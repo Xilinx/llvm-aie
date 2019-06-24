@@ -1,3 +1,10 @@
+# llvm/utils/UpdateTestChecks/asm.py -*- Python -*-
+#
+# Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 from __future__ import print_function
 import re
 import sys
@@ -30,6 +37,14 @@ ASM_FUNCTION_X86_RE = re.compile(
     r"^\s*(?:[^:\n]+?:\s*\n\s*\.size|\.cfi_endproc|\.globl|\.comm|\.(?:sub)?section|#+ -- End function)",
     flags=(re.M | re.S),
 )
+
+ASM_FUNCTION_AIE_RE = re.compile(
+        r'^(?P<func>[\ .0-9a-zA-Z_]+)\w*:.*?\n' # f: (name of function)
+#        r'(\/\/[^:]*:\n)'
+  #        r'\s+\.fnstart\n' # .fnstart
+        r'(?P<body>.*?)\n' # (body of the function)
+        r'.Lfunc_end[0-9]+:', # .Lfunc_end0: or # -- End function
+        flags=(re.M | re.S))
 
 ASM_FUNCTION_ARM_RE = re.compile(
     r"^(?P<func>[0-9a-zA-Z_$]+):\n"  # f: (name of function)
@@ -274,6 +289,8 @@ SCRUB_X86_LCP_RE = re.compile(r"\.?LCPI[0-9]+_[0-9]+")
 SCRUB_X86_RET_RE = re.compile(r"ret[l|q]")
 
 
+SCRUB_AIE_COMMENTS_RE = re.compile(r'\/\/.*$')
+
 def scrub_asm_x86(asm, args):
     # Scrub runs of whitespace out of the assembly, but leave the leading
     # whitespace in place.
@@ -318,6 +335,19 @@ def scrub_asm_amdgpu(asm, args):
     asm = common.SCRUB_TRAILING_WHITESPACE_RE.sub(r"", asm)
     return asm
 
+
+def scrub_asm_aie(asm, args):
+  #asm = SCRUB_AIE_COMMENTS_RE.sub(r' ', asm)
+  # Scrub runs of whitespace out of the assembly, but leave the leading
+  # whitespace in place.
+  asm = common.SCRUB_WHITESPACE_RE.sub(r' ', asm)
+  # Expand the tabs used for indentation.
+  asm = string.expandtabs(asm, 2)
+  # Strip kill operands inserted into the asm.
+  asm = common.SCRUB_KILL_COMMENT_RE.sub('', asm)
+  # Strip trailing whitespace.
+  asm = common.SCRUB_TRAILING_WHITESPACE_RE.sub(r'', asm)
+  return asm
 
 def scrub_asm_arm_eabi(asm, args):
     # Scrub runs of whitespace out of the assembly, but leave the leading
@@ -541,6 +571,7 @@ def get_run_handler(triple):
         "aarch64": (scrub_asm_arm_eabi, ASM_FUNCTION_AARCH64_RE),
         "aarch64-apple-darwin": (scrub_asm_arm_eabi, ASM_FUNCTION_AARCH64_DARWIN_RE),
         "aarch64-apple-ios": (scrub_asm_arm_eabi, ASM_FUNCTION_AARCH64_DARWIN_RE),
+        "aie": (scrub_asm_aie, ASM_FUNCTION_AIE_RE),
         "bpf": (scrub_asm_bpf, ASM_FUNCTION_BPF_RE),
         "bpfel": (scrub_asm_bpf, ASM_FUNCTION_BPF_RE),
         "bpfeb": (scrub_asm_bpf, ASM_FUNCTION_BPF_RE),
