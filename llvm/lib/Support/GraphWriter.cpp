@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements misc. GraphWriter support routines.
@@ -207,6 +210,14 @@ bool llvm::DisplayGraph(StringRef FilenameRef, bool wait,
       return false;
   }
 #endif
+  if (S.TryFindProgram("dotty", ViewerPath)) {
+    std::vector<StringRef> args;
+    args.push_back(ViewerPath);
+    args.push_back(Filename);
+    errs() << "Trying 'dotty' program... ";
+    if (!ExecGraphViewer(ViewerPath, args, Filename, wait, ErrMsg))
+      return false;
+  }
   if (S.TryFindProgram("xdg-open", ViewerPath)) {
     std::vector<StringRef> args;
     args.push_back(ViewerPath);
