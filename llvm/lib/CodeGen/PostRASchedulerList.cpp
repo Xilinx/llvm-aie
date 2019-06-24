@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This implements a top-down list scheduler, using standard algorithms.
@@ -465,7 +468,7 @@ void SchedulePostRATDList::ReleaseSucc(SUnit *SU, SDep *SuccEdge) {
 
   // Standard scheduler algorithms will recompute the depth of the successor
   // here as such:
-  //   SuccSU->setDepthToAtLeast(SU->getDepth() + SuccEdge->getLatency());
+  SuccSU->setDepthToAtLeast(SU->getDepth() + SuccEdge->getLatency());
   //
   // However, we lazily compute node depth instead. Note that
   // ScheduleNodeTopDown has already updated the depth of this node which causes
