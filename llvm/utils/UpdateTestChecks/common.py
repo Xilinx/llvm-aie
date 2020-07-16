@@ -1,3 +1,11 @@
+# llvm/utils/UpdateTestChecks/common.py -*- Python -*-
+#
+# Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+
 from __future__ import print_function
 
 import argparse
@@ -275,7 +283,9 @@ class TestInfo(object):
         self.run_lines = find_run_lines(test, self.input_lines)
         self.comment_prefix = comment_prefix
         if self.comment_prefix is None:
-            if self.path.endswith(".mir"):
+            if self.path.endswith('.mlir'):
+                self.comment_prefix = '//'
+            elif self.path.endswith('.mir'):
                 self.comment_prefix = "#"
             else:
                 self.comment_prefix = ";"
