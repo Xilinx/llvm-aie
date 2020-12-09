@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_MC_MCASSEMBLER_H
@@ -209,7 +212,9 @@ private:
   /// changes as a result of relaxation.
   bool relaxFragment(MCAsmLayout &Layout, MCFragment &F);
   bool relaxInstruction(MCAsmLayout &Layout, MCRelaxableFragment &IF);
+  bool forceRelaxInstruction(MCAsmLayout &Layout, MCRelaxableFragment &IF);
   bool relaxLEB(MCAsmLayout &Layout, MCLEBFragment &IF);
+  bool relaxAlignByPadding(MCAsmLayout &Layout, MCAlignByPaddingFragment &BF);
   bool relaxBoundaryAlign(MCAsmLayout &Layout, MCBoundaryAlignFragment &BF);
   bool relaxDwarfLineAddr(MCAsmLayout &Layout, MCDwarfLineAddrFragment &DF);
   bool relaxDwarfCallFrameFragment(MCAsmLayout &Layout,

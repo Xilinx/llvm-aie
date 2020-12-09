@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCFragment.h"
@@ -274,6 +277,9 @@ void MCFragment::destroy() {
     case FT_Align:
       delete cast<MCAlignFragment>(this);
       return;
+    case FT_AlignByPadding:
+      delete cast<MCAlignByPaddingFragment>(this);
+      return;
     case FT_Data:
       delete cast<MCDataFragment>(this);
       return;
@@ -342,6 +348,7 @@ LLVM_DUMP_METHOD void MCFragment::dump() const {
   OS << "<";
   switch (getKind()) {
   case MCFragment::FT_Align: OS << "MCAlignFragment"; break;
+  case MCFragment::FT_AlignByPadding: OS << "MCAlignByPaddingFragment"; break;
   case MCFragment::FT_Data:  OS << "MCDataFragment"; break;
   case MCFragment::FT_CompactEncodedInst:
     OS << "MCCompactEncodedInstFragment"; break;
@@ -379,6 +386,12 @@ LLVM_DUMP_METHOD void MCFragment::dump() const {
     OS << " Alignment:" << AF->getAlignment().value()
        << " Value:" << AF->getValue() << " ValueSize:" << AF->getValueSize()
        << " MaxBytesToEmit:" << AF->getMaxBytesToEmit() << ">";
+    break;
+  }
+  case MCFragment::FT_AlignByPadding: {
+    const auto *AF = cast<MCAlignByPaddingFragment>(this);
+    OS << "\n       ";
+    OS << " Alignment:" << AF->getAlignment() << ">";
     break;
   }
   case MCFragment::FT_Data:  {
