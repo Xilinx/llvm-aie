@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_MC_MCFRAGMENT_H
@@ -47,6 +50,7 @@ public:
     FT_CVInlineLines,
     FT_CVDefRange,
     FT_PseudoProbe,
+    FT_AlignByPadding,
     FT_Dummy
   };
 
@@ -341,6 +345,21 @@ public:
 
   static bool classof(const MCFragment *F) {
     return F->getKind() == MCFragment::FT_Align;
+  }
+};
+
+class MCAlignByPaddingFragment : public MCFragment {
+  /// The alignment to ensure, in bytes.
+  unsigned Alignment;
+
+public:
+  MCAlignByPaddingFragment(unsigned Alignment, MCSection *Sec = nullptr)
+      : MCFragment(FT_AlignByPadding, false, Sec), Alignment(Alignment) {}
+
+  unsigned getAlignment() const { return Alignment; }
+
+  static bool classof(const MCFragment *F) {
+    return F->getKind() == MCFragment::FT_AlignByPadding;
   }
 };
 
