@@ -1,3 +1,11 @@
+#
+# Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+
+
 include(GNUInstallDirs)
 include(LLVMDistributionSupport)
 include(LLVMProcessSources)
@@ -1342,6 +1350,16 @@ if(NOT LLVM_TOOLCHAIN_TOOLS)
   if (LLVM_ENABLE_LIBXML2)
     list(APPEND LLVM_TOOLCHAIN_TOOLS llvm-mt)
   endif()
+endif()
+
+if(NOT LLVM_TOOLCHAIN_UTILITIES)
+  set (LLVM_TOOLCHAIN_UTILITIES
+    count
+    FileCheck
+    llvm-PerfectShuffle
+    not
+    yaml-bench
+  )
 endif()
 
 macro(llvm_add_tool project name)
