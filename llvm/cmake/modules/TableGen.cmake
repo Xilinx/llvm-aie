@@ -1,3 +1,11 @@
+#
+# Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+
+
 # LLVM_TARGET_DEFINITIONS must contain the name of the .td file to process,
 # while LLVM_TARGET_DEPENDS may contain additional file dependencies.
 # Extra parameters for `tblgen' may come after `ofn' parameter.
@@ -156,7 +164,7 @@ function(add_public_tablegen_target target)
     message(FATAL_ERROR "Requires tablegen() definitions as TABLEGEN_OUTPUT.")
   endif()
   add_custom_target(${target}
-    DEPENDS ${TABLEGEN_OUTPUT})
+    ALL DEPENDS ${TABLEGEN_OUTPUT})
   if(LLVM_COMMON_DEPENDS)
     add_dependencies(${target} ${LLVM_COMMON_DEPENDS})
   endif()
