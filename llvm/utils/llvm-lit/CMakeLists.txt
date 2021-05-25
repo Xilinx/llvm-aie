@@ -1,3 +1,11 @@
+#
+# Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+
+
 get_property(LLVM_LIT_CONFIG_FILES GLOBAL PROPERTY LLVM_LIT_CONFIG_FILES)
 list(LENGTH LLVM_LIT_CONFIG_FILES file_len)
 math(EXPR file_last "${file_len} - 1")
@@ -41,5 +49,10 @@ else()
   configure_file(
     llvm-lit.in
     ${LIT_BASE_DIR}/${LIT_FILE_NAME}
+    )
+  install(FILES
+    ${LIT_BASE_DIR}/${LIT_FILE_NAME}
+    DESTINATION bin
+    COMPONENT python
     )
 endif()
