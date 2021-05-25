@@ -1,3 +1,11 @@
+#
+# Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+
+
 # The configured file is not placed in the correct location
 # until the tests are run as we need to copy it into
 # a copy of the tests folder
@@ -5,6 +13,16 @@ configure_lit_site_cfg(
   "${CMAKE_CURRENT_SOURCE_DIR}/tests/lit.site.cfg.in"
   "${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg"
   )
+
+install(DIRECTORY
+  lit
+  DESTINATION bin
+  COMPONENT python
+  )
+add_custom_target(python)
+add_llvm_install_targets(install-python
+  DEPENDS python
+  COMPONENT python)
 
 # Lit's test suite creates output files next to the sources which makes the
 # source tree dirty. This is undesirable because we do out of source builds.
