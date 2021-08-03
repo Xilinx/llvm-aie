@@ -1,3 +1,10 @@
+#
+# Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+
 include(GNUInstallDirs)
 include(LLVMDistributionSupport)
 
@@ -322,8 +329,11 @@ function(add_mlir_library name)
 
   if(TARGET ${name})
     target_link_libraries(${name} INTERFACE ${LLVM_COMMON_LIBS})
+    if(${ARG_INSTALL_WITH_TOOLCHAIN})
+      set(INSTALL_WITH_TOOLCHAIN INSTALL_WITH_TOOLCHAIN)
+    endif()
     if(NOT ARG_DISABLE_INSTALL)
-      add_mlir_library_install(${name})
+      add_mlir_library_install(${name} ${INSTALL_WITH_TOOLCHAIN})
     endif()
   else()
     # Add empty "phony" target
@@ -548,26 +558,30 @@ endfunction(add_mlir_aggregate)
 # This is usually done as part of add_mlir_library but is broken out for cases
 # where non-standard library builds can be installed.
 function(add_mlir_library_install name)
-  if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
-  get_target_export_arg(${name} MLIR export_to_mlirtargets UMBRELLA mlir-libraries)
-  install(TARGETS ${name}
-    COMPONENT ${name}
-    ${export_to_mlirtargets}
-    LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
-    ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX}
-    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
-    # Note that CMake will create a directory like:
-    #   objects-${CMAKE_BUILD_TYPE}/obj.LibName
-    # and put object files there.
-    OBJECTS DESTINATION lib${LLVM_LIBDIR_SUFFIX}
-  )
+  cmake_parse_arguments(ARG
+  "INSTALL_WITH_TOOLCHAIN"
+  ""
+  ""
+  ${ARGN})
+  if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY OR ARG_INSTALL_WITH_TOOLCHAIN)
+    get_target_export_arg(${name} MLIR export_to_mlirtargets UMBRELLA mlir-libraries)
+    install(TARGETS ${name}
+      COMPONENT ${name}
+      ${export_to_mlirtargets}
+      LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
+      ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX}
+      RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+      # Note that CMake will create a directory like:
+      #   objects-${CMAKE_BUILD_TYPE}/obj.LibName
+      # and put object files there.
+      OBJECTS DESTINATION lib${LLVM_LIBDIR_SUFFIX})
 
-  if (NOT LLVM_ENABLE_IDE)
-    add_llvm_install_targets(install-${name}
-                            DEPENDS ${name}
-                            COMPONENT ${name})
-  endif()
-  set_property(GLOBAL APPEND PROPERTY MLIR_ALL_LIBS ${name})
+    if (NOT LLVM_ENABLE_IDE)
+      add_llvm_install_targets(install-${name}
+                              DEPENDS ${name}
+                              COMPONENT ${name})
+    endif()
+    set_property(GLOBAL APPEND PROPERTY MLIR_ALL_LIBS ${name})
   endif()
   set_property(GLOBAL APPEND PROPERTY MLIR_EXPORTS ${name})
 endfunction()
