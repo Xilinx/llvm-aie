@@ -1,3 +1,10 @@
+#
+# Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+
 # Building libmlir-cpp.so fails if LLVM_ENABLE_PIC=Off
 if (NOT LLVM_ENABLE_PIC)
   return()
@@ -26,9 +33,9 @@ foreach (lib ${mlir_libs})
   # list(APPEND _DEPS  $<TARGET_PROPERTY:${lib},LINK_LIBRARIES>)
 endforeach ()
 
-if(MLIR_LINK_MLIR_DYLIB)
+#if(MLIR_LINK_MLIR_DYLIB)
   set(INSTALL_WITH_TOOLCHAIN INSTALL_WITH_TOOLCHAIN)
-endif()
+#endif()
 
 if(LLVM_BUILD_LLVM_DYLIB)
   add_mlir_library(
