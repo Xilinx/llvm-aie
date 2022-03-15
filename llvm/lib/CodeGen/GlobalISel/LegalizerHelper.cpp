@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 /// \file This file implements the LegalizerHelper class to legalize
@@ -3215,8 +3218,18 @@ LegalizerHelper::LegalizeResult LegalizerHelper::lowerLoad(GAnyLoad &LoadMI) {
       MIRBuilder.buildLoad(LoadReg, PtrReg, *NewMMO);
     }
 
-    if (DstTy != LoadTy)
-      MIRBuilder.buildTrunc(DstReg, LoadReg);
+    if (DstTy != LoadTy) {
+      if (DstTy.isPointer()) {
+        // FIXME: We currently consider this to be illegal for non-integral
+        // address spaces, but we still need a way to reinterpret the bits.
+        Register Trunc =
+            MIRBuilder.buildTrunc(LLT::scalar(DstTy.getSizeInBits()), LoadReg)
+                .getReg(0);
+        MIRBuilder.buildIntToPtr(DstReg, Trunc);
+      } else {
+        MIRBuilder.buildTrunc(DstReg, LoadReg);
+      }
+    }
 
     LoadMI.eraseFromParent();
     return Legalized;
