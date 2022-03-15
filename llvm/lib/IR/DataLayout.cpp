@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines layout properties related to datatype size/offset/alignment
@@ -748,7 +751,7 @@ Align DataLayout::getPointerPrefAlignment(unsigned AS) const {
 }
 
 unsigned DataLayout::getPointerSize(unsigned AS) const {
-  return divideCeil(getPointerAlignElem(AS).TypeBitWidth, 8);
+  return PowerOf2Ceil(divideCeil(getPointerAlignElem(AS).TypeBitWidth, 8));
 }
 
 unsigned DataLayout::getMaxIndexSize() const {
