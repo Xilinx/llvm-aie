@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines layout properties related to datatype size/offset/alignment
@@ -371,7 +374,7 @@ public:
   /// the backends/clients are updated.
   Align getPointerPrefAlignment(unsigned AS = 0) const;
 
-  /// Layout pointer size in bytes, rounded up to a whole
+  /// Layout pointer size in bytes, rounded up to a power of 2
   /// number of bytes.
   /// FIXME: The defaults need to be removed once all of
   /// the backends/clients are updated.
