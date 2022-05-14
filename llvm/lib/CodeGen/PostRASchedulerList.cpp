@@ -566,7 +566,8 @@ void SchedulePostRATDList::ListScheduleTopDown() {
                AvailableQueue.dump(this));
 
     SUnit *FoundSUnit = nullptr, *NotPreferredSUnit = nullptr;
-    bool HasNoopHazards = false;
+
+    bool HasNoopHazards = HazardRec->emitNoopsIfNoInstructionsAvailable();
     while (!AvailableQueue.empty()) {
       SUnit *CurSUnit = AvailableQueue.pop();
 
