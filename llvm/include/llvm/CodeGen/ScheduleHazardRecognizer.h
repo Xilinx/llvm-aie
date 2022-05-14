@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the ScheduleHazardRecognizer class, which implements
@@ -60,6 +63,12 @@ public:
   virtual HazardType getHazardType(SUnit *, int Stalls = 0) {
     return NoHazard;
   }
+
+  /// emitNoopsIfNoInstructionsAvailable - This function determines the behavior
+  /// if no instructions are available to execute.  For architectures with
+  /// static compiler pipelines, this should return true.  Most architectures
+  /// with pipeline interlocks can return false.
+  virtual bool emitNoopsIfNoInstructionsAvailable() { return false; }
 
   /// Reset - This callback is invoked when a new block of
   /// instructions is about to be schedule. The hazard state should be
