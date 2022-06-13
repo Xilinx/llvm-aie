@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 /// \file
 /// This file declares the IRTranslator pass.
@@ -661,6 +664,9 @@ private:
   /// used as a single "unsigned". Aggregates get flattened. If such VRegs do
   /// not exist, they are created.
   ArrayRef<Register> getOrCreateVRegs(const Value &Val);
+
+  /// Get the VRegs that represent the \p RetVal return value.
+  ArrayRef<Register> getOrCreateReturnVRegs(const Value *RetVal);
 
   Register getOrCreateVReg(const Value &Val) {
     auto Regs = getOrCreateVRegs(Val);

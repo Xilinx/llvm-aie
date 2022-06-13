@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This implements routines for translating functions from LLVM IR into
@@ -288,6 +291,14 @@ public:
 
   Register getCatchPadExceptionPointerVReg(const Value *CPI,
                                            const TargetRegisterClass *RC);
+
+  /// Saved context when using CallLowering::preLowerReturn()
+  struct SavedRetCCState {
+    const Value *RetVal = nullptr;
+    SmallVector<Register, 4> AssignedRegs;
+    unsigned ReservedStackSize = 0;
+  };
+  std::optional<SavedRetCCState> PreDeterminedRetAssignments;
 
 private:
   /// LiveOutRegInfo - Information about live out vregs.

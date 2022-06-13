@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 ///
 /// \file
@@ -529,6 +532,23 @@ public:
   virtual bool fallBackToDAGISel(const MachineFunction &MF) const {
     return false;
   }
+
+  /// True if the target need to pre-lower the return instruction before
+  /// lowering formal arguments.
+  virtual bool mustPreLowerReturn() const { return false; }
+
+  /// This hook must be implemented for targets for which mustPreLowerReturn()
+  /// is true. The hook allows to pre-determine return assignments for targets
+  /// that require it. This hook is used by GlobalISel.
+  ///
+  /// The outgoing return values are described by \p RetVal, in the specified
+  /// virtual registers \p VRegs.
+  ///
+  /// \return True if the hook succeeds, false otherwise.
+  virtual bool preLowerReturn(const Value *RetVal, ArrayRef<Register> VRegs,
+                              FunctionLoweringInfo &FLI) const {
+    return false;
+  };
 
   /// This hook must be implemented to lower the incoming (formal)
   /// arguments, described by \p VRegs, for GlobalISel. Each argument
