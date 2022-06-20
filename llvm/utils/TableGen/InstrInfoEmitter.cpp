@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This tablegen backend is responsible for emitting a description of the target
@@ -44,6 +47,12 @@ static cl::opt<bool> ExpandMIOperandInfo(
     "instr-info-expand-mi-operand-info",
     cl::desc("Expand operand's MIOperandInfo DAG into suboperands"),
     cl::cat(InstrInfoEmitterCat), cl::init(true));
+
+cl::opt<std::string>
+    IIBaseClass("base-instrinfo-class",
+                cl::desc("Base InstrInfo class to derive from"),
+                cl::value_desc("Base class"), cl::init("TargetInstrInfo"),
+                cl::cat(InstrInfoEmitterCat));
 
 namespace {
 
@@ -1098,12 +1107,11 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
 
   std::string ClassName = TargetName + "GenInstrInfo";
   OS << "namespace llvm {\n";
-  OS << "struct " << ClassName << " : public TargetInstrInfo {\n"
+  OS << "struct " << ClassName << " : public " << IIBaseClass << " {\n"
      << "  explicit " << ClassName
      << "(unsigned CFSetupOpcode = ~0u, unsigned CFDestroyOpcode = ~0u, "
         "unsigned CatchRetOpcode = ~0u, unsigned ReturnOpcode = ~0u);\n"
      << "  ~" << ClassName << "() override = default;\n";
-
 
   OS << "\n};\n} // end namespace llvm\n";
 
@@ -1137,7 +1145,8 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
   OS << ClassName << "::" << ClassName
      << "(unsigned CFSetupOpcode, unsigned CFDestroyOpcode, unsigned "
         "CatchRetOpcode, unsigned ReturnOpcode)\n"
-     << "  : TargetInstrInfo(CFSetupOpcode, CFDestroyOpcode, CatchRetOpcode, "
+     << "  : " << IIBaseClass
+     << "(CFSetupOpcode, CFDestroyOpcode, CatchRetOpcode, "
         "ReturnOpcode) {\n"
      << "  InitMCInstrInfo(" << TargetName << "Descs.Insts, " << TargetName
      << "InstrNameIndices, " << TargetName << "InstrNameData, ";

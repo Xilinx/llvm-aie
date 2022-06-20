@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This tablegen backend is responsible for emitting a description of a target
@@ -52,6 +55,12 @@ static cl::opt<bool>
     RegisterInfoDebug("register-info-debug", cl::init(false),
                       cl::desc("Dump register information to help debugging"),
                       cl::cat(RegisterInfoCat));
+
+cl::opt<std::string>
+    RIBaseClass("base-registerinfo-class",
+                cl::desc("Base TargetRegisterInfo class to derive from"),
+                cl::value_desc("Base class"), cl::init("TargetRegisterInfo"),
+                cl::cat(RegisterInfoCat));
 
 namespace {
 
@@ -1133,7 +1142,7 @@ RegisterInfoEmitter::runTargetHeader(raw_ostream &OS, CodeGenTarget &Target,
 
   OS << "class " << TargetName << "FrameLowering;\n\n";
 
-  OS << "struct " << ClassName << " : public TargetRegisterInfo {\n"
+  OS << "struct " << ClassName << " : public " << RIBaseClass << " {\n"
      << "  explicit " << ClassName
      << "(unsigned RA, unsigned D = 0, unsigned E = 0,\n"
      << "      unsigned PC = 0, unsigned HwMode = 0);\n";
@@ -1647,7 +1656,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
      << ClassName
      << "(unsigned RA, unsigned DwarfFlavour, unsigned EHFlavour,\n"
         "      unsigned PC, unsigned HwMode)\n"
-     << "  : TargetRegisterInfo(&" << TargetName << "RegInfoDesc"
+     << "  : " << RIBaseClass << "(&" << TargetName << "RegInfoDesc"
      << ", RegisterClasses, RegisterClasses+" << RegisterClasses.size() << ",\n"
      << "             SubRegIndexNameTable, SubRegIndexLaneMaskTable,\n"
      << "             ";
