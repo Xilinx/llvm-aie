@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements integer type expansion and promotion for LegalizeTypes.
@@ -2012,7 +2015,7 @@ void DAGTypeLegalizer::PromoteSetCCOperands(SDValue &LHS, SDValue &RHS,
 
 SDValue DAGTypeLegalizer::PromoteIntOp_ANY_EXTEND(SDNode *N) {
   SDValue Op = GetPromotedInteger(N->getOperand(0));
-  return DAG.getNode(ISD::ANY_EXTEND, SDLoc(N), N->getValueType(0), Op);
+  return DAG.getAnyExtOrTrunc(Op, SDLoc(N), N->getValueType(0));
 }
 
 SDValue DAGTypeLegalizer::PromoteIntOp_ATOMIC_STORE(AtomicSDNode *N) {
@@ -2182,7 +2185,7 @@ SDValue DAGTypeLegalizer::PromoteIntOp_FunnelShift(SDNode *N) {
 SDValue DAGTypeLegalizer::PromoteIntOp_SIGN_EXTEND(SDNode *N) {
   SDValue Op = GetPromotedInteger(N->getOperand(0));
   SDLoc dl(N);
-  Op = DAG.getNode(ISD::ANY_EXTEND, dl, N->getValueType(0), Op);
+  Op = DAG.getAnyExtOrTrunc(Op, dl, N->getValueType(0));
   return DAG.getNode(ISD::SIGN_EXTEND_INREG, dl, Op.getValueType(),
                      Op, DAG.getValueType(N->getOperand(0).getValueType()));
 }
@@ -2351,7 +2354,7 @@ SDValue DAGTypeLegalizer::PromoteIntOp_STRICT_UINT_TO_FP(SDNode *N) {
 SDValue DAGTypeLegalizer::PromoteIntOp_ZERO_EXTEND(SDNode *N) {
   SDLoc dl(N);
   SDValue Op = GetPromotedInteger(N->getOperand(0));
-  Op = DAG.getNode(ISD::ANY_EXTEND, dl, N->getValueType(0), Op);
+  Op = DAG.getAnyExtOrTrunc(Op, dl, N->getValueType(0));
   return DAG.getZeroExtendInReg(Op, dl, N->getOperand(0).getValueType());
 }
 
