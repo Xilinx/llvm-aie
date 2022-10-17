@@ -4,10 +4,14 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCDisassembler/MCDisassembler.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/CodeGen/TargetRegisterInfo.h"
 
 using namespace llvm;
 
@@ -40,6 +44,16 @@ void MCDisassembler::tryAddingPcLoadReferenceComment(int64_t Value,
                                                      uint64_t Address) const {
   if (Symbolizer)
     Symbolizer->tryAddingPcLoadReferenceComment(*CommentStream, Value, Address);
+}
+
+MCDisassembler::DecodeStatus
+MCDisassembler::decodeSingletonRegClass(MCInst &Inst,
+                                        const TargetRegisterClass &RC) const {
+  if (RC.getNumRegs() != 1)
+    return MCDisassembler::Fail;
+  unsigned Reg = RC.getRegister(0);
+  Inst.addOperand(MCOperand::createReg(Reg));
+  return MCDisassembler::Success;
 }
 
 void MCDisassembler::setSymbolizer(std::unique_ptr<MCSymbolizer> Symzer) {

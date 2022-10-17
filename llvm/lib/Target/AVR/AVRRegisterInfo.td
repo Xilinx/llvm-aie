@@ -4,6 +4,8 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+//
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
@@ -213,7 +215,9 @@ def PTRDISPREGS : RegisterClass<"AVR", [i16], 8, (add R31R30, R29R28), ptr>;
 
 // We have a bunch of instructions with an explicit Z register argument. We
 // model this using a register class containing only the Z register.
-def ZREG : RegisterClass<"AVR", [i16], 8, (add R31R30)>;
+def ZREG : RegisterClass<"AVR", [i16], 8, (add R31R30)> {
+  let DecodeZeroBitOperand = true;
+}
 
 // Register class used for the stack read pseudo instruction.
 def GPRSP : RegisterClass<"AVR", [i16], 8, (add SP)>;

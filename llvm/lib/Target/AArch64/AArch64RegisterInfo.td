@@ -4,6 +4,8 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 //
@@ -1591,6 +1593,7 @@ let isAllocatable = 0 in {
   // Accumulator array
   def MPR : RegisterClass<"AArch64", [untyped], 2048, (add ZA)> {
     let Size = 2048;
+    let DecodeZeroBitOperand = true;
   }
 
   // Accumulator array as single tiles

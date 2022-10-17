@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_MC_MCDISASSEMBLER_MCDISASSEMBLER_H
@@ -17,6 +20,8 @@
 #include <vector>
 
 namespace llvm {
+
+class TargetRegisterClass;
 
 struct XCOFFSymbolInfoTy {
   std::optional<XCOFF::StorageMappingClass> StorageMappingClass;
@@ -208,6 +213,11 @@ public:
                                 uint64_t InstSize) const;
 
   void tryAddingPcLoadReferenceComment(int64_t Value, uint64_t Address) const;
+
+  /// Decode a register class that contains a single register, essentially
+  /// adding that register as an operand of \p Inst.
+  DecodeStatus decodeSingletonRegClass(MCInst &Inst,
+                                       const TargetRegisterClass &RC) const;
 
   /// Set \p Symzer as the current symbolizer.
   /// This takes ownership of \p Symzer, and deletes the previously set one.

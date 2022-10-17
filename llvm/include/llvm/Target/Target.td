@@ -229,6 +229,7 @@ class RegisterWithSubRegs<string n, list<Register> subregs> : Register<n> {
 // RegisterClass's and other Operand's.
 class DAGOperand {
   string OperandNamespace = "MCOI";
+  bit DecodeZeroBitOperand = false;
   string DecoderMethod = "";
   bit hasCompleteDecoder = true;
 }
