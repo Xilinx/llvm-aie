@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file is part of the AVR Disassembler.
@@ -87,6 +90,12 @@ static DecodeStatus DecodeLD8RegisterClass(MCInst &Inst, unsigned RegNo,
   unsigned Register = GPRDecoderTable[RegNo + 16];
   Inst.addOperand(MCOperand::createReg(Register));
   return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeZREGRegisterClass(MCInst &Inst, unsigned RegNo,
+                                            uint64_t Address,
+                                            const MCDisassembler *Decoder) {
+  return Decoder->decodeSingletonRegClass(Inst, AVR::ZREGRegClass);
 }
 
 static DecodeStatus decodeFIOARr(MCInst &Inst, unsigned Insn, uint64_t Address,

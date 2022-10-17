@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // It contains the tablegen backend that emits the decoder functions for
@@ -95,10 +98,15 @@ struct OperandInfo {
   std::vector<EncodingField> Fields;
   std::string Decoder;
   bool HasCompleteDecoder;
+
+  /// Insert a call to decode the operand, even if it has no encoding bits.
+  bool IsZeroFieldDecodable;
+
   uint64_t InitValue;
 
-  OperandInfo(std::string D, bool HCD)
-      : Decoder(std::move(D)), HasCompleteDecoder(HCD), InitValue(0) {}
+  OperandInfo(std::string D, bool HCD, bool IsZeroFieldDecodable)
+      : Decoder(std::move(D)), HasCompleteDecoder(HCD),
+        IsZeroFieldDecodable(IsZeroFieldDecodable), InitValue(0) {}
 
   void addField(unsigned Base, unsigned Width, unsigned Offset) {
     Fields.push_back(EncodingField(Base, Width, Offset));
@@ -1221,7 +1229,9 @@ void FilterChooser::emitDecoder(raw_ostream &OS, unsigned Indentation,
   HasCompleteDecoder = true;
 
   for (const auto &Op : Operands.find(Opc)->second) {
-    // If a custom instruction decoder was specified, use that.
+    // That case can be reached:
+    //  - If a custom decoder was specified for the whole instruction
+    //  - If an operand with zero encoding bits has `DecodeZeroBitOperand=true`
     if (Op.numFields() == 0 && !Op.Decoder.empty()) {
       HasCompleteDecoder = Op.HasCompleteDecoder;
       OS.indent(Indentation)
@@ -1229,7 +1239,7 @@ void FilterChooser::emitDecoder(raw_ostream &OS, unsigned Indentation,
           << "(MI, insn, Address, Decoder))) { "
           << (HasCompleteDecoder ? "" : "DecodeComplete = false; ")
           << "return MCDisassembler::Fail; }\n";
-      break;
+      continue;
     }
 
     bool OpHasCompleteDecoder;
@@ -1889,8 +1899,14 @@ static std::string findOperandDecoderMethod(Record *Record) {
   return Decoder;
 }
 
+static bool isZeroFieldDecodableOperand(const Record &TypeRecord) {
+  return TypeRecord.isSubClassOf("DAGOperand") &&
+         TypeRecord.getValueAsBit("DecodeZeroBitOperand");
+}
+
 OperandInfo getOpInfo(Record *TypeRecord) {
   std::string Decoder = findOperandDecoderMethod(TypeRecord);
+  bool IsZeroFieldDecodable = isZeroFieldDecodableOperand(*TypeRecord);
 
   RecordVal *HasCompleteDecoderVal = TypeRecord->getValue("hasCompleteDecoder");
   BitInit *HasCompleteDecoderBit =
@@ -1900,7 +1916,7 @@ OperandInfo getOpInfo(Record *TypeRecord) {
   bool HasCompleteDecoder =
       HasCompleteDecoderBit ? HasCompleteDecoderBit->getValue() : true;
 
-  return OperandInfo(Decoder, HasCompleteDecoder);
+  return OperandInfo(Decoder, HasCompleteDecoder, IsZeroFieldDecodable);
 }
 
 void parseVarLenInstOperand(const Record &Def,
@@ -2028,10 +2044,10 @@ populateInstruction(CodeGenTarget &Target, const Record &EncodingDef,
   // of trying to auto-generate the decoder.
   StringRef InstDecoder = EncodingDef.getValueAsString("DecoderMethod");
   if (InstDecoder != "") {
-    bool HasCompleteInstDecoder =
-        EncodingDef.getValueAsBit("hasCompleteDecoder");
-    InsnOperands.push_back(
-        OperandInfo(std::string(InstDecoder), HasCompleteInstDecoder));
+    bool HasCompleteInstDecoder = EncodingDef.getValueAsBit("hasCompleteDecoder");
+    InsnOperands.emplace_back(OperandInfo(std::string(InstDecoder),
+                                          HasCompleteInstDecoder,
+                                          /*IsZeroFieldDecodable=*/false));
     Operands[Opc] = InsnOperands;
     return Bits.getNumBits();
   }
@@ -2146,11 +2162,14 @@ populateInstruction(CodeGenTarget &Target, const Record &EncodingDef,
       }
 
       addOneOperandFields(EncodingDef, Bits, TiedNames, OpName, OpInfo);
-      // FIXME: it should be an error not to find a definition for a given
-      // operand, rather than just failing to add it to the resulting
-      // instruction! (This is a longstanding bug, which will be addressed in an
-      // upcoming change.)
-      if (OpInfo.numFields() > 0)
+
+      // When IsZeroFieldDecodable is true, add the operand even if it doesn't
+      // have any field attached to it in the Inst bits.
+      // This gives targets the chance to still decode that operand and add it
+      // to the MCInst being decoded. One cannot always insert decoding calls
+      // for "zero-bits" operands, as some targets (e.g. AMDGPU) rely on this
+      // mechanism to essentially "skip" operands.
+      if (OpInfo.numFields() > 0 || OpInfo.IsZeroFieldDecodable)
         InsnOperands.push_back(OpInfo);
     }
   }
