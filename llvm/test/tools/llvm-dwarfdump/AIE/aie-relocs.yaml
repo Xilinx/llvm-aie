@@ -1,0 +1,86 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+
+# Tests AIE relocations. We provide a .debug_info section with multiple
+# DW_AT_high_pc entries (that's one of the attributes for which relocations are
+# resolved by llvm-dwarfdump) and we add a relocation for each of them.
+#
+# RUN: yaml2obj %s | llvm-dwarfdump - | FileCheck %s
+
+--- !ELF
+FileHeader:
+  Class:           ELFCLASS32
+  Data:            ELFDATA2LSB
+  Type:            ET_REL
+  Machine:         EM_AIE
+  Flags:           [ EF_AIE_AIE1 ]
+Sections:
+  - Name:            .debug_abbrev
+    Type:            SHT_PROGBITS
+    Content:         01110012011201120112011201120112011201120112011201120112011201000000
+  - Name:            .debug_info
+    Type:            SHT_PROGBITS
+    Content:         78000000040000000000080142000000000000004200000000000000420000000000000042000000000000004200000000000000420000000000000042000000000000004200000000000000424200000000000042420000000000004242424200000000424242420000000042424242424242004242424242424200
+  - Name:            .rela.debug_info
+    Type:            SHT_RELA
+    Flags:           [ SHF_INFO_LINK ]
+    Link:            .symtab
+    AddressAlign:    0x4
+    Info:            .debug_info
+    Relocations:
+
+      # Test 1
+      # 0x42 with R_AIE_72(0x1) = 0x1
+      # CHECK: DW_AT_high_pc (0x0000000000000001)
+      - Offset:          0x000000000000000C # 0xC + 8*0
+        Symbol:          v1
+        Type:            R_AIE_72
+
+      # Test 2
+      # 0x42 with R_AIE_0(0x4) = 0x4
+      # CHECK: DW_AT_high_pc (0x0000000000000004)
+      - Offset:          0x0000000000000014 # 0xC + 8*1
+        Symbol:          v4
+        Type:            R_AIE_0
+
+      # Others should not be affected.
+      # CHECK: DW_AT_high_pc (0x0000000000000042)
+      # CHECK: DW_AT_high_pc (0x0000000000000042)
+      # CHECK: DW_AT_high_pc (0x0000000000000042)
+      # CHECK: DW_AT_high_pc (0x0000000000000042)
+      # CHECK: DW_AT_high_pc (0x0000000000000042)
+      # CHECK: DW_AT_high_pc (0x0000000000000042)
+      # CHECK: DW_AT_high_pc (0x0000000000004242)
+      # CHECK: DW_AT_high_pc (0x0000000000004242)
+      # CHECK: DW_AT_high_pc (0x0000000042424242)
+      # CHECK: DW_AT_high_pc (0x0000000042424242)
+      # CHECK: DW_AT_high_pc (0x0042424242424242)
+      # CHECK: DW_AT_high_pc (0x0042424242424242)
+
+
+Symbols:
+  - Name:            v1
+    Type:            STT_SECTION
+    Section:         .debug_info
+    Value:           0x0000000000000001
+  - Name:            v4
+    Type:            STT_SECTION
+    Section:         .debug_info
+    Value:           0x0000000000000004
+  - Name:            v04020103
+    Type:            STT_SECTION
+    Section:         .debug_info
+    Value:           0x0000000004020103
+  - Name:            vFFFFFFFFFFFFFFFF
+    Type:            STT_SECTION
+    Section:         .debug_info
+    Value:           0xFFFFFFFFFFFFFFFF
+  - Name:            v0100000000000000
+    Type:            STT_SECTION
+    Section:         .debug_info
+    Value:           0x0100000000000000
+...

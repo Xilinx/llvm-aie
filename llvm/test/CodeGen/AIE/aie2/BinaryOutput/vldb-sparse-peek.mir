@@ -1,0 +1,72 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+
+---
+name:            test_vldb_sparse
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; VLDB.sparse - Vector Loads with sparse decompression
+    ; VLDB.SPARSE.PEEK.4
+    $p0, $qwh0 = VLDB_SPARSE_PEEK_4 $p0, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of
+    $p1, $qwl0 = VLDB_SPARSE_PEEK_4 $p1, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of
+    $p2, $qwh1 = VLDB_SPARSE_PEEK_4 $p2, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of
+    $p3, $qwl1 = VLDB_SPARSE_PEEK_4 $p3, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of
+    $p4, $qwh2 = VLDB_SPARSE_PEEK_4 $p4, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of
+    $p5, $qwl2 = VLDB_SPARSE_PEEK_4 $p5, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of
+    $p6, $qwh3 = VLDB_SPARSE_PEEK_4 $p6, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of
+    $p7, $qwl3 = VLDB_SPARSE_PEEK_4 $p7, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of
+    ; VLDB.SPARSE.PEEK.8
+    $p0, $qwh0 = VLDB_SPARSE_PEEK_8 $p0, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of
+    $p1, $qwl0 = VLDB_SPARSE_PEEK_8 $p1, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of
+    $p2, $qwh1 = VLDB_SPARSE_PEEK_8 $p2, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of
+    $p3, $qwl1 = VLDB_SPARSE_PEEK_8 $p3, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of
+    $p4, $qwh2 = VLDB_SPARSE_PEEK_8 $p4, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of
+    $p5, $qwl2 = VLDB_SPARSE_PEEK_8 $p5, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of
+    $p6, $qwh3 = VLDB_SPARSE_PEEK_8 $p6, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of
+    $p7, $qwl3 = VLDB_SPARSE_PEEK_8 $p7, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of
+    ; VLDB.SPARSE.PEEK.16
+    $p0, $qwh0 = VLDB_SPARSE_PEEK_16 $p0, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of
+    $p1, $qwl0 = VLDB_SPARSE_PEEK_16 $p1, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of
+    $p2, $qwh1 = VLDB_SPARSE_PEEK_16 $p2, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of
+    $p3, $qwl1 = VLDB_SPARSE_PEEK_16 $p3, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of
+    $p4, $qwh2 = VLDB_SPARSE_PEEK_16 $p4, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of
+    $p5, $qwl2 = VLDB_SPARSE_PEEK_16 $p5, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of
+    $p6, $qwh3 = VLDB_SPARSE_PEEK_16 $p6, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of
+    $p7, $qwl3 = VLDB_SPARSE_PEEK_16 $p7, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of
+...
+
+# CHECK: 0: 19 00 d8 38 vldb.sparse.peek.4 qwh0, [p0]
+# CHECK: 4: 19 20 d8 39 vldb.sparse.peek.4 qwl0, [p1]
+# CHECK: 8: 19 40 d8 3a vldb.sparse.peek.4 qwh1, [p2]
+# CHECK: c: 19 60 d8 3b vldb.sparse.peek.4 qwl1, [p3]
+# CHECK: 10: 19 80 d8 3c vldb.sparse.peek.4 qwh2, [p4]
+# CHECK: 14: 19 a0 d8 3d vldb.sparse.peek.4 qwl2, [p5]
+# CHECK: 18: 19 c0 d8 3e vldb.sparse.peek.4 qwh3, [p6]
+# CHECK: 1c: 19 e0 d8 3f vldb.sparse.peek.4 qwl3, [p7]
+# CHECK: 20: 19 00 e8 38 vldb.sparse.peek.8 qwh0, [p0]
+# CHECK: 24: 19 20 e8 39 vldb.sparse.peek.8 qwl0, [p1]
+# CHECK: 28: 19 40 e8 3a vldb.sparse.peek.8 qwh1, [p2]
+# CHECK: 2c: 19 60 e8 3b vldb.sparse.peek.8 qwl1, [p3]
+# CHECK: 30: 19 80 e8 3c vldb.sparse.peek.8 qwh2, [p4]
+# CHECK: 34: 19 a0 e8 3d vldb.sparse.peek.8 qwl2, [p5]
+# CHECK: 38: 19 c0 e8 3e vldb.sparse.peek.8 qwh3, [p6]
+# CHECK: 3c: 19 e0 e8 3f vldb.sparse.peek.8 qwl3, [p7]
+# CHECK: 40: 19 00 f8 38 vldb.sparse.peek.16 qwh0, [p0]
+# CHECK: 44: 19 20 f8 39 vldb.sparse.peek.16 qwl0, [p1]
+# CHECK: 48: 19 40 f8 3a vldb.sparse.peek.16 qwh1, [p2]
+# CHECK: 4c: 19 60 f8 3b vldb.sparse.peek.16 qwl1, [p3]
+# CHECK: 50: 19 80 f8 3c vldb.sparse.peek.16 qwh2, [p4]
+# CHECK: 54: 19 a0 f8 3d vldb.sparse.peek.16 qwl2, [p5]
+# CHECK: 58: 19 c0 f8 3e vldb.sparse.peek.16 qwh3, [p6]
+# CHECK: 5c: 19 e0 f8 3f vldb.sparse.peek.16 qwl3, [p7]

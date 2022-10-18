@@ -1,0 +1,128 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+
+
+---
+name:            vst_srs
+alignment:       16
+body:             |
+  bb.0 (align 16):
+
+    VST_SRS_D16_S32_ag_idx_imm $p0, 96,   $bml0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    VST_SRS_S16_S32_ag_idx_imm $p2, -128, $bml1, $s1, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+    VST_SRS_D32_S64_ag_idx_imm $p5, 96,   $bmh5, $s2, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    VST_SRS_S32_S64_ag_idx_imm $p7, -128, $bmh7, $s3, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+
+    VST_SRS_D16_S64_ag_idx_imm $p0, 96,   $cm1, $s1, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    VST_SRS_S16_S64_ag_idx_imm $p2, -128, $cm2, $s2, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+    VST_SRS_D8_S32_ag_idx_imm  $p5, 96,   $cm3, $s3, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    VST_SRS_S8_S32_ag_idx_imm  $p7, -128, $cm4, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+
+    $p0 = VST_SRS_D16_S32_ag_pstm_nrm $p0, $m7, $bml0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    $p2 = VST_SRS_S16_S32_ag_pstm_nrm $p2, $m0, $bml1, $s1, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+    $p5 = VST_SRS_D32_S64_ag_pstm_nrm $p5, $m2, $bmh5, $s2, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    $p7 = VST_SRS_S32_S64_ag_pstm_nrm $p7, $m5, $bmh7, $s3, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+
+    $p0 = VST_SRS_D16_S64_ag_pstm_nrm $p0, $m7, $cm1, $s1, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    $p2 = VST_SRS_S16_S64_ag_pstm_nrm $p2, $m0, $cm2, $s2, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+    $p5 = VST_SRS_D8_S32_ag_pstm_nrm  $p5, $m2, $cm3, $s3, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    $p7 = VST_SRS_S8_S32_ag_pstm_nrm  $p7, $m5, $cm4, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+
+    $p0 = VST_SRS_D16_S32_ag_pstm_nrm_imm $p0, 0, $bml0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    $p2 = VST_SRS_S16_S32_ag_pstm_nrm_imm $p2, -32, $bml1, $s1, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+    $p5 = VST_SRS_D32_S64_ag_pstm_nrm_imm $p5, 224, $bmh5, $s2, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    $p7 = VST_SRS_S32_S64_ag_pstm_nrm_imm $p7, -256, $bmh7, $s3, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+
+    $p0 = VST_SRS_D16_S64_ag_pstm_nrm_imm $p0, 0, $cm1, $s1, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    $p2 = VST_SRS_S16_S64_ag_pstm_nrm_imm $p2, -32, $cm2, $s2, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+    $p5 = VST_SRS_D8_S32_ag_pstm_nrm_imm  $p5, 224, $cm3, $s3, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    $p7 = VST_SRS_S8_S32_ag_pstm_nrm_imm  $p7, -256, $cm4, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+
+    $p0, $dc7 = VST_2D_SRS_D16_S32 $p0, $d7, $bml0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    $p2, $dc0 = VST_2D_SRS_S16_S32 $p2, $d0, $bml1, $s1, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+    $p5, $dc2 = VST_2D_SRS_D32_S64 $p5, $d2, $bmh5, $s2, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    $p7, $dc5 = VST_2D_SRS_S32_S64 $p7, $d5, $bmh7, $s3, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+
+    $p0, $dc7 = VST_2D_SRS_D16_S64 $p0, $d7, $cm1, $s1, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    $p2, $dc0 = VST_2D_SRS_S16_S64 $p2, $d0, $cm2, $s2, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+    $p5, $dc2 = VST_2D_SRS_D8_S32  $p5, $d2, $cm3, $s3, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    $p7, $dc5 = VST_2D_SRS_S8_S32  $p7, $d5, $cm4, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+
+    $p0, $dc0, $dc4 = VST_3D_SRS_D16_S32 $p0, $d0_3d, $bml0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    $p2, $dc1, $dc5 = VST_3D_SRS_S16_S32 $p2, $d1_3d, $bml1, $s1, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+    $p5, $dc2, $dc6 = VST_3D_SRS_D32_S64 $p5, $d2_3d, $bmh5, $s2, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    $p7, $dc3, $dc7 = VST_3D_SRS_S32_S64 $p7, $d3_3d, $bmh7, $s3, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+
+    $p0, $dc0, $dc4 = VST_3D_SRS_D16_S64 $p0, $d0_3d, $cm1, $s1, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    $p2, $dc1, $dc5 = VST_3D_SRS_S16_S64 $p2, $d1_3d, $cm2, $s2, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+    $p5, $dc2, $dc6 = VST_3D_SRS_D8_S32  $p5, $d2_3d, $cm3, $s3, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    $p7, $dc3, $dc7 = VST_3D_SRS_S8_S32  $p7, $d3_3d, $cm4, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+
+    VST_SRS_D16_S32_ag_idx $p0, $dj0, $bml0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    VST_SRS_S16_S32_ag_idx $p2, $dj1, $bml1, $s1, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+    VST_SRS_D32_S64_ag_idx $p5, $dj2, $bmh5, $s2, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    VST_SRS_S32_S64_ag_idx $p7, $dj3, $bmh7, $s3, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+
+    VST_SRS_D16_S64_ag_idx $p0, $dj4, $cm1, $s1, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    VST_SRS_S16_S64_ag_idx $p2, $dj5, $cm2, $s2, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+    VST_SRS_D8_S32_ag_idx  $p5, $dj6, $cm3, $s3, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    VST_SRS_S8_S32_ag_idx  $p7, $dj7, $cm4, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+
+# CHECK: 0: 99 01 6c 08 vst.srs.d16.s32 bml0, s0, [p0, #96]
+# CHECK: 4: 99 45 8d 0a vst.srs.s16.s32 bml1, s1, [p2, #-128]
+# CHECK: 8: 99 97 6e 0d vst.srs.d32.s64 bmh5, s2, [p5, #96]
+# CHECK: c: 99 df 8f 0f vst.srs.s32.s64 bmh7, s3, [p7, #-128]
+# CHECK: 10: 99 84 6d 08 vst.srs.d16.s64 cm1, s1, [p0, #96]
+# CHECK: 14: 99 c8 8e 0a vst.srs.s16.s64 cm2, s2, [p2, #-128]
+# CHECK: 18: 99 0c 6f 0d vst.srs.d8.s32 cm3, s3, [p5, #96]
+# CHECK: 1c: 99 50 8c 0f vst.srs.s8.s32 cm4, s0, [p7, #-128]
+# CHECK: 20: 99 01 e8 08 vst.srs.d16.s32 bml0, s0, [p0], m7
+# CHECK: 24: 99 45 09 0a vst.srs.s16.s32 bml1, s1, [p2], m0
+# CHECK: 28: 99 97 4a 0d vst.srs.d32.s64 bmh5, s2, [p5], m2
+# CHECK: 2c: 99 df ab 0f vst.srs.s32.s64 bmh7, s3, [p7], m5
+# CHECK: 30: 99 84 e9 08 vst.srs.d16.s64 cm1, s1, [p0], m7
+# CHECK: 34: 99 c8 0a 0a vst.srs.s16.s64 cm2, s2, [p2], m0
+# CHECK: 38: 99 0c 4b 0d vst.srs.d8.s32 cm3, s3, [p5], m2
+# CHECK: 3c: 99 50 a8 0f vst.srs.s8.s32 cm4, s0, [p7], m5
+# CHECK: 40: 99 01 04 08 vst.srs.d16.s32 bml0, s0, [p0], #0
+# CHECK: 44: 99 45 f5 0a vst.srs.s16.s32 bml1, s1, [p2], #-32
+# CHECK: 48: 99 97 76 0d vst.srs.d32.s64 bmh5, s2, [p5], #224
+# CHECK: 4c: 99 df 87 0f vst.srs.s32.s64 bmh7, s3, [p7], #-256
+# CHECK: 50: 99 84 05 08 vst.srs.d16.s64 cm1, s1, [p0], #0
+# CHECK: 54: 99 c8 f6 0a vst.srs.s16.s64 cm2, s2, [p2], #-32
+# CHECK: 58: 99 0c 77 0d vst.srs.d8.s32 cm3, s3, [p5], #224
+# CHECK: 5c: 99 50 84 0f vst.srs.s8.s32 cm4, s0, [p7], #-256
+# CHECK: 60: 99 01 f8 08 vst.2d.srs.d16.s32 bml0, s0, [p0], d7
+# CHECK: 64: 99 45 19 0a vst.2d.srs.s16.s32 bml1, s1, [p2], d0
+# CHECK: 68: 99 97 5a 0d vst.2d.srs.d32.s64 bmh5, s2, [p5], d2
+# CHECK: 6c: 99 df bb 0f vst.2d.srs.s32.s64 bmh7, s3, [p7], d5
+# CHECK: 70: 99 84 f9 08 vst.2d.srs.d16.s64 cm1, s1, [p0], d7
+# CHECK: 74: 99 c8 1a 0a vst.2d.srs.s16.s64 cm2, s2, [p2], d0
+# CHECK: 78: 99 0c 5b 0d vst.2d.srs.d8.s32 cm3, s3, [p5], d2
+# CHECK: 7c: 99 50 b8 0f vst.2d.srs.s8.s32 cm4, s0, [p7], d5
+# CHECK: 80: 99 01 00 08 vst.3d.srs.d16.s32 bml0, s0, [p0], d0
+# CHECK: 84: 99 45 21 0a vst.3d.srs.s16.s32 bml1, s1, [p2], d1
+# CHECK: 88: 99 97 42 0d vst.3d.srs.d32.s64 bmh5, s2, [p5], d2
+# CHECK: 8c: 99 df 63 0f vst.3d.srs.s32.s64 bmh7, s3, [p7], d3
+# CHECK: 90: 99 84 01 08 vst.3d.srs.d16.s64 cm1, s1, [p0], d0
+# CHECK: 94: 99 c8 22 0a vst.3d.srs.s16.s64 cm2, s2, [p2], d1
+# CHECK: 98: 99 0c 43 0d vst.3d.srs.d8.s32 cm3, s3, [p5], d2
+# CHECK: 9c: 99 50 60 0f vst.3d.srs.s8.s32 cm4, s0, [p7], d3
+# CHECK: a0: 99 01 10 08 vst.srs.d16.s32 bml0, s0, [p0, dj0]
+# CHECK: a4: 99 45 31 0a vst.srs.s16.s32 bml1, s1, [p2, dj1]
+# CHECK: a8: 99 97 52 0d vst.srs.d32.s64 bmh5, s2, [p5, dj2]
+# CHECK: ac: 99 df 73 0f vst.srs.s32.s64 bmh7, s3, [p7, dj3]
+# CHECK: b0: 99 84 91 08 vst.srs.d16.s64 cm1, s1, [p0, dj4]
+# CHECK: b4: 99 c8 b2 0a vst.srs.s16.s64 cm2, s2, [p2, dj5]
+# CHECK: b8: 99 0c d3 0d vst.srs.d8.s32 cm3, s3, [p5, dj6]
+# CHECK: bc: 99 50 f0 0f vst.srs.s8.s32 cm4, s0, [p7, dj7]

@@ -1,0 +1,93 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+
+# CHECK: 0: 39 4e 0b 1b vinsert.8 x6, x9, r29, r22
+# CHECK: 4: 39 d6 ab 1b vinsert.16 x7, x10, r29, r23
+# CHECK: 8: 39 5e 4c 1c vinsert.32 x8, x11, r29, r24
+# CHECK: c: 39 06 e6 1c vinsert.64 x9, x0, r29, r23:r22
+# CHECK: 10: b9 0e 40 19 vextract.d8 r5, x1, r16
+# CHECK: 14: b9 96 34 1b vextract.d16 p3, x2, r17
+# CHECK: 18: b9 1e b5 1a vextract.d16 s1, x3, r18
+# CHECK: 1c: b9 a6 a9 18 vextract.d32 m2, x4, r19
+# CHECK: 20: b9 2e e8 1c vextract.d32 dj3, x5, r16
+# CHECK: 24: b9 b6 28 1b vextract.d32 dn4, x6, r17
+# CHECK: 28: b9 3e 69 1f vextract.d32 dc5, x7, r18
+# CHECK: 2c: b9 c6 0d 19 vextract.d64 r19:r18, x8, r19
+# CHECK: 30: b9 0e 82 19 vextract.s8 r6, x1, r16
+# CHECK: 34: b9 96 36 1c vextract.s16 p4, x2, r17
+# CHECK: 38: b9 1e b7 1c vextract.s16 s2, x3, r18
+# CHECK: 3c: b9 a6 eb 18 vextract.s32 m3, x4, r19
+# CHECK: 40: b9 2e 2a 1d vextract.s32 dj4, x5, r16
+# CHECK: 44: b9 b6 6a 1b vextract.s32 dn5, x6, r17
+# CHECK: 48: b9 3e ab 1f vextract.s32 dc6, x7, r18
+# CHECK: 4c: b9 c6 0f 1a vextract.s64 r21:r20, x8, r19
+# CHECK: 50: f9 64 04 1b vpush.lo.8 x6, r8, x9
+# CHECK: 54: 79 e5 a4 1b vpush.lo.16 x7, r9, x10
+# CHECK: 58: f9 65 48 1c vpush.lo.32 x8, r16, x11
+# CHECK: 5c: 79 60 e6 1c vpush.lo.64 x9, r23:r22, x0
+# CHECK: 60: b9 4f 14 1b vpush.hi.8 x6, x9, r8
+# CHECK: 64: b9 d7 b4 1b vpush.hi.16 x7, x10, r9
+# CHECK: 68: b9 5f 58 1c vpush.hi.32 x8, x11, r16
+# CHECK: 6c: b9 07 f8 1c vpush.hi.64 x9, x0, r25:r24
+# CHECK: 70: b9 07 0b 1b vbcst.8 x6, r22
+# CHECK: 74: b9 87 ab 1b vbcst.16 x7, r23
+# CHECK: 78: b9 07 4c 1c vbcst.32 x8, r24
+# CHECK: 7c: b9 07 e8 1c vbcst.64 x9, r25:r24
+
+---
+name:            test
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; 8.1.1 VINSERT - Insert scalar in vector
+    $x6 = VINSERT_8  $x9, $r29, $r22
+    $x7 = VINSERT_16 $x10, $r29, $r23
+    $x8 = VINSERT_32 $x11, $r29, $r24
+    $x9 = VINSERT_64 $x0, $r29, $l3
+
+    ; 8.1.2 VEXTRACT - Extract scalar from vector
+    $r5 =  VEXTRACT_D8  $x1,  $r16, implicit $crvaddsign
+    $p3 =  VEXTRACT_D16 $x2,  $r17, implicit $crvaddsign
+    $s1 =  VEXTRACT_D16 $x3,  $r18, implicit $crvaddsign
+    $m2 =  VEXTRACT_D32 $x4,  $r19, implicit $crvaddsign
+    $dj3 = VEXTRACT_D32 $x5,  $r16, implicit $crvaddsign
+    $dn4 = VEXTRACT_D32 $x6,  $r17, implicit $crvaddsign
+    $dc5 = VEXTRACT_D32 $x7,  $r18, implicit $crvaddsign
+    $l1 =  VEXTRACT_D64 $x8,  $r19, implicit $crvaddsign
+
+    $r6 =  VEXTRACT_S8  $x1,  $r16
+    $p4 =  VEXTRACT_S16 $x2,  $r17
+    $s2 =  VEXTRACT_S16 $x3,  $r18
+    $m3 =  VEXTRACT_S32 $x4,  $r19
+    $dj4 = VEXTRACT_S32 $x5,  $r16
+    $dn5 = VEXTRACT_S32 $x6,  $r17
+    $dc6 = VEXTRACT_S32 $x7,  $r18
+    $l2 =  VEXTRACT_S64 $x8,  $r19
+
+    ; 8.1.3 VPUSH - Pushes scalar word into vector
+    $x6 = VPUSH_LO_8  $r8,  $x9
+    $x7 = VPUSH_LO_16 $r9,  $x10
+    $x8 = VPUSH_LO_32 $r16, $x11
+    $x9 = VPUSH_LO_64 $l3,  $x0
+    $x6 = VPUSH_HI_8  $x9,  $r8
+    $x7 = VPUSH_HI_16 $x10, $r9
+    $x8 = VPUSH_HI_32 $x11, $r16
+    $x9 = VPUSH_HI_64 $x0,  $l4
+
+    ; 8.1.4 VBCST - Broadcast scalar word to vector
+    $x6 = VBCST_8  $r22
+    $x7 = VBCST_16 $r23
+    $x8 = VBCST_32 $r24
+    $x9 = VBCST_64 $l4
+
+...

@@ -1,0 +1,44 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+
+# CHECK: 0: 19 20 24 10 movx crsat, r0
+# CHECK: 4: 19 20 58 10 movx crrnd, r1
+# CHECK: 8: 19 20 8c 10 movx crfpmask, r2
+# CHECK: c: 19 20 c8 10 movx crf2imask, r3
+# CHECK: 10: 19 20 04 11 movx crf2fmask, r4
+# CHECK: 14: 19 20 60 11 movx crsrssign, r5
+# CHECK: 18: 19 20 a8 11 movx crupssign, r6
+# CHECK: 1c: 19 20 d4 11 movx crpacksign, r7
+# CHECK: 20: 19 20 2c 12 movx crunpacksign, r8
+# CHECK: 24: 19 20 40 12 movx crvaddsign, r9
+# CHECK: 28: 19 20 9c 12 movx crscden, r10
+# CHECK: 2c: 19 20 d0 12 movx crmcden, r11
+
+---
+name:            test
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    $crsat        = MOVX_mvx_scl $r0
+    $crrnd        = MOVX_mvx_scl $r1
+    $crfpmask     = MOVX_mvx_scl $r2
+    $crf2imask    = MOVX_mvx_scl $r3
+    $crf2fmask    = MOVX_mvx_scl $r4
+    $crsrssign    = MOVX_mvx_scl $r5
+    $crupssign    = MOVX_mvx_scl $r6
+    $crpacksign   = MOVX_mvx_scl $r7
+    $crunpacksign = MOVX_mvx_scl $r8
+    $crvaddsign   = MOVX_mvx_scl $r9
+    $crscden      = MOVX_mvx_scl $r10
+    $crmcden      = MOVX_mvx_scl $r11
+...

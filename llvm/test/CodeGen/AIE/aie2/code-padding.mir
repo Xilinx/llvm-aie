@@ -1,0 +1,148 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc --mtriple=aie2 --filetype=obj --start-after=aie-finalize-mi-bundles %s -o %t
+# RUN: llvm-objdump --triple=aie2 -d %t | FileCheck %s
+
+# Each function and the end of the object file should be aligned.
+# We grow the function each time by defining larger and larger bundles.
+#
+# We check that the byte packets that we generate indeed encode
+# single cycle nop-bundles.
+
+# Note that this nop packing is optimizing execution time of blocks falling
+# through to aligned basic blocks but that we test it here for aligning
+# functions. This uses the same nop filling mechanism, but gives tests that
+# are easier to construct.
+
+# CHECK-LABEL: f0
+# CHECK: e: 01 00 nop
+# CHECK-LABEL: f1
+# CHECK: 22: 2f 78 00 00 38 00 40 00 00 00 00 00 00 00     nopa    ;               nops    ;               nopm    ;               nopv
+# CHECK-LABEL: f2
+# CHECK: 44: 37 88 03 00 00 00 00 00 00 00 00 00   nops    ;               nopb    ;               nopx    ;               nopm
+# CHECK-LABEL: f3
+# CHECK: 66: bb 8e 03 00 00 00 00 00 00 00 nopa    ;               nopb    ;               nopm
+# CHECK-LABEL: f4
+# CHECK: 88: 03 80 03 00 00 00 00 00       nops    ;               nopm
+# CHECK-LABEL: f5
+# CHECK: aa: 15 00 00 00 00 00     nopxm
+# CHECK-LABEL: f6
+# CHECK: cc: 19 00 00 10   nopx
+
+---
+name:            f0
+alignment:       16
+body:             |
+  bb.0.entry:
+    RET implicit $lr
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier implicit killed $r0
+...
+---
+name:            f1
+alignment:       16
+body:             |
+  bb.0.entry:
+    $r0 = MOVA_lda_cg 0
+    RET implicit $lr
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier implicit killed $r0
+...
+---
+name:            f2
+alignment:       16
+body:             |
+  bb.0.entry:
+    $r0 = MOVXM_lng_cg 1
+    RET implicit $lr
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier implicit killed $r0
+...
+---
+name:            f3
+alignment:       16
+body:             |
+  bb.0.entry:
+    BUNDLE {
+      $r0 = OR $r0,$r1
+      $p0 = MOV_mv_scl $p1
+    }
+    RET implicit $lr
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier implicit killed $r0
+...
+---
+name:            f4
+alignment:       16
+body:             |
+  bb.0.entry:
+    BUNDLE {
+      $r0 = OR $r0,$r1
+      ST_dms_sts_idx_imm $r0, $p2, 0
+      $p0 = MOV_mv_scl $p1
+    }
+    RET implicit $lr
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier implicit killed $r0
+...
+---
+name:            f5
+alignment:       16
+body:             |
+  bb.0.entry:
+    BUNDLE {
+      $r0 = MOVXM_lng_cg 32
+      ST_dms_sts_idx_imm $r0, $p2, 0
+      $p0 = PADDA_lda_ptr_inc_idx_imm $p0, 4
+    }
+    RET implicit $lr
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier implicit killed $r0
+...
+---
+name:            f6
+alignment:       16
+body:             |
+  bb.0.entry:
+    BUNDLE {
+      $p0 = MOV_mv_scl $p1
+      ST_dms_sts_idx_imm $r0, $p2, 0
+      $p0 = PADDA_lda_ptr_inc_idx_imm $p0, 4
+      $cm0 = VMAC_vmac_cm_core_dense $cm1, $x0, $x1, $r1
+    }
+    RET implicit $lr
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier implicit killed $r0
+...

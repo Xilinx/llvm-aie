@@ -1,0 +1,90 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+
+
+# CHECK: 0: 55 fe 1f f0 ff 7f movxm r0, #2147483647
+# CHECK: 6: 55 00 80 00 00 80 movxm r1, #-2147483648
+# CHECK: c: 55 28 80 0f 00 00 movxm r31, #20
+# CHECK: 12: 55 40 60 00 00 00 movxm p0, #32
+# CHECK: 18: 55 ae 7f fe ff ff movxm p7, #-41
+# CHECK: 1e: 55 42 fc 4c 00 00 movxm sp, #20001
+# CHECK: 24: 55 00 e5 08 00 00 movxm le, #640
+# CHECK: 2a: 55 80 e5 00 00 00 movxm ls, #704
+# CHECK: 30: 55 40 fc 4a 00 00 movxm lc, #20000
+# CHECK: 36: 55 40 60 09 00 00 movxm s2, #32
+# CHECK: 3c: 55 00 20 09 00 00 movxm crsat, #0
+# CHECK: 42: 55 02 20 06 00 00 movxm crrnd, #1
+# CHECK: 48: 55 00 20 03 00 00 movxm crfpmask, #0
+# CHECK: 4e: 55 02 20 02 00 00 movxm crf2imask, #1
+# CHECK: 54: 55 00 20 01 00 00 movxm crf2fmask, #0
+# CHECK: 5a: 55 02 20 08 00 00 movxm crsrssign, #1
+# CHECK: 60: 55 00 20 0a 00 00 movxm crupssign, #0
+# CHECK: 66: 55 02 20 05 00 00 movxm crpacksign, #1
+# CHECK: 6c: 55 00 20 0b 00 00 movxm crunpacksign, #0
+# CHECK: 72: 55 02 20 00 00 00 movxm crvaddsign, #1
+# CHECK: 78: 55 00 20 07 00 00 movxm crscden, #0
+# CHECK: 7e: 55 02 20 04 00 00 movxm crmcden, #1
+# CHECK: 84: 55 00 a0 07 00 00 movxm srss0, #0
+# CHECK: 8a: 55 02 a0 05 00 00 movxm srms0, #1
+# CHECK: 90: 55 00 a0 06 00 00 movxm srsrs_of, #0
+# CHECK: 96: 55 02 a0 09 00 00 movxm srups_of, #1
+# CHECK: 9c: 55 00 a0 01 00 00 movxm srcompr_uf, #0
+# CHECK: a2: 55 02 a0 08 00 00 movxm srsparse_of, #1
+# CHECK: a8: 55 00 a0 04 00 00 movxm srfpflags, #0
+# CHECK: ae: 55 02 a0 03 00 00 movxm srf2iflags, #1
+# CHECK: b4: 55 00 a0 02 00 00 movxm srf2fflags, #0
+# CHECK: ba: 55 02 a0 00 00 00 movxm srcarry, #1
+# CHECK: c0: 55 00 48 08 00 00 movxm dj0, #1024
+---
+name:            test_call
+alignment:       16
+body:             |
+  bb.0 (align 16):
+
+    $r0  = MOVXM_lng_cg 2147483647
+    $r1  = MOVXM_lng_cg -2147483648
+    $r31 = MOVXM_lng_cg 20
+    $p0  = MOVXM_lng_cg 32
+    $p7  = MOVXM_lng_cg -41
+    $sp  = MOVXM_lng_cg 20001
+    $le  = MOVXM_lng_cg 640
+    $ls  = MOVXM_lng_cg 704
+    $lc  = MOVXM_lng_cg 20000
+    $s2  = MOVXM_lng_cg 32
+
+    $crsat        = MOVXM_lng_cg 0
+    $crrnd        = MOVXM_lng_cg 1
+    $crfpmask     = MOVXM_lng_cg 0
+    $crf2imask    = MOVXM_lng_cg 1
+    $crf2fmask    = MOVXM_lng_cg 0
+    $crsrssign    = MOVXM_lng_cg 1
+    $crupssign    = MOVXM_lng_cg 0
+    $crpacksign   = MOVXM_lng_cg 1
+    $crunpacksign = MOVXM_lng_cg 0
+    $crvaddsign   = MOVXM_lng_cg 1
+    $crscden      = MOVXM_lng_cg 0
+    $crmcden      = MOVXM_lng_cg 1
+
+    $srss0        = MOVXM_lng_cg 0
+    $srms0        = MOVXM_lng_cg 1
+    $srsrs_of     = MOVXM_lng_cg 0
+    $srups_of     = MOVXM_lng_cg 1
+    $srcompr_uf   = MOVXM_lng_cg 0
+    $srsparse_of  = MOVXM_lng_cg 1
+    $srfpflags    = MOVXM_lng_cg 0
+    $srf2iflags   = MOVXM_lng_cg 1
+    $srf2fflags   = MOVXM_lng_cg 0
+    $srcarry      = MOVXM_lng_cg 1
+
+    $dj0  = MOVXM_lng_cg 1024
+...

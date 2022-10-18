@@ -1,0 +1,123 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+
+
+---
+name:            vlda_ups
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    $bmh0 = VLDA_UPS_S32_D16_ag_idx_imm $s0, $p0, 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    $bml2 = VLDA_UPS_S32_S16_ag_idx_imm $s1, $p2, -32, implicit-def $srups_of, implicit $crsat
+    $bmh5 = VLDA_UPS_S64_D32_ag_idx_imm $s2, $p3, 96, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    $bml7 = VLDA_UPS_S64_S32_ag_idx_imm $s3, $p5, -128, implicit-def $srups_of, implicit $crsat
+    $cm0 = VLDA_UPS_S32_D8_ag_idx_imm  $s0, $p0, 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    $cm2 = VLDA_UPS_S32_S8_ag_idx_imm  $s1, $p2, -32, implicit-def $srups_of, implicit $crsat
+    $cm5 = VLDA_UPS_S64_S16_ag_idx_imm $s2, $p3, 96, implicit-def $srups_of, implicit $crsat
+    $cm7 = VLDA_UPS_S64_D16_ag_idx_imm $s3, $p5, -128, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+
+    $bmh0, $p0 = VLDA_UPS_S32_D16_ag_pstm_nrm $s0, $p0, $m4, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    $bml2, $p2 = VLDA_UPS_S32_S16_ag_pstm_nrm $s1, $p2, $m3, implicit-def $srups_of, implicit $crsat
+    $bmh5, $p3 = VLDA_UPS_S64_D32_ag_pstm_nrm $s2, $p3, $m2, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    $bml7, $p5 = VLDA_UPS_S64_S32_ag_pstm_nrm $s3, $p5, $m0, implicit-def $srups_of, implicit $crsat
+    $cm0, $p0 = VLDA_UPS_S32_D8_ag_pstm_nrm  $s0, $p0, $m4, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    $cm2, $p2 = VLDA_UPS_S32_S8_ag_pstm_nrm  $s1, $p2, $m3, implicit-def $srups_of, implicit $crsat
+    $cm5, $p3 = VLDA_UPS_S64_S16_ag_pstm_nrm $s2, $p3, $m2, implicit-def $srups_of, implicit $crsat
+    $cm7, $p5 = VLDA_UPS_S64_D16_ag_pstm_nrm $s3, $p5, $m0, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+
+    $bmh0, $p0 = VLDA_UPS_S32_D16_ag_pstm_nrm_imm $s0, $p0, 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    $bml2, $p2 = VLDA_UPS_S32_S16_ag_pstm_nrm_imm $s1, $p2, 0, implicit-def $srups_of, implicit $crsat
+    $bmh5, $p3 = VLDA_UPS_S64_D32_ag_pstm_nrm_imm $s2, $p3, 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    $bml7, $p5 = VLDA_UPS_S64_S32_ag_pstm_nrm_imm $s3, $p5, 0, implicit-def $srups_of, implicit $crsat
+    $cm0, $p0 = VLDA_UPS_S32_D8_ag_pstm_nrm_imm  $s0, $p0, 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    $cm2, $p2 = VLDA_UPS_S32_S8_ag_pstm_nrm_imm  $s1, $p2, 0, implicit-def $srups_of, implicit $crsat
+    $cm5, $p3 = VLDA_UPS_S64_S16_ag_pstm_nrm_imm $s2, $p3, 0, implicit-def $srups_of, implicit $crsat
+    $cm7, $p5 = VLDA_UPS_S64_D16_ag_pstm_nrm_imm $s3, $p5, 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+
+    $bmh0, $p0, $dc4 = VLDA_2D_UPS_S32_D16 $s0, $p0, $d4, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    $bml2, $p2, $dc3 = VLDA_2D_UPS_S32_S16 $s1, $p2, $d3, implicit-def $srups_of, implicit $crsat
+    $bmh5, $p3, $dc2 = VLDA_2D_UPS_S64_D32 $s2, $p3, $d2, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    $bml7, $p5, $dc0 = VLDA_2D_UPS_S64_S32 $s3, $p5, $d0, implicit-def $srups_of, implicit $crsat
+    $cm0, $p0, $dc4 = VLDA_2D_UPS_S32_D8  $s0, $p0, $d4, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    $cm2, $p2, $dc3 = VLDA_2D_UPS_S32_S8  $s1, $p2, $d3, implicit-def $srups_of, implicit $crsat
+    $cm5, $p3, $dc2 = VLDA_2D_UPS_S64_S16 $s2, $p3, $d2, implicit-def $srups_of, implicit $crsat
+    $cm7, $p5, $dc0 = VLDA_2D_UPS_S64_D16 $s3, $p5, $d0, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+
+    $bmh0, $p0, $dc0, $dc4 = VLDA_3D_UPS_S32_D16 $s0, $p0, $d0_3d, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    $bml2, $p2, $dc1, $dc5 = VLDA_3D_UPS_S32_S16 $s1, $p2, $d1_3d, implicit-def $srups_of, implicit $crsat
+    $bmh5, $p3, $dc2, $dc6 = VLDA_3D_UPS_S64_D32 $s2, $p3, $d2_3d, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    $bml7, $p5, $dc3, $dc7 = VLDA_3D_UPS_S64_S32 $s3, $p5, $d3_3d, implicit-def $srups_of, implicit $crsat
+    $cm0, $p0, $dc0, $dc4 = VLDA_3D_UPS_S32_D8  $s0, $p0, $d0_3d, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    $cm2, $p2, $dc1, $dc5 = VLDA_3D_UPS_S32_S8  $s1, $p2, $d1_3d, implicit-def $srups_of, implicit $crsat
+    $cm5, $p3, $dc2, $dc6 = VLDA_3D_UPS_S64_S16 $s2, $p3, $d2_3d, implicit-def $srups_of, implicit $crsat
+    $cm7, $p5, $dc3, $dc7 = VLDA_3D_UPS_S64_D16 $s3, $p5, $d3_3d, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+
+    $bmh0 = VLDA_UPS_S32_D16_ag_idx $s0, $p0, $dj0, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    $bml2 = VLDA_UPS_S32_S16_ag_idx $s1, $p2, $dj1, implicit-def $srups_of, implicit $crsat
+    $bmh5 = VLDA_UPS_S64_D32_ag_idx $s2, $p3, $dj2, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    $bml7 = VLDA_UPS_S64_S32_ag_idx $s3, $p5, $dj3, implicit-def $srups_of, implicit $crsat
+    $cm0 = VLDA_UPS_S32_D8_ag_idx  $s0, $p0, $dj4, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    $cm2 = VLDA_UPS_S32_S8_ag_idx  $s1, $p2, $dj5, implicit-def $srups_of, implicit $crsat
+    $cm5 = VLDA_UPS_S64_S16_ag_idx $s2, $p3, $dj6, implicit-def $srups_of, implicit $crsat
+    $cm7 = VLDA_UPS_S64_D16_ag_idx $s3, $p5, $dj7, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+...
+
+
+# CHECK: 0: 19 03 0c 00 vlda.ups.s32.d16 bmh0, s0, [p0, #0]
+# CHECK: 4: 19 49 ed 02 vlda.ups.s32.s16 bml2, s1, [p2, #-32]
+# CHECK: 8: 19 97 6e 03 vlda.ups.s64.d32 bmh5, s2, [p3, #96]
+# CHECK: c: 19 dd 8f 05 vlda.ups.s64.s32 bml7, s3, [p5, #-128]
+# CHECK: 10: 19 40 0c 00 vlda.ups.s32.d8 cm0, s0, [p0, #0]
+# CHECK: 14: 19 4a ed 02 vlda.ups.s32.s8 cm2, s1, [p2, #-32]
+# CHECK: 18: 19 d6 6e 03 vlda.ups.s64.s16 cm5, s2, [p3, #96]
+# CHECK: 1c: 19 dc 8f 05 vlda.ups.s64.d16 cm7, s3, [p5, #-128]
+# CHECK: 20: 19 03 88 00 vlda.ups.s32.d16 bmh0, s0, [p0], m4
+# CHECK: 24: 19 49 69 02 vlda.ups.s32.s16 bml2, s1, [p2], m3
+# CHECK: 28: 19 97 4a 03 vlda.ups.s64.d32 bmh5, s2, [p3], m2
+# CHECK: 2c: 19 dd 0b 05 vlda.ups.s64.s32 bml7, s3, [p5], m0
+# CHECK: 30: 19 40 88 00 vlda.ups.s32.d8 cm0, s0, [p0], m4
+# CHECK: 34: 19 4a 69 02 vlda.ups.s32.s8 cm2, s1, [p2], m3
+# CHECK: 38: 19 d6 4a 03 vlda.ups.s64.s16 cm5, s2, [p3], m2
+# CHECK: 3c: 19 dc 0b 05 vlda.ups.s64.d16 cm7, s3, [p5], m0
+# CHECK: 40: 19 03 04 00 vlda.ups.s32.d16 bmh0, s0, [p0], #0
+# CHECK: 44: 19 49 05 02 vlda.ups.s32.s16 bml2, s1, [p2], #0
+# CHECK: 48: 19 97 06 03 vlda.ups.s64.d32 bmh5, s2, [p3], #0
+# CHECK: 4c: 19 dd 07 05 vlda.ups.s64.s32 bml7, s3, [p5], #0
+# CHECK: 50: 19 40 04 00 vlda.ups.s32.d8 cm0, s0, [p0], #0
+# CHECK: 54: 19 4a 05 02 vlda.ups.s32.s8 cm2, s1, [p2], #0
+# CHECK: 58: 19 d6 06 03 vlda.ups.s64.s16 cm5, s2, [p3], #0
+# CHECK: 5c: 19 dc 07 05 vlda.ups.s64.d16 cm7, s3, [p5], #0
+# CHECK: 60: 19 03 98 00 vlda.2d.ups.s32.d16 bmh0, s0, [p0], d4
+# CHECK: 64: 19 49 79 02 vlda.2d.ups.s32.s16 bml2, s1, [p2], d3
+# CHECK: 68: 19 97 5a 03 vlda.2d.ups.s64.d32 bmh5, s2, [p3], d2
+# CHECK: 6c: 19 dd 1b 05 vlda.2d.ups.s64.s32 bml7, s3, [p5], d0
+# CHECK: 70: 19 40 98 00 vlda.2d.ups.s32.d8 cm0, s0, [p0], d4
+# CHECK: 74: 19 4a 79 02 vlda.2d.ups.s32.s8 cm2, s1, [p2], d3
+# CHECK: 78: 19 d6 5a 03 vlda.2d.ups.s64.s16 cm5, s2, [p3], d2
+# CHECK: 7c: 19 dc 1b 05 vlda.2d.ups.s64.d16 cm7, s3, [p5], d0
+# CHECK: 80: 19 03 00 00 vlda.3d.ups.s32.d16 bmh0, s0, [p0], d0
+# CHECK: 84: 19 49 21 02 vlda.3d.ups.s32.s16 bml2, s1, [p2], d1
+# CHECK: 88: 19 97 42 03 vlda.3d.ups.s64.d32 bmh5, s2, [p3], d2
+# CHECK: 8c: 19 dd 63 05 vlda.3d.ups.s64.s32 bml7, s3, [p5], d3
+# CHECK: 90: 19 40 00 00 vlda.3d.ups.s32.d8 cm0, s0, [p0], d0
+# CHECK: 94: 19 4a 21 02 vlda.3d.ups.s32.s8 cm2, s1, [p2], d1
+# CHECK: 98: 19 d6 42 03 vlda.3d.ups.s64.s16 cm5, s2, [p3], d2
+# CHECK: 9c: 19 dc 63 05 vlda.3d.ups.s64.d16 cm7, s3, [p5], d3
+# CHECK: a0: 19 03 10 00 vlda.ups.s32.d16 bmh0, s0, [p0, dj0]
+# CHECK: a4: 19 49 31 02 vlda.ups.s32.s16 bml2, s1, [p2, dj1]
+# CHECK: a8: 19 97 52 03 vlda.ups.s64.d32 bmh5, s2, [p3, dj2]
+# CHECK: ac: 19 dd 73 05 vlda.ups.s64.s32 bml7, s3, [p5, dj3]
+# CHECK: b0: 19 40 90 00 vlda.ups.s32.d8 cm0, s0, [p0, dj4]
+# CHECK: b4: 19 4a b1 02 vlda.ups.s32.s8 cm2, s1, [p2, dj5]
+# CHECK: b8: 19 d6 d2 03 vlda.ups.s64.s16 cm5, s2, [p3, dj6]
+# CHECK: bc: 19 dc f3 05 vlda.ups.s64.d16 cm7, s3, [p5, dj7]

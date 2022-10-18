@@ -1,0 +1,32 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: not llc -mtriple=aie2 --verify-machineinstrs -run-pass=greedy %s -o - 2>&1 | FileCheck %s
+
+# CHECK: error: ran out of registers during register allocation
+
+# A funny example where Greedy does not bother inflating %2's regclass to eR.
+# It shouldn't happen in real code because ISel will not constrain %2 to eR29
+# unless it is consumed by a eR29 operand, which isn't the case.
+# If it was consumed by a eR29 operand, Greedy would understand why it was
+# constrained in the first place, and would inflate the class + insert COPY
+# instructions. See inflate-er-subclasses.mir
+---
+name:            fail_inflate_er29
+alignment:       16
+legalized:       true
+regBankSelected: true
+selected:        true
+tracksRegLiveness: true
+body:             |
+  bb.1.entry:
+    liveins: $r0, $x0
+    %0:vec512 = COPY $x0
+    %1:er29 = COPY $r0
+    %2:er29 = ADD_add_r_ri %1, %1, implicit-def $srcarry
+    %0:vec512 = VINSERT_16 %0, %1, %2
+    $x0 = COPY %0
+...

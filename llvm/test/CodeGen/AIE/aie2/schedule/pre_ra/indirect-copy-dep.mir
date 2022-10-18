@@ -1,0 +1,47 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc -march=aie2 -enable-misched -run-pass=machine-scheduler --issue-limit=6 %s -o - | FileCheck %s
+
+# Make sure the weak edge due to COPY %1151 is respected and the two
+# VST.SRS are stuck together.
+
+# Note, updated manually because update_mir_test_checks has problems with non-SSA vregs.
+
+---
+name: mix
+tracksRegLiveness: true
+body: |
+  bb.0.entry:
+  liveins: $p0, $m0, $cm0, $cm1, $s0, $d1
+    ; CHECK-LABEL: name: mix
+    ; CHECK: liveins: $p0, $m0, $cm0, $cm1, $s0, $d1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep_as_32bit = COPY $p0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:em = COPY $m0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:acc1024 = COPY $cm0
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc1024 = COPY $cm1
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:mss = COPY $s0
+    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:ed = COPY $d1
+    ; CHECK-NEXT: [[PADD_mod_pseudo:%[0-9]+]]:ep_as_32bit = PADD_mod_pseudo [[PADD_mod_pseudo]], [[COPY1]]
+    ; CHECK-NEXT: VST_SRS_S8_S32_ag_idx_imm [[PADD_mod_pseudo]], 0, [[COPY3]], [[COPY4]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+    ; CHECK-NEXT: VST_SRS_S8_S32_ag_idx_imm [[PADD_mod_pseudo]], 32, [[COPY2]], [[COPY4]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+    ; CHECK-NEXT: [[PADD_imm_pseudo:%[0-9]+]]:ep_as_32bit = COPY [[PADD_mod_pseudo]]
+    ; CHECK-NEXT: [[PADD_imm_pseudo]]:ep_as_32bit = PADD_imm_pseudo [[PADD_imm_pseudo]], 32
+    ; CHECK-NEXT: dead [[PADD_imm_pseudo]]:ep_as_32bit, dead [[COPY5]].sub_dim_count:ed = PADDA_2D [[PADD_imm_pseudo]], [[COPY5]]
+    %1151:ep_as_32bit = COPY $p0
+    %820:em = COPY $m0
+    %1716:acc1024 = COPY $cm0
+    %1718:acc1024 = COPY $cm1
+    %1456:mss = COPY $s0
+    %1449:ed = COPY $d1
+    %1151:ep_as_32bit = PADD_mod_pseudo %1151, %820
+    VST_SRS_S8_S32_ag_idx_imm %1151, 0, %1718, %1456, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+    %1157:ep_as_32bit = COPY %1151
+    %1157:ep_as_32bit = PADD_imm_pseudo %1157, 32
+    VST_SRS_S8_S32_ag_idx_imm %1151, 32, %1716, %1456, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+    %1157:ep_as_32bit, %1449.sub_dim_count:ed = PADDA_2D %1157, %1449
+...

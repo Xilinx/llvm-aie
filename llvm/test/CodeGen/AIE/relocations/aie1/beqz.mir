@@ -1,0 +1,129 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc %s -debug -mtriple=aie --start-before=livedebugvalues --filetype=obj -show-mc-encoding -o %t 2> %t.out
+# RUN: cat %t.out | FileCheck %s --check-prefix=FIXUP
+# RUN: llvm-readelf -r %t | FileCheck %s --check-prefix=RELOC
+
+# Let's check that the relocation kinds emitted for beqz (AIE) are correct!
+
+--- |
+  ; ModuleID = 't.mir'
+  define i32 @main_test() {
+    ret i32 0
+  }
+
+  define i32 @target_function() {
+  entry:
+    ret i32 0
+  }
+...
+---
+name:            target_function
+body:             |
+  bb.0.entry (align 16):
+    liveins: $r0
+    PseudoRET implicit $lr, implicit killed $r0
+---
+name:            main_test
+body:             |
+  bb.0:
+    BUNDLE {
+      NOP_LDA
+      BEQZ $r0, @target_function
+      ; FIXUP: MCFixup Offset:0 {{.*}} Kind:131
+      ; RELOC: {{.*}} R_AIE_3
+    }
+
+    BUNDLE {
+      NOP_ST
+      BEQZ $r0, @target_function
+      ; FIXUP: MCFixup Offset:8 {{.*}} Kind:130
+      ; RELOC: {{.*}} R_AIE_2
+    }
+
+    BUNDLE {
+      NOP_ALU
+      BEQZ $r0, @target_function
+      ; FIXUP: MCFixup Offset:16 {{.*}} Kind:130
+      ; RELOC: {{.*}} R_AIE_2
+    }
+
+    BUNDLE {
+      NOP_LDA
+      BEQZ $r0, @target_function
+      ; FIXUP: MCFixup Offset:24 {{.*}} Kind:133
+      ; RELOC: {{.*}} R_AIE_5
+      NOP_VECA
+    }
+
+    BUNDLE {
+      NOP_LDA
+      NOP_LDB
+      NOP_ST
+      BEQZ $r0, @target_function
+      ; FIXUP: MCFixup Offset:36 {{.*}} Kind:132
+      ; RELOC: {{.*}} R_AIE_4
+    }
+
+    BUNDLE {
+      NOP_LDA
+      NOP_LDB
+      NOP_ALU
+      BEQZ $r0, @target_function
+      ; FIXUP: MCFixup Offset:48 {{.*}} Kind:132
+      ; RELOC: {{.*}} R_AIE_4
+    }
+
+    BUNDLE {
+      NOP_LDA
+      BEQZ $r0, @target_function
+      ; FIXUP: MCFixup Offset:60 {{.*}} Kind:133
+      ; RELOC: {{.*}} R_AIE_5
+      NOP_VECM
+    }
+
+    BUNDLE {
+      NOP_LDA
+      NOP_LDB
+      NOP_ST
+      BEQZ $r0, @target_function
+      ; FIXUP: MCFixup Offset:72 {{.*}} Kind:128
+      ; RELOC: {{.*}} R_AIE_0
+      NOP_VECA
+    }
+
+    BUNDLE {
+      NOP_LDA
+      NOP_LDB
+      NOP_ALU
+      BEQZ $r0, @target_function
+      ; FIXUP: MCFixup Offset:88 {{.*}} Kind:128
+      ; RELOC: {{.*}} R_AIE_0
+      NOP_VECA
+    }
+
+    BUNDLE {
+      NOP_LDA
+      NOP_LDB
+      NOP_ST
+      BEQZ $r0, @target_function
+      ; FIXUP: MCFixup Offset:104 {{.*}} Kind:128
+      ; RELOC: {{.*}} R_AIE_0
+      NOP_VECM
+    }
+
+    BUNDLE {
+      NOP_LDA
+      NOP_LDB
+      NOP_ALU
+      BEQZ $r0, @target_function
+      ; FIXUP: MCFixup Offset:120 {{.*}} Kind:128
+      ; RELOC: {{.*}} R_AIE_0
+      NOP_VECM
+    }
+
+    PseudoRET implicit $lr, implicit killed $r0

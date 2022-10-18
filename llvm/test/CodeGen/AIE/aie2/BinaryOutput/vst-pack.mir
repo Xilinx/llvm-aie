@@ -1,0 +1,71 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+
+
+---
+name:            vst_pack
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    VST_PACK_D4_D8_ag_idx_imm $p0, 0, $x0, implicit $crsat, implicit $crpacksign
+    VST_PACK_D8_D16_ag_idx_imm $p0, 0, $x1, implicit $crsat, implicit $crpacksign
+    VST_PACK_S4_S8_ag_idx_imm $p0, 0, $x2, implicit $crsat
+    VST_PACK_S8_S16_ag_idx_imm $p0, 0, $x3, implicit $crsat
+    VST_PACK_D4_D8_ag_idx $p1, $dj7, $x0, implicit $crsat, implicit $crpacksign
+    VST_PACK_D8_D16_ag_idx $p2, $dj5, $x1, implicit $crsat, implicit $crpacksign
+    VST_PACK_S4_S8_ag_idx $p3, $dj2, $x2, implicit $crsat
+    VST_PACK_S8_S16_ag_idx $p4, $dj0, $x3, implicit $crsat
+
+    $p0 = VST_PACK_D4_D8_ag_pstm_nrm_imm $p0, -256, $x0, implicit $crsat, implicit $crpacksign
+    $p5 = VST_PACK_D8_D16_ag_pstm_nrm_imm $p5, 224, $x1, implicit $crsat, implicit $crpacksign
+    $p6 = VST_PACK_S4_S8_ag_pstm_nrm_imm $p6, 32, $x2, implicit $crsat
+    $p7 = VST_PACK_S8_S16_ag_pstm_nrm_imm $p7, 0, $x3, implicit $crsat
+    $p1 = VST_PACK_D4_D8_ag_pstm_nrm $p1, $m7, $x0, implicit $crsat, implicit $crpacksign
+    $p2 = VST_PACK_D8_D16_ag_pstm_nrm $p2, $m5, $x1, implicit $crsat, implicit $crpacksign
+    $p3 = VST_PACK_S4_S8_ag_pstm_nrm $p3, $m2, $x2, implicit $crsat
+    $p4 = VST_PACK_S8_S16_ag_pstm_nrm $p4, $m0, $x3, implicit $crsat
+
+    $p0, $dc7 = VST_2D_PACK_D4_D8 $p0, $d7, $x0, implicit $crsat, implicit $crpacksign
+    $p1, $dc3 = VST_2D_PACK_D8_D16 $p1, $d3, $x1, implicit $crsat, implicit $crpacksign
+    $p4, $dc2 = VST_2D_PACK_S4_S8 $p4, $d2, $x2, implicit $crsat
+    $p6, $dc0 = VST_2D_PACK_S8_S16 $p6, $d0, $x3, implicit $crsat
+
+    $p0, $dc0, $dc4 = VST_3D_PACK_D4_D8 $p0, $d0_3d, $x2, implicit $crsat, implicit $crpacksign
+    $p1, $dc1, $dc5 = VST_3D_PACK_D8_D16 $p1, $d1_3d, $x4, implicit $crsat, implicit $crpacksign
+    $p2, $dc2, $dc6 = VST_3D_PACK_S4_S8 $p2, $d2_3d, $x5, implicit $crsat
+    $p3, $dc3, $dc7 = VST_3D_PACK_S8_S16 $p3, $d3_3d, $x6, implicit $crsat
+
+# CHECK: 0: 99 02 0c 08 vst.pack.d4.d8 x0, [p0, #0]
+# CHECK: 4: 99 06 0d 08 vst.pack.d8.d16 x1, [p0, #0]
+# CHECK: 8: 99 0a 0e 08 vst.pack.s4.s8 x2, [p0, #0]
+# CHECK: c: 99 0e 0f 08 vst.pack.s8.s16 x3, [p0, #0]
+# CHECK: 10: 99 02 f0 09 vst.pack.d4.d8 x0, [p1, dj7]
+# CHECK: 14: 99 06 b1 0a vst.pack.d8.d16 x1, [p2, dj5]
+# CHECK: 18: 99 0a 52 0b vst.pack.s4.s8 x2, [p3, dj2]
+# CHECK: 1c: 99 0e 13 0c vst.pack.s8.s16 x3, [p4, dj0]
+# CHECK: 20: 99 02 84 08 vst.pack.d4.d8 x0, [p0], #-256
+# CHECK: 24: 99 06 75 0d vst.pack.d8.d16 x1, [p5], #224
+# CHECK: 28: 99 0a 16 0e vst.pack.s4.s8 x2, [p6], #32
+# CHECK: 2c: 99 0e 07 0f vst.pack.s8.s16 x3, [p7], #0
+# CHECK: 30: 99 02 e8 09 vst.pack.d4.d8 x0, [p1], m7
+# CHECK: 34: 99 06 a9 0a vst.pack.d8.d16 x1, [p2], m5
+# CHECK: 38: 99 0a 4a 0b vst.pack.s4.s8 x2, [p3], m2
+# CHECK: 3c: 99 0e 0b 0c vst.pack.s8.s16 x3, [p4], m0
+# CHECK: 40: 99 02 f8 08 vst.2d.pack.d4.d8 x0, [p0], d7
+# CHECK: 44: 99 06 79 09 vst.2d.pack.d8.d16 x1, [p1], d3
+# CHECK: 48: 99 0a 5a 0c vst.2d.pack.s4.s8 x2, [p4], d2
+# CHECK: 4c: 99 0e 1b 0e vst.2d.pack.s8.s16 x3, [p6], d0
+# CHECK: 50: 99 0a 00 08 vst.3d.pack.d4.d8 x2, [p0], d0
+# CHECK: 54: 99 12 21 09 vst.3d.pack.d8.d16 x4, [p1], d1
+# CHECK: 58: 99 16 42 0a vst.3d.pack.s4.s8 x5, [p2], d2
+# CHECK: 5c: 99 1a 63 0b vst.3d.pack.s8.s16 x6, [p3], d3

@@ -1,0 +1,178 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc -O2 --march=aie2 %s --start-after=branch-relaxation --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+
+# Verify bb.2 and bb.3 get a label.
+---
+name:            test_fallthrough
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    successors: %bb.1
+    $r6 = ADD_add_r_ri $r6, 63, implicit-def $srcarry
+  bb.1 (align 16):
+    successors: %bb.2
+    JNZ $r6, %bb.2 {
+      NOP
+      NOP
+      NOP
+      NOP
+      NOP
+    }
+  bb.2 (align 16):
+    successors: %bb.3
+    JZ $r7, %bb.3 {
+      NOP
+      NOP
+      NOP
+      NOP
+      NOP
+    }
+  bb.3 (align 16):
+    RET implicit $lr {
+      NOP
+      NOP
+      NOP
+      NOP
+      NOP
+    }
+...
+# CHECK: <test_fallthrough>:
+# CHECK-NOT: <.LBB0_{{[0-9]+}}>:
+# CHECK: add r6
+# CHECK-NOT: <.LBB0_{{[0-9]+}}>:
+# CHECK: jnz r6
+# CHECK: <.LBB0_2>:
+# CHECK: jz r7
+# CHECK: <.LBB0_3>:
+# CHECK: ret
+
+# Verify bb.2 gets a label even if its address isn't taken by a
+# direct predecessor.
+---
+name:            test_taken
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    successors: %bb.1
+    $p0  = MOVXM_lng_cg %bb.2
+  bb.1 (align 16):
+    successors: %bb.2
+    NOP
+  bb.2 (align 16):
+    RET implicit $lr {
+      NOP
+      NOP
+      NOP
+      NOP
+      NOP
+    }
+...
+# CHECK: <test_taken>:
+# CHECK-NOT: <.LBB1_{{[0-9]+}}>:
+# CHECK: movxm p0
+# CHECK-NOT: <.LBB1_{{[0-9]+}}>:
+# CHECK: nop
+# CHECK: <.LBB1_2>:
+# CHECK: ret
+
+
+# Make sure the two entries in the jump table get a label.
+# The other fall-through BBs do not need one.
+---
+name: test_jumptable
+jumpTable:
+  kind: block-address
+  entries:
+    - id: 0
+      blocks: [ '%bb.1', '%bb.3' ]
+body: |
+  bb.0 (align 16):
+    successors: %bb.1, %bb.2, %bb.3
+    $p0 = MOVXM_lng_cg %jump-table.0
+    $p0 = PADDA_lda_ptr_inc_idx $p0, $m0
+    J_jump_ind killed $p0 {
+      NOP
+      NOP
+      NOP
+      NOP
+      NOP
+    }
+    DelayedSchedBarrier
+  bb.1 (align 16):
+    successors: %bb.2
+    NOP
+  bb.2 (align 16):
+    successors: %bb.3
+    NOP
+  bb.3 (align 16):
+    successors: %bb.4
+    NOP
+  bb.4 (align 16):
+    RET implicit $lr {
+      NOP
+      NOP
+      NOP
+      NOP
+      NOP
+    }
+...
+# CHECK: <test_jumptable>:
+# CHECK-NOT: <.LBB2_{{[0-9]+}}>:
+# CHECK:       j p0
+# CHECK:     <.LBB2_1>:
+# CHECK-NOT: <.LBB2_{{[0-9]+}}>:
+# CHECK:     <.LBB2_3>:
+# CHECK-NOT: <.LBB2_{{[0-9]+}}>:
+# CHECK:       ret
+
+
+# Make sure bb.1 and bb.2 get a label, even if their addresses
+# are taken inside a bundle.
+---
+name: test_bundled_jump
+body: |
+  bb.0 (align 16):
+    successors: %bb.1
+    I80_LDA_LNG 0, 0, implicit-def $p1, implicit-def $p0, implicit $p1 {
+      $p1 = PADDA_lda_ptr_inc_idx_imm $p1, 4
+      $p0 = MOVXM_lng_cg %bb.2
+    }
+    I80_LDA_LNG 0, 0, implicit-def $p1, implicit $p1 {
+      $p1 = PADDA_lda_ptr_inc_idx_imm $p1, 4
+      J_jump_imm %bb.1
+    }
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier
+  bb.1 (align 16):
+    successors: %bb.2
+    NOP
+  bb.2 (align 16):
+    successors: %bb.3
+    NOP
+  bb.3 (align 16):
+    RET implicit $lr {
+      NOP
+      NOP
+      NOP
+      NOP
+      NOP
+    }
+...
+# CHECK: <test_bundled_jump>:
+# CHECK-NOT: <.LBB3_{{[0-9]+}}>:
+# CHECK:       padda
+# CHECK:     <.LBB3_1>:
+# CHECK-NOT: <.LBB3_{{[0-9]+}}>:
+# CHECK:     <.LBB3_2>:
+# CHECK-NOT: <.LBB3_{{[0-9]+}}>:
+# CHECK:       ret

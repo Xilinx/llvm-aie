@@ -1,0 +1,38 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: yaml2obj %s | llvm-objdump -dr - | FileCheck %s
+
+# We specifically filter out unaligned symbols from the disassembly
+# CHECK-NOT: __unaligned_symbol
+
+--- !ELF
+FileHeader:
+  Class:           ELFCLASS32
+  Data:            ELFDATA2LSB
+  Type:            ET_REL
+  Machine:         EM_AIE
+  Flags:           [ EF_AIE_AIE2 ]
+Sections:
+  - Name:            .text
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
+    AddressAlign:    0x10
+    Content:         43100038030000001501000000000100010001000100BB8E030000000000000015010000000099063018010001000100C0030088030000000000000000000000010001000100010001000100190800100100010001000100010001001900000095000030000001000100010001000100
+Symbols:
+  - Name:            me_basic.o
+    Type:            STT_FILE
+    Index:           SHN_ABS
+  - Name:            __unaligned_symbol
+    Section:         .text
+    Value:           0x2f
+    Size:            0x1
+  - Name:            _main_init
+    Type:            STT_FUNC
+    Section:         .text
+    Binding:         STB_GLOBAL
+    Size:            0x70
+...

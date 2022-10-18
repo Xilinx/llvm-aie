@@ -1,0 +1,23 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc -march=aie2 --run-pass=machine-cp %s --mcp-use-is-copy-instr -o - --stats \
+# RUN:   | FileCheck %s
+
+# CHECK:       bb.0.entry:
+# CHECK-NEXT:  renamable $r0 = MOVA_lda_cg 11
+# CHECK-NEXT:  PseudoRET implicit $lr, implicit $r0
+
+---
+name:            test_machine_cp
+body:             |
+  bb.0.entry:
+    renamable $r0 = MOVA_lda_cg 11
+    $r12 = MOV_mv_scl killed $r0
+    $r0 = MOV_mv_scl killed $r12
+    PseudoRET implicit $lr, implicit $r0
+
+...

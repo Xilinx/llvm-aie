@@ -1,0 +1,135 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+
+# Note this tricky case for the disassembler:
+# $r0 = MOV_mv_scl $p0
+# instr =   00011000000000000111011001011001
+# instr32 = 0001100000000000011101100101
+# mv     =       0000000000001110110010
+
+# The problem is that the fixed bits in the instruction both match a
+# MOV_mv_scl and a VADD_32. By default, LLVM will just pick
+# one candidate and assume that if the fixed bits match, then it for sure can
+# decode the instruction. However, in our case, we can only say that the
+# instruction can be decoded after also trying to decode the register operands.
+#
+# See the example below, where the fixed bits are both valid for vec_add and
+# mv_scl. One needs to manually set hasCompleteDecoder = 0 on the register
+# operands to communicate that LLVM should fallback if decoding the registers
+# fails. Here LLVM will fall-back to decoding mv_scl, because s1 and s2 cannot
+# be decoded as X registers.
+
+# Decoding mv as a VADD_32
+# mv      =  0000000000001110110010
+# vec_add =  \d /   \ op/\s1/\s2/\size
+# Not OK: s1 and s2 are too big, and do not represent any X register.
+# The disassembler should fall back to try and decode as mv_scl.
+#
+# Decoding mv as a MOV_mv_scl
+# mv     =   0000000000001110110010
+# mv_scl =   00000000000011
+#            \ dst /\ src /
+# OK
+
+# CHECK: 0: 59 76 00 18 mov r0, p0
+# CHECK: 4: 59 16 30 19 mov p1, r0
+# CHECK: 8: 59 f6 3c 1a mov p2, sp
+# CHECK: c: 59 76 76 1e mov sp, p3
+# CHECK: 10: 59 76 78 1a mov lr, p4
+# CHECK: 14: 59 f6 cc 1b mov r15, sp
+# CHECK: 18: 59 16 77 1e mov sp, r14
+# CHECK: 1c: 59 96 77 1d mov lc, r15
+# CHECK: 20: 59 96 67 18 mov m1, r15
+# CHECK: 24: 59 96 68 1c mov dj1, r17
+# CHECK: 28: 59 96 a9 1a mov dn2, r19
+# CHECK: 2c: 59 96 ea 1e mov dc3, r21
+# CHECK: 30: 59 d6 33 18 mov p0, m7
+# CHECK: 34: 59 56 3b 1a mov p2, dj6
+# CHECK: 38: 59 d6 36 1c mov p4, dn5
+# CHECK: 3c: 59 56 3e 1e mov p6, dc4
+# CHECK: 40: 59 76 b9 1a mov s1, s2
+# CHECK: 44: 59 36 94 1c mov crsat, crmcden
+# CHECK: 48: 59 36 19 1b mov crrnd, crsat
+# CHECK: 4c: 59 36 96 19 mov crfpmask, crrnd
+# CHECK: 50: 59 36 13 19 mov crf2imask, crfpmask
+# CHECK: 54: 59 36 92 18 mov crf2fmask, crf2imask
+# CHECK: 58: 59 36 11 1c mov crsrssign, crf2fmask
+# CHECK: 5c: 59 36 18 1d mov crupssign, crsrssign
+# CHECK: 60: 59 36 9a 1a mov crpacksign, crupssign
+# CHECK: 64: 59 36 95 1d mov crunpacksign, crpacksign
+# CHECK: 68: 59 36 1b 18 mov crvaddsign, crunpacksign
+# CHECK: 6c: 59 36 90 1b mov crscden, crvaddsign
+# CHECK: 70: 59 36 17 1a mov crmcden, crscden
+# CHECK: 74: 59 b6 d0 1b mov srss0, srcarry
+# CHECK: 78: 59 b6 d7 1a mov srms0, srss0
+# CHECK: 7c: 59 b6 55 1b mov srsrs_of, srms0
+# CHECK: 80: 59 b6 d6 1c mov srups_of, srsrs_of
+# CHECK: 84: 59 b6 d9 18 mov srcompr_uf, srups_of
+# CHECK: 88: 59 b6 51 1c mov srsparse_of, srcompr_uf
+# CHECK: 8c: 59 b6 58 1a mov srfpflags, srsparse_of
+# CHECK: 90: 59 b6 d4 19 mov srf2iflags, srfpflags
+# CHECK: 94: 59 b6 53 19 mov srf2fflags, srf2iflags
+# CHECK: 98: 59 b6 52 18 mov srcarry, srf2fflags
+# CHECK: 9c: 59 f6 06 18 mov r0, core_id
+
+---
+name:            test
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    $r0 = MOV_mv_scl $p0
+    $p1 = MOV_mv_scl $r0
+    $p2 = MOV_mv_scl $sp
+    $sp = MOV_mv_scl $p3
+    $lr = MOV_mv_scl $p4
+    $r15 = MOV_mv_scl $sp
+    $sp = MOV_mv_scl $r14
+    $lc = MOV_mv_scl $r15
+    $m1 = MOV_mv_scl $r15
+    $dj1 = MOV_mv_scl $r17
+    $dn2 = MOV_mv_scl $r19
+    $dc3 = MOV_mv_scl $r21
+
+    $p0 = MOV_mv_scl $m7
+    $p2 = MOV_mv_scl $dj6
+    $p4 = MOV_mv_scl $dn5
+    $p6 = MOV_mv_scl $dc4
+
+    $s1 = MOV_mv_scl $s2
+
+    $crsat        = MOV_mv_scl $crmcden
+    $crrnd        = MOV_mv_scl $crsat
+    $crfpmask     = MOV_mv_scl $crrnd
+    $crf2imask    = MOV_mv_scl $crfpmask
+    $crf2fmask    = MOV_mv_scl $crf2imask
+    $crsrssign    = MOV_mv_scl $crf2fmask
+    $crupssign    = MOV_mv_scl $crsrssign
+    $crpacksign   = MOV_mv_scl $crupssign
+    $crunpacksign = MOV_mv_scl $crpacksign
+    $crvaddsign   = MOV_mv_scl $crunpacksign
+    $crscden      = MOV_mv_scl $crvaddsign
+    $crmcden      = MOV_mv_scl $crscden
+
+    $srss0        = MOV_mv_scl $srcarry
+    $srms0        = MOV_mv_scl $srss0
+    $srsrs_of     = MOV_mv_scl $srms0
+    $srups_of     = MOV_mv_scl $srsrs_of
+    $srcompr_uf   = MOV_mv_scl $srups_of
+    $srsparse_of  = MOV_mv_scl $srcompr_uf
+    $srfpflags    = MOV_mv_scl $srsparse_of
+    $srf2iflags   = MOV_mv_scl $srfpflags
+    $srf2fflags   = MOV_mv_scl $srf2iflags
+    $srcarry      = MOV_mv_scl $srf2fflags
+
+    $r0 = MOV_mv_scl $core_id
+...

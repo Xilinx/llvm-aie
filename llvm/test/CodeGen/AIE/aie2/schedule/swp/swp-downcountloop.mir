@@ -1,0 +1,459 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc --mtriple=aie2 --run-pass=pipeliner --issue-limit=6  %s -o - | FileCheck  %s
+# This checks that the loop control is properly checked.
+# We test the schedule by following the loopcounter chain into the loop.
+# The number and amounts of updates before the loop tells us the stagecount
+# and the stage where the decrement was scheduled
+
+...
+---
+name:            maxCanon
+alignment:       16
+tracksRegLiveness: true
+debugInstrRef:   false
+liveins:         []
+body:             |
+  ; CHECK-LABEL: name: maxCanon
+  ; CHECK: [[INIT:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 16
+  ; CHECK: [[DEC1:%[0-9]+]]:er = ADD_add_r_ri [[INIT]], -2
+  ; CHECK: [[PHI:%[0-9]+]]:er = PHI
+  ; CHECK-SAME: [[DEC1]]
+  ; CHECK: [[LDEC:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -1
+  ; CHECK: PseudoRET
+  bb.1:
+    liveins: $p0, $p1
+    %1:ep = COPY $p0
+    %2:ep = COPY $p1
+    %26:er = MOV_RLC_imm10_pseudo 4
+    %29:em = COPY %26
+    %17:er = MOV_RLC_imm11_pseudo 0
+    %19:er = MOV_RLC_imm10_pseudo 16
+
+  bb.3:
+    %3:er = PHI %19, %bb.1, %16, %bb.3
+    %4:ep = PHI %1, %bb.1, %8, %bb.3
+    %5:er = PHI %17, %bb.1, %0, %bb.3
+    %9:er = LDA_dms_lda_idx_imm %4, 0
+    %8:ep = PADD_mod_pseudo  %4, %29
+    %14:er = ABS %9, implicit-def $srcarry
+    %24:er27 = LT %5, %14
+    %0:er = SELNEZ %14, %5, %24
+    %16:er = nsw ADD_add_r_ri %3, -1, implicit-def $srcarry
+    %21:er = EQZ %16
+    PseudoJZ %21, %bb.3
+
+  bb.2:
+    $r0 = COPY %0
+    PseudoRET implicit $lr, implicit $r0
+
+...
+---
+name:            maxRev
+alignment:       16
+tracksRegLiveness: true
+debugInstrRef:   false
+liveins:         []
+body:             |
+  ; CHECK-LABEL: name: maxRev
+  ; CHECK: [[INIT:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 16
+  ; CHECK: [[DEC1:%[0-9]+]]:er = ADD_add_r_ri [[INIT]], -2
+  ; CHECK: [[PHI:%[0-9]+]]:er = PHI
+  ; CHECK-SAME: [[DEC1]]
+  ; CHECK: [[LDEC:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -1
+  ; CHECK: PseudoRET
+  bb.1:
+    liveins: $p0, $p1
+    %1:ep = COPY $p0
+    %2:ep = COPY $p1
+    %26:er = MOV_RLC_imm11_pseudo 4
+    %29:em = COPY %26
+    %17:er = MOV_RLC_imm10_pseudo 0
+    %19:er = MOV_RLC_imm11_pseudo 16
+
+  bb.3:
+    %3:er = PHI %19, %bb.1, %16, %bb.3
+    %4:ep = PHI %1, %bb.1, %8, %bb.3
+    %5:er = PHI %17, %bb.1, %0, %bb.3
+    %9:er = LDA_dms_lda_idx_imm %4, 0
+    %8:ep = PADD_mod_pseudo  %4, %29
+    %14:er = ABS %9, implicit-def $srcarry
+    %24:er27 = LT %5, %14
+    %0:er = SELNEZ %14, %5, %24
+    %16:er = nsw ADD_add_r_ri %3, -1, implicit-def $srcarry
+    PseudoJNZ %16, %bb.3
+
+  bb.2:
+    $r0 = COPY %0
+    PseudoRET implicit $lr, implicit $r0
+
+...
+---
+name:            maxRevTwoNegations
+alignment:       16
+tracksRegLiveness: true
+debugInstrRef:   false
+liveins:         []
+body:             |
+  ; CHECK-LABEL: name: maxRevTwoNegations
+  ; CHECK: [[INIT:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 16
+  ; CHECK: [[DEC1:%[0-9]+]]:er = ADD_add_r_ri [[INIT]], -2
+  ; CHECK: [[DEC2:%[0-9]+]]:er = nsw ADD_add_r_ri [[DEC1]], -1
+  ; CHECK: [[PHI:%[0-9]+]]:er = PHI
+  ; CHECK-SAME: [[DEC2]]
+  ; CHECK: [[LDEC:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -1
+  ; CHECK: PseudoRET
+  bb.1:
+    liveins: $p0, $p1
+    %1:ep = COPY $p0
+    %2:ep = COPY $p1
+    %26:er = MOV_RLC_imm10_pseudo 4
+    %29:em = COPY %26
+    %17:er = MOV_RLC_imm11_pseudo 0
+    %19:er = MOV_RLC_imm10_pseudo 16
+
+  bb.3:
+    %3:er = PHI %19, %bb.1, %16, %bb.3
+    %4:ep = PHI %1, %bb.1, %8, %bb.3
+    %5:er = PHI %17, %bb.1, %0, %bb.3
+    %9:er = LDA_dms_lda_idx_imm %4, 0
+    %8:ep = PADD_mod_pseudo  %4, %29
+    %14:er = ABS %9, implicit-def $srcarry
+    %24:er27 = LT %5, %14
+    %0:er = SELNEZ %14, %5, %24
+    %16:er = nsw ADD_add_r_ri %3, -1, implicit-def $srcarry
+    %21:er = EQZ %16
+    %22:er = COPY %21
+    %23:er = EQZ %22
+    %25:er = COPY %23
+    PseudoJNZ %25, %bb.3
+
+  bb.2:
+    $r0 = COPY %0
+    PseudoRET implicit $lr, implicit $r0
+
+---
+name:            maxCanonStep2
+alignment:       16
+tracksRegLiveness: true
+debugInstrRef:   false
+liveins:         []
+body:             |
+  ; CHECK-LABEL: name: maxCanonStep2
+  ; CHECK: [[INIT:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 32
+  ; CHECK: [[DEC1:%[0-9]+]]:er = ADD_add_r_ri [[INIT]], -4
+  ; CHECK: [[PHI:%[0-9]+]]:er = PHI
+  ; CHECK-SAME: [[DEC1]]
+  ; CHECK: [[LDEC:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -2
+  ; CHECK: PseudoRET
+  bb.1:
+    liveins: $p0, $p1
+    %1:ep = COPY $p0
+    %2:ep = COPY $p1
+    %26:er = MOV_RLC_imm11_pseudo 4
+    %29:em = COPY %26
+    %17:er = MOV_RLC_imm10_pseudo 0
+    %19:er = MOV_RLC_imm11_pseudo 32
+
+  bb.3:
+    %3:er = PHI %19, %bb.1, %16, %bb.3
+    %4:ep = PHI %1, %bb.1, %8, %bb.3
+    %5:er = PHI %17, %bb.1, %0, %bb.3
+    %9:er = LDA_dms_lda_idx_imm %4, 0
+    %8:ep = PADD_mod_pseudo  %4, %29
+    %14:er = ABS %9, implicit-def $srcarry
+    %24:er27 = LT %5, %14
+    %0:er = SELNEZ %14, %5, %24
+    %16:er = nsw ADD_add_r_ri %3, -2, implicit-def $srcarry
+    %21:er = EQZ %16
+    PseudoJZ %21, %bb.3
+
+  bb.2:
+    $r0 = COPY %0
+    PseudoRET implicit $lr, implicit $r0
+...
+---
+name:            maxNegationMismatch
+alignment:       16
+tracksRegLiveness: true
+debugInstrRef:   false
+liveins:         []
+body:             |
+  ; CHECK-LABEL: name: maxNegationMismatch
+  ; CHECK: [[INIT:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 16
+  ; CHECK: [[PHI:%[0-9]+]]:er = PHI
+  ; CHECK-SAME: [[INIT]]
+  ; CHECK: [[LDEC:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -1
+  ; CHECK: PseudoRET
+  bb.1:
+    liveins: $p0, $p1
+    %1:ep = COPY $p0
+    %2:ep = COPY $p1
+    %26:er = MOV_RLC_imm10_pseudo 4
+    %29:em = COPY %26
+    %17:er = MOV_RLC_imm11_pseudo 0
+    %19:er = MOV_RLC_imm10_pseudo 16
+
+  bb.3:
+    %3:er = PHI %19, %bb.1, %16, %bb.3
+    %4:ep = PHI %1, %bb.1, %8, %bb.3
+    %5:er = PHI %17, %bb.1, %0, %bb.3
+    %9:er = LDA_dms_lda_idx_imm %4, 0
+    %8:ep = PADD_mod_pseudo  %4, %29
+    %14:er = ABS %9, implicit-def $srcarry
+    %24:er27 = LT %5, %14
+    %0:er = SELNEZ %14, %5, %24
+    %16:er = nsw ADD_add_r_ri %3, -1, implicit-def $srcarry
+    PseudoJZ %16, %bb.3
+
+  bb.2:
+    $r0 = COPY %0
+    PseudoRET implicit $lr, implicit $r0
+
+...
+---
+name:            maxMultiTerminator
+alignment:       16
+tracksRegLiveness: true
+debugInstrRef:   false
+liveins:         []
+body:             |
+  ; CHECK-LABEL: name: maxMultiTerminator
+  ; CHECK: [[INIT:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 16
+  ; CHECK: [[PHI:%[0-9]+]]:er = PHI
+  ; CHECK-SAME: [[INIT]]
+  ; CHECK: [[LDEC:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -1
+  ; CHECK: PseudoRET
+  bb.1:
+    liveins: $p0, $p1
+    %1:ep = COPY $p0
+    %2:ep = COPY $p1
+    %26:er = MOV_RLC_imm10_pseudo 4
+    %29:em = COPY %26
+    %17:er = MOV_RLC_imm10_pseudo 0
+    %19:er = MOV_RLC_imm11_pseudo 16
+
+  bb.3:
+    %3:er = PHI %19, %bb.1, %16, %bb.3
+    %4:ep = PHI %1, %bb.1, %8, %bb.3
+    %5:er = PHI %17, %bb.1, %0, %bb.3
+    %9:er = LDA_dms_lda_idx_imm %4, 0
+    %8:ep = PADD_mod_pseudo  %4, %29
+    %14:er = ABS %9, implicit-def $srcarry
+    %24:er27 = LT %5, %14
+    %0:er = SELNEZ %14, %5, %24
+    %16:er = nsw ADD_add_r_ri %3, -1, implicit-def $srcarry
+    PseudoJNZ %16, %bb.2
+    PseudoJ_jump_imm %bb.3
+
+  bb.2:
+    $r0 = COPY %0
+    PseudoRET implicit $lr, implicit $r0
+
+...
+---
+name:            maxCanonOddStep2
+alignment:       16
+tracksRegLiveness: true
+debugInstrRef:   false
+liveins:         []
+body:             |
+  ; CHECK-LABEL: name: maxCanonOddStep2
+  ; CHECK: [[INIT:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 31
+  ; CHECK: [[PHI:%[0-9]+]]:er = PHI
+  ; CHECK-SAME: [[INIT]]
+  ; CHECK: [[LDEC:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -2
+  ; CHECK: PseudoRET
+  bb.1:
+    liveins: $p0, $p1
+    %1:ep = COPY $p0
+    %2:ep = COPY $p1
+    %26:er = MOV_RLC_imm11_pseudo 4
+    %29:em = COPY %26
+    %17:er = MOV_RLC_imm10_pseudo 0
+    %19:er = MOV_RLC_imm10_pseudo 31
+
+  bb.3:
+    %3:er = PHI %19, %bb.1, %16, %bb.3
+    %4:ep = PHI %1, %bb.1, %8, %bb.3
+    %5:er = PHI %17, %bb.1, %0, %bb.3
+    %9:er = LDA_dms_lda_idx_imm %4, 0
+    %8:ep = PADD_mod_pseudo  %4, %29
+    %14:er = ABS %9, implicit-def $srcarry
+    %24:er27 = LT %5, %14
+    %0:er = SELNEZ %14, %5, %24
+    %16:er = nsw ADD_add_r_ri %3, -2, implicit-def $srcarry
+    %21:er = EQZ %16
+    PseudoJZ %21, %bb.3
+
+  bb.2:
+    $r0 = COPY %0
+    PseudoRET implicit $lr, implicit $r0
+
+...
+---
+name:            maxCanonPosStep
+alignment:       16
+tracksRegLiveness: true
+debugInstrRef:   false
+liveins:         []
+body:             |
+  ; CHECK-LABEL: name: maxCanonPosStep
+  ; CHECK: [[INIT:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 16
+  ; CHECK: [[PHI:%[0-9]+]]:er = PHI
+  ; CHECK-SAME: [[INIT]]
+  ; CHECK: [[LDEC:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], 1
+  ; CHECK: PseudoRET
+  bb.1:
+    liveins: $p0, $p1
+    %1:ep = COPY $p0
+    %2:ep = COPY $p1
+    %26:er = MOV_RLC_imm10_pseudo 4
+    %29:em = COPY %26
+    %17:er = MOV_RLC_imm11_pseudo 0
+    %19:er = MOV_RLC_imm10_pseudo 16
+
+  bb.3:
+    %3:er = PHI %19, %bb.1, %16, %bb.3
+    %4:ep = PHI %1, %bb.1, %8, %bb.3
+    %5:er = PHI %17, %bb.1, %0, %bb.3
+    %9:er = LDA_dms_lda_idx_imm %4, 0
+    %8:ep = PADD_mod_pseudo  %4, %29
+    %14:er = ABS %9, implicit-def $srcarry
+    %24:er27 = LT %5, %14
+    %0:er = SELNEZ %14, %5, %24
+    %16:er = nsw ADD_add_r_ri %3, 1, implicit-def $srcarry
+    %21:er = EQZ %16
+    PseudoJZ %21, %bb.3
+
+  bb.2:
+    $r0 = COPY %0
+    PseudoRET implicit $lr, implicit $r0
+...
+---
+name:            maxCanonMinIter
+alignment:       16
+tracksRegLiveness: true
+debugInstrRef:   false
+liveins:         []
+body:             |
+  ; This is the accept boundary case for minimum tripcount
+  ; CHECK-LABEL: name: maxCanonMinIter
+  ; CHECK: [[INIT:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 3
+  ; CHECK: [[DEC1:%[0-9]+]]:er = ADD_add_r_ri [[INIT]], -2
+  ; CHECK: [[PHI:%[0-9]+]]:er = PHI
+  ; CHECK-SAME: [[DEC1]]
+  ; CHECK: [[LDEC:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -1
+  ; CHECK: PseudoRET
+  bb.1:
+    liveins: $p0, $p1
+    %1:ep = COPY $p0
+    %2:ep = COPY $p1
+    %26:er = MOV_RLC_imm10_pseudo 4
+    %29:em = COPY %26
+    %17:er = MOV_RLC_imm10_pseudo 0
+    %19:er = MOV_RLC_imm11_pseudo 3
+  bb.3:
+    %3:er = PHI %19, %bb.1, %16, %bb.3
+    %4:ep = PHI %1, %bb.1, %8, %bb.3
+    %5:er = PHI %17, %bb.1, %0, %bb.3
+    %9:er = LDA_dms_lda_idx_imm %4, 0
+    %8:ep = PADD_mod_pseudo  %4, %29
+    %14:er = ABS %9, implicit-def $srcarry
+    %24:er27 = LT %5, %14
+    %0:er = SELNEZ %14, %5, %24
+    %16:er = nsw ADD_add_r_ri %3, -1, implicit-def $srcarry
+    %21:er = EQZ %16
+    PseudoJZ %21, %bb.3
+
+  bb.2:
+    $r0 = COPY %0
+    PseudoRET implicit $lr, implicit $r0
+
+...
+---
+name:            maxCanonLtMinIter
+alignment:       16
+tracksRegLiveness: true
+debugInstrRef:   false
+liveins:         []
+body:             |
+  ; This is the reject boundary case for minimum tripcount
+  ; CHECK-LABEL: name: maxCanonLtMinIter
+  ; CHECK: [[INIT:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 2
+  ; CHECK: [[PHI:%[0-9]+]]:er = PHI
+  ; CHECK-SAME: [[INIT]]
+  ; CHECK: [[LDEC:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -1
+  ; CHECK: PseudoRET
+  bb.1:
+    liveins: $p0, $p1
+    %1:ep = COPY $p0
+    %2:ep = COPY $p1
+    %26:er = MOV_RLC_imm11_pseudo 4
+    %29:em = COPY %26
+    %17:er = MOV_RLC_imm10_pseudo 0
+    %19:er = MOV_RLC_imm10_pseudo 2
+  bb.3:
+    %3:er = PHI %19, %bb.1, %16, %bb.3
+    %4:ep = PHI %1, %bb.1, %8, %bb.3
+    %5:er = PHI %17, %bb.1, %0, %bb.3
+    %9:er = LDA_dms_lda_idx_imm %4, 0
+    %8:ep = PADD_mod_pseudo  %4, %29
+    %14:er = ABS %9, implicit-def $srcarry
+    %24:er27 = LT %5, %14
+    %0:er = SELNEZ %14, %5, %24
+    %16:er = nsw ADD_add_r_ri %3, -1, implicit-def $srcarry
+    %21:er = EQZ %16
+    PseudoJZ %21, %bb.3
+
+  bb.2:
+    $r0 = COPY %0
+    PseudoRET implicit $lr, implicit $r0
+
+...
+---
+name:            maxCanonRevBranchTargets
+alignment:       16
+tracksRegLiveness: true
+debugInstrRef:   false
+liveins:         []
+body:             |
+  ; CHECK-LABEL: name: maxCanonRevBranchTargets
+  ; CHECK: [[INIT:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 16
+  ; CHECK: [[DEC1:%[0-9]+]]:er = ADD_add_r_ri [[INIT]], -2
+  ; CHECK: [[PHI:%[0-9]+]]:er = PHI
+  ; CHECK-SAME: [[DEC1]]
+  ; CHECK: [[LDEC:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -1
+  ; CHECK: PseudoRET
+  bb.1:
+    liveins: $p0, $p1
+    %1:ep = COPY $p0
+    %2:ep = COPY $p1
+    %26:er = MOV_RLC_imm10_pseudo 4
+    %29:em = COPY %26
+    %17:er = MOV_RLC_imm11_pseudo 0
+    %19:er = MOV_RLC_imm10_pseudo 16
+
+  bb.3:
+    %3:er = PHI %19, %bb.1, %16, %bb.3
+    %4:ep = PHI %1, %bb.1, %8, %bb.3
+    %5:er = PHI %17, %bb.1, %0, %bb.3
+    %9:er = LDA_dms_lda_idx_imm %4, 0
+    %8:ep = PADD_mod_pseudo  %4, %29
+    %14:er = ABS %9, implicit-def $srcarry
+    %24:er27 = LT %5, %14
+    %0:er = SELNEZ %14, %5, %24
+    %16:er = nsw ADD_add_r_ri %3, -1, implicit-def $srcarry
+    %21:er = EQZ %16
+    PseudoJNZ %21, %bb.2
+    PseudoJ_jump_imm %bb.3
+
+  bb.2:
+    $r0 = COPY %0
+    PseudoRET implicit $lr, implicit $r0
+
+...

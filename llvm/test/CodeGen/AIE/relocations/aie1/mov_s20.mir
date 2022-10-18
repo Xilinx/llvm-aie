@@ -1,0 +1,120 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc %s -debug -mtriple=aie --start-before=livedebugvalues --filetype=obj -show-mc-encoding -o %t 2> %t.out
+# RUN: cat %t.out | FileCheck %s --check-prefix=FIXUP
+# RUN: llvm-readelf -r %t | FileCheck %s --check-prefix=RELOC
+
+# Let's check that the relocation kinds emitted for mov_s20 (AIE) are correct!
+
+--- |
+  ; ModuleID = 't.mir'
+  @myint = dso_local global i32 0
+  define i32 @main_test() {
+    ret i32 0
+  }
+
+...
+---
+name:            main_test
+body:             |
+  bb.0:
+    BUNDLE {
+      NOP_LDA
+      renamable $r0 = MOV_S20 target-flags(aie-global) @myint
+      ; FIXUP: MCFixup Offset:0 {{.*}} Kind:180
+      ; RELOC: {{.*}} R_AIE_52
+    }
+
+    BUNDLE {
+      NOP_ST
+      renamable $r0 = MOV_S20 target-flags(aie-global) @myint
+      ; FIXUP: MCFixup Offset:8 {{.*}} Kind:179
+      ; RELOC: {{.*}} R_AIE_51
+    }
+
+    BUNDLE {
+      NOP_ALU
+      renamable $r0 = MOV_S20 target-flags(aie-global) @myint
+      ; FIXUP: MCFixup Offset:16 {{.*}} Kind:179
+      ; RELOC: {{.*}} R_AIE_51
+    }
+
+    BUNDLE {
+      NOP_LDA
+      renamable $r0 = MOV_S20 target-flags(aie-global) @myint
+      ; FIXUP: MCFixup Offset:24 {{.*}} Kind:166
+      ; RELOC: {{.*}} R_AIE_38
+      NOP_VECA
+    }
+
+    BUNDLE {
+      NOP_LDA
+      NOP_LDB
+      NOP_ST
+      renamable $r0 = MOV_S20 target-flags(aie-global) @myint
+      ; FIXUP: MCFixup Offset:36 {{.*}} Kind:181
+      ; RELOC: {{.*}} R_AIE_53
+    }
+
+    BUNDLE {
+      NOP_LDA
+      NOP_LDB
+      NOP_ALU
+      renamable $r0 = MOV_S20 target-flags(aie-global) @myint
+      ; FIXUP: MCFixup Offset:48 {{.*}} Kind:181
+      ; RELOC: {{.*}} R_AIE_53
+    }
+
+    BUNDLE {
+      NOP_LDA
+      renamable $r0 = MOV_S20 target-flags(aie-global) @myint
+      ; FIXUP: MCFixup Offset:60 {{.*}} Kind:166
+      ; RELOC: {{.*}} R_AIE_38
+      NOP_VECM
+    }
+
+    BUNDLE {
+      NOP_LDA
+      NOP_LDB
+      NOP_ST
+      renamable $r0 = MOV_S20 target-flags(aie-global) @myint
+      ; FIXUP: MCFixup Offset:72 {{.*}} Kind:165
+      ; RELOC: {{.*}} R_AIE_37
+      NOP_VECA
+    }
+
+    BUNDLE {
+      NOP_LDA
+      NOP_LDB
+      NOP_ALU
+      renamable $r0 = MOV_S20 target-flags(aie-global) @myint
+      ; FIXUP: MCFixup Offset:88 {{.*}} Kind:165
+      ; RELOC: {{.*}} R_AIE_37
+      NOP_VECA
+    }
+
+    BUNDLE {
+      NOP_LDA
+      NOP_LDB
+      NOP_ST
+      renamable $r0 = MOV_S20 target-flags(aie-global) @myint
+      ; FIXUP: MCFixup Offset:104 {{.*}} Kind:165
+      ; RELOC: {{.*}} R_AIE_37
+      NOP_VECM
+    }
+
+    BUNDLE {
+      NOP_LDA
+      NOP_LDB
+      NOP_ALU
+      renamable $r0 = MOV_S20 target-flags(aie-global) @myint
+      ; FIXUP: MCFixup Offset:120 {{.*}} Kind:165
+      ; RELOC: {{.*}} R_AIE_37
+      NOP_VECM
+    }
+
+    PseudoRET implicit $lr, implicit killed $r0

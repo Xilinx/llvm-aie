@@ -1,0 +1,40 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+
+# CHECK: 0: d9 06 00 18 vmov x0, bml0
+# CHECK: 4: d9 06 2c 18 vmov bml0, x0
+# CHECK: 8: d9 36 8c 19 vmov x3, x6
+# CHECK: c: d9 2e 0c 1d vmov x10, x5
+# CHECK: 10: d9 06 a6 19 vmov bml3, bml6
+# CHECK: 14: d9 06 25 1c vmov bml8, bml5
+# CHECK: 18: d9 86 e6 19 vmov bmh3, bmh6
+# CHECK: 1c: d9 86 65 1c vmov bmh8, bmh5
+
+---
+name:            test
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; 5.6 VMOV - Move vector/accumulator register (512 bits)
+    $x0 = VMOV_mv_x $bml0
+    $bml0 = VMOV_mv_x $x0
+
+    $x3 = VMOV_mv_x $x6
+    $x10 = VMOV_mv_x $x5
+
+    $bml3 = VMOV_mv_x $bml6
+    $bml8 = VMOV_mv_x $bml5
+    $bmh3 = VMOV_mv_x $bmh6
+    $bmh8 = VMOV_mv_x $bmh5
+
+...

@@ -1,0 +1,35 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc -march=aie --run-pass=machine-cp %s --mcp-use-is-copy-instr -o - --stats \
+# RUN:   | FileCheck %s
+
+# Note that not all copies are removed, in particular, it seems we have to have
+# exactly 2 instructions that are removed together.  2 instructions are not converted
+# to a simpler move, and 3 instructions cannot be removed together.
+
+# CHECK:       bb.0.entry:
+# CHECK-NEXT:  renamable $r0 = MOV_U20 11
+# CHECK-NEXT:  renamable $md0 = MV_R2SPECIAL killed renamable $r0
+# CHECK-NEXT:  $r13 = MV_SPECIAL2R $md0
+# CHECK-NEXT:  $r0 = MOV killed $r13
+# CHECK-NEXT:  PseudoRET implicit $lr, implicit $r0
+
+---
+name:            test_machine_cp
+body:             |
+  bb.0.entry:
+    renamable $r0 = MOV_U20 11
+    renamable $md0 = MV_R2SPECIAL killed renamable $r0
+    $r13 = MV_SPECIAL2R killed $md0
+    renamable $md0 = MV_R2SPECIAL killed renamable $r13
+    $r13 = MV_SPECIAL2R killed $md0
+    $r12 = MOV killed $r13
+    $r13 = MOV killed $r12
+    $r0 = MOV killed $r13
+    PseudoRET implicit $lr, implicit $r0
+
+...

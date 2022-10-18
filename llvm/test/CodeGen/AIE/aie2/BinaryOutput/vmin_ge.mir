@@ -1,0 +1,36 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+
+# CHECK: 0: 19 09 08 18 vmin_ge.d8 x0, r17:r16, x1, x2
+# CHECK: 4: b9 20 58 19 vmin_ge.d16 x2, r21, x4, x1
+# CHECK: 8: d9 29 f8 19 vmin_ge.d32 x3, r23, x5, x3
+# CHECK: c: 19 89 18 1a vmin_ge.s8 x4, r19:r18, x1, x2
+# CHECK: 10: b9 a0 c8 1a vmin_ge.s16 x5, r20, x4, x1
+# CHECK: 14: d9 a9 b8 18 vmin_ge.s32 x1, r19, x5, x3
+# CHECK: 18: b9 22 e9 1a vmin_ge.bf16 x5, r22, x4, x5
+
+---
+name:            test_vmin_ge
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ;  8.5.2 VMIN_GE - Combined vector minimum and comparison
+    $x0, $l0  = VMIN_GE_D8  $x1, $x2, implicit $crvaddsign
+    $x2, $r21 = VMIN_GE_D16 $x4, $x1, implicit $crvaddsign
+    $x3, $r23 = VMIN_GE_D32 $x5, $x3, implicit $crvaddsign
+
+    $x4, $l1  = VMIN_GE_S8  $x1, $x2
+    $x5, $r20 = VMIN_GE_S16 $x4, $x1
+    $x1, $r19 = VMIN_GE_S32 $x5, $x3
+    $x5, $r22 = VMIN_GE_BF16 $x4, $x5
+...

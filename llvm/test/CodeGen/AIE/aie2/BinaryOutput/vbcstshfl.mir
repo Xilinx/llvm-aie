@@ -1,0 +1,38 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr %t | FileCheck %s
+
+# CHECK: 0: b9 a7 82 19 vbcstshfl.8 x3, r5, r29
+# CHECK: 4: b9 a7 2f 1a vbcstshfl.16 x4, r31, r29
+# CHECK: 8: b9 a7 c7 1a vbcstshfl.32 x5, r15, r29
+# CHECK: c: b9 27 62 1b vbcstshfl.64 x6, r19:r18, r29
+# CHECK: 10: b9 e7 02 1c vbcstshfl.8 bmh0, r5, r29
+# CHECK: 14: b9 e7 af 1f vbcstshfl.16 bmh7, r31, r29
+# CHECK: 18: b9 e7 c7 1a vbcstshfl.32 bml5, r15, r29
+# CHECK: 1c: b9 67 62 1b vbcstshfl.64 bml6, r19:r18, r29
+
+---
+name:            test_vbcstshfl
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ;  8.1.6 VBCSTSHFL - Broadcast scalar word to vector and shuffl
+    $x3 = VBCSTSHFL_8 $r5, $r29
+    $x4 = VBCSTSHFL_16 $r31, $r29
+    $x5 = VBCSTSHFL_32 $r15, $r29
+    $x6 = VBCSTSHFL_64 $l1, $r29
+
+    $bmh0 = VBCSTSHFL_8 $r5, $r29
+    $bmh7 = VBCSTSHFL_16 $r31, $r29
+    $bml5 = VBCSTSHFL_32 $r15, $r29
+    $bml6 = VBCSTSHFL_64 $l1, $r29
+...

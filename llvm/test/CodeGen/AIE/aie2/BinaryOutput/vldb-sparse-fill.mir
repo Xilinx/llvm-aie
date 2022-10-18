@@ -1,0 +1,72 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+
+---
+name:            test_vldb_sparse
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; VLDB.sparse - Vector Loads with sparse decompression
+    ; VLDB.SPARSE.FILL.4
+    $p0 = VLDB_SPARSE_FILL_4 $p0, implicit $dp, implicit-def $srsparse_of
+    $p1 = VLDB_SPARSE_FILL_4 $p1, implicit $dp, implicit-def $srsparse_of
+    $p2 = VLDB_SPARSE_FILL_4 $p2, implicit $dp, implicit-def $srsparse_of
+    $p3 = VLDB_SPARSE_FILL_4 $p3, implicit $dp, implicit-def $srsparse_of
+    $p4 = VLDB_SPARSE_FILL_4 $p4, implicit $dp, implicit-def $srsparse_of
+    $p5 = VLDB_SPARSE_FILL_4 $p5, implicit $dp, implicit-def $srsparse_of
+    $p6 = VLDB_SPARSE_FILL_4 $p6, implicit $dp, implicit-def $srsparse_of
+    $p7 = VLDB_SPARSE_FILL_4 $p7, implicit $dp, implicit-def $srsparse_of
+    ; VLDB.SPARSE.FILL.8
+    $p0 = VLDB_SPARSE_FILL_8 $p0, implicit $dp, implicit-def $srsparse_of
+    $p1 = VLDB_SPARSE_FILL_8 $p1, implicit $dp, implicit-def $srsparse_of
+    $p2 = VLDB_SPARSE_FILL_8 $p2, implicit $dp, implicit-def $srsparse_of
+    $p3 = VLDB_SPARSE_FILL_8 $p3, implicit $dp, implicit-def $srsparse_of
+    $p4 = VLDB_SPARSE_FILL_8 $p4, implicit $dp, implicit-def $srsparse_of
+    $p5 = VLDB_SPARSE_FILL_8 $p5, implicit $dp, implicit-def $srsparse_of
+    $p6 = VLDB_SPARSE_FILL_8 $p6, implicit $dp, implicit-def $srsparse_of
+    $p7 = VLDB_SPARSE_FILL_8 $p7, implicit $dp, implicit-def $srsparse_of
+    ; VLDB.SPARSE.FILL.16
+    $p0 = VLDB_SPARSE_FILL_16 $p0, implicit $dp, implicit-def $srsparse_of
+    $p1 = VLDB_SPARSE_FILL_16 $p1, implicit $dp, implicit-def $srsparse_of
+    $p2 = VLDB_SPARSE_FILL_16 $p2, implicit $dp, implicit-def $srsparse_of
+    $p3 = VLDB_SPARSE_FILL_16 $p3, implicit $dp, implicit-def $srsparse_of
+    $p4 = VLDB_SPARSE_FILL_16 $p4, implicit $dp, implicit-def $srsparse_of
+    $p5 = VLDB_SPARSE_FILL_16 $p5, implicit $dp, implicit-def $srsparse_of
+    $p6 = VLDB_SPARSE_FILL_16 $p6, implicit $dp, implicit-def $srsparse_of
+    $p7 = VLDB_SPARSE_FILL_16 $p7, implicit $dp, implicit-def $srsparse_of
+...
+
+# CHECK: 0: 19 00 18 38 vldb.sparse.fill.4 [p0]
+# CHECK: 4: 19 00 18 39 vldb.sparse.fill.4 [p1]
+# CHECK: 8: 19 00 18 3a vldb.sparse.fill.4 [p2]
+# CHECK: c: 19 00 18 3b vldb.sparse.fill.4 [p3]
+# CHECK: 10: 19 00 18 3c vldb.sparse.fill.4 [p4]
+# CHECK: 14: 19 00 18 3d vldb.sparse.fill.4 [p5]
+# CHECK: 18: 19 00 18 3e vldb.sparse.fill.4 [p6]
+# CHECK: 1c: 19 00 18 3f vldb.sparse.fill.4 [p7]
+# CHECK: 20: 19 00 28 38 vldb.sparse.fill.8 [p0]
+# CHECK: 24: 19 00 28 39 vldb.sparse.fill.8 [p1]
+# CHECK: 28: 19 00 28 3a vldb.sparse.fill.8 [p2]
+# CHECK: 2c: 19 00 28 3b vldb.sparse.fill.8 [p3]
+# CHECK: 30: 19 00 28 3c vldb.sparse.fill.8 [p4]
+# CHECK: 34: 19 00 28 3d vldb.sparse.fill.8 [p5]
+# CHECK: 38: 19 00 28 3e vldb.sparse.fill.8 [p6]
+# CHECK: 3c: 19 00 28 3f vldb.sparse.fill.8 [p7]
+# CHECK: 40: 19 00 38 38 vldb.sparse.fill.16 [p0]
+# CHECK: 44: 19 00 38 39 vldb.sparse.fill.16 [p1]
+# CHECK: 48: 19 00 38 3a vldb.sparse.fill.16 [p2]
+# CHECK: 4c: 19 00 38 3b vldb.sparse.fill.16 [p3]
+# CHECK: 50: 19 00 38 3c vldb.sparse.fill.16 [p4]
+# CHECK: 54: 19 00 38 3d vldb.sparse.fill.16 [p5]
+# CHECK: 58: 19 00 38 3e vldb.sparse.fill.16 [p6]
+# CHECK: 5c: 19 00 38 3f vldb.sparse.fill.16 [p7]

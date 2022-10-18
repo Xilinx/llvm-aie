@@ -1,0 +1,61 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+
+# CHECK: 0: 99 f2 ff 03 padda [sp], #131040
+# CHECK: 4: 99 32 00 04 padda [sp], #-131072
+# CHECK: 8: 19 e0 ff 3b paddb [sp], #65504
+# CHECK: c: 19 00 03 3c paddb [sp], #-65536
+# CHECK: 10: 99 31 08 00 padda [p0], m0
+# CHECK: 14: 99 31 68 03 padda [p3], m3
+# CHECK: 18: 59 31 08 08 padds [p0], m0
+# CHECK: 1c: 59 31 68 0b padds [p3], m3
+# CHECK: 20: 99 73 00 00 padda [p0], #4
+# CHECK: 24: 99 f3 ff 01 padda [p1], #-4
+# CHECK: 28: 99 f3 7f 02 padda [p2], #2044
+# CHECK: 2c: 99 33 80 03 padda [p3], #-2048
+# CHECK: 30: 59 73 00 08 padds [p0], #4
+# CHECK: 34: 59 f3 ff 09 padds [p1], #-4
+# CHECK: 38: 59 f3 7f 0a padds [p2], #2044
+# CHECK: 3c: 59 33 80 0b padds [p3], #-2048
+# CHECK: 40: 19 08 8b 3c paddb [p4], m4
+# CHECK: 44: 19 30 03 3d paddb [p5], #4
+# CHECK: 48: 19 f0 ff 3e paddb [p6], #-4
+# CHECK: 4c: 19 f0 7f 3f paddb [p7], #1020
+# CHECK: 50: 19 10 83 38 paddb [p0], #-1024
+---
+name:            test_call
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    PADDA_sp_imm 131040, implicit-def $sp, implicit $sp
+    PADDA_sp_imm -131072, implicit-def $sp, implicit $sp
+    PADDB_sp_imm 65504, implicit-def $sp, implicit $sp
+    PADDB_sp_imm -65536, implicit-def $sp, implicit $sp
+    $p0 = PADDA_lda_ptr_inc_idx $p0, $m0
+    $p3 = PADDA_lda_ptr_inc_idx $p3, $m3
+    $p0 = PADDS_st_ptr_inc_idx $p0, $m0
+    $p3 = PADDS_st_ptr_inc_idx $p3, $m3
+    $p0 = PADDA_lda_ptr_inc_idx_imm $p0, 4
+    $p1 = PADDA_lda_ptr_inc_idx_imm $p1, -4
+    $p2 = PADDA_lda_ptr_inc_idx_imm $p2, 2044
+    $p3 = PADDA_lda_ptr_inc_idx_imm $p3, -2048
+    $p0 = PADDS_st_ptr_inc_idx_imm $p0, 4
+    $p1 = PADDS_st_ptr_inc_idx_imm $p1, -4
+    $p2 = PADDS_st_ptr_inc_idx_imm $p2, 2044
+    $p3 = PADDS_st_ptr_inc_idx_imm $p3, -2048
+    $p4 = PADDB_ldb_ptr_inc_nospill_nrm $p4, $m4
+    $p5 = PADDB_ldb_ptr_inc_nrm_imm $p5, 4
+    $p6 = PADDB_ldb_ptr_inc_nrm_imm $p6, -4
+    $p7 = PADDB_ldb_ptr_inc_nrm_imm $p7, 1020
+    $p0 = PADDB_ldb_ptr_inc_nrm_imm $p0, -1024
+...

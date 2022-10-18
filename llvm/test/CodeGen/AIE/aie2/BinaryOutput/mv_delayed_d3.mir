@@ -1,0 +1,107 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+
+
+
+---
+name:            test_mov_d2
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    $r0  = MOV_D3 $p0
+    $r1  = MOV_D3 $r0
+    $r2  = MOV_D3 $sp
+    $r3  = MOV_D3 $p3
+    $r4  = MOV_D3 $p4
+    $r5  = MOV_D3 $sp
+    $r6  = MOV_D3 $r14
+    $r7  = MOV_D3 $r15
+    $r8  = MOV_D3 $r15
+    $r9  = MOV_D3 $r17
+    $r10 = MOV_D3 $r19
+    $r11 = MOV_D3 $r21
+
+    $r12 = MOV_D3 $m7
+    $r13 = MOV_D3 $dj6
+    $r14 = MOV_D3 $dn5
+    $r15 = MOV_D3 $dc4
+
+    $r16 = MOV_D3 $s2
+
+    $r17  = MOV_D3 $crmcden
+    $r18  = MOV_D3 $crsat
+    $r19  = MOV_D3 $crrnd
+    $r20  = MOV_D3 $crfpmask
+    $r21  = MOV_D3 $crf2imask
+    $r22  = MOV_D3 $crf2fmask
+    $r23  = MOV_D3 $crsrssign
+    $r24  = MOV_D3 $crupssign
+    $r25  = MOV_D3 $crpacksign
+    $r26  = MOV_D3 $crunpacksign
+    $r27  = MOV_D3 $crvaddsign
+    $r28  = MOV_D3 $crscden
+
+    $r29  = MOV_D3 $srcarry
+    $r30  = MOV_D3 $srss0
+    $r31  = MOV_D3 $srms0
+    $r1   = MOV_D3 $srsrs_of
+    $r2   = MOV_D3 $srups_of
+    $r3   = MOV_D3 $srcompr_uf
+    $r4   = MOV_D3 $srsparse_of
+    $r5   = MOV_D3 $srfpflags
+    $r6   = MOV_D3 $srf2iflags
+    $r7   = MOV_D3 $srf2fflags
+
+    $r8   = MOV_D3 $core_id
+...
+
+ # CHECK: 0: 59 6e 10 18 mov.d3 r0, p0
+# CHECK: 4: 59 0e 50 18 mov.d3 r1, r0
+# CHECK: 8: 59 ee 9c 18 mov.d3 r2, sp
+# CHECK: c: 59 6e d6 18 mov.d3 r3, p3
+# CHECK: 10: 59 6e 18 19 mov.d3 r4, p4
+# CHECK: 14: 59 ee 5c 19 mov.d3 r5, sp
+# CHECK: 18: 59 0e 97 19 mov.d3 r6, r14
+# CHECK: 1c: 59 8e d7 19 mov.d3 r7, r15
+# CHECK: 20: 59 8e 17 1a mov.d3 r8, r15
+# CHECK: 24: 59 8e 58 1a mov.d3 r9, r17
+# CHECK: 28: 59 8e 99 1a mov.d3 r10, r19
+# CHECK: 2c: 59 8e da 1a mov.d3 r11, r21
+# CHECK: 30: 59 ce 13 1b mov.d3 r12, m7
+# CHECK: 34: 59 4e 5b 1b mov.d3 r13, dj6
+# CHECK: 38: 59 ce 96 1b mov.d3 r14, dn5
+# CHECK: 3c: 59 4e de 1b mov.d3 r15, dc4
+# CHECK: 40: 59 6e 19 1c mov.d3 r16, s2
+# CHECK: 44: 59 2e 54 1c mov.d3 r17, crmcden
+# CHECK: 48: 59 2e 99 1c mov.d3 r18, crsat
+# CHECK: 4c: 59 2e d6 1c mov.d3 r19, crrnd
+# CHECK: 50: 59 2e 13 1d mov.d3 r20, crfpmask
+# CHECK: 54: 59 2e 52 1d mov.d3 r21, crf2imask
+# CHECK: 58: 59 2e 91 1d mov.d3 r22, crf2fmask
+# CHECK: 5c: 59 2e d8 1d mov.d3 r23, crsrssign
+# CHECK: 60: 59 2e 1a 1e mov.d3 r24, crupssign
+# CHECK: 64: 59 2e 55 1e mov.d3 r25, crpacksign
+# CHECK: 68: 59 2e 9b 1e mov.d3 r26, crunpacksign
+# CHECK: 6c: 59 2e d0 1e mov.d3 r27, crvaddsign
+# CHECK: 70: 59 2e 17 1f mov.d3 r28, crscden
+# CHECK: 74: 59 ae 50 1f mov.d3 r29, srcarry
+# CHECK: 78: 59 ae 97 1f mov.d3 r30, srss0
+# CHECK: 7c: 59 ae d5 1f mov.d3 r31, srms0
+# CHECK: 80: 59 ae 56 18 mov.d3 r1, srsrs_of
+# CHECK: 84: 59 ae 99 18 mov.d3 r2, srups_of
+# CHECK: 88: 59 ae d1 18 mov.d3 r3, srcompr_uf
+# CHECK: 8c: 59 ae 18 19 mov.d3 r4, srsparse_of
+# CHECK: 90: 59 ae 54 19 mov.d3 r5, srfpflags
+# CHECK: 94: 59 ae 93 19 mov.d3 r6, srf2iflags
+# CHECK: 98: 59 ae d2 19 mov.d3 r7, srf2fflags
+# CHECK: 9c: 59 ee 16 1a mov.d3 r8, core_id

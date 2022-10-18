@@ -1,0 +1,39 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+
+
+# CHECK: 0: 39 97 8e 19 vextbcst.8 x3, x2, r29
+# CHECK: 4: 39 8f 24 1a vextbcst.16 x4, x1, r9
+# CHECK: 8: 39 df c9 1a vextbcst.32 x5, x11, r19
+# CHECK: c: 39 57 61 1b vextbcst.64 x6, x10, r2
+# CHECK: 10: 39 9f 17 19 vextbcst.8 x2, x3, #15
+# CHECK: 14: 39 27 b0 18 vextbcst.16 x1, x4, #0
+# CHECK: 18: 39 af df 1d vextbcst.32 x11, x5, #31
+# CHECK: 1c: 39 b7 75 1d vextbcst.64 x10, x6, #11
+
+---
+name:            test_vextbcst
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ;  8.1.5 VEXTBCST - Extract and broadcast scalar word between two vectors
+    $x3 = VEXTBCST_8_mRm $x2, $r29
+    $x4 = VEXTBCST_16_mRm $x1, $r9
+    $x5 = VEXTBCST_32_mRm $x11, $r19
+    $x6 = VEXTBCST_64_mRm $x10, $r2
+
+    $x2 = VEXTBCST_8_mExtractIdxImm $x3, 15
+    $x1 = VEXTBCST_16_mExtractIdxImm $x4, 0
+    $x11 = VEXTBCST_32_mExtractIdxImm $x5, 31
+    $x10 = VEXTBCST_64_mExtractIdxImm $x6, 11
+...

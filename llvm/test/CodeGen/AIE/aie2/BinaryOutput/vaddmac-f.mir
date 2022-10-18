@@ -1,0 +1,66 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+#
+# CHECK: 0: c9 08 0d 28 vaddmac.f bml0, bml0, bml2, x3, x4, r5
+# CHECK: 4: c9 09 0d 28 vaddmsc.f bml0, bml0, bml2, x3, x4, r5
+# CHECK: 8: c9 14 8d 29 vaddmac.f bml3, bml3, bml5, x3, x4, r5
+# CHECK: c: c9 15 8d 29 vaddmsc.f bml3, bml3, bml5, x3, x4, r5
+# CHECK: 10: c9 0e cd 2b vaddmac.f bmh7, bmh7, bmh3, x3, x4, r5
+# CHECK: 14: c9 0f cd 2b vaddmsc.f bmh7, bmh7, bmh3, x3, x4, r5
+# CHECK: 18: c9 08 03 28 vaddmac.f bml0, bml0, bml2, x0, qx0, r5
+# CHECK: 1c: c9 09 03 28 vaddmsc.f bml0, bml0, bml2, x0, qx0, r5
+# CHECK: 20: c9 48 07 28 vaddmac.f bml0, bml0, bml2, x1, qx1, r5
+# CHECK: 24: c9 49 07 28 vaddmsc.f bml0, bml0, bml2, x1, qx1, r5
+# CHECK: 28: c9 94 8b 29 vaddmac.f bml3, bml3, bml5, x2, qx2, r5
+# CHECK: 2c: c9 95 8b 29 vaddmsc.f bml3, bml3, bml5, x2, qx2, r5
+# CHECK: 30: c9 ce cf 2b vaddmac.f bmh7, bmh7, bmh3, x3, qx3, r5
+# CHECK: 34: c9 cf cf 2b vaddmsc.f bmh7, bmh7, bmh3, x3, qx3, r5
+# CHECK: 38: c9 08 33 28 vaddmac.f bml0, bml0, bml2, y2, qx0, r5
+# CHECK: 3c: c9 09 33 28 vaddmsc.f bml0, bml0, bml2, y2, qx0, r5
+# CHECK: 40: c9 48 37 28 vaddmac.f bml0, bml0, bml2, y3, qx1, r5
+# CHECK: 44: c9 49 37 28 vaddmsc.f bml0, bml0, bml2, y3, qx1, r5
+# CHECK: 48: c9 94 bb 29 vaddmac.f bml3, bml3, bml5, y4, qx2, r5
+# CHECK: 4c: c9 95 bb 29 vaddmsc.f bml3, bml3, bml5, y4, qx2, r5
+# CHECK: 50: c9 ce ff 2b vaddmac.f bmh7, bmh7, bmh3, y5, qx3, r5
+# CHECK: 54: c9 cf ff 2b vaddmsc.f bmh7, bmh7, bmh3, y5, qx3, r5
+
+---
+name:            vaddmac_f
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; VADDMAC.f / VADDMSC.f  Double accumulator matrix bfloat16 matrix multiply-
+    ; accumulate/subtract
+    $bml0 = VADDMAC_F_vmac_bm_core_dense $bml0, $bml2, $x3, $x4, $r5, implicit-def $srfpflags, implicit $crfpmask
+    $bml0 = VADDMSC_F_vmac_bm_core_dense $bml0, $bml2, $x3, $x4, $r5, implicit-def $srfpflags, implicit $crfpmask
+    $bml3 = VADDMAC_F_vmac_bm_core_dense $bml3, $bml5, $x3, $x4, $r5, implicit-def $srfpflags, implicit $crfpmask
+    $bml3 = VADDMSC_F_vmac_bm_core_dense $bml3, $bml5, $x3, $x4, $r5, implicit-def $srfpflags, implicit $crfpmask
+    $bmh7 = VADDMAC_F_vmac_bm_core_dense $bmh7, $bmh3, $x3, $x4, $r5, implicit-def $srfpflags, implicit $crfpmask
+    $bmh7 = VADDMSC_F_vmac_bm_core_dense $bmh7, $bmh3, $x3, $x4, $r5, implicit-def $srfpflags, implicit $crfpmask
+    $bml0 = VADDMAC_F_vmac_bm_core_sparse_narrow $bml0, $bml2, $x0, $qx0, $r5, implicit-def $srfpflags, implicit $crfpmask
+    $bml0 = VADDMSC_F_vmac_bm_core_sparse_narrow $bml0, $bml2, $x0, $qx0, $r5, implicit-def $srfpflags, implicit $crfpmask
+    $bml0 = VADDMAC_F_vmac_bm_core_sparse_narrow $bml0, $bml2, $x1, $qx1, $r5, implicit-def $srfpflags, implicit $crfpmask
+    $bml0 = VADDMSC_F_vmac_bm_core_sparse_narrow $bml0, $bml2, $x1, $qx1, $r5, implicit-def $srfpflags, implicit $crfpmask
+    $bml3 = VADDMAC_F_vmac_bm_core_sparse_narrow $bml3, $bml5, $x2, $qx2, $r5, implicit-def $srfpflags, implicit $crfpmask
+    $bml3 = VADDMSC_F_vmac_bm_core_sparse_narrow $bml3, $bml5, $x2, $qx2, $r5, implicit-def $srfpflags, implicit $crfpmask
+    $bmh7 = VADDMAC_F_vmac_bm_core_sparse_narrow $bmh7, $bmh3, $x3, $qx3, $r5, implicit-def $srfpflags, implicit $crfpmask
+    $bmh7 = VADDMSC_F_vmac_bm_core_sparse_narrow $bmh7, $bmh3, $x3, $qx3, $r5, implicit-def $srfpflags, implicit $crfpmask
+    $bml0 = VADDMAC_F_vmac_bm_core_sparse_wide $bml0, $bml2, $y2, $qx0, $r5, implicit-def $srfpflags, implicit $crfpmask
+    $bml0 = VADDMSC_F_vmac_bm_core_sparse_wide $bml0, $bml2, $y2, $qx0, $r5, implicit-def $srfpflags, implicit $crfpmask
+    $bml0 = VADDMAC_F_vmac_bm_core_sparse_wide $bml0, $bml2, $y3, $qx1, $r5, implicit-def $srfpflags, implicit $crfpmask
+    $bml0 = VADDMSC_F_vmac_bm_core_sparse_wide $bml0, $bml2, $y3, $qx1, $r5, implicit-def $srfpflags, implicit $crfpmask
+    $bml3 = VADDMAC_F_vmac_bm_core_sparse_wide $bml3, $bml5, $y4, $qx2, $r5, implicit-def $srfpflags, implicit $crfpmask
+    $bml3 = VADDMSC_F_vmac_bm_core_sparse_wide $bml3, $bml5, $y4, $qx2, $r5, implicit-def $srfpflags, implicit $crfpmask
+    $bmh7 = VADDMAC_F_vmac_bm_core_sparse_wide $bmh7, $bmh3, $y5, $qx3, $r5, implicit-def $srfpflags, implicit $crfpmask
+    $bmh7 = VADDMSC_F_vmac_bm_core_sparse_wide $bmh7, $bmh3, $y5, $qx3, $r5, implicit-def $srfpflags, implicit $crfpmask
+...

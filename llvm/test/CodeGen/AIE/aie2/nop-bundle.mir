@@ -1,0 +1,38 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc --mtriple=aie2 --filetype=obj --start-after=aie-finalize-mi-bundles %s -o %t
+# RUN: llvm-objdump --triple=aie2 -d %t | FileCheck %s
+
+# Check ordering of bundle instructions and insertion of nops in bundles
+# that need it
+
+# The bundle needs to be reordered for coding.
+# Moreover, it doesn't fit tightly in a format, so needs to be coded in
+# a wider 128 bits format with a nop in slot B.
+# CHECK-LABEL: asxmv
+# CHECK: nopb {{.*}} padda {{.*}} st {{.*}} or {{.*}} mov {{.*}} vmac
+
+---
+name:            asxmv
+alignment:       16
+body:             |
+  bb.0.entry:
+    BUNDLE {
+      $r0 = OR $r0,$r1
+      ST_dms_sts_idx_imm $r0, $p2, 0
+      $cm0 = VMAC_vmac_cm_core_dense $cm1, $x0, $x1, $r1
+      $p0 = PADDA_lda_ptr_inc_idx_imm $p0, 4
+      $p0 = MOV_mv_scl $p1
+    }
+    RET implicit $lr
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier implicit killed $r0
+...

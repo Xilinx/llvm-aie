@@ -1,0 +1,89 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+
+---
+name:            vlda_am
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; VLD - Vector Loads - ag_idx_imm
+    $amll3 = VLDA_dmw_lda_am_ag_idx_imm $p2, 0
+    $amhl7 = VLDA_dmw_lda_am_ag_idx_imm $p2, 32
+    $amlh4 = VLDA_dmw_lda_am_ag_idx_imm $p5, 992
+    $amhh6 = VLDA_dmw_lda_am_ag_idx_imm $p5, -1024
+
+    ; VLD - Vector Loads - ag_spill
+    $amll3 = VLDA_dmw_lda_am_ag_spill -32, implicit $sp
+    $amhl7 = VLDA_dmw_lda_am_ag_spill -131072, implicit $sp
+    $amlh4 = VLDA_dmw_lda_am_ag_spill -64, implicit $sp
+    $amhh6 = VLDA_dmw_lda_am_ag_spill -131072, implicit $sp
+
+    ; VLD - Vector Loads - ag_idx
+    $amll3 = VLDA_dmw_lda_am_ag_idx $p2, $dj0
+    $amhl7 = VLDA_dmw_lda_am_ag_idx $p2, $dj1
+    $amlh4 = VLDA_dmw_lda_am_ag_idx $p5, $dj2
+    $amhh6 = VLDA_dmw_lda_am_ag_idx $p5, $dj3
+
+    ; VLD - Vector Loads - ag_pstm_nrm
+    $amll3, $p2 = VLDA_dmw_lda_am_ag_pstm_nrm $p2, $m4
+    $amhl7, $p2 = VLDA_dmw_lda_am_ag_pstm_nrm $p2, $m3
+    $amlh4, $p5 = VLDA_dmw_lda_am_ag_pstm_nrm $p5, $m2
+    $amhh6, $p5 = VLDA_dmw_lda_am_ag_pstm_nrm $p5, $m0
+
+    ; VLD - Vector Loads - ag_pstm_nrm_imm
+    $amll3, $p2 = VLDA_dmw_lda_am_ag_pstm_nrm_imm $p2, 0
+    $amhl7, $p2 = VLDA_dmw_lda_am_ag_pstm_nrm_imm $p2, -1056
+    $amlh4, $p5 = VLDA_dmw_lda_am_ag_pstm_nrm_imm $p5, 2016
+    $amhh6, $p5 = VLDA_dmw_lda_am_ag_pstm_nrm_imm $p5, -2048
+
+    ; VLD - Vector Loads - ag_pstm_2d
+    $amll3, $p2, $dc4 = VLDA_2D_dmw_lda_am $p2, $d4
+    $amhl7, $p2, $dc3 = VLDA_2D_dmw_lda_am $p2, $d3
+    $amlh4, $p5, $dc2 = VLDA_2D_dmw_lda_am $p5, $d2
+    $amhh6, $p5, $dc0 = VLDA_2D_dmw_lda_am $p5, $d0
+
+    ; VLD - Vector Loads - ag_pstm_3d
+    $amll0, $p0, $dc0, $dc4 = VLDA_3D_dmw_lda_am $p0, $d0_3d
+    $amhl2, $p2, $dc1, $dc5 = VLDA_3D_dmw_lda_am $p2, $d1_3d
+    $amlh4, $p4, $dc2, $dc6 = VLDA_3D_dmw_lda_am $p4, $d2_3d
+    $amhh5, $p5, $dc3, $dc7 = VLDA_3D_dmw_lda_am $p5, $d3_3d
+...
+
+# CHECK: 0: 99 8c 02 02 vlda amll3, [p2, #0]
+# CHECK: 4: 99 9e 06 02 vlda amhl7, [p2, #32]
+# CHECK: 8: 99 91 7e 05 vlda amlh4, [p5, #992]
+# CHECK: c: 99 9b 82 05 vlda amhh6, [p5, #-1024]
+# CHECK: 10: 99 cc ff 07 vlda amll3, [sp, #-32]
+# CHECK: 14: 99 5e 00 00 vlda amhl7, [sp, #-131072]
+# CHECK: 18: 99 51 ff 07 vlda amlh4, [sp, #-64]
+# CHECK: 1c: 99 5b 00 00 vlda amhh6, [sp, #-131072]
+# CHECK: 20: 99 8c 10 02 vlda amll3, [p2, dj0]
+# CHECK: 24: 99 9e 30 02 vlda amhl7, [p2, dj1]
+# CHECK: 28: 99 91 50 05 vlda amlh4, [p5, dj2]
+# CHECK: 2c: 99 9b 70 05 vlda amhh6, [p5, dj3]
+# CHECK: 30: 99 8c 88 02 vlda amll3, [p2], m4
+# CHECK: 34: 99 9e 68 02 vlda amhl7, [p2], m3
+# CHECK: 38: 99 91 48 05 vlda amlh4, [p5], m2
+# CHECK: 3c: 99 9b 08 05 vlda amhh6, [p5], m0
+# CHECK: 40: 99 8c 01 02 vlda amll3, [p2], #0
+# CHECK: 44: 99 9e bf 02 vlda amhl7, [p2], #-1056
+# CHECK: 48: 99 91 7f 05 vlda amlh4, [p5], #2016
+# CHECK: 4c: 99 9b 81 05 vlda amhh6, [p5], #-2048
+# CHECK: 50: 99 8c 98 02 vlda.2d amll3, [p2], d4
+# CHECK: 54: 99 9e 78 02 vlda.2d amhl7, [p2], d3
+# CHECK: 58: 99 91 58 05 vlda.2d amlh4, [p5], d2
+# CHECK: 5c: 99 9b 18 05 vlda.2d amhh6, [p5], d0
+# CHECK: 60: 99 80 00 00 vlda.3d amll0, [p0], d0
+# CHECK: 64: 99 8a 20 02 vlda.3d amhl2, [p2], d1
+# CHECK: 68: 99 91 40 04 vlda.3d amlh4, [p4], d2
+# CHECK: 6c: 99 97 60 05 vlda.3d amhh5, [p5], d3

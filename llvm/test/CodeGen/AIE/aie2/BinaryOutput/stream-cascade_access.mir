@@ -1,0 +1,47 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr %t | FileCheck --ignore-case %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr %t | FileCheck --ignore-case %s
+
+# CHECK: 0: 99 09 00 00 vmov bml2, scd
+# CHECK: 4: 99 0b 00 00 vmov bmh2, scd
+# CHECK: 8: 99 03 00 00 vmov bmh0, scd
+# CHECK: c: 99 08 00 00 vmov x2, scd
+# CHECK: 10: 99 0c 00 00 vmov x3, scd
+# CHECK: 14: 99 10 00 00 vmov x4, scd
+# CHECK: 18: 99 01 7c 08 vmov mcd, bml0
+# CHECK: 1c: 99 07 7c 08 vmov mcd, bmh1
+# CHECK: 20: 99 24 7c 08 vmov mcd, x9
+# CHECK: 24: 99 28 7c 08 vmov mcd, x10
+# CHECK: 28: 19 03 1c 00 vmov.hi cm0, scd
+# CHECK: 2c: 19 05 1c 00 vmov.lo cm1, scd
+
+---
+name:            test
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; 6.3 VMOV - Cascade stream access
+    $bml2 = VMOV_mv_scd implicit $crscden
+    $bmh2 = VMOV_mv_scd implicit $crscden
+    $bmh0 = VMOV_mv_scd implicit $crscden
+    $x2 = VMOV_mv_scd   implicit $crscden
+    $x3 = VMOV_mv_scd   implicit $crscden
+    $x4 = VMOV_mv_scd   implicit $crscden
+
+    VMOV_mv_mcd $bml0, implicit $crmcden
+    VMOV_mv_mcd $bmh1, implicit $crmcden
+    VMOV_mv_mcd $x9  , implicit $crmcden
+    VMOV_mv_mcd $x10 , implicit $crmcden
+
+    $cm0 = VMOV_HI implicit $crscden
+    $cm1 = VMOV_LO implicit $crscden
+...

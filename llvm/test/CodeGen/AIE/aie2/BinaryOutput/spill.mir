@@ -1,0 +1,45 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+
+# CHECK: 0: 59 c2 ff 07 lda r1, [sp, #-4]
+# CHECK: 4: d9 76 ff 07 lda p6, [sp, #-8]
+# CHECK: 8: 59 c5 fe 07 lda m2, [sp, #-12]
+# CHECK: c: 59 e7 fd 07 lda dj3, [sp, #-20]
+# CHECK: 10: 59 f9 fc 07 lda dc4, [sp, #-28]
+# CHECK: 14: 59 5b fc 07 lda dn5, [sp, #-32]
+# CHECK: 18: 19 44 fc 0f st r2, [sp, #-32]
+# CHECK: 1c: 99 56 fd 0f st p2, [sp, #-24]
+# CHECK: 20: 19 6f fa 0f st dj7, [sp, #-48]
+# CHECK: 24: 19 f3 fe 0f st dc1, [sp, #-12]
+# CHECK: 28: 19 57 f1 0f st dn3, [sp, #-120]
+# CHECK: 2c: 19 cd f3 0f st m6, [sp, #-100]
+---
+name:            test_spill
+alignment:       16
+body:             |
+  bb.0 (align 16):
+
+    $r1 = LDA_dms_spill -4, implicit $sp
+    $p6 = LDA_dms_spill -8, implicit $sp
+    $m2 = LDA_dms_spill -12, implicit $sp
+    $dj3 = LDA_dms_spill -20, implicit $sp
+    $dc4 = LDA_dms_spill -28, implicit $sp
+    $dn5 = LDA_dms_spill -32, implicit $sp
+
+    ST_dms_spill $r2, -32, implicit $sp
+    ST_dms_spill $p2, -24, implicit $sp
+    ST_dms_spill $dj7, -48, implicit $sp
+    ST_dms_spill $dc1, -12, implicit $sp
+    ST_dms_spill $dn3, -120, implicit $sp
+    ST_dms_spill $m6, -100, implicit $sp
+...
