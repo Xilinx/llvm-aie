@@ -1,0 +1,31 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+
+# CHECK: 0: 99 31 00 00 padda.3d [p0], d0
+# CHECK: 4: 99 31 60 05 padda.3d [p5], d3
+# CHECK: 8: 19 08 3b 39 paddb.3d [p1], d1
+# CHECK: c: 19 08 5b 3b paddb.3d [p3], d2
+# CHECK: 10: 59 31 00 0a padds.3d [p2], d0
+# CHECK: 14: 59 31 60 0e padds.3d [p6], d3
+---
+name:            test_call
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    $p0, $dc0, $dc4 = PADDA_3D $p0, $d0_3d
+    $p5, $dc3, $dc7 = PADDA_3D $p5, $d3_3d
+    $p1, $dc1, $dc5 = PADDB_3D $p1, $d1_3d
+    $p3, $dc2, $dc6 = PADDB_3D $p3, $d2_3d
+    $p2, $dc0, $dc4 = PADDS_3D $p2, $d0_3d
+    $p6, $dc3, $dc7 = PADDS_3D $p6, $d3_3d
+...

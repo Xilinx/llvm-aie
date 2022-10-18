@@ -1,0 +1,57 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+
+# CHECK: 0: 59 0f 00 18 vmov wl0, amll0
+# CHECK: 4: 59 07 1c 18 vmov amll0, wl0
+# CHECK: 8: 59 1f 4c 1a vmov wl3, wl6
+# CHECK: c: 59 57 4c 19 vmov wl10, wl5
+# CHECK: 10: 59 9f 4c 1e vmov wh3, wh6
+# CHECK: 14: 59 d7 4c 1d vmov wh10, wh5
+# CHECK: 18: 59 0f 96 19 vmov amll3, amll6
+# CHECK: 1c: 59 0f 15 1c vmov amll8, amll5
+# CHECK: 20: 59 4f b6 19 vmov amlh3, amlh6
+# CHECK: 24: 59 4f 35 1c vmov amlh8, amlh5
+# CHECK: 28: 59 8f d6 19 vmov amhl3, amhl6
+# CHECK: 2c: 59 8f 55 1c vmov amhl8, amhl5
+# CHECK: 30: 59 cf f6 19 vmov amhh3, amhh6
+# CHECK: 34: 59 cf 75 1c vmov amhh8, amhh5
+# CHECK: 38: 59 87 2e 18 vmov q0, q1
+# CHECK: 3c: 59 07 2f 1a vmov q1, q2
+
+---
+name:            test
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; 5.6 VMOV - Move vector/accumulator register (256 bits)
+    $wl0 = VMOV_mv_w $amll0
+    $amll0 = VMOV_mv_w $wl0
+
+    $wl3 = VMOV_mv_w $wl6
+    $wl10 = VMOV_mv_w $wl5
+    $wh3 = VMOV_mv_w $wh6
+    $wh10 = VMOV_mv_w $wh5
+
+    $amll3 = VMOV_mv_w $amll6
+    $amll8 = VMOV_mv_w $amll5
+    $amlh3 = VMOV_mv_w $amlh6
+    $amlh8 = VMOV_mv_w $amlh5
+    $amhl3 = VMOV_mv_w $amhl6
+    $amhl8 = VMOV_mv_w $amhl5
+    $amhh3 = VMOV_mv_w $amhh6
+    $amhh8 = VMOV_mv_w $amhh5
+
+    $q0 = VMOV_mv_w $q1
+    $q1 = VMOV_mv_w $q2
+
+...

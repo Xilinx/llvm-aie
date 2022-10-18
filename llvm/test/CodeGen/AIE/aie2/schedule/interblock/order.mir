@@ -1,0 +1,192 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc --mtriple=aie2 --start-before=postmisched --debug-only=machine-scheduler %s -o /dev/null |& FileCheck %s
+# REQUIRES: asserts
+
+# Check post-order scheduling of blocks. This mainly follows the flow
+# backwards from exit point to entry point
+---
+name:            trivial
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: trivial
+  ; CHECK: MBB scheduling sequence : 0 ->
+  bb.0:
+    RET implicit $lr
+    DelayedSchedBarrier
+...
+---
+name:            simpleIf
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: simpleIf
+  ; CHECK: MBB scheduling sequence : 2 -> 1 -> 0 ->
+  bb.0:
+    liveins: $r0
+    JNZ $r0, %bb.2
+    DelayedSchedBarrier
+  bb.1:
+  bb.2:
+    RET implicit $lr
+    DelayedSchedBarrier
+...
+---
+name:            ifElse
+tracksRegLiveness: true
+body:             |
+  ; bb.1 and bb.2 are not orderable
+  ; CHECK-LABEL: ifElse
+  ; CHECK: MBB scheduling sequence : 3 -> {{1 -> 2|2 -> 1}} -> 0 ->
+  bb.0:
+    liveins: $r0
+    JNZ $r0, %bb.2
+    DelayedSchedBarrier
+  bb.1:
+    J_jump_imm %bb.3
+    DelayedSchedBarrier
+  bb.2:
+  bb.3:
+    RET implicit $lr
+    DelayedSchedBarrier
+...
+---
+name:            outOfLine
+tracksRegLiveness: true
+body:             |
+  ; simple if, strange block ordering
+  ; CHECK-LABEL: outOfLine
+  ; CHECK: MBB scheduling sequence : 3 -> 1 -> 2 -> 0 ->
+  bb.0:
+    liveins: $r0
+    JNZ $r0, %bb.2
+    DelayedSchedBarrier
+    J_jump_imm %bb.1
+    DelayedSchedBarrier
+  bb.1:
+    J_jump_imm %bb.3
+    DelayedSchedBarrier
+  bb.2:
+    J_jump_imm %bb.1
+    DelayedSchedBarrier
+  bb.3:
+    RET implicit $lr
+    DelayedSchedBarrier
+...
+---
+name:            loop
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: loop
+  ; CHECK: MBB scheduling sequence : 2 -> 1 -> 0 ->
+  bb.0:
+    liveins: $r0
+  bb.1:
+    liveins: $r0
+    JNZ $r0, %bb.1
+    DelayedSchedBarrier
+  bb.2:
+    RET implicit $lr
+    DelayedSchedBarrier
+...
+---
+name:            irreducible
+tracksRegLiveness: true
+body:             |
+  ; This is an irreducible loop
+  ; bb.0 dominates bb.1 and bb.2; bb.3 postdominates them
+  ; Note that a pure post-order depth-first search might yield 2 3 1 0,
+  ; so the current ref might be lucky
+  ; CHECK-LABEL: irreducible
+  ; CHECK: MBB scheduling sequence : 3 -> {{1 -> 2|2 -> 1}} -> 0 ->
+  bb.0:
+    liveins: $r0
+    JNZ $r0, %bb.2
+    DelayedSchedBarrier
+  bb.1:
+    liveins: $r0
+    JNZ $r0, %bb.3
+    DelayedSchedBarrier
+  bb.2:
+    liveins: $r0
+    JNZ $r0, %bb.1
+    DelayedSchedBarrier
+  bb.3:
+    RET implicit $lr
+    DelayedSchedBarrier
+...
+---
+name:            innerLoop
+tracksRegLiveness: true
+body:             |
+  ; In particular, check that the inner loop body is well ordered
+  ; CHECK-LABEL: innerLoop
+  ; CHECK: MBB scheduling sequence : 8 -> 7 -> 6 -> 5 -> 4 -> 3 -> 2 -> 1 -> 0
+  bb.0:
+    liveins: $r0
+    JNZ $r0, %bb.8
+    DelayedSchedBarrier
+  bb.1:
+    liveins: $r0
+    JNZ $r0, %bb.7
+    DelayedSchedBarrier
+  bb.2:
+    liveins: $r0
+    JNZ $r0, %bb.3
+    DelayedSchedBarrier
+  bb.3:
+    liveins: $r0
+    JNZ $r0, %bb.5
+    DelayedSchedBarrier
+  bb.4:
+  bb.5:
+    liveins: $r0
+    JNZ $r0, %bb.7
+    DelayedSchedBarrier
+  bb.6:
+  bb.7:
+    J_jump_imm %bb.1
+    DelayedSchedBarrier
+  bb.8:
+    RET implicit $lr
+    DelayedSchedBarrier
+...
+---
+name:            fallthroughSwitch
+tracksRegLiveness: true
+body:             |
+  ; Out of order switch logic and multi-entry regions
+  ; CHECK-LABEL: fallthroughSwitch
+  ; CHECK: MBB scheduling sequence : 9 -> 4 -> 3 -> 2 -> 1 -> 8 -> 7 -> 6 -> 5 -> 0 ->
+  bb.0:
+    J_jump_imm %bb.5
+    DelayedSchedBarrier
+  bb.1:
+  bb.2:
+  bb.3:
+  bb.4:
+    J_jump_imm %bb.9
+    DelayedSchedBarrier
+  bb.5:
+    liveins: $r0
+    JNZ $r0, %bb.1
+    DelayedSchedBarrier
+  bb.6:
+    liveins: $r0
+    JNZ $r0, %bb.2
+    DelayedSchedBarrier
+  bb.7:
+    liveins: $r0
+    JNZ $r0, %bb.3
+    DelayedSchedBarrier
+  bb.8:
+    liveins: $r0
+    JNZ $r0, %bb.4
+    DelayedSchedBarrier
+  bb.9:
+    RET implicit $lr
+    DelayedSchedBarrier
+...

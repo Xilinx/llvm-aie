@@ -7,6 +7,7 @@
 // Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
+
 // RUN: llvm-tblgen --gen-instr-format -I %p -I %p/../ -I %p/../../../../include %s 2>&1 | FileCheck %s \
 // (MCCodeEmitter lda:) Value.insertBits(op.extractBitsAsZExtValue(18, 0), 110, 18);
 // RUN: -D#%,I128_LDA_NUM_BITS=18 -D#%,I128_LDA_BIT_POS=110 \

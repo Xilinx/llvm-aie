@@ -1,0 +1,79 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc --mtriple=aie2 --issue-limit=6 --start-after=instruction-select --debug-only=pipeliner -O2 %s -o - 2>&1 | FileCheck %s
+# REQUIRES: asserts
+
+# The edges to the 'isZeroCost' instructions INSERT_SUBREG
+# should carry the load's operand latency, and push the depth
+# of their successor to the appropriate value.
+
+# We watch the printout of the dag, checking that the relevant
+# nodes are listed and that the edges have the correct values.
+# The listed nodes serve as anchors to match the correct intermediate
+# entries
+
+# CHECK: SU(3):   %9:mwa = VLDA_dmw_lda_w_ag_idx_imm %7:ep, 32
+# CHECK:  Successors:
+# CHECK:    SU(6): Data Latency=7 Reg=%9
+# CHECK: SU(4):   %10:mwa = VLDA_dmw_lda_w_ag_idx_imm %7:ep, 0
+# CHECK:  Successors:
+# CHECK:    SU(5): Data Latency=7 Reg=%10
+# CHECK: SU(5):   %12:mshfldst = INSERT_SUBREG %11:mshfldst(tied-def 0), %10:mwa, %subreg.sub_256_lo
+# CHECK:   Predecessors:
+# CHECK:     SU(4): Data Latency=7 Reg=%10
+# CHECK: SU(6):   %13:vec512 = INSERT_SUBREG %12:mshfldst(tied-def 0), %9:mwa, %subreg.sub_256_hi
+# CHECK:   Predecessors:
+# CHECK:     SU(3): Data Latency=7 Reg=%9
+# CHECK:   Successors:
+# CHECK:     SU(7): Data Latency=0 Reg=%13
+# CHECK: SU(7):   %14:er = VEXTRACT_S16 %13:vec512, %1:ers4
+# CHECK:  Depth              : 7
+# CHECK: SU(8):   %15:er = EXTENDs16 %14:er
+
+...
+---
+name:            _Z4pairPDv32_si
+alignment:       16
+exposesReturnsTwice: false
+legalized:       true
+regBankSelected: true
+selected:        true
+tracksRegLiveness: true
+body:             |
+  bb.1.entry:
+    successors: %bb.3(0x80000000)
+    liveins: $p0, $r1
+
+    %1:ep = COPY $p0
+    %8:ers4 = MOVA_lda_cg 0
+    %18:er = MOVA_lda_cg 10
+    PseudoJ_jump_imm %bb.3
+
+  bb.2:
+    $r0 = COPY %0
+    PseudoRET implicit $lr, implicit $r0
+
+  bb.3:
+    successors: %bb.2(0x04000000), %bb.3(0x7c000000)
+
+    %3:er = PHI %16, %bb.3, %18, %bb.1
+    %4:er = PHI %8, %bb.1, %0, %bb.3
+    %5:ep = PHI %1, %bb.1, %14, %bb.3
+    %25:mwa = VLDA_dmw_lda_w_ag_idx_imm %5, 32
+    %24:mwa = VLDA_dmw_lda_w_ag_idx_imm %5, 0
+    %23:mshfldst = IMPLICIT_DEF
+    %22:mshfldst = INSERT_SUBREG %23, %24, %subreg.sub_256_lo
+    %6:vec512 = INSERT_SUBREG %22, %25, %subreg.sub_256_hi
+    %7:er = VEXTRACT_S16 %6, %8
+    %12:er = EXTENDs16 %7
+    %0:er = nsw ADD %12, %4, implicit-def $srcarry
+    %14:ep = PADD_imm_pseudo %5, 64
+    %16:er = nsw ADD_add_r_ri %3, -1, implicit-def $srcarry
+    PseudoJZ %16, %bb.2
+    PseudoJ_jump_imm %bb.3
+
+...

@@ -1,0 +1,69 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+
+# CHECK: 0: d9 0d 80 02 vlda.128 wl3, [p2]
+# CHECK: 4: d9 1d 80 02 vlda.128 wl7, [p2]
+# CHECK: 8: d9 13 80 05 vlda.128 wh4, [p5]
+# CHECK: c: d9 1b 80 05 vlda.128 wh6, [p5]
+# CHECK: 10: 19 d8 80 3a vldb.128 wl3, [p2, dj4]
+# CHECK: 14: 19 d8 61 3a vldb.128 wl7, [p2, dj3]
+# CHECK: 18: 19 38 41 3d vldb.128 wh4, [p5, dj2]
+# CHECK: 1c: 19 b8 01 3d vldb.128 wh6, [p5, dj0]
+# CHECK: 20: 19 d8 88 3a vldb.128 wl3, [p2], m4
+# CHECK: 24: 19 d8 69 3a vldb.128 wl7, [p2], m3
+# CHECK: 28: 19 38 49 3d vldb.128 wh4, [p5], m2
+# CHECK: 2c: 19 b8 09 3d vldb.128 wh6, [p5], m0
+# CHECK: 30: 19 d8 90 3a vldb.2d.128 wl3, [p2], d4
+# CHECK: 34: 19 d8 71 3a vldb.2d.128 wl7, [p2], d3
+# CHECK: 38: 19 38 51 3d vldb.2d.128 wh4, [p5], d2
+# CHECK: 3c: 19 b8 11 3d vldb.2d.128 wh6, [p5], d0
+# CHECK: 40: 19 18 18 38 vldb.3d.128 wl0, [p0], d0
+# CHECK: 44: 19 98 38 3a vldb.3d.128 wl2, [p2], d1
+# CHECK: 48: 19 38 59 3c vldb.3d.128 wh4, [p4], d2
+# CHECK: 4c: 19 78 79 3d vldb.3d.128 wh5, [p5], d3
+---
+name:            test_call
+alignment:       16
+body:             |
+  bb.0 (align 16):
+
+    ; 3.2 VLD - Vector Loads
+    $wl3 = VLDA_128 $p2
+    $wl7 = VLDA_128 $p2
+    $wh4 = VLDA_128 $p5
+    $wh6 = VLDA_128 $p5
+
+    ; VLD - Vector Loads - ag_idx
+    $wl3 = VLDB_128_ag_idx $p2, $dj4
+    $wl7 = VLDB_128_ag_idx $p2, $dj3
+    $wh4 = VLDB_128_ag_idx $p5, $dj2
+    $wh6 = VLDB_128_ag_idx $p5, $dj0
+
+    ; VLD - Vector Loads - ag_pstm_nrm
+    $wl3, $p2 = VLDB_128_ag_pstm_nrm $p2, $m4
+    $wl7, $p2 = VLDB_128_ag_pstm_nrm $p2, $m3
+    $wh4, $p5 = VLDB_128_ag_pstm_nrm $p5, $m2
+    $wh6, $p5 = VLDB_128_ag_pstm_nrm $p5, $m0
+
+    ; VLD - Vector Loads - ag_pstm_2d
+    $wl3, $p2, $dc4 = VLDB_2D_128 $p2, $d4
+    $wl7, $p2, $dc3 = VLDB_2D_128 $p2, $d3
+    $wh4, $p5, $dc2 = VLDB_2D_128 $p5, $d2
+    $wh6, $p5, $dc0 = VLDB_2D_128 $p5, $d0
+
+    ; VLD - Vector Loads - ag_pstm_3d
+    $wl0, $p0, $dc0, $dc4 = VLDB_3D_128 $p0, $d0_3d
+    $wl2, $p2, $dc1, $dc5 = VLDB_3D_128 $p2, $d1_3d
+    $wh4, $p4, $dc2, $dc6 = VLDB_3D_128 $p4, $d2_3d
+    $wh5, $p5, $dc3, $dc7 = VLDB_3D_128 $p5, $d3_3d
+...

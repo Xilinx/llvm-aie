@@ -1,0 +1,76 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+
+# CHECK: 0: 79 ab 28 1a vshift x4, x5, x6, r17
+# CHECK: 4: 79 ab 18 1a vshift.align x4, x5, s0, x6, r17
+# CHECK: 8: 19 2b 00 1a vadd.8 x4, x5, x6
+# CHECK: c: 39 2b 00 1a vadd.16 x4, x5, x6
+# CHECK: 10: 59 2b 00 1a vadd.32 x4, x5, x6
+# CHECK: 14: 19 2b 01 1a vsub.8 x4, x5, x6
+# CHECK: 18: 39 2b 01 1a vsub.16 x4, x5, x6
+# CHECK: 1c: d9 55 01 1a vsub.32 x4, x10, x11
+# CHECK: 20: 49 54 d1 4f vmul.f bml5, x4, x5, r9
+# CHECK: 24: 49 14 d3 4f vmul.f bml5, x4, qx0, r9
+# CHECK: 28: 49 56 fb a7 vmul.f bmh5, y4, qx1, r20
+# CHECK: 2c: 49 10 cf 1f vmul.f bml4, x3, qx0, r3
+# CHECK: 30: 49 52 f7 07 vmul.f bmh4, y3, qx1, r0
+# CHECK: 34: 49 9d cd 67 vnegmul.f bml7, x3, x6, r12
+# CHECK: 38: 49 1d cf 67 vnegmul.f bml7, x3, qx0, r12
+# CHECK: 3c: 49 5f f7 3f vnegmul.f bmh7, y3, qx1, r7
+# CHECK: 40: 49 23 cb 17 vnegmul.f bmh8, x2, qx0, r2
+# CHECK: 44: 49 61 fb 67 vnegmul.f bml8, y4, qx1, r12
+# CHECK: 48: 49 54 11 4b vmac.f bml5, bml6, x4, x5, r9
+# CHECK: 4c: 49 42 13 9b vmac.f bmh0, bml6, x4, qx1, r19
+# CHECK: 50: 49 e0 3b 4b vmac.f bml8, bml6, y4, qx3, r9
+# CHECK: 54: 49 dd 08 14 vmsc.f bml7, bml8, x2, x3, r2
+# CHECK: 58: 49 87 4b 29 vmsc.f bmh1, bmh2, x2, qx2, r5
+# CHECK: 5c: 49 05 b3 00 vmsc.f bml1, bml1, y2, qx0, r0
+---
+name:            test_VMUL_bf
+alignment:       16
+body:             |
+  bb.0 (align 16):
+
+    ; 8.2.4 VSHIFT - Shift vector
+    $x4 = VSHIFT $x5, $x6, $r17
+    ; 8.2.5 VSHIFT_ALIGN - Shift vector
+    $x4 = VSHIFT_ALIGN $x5, $s0, $x6, $r17
+
+    ; 8.3.1 VADD/VSUB - Vector addition / subtraction
+    $x4 = VADD_8 $x5, $x6
+    $x4 = VADD_16 $x5, $x6
+    $x4 = VADD_32 $x5, $x6
+    $x4 = VSUB_8 $x5, $x6
+    $x4 = VSUB_16 $x5, $x6
+    $x4 = VSUB_32 $x10, $x11
+
+    ; 9.9 VMUL.f / VNEGMUL.f - Matrix multiplication
+    $bml5 = VMUL_F_vmac_bm_core_dense $x4, $x5, $r9, implicit-def $srfpflags, implicit $crfpmask
+    $bml5 = VMUL_F_vmac_bm_core_sparse_narrow $x4, $qx0, $r9, implicit-def $srfpflags, implicit $crfpmask
+    $bmh5 = VMUL_F_vmac_bm_core_sparse_wide $y4, $qx1, $r20, implicit-def $srfpflags, implicit $crfpmask
+    $bml4 = VMUL_F_vmac_bm_core_sparse_narrow $x3, $qx0, $r3, implicit-def $srfpflags, implicit $crfpmask
+    $bmh4 = VMUL_F_vmac_bm_core_sparse_wide $y3, $qx1, $r0, implicit-def $srfpflags, implicit $crfpmask
+    $bml7 = VNEGMUL_F_vmac_bm_core_dense $x3, $x6, $r12, implicit-def $srfpflags, implicit $crfpmask
+    $bml7 = VNEGMUL_F_vmac_bm_core_sparse_narrow $x3, $qx0, $r12, implicit-def $srfpflags, implicit $crfpmask
+    $bmh7 = VNEGMUL_F_vmac_bm_core_sparse_wide $y3, $qx1, $r7, implicit-def $srfpflags, implicit $crfpmask
+    $bmh8 = VNEGMUL_F_vmac_bm_core_sparse_narrow $x2, $qx0, $r2, implicit-def $srfpflags, implicit $crfpmask
+    $bml8 = VNEGMUL_F_vmac_bm_core_sparse_wide $y4, $qx1, $r12, implicit-def $srfpflags, implicit $crfpmask
+
+    ; 9.11 VMAC.f / VMSC.f Matrix multiplyaccumulate/subtract
+    $bml5 = VMAC_F_vmac_bm_core_dense $bml6, $x4, $x5, $r9, implicit-def $srfpflags, implicit $crfpmask
+    $bmh0 = VMAC_F_vmac_bm_core_sparse_narrow $bml6, $x4, $qx1, $r19, implicit-def $srfpflags, implicit $crfpmask
+    $bml8 = VMAC_F_vmac_bm_core_sparse_wide $bml6, $y4, $qx3, $r9, implicit-def $srfpflags, implicit $crfpmask
+    $bml7 = VMSC_F_vmac_bm_core_dense $bml8, $x2, $x3, $r2, implicit-def $srfpflags, implicit $crfpmask
+    $bmh1 = VMSC_F_vmac_bm_core_sparse_narrow $bmh2, $x2, $qx2, $r5, implicit-def $srfpflags, implicit $crfpmask
+    $bml1 = VMSC_F_vmac_bm_core_sparse_wide $bml1, $y2, $qx0, $r0, implicit-def $srfpflags, implicit $crfpmask
+...

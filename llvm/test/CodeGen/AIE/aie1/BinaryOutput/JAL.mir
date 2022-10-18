@@ -1,0 +1,26 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc -O2 --march=aie %s --start-after=post-RA-sched --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie -dr %t | FileCheck %s
+
+# CHECK: 0: 0b 08 20 a0 {{(nop;?)*}}jal #128
+# CHECK: 10: 41 a0 jal cb5
+# CHECK: 1c: 01 01 ret lr
+
+---
+name:            test_call_external
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    liveins: $cb5
+
+    JAL 128
+    JAL_IND $cb5
+    PseudoRET implicit $lr, implicit killed $r0
+
+...

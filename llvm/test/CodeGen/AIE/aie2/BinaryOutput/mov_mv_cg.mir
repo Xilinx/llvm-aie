@@ -1,0 +1,87 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+
+
+# CHECK: 0: 99 ff 07 18 mov r0, #511
+# CHECK: 4: 99 06 48 18 mov r1, #-512
+# CHECK: 8: 99 56 c0 1f mov r31, #20
+# CHECK: c: 99 86 30 18 mov p0, #32
+# CHECK: 10: 99 5f 3f 1f mov p7, #-41
+# CHECK: 14: 99 57 70 1e mov sp, #21
+# CHECK: 18: 99 06 71 1c mov le, #64
+# CHECK: 1c: 99 2e 71 18 mov ls, #74
+# CHECK: 20: 99 b7 70 1d mov lc, #45
+# CHECK: 24: 99 86 b0 1c mov s2, #32
+# CHECK: 28: 99 06 90 1c mov crsat, #0
+# CHECK: 2c: 99 07 10 1b mov crrnd, #1
+# CHECK: 30: 99 06 90 19 mov crfpmask, #0
+# CHECK: 34: 99 07 10 19 mov crf2imask, #1
+# CHECK: 38: 99 06 90 18 mov crf2fmask, #0
+# CHECK: 3c: 99 07 10 1c mov crsrssign, #1
+# CHECK: 40: 99 06 10 1d mov crupssign, #0
+# CHECK: 44: 99 07 90 1a mov crpacksign, #1
+# CHECK: 48: 99 06 90 1d mov crunpacksign, #0
+# CHECK: 4c: 99 07 10 18 mov crvaddsign, #1
+# CHECK: 50: 99 06 90 1b mov crscden, #0
+# CHECK: 54: 99 07 10 1a mov crmcden, #1
+# CHECK: 58: 99 06 d0 1b mov srss0, #0
+# CHECK: 5c: 99 07 d0 1a mov srms0, #1
+# CHECK: 60: 99 06 50 1b mov srsrs_of, #0
+# CHECK: 64: 99 07 d0 1c mov srups_of, #1
+# CHECK: 68: 99 06 d0 18 mov srcompr_uf, #0
+# CHECK: 6c: 99 07 50 1c mov srsparse_of, #1
+# CHECK: 70: 99 06 50 1a mov srfpflags, #0
+# CHECK: 74: 99 07 d0 19 mov srf2iflags, #1
+# CHECK: 78: 99 06 50 19 mov srf2fflags, #0
+# CHECK: 7c: 99 07 50 18 mov srcarry, #1
+---
+name:            test_call
+alignment:       16
+body:             |
+  bb.0 (align 16):
+
+    $r0  = MOV_mv_cg 511
+    $r1  = MOV_mv_cg -512
+    $r31 = MOV_mv_cg 20
+    $p0  = MOV_mv_cg 32
+    $p7  = MOV_mv_cg -41
+    $sp  = MOV_mv_cg 21
+    $le  = MOV_mv_cg 64
+    $ls  = MOV_mv_cg 74
+    $lc  = MOV_mv_cg 45
+    $s2  = MOV_mv_cg 32
+
+    $crsat        = MOV_mv_cg 0
+    $crrnd        = MOV_mv_cg 1
+    $crfpmask     = MOV_mv_cg 0
+    $crf2imask    = MOV_mv_cg 1
+    $crf2fmask    = MOV_mv_cg 0
+    $crsrssign    = MOV_mv_cg 1
+    $crupssign    = MOV_mv_cg 0
+    $crpacksign   = MOV_mv_cg 1
+    $crunpacksign = MOV_mv_cg 0
+    $crvaddsign   = MOV_mv_cg 1
+    $crscden      = MOV_mv_cg 0
+    $crmcden      = MOV_mv_cg 1
+
+    $srss0        = MOV_mv_cg 0
+    $srms0        = MOV_mv_cg 1
+    $srsrs_of     = MOV_mv_cg 0
+    $srups_of     = MOV_mv_cg 1
+    $srcompr_uf   = MOV_mv_cg 0
+    $srsparse_of  = MOV_mv_cg 1
+    $srfpflags    = MOV_mv_cg 0
+    $srf2iflags   = MOV_mv_cg 1
+    $srf2fflags   = MOV_mv_cg 0
+    $srcarry      = MOV_mv_cg 1
+...

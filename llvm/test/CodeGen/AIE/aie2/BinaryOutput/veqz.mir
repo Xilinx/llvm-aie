@@ -1,0 +1,35 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+#
+
+---
+name:            eqz
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; VEQZ
+
+    $l0 = VEQZ_8 $x0
+    $l2 = VEQZ_8 $x3
+    $r16 = VEQZ_16 $x2
+    $r18 = VEQZ_16 $x7
+    $r20 = VEQZ_32 $x4
+    $r23 = VEQZ_32 $x11
+...
+
+# CHECK: 0: 19 80 07 18 veqz.8 r17:r16, x0
+# CHECK: 4: 99 81 27 18 veqz.8 r21:r20, x3
+# CHECK: 8: 39 81 07 18 veqz.16 r16, x2
+# CHECK: c: b9 83 27 18 veqz.16 r18, x7
+# CHECK: 10: 59 82 47 18 veqz.32 r20, x4
+# CHECK: 14: d9 85 77 18 veqz.32 r23, x11

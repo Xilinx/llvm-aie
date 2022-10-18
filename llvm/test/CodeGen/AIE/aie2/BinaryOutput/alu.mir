@@ -1,0 +1,89 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+
+# CHECK: 0: 19 1c e4 10 clb r18, r3
+# CHECK: 4: 19 3c f0 12 clz r24, r11
+# CHECK: 8: 19 5c 8a 11 extend.s8 r5, r6
+# CHECK: c: 19 9c 0a 12 extend.u8 r5, r8
+# CHECK: 10: 19 7c 8a 11 extend.s16 r5, r6
+# CHECK: 14: 19 bc 0a 12 extend.u16 r5, r8
+# CHECK: 18: 19 dc 8a 13 eqz r5, r14
+# CHECK: 1c: 19 fc 8a 13 nez r5, r14
+# CHECK: 20: 19 1c 8b 12 abs r5, r10
+# CHECK: 24: 19 ff 0a 12 add r5, r8, #63
+# CHECK: 28: 19 03 0f 12 add r7, r8, #-64
+# CHECK: 2c: 19 3e 8e 10 sel.nez r7, r2, r3, r27
+# CHECK: 30: 19 36 8e 10 sel.eqz r7, r2, r3, r27
+# CHECK: 34: 99 20 ca 10 add r5, r3, r2
+# CHECK: 38: 99 f1 ca 13 sub r5, r15, r15
+# CHECK: 3c: 99 22 0c 11 adc r6, r4, r2
+# CHECK: 40: 99 23 0c 11 sbc r6, r4, r2
+# CHECK: 44: 99 34 8a 10 and r5, r2, r3
+# CHECK: 48: 99 f5 8a 13 or r5, r14, r15
+# CHECK: 4c: 99 56 0a 11 xor r5, r4, r5
+# CHECK: 50: 99 f8 8e 13 ne r7, r14, r15
+# CHECK: 54: 99 f9 8e 13 ge r7, r14, r15
+# CHECK: 58: 99 fb 8e 13 geu r7, r14, r15
+# CHECK: 5c: 99 fa 8e 13 lt r7, r14, r15
+# CHECK: 60: 99 fc 8e 13 ltu r7, r14, r15
+# CHECK: 64: 99 de 0e 13 ashl r7, r12, r13
+# CHECK: 68: 99 dd 0e 13 lshl r7, r12, r13
+# CHECK: 6c: 99 ff 8e 13 mul r7, r14, r15
+# CHECK: 70: 19 2a e4 10 divs r18, r31, r3, r2
+---
+name:            test_call
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; 4.1.2
+    $r18 = CLB $r3
+    $r24 = CLZ $r11
+    ; 4.1.3
+    $r5 = EXTENDs8 $r6
+    $r5 = EXTENDu8 $r8
+    $r5 = EXTENDs16 $r6
+    $r5 = EXTENDu16 $r8
+    ; 4.1.4
+    $r5 = EQZ $r14
+    $r5 = NEZ $r14
+    ; 4.1.5
+    $r5 = ABS $r10, implicit-def $srcarry
+    ; 4.1.6
+    $r5 = ADD_add_r_ri $r8, 63, implicit-def $srcarry
+    $r7 = ADD_add_r_ri $r8, -64, implicit-def $srcarry
+    ; 4.1.7
+    $r7 = SELNEZ $r2, $r3, $r27
+    $r7 = SELEQZ $r2, $r3, $r27
+    ; 4.1.8
+    $r5 = ADD $r3, $r2, implicit-def $srcarry
+    $r5 = SUB $r15, $r15, implicit-def $srcarry
+    $r6 = ADC $r4, $r2, implicit-def $srcarry, implicit $srcarry
+    $r6 = SBC $r4, $r2, implicit-def $srcarry, implicit $srcarry
+    ; 4.1.9
+    $r5 = AND $r2, $r3
+    $r5 = OR $r14, $r15
+    $r5 = XOR $r4, $r5
+    ; 4.1.10
+    $r7 = NE $r14, $r15
+    $r7 = GE $r14, $r15
+    $r7 = GEU $r14, $r15
+    $r7 = LT $r14, $r15
+    $r7 = LTU $r14, $r15
+    ; 4.1.11
+    $r7 = ASHL $r12, $r13
+    $r7 = LSHL $r12, $r13
+    ; 4.1.12
+    $r7 = MUL_mul_r_rr $r14, $r15
+    ; 4.1.2
+    $r18, $r31 = DIVS $r31, $r3, $r2
+...

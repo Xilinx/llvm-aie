@@ -1,0 +1,35 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+
+# CHECK: 0: 01 00 nop
+# CHECK: 2: 19 00 00 00 nopa
+# CHECK: 6: 19 00 00 38 nopb
+# CHECK: a: 19 00 00 10 nopx
+# CHECK: e: 19 07 00 18 nopm
+# CHECK: 12: 19 00 00 08 nops
+# CHECK: 16: 09 78 00 00 nopv
+# CHECK: 1a: 15 00 00 00 00 00 nopxm
+---
+name:            test_call
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    NOP
+    NOPA
+    NOPB
+    NOPX
+    NOPM
+    NOPS
+    NOPV
+    NOPXM
+...

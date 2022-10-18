@@ -1,0 +1,145 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+
+# CHECK: 0: d9 01 8c 05 lda.s8 r0, [p5, #-4]
+# CHECK: 4: d9 01 8e 06 lda.s16 r0, [p6, #-4]
+# CHECK: 8: d9 03 6d 05 lda.u8 r1, [p5, #3]
+# CHECK: c: d9 03 6f 06 lda.u16 r1, [p6, #3]
+# CHECK: 10: d9 07 10 05 lda.s8 r3, [p5, dj0]
+# CHECK: 14: d9 07 32 06 lda.s16 r3, [p6, dj1]
+# CHECK: 18: d9 09 51 05 lda.u8 r4, [p5, dj2]
+# CHECK: 1c: d9 09 73 06 lda.u16 r4, [p6, dj3]
+# CHECK: 20: d9 0b 84 05 lda.s8 r5, [p5], #-8
+# CHECK: 24: d9 0b 86 06 lda.s16 r5, [p6], #-8
+# CHECK: 28: d9 0d 75 05 lda.u8 r6, [p5], #7
+# CHECK: 2c: d9 0d 77 06 lda.u16 r6, [p6], #7
+# CHECK: 30: d9 0f 08 05 lda.s8 r7, [p5], m0
+# CHECK: 34: d9 0f 2a 06 lda.s16 r7, [p6], m1
+# CHECK: 38: d9 11 49 05 lda.u8 r8, [p5], m2
+# CHECK: 3c: d9 11 6b 06 lda.u16 r8, [p6], m3
+# CHECK: 40: d9 b6 02 07 lda p6, [p7, #0]
+# CHECK: 44: 59 83 06 06 lda m1, [p6, #4]
+# CHECK: 48: 59 a5 fe 05 lda dj2, [p5, #-4]
+# CHECK: 4c: 59 97 82 04 lda dn3, [p4, #-128]
+# CHECK: 50: 59 b9 7e 03 lda dc4, [p3, #124]
+# CHECK: 54: d9 b6 10 07 lda p6, [p7, dj0]
+# CHECK: 58: 59 83 30 06 lda m1, [p6, dj1]
+# CHECK: 5c: 59 a5 50 05 lda dj2, [p5, dj2]
+# CHECK: 60: 59 97 70 04 lda dn3, [p4, dj3]
+# CHECK: 64: 59 b9 90 03 lda dc4, [p3, dj4]
+# CHECK: 68: d9 b6 01 07 lda p6, [p7], #0
+# CHECK: 6c: 59 83 03 06 lda m1, [p6], #4
+# CHECK: 70: 59 a5 ff 05 lda dj2, [p5], #-4
+# CHECK: 74: 59 97 81 04 lda dn3, [p4], #-256
+# CHECK: 78: 59 b9 7f 03 lda dc4, [p3], #252
+# CHECK: 7c: d9 b6 08 07 lda p6, [p7], m0
+# CHECK: 80: 59 83 28 06 lda m1, [p6], m1
+# CHECK: 84: 59 a5 48 05 lda dj2, [p5], m2
+# CHECK: 88: 59 97 68 04 lda dn3, [p4], m3
+# CHECK: 8c: 59 b9 88 03 lda dc4, [p3], m4
+# CHECK: 90: d9 b6 18 07 lda.2d p6, [p7], d0
+# CHECK: 94: 59 83 38 06 lda.2d m1, [p6], d1
+# CHECK: 98: 59 a5 58 05 lda.2d dj2, [p5], d2
+# CHECK: 9c: 59 97 78 04 lda.2d dn3, [p4], d3
+# CHECK: a0: 59 b9 98 03 lda.2d dc4, [p3], d4
+# CHECK: a4: d9 0f 18 05 lda.2d.s8 r7, [p5], d0
+# CHECK: a8: d9 0f 3a 06 lda.2d.s16 r7, [p6], d1
+# CHECK: ac: d9 11 59 05 lda.2d.u8 r8, [p5], d2
+# CHECK: b0: d9 11 7b 06 lda.2d.u16 r8, [p6], d3
+# CHECK: b4: d9 b6 00 07 lda.3d p6, [p7], d0
+# CHECK: b8: 59 83 20 06 lda.3d m1, [p6], d1
+# CHECK: bc: 59 a5 40 05 lda.3d dj2, [p5], d2
+# CHECK: c0: 59 97 60 04 lda.3d dn3, [p4], d3
+# CHECK: c4: 59 b9 00 03 lda.3d dc4, [p3], d0
+# CHECK: c8: d9 0f 00 05 lda.3d.s8 r7, [p5], d0
+# CHECK: cc: d9 0f 22 06 lda.3d.s16 r7, [p6], d1
+# CHECK: d0: d9 11 41 05 lda.3d.u8 r8, [p5], d2
+# CHECK: d4: d9 11 63 06 lda.3d.u16 r8, [p6], d3
+# CHECK: d8: 19 80 03 00 lda.tm r0, [p0]
+
+---
+name:            test_call
+alignment:       16
+body:             |
+  bb.0 (align 16):
+
+    $r0 = LDA_S8_ag_idx_imm $p5, -4
+    $r0 = LDA_S16_ag_idx_imm $p6, -4
+    $r1 = LDA_U8_ag_idx_imm $p5, 3
+    $r1 = LDA_U16_ag_idx_imm $p6, 3
+
+    $r3 = LDA_S8_ag_idx $p5, $dj0
+    $r3 = LDA_S16_ag_idx $p6, $dj1
+    $r4 = LDA_U8_ag_idx $p5, $dj2
+    $r4 = LDA_U16_ag_idx $p6, $dj3
+
+    $r5, $p5 = LDA_S8_ag_pstm_nrm_imm $p5, -8
+    $r5, $p6 = LDA_S16_ag_pstm_nrm_imm $p6, -8
+    $r6, $p5 = LDA_U8_ag_pstm_nrm_imm $p5, 7
+    $r6, $p6 = LDA_U16_ag_pstm_nrm_imm $p6, 7
+
+    $r7, $p5 = LDA_S8_ag_pstm_nrm $p5, $m0
+    $r7, $p6 = LDA_S16_ag_pstm_nrm $p6, $m1
+    $r8, $p5 = LDA_U8_ag_pstm_nrm $p5, $m2
+    $r8, $p6 = LDA_U16_ag_pstm_nrm $p6, $m3
+
+    $p6 = LDA_dms_lda_idx_imm $p7, 0
+    $m1 = LDA_dms_lda_idx_imm $p6, 4
+    $dj2 = LDA_dms_lda_idx_imm $p5, -4
+    $dn3 = LDA_dms_lda_idx_imm $p4, -128
+    $dc4 = LDA_dms_lda_idx_imm $p3, 124
+
+    $p6 = LDA_dms_lda_idx $p7, $dj0
+    $m1 = LDA_dms_lda_idx $p6, $dj1
+    $dj2 = LDA_dms_lda_idx $p5, $dj2
+    $dn3 = LDA_dms_lda_idx $p4, $dj3
+    $dc4 = LDA_dms_lda_idx $p3, $dj4
+
+    $p6, $p7 = LDA_dms_lda_pstm_nrm_imm $p7, 0
+    $m1, $p6 = LDA_dms_lda_pstm_nrm_imm $p6, 4
+    $dj2, $p5 = LDA_dms_lda_pstm_nrm_imm $p5, -4
+    $dn3, $p4 = LDA_dms_lda_pstm_nrm_imm $p4, -256
+    $dc4, $p3 = LDA_dms_lda_pstm_nrm_imm $p3, 252
+
+    $p6, $p7 = LDA_dms_lda_pstm_nrm $p7, $m0
+    $m1, $p6 = LDA_dms_lda_pstm_nrm $p6, $m1
+    $dj2, $p5 = LDA_dms_lda_pstm_nrm $p5, $m2
+    $dn3, $p4 = LDA_dms_lda_pstm_nrm $p4, $m3
+    $dc4, $p3 = LDA_dms_lda_pstm_nrm $p3, $m4
+
+    $p6, $p7, $dc0 = LDA_2D_dms_lda $p7, $d0
+    $m1, $p6, $dc1 = LDA_2D_dms_lda $p6, $d1
+    $dj2, $p5, $dc2 = LDA_2D_dms_lda $p5, $d2
+    $dn3, $p4, $dc3 = LDA_2D_dms_lda $p4, $d3
+    $dc4, $p3, $dc4 = LDA_2D_dms_lda $p3, $d4
+
+    $r7, $p5, $dc0 = LDA_2D_S8_dmhb_lda $p5, $d0
+    $r7, $p6, $dc1 = LDA_2D_S16_dmhb_lda $p6, $d1
+    $r8, $p5, $dc2 = LDA_2D_U8_dmhb_lda $p5, $d2
+    $r8, $p6, $dc3 = LDA_2D_U16_dmhb_lda $p6, $d3
+
+    $p6, $p7, $dc0, $dc4 = LDA_3D_dms_lda $p7, $d0_3d
+    $m1, $p6, $dc1, $dc5 = LDA_3D_dms_lda $p6, $d1_3d
+    $dj2, $p5, $dc2, $dc6 = LDA_3D_dms_lda $p5, $d2_3d
+    $dn3, $p4, $dc3, $dc7 = LDA_3D_dms_lda $p4, $d3_3d
+    $dc4, $p3, $dc0, $dc4 = LDA_3D_dms_lda $p3, $d0_3d
+
+    $r7, $p5, $dc0, $dc4 = LDA_3D_S8_dmhb_lda $p5, $d0_3d
+    $r7, $p6, $dc1, $dc5 = LDA_3D_S16_dmhb_lda $p6, $d1_3d
+    $r8, $p5, $dc2, $dc6 = LDA_3D_U8_dmhb_lda $p5, $d2_3d
+    $r8, $p6, $dc3, $dc7 = LDA_3D_U16_dmhb_lda $p6, $d3_3d
+
+    ; 3.21 LD.TM - Scalar Load from Tile Memory Map
+    $r0 = LDA_TM $p0 :: (load (s32) from custom "TileMemory")
+
+...

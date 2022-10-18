@@ -1,0 +1,24 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc -O2 --march=aie %s --start-after=post-RA-sched --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie -dr %t | FileCheck %s
+# CHECK: 14: 01 00   nop
+# CHECK: 16: 01 00   nop
+# CHECK: 18: 01 00   nop
+# CHECK: 1a: 01 00   nop
+# CHECK: 1c: 01 00   nop
+# CHECK: 1e: 01 00   nop
+# CHECK-NOT: 20:
+
+---
+name:            func
+body:             |
+  bb.0:
+     $r0 = ADD  $r6,  $r7
+     $r0 = OR  $r0, $r6
+    PseudoRET implicit $lr, implicit killed $r0
+...

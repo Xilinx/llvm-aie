@@ -1,0 +1,81 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: not --crash llc -mtriple=aie2 -run-pass machineverifier -o /dev/null %s 2>&1 | FileCheck %s
+
+# This test ensures that the Machine Verifier detects tied physical registers
+# that don't match.
+
+---
+name:            tied_ok
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    $p5, $dc3 = PADDA_2D $p5, $d3
+    $p5, $dc3, $dc7 = PADDA_3D $p5, $d3_3d
+    $p5, $dc3 = PADDB_2D $p5, $d3
+    $p5, $dc3, $dc7 = PADDB_3D $p5, $d3_3d
+    $p5, $dc3 = PADDS_2D $p5, $d3
+    $p5, $dc3, $dc7 = PADDS_3D $p5, $d3_3d
+...
+
+# Virtual registers are not required to be tied.
+---
+name:            virtual_ok
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    %0:ep = COPY $p0
+    %12:ed = COPY $d0
+    %23:eds = COPY $d0_3d
+    %10:ep, %11:edc = PADDA_2D %0, %12
+    %20:ep, %21:edc, %22:edc = PADDA_3D %0, %23
+    %30:ep, %31:edc = PADDB_2D %0, %12
+    %40:ep, %41:edc, %42:edc = PADDB_3D %0, %23
+    %50:ep, %51:edc = PADDS_2D %0, %12
+    %60:ep, %61:edc, %62:edc = PADDS_3D %0, %23
+...
+
+---
+name:            tied_nok
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    liveins: $p5, $d1_3d, $d4
+
+    ; CHECK-NOT: Bad machine code
+    ; CHECK-COUNT-10: Bad machine code: Tied physical registers must match
+    $p5, $dc3 = PADDA_2D $p5, $d1
+    $p5, $dc4, $dc7 = PADDA_3D $p5, $d1_3d
+    $p5, $dc4, $dc5 = PADDA_3D $p5, $d1_3d
+    $p5, $dc1, $dc7 = PADDA_3D $p5, $d1_3d
+    $p5, $dc3 = PADDB_2D $p5, $d1
+    $p5, $dc4, $dc7 = PADDB_3D $p5, $d1_3d
+    $p5, $dc4, $dc5 = PADDB_3D $p5, $d1_3d
+    $p5, $dc3 = PADDS_2D $p5, $d1
+    $p5, $dc4, $dc7 = PADDS_3D $p5, $d1_3d
+    $p5, $dc4, $dc5 = PADDS_3D $p5, $d1_3d
+
+    ; Below instructions have hasExtraSrcRegAllocReq and hasExtraDefRegAllocReq attributes
+    ; which essentially bypass the register flags. The renamable attributes
+    ; below should trigger no verification error.
+    ; CHECK-NOT: Bad machine code
+    $p5, renamable $dc3 = PADDA_2D $p5, $d3
+    $p5, $dc3 = PADDA_2D $p5, renamable $d3
+    $p5, renamable $dc3, $dc7 = PADDA_3D $p5, $d3_3d
+    $p5, $dc3, renamable $dc7 = PADDA_3D $p5, $d3_3d
+    $p5, $dc3, $dc7 = PADDA_3D $p5, renamable $d3_3d
+    $p5, renamable $dc3 = PADDB_2D $p5, $d3
+    $p5, $dc3 = PADDB_2D $p5, renamable $d3
+    $p5, renamable $dc3, $dc7 = PADDB_3D $p5, $d3_3d
+    $p5, $dc3, renamable $dc7 = PADDB_3D $p5, $d3_3d
+    $p5, $dc3, $dc7 = PADDB_3D $p5, renamable $d3_3d
+    $p5, renamable $dc3 = PADDS_2D $p5, $d3
+    $p5, $dc3 = PADDS_2D $p5, renamable $d3
+    $p5, renamable $dc3, $dc7 = PADDS_3D $p5, $d3_3d
+    $p5, $dc3, renamable $dc7 = PADDS_3D $p5, $d3_3d
+    $p5, $dc3, $dc7 = PADDS_3D $p5, renamable $d3_3d
+...

@@ -1,9 +1,11 @@
 //===- LegalizerHelperTest.cpp
-//-----------------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -4229,6 +4231,36 @@ TEST_F(AArch64GISelMITest, MoreElementsSelect) {
   CHECK: [[SELECT:%[0-9]+]]:_(<2 x s32>) = G_SELECT [[SHUFFLE]]:_(<2 x s1>), [[BITCAST0]]:_, [[BITCAST1]]:_
   )";
 
+  EXPECT_TRUE(CheckMachineFunction(*MF, CheckStr)) << *MF;
+}
+
+TEST_F(AArch64GISelMITest, LibCallMul) {
+  setUp();
+  if (!TM)
+    return;
+
+  // Declare your legalization info
+  DefineLegalizerInfo(
+      A, { getActionDefinitionsBuilder(G_MUL).libcallFor({s64}); });
+  // Build
+  auto MIBMUL = B.buildInstr(TargetOpcode::G_MUL, {LLT::scalar(64)},
+                             {Copies[0], Copies[1]});
+  AInfo Info(MF->getSubtarget());
+  DummyGISelObserver Observer;
+  LegalizerHelper Helper(*MF, Info, Observer, B);
+  LostDebugLocObserver DummyLocObserver("");
+  EXPECT_EQ(LegalizerHelper::LegalizeResult::Legalized,
+            Helper.libcall(*MIBMUL, DummyLocObserver));
+
+  auto CheckStr = R"(
+    CHECK: [[COPY0:%[0-9]+]]:_(s64) = COPY $x0
+    CHECK: [[COPY1:%[0-9]+]]:_(s64) = COPY $x1
+    CHECK: $x0 = COPY [[COPY0]]
+    CHECK: $x1 = COPY [[COPY1]]
+    CHECK: BL &__muldi3
+  )";
+
+  // Check
   EXPECT_TRUE(CheckMachineFunction(*MF, CheckStr)) << *MF;
 }
 

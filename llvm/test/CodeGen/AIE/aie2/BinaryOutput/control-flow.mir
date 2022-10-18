@@ -1,0 +1,83 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+
+# CHECK: 0: 15 01 80 ff 03 00 jl #2047
+# CHECK: 10: 19 54 01 10 jl p5
+# CHECK: 20: 95 00 80 ff ff 07 j #1048575
+# CHECK: 30: 19 84 00 10 j p2
+# CHECK: 40: 95 01 40 00 00 30 jnz r6, #0
+# CHECK: 50: 95 01 00 00 00 38 jz r7, #0
+# CHECK: 60: 19 18 00 10 ret lr
+
+---
+name:            test_call
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    JL 2047, implicit-def $lr
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier
+  bb.1 (align 16):
+    JL_IND $p5, implicit-def $lr
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier
+  bb.2 (align 16):
+    J_jump_imm 1048575 ; (2^20 - 1)
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier
+  bb.3 (align 16):
+    J_jump_ind $p2
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier
+  bb.4 (align 16):
+    JNZ $r6, %bb.5
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier
+  bb.5 (align 16):
+    JZ $r7, %bb.6
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier
+  bb.6 (align 16):
+    RET implicit $lr
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier
+
+...

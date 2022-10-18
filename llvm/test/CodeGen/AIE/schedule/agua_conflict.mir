@@ -1,0 +1,61 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc --issue-limit=8 -start-before=post-RA-sched %s -o - | FileCheck %s
+#
+# This file checks that 2 agua instructions (with different slots) can't be
+# issued together.
+--- |
+  ; ModuleID = 'agua_conflict.ll'
+  target triple = "aie"
+  define dso_local void @agua_conflict() {
+  entry:
+    br label %dms_lda_spil__dms_ldb_sp_imm
+  dms_lda_spil__dms_ldb_sp_imm:
+    br label %lda_ptr_inc_sp_imm__dms_ldb_spis
+  lda_ptr_inc_sp_imm__dms_ldb_spis:
+    ret void
+  }
+...
+# CHECK-LABEL: bb.0
+# CHECK: lda.spil r1, [sp, #-32]
+# CHECK-NOT: ;
+# CHECK: padda [sp], #-32
+
+# Note to the future:
+# At the time this test was written, only 1 Composite instruction of size
+# 128-bit allows the scheduler/packetizer to bundle LDB and LNG together. But,
+# it can also be done using 2 (over 15) 96-bit formats. Once these formats will
+# be implemented, the shorter format (in size) will be selected. It will be one
+# of the 2 96-bit candidates.
+# Normally, the test will not change as the order of the slots is the same
+# (LDB before LNG) for every format of AIE1.
+
+# CHECK-LABEL: bb.1
+# CHECK: paddb [sp], #16;{{.*}} lda.spil r2, [sp, #-32]
+
+# CHECK-LABEL: bb.2
+# CHECK: padda [sp], #-32;{{.*}} ldb r3, [sp, #16]
+---
+name:            agua_conflict
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    ; LDA_SPIL (lng/agua) can't be issued with PADDA (lda/agua)
+    $r1 = LDA_SPIL_GPR -32, implicit $sp
+    PADDA_sp_imm -32, implicit-def $sp, implicit $sp
+    PseudoBR %bb.1
+  bb.1.dms_lda_spil__dms_ldb_sp_imm:
+    ; LDA_SPIL (lng/agua) can still be issued with PADDB (ldb/agub)
+    $r2 = LDA_SPIL_GPR -32, implicit $sp
+    PADDB_sp_imm 16, implicit-def $sp, implicit $sp
+    PseudoBR %bb.2
+  bb.2.lda_ptr_inc_sp_imm__dms_ldb_spis:
+    ; PADDA (lda/agua) can still be issued with LDB_spis (ldb/agub)
+    $r3 = LDB_spis 16, implicit $sp
+    PADDA_sp_imm -32, implicit-def $sp, implicit $sp
+...

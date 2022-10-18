@@ -1,0 +1,263 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc --mtriple=aie2 --mc-relax-all --start-after=aie-finalize-mi-bundles --filetype=obj %s -o %t_t.o
+#; RUN: llvm-objdump --triple=aie2  -dr %t_t.o | grep -v -e '^$' | FileCheck %s
+
+# We check that we ignore --mc-relax-all by expecting reasonable nop
+# sequences and properly aligned block labels
+
+# CHECK-LABEL: <f>:
+# CHECK: 01 00        	nop
+# CHECK-NEXT: 01 00        	nop
+# CHECK-NEXT: 01 00        	nop
+# CHECK-NEXT: 01 00        	nop
+# CHECK-NEXT: 01 00        	nop
+# CHECK: 01 00        	nop
+# CHECK-NEXT: 01 00        	nop
+# CHECK-NEXT: 01 00        	nop
+# CHECK-NEXT: 01 00        	nop
+# CHECK-NEXT: 01 00        	nop
+# CHECK-NEXT: 00000040 <.LBB0_2>:
+# CHECK: 01 00          nop
+# CHECK-NEXT: 01 00         nop
+# CHECK-NEXT: 01 00         nop
+# CHECK-NEXT: 01 00         nop
+# CHECK-NEXT: 01 00         nop
+# CHECK: 01 00        	nop
+# CHECK-NEXT: 01 00        	nop
+# CHECK-NEXT: 01 00        	nop
+# CHECK-NEXT: 01 00        	nop
+# CHECK-NEXT: bb 8e 03 00 00 00 00 00 00 00	nopa	;		nopb	;		nopm
+# CHECK-NEXT: 00000070 <.LBB0_4>:
+# CHECK: 01 00          nop
+# CHECK-NEXT: 01 00         nop
+# CHECK-NEXT: 01 00         nop
+# CHECK-NEXT: 01 00         nop
+# CHECK-NEXT: 01 00         nop
+# CHECK: 01 00        	nop
+# CHECK-NEXT: 01 00        	nop
+# CHECK-NEXT: 01 00        	nop
+# CHECK-NEXT: 01 00        	nop
+# CHECK-NEXT: bb 8e 03 00 00 00 00 00 00 00	nopa	;		nopb	;		nopm
+# CHECK-NEXT: 000000a0 <.LBB0_6>:
+# CHECK: ret lr
+# CHECK-NEXT: 01 00        	nop
+# CHECK-NEXT: 01 00        	nop
+# CHECK-NEXT: 01 00        	nop
+# CHECK-NEXT: 01 00        	nop
+# CHECK-NEXT: 01 00        	nop
+# CHECK-NEXT: : bb 8e 03 00 00 00 00 00 00 00	nopa	;		nopb	;		nopm
+
+--- |
+  ; ModuleID = 'nops.c'
+  source_filename = "nops.c"
+  target datalayout = "e-m:e-p:20:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-f32:32:32-i64:32-f64:32-a:0:32-n32"
+  target triple = "aie2"
+
+  ; Function Attrs: nounwind
+  define dso_local void @f(i32 noundef %a, i32 noundef %b, i32 noundef %c) local_unnamed_addr #0 {
+  entry:
+    %tobool.not = icmp eq i32 %a, 0
+    br i1 %tobool.not, label %if.end, label %if.then
+
+  if.then:                                          ; preds = %entry
+    %call = tail call i32 @g(i32 noundef %a) #2
+    br label %if.end
+
+  if.end:                                           ; preds = %if.then, %entry
+    %tobool1.not = icmp eq i32 %b, 0
+    br i1 %tobool1.not, label %if.end4, label %if.then2
+
+  if.then2:                                         ; preds = %if.end
+    %call3 = tail call i32 @g(i32 noundef 2) #2
+    br label %if.end4
+
+  if.end4:                                          ; preds = %if.then2, %if.end
+    %tobool5.not = icmp eq i32 %c, 0
+    br i1 %tobool5.not, label %if.end8, label %if.then6
+
+  if.then6:                                         ; preds = %if.end4
+    %call7 = tail call i32 @g(i32 noundef 7) #2
+    br label %if.end8
+
+  if.end8:                                          ; preds = %if.then6, %if.end4
+    ret void
+  }
+
+  declare dso_local i32 @g(i32 noundef) local_unnamed_addr #1
+
+  attributes #0 = { nounwind "frame-pointer"="none" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" }
+  attributes #1 = { "frame-pointer"="none" "no-trapping-math"="true" "stack-protector-buffer-size"="8" }
+  attributes #2 = { nounwind }
+
+  !llvm.module.flags = !{!0}
+  !llvm.ident = !{!1}
+
+  !0 = !{i32 1, !"wchar_size", i32 4}
+  !1 = !{!"clang version 16.0.0 (git@gitenterprise.xilinx.com:XRLabs/llvm-aie.git 970869f9d777eacf11ab6cf75707c369980025d1)"}
+
+...
+---
+name:            f
+alignment:       16
+exposesReturnsTwice: false
+legalized:       true
+regBankSelected: true
+selected:        true
+failedISel:      false
+tracksRegLiveness: true
+hasWinCFI:       false
+callsEHReturn:   false
+callsUnwindInit: false
+hasEHCatchret:   false
+hasEHScopes:     false
+hasEHFunclets:   false
+failsVerification: false
+tracksDebugUserValues: true
+registers:       []
+liveins:         []
+calleeSavedRegisters: [ '$lr', '$r16', '$r17', '$r18', '$r19', '$r20',
+                        '$r21', '$r22', '$r23', '$p6', '$p7' ]
+frameInfo:
+  isFrameAddressTaken: false
+  isReturnAddressTaken: false
+  hasStackMap:     false
+  hasPatchPoint:   false
+  stackSize:       32
+  offsetAdjustment: 0
+  maxAlignment:    4
+  adjustsStack:    true
+  hasCalls:        true
+  stackProtector:  ''
+  functionContext: ''
+  maxCallFrameSize: 0
+  cvBytesOfCalleeSavedRegisters: 0
+  hasOpaqueSPAdjustment: false
+  hasVAStart:      false
+  hasMustTailInVarArgFunc: false
+  hasTailCall:     false
+  localFrameSize:  0
+  savePoint:       ''
+  restorePoint:    ''
+fixedStack:      []
+stack:
+  - { id: 0, name: '', type: spill-slot, offset: 8, size: 4, alignment: 4,
+      stack-id: default, callee-saved-register: '$lr', callee-saved-restored: true,
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 1, name: '', type: spill-slot, offset: 4, size: 4, alignment: 4,
+      stack-id: default, callee-saved-register: '$r16', callee-saved-restored: true,
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 2, name: '', type: spill-slot, offset: 0, size: 4, alignment: 4,
+      stack-id: default, callee-saved-register: '$r17', callee-saved-restored: true,
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+callSites:       []
+debugValueSubstitutions: []
+constants:       []
+machineFunctionInfo:
+  varArgsFrameIndex: 0
+body:             |
+  bb.0.entry:
+    successors: %bb.2(0x30000000), %bb.1(0x50000000)
+    liveins: $r0, $r1, $r2, $r16, $r17
+
+    frame-setup PADDA_sp_imm 32, implicit-def $sp, implicit $sp
+    ST_dms_spill killed $r16, -28, implicit $sp :: (store (s32) into %stack.1)
+    ST_dms_spill killed $r17, -32, implicit $sp :: (store (s32) into %stack.2)
+    $r17 = MOV_mv_scl killed $r1
+    $r16 = MOV_mv_scl killed $r2
+    renamable $r1 = EQZ renamable $r0
+    ST_dms_spill $lr, -24, implicit $sp :: (store (s32) into %stack.0)
+    JNZ killed renamable $r1, %bb.2
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier
+
+  bb.1.if.then:
+    successors: %bb.2(0x80000000)
+    liveins: $r0, $r16, $r17
+
+    $r1 = MOV_mv_scl killed $r0
+    JL @g, implicit-def $lr
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier csr_aie2, implicit killed $r1, implicit-def dead $r0
+
+  bb.2.if.end:
+    successors: %bb.4(0x30000000), %bb.3(0x50000000)
+    liveins: $r16, $r17
+
+    renamable $r0 = EQZ killed renamable $r17
+    JNZ killed renamable $r0, %bb.4
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier
+
+  bb.3.if.then2:
+    successors: %bb.4(0x80000000)
+    liveins: $r16
+
+    renamable $r1 = MOVA_lda_cg 2
+    JL @g, implicit-def $lr
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier csr_aie2, implicit killed $r1, implicit-def dead $r0
+
+  bb.4.if.end4:
+    successors: %bb.6(0x30000000), %bb.5(0x50000000)
+    liveins: $r16
+
+    renamable $r0 = EQZ killed renamable $r16
+    JNZ killed renamable $r0, %bb.6
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier
+
+  bb.5.if.then6:
+    successors: %bb.6(0x80000000)
+
+    renamable $r1 = MOVA_lda_cg 7
+    JL @g, implicit-def $lr
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier csr_aie2, implicit killed $r1, implicit-def dead $r0
+
+  bb.6.if.end8:
+    $lr = LDA_dms_spill -24, implicit $sp :: (load (s32) from %stack.0)
+    $r17 = LDA_dms_spill -32, implicit $sp :: (load (s32) from %stack.2)
+    $r16 = LDA_dms_spill -28, implicit $sp :: (load (s32) from %stack.1)
+    frame-destroy PADDA_sp_imm -32, implicit-def $sp, implicit $sp
+    NOP
+    NOP
+    NOP
+    NOP
+    RET implicit $lr
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier
+
+...

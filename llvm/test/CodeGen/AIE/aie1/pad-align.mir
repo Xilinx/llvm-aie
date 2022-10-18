@@ -1,0 +1,169 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc -mtriple=aie -start-after=post-RA-sched %s --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie -d --disassemble-zeroes %t | FileCheck %s
+---
+
+# The JL instructions will be delayslot filled with 5 nops;
+# alignment padding for the return address will exapand the last one.
+# The EVENT instructions (except the first) mark the return address and
+# should sit on a 16 byte alignment
+
+# We run through all possible alignment needs, and expect only the final two
+# nops to be touched.
+# leading nop bytes:
+#  01 2 byte
+#  0b 4 byte
+#  17 8 byte
+#  1f 12 byte
+#  00 16 byte
+
+
+# CHECK-LABEL: <test>:
+# CHECK: event
+# CHECK-NEXT: jal
+# CHECK-NEXT: 01 00 nop
+# CHECK-NEXT: 01 00 nop
+# CHECK-NEXT: 01 00 nop
+# CHECK-NEXT: 01 00 nop
+# CHECK-NEXT: 00 {{.*}} nop
+# CHECK-NEXT: 0: {{.*}} event
+
+# CHECK-NEXT: nop
+# CHECK-NEXT: jal
+# CHECK-NEXT: 01 00 nop
+# CHECK-NEXT: 01 00 nop
+# CHECK-NEXT: 01 00 nop
+# CHECK-NEXT: 0b {{.*}} nop
+# CHECK-NEXT: 1f {{.*}} nop
+# CHECK-NEXT: 0: {{.*}} event
+
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: jal
+# CHECK-NEXT: 01 00 nop
+# CHECK-NEXT: 01 00 nop
+# CHECK-NEXT: 01 00 nop
+# CHECK-NEXT: 01 00 nop
+# CHECK-NEXT: 1f {{.*}} nop
+# CHECK-NEXT: 0: {{.*}} event
+
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: jal
+# CHECK-NEXT: 01 00 nop
+# CHECK-NEXT: 01 00 nop
+# CHECK-NEXT: 01 00 nop
+# CHECK-NEXT: 0b {{.*}} nop
+# CHECK-NEXT: 17 {{.*}} nop
+# CHECK-NEXT: 0: {{.*}} event
+
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: jal
+# CHECK-NEXT: 01 00 nop
+# CHECK-NEXT: 01 00 nop
+# CHECK-NEXT: 01 00 nop
+# CHECK-NEXT: 01 00 nop
+# CHECK-NEXT: 17 {{.*}} nop
+# CHECK-NEXT: 0: {{.*}} event
+
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: jal
+# CHECK-NEXT: 01 00 nop
+# CHECK-NEXT: 01 00 nop
+# CHECK-NEXT: 01 00 nop
+# CHECK-NEXT: 0b {{.*}} nop
+# CHECK-NEXT: 0b {{.*}} nop
+# CHECK-NEXT: 0: {{.*}} event
+
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: jal
+# CHECK-NEXT: 01 00 nop
+# CHECK-NEXT: 01 00 nop
+# CHECK-NEXT: 01 00 nop
+# CHECK-NEXT: 01 00 nop
+# CHECK-NEXT: 0b {{.*}} nop
+# CHECK-NEXT: 0: {{.*}} event
+
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: jal
+# CHECK-NEXT: 01 00 nop
+# CHECK-NEXT: 01 00 nop
+# CHECK-NEXT: 01 00 nop
+# CHECK-NEXT: 01 00 nop
+# CHECK-NEXT: 01 00 nop
+# CHECK-NEXT: 0: {{.*}} event
+
+name:            test
+body:             |
+  bb.1.entry:
+    EVENT 0
+    JAL 32, csr_aie1, implicit-def $lr
+    EVENT 0
+    NOP
+    JAL 32, csr_aie1, implicit-def $lr
+    EVENT 0
+    NOP
+    NOP
+    JAL 32, csr_aie1, implicit-def $lr
+    EVENT 0
+    NOP
+    NOP
+    NOP
+    JAL 32, csr_aie1, implicit-def $lr
+    EVENT 0
+    NOP
+    NOP
+    NOP
+    NOP
+    JAL 32, csr_aie1, implicit-def $lr
+    EVENT 0
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    JAL 32, csr_aie1, implicit-def $lr
+    EVENT 0
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    JAL 32, csr_aie1, implicit-def $lr
+    EVENT 0
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    JAL 32, csr_aie1, implicit-def $lr
+    EVENT 0
+    PseudoRET implicit $lr
+...

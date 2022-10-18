@@ -1,0 +1,31 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+
+# CHECK: 0: 09 04 3c 01 vmov.d cm1, cm2
+# CHECK: 4: 09 0c 3c 00 vmov.d cm3, cm0
+# CHECK: 8: 09 14 3c 04 vmov.d cm5, cm8
+# CHECK: c: 09 1c bc 00 vmov.d cm7, cm1
+# CHECK: 10: 09 10 3c 03 vmov.d cm4, cm6
+
+---
+name:            test_vmovd
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; 5.7 VMOV.D – Move accumulator register delayed
+    $cm1 = VMOV_D $cm2
+    $cm3 = VMOV_D $cm0
+    $cm5 = VMOV_D $cm8
+    $cm7 = VMOV_D $cm1
+    $cm4 = VMOV_D $cm6
+...

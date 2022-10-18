@@ -1,0 +1,139 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+
+# CHECK: 0: 99 96 16 0a st p2, [p2, #20]
+# CHECK: 4: 19 a3 12 09 st dj1, [p1, #16]
+# CHECK: 8: 19 b1 f2 08 st dc0, [p0, #-16]
+# CHECK: c: 19 9f ea 09 st dn7, [p1, #-24]
+# CHECK: 10: 19 87 82 09 st m3, [p1, #-128]
+# CHECK: 14: 19 a2 7e 0a st r17, [p2, #124]
+# CHECK: 18: 99 96 10 0a st p2, [p2, dj0]
+# CHECK: 1c: 19 a3 30 09 st dj1, [p1, dj1]
+# CHECK: 20: 19 b1 50 08 st dc0, [p0, dj2]
+# CHECK: 24: 19 9f 70 09 st dn7, [p1, dj3]
+# CHECK: 28: 19 87 90 09 st m3, [p1, dj4]
+# CHECK: 2c: 19 a2 b0 0a st r17, [p2, dj5]
+# CHECK: 30: 99 96 0b 0a st p2, [p2], #20
+# CHECK: 34: 19 a3 09 09 st dj1, [p1], #16
+# CHECK: 38: 19 b1 f9 08 st dc0, [p0], #-16
+# CHECK: 3c: 19 9f f5 09 st dn7, [p1], #-24
+# CHECK: 40: 19 87 81 09 st m3, [p1], #-256
+# CHECK: 44: 19 a2 7f 0a st r17, [p2], #252
+# CHECK: 48: 99 96 08 0a st p2, [p2], m0
+# CHECK: 4c: 19 a3 28 09 st dj1, [p1], m1
+# CHECK: 50: 19 b1 48 08 st dc0, [p0], m2
+# CHECK: 54: 19 9f 68 09 st dn7, [p1], m3
+# CHECK: 58: 19 87 88 09 st m3, [p1], m4
+# CHECK: 5c: 19 a2 a8 0a st r17, [p2], m5
+# CHECK: 60: 19 00 8d 00 st.s8 r0, [p0, #-4]
+# CHECK: 64: 19 00 6f 01 st.s16 r0, [p1, #3]
+# CHECK: 68: 19 00 11 02 st.s8 r0, [p2, dj0]
+# CHECK: 6c: 19 00 33 03 st.s16 r0, [p3, dj1]
+# CHECK: 70: 19 00 85 04 st.s8 r0, [p4], #-8
+# CHECK: 74: 19 00 77 05 st.s16 r0, [p5], #7
+# CHECK: 78: 19 00 09 06 st.s8 r0, [p6], m0
+# CHECK: 7c: 19 00 2b 07 st.s16 r0, [p7], m1
+# CHECK: 80: 19 18 9e 08 st.tm r12, [p0]
+# CHECK: 84: 99 16 9e 0a st.tm p2, [p2]
+# CHECK: 88: 99 02 9e 09 st.tm lr, [p1]
+# CHECK: 8c: 19 35 9e 08 st.tm dc2, [p0]
+# CHECK: 90: 19 2f 9e 09 st.tm dj7, [p1]
+# CHECK: 94: 19 17 9e 0a st.tm dn3, [p2]
+# CHECK: 98: 99 96 18 0a st.2d p2, [p2], d0
+# CHECK: 9c: 19 a3 38 09 st.2d dj1, [p1], d1
+# CHECK: a0: 19 b1 58 08 st.2d dc0, [p0], d2
+# CHECK: a4: 19 9f 78 09 st.2d dn7, [p1], d3
+# CHECK: a8: 19 87 98 09 st.2d m3, [p1], d4
+# CHECK: ac: 19 a2 b8 0a st.2d r17, [p2], d5
+# CHECK: b0: 99 96 00 0a st.3d p2, [p2], d0
+# CHECK: b4: 19 a3 00 09 st.3d dj1, [p1], d0
+# CHECK: b8: 19 b1 20 08 st.3d dc0, [p0], d1
+# CHECK: bc: 19 9f 40 09 st.3d dn7, [p1], d2
+# CHECK: c0: 19 87 60 09 st.3d m3, [p1], d3
+# CHECK: c4: 19 a2 00 0a st.3d r17, [p2], d0
+# CHECK: c8: 19 00 b9 06 st.2d.s8 r0, [p6], d5
+# CHECK: cc: 19 00 1b 07 st.2d.s16 r0, [p7], d0
+# CHECK: d0: 19 00 61 06 st.3d.s8 r0, [p6], d3
+# CHECK: d4: 19 00 03 07 st.3d.s16 r0, [p7], d0
+---
+name:            test_call
+alignment:       16
+body:             |
+  bb.0 (align 16):
+
+    ST_dms_sts_idx_imm $p2, $p2, 20
+    ST_dms_sts_idx_imm $dj1, $p1, 16
+    ST_dms_sts_idx_imm $dc0, $p0, -16
+    ST_dms_sts_idx_imm $dn7, $p1, -24
+    ST_dms_sts_idx_imm $m3, $p1, -128
+    ST_dms_sts_idx_imm $r17, $p2, 124
+
+    ST_dms_sts_idx $p2, $p2, $dj0
+    ST_dms_sts_idx $dj1, $p1, $dj1
+    ST_dms_sts_idx $dc0, $p0, $dj2
+    ST_dms_sts_idx $dn7, $p1, $dj3
+    ST_dms_sts_idx $m3, $p1, $dj4
+    ST_dms_sts_idx $r17, $p2, $dj5
+
+    $p2 = ST_dms_sts_pstm_nrm_imm $p2, $p2, 20
+    $p1 = ST_dms_sts_pstm_nrm_imm $dj1, $p1, 16
+    $p0 = ST_dms_sts_pstm_nrm_imm $dc0, $p0, -16
+    $p1 = ST_dms_sts_pstm_nrm_imm $dn7, $p1, -24
+    $p1 = ST_dms_sts_pstm_nrm_imm $m3, $p1, -256
+    $p2 = ST_dms_sts_pstm_nrm_imm $r17, $p2, 252
+
+    $p2 = ST_dms_sts_pstm_nrm $p2, $p2, $m0
+    $p1 = ST_dms_sts_pstm_nrm $dj1, $p1, $m1
+    $p0 = ST_dms_sts_pstm_nrm $dc0, $p0, $m2
+    $p1 = ST_dms_sts_pstm_nrm $dn7, $p1, $m3
+    $p1 = ST_dms_sts_pstm_nrm $m3, $p1, $m4
+    $p2 = ST_dms_sts_pstm_nrm $r17, $p2, $m5
+
+    ST_S8_ag_idx_imm $r0, $p0, -4
+    ST_S16_ag_idx_imm $r0, $p1, 3
+    ST_S8_ag_idx $r0, $p2, $dj0
+    ST_S16_ag_idx $r0, $p3, $dj1
+
+    $p4 = ST_S8_ag_pstm_nrm_imm $r0, $p4, -8
+    $p5 = ST_S16_ag_pstm_nrm_imm $r0, $p5, 7
+    $p6 = ST_S8_ag_pstm_nrm $r0, $p6, $m0
+    $p7 = ST_S16_ag_pstm_nrm $r0, $p7, $m1
+
+    ; 3.18 ST.TM - Scalar Store to Tile Memory Map
+    ST_TM $r12, $p0 :: (store (s32) into custom "TileMemory")
+    ST_TM $p2, $p2 :: (store (s32) into custom "TileMemory")
+    ST_TM $lr, $p1 :: (store (s32) into custom "TileMemory")
+    ST_TM $dc2, $p0 :: (store (s32) into custom "TileMemory")
+    ST_TM $dj7, $p1 :: (store (s32) into custom "TileMemory")
+    ST_TM $dn3, $p2 :: (store (s32) into custom "TileMemory")
+
+    $p2, $dc0 = ST_2D_dms_sts $p2, $p2, $d0
+    $p1, $dc1 = ST_2D_dms_sts $dj1, $p1, $d1
+    $p0, $dc2 = ST_2D_dms_sts $dc0, $p0, $d2
+    $p1, $dc3 = ST_2D_dms_sts $dn7, $p1, $d3
+    $p1, $dc4 = ST_2D_dms_sts $m3, $p1, $d4
+    $p2, $dc5 = ST_2D_dms_sts $r17, $p2, $d5
+
+    $p2, $dc0, $dc4 = ST_3D_dms_sts $p2, $p2, $d0_3d
+    $p1, $dc0, $dc4 = ST_3D_dms_sts $dj1, $p1, $d0_3d
+    $p0, $dc1, $dc5 = ST_3D_dms_sts $dc0, $p0, $d1_3d
+    $p1, $dc2, $dc6 = ST_3D_dms_sts $dn7, $p1, $d2_3d
+    $p1, $dc3, $dc7 = ST_3D_dms_sts $m3, $p1, $d3_3d
+    $p2, $dc0, $dc4 = ST_3D_dms_sts $r17, $p2, $d0_3d
+
+    $p6, $dc5 = ST_2D_S8 $r0, $p6, $d5
+    $p7, $dc0 = ST_2D_S16 $r0, $p7, $d0
+
+    $p6, $dc3, $dc7 = ST_3D_S8 $r0, $p6, $d3_3d
+    $p7, $dc0, $dc4 = ST_3D_S16 $r0, $p7, $d0_3d
+...

@@ -1,0 +1,61 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc -O2 --march=aie2 --start-after=aie-finalize-mi-bundles --filetype=obj %s -o %t
+# RUN: llvm-objdump --triple=aie2 -dr %t | FileCheck %s
+# CHECK: 0: 01 00 nop
+# CHECK: 2: 19 00 00 10 nopx
+# CHECK: 6: 15 00 00 00 00 00 nopxm
+# CHECK: c: 03 80 03 00 00 00 00 00 nops ; nopm
+# CHECK: 14: bb 8e 03 00 00 00 00 00 00 00 nopa ; nopb ; nopm
+# CHECK: 1e: 37 88 03 00 00 00 00 00 00 00 00 00 nops ; nopb ; nopx ; nopm
+# CHECK: 2a: 2f 78 00 00 38 00 40 00 00 00 00 00 00 00 nopa ; nops ; nopm ; nopv
+# CHECK: 38: c0 03 00 88 03 00 00 00 00 00 00 00 00 00 00 00 nopb ; nopa ; nops ; nopx ; nopm ; nopv
+---
+name:            test_call
+alignment:       16
+body:             |
+  bb.0 (align 16):
+  BUNDLE {
+     NOP
+  }
+  BUNDLE {
+    NOPX
+  }
+  BUNDLE {
+    NOPXM
+  }
+  BUNDLE {
+    NOPS
+    NOPM
+  }
+  BUNDLE {
+    NOPA
+    NOPB
+    NOPM
+  }
+  BUNDLE {
+    NOPS
+    NOPB
+    NOPX
+    NOPM
+  }
+  BUNDLE {
+    NOPA
+    NOPS
+    NOPM
+    NOPV
+  }
+
+  BUNDLE {
+    NOPB
+    NOPA
+    NOPS
+    NOPX
+    NOPM
+    NOPV
+  }
+...

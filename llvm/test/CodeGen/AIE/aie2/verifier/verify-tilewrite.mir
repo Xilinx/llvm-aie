@@ -1,0 +1,29 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: not --crash llc -mtriple=aie2 -run-pass machineverifier -o /dev/null %s 2>&1 | FileCheck %s
+
+# This test ensures that the Machine Verifier detects loss of tile memory MMOs
+---
+name:            tm_ok
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ST_TM $r0, $p0 :: (store (s32) into custom "TileMemory")
+    $r1 = LDA_TM $p1 :: (load (s32) from custom "TileMemory")
+...
+
+---
+name:            st_tm_wrong
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; CHECK: Bad machine code: Required Store TileMemory MemOperand not found
+    ; CHECK: Bad machine code: Missing mayLoad flag
+    ; CHECK: Bad machine code: Required Store TileMemory MemOperand not found
+    ST_TM $r0, $p0
+    ST_TM $r0, $p0 :: (load (s32) from custom "TileMemory")
+...

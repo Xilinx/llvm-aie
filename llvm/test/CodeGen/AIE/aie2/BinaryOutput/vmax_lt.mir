@@ -1,0 +1,36 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+
+# CHECK: 0: 19 09 0a 18 vmax_lt.d8 x0, r17:r16, x1, x2
+# CHECK: 4: b9 20 5a 19 vmax_lt.d16 x2, r21, x4, x1
+# CHECK: 8: d9 29 fa 19 vmax_lt.d32 x3, r23, x5, x3
+# CHECK: c: 19 89 1a 1a vmax_lt.s8 x4, r19:r18, x1, x2
+# CHECK: 10: b9 a0 ca 1a vmax_lt.s16 x5, r20, x4, x1
+# CHECK: 14: d9 a9 ba 18 vmax_lt.s32 x1, r19, x5, x3
+# CHECK: 18: 39 3b 0b 1b vmax_lt.bf16 x6, r16, x7, x6
+
+---
+name:            test_vmax_lt
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ;  8.5.2 VMAX_LT - Combined vector maximum and comparison
+    $x0, $l0  = VMAX_LT_D8  $x1, $x2, implicit $crvaddsign
+    $x2, $r21 = VMAX_LT_D16 $x4, $x1, implicit $crvaddsign
+    $x3, $r23 = VMAX_LT_D32 $x5, $x3, implicit $crvaddsign
+
+    $x4, $l1  = VMAX_LT_S8  $x1, $x2
+    $x5, $r20 = VMAX_LT_S16 $x4, $x1
+    $x1, $r19 = VMAX_LT_S32 $x5, $x3
+    $x6, $r16 = VMAX_LT_BF16 $x7, $x6
+...

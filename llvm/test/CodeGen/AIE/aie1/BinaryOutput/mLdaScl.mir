@@ -1,0 +1,169 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc -O2 --march=aie %s --start-after=branch-relaxation --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie -dr %t | FileCheck %s
+# CHECK:       0: 03 08 68 38   lda     r0, [p0]
+# CHECK:       4: 03 08 e8 38   lda     r1, [p0]
+# CHECK:       8: 03 08 68 39   lda     r2, [p0]
+# CHECK:       c: 03 08 e8 39   lda     r3, [p0]
+# CHECK:      10: 03 08 68 3a   lda     r4, [p0]
+# CHECK:      14: 03 08 e8 3a   lda     r5, [p0]
+# CHECK:      18: 03 08 68 3b   lda     r6, [p0]
+# CHECK:      1c: 03 08 e8 3b   lda     r7, [p0]
+# CHECK:      20: 03 08 68 3c   lda     r8, [p0]
+# CHECK:      24: 03 08 e8 3c   lda     r9, [p0]
+# CHECK:      28: 03 08 68 3d   lda     r10, [p0]
+# CHECK:      2c: 03 08 e8 3d   lda     r11, [p0]
+# CHECK:      30: 03 08 68 3e   lda     r12, [p0]
+# CHECK:      34: 03 08 e8 3e   lda     r13, [p0]
+# CHECK:      38: 03 08 68 3f   lda     r14, [p0]
+# CHECK:      3c: 03 08 e8 3f   lda     r15, [p0]
+# CHECK:      40: 03 08 68 34   lda     p0, [p0]
+# CHECK:      44: 03 08 e8 34   lda     p1, [p0]
+# CHECK:      48: 03 08 68 35   lda     p2, [p0]
+# CHECK:      4c: 03 08 e8 35   lda     p3, [p0]
+# CHECK:      50: 03 08 68 36   lda     p4, [p0]
+# CHECK:      54: 03 08 e8 36   lda     p5, [p0]
+# CHECK:      58: 03 08 68 37   lda     p6, [p0]
+# CHECK:      5c: 03 08 e8 37   lda     p7, [p0]
+# CHECK:      60: 03 08 68 30   lda     m0, [p0]
+# CHECK:      64: 03 08 e8 30   lda     m1, [p0]
+# CHECK:      68: 03 08 68 31   lda     m2, [p0]
+# CHECK:      6c: 03 08 e8 31   lda     m3, [p0]
+# CHECK:      70: 03 08 68 32   lda     m4, [p0]
+# CHECK:      74: 03 08 e8 32   lda     m5, [p0]
+# CHECK:      78: 03 08 68 33   lda     m6, [p0]
+# CHECK:      7c: 03 08 e8 33   lda     m7, [p0]
+# CHECK:      80: 03 08 68 2c   lda     cl0, [p0]
+# CHECK:      84: 03 08 e8 2c   lda     cl1, [p0]
+# CHECK:      88: 03 08 68 2d   lda     cl2, [p0]
+# CHECK:      8c: 03 08 e8 2d   lda     cl3, [p0]
+# CHECK:      90: 03 08 68 2e   lda     cl4, [p0]
+# CHECK:      94: 03 08 e8 2e   lda     cl5, [p0]
+# CHECK:      98: 03 08 68 2f   lda     cl6, [p0]
+# CHECK:      9c: 03 08 e8 2f   lda     cl7, [p0]
+# CHECK:      a0: 03 08 68 28   lda     ch0, [p0]
+# CHECK:      a4: 03 08 e8 28   lda     ch1, [p0]
+# CHECK:      a8: 03 08 68 29   lda     ch2, [p0]
+# CHECK:      ac: 03 08 e8 29   lda     ch3, [p0]
+# CHECK:      b0: 03 08 68 2a   lda     ch4, [p0]
+# CHECK:      b4: 03 08 e8 2a   lda     ch5, [p0]
+# CHECK:      b8: 03 08 68 2b   lda     ch6, [p0]
+# CHECK:      bc: 03 08 e8 2b   lda     ch7, [p0]
+# CHECK:      c0: 03 08 68 24   lda     cs0, [p0]
+# CHECK:      c4: 03 08 e8 24   lda     cs1, [p0]
+# CHECK:      c8: 03 08 68 25   lda     cs2, [p0]
+# CHECK:      cc: 03 08 e8 25   lda     cs3, [p0]
+# CHECK:      d0: 03 08 68 26   lda     cs4, [p0]
+# CHECK:      d4: 03 08 e8 26   lda     cs5, [p0]
+# CHECK:      d8: 03 08 68 27   lda     cs6, [p0]
+# CHECK:      dc: 03 08 e8 27   lda     cs7, [p0]
+# CHECK:      e0: 03 08 68 20   lda     cb0, [p0]
+# CHECK:      e4: 03 08 e8 20   lda     cb1, [p0]
+# CHECK:      e8: 03 08 68 21   lda     cb2, [p0]
+# CHECK:      ec: 03 08 e8 21   lda     cb3, [p0]
+# CHECK:      f0: 03 08 68 22   lda     cb4, [p0]
+# CHECK:      f4: 03 08 e8 22   lda     cb5, [p0]
+# CHECK:      f8: 03 08 68 23   lda     cb6, [p0]
+# CHECK:      fc: 03 08 e8 23   lda     cb7, [p0]
+
+--- |
+  ; ModuleID = 't.mir'
+  source_filename = "mir/aie-call.ll"
+  target datalayout = "e-m:e-p:20:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-f32:32:32-i64:32-f64:32-a:0:32-n32"
+
+  declare i32 @external_function(i32)
+
+  ; Function Attrs: nounwind
+  define i32 @test_call_external(i32 %a, i32 %b) #0 {
+    %1 = add i32 %a, %b
+    ret i32 %1
+  }
+
+  attributes #0 = { nounwind }
+
+...
+---
+name:            test_call_external
+alignment:       16
+registers:       []
+liveins:
+  - { reg: '$r6', virtual-reg: '' }
+  - { reg: '$r7', virtual-reg: '' }
+machineFunctionInfo: {}
+body:             |
+  bb.0 (%ir-block.0, align 16):
+    liveins: $p0, $p1, $p2, $p3, $p4, $p5, $p6, $p7, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $r8, $r9, $r10, $r11, $r12, $r13, $r14, $r15
+
+     $r0 = LDA_ind_GPR   $p0
+     $r1 = LDA_ind_GPR   $p0
+     $r2 = LDA_ind_GPR   $p0
+     $r3 = LDA_ind_GPR   $p0
+     $r4 = LDA_ind_GPR   $p0
+     $r5 = LDA_ind_GPR   $p0
+     $r6 = LDA_ind_GPR   $p0
+     $r7 = LDA_ind_GPR   $p0
+     $r8 = LDA_ind_GPR   $p0
+     $r9 = LDA_ind_GPR   $p0
+     $r10 = LDA_ind_GPR   $p0
+     $r11 = LDA_ind_GPR   $p0
+     $r12 = LDA_ind_GPR   $p0
+     $r13 = LDA_ind_GPR   $p0
+     $r14 = LDA_ind_GPR   $p0
+     $r15 = LDA_ind_GPR   $p0
+     $p0 = LDA_ind_PTR   $p0
+     $p1 = LDA_ind_PTR   $p0
+     $p2 = LDA_ind_PTR   $p0
+     $p3 = LDA_ind_PTR   $p0
+     $p4 = LDA_ind_PTR   $p0
+     $p5 = LDA_ind_PTR   $p0
+     $p6 = LDA_ind_PTR   $p0
+     $p7 = LDA_ind_PTR   $p0
+     $m0 = LDA_ind_PTR   $p0
+     $m1 = LDA_ind_PTR   $p0
+     $m2 = LDA_ind_PTR   $p0
+     $m3 = LDA_ind_PTR   $p0
+     $m4 = LDA_ind_PTR   $p0
+     $m5 = LDA_ind_PTR   $p0
+     $m6 = LDA_ind_PTR   $p0
+     $m7 = LDA_ind_PTR   $p0
+     $cl0 = LDA_ind_GPR   $p0
+     $cl1 = LDA_ind_GPR   $p0
+     $cl2 = LDA_ind_GPR   $p0
+     $cl3 = LDA_ind_GPR   $p0
+     $cl4 = LDA_ind_GPR   $p0
+     $cl5 = LDA_ind_GPR   $p0
+     $cl6 = LDA_ind_GPR   $p0
+     $cl7 = LDA_ind_GPR   $p0
+     $ch0 = LDA_ind_GPR   $p0
+     $ch1 = LDA_ind_GPR   $p0
+     $ch2 = LDA_ind_GPR   $p0
+     $ch3 = LDA_ind_GPR   $p0
+     $ch4 = LDA_ind_GPR   $p0
+     $ch5 = LDA_ind_GPR   $p0
+     $ch6 = LDA_ind_GPR   $p0
+     $ch7 = LDA_ind_GPR   $p0
+     $cs0 = LDA_ind_PTR   $p0
+     $cs1 = LDA_ind_PTR   $p0
+     $cs2 = LDA_ind_PTR   $p0
+     $cs3 = LDA_ind_PTR   $p0
+     $cs4 = LDA_ind_PTR   $p0
+     $cs5 = LDA_ind_PTR   $p0
+     $cs6 = LDA_ind_PTR   $p0
+     $cs7 = LDA_ind_PTR   $p0
+     $cb0 = LDA_ind_PTR   $p0
+     $cb1 = LDA_ind_PTR   $p0
+     $cb2 = LDA_ind_PTR   $p0
+     $cb3 = LDA_ind_PTR   $p0
+     $cb4 = LDA_ind_PTR   $p0
+     $cb5 = LDA_ind_PTR   $p0
+     $cb6 = LDA_ind_PTR   $p0
+     $cb7 = LDA_ind_PTR   $p0
+
+    PseudoRET implicit $lr, implicit killed $r0
+
+...

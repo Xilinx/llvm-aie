@@ -1,0 +1,27 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+
+# CHECK: 0: 99 00 17 1a vbneg_ltz.s8 x4, r19:r18, x1
+# CHECK: 4: 39 02 c7 1a vbneg_ltz.s16 x5, r20, x4
+# CHECK: 8: d9 02 b7 18 vbneg_ltz.s32 x1, r19, x5
+
+---
+name:            test_vbneg_ltz
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; VBNEG_LTZ – Combined vector bitwise inversion value and zero comparison
+    $x4, $l1  = VBNEG_LTZ_S8  $x1
+    $x5, $r20 = VBNEG_LTZ_S16 $x4
+    $x1, $r19 = VBNEG_LTZ_S32 $x5
+...

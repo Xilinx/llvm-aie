@@ -1,0 +1,42 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+
+
+---
+name:            vlda_conv
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    $bmh1 = VLDA_CONV_FP32_BF16_ag_idx_imm $p0, 0
+    $bmh3 = VLDA_CONV_FP32_BF16_ag_idx_imm $p2, 96
+    $bmh2 = VLDA_CONV_FP32_BF16_ag_idx_imm $p5, -128
+    $bmh5 = VLDA_CONV_FP32_BF16_ag_idx $p6, $dj3
+    $bmh4, $p4 = VLDA_CONV_FP32_BF16_pstm_nrm $p4, $m4
+    $bmh6, $p6 = VLDA_CONV_FP32_BF16_pstm_nrm_imm $p6, 0
+    $bmh7, $p3 = VLDA_CONV_FP32_BF16_pstm_nrm_imm $p3, 224
+    $bmh8, $p7 = VLDA_CONV_FP32_BF16_pstm_nrm_imm $p7, -256
+    $bmh5, $p1, $dc4 = VLDA_2D_CONV_FP32_BF16 $p1, $d4
+    $bmh6, $p4, $dc3, $dc7 = VLDA_3D_CONV_FP32_BF16 $p4, $d3_3d
+...
+
+
+# CHECK: 0: 19 86 0c 00 vlda.conv.fp32.bf16 bmh1, [p0, #0]
+# CHECK: 4: 19 8e 6c 02 vlda.conv.fp32.bf16 bmh3, [p2, #96]
+# CHECK: 8: 19 8a 8c 05 vlda.conv.fp32.bf16 bmh2, [p5, #-128]
+# CHECK: c: 19 96 70 06 vlda.conv.fp32.bf16 bmh5, [p6, dj3]
+# CHECK: 10: 19 92 88 04 vlda.conv.fp32.bf16 bmh4, [p4], m4
+# CHECK: 14: 19 9a 04 06 vlda.conv.fp32.bf16 bmh6, [p6], #0
+# CHECK: 18: 19 9e 74 03 vlda.conv.fp32.bf16 bmh7, [p3], #224
+# CHECK: 1c: 19 a2 84 07 vlda.conv.fp32.bf16 bmh8, [p7], #-256
+# CHECK: 20: 19 96 98 01 vlda.2d.conv.fp32.bf16 bmh5, [p1], d4
+# CHECK: 24: 19 9a 60 04 vlda.3d.conv.fp32.bf16 bmh6, [p4], d3

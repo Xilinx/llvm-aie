@@ -1,0 +1,30 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+#
+
+
+---
+name:            vaddmac
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; 8.3.2 VADDSUB – Configurable vector addition or subtraction
+    $x0 = VADDSUB_8 $x1, $x2, $l0
+    $x0 = VADDSUB_8 $x1, $x2, $l5
+    $x2 = VADDSUB_16 $x4, $x1, $r16
+    $x3 = VADDSUB_32 $x5, $x3, $r23
+...
+# CHECK: 0: 19 89 02 18 vaddsub.8 x0, x1, x2, r17:r16
+# CHECK: 4: 19 89 52 18 vaddsub.8 x0, x1, x2, r27:r26
+# CHECK: 8: b9 a0 02 19 vaddsub.16 x2, x4, x1, r16
+# CHECK: c: d9 a9 f2 19 vaddsub.32 x3, x5, x3, r23

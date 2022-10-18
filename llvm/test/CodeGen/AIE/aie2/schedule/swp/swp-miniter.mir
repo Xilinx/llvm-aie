@@ -1,0 +1,55 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc --mtriple=aie2 --run-pass=pipeliner %s -o - | FileCheck %s
+# RUN: llc --mtriple=aie2 --run-pass=pipeliner --aie-loop-min-tripcount=0 \
+# RUN:    %s -o - | FileCheck %s
+# RUN: llc --mtriple=aie2 --run-pass=pipeliner --aie-loop-min-tripcount=1 \
+# RUN:    %s -o - | FileCheck --check-prefix=CHECK-FORCED %s
+
+# Check that the option `aie-loop-min-tripcount` works
+# One of its key features is that it prevents guards in the prologue blocks
+# Note that the tripcount represents 'backedge taken', so min-tripcount=1
+# allows a two stage pipeline without guards.
+
+...
+---
+name:           dynTC
+alignment:       16
+tracksRegLiveness: true
+debugInstrRef:   false
+liveins:         []
+body:             |
+  ; CHECK-LABEL: name: dynTC
+  ; CHECK: PseudoJZ
+  ; CHECK: PseudoJNZ
+  ; CHECK: PseudoRET
+
+  ; CHECK-FORCED-LABEL: name: dynTC
+  ; CHECK-FORCED: PseudoJNZ
+  ; CHECK-FORCED: PseudoRET
+
+  ; CHECK-FORCED-NOT: PseudoJZ
+  bb.1:
+    liveins: $p0, $p1, $r0
+    %1:ep = COPY $p0
+    %4:er = MOV_RLC_imm10_pseudo 1
+    %6:er = MOV_RLC_imm11_pseudo 4
+    %7:em = COPY %6
+    %19:er = COPY $r0
+  bb.3:
+    %3:er = PHI %19, %bb.1, %16, %bb.3
+    %5:er = PHI %4, %bb.1, %10, %bb.3
+    %8:ep = PHI %1, %bb.1, %9, %bb.3
+    %16:er = nsw ADD_add_r_ri %3, -1, implicit-def $srcarry
+    %10:er = MUL_mul_r_rr %5, %16
+    %9:ep = PADD_mod_pseudo %1, %7
+    PseudoJNZ %16, %bb.3
+
+  bb.2:
+    PseudoRET implicit $lr
+
+...

@@ -1,0 +1,225 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc -mtriple=aie2 -start-after=machinemoduleinfo %s --filetype=obj -o %t --issue-limit=6
+# RUN: llvm-objdump --triple=aie2 -d %t | FileCheck %s
+---
+
+# The bundled JL instructions will be delayslot filled with 5 nops;
+# alignment padding for the return address will expand the last one.
+# The EVENT instructions (except the first) mark the return address and
+# should sit on a 16 byte alignment
+
+
+# CHECK-LABEL: <test>:
+# CHECK: event
+# CHECK-NEXT: jl
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nopa ; nops ; nopm ; nopv
+# CHECK-NEXT: 0: {{.*}} event
+
+# CHECK-NEXT: nop
+# CHECK-NEXT: jl
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nops ; nopb ; nopx ; nopm
+# CHECK-NEXT: 0: {{.*}} event
+
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: jl
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nopa ; nopb ; nopm
+# CHECK-NEXT: 0: {{.*}} event
+
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: jl
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nops ; nopm
+# CHECK-NEXT: 0: {{.*}} event
+
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: jl
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nopxm
+# CHECK-NEXT: 0: {{.*}} event
+
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: jl
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nopx
+# CHECK-NEXT: 0: {{.*}} event
+
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: jl
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: 0: {{.*}} event
+
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: jl
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nopb ; nopa ; nops ; nopx ; nopm ; nopv
+# CHECK-NEXT: 0: {{.*}} event
+
+name:            test
+body:             |
+  bb.1.entry:
+    EVENT 0
+    BUNDLE {
+      JL 32, csr_aie2, implicit-def $lr
+    }
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier
+    EVENT 0
+    NOP
+    BUNDLE {
+      JL 32, csr_aie2, implicit-def $lr
+    }
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier
+    EVENT 0
+    NOP
+    NOP
+    BUNDLE {
+      JL 32, csr_aie2, implicit-def $lr
+    }
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier
+    EVENT 0
+    NOP
+    NOP
+    NOP
+    BUNDLE {
+      JL 32, csr_aie2, implicit-def $lr
+    }
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier
+    EVENT 0
+    NOP
+    NOP
+    NOP
+    NOP
+    BUNDLE {
+      JL 32, csr_aie2, implicit-def $lr
+    }
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier
+    EVENT 0
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    BUNDLE {
+      JL 32, csr_aie2, implicit-def $lr
+    }
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier
+    EVENT 0
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    BUNDLE {
+      JL 32, csr_aie2, implicit-def $lr
+    }
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier
+    EVENT 0
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    BUNDLE {
+      JL 32, csr_aie2, implicit-def $lr
+    }
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier
+    EVENT 0
+    RET implicit $lr
+    DelayedSchedBarrier
+...

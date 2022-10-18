@@ -1,0 +1,89 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+
+---
+name:            test_call
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; VST - Vector Stores - ag_idx_imm
+    VST_dmw_sts_am_ag_idx_imm $amll3, $p2, 0
+    VST_dmw_sts_am_ag_idx_imm $amhl7, $p2, 32
+    VST_dmw_sts_am_ag_idx_imm $amlh4, $p5, 992
+    VST_dmw_sts_am_ag_idx_imm $amhh6, $p5, -1024
+
+    ; VST - Vector Stores - ag_spill
+    VST_dmw_sts_am_ag_spill $amll3, -32, implicit $sp
+    VST_dmw_sts_am_ag_spill $amhl7, -131072, implicit $sp
+    VST_dmw_sts_am_ag_spill $amlh4, -64, implicit $sp
+    VST_dmw_sts_am_ag_spill $amhh6, -131072, implicit $sp
+
+    ; VST - Vector Stores - ag_idx
+    VST_dmw_sts_am_ag_idx $amll3, $p2, $dj0
+    VST_dmw_sts_am_ag_idx $amhl7, $p2, $dj1
+    VST_dmw_sts_am_ag_idx $amlh4, $p5, $dj2
+    VST_dmw_sts_am_ag_idx $amhh6, $p5, $dj3
+
+    ; VST - Vector Stores - ag_pstm_nrm
+    $p2 = VST_dmw_sts_am_ag_pstm_nrm $amll3, $p2, $m4
+    $p2 = VST_dmw_sts_am_ag_pstm_nrm $amhl7, $p2, $m3
+    $p5 = VST_dmw_sts_am_ag_pstm_nrm $amlh4, $p5, $m2
+    $p5 = VST_dmw_sts_am_ag_pstm_nrm $amhh6, $p5, $m0
+
+    ; VST - Vector Stores - ag_pstm_nrm_imm
+    $p2 = VST_dmw_sts_am_ag_pstm_nrm_imm $amll3, $p2, 0
+    $p2 = VST_dmw_sts_am_ag_pstm_nrm_imm $amhl7, $p2, -1056
+    $p5 = VST_dmw_sts_am_ag_pstm_nrm_imm $amlh4, $p5, 2016
+    $p5 = VST_dmw_sts_am_ag_pstm_nrm_imm $amhh6, $p5, -2048
+
+    ; VST - Vector Stores - ag_pstm_2d
+    $p2, $dc2 = VST_2D_dmw_sts_am $amll3, $p2, $d2
+    $p2, $dc1 = VST_2D_dmw_sts_am $amhl7, $p2, $d1
+    $p5, $dc0 = VST_2D_dmw_sts_am $amlh4, $p5, $d0
+    $p5, $dc4 = VST_2D_dmw_sts_am $amhh6, $p5, $d4
+
+    ; VST - Vector Stores - ag_pstm_3d
+    $p0, $dc0, $dc4 = VST_3D_dmw_sts_am $amlh4, $p0, $d0_3d
+    $p2, $dc1, $dc5 = VST_3D_dmw_sts_am $amhl7, $p2, $d1_3d
+    $p4, $dc2, $dc6 = VST_3D_dmw_sts_am $amll3, $p4, $d2_3d
+    $p5, $dc3, $dc7 = VST_3D_dmw_sts_am $amhh6, $p5, $d3_3d
+...
+
+# CHECK: 0: 59 8c 02 0a vst amll3, [p2, #0]
+# CHECK: 4: 59 9e 06 0a vst amhl7, [p2, #32]
+# CHECK: 8: 59 91 7e 0d vst amlh4, [p5, #992]
+# CHECK: c: 59 9b 82 0d vst amhh6, [p5, #-1024]
+# CHECK: 10: 59 cc ff 0f vst amll3, [sp, #-32]
+# CHECK: 14: 59 5e 00 08 vst amhl7, [sp, #-131072]
+# CHECK: 18: 59 51 ff 0f vst amlh4, [sp, #-64]
+# CHECK: 1c: 59 5b 00 08 vst amhh6, [sp, #-131072]
+# CHECK: 20: 59 8c 10 0a vst amll3, [p2, dj0]
+# CHECK: 24: 59 9e 30 0a vst amhl7, [p2, dj1]
+# CHECK: 28: 59 91 50 0d vst amlh4, [p5, dj2]
+# CHECK: 2c: 59 9b 70 0d vst amhh6, [p5, dj3]
+# CHECK: 30: 59 8c 88 0a vst amll3, [p2], m4
+# CHECK: 34: 59 9e 68 0a vst amhl7, [p2], m3
+# CHECK: 38: 59 91 48 0d vst amlh4, [p5], m2
+# CHECK: 3c: 59 9b 08 0d vst amhh6, [p5], m0
+# CHECK: 40: 59 8c 01 0a vst amll3, [p2], #0
+# CHECK: 44: 59 9e bf 0a vst amhl7, [p2], #-1056
+# CHECK: 48: 59 91 7f 0d vst amlh4, [p5], #2016
+# CHECK: 4c: 59 9b 81 0d vst amhh6, [p5], #-2048
+# CHECK: 50: 59 8c 58 0a vst.2d amll3, [p2], d2
+# CHECK: 54: 59 9e 38 0a vst.2d amhl7, [p2], d1
+# CHECK: 58: 59 91 18 0d vst.2d amlh4, [p5], d0
+# CHECK: 5c: 59 9b 98 0d vst.2d amhh6, [p5], d4
+# CHECK: 60: 59 91 00 08 vst.3d amlh4, [p0], d0
+# CHECK: 64: 59 9e 20 0a vst.3d amhl7, [p2], d1
+# CHECK: 68: 59 8c 40 0c vst.3d amll3, [p4], d2
+# CHECK: 6c: 59 9b 60 0d vst.3d amhh6, [p5], d3

@@ -1,0 +1,27 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc --mtriple=aie2 --use-ctors --start-after=postmisched --filetype=obj %s -o %t.o
+# RUN: llvm-objdump -h %t.o | FileCheck %s --check-prefix=SECTIONS
+# RUN: llvm-objdump -t %t.o | FileCheck %s --check-prefix=SYMBOLS
+# RUN: llvm-objdump -r %t.o | FileCheck %s --check-prefix=RELOCS
+
+# We check that we have a .ctors section of size eight,
+# that it contains a local object of the same name of size eight
+# and that it has correct relocations to the initialization functions
+
+# SECTIONS: .ctors 00000008 00000000 DATA
+# SYMBOLS: l     O .ctors 00000008 .ctors
+# RELOCS:      RELOCATION RECORDS FOR [.ctors]:
+# RELOCS-NEXT: OFFSET   TYPE                     VALUE
+# RELOCS-NEXT: 00000000 R_AIE_50                 ctor2
+# RELOCS-NEXT: 00000004 R_AIE_50                 ctor1
+
+--- |
+  @llvm.global_ctors = appending global [2 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 65535, ptr @ctor1, ptr null}, {i32, ptr, ptr} { i32 65535, ptr @ctor2, ptr null}]
+  declare dso_local void @ctor1()
+  declare dso_local void @ctor2();
+...

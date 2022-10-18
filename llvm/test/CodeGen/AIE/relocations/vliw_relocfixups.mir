@@ -1,0 +1,90 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc %s -debug -mtriple=aie --start-before=livedebugvalues --filetype=obj -show-mc-encoding -o %t 2> %t.out
+# RUN: cat %t.out | FileCheck %s --check-prefix=FIXUP
+# RUN: llvm-readelf -r %t | FileCheck %s --check-prefix=RELOC
+
+# RELOC: Relocation section '.rela.text' at offset {{.*}} contains 9 entries:
+
+--- |
+  ; ModuleID = 't.mir'
+
+  @myint = dso_local global i32 0
+  define i32 @test_call_external() {
+    ret i32 0
+  }
+
+  define i32 @target_function() {
+  entry:
+    ret i32 0
+  }
+
+...
+---
+name:            target_function
+body:             |
+  bb.0.entry (align 16):
+    liveins: $r0
+    PseudoRET implicit $lr, implicit killed $r0
+---
+name:            test_call_external
+body:             |
+  bb.0:
+    renamable $p0 = MOV_U20_I20 target-flags(aie-global) @myint
+    ; FIXUP: MCFixup Offset:0 Value:#myint Kind:182
+    ; RELOC: 00000000 {{.*}} R_AIE_54
+
+    BUNDLE {
+      renamable $r0 = MOV_S12 target-flags(aie-global) @myint
+      ; FIXUP: MCFixup Offset:4 Value:#myint Kind:143
+      ; RELOC: 00000004 {{.*}} R_AIE_15
+
+      renamable $p0 = MOV_U20_I20 target-flags(aie-global) @myint
+      ; FIXUP: MCFixup Offset:4 Value:#myint Kind:183
+      ; RELOC: 00000004 {{.*}} R_AIE_55
+    }
+
+    BUNDLE {
+      NOP_LDA
+      renamable $p0 = MOV_U20_I20 target-flags(aie-global) @myint
+      ; FIXUP: MCFixup Offset:12 Value:#myint Kind:184
+      ; RELOC: 0000000c {{.*}} R_AIE_56
+    }
+
+    BUNDLE {
+      NOP_ST
+      renamable $p0 = MOV_U20_I20 target-flags(aie-global) @myint
+      ; FIXUP: MCFixup Offset:20 Value:#myint Kind:183
+      ; RELOC: 00000014 {{.*}} R_AIE_55
+    }
+
+    BUNDLE {
+      NOP_LDA
+      NOP_LDB
+
+      renamable $r0 = MOV_S12 target-flags(aie-global) @myint
+      ; FIXUP: MCFixup Offset:28 Value:#myint Kind:149
+      ; RELOC: 0000001c {{.*}} R_AIE_21
+
+      renamable $p0 = MOV_U20_I20 target-flags(aie-global) @myint
+      ; FIXUP: MCFixup Offset:28 Value:#myint Kind:167
+      ; RELOC: 0000001c {{.*}} R_AIE_39
+
+      NOP_VECA
+    }
+
+    BUNDLE {
+      renamable $r0 = MOV_S12 target-flags(aie-global) @myint
+      ; FIXUP: MCFixup Offset:44 Value:#myint Kind:143
+      ; RELOC: 0000002c {{.*}} R_AIE_15
+
+      JAL @target_function, implicit-def dead $lr, implicit-def $sp, implicit-def $r0
+      ; FIXUP: MCFixup Offset:44 Value:target_function Kind:130
+      ; RELOC: 0000002c {{.*}} R_AIE_2
+    }
+
+    PseudoRET implicit $lr, implicit killed $p0

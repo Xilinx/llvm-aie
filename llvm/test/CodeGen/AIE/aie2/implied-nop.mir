@@ -1,0 +1,31 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc --mtriple=aie2 --filetype=obj --start-before=aie-finalize-mi-bundles %s -o %t
+# RUN: llvm-objdump --triple=aie2 -d %t | FileCheck %s
+
+# We feed a slot combination that requires a filler nop to complete a 128 bit
+# bundle
+
+# NOTE: Another combination would be absmv, but we don't have any useful
+# B instructions.
+
+# CHECK-LABEL: asxmv
+# CHECK: nopb ; padda [p0], #4; st r0, [p2, #0]; or r11, r11, r12; mov p0, p1; vmac cm0, cm1, x0, x1, r1
+---
+name:            asxmv
+alignment:       16
+body:             |
+  bb.0.entry:
+    $p0 = PADDA_lda_ptr_inc_idx_imm $p0, 4 {
+      ST_dms_sts_idx_imm $r0, $p2, 0
+      $r11 = OR $r11, $r12
+      $p0 = MOV_mv_scl $p1
+      $cm0 = VMAC_vmac_cm_core_dense $cm1, $x0, $x1, $r1
+    }
+    RET implicit $lr
+    DelayedSchedBarrier implicit killed $r0
+...

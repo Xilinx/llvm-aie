@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/DebugInfo/DWARF/DWARFExpression.h"
@@ -106,6 +109,11 @@ static std::vector<Desc> getOpDescriptions() {
   // to fetch the final Description for the operation. Each such final
   // Description must share the same first SizeSubOpLEB operand.
   Descriptions[DW_OP_LLVM_user] = Desc(Op::Dwarf5, Op::SizeSubOpLEB);
+
+  // AIE
+  Descriptions[DW_OP_AIE_address_space] = Desc(Op::Dwarf2);
+  // End AIE
+
   return Descriptions;
 }
 

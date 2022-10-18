@@ -1,0 +1,58 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+
+---
+name:            test_vldb_unpack
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; VLDB.UNPACK - Vector Loads with unpacking
+    ; VLDB.UNPACK - ag_idx
+    $x0 = VLDB_UNPACK_S8_S4_ag_idx $p1, $dj0
+    $x1 = VLDB_UNPACK_S16_S8_ag_idx $p4, $dj1
+    $x2 = VLDB_UNPACK_D8_D4_ag_idx $p5, $dj2, implicit $crunpacksign
+    $x3 = VLDB_UNPACK_D16_D8_ag_idx $p2, $dj3, implicit $crunpacksign
+    ; VLDB.UNPACK - ag_pstm_nrm
+    $x4, $p6 = VLDB_UNPACK_S8_S4_ag_pstm_nrm $p6, $m0
+    $x5, $p0 = VLDB_UNPACK_S16_S8_ag_pstm_nrm $p0, $m1
+    $x6, $p3 = VLDB_UNPACK_D8_D4_pstm_nrm $p3, $m2, implicit $crunpacksign
+    $x7, $p1 = VLDB_UNPACK_D16_D8_ag_pstm_nrm $p1, $m3, implicit $crunpacksign
+    ; VLDB.UNPACK - ag_pstm_2d
+    $x4, $p0, $dc0 = VLDB_2D_UNPACK_S8_S4 $p0, $d0
+    $x5, $p1, $dc1 = VLDB_2D_UNPACK_S16_S8 $p1, $d1
+    $x6, $p2, $dc2 = VLDB_2D_UNPACK_D8_D4 $p2, $d2, implicit $crunpacksign
+    $x7, $p3, $dc3 = VLDB_2D_UNPACK_D16_D8 $p3, $d3, implicit $crunpacksign
+    ; VLDB.UNPACK - ag_pstm_3d
+    $x4, $p4, $dc0, $dc4 = VLDB_3D_UNPACK_S8_S4 $p4, $d0_3d
+    $x5, $p5, $dc1, $dc5 = VLDB_3D_UNPACK_S16_S8 $p5, $d1_3d
+    $x6, $p6, $dc2, $dc6 = VLDB_3D_UNPACK_D8_D4 $p6, $d2_3d, implicit $crunpacksign
+    $x7, $p7, $dc3, $dc7 = VLDB_3D_UNPACK_D16_D8 $p7, $d3_3d, implicit $crunpacksign
+
+...
+
+# CHECK: 0: 19 20 04 39 vldb.unpack.s8.s4 x0, [p1, dj0]
+# CHECK: 4: 19 70 24 3c vldb.unpack.s16.s8 x1, [p4, dj1]
+# CHECK: 8: 19 80 44 3d vldb.unpack.d8.d4 x2, [p5, dj2]
+# CHECK: c: 19 d0 64 3a vldb.unpack.d16.d8 x3, [p2, dj3]
+# CHECK: 10: 19 20 0d 3e vldb.unpack.s8.s4 x4, [p6], m0
+# CHECK: 14: 19 70 2d 38 vldb.unpack.s16.s8 x5, [p0], m1
+# CHECK: 18: 19 80 4d 3b vldb.unpack.d8.d4 x6, [p3], m2
+# CHECK: 1c: 19 d0 6d 39 vldb.unpack.d16.d8 x7, [p1], m3
+# CHECK: 20: 19 20 15 38 vldb.2d.unpack.s8.s4 x4, [p0], d0
+# CHECK: 24: 19 70 35 39 vldb.2d.unpack.s16.s8 x5, [p1], d1
+# CHECK: 28: 19 80 55 3a vldb.2d.unpack.d8.d4 x6, [p2], d2
+# CHECK: 2c: 19 d0 75 3b vldb.2d.unpack.d16.d8 x7, [p3], d3
+# CHECK: 30: 19 20 1d 3c vldb.3d.unpack.s8.s4 x4, [p4], d0
+# CHECK: 34: 19 70 3d 3d vldb.3d.unpack.s16.s8 x5, [p5], d1
+# CHECK: 38: 19 80 5d 3e vldb.3d.unpack.d8.d4 x6, [p6], d2
+# CHECK: 3c: 19 d0 7d 3f vldb.3d.unpack.d16.d8 x7, [p7], d3

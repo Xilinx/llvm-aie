@@ -1,0 +1,44 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+
+---
+name:            test
+alignment:       16
+body:             |
+  bb.0.entry (align 16):
+    liveins: $r1
+
+    renamable $r0 = MOV_mv_ss2scl implicit-def $srss0
+    $r28 = MOV_mv_scl $srss0
+    MOV_mv_scl2ms_doTlast_reg renamable $r0, killed renamable $r28
+    MOV_mv_scl2ms renamable $r0
+    MOV_TLAST_mv_scl2ms renamable $r0
+    renamable $r1 = MOV_NB_mv_ss2scl implicit-def $srss0
+    $r28 = MOV_mv_scl $srss0
+    MOV_NB_mv_scl2ms_doTlast_reg renamable $r1, killed renamable $r28, implicit-def $srms0
+    $r0 = MOV_mv_scl $srms0
+    MOV_NB_mv_scl2ms renamable $r1, implicit-def $srms0
+    MOV_NB_TLAST_mv_scl2ms killed renamable $r1, implicit-def $srms0
+
+...
+# CHECK: 0: 19 80 01 00 mov r0, ss
+# CHECK: 4: 59 b6 07 1f mov r28, srss0
+# CHECK: 8: 19 00 1e 0a mov ms, r0, r28
+# CHECK: c: 19 00 1e 08 mov ms, r0
+# CHECK: 10: 19 00 1e 09 mov.tlast ms, r0
+# CHECK: 14: 19 82 01 04 mov.nb r1, ss
+# CHECK: 18: 59 b6 07 1f mov r28, srss0
+# CHECK: 1c: 19 02 1e 0e mov.nb ms, r1, r28
+# CHECK: 20: 59 b6 05 18 mov r0, srms0
+# CHECK: 24: 19 02 1e 0c mov.nb ms, r1
+# CHECK: 28: 19 02 1e 0d mov.nb.tlast ms, r1

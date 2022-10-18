@@ -1,0 +1,173 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc --run-pass=postmisched -O2 --issue-limit=6 %s -o - | FileCheck %s
+
+# We check that there's no dep between TM end normal memory
+# and that there are proper deps between TM
+# we entice the scheduler to swap by putting longer paths on the first
+# memory instruction of each pair
+
+# The llvm is carrying memory objects for the memory operands
+
+--- |
+  target datalayout = "e-m:e-p:20:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-f32:32:32-i64:32-f64:32-a:0:32-n32"
+  target triple = "aie2"
+
+  define dso_local noundef i32 @nodep_wtm_rmem(ptr nocapture readonly %p) {
+  entry:
+    tail call void @llvm.aie2.write.tm(i32 42, ptr nonnull inttoptr (i20 -524284 to ptr))
+    %0 = load i32, ptr %p, align 4
+    %tobool.not = icmp eq i32 %0, 0
+    %cond = select i1 %tobool.not, i32 -1, i32 %0
+    ret i32 %cond
+  }
+
+  define dso_local noundef i32 @nodep_rtm_wmem(ptr nocapture writeonly %p, i32 noundef %r) {
+  entry:
+    store i32 %r, ptr %p, align 4
+    %0 = tail call i32 @llvm.aie2.read.tm(ptr nonnull inttoptr (i20 -524282 to ptr))
+    ret i32 %0
+  }
+
+  define dso_local noundef i32 @true_tm() {
+  entry:
+    tail call void @llvm.aie2.write.tm(i32 42, ptr nonnull inttoptr (i20 -524283 to ptr))
+    %0 = tail call i32 @llvm.aie2.read.tm(ptr nonnull inttoptr (i20 -524283 to ptr))
+    ret i32 %0
+  }
+
+  define dso_local noundef i32 @anti_tm() {
+  entry:
+    tail call void @llvm.aie2.write.tm(i32 42, ptr nonnull inttoptr (i20 -524283 to ptr))
+    %0 = tail call i32 @llvm.aie2.read.tm(ptr nonnull inttoptr (i20 -524283 to ptr))
+    ret i32 %0
+  }
+
+  define dso_local void @out_tm(i32 noundef %in, i32 noundef %dst) {
+  entry:
+    %add = add nsw i32 %in, 13
+    tail call void @llvm.aie2.write.tm(i32 %add, ptr nonnull inttoptr (i20 -524283 to ptr))
+    %add.i = add i32 %dst, 524288
+    %conv.i = trunc i32 %add.i to i20
+    %0 = inttoptr i20 %conv.i to ptr
+    tail call void @llvm.aie2.write.tm(i32 %in, ptr %0)
+    ret void
+  }
+
+  declare void @llvm.aie2.write.tm(i32, ptr)
+  declare i32 @llvm.aie2.read.tm(ptr)
+
+...
+---
+name:            nodep_wtm_rmem
+alignment:       16
+legalized:       true
+regBankSelected: true
+selected:        true
+failedISel:      false
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: nodep_wtm_rmem
+    ; CHECK: LDA_dms_lda_idx_imm renamable $p0, 0 :: (load (s32) from %ir.p)
+    ; CHECK: ST_TM killed renamable $r1, killed renamable $p1 :: (store (s32) into custom "TileMemory")
+
+    renamable $r1 = MOVA_lda_cg 42
+    renamable $p1 = MOVXM_lng_cg -524284
+    ST_TM killed renamable $r1, killed renamable $p1 :: (store (s32) into custom "TileMemory")
+    renamable $r0 = LDA_dms_lda_idx_imm killed renamable $p0, 0 :: (load (s32) from %ir.p)
+    PseudoRET implicit $lr, implicit $r0
+
+...
+---
+name:            nodep_rtm_wmem
+alignment:       16
+exposesReturnsTwice: false
+legalized:       true
+regBankSelected: true
+selected:        true
+failedISel:      false
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    liveins: $p0, $r1
+
+    ; CHECK-LABEL: name: nodep_rtm_wmem
+    ; CHECK: ST_dms_sts_idx_imm renamable $r1, renamable $p0, 0 :: (store (s32) into %ir.p)
+    ; CHECK: renamable $r0 = LDA_TM killed renamable $p1 :: (load (s32) from custom "TileMemory")
+    renamable $p1 = MOVXM_lng_cg -524282
+    ST_dms_sts_idx_imm killed renamable $r1, killed renamable $p0, 0 :: (store (s32) into %ir.p)
+    renamable $r0 = LDA_TM killed renamable $p1 :: (load (s32) from custom "TileMemory")
+
+...
+---
+name:            true_tm
+alignment:       16
+exposesReturnsTwice: false
+legalized:       true
+regBankSelected: true
+selected:        true
+failedISel:      false
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    liveins: $p1
+    ; CHECK-LABEL: name: true_tm
+    ; CHECK: ST_TM killed renamable $r1, killed renamable $p0 :: (store (s32) into custom "TileMemory")
+    ; CHECK: renamable $r0 = LDA_TM killed renamable $p1 :: (load (s32) from custom "TileMemory")
+    renamable $r1 = MOVA_lda_cg 42
+    renamable $p0 = MOVXM_lng_cg -524283
+    ST_TM killed renamable $r1, renamable $p0 :: (store (s32) into custom "TileMemory")
+    renamable $r0 = LDA_TM killed renamable $p1 :: (load (s32) from custom "TileMemory")
+
+...
+---
+name:            anti_tm
+alignment:       16
+exposesReturnsTwice: false
+legalized:       true
+regBankSelected: true
+selected:        true
+failedISel:      false
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    liveins: $p0, $r1
+    ; CHECK-LABEL: name: anti_tm
+    ; CHECK: renamable $r0 = LDA_TM renamable $p0 :: (load (s32) from custom "TileMemory")
+    ; CHECK: ST_TM killed renamable $r1, killed renamable $p0 :: (store (s32) into custom "TileMemory")
+    renamable $r0 = LDA_TM renamable $p0 :: (load (s32) from custom "TileMemory")
+    renamable $r1 = MOVA_lda_cg 42
+    ST_TM killed renamable $r1, renamable $p0 :: (store (s32) into custom "TileMemory")
+
+...
+---
+name:            out_tm
+alignment:       16
+exposesReturnsTwice: false
+legalized:       true
+regBankSelected: true
+selected:        true
+failedISel:      false
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    liveins: $r0, $r1
+
+    ; CHECK-LABEL: name: out_tm
+    ; CHECK: ST_TM renamable $r3, renamable $p0 :: (store (s32) into custom "TileMemory")
+    ; CHECK: ST_TM killed renamable $r0, killed renamable $p0 :: (store (s32) into custom "TileMemory")
+    renamable $p0 = MOVXM_lng_cg -524283
+    renamable $r2 = MOVXM_lng_cg 524288
+    renamable $r3 = nsw ADD_add_r_ri renamable $r0, 13, implicit-def $srcarry
+    ST_TM killed renamable $r3, killed renamable $p0 :: (store (s32) into custom "TileMemory")
+    renamable $r1 = ADD killed renamable $r1, killed renamable $r2, implicit-def $srcarry
+    $p0 = MOV_mv_scl killed $r1
+    ST_TM killed renamable $r0, killed renamable $p0 :: (store (s32) into custom "TileMemory")
+
+...

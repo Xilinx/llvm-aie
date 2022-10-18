@@ -1,0 +1,55 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: not --crash llc -mtriple=aie2 -run-pass machineverifier -o /dev/null %s 2>&1 | FileCheck %s
+
+# This test ensures that the Machine Verifier detects tied physical registers
+# that don't match.
+
+---
+name:            tied_ok
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    $p6, $dc3, $dc7 = ST_3D_dms_sts $p6, $p6, $d3_3d
+    $p6, $dc3, $dc7 = ST_3D_S8 $r6, $p6, $d3_3d
+    $p6, $dc0, $dc4 = ST_3D_S16 $r6, $p6, $d0_3d
+...
+
+
+# Virtual registers are not required to be tied.
+---
+name:            virtual_ok
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    %0:ep = COPY $p0
+    %10:eds = COPY $d0_3d
+    %20:ep, %21:edc, %22:edc = ST_3D_dms_sts $m4, %0, %10
+    %20:ep, %21:edc, %22:edc = ST_3D_S8 $r4, %0, %10
+    %20:ep, %21:edc, %22:edc = ST_3D_S16 $r4, %0, %10
+...
+
+
+---
+name:            tied_nok
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    ; CHECK-COUNT-3: Bad machine code: Tied physical registers must match
+    $p5, $dc3, $dc7 = ST_3D_dms_sts $p6, $p5, $d2_3d
+    $p5, $dc3, $dc7 = ST_3D_S8 $r6, $p5, $d2_3d
+    $p5, $dc2, $dc5 = ST_3D_S16 $r6, $p5, $d2_3d
+
+    ; Below instructions have hasExtraSrcRegAllocReq and hasExtraDefRegAllocReq attributes
+    ; which essentially bypass the register flags. The renamable attributes
+    ; below should trigger no verification error.
+    ; CHECK-NOT: Bad machine code
+    $p3, renamable $dc3, renamable $dc7 = ST_3D_dms_sts $p2, $p3, renamable $d3_3d
+    $p6, renamable $dc3, renamable $dc7 = ST_3D_S8 $r6, $p6, renamable $d3_3d
+    $p6, renamable $dc0, renamable $dc4 = ST_3D_S16 $r6, $p6, renamable $d0_3d
+...

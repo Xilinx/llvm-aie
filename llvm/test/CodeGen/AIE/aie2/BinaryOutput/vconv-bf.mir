@@ -1,0 +1,38 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+
+
+---
+name:            conv_bf
+alignment:       16
+body:             |
+  bb.0 (align 16):
+
+    $bml0 = VCONV_FP32_BF16 $wl0
+    $bmh3 = VCONV_FP32_BF16 $wh2
+    $wl1 = VCONV_BF16_FP32 $bml1, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask
+    $wh2 = VCONV_BF16_FP32 $bmh3, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask
+    $x0 = VFLOOR_S32_BF16_mFl2FxSrc_AM $amll0, $s0, implicit-def $srf2iflags, implicit $crf2imask
+    $x3 = VFLOOR_S32_BF16_mFl2FxSrc_AM $amhl0, $s2, implicit-def $srf2iflags, implicit $crf2imask
+    $x1 = VFLOOR_S32_BF16_mFl2FxSrc_W $wl1, $s1, implicit-def $srf2iflags, implicit $crf2imask
+    $x4 = VFLOOR_S32_BF16_mFl2FxSrc_W $wh4, $s2, implicit-def $srf2iflags, implicit $crf2imask
+
+
+# CHECK: 0: d9 07 00 18 vconv.fp32.bf16 bml0, wl0
+# CHECK: 4: d9 8f c0 19 vconv.fp32.bf16 bmh3, wh2
+# CHECK: 8: d9 05 80 08 vconv.bf16.fp32 wl1, bml1
+# CHECK: c: d9 0f 40 09 vconv.bf16.fp32 wh2, bmh3
+# CHECK: 10: 59 00 40 08 vfloor.s32.bf16 x0, amll0, s0
+# CHECK: 14: 59 02 c2 09 vfloor.s32.bf16 x3, amhl0, s2
+# CHECK: 18: 59 04 81 08 vfloor.s32.bf16 x1, wl1, s1
+# CHECK: 1c: 59 12 02 0a vfloor.s32.bf16 x4, wh4, s2

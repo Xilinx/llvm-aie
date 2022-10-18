@@ -1,0 +1,39 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+
+
+# CHECK: 0: 59 04 ff 03 mova r2, #1023
+# CHECK: 4: 59 06 00 04 mova r3, #-1024
+# CHECK: 8: d9 06 00 00 mova p0, #0
+# CHECK: c: d9 3e 20 00 mova p7, #32
+# CHECK: 10: d9 0a 29 00 mova lc, #41
+# CHECK: 14: 59 03 2a 00 mova m1, #42
+# CHECK: 18: 59 25 2b 00 mova dj2, #43
+# CHECK: 1c: 59 17 2c 00 mova dn3, #44
+# CHECK: 20: 59 39 2d 00 mova dc4, #45
+---
+name:            test_call
+alignment:       16
+body:             |
+  bb.0 (align 16):
+
+    $r2  = MOVA_lda_cg 1023
+    $r3  = MOVA_lda_cg -1024
+    $p0  = MOVA_lda_cg 0
+    $p7  = MOVA_lda_cg 32
+    $lc  = MOVA_lda_cg 41
+    $m1  = MOVA_lda_cg 42
+    $dj2 = MOVA_lda_cg 43
+    $dn3 = MOVA_lda_cg 44
+    $dc4 = MOVA_lda_cg 45
+...

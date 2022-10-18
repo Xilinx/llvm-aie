@@ -1,0 +1,26 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc -O2 --march=aie %s --start-after=branch-relaxation --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie -dr %t | FileCheck %s
+
+# CHECK: 0: 2b 00 80 c0 {{(nop;?)*}}vlda.spil wr0, [sp, #-65536]
+# CHECK: 4: ab ff 8b c7 {{(nop;?)*}}vlda.spil wr1, [sp, #-4]
+# CHECK: 8: 0b fc ff e0 {{(nop;?)*}}vst.spil wr0, [sp, #-4]
+# CHECK: c: 0b 00 00 e2 {{(nop;?)*}}vst.spil wr1, [sp, #-65536]
+---
+name:            test_call
+alignment:       16
+body:             |
+  bb.0 (align 16):
+
+    $wr0 = WVLDA_SPIL -65536, implicit $sp
+    $wr1 = WVLDA_SPIL -4, implicit $sp
+    WVST_SPIL $wr0, -4, implicit $sp
+    WVST_SPIL $wr1, -65536, implicit $sp
+
+...
