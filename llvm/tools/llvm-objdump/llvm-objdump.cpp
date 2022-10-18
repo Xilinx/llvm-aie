@@ -3,6 +3,8 @@
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//  
+// Modifications (c) Copyright 2022 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -506,6 +508,11 @@ namespace {
 static bool isAArch64Elf(const ObjectFile &Obj) {
   const auto *Elf = dyn_cast<ELFObjectFileBase>(&Obj);
   return Elf && Elf->getEMachine() == ELF::EM_AARCH64;
+}
+
+static bool isAIEElf(const ObjectFile &Obj) {
+  const auto *Elf = dyn_cast<ELFObjectFileBase>(&Obj);
+  return Elf && Elf->getEMachine() == ELF::EM_AIE;
 }
 
 static bool isArmElf(const ObjectFile &Obj) {
@@ -1685,6 +1692,21 @@ disassembleObject(ObjectFile &Obj, const ObjectFile &DbgObj,
 
     // Get the list of all the symbols in this section.
     SectionSymbolsTy &Symbols = AllSymbols[Section];
+
+    // AIE object files contain extra symbols marking the end of
+    // basic blocks.  This tends to confuse the disassembly, because
+    // these symbols are not (generally) aligned to instruction
+    // boundaries.  Avoid using these symbols as disassembly boundaries.
+    // They are marked in the object file, but since these symbols
+    // are never 16-bit aligned, it's easier to filter them out
+    // this way.
+    if (isAIEElf(Obj)) {
+      Symbols.erase(
+          std::remove_if(Symbols.begin(), Symbols.end(),
+                         [](SymbolInfoTy &i) { return i.Addr % 2 == 1; }),
+          Symbols.end());
+    }
+
     auto &MappingSymbols = AllMappingSymbols[Section];
     llvm::sort(MappingSymbols);
 
