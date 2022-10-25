@@ -1,9 +1,11 @@
 //===- CodeGenFormat.cpp - Format Generator Generator
-//------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -665,15 +667,16 @@ void TGInstrLayout::emitPacketEntry(raw_ostream &o) const {
 
   const std::string TargetSlotKindName = Target + SlotsRegistry.GenSlotKindName;
 
+  uint64_t Bits = 0;
   for (auto &Slot : SlotsVec) {
+    Bits |= uint64_t(1) << Slot->getSlot()->getNumSlot();
     o << TargetSlotKindName << '(' << TargetSlotKindName
       << "::" << Slot->getSlot()->getEnumerationString() << ')';
     if (&Slot != &SlotsVec.back())
       o << ", ";
   }
 
-  o << "}\n"
-    << "},\n";
+  o << "},\n" << format_hex(Bits, 8) << "},\n";
 }
 
 /// Returns true whether each all of the bits are not complete
@@ -1008,8 +1011,8 @@ void TGTargetSlots::emitTargetSlotKindClass(raw_ostream &o) const {
   if (Slots.size() > 1) {
     // 2nd Ctor - Initilization by SlotKind if valid
     // We check in this constructor
-    o << "  constexpr " << TargetEnumName << '(' << TargetEnumName
-      << "::" << GenSlotKindName << " Kind)\n"
+    o << "  constexpr " << TargetEnumName << '(' << "int"
+      << " Kind)\n"
       << "    : MC" << GenSlotKindName
       << "((Kind >= "
       // Default slot is always at index 0
@@ -1073,8 +1076,7 @@ void TGTargetSlots::emitSlotsInfoInstanciation(
       continue;
     o << "constexpr const " << TargetClassName << " " << TS.getInstanceName()
       << " = {\n"
-      << "  " << TargetEnumName << "::" << GenSlotKindName
-      << "::" << TS.getEnumerationString() << ",\n"
+      << "  " << TargetEnumName << "::" << TS.getEnumerationString() << ",\n"
       << "  \"" << TS.getSlotName() << "\",\n"
       << "  " << TS.getSlotSize()
       << ",\n"
