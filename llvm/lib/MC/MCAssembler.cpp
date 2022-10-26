@@ -1101,12 +1101,14 @@ static bool needPadding(uint64_t StartAddr, uint64_t Size,
 
 bool MCAssembler::relaxAlignByPadding(MCAsmLayout &Layout,
                                       MCAlignByPaddingFragment &BF) {
-  uint64_t alignedOffset = Layout.getFragmentOffset(&BF);
-  Align alignment(BF.getAlignment());
-  uint64_t bytesNeeded = offsetToAlignment(alignedOffset, alignment);
-  if(bytesNeeded == 0) return false;
+  uint64_t AlignedOffset = Layout.getFragmentOffset(&BF);
+  Align Alignment(BF.getAlignment());
+  uint64_t BytesNeeded = offsetToAlignment(AlignedOffset, Alignment);
+  if (BytesNeeded == 0)
+    return false;
 
   // Walk backwards, finding appropriate instructions to pad.
+  // Any instruction that can be relaxed sits in an FT_Relaxable fragment
   for (MCFragment *F = &BF; F != nullptr; F = F->getPrevNode()) {
     switch (F->getKind()) {
       default:
@@ -1118,8 +1120,12 @@ bool MCAssembler::relaxAlignByPadding(MCAsmLayout &Layout,
       }
       case MCFragment::FT_Relaxable: {
         auto &RF = cast<MCRelaxableFragment>(*F);
-        // If relaxing this instruction might solve our bytesNeeded, then try it.
-        if(RF.getContents().size() <= bytesNeeded) {
+        // If relaxing this instruction might contribute to our BytesNeeded,
+        // then try it. We should not overshoot, so never stretch more than the
+        // number of bytes we need.
+        unsigned Extra = getBackend().maxRelaxIncrement(RF.getInst(),
+                                                        *RF.getSubtargetInfo());
+        if (Extra > 0 && Extra <= BytesNeeded) {
           forceRelaxInstruction(Layout, RF);
           // This is a rather conservative approach that will likely result in re-entering this
           // function.  It's possible that there is some O(N^2) runtime here, but N is probably
@@ -1132,7 +1138,7 @@ bool MCAssembler::relaxAlignByPadding(MCAsmLayout &Layout,
       }
     }
   }
-return false;
+  return false;
 }
 
 bool MCAssembler::relaxBoundaryAlign(MCAsmLayout &Layout,
@@ -1278,8 +1284,15 @@ bool MCAssembler::layoutSectionOnce(MCAsmLayout &Layout, MCSection &Sec) {
   for (MCFragment &Frag : Sec) {
     // Check if this is a fragment that needs relaxation.
     bool RelaxedFrag = relaxFragment(Layout, Frag);
-    if (RelaxedFrag && !FirstRelaxedFragment)
+
+    if (RelaxedFrag && !FirstRelaxedFragment) {
       FirstRelaxedFragment = &Frag;
+      if (getBackend().relaxPerInstruction()) {
+        // First finalize the last relaxed instruction. This avoids inserting
+        // padding based on offsets that aren't final yet.
+        break;
+      }
+    }
   }
   if (FirstRelaxedFragment) {
     Layout.invalidateFragmentsFrom(FirstRelaxedFragment);
