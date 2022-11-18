@@ -5,6 +5,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 /// \file
@@ -298,7 +301,20 @@ static Expected<LLTCodeGen> getInstResultType(const TreePatternNode &Dst,
   if (!InstInfo.Operands.NumDefs)
     return failedImport("Dst pattern child needs a def");
 
+  // This mimics the handling of implicit defs in instructions from
+  // GetNumNodeResults in CodeGenDAGPatterns.cpp
+  // TLDR: For reasons I ignore, implicit defs are counted as 1, irrelevant of
+  // their actual number.
+  int AccountedImplicitDefs = 0;
+  if (InstInfo.HasOneImplicitDefWithKnownVT(Target) != MVT::Other)
+    ++AccountedImplicitDefs;
+
+  // The instruction used as operand might have implicit defs, only count
+  // explicit ones as results.
   ArrayRef<TypeSetByHwMode> ChildTypes = Dst.getExtTypes();
+  if (ChildTypes.size() - AccountedImplicitDefs != 1)
+    return failedImport("Dst pattern child has multiple results");
+
   if (ChildTypes.size() < 1)
     return failedImport("Dst pattern child has no result");
 
