@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 /// \file
@@ -288,9 +291,24 @@ static std::string getMangledRootDefName(StringRef DefOperandName) {
 
 //===- GlobalISelEmitter class --------------------------------------------===//
 
-static Expected<LLTCodeGen> getInstResultType(const TreePatternNode *Dst) {
+static Expected<LLTCodeGen> getInstResultType(const TreePatternNode *Dst,
+                                              const CodeGenDAGPatterns &CGP) {
+  const Record *Inst = Dst->getOperator();
+  assert(Inst->isSubClassOf("Instruction"));
+  CodeGenInstruction &InstInfo = CGP.getTargetInfo().getInstruction(Inst);
+
+  // This mimics the handling of implicit defs in instructions from
+  // GetNumNodeResults in CodeGenDAGPatterns.cpp
+  // TLDR: For reasons I ignore, implicit defs are counted as 1, irrelevant of
+  // their actual number.
+  int AccountedImplicitDefs = 0;
+  if (InstInfo.HasOneImplicitDefWithKnownVT(CGP.getTargetInfo()) != MVT::Other)
+    ++AccountedImplicitDefs;
+
+  // The instruction used as operand might have implicit defs, only count
+  // explicit ones as results.
   ArrayRef<TypeSetByHwMode> ChildTypes = Dst->getExtTypes();
-  if (ChildTypes.size() != 1)
+  if (ChildTypes.size() - AccountedImplicitDefs != 1)
     return failedImport("Dst pattern child has multiple results");
 
   std::optional<LLTCodeGen> MaybeOpTy;
@@ -1221,7 +1239,7 @@ Expected<action_iterator> GlobalISelEmitter::importExplicitUseRenderer(
     }
 
     if (DstChild->getOperator()->isSubClassOf("Instruction")) {
-      auto OpTy = getInstResultType(DstChild);
+      auto OpTy = getInstResultType(DstChild, CGP);
       if (!OpTy)
         return OpTy.takeError();
 
@@ -1556,7 +1574,7 @@ Expected<action_iterator> GlobalISelEmitter::importExplicitUseRenderers(
     if (!ValChild->isLeaf()) {
       // We really have to handle the source instruction, and then insert a
       // copy from the subregister.
-      auto ExtractSrcTy = getInstResultType(ValChild);
+      auto ExtractSrcTy = getInstResultType(ValChild, CGP);
       if (!ExtractSrcTy)
         return ExtractSrcTy.takeError();
 
