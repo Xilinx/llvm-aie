@@ -35,6 +35,7 @@
 #include <memory>
 #include <ostream>
 #include <set>
+#include <sstream>
 #include <stack>
 #include <string>
 #include <utility>
@@ -59,11 +60,7 @@ void CodeGenFormat::run(raw_ostream &o) {
   if (Size != 1)
     exit(EXIT_FAILURE);
 
-  std::string FormatClassEmitted =
-      CodeGenFormatRecords[0]->getValueAsString("FormatClassEmitted").str();
-
-  if (FormatClassEmitted.empty())
-    FormatClassEmitted = Target.getName().str() + "FormatDesc";
+  const std::string FormatClassEmitted ("MCFormatDesc");
 
   TGTargetSlots Slots(CurrentNamespace, Records.getClass("InstSlot"));
   std::vector<Record *> InstRecords =
@@ -175,8 +172,8 @@ void CodeGenFormat::run(raw_ostream &o) {
       << "#endif // GET_FORMATS_FORMATS_DEFS\n\n";
 
     o << "#ifdef GET_FORMATS_PACKETS_TABLE\n"
-      << "#undef GET_FORMATS_PACKETS_TABLE\n\n"
-      << "const PacketFormats Formats = {{\n";
+      << "#undef GET_FORMATS_PACKETS_TABLE\n\n";
+
 
     // Introduce an intermediate container for the Packets which allow us
     // to sort them (as the base container can't be sorted as TGInstLayout
@@ -193,16 +190,34 @@ void CodeGenFormat::run(raw_ostream &o) {
                 return Packet0->getSize() < Packet1->getSize();
               });
 
+    // Create two flat tables, one holding all slot ranges
+    // consecutively, the other with the formats,
+    // referencing the ranges
+    std::stringstream SlotData;
+    std::stringstream Formats;
+    unsigned SlotIndex = 0;
+
+    SlotData << "static const MCSlotKind FormatSlotData[] = {\n";
+    Formats << "static const VLIWFormat FormatData[] = {\n";
+
     // Emit each Packet in Size order
     for (const TGInstrLayout *Packet : Packets)
-      Packet->emitPacketEntry(o);
+      Packet->emitPacketEntry(Formats, SlotData, SlotIndex);
 
-    o << "}};\n\n"
-      << "#endif // GET_FORMATS_PACKETS_TABLE\n\n";
+    // Terminate both tables
+    SlotData << "};\n\n";
+    // Add a sentinel, (used by the getFormat lookup)
+    Formats << "{\n  0, nullptr, {nullptr, nullptr}, 0}\n"
+            << "};\n\n"
+            << "static const PacketFormats Formats {FormatData};\n\n";
+
+    o << SlotData.str();
+    o << Formats.str();
+    o << "#endif // GET_FORMATS_PACKETS_TABLE\n\n";
   }
 }
 
-// Retreive the number of consecutive bits (from posBit) that are part of the
+// Retrieve the number of consecutive bits (from posBit) that are part of the
 // same "variable" (described by "VarName")
 // NOTE0: if the bit at posbit isn't a variable bit, then we simply return 0
 // NOTE1: the counting is made in descending order (i.e from bit n-1, left one,
@@ -648,35 +663,38 @@ void TGInstrLayout::emitFormat(raw_ostream &o) const {
     }
   }
   o << "},\n";
+  auto *RootField = *fields().begin();
 
-  o << "      &" << FormatRef << "[0]\n"
+  o << "      &" << FormatRef << "[" << RootField->EmissionID << "]\n"
     << "    }";
 }
 
-void TGInstrLayout::emitPacketEntry(raw_ostream &o) const {
+void TGInstrLayout::emitPacketEntry(std::ostream &Formats, std::ostream &SlotData,
+    unsigned &SlotIndex) const {
   const std::vector<TGFieldLayout *> SlotsVec(slots().begin(), slots().end());
   // Some instructions (DUMMY96, UNKNOWN128...) are indicated as Composite but
   // they don't define a Packet Format... In that case, we don't emit anything.
   if (SlotsVec.empty())
     return;
 
-  o << "{\n"
-    << "  " << Target << "::" << getInstrName() << ",\n"
-    << "  \"" << getInstrName() << "\",\n"
-    << "  {";
+  Formats << "{\n"
+          << "  " << Target << "::" << getInstrName() << ",\n"
+          << "  \"" << getInstrName() << "\",\n";
 
   const std::string TargetSlotKindName = Target + SlotsRegistry.GenSlotKindName;
 
+  SlotData << "// " << getInstrName() << " : " << SlotIndex << "\n";
+  unsigned Start = SlotIndex;
   uint64_t Bits = 0;
   for (auto &Slot : SlotsVec) {
     Bits |= uint64_t(1) << Slot->getSlot()->getNumSlot();
-    o << TargetSlotKindName << '(' << TargetSlotKindName
-      << "::" << Slot->getSlot()->getEnumerationString() << ')';
-    if (&Slot != &SlotsVec.back())
-      o << ", ";
+    SlotData << TargetSlotKindName
+      << "::" << Slot->getSlot()->getEnumerationString() << ",\n";
+    SlotIndex++;
   }
-
-  o << "},\n" << format_hex(Bits, 8) << "},\n";
+  unsigned End = SlotIndex;
+  Formats << "  { &FormatSlotData[" << Start << "], &FormatSlotData[" << End << "]},\n";
+  Formats << "  " << std::hex << std::showbase << Bits << std::dec << "},\n";
 }
 
 /// Returns true whether each all of the bits are not complete
