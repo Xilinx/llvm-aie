@@ -1,9 +1,11 @@
 //===- CodeGenFormat.h - Format Generator Generator
-//-------------------------------------------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -143,7 +145,7 @@ public:
   /// Emit the Format entries.
   void emitFormat(raw_ostream &o) const;
   /// Emit the Packet-Format table, used in the FormatSelector.
-  void emitPacketEntry(raw_ostream &o) const;
+  void emitPacketEntry(std::ostream &o, std::ostream &SlotData, unsigned &SlotIndex) const;
 
 private:
   /// Check the value of the IsComposite TableGen attribute and report it into
