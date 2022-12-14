@@ -60,7 +60,7 @@ void CodeGenFormat::run(raw_ostream &o) {
   if (Size != 1)
     exit(EXIT_FAILURE);
 
-  const std::string FormatClassEmitted ("MCFormatDesc");
+  const std::string FormatClassEmitted("MCFormatDesc");
 
   TGTargetSlots Slots(CurrentNamespace, Records.getClass("InstSlot"));
   std::vector<Record *> InstRecords =
@@ -155,12 +155,13 @@ void CodeGenFormat::run(raw_ostream &o) {
     o << "#ifdef GET_FORMATS_FORMATS_DEFS\n"
       << "#undef GET_FORMATS_FORMATS_DEFS\n\n";
 
-    o << "static std::vector<MCFormatField> FieldsHierarchyTables[] = {\n";
+    o << "static const MCFormatField FieldsHierarchyTables[] = {\n";
+    unsigned BaseIndex = 0;
     for (const TGInstrLayout &Inst : InstFormats)
-      Inst.emitFlatTree(o);
+      Inst.emitFlatTree(o, BaseIndex);
     o << "};\n\n";
 
-    o << "static " << FormatClassEmitted << " Formats[] = {\n";
+    o << "static const " << FormatClassEmitted << " Formats[] = {\n";
     for (const TGInstrLayout &Inst : InstFormats) {
       Inst.emitFormat(o);
       if (&Inst != &InstFormats.back())
@@ -173,7 +174,6 @@ void CodeGenFormat::run(raw_ostream &o) {
 
     o << "#ifdef GET_FORMATS_PACKETS_TABLE\n"
       << "#undef GET_FORMATS_PACKETS_TABLE\n\n";
-
 
     // Introduce an intermediate container for the Packets which allow us
     // to sort them (as the base container can't be sorted as TGInstLayout
@@ -496,15 +496,15 @@ iterator_range<TGFieldIterator> TGInstrLayout::operands() const {
                     TGFieldIterator(nullptr));
 }
 
-void TGInstrLayout::emitFlatTree(raw_ostream &o) const {
+void TGInstrLayout::emitFlatTree(raw_ostream &o, unsigned &FieldIndex) const {
   const std::string GenSlotKindName = SlotsRegistry.GenSlotKindName;
-  unsigned nb = 0;
+  const unsigned FieldIndexIn = FieldIndex;
   for (TGFieldLayout *Field : fields()) {
-    Field->EmissionID = nb++;
+    Field->EmissionID = FieldIndex++;
   }
   o << "    // " << Target << "::" << InstrName
-    << " - Index : " << std::to_string(InstrID) << "\n"
-    << "    {";
+    << " - Index : " << std::to_string(InstrID)
+    << " - FieldIndex : " << std::to_string(FieldIndexIn) << "\n";
   for (const TGFieldLayout *Field : fields()) {
     if (Field->EmissionID == 0)
       o << "{ ";
@@ -517,76 +517,12 @@ void TGInstrLayout::emitFlatTree(raw_ostream &o) const {
     else
       o << Field->getParent()->EmissionID << ", ";
 
-    // Emitting Children-ID
-    if (Field->LayoutEntries.empty()) {
-      o << "{}, ";
-    } else {
-      o << "{ ";
-      for (auto &ref : Field->LayoutEntries) {
-        o << ref->EmissionID;
-        if (ref != Field->LayoutEntries.back())
-          o << ", ";
-      }
-      o << " }, ";
-    }
-
     if (Field->isFixedBits()) {
-      std::string CstEmitted;
-      unsigned BitWidth = Field->getSize();
-
-      // If the number of bits > 64, the expression to generate is a bit more
-      // complex. We need to emit each chunck of 64-bit separately and apply
-      // the right shifting.
-      if (BitWidth > APInt::APINT_BITS_PER_WORD) {
-        unsigned NumWords = APInt::getNumWords(BitWidth);
-        unsigned ShiftAmt = 0;
-        // Accumulator string, used to group bits by chunck of size
-        // APINT_BITS_PER_WORD
-        std::string RawChunck;
-        // Number of Chunck currently emitted (i.e. placed into CstEmitted)
-        unsigned ChunckEmitted = 0;
-
-        // Iterating over the fixed-bits in reverse-ordering.
-        // Thus, we're beginning with the least significant bit.
-        for (auto it = Field->Label.rbegin(); it != Field->Label.rend(); ++it) {
-          // Place the i-th bit at the beginning of the string as the order is
-          // reverse
-          RawChunck = *it + RawChunck;
-
-          // If the current chunck reaches the limit in size of a constant
-          // immediate (64-bits - APInt::APINT_BITS_PER_WORD)
-          if (RawChunck.size() == APInt::APINT_BITS_PER_WORD) {
-            // Emit the current chunck
-            CstEmitted +=
-                "(APInt(" + std::to_string(BitWidth) + ", 0b" + RawChunck + ")";
-            // Emit a shifting on the constant if needed
-            CstEmitted +=
-                (ShiftAmt > 0) ? " << " + std::to_string(ShiftAmt) + ')' : ")";
-            ChunckEmitted++;
-            // If there are still chuncks to emit after this one
-            if (ChunckEmitted < NumWords)
-              CstEmitted += " + ";
-            // Reset the string accumulator
-            RawChunck = "";
-            // Increment the Shifting
-            ShiftAmt += APInt::APINT_BITS_PER_WORD;
-          }
-        }
-        // Emit the last chunck if it exists
-        if (!RawChunck.empty())
-          CstEmitted += "(APInt(" + std::to_string(BitWidth) + ", " +
-                        RawChunck + ") << " + std::to_string(ShiftAmt) + ')';
-      }
-      // Pre-condition: BitWidth <= APInt::APINT_BITS_PER_WORD
-      else {
-        CstEmitted = "APInt(" + std::to_string(BitWidth) + ", 0b" +
-                     Field->getLabel() + ")";
-      }
-      o << "MCFormatField::MCFormatFieldType::FixedBits, nullptr, "
-        << CstEmitted << ", ";
-    } else
+      o << "MCFormatField::MCFormatFieldType::FixedBits, nullptr, ";
+    } else {
       o << "MCFormatField::MCFormatFieldType::Variable, " << '"'
-        << Field->getLabel() << "\0" << '"' << ", APInt(0, 0, false), ";
+        << Field->getLabel() << "\",";
+    }
 
     o << "{ " << Field->GlobalOffsets.LeftOffset << ", "
       << Field->GlobalOffsets.RightOffset << " }, ";
@@ -601,20 +537,12 @@ void TGInstrLayout::emitFlatTree(raw_ostream &o) const {
       o << SlotInfo->getEnumerationString();
     else
       o << DefaultSlotInfo->second.getEnumerationString();
-    o << ") }";
-
-    if (Field->EmissionID < nb - 1)
-      o << ',';
-    else
-      o << "},";
-
-    o << '\n';
+    o << ") },\n";
   }
 }
 
 void TGInstrLayout::emitFormat(raw_ostream &o) const {
-  std::string FormatRef =
-      "FieldsHierarchyTables[" + std::to_string(InstrID) + ']';
+  std::string FormatRef = "FieldsHierarchyTables";
   o << "    // " << Target << "::" << InstrName
     << " - Index : " << std::to_string(InstrID) << "\n"
     << "    {\n"
@@ -630,8 +558,8 @@ void TGInstrLayout::emitFormat(raw_ostream &o) const {
 
   for (auto &SlotField : SlotsVec) {
     o << "{ ";
-    o << TargetClassName << '(' << TargetClassName
-      << "::" << SlotField->SlotClass->getEnumerationString() << ')' << ", ";
+    o << TargetClassName << "::" << SlotField->SlotClass->getEnumerationString()
+      << ", ";
     o << "&" << FormatRef << "[" << SlotField->EmissionID << "]";
     o << " }";
     if (&SlotField != &SlotsVec.back())
@@ -669,8 +597,9 @@ void TGInstrLayout::emitFormat(raw_ostream &o) const {
     << "    }";
 }
 
-void TGInstrLayout::emitPacketEntry(std::ostream &Formats, std::ostream &SlotData,
-    unsigned &SlotIndex) const {
+void TGInstrLayout::emitPacketEntry(std::ostream &Formats,
+                                    std::ostream &SlotData,
+                                    unsigned &SlotIndex) const {
   const std::vector<TGFieldLayout *> SlotsVec(slots().begin(), slots().end());
   // Some instructions (DUMMY96, UNKNOWN128...) are indicated as Composite but
   // they don't define a Packet Format... In that case, we don't emit anything.
@@ -689,11 +618,12 @@ void TGInstrLayout::emitPacketEntry(std::ostream &Formats, std::ostream &SlotDat
   for (auto &Slot : SlotsVec) {
     Bits |= uint64_t(1) << Slot->getSlot()->getNumSlot();
     SlotData << TargetSlotKindName
-      << "::" << Slot->getSlot()->getEnumerationString() << ",\n";
+             << "::" << Slot->getSlot()->getEnumerationString() << ",\n";
     SlotIndex++;
   }
   unsigned End = SlotIndex;
-  Formats << "  { &FormatSlotData[" << Start << "], &FormatSlotData[" << End << "]},\n";
+  Formats << "  { &FormatSlotData[" << Start << "], &FormatSlotData[" << End
+          << "]},\n";
   Formats << "  " << std::hex << std::showbase << Bits << std::dec << "},\n";
 }
 

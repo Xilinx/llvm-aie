@@ -141,11 +141,12 @@ public:
   /// Emissions methods
 
   /// Emit a flat representation of the encoding hierarchy.
-  void emitFlatTree(raw_ostream &o) const;
+  void emitFlatTree(raw_ostream &o, unsigned &BaseIndex) const;
   /// Emit the Format entries.
   void emitFormat(raw_ostream &o) const;
   /// Emit the Packet-Format table, used in the FormatSelector.
-  void emitPacketEntry(std::ostream &o, std::ostream &SlotData, unsigned &SlotIndex) const;
+  void emitPacketEntry(std::ostream &o, std::ostream &SlotData,
+                       unsigned &SlotIndex) const;
 
 private:
   /// Check the value of the IsComposite TableGen attribute and report it into
