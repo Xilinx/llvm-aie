@@ -35,7 +35,6 @@
 #include <memory>
 #include <ostream>
 #include <set>
-#include <sstream>
 #include <stack>
 #include <string>
 #include <utility>
@@ -102,33 +101,23 @@ void CodeGenFormat::run(raw_ostream &o) {
 
   assert(Slots.size() != 0 && "no Slot detected");
 
-  o << "#ifdef GET_FORMATS_SLOTKINDS\n";
-  // We don't generate the #undef GET_FORMATS_SLOTKINDS on purpose as we intend
-  // to group all the slotkinds in one enumeration for every target:
-  // enum SlotKind : int {
-  //   SLOT_UNKNOWN = -1,
-  //   #define GET_FORMATS_SLOTKINDS
-  //   #include "AIEGenFormats.inc"
-  //   #include "AIE2GenFormats.inc"
-  //   #include "AIE2PGenFormats.inc"
-  //   #include "AIE2PSGenFormats.inc"
-  //   #undef GET_FORMATS_SLOTKINDS
-  // };
+  o << "#ifdef GET_FORMATS_SLOTKINDS\n"
+       "#undef GET_FORMATS_SLOTKINDS\n\n";
   Slots.emitTargetSlotKindEnum(o);
   o << "#endif // GET_FORMATS_SLOTKINDS\n\n";
 
-  o << "#ifdef GET_FORMATS_SLOTINFOS_MAPPING\n";
-  // same here for #undef GET_FORMATS_SLOTINFOS_MAPPING...
+  o << "#ifdef GET_FORMATS_SLOTINFOS_MAPPING\n"
+       "#undef GET_FORMATS_SLOTINFOS_MAPPING\n";
   Slots.emitTargetSlotMapping(o);
   o << "#endif // GET_FORMATS_SLOTINFOS_MAPPING\n\n";
 
   o << "#ifdef GET_FORMATS_HEADER\n"
-    << "#undef GET_FORMATS_HEADER\n\n";
+       "#undef GET_FORMATS_HEADER\n\n";
   Slots.emitTargetSlotsDeclaration(o);
   o << "#endif // GET_FORMATS_HEADER\n\n";
 
   o << "#ifdef GET_FORMATS_CLASS_DEF\n"
-    << "#undef GET_FORMATS_CLASS_DEF\n\n";
+       "#undef GET_FORMATS_CLASS_DEF\n\n";
   Slots.emitTargetSlotKindClass(o);
   Slots.emitTargetSlotClass(o);
   o << "#endif // GET_FORMATS_CLASS_DEF\n\n";
@@ -155,22 +144,35 @@ void CodeGenFormat::run(raw_ostream &o) {
     o << "#ifdef GET_FORMATS_FORMATS_DEFS\n"
       << "#undef GET_FORMATS_FORMATS_DEFS\n\n";
 
-    o << "static const MCFormatField FieldsHierarchyTables[] = {\n";
+    ConstTable FieldsHierarchy("MCFormatField", "FieldsHierarchyTables");
+
     unsigned BaseIndex = 0;
     for (const TGInstrLayout &Inst : InstFormats)
-      Inst.emitFlatTree(o, BaseIndex);
-    o << "};\n\n";
+      Inst.emitFlatTree(FieldsHierarchy, BaseIndex);
+    FieldsHierarchy.finish();
 
-    o << "static const " << FormatClassEmitted << " Formats[] = {\n";
-    for (const TGInstrLayout &Inst : InstFormats) {
-      Inst.emitFormat(o);
-      if (&Inst != &InstFormats.back())
-        o << ',';
-      o << '\n';
+    o << FieldsHierarchy;
+
+    {
+      ConstTable OpFields("const MCFormatField *", "OpFields");
+      ConstTable FieldRanges("const MCFormatField * const *", "FieldRanges");
+      ConstTable Formats(FormatClassEmitted, "Formats");
+      for (const TGInstrLayout &Inst : InstFormats) {
+        Inst.emitFormat(FieldsHierarchy, Formats, OpFields, FieldRanges);
+        Formats.next();
+      }
+
+      Formats.finish();
+      OpFields.finish();
+      FieldRanges.mark("Sentinel");
+      FieldRanges << OpFields.refNext();
+      FieldRanges.finish();
+
+      o << OpFields;
+      o << FieldRanges;
+      o << Formats;
+      o << "#endif // GET_FORMATS_FORMATS_DEFS\n\n";
     }
-
-    o << "};\n"
-      << "#endif // GET_FORMATS_FORMATS_DEFS\n\n";
 
     o << "#ifdef GET_FORMATS_PACKETS_TABLE\n"
       << "#undef GET_FORMATS_PACKETS_TABLE\n\n";
@@ -189,31 +191,29 @@ void CodeGenFormat::run(raw_ostream &o) {
               [](const TGInstrLayout *Packet0, const TGInstrLayout *Packet1) {
                 return Packet0->getSize() < Packet1->getSize();
               });
+    {
+      // Create two flat tables, one holding all slot ranges
+      // consecutively, the other with the formats,
+      // referencing the ranges
+      ConstTable SlotData("MCSlotKind", "FormatSlotData");
+      ConstTable FormatData("VLIWFormat", "FormatData");
 
-    // Create two flat tables, one holding all slot ranges
-    // consecutively, the other with the formats,
-    // referencing the ranges
-    std::stringstream SlotData;
-    std::stringstream Formats;
-    unsigned SlotIndex = 0;
+      // Emit each Packet in Size order
+      for (const TGInstrLayout *Packet : Packets)
+        Packet->emitPacketEntry(FormatData, SlotData);
 
-    SlotData << "static const MCSlotKind FormatSlotData[] = {\n";
-    Formats << "static const VLIWFormat FormatData[] = {\n";
+      // Terminate both tables
+      SlotData.finish();
+      // Add a sentinel, (The 0 opcode is used by the getFormat lookup)
+      FormatData.mark("Sentinel");
+      FormatData << "{\n  0, nullptr, {nullptr, nullptr}, 0}\n";
+      FormatData.finish();
 
-    // Emit each Packet in Size order
-    for (const TGInstrLayout *Packet : Packets)
-      Packet->emitPacketEntry(Formats, SlotData, SlotIndex);
+      o << SlotData << FormatData
+        << "static const PacketFormats Formats {FormatData};\n\n";
 
-    // Terminate both tables
-    SlotData << "};\n\n";
-    // Add a sentinel, (used by the getFormat lookup)
-    Formats << "{\n  0, nullptr, {nullptr, nullptr}, 0}\n"
-            << "};\n\n"
-            << "static const PacketFormats Formats {FormatData};\n\n";
-
-    o << SlotData.str();
-    o << Formats.str();
-    o << "#endif // GET_FORMATS_PACKETS_TABLE\n\n";
+      o << "#endif // GET_FORMATS_PACKETS_TABLE\n\n";
+    }
   }
 }
 
@@ -496,53 +496,55 @@ iterator_range<TGFieldIterator> TGInstrLayout::operands() const {
                     TGFieldIterator(nullptr));
 }
 
-void TGInstrLayout::emitFlatTree(raw_ostream &o, unsigned &FieldIndex) const {
+void TGInstrLayout::emitFlatTree(ConstTable &FieldsHierarchy,
+                                 unsigned &FieldIndex) const {
   const std::string GenSlotKindName = SlotsRegistry.GenSlotKindName;
-  const unsigned FieldIndexIn = FieldIndex;
   for (TGFieldLayout *Field : fields()) {
     Field->EmissionID = FieldIndex++;
   }
-  o << "    // " << Target << "::" << InstrName
-    << " - Index : " << std::to_string(InstrID)
-    << " - FieldIndex : " << std::to_string(FieldIndexIn) << "\n";
+  FieldsHierarchy << "    // " << Target << "::" << InstrName
+                  << " - Index : " << std::to_string(InstrID)
+                  << " - FieldIndex : " << FieldsHierarchy.mark() << "\n";
+  const char *Bracket = "{ ";
   for (const TGFieldLayout *Field : fields()) {
-    if (Field->EmissionID == 0)
-      o << "{ ";
-    else
-      o << "     { ";
+    FieldsHierarchy << Bracket;
+    Bracket = "     { ";
 
     // Emitting ParentID
     if (Field->getParent() == nullptr)
-      o << "-1, ";
+      FieldsHierarchy << "-1, ";
     else
-      o << Field->getParent()->EmissionID << ", ";
+      FieldsHierarchy << Field->getParent()->EmissionID << ", ";
 
     if (Field->isFixedBits()) {
-      o << "MCFormatField::MCFormatFieldType::FixedBits, nullptr, ";
+      FieldsHierarchy
+          << "MCFormatField::MCFormatFieldType::FixedBits, nullptr, ";
     } else {
-      o << "MCFormatField::MCFormatFieldType::Variable, " << '"'
-        << Field->getLabel() << "\",";
+      FieldsHierarchy << "MCFormatField::MCFormatFieldType::Variable, " << '"'
+                      << Field->getLabel() << "\",";
     }
 
-    o << "{ " << Field->GlobalOffsets.LeftOffset << ", "
-      << Field->GlobalOffsets.RightOffset << " }, ";
+    FieldsHierarchy << "{ " << Field->GlobalOffsets.LeftOffset << ", "
+                    << Field->GlobalOffsets.RightOffset << " }, ";
 
     const std::string TargetKindName = Target + SlotsRegistry.GenSlotKindName;
     const TGTargetSlot *SlotInfo = Field->getSlot();
     const TGTargetSlots::RecordSlot *DefaultSlotInfo =
         SlotsRegistry.getDefaultSlot();
 
-    o << TargetKindName << '(' << TargetKindName << "::";
+    FieldsHierarchy << TargetKindName << '(' << TargetKindName << "::";
     if (SlotInfo)
-      o << SlotInfo->getEnumerationString();
+      FieldsHierarchy << SlotInfo->getEnumerationString();
     else
-      o << DefaultSlotInfo->second.getEnumerationString();
-    o << ") },\n";
+      FieldsHierarchy << DefaultSlotInfo->second.getEnumerationString();
+    FieldsHierarchy << ") }";
+    FieldsHierarchy.next();
   }
 }
 
-void TGInstrLayout::emitFormat(raw_ostream &o) const {
-  std::string FormatRef = "FieldsHierarchyTables";
+void TGInstrLayout::emitFormat(ConstTable &FieldsHierarchy, ConstTable &o,
+                               ConstTable &OpFields,
+                               ConstTable &FieldRanges) const {
   o << "    // " << Target << "::" << InstrName
     << " - Index : " << std::to_string(InstrID) << "\n"
     << "    {\n"
@@ -560,7 +562,7 @@ void TGInstrLayout::emitFormat(raw_ostream &o) const {
     o << "{ ";
     o << TargetClassName << "::" << SlotField->SlotClass->getEnumerationString()
       << ", ";
-    o << "&" << FormatRef << "[" << SlotField->EmissionID << "]";
+    o << FieldsHierarchy.absRef(SlotField->EmissionID);
     o << " }";
     if (&SlotField != &SlotsVec.back())
       o << ", ";
@@ -570,61 +572,59 @@ void TGInstrLayout::emitFormat(raw_ostream &o) const {
   // Group every field by their operand index (if they have one)
   // i.e. { 0 : {field0, field1}, 1 : {field2}}...
   std::map<unsigned, SmallVector<TGFieldLayout *>> FieldOpIndexMap;
+  // Keep track of the maximum operand index
+  unsigned MaxIdx = 0;
   for (auto *OperandField : operands()) {
-    FieldOpIndexMap[OperandField->getMCOperandIndex()].push_back(OperandField);
+    unsigned Idx = OperandField->getMCOperandIndex();
+    FieldOpIndexMap[Idx].push_back(OperandField);
+    MaxIdx = std::max(MaxIdx, Idx);
   }
 
-  o << "      /* MCOperand - Slots mapper */\n"
-    << "      {";
-  for (auto &MappedOperands : FieldOpIndexMap) {
-    o << "{ ";
-    o << MappedOperands.first << ", "
-      << "{ ";
-    for (auto &MO : MappedOperands.second) {
-      o << '&' << FormatRef << '[' << MO->EmissionID << "]";
-      if (&MO != &MappedOperands.second.back())
-        o << ", ";
-    }
-    o << " }}";
-    if (MappedOperands != *std::prev(FieldOpIndexMap.end())) {
-      o << ", ";
+  o << "      /* MCOperand - Slots mapper */\n";
+  OpFields.mark(InstrName.c_str());
+  FieldRanges.mark(InstrName.c_str());
+  for (unsigned Idx = 0; Idx <= MaxIdx; Idx++) {
+    FieldRanges << OpFields.ref(Idx);
+    FieldRanges.next();
+    auto It = FieldOpIndexMap.find(Idx);
+    if (It != FieldOpIndexMap.end()) {
+      for (auto &MO : It->second) {
+        OpFields << "  " << FieldsHierarchy.absRef(MO->EmissionID);
+        OpFields.next();
+      }
     }
   }
-  o << "},\n";
+  o << "      {" << FieldRanges.ref(0) << ", " << MaxIdx + 1 << "},\n";
+
   auto *RootField = *fields().begin();
-
-  o << "      &" << FormatRef << "[" << RootField->EmissionID << "]\n"
+  o << "      " << FieldsHierarchy.absRef(RootField->EmissionID) << "\n"
     << "    }";
 }
 
-void TGInstrLayout::emitPacketEntry(std::ostream &Formats,
-                                    std::ostream &SlotData,
-                                    unsigned &SlotIndex) const {
+void TGInstrLayout::emitPacketEntry(ConstTable &Packets,
+                                    ConstTable &SlotData) const {
   const std::vector<TGFieldLayout *> SlotsVec(slots().begin(), slots().end());
   // Some instructions (DUMMY96, UNKNOWN128...) are indicated as Composite but
   // they don't define a Packet Format... In that case, we don't emit anything.
   if (SlotsVec.empty())
     return;
 
-  Formats << "{\n"
+  Packets << "{\n"
           << "  " << Target << "::" << getInstrName() << ",\n"
           << "  \"" << getInstrName() << "\",\n";
 
   const std::string TargetSlotKindName = Target + SlotsRegistry.GenSlotKindName;
 
-  SlotData << "// " << getInstrName() << " : " << SlotIndex << "\n";
-  unsigned Start = SlotIndex;
+  SlotData << "// " << getInstrName() << " : " << SlotData.mark() << "\n";
   uint64_t Bits = 0;
   for (auto &Slot : SlotsVec) {
     Bits |= uint64_t(1) << Slot->getSlot()->getNumSlot();
     SlotData << TargetSlotKindName
-             << "::" << Slot->getSlot()->getEnumerationString() << ",\n";
-    SlotIndex++;
+             << "::" << Slot->getSlot()->getEnumerationString();
+    SlotData.next();
   }
-  unsigned End = SlotIndex;
-  Formats << "  { &FormatSlotData[" << Start << "], &FormatSlotData[" << End
-          << "]},\n";
-  Formats << "  " << std::hex << std::showbase << Bits << std::dec << "},\n";
+  Packets << "  { " << SlotData.ref(0) << "," << SlotData.refNext() << "},\n";
+  Packets << "  " << std::hex << std::showbase << Bits << std::dec << "},\n";
 }
 
 /// Returns true whether each all of the bits are not complete
