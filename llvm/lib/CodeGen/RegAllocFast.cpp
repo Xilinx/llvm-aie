@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 /// \file This register allocator allocates registers to a basic block at a
@@ -261,6 +264,8 @@ private:
   /// cannot be allocated.
   RegUnitSet UsedInInstr;
   RegUnitSet PhysRegUses;
+  // Keep track of the VRegs that were assigned for def operands.
+  SmallSet<Register, 8> DefVRegsAssignedInInstr;
   SmallVector<uint16_t, 8> DefOperandIndexes;
   // Register masks attached to the current instruction.
   SmallVector<const uint32_t *> RegMasks;
@@ -984,6 +989,13 @@ bool RegAllocFast::defineLiveThroughVirtReg(MachineInstr &MI, unsigned OpNum,
                                             Register VirtReg) {
   if (!shouldAllocateRegister(VirtReg))
     return false;
+
+  // If the current instruction has a previous def of the same VirtReg,
+  // re-use its PhysReg instead of finding a new assignment.
+  // E.g. %0.sub_0, %0.sub_1 = FOO %1
+  if (DefVRegsAssignedInInstr.count(VirtReg))
+    return defineVirtReg(MI, OpNum, VirtReg, true);
+
   LiveRegMap::iterator LRI = findLiveVirtReg(VirtReg);
   if (LRI != LiveVirtRegs.end()) {
     MCPhysReg PrevReg = LRI->PhysReg;
@@ -1047,7 +1059,8 @@ bool RegAllocFast::defineVirtReg(MachineInstr &MI, unsigned OpNum,
       return setPhysReg(MI, MO, *AllocationOrder.begin());
     }
   } else {
-    assert(!isRegUsedInInstr(LRI->PhysReg, LookAtPhysRegUses) &&
+    assert((!isRegUsedInInstr(LRI->PhysReg, LookAtPhysRegUses) ||
+            DefVRegsAssignedInInstr.count(VirtReg)) &&
            "TODO: preassign mismatch");
     LLVM_DEBUG(dbgs() << "In def of " << printReg(VirtReg, TRI)
                       << " use existing assignment to "
@@ -1089,6 +1102,7 @@ bool RegAllocFast::defineVirtReg(MachineInstr &MI, unsigned OpNum,
     BundleVirtRegsMap[VirtReg] = PhysReg;
   }
   markRegUsedInInstr(PhysReg);
+  DefVRegsAssignedInInstr.insert(VirtReg);
   return setPhysReg(MI, MO, PhysReg);
 }
 
@@ -1359,6 +1373,7 @@ void RegAllocFast::allocateInstruction(MachineInstr &MI) {
   UsedInInstr.clear();
   RegMasks.clear();
   BundleVirtRegsMap.clear();
+  DefVRegsAssignedInInstr.clear();
 
   // Scan for special cases; Apply pre-assigned register defs to state.
   bool HasPhysRegUse = false;
