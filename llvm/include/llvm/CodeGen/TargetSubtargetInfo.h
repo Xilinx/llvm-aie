@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file describes the subtarget options of a Target machine.
@@ -213,6 +216,9 @@ public:
   /// True if the subtarget should run a machine scheduler after register
   /// allocation.
   virtual bool enablePostRAMachineScheduler() const;
+
+  /// True if the subtarget requires post-RA scheduling.
+  virtual bool forcePostRAScheduling() const;
 
   /// True if the subtarget should run the atomic expansion pass.
   virtual bool enableAtomicExpand() const;

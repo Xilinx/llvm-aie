@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 /// \file This file describes the general parts of a Subtarget.
@@ -52,6 +55,8 @@ bool TargetSubtargetInfo::enablePostRAScheduler() const {
 bool TargetSubtargetInfo::enablePostRAMachineScheduler() const {
   return enableMachineScheduler() && enablePostRAScheduler();
 }
+
+bool TargetSubtargetInfo::forcePostRAScheduling() const { return false; }
 
 bool TargetSubtargetInfo::useAA() const {
   return false;
