@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file describes the target machine instruction set to the code generator.
@@ -40,7 +43,7 @@
 
 namespace llvm {
 
-class DFAPacketizer;
+class ResourceCycle;
 class InstrItineraryData;
 class LiveIntervals;
 class LiveVariables;
@@ -1920,7 +1923,7 @@ public:
                                          const TargetRegisterInfo *TRI) const {}
 
   /// Create machine specific model for scheduling.
-  virtual DFAPacketizer *
+  virtual ResourceCycle *
   CreateTargetScheduleState(const TargetSubtargetInfo &) const {
     return nullptr;
   }

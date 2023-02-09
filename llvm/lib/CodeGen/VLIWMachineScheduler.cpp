@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // MachineScheduler schedules machine instructions after phi elimination. It
@@ -13,13 +16,13 @@
 
 #include "llvm/CodeGen/VLIWMachineScheduler.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/CodeGen/DFAPacketizer.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/RegisterClassInfo.h"
 #include "llvm/CodeGen/RegisterPressure.h"
+#include "llvm/CodeGen/ResourceCycle.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/ScheduleHazardRecognizer.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
@@ -190,7 +193,7 @@ bool VLIWResourceModel::reserveResources(SUnit *SU, bool IsTop) {
   return startNewCycle;
 }
 
-DFAPacketizer *
+ResourceCycle *
 VLIWResourceModel::createPacketizer(const TargetSubtargetInfo &STI) const {
   return STI.getInstrInfo()->CreateTargetScheduleState(STI);
 }

@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // An implementation of the Swing Modulo Scheduling (SMS) software pipeliner.
@@ -452,7 +455,7 @@ private:
   SwingSchedulerDAG *DAG;
   const bool UseDFA;
   /// DFA resources for each slot
-  llvm::SmallVector<std::unique_ptr<DFAPacketizer>> DFAResources;
+  llvm::SmallVector<std::unique_ptr<ResourceCycle>> DFAResources;
   /// Modulo Reservation Table. When a resource with ID R is consumed in cycle
   /// C, it is counted in MRT[C mod II][R]. (Used when UseDFA == F)
   llvm::SmallVector<llvm::SmallVector<uint64_t, DefaultProcResSize>> MRT;
