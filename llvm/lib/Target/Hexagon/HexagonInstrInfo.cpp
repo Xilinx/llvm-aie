@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains the Hexagon implementation of the TargetInstrInfo class.
@@ -1972,7 +1975,7 @@ unsigned HexagonInstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
   return getInstrTimingClassLatency(ItinData, MI);
 }
 
-DFAPacketizer *HexagonInstrInfo::CreateTargetScheduleState(
+ResourceCycle *HexagonInstrInfo::CreateTargetScheduleState(
     const TargetSubtargetInfo &STI) const {
   const InstrItineraryData *II = STI.getInstrItineraryData();
   return static_cast<const HexagonSubtarget&>(STI).createDFAPacketizer(II);

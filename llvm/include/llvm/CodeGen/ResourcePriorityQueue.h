@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the ResourcePriorityQueue class, which is a
@@ -19,20 +22,20 @@
 #include "llvm/CodeGen/ScheduleDAG.h"
 
 namespace llvm {
-  class DFAPacketizer;
-  class InstrItineraryData;
-  class ResourcePriorityQueue;
-  class SelectionDAGISel;
-  class TargetInstrInfo;
-  class TargetRegisterInfo;
+class ResourceCycle;
+class InstrItineraryData;
+class ResourcePriorityQueue;
+class SelectionDAGISel;
+class TargetInstrInfo;
+class TargetRegisterInfo;
 
-  /// Sorting functions for the Available queue.
-  struct resource_sort {
-    ResourcePriorityQueue *PQ;
-    explicit resource_sort(ResourcePriorityQueue *pq) : PQ(pq) {}
+/// Sorting functions for the Available queue.
+struct resource_sort {
+  ResourcePriorityQueue *PQ;
+  explicit resource_sort(ResourcePriorityQueue *pq) : PQ(pq) {}
 
-    bool operator()(const SUnit* LHS, const SUnit* RHS) const;
-  };
+  bool operator()(const SUnit *LHS, const SUnit *RHS) const;
+};
 
   class ResourcePriorityQueue : public SchedulingPriorityQueue {
     /// SUnits - The SUnits for the current graph.
@@ -62,8 +65,8 @@ namespace llvm {
     const InstrItineraryData* InstrItins;
     /// ResourcesModel - Represents VLIW state.
     /// Not limited to VLIW targets per say, but assumes
-    /// definition of DFA by a target.
-    std::unique_ptr<DFAPacketizer> ResourcesModel;
+    /// definition of a resource interface by a target, e.g. DFAPacketizer
+    std::unique_ptr<ResourceCycle> ResourcesModel;
 
     /// Resource model - packet/bundle model. Purely
     /// internal at the time.

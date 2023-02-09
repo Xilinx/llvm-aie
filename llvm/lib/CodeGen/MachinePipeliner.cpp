@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // An implementation of the Swing Modulo Scheduling (SMS) software pipeliner.
@@ -3141,9 +3144,9 @@ int ResourceManager::calculateResMIIDFA() const {
   for (SUnit &SU : DAG->SUnits)
     FuncUnitOrder.push(SU.getInstr());
 
-  SmallVector<std::unique_ptr<DFAPacketizer>, 8> Resources;
+  SmallVector<std::unique_ptr<ResourceCycle>, 8> Resources;
   Resources.push_back(
-      std::unique_ptr<DFAPacketizer>(TII->CreateTargetScheduleState(*ST)));
+      std::unique_ptr<ResourceCycle>(TII->CreateTargetScheduleState(*ST)));
 
   while (!FuncUnitOrder.empty()) {
     MachineInstr *MI = FuncUnitOrder.top();
@@ -3181,7 +3184,7 @@ int ResourceManager::calculateResMIIDFA() const {
       auto *NewResource = TII->CreateTargetScheduleState(*ST);
       assert(NewResource->canReserveResources(*MI) && "Reserve error.");
       NewResource->reserveResources(*MI);
-      Resources.push_back(std::unique_ptr<DFAPacketizer>(NewResource));
+      Resources.push_back(std::unique_ptr<ResourceCycle>(NewResource));
     }
   }
 

@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 // This class implements a deterministic finite automaton (DFA) based
 // packetizing mechanism for VLIW architectures. It provides APIs to
@@ -118,7 +121,9 @@ void DefaultVLIWScheduler::schedule() {
 VLIWPacketizerList::VLIWPacketizerList(MachineFunction &mf,
                                        MachineLoopInfo &mli, AAResults *aa)
     : MF(mf), TII(mf.getSubtarget().getInstrInfo()), AA(aa) {
-  ResourceTracker = TII->CreateTargetScheduleState(MF.getSubtarget());
+  ResourceCycle *TSS = TII->CreateTargetScheduleState(MF.getSubtarget());
+  assert(TSS->CanTrackResources && "Expected a DFAPacketizer");
+  ResourceTracker = static_cast<DFAPacketizer *>(TSS);
   ResourceTracker->setTrackResources(true);
   VLIWScheduler = new DefaultVLIWScheduler(MF, mli, AA);
 }

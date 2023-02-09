@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains the Hexagon implementation of the TargetInstrInfo class.
@@ -282,7 +285,7 @@ public:
                            unsigned *PredCost = nullptr) const override;
 
   /// Create machine specific model for scheduling.
-  DFAPacketizer *
+  ResourceCycle *
   CreateTargetScheduleState(const TargetSubtargetInfo &STI) const override;
 
   // Sometimes, it is possible for the target

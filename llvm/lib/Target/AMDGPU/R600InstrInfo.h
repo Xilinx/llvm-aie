@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 /// \file
@@ -29,7 +32,6 @@ enum : uint64_t {
 };
 }
 
-class DFAPacketizer;
 class MachineFunction;
 class MachineInstr;
 class MachineInstrBuilder;
@@ -157,7 +159,7 @@ public:
 
   bool isMov(unsigned Opcode) const;
 
-  DFAPacketizer *
+  ResourceCycle *
   CreateTargetScheduleState(const TargetSubtargetInfo &) const override;
 
   bool reverseBranchCondition(
