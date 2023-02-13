@@ -3489,7 +3489,7 @@ bool ResourceManager::canReserveResources(SUnit &SU, int Cycle) {
   });
   if (UseDFA)
     return DFAResources[positiveModulo(Cycle, InitiationInterval)]
-        ->canReserveResources(&SU.getInstr()->getDesc());
+        ->canReserveResources(*SU.getInstr());
 
   const MCSchedClassDesc *SCDesc = DAG->getSchedClass(&SU);
   if (!SCDesc->isValid()) {
@@ -3515,7 +3515,7 @@ void ResourceManager::reserveResources(SUnit &SU, int Cycle) {
   });
   if (UseDFA)
     return DFAResources[positiveModulo(Cycle, InitiationInterval)]
-        ->reserveResources(&SU.getInstr()->getDesc());
+        ->reserveResources(*SU.getInstr());
 
   const MCSchedClassDesc *SCDesc = DAG->getSchedClass(&SU);
   if (!SCDesc->isValid()) {
