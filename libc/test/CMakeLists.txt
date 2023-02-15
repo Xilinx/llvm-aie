@@ -1,3 +1,9 @@
+#
+# Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 add_custom_target(check-libc)
 add_custom_target(libc-unit-tests)
 add_custom_target(libc-hermetic-tests)
@@ -15,9 +21,9 @@ if(LIBC_TARGET_ARCHITECTURE_IS_GPU AND
 endif()
 
 add_subdirectory(src)
-add_subdirectory(utils)
 
 if(LLVM_LIBC_FULL_BUILD AND NOT LIBC_TARGET_OS_IS_BAREMETAL)
+  add_subdirectory(utils)
   add_subdirectory(IntegrationTest)
 endif()
 

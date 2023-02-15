@@ -1,3 +1,9 @@
+#
+# Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 cmake_minimum_required(VERSION 3.20.0)
 
 # Include LLVM's cmake policies.
@@ -358,7 +364,7 @@ endif()
 # and libraries potentially draw from the components present in all
 # of the other directories.
 add_subdirectory(lib)
-if(LLVM_INCLUDE_TESTS)
+if(LLVM_INCLUDE_TESTS AND NOT LIBC_CROSSBUILD)
   add_subdirectory(test)
   add_subdirectory(fuzzing)
 endif()
