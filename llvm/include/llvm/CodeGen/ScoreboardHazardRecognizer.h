@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the ScoreboardHazardRecognizer class, which
@@ -20,6 +23,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstring>
+#include <vector>
 
 namespace llvm {
 
@@ -37,7 +41,7 @@ class ScoreboardHazardRecognizer : public ScheduleHazardRecognizer {
   // bottom-up scheduler, then the scoreboard cycles are the inverse of the
   // scheduler's cycles.
   class Scoreboard {
-    InstrStage::FuncUnits *Data = nullptr;
+    std::vector<InstrStage::FuncUnits> Data;
 
     // The maximum number of cycles monitored by the Scoreboard. This
     // value is determined based on the target itineraries to ensure
@@ -49,15 +53,10 @@ class ScoreboardHazardRecognizer : public ScheduleHazardRecognizer {
 
   public:
     Scoreboard() = default;
-    Scoreboard &operator=(const Scoreboard &other) = delete;
-    Scoreboard(const Scoreboard &other) = delete;
-    ~Scoreboard() {
-      delete[] Data;
-    }
 
     size_t getDepth() const { return Depth; }
 
-    InstrStage::FuncUnits& operator[](size_t idx) const {
+    const InstrStage::FuncUnits &operator[](size_t idx) const {
       // Depth is expected to be a power-of-2.
       assert(Depth && !(Depth & (Depth - 1)) &&
              "Scoreboard was not initialized properly!");
@@ -65,13 +64,16 @@ class ScoreboardHazardRecognizer : public ScheduleHazardRecognizer {
       return Data[(Head + idx) & (Depth-1)];
     }
 
-    void reset(size_t d = 1) {
-      if (!Data) {
-        Depth = d;
-        Data = new InstrStage::FuncUnits[Depth];
-      }
+    InstrStage::FuncUnits &operator[](size_t idx) {
+      return const_cast<InstrStage::FuncUnits &>(
+          static_cast<const Scoreboard *>(this)->operator[](idx));
+    }
 
-      memset(Data, 0, Depth * sizeof(Data[0]));
+    void reset(size_t d = 1) {
+      if (Data.empty())
+        Depth = d;
+      Data.clear();
+      Data.resize(Depth, 0);
       Head = 0;
     }
 
