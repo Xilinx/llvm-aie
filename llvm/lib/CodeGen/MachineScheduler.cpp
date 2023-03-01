@@ -3894,18 +3894,39 @@ bool PostGenericScheduler::tryCandidate(SchedCandidate &Cand,
   return false;
 }
 
-void PostGenericScheduler::pickNodeFromQueue(SchedCandidate &Cand) {
-  ReadyQueue &Q = Top.Available;
+void PostGenericScheduler::pickNodeFromQueue(SchedCandidate &Cand,
+                                             SchedBoundary &Zone) {
+  ReadyQueue &Q = Zone.Available;
   for (SUnit *SU : Q) {
     SchedCandidate TryCand(Cand.Policy);
     TryCand.SU = SU;
-    TryCand.AtTop = true;
+    TryCand.AtTop = Zone.isTop();
     TryCand.initResourceDelta(DAG, SchedModel);
     if (tryCandidate(Cand, TryCand)) {
       Cand.setBest(TryCand);
       LLVM_DEBUG(traceCandidate(Cand));
     }
   }
+}
+
+SUnit *PostGenericScheduler::pickNodeUnidirectional(SchedBoundary &Zone) {
+  // Bump cycle until there's at least an SU available for scheduling.
+  SUnit *SU = Zone.pickOnlyChoice();
+  if (SU) {
+    tracePick(Only1, Zone.isTop());
+    return SU;
+  }
+
+  CandPolicy NoPolicy;
+  SchedCandidate Cand(NoPolicy);
+  // Set the policy based on the state of the current zone and
+  // the instructions outside the zone, including the bottom zone.
+  setPolicy(Cand.Policy, /*IsPostRA=*/true, Zone, nullptr);
+  pickNodeFromQueue(Cand, Zone);
+  assert(Cand.Reason != NoCand && "failed to find a candidate");
+  tracePick(Cand);
+  SU = Cand.SU;
+  return SU;
 }
 
 /// Pick the next node to schedule.
@@ -3916,20 +3937,7 @@ SUnit *PostGenericScheduler::pickNode(bool &IsTopNode) {
   }
   SUnit *SU;
   do {
-    SU = Top.pickOnlyChoice();
-    if (SU) {
-      tracePick(Only1, true);
-    } else {
-      CandPolicy NoPolicy;
-      SchedCandidate TopCand(NoPolicy);
-      // Set the top-down policy based on the state of the current top zone and
-      // the instructions outside the zone, including the bottom zone.
-      setPolicy(TopCand.Policy, /*IsPostRA=*/true, Top, nullptr);
-      pickNodeFromQueue(TopCand);
-      assert(TopCand.Reason != NoCand && "failed to find a candidate");
-      tracePick(TopCand);
-      SU = TopCand.SU;
-    }
+    SU = pickNodeUnidirectional(Top);
   } while (SU->isScheduled);
 
   IsTopNode = true;

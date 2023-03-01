@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file provides an interface for customizing the standard MachineScheduler
@@ -1336,7 +1339,13 @@ public:
 protected:
   virtual bool tryCandidate(SchedCandidate &Cand, SchedCandidate &TryCand);
 
-  void pickNodeFromQueue(SchedCandidate &Cand);
+  /// Pick the best candidate from the available list of \p Zone.
+  void pickNodeFromQueue(SchedCandidate &Cand, SchedBoundary &Zone);
+
+  /// Pick an SU from a single zone. This will bump the cycle until at
+  /// least one candidate is available.
+  /// See GenericScheduler::pickNodeBidirectional() for "bidirectional" picking.
+  SUnit *pickNodeUnidirectional(SchedBoundary &Zone);
 };
 
 /// Create the standard converging machine scheduler. This will be used as the
