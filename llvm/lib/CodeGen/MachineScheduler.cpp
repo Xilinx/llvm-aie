@@ -3977,6 +3977,26 @@ void PostGenericScheduler::pickNodeFromQueue(SchedBoundary &Zone,
   }
 }
 
+SUnit *PostGenericScheduler::pickNodeUnidirectional(SchedBoundary &Zone) {
+  // Bump cycle until there's at least an SU available for scheduling.
+  SUnit *SU = Zone.pickOnlyChoice();
+  if (SU) {
+    tracePick(Only1, Zone.isTop());
+    return SU;
+  }
+
+  CandPolicy NoPolicy;
+  SchedCandidate Cand(NoPolicy);
+  // Set the policy based on the state of the current zone and
+  // the instructions outside the zone, including the bottom zone.
+  setPolicy(Cand.Policy, /*IsPostRA=*/true, Zone, nullptr);
+  pickNodeFromQueue(Zone, Cand);
+  assert(Cand.Reason != NoCand && "failed to find a candidate");
+  tracePick(Cand);
+  SU = Cand.SU;
+  return SU;
+}
+
 /// Pick the best candidate node from either the top or bottom queue.
 SUnit *PostGenericScheduler::pickNodeBidirectional(bool &IsTopNode) {
   // FIXME: This is similiar to GenericScheduler::pickNodeBidirectional. Factor
@@ -4100,7 +4120,8 @@ SUnit *PostGenericScheduler::pickNode(bool &IsTopNode) {
       }
       IsTopNode = true;
     } else {
-      SU = pickNodeBidirectional(IsTopNode);
+//      SU = pickNodeBidirectional(IsTopNode);
+      SU = pickNodeUnidirectional(Top);
     }
   } while (SU->isScheduled);
 
