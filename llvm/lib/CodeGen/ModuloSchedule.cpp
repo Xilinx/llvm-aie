@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/ModuloSchedule.h"
@@ -100,8 +103,10 @@ void ModuloScheduleExpander::expand() {
 }
 
 void ModuloScheduleExpander::generatePipelinedLoop() {
-  LoopInfo = TII->analyzeLoopForPipelining(BB);
+  // LoopInfo = TII->analyzeLoopForPipelining(BB);
   assert(LoopInfo && "Must be able to analyze loop!");
+
+  LoopInfo->startExpand();
 
   // Create a new basic block for the kernel and add it to the CFG.
   MachineBasicBlock *KernelBB = MF.CreateMachineBasicBlock(BB->getBasicBlock());
@@ -2002,7 +2007,6 @@ void PeelingModuloScheduleExpander::expand() {
   BB = Schedule.getLoop()->getTopBlock();
   Preheader = Schedule.getLoop()->getLoopPreheader();
   LLVM_DEBUG(Schedule.dump());
-  LoopInfo = TII->analyzeLoopForPipelining(BB);
   assert(LoopInfo);
 
   rewriteKernel();
@@ -2024,7 +2028,7 @@ void PeelingModuloScheduleExpander::validateAgainstModuloScheduleExpander() {
   // First, run the normal ModuleScheduleExpander. We don't support any
   // InstrChanges.
   assert(LIS && "Requires LiveIntervals!");
-  ModuloScheduleExpander MSE(MF, Schedule, *LIS,
+  ModuloScheduleExpander MSE(MF, Schedule, *LIS, LoopInfo,
                              ModuloScheduleExpander::InstrChangesTy());
   MSE.expand();
   MachineBasicBlock *ExpandedKernel = MSE.getRewrittenKernel();
@@ -2187,8 +2191,12 @@ void ModuloScheduleTest::runOnLoop(MachineFunction &MF, MachineLoop &L) {
 
   ModuloSchedule MS(MF, &L, std::move(Instrs), std::move(Cycle),
                     std::move(Stage));
+  auto &ST = MF.getSubtarget();
+  auto *TII = ST.getInstrInfo();
+  auto LoopInfo = TII->analyzeLoopForPipelining(BB);
   ModuloScheduleExpander MSE(
-      MF, MS, LIS, /*InstrChanges=*/ModuloScheduleExpander::InstrChangesTy());
+      MF, MS, LIS, LoopInfo.get(),
+      /*InstrChanges=*/ModuloScheduleExpander::InstrChangesTy());
   MSE.expand();
   MSE.cleanup();
 }

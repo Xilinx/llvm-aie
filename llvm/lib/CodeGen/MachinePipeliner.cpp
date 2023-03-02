@@ -660,10 +660,11 @@ void SwingSchedulerDAG::schedule() {
   }
   // The experimental code generator can't work if there are InstChanges.
   if (ExperimentalCodeGen && NewInstrChanges.empty()) {
-    PeelingModuloScheduleExpander MSE(MF, MS, &LIS);
+    PeelingModuloScheduleExpander MSE(MF, MS, &LIS, LoopPipelinerInfo);
     MSE.expand();
   } else {
-    ModuloScheduleExpander MSE(MF, MS, LIS, std::move(NewInstrChanges));
+    ModuloScheduleExpander MSE(MF, MS, LIS, LoopPipelinerInfo,
+                               std::move(NewInstrChanges));
     MSE.expand();
     MSE.cleanup();
   }

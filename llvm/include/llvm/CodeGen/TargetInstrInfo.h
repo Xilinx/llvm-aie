@@ -753,6 +753,10 @@ public:
       return true;
     }
 
+    /// This is called from the modulo schedule expander before any other
+    /// modification
+    virtual void startExpand() {}
+
     /// Create a condition to determine if the trip count of the loop is greater
     /// than TC, where TC is always one more than for the previous prologue or
     /// 0 if this is being called for the outermost prologue.
