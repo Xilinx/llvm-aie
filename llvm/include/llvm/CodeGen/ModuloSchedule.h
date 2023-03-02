@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // Software pipelining (SWP) is an instruction scheduling technique for loops
@@ -177,7 +180,7 @@ private:
   MachineBasicBlock *BB = nullptr;
   MachineBasicBlock *Preheader = nullptr;
   MachineBasicBlock *NewKernel = nullptr;
-  std::unique_ptr<TargetInstrInfo::PipelinerLoopInfo> LoopInfo;
+  TargetInstrInfo::PipelinerLoopInfo *LoopInfo;
 
   /// Map for each register and the max difference between its uses and def.
   /// The first element in the pair is the max difference in stages. The
@@ -263,9 +266,11 @@ public:
   /// FIXME: InstrChanges is opaque and is an implementation detail of an
   ///   optimization in MachinePipeliner that crosses abstraction boundaries.
   ModuloScheduleExpander(MachineFunction &MF, ModuloSchedule &S,
-                         LiveIntervals &LIS, InstrChangesTy InstrChanges)
+                         LiveIntervals &LIS,
+                         TargetInstrInfo::PipelinerLoopInfo *LoopInfo,
+                         InstrChangesTy InstrChanges)
       : Schedule(S), MF(MF), ST(MF.getSubtarget()), MRI(MF.getRegInfo()),
-        TII(ST.getInstrInfo()), LIS(LIS),
+        TII(ST.getInstrInfo()), LIS(LIS), LoopInfo(LoopInfo),
         InstrChanges(std::move(InstrChanges)) {}
 
   /// Performs the actual expansion.
@@ -283,9 +288,10 @@ public:
 class PeelingModuloScheduleExpander {
 public:
   PeelingModuloScheduleExpander(MachineFunction &MF, ModuloSchedule &S,
-                                LiveIntervals *LIS)
+                                LiveIntervals *LIS,
+                                TargetInstrInfo::PipelinerLoopInfo *LoopInfo)
       : Schedule(S), MF(MF), ST(MF.getSubtarget()), MRI(MF.getRegInfo()),
-        TII(ST.getInstrInfo()), LIS(LIS) {}
+        TII(ST.getInstrInfo()), LIS(LIS), LoopInfo(LoopInfo) {}
 
   void expand();
 
@@ -367,7 +373,7 @@ protected:
   /// coming from a peeled out prologue.
   Register getPhiCanonicalReg(MachineInstr* CanonicalPhi, MachineInstr* Phi);
   /// Target loop info before kernel peeling.
-  std::unique_ptr<TargetInstrInfo::PipelinerLoopInfo> LoopInfo;
+  TargetInstrInfo::PipelinerLoopInfo *LoopInfo;
 };
 
 /// Expander that simply annotates each scheduled instruction with a post-instr
