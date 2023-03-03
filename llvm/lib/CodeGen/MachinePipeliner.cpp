@@ -3133,9 +3133,9 @@ bool ResourceManager::isOverbooked() const {
 
 int ResourceManager::calculateResMIIDFA() const {
   assert(UseDFA);
-
   // Sort the instructions by the number of available choices for scheduling,
   // least to most. Use the number of critical resources as the tie breaker.
+  // This gives priority to instructions that are difficult to fit.
   FuncUnitSorter FUS = FuncUnitSorter(*ST);
   for (SUnit &SU : DAG->SUnits)
     FUS.calcCriticalResources(*SU.getInstr());
@@ -3145,48 +3145,32 @@ int ResourceManager::calculateResMIIDFA() const {
   for (SUnit &SU : DAG->SUnits)
     FuncUnitOrder.push(SU.getInstr());
 
-  SmallVector<std::unique_ptr<ResourceCycle>, 8> Resources;
-  Resources.push_back(
-      std::unique_ptr<ResourceCycle>(TII->CreateTargetScheduleState(*ST)));
-
+  using UPR = std::unique_ptr<ResourceCycle>;
+  SmallVector<UPR, 8> Resources;
+  // Try to fit all instruction somewhere in the schedule, grow it when
+  // one doesn't fit.
+  // The resulting length of the schedule serves as resource MII
   while (!FuncUnitOrder.empty()) {
     MachineInstr *MI = FuncUnitOrder.top();
     FuncUnitOrder.pop();
+
     if (TII->isZeroCost(MI->getOpcode()))
       continue;
 
-    // Attempt to reserve the instruction in an existing DFA. At least one
-    // DFA is needed for each cycle.
-    unsigned NumCycles = DAG->getSUnit(MI)->Latency;
-    unsigned ReservedCycles = 0;
-    auto *RI = Resources.begin();
-    auto *RE = Resources.end();
-    LLVM_DEBUG({
-      dbgs() << "Trying to reserve resource for " << NumCycles
-             << " cycles for \n";
-      MI->dump();
-    });
-    for (unsigned C = 0; C < NumCycles; ++C)
-      while (RI != RE) {
-        if ((*RI)->canReserveResources(*MI)) {
-          (*RI)->reserveResources(*MI);
-          ++ReservedCycles;
-          break;
-        }
-        RI++;
-      }
-    LLVM_DEBUG(dbgs() << "ReservedCycles:" << ReservedCycles
-                      << ", NumCycles:" << NumCycles << "\n");
-    // Add new DFAs, if needed, to reserve resources.
-    for (unsigned C = ReservedCycles; C < NumCycles; ++C) {
-      LLVM_DEBUG(if (SwpDebugResource) dbgs()
-                 << "NewResource created to reserve resources"
-                 << "\n");
-      auto *NewResource = TII->CreateTargetScheduleState(*ST);
-      assert(NewResource->canReserveResources(*MI) && "Reserve error.");
-      NewResource->reserveResources(*MI);
-      Resources.push_back(std::unique_ptr<ResourceCycle>(NewResource));
+    auto *Room = find_if(Resources,
+                         [MI](UPR &R) { return R->canReserveResources(*MI); });
+    if (Room != Resources.end()) {
+      (*Room)->reserveResources(*MI);
+      continue;
     }
+    auto *NewResource = TII->CreateTargetScheduleState(*ST);
+    // Please note: This has the sideeffect of setting the slot mapping
+    // for a multi-slot pseudo
+    bool CanReserve = NewResource->canReserveResources(*MI);
+    (void)CanReserve;
+    assert(CanReserve);
+    NewResource->reserveResources(*MI);
+    Resources.emplace_back(NewResource);
   }
 
   int Resmii = Resources.size();
