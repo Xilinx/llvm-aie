@@ -9,6 +9,7 @@ import lit.formats
 import lit.TestingConfig
 import lit.util
 
+
 # LitConfig must be a new style class for properties to work
 class LitConfig(object):
     """LitConfig - Configuration data for a 'lit' test runner instance, shared
@@ -38,6 +39,7 @@ class LitConfig(object):
         parallelism_groups={},
         per_test_coverage=False,
         gtest_sharding=True,
+        allow_partial_configs=False,
     ):
         # The name of the test runner.
         self.progname = progname
@@ -53,6 +55,11 @@ class LitConfig(object):
         self.order = order
         self.params = dict(params)
         self.bashPath = None
+
+        # Do not crash when failing to load a configuration file.
+        # Useful for debugging, or when understanding the whole tree of cfg
+        # files isn't needed, e.g. for auto-update scripts.
+        self.allow_partial_configs = allow_partial_configs
 
         # Configuration files to look for when discovering test suites.
         self.config_prefix = config_prefix or "lit"

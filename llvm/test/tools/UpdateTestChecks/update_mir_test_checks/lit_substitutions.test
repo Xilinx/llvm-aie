@@ -1,0 +1,14 @@
+# REQUIRES: x86-registered-target
+
+## Check that update_mir_test_checks handles --lit-substitutions properly,
+## applying substitutions from config files before running commands.
+
+# RUN: rm -rf %t && cp -r %S/Inputs/tests_with_substitutions %t
+
+## One substitution defined in Inputs/tests_with_substitutions/lit.cfg
+# RUN: %update_mir_test_checks %t/one.mir --lit-substitutions -v
+# RUN: diff -u %S/Inputs/tests_with_substitutions/one.expected %t/one.mir
+
+## An additional substitution defined in Inputs/tests_with_substitutions/nested/lit.local.cfg
+# RUN: %update_mir_test_checks %t/nested/two.mir --lit-substitutions -v
+# RUN: diff -u %S/Inputs/tests_with_substitutions/two.expected %t/nested/two.mir

@@ -1,0 +1,8 @@
+# RUN: llc -mtriple=%triple -run-pass=%pass -o - %s | FileCheck %s
+
+---
+name:            test
+body:             |
+  bb.1:
+    RET 0, implicit $eax
+...
