@@ -228,6 +228,13 @@ def parse_commandline_args(parser):
     parser.add_argument(
         "--version", type=int, default=1, help="The version of output format"
     )
+    parser.add_argument(
+        "-s",
+        "--lit-substitutions",
+        action="store_true",
+        default=False,
+        help="Read simple lit .cfg files and apply declared substitutions",
+    )
     args = parser.parse_args()
     # TODO: This should not be handled differently from the other options
     global _verbose, _global_value_regex, _global_hex_value_regex
@@ -270,6 +277,7 @@ class TestInfo(object):
         argv,
         comment_prefix,
         argparse_callback,
+        lit_substitutions,
     ):
         self.parser = parser
         self.argparse_callback = argparse_callback
@@ -295,6 +303,7 @@ class TestInfo(object):
         self.test_unused_note = (
             self.comment_prefix + self.comment_prefix + " " + UNUSED_NOTE
         )
+        self.lit_substitutions = lit_substitutions
 
     def ro_iterlines(self):
         for line_num, input_line in enumerate(self.input_lines):
@@ -340,9 +349,59 @@ class TestInfo(object):
         return ret
 
 
+def parse_lit_substitutions(
+    test_path: str, test_suite_cache, local_config_cache
+) -> list:
+    """Reason about lit config files and derive which substitutions are to be
+    used for the test at test_path."""
+
+    # Make sure to import lit from llvm/utils
+    utils_dir = os.path.dirname(os.path.dirname(__file__))
+    lit_dir = os.path.join(utils_dir, "lit")
+    if not lit_dir in sys.path:
+        sys.path.insert(0, lit_dir)
+
+    import lit.LitConfig
+    import lit.discovery
+
+    # The important bit here is allow_partial_configs. We won't be able to
+    # understand the whole tree of config files (including lit.site.cfg) without
+    # access to a build tree. So just accept some bits won't be loaded. This
+    # is more that enough to understand lit.local.cfg files which mostly contain
+    # substitutions.
+    lit_config = lit.LitConfig.LitConfig(
+        progname="lit",
+        path=[],
+        quiet=False,
+        useValgrind=False,
+        valgrindLeakCheck=False,
+        valgrindArgs=[],
+        noExecute=False,
+        debug=_verbose,
+        isWindows=False,
+        order="smart",
+        params={},
+        allow_partial_configs=True,
+    )
+    lit_config.targets = []
+
+    tests = lit.discovery.getTests(
+        test_path, lit_config, test_suite_cache, local_config_cache
+    )[1]
+
+    for test in tests:
+        # Test and its test suite was found. Use the latter to access
+        # user-defined substitutions.
+        return test.config.substitutions
+    return []
+
+
 def itertests(
     test_patterns, parser, script_name, comment_prefix=None, argparse_callback=None
 ):
+    test_suite_cache = {}
+    local_config_cache = {}
+
     for pattern in test_patterns:
         # On Windows we must expand the patterns ourselves.
         tests_list = glob.glob(pattern)
@@ -385,6 +444,11 @@ def itertests(
                 if UNUSED_NOTE in l:
                     break
                 final_input_lines.append(l)
+            lit_substitutions = (
+                parse_lit_substitutions(test, test_suite_cache, local_config_cache)
+                if args.lit_substitutions
+                else []
+            )
             yield TestInfo(
                 test,
                 parser,
@@ -394,6 +458,7 @@ def itertests(
                 argv,
                 comment_prefix,
                 argparse_callback,
+                lit_substitutions,
             )
 
 
@@ -421,7 +486,7 @@ def should_add_line_to_output(
 
 
 # Perform lit-like substitutions
-def getSubstitutions(sourcepath):
+def getPathSubstitutions(sourcepath):
     sourcedir = os.path.dirname(sourcepath)
     return [
         ("%s", sourcepath),
@@ -437,10 +502,25 @@ def applySubstitutions(s, substitutions):
     return s
 
 
+def applyArgArraySubstitutions(args: list, path_substitutions, cfg_substitutions):
+    """Apply path substitutions and user substitutions defined in lit.cfg files."""
+
+    # After expanding substitutions from lit.cfg files, args might be turned into
+    # multiple ones. Make sure to re-split.
+    new_args = shlex.split(applySubstitutions(shlex.join(args), cfg_substitutions))
+
+    # After user expansions, one can safely expand things like %s, %S or %t.
+    # It is important to do it in a second step, as shlex.split() does not
+    # understand Windows paths properly.
+    return [applySubstitutions(arg, path_substitutions) for arg in new_args]
+
+
 # Invoke the tool that is being tested.
-def invoke_tool(exe, cmd_args, ir, preprocess_cmd=None, verbose=False):
+def invoke_tool(
+    exe, cmd_args, ir, preprocess_cmd=None, verbose=False, cfg_substitutions=[]
+):
     with open(ir) as ir_file:
-        substitutions = getSubstitutions(ir)
+        path_substitutions = getPathSubstitutions(ir)
 
         # TODO Remove the str form which is used by update_test_checks.py and
         # update_llc_test_checks.py
@@ -450,7 +530,9 @@ def invoke_tool(exe, cmd_args, ir, preprocess_cmd=None, verbose=False):
             assert isinstance(
                 preprocess_cmd, str
             )  # TODO: use a list instead of using shell
-            preprocess_cmd = applySubstitutions(preprocess_cmd, substitutions).strip()
+            preprocess_cmd = applySubstitutions(
+                preprocess_cmd, cfg_substitutions + path_substitutions
+            ).strip()
             if verbose:
                 print(
                     "Pre-processing input file: ",
@@ -469,11 +551,15 @@ def invoke_tool(exe, cmd_args, ir, preprocess_cmd=None, verbose=False):
                 ir_file = pp.stdout
 
         if isinstance(cmd_args, list):
-            args = [applySubstitutions(a, substitutions) for a in cmd_args]
+            args = applyArgArraySubstitutions(
+                cmd_args, path_substitutions, cfg_substitutions
+            )
             stdout = subprocess.check_output([exe] + args, stdin=ir_file)
         else:
             stdout = subprocess.check_output(
-                exe + " " + applySubstitutions(cmd_args, substitutions),
+                exe
+                + " "
+                + applySubstitutions(cmd_args, cfg_substitutions + path_substitutions),
                 shell=True,
                 stdin=ir_file,
             )
@@ -1889,6 +1975,7 @@ def get_autogennote_suffix(parser, args):
             "llvm_bin",
             "verbose",
             "force_update",
+            "lit_substitutions",
         ):
             continue
         value = getattr(args, action.dest)

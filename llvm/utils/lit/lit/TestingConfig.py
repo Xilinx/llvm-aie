@@ -149,10 +149,15 @@ class TestingConfig(object):
         except:
             import traceback
 
-            litConfig.fatal(
-                "unable to parse config file %r, traceback: %s"
-                % (path, traceback.format_exc())
+            msg = "unable to parse config file %r, traceback: %s" % (
+                path,
+                traceback.format_exc(),
             )
+            if not litConfig.allow_partial_configs:
+                litConfig.fatal(msg)
+            elif litConfig.debug:
+                litConfig.note(msg)
+
         self.finish(litConfig)
 
     def __init__(

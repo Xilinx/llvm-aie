@@ -309,11 +309,11 @@ def main():
         run_list = []
         line2func_list = collections.defaultdict(list)
 
-        subs = {
-            "%s": ti.path,
-            "%t": tempfile.NamedTemporaryFile().name,
-            "%S": os.path.dirname(ti.path),
-        }
+        subs = [
+            ("%s", ti.path),
+            ("%t", tempfile.NamedTemporaryFile().name),
+            ("%S", os.path.dirname(ti.path)),
+        ]
 
         for l in ti.run_lines:
             commands = [cmd.strip() for cmd in l.split("|")]
@@ -328,20 +328,18 @@ def main():
             # Execute non-clang runline.
             if exec_args[0] not in SUBST:
                 # Do lit-like substitutions.
-                for s in subs:
-                    exec_args = [
-                        i.replace(s, subs[s]) if s in i else i for i in exec_args
-                    ]
+                exec_args = common.applyArgArraySubstitutions(
+                    exec_args, subs, ti.lit_substitutions
+                )
                 run_list.append((None, exec_args, None, None))
                 continue
             # This is a clang runline, apply %clang substitution rule, do lit-like substitutions,
             # and append args.clang_args
             clang_args = exec_args
             clang_args[0:1] = SUBST[clang_args[0]]
-            for s in subs:
-                clang_args = [
-                    i.replace(s, subs[s]) if s in i else i for i in clang_args
-                ]
+            clang_args = common.applyArgArraySubstitutions(
+                clang_args, subs, ti.lit_substitutions
+            )
             clang_args += ti.args.clang_args
 
             # Extract -check-prefix in FileCheck args
