@@ -4,7 +4,10 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-//===--------------------------------------------------------------------===//
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
+//===----------------------------------------------------------------------===//
 /// \file
 /// This contains common combine transformations that may be used in a combine
 /// pass,or by the target elsewhere.
@@ -813,6 +816,11 @@ public:
 
   // Given a binop \p MI, commute operands 1 and 2.
   void applyCommuteBinOpOperands(MachineInstr &MI);
+
+  /// Transform:
+  ///  G_INTTOPTR (int G_CONSTANT x) -> (pointer G_CONSTANT x)
+  bool matchIntToPtrContant(MachineInstr &MI, MachineRegisterInfo &MRI,
+                            BuildFnTy &MatchInfo);
 
 private:
   /// Checks for legality of an indexed variant of \p LdSt.
