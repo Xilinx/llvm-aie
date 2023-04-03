@@ -1,3 +1,9 @@
+#
+# Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 set(libc_archive_targets "")
 set(libc_archive_names "")
 set(libc_archive_entrypoint_lists "")
@@ -28,6 +34,14 @@ foreach(archive IN ZIP_LISTS
     DEPENDS
       ${${archive_2}}
   )
+
+  # The dependency below is necessary because it's possible for libc-headers to generate
+  # and want to install headers that no component of ${archive_1} depend on.
+  # This causes issues when running 'make install' because libc-headers is all implemented
+  # with custom targets and in older version of cmake (~pre-3.20, apparently)
+  # there is not good support for describing install dependencies on custom targets.
+  add_dependencies(${archive_1} libc-headers)
+
   set_target_properties(
     ${archive_1}
     PROPERTIES
