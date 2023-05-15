@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the ScoreboardHazardRecognizer class, which
@@ -113,9 +116,6 @@ ScoreboardHazardRecognizer::getHazardType(SUnit *SU, int Stalls) {
   if (!ItinData || ItinData->isEmpty())
     return NoHazard;
 
-  // Note that stalls will be negative for bottom-up scheduling.
-  int cycle = Stalls;
-
   // Use the itinerary for the underlying instruction to check for
   // free FU's in the scoreboard at the appropriate future cycles.
 
@@ -124,7 +124,16 @@ ScoreboardHazardRecognizer::getHazardType(SUnit *SU, int Stalls) {
     // Don't check hazards for non-machineinstr Nodes.
     return NoHazard;
   }
-  unsigned idx = MCID->getSchedClass();
+  HazardType Hzrd = getHazardType(MCID->getSchedClass(), Stalls);
+  LLVM_DEBUG(if (Hzrd != NoHazard) DAG->dumpNode(*SU));
+  return Hzrd;
+}
+
+ScheduleHazardRecognizer::HazardType
+ScoreboardHazardRecognizer::getHazardType(unsigned SchedClass, int Stalls) {
+  // Note that stalls will be negative for bottom-up scheduling.
+  int cycle = Stalls;
+  unsigned idx = SchedClass;
   for (const InstrStage *IS = ItinData->beginStage(idx),
          *E = ItinData->endStage(idx); IS != E; ++IS) {
     // We must find one of the stage's units free for every cycle the
@@ -156,7 +165,6 @@ ScoreboardHazardRecognizer::getHazardType(SUnit *SU, int Stalls) {
 
       if (!freeUnits) {
         LLVM_DEBUG(dbgs() << "*** Hazard in cycle +" << StageCycle << ", ");
-        LLVM_DEBUG(DAG->dumpNode(*SU));
         return Hazard;
       }
     }

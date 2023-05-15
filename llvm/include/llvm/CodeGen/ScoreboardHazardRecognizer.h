@@ -119,6 +119,10 @@ public:
   // Stalls provides an cycle offset at which SU will be scheduled. It will be
   // negative for bottom-up scheduling.
   HazardType getHazardType(SUnit *SU, int Stalls) override;
+  // This is an overload taking a schedclass. This is the actual
+  // implementation of the wrapper above which just traverses from
+  // the SU to the corresponding SchedClass.
+  HazardType getHazardType(unsigned SchedClass, int Stalls);
   void Reset() override;
   void EmitInstruction(SUnit *SU) override;
   void AdvanceCycle() override;
