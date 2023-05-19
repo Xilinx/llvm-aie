@@ -386,3 +386,25 @@ const TargetRegisterClass *
 AIE2RegisterInfo::getGPRRegClass(const MachineFunction &MF) const {
   return &AIE2::eRRegClass;
 }
+
+const std::set<int> &AIE2RegisterInfo::getSubRegSplit(int RegClassId) const {
+  static const std::set<int> NoSplit = {AIE2::NoSubRegister};
+  static const std::set<int> Mod2DSplit = {AIE2::sub_mod, AIE2::sub_dim_size,
+                                           AIE2::sub_dim_stride,
+                                           AIE2::sub_dim_count};
+  static const std::set<int> Mod3DSplit = {AIE2::sub_mod,
+                                           AIE2::sub_dim_size,
+                                           AIE2::sub_dim_stride,
+                                           AIE2::sub_dim_count,
+                                           AIE2::sub_hi_dim_then_sub_mod,
+                                           AIE2::sub_hi_dim_then_sub_dim_size,
+                                           AIE2::sub_hi_dim_then_sub_dim_stride,
+                                           AIE2::sub_hi_dim_then_sub_dim_count};
+  switch (RegClassId) {
+  case AIE2::eDRegClassID:
+    return Mod2DSplit;
+  case AIE2::eDSRegClassID:
+    return Mod3DSplit;
+  }
+  return NoSplit;
+}

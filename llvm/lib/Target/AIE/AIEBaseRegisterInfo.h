@@ -16,6 +16,7 @@
 #define LLVM_LIB_TARGET_AIE_AIEBASEREGISTERINFO_H
 
 #include "llvm/CodeGen/TargetRegisterInfo.h"
+#include <set>
 
 namespace llvm {
 
@@ -26,6 +27,13 @@ struct AIEBaseRegisterInfo : public TargetRegisterInfo {
   virtual const TargetRegisterClass *
   getGPRRegClass(const MachineFunction &MF) const {
     llvm_unreachable("Target didn't implement getGPRRegClass!");
+  }
+
+  /// Returns the SubReg indices that can be used to split a vreg in
+  /// \p RegClassId into multiple smaller registers.
+  /// Returns {NoSubRegister} if splitting is not possible.
+  virtual const std::set<int> &getSubRegSplit(int RegClassId) const {
+    llvm_unreachable("Target didn't implement getSubRegSplit()");
   }
 #if 0
   /// Returns a BitVector of the intersection of GPR RegClass
