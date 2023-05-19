@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the RAGreedy function pass for register allocation in
@@ -1338,8 +1341,11 @@ unsigned RAGreedy::tryBlockSplit(const LiveInterval &VirtReg,
 static unsigned getNumAllocatableRegsForConstraints(
     const MachineInstr *MI, Register Reg, const TargetRegisterClass *SuperRC,
     const TargetInstrInfo *TII, const TargetRegisterInfo *TRI,
-    const RegisterClassInfo &RCI) {
+    const RegisterClassInfo &RCI, const VirtRegMap &VRM) {
   assert(SuperRC && "Invalid register class");
+
+  if (VRM.hasRequiredPhys(Reg))
+    return 1;
 
   const TargetRegisterClass *ConstrainedRC =
       MI->getRegClassConstraintEffectForVReg(Reg, SuperRC, TII, TRI,
@@ -1451,8 +1457,8 @@ unsigned RAGreedy::tryInstructionSplit(const LiveInterval &VirtReg,
       if (TII->isFullCopyInstr(*MI) ||
           (SplitSubClass &&
            SuperRCNumAllocatableRegs ==
-               getNumAllocatableRegsForConstraints(MI, VirtReg.reg(), SuperRC,
-                                                   TII, TRI, RegClassInfo)) ||
+               getNumAllocatableRegsForConstraints(
+                   MI, VirtReg.reg(), SuperRC, TII, TRI, RegClassInfo, *VRM)) ||
           // TODO: Handle split for subranges with subclass constraints?
           (!SplitSubClass && VirtReg.hasSubRanges() &&
            !readsLaneSubset(*MRI, MI, VirtReg, TRI, Use, TII))) {
@@ -2313,6 +2319,10 @@ void RAGreedy::tryHintRecoloring(const LiveInterval &VirtReg) {
       continue;
     }
 
+    // Cannot recolor registers that have a required assignment.
+    if (VRM->hasRequiredPhys(Reg))
+      continue;
+
     // Get the live interval mapped with this virtual register to be able
     // to check for the interference with the new color.
     LiveInterval &LI = LIS->getInterval(Reg);
@@ -2464,7 +2474,9 @@ MCRegister RAGreedy::selectOrSplitImpl(const LiveInterval &VirtReg,
   // Wait until the second time, when all smaller ranges have been allocated.
   // This gives a better picture of the interference to split around.
   if (Stage < RS_Split) {
-    ExtraInfo->setStage(VirtReg, RS_Split);
+    LiveRangeStage NextStage =
+        VRM->hasRequiredPhys(VirtReg.reg()) ? RS_Spill : RS_Split;
+    ExtraInfo->setStage(VirtReg, NextStage);
     LLVM_DEBUG(dbgs() << "wait for second round\n");
     NewVRegs.push_back(VirtReg.reg());
     return 0;

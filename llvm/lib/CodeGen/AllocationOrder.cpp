@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements an allocation order for virtual registers.
@@ -29,6 +32,9 @@ using namespace llvm;
 AllocationOrder AllocationOrder::create(unsigned VirtReg, const VirtRegMap &VRM,
                                         const RegisterClassInfo &RegClassInfo,
                                         const LiveRegMatrix *Matrix) {
+  if (VRM.hasRequiredPhys(VirtReg)) {
+    return AllocationOrder(MCPhysReg(VRM.getRequiredPhys(VirtReg)));
+  }
   const MachineFunction &MF = VRM.getMachineFunction();
   const TargetRegisterInfo *TRI = &VRM.getTargetRegInfo();
   auto Order = RegClassInfo.getOrder(MF.getRegInfo().getRegClass(VirtReg));
@@ -50,4 +56,19 @@ AllocationOrder AllocationOrder::create(unsigned VirtReg, const VirtRegMap &VRM,
            "Target hint is outside allocation order.");
 #endif
   return AllocationOrder(std::move(Hints), Order, HardHints);
+}
+
+AllocationOrder::AllocationOrder(MCPhysReg RequiredReg) : IterationLimit(1) {
+  OrderScratch = {RequiredReg};
+  Order = OrderScratch;
+}
+
+AllocationOrder::AllocationOrder(const AllocationOrder &A)
+    : Hints(A.Hints), IterationLimit(A.IterationLimit) {
+  if (A.OrderScratch.empty()) {
+    Order = A.Order;
+  } else {
+    OrderScratch = A.OrderScratch;
+    Order = OrderScratch;
+  }
 }

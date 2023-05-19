@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // The LiveRangeEdit class represents changes done to a virtual register when it
@@ -491,6 +494,16 @@ LiveRangeEdit::MRI_NoteNewVirtualRegister(Register VReg) {
     VRM->grow();
 
   NewRegs.push_back(VReg);
+}
+
+void LiveRangeEdit::MRI_NoteCloneVirtualRegister(Register NewReg,
+                                                 Register SrcReg) {
+  if (VRM) {
+    VRM->grow();
+    if (VRM->hasRequiredPhys(SrcReg))
+      VRM->setRequiredPhys(NewReg, VRM->getRequiredPhys(SrcReg));
+  }
+  NewRegs.push_back(NewReg);
 }
 
 void LiveRangeEdit::calculateRegClassAndHint(MachineFunction &MF,

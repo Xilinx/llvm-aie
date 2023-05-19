@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements a virtual register map. This maps virtual registers to
@@ -50,6 +53,14 @@ class TargetInstrInfo;
     /// spilled register is the temporary used to load it from the
     /// stack).
     IndexedMap<Register, VirtReg2IndexFunctor> Virt2PhysMap;
+
+    /// This maps virtual registers to their required physical register
+    /// assignments. If a VReg is present, it can only be assigned to
+    /// Virt2RequiredPhysMap[VReg] after RA finishes. This can be useful for
+    /// maintaining super-reg to sub-reg relationships. E.g. making sure that
+    /// different VRegs will still belong to a same physical super register
+    /// after allocation.
+    IndexedMap<Register, VirtReg2IndexFunctor> Virt2RequiredPhysMap;
 
     /// Virt2StackSlotMap - This is virtual register to stack slot
     /// mapping. Each spilled virtual register has an entry in it
@@ -111,6 +122,23 @@ class TargetInstrInfo;
     /// the specified physical register
     void assignVirt2Phys(Register virtReg, MCPhysReg physReg);
 
+    /// returns true if the specified virtual register is
+    /// required to be assigned to a specific physical register
+    bool hasRequiredPhys(Register virtReg) const {
+      return getRequiredPhys(virtReg) != NO_PHYS_REG;
+    }
+
+    /// returns the physical register that the specified virtual register is
+    /// required to be ultimately assigned to, or NO_PHYS_REG.
+    MCRegister getRequiredPhys(Register virtReg) const {
+      assert(virtReg.isVirtual());
+      return MCRegister::from(Virt2RequiredPhysMap[virtReg.id()]);
+    }
+
+    /// Sets the physical register that the specified virtual register is
+    /// required to be ultimately assigned to.
+    void setRequiredPhys(Register virtReg, MCPhysReg physReg);
+
     bool isShapeMapEmpty() const { return Virt2ShapeMap.empty(); }
 
     bool hasShape(Register virtReg) const {
@@ -154,6 +182,9 @@ class TargetInstrInfo;
       Virt2SplitMap[virtReg.id()] = SReg;
       if (hasShape(SReg)) {
         Virt2ShapeMap[virtReg.id()] = getShape(SReg);
+      }
+      if (hasRequiredPhys(SReg)) {
+        setRequiredPhys(virtReg, getRequiredPhys(SReg));
       }
     }
 
