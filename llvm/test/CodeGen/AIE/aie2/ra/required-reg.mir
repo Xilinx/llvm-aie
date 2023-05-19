@@ -7,6 +7,7 @@
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc -mtriple=aie2 -verify-machineinstrs --run-pass=greedy,virtregrewriter --require-preferred-registers %s -o - | FileCheck %s
+# RUN: llc -mtriple=aie2 -verify-machineinstrs --run-pass=greedy,greedy,virtregrewriter --require-preferred-registers %s -o - | FileCheck %s
 
 # We turn preferred registers into required ones using --require-preferred-registers.
 # Here we make sure that those choices are enforced even if they induce spills.

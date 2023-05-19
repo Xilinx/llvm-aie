@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the RegAllocBase class, which is the skeleton of a basic
@@ -97,6 +100,9 @@ protected:
 
   /// enqueue - Add VirtReg to the priority queue of unassigned registers.
   virtual void enqueueImpl(const LiveInterval *LI) = 0;
+
+  /// Hook for allocators to initialize state for already-allocated registers.
+  virtual void noteAllocatedReg(const LiveInterval *LI) {}
 
   /// enqueue - Add VirtReg to the priority queue of unassigned registers.
   void enqueue(const LiveInterval *LI);
