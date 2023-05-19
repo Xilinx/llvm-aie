@@ -305,6 +305,10 @@ void RAGreedy::enqueue(PQueue &CurQueue, const LiveInterval *LI) {
   CurQueue.push(std::make_pair(Ret, ~Reg));
 }
 
+void RAGreedy::noteAllocatedReg(const LiveInterval *LI) {
+  ExtraInfo->setStage(*LI, RS_Spill);
+}
+
 unsigned DefaultPriorityAdvisor::getPriority(const LiveInterval &LI) const {
   const unsigned Size = LI.getSize();
   const Register Reg = LI.reg();

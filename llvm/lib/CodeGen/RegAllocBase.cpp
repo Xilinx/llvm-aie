@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the RegAllocBase class which provides common functionality
@@ -178,8 +181,10 @@ void RegAllocBase::enqueue(const LiveInterval *LI) {
 
   assert(Reg.isVirtual() && "Can only enqueue virtual registers");
 
-  if (VRM->hasPhys(Reg))
+  if (VRM->hasPhys(Reg)) {
+    noteAllocatedReg(LI);
     return;
+  }
 
   const TargetRegisterClass &RC = *MRI->getRegClass(Reg);
   if (ShouldAllocateClass(*TRI, RC)) {

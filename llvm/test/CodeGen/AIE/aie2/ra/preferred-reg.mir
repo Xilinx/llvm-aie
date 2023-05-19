@@ -7,6 +7,7 @@
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc -mtriple=aie2 -verify-machineinstrs --run-pass=greedy,virtregrewriter %s -o - | FileCheck %s
+# RUN: llc -mtriple=aie2 -verify-machineinstrs --run-pass=greedy,greedy,virtregrewriter %s -o - | FileCheck %s
 
 # Similar to required-reg.mir as well, but the registers are only "preferred".
 # Greedy should prefer ignoring the hint over spilling.

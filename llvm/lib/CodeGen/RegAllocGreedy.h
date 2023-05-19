@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 // This file defines the RAGreedy function pass for register allocation in
 // optimized builds.
@@ -291,6 +294,7 @@ public:
   void releaseMemory() override;
   Spiller &spiller() override { return *SpillerInstance; }
   void enqueueImpl(const LiveInterval *LI) override;
+  void noteAllocatedReg(const LiveInterval *LI) override;
   const LiveInterval *dequeue() override;
   MCRegister selectOrSplit(const LiveInterval &,
                            SmallVectorImpl<Register> &) override;
