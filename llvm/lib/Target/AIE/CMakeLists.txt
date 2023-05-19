@@ -84,6 +84,7 @@ add_llvm_target(AIECodeGen
    AIESplitInstructionRewriter.cpp
    AIESubRegConstrainer.cpp
    AIESubtarget.cpp
+   AIESuperRegRewriter.cpp
    AIETargetMachine.cpp
    AIETargetObjectFile.cpp
    AIE2AsmPrinter.cpp

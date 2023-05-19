@@ -77,6 +77,7 @@ struct AIE2RegisterInfo : public AIE2GenRegisterInfo {
                             const MachineFunction &MF) const override;
   const TargetRegisterClass *
   getGPRRegClass(const MachineFunction &MF) const override;
+  const std::set<int> &getSubRegSplit(int RegClassId) const override;
 };
 } // namespace llvm
 
