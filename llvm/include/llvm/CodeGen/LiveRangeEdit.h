@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // The LiveRangeEdit class represents changes done to a virtual register when it
@@ -105,6 +108,9 @@ private:
   /// MachineRegisterInfo callback to notify when new virtual
   /// registers are created.
   void MRI_NoteNewVirtualRegister(Register VReg) override;
+
+  /// MachineRegisterInfo callback to notify when a virtual register is cloned
+  void MRI_NoteCloneVirtualRegister(Register NewReg, Register SrcReg) override;
 
   /// Check if MachineOperand \p MO is a last use/kill either in the
   /// main live range of \p LI or in one of the matching subregister ranges.

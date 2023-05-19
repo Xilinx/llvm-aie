@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements an allocation order for virtual registers.
@@ -30,6 +33,9 @@ class LiveRegMatrix;
 class LLVM_LIBRARY_VISIBILITY AllocationOrder {
   const SmallVector<MCPhysReg, 16> Hints;
   ArrayRef<MCPhysReg> Order;
+  /// Small scratchpad for \p Order to support "dynamic" allocation orders
+  SmallVector<MCPhysReg, 1> OrderScratch;
+
   // How far into the Order we can iterate. This is 0 if the AllocationOrder is
   // constructed with HardHints = true, Order.size() otherwise. While
   // technically a size_t, it will participate in comparisons with the
@@ -91,6 +97,13 @@ public:
                   bool HardHints)
       : Hints(std::move(Hints)), Order(Order),
         IterationLimit(HardHints ? 0 : static_cast<int>(Order.size())) {}
+
+  /// Create a "singleton" AllocationOrder, which only allows a single physreg
+  /// to be picked.
+  AllocationOrder(MCPhysReg RequiredReg);
+
+  AllocationOrder(const AllocationOrder &A);
+  AllocationOrder(AllocationOrder &&A) = delete;
 
   Iterator begin() const {
     return Iterator(*this, -(static_cast<int>(Hints.size())));

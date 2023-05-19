@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the VirtRegMap class.
@@ -52,6 +55,11 @@ using namespace llvm;
 STATISTIC(NumSpillSlots, "Number of spill slots allocated");
 STATISTIC(NumIdCopies,   "Number of identity moves eliminated after rewriting");
 
+static cl::opt<bool> RequirePreferredRegs(
+    "require-preferred-registers", cl::init(false), cl::Hidden,
+    cl::desc("Enforce preferred-register simple hints by making the hints "
+             "required in the VirtRegMap"));
+
 //===----------------------------------------------------------------------===//
 //  VirtRegMap implementation
 //===----------------------------------------------------------------------===//
@@ -67,17 +75,29 @@ bool VirtRegMap::runOnMachineFunction(MachineFunction &mf) {
   MF = &mf;
 
   Virt2PhysMap.clear();
+  Virt2RequiredPhysMap.clear();
   Virt2StackSlotMap.clear();
   Virt2SplitMap.clear();
   Virt2ShapeMap.clear();
 
   grow();
+
+  // Turn "preferred" registers into "required" registers if requested.
+  if (RequirePreferredRegs) {
+    for (unsigned Idx = 0; Idx != MRI->getNumVirtRegs(); ++Idx) {
+      Register VReg = Register::index2VirtReg(Idx);
+      if (Register PreferredReg = MRI->getSimpleHint(VReg))
+        setRequiredPhys(VReg, PreferredReg);
+    }
+  }
+
   return false;
 }
 
 void VirtRegMap::grow() {
   unsigned NumRegs = MF->getRegInfo().getNumVirtRegs();
   Virt2PhysMap.resize(NumRegs);
+  Virt2RequiredPhysMap.resize(NumRegs);
   Virt2StackSlotMap.resize(NumRegs);
   Virt2SplitMap.resize(NumRegs);
 }
@@ -89,7 +109,17 @@ void VirtRegMap::assignVirt2Phys(Register virtReg, MCPhysReg physReg) {
          "virtual register");
   assert(!getRegInfo().isReserved(physReg) &&
          "Attempt to map virtReg to a reserved physReg");
+  assert(!hasRequiredPhys(virtReg) || getRequiredPhys(virtReg) == physReg);
   Virt2PhysMap[virtReg.id()] = physReg;
+}
+
+void VirtRegMap::setRequiredPhys(Register virtReg, MCPhysReg physReg) {
+  assert(virtReg.isVirtual() && Register::isPhysicalRegister(physReg));
+  assert(!getRegInfo().isReserved(physReg) &&
+         "Attempt to map virtReg to a reserved physReg");
+  assert(Virt2PhysMap[virtReg.id()] == NO_PHYS_REG ||
+         Virt2PhysMap[virtReg.id()] == physReg);
+  Virt2RequiredPhysMap[virtReg.id()] = physReg;
 }
 
 unsigned VirtRegMap::createSpillSlot(const TargetRegisterClass *RC) {
@@ -107,6 +137,10 @@ unsigned VirtRegMap::createSpillSlot(const TargetRegisterClass *RC) {
 }
 
 bool VirtRegMap::hasPreferredPhys(Register VirtReg) const {
+  if (hasRequiredPhys(VirtReg)) {
+    assert(getPhys(VirtReg) == getRequiredPhys(VirtReg));
+    return true;
+  }
   Register Hint = MRI->getSimpleHint(VirtReg);
   if (!Hint.isValid())
     return false;
@@ -116,6 +150,8 @@ bool VirtRegMap::hasPreferredPhys(Register VirtReg) const {
 }
 
 bool VirtRegMap::hasKnownPreference(Register VirtReg) const {
+  if (hasRequiredPhys(VirtReg))
+    return true;
   std::pair<unsigned, Register> Hint = MRI->getRegAllocationHint(VirtReg);
   if (Hint.second.isPhysical())
     return true;
@@ -146,10 +182,15 @@ void VirtRegMap::print(raw_ostream &OS, const Module*) const {
   OS << "********** REGISTER MAP **********\n";
   for (unsigned i = 0, e = MRI->getNumVirtRegs(); i != e; ++i) {
     Register Reg = Register::index2VirtReg(i);
-    if (Virt2PhysMap[Reg] != (unsigned)VirtRegMap::NO_PHYS_REG) {
+    if (Virt2PhysMap[Reg] != (unsigned)VirtRegMap::NO_PHYS_REG ||
+        hasRequiredPhys(Reg)) {
       OS << '[' << printReg(Reg, TRI) << " -> "
          << printReg(Virt2PhysMap[Reg], TRI) << "] "
-         << TRI->getRegClassName(MRI->getRegClass(Reg)) << "\n";
+         << TRI->getRegClassName(MRI->getRegClass(Reg));
+      if (MCRegister ReqPhysReg = getRequiredPhys(Reg)) {
+        OS << " (" << printReg(ReqPhysReg, TRI) << " REQUIRED)";
+      }
+      OS << "\n";
     }
   }
 
