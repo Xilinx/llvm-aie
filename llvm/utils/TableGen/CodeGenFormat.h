@@ -151,6 +151,12 @@ private:
   unsigned Size;
   /// Is it describing a composite VLIW instruction? (Packet Format)
   bool IsComposite;
+  /// Is it a MultipleSlotOptions instruction?
+  bool IsMultipleSlotOptions;
+  /// Possible instructions pseudo could expand to
+  /// Vector is used to preserve the sequence of Inst. mentioned in TableGen
+  /// This will indirectly help in giving priority to a specific inst/slot
+  std::vector<std::string> AlternateInsts;
   /// Is it the NOP instruction of a particular slot?
   bool IsSlotNOP;
   /// Mapping Container between Slots and their respective NOP instruction
@@ -186,8 +192,19 @@ public:
   unsigned getSize() const;
   const std::string &getInstrName() const { return InstrName; }
   bool isPacketFormat() const { return IsComposite; }
+  bool hasMultipleSlotOptions() const { return IsMultipleSlotOptions; }
   bool isSlotNOP() const { return IsSlotNOP; }
   void dump(std::ostream &) const;
+  std::vector<std::string> getAlternateInsts() const { return AlternateInsts; }
+  void addAlternateInsts(const std::string Instr) {
+    assert(IsMultipleSlotOptions &&
+           "AlternateInst only possible for Pseudo Instr");
+    auto it = std::find(AlternateInsts.begin(), AlternateInsts.end(), Instr);
+    if (it == AlternateInsts.end())
+      AlternateInsts.push_back(Instr);
+    else
+      llvm_unreachable("Alternate Insts already exist");
+  }
 
   /// Emissions methods
 
@@ -196,13 +213,27 @@ public:
   /// Emit the Format entries.
   void emitFormat(ConstTable &FieldHierarcht, ConstTable &Formats,
                   ConstTable &OpFields, ConstTable &FieldRanges) const;
+  /// Emit a case table to get InstrID based of InstrName.
+  void emitOpcodeFormatIndex(raw_ostream &o) const;
+  /// Emit a set array to get AlternateInsts refs based of
+  /// InstrName/PseudoOpcode
+  void emitAlternateInstsOpcodeSet(raw_ostream &o) const;
+  /// Emit a case table to get AlternateInsts based of InstrName/PseudoOpcode
+  void emitAlternateInstsOpcode(raw_ostream &o, unsigned int index) const;
   /// Emit the Packet-Format table, used in the FormatSelector.
   void emitPacketEntry(ConstTable &FormatData, ConstTable &SlotData) const;
+
+  void addAlternateInstInMultiSlotPseudo(
+      const std::vector<TGInstrLayout> &InstFormats);
 
 private:
   /// Check the value of the IsComposite TableGen attribute and report it into
   /// the class.
   void resolveIsComposite();
+
+  /// Check the value of the hasMultipleSlotOptions TableGen attribute & report
+  /// it into the class.
+  void resolveIsMultipleSlotOptions();
 
   /// Mark every Field representing a Slot with its according slot.
   void resolveIsSlot();
@@ -421,7 +452,7 @@ public:
   void emitTargetSlotsDeclaration(raw_ostream &o) const;
 
   /// Emit the initialization code of all "SlotInfo" instances
-  void emitSlotsInfoInstanciation(raw_ostream &o,
+  void emitSlotsInfoInstantiation(raw_ostream &o,
                                   const TGInstrLayout::NOPSlotMap &) const;
 };
 
@@ -498,9 +529,10 @@ public:
   const TGTargetSlot *getSlot() const { return SlotClass; }
 
   /// Set the current Slot reference of the field
-  void setSlot(const TGTargetSlot &Slot) {
+  void setSlot(const TGTargetSlot &Slot,
+               const bool IsMultipleSlotOptions = false) {
     SlotClass = &Slot;
-    if (Size != SlotClass->getSlotSize()) {
+    if (Size != SlotClass->getSlotSize() && !IsMultipleSlotOptions) {
       errs() << "Size doesn't match between the field " << Label
              << " of the Record " << DefRecord->getName() << " and the slot "
              << Slot.getInstanceName() << "\n";

@@ -40,6 +40,16 @@ class TESTPacketFormat<dag outs, dag ins, string opcodestr, string argstr,
   let isComposite = true;
 }
 
+class TESTMultiSlot_Pseudo<list<TESTInst> insts = [], string opcodestr = "",
+             string argstr = "">
+    : TESTInst<(outs),(ins), opcodestr, argstr, []>{
+  let isPseudo = 1;
+  bits<1> isMultiSlotPseudo = 1;
+  list<TESTInst> materializableInto = insts;
+  let isCodeGenOnly = 1;
+  let isComposite = 0;
+}
+
 class TEST_instr32<dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">
     : TESTSubInst<outs, ins, opcodestr, argstr, pattern> {
   field bits<32> SoftFail = 0;

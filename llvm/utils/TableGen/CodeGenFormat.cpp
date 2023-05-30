@@ -83,12 +83,14 @@ void CodeGenFormat::run(raw_ostream &o) {
 
   // Our main container of Formats
   std::vector<TGInstrLayout> InstFormats;
+  // Contains only multislot pseudo inst.
+  std::vector<TGInstrLayout> PseudoInstFormats;
 
   for (const CodeGenInstruction *CGI : NumberedInstructions) {
     Record *R = CGI->TheDef;
 
-    if (R->getValueAsString("Namespace") == "TargetOpcode" ||
-        R->getValueAsBit("isPseudo") || !R->getValue("Inst"))
+    if ((R->getValueAsString("Namespace") == "TargetOpcode") ||
+        (!R->getValue("Inst") && !R->getValue("isMultiSlotPseudo")))
       continue;
 
     // Build a tree of fields based on the encoding infos of the current
@@ -97,7 +99,14 @@ void CodeGenFormat::run(raw_ostream &o) {
     // For debugging purposes:
     // IL.dump(std::cout);
     InstFormats.push_back(IL);
+
+    if (IL.hasMultipleSlotOptions())
+      PseudoInstFormats.push_back(IL);
   }
+
+  // Populate slot map for multislot pseudo inst.
+  for (TGInstrLayout &PseudoInst : PseudoInstFormats)
+    PseudoInst.addAlternateInstInMultiSlotPseudo(InstFormats);
 
   assert(Slots.size() != 0 && "no Slot detected");
 
@@ -105,11 +114,6 @@ void CodeGenFormat::run(raw_ostream &o) {
        "#undef GET_FORMATS_SLOTKINDS\n\n";
   Slots.emitTargetSlotKindEnum(o);
   o << "#endif // GET_FORMATS_SLOTKINDS\n\n";
-
-  o << "#ifdef GET_FORMATS_SLOTINFOS_MAPPING\n"
-       "#undef GET_FORMATS_SLOTINFOS_MAPPING\n";
-  Slots.emitTargetSlotMapping(o);
-  o << "#endif // GET_FORMATS_SLOTINFOS_MAPPING\n\n";
 
   o << "#ifdef GET_FORMATS_HEADER\n"
        "#undef GET_FORMATS_HEADER\n\n";
@@ -126,19 +130,57 @@ void CodeGenFormat::run(raw_ostream &o) {
     o << "#ifdef GET_FORMATS_INFO\n"
       << "#undef GET_FORMATS_INFO\n"
       << "enum GenFormatInfo {\n"
-      << "  NB_FORMATS_EMITTED = " << InstFormats.size() << ",\n"
-      << "  FIRST_INST_EMITTED = " << Target.getName()
-      << "::" << InstFormats[0].getInstrName() << ",\n"
-      << "  LAST_INSTR_EMITTED = " << Target.getName()
-      << "::" << InstFormats.back().getInstrName() << "\n"
+      << "  NB_FORMATS_EMITTED = " << InstFormats.size() << "\n"
       << "};\n"
       << "#endif // GET_FORMATS_INFO\n\n";
   }
 
   o << "#ifdef GET_FORMATS_SLOTS_DEFS\n"
     << "#undef GET_FORMATS_SLOTS_DEFS\n\n";
-  Slots.emitSlotsInfoInstanciation(o, TGInstrLayout::getNOPSlotMapper());
+  Slots.emitSlotsInfoInstantiation(o, TGInstrLayout::getNOPSlotMapper());
   o << "#endif // GET_FORMATS_SLOTS_DEFS\n\n";
+
+  o << "#ifdef GET_FORMATS_SLOTINFOS_MAPPING\n"
+       "#undef GET_FORMATS_SLOTINFOS_MAPPING\n";
+  Slots.emitTargetSlotMapping(o);
+  o << "#endif // GET_FORMATS_SLOTINFOS_MAPPING\n\n";
+
+  o << "#ifdef GET_OPCODE_FORMATS_INDEX_FUNC\n"
+    << "#undef GET_OPCODE_FORMATS_INDEX_FUNC\n";
+  o << "std::optional<unsigned int> " << Target.getName().str()
+    << "MCFormats::getFormatDescIndex";
+  o << "(unsigned int Opcode) const {\n";
+  o << "  switch (Opcode) {\n";
+  o << "  default:\n";
+  o << "    return std::nullopt;\n";
+  for (const TGInstrLayout &Inst : InstFormats)
+    Inst.emitOpcodeFormatIndex(o);
+  o << "  }\n}\n";
+  o << "#endif // GET_OPCODE_FORMATS_INDEX_FUNC\n\n";
+
+  o << "#ifdef GET_ALTERNATE_INST_OPCODE_FUNC\n"
+    << "#undef GET_ALTERNATE_INST_OPCODE_FUNC\n";
+
+  if (!PseudoInstFormats.empty()) {
+    o << "static std::vector<unsigned int> const AlternateInsts[] = {\n";
+    for (const auto &Inst : PseudoInstFormats) {
+      Inst.emitAlternateInstsOpcodeSet(o);
+      if (Inst.getInstrName() != PseudoInstFormats.back().getInstrName())
+        o << ", \n";
+    }
+    o << "\n};\n\n";
+  }
+
+  o << "const std::vector<unsigned int> *" << Target.getName().str()
+    << "MCFormats::getAlternateInstsOpcode";
+  o << "(unsigned int Opcode) const {\n";
+  o << "  switch (Opcode) {\n";
+  o << "  default:\n";
+  o << "    return nullptr;\n";
+  for (unsigned int i = 0; i < PseudoInstFormats.size(); i++)
+    PseudoInstFormats[i].emitAlternateInstsOpcode(o, i);
+  o << "  }\n}\n";
+  o << "#endif // GET_ALTERNATE_INST_OPCODE_FUNC\n\n";
 
   if (InstFormats.size() > 0 && Slots.size() > 0) {
     o << "#ifdef GET_FORMATS_FORMATS_DEFS\n"
@@ -267,10 +309,16 @@ unsigned CodeGenFormat::getFixedBits(std::string &OutChunck, BitsInit *BI,
 
 TGInstrLayout::TGInstrLayout(const CodeGenInstruction *const CGI,
                              const TGTargetSlots &Slots)
-    : CGI(CGI), SlotsRegistry(Slots), IsComposite(false), IsSlotNOP(false),
-      InstrID(EmissionID++) {
+    : CGI(CGI), SlotsRegistry(Slots), IsComposite(false),
+      IsMultipleSlotOptions(false), IsSlotNOP(false), InstrID(EmissionID++) {
+
+  // resolveIsMultipleSlotOptions is required to select Arttibute to keep track
+  // of.
+  resolveIsMultipleSlotOptions();
+
   // Default name of Instruction Attribute in TableGen record
-  std::string InstrAttribute = "Inst";
+  std::string InstrAttribute =
+      IsMultipleSlotOptions ? "isMultiSlotPseudo" : "Inst";
 
   assert(CGI && "null pointer as CodeGenInstruction argument");
   assert(CGI->TheDef && "CodeGenInstruction doesn't own any Record reference");
@@ -285,6 +333,15 @@ TGInstrLayout::TGInstrLayout(const CodeGenInstruction *const CGI,
 
   InstField = std::make_shared<TGFieldLayout>(
       CGI, InstrAttribute, nullptr, Size, TGFieldLayout::FieldType::Variable);
+
+  if (IsMultipleSlotOptions) {
+    std::vector<Record *> SlotRecords =
+        CGI->TheDef->getValueAsListOfDefs("materializableInto");
+    assert(!SlotRecords.empty() &&
+           "Expected Instructions for multi slot Pseudo instructions");
+    resolveIsComposite();
+    return;
+  }
 
   BitsInit *BI = nullptr;
   unsigned HierarchyLevel = 0;
@@ -335,6 +392,51 @@ void TGInstrLayout::resolveIsComposite() {
   Record *BaseRecord = CGI->TheDef;
   if (BaseRecord->getValue("isComposite"))
     IsComposite = BaseRecord->getValueAsBit("isComposite");
+}
+
+void TGInstrLayout::resolveIsMultipleSlotOptions() {
+  Record *BaseRecord = CGI->TheDef;
+  if (BaseRecord->getValue("isMultiSlotPseudo"))
+    IsMultipleSlotOptions =
+        BaseRecord->getValueAsBitsInit("isMultiSlotPseudo")->getBit(0);
+}
+
+void TGInstrLayout::addAlternateInstInMultiSlotPseudo(
+    const std::vector<TGInstrLayout> &InstFormats) {
+
+  std::vector<Record *> AltInsts =
+      CGI->TheDef->getValueAsListOfDefs("materializableInto");
+
+  std::set<const TGTargetSlot *> SupportedSlot;
+  for (Record *AltInst : AltInsts) {
+    bool Found = false;
+    for (const TGInstrLayout &Inst : InstFormats) {
+      if (Inst.InstrName == AltInst->getName()) {
+
+        const std::vector<TGFieldLayout *> SlotsVec(Inst.slots().begin(),
+                                                    Inst.slots().end());
+        assert(SlotsVec.size() == 1 && "Real Instr should have only one slot");
+        for (auto &SlotField : SlotsVec) {
+          const TGTargetSlot *Slot = SlotField->SlotClass;
+          if (Slot) {
+            // Add alternate instr only if no other instr with same slot exist
+            if (SupportedSlot.find(Slot) == SupportedSlot.end()) {
+              addAlternateInsts(Target + "::" + Inst.InstrName);
+              SupportedSlot.insert(Slot);
+            } else
+              llvm_unreachable(
+                  "An instr. with same slot already added to supported list");
+          } else
+            llvm_unreachable(
+                "MulitSlot Pseudo Inst. with an Real Inst having UNKNOWN slot");
+        }
+        Found = true;
+        break;
+      }
+    }
+    if (!Found)
+      llvm_unreachable("Instruction for MulitSlot Pseudo Inst. not found");
+  }
 }
 
 void TGInstrLayout::resolveIsSlot() {
@@ -524,8 +626,12 @@ void TGInstrLayout::emitFlatTree(ConstTable &FieldsHierarchy,
                       << Field->getLabel() << "\",";
     }
 
-    FieldsHierarchy << "{ " << Field->GlobalOffsets.LeftOffset << ", "
-                    << Field->GlobalOffsets.RightOffset << " }, ";
+    if (Field->isGlobalPositionKnown())
+      FieldsHierarchy << " MCFormatField::GlobalOffsets{ "
+                      << Field->GlobalOffsets.LeftOffset << ", "
+                      << Field->GlobalOffsets.RightOffset << " }, ";
+    else
+      FieldsHierarchy << " /*LocInfos=*/std::nullopt,";
 
     const std::string TargetKindName = Target + SlotsRegistry.GenSlotKindName;
     const TGTargetSlot *SlotInfo = Field->getSlot();
@@ -542,6 +648,32 @@ void TGInstrLayout::emitFlatTree(ConstTable &FieldsHierarchy,
   }
 }
 
+void TGInstrLayout::emitAlternateInstsOpcodeSet(raw_ostream &o) const {
+  assert(AlternateInsts.size() &&
+         "AlternateInsts cannot be empty for multi slot pseudo instr");
+  o << "    // " << Target << "::" << InstrName << "\n";
+  o << "    { ";
+  for (const auto &AltInstr : AlternateInsts) {
+    o << AltInstr;
+    if (AltInstr != AlternateInsts.back())
+      o << ", ";
+  }
+  o << " }";
+}
+
+void TGInstrLayout::emitAlternateInstsOpcode(raw_ostream &o,
+                                             unsigned int index) const {
+  assert(AlternateInsts.size() &&
+         "AlternateInsts cannot be empty for multi slot pseudo instr");
+  o << "  case " << Target << "::" << InstrName << ":\n"
+    << "    return &AlternateInsts[" << std::to_string(index) << "];\n";
+}
+
+void TGInstrLayout::emitOpcodeFormatIndex(raw_ostream &o) const {
+  o << "  case " << Target << "::" << InstrName << ":\n"
+    << "    return " << std::to_string(InstrID) << ";\n";
+}
+
 void TGInstrLayout::emitFormat(ConstTable &FieldsHierarchy, ConstTable &o,
                                ConstTable &OpFields,
                                ConstTable &FieldRanges) const {
@@ -551,6 +683,8 @@ void TGInstrLayout::emitFormat(ConstTable &FieldsHierarchy, ConstTable &o,
     << "      " << /*"llvm" << "::" << Namespace << "::" <<*/ InstrName
     << " /* Opcode */,\n"
     << "      " << (IsComposite ? "true" : "false") << " /* isComposite */,\n"
+    << "      " << (IsMultipleSlotOptions ? "true" : "false")
+    << " /* hasMultipleSlotOptions */,\n"
     << "      "
     << "/* Slots - Fields mapper */\n"
     << "      {";
@@ -974,6 +1108,13 @@ void TGTargetSlots::emitTargetSlotKindClass(raw_ostream &o) const {
 }
 
 void TGTargetSlots::emitTargetSlotMapping(raw_ostream &o) const {
+
+  o << "const MCSlotInfo *" << Target << "MCFormats::getSlotInfo";
+  o << "(const MCSlotKind Kind) const {\n";
+  o << "  switch (Kind) {\n";
+  o << "  default:\n";
+  o << "    return nullptr;\n";
+
   const std::string EnumCstPreamble = Target + GenSlotKindName + "::";
   for (const RecordSlot &Slot : Slots) {
     const TGTargetSlot &TS = Slot.second;
@@ -985,6 +1126,8 @@ void TGTargetSlots::emitTargetSlotMapping(raw_ostream &o) const {
       << "    "
       << "return &" << TS.getInstanceName() << ";\n";
   }
+  o << "  }\n";
+  o << "}\n";
 }
 
 void TGTargetSlots::emitTargetSlotsDeclaration(raw_ostream &o) const {
@@ -1001,7 +1144,7 @@ void TGTargetSlots::emitTargetSlotsDeclaration(raw_ostream &o) const {
   }
 }
 
-void TGTargetSlots::emitSlotsInfoInstanciation(
+void TGTargetSlots::emitSlotsInfoInstantiation(
     raw_ostream &o, const TGInstrLayout::NOPSlotMap &SlotMapper) const {
   assert(IsFinalized && "Internal vector needs to be finalized (i.e. sorted)");
 
