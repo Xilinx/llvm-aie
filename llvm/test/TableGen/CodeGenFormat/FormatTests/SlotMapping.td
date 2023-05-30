@@ -12,9 +12,18 @@ def veca_slot : InstSlot<"veca", 37>;
 
 include "Inputs/CommonFormatTesting.td"
 
+// CHECK:        GET_ALTERNATE_INST_OPCODE_FUNC
+// CHECK:        static std::vector<unsigned int> const AlternateInsts[] = {
+// CHECK:        TEST::MultiSlotPseudo
+// CHECK:        { TEST::ADD, TEST::VMUL80_S32_S32_BM }
+
+// CHECK:        const std::vector<unsigned int> *TESTMCFormats::getAlternateInstsOpcode(unsigned int Opcode) const {
+// CHECK:        case TEST::MultiSlotPseudo:
+// CHECK:        return &AlternateInsts[0];
+
 def ADD      : TEST_alu_r_rr<0b0000, "add">;
 
-// CHECK:        TEST::ADD - Index : 0
+// CHECK:        TEST::ADD - Index : 1
 // CHECK-NOT:    TESTSlotKind::TEST_SLOT_ALUAAA
 // CHECK:        "alu_base"
 // CHECK:        { 1, 19 }
@@ -24,14 +33,21 @@ def ADD      : TEST_alu_r_rr<0b0000, "add">;
 def VMUL80_S32_S32_BM : TEST_vec_acm_bm_zero
     <0b1, 0b0, 0b01, 0b0, 0b01, (outs), (ins), [], "", "">;
 
-// CHECK:        TEST::VMUL80_S32_S32_BM - Index : 1
+// CHECK:        TEST::VMUL80_S32_S32_BM - Index : 2
 // CHECK-NOT:    TESTSlotKind::TEST_SLOT_VECA
 // CHECK:        "veca_base"
 // CHECK:        { 21, 57 }
 // CHECK:        TESTSlotKind::TEST_SLOT_VECA
 // CHECK-NOT:    TESTSlotKind::TEST_SLOT_VECA
 
-// CHECK:        TEST::ADD - Index : 0
+def MultiSlotPseudo : TESTMultiSlot_Pseudo<[ADD,VMUL80_S32_S32_BM]>;
+
+// CHECK:        TEST::MultiSlotPseudo - Index : 0
 // CHECK:        false /* isComposite */
-// CHECK:        TEST::VMUL80_S32_S32_BM - Index : 1
+// CHECK:        true /* hasMultipleSlotOptions */
+// CHECK:        TEST::ADD - Index : 1
 // CHECK:        false /* isComposite */
+// CHECK:        false /* hasMultipleSlotOptions */
+// CHECK:        TEST::VMUL80_S32_S32_BM - Index : 2
+// CHECK:        false /* isComposite */
+// CHECK:        false /* hasMultipleSlotOptions */
