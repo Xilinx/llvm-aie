@@ -71,22 +71,71 @@ private:
 /// regs. Returns {} if the rewrite isn't possible.
 static SmallSet<int, 8> getRewritableSubRegs(Register Reg,
                                              const MachineRegisterInfo &MRI,
-                                             const AIEBaseRegisterInfo &TRI) {
+                                             const AIEBaseRegisterInfo &TRI,
+                                             std::set<Register> &VisitedVRegs) {
+  if (Reg.isPhysical()) {
+    // TODO: One could use collectSubRegs() in AIEBaseInstrInfo.cpp
+    // But given that MOD registers are not part of the ABI, they should
+    // not appear as physical registers before RA.
+    LLVM_DEBUG(dbgs() << "  Cannot rewrite physreg " << printReg(Reg, &TRI)
+                      << "\n");
+    return {};
+  }
+
   auto &SubRegSplit = TRI.getSubRegSplit(MRI.getRegClass(Reg)->getID());
+  if (SubRegSplit.size() <= 1) {
+    // Register does not have multiple subregs to be rewritten into.
+    LLVM_DEBUG(dbgs() << "  Cannot rewrite " << printReg(Reg, &TRI, 0, &MRI)
+                      << ": no sub-reg split\n");
+    return {};
+  }
+
+  VisitedVRegs.insert(Reg);
   SmallSet<int, 8> UsedSubRegs;
   for (MachineOperand &RegOp : MRI.reg_operands(Reg)) {
     int SubReg = RegOp.getSubReg();
-    if (!SubReg || !SubRegSplit.count(SubReg)) {
+    if (SubReg && SubRegSplit.count(SubReg)) {
+      UsedSubRegs.insert(SubReg);
+    } else if (RegOp.getParent()->isFullCopy()) {
+      // To rewrite a full copy, both operands need to be rewritable using
+      // their subregs.
+      Register DstReg = RegOp.getParent()->getOperand(0).getReg();
+      if (!VisitedVRegs.count(DstReg) &&
+          getRewritableSubRegs(DstReg, MRI, TRI, VisitedVRegs).empty()) {
+        LLVM_DEBUG(dbgs() << "  Cannot rewrite "
+                          << printReg(DstReg, &TRI, 0, &MRI) << " in "
+                          << *RegOp.getParent());
+        return {};
+      }
+      Register SrcReg = RegOp.getParent()->getOperand(1).getReg();
+      if (!VisitedVRegs.count(SrcReg) &&
+          getRewritableSubRegs(SrcReg, MRI, TRI, VisitedVRegs).empty()) {
+        LLVM_DEBUG(dbgs() << "  Cannot rewrite "
+                          << printReg(SrcReg, &TRI, 0, &MRI) << " in "
+                          << *RegOp.getParent());
+        return {};
+      }
+      UsedSubRegs.insert(SubRegSplit.begin(), SubRegSplit.end());
+    } else {
+      LLVM_DEBUG(dbgs() << "  Cannot rewrite " << RegOp << " in "
+                        << *RegOp.getParent());
       return {};
     }
-    UsedSubRegs.insert(SubReg);
   }
+
   return UsedSubRegs;
 }
 
+static SmallSet<int, 8> getRewritableSubRegs(Register Reg,
+                                             const MachineRegisterInfo &MRI,
+                                             const AIEBaseRegisterInfo &TRI) {
+  std::set<Register> VisitedVRegs;
+  return getRewritableSubRegs(Reg, MRI, TRI, VisitedVRegs);
+}
+
 bool AIESuperRegRewriter::runOnMachineFunction(MachineFunction &MF) {
-  LLVM_DEBUG(llvm::dbgs() << "Splitting super-registers: " << MF.getName()
-                          << "\n");
+  LLVM_DEBUG(llvm::dbgs() << "*** Splitting super-registers: " << MF.getName()
+                          << " ***\n");
 
   MachineRegisterInfo &MRI = MF.getRegInfo();
   auto &TRI =
@@ -98,6 +147,7 @@ bool AIESuperRegRewriter::runOnMachineFunction(MachineFunction &MF) {
   std::map<Register, MCRegister> AssignedPhysRegs;
 
   // Collect already-assigned VRegs that can be split into smaller ones.
+  LLVM_DEBUG(VRM.dump());
   for (unsigned VRegIdx = 0, End = MRI.getNumVirtRegs(); VRegIdx != End;
        ++VRegIdx) {
     Register Reg = Register::index2VirtReg(VRegIdx);
@@ -151,6 +201,32 @@ void AIESuperRegRewriter::rewriteSuperReg(
   for (int SubReg : SubRegs) {
     const TargetRegisterClass *SubRC = TRI.getSubRegisterClass(SuperRC, SubReg);
     SubRegToVReg[SubReg] = MRI.createVirtualRegister(SubRC);
+  }
+
+  // Rewrite full copies into multiple copies using subregs
+  for (MachineInstr &MI : make_early_inc_range(MRI.reg_instructions(Reg))) {
+    if (!MI.isFullCopy())
+      continue;
+    LLVM_DEBUG(dbgs() << "  Changing full copy: " << MI);
+    LLVM_DEBUG(dbgs() << "  Range: " << LIS.getInterval(Reg) << "\n");
+    Register DstReg = MI.getOperand(0).getReg();
+    Register SrcReg = MI.getOperand(1).getReg();
+    LIS.removeVRegDefAt(LIS.getInterval(DstReg),
+                        Indexes.getInstructionIndex(MI).getRegSlot());
+    auto &CopySubRegs = TRI.getSubRegSplit(MRI.getRegClass(Reg)->getID());
+    MachineInstrSpan MIS(MI, MI.getParent());
+    for (int SubRegIdx : CopySubRegs) {
+      MachineInstr *PartCopy = BuildMI(*MI.getParent(), MI, MI.getDebugLoc(),
+                                       TII->get(TargetOpcode::COPY))
+                                   .addReg(DstReg, RegState::Define, SubRegIdx)
+                                   .addReg(SrcReg, 0, SubRegIdx)
+                                   .getInstr();
+      LLVM_DEBUG(dbgs() << "        to " << *PartCopy);
+      LIS.InsertMachineInstrInMaps(*PartCopy);
+      LIS.getInterval(PartCopy->getOperand(0).getReg());
+    }
+    LIS.RemoveMachineInstrFromMaps(MI);
+    MI.eraseFromParent();
   }
 
   LLVM_DEBUG(dbgs() << "  Splitting range " << LIS.getInterval(Reg) << "\n");
