@@ -196,6 +196,9 @@ body:             |
 ...
 
 # Test splitting a 2D reg that is defined from another 2D reg
+# This is for testing purposes, we will not have copies from D and D_3D
+# physical registers at this part of the flow, as these registers are not
+# part of the calling convention.
 ---
 name:            test_split_2d_from_full_copy
 tracksRegLiveness: true
@@ -228,6 +231,56 @@ body:             |
     %20:ep = COPY $p0
     %100:ed = COPY $d1
   bb.2:
+    %20:ep, %100.sub_dim_count:ed = PADDA_2D_split %20, %100.sub_mod, %100.sub_dim_size, %100.sub_dim_stride, %100.sub_dim_count
+    PseudoRET implicit $lr, implicit %20, implicit %100.sub_dim_count
+...
+
+# Test splitting a 2D reg that is defined from another 2D reg, the latter
+# defined through 1D regs.
+---
+name:            test_split_2d_from_full_copy_def_by_1d
+tracksRegLiveness: true
+body:             |
+  ; VREGS-LABEL: name: test_split_2d_from_full_copy_def_by_1d
+  ; VREGS: bb.0.entry:
+  ; VREGS-NEXT:   successors: %bb.1(0x80000000)
+  ; VREGS-NEXT:   liveins: $p0, $m1, $dn1, $dj1
+  ; VREGS-NEXT: {{  $}}
+  ; VREGS-NEXT:   [[COPY:%[0-9]+]]:ep = COPY $p0
+  ; VREGS-NEXT:   [[COPY1:%[0-9]+]]:em = COPY $m1
+  ; VREGS-NEXT:   [[COPY2:%[0-9]+]]:edn = COPY $dn1
+  ; VREGS-NEXT:   [[COPY3:%[0-9]+]]:edj = COPY $dj1
+  ; VREGS-NEXT:   [[MOV_PD_imm10_pseudo:%[0-9]+]]:edc = MOV_PD_imm10_pseudo 0
+  ; VREGS-NEXT: {{  $}}
+  ; VREGS-NEXT: bb.1:
+  ; VREGS-NEXT:   [[COPY4:%[0-9]+]]:edc = COPY [[MOV_PD_imm10_pseudo]]
+  ; VREGS-NEXT:   [[COPY5:%[0-9]+]]:edn = COPY [[COPY2]]
+  ; VREGS-NEXT:   [[COPY6:%[0-9]+]]:edj = COPY [[COPY3]]
+  ; VREGS-NEXT:   [[COPY7:%[0-9]+]]:em = COPY [[COPY1]]
+  ; VREGS-NEXT:   [[COPY:%[0-9]+]]:ep, [[COPY4:%[0-9]+]]:edc = PADDA_2D_split [[COPY]], [[COPY7]], [[COPY5]], [[COPY6]], [[COPY4]]
+  ; VREGS-NEXT:   PseudoRET implicit $lr, implicit [[COPY]], implicit [[COPY4]]
+  ;
+  ; RA-LABEL: name: test_split_2d_from_full_copy_def_by_1d
+  ; RA: bb.0.entry:
+  ; RA-NEXT:   successors: %bb.1(0x80000000)
+  ; RA-NEXT:   liveins: $dj1, $dn1, $m1, $p0
+  ; RA-NEXT: {{  $}}
+  ; RA-NEXT:   renamable $dc1 = MOV_PD_imm10_pseudo 0
+  ; RA-NEXT: {{  $}}
+  ; RA-NEXT: bb.1:
+  ; RA-NEXT:   liveins: $dc1, $dj1, $dn1, $m1, $p0
+  ; RA-NEXT: {{  $}}
+  ; RA-NEXT:   $p0, $dc1 = PADDA_2D_split killed $p0, killed $m1, killed $dn1, killed $dj1, killed $dc1
+  ; RA-NEXT:   PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc1
+  bb.1.entry:
+    liveins: $p0, $m1, $dn1, $dj1
+    %20:ep = COPY $p0
+    undef %21.sub_mod:ed = COPY $m1
+    %21.sub_dim_size:ed = COPY $dn1
+    %21.sub_dim_stride:ed = COPY $dj1
+    %21.sub_dim_count:ed = MOV_PD_imm10_pseudo 0
+  bb.2:
+    %100:ed = COPY %21
     %20:ep, %100.sub_dim_count:ed = PADDA_2D_split %20, %100.sub_mod, %100.sub_dim_size, %100.sub_dim_stride, %100.sub_dim_count
     PseudoRET implicit $lr, implicit %20, implicit %100.sub_dim_count
 ...
