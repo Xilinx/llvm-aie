@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This transformation analyzes and transforms the induction variables (and
@@ -5907,8 +5910,9 @@ LSRInstance::LSRInstance(Loop *L, IVUsers &IU, ScalarEvolution &SE,
   // If loop preparation eliminates all interesting IV users, bail.
   if (IU.empty()) return;
 
-  // Skip nested loops until we can model them better with formulae.
-  if (!L->isInnermost()) {
+  // Skip nested loops until we can model them better with formulae, unless
+  // the target explicitly requests LSR for them.
+  if (!L->isInnermost() && !TTI.isProfitableOuterLSR(*L)) {
     LLVM_DEBUG(dbgs() << "LSR skipping outer loop " << *L << "\n");
     return;
   }

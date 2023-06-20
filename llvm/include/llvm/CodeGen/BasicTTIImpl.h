@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 /// \file
@@ -389,6 +392,10 @@ public:
   bool shouldFoldTerminatingConditionAfterLSR() const {
     return TargetTransformInfoImplBase::
         shouldFoldTerminatingConditionAfterLSR();
+  }
+
+  bool isProfitableOuterLSR(const Loop &L) const {
+    return TargetTransformInfoImplBase::isProfitableOuterLSR(L);
   }
 
   bool isProfitableLSRChainElement(Instruction *I) {

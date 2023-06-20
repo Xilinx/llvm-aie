@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 /// \file
 /// This file provides helpers for the implementation of
@@ -236,6 +239,8 @@ public:
   bool isNumRegsMajorCostOfLSR() const { return true; }
 
   bool shouldFoldTerminatingConditionAfterLSR() const { return false; }
+
+  bool isProfitableOuterLSR(const Loop &L) const { return false; }
 
   bool isProfitableLSRChainElement(Instruction *I) const { return false; }
 

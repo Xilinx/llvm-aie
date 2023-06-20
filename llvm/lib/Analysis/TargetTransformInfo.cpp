@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/TargetTransformInfo.h"
@@ -415,6 +418,10 @@ bool TargetTransformInfo::isNumRegsMajorCostOfLSR() const {
 
 bool TargetTransformInfo::shouldFoldTerminatingConditionAfterLSR() const {
   return TTIImpl->shouldFoldTerminatingConditionAfterLSR();
+}
+
+bool TargetTransformInfo::isProfitableOuterLSR(const Loop &L) const {
+  return TTIImpl->isProfitableOuterLSR(L);
 }
 
 bool TargetTransformInfo::isProfitableLSRChainElement(Instruction *I) const {
