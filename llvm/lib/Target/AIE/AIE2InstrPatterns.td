@@ -164,13 +164,13 @@ defm : CmpPatternsSigned<i32>;
 
 // 4.1.11 LSHL / ASHL – Shift register
 // TODO: Could we always lower right shifts to left shifts to help simplify constants?
-def : Pat<(srl (i32 eR:$rs1), (i32 eR:$rs2)), (LSHL eR:$rs1, (SUB (MOVA_lda_cg (i32 0)), eR:$rs2))>;
-def : Pat<(sra (i32 eR:$rs1), (i32 eR:$rs2)), (ASHL eR:$rs1, (SUB (MOVA_lda_cg (i32 0)), eR:$rs2))>;
+def : Pat<(srl (i32 eR:$rs1), (i32 eR:$rs2)), (LSHL eR:$rs1, (SUB (MOV_RLC_imm10_pseudo (i32 0)), eR:$rs2))>;
+def : Pat<(sra (i32 eR:$rs1), (i32 eR:$rs2)), (ASHL eR:$rs1, (SUB (MOV_RLC_imm10_pseudo (i32 0)), eR:$rs2))>;
 def : Pat<(shl (i32 eR:$rs1), (i32 eR:$rs2)), (LSHL eR:$rs1, eR:$rs2)>;
 def : Pat<(srl (i32 eR:$rs1), (i32 simm32:$amount)),
-          (LSHL eR:$rs1, (MOVA_lda_cg (i32 (NegateImm simm32:$amount))))>;
+          (LSHL eR:$rs1, (MOV_RLC_imm10_pseudo (i32 (NegateImm simm32:$amount))))>;
 def : Pat<(sra (i32 eR:$rs1), (i32 simm32:$amount)),
-          (ASHL eR:$rs1, (MOVA_lda_cg (i32 (NegateImm simm32:$amount))))>;
+          (ASHL eR:$rs1, (MOV_RLC_imm10_pseudo (i32 (NegateImm simm32:$amount))))>;
 
 // This converts a generic FrameIndex into a TargetFrameIndex, frameindex
 // cannot be used in an output pattern.
