@@ -406,6 +406,10 @@ public:
     return true;
   }
 
+  /// Return true if the instruction should be considered for hoisting by
+  /// MachineLICM, even if it is "cheap".
+  virtual bool canHoistCheapInst(const MachineInstr &MI) const { return false; }
+
   /// Re-issue the specified 'original' instruction at the
   /// specific location targeting a new destination register.
   /// The register in Orig->getOperand(0).getReg() will be substituted by

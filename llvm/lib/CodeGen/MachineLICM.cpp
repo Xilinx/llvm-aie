@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This pass performs loop invariant code motion on machine instructions. We
@@ -241,7 +244,8 @@ namespace {
 
     bool IsCheapInstruction(MachineInstr &MI) const;
 
-    bool CanCauseHighRegPressure(const DenseMap<unsigned, int> &Cost,
+    bool CanCauseHighRegPressure(MachineInstr &MI,
+                                 const DenseMap<unsigned, int> &Cost,
                                  bool Cheap);
 
     void UpdateBackTraceRegPressure(const MachineInstr *MI);
@@ -1140,9 +1144,8 @@ bool MachineLICMBase::IsCheapInstruction(MachineInstr &MI) const {
 
 /// Visit BBs from header to current BB, check if hoisting an instruction of the
 /// given cost matrix can cause high register pressure.
-bool
-MachineLICMBase::CanCauseHighRegPressure(const DenseMap<unsigned, int>& Cost,
-                                         bool CheapInstr) {
+bool MachineLICMBase::CanCauseHighRegPressure(
+    MachineInstr &MI, const DenseMap<unsigned, int> &Cost, bool CheapInstr) {
   for (const auto &RPIdAndCost : Cost) {
     if (RPIdAndCost.second <= 0)
       continue;
@@ -1152,7 +1155,7 @@ MachineLICMBase::CanCauseHighRegPressure(const DenseMap<unsigned, int>& Cost,
 
     // Don't hoist cheap instructions if they would increase register pressure,
     // even if we're under the limit.
-    if (CheapInstr && !HoistCheapInsts)
+    if (CheapInstr && !HoistCheapInsts && !TII->canHoistCheapInst(MI))
       return true;
 
     for (const auto &RP : BackTrace)
@@ -1241,7 +1244,7 @@ bool MachineLICMBase::IsProfitableToHoist(MachineInstr &MI,
 
   // Visit BBs from header to current BB, if hoisting this doesn't cause
   // high register pressure, then it's safe to proceed.
-  if (!CanCauseHighRegPressure(Cost, CheapInstr)) {
+  if (!CanCauseHighRegPressure(MI, Cost, CheapInstr)) {
     LLVM_DEBUG(dbgs() << "Hoist non-reg-pressure: " << MI);
     ++NumLowRP;
     return true;
