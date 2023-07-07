@@ -27,6 +27,7 @@
 
 namespace llvm {
 
+class MCInstrDesc;
 class ScheduleDAG;
 class SUnit;
 
@@ -127,6 +128,9 @@ public:
   void EmitInstruction(SUnit *SU) override;
   void AdvanceCycle() override;
   void RecedeCycle() override;
+
+protected:
+  void EmitInstructionWithDesc(const MCInstrDesc *MCID);
 };
 
 } // end namespace llvm

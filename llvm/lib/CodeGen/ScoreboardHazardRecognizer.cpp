@@ -183,6 +183,11 @@ void ScoreboardHazardRecognizer::EmitInstruction(SUnit *SU) {
   // Use the itinerary for the underlying instruction to reserve FU's
   // in the scoreboard at the appropriate future cycles.
   const MCInstrDesc *MCID = DAG->getInstrDesc(SU);
+  return EmitInstructionWithDesc(MCID);
+}
+
+void ScoreboardHazardRecognizer::EmitInstructionWithDesc(
+    const MCInstrDesc *MCID) {
   assert(MCID && "The scheduler must filter non-machineinstrs");
   if (DAG->TII->isZeroCost(MCID->Opcode))
     return;
