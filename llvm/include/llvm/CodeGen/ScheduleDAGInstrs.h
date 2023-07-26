@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 /// \file Implements the ScheduleDAGInstrs class, which implements scheduling
@@ -334,6 +337,9 @@ namespace llvm {
     /// Typically, a scheduling algorithm will implement schedule() without
     /// overriding enterRegion() or exitRegion().
     virtual void schedule() = 0;
+
+    /// Allow targets to decide sequence in which MBB are scheduled.
+    virtual std::vector<MachineBasicBlock *> getMBBScheduleSeq() const;
 
     /// Allow targets to perform final scheduling actions at the level of the
     /// whole MachineFunction. By default does nothing.

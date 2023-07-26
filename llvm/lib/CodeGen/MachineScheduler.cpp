@@ -570,8 +570,7 @@ void MachineSchedulerBase::scheduleRegions(ScheduleDAGInstrs &Scheduler,
   //
   // TODO: Visit blocks in global postorder or postorder within the bottom-up
   // loop tree. Then we can optionally compute global RegPressure.
-  for (MachineFunction::iterator MBB = MF->begin(), MBBEnd = MF->end();
-       MBB != MBBEnd; ++MBB) {
+  for (MachineBasicBlock *MBB : Scheduler.getMBBScheduleSeq()) {
 
     Scheduler.startBlock(&*MBB);
 
@@ -666,6 +665,14 @@ LLVM_DUMP_METHOD void ReadyQueue::dump() const {
 
 // Provide a vtable anchor.
 ScheduleDAGMI::~ScheduleDAGMI() = default;
+
+std::vector<MachineBasicBlock *> ScheduleDAGMI::getMBBScheduleSeq() const {
+  auto Seq = SchedImpl->getMBBScheduleSeq(MF);
+  if (Seq.empty()) {
+    return ScheduleDAGInstrs::getMBBScheduleSeq();
+  }
+  return Seq;
+}
 
 /// ReleaseSucc - Decrement the NumPredsLeft count of a successor. When
 /// NumPredsLeft reaches zero, release the successor node.
