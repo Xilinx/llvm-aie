@@ -270,6 +270,13 @@ public:
   /// When all successor dependencies have been resolved, free this node for
   /// bottom-up scheduling.
   virtual void releaseBottomNode(SUnit *SU) = 0;
+
+  /// Allow targets to decide sequence in which MBB are scheduled.
+  virtual std::vector<MachineBasicBlock *>
+  getMBBScheduleSeq(MachineFunction &MF) const {
+    // This signals SchedDAGMI to fall back to default ordering
+    return {};
+  }
 };
 
 /// ScheduleDAGMI is an implementation of ScheduleDAGInstrs that simply
@@ -316,6 +323,9 @@ public:
   bool doMBBSchedRegionsTopDown() const override {
     return SchedImpl->doMBBSchedRegionsTopDown();
   }
+
+  /// Supply the scheduling order of blocks
+  std::vector<MachineBasicBlock *> getMBBScheduleSeq() const override;
 
   // Returns LiveIntervals instance for use in DAG mutators and such.
   LiveIntervals *getLIS() const { return LIS; }
