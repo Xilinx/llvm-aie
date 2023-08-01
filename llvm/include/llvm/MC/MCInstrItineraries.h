@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file describes the structures used for instruction
@@ -15,6 +18,7 @@
 #ifndef LLVM_MC_MCINSTRITINERARIES_H
 #define LLVM_MC_MCINSTRITINERARIES_H
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/MC/MCSchedule.h"
 #include <algorithm>
 #include <optional>
@@ -87,7 +91,8 @@ struct InstrStage {
   /// Returns the number of cycles from the start of this stage to the
   /// start of the next stage in the itinerary
   unsigned getNextCycles() const {
-    return (NextCycles_ >= 0) ? (unsigned)NextCycles_ : Cycles_;
+    assert(NextCycles_ >= 0);
+    return (unsigned)NextCycles_;
   }
 };
 
@@ -109,6 +114,7 @@ struct InstrItinerary {
 ///
 class InstrItineraryData {
 public:
+  virtual ~InstrItineraryData() = default;
   MCSchedModel SchedModel =
       MCSchedModel::Default;               ///< Basic machine properties.
   const InstrStage *Stages = nullptr;      ///< Array of stages selected
@@ -124,10 +130,10 @@ public:
       Itineraries(SchedModel.InstrItineraries) {}
 
   /// Returns true if there are no itineraries.
-  bool isEmpty() const { return Itineraries == nullptr; }
+  virtual bool isEmpty() const { return Itineraries == nullptr; }
 
   /// Returns true if the index is for the end marker itinerary.
-  bool isEndMarker(unsigned ItinClassIndx) const {
+  virtual bool isEndMarker(unsigned ItinClassIndx) const {
     return ((Itineraries[ItinClassIndx].FirstStage == UINT16_MAX) &&
             (Itineraries[ItinClassIndx].LastStage == UINT16_MAX));
   }
@@ -142,6 +148,12 @@ public:
   const InstrStage *endStage(unsigned ItinClassIndx) const {
     unsigned StageIdx = Itineraries[ItinClassIndx].LastStage;
     return Stages + StageIdx;
+  }
+
+  virtual ArrayRef<const InstrStage> getStages(unsigned ItinClassIndx) const {
+    auto &Itinerary = Itineraries[ItinClassIndx];
+    size_t Length = Itinerary.LastStage - Itinerary.FirstStage;
+    return ArrayRef<const InstrStage>(Stages + Itinerary.FirstStage, Length);
   }
 
   /// Return the total stage latency of the given class.  The latency is
