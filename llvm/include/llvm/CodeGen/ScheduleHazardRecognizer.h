@@ -17,6 +17,7 @@
 #ifndef LLVM_CODEGEN_SCHEDULEHAZARDRECOGNIZER_H
 #define LLVM_CODEGEN_SCHEDULEHAZARDRECOGNIZER_H
 
+#include <cassert>
 namespace llvm {
 
 class MachineInstr;
@@ -60,7 +61,7 @@ public:
   ///     other instruction is available, issue it first.
   ///  * NoopHazard: issuing this instruction would break the program.  If
   ///     some other instruction can be issued, do so, otherwise issue a noop.
-  virtual HazardType getHazardType(SUnit *, int Stalls = 0) {
+  virtual HazardType getHazardType(SUnit *, int DeltaCycles = 0) {
     return NoHazard;
   }
 
@@ -71,13 +72,21 @@ public:
   virtual bool emitNoopsIfNoInstructionsAvailable() { return false; }
 
   /// Reset - This callback is invoked when a new block of
-  /// instructions is about to be schedule. The hazard state should be
+  /// instructions is about to be scheduled. The hazard state should be
   /// set to an initialized state.
   virtual void Reset() {}
 
   /// EmitInstruction - This callback is invoked when an instruction is
   /// emitted, to advance the hazard state.
+  /// DeltaCycles is the signed distance from the current cycle where to insert
+  /// the instruction.
   virtual void EmitInstruction(SUnit *) {}
+  /// DeltaCycles is the signed distance from the current cycle where to insert
+  /// the instruction. Override this method if you can deal with DeltaCycles.
+  virtual void EmitInstruction(SUnit *SU, int DeltaCycles) {
+    assert(DeltaCycles == 0);
+    EmitInstruction(SU);
+  }
 
   /// This overload will be used when the hazard recognizer is being used
   /// by a non-scheduling pass, which does not use SUnits.

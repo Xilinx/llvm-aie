@@ -34,7 +34,7 @@ class SUnit;
 class ScoreboardHazardRecognizer : public ScheduleHazardRecognizer {
   // Scoreboard to track function unit usage. Scoreboard[0] is a
   // mask of the FUs in use in the cycle currently being
-  // schedule. Scoreboard[1] is a mask for the next cycle. The
+  // scheduled. Scoreboard[1] is a mask for the next cycle. The
   // Scoreboard is used as a circular buffer with the current cycle
   // indicated by Head.
   //
@@ -126,11 +126,12 @@ public:
   HazardType getHazardType(unsigned SchedClass, int Stalls);
   void Reset() override;
   void EmitInstruction(SUnit *SU) override;
+  void EmitInstruction(SUnit *SU, int DeltaCycles) override;
   void AdvanceCycle() override;
   void RecedeCycle() override;
 
 protected:
-  void EmitInstructionWithDesc(const MCInstrDesc *MCID);
+  void EmitInstructionWithDesc(const MCInstrDesc *MCID, int DeltaCycles = 0);
 };
 
 } // end namespace llvm

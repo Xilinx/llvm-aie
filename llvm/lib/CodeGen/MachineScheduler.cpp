@@ -2408,9 +2408,9 @@ SchedBoundary::getNextResourceCycle(const MCSchedClassDesc *SC, unsigned PIdx,
 /// can dispatch per cycle.
 ///
 /// TODO: Also check whether the SU must start a new group.
-bool SchedBoundary::checkHazard(SUnit *SU) {
-  if (HazardRec->isEnabled()
-      && HazardRec->getHazardType(SU) != ScheduleHazardRecognizer::NoHazard) {
+bool SchedBoundary::checkHazard(SUnit *SU, int DeltaCycles) {
+  if (HazardRec->isEnabled() && HazardRec->getHazardType(SU, DeltaCycles) !=
+                                    ScheduleHazardRecognizer::NoHazard) {
     return true;
   }
 
@@ -2637,7 +2637,7 @@ void SchedBoundary::bumpNode(SUnit *SU) {
       // scheduling, clear the pipeline state before emitting.
       HazardRec->Reset();
     }
-    HazardRec->EmitInstruction(SU);
+    HazardRec->EmitInstruction(SU, 0);
     // Scheduling an instruction may have made pending instructions available.
     CheckPending = true;
   }
