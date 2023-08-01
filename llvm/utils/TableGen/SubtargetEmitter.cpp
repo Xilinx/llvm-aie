@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This tablegen backend emits subtarget enumerations.
@@ -366,6 +369,9 @@ void SubtargetEmitter::FormItineraryStageString(const std::string &Name,
     }
 
     int TimeInc = Stage->getValueAsInt("TimeInc");
+    if (TimeInc < 0) {
+      TimeInc = Cycles;
+    }
     ItinString += ", " + itostr(TimeInc);
 
     int Kind = Stage->getValueAsInt("Kind");
