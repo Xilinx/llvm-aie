@@ -10,7 +10,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This file implements the ScoreboardHazardRecognizer class, which
-// encapsultes hazard-avoidance heuristics for scheduling, based on the
+// encapsulates hazard-avoidance heuristics for scheduling, based on the
 // scheduling itineraries specified for the target.
 //
 //===----------------------------------------------------------------------===//
@@ -177,18 +177,23 @@ ScoreboardHazardRecognizer::getHazardType(unsigned SchedClass, int Stalls) {
 }
 
 void ScoreboardHazardRecognizer::EmitInstruction(SUnit *SU) {
+  EmitInstruction(SU, 0);
+}
+
+void ScoreboardHazardRecognizer::EmitInstruction(SUnit *SU, int DeltaCycles) {
   if (!ItinData || ItinData->isEmpty())
     return;
 
   // Use the itinerary for the underlying instruction to reserve FU's
   // in the scoreboard at the appropriate future cycles.
   const MCInstrDesc *MCID = DAG->getInstrDesc(SU);
-  return EmitInstructionWithDesc(MCID);
+  return EmitInstructionWithDesc(MCID, DeltaCycles);
 }
 
 void ScoreboardHazardRecognizer::EmitInstructionWithDesc(
-    const MCInstrDesc *MCID) {
+    const MCInstrDesc *MCID, int DeltaCycles) {
   assert(MCID && "The scheduler must filter non-machineinstrs");
+  assert(DeltaCycles == 0);
   if (DAG->TII->isZeroCost(MCID->Opcode))
     return;
 

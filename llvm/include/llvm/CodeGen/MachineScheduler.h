@@ -1023,7 +1023,7 @@ public:
            !SchedModel->getProcResource(PIdx)->BufferSize;
   }
 
-  bool checkHazard(SUnit *SU);
+  bool checkHazard(SUnit *SU, int DeltaCycles = 0);
 
   unsigned findMaxLatency(ArrayRef<SUnit*> ReadySUs);
 
