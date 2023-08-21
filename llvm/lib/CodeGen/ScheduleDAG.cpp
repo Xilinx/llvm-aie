@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 /// \file Implements the ScheduleDAG class, which is a base class used by
@@ -82,12 +85,16 @@ LLVM_DUMP_METHOD void SDep::dump(const TargetRegisterInfo *TRI) const {
   switch (getKind()) {
   case Data:
     dbgs() << " Latency=" << getLatency();
+    if (Latency < 0)
+      dbgs() << "(" << Latency << ")";
     if (TRI && isAssignedRegDep())
       dbgs() << " Reg=" << printReg(getReg(), TRI);
     break;
   case Anti:
   case Output:
     dbgs() << " Latency=" << getLatency();
+    if (Latency < 0)
+      dbgs() << "(" << Latency << ")";
     break;
   case Order:
     dbgs() << " Latency=" << getLatency();
