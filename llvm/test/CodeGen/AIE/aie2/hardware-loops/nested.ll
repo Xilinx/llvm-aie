@@ -23,7 +23,6 @@ define void @nested(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; CHECK-NEXT:    mova r4, #2
 ; CHECK-NEXT:    movxm p2, #.LBB0_2
 ; CHECK-NEXT:    movxm p3, #.LBB0_1
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB0_1: // %for.cond3.preheader
 ; CHECK-NEXT:    // =>This Loop Header: Depth=1
@@ -33,7 +32,6 @@ define void @nested(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; CHECK-NEXT:    lda p4, [p1, dj0]
 ; CHECK-NEXT:    add.nc r5, r1, #-1
 ; CHECK-NEXT:    mova r6, #0
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop

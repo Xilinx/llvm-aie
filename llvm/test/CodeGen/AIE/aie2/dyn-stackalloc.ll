@@ -55,6 +55,8 @@ define void @test_loop_dyn_alloca(i32 noundef %n) {
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    paddb [sp], #64
+; CHECK-NEXT:    st p7, [sp, #-64] // 4-byte Folded Spill
+; CHECK-NEXT:    mov p7, sp
 ; CHECK-NEXT:    st lr, [sp, #-32] // 4-byte Folded Spill
 ; CHECK-NEXT:    st r16, [sp, #-36] // 4-byte Folded Spill
 ; CHECK-NEXT:    st r17, [sp, #-40] // 4-byte Folded Spill
@@ -63,8 +65,6 @@ define void @test_loop_dyn_alloca(i32 noundef %n) {
 ; CHECK-NEXT:    st r20, [sp, #-52] // 4-byte Folded Spill
 ; CHECK-NEXT:    st r21, [sp, #-56] // 4-byte Folded Spill
 ; CHECK-NEXT:    st p6, [sp, #-60] // 4-byte Folded Spill
-; CHECK-NEXT:    st p7, [sp, #-64] // 4-byte Folded Spill
-; CHECK-NEXT:    mov p7, sp
 ; CHECK-NEXT:    padda [p7], #-64
 ; CHECK-NEXT:    mova r16, #1
 ; CHECK-NEXT:    mova r17, #0

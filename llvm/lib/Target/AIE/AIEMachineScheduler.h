@@ -39,6 +39,17 @@ public:
     const Region &getBottom() const { return Regions.front(); }
   };
 
+  // Represents how accurate our successor information is
+  enum class ScoreboardTrust {
+    // The bundles represent the true start of the blocks
+    Absolute,
+    // The bundles are accurate, but may shift at most one cycle
+    // due to alignment of a successor block
+    AccountForAlign,
+    // We don't have bundles for all successors
+    Conservative
+  };
+
   AIEPostRASchedStrategy(const MachineSchedContext *C);
 
   /// Called after each region entry.
@@ -76,7 +87,7 @@ public:
   /// successor blocks of CurBB for InterBlock scheduling
   /// \param Conservative If this is set, make sure we cannot reserve resources
   /// outside of the region, i.e. block all resources.
-  void initializeBotScoreBoard(bool Conservative);
+  void initializeBotScoreBoard(ScoreboardTrust Trust);
 
   /// Schedule MBB in a sequence such that all the successors are scheduled
   /// before a given basic block is scheduled. This may not hold true if graph

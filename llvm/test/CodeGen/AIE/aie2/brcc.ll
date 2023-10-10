@@ -20,7 +20,6 @@ define i32 @br_i32(i32  %a, i32  %b, i32 %v, i32* nocapture writeonly %c) {
 ; CHECK-NEXT:    mov r0, r3 // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %if.then
 ; CHECK-NEXT:    st r0, [p0, #0]
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB0_2: // %if.end
 ; CHECK-NEXT:    ret lr
@@ -55,7 +54,6 @@ define i32 @br_i32_reverse(i32  %a, i32  %b, i32 %v, i32* nocapture writeonly %c
 ; CHECK-NEXT:    mov r0, r3 // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %if.then
 ; CHECK-NEXT:    st r0, [p0, #0]
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB1_2: // %if.end
 ; CHECK-NEXT:    ret lr
@@ -132,8 +130,8 @@ define i32 @br_diamond_complex_end(i32  %a, i32  %b, i32 %v, i32* nocapture writ
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
-; CHECK-NEXT:    nop // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 1
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB3_2: // %if.else
 ; CHECK-NEXT:    jl #foo

@@ -17,7 +17,6 @@ define void @sibling(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef
 ; CHECK-NEXT:    mova r4, #2
 ; CHECK-NEXT:    movxm p2, #.LBB0_1
 ; CHECK-NEXT:    mova r5, #0
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB0_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
@@ -43,7 +42,6 @@ define void @sibling(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef
 ; CHECK-NEXT:    add.nc r1, r1, #-1
 ; CHECK-NEXT:    mova r3, #2
 ; CHECK-NEXT:    movxm p2, #.LBB0_3
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    .p2align 4
