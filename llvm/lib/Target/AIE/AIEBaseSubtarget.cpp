@@ -13,9 +13,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEBaseSubtarget.h"
+#include "AIEMachineScheduler.h"
+#include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
 #include "llvm/CodeGen/ScheduleDAGMutation.h"
+#include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/Support/Debug.h"
 
 using namespace llvm;
 
@@ -32,6 +37,13 @@ static cl::opt<bool> EnableStrongCopyEdges(
 static cl::opt<unsigned>
     UserLatencyMargin("aie-latency-margin", cl::Hidden, cl::init(0),
                       cl::desc("Define the latency on ExitSU edges"));
+
+// Resetting aie-interblock-latency will use worst case instruction latencies
+// on ExitSU edges. This reverts to the 'classical' safety margin for
+// interblock scheduling
+static cl::opt<bool>
+    InterBlockLatency("aie-interblock-latency", cl::Hidden, cl::init(true),
+                      cl::desc("Use interblock latencies on ExitSU edges"));
 
 #define DEBUG_TYPE "aie-subtarget"
 
@@ -176,6 +188,114 @@ class LockDelays : public ScheduleDAGMutation {
   };
 };
 
+#undef DEBUG_TYPE
+#define DEBUG_TYPE "machine-scheduler"
+
+class MaxLatencyFinder {
+  const AIEPostRASchedStrategy *const Scheduler;
+  const AIEBaseInstrInfo *const TII;
+  const InstrItineraryData *const Itineraries;
+  const MCRegisterInfo *const TRI;
+  MachineBasicBlock *const CurBB;
+  const bool InterBlock;
+
+  // Check whether this region connects to the successor blocks
+  //
+  bool isBottomRegion(MachineInstr *ExitMI) {
+    if (!ExitMI) {
+      // ExitMI is always the leading instruction of the next region.
+      // If it is missing we are falling through to the next block.
+      return true;
+    }
+    MachineBasicBlock::instr_iterator It(ExitMI);
+    return std::next(It) == CurBB->end();
+  }
+
+  bool overlap(MachineOperand &SrcOp, MachineOperand &DstOp) const {
+    Register SrcReg = SrcOp.getReg();
+    Register DstReg = DstOp.getReg();
+    for (MCRegAliasIterator Ali(SrcReg, TRI, true); Ali.isValid(); ++Ali) {
+      if (*Ali == DstReg.asMCReg()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Check whether Dst depends on Src
+  bool depends(MachineInstr &Src, MachineInstr &Dst) const {
+    // We detect any common register input/output between Dst and Src
+    for (auto &SrcOp : Src.operands()) {
+      if (!SrcOp.isReg()) {
+        continue;
+      }
+      for (auto &DstOp : Dst.operands()) {
+        if (!DstOp.isReg()) {
+          continue;
+        }
+        // Exclude the RAR case
+        if (SrcOp.isUse() && DstOp.isUse()) {
+          continue;
+        }
+        if (overlap(SrcOp, DstOp)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  // Find the first dependence on SrcMI in Bundles or Prune,
+  // whichever is less
+  int findEarliestRef(MachineInstr &SrcMI,
+                      const std::vector<llvm::AIE::MachineBundle> &Bundles,
+                      int Prune) {
+    int Cycle = 0;
+    for (const auto &Bundle : Bundles) {
+      if (Cycle >= Prune) {
+        return Cycle;
+      }
+      for (MachineInstr *DstMI : Bundle.getInstrs()) {
+        if (depends(SrcMI, *DstMI)) {
+          LLVM_DEBUG(dbgs() << *DstMI << " depends in cycle=" << Cycle << "\n");
+          return Cycle;
+        }
+      }
+      Cycle++;
+    }
+    return Cycle;
+  }
+
+public:
+  MaxLatencyFinder(AIEScheduleDAGMI *DAG)
+      : Scheduler(DAG->getSchedImpl()),
+        TII(static_cast<const AIEBaseInstrInfo *>(DAG->TII)),
+        Itineraries(DAG->getSchedModel()->getInstrItineraries()),
+        TRI(DAG->MF.getSubtarget().getRegisterInfo()),
+        CurBB(Scheduler->getCurMBB()),
+        InterBlock(InterBlockLatency && CurBB &&
+                   isBottomRegion(DAG->ExitSU.getInstr()) &&
+                   Scheduler->successorsAreScheduled(CurBB)) {}
+
+  unsigned operator()(MachineInstr &MI) {
+    int Latency = maxLatency(&MI, *TII, *Itineraries);
+    if (!InterBlock) {
+      return Latency;
+    }
+    LLVM_DEBUG(dbgs() << MI << "Earliest for " << MI);
+    // Track the earliest use in any successor block, given the cycles in
+    // which these uses are scheduled
+    int Earliest = Latency;
+    for (MachineBasicBlock *SuccBB : CurBB->successors()) {
+      const AIEPostRASchedStrategy::Region &TopBundles =
+          Scheduler->getBlockState(SuccBB).getTop();
+      Earliest = std::min(Earliest, findEarliestRef(MI, TopBundles, Earliest));
+    }
+    LLVM_DEBUG(dbgs() << "   Earliest=" << Earliest << "\n");
+    return std::max(Latency - Earliest, 1);
+  }
+};
+
 class RegionEndEdges : public ScheduleDAGMutation {
   void removeExitSUPreds(ScheduleDAGInstrs *DAG) {
     SUnit &ExitSU = DAG->ExitSU;
@@ -184,14 +304,14 @@ class RegionEndEdges : public ScheduleDAGMutation {
     }
   }
   void apply(ScheduleDAGInstrs *DAG) override {
+    MaxLatencyFinder MaxLatency(static_cast<AIEScheduleDAGMI *>(DAG));
+
     // Default edges to ExitSU are conservative, and can't be shrunk.
-    // We really should know what we're doing here, so just
+    // We really should know what we're doing here, so just remove and
     // recompute all of them.
     removeExitSUPreds(DAG);
 
     const auto *TII = static_cast<const AIEBaseInstrInfo *>(DAG->TII);
-    const InstrItineraryData *Itineraries =
-        DAG->getSchedModel()->getInstrItineraries();
     bool UserSetLatencyMargin = UserLatencyMargin.getNumOccurrences() > 0;
     for (MachineInstr &MI : *DAG) {
       SUnit *SU = DAG->getSUnit(&MI);
@@ -202,8 +322,7 @@ class RegionEndEdges : public ScheduleDAGMutation {
       unsigned DelaySlots = TII->getNumDelaySlots(MI);
       unsigned EdgeLatency = !DelaySlots && UserSetLatencyMargin
                                  ? UserLatencyMargin
-                                 : maxLatency(&MI, *TII, *Itineraries);
-
+                                 : MaxLatency(MI);
       // Extend the edge latency if MI requires delay slots. This makes sure
       // there are at least getNumDelaySlots() cycles between MI and ExitSU.
       if (DelaySlots) {

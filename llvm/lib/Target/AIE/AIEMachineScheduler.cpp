@@ -29,6 +29,19 @@ static cl::opt<unsigned> ReservedDelaySlots(
     "aie-reserved-delay-slots", cl::init(0),
     cl::desc("[AIE] Number of delay slots to be left empty"));
 
+/// This is a testing option. Resetting it prevents inter-block conflicts from
+/// the scoreboard, so that all interblock scheduling effects can be blamed on
+/// the latencies.
+static cl::opt<bool>
+    InterBlockScoreboard("aie-interblock-scoreboard", cl::init(true),
+                         cl::desc("Initialize the interblock scoreboard"));
+
+/// This option indicates that there may be an alignment nop cycle inserted
+/// in a successor block. It can be reset for testing purposes.
+static cl::opt<bool>
+    InterBlockAlignment("aie-interblock-alignment", cl::init(true),
+                        cl::desc("Allow for alignment of successor blocks"));
+
 static AIEHazardRecognizer *getAIEHazardRecognizer(const SchedBoundary &Zone) {
   return static_cast<AIEHazardRecognizer *>(Zone.HazardRec);
 }
@@ -70,6 +83,12 @@ const AIEBaseInstrInfo *getTII(MachineBasicBlock *MBB) {
 bool hasUnknownSuccessors(
     llvm::iterator_range<MachineBasicBlock::iterator> Region,
     MachineBasicBlock *MBB) {
+  if (MBB->succ_empty()) {
+    // This includes pure return blocks, i.e. blocks that unconditionally
+    // fall in a return.  ATM, we don't have true control sinks like HALT
+    // which could be special-cased to return false. Probably not worth it.
+    return true;
+  }
   const AIEBaseInstrInfo *TII = getTII(MBB);
   for (auto &Flow : reverse(Region)) {
     if (TII->jumpsToUnknown(Flow.getOpcode())) {
@@ -88,7 +107,13 @@ bool AIEPostRASchedStrategy::successorsAreScheduled(
          });
 }
 
-void AIEPostRASchedStrategy::initializeBotScoreBoard(bool Conservative) {
+void AIEPostRASchedStrategy::initializeBotScoreBoard(ScoreboardTrust Trust) {
+
+  if (!InterBlockScoreboard) {
+    LLVM_DEBUG(dbgs() << "Interblock scoreboard explicitly disabled\n");
+    return;
+  }
+
   // Check that we have forced bottom up regions. This makes sure that
   // getTop() used below behaves sanely.
   assert(!doMBBSchedRegionsTopDown());
@@ -119,7 +144,7 @@ void AIEPostRASchedStrategy::initializeBotScoreBoard(bool Conservative) {
   // The conservative estimate is to declare all cycles unknown.
   int FirstBlockedCycle = 0;
 
-  if (!Conservative) {
+  if (Trust != ScoreboardTrust::Conservative) {
     // Depth is a suitable supremum for the minimum we compute.
     // Note that if the loop isn't entered, the responsibilty lies with
     // our caller not setting Conservative. This may be legitimate to
@@ -141,6 +166,9 @@ void AIEPostRASchedStrategy::initializeBotScoreBoard(bool Conservative) {
                           << Bundle.getInstrs().size() << "instr\n");
         for (MachineInstr *MI : Bundle.getInstrs()) {
           InsertInCycle(*MI, Cycle);
+          if (Trust == ScoreboardTrust::AccountForAlign && Cycle + 1 < Depth) {
+            InsertInCycle(*MI, Cycle + 1);
+          }
         }
         Cycle++;
       }
@@ -154,7 +182,6 @@ void AIEPostRASchedStrategy::initializeBotScoreBoard(bool Conservative) {
   }
 
   AlignScoreboardToCycleOne();
-
   LLVM_DEBUG(BotHazardRec->dumpScoreboard());
 }
 
@@ -184,8 +211,14 @@ void AIEPostRASchedStrategy::initialize(ScheduleDAGMI *Dag) {
   // Update Bot scoreboard of the bottom region with the foreseeable future
   // as found in the top regions of the successor blocks. If we don't know,
   // assume the worst.
+  // TODO: When we include alignment in the schedule, we can change
+  // AccountForAlign to Absolute
   const bool Conservative = !(IsBottomRegion && successorsAreScheduled(CurMBB));
-  initializeBotScoreBoard(Conservative);
+  const ScoreboardTrust NonConservative = InterBlockAlignment
+                                              ? ScoreboardTrust::AccountForAlign
+                                              : ScoreboardTrust::Absolute;
+  initializeBotScoreBoard(Conservative ? ScoreboardTrust::Conservative
+                                       : NonConservative);
 
   // TODO:
   // We could set something like 'InterBlockCycles' here and include

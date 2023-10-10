@@ -41,7 +41,6 @@ body:             |
   ; CHECK-NEXT:   $r13 = MOVA_lda_cg 3 {
   ; CHECK-NEXT:     $r1 = MUL_mul_r_rr killed $r2, $r2
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   liveins: $r1, $r3, $r13

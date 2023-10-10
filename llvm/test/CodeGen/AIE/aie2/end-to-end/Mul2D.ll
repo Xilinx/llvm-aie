@@ -60,10 +60,10 @@ define void @mul2d(ptr noalias %in_ptr0, ptr noalias %in_ptr1, ptr noalias %out_
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %for.body.lr.ph
-; CHECK-NEXT:    movx r3, #0; mov p3, sp
-; CHECK-NEXT:    mova r9, #-1; paddb [p3], #-4; movx r10, #1; vbcst.8 x0, r3
+; CHECK-NEXT:    movx r10, #1; mov p3, sp
+; CHECK-NEXT:    mova r9, #-1; paddb [p3], #-4; movx r3, #0
 ; CHECK-NEXT:    lda.u8 r2, [p3, #0]; extend.u8 r4, r5; mov p3, sp
-; CHECK-NEXT:    mova r1, #808; paddb [p3], #-8; lshl r0, r0, r9
+; CHECK-NEXT:    mova r1, #808; paddb [p3], #-8; lshl r0, r0, r9; vbcst.8 x0, r3
 ; CHECK-NEXT:    lda dj0, [p3, #0]; mov p3, sp
 ; CHECK-NEXT:    paddb [p3], #-12; movx r4, #0; mov s0, r4
 ; CHECK-NEXT:    lda dj4, [p3, #0]; mov p3, sp

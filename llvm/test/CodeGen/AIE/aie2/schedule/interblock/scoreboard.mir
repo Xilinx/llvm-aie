@@ -5,10 +5,14 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc --mtriple=aie2 --issue-limit=6 --run-pass=postmisched --aie-latency-margin=0 %s -o - | FileCheck %s
+# RUN: llc --mtriple=aie2 --issue-limit=6 --run-pass=postmisched \
+# RUN:   --aie-latency-margin=0 --aie-interblock-alignment=false %s -o - \
+# RUN:   | FileCheck %s
 
 # Check that inter-block scoreboard is ok. We disable the latency safety
-# margin from the command line to make the test more sensitive
+# margin from the command line to make the test more sensitive.
+# We switch off the alignment provision, to have less fuzziness in
+# the cycles we construct
 
 # Note: Comments sometimes refer to cycles. The first cycle is cycle 0
 
@@ -196,6 +200,7 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $wl2 = VMOV_mv_w killed $wl1
   ; CHECK-NEXT:   $wh2 = VMOV_mv_w killed $wh1
+  ; CHECK-NEXT:   NOP
 
   ; The MUL_mul_r_rr has no successor conflicts
   bb.0:
