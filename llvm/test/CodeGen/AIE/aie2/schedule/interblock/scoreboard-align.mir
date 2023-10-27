@@ -17,14 +17,12 @@
 
 # VLDA has late vector write port W_WA conflicts with VCONV, E7 vs E2
 # We force the VCONV to cycle 0 in bb.1 using a parallel latency chain
-# that leaves the ST slot free in just one cycle
-# To allow for an alignment cycle, the VCONV can execute in cycle 0 and
-# cycle 1, so W_WA occupies cycle 1 and 2
-# Note that this is similar to twoSuccLateConflict in the sibling
-# scoreboard.mir; there the two successors have the VCONV in different positions
-# but it doesn't account for alignment, whereas here we do account for
-# alignment. This creates a shadow copy of the resource usage in the
-# same successor block
+# that leaves the ST slot free in just that cycle
+# bb.1 in itself leaves the W_WA slot free in cycle 2, which would
+# allow the VLDA to use that, requiring three nops.
+# Allowing for a latency cycle will effectively occupy W_WA in
+# bb.1:cycle 2, which forces the VLA up by two nops more.
+
 ---
 name:            lateConflict
 alignment:       16
@@ -38,11 +36,54 @@ body:             |
   ; CHECK-NEXT:   $wl0 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   liveins: $bml0, $p0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $wl1 = VCONV_BF16_FP32 $bml0, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd {
+  ; CHECK-NEXT:   $wl1 = VCONV_BF16_FP32 $bml0, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask {
+  ; CHECK-NEXT:     $p1 = MOV_mv_scl killed $p0
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   $p1 = PADDS_st_ptr_inc_idx_imm killed $p1, 4
+  ; CHECK-NEXT:   $p1 = PADDS_st_ptr_inc_idx_imm killed $p1, 4
+  bb.0:
+    successors: %bb.1
+    liveins: $p0, $r1
+    $wl0 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0
+  bb.1:
+    successors:
+    liveins: $bml0, $p0
+    $wl1 = VCONV_BF16_FP32 $bml0, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask
+    $p1 = MOV_mv_scl $p0
+    $p1 = PADDS_st_ptr_inc_idx_imm $p1, 4
+    $p1 = PADDS_st_ptr_inc_idx_imm $p1, 4
+...
+
+# This proves the scheduler eager enough and capable of using a late
+# free slot for W_WA. It is similar to lateConflict, except that we
+# add one instruction not using W_WA. The scheduler should squeeze
+# the W_WA use of VLDA in there. This loses us three nops, since it can
+# now bridge the two cycles in which W_WA may be occupied.
+---
+name:            lateConflictAvoid
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: lateConflictAvoid
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $p0, $r1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $wl0 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   liveins: $bml0, $p0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $wl1 = VCONV_BF16_FP32 $bml0, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask {
   ; CHECK-NEXT:     $p1 = MOV_mv_scl killed $p0
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   $p1 = PADDS_st_ptr_inc_idx_imm killed $p1, 4
@@ -55,7 +96,7 @@ body:             |
   bb.1:
     successors:
     liveins: $bml0, $p0
-    $wl1 = VCONV_BF16_FP32 $bml0, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd
+    $wl1 = VCONV_BF16_FP32 $bml0, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask
     $p1 = MOV_mv_scl $p0
     $p1 = PADDS_st_ptr_inc_idx_imm $p1, 4
     $p1 = PADDS_st_ptr_inc_idx_imm $p1, 4
