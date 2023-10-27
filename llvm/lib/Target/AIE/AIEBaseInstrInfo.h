@@ -230,6 +230,11 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   std::optional<int> getMemoryLatency(unsigned SrcSchedClass,
                                       unsigned DstSchedClass) const;
 
+  /// Returns the worst-case latency to be observed to preserve the
+  /// ordering of aliasing memory operations. We don't know the destination
+  /// of the edge
+  int getConservativeMemoryLatency(unsigned SrcSchedClass) const;
+
   /// Returns cycle for the first memory operation of an instruction.
   /// This is usually the same as \p getLastMemoryCycle except for instructions
   /// that touch memory multiple times like AIE's read-modify-write part-word

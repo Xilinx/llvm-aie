@@ -589,6 +589,17 @@ unsigned AIEBaseInstrInfo::getNumBypassedCycles(
              : 0;
 }
 
+int AIEBaseInstrInfo::getConservativeMemoryLatency(
+    unsigned SrcSchedClass) const {
+  if (!AccurateMemEdges)
+    return 1;
+
+  std::optional<int> SrcCycle = getLastMemoryCycle(SrcSchedClass);
+  int WorstDstCycle = getMinFirstMemoryCycle();
+
+  return SrcCycle ? *SrcCycle - WorstDstCycle + 1 : 0;
+}
+
 std::optional<int>
 AIEBaseInstrInfo::getMemoryLatency(unsigned SrcSchedClass,
                                    unsigned DstSchedClass) const {

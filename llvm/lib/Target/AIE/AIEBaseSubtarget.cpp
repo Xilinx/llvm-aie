@@ -116,9 +116,9 @@ void AIEBaseSubtarget::adjustSchedDependency(
 
 namespace {
 // Compute the latency of this instruction. We take the maximum of the
-// stages and the operand latencies.
+// operand and the memory latency. Include the stage latency if requested.
 int maxLatency(const MachineInstr *MI, const AIEBaseInstrInfo &InstrInfo,
-               const InstrItineraryData &Itineraries) {
+               const InstrItineraryData &Itineraries, bool IncludeStages) {
   int Latency = 0;
   unsigned SrcClass = MI->getDesc().getSchedClass();
   for (unsigned I = 0;; I++) {
@@ -130,8 +130,12 @@ int maxLatency(const MachineInstr *MI, const AIEBaseInstrInfo &InstrInfo,
       break;
     }
   }
-  Latency =
-      std::max(Latency, int(InstrInfo.getInstrLatency(&Itineraries, *MI)));
+  Latency = std::max(Latency, InstrInfo.getConservativeMemoryLatency(SrcClass));
+  if (IncludeStages) {
+    int StageLatency = InstrInfo.getInstrLatency(&Itineraries, *MI);
+    Latency = std::max(Latency, StageLatency);
+  }
+
   return Latency;
 }
 
@@ -179,7 +183,10 @@ class LockDelays : public ScheduleDAGMutation {
           // a reserved FuncUnit instead.  See AIE2Schedule.td
           continue;
         }
-        int Delay = maxLatency(LdSt, *InstrInfo, *Itineraries) - LockDelay;
+
+        int Delay = maxLatency(LdSt, *InstrInfo, *Itineraries,
+                               /*IncludeStages=*/true) -
+                    LockDelay;
         UpdateDepth |= updatePredLatency(PredEdge, SU, std::max(Delay, 0));
       }
       if (UpdateDepth) {
@@ -204,8 +211,9 @@ class MaxLatencyFinder {
   //
   bool isBottomRegion(MachineInstr *ExitMI) {
     if (!ExitMI) {
-      // ExitMI is always the leading instruction of the next region.
-      // If it is missing we are falling through to the next block.
+      // ExitMI represents an instruction after this region. If it is
+      // missing we are falling through to the next block, and hence we
+      // are the bottom region.
       return true;
     }
     MachineBasicBlock::instr_iterator It(ExitMI);
@@ -225,6 +233,16 @@ class MaxLatencyFinder {
 
   // Check whether Dst depends on Src
   bool depends(MachineInstr &Src, MachineInstr &Dst) const {
+    // We don't try anything clever in terms of alias analysis
+    // The memory latency is accounted for by maxLatency() and any
+    // possible dependence will be corrected for by its scheduled cycle.
+    // (RAW || WAW) ||
+    // (WAR)
+    if ((Src.mayStore() && (Dst.mayLoad() || Dst.mayStore())) ||
+        (Src.mayLoad() && Dst.mayStore())) {
+      return true;
+    }
+
     // We detect any common register input/output between Dst and Src
     for (auto &SrcOp : Src.operands()) {
       if (!SrcOp.isReg()) {
@@ -243,6 +261,7 @@ class MaxLatencyFinder {
         }
       }
     }
+
     return false;
   }
 
@@ -279,7 +298,11 @@ public:
                    Scheduler->successorsAreScheduled(CurBB)) {}
 
   unsigned operator()(MachineInstr &MI) {
-    int Latency = maxLatency(&MI, *TII, *Itineraries);
+    // If we don't use interblock information, include the 'StageLatency'
+    // in maxLatency. This influences the height parameters, telling the
+    // scheduler to prefer deep-pipeline instructions over shorter ones.
+    const bool IncludeStages = !InterBlock;
+    int Latency = maxLatency(&MI, *TII, *Itineraries, IncludeStages);
     if (!InterBlock) {
       return Latency;
     }
