@@ -16,6 +16,7 @@
 #include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
 #include "llvm/TableGen/TableGenBackend.h"
+#include <limits>
 
 using namespace llvm;
 
@@ -28,11 +29,32 @@ namespace {
 /// This looks for MemInstrItinData records to know when memory instructions
 /// actually access memory.
 class AIEMemoryCyclesEmitter {
+  struct MemoryCycles {
+    const CodeGenSchedClass *SchedClass; // The sched class.
+    unsigned FirstCycle; // The cycle for the first memory operation.
+    unsigned LastCycle;  // The cycle for the last memory operation.
+  };
+
 public:
   AIEMemoryCyclesEmitter(RecordKeeper &R);
 
+  /// Utility class computing minima and maxima
+  class MemCycleGetter {
+  public:
+    int Min = std::numeric_limits<int>::max();
+    int Max = std::numeric_limits<int>::min();
+    MemCycleGetter(bool LastCycles) : LastCycles(LastCycles){};
+    unsigned operator()(const AIEMemoryCyclesEmitter::MemoryCycles &MC) {
+      int Result = int(LastCycles ? MC.LastCycle : MC.FirstCycle);
+      Min = std::min(Min, Result);
+      Max = std::max(Max, Result);
+      return Result;
+    }
+    bool LastCycles = false;
+  };
+
   /// Generate C++ code from \p ItinMemCycles.
-  void emitMemoryCyclesInfo(raw_ostream &OS, bool LastCycles);
+  void emitMemoryCyclesInfo(raw_ostream &OS, MemCycleGetter &Access);
 
   /// Process the SchedClasses, looking for those with MemoryCycles.
   void run(raw_ostream &OS);
@@ -49,11 +71,6 @@ private:
   const CodeGenSchedModels &SchedModels;
   const CodeGenProcModel *ItinModel = nullptr;
 
-  struct MemoryCycles {
-    const CodeGenSchedClass *SchedClass; // The sched class.
-    unsigned FirstCycle; // The cycle for the first memory operation.
-    unsigned LastCycle;  // The cycle for the last memory operation.
-  };
   std::vector<MemoryCycles> ItinMemCycles;
 };
 
@@ -108,24 +125,29 @@ void AIEMemoryCyclesEmitter::evaluateSchedClass(
 //   }
 // }
 void AIEMemoryCyclesEmitter::emitMemoryCyclesInfo(raw_ostream &OS,
-                                                  bool LastCycles) {
+                                                  MemCycleGetter &Access) {
+  const std::string Prefix(std::string(Target.getName()) + "InstrInfo::");
+  const std::string FirstOrLast(Access.LastCycles ? "Last" : "First");
+  const std::string EndOfFunction("\n}\n\n");
   OS << "std::optional<int>\n";
-  OS << Target.getName() << "InstrInfo::";
-  if (LastCycles)
-    OS << "getLastMemoryCycle(unsigned SchedClass) const {\n";
-  else
-    OS << "getFirstMemoryCycle(unsigned SchedClass) const {\n";
+  OS << Prefix << "get" << FirstOrLast
+     << "MemoryCycle(unsigned SchedClass) const {\n";
 
   OS << "  switch (SchedClass) {\n"
      << "  default: return {};\n";
   for (const MemoryCycles &MemCycles : ItinMemCycles) {
-    int Cycle = LastCycles ? MemCycles.LastCycle : MemCycles.FirstCycle;
+    unsigned Cycle = Access(MemCycles);
     OS << "  case " << MemCycles.SchedClass->Index << ": return " << Cycle
        << "; // " << MemCycles.SchedClass->Name << "\n";
   }
-  OS << "  }";
+  OS << "  }" << EndOfFunction;
 
-  OS << "\n}\n\n";
+  OS << "int " << Prefix << "getMin" << FirstOrLast
+     << "MemoryCycle() const {\n  return " << Access.Min << ";"
+     << EndOfFunction;
+  OS << "int " << Prefix << "getMax" << FirstOrLast
+     << "MemoryCycle() const {\n  return " << Access.Max << ";"
+     << EndOfFunction;
 }
 
 void AIEMemoryCyclesEmitter::run(raw_ostream &OS) {
@@ -136,8 +158,10 @@ void AIEMemoryCyclesEmitter::run(raw_ostream &OS) {
   // Generate code to access scheduling information for memory instructions.
   Records.startTimer("Emit memory ops scheduling info");
   emitSourceFileHeader("Memory ops scheduling info Source Fragment", OS);
-  emitMemoryCyclesInfo(OS, /*LastCycles=*/false);
-  emitMemoryCyclesInfo(OS, /*LastCycles=*/true);
+  MemCycleGetter GetFirst(/*LastCycles=*/false);
+  MemCycleGetter GetLast(/*LastCycles=*/true);
+  emitMemoryCyclesInfo(OS, GetFirst);
+  emitMemoryCyclesInfo(OS, GetLast);
 }
 
 static TableGen::Emitter::OptClass<AIEMemoryCyclesEmitter>

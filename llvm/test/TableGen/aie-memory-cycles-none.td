@@ -39,9 +39,19 @@ def FOO : TestInstruction {
 // CHECK-NEXT:   }
 // CHECK-NEXT: }
 
+// CHECK-LABEL: int TestAIEInstrInfo::getMinFirstMemoryCycle() const {
+// CHECK-NEXT:  return 2147483647;
+// CHECK-LABEL:int TestAIEInstrInfo::getMaxFirstMemoryCycle() const {
+// CHECK-NEXT:  return -2147483648;
+
 // CHECK:      std::optional<int>
 // CHECK-NEXT: TestAIEInstrInfo::getLastMemoryCycle(unsigned SchedClass) const {
 // CHECK-NEXT:   switch (SchedClass) {
 // CHECK-NEXT:   default: return {};
 // CHECK-NEXT:   }
 // CHECK-NEXT: }
+
+// CHECK-LABEL: TestAIEInstrInfo::getMinLastMemoryCycle() const {
+// CHECK-NEXT:  return 2147483647;
+// CHECK-LABEL: int TestAIEInstrInfo::getMaxLastMemoryCycle() const {
+// CHECK-NEXT:  return -2147483648;
