@@ -33,6 +33,7 @@
 #include "llvm/Support/Automaton.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include <limits>
 
 #define DEBUG_TYPE "aie-codegen"
 
@@ -611,6 +612,22 @@ AIEBaseInstrInfo::getFirstMemoryCycle(unsigned SchedClass) const {
 std::optional<int>
 AIEBaseInstrInfo::getLastMemoryCycle(unsigned SchedClass) const {
   return std::nullopt;
+}
+
+int AIEBaseInstrInfo::getMinFirstMemoryCycle() const {
+  return std::numeric_limits<unsigned>().max();
+}
+
+int AIEBaseInstrInfo::getMaxFirstMemoryCycle() const {
+  return std::numeric_limits<unsigned>().min();
+}
+
+int AIEBaseInstrInfo::getMinLastMemoryCycle() const {
+  return std::numeric_limits<unsigned>().max();
+}
+
+int AIEBaseInstrInfo::getMaxLastMemoryCycle() const {
+  return std::numeric_limits<unsigned>().min();
 }
 
 bool AIEBaseInstrInfo::isLegalTypeToPad(const LLT &Ty,

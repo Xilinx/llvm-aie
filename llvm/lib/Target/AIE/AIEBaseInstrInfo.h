@@ -244,6 +244,15 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   /// E.g. in AIE2 VST.SRS has a last cycle of 7, ST.s8 a last cycle of 11.
   virtual std::optional<int> getLastMemoryCycle(unsigned SchedClass) const;
 
+  /// Return the minimum of FirstMemoryCycle over all sched classes
+  virtual int getMinFirstMemoryCycle() const;
+  /// Return the maximum of FirstMemoryCycle over all sched classes
+  virtual int getMaxFirstMemoryCycle() const;
+  /// Return the minimum of LastMemoryCycle over all sched classes
+  virtual int getMinLastMemoryCycle() const;
+  /// Return the maximum of LastMemoryCycle over all sched classes
+  virtual int getMaxLastMemoryCycle() const;
+
   const AIEBaseMCFormats *getFormatInterface() const { return FormatInterface; }
 
   /// Verifies whether Ty is legal as an input to G_AIE_PAD_VECTOR_UNDEF or an

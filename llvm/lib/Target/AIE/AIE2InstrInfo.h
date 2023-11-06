@@ -82,6 +82,11 @@ public:
 
   std::optional<int> getLastMemoryCycle(unsigned SchedClass) const override;
 
+  int getMinFirstMemoryCycle() const override;
+  int getMaxFirstMemoryCycle() const override;
+  int getMinLastMemoryCycle() const override;
+  int getMaxLastMemoryCycle() const override;
+
   SmallVector<TiedRegOperands, 4>
   getTiedRegInfo(unsigned Opcode) const override;
 

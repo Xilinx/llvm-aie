@@ -56,6 +56,11 @@ let Itinerary = II_OTHER in
 // CHECK-NEXT:   }
 // CHECK-NEXT: }
 
+// CHECK-LABEL: int TestAIEInstrInfo::getMinFirstMemoryCycle() const {
+// CHECK-NEXT:  return 5;
+// CHECK-LABEL:int TestAIEInstrInfo::getMaxFirstMemoryCycle() const {
+// CHECK-NEXT:  return 7;
+
 // CHECK:      std::optional<int>
 // CHECK-NEXT: TestAIEInstrInfo::getLastMemoryCycle(unsigned SchedClass) const {
 // CHECK-NEXT:   switch (SchedClass) {
@@ -65,3 +70,8 @@ let Itinerary = II_OTHER in
 // CHECK-NEXT:   case 4: return 5; // II_ST
 // CHECK-NEXT:   }
 // CHECK-NEXT: }
+
+// CHECK-LABEL: TestAIEInstrInfo::getMinLastMemoryCycle() const {
+// CHECK-NEXT:  return 5;
+// CHECK-LABEL: int TestAIEInstrInfo::getMaxLastMemoryCycle() const {
+// CHECK-NEXT:  return 11;
