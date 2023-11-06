@@ -32,14 +32,14 @@ def FOO : TestInstruction {
   let Itinerary = II_OTHER;
 }
 
-// CHECK:      std::optional<unsigned>
+// CHECK:      std::optional<int>
 // CHECK-NEXT: TestAIEInstrInfo::getFirstMemoryCycle(unsigned SchedClass) const {
 // CHECK-NEXT:   switch (SchedClass) {
 // CHECK-NEXT:   default: return {};
 // CHECK-NEXT:   }
 // CHECK-NEXT: }
 
-// CHECK:      std::optional<unsigned>
+// CHECK:      std::optional<int>
 // CHECK-NEXT: TestAIEInstrInfo::getLastMemoryCycle(unsigned SchedClass) const {
 // CHECK-NEXT:   switch (SchedClass) {
 // CHECK-NEXT:   default: return {};

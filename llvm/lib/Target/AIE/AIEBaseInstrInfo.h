@@ -235,15 +235,14 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   /// that touch memory multiple times like AIE's read-modify-write part-word
   /// stores.
   /// E.g. in AIE2 VST.SRS has a first cycle of 7, ST.s8 a first cycle of 5.
-  virtual std::optional<unsigned>
-  getFirstMemoryCycle(unsigned SchedClass) const;
+  virtual std::optional<int> getFirstMemoryCycle(unsigned SchedClass) const;
 
   /// Returns cycle for the last memory operation of an instruction.
   /// This is usually the same as \p getFirstMemoryCycle except for instructions
   /// that touch memory multiple times like AIE's read-modify-write part-word
   /// stores.
   /// E.g. in AIE2 VST.SRS has a last cycle of 7, ST.s8 a last cycle of 11.
-  virtual std::optional<unsigned> getLastMemoryCycle(unsigned SchedClass) const;
+  virtual std::optional<int> getLastMemoryCycle(unsigned SchedClass) const;
 
   const AIEBaseMCFormats *getFormatInterface() const { return FormatInterface; }
 

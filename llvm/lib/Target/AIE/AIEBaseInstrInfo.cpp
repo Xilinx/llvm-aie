@@ -594,8 +594,8 @@ AIEBaseInstrInfo::getMemoryLatency(unsigned SrcSchedClass,
   if (!AccurateMemEdges)
     return 1;
 
-  std::optional<unsigned> SrcCycle = getLastMemoryCycle(SrcSchedClass);
-  std::optional<unsigned> DstCycle = getFirstMemoryCycle(DstSchedClass);
+  std::optional<int> SrcCycle = getLastMemoryCycle(SrcSchedClass);
+  std::optional<int> DstCycle = getFirstMemoryCycle(DstSchedClass);
 
   if (!SrcCycle || !DstCycle)
     return std::nullopt;
@@ -603,12 +603,12 @@ AIEBaseInstrInfo::getMemoryLatency(unsigned SrcSchedClass,
   return (int)(*SrcCycle) - (int)(*DstCycle) + 1;
 }
 
-std::optional<unsigned>
+std::optional<int>
 AIEBaseInstrInfo::getFirstMemoryCycle(unsigned SchedClass) const {
   return std::nullopt;
 }
 
-std::optional<unsigned>
+std::optional<int>
 AIEBaseInstrInfo::getLastMemoryCycle(unsigned SchedClass) const {
   return std::nullopt;
 }

@@ -46,7 +46,7 @@ let Itinerary = II_PART_ST in
 let Itinerary = II_OTHER in
   def FAKE_ST : StoreInstruction<>;
 
-// CHECK:      std::optional<unsigned>
+// CHECK:      std::optional<int>
 // CHECK-NEXT: TestAIEInstrInfo::getFirstMemoryCycle(unsigned SchedClass) const {
 // CHECK-NEXT:   switch (SchedClass) {
 // CHECK-NEXT:   default: return {};
@@ -56,7 +56,7 @@ let Itinerary = II_OTHER in
 // CHECK-NEXT:   }
 // CHECK-NEXT: }
 
-// CHECK:      std::optional<unsigned>
+// CHECK:      std::optional<int>
 // CHECK-NEXT: TestAIEInstrInfo::getLastMemoryCycle(unsigned SchedClass) const {
 // CHECK-NEXT:   switch (SchedClass) {
 // CHECK-NEXT:   default: return {};
