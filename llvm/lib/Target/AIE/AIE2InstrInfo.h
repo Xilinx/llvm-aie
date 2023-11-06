@@ -78,11 +78,9 @@ public:
                                 const MachineInstr &UseMI,
                                 unsigned UseIdx) const override;
 
-  std::optional<unsigned>
-  getFirstMemoryCycle(unsigned SchedClass) const override;
+  std::optional<int> getFirstMemoryCycle(unsigned SchedClass) const override;
 
-  std::optional<unsigned>
-  getLastMemoryCycle(unsigned SchedClass) const override;
+  std::optional<int> getLastMemoryCycle(unsigned SchedClass) const override;
 
   SmallVector<TiedRegOperands, 4>
   getTiedRegInfo(unsigned Opcode) const override;

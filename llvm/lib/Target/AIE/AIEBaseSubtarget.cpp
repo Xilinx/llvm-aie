@@ -117,20 +117,21 @@ void AIEBaseSubtarget::adjustSchedDependency(
 namespace {
 // Compute the latency of this instruction. We take the maximum of the
 // stages and the operand latencies.
-unsigned maxLatency(const MachineInstr *MI, const TargetInstrInfo &InstrInfo,
-                    const InstrItineraryData &Itineraries) {
-  unsigned Latency = 0;
-  unsigned DefClass = MI->getDesc().getSchedClass();
+int maxLatency(const MachineInstr *MI, const AIEBaseInstrInfo &InstrInfo,
+               const InstrItineraryData &Itineraries) {
+  int Latency = 0;
+  unsigned SrcClass = MI->getDesc().getSchedClass();
   for (unsigned I = 0;; I++) {
-    std::optional<unsigned> OpLat = Itineraries.getOperandCycle(DefClass, I);
+    std::optional<unsigned> OpLat = Itineraries.getOperandCycle(SrcClass, I);
     if (OpLat) {
-      Latency = std::max(Latency, unsigned(*OpLat));
+      Latency = std::max(Latency, int(*OpLat));
     } else {
       // Beyond last operand
       break;
     }
   }
-  Latency = std::max(Latency, InstrInfo.getInstrLatency(&Itineraries, *MI));
+  Latency =
+      std::max(Latency, int(InstrInfo.getInstrLatency(&Itineraries, *MI)));
   return Latency;
 }
 

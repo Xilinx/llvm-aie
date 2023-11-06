@@ -98,7 +98,7 @@ void AIEMemoryCyclesEmitter::evaluateSchedClass(
 }
 
 // Generate something like:
-// std::optional<unsigned>
+// std::optional<int>
 // AIE2InstrInfo::getFirstMemoryCycle(unsigned SchedClass) const {
 //   switch (SchedClass) {
 //   default: return {};
@@ -109,7 +109,7 @@ void AIEMemoryCyclesEmitter::evaluateSchedClass(
 // }
 void AIEMemoryCyclesEmitter::emitMemoryCyclesInfo(raw_ostream &OS,
                                                   bool LastCycles) {
-  OS << "std::optional<unsigned>\n";
+  OS << "std::optional<int>\n";
   OS << Target.getName() << "InstrInfo::";
   if (LastCycles)
     OS << "getLastMemoryCycle(unsigned SchedClass) const {\n";
