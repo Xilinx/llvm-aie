@@ -1541,9 +1541,9 @@ bool FilterChooser::filterProcessor(bool AllowMixed, bool Greedy) {
     return true;
 
   // Heuristics.  See also doFilter()'s "Heuristics" comment when num of
-  // instructions is 3.
+  // instructions is 3 or greater.
   if (AllowMixed && !Greedy) {
-    assert(numInstructions == 3);
+    assert(numInstructions >= 3);
 
     for (auto Opcode : Opcodes) {
       std::vector<unsigned> StartBits;
@@ -1560,6 +1560,11 @@ bool FilterChooser::filterProcessor(bool AllowMixed, bool Greedy) {
         return true;
       }
     }
+    // If no island of undecoded bits was found, just bail out.
+    // We had already unsuccessfully tried to build up a list of
+    // candidate filters in the previous calls of filterProcessor() from
+    // the doFilter() method. No point in trying again.
+    return false;
   }
 
   unsigned BitIndex;
@@ -1772,11 +1777,12 @@ void FilterChooser::doFilter() {
   if (filterProcessor(true))
     return;
 
-  // Heuristics to cope with conflict set {t2CMPrs, t2SUBSrr, t2SUBSrs} where
+  // Heuristics to cope with conflict sets of 3 or more instructions.
+  // For example, the conflict set {t2CMPrs, t2SUBSrr, t2SUBSrs} where
   // no single instruction for the maximum ATTR_MIXED region Inst{14-4} has a
   // well-known encoding pattern.  In such case, we backtrack and scan for the
   // the very first consecutive ATTR_ALL_SET region and assign a filter to it.
-  if (Num == 3 && filterProcessor(true, false))
+  if (Num >= 3 && filterProcessor(true, false))
     return;
 
   // If we come to here, the instruction decoding has failed.
