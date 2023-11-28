@@ -18,7 +18,7 @@ define <32 x i8> @test_pack_d8_d16_dyn(<32 x i16> %v, i32 %sign) {
 ; CHECK-NEXT:    vpack.d8.d16 wl0, x2 // Delay Slot 2
 ; CHECK-NEXT:    mov crPackSign, #0 // Delay Slot 1
 entry:
-  %0 = tail call <32 x i8> @llvm.aie2.pack(<32 x i16> %v, i32 %sign, i32 1)
+  %0 = tail call <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> %v, i32 %sign)
   ret <32 x i8> %0
 }
 
@@ -34,7 +34,7 @@ define <32 x i8> @test_pack_d4_d8_dyn(<64 x i8> %v, i32 %sign) {
 ; CHECK-NEXT:    mov crPackSign, #0 // Delay Slot 1
 entry:
   %0 = bitcast <64 x i8> %v to <32 x i16>
-  %1 = tail call <32 x i8> @llvm.aie2.pack(<32 x i16> %0, i32 %sign, i32 0)
+  %1 = tail call <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> %0, i32 %sign)
   ret <32 x i8> %1
 }
 
@@ -49,7 +49,7 @@ define <32 x i8> @test_pack_s8_s16(<32 x i16> %v) {
 ; CHECK-NEXT:    vpack.s8.s16 wl0, x2 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
-  %0 = tail call <32 x i8> @llvm.aie2.pack(<32 x i16> %v, i32 1, i32 1)
+  %0 = tail call <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> %v, i32 1)
   ret <32 x i8> %0
 }
 
@@ -64,7 +64,7 @@ define <32 x i8> @test_pack_d8_d16(<32 x i16> %v) {
 ; CHECK-NEXT:    vpack.d8.d16 wl0, x2 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
-  %0 = tail call <32 x i8> @llvm.aie2.pack(<32 x i16> %v, i32 0, i32 1)
+  %0 = tail call <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> %v, i32 0)
   ret <32 x i8> %0
 }
 
@@ -80,7 +80,7 @@ define <32 x i8> @test_pack_s4_s8(<64 x i8> %v) {
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = bitcast <64 x i8> %v to <32 x i16>
-  %1 = tail call <32 x i8> @llvm.aie2.pack(<32 x i16> %0, i32 1, i32 0)
+  %1 = tail call <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> %0, i32 1)
   ret <32 x i8> %1
 }
 
@@ -96,8 +96,9 @@ define <32 x i8> @test_pack_d4_d8(<64 x i8> %v) {
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %0 = bitcast <64 x i8> %v to <32 x i16>
-  %1 = tail call <32 x i8> @llvm.aie2.pack(<32 x i16> %0, i32 0, i32 0)
+  %1 = tail call <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> %0, i32 0)
   ret <32 x i8> %1
 }
 
-declare <32 x i8> @llvm.aie2.pack(<32 x i16>, i32, i32) #1
+declare <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16>, i32)
+declare <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16>, i32)

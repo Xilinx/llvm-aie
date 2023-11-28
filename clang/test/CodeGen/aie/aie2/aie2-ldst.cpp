@@ -12,7 +12,7 @@
 
 // CHECK-LABEL: @_Z9test_packDv32_si(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack(<32 x i16> [[V:%.*]], i32 [[SIGN:%.*]], i32 1)
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> [[V:%.*]], i32 [[SIGN:%.*]])
 // CHECK-NEXT:    ret <32 x i8> [[TMP0]]
 //
 v32int8 test_pack(v32int16 v, int sign) {
@@ -21,7 +21,7 @@ v32int8 test_pack(v32int16 v, int sign) {
 
 // CHECK-LABEL: @_Z9test_packDv32_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack(<32 x i16> [[V:%.*]], i32 [[SIGN:%.*]], i32 1)
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> [[V:%.*]], i32 [[SIGN:%.*]])
 // CHECK-NEXT:    ret <32 x i8> [[TMP0]]
 //
 v32uint8 test_pack(v32uint16 v, int sign) {
@@ -32,7 +32,7 @@ v32uint8 test_pack(v32uint16 v, int sign) {
 // CHECK-LABEL: @_Z9test_packDv64_ai(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V:%.*]] to <32 x i16>
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack(<32 x i16> [[TMP0]], i32 [[SIGN:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> [[TMP0]], i32 [[SIGN:%.*]])
 // CHECK-NEXT:    ret <32 x i8> [[TMP1]]
 //
 v64int4 test_pack(v64int8 v, int sign) {
@@ -42,7 +42,7 @@ v64int4 test_pack(v64int8 v, int sign) {
 // CHECK-LABEL: @_Z9test_packDv64_hi(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V:%.*]] to <32 x i16>
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack(<32 x i16> [[TMP0]], i32 [[SIGN:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> [[TMP0]], i32 [[SIGN:%.*]])
 // CHECK-NEXT:    ret <32 x i8> [[TMP1]]
 //
 v64uint4 test_pack(v64uint8 v, int sign) {
@@ -51,7 +51,7 @@ v64uint4 test_pack(v64uint8 v, int sign) {
 
 // CHECK-LABEL: @_Z9test_packDv32_s(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack(<32 x i16> [[V:%.*]], i32 1, i32 1)
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> [[V:%.*]], i32 1)
 // CHECK-NEXT:    ret <32 x i8> [[TMP0]]
 //
 v32int8 test_pack(v32int16 v) {
@@ -60,7 +60,7 @@ v32int8 test_pack(v32int16 v) {
 
 // CHECK-LABEL: @_Z9test_packDv32_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack(<32 x i16> [[V:%.*]], i32 0, i32 1)
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> [[V:%.*]], i32 0)
 // CHECK-NEXT:    ret <32 x i8> [[TMP0]]
 //
 v32uint8 test_pack(v32uint16 v) {
@@ -70,7 +70,7 @@ v32uint8 test_pack(v32uint16 v) {
 // CHECK-LABEL: @_Z9test_packDv64_a(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V:%.*]] to <32 x i16>
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack(<32 x i16> [[TMP0]], i32 1, i32 0)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> [[TMP0]], i32 1)
 // CHECK-NEXT:    ret <32 x i8> [[TMP1]]
 //
 v64int4 test_pack(v64int8 v) {
@@ -80,7 +80,7 @@ v64int4 test_pack(v64int8 v) {
 // CHECK-LABEL: @_Z9test_packDv64_h(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V:%.*]] to <32 x i16>
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack(<32 x i16> [[TMP0]], i32 0, i32 0)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> [[TMP0]], i32 0)
 // CHECK-NEXT:    ret <32 x i8> [[TMP1]]
 //
 v64uint4 test_pack(v64uint8 v) {

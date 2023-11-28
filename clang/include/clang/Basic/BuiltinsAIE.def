@@ -446,7 +446,8 @@ BUILTIN(__builtin_aiev2_get_ctrl_reg, "UiUi", "nc")
 BUILTIN(__builtin_aiev2_get_coreid, "i", "nc")
 
 // Pack-Unpack
-BUILTIN(__builtin_aiev2_pack, "V32cV32sii", "nc")
+BUILTIN(__builtin_aiev2_pack_I8_I16, "V32cV32si", "nc")
+BUILTIN(__builtin_aiev2_pack_I4_I8, "V32cV32si", "nc")
 BUILTIN(__builtin_aiev2_unpack, "V32sV32cii", "nc")
 
 // Scheduling barrier

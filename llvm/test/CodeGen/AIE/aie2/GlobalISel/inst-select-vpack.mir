@@ -27,8 +27,7 @@ body:             |
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $wl0
     %1:vregbank(<32 x s16>) = COPY $x2
     %2:gprregbank(s32) = COPY $r0
-    %3:gprregbank(s32) = G_CONSTANT i32 1
-    %0:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack), %1:vregbank(<32 x s16>), %2:gprregbank(s32), %3:gprregbank(s32)
+    %0:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I8.I16), %1:vregbank(<32 x s16>), %2:gprregbank(s32)
     $wl0 = COPY %0:vregbank(<32 x s8>)
     PseudoRET implicit $lr, implicit $wl0
 ...
@@ -53,9 +52,8 @@ body:             |
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $wl0
     %1:vregbank(<64 x s8>) = COPY $x2
     %2:gprregbank(s32) = COPY $r0
-    %4:gprregbank(s32) = G_CONSTANT i32 0
     %3:vregbank(<32 x s16>) = G_BITCAST %1:vregbank(<64 x s8>)
-    %0:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack), %3:vregbank(<32 x s16>), %2:gprregbank(s32), %4:gprregbank(s32)
+    %0:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I4.I8), %3:vregbank(<32 x s16>), %2:gprregbank(s32)
     $wl0 = COPY %0:vregbank(<32 x s8>)
     PseudoRET implicit $lr, implicit $wl0
 ...
@@ -77,7 +75,7 @@ body:             |
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $wl0
     %1:vregbank(<32 x s16>) = COPY $x2
     %2:gprregbank(s32) = G_CONSTANT i32 1
-    %0:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack), %1:vregbank(<32 x s16>), %2:gprregbank(s32), %2:gprregbank(s32)
+    %0:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I8.I16), %1:vregbank(<32 x s16>), %2:gprregbank(s32)
     $wl0 = COPY %0:vregbank(<32 x s8>)
     PseudoRET implicit $lr, implicit $wl0
 ...
@@ -99,8 +97,7 @@ body:             |
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $wl0
     %1:vregbank(<32 x s16>) = COPY $x2
     %2:gprregbank(s32) = G_CONSTANT i32 0
-    %3:gprregbank(s32) = G_CONSTANT i32 1
-    %0:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack), %1:vregbank(<32 x s16>), %2:gprregbank(s32), %3:gprregbank(s32)
+    %0:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I8.I16), %1:vregbank(<32 x s16>), %2:gprregbank(s32)
     $wl0 = COPY %0:vregbank(<32 x s8>)
     PseudoRET implicit $lr, implicit $wl0
 ...
@@ -122,9 +119,8 @@ body:             |
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $wl0
     %1:vregbank(<64 x s8>) = COPY $x2
     %3:gprregbank(s32) = G_CONSTANT i32 1
-    %4:gprregbank(s32) = G_CONSTANT i32 0
     %2:vregbank(<32 x s16>) = G_BITCAST %1:vregbank(<64 x s8>)
-    %0:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack), %2:vregbank(<32 x s16>), %3:gprregbank(s32), %4:gprregbank(s32)
+    %0:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I4.I8), %2:vregbank(<32 x s16>), %3:gprregbank(s32)
     $wl0 = COPY %0:vregbank(<32 x s8>)
     PseudoRET implicit $lr, implicit $wl0
 ...
@@ -147,7 +143,7 @@ body:             |
     %1:vregbank(<64 x s8>) = COPY $x2
     %3:gprregbank(s32) = G_CONSTANT i32 0
     %2:vregbank(<32 x s16>) = G_BITCAST %1:vregbank(<64 x s8>)
-    %0:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack), %2:vregbank(<32 x s16>), %3:gprregbank(s32), %3:gprregbank(s32)
+    %0:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I4.I8), %2:vregbank(<32 x s16>), %3:gprregbank(s32)
     $wl0 = COPY %0:vregbank(<32 x s8>)
     PseudoRET implicit $lr, implicit $wl0
 ...
