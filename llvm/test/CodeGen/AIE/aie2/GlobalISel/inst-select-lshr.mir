@@ -20,8 +20,8 @@ body: |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
-    ; CHECK-NEXT: [[MOVA_lda_cg:%[0-9]+]]:er = MOVA_lda_cg 0
-    ; CHECK-NEXT: [[SUB:%[0-9]+]]:er = SUB [[MOVA_lda_cg]], [[COPY1]], implicit-def dead $srcarry
+    ; CHECK-NEXT: [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 0
+    ; CHECK-NEXT: [[SUB:%[0-9]+]]:er = SUB [[MOV_RLC_imm10_pseudo]], [[COPY1]], implicit-def dead $srcarry
     ; CHECK-NEXT: [[LSHL:%[0-9]+]]:er = LSHL [[COPY]], [[SUB]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[LSHL]]
     %0:gprregbank(s32) = COPY $r6
@@ -42,8 +42,8 @@ body: |
     ; CHECK: liveins: $r6
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
-    ; CHECK-NEXT: [[MOVA_lda_cg:%[0-9]+]]:er = MOVA_lda_cg -16
-    ; CHECK-NEXT: [[LSHL:%[0-9]+]]:er = LSHL [[COPY]], [[MOVA_lda_cg]]
+    ; CHECK-NEXT: [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo -16
+    ; CHECK-NEXT: [[LSHL:%[0-9]+]]:er = LSHL [[COPY]], [[MOV_RLC_imm10_pseudo]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[LSHL]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = G_CONSTANT i32 16
@@ -63,8 +63,8 @@ body: |
     ; CHECK: liveins: $r6
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
-    ; CHECK-NEXT: [[MOVA_lda_cg:%[0-9]+]]:er = MOVA_lda_cg 16
-    ; CHECK-NEXT: [[LSHL:%[0-9]+]]:er = LSHL [[COPY]], [[MOVA_lda_cg]]
+    ; CHECK-NEXT: [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 16
+    ; CHECK-NEXT: [[LSHL:%[0-9]+]]:er = LSHL [[COPY]], [[MOV_RLC_imm10_pseudo]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[LSHL]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = G_CONSTANT i32 -16

@@ -12,35 +12,35 @@
 #define __AIEV2_PACK_UNPACK_H__
 
 INTRINSIC(v32int8) pack(v32int16 v, int sign) {
-  return __builtin_aiev2_pack(v, sign, 0x1);
+  return __builtin_aiev2_pack_I8_I16(v, sign);
 }
 
 INTRINSIC(v32uint8) pack(v32uint16 v, int sign) {
-  return __builtin_aiev2_pack(v, sign, 0x1);
+  return __builtin_aiev2_pack_I8_I16(v, sign);
 }
 
 INTRINSIC(v64int4) pack(v64int8 v, int sign) {
-  return __builtin_aiev2_pack(v, sign, 0x0);
+  return __builtin_aiev2_pack_I4_I8(v, sign);
 }
 
 INTRINSIC(v64uint4) pack(v64uint8 v, int sign) {
-  return __builtin_aiev2_pack(v, sign, 0x0);
+  return __builtin_aiev2_pack_I4_I8(v, sign);
 }
 
 INTRINSIC(v32int8) pack(v32int16 v) {
-  return __builtin_aiev2_pack(v, __SIGN_SIGNED, 0x1);
+  return __builtin_aiev2_pack_I8_I16(v, __SIGN_SIGNED);
 }
 
 INTRINSIC(v32uint8) pack(v32uint16 v) {
-  return __builtin_aiev2_pack(v, __SIGN_UNSIGNED, 0x1);
+  return __builtin_aiev2_pack_I8_I16(v, __SIGN_UNSIGNED);
 }
 
 INTRINSIC(v64int4) pack(v64int8 v) {
-  return __builtin_aiev2_pack(v, __SIGN_SIGNED, 0x0);
+  return __builtin_aiev2_pack_I4_I8(v, __SIGN_SIGNED);
 }
 
 INTRINSIC(v64uint4) pack(v64uint8 v) {
-  return __builtin_aiev2_pack(v, __SIGN_UNSIGNED, 0x0);
+  return __builtin_aiev2_pack_I4_I8(v, __SIGN_UNSIGNED);
 }
 
 INTRINSIC(v32int16) unpack(v32int8 v, bool sign) {

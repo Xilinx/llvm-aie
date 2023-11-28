@@ -26,7 +26,7 @@ entry:
   %ret = alloca <32 x i8>, align 32
   call void @llvm.lifetime.start.p0(i64 32, ptr nonnull %ret)
   %0 = bitcast <64 x i8> %b to <32 x i16>
-  %1 = tail call <32 x i8> @llvm.aie2.pack(<32 x i16> %0, i32 0, i32 0)
+  %1 = tail call <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> %0, i32 0)
   store volatile <32 x i8> %1, ptr %ret, align 32, !tbaa !2
   %ret.0.ret.0.ret.0.ret.0. = load volatile <32 x i8>, ptr %ret, align 32, !tbaa !2
   call void @llvm.lifetime.end.p0(i64 32, ptr nonnull %ret)
@@ -58,7 +58,7 @@ define dso_local noundef <32 x i8> @_Z5test2Dv32_s(<32 x i16> noundef %b) local_
 entry:
   %ret = alloca <32 x i8>, align 32
   call void @llvm.lifetime.start.p0(i64 32, ptr nonnull %ret)
-  %0 = tail call <32 x i8> @llvm.aie2.pack(<32 x i16> %b, i32 0, i32 1)
+  %0 = tail call <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> %b, i32 0)
   store volatile <32 x i8> %0, ptr %ret, align 32, !tbaa !2
   %ret.0.ret.0.ret.0.ret.0. = load volatile <32 x i8>, ptr %ret, align 32, !tbaa !2
   call void @llvm.lifetime.end.p0(i64 32, ptr nonnull %ret)
@@ -85,7 +85,7 @@ entry:
   %ret = alloca <32 x i8>, align 32
   call void @llvm.lifetime.start.p0(i64 32, ptr nonnull %ret)
   %0 = bitcast <64 x i8> %b to <32 x i16>
-  %1 = tail call <32 x i8> @llvm.aie2.pack(<32 x i16> %0, i32 1, i32 0)
+  %1 = tail call <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> %0, i32 1)
   store volatile <32 x i8> %1, ptr %ret, align 32, !tbaa !2
   %ret.0.ret.0.ret.0.ret.0. = load volatile <32 x i8>, ptr %ret, align 32, !tbaa !2
   call void @llvm.lifetime.end.p0(i64 32, ptr nonnull %ret)
@@ -111,7 +111,7 @@ define dso_local noundef <32 x i8> @_Z5test3Dv32_s(<32 x i16> noundef %b) local_
 entry:
   %ret = alloca <32 x i8>, align 32
   call void @llvm.lifetime.start.p0(i64 32, ptr nonnull %ret)
-  %0 = tail call <32 x i8> @llvm.aie2.pack(<32 x i16> %b, i32 1, i32 1)
+  %0 = tail call <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> %b, i32 1)
   store volatile <32 x i8> %0, ptr %ret, align 32, !tbaa !2
   %ret.0.ret.0.ret.0.ret.0. = load volatile <32 x i8>, ptr %ret, align 32, !tbaa !2
   call void @llvm.lifetime.end.p0(i64 32, ptr nonnull %ret)
@@ -138,7 +138,7 @@ entry:
   %ret = alloca <32 x i8>, align 32
   call void @llvm.lifetime.start.p0(i64 32, ptr nonnull %ret)
   %0 = bitcast <64 x i8> %b to <32 x i16>
-  %1 = tail call <32 x i8> @llvm.aie2.pack(<32 x i16> %0, i32 1, i32 0)
+  %1 = tail call <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> %0, i32 1)
   store volatile <32 x i8> %1, ptr %ret, align 32, !tbaa !2
   %ret.0.ret.0.ret.0.ret.0. = load volatile <32 x i8>, ptr %ret, align 32, !tbaa !2
   call void @llvm.lifetime.end.p0(i64 32, ptr nonnull %ret)
@@ -164,7 +164,7 @@ define dso_local noundef <32 x i8> @_Z5test6Dv32_s(<32 x i16> noundef %b) local_
 entry:
   %ret = alloca <32 x i8>, align 32
   call void @llvm.lifetime.start.p0(i64 32, ptr nonnull %ret)
-  %0 = tail call <32 x i8> @llvm.aie2.pack(<32 x i16> %b, i32 1, i32 1)
+  %0 = tail call <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> %b, i32 1)
   store volatile <32 x i8> %0, ptr %ret, align 32, !tbaa !2
   %ret.0.ret.0.ret.0.ret.0. = load volatile <32 x i8>, ptr %ret, align 32, !tbaa !2
   call void @llvm.lifetime.end.p0(i64 32, ptr nonnull %ret)
@@ -172,7 +172,8 @@ entry:
 }
 
 ; Function Attrs: nofree nosync nounwind memory(none)
-declare <32 x i8> @llvm.aie2.pack(<32 x i16>, i32, i32) #2
+declare <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16>, i32)
+declare <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16>, i32)
 
 attributes #0 = { mustprogress nofree nounwind memory(inaccessiblemem: readwrite) "no-trapping-math"="true" "stack-protector-buffer-size"="8" }
 attributes #1 = { mustprogress nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }

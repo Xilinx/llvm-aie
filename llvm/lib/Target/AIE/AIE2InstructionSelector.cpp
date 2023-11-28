@@ -569,7 +569,8 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
       return selectVUPS(I, MRI);
     case Intrinsic::aie2_unpack:
       return selectVUNPACK(I, MRI);
-    case Intrinsic::aie2_pack:
+    case Intrinsic::aie2_pack_I4_I8:
+    case Intrinsic::aie2_pack_I8_I16:
       return selectVPACK(I, MRI);
     case Intrinsic::aie2_I256_v16_acc32_srs:
     case Intrinsic::aie2_I256_v16_acc64_srs:
@@ -1167,7 +1168,7 @@ bool AIE2InstructionSelector::selectVMAXDIFF_LT(MachineInstr &I,
     return selectImpl(I, *CoverageInfo);
   }
 
-  unsigned OpCode = getOpCode(I.getIntrinsicID());
+  unsigned OpCode = getOpCode(cast<GIntrinsic>(I).getIntrinsicID());
   MachineInstrBuilder MI = MIB.buildInstr(OpCode, {DstReg, CmpReg}, {})
                                .addReg(Src1Reg)
                                .addReg(Src2Reg);
@@ -1217,7 +1218,7 @@ bool AIE2InstructionSelector::selectVSUB_LTGE(MachineInstr &I,
     return selectImpl(I, *CoverageInfo);
   }
 
-  unsigned OpCode = getOpCode(I.getIntrinsicID());
+  unsigned OpCode = getOpCode(cast<GIntrinsic>(I).getIntrinsicID());
   MachineInstrBuilder MI = MIB.buildInstr(OpCode, {DstReg, CmpReg}, {})
                                .addReg(Src1Reg)
                                .addReg(Src2Reg);
@@ -1267,27 +1268,27 @@ bool AIE2InstructionSelector::selectVPACK(MachineInstr &I,
   // In this case of G_INTRINSIC, operand 1 is target intrinsic.
   Register SrcReg = I.getOperand(2).getReg();
   Register SignReg = I.getOperand(3).getReg();
-  Register LaneTypeReg = I.getOperand(4).getReg();
+  MachineInstrBuilder MI;
 
-  if (auto SignVal = getIConstantVRegValWithLookThrough(SignReg, MRI)) {
-    // FIXME: consider crSat.
-    // Handle constant sign through instruction patterns
-    return selectImpl(I, *CoverageInfo);
+  if (auto Sign = getIConstantVRegValWithLookThrough(SignReg, MRI)) {
+    unsigned OpCode;
+    unsigned SignVal = Sign->Value.getZExtValue();
+    if (SignVal)
+      OpCode = (cast<GIntrinsic>(I).getIntrinsicID() == Intrinsic::aie2_pack_I4_I8)
+                   ? AIE2::VPACK_S4_S8
+                   : AIE2::VPACK_S8_S16;
+    else
+      OpCode = (cast<GIntrinsic>(I).getIntrinsicID() == Intrinsic::aie2_pack_I4_I8)
+                   ? AIE2::VPACK_D4_D8
+                   : AIE2::VPACK_D8_D16;
+    MI = MIB.buildInstr(OpCode, {DstReg}, {}).addReg(SrcReg);
+  } else {
+    unsigned OpCode = (cast<GIntrinsic>(I).getIntrinsicID() == Intrinsic::aie2_pack_I4_I8)
+                          ? AIE2::VPACK_D4_D8
+                          : AIE2::VPACK_D8_D16;
+    MI = MIB.buildInstr(OpCode, {DstReg}, {}).addReg(SrcReg);
+    setUnsetCtrlRegister(*MI, MRI, AIE2::crPackSign, SignReg);
   }
-
-  // Handle dynamic sign
-  unsigned OpCode;
-  if (auto LaneType = getIConstantVRegValWithLookThrough(LaneTypeReg, MRI)) {
-    static const unsigned VPackOpCodes[] = {AIE2::VPACK_D4_D8,
-                                            AIE2::VPACK_D8_D16};
-    unsigned LaneTypeVal = LaneType->Value.getZExtValue();
-    assert(LaneTypeVal < 2 && "Unexpected constant value for lane type");
-    OpCode = VPackOpCodes[LaneTypeVal];
-  } else
-    llvm_unreachable("Expected constant value for lane type!");
-
-  MachineInstrBuilder MI = MIB.buildInstr(OpCode, {DstReg}, {}).addReg(SrcReg);
-  setUnsetCtrlRegister(*MI, MRI, AIE2::crPackSign, SignReg);
 
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
@@ -3419,7 +3420,8 @@ getCombinedOpcodePACK(const MachineInstr &MemOp, const MachineInstr &CombOp,
   const bool AlwaysFitsImmediateRange = true;
 
   if (CombOp.getOpcode() != AIE2::G_INTRINSIC ||
-      cast<GIntrinsic>(CombOp).getIntrinsicID() != Intrinsic::aie2_pack)
+      (cast<GIntrinsic>(CombOp).getIntrinsicID() != Intrinsic::aie2_pack_I4_I8 &&
+       cast<GIntrinsic>(CombOp).getIntrinsicID() != Intrinsic::aie2_pack_I8_I16))
     return {};
 
   assert(getLoadStoreSize(MemOp) == 256 && "Unexpected VST.PACK size");
@@ -3584,21 +3586,12 @@ bool AIE2InstructionSelector::selectG_AIE_STORE_PACK(MachineInstr &StoreI,
       StoreI.getParent() != PackOp->getParent() || !MRI.hasOneUse(PackResult))
     return false;
 
-  std::optional<ValueAndVReg> Is32LanesReg = {};
-
-  if (!(PackOp->getNumOperands() >= 5 && PackOp->getOperand(4).isReg() &&
-        mi_match(PackOp->getOperand(4).getReg(), MRI, m_GCst(Is32LanesReg))))
-    // The pack intrinsic will always have a constant 0 or 1 as the 4th Operand
-    // If this match does not work we can return early
-    return false;
-
   std::optional<AddressingModeInfo> AMI =
       getOrDefineAddressingRegister(StoreI, MRI);
   if (!AMI)
     return false;
 
-  // Is32LanesReg = 1 for 32 Lanes of 8 bits and 0 for 64 lanes of 4 bits
-  bool Is32Lanes = Is32LanesReg.value().Value == 0x1;
+  bool Is32Lanes = cast<GIntrinsic>(PackOp)->getIntrinsicID() == Intrinsic::aie2_pack_I8_I16;
 
   // Note: Operand 1 is the ID of the intrinsic
   Register SrcReg = PackOp->getOperand(2).getReg();

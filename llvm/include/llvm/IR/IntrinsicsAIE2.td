@@ -387,7 +387,8 @@ class AIEV2GetCoreID : Intrinsic<[llvm_i32_ty], [], [IntrNoMem]>;
 class AIEV2CLB : Intrinsic<[llvm_i32_ty], [llvm_i32_ty], [IntrNoMem]>;
 
 // Pack-Unpack
-class AIEV2Pack : Intrinsic<[llvm_v32i8_ty], [llvm_v32i16_ty, llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
+class AIEV2PackI4I8 : Intrinsic<[llvm_v32i8_ty], [llvm_v32i16_ty, llvm_i32_ty], [IntrNoMem]>;
+class AIEV2PackI8I16 : Intrinsic<[llvm_v32i8_ty], [llvm_v32i16_ty, llvm_i32_ty], [IntrNoMem]>;
 class AIEV2UnPack : Intrinsic<[llvm_v32i16_ty], [llvm_v32i8_ty, llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
 
 // Scheduling barrier
@@ -781,7 +782,8 @@ def int_aie2_get_coreid : ClangBuiltin<"__builtin_aiev2_get_coreid">, AIEV2GetCo
 def int_aie2_clb : ClangBuiltin<"__builtin_aiev2_clb">, AIEV2CLB;
 
 // Pack-Unpack
-def int_aie2_pack : ClangBuiltin<"__builtin_aiev2_pack">, AIEV2Pack;
+def int_aie2_pack_I8_I16 : ClangBuiltin<"__builtin_aiev2_pack_I8_I16">, AIEV2PackI8I16;
+def int_aie2_pack_I4_I8 : ClangBuiltin<"__builtin_aiev2_pack_I4_I8">, AIEV2PackI4I8;
 def int_aie2_unpack : ClangBuiltin<"__builtin_aiev2_unpack">, AIEV2UnPack;
 
 // Scheduling barrier

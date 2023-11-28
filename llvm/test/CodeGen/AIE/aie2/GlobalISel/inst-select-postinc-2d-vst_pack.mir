@@ -34,8 +34,7 @@ body:             |
     %4:edc(s20) = G_CONSTANT i20 4
     %100:vregbank(<8 x s64>) = COPY $x0
     %101:gprregbank(s32) = G_CONSTANT i32 1
-    %102:gprregbank(s32) = G_CONSTANT i32 0
-    %103:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.pack), %100:vregbank(<8 x s64>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %103:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I4.I8), %100:vregbank(<8 x s64>), %101:gprregbank(s32)
     %19:ptrregbank(p0), %7:modregbank(s20) = G_AIE_POSTINC_2D_STORE %103, %0, %1, %2, %3, %4 :: (store (<16 x s16>))
     PseudoRET implicit $lr
 ...
@@ -67,8 +66,7 @@ body:             |
     %4:edc(s20) = G_CONSTANT i20 4
     %100:vregbank(<8 x s64>) = COPY $x0
     %101:gprregbank(s32) = G_CONSTANT i32 1
-    %102:gprregbank(s32) = G_CONSTANT i32 1
-    %103:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.pack), %100:vregbank(<8 x s64>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %103:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I8.I16), %100:vregbank(<8 x s64>), %101:gprregbank(s32)
     %19:ptrregbank(p0), %7:modregbank(s20) = G_AIE_POSTINC_2D_STORE %103, %0, %1, %2, %3, %4 :: (store (<16 x s16>))
     PseudoRET implicit $lr
 ...
@@ -100,8 +98,7 @@ body:             |
     %4:edc(s20) = G_CONSTANT i20 4
     %100:vregbank(<8 x s64>) = COPY $x0
     %101:gprregbank(s32) = G_CONSTANT i32 0
-    %102:gprregbank(s32) = G_CONSTANT i32 0
-    %103:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.pack), %100:vregbank(<8 x s64>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %103:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I4.I8), %100:vregbank(<8 x s64>), %101:gprregbank(s32)
     %19:ptrregbank(p0), %7:modregbank(s20) = G_AIE_POSTINC_2D_STORE %103, %0, %1, %2, %3, %4 :: (store (<16 x s16>))
     PseudoRET implicit $lr
 ...
@@ -133,8 +130,7 @@ body:             |
     %4:edc(s20) = G_CONSTANT i20 4
     %100:vregbank(<8 x s64>) = COPY $x0
     %101:gprregbank(s32) = G_CONSTANT i32 0
-    %102:gprregbank(s32) = G_CONSTANT i32 1
-    %103:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.pack), %100:vregbank(<8 x s64>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %103:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I8.I16), %100:vregbank(<8 x s64>), %101:gprregbank(s32)
     %19:ptrregbank(p0), %7:modregbank(s20) = G_AIE_POSTINC_2D_STORE %103, %0, %1, %2, %3, %4 :: (store (<16 x s16>))
     PseudoRET implicit $lr
 ...
@@ -169,8 +165,7 @@ body:             |
     %4:edc(s20) = G_CONSTANT i20 4
     %100:vregbank(<8 x s64>) = COPY $x0
     %101:gprregbank(s32) = COPY $r1
-    %102:gprregbank(s32) = G_CONSTANT i32 0
-    %103:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.pack), %100:vregbank(<8 x s64>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %103:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I4.I8), %100:vregbank(<8 x s64>), %101:gprregbank(s32)
     %19:ptrregbank(p0), %7:modregbank(s20) = G_AIE_POSTINC_2D_STORE %103, %0, %1, %2, %3, %4 :: (store (<16 x s16>))
     PseudoRET implicit $lr
 ...
@@ -205,8 +200,7 @@ body:             |
     %4:edc(s20) = G_CONSTANT i20 4
     %100:vregbank(<8 x s64>) = COPY $x0
     %101:gprregbank(s32) = COPY $r1
-    %102:gprregbank(s32) = G_CONSTANT i32 1
-    %103:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.pack), %100:vregbank(<8 x s64>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %103:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I8.I16), %100:vregbank(<8 x s64>), %101:gprregbank(s32)
     %19:ptrregbank(p0), %7:modregbank(s20) = G_AIE_POSTINC_2D_STORE %103, %0, %1, %2, %3, %4 :: (store (<16 x s16>))
     PseudoRET implicit $lr
 ...
