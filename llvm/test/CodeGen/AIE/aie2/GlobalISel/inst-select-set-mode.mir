@@ -164,11 +164,11 @@ regBankSelected: true
 body:             |
   bb.1.entry:
     ; CHECK-LABEL: name: get_satmode
-    ; CHECK: [[COPY:%[0-9]+]]:er = COPY $crsat
+    ; CHECK: [[COPY:%[0-9]+]]:ercr = COPY $crsat
     ; CHECK-NEXT: $r0 = COPY [[COPY]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
     %1:gprregbank(s32) = G_CONSTANT i32 9
-    %0:gprregbank(s32) = G_INTRINSIC intrinsic(@llvm.aie2.get.ctrl.reg), %1:gprregbank(s32)
+    %0:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.get.ctrl.reg), %1:gprregbank(s32)
     $r0 = COPY %0:gprregbank(s32)
     PseudoRET implicit $lr, implicit $r0
 ...
@@ -182,11 +182,11 @@ regBankSelected: true
 body:             |
   bb.1.entry:
     ; CHECK-LABEL: name: get_sat
-    ; CHECK: [[COPY:%[0-9]+]]:er = COPY $crsat
+    ; CHECK: [[COPY:%[0-9]+]]:ercr = COPY $crsat
     ; CHECK-NEXT: $r0 = COPY [[COPY]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
     %1:gprregbank(s32) = G_CONSTANT i32 9
-    %0:gprregbank(s32) = G_INTRINSIC intrinsic(@llvm.aie2.get.ctrl.reg), %1:gprregbank(s32)
+    %0:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.get.ctrl.reg), %1:gprregbank(s32)
     $r0 = COPY %0:gprregbank(s32)
     PseudoRET implicit $lr, implicit $r0
 ...
@@ -200,11 +200,11 @@ regBankSelected: true
 body:             |
   bb.1.entry:
     ; CHECK-LABEL: name: get_rnd
-    ; CHECK: [[COPY:%[0-9]+]]:er = COPY $crrnd
+    ; CHECK: [[COPY:%[0-9]+]]:ercr = COPY $crrnd
     ; CHECK-NEXT: $r0 = COPY [[COPY]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
     %1:gprregbank(s32) = G_CONSTANT i32 6
-    %0:gprregbank(s32) = G_INTRINSIC intrinsic(@llvm.aie2.get.ctrl.reg), %1:gprregbank(s32)
+    %0:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.get.ctrl.reg), %1:gprregbank(s32)
     $r0 = COPY %0:gprregbank(s32)
     PseudoRET implicit $lr, implicit $r0
 ...
@@ -218,11 +218,11 @@ regBankSelected: true
 body:             |
   bb.1.entry:
     ; CHECK-LABEL: name: get_fpmulmac_mask
-    ; CHECK: [[COPY:%[0-9]+]]:er = COPY $crfpmask
+    ; CHECK: [[COPY:%[0-9]+]]:ercr = COPY $crfpmask
     ; CHECK-NEXT: $r0 = COPY [[COPY]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
     %1:gprregbank(s32) = G_CONSTANT i32 3
-    %0:gprregbank(s32) = G_INTRINSIC intrinsic(@llvm.aie2.get.ctrl.reg), %1:gprregbank(s32)
+    %0:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.get.ctrl.reg), %1:gprregbank(s32)
     $r0 = COPY %0:gprregbank(s32)
     PseudoRET implicit $lr, implicit $r0
 ...
@@ -236,11 +236,11 @@ regBankSelected: true
 body:             |
   bb.1.entry:
     ; CHECK-LABEL: name: get_fp2int_mask
-    ; CHECK: [[COPY:%[0-9]+]]:er = COPY $crf2imask
+    ; CHECK: [[COPY:%[0-9]+]]:ercr = COPY $crf2imask
     ; CHECK-NEXT: $r0 = COPY [[COPY]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
     %1:gprregbank(s32) = G_CONSTANT i32 2
-    %0:gprregbank(s32) = G_INTRINSIC intrinsic(@llvm.aie2.get.ctrl.reg), %1:gprregbank(s32)
+    %0:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.get.ctrl.reg), %1:gprregbank(s32)
     $r0 = COPY %0:gprregbank(s32)
     PseudoRET implicit $lr, implicit $r0
 ...
@@ -254,11 +254,11 @@ regBankSelected: true
 body:             |
   bb.1.entry:
     ; CHECK-LABEL: name: get_fp2bfmask
-    ; CHECK: [[COPY:%[0-9]+]]:er = COPY $crf2fmask
+    ; CHECK: [[COPY:%[0-9]+]]:ercr = COPY $crf2fmask
     ; CHECK-NEXT: $r0 = COPY [[COPY]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
     %1:gprregbank(s32) = G_CONSTANT i32 1
-    %0:gprregbank(s32) = G_INTRINSIC intrinsic(@llvm.aie2.get.ctrl.reg), %1:gprregbank(s32)
+    %0:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.get.ctrl.reg), %1:gprregbank(s32)
     $r0 = COPY %0:gprregbank(s32)
     PseudoRET implicit $lr, implicit $r0
 ...

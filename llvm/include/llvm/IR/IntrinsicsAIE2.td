@@ -375,9 +375,9 @@ class AIEV2WriteTM : Intrinsic<[], [llvm_i32_ty, llvm_ptr_ty], [IntrWriteMem]>;
 
 // Mode Settings
 // Set Control Reg
-class AIEV2SetCtrlReg : Intrinsic<[], [llvm_i32_ty, llvm_i32_ty], [IntrHasSideEffects, IntrNoMem]>;
+class AIEV2SetCtrlReg : Intrinsic<[], [llvm_i32_ty, llvm_i32_ty], [IntrWriteMem, IntrInaccessibleMemOnly]>;
 // Get Control Reg
-class AIEV2GetCtrlReg : Intrinsic<[llvm_i32_ty], [llvm_i32_ty], [IntrNoMem]>;
+class AIEV2GetCtrlReg : Intrinsic<[llvm_i32_ty], [llvm_i32_ty], [IntrReadMem, IntrInaccessibleMemOnly]>;
 
 
 // Get CoreID
@@ -387,8 +387,8 @@ class AIEV2GetCoreID : Intrinsic<[llvm_i32_ty], [], [IntrNoMem]>;
 class AIEV2CLB : Intrinsic<[llvm_i32_ty], [llvm_i32_ty], [IntrNoMem]>;
 
 // Pack-Unpack
-class AIEV2PackI4I8 : Intrinsic<[llvm_v32i8_ty], [llvm_v32i16_ty, llvm_i32_ty], [IntrNoMem]>;
-class AIEV2PackI8I16 : Intrinsic<[llvm_v32i8_ty], [llvm_v32i16_ty, llvm_i32_ty], [IntrNoMem]>;
+class AIEV2PackI4I8 : Intrinsic<[llvm_v32i8_ty], [llvm_v32i16_ty, llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
+class AIEV2PackI8I16 : Intrinsic<[llvm_v32i8_ty], [llvm_v32i16_ty, llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
 class AIEV2UnPack : Intrinsic<[llvm_v32i16_ty], [llvm_v32i8_ty, llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
 
 // Scheduling barrier

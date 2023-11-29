@@ -20,12 +20,16 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:ercr = COPY $crsat
+    ; CHECK-NEXT: $crsat = COPY [[COPY2]]
     ; CHECK-NEXT: VST_PACK_D8_D16_ag_idx_imm [[COPY1]], 0, [[COPY]], implicit $crsat, implicit $crpacksign :: (store (<32 x s8>))
     ; CHECK-NEXT: PseudoRET implicit $lr
     %0:vregbank(<32 x s16>) = COPY $x0
     %2:ptrregbank(p0) = COPY $p0
     %6:gprregbank(s32) = G_CONSTANT i32 0
-    %5:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I8.I16), %0:vregbank(<32 x s16>), %6:gprregbank(s32)
+    %3:gprregbank(s32) = G_CONSTANT i32 9
+    %4:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.get.ctrl.reg), %3:gprregbank(s32)
+    %5:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I8.I16), %0:vregbank(<32 x s16>), %6:gprregbank(s32), %4:gprregbank(s32)
     G_STORE %5:vregbank(<32 x s8>), %2:ptrregbank(p0) :: (store (<32 x s8>))
     PseudoRET implicit $lr
 ...
@@ -44,14 +48,18 @@ body:             |
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $s0
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:ercr = COPY $crsat
     ; CHECK-NEXT: $crpacksign = COPY [[COPY2]]
+    ; CHECK-NEXT: $crsat = COPY [[COPY3]]
     ; CHECK-NEXT: VST_PACK_D8_D16_ag_idx_imm [[COPY1]], 0, [[COPY]], implicit $crsat, implicit $crpacksign :: (store (<32 x s8>))
     ; CHECK-NEXT: $crpacksign = MOV_scalar_imm10_pseudo 0
     ; CHECK-NEXT: PseudoRET implicit $lr
     %0:vregbank(<32 x s16>) = COPY $x0
     %2:ptrregbank(p0) = COPY $p0
     %6:gprregbank(s32) = COPY $s0
-    %5:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I8.I16), %0:vregbank(<32 x s16>), %6:gprregbank(s32)
+    %3:gprregbank(s32) = G_CONSTANT i32 9
+    %4:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.get.ctrl.reg), %3:gprregbank(s32)
+    %5:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I8.I16), %0:vregbank(<32 x s16>), %6:gprregbank(s32), %4:gprregbank(s32)
     G_STORE %5:vregbank(<32 x s8>), %2:ptrregbank(p0) :: (store (<32 x s8>))
     PseudoRET implicit $lr
 ...
@@ -69,12 +77,16 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:ercr = COPY $crsat
+    ; CHECK-NEXT: $crsat = COPY [[COPY2]]
     ; CHECK-NEXT: VST_PACK_S8_S16_ag_idx_imm [[COPY1]], 0, [[COPY]], implicit $crsat :: (store (<32 x s8>))
     ; CHECK-NEXT: PseudoRET implicit $lr
     %0:vregbank(<32 x s16>) = COPY $x0
     %2:ptrregbank(p0) = COPY $p0
     %6:gprregbank(s32) = G_CONSTANT i32 1
-    %5:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I8.I16), %0:vregbank(<32 x s16>), %6:gprregbank(s32)
+    %3:gprregbank(s32) = G_CONSTANT i32 9
+    %4:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.get.ctrl.reg), %3:gprregbank(s32)
+    %5:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I8.I16), %0:vregbank(<32 x s16>), %6:gprregbank(s32), %4:gprregbank(s32)
     G_STORE %5:vregbank(<32 x s8>), %2:ptrregbank(p0) :: (store (<32 x s8>))
     PseudoRET implicit $lr
 ...
@@ -92,13 +104,17 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:ercr = COPY $crsat
+    ; CHECK-NEXT: $crsat = COPY [[COPY2]]
     ; CHECK-NEXT: VST_PACK_D4_D8_ag_idx_imm [[COPY1]], 0, [[COPY]], implicit $crsat, implicit $crpacksign :: (store (<32 x s8>))
     ; CHECK-NEXT: PseudoRET implicit $lr
     %0:vregbank(<64 x s8>) = COPY $x0
     %1:vregbank(<32 x s16>) = G_BITCAST %0:vregbank(<64 x s8>)
     %2:ptrregbank(p0) = COPY $p0
     %6:gprregbank(s32) = G_CONSTANT i32 0
-    %5:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I4.I8), %1:vregbank(<32 x s16>), %6:gprregbank(s32)
+    %3:gprregbank(s32) = G_CONSTANT i32 9
+    %4:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.get.ctrl.reg), %3:gprregbank(s32)
+    %5:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I4.I8), %1:vregbank(<32 x s16>), %6:gprregbank(s32), %4:gprregbank(s32)
     G_STORE %5:vregbank(<32 x s8>), %2:ptrregbank(p0) :: (store (<32 x s8>))
     PseudoRET implicit $lr
 ...
@@ -117,7 +133,9 @@ body:             |
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $s0
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:ercr = COPY $crsat
     ; CHECK-NEXT: $crpacksign = COPY [[COPY2]]
+    ; CHECK-NEXT: $crsat = COPY [[COPY3]]
     ; CHECK-NEXT: VST_PACK_D4_D8_ag_idx_imm [[COPY1]], 0, [[COPY]], implicit $crsat, implicit $crpacksign :: (store (<32 x s8>))
     ; CHECK-NEXT: $crpacksign = MOV_scalar_imm10_pseudo 0
     ; CHECK-NEXT: PseudoRET implicit $lr
@@ -125,7 +143,9 @@ body:             |
     %1:vregbank(<32 x s16>) = G_BITCAST %0:vregbank(<64 x s8>)
     %2:ptrregbank(p0) = COPY $p0
     %6:gprregbank(s32) = COPY $s0
-    %5:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I4.I8), %1:vregbank(<32 x s16>), %6:gprregbank(s32)
+    %3:gprregbank(s32) = G_CONSTANT i32 9
+    %4:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.get.ctrl.reg), %3:gprregbank(s32)
+    %5:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I4.I8), %1:vregbank(<32 x s16>), %6:gprregbank(s32), %4:gprregbank(s32)
     G_STORE %5:vregbank(<32 x s8>), %2:ptrregbank(p0) :: (store (<32 x s8>))
     PseudoRET implicit $lr
 ...
@@ -143,13 +163,17 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:ercr = COPY $crsat
+    ; CHECK-NEXT: $crsat = COPY [[COPY2]]
     ; CHECK-NEXT: VST_PACK_S4_S8_ag_idx_imm [[COPY1]], 0, [[COPY]], implicit $crsat :: (store (<32 x s8>))
     ; CHECK-NEXT: PseudoRET implicit $lr
     %0:vregbank(<64 x s8>) = COPY $x0
     %1:vregbank(<32 x s16>) = G_BITCAST %0:vregbank(<64 x s8>)
     %2:ptrregbank(p0) = COPY $p0
     %6:gprregbank(s32) = G_CONSTANT i32 1
-    %5:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I4.I8), %1:vregbank(<32 x s16>), %6:gprregbank(s32)
+    %3:gprregbank(s32) = G_CONSTANT i32 9
+    %4:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.get.ctrl.reg), %3:gprregbank(s32)
+    %5:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I4.I8), %1:vregbank(<32 x s16>), %6:gprregbank(s32), %4:gprregbank(s32)
     G_STORE %5:vregbank(<32 x s8>), %2:ptrregbank(p0) :: (store (<32 x s8>))
     PseudoRET implicit $lr
 ...
