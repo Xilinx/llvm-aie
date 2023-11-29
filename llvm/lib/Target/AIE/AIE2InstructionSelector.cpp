@@ -589,7 +589,8 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
     case Intrinsic::aie2_acc64_v16_I512_ups:
     case Intrinsic::aie2_acc64_v8_I256_ups:
       return selectVUPS(I, MRI);
-    case Intrinsic::aie2_unpack:
+    case Intrinsic::aie2_unpack_I8_I4:
+    case Intrinsic::aie2_unpack_I16_I8:
       return selectVUNPACK(I, MRI);
     case Intrinsic::aie2_pack_I4_I8:
     case Intrinsic::aie2_pack_I8_I16:
@@ -1258,26 +1259,27 @@ bool AIE2InstructionSelector::selectVUNPACK(MachineInstr &I,
   // In this case of G_INTRINSIC operand 1 is target intrinsic
   Register SrcReg = I.getOperand(2).getReg();
   Register SignReg = I.getOperand(3).getReg();
-  Register LaneTypeReg = I.getOperand(4).getReg();
+  MachineInstrBuilder MI;
 
-  if (auto SignVal = getIConstantVRegValWithLookThrough(SignReg, MRI)) {
-    // Handle constant sign through instruction patterns
-    return selectImpl(I, *CoverageInfo);
-  }
-
-  unsigned OpCode;
-  if (auto LaneType = getIConstantVRegValWithLookThrough(LaneTypeReg, MRI)) {
-    static const unsigned OpCodes[] = {AIE2::VUNPACK_D8_D4,
-                                       AIE2::VUNPACK_D16_D8};
-    unsigned LaneTypeVal = LaneType->Value.getZExtValue();
-    assert(LaneTypeVal < 2 && "Unexpected constant value for lane type");
-    OpCode = OpCodes[LaneTypeVal];
+  if (auto Sign = getIConstantVRegValWithLookThrough(SignReg, MRI)) {
+    unsigned OpCode;
+    unsigned SignVal = Sign->Value.getZExtValue();
+    if (SignVal)
+      OpCode = (cast<GIntrinsic>(I).getIntrinsicID() == Intrinsic::aie2_unpack_I8_I4)
+                   ? AIE2::VUNPACK_S8_S4
+                   : AIE2::VUNPACK_S16_S8;
+    else
+      OpCode = (cast<GIntrinsic>(I).getIntrinsicID() == Intrinsic::aie2_unpack_I8_I4)
+                   ? AIE2::VUNPACK_D8_D4
+                   : AIE2::VUNPACK_D16_D8;
+    MI = MIB.buildInstr(OpCode, {DstReg}, {}).addReg(SrcReg);
   } else {
-    llvm_unreachable("Expected constant value for lane type");
+    unsigned OpCode = (cast<GIntrinsic>(I).getIntrinsicID() == Intrinsic::aie2_unpack_I8_I4)
+                          ? AIE2::VUNPACK_D8_D4
+                          : AIE2::VUNPACK_D16_D8;
+    MI = MIB.buildInstr(OpCode, {DstReg}, {}).addReg(SrcReg);
+    setUnsetCtrlRegister(*MI, MRI, AIE2::crUnpackSign, SignReg);
   }
-
-  MachineInstrBuilder MI = MIB.buildInstr(OpCode, {DstReg}, {}).addReg(SrcReg);
-  setUnsetCtrlRegister(*MI, MRI, AIE2::crUnpackSign, SignReg);
 
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
