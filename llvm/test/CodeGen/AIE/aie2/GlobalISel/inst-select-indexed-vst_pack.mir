@@ -20,22 +20,28 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:ercr = COPY $crsat
+    ; CHECK-NEXT: $crsat = COPY [[COPY2]]
     ; CHECK-NEXT: VST_PACK_D8_D16_ag_idx_imm [[COPY1]], 96, [[COPY]], implicit $crsat, implicit $crpacksign :: (store (<32 x s8>))
     ; CHECK-NEXT: [[MOV_PD_imm10_pseudo:%[0-9]+]]:edj = MOV_PD_imm10_pseudo 128
+    ; CHECK-NEXT: $crsat = COPY [[COPY2]]
     ; CHECK-NEXT: VST_PACK_D8_D16_ag_idx [[COPY1]], [[MOV_PD_imm10_pseudo]], [[COPY]], implicit $crsat, implicit $crpacksign :: (store (<32 x s8>))
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:edj = COPY $dj0
-    ; CHECK-NEXT: VST_PACK_D8_D16_ag_idx [[COPY1]], [[COPY2]], [[COPY]], implicit $crsat, implicit $crpacksign :: (store (<32 x s8>))
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:edj = COPY $dj0
+    ; CHECK-NEXT: $crsat = COPY [[COPY2]]
+    ; CHECK-NEXT: VST_PACK_D8_D16_ag_idx [[COPY1]], [[COPY3]], [[COPY]], implicit $crsat, implicit $crpacksign :: (store (<32 x s8>))
     %0:vregbank(<32 x s16>) = COPY $x0
     %2:ptrregbank(p0) = COPY $p0
     %6:gprregbank(s32) = G_CONSTANT i32 0
-    %5:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I8.I16), %0:vregbank(<32 x s16>), %6:gprregbank(s32)
+    %4:gprregbank(s32) = G_CONSTANT i32 9
+    %7:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.get.ctrl.reg), %4:gprregbank(s32)
+    %5:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I8.I16), %0:vregbank(<32 x s16>), %6:gprregbank(s32), %7:gprregbank(s32)
     %3:modregbank(s20) = G_CONSTANT i20 96
     G_AIE_OFFSET_STORE %5:vregbank(<32 x s8>), %2:ptrregbank(p0), %3:modregbank(s20) :: (store (<32 x s8>))
     %8:modregbank(s20) = G_CONSTANT i20 128
-    %9:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I8.I16), %0:vregbank(<32 x s16>), %6:gprregbank(s32)
+    %9:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I8.I16), %0:vregbank(<32 x s16>), %6:gprregbank(s32), %7:gprregbank(s32)
     G_AIE_OFFSET_STORE %9:vregbank(<32 x s8>), %2:ptrregbank(p0), %8:modregbank(s20) :: (store (<32 x s8>))
     %10:modregbank(s20) = COPY $dj0
-    %11:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I8.I16), %0:vregbank(<32 x s16>), %6:gprregbank(s32)
+    %11:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I8.I16), %0:vregbank(<32 x s16>), %6:gprregbank(s32), %7:gprregbank(s32)
     G_AIE_OFFSET_STORE %11:vregbank(<32 x s8>), %2:ptrregbank(p0), %10:modregbank(s20) :: (store (<32 x s8>))
 ...
 
@@ -53,28 +59,34 @@ body:             |
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $s0
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:ercr = COPY $crsat
     ; CHECK-NEXT: $crpacksign = COPY [[COPY2]]
+    ; CHECK-NEXT: $crsat = COPY [[COPY3]]
     ; CHECK-NEXT: VST_PACK_D8_D16_ag_idx_imm [[COPY1]], 96, [[COPY]], implicit $crsat, implicit $crpacksign :: (store (<32 x s8>))
     ; CHECK-NEXT: $crpacksign = MOV_scalar_imm10_pseudo 0
     ; CHECK-NEXT: [[MOV_PD_imm10_pseudo:%[0-9]+]]:edj = MOV_PD_imm10_pseudo 128
     ; CHECK-NEXT: $crpacksign = COPY [[COPY2]]
+    ; CHECK-NEXT: $crsat = COPY [[COPY3]]
     ; CHECK-NEXT: VST_PACK_D8_D16_ag_idx [[COPY1]], [[MOV_PD_imm10_pseudo]], [[COPY]], implicit $crsat, implicit $crpacksign :: (store (<32 x s8>))
     ; CHECK-NEXT: $crpacksign = MOV_scalar_imm10_pseudo 0
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:edj = COPY $dj0
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:edj = COPY $dj0
     ; CHECK-NEXT: $crpacksign = COPY [[COPY2]]
-    ; CHECK-NEXT: VST_PACK_D8_D16_ag_idx [[COPY1]], [[COPY3]], [[COPY]], implicit $crsat, implicit $crpacksign :: (store (<32 x s8>))
+    ; CHECK-NEXT: $crsat = COPY [[COPY3]]
+    ; CHECK-NEXT: VST_PACK_D8_D16_ag_idx [[COPY1]], [[COPY4]], [[COPY]], implicit $crsat, implicit $crpacksign :: (store (<32 x s8>))
     ; CHECK-NEXT: $crpacksign = MOV_scalar_imm10_pseudo 0
     %0:vregbank(<32 x s16>) = COPY $x0
     %2:ptrregbank(p0) = COPY $p0
     %6:gprregbank(s32) = COPY $s0
-    %5:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I8.I16), %0:vregbank(<32 x s16>), %6:gprregbank(s32)
+    %4:gprregbank(s32) = G_CONSTANT i32 9
+    %7:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.get.ctrl.reg), %4:gprregbank(s32)
+    %5:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I8.I16), %0:vregbank(<32 x s16>), %6:gprregbank(s32), %7:gprregbank(s32)
     %3:modregbank(s20) = G_CONSTANT i20 96
     G_AIE_OFFSET_STORE %5:vregbank(<32 x s8>), %2:ptrregbank(p0), %3:modregbank(s20) :: (store (<32 x s8>))
     %8:modregbank(s20) = G_CONSTANT i20 128
-    %9:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I8.I16), %0:vregbank(<32 x s16>), %6:gprregbank(s32)
+    %9:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I8.I16), %0:vregbank(<32 x s16>), %6:gprregbank(s32), %7:gprregbank(s32)
     G_AIE_OFFSET_STORE %9:vregbank(<32 x s8>), %2:ptrregbank(p0), %8:modregbank(s20) :: (store (<32 x s8>))
     %10:modregbank(s20) = COPY $dj0
-    %11:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I8.I16), %0:vregbank(<32 x s16>), %6:gprregbank(s32)
+    %11:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I8.I16), %0:vregbank(<32 x s16>), %6:gprregbank(s32), %7:gprregbank(s32)
     G_AIE_OFFSET_STORE %11:vregbank(<32 x s8>), %2:ptrregbank(p0), %10:modregbank(s20) :: (store (<32 x s8>))
 ...
 
@@ -91,22 +103,28 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:ercr = COPY $crsat
+    ; CHECK-NEXT: $crsat = COPY [[COPY2]]
     ; CHECK-NEXT: VST_PACK_S8_S16_ag_idx_imm [[COPY1]], 96, [[COPY]], implicit $crsat :: (store (<32 x s8>))
     ; CHECK-NEXT: [[MOV_PD_imm10_pseudo:%[0-9]+]]:edj = MOV_PD_imm10_pseudo 128
+    ; CHECK-NEXT: $crsat = COPY [[COPY2]]
     ; CHECK-NEXT: VST_PACK_S8_S16_ag_idx [[COPY1]], [[MOV_PD_imm10_pseudo]], [[COPY]], implicit $crsat :: (store (<32 x s8>))
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:edj = COPY $dj0
-    ; CHECK-NEXT: VST_PACK_S8_S16_ag_idx [[COPY1]], [[COPY2]], [[COPY]], implicit $crsat :: (store (<32 x s8>))
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:edj = COPY $dj0
+    ; CHECK-NEXT: $crsat = COPY [[COPY2]]
+    ; CHECK-NEXT: VST_PACK_S8_S16_ag_idx [[COPY1]], [[COPY3]], [[COPY]], implicit $crsat :: (store (<32 x s8>))
     %0:vregbank(<32 x s16>) = COPY $x0
     %2:ptrregbank(p0) = COPY $p0
     %6:gprregbank(s32) = G_CONSTANT i32 1
-    %5:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I8.I16), %0:vregbank(<32 x s16>), %6:gprregbank(s32)
+    %4:gprregbank(s32) = G_CONSTANT i32 9
+    %7:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.get.ctrl.reg), %4:gprregbank(s32)
+    %5:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I8.I16), %0:vregbank(<32 x s16>), %6:gprregbank(s32), %7:gprregbank(s32)
     %3:modregbank(s20) = G_CONSTANT i20 96
     G_AIE_OFFSET_STORE %5:vregbank(<32 x s8>), %2:ptrregbank(p0), %3:modregbank(s20) :: (store (<32 x s8>))
     %8:modregbank(s20) = G_CONSTANT i20 128
-    %9:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I8.I16), %0:vregbank(<32 x s16>), %6:gprregbank(s32)
+    %9:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I8.I16), %0:vregbank(<32 x s16>), %6:gprregbank(s32), %7:gprregbank(s32)
     G_AIE_OFFSET_STORE %9:vregbank(<32 x s8>), %2:ptrregbank(p0), %8:modregbank(s20) :: (store (<32 x s8>))
     %10:modregbank(s20) = COPY $dj0
-    %11:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I8.I16), %0:vregbank(<32 x s16>), %6:gprregbank(s32)
+    %11:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I8.I16), %0:vregbank(<32 x s16>), %6:gprregbank(s32), %7:gprregbank(s32)
     G_AIE_OFFSET_STORE %11:vregbank(<32 x s8>), %2:ptrregbank(p0), %10:modregbank(s20) :: (store (<32 x s8>))
 ...
 
@@ -123,23 +141,29 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:ercr = COPY $crsat
+    ; CHECK-NEXT: $crsat = COPY [[COPY2]]
     ; CHECK-NEXT: VST_PACK_D4_D8_ag_idx_imm [[COPY1]], 96, [[COPY]], implicit $crsat, implicit $crpacksign :: (store (<32 x s8>))
     ; CHECK-NEXT: [[MOV_PD_imm10_pseudo:%[0-9]+]]:edj = MOV_PD_imm10_pseudo 128
+    ; CHECK-NEXT: $crsat = COPY [[COPY2]]
     ; CHECK-NEXT: VST_PACK_D4_D8_ag_idx [[COPY1]], [[MOV_PD_imm10_pseudo]], [[COPY]], implicit $crsat, implicit $crpacksign :: (store (<32 x s8>))
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:edj = COPY $dj0
-    ; CHECK-NEXT: VST_PACK_D4_D8_ag_idx [[COPY1]], [[COPY2]], [[COPY]], implicit $crsat, implicit $crpacksign :: (store (<32 x s8>))
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:edj = COPY $dj0
+    ; CHECK-NEXT: $crsat = COPY [[COPY2]]
+    ; CHECK-NEXT: VST_PACK_D4_D8_ag_idx [[COPY1]], [[COPY3]], [[COPY]], implicit $crsat, implicit $crpacksign :: (store (<32 x s8>))
     %0:vregbank(<64 x s8>) = COPY $x0
     %1:vregbank(<32 x s16>) = G_BITCAST %0:vregbank(<64 x s8>)
     %2:ptrregbank(p0) = COPY $p0
     %6:gprregbank(s32) = G_CONSTANT i32 0
-    %5:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I4.I8), %1:vregbank(<32 x s16>), %6:gprregbank(s32)
+    %4:gprregbank(s32) = G_CONSTANT i32 9
+    %7:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.get.ctrl.reg), %4:gprregbank(s32)
+    %5:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I4.I8), %1:vregbank(<32 x s16>), %6:gprregbank(s32), %7:gprregbank(s32)
     %3:modregbank(s20) = G_CONSTANT i20 96
     G_AIE_OFFSET_STORE %5:vregbank(<32 x s8>), %2:ptrregbank(p0), %3:modregbank(s20) :: (store (<32 x s8>))
     %8:modregbank(s20) = G_CONSTANT i20 128
-    %9:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I4.I8), %1:vregbank(<32 x s16>), %6:gprregbank(s32)
+    %9:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I4.I8), %1:vregbank(<32 x s16>), %6:gprregbank(s32), %7:gprregbank(s32)
     G_AIE_OFFSET_STORE %9:vregbank(<32 x s8>), %2:ptrregbank(p0), %8:modregbank(s20) :: (store (<32 x s8>))
     %10:modregbank(s20) = COPY $dj0
-    %11:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I4.I8), %1:vregbank(<32 x s16>), %6:gprregbank(s32)
+    %11:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I4.I8), %1:vregbank(<32 x s16>), %6:gprregbank(s32), %7:gprregbank(s32)
     G_AIE_OFFSET_STORE %11:vregbank(<32 x s8>), %2:ptrregbank(p0), %10:modregbank(s20) :: (store (<32 x s8>))
 ...
 
@@ -157,29 +181,35 @@ body:             |
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $s0
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:ercr = COPY $crsat
     ; CHECK-NEXT: $crpacksign = COPY [[COPY2]]
+    ; CHECK-NEXT: $crsat = COPY [[COPY3]]
     ; CHECK-NEXT: VST_PACK_D4_D8_ag_idx_imm [[COPY1]], 96, [[COPY]], implicit $crsat, implicit $crpacksign :: (store (<32 x s8>))
     ; CHECK-NEXT: $crpacksign = MOV_scalar_imm10_pseudo 0
     ; CHECK-NEXT: [[MOV_PD_imm10_pseudo:%[0-9]+]]:edj = MOV_PD_imm10_pseudo 128
     ; CHECK-NEXT: $crpacksign = COPY [[COPY2]]
+    ; CHECK-NEXT: $crsat = COPY [[COPY3]]
     ; CHECK-NEXT: VST_PACK_D4_D8_ag_idx [[COPY1]], [[MOV_PD_imm10_pseudo]], [[COPY]], implicit $crsat, implicit $crpacksign :: (store (<32 x s8>))
     ; CHECK-NEXT: $crpacksign = MOV_scalar_imm10_pseudo 0
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:edj = COPY $dj0
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:edj = COPY $dj0
     ; CHECK-NEXT: $crpacksign = COPY [[COPY2]]
-    ; CHECK-NEXT: VST_PACK_D4_D8_ag_idx [[COPY1]], [[COPY3]], [[COPY]], implicit $crsat, implicit $crpacksign :: (store (<32 x s8>))
+    ; CHECK-NEXT: $crsat = COPY [[COPY3]]
+    ; CHECK-NEXT: VST_PACK_D4_D8_ag_idx [[COPY1]], [[COPY4]], [[COPY]], implicit $crsat, implicit $crpacksign :: (store (<32 x s8>))
     ; CHECK-NEXT: $crpacksign = MOV_scalar_imm10_pseudo 0
     %0:vregbank(<64 x s8>) = COPY $x0
     %1:vregbank(<32 x s16>) = G_BITCAST %0:vregbank(<64 x s8>)
     %2:ptrregbank(p0) = COPY $p0
     %6:gprregbank(s32) = COPY $s0
-    %5:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I4.I8), %1:vregbank(<32 x s16>), %6:gprregbank(s32)
+    %4:gprregbank(s32) = G_CONSTANT i32 9
+    %7:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.get.ctrl.reg), %4:gprregbank(s32)
+    %5:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I4.I8), %1:vregbank(<32 x s16>), %6:gprregbank(s32), %7:gprregbank(s32)
     %3:modregbank(s20) = G_CONSTANT i20 96
     G_AIE_OFFSET_STORE %5:vregbank(<32 x s8>), %2:ptrregbank(p0), %3:modregbank(s20) :: (store (<32 x s8>))
     %8:modregbank(s20) = G_CONSTANT i20 128
-    %9:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I4.I8), %1:vregbank(<32 x s16>), %6:gprregbank(s32)
+    %9:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I4.I8), %1:vregbank(<32 x s16>), %6:gprregbank(s32), %7:gprregbank(s32)
     G_AIE_OFFSET_STORE %9:vregbank(<32 x s8>), %2:ptrregbank(p0), %8:modregbank(s20) :: (store (<32 x s8>))
     %10:modregbank(s20) = COPY $dj0
-    %11:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I4.I8), %1:vregbank(<32 x s16>), %6:gprregbank(s32)
+    %11:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I4.I8), %1:vregbank(<32 x s16>), %6:gprregbank(s32), %7:gprregbank(s32)
     G_AIE_OFFSET_STORE %11:vregbank(<32 x s8>), %2:ptrregbank(p0), %10:modregbank(s20) :: (store (<32 x s8>))
 ...
 
@@ -196,22 +226,28 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:ercr = COPY $crsat
+    ; CHECK-NEXT: $crsat = COPY [[COPY2]]
     ; CHECK-NEXT: VST_PACK_S4_S8_ag_idx_imm [[COPY1]], 96, [[COPY]], implicit $crsat :: (store (<32 x s8>))
     ; CHECK-NEXT: [[MOV_PD_imm10_pseudo:%[0-9]+]]:edj = MOV_PD_imm10_pseudo 128
+    ; CHECK-NEXT: $crsat = COPY [[COPY2]]
     ; CHECK-NEXT: VST_PACK_S4_S8_ag_idx [[COPY1]], [[MOV_PD_imm10_pseudo]], [[COPY]], implicit $crsat :: (store (<32 x s8>))
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:edj = COPY $dj0
-    ; CHECK-NEXT: VST_PACK_S4_S8_ag_idx [[COPY1]], [[COPY2]], [[COPY]], implicit $crsat :: (store (<32 x s8>))
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:edj = COPY $dj0
+    ; CHECK-NEXT: $crsat = COPY [[COPY2]]
+    ; CHECK-NEXT: VST_PACK_S4_S8_ag_idx [[COPY1]], [[COPY3]], [[COPY]], implicit $crsat :: (store (<32 x s8>))
     %0:vregbank(<64 x s8>) = COPY $x0
     %1:vregbank(<32 x s16>) = G_BITCAST %0:vregbank(<64 x s8>)
     %2:ptrregbank(p0) = COPY $p0
     %6:gprregbank(s32) = G_CONSTANT i32 1
-    %5:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I4.I8), %1:vregbank(<32 x s16>), %6:gprregbank(s32)
+    %4:gprregbank(s32) = G_CONSTANT i32 9
+    %7:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.get.ctrl.reg), %4:gprregbank(s32)
+    %5:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I4.I8), %1:vregbank(<32 x s16>), %6:gprregbank(s32), %7:gprregbank(s32)
     %3:modregbank(s20) = G_CONSTANT i20 96
     G_AIE_OFFSET_STORE %5:vregbank(<32 x s8>), %2:ptrregbank(p0), %3:modregbank(s20) :: (store (<32 x s8>))
     %8:modregbank(s20) = G_CONSTANT i20 128
-    %9:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I4.I8), %1:vregbank(<32 x s16>), %6:gprregbank(s32)
+    %9:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I4.I8), %1:vregbank(<32 x s16>), %6:gprregbank(s32), %7:gprregbank(s32)
     G_AIE_OFFSET_STORE %9:vregbank(<32 x s8>), %2:ptrregbank(p0), %8:modregbank(s20) :: (store (<32 x s8>))
     %10:modregbank(s20) = COPY $dj0
-    %11:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I4.I8), %1:vregbank(<32 x s16>), %6:gprregbank(s32)
+    %11:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I4.I8), %1:vregbank(<32 x s16>), %6:gprregbank(s32), %7:gprregbank(s32)
     G_AIE_OFFSET_STORE %11:vregbank(<32 x s8>), %2:ptrregbank(p0), %10:modregbank(s20) :: (store (<32 x s8>))
 ...

@@ -27,7 +27,9 @@ body:             |
     ; CHECK-NEXT: [[MOV_PD_imm10_pseudo5:%[0-9]+]]:edc = MOV_PD_imm10_pseudo 6
     ; CHECK-NEXT: [[MOV_PD_imm10_pseudo6:%[0-9]+]]:edc = MOV_PD_imm10_pseudo 7
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:ercr = COPY $crsat
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:eds = REG_SEQUENCE [[MOV_PD_imm10_pseudo]], %subreg.sub_mod, [[MOV_PD_imm10_pseudo3]], %subreg.sub_dim_size, [[MOV_PD_imm10_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm10_pseudo5]], %subreg.sub_dim_count, [[MOV_PD_imm10_pseudo4]], %subreg.sub_hi_dim_then_sub_dim_size, [[MOV_PD_imm10_pseudo2]], %subreg.sub_hi_dim_then_sub_dim_stride, [[MOV_PD_imm10_pseudo6]], %subreg.sub_hi_dim_then_sub_dim_count
+    ; CHECK-NEXT: $crsat = COPY [[COPY2]]
     ; CHECK-NEXT: [[VST_3D_PACK_S4_S8_:%[0-9]+]]:ep, [[VST_3D_PACK_S4_S8_1:%[0-9]+]]:edc, [[VST_3D_PACK_S4_S8_2:%[0-9]+]]:edc = VST_3D_PACK_S4_S8 [[COPY]], [[REG_SEQUENCE]], [[COPY1]], implicit $crsat :: (store (<8 x s32>))
     %0:ptrregbank(p0) = COPY $p0
     %1:em(s20) = G_CONSTANT i20 1
@@ -39,7 +41,9 @@ body:             |
     %7:edc(s20) = G_CONSTANT i20 7
     %100:vregbank(<64 x s8>) = COPY $x0
     %102:gprregbank(s32) = G_CONSTANT i32 1
-    %104:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I4.I8), %100:vregbank(<64 x s8>), %102:gprregbank(s32)
+    %103:gprregbank(s32) = G_CONSTANT i32 9
+    %105:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.get.ctrl.reg), %103:gprregbank(s32)
+    %104:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I4.I8), %100:vregbank(<64 x s8>), %102:gprregbank(s32), %105:gprregbank(s32)
     %19:ptrregbank(p0), %8:modregbank(s20), %9:modregbank(s20) = G_AIE_POSTINC_3D_STORE %104, %0, %1, %2, %3, %4, %6, %5, %7 :: (store (<8 x s32>))
 ...
 
@@ -63,7 +67,9 @@ body:             |
     ; CHECK-NEXT: [[MOV_PD_imm10_pseudo5:%[0-9]+]]:edc = MOV_PD_imm10_pseudo 6
     ; CHECK-NEXT: [[MOV_PD_imm10_pseudo6:%[0-9]+]]:edc = MOV_PD_imm10_pseudo 7
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:ercr = COPY $crsat
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:eds = REG_SEQUENCE [[MOV_PD_imm10_pseudo]], %subreg.sub_mod, [[MOV_PD_imm10_pseudo3]], %subreg.sub_dim_size, [[MOV_PD_imm10_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm10_pseudo5]], %subreg.sub_dim_count, [[MOV_PD_imm10_pseudo4]], %subreg.sub_hi_dim_then_sub_dim_size, [[MOV_PD_imm10_pseudo2]], %subreg.sub_hi_dim_then_sub_dim_stride, [[MOV_PD_imm10_pseudo6]], %subreg.sub_hi_dim_then_sub_dim_count
+    ; CHECK-NEXT: $crsat = COPY [[COPY2]]
     ; CHECK-NEXT: [[VST_3D_PACK_S8_S16_:%[0-9]+]]:ep, [[VST_3D_PACK_S8_S16_1:%[0-9]+]]:edc, [[VST_3D_PACK_S8_S16_2:%[0-9]+]]:edc = VST_3D_PACK_S8_S16 [[COPY]], [[REG_SEQUENCE]], [[COPY1]], implicit $crsat :: (store (<8 x s32>))
     %0:ptrregbank(p0) = COPY $p0
     %1:em(s20) = G_CONSTANT i20 1
@@ -75,7 +81,9 @@ body:             |
     %7:edc(s20) = G_CONSTANT i20 7
     %100:vregbank(<64 x s8>) = COPY $x0
     %102:gprregbank(s32) = G_CONSTANT i32 1
-    %104:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I8.I16), %100:vregbank(<64 x s8>), %102:gprregbank(s32)
+    %103:gprregbank(s32) = G_CONSTANT i32 9
+    %105:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.get.ctrl.reg), %103:gprregbank(s32)
+    %104:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I8.I16), %100:vregbank(<64 x s8>), %102:gprregbank(s32), %105:gprregbank(s32)
     %19:ptrregbank(p0), %8:modregbank(s20), %9:modregbank(s20) = G_AIE_POSTINC_3D_STORE %104, %0, %1, %2, %3, %4, %6, %5, %7 :: (store (<8 x s32>))
 ...
 
@@ -99,7 +107,9 @@ body:             |
     ; CHECK-NEXT: [[MOV_PD_imm10_pseudo5:%[0-9]+]]:edc = MOV_PD_imm10_pseudo 6
     ; CHECK-NEXT: [[MOV_PD_imm10_pseudo6:%[0-9]+]]:edc = MOV_PD_imm10_pseudo 7
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:ercr = COPY $crsat
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:eds = REG_SEQUENCE [[MOV_PD_imm10_pseudo]], %subreg.sub_mod, [[MOV_PD_imm10_pseudo3]], %subreg.sub_dim_size, [[MOV_PD_imm10_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm10_pseudo5]], %subreg.sub_dim_count, [[MOV_PD_imm10_pseudo4]], %subreg.sub_hi_dim_then_sub_dim_size, [[MOV_PD_imm10_pseudo2]], %subreg.sub_hi_dim_then_sub_dim_stride, [[MOV_PD_imm10_pseudo6]], %subreg.sub_hi_dim_then_sub_dim_count
+    ; CHECK-NEXT: $crsat = COPY [[COPY2]]
     ; CHECK-NEXT: [[VST_3D_PACK_D4_D8_:%[0-9]+]]:ep, [[VST_3D_PACK_D4_D8_1:%[0-9]+]]:edc, [[VST_3D_PACK_D4_D8_2:%[0-9]+]]:edc = VST_3D_PACK_D4_D8 [[COPY]], [[REG_SEQUENCE]], [[COPY1]], implicit $crsat, implicit $crpacksign :: (store (<8 x s32>))
     %0:ptrregbank(p0) = COPY $p0
     %1:em(s20) = G_CONSTANT i20 1
@@ -111,7 +121,9 @@ body:             |
     %7:edc(s20) = G_CONSTANT i20 7
     %100:vregbank(<64 x s8>) = COPY $x0
     %102:gprregbank(s32) = G_CONSTANT i32 0
-    %104:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I4.I8), %100:vregbank(<64 x s8>), %102:gprregbank(s32)
+    %103:gprregbank(s32) = G_CONSTANT i32 9
+    %105:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.get.ctrl.reg), %103:gprregbank(s32)
+    %104:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I4.I8), %100:vregbank(<64 x s8>), %102:gprregbank(s32), %105:gprregbank(s32)
     %19:ptrregbank(p0), %8:modregbank(s20), %9:modregbank(s20) = G_AIE_POSTINC_3D_STORE %104, %0, %1, %2, %3, %4, %6, %5, %7 :: (store (<8 x s32>))
 ...
 
@@ -135,7 +147,9 @@ body:             |
     ; CHECK-NEXT: [[MOV_PD_imm10_pseudo5:%[0-9]+]]:edc = MOV_PD_imm10_pseudo 6
     ; CHECK-NEXT: [[MOV_PD_imm10_pseudo6:%[0-9]+]]:edc = MOV_PD_imm10_pseudo 7
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:ercr = COPY $crsat
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:eds = REG_SEQUENCE [[MOV_PD_imm10_pseudo]], %subreg.sub_mod, [[MOV_PD_imm10_pseudo3]], %subreg.sub_dim_size, [[MOV_PD_imm10_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm10_pseudo5]], %subreg.sub_dim_count, [[MOV_PD_imm10_pseudo4]], %subreg.sub_hi_dim_then_sub_dim_size, [[MOV_PD_imm10_pseudo2]], %subreg.sub_hi_dim_then_sub_dim_stride, [[MOV_PD_imm10_pseudo6]], %subreg.sub_hi_dim_then_sub_dim_count
+    ; CHECK-NEXT: $crsat = COPY [[COPY2]]
     ; CHECK-NEXT: [[VST_3D_PACK_D8_D16_:%[0-9]+]]:ep, [[VST_3D_PACK_D8_D16_1:%[0-9]+]]:edc, [[VST_3D_PACK_D8_D16_2:%[0-9]+]]:edc = VST_3D_PACK_D8_D16 [[COPY]], [[REG_SEQUENCE]], [[COPY1]], implicit $crsat, implicit $crpacksign :: (store (<8 x s32>))
     %0:ptrregbank(p0) = COPY $p0
     %1:em(s20) = G_CONSTANT i20 1
@@ -147,7 +161,9 @@ body:             |
     %7:edc(s20) = G_CONSTANT i20 7
     %100:vregbank(<64 x s8>) = COPY $x0
     %102:gprregbank(s32) = G_CONSTANT i32 0
-    %104:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I8.I16), %100:vregbank(<64 x s8>), %102:gprregbank(s32)
+    %103:gprregbank(s32) = G_CONSTANT i32 9
+    %105:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.get.ctrl.reg), %103:gprregbank(s32)
+    %104:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I8.I16), %100:vregbank(<64 x s8>), %102:gprregbank(s32), %105:gprregbank(s32)
     %19:ptrregbank(p0), %8:modregbank(s20), %9:modregbank(s20) = G_AIE_POSTINC_3D_STORE %104, %0, %1, %2, %3, %4, %6, %5, %7 :: (store (<8 x s32>))
 ...
 
@@ -172,8 +188,10 @@ body:             |
     ; CHECK-NEXT: [[MOV_PD_imm10_pseudo6:%[0-9]+]]:edc = MOV_PD_imm10_pseudo 7
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $r1
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:ercr = COPY $crsat
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:eds = REG_SEQUENCE [[MOV_PD_imm10_pseudo]], %subreg.sub_mod, [[MOV_PD_imm10_pseudo3]], %subreg.sub_dim_size, [[MOV_PD_imm10_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm10_pseudo5]], %subreg.sub_dim_count, [[MOV_PD_imm10_pseudo4]], %subreg.sub_hi_dim_then_sub_dim_size, [[MOV_PD_imm10_pseudo2]], %subreg.sub_hi_dim_then_sub_dim_stride, [[MOV_PD_imm10_pseudo6]], %subreg.sub_hi_dim_then_sub_dim_count
     ; CHECK-NEXT: $crpacksign = COPY [[COPY2]]
+    ; CHECK-NEXT: $crsat = COPY [[COPY3]]
     ; CHECK-NEXT: [[VST_3D_PACK_D4_D8_:%[0-9]+]]:ep, [[VST_3D_PACK_D4_D8_1:%[0-9]+]]:edc, [[VST_3D_PACK_D4_D8_2:%[0-9]+]]:edc = VST_3D_PACK_D4_D8 [[COPY]], [[REG_SEQUENCE]], [[COPY1]], implicit $crsat, implicit $crpacksign :: (store (<8 x s32>))
     ; CHECK-NEXT: $crpacksign = MOV_scalar_imm10_pseudo 0
     %0:ptrregbank(p0) = COPY $p0
@@ -186,7 +204,9 @@ body:             |
     %7:edc(s20) = G_CONSTANT i20 7
     %100:vregbank(<64 x s8>) = COPY $x0
     %102:gprregbank(s32) = COPY $r1
-    %104:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I4.I8), %100:vregbank(<64 x s8>), %102:gprregbank(s32)
+    %103:gprregbank(s32) = G_CONSTANT i32 9
+    %105:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.get.ctrl.reg), %103:gprregbank(s32)
+    %104:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I4.I8), %100:vregbank(<64 x s8>), %102:gprregbank(s32), %105:gprregbank(s32)
     %19:ptrregbank(p0), %8:modregbank(s20), %9:modregbank(s20) = G_AIE_POSTINC_3D_STORE %104, %0, %1, %2, %3, %4, %6, %5, %7 :: (store (<8 x s32>))
 ...
 
@@ -211,8 +231,10 @@ body:             |
     ; CHECK-NEXT: [[MOV_PD_imm10_pseudo6:%[0-9]+]]:edc = MOV_PD_imm10_pseudo 7
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $r1
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:ercr = COPY $crsat
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:eds = REG_SEQUENCE [[MOV_PD_imm10_pseudo]], %subreg.sub_mod, [[MOV_PD_imm10_pseudo3]], %subreg.sub_dim_size, [[MOV_PD_imm10_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm10_pseudo5]], %subreg.sub_dim_count, [[MOV_PD_imm10_pseudo4]], %subreg.sub_hi_dim_then_sub_dim_size, [[MOV_PD_imm10_pseudo2]], %subreg.sub_hi_dim_then_sub_dim_stride, [[MOV_PD_imm10_pseudo6]], %subreg.sub_hi_dim_then_sub_dim_count
     ; CHECK-NEXT: $crpacksign = COPY [[COPY2]]
+    ; CHECK-NEXT: $crsat = COPY [[COPY3]]
     ; CHECK-NEXT: [[VST_3D_PACK_D8_D16_:%[0-9]+]]:ep, [[VST_3D_PACK_D8_D16_1:%[0-9]+]]:edc, [[VST_3D_PACK_D8_D16_2:%[0-9]+]]:edc = VST_3D_PACK_D8_D16 [[COPY]], [[REG_SEQUENCE]], [[COPY1]], implicit $crsat, implicit $crpacksign :: (store (<8 x s32>))
     ; CHECK-NEXT: $crpacksign = MOV_scalar_imm10_pseudo 0
     %0:ptrregbank(p0) = COPY $p0
@@ -225,6 +247,8 @@ body:             |
     %7:edc(s20) = G_CONSTANT i20 7
     %100:vregbank(<64 x s8>) = COPY $x0
     %102:gprregbank(s32) = COPY $r1
-    %104:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I8.I16), %100:vregbank(<64 x s8>), %102:gprregbank(s32)
+    %103:gprregbank(s32) = G_CONSTANT i32 9
+    %105:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.get.ctrl.reg), %103:gprregbank(s32)
+    %104:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.pack.I8.I16), %100:vregbank(<64 x s8>), %102:gprregbank(s32), %105:gprregbank(s32)
     %19:ptrregbank(p0), %8:modregbank(s20), %9:modregbank(s20) = G_AIE_POSTINC_3D_STORE %104, %0, %1, %2, %3, %4, %6, %5, %7 :: (store (<8 x s32>))
 ...
