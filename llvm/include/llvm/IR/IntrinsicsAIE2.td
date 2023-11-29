@@ -387,9 +387,10 @@ class AIEV2GetCoreID : Intrinsic<[llvm_i32_ty], [], [IntrNoMem]>;
 class AIEV2CLB : Intrinsic<[llvm_i32_ty], [llvm_i32_ty], [IntrNoMem]>;
 
 // Pack-Unpack
-class AIEV2PackI4I8 : Intrinsic<[llvm_v32i8_ty], [llvm_v32i16_ty, llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
-class AIEV2PackI8I16 : Intrinsic<[llvm_v32i8_ty], [llvm_v32i16_ty, llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
-class AIEV2UnPack : Intrinsic<[llvm_v32i16_ty], [llvm_v32i8_ty, llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
+class AIEV2PackI4I8 : Intrinsic<[llvm_v32i8_ty], [llvm_v32i16_ty, llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>; 
+class AIEV2PackI8I16 : Intrinsic<[llvm_v32i8_ty], [llvm_v32i16_ty, llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;  
+class AIEV2UnPackI8I4 : Intrinsic<[llvm_v32i16_ty], [llvm_v32i8_ty, llvm_i32_ty], [IntrNoMem]>;
+class AIEV2UnPackI16I8 : Intrinsic<[llvm_v32i16_ty], [llvm_v32i8_ty, llvm_i32_ty], [IntrNoMem]>;
 
 // Scheduling barrier
 class AIEV2SchedBarrier : Intrinsic<[], [], [IntrNoMem, IntrHasSideEffects, IntrConvergent, IntrWillReturn]>;
@@ -784,7 +785,8 @@ def int_aie2_clb : ClangBuiltin<"__builtin_aiev2_clb">, AIEV2CLB;
 // Pack-Unpack
 def int_aie2_pack_I8_I16 : ClangBuiltin<"__builtin_aiev2_pack_I8_I16">, AIEV2PackI8I16;
 def int_aie2_pack_I4_I8 : ClangBuiltin<"__builtin_aiev2_pack_I4_I8">, AIEV2PackI4I8;
-def int_aie2_unpack : ClangBuiltin<"__builtin_aiev2_unpack">, AIEV2UnPack;
+def int_aie2_unpack_I16_I8 : ClangBuiltin<"__builtin_aiev2_unpack_I16_I8">, AIEV2UnPackI16I8;
+def int_aie2_unpack_I8_I4 : ClangBuiltin<"__builtin_aiev2_unpack_I8_I4">, AIEV2UnPackI8I4;
 
 // Scheduling barrier
 def int_aie2_sched_barrier : ClangBuiltin<"__builtin_aiev2_sched_barrier">, AIEV2SchedBarrier;

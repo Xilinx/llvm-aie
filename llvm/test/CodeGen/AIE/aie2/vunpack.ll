@@ -21,7 +21,7 @@ define dso_local noundef <32 x i16> @_Z11test_unpackDv32_ab(<32 x i8> noundef %v
 ; CHECK-NEXT:    mov crUnpackSign, #0 // Delay Slot 1
 entry:
   %conv.i = zext i1 %sign to i32
-  %0 = tail call <32 x i16> @llvm.aie2.unpack(<32 x i8> %v, i32 %conv.i, i32 1)
+  %0 = tail call <32 x i16> @llvm.aie2.unpack.I16.I8(<32 x i8> %v, i32 %conv.i)
   ret <32 x i16> %0
 }
 
@@ -40,7 +40,7 @@ define dso_local noundef <32 x i16> @_Z11test_unpackDv32_hb(<32 x i8> noundef %v
 ; CHECK-NEXT:    mov crUnpackSign, #0 // Delay Slot 1
 entry:
   %conv.i = zext i1 %sign to i32
-  %0 = tail call <32 x i16> @llvm.aie2.unpack(<32 x i8> %v, i32 %conv.i, i32 1)
+  %0 = tail call <32 x i16> @llvm.aie2.unpack.I16.I8(<32 x i8> %v, i32 %conv.i)
   ret <32 x i16> %0
 }
 
@@ -59,7 +59,7 @@ define dso_local noundef <64 x i8> @_Z11test_unpackDv32_DB8_b(<32 x i8> noundef 
 ; CHECK-NEXT:    mov crUnpackSign, #0 // Delay Slot 1
 entry:
   %conv.i = zext i1 %sign to i32
-  %0 = tail call <32 x i16> @llvm.aie2.unpack(<32 x i8> %v, i32 %conv.i, i32 0)
+  %0 = tail call <32 x i16> @llvm.aie2.unpack.I8.I4(<32 x i8> %v, i32 %conv.i)
   %1 = bitcast <32 x i16> %0 to <64 x i8>
   ret <64 x i8> %1
 }
@@ -79,7 +79,7 @@ define dso_local noundef <64 x i8> @_Z11test_unpackDv32_DU8_b(<32 x i8> noundef 
 ; CHECK-NEXT:    mov crUnpackSign, #0 // Delay Slot 1
 entry:
   %conv.i = zext i1 %sign to i32
-  %0 = tail call <32 x i16> @llvm.aie2.unpack(<32 x i8> %v, i32 %conv.i, i32 0)
+  %0 = tail call <32 x i16> @llvm.aie2.unpack.I8.I4(<32 x i8> %v, i32 %conv.i)
   %1 = bitcast <32 x i16> %0 to <64 x i8>
   ret <64 x i8> %1
 }
@@ -97,7 +97,7 @@ define dso_local noundef <32 x i16> @_Z11test_unpackDv32_a(<32 x i8> noundef %v)
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
-  %0 = tail call <32 x i16> @llvm.aie2.unpack(<32 x i8> %v, i32 1, i32 1)
+  %0 = tail call <32 x i16> @llvm.aie2.unpack.I16.I8(<32 x i8> %v, i32 1)
   ret <32 x i16> %0
 }
 
@@ -114,7 +114,7 @@ define dso_local noundef <32 x i16> @_Z11test_unpackDv32_h(<32 x i8> noundef %v)
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
-  %0 = tail call <32 x i16> @llvm.aie2.unpack(<32 x i8> %v, i32 0, i32 1)
+  %0 = tail call <32 x i16> @llvm.aie2.unpack.I16.I8(<32 x i8> %v, i32 0)
   ret <32 x i16> %0
 }
 
@@ -131,7 +131,7 @@ define dso_local noundef <64 x i8> @_Z11test_unpackDv32_DB8_(<32 x i8> noundef %
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
-  %0 = tail call <32 x i16> @llvm.aie2.unpack(<32 x i8> %v, i32 1, i32 0)
+  %0 = tail call <32 x i16> @llvm.aie2.unpack.I8.I4(<32 x i8> %v, i32 1)
   %1 = bitcast <32 x i16> %0 to <64 x i8>
   ret <64 x i8> %1
 }
@@ -149,9 +149,10 @@ define dso_local noundef <64 x i8> @_Z11test_unpackDv32_DU8_(<32 x i8> noundef %
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
-  %0 = tail call <32 x i16> @llvm.aie2.unpack(<32 x i8> %v, i32 0, i32 0)
+  %0 = tail call <32 x i16> @llvm.aie2.unpack.I8.I4(<32 x i8> %v, i32 0)
   %1 = bitcast <32 x i16> %0 to <64 x i8>
   ret <64 x i8> %1
 }
 
-declare <32 x i16> @llvm.aie2.unpack(<32 x i8>, i32, i32) #1
+declare <32 x i16> @llvm.aie2.unpack.I8.I4(<32 x i8>, i32)
+declare <32 x i16> @llvm.aie2.unpack.I16.I8(<32 x i8>, i32)

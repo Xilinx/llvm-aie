@@ -902,13 +902,6 @@ def : Pat<(int_aie2_vabs_gtz8  VEC512:$s1, 0x1), (VABS_GTZ_S8  VEC512:$s1)>;
 def : Pat<(int_aie2_vabs_gtz16 VEC512:$s1, 0x1), (VABS_GTZ_S16 VEC512:$s1)>;
 def : Pat<(int_aie2_vabs_gtz32 VEC512:$s1, 0x1), (VABS_GTZ_S32 VEC512:$s1)>;
 
-// VUNPACK
-// Note : Non-constant sign is handled in .cpp
-def : Pat<(int_aie2_unpack VEC256:$src, 0x0, 0x0), (VUNPACK_D8_D4  VEC256:$src)>;
-def : Pat<(int_aie2_unpack VEC256:$src, 0x0, 0x1), (VUNPACK_D16_D8 VEC256:$src)>;
-def : Pat<(int_aie2_unpack VEC256:$src, 0x1, 0x0), (VUNPACK_S8_S4  VEC256:$src)>;
-def : Pat<(int_aie2_unpack VEC256:$src, 0x1, 0x1), (VUNPACK_S16_S8 VEC256:$src)>;
-
 // VADD
 def : Pat<(int_aie2_add_acc ACC1024:$acc1, ACC1024:$acc2, eR:$c),
           (VADD ACC1024:$acc1, ACC1024:$acc2, eR:$c)>;

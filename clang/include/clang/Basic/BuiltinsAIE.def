@@ -448,7 +448,8 @@ BUILTIN(__builtin_aiev2_get_coreid, "i", "nc")
 // Pack-Unpack
 BUILTIN(__builtin_aiev2_pack_I8_I16, "V32cV32sii", "nc")
 BUILTIN(__builtin_aiev2_pack_I4_I8, "V32cV32sii", "nc")
-BUILTIN(__builtin_aiev2_unpack, "V32sV32cii", "nc")
+BUILTIN(__builtin_aiev2_unpack_I16_I8, "V32sV32ci", "nc")
+BUILTIN(__builtin_aiev2_unpack_I8_I4, "V32sV32ci", "nc")
 
 // Scheduling barrier
 BUILTIN(__builtin_aiev2_sched_barrier, "v", "n")
