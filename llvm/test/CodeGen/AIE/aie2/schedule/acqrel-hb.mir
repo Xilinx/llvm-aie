@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -march=aie2 --issue-limit=1 -run-pass=postmisched %s -o - \
+# RUN: llc -march=aie2 --issue-limit=6 -run-pass=postmisched %s -o - \
 # RUN:   | FileCheck %s
 
 # Loads and stores should finish before a lock is taken or released
@@ -21,22 +21,27 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: ACQ_mLockId_imm 0, $r0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: renamable $r14 = LDA_S16_ag_idx_imm renamable $p0, 0
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: ACQ_mLockId_reg $r0, $r1
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: renamable $r13 = LDA_S16_ag_idx_imm renamable $p0, 0
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: ACQ_COND_mLockId_imm 0, $r0, $r26
-    ; CHECK-NEXT: renamable $r14 = LDA_S8_ag_idx_imm killed renamable $p0, 0
     ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: renamable $r14 = LDA_S8_ag_idx_imm killed renamable $p0, 0
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: RET implicit $lr
@@ -71,22 +76,47 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: ACQ_mLockId_imm 0, $r0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: ST_S8_ag_idx_imm killed renamable $r13, killed renamable $p0, 0
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: ACQ_mLockId_reg $r0, $r1
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: ST_S8_ag_idx_imm killed renamable $r14, renamable $p1, 0
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: ACQ_COND_mLockId_imm 0, $r0, $r26
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: ST_S16_ag_idx_imm killed renamable $r15, killed renamable $p1, 0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
@@ -121,22 +151,27 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: REL_mLockId_imm 0, $r0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: renamable $r14 = LDA_S16_ag_idx_imm renamable $p0, 0
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: REL_mLockId_reg $r0, $r1
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: renamable $r13 = LDA_S16_ag_idx_imm renamable $p0, 0
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: REL_COND_mLockId_imm 0, $r0, $r26
-    ; CHECK-NEXT: renamable $r14 = LDA_S8_ag_idx_imm killed renamable $p0, 0
     ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: renamable $r14 = LDA_S8_ag_idx_imm killed renamable $p0, 0
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: RET implicit $lr
@@ -171,22 +206,47 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: REL_mLockId_imm 0, $r0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: ST_S8_ag_idx_imm killed renamable $r13, killed renamable $p0, 0
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: REL_mLockId_reg $r0, $r1
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: ST_S8_ag_idx_imm killed renamable $r14, renamable $p1, 0
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: REL_COND_mLockId_imm 0, $r0, $r26
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: ST_S16_ag_idx_imm killed renamable $r15, killed renamable $p1, 0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP

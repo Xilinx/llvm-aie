@@ -167,34 +167,40 @@ bool updateSuccLatency(SDep &SuccEdge, SUnit &PredSU, int Latency) {
 // locks
 class LockDelays : public ScheduleDAGMutation {
   void apply(ScheduleDAGInstrs *DAG) override {
-    // FIXME: There was mention of a delay of locks. I can't find that in the
-    // ISA, but it sounds reasonable that it can't be taken before the semaphore
-    // hardware has been accessed, which starts in E2.
-    const int LockDelay = 2;
-    const auto *InstrInfo = static_cast<const AIEBaseInstrInfo *>(DAG->TII);
-    const auto *Itineraries = DAG->getSchedModel()->getInstrItineraries();
+    // FIXME: Delays for locks to reach the core aren't completely described in
+    // the ISA. The numbers are therefore conservative.
+    const int CoreStallCycle = 2;
+    const int CoreResumeCycle = 8;
+    const auto *TII = static_cast<const AIEBaseInstrInfo *>(DAG->TII);
+
+    // Iterate over all the predecessors and successors of Lock instructions
+    // to increase the edge latency.
+    // Note that scalar streams are kept away from locks using
+    // a reserved FuncUnit instead.  See AIE2Schedule.td
     for (auto &SU : DAG->SUnits) {
-      if (!SU.isInstr()) {
-        continue;
-      }
       MachineInstr *Lock = SU.getInstr();
-      if (!InstrInfo->isLock(Lock->getOpcode())) {
+      if (!Lock || !TII->isLock(Lock->getOpcode())) {
         continue;
       }
       for (auto &PredEdge : SU.Preds) {
-        if (PredEdge.getKind() != SDep::Order) {
-          continue;
-        }
         MachineInstr *LdSt = PredEdge.getSUnit()->getInstr();
-        if (!LdSt->mayLoad() && !LdSt->mayStore()) {
-          // Note that scalar streams are kept away from locks using
-          // a reserved FuncUnit instead.  See AIE2Schedule.td
+        if (PredEdge.getKind() != SDep::Order || !LdSt->mayLoadOrStore()) {
           continue;
         }
-        int Delay = maxLatency(LdSt, *InstrInfo, *Itineraries,
-                               /*IncludeStages=*/true) -
-                    LockDelay;
-        updatePredLatency(PredEdge, SU, std::max(Delay, 0));
+        // Ensure memory operation happens before the core stalls
+        int Delay = *TII->getLastMemoryCycle(LdSt->getDesc().SchedClass) -
+                    CoreStallCycle + 1;
+        updatePredLatency(PredEdge, SU, Delay);
+      }
+      for (auto &SuccEdge : SU.Succs) {
+        MachineInstr *LdSt = SuccEdge.getSUnit()->getInstr();
+        if (SuccEdge.getKind() != SDep::Order || !LdSt->mayLoadOrStore()) {
+          continue;
+        }
+        // Ensure memory operation happens after the core resumes
+        int Delay = CoreResumeCycle -
+                    *TII->getFirstMemoryCycle(LdSt->getDesc().SchedClass) + 1;
+        updateSuccLatency(SuccEdge, SU, Delay);
       }
     }
   };
