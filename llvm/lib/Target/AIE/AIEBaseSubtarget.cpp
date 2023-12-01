@@ -71,6 +71,9 @@ SDep &getInverseEdge(const SUnit &SrcSU, const SDep &E, bool Backward) {
 SDep &getForwardEdge(const SUnit &SrcSU, const SDep &E) {
   return getInverseEdge(SrcSU, E, /*Backward=*/false);
 }
+SDep &getBackwardEdge(const SUnit &SrcSU, const SDep &E) {
+  return getInverseEdge(SrcSU, E, /*Backward=*/true);
+}
 
 } // namespace
 
@@ -139,9 +142,9 @@ int maxLatency(const MachineInstr *MI, const AIEBaseInstrInfo &InstrInfo,
   return Latency;
 }
 
-// Set latency and declare height dirty if it changes
+// Set latency and declare height/depth dirty if it changes
 // return whether anything changed
-bool updatePredLatency(SDep &Dep, const SUnit &SuccSU, int Latency) {
+bool updatePredLatency(SDep &Dep, SUnit &SuccSU, int Latency) {
   if (Latency == Dep.getSignedLatency()) {
     return false;
   }
@@ -149,8 +152,14 @@ bool updatePredLatency(SDep &Dep, const SUnit &SuccSU, int Latency) {
   // Change the dependence in both directions.
   getForwardEdge(SuccSU, Dep).setSignedLatency(Latency);
   Dep.setSignedLatency(Latency);
+  SuccSU.setDepthDirty();
   Dep.getSUnit()->setHeightDirty();
   return true;
+}
+
+bool updateSuccLatency(SDep &SuccEdge, SUnit &PredSU, int Latency) {
+  SDep &PredEdge = getBackwardEdge(PredSU, SuccEdge);
+  return updatePredLatency(PredEdge, *SuccEdge.getSUnit(), Latency);
 }
 
 // Set the latency of ordering edges between memory operations and locks.
@@ -172,7 +181,6 @@ class LockDelays : public ScheduleDAGMutation {
       if (!InstrInfo->isLock(Lock->getOpcode())) {
         continue;
       }
-      bool UpdateDepth = false;
       for (auto &PredEdge : SU.Preds) {
         if (PredEdge.getKind() != SDep::Order) {
           continue;
@@ -183,14 +191,10 @@ class LockDelays : public ScheduleDAGMutation {
           // a reserved FuncUnit instead.  See AIE2Schedule.td
           continue;
         }
-
         int Delay = maxLatency(LdSt, *InstrInfo, *Itineraries,
                                /*IncludeStages=*/true) -
                     LockDelay;
-        UpdateDepth |= updatePredLatency(PredEdge, SU, std::max(Delay, 0));
-      }
-      if (UpdateDepth) {
-        SU.setDepthDirty();
+        updatePredLatency(PredEdge, SU, std::max(Delay, 0));
       }
     }
   };
@@ -424,7 +428,6 @@ class MemoryEdges : public ScheduleDAGMutation {
         continue;
       }
 
-      bool UpdateDepth = false;
       for (auto &PredEdge : SU.Preds) {
         MachineInstr &SrcMI = *PredEdge.getSUnit()->getInstr();
 
@@ -449,10 +452,7 @@ class MemoryEdges : public ScheduleDAGMutation {
                      << SrcMI << "    to: " << MI);
           report_fatal_error("Missing memory latency info.");
         }
-        UpdateDepth |= updatePredLatency(PredEdge, SU, *MemLat);
-      }
-      if (UpdateDepth) {
-        SU.setDepthDirty();
+        updatePredLatency(PredEdge, SU, *MemLat);
       }
     }
   };
