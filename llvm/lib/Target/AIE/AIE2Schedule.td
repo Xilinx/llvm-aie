@@ -266,6 +266,10 @@ def II_VLDB_SPARSE_RESET : InstrItinClass;
 def II_VLDB_SPARSE_FILL : InstrItinClass;
 def II_VLDB_SPARSE_PEEK : InstrItinClass;
 def II_VLDB_SPARSE_POP : InstrItinClass;
+def II_VLDB_COMPR_RESET : InstrItinClass;
+def II_VLDB_COMPR_FILL : InstrItinClass;
+def II_VLDB_COMPR_PEEK : InstrItinClass;
+def II_VLDB_COMPR_POP : InstrItinClass;
 def II_VLDB_PTR : InstrItinClass;
 def II_VLDB_PTR_POSTINC : InstrItinClass;
 def II_VLDB_PTR_2D : InstrItinClass;
@@ -672,7 +676,18 @@ MemInstrItinData<II_VLDB_SPARSE_PEEK, [AvoidPartWordStore],
 MemInstrItinData<II_VLDB_SPARSE_POP, [AvoidPartWordStore],
     [/*ptr_out*/1,/*dst*/7,/*ptr*/1,/*def:srSparse_of*/6, /*def:srCompr_uf*/5, /*def:DP*/6,/*use:DP*/6],
     MemoryCycles<5>>,
-
+MemInstrItinData<II_VLDB_COMPR_FILL, [AvoidPartWordStore],
+    [/*ptr_out*/1,/*ptr*/1,/*use:DP*/6],
+    MemoryCycles<5>>,
+MemInstrItinData<II_VLDB_COMPR_RESET, [AvoidPartWordStore],
+    [/*ptr_out*/1,/*ptr*/1,/*def:DP*/6,/*use:DP*/6],
+    MemoryCycles<5>>,
+MemInstrItinData<II_VLDB_COMPR_PEEK, [AvoidPartWordStore],
+    [/*ptr_out*/1,/*dst*/7,/*ptr*/1,/*def:srCompr_uf*/5,/*use:DP*/6],
+    MemoryCycles<5>>,
+MemInstrItinData<II_VLDB_COMPR_POP, [AvoidPartWordStore],
+    [/*ptr_out*/1,/*dst*/7,/*ptr*/1,/*def:srCompr_uf*/5, /*def:DP*/6,/*use:DP*/6],
+    MemoryCycles<5>>,
 MemInstrItinData<II_VLDB_POSTINC, [AvoidPartWordStore], [7,1,1,1], MemoryCycles<5>>,
 MemInstrItinData<II_VLDB_2D, [AvoidPartWordStore], [7,1,1,1,1], MemoryCycles<5>>,
 MemInstrItinData<II_VLDB_3D, [AvoidPartWordStore], [7,1,1,1,1,1], MemoryCycles<5>>,

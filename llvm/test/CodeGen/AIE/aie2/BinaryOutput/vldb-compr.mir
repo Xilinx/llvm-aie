@@ -1,0 +1,89 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+
+---
+name:            test_vldb_compr
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; VLDB.compr - Vector Loads with decompression
+    ; VLDB.COMPR.FILL
+    $p0 = VLDB_COMPR_FILL $p0, implicit $dp
+    $p1 = VLDB_COMPR_FILL $p1, implicit $dp
+    $p2 = VLDB_COMPR_FILL $p2, implicit $dp
+    $p3 = VLDB_COMPR_FILL $p3, implicit $dp
+    $p4 = VLDB_COMPR_FILL $p4, implicit $dp
+    $p5 = VLDB_COMPR_FILL $p5, implicit $dp
+    $p6 = VLDB_COMPR_FILL $p6, implicit $dp
+    $p7 = VLDB_COMPR_FILL $p7, implicit $dp
+    ; VLDB.COMPR.RESET
+    $p0 = VLDB_COMPR_RESET $p0, implicit-def $dp, implicit $dp
+    $p1 = VLDB_COMPR_RESET $p1, implicit-def $dp, implicit $dp
+    $p2 = VLDB_COMPR_RESET $p2, implicit-def $dp, implicit $dp
+    $p3 = VLDB_COMPR_RESET $p3, implicit-def $dp, implicit $dp
+    $p4 = VLDB_COMPR_RESET $p4, implicit-def $dp, implicit $dp
+    $p5 = VLDB_COMPR_RESET $p5, implicit-def $dp, implicit $dp
+    $p6 = VLDB_COMPR_RESET $p6, implicit-def $dp, implicit $dp
+    $p7 = VLDB_COMPR_RESET $p7, implicit-def $dp, implicit $dp
+    ; VLDB.COMPR.PEEK
+    $p0, $wh0 = VLDB_COMPR_PEEK $p0, implicit-def $srcompr_uf, implicit $dp
+    $p1, $wl0 = VLDB_COMPR_PEEK $p1, implicit-def $srcompr_uf, implicit $dp
+    $p2, $wh1 = VLDB_COMPR_PEEK $p2, implicit-def $srcompr_uf, implicit $dp
+    $p3, $wl1 = VLDB_COMPR_PEEK $p3, implicit-def $srcompr_uf, implicit $dp
+    $p4, $wh2 = VLDB_COMPR_PEEK $p4, implicit-def $srcompr_uf, implicit $dp
+    $p5, $wl2 = VLDB_COMPR_PEEK $p5, implicit-def $srcompr_uf, implicit $dp
+    $p6, $wh3 = VLDB_COMPR_PEEK $p6, implicit-def $srcompr_uf, implicit $dp
+    $p7, $wl3 = VLDB_COMPR_PEEK $p7, implicit-def $srcompr_uf, implicit $dp
+    ; VLDB.COMPR.POP
+    $p0, $wh0 = VLDB_COMPR_POP $p0, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
+    $p1, $wl0 = VLDB_COMPR_POP $p1, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
+    $p2, $wh1 = VLDB_COMPR_POP $p2, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
+    $p3, $wl1 = VLDB_COMPR_POP $p3, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
+    $p4, $wh2 = VLDB_COMPR_POP $p4, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
+    $p5, $wl2 = VLDB_COMPR_POP $p5, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
+    $p6, $wh3 = VLDB_COMPR_POP $p6, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
+    $p7, $wl3 = VLDB_COMPR_POP $p7, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
+...
+
+# CHECK: 0: 19 00 08 38 vldb.compr.fill [p0]
+# CHECK: 4: 19 00 08 39 vldb.compr.fill [p1]
+# CHECK: 8: 19 00 08 3a vldb.compr.fill [p2]
+# CHECK: c: 19 00 08 3b vldb.compr.fill [p3]
+# CHECK: 10: 19 00 08 3c vldb.compr.fill [p4]
+# CHECK: 14: 19 00 08 3d vldb.compr.fill [p5]
+# CHECK: 18: 19 00 08 3e vldb.compr.fill [p6]
+# CHECK: 1c: 19 00 08 3f vldb.compr.fill [p7]
+# CHECK: 20: 19 00 88 38 vldb.compr.reset [p0]
+# CHECK: 24: 19 00 88 39 vldb.compr.reset [p1]
+# CHECK: 28: 19 00 88 3a vldb.compr.reset [p2]
+# CHECK: 2c: 19 00 88 3b vldb.compr.reset [p3]
+# CHECK: 30: 19 00 88 3c vldb.compr.reset [p4]
+# CHECK: 34: 19 00 88 3d vldb.compr.reset [p5]
+# CHECK: 38: 19 00 88 3e vldb.compr.reset [p6]
+# CHECK: 3c: 19 00 88 3f vldb.compr.reset [p7]
+# CHECK: 40: 19 20 c8 38 vldb.compr.peek wh0, [p0]
+# CHECK: 44: 19 00 c8 39 vldb.compr.peek wl0, [p1]
+# CHECK: 48: 19 60 c8 3a vldb.compr.peek wh1, [p2]
+# CHECK: 4c: 19 40 c8 3b vldb.compr.peek wl1, [p3]
+# CHECK: 50: 19 a0 c8 3c vldb.compr.peek wh2, [p4]
+# CHECK: 54: 19 80 c8 3d vldb.compr.peek wl2, [p5]
+# CHECK: 58: 19 e0 c8 3e vldb.compr.peek wh3, [p6]
+# CHECK: 5c: 19 c0 c8 3f vldb.compr.peek wl3, [p7]
+# CHECK: 60: 19 20 48 38 vldb.compr.pop wh0, [p0]
+# CHECK: 64: 19 00 48 39 vldb.compr.pop wl0, [p1]
+# CHECK: 68: 19 60 48 3a vldb.compr.pop wh1, [p2]
+# CHECK: 6c: 19 40 48 3b vldb.compr.pop wl1, [p3]
+# CHECK: 70: 19 a0 48 3c vldb.compr.pop wh2, [p4]
+# CHECK: 74: 19 80 48 3d vldb.compr.pop wl2, [p5]
+# CHECK: 78: 19 e0 48 3e vldb.compr.pop wh3, [p6]
+# CHECK: 7c: 19 c0 48 3f vldb.compr.pop wl3, [p7]
