@@ -256,6 +256,26 @@ class AIE2_dmw_ldb_compr_inst_ldb < dag outs, dag ins, list<dag> pattern, string
   let ldb = {dmw_ldb_compr};
 }
 
+class AIE2_dmw_ldb_compr_op_inst_ldb <bits<2> op, bits<2> smode, dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
+    AIE2_dmw_ldb_compr_inst_ldb <outs, ins, pattern, opcodestr, argstr> {
+  bits<3> ptr;
+  bits<5> dst;
+  field bits<1> dontcare1;
+  let dmw_ldb_compr = {ptr, op, smode, 0b10, dst, dontcare1, 0b0};
+
+  let ldb = {dmw_ldb_compr};
+}
+
+class AIE2_dmw_ldb_compr_init_inst_ldb <bits<2> op, bits<2> smode, dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
+    AIE2_dmw_ldb_compr_inst_ldb <outs, ins, pattern, opcodestr, argstr> {
+  bits<3> ptr;
+  field bits<5> dontcare5;
+  field bits<1> dontcare1;
+  let dmw_ldb_compr = {ptr, op, smode, 0b10, dontcare5, dontcare1, 0b0};
+
+  let ldb = {dmw_ldb_compr};
+}
+
 class AIE2_tm_sts_inst_st < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_inst_st_instr32 <outs, ins, pattern, opcodestr, argstr> {
   field bits<1> dontcare1;

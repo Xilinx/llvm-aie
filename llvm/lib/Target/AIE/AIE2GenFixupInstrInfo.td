@@ -2328,6 +2328,31 @@ let mayStore = true in {
   }
 } // let mayStore = true
 
+// 3.6 VLD.COMPR - Vector Loads with decompression
+let mayLoad = true, Constraints = "$ptr_out = $ptr" in {
+  class VLD_COMPR_INIT<bits<2> op, bits<2> smode, string opcodestr> :
+    AIE2_dmw_ldb_compr_init_inst_ldb<op, smode,
+      (outs eP:$ptr_out),
+      (ins eP:$ptr), [], opcodestr,"[$ptr]">;
+  let Itinerary = II_VLDB_COMPR_RESET, Defs = [DP], Uses = [DP] in {
+      def VLDB_COMPR_RESET : VLD_COMPR_INIT<0b10, 0b00, "vldb.compr.reset">;
+  }
+  let Itinerary = II_VLDB_COMPR_FILL, Uses = [DP] in {
+      def VLDB_COMPR_FILL : VLD_COMPR_INIT<0b00, 0b00, "vldb.compr.fill">;
+  }
+
+  class VLD_COMPR_OP<bits<2> op, bits<2> smode, string opcodestr> :
+    AIE2_dmw_ldb_compr_op_inst_ldb<op, smode,
+      (outs eP:$ptr_out, mWb:$dst),
+      (ins eP:$ptr), [], opcodestr,"$dst, [$ptr]">;
+  let Itinerary = II_VLDB_COMPR_PEEK, Defs = [srCompr_uf], Uses = [DP] in {
+    def VLDB_COMPR_PEEK : VLD_COMPR_OP<0b11, 0b00, "vldb.compr.peek">;
+  }
+  let Itinerary = II_VLDB_COMPR_POP, Defs = [srCompr_uf, DP], Uses = [DP] in {
+    def VLDB_COMPR_POP : VLD_COMPR_OP<0b01, 0b00, "vldb.compr.pop">;
+  }
+} // let mayLoad = true, Constraints = "$ptr_out = $ptr"
+
 // 3.7 VLD.SPARSE - Vector Loads with sparse decompression
 let mayLoad = true, Constraints = "$ptr_out = $ptr", Uses = [DP] in {
   class VLD_SPARSE_INIT<bits<2> op, bits<2> smode, string opcodestr> :
