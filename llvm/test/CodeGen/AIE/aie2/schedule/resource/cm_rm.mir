@@ -8,10 +8,9 @@
 # RUN: llc -march=aie2 --issue-limit=1 -run-pass=postmisched %s -o - \
 # RUN:   | FileCheck %s
 
-# VADDMAC accesses CM_RM write port in cycle 3, VMOV_CM in cycle 1
+# VADDMAC accesses CM_RM read port in cycle 3, VMOV_CM in cycle 1
 # The scheduler needs to insert an additional NOP such that the
 # two instructions don't access the same port in the same cycle
-
 ---
 name:            E3_VADDMAC_E1_VMOV_CM
 alignment:       16
@@ -19,19 +18,18 @@ body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: E3_VADDMAC_E1_VMOV_CM
     ; CHECK: $cm0 = VADDMAC_vmac_bm_core_dense killed $cm0, $cm2, killed $x3, killed $x4, killed $r5
-    ; CHECK-NEXT: $cm8 = VMOV_mv_cm killed $cm5
-    ; CHECK-NEXT: VMOV_mv_mcd killed $bml2, implicit $crmcden
+    ; CHECK-NEXT: $cm7 = VMOV_mv_cm killed $cm2
     ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $cm8 = VMOV_mv_cm killed $cm5
     ; CHECK-NEXT: NOP
     $cm0 = VADDMAC_vmac_bm_core_dense $cm0, $cm2, $x3, $x4, $r5
-    VMOV_mv_mcd $bml2,  implicit $crmcden
+    $cm7 = VMOV_mv_cm $cm2
     $cm8 = VMOV_mv_cm $cm5
 ...
 
-# VNEGADD accesses CM_RM write port in cycle 3, VMOV_CM in cycle 1
+# VNEGADD accesses CM_RM read port in cycle 3, VMOV_CM in cycle 1
 # The scheduler needs to insert an additional NOP such that the
 # two instructions don't access the same port in the same cycle
-
 ---
 name:            E3_VNEGADD_E1_VMOV_CM
 alignment:       16
@@ -39,12 +37,12 @@ body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: E3_VNEGADD_E1_VMOV_CM
     ; CHECK: $cm0 = VNEGADD killed $cm3, $cm2, killed $r5
-    ; CHECK-NEXT: $cm8 = VMOV_mv_cm killed $cm5
-    ; CHECK-NEXT: VMOV_mv_mcd killed $bml2, implicit $crmcden
+    ; CHECK-NEXT: $cm7 = VMOV_mv_cm killed $cm2
     ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $cm8 = VMOV_mv_cm killed $cm5
     ; CHECK-NEXT: NOP
     $cm0 = VNEGADD $cm3, $cm2, $r5
-    VMOV_mv_mcd $bml2,  implicit $crmcden
+    $cm7 = VMOV_mv_cm $cm2
     $cm8 = VMOV_mv_cm $cm5
 ...
 
