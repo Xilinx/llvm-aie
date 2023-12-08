@@ -212,6 +212,12 @@ def II_ST : InstrItinClass;
 def II_ST_MS : InstrItinClass;
 def II_ST_MS_NB : InstrItinClass;
 def II_ST_MS_NB_TLAST_REG : InstrItinClass;
+def II_MOV_PH_B : InstrItinClass;
+def II_MOV_PH_NB : InstrItinClass;
+def II_MOV_PH_NB_TLAST_REG : InstrItinClass;
+def II_MOV_CPH_B : InstrItinClass;
+def II_MOV_CPH_NB : InstrItinClass;
+def II_MOV_CPH_NB_TLAST_REG : InstrItinClass;
 def II_STHB : InstrItinClass;
 def II_ST_POST_1D : InstrItinClass;
 def II_ST_POST_2D : InstrItinClass;
@@ -474,6 +480,24 @@ InstrItinData<II_ST_MS_NB,
 InstrItinData<II_ST_MS_NB_TLAST_REG,
     [PrefixCycle<R_RV_PORT>, SimpleCycle<P_RM_PORT>, AvoidSemaphore<2>],
     [1,1,/*def:srMS0*/3]>,
+InstrItinData<II_MOV_PH_B,
+    [SimpleCycle<R_RV_PORT>, AvoidSemaphore<5>],
+    [1,1,/*tlast*/1]>,
+InstrItinData<II_MOV_PH_NB,
+    [SimpleCycle<R_RV_PORT>, AvoidSemaphore<5>],
+    [1,1,/*def:srMS0*/3]>,
+InstrItinData<II_MOV_PH_NB_TLAST_REG,
+    [SimpleCycle<R_RV_PORT>, AvoidSemaphore<5>],
+    [1,1,/*tlast*/1,/*def:srMS0*/3]>,
+InstrItinData<II_MOV_CPH_B,
+    [PrefixCycle<P_RM_PORT>, SimpleCycle<R_RV_PORT>, AvoidSemaphore<5>],
+    [1,1,1,1,/*tlast*/1]>,
+InstrItinData<II_MOV_CPH_NB,
+    [PrefixCycle<P_RM_PORT>, SimpleCycle<R_RV_PORT>, AvoidSemaphore<5>],
+    [1,1,1,1,/*def:srMS0*/3]>,
+InstrItinData<II_MOV_CPH_NB_TLAST_REG,
+    [PrefixCycle<P_RM_PORT>, SimpleCycle<R_RV_PORT>, AvoidSemaphore<5>],
+    [1,1,1,1,/*tlast*/1,/*def:srMS0*/3]>,
 MemInstrItinData<II_ST_POST_1D,
     [AvoidPartWordStore, PrefixCycle<R_RV_PORT>, SimpleCycle<P_RM_PORT>,
      SimpleCycle<STORE_UNIT>],

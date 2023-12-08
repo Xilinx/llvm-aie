@@ -277,3 +277,35 @@ body:             |
     MOV_mv_scl2ms renamable $r0
     MOV_mv_scl2ms renamable $r0
 ...
+
+# Packet switched MOV access RV port of GPR in cycle 1, ST.s8/ST.s16 access it in cycle 7
+---
+name:            E7_STHB_E1_MOV_PH
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: E7_STHB_E1_MOV_PH
+    ; CHECK: ST_S8_ag_idx_imm $r13, $p0, 0 {
+    ; CHECK-NEXT:   MOV_mv_ph2ms $r0, 0
+    ; CHECK-NEXT: }
+    ; CHECK-NEXT: MOV_mv_ph2ms_doTlast_reg killed $r27, 3, $r28
+    ; CHECK-NEXT: MOV_NB_mv_ph2ms_doTlast_reg killed $r12, 2, $r28, implicit-def $srms0
+    ; CHECK-NEXT: MOV_mv_cph2ms killed $m0, 0, 3, killed $r1
+    ; CHECK-NEXT: MOV_mv_cph2ms_doTlast_reg $m1, 1, 2, $r2, $r28
+    ; CHECK-NEXT: MOV_NB_mv_cph2ms_doTlast_reg killed $m1, 1, 2, killed $r2, killed $r28, implicit-def $srms0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: MOV_mv_ph2ms killed $r0, 0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ST_S8_ag_idx_imm $r13, $p0, 0
+    MOV_mv_ph2ms $r0, 0
+    MOV_mv_ph2ms_doTlast_reg $r27, 3, $r28
+    MOV_NB_mv_ph2ms_doTlast_reg $r12, 2, $r28, implicit-def $srms0
+    MOV_mv_cph2ms $m0, 0, 3, $r1
+    MOV_mv_cph2ms_doTlast_reg $m1, 1, 2, $r2, $r28
+    MOV_NB_mv_cph2ms_doTlast_reg $m1, 1, 2, $r2, $r28, implicit-def $srms0
+    MOV_mv_ph2ms $r0, 0
+...

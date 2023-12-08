@@ -165,3 +165,447 @@ body:             |
     REL_mLockId_imm 0, $r0
     $bml4 = VMOV_mv_scd implicit $crscden
 ...
+
+---
+name:            ACQ_II_MOV_PH_B
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: ACQ_II_MOV_PH_B
+    ; CHECK: MOV_mv_ph2ms $r0, 1
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: ACQ_mLockId_imm 0, $r0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: MOV_mv_ph2ms $r0, 1
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: ACQ_mLockId_reg $r0, killed $r1
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: MOV_mv_ph2ms killed $r0, 1
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    MOV_mv_ph2ms $r0, 1
+    ACQ_mLockId_imm 0, $r0
+    MOV_mv_ph2ms $r0, 1
+    ACQ_mLockId_reg $r0, $r1
+    MOV_mv_ph2ms $r0, 1
+...
+
+---
+name:            REL_II_MOV_PH_B
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: REL_II_MOV_PH_B
+    ; CHECK: MOV_mv_ph2ms $r0, 1
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: REL_mLockId_imm 0, $r0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: MOV_mv_ph2ms $r0, 1
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: REL_mLockId_imm 0, $r0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: MOV_mv_ph2ms killed $r0, 1
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    MOV_mv_ph2ms $r0, 1
+    REL_mLockId_imm 0, $r0
+    MOV_mv_ph2ms $r0, 1
+    REL_mLockId_imm 0, $r0
+    MOV_mv_ph2ms $r0, 1
+...
+
+---
+name:            ACQ_II_MOV_PH_NB
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: ACQ_II_MOV_PH_NB
+    ; CHECK: MOV_NB_mv_ph2ms $r1, 1, implicit-def $srms0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: ACQ_mLockId_imm 0, $r0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: MOV_NB_mv_ph2ms $r1, 1, implicit-def $srms0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: ACQ_mLockId_reg killed $r0, $r1
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: MOV_NB_mv_ph2ms killed $r1, 1, implicit-def $srms0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    MOV_NB_mv_ph2ms $r1, 1, implicit-def $srms0
+    ACQ_mLockId_imm 0, $r0
+    MOV_NB_mv_ph2ms $r1, 1, implicit-def $srms0
+    ACQ_mLockId_reg $r0, $r1
+    MOV_NB_mv_ph2ms $r1, 1, implicit-def $srms0
+...
+
+---
+name:            REL_II_MOV_PH_NB
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: REL_II_MOV_PH_NB
+    ; CHECK: MOV_NB_mv_ph2ms $r1, 1, implicit-def $srms0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: REL_mLockId_imm 0, $r0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: MOV_NB_mv_ph2ms $r1, 1, implicit-def $srms0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: REL_mLockId_imm 0, killed $r0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: MOV_NB_mv_ph2ms killed $r1, 1, implicit-def $srms0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    MOV_NB_mv_ph2ms $r1, 1, implicit-def $srms0
+    REL_mLockId_imm 0, $r0
+    MOV_NB_mv_ph2ms $r1, 1, implicit-def $srms0
+    REL_mLockId_imm 0, $r0
+    MOV_NB_mv_ph2ms $r1, 1, implicit-def $srms0
+...
+
+---
+name:            ACQ_II_MOV_PH_NB_TLAST_REG
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: ACQ_II_MOV_PH_NB_TLAST_REG
+    ; CHECK: MOV_NB_mv_ph2ms_doTlast_reg $r1, 1, $r28, implicit-def $srms0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: ACQ_mLockId_imm 0, $r0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: MOV_NB_mv_ph2ms_doTlast_reg $r1, 1, $r28, implicit-def $srms0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: ACQ_mLockId_reg killed $r0, $r1
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: MOV_NB_mv_ph2ms_doTlast_reg killed $r1, 1, killed $r28, implicit-def $srms0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    MOV_NB_mv_ph2ms_doTlast_reg $r1, 1, $r28, implicit-def $srms0
+    ACQ_mLockId_imm 0, $r0
+    MOV_NB_mv_ph2ms_doTlast_reg $r1, 1, $r28, implicit-def $srms0
+    ACQ_mLockId_reg $r0, $r1
+    MOV_NB_mv_ph2ms_doTlast_reg $r1, 1, $r28, implicit-def $srms0
+...
+
+---
+name:            REL_II_MOV_PH_NB_TLAST_REG
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: REL_II_MOV_PH_NB_TLAST_REG
+    ; CHECK: MOV_NB_mv_ph2ms_doTlast_reg $r1, 1, $r28, implicit-def $srms0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: REL_mLockId_imm 0, $r0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: MOV_NB_mv_ph2ms_doTlast_reg $r1, 1, $r28, implicit-def $srms0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: REL_mLockId_imm 0, killed $r0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: MOV_NB_mv_ph2ms_doTlast_reg killed $r1, 1, killed $r28, implicit-def $srms0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    MOV_NB_mv_ph2ms_doTlast_reg $r1, 1, $r28, implicit-def $srms0
+    REL_mLockId_imm 0, $r0
+    MOV_NB_mv_ph2ms_doTlast_reg $r1, 1, $r28, implicit-def $srms0
+    REL_mLockId_imm 0, $r0
+    MOV_NB_mv_ph2ms_doTlast_reg $r1, 1, $r28, implicit-def $srms0
+...
+
+
+---
+name:            ACQ_II_MOV_CPH_B
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: ACQ_II_MOV_CPH_B
+    ; CHECK: MOV_mv_cph2ms $m0, 1, 2, $r0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: ACQ_mLockId_imm 0, $r0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: MOV_mv_cph2ms $m0, 1, 2, $r0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: ACQ_mLockId_reg $r0, killed $r1
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: MOV_mv_cph2ms killed $m0, 1, 2, killed $r0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    MOV_mv_cph2ms $m0, 1, 2, $r0
+    ACQ_mLockId_imm 0, $r0
+    MOV_mv_cph2ms $m0, 1, 2, $r0
+    ACQ_mLockId_reg $r0, $r1
+    MOV_mv_cph2ms $m0, 1, 2, $r0
+...
+
+---
+name:            REL_II_MOV_CPH_B
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: REL_II_MOV_CPH_B
+    ; CHECK: MOV_mv_cph2ms $m0, 1, 2, $r0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: REL_mLockId_imm 0, $r0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: MOV_mv_cph2ms $m0, 1, 2, $r0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: REL_mLockId_imm 0, $r0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: MOV_mv_cph2ms killed $m0, 1, 2, killed $r0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    MOV_mv_cph2ms $m0, 1, 2, $r0
+    REL_mLockId_imm 0, $r0
+    MOV_mv_cph2ms $m0, 1, 2, $r0
+    REL_mLockId_imm 0, $r0
+    MOV_mv_cph2ms $m0, 1, 2, $r0
+...
+---
+name:            ACQ_II_MOV_CPH_NB
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: ACQ_II_MOV_CPH_NB
+    ; CHECK: MOV_NB_mv_cph2ms $m1, 1, 2, $r1, implicit-def $srms0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: ACQ_mLockId_imm 0, $r0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: MOV_NB_mv_cph2ms $m1, 1, 2, $r1, implicit-def $srms0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: ACQ_mLockId_reg killed $r0, $r1
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: MOV_NB_mv_cph2ms killed $m1, 1, 2, killed $r1, implicit-def $srms0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    MOV_NB_mv_cph2ms $m1, 1, 2, $r1, implicit-def $srms0
+    ACQ_mLockId_imm 0, $r0
+    MOV_NB_mv_cph2ms $m1, 1, 2, $r1, implicit-def $srms0
+    ACQ_mLockId_reg $r0, $r1
+    MOV_NB_mv_cph2ms $m1, 1, 2, $r1, implicit-def $srms0
+...
+
+---
+name:            REL_II_MOV_CPH_NB
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: REL_II_MOV_CPH_NB
+    ; CHECK: MOV_NB_mv_cph2ms $m1, 1, 2, $r1, implicit-def $srms0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: REL_mLockId_imm 0, $r0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: MOV_NB_mv_cph2ms $m1, 1, 2, $r1, implicit-def $srms0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: REL_mLockId_imm 0, killed $r0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: MOV_NB_mv_cph2ms killed $m1, 1, 2, killed $r1, implicit-def $srms0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    MOV_NB_mv_cph2ms $m1, 1, 2, $r1, implicit-def $srms0
+    REL_mLockId_imm 0, $r0
+    MOV_NB_mv_cph2ms $m1, 1, 2, $r1, implicit-def $srms0
+    REL_mLockId_imm 0, $r0
+    MOV_NB_mv_cph2ms $m1, 1, 2, $r1, implicit-def $srms0
+...
+
+---
+name:            ACQ_II_MOV_CPH_NB_TLAST_REG
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: ACQ_II_MOV_CPH_NB_TLAST_REG
+    ; CHECK: MOV_NB_mv_cph2ms_doTlast_reg $m1, 1, 2, $r1, $r28, implicit-def $srms0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: ACQ_mLockId_imm 0, $r0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: MOV_NB_mv_cph2ms_doTlast_reg $m1, 1, 2, $r1, $r28, implicit-def $srms0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: ACQ_mLockId_reg killed $r0, $r1
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: MOV_NB_mv_cph2ms_doTlast_reg killed $m1, 1, 2, killed $r1, killed $r28, implicit-def $srms0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    MOV_NB_mv_cph2ms_doTlast_reg $m1, 1, 2, $r1, $r28, implicit-def $srms0
+    ACQ_mLockId_imm 0, $r0
+    MOV_NB_mv_cph2ms_doTlast_reg $m1, 1, 2, $r1, $r28, implicit-def $srms0
+    ACQ_mLockId_reg $r0, $r1
+    MOV_NB_mv_cph2ms_doTlast_reg $m1, 1, 2, $r1, $r28, implicit-def $srms0
+...
+
+---
+name:            REL_II_MOV_CPH_NB_TLAST_REG
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: REL_II_MOV_CPH_NB_TLAST_REG
+    ; CHECK: MOV_NB_mv_cph2ms_doTlast_reg $m1, 1, 2, $r1, $r28, implicit-def $srms0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: REL_mLockId_imm 0, $r0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: MOV_NB_mv_cph2ms_doTlast_reg $m1, 1, 2, $r1, $r28, implicit-def $srms0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: REL_mLockId_imm 0, killed $r0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: MOV_NB_mv_cph2ms_doTlast_reg killed $m1, 1, 2, killed $r1, killed $r28, implicit-def $srms0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    MOV_NB_mv_cph2ms_doTlast_reg $m1, 1, 2, $r1, $r28, implicit-def $srms0
+    REL_mLockId_imm 0, $r0
+    MOV_NB_mv_cph2ms_doTlast_reg $m1, 1, 2, $r1, $r28, implicit-def $srms0
+    REL_mLockId_imm 0, $r0
+    MOV_NB_mv_cph2ms_doTlast_reg $m1, 1, 2, $r1, $r28, implicit-def $srms0
+...

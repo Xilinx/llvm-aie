@@ -520,3 +520,53 @@ body:             |
   $r1 = MOV_mv_scl $dj0
   MOV_NB_mv_scl2ms_doTlast_reg $m3, $r28, implicit-def $srms0
 ...
+
+# This tests that we can't bundle the stream instruction which is in the S slot with an M slot instruction
+# because of the slot conflict on reading pointers/modifiers in E1.
+---
+name:            E1_II_MOV_CPH_B_E1_II_MOV_SCL
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: E1_II_MOV_CPH_B_E1_II_MOV_SCL
+    ; CHECK: MOV_mv_cph2ms killed $m2, 1, 2, killed $r0
+    ; CHECK-NEXT: $r1 = MOV_mv_scl killed $m0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+  MOV_mv_cph2ms $m2, 1, 2, $r0
+  $r1 = MOV_mv_scl $m0
+...
+
+---
+name:            E1_II_MOV_CPH_NB_E1_II_MOV_SCL
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: E1_II_MOV_CPH_NB_E1_II_MOV_SCL
+    ; CHECK: MOV_NB_mv_cph2ms killed $m1, 1, 2, killed $r2, implicit-def $srms0
+    ; CHECK-NEXT: $r1 = MOV_mv_scl killed $m0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+  MOV_NB_mv_cph2ms $m1, 1, 2, $r2, implicit-def $srms0
+  $r1 = MOV_mv_scl $m0
+...
+
+---
+name:            E1_II_MOV_CPH_NB_TLAST_REG_E1_II_MOV_SCL
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: E1_II_MOV_CPH_NB_TLAST_REG_E1_II_MOV_SCL
+    ; CHECK: MOV_NB_mv_cph2ms_doTlast_reg killed $m1, 1, 2, killed $r2, killed $r28, implicit-def $srms0
+    ; CHECK-NEXT: $r1 = MOV_mv_scl killed $m0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+  MOV_NB_mv_cph2ms_doTlast_reg $m1, 1, 2, $r2, $r28, implicit-def $srms0
+  $r1 = MOV_mv_scl $m0
+...

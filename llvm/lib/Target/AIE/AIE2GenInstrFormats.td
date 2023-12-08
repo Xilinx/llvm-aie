@@ -878,9 +878,76 @@ class AIE2_mul_r_rr_inst_alu < dag outs, dag ins, list<dag> pattern, string opco
 
 class AIE2_mv_ph2ms_inst_st < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_inst_st_instr32 <outs, ins, pattern, opcodestr, argstr> {
-   field bits<18> mv_ph2ms;
+  bits<5> id;  // mRv
+  bits<3> dst; // mMStream
+  field bits<1> dontcare1;
+  field bits<3> dontcare3;
+  bits<3> pcktType;
 
-  let st = {mv_ph2ms,0b100};
+  field bits<18> mv_ph2ms= {dst, dontcare3, pcktType, dontcare1, 0b100, id};
+  let st = {mv_ph2ms, 0b100};
+}
+
+class AIE2_mv_ph2ms_b_noTlast < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
+    AIE2_mv_ph2ms_inst_st <outs, ins, pattern, opcodestr, argstr> {
+  let dst = {0b000};
+}
+class AIE2_mv_ph2ms_nb_noTlast < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
+    AIE2_mv_ph2ms_inst_st <outs, ins, pattern, opcodestr, argstr> {
+  let dst = {0b100};
+}
+class AIE2_mv_ph2ms_b_doTlast < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
+    AIE2_mv_ph2ms_inst_st <outs, ins, pattern, opcodestr, argstr> {
+  let dst = {0b001};
+}
+class AIE2_mv_ph2ms_nb_doTlast < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
+    AIE2_mv_ph2ms_inst_st <outs, ins, pattern, opcodestr, argstr> {
+  let dst = {0b101};
+}
+class AIE2_mv_ph2ms_b_doTlast_reg < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
+    AIE2_mv_ph2ms_inst_st <outs, ins, pattern, opcodestr, argstr> {
+  let dst = {0b01, dontcare1};
+}
+class AIE2_mv_ph2ms_nb_doTlast_reg < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
+    AIE2_mv_ph2ms_inst_st <outs, ins, pattern, opcodestr, argstr> {
+  let dst = {0b11, dontcare1};
+}
+
+class AIE2_mv_cph2ms_inst_st < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
+    AIE2_inst_st_instr32 <outs, ins, pattern, opcodestr, argstr> {
+  bits<5> id;  // mRv
+  bits<3> dst; // mMStream
+  bits<2> op;
+  bits<2> nw;
+  bits<3> addr;
+
+  field bits<18> mv_cph2ms= {dst, addr, op, nw, 0b100, id};
+  let st = {mv_cph2ms, 0b000};
+}
+
+class AIE2_mv_cph2ms_b_noTlast < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
+    AIE2_mv_cph2ms_inst_st <outs, ins, pattern, opcodestr, argstr> {
+  let dst = {0b000};
+}
+class AIE2_mv_cph2ms_nb_noTlast < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
+    AIE2_mv_cph2ms_inst_st <outs, ins, pattern, opcodestr, argstr> {
+  let dst = {0b100};
+}
+class AIE2_mv_cph2ms_b_doTlast < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
+    AIE2_mv_cph2ms_inst_st <outs, ins, pattern, opcodestr, argstr> {
+  let dst = {0b001};
+}
+class AIE2_mv_cph2ms_nb_doTlast < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
+    AIE2_mv_cph2ms_inst_st <outs, ins, pattern, opcodestr, argstr> {
+  let dst = {0b101};
+}
+class AIE2_mv_cph2ms_b_doTlast_reg < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
+    AIE2_mv_cph2ms_inst_st <outs, ins, pattern, opcodestr, argstr> {
+  let dst = {0b01, dontcare1};
+}
+class AIE2_mv_cph2ms_nb_doTlast_reg < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
+    AIE2_mv_cph2ms_inst_st <outs, ins, pattern, opcodestr, argstr> {
+  let dst = {0b11, dontcare1};
 }
 
 class AIE2_mv_scl_inst_mv < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
