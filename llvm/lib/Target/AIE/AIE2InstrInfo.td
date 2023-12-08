@@ -497,14 +497,11 @@ class vec_nop {
   let vec = {dontcare17, 0b1111, dontcare4, 0b0};
 }
 
+// These are instances of formats with only nops.
+
 let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
 def NOP : AIE2_inst_nop_instr16<(outs), (ins), [], "nop", "">;
 }
-
-// These are instances of formats with only nops.
-
-// nop16_slot has all don't care bits
-def NOP16 : AIE2__instr16__nop<(ins nop16_slot:$nop16)>;
 
 def NOP32 : AIE2__instr32__alu<(ins)>, alu_nop {
   let AsmString = "nop32";

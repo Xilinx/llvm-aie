@@ -48,7 +48,7 @@ void AIE2AsmBackend::relaxInstruction(MCInst &Inst,
   switch (Inst.getOpcode()) {
   default:
     break;
-  case AIE2::NOP:
+  case AIE2::I16_NOP:
     Inst.setOpcode(AIE2::NOP32);
     return;
   case AIE2::NOP32:
@@ -79,7 +79,7 @@ unsigned AIE2AsmBackend::maxRelaxIncrement(const MCInst &Inst,
   switch (Inst.getOpcode()) {
   default:
     break;
-  case AIE2::NOP:
+  case AIE2::I16_NOP:
   case AIE2::NOP32:
   case AIE2::NOP48:
   case AIE2::NOP64:
