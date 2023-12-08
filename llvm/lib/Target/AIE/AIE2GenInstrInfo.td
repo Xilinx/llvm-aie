@@ -388,6 +388,51 @@ let hasSideEffects = true, mayLoad = false, mayStore = false in {
   }
 }
 
+// 6.2 MOV – Packet switched stream access
+let hasSideEffects = true, mayLoad = false, mayStore = false in {
+  let Itinerary = II_MOV_PH_B in {
+    def MOV_mv_ph2ms : AIE2_mv_ph2ms_b_noTlast< (outs) , (ins eR:$id, imm3:$pcktType), [],
+        "mov.ph", "ms, $id, $pcktType">;
+    def MOV_TLAST_mv_ph2ms : AIE2_mv_ph2ms_b_doTlast< (outs) , (ins eR:$id, imm3:$pcktType), [],
+        "mov.ph.tlast", "ms, $id, $pcktType">;
+    def MOV_mv_ph2ms_doTlast_reg : AIE2_mv_ph2ms_b_doTlast_reg< (outs) , (ins eR:$id, imm3:$pcktType, eR28:$tlast), [],
+        "mov.ph", "ms, $id, $pcktType, $tlast">;
+  }
+  let Defs = [srMS0] in {
+    let Itinerary = II_MOV_PH_NB in {
+      def MOV_NB_mv_ph2ms : AIE2_mv_ph2ms_nb_noTlast< (outs) , (ins eR:$id, imm3:$pcktType), [],
+          "mov.ph.nb", "ms, $id, $pcktType">;
+      def MOV_NB_TLAST_mv_ph2ms : AIE2_mv_ph2ms_nb_doTlast< (outs) , (ins eR:$id, imm3:$pcktType), [],
+          "mov.ph.nb.tlast", "ms, $id, $pcktType">;
+    }
+    let Itinerary = II_MOV_PH_NB_TLAST_REG in {
+      def MOV_NB_mv_ph2ms_doTlast_reg : AIE2_mv_ph2ms_nb_doTlast_reg< (outs) , (ins eR:$id, imm3:$pcktType, eR28:$tlast), [],
+          "mov.ph.nb", "ms, $id, $pcktType, $tlast">;
+    }
+  }
+
+  let Itinerary = II_MOV_CPH_B in {
+    def MOV_mv_cph2ms : AIE2_mv_cph2ms_b_noTlast< (outs) , (ins eM:$addr, imm2:$nw, imm2:$op, eR:$id), [],
+        "mov.cph", "ms, $addr, $nw, $op, $id">;
+    def MOV_TLAST_mv_cph2ms : AIE2_mv_cph2ms_b_doTlast< (outs) , (ins eM:$addr, imm2:$nw, imm2:$op, eR:$id), [],
+        "mov.cph.tlast", "ms, $addr, $nw, $op, $id">;
+    def MOV_mv_cph2ms_doTlast_reg : AIE2_mv_cph2ms_b_doTlast_reg< (outs) , (ins eM:$addr, imm2:$nw, imm2:$op, eR:$id, eR28:$tlast), [],
+        "mov.cph", "ms, $addr, $nw, $op, $id, $tlast">;
+  }
+  let Defs = [srMS0] in {
+    let Itinerary = II_MOV_CPH_NB in {
+      def MOV_NB_mv_cph2ms : AIE2_mv_cph2ms_nb_noTlast< (outs) , (ins eM:$addr, imm2:$nw, imm2:$op, eR:$id), [],
+          "mov.cph.nb", "ms, $addr, $nw, $op, $id">;
+      def MOV_NB_TLAST_mv_cph2ms : AIE2_mv_cph2ms_nb_doTlast< (outs) , (ins eM:$addr, imm2:$nw, imm2:$op, eR:$id), [],
+          "mov.cph.nb.tlast", "ms, $addr, $nw, $op, $id">;
+    }
+    let Itinerary = II_MOV_CPH_NB_TLAST_REG in {
+      def MOV_NB_mv_cph2ms_doTlast_reg : AIE2_mv_cph2ms_nb_doTlast_reg< (outs) , (ins eM:$addr, imm2:$nw, imm2:$op, eR:$id, eR28:$tlast), [],
+          "mov.cph.nb", "ms, $addr, $nw, $op, $id, $tlast">;
+    }
+  }
+}
+
 let Itinerary = II_J, hasDelaySlot = true in {
   def J_jump_imm : AIE2_jump_imm_lng<(outs),
       (ins addr20:$cpmaddr), [] , "j", "$cpmaddr">;

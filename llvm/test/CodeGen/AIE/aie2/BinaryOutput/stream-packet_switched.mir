@@ -1,0 +1,67 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+
+---
+name:            test
+alignment:       16
+body:             |
+  bb.0.entry (align 16):
+    liveins: $r1
+
+    ; 6.2 MOV – Packet switched stream access
+    ; Packet header
+    MOV_mv_ph2ms $r0, 0
+    MOV_mv_ph2ms $r1, 1
+    MOV_mv_ph2ms $r2, 2
+    MOV_mv_ph2ms $r3, 3
+    MOV_mv_ph2ms $r4, 4
+    MOV_mv_ph2ms $r5, 5
+    MOV_mv_ph2ms $r6, 6
+    MOV_TLAST_mv_ph2ms $r1, 2
+    MOV_mv_ph2ms_doTlast_reg $r27, 3, $r28
+    MOV_NB_mv_ph2ms_doTlast_reg $r12, 2, $r28, implicit-def $srms0
+    MOV_NB_mv_ph2ms $r1, 1, implicit-def $srms0
+    MOV_NB_TLAST_mv_ph2ms $r2, 0, implicit-def $srms0
+
+    ; Control packet header
+    MOV_mv_cph2ms $m0, 0, 3, $r1
+    MOV_mv_cph2ms $m1, 1, 2, $r2
+    MOV_mv_cph2ms $m2, 2, 1, $r3
+    MOV_mv_cph2ms $m3, 3, 0, $r4
+    MOV_TLAST_mv_cph2ms $m7, 1, 2, $r2
+    MOV_mv_cph2ms_doTlast_reg $m1, 1, 2, $r2, $r28
+    MOV_NB_mv_cph2ms_doTlast_reg $m1, 1, 2, $r2, $r28, implicit-def $srms0
+    MOV_NB_mv_cph2ms $m1, 1, 2, $r2, implicit-def $srms0
+    MOV_NB_TLAST_mv_cph2ms $m1, 1, 2, $r2, implicit-def $srms0
+...
+# CHECK: 0: 19 01 01 08 mov.ph ms, r0, #0
+# CHECK: 4: 19 03 05 08 mov.ph ms, r1, #1
+# CHECK: 8: 19 05 09 08 mov.ph ms, r2, #2
+# CHECK: c: 19 07 0d 08 mov.ph ms, r3, #3
+# CHECK: 10: 19 09 11 08 mov.ph ms, r4, #4
+# CHECK: 14: 19 0b 15 08 mov.ph ms, r5, #5
+# CHECK: 18: 19 0d 19 08 mov.ph ms, r6, #6
+# CHECK: 1c: 19 03 09 09 mov.ph.tlast ms, r1, #2
+# CHECK: 20: 19 37 0d 0a mov.ph ms, r27, #3, r28
+# CHECK: 24: 19 19 09 0e mov.ph.nb ms, r12, #2, r28
+# CHECK: 28: 19 03 05 0c mov.ph.nb ms, r1, #1
+# CHECK: 2c: 19 05 01 0d mov.ph.nb.tlast ms, r2, #0
+# CHECK: 30: 19 02 19 08 mov.cph ms, m0, #0, #3, r1
+# CHECK: 34: 19 04 33 08 mov.cph ms, m1, #1, #2, r2
+# CHECK: 38: 19 06 4d 08 mov.cph ms, m2, #2, #1, r3
+# CHECK: 3c: 19 08 67 08 mov.cph ms, m3, #3, #0, r4
+# CHECK: 40: 19 04 f3 09 mov.cph.tlast ms, m7, #1, #2, r2
+# CHECK: 44: 19 04 33 0a mov.cph ms, m1, #1, #2, r2, r28
+# CHECK: 48: 19 04 33 0e mov.cph.nb ms, m1, #1, #2, r2, r28
+# CHECK: 4c: 19 04 33 0c mov.cph.nb ms, m1, #1, #2, r2
+# CHECK: 50: 19 04 33 0d mov.cph.nb.tlast ms, m1, #1, #2, r2

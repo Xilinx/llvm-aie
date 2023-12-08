@@ -19,6 +19,7 @@
 include "AIEBaseInstrInfo.td"
 
 def t02u : txxu<2, i32>;
+def imm2 : txxu<2,i32>;
 def imm3 : txxu<3,i32>;
 def imm4 : txxu<4,i32>;
 def imm5 : txxu<5,i32>;
