@@ -1322,6 +1322,8 @@ def I64_LDA_LDB_ALU : AIE2__instr64__lda__ldb__alu<(ins lda_slot:$lda, ldb_slot:
 def I64_ALU_VEC : AIE2__instr64__alu__vec<(ins alu_slot:$alu, vec_slot:$vec)>;
 def I64_LNG : AIE2__instr64__lng<(ins lng_slot:$lng)>;
 def I64_ALU_MV : AIE2__instr64__alu__mv<(ins alu_slot:$alu, mv_slot:$mv)>;
+// nop16_slot has all don't care bits
+def I16_NOP : AIE2__instr16__nop<(ins nop16_slot:$nop16)>;
 def I32_VEC : AIE2__instr32__vec<(ins vec_slot:$vec)>;
 def I32_ST : AIE2__instr32__st<(ins st_slot:$st)>;
 def I32_MV : AIE2__instr32__mv<(ins mv_slot:$mv)>;

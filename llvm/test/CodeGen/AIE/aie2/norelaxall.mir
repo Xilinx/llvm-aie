@@ -4,8 +4,8 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc --mtriple=aie2 --mc-relax-all --start-after=aie-finalize-mi-bundles --filetype=obj %s -o %t_t.o
-#; RUN: llvm-objdump --triple=aie2  -dr %t_t.o | grep -v -e '^$' | FileCheck %s
+# RUN: llc --mtriple=aie2 --mc-relax-all --start-before=aie-finalize-mi-bundles --filetype=obj %s -o %t_t.o
+# RUN: llvm-objdump --triple=aie2  -dr %t_t.o | grep -v -e '^$' | FileCheck %s
 
 # We check that we ignore --mc-relax-all by expecting reasonable nop
 # sequences and properly aligned block labels
