@@ -100,16 +100,23 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: cascade_stream_acq
-    ; CHECK: $bml2 = VMOV_mv_scd implicit $crscden {
-    ; CHECK-NEXT:   VMOV_mv_mcd killed $bml0, implicit $crmcden
-    ; CHECK-NEXT:   ACQ_mLockId_imm 0, $r0
-    ; CHECK-NEXT: }
+    ; CHECK: $bml2 = VMOV_mv_scd implicit $crscden
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $bml4 = VMOV_mv_scd implicit $crscden {
-    ; CHECK-NEXT:   ACQ_mLockId_reg killed $r0, killed $r1
-    ; CHECK-NEXT: }
+    ; CHECK-NEXT: ACQ_mLockId_imm 0, $r0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: VMOV_mv_mcd killed $bml0, implicit $crmcden
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: ACQ_mLockId_reg killed $r0, killed $r1
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $bml4 = VMOV_mv_scd implicit $crscden
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
@@ -129,16 +136,23 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: cascade_stream_rel
-    ; CHECK: $bml2 = VMOV_mv_scd implicit $crscden {
-    ; CHECK-NEXT:   VMOV_mv_mcd killed $bml0, implicit $crmcden
-    ; CHECK-NEXT:   REL_mLockId_imm 0, $r0
-    ; CHECK-NEXT: }
+    ; CHECK: $bml2 = VMOV_mv_scd implicit $crscden
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $bml4 = VMOV_mv_scd implicit $crscden {
-    ; CHECK-NEXT:   REL_mLockId_imm 0, killed $r0
-    ; CHECK-NEXT: }
+    ; CHECK-NEXT: REL_mLockId_imm 0, $r0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: VMOV_mv_mcd killed $bml0, implicit $crmcden
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: REL_mLockId_imm 0, killed $r0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $bml4 = VMOV_mv_scd implicit $crscden
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP

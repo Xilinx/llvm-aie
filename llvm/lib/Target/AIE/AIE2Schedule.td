@@ -748,10 +748,15 @@ InstrItinData<II_VMOV_W, [InstrStage<1, [CM_RM_PORT]>, PrefixCycle<W_WM_PORT>, S
 InstrItinData<II_VMOV_X, [SimpleCycle<CM_RM_PORT>, PrefixCycle<W_WM_PORT>, SimpleCycle<CM_WM_PORT>],
               [2,1], [MOV_Bypass, MOV_Bypass]>,
 InstrItinData<II_VMOV_CM, [InstrStage<1, [CM_RM_PORT]>, InstrStage<1,  [CM_WM_PORT]>], [2,1]>,
-InstrItinData<II_VMOV_CASCADE_READ ,[EmptyCycles<6>, InstrStage<1,[W_WA_PORT],0>, InstrStage<1,[CM_WM_PORT],0>],
+
+// Note: We reserve the semaphore interface at the same cycles as ACQ/REL to
+// steer cascade streams sufficiently away from them. This is very conservative,
+// and will cause at least three cycles between stream operations and locks.
+InstrItinData<II_VMOV_CASCADE_READ, [EmptyCycles<1>, AvoidSemaphore<4>, EmptyCycles<5>, PrefixCycle<W_WA_PORT>, SimpleCycle<CM_WM_PORT>],
               [7,7,/*crSCDEn*/5]>,
-InstrItinData<II_VMOV_CASCADE_WRITE,[InstrStage<1, [W_RS_PORT]>],
+InstrItinData<II_VMOV_CASCADE_WRITE,[SimpleCycle<W_RS_PORT>, AvoidSemaphore<4>],
               [1,/*crMCDEn*/1]>,
+
 InstrItinData<II_VMUL, [InstrStage<1, [R_RV_PORT]>, EmptyCycles<3>, InstrStage<1, [CM_WA_PORT]>],
               [5,1,1,1], [VEC_Bypass,NoBypass,NoBypass]>,
 InstrItinData<II_VNEGMUL, [InstrStage<1, [R_RV_PORT]>, EmptyCycles<3>, InstrStage<1, [CM_WA_PORT]>],
