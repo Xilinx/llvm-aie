@@ -5,62 +5,59 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -march=aie2 --issue-limit=1 -run-pass=postmisched %s -o - \
+# RUN: llc -march=aie2 --issue-limit=6 -run-pass=postmisched %s -o - \
 # RUN:   | FileCheck %s
 
-
-#VMOV
+# Write Dst in E7
+# Read crscden in E5
 ---
-name: test_stream_read_write
+name: II_VMOV_CASCADE_READ
 alignment:       16
 body:             |
   bb.0 (align 16):
     ; 6.3 VMOV - Cascade stream access
-    ; CHECK-LABEL: name: test_stream_read_write
+    ; CHECK-LABEL: name: II_VMOV_CASCADE_READ
     ; CHECK: $bml2 = VMOV_mv_scd implicit $crscden
-    ; CHECK-NEXT: $cm2 = VMOV_HI implicit $crscden
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $crscden = MOV_mv_cg 0
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: VST_dmw_sts_am_ag_idx_imm killed $amll2, killed $p0, 0
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: VMOV_mv_mcd killed $bml2, implicit $crmcden
-    ; CHECK-NEXT: VMOV_mv_mcd killed $bmh2, implicit $crmcden
-    ; CHECK-NEXT: $x2 = VMOV_mv_scd implicit $crscden
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: VMOV_mv_mcd killed $x2, implicit $crmcden
     $bml2 = VMOV_mv_scd implicit $crscden
-    $cm2 = VMOV_HI      implicit $crscden
-    VMOV_mv_mcd $bml2,  implicit $crmcden
-    VMOV_mv_mcd $bmh2,  implicit $crmcden
-    $x2 = VMOV_mv_scd   implicit $crscden
-    VMOV_mv_mcd $x2,    implicit $crmcden
+    VST_dmw_sts_am_ag_idx_imm $amll2, $p0, 0
+    $crscden = MOV_mv_cg 0
 ...
+
+# Read Src in E1
+# Read crmcden in E1
 ---
-name: test_vadd_stream_write
+name: II_VMOV_CASCADE_WRITE
 alignment:       16
 body:             |
   bb.0 (align 16):
     liveins: $cm0, $cm1
-    ; CHECK-LABEL: name: test_vadd_stream_write
+    ; CHECK-LABEL: name: II_VMOV_CASCADE_WRITE
     ; CHECK: liveins: $cm0, $cm1
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: $r0 = MOVA_lda_cg 1
-    ; CHECK-NEXT: $cm0 = VADD killed $cm0, killed $cm1, killed $r0
+    ; CHECK-NEXT: $amll0 = VLDA_dmw_lda_am_ag_idx_imm killed $p0, 0
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: VMOV_mv_mcd killed $bml0, implicit $crmcden
-    ; CHECK-NEXT: VMOV_mv_mcd killed $bmh0, implicit $crmcden
-    $r0 = MOVA_lda_cg 1
-    $cm0 = VADD $cm0, $cm1, $r0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: VMOV_mv_mcd $bml0, implicit $crmcden {
+    ; CHECK-NEXT:   $crmcden = MOV_mv_cg 0
+    ; CHECK-NEXT: }
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    $amll0 = VLDA_dmw_lda_am_ag_idx_imm $p0, 0
     VMOV_mv_mcd $bml0, implicit $crmcden
-    VMOV_mv_mcd $bmh0, implicit $crmcden
+    $crmcden = MOV_mv_cg 0
 ...
+

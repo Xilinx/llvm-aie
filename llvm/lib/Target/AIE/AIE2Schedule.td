@@ -753,7 +753,7 @@ InstrItinData<II_VMOV_CM, [InstrStage<1, [CM_RM_PORT]>, InstrStage<1,  [CM_WM_PO
 // steer cascade streams sufficiently away from them. This is very conservative,
 // and will cause at least three cycles between stream operations and locks.
 InstrItinData<II_VMOV_CASCADE_READ, [EmptyCycles<1>, AvoidSemaphore<4>, EmptyCycles<5>, PrefixCycle<W_WA_PORT>, SimpleCycle<CM_WM_PORT>],
-              [7,7,/*crSCDEn*/5]>,
+              [7,/*crSCDEn*/5]>,
 InstrItinData<II_VMOV_CASCADE_WRITE,[SimpleCycle<W_RS_PORT>, AvoidSemaphore<4>],
               [1,/*crMCDEn*/1]>,
 
