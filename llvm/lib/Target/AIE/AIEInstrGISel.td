@@ -73,6 +73,17 @@ def G_AIE_SEXT_EXTRACT_VECTOR_ELT : AIEGenericInstruction {
   let hasSideEffects = false;
 }
 
+// AIE generic insert vector element. This is used to legalize
+// S32 (large) type values being inserted to a vector with
+// S8 or S16 (small) element type. This is OK because internally
+// we select it to a VINSERT that will truncate the bits to the
+// required element type.
+def G_AIE_INSERT_VECTOR_ELT : AIEGenericInstruction {
+  let OutOperandList = (outs type0:$dst);
+  let InOperandList = (ins type0:$src, type1:$elt, type2:$idx);
+  let hasSideEffects = false;
+}
+
 // Create a larger vector by padding undefined values in the high bits
 def G_AIE_PAD_VECTOR_UNDEF : AIEGenericInstruction {
   let OutOperandList = (outs type0:$dst);

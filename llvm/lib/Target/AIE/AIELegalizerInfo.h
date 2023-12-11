@@ -38,6 +38,8 @@ private:
                                 MachineInstr &MI) const;
   bool legalizeG_EXTRACT_VECTOR_ELT(LegalizerHelper &Helper,
                                     MachineInstr &MI) const;
+  bool legalizeG_INSERT_VECTOR_ELT(LegalizerHelper &Helper,
+                                   MachineInstr &MI) const;
   bool legalizeG_FCMP(LegalizerHelper &Helper, MachineInstr &MI) const;
   bool legalizeG_FPTRUNC(LegalizerHelper &Helper, MachineInstr &MI) const;
   bool legalizeG_FPEXT(LegalizerHelper &Helper, MachineInstr &MI) const;
