@@ -100,3 +100,144 @@ declare <16 x i32> @llvm.aie2.vinsert8.I512(<16 x i32>, i32, i32) #1
 declare <16 x i32> @llvm.aie2.vinsert16.I512(<16 x i32>, i32, i32) #1
 declare <16 x i32> @llvm.aie2.vinsert32.I512(<16 x i32>, i32, i32) #1
 declare <16 x i32> @llvm.aie2.vinsert64.I512(<16 x i32>, i32, <2 x i32>) #1
+
+define <2 x i32> @test_64bit(<2 x i32> %vec, i32 %c) {
+; CHECK-LABEL: test_64bit:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    mov r16, r18 // Delay Slot 2
+; CHECK-NEXT:    mov r17, r0 // Delay Slot 1
+entry:
+  %vecins = insertelement <2 x i32> %vec, i32 %c, i32 1
+  ret <2 x i32> %vecins
+}
+
+define <2 x i32> @test_64bit_dyn_idx(<2 x i32> %vec, i32 %b, i32 %c) {
+; CHECK-LABEL: test_64bit_dyn_idx:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    mov r27, r0 // Delay Slot 3
+; CHECK-NEXT:    sel.nez r16, r18, r1, r27 // Delay Slot 2
+; CHECK-NEXT:    sel.nez r17, r1, r19, r27 // Delay Slot 1
+entry:
+  %vecins = insertelement <2 x i32> %vec, i32 %c, i32 %b
+  ret <2 x i32> %vecins
+}
+
+
+define <8 x i32> @test_256bit(<8 x i32> %vec, i32 %c) {
+; CHECK-LABEL: test_256bit:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    mova r29, #1 // Delay Slot 3
+; CHECK-NEXT:    vinsert.32 x0, x2, r29, r0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+entry:
+  %vecins = insertelement <8 x i32> %vec, i32 %c, i32 1
+  ret <8 x i32> %vecins
+}
+
+define <16 x i16> @test_256bit_dyn_idx(<16 x i16> %vec, i32 %b, i16 %c) {
+; CHECK-LABEL: test_256bit_dyn_idx:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    mov r29, r0 // Delay Slot 3
+; CHECK-NEXT:    vinsert.16 x0, x2, r29, r1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+entry:
+  %vecins = insertelement <16 x i16> %vec, i16 %c, i32 %b
+  ret <16 x i16> %vecins
+}
+
+define <64 x i8> @test_512bit(<64 x i8> %vec, i8 %c) {
+; CHECK-LABEL: test_512bit:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    mova r29, #5 // Delay Slot 3
+; CHECK-NEXT:    vinsert.8 x0, x2, r29, r0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+entry:
+  %vecins = insertelement <64 x i8> %vec, i8 %c, i32 5
+  ret <64 x i8> %vecins
+}
+
+define <32 x i16> @test_512bit_dyn_idx(<32 x i16> %vec, i32 %b, i16 %c) {
+; CHECK-LABEL: test_512bit_dyn_idx:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    mov r29, r0 // Delay Slot 3
+; CHECK-NEXT:    vinsert.16 x0, x2, r29, r1 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+entry:
+  %vecins = insertelement <32 x i16> %vec, i16 %c, i32 %b
+  ret <32 x i16> %vecins
+}
+
+define <128 x i8> @test_1024bit_lo(<128 x i8> %vec, i8 %c) {
+; CHECK-LABEL: test_1024bit_lo:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    vmov x4, x6 // Delay Slot 4
+; CHECK-NEXT:    mova r29, #5; vmov x5, x7 // Delay Slot 3
+; CHECK-NEXT:    vinsert.8 x4, x4, r29, r0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+entry:
+  %vecins = insertelement <128 x i8> %vec, i8 %c, i32 5
+  ret <128 x i8> %vecins
+}
+
+define <128 x i8> @test_1024bit_hi(<128 x i8> %vec, i8 %c) {
+; CHECK-LABEL: test_1024bit_hi:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    vmov x5, x7 // Delay Slot 4
+; CHECK-NEXT:    mova r29, #4; vmov x4, x6 // Delay Slot 3
+; CHECK-NEXT:    vinsert.8 x5, x5, r29, r0 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+entry:
+  %vecins = insertelement <128 x i8> %vec, i8 %c, i32 68
+  ret <128 x i8> %vecins
+}
+
+define <32 x i32> @test_1024bit_dyn_idx(<32 x i32> %vec, i32 %b, i32 %c) {
+; CHECK-LABEL: test_1024bit_dyn_idx:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    mova r2, #16; movx r3, #0
+; CHECK-NEXT:    lt r27, r0, r2; mov r4, r16
+; CHECK-NEXT:    sel.nez r2, r3, r2, r27
+; CHECK-NEXT:    sub r29, r0, r2
+; CHECK-NEXT:    add r16, r27, #-1
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    vsel.32 x0, x6, x7, r16 // Delay Slot 5
+; CHECK-NEXT:    vinsert.32 x0, x0, r29, r1 // Delay Slot 4
+; CHECK-NEXT:    vsel.32 x4, x0, x6, r16 // Delay Slot 3
+; CHECK-NEXT:    vsel.32 x5, x7, x0, r16 // Delay Slot 2
+; CHECK-NEXT:    mov r16, r4 // Delay Slot 1
+entry:
+  %vecins = insertelement <32 x i32> %vec, i32 %c, i32 %b
+  ret <32 x i32> %vecins
+}
