@@ -347,6 +347,12 @@ AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
         })
         .customIf(typeInSet(1, {V2S32, V8S32, V16S32, V32S32, V16S16, V32S8,
                                 V32S16, V64S8, V64S16, V128S8}));
+
+    getActionDefinitionsBuilder(G_INSERT_VECTOR_ELT)
+        .clampScalar(2, S32, S32) // Clamp the idx to 32 bit since VINSERT
+                                  // relies on eR29 only for idx.
+        .customIf(typeInSet(0, {V2S32, V8S32, V16S16, V32S8, V16S32, V32S16,
+                                V64S8, V32S32, V64S16, V128S8}));
   }
 
   // Control-flow
@@ -410,6 +416,8 @@ bool AIELegalizerInfo::legalizeCustom(LegalizerHelper &Helper,
     return legalizeG_DYN_STACKALLOC(Helper, MI);
   case TargetOpcode::G_EXTRACT_VECTOR_ELT:
     return legalizeG_EXTRACT_VECTOR_ELT(Helper, MI);
+  case TargetOpcode::G_INSERT_VECTOR_ELT:
+    return legalizeG_INSERT_VECTOR_ELT(Helper, MI);
   case TargetOpcode::G_FCMP:
     return legalizeG_FCMP(Helper, MI);
   case TargetOpcode::G_FPTRUNC:
@@ -668,6 +676,67 @@ bool AIELegalizerInfo::legalizeG_EXTRACT_VECTOR_ELT(LegalizerHelper &Helper,
   }
   default:
     llvm_unreachable("Unexpected vector size for extract vector elt!");
+  }
+  MI.removeFromParent();
+  return true;
+}
+
+bool AIELegalizerInfo::legalizeG_INSERT_VECTOR_ELT(LegalizerHelper &Helper,
+                                                   MachineInstr &MI) const {
+  MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
+  MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
+  const Register DstVecReg = MI.getOperand(0).getReg();
+  const Register SrcVecReg = MI.getOperand(1).getReg();
+  const Register ValReg = MI.getOperand(2).getReg();
+  const Register IdxReg = MI.getOperand(3).getReg();
+  const LLT DstVecTy = MRI.getType(DstVecReg);
+  const unsigned DstVecSize = DstVecTy.getSizeInBits();
+  const LLT S32 = LLT::scalar(32);
+
+  switch (DstVecSize) {
+  case 64: {
+    if (DstVecTy != LLT::fixed_vector(2, 32)) {
+      llvm_unreachable("Unexpected 64-bit vector type!");
+    }
+    std::array<Register, 2> Regs = {MRI.createGenericVirtualRegister(S32),
+                                    MRI.createGenericVirtualRegister(S32)};
+    MIRBuilder.buildUnmerge(Regs, SrcVecReg);
+    auto IdxVal = getIConstantVRegValWithLookThrough(IdxReg, MRI);
+    if (IdxVal) {
+      unsigned Idx = IdxVal->Value.getZExtValue();
+      assert(Idx < Regs.size() && "Expected idx to be 0 or 1.");
+      Regs[Idx] = ValReg;
+      MIRBuilder.buildBuildVector(DstVecReg, Regs);
+    } else {
+      std::array<Register, 2> TmpSelDsts = {
+          MRI.createGenericVirtualRegister(S32),
+          MRI.createGenericVirtualRegister(S32)};
+      MIRBuilder.buildSelect(TmpSelDsts[0], IdxReg, Regs[0], ValReg);
+      MIRBuilder.buildSelect(TmpSelDsts[1], IdxReg, ValReg, Regs[1]);
+      MIRBuilder.buildBuildVector(DstVecReg, TmpSelDsts);
+    }
+    break;
+  }
+  case 256:
+  case 512:
+  case 1024: {
+    const LLT ValTy = MRI.getType(ValReg);
+    if (ValTy == LLT::scalar(64)) {
+      llvm_unreachable("Unexpected scalar value type for insert vec elt!");
+    }
+    Register NewValReg;
+    if (ValTy == LLT::scalar(8) || ValTy == LLT::scalar(16)) {
+      NewValReg = MRI.createGenericVirtualRegister(S32);
+      MIRBuilder.buildAnyExt(NewValReg, ValReg);
+    } else {
+      NewValReg = ValReg;
+    }
+    MIRBuilder.buildInstr(AIE2::G_AIE_INSERT_VECTOR_ELT, {DstVecReg},
+                          {SrcVecReg, NewValReg, IdxReg});
+    break;
+  }
+  default:
+    llvm_unreachable("Unexpected vector size for insert vector elt!");
   }
   MI.removeFromParent();
   return true;
