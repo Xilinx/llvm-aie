@@ -481,3 +481,42 @@ body:             |
   JL_IND $p1, implicit-def $lr
   DelayedSchedBarrier
 ...
+
+---
+name:            E1_II_MOV_SCL_E1_II_ST_MS
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: E1_II_MOV_SCL_E1_II_ST_MS
+    ; CHECK: MOV_mv_scl2ms killed $m3
+    ; CHECK-NEXT: $r1 = MOV_mv_scl killed $dj0
+    ; CHECK-NEXT: NOP
+  $r1 = MOV_mv_scl $dj0
+  MOV_mv_scl2ms $m3
+...
+
+---
+name:            E1_II_MOV_SCL_E1_II_ST_MS_NB
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: E1_II_MOV_SCL_E1_II_ST_MS_NB
+    ; CHECK: MOV_NB_mv_scl2ms killed $m3, implicit-def $srms0
+    ; CHECK-NEXT: $r1 = MOV_mv_scl killed $dj0
+    ; CHECK-NEXT: NOP
+  $r1 = MOV_mv_scl $dj0
+  MOV_NB_mv_scl2ms $m3, implicit-def $srms0
+...
+
+---
+name:            E1_II_MOV_SCL_E1_II_ST_MS_NB_TLAST_REG
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: E1_II_MOV_SCL_E1_II_ST_MS_NB_TLAST_REG
+    ; CHECK: MOV_NB_mv_scl2ms_doTlast_reg killed $m3, killed $r28, implicit-def $srms0
+    ; CHECK-NEXT: $r1 = MOV_mv_scl killed $dj0
+    ; CHECK-NEXT: NOP
+  $r1 = MOV_mv_scl $dj0
+  MOV_NB_mv_scl2ms_doTlast_reg $m3, $r28, implicit-def $srms0
+...
