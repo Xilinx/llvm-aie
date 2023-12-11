@@ -184,6 +184,7 @@ public:
   bool selectStartLoop(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_AIE_EXTRACT_VECTOR_ELT(MachineInstr &I,
                                       MachineRegisterInfo &MRI);
+  bool selectG_AIE_INSERT_VECTOR_ELT(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectSetI128(MachineInstr &I, Register DstReg, Register SrcReg,
                      MachineRegisterInfo &MRI);
   bool selectExtractI128(MachineInstr &I, Register DstReg, Register SrcReg,
@@ -709,6 +710,8 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
   case AIE2::G_AIE_ZEXT_EXTRACT_VECTOR_ELT:
   case AIE2::G_AIE_SEXT_EXTRACT_VECTOR_ELT:
     return selectG_AIE_EXTRACT_VECTOR_ELT(I, MRI);
+  case AIE2::G_AIE_INSERT_VECTOR_ELT:
+    return selectG_AIE_INSERT_VECTOR_ELT(I, MRI);
   case AIE2::G_AIE_PAD_VECTOR_UNDEF:
     return selectSetI128(I, I.getOperand(0).getReg(), I.getOperand(1).getReg(),
                          MRI);
@@ -4160,9 +4163,22 @@ static unsigned getExtractVecEltOpcode(unsigned EltSize, unsigned InstOpcode) {
   return Opcode;
 }
 
+static unsigned getInsertVecEltOpcode(unsigned EltSize, unsigned InstOpcode) {
+  switch (EltSize) {
+  case 8:
+    return AIE2::VINSERT_8;
+  case 16:
+    return AIE2::VINSERT_16;
+  case 32:
+    return AIE2::VINSERT_32;
+  default:
+    llvm_unreachable("Unexpected vector elt size for insert vec elt!");
+  }
+}
+
 namespace {
 
-// Vector source and index regs for extract vector elt.
+// Vector source and index regs for extract/insert vector elt.
 struct SelSrcAndIdx {
   Register SrcReg;
   Register IdxReg;
@@ -4171,7 +4187,7 @@ struct SelSrcAndIdx {
   Register SubSrcReg512Lo = 0;
   Register SubSrcReg512Hi = 0;
   // Select the Low (0) or High (1) 512-bit part of a 1024-bit vector to be used
-  // as an input to VEXTRACT based on the idx.
+  // as an input to VEXTRACT or VINSERT based on the idx.
   bool SelLoOrHi = 0;
   // Get the opcode and sel reg for the generated VSEL insn.
   unsigned VSelOpcode = 0;
@@ -4180,15 +4196,17 @@ struct SelSrcAndIdx {
 
 } // end anonymous namespace
 
-static SelSrcAndIdx getExtractVectorEltInputs(MachineInstr &I,
-                                              const TargetRegisterInfo &TRI,
-                                              MachineRegisterInfo &MRI,
-                                              const AIE2InstrInfo &TII,
-                                              const AIE2RegisterBankInfo &RBI,
-                                              MachineIRBuilder &MIB) {
+static SelSrcAndIdx getExtractOrInsertVectorEltInputs(
+    MachineInstr &I, const TargetRegisterInfo &TRI, MachineRegisterInfo &MRI,
+    const AIE2InstrInfo &TII, const AIE2RegisterBankInfo &RBI,
+    MachineIRBuilder &MIB) {
   MachineFunction *MF = I.getMF();
   MachineOperand &RegOp0 = I.getOperand(1);
-  MachineOperand &RegOp1 = I.getOperand(2);
+  unsigned Idx = 2;
+  if (I.getOpcode() == AIE2::G_AIE_INSERT_VECTOR_ELT) {
+    Idx = 3;
+  }
+  MachineOperand &RegOp1 = I.getOperand(Idx);
   Register SrcReg0 = RegOp0.getReg();
   Register SrcReg1 = RegOp1.getReg();
   LLT SrcVecTy = MRI.getType(SrcReg0);
@@ -4293,7 +4311,8 @@ static SelSrcAndIdx getExtractVectorEltInputs(MachineInstr &I,
     break;
   }
   default:
-    llvm_unreachable("Unexpected input vector size for extract vector elt!");
+    llvm_unreachable(
+        "Unexpected input vector size for extract/insert vector elt!");
   }
   return SelSrcIdx;
 }
@@ -4307,13 +4326,123 @@ bool AIE2InstructionSelector::selectG_AIE_EXTRACT_VECTOR_ELT(
   LLT SrcEltTy = SrcVecTy.getElementType();
   unsigned EltSize = SrcEltTy.getSizeInBits();
   SelSrcAndIdx SelSrcIdx =
-      getExtractVectorEltInputs(I, TRI, MRI, TII, RBI, MIB);
+      getExtractOrInsertVectorEltInputs(I, TRI, MRI, TII, RBI, MIB);
   unsigned Opcode = getExtractVecEltOpcode(EltSize, I.getOpcode());
   MachineInstrBuilder MI = MIB.buildInstr(Opcode, {DstReg}, {})
                                .addReg(SelSrcIdx.SrcReg)
                                .addReg(SelSrcIdx.IdxReg);
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
+}
+
+bool AIE2InstructionSelector::selectG_AIE_INSERT_VECTOR_ELT(
+    MachineInstr &I, MachineRegisterInfo &MRI) {
+  Register DstVecReg = I.getOperand(0).getReg();
+  unsigned DstVecSize = MRI.getType(DstVecReg).getSizeInBits();
+  Register SrcVecReg = I.getOperand(1).getReg();
+  Register ValReg = I.getOperand(2).getReg();
+  Register IdxReg = I.getOperand(3).getReg();
+  LLT SrcVecEltTy = MRI.getType(SrcVecReg).getElementType();
+  unsigned SrcVecEltSize = SrcVecEltTy.getSizeInBits();
+
+  // Get the appropriate VINSERT opcode.
+  unsigned Opcode = getInsertVecEltOpcode(SrcVecEltSize, I.getOpcode());
+  // VINSERT needs a 512bit src register.
+  SelSrcAndIdx SelSrcIdx =
+      getExtractOrInsertVectorEltInputs(I, TRI, MRI, TII, RBI, MIB);
+
+  const TargetRegisterClass *RC512 = &AIE2::VEC512RegClass;
+  MachineInstrBuilder VINSERT;
+
+  // Copy to the original register.
+  switch (DstVecSize) {
+  case 256: {
+    Register Tmp512VecDstReg = MRI.createVirtualRegister(RC512);
+    VINSERT = MIB.buildInstr(Opcode, {Tmp512VecDstReg}, {});
+    MachineInstrBuilder CopyInstr =
+        MIB.buildInstr(TargetOpcode::COPY, {DstVecReg}, {})
+            .addReg(Tmp512VecDstReg, 0, AIE2::sub_256_lo);
+    constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *CopyInstr,
+                             AIE2::VEC256RegClass, CopyInstr->getOperand(0));
+    break;
+  }
+  case 512: {
+    VINSERT = MIB.buildInstr(Opcode, {DstVecReg}, {});
+    constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *VINSERT, *RC512,
+                             VINSERT->getOperand(0));
+    break;
+  }
+  case 1024: {
+    // Non Const idx case.
+    // ...
+    // %6 = ADD %3, -1
+    // %7 = VSEL_32 <sub_512bit_lo_orig>, <sub_512bit_hi_orig>, %6
+    // %8 = VINSERT32 %7, <val>, %5
+    /* select lo and hi parts for the REG_SEQUENCE */
+    // %9 = VSEL_32 %8, <sub_512bit_lo_orig>, %6
+    // %10 = VSEL_32 <sub_512bit_hi_orig>, %8, %6
+    // %11 = REG_SEQUENCE %9, sub_512bit_lo, %10, sub_512bit_hi
+
+    auto IdxVal = getIConstantVRegValWithLookThrough(IdxReg, MRI);
+    Register Tmp512VecDstReg = MRI.createVirtualRegister(RC512);
+    VINSERT = MIB.buildInstr(Opcode, {Tmp512VecDstReg}, {});
+    MachineInstrBuilder RegSeq1024;
+    if (!IdxVal) {
+      auto VSel1 = MIB.buildInstr(SelSrcIdx.VSelOpcode, {RC512}, {})
+                       .addReg(Tmp512VecDstReg)
+                       .addReg(SelSrcIdx.SubSrcReg512Lo)
+                       .addReg(SelSrcIdx.VSelReg);
+      constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *VSel1, *RC512,
+                               VSel1->getOperand(1));
+      constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *VSel1, *RC512,
+                               VSel1->getOperand(2));
+      auto VSel2 = MIB.buildInstr(SelSrcIdx.VSelOpcode, {RC512}, {})
+                       .addReg(SelSrcIdx.SubSrcReg512Hi)
+                       .addReg(Tmp512VecDstReg)
+                       .addReg(SelSrcIdx.VSelReg);
+      constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *VSel2, *RC512,
+                               VSel2->getOperand(1));
+      constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *VSel2, *RC512,
+                               VSel2->getOperand(2));
+
+      RegSeq1024 = MIB.buildInstr(AIE2::REG_SEQUENCE, {DstVecReg}, {})
+                       .addReg(VSel1.getReg(0))
+                       .addImm(AIE2::sub_512_lo)
+                       .addReg(VSel2.getReg(0))
+                       .addImm(AIE2::sub_512_hi);
+    } else {
+      // Const idx case.
+      Register TempOrig512Vec = MRI.createVirtualRegister(RC512);
+      MachineInstrBuilder CopyInstr =
+          MIB.buildInstr(TargetOpcode::COPY, {TempOrig512Vec}, {});
+      RegSeq1024 = MIB.buildInstr(AIE2::REG_SEQUENCE, {DstVecReg}, {});
+      if (SelSrcIdx.SelLoOrHi) {
+        CopyInstr.addReg(SrcVecReg, 0, AIE2::sub_512_lo);
+        RegSeq1024.addReg(TempOrig512Vec)
+            .addImm(AIE2::sub_512_lo)
+            .addReg(Tmp512VecDstReg)
+            .addImm(AIE2::sub_512_hi);
+      } else {
+        CopyInstr.addReg(SrcVecReg, 0, AIE2::sub_512_hi);
+        RegSeq1024.addReg(Tmp512VecDstReg)
+            .addImm(AIE2::sub_512_lo)
+            .addReg(TempOrig512Vec)
+            .addImm(AIE2::sub_512_hi);
+      }
+      constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *CopyInstr, *RC512,
+                               CopyInstr->getOperand(0));
+    }
+    constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *RegSeq1024,
+                             AIE2::VEC1024RegClass, RegSeq1024->getOperand(0));
+    break;
+  }
+  default:
+    llvm_unreachable("Unexpected input vector size for insert vec elt!");
+  }
+  VINSERT.addReg(SelSrcIdx.SrcReg).addReg(SelSrcIdx.IdxReg).addReg(ValReg);
+
+  I.eraseFromParent();
+  return constrainSelectedInstRegOperands(*VINSERT, TII, TRI, RBI);
 }
 
 // Select extract 128-bit Intrinsics
