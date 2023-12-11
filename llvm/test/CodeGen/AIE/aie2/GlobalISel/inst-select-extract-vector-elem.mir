@@ -20,8 +20,7 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec256 = COPY $wl0
     ; CHECK-NEXT: [[MOV_RLC_imm10_pseudo:%[0-9]+]]:ers4 = MOV_RLC_imm10_pseudo 1
-    ; CHECK-NEXT: [[DEF:%[0-9]+]]:vec256 = IMPLICIT_DEF
-    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[COPY]], %subreg.sub_256_lo, [[DEF]], %subreg.sub_256_hi
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[COPY]], %subreg.sub_256_lo
     ; CHECK-NEXT: [[VEXTRACT_D16_:%[0-9]+]]:er = VEXTRACT_D16 [[REG_SEQUENCE]], [[MOV_RLC_imm10_pseudo]], implicit $crvaddsign
     ; CHECK-NEXT: $r0 = COPY [[VEXTRACT_D16_]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
@@ -46,8 +45,7 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec256 = COPY $wl0
     ; CHECK-NEXT: [[MOV_RLC_imm10_pseudo:%[0-9]+]]:ers4 = MOV_RLC_imm10_pseudo 1
-    ; CHECK-NEXT: [[DEF:%[0-9]+]]:vec256 = IMPLICIT_DEF
-    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[COPY]], %subreg.sub_256_lo, [[DEF]], %subreg.sub_256_hi
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[COPY]], %subreg.sub_256_lo
     ; CHECK-NEXT: [[VEXTRACT_S16_:%[0-9]+]]:er = VEXTRACT_S16 [[REG_SEQUENCE]], [[MOV_RLC_imm10_pseudo]]
     ; CHECK-NEXT: $r0 = COPY [[VEXTRACT_S16_]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
@@ -72,8 +70,7 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec256 = COPY $wl0
     ; CHECK-NEXT: [[MOV_RLC_imm10_pseudo:%[0-9]+]]:ers4 = MOV_RLC_imm10_pseudo 1
-    ; CHECK-NEXT: [[DEF:%[0-9]+]]:vec256 = IMPLICIT_DEF
-    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[COPY]], %subreg.sub_256_lo, [[DEF]], %subreg.sub_256_hi
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[COPY]], %subreg.sub_256_lo
     ; CHECK-NEXT: [[VEXTRACT_S8_:%[0-9]+]]:er = VEXTRACT_S8 [[REG_SEQUENCE]], [[MOV_RLC_imm10_pseudo]]
     ; CHECK-NEXT: $r0 = COPY [[VEXTRACT_S8_]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
@@ -98,8 +95,7 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec256 = COPY $wl0
     ; CHECK-NEXT: [[MOV_RLC_imm10_pseudo:%[0-9]+]]:ers4 = MOV_RLC_imm10_pseudo 1
-    ; CHECK-NEXT: [[DEF:%[0-9]+]]:vec256 = IMPLICIT_DEF
-    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[COPY]], %subreg.sub_256_lo, [[DEF]], %subreg.sub_256_hi
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[COPY]], %subreg.sub_256_lo
     ; CHECK-NEXT: [[VEXTRACT_D8_:%[0-9]+]]:er = VEXTRACT_D8 [[REG_SEQUENCE]], [[MOV_RLC_imm10_pseudo]], implicit $crvaddsign
     ; CHECK-NEXT: $r0 = COPY [[VEXTRACT_D8_]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
@@ -124,8 +120,7 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec256 = COPY $wl0
     ; CHECK-NEXT: [[MOV_RLC_imm10_pseudo:%[0-9]+]]:ers4 = MOV_RLC_imm10_pseudo 1
-    ; CHECK-NEXT: [[DEF:%[0-9]+]]:vec256 = IMPLICIT_DEF
-    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[COPY]], %subreg.sub_256_lo, [[DEF]], %subreg.sub_256_hi
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[COPY]], %subreg.sub_256_lo
     ; CHECK-NEXT: [[VEXTRACT_S32_:%[0-9]+]]:er = VEXTRACT_S32 [[REG_SEQUENCE]], [[MOV_RLC_imm10_pseudo]]
     ; CHECK-NEXT: $r0 = COPY [[VEXTRACT_S32_]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
