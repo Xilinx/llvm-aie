@@ -4140,21 +4140,16 @@ createOpcodeCondRegPair(unsigned EltSize, Register LtReg, MachineIRBuilder &MIB,
 
 static unsigned getExtractVecEltOpcode(unsigned EltSize, unsigned InstOpcode) {
   unsigned Opcode = 0;
+  bool IsZextExtVecElt = InstOpcode == AIE2::G_AIE_ZEXT_EXTRACT_VECTOR_ELT;
   switch (EltSize) {
   case 8:
-    Opcode = InstOpcode == AIE2::G_AIE_ZEXT_EXTRACT_VECTOR_ELT
-                 ? AIE2::VEXTRACT_D8
-                 : AIE2::VEXTRACT_S8;
+    Opcode = IsZextExtVecElt ? AIE2::VEXTRACT_D8 : AIE2::VEXTRACT_S8;
     break;
   case 16:
-    Opcode = InstOpcode == AIE2::G_AIE_ZEXT_EXTRACT_VECTOR_ELT
-                 ? AIE2::VEXTRACT_D16
-                 : AIE2::VEXTRACT_S16;
+    Opcode = IsZextExtVecElt ? AIE2::VEXTRACT_D16 : AIE2::VEXTRACT_S16;
     break;
   case 32:
-    Opcode = InstOpcode == AIE2::G_AIE_ZEXT_EXTRACT_VECTOR_ELT
-                 ? AIE2::VEXTRACT_D32
-                 : AIE2::VEXTRACT_S32;
+    Opcode = IsZextExtVecElt ? AIE2::VEXTRACT_D32 : AIE2::VEXTRACT_S32;
     break;
   // there is no AIE vector with elt size 64, VEXTRACT_D64/VEXTRACT_S64 is
   // selected only when the extracted value is another vector of size 64-bit.
@@ -4167,19 +4162,30 @@ static unsigned getExtractVecEltOpcode(unsigned EltSize, unsigned InstOpcode) {
 
 namespace {
 
-// EXTRACT_VECTOR_ELT Vector source register and Index register
-struct SrcRegAndIndex {
+// Vector source and index regs for extract vector elt.
+struct SelSrcAndIdx {
   Register SrcReg;
   Register IdxReg;
+  /* For a 1024-bit vector input */
+  // Get the Low and High parts of a 1024-bit register.
+  Register SubSrcReg512Lo = 0;
+  Register SubSrcReg512Hi = 0;
+  // Select the Low (0) or High (1) 512-bit part of a 1024-bit vector to be used
+  // as an input to VEXTRACT based on the idx.
+  bool SelLoOrHi = 0;
+  // Get the opcode and sel reg for the generated VSEL insn.
+  unsigned VSelOpcode = 0;
+  Register VSelReg = 0;
 };
 
 } // end anonymous namespace
 
-static SrcRegAndIndex
-getEXTRACT_VECTOR_ELTInputs(MachineInstr &I, const TargetRegisterInfo &TRI,
-                            MachineRegisterInfo &MRI, const AIE2InstrInfo &TII,
-                            const AIE2RegisterBankInfo &RBI,
-                            MachineIRBuilder &MIB) {
+static SelSrcAndIdx getExtractVectorEltInputs(MachineInstr &I,
+                                              const TargetRegisterInfo &TRI,
+                                              MachineRegisterInfo &MRI,
+                                              const AIE2InstrInfo &TII,
+                                              const AIE2RegisterBankInfo &RBI,
+                                              MachineIRBuilder &MIB) {
   MachineFunction *MF = I.getMF();
   MachineOperand &RegOp0 = I.getOperand(1);
   MachineOperand &RegOp1 = I.getOperand(2);
@@ -4191,27 +4197,23 @@ getEXTRACT_VECTOR_ELTInputs(MachineInstr &I, const TargetRegisterInfo &TRI,
   unsigned EltSize = SrcEltTy.getSizeInBits();
   unsigned NumLanes = SrcVecTy.getNumElements();
   unsigned HalfNumLanes = NumLanes / 2;
-  const TargetRegisterClass *RC256 = &AIE2::VEC256RegClass;
   const TargetRegisterClass *RC512 = &AIE2::VEC512RegClass;
-  SrcRegAndIndex SRegIdx;
-  SRegIdx.SrcReg = SrcReg0;
-  SRegIdx.IdxReg = SrcReg1;
+  SelSrcAndIdx SelSrcIdx;
+  SelSrcIdx.SrcReg = SrcReg0;
+  SelSrcIdx.IdxReg = SrcReg1;
   switch (VecSize) {
   case 256: {
-    auto SrcUndef = MIB.buildInstr(TargetOpcode::IMPLICIT_DEF, {RC256}, {});
-    SRegIdx.SrcReg = MRI.createVirtualRegister(RC512);
+    SelSrcIdx.SrcReg = MRI.createVirtualRegister(RC512);
     MachineInstrBuilder MI =
-        MIB.buildInstr(AIE2::REG_SEQUENCE, {SRegIdx.SrcReg}, {})
+        MIB.buildInstr(AIE2::REG_SEQUENCE, {SelSrcIdx.SrcReg}, {})
             .addReg(SrcReg0)
-            .addImm(AIE2::sub_256_lo)
-            .addReg(SrcUndef.getReg(0))
-            .addImm(AIE2::sub_256_hi);
+            .addImm(AIE2::sub_256_lo);
     constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *MI, AIE2::VEC256RegClass,
                              MI->getOperand(1));
     break;
   }
   case 512:
-    // Extract is natively supported for operand of size 512
+    // 512 bit vectors are natively supported by the instruction.
     break;
   case 1024: {
     Register SrcRegLo = MRI.createVirtualRegister(RC512);
@@ -4229,12 +4231,13 @@ getEXTRACT_VECTOR_ELTInputs(MachineInstr &I, const TargetRegisterInfo &TRI,
     /* create bitvector for vector select */
     // %6 = ADD %3, -1
     // %7 = VSEL_16 <sub_512bit_lo>, <sub_512bit_hi>, %6
-    // %4:er = VEXTRACT_S16 %7, %5
     if (!IdxVal) {
       auto SubRegCopyLo = MIB.buildInstr(TargetOpcode::COPY, {SrcRegLo}, {})
                               .addReg(SrcReg0, 0, AIE2::sub_512_lo);
       auto SubRegCopyHi = MIB.buildInstr(TargetOpcode::COPY, {SrcRegHi}, {})
                               .addReg(SrcReg0, 0, AIE2::sub_512_hi);
+      SelSrcIdx.SubSrcReg512Lo = SubRegCopyLo.getReg(0);
+      SelSrcIdx.SubSrcReg512Hi = SubRegCopyHi.getReg(0);
       auto SelIdx0 =
           MIB.buildInstr(AIE2::MOV_RLC_imm10_pseudo, {&AIE2::eRRegClass}, {})
               .addImm(0);
@@ -4250,25 +4253,26 @@ getEXTRACT_VECTOR_ELTInputs(MachineInstr &I, const TargetRegisterInfo &TRI,
       auto NewIdx = MIB.buildInstr(AIE2::SUB, {&AIE2::eRRegClass}, {})
                         .addReg(SrcReg1)
                         .addReg(IdxAdjust.getReg(0));
-      std::pair<unsigned, Register> OpcodeRegPair =
+      auto [VSelOpcode, VSelReg] =
           createOpcodeCondRegPair(EltSize, Lt.getReg(0), MIB, MRI);
-      auto VSel =
-          MIB.buildInstr(OpcodeRegPair.first, {&AIE2::VEC512RegClass}, {})
-              .addReg(SubRegCopyLo.getReg(0))
-              .addReg(SubRegCopyHi.getReg(0))
-              .addReg(OpcodeRegPair.second);
-      SRegIdx.SrcReg = VSel.getReg(0);
-      SRegIdx.IdxReg = NewIdx.getReg(0);
+      auto VSel = MIB.buildInstr(VSelOpcode, {&AIE2::VEC512RegClass}, {})
+                      .addReg(SelSrcIdx.SubSrcReg512Lo)
+                      .addReg(SelSrcIdx.SubSrcReg512Hi)
+                      .addReg(VSelReg);
+      SelSrcIdx.VSelOpcode = VSelOpcode;
+      SelSrcIdx.VSelReg = VSelReg;
+      SelSrcIdx.SrcReg = VSel.getReg(0);
+      SelSrcIdx.IdxReg = NewIdx.getReg(0);
       constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *VSel,
                                AIE2::VEC512RegClass, VSel->getOperand(1));
       constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *VSel,
                                AIE2::VEC512RegClass, VSel->getOperand(2));
-      // Const Idx case
     } else {
+      // Const Idx case
       unsigned LaneIdx = IdxVal->Value.getZExtValue();
       unsigned AdjustedIdx =
           LaneIdx < HalfNumLanes ? LaneIdx : LaneIdx - HalfNumLanes;
-      SRegIdx.IdxReg =
+      SelSrcIdx.IdxReg =
           MIB.buildInstr(AIE2::MOV_RLC_imm10_pseudo, {&AIE2::eRRegClass}, {})
               .addImm(AdjustedIdx)
               .getReg(0);
@@ -4276,20 +4280,22 @@ getEXTRACT_VECTOR_ELTInputs(MachineInstr &I, const TargetRegisterInfo &TRI,
         auto SubRegCopyLo = MIB.buildInstr(TargetOpcode::COPY, {SrcRegLo}, {})
                                 .addReg(SrcReg0, 0, AIE2::sub_512_lo);
         RegOp0.setReg(SubRegCopyLo.getReg(0));
-        SRegIdx.SrcReg = SrcRegLo;
+        SelSrcIdx.SrcReg = SrcRegLo;
+        SelSrcIdx.SelLoOrHi = 0;
       } else {
         auto SubRegCopyHi = MIB.buildInstr(TargetOpcode::COPY, {SrcRegHi}, {})
                                 .addReg(SrcReg0, 0, AIE2::sub_512_hi);
         RegOp0.setReg(SubRegCopyHi.getReg(0));
-        SRegIdx.SrcReg = SrcRegHi;
+        SelSrcIdx.SrcReg = SrcRegHi;
+        SelSrcIdx.SelLoOrHi = 1;
       }
     }
     break;
   }
   default:
-    llvm_unreachable("Unhandled Input Operand Size For EXTRACT_VECTOR_ELT");
+    llvm_unreachable("Unexpected input vector size for extract vector elt!");
   }
-  return SRegIdx;
+  return SelSrcIdx;
 }
 
 bool AIE2InstructionSelector::selectG_AIE_EXTRACT_VECTOR_ELT(
@@ -4300,12 +4306,12 @@ bool AIE2InstructionSelector::selectG_AIE_EXTRACT_VECTOR_ELT(
   LLT SrcVecTy = MRI.getType(SrcReg0);
   LLT SrcEltTy = SrcVecTy.getElementType();
   unsigned EltSize = SrcEltTy.getSizeInBits();
-  SrcRegAndIndex SRegIdx =
-      getEXTRACT_VECTOR_ELTInputs(I, TRI, MRI, TII, RBI, MIB);
+  SelSrcAndIdx SelSrcIdx =
+      getExtractVectorEltInputs(I, TRI, MRI, TII, RBI, MIB);
   unsigned Opcode = getExtractVecEltOpcode(EltSize, I.getOpcode());
   MachineInstrBuilder MI = MIB.buildInstr(Opcode, {DstReg}, {})
-                               .addReg(SRegIdx.SrcReg)
-                               .addReg(SRegIdx.IdxReg);
+                               .addReg(SelSrcIdx.SrcReg)
+                               .addReg(SelSrcIdx.IdxReg);
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
 }
