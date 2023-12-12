@@ -439,6 +439,16 @@ def : Pat<(int_aie2_vsel16 VEC512:$src1, VEC512:$src2, eRS8:$rsel),
 def : Pat<(int_aie2_vsel32 VEC512:$src1, VEC512:$src2, eRS8:$rsel),
            (VSEL_32 VEC512:$src1, VEC512:$src2, eRS8:$rsel)>;
 
+// VADDSUB
+def : Pat<(int_aie2_vaddsub8 VEC512:$src1, VEC512:$src2, eL:$lsel),
+           (VADDSUB_8 VEC512:$src1, VEC512:$src2, eL:$lsel)>;
+
+def : Pat<(int_aie2_vaddsub16 VEC512:$src1, VEC512:$src2, eRS8:$rsel),
+           (VADDSUB_16 VEC512:$src1, VEC512:$src2, eRS8:$rsel)>;
+
+def : Pat<(int_aie2_vaddsub32 VEC512:$src1, VEC512:$src2, eRS8:$rsel),
+           (VADDSUB_32 VEC512:$src1, VEC512:$src2, eRS8:$rsel)>;
+
 // VADD/VSUB
 def : Pat<(add v64i8:$src1, v64i8:$src2),   (VADD_8  VEC512:$src1, VEC512:$src2)>;
 def : Pat<(add v32i16:$src1, v32i16:$src2), (VADD_16 VEC512:$src1, VEC512:$src2)>;
