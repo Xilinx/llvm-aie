@@ -344,18 +344,15 @@ AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
         const LLT &EltTy = Query.Types[1].getElementType();
         return Query.Types[0] != EltTy;
       })
-      .lowerIf([=](const LegalityQuery &Query) {
-        const LLT &VecTy = Query.Types[1];
-        return VecTy == V2S32;
-      })
       .legalIf([=](const LegalityQuery &Query) {
         const LLT &VecTy = Query.Types[1];
         return VecTy == V8S32 || VecTy == V16S32 || VecTy == V32S32;
       })
       .customIf([=](const LegalityQuery &Query) {
         const LLT &VecTy = Query.Types[1];
-        return VecTy == V16S16 || VecTy == V32S8 || VecTy == V32S16 ||
-               VecTy == V64S8 || VecTy == V64S16 || VecTy == V128S8;
+        return VecTy == V2S32 || VecTy == V16S16 || VecTy == V32S8 ||
+               VecTy == V32S16 || VecTy == V64S8 || VecTy == V64S16 ||
+               VecTy == V128S8;
       });
 
   // Control-flow
@@ -625,22 +622,51 @@ bool AIELegalizerInfo::legalizeG_EXTRACT_VECTOR_ELT(LegalizerHelper &Helper,
                                                     MachineInstr &MI) const {
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
   MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
-  Register DstReg = MI.getOperand(0).getReg();
-  Register SrcReg0 = MI.getOperand(1).getReg();
-  Register SrcReg1 = MI.getOperand(2).getReg();
-  LLT VecTy = MRI.getType(SrcReg0);
-  LLT EltTy = VecTy.getElementType();
-  assert(EltTy == MRI.getType(DstReg));
-  LLT S32 = LLT::scalar(32);
-  Register ExtractNewDstReg = MRI.createGenericVirtualRegister(S32);
-  Register ExtDstReg = MRI.createGenericVirtualRegister(S32);
-  auto ExtractVecI =
-      MIRBuilder.buildInstr(AIE2::G_AIE_SEXT_EXTRACT_VECTOR_ELT,
-                            {ExtractNewDstReg}, {SrcReg0, SrcReg1});
-  auto ExtI =
-      MIRBuilder.buildAssertInstr(TargetOpcode::G_ASSERT_SEXT, ExtDstReg,
-                                  ExtractVecI.getReg(0), EltTy.getSizeInBits());
-  MIRBuilder.buildTrunc(DstReg, ExtI.getReg(0));
+  const Register DstReg = MI.getOperand(0).getReg();
+  const Register SrcVecReg = MI.getOperand(1).getReg();
+  const Register IdxReg = MI.getOperand(2).getReg();
+  const LLT SrcVecTy = MRI.getType(SrcVecReg);
+  const unsigned SrcVecSize = SrcVecTy.getSizeInBits();
+  const LLT SrcVecEltTy = SrcVecTy.getElementType();
+  assert(SrcVecEltTy == MRI.getType(DstReg));
+
+  const LLT S32 = LLT::scalar(32);
+  switch (SrcVecSize) {
+  case 64: {
+    assert(SrcVecTy == LLT::fixed_vector(2, 32) && "Unexpected 64bit vector!");
+    const Register Reg0 = MRI.createGenericVirtualRegister(S32);
+    const Register Reg1 = MRI.createGenericVirtualRegister(S32);
+    MIRBuilder.buildUnmerge({Reg0, Reg1}, SrcVecReg);
+
+    auto IdxVal = getIConstantVRegValWithLookThrough(IdxReg, MRI);
+    if (!IdxVal)
+      MIRBuilder.buildSelect(DstReg, IdxReg, Reg1, Reg0);
+    else {
+      const unsigned LaneIdx = IdxVal->Value.getZExtValue();
+      if (LaneIdx)
+        MIRBuilder.buildCopy(DstReg, Reg1);
+      else
+        MIRBuilder.buildCopy(DstReg, Reg0);
+    }
+    break;
+  }
+  case 256:
+  case 512:
+  case 1024: {
+    assert((SrcVecEltTy == LLT::scalar(8) || SrcVecEltTy == LLT::scalar(16)) &&
+           "Unexpected vector element type for extract vector elt!");
+    const Register ExtEltDstReg = MRI.createGenericVirtualRegister(S32);
+    const Register ExtDstReg = MRI.createGenericVirtualRegister(S32);
+    MIRBuilder.buildInstr(AIE2::G_AIE_SEXT_EXTRACT_VECTOR_ELT, {ExtEltDstReg},
+                          {SrcVecReg, IdxReg});
+    MIRBuilder.buildAssertInstr(TargetOpcode::G_ASSERT_SEXT, ExtDstReg,
+                                ExtEltDstReg, SrcVecEltTy.getSizeInBits());
+    MIRBuilder.buildTrunc(DstReg, ExtDstReg);
+    break;
+  }
+  default:
+    llvm_unreachable("Unexpected vector size for extract vector elt!");
+  }
   MI.removeFromParent();
   return true;
 }
