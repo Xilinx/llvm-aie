@@ -472,6 +472,26 @@ def : Pat<(sub v64i8:$src1, v64i8:$src2),   (VSUB_8  VEC512:$src1, VEC512:$src2)
 def : Pat<(sub v32i16:$src1, v32i16:$src2), (VSUB_16 VEC512:$src1, VEC512:$src2)>;
 def : Pat<(sub v16i32:$src1, v16i32:$src2), (VSUB_32 VEC512:$src1, VEC512:$src2)>;
 
+// VSUB_LT/VSUB_GE
+class VSUB_LT_GE_INSTR<SDPatternOperator OpNode, AIE2Inst Inst, bits<1> sgn>:
+    Pat<(OpNode VEC512:$src1, VEC512:$src2, sgn), (Inst VEC512:$src1, VEC512:$src2)>;
+
+def : VSUB_LT_GE_INSTR<int_aie2_vsub_lt8, VSUB_LT_D8, 0x0>;
+def : VSUB_LT_GE_INSTR<int_aie2_vsub_lt16, VSUB_LT_D16, 0x0>;
+def : VSUB_LT_GE_INSTR<int_aie2_vsub_lt32, VSUB_LT_D32, 0x0>;
+
+def : VSUB_LT_GE_INSTR<int_aie2_vsub_ge8, VSUB_GE_D8, 0x0>;
+def : VSUB_LT_GE_INSTR<int_aie2_vsub_ge16, VSUB_GE_D16, 0x0>;
+def : VSUB_LT_GE_INSTR<int_aie2_vsub_ge32, VSUB_GE_D32, 0x0>;
+
+def : VSUB_LT_GE_INSTR<int_aie2_vsub_lt8, VSUB_LT_S8, 0x1>;
+def : VSUB_LT_GE_INSTR<int_aie2_vsub_lt16, VSUB_LT_S16, 0x1>;
+def : VSUB_LT_GE_INSTR<int_aie2_vsub_lt32, VSUB_LT_S32, 0x1>;
+
+def : VSUB_LT_GE_INSTR<int_aie2_vsub_ge8, VSUB_GE_S8, 0x1>;
+def : VSUB_LT_GE_INSTR<int_aie2_vsub_ge16, VSUB_GE_S16, 0x1>;
+def : VSUB_LT_GE_INSTR<int_aie2_vsub_ge32, VSUB_GE_S32, 0x1>;
+
 // VINSERT
 def : Pat<(int_aie2_vinsert8_I512 VEC512:$s1, eR29:$idx, eR:$s0),
            (VINSERT_8 VEC512:$s1, eR29:$idx, eR:$s0)>;
