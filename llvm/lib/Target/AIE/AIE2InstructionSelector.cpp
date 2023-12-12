@@ -148,6 +148,7 @@ public:
   bool selectSetControlRegister(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVMAXDIFF_LT(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVABS_GTZ(MachineInstr &I, MachineRegisterInfo &MRI);
+  bool selectVSUB_LTGE(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVEXTRACT(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVCompare(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVSRS(MachineInstr &I, MachineRegisterInfo &MRI);
@@ -438,6 +439,19 @@ unsigned AIE2InstructionSelector::getOpCode(Intrinsic::ID IntrinsicID) {
     return AIE2::VABS_GTZ_D16;
   case Intrinsic::aie2_vabs_gtz32:
     return AIE2::VABS_GTZ_D32;
+  // VSUB_LT/VSUB_GE
+  case Intrinsic::aie2_vsub_lt8:
+    return AIE2::VSUB_LT_D8;
+  case Intrinsic::aie2_vsub_lt16:
+    return AIE2::VSUB_LT_D16;
+  case Intrinsic::aie2_vsub_lt32:
+    return AIE2::VSUB_LT_D32;
+  case Intrinsic::aie2_vsub_ge8:
+    return AIE2::VSUB_GE_D8;
+  case Intrinsic::aie2_vsub_ge16:
+    return AIE2::VSUB_GE_D16;
+  case Intrinsic::aie2_vsub_ge32:
+    return AIE2::VSUB_GE_D32;
   // Streams
   case Intrinsic::aie2_get_ss:
     return AIE2::MOV_mv_ss2scl;
@@ -539,6 +553,13 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
     case Intrinsic::aie2_vabs_gtz16:
     case Intrinsic::aie2_vabs_gtz32:
       return selectVABS_GTZ(I, MRI);
+    case Intrinsic::aie2_vsub_lt8:
+    case Intrinsic::aie2_vsub_lt16:
+    case Intrinsic::aie2_vsub_lt32:
+    case Intrinsic::aie2_vsub_ge8:
+    case Intrinsic::aie2_vsub_ge16:
+    case Intrinsic::aie2_vsub_ge32:
+      return selectVSUB_LTGE(I, MRI);
     case Intrinsic::aie2_acc32_v16_I256_ups:
     case Intrinsic::aie2_acc32_v32_I256_ups:
     case Intrinsic::aie2_acc32_v32_I512_ups:
@@ -1174,6 +1195,32 @@ bool AIE2InstructionSelector::selectVABS_GTZ(MachineInstr &I,
   unsigned OpCode = getOpCode(cast<GIntrinsic>(I).getIntrinsicID());
   MachineInstrBuilder MI =
       MIB.buildInstr(OpCode, {DstReg, CmpReg}, {}).addReg(SrcReg);
+
+  setUnsetCtrlRegister(*MI, MRI, AIE2::crVaddSign, SignReg);
+
+  I.eraseFromParent();
+  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
+}
+
+bool AIE2InstructionSelector::selectVSUB_LTGE(MachineInstr &I,
+                                              MachineRegisterInfo &MRI) {
+
+  Register DstReg = I.getOperand(0).getReg();
+  Register CmpReg = I.getOperand(1).getReg();
+  // In this case of G_INTRINSIC operand 2 is target intrinsic
+  Register Src1Reg = I.getOperand(3).getReg();
+  Register Src2Reg = I.getOperand(4).getReg();
+  Register SignReg = I.getOperand(5).getReg();
+
+  if (auto SignVal = getIConstantVRegSExtVal(SignReg, MRI)) {
+    // Handle constant sign through instruction patterns
+    return selectImpl(I, *CoverageInfo);
+  }
+
+  unsigned OpCode = getOpCode(I.getIntrinsicID());
+  MachineInstrBuilder MI = MIB.buildInstr(OpCode, {DstReg, CmpReg}, {})
+                               .addReg(Src1Reg)
+                               .addReg(Src2Reg);
 
   setUnsetCtrlRegister(*MI, MRI, AIE2::crVaddSign, SignReg);
 
