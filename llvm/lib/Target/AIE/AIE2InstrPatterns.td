@@ -449,6 +449,20 @@ def : Pat<(int_aie2_vaddsub16 VEC512:$src1, VEC512:$src2, eRS8:$rsel),
 def : Pat<(int_aie2_vaddsub32 VEC512:$src1, VEC512:$src2, eRS8:$rsel),
            (VADDSUB_32 VEC512:$src1, VEC512:$src2, eRS8:$rsel)>;
 
+// VMAXDIFF_LT
+def : Pat<(int_aie2_vmaxdiff_lt8 VEC512:$src1, VEC512:$src2, 0x0),
+           (VMAX_LT_D8 VEC512:$src1, VEC512:$src2)>;
+def : Pat<(int_aie2_vmaxdiff_lt16 VEC512:$src1, VEC512:$src2, 0x0),
+           (VMAX_LT_D16 VEC512:$src1, VEC512:$src2)>;
+def : Pat<(int_aie2_vmaxdiff_lt32 VEC512:$src1, VEC512:$src2, 0x0),
+           (VMAX_LT_D32 VEC512:$src1, VEC512:$src2)>;
+def : Pat<(int_aie2_vmaxdiff_lt8 VEC512:$src1, VEC512:$src2, 0x1),
+           (VMAX_LT_S8 VEC512:$src1, VEC512:$src2)>;
+def : Pat<(int_aie2_vmaxdiff_lt16 VEC512:$src1, VEC512:$src2, 0x1),
+           (VMAX_LT_S16 VEC512:$src1, VEC512:$src2)>;
+def : Pat<(int_aie2_vmaxdiff_lt32 VEC512:$src1, VEC512:$src2, 0x1),
+           (VMAX_LT_S32 VEC512:$src1, VEC512:$src2)>;
+
 // VADD/VSUB
 def : Pat<(add v64i8:$src1, v64i8:$src2),   (VADD_8  VEC512:$src1, VEC512:$src2)>;
 def : Pat<(add v32i16:$src1, v32i16:$src2), (VADD_16 VEC512:$src1, VEC512:$src2)>;
