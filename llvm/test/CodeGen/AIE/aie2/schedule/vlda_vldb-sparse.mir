@@ -17,7 +17,7 @@ body:             |
     ; CHECK-LABEL: name: II_VLDA_II_VLDB_SPARSE_FILL
     ; CHECK: VST_dmw_sts_w_ag_idx_imm killed $wl0, $p0, 0
     ; CHECK-NEXT: $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p1, 0 {
-    ; CHECK-NEXT:   $p0 = VLDB_SPARSE_FILL_4 killed $p0, implicit killed $dp, implicit-def $srsparse_of
+    ; CHECK-NEXT:   $p0 = VLDB_SPARSE_FILL_4 killed $p0, implicit-def $srsparse_of, implicit killed $dp
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
@@ -26,7 +26,7 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     VST_dmw_sts_w_ag_idx_imm $wl0, $p0, 0
-    $p0 = VLDB_SPARSE_FILL_4 $p0, implicit $dp, implicit-def $srsparse_of
+    $p0 = VLDB_SPARSE_FILL_4 $p0, implicit-def $srsparse_of, implicit $dp
     $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p1, 0
 ...
 
@@ -38,7 +38,7 @@ body:             |
     ; CHECK-LABEL: name: II_VLDA_II_VLDB_SPARSE_RESET
     ; CHECK: VST_dmw_sts_w_ag_idx_imm killed $wl0, $p0, 0
     ; CHECK-NEXT: $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p1, 0 {
-    ; CHECK-NEXT:   $p0 = VLDB_SPARSE_RESET_4 killed $p0, implicit killed $dp, implicit-def $srsparse_of, implicit-def $dp
+    ; CHECK-NEXT:   $p0 = VLDB_SPARSE_RESET_4 killed $p0, implicit-def $srsparse_of, implicit-def $dp, implicit killed $dp
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
@@ -47,7 +47,7 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     VST_dmw_sts_w_ag_idx_imm $wl0, $p0, 0
-    $p0 = VLDB_SPARSE_RESET_4 $p0, implicit $dp, implicit-def $srsparse_of, implicit-def $dp
+    $p0 = VLDB_SPARSE_RESET_4 $p0, implicit-def $srsparse_of, implicit-def $dp, implicit $dp
     $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p1, 0
 ...
 
@@ -59,7 +59,7 @@ body:             |
     ; CHECK-LABEL: name: II_VLDA_II_VLDB_SPARSE_PEEK
     ; CHECK: VST_dmw_sts_w_ag_idx_imm killed $wl0, $p0, 0
     ; CHECK-NEXT: $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p1, 0 {
-    ; CHECK-NEXT:   $p0, $qwh0 = VLDB_SPARSE_PEEK_4 killed $p0, implicit killed $dp, implicit-def $srsparse_of, implicit-def $srcompr_uf
+    ; CHECK-NEXT:   $p0, $qwh0 = VLDB_SPARSE_PEEK_4 killed $p0, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit killed $dp
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
@@ -68,7 +68,7 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     VST_dmw_sts_w_ag_idx_imm $wl0, $p0, 0
-    $p0, $qwh0 = VLDB_SPARSE_PEEK_4 $p0, implicit $dp, implicit-def $srsparse_of, implicit-def $srcompr_uf
+    $p0, $qwh0 = VLDB_SPARSE_PEEK_4 $p0, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit $dp
     $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p1, 0
 ...
 
@@ -80,7 +80,7 @@ body:             |
     ; CHECK-LABEL: name: II_VLDA_II_VLDB_SPARSE_POP
     ; CHECK: VST_dmw_sts_w_ag_idx_imm killed $wl0, $p0, 0
     ; CHECK-NEXT: $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p1, 0 {
-    ; CHECK-NEXT:   $p0, $qwh0 = VLDB_SPARSE_POP_4 killed $p0, implicit killed $dp, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp
+    ; CHECK-NEXT:   $p0, $qwh0 = VLDB_SPARSE_POP_4 killed $p0, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit killed $dp
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
@@ -89,6 +89,6 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     VST_dmw_sts_w_ag_idx_imm $wl0, $p0, 0
-    $p0, $qwh0 = VLDB_SPARSE_POP_4 $p0, implicit $dp, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp
+    $p0, $qwh0 = VLDB_SPARSE_POP_4 $p0, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
     $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p1, 0
 ...

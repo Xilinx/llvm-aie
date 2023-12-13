@@ -18,32 +18,32 @@ body:             |
   bb.0 (align 16):
     ; VLDB.sparse - Vector Loads with sparse decompression
     ; VLDB.SPARSE.POP.4
-    $p0, $qwh0 = VLDB_SPARSE_POP_4 $p0, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of, implicit-def $dp
-    $p1, $qwl0 = VLDB_SPARSE_POP_4 $p1, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of, implicit-def $dp
-    $p2, $qwh1 = VLDB_SPARSE_POP_4 $p2, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of, implicit-def $dp
-    $p3, $qwl1 = VLDB_SPARSE_POP_4 $p3, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of, implicit-def $dp
-    $p4, $qwh2 = VLDB_SPARSE_POP_4 $p4, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of, implicit-def $dp
-    $p5, $qwl2 = VLDB_SPARSE_POP_4 $p5, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of, implicit-def $dp
-    $p6, $qwh3 = VLDB_SPARSE_POP_4 $p6, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of, implicit-def $dp
-    $p7, $qwl3 = VLDB_SPARSE_POP_4 $p7, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of, implicit-def $dp
+    $p0, $qwh0 = VLDB_SPARSE_POP_4 $p0, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
+    $p1, $qwl0 = VLDB_SPARSE_POP_4 $p1, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
+    $p2, $qwh1 = VLDB_SPARSE_POP_4 $p2, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
+    $p3, $qwl1 = VLDB_SPARSE_POP_4 $p3, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
+    $p4, $qwh2 = VLDB_SPARSE_POP_4 $p4, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
+    $p5, $qwl2 = VLDB_SPARSE_POP_4 $p5, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
+    $p6, $qwh3 = VLDB_SPARSE_POP_4 $p6, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
+    $p7, $qwl3 = VLDB_SPARSE_POP_4 $p7, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
     ; VLDB.SPARSE.POP.8
-    $p0, $qwh0 = VLDB_SPARSE_POP_8 $p0, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of, implicit-def $dp
-    $p1, $qwl0 = VLDB_SPARSE_POP_8 $p1, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of, implicit-def $dp
-    $p2, $qwh1 = VLDB_SPARSE_POP_8 $p2, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of, implicit-def $dp
-    $p3, $qwl1 = VLDB_SPARSE_POP_8 $p3, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of, implicit-def $dp
-    $p4, $qwh2 = VLDB_SPARSE_POP_8 $p4, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of, implicit-def $dp
-    $p5, $qwl2 = VLDB_SPARSE_POP_8 $p5, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of, implicit-def $dp
-    $p6, $qwh3 = VLDB_SPARSE_POP_8 $p6, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of, implicit-def $dp
-    $p7, $qwl3 = VLDB_SPARSE_POP_8 $p7, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of, implicit-def $dp
+    $p0, $qwh0 = VLDB_SPARSE_POP_8 $p0, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
+    $p1, $qwl0 = VLDB_SPARSE_POP_8 $p1, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
+    $p2, $qwh1 = VLDB_SPARSE_POP_8 $p2, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
+    $p3, $qwl1 = VLDB_SPARSE_POP_8 $p3, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
+    $p4, $qwh2 = VLDB_SPARSE_POP_8 $p4, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
+    $p5, $qwl2 = VLDB_SPARSE_POP_8 $p5, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
+    $p6, $qwh3 = VLDB_SPARSE_POP_8 $p6, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
+    $p7, $qwl3 = VLDB_SPARSE_POP_8 $p7, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
     ; VLDB.SPARSE.POP.16
-    $p0, $qwh0 = VLDB_SPARSE_POP_16 $p0, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of, implicit-def $dp
-    $p1, $qwl0 = VLDB_SPARSE_POP_16 $p1, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of, implicit-def $dp
-    $p2, $qwh1 = VLDB_SPARSE_POP_16 $p2, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of, implicit-def $dp
-    $p3, $qwl1 = VLDB_SPARSE_POP_16 $p3, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of, implicit-def $dp
-    $p4, $qwh2 = VLDB_SPARSE_POP_16 $p4, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of, implicit-def $dp
-    $p5, $qwl2 = VLDB_SPARSE_POP_16 $p5, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of, implicit-def $dp
-    $p6, $qwh3 = VLDB_SPARSE_POP_16 $p6, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of, implicit-def $dp
-    $p7, $qwl3 = VLDB_SPARSE_POP_16 $p7, implicit $dp, implicit-def $srcompr_uf, implicit-def $srsparse_of, implicit-def $dp
+    $p0, $qwh0 = VLDB_SPARSE_POP_16 $p0, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
+    $p1, $qwl0 = VLDB_SPARSE_POP_16 $p1, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
+    $p2, $qwh1 = VLDB_SPARSE_POP_16 $p2, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
+    $p3, $qwl1 = VLDB_SPARSE_POP_16 $p3, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
+    $p4, $qwh2 = VLDB_SPARSE_POP_16 $p4, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
+    $p5, $qwl2 = VLDB_SPARSE_POP_16 $p5, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
+    $p6, $qwh3 = VLDB_SPARSE_POP_16 $p6, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
+    $p7, $qwl3 = VLDB_SPARSE_POP_16 $p7, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
 ...
 
 # CHECK: 0: 19 00 58 38 vldb.sparse.pop.4 qwh0, [p0]
