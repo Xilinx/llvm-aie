@@ -835,7 +835,7 @@ MemInstrItinData<II_VST_3D_CONV, [SimpleCycle<CM_RM_PORT>, SimpleCycle<STORE_UNI
               MemoryCycles<7>>,
 // VCONV.bf16.fp32
 InstrItinData<II_VCONV, [SimpleCycle<CM_RM_PORT>, SimpleCycle<W_WA_PORT>],
-              [2,1,/*crRnd*/1,/*srF2FFlags*/1,/*crF2FMask*/1]>,
+              [2,1,/*def:srF2FFlags*/1,/*def:crF2FMask*/1,/*crRnd*/1]>,
 // VFLOOR – Vector bfloat16 to Integer Conversion, VFLOOR.s32.bf16
 InstrItinData<II_VFLOORs32bf16_AM, [SimpleCycle<CM_RM_PORT>, SimpleCycle<W_WA_PORT>],
               [2,1,1,/*srF2IFlags*/2,/*crF2IMask*/1]>,
