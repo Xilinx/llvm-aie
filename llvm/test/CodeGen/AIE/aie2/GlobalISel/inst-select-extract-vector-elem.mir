@@ -131,7 +131,7 @@ body:             |
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
     %1:vregbank(<8 x s32>) = COPY $wl0
     %2:gprregbank(s32) = G_CONSTANT i32 1
-    %0:gprregbank(s32) = G_EXTRACT_VECTOR_ELT %1(<8 x s32>), %2(s32)
+    %0:gprregbank(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %1(<8 x s32>), %2(s32)
     $r0 = COPY %0(s32)
     PseudoRET implicit $lr, implicit $r0
 
@@ -251,7 +251,7 @@ body:             |
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
     %1:vregbank(<16 x s32>) = COPY $x0
     %2:gprregbank(s32) = G_CONSTANT i32 1
-    %0:gprregbank(s32) = G_EXTRACT_VECTOR_ELT %1(<16 x s32>), %2(s32)
+    %0:gprregbank(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %1(<16 x s32>), %2(s32)
     $r0 = COPY %0(s32)
     PseudoRET implicit $lr, implicit $r0
 ...
@@ -375,7 +375,7 @@ body:             |
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
     %1:vregbank(<32 x s32>) = COPY $y2
     %2:gprregbank(s32) = G_CONSTANT i32 1
-    %0:gprregbank(s32) = G_EXTRACT_VECTOR_ELT %1(<32 x s32>), %2(s32)
+    %0:gprregbank(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %1(<32 x s32>), %2(s32)
     $r0 = COPY %0(s32)
     PseudoRET implicit $lr, implicit $r0
 
@@ -406,8 +406,8 @@ body:             |
     %1:vregbank(<32 x s16>) = COPY $x0
     %3:gprregbank(s32) = G_CONSTANT i32 17
     %5:gprregbank(s32) = G_CONSTANT i32 0
-    %2:gprregbank(s16) = G_EXTRACT_VECTOR_ELT %1(<32 x s16>), %3(s32)
-    %4:gprregbank(s16) = G_EXTRACT_VECTOR_ELT %1(<32 x s16>), %5(s32)
+    %2:gprregbank(s16) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %1(<32 x s16>), %3(s32)
+    %4:gprregbank(s16) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %1(<32 x s16>), %5(s32)
     %7:gprregbank(s32) = G_ANYEXT %4(s16)
     %8:gprregbank(s32) = G_ANYEXT %2(s16)
     %9:gprregbank(s32) = G_ADD %7, %8
@@ -444,7 +444,7 @@ body:             |
     %1:vregbank(<32 x s32>) = COPY $y2
     %4:gprregbank(s32) = G_CONSTANT i32 31
     %2:ptrregbank(p0) = G_FRAME_INDEX %stack.0
-    %3:gprregbank(s32) = G_EXTRACT_VECTOR_ELT %1(<32 x s32>), %4(s32)
+    %3:gprregbank(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %1(<32 x s32>), %4(s32)
     LIFETIME_START %stack.0
     G_STORE %3(s32), %2(p0) :: (volatile store (s32))
     %0:gprregbank(s32) = G_LOAD %2(p0) :: (volatile dereferenceable load (s32))
@@ -551,7 +551,7 @@ body:             |
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
     %1:vregbank(<32 x s32>) = COPY $y2
     %2:gprregbank(s32) = G_CONSTANT i32 15
-    %0:gprregbank(s32) = G_EXTRACT_VECTOR_ELT %1(<32 x s32>), %2(s32)
+    %0:gprregbank(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %1(<32 x s32>), %2(s32)
     $r0 = COPY %0(s32)
     PseudoRET implicit $lr, implicit $r0
 
@@ -660,7 +660,7 @@ body:             |
     %1:vregbank(<32 x s32>) = COPY $y2
     %2:ptrregbank(p0) = G_FRAME_INDEX %stack.0
     %3:gprregbank(s32) = G_LOAD %2(p0) :: (volatile dereferenceable load (s32))
-    %0:gprregbank(s32) = G_EXTRACT_VECTOR_ELT %1(<32 x s32>), %3(s32)
+    %0:gprregbank(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %1(<32 x s32>), %3(s32)
     $r0 = COPY %0(s32)
     PseudoRET implicit $lr, implicit $r0
 

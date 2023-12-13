@@ -684,7 +684,6 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
     return selectG_AIE_LOAD_STORE(I, MRI);
   case AIE2::G_AIE_ZEXT_EXTRACT_VECTOR_ELT:
   case AIE2::G_AIE_SEXT_EXTRACT_VECTOR_ELT:
-  case AIE2::G_EXTRACT_VECTOR_ELT:
     return selectG_AIE_EXTRACT_VECTOR_ELT(I, MRI);
   case AIE2::G_AIE_PAD_VECTOR_UNDEF:
     return selectSetI128(I, I.getOperand(0).getReg(), I.getOperand(1).getReg(),
