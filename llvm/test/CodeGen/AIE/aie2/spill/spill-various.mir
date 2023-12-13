@@ -28,7 +28,7 @@ body:             |
     ; CHECK-NEXT: ST_dms_spill $dj3, -16, implicit $sp :: (store (s32) into %stack.3)
     ; CHECK-NEXT: ST_dms_spill $dn4, -12, implicit $sp :: (store (s32) into %stack.4)
     ; CHECK-NEXT: ST_dms_spill $dc5, -8, implicit $sp :: (store (s32) into %stack.5)
-    ; CHECK-NEXT: JL 32, csr_aie2, implicit-def $lr
+    ; CHECK-NEXT: PseudoJL 32, csr_aie2, implicit-def $lr
     ; CHECK-NEXT: $dc5 = LDA_dms_spill -8, implicit $sp :: (load (s32) from %stack.5)
     ; CHECK-NEXT: $dn4 = LDA_dms_spill -12, implicit $sp :: (load (s32) from %stack.4)
     ; CHECK-NEXT: $dj3 = LDA_dms_spill -16, implicit $sp :: (load (s32) from %stack.3)
@@ -44,6 +44,6 @@ body:             |
     %3:edj = COPY $dj3
     %4:edn = COPY $dn4
     %5:edc = COPY $dc5
-    JL 32, csr_aie2, implicit-def $lr
+    PseudoJL 32, csr_aie2, implicit-def $lr
     PseudoRET implicit $lr, implicit %0, implicit %1, implicit %2, implicit %3, implicit %4, implicit %5
 ...

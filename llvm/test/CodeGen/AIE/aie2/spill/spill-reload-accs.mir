@@ -54,11 +54,11 @@ body:             |
     ; CHECK: liveins: $amll0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: VST_dmw_sts_am_ag_spill $amll0, %stack.0, implicit $sp :: (store (s256) into %stack.0)
-    ; CHECK-NEXT: JL 32, csr_aie2, implicit-def $lr
+    ; CHECK-NEXT: PseudoJL 32, csr_aie2, implicit-def $lr
     ; CHECK-NEXT: renamable $amhh0 = VLDA_dmw_lda_am_ag_spill %stack.0, implicit $sp :: (load (s256) from %stack.0)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $amhh0
     %0:acc256 = COPY $amll0
-    JL 32, csr_aie2, implicit-def $lr
+    PseudoJL 32, csr_aie2, implicit-def $lr
     PseudoRET implicit $lr, implicit %0
 ...
 
@@ -109,11 +109,11 @@ body:             |
     ; CHECK: liveins: $bml0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: VST_BM_SPILL $bml0, %stack.0, implicit $sp :: (store (s512) into %stack.0, align 32)
-    ; CHECK-NEXT: JL 32, csr_aie2, implicit-def $lr
+    ; CHECK-NEXT: PseudoJL 32, csr_aie2, implicit-def $lr
     ; CHECK-NEXT: renamable $bmh0 = VLDA_BM_SPILL %stack.0, implicit $sp :: (load (s512) from %stack.0, align 32)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $bmh0
     %0:acc512 = COPY $bml0
-    JL 32, csr_aie2, implicit-def $lr
+    PseudoJL 32, csr_aie2, implicit-def $lr
     PseudoRET implicit $lr, implicit %0
 ...
 
@@ -164,10 +164,10 @@ body:             |
     ; CHECK: liveins: $cm0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: VST_CM_SPILL $cm0, %stack.0, implicit $sp :: (store (s1024) into %stack.0, align 32)
-    ; CHECK-NEXT: JL 32, csr_aie2, implicit-def $lr
+    ; CHECK-NEXT: PseudoJL 32, csr_aie2, implicit-def $lr
     ; CHECK-NEXT: renamable $cm0 = VLDA_CM_SPILL %stack.0, implicit $sp :: (load (s1024) from %stack.0, align 32)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $cm0
     %0:acc1024 = COPY $cm0
-    JL 32, csr_aie2, implicit-def $lr
+    PseudoJL 32, csr_aie2, implicit-def $lr
     PseudoRET implicit $lr, implicit %0
 ...
