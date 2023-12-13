@@ -18,32 +18,32 @@ body:             |
   bb.0 (align 16):
     ; VLDB.sparse - Vector Loads with sparse decompression
     ; VLDB.SPARSE.RESET.4
-    $p0 = VLDB_SPARSE_RESET_4 $p0, implicit $dp, implicit-def $srsparse_of, implicit-def $dp
-    $p1 = VLDB_SPARSE_RESET_4 $p1, implicit $dp, implicit-def $srsparse_of, implicit-def $dp
-    $p2 = VLDB_SPARSE_RESET_4 $p2, implicit $dp, implicit-def $srsparse_of, implicit-def $dp
-    $p3 = VLDB_SPARSE_RESET_4 $p3, implicit $dp, implicit-def $srsparse_of, implicit-def $dp
-    $p4 = VLDB_SPARSE_RESET_4 $p4, implicit $dp, implicit-def $srsparse_of, implicit-def $dp
-    $p5 = VLDB_SPARSE_RESET_4 $p5, implicit $dp, implicit-def $srsparse_of, implicit-def $dp
-    $p6 = VLDB_SPARSE_RESET_4 $p6, implicit $dp, implicit-def $srsparse_of, implicit-def $dp
-    $p7 = VLDB_SPARSE_RESET_4 $p7, implicit $dp, implicit-def $srsparse_of, implicit-def $dp
+    $p0 = VLDB_SPARSE_RESET_4 $p0, implicit-def $srsparse_of, implicit-def $dp, implicit $dp
+    $p1 = VLDB_SPARSE_RESET_4 $p1, implicit-def $srsparse_of, implicit-def $dp, implicit $dp
+    $p2 = VLDB_SPARSE_RESET_4 $p2, implicit-def $srsparse_of, implicit-def $dp, implicit $dp
+    $p3 = VLDB_SPARSE_RESET_4 $p3, implicit-def $srsparse_of, implicit-def $dp, implicit $dp
+    $p4 = VLDB_SPARSE_RESET_4 $p4, implicit-def $srsparse_of, implicit-def $dp, implicit $dp
+    $p5 = VLDB_SPARSE_RESET_4 $p5, implicit-def $srsparse_of, implicit-def $dp, implicit $dp
+    $p6 = VLDB_SPARSE_RESET_4 $p6, implicit-def $srsparse_of, implicit-def $dp, implicit $dp
+    $p7 = VLDB_SPARSE_RESET_4 $p7, implicit-def $srsparse_of, implicit-def $dp, implicit $dp
     ; VLDB.SPARSE.RESET.8
-    $p0 = VLDB_SPARSE_RESET_8 $p0, implicit $dp, implicit-def $srsparse_of, implicit-def $dp
-    $p1 = VLDB_SPARSE_RESET_8 $p1, implicit $dp, implicit-def $srsparse_of, implicit-def $dp
-    $p2 = VLDB_SPARSE_RESET_8 $p2, implicit $dp, implicit-def $srsparse_of, implicit-def $dp
-    $p3 = VLDB_SPARSE_RESET_8 $p3, implicit $dp, implicit-def $srsparse_of, implicit-def $dp
-    $p4 = VLDB_SPARSE_RESET_8 $p4, implicit $dp, implicit-def $srsparse_of, implicit-def $dp
-    $p5 = VLDB_SPARSE_RESET_8 $p5, implicit $dp, implicit-def $srsparse_of, implicit-def $dp
-    $p6 = VLDB_SPARSE_RESET_8 $p6, implicit $dp, implicit-def $srsparse_of, implicit-def $dp
-    $p7 = VLDB_SPARSE_RESET_8 $p7, implicit $dp, implicit-def $srsparse_of, implicit-def $dp
+    $p0 = VLDB_SPARSE_RESET_8 $p0, implicit-def $srsparse_of, implicit-def $dp, implicit $dp
+    $p1 = VLDB_SPARSE_RESET_8 $p1, implicit-def $srsparse_of, implicit-def $dp, implicit $dp
+    $p2 = VLDB_SPARSE_RESET_8 $p2, implicit-def $srsparse_of, implicit-def $dp, implicit $dp
+    $p3 = VLDB_SPARSE_RESET_8 $p3, implicit-def $srsparse_of, implicit-def $dp, implicit $dp
+    $p4 = VLDB_SPARSE_RESET_8 $p4, implicit-def $srsparse_of, implicit-def $dp, implicit $dp
+    $p5 = VLDB_SPARSE_RESET_8 $p5, implicit-def $srsparse_of, implicit-def $dp, implicit $dp
+    $p6 = VLDB_SPARSE_RESET_8 $p6, implicit-def $srsparse_of, implicit-def $dp, implicit $dp
+    $p7 = VLDB_SPARSE_RESET_8 $p7, implicit-def $srsparse_of, implicit-def $dp, implicit $dp
     ; VLDB.SPARSE.RESET.16
-    $p0 = VLDB_SPARSE_RESET_16 $p0, implicit $dp, implicit-def $srsparse_of, implicit-def $dp
-    $p1 = VLDB_SPARSE_RESET_16 $p1, implicit $dp, implicit-def $srsparse_of, implicit-def $dp
-    $p2 = VLDB_SPARSE_RESET_16 $p2, implicit $dp, implicit-def $srsparse_of, implicit-def $dp
-    $p3 = VLDB_SPARSE_RESET_16 $p3, implicit $dp, implicit-def $srsparse_of, implicit-def $dp
-    $p4 = VLDB_SPARSE_RESET_16 $p4, implicit $dp, implicit-def $srsparse_of, implicit-def $dp
-    $p5 = VLDB_SPARSE_RESET_16 $p5, implicit $dp, implicit-def $srsparse_of, implicit-def $dp
-    $p6 = VLDB_SPARSE_RESET_16 $p6, implicit $dp, implicit-def $srsparse_of, implicit-def $dp
-    $p7 = VLDB_SPARSE_RESET_16 $p7, implicit $dp, implicit-def $srsparse_of, implicit-def $dp
+    $p0 = VLDB_SPARSE_RESET_16 $p0, implicit-def $srsparse_of, implicit-def $dp, implicit $dp
+    $p1 = VLDB_SPARSE_RESET_16 $p1, implicit-def $srsparse_of, implicit-def $dp, implicit $dp
+    $p2 = VLDB_SPARSE_RESET_16 $p2, implicit-def $srsparse_of, implicit-def $dp, implicit $dp
+    $p3 = VLDB_SPARSE_RESET_16 $p3, implicit-def $srsparse_of, implicit-def $dp, implicit $dp
+    $p4 = VLDB_SPARSE_RESET_16 $p4, implicit-def $srsparse_of, implicit-def $dp, implicit $dp
+    $p5 = VLDB_SPARSE_RESET_16 $p5, implicit-def $srsparse_of, implicit-def $dp, implicit $dp
+    $p6 = VLDB_SPARSE_RESET_16 $p6, implicit-def $srsparse_of, implicit-def $dp, implicit $dp
+    $p7 = VLDB_SPARSE_RESET_16 $p7, implicit-def $srsparse_of, implicit-def $dp, implicit $dp
 ...
 
 # CHECK: 0: 19 00 98 38 vldb.sparse.reset.4 [p0]
