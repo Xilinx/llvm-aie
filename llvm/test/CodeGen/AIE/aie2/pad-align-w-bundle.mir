@@ -127,7 +127,7 @@ body:             |
       EVENT 0
     }
     BUNDLE implicit-def $lr {
-      JL 32, csr_aie2, implicit-def $lr
+      JL 32, implicit-def $lr
     }
     BUNDLE {
       NOP
@@ -144,7 +144,7 @@ body:             |
     BUNDLE {
       NOP
     }
-    DelayedSchedBarrier
+    DelayedSchedBarrier csr_aie2
     BUNDLE {
       EVENT 0
     }
@@ -152,7 +152,7 @@ body:             |
       NOP
     }
     BUNDLE implicit-def $lr {
-      JL 32, csr_aie2, implicit-def $lr
+      JL 32, implicit-def $lr
     }
     BUNDLE {
       NOP
@@ -169,35 +169,7 @@ body:             |
     BUNDLE {
       NOP
     }
-    DelayedSchedBarrier
-    BUNDLE {
-      EVENT 0
-    }
-    BUNDLE {
-      NOP
-    }
-    BUNDLE {
-      NOP
-    }
-    BUNDLE implicit-def $lr {
-      JL 32, csr_aie2, implicit-def $lr
-    }
-    BUNDLE {
-      NOP
-    }
-    BUNDLE {
-      NOP
-    }
-    BUNDLE {
-      NOP
-    }
-    BUNDLE {
-      NOP
-    }
-    BUNDLE {
-      NOP
-    }
-    DelayedSchedBarrier
+    DelayedSchedBarrier csr_aie2
     BUNDLE {
       EVENT 0
     }
@@ -207,11 +179,8 @@ body:             |
     BUNDLE {
       NOP
     }
-    BUNDLE {
-      NOP
-    }
     BUNDLE implicit-def $lr {
-      JL 32, csr_aie2, implicit-def $lr
+      JL 32, implicit-def $lr
     }
     BUNDLE {
       NOP
@@ -228,7 +197,7 @@ body:             |
     BUNDLE {
       NOP
     }
-    DelayedSchedBarrier
+    DelayedSchedBarrier csr_aie2
     BUNDLE {
       EVENT 0
     }
@@ -241,11 +210,8 @@ body:             |
     BUNDLE {
       NOP
     }
-    BUNDLE {
-      NOP
-    }
     BUNDLE implicit-def $lr {
-      JL 32, csr_aie2, implicit-def $lr
+      JL 32, implicit-def $lr
     }
     BUNDLE {
       NOP
@@ -262,7 +228,7 @@ body:             |
     BUNDLE {
       NOP
     }
-    DelayedSchedBarrier
+    DelayedSchedBarrier csr_aie2
     BUNDLE {
       EVENT 0
     }
@@ -278,11 +244,8 @@ body:             |
     BUNDLE {
       NOP
     }
-    BUNDLE {
-      NOP
-    }
     BUNDLE implicit-def $lr {
-      JL 32, csr_aie2, implicit-def $lr
+      JL 32, implicit-def $lr
     }
     BUNDLE {
       NOP
@@ -299,7 +262,7 @@ body:             |
     BUNDLE {
       NOP
     }
-    DelayedSchedBarrier
+    DelayedSchedBarrier csr_aie2
     BUNDLE {
       EVENT 0
     }
@@ -318,11 +281,8 @@ body:             |
     BUNDLE {
       NOP
     }
-    BUNDLE {
-      NOP
-    }
     BUNDLE implicit-def $lr {
-      JL 32, csr_aie2, implicit-def $lr
+      JL 32, implicit-def $lr
     }
     BUNDLE {
       NOP
@@ -339,7 +299,7 @@ body:             |
     BUNDLE {
       NOP
     }
-    DelayedSchedBarrier
+    DelayedSchedBarrier csr_aie2
     BUNDLE {
       EVENT 0
     }
@@ -361,11 +321,51 @@ body:             |
     BUNDLE {
       NOP
     }
+    BUNDLE implicit-def $lr {
+      JL 32, implicit-def $lr
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    DelayedSchedBarrier csr_aie2
+    BUNDLE {
+      EVENT 0
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
     BUNDLE {
       NOP
     }
     BUNDLE implicit-def $lr {
-      JL 32, csr_aie2, implicit-def $lr
+      JL 32, implicit-def $lr
     }
     BUNDLE {
       NOP
@@ -382,7 +382,7 @@ body:             |
     BUNDLE {
       NOP
     }
-    DelayedSchedBarrier
+    DelayedSchedBarrier csr_aie2
     BUNDLE {
       EVENT 0
     }
@@ -398,7 +398,7 @@ body:             |
       renamable $p0 = LDA_dms_lda_idx_imm killed renamable $p6, 0 :: (dereferenceable load (p0))
     }
     BUNDLE implicit-def $lr {
-      JL 32, csr_aie2, implicit-def $lr
+      JL 32, implicit-def $lr
     }
     BUNDLE {
       NOP

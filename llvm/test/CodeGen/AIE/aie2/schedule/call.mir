@@ -12,13 +12,13 @@ name:            call
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: call
-    ; CHECK: JL 0, csr_aie2, implicit-def $lr
+    ; CHECK: JL 0, implicit-def $lr
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: DelayedSchedBarrier implicit-def $r0
+    ; CHECK-NEXT: DelayedSchedBarrier csr_aie2, implicit-def $r0
     ; CHECK-NEXT: RET implicit $lr
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
@@ -26,8 +26,8 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: renamable $r0 = ADD_add_r_ri killed renamable $r0, 1, implicit-def $srcarry
     ; CHECK-NEXT: DelayedSchedBarrier implicit killed $r0
-    JL 0, csr_aie2, implicit-def $lr
-    DelayedSchedBarrier implicit-def $r0
+    JL 0, implicit-def $lr
+    DelayedSchedBarrier csr_aie2, implicit-def $r0
     renamable $r0 = ADD_add_r_ri killed renamable $r0, 1, implicit-def $srcarry
     RET implicit $lr
     DelayedSchedBarrier implicit $r0
