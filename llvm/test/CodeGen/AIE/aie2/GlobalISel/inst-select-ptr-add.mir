@@ -21,7 +21,7 @@ body: |
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r6
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY [[COPY]]
-    ; CHECK-NEXT: [[ADD:%[0-9]+]]:er = ADD [[COPY2]], [[COPY1]]
+    ; CHECK-NEXT: [[ADD:%[0-9]+]]:er = ADD [[COPY2]], [[COPY1]], implicit-def $srcarry
     ; CHECK-NEXT: $p0 = COPY [[ADD]]
     %0:ptrregbank(p0) = COPY $p0
     %1:gprregbank(s32) = COPY $r6
