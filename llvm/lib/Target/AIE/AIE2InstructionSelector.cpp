@@ -977,8 +977,9 @@ bool AIE2InstructionSelector::selectG_PTR_ADD(MachineInstr &I,
 
     // FIXME: Constants on the RHS could be folded into the ADD instruction by
     // relying on the TableGen patterns for G_ADD on GPRRegbank
-    I.setDesc(TII.get(AIE2::ADD));
-    return constrainSelectedInstRegOperands(I, TII, TRI, RBI);
+    MachineInstr &MI = *MIB.buildInstr(AIE2::ADD, {DstReg}, {Src1Reg, Src2Reg});
+    I.eraseFromParent();
+    return constrainSelectedInstRegOperands(MI, TII, TRI, RBI);
   }
 
   // Standard PTR bank case handled through patterns.
