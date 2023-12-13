@@ -115,82 +115,68 @@ name:            test
 body:             |
   bb.1.entry:
     EVENT 0
-    JL 32, csr_aie2, implicit-def $lr
+    JL 32, implicit-def $lr
     NOP
     NOP
     NOP
     NOP
     NOP
-    DelayedSchedBarrier
+    DelayedSchedBarrier csr_aie2
     EVENT 0
     NOP
-    JL 32, csr_aie2, implicit-def $lr
+    JL 32, implicit-def $lr
     NOP
     NOP
     NOP
     NOP
     NOP
-    DelayedSchedBarrier
-    EVENT 0
-    NOP
-    NOP
-    JL 32, csr_aie2, implicit-def $lr
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
-    DelayedSchedBarrier
+    DelayedSchedBarrier csr_aie2
     EVENT 0
     NOP
     NOP
-    NOP
-    JL 32, csr_aie2, implicit-def $lr
-    NOP
+    JL 32, implicit-def $lr
     NOP
     NOP
     NOP
     NOP
-    DelayedSchedBarrier
+    NOP
+    DelayedSchedBarrier csr_aie2
     EVENT 0
     NOP
     NOP
     NOP
-    NOP
-    JL 32, csr_aie2, implicit-def $lr
-    NOP
+    JL 32, implicit-def $lr
     NOP
     NOP
     NOP
     NOP
-    DelayedSchedBarrier
+    NOP
+    DelayedSchedBarrier csr_aie2
     EVENT 0
     NOP
     NOP
     NOP
     NOP
-    NOP
-    JL 32, csr_aie2, implicit-def $lr
-    NOP
+    JL 32, implicit-def $lr
     NOP
     NOP
     NOP
     NOP
-    DelayedSchedBarrier
+    NOP
+    DelayedSchedBarrier csr_aie2
     EVENT 0
     NOP
     NOP
     NOP
     NOP
     NOP
-    NOP
-    JL 32, csr_aie2, implicit-def $lr
-    NOP
+    JL 32, implicit-def $lr
     NOP
     NOP
     NOP
     NOP
-    DelayedSchedBarrier
+    NOP
+    DelayedSchedBarrier csr_aie2
     EVENT 0
     NOP
     NOP
@@ -198,14 +184,28 @@ body:             |
     NOP
     NOP
     NOP
-    NOP
-    JL 32, csr_aie2, implicit-def $lr
-    NOP
+    JL 32, implicit-def $lr
     NOP
     NOP
     NOP
     NOP
-    DelayedSchedBarrier
+    NOP
+    DelayedSchedBarrier csr_aie2
+    EVENT 0
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    JL 32, implicit-def $lr
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier csr_aie2
     EVENT 0
     RET implicit $lr
     DelayedSchedBarrier
