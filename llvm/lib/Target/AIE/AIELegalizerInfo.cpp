@@ -339,21 +339,15 @@ AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
       .clampScalar(0, S32, S32)
       .lower();
 
-  getActionDefinitionsBuilder(G_EXTRACT_VECTOR_ELT)
-      .unsupportedIf([=](const LegalityQuery &Query) {
-        const LLT &EltTy = Query.Types[1].getElementType();
-        return Query.Types[0] != EltTy;
-      })
-      .legalIf([=](const LegalityQuery &Query) {
-        const LLT &VecTy = Query.Types[1];
-        return VecTy == V8S32 || VecTy == V16S32 || VecTy == V32S32;
-      })
-      .customIf([=](const LegalityQuery &Query) {
-        const LLT &VecTy = Query.Types[1];
-        return VecTy == V2S32 || VecTy == V16S16 || VecTy == V32S8 ||
-               VecTy == V32S16 || VecTy == V64S8 || VecTy == V64S16 ||
-               VecTy == V128S8;
-      });
+  if (ST.isAIE2()) {
+    getActionDefinitionsBuilder(G_EXTRACT_VECTOR_ELT)
+        .unsupportedIf([=](const LegalityQuery &Query) {
+          const LLT &EltTy = Query.Types[1].getElementType();
+          return Query.Types[0] != EltTy;
+        })
+        .customIf(typeInSet(1, {V2S32, V8S32, V16S32, V32S32, V16S16, V32S8,
+                                V32S16, V64S8, V64S16, V128S8}));
+  }
 
   // Control-flow
   getActionDefinitionsBuilder(G_BRCOND).legalFor({S32}).clampScalar(0, S32,
@@ -653,15 +647,23 @@ bool AIELegalizerInfo::legalizeG_EXTRACT_VECTOR_ELT(LegalizerHelper &Helper,
   case 256:
   case 512:
   case 1024: {
-    assert((SrcVecEltTy == LLT::scalar(8) || SrcVecEltTy == LLT::scalar(16)) &&
+    const LLT S8 = LLT::scalar(8);
+    const LLT S16 = LLT::scalar(16);
+    bool IsS32 = SrcVecEltTy == S32;
+    assert((SrcVecEltTy == S8 || SrcVecEltTy == S16 || IsS32) &&
            "Unexpected vector element type for extract vector elt!");
-    const Register ExtEltDstReg = MRI.createGenericVirtualRegister(S32);
-    const Register ExtDstReg = MRI.createGenericVirtualRegister(S32);
-    MIRBuilder.buildInstr(AIE2::G_AIE_SEXT_EXTRACT_VECTOR_ELT, {ExtEltDstReg},
-                          {SrcVecReg, IdxReg});
-    MIRBuilder.buildAssertInstr(TargetOpcode::G_ASSERT_SEXT, ExtDstReg,
-                                ExtEltDstReg, SrcVecEltTy.getSizeInBits());
-    MIRBuilder.buildTrunc(DstReg, ExtDstReg);
+    if (!IsS32) {
+      const Register ExtEltDstReg = MRI.createGenericVirtualRegister(S32);
+      const Register ExtDstReg = MRI.createGenericVirtualRegister(S32);
+      MIRBuilder.buildInstr(AIE2::G_AIE_SEXT_EXTRACT_VECTOR_ELT, {ExtEltDstReg},
+                            {SrcVecReg, IdxReg});
+      MIRBuilder.buildAssertInstr(TargetOpcode::G_ASSERT_SEXT, ExtDstReg,
+                                  ExtEltDstReg, SrcVecEltTy.getSizeInBits());
+      MIRBuilder.buildTrunc(DstReg, ExtDstReg);
+    } else {
+      MIRBuilder.buildInstr(AIE2::G_AIE_SEXT_EXTRACT_VECTOR_ELT, {DstReg},
+                            {SrcVecReg, IdxReg});
+    }
     break;
   }
   default:
