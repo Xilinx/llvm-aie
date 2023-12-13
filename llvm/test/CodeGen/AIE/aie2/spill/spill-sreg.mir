@@ -110,12 +110,12 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: renamable $r0 = MOV_mv_scl $s0
     ; CHECK-NEXT: ST_dms_spill killed renamable $r0, %stack.0, implicit $sp :: (store (s32) into %stack.0)
-    ; CHECK-NEXT: JL 32, csr_aie2, implicit-def $lr
+    ; CHECK-NEXT: PseudoJL 32, csr_aie2, implicit-def $lr
     ; CHECK-NEXT: renamable $r0 = LDA_dms_spill %stack.0, implicit $sp :: (load (s32) from %stack.0)
     ; CHECK-NEXT: renamable $s0 = MOV_mv_scl killed renamable $r0
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $s0
     %0:es = COPY $s0
-    JL 32, csr_aie2, implicit-def $lr
+    PseudoJL 32, csr_aie2, implicit-def $lr
     PseudoRET implicit $lr, implicit %0
 ...
 
@@ -133,9 +133,9 @@ body:             |
     ; CHECK: liveins: $s0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: renamable $r16 = COPY $s0
-    ; CHECK-NEXT: JL 32, csr_aie2, implicit-def $lr
+    ; CHECK-NEXT: PseudoJL 32, csr_aie2, implicit-def $lr
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $r16
     %0:spill_es_to_er = COPY $s0
-    JL 32, csr_aie2, implicit-def $lr
+    PseudoJL 32, csr_aie2, implicit-def $lr
     PseudoRET implicit $lr, implicit %0
 ...
