@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/TargetParser/Triple.h"
@@ -28,6 +31,8 @@ StringRef Triple::getArchTypeName(ArchType Kind) {
   case aarch64:        return "aarch64";
   case aarch64_32:     return "aarch64_32";
   case aarch64_be:     return "aarch64_be";
+  case aie:            return "aie";
+  case aie2:           return "aie2";
   case amdgcn:         return "amdgcn";
   case amdil64:        return "amdil64";
   case amdil:          return "amdil";
@@ -129,6 +134,9 @@ StringRef Triple::getArchTypePrefix(ArchType Kind) {
   case aarch64:
   case aarch64_be:
   case aarch64_32:  return "aarch64";
+
+  case aie:         return "aie";
+  case aie2:        return "aie2";
 
   case arc:         return "arc";
 
@@ -368,6 +376,8 @@ Triple::ArchType Triple::getArchTypeForLLVMName(StringRef Name) {
     .Case("aarch64", aarch64)
     .Case("aarch64_be", aarch64_be)
     .Case("aarch64_32", aarch64_32)
+    .Case("aie", aie)
+    .Case("aie2", aie2)
     .Case("arc", arc)
     .Case("arm64", aarch64) // "arm64" is an alias for "aarch64"
     .Case("arm64_32", aarch64_32)
@@ -515,6 +525,8 @@ static Triple::ArchType parseArch(StringRef ArchName) {
           .Case("aarch64", Triple::aarch64)
           .Case("aarch64_be", Triple::aarch64_be)
           .Case("aarch64_32", Triple::aarch64_32)
+          .Case("aie", Triple::aie)
+          .Case("aie2", Triple::aie2)
           .Case("arc", Triple::arc)
           .Case("arm64", Triple::aarch64)
           .Case("arm64_32", Triple::aarch64_32)
@@ -866,6 +878,8 @@ static Triple::ObjectFormatType getDefaultFormat(const Triple &T) {
       return T.isOSDarwin() ? Triple::MachO : Triple::ELF;
     }
   case Triple::aarch64_be:
+  case Triple::aie:
+  case Triple::aie2:
   case Triple::amdgcn:
   case Triple::amdil64:
   case Triple::amdil:
@@ -1486,7 +1500,9 @@ unsigned Triple::getArchPointerBitWidth(llvm::Triple::ArchType Arch) {
   case llvm::Triple::avr:
   case llvm::Triple::msp430:
     return 16;
-
+  case llvm::Triple::aie:
+  case llvm::Triple::aie2:
+    return 20;
   case llvm::Triple::aarch64_32:
   case llvm::Triple::amdil:
   case llvm::Triple::arc:
@@ -1580,6 +1596,8 @@ Triple Triple::get32BitArchVariant() const {
     break;
 
   case Triple::aarch64_32:
+  case Triple::aie:
+  case Triple::aie2:
   case Triple::amdil:
   case Triple::arc:
   case Triple::arm:
@@ -1650,6 +1668,8 @@ Triple Triple::get64BitArchVariant() const {
   Triple T(*this);
   switch (getArch()) {
   case Triple::UnknownArch:
+  case Triple::aie:
+  case Triple::aie2:
   case Triple::arc:
   case Triple::avr:
   case Triple::csky:
@@ -1734,6 +1754,8 @@ Triple Triple::getBigEndianArchVariant() const {
     return T;
   switch (getArch()) {
   case Triple::UnknownArch:
+  case Triple::aie:
+  case Triple::aie2:
   case Triple::amdgcn:
   case Triple::amdil64:
   case Triple::amdil:
@@ -1836,6 +1858,8 @@ bool Triple::isLittleEndian() const {
   switch (getArch()) {
   case Triple::aarch64:
   case Triple::aarch64_32:
+  case Triple::aie:
+  case Triple::aie2:
   case Triple::amdgcn:
   case Triple::amdil64:
   case Triple::amdil:

@@ -1,8 +1,10 @@
 //=- llvm/CodeGen/ResourceScoreboard.h - Schedule Support -*- C++ -*-=//
 //
-// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// This file is licensed under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -76,8 +78,14 @@ public:
     return DeltaCycles >= -Depth && DeltaCycles <= 0;
   }
 
-  void advance() { Head = (Head + 1) & (Size - 1); }
-  void recede() { Head = (Head - 1) & (Size - 1); }
+  void advance() {
+    (*this)[0].clearResources();
+    Head = (Head + 1) & (Size - 1);
+  }
+  void recede() {
+    (*this)[Depth - 1].clearResources();
+    Head = (Head - 1) & (Size - 1);
+  }
 
   /// Check whether this and Other have a conflict.
   /// \param DeltaCycles displacement in cycles of Other relative to this.
@@ -101,14 +109,13 @@ public:
     return false;
   }
 
-#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
   // Print the scoreboard.
   void dump() const {
     int First = -Depth;
-    while (First < 0 && (*this)[First].empty())
+    while (First < 0 && (*this)[First].isEmpty())
       First++;
     int Last = Depth - 1;
-    while ((Last > 0) && (*this)[Last].empty())
+    while ((Last > 0) && (*this)[Last].isEmpty())
       Last--;
 
     for (int C = First; C <= Last; C++) {
@@ -120,7 +127,6 @@ public:
       dbgs() << "\n";
     }
   }
-#endif
 };
 
 } // end namespace llvm

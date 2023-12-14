@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/STLExtras.h"
@@ -124,7 +127,7 @@ TEST(DwarfLineTables, TestCustomParams) {
   Params.DWARF2LineRange = 12;
 
   // Minimal line offset expressible through extended opcode, 0 addr delta
-  const uint8_t Encoding0[] = {13}; // Special opcode Addr += 0, Line += -5
+  const uint8_t Encoding0[] = {13}; // Special opcode Addr += 0, Line += -3
   verifyEncoding(Params, -3, 0, Encoding0);
 
   // Maximal line offset expressible through extended opcode,

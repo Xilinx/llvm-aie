@@ -42,6 +42,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 
 #define DEBUG_TYPE "post-RA-sched"
@@ -378,6 +379,7 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
 void SchedulePostRATDList::startBlock(MachineBasicBlock *BB) {
   // Call the superclass.
   ScheduleDAGInstrs::startBlock(BB);
+  HazardRec->StartBlock(BB);
 
   // Reset the hazard recognizer and anti-dep breaker.
   HazardRec->Reset();
@@ -434,6 +436,7 @@ void SchedulePostRATDList::finishBlock() {
   if (AntiDepBreak)
     AntiDepBreak->FinishBlock();
 
+  HazardRec->EndBlock(BB);
   // Call the superclass.
   ScheduleDAGInstrs::finishBlock();
 }
@@ -656,6 +659,25 @@ void SchedulePostRATDList::ListScheduleTopDown() {
       CycleHasInsts = false;
     }
   }
+
+  // BEGIN AIE Hack
+  // Currently, AIE uses PostRA scheduling to insert architecturally required NOOPS.
+  // However, normally scheduling does not generate any NOOPS before the final instruction.
+  // Without this, we tend to miss the connection between loads of the Link Register (LR)
+  // and return(RET) instructions.
+  // Emit Noops before the ExitSU
+  if (CycleHasInsts) {
+    HazardRec->AdvanceCycle();
+    ++CurCycle;
+  }
+  bool HasNoopHazards = HazardRec->emitNoopsIfNoInstructionsAvailable();
+  if (HasNoopHazards) {
+    unsigned Depth = ExitSU.getDepth();
+    while (CurCycle < Depth) {
+      emitNoop(CurCycle++);
+    }
+  }
+  // END AIE Hack
 
 #ifndef NDEBUG
   unsigned ScheduledNodes = VerifyScheduledDAG(/*isBottomUp=*/false);

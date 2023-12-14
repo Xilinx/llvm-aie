@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file declares the ELFFile template class.
@@ -68,7 +71,8 @@ struct VersionEntry {
   bool IsVerDef;
 };
 
-StringRef getELFRelocationTypeName(uint32_t Machine, uint32_t Type);
+StringRef getELFRelocationTypeName(uint32_t Machine, uint32_t Type,
+                                   uint32_t Flags = 0);
 uint32_t getELFRelativeRelocationType(uint32_t Machine);
 StringRef getELFSectionTypeName(uint32_t Machine, uint32_t Type);
 
@@ -626,7 +630,8 @@ ELFFile<ELFT>::getSectionContents(const Elf_Shdr &Sec) const {
 
 template <class ELFT>
 StringRef ELFFile<ELFT>::getRelocationTypeName(uint32_t Type) const {
-  return getELFRelocationTypeName(getHeader().e_machine, Type);
+  return getELFRelocationTypeName(getHeader().e_machine, Type,
+                                  getHeader().e_flags);
 }
 
 template <class ELFT>

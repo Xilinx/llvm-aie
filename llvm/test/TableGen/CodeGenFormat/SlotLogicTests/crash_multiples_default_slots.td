@@ -1,3 +1,13 @@
+//===- crash_multiples_default_slots.td --------------------*- tablegen -*-===//
+//
+// This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+//
+//===----------------------------------------------------------------------===//
+
 // Testing if the default slot(s) are behaving correctly:
 // - a unique default slot must be defined
 // - The size of a default slot doesn't matter

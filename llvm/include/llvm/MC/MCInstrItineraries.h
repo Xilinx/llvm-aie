@@ -156,6 +156,15 @@ public:
     return ArrayRef<const InstrStage>(Stages + Itinerary.FirstStage, Length);
   }
 
+  /// Return the pipeline forwarding class for an operand.
+  /// 0 means no forwarding.
+  unsigned getForwardingClass(unsigned ItinClassIndx, unsigned OpIdx) const {
+    const InstrItinerary &Itinerary = Itineraries[ItinClassIndx];
+    if (Itinerary.FirstOperandCycle + OpIdx < Itinerary.LastOperandCycle)
+      return Forwardings[Itinerary.FirstOperandCycle + OpIdx];
+    return 0;
+  }
+
   /// Return the total stage latency of the given class.  The latency is
   /// the maximum completion time for any stage in the itinerary.  If no stages
   /// exist, it defaults to one cycle.

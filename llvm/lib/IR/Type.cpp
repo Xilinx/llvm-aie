@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the Type class for the IR library.
@@ -251,6 +254,7 @@ Type *Type::getX86_AMXTy(LLVMContext &C) { return &C.pImpl->X86_AMXTy; }
 IntegerType *Type::getInt1Ty(LLVMContext &C) { return &C.pImpl->Int1Ty; }
 IntegerType *Type::getInt8Ty(LLVMContext &C) { return &C.pImpl->Int8Ty; }
 IntegerType *Type::getInt16Ty(LLVMContext &C) { return &C.pImpl->Int16Ty; }
+IntegerType *Type::getInt20Ty(LLVMContext &C) { return &C.pImpl->Int20Ty; }
 IntegerType *Type::getInt32Ty(LLVMContext &C) { return &C.pImpl->Int32Ty; }
 IntegerType *Type::getInt64Ty(LLVMContext &C) { return &C.pImpl->Int64Ty; }
 IntegerType *Type::getInt128Ty(LLVMContext &C) { return &C.pImpl->Int128Ty; }
@@ -284,6 +288,7 @@ IntegerType *IntegerType::get(LLVMContext &C, unsigned NumBits) {
   case   1: return cast<IntegerType>(Type::getInt1Ty(C));
   case   8: return cast<IntegerType>(Type::getInt8Ty(C));
   case  16: return cast<IntegerType>(Type::getInt16Ty(C));
+  case  20: return cast<IntegerType>(Type::getInt20Ty(C));
   case  32: return cast<IntegerType>(Type::getInt32Ty(C));
   case  64: return cast<IntegerType>(Type::getInt64Ty(C));
   case 128: return cast<IntegerType>(Type::getInt128Ty(C));

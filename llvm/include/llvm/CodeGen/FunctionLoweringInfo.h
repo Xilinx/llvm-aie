@@ -30,6 +30,7 @@
 #include "llvm/IR/Value.h"
 #include "llvm/Support/KnownBits.h"
 #include <cassert>
+#include <optional>
 #include <utility>
 #include <vector>
 
