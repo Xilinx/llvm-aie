@@ -1,0 +1,40 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: not --crash llc -mtriple=aie2 -run-pass machineverifier -o /dev/null %s 2>&1 | FileCheck %s
+
+# This test ensures that the Machine Verifier detects implicit operands that
+# are ordered differently from what .td mentions. We should have all the
+# implicit-def operands first, followed by the implicit ones.
+
+---
+name:            ok
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    %0:er = COPY $r0
+    %1:er = COPY $r1
+    %2:er = ADD %0, %1, implicit-def $srcarry
+    $r12 = ADD $r10, $r11, implicit-def $srcarry
+    $wl5 = VSRS_D16_S32_mv_w_srs $bml3, $s1, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+...
+
+# Note: It's not possible to test the "Missing implicit operands compared to descriptor"
+# error because MIRParser will complain before we even reach the MachineVerifier.
+---
+name:            nok
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; CHECK: Bad machine code: MI operand not an implicit register as stated in descriptor
+    ; CHECK-COUNT-3: Bad machine code: Implicit operand in MI not matching that of the descriptor
+    $r12 = ADD $r10, $r11, CustomRegMask($r22,$r23), implicit-def $srcarry
+    $wl5 = VSRS_D16_S32_mv_w_srs $bml3, $s1, implicit $crsat, implicit $crrnd, implicit $crsrssign, implicit-def $srsrs_of
+    $wl5 = VSRS_D16_S32_mv_w_srs $bml3, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsat, implicit $crsrssign
+    $wl5 = VSRS_D16_S32_mv_w_srs $bml3, $s1, implicit-def $srsrs_of, implicit $crrnd, implicit $crsrssign, implicit $crsat
+    ; CHECK-NOT: Bad machine code
+...
