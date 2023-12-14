@@ -731,8 +731,65 @@ bool AIEBaseInstrInfo::verifySameLaneTypes(const MachineInstr &MI,
   return true;
 }
 
+bool AIEBaseInstrInfo::verifyImplicitOpsOrder(const MachineInstr &MI,
+                                              StringRef &ErrInfo) const {
+  if (MI.isCall() || isSchedulingBoundary(MI, MI.getParent(), *MI.getMF())) {
+    // Scheduling boundaries (calls in particular) can have regmask operands.
+    // Those typically get inserted in between the explicit and implicit
+    // operands. This therefore shifts the indices of implicit operands and
+    // breaks their mapping to operand latencies in Itineraries.
+    // This is fine for scheduling boundaries because their itinerary isn't
+    // queried, but this is an error for all other instructions.
+    // FIXME: "static" implicit operands coming from the descriptor should never
+    // be shifted.
+    return true;
+  }
+
+  auto VerifyMIOperand = [&MI, &ErrInfo](unsigned MIOpIdx,
+                                         MCPhysReg ExpectedImplicitReg,
+                                         bool IsDef) -> bool {
+    assert(MIOpIdx >= MI.getNumExplicitOperands());
+    if (MIOpIdx >= MI.getNumOperands()) {
+      ErrInfo = "Missing implicit operands compared to descriptor";
+      return false;
+    }
+
+    const MachineOperand &MIOp = MI.getOperand(MIOpIdx);
+    if (!MIOp.isReg() || !MIOp.isImplicit()) {
+      ErrInfo = "MI operand not an implicit register as stated in descriptor";
+      return false;
+    }
+    if (MIOp.isDef() != IsDef || MIOp.getReg() != ExpectedImplicitReg) {
+      ErrInfo = "Implicit operand in MI not matching that of the descriptor";
+      return false;
+    }
+    return true;
+  };
+
+  // Verify that the first implicit operands in MI match the implicit defs in
+  // Desc, followed by the implicit uses in Desc.
+  unsigned MIOpIdx = MI.getNumExplicitOperands();
+  const MCInstrDesc &Desc = MI.getDesc();
+  for (MCPhysReg DescImplicitDef : Desc.implicit_defs()) {
+    if (!VerifyMIOperand(MIOpIdx, DescImplicitDef, /*IsDef=*/true)) {
+      return false;
+    }
+    ++MIOpIdx;
+  }
+  for (MCPhysReg DescImplicitUse : Desc.implicit_uses()) {
+    if (!VerifyMIOperand(MIOpIdx, DescImplicitUse, /*IsDef=*/false)) {
+      return false;
+    }
+    ++MIOpIdx;
+  }
+
+  // All implicit ops mentioned in the descriptor are matching those in MI.
+  return true;
+}
+
 bool AIEBaseInstrInfo::verifyInstruction(const MachineInstr &MI,
                                          StringRef &ErrInfo) const {
+  const Triple &TT = MI.getMF()->getSubtarget().getTargetTriple();
   if (!verifyGenericInstruction(MI, ErrInfo)) {
     return false;
   }
@@ -740,6 +797,10 @@ bool AIEBaseInstrInfo::verifyInstruction(const MachineInstr &MI,
     return false;
   }
   if (!verifyMemOperand(MI, ErrInfo)) {
+    return false;
+  }
+  if (!TT.isAIE1() && !verifyImplicitOpsOrder(MI, ErrInfo)) {
+    // FIXME: Some AIE1 tests need updating.
     return false;
   }
   return TargetInstrInfo::verifyInstruction(MI, ErrInfo);

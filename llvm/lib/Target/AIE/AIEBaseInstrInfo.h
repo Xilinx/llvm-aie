@@ -276,6 +276,7 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
                                 StringRef &ErrInfo) const;
   bool verifyTiedRegisters(const MachineInstr &MI, StringRef &ErrInfo) const;
   static bool verifySameLaneTypes(const MachineInstr &MI, StringRef &ErrInfo);
+  bool verifyImplicitOpsOrder(const MachineInstr &MI, StringRef &ErrInfo) const;
   bool verifyInstruction(const MachineInstr &MI,
                          StringRef &ErrInfo) const override;
 
