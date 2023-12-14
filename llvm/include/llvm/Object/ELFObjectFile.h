@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file declares the ELFObjectFile template class.
@@ -1074,7 +1077,8 @@ uint64_t ELFObjectFile<ELFT>::getRelocationType(DataRefImpl Rel) const {
 
 template <class ELFT>
 StringRef ELFObjectFile<ELFT>::getRelocationTypeName(uint32_t Type) const {
-  return getELFRelocationTypeName(EF.getHeader().e_machine, Type);
+  return getELFRelocationTypeName(EF.getHeader().e_machine, Type,
+                                  EF.getHeader().e_flags);
 }
 
 template <class ELFT>
@@ -1216,6 +1220,8 @@ StringRef ELFObjectFile<ELFT>::getFileFormatName() const {
       return "elf32-iamcu";
     case ELF::EM_X86_64:
       return "elf32-x86-64";
+    case ELF::EM_AIE:
+      return "elf32-aie";
     case ELF::EM_ARM:
       return (IsLittleEndian ? "elf32-littlearm" : "elf32-bigarm");
     case ELF::EM_AVR:
@@ -1293,6 +1299,17 @@ template <class ELFT> Triple::ArchType ELFObjectFile<ELFT>::getArch() const {
     return Triple::x86_64;
   case ELF::EM_AARCH64:
     return IsLittleEndian ? Triple::aarch64 : Triple::aarch64_be;
+  case ELF::EM_AIE: {
+    unsigned AIEArch = EF.getHeader().e_flags;
+    switch (AIEArch) {
+    case ELF::EF_AIE_AIE1:
+      return Triple::aie;
+    case ELF::EF_AIE_AIE2:
+      return Triple::aie2;
+    default:
+      return Triple::UnknownArch;
+    }
+  }
   case ELF::EM_ARM:
     return Triple::arm;
   case ELF::EM_AVR:

@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This header contains common, non-processor-specific data structures and
@@ -320,6 +323,7 @@ enum {
   EM_VE = 251,            // NEC SX-Aurora VE
   EM_CSKY = 252,          // C-SKY 32-bit processor
   EM_LOONGARCH = 258,     // LoongArch
+  EM_AIE = 264            // AMD/Xilinx AIEngine architecture
 };
 
 // Object file classes.
@@ -334,6 +338,42 @@ enum {
   ELFDATANONE = 0, // Invalid data encoding.
   ELFDATA2LSB = 1, // Little-endian object file
   ELFDATA2MSB = 2  // Big-endian object file
+};
+
+// Anonymous EFlags (for serialization of EM_NONE)
+enum : unsigned {
+  EF_NONE_FLAG0 = 0x00000001,
+  EF_NONE_FLAG1 = 0x00000002,
+  EF_NONE_FLAG2 = 0x00000004,
+  EF_NONE_FLAG3 = 0x00000008,
+  EF_NONE_FLAG4 = 0x00000010,
+  EF_NONE_FLAG5 = 0x00000020,
+  EF_NONE_FLAG6 = 0x00000040,
+  EF_NONE_FLAG7 = 0x00000080,
+  EF_NONE_FLAG8 = 0x00000100,
+  EF_NONE_FLAG9 = 0x00000200,
+  EF_NONE_FLAG10 = 0x00000400,
+  EF_NONE_FLAG11 = 0x00000800,
+  EF_NONE_FLAG12 = 0x00001000,
+  EF_NONE_FLAG13 = 0x00002000,
+  EF_NONE_FLAG14 = 0x00004000,
+  EF_NONE_FLAG15 = 0x00008000,
+  EF_NONE_FLAG16 = 0x00010000,
+  EF_NONE_FLAG17 = 0x00020000,
+  EF_NONE_FLAG18 = 0x00040000,
+  EF_NONE_FLAG19 = 0x00080000,
+  EF_NONE_FLAG20 = 0x00100000,
+  EF_NONE_FLAG21 = 0x00200000,
+  EF_NONE_FLAG22 = 0x00400000,
+  EF_NONE_FLAG23 = 0x00800000,
+  EF_NONE_FLAG24 = 0x01000000,
+  EF_NONE_FLAG25 = 0x02000000,
+  EF_NONE_FLAG26 = 0x04000000,
+  EF_NONE_FLAG27 = 0x08000000,
+  EF_NONE_FLAG28 = 0x10000000,
+  EF_NONE_FLAG29 = 0x20000000,
+  EF_NONE_FLAG30 = 0x40000000,
+  EF_NONE_FLAG31 = 0x80000000,
 };
 
 // OS ABI identification.
@@ -443,6 +483,17 @@ enum : unsigned {
   EF_ARM_EABI_VER4 = 0x04000000U,
   EF_ARM_EABI_VER5 = 0x05000000U,
   EF_ARM_EABIMASK = 0xFF000000U
+};
+
+// AIEngine specific e_flags
+enum : unsigned {
+  EF_AIE_AIE1 = 0x00000001, // AMD-Xilinx AIEngine
+  EF_AIE_AIE2 = 0x00000002, // AMD-Xilinx AIE-ML
+};
+
+// ELF Relocation types for AIE
+enum {
+#include "ELFRelocs/AIE.def"
 };
 
 // ELF Relocation types for ARM

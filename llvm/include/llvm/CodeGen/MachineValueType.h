@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the set of machine-level target independent types which
@@ -96,19 +99,27 @@ namespace llvm {
               (SimpleTy >= MVT::FIRST_INTEGER_FIXEDLEN_VECTOR_VALUETYPE &&
                SimpleTy <= MVT::LAST_INTEGER_FIXEDLEN_VECTOR_VALUETYPE) ||
               (SimpleTy >= MVT::FIRST_INTEGER_SCALABLE_VECTOR_VALUETYPE &&
-               SimpleTy <= MVT::LAST_INTEGER_SCALABLE_VECTOR_VALUETYPE));
+               SimpleTy <= MVT::LAST_INTEGER_SCALABLE_VECTOR_VALUETYPE) ||
+              (SimpleTy >= MVT::FIRST_AIE_INTEGER_VALUETYPE &&
+               SimpleTy <= MVT::LAST_AIE_INTEGER_VALUETYPE) ||
+              (SimpleTy >= MVT::FIRST_AIE_VECTOR_VALUETYPE &&
+               SimpleTy <= MVT::LAST_AIE_VECTOR_VALUETYPE));
     }
 
     /// Return true if this is an integer, not including vectors.
     bool isScalarInteger() const {
       return (SimpleTy >= MVT::FIRST_INTEGER_VALUETYPE &&
-              SimpleTy <= MVT::LAST_INTEGER_VALUETYPE);
+              SimpleTy <= MVT::LAST_INTEGER_VALUETYPE) ||
+             (SimpleTy >= MVT::FIRST_AIE_INTEGER_VALUETYPE &&
+              SimpleTy <= MVT::LAST_AIE_INTEGER_VALUETYPE);
     }
 
     /// Return true if this is a vector value type.
     bool isVector() const {
       return (SimpleTy >= MVT::FIRST_VECTOR_VALUETYPE &&
-              SimpleTy <= MVT::LAST_VECTOR_VALUETYPE);
+              SimpleTy <= MVT::LAST_VECTOR_VALUETYPE) ||
+             (SimpleTy >= MVT::FIRST_AIE_VECTOR_VALUETYPE &&
+              SimpleTy <= MVT::LAST_AIE_VECTOR_VALUETYPE);
     }
 
     /// Return true if this is a vector value type where the
@@ -130,7 +141,9 @@ namespace llvm {
 
     bool isFixedLengthVector() const {
       return (SimpleTy >= MVT::FIRST_FIXEDLEN_VECTOR_VALUETYPE &&
-              SimpleTy <= MVT::LAST_FIXEDLEN_VECTOR_VALUETYPE);
+              SimpleTy <= MVT::LAST_FIXEDLEN_VECTOR_VALUETYPE) ||
+             (SimpleTy >= MVT::FIRST_AIE_VECTOR_VALUETYPE &&
+              SimpleTy <= MVT::LAST_AIE_VECTOR_VALUETYPE);
     }
 
     /// Return true if this is a 16-bit vector type.
@@ -541,6 +554,13 @@ namespace llvm {
                                 MVT::LAST_FP_SCALABLE_VECTOR_VALUETYPE,
                                 force_iteration_on_noniterable_enum);
     }
+
+    static auto integer_aie_valuetypes() {
+      return enum_seq_inclusive(MVT::FIRST_AIE_INTEGER_VALUETYPE,
+                                MVT::LAST_AIE_INTEGER_VALUETYPE,
+                                force_iteration_on_noniterable_enum);
+    }
+
     /// @}
   };
 

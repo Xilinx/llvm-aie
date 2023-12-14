@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains the declaration of the Type class.  For more "Type"
@@ -460,6 +463,7 @@ public:
   static IntegerType *getInt1Ty(LLVMContext &C);
   static IntegerType *getInt8Ty(LLVMContext &C);
   static IntegerType *getInt16Ty(LLVMContext &C);
+  static IntegerType *getInt20Ty(LLVMContext &C);
   static IntegerType *getInt32Ty(LLVMContext &C);
   static IntegerType *getInt64Ty(LLVMContext &C);
   static IntegerType *getInt128Ty(LLVMContext &C);

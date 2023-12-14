@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the TargetInstrInfo class.
@@ -67,7 +70,9 @@ TargetInstrInfo::getRegClass(const MCInstrDesc &MCID, unsigned OpNum,
 /// point.
 void TargetInstrInfo::insertNoop(MachineBasicBlock &MBB,
                                  MachineBasicBlock::iterator MI) const {
-  llvm_unreachable("Target didn't implement insertNoop!");
+  // AIE Hack
+  return;
+//  llvm_unreachable("Target didn't implement insertNoop!");
 }
 
 /// insertNoops - Insert noops into the instruction stream at the specified

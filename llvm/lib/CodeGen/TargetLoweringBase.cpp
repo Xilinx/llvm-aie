@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This implements the TargetLoweringBase class.
@@ -1365,6 +1368,42 @@ void TargetLoweringBase::computeRegisterProperties(
       ValueTypeActions.setTypeAction(IVT, TypePromoteInteger);
     }
   }
+
+  // AIE
+  // i20 and i48 types aren't added as 'regular' integer types.  However they
+  // can still pop up in existing architectures, so we need to promote/expand
+  // them. This code isn't terribly general, but is enough to get X86, riscv,
+  // arm to work.
+  if (!isTypeLegal(MVT::i20)) {
+    if (isTypeLegal(MVT::i32)) {
+      RegisterTypeForVT[MVT::i20] = TransformToType[MVT::i20] = MVT::i32;
+      ValueTypeActions.setTypeAction(MVT::i20, TypePromoteInteger);
+    } else if (isTypeLegal(MVT::i64)) {
+      RegisterTypeForVT[MVT::i20] = TransformToType[MVT::i20] = MVT::i64;
+      ValueTypeActions.setTypeAction(MVT::i20, TypePromoteInteger);
+    } else {
+      // Expand it instead.
+      assert(LargestIntReg < MVT::i32);
+      NumRegistersForVT[MVT::i20] = NumRegistersForVT[MVT::i32];
+      RegisterTypeForVT[MVT::i20] = (MVT::SimpleValueType)LargestIntReg;
+      TransformToType[MVT::i20] = MVT::i16;
+      ValueTypeActions.setTypeAction(MVT::i20, TypeExpandInteger);
+    }
+  }
+  if (!isTypeLegal(MVT::i48)) {
+    if (isTypeLegal(MVT::i64)) {
+      RegisterTypeForVT[MVT::i48] = TransformToType[MVT::i48] = MVT::i64;
+      ValueTypeActions.setTypeAction(MVT::i48, TypePromoteInteger);
+    } else {
+      // Expand it instead.
+      assert(LargestIntReg <= MVT::i32);
+      NumRegistersForVT[MVT::i48] = NumRegistersForVT[MVT::i64];
+      RegisterTypeForVT[MVT::i48] = (MVT::SimpleValueType)LargestIntReg;
+      TransformToType[MVT::i48] = MVT::i32;
+      ValueTypeActions.setTypeAction(MVT::i48, TypeExpandInteger);
+    }
+  }
+  // End AIE
 
   // ppcf128 type is really two f64's.
   if (!isTypeLegal(MVT::ppcf128)) {

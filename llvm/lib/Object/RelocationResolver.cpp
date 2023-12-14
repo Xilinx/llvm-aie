@@ -1,8 +1,12 @@
-//===- RelocationResolver.cpp ------------------------------------*- C++ -*-===//
+//===- RelocationResolver.cpp ------------------------------------*- C++
+//-*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -68,6 +72,30 @@ static uint64_t resolveX86_64(uint64_t Type, uint64_t Offset, uint64_t S,
   case ELF::R_X86_64_32:
   case ELF::R_X86_64_32S:
     return (S + Addend) & 0xFFFFFFFF;
+  default:
+    llvm_unreachable("Invalid relocation type");
+  }
+}
+
+static bool supportsAIE(uint64_t Type) {
+  switch (Type) {
+  case ELF::R_AIE_0:
+  case ELF::R_AIE_72:
+    return true;
+  default:
+    return false;
+  }
+}
+
+static uint64_t resolveAIE(uint64_t Type, uint64_t Offset, uint64_t S,
+                           uint64_t LocData, int64_t Addend) {
+  // llvm::dbgs() << "ResolveReloc:" << Type << " " << Offset << " " << S << " "
+  //              << LocData << " " << Addend << "\n";
+  switch (Type) {
+  case ELF::R_AIE_0:
+    return (S + Addend);
+  case ELF::R_AIE_72:
+    return (S + Addend);
   default:
     llvm_unreachable("Invalid relocation type");
   }
@@ -817,6 +845,8 @@ getRelocationResolver(const ObjectFile &Obj) {
     case Triple::ppcle:
     case Triple::ppc:
       return {supportsPPC32, resolvePPC32};
+    case Triple::aie:
+      return {supportsAIE, resolveAIE};
     case Triple::arm:
     case Triple::armeb:
       return {supportsARM, resolveARM};

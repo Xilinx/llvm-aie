@@ -21,6 +21,7 @@
 namespace llvm {
 
 class MachineInstr;
+class MachineBasicBlock;
 class SUnit;
 
 /// HazardRecognizer - This determines whether or not an instruction can be
@@ -140,6 +141,17 @@ public:
     for (unsigned i = 0; i < Quantity; ++i)
       EmitNoop();
   }
+
+  /// BEGIN AIE extension
+  /// These are called at the start and the end of scheduling
+  /// a machine block. They can be used to maintain extra state,
+  /// and do some postprocessing on the reordered code.
+  /// StartBlock is called before any scheduling actions,
+  /// EndBlock is called after reordering the instructions.
+  virtual void StartBlock(MachineBasicBlock *MBB) {}
+
+  virtual void EndBlock(MachineBasicBlock *MBB) {}
+  /// END AIE Extension
 };
 
 } // end namespace llvm

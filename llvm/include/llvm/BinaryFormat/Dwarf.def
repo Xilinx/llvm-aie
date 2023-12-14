@@ -4,6 +4,8 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // Macros for running through Dwarf enumerators.
@@ -565,6 +567,13 @@ HANDLE_DW_AT(0x2303, GNU_numerator, 0, GNU)
 HANDLE_DW_AT(0x2304, GNU_denominator, 0, GNU)
 HANDLE_DW_AT(0x2305, GNU_bias, 0, GNU)
 
+// AIE
+HANDLE_DW_AT(0x2501, AIE_frame_size, 0, AMD)
+HANDLE_DW_AT(0x2502, AIE_frame_base, 0, AMD)
+HANDLE_DW_AT(0x2503, AIE_addr, 0, AMD)
+HANDLE_DW_AT(0x2504, AIE_frame_base2, 0, AMD)
+// END AIE
+
 HANDLE_DW_AT(0x2900, GO_kind, 0, GO)
 HANDLE_DW_AT(0x2901, GO_key, 0, GO)
 HANDLE_DW_AT(0x2902, GO_elem, 0, GO)
@@ -879,6 +888,8 @@ HANDLE_DW_OP(0xf8, PGI_omp_thread_num, 0, PGI)
 // Extensions for Fission proposal.
 HANDLE_DW_OP(0xfb, GNU_addr_index, 0, GNU)
 HANDLE_DW_OP(0xfc, GNU_const_index, 0, GNU)
+
+HANDLE_DW_OP(0xfd, AIE_address_space, 0, AMD)
 
 // DW_OP_LLVM_user has two operands:
 //   (1) An unsigned LEB128 "LLVM Vendor Extension Opcode".

@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/ValueTypes.h"
@@ -171,6 +174,7 @@ std::string EVT::getEVTString() const {
       return "f" + utostr(getSizeInBits());
     llvm_unreachable("Invalid EVT!");
   case MVT::bf16:      return "bf16";
+  case MVT::i20:      return "i20";
   case MVT::ppcf128:   return "ppcf128";
   case MVT::isVoid:    return "isVoid";
   case MVT::Other:     return "ch";
@@ -211,6 +215,7 @@ Type *EVT::getTypeForEVT(LLVMContext &Context) const {
   case MVT::i4:      return Type::getIntNTy(Context, 4);
   case MVT::i8:      return Type::getInt8Ty(Context);
   case MVT::i16:     return Type::getInt16Ty(Context);
+  case MVT::i20:     return Type::getInt20Ty(Context);
   case MVT::i32:     return Type::getInt32Ty(Context);
   case MVT::i64:     return Type::getInt64Ty(Context);
   case MVT::i128:    return IntegerType::get(Context, 128);
@@ -571,6 +576,13 @@ Type *EVT::getTypeForEVT(LLVMContext &Context) const {
   case MVT::nxv8f64:
     return ScalableVectorType::get(Type::getDoubleTy(Context), 8);
   case MVT::Metadata: return Type::getMetadataTy(Context);
+/* AIE */
+  case MVT::i48:     return IntegerType::get(Context, 48);
+  case MVT::v8i48:
+    return FixedVectorType::get(Type::getIntNTy(Context, 48), 8);
+  case MVT::v16i48:
+    return FixedVectorType::get(Type::getIntNTy(Context, 48), 16);
+/* End AIE */
   }
   // clang-format on
 }

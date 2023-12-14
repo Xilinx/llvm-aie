@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines several CodeGen-specific LLVM IR analysis utilities.
@@ -80,7 +83,8 @@ void llvm::ComputeValueVTs(const TargetLowering &TLI, const DataLayout &DL,
                            Type *Ty, SmallVectorImpl<EVT> &ValueVTs,
                            SmallVectorImpl<EVT> *MemVTs,
                            SmallVectorImpl<TypeSize> *Offsets,
-                           TypeSize StartingOffset) {
+                           TypeSize StartingOffset,
+                           SmallVectorImpl<Type *> *IRTypes) {
   // Given a struct type, recursively traverse the elements.
   if (StructType *STy = dyn_cast<StructType>(Ty)) {
     // If the Offsets aren't needed, don't query the struct layout. This allows
@@ -95,7 +99,7 @@ void llvm::ComputeValueVTs(const TargetLowering &TLI, const DataLayout &DL,
       TypeSize EltOffset = SL ? SL->getElementOffset(EI - EB)
                               : TypeSize::get(0, StartingOffset.isScalable());
       ComputeValueVTs(TLI, DL, *EI, ValueVTs, MemVTs, Offsets,
-                      StartingOffset + EltOffset);
+                      StartingOffset + EltOffset, IRTypes);
     }
     return;
   }
@@ -105,7 +109,7 @@ void llvm::ComputeValueVTs(const TargetLowering &TLI, const DataLayout &DL,
     TypeSize EltSize = DL.getTypeAllocSize(EltTy);
     for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i)
       ComputeValueVTs(TLI, DL, EltTy, ValueVTs, MemVTs, Offsets,
-                      StartingOffset + i * EltSize);
+                      StartingOffset + i * EltSize, IRTypes);
     return;
   }
   // Interpret void as zero return values.
@@ -117,14 +121,17 @@ void llvm::ComputeValueVTs(const TargetLowering &TLI, const DataLayout &DL,
     MemVTs->push_back(TLI.getMemValueType(DL, Ty));
   if (Offsets)
     Offsets->push_back(StartingOffset);
+  if (IRTypes)
+    IRTypes->push_back(Ty);
 }
 
 void llvm::ComputeValueVTs(const TargetLowering &TLI, const DataLayout &DL,
                            Type *Ty, SmallVectorImpl<EVT> &ValueVTs,
                            SmallVectorImpl<TypeSize> *Offsets,
-                           TypeSize StartingOffset) {
+                           TypeSize StartingOffset,
+                           SmallVectorImpl<Type *> *IRTypes) {
   return ComputeValueVTs(TLI, DL, Ty, ValueVTs, /*MemVTs=*/nullptr, Offsets,
-                         StartingOffset);
+                         StartingOffset, IRTypes);
 }
 
 void llvm::ComputeValueVTs(const TargetLowering &TLI, const DataLayout &DL,

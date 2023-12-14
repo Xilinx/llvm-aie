@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the Function class for the IR library.
@@ -1126,8 +1129,14 @@ static void DecodeIITType(unsigned &NextElt, ArrayRef<unsigned char> Infos,
   case IIT_I16:
     OutputTable.push_back(IITDescriptor::get(IITDescriptor::Integer,16));
     return;
+  case IIT_I20:
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Integer, 20));
+    return;
   case IIT_I32:
     OutputTable.push_back(IITDescriptor::get(IITDescriptor::Integer, 32));
+    return;
+  case IIT_I48:
+    OutputTable.push_back(IITDescriptor::get(IITDescriptor::Integer, 48));
     return;
   case IIT_I64:
     OutputTable.push_back(IITDescriptor::get(IITDescriptor::Integer, 64));

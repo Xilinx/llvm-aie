@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #include "ObjcopyOptions.h"
@@ -275,6 +278,8 @@ static const StringMap<MachineInfo> TargetMap{
     // ARM AArch64
     {"elf64-aarch64", {ELF::EM_AARCH64, true, true}},
     {"elf64-littleaarch64", {ELF::EM_AARCH64, true, true}},
+    // AIE
+    {"elf32-aie", {ELF::EM_AIE, false, true}},
     // RISC-V
     {"elf32-littleriscv", {ELF::EM_RISCV, false, true}},
     {"elf64-littleriscv", {ELF::EM_RISCV, true, true}},

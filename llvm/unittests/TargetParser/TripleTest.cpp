@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/TargetParser/Triple.h"
@@ -1560,6 +1563,14 @@ TEST(TripleTest, BitWidthArchVariants) {
   EXPECT_EQ(Triple::armeb, T.get32BitArchVariant().getArch());
   EXPECT_EQ(Triple::aarch64_be, T.get64BitArchVariant().getArch());
 
+  T.setArch(Triple::aie);
+  EXPECT_EQ(Triple::aie, T.get32BitArchVariant().getArch());
+  EXPECT_EQ(Triple::UnknownArch, T.get64BitArchVariant().getArch());
+
+  T.setArch(Triple::aie2);
+  EXPECT_EQ(Triple::aie2, T.get32BitArchVariant().getArch());
+  EXPECT_EQ(Triple::UnknownArch, T.get64BitArchVariant().getArch());
+
   T.setArch(Triple::renderscript32);
   EXPECT_EQ(Triple::renderscript32, T.get32BitArchVariant().getArch());
   EXPECT_EQ(Triple::renderscript64, T.get64BitArchVariant().getArch());
@@ -1609,6 +1620,14 @@ TEST(TripleTest, EndianArchVariants) {
   T.setArch(Triple::aarch64);
   EXPECT_EQ(Triple::aarch64_be, T.getBigEndianArchVariant().getArch());
   EXPECT_EQ(Triple::aarch64, T.getLittleEndianArchVariant().getArch());
+
+  T.setArch(Triple::aie);
+  EXPECT_EQ(Triple::UnknownArch, T.getBigEndianArchVariant().getArch());
+  EXPECT_EQ(Triple::aie, T.getLittleEndianArchVariant().getArch());
+
+  T.setArch(Triple::aie2);
+  EXPECT_EQ(Triple::UnknownArch, T.getBigEndianArchVariant().getArch());
+  EXPECT_EQ(Triple::aie2, T.getLittleEndianArchVariant().getArch());
 
   T.setArch(Triple::armeb);
   EXPECT_EQ(Triple::armeb, T.getBigEndianArchVariant().getArch());

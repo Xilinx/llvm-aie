@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 /// \file
@@ -84,6 +87,7 @@ enum LLVMConstants : uint32_t {
   DWARF_VENDOR_PGI,
   DWARF_VENDOR_SUN,
   DWARF_VENDOR_UPC,
+  DWARF_VENDOR_AMD,
   ///\}
 };
 

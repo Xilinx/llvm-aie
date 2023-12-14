@@ -1,23 +1,19 @@
-// RUN: llvm-tblgen --gen-aie-presched-lowering -I %p/../../include -I %p/../../lib/Target/AIE %s | FileCheck %s
+//===- aie-presched-lowering.td ----------------------------*- tablegen -*-===//
+//
+// This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+//
+//===----------------------------------------------------------------------===//
+// RUN: llvm-tblgen --gen-aie-presched-lowering -I %p/../../include -I %p/Common %s | FileCheck %s
 
 // Verify how TableGen uses PreSchedInstExpansion to generate
 // getPseudoBranchExpandInfo().
 
-include "llvm/Target/Target.td"
-include "AIEBaseInstrInfo.td"
+include "aie-arch-with-regs.td"
 
-def TestAIETargetInstrInfo : InstrInfo;
-
-def TestAIE : Target {
-  let InstructionSet = TestAIETargetInstrInfo;
-}
-
-def REG : Register<"REG">;
-def GPR : RegisterClass<"TestAIE", [i32], 32, (add REG)>;
-
-class TestInstruction : Instruction {
-  let Namespace = "TestAIE";
-}
 class Pseudo<dag outs, dag ins> : TestInstruction {
   dag OutOperandList = outs;
   dag InOperandList = ins;

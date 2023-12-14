@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_TARGETPARSER_TRIPLE_H
@@ -51,6 +54,8 @@ public:
     aarch64,        // AArch64 (little endian): aarch64
     aarch64_be,     // AArch64 (big endian): aarch64_be
     aarch64_32,     // AArch64 (little endian) ILP32: aarch64_32
+    aie,            // AIE: Xilinx AIEngine
+    aie2,           // AIE: Xilinx AIMLEngine
     arc,            // ARC: Synopsys ARC
     avr,            // AVR: Atmel AVR microcontroller
     bpfel,          // eBPF or extended BPF or 64-bit BPF (little endian)
@@ -803,6 +808,23 @@ public:
 
   bool isAMDGPU() const {
     return getArch() == Triple::r600 || getArch() == Triple::amdgcn;
+  }
+
+  //TODO aie1 is currently named as aie, perhaps we should change the
+  //triple name to aie1?
+  /// Tests whether the target is AIE1.
+  bool isAIE1() const {
+    return getArch() == Triple::aie;
+  }
+
+  /// Tests whether the target is AIE2.
+  bool isAIE2() const {
+    return getArch() == Triple::aie2;
+  }
+
+  /// Tests whether the target is AIE.
+  bool isAIE() const {
+    return getArch() == Triple::aie || getArch() == Triple::aie2;
   }
 
   /// Tests whether the target is Thumb (little and big endian).

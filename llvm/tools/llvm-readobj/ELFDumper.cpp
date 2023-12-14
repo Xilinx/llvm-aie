@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 ///
 /// \file
@@ -1103,6 +1106,7 @@ const EnumEntry<unsigned> C6000ElfOSABI[] = {
 };
 
 const EnumEntry<unsigned> ElfMachineType[] = {
+    // clang-format off
   ENUM_ENT(EM_NONE,          "None"),
   ENUM_ENT(EM_M32,           "WE32100"),
   ENUM_ENT(EM_SPARC,         "Sparc"),
@@ -1267,6 +1271,8 @@ const EnumEntry<unsigned> ElfMachineType[] = {
   ENUM_ENT(EM_BPF,           "EM_BPF"),
   ENUM_ENT(EM_VE,            "NEC SX-Aurora Vector Engine"),
   ENUM_ENT(EM_LOONGARCH,     "LoongArch"),
+  ENUM_ENT(EM_AIE,           "AMD/Xilinx AIEngine architecture")
+    // clang-format on
 };
 
 const EnumEntry<unsigned> ElfSymbolBindings[] = {

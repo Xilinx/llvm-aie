@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the CodeGenDAGPatterns class, which is used to read and
@@ -831,6 +834,9 @@ void TypeInfer::expandOverloads(TypeSetByHwMode::SetType &Out,
       if (Legal.count(T))
         Out.insert(T);
     for (MVT T : MVT::integer_scalable_vector_valuetypes())
+      if (Legal.count(T))
+        Out.insert(T);
+    for (MVT T : MVT::integer_aie_valuetypes())
       if (Legal.count(T))
         Out.insert(T);
   } else if (Out.count(MVT::fAny)) {

@@ -1,3 +1,13 @@
+//===- positive_default_slot_size.td -----------------------*- tablegen -*-===//
+//
+// This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+//
+//===----------------------------------------------------------------------===//
+
 // Testing if the default slot(s) are behaving correctly.
 // The size of a given slot must be > 0 if the slot is valid and >= 0 if it's
 // a default one.

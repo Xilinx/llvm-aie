@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This tablegen backend is responsible for emitting a description of a target
@@ -15,6 +18,7 @@
 #include "CodeGenTarget.h"
 #include "InfoByHwMode.h"
 #include "llvm/ADT/BitVector.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
@@ -23,6 +27,14 @@
 #define DEBUG_TYPE "register-bank-emitter"
 
 using namespace llvm;
+
+cl::OptionCategory RegisterBankCat("Options for -gen-register-bank");
+
+cl::opt<std::string>
+    RBBaseClass("base-register-bank-class",
+                cl::desc("Base RegisterBankInfo class to derive from"),
+                cl::value_desc("Base class"), cl::init("RegisterBankInfo"),
+                cl::cat(RegisterBankCat));
 
 namespace {
 class RegisterBank {
@@ -278,7 +290,7 @@ void RegisterBankEmitter::emitBaseClassImplementation(
 
   OS << TargetName << "GenRegisterBankInfo::" << TargetName
      << "GenRegisterBankInfo(unsigned HwMode)\n"
-     << "    : RegisterBankInfo(RegBanks, " << TargetName
+     << "    : " << RBBaseClass << "(RegBanks, " << TargetName
      << "::NumRegisterBanks, Sizes, HwMode) {\n"
      << "  // Assert that RegBank indices match their ID's\n"
      << "#ifndef NDEBUG\n"

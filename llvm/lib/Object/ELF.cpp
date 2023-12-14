@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Object/ELF.h"
@@ -21,7 +24,8 @@ using namespace object;
 #define ELF_RELOC(name, value) STRINGIFY_ENUM_CASE(ELF, name)
 
 StringRef llvm::object::getELFRelocationTypeName(uint32_t Machine,
-                                                 uint32_t Type) {
+                                                 uint32_t Type,
+                                                 uint32_t Flags) {
   switch (Machine) {
   case ELF::EM_68K:
     switch (Type) {
@@ -55,6 +59,20 @@ StringRef llvm::object::getELFRelocationTypeName(uint32_t Machine,
   case ELF::EM_AARCH64:
     switch (Type) {
 #include "llvm/BinaryFormat/ELFRelocs/AArch64.def"
+    default:
+      break;
+    }
+    break;
+  case ELF::EM_AIE:
+    switch (Type) {
+      // We use same .def for all architectures because ELF numbers are opaque.
+      // The shared relocation logic basically gets the numbers from the
+      // processed reloc files and uses the non-descriptive enumeration in
+      // AIE.def to indicate that exact number. So we get something like
+      // ELF_AIE_43, which is just a difficult way to indicate 'relocation type
+      // 43'. The linker uses the machine flags to switch the relocation
+      // routines.
+#include "llvm/BinaryFormat/ELFRelocs/AIE.def"
     default:
       break;
     }

@@ -1,3 +1,14 @@
+//===- TargetLowering.h -----------------------------------------*- C++ -*-===//
+//
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
+//===----------------------------------------------------------------------===//
+
 //===- llvm/CodeGen/TargetLowering.h - Target Lowering Info -----*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
@@ -405,8 +416,8 @@ public:
   /// all possible shift amounts, returns MVT::i32. In general, \p LegalTypes
   /// should be set to true for calls during type legalization and after type
   /// legalization has been completed.
-  EVT getShiftAmountTy(EVT LHSTy, const DataLayout &DL,
-                       bool LegalTypes = true) const;
+  virtual EVT getShiftAmountTy(EVT LHSTy, const DataLayout &DL,
+                               bool LegalTypes = true) const;
 
   /// Return the preferred type to use for a shift opcode, given the shifted
   /// amount type is \p ShiftValueTy.

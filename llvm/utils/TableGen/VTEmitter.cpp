@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/StringRef.h"
@@ -72,19 +75,24 @@ void VTEmitter::run(raw_ostream &OS) {
     bool IsFP = VT->getValueAsInt("isFP");
     bool IsVector = VT->getValueAsInt("isVector");
     bool IsScalable = VT->getValueAsInt("isScalable");
+    bool IsAIE = VT->getValueAsInt("isAIE");
 
+    UpdateVTRange("AIE_VECTOR_VALUETYPE", Name,
+                  IsAIE && IsInteger && IsVector && !IsScalable);
+    UpdateVTRange("AIE_INTEGER_VALUETYPE", Name,
+                  IsAIE && IsInteger && !IsVector);
     UpdateVTRange("INTEGER_FIXEDLEN_VECTOR_VALUETYPE", Name,
-                  IsInteger && IsVector && !IsScalable);
+                  !IsAIE && IsInteger && IsVector && !IsScalable);
     UpdateVTRange("INTEGER_SCALABLE_VECTOR_VALUETYPE", Name,
-                  IsInteger && IsScalable);
+                  !IsAIE && IsInteger && IsScalable);
     UpdateVTRange("FP_FIXEDLEN_VECTOR_VALUETYPE", Name,
-                  IsFP && IsVector && !IsScalable);
-    UpdateVTRange("FP_SCALABLE_VECTOR_VALUETYPE", Name, IsFP && IsScalable);
-    UpdateVTRange("FIXEDLEN_VECTOR_VALUETYPE", Name, IsVector && !IsScalable);
-    UpdateVTRange("SCALABLE_VECTOR_VALUETYPE", Name, IsScalable);
-    UpdateVTRange("VECTOR_VALUETYPE", Name, IsVector);
-    UpdateVTRange("INTEGER_VALUETYPE", Name, IsInteger && !IsVector);
-    UpdateVTRange("FP_VALUETYPE", Name, IsFP && !IsVector);
+                  !IsAIE && IsFP && IsVector && !IsScalable);
+    UpdateVTRange("FP_SCALABLE_VECTOR_VALUETYPE", Name, !IsAIE && IsFP && IsScalable);
+    UpdateVTRange("FIXEDLEN_VECTOR_VALUETYPE", Name, !IsAIE && IsVector && !IsScalable);
+    UpdateVTRange("SCALABLE_VECTOR_VALUETYPE", Name, !IsAIE && IsScalable);
+    UpdateVTRange("VECTOR_VALUETYPE", Name, !IsAIE && IsVector);
+    UpdateVTRange("INTEGER_VALUETYPE", Name, !IsAIE && IsInteger && !IsVector);
+    UpdateVTRange("FP_VALUETYPE", Name, !IsAIE && IsFP && !IsVector);
     UpdateVTRange("VALUETYPE", Name, Value < 224);
 
     // clang-format off

@@ -4,6 +4,8 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // Value types - These values correspond to the register types defined in the
@@ -24,6 +26,7 @@ class ValueType<int size, int value> {
   int isFP = false;
   int isVector = false;
   int isScalable = false;
+  int isAIE = false;
 }
 
 class VTAny<int value> : ValueType<0, value> {
@@ -284,6 +287,15 @@ def i64x8     : ValueType<512,  195>;  // 8 Consecutive GPRs (AArch64)
 def aarch64svcount
               : ValueType<16,   196>;  // AArch64 predicate-as-counter
 def spirvbuiltin : ValueType<0,  197>; // SPIR-V's builtin type
+
+/* AIE */
+let isAIE = true in {
+  def i48    : VTInt<48, 198>;    // 48-bit acc type
+  def i20    : VTInt<20, 199>;    //  20 bit pointers.
+  def v8i48  : VTVec<8, i48, 200>;   //  8 x i48 vector value
+  def v16i48 : VTVec<16, i48, 201>;   //  16 x i48 vector value
+}
+/* End AIE */
 
 def token      : ValueType<0, 248>;  // TokenTy
 def MetadataVT : ValueType<0, 249> { // Metadata

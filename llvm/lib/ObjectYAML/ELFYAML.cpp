@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines classes for handling the YAML representation of ELF.
@@ -356,6 +359,7 @@ void ScalarEnumerationTraits<ELFYAML::ELF_EM>::enumeration(
   ECase(EM_VE);
   ECase(EM_CSKY);
   ECase(EM_LOONGARCH);
+  ECase(EM_AIE);
 #undef ECase
   IO.enumFallback<Hex16>(Value);
 }
@@ -641,7 +645,43 @@ void ScalarBitSetTraits<ELFYAML::ELF_EF>::bitset(IO &IO,
       break;
     }
     break;
+  case ELF::EM_AIE:
+    BCase(EF_AIE_AIE1);
+    BCase(EF_AIE_AIE2);
+    break;
   default:
+    BCase(EF_NONE_FLAG0);
+    BCase(EF_NONE_FLAG1);
+    BCase(EF_NONE_FLAG2);
+    BCase(EF_NONE_FLAG3);
+    BCase(EF_NONE_FLAG4);
+    BCase(EF_NONE_FLAG5);
+    BCase(EF_NONE_FLAG6);
+    BCase(EF_NONE_FLAG7);
+    BCase(EF_NONE_FLAG8);
+    BCase(EF_NONE_FLAG9);
+    BCase(EF_NONE_FLAG10);
+    BCase(EF_NONE_FLAG11);
+    BCase(EF_NONE_FLAG12);
+    BCase(EF_NONE_FLAG13);
+    BCase(EF_NONE_FLAG14);
+    BCase(EF_NONE_FLAG15);
+    BCase(EF_NONE_FLAG16);
+    BCase(EF_NONE_FLAG17);
+    BCase(EF_NONE_FLAG18);
+    BCase(EF_NONE_FLAG19);
+    BCase(EF_NONE_FLAG20);
+    BCase(EF_NONE_FLAG21);
+    BCase(EF_NONE_FLAG22);
+    BCase(EF_NONE_FLAG23);
+    BCase(EF_NONE_FLAG24);
+    BCase(EF_NONE_FLAG25);
+    BCase(EF_NONE_FLAG26);
+    BCase(EF_NONE_FLAG27);
+    BCase(EF_NONE_FLAG28);
+    BCase(EF_NONE_FLAG29);
+    BCase(EF_NONE_FLAG30);
+    BCase(EF_NONE_FLAG31);
     break;
   }
 #undef BCase
@@ -882,6 +922,15 @@ void ScalarEnumerationTraits<ELFYAML::ELF_REL>::enumeration(
     break;
   case ELF::EM_AARCH64:
 #include "llvm/BinaryFormat/ELFRelocs/AArch64.def"
+    break;
+  case ELF::EM_AIE:
+    // We use same .def for all architectures because ELF numbers are opaque.
+    // The shared relocation logic basically gets the numbers from the processed
+    // reloc files and uses the non-descriptive enumeration in AIE.def to
+    // indicate that exact number. So we get something like ELF_AIE_43, which is
+    // just a difficult way to indicate 'relocation type 43'. The linker uses
+    // the machine flags to switch the relocation routines.
+#include "llvm/BinaryFormat/ELFRelocs/AIE.def"
     break;
   case ELF::EM_ARM:
 #include "llvm/BinaryFormat/ELFRelocs/ARM.def"

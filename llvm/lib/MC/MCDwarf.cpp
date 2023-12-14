@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCDwarf.h"
@@ -27,6 +30,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/EndianStream.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -679,6 +683,23 @@ static uint64_t SpecialAddr(MCDwarfLineTableParams Params, uint64_t op) {
   return (op - Params.DWARF2LineOpcodeBase) / Params.DWARF2LineRange;
 }
 
+static llvm::cl::opt<bool>
+    AvoidBoundaryOpc("aie-avoid-boundary-opc", cl::Hidden, cl::init(true),
+                     cl::desc("Avoid boundary case in line table encoder"));
+
+// This confines the exception for the debug line section to AIE
+static bool isLegalSpecialOpcode(const MCContext &Context,
+                                 const MCDwarfLineTableParams &Params,
+                                 uint64_t Opcode) {
+  if (Opcode > 255) {
+    return false;
+  }
+  if (Context.getTargetTriple().isAIE() && AvoidBoundaryOpc) {
+    return Opcode > 0xd;
+  }
+  return Opcode >= Params.DWARF2LineOpcodeBase;
+}
+
 /// Utility function to encode a Dwarf pair of LineDelta and AddrDeltas.
 void MCDwarfLineAddr::encode(MCContext &Context, MCDwarfLineTableParams Params,
                              int64_t LineDelta, uint64_t AddrDelta,
@@ -737,14 +758,14 @@ void MCDwarfLineAddr::encode(MCContext &Context, MCDwarfLineTableParams Params,
   if (AddrDelta < 256 + MaxSpecialAddrDelta) {
     // Try using a special opcode.
     Opcode = Temp + AddrDelta * Params.DWARF2LineRange;
-    if (Opcode <= 255) {
+    if (isLegalSpecialOpcode(Context, Params, Opcode)) {
       Out.push_back(Opcode);
       return;
     }
 
     // Try using DW_LNS_const_add_pc followed by special op.
     Opcode = Temp + (AddrDelta - MaxSpecialAddrDelta) * Params.DWARF2LineRange;
-    if (Opcode <= 255) {
+    if (isLegalSpecialOpcode(Context, Params, Opcode)) {
       Out.push_back(dwarf::DW_LNS_const_add_pc);
       Out.push_back(Opcode);
       return;
@@ -759,7 +780,16 @@ void MCDwarfLineAddr::encode(MCContext &Context, MCDwarfLineTableParams Params,
     Out.push_back(dwarf::DW_LNS_copy);
   else {
     assert(Temp <= 255 && "Buggy special opcode encoding.");
-    Out.push_back(Temp);
+    if (isLegalSpecialOpcode(Context, Params, Temp)) {
+      Out.push_back(Temp);
+    } else {
+      // If NeedCopy is not set, LineDelta has not been accounted for.
+      // If we fail to emit it as a special, we have to code it explicitly
+      // and emit a final DW_LNS_copy to create a new line in the table
+      Out.push_back(dwarf::DW_LNS_advance_line);
+      Out.append(Buf, Buf + encodeSLEB128(LineDelta, Buf));
+      Out.push_back(dwarf::DW_LNS_copy);
+    }
   }
 }
 

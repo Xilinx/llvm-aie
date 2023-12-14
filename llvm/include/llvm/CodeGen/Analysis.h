@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file declares several CodeGen-specific LLVM IR analysis utilities.
@@ -62,10 +65,13 @@ inline unsigned ComputeLinearIndex(Type *Ty,
 /// If Offsets is non-null, it points to a vector to be filled in
 /// with the in-memory offsets of each of the individual values.
 ///
+/// If IRTypes is non-null, its pointee will contain the corresponding
+/// llvm::Types for each element in ValueVTs.
 void ComputeValueVTs(const TargetLowering &TLI, const DataLayout &DL, Type *Ty,
                      SmallVectorImpl<EVT> &ValueVTs,
                      SmallVectorImpl<TypeSize> *Offsets,
-                     TypeSize StartingOffset);
+                     TypeSize StartingOffset,
+                     SmallVectorImpl<Type *> *IRTypes = nullptr);
 void ComputeValueVTs(const TargetLowering &TLI, const DataLayout &DL, Type *Ty,
                      SmallVectorImpl<EVT> &ValueVTs,
                      SmallVectorImpl<TypeSize> *Offsets = nullptr,
@@ -80,7 +86,8 @@ void ComputeValueVTs(const TargetLowering &TLI, const DataLayout &DL, Type *Ty,
                      SmallVectorImpl<EVT> &ValueVTs,
                      SmallVectorImpl<EVT> *MemVTs,
                      SmallVectorImpl<TypeSize> *Offsets,
-                     TypeSize StartingOffset);
+                     TypeSize StartingOffset,
+                     SmallVectorImpl<Type *> *IRTypes = nullptr);
 void ComputeValueVTs(const TargetLowering &TLI, const DataLayout &DL, Type *Ty,
                      SmallVectorImpl<EVT> &ValueVTs,
                      SmallVectorImpl<EVT> *MemVTs,

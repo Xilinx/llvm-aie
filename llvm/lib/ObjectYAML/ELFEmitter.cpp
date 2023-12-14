@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 ///
 /// \file
@@ -201,6 +204,9 @@ template <class ELFT> class ELFState {
   NameToIdxMap SN2I;
   NameToIdxMap SymN2I;
   NameToIdxMap DynSymN2I;
+  /*** Begin AIE Support ***/
+  NameToIdxMap AIEMemN2I;
+  /*** End AIE Support ***/
   ELFYAML::Object &Doc;
 
   StringSet<> ExcludedSectionHeaders;
@@ -1933,6 +1939,7 @@ template <class ELFT> void ELFState<ELFT>::finalizeStrings() {
   if (Doc.Symbols)
     for (const ELFYAML::Symbol &Sym : *Doc.Symbols)
       DotStrtab.add(ELFYAML::dropUniqueSuffix(Sym.Name));
+
   DotStrtab.finalize();
 
   // Add the dynamic symbol names to .dynstr section.

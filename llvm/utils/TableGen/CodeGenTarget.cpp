@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This class wraps target description classes used by the various code
@@ -65,7 +68,9 @@ StringRef llvm::getEnumName(MVT::SimpleValueType T) {
   case MVT::i4:       return "MVT::i4";
   case MVT::i8:       return "MVT::i8";
   case MVT::i16:      return "MVT::i16";
+  case MVT::i20:      return "MVT::i20";
   case MVT::i32:      return "MVT::i32";
+  case MVT::i48:      return "MVT::i48";
   case MVT::i64:      return "MVT::i64";
   case MVT::i128:     return "MVT::i128";
   case MVT::Any:      return "MVT::Any";
@@ -256,6 +261,8 @@ StringRef llvm::getEnumName(MVT::SimpleValueType T) {
   case MVT::nxv2f64:   return "MVT::nxv2f64";
   case MVT::nxv4f64:   return "MVT::nxv4f64";
   case MVT::nxv8f64:   return "MVT::nxv8f64";
+  case MVT::v8i48:     return "MVT::v8i48";
+  case MVT::v16i48:    return "MVT::v16i48";
   case MVT::token:     return "MVT::token";
   case MVT::Metadata:  return "MVT::Metadata";
   case MVT::iPTR:      return "MVT::iPTR";

@@ -4,6 +4,8 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines properties of all LLVM intrinsics.
@@ -319,6 +321,8 @@ def IIT_FUNCREF : IIT_VT<funcref, 55>;
 def IIT_I2 : IIT_Int<2, 57>;
 def IIT_I4 : IIT_Int<4, 58>;
 def IIT_AARCH64_SVCOUNT : IIT_VT<aarch64svcount, 59>;
+def IIT_I20 : IIT_Int<20, 60>;
+def IIT_I48 : IIT_Int<48, 61>;
 }
 
 defvar IIT_all_FixedTypes = !filter(iit, IIT_all,
@@ -549,6 +553,7 @@ def llvm_v32i64_ty     : LLVMType<v32i64>;   // 32 x i64
 
 def llvm_v1i128_ty     : LLVMType<v1i128>;   //  1 x i128
 
+def llvm_f16_ty        : LLVMType<f16>;      //  half (__fp16)
 def llvm_v2f16_ty      : LLVMType<v2f16>;    //  2 x half (__fp16)
 def llvm_v4f16_ty      : LLVMType<v4f16>;    //  4 x half (__fp16)
 def llvm_v8f16_ty      : LLVMType<v8f16>;    //  8 x half (__fp16)
@@ -559,6 +564,7 @@ def llvm_v4bf16_ty     : LLVMType<v4bf16>;   //  4 x bfloat (__bf16)
 def llvm_v8bf16_ty     : LLVMType<v8bf16>;   //  8 x bfloat (__bf16)
 def llvm_v16bf16_ty    : LLVMType<v16bf16>;  // 16 x bfloat (__bf16)
 def llvm_v32bf16_ty    : LLVMType<v32bf16>;  // 32 x bfloat (__bf16)
+def llvm_v64bf16_ty    : LLVMType<v64bf16>;  // 64 x bfloat (__bf16)
 def llvm_v1f32_ty      : LLVMType<v1f32>;    //  1 x float
 def llvm_v2f32_ty      : LLVMType<v2f32>;    //  2 x float
 def llvm_v3f32_ty      : LLVMType<v3f32>;    //  3 x float
@@ -571,6 +577,12 @@ def llvm_v2f64_ty      : LLVMType<v2f64>;    //  2 x double
 def llvm_v4f64_ty      : LLVMType<v4f64>;    //  4 x double
 def llvm_v8f64_ty      : LLVMType<v8f64>;    //  8 x double
 def llvm_v16f64_ty     : LLVMType<v16f64>;   // 16 x double
+
+/* AIE */
+def llvm_i20_ty        : LLVMType<i20>;
+def llvm_v8i48_ty      : LLVMType<v8i48>;    //  8 x i48
+def llvm_v16i48_ty     : LLVMType<v16i48>;   //  16 x i48
+/* End AIE */
 
 def llvm_vararg_ty     : LLVMType<isVoid>;   // this means vararg here
 

@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This implements routines for translating from LLVM IR into SelectionDAG IR.
@@ -2224,9 +2227,21 @@ void SelectionDAGBuilder::visitRet(const ReturnInst &I) {
           Flags.setZExt();
 
         for (unsigned i = 0; i < NumParts; ++i) {
-          Outs.push_back(ISD::OutputArg(Flags,
+          // AIE Hack: SelectionDAG forgets to set the IsSplit flags for return
+          // values. This fix can be removed once we fully move to GlobalISel.
+          // In the meantime, do the same as in LowerArguments()
+          auto PartFlags = Flags;
+          if (NumParts > 1 && i == 0) {
+            PartFlags.setSplit();
+          } else if (i > 0) {
+            PartFlags.setOrigAlign(Align(1));
+            if (i == NumParts - 1)
+              PartFlags.setSplitEnd();
+          }
+          Outs.push_back(ISD::OutputArg(PartFlags,
                                         Parts[i].getValueType().getSimpleVT(),
                                         VT, /*isfixed=*/true, 0, 0));
+          // End AIE Hack
           OutVals.push_back(Parts[i]);
         }
       }
@@ -10389,7 +10404,10 @@ TargetLowering::LowerCallTo(TargetLowering::CallLoweringInfo &CLI) const {
   CLI.OutVals.clear();
   for (unsigned i = 0, e = Args.size(); i != e; ++i) {
     SmallVector<EVT, 4> ValueVTs;
-    ComputeValueVTs(*this, DL, Args[i].Ty, ValueVTs);
+    SmallVector<Type *, 4> IRTypes;
+    TypeSize Offset = TypeSize::get(0, Args[i].Ty->isScalableTy());
+    ComputeValueVTs(*this, DL, Args[i].Ty, ValueVTs, /*Offsets=*/nullptr,
+                    Offset, &IRTypes);
     // FIXME: Split arguments if CLI.IsPostTypeLegalization
     Type *FinalType = Args[i].Ty;
     if (Args[i].IsByVal)
@@ -10399,6 +10417,7 @@ TargetLowering::LowerCallTo(TargetLowering::CallLoweringInfo &CLI) const {
     for (unsigned Value = 0, NumValues = ValueVTs.size(); Value != NumValues;
          ++Value) {
       EVT VT = ValueVTs[Value];
+      Type *IRType = IRTypes[Value];
       Type *ArgTy = VT.getTypeForEVT(CLI.RetTy->getContext());
       SDValue Op = SDValue(Args[i].Node.getNode(),
                            Args[i].Node.getResNo() + Value);
@@ -10410,10 +10429,10 @@ TargetLowering::LowerCallTo(TargetLowering::CallLoweringInfo &CLI) const {
       const Align OriginalAlignment(getABIAlignmentForCallingConv(ArgTy, DL));
       Flags.setOrigAlign(OriginalAlignment);
 
-      if (Args[i].Ty->isPointerTy()) {
+      if (IRType->isPointerTy()) {
         Flags.setPointer();
         Flags.setPointerAddrSpace(
-            cast<PointerType>(Args[i].Ty)->getAddressSpace());
+            cast<PointerType>(IRType)->getAddressSpace());
       }
       if (Args[i].IsZExt)
         Flags.setZExt();
@@ -10939,7 +10958,10 @@ void SelectionDAGISel::LowerArguments(const Function &F) {
   for (const Argument &Arg : F.args()) {
     unsigned ArgNo = Arg.getArgNo();
     SmallVector<EVT, 4> ValueVTs;
-    ComputeValueVTs(*TLI, DAG.getDataLayout(), Arg.getType(), ValueVTs);
+    SmallVector<Type *, 4> IRTypes;
+    TypeSize Offset = TypeSize::get(0, Arg.getType()->isScalableTy());
+    ComputeValueVTs(*TLI, DAG.getDataLayout(), Arg.getType(), ValueVTs,
+                    /*Offsets=*/nullptr, Offset, &IRTypes);
     bool isArgValueUsed = !Arg.use_empty();
     unsigned PartBase = 0;
     Type *FinalType = Arg.getType();
@@ -10950,14 +10972,13 @@ void SelectionDAGISel::LowerArguments(const Function &F) {
     for (unsigned Value = 0, NumValues = ValueVTs.size();
          Value != NumValues; ++Value) {
       EVT VT = ValueVTs[Value];
+      Type *IRType = IRTypes[Value];
       Type *ArgTy = VT.getTypeForEVT(*DAG.getContext());
       ISD::ArgFlagsTy Flags;
 
-
-      if (Arg.getType()->isPointerTy()) {
+      if (IRType->isPointerTy()) {
         Flags.setPointer();
-        Flags.setPointerAddrSpace(
-            cast<PointerType>(Arg.getType())->getAddressSpace());
+        Flags.setPointerAddrSpace(cast<PointerType>(IRType)->getAddressSpace());
       }
       if (Arg.hasAttribute(Attribute::ZExt))
         Flags.setZExt();

@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file describes an abstract interface used to get information about a
@@ -308,7 +311,11 @@ public:
   }
 
   /// Return true if the given TargetRegisterClass is compatible with LLT T.
-  bool isTypeLegalForClass(const TargetRegisterClass &RC, LLT T) const {
+  /// HACK: AIE currently requires this function to be virtual, because it needs
+  /// control over which register class is inferred for pointer types.
+  /// TODO: Remove the 'virtual' specifier once AIE's register classes are
+  /// separated
+  virtual bool isTypeLegalForClass(const TargetRegisterClass &RC, LLT T) const {
     for (auto I = legalclasstypes_begin(RC); *I != MVT::Other; ++I) {
       MVT VT(*I);
       if (VT == MVT::Untyped)
