@@ -1,3 +1,9 @@
+#
+# Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 set(LLVM_TARGET_DEFINITIONS Options.td)
 tablegen(LLVM Options.inc -gen-opt-parser-defs)
 add_public_tablegen_target(ELFOptionsTableGen)
@@ -21,6 +27,7 @@ endif()
 add_lld_library(lldELF
   AArch64ErrataFix.cpp
   Arch/AArch64.cpp
+  Arch/AIE.cpp
   Arch/AMDGPU.cpp
   Arch/ARM.cpp
   Arch/AVR.cpp

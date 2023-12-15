@@ -1,0 +1,140 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// Requires: aie2
+// RUN: split-file %s %t
+// RUN: yaml2obj %t/main.yaml -o main.o
+// RUN: yaml2obj %t/ext.yaml -o ext.o
+// RUN: ld.lld -e main main.o ext.o -o %t/prog
+// RUN: llvm-nm --radix=d %t/prog | sed 's/^0*//' > %t/symtab.dec
+// RUN: (cat %t/symtab.dec; llvm-objdump --triple=aie2 -d --no-print-imm-hex %t/prog) | FileCheck %s
+
+// CHECK: [[f:[0-9]+]] T f
+// CHECK: [[f1:[0-9]+]] T f1
+// CHECK: [[global:[0-9]+]] D global
+// CHECK-LABEL: <main>:
+// CHECK: movxm{{.*}}[[global]]
+// CHECK: jl{{.*}}[[f]]
+// CHECK-LABEL: <f>:
+// CHECK: jl{{.*}}[[f1]]
+
+
+#--- main.yaml
+--- !ELF
+FileHeader:
+  Class:           ELFCLASS32
+  Data:            ELFDATA2LSB
+  Type:            ET_REL
+  Machine:         EM_AIE
+  Flags:           [ EF_AIE_AIE2 ]
+  SectionHeaderStringTable: .strtab
+Sections:
+  - Name:            .text
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
+    AddressAlign:    0x10
+    Content:         191800100100010001000100010001009972000099C2FC0F1960FC0F5920000055006000000059800200010001000100010001000100150100000000010001000100010037880300000000000000000059160818D9C2FC075960FC0799FEFF070100010001000100191800100100010001000100010001000100010001000100
+  - Name:            .note.GNU-stack
+    Type:            SHT_PROGBITS
+    AddressAlign:    0x1
+  - Name:            .rela.text
+    Type:            SHT_RELA
+    Flags:           [ SHF_INFO_LINK ]
+    Link:            .symtab
+    AddressAlign:    0x4
+    Info:            .text
+    Relocations:
+      - Offset:          0x20
+        Symbol:          global
+        Type:            R_AIE_42
+      - Offset:          0x36
+        Symbol:          f
+        Type:            R_AIE_1
+  - Type:            SectionHeaderTable
+    Sections:
+      - Name:            .strtab
+      - Name:            .text
+      - Name:            .rela.text
+      - Name:            .note.GNU-stack
+      - Name:            .symtab
+Symbols:
+  - Name:            main.ll
+    Type:            STT_FILE
+    Index:           SHN_ABS
+  - Name:            f1
+    Type:            STT_FUNC
+    Section:         .text
+    Binding:         STB_GLOBAL
+    Size:            0xE
+  - Name:            main
+    Type:            STT_FUNC
+    Section:         .text
+    Binding:         STB_GLOBAL
+    Value:           0x10
+    Size:            0x66
+  - Name:            global
+    Binding:         STB_GLOBAL
+  - Name:            f
+    Binding:         STB_GLOBAL
+...
+#--- ext.yaml
+--- !ELF
+FileHeader:
+  Class:           ELFCLASS32
+  Data:            ELFDATA2LSB
+  Type:            ET_REL
+  Machine:         EM_AIE
+  Flags:           [ EF_AIE_AIE2 ]
+  SectionHeaderStringTable: .strtab
+Sections:
+  - Name:            .text
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
+    AddressAlign:    0x10
+    Content:         997200009942FC0F1501000000000100010001000100BB8E0300000000000000D942FC0799FEFF07010001000100010001001918001001000100010001000100
+  - Name:            .data
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_WRITE, SHF_ALLOC ]
+    AddressAlign:    0x4
+    Content:         2A000000
+  - Name:            .note.GNU-stack
+    Type:            SHT_PROGBITS
+    AddressAlign:    0x1
+  - Name:            .rela.text
+    Type:            SHT_RELA
+    Flags:           [ SHF_INFO_LINK ]
+    Link:            .symtab
+    AddressAlign:    0x4
+    Info:            .text
+    Relocations:
+      - Offset:          0x8
+        Symbol:          f1
+        Type:            R_AIE_1
+  - Type:            SectionHeaderTable
+    Sections:
+      - Name:            .strtab
+      - Name:            .text
+      - Name:            .rela.text
+      - Name:            .data
+      - Name:            .note.GNU-stack
+      - Name:            .symtab
+Symbols:
+  - Name:            ext.ll
+    Type:            STT_FILE
+    Index:           SHN_ABS
+  - Name:            f
+    Type:            STT_FUNC
+    Section:         .text
+    Binding:         STB_GLOBAL
+    Size:            0x40
+  - Name:            f1
+    Binding:         STB_GLOBAL
+  - Name:            global
+    Type:            STT_OBJECT
+    Section:         .data
+    Binding:         STB_GLOBAL
+    Size:            0x4
+...

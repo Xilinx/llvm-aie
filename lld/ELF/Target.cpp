@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // Machine-specific things, such as applying relocations, creation of
@@ -41,11 +44,14 @@ using namespace lld::elf;
 const TargetInfo *elf::target;
 
 std::string lld::toString(RelType type) {
-  StringRef s = getELFRelocationTypeName(elf::config->emachine, type);
+  StringRef s = getELFRelocationTypeName(elf::config->emachine, type,
+                                         elf::config->eflags);
   if (s == "Unknown")
     return ("Unknown (" + Twine(type) + ")").str();
   return std::string(s);
 }
+
+bool lld::elf::isAIE() { return config->emachine == EM_AIE; }
 
 TargetInfo *elf::getTarget() {
   switch (config->emachine) {
@@ -54,6 +60,8 @@ TargetInfo *elf::getTarget() {
     return getX86TargetInfo();
   case EM_AARCH64:
     return getAArch64TargetInfo();
+  case EM_AIE:
+    return getAIETargetInfo();
   case EM_AMDGPU:
     return getAMDGPUTargetInfo();
   case EM_ARM:

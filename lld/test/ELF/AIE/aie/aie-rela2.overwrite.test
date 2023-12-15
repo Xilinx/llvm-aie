@@ -1,0 +1,61 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# REQUIRES: aie
+# RUN: yaml2obj %s -o %t.o
+# RUN: ld.lld -Ttext=0 %t.o -o %t
+# RUN: obj2yaml %t | FileCheck %s
+#
+# CHECK:  - Name:            .text
+# CHECK:    Content: FF0F00E0F1FFFFFFFFFFFFFFFFFFFFFF
+
+--- !ELF
+FileHeader:
+  Class:           ELFCLASS32
+  Data:            ELFDATA2LSB
+  Type:            ET_REL
+  Machine:         EM_AIE
+  Flags:           [ EF_AIE_AIE1 ]
+Sections:
+  - Name:            .text
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
+    AddressAlign:    0x0000000000000004
+    Content:         FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+  - Name:            .rela.text
+    Type:            SHT_RELA
+    Link:            .symtab
+    AddressAlign:    0x0000000000000004
+    EntSize:         0x000000000000000C
+    Info:            .text
+    Relocations:
+      - Offset:          0x0000000000000000
+        Symbol:          foo
+        Type:            R_AIE_2
+  - Name:            .note.GNU-stack
+    Type:            SHT_PROGBITS
+    AddressAlign:    0x0000000000000001
+    Content:         ''
+  - Name:            .llvm_addrsig
+    Type:            SHT_LLVM_ADDRSIG
+    Flags:           [ SHF_EXCLUDE ]
+    Link:            .symtab
+    AddressAlign:    0x0000000000000001
+    Content:         ''
+Symbols:
+  - Name:            linktest.cc
+    Type:            STT_FILE
+    Index:           SHN_ABS
+  - Name:            _main
+    Type:            STT_FUNC
+    Section:         .text
+    Binding:         STB_GLOBAL
+    Size:            0x0000000000000010
+  - Name:            foo
+    Section:			.text
+    Value:				0x00000
+    Binding:         STB_GLOBAL
+...
