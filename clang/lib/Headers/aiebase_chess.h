@@ -32,6 +32,7 @@
 #define chess_pipeline_initiation_interval(x)
 #define chess_pipeline_non_leaf_loop_solution(x)
 #define chess_prepare_for_pipelining
+#define chess_no_prepare_for_pipelining
 #define chess_property(x)
 #define chess_protect_access
 #define chess_require_pipelining(x)
