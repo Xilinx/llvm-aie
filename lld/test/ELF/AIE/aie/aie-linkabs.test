@@ -1,0 +1,21 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+
+# REQUIRES: aie
+# RUN: yaml2obj %S/aie-linkabs.in0.test -o %t_1.o
+# RUN: yaml2obj %S/aie-linkabs.in0.test -o %t_2.o
+# RUN: ld.lld -Ttext=0 %t_1.o %t_2.o -o %t
+# RUN: obj2yaml %t | FileCheck %s
+#
+
+# Linking the same symbol with the same value should succeed
+
+# CHECK:  - Name:            _ZN12me_primitive3ss1E
+# CHECK:    Type:            STT_OBJECT
+# CHECK:    Index:           SHN_ABS
+# CHECK:    Binding:         STB_GLOBAL
+# CHECK:    Value:           0x1

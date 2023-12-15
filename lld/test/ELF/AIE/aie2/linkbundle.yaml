@@ -1,0 +1,239 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// Requires: aie2
+// RUN: split-file %s %t
+// RUN: yaml2obj %t/t0.yaml -o t0.o
+// RUN: yaml2obj %t/t1.yaml -o t1.o
+// RUN: ld.lld t0.o t1.o -o %t/prog
+// RUN: llvm-nm %t/prog | sed 's/^0*//' > %t/symtab
+// RUN: (cat %t/symtab; llvm-objdump --triple=aie2 -d %t/prog) | FileCheck %s
+
+// t1.yaml contains relocations in various bundle formats.
+// We 'load the symbol table' as dumped by nm and check the patched addresses
+
+// CHECK: [[g1:[0-9a-f]+]] B g1
+// CHECK: [[g2:[0-9a-f]+]] B g2
+// CHECK: [[g3:[0-9a-f]+]] B g3
+// CHECK: [[g4:[0-9a-f]+]] B g4
+// CHECK: [[g5:[0-9a-f]+]] B g5
+// CHECK-LABEL: <f1>:
+// CHECK: movxm   p0, #0x[[g1]]
+// CHECK-LABEL: <f2>:
+// CHECK: st      r0, [p1, #0];           movxm   p0, #0x[[g2]]
+// CHECK-LABEL: <f3>:
+// CHECK: st      r0, [p1, #0];           vunpack.s16.s8  x0, wl0;                movxm   p0, #0x[[g3]]
+// CHECK-LABEL: <f4>:
+// CHECK: lda     r1, [p1, #0];           vunpack.s16.s8  x0, wl0;                movxm       p0, #0x[[g4]];           st      r0, [p1, #0]
+// CHECK-LABEL: <f5>:
+// CHECK: vunpack.s16.s8  x0, wl0;                lda     r2, [p1, #0];      st       r0, [p1, #0];           movxm   p0, #0x[[g5]];           vadd    cm0, cm0, cm0, r0
+
+#--- t0.yaml
+--- !ELF
+FileHeader:
+  Class:           ELFCLASS32
+  Data:            ELFDATA2LSB
+  Type:            ET_REL
+  Machine:         EM_AIE
+  Flags:           [ EF_AIE_AIE2 ]
+  SectionHeaderStringTable: .strtab
+Sections:
+  - Name:            .text
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
+    AddressAlign:    0x10
+    Content:         9932020099F6E00F59F63C1E997EE00F9933F40659F63C1F99C2E10F1960E10F59202A009933F807D983020ED983060E1501000000000100010001000100010059763019591608181501000000000100010001000100BB8E0300000000000000597630195916081859763C1A1501000000000100010001000100150000000000597630195916081859763C1A1501000000000100010001000100150000000000597630195916081859763C1A59763E1B15010000000001000100010001000100D9C2E107D97EE007D9F6E0075960E1079932FE0701000100010001001918001001000100010001000100150000000000
+  - Name:            .bss
+    Type:            SHT_NOBITS
+    Flags:           [ SHF_WRITE, SHF_ALLOC ]
+    AddressAlign:    0x4
+    Size:            0x14
+  - Name:            .comment
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_MERGE, SHF_STRINGS ]
+    AddressAlign:    0x1
+    EntSize:         0x1
+    Content:         00636C616E672076657273696F6E2031362E302E30202867697440676974656E74657270726973652E78696C696E782E636F6D3A58524C6162732F6C6C766D2D6169652E67697420386366663931313532613638323666346139383762663465333037373462303039373638653232662900
+  - Name:            .note.GNU-stack
+    Type:            SHT_PROGBITS
+    AddressAlign:    0x1
+  - Name:            .rela.text
+    Type:            SHT_RELA
+    Flags:           [ SHF_INFO_LINK ]
+    Link:            .symtab
+    AddressAlign:    0x4
+    Info:            .text
+    Relocations:
+      - Offset:          0x30
+        Symbol:          f1
+        Type:            R_AIE_1
+      - Offset:          0x48
+        Symbol:          f2
+        Type:            R_AIE_1
+      - Offset:          0x6C
+        Symbol:          f3
+        Type:            R_AIE_1
+      - Offset:          0x8C
+        Symbol:          f4
+        Type:            R_AIE_1
+      - Offset:          0xB0
+        Symbol:          f5
+        Type:            R_AIE_1
+  - Type:            SectionHeaderTable
+    Sections:
+      - Name:            .strtab
+      - Name:            .text
+      - Name:            .rela.text
+      - Name:            .bss
+      - Name:            .comment
+      - Name:            .note.GNU-stack
+      - Name:            .symtab
+Symbols:
+  - Name:            t0.cc
+    Type:            STT_FILE
+    Index:           SHN_ABS
+  - Name:            _start
+    Type:            STT_FUNC
+    Section:         .text
+    Binding:         STB_GLOBAL
+    Size:            0xEA
+  - Name:            f1
+    Binding:         STB_GLOBAL
+  - Name:            f2
+    Binding:         STB_GLOBAL
+  - Name:            f3
+    Binding:         STB_GLOBAL
+  - Name:            f4
+    Binding:         STB_GLOBAL
+  - Name:            f5
+    Binding:         STB_GLOBAL
+  - Name:            g1
+    Type:            STT_OBJECT
+    Section:         .bss
+    Binding:         STB_GLOBAL
+    Size:            0x4
+  - Name:            g2
+    Type:            STT_OBJECT
+    Section:         .bss
+    Binding:         STB_GLOBAL
+    Value:           0x4
+    Size:            0x4
+  - Name:            g3
+    Type:            STT_OBJECT
+    Section:         .bss
+    Binding:         STB_GLOBAL
+    Value:           0x8
+    Size:            0x4
+  - Name:            g4
+    Type:            STT_OBJECT
+    Section:         .bss
+    Binding:         STB_GLOBAL
+    Value:           0xC
+    Size:            0x4
+  - Name:            g5
+    Type:            STT_OBJECT
+    Section:         .bss
+    Binding:         STB_GLOBAL
+    Value:           0x10
+    Size:            0x4
+...
+#--- t1.yaml
+--- !ELF
+FileHeader:
+  Class:           ELFCLASS32
+  Data:            ELFDATA2LSB
+  Type:            ET_REL
+  Machine:           EM_AIE
+  Flags:           [ EF_AIE_AIE2 ]
+  SectionHeaderStringTable: .strtab
+Sections:
+  - Name:            .text
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
+    AddressAlign:    0x10
+    Content:         55006000000019180010010001000100010001003788030000000000000000003B1100180000000050201918001001000100010001000100038003000000000037100018000000301000502019180010010001000100010001001500000000007F0050200200030000301048502019180010010001000100010001001900001000C0011000180000008002895020060219180010010001000100010001000100
+  - Name:            .comment
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_MERGE, SHF_STRINGS ]
+    AddressAlign:    0x1
+    EntSize:         0x1
+    Content:         00636C616E672076657273696F6E2031362E302E30202867697440676974656E74657270726973652E78696C696E782E636F6D3A58524C6162732F6C6C766D2D6169652E67697420386366663931313532613638323666346139383762663465333037373462303039373638653232662900
+  - Name:            .note.GNU-stack
+    Type:            SHT_PROGBITS
+    AddressAlign:    0x1
+  - Name:            .rela.text
+    Type:            SHT_RELA
+    Flags:           [ SHF_INFO_LINK ]
+    Link:            .symtab
+    AddressAlign:    0x4
+    Info:            .text
+    Relocations:
+      - Symbol:          g1
+        Type:            R_AIE_42
+      - Offset:          0x20
+        Symbol:          g2
+        Type:            R_AIE_44
+      - Offset:          0x40
+        Symbol:          g3
+        Type:            R_AIE_46
+      - Offset:          0x60
+        Symbol:          g4
+        Type:            R_AIE_49
+      - Offset:          0x80
+        Symbol:          g5
+        Type:            R_AIE_41
+  - Type:            SectionHeaderTable
+    Sections:
+      - Name:            .strtab
+      - Name:            .text
+      - Name:            .rela.text
+      - Name:            .comment
+      - Name:            .note.GNU-stack
+      - Name:            .symtab
+Symbols:
+  - Name:            t1.cc
+    Type:            STT_FILE
+    Index:           SHN_ABS
+  - Name:            f1
+    Type:            STT_FUNC
+    Section:         .text
+    Binding:         STB_GLOBAL
+    Size:            0x14
+  - Name:            g1
+    Binding:         STB_GLOBAL
+  - Name:            f2
+    Type:            STT_FUNC
+    Section:         .text
+    Binding:         STB_GLOBAL
+    Value:           0x20
+    Size:            0x18
+  - Name:            g2
+    Binding:         STB_GLOBAL
+  - Name:            f3
+    Type:            STT_FUNC
+    Section:         .text
+    Binding:         STB_GLOBAL
+    Value:           0x40
+    Size:            0x1A
+  - Name:            g3
+    Binding:         STB_GLOBAL
+  - Name:            f4
+    Type:            STT_FUNC
+    Section:         .text
+    Binding:         STB_GLOBAL
+    Value:           0x60
+    Size:            0x1C
+  - Name:            g4
+    Binding:         STB_GLOBAL
+  - Name:            f5
+    Type:            STT_FUNC
+    Section:         .text
+    Binding:         STB_GLOBAL
+    Value:           0x80
+    Size:            0x1E
+  - Name:            g5
+    Binding:         STB_GLOBAL
+...

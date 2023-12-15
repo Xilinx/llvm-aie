@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLD_ELF_TARGET_H
@@ -176,6 +179,7 @@ protected:
 };
 
 TargetInfo *getAArch64TargetInfo();
+TargetInfo *getAIETargetInfo();
 TargetInfo *getAMDGPUTargetInfo();
 TargetInfo *getARMTargetInfo();
 TargetInfo *getAVRTargetInfo();
@@ -241,6 +245,8 @@ LLVM_LIBRARY_VISIBILITY extern const TargetInfo *target;
 TargetInfo *getTarget();
 
 template <class ELFT> bool isMipsPIC(const Defined *sym);
+
+bool isAIE();
 
 void reportRangeError(uint8_t *loc, const Relocation &rel, const Twine &v,
                       int64_t min, uint64_t max);

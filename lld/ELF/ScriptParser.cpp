@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains a recursive-descendent parser for linker scripts.
@@ -427,6 +430,7 @@ static std::pair<ELFKind, uint16_t> parseBfdName(StringRef s) {
       .Case("elf64-aarch64", {ELF64LEKind, EM_AARCH64})
       .Case("elf64-littleaarch64", {ELF64LEKind, EM_AARCH64})
       .Case("elf64-bigaarch64", {ELF64BEKind, EM_AARCH64})
+      .Case("elf32-aie", {ELF32LEKind, EM_AIE})
       .Case("elf32-powerpc", {ELF32BEKind, EM_PPC})
       .Case("elf32-powerpcle", {ELF32LEKind, EM_PPC})
       .Case("elf64-powerpc", {ELF64BEKind, EM_PPC64})

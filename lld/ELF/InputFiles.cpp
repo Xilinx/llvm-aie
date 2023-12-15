@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #include "InputFiles.h"
@@ -1227,6 +1230,7 @@ template <class ELFT> void ObjFile<ELFT>::postParse() {
 
     if (sym.binding == STB_WEAK || binding == STB_WEAK)
       continue;
+
     std::lock_guard<std::mutex> lock(mu);
     ctx.duplicates.push_back({&sym, this, sec, eSym.st_value});
   }
@@ -1579,6 +1583,9 @@ static uint16_t getBitcodeMachineKind(StringRef path, const Triple &t) {
   case Triple::aarch64:
   case Triple::aarch64_be:
     return EM_AARCH64;
+  case Triple::aie:
+  case Triple::aie2:
+    return EM_AIE;
   case Triple::amdgcn:
   case Triple::r600:
     return EM_AMDGPU;
