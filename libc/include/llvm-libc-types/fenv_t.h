@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef __LLVM_LIBC_TYPES_FENV_T_H__
@@ -29,6 +32,8 @@ typedef unsigned int fenv_t;
 typedef struct {
   unsigned int __fpc;
 } fenv_t;
+#elif defined(__AIENGINE__)
+typedef void fenv_t; // We don't really have fenv.
 #else
 #error "fenv_t not defined for your platform"
 #endif

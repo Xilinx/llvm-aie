@@ -65,6 +65,7 @@ if (COMPILER_RT_STANDALONE_BUILD)
 endif()
 
 include(builtin-config-ix)
+include(crt-config-ix)
 include(CMakeDependentOption)
 include(CMakePushCheckState)
 
@@ -402,6 +403,7 @@ emutls.c # Needs  __attribute__ ((__regparm__ (1)))
 enable_execute_stack.c # Trampoline stuff
 eprintf.c # Archaeology
 gcc_personality_v0.c # Needs br with Jumptable
+mulsc3.c # copyPhysReg
 os_version_check.c # No OS
 trampoline_setup.c # Trampoline stuff
 )

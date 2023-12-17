@@ -1,3 +1,10 @@
+#
+# Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+
 # ------------------------------------------------------------------------------
 # Architecture and OS definitions.
 #
@@ -45,6 +52,10 @@ function(get_arch_and_system_from_triple triple arch_var sys_var)
   # value.
   if(target_arch MATCHES "^mips")
     set(target_arch "mips")
+  elseif(target_arch MATCHES "^aie2")
+    set(target_arch "aie2")
+  elseif(target_arch MATCHES "^aie")
+    set(target_arch "aie")
   elseif(target_arch MATCHES "^arm")
     # TODO(lntue): Shall we separate `arm64`?  It is currently recognized as
     # `arm` here.
@@ -148,6 +159,10 @@ if(LIBC_TARGET_ARCHITECTURE STREQUAL "arm")
   set(LIBC_TARGET_ARCHITECTURE_IS_ARM TRUE)
 elseif(LIBC_TARGET_ARCHITECTURE STREQUAL "aarch64")
   set(LIBC_TARGET_ARCHITECTURE_IS_AARCH64 TRUE)
+elseif(LIBC_TARGET_ARCHITECTURE STREQUAL "aie")
+  set(LIBC_TARGET_ARCHITECTURE_IS_AIE TRUE)
+elseif(LIBC_TARGET_ARCHITECTURE STREQUAL "aie2")
+  set(LIBC_TARGET_ARCHITECTURE_IS_AIE TRUE)
 elseif(LIBC_TARGET_ARCHITECTURE STREQUAL "x86_64")
   set(LIBC_TARGET_ARCHITECTURE_IS_X86 TRUE)
 elseif(LIBC_TARGET_ARCHITECTURE STREQUAL "riscv64")

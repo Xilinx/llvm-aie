@@ -1,3 +1,9 @@
+#
+# Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 set(OBJECT_LIBRARY_TARGET_TYPE "OBJECT_LIBRARY")
 
 function(_get_common_compile_options output_var flags)
@@ -37,7 +43,10 @@ function(_get_common_compile_options output_var flags)
 
     list(APPEND compile_options "-fno-builtin")
     list(APPEND compile_options "-fno-exceptions")
-    list(APPEND compile_options "-fno-lax-vector-conversions")
+    if(NOT LIBC_TARGET_ARCHITECTURE_IS_AIE)
+      # AIE currently requires lax vector conversions
+      list(APPEND compile_options "-fno-lax-vector-conversions")
+    endif()
     list(APPEND compile_options "-fno-unwind-tables")
     list(APPEND compile_options "-fno-asynchronous-unwind-tables")
     list(APPEND compile_options "-fno-rtti")

@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_LIBC_SRC_STRING_MEMORY_UTILS_INLINE_MEMCMP_H
@@ -24,7 +27,7 @@
 #elif defined(LIBC_TARGET_ARCH_IS_ANY_RISCV)
 #include "src/string/memory_utils/riscv/inline_memcmp.h"
 #define LIBC_SRC_STRING_MEMORY_UTILS_MEMCMP inline_memcmp_riscv
-#elif defined(LIBC_TARGET_ARCH_IS_ARM) || defined(LIBC_TARGET_ARCH_IS_GPU)
+#elif defined(LIBC_TARGET_ARCH_IS_ARM) || defined(LIBC_TARGET_ARCH_IS_AIE) || defined(LIBC_TARGET_ARCH_IS_GPU)
 #include "src/string/memory_utils/generic/byte_per_byte.h"
 #define LIBC_SRC_STRING_MEMORY_UTILS_MEMCMP inline_memcmp_byte_per_byte
 #else

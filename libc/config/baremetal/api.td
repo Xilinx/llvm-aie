@@ -1,3 +1,12 @@
+//===- api.td ----------------------------------------------*- tablegen -*-===//
+//
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+//
+//===----------------------------------------------------------------------===//
 include "config/public_api.td"
 
 include "spec/stdc.td"
@@ -27,4 +36,16 @@ def StdlibAPI : PublicAPI<"stdlib.h"> {
 
 def StringAPI : PublicAPI<"string.h"> {
   let Types = ["size_t"];
+}
+
+def FenvAPI: PublicAPI<"fenv.h"> {
+  let Macros = [
+  ];
+  let Types = ["fenv_t", "fexcept_t"];
+}
+
+def MathAPI : PublicAPI<"math.h"> {
+  let Macros = [
+  ];
+  let Types = ["double_t", "float_t"];
 }
