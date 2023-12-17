@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_LIBC_SRC___SUPPORT_MACROS_PROPERTIES_ARCHITECTURES_H
@@ -47,6 +50,10 @@
 
 #if defined(LIBC_TARGET_ARCH_IS_AARCH64) || defined(LIBC_TARGET_ARCH_IS_ARM)
 #define LIBC_TARGET_ARCH_IS_ANY_ARM
+#endif
+
+#if defined(__AIENGINE__)
+#define LIBC_TARGET_ARCH_IS_AIE
 #endif
 
 #if defined(__riscv) && (__riscv_xlen == 64)

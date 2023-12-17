@@ -54,6 +54,10 @@ function(_get_common_compile_options output_var flags)
 
     list(APPEND compile_options "-fno-builtin")
     list(APPEND compile_options "-fno-exceptions")
+    if(NOT LIBC_TARGET_ARCHITECTURE_IS_AIE)
+      # AIE currently requires lax vector conversions
+      list(APPEND compile_options "-fno-lax-vector-conversions")
+    endif()
     list(APPEND compile_options "-fno-lax-vector-conversions")
     list(APPEND compile_options "-fno-unwind-tables")
     list(APPEND compile_options "-fno-asynchronous-unwind-tables")
