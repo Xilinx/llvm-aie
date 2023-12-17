@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements construction of a TargetInfo object from a
@@ -14,6 +17,7 @@
 #include "Targets.h"
 
 #include "Targets/AArch64.h"
+#include "Targets/AIE.h"
 #include "Targets/AMDGPU.h"
 #include "Targets/ARC.h"
 #include "Targets/ARM.h"
@@ -119,6 +123,10 @@ std::unique_ptr<TargetInfo> AllocateTarget(const llvm::Triple &Triple,
 
   case llvm::Triple::arc:
     return std::make_unique<ARCTargetInfo>(Triple, Opts);
+
+  case llvm::Triple::aie:
+  case llvm::Triple::aie2:
+    return std::make_unique<AIETargetInfo>(Triple, Opts);
 
   case llvm::Triple::xcore:
     return std::make_unique<XCoreTargetInfo>(Triple, Opts);

@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This coordinates the per-module state used while generating code.
@@ -273,6 +276,9 @@ createTargetCodeGenInfo(CodeGenModule &CGM) {
     return createHexagonTargetCodeGenInfo(CGM);
   case llvm::Triple::lanai:
     return createLanaiTargetCodeGenInfo(CGM);
+  case llvm::Triple::aie:
+  case llvm::Triple::aie2:
+    return createAIETargetCodeGenInfo(CGM);
   case llvm::Triple::r600:
     return createAMDGPUTargetCodeGenInfo(CGM);
   case llvm::Triple::amdgcn:

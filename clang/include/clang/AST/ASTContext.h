@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 /// \file
@@ -1134,6 +1137,9 @@ public:
 #include "clang/Basic/RISCVVTypes.def"
 #define WASM_TYPE(Name, Id, SingletonId) CanQualType SingletonId;
 #include "clang/Basic/WebAssemblyReferenceTypes.def"
+#define AIE_TYPE(Name, Id, Size, Algn) \
+  CanQualType Id##Ty;
+#include "clang/Basic/AIETypes.def"
 
   // Types for deductions in C++0x [stmt.ranged]'s desugaring. Built on demand.
   mutable QualType AutoDeductTy;     // Deduction against 'auto'.

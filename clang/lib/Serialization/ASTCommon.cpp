@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 //  This file defines common functions that both ASTReader and ASTWriter use.
@@ -255,6 +258,11 @@ serialization::TypeIdxFromBuiltin(const BuiltinType *BT) {
     ID = PREDEF_TYPE_##Id##_ID;                                                \
     break;
 #include "clang/Basic/WebAssemblyReferenceTypes.def"
+#define AIE_TYPE(Name, Id, Size, Algn) \
+  case BuiltinType::Id: \
+    ID = PREDEF_TYPE_##Id##_ID; \
+    break;
+#include "clang/Basic/AIETypes.def"
   case BuiltinType::BuiltinFn:
     ID = PREDEF_TYPE_BUILTIN_FN;
     break;

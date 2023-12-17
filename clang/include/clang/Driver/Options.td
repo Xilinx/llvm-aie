@@ -4,6 +4,8 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 //  This file defines the options accepted by clang.
@@ -210,6 +212,8 @@ def m_ve_Features_Group : OptionGroup<"<ve features group>">,
                           Group<m_Group>, DocName<"VE">;
 def m_loongarch_Features_Group : OptionGroup<"<loongarch features group>">,
                                  Group<m_Group>, DocName<"LoongArch">;
+def m_aie_Features_Group : OptionGroup<"<AIE features group>">,
+                             Group<m_Group>, DocName<"AIE">;
 
 def m_libc_Group : OptionGroup<"<m libc group>">, Group<m_mips_Features_Group>,
                    Flags<[HelpHidden]>;
@@ -4459,6 +4463,8 @@ def mms_bitfields : Flag<["-"], "mms-bitfields">, Group<m_Group>,
   Visibility<[ClangOption, CC1Option]>,
   HelpText<"Set the default structure layout to be compatible with the Microsoft compiler standard">,
   MarshallingInfoFlag<LangOpts<"MSBitfields">>;
+def mno_vitis_headers : Flag<["-"], "mno-vitis-headers">, Group<m_aie_Features_Group>,
+  HelpText<"Disable automatic inclusion of Vitis-compatible headers">;
 def moutline : Flag<["-"], "moutline">, Group<f_clang_Group>,
   Visibility<[ClangOption, CC1Option]>,
     HelpText<"Enable function outlining (AArch64 only)">;

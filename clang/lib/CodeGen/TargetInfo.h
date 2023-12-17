@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // These classes wrap the information about a call or function
@@ -423,6 +426,9 @@ createAArch64TargetCodeGenInfo(CodeGenModule &CGM, AArch64ABIKind Kind);
 
 std::unique_ptr<TargetCodeGenInfo>
 createWindowsAArch64TargetCodeGenInfo(CodeGenModule &CGM, AArch64ABIKind K);
+
+std::unique_ptr<TargetCodeGenInfo>
+createAIETargetCodeGenInfo(CodeGenModule &CGM);
 
 std::unique_ptr<TargetCodeGenInfo>
 createAMDGPUTargetCodeGenInfo(CodeGenModule &CGM);

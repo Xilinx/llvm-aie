@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the actions class which performs semantic analysis and
@@ -450,6 +453,12 @@ void Sema::Initialize() {
 #define WASM_TYPE(Name, Id, SingletonId)                                       \
   addImplicitTypedef(Name, Context.SingletonId);
 #include "clang/Basic/WebAssemblyReferenceTypes.def"
+  }
+
+  if (Context.getTargetInfo().getTriple().isAIE()) {
+#define AIE_TYPE(Name, Id, Size, Algn)                                        \
+  addImplicitTypedef(#Name, Context.Id##Ty);
+#include "clang/Basic/AIETypes.def"
   }
 
   if (Context.getTargetInfo().hasBuiltinMSVaList()) {

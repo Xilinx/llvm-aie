@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This header defines Bitcode enum values for Clang serialized AST files.
@@ -1092,6 +1095,9 @@ enum PredefinedTypeIDs {
 // \brief WebAssembly reference types with auto numeration
 #define WASM_TYPE(Name, Id, SingletonId) PREDEF_TYPE_##Id##_ID,
 #include "clang/Basic/WebAssemblyReferenceTypes.def"
+// \brief AIE types with auto numeration
+#define AIE_TYPE(Name, Id, Size, Algn) PREDEF_TYPE_##Id##_ID,
+#include "clang/Basic/AIETypes.def"
   // Sentinel value. Considered a predefined type but not useable as one.
   PREDEF_TYPE_LAST_ID
 };
@@ -1101,7 +1107,7 @@ enum PredefinedTypeIDs {
 ///
 /// Type IDs for non-predefined types will start at
 /// NUM_PREDEF_TYPE_IDs.
-const unsigned NUM_PREDEF_TYPE_IDS = 502;
+const unsigned NUM_PREDEF_TYPE_IDS = 506;
 
 // Ensure we do not overrun the predefined types we reserved
 // in the enum PredefinedTypeIDs above.

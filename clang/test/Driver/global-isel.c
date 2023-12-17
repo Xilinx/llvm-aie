@@ -1,3 +1,12 @@
+//===- global-isel.c --------------------------------------------*- C++ -*-===//
+//
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+//
+//===----------------------------------------------------------------------===//
 // REQUIRES: x86-registered-target,aarch64-registered-target
 
 // RUN: %clang -fglobal-isel -S -### %s 2>&1 | FileCheck --check-prefix=ENABLED %s
@@ -21,6 +30,8 @@
 
 // RUN: %clang -target x86_64 -fexperimental-isel -S %s -### 2>&1 | FileCheck --check-prefix=X86_64 %s
 
+// RUN: %clang -target aie -fglobal-isel -S %s -### 2>&1 | FileCheck --check-prefix=AIE %s
+
 // ENABLED: "-mllvm" "-global-isel=1"
 // DISABLED: "-mllvm" "-global-isel=0"
 
@@ -33,3 +44,6 @@
 
 // X86_64: -fglobal-isel support for the 'x86_64' architecture is incomplete
 // X86_64: "-mllvm" "-global-isel-abort=2"
+
+// AIE: warning: -fglobal-isel support for the 'aie' architecture is incomplete
+// AIE: "-mllvm" "-global-isel-abort=2"

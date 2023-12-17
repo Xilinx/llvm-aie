@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This provides C++ code generation targeting the Itanium C++ ABI.  The class
@@ -3364,6 +3367,9 @@ static bool TypeInfoIsInStandardLibrary(const BuiltinType *Ty) {
 #include "clang/Basic/RISCVVTypes.def"
 #define WASM_TYPE(Name, Id, SingletonId) case BuiltinType::Id:
 #include "clang/Basic/WebAssemblyReferenceTypes.def"
+#define AIE_TYPE(Name, Id, Size, Algn) \
+    case BuiltinType::Id:
+#include "clang/Basic/AIETypes.def"
     case BuiltinType::ShortAccum:
     case BuiltinType::Accum:
     case BuiltinType::LongAccum:

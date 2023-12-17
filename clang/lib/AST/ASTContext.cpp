@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 //  This file implements the ASTContext interface.
@@ -1368,6 +1371,11 @@ void ASTContext::InitBuiltinTypes(const TargetInfo &Target,
   InitBuiltinType(SingletonId, BuiltinType::Id);
 #include "clang/Basic/WebAssemblyReferenceTypes.def"
   }
+  if (Target.getTriple().isAIE()) {
+#define AIE_TYPE(Name, Id, Size, Algn)                                         \
+      InitBuiltinType(Id##Ty, BuiltinType::Id);
+#include "clang/Basic/AIETypes.def"
+  }
 
   // Builtin type for __objc_yes and __objc_no
   ObjCBuiltinBoolTy = (Target.useSignedCharForObjCBool() ?
@@ -2190,6 +2198,12 @@ TypeInfo ASTContext::getTypeInfoImpl(const Type *T) const {
     Align = 8;                                                                 \
     break;
 #include "clang/Basic/WebAssemblyReferenceTypes.def"
+#define AIE_TYPE(Name, Id, Size, Algn)                                         \
+  case BuiltinType::Id:                                                        \
+    Width = Size;                                                              \
+    Align = Algn;                                                              \
+    break;
+#include "clang/Basic/AIETypes.def"
     }
     break;
   case Type::ObjCObjectPointer:
@@ -3999,6 +4013,10 @@ QualType ASTContext::getScalableVectorType(QualType EltTy, unsigned NumElts,
   if (EltTy->isBooleanType() && NumElts == NumEls)                             \
     return SingletonId;
 #include "clang/Basic/RISCVVTypes.def"
+  } else if (Target->getTriple().isAIE()) {
+#define AIE_TYPE(Name, Id, Size, Algn)                                         \
+      return Id##Ty;
+#include "clang/Basic/AIETypes.def"
   }
   return QualType();
 }
@@ -8026,6 +8044,8 @@ static char getObjCEncodingForPrimitiveType(const ASTContext *C,
 #include "clang/Basic/RISCVVTypes.def"
 #define WASM_TYPE(Name, Id, SingletonId) case BuiltinType::Id:
 #include "clang/Basic/WebAssemblyReferenceTypes.def"
+#define AIE_TYPE(Name, Id, Size, Algn) case BuiltinType::Id:
+#include "clang/Basic/AIETypes.def"
       {
         DiagnosticsEngine &Diags = C->getDiagnostics();
         unsigned DiagID = Diags.getCustomDiagID(DiagnosticsEngine::Error,
@@ -11452,6 +11472,22 @@ static QualType DecodeTypeFromStr(const char *&Str, const ASTContext &Context,
   case 'p':
     Type = Context.getProcessIDType();
     break;
+/* AIE DecodeType Letters */
+  // TODO 'l' 'e' 'm' and 'n' are AIE Specific letters for acc32, acc48
+  // and acc64 handle this in custom way
+  case 'n':
+    Type = Context.ACC32Ty;
+    break;
+  case 'e':
+    Type = Context.ACC48Ty;
+    break;
+  case 'm':
+    Type = Context.ACC64Ty;
+    break;
+  case 'g':
+    Type = Context.ACCFLOATTy;
+    break;
+    /* End AIE */
   }
 
   // If there are modifiers and if we're allowed to parse them, go for it.

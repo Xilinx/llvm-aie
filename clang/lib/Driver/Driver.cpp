@@ -4,9 +4,13 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #include "clang/Driver/Driver.h"
+#include "ToolChains/AIE.h"
 #include "ToolChains/AIX.h"
 #include "ToolChains/AMDGPU.h"
 #include "ToolChains/AMDGPUOpenMP.h"
@@ -6310,6 +6314,10 @@ const ToolChain &Driver::getToolChain(const ArgList &Args,
       // Of these targets, Hexagon is the only one that might have
       // an OS of Linux, in which case it got handled above already.
       switch (Target.getArch()) {
+      case llvm::Triple::aie:
+      case llvm::Triple::aie2:
+        TC = std::make_unique<toolchains::AIEToolChain>(*this, Target, Args);
+        break;
       case llvm::Triple::tce:
         TC = std::make_unique<toolchains::TCEToolChain>(*this, Target, Args);
         break;

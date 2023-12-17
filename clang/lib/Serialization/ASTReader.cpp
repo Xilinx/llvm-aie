@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 //  This file defines the ASTReader class, which reads AST files.
@@ -7369,6 +7372,11 @@ QualType ASTReader::GetType(TypeID ID) {
     T = Context.SingletonId;                                                   \
     break;
 #include "clang/Basic/WebAssemblyReferenceTypes.def"
+#define AIE_TYPE(Name, Id, Size, Algn) \
+    case PREDEF_TYPE_##Id##_ID: \
+      T = Context.Id##Ty; \
+      break;
+#include "clang/Basic/AIETypes.def"
     }
 
     assert(!T.isNull() && "Unknown predefined type");

@@ -1,3 +1,10 @@
+#
+# Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+
 # core_files list contains the headers shared by all platforms.
 # Please consider adding new platform specific headers
 # to platform specific lists below.
@@ -35,6 +42,37 @@ set(core_files
   unwind.h
   varargs.h
   )
+
+set(aie_files
+  aiebase_chess.h
+  aiebase_typedefs.h
+  aiev1_undef.h
+  aiev1_upd_ext.h
+  aiev1_vfloat.h
+  aiev1_vmult.h
+  aiev1_vmac.h
+  aiev1_ldst.h
+  aiev1_vcmp.h
+  aiev1intrin.h
+  aiev2_scalar.h
+  aiev2_srs.h
+  aiev2_streams.h
+  aiev2_undef.h
+  aiev2_vadd.h
+  aiev2_core.h
+  aiev2_vmult.h
+  aiev2_pckt_header.h
+  aiev2_scl2vec.h
+  aiev2_upd_ext.h
+  aiev2_ups.h
+  aiev2_set_mode.h
+  aiev2_locks.h
+  aiev2_defines.h
+  aiev2_addr.h
+  aiev2_addlog.h
+  aiev2_ldst.h
+  aiev2intrin.h
+)
 
 set(arm_common_files
   # Headers shared by Arm and AArch64
@@ -263,6 +301,7 @@ set(utility_files
 
 set(files
   ${core_files}
+  ${aie_files}
   ${arm_common_files}
   ${arm_only_files}
   ${aarch64_only_files}

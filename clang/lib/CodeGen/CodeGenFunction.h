@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This is the internal per-function state used for llvm translation.
@@ -4330,6 +4333,8 @@ public:
   llvm::Value *EmitHexagonBuiltinExpr(unsigned BuiltinID, const CallExpr *E);
   llvm::Value *EmitRISCVBuiltinExpr(unsigned BuiltinID, const CallExpr *E,
                                     ReturnValueSlot ReturnValue);
+  llvm::Value *EmitAIE1BuiltinExpr(unsigned BuiltinID, const CallExpr *E);
+  llvm::Value *EmitAIE2BuiltinExpr(unsigned BuiltinID, const CallExpr *E);
   void ProcessOrderScopeAMDGCN(llvm::Value *Order, llvm::Value *Scope,
                                llvm::AtomicOrdering &AO,
                                llvm::SyncScope::ID &SSID);

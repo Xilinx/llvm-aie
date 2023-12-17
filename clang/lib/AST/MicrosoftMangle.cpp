@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This provides C++ name mangling targeting the Microsoft Visual C++ ABI.
@@ -2563,6 +2566,8 @@ void MicrosoftCXXNameMangler::mangleType(const BuiltinType *T, Qualifiers,
 #include "clang/Basic/PPCTypes.def"
 #define RVV_TYPE(Name, Id, SingletonId) case BuiltinType::Id:
 #include "clang/Basic/RISCVVTypes.def"
+#define AIE_TYPE(Name, Id, Size, Algn) case BuiltinType::Id:
+#include "clang/Basic/AIETypes.def"
   case BuiltinType::ShortAccum:
   case BuiltinType::Accum:
   case BuiltinType::LongAccum:

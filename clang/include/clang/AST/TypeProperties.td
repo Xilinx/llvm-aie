@@ -4,6 +4,8 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+//
 //===----------------------------------------------------------------------===//
 
 include "clang/AST/PropertiesBase.td"
@@ -820,6 +822,9 @@ let Class = BuiltinType in {
 #define WASM_TYPE(NAME, ID, SINGLETON_ID) \
       case BuiltinType::ID: return ctx.SINGLETON_ID;
 #include "clang/Basic/WebAssemblyReferenceTypes.def"
+#define AIE_TYPE(NAME, ID, SIZE, ALGN) \
+      case BuiltinType::ID: return ctx.ID##Ty;
+#include "clang/Basic/AIETypes.def"
 
 #define BUILTIN_TYPE(ID, SINGLETON_ID) \
       case BuiltinType::ID: return ctx.SINGLETON_ID;

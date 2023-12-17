@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #include "clang/Index/USRGeneration.h"
@@ -768,6 +771,10 @@ void USRGenerator::VisitType(QualType T) {
 #include "clang/Basic/RISCVVTypes.def"
 #define WASM_TYPE(Name, Id, SingletonId) case BuiltinType::Id:
 #include "clang/Basic/WebAssemblyReferenceTypes.def"
+#define AIE_TYPE(Name, Id, Size, Algn) \
+        case BuiltinType::Id: \
+          Out << "@BT@" << #Name; break;
+#include "clang/Basic/AIETypes.def"
         case BuiltinType::ShortAccum:
           Out << "@BT@ShortAccum"; break;
         case BuiltinType::Accum:

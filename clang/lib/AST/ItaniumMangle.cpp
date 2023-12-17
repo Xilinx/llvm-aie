@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // Implements C++ name mangling according to the Itanium C++ ABI,
@@ -3420,6 +3423,12 @@ void CXXNameMangler::mangleType(const BuiltinType *T) {
     Out << 'u' << type_name.size() << type_name;                               \
     break;
 #include "clang/Basic/WebAssemblyReferenceTypes.def"
+#define AIE_TYPE(Name, Id, Size, Algn)                                         \
+  case BuiltinType::Id:                                                        \
+    type_name = #Name;                                                         \
+    Out << 'u' << type_name.size() << type_name;                               \
+    break;
+#include "clang/Basic/AIETypes.def"
   }
 }
 

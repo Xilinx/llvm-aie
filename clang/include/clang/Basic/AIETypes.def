@@ -1,0 +1,55 @@
+//===-- AIETypes.def - Metadata about AIE types -----------------*- C++ -*-===//
+//
+// This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+//
+//===----------------------------------------------------------------------===//
+//
+//  This file defines AIE types.
+//  Custom code should define one of these macros:
+//
+//
+//    AIE_TYPE(Name, Id, Size) - An AIE vector type of a given size
+//    (in bits).
+//
+//    AIE_ACC32_TYPE(Name, Id, Size) - An AIEngine V2 acc type of a given
+//    size (in bits).
+//
+//    AIE_ACC48_TYPE(Name, Id, Size) - An AIEngine V1 acc type of a given
+//    size (in bits).
+
+//
+//    AIE_ACC64_TYPE(Name, Id, Size) - An AIEngine V2 acc type of a given
+//    size (in bits).
+
+//===----------------------------------------------------------------------===//
+
+#ifndef AIE_ACC32_TYPE
+#define AIE_ACC32_TYPE(Name, Id, Size, Algn)               \
+  AIE_TYPE(Name, Id, Size, Algn)
+#endif
+
+#ifndef AIE_ACC48_TYPE
+#define AIE_ACC48_TYPE(Name, Id, Size, Algn)               \
+  AIE_TYPE(Name, Id, Size, Algn)
+#endif
+
+#ifndef AIE_ACC64_TYPE
+#define AIE_ACC64_TYPE(Name, Id, Size, Algn)               \
+  AIE_TYPE(Name, Id, Size, Algn)
+#endif
+
+
+AIE_ACC32_TYPE(__acc32, ACC32, 32, 32)
+AIE_ACC48_TYPE(__acc48, ACC48, 48, 64)
+AIE_ACC64_TYPE(__acc64, ACC64, 64, 64)
+
+AIE_ACC32_TYPE(__accfloat, ACCFLOAT, 32, 32)
+
+#undef AIE_ACC32_TYPE
+#undef AIE_ACC48_TYPE
+#undef AIE_ACC64_TYPE
+#undef AIE_TYPE

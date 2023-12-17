@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the main API hooks in the Clang-C Source Indexing
@@ -1641,6 +1644,8 @@ bool CursorVisitor::VisitBuiltinTypeLoc(BuiltinTypeLoc TL) {
 #include "clang/Basic/RISCVVTypes.def"
 #define WASM_TYPE(Name, Id, SingletonId) case BuiltinType::Id:
 #include "clang/Basic/WebAssemblyReferenceTypes.def"
+#define AIE_TYPE(Name, Id, Size, Algn) case BuiltinType::Id:
+#include "clang/Basic/AIETypes.def"
 #define BUILTIN_TYPE(Id, SingletonId)
 #define SIGNED_TYPE(Id, SingletonId) case BuiltinType::Id:
 #define UNSIGNED_TYPE(Id, SingletonId) case BuiltinType::Id:

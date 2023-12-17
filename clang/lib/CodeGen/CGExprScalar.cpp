@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This contains code to emit Expr nodes with scalar LLVM types as LLVM code.
@@ -25,6 +28,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/StmtVisitor.h"
+#include "clang/AST/Type.h"
 #include "clang/Basic/CodeGenOptions.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/APFixedPoint.h"
@@ -37,6 +41,7 @@
 #include "llvm/IR/GetElementPtrTypeIterator.h"
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/IntrinsicsAIE2.h"
 #include "llvm/IR/IntrinsicsPowerPC.h"
 #include "llvm/IR/MatrixBuilder.h"
 #include "llvm/IR/Module.h"
@@ -3851,7 +3856,81 @@ static Value* tryEmitFMulAdd(const BinOpInfo &op,
   return nullptr;
 }
 
+namespace {
+enum AIEOperationControl { I32 = 0x0, I64 = 0x2, FP32 = 0x1C };
+} // namespace
+
+static std::optional<std::pair<int, int>>
+getAIEIntrinsicForOp(const BinOpInfo &op, const CodeGenFunction &CGF) {
+  assert(op.Ty->isVectorType() && "Expected a vector type");
+  QualType ElemTy = op.Ty->castAs<VectorType>()->getElementType();
+  assert(ElemTy->isAIEAccumulatorType() && "Expected an AIE accumulator type");
+
+  uint64_t Size = CGF.getContext().getTypeSize(op.Ty);
+
+  if (Size == 1024) {
+    switch (op.Opcode) {
+    case clang::BinaryOperator::Opcode::BO_Add: {
+      if (ElemTy->isSpecificBuiltinType(BuiltinType::ACC32))
+        return {{llvm::Intrinsic::aie2_add_acc, AIEOperationControl::I32}};
+      else if (ElemTy->isSpecificBuiltinType(BuiltinType::ACC64))
+        return {{llvm::Intrinsic::aie2_add_acc, AIEOperationControl::I64}};
+    } break;
+    case clang::BinaryOperator::Opcode::BO_Sub: {
+      if (ElemTy->isSpecificBuiltinType(BuiltinType::ACC32))
+        return {{llvm::Intrinsic::aie2_sub_acc, AIEOperationControl::I32}};
+      else if (ElemTy->isSpecificBuiltinType(BuiltinType::ACC64))
+        return {{llvm::Intrinsic::aie2_sub_acc, AIEOperationControl::I64}};
+    } break;
+    default:
+      break;
+    }
+  } else if (Size == 512) {
+    switch (op.Opcode) {
+    case clang::BinaryOperator::Opcode::BO_Add: {
+      if (ElemTy->isSpecificBuiltinType(BuiltinType::ACCFLOAT))
+        return {
+            {llvm::Intrinsic::aie2_add_accfloat, AIEOperationControl::FP32}};
+    } break;
+    case clang::BinaryOperator::Opcode::BO_Sub: {
+      if (ElemTy->isSpecificBuiltinType(BuiltinType::ACCFLOAT))
+        return {
+            {llvm::Intrinsic::aie2_sub_accfloat, AIEOperationControl::FP32}};
+    } break;
+    default:
+      break;
+    }
+  }
+
+  return std::nullopt;
+}
+
+static Value *handleAIEAccumulatorBinOp(const BinOpInfo &op,
+                                        CodeGenFunction &CGF,
+                                        CGBuilderTy &Builder) {
+  if (op.Ty->isVectorType()) {
+    QualType ElemTy = op.Ty->castAs<VectorType>()->getElementType();
+    if (ElemTy->isAIEAccumulatorType()) {
+      // Get the intrinsic and register configuration for the given operator
+      auto IntrinsicCfg = getAIEIntrinsicForOp(op, CGF);
+      if (IntrinsicCfg) {
+        llvm::Function *F = CGF.CGM.getIntrinsic(IntrinsicCfg->first);
+        auto *LHSTmp = Builder.CreateBitCast(op.LHS, F->getReturnType());
+        auto *RHSTmp = Builder.CreateBitCast(op.RHS, F->getReturnType());
+        Value *ConfigParam = Builder.getInt32(IntrinsicCfg->second);
+        return Builder.CreateCall(F, {LHSTmp, RHSTmp, ConfigParam});
+      }
+
+      CGF.ErrorUnsupported(op.E, "operator for accumulator type");
+    }
+  }
+  return nullptr;
+}
+
 Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &op) {
+  if (Value *Val = handleAIEAccumulatorBinOp(op, CGF, Builder))
+    return Val;
+
   if (op.LHS->getType()->isPointerTy() ||
       op.RHS->getType()->isPointerTy())
     return emitPointerArithmetic(CGF, op, CodeGenFunction::NotSubtraction);
@@ -4008,6 +4087,9 @@ Value *ScalarExprEmitter::EmitFixedPointBinOp(const BinOpInfo &op) {
 }
 
 Value *ScalarExprEmitter::EmitSub(const BinOpInfo &op) {
+  if (Value *Val = handleAIEAccumulatorBinOp(op, CGF, Builder))
+    return Val;
+
   // The LHS is always a pointer if either side is.
   if (!op.LHS->getType()->isPointerTy()) {
     if (op.Ty->isSignedIntegerOrEnumerationType()) {

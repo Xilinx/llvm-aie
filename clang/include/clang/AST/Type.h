@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 /// \file
@@ -2635,6 +2638,9 @@ public:
   /// set of type specifiers.
   bool isSpecifierType() const;
 
+  /// Returns true if this is a AIE ACC48.
+  bool isAIEAccumulatorType() const;
+
   /// Determine the linkage of this type.
   Linkage getLinkage() const;
 
@@ -2751,6 +2757,9 @@ public:
 // WebAssembly reference types
 #define WASM_TYPE(Name, Id, SingletonId) Id,
 #include "clang/Basic/WebAssemblyReferenceTypes.def"
+//AIE Types
+#define AIE_TYPE(Name, Id, Size, Algn) Id,
+#include "clang/Basic/AIETypes.def"
 // All other builtin types
 #define BUILTIN_TYPE(Id, SingletonId) Id,
 #define LAST_BUILTIN_TYPE(Id) LastKind = Id
@@ -7402,9 +7411,12 @@ inline bool Type::isUnsignedFixedPointType() const {
 }
 
 inline bool Type::isScalarType() const {
-  if (const auto *BT = dyn_cast<BuiltinType>(CanonicalType))
+  if (const auto *BT = dyn_cast<BuiltinType>(CanonicalType)) {
+    if (isAIEAccumulatorType())
+      return true;
     return BT->getKind() > BuiltinType::Void &&
            BT->getKind() <= BuiltinType::NullPtr;
+  }
   if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType))
     // Enums are scalar types, but only if they are defined.  Incomplete enums
     // are not treated as scalar types.
@@ -7454,6 +7466,13 @@ inline bool Type::isTypedefNameType() const {
   if (auto *TST = getAs<TemplateSpecializationType>())
     return TST->isTypeAlias();
   return false;
+}
+
+inline bool Type::isAIEAccumulatorType() const {
+  return (isSpecificBuiltinType(BuiltinType::ACC32) ||
+          isSpecificBuiltinType(BuiltinType::ACC48) ||
+          isSpecificBuiltinType(BuiltinType::ACC64) ||
+          isSpecificBuiltinType(BuiltinType::ACCFLOAT));
 }
 
 /// Determines whether this type can decay to a pointer type.

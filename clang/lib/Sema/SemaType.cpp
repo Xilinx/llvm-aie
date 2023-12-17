@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 //  This file implements type-related semantic analysis.
@@ -2749,7 +2752,8 @@ QualType Sema::BuildVectorType(QualType CurType, Expr *SizeExpr,
   // can't already be a vector.
   if ((!CurType->isDependentType() &&
        (!CurType->isBuiltinType() || CurType->isBooleanType() ||
-        (!CurType->isIntegerType() && !CurType->isRealFloatingType())) &&
+        (!CurType->isIntegerType() && !CurType->isRealFloatingType() &&
+         !CurType->isAIEAccumulatorType())) &&
        !CurType->isBitIntType()) ||
       CurType->isArrayType()) {
     Diag(AttrLoc, diag::err_attribute_invalid_vector_type) << CurType;

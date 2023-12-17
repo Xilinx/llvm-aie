@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This is the code that handles AST -> LLVM type lowering.
@@ -534,6 +537,27 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
       llvm_unreachable("Unexpected wasm reference builtin type!");             \
   } break;
 #include "clang/Basic/WebAssemblyReferenceTypes.def"
+    {
+      ASTContext::BuiltinVectorTypeInfo Info =
+          Context.getBuiltinVectorTypeInfo(cast<BuiltinType>(Ty));
+      return llvm::ScalableVectorType::get(ConvertType(Info.ElementType),
+                                           Info.EC.getKnownMinValue() *
+                                           Info.NumVectors);
+    }
+#define AIE_TYPE(Name, Id, Size, Algn) case BuiltinType::Id:
+#include "clang/Basic/AIETypes.def"
+    {
+      if (cast<BuiltinType>(Ty)->getKind() == BuiltinType::ACC48) {
+        ResultType = llvm::IntegerType::get(getLLVMContext(), 48);
+      } else if (cast<BuiltinType>(Ty)->getKind() == BuiltinType::ACC32) {
+        ResultType = llvm::IntegerType::get(getLLVMContext(), 32);
+      } else if (cast<BuiltinType>(Ty)->getKind() == BuiltinType::ACC64) {
+        ResultType = llvm::IntegerType::get(getLLVMContext(), 64);
+      } else if (cast<BuiltinType>(Ty)->getKind() == BuiltinType::ACCFLOAT) {
+        ResultType = llvm::IntegerType::get(getLLVMContext(), 32);
+      }
+      break;
+    }
     case BuiltinType::Dependent:
 #define BUILTIN_TYPE(Id, SingletonId)
 #define PLACEHOLDER_TYPE(Id, SingletonId) \
@@ -611,7 +635,15 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     llvm::Type *IRElemTy = VT->isExtVectorBoolType()
                                ? llvm::Type::getInt1Ty(getLLVMContext())
                                : ConvertType(VT->getElementType());
-    ResultType = llvm::FixedVectorType::get(IRElemTy, VT->getNumElements());
+    QualType EltTy = VT->getElementType();
+    if (EltTy->isSpecificBuiltinType(BuiltinType::ACC32) ||
+        EltTy->isSpecificBuiltinType(BuiltinType::ACCFLOAT)) {
+      uint64_t Size = getContext().getTypeSize(Ty);
+      ResultType = llvm::FixedVectorType::get(
+          llvm::Type::getInt64Ty(getLLVMContext()), Size / 64);
+    } else {
+      ResultType = llvm::FixedVectorType::get(IRElemTy, VT->getNumElements());
+    }
     break;
   }
   case Type::ConstantMatrix: {
