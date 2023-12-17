@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 ///
 /// \file
@@ -31,6 +34,16 @@ namespace clang {
 #include "clang/Basic/BuiltinsNEON.def"
     FirstTSBuiltin
   };
+  }
+
+  /// AIE builtins
+  namespace AIE {
+    enum {
+      LastTIBuiltin = clang::Builtin::FirstTSBuiltin - 1,
+#define BUILTIN(ID, TYPE, ATTRS) BI##ID,
+#include "clang/Basic/BuiltinsAIE.def"
+      LastTSBuiltin
+    };
   }
 
   /// ARM builtins

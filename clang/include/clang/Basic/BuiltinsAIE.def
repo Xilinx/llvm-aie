@@ -1,0 +1,464 @@
+//==- BuiltinsAIE.def - AIE Builtin function database ----*- C++ -*-==//
+//
+// This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+//
+//===----------------------------------------------------------------------===//
+//
+// This file defines the AIE-specific builtin function database.  Users of
+// this file must define the BUILTIN macro to make use of this information.
+//
+//===----------------------------------------------------------------------===//
+
+// The format of this database matches clang/Basic/Builtins.def.
+// In addition to the default type specifiers (second argument to the macro),
+// we support the following identifiers on AIE:
+//  n -> acc32
+//  e -> acc48
+//  m -> acc64
+//  g -> accfloat
+
+BUILTIN(__builtin_aie_event, "vi", "nc")
+// Locks
+BUILTIN(__builtin_aie_acquire, "vii", "nc")
+BUILTIN(__builtin_aie_release, "vii", "nc")
+// Streams
+BUILTIN(__builtin_aie_packet_header, "iii", "nc")
+BUILTIN(__builtin_aie_ctrl_packet_header, "iiiii", "nc")
+BUILTIN(__builtin_aie_get_ss, "ii", "nc")
+BUILTIN(__builtin_aie_getf_ss, "fi", "nc")
+BUILTIN(__builtin_aie_put_ms, "vii", "nc")
+BUILTIN(__builtin_aie_putf_ms, "vif", "nc")
+BUILTIN(__builtin_aie_bitget, "iii", "nc")
+BUILTIN(__builtin_aie_bitget_mc0, "ii", "nc")
+BUILTIN(__builtin_aie_bitget_mc1, "ii", "nc")
+BUILTIN(__builtin_aie_bitset, "iiii", "nc")
+BUILTIN(__builtin_aie_bitset_md0, "iii", "nc")
+BUILTIN(__builtin_aie_bitset_md1, "iii", "nc")
+
+BUILTIN(__builtin_aie_sqrt_flt_flt, "ff", "nc")
+BUILTIN(__builtin_aie_invsqrt_flt_flt, "ff", "nc")
+BUILTIN(__builtin_aie_inv_flt_flt, "ff", "nc")
+BUILTIN(__builtin_aie_sqrt_fix_flt, "iif", "nc")
+BUILTIN(__builtin_aie_invsqrt_fix_flt, "iif", "nc")
+BUILTIN(__builtin_aie_inv_fix_flt, "iif", "nc")
+BUILTIN(__builtin_aie_sqrt_flt_fix, "fii", "nc")
+BUILTIN(__builtin_aie_invsqrt_flt_fix, "fii", "nc")
+BUILTIN(__builtin_aie_inv_flt_fix, "fii", "nc")
+BUILTIN(__builtin_aie_sqrt_fix_fix, "iiii", "nc")
+BUILTIN(__builtin_aie_invsqrt_fix_fix, "iiii", "nc")
+BUILTIN(__builtin_aie_inv_fix_fix, "iiii", "nc")
+
+// Floating point vector ops
+BUILTIN(__builtin_aie_v4f32undef, "V4f", "nc")
+BUILTIN(__builtin_aie_v8f32undef, "V8f", "nc")
+BUILTIN(__builtin_aie_v16f32undef, "V16f", "nc")
+BUILTIN(__builtin_aie_v32f32undef, "V32f", "nc")
+BUILTIN(__builtin_aie_vfpmul, "V8fV32fiiV8fiiii", "nc")
+BUILTIN(__builtin_aie_vfpmac, "V8fV8fV32fiiV8fiiii", "nc")
+BUILTIN(__builtin_aie_vfpsimplemul, "V8fV8fV8fii", "nc")
+BUILTIN(__builtin_aie_vfpsimplemac, "V8fV8fV8fV8fii", "nc")
+// Integer vector ops
+BUILTIN(__builtin_aie_v2i32undef, "V2i", "nc")
+BUILTIN(__builtin_aie_v16i16undef, "V16s", "nc")
+BUILTIN(__builtin_aie_v32i16undef, "V32s", "nc")
+BUILTIN(__builtin_aie_v16i32undef, "V16i", "nc")
+BUILTIN(__builtin_aie_v32i32undef, "V32i", "nc")
+BUILTIN(__builtin_aie_v128i8undef, "V128c", "nc")
+BUILTIN(__builtin_aie_v8i48undef, "V8e", "nc")
+BUILTIN(__builtin_aie_v16i48undef, "V16e", "nc")
+//upd intrinsic
+BUILTIN(__builtin_aie_upd_v_v8i32_lo, "V8iV8iV4i", "nc")
+BUILTIN(__builtin_aie_upd_v_v8i32_hi, "V8iV8iV4i", "nc")
+BUILTIN(__builtin_aie_upd_w_v16i32_lo, "V16iV16iV8i", "nc")
+BUILTIN(__builtin_aie_upd_w_v16i32_hi, "V16iV16iV8i", "nc")
+//ext intrinsic
+BUILTIN(__builtin_aie_ext_v_v8i32_lo, "V4iV8i", "nc")
+BUILTIN(__builtin_aie_ext_v_v8i32_hi, "V4iV8i", "nc")
+BUILTIN(__builtin_aie_ext_w_v16i32_lo, "V8iV16i", "nc")
+BUILTIN(__builtin_aie_ext_w_v16i32_hi, "V8iV16i", "nc")
+BUILTIN(__builtin_aie_ext_w_v32i16_lo, "V16sV32s", "nc")
+BUILTIN(__builtin_aie_ext_w_v32i16_hi, "V16sV32s", "nc")
+//concat
+BUILTIN(__builtin_aie_concat_v16i16, "V32sV16sV16s", "nc")
+BUILTIN(__builtin_aie_concat_v32i16, "V64sV32sV32s", "nc")
+//mac,mul intrisic
+BUILTIN(__builtin_aie_mul4_v32int32_v8int32_am_sw80, "V8eV32iV8iiiiV2iV2iV2i", "nc")
+BUILTIN(__builtin_aie_mul4_v16int32_v8int32_am_sw80, "V8eV16iV8iiiiV2iV2iV2i", "nc")
+BUILTIN(__builtin_aie_mul8_v32int32_v8int32_bm_sw80, "V16eV32iV8iiiiV2iV2iV2i", "nc")
+BUILTIN(__builtin_aie_mul16_v32int32_v16int16_bm_sw48, "V16eV32iV16siiiV2iV2iV2i", "nc")
+BUILTIN(__builtin_aie_mul16_v128int8_v32int8_bm_sw48, "V16eV128cV32ciiiV2iV2iV2i", "nc")
+BUILTIN(__builtin_aie_mac16_v32int32_v16int16_bm_sw48, "V16eV32iV16sV16eiiiV2iV2iV2i", "nc")
+BUILTIN(__builtin_aie_mac16_v64int16_v8int32_bm_sw48, "V16eV64sV8iV16eiiiV2iV2iV2i", "nc")
+BUILTIN(__builtin_aie_mac16_v128int8_v32int8_bm_sw48, "V16eV128cV32cV16eiiiV2iV2iV2i", "nc")
+//srs
+BUILTIN(__builtin_aie_bsrs_v16i8, "V16cV16ei", "nc")
+BUILTIN(__builtin_aie_ubsrs_v16i8, "V16UcV16ei", "nc")
+//compare intrinsic
+BUILTIN(__builtin_aie_prim_v32int16, "V32sV32siiV2iV2iV2i", "nc")
+BUILTIN(__builtin_aie_prim_v32int16_cmp, "V32sV32siiV2iV2iV2ii", "nc")
+BUILTIN(__builtin_aie_prim_v32int16_select, "V32sV32siiiV2iV2iV2i", "nc")
+//pack-unpack
+BUILTIN(__builtin_aie_pack_v16int16, "V16cV16s", "nc")
+//aie2
+BUILTIN(__builtin_aiev2_event, "vi", "nc")
+//bitcounting
+BUILTIN(__builtin_aiev2_clb, "UiUi", "nc")
+//semaphores
+BUILTIN(__builtin_aiev2_acquire, "vUiUi", "nc")
+BUILTIN(__builtin_aiev2_acquire_cond, "vUiUii", "nc")
+BUILTIN(__builtin_aiev2_release, "vUii", "nc")
+BUILTIN(__builtin_aiev2_release_cond, "vUiii", "nc")
+BUILTIN(__builtin_aiev2_done, "v", "n")
+//multiply-mac
+BUILTIN(__builtin_aiev2_I512_I512_ACC1024_acc64_mul_conf, "V16mV64cV16ii", "nc")
+BUILTIN(__builtin_aiev2_I512_I512_ACC1024_acc64_negmul_conf, "V16mV64cV16ii", "nc")
+BUILTIN(__builtin_aiev2_I512_I512_ACC1024_acc64_mac_conf, "V16mV64cV16iV16mi", "nc")
+BUILTIN(__builtin_aiev2_I512_I512_ACC1024_acc64_negmac_conf, "V16mV64cV16iV16mi", "nc")
+BUILTIN(__builtin_aiev2_I512_I512_ACC1024_ACC1024_acc64_addmac_conf, "V16mV64cV16iV16mV16mi", "nc")
+BUILTIN(__builtin_aiev2_I512_I512_ACC1024_ACC1024_acc64_addmsc_conf, "V16mV64cV16iV16mV16mi", "nc")
+BUILTIN(__builtin_aiev2_I512_I512_ACC1024_ACC1024_acc64_submac_conf, "V16mV64cV16iV16mV16mi", "nc")
+BUILTIN(__builtin_aiev2_I512_I512_ACC1024_ACC1024_acc64_submsc_conf, "V16mV64cV16iV16mV16mi", "nc")
+BUILTIN(__builtin_aiev2_I512_I512_ACC1024_acc64_msc_conf, "V16mV64cV16iV16mi", "nc")
+BUILTIN(__builtin_aiev2_I512_I512_ACC1024_acc64_negmsc_conf, "V16mV64cV16iV16mi", "nc")
+
+BUILTIN(__builtin_aiev2_I512_I512_ACC1024_acc32_mul_conf, "V32nV64cV16ii", "nc")
+BUILTIN(__builtin_aiev2_I512_I512_ACC1024_acc32_negmul_conf, "V32nV64cV16ii", "nc")
+BUILTIN(__builtin_aiev2_I512_I512_ACC1024_acc32_mac_conf, "V32nV64cV16iV32ni", "nc")
+BUILTIN(__builtin_aiev2_I512_I512_ACC1024_acc32_negmac_conf, "V32nV64cV16iV32ni", "nc")
+BUILTIN(__builtin_aiev2_I512_I512_ACC1024_ACC1024_acc32_addmac_conf, "V32nV64cV16iV32nV32ni", "nc")
+BUILTIN(__builtin_aiev2_I512_I512_ACC1024_ACC1024_acc32_addmsc_conf, "V32nV64cV16iV32nV32ni", "nc")
+BUILTIN(__builtin_aiev2_I512_I512_ACC1024_ACC1024_acc32_submac_conf, "V32nV64cV16iV32nV32ni", "nc")
+BUILTIN(__builtin_aiev2_I512_I512_ACC1024_ACC1024_acc32_submsc_conf, "V32nV64cV16iV32nV32ni", "nc")
+BUILTIN(__builtin_aiev2_I512_I512_ACC1024_acc32_msc_conf, "V32nV64cV16iV32ni", "nc")
+BUILTIN(__builtin_aiev2_I512_I512_ACC1024_acc32_negmsc_conf, "V32nV64cV16iV32ni", "nc")
+
+BUILTIN(__builtin_aiev2_bf_mul16_conf, "V16gV32yV32yi", "nc")
+BUILTIN(__builtin_aiev2_bf_negmul16_conf, "V16gV32yV32yi", "nc")
+BUILTIN(__builtin_aiev2_bf_mac16_conf, "V16gV32yV32yV16gi", "nc")
+BUILTIN(__builtin_aiev2_bf_msc16_conf, "V16gV32yV32yV16gi", "nc")
+BUILTIN(__builtin_aiev2_bf_addmac16_conf, "V16gV32yV32yV16gV16gi", "nc")
+BUILTIN(__builtin_aiev2_bf_addmsc16_conf, "V16gV32yV32yV16gV16gi", "nc")
+
+// Accumulator Addition/Subtraction
+BUILTIN(__builtin_aiev2_add_acc, "V32nV32nV32ni", "nc")
+BUILTIN(__builtin_aiev2_sub_acc, "V32nV32nV32ni", "nc")
+
+// Accumulator word negation
+BUILTIN(__builtin_aiev2_ACC1024_acc32_neg_conf, "V32nV32ni", "nc")
+BUILTIN(__builtin_aiev2_ACC1024_acc64_neg_conf, "V16mV16mi", "nc")
+
+// Accumulator float Addition/Subtraction
+BUILTIN(__builtin_aiev2_add_accfloat, "V16gV16gV16gi", "nc")
+BUILTIN(__builtin_aiev2_sub_accfloat, "V16gV16gV16gi", "nc")
+
+// Accumulator float word negation
+BUILTIN(__builtin_aiev2_ACC512_accfloat_neg_conf, "V16gV16gi", "nc")
+
+// Accumulator negated Addition/Subtraction
+BUILTIN(__builtin_aiev2_negadd_acc, "V32nV32nV32ni", "nc")
+BUILTIN(__builtin_aiev2_negsub_acc, "V32nV32nV32ni", "nc")
+
+// Accumulator float negated Addition/Subtraction
+BUILTIN(__builtin_aiev2_negadd_accfloat, "V16gV16gV16gi", "nc")
+BUILTIN(__builtin_aiev2_negsub_accfloat, "V16gV16gV16gi", "nc")
+
+// v16accfloat to v16bfloat16 and vice-versa
+BUILTIN(__builtin_aiev2_v16accfloat_to_v16bf16, "V16yV16g", "nc")
+BUILTIN(__builtin_aiev2_v16bf16_to_v16accfloat, "V16gV16y", "nc")
+
+//undef
+BUILTIN(__builtin_aiev2_v4int32, "V4i", "nc")
+BUILTIN(__builtin_aiev2_v16int8, "V16c", "nc")
+BUILTIN(__builtin_aiev2_v8int16, "V8s", "nc")
+BUILTIN(__builtin_aiev2_v8int32, "V8i", "nc")
+BUILTIN(__builtin_aiev2_v32int8, "V32c", "nc")
+BUILTIN(__builtin_aiev2_v16int16, "V16s", "nc")
+BUILTIN(__builtin_aiev2_v16int32, "V16i", "nc")
+BUILTIN(__builtin_aiev2_v64int8, "V64c", "nc")
+BUILTIN(__builtin_aiev2_v32int16, "V32s", "nc")
+BUILTIN(__builtin_aiev2_v32int32, "V32i", "nc")
+BUILTIN(__builtin_aiev2_v128int8, "V128c", "nc")
+BUILTIN(__builtin_aiev2_v64int16, "V64s", "nc")
+BUILTIN(__builtin_aiev2_v8acc32, "V8n", "nc")
+BUILTIN(__builtin_aiev2_v16acc32, "V16n", "nc")
+BUILTIN(__builtin_aiev2_v32acc32, "V32n", "nc")
+BUILTIN(__builtin_aiev2_v4acc64, "V4m", "nc")
+BUILTIN(__builtin_aiev2_v8acc64, "V8m", "nc")
+BUILTIN(__builtin_aiev2_v16acc64, "V16m", "nc")
+BUILTIN(__builtin_aiev2_v8accfloat, "V8g", "nc")
+BUILTIN(__builtin_aiev2_v16accfloat, "V16g", "nc")
+BUILTIN(__builtin_aiev2_v32accfloat, "V32g", "nc")
+BUILTIN(__builtin_aiev2_v8bfloat16, "V8y", "nc")
+BUILTIN(__builtin_aiev2_v16bfloat16, "V16y", "nc")
+BUILTIN(__builtin_aiev2_v32bfloat16, "V32y", "nc")
+BUILTIN(__builtin_aiev2_v64bfloat16, "V64y", "nc")
+BUILTIN(__builtin_aiev2_v8float, "V8f", "nc")
+BUILTIN(__builtin_aiev2_v16float, "V16f", "nc")
+BUILTIN(__builtin_aiev2_v32float, "V32f", "nc")
+
+//get 256-reg from given 128-reg
+BUILTIN(__builtin_aiev2_get_I256_I128, "V8iV4i", "nc")
+//scl2vec::shift-shiftx-shift_bytes
+BUILTIN(__builtin_aiev2_vshift_I512_I512, "V16iV16iV16iii", "nc")
+BUILTIN(__builtin_aiev2_vshift_bf512_bf512, "V32yV32yV32yii", "nc")
+//scl2vec::insert
+BUILTIN(__builtin_aiev2_vinsert8_I512,"V16iV16iii", "nc")
+BUILTIN(__builtin_aiev2_vinsert16_I512,"V16iV16iii", "nc")
+BUILTIN(__builtin_aiev2_vinsert32_I512,"V16iV16iii", "nc")
+BUILTIN(__builtin_aiev2_vinsert64_I512,"V16iV16iiV2i", "nc")
+BUILTIN(__builtin_aiev2_vinsert_bf16_bf512,"V32yV32yiy", "nc")
+BUILTIN(__builtin_aiev2_vinsert_bf32_bf512,"V32yV32yiV2y", "nc")
+BUILTIN(__builtin_aiev2_vinsert_bf64_bf512,"V32yV32yiV4y", "nc")
+BUILTIN(__builtin_aiev2_vinsert32_accfloat,"V16gV16gif", "nc")
+//scl2vec::broadcast:broadcast_zero:broadcast_one
+BUILTIN(__builtin_aiev2_vbroadcast8_I512, "V64ci", "nc")
+BUILTIN(__builtin_aiev2_vbroadcast16_I512, "V32si", "nc")
+BUILTIN(__builtin_aiev2_vbroadcast32_I512, "V16ii", "nc")
+BUILTIN(__builtin_aiev2_vbroadcast64_I512, "V16iV2i", "nc")
+BUILTIN(__builtin_aiev2_vbroadcast_bf16_bf512, "V32yy", "nc")
+BUILTIN(__builtin_aiev2_vbroadcast_bf32_bf512, "V32yV2y", "nc")
+BUILTIN(__builtin_aiev2_vbroadcast_bf64_bf512, "V32yV4y", "nc")
+BUILTIN(__builtin_aiev2_vbroadcastfloat_I512, "V16ff", "nc")
+BUILTIN(__builtin_aiev2_vbroadcast_zero_acc1024, "V16m", "nc")
+//scl2vec::broadcast_elem
+BUILTIN(__builtin_aiev2_vextract_broadcast8_I512, "V64cV64ci", "nc")
+BUILTIN(__builtin_aiev2_vextract_broadcast16_I512, "V32sV32si", "nc")
+BUILTIN(__builtin_aiev2_vextract_broadcast32_I512, "V16iV16ii", "nc")
+BUILTIN(__builtin_aiev2_vextract_broadcast_bf32_bf512, "V32yV32yi", "nc")
+//scl2vec::vshuffle
+BUILTIN(__builtin_aiev2_vshuffle,"V16iV16iV16iUi", "nc")
+BUILTIN(__builtin_aiev2_vshuffle_bf16,"V32yV32yV32yUi", "nc")
+
+//scl2vec::vbcstshfl
+BUILTIN(__builtin_aiev2_vbcst_shuffle8,"V16iiUi", "nc")
+BUILTIN(__builtin_aiev2_vbcst_shuffle16,"V16iiUi", "nc")
+BUILTIN(__builtin_aiev2_vbcst_shuffle_bf16,"V32yyUi", "nc")
+BUILTIN(__builtin_aiev2_vbcst_shuffle32,"V16iiUi", "nc")
+BUILTIN(__builtin_aiev2_vbcst_shuffle64,"V16iV2iUi", "nc")
+//scl2vec::ext_elem
+BUILTIN(__builtin_aiev2_vextract_elem8_I512, "iV64cii", "nc")
+BUILTIN(__builtin_aiev2_vextract_elem16_I512, "iV32sii", "nc")
+BUILTIN(__builtin_aiev2_vextract_elem32_I512, "iV16iii", "nc")
+BUILTIN(__builtin_aiev2_vextract_elem64_I512, "V2iV16iii", "nc")
+
+//ext-upd-set-concat::upd_ext
+//upd
+BUILTIN(__builtin_aiev2_upd_I64_I32,"V2iV2iii","nc")
+BUILTIN(__builtin_aiev2_upd_I512_I256,"V16iV16iV8ii","nc")
+BUILTIN(__builtin_aiev2_upd_I1024_I512,"V32iV32iV16ii","nc")
+BUILTIN(__builtin_aiev2_upd_I1024_I256,"V32iV32iV8ii","nc")
+BUILTIN(__builtin_aiev2_upd_bf512_bf256, "V32yV32yV16yi","nc")
+BUILTIN(__builtin_aiev2_upd_bf1024_bf512,"V64yV64yV32yi","nc")
+BUILTIN(__builtin_aiev2_upd_bf1024_bf256,"V64yV64yV16yi","nc")
+BUILTIN(__builtin_aiev2_upd_ACC512_ACC256_acc32,"V16nV16nV8ni","nc")
+BUILTIN(__builtin_aiev2_upd_ACC1024_ACC512_acc32,"V32nV32nV16ni","nc")
+BUILTIN(__builtin_aiev2_upd_ACC1024_ACC256_acc32,"V32nV32nV8ni","nc")
+BUILTIN(__builtin_aiev2_upd_ACC512_ACC256_acc64,"V8mV8mV4mi","nc")
+BUILTIN(__builtin_aiev2_upd_ACC1024_ACC512_acc64,"V16mV16mV8mi","nc")
+BUILTIN(__builtin_aiev2_upd_ACC1024_ACC256_acc64,"V16mV16mV4mi","nc")
+//set
+BUILTIN(__builtin_aiev2_set_I64_I32,"V2iii","nc")
+BUILTIN(__builtin_aiev2_set_I512_I256,"V16iV8ii","nc")
+BUILTIN(__builtin_aiev2_set_I1024_I512,"V32iV16ii","nc")
+BUILTIN(__builtin_aiev2_set_I1024_I256,"V32iV8ii","nc")
+BUILTIN(__builtin_aiev2_set_bf512_bf256, "V32yV16yi","nc")
+BUILTIN(__builtin_aiev2_set_bf1024_bf512,"V64yV32yi","nc")
+BUILTIN(__builtin_aiev2_set_bf1024_bf256,"V64yV16yi","nc")
+BUILTIN(__builtin_aiev2_set_ACC512_ACC256_acc32,"V16nV8ni","nc")
+BUILTIN(__builtin_aiev2_set_ACC1024_ACC512_acc32,"V32nV16ni","nc")
+BUILTIN(__builtin_aiev2_set_ACC1024_ACC256_acc32,"V32nV8ni","nc")
+BUILTIN(__builtin_aiev2_set_ACC512_ACC256_acc64,"V8mV4mi","nc")
+BUILTIN(__builtin_aiev2_set_ACC1024_ACC512_acc64,"V16mV8mi","nc")
+BUILTIN(__builtin_aiev2_set_ACC1024_ACC256_acc64,"V16mV4mi","nc")
+//ext
+BUILTIN(__builtin_aiev2_ext_I32_I64,"iV2ii","nc")
+BUILTIN(__builtin_aiev2_ext_I256_I512,"V8iV16ii","nc")
+BUILTIN(__builtin_aiev2_ext_I512_I1024,"V16iV32ii","nc")
+BUILTIN(__builtin_aiev2_ext_I256_I1024,"V8iV32ii","nc")
+BUILTIN(__builtin_aiev2_ext_bf256_bf512, "V16yV32yi","nc")
+BUILTIN(__builtin_aiev2_ext_bf512_bf1024,"V32yV64yi","nc")
+BUILTIN(__builtin_aiev2_ext_bf256_bf1024,"V16yV64yi","nc")
+BUILTIN(__builtin_aiev2_ext_ACC256_ACC512_acc32,"V8nV16ni","nc")
+BUILTIN(__builtin_aiev2_ext_ACC512_ACC1024_acc32,"V16nV32ni","nc")
+BUILTIN(__builtin_aiev2_ext_ACC256_ACC1024_acc32,"V8nV32ni","nc")
+BUILTIN(__builtin_aiev2_ext_ACC256_ACC512_acc64,"V4mV8mi","nc")
+BUILTIN(__builtin_aiev2_ext_ACC512_ACC1024_acc64,"V8mV16mi","nc")
+BUILTIN(__builtin_aiev2_ext_ACC256_ACC1024_acc64,"V4mV16mi","nc")
+//concat
+BUILTIN(__builtin_aiev2_concat_I512_I256,"V16iV8iV8i","nc")
+BUILTIN(__builtin_aiev2_concat_I1024_I256,"V32iV8iV8iV8iV8i","nc")
+BUILTIN(__builtin_aiev2_concat_I1024_I512,"V32iV16iV16i","nc")
+BUILTIN(__builtin_aiev2_concat_bf512_bf256, "V32yV16yV16y","nc")
+BUILTIN(__builtin_aiev2_concat_bf1024_bf256,"V64yV16yV16yV16yV16y","nc")
+BUILTIN(__builtin_aiev2_concat_bf1024_bf512,"V64yV32yV32y","nc")
+BUILTIN(__builtin_aiev2_concat_ACC512_ACC256_acc32,"V16nV8nV8n","nc")
+BUILTIN(__builtin_aiev2_concat_ACC1024_ACC256_acc32,"V32nV8nV8nV8nV8n","nc")
+BUILTIN(__builtin_aiev2_concat_ACC1024_ACC512_acc32,"V32nV16nV16n","nc")
+BUILTIN(__builtin_aiev2_concat_ACC512_ACC256_acc64,"V8mV4mV4m","nc")
+BUILTIN(__builtin_aiev2_concat_ACC1024_ACC256_acc64,"V16mV4mV4mV4mV4m","nc")
+BUILTIN(__builtin_aiev2_concat_ACC1024_ACC512_acc64,"V16mV8mV8m","nc")
+
+//srs
+BUILTIN(__builtin_aiev2_I256_v16_acc32_srs, "V16sV16nii", "nc")
+BUILTIN(__builtin_aiev2_I256_v16_acc64_srs, "V16sV16mii", "nc")
+BUILTIN(__builtin_aiev2_I256_v32_acc32_srs, "V32cV32nii", "nc")
+BUILTIN(__builtin_aiev2_I256_v8_acc64_srs, "V8iV8mii", "nc")
+BUILTIN(__builtin_aiev2_I512_v16_acc64_srs, "V16iV16mii", "nc")
+BUILTIN(__builtin_aiev2_I512_v32_acc32_srs, "V32sV32nii", "nc")
+
+//ups
+BUILTIN(__builtin_aiev2_acc32_v16_I256_ups, "V16nV16sii", "nc")
+BUILTIN(__builtin_aiev2_acc32_v32_I256_ups, "V32nV32cii", "nc")
+BUILTIN(__builtin_aiev2_acc32_v32_I512_ups, "V32nV32sii", "nc")
+BUILTIN(__builtin_aiev2_acc64_v16_I256_ups, "V16mV16sii", "nc")
+BUILTIN(__builtin_aiev2_acc64_v16_I512_ups, "V16mV16iii", "nc")
+BUILTIN(__builtin_aiev2_acc64_v8_I256_ups,  "V8mV8iii", "nc")
+
+// vabs_gtz
+BUILTIN(__builtin_aiev2_vabs_gtz8, "V64cV64ciUWi&", "nc")
+BUILTIN(__builtin_aiev2_vabs_gtz16, "V32sV32siUi&", "nc")
+BUILTIN(__builtin_aiev2_vabs_gtz32, "V16iV16iiUi&", "nc")
+
+// vaddsub
+BUILTIN(__builtin_aiev2_vaddsub8, "V64cV64cV64cV2i", "nc")
+BUILTIN(__builtin_aiev2_vaddsub16, "V32sV32sV32sUi", "nc")
+BUILTIN(__builtin_aiev2_vaddsub32, "V16iV16iV16iUi", "nc")
+
+// vbneg_ltz
+BUILTIN(__builtin_aiev2_vbneg_ltz8, "V64cV64cUWi&", "nc")
+BUILTIN(__builtin_aiev2_vbneg_ltz16, "V32sV32sUi&", "nc")
+BUILTIN(__builtin_aiev2_vbneg_ltz32, "V16iV16iUi&", "nc")
+
+// veqz
+BUILTIN(__builtin_aiev2_veqz8, "V2iV64c", "nc")
+BUILTIN(__builtin_aiev2_veqz16, "UiV32s", "nc")
+BUILTIN(__builtin_aiev2_veqz32, "UiV16i", "nc")
+
+// vge
+BUILTIN(__builtin_aiev2_vge8, "V2iV64cV64ci", "nc")
+BUILTIN(__builtin_aiev2_vge16, "UiV32sV32si", "nc")
+BUILTIN(__builtin_aiev2_vge32, "UiV16iV16ii", "nc")
+BUILTIN(__builtin_aiev2_vgebf16, "UiV32yV32y", "nc")
+
+// vlt
+BUILTIN(__builtin_aiev2_vlt8, "V2iV64cV64ci", "nc")
+BUILTIN(__builtin_aiev2_vlt16, "UiV32sV32si", "nc")
+BUILTIN(__builtin_aiev2_vlt32, "UiV16iV16ii", "nc")
+BUILTIN(__builtin_aiev2_vltbf16, "UiV32yV32y", "nc")
+
+// vmaxdiff_lt
+BUILTIN(__builtin_aiev2_vmaxdiff_lt8, "V64cV64cV64ciUWi&", "nc")
+BUILTIN(__builtin_aiev2_vmaxdiff_lt16, "V32sV32sV32siUi&", "nc")
+BUILTIN(__builtin_aiev2_vmaxdiff_lt32, "V16iV16iV16iiUi&", "nc")
+
+// vmax_lt
+BUILTIN(__builtin_aiev2_vmax_lt8, "V64cV64cV64ciUWi&", "nc")
+BUILTIN(__builtin_aiev2_vmax_lt16, "V32sV32sV32siUi&", "nc")
+BUILTIN(__builtin_aiev2_vmax_lt32, "V16iV16iV16iiUi&", "nc")
+BUILTIN(__builtin_aiev2_vmax_ltbf16, "V32yV32yV32yUi&", "nc")
+
+// vmin_ge
+BUILTIN(__builtin_aiev2_vmin_ge8, "V64cV64cV64ciUWi&", "nc")
+BUILTIN(__builtin_aiev2_vmin_ge16, "V32sV32sV32siUi&", "nc")
+BUILTIN(__builtin_aiev2_vmin_ge32, "V16iV16iV16iiUi&", "nc")
+BUILTIN(__builtin_aiev2_vmin_gebf16, "V32yV32yV32yUi&", "nc")
+
+// vneg_gtz
+BUILTIN(__builtin_aiev2_vneg_gtz8, "V64cV64cUWi&", "nc")
+BUILTIN(__builtin_aiev2_vneg_gtz16, "V32sV32sUi&", "nc")
+BUILTIN(__builtin_aiev2_vneg_gtz32, "V16iV16iUi&", "nc")
+
+// vsel
+BUILTIN(__builtin_aiev2_vsel8, "V64cV64cV64cV2i", "nc")
+BUILTIN(__builtin_aiev2_vsel16, "V32sV32sV32sUi", "nc")
+BUILTIN(__builtin_aiev2_vsel32, "V16iV16iV16iUi", "nc")
+
+// vsub_ge
+BUILTIN(__builtin_aiev2_vsub_ge8, "V64cV64cV64ciUWi&", "nc")
+BUILTIN(__builtin_aiev2_vsub_ge16, "V32sV32sV32siUi&", "nc")
+BUILTIN(__builtin_aiev2_vsub_ge32, "V16iV16iV16iiUi&", "nc")
+
+// vsub_lt
+BUILTIN(__builtin_aiev2_vsub_lt8, "V64cV64cV64ciUWi&", "nc")
+BUILTIN(__builtin_aiev2_vsub_lt16, "V32sV32sV32siUi&", "nc")
+BUILTIN(__builtin_aiev2_vsub_lt32, "V16iV16iV16iiUi&", "nc")
+
+//addr
+BUILTIN(__builtin_aiev2_add_2d, "v*v*iiii&", "nc")
+BUILTIN(__builtin_aiev2_add_3d, "v*v*iiiii&ii&", "nc")
+
+BUILTIN(__builtin_aiev2_load_4x16_lo, "V8iV8i", "nc")
+BUILTIN(__builtin_aiev2_load_4x16_hi, "V8iV8i", "nc")
+BUILTIN(__builtin_aiev2_load_4x32_lo, "V8iV8i", "nc")
+BUILTIN(__builtin_aiev2_load_4x32_hi, "V8iV8i", "nc")
+BUILTIN(__builtin_aiev2_load_4x64_lo, "V8iV8i", "nc")
+BUILTIN(__builtin_aiev2_load_4x64_hi, "V8iV8i", "nc")
+
+// bfloat16 conversions
+BUILTIN(__builtin_float_to_bfloat16, "yf", "nc")
+BUILTIN(__builtin_bfloat16_to_int, "iy", "nc")
+// vector bfloat16 to vector int
+BUILTIN(__builtin_aiev2_v16bf16_to_v16i32, "V16iV16yi", "nc")
+
+// Streams
+// Cascade stream read
+BUILTIN(__builtin_aiev2_scd_read_vec, "V16ii", "nc")
+BUILTIN(__builtin_aiev2_scd_read_acc32, "V16ni", "nc")
+BUILTIN(__builtin_aiev2_scd_expand_lo, "V32ni", "nc")
+BUILTIN(__builtin_aiev2_scd_expand_hi, "V32ni", "nc")
+
+// Cascade stream write
+BUILTIN(__builtin_aiev2_mcd_write_vec, "vV16ii", "nc")
+BUILTIN(__builtin_aiev2_mcd_write_acc32, "vV16ni", "nc")
+
+// Scalar stream read
+BUILTIN(__builtin_aiev2_get_ss, "ii&", "nc")
+BUILTIN(__builtin_aiev2_get_ss_nb, "ii&", "nc")
+
+// Scalar stream write
+BUILTIN(__builtin_aiev2_put_ms, "vii", "nc")
+BUILTIN(__builtin_aiev2_put_ms_nb, "viii&", "nc")
+
+// Packet switched streams
+// Packet header
+BUILTIN(__builtin_aiev2_put_ms_packet_header, "viii", "nc")
+BUILTIN(__builtin_aiev2_put_ms_nb_packet_header, "viiii&", "nc")
+
+// Control packet header
+BUILTIN(__builtin_aiev2_put_ms_ctrl_packet_header, "viiiii", "nc")
+BUILTIN(__builtin_aiev2_put_ms_nb_ctrl_packet_header, "viiiiii&", "nc")
+
+// Read/Write for Tile Memory Map
+BUILTIN(__builtin_aiev2_read_tm, "iv*", "nc")
+BUILTIN(__builtin_aiev2_write_tm, "viv*", "nc")
+
+// Mode Settings
+// Set Control Registers
+BUILTIN(__builtin_aiev2_set_ctrl_reg, "vUiCUi", "nc")
+// Get Control Registers
+BUILTIN(__builtin_aiev2_get_ctrl_reg, "UiUi", "nc")
+
+// Get Core ID
+BUILTIN(__builtin_aiev2_get_coreid, "i", "nc")
+
+// Pack-Unpack
+BUILTIN(__builtin_aiev2_pack, "V32cV32sii", "nc")
+BUILTIN(__builtin_aiev2_unpack, "V32sV32cii", "nc")
+
+// Scheduling barrier
+BUILTIN(__builtin_aiev2_sched_barrier, "v", "n")
+
+// Clears accumulator
+BUILTIN(__builtin_aiev2_clr16f_conf, "V16g", "n")
+
+// Extract sub-vector
+BUILTIN(__builtin_aiev2_extract_I128_I512, "V4iV16i", "nc")
+
+// Set sub-vector
+BUILTIN(__builtin_aiev2_set_I512_I128, "V16iV4i", "nc")
+
+#undef BUILTIN

@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This coordinates the debug information generation while generating code.
@@ -857,6 +860,12 @@ llvm::DIType *CGDebugInfo::CreateType(const BuiltinType *BT) {
   }
 #include "clang/Basic/WebAssemblyReferenceTypes.def"
 
+//TODO AIE handle debug info
+#define AIE_TYPE(Name, Id, Size, Algn) case BuiltinType::Id:
+#include "clang/Basic/AIETypes.def"
+    {
+      return CreateType(cast<const BuiltinType>(CGM.getContext().IntTy));
+    }
   case BuiltinType::UChar:
   case BuiltinType::Char_U:
     Encoding = llvm::dwarf::DW_ATE_unsigned_char;
