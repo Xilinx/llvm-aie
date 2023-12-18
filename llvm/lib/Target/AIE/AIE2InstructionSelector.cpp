@@ -21,8 +21,9 @@
 #include "InstPrinter/AIE2InstPrinter.h"
 #include "MCTargetDesc/AIE2MCTargetDesc.h"
 #include "llvm/ADT/APInt.h"
-#include "llvm/CodeGen/GlobalISel/InstructionSelector.h"
 #include "llvm/CodeGen/GlobalISel/GIMatchTableExecutorImpl.h"
+#include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
+#include "llvm/CodeGen/GlobalISel/InstructionSelector.h"
 #include "llvm/CodeGen/GlobalISel/MIPatternMatch.h"
 #include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
 #include "llvm/CodeGen/GlobalISel/Utils.h"
@@ -32,10 +33,10 @@
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/Register.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
-#include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
-#include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/IntrinsicsAIE.h"
 #include "llvm/IR/IntrinsicsAIE2.h"
 #include <optional>
@@ -166,6 +167,7 @@ public:
                                   Register ShftReg, Register SignReg,
                                   bool ConstantSign, MachineRegisterInfo &MRI);
   bool selectVUPS(MachineInstr &I, MachineRegisterInfo &MRI);
+  bool selectVCONV(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectWriteTM(MachineInstr &I, MachineRegisterInfo &MRI);
   LoadStoreOpcodes getLoadStoreOpcode(const MachineInstr &I,
                                       const MachineRegisterInfo &MRI,
@@ -181,6 +183,7 @@ public:
                                    Register ShftReg, Register SignReg,
                                    bool ConstantSign, MachineRegisterInfo &MRI);
   bool selectG_AIE_STORE_CONV(MachineInstr &StoreI, MachineRegisterInfo &MRI);
+  bool selectG_AIE_LOAD_CONV(MachineInstr &StoreI, MachineRegisterInfo &MRI);
   bool selectG_AIE_STORE_PACK(MachineInstr &StoreI, MachineRegisterInfo &MRI);
   bool selectStartLoop(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_AIE_EXTRACT_VECTOR_ELT(MachineInstr &I,
@@ -604,6 +607,8 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
     case Intrinsic::aie2_I512_v16_acc64_srs:
     case Intrinsic::aie2_I512_v32_acc32_srs:
       return selectVSRS(I, MRI);
+    case Intrinsic::aie2_v16bf16_to_v16accfloat:
+      return selectVCONV(I, MRI);
     case Intrinsic::aie2_vextract_elem8_I512:
     case Intrinsic::aie2_vextract_elem16_I512:
     case Intrinsic::aie2_vextract_elem32_I512:
@@ -4070,6 +4075,130 @@ bool AIE2InstructionSelector::select512BitG_AIE_LOAD_STORE(
   default:
     return false;
   }
+}
+
+std::optional<LoadStoreOpcodes>
+getCombinedOpcodeCONVLoad(const MachineInstr &MemOp, const MachineInstr &CombOp,
+                          std::optional<APInt> Immediate) {
+
+  // const bool AlwaysFitsImmediateRange = true;
+  const bool NoImmediate = false;
+  if (CombOp.getOpcode() != AIE2::G_INTRINSIC ||
+      cast<GIntrinsic>(CombOp).getIntrinsicID() !=
+          Intrinsic::aie2_v16bf16_to_v16accfloat)
+    return {};
+
+  if (!MemOp.mayLoad())
+    return {};
+
+  assert(getLoadStoreSize(MemOp) == 256 && "Unexpected VLDA.CONV size");
+
+  unsigned ISelOpcode;
+  bool FitsImmediateRange;
+
+  switch (MemOp.getOpcode()) {
+  case AIE2::G_LOAD:
+    return LoadStoreOpcodes{/*ISelOpcode=*/AIE2::VLDA_CONV_FP32_BF16_ag_idx_imm,
+                            true, /*OffsetOpcode=*/{}};
+  case AIE2::G_AIE_OFFSET_LOAD:
+    FitsImmediateRange = checkImmediateRange<8, 32>(Immediate);
+    ISelOpcode = FitsImmediateRange ? AIE2::VLDA_CONV_FP32_BF16_ag_idx_imm
+                                    : AIE2::VLDA_CONV_FP32_BF16_ag_idx;
+    return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
+                            /*OffsetOpcode=*/{}};
+  case AIE2::G_AIE_POSTINC_LOAD:
+    FitsImmediateRange = checkImmediateRange<9, 32>(Immediate);
+    ISelOpcode = FitsImmediateRange ? AIE2::VLDA_CONV_FP32_BF16_pstm_nrm_imm
+                                    : AIE2::VLDA_CONV_FP32_BF16_pstm_nrm;
+    return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
+                            /*OffsetOpcode=*/{}};
+  case AIE2::G_AIE_POSTINC_2D_LOAD:
+    return LoadStoreOpcodes{/*ISelOpcode=*/AIE2::VLDA_2D_CONV_FP32_BF16,
+                            NoImmediate,
+                            /*OffsetOpcode=*/{}};
+  case AIE2::G_AIE_POSTINC_3D_LOAD:
+    return LoadStoreOpcodes{/*ISelOpcode=*/AIE2::VLDA_3D_CONV_FP32_BF16,
+                            NoImmediate,
+                            /*OffsetOpcode=*/{}};
+  }
+  return {};
+}
+
+bool canCombineCONVLoad(MachineInstr &MemOp, MachineInstr &CombOp) {
+  const std::optional<APInt> NoImmediate = {};
+  return getCombinedOpcodeCONVLoad(MemOp, CombOp, NoImmediate).has_value();
+}
+
+// make an instruction trivially dead by creating and distributing new virtual
+// registers to its defs
+void makeDeadMI(MachineInstr &MI, MachineRegisterInfo &MRI) {
+  for (auto *Def = MI.defs().begin(); Def != MI.defs().end(); ++Def) {
+    Register NewReg = MRI.cloneVirtualRegister(Def->getReg());
+    Def->setReg(NewReg);
+  }
+}
+
+bool AIE2InstructionSelector::selectG_AIE_LOAD_CONV(MachineInstr &CONVI,
+                                                    MachineRegisterInfo &MRI) {
+  Register LoadResult = (std::next(CONVI.uses().begin()))->getReg();
+  MachineInstr *LoadOp = MRI.getUniqueVRegDef(LoadResult);
+
+  assert(LoadOp && "Expected SSA.");
+
+  // Do not try to combine if one of the load's defs is used by another
+  // instruction between the load and the VCONV or if there is a store
+  // between the load and the VCONV.
+  if (!canDelayMemOp(*LoadOp, CONVI))
+    return false;
+
+  if (!canCombineCONVLoad(*LoadOp, CONVI) ||
+      LoadOp->getParent() != CONVI.getParent() || !MRI.hasOneUse(LoadResult))
+    return false;
+
+  std::optional<AddressingModeInfo> AMI =
+      getOrDefineAddressingRegister(*LoadOp, MRI);
+
+  if (!AMI)
+    return false;
+
+  std::optional<LoadStoreOpcodes> LSO =
+      getCombinedOpcodeCONVLoad(AMI->MemI, CONVI, AMI->ImmediateOffset);
+
+  Register DstReg = CONVI.getOperand(0).getReg();
+
+  auto NewInstr = MIB.buildInstr(LSO->ISelOpcode);
+
+  NewInstr.addDef(DstReg);
+
+  for (auto *Def = std::next(AMI->MemI.defs().begin());
+       Def != AMI->MemI.defs().end(); ++Def)
+    NewInstr.addDef(Def->getReg());
+
+  addAddressingMode(NewInstr, *AMI, LSO->FitsImmediateRange, false, MRI);
+
+  NewInstr.cloneMemRefs(AMI->MemI);
+
+  CONVI.eraseFromParent();
+
+  // Erasing the load instruction breaks later on in the selection code. That is
+  // because an iterator is kept on erased instructions. This breaks while
+  // trying to eliminate a trivially dead instruction which requires access to
+  // its memory operands which have been erased, thus leading to a seg fault. To
+  // remedy this, we keep the load to be removed by the trivial dead code
+  // elimination and we make sure to assign new virtual register definitions to
+  // its live operands to respect SSA.
+  makeDeadMI(*LoadOp, MRI);
+
+  return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
+}
+
+bool AIE2InstructionSelector::selectVCONV(MachineInstr &I,
+                                          MachineRegisterInfo &MRI) {
+  // Try to match CONV combine
+  if (selectG_AIE_LOAD_CONV(I, MRI))
+    return true;
+  // Resort to TableGen'ed selection patterns
+  return selectImpl(I, *CoverageInfo);
 }
 
 bool AIE2InstructionSelector::selectG_AIE_LOAD_STORE(MachineInstr &I,
