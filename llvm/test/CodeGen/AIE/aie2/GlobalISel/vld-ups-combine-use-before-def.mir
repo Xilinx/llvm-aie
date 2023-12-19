@@ -5,21 +5,31 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: not --crash llc -mtriple aie2 -run-pass=instruction-select -run-pass=liveintervals -verify-machineinstrs -o /dev/null %s 2>&1 | FileCheck %s
+# RUN: llc -mtriple aie2 -run-pass=instruction-select -run-pass=liveintervals -verify-machineinstrs -o - %s 2>&1 | FileCheck %s
 
-# %4 is used before being defined which is wrong.
-# This is fixed in a follow-up commit.
+# This tests that we don't combine if one of the load's defs is used before the VUPS instruction
 ---
-name:            VLD_UPS_use_before_def
+name:            VLD_UPS_use
 legalized:       true
 regBankSelected: true
 tracksRegLiveness: true
 body: |
   bb.0:
     liveins: $p0, $m0, $m1, $m2, $r0
-    ; CHECK: Use of %4 does not have a corresponding definition on every path:
-    ; CHECK-NEXT: 64r $m1 = COPY %4:ep
-    ; CHECK-NEXT: LLVM ERROR: Use not jointly dominated by defs.
+    ; CHECK-LABEL: name: VLD_UPS_use
+    ; CHECK: liveins: $p0, $m0, $m1, $m2, $r0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:em = COPY $m0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $r0
+    ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_pstm_nrm:%[0-9]+]]:vec256, [[VLDA_dmw_lda_w_ag_pstm_nrm1:%[0-9]+]]:ep = VLDA_dmw_lda_w_ag_pstm_nrm [[COPY]], [[COPY1]] :: (load (<16 x s16>))
+    ; CHECK-NEXT: $m1 = COPY [[VLDA_dmw_lda_w_ag_pstm_nrm1]]
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:ep = COPY $m1
+    ; CHECK-NEXT: $crupssign = COPY [[COPY2]]
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:mss = COPY [[COPY2]]
+    ; CHECK-NEXT: [[VUPS_S64_D16_mv_ups_w2c:%[0-9]+]]:mcms = VUPS_S64_D16_mv_ups_w2c [[VLDA_dmw_lda_w_ag_pstm_nrm]], [[COPY4]], implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    ; CHECK-NEXT: $crupssign = MOV_scalar_imm10_pseudo 0
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VUPS_S64_D16_mv_ups_w2c]], implicit [[COPY3]]
     %0:ptrregbank(p0) = COPY $p0
     %7:modregbank(s20) = COPY $m0
     %70:gprregbank(s32) = COPY $r0

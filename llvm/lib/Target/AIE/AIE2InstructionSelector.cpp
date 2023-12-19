@@ -16,6 +16,7 @@
 #include "AIE2RegisterBankInfo.h"
 #include "AIE2RegisterInfo.h"
 #include "AIE2TargetMachine.h"
+#include "AIECombinerHelper.h"
 #include "AIEMachineFunctionInfo.h"
 #include "InstPrinter/AIE2InstPrinter.h"
 #include "MCTargetDesc/AIE2MCTargetDesc.h"
@@ -2464,6 +2465,12 @@ bool AIE2InstructionSelector::selectG_AIE_LOAD_UPS(MachineInstr &UPSI,
   MachineInstr *LoadOp = MRI.getUniqueVRegDef(LoadResult);
 
   assert(LoadOp && "Expected SSA.");
+
+  // Do not try to combine if one of the load's defs is used by another
+  // instruction between the load and the VUPS or if there is a store
+  // between the load and the VUPS.
+  if (!canDelayMemOp(*LoadOp, UPSI))
+    return false;
 
   if (!canCombineSRSUPS(*LoadOp, UPSI) ||
       LoadOp->getParent() != UPSI.getParent() || !MRI.hasOneUse(LoadResult))

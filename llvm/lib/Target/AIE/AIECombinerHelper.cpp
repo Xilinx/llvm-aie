@@ -76,7 +76,7 @@ bool isUseOf(const MachineInstr &MI, const MachineInstr &Use) {
 
 /// \return true if \a MemI can be moved just before \a Dest in order to allow
 /// post-increment combining
-bool canDelayMemOp(MachineInstr &MemI, MachineInstr &Dest) {
+bool llvm::canDelayMemOp(MachineInstr &MemI, MachineInstr &Dest) {
   if (MemI.getParent() != Dest.getParent())
     return false;
   auto MII = std::next(MemI.getIterator());
