@@ -7,17 +7,16 @@
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2 -run-pass=instruction-select -verify-machineinstrs -o - %s | FileCheck %s
 
-# The load and store are reordered after the combine which is wrong.
-# This is fixed in a follow-up commit.
+# This tests that we don't combine if a store is in between the load and VUPS instruction
 ---
-name:            VLD_UPS_store_after_load
+name:            VLD_UPS_store
 legalized:       true
 regBankSelected: true
 tracksRegLiveness: true
 body: |
   bb.0:
     liveins: $p0, $m0, $m1, $m2, $r0, $amll0, $p1
-    ; CHECK-LABEL: name: VLD_UPS_store_after_load
+    ; CHECK-LABEL: name: VLD_UPS_store
     ; CHECK: liveins: $p0, $m0, $m1, $m2, $r0, $amll0, $p1
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -25,12 +24,13 @@ body: |
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:em = COPY $m0
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:er = COPY $r0
     ; CHECK-NEXT: [[COPY4:%[0-9]+]]:vec256 = COPY $amll0
+    ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_pstm_nrm:%[0-9]+]]:vec256, [[VLDA_dmw_lda_w_ag_pstm_nrm1:%[0-9]+]]:ep = VLDA_dmw_lda_w_ag_pstm_nrm [[COPY]], [[COPY2]] :: (load (<16 x s16>))
     ; CHECK-NEXT: VST_dmw_sts_w_ag_idx_imm [[COPY4]], [[COPY1]], 0 :: (store (<16 x s16>))
     ; CHECK-NEXT: $crupssign = COPY [[COPY3]]
     ; CHECK-NEXT: [[COPY5:%[0-9]+]]:mss = COPY [[COPY3]]
-    ; CHECK-NEXT: [[VLDA_UPS_S64_D16_ag_pstm_nrm:%[0-9]+]]:mcms, [[VLDA_UPS_S64_D16_ag_pstm_nrm1:%[0-9]+]]:ep = VLDA_UPS_S64_D16_ag_pstm_nrm [[COPY5]], [[COPY]], [[COPY2]], implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<16 x s16>))
+    ; CHECK-NEXT: [[VUPS_S64_D16_mv_ups_w2c:%[0-9]+]]:mcms = VUPS_S64_D16_mv_ups_w2c [[VLDA_dmw_lda_w_ag_pstm_nrm]], [[COPY5]], implicit-def $srups_of, implicit $crsat, implicit $crupssign
     ; CHECK-NEXT: $crupssign = MOV_scalar_imm10_pseudo 0
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_S64_D16_ag_pstm_nrm]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VUPS_S64_D16_mv_ups_w2c]]
     %0:ptrregbank(p0) = COPY $p0
     %20:ptrregbank(p0) = COPY $p1
     %7:modregbank(s20) = COPY $m0
