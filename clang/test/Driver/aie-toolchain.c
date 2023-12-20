@@ -57,3 +57,18 @@
 // RUN: %clang %s -### --target=aie -fuse-init-array 2>&1 \
 // RUN:   | FileCheck -check-prefix=CC1-XXTORS-OVERRIDE %s
 // CC1-XXTORS-OVERRIDE-NOT: -fno-use-init-array
+
+// By default we don't want threadsafe statics
+// RUN: %clang %s -### --target=aie 2>&1 \
+// RUN:   | FileCheck -check-prefix=CC1-STATICS %s
+// CC1-STATICS: "-cc1"{{.*}}"-fno-threadsafe-statics"
+
+// Also if we explicitly ask for it.
+// RUN: %clang %s -### --target=aie -fno-threadsafe-statics 2>&1 \
+// RUN:   | FileCheck -check-prefix=CC1-STATICS-EXPL-DEFAULT %s
+// CC1-STATICS-EXPL-DEFAULT: "-cc1"{{.*}}"-fno-threadsafe-statics"
+
+// But not if we override it
+// RUN: %clang %s -### --target=aie -fthreadsafe-statics 2>&1 \
+// RUN:   | FileCheck -check-prefix=CC1-STATICS-OVERRIDE %s
+// CC1-STATICS-OVERRIDE-NOT: -fno-threadsafe-statics
