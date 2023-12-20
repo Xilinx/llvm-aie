@@ -184,6 +184,9 @@ INTRINSIC(v128int4) insert(v128int4 v, int idx, v16int4 b) {
 INTRINSIC(v64int8) insert(v64int8 v, int idx, char b) {
   return __builtin_aiev2_vinsert8_I512(v, idx, b);
 }
+INTRINSIC(v64int8) insert(v64int8 v, int idx, signed char b) {
+  return __builtin_aiev2_vinsert8_I512(v, idx, b);
+}
 INTRINSIC(v64int8) insert(v64int8 v, int idx, v2int8 b) {
   return __builtin_aiev2_vinsert16_I512(v, idx, (short)b);
 }
