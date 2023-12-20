@@ -94,6 +94,12 @@ void AIEToolChain::addClangTargetOptions(
   // condition and 5 delay slots for one of the branches, thus speculating 10
   // instructions should be fine
   CC1Args.append({"-mllvm", "--two-entry-phi-node-folding-threshold=10"});
+
+  // Pass -fno-threadsafe-statics to prevent dependence on lock acquire/release
+  // handling for static local variables.
+  if (!DriverArgs.hasFlag(options::OPT_fthreadsafe_statics,
+                          options::OPT_fno_threadsafe_statics, false))
+    CC1Args.push_back("-fno-threadsafe-statics");
 }
 
 // Avoid using newer dwarf versions, as the simulator doesn't understand newer
