@@ -174,6 +174,17 @@ v128int4 test_insert(v128int4 v, int idx, v16int4 b) {
 v64int8 test_insert(v64int8 v, int idx, char b) {
   return insert(v, idx, b);
 }
+// CHECK-LABEL: @_Z23test_insert_signed_charDv64_aia(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V:%.*]] to <16 x i32>
+// CHECK-NEXT:    [[CONV_I:%.*]] = sext i8 [[B:%.*]] to i32
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i32> @llvm.aie2.vinsert8.I512(<16 x i32> [[TMP0]], i32 [[IDX:%.*]], i32 [[CONV_I]])
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <16 x i32> [[TMP1]] to <64 x i8>
+// CHECK-NEXT:    ret <64 x i8> [[TMP2]]
+//
+v64int8 test_insert_signed_char(v64int8 v, int idx, signed char b) {
+  return insert(v, idx, b);
+}
 // CHECK-LABEL: @_Z11test_insertDv64_aiDv2_a(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V:%.*]] to <16 x i32>
