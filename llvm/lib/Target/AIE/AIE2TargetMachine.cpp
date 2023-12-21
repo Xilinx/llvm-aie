@@ -47,6 +47,14 @@ static cl::opt<bool>
                               cl::desc("Enable AIE alias analysis pass"),
                               cl::init(true), cl::Hidden);
 
+static cl::opt<bool>
+    EnableStagedRA("aie-staged-ra", cl::Hidden, cl::init(true),
+                   cl::desc("Enable multi-stage register allocation"));
+static cl::opt<bool>
+    EnableSuperRegSplitting("aie-split-superregs", cl::Hidden, cl::init(true),
+                            cl::desc("Enable splitting super-regs into their "
+                                     "smaller components to facilitate RA"));
+
 extern bool AIEDumpArtifacts;
 
 void AIE2TargetMachine::anchor() {}
@@ -74,6 +82,8 @@ public:
   void addPreEmitPass() override;
   bool addInstSelector() override;
   void addPreRegAlloc() override;
+  bool addRegAssignAndRewriteOptimized() override;
+  void addPostRewrite() override;
   void addMachineLateOptimization() override;
   void addPreSched2() override;
   void addBlockPlacement() override;
@@ -143,6 +153,31 @@ void AIE2PassConfig::addPreRegAlloc() {
   if (AIEDumpArtifacts) {
     addPass(createDumpModulePass(/*Suffix=*/"before-ra"));
     addPass(createMachineFunctionDumperPass(/*Suffix=*/"before-ra"));
+  }
+}
+
+bool AIE2PassConfig::addRegAssignAndRewriteOptimized() {
+  if (!EnableStagedRA && !EnableSuperRegSplitting)
+    return TargetPassConfig::addRegAssignAndRewriteOptimized();
+
+  // Rewrite instructions which use large tuple regs into _split variants
+  // to better expose sub-registers and facilitate RA.
+  if (EnableSuperRegSplitting)
+    addPass(createAIESplitInstrBuilder());
+
+  // TODO: Actually do staged RA here
+  addPass(createGreedyRegisterAllocator());
+  addPass(createVirtRegRewriter());
+
+  return true;
+}
+
+void AIE2PassConfig::addPostRewrite() {
+  if (getOptLevel() != CodeGenOptLevel::None && EnableSuperRegSplitting) {
+    // Rewrite _split instructions which were used to facilitate RA.
+    // Now we want the real "target" instructions with encoding and scheduling
+    // information.
+    addPass(createAIESplitInstrReplacer());
   }
 }
 

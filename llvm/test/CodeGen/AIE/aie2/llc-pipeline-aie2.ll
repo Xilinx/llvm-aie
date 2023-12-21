@@ -185,7 +185,9 @@
 ; AIE-O123-NEXT:      Register Coalescer
 ; AIE-O123-NEXT:      Rename Disconnected Subregister Components
 ; AIE-O123-NEXT:      Machine Instruction Scheduler
+; AIE-O123-NEXT:      AIE 2D/3D operand splitter
 ; AIE-O123-NEXT:      Machine Block Frequency Analysis
+; AIE-O123-NEXT:      Live Interval Analysis
 ; AIE-O123-NEXT:      Debug Variable Analysis
 ; AIE-O123-NEXT:      Live Stack Slot Analysis
 ; AIE-O123-NEXT:      Virtual Register Map
@@ -196,8 +198,8 @@
 ; AIE-O123-NEXT:      Machine Optimization Remark Emitter
 ; AIE-O123-NEXT:      Greedy Register Allocator
 ; AIE-O123-NEXT:      Virtual Register Rewriter
-; AIE-O123-NEXT:      Register Allocation Pass Scoring
 ; AIE-O123-NEXT:      Stack Slot Coloring
+; AIE-O123-NEXT:      AIE 1D operands to 2D/3D rewriter
 ; AIE-O123-NEXT:      Machine Copy Propagation Pass
 ; AIE-O123-NEXT:      Machine Loop Invariant Code Motion
 ; AIE-O123-NEXT:      Remove Redundant DEBUG_VALUE analysis

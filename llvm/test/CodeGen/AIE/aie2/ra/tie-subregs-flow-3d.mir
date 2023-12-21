@@ -182,24 +182,23 @@ body:             |
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   $m4 = MOV_mv_scl killed $r4
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
-  ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $r8, $d0_3d:0x00000000000F0870
+  ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $r2, $r3, $r5, $r6, $r7, $r8, $d0_3d:0x0000000000070870
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $dn0 = MOV_mv_scl killed $r1
   ; CHECK-NEXT:   $dj0 = MOV_mv_scl killed $r2
   ; CHECK-NEXT:   $dc0 = MOV_mv_scl killed $r3
-  ; CHECK-NEXT:   $m4 = MOV_mv_scl killed $r4
   ; CHECK-NEXT:   $dn4 = MOV_mv_scl killed $r5
   ; CHECK-NEXT:   $dj4 = MOV_mv_scl killed $r6
   ; CHECK-NEXT:   $dc4 = MOV_mv_scl killed $r7
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2 (align 16):
   ; CHECK-NEXT:   successors: %bb.3(0x40000000), %bb.2(0x40000000)
-  ; CHECK-NEXT:   liveins: $p0, $r0, $r8, $d0_3d:0x00000000000F0870
+  ; CHECK-NEXT:   liveins: $p0, $r0, $r8, $d0_3d:0x0000000000070870
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   ST_dms_sts_idx_imm renamable $r0, renamable $p0, 0 :: (store (s32))
   ; CHECK-NEXT:   renamable $r0 = nuw nsw ADD_add_r_ri killed renamable $r0, 1, implicit-def $srcarry
@@ -280,7 +279,7 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
-  ; CHECK-NEXT:   liveins: $p0, $d0_3d:0x00000000000F0870
+  ; CHECK-NEXT:   liveins: $p0, $d0_3d:0x0000000000070870
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $p0, $dc0, $dc4 = PADDA_3D killed $p0, $d0_3d
   ; CHECK-NEXT: {{  $}}
@@ -346,7 +345,7 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
-  ; CHECK-NEXT:   liveins: $p0, $r9, $d0_3d:0x00000000000F0860
+  ; CHECK-NEXT:   liveins: $p0, $r9, $d0_3d:0x0000000000070860
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $dc0 = MOV_mv_scl killed $r9
   ; CHECK-NEXT: {{  $}}
