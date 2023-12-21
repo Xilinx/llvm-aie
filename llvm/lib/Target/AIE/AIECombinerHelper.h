@@ -116,6 +116,12 @@ void applyExtractVecEltAndExt(MachineInstr &MI, MachineRegisterInfo &MRI,
                               MachineIRBuilder &B,
                               std::pair<MachineInstr *, bool> &MatchInfo);
 
+bool matchSplatVector(MachineInstr &MI, MachineRegisterInfo &MRI,
+                      std::pair<Register, Register> &MatchInfo);
+bool applySplatVector(MachineInstr &MI, MachineRegisterInfo &MRI,
+                      MachineIRBuilder &B,
+                      std::pair<Register, Register> &MatchInfo);
+
 bool matchUnpadVector(MachineInstr &MI, MachineRegisterInfo &MRI,
                       const AIEBaseInstrInfo &TII);
 void applyUnpadVector(MachineInstr &MI, MachineRegisterInfo &MRI,

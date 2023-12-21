@@ -893,6 +893,58 @@ void llvm::applyExtractVecEltAndExt(
 }
 
 // Match something like:
+// %0:_(<32 x s16>) = G_BUILD_VECTOR %1:_(s16), ... x32
+//
+// To turn it into
+// %0:_(<32 x s16>) = G_AIE_BROADCAST_VECTOR %1:_(s16)
+bool llvm::matchSplatVector(MachineInstr &MI, MachineRegisterInfo &MRI,
+                            std::pair<Register, Register> &MatchInfo) {
+
+  assert(MI.getOpcode() == TargetOpcode::G_BUILD_VECTOR &&
+         "Expected a G_BUILD_VECTOR");
+
+  const Register DstVecReg = MI.getOperand(0).getReg();
+  const LLT DstVecTy = MRI.getType(DstVecReg);
+  const unsigned DstVecSize = DstVecTy.getSizeInBits();
+
+  switch (DstVecSize) {
+  case 512:
+    break;
+  default:
+    // unimplemented
+    return false;
+  }
+
+  const unsigned NumOps = MI.getNumOperands();
+  const MachineOperand FirstOp = MI.getOperand(1);
+  for (unsigned i = 2; i < NumOps; i++) {
+    if (!MI.getOperand(i).isIdenticalTo(FirstOp)) {
+      return false;
+    }
+  }
+  MatchInfo = std::make_pair(DstVecReg, FirstOp.getReg());
+  return true;
+}
+
+bool llvm::applySplatVector(MachineInstr &MI, MachineRegisterInfo &MRI,
+                            MachineIRBuilder &B,
+                            std::pair<Register, Register> &MatchInfo) {
+  B.setInstrAndDebugLoc(MI);
+  auto [DstVecReg, SrcReg] = MatchInfo;
+  const LLT SrcTy = MRI.getType(SrcReg);
+
+  if (SrcTy == LLT::scalar(8) || SrcTy == LLT::scalar(16)) {
+    const LLT S32 = LLT::scalar(32);
+    Register Src32BitReg = MRI.createGenericVirtualRegister(S32);
+    B.buildAnyExt(Src32BitReg, SrcReg);
+    SrcReg = Src32BitReg;
+  }
+  B.buildInstr(AIE2::G_AIE_BROADCAST_VECTOR, {DstVecReg}, {SrcReg});
+  MI.eraseFromParent();
+  return true;
+}
+
+// Match something like:
 // %0(<4 x s32>), dead %1(<4 x s32>), dead %2(<4 x s32>), dead %3(<4 x s32>)
 //   = G_UNMERGE_VALUES %10(<16 x s32>)
 //

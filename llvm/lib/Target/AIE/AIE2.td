@@ -25,13 +25,13 @@ def ptr0 : PtrValueType<i20, 0>;
 include "AIE2RegisterInfo.td"
 include "AIE2Schedule.td"
 include "AIE2CallingConv.td"
-include "AIE2InstrInfo.td"
 include "AIE2RegisterBanks.td"
 
 class AIEGenericInstruction : GenericInstruction {
   let Namespace = "AIE2";
 }
 include "AIEInstrGISel.td"
+include "AIE2InstrInfo.td"
 
 include "AIECombine.td"
 
