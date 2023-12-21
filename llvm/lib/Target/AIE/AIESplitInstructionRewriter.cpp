@@ -14,6 +14,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/CodeGen/SlotIndexes.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/Support/Debug.h"
@@ -36,6 +37,8 @@ public:
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesCFG();
+    AU.addUsedIfAvailable<SlotIndexes>();
+    AU.addPreserved<SlotIndexes>();
     MachineFunctionPass::getAnalysisUsage(AU);
   }
 
@@ -113,6 +116,13 @@ void AIESplitInstrBuilder::rewriteInstruction(
   }
 
   MIB->cloneMemRefs(MF, MI);
+  if (SlotIndexes *Indexes = getAnalysisIfAvailable<SlotIndexes>()) {
+    // Maintaining SlotIndexes is easy and help avoiding unnecessary test
+    // updates. Renumbering instruction slots can cause LiveIntervals
+    // to be estimated a different size, which then changes the allocation
+    // priority inside Greedy.
+    Indexes->replaceMachineInstrInMaps(MI, *MIB);
+  }
   MI.eraseFromBundle();
 }
 
