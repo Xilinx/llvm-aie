@@ -34,6 +34,14 @@ def combine_extract_vector_elt_and_zsa_ext : GICombineRule<
   (apply [{ applyExtractVecEltAndExt(*${root}, MRI, B, ${matchinfo}); }])
 >;
 
+def combine_splat_vector_matchdata: GIDefMatchData<"std::pair<Register, Register>">;
+def combine_splat_vector : GICombineRule<
+  (defs root:$root, combine_splat_vector_matchdata:$matchinfo),
+  (match (wip_match_opcode G_BUILD_VECTOR): $root,
+  [{ return matchSplatVector(*${root}, MRI, ${matchinfo}); }]),
+  (apply [{ applySplatVector(*${root}, MRI, B, ${matchinfo}); }])
+>;
+
 def combine_pad_vector_matchdata: GIDefMatchData<"Register">;
 def combine_pad_vector : GICombineRule<
   (defs root:$root, combine_pad_vector_matchdata:$matchinfo),
@@ -53,7 +61,8 @@ def AIE2PreLegalizerCombiner
     : GICombiner<"AIE2PreLegalizerCombinerImpl", [ combine_unpad_vector, combine_pad_vector,
                                                                  all_combines, combine_S20NarrowingOpt,
                                                                  combine_globalval_offset,
-                                                                 combine_extract_vector_elt_and_zsa_ext ]> {
+                                                                 combine_extract_vector_elt_and_zsa_ext,
+                                                                 combine_splat_vector ]> {
 }
 
 def AIE2PostLegalizerGenericCombiner

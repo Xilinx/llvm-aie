@@ -84,6 +84,12 @@ def G_AIE_INSERT_VECTOR_ELT : AIEGenericInstruction {
   let hasSideEffects = false;
 }
 
+def G_AIE_BROADCAST_VECTOR : AIEGenericInstruction {
+  let OutOperandList = (outs type0:$dst);
+  let InOperandList = (ins type1:$src);
+  let hasSideEffects = false;
+}
+
 // Create a larger vector by padding undefined values in the high bits
 def G_AIE_PAD_VECTOR_UNDEF : AIEGenericInstruction {
   let OutOperandList = (outs type0:$dst);

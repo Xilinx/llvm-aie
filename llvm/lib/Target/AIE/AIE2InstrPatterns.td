@@ -610,6 +610,14 @@ def : Pat<(int_aie2_vbroadcast16_bf512 eR:$s0), (VBCST_16 eR:$s0)>;
 def : Pat<(int_aie2_vbroadcast32_bf512 eR:$s0), (VBCST_32 eR:$s0)>;
 def : Pat<(int_aie2_vbroadcast64_bf512 eL:$s0), (VBCST_64 eL:$s0)>;
 
+def bcst_vector_node : SDNode<"AIE2::G_AIE_BROADCAST_VECTOR",
+                              SDTypeProfile<1, 1, [SDTCisVT<1, i32>]>>;
+def : GINodeEquiv<G_AIE_BROADCAST_VECTOR, bcst_vector_node>;
+
+def : Pat<(v64i8 (bcst_vector_node eR:$s0)), (VBCST_8 eR:$s0)>;
+def : Pat<(v32i16 (bcst_vector_node eR:$s0)), (VBCST_16 eR:$s0)>;
+def : Pat<(v16i32 (bcst_vector_node eR:$s0)), (VBCST_32 eR:$s0)>;
+
 // VCLR
 def : Pat<(int_aie2_vbroadcast_zero_acc1024), (VCLR_vclr)>;
 
