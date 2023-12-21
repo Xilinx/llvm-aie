@@ -51,6 +51,9 @@ static cl::opt<bool>
     EnableStagedRA("aie-staged-ra", cl::Hidden, cl::init(true),
                    cl::desc("Enable multi-stage register allocation"));
 static cl::opt<bool>
+    EnableSubregRenaming("aie-subreg-renaming", cl::Hidden, cl::init(false),
+                         cl::desc("Enable RenameIndependentSubregs pass"));
+static cl::opt<bool>
     EnableSuperRegSplitting("aie-split-superregs", cl::Hidden, cl::init(true),
                             cl::desc("Enable splitting super-regs into their "
                                      "smaller components to facilitate RA"));
@@ -77,7 +80,10 @@ AIE2TargetMachine::AIE2TargetMachine(const Target &T, const Triple &TT,
 class AIE2PassConfig final : public AIEPassConfig {
 public:
   AIE2PassConfig(LLVMTargetMachine &TM, PassManagerBase &PM)
-      : AIEPassConfig(TM, PM) {}
+      : AIEPassConfig(TM, PM) {
+    if (!EnableSubregRenaming)
+      disablePass(&RenameIndependentSubregsID);
+  }
   bool addPreISel() override;
   void addPreEmitPass() override;
   bool addInstSelector() override;
