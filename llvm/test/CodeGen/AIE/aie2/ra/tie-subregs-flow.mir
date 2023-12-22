@@ -263,7 +263,7 @@ body:             |
     ; CHECK-NEXT: RET implicit $lr
     ; CHECK-NEXT: $p0, $dc1 = PADDA_2D killed $p0, $d1
     ; CHECK-NEXT: $p1, $dc7 = PADDA_2D killed $p1, killed $d7
-    ; CHECK-NEXT: $p0, $dc1 = PADDA_2D killed $p0, $d1
+    ; CHECK-NEXT: $p0, dead $dc1 = PADDA_2D killed $p0, $d1
     ; CHECK-NEXT: $dc1 = MOV_mv_scl killed $dc7
     ; CHECK-NEXT: $p1, dead $dc1 = PADDA_2D killed $p1, killed $d1
     ; CHECK-NEXT: DelayedSchedBarrier implicit killed renamable $p0, implicit killed renamable $p1, implicit killed $m0, implicit killed $d2, implicit killed $d3, implicit killed $d4, implicit killed $d5, implicit killed $d6
@@ -322,7 +322,7 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
-  ; CHECK-NEXT:   liveins: $d0:0x0000000000000870, $p0, $r0, $r1, $r2, $r3, $r4
+  ; CHECK-NEXT:   liveins: $m0, $p0, $r0, $r1, $r2, $r3, $r4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $dn0 = MOV_mv_scl killed $r1
   ; CHECK-NEXT:   $dj0 = MOV_mv_scl killed $r2
@@ -330,7 +330,7 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2 (align 16):
   ; CHECK-NEXT:   successors: %bb.3(0x40000000), %bb.2(0x40000000)
-  ; CHECK-NEXT:   liveins: $d0:0x0000000000000870, $p0, $r0, $r4
+  ; CHECK-NEXT:   liveins: $d0:0x0000000000000870, $dc0, $dj0, $dn0, $m0, $p0, $r0, $r4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   ST_dms_sts_idx_imm renamable $r0, renamable $p0, 0 :: (store (s32))
   ; CHECK-NEXT:   renamable $r0 = nuw nsw ADD_add_r_ri killed renamable $r0, 1, implicit-def $srcarry
@@ -402,12 +402,12 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
-  ; CHECK-NEXT:   liveins: $d0:0x0000000000000870, $p0
+  ; CHECK-NEXT:   liveins: $d0:0x0000000000000870, $dc0, $dj0, $dn0, $m0, $p0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $p0, $dc0 = PADDA_2D killed $p0, killed $d0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2 (align 16):
-  ; CHECK-NEXT:   liveins: $d0:0x0000000000000010, $p0
+  ; CHECK-NEXT:   liveins: $dc0, $p0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   RET implicit $lr
   ; CHECK-NEXT:   NOP
@@ -460,7 +460,7 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
-  ; CHECK-NEXT:   liveins: $d0:0x0000000000000860, $p0, $r5
+  ; CHECK-NEXT:   liveins: $d0:0x0000000000000860, $dj0, $dn0, $m0, $p0, $r5
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $dc0 = MOV_mv_scl killed $r5
   ; CHECK-NEXT: {{  $}}
@@ -498,4 +498,65 @@ body:             |
     %10:edc = PHI %202, %bb.1, %302, %bb.2
     %11:ep = PHI %201, %bb.1, %301, %bb.2
     PseudoRET implicit $lr, implicit %10, implicit %11
+...
+
+---
+name:            test_padd_phi_source
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: test_padd_phi_source
+  ; CHECK: bb.0.entry (align 16):
+  ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $r2, $r3, $r4, $r5
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   JZ killed renamable $r5, %bb.2
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   DelayedSchedBarrier
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.2(0x80000000)
+  ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $r2, $r4
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $r3 = MOV_mv_scl killed $r4
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2 (align 16):
+  ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $r2, $r3
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   RET implicit $lr
+  ; CHECK-NEXT:   $m0 = MOV_mv_scl killed $r0
+  ; CHECK-NEXT:   $dn0 = MOV_mv_scl killed $r1
+  ; CHECK-NEXT:   $dj0 = MOV_mv_scl killed $r2
+  ; CHECK-NEXT:   $dc0 = MOV_mv_scl killed $r3
+  ; CHECK-NEXT:   $p0, $dc0 = PADDA_2D killed $p0, killed $d0
+  ; CHECK-NEXT:   DelayedSchedBarrier implicit killed renamable $p0, implicit killed renamable $dc0
+  bb.0.entry:
+    successors: %bb.2(0x40000000), %bb.1(0x40000000)
+    liveins: $p0, $r0, $r1, $r2, $r3, $r4, $r5
+    %0:er = COPY $r0
+    %1:er = COPY $r1
+    %2:er = COPY $r2
+    %3:er = COPY $r3
+    %4:er = COPY $r4
+    %5:er = COPY $r5
+    %10:ep_as_32bit = COPY $p0
+    PseudoJNZ %5, %bb.2
+  bb.1:
+    successors: %bb.3(0x80000000)
+    %11:er = COPY %3
+    PseudoJ_jump_imm %bb.3
+  bb.2:
+    successors: %bb.3(0x80000000)
+    %11:er = COPY %4
+  bb.3:
+    undef %9.sub_mod:ed = COPY %0
+    %9.sub_dim_size:ed = COPY %1
+    %9.sub_dim_stride:ed = COPY %2
+    %9.sub_dim_count:ed = COPY %11
+    %10:ep_as_32bit, %9.sub_dim_count:ed = PADDA_2D %10, %9
+    PseudoRET implicit $lr, implicit %10, implicit %9.sub_dim_count
 ...

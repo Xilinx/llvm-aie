@@ -57,6 +57,9 @@ static cl::opt<bool>
     EnableSuperRegSplitting("aie-split-superregs", cl::Hidden, cl::init(true),
                             cl::desc("Enable splitting super-regs into their "
                                      "smaller components to facilitate RA"));
+static cl::opt<bool>
+    AllocateMRegsFirst("aie-mod-ra-first", cl::Hidden, cl::init(false),
+                       cl::desc("Allocate M registers first in staged RA."));
 
 extern bool AIEDumpArtifacts;
 
@@ -162,6 +165,20 @@ void AIE2PassConfig::addPreRegAlloc() {
   }
 }
 
+static bool onlyAllocate3DRegisters(const TargetRegisterInfo &TRI,
+                                    const TargetRegisterClass &RC) {
+  return AIE2::eDSRegClass.hasSubClassEq(&RC);
+}
+static bool onlyAllocate3D2DRegisters(const TargetRegisterInfo &TRI,
+                                      const TargetRegisterClass &RC) {
+  return AIE2::eDSRegClass.hasSubClassEq(&RC) ||
+         AIE2::eDRegClass.hasSubClassEq(&RC);
+}
+static bool onlyAllocateMRegisters(const TargetRegisterInfo &TRI,
+                                   const TargetRegisterClass &RC) {
+  return AIE2::eMRegClass.hasSubClassEq(&RC);
+}
+
 bool AIE2PassConfig::addRegAssignAndRewriteOptimized() {
   if (!EnableStagedRA && !EnableSuperRegSplitting)
     return TargetPassConfig::addRegAssignAndRewriteOptimized();
@@ -171,7 +188,14 @@ bool AIE2PassConfig::addRegAssignAndRewriteOptimized() {
   if (EnableSuperRegSplitting)
     addPass(createAIESplitInstrBuilder());
 
-  // TODO: Actually do staged RA here
+  if (AllocateMRegsFirst)
+    addPass(createGreedyRegisterAllocator(onlyAllocateMRegisters));
+  if (EnableStagedRA) {
+    addPass(createGreedyRegisterAllocator(onlyAllocate3DRegisters));
+    addPass(createAIESuperRegRewriter());
+    addPass(createGreedyRegisterAllocator(onlyAllocate3D2DRegisters));
+    addPass(createAIESuperRegRewriter());
+  }
   addPass(createGreedyRegisterAllocator());
   addPass(createVirtRegRewriter());
 
