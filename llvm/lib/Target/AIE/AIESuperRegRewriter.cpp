@@ -153,6 +153,7 @@ void AIESuperRegRewriter::rewriteSuperReg(
     SubRegToVReg[SubReg] = MRI.createVirtualRegister(SubRC);
   }
 
+  LLVM_DEBUG(dbgs() << "  Splitting range " << LIS.getInterval(Reg) << "\n");
   for (MachineOperand &RegOp : make_early_inc_range(MRI.reg_operands(Reg))) {
     LLVM_DEBUG(dbgs() << "  Changing " << *RegOp.getParent());
     int SubReg = RegOp.getSubReg();
@@ -180,8 +181,21 @@ void AIESuperRegRewriter::rewriteSuperReg(
 
   for (auto &[SubRegIdx, VReg] : SubRegToVReg) {
     MCRegister SubPhysReg = TRI.getSubReg(AssignedPhysReg, SubRegIdx);
-    LRM.assign(LIS.getInterval(VReg), SubPhysReg);
-    VRM.setRequiredPhys(VReg, SubPhysReg);
+    LiveInterval &SubRegLI = LIS.getInterval(VReg);
+    LLVM_DEBUG(dbgs() << "  Assigning Range: " << SubRegLI << '\n');
+
+    // By giving an independent VReg to each lane, we might have created
+    // multiple separate components. Give a VReg to each separate component.
+    SmallVector<LiveInterval *, 4> LIComponents;
+    LIS.splitSeparateComponents(SubRegLI, LIComponents);
+    LIComponents.push_back(&SubRegLI);
+    VRM.grow();
+
+    for (LiveInterval *LI : LIComponents) {
+      LRM.assign(*LI, SubPhysReg);
+      VRM.setRequiredPhys(LI->reg(), SubPhysReg);
+      LLVM_DEBUG(dbgs() << "  Assigned " << printReg(LI->reg()) << "\n");
+    }
   }
 }
 

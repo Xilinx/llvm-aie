@@ -291,3 +291,55 @@ body:             |
     %20:ep, %100.sub_dim_count:eds, %100.sub_hi_dim_then_sub_dim_count:eds = PADDA_3D_split %20, %100.sub_mod, %100.sub_dim_size, %100.sub_dim_stride, %100.sub_dim_count, undef %100.sub_hi_dim_then_sub_mod, %100.sub_hi_dim_then_sub_dim_size, %100.sub_hi_dim_then_sub_dim_stride, %100.sub_hi_dim_then_sub_dim_count
     PseudoRET implicit $lr, implicit %20, implicit %100.sub_dim_count, implicit %100.sub_hi_dim_then_sub_dim_count
 ...
+
+# %100.sub_dim_count:ed has two independent components, the first one use in PADDA_2D,
+# and the second by PADDB_2D. This is fine as long as this is a subreg, but once it
+# is rewritten as its own vreg, one needs to split that vreg further into two
+# intervals/vregs: one for each component.
+---
+name:            test_split_2d_multi_components
+tracksRegLiveness: true
+body:             |
+  ; VREGS-LABEL: name: test_split_2d_multi_components
+  ; VREGS: bb.0.entry:
+  ; VREGS-NEXT:   successors: %bb.1(0x80000000)
+  ; VREGS-NEXT:   liveins: $p0, $p1
+  ; VREGS-NEXT: {{  $}}
+  ; VREGS-NEXT:   [[COPY:%[0-9]+]]:ep = COPY $p0
+  ; VREGS-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p1
+  ; VREGS-NEXT:   [[LDA_dms_lda_idx_imm:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY1]], 0
+  ; VREGS-NEXT:   [[LDA_dms_lda_idx_imm1:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY1]], 4
+  ; VREGS-NEXT:   [[LDA_dms_lda_idx_imm2:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY1]], 8
+  ; VREGS-NEXT:   [[LDA_dms_lda_idx_imm3:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY1]], 12
+  ; VREGS-NEXT:   [[COPY2:%[0-9]+]]:edn = COPY [[LDA_dms_lda_idx_imm1]]
+  ; VREGS-NEXT:   [[COPY3:%[0-9]+]]:em = COPY [[LDA_dms_lda_idx_imm]]
+  ; VREGS-NEXT:   [[COPY4:%[0-9]+]]:edj = COPY [[LDA_dms_lda_idx_imm2]]
+  ; VREGS-NEXT:   [[COPY5:%[0-9]+]]:edc_as_32bit = COPY [[LDA_dms_lda_idx_imm3]]
+  ; VREGS-NEXT: {{  $}}
+  ; VREGS-NEXT: bb.1:
+  ; VREGS-NEXT:   [[COPY:%[0-9]+]]:ep, [[COPY5:%[0-9]+]]:edc_as_32bit = PADDA_2D_split [[COPY]], [[COPY3]], [[COPY2]], [[COPY4]], [[COPY5]]
+  ; VREGS-NEXT:   ST_dms_sts_idx_imm [[COPY5]], [[COPY1]], 12 :: (store (s20), align 4)
+  ; VREGS-NEXT:   [[LDA_dms_lda_idx_imm4:%[0-9]+]]:edc_as_32bit = LDA_dms_lda_idx_imm [[COPY1]], 16
+  ; VREGS-NEXT:   [[COPY:%[0-9]+]]:ep, [[LDA_dms_lda_idx_imm4:%[0-9]+]]:edc_as_32bit = PADDB_2D_split [[COPY]], [[COPY3]], [[COPY2]], [[COPY4]], [[LDA_dms_lda_idx_imm4]]
+  ; VREGS-NEXT:   ST_dms_sts_idx_imm [[LDA_dms_lda_idx_imm4]], [[COPY1]], 16 :: (store (s20), align 4)
+  ; VREGS-NEXT:   PseudoRET implicit $lr, implicit [[COPY]]
+  bb.1.entry:
+    liveins: $p0, $p1
+    %20:ep = COPY $p0
+    %21:ep = COPY $p1
+    %0:er = LDA_dms_lda_idx_imm %21, 0
+    %1:er = LDA_dms_lda_idx_imm %21, 4
+    %2:er = LDA_dms_lda_idx_imm %21, 8
+    %3:er = LDA_dms_lda_idx_imm %21, 12
+    undef %100.sub_dim_size:ed = COPY %1
+    %100.sub_mod:ed = COPY %0
+    %100.sub_dim_stride:ed = COPY %2
+    %100.sub_dim_count:ed = COPY %3
+  bb.2:
+    %20:ep, %100.sub_dim_count:ed = PADDA_2D_split %20, %100.sub_mod, %100.sub_dim_size, %100.sub_dim_stride, %100.sub_dim_count
+    ST_dms_sts_idx_imm %100.sub_dim_count, %21, 12 :: (store (s20))
+    %100.sub_dim_count:ed = LDA_dms_lda_idx_imm %21, 16
+    %20:ep, %100.sub_dim_count:ed = PADDB_2D_split %20, %100.sub_mod, %100.sub_dim_size, %100.sub_dim_stride, %100.sub_dim_count
+    ST_dms_sts_idx_imm %100.sub_dim_count, %21, 16 :: (store (s20))
+    PseudoRET implicit $lr, implicit %20
+...
