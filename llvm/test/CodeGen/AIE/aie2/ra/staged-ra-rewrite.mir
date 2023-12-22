@@ -7,6 +7,8 @@
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc -O2 -mtriple=aie2 -verify-machineinstrs -run-pass=greedy,aie-superreg-rewrite %s -o - | FileCheck %s --check-prefix=VREGS
+# RUN: llc -O2 -mtriple=aie2 -verify-machineinstrs --aie-staged-ra -start-before=greedy -stop-after=virtregrewriter %s -o - \
+# RUN:    | FileCheck %s --check-prefix=RA
 
 # Test rewriting of 2D/3D registers into independent vregs.
 
@@ -33,6 +35,26 @@ body:             |
   ; VREGS-NEXT: bb.1:
   ; VREGS-NEXT:   [[COPY:%[0-9]+]]:ep, [[COPY5:%[0-9]+]]:edc = PADDA_2D_split [[COPY]], [[COPY3]], [[COPY2]], [[COPY4]], [[COPY5]]
   ; VREGS-NEXT:   PseudoRET implicit $lr, implicit [[COPY]], implicit [[COPY5]]
+  ;
+  ; RA-LABEL: name: test_split_2d_from_1d
+  ; RA: bb.0.entry:
+  ; RA-NEXT:   successors: %bb.1(0x80000000)
+  ; RA-NEXT:   liveins: $p0, $p1
+  ; RA-NEXT: {{  $}}
+  ; RA-NEXT:   renamable $r0 = LDA_dms_lda_idx_imm renamable $p1, 0
+  ; RA-NEXT:   renamable $r1 = LDA_dms_lda_idx_imm renamable $p1, 4
+  ; RA-NEXT:   renamable $r2 = LDA_dms_lda_idx_imm renamable $p1, 8
+  ; RA-NEXT:   renamable $r3 = LDA_dms_lda_idx_imm killed renamable $p1, 12
+  ; RA-NEXT:   renamable $dn0 = COPY killed renamable $r1
+  ; RA-NEXT:   renamable $m0 = COPY killed renamable $r0
+  ; RA-NEXT:   renamable $dj0 = COPY killed renamable $r2
+  ; RA-NEXT:   renamable $dc0 = COPY killed renamable $r3
+  ; RA-NEXT: {{  $}}
+  ; RA-NEXT: bb.1:
+  ; RA-NEXT:   liveins: $dc0, $dj0, $dn0, $m0, $p0
+  ; RA-NEXT: {{  $}}
+  ; RA-NEXT:   $p0, $dc0 = PADDA_2D_split killed $p0, killed $m0, killed $dn0, killed $dj0, killed $dc0
+  ; RA-NEXT:   PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0
   bb.1.entry:
     liveins: $p0, $p1
     %20:ep = COPY $p0
@@ -76,6 +98,26 @@ body:             |
   ; VREGS-NEXT: bb.1:
   ; VREGS-NEXT:   dead [[COPY:%[0-9]+]]:ep, [[COPY5:%[0-9]+]]:edc_as_32bit = PADDA_2D_split [[COPY]], [[COPY3]], [[COPY2]], [[COPY4]], [[COPY5]]
   ; VREGS-NEXT:   ST_dms_sts_idx_imm [[COPY5]], [[COPY1]], 12 :: (store (s20), align 4)
+  ;
+  ; RA-LABEL: name: test_split_2d_32bit_user
+  ; RA: bb.0.entry:
+  ; RA-NEXT:   successors: %bb.1(0x80000000)
+  ; RA-NEXT:   liveins: $p0, $p1
+  ; RA-NEXT: {{  $}}
+  ; RA-NEXT:   renamable $r0 = LDA_dms_lda_idx_imm renamable $p1, 0
+  ; RA-NEXT:   renamable $r1 = LDA_dms_lda_idx_imm renamable $p1, 4
+  ; RA-NEXT:   renamable $r2 = LDA_dms_lda_idx_imm renamable $p1, 8
+  ; RA-NEXT:   renamable $r3 = LDA_dms_lda_idx_imm renamable $p1, 12
+  ; RA-NEXT:   renamable $dn0 = COPY killed renamable $r1
+  ; RA-NEXT:   renamable $m0 = COPY killed renamable $r0
+  ; RA-NEXT:   renamable $dj0 = COPY killed renamable $r2
+  ; RA-NEXT:   renamable $dc0 = COPY killed renamable $r3
+  ; RA-NEXT: {{  $}}
+  ; RA-NEXT: bb.1:
+  ; RA-NEXT:   liveins: $dc0, $dj0, $dn0, $m0, $p0, $p1
+  ; RA-NEXT: {{  $}}
+  ; RA-NEXT:   dead $p0, $dc0 = PADDA_2D_split killed $p0, killed $m0, killed $dn0, killed $dj0, killed $dc0
+  ; RA-NEXT:   ST_dms_sts_idx_imm killed renamable $dc0, killed renamable $p1, 12 :: (store (s20), align 4)
   bb.1.entry:
     liveins: $p0, $p1
     %20:ep = COPY $p0
@@ -118,6 +160,24 @@ body:             |
   ; VREGS-NEXT: bb.1:
   ; VREGS-NEXT:   [[COPY:%[0-9]+]]:ep, [[COPY6:%[0-9]+]]:edc = PADDA_2D_split [[COPY]], [[COPY4]], [[COPY3]], [[COPY5]], [[COPY6]]
   ; VREGS-NEXT:   PseudoRET implicit $lr, implicit [[COPY]], implicit [[COPY6]]
+  ;
+  ; RA-LABEL: name: test_split_2d_from_other_2d
+  ; RA: bb.0.entry:
+  ; RA-NEXT:   successors: %bb.1(0x80000000)
+  ; RA-NEXT:   liveins: $d1, $p0, $p1
+  ; RA-NEXT: {{  $}}
+  ; RA-NEXT:   renamable $r0 = LDA_dms_lda_idx_imm renamable $p1, 4
+  ; RA-NEXT:   renamable $r1 = LDA_dms_lda_idx_imm renamable $p1, 8
+  ; RA-NEXT:   renamable $r2 = LDA_dms_lda_idx_imm killed renamable $p1, 12
+  ; RA-NEXT:   renamable $dn1 = COPY killed renamable $r0
+  ; RA-NEXT:   renamable $dj1 = COPY killed renamable $r1
+  ; RA-NEXT:   renamable $dc1 = COPY killed renamable $r2
+  ; RA-NEXT: {{  $}}
+  ; RA-NEXT: bb.1:
+  ; RA-NEXT:   liveins: $dc1, $dj1, $dn1, $m1, $p0
+  ; RA-NEXT: {{  $}}
+  ; RA-NEXT:   $p0, $dc1 = PADDA_2D_split killed $p0, killed $m1, killed $dn1, killed $dj1, killed $dc1
+  ; RA-NEXT:   PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc1
   bb.1.entry:
     liveins: $p0, $p1, $d1
     %20:ep = COPY $p0
@@ -151,6 +211,18 @@ body:             |
   ; VREGS-NEXT: bb.1:
   ; VREGS-NEXT:   [[COPY:%[0-9]+]]:ep, [[COPY1:%[0-9]+]].sub_dim_count:ed = PADDA_2D_split [[COPY]], [[COPY1]].sub_mod, [[COPY1]].sub_dim_size, [[COPY1]].sub_dim_stride, [[COPY1]].sub_dim_count
   ; VREGS-NEXT:   PseudoRET implicit $lr, implicit [[COPY]], implicit [[COPY1]].sub_dim_count
+  ;
+  ; RA-LABEL: name: test_split_2d_from_full_copy
+  ; RA: bb.0.entry:
+  ; RA-NEXT:   successors: %bb.1(0x80000000)
+  ; RA-NEXT:   liveins: $d1, $p0
+  ; RA-NEXT: {{  $}}
+  ; RA-NEXT: {{  $}}
+  ; RA-NEXT: bb.1:
+  ; RA-NEXT:   liveins: $d1:0x0000000000000870, $p0
+  ; RA-NEXT: {{  $}}
+  ; RA-NEXT:   $p0, $dc1 = PADDA_2D_split killed $p0, $m1, $dn1, $dj1, $dc1
+  ; RA-NEXT:   PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc1
   bb.1.entry:
     liveins: $p0, $d1
     %20:ep = COPY $p0
@@ -182,6 +254,24 @@ body:             |
   ; VREGS-NEXT: bb.1:
   ; VREGS-NEXT:   [[COPY:%[0-9]+]]:ep, [[COPY4:%[0-9]+]]:edc = PADDA_2D_split [[COPY]], undef %9:em, [[COPY2]], [[COPY3]], [[COPY4]]
   ; VREGS-NEXT:   PseudoRET implicit $lr, implicit [[COPY]], implicit [[COPY4]]
+  ;
+  ; RA-LABEL: name: test_split_2d_undef
+  ; RA: bb.0.entry:
+  ; RA-NEXT:   successors: %bb.1(0x80000000)
+  ; RA-NEXT:   liveins: $p0, $p1
+  ; RA-NEXT: {{  $}}
+  ; RA-NEXT:   renamable $r0 = LDA_dms_lda_idx_imm renamable $p1, 4
+  ; RA-NEXT:   renamable $r1 = LDA_dms_lda_idx_imm renamable $p1, 8
+  ; RA-NEXT:   renamable $r2 = LDA_dms_lda_idx_imm killed renamable $p1, 12
+  ; RA-NEXT:   renamable $dn0 = COPY killed renamable $r0
+  ; RA-NEXT:   renamable $dj0 = COPY killed renamable $r1
+  ; RA-NEXT:   renamable $dc0 = COPY killed renamable $r2
+  ; RA-NEXT: {{  $}}
+  ; RA-NEXT: bb.1:
+  ; RA-NEXT:   liveins: $dc0, $dj0, $dn0, $p0
+  ; RA-NEXT: {{  $}}
+  ; RA-NEXT:   $p0, $dc0 = PADDA_2D_split killed $p0, undef $m0, killed $dn0, killed $dj0, killed $dc0
+  ; RA-NEXT:   PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0
   bb.1.entry:
     liveins: $p0, $p1
 
@@ -230,6 +320,27 @@ body:             |
   ; VREGS-NEXT: bb.1:
   ; VREGS-NEXT:   [[COPY:%[0-9]+]]:ep, [[COPY3:%[0-9]+]].sub_dim_count:eds, [[COPY3:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = PADDA_3D_split [[COPY]], [[COPY3]].sub_mod, [[COPY3]].sub_dim_size, [[COPY3]].sub_dim_stride, [[COPY3]].sub_dim_count, undef [[COPY3]].sub_hi_dim_then_sub_mod, [[COPY3]].sub_hi_dim_then_sub_dim_size, [[COPY3]].sub_hi_dim_then_sub_dim_stride, [[COPY3]].sub_hi_dim_then_sub_dim_count
   ; VREGS-NEXT:   PseudoRET implicit $lr, implicit [[COPY]], implicit [[COPY3]].sub_dim_count, implicit [[COPY3]].sub_hi_dim_then_sub_dim_count
+  ;
+  ; RA-LABEL: name: test_split_3d_from_various
+  ; RA: bb.0.entry:
+  ; RA-NEXT:   successors: %bb.1(0x80000000)
+  ; RA-NEXT:   liveins: $dc5, $dj5, $dn5, $m5, $p0, $p1
+  ; RA-NEXT: {{  $}}
+  ; RA-NEXT:   renamable $r0 = LDA_dms_lda_idx_imm renamable $p1, 0
+  ; RA-NEXT:   renamable $r1 = LDA_dms_lda_idx_imm renamable $p1, 4
+  ; RA-NEXT:   renamable $r2 = LDA_dms_lda_idx_imm renamable $p1, 8
+  ; RA-NEXT:   renamable $r3 = LDA_dms_lda_idx_imm killed renamable $p1, 12
+  ; RA-NEXT:   renamable $dn0 = COPY killed renamable $r1
+  ; RA-NEXT:   renamable $m0 = COPY killed renamable $r0
+  ; RA-NEXT:   renamable $dj0 = COPY killed renamable $r2
+  ; RA-NEXT:   renamable $dc0 = COPY killed renamable $r3
+  ; RA-NEXT:   renamable $d4 = COPY killed renamable $d5
+  ; RA-NEXT: {{  $}}
+  ; RA-NEXT: bb.1:
+  ; RA-NEXT:   liveins: $p0, $d0_3d:0x0000000000070870
+  ; RA-NEXT: {{  $}}
+  ; RA-NEXT:   $p0, $dc0, $dc4 = PADDA_3D_split killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4
+  ; RA-NEXT:   PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit renamable $dc4
   bb.1.entry:
     successors: %bb.2
     liveins: $p0, $p1, $m5, $dn5, $dj5, $dc5
@@ -277,6 +388,20 @@ body:             |
   ; VREGS-NEXT: bb.1:
   ; VREGS-NEXT:   [[COPY:%[0-9]+]]:ep, [[COPY3:%[0-9]+]].sub_dim_count:eds, [[COPY3:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = PADDA_3D_split [[COPY]], [[COPY3]].sub_mod, [[COPY3]].sub_dim_size, [[COPY3]].sub_dim_stride, [[COPY3]].sub_dim_count, undef [[COPY3]].sub_hi_dim_then_sub_mod, [[COPY3]].sub_hi_dim_then_sub_dim_size, [[COPY3]].sub_hi_dim_then_sub_dim_stride, [[COPY3]].sub_hi_dim_then_sub_dim_count
   ; VREGS-NEXT:   PseudoRET implicit $lr, implicit [[COPY]], implicit [[COPY3]].sub_dim_count, implicit [[COPY3]].sub_hi_dim_then_sub_dim_count
+  ;
+  ; RA-LABEL: name: test_split_3d_from_2d
+  ; RA: bb.0.entry:
+  ; RA-NEXT:   successors: %bb.1(0x80000000)
+  ; RA-NEXT:   liveins: $d1, $d5, $p0
+  ; RA-NEXT: {{  $}}
+  ; RA-NEXT:   renamable $d0 = COPY killed renamable $d1
+  ; RA-NEXT:   renamable $d4 = COPY killed renamable $d5
+  ; RA-NEXT: {{  $}}
+  ; RA-NEXT: bb.1:
+  ; RA-NEXT:   liveins: $p0, $d0_3d:0x0000000000070870
+  ; RA-NEXT: {{  $}}
+  ; RA-NEXT:   $p0, $dc0, $dc4 = PADDA_3D_split killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4
+  ; RA-NEXT:   PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit renamable $dc4
   bb.1.entry:
     successors: %bb.2
     liveins: $p0, $d1, $d5
@@ -323,6 +448,30 @@ body:             |
   ; VREGS-NEXT:   [[COPY:%[0-9]+]]:ep, [[LDA_dms_lda_idx_imm4:%[0-9]+]]:edc_as_32bit = PADDB_2D_split [[COPY]], [[COPY3]], [[COPY2]], [[COPY4]], [[LDA_dms_lda_idx_imm4]]
   ; VREGS-NEXT:   ST_dms_sts_idx_imm [[LDA_dms_lda_idx_imm4]], [[COPY1]], 16 :: (store (s20), align 4)
   ; VREGS-NEXT:   PseudoRET implicit $lr, implicit [[COPY]]
+  ;
+  ; RA-LABEL: name: test_split_2d_multi_components
+  ; RA: bb.0.entry:
+  ; RA-NEXT:   successors: %bb.1(0x80000000)
+  ; RA-NEXT:   liveins: $p0, $p1
+  ; RA-NEXT: {{  $}}
+  ; RA-NEXT:   renamable $r0 = LDA_dms_lda_idx_imm renamable $p1, 0
+  ; RA-NEXT:   renamable $r1 = LDA_dms_lda_idx_imm renamable $p1, 4
+  ; RA-NEXT:   renamable $r2 = LDA_dms_lda_idx_imm renamable $p1, 8
+  ; RA-NEXT:   renamable $r3 = LDA_dms_lda_idx_imm renamable $p1, 12
+  ; RA-NEXT:   renamable $dn0 = COPY killed renamable $r1
+  ; RA-NEXT:   renamable $m0 = COPY killed renamable $r0
+  ; RA-NEXT:   renamable $dj0 = COPY killed renamable $r2
+  ; RA-NEXT:   renamable $dc0 = COPY killed renamable $r3
+  ; RA-NEXT: {{  $}}
+  ; RA-NEXT: bb.1:
+  ; RA-NEXT:   liveins: $dc0, $dj0, $dn0, $m0, $p0, $p1
+  ; RA-NEXT: {{  $}}
+  ; RA-NEXT:   $p0, $dc0 = PADDA_2D_split killed $p0, $m0, $dn0, $dj0, killed $dc0
+  ; RA-NEXT:   ST_dms_sts_idx_imm killed renamable $dc0, renamable $p1, 12 :: (store (s20), align 4)
+  ; RA-NEXT:   renamable $dc0 = LDA_dms_lda_idx_imm renamable $p1, 16
+  ; RA-NEXT:   $p0, $dc0 = PADDB_2D_split killed $p0, killed $m0, killed $dn0, killed $dj0, killed $dc0
+  ; RA-NEXT:   ST_dms_sts_idx_imm killed renamable $dc0, killed renamable $p1, 16 :: (store (s20), align 4)
+  ; RA-NEXT:   PseudoRET implicit $lr, implicit killed renamable $p0
   bb.1.entry:
     liveins: $p0, $p1
     %20:ep = COPY $p0

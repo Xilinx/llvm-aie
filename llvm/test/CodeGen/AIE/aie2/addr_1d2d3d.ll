@@ -91,9 +91,9 @@ define dso_local ptr @test_add_3d_ptr(ptr %a, i32 noundef %off, i32 noundef %siz
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    lda dc0, [p2, #0]
 ; CHECK-NEXT:    lda dc4, [p3, #0]
-; CHECK-NEXT:    mova r5, #6
-; CHECK-NEXT:    lshl r2, r2, r5
-; CHECK-NEXT:    lshl r0, r0, r5
+; CHECK-NEXT:    mova r6, #6
+; CHECK-NEXT:    lshl r2, r2, r6
+; CHECK-NEXT:    lshl r0, r0, r6
 ; CHECK-NEXT:    mov dj0, r2
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -101,7 +101,7 @@ define dso_local ptr @test_add_3d_ptr(ptr %a, i32 noundef %off, i32 noundef %siz
 ; CHECK-NEXT:    mov m0, r0
 ; CHECK-NEXT:    mov dn0, r1
 ; CHECK-NEXT:    mov dn4, r3
-; CHECK-NEXT:    lshl r2, r4, r5
+; CHECK-NEXT:    lshl r2, r4, r6
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    mov dj4, r2 // Delay Slot 5
 ; CHECK-NEXT:    padda.3d [p0], d0 // Delay Slot 4
