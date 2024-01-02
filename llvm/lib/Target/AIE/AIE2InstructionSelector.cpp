@@ -34,6 +34,7 @@
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Register.h"
+#include "llvm/CodeGen/TargetLowering.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Intrinsics.h"
@@ -161,6 +162,7 @@ public:
   bool selectVPACK(MachineInstr &I, MachineRegisterInfo &MRI);
   std::optional<AddressingModeInfo>
   getOrDefineAddressingRegister(MachineInstr &MemI, MachineRegisterInfo &MRI);
+  bool selectG_AIE_LOAD_UNPACK(MachineInstr &StoreI, MachineRegisterInfo &MRI);
   bool selectG_AIE_LOAD_UPS(MachineInstr &StoreI, MachineRegisterInfo &MRI);
   bool select512BitG_AIE_LOAD_UPS(MachineInstr &UPSI, LoadStoreOpcodes &LSO,
                                   AddressingModeInfo &AMI, Register DstReg,
@@ -1263,6 +1265,9 @@ bool AIE2InstructionSelector::selectVSUB_LTGE(MachineInstr &I,
 
 bool AIE2InstructionSelector::selectVUNPACK(MachineInstr &I,
                                             MachineRegisterInfo &MRI) {
+  // Try to match UNPACK combine
+  if (selectG_AIE_LOAD_UNPACK(I, MRI))
+    return true;
 
   Register DstReg = I.getOperand(0).getReg();
   // In this case of G_INTRINSIC operand 1 is target intrinsic
@@ -1351,6 +1356,172 @@ template <unsigned MaxPow2, unsigned Step, unsigned SplitOffset>
 bool checkImmediateRangeSplitting(std::optional<APInt> Immediate) {
   return Immediate && checkImmediateRange<MaxPow2, Step>(Immediate) &&
          checkImmediateRange<MaxPow2, Step>(*Immediate + SplitOffset);
+}
+
+std::optional<LoadStoreOpcodes> getCombinedOpcodeUNPACKLoad(
+    const MachineInstr &MemOp, const MachineInstr &CombOp,
+    std::optional<APInt> Immediate, MachineRegisterInfo &MRI) {
+
+  const bool NoImmediate = false;
+  if (CombOp.getOpcode() != AIE2::G_INTRINSIC ||
+      (cast<GIntrinsic>(CombOp).getIntrinsicID() !=
+           Intrinsic::aie2_unpack_I8_I4 &&
+       cast<GIntrinsic>(CombOp).getIntrinsicID() !=
+           Intrinsic::aie2_unpack_I16_I8))
+    return {};
+
+  if (!MemOp.mayLoad())
+    return {};
+
+  assert(getLoadStoreSize(MemOp) == 256 && "Unexpected VLDA.UNPACK size");
+
+  unsigned ISelOpcode;
+  Register SignReg = CombOp.getOperand(3).getReg();
+
+  auto Sign = getIConstantVRegValWithLookThrough(SignReg, MRI);
+  if (Sign && Sign->Value.getZExtValue()) {
+    if (cast<GIntrinsic>(CombOp).getIntrinsicID() ==
+        Intrinsic::aie2_unpack_I8_I4) {
+      switch (MemOp.getOpcode()) {
+      case AIE2::G_AIE_OFFSET_LOAD:
+        ISelOpcode = AIE2::VLDB_UNPACK_S8_S4_ag_idx;
+        return LoadStoreOpcodes{ISelOpcode, NoImmediate, {}};
+      case AIE2::G_AIE_POSTINC_LOAD:
+        ISelOpcode = AIE2::VLDB_UNPACK_S8_S4_ag_pstm_nrm;
+        return LoadStoreOpcodes{ISelOpcode, NoImmediate, {}};
+      case AIE2::G_AIE_POSTINC_2D_LOAD:
+        ISelOpcode = AIE2::VLDB_2D_UNPACK_S8_S4;
+        return LoadStoreOpcodes{ISelOpcode, NoImmediate, {}};
+      case AIE2::G_AIE_POSTINC_3D_LOAD:
+        ISelOpcode = AIE2::VLDB_3D_UNPACK_S8_S4;
+        return LoadStoreOpcodes{ISelOpcode, NoImmediate, {}};
+      }
+    } else { // aie2_unpack_I16_I8
+      switch (MemOp.getOpcode()) {
+      case AIE2::G_AIE_OFFSET_LOAD:
+        ISelOpcode = AIE2::VLDB_UNPACK_S16_S8_ag_idx;
+        return LoadStoreOpcodes{ISelOpcode, NoImmediate, {}};
+      case AIE2::G_AIE_POSTINC_LOAD:
+        ISelOpcode = AIE2::VLDB_UNPACK_S16_S8_ag_pstm_nrm;
+        return LoadStoreOpcodes{ISelOpcode, NoImmediate, {}};
+      case AIE2::G_AIE_POSTINC_2D_LOAD:
+        ISelOpcode = AIE2::VLDB_2D_UNPACK_S16_S8;
+        return LoadStoreOpcodes{ISelOpcode, NoImmediate, {}};
+      case AIE2::G_AIE_POSTINC_3D_LOAD:
+        ISelOpcode = AIE2::VLDB_3D_UNPACK_S16_S8;
+        return LoadStoreOpcodes{ISelOpcode, NoImmediate, {}};
+      }
+    }
+  } else {
+    if (cast<GIntrinsic>(CombOp).getIntrinsicID() ==
+        Intrinsic::aie2_unpack_I8_I4) {
+      switch (MemOp.getOpcode()) {
+      case AIE2::G_AIE_OFFSET_LOAD:
+        ISelOpcode = AIE2::VLDB_UNPACK_D8_D4_ag_idx;
+        return LoadStoreOpcodes{ISelOpcode, NoImmediate, {}};
+      case AIE2::G_AIE_POSTINC_LOAD:
+        ISelOpcode = AIE2::VLDB_UNPACK_D8_D4_pstm_nrm;
+        return LoadStoreOpcodes{ISelOpcode, NoImmediate, {}};
+      case AIE2::G_AIE_POSTINC_2D_LOAD:
+        ISelOpcode = AIE2::VLDB_2D_UNPACK_D8_D4;
+        return LoadStoreOpcodes{ISelOpcode, NoImmediate, {}};
+      case AIE2::G_AIE_POSTINC_3D_LOAD:
+        ISelOpcode = AIE2::VLDB_3D_UNPACK_D8_D4;
+        return LoadStoreOpcodes{ISelOpcode, NoImmediate, {}};
+      }
+    } else { // aie2_unpack_I16_I8
+      switch (MemOp.getOpcode()) {
+      case AIE2::G_AIE_OFFSET_LOAD:
+        ISelOpcode = AIE2::VLDB_UNPACK_D16_D8_ag_idx;
+        return LoadStoreOpcodes{ISelOpcode, NoImmediate, {}};
+      case AIE2::G_AIE_POSTINC_LOAD:
+        ISelOpcode = AIE2::VLDB_UNPACK_D16_D8_ag_pstm_nrm;
+        return LoadStoreOpcodes{ISelOpcode, NoImmediate, {}};
+      case AIE2::G_AIE_POSTINC_2D_LOAD:
+        ISelOpcode = AIE2::VLDB_2D_UNPACK_D16_D8;
+        return LoadStoreOpcodes{ISelOpcode, NoImmediate, {}};
+      case AIE2::G_AIE_POSTINC_3D_LOAD:
+        ISelOpcode = AIE2::VLDB_3D_UNPACK_D16_D8;
+        return LoadStoreOpcodes{ISelOpcode, NoImmediate, {}};
+      }
+    }
+  }
+  return {};
+}
+
+bool canCombineUNPACKLoad(MachineInstr &MemOp, MachineInstr &CombOp,
+                          MachineRegisterInfo &MRI) {
+  const std::optional<APInt> NoImmediate = {};
+  return getCombinedOpcodeUNPACKLoad(MemOp, CombOp, NoImmediate, MRI)
+      .has_value();
+}
+
+// make an instruction trivially dead by creating and distributing new virtual
+// registers to its defs
+void makeDeadMI(MachineInstr &MI, MachineRegisterInfo &MRI) {
+  for (auto *Def = MI.defs().begin(); Def != MI.defs().end(); ++Def) {
+    Register NewReg = MRI.cloneVirtualRegister(Def->getReg());
+    Def->setReg(NewReg);
+  }
+}
+
+bool AIE2InstructionSelector::selectG_AIE_LOAD_UNPACK(
+    MachineInstr &UNPACKI, MachineRegisterInfo &MRI) {
+  Register LoadResult = (std::next(UNPACKI.uses().begin()))->getReg();
+  MachineInstr *LoadOp = MRI.getUniqueVRegDef(LoadResult);
+
+  assert(LoadOp && "Expected SSA.");
+
+  // Do not try to combine if one of the load's defs is used by another
+  // instruction between the load and the VUNPACK or if there is a store
+  // between the load and the VUNPACK.
+  if (!canDelayMemOp(*LoadOp, UNPACKI, MRI))
+    return false;
+
+  if (!canCombineUNPACKLoad(*LoadOp, UNPACKI, MRI) ||
+      LoadOp->getParent() != UNPACKI.getParent() || !MRI.hasOneUse(LoadResult))
+    return false;
+
+  std::optional<AddressingModeInfo> AMI =
+      getOrDefineAddressingRegister(*LoadOp, MRI);
+  if (!AMI)
+    return false;
+
+  std::optional<LoadStoreOpcodes> LSO = getCombinedOpcodeUNPACKLoad(
+      AMI->MemI, UNPACKI, AMI->ImmediateOffset, MRI);
+
+  Register DstReg = UNPACKI.getOperand(0).getReg();
+  Register SignReg = UNPACKI.getOperand(3).getReg();
+
+  auto NewInstr = MIB.buildInstr(LSO->ISelOpcode);
+
+  NewInstr.addDef(DstReg);
+
+  for (auto *Def = std::next(AMI->MemI.defs().begin());
+       Def != AMI->MemI.defs().end(); ++Def) {
+    NewInstr.addDef(Def->getReg());
+  }
+
+  addAddressingMode(NewInstr, *AMI, LSO->FitsImmediateRange, false, MRI);
+
+  NewInstr.cloneMemRefs(AMI->MemI);
+
+  auto ConstantSign = getIConstantVRegValWithLookThrough(SignReg, MRI);
+  if (!ConstantSign)
+    setUnsetCtrlRegister(*NewInstr, MRI, AIE2::crUnpackSign, SignReg);
+
+  UNPACKI.eraseFromParent();
+
+  // Erasing the load instruction breaks later on in the selection code. That is
+  // because we keep an iterator on erased instructions. This breaks while
+  // trying to eliminate a trivially dead instruction which requires access to
+  // its memory operands which have been erased, thus leading to a seg fault. To
+  // remedy this, we keep the load to be removed by the trivial dead code
+  // elimination and we make sure to assign a new virtual register definition to
+  // its live operands to respect SSA.
+  makeDeadMI(*LoadOp, MRI);
+
+  return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
 }
 
 void AIE2InstructionSelector::insertPtrAddForOffset(MachineRegisterInfo &MRI,
@@ -4127,15 +4298,6 @@ getCombinedOpcodeCONVLoad(const MachineInstr &MemOp, const MachineInstr &CombOp,
 bool canCombineCONVLoad(MachineInstr &MemOp, MachineInstr &CombOp) {
   const std::optional<APInt> NoImmediate = {};
   return getCombinedOpcodeCONVLoad(MemOp, CombOp, NoImmediate).has_value();
-}
-
-// make an instruction trivially dead by creating and distributing new virtual
-// registers to its defs
-void makeDeadMI(MachineInstr &MI, MachineRegisterInfo &MRI) {
-  for (auto *Def = MI.defs().begin(); Def != MI.defs().end(); ++Def) {
-    Register NewReg = MRI.cloneVirtualRegister(Def->getReg());
-    Def->setReg(NewReg);
-  }
 }
 
 bool AIE2InstructionSelector::selectG_AIE_LOAD_CONV(MachineInstr &CONVI,
