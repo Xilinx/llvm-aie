@@ -506,6 +506,37 @@ static DecodeStatus DecodeLDA_Q_3DInstruction(MCInst &MI, InsnType &insn,
 
 #include "AIE2GenDisassemblerTables.inc"
 
+template <typename InsnType>
+DecodeStatus decodeSlot(const uint8_t *DecoderTable, MCInst &Inst,
+                        InsnType &Imm, int64_t Address,
+                        const MCDisassembler *Decoder) {
+  MCInst *MCI = Decoder->getContext().createMCInst();
+  DecodeStatus Result = decodeInstruction(DecoderTable, *MCI, Imm, Address,
+                                          Decoder, Decoder->getSubtargetInfo());
+  if (Result != MCDisassembler::Success) {
+    MCI->clear();
+  }
+  Inst.addOperand(MCOperand::createInst(MCI));
+  return MCDisassembler::Success;
+}
+
+// Slots:
+// ------------------------------------------
+// |            instr16              | 0001 |
+// ------------------------------------------
+
+// ------------------------------------------
+// |xxxxxxxxxxxxxxxx                 | 0001 |
+// ------------------------------------------
+template <typename InsnType>
+DecodeStatus decodeNopInstruction(MCInst &Inst, InsnType &Imm, int64_t Address,
+                                  const MCDisassembler *Decoder) {
+  LLVM_DEBUG(dbgs() << "Decode Nop Instruction\n");
+  Imm <<= 4;
+  Imm |= 0b0001;
+  return decodeSlot(DecoderTable16, Inst, Imm, Address, Decoder);
+}
+
 // Slots:
 // -----------------------------------------
 // |            instr32             | 1001 |
@@ -530,18 +561,9 @@ template <typename InsnType>
 DecodeStatus decodeLdaInstruction(MCInst &Inst, InsnType &Imm, int64_t Address,
                                   const MCDisassembler *Decoder) {
   LLVM_DEBUG(dbgs() << "Decode Lda Instruction\n");
-  const AIE2Disassembler *Disassembler = (const AIE2Disassembler *)Decoder;
-  MCInst *MCI = Disassembler->getContext().createMCInst();
   Imm <<= 6;
   Imm |= (0b00000 << 27) | 0b011001;
-  DecodeStatus Result =
-      decodeInstruction(DecoderTable32, *MCI, Imm, Address, Decoder,
-                        Disassembler->getSubtargetInfo());
-  if (Result != MCDisassembler::Success) {
-    MCI->clear();
-  }
-  Inst.addOperand(MCOperand::createInst(MCI));
-  return MCDisassembler::Success;
+  return decodeSlot(DecoderTable32, Inst, Imm, Address, Decoder);
 }
 
 // -----------------------------------------
@@ -551,18 +573,9 @@ template <typename InsnType>
 DecodeStatus decodeLdbInstruction(MCInst &Inst, InsnType &Imm, int64_t Address,
                                   const MCDisassembler *Decoder) {
   LLVM_DEBUG(dbgs() << "Decode Ldb Instruction\n");
-  const AIE2Disassembler *Disassembler = (const AIE2Disassembler *)Decoder;
-  MCInst *MCI = Disassembler->getContext().createMCInst();
   Imm <<= 11;
   Imm |= (0b00111 << 27) | 0b00000011001;
-  DecodeStatus Result =
-      decodeInstruction(DecoderTable32, *MCI, Imm, Address, Decoder,
-                        Disassembler->getSubtargetInfo());
-  if (Result != MCDisassembler::Success) {
-    MCI->clear();
-  }
-  Inst.addOperand(MCOperand::createInst(MCI));
-  return MCDisassembler::Success;
+  return decodeSlot(DecoderTable32, Inst, Imm, Address, Decoder);
 }
 
 // -----------------------------------------
@@ -572,18 +585,9 @@ template <typename InsnType>
 DecodeStatus decodeAluInstruction(MCInst &Inst, InsnType &Imm, int64_t Address,
                                   const MCDisassembler *Decoder) {
   LLVM_DEBUG(dbgs() << "Decode Alu Instruction\n");
-  const AIE2Disassembler *Disassembler = (const AIE2Disassembler *)Decoder;
-  MCInst *MCI = Disassembler->getContext().createMCInst();
   Imm <<= 7;
   Imm |= (0b00010 << 27) | 0b0011001;
-  DecodeStatus Result =
-      decodeInstruction(DecoderTable32, *MCI, Imm, Address, Decoder,
-                        Disassembler->getSubtargetInfo());
-  if (Result != MCDisassembler::Success) {
-    MCI->clear();
-  }
-  Inst.addOperand(MCOperand::createInst(MCI));
-  return MCDisassembler::Success;
+  return decodeSlot(DecoderTable32, Inst, Imm, Address, Decoder);
 }
 
 // -----------------------------------------
@@ -593,18 +597,9 @@ template <typename InsnType>
 DecodeStatus decodeMvInstruction(MCInst &Inst, InsnType &Imm, int64_t Address,
                                  const MCDisassembler *Decoder) {
   LLVM_DEBUG(dbgs() << "Decode Mv Instruction\n");
-  const AIE2Disassembler *Disassembler = (const AIE2Disassembler *)Decoder;
-  MCInst *MCI = Disassembler->getContext().createMCInst();
   Imm <<= 5;
   Imm |= (0b00011 << 27) | 0b11001;
-  DecodeStatus Result =
-      decodeInstruction(DecoderTable32, *MCI, Imm, Address, Decoder,
-                        Disassembler->getSubtargetInfo());
-  if (Result != MCDisassembler::Success) {
-    MCI->clear();
-  }
-  Inst.addOperand(MCOperand::createInst(MCI));
-  return MCDisassembler::Success;
+  return decodeSlot(DecoderTable32, Inst, Imm, Address, Decoder);
 }
 
 // -----------------------------------------
@@ -614,20 +609,9 @@ template <typename InsnType>
 DecodeStatus decodeStInstruction(MCInst &Inst, InsnType &Imm, int64_t Address,
                                  const MCDisassembler *Decoder) {
   LLVM_DEBUG(dbgs() << "Decode St Instruction\n");
-  const AIE2Disassembler *Disassembler = (const AIE2Disassembler *)Decoder;
-  MCInst *MCI = Disassembler->getContext().createMCInst();
   Imm <<= 6;
-  // FIXME x0001 is encoded as 10001, don't care bit can be
-  // either 0 or 1.
-  Imm |= (0b10001 << 27) | 0b11001;
-  DecodeStatus Result =
-      decodeInstruction(DecoderTable32, *MCI, Imm, Address, Decoder,
-                        Disassembler->getSubtargetInfo());
-  if (Result != MCDisassembler::Success) {
-    MCI->clear();
-  }
-  Inst.addOperand(MCOperand::createInst(MCI));
-  return MCDisassembler::Success;
+  Imm |= (0b00001 << 27) | 0b11001;
+  return decodeSlot(DecoderTable32, Inst, Imm, Address, Decoder);
 }
 
 // -----------------------------------------
@@ -637,18 +621,9 @@ template <typename InsnType>
 DecodeStatus decodeVecInstruction(MCInst &Inst, InsnType &Imm, int64_t Address,
                                   const MCDisassembler *Decoder) {
   LLVM_DEBUG(dbgs() << "Decode Vec Instruction\n");
-  const AIE2Disassembler *Disassembler = (const AIE2Disassembler *)Decoder;
-  MCInst *MCI = Disassembler->getContext().createMCInst();
   Imm <<= 6;
   Imm |= 0b001001;
-  DecodeStatus Result =
-      decodeInstruction(DecoderTable32, *MCI, Imm, Address, Decoder,
-                        Disassembler->getSubtargetInfo());
-  if (Result != MCDisassembler::Success) {
-    MCI->clear();
-  }
-  Inst.addOperand(MCOperand::createInst(MCI));
-  return MCDisassembler::Success;
+  return decodeSlot(DecoderTable32, Inst, Imm, Address, Decoder);
 }
 
 // Slots:
@@ -661,41 +636,12 @@ template <typename InsnType>
 DecodeStatus decodeLngInstruction(MCInst &Inst, InsnType &Imm, int64_t Address,
                                   const MCDisassembler *Decoder) {
   LLVM_DEBUG(dbgs() << "Decode Lng Instruction\n");
-  const AIE2Disassembler *Disassembler = (const AIE2Disassembler *)Decoder;
-  MCInst *MCI = Disassembler->getContext().createMCInst();
   Imm <<= 6;
   Imm |= 0b010101;
-  DecodeStatus Result =
-      decodeInstruction(DecoderTable48, *MCI, Imm, Address, Decoder,
-                        Disassembler->getSubtargetInfo());
-  if (Result != MCDisassembler::Success) {
-    MCI->clear();
-  }
-  Inst.addOperand(MCOperand::createInst(MCI));
-  return MCDisassembler::Success;
+  return decodeSlot(DecoderTable48, Inst, Imm, Address, Decoder);
 }
 
-// Slots:
-// -----------------------------------------
-// |            instr16 [nop]        | 0001 |
-// -----------------------------------------
-template <typename InsnType>
-DecodeStatus decodeNopInstruction(MCInst &Inst, InsnType &Imm, int64_t Address,
-                                  const MCDisassembler *Decoder) {
-  LLVM_DEBUG(dbgs() << "Decode Lng Instruction\n");
-  const AIE2Disassembler *Disassembler = (const AIE2Disassembler *)Decoder;
-  MCInst *MCI = Disassembler->getContext().createMCInst();
-  Imm <<= 4;
-  Imm |= 0b0001;
-  DecodeStatus Result =
-      decodeInstruction(DecoderTable16, *MCI, Imm, Address, Decoder,
-                        Disassembler->getSubtargetInfo());
-  if (Result != MCDisassembler::Success) {
-    MCI->clear();
-  }
-  Inst.addOperand(MCOperand::createInst(MCI));
-  return MCDisassembler::Success;
-}
+
 
 template <typename InsnType>
 static DecodeStatus DecodeST_2D_Instruction(MCInst &MI, InsnType &insn,
@@ -2000,8 +1946,6 @@ DecodeStatus AIE2Disassembler::getInstruction(MCInst &MI, uint64_t &Size,
                                               ArrayRef<uint8_t> Bytes,
                                               uint64_t Address,
                                               raw_ostream &CS) const {
-  DecodeStatus Result;
-
   Size = formatSize(Bytes);
   if (Bytes.size() < Size) {
     LLVM_DEBUG(dbgs() << "Disassembler failed with buffer overrun: "
@@ -2011,77 +1955,77 @@ DecodeStatus AIE2Disassembler::getInstruction(MCInst &MI, uint64_t &Size,
   }
 
   // Calling the auto-generated decoder function.
-  if (Size == 2) {
+  // For formats bigger than 64 bits we use APint.
+  // Note that there are some nasty bits in the instruction decode
+  // tables generated by tablegen if decoding more than 64 bits at
+  // once. See: https://reviews.llvm.org/D52100
+  // TLDR: The format size can be more than 64 bits, but any
+  // field extracted from it should fit in a 64 bit type.
+  // Since all stand-alone instructions fit in 48 bits, this is not a
+  // problem.
+  switch (Size) {
+  case 2: {
     uint16_t Insn = support::endian::read16le(Bytes.data());
     LLVM_DEBUG(dbgs() << "Trying AIE16 table :\n");
-    Result = decodeInstruction(DecoderTable16, MI, Insn, Address, this, STI);
-  } else if (Size == 4) {
+    return decodeInstruction(DecoderTableFormats16, MI, Insn, Address, this,
+                             STI);
+  }
+  case 4: {
     uint32_t Insn = support::endian::read32le(Bytes.data());
     LLVM_DEBUG(dbgs() << "Trying AIE32 table :\n";);
-    Result =
-        decodeInstruction(DecoderTableFormats32, MI, Insn, Address, this, STI);
-    return Result;
-  } else if (Size == 6) {
+    return decodeInstruction(DecoderTableFormats32, MI, Insn, Address, this,
+                             STI);
+  }
+  case 6: {
     uint64_t Low = support::endian::read32le(Bytes.data());
     uint64_t High = support::endian::read16le(Bytes.data() + 4);
     uint64_t Insn = (High << 32) | Low;
     LLVM_DEBUG(dbgs() << "Trying AIE48 table :\n";);
-    Result =
-        decodeInstruction(DecoderTableFormats48, MI, Insn, Address, this, STI);
-    return Result;
-  } else if (Size == 8) {
+    return decodeInstruction(DecoderTableFormats48, MI, Insn, Address, this,
+                             STI);
+  }
+  case 8: {
     uint64_t Insn = support::endian::read64le(Bytes.data());
     LLVM_DEBUG(dbgs() << "Trying AIE64 table :\n";);
-    Result =
-        decodeInstruction(DecoderTableFormats64, MI, Insn, Address, this, STI);
-    return Result;
-  } else if (Size == 10) {
-    // Note that there are some nasty bits in the instruction decode
-    // tables generated by tablegen if decoding more than 64 bits at
-    // once.  See: https://reviews.llvm.org/D52100
+    return decodeInstruction(DecoderTableFormats64, MI, Insn, Address, this,
+                             STI);
+  }
+  case 10: {
     APInt Insn(96, support::endian::read16le(Bytes.data() + 8));
-    Insn = Insn.shl(64);
+    Insn <<= 64;
     Insn |= support::endian::read64le(Bytes.data());
     LLVM_DEBUG(dbgs() << "Trying AIE80 table :\n");
-    Result =
-        decodeInstruction(DecoderTableFormats80, MI, Insn, Address, this, STI);
-    return Result;
-  } else if (Size == 12) {
-    // Note that there are some nasty bits in the instruction decode
-    // tables generated by tablegen if decoding more than 64 bits at
-    // once.  See: https://reviews.llvm.org/D52100
+    return decodeInstruction(DecoderTableFormats80, MI, Insn, Address, this,
+                             STI);
+  }
+  case 12: {
     APInt Insn(96, support::endian::read32le(Bytes.data() + 8));
-    Insn = Insn.shl(64);
+    Insn <<= 64;
     Insn |= support::endian::read64le(Bytes.data());
     LLVM_DEBUG(dbgs() << "Trying AIE96 table :\n");
-    Result =
-        decodeInstruction(DecoderTableFormats96, MI, Insn, Address, this, STI);
-  } else if (Size == 14) {
-    // Note that there are some nasty bits in the instruction decode
-    // tables generated by tablegen if decoding more than 64 bits at
-    // once.  See: https://reviews.llvm.org/D52100
+    return decodeInstruction(DecoderTableFormats96, MI, Insn, Address, this,
+                             STI);
+  }
+  case 14: {
     APInt Insn(112, support::endian::read16le(Bytes.data() + 12));
-    Insn = Insn.shl(32);
+    Insn <<= 32;
     Insn |= support::endian::read32le(Bytes.data() + 8);
-    Insn = Insn.shl(64);
+    Insn <<= 64;
     Insn |= support::endian::read64le(Bytes.data());
     LLVM_DEBUG(dbgs() << "Trying AIE112 table :\n");
-    Result =
-        decodeInstruction(DecoderTableFormats112, MI, Insn, Address, this, STI);
-    return Result;
-  } else if (Size == 16) {
-    // Note that there are some nasty bits in the instruction decode
-    // tables generated by tablegen if decoding more than 64 bits at
-    // once.  See: https://reviews.llvm.org/D52100
+    return decodeInstruction(DecoderTableFormats112, MI, Insn, Address, this,
+                             STI);
+  }
+  case 16: {
     APInt Insn(128, support::endian::read64le(Bytes.data() + 8));
-    Insn = Insn.shl(64);
+    Insn <<= 64;
     Insn |= support::endian::read64le(Bytes.data());
     LLVM_DEBUG(dbgs() << "Trying AIE128 table :\n");
-    Result =
-        decodeInstruction(DecoderTableFormats128, MI, Insn, Address, this, STI);
-    return Result;
-  } else {
+    return decodeInstruction(DecoderTableFormats128, MI, Insn, Address, this,
+                             STI);
+  }
+  default:
     assert(false);
   }
-  return Result;
+  return MCDisassembler::Fail;
 }
