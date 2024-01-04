@@ -641,7 +641,60 @@ DecodeStatus decodeLngInstruction(MCInst &Inst, InsnType &Imm, int64_t Address,
   return decodeSlot(DecoderTable48, Inst, Imm, Address, Decoder);
 }
 
+namespace {
+class BuildNDim {
+  MCInst &MI;
+  Register PtrReg;
+  Register ModReg;
+  int NDim;
 
+public:
+  BuildNDim(MCInst &MI, Register PtrReg, Register ModReg, int NDim)
+      : MI(MI), PtrReg(PtrReg), ModReg(ModReg), NDim(NDim) {}
+
+  BuildNDim &addReg(Register Reg) {
+    MI.addOperand(MCOperand::createReg(Reg));
+    return *this;
+  }
+  BuildNDim &addInputs() {
+    addReg(PtrReg);
+    addReg(ModReg);
+    return *this;
+  }
+  BuildNDim &addOutputs(const MCDisassembler *Decoder) {
+    const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
+    addReg(PtrReg);
+    if (NDim == 2) {
+      addReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count));
+    } else {
+      assert(NDim == 3);
+      addReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count));
+      addReg(MRI.getSubReg(ModReg, AIE2::sub_hi_dim_then_sub_dim_count));
+    }
+    return *this;
+  }
+};
+
+BuildNDim build2D(MCInst &MI, unsigned PtrRegRaw, unsigned ModRegRaw) {
+  assert(PtrRegRaw < std::size(ePDecoderTable));
+  assert(ModRegRaw < std::size(eDDecoderTable));
+  Register PtrReg = ePDecoderTable[PtrRegRaw];
+  Register ModReg = eDDecoderTable[ModRegRaw];
+  assert(PtrReg && ModReg);
+
+  return {MI, PtrReg, ModReg, 2};
+}
+
+BuildNDim build3D(MCInst &MI, unsigned PtrRegRaw, unsigned ModRegRaw) {
+  assert(PtrRegRaw < std::size(ePDecoderTable));
+  assert(ModRegRaw < std::size(eDSDecoderTable));
+  Register PtrReg = ePDecoderTable[PtrRegRaw];
+  Register ModReg = eDSDecoderTable[ModRegRaw];
+  assert(PtrReg && ModReg);
+
+  return {MI, PtrReg, ModReg, 3};
+}
+} // namespace
 
 template <typename InsnType>
 static DecodeStatus DecodeST_2D_Instruction(MCInst &MI, InsnType &insn,
@@ -651,24 +704,16 @@ static DecodeStatus DecodeST_2D_Instruction(MCInst &MI, InsnType &insn,
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 3);
 
-  if (SrcRegRaw >= std::size(mLdaSclDecoderTable) ||
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDDecoderTable))
+  if (SrcRegRaw >= std::size(mLdaSclDecoderTable))
     return MCDisassembler::Fail;
 
   Register SrcReg = mLdaSclDecoderTable[SrcRegRaw];
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDDecoderTable[ModRegRaw];
-  assert(SrcReg && PtrReg && ModReg && "Register not found.");
+  assert(SrcReg && "Register not found.");
 
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-
-  MI.addOperand(MCOperand::createReg(SrcReg));
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
+  build2D(MI, PtrRegRaw, ModRegRaw)
+      .addOutputs(Decoder)
+      .addReg(SrcReg)
+      .addInputs();
 
   return MCDisassembler::Success;
 }
@@ -680,25 +725,17 @@ static DecodeStatus DecodeST_2D_HBInstruction(MCInst &MI, InsnType &insn,
   unsigned SrcRegRaw = fieldFromInstruction(insn, 9, 5);
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 3);
-  if (SrcRegRaw >= std::size(eRDecoderTable) ||
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDDecoderTable))
+  if (SrcRegRaw >= std::size(eRDecoderTable))
     return MCDisassembler::Fail;
 
   Register SrcReg = eRDecoderTable[SrcRegRaw];
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDDecoderTable[ModRegRaw];
-  assert(SrcReg && PtrReg && ModReg && "Register not found.");
 
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
+  assert(SrcReg && "Register not found.");
 
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-
-  MI.addOperand(MCOperand::createReg(SrcReg));
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
+  build2D(MI, PtrRegRaw, ModRegRaw)
+      .addOutputs(Decoder)
+      .addReg(SrcReg)
+      .addInputs();
 
   return MCDisassembler::Success;
 }
@@ -711,26 +748,16 @@ static DecodeStatus DecodeST_3D_Instruction(MCInst &MI, InsnType &insn,
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 3);
 
-  if (SrcRegRaw >= std::size(mLdaSclDecoderTable) ||
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDSDecoderTable))
+  if (SrcRegRaw >= std::size(mLdaSclDecoderTable))
     return MCDisassembler::Fail;
 
   Register SrcReg = mLdaSclDecoderTable[SrcRegRaw];
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDSDecoderTable[ModRegRaw];
-  assert(SrcReg && PtrReg && ModReg && "Register not found.");
+  assert(SrcReg && "Register not found.");
 
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-  MI.addOperand(MCOperand::createReg(
-      MRI.getSubReg(ModReg, AIE2::sub_hi_dim_then_sub_dim_count)));
-
-  MI.addOperand(MCOperand::createReg(SrcReg));
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
+  build3D(MI, PtrRegRaw, ModRegRaw)
+      .addOutputs(Decoder)
+      .addReg(SrcReg)
+      .addInputs();
 
   return MCDisassembler::Success;
 }
@@ -742,27 +769,16 @@ static DecodeStatus DecodeST_3D_HBInstruction(MCInst &MI, InsnType &insn,
   unsigned SrcRegRaw = fieldFromInstruction(insn, 9, 5);
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 3);
-  if (SrcRegRaw >= std::size(eRDecoderTable) ||
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDSDecoderTable))
+  if (SrcRegRaw >= std::size(eRDecoderTable))
     return MCDisassembler::Fail;
 
   Register SrcReg = eRDecoderTable[SrcRegRaw];
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDSDecoderTable[ModRegRaw];
-  assert(SrcReg && PtrReg && ModReg && "Register not found.");
 
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-  MI.addOperand(MCOperand::createReg(
-      MRI.getSubReg(ModReg, AIE2::sub_hi_dim_then_sub_dim_count)));
-
-  MI.addOperand(MCOperand::createReg(SrcReg));
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
+  assert(SrcReg && "Register not found.");
+  build3D(MI, PtrRegRaw, ModRegRaw)
+      .addOutputs(Decoder)
+      .addReg(SrcReg)
+      .addInputs();
 
   return MCDisassembler::Success;
 }
@@ -775,24 +791,15 @@ static DecodeStatus DecodeLDA_2D_Instruction(MCInst &MI, InsnType &insn,
   unsigned DstRegRaw = fieldFromInstruction(insn, 7, 7);
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 3);
-  if (DstRegRaw >= std::size(mLdaSclDecoderTable) ||
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDDecoderTable))
+  if (DstRegRaw >= std::size(mLdaSclDecoderTable))
     return MCDisassembler::Fail;
 
   Register DstReg = mLdaSclDecoderTable[DstRegRaw];
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDDecoderTable[ModRegRaw];
-  assert(DstReg && PtrReg && ModReg && "Register not found.");
-
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(DstReg));
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
+  assert(DstReg && "Register not found.");
+  build2D(MI, PtrRegRaw, ModRegRaw)
+      .addReg(DstReg)
+      .addOutputs(Decoder)
+      .addInputs();
 
   return MCDisassembler::Success;
 }
@@ -805,24 +812,16 @@ static DecodeStatus DecodeLDA_2D_HBInstruction(MCInst &MI, InsnType &insn,
   unsigned DstRegRaw = fieldFromInstruction(insn, 9, 5);
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 3);
-  if (DstRegRaw >= std::size(eRDecoderTable) ||
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDDecoderTable))
+  if (DstRegRaw >= std::size(eRDecoderTable))
     return MCDisassembler::Fail;
 
   Register DstReg = eRDecoderTable[DstRegRaw];
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDDecoderTable[ModRegRaw];
-  assert(DstReg && PtrReg && ModReg && "Register not found.");
+  assert(DstReg && "Register not found.");
 
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(DstReg));
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
+  build2D(MI, PtrRegRaw, ModRegRaw)
+      .addReg(DstReg)
+      .addOutputs(Decoder)
+      .addInputs();
 
   return MCDisassembler::Success;
 }
@@ -834,27 +833,16 @@ static DecodeStatus DecodeLDA_3D_Instruction(MCInst &MI, InsnType &insn,
   unsigned DstRegRaw = fieldFromInstruction(insn, 7, 7);
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 2);
-  if (DstRegRaw >= std::size(mLdaSclDecoderTable) ||
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDSDecoderTable))
+  if (DstRegRaw >= std::size(mLdaSclDecoderTable))
     return MCDisassembler::Fail;
 
   Register DstReg = mLdaSclDecoderTable[DstRegRaw];
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDSDecoderTable[ModRegRaw];
-  assert(DstReg && PtrReg && ModReg && "Register not found.");
+  assert(DstReg && "Register not found.");
 
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(DstReg));
-  MI.addOperand(MCOperand::createReg(PtrReg));
-
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-  MI.addOperand(MCOperand::createReg(
-      MRI.getSubReg(ModReg, AIE2::sub_hi_dim_then_sub_dim_count)));
-
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
+  build3D(MI, PtrRegRaw, ModRegRaw)
+      .addReg(DstReg)
+      .addOutputs(Decoder)
+      .addInputs();
 
   return MCDisassembler::Success;
 }
@@ -866,27 +854,16 @@ static DecodeStatus DecodeLDA_3D_HBInstruction(MCInst &MI, InsnType &insn,
   unsigned DstRegRaw = fieldFromInstruction(insn, 9, 5);
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 2);
-  if (DstRegRaw >= std::size(eRDecoderTable) ||
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDSDecoderTable))
+  if (DstRegRaw >= std::size(eRDecoderTable))
     return MCDisassembler::Fail;
 
   Register DstReg = eRDecoderTable[DstRegRaw];
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDSDecoderTable[ModRegRaw];
-  assert(DstReg && PtrReg && ModReg && "Register not found.");
 
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(DstReg));
-  MI.addOperand(MCOperand::createReg(PtrReg));
-
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-  MI.addOperand(MCOperand::createReg(
-      MRI.getSubReg(ModReg, AIE2::sub_hi_dim_then_sub_dim_count)));
-
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
+  assert(DstReg && "Register not found.");
+  build3D(MI, PtrRegRaw, ModRegRaw)
+      .addReg(DstReg)
+      .addOutputs(Decoder)
+      .addInputs();
 
   return MCDisassembler::Success;
 }
@@ -898,20 +875,8 @@ static DecodeStatus DecodePADD_2DInstruction(MCInst &MI, InsnType &insn,
 
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 3);
-  if (PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDDecoderTable))
-    return MCDisassembler::Fail;
 
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDDecoderTable[ModRegRaw];
-  assert(PtrReg && ModReg && "Register not found.");
-
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
+  build2D(MI, PtrRegRaw, ModRegRaw).addOutputs(Decoder).addInputs();
 
   return MCDisassembler::Success;
 }
@@ -923,22 +888,8 @@ static DecodeStatus DecodePADD_3DInstruction(MCInst &MI, InsnType &insn,
 
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 2);
-  if (PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDSDecoderTable))
-    return MCDisassembler::Fail;
 
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDSDecoderTable[ModRegRaw];
-  assert(PtrReg && ModReg && "Register not found.");
-
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-  MI.addOperand(MCOperand::createReg(
-      MRI.getSubReg(ModReg, AIE2::sub_hi_dim_then_sub_dim_count)));
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
+  build3D(MI, PtrRegRaw, ModRegRaw).addOutputs(Decoder).addInputs();
 
   return MCDisassembler::Success;
 }
@@ -951,24 +902,16 @@ static DecodeStatus DecodeVST_W_2DInstruction(MCInst &MI, InsnType &insn,
   unsigned SrcRegRaw = fieldFromInstruction(insn, 9, 5);
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 3);
-  if (SrcRegRaw >= std::size(mWaDecoderTable) || // mWs == mWa
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDDecoderTable))
+  if (SrcRegRaw >= std::size(mWaDecoderTable))
     return MCDisassembler::Fail;
 
   Register SrcReg = mWaDecoderTable[SrcRegRaw]; // mWs == mWa
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDDecoderTable[ModRegRaw];
-  assert(SrcReg && PtrReg && ModReg && "Register not found.");
+  assert(SrcReg && "Register not found.");
 
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-
-  MI.addOperand(MCOperand::createReg(SrcReg));
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
+  build2D(MI, PtrRegRaw, ModRegRaw)
+      .addOutputs(Decoder)
+      .addReg(SrcReg)
+      .addInputs();
 
   return MCDisassembler::Success;
 }
@@ -981,26 +924,16 @@ static DecodeStatus DecodeVST_3D_WInstruction(MCInst &MI, InsnType &insn,
   unsigned SrcRegRaw = fieldFromInstruction(insn, 9, 5);
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 2);
-  if (SrcRegRaw >= std::size(mWaDecoderTable) || // mWs == mWa
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDSDecoderTable))
+  if (SrcRegRaw >= std::size(mWaDecoderTable))
     return MCDisassembler::Fail;
 
   Register SrcReg = mWaDecoderTable[SrcRegRaw]; // mWs == mWa
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDSDecoderTable[ModRegRaw];
-  assert(SrcReg && PtrReg && ModReg && "Register not found.");
+  assert(SrcReg && "Register not found.");
 
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-  MI.addOperand(MCOperand::createReg(
-      MRI.getSubReg(ModReg, AIE2::sub_hi_dim_then_sub_dim_count)));
-
-  MI.addOperand(MCOperand::createReg(SrcReg));
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
+  build3D(MI, PtrRegRaw, ModRegRaw)
+      .addOutputs(Decoder)
+      .addReg(SrcReg)
+      .addInputs();
 
   return MCDisassembler::Success;
 }
@@ -1014,27 +947,20 @@ DecodeVST_PACK_2DInstruction(MCInst &MI, InsnType &insn, uint64_t Address,
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 3);
 
-  if (SrcRegRaw >= std::size(mXvDecoderTable) ||
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDDecoderTable))
+  if (SrcRegRaw >= std::size(mXvDecoderTable))
     return MCDisassembler::Fail;
 
   Register SrcReg = mXvDecoderTable[SrcRegRaw];
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDDecoderTable[ModRegRaw];
-  assert(SrcReg && PtrReg && ModReg && "Register not found.");
+  assert(SrcReg && "Register not found.");
 
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
-  MI.addOperand(MCOperand::createReg(SrcReg));
+  build2D(MI, PtrRegRaw, ModRegRaw)
+      .addOutputs(Decoder)
+      .addInputs()
+      .addReg(SrcReg);
 
   return MCDisassembler::Success;
 }
+
 template <typename InsnType>
 static DecodeStatus
 DecodeVST_PACK_3DInstruction(MCInst &MI, InsnType &insn, uint64_t Address,
@@ -1043,26 +969,16 @@ DecodeVST_PACK_3DInstruction(MCInst &MI, InsnType &insn, uint64_t Address,
   unsigned SrcRegRaw = fieldFromInstruction(insn, 10, 4);
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 2);
-  if (SrcRegRaw >= std::size(mXvDecoderTable) ||
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDSDecoderTable))
+  if (SrcRegRaw >= std::size(mXvDecoderTable))
     return MCDisassembler::Fail;
 
   Register SrcReg = mXvDecoderTable[SrcRegRaw];
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDSDecoderTable[ModRegRaw];
-  assert(SrcReg && PtrReg && ModReg && "Register not found.");
+  assert(SrcReg && "Register not found.");
 
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-  MI.addOperand(MCOperand::createReg(
-      MRI.getSubReg(ModReg, AIE2::sub_hi_dim_then_sub_dim_count)));
-
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
-  MI.addOperand(MCOperand::createReg(SrcReg));
+  build3D(MI, PtrRegRaw, ModRegRaw)
+      .addOutputs(Decoder)
+      .addInputs()
+      .addReg(SrcReg);
 
   return MCDisassembler::Success;
 }
@@ -1075,24 +991,15 @@ static DecodeStatus DecodeST_Q_2DInstruction(MCInst &MI, InsnType &insn,
   unsigned SrcRegRaw = fieldFromInstruction(insn, 12, 2);
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 3);
-  if (SrcRegRaw >= std::size(mQQmDecoderTable) ||
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDDecoderTable))
+  if (SrcRegRaw >= std::size(mQQmDecoderTable))
     return MCDisassembler::Fail;
 
   Register SrcReg = mQQmDecoderTable[SrcRegRaw];
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDDecoderTable[ModRegRaw];
-  assert(SrcReg && PtrReg && ModReg && "Register not found.");
-
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-
-  MI.addOperand(MCOperand::createReg(SrcReg));
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
+  assert(SrcReg && "Register not found.");
+  build2D(MI, PtrRegRaw, ModRegRaw)
+      .addOutputs(Decoder)
+      .addReg(SrcReg)
+      .addInputs();
 
   return MCDisassembler::Success;
 }
@@ -1105,26 +1012,16 @@ static DecodeStatus DecodeST_Q_3DInstruction(MCInst &MI, InsnType &insn,
   unsigned SrcRegRaw = fieldFromInstruction(insn, 12, 2);
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 2);
-  if (SrcRegRaw >= std::size(mQQmDecoderTable) ||
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDSDecoderTable))
+  if (SrcRegRaw >= std::size(mQQmDecoderTable))
     return MCDisassembler::Fail;
 
   Register SrcReg = mQQmDecoderTable[SrcRegRaw];
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDSDecoderTable[ModRegRaw];
-  assert(SrcReg && PtrReg && ModReg && "Register not found.");
+  assert(SrcReg && "Register not found.");
 
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-  MI.addOperand(MCOperand::createReg(
-      MRI.getSubReg(ModReg, AIE2::sub_hi_dim_then_sub_dim_count)));
-
-  MI.addOperand(MCOperand::createReg(SrcReg));
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
+  build3D(MI, PtrRegRaw, ModRegRaw)
+      .addOutputs(Decoder)
+      .addReg(SrcReg)
+      .addInputs();
 
   return MCDisassembler::Success;
 }
@@ -1137,24 +1034,16 @@ static DecodeStatus DecodeLDA_Q_2DInstruction(MCInst &MI, InsnType &insn,
   unsigned DstRegRaw = fieldFromInstruction(insn, 12, 2);
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 3);
-  if (DstRegRaw >= std::size(mQQmDecoderTable) ||
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDDecoderTable))
+  if (DstRegRaw >= std::size(mQQmDecoderTable))
     return MCDisassembler::Fail;
 
   Register DstReg = mQQmDecoderTable[DstRegRaw];
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDDecoderTable[ModRegRaw];
-  assert(DstReg && PtrReg && ModReg && "Register not found.");
+  assert(DstReg && "Register not found.");
 
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(DstReg));
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
+  build2D(MI, PtrRegRaw, ModRegRaw)
+      .addReg(DstReg)
+      .addOutputs(Decoder)
+      .addInputs();
 
   return MCDisassembler::Success;
 }
@@ -1167,26 +1056,16 @@ static DecodeStatus DecodeLDA_Q_3DInstruction(MCInst &MI, InsnType &insn,
   unsigned DstRegRaw = fieldFromInstruction(insn, 12, 2);
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 2);
-  if (DstRegRaw >= std::size(mQQmDecoderTable) ||
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDSDecoderTable))
+  if (DstRegRaw >= std::size(mQQmDecoderTable))
     return MCDisassembler::Fail;
 
   Register DstReg = mQQmDecoderTable[DstRegRaw];
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDSDecoderTable[ModRegRaw];
-  assert(DstReg && PtrReg && ModReg && "Register not found.");
+  assert(DstReg && "Register not found.");
 
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(DstReg));
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-  MI.addOperand(MCOperand::createReg(
-      MRI.getSubReg(ModReg, AIE2::sub_hi_dim_then_sub_dim_count)));
-
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
+  build3D(MI, PtrRegRaw, ModRegRaw)
+      .addReg(DstReg)
+      .addOutputs(Decoder)
+      .addInputs();
 
   return MCDisassembler::Success;
 }
@@ -1199,24 +1078,16 @@ static DecodeStatus DecodeVST_AM_2DInstruction(MCInst &MI, InsnType &insn,
   unsigned SrcRegRaw = fieldFromInstruction(insn, 8, 6);
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 3);
-  if (SrcRegRaw >= std::size(mAMmDecoderTable) ||
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDDecoderTable))
+  if (SrcRegRaw >= std::size(mAMmDecoderTable))
     return MCDisassembler::Fail;
 
   Register SrcReg = mAMmDecoderTable[SrcRegRaw];
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDDecoderTable[ModRegRaw];
-  assert(SrcReg && PtrReg && ModReg && "Register not found.");
+  assert(SrcReg && "Register not found.");
 
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-
-  MI.addOperand(MCOperand::createReg(SrcReg));
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
+  build2D(MI, PtrRegRaw, ModRegRaw)
+      .addOutputs(Decoder)
+      .addReg(SrcReg)
+      .addInputs();
 
   return MCDisassembler::Success;
 }
@@ -1229,26 +1100,16 @@ static DecodeStatus DecodeVST_3D_AMInstruction(MCInst &MI, InsnType &insn,
   unsigned SrcRegRaw = fieldFromInstruction(insn, 8, 6);
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 2);
-  if (SrcRegRaw >= std::size(mAMmDecoderTable) ||
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDSDecoderTable))
+  if (SrcRegRaw >= std::size(mAMmDecoderTable))
     return MCDisassembler::Fail;
 
   Register SrcReg = mAMmDecoderTable[SrcRegRaw];
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDSDecoderTable[ModRegRaw];
-  assert(SrcReg && PtrReg && ModReg && "Register not found.");
+  assert(SrcReg && "Register not found.");
 
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-  MI.addOperand(MCOperand::createReg(
-      MRI.getSubReg(ModReg, AIE2::sub_hi_dim_then_sub_dim_count)));
-
-  MI.addOperand(MCOperand::createReg(SrcReg));
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
+  build3D(MI, PtrRegRaw, ModRegRaw)
+      .addOutputs(Decoder)
+      .addReg(SrcReg)
+      .addInputs();
 
   return MCDisassembler::Success;
 }
@@ -1261,24 +1122,16 @@ static DecodeStatus DecodeVLDA_2D_WInstruction(MCInst &MI, InsnType &insn,
   unsigned DstRegRaw = fieldFromInstruction(insn, 9, 5);
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 3);
-  if (DstRegRaw >= std::size(mWaDecoderTable) ||
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDDecoderTable))
+  if (DstRegRaw >= std::size(mWaDecoderTable))
     return MCDisassembler::Fail;
 
   Register DstReg = mWaDecoderTable[DstRegRaw];
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDDecoderTable[ModRegRaw];
-  assert(DstReg && PtrReg && ModReg && "Register not found.");
+  assert(DstReg && "Register not found.");
 
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(DstReg));
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
+  build2D(MI, PtrRegRaw, ModRegRaw)
+      .addReg(DstReg)
+      .addOutputs(Decoder)
+      .addInputs();
 
   return MCDisassembler::Success;
 }
@@ -1291,26 +1144,16 @@ static DecodeStatus DecodeVLDA_3D_WInstruction(MCInst &MI, InsnType &insn,
   unsigned DstRegRaw = fieldFromInstruction(insn, 9, 5);
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 2);
-  if (DstRegRaw >= std::size(mWaDecoderTable) ||
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDSDecoderTable))
+  if (DstRegRaw >= std::size(mWaDecoderTable))
     return MCDisassembler::Fail;
 
   Register DstReg = mWaDecoderTable[DstRegRaw];
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDSDecoderTable[ModRegRaw];
-  assert(DstReg && PtrReg && ModReg && "Register not found.");
+  assert(DstReg && "Register not found.");
 
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(DstReg));
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-  MI.addOperand(MCOperand::createReg(
-      MRI.getSubReg(ModReg, AIE2::sub_hi_dim_then_sub_dim_count)));
-
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
+  build3D(MI, PtrRegRaw, ModRegRaw)
+      .addReg(DstReg)
+      .addOutputs(Decoder)
+      .addInputs();
 
   return MCDisassembler::Success;
 }
@@ -1323,24 +1166,16 @@ static DecodeStatus DecodeVLDA_2D_AMInstruction(MCInst &MI, InsnType &insn,
   unsigned DstRegRaw = fieldFromInstruction(insn, 8, 6);
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 3);
-  if (DstRegRaw >= std::size(mAMmDecoderTable) ||
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDDecoderTable))
+  if (DstRegRaw >= std::size(mAMmDecoderTable))
     return MCDisassembler::Fail;
 
   Register DstReg = mAMmDecoderTable[DstRegRaw];
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDDecoderTable[ModRegRaw];
-  assert(DstReg && PtrReg && ModReg && "Register not found.");
+  assert(DstReg && "Register not found.");
 
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(DstReg));
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
+  build2D(MI, PtrRegRaw, ModRegRaw)
+      .addReg(DstReg)
+      .addOutputs(Decoder)
+      .addInputs();
 
   return MCDisassembler::Success;
 }
@@ -1353,26 +1188,16 @@ static DecodeStatus DecodeVLDA_3D_AMInstruction(MCInst &MI, InsnType &insn,
   unsigned DstRegRaw = fieldFromInstruction(insn, 8, 6);
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 2);
-  if (DstRegRaw >= std::size(mAMmDecoderTable) ||
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDSDecoderTable))
+  if (DstRegRaw >= std::size(mAMmDecoderTable))
     return MCDisassembler::Fail;
 
   Register DstReg = mAMmDecoderTable[DstRegRaw];
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDSDecoderTable[ModRegRaw];
-  assert(DstReg && PtrReg && ModReg && "Register not found.");
+  assert(DstReg && "Register not found.");
 
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(DstReg));
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-  MI.addOperand(MCOperand::createReg(
-      MRI.getSubReg(ModReg, AIE2::sub_hi_dim_then_sub_dim_count)));
-
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
+  build3D(MI, PtrRegRaw, ModRegRaw)
+      .addReg(DstReg)
+      .addOutputs(Decoder)
+      .addInputs();
 
   return MCDisassembler::Success;
 }
@@ -1385,24 +1210,16 @@ static DecodeStatus DecodeVLDB_2DInstruction(MCInst &MI, InsnType &insn,
   unsigned DstRegRaw = fieldFromInstruction(insn, 13, 5);
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 3);
-  if (DstRegRaw >= std::size(mWaDecoderTable) || // mWa == mWb
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDDecoderTable))
+  if (DstRegRaw >= std::size(mWaDecoderTable))
     return MCDisassembler::Fail;
 
   Register DstReg = mWaDecoderTable[DstRegRaw];
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDDecoderTable[ModRegRaw];
-  assert(DstReg && PtrReg && ModReg && "Register not found.");
+  assert(DstReg && "Register not found.");
 
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(DstReg));
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
+  build2D(MI, PtrRegRaw, ModRegRaw)
+      .addReg(DstReg)
+      .addOutputs(Decoder)
+      .addInputs();
 
   return MCDisassembler::Success;
 }
@@ -1415,26 +1232,16 @@ static DecodeStatus DecodeVLDB_3DInstruction(MCInst &MI, InsnType &insn,
   unsigned DstRegRaw = fieldFromInstruction(insn, 13, 5);
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 2);
-  if (DstRegRaw >= std::size(mWaDecoderTable) || // mWa == mWb
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDSDecoderTable))
+  if (DstRegRaw >= std::size(mWaDecoderTable)) // mWa == mWb
     return MCDisassembler::Fail;
 
   Register DstReg = mWaDecoderTable[DstRegRaw];
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDSDecoderTable[ModRegRaw];
-  assert(DstReg && PtrReg && ModReg && "Register not found.");
+  assert(DstReg && "Register not found.");
 
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(DstReg));
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-  MI.addOperand(MCOperand::createReg(
-      MRI.getSubReg(ModReg, AIE2::sub_hi_dim_then_sub_dim_count)));
-
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
+  build3D(MI, PtrRegRaw, ModRegRaw)
+      .addReg(DstReg)
+      .addOutputs(Decoder)
+      .addInputs();
 
   return MCDisassembler::Success;
 }
@@ -1445,26 +1252,16 @@ DecodeVLDB_UNPACK_3DInstruction(MCInst &MI, InsnType &insn, uint64_t Address,
   unsigned DstRegRaw = fieldFromInstruction(insn, 14, 4);
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 2);
-  if (DstRegRaw >= std::size(mXvDecoderTable) || // mXv == mXs
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDSDecoderTable))
+  if (DstRegRaw >= std::size(mXvDecoderTable)) // mXv == mXs
     return MCDisassembler::Fail;
 
   Register DstReg = mXvDecoderTable[DstRegRaw];
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDSDecoderTable[ModRegRaw];
-  assert(DstReg && PtrReg && ModReg && "Register not found.");
+  assert(DstReg && "Register not found.");
 
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(DstReg));
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-  MI.addOperand(MCOperand::createReg(
-      MRI.getSubReg(ModReg, AIE2::sub_hi_dim_then_sub_dim_count)));
-
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
+  build3D(MI, PtrRegRaw, ModRegRaw)
+      .addReg(DstReg)
+      .addOutputs(Decoder)
+      .addInputs();
 
   return MCDisassembler::Success;
 }
@@ -1476,24 +1273,16 @@ DecodeVLDB_UNPACK_2DInstruction(MCInst &MI, InsnType &insn, uint64_t Address,
   unsigned DstRegRaw = fieldFromInstruction(insn, 14, 4);
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 3);
-  if (DstRegRaw >= std::size(mXvDecoderTable) || // mXv == mXs
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDDecoderTable))
+  if (DstRegRaw >= std::size(mXvDecoderTable)) // mXv == mXs
     return MCDisassembler::Fail;
 
   Register DstReg = mXvDecoderTable[DstRegRaw];
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDDecoderTable[ModRegRaw];
-  assert(DstReg && PtrReg && ModReg && "Register not found.");
+  assert(DstReg && "Register not found.");
 
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(DstReg));
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
+  build2D(MI, PtrRegRaw, ModRegRaw)
+      .addReg(DstReg)
+      .addOutputs(Decoder)
+      .addInputs();
 
   return MCDisassembler::Success;
 }
@@ -1508,26 +1297,17 @@ DecodeVST_2D_SRS_CMInstruction(MCInst &MI, InsnType &insn, uint64_t Address,
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 3);
   if (SrcRegRaw >= std::size(eCMDecoderTable) ||
-      ShftRegRaw >= std::size(mSsDecoderTable) ||
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDDecoderTable))
+      ShftRegRaw >= std::size(mSsDecoderTable))
     return MCDisassembler::Fail;
 
   Register SrcReg = eCMDecoderTable[SrcRegRaw];
   Register ShftReg = mSsDecoderTable[ShftRegRaw];
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDDecoderTable[ModRegRaw];
-  assert(SrcReg && ShftReg && PtrReg && ModReg && "Register not found.");
-
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
-  MI.addOperand(MCOperand::createReg(SrcReg));
-  MI.addOperand(MCOperand::createReg(ShftReg));
+  assert(SrcReg && ShftReg && "Register not found.");
+  build2D(MI, PtrRegRaw, ModRegRaw)
+      .addOutputs(Decoder)
+      .addInputs()
+      .addReg(SrcReg)
+      .addReg(ShftReg);
 
   return MCDisassembler::Success;
 }
@@ -1542,28 +1322,18 @@ DecodeVST_3D_SRS_CMInstruction(MCInst &MI, InsnType &insn, uint64_t Address,
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 2);
   if (SrcRegRaw >= std::size(eCMDecoderTable) ||
-      ShftRegRaw >= std::size(mSsDecoderTable) ||
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDSDecoderTable))
+      ShftRegRaw >= std::size(mSsDecoderTable))
     return MCDisassembler::Fail;
 
   Register SrcReg = eCMDecoderTable[SrcRegRaw];
   Register ShftReg = mSsDecoderTable[ShftRegRaw];
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDSDecoderTable[ModRegRaw];
-  assert(SrcReg && ShftReg && PtrReg && ModReg && "Register not found.");
+  assert(SrcReg && ShftReg && "Register not found.");
 
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-  MI.addOperand(MCOperand::createReg(
-      MRI.getSubReg(ModReg, AIE2::sub_hi_dim_then_sub_dim_count)));
-
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
-  MI.addOperand(MCOperand::createReg(SrcReg));
-  MI.addOperand(MCOperand::createReg(ShftReg));
+  build3D(MI, PtrRegRaw, ModRegRaw)
+      .addOutputs(Decoder)
+      .addInputs()
+      .addReg(SrcReg)
+      .addReg(ShftReg);
 
   return MCDisassembler::Success;
 }
@@ -1578,26 +1348,19 @@ DecodeVST_2D_SRS_BMInstruction(MCInst &MI, InsnType &insn, uint64_t Address,
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 3);
   if (SrcRegRaw >= std::size(mBMmDecoderTable) ||
-      ShftRegRaw >= std::size(mSsDecoderTable) ||
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDDecoderTable))
+      ShftRegRaw >= std::size(mSsDecoderTable))
     return MCDisassembler::Fail;
 
   Register SrcReg = mBMmDecoderTable[SrcRegRaw];
   Register ShftReg = mSsDecoderTable[ShftRegRaw];
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDDecoderTable[ModRegRaw];
-  assert(SrcReg && ShftReg && PtrReg && ModReg && "Register not found.");
 
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
+  assert(SrcReg && ShftReg && "Register not found.");
 
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
-  MI.addOperand(MCOperand::createReg(SrcReg));
-  MI.addOperand(MCOperand::createReg(ShftReg));
+  build2D(MI, PtrRegRaw, ModRegRaw)
+      .addOutputs(Decoder)
+      .addInputs()
+      .addReg(SrcReg)
+      .addReg(ShftReg);
 
   return MCDisassembler::Success;
 }
@@ -1612,28 +1375,19 @@ DecodeVST_3D_SRS_BMInstruction(MCInst &MI, InsnType &insn, uint64_t Address,
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 2);
   if (SrcRegRaw >= std::size(mBMmDecoderTable) ||
-      ShftRegRaw >= std::size(mSsDecoderTable) ||
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDSDecoderTable))
+      ShftRegRaw >= std::size(mSsDecoderTable))
     return MCDisassembler::Fail;
 
   Register SrcReg = mBMmDecoderTable[SrcRegRaw];
   Register ShftReg = mSsDecoderTable[ShftRegRaw];
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDSDecoderTable[ModRegRaw];
-  assert(SrcReg && ShftReg && PtrReg && ModReg && "Register not found.");
 
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-  MI.addOperand(MCOperand::createReg(
-      MRI.getSubReg(ModReg, AIE2::sub_hi_dim_then_sub_dim_count)));
+  assert(SrcReg && ShftReg && "Register not found.");
 
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
-  MI.addOperand(MCOperand::createReg(SrcReg));
-  MI.addOperand(MCOperand::createReg(ShftReg));
+  build3D(MI, PtrRegRaw, ModRegRaw)
+      .addOutputs(Decoder)
+      .addInputs()
+      .addReg(SrcReg)
+      .addReg(ShftReg);
 
   return MCDisassembler::Success;
 }
@@ -1646,24 +1400,16 @@ DecodeVST_2D_CONV_BMInstruction(MCInst &MI, InsnType &insn, uint64_t Address,
   unsigned SrcRegRaw = fieldFromInstruction(insn, 9, 5);
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 3);
-  if (SrcRegRaw >= std::size(mBMmDecoderTable) ||
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDDecoderTable))
+  if (SrcRegRaw >= std::size(mBMmDecoderTable))
     return MCDisassembler::Fail;
 
   Register SrcReg = mBMmDecoderTable[SrcRegRaw];
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDDecoderTable[ModRegRaw];
-  assert(SrcReg && PtrReg && ModReg && "Register not found.");
+  assert(SrcReg && "Register not found.");
 
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
-  MI.addOperand(MCOperand::createReg(SrcReg));
+  build2D(MI, PtrRegRaw, ModRegRaw)
+      .addOutputs(Decoder)
+      .addInputs()
+      .addReg(SrcReg);
 
   return MCDisassembler::Success;
 }
@@ -1676,26 +1422,16 @@ DecodeVST_3D_CONV_BMInstruction(MCInst &MI, InsnType &insn, uint64_t Address,
   unsigned SrcRegRaw = fieldFromInstruction(insn, 9, 5);
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 2);
-  if (SrcRegRaw >= std::size(mBMmDecoderTable) ||
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDSDecoderTable))
+  if (SrcRegRaw >= std::size(mBMmDecoderTable))
     return MCDisassembler::Fail;
 
   Register SrcReg = mBMmDecoderTable[SrcRegRaw];
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDSDecoderTable[ModRegRaw];
-  assert(SrcReg && PtrReg && ModReg && "Register not found.");
+  assert(SrcReg && "Register not found.");
 
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-  MI.addOperand(MCOperand::createReg(
-      MRI.getSubReg(ModReg, AIE2::sub_hi_dim_then_sub_dim_count)));
-
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
-  MI.addOperand(MCOperand::createReg(SrcReg));
+  build3D(MI, PtrRegRaw, ModRegRaw)
+      .addOutputs(Decoder)
+      .addInputs()
+      .addReg(SrcReg);
 
   return MCDisassembler::Success;
 }
@@ -1710,26 +1446,18 @@ DecodeVLDA_2D_UPS_CMInstruction(MCInst &MI, InsnType &insn, uint64_t Address,
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 3);
   if (DstRegRaw >= std::size(eCMDecoderTable) ||
-      ShftRegRaw >= std::size(mSsDecoderTable) ||
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDDecoderTable))
+      ShftRegRaw >= std::size(mSsDecoderTable))
     return MCDisassembler::Fail;
 
   Register DstReg = eCMDecoderTable[DstRegRaw];
   Register ShftReg = mSsDecoderTable[ShftRegRaw];
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDDecoderTable[ModRegRaw];
-  assert(DstReg && ShftReg && PtrReg && ModReg && "Register not found.");
+  assert(DstReg && ShftReg && "Register not found.");
 
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(DstReg));
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-
-  MI.addOperand(MCOperand::createReg(ShftReg));
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
+  build2D(MI, PtrRegRaw, ModRegRaw)
+      .addReg(DstReg)
+      .addOutputs(Decoder)
+      .addReg(ShftReg)
+      .addInputs();
 
   return MCDisassembler::Success;
 }
@@ -1744,28 +1472,18 @@ DecodeVLDA_3D_UPS_CMInstruction(MCInst &MI, InsnType &insn, uint64_t Address,
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 2);
   if (DstRegRaw >= std::size(eCMDecoderTable) ||
-      ShftRegRaw >= std::size(mSsDecoderTable) ||
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDSDecoderTable))
+      ShftRegRaw >= std::size(mSsDecoderTable))
     return MCDisassembler::Fail;
 
   Register DstReg = eCMDecoderTable[DstRegRaw];
   Register ShftReg = mSsDecoderTable[ShftRegRaw];
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDSDecoderTable[ModRegRaw];
-  assert(DstReg && ShftReg && PtrReg && ModReg && "Register not found.");
+  assert(DstReg && ShftReg && "Register not found.");
 
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(DstReg));
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-  MI.addOperand(MCOperand::createReg(
-      MRI.getSubReg(ModReg, AIE2::sub_hi_dim_then_sub_dim_count)));
-
-  MI.addOperand(MCOperand::createReg(ShftReg));
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
+  build3D(MI, PtrRegRaw, ModRegRaw)
+      .addReg(DstReg)
+      .addOutputs(Decoder)
+      .addReg(ShftReg)
+      .addInputs();
 
   return MCDisassembler::Success;
 }
@@ -1780,26 +1498,18 @@ DecodeVLDA_2D_UPS_BMInstruction(MCInst &MI, InsnType &insn, uint64_t Address,
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 3);
   if (DstRegRaw >= std::size(mBMmDecoderTable) ||
-      ShftRegRaw >= std::size(mSsDecoderTable) ||
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDDecoderTable))
+      ShftRegRaw >= std::size(mSsDecoderTable))
     return MCDisassembler::Fail;
 
   Register DstReg = mBMmDecoderTable[DstRegRaw];
   Register ShftReg = mSsDecoderTable[ShftRegRaw];
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDDecoderTable[ModRegRaw];
-  assert(DstReg && ShftReg && PtrReg && ModReg && "Register not found.");
+  assert(DstReg && ShftReg && "Register not found.");
 
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(DstReg));
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-
-  MI.addOperand(MCOperand::createReg(ShftReg));
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
+  build2D(MI, PtrRegRaw, ModRegRaw)
+      .addReg(DstReg)
+      .addOutputs(Decoder)
+      .addReg(ShftReg)
+      .addInputs();
 
   return MCDisassembler::Success;
 }
@@ -1814,28 +1524,18 @@ DecodeVLDA_3D_UPS_BMInstruction(MCInst &MI, InsnType &insn, uint64_t Address,
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 2);
   if (DstRegRaw >= std::size(mBMmDecoderTable) ||
-      ShftRegRaw >= std::size(mSsDecoderTable) ||
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDSDecoderTable))
+      ShftRegRaw >= std::size(mSsDecoderTable))
     return MCDisassembler::Fail;
 
   Register DstReg = mBMmDecoderTable[DstRegRaw];
   Register ShftReg = mSsDecoderTable[ShftRegRaw];
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDSDecoderTable[ModRegRaw];
-  assert(DstReg && ShftReg && PtrReg && ModReg && "Register not found.");
+  assert(DstReg && ShftReg && "Register not found.");
 
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(DstReg));
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-  MI.addOperand(MCOperand::createReg(
-      MRI.getSubReg(ModReg, AIE2::sub_hi_dim_then_sub_dim_count)));
-
-  MI.addOperand(MCOperand::createReg(ShftReg));
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
+  build3D(MI, PtrRegRaw, ModRegRaw)
+      .addReg(DstReg)
+      .addOutputs(Decoder)
+      .addReg(ShftReg)
+      .addInputs();
 
   return MCDisassembler::Success;
 }
@@ -1848,24 +1548,16 @@ DecodeVLDA_2D_CONV_BMInstruction(MCInst &MI, InsnType &insn, uint64_t Address,
   unsigned DstRegRaw = fieldFromInstruction(insn, 9, 5);
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 3);
-  if (DstRegRaw >= std::size(mBMmDecoderTable) ||
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDDecoderTable))
+  if (DstRegRaw >= std::size(mBMmDecoderTable))
     return MCDisassembler::Fail;
 
   Register DstReg = mBMmDecoderTable[DstRegRaw];
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDDecoderTable[ModRegRaw];
-  assert(DstReg && PtrReg && ModReg && "Register not found.");
+  assert(DstReg && "Register not found.");
 
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(DstReg));
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
+  build2D(MI, PtrRegRaw, ModRegRaw)
+      .addReg(DstReg)
+      .addOutputs(Decoder)
+      .addInputs();
 
   return MCDisassembler::Success;
 }
@@ -1878,27 +1570,16 @@ DecodeVLDA_3D_CONV_BMInstruction(MCInst &MI, InsnType &insn, uint64_t Address,
   unsigned DstRegRaw = fieldFromInstruction(insn, 9, 5);
   unsigned PtrRegRaw = fieldFromInstruction(insn, 24, 3);
   unsigned ModRegRaw = fieldFromInstruction(insn, 21, 2);
-  if (DstRegRaw >= std::size(mBMmDecoderTable) ||
-      PtrRegRaw >= std::size(ePDecoderTable) ||
-      ModRegRaw >= std::size(eDSDecoderTable))
+  if (DstRegRaw >= std::size(mBMmDecoderTable))
     return MCDisassembler::Fail;
 
   Register DstReg = mBMmDecoderTable[DstRegRaw];
-  Register PtrReg = ePDecoderTable[PtrRegRaw];
-  Register ModReg = eDSDecoderTable[ModRegRaw];
-  assert(DstReg && PtrReg && ModReg && "Register not found.");
+  assert(DstReg && "Register not found.");
 
-  const MCRegisterInfo &MRI = *Decoder->getContext().getRegisterInfo();
-  MI.addOperand(MCOperand::createReg(DstReg));
-  MI.addOperand(MCOperand::createReg(PtrReg));
-
-  MI.addOperand(
-      MCOperand::createReg(MRI.getSubReg(ModReg, AIE2::sub_dim_count)));
-  MI.addOperand(MCOperand::createReg(
-      MRI.getSubReg(ModReg, AIE2::sub_hi_dim_then_sub_dim_count)));
-
-  MI.addOperand(MCOperand::createReg(PtrReg));
-  MI.addOperand(MCOperand::createReg(ModReg));
+  build3D(MI, PtrRegRaw, ModRegRaw)
+      .addReg(DstReg)
+      .addOutputs(Decoder)
+      .addInputs();
 
   return MCDisassembler::Success;
 }
