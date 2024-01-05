@@ -709,10 +709,10 @@ v8acc32 test_extract_v8acc32 (v16acc32 a, int idx){
 // CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX:%.*]], 0
 // CHECK-NEXT:    br i1 [[CMP_I]], label [[IF_THEN_I:%.*]], label [[IF_ELSE_I:%.*]]
 // CHECK:       if.then.i:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call <8 x i64> @llvm.aie2.upd.512.256.acc32(<8 x i64> [[A:%.*]], <4 x i64> [[B:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call <8 x i64> @llvm.aie2.upd.512.256.acc(<8 x i64> [[A:%.*]], <4 x i64> [[B:%.*]], i32 0)
 // CHECK-NEXT:    br label [[_ZL6INSERTDV16_U7__ACC32IDV8_U7__ACC32_EXIT:%.*]]
 // CHECK:       if.else.i:
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call <8 x i64> @llvm.aie2.upd.512.256.acc32(<8 x i64> [[A]], <4 x i64> [[B]], i32 1)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <8 x i64> @llvm.aie2.upd.512.256.acc(<8 x i64> [[A]], <4 x i64> [[B]], i32 1)
 // CHECK-NEXT:    br label [[_ZL6INSERTDV16_U7__ACC32IDV8_U7__ACC32_EXIT]]
 // CHECK:       _ZL6insertDv16_u7__acc32iDv8_u7__acc32.exit:
 // CHECK-NEXT:    [[RETVAL_0_I:%.*]] = phi <8 x i64> [ [[TMP0]], [[IF_THEN_I]] ], [ [[TMP1]], [[IF_ELSE_I]] ]
@@ -773,10 +773,10 @@ v4acc64 test_extract_v4acc64 (v8acc64 a, int idx){
 // CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX:%.*]], 0
 // CHECK-NEXT:    br i1 [[CMP_I]], label [[IF_THEN_I:%.*]], label [[IF_ELSE_I:%.*]]
 // CHECK:       if.then.i:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call <8 x i64> @llvm.aie2.upd.512.256.acc64(<8 x i64> [[A:%.*]], <4 x i64> [[B:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call <8 x i64> @llvm.aie2.upd.512.256.acc(<8 x i64> [[A:%.*]], <4 x i64> [[B:%.*]], i32 0)
 // CHECK-NEXT:    br label [[_ZL6INSERTDV8_U7__ACC64IDV4_U7__ACC64_EXIT:%.*]]
 // CHECK:       if.else.i:
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call <8 x i64> @llvm.aie2.upd.512.256.acc64(<8 x i64> [[A]], <4 x i64> [[B]], i32 1)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <8 x i64> @llvm.aie2.upd.512.256.acc(<8 x i64> [[A]], <4 x i64> [[B]], i32 1)
 // CHECK-NEXT:    br label [[_ZL6INSERTDV8_U7__ACC64IDV4_U7__ACC64_EXIT]]
 // CHECK:       _ZL6insertDv8_u7__acc64iDv4_u7__acc64.exit:
 // CHECK-NEXT:    [[RETVAL_0_I:%.*]] = phi <8 x i64> [ [[TMP0]], [[IF_THEN_I]] ], [ [[TMP1]], [[IF_ELSE_I]] ]
@@ -853,16 +853,16 @@ v8acc32 test_extract_v8acc32 (v32acc32 a, int idx)
 // CHECK-NEXT:      i32 2, label [[IF_THEN5_I:%.*]]
 // CHECK-NEXT:    ]
 // CHECK:       if.then.i:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call <16 x i64> @llvm.aie2.upd.1024.256.acc32(<16 x i64> [[A:%.*]], <4 x i64> [[B:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call <16 x i64> @llvm.aie2.upd.1024.256.acc(<16 x i64> [[A:%.*]], <4 x i64> [[B:%.*]], i32 0)
 // CHECK-NEXT:    br label [[_ZL6INSERTDV32_U7__ACC32IDV8_U7__ACC32_EXIT:%.*]]
 // CHECK:       if.then2.i:
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i64> @llvm.aie2.upd.1024.256.acc32(<16 x i64> [[A]], <4 x i64> [[B]], i32 1)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i64> @llvm.aie2.upd.1024.256.acc(<16 x i64> [[A]], <4 x i64> [[B]], i32 1)
 // CHECK-NEXT:    br label [[_ZL6INSERTDV32_U7__ACC32IDV8_U7__ACC32_EXIT]]
 // CHECK:       if.then5.i:
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i64> @llvm.aie2.upd.1024.256.acc32(<16 x i64> [[A]], <4 x i64> [[B]], i32 2)
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i64> @llvm.aie2.upd.1024.256.acc(<16 x i64> [[A]], <4 x i64> [[B]], i32 2)
 // CHECK-NEXT:    br label [[_ZL6INSERTDV32_U7__ACC32IDV8_U7__ACC32_EXIT]]
 // CHECK:       if.else6.i:
-// CHECK-NEXT:    [[TMP3:%.*]] = tail call <16 x i64> @llvm.aie2.upd.1024.256.acc32(<16 x i64> [[A]], <4 x i64> [[B]], i32 3)
+// CHECK-NEXT:    [[TMP3:%.*]] = tail call <16 x i64> @llvm.aie2.upd.1024.256.acc(<16 x i64> [[A]], <4 x i64> [[B]], i32 3)
 // CHECK-NEXT:    br label [[_ZL6INSERTDV32_U7__ACC32IDV8_U7__ACC32_EXIT]]
 // CHECK:       _ZL6insertDv32_u7__acc32iDv8_u7__acc32.exit:
 // CHECK-NEXT:    [[RETVAL_0_I:%.*]] = phi <16 x i64> [ [[TMP0]], [[IF_THEN_I]] ], [ [[TMP1]], [[IF_THEN2_I]] ], [ [[TMP2]], [[IF_THEN5_I]] ], [ [[TMP3]], [[IF_ELSE6_I]] ]
@@ -936,10 +936,10 @@ v16acc32 test_extract_v16acc32 (v32acc32 a, int idx){
 // CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX:%.*]], 0
 // CHECK-NEXT:    br i1 [[CMP_I]], label [[IF_THEN_I:%.*]], label [[IF_ELSE_I:%.*]]
 // CHECK:       if.then.i:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call <16 x i64> @llvm.aie2.upd.1024.512.acc32(<16 x i64> [[A:%.*]], <8 x i64> [[B:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call <16 x i64> @llvm.aie2.upd.1024.512.acc(<16 x i64> [[A:%.*]], <8 x i64> [[B:%.*]], i32 0)
 // CHECK-NEXT:    br label [[_ZL6INSERTDV32_U7__ACC32IDV16_U7__ACC32_EXIT:%.*]]
 // CHECK:       if.else.i:
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i64> @llvm.aie2.upd.1024.512.acc32(<16 x i64> [[A]], <8 x i64> [[B]], i32 1)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i64> @llvm.aie2.upd.1024.512.acc(<16 x i64> [[A]], <8 x i64> [[B]], i32 1)
 // CHECK-NEXT:    br label [[_ZL6INSERTDV32_U7__ACC32IDV16_U7__ACC32_EXIT]]
 // CHECK:       _ZL6insertDv32_u7__acc32iDv16_u7__acc32.exit:
 // CHECK-NEXT:    [[RETVAL_0_I:%.*]] = phi <16 x i64> [ [[TMP0]], [[IF_THEN_I]] ], [ [[TMP1]], [[IF_ELSE_I]] ]
@@ -1027,16 +1027,16 @@ v4acc64 test_extract_v4acc64_idx0 (v16acc64 a, int idx)
 // CHECK-NEXT:      i32 2, label [[IF_THEN5_I:%.*]]
 // CHECK-NEXT:    ]
 // CHECK:       if.then.i:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call <16 x i64> @llvm.aie2.upd.1024.256.acc64(<16 x i64> [[A:%.*]], <4 x i64> [[B:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call <16 x i64> @llvm.aie2.upd.1024.256.acc(<16 x i64> [[A:%.*]], <4 x i64> [[B:%.*]], i32 0)
 // CHECK-NEXT:    br label [[_ZL6INSERTDV16_U7__ACC64IDV4_U7__ACC64_EXIT:%.*]]
 // CHECK:       if.then2.i:
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i64> @llvm.aie2.upd.1024.256.acc64(<16 x i64> [[A]], <4 x i64> [[B]], i32 1)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i64> @llvm.aie2.upd.1024.256.acc(<16 x i64> [[A]], <4 x i64> [[B]], i32 1)
 // CHECK-NEXT:    br label [[_ZL6INSERTDV16_U7__ACC64IDV4_U7__ACC64_EXIT]]
 // CHECK:       if.then5.i:
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i64> @llvm.aie2.upd.1024.256.acc64(<16 x i64> [[A]], <4 x i64> [[B]], i32 2)
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i64> @llvm.aie2.upd.1024.256.acc(<16 x i64> [[A]], <4 x i64> [[B]], i32 2)
 // CHECK-NEXT:    br label [[_ZL6INSERTDV16_U7__ACC64IDV4_U7__ACC64_EXIT]]
 // CHECK:       if.else6.i:
-// CHECK-NEXT:    [[TMP3:%.*]] = tail call <16 x i64> @llvm.aie2.upd.1024.256.acc64(<16 x i64> [[A]], <4 x i64> [[B]], i32 3)
+// CHECK-NEXT:    [[TMP3:%.*]] = tail call <16 x i64> @llvm.aie2.upd.1024.256.acc(<16 x i64> [[A]], <4 x i64> [[B]], i32 3)
 // CHECK-NEXT:    br label [[_ZL6INSERTDV16_U7__ACC64IDV4_U7__ACC64_EXIT]]
 // CHECK:       _ZL6insertDv16_u7__acc64iDv4_u7__acc64.exit:
 // CHECK-NEXT:    [[RETVAL_0_I:%.*]] = phi <16 x i64> [ [[TMP0]], [[IF_THEN_I]] ], [ [[TMP1]], [[IF_THEN2_I]] ], [ [[TMP2]], [[IF_THEN5_I]] ], [ [[TMP3]], [[IF_ELSE6_I]] ]
@@ -1113,10 +1113,10 @@ v8acc64 test_extract_v8acc64 (v16acc64 a, int idx)
 // CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX:%.*]], 0
 // CHECK-NEXT:    br i1 [[CMP_I]], label [[IF_THEN_I:%.*]], label [[IF_ELSE_I:%.*]]
 // CHECK:       if.then.i:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call <16 x i64> @llvm.aie2.upd.1024.512.acc64(<16 x i64> [[A:%.*]], <8 x i64> [[B:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call <16 x i64> @llvm.aie2.upd.1024.512.acc(<16 x i64> [[A:%.*]], <8 x i64> [[B:%.*]], i32 0)
 // CHECK-NEXT:    br label [[_ZL6INSERTDV16_U7__ACC64IDV8_U7__ACC64_EXIT:%.*]]
 // CHECK:       if.else.i:
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i64> @llvm.aie2.upd.1024.512.acc64(<16 x i64> [[A]], <8 x i64> [[B]], i32 1)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i64> @llvm.aie2.upd.1024.512.acc(<16 x i64> [[A]], <8 x i64> [[B]], i32 1)
 // CHECK-NEXT:    br label [[_ZL6INSERTDV16_U7__ACC64IDV8_U7__ACC64_EXIT]]
 // CHECK:       _ZL6insertDv16_u7__acc64iDv8_u7__acc64.exit:
 // CHECK-NEXT:    [[RETVAL_0_I:%.*]] = phi <16 x i64> [ [[TMP0]], [[IF_THEN_I]] ], [ [[TMP1]], [[IF_ELSE_I]] ]
@@ -1189,10 +1189,10 @@ v64int8 test_set_v64int8_1(v16int8 a) {
 // CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX:%.*]], 0
 // CHECK-NEXT:    br i1 [[CMP_I]], label [[IF_THEN_I:%.*]], label [[IF_ELSE_I:%.*]]
 // CHECK:       if.then.i:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call <8 x i64> @llvm.aie2.upd.512.256.acc32(<8 x i64> [[A:%.*]], <4 x i64> [[B:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call <8 x i64> @llvm.aie2.upd.512.256.acc(<8 x i64> [[A:%.*]], <4 x i64> [[B:%.*]], i32 0)
 // CHECK-NEXT:    br label [[_ZL6INSERTDV16_U10__ACCFLOATIDV8_U10__ACCFLOAT_EXIT:%.*]]
 // CHECK:       if.else.i:
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call <8 x i64> @llvm.aie2.upd.512.256.acc32(<8 x i64> [[A]], <4 x i64> [[B]], i32 1)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <8 x i64> @llvm.aie2.upd.512.256.acc(<8 x i64> [[A]], <4 x i64> [[B]], i32 1)
 // CHECK-NEXT:    br label [[_ZL6INSERTDV16_U10__ACCFLOATIDV8_U10__ACCFLOAT_EXIT]]
 // CHECK:       _ZL6insertDv16_u10__accfloatiDv8_u10__accfloat.exit:
 // CHECK-NEXT:    [[RETVAL_0_I:%.*]] = phi <8 x i64> [ [[TMP0]], [[IF_THEN_I]] ], [ [[TMP1]], [[IF_ELSE_I]] ]
@@ -1210,16 +1210,16 @@ v16accfloat test_insert(v16accfloat a, int idx, v8accfloat b) {
 // CHECK-NEXT:      i32 2, label [[IF_THEN5_I:%.*]]
 // CHECK-NEXT:    ]
 // CHECK:       if.then.i:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call <16 x i64> @llvm.aie2.upd.1024.256.acc32(<16 x i64> [[A:%.*]], <4 x i64> [[B:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call <16 x i64> @llvm.aie2.upd.1024.256.acc(<16 x i64> [[A:%.*]], <4 x i64> [[B:%.*]], i32 0)
 // CHECK-NEXT:    br label [[_ZL6INSERTDV32_U10__ACCFLOATIDV8_U10__ACCFLOAT_EXIT:%.*]]
 // CHECK:       if.then2.i:
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i64> @llvm.aie2.upd.1024.256.acc32(<16 x i64> [[A]], <4 x i64> [[B]], i32 1)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i64> @llvm.aie2.upd.1024.256.acc(<16 x i64> [[A]], <4 x i64> [[B]], i32 1)
 // CHECK-NEXT:    br label [[_ZL6INSERTDV32_U10__ACCFLOATIDV8_U10__ACCFLOAT_EXIT]]
 // CHECK:       if.then5.i:
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i64> @llvm.aie2.upd.1024.256.acc32(<16 x i64> [[A]], <4 x i64> [[B]], i32 2)
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i64> @llvm.aie2.upd.1024.256.acc(<16 x i64> [[A]], <4 x i64> [[B]], i32 2)
 // CHECK-NEXT:    br label [[_ZL6INSERTDV32_U10__ACCFLOATIDV8_U10__ACCFLOAT_EXIT]]
 // CHECK:       if.else6.i:
-// CHECK-NEXT:    [[TMP3:%.*]] = tail call <16 x i64> @llvm.aie2.upd.1024.256.acc32(<16 x i64> [[A]], <4 x i64> [[B]], i32 3)
+// CHECK-NEXT:    [[TMP3:%.*]] = tail call <16 x i64> @llvm.aie2.upd.1024.256.acc(<16 x i64> [[A]], <4 x i64> [[B]], i32 3)
 // CHECK-NEXT:    br label [[_ZL6INSERTDV32_U10__ACCFLOATIDV8_U10__ACCFLOAT_EXIT]]
 // CHECK:       _ZL6insertDv32_u10__accfloatiDv8_u10__accfloat.exit:
 // CHECK-NEXT:    [[RETVAL_0_I:%.*]] = phi <16 x i64> [ [[TMP0]], [[IF_THEN_I]] ], [ [[TMP1]], [[IF_THEN2_I]] ], [ [[TMP2]], [[IF_THEN5_I]] ], [ [[TMP3]], [[IF_ELSE6_I]] ]
@@ -1234,10 +1234,10 @@ v32accfloat test_insert(v32accfloat a, int idx, v8accfloat b) {
 // CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX:%.*]], 0
 // CHECK-NEXT:    br i1 [[CMP_I]], label [[IF_THEN_I:%.*]], label [[IF_ELSE_I:%.*]]
 // CHECK:       if.then.i:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call <16 x i64> @llvm.aie2.upd.1024.512.acc32(<16 x i64> [[A:%.*]], <8 x i64> [[B:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call <16 x i64> @llvm.aie2.upd.1024.512.acc(<16 x i64> [[A:%.*]], <8 x i64> [[B:%.*]], i32 0)
 // CHECK-NEXT:    br label [[_ZL6INSERTDV32_U10__ACCFLOATIDV16_U10__ACCFLOAT_EXIT:%.*]]
 // CHECK:       if.else.i:
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i64> @llvm.aie2.upd.1024.512.acc32(<16 x i64> [[A]], <8 x i64> [[B]], i32 1)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i64> @llvm.aie2.upd.1024.512.acc(<16 x i64> [[A]], <8 x i64> [[B]], i32 1)
 // CHECK-NEXT:    br label [[_ZL6INSERTDV32_U10__ACCFLOATIDV16_U10__ACCFLOAT_EXIT]]
 // CHECK:       _ZL6insertDv32_u10__accfloatiDv16_u10__accfloat.exit:
 // CHECK-NEXT:    [[RETVAL_0_I:%.*]] = phi <16 x i64> [ [[TMP0]], [[IF_THEN_I]] ], [ [[TMP1]], [[IF_ELSE_I]] ]

@@ -547,9 +547,9 @@ INTRINSIC(v8accfloat) extract_v8accfloat(v16accfloat a, int idx) {
 // Insert 256-bit in 512-bit register
 INTRINSIC(v16accfloat) insert(v16accfloat a, int idx, v8accfloat b) {
   if (idx == 0)
-    return __builtin_aiev2_upd_ACC512_ACC256_acc32(a, b, 0);
+    return __builtin_aiev2_upd_ACC512_ACC256(a, b, 0);
   else
-    return __builtin_aiev2_upd_ACC512_ACC256_acc32(a, b, 1);
+    return __builtin_aiev2_upd_ACC512_ACC256(a, b, 1);
 }
 
 // Set 256-bit portion of 512-bit register
@@ -603,9 +603,9 @@ INTRINSIC(v8acc32) extract_v8acc32(v16acc32 a, int idx) {
 // Insert 256-bit in 512-bit register
 INTRINSIC(v16acc32) insert(v16acc32 a, int idx, v8acc32 b) {
   if (idx == 0)
-    return __builtin_aiev2_upd_ACC512_ACC256_acc32(a, b, 0);
+    return __builtin_aiev2_upd_ACC512_ACC256(a, b, 0);
   else
-    return __builtin_aiev2_upd_ACC512_ACC256_acc32(a, b, 1);
+    return __builtin_aiev2_upd_ACC512_ACC256(a, b, 1);
 }
 
 // Set 256-bit portion of 512-bit register
@@ -631,9 +631,9 @@ INTRINSIC(v4acc64) extract_v4acc64(v8acc64 a, int idx) {
 // Insert 256-bit in 512-bit register
 INTRINSIC(v8acc64) insert(v8acc64 a, int idx, v4acc64 b) {
   if (idx == 0)
-    return __builtin_aiev2_upd_ACC512_ACC256_acc64(a, b, 0);
+    return __builtin_aiev2_upd_ACC512_ACC256(a, b, 0);
   else
-    return __builtin_aiev2_upd_ACC512_ACC256_acc64(a, b, 1);
+    return __builtin_aiev2_upd_ACC512_ACC256(a, b, 1);
 }
 
 // Set 256-bit portion of 512-bit register
@@ -1452,13 +1452,13 @@ INTRINSIC(v8accfloat) extract_v8accfloat(v32accfloat a, int idx) {
 // Insert 256-bit in 1024-bit register
 INTRINSIC(v32accfloat) insert(v32accfloat a, int idx, v8accfloat b) {
   if (idx == 0)
-    return __builtin_aiev2_upd_ACC1024_ACC256_acc32(a, b, 0);
+    return __builtin_aiev2_upd_ACC1024_ACC256(a, b, 0);
   else if (idx == 1)
-    return __builtin_aiev2_upd_ACC1024_ACC256_acc32(a, b, 1);
+    return __builtin_aiev2_upd_ACC1024_ACC256(a, b, 1);
   else if (idx == 2)
-    return __builtin_aiev2_upd_ACC1024_ACC256_acc32(a, b, 2);
+    return __builtin_aiev2_upd_ACC1024_ACC256(a, b, 2);
   else
-    return __builtin_aiev2_upd_ACC1024_ACC256_acc32(a, b, 3);
+    return __builtin_aiev2_upd_ACC1024_ACC256(a, b, 3);
 }
 
 // Set 256-bit portion of 1024-bit register
@@ -1489,9 +1489,9 @@ INTRINSIC(v16accfloat) extract_v16accfloat(v32accfloat a, int idx) {
 // Insert 512-bit in 1024-bit register
 INTRINSIC(v32accfloat) insert(v32accfloat a, int idx, v16accfloat b) {
   if (idx == 0)
-    return __builtin_aiev2_upd_ACC1024_ACC512_acc32(a, b, 0);
+    return __builtin_aiev2_upd_ACC1024_ACC512(a, b, 0);
   else
-    return __builtin_aiev2_upd_ACC1024_ACC512_acc32(a, b, 1);
+    return __builtin_aiev2_upd_ACC1024_ACC512(a, b, 1);
 }
 
 // Set 512-bit portion of 1024-bit register
@@ -1589,13 +1589,13 @@ INTRINSIC(v8acc32) extract_v8acc32(v32acc32 a, int idx) {
 // Insert 256-bit in 1024-bit register
 INTRINSIC(v32acc32) insert(v32acc32 a, int idx, v8acc32 b) {
   if (idx == 0)
-    return __builtin_aiev2_upd_ACC1024_ACC256_acc32(a, b, 0);
+    return __builtin_aiev2_upd_ACC1024_ACC256(a, b, 0);
   else if (idx == 1)
-    return __builtin_aiev2_upd_ACC1024_ACC256_acc32(a, b, 1);
+    return __builtin_aiev2_upd_ACC1024_ACC256(a, b, 1);
   else if (idx == 2)
-    return __builtin_aiev2_upd_ACC1024_ACC256_acc32(a, b, 2);
+    return __builtin_aiev2_upd_ACC1024_ACC256(a, b, 2);
   else
-    return __builtin_aiev2_upd_ACC1024_ACC256_acc32(a, b, 3);
+    return __builtin_aiev2_upd_ACC1024_ACC256(a, b, 3);
 }
 
 // Set 256-bit portion of 1024-bit register
@@ -1625,9 +1625,9 @@ INTRINSIC(v16acc32) extract_v16acc32(v32acc32 a, int idx) {
 // Insert 512-bit in 1024-bit register
 INTRINSIC(v32acc32) insert(v32acc32 a, int idx, v16acc32 b) {
   if (idx == 0)
-    return __builtin_aiev2_upd_ACC1024_ACC512_acc32(a, b, 0);
+    return __builtin_aiev2_upd_ACC1024_ACC512(a, b, 0);
   else
-    return __builtin_aiev2_upd_ACC1024_ACC512_acc32(a, b, 1);
+    return __builtin_aiev2_upd_ACC1024_ACC512(a, b, 1);
 }
 
 // Set 512-bit portion of 1024-bit register
@@ -1657,13 +1657,13 @@ INTRINSIC(v4acc64) extract_v4acc64(v16acc64 a, int idx) {
 // Insert 256-bit in 1024-bit register
 INTRINSIC(v16acc64) insert(v16acc64 a, int idx, v4acc64 b) {
   if (idx == 0)
-    return __builtin_aiev2_upd_ACC1024_ACC256_acc64(a, b, 0);
+    return __builtin_aiev2_upd_ACC1024_ACC256(a, b, 0);
   else if (idx == 1)
-    return __builtin_aiev2_upd_ACC1024_ACC256_acc64(a, b, 1);
+    return __builtin_aiev2_upd_ACC1024_ACC256(a, b, 1);
   else if (idx == 2)
-    return __builtin_aiev2_upd_ACC1024_ACC256_acc64(a, b, 2);
+    return __builtin_aiev2_upd_ACC1024_ACC256(a, b, 2);
   else
-    return __builtin_aiev2_upd_ACC1024_ACC256_acc64(a, b, 3);
+    return __builtin_aiev2_upd_ACC1024_ACC256(a, b, 3);
 }
 
 // Set 256-bit portion of 1024-bit register
@@ -1693,9 +1693,9 @@ INTRINSIC(v8acc64) extract_v8acc64(v16acc64 a, int idx) {
 // Insert 512-bit in 1024-bit register
 INTRINSIC(v16acc64) insert(v16acc64 a, int idx, v8acc64 b) {
   if (idx == 0)
-    return __builtin_aiev2_upd_ACC1024_ACC512_acc64(a, b, 0);
+    return __builtin_aiev2_upd_ACC1024_ACC512(a, b, 0);
   else
-    return __builtin_aiev2_upd_ACC1024_ACC512_acc64(a, b, 1);
+    return __builtin_aiev2_upd_ACC1024_ACC512(a, b, 1);
 }
 
 // Set 512-bit portion of 1024-bit register

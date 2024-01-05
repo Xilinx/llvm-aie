@@ -55,7 +55,6 @@ v16acc32 test_sups(v16uint16 a, int shft) {
    return sups(a,shft,__SIGN_UNSIGNED);
 }
 
-//
 // CHECK-LABEL: @_Z9test_supsDv32_ai(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i64> @llvm.aie2.acc32.v32.I256.ups(<32 x i8> [[A:%.*]], i32 [[SHFT:%.*]], i32 1)
@@ -236,7 +235,6 @@ v32acc32 test_sups(v32int16 a, int shft, int sign) {
    return sups(a,shft,sign);
 }
 
-//
 // CHECK-LABEL: @_Z9test_supsDv32_tii(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <32 x i16> [[A:%.*]] to <16 x i32>
