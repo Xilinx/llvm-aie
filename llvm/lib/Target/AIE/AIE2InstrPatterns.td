@@ -682,36 +682,30 @@ foreach intr = [int_aie2_upd_I1024_I256, int_aie2_upd_bf1024_bf256] in {
              sub_512_hi)>;
 }
 // acc32, acc64
-foreach intr = [int_aie2_upd_512_256_acc32, int_aie2_upd_512_256_acc64] in {
-  def : Pat<(intr ACC512:$src1, ACC256:$src2, 0x0),
-             (INSERT_SUBREG ACC512:$src1, ACC256:$src2, sub_256_lo)>;
-  def : Pat<(intr ACC512:$src1, ACC256:$src2, 0x1),
-             (INSERT_SUBREG ACC512:$src1, ACC256:$src2, sub_256_hi)>;
-}
-foreach intr = [int_aie2_upd_1024_512_acc32, int_aie2_upd_1024_512_acc64] in {
-  def : Pat<(intr ACC1024:$src1, ACC512:$src2, 0x0),
-             (INSERT_SUBREG ACC1024:$src1, ACC512:$src2, sub_512_lo)>;
-  def : Pat<(intr ACC1024:$src1, ACC512:$src2, 0x1),
-             (INSERT_SUBREG ACC1024:$src1, ACC512:$src2, sub_512_hi)>;
-}
-foreach intr = [int_aie2_upd_1024_256_acc32, int_aie2_upd_1024_256_acc64] in {
-  def : Pat<(intr ACC1024:$src1, ACC256:$src2, 0x0),
-             (INSERT_SUBREG ACC1024:$src1,
-              (v8i64 (REG_SEQUENCE ACC512, ACC256:$src2, sub_256_lo)),
-             sub_512_lo)>;
-  def : Pat<(intr ACC1024:$src1, ACC256:$src2, 0x1),
-             (INSERT_SUBREG ACC1024:$src1,
-              (v8i64 (REG_SEQUENCE ACC512, ACC256:$src2, sub_256_hi)),
-             sub_512_lo)>;
-  def : Pat<(intr ACC1024:$src1, ACC256:$src2, 0x2),
-             (INSERT_SUBREG ACC1024:$src1,
-              (v8i64 (REG_SEQUENCE ACC512, ACC256:$src2, sub_256_lo)),
-             sub_512_hi)>;
-  def : Pat<(intr ACC1024:$src1, ACC256:$src2, 0x3),
-             (INSERT_SUBREG ACC1024:$src1,
-              (v8i64 (REG_SEQUENCE ACC512, ACC256:$src2, sub_256_hi)),
-             sub_512_hi)>;
-}
+def : Pat<(int_aie2_upd_512_256_acc ACC512:$src1, ACC256:$src2, 0x0),
+            (INSERT_SUBREG ACC512:$src1, ACC256:$src2, sub_256_lo)>;
+def : Pat<(int_aie2_upd_512_256_acc ACC512:$src1, ACC256:$src2, 0x1),
+            (INSERT_SUBREG ACC512:$src1, ACC256:$src2, sub_256_hi)>;
+def : Pat<(int_aie2_upd_1024_512_acc ACC1024:$src1, ACC512:$src2, 0x0),
+            (INSERT_SUBREG ACC1024:$src1, ACC512:$src2, sub_512_lo)>;
+def : Pat<(int_aie2_upd_1024_512_acc ACC1024:$src1, ACC512:$src2, 0x1),
+            (INSERT_SUBREG ACC1024:$src1, ACC512:$src2, sub_512_hi)>;
+def : Pat<(int_aie2_upd_1024_256_acc ACC1024:$src1, ACC256:$src2, 0x0),
+            (INSERT_SUBREG ACC1024:$src1,
+            (v8i64 (REG_SEQUENCE ACC512, ACC256:$src2, sub_256_lo)),
+            sub_512_lo)>;
+def : Pat<(int_aie2_upd_1024_256_acc ACC1024:$src1, ACC256:$src2, 0x1),
+            (INSERT_SUBREG ACC1024:$src1,
+            (v8i64 (REG_SEQUENCE ACC512, ACC256:$src2, sub_256_hi)),
+            sub_512_lo)>;
+def : Pat<(int_aie2_upd_1024_256_acc ACC1024:$src1, ACC256:$src2, 0x2),
+            (INSERT_SUBREG ACC1024:$src1,
+            (v8i64 (REG_SEQUENCE ACC512, ACC256:$src2, sub_256_lo)),
+            sub_512_hi)>;
+def : Pat<(int_aie2_upd_1024_256_acc ACC1024:$src1, ACC256:$src2, 0x3),
+            (INSERT_SUBREG ACC1024:$src1,
+            (v8i64 (REG_SEQUENCE ACC512, ACC256:$src2, sub_256_hi)),
+            sub_512_hi)>;
 
 // Set
 foreach intr = [int_aie2_set_I512_I256, int_aie2_set_bf512_bf256] in {

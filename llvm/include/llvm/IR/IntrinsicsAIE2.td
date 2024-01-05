@@ -558,18 +558,12 @@ def int_aie2_upd_I1024_I256 : ClangBuiltin<"__builtin_aiev2_upd_I1024_I256">, AI
 def int_aie2_upd_bf512_bf256  : ClangBuiltin<"__builtin_aiev2_upd_bf512_bf256">,  AIEV2UPD_bf512_bf256;
 def int_aie2_upd_bf1024_bf512 : ClangBuiltin<"__builtin_aiev2_upd_bf1024_bf512">, AIEV2UPD_bf1024_bf512;
 def int_aie2_upd_bf1024_bf256 : ClangBuiltin<"__builtin_aiev2_upd_bf1024_bf256">, AIEV2UPD_bf1024_bf256;
-def int_aie2_upd_512_256_acc32  :
-   ClangBuiltin<"__builtin_aiev2_upd_ACC512_ACC256_acc32">,  AIEV2UPD_512_256_acc;
-def int_aie2_upd_1024_512_acc32 :
-   ClangBuiltin<"__builtin_aiev2_upd_ACC1024_ACC512_acc32">, AIEV2UPD_1024_512_acc;
-def int_aie2_upd_1024_256_acc32 :
-   ClangBuiltin<"__builtin_aiev2_upd_ACC1024_ACC256_acc32">, AIEV2UPD_1024_256_acc;
-def int_aie2_upd_512_256_acc64  :
-   ClangBuiltin<"__builtin_aiev2_upd_ACC512_ACC256_acc64">,  AIEV2UPD_512_256_acc;
-def int_aie2_upd_1024_512_acc64 :
-   ClangBuiltin<"__builtin_aiev2_upd_ACC1024_ACC512_acc64">, AIEV2UPD_1024_512_acc;
-def int_aie2_upd_1024_256_acc64 :
-   ClangBuiltin<"__builtin_aiev2_upd_ACC1024_ACC256_acc64">, AIEV2UPD_1024_256_acc;
+def int_aie2_upd_512_256_acc  :
+   ClangBuiltin<"__builtin_aiev2_upd_ACC512_ACC256">,  AIEV2UPD_512_256_acc;
+def int_aie2_upd_1024_512_acc :
+   ClangBuiltin<"__builtin_aiev2_upd_ACC1024_ACC512">, AIEV2UPD_1024_512_acc;
+def int_aie2_upd_1024_256_acc :
+   ClangBuiltin<"__builtin_aiev2_upd_ACC1024_ACC256">, AIEV2UPD_1024_256_acc;
 //set
 def int_aie2_set_I64_I32    : ClangBuiltin<"__builtin_aiev2_set_I64_I32">,    AIEV2SET_I64_I32;
 def int_aie2_set_I512_I256  : ClangBuiltin<"__builtin_aiev2_set_I512_I256">,  AIEV2SET_I512_I256;
