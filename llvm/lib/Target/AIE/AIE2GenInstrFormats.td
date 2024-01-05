@@ -21,7 +21,7 @@ class AIE2_instr32_me < dag outs, dag ins, list<dag> pattern, string opcodestr =
   field bits<32> Inst;
    field bits<28> instr32;
 
-  let Inst = {instr32,0b1001};
+  let Inst = {instr32,0b0000};
 }
 
 class AIE2_instr48_me < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:

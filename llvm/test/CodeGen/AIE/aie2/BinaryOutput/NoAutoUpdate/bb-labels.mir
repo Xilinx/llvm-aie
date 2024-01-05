@@ -14,31 +14,66 @@ alignment:       16
 body:             |
   bb.0 (align 16):
     successors: %bb.1
-    $r6 = ADD_add_r_ri $r6, 63, implicit-def $srcarry
+    BUNDLE {
+      $r6 = ADD_add_r_ri $r6, 63, implicit-def $srcarry
+    }
   bb.1 (align 16):
     successors: %bb.2
-    JNZ $r6, %bb.2 {
+    BUNDLE {
+      JNZ $r6, %bb.2
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
     }
   bb.2 (align 16):
     successors: %bb.3
-    JZ $r7, %bb.3 {
+    BUNDLE {
+      JZ $r7, %bb.3
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
     }
   bb.3 (align 16):
-    RET implicit $lr {
+    BUNDLE {
+      RET implicit $lr
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
     }
 ...
@@ -60,16 +95,31 @@ alignment:       16
 body:             |
   bb.0 (align 16):
     successors: %bb.1
-    $p0  = MOVXM_lng_cg %bb.2
+    BUNDLE {
+      $p0  = MOVXM_lng_cg %bb.2
+    }
   bb.1 (align 16):
     successors: %bb.2
-    NOP
+    BUNDLE {
+      NOP
+    }
   bb.2 (align 16):
-    RET implicit $lr {
+    BUNDLE {
+      RET implicit $lr
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
     }
 ...
@@ -94,31 +144,63 @@ jumpTable:
 body: |
   bb.0 (align 16):
     successors: %bb.1, %bb.2, %bb.3
-    $p0 = MOVXM_lng_cg %jump-table.0
-    $p0 = PADDA_lda_ptr_inc_idx $p0, $m0
-    J_jump_ind killed $p0 {
+    BUNDLE {
+      $p0 = MOVXM_lng_cg %jump-table.0
+    }
+    BUNDLE {
+      $p0 = PADDA_lda_ptr_inc_idx $p0, $m0
+    }
+    BUNDLE {
+      J_jump_ind killed $p0
+    } 
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
     }
     DelayedSchedBarrier
   bb.1 (align 16):
     successors: %bb.2
-    NOP
+    BUNDLE {
+      NOP
+     }
   bb.2 (align 16):
     successors: %bb.3
-    NOP
+    BUNDLE {
+      NOP
+     }
   bb.3 (align 16):
     successors: %bb.4
-    NOP
+    BUNDLE {
+      NOP
+     }
   bb.4 (align 16):
-    RET implicit $lr {
+    BUNDLE {
+      RET implicit $lr
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
     }
 ...
@@ -139,32 +221,57 @@ name: test_bundled_jump
 body: |
   bb.0 (align 16):
     successors: %bb.1
-    I80_LDA_LNG 0, 0, implicit-def $p1, implicit-def $p0, implicit $p1 {
+    BUNDLE {
       $p1 = PADDA_lda_ptr_inc_idx_imm $p1, 4
       $p0 = MOVXM_lng_cg %bb.2
     }
-    I80_LDA_LNG 0, 0, implicit-def $p1, implicit $p1 {
+    BUNDLE {
       $p1 = PADDA_lda_ptr_inc_idx_imm $p1, 4
       J_jump_imm %bb.1
     }
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
     DelayedSchedBarrier
   bb.1 (align 16):
     successors: %bb.2
-    NOP
+    BUNDLE {
+      NOP
+     }
   bb.2 (align 16):
     successors: %bb.3
-    NOP
+    BUNDLE {
+      NOP
+     }
   bb.3 (align 16):
-    RET implicit $lr {
+    BUNDLE {
+      RET implicit $lr
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
     }
 ...

@@ -562,7 +562,7 @@ DecodeStatus decodeLdaInstruction(MCInst &Inst, InsnType &Imm, int64_t Address,
                                   const MCDisassembler *Decoder) {
   LLVM_DEBUG(dbgs() << "Decode Lda Instruction\n");
   Imm <<= 6;
-  Imm |= (0b00000 << 27) | 0b011001;
+  Imm |= (0b00000 << 27) | 0b010000;
   return decodeSlot(DecoderTable32, Inst, Imm, Address, Decoder);
 }
 
@@ -574,7 +574,7 @@ DecodeStatus decodeLdbInstruction(MCInst &Inst, InsnType &Imm, int64_t Address,
                                   const MCDisassembler *Decoder) {
   LLVM_DEBUG(dbgs() << "Decode Ldb Instruction\n");
   Imm <<= 11;
-  Imm |= (0b00111 << 27) | 0b00000011001;
+  Imm |= (0b00111 << 27) | 0b00000010000;
   return decodeSlot(DecoderTable32, Inst, Imm, Address, Decoder);
 }
 
@@ -586,7 +586,7 @@ DecodeStatus decodeAluInstruction(MCInst &Inst, InsnType &Imm, int64_t Address,
                                   const MCDisassembler *Decoder) {
   LLVM_DEBUG(dbgs() << "Decode Alu Instruction\n");
   Imm <<= 7;
-  Imm |= (0b00010 << 27) | 0b0011001;
+  Imm |= (0b00010 << 27) | 0b0010000;
   return decodeSlot(DecoderTable32, Inst, Imm, Address, Decoder);
 }
 
@@ -598,7 +598,7 @@ DecodeStatus decodeMvInstruction(MCInst &Inst, InsnType &Imm, int64_t Address,
                                  const MCDisassembler *Decoder) {
   LLVM_DEBUG(dbgs() << "Decode Mv Instruction\n");
   Imm <<= 5;
-  Imm |= (0b00011 << 27) | 0b11001;
+  Imm |= (0b00011 << 27) | 0b10000;
   return decodeSlot(DecoderTable32, Inst, Imm, Address, Decoder);
 }
 
@@ -610,7 +610,7 @@ DecodeStatus decodeStInstruction(MCInst &Inst, InsnType &Imm, int64_t Address,
                                  const MCDisassembler *Decoder) {
   LLVM_DEBUG(dbgs() << "Decode St Instruction\n");
   Imm <<= 6;
-  Imm |= (0b00001 << 27) | 0b11001;
+  Imm |= (0b00001 << 27) | 0b10000;
   return decodeSlot(DecoderTable32, Inst, Imm, Address, Decoder);
 }
 
@@ -622,7 +622,7 @@ DecodeStatus decodeVecInstruction(MCInst &Inst, InsnType &Imm, int64_t Address,
                                   const MCDisassembler *Decoder) {
   LLVM_DEBUG(dbgs() << "Decode Vec Instruction\n");
   Imm <<= 6;
-  Imm |= 0b001001;
+  Imm |= 0b000000;
   return decodeSlot(DecoderTable32, Inst, Imm, Address, Decoder);
 }
 
