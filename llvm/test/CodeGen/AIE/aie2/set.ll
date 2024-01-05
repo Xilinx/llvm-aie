@@ -289,11 +289,11 @@ entry:
   br i1 %cmp.i, label %if.then.i, label %if.else.i
 
 if.then.i:
-  %1 = tail call <8 x i64> @llvm.aie2.set.512.256.acc32(<4 x i64> %b, i32 0)
+  %1 = tail call <8 x i64> @llvm.aie2.set.512.256.acc(<4 x i64> %b, i32 0)
   br label %_ZL12set_v16acc32iDv8_u7__acc32.exit
 
 if.else.i:
-  %2 = tail call <8 x i64> @llvm.aie2.set.512.256.acc32(<4 x i64> %b, i32 1)
+  %2 = tail call <8 x i64> @llvm.aie2.set.512.256.acc(<4 x i64> %b, i32 1)
   br label %_ZL12set_v16acc32iDv8_u7__acc32.exit
 
 _ZL12set_v16acc32iDv8_u7__acc32.exit:
@@ -313,7 +313,7 @@ define dso_local noundef <8 x i64> @_Z17test_set_v16acc32Dv8_u7__acc32(<4 x i64>
 ; CHECK-NEXT:    vmov amlh0, amll1 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
-  %0 = tail call <8 x i64> @llvm.aie2.set.512.256.acc32(<4 x i64> %b, i32 1)
+  %0 = tail call <8 x i64> @llvm.aie2.set.512.256.acc(<4 x i64> %b, i32 1)
   ret <8 x i64> %0
 }
 
@@ -346,11 +346,11 @@ entry:
   br i1 %cmp.i, label %if.then.i, label %if.else.i
 
 if.then.i:
-  %1 = tail call <8 x i64> @llvm.aie2.set.512.256.acc64(<4 x i64> %b, i32 0)
+  %1 = tail call <8 x i64> @llvm.aie2.set.512.256.acc(<4 x i64> %b, i32 0)
   br label %_ZL11set_v8acc64iDv4_u7__acc64.exit
 
 if.else.i:
-  %2 = tail call <8 x i64> @llvm.aie2.set.512.256.acc64(<4 x i64> %b, i32 1)
+  %2 = tail call <8 x i64> @llvm.aie2.set.512.256.acc(<4 x i64> %b, i32 1)
   br label %_ZL11set_v8acc64iDv4_u7__acc64.exit
 
 _ZL11set_v8acc64iDv4_u7__acc64.exit:
@@ -370,7 +370,7 @@ define dso_local noundef <8 x i64> @_Z16test_set_v8acc64Dv4_u7__acc64(<4 x i64> 
 ; CHECK-NEXT:    vmov amll0, amll1 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
-  %0 = tail call <8 x i64> @llvm.aie2.set.512.256.acc64(<4 x i64> %b, i32 0)
+  %0 = tail call <8 x i64> @llvm.aie2.set.512.256.acc(<4 x i64> %b, i32 0)
   ret <8 x i64> %0
 }
 
@@ -465,19 +465,19 @@ entry:
   ]
 
 if.then.i:
-  %0 = tail call <16 x i64> @llvm.aie2.set.1024.256.acc32(<4 x i64> %b, i32 0)
+  %0 = tail call <16 x i64> @llvm.aie2.set.1024.256.acc(<4 x i64> %b, i32 0)
   br label %_ZL12set_v32acc32iDv8_u7__acc32.exit
 
 if.then3.i:
-  %1 = tail call <16 x i64> @llvm.aie2.set.1024.256.acc32(<4 x i64> %b, i32 1)
+  %1 = tail call <16 x i64> @llvm.aie2.set.1024.256.acc(<4 x i64> %b, i32 1)
   br label %_ZL12set_v32acc32iDv8_u7__acc32.exit
 
 if.then7.i:
-  %2 = tail call <16 x i64> @llvm.aie2.set.1024.256.acc32(<4 x i64> %b, i32 2)
+  %2 = tail call <16 x i64> @llvm.aie2.set.1024.256.acc(<4 x i64> %b, i32 2)
   br label %_ZL12set_v32acc32iDv8_u7__acc32.exit
 
 if.else.i:
-  %3 = tail call <16 x i64> @llvm.aie2.set.1024.256.acc32(<4 x i64> %b, i32 3)
+  %3 = tail call <16 x i64> @llvm.aie2.set.1024.256.acc(<4 x i64> %b, i32 3)
   br label %_ZL12set_v32acc32iDv8_u7__acc32.exit
 
 _ZL12set_v32acc32iDv8_u7__acc32.exit:
@@ -497,7 +497,7 @@ define dso_local noundef <16 x i64> @_Z17test_set_v32acc32Dv8_u7__acc32(<4 x i64
 ; CHECK-NEXT:    vmov amlh0, amll1 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
-  %0 = tail call <16 x i64> @llvm.aie2.set.1024.256.acc32(<4 x i64> %b, i32 1)
+  %0 = tail call <16 x i64> @llvm.aie2.set.1024.256.acc(<4 x i64> %b, i32 1)
   ret <16 x i64> %0
 }
 
@@ -530,11 +530,11 @@ entry:
   br i1 %cmp.i, label %if.then.i, label %if.else.i
 
 if.then.i:
-  %1 = tail call <16 x i64> @llvm.aie2.set.1024.512.acc32(<8 x i64> %b, i32 0)
+  %1 = tail call <16 x i64> @llvm.aie2.set.1024.512.acc(<8 x i64> %b, i32 0)
   br label %_ZL12set_v32acc32iDv16_u7__acc32.exit
 
 if.else.i:
-  %2 = tail call <16 x i64> @llvm.aie2.set.1024.512.acc32(<8 x i64> %b, i32 1)
+  %2 = tail call <16 x i64> @llvm.aie2.set.1024.512.acc(<8 x i64> %b, i32 1)
   br label %_ZL12set_v32acc32iDv16_u7__acc32.exit
 
 _ZL12set_v32acc32iDv16_u7__acc32.exit:
@@ -554,7 +554,7 @@ define dso_local noundef <16 x i64> @_Z17test_set_v32acc32Dv16_u7__acc32(<8 x i6
 ; CHECK-NEXT:    vmov bml0, bml1 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
-  %0 = tail call <16 x i64> @llvm.aie2.set.1024.512.acc32(<8 x i64> %b, i32 0)
+  %0 = tail call <16 x i64> @llvm.aie2.set.1024.512.acc(<8 x i64> %b, i32 0)
   ret <16 x i64> %0
 }
 
@@ -649,19 +649,19 @@ entry:
   ]
 
 if.then.i:
-  %0 = tail call <16 x i64> @llvm.aie2.set.1024.256.acc64(<4 x i64> %b, i32 0)
+  %0 = tail call <16 x i64> @llvm.aie2.set.1024.256.acc(<4 x i64> %b, i32 0)
   br label %_ZL12set_v16acc64iDv4_u7__acc64.exit
 
 if.then3.i:
-  %1 = tail call <16 x i64> @llvm.aie2.set.1024.256.acc64(<4 x i64> %b, i32 1)
+  %1 = tail call <16 x i64> @llvm.aie2.set.1024.256.acc(<4 x i64> %b, i32 1)
   br label %_ZL12set_v16acc64iDv4_u7__acc64.exit
 
 if.then7.i:
-  %2 = tail call <16 x i64> @llvm.aie2.set.1024.256.acc64(<4 x i64> %b, i32 2)
+  %2 = tail call <16 x i64> @llvm.aie2.set.1024.256.acc(<4 x i64> %b, i32 2)
   br label %_ZL12set_v16acc64iDv4_u7__acc64.exit
 
 if.else.i:
-  %3 = tail call <16 x i64> @llvm.aie2.set.1024.256.acc64(<4 x i64> %b, i32 3)
+  %3 = tail call <16 x i64> @llvm.aie2.set.1024.256.acc(<4 x i64> %b, i32 3)
   br label %_ZL12set_v16acc64iDv4_u7__acc64.exit
 
 _ZL12set_v16acc64iDv4_u7__acc64.exit:
@@ -681,7 +681,7 @@ define dso_local noundef <16 x i64> @_Z17test_set_v16acc64Dv4_u7__acc64(<4 x i64
 ; CHECK-NEXT:    vmov amlh0, amll1 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
-  %0 = tail call <16 x i64> @llvm.aie2.set.1024.256.acc64(<4 x i64> %b, i32 1)
+  %0 = tail call <16 x i64> @llvm.aie2.set.1024.256.acc(<4 x i64> %b, i32 1)
   ret <16 x i64> %0
 }
 
@@ -714,11 +714,11 @@ entry:
   br i1 %cmp.i, label %if.then.i, label %if.else.i
 
 if.then.i:
-  %1 = tail call <16 x i64> @llvm.aie2.set.1024.512.acc64(<8 x i64> %b, i32 0)
+  %1 = tail call <16 x i64> @llvm.aie2.set.1024.512.acc(<8 x i64> %b, i32 0)
   br label %_ZL12set_v16acc64iDv8_u7__acc64.exit
 
 if.else.i:
-  %2 = tail call <16 x i64> @llvm.aie2.set.1024.512.acc64(<8 x i64> %b, i32 1)
+  %2 = tail call <16 x i64> @llvm.aie2.set.1024.512.acc(<8 x i64> %b, i32 1)
   br label %_ZL12set_v16acc64iDv8_u7__acc64.exit
 
 _ZL12set_v16acc64iDv8_u7__acc64.exit:
@@ -738,7 +738,7 @@ define dso_local noundef <16 x i64> @_Z17test_set_v16acc64Dv8_u7__acc64(<8 x i64
 ; CHECK-NEXT:    vmov bml0, bml1 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
-  %0 = tail call <16 x i64> @llvm.aie2.set.1024.512.acc64(<8 x i64> %b, i32 0)
+  %0 = tail call <16 x i64> @llvm.aie2.set.1024.512.acc(<8 x i64> %b, i32 0)
   ret <16 x i64> %0
 }
 
@@ -746,9 +746,6 @@ entry:
 declare <16 x i32> @llvm.aie2.set.I512.I256(<8 x i32>, i32) #2
 declare <32 x i32> @llvm.aie2.set.I1024.I256(<8 x i32>, i32) #2
 declare <32 x i32> @llvm.aie2.set.I1024.I512(<16 x i32>, i32) #2
-declare <8 x i64> @llvm.aie2.set.512.256.acc32(<4 x i64>, i32) #2
-declare <8 x i64> @llvm.aie2.set.512.256.acc64(<4 x i64>, i32) #2
-declare <16 x i64> @llvm.aie2.set.1024.256.acc32(<4 x i64>, i32) #2
-declare <16 x i64> @llvm.aie2.set.1024.512.acc32(<8 x i64>, i32) #2
-declare <16 x i64> @llvm.aie2.set.1024.256.acc64(<4 x i64>, i32) #2
-declare <16 x i64> @llvm.aie2.set.1024.512.acc64(<8 x i64>, i32) #2
+declare <8 x i64> @llvm.aie2.set.512.256.acc(<4 x i64>, i32) #2
+declare <16 x i64> @llvm.aie2.set.1024.256.acc(<4 x i64>, i32) #2
+declare <16 x i64> @llvm.aie2.set.1024.512.acc(<8 x i64>, i32) #2

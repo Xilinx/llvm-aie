@@ -731,28 +731,22 @@ foreach intr = [int_aie2_set_I1024_I256, int_aie2_set_bf1024_bf256] in {
              (REG_SEQUENCE VEC1024, VEC256:$src, sub_512_hi_256_hi)>;
 }
 
-foreach intr = [int_aie2_set_512_256_acc32, int_aie2_set_512_256_acc64] in {
-  def : Pat<(intr ACC256:$src, 0x0),
-             (REG_SEQUENCE ACC512, ACC256:$src, sub_256_lo)>;
-  def : Pat<(intr ACC256:$src, 0x1),
-             (REG_SEQUENCE ACC512, ACC256:$src, sub_256_hi)>;
-}
-foreach intr = [int_aie2_set_1024_512_acc32, int_aie2_set_1024_512_acc64] in {
-  def : Pat<(intr ACC512:$src, 0x0),
-             (REG_SEQUENCE ACC1024, ACC512:$src, sub_512_lo)>;
-  def : Pat<(intr ACC512:$src, 0x1),
-             (REG_SEQUENCE ACC1024, ACC512:$src, sub_512_hi)>;
-}
-foreach intr = [int_aie2_set_1024_256_acc32, int_aie2_set_1024_256_acc64] in {
-  def : Pat<(intr ACC256:$src, 0x0),
-             (REG_SEQUENCE ACC1024, ACC256:$src, sub_256_lo)>;
-  def : Pat<(intr ACC256:$src, 0x1),
-             (REG_SEQUENCE ACC1024, ACC256:$src, sub_256_hi)>;
-  def : Pat<(intr ACC256:$src, 0x2),
-             (REG_SEQUENCE ACC1024, ACC256:$src, sub_512_hi_256_lo)>;
-  def : Pat<(intr ACC256:$src, 0x3),
-             (REG_SEQUENCE ACC1024, ACC256:$src, sub_512_hi_256_hi)>;
-}
+def : Pat<(int_aie2_set_512_256_acc ACC256:$src, 0x0),
+            (REG_SEQUENCE ACC512, ACC256:$src, sub_256_lo)>;
+def : Pat<(int_aie2_set_512_256_acc ACC256:$src, 0x1),
+            (REG_SEQUENCE ACC512, ACC256:$src, sub_256_hi)>;
+def : Pat<(int_aie2_set_1024_512_acc ACC512:$src, 0x0),
+            (REG_SEQUENCE ACC1024, ACC512:$src, sub_512_lo)>;
+def : Pat<(int_aie2_set_1024_512_acc ACC512:$src, 0x1),
+            (REG_SEQUENCE ACC1024, ACC512:$src, sub_512_hi)>;
+def : Pat<(int_aie2_set_1024_256_acc ACC256:$src, 0x0),
+            (REG_SEQUENCE ACC1024, ACC256:$src, sub_256_lo)>;
+def : Pat<(int_aie2_set_1024_256_acc ACC256:$src, 0x1),
+            (REG_SEQUENCE ACC1024, ACC256:$src, sub_256_hi)>;
+def : Pat<(int_aie2_set_1024_256_acc ACC256:$src, 0x2),
+            (REG_SEQUENCE ACC1024, ACC256:$src, sub_512_hi_256_lo)>;
+def : Pat<(int_aie2_set_1024_256_acc ACC256:$src, 0x3),
+            (REG_SEQUENCE ACC1024, ACC256:$src, sub_512_hi_256_hi)>;
 
 // Concat
 class Concat256<SDPatternOperator OpNode, RegisterClass ConcatClass, RegisterClass RegClass>
