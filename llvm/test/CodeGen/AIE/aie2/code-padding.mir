@@ -38,12 +38,24 @@ name:            f0
 alignment:       16
 body:             |
   bb.0.entry:
-    RET implicit $lr
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
+    BUNDLE {
+      RET implicit $lr
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
     DelayedSchedBarrier implicit killed $r0
 ...
 ---
@@ -51,13 +63,27 @@ name:            f1
 alignment:       16
 body:             |
   bb.0.entry:
-    $r0 = MOVA_lda_cg 0
-    RET implicit $lr
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
+    BUNDLE {
+      $r0 = MOVA_lda_cg 0
+    }
+    BUNDLE {
+      RET implicit $lr
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
     DelayedSchedBarrier implicit killed $r0
 ...
 ---
@@ -65,13 +91,27 @@ name:            f2
 alignment:       16
 body:             |
   bb.0.entry:
-    $r0 = MOVXM_lng_cg 1
-    RET implicit $lr
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
+    BUNDLE {
+      $r0 = MOVXM_lng_cg 1
+    }
+    BUNDLE {
+      RET implicit $lr
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
     DelayedSchedBarrier implicit killed $r0
 ...
 ---
@@ -83,12 +123,24 @@ body:             |
       $r0 = OR $r0,$r1
       $p0 = MOV_mv_scl $p1
     }
-    RET implicit $lr
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
+    BUNDLE {
+      RET implicit $lr
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
     DelayedSchedBarrier implicit killed $r0
 ...
 ---
@@ -101,12 +153,24 @@ body:             |
       ST_dms_sts_idx_imm $r0, $p2, 0
       $p0 = MOV_mv_scl $p1
     }
-    RET implicit $lr
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
+    BUNDLE {
+      RET implicit $lr
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
     DelayedSchedBarrier implicit killed $r0
 ...
 ---
@@ -119,12 +183,24 @@ body:             |
       ST_dms_sts_idx_imm $r0, $p2, 0
       $p0 = PADDA_lda_ptr_inc_idx_imm $p0, 4
     }
-    RET implicit $lr
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
+    BUNDLE {
+      RET implicit $lr
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
     DelayedSchedBarrier implicit killed $r0
 ...
 ---
@@ -138,11 +214,23 @@ body:             |
       $p0 = PADDA_lda_ptr_inc_idx_imm $p0, 4
       $cm0 = VMAC_vmac_cm_core_dense $cm1, $x0, $x1, $r1
     }
-    RET implicit $lr
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
+    BUNDLE {
+      RET implicit $lr
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
     DelayedSchedBarrier implicit killed $r0
 ...

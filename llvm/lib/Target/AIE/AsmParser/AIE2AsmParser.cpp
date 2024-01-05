@@ -47,7 +47,7 @@ private:
 
   bool validateInstruction(MCInst &Inst, OperandVector &Operands);
 
-  bool emitBundle(MCStreamer &Out);
+  void emitBundle(MCStreamer &Out);
 
 // Auto-generated Match Functions
 #define GET_ASSEMBLER_HEADER
@@ -223,7 +223,7 @@ bool AIE2AsmParser::ParseDirective(AsmToken DirectiveID) {
   return true;
 }
 
-bool AIE2AsmParser::emitBundle(MCStreamer &Out) {
+void AIE2AsmParser::emitBundle(MCStreamer &Out) {
   LLVM_DEBUG(dbgs() << "Emitting bundle\n");
   MCInst B;
   const auto *Format = Bundle.getFormatOrNull();
@@ -239,8 +239,6 @@ bool AIE2AsmParser::emitBundle(MCStreamer &Out) {
   }
   B.setOpcode(Format->Opcode);
   Out.emitInstruction(B, getSTI());
-  Bundle.clear();
-  return false;
 }
 
 bool AIE2AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
@@ -261,26 +259,25 @@ bool AIE2AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     Inst->setLoc(IDLoc);
     if (validateInstruction(*Inst, Operands))
       return true;
-    // If we the instruction ends with a ';', or we are already inside a bundle,
-    bool EndOfBundle =
-        getTok().getString().empty() || getTok().getString()[0] != ';';
-    if (!EndOfBundle || !Bundle.empty()) {
-      if (Bundle.canAdd(Inst))
-        Bundle.add(Inst);
-      else {
-        // Lex to end of line
-        while (!(getLexer().is(llvm::AsmToken::EndOfStatement) &&
-                 (getLexer().getTok().getString().empty() ||
-                  getLexer().getTok().getString()[0] == '\n')))
-          Lex();
-        Bundle.clear();
-        return Error(IDLoc, "incorrect bundle");
-      }
-      if (EndOfBundle)
-        return emitBundle(Out);
-      return true;
+
+    if (Bundle.canAdd(Inst))
+      Bundle.add(Inst);
+    else {
+      // Lex to end of line
+      while (!(getLexer().is(llvm::AsmToken::EndOfStatement) &&
+                (getLexer().getTok().getString().empty() ||
+                getLexer().getTok().getString()[0] == '\n')))
+        Lex();
+      Bundle.clear();
+      return Error(IDLoc, "incorrect bundle");
     }
-    Out.emitInstruction(*Inst, getSTI());
+
+    const bool EndOfBundle =
+        getTok().getString().empty() || getTok().getString()[0] != ';';
+    if (EndOfBundle) {
+      emitBundle(Out);
+      Bundle.clear();
+    }
     return false;
   }
   // TODO: Properly implement the following cases

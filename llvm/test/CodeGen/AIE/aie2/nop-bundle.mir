@@ -28,11 +28,4 @@ body:             |
       $p0 = PADDA_lda_ptr_inc_idx_imm $p0, 4
       $p0 = MOV_mv_scl $p1
     }
-    RET implicit $lr
-    NOP
-    NOP
-    NOP
-    NOP
-    NOP
-    DelayedSchedBarrier implicit killed $r0
 ...
