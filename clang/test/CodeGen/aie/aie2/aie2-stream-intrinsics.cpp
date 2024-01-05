@@ -654,9 +654,9 @@ void test_put_mcd(v32bfloat16 a) { put_mcd(a); }
 
 // CHECK-LABEL: @_Z12test_put_mcdDv32_u7__acc32i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc32(<16 x i64> [[A:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc(<16 x i64> [[A:%.*]], i32 0)
 // CHECK-NEXT:    tail call void @llvm.aie2.mcd.write.acc32(<8 x i64> [[TMP0]], i32 [[EN:%.*]])
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc32(<16 x i64> [[A]], i32 1)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc(<16 x i64> [[A]], i32 1)
 // CHECK-NEXT:    tail call void @llvm.aie2.mcd.write.acc32(<8 x i64> [[TMP1]], i32 [[EN]])
 // CHECK-NEXT:    ret void
 //
@@ -664,9 +664,9 @@ void test_put_mcd(v32acc32 a, int en) { put_mcd(a, en); }
 
 // CHECK-LABEL: @_Z12test_put_mcdDv16_u7__acc64i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc32(<16 x i64> [[A:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc(<16 x i64> [[A:%.*]], i32 0)
 // CHECK-NEXT:    tail call void @llvm.aie2.mcd.write.acc32(<8 x i64> [[TMP0]], i32 [[EN:%.*]])
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc32(<16 x i64> [[A]], i32 1)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc(<16 x i64> [[A]], i32 1)
 // CHECK-NEXT:    tail call void @llvm.aie2.mcd.write.acc32(<8 x i64> [[TMP1]], i32 [[EN]])
 // CHECK-NEXT:    ret void
 //
@@ -760,9 +760,9 @@ void test_put_mcd(v32uint32 a, int en) { put_mcd(a, en); }
 
 // CHECK-LABEL: @_Z12test_put_mcdDv32_u7__acc32(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc32(<16 x i64> [[A:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc(<16 x i64> [[A:%.*]], i32 0)
 // CHECK-NEXT:    tail call void @llvm.aie2.mcd.write.acc32(<8 x i64> [[TMP0]], i32 1)
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc32(<16 x i64> [[A]], i32 1)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc(<16 x i64> [[A]], i32 1)
 // CHECK-NEXT:    tail call void @llvm.aie2.mcd.write.acc32(<8 x i64> [[TMP1]], i32 1)
 // CHECK-NEXT:    ret void
 //
@@ -770,9 +770,9 @@ void test_put_mcd(v32acc32 a) { put_mcd(a); }
 
 // CHECK-LABEL: @_Z12test_put_mcdDv16_u7__acc64(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc32(<16 x i64> [[A:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc(<16 x i64> [[A:%.*]], i32 0)
 // CHECK-NEXT:    tail call void @llvm.aie2.mcd.write.acc32(<8 x i64> [[TMP0]], i32 1)
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc32(<16 x i64> [[A]], i32 1)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc(<16 x i64> [[A]], i32 1)
 // CHECK-NEXT:    tail call void @llvm.aie2.mcd.write.acc32(<8 x i64> [[TMP1]], i32 1)
 // CHECK-NEXT:    ret void
 //

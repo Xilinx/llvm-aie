@@ -345,11 +345,11 @@ entry:
   br i1 %cmp.i, label %if.then.i, label %if.else.i
 
 if.then.i:
-  %1 = tail call <4 x i64> @llvm.aie2.ext.256.512.acc32(<8 x i64> %a, i32 0)
+  %1 = tail call <4 x i64> @llvm.aie2.ext.256.512.acc(<8 x i64> %a, i32 0)
   br label %_ZL15extract_v8acc32Dv16_u7__acc32i.exit
 
 if.else.i:
-  %2 = tail call <4 x i64> @llvm.aie2.ext.256.512.acc32(<8 x i64> %a, i32 1)
+  %2 = tail call <4 x i64> @llvm.aie2.ext.256.512.acc(<8 x i64> %a, i32 1)
   br label %_ZL15extract_v8acc32Dv16_u7__acc32i.exit
 
 _ZL15extract_v8acc32Dv16_u7__acc32i.exit:
@@ -369,7 +369,7 @@ define dso_local noundef <4 x i64> @_Z20test_extract_v8acc32Dv16_u7__acc32(<8 x 
 ; CHECK-NEXT:    vmov amll0, amlh1 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
-  %0 = tail call <4 x i64> @llvm.aie2.ext.256.512.acc32(<8 x i64> %a, i32 1)
+  %0 = tail call <4 x i64> @llvm.aie2.ext.256.512.acc(<8 x i64> %a, i32 1)
   ret <4 x i64> %0
 }
 
@@ -402,11 +402,11 @@ entry:
   br i1 %cmp.i, label %if.then.i, label %if.else.i
 
 if.then.i:
-  %1 = tail call <4 x i64> @llvm.aie2.ext.256.512.acc64(<8 x i64> %a, i32 0)
+  %1 = tail call <4 x i64> @llvm.aie2.ext.256.512.acc(<8 x i64> %a, i32 0)
   br label %_ZL15extract_v4acc64Dv8_u7__acc64i.exit
 
 if.else.i:
-  %2 = tail call <4 x i64> @llvm.aie2.ext.256.512.acc64(<8 x i64> %a, i32 1)
+  %2 = tail call <4 x i64> @llvm.aie2.ext.256.512.acc(<8 x i64> %a, i32 1)
   br label %_ZL15extract_v4acc64Dv8_u7__acc64i.exit
 
 _ZL15extract_v4acc64Dv8_u7__acc64i.exit:
@@ -426,7 +426,7 @@ define dso_local noundef <4 x i64> @_Z20test_extract_v4acc64Dv8_u7__acc64(<8 x i
 ; CHECK-NEXT:    vmov bml0, bml1 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
-  %0 = tail call <4 x i64> @llvm.aie2.ext.256.512.acc64(<8 x i64> %a, i32 0)
+  %0 = tail call <4 x i64> @llvm.aie2.ext.256.512.acc(<8 x i64> %a, i32 0)
   ret <4 x i64> %0
 }
 
@@ -521,19 +521,19 @@ entry:
   ]
 
 if.then.i:
-  %0 = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc32(<16 x i64> %a, i32 0)
+  %0 = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc(<16 x i64> %a, i32 0)
   br label %_ZL15extract_v8acc32Dv32_u7__acc32i.exit
 
 if.then3.i:
-  %1 = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc32(<16 x i64> %a, i32 1)
+  %1 = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc(<16 x i64> %a, i32 1)
   br label %_ZL15extract_v8acc32Dv32_u7__acc32i.exit
 
 if.then7.i:
-  %2 = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc32(<16 x i64> %a, i32 2)
+  %2 = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc(<16 x i64> %a, i32 2)
   br label %_ZL15extract_v8acc32Dv32_u7__acc32i.exit
 
 if.else.i:
-  %3 = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc32(<16 x i64> %a, i32 3)
+  %3 = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc(<16 x i64> %a, i32 3)
   br label %_ZL15extract_v8acc32Dv32_u7__acc32i.exit
 
 _ZL15extract_v8acc32Dv32_u7__acc32i.exit:
@@ -553,7 +553,7 @@ define dso_local noundef <4 x i64> @_Z25test_extract_v8acc32_idx0Dv32_u7__acc32(
 ; CHECK-NEXT:    vmov cm0, cm1 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
-  %0 = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc32(<16 x i64> %a, i32 0)
+  %0 = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc(<16 x i64> %a, i32 0)
   ret <4 x i64> %0
 }
 
@@ -569,7 +569,7 @@ define dso_local noundef <4 x i64> @_Z25test_extract_v8acc32_idx1Dv32_u7__acc32(
 ; CHECK-NEXT:    vmov amll0, amlh1 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
-  %0 = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc32(<16 x i64> %a, i32 1)
+  %0 = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc(<16 x i64> %a, i32 1)
   ret <4 x i64> %0
 }
 
@@ -585,7 +585,7 @@ define dso_local noundef <4 x i64> @_Z25test_extract_v8acc32_idx2Dv32_u7__acc32(
 ; CHECK-NEXT:    vmov amll0, amhl1 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
-  %0 = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc32(<16 x i64> %a, i32 2)
+  %0 = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc(<16 x i64> %a, i32 2)
   ret <4 x i64> %0
 }
 
@@ -601,7 +601,7 @@ define dso_local noundef <4 x i64> @_Z25test_extract_v8acc32_idx3Dv32_u7__acc32(
 ; CHECK-NEXT:    vmov amll0, amhh1 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
-  %0 = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc32(<16 x i64> %a, i32 3)
+  %0 = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc(<16 x i64> %a, i32 3)
   ret <4 x i64> %0
 }
 
@@ -634,11 +634,11 @@ entry:
   br i1 %cmp.i, label %if.then.i, label %if.else.i
 
 if.then.i:
-  %1 = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc32(<16 x i64> %a, i32 0)
+  %1 = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc(<16 x i64> %a, i32 0)
   br label %_ZL16extract_v16acc32Dv32_u7__acc32i.exit
 
 if.else.i:
-  %2 = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc32(<16 x i64> %a, i32 1)
+  %2 = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc(<16 x i64> %a, i32 1)
   br label %_ZL16extract_v16acc32Dv32_u7__acc32i.exit
 
 _ZL16extract_v16acc32Dv32_u7__acc32i.exit:
@@ -658,7 +658,7 @@ define dso_local noundef <8 x i64> @_Z21test_extract_v16acc32Dv32_u7__acc32(<16 
 ; CHECK-NEXT:    vmov cm0, cm1 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
-  %0 = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc32(<16 x i64> %a, i32 0)
+  %0 = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc(<16 x i64> %a, i32 0)
   ret <8 x i64> %0
 }
 
@@ -753,19 +753,19 @@ entry:
   ]
 
 if.then.i:
-  %0 = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc64(<16 x i64> %a, i32 0)
+  %0 = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc(<16 x i64> %a, i32 0)
   br label %_ZL15extract_v4acc64Dv16_u7__acc64i.exit
 
 if.then3.i:
-  %1 = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc64(<16 x i64> %a, i32 1)
+  %1 = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc(<16 x i64> %a, i32 1)
   br label %_ZL15extract_v4acc64Dv16_u7__acc64i.exit
 
 if.then7.i:
-  %2 = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc64(<16 x i64> %a, i32 2)
+  %2 = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc(<16 x i64> %a, i32 2)
   br label %_ZL15extract_v4acc64Dv16_u7__acc64i.exit
 
 if.else.i:
-  %3 = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc64(<16 x i64> %a, i32 3)
+  %3 = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc(<16 x i64> %a, i32 3)
   br label %_ZL15extract_v4acc64Dv16_u7__acc64i.exit
 
 _ZL15extract_v4acc64Dv16_u7__acc64i.exit:
@@ -785,7 +785,7 @@ define dso_local noundef <4 x i64> @_Z25test_extract_v4acc64_idx1Dv16_u7__acc64(
 ; CHECK-NEXT:    vmov amll0, amlh1 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
-  %0 = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc64(<16 x i64> %a, i32 1)
+  %0 = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc(<16 x i64> %a, i32 1)
   ret <4 x i64> %0
 }
 
@@ -801,7 +801,7 @@ define dso_local noundef <4 x i64> @_Z25test_extract_v4acc64_idx2Dv16_u7__acc64(
 ; CHECK-NEXT:    vmov amll0, amhl1 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
-  %0 = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc64(<16 x i64> %a, i32 2)
+  %0 = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc(<16 x i64> %a, i32 2)
   ret <4 x i64> %0
 }
 
@@ -834,11 +834,11 @@ entry:
   br i1 %cmp.i, label %if.then.i, label %if.else.i
 
 if.then.i:
-  %1 = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc64(<16 x i64> %a, i32 0)
+  %1 = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc(<16 x i64> %a, i32 0)
   br label %_ZL15extract_v8acc64Dv16_u7__acc64i.exit
 
 if.else.i:
-  %2 = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc64(<16 x i64> %a, i32 1)
+  %2 = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc(<16 x i64> %a, i32 1)
   br label %_ZL15extract_v8acc64Dv16_u7__acc64i.exit
 
 _ZL15extract_v8acc64Dv16_u7__acc64i.exit:
@@ -858,7 +858,7 @@ define dso_local noundef <8 x i64> @_Z20test_extract_v8acc64Dv16_u7__acc64(<16 x
 ; CHECK-NEXT:    vmov cm0, cm1 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
-  %0 = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc64(<16 x i64> %a, i32 0)
+  %0 = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc(<16 x i64> %a, i32 0)
   ret <8 x i64> %0
 }
 
@@ -866,9 +866,6 @@ entry:
 declare <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32>, i32) #2
 declare <8 x i32> @llvm.aie2.ext.I256.I1024(<32 x i32>, i32) #2
 declare <16 x i32> @llvm.aie2.ext.I512.I1024(<32 x i32>, i32) #2
-declare <4 x i64> @llvm.aie2.ext.256.512.acc32(<8 x i64>, i32) #2
-declare <4 x i64> @llvm.aie2.ext.256.512.acc64(<8 x i64>, i32) #2
-declare <4 x i64> @llvm.aie2.ext.256.1024.acc32(<16 x i64>, i32) #2
-declare <8 x i64> @llvm.aie2.ext.512.1024.acc32(<16 x i64>, i32) #2
-declare <4 x i64> @llvm.aie2.ext.256.1024.acc64(<16 x i64>, i32) #2
-declare <8 x i64> @llvm.aie2.ext.512.1024.acc64(<16 x i64>, i32) #2
+declare <4 x i64> @llvm.aie2.ext.256.512.acc(<8 x i64>, i32) #2
+declare <4 x i64> @llvm.aie2.ext.256.1024.acc(<16 x i64>, i32) #2
+declare <8 x i64> @llvm.aie2.ext.512.1024.acc(<16 x i64>, i32) #2
