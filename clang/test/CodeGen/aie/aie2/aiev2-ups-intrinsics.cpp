@@ -55,6 +55,7 @@ v16acc32 test_sups(v16uint16 a, int shft) {
    return sups(a,shft,__SIGN_UNSIGNED);
 }
 
+//
 // CHECK-LABEL: @_Z9test_supsDv32_ai(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i64> @llvm.aie2.acc32.v32.I256.ups(<32 x i8> [[A:%.*]], i32 [[SHFT:%.*]], i32 1)
@@ -132,10 +133,10 @@ v16acc64 test_lups(v16uint16 a, int shft, int sign) {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> [[A:%.*]], i32 0)
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <8 x i64> @llvm.aie2.acc64.v8.I256.ups(<8 x i32> [[TMP0]], i32 [[SHFT:%.*]], i32 1)
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i64> @llvm.aie2.set.1024.512.acc64(<8 x i64> [[TMP1]], i32 0)
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i64> @llvm.aie2.set.1024.512.acc(<8 x i64> [[TMP1]], i32 0)
 // CHECK-NEXT:    [[TMP3:%.*]] = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> [[A]], i32 1)
 // CHECK-NEXT:    [[TMP4:%.*]] = tail call noundef <8 x i64> @llvm.aie2.acc64.v8.I256.ups(<8 x i32> [[TMP3]], i32 [[SHFT]], i32 1)
-// CHECK-NEXT:    [[TMP5:%.*]] = tail call noundef <16 x i64> @llvm.aie2.upd.1024.512.acc64(<16 x i64> [[TMP2]], <8 x i64> [[TMP4]], i32 1)
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call noundef <16 x i64> @llvm.aie2.upd.1024.512.acc(<16 x i64> [[TMP2]], <8 x i64> [[TMP4]], i32 1)
 // CHECK-NEXT:    ret <16 x i64> [[TMP5]]
 //
 v16acc64 test_lups(v16int32 a, int shft){
@@ -146,10 +147,10 @@ v16acc64 test_lups(v16int32 a, int shft){
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> [[A:%.*]], i32 0)
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <8 x i64> @llvm.aie2.acc64.v8.I256.ups(<8 x i32> [[TMP0]], i32 [[SHFT:%.*]], i32 0)
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i64> @llvm.aie2.set.1024.512.acc64(<8 x i64> [[TMP1]], i32 0)
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i64> @llvm.aie2.set.1024.512.acc(<8 x i64> [[TMP1]], i32 0)
 // CHECK-NEXT:    [[TMP3:%.*]] = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> [[A]], i32 1)
 // CHECK-NEXT:    [[TMP4:%.*]] = tail call noundef <8 x i64> @llvm.aie2.acc64.v8.I256.ups(<8 x i32> [[TMP3]], i32 [[SHFT]], i32 0)
-// CHECK-NEXT:    [[TMP5:%.*]] = tail call noundef <16 x i64> @llvm.aie2.upd.1024.512.acc64(<16 x i64> [[TMP2]], <8 x i64> [[TMP4]], i32 1)
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call noundef <16 x i64> @llvm.aie2.upd.1024.512.acc(<16 x i64> [[TMP2]], <8 x i64> [[TMP4]], i32 1)
 // CHECK-NEXT:    ret <16 x i64> [[TMP5]]
 //
 v16acc64 test_lups(v16uint32 a, int shft) {
@@ -160,10 +161,10 @@ v16acc64 test_lups(v16uint32 a, int shft) {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> [[A:%.*]], i32 0)
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <8 x i64> @llvm.aie2.acc64.v8.I256.ups(<8 x i32> [[TMP0]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i64> @llvm.aie2.set.1024.512.acc64(<8 x i64> [[TMP1]], i32 0)
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i64> @llvm.aie2.set.1024.512.acc(<8 x i64> [[TMP1]], i32 0)
 // CHECK-NEXT:    [[TMP3:%.*]] = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> [[A]], i32 1)
 // CHECK-NEXT:    [[TMP4:%.*]] = tail call noundef <8 x i64> @llvm.aie2.acc64.v8.I256.ups(<8 x i32> [[TMP3]], i32 [[SHFT]], i32 [[SIGN]])
-// CHECK-NEXT:    [[TMP5:%.*]] = tail call noundef <16 x i64> @llvm.aie2.upd.1024.512.acc64(<16 x i64> [[TMP2]], <8 x i64> [[TMP4]], i32 1)
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call noundef <16 x i64> @llvm.aie2.upd.1024.512.acc(<16 x i64> [[TMP2]], <8 x i64> [[TMP4]], i32 1)
 // CHECK-NEXT:    ret <16 x i64> [[TMP5]]
 //
 v16acc64 test_lups(v16int32 a, int shft, int sign) {
@@ -174,10 +175,10 @@ v16acc64 test_lups(v16int32 a, int shft, int sign) {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> [[A:%.*]], i32 0)
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <8 x i64> @llvm.aie2.acc64.v8.I256.ups(<8 x i32> [[TMP0]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i64> @llvm.aie2.set.1024.512.acc64(<8 x i64> [[TMP1]], i32 0)
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x i64> @llvm.aie2.set.1024.512.acc(<8 x i64> [[TMP1]], i32 0)
 // CHECK-NEXT:    [[TMP3:%.*]] = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> [[A]], i32 1)
 // CHECK-NEXT:    [[TMP4:%.*]] = tail call noundef <8 x i64> @llvm.aie2.acc64.v8.I256.ups(<8 x i32> [[TMP3]], i32 [[SHFT]], i32 [[SIGN]])
-// CHECK-NEXT:    [[TMP5:%.*]] = tail call noundef <16 x i64> @llvm.aie2.upd.1024.512.acc64(<16 x i64> [[TMP2]], <8 x i64> [[TMP4]], i32 1)
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call noundef <16 x i64> @llvm.aie2.upd.1024.512.acc(<16 x i64> [[TMP2]], <8 x i64> [[TMP4]], i32 1)
 // CHECK-NEXT:    ret <16 x i64> [[TMP5]]
 //
 v16acc64 test_lups(v16uint32 a, int shft, int sign) {
@@ -190,11 +191,11 @@ v16acc64 test_lups(v16uint32 a, int shft, int sign) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> [[TMP0]], i32 0)
 // CHECK-NEXT:    [[RETVAL_0_I10_I:%.*]] = bitcast <8 x i32> [[TMP1]] to <16 x i16>
 // CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <8 x i64> @llvm.aie2.acc32.v16.I256.ups(<16 x i16> [[RETVAL_0_I10_I]], i32 [[SHFT:%.*]], i32 1)
-// CHECK-NEXT:    [[TMP3:%.*]] = tail call noundef <16 x i64> @llvm.aie2.set.1024.512.acc32(<8 x i64> [[TMP2]], i32 0)
+// CHECK-NEXT:    [[TMP3:%.*]] = tail call noundef <16 x i64> @llvm.aie2.set.1024.512.acc(<8 x i64> [[TMP2]], i32 0)
 // CHECK-NEXT:    [[TMP4:%.*]] = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> [[TMP0]], i32 1)
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = bitcast <8 x i32> [[TMP4]] to <16 x i16>
 // CHECK-NEXT:    [[TMP5:%.*]] = tail call noundef <8 x i64> @llvm.aie2.acc32.v16.I256.ups(<16 x i16> [[RETVAL_0_I_I]], i32 [[SHFT]], i32 1)
-// CHECK-NEXT:    [[TMP6:%.*]] = tail call noundef <16 x i64> @llvm.aie2.upd.1024.512.acc32(<16 x i64> [[TMP3]], <8 x i64> [[TMP5]], i32 1)
+// CHECK-NEXT:    [[TMP6:%.*]] = tail call noundef <16 x i64> @llvm.aie2.upd.1024.512.acc(<16 x i64> [[TMP3]], <8 x i64> [[TMP5]], i32 1)
 // CHECK-NEXT:    ret <16 x i64> [[TMP6]]
 //
 v32acc32 test_sups(v32int16 a, int shft) {
@@ -207,11 +208,11 @@ v32acc32 test_sups(v32int16 a, int shft) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> [[TMP0]], i32 0)
 // CHECK-NEXT:    [[RETVAL_0_I10_I:%.*]] = bitcast <8 x i32> [[TMP1]] to <16 x i16>
 // CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <8 x i64> @llvm.aie2.acc32.v16.I256.ups(<16 x i16> [[RETVAL_0_I10_I]], i32 [[SHFT:%.*]], i32 0)
-// CHECK-NEXT:    [[TMP3:%.*]] = tail call noundef <16 x i64> @llvm.aie2.set.1024.512.acc32(<8 x i64> [[TMP2]], i32 0)
+// CHECK-NEXT:    [[TMP3:%.*]] = tail call noundef <16 x i64> @llvm.aie2.set.1024.512.acc(<8 x i64> [[TMP2]], i32 0)
 // CHECK-NEXT:    [[TMP4:%.*]] = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> [[TMP0]], i32 1)
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = bitcast <8 x i32> [[TMP4]] to <16 x i16>
 // CHECK-NEXT:    [[TMP5:%.*]] = tail call noundef <8 x i64> @llvm.aie2.acc32.v16.I256.ups(<16 x i16> [[RETVAL_0_I_I]], i32 [[SHFT]], i32 0)
-// CHECK-NEXT:    [[TMP6:%.*]] = tail call noundef <16 x i64> @llvm.aie2.upd.1024.512.acc32(<16 x i64> [[TMP3]], <8 x i64> [[TMP5]], i32 1)
+// CHECK-NEXT:    [[TMP6:%.*]] = tail call noundef <16 x i64> @llvm.aie2.upd.1024.512.acc(<16 x i64> [[TMP3]], <8 x i64> [[TMP5]], i32 1)
 // CHECK-NEXT:    ret <16 x i64> [[TMP6]]
 //
 v32acc32 test_sups(v32uint16 a, int shft) {
@@ -224,28 +225,29 @@ v32acc32 test_sups(v32uint16 a, int shft) {
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> [[TMP0]], i32 0)
 // CHECK-NEXT:    [[RETVAL_0_I10_I:%.*]] = bitcast <8 x i32> [[TMP1]] to <16 x i16>
 // CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <8 x i64> @llvm.aie2.acc32.v16.I256.ups(<16 x i16> [[RETVAL_0_I10_I]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
-// CHECK-NEXT:    [[TMP3:%.*]] = tail call noundef <16 x i64> @llvm.aie2.set.1024.512.acc32(<8 x i64> [[TMP2]], i32 0)
+// CHECK-NEXT:    [[TMP3:%.*]] = tail call noundef <16 x i64> @llvm.aie2.set.1024.512.acc(<8 x i64> [[TMP2]], i32 0)
 // CHECK-NEXT:    [[TMP4:%.*]] = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> [[TMP0]], i32 1)
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = bitcast <8 x i32> [[TMP4]] to <16 x i16>
 // CHECK-NEXT:    [[TMP5:%.*]] = tail call noundef <8 x i64> @llvm.aie2.acc32.v16.I256.ups(<16 x i16> [[RETVAL_0_I_I]], i32 [[SHFT]], i32 [[SIGN]])
-// CHECK-NEXT:    [[TMP6:%.*]] = tail call noundef <16 x i64> @llvm.aie2.upd.1024.512.acc32(<16 x i64> [[TMP3]], <8 x i64> [[TMP5]], i32 1)
+// CHECK-NEXT:    [[TMP6:%.*]] = tail call noundef <16 x i64> @llvm.aie2.upd.1024.512.acc(<16 x i64> [[TMP3]], <8 x i64> [[TMP5]], i32 1)
 // CHECK-NEXT:    ret <16 x i64> [[TMP6]]
 //
 v32acc32 test_sups(v32int16 a, int shft, int sign) {
    return sups(a,shft,sign);
 }
 
+//
 // CHECK-LABEL: @_Z9test_supsDv32_tii(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <32 x i16> [[A:%.*]] to <16 x i32>
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> [[TMP0]], i32 0)
 // CHECK-NEXT:    [[RETVAL_0_I10_I:%.*]] = bitcast <8 x i32> [[TMP1]] to <16 x i16>
 // CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <8 x i64> @llvm.aie2.acc32.v16.I256.ups(<16 x i16> [[RETVAL_0_I10_I]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
-// CHECK-NEXT:    [[TMP3:%.*]] = tail call noundef <16 x i64> @llvm.aie2.set.1024.512.acc32(<8 x i64> [[TMP2]], i32 0)
+// CHECK-NEXT:    [[TMP3:%.*]] = tail call noundef <16 x i64> @llvm.aie2.set.1024.512.acc(<8 x i64> [[TMP2]], i32 0)
 // CHECK-NEXT:    [[TMP4:%.*]] = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> [[TMP0]], i32 1)
 // CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = bitcast <8 x i32> [[TMP4]] to <16 x i16>
 // CHECK-NEXT:    [[TMP5:%.*]] = tail call noundef <8 x i64> @llvm.aie2.acc32.v16.I256.ups(<16 x i16> [[RETVAL_0_I_I]], i32 [[SHFT]], i32 [[SIGN]])
-// CHECK-NEXT:    [[TMP6:%.*]] = tail call noundef <16 x i64> @llvm.aie2.upd.1024.512.acc32(<16 x i64> [[TMP3]], <8 x i64> [[TMP5]], i32 1)
+// CHECK-NEXT:    [[TMP6:%.*]] = tail call noundef <16 x i64> @llvm.aie2.upd.1024.512.acc(<16 x i64> [[TMP3]], <8 x i64> [[TMP5]], i32 1)
 // CHECK-NEXT:    ret <16 x i64> [[TMP6]]
 //
 v32acc32 test_sups(v32uint16 a, int shft, int sign) {

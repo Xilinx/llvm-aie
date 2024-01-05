@@ -195,7 +195,7 @@ v32bfloat16 test_get_scd_v32bfloat16() { return get_scd_v32bfloat16(); }
 // CHECK-LABEL: @_Z21test_get_scd_v32acc32i(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <8 x i64> @llvm.aie2.scd.read.acc32(i32 [[EN:%.*]])
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <16 x i64> @llvm.aie2.set.1024.512.acc32(<8 x i64> [[TMP0]], i32 0)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <16 x i64> @llvm.aie2.set.1024.512.acc(<8 x i64> [[TMP0]], i32 0)
 // CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <8 x i64> @llvm.aie2.scd.read.acc32(i32 [[EN]])
 // CHECK-NEXT:    [[TMP3:%.*]] = tail call noundef <16 x i64> @llvm.aie2.upd.1024.512.acc(<16 x i64> [[TMP1]], <8 x i64> [[TMP2]], i32 1)
 // CHECK-NEXT:    ret <16 x i64> [[TMP3]]
@@ -205,7 +205,7 @@ v32acc32 test_get_scd_v32acc32(int en) { return get_scd_v32acc32(en); }
 // CHECK-LABEL: @_Z21test_get_scd_v16acc64i(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <8 x i64> @llvm.aie2.scd.read.acc32(i32 [[EN:%.*]])
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <16 x i64> @llvm.aie2.set.1024.512.acc32(<8 x i64> [[TMP0]], i32 0)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <16 x i64> @llvm.aie2.set.1024.512.acc(<8 x i64> [[TMP0]], i32 0)
 // CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <8 x i64> @llvm.aie2.scd.read.acc32(i32 [[EN]])
 // CHECK-NEXT:    [[TMP3:%.*]] = tail call noundef <16 x i64> @llvm.aie2.upd.1024.512.acc(<16 x i64> [[TMP1]], <8 x i64> [[TMP2]], i32 1)
 // CHECK-NEXT:    ret <16 x i64> [[TMP3]]
@@ -215,7 +215,7 @@ v16acc64 test_get_scd_v16acc64(int en) { return get_scd_v16acc64(en); }
 // CHECK-LABEL: @_Z24test_get_scd_v32accfloati(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <8 x i64> @llvm.aie2.scd.read.acc32(i32 [[EN:%.*]])
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <16 x i64> @llvm.aie2.set.1024.512.acc32(<8 x i64> [[TMP0]], i32 0)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <16 x i64> @llvm.aie2.set.1024.512.acc(<8 x i64> [[TMP0]], i32 0)
 // CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <8 x i64> @llvm.aie2.scd.read.acc32(i32 [[EN]])
 // CHECK-NEXT:    [[TMP3:%.*]] = tail call noundef <16 x i64> @llvm.aie2.upd.1024.512.acc(<16 x i64> [[TMP1]], <8 x i64> [[TMP2]], i32 1)
 // CHECK-NEXT:    ret <16 x i64> [[TMP3]]
@@ -311,7 +311,7 @@ v32uint32 test_get_scd_v32uint32(int en) { return get_scd_v32uint32(en); }
 // CHECK-LABEL: @_Z21test_get_scd_v32acc32v(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <8 x i64> @llvm.aie2.scd.read.acc32(i32 1)
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <16 x i64> @llvm.aie2.set.1024.512.acc32(<8 x i64> [[TMP0]], i32 0)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <16 x i64> @llvm.aie2.set.1024.512.acc(<8 x i64> [[TMP0]], i32 0)
 // CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <8 x i64> @llvm.aie2.scd.read.acc32(i32 1)
 // CHECK-NEXT:    [[TMP3:%.*]] = tail call noundef <16 x i64> @llvm.aie2.upd.1024.512.acc(<16 x i64> [[TMP1]], <8 x i64> [[TMP2]], i32 1)
 // CHECK-NEXT:    ret <16 x i64> [[TMP3]]
@@ -321,7 +321,7 @@ v32acc32 test_get_scd_v32acc32() { return get_scd_v32acc32(); }
 // CHECK-LABEL: @_Z21test_get_scd_v16acc64v(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <8 x i64> @llvm.aie2.scd.read.acc32(i32 1)
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <16 x i64> @llvm.aie2.set.1024.512.acc32(<8 x i64> [[TMP0]], i32 0)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <16 x i64> @llvm.aie2.set.1024.512.acc(<8 x i64> [[TMP0]], i32 0)
 // CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <8 x i64> @llvm.aie2.scd.read.acc32(i32 1)
 // CHECK-NEXT:    [[TMP3:%.*]] = tail call noundef <16 x i64> @llvm.aie2.upd.1024.512.acc(<16 x i64> [[TMP1]], <8 x i64> [[TMP2]], i32 1)
 // CHECK-NEXT:    ret <16 x i64> [[TMP3]]
@@ -4609,3 +4609,4 @@ v64uint16 test_get_ss_v64uint16() { return get_ss_v64uint16(); }
 // CHECK-NEXT:    ret <32 x i32> [[TMP98]]
 //
 v32uint32 test_get_ss_v32uint32() { return get_ss_v32uint32(); }
+
