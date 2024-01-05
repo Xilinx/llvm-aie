@@ -823,24 +823,18 @@ def : Pat<(int_aie2_ext_bf256_bf1024 VEC1024:$src, 0x3),
            (v16bf16 (EXTRACT_SUBREG VEC1024:$src, sub_512_hi_256_hi))>;
 
 
-foreach intr = [int_aie2_ext_256_512_acc32, int_aie2_ext_256_512_acc64] in {
-  def : Pat<(intr ACC512:$src, 0x0), (v4i64 (EXTRACT_SUBREG ACC512:$src, sub_256_lo))>;
-  def : Pat<(intr ACC512:$src, 0x1), (v4i64 (EXTRACT_SUBREG ACC512:$src, sub_256_hi))>;
-}
-foreach intr = [int_aie2_ext_512_1024_acc32, int_aie2_ext_512_1024_acc64] in {
-  def : Pat<(intr ACC1024:$src, 0x0), (v8i64 (EXTRACT_SUBREG ACC1024:$src, sub_512_lo))>;
-  def : Pat<(intr ACC1024:$src, 0x1), (v8i64 (EXTRACT_SUBREG ACC1024:$src, sub_512_hi))>;
-}
-foreach intr = [int_aie2_ext_256_1024_acc32, int_aie2_ext_256_1024_acc64] in {
-  def : Pat<(intr ACC1024:$src, 0x0),
-             (v4i64 (EXTRACT_SUBREG ACC1024:$src, sub_256_lo))>;
-  def : Pat<(intr ACC1024:$src, 0x1),
-             (v4i64 (EXTRACT_SUBREG ACC1024:$src, sub_256_hi))>;
-  def : Pat<(intr ACC1024:$src, 0x2),
-             (v4i64 (EXTRACT_SUBREG ACC1024:$src, sub_512_hi_256_lo))>;
-  def : Pat<(intr ACC1024:$src, 0x3),
-             (v4i64 (EXTRACT_SUBREG ACC1024:$src, sub_512_hi_256_hi))>;
-}
+def : Pat<(int_aie2_ext_256_512_acc ACC512:$src, 0x0), (v4i64 (EXTRACT_SUBREG ACC512:$src, sub_256_lo))>;
+def : Pat<(int_aie2_ext_256_512_acc ACC512:$src, 0x1), (v4i64 (EXTRACT_SUBREG ACC512:$src, sub_256_hi))>;
+def : Pat<(int_aie2_ext_512_1024_acc ACC1024:$src, 0x0), (v8i64 (EXTRACT_SUBREG ACC1024:$src, sub_512_lo))>;
+def : Pat<(int_aie2_ext_512_1024_acc ACC1024:$src, 0x1), (v8i64 (EXTRACT_SUBREG ACC1024:$src, sub_512_hi))>;
+def : Pat<(int_aie2_ext_256_1024_acc ACC1024:$src, 0x0),
+            (v4i64 (EXTRACT_SUBREG ACC1024:$src, sub_256_lo))>;
+def : Pat<(int_aie2_ext_256_1024_acc ACC1024:$src, 0x1),
+            (v4i64 (EXTRACT_SUBREG ACC1024:$src, sub_256_hi))>;
+def : Pat<(int_aie2_ext_256_1024_acc ACC1024:$src, 0x2),
+            (v4i64 (EXTRACT_SUBREG ACC1024:$src, sub_512_hi_256_lo))>;
+def : Pat<(int_aie2_ext_256_1024_acc ACC1024:$src, 0x3),
+            (v4i64 (EXTRACT_SUBREG ACC1024:$src, sub_512_hi_256_hi))>;
 
 // VBOR / VBAND
 foreach vec256Ty = [v32i8, v16i16, v8i32] in {

@@ -690,10 +690,10 @@ v16int16 test_concat_v8int16  (v8int16 v0, v8int16 v1 ) {
 // CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX:%.*]], 0
 // CHECK-NEXT:    br i1 [[CMP_I]], label [[IF_THEN_I:%.*]], label [[IF_ELSE_I:%.*]]
 // CHECK:       if.then.i:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.512.acc32(<8 x i64> [[A:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.512.acc(<8 x i64> [[A:%.*]], i32 0)
 // CHECK-NEXT:    br label [[_ZL15EXTRACT_V8ACC32DV16_U7__ACC32I_EXIT:%.*]]
 // CHECK:       if.else.i:
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.512.acc32(<8 x i64> [[A]], i32 1)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.512.acc(<8 x i64> [[A]], i32 1)
 // CHECK-NEXT:    br label [[_ZL15EXTRACT_V8ACC32DV16_U7__ACC32I_EXIT]]
 // CHECK:       _ZL15extract_v8acc32Dv16_u7__acc32i.exit:
 // CHECK-NEXT:    [[RETVAL_0_I:%.*]] = phi <4 x i64> [ [[TMP0]], [[IF_THEN_I]] ], [ [[TMP1]], [[IF_ELSE_I]] ]
@@ -754,10 +754,10 @@ v16acc32 test_concat (v8acc32 a0, v8acc32 a1){
 // CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX:%.*]], 0
 // CHECK-NEXT:    br i1 [[CMP_I]], label [[IF_THEN_I:%.*]], label [[IF_ELSE_I:%.*]]
 // CHECK:       if.then.i:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.512.acc64(<8 x i64> [[A:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.512.acc(<8 x i64> [[A:%.*]], i32 0)
 // CHECK-NEXT:    br label [[_ZL15EXTRACT_V4ACC64DV8_U7__ACC64I_EXIT:%.*]]
 // CHECK:       if.else.i:
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.512.acc64(<8 x i64> [[A]], i32 1)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.512.acc(<8 x i64> [[A]], i32 1)
 // CHECK-NEXT:    br label [[_ZL15EXTRACT_V4ACC64DV8_U7__ACC64I_EXIT]]
 // CHECK:       _ZL15extract_v4acc64Dv8_u7__acc64i.exit:
 // CHECK-NEXT:    [[RETVAL_0_I:%.*]] = phi <4 x i64> [ [[TMP0]], [[IF_THEN_I]] ], [ [[TMP1]], [[IF_ELSE_I]] ]
@@ -824,16 +824,16 @@ v8acc64 test_concat (v4acc64 a0, v4acc64 a1){
 // CHECK-NEXT:      i32 2, label [[IF_THEN5_I:%.*]]
 // CHECK-NEXT:    ]
 // CHECK:       if.then.i:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc32(<16 x i64> [[A:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc(<16 x i64> [[A:%.*]], i32 0)
 // CHECK-NEXT:    br label [[_ZL15EXTRACT_V8ACC32DV32_U7__ACC32I_EXIT:%.*]]
 // CHECK:       if.then2.i:
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc32(<16 x i64> [[A]], i32 1)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc(<16 x i64> [[A]], i32 1)
 // CHECK-NEXT:    br label [[_ZL15EXTRACT_V8ACC32DV32_U7__ACC32I_EXIT]]
 // CHECK:       if.then5.i:
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc32(<16 x i64> [[A]], i32 2)
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc(<16 x i64> [[A]], i32 2)
 // CHECK-NEXT:    br label [[_ZL15EXTRACT_V8ACC32DV32_U7__ACC32I_EXIT]]
 // CHECK:       if.else6.i:
-// CHECK-NEXT:    [[TMP3:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc32(<16 x i64> [[A]], i32 3)
+// CHECK-NEXT:    [[TMP3:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc(<16 x i64> [[A]], i32 3)
 // CHECK-NEXT:    br label [[_ZL15EXTRACT_V8ACC32DV32_U7__ACC32I_EXIT]]
 // CHECK:       _ZL15extract_v8acc32Dv32_u7__acc32i.exit:
 // CHECK-NEXT:    [[RETVAL_0_I:%.*]] = phi <4 x i64> [ [[TMP0]], [[IF_THEN_I]] ], [ [[TMP1]], [[IF_THEN2_I]] ], [ [[TMP2]], [[IF_THEN5_I]] ], [ [[TMP3]], [[IF_ELSE6_I]] ]
@@ -917,10 +917,10 @@ v32acc32 test_concat (v8acc32 a0, v8acc32 a1, v8acc32 a2, v8acc32 a3)
 // CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX:%.*]], 0
 // CHECK-NEXT:    br i1 [[CMP_I]], label [[IF_THEN_I:%.*]], label [[IF_ELSE_I:%.*]]
 // CHECK:       if.then.i:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc32(<16 x i64> [[A:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc(<16 x i64> [[A:%.*]], i32 0)
 // CHECK-NEXT:    br label [[_ZL16EXTRACT_V16ACC32DV32_U7__ACC32I_EXIT:%.*]]
 // CHECK:       if.else.i:
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc32(<16 x i64> [[A]], i32 1)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc(<16 x i64> [[A]], i32 1)
 // CHECK-NEXT:    br label [[_ZL16EXTRACT_V16ACC32DV32_U7__ACC32I_EXIT]]
 // CHECK:       _ZL16extract_v16acc32Dv32_u7__acc32i.exit:
 // CHECK-NEXT:    [[RETVAL_0_I:%.*]] = phi <8 x i64> [ [[TMP0]], [[IF_THEN_I]] ], [ [[TMP1]], [[IF_ELSE_I]] ]
@@ -988,16 +988,16 @@ v32acc32 test_concat (v16acc32 a0, v16acc32 a1){
 // CHECK-NEXT:      i32 2, label [[IF_THEN5_I:%.*]]
 // CHECK-NEXT:    ]
 // CHECK:       if.then.i:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc64(<16 x i64> [[A:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc(<16 x i64> [[A:%.*]], i32 0)
 // CHECK-NEXT:    br label [[_ZL15EXTRACT_V4ACC64DV16_U7__ACC64I_EXIT:%.*]]
 // CHECK:       if.then2.i:
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc64(<16 x i64> [[A]], i32 1)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc(<16 x i64> [[A]], i32 1)
 // CHECK-NEXT:    br label [[_ZL15EXTRACT_V4ACC64DV16_U7__ACC64I_EXIT]]
 // CHECK:       if.then5.i:
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc64(<16 x i64> [[A]], i32 2)
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc(<16 x i64> [[A]], i32 2)
 // CHECK-NEXT:    br label [[_ZL15EXTRACT_V4ACC64DV16_U7__ACC64I_EXIT]]
 // CHECK:       if.else6.i:
-// CHECK-NEXT:    [[TMP3:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc64(<16 x i64> [[A]], i32 3)
+// CHECK-NEXT:    [[TMP3:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc(<16 x i64> [[A]], i32 3)
 // CHECK-NEXT:    br label [[_ZL15EXTRACT_V4ACC64DV16_U7__ACC64I_EXIT]]
 // CHECK:       _ZL15extract_v4acc64Dv16_u7__acc64i.exit:
 // CHECK-NEXT:    [[RETVAL_0_I:%.*]] = phi <4 x i64> [ [[TMP0]], [[IF_THEN_I]] ], [ [[TMP1]], [[IF_THEN2_I]] ], [ [[TMP2]], [[IF_THEN5_I]] ], [ [[TMP3]], [[IF_ELSE6_I]] ]
@@ -1010,7 +1010,7 @@ v4acc64 test_extract_v4acc64 (v16acc64 a, int idx)
 
 // CHECK-LABEL: @_Z25test_extract_v4acc64_idx0Dv16_u7__acc64i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc64(<16 x i64> [[A:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc(<16 x i64> [[A:%.*]], i32 0)
 // CHECK-NEXT:    ret <4 x i64> [[TMP0]]
 //
 v4acc64 test_extract_v4acc64_idx0 (v16acc64 a, int idx)
@@ -1093,10 +1093,10 @@ v16acc64 test_concat (v4acc64 a0, v4acc64 a1, v4acc64 a2, v4acc64 a3)
 // CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX:%.*]], 0
 // CHECK-NEXT:    br i1 [[CMP_I]], label [[IF_THEN_I:%.*]], label [[IF_ELSE_I:%.*]]
 // CHECK:       if.then.i:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc64(<16 x i64> [[A:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc(<16 x i64> [[A:%.*]], i32 0)
 // CHECK-NEXT:    br label [[_ZL15EXTRACT_V8ACC64DV16_U7__ACC64I_EXIT:%.*]]
 // CHECK:       if.else.i:
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc64(<16 x i64> [[A]], i32 1)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc(<16 x i64> [[A]], i32 1)
 // CHECK-NEXT:    br label [[_ZL15EXTRACT_V8ACC64DV16_U7__ACC64I_EXIT]]
 // CHECK:       _ZL15extract_v8acc64Dv16_u7__acc64i.exit:
 // CHECK-NEXT:    [[RETVAL_0_I:%.*]] = phi <8 x i64> [ [[TMP0]], [[IF_THEN_I]] ], [ [[TMP1]], [[IF_ELSE_I]] ]
@@ -1342,10 +1342,10 @@ v32accfloat test_concat(v8accfloat a0, v8accfloat a1, v8accfloat a2, v8accfloat 
 // CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX:%.*]], 0
 // CHECK-NEXT:    br i1 [[CMP_I]], label [[IF_THEN_I:%.*]], label [[IF_ELSE_I:%.*]]
 // CHECK:       if.then.i:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.512.acc32(<8 x i64> [[A:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.512.acc(<8 x i64> [[A:%.*]], i32 0)
 // CHECK-NEXT:    br label [[_ZL18EXTRACT_V8ACCFLOATDV16_U10__ACCFLOATI_EXIT:%.*]]
 // CHECK:       if.else.i:
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.512.acc32(<8 x i64> [[A]], i32 1)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.512.acc(<8 x i64> [[A]], i32 1)
 // CHECK-NEXT:    br label [[_ZL18EXTRACT_V8ACCFLOATDV16_U10__ACCFLOATI_EXIT]]
 // CHECK:       _ZL18extract_v8accfloatDv16_u10__accfloati.exit:
 // CHECK-NEXT:    [[RETVAL_0_I:%.*]] = phi <4 x i64> [ [[TMP0]], [[IF_THEN_I]] ], [ [[TMP1]], [[IF_ELSE_I]] ]
@@ -1363,16 +1363,16 @@ v8accfloat test_extract_v8accfloat(v16accfloat a, int idx) {
 // CHECK-NEXT:      i32 2, label [[IF_THEN5_I:%.*]]
 // CHECK-NEXT:    ]
 // CHECK:       if.then.i:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc32(<16 x i64> [[A:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc(<16 x i64> [[A:%.*]], i32 0)
 // CHECK-NEXT:    br label [[_ZL18EXTRACT_V8ACCFLOATDV32_U10__ACCFLOATI_EXIT:%.*]]
 // CHECK:       if.then2.i:
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc32(<16 x i64> [[A]], i32 1)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc(<16 x i64> [[A]], i32 1)
 // CHECK-NEXT:    br label [[_ZL18EXTRACT_V8ACCFLOATDV32_U10__ACCFLOATI_EXIT]]
 // CHECK:       if.then5.i:
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc32(<16 x i64> [[A]], i32 2)
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc(<16 x i64> [[A]], i32 2)
 // CHECK-NEXT:    br label [[_ZL18EXTRACT_V8ACCFLOATDV32_U10__ACCFLOATI_EXIT]]
 // CHECK:       if.else6.i:
-// CHECK-NEXT:    [[TMP3:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc32(<16 x i64> [[A]], i32 3)
+// CHECK-NEXT:    [[TMP3:%.*]] = tail call <4 x i64> @llvm.aie2.ext.256.1024.acc(<16 x i64> [[A]], i32 3)
 // CHECK-NEXT:    br label [[_ZL18EXTRACT_V8ACCFLOATDV32_U10__ACCFLOATI_EXIT]]
 // CHECK:       _ZL18extract_v8accfloatDv32_u10__accfloati.exit:
 // CHECK-NEXT:    [[RETVAL_0_I:%.*]] = phi <4 x i64> [ [[TMP0]], [[IF_THEN_I]] ], [ [[TMP1]], [[IF_THEN2_I]] ], [ [[TMP2]], [[IF_THEN5_I]] ], [ [[TMP3]], [[IF_ELSE6_I]] ]
@@ -1387,10 +1387,10 @@ v8accfloat test_extract_v8accfloat(v32accfloat a, int idx) {
 // CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX:%.*]], 0
 // CHECK-NEXT:    br i1 [[CMP_I]], label [[IF_THEN_I:%.*]], label [[IF_ELSE_I:%.*]]
 // CHECK:       if.then.i:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc32(<16 x i64> [[A:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc(<16 x i64> [[A:%.*]], i32 0)
 // CHECK-NEXT:    br label [[_ZL19EXTRACT_V16ACCFLOATDV32_U10__ACCFLOATI_EXIT:%.*]]
 // CHECK:       if.else.i:
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc32(<16 x i64> [[A]], i32 1)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc(<16 x i64> [[A]], i32 1)
 // CHECK-NEXT:    br label [[_ZL19EXTRACT_V16ACCFLOATDV32_U10__ACCFLOATI_EXIT]]
 // CHECK:       _ZL19extract_v16accfloatDv32_u10__accfloati.exit:
 // CHECK-NEXT:    [[RETVAL_0_I:%.*]] = phi <8 x i64> [ [[TMP0]], [[IF_THEN_I]] ], [ [[TMP1]], [[IF_ELSE_I]] ]
