@@ -772,15 +772,10 @@ def : Concat256<int_aie2_concat_bf512_bf256, VEC512, VEC256>;
 def : Concat512<int_aie2_concat_bf1024_bf512, VEC1024, VEC512>;
 def : Concat1024<int_aie2_concat_bf1024_bf256, VEC1024, VEC256>;
 
-// acc32
-def : Concat256<int_aie2_concat_512_256_acc32, ACC512, ACC256>;
-def : Concat512<int_aie2_concat_1024_512_acc32, ACC1024, ACC512>;
-def : Concat1024<int_aie2_concat_1024_256_acc32, ACC1024, ACC256>;
-
-// acc64
-def : Concat256<int_aie2_concat_512_256_acc64, ACC512, ACC256>;
-def : Concat512<int_aie2_concat_1024_512_acc64, ACC1024, ACC512>;
-def : Concat1024<int_aie2_concat_1024_256_acc64, ACC1024, ACC256>;
+// acc
+def : Concat256<int_aie2_concat_512_256_acc, ACC512, ACC256>;
+def : Concat512<int_aie2_concat_1024_512_acc, ACC1024, ACC512>;
+def : Concat1024<int_aie2_concat_1024_256_acc, ACC1024, ACC256>;
 
 // Extract
 def : Pat<(int_aie2_ext_I256_I512 VEC512:$src, 0x0),

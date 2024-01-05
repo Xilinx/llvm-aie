@@ -742,7 +742,7 @@ v16acc32 test_set_v16acc32 (int idx, v8acc32 b){
 
 // CHECK-LABEL: @_Z11test_concatDv8_u7__acc32S_(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <8 x i64> @llvm.aie2.concat.512.256.acc32(<4 x i64> [[A0:%.*]], <4 x i64> [[A1:%.*]])
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <8 x i64> @llvm.aie2.concat.512.256.acc(<4 x i64> [[A0:%.*]], <4 x i64> [[A1:%.*]])
 // CHECK-NEXT:    ret <8 x i64> [[TMP0]]
 //
 v16acc32 test_concat (v8acc32 a0, v8acc32 a1){
@@ -808,7 +808,7 @@ v8acc64 test_set_v8acc64 (int idx, v4acc64 b){
 //
 // CHECK-LABEL: @_Z11test_concatDv4_u7__acc64S_(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <8 x i64> @llvm.aie2.concat.512.256.acc64(<4 x i64> [[A0:%.*]], <4 x i64> [[A1:%.*]])
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <8 x i64> @llvm.aie2.concat.512.256.acc(<4 x i64> [[A0:%.*]], <4 x i64> [[A1:%.*]])
 // CHECK-NEXT:    ret <8 x i64> [[TMP0]]
 //
 v8acc64 test_concat (v4acc64 a0, v4acc64 a1){
@@ -902,7 +902,7 @@ v32acc32 test_set_v32acc32 (int idx, v8acc32 b){
 
 // CHECK-LABEL: @_Z11test_concatDv8_u7__acc32S_S_S_(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i64> @llvm.aie2.concat.1024.256.acc32(<4 x i64> [[A0:%.*]], <4 x i64> [[A1:%.*]], <4 x i64> [[A2:%.*]], <4 x i64> [[A3:%.*]])
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i64> @llvm.aie2.concat.1024.256.acc(<4 x i64> [[A0:%.*]], <4 x i64> [[A1:%.*]], <4 x i64> [[A2:%.*]], <4 x i64> [[A3:%.*]])
 // CHECK-NEXT:    ret <16 x i64> [[TMP0]]
 //
 v32acc32 test_concat (v8acc32 a0, v8acc32 a1, v8acc32 a2, v8acc32 a3)
@@ -970,7 +970,7 @@ v32acc32 test_set_v32acc32 (int idx, v16acc32 b){
 
 // CHECK-LABEL: @_Z11test_concatDv16_u7__acc32S_(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i64> @llvm.aie2.concat.1024.512.acc32(<8 x i64> [[A0:%.*]], <8 x i64> [[A1:%.*]])
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i64> @llvm.aie2.concat.1024.512.acc(<8 x i64> [[A0:%.*]], <8 x i64> [[A1:%.*]])
 // CHECK-NEXT:    ret <16 x i64> [[TMP0]]
 //
 v32acc32 test_concat (v16acc32 a0, v16acc32 a1){
@@ -1078,7 +1078,7 @@ v16acc64 test_set_v16acc64 (int idx, v4acc64 b)
 
 // CHECK-LABEL: @_Z11test_concatDv4_u7__acc64S_S_S_(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i64> @llvm.aie2.concat.1024.256.acc64(<4 x i64> [[A0:%.*]], <4 x i64> [[A1:%.*]], <4 x i64> [[A2:%.*]], <4 x i64> [[A3:%.*]])
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i64> @llvm.aie2.concat.1024.256.acc(<4 x i64> [[A0:%.*]], <4 x i64> [[A1:%.*]], <4 x i64> [[A2:%.*]], <4 x i64> [[A3:%.*]])
 // CHECK-NEXT:    ret <16 x i64> [[TMP0]]
 //
 v16acc64 test_concat (v4acc64 a0, v4acc64 a1, v4acc64 a2, v4acc64 a3)
@@ -1149,7 +1149,7 @@ v16acc64 test_set_v16acc64 (int idx, v8acc64 b)
 
 // CHECK-LABEL: @_Z11test_concatDv8_u7__acc64S_(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i64> @llvm.aie2.concat.1024.512.acc64(<8 x i64> [[A0:%.*]], <8 x i64> [[A1:%.*]])
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i64> @llvm.aie2.concat.1024.512.acc(<8 x i64> [[A0:%.*]], <8 x i64> [[A1:%.*]])
 // CHECK-NEXT:    ret <16 x i64> [[TMP0]]
 //
 v16acc64 test_concat (v8acc64 a0, v8acc64 a1)
@@ -1312,7 +1312,7 @@ v32accfloat test_set_v32accfloat(int idx, v16accfloat b) {
 
 // CHECK-LABEL: @_Z11test_concatDv8_u10__accfloatS_(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <8 x i64> @llvm.aie2.concat.512.256.acc32(<4 x i64> [[A0:%.*]], <4 x i64> [[A1:%.*]])
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <8 x i64> @llvm.aie2.concat.512.256.acc(<4 x i64> [[A0:%.*]], <4 x i64> [[A1:%.*]])
 // CHECK-NEXT:    ret <8 x i64> [[TMP0]]
 //
 v16accfloat test_concat(v8accfloat a0, v8accfloat a1) {
@@ -1321,7 +1321,7 @@ v16accfloat test_concat(v8accfloat a0, v8accfloat a1) {
 
 // CHECK-LABEL: @_Z11test_concatDv16_u10__accfloatS_(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i64> @llvm.aie2.concat.1024.512.acc32(<8 x i64> [[A0:%.*]], <8 x i64> [[A1:%.*]])
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i64> @llvm.aie2.concat.1024.512.acc(<8 x i64> [[A0:%.*]], <8 x i64> [[A1:%.*]])
 // CHECK-NEXT:    ret <16 x i64> [[TMP0]]
 //
 v32accfloat test_concat(v16accfloat a0, v16accfloat a1) {
@@ -1330,7 +1330,7 @@ v32accfloat test_concat(v16accfloat a0, v16accfloat a1) {
 
 // CHECK-LABEL: @_Z11test_concatDv8_u10__accfloatS_S_S_(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i64> @llvm.aie2.concat.1024.256.acc32(<4 x i64> [[A0:%.*]], <4 x i64> [[A1:%.*]], <4 x i64> [[A2:%.*]], <4 x i64> [[A3:%.*]])
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i64> @llvm.aie2.concat.1024.256.acc(<4 x i64> [[A0:%.*]], <4 x i64> [[A1:%.*]], <4 x i64> [[A2:%.*]], <4 x i64> [[A3:%.*]])
 // CHECK-NEXT:    ret <16 x i64> [[TMP0]]
 //
 v32accfloat test_concat(v8accfloat a0, v8accfloat a1, v8accfloat a2, v8accfloat a3) {

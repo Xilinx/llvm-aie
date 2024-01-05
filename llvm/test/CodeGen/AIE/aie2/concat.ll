@@ -78,7 +78,7 @@ define dso_local noundef <8 x i64> @_Z11test_concatDv8_u7__acc32S_(<4 x i64> nou
 ; CHECK-NEXT:    vmov amlh0, amll2 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
-  %0 = tail call <8 x i64> @llvm.aie2.concat.512.256.acc32(<4 x i64> %a0, <4 x i64> %a1)
+  %0 = tail call <8 x i64> @llvm.aie2.concat.512.256.acc(<4 x i64> %a0, <4 x i64> %a1)
   ret <8 x i64> %0
 }
 
@@ -94,7 +94,7 @@ define dso_local noundef <16 x i64> @_Z11test_concatDv8_u7__acc32S_S_S_(<4 x i64
 ; CHECK-NEXT:    vmov amhh0, amll4 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
-  %0 = tail call <16 x i64> @llvm.aie2.concat.1024.256.acc32(<4 x i64> %a0, <4 x i64> %a1, <4 x i64> %a2, <4 x i64> %a3)
+  %0 = tail call <16 x i64> @llvm.aie2.concat.1024.256.acc(<4 x i64> %a0, <4 x i64> %a1, <4 x i64> %a2, <4 x i64> %a3)
   ret <16 x i64> %0
 }
 
@@ -110,7 +110,7 @@ define dso_local noundef <16 x i64> @_Z11test_concatDv16_u7__acc32S_(<8 x i64> n
 ; CHECK-NEXT:    vmov bmh0, bml2 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
-  %0 = tail call <16 x i64> @llvm.aie2.concat.1024.512.acc32(<8 x i64> %a0, <8 x i64> %a1)
+  %0 = tail call <16 x i64> @llvm.aie2.concat.1024.512.acc(<8 x i64> %a0, <8 x i64> %a1)
   ret <16 x i64> %0
 }
 
@@ -126,7 +126,7 @@ define dso_local noundef <8 x i64> @_Z11test_concatDv4_u7__acc64S_(<4 x i64> nou
 ; CHECK-NEXT:    vmov amlh0, amll2 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
-  %0 = tail call <8 x i64> @llvm.aie2.concat.512.256.acc64(<4 x i64> %a0, <4 x i64> %a1)
+  %0 = tail call <8 x i64> @llvm.aie2.concat.512.256.acc(<4 x i64> %a0, <4 x i64> %a1)
   ret <8 x i64> %0
 }
 
@@ -142,7 +142,7 @@ define dso_local noundef <16 x i64> @_Z11test_concatDv8_u7__acc64S_(<8 x i64> no
 ; CHECK-NEXT:    vmov bmh0, bml2 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
-  %0 = tail call <16 x i64> @llvm.aie2.concat.1024.512.acc64(<8 x i64> %a0, <8 x i64> %a1)
+  %0 = tail call <16 x i64> @llvm.aie2.concat.1024.512.acc(<8 x i64> %a0, <8 x i64> %a1)
   ret <16 x i64> %0
 }
 
@@ -158,7 +158,7 @@ define dso_local noundef <16 x i64> @_Z11test_concatDv4_u7__acc64S_S_S_(<4 x i64
 ; CHECK-NEXT:    vmov amhh0, amll4 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
-  %0 = tail call <16 x i64> @llvm.aie2.concat.1024.256.acc64(<4 x i64> %a0, <4 x i64> %a1, <4 x i64> %a2, <4 x i64> %a3)
+  %0 = tail call <16 x i64> @llvm.aie2.concat.1024.256.acc(<4 x i64> %a0, <4 x i64> %a1, <4 x i64> %a2, <4 x i64> %a3)
   ret <16 x i64> %0
 }
 
@@ -166,9 +166,6 @@ entry:
 declare <16 x i32> @llvm.aie2.concat.I512.I256(<8 x i32>, <8 x i32>) #2
 declare <32 x i32> @llvm.aie2.concat.I1024.I256(<8 x i32>, <8 x i32>, <8 x i32>, <8 x i32>) #2
 declare <32 x i32> @llvm.aie2.concat.I1024.I512(<16 x i32>, <16 x i32>) #2
-declare <8 x i64> @llvm.aie2.concat.512.256.acc32(<4 x i64>, <4 x i64>) #2
-declare <16 x i64> @llvm.aie2.concat.1024.256.acc32(<4 x i64>, <4 x i64>, <4 x i64>, <4 x i64>) #2
-declare <16 x i64> @llvm.aie2.concat.1024.512.acc32(<8 x i64>, <8 x i64>) #2
-declare <8 x i64> @llvm.aie2.concat.512.256.acc64(<4 x i64>, <4 x i64>) #2
-declare <16 x i64> @llvm.aie2.concat.1024.512.acc64(<8 x i64>, <8 x i64>) #2
-declare <16 x i64> @llvm.aie2.concat.1024.256.acc64(<4 x i64>, <4 x i64>, <4 x i64>, <4 x i64>) #2
+declare <8 x i64> @llvm.aie2.concat.512.256.acc(<4 x i64>, <4 x i64>) #2
+declare <16 x i64> @llvm.aie2.concat.1024.256.acc(<4 x i64>, <4 x i64>, <4 x i64>, <4 x i64>) #2
+declare <16 x i64> @llvm.aie2.concat.1024.512.acc(<8 x i64>, <8 x i64>) #2

@@ -600,18 +600,12 @@ def int_aie2_concat_I1024_I512 : ClangBuiltin<"__builtin_aiev2_concat_I1024_I512
 def int_aie2_concat_bf512_bf256  : ClangBuiltin<"__builtin_aiev2_concat_bf512_bf256">,  AIEV2Concat_bf512_bf256;
 def int_aie2_concat_bf1024_bf256 : ClangBuiltin<"__builtin_aiev2_concat_bf1024_bf256">, AIEV2Concat_bf1024_bf256;
 def int_aie2_concat_bf1024_bf512 : ClangBuiltin<"__builtin_aiev2_concat_bf1024_bf512">, AIEV2Concat_bf1024_bf512;
-def int_aie2_concat_512_256_acc32  :
-   ClangBuiltin<"__builtin_aiev2_concat_ACC512_ACC256_acc32">,  AIEV2Concat_512_256_acc;
-def int_aie2_concat_1024_256_acc32 :
-   ClangBuiltin<"__builtin_aiev2_concat_ACC1024_ACC256_acc32">, AIEV2Concat_1024_256_acc;
-def int_aie2_concat_1024_512_acc32 :
-   ClangBuiltin<"__builtin_aiev2_concat_ACC1024_ACC512_acc32">, AIEV2Concat_1024_512_acc;
-def int_aie2_concat_512_256_acc64  :
-   ClangBuiltin<"__builtin_aiev2_concat_ACC512_ACC256_acc64">,  AIEV2Concat_512_256_acc;
-def int_aie2_concat_1024_256_acc64 :
-   ClangBuiltin<"__builtin_aiev2_concat_ACC1024_ACC256_acc64">, AIEV2Concat_1024_256_acc;
-def int_aie2_concat_1024_512_acc64 :
-   ClangBuiltin<"__builtin_aiev2_concat_ACC1024_ACC512_acc64">, AIEV2Concat_1024_512_acc;
+def int_aie2_concat_512_256_acc  :
+   ClangBuiltin<"__builtin_aiev2_concat_ACC512_ACC256">,  AIEV2Concat_512_256_acc;
+def int_aie2_concat_1024_256_acc :
+   ClangBuiltin<"__builtin_aiev2_concat_ACC1024_ACC256">, AIEV2Concat_1024_256_acc;
+def int_aie2_concat_1024_512_acc :
+   ClangBuiltin<"__builtin_aiev2_concat_ACC1024_ACC512">, AIEV2Concat_1024_512_acc;
 
 //srs
 def int_aie2_I256_v16_acc32_srs : ClangBuiltin<"__builtin_aiev2_I256_v16_acc32_srs">, AIEV2I256V16Acc32I;

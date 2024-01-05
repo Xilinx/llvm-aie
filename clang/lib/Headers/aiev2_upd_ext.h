@@ -561,7 +561,7 @@ INTRINSIC(v16accfloat) set_v16accfloat(int idx, v8accfloat b) {
 }
 
 INTRINSIC(v16accfloat) concat(v8accfloat a0, v8accfloat a1) {
-  return __builtin_aiev2_concat_ACC512_ACC256_acc32(a0, a1);
+  return __builtin_aiev2_concat_ACC512_ACC256(a0, a1);
 }
 
 // Extract 256-bit portion from 512-bit register
@@ -617,7 +617,7 @@ INTRINSIC(v16acc32) set_v16acc32(int idx, v8acc32 b) {
 }
 
 INTRINSIC(v16acc32) concat(v8acc32 a0, v8acc32 a1) {
-  return __builtin_aiev2_concat_ACC512_ACC256_acc32(a0, a1);
+  return __builtin_aiev2_concat_ACC512_ACC256(a0, a1);
 }
 
 // Extract 256-bit portion from 512-bit register
@@ -645,7 +645,7 @@ INTRINSIC(v8acc64) set_v8acc64(int idx, v4acc64 b) {
 }
 
 INTRINSIC(v8acc64) concat(v4acc64 a0, v4acc64 a1) {
-  return __builtin_aiev2_concat_ACC512_ACC256_acc64(a0, a1);
+  return __builtin_aiev2_concat_ACC512_ACC256(a0, a1);
 }
 
 #if 0
@@ -1475,7 +1475,7 @@ INTRINSIC(v32accfloat) set_v32accfloat(int idx, v8accfloat b) {
 
 INTRINSIC(v32accfloat)
 concat(v8accfloat a0, v8accfloat a1, v8accfloat a2, v8accfloat a3) {
-  return __builtin_aiev2_concat_ACC1024_ACC256_acc32(a0, a1, a2, a3);
+  return __builtin_aiev2_concat_ACC1024_ACC256(a0, a1, a2, a3);
 }
 
 // Extract 512-bit portion from 1024-bit register
@@ -1503,7 +1503,7 @@ INTRINSIC(v32accfloat) set_v32accfloat(int idx, v16accfloat b) {
 }
 
 INTRINSIC(v32accfloat) concat(v16accfloat a0, v16accfloat a1) {
-  return __builtin_aiev2_concat_ACC1024_ACC512_acc32(a0, a1);
+  return __builtin_aiev2_concat_ACC1024_ACC512(a0, a1);
 }
 
 // Extract 256-bit portion from 1024-bit register
@@ -1611,7 +1611,7 @@ INTRINSIC(v32acc32) set_v32acc32(int idx, v8acc32 b) {
 }
 
 INTRINSIC(v32acc32) concat(v8acc32 a0, v8acc32 a1, v8acc32 a2, v8acc32 a3) {
-  return __builtin_aiev2_concat_ACC1024_ACC256_acc32(a0, a1, a2, a3);
+  return __builtin_aiev2_concat_ACC1024_ACC256(a0, a1, a2, a3);
 }
 
 // Extract 512-bit portion from 1024-bit register
@@ -1639,7 +1639,7 @@ INTRINSIC(v32acc32) set_v32acc32(int idx, v16acc32 b) {
 }
 
 INTRINSIC(v32acc32) concat(v16acc32 a0, v16acc32 a1) {
-  return __builtin_aiev2_concat_ACC1024_ACC512_acc32(a0, a1);
+  return __builtin_aiev2_concat_ACC1024_ACC512(a0, a1);
 }
 
 // Extract 256-bit portion from 1024-bit register
@@ -1679,7 +1679,7 @@ INTRINSIC(v16acc64) set_v16acc64(int idx, v4acc64 b) {
 }
 
 INTRINSIC(v16acc64) concat(v4acc64 a0, v4acc64 a1, v4acc64 a2, v4acc64 a3) {
-  return __builtin_aiev2_concat_ACC1024_ACC256_acc64(a0, a1, a2, a3);
+  return __builtin_aiev2_concat_ACC1024_ACC256(a0, a1, a2, a3);
 }
 
 // Extract 512-bit portion from 1024-bit register
@@ -1707,7 +1707,7 @@ INTRINSIC(v16acc64) set_v16acc64(int idx, v8acc64 b) {
 }
 
 INTRINSIC(v16acc64) concat(v8acc64 a0, v8acc64 a1) {
-  return __builtin_aiev2_concat_ACC1024_ACC512_acc64(a0, a1);
+  return __builtin_aiev2_concat_ACC1024_ACC512(a0, a1);
 }
 
 #if 0
