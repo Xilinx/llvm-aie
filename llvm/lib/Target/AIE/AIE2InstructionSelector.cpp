@@ -2474,7 +2474,7 @@ bool AIE2InstructionSelector::selectG_AIE_LOAD_UPS(MachineInstr &UPSI,
   // Do not try to combine if one of the load's defs is used by another
   // instruction between the load and the VUPS or if there is a store
   // between the load and the VUPS.
-  if (!canDelayMemOp(*LoadOp, UPSI))
+  if (!canDelayMemOp(*LoadOp, UPSI, MRI))
     return false;
 
   if (!canCombineSRSUPS(*LoadOp, UPSI) ||
@@ -4148,7 +4148,7 @@ bool AIE2InstructionSelector::selectG_AIE_LOAD_CONV(MachineInstr &CONVI,
   // Do not try to combine if one of the load's defs is used by another
   // instruction between the load and the VCONV or if there is a store
   // between the load and the VCONV.
-  if (!canDelayMemOp(*LoadOp, CONVI))
+  if (!canDelayMemOp(*LoadOp, CONVI, MRI))
     return false;
 
   if (!canCombineCONVLoad(*LoadOp, CONVI) ||
