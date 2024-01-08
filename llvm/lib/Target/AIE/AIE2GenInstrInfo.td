@@ -536,7 +536,8 @@ let Itinerary = II_PADD_2D in {
           (ins eP:$ptr, eD:$mod),
           [], "padds.2d", "[$ptr], $mod">,
         AIE2_ag_standalone__ag_pstm_2d;
-
+    }
+    let DecoderMethod = "DecodePADDB_2DInstruction" in {
       def PADDB_2D : AIE2_ldb_ptr_inc_inst_ldb<
           (outs eP:$ptr_out, eDC:$count_out),
           (ins eP:$ptr, eD:$mod),
@@ -565,7 +566,8 @@ let Itinerary = II_PADD_3D in {
           (ins eP:$ptr, eDS:$mod),
           [], "padds.3d", "[$ptr], $mod">,
         AIE2_ag_standalone__ag_pstm_3d;
-
+    }
+  let DecoderMethod = "DecodePADDB_3DInstruction" in {
       def PADDB_3D : AIE2_ldb_ptr_inc_inst_ldb<
           (outs eP:$ptr_out, eDC:$count_lo_out, eDC:$count_hi_out),
           (ins eP:$ptr, eDS:$mod),

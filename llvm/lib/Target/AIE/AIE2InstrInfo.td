@@ -501,7 +501,10 @@ class vec_nop {
 // These are instances of formats with only nops.
 
 let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
-def NOP : AIE2_inst_nop_instr16<(outs), (ins), [], "nop", "">;
+  def NOP : AIE2_inst_nop_instr16<(outs), (ins), [], "nop", ""> {
+    field bits<12> dontcare12;
+    let nop16 = dontcare12;
+  }
 }
 
 def NOP32 : AIE2__instr32__alu<(ins)>, alu_nop {
