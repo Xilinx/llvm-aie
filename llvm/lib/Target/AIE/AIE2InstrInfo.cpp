@@ -141,6 +141,10 @@ bool AIE2InstrInfo::verifyGenericInstruction(const MachineInstr &MI,
                                              StringRef &ErrInfo) const {
   const MachineRegisterInfo &MRI = MI.getMF()->getRegInfo();
   switch (MI.getOpcode()) {
+  case AIE2::G_AIE_ZEXT_EXTRACT_VECTOR_ELT:
+  case AIE2::G_AIE_SEXT_EXTRACT_VECTOR_ELT:
+    ErrInfo = "Expected 32bit scalar destination";
+    return MRI.getType(MI.getOperand(0).getReg()) == LLT::scalar(32);
   case AIE2::G_AIE_PAD_VECTOR_UNDEF:
     return verifySameLaneTypes(MI, ErrInfo) &&
            isLegalTypeToUnpad(MRI.getType(MI.getOperand(0).getReg()),

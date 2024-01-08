@@ -373,44 +373,8 @@ body:             |
     %0:gprregbank(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %1(<32 x s32>), %2(s32)
     $r0 = COPY %0(s32)
     PseudoRET implicit $lr, implicit $r0
-
 ...
----
-name:            _512bit_extract_and_extend
-alignment:       16
-exposesReturnsTwice: false
-legalized:       true
-regBankSelected: true
-selected:        false
-body:             |
-  bb.1.entry:
-    liveins: $x0
 
-    ; CHECK-LABEL: name: _512bit_extract_and_extend
-    ; CHECK: liveins: $x0
-    ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
-    ; CHECK-NEXT: [[MOV_RLC_imm10_pseudo:%[0-9]+]]:ers4 = MOV_RLC_imm10_pseudo 17
-    ; CHECK-NEXT: [[MOV_RLC_imm10_pseudo1:%[0-9]+]]:ers4 = MOV_RLC_imm10_pseudo 0
-    ; CHECK-NEXT: [[VEXTRACT_S16_:%[0-9]+]]:er = VEXTRACT_S16 [[COPY]], [[MOV_RLC_imm10_pseudo]]
-    ; CHECK-NEXT: [[VEXTRACT_S16_1:%[0-9]+]]:er = VEXTRACT_S16 [[COPY]], [[MOV_RLC_imm10_pseudo1]]
-    ; CHECK-NEXT: [[ADD:%[0-9]+]]:er = ADD [[VEXTRACT_S16_1]], [[VEXTRACT_S16_]], implicit-def dead $srcarry
-    ; CHECK-NEXT: [[EXTENDs16_:%[0-9]+]]:er = EXTENDs16 [[ADD]]
-    ; CHECK-NEXT: $r0 = COPY [[EXTENDs16_]]
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
-    %1:vregbank(<32 x s16>) = COPY $x0
-    %3:gprregbank(s32) = G_CONSTANT i32 17
-    %5:gprregbank(s32) = G_CONSTANT i32 0
-    %2:gprregbank(s16) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %1(<32 x s16>), %3(s32)
-    %4:gprregbank(s16) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %1(<32 x s16>), %5(s32)
-    %7:gprregbank(s32) = G_ANYEXT %4(s16)
-    %8:gprregbank(s32) = G_ANYEXT %2(s16)
-    %9:gprregbank(s32) = G_ADD %7, %8
-    %6:gprregbank(s32) = G_SEXT_INREG %9, 16
-    $r0 = COPY %6(s32)
-    PseudoRET implicit $lr, implicit $r0
-
-...
 ---
 name:            _1024bit_extractelt_and_use
 legalized:       true
@@ -448,7 +412,6 @@ body:             |
     PseudoRET implicit $lr, implicit $r0
 ...
 
-...
 ---
 name:            extract_32bit_v2int32
 alignment:       16

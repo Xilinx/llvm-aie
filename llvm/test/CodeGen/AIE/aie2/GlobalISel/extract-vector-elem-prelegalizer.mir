@@ -6,29 +6,51 @@
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2 -run-pass=aie2-prelegalizer-combiner %s -verify-machineinstrs -o - | FileCheck %s
+
 ---
-name:            _extract_elem16bit_256bitvec
+name:            _extract_elem16bit_zext_256bitvec
 legalized:       false
 body:             |
   bb.1.entry:
     liveins: $wl0
 
-    ; CHECK-LABEL: name: _extract_elem16bit_256bitvec
+    ; CHECK-LABEL: name: _extract_elem16bit_zext_256bitvec
     ; CHECK: liveins: $wl0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s16>) = COPY $wl0
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
     ; CHECK-NEXT: [[AIE_ZEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_ZEXT_EXTRACT_VECTOR_ELT [[COPY]](<16 x s16>), [[C]](s32)
-    ; CHECK-NEXT: $r0 = COPY [[AIE_ZEXT_EXTRACT_VECTOR_ELT]](s32)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
+    ; CHECK-NEXT: [[ASSERT_ZEXT:%[0-9]+]]:_(s32) = G_ASSERT_ZEXT [[AIE_ZEXT_EXTRACT_VECTOR_ELT]], 16
+    ; CHECK-NEXT: $r0 = COPY [[ASSERT_ZEXT]](s32)
     %1:_(<16 x s16>) = COPY $wl0
     %2:_(s32) = G_CONSTANT i32 1
     %0:_(s16) = G_EXTRACT_VECTOR_ELT %1(<16 x s16>), %2(s32)
     %3:_(s32) = G_ZEXT %0(s16)
     $r0 = COPY %3(s32)
-    PseudoRET implicit $lr, implicit $r0
-
 ...
+
+---
+name:            _extract_elem16bit_256bitvec_zext_16to64bit
+legalized:       false
+body:             |
+  bb.1.entry:
+    liveins: $wl0
+    ; CHECK-LABEL: name: _extract_elem16bit_256bitvec_zext_16to64bit
+    ; CHECK: liveins: $wl0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s16>) = COPY $wl0
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; CHECK-NEXT: [[AIE_ZEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_ZEXT_EXTRACT_VECTOR_ELT [[COPY]](<16 x s16>), [[C]](s32)
+    ; CHECK-NEXT: [[ASSERT_ZEXT:%[0-9]+]]:_(s32) = G_ASSERT_ZEXT [[AIE_ZEXT_EXTRACT_VECTOR_ELT]], 16
+    ; CHECK-NEXT: [[ZEXT:%[0-9]+]]:_(s64) = G_ZEXT [[ASSERT_ZEXT]](s32)
+    ; CHECK-NEXT: $l0 = COPY [[ZEXT]](s64)
+    %1:_(<16 x s16>) = COPY $wl0
+    %2:_(s32) = G_CONSTANT i32 1
+    %0:_(s16) = G_EXTRACT_VECTOR_ELT %1(<16 x s16>), %2(s32)
+    %3:_(s64) = G_ZEXT %0(s16)
+    $l0 = COPY %3(s64)
+...
+
 ---
 name:            _extract_elem16bit_sext_256bitvec
 legalized:       false
@@ -42,16 +64,37 @@ body:             |
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s16>) = COPY $wl0
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
     ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<16 x s16>), [[C]](s32)
-    ; CHECK-NEXT: $r0 = COPY [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s32)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
+    ; CHECK-NEXT: [[ASSERT_SEXT:%[0-9]+]]:_(s32) = G_ASSERT_SEXT [[AIE_SEXT_EXTRACT_VECTOR_ELT]], 16
+    ; CHECK-NEXT: $r0 = COPY [[ASSERT_SEXT]](s32)
     %1:_(<16 x s16>) = COPY $wl0
     %2:_(s32) = G_CONSTANT i32 1
     %0:_(s16) = G_EXTRACT_VECTOR_ELT %1(<16 x s16>), %2(s32)
     %3:_(s32) = G_SEXT %0(s16)
     $r0 = COPY %3(s32)
-    PseudoRET implicit $lr, implicit $r0
-
 ...
+
+---
+name:            _extract_elem16bit_256bitvec_sext_16to64bit
+legalized:       false
+body:             |
+  bb.1.entry:
+    liveins: $wl0
+    ; CHECK-LABEL: name: _extract_elem16bit_256bitvec_sext_16to64bit
+    ; CHECK: liveins: $wl0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s16>) = COPY $wl0
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<16 x s16>), [[C]](s32)
+    ; CHECK-NEXT: [[ASSERT_SEXT:%[0-9]+]]:_(s32) = G_ASSERT_SEXT [[AIE_SEXT_EXTRACT_VECTOR_ELT]], 16
+    ; CHECK-NEXT: [[SEXT:%[0-9]+]]:_(s64) = G_SEXT [[ASSERT_SEXT]](s32)
+    ; CHECK-NEXT: $l0 = COPY [[SEXT]](s64)
+    %1:_(<16 x s16>) = COPY $wl0
+    %2:_(s32) = G_CONSTANT i32 1
+    %0:_(s16) = G_EXTRACT_VECTOR_ELT %1(<16 x s16>), %2(s32)
+    %3:_(s64) = G_SEXT %0(s16)
+    $l0 = COPY %3(s64)
+...
+
 ---
 name:            _extract_elem8bit_sext_256bitvec
 legalized:       false
@@ -65,16 +108,59 @@ body:             |
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<32 x s8>) = COPY $wl0
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
     ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<32 x s8>), [[C]](s32)
-    ; CHECK-NEXT: $r0 = COPY [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s32)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
+    ; CHECK-NEXT: [[ASSERT_SEXT:%[0-9]+]]:_(s32) = G_ASSERT_SEXT [[AIE_SEXT_EXTRACT_VECTOR_ELT]], 8
+    ; CHECK-NEXT: $r0 = COPY [[ASSERT_SEXT]](s32)
     %1:_(<32 x s8>) = COPY $wl0
     %2:_(s32) = G_CONSTANT i32 1
     %0:_(s8) = G_EXTRACT_VECTOR_ELT %1(<32 x s8>), %2(s32)
     %3:_(s32) = G_SEXT %0(s8)
     $r0 = COPY %3(s32)
-    PseudoRET implicit $lr, implicit $r0
-
 ...
+
+---
+name:            extract_elem8bit_256bitvec_sext_8to16bit
+legalized:       false
+body:             |
+  bb.1.entry:
+    liveins: $wl0
+    ; CHECK-LABEL: name: extract_elem8bit_256bitvec_sext_8to16bit
+    ; CHECK: liveins: $wl0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<32 x s8>) = COPY $wl0
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<32 x s8>), [[C]](s32)
+    ; CHECK-NEXT: [[ASSERT_SEXT:%[0-9]+]]:_(s32) = G_ASSERT_SEXT [[AIE_SEXT_EXTRACT_VECTOR_ELT]], 8
+    ; CHECK-NEXT: $r0 = COPY [[ASSERT_SEXT]](s32)
+    %1:_(<32 x s8>) = COPY $wl0
+    %2:_(s32) = G_CONSTANT i32 1
+    %0:_(s8) = G_EXTRACT_VECTOR_ELT %1(<32 x s8>), %2(s32)
+    %4:_(s16) = G_SEXT %0(s8)
+    %3:_(s32) = G_ANYEXT %4(s16)
+    $r0 = COPY %3(s32)
+...
+
+---
+name:            extract_elem8bit_256bitvec_sext_8to64bit
+legalized:       false
+body:             |
+  bb.1.entry:
+    liveins: $wl0
+    ; CHECK-LABEL: name: extract_elem8bit_256bitvec_sext_8to64bit
+    ; CHECK: liveins: $wl0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<32 x s8>) = COPY $wl0
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<32 x s8>), [[C]](s32)
+    ; CHECK-NEXT: [[ASSERT_SEXT:%[0-9]+]]:_(s32) = G_ASSERT_SEXT [[AIE_SEXT_EXTRACT_VECTOR_ELT]], 8
+    ; CHECK-NEXT: [[SEXT:%[0-9]+]]:_(s64) = G_SEXT [[ASSERT_SEXT]](s32)
+    ; CHECK-NEXT: $l1 = COPY [[SEXT]](s64)
+    %1:_(<32 x s8>) = COPY $wl0
+    %2:_(s32) = G_CONSTANT i32 1
+    %0:_(s8) = G_EXTRACT_VECTOR_ELT %1(<32 x s8>), %2(s32)
+    %4:_(s64) = G_SEXT %0(s8)
+    $l1 = COPY %4(s64)
+...
+
 ---
 name:            _extract_elem8bit_zext_256bitvec
 body:             |
@@ -87,18 +173,58 @@ body:             |
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<32 x s8>) = COPY $wl0
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
     ; CHECK-NEXT: [[AIE_ZEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_ZEXT_EXTRACT_VECTOR_ELT [[COPY]](<32 x s8>), [[C]](s32)
-    ; CHECK-NEXT: $r0 = COPY [[AIE_ZEXT_EXTRACT_VECTOR_ELT]](s32)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
+    ; CHECK-NEXT: [[ASSERT_ZEXT:%[0-9]+]]:_(s32) = G_ASSERT_ZEXT [[AIE_ZEXT_EXTRACT_VECTOR_ELT]], 8
+    ; CHECK-NEXT: $r0 = COPY [[ASSERT_ZEXT]](s32)
     %1:_(<32 x s8>) = COPY $wl0
     %2:_(s32) = G_CONSTANT i32 1
     %0:_(s8) = G_EXTRACT_VECTOR_ELT %1(<32 x s8>), %2(s32)
     %3:_(s32) = G_ZEXT %0(s8)
     $r0 = COPY %3(s32)
-    PseudoRET implicit $lr, implicit $r0
+...
 
+---
+name:            extract_elem8bit_256bitvec_zext_8to16bit
+body:             |
+  bb.1.entry:
+    liveins: $wl0
+    ; CHECK-LABEL: name: extract_elem8bit_256bitvec_zext_8to16bit
+    ; CHECK: liveins: $wl0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<32 x s8>) = COPY $wl0
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; CHECK-NEXT: [[AIE_ZEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_ZEXT_EXTRACT_VECTOR_ELT [[COPY]](<32 x s8>), [[C]](s32)
+    ; CHECK-NEXT: [[ASSERT_ZEXT:%[0-9]+]]:_(s32) = G_ASSERT_ZEXT [[AIE_ZEXT_EXTRACT_VECTOR_ELT]], 8
+    ; CHECK-NEXT: $r0 = COPY [[ASSERT_ZEXT]](s32)
+    %1:_(<32 x s8>) = COPY $wl0
+    %2:_(s32) = G_CONSTANT i32 1
+    %0:_(s8) = G_EXTRACT_VECTOR_ELT %1(<32 x s8>), %2(s32)
+    %4:_(s16) = G_ZEXT %0(s8)
+    %3:_(s32) = G_ANYEXT %4(s16)
+    $r0 = COPY %3(s32)
 ...
+
+---
+name:            extract_elem8bit_256bitvec_zext_8to64bit
+body:             |
+  bb.1.entry:
+    liveins: $wl0
+    ; CHECK-LABEL: name: extract_elem8bit_256bitvec_zext_8to64bit
+    ; CHECK: liveins: $wl0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<32 x s8>) = COPY $wl0
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; CHECK-NEXT: [[AIE_ZEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_ZEXT_EXTRACT_VECTOR_ELT [[COPY]](<32 x s8>), [[C]](s32)
+    ; CHECK-NEXT: [[ASSERT_ZEXT:%[0-9]+]]:_(s32) = G_ASSERT_ZEXT [[AIE_ZEXT_EXTRACT_VECTOR_ELT]], 8
+    ; CHECK-NEXT: [[ZEXT:%[0-9]+]]:_(s64) = G_ZEXT [[ASSERT_ZEXT]](s32)
+    ; CHECK-NEXT: $l0 = COPY [[ZEXT]](s64)
+    %1:_(<32 x s8>) = COPY $wl0
+    %2:_(s32) = G_CONSTANT i32 1
+    %0:_(s8) = G_EXTRACT_VECTOR_ELT %1(<32 x s8>), %2(s32)
+    %4:_(s64) = G_ZEXT %0(s8)
+    $l0 = COPY %4(s64)
+...
+
 # If the User of the vector extract is not an ext (from S8/S16->S32), then don't combine.
-...
 ---
 name:            test_vec_extract_no_combine0
 legalized:       false
@@ -115,16 +241,14 @@ body:             |
     ; CHECK-NEXT: [[TRUNC:%[0-9]+]]:_(s8) = G_TRUNC [[EVEC]](s16)
     ; CHECK-NEXT: [[ZEXT:%[0-9]+]]:_(s32) = G_ZEXT [[TRUNC]](s8)
     ; CHECK-NEXT: $r0 = COPY [[ZEXT]](s32)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
     %1:_(<32 x s16>) = COPY $x0
     %3:_(s32) = G_CONSTANT i32 17
     %2:_(s16) = G_EXTRACT_VECTOR_ELT %1(<32 x s16>), %3(s32)
     %4:_(s8) = G_TRUNC %2(s16)
     %5:_(s32) = G_ZEXT %4(s8)
     $r0 = COPY %5(s32)
-    PseudoRET implicit $lr, implicit $r0
-
 ...
+
 ---
 name:            test_vec_extract_no_combine1
 legalized:       false
@@ -142,15 +266,13 @@ body:             |
     ; CHECK-NEXT: [[FRAME_INDEX:%[0-9]+]]:_(p0) = G_FRAME_INDEX %stack.0
     ; CHECK-NEXT: [[EVEC:%[0-9]+]]:_(s32) = G_EXTRACT_VECTOR_ELT [[COPY]](<32 x s32>), [[C]](s32)
     ; CHECK-NEXT: G_STORE [[EVEC]](s32), [[FRAME_INDEX]](p0) :: (volatile store (s32))
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
     %1:_(<32 x s32>) = COPY $y2
     %4:_(s32) = G_CONSTANT i32 31
     %2:_(p0) = G_FRAME_INDEX %stack.0
     %3:_(s32) = G_EXTRACT_VECTOR_ELT %1(<32 x s32>), %4(s32)
     G_STORE %3(s32), %2(p0) :: (volatile store (s32))
-    PseudoRET implicit $lr, implicit $r0
-
 ...
+
 ---
 name:            test_vec_extract_mutiple_users
 legalized:       false
@@ -171,7 +293,6 @@ body:             |
     ; CHECK-NEXT: [[FRAME_INDEX:%[0-9]+]]:_(p0) = G_FRAME_INDEX %stack.0
     ; CHECK-NEXT: G_STORE [[ZEXT]](s32), [[FRAME_INDEX]](p0) :: (volatile store (s32))
     ; CHECK-NEXT: $r0 = COPY [[SEXT]](s32)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
     %1:_(<16 x s16>) = COPY $wl0
     %2:_(s32) = G_CONSTANT i32 1
     %0:_(s16) = G_EXTRACT_VECTOR_ELT %1(<16 x s16>), %2(s32)
@@ -180,5 +301,4 @@ body:             |
     %5:_(p0) = G_FRAME_INDEX %stack.0
     G_STORE %4(s32), %5(p0) :: (volatile store (s32))
     $r0 = COPY %3(s32)
-    PseudoRET implicit $lr, implicit $r0
 ...

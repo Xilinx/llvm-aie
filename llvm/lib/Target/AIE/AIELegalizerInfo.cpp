@@ -167,17 +167,10 @@ AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
   // G_PTRTOINT), the only legal extension is S20 -> S32.
   // Extensions to types larger than 64 bits have to be broken down into
   // multiple parts.
-  getActionDefinitionsBuilder({G_SEXT, G_ZEXT})
+  getActionDefinitionsBuilder({G_ANYEXT, G_SEXT, G_ZEXT})
       .legalFor({{S32, S20}})
       .clampScalar(0, S32, S32);
   // FIXME: (s|z|any)ext s20 to s64 is broken.
-
-  auto &ANYEXT = getActionDefinitionsBuilder(G_ANYEXT)
-                     .legalFor({{S32, S20}})
-                     .clampScalar(0, S32, S32);
-
-  if (ST.isAIE2())
-    ANYEXT.legalFor({{S32, S16}});
 
   auto &VANDOR = getActionDefinitionsBuilder({G_AND, G_OR})
                      .legalFor({S32})
