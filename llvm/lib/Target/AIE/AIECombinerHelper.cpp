@@ -76,16 +76,19 @@ bool isUseOf(const MachineInstr &MI, const MachineInstr &Use) {
 
 /// \return true if \a MemI can be moved just before \a Dest in order to allow
 /// post-increment combining
-bool llvm::canDelayMemOp(MachineInstr &MemI, MachineInstr &Dest) {
+bool llvm::canDelayMemOp(MachineInstr &MemI, MachineInstr &Dest,
+                         MachineRegisterInfo &MRI) {
   if (MemI.getParent() != Dest.getParent())
     return false;
   auto MII = std::next(MemI.getIterator());
   auto MIE = Dest.getIterator();
   auto InstrRange = make_range(MII, MIE);
   bool SawStore = MemI.mayStore();
-  return none_of(InstrRange, [&](const MachineInstr &MI) {
-    return isUseOf(MI, MemI) || !MI.isSafeToMove(nullptr, SawStore);
-  });
+  auto UnsafeToMovePast = [&](const MachineInstr &MI) {
+    return (isUseOf(MI, MemI) && !isTriviallyDead(MI, MRI)) ||
+           !MI.isSafeToMove(nullptr, SawStore);
+  };
+  return none_of(InstrRange, UnsafeToMovePast);
 }
 
 MachineInstr *findLastRegUseInBB(Register Reg, MachineInstr &IgnoreUser,
@@ -254,7 +257,7 @@ MachineInstr *findPostIncMatch(MachineInstr &MemI, MachineRegisterInfo &MRI,
     // Instruction with side effects are also blocking: Loads, stores, calls,
     // instructions with side effects cannot be moved.
     // TODO: try move other instructions that block us from combining
-    else if (canDelayMemOp(MemI, PtrAddInsertLoc)) {
+    else if (canDelayMemOp(MemI, PtrAddInsertLoc, MRI)) {
       // If Definition of the offset is a G_CONSTANT we have to move that
       // instruction up
       MatchData = {
