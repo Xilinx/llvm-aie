@@ -20974,8 +20974,6 @@ static llvm::Intrinsic::ID getAIE2IntrinsicFunction(unsigned BuiltinID) {
     return Intrinsic::aie2_add_2d;
   case AIE::BI__builtin_aiev2_add_3d:
     return Intrinsic::aie2_add_3d;
-  case AIE::BI__builtin_float_to_bfloat16:
-    return Intrinsic::aie2_float_to_bfloat16;
   case AIE::BI__builtin_aiev2_get_ss:
     return Intrinsic::aie2_get_ss;
   case AIE::BI__builtin_aiev2_get_ss_nb:
@@ -21096,13 +21094,6 @@ Value *CodeGenFunction::EmitAIE2BuiltinExpr(unsigned BuiltinID,
     Builder.CreateDefaultAlignedStore(Count2, Count2Addr);
 
     return Builder.CreateExtractValue(Val, 0);
-  }
-  case AIE::BI__builtin_float_to_bfloat16: {
-    Value *Arg0 = EmitScalarExpr(E->getArg(0));
-    llvm::Intrinsic::ID IntrinsicID = getAIE2IntrinsicFunction(BuiltinID);
-    assert(IntrinsicID != Intrinsic::not_intrinsic);
-    Function *F = CGM.getIntrinsic(IntrinsicID);
-    return Builder.CreateCall(F, {Arg0});
   }
   case AIE::BI__builtin_aiev2_put_ms_nb:
   case AIE::BI__builtin_aiev2_put_ms_nb_packet_header:

@@ -876,9 +876,27 @@ bool AIELegalizerInfo::legalizeG_FPTRUNC(LegalizerHelper &Helper,
   if (DstTy != LLT::scalar(16) || SrcTy != LLT::scalar(32))
     return false;
 
-  MIRBuilder.buildIntrinsic(Intrinsic::aie2_float_to_bfloat16, DstReg, false, false)
-      .addUse(SrcReg);
+  LLT ACC512 = LLT::fixed_vector(8, 64);
+  LLT V16S32 = LLT::fixed_vector(16, 32);
+  LLT V16S16 = LLT::fixed_vector(16, 16);
+  Register Vec512Reg = MRI.createGenericVirtualRegister(V16S32);
+  Register Vec512Undef = MRI.createGenericVirtualRegister(V16S32);
+  Register IdxReg = MRI.createGenericVirtualRegister(LLT::scalar(32));
+  MIRBuilder.buildUndef(Vec512Undef);
+  MIRBuilder.buildConstant(IdxReg, 0);
+  MIRBuilder.buildInstr(AIE2::G_INSERT_VECTOR_ELT, {Vec512Reg},
+                        {Vec512Undef, SrcReg, IdxReg});
 
+  Register Acc512Reg = MRI.createGenericVirtualRegister(ACC512);
+  MIRBuilder.buildBitcast(Acc512Reg, Vec512Reg);
+
+  Register Vec256Reg = MRI.createGenericVirtualRegister(V16S16);
+  MIRBuilder
+      .buildIntrinsic(Intrinsic::aie2_v16accfloat_to_v16bf16, Vec256Reg)
+      .addUse(Acc512Reg);
+
+  MIRBuilder.buildInstr(TargetOpcode::G_EXTRACT_VECTOR_ELT, {DstReg},
+                        {Vec256Reg, IdxReg});
   MI.eraseFromParent();
   return true;
 }

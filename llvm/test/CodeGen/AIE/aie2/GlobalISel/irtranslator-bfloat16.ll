@@ -22,21 +22,6 @@ entry:
   ret %class.bfloat16 %arg.coerce
 }
 
-define dso_local %class.bfloat16 @_Z15bfloat16_assignv()  {
-  ; CHECK-LABEL: name: _Z15bfloat16_assignv
-  ; CHECK: bb.1.entry:
-  ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s32) = G_FCONSTANT float 1.000000e+00
-  ; CHECK-NEXT:   [[DEF:%[0-9]+]]:_(s16) = G_IMPLICIT_DEF
-  ; CHECK-NEXT:   [[INT:%[0-9]+]]:_(s16) = G_INTRINSIC intrinsic(@llvm.aie2.float.to.bfloat16), [[C]](s32)
-  ; CHECK-NEXT:   [[ANYEXT:%[0-9]+]]:_(s32) = G_ANYEXT [[INT]](s16)
-  ; CHECK-NEXT:   $r0 = COPY [[ANYEXT]](s32)
-  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit $r0
-entry:
-  %0 = tail call bfloat @llvm.aie2.float.to.bfloat16(float 1.000000e+00)
-  %.fca.0.insert = insertvalue %class.bfloat16 poison, bfloat %0, 0
-  ret %class.bfloat16 %.fca.0.insert
-}
-
 define dso_local %class.bfloat16 @_Z13bfloat16_div28bfloat16f(%class.bfloat16 %arg.coerce, float noundef %f)  {
   ; CHECK-LABEL: name: _Z13bfloat16_div28bfloat16f
   ; CHECK: bb.1.entry:
@@ -160,4 +145,3 @@ declare <32 x bfloat> @llvm.aie2.concat.bf512.bf256(<16 x bfloat>, <16 x bfloat>
 declare <16 x bfloat> @llvm.aie2.v16accfloat.to.v16bf16(<8 x i64>)
 declare <8 x i64> @llvm.aie2.v16accfloat()
 declare <16 x bfloat> @llvm.aie2.v16bfloat16()
-declare bfloat @llvm.aie2.float.to.bfloat16(float)
