@@ -882,14 +882,34 @@ void llvm::applyExtractVecEltAndExt(
     MachineInstr &MI, MachineRegisterInfo &MRI, MachineIRBuilder &B,
     std::pair<MachineInstr *, bool> &MatchInfo) {
   B.setInstrAndDebugLoc(MI);
-  Register DstReg = MatchInfo.first->getOperand(0).getReg();
-  Register SrcReg0 = MI.getOperand(1).getReg();
-  Register SrcReg1 = MI.getOperand(2).getReg();
-  unsigned Opcode = MatchInfo.second == 0 ? AIE2::G_AIE_ZEXT_EXTRACT_VECTOR_ELT
-                                          : AIE2::G_AIE_SEXT_EXTRACT_VECTOR_ELT;
-  B.buildInstr(Opcode, {DstReg}, {SrcReg0, SrcReg1});
+  auto [MatchMI, IsSignedExt] = MatchInfo;
+  const Register ExtractDstReg = MI.getOperand(0).getReg();
+  const LLT ExtractDstTy = MRI.getType(ExtractDstReg);
+  const Register ExtendDstReg = MatchMI->getOperand(0).getReg();
+  const LLT ExtendDstTy = MRI.getType(ExtendDstReg);
+  const Register SrcReg0 = MI.getOperand(1).getReg();
+  const Register SrcReg1 = MI.getOperand(2).getReg();
+  const LLT S32 = LLT::scalar(32);
+
+  const unsigned Opcode = IsSignedExt ? AIE2::G_AIE_SEXT_EXTRACT_VECTOR_ELT
+                                      : AIE2::G_AIE_ZEXT_EXTRACT_VECTOR_ELT;
+  const Register ExtractElt32BitDst = MRI.createGenericVirtualRegister(S32);
+  B.buildInstr(Opcode, {ExtractElt32BitDst}, {SrcReg0, SrcReg1});
+
+  const unsigned AssertOpcode =
+      IsSignedExt ? TargetOpcode::G_ASSERT_SEXT : TargetOpcode::G_ASSERT_ZEXT;
+  if (ExtendDstTy == LLT::scalar(32)) {
+    B.buildAssertInstr(AssertOpcode, ExtendDstReg, ExtractElt32BitDst,
+                       ExtractDstTy.getSizeInBits());
+  } else {
+    const Register Assert32BitDst = MRI.createGenericVirtualRegister(S32);
+    B.buildAssertInstr(AssertOpcode, Assert32BitDst, ExtractElt32BitDst,
+                       ExtractDstTy.getSizeInBits());
+    B.buildExtOrTrunc(MatchMI->getOpcode(), ExtendDstReg, Assert32BitDst);
+  }
+
   MI.eraseFromParent();
-  MatchInfo.first->eraseFromParent();
+  MatchMI->eraseFromParent();
 }
 
 // Match something like:
