@@ -387,7 +387,6 @@ BUILTIN(__builtin_aiev2_load_4x64_lo, "V8iV8i", "nc")
 BUILTIN(__builtin_aiev2_load_4x64_hi, "V8iV8i", "nc")
 
 // bfloat16 conversions
-BUILTIN(__builtin_float_to_bfloat16, "yf", "nc")
 BUILTIN(__builtin_bfloat16_to_int, "iy", "nc")
 // vector bfloat16 to vector int
 BUILTIN(__builtin_aiev2_v16bf16_to_v16i32, "V16iV16yi", "nc")

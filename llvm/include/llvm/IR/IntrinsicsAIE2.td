@@ -340,9 +340,6 @@ class AIEV2LOAD4X : DefaultAttrsIntrinsic<[llvm_v8i32_ty], [llvm_v8i32_ty],
 
 
 // bfloat16 conversions
-class AIEV2FloatToBF16 : Intrinsic<[llvm_bfloat_ty],
-      [llvm_float_ty],
-      [IntrNoMem]>;
 class AIEV2BF16ToInt : Intrinsic<[llvm_i32_ty],
       [llvm_bfloat_ty],
       [IntrNoMem]>;
@@ -707,7 +704,6 @@ def int_aie2_load_4x32_hi : ClangBuiltin<"__builtin_aiev2_load_4x32_hi">, AIEV2L
 def int_aie2_load_4x64_lo : ClangBuiltin<"__builtin_aiev2_load_4x64_lo">, AIEV2LOAD4X;
 def int_aie2_load_4x64_hi : ClangBuiltin<"__builtin_aiev2_load_4x64_hi">, AIEV2LOAD4X;
 
-def int_aie2_float_to_bfloat16    : AIEV2FloatToBF16;
 def int_aie2_bfloat16_to_int      : ClangBuiltin<"__builtin_bfloat16_to_int">, AIEV2BF16ToInt;
 // vector bfloat16 to vector int
 def int_aie2_v16bf16_to_v16i32      : ClangBuiltin<"__builtin_aiev2_v16bf16_to_v16i32">, AIEV2V16BF16ToV16I;
