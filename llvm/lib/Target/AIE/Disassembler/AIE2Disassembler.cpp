@@ -328,9 +328,9 @@ static DecodeStatus DecodemShflDstRegisterClass(MCInst &Inst, uint64_t RegNo,
 
 #define SLOTDECODERDecl(ClassName)                                             \
   template <typename InsnType>                                                 \
-  static DecodeStatus decode##ClassName##Instruction(                          \
-      MCInst &MI, InsnType &Insn, int64_t Address,                             \
-      const MCDisassembler *Decoder)
+  static DecodeStatus decode##ClassName##Slot(MCInst &MI, InsnType &Insn,      \
+                                              int64_t Address,                 \
+                                              const MCDisassembler *Decoder)
 
 SLOTDECODERDecl(Lda);
 SLOTDECODERDecl(Ldb);
@@ -381,14 +381,14 @@ template <typename InsnType>
 static DecodeStatus DecodePADD_3DInstruction(MCInst &MI, InsnType &Insn,
                                              uint64_t Address,
                                              const MCDisassembler *Decoder);
-                                             template <typename InsnType>
+template <typename InsnType>
 static DecodeStatus DecodePADDB_2DInstruction(MCInst &MI, InsnType &Insn,
-                                             uint64_t Address,
-                                             const MCDisassembler *Decoder);
+                                              uint64_t Address,
+                                              const MCDisassembler *Decoder);
 template <typename InsnType>
 static DecodeStatus DecodePADDB_3DInstruction(MCInst &MI, InsnType &Insn,
-                                             uint64_t Address,
-                                             const MCDisassembler *Decoder);
+                                              uint64_t Address,
+                                              const MCDisassembler *Decoder);
 template <typename InsnType>
 static DecodeStatus DecodeVST_W_2DInstruction(MCInst &MI, InsnType &Insn,
                                               uint64_t Address,
@@ -530,57 +530,57 @@ DecodeStatus decodeSlot(const uint8_t *DecoderTable, MCInst &Inst,
 }
 
 template <typename InsnType>
-DecodeStatus decodeNopInstruction(MCInst &Inst, InsnType &Imm, int64_t Address,
-                                  const MCDisassembler *Decoder) {
+DecodeStatus decodeNopSlot(MCInst &Inst, InsnType &Imm, int64_t Address,
+                           const MCDisassembler *Decoder) {
   LLVM_DEBUG(dbgs() << "Decode Nop Instruction\n");
   return decodeSlot(DecoderTableNop16, Inst, Imm, Address, Decoder);
 }
 
 template <typename InsnType>
-DecodeStatus decodeLdaInstruction(MCInst &Inst, InsnType &Imm, int64_t Address,
-                                  const MCDisassembler *Decoder) {
+DecodeStatus decodeLdaSlot(MCInst &Inst, InsnType &Imm, int64_t Address,
+                           const MCDisassembler *Decoder) {
   LLVM_DEBUG(dbgs() << "Decode Lda Instruction\n");
   return decodeSlot(DecoderTableLda32, Inst, Imm, Address, Decoder);
 }
 
 template <typename InsnType>
-DecodeStatus decodeLdbInstruction(MCInst &Inst, InsnType &Imm, int64_t Address,
-                                  const MCDisassembler *Decoder) {
+DecodeStatus decodeLdbSlot(MCInst &Inst, InsnType &Imm, int64_t Address,
+                           const MCDisassembler *Decoder) {
   LLVM_DEBUG(dbgs() << "Decode Ldb Instruction\n");
   return decodeSlot(DecoderTableLdb32, Inst, Imm, Address, Decoder);
 }
 
 template <typename InsnType>
-DecodeStatus decodeAluInstruction(MCInst &Inst, InsnType &Imm, int64_t Address,
-                                  const MCDisassembler *Decoder) {
+DecodeStatus decodeAluSlot(MCInst &Inst, InsnType &Imm, int64_t Address,
+                           const MCDisassembler *Decoder) {
   LLVM_DEBUG(dbgs() << "Decode Alu Instruction\n");
   return decodeSlot(DecoderTableAlu32, Inst, Imm, Address, Decoder);
 }
 
 template <typename InsnType>
-DecodeStatus decodeMvInstruction(MCInst &Inst, InsnType &Imm, int64_t Address,
-                                 const MCDisassembler *Decoder) {
+DecodeStatus decodeMvSlot(MCInst &Inst, InsnType &Imm, int64_t Address,
+                          const MCDisassembler *Decoder) {
   LLVM_DEBUG(dbgs() << "Decode Mv Instruction\n");
   return decodeSlot(DecoderTableMv32, Inst, Imm, Address, Decoder);
 }
 
 template <typename InsnType>
-DecodeStatus decodeStInstruction(MCInst &Inst, InsnType &Imm, int64_t Address,
-                                 const MCDisassembler *Decoder) {
+DecodeStatus decodeStSlot(MCInst &Inst, InsnType &Imm, int64_t Address,
+                          const MCDisassembler *Decoder) {
   LLVM_DEBUG(dbgs() << "Decode St Instruction\n");
   return decodeSlot(DecoderTableSt32, Inst, Imm, Address, Decoder);
 }
 
 template <typename InsnType>
-DecodeStatus decodeVecInstruction(MCInst &Inst, InsnType &Imm, int64_t Address,
-                                  const MCDisassembler *Decoder) {
+DecodeStatus decodeVecSlot(MCInst &Inst, InsnType &Imm, int64_t Address,
+                           const MCDisassembler *Decoder) {
   LLVM_DEBUG(dbgs() << "Decode Vec Instruction\n");
   return decodeSlot(DecoderTableVec32, Inst, Imm, Address, Decoder);
 }
 
 template <typename InsnType>
-DecodeStatus decodeLngInstruction(MCInst &Inst, InsnType &Imm, int64_t Address,
-                                  const MCDisassembler *Decoder) {
+DecodeStatus decodeLngSlot(MCInst &Inst, InsnType &Imm, int64_t Address,
+                           const MCDisassembler *Decoder) {
   LLVM_DEBUG(dbgs() << "Decode Lng Instruction\n");
   return decodeSlot(DecoderTableLng48, Inst, Imm, Address, Decoder);
 }
@@ -692,7 +692,7 @@ static DecodeStatus DecodeST_3D_Instruction(MCInst &MI, InsnType &Insn,
 
   unsigned SrcRegRaw = fieldFromInstruction(Insn, 1, 7);
   unsigned PtrRegRaw = fieldFromInstruction(Insn, 18, 3);
-  unsigned ModRegRaw = fieldFromInstruction(Insn, 15, 3);                                              
+  unsigned ModRegRaw = fieldFromInstruction(Insn, 15, 3);
 
   if (SrcRegRaw >= std::size(mLdaSclDecoderTable))
     return MCDisassembler::Fail;
@@ -841,8 +841,8 @@ static DecodeStatus DecodePADD_3DInstruction(MCInst &MI, InsnType &Insn,
 }
 template <typename InsnType>
 static DecodeStatus DecodePADDB_2DInstruction(MCInst &MI, InsnType &Insn,
-                                             uint64_t Address,
-                                             const MCDisassembler *Decoder) {
+                                              uint64_t Address,
+                                              const MCDisassembler *Decoder) {
 
   unsigned PtrRegRaw = fieldFromInstruction(Insn, 13, 3);
   unsigned ModRegRaw = fieldFromInstruction(Insn, 10, 3);
@@ -854,8 +854,8 @@ static DecodeStatus DecodePADDB_2DInstruction(MCInst &MI, InsnType &Insn,
 
 template <typename InsnType>
 static DecodeStatus DecodePADDB_3DInstruction(MCInst &MI, InsnType &Insn,
-                                             uint64_t Address,
-                                             const MCDisassembler *Decoder) {
+                                              uint64_t Address,
+                                              const MCDisassembler *Decoder) {
 
   unsigned PtrRegRaw = fieldFromInstruction(Insn, 13, 3);
   unsigned ModRegRaw = fieldFromInstruction(Insn, 10, 2);
@@ -895,7 +895,7 @@ static DecodeStatus DecodeVST_3D_WInstruction(MCInst &MI, InsnType &Insn,
   unsigned SrcRegRaw = fieldFromInstruction(Insn, 3, 5);
   unsigned PtrRegRaw = fieldFromInstruction(Insn, 18, 3);
   unsigned ModRegRaw = fieldFromInstruction(Insn, 15, 3);
- 
+
   if (SrcRegRaw >= std::size(mWaDecoderTable))
     return MCDisassembler::Fail;
 
@@ -1246,7 +1246,7 @@ DecodeVLDB_UNPACK_2DInstruction(MCInst &MI, InsnType &Insn, uint64_t Address,
   unsigned DstRegRaw = fieldFromInstruction(Insn, 3, 4);
   unsigned PtrRegRaw = fieldFromInstruction(Insn, 13, 3);
   unsigned ModRegRaw = fieldFromInstruction(Insn, 10, 2);
-  
+
   if (DstRegRaw >= std::size(mXvDecoderTable)) // mXv == mXs
     return MCDisassembler::Fail;
 
@@ -1321,7 +1321,7 @@ DecodeVST_2D_SRS_BMInstruction(MCInst &MI, InsnType &Insn, uint64_t Address,
   unsigned ShftRegRaw = fieldFromInstruction(Insn, 10, 2);
   unsigned PtrRegRaw = fieldFromInstruction(Insn, 18, 3);
   unsigned ModRegRaw = fieldFromInstruction(Insn, 15, 3);
- 
+
   if (SrcRegRaw >= std::size(mBMmDecoderTable) ||
       ShftRegRaw >= std::size(mSsDecoderTable))
     return MCDisassembler::Fail;
@@ -1349,7 +1349,7 @@ DecodeVST_3D_SRS_BMInstruction(MCInst &MI, InsnType &Insn, uint64_t Address,
   unsigned ShftRegRaw = fieldFromInstruction(Insn, 10, 2);
   unsigned PtrRegRaw = fieldFromInstruction(Insn, 18, 3);
   unsigned ModRegRaw = fieldFromInstruction(Insn, 15, 3);
- 
+
   if (SrcRegRaw >= std::size(mBMmDecoderTable) ||
       ShftRegRaw >= std::size(mSsDecoderTable))
     return MCDisassembler::Fail;
@@ -1376,7 +1376,7 @@ DecodeVST_2D_CONV_BMInstruction(MCInst &MI, InsnType &Insn, uint64_t Address,
   unsigned SrcRegRaw = fieldFromInstruction(Insn, 3, 4);
   unsigned PtrRegRaw = fieldFromInstruction(Insn, 18, 3);
   unsigned ModRegRaw = fieldFromInstruction(Insn, 15, 3);
- 
+
   if (SrcRegRaw >= std::size(mBMmDecoderTable))
     return MCDisassembler::Fail;
 
