@@ -11,7 +11,6 @@
 class AIE2_add_r_ri_inst_alu <dag outs, dag ins, list<dag> pattern,
       string opcodestr = "", string argstr = "">
     : AIE2_inst_alu_instr32 <outs, ins, pattern, opcodestr, argstr> {
-  field bits<17> add_r_ri;
   bits<5> mRx;
   bits<7> c7s;
   bits<5> mRx0;
@@ -21,10 +20,8 @@ class AIE2_add_r_ri_inst_alu <dag outs, dag ins, list<dag> pattern,
 
 class AIE2_dmhb_sts_inst_lda < bits<1> op, dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_inst_lda_instr32 <outs, ins, pattern, opcodestr, argstr> {
-  bits<1> eOpSt;
   bits<5> mRv;
-
-  field bits<9> ag_nospill;
+  bits<9> ag_nospill;
 
   let lda = {ag_nospill,op,0b100,mRv,0b000};
 }
@@ -76,8 +73,7 @@ class AIE2_dmv_sts_q_inst_st < dag outs, dag ins, list<dag> pattern, string opco
 class AIE2_dmhb_lda_inst_lda < bits<2> op, dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_inst_lda_instr32 <outs, ins, pattern, opcodestr, argstr> {
   bits<5> mRa;
-
-  field bits<9> ag_nospill = 0;
+  bits<9> ag_nospill;
 
   let lda = {ag_nospill, op, 0b00, mRa, 0b111};
 }
@@ -90,16 +86,11 @@ class AIE2_dms_lda_inst_lda < dag outs, dag ins, list<dag> pattern, string opcod
   let lda = {ag_all, mLdaScl, 0b1};
 }
 
-class AIE2_aga_mems_dms_lda < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
-    AIE2_dms_lda_inst_lda <outs, ins, pattern, opcodestr, argstr> {
-  field bits<13> ag_all;
-}
-
 class AIE2_dmw_lda_am_inst_lda < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_inst_lda_instr32 <outs, ins, pattern, opcodestr, argstr> {
   bits<6> dst;
   bits<13> ag_all;
-  field bits<13> aga_memw = {ag_all};
+  bits<13> aga_memw = {ag_all};
 
   let lda = {aga_memw,dst,0b10};
 }
@@ -108,7 +99,7 @@ class AIE2_dmv_lda_q_inst_lda < dag outs, dag ins, list<dag> pattern, string opc
     AIE2_inst_lda_instr32 <outs, ins, pattern, opcodestr, argstr> {
   bits<2> dst;
   bits<13> ag_all;
-  field bits<13> aga_memv = {ag_all};
+  bits<13> aga_memv = {ag_all};
 
   let lda = {aga_memv,dst,0b00001, 0b1};
 }
@@ -164,17 +155,16 @@ class AIE2_dmv_lda_w_ptr_inst_lda < dag outs, dag ins, list<dag> pattern, string
 
 class AIE2_dmw_ldb_compr_inst_ldb < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_inst_ldb_instr32 <outs, ins, pattern, opcodestr, argstr> {
-   field bits<16> dmw_ldb_compr;
+  bits<16> dmw_ldb_compr;
 
   let ldb = {dmw_ldb_compr};
 }
 
-class AIE2_dmw_ldb_compr_op_inst_ldb <bits<2> op, bits<2> smode, dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
-    AIE2_dmw_ldb_compr_inst_ldb <outs, ins, pattern, opcodestr, argstr> {
+class AIE2_dmw_ldb_compr_op_inst_ldb <bits<2> op, bits<2> smode, dag outs, dag ins, string opcodestr = "", string argstr = "">:
+    AIE2_dmw_ldb_compr_inst_ldb <outs, ins, [], opcodestr, argstr> {
   bits<3> ptr;
   bits<5> dst;
-  field bits<1> dontcare1;
-  let dmw_ldb_compr = {ptr, op, smode, 0b10, dst, dontcare1, 0b0};
+  let dmw_ldb_compr = {ptr, op, smode, 0b10, dst, dontcare{1}, 0b0};
 
   let ldb = {dmw_ldb_compr};
 }
@@ -182,20 +172,17 @@ class AIE2_dmw_ldb_compr_op_inst_ldb <bits<2> op, bits<2> smode, dag outs, dag i
 class AIE2_dmw_ldb_compr_init_inst_ldb <bits<2> op, bits<2> smode, dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_dmw_ldb_compr_inst_ldb <outs, ins, pattern, opcodestr, argstr> {
   bits<3> ptr;
-  field bits<5> dontcare5;
-  field bits<1> dontcare1;
-  let dmw_ldb_compr = {ptr, op, smode, 0b10, dontcare5, dontcare1, 0b0};
+  let dmw_ldb_compr = {ptr, op, smode, 0b10, dontcare{5-1}, dontcare{1-1}, 0b0};
 
   let ldb = {dmw_ldb_compr};
 }
 
 class AIE2_tm_sts_inst_st < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_inst_st_instr32 <outs, ins, pattern, opcodestr, argstr> {
-  field bits<1> dontcare1;
   bits<3> ptr;
   bits<7> mSclSt;
 
-  let st = {ptr,0b1,dontcare1,0b0111,0b1000,mSclSt,0b0};
+  let st = {ptr,0b1,dontcare{1},0b0111,0b1000,mSclSt,0b0};
 }
 
 class AIE2_alu_cg_inst_alu < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
@@ -208,7 +195,6 @@ class AIE2_alu_cg_inst_alu < dag outs, dag ins, list<dag> pattern, string opcode
 
 class AIE2_alu_dstep_inst_alu < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_inst_alu_instr32 <outs, ins, pattern, opcodestr, argstr> {
-   field bits<15> alu_dstep;
   bits<5> d0;
   bits<5> s0;
   bits<5> s1;
@@ -227,7 +213,6 @@ class AIE2_alu_r_r_inst_alu < bits<4> op, dag outs, dag ins, list<dag> pattern, 
 
 class AIE2_alu_r_rr_inst_alu < bits<4> op, dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_inst_alu_instr32 <outs, ins, pattern, opcodestr, argstr> {
-   field bits<19> alu_r_rr;
   bits<5> mRx;
   bits<4> eBinArith;
   bits<5> mRx0;
@@ -312,13 +297,12 @@ class AIE2_dmw_lda_w_inst_lda < dag outs, dag ins, list<dag> pattern, string opc
 
 class AIE2_dmw_lda_ups_bf_inst_lda < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_inst_lda_instr32 <outs, ins, pattern, opcodestr, argstr> {
-  field bits<1> dontcare1;
   bits<5> dst;
   bits<9> ags_memw_ups;
   bits<9> ag_nospill = 0;
   let ags_memw_ups = {ag_nospill};
 
-  let lda = {ags_memw_ups, dontcare1, 0b010, dst, 0b000};
+  let lda = {ags_memw_ups, dontcare{1}, 0b010, dst, 0b000};
 }
 
 class AIE2_dmw_ldb_sparse_inst_ldb < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
@@ -332,8 +316,7 @@ class AIE2_dmw_ldb_sparse_op_inst_ldb <bits<2> op, bits<2> smode, dag outs, dag 
     AIE2_dmw_ldb_sparse_inst_ldb <outs, ins, pattern, opcodestr, argstr> {
   bits<3> ptr;
   bits<3> dst;
-  field bits<1> dontcare1;
-  let dmw_ldb_sparse = {ptr, op, smode, 0b1000, dst, dontcare1, 0b0};
+  let dmw_ldb_sparse = {ptr, op, smode, 0b1000, dst, dontcare{1}, 0b0};
 
   let ldb = {dmw_ldb_sparse};
 }
@@ -341,9 +324,7 @@ class AIE2_dmw_ldb_sparse_op_inst_ldb <bits<2> op, bits<2> smode, dag outs, dag 
 class AIE2_dmw_ldb_sparse_init_inst_ldb <bits<2> op, bits<2> smode, dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_dmw_ldb_sparse_inst_ldb <outs, ins, pattern, opcodestr, argstr> {
   bits<3> ptr;
-  field bits<3> dontcare3;
-  field bits<1> dontcare1;
-  let dmw_ldb_sparse = {ptr, op, smode, 0b1000, dontcare3, dontcare1, 0b0};
+  let dmw_ldb_sparse = {ptr, op, smode, 0b1000, dontcare{3-1}, dontcare{1}, 0b0};
 
   let ldb = {dmw_ldb_sparse};
 }
@@ -368,13 +349,12 @@ class AIE2_dmw_sts_am_inst_st < dag outs, dag ins, list<dag> pattern, string opc
 
 class AIE2_dmw_sts_srs_bf_inst_st < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_inst_st_instr32 <outs, ins, pattern, opcodestr, argstr> {
-  field bits<1> dontcare1;
   bits<5> src;
   bits<9> ags_memw_pack;
   bits<9> ag_nospill = 0;
   let ags_memw_pack = {ag_nospill};
 
-  let st = {ags_memw_pack, dontcare1, 0b100, src, 0b111};
+  let st = {ags_memw_pack, dontcare{1}, 0b100, src, 0b111};
 }
 
 class AIE2_dmw_sts_w_inst_st < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
@@ -401,7 +381,6 @@ class AIE2_event_inst_alu < dag outs, dag ins, list<dag> pattern, string opcodes
 
 class AIE2_jump_imm_lng < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_inst_lng_instr48 <outs, ins, pattern, opcodestr, argstr> {
-   field bits<20> jump_imm;
   bits<20> cpmaddr;
 
   let lng = {0b00000,cpmaddr,0b0,0b0000,0b0000,0b00000,0b010};
@@ -409,7 +388,6 @@ class AIE2_jump_imm_lng < dag outs, dag ins, list<dag> pattern, string opcodestr
 
 class AIE2_jump_ind_inst_alu < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_inst_alu_instr32 <outs, ins, pattern, opcodestr, argstr> {
-   field bits<3> jump_ind;
   bits<3> mPm;
 
   let alu = {0b0000000000,mPm,0b000100,0b0};
@@ -425,7 +403,6 @@ class AIE2_jump_link_imm_lng < dag outs, dag ins, list<dag> pattern, string opco
 
 class AIE2_jump_link_ind_inst_alu < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_inst_alu_instr32 <outs, ins, pattern, opcodestr, argstr> {
-   field bits<3> jump_link_ind;
   bits<3> mPm;
 
   let alu = {0b0000000000,mPm,0b010100,0b0};
@@ -439,7 +416,6 @@ class AIE2_jump_return_inst_alu < dag outs, dag ins, list<dag> pattern, string o
 
 class AIE2_jumpc_decr_ind_inst_alu < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_inst_alu_instr32 <outs, ins, pattern, opcodestr, argstr> {
-   field bits<13> jumpc_decr_ind;
   bits<3> mPm;
   bits<5> mRx;
   bits<5> mRx0;
@@ -449,7 +425,6 @@ class AIE2_jumpc_decr_ind_inst_alu < dag outs, dag ins, list<dag> pattern, strin
 
 class AIE2_jumpc_imm_lng < bits<1> op, dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_inst_lng_instr48 <outs, ins, pattern, opcodestr, argstr> {
-  field bits<26> jumpc_imm;
   bits<20> cpmaddr;
   bits<1> eOpBr;
   bits<5> mRx;
@@ -459,7 +434,6 @@ class AIE2_jumpc_imm_lng < bits<1> op, dag outs, dag ins, list<dag> pattern, str
 
 class AIE2_lda_cg_inst_lda < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_inst_lda_instr32 <outs, ins, pattern, opcodestr, argstr> {
-   field bits<20> lda_cg;
   bits<7> mLdaCg;
   bits<11> c11s;
 
@@ -480,9 +454,8 @@ class AIE2_vacc_bf_inst_vec < bits<1> md2, bits<1> md1, dag outs, dag ins, list<
   bits<5> acc1;
   bits<5> acc2;
   bits<5> dst;
-  field bits<2> dontcare2;
 
-  field bits<25> vacc_bf = {c, acc1, md1, dontcare2, acc2, dst, md2, 0b1};
+  field bits<25> vacc_bf = {c, acc1, md1, dontcare{2-1}, acc2, dst, md2, 0b1};
   let vec = {vacc_bf,0b0};
 }
 
@@ -497,18 +470,15 @@ class AIE2_mv_x_inst_mv < dag outs, dag ins, list<dag> pattern, string opcodestr
 class AIE2_mv_scd_inst_lda < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_inst_lda_instr32 <outs, ins, pattern, opcodestr, argstr> {
   bits<6> dst;
-  field bits<11> dontcare11;
 
-  let lda = {dontcare11,0b00,dst,0b10};
+  let lda = {dontcare{11-1},0b00,dst,0b10};
 }
 
 class AIE2_mv_scdl_inst_lda < bits<1> hilo, dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_inst_lda_instr32 <outs, ins, pattern, opcodestr, argstr> {
   bits<4> dst;
-  field bits<4> dontcare4;
-  field bits<6> dontcare6;
 
-  let lda = {dontcare6,0b111,dontcare4,dst,hilo,0b100};
+  let lda = {dontcare{6-1},0b111,dontcare{4-1},dst,hilo,0b100};
 }
 
 class AIE2_mv_mcd_inst_st < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
@@ -523,18 +493,16 @@ class AIE2_vec_broadcast_shuffle_inst_mv < dag outs, dag ins, list<dag> pattern,
   bits<2> vec_insert_src_0;
   bits<5> vec_insert_src_1;
   bits<5> dst; // OP_mShflDst
-  field bits<2> dontcare2;
 
-  let mv = {dst{4-1},vec_insert_src_0,0b0,vec_insert_src_1,dst{0},0b1,dontcare2,0b1111,0b01};
+  let mv = {dst{4-1},vec_insert_src_0,0b0,vec_insert_src_1,dst{0},0b1,dontcare{2-1},0b1111,0b01};
 }
 
 class AIE2_mv_cm_inst_mv < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_inst_mv_instr32 <outs, ins, pattern, opcodestr, argstr> {
   bits<4> dst;
   bits<4> src;
-  field bits<5> dontcare5;
 
-  // Note: the dontcare5 is important, otherwise the disassembler generator
+  // Note: the dontcare is important, otherwise the disassembler generator
   // finds decoding conflicts which it cannot resolve.
   // Decoding Conflict:
   //                 00011....................1011001
@@ -547,12 +515,12 @@ class AIE2_mv_cm_inst_mv < dag outs, dag ins, list<dag> pattern, string opcodest
   // VMOV_mv_w           00011________________11101011001
   // VMOV_mv_x           00011______0_________11011011001
   // VSUB_32             00011____00000010________1011001
-  let mv = {dst,0b0,0b01,src,dontcare5,0b1101,0b10};
+  let mv = {dst,0b0,0b01,src,dontcare{5-1},0b1101,0b10};
 }
 
 class AIE2_mDm_dms_lda < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_dms_lda_inst_lda <outs, ins, pattern, opcodestr, argstr> {
-   field bits<5> mDm;
+  bits<5> mDm;
 
   let ag_all = {mDm,0b10,0b10,0b10,0b10};
 }
@@ -561,9 +529,8 @@ class AIE2_mv_scl2ms_inst_st < dag outs, dag ins, list<dag> pattern, string opco
     AIE2_inst_st_instr32 <outs, ins, pattern, opcodestr, argstr> {
   bits<7> src; // mSclMS
   bits<3> dst;
-  field bits<1> dontcare1;
 
-  let st = {dst, 0b0, dontcare1, 0b0111, 0b1000, src, 0b0};
+  let st = {dst, 0b0, dontcare{1}, 0b0111, 0b1000, src, 0b0};
 }
 class AIE2_mv_scl2ms_b_noTlast < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_mv_scl2ms_inst_st <outs, ins, pattern, opcodestr, argstr> {
@@ -583,11 +550,11 @@ class AIE2_mv_scl2ms_nb_doTlast < dag outs, dag ins, list<dag> pattern, string o
 }
 class AIE2_mv_scl2ms_b_doTlast_reg < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_mv_scl2ms_inst_st <outs, ins, pattern, opcodestr, argstr> {
-  let dst = {0b01, dontcare1};
+  let dst = {0b01, dontcare{1}};
 }
 class AIE2_mv_scl2ms_nb_doTlast_reg < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_mv_scl2ms_inst_st <outs, ins, pattern, opcodestr, argstr> {
-  let dst = {0b11, dontcare1};
+  let dst = {0b11, dontcare{1}};
 }
 
 class AIE2_vec_extract_broadcast_inst_mv <bits<2> word_size,  dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
@@ -605,17 +572,15 @@ class AIE2_mv_float_to_int_inst_st < dag outs, dag ins, list<dag> pattern, strin
 
   bits<1> mFl2FxSrc_0;
   bits<6> mFl2FxSrc_1;
-  bits<4> dst;
+  bits<4> dst;  
   bits<2> shft;
-  field bits<4> dontcare4;
-  field bits<19> mv_float_to_int = {dst,mFl2FxSrc_0,dontcare4,shft,0b00,mFl2FxSrc_1};
+  field bits<19> mv_float_to_int = {dst,mFl2FxSrc_0,dontcare{4-1},shft,0b00,mFl2FxSrc_1};
 
   let st = {mv_float_to_int,0b01};
 }
 
 class AIE2_mv_cntr2c_inst_mv < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_inst_mv_instr32 <outs, ins, pattern, opcodestr, argstr> {
-   field bits<3> mv_cntr2c;
   bits<3> dst;
 
   let mv = {0b0000,dst,0b0,0b0000,0b0100,0b1100,0b10};
@@ -647,9 +612,8 @@ class AIE2_vec_abs_not_inst_mv < bits<5> op, bits<2> word_size, dag outs, dag in
   bits<3> cmp;
   bits<4> d;
   bits<4> s1;
-  field bits<4> dontcare4;
 
-  let mv = {d,cmp,op,dontcare4,s1,word_size};
+  let mv = {d,cmp,op,dontcare{4-1},s1,word_size};
 }
 
 class AIE2_mv_ss2scl_inst_lda < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
@@ -711,7 +675,6 @@ class AIE2_mv_x_srs_inst_st < dag outs, dag ins, list<dag> pattern, string opcod
 
 class AIE2_mul_r_rr_inst_alu < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_inst_alu_instr32 <outs, ins, pattern, opcodestr, argstr> {
-   field bits<15> mul_r_rr;
   bits<5> mRx;
   bits<5> mRx0;
   bits<5> mRy;
@@ -723,11 +686,9 @@ class AIE2_mv_ph2ms_inst_st < dag outs, dag ins, list<dag> pattern, string opcod
     AIE2_inst_st_instr32 <outs, ins, pattern, opcodestr, argstr> {
   bits<5> id;  // mRv
   bits<3> dst; // mMStream
-  field bits<1> dontcare1;
-  field bits<3> dontcare3;
   bits<3> pcktType;
 
-  field bits<18> mv_ph2ms= {dst, dontcare3, pcktType, dontcare1, 0b100, id};
+  field bits<18> mv_ph2ms= {dst, dontcare{3-1}, pcktType, dontcare{1}, 0b100, id};
   let st = {mv_ph2ms, 0b100};
 }
 
@@ -749,11 +710,11 @@ class AIE2_mv_ph2ms_nb_doTlast < dag outs, dag ins, list<dag> pattern, string op
 }
 class AIE2_mv_ph2ms_b_doTlast_reg < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_mv_ph2ms_inst_st <outs, ins, pattern, opcodestr, argstr> {
-  let dst = {0b01, dontcare1};
+  let dst = {0b01, dontcare{1}};
 }
 class AIE2_mv_ph2ms_nb_doTlast_reg < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_mv_ph2ms_inst_st <outs, ins, pattern, opcodestr, argstr> {
-  let dst = {0b11, dontcare1};
+  let dst = {0b11, dontcare{1}};
 }
 
 class AIE2_mv_cph2ms_inst_st < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
@@ -786,16 +747,15 @@ class AIE2_mv_cph2ms_nb_doTlast < dag outs, dag ins, list<dag> pattern, string o
 }
 class AIE2_mv_cph2ms_b_doTlast_reg < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_mv_cph2ms_inst_st <outs, ins, pattern, opcodestr, argstr> {
-  let dst = {0b01, dontcare1};
+  let dst = {0b01, dontcare{1}};
 }
 class AIE2_mv_cph2ms_nb_doTlast_reg < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_mv_cph2ms_inst_st <outs, ins, pattern, opcodestr, argstr> {
-  let dst = {0b11, dontcare1};
+  let dst = {0b11, dontcare{1}};
 }
 
 class AIE2_mv_scl_inst_mv < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_inst_mv_instr32 <outs, ins, pattern, opcodestr, argstr> {
-   field bits<14> mv_scl;
   bits<7> mMvSclDst;
   bits<7> mMvSclSrc;
 
@@ -806,9 +766,8 @@ class AIE2_mv_unpack_inst_ldb < bits<1> sgn, bits<1> sz, dag outs, dag ins, list
     AIE2_inst_ldb_instr32 <outs, ins, pattern, opcodestr, argstr> {
   bits<4> dst;
   bits<5> src;
-  field bits<1> dontcare1;
 
-  let ldb = {src,dontcare1,0b1,0b00,dst,sgn,sz,0b0};
+  let ldb = {src,dontcare{1},0b1,0b00,dst,sgn,sz,0b0};
 }
 
 class AIE2_mv_pack_inst_st < bits<1> sgn, bits<1> sz, dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
@@ -847,13 +806,11 @@ class AIE2_mv_ups_w2c_inst_mv < dag outs, dag ins, list<dag> pattern, string opc
 
 class AIE2_mv_ups_x2c_inst_mv < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_inst_mv_instr32 <outs, ins, pattern, opcodestr, argstr> {
-  field bits<1> dontcare;
   bits<4> mv_ups_base;
   bits<4> dst;
   bits<4> src;
 
-
-  let mv = {dst,0b0,mv_ups_base,0b10,dontcare,src,0b1111,0b10};
+  let mv = {dst,0b0,mv_ups_base,0b10,dontcare{1},src,0b1111,0b10};
 }
 
 class AIE2_mv_w_srs_inst_st < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
@@ -867,23 +824,19 @@ class AIE2_mv_w_srs_inst_st < dag outs, dag ins, list<dag> pattern, string opcod
 
 class AIE2_mv_w_srs_bf_inst_st < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_inst_st_instr32 <outs, ins, pattern, opcodestr, argstr> {
-  field bits<1> dontcare1;
-  field bits<4> dontcare4;
   bits<5> dst;
   bits<5> src;
-  field bits<18> mv_w_srs_bf = {dst, dontcare4, dontcare1, 0b000, src};
+  field bits<18> mv_w_srs_bf = {dst, dontcare{4-1}, dontcare{1}, 0b000, src};
 
   let st = {mv_w_srs_bf,0b111};
 }
 
 class AIE2_mvx_scl_inst_alu < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_inst_alu_instr32 <outs, ins, pattern, opcodestr, argstr> {
-   field bits<9> mvx_scl;
-   field bits<4> dontcare4;
   bits<4> mCRm;
   bits<5> mRx;
 
-  let alu = {mRx,mCRm,dontcare4,0b1,0b00000,0b0};
+  let alu = {mRx,mCRm,dontcare{4-1},0b1,0b00000,0b0};
 }
 
 class AIE2_nop_alu_inst_alu < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
@@ -947,41 +900,36 @@ class AIE2_acquire_inst_alu <dag outs, dag ins, list<dag> pattern, string opcode
   : AIE2_inst_alu_instr32 <outs, ins, pattern, opcodestr, argstr> {
   bits<7> mLockId;
   bits<5> mRy;
-  field bits<1> dontcare1;
 
-  let alu = {mLockId, dontcare1, 0b01, mRy, 0b0010, 0b0};
+  let alu = {mLockId, dontcare{1}, 0b01, mRy, 0b0010, 0b0};
 }
 
 class AIE2_acquire_cond_inst_alu < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">
   : AIE2_inst_alu_instr32 <outs, ins, pattern, opcodestr, argstr> {
   bits<7> mLockId;
   bits<5> mRy;
-  field bits<1> dontcare1;
 
-  let alu = {mLockId, dontcare1, 0b11, mRy, 0b0010, 0b0};
+  let alu = {mLockId, dontcare{1}, 0b11, mRy, 0b0010, 0b0};
 }
 
 class AIE2_release_inst_alu < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">
   : AIE2_inst_alu_instr32 <outs, ins, pattern, opcodestr, argstr> {
   bits<7> mLockId;
   bits<5> mRy;
-  field bits<1> dontcare1;
-
-  let alu = {mLockId, dontcare1, 0b00, mRy, 0b0010, 0b0};
+ 
+  let alu = {mLockId, dontcare{1}, 0b00, mRy, 0b0010, 0b0};
 }
 
 class AIE2_release_cond_inst_alu < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">
   : AIE2_inst_alu_instr32 <outs, ins, pattern, opcodestr, argstr> {
   bits<7> mLockId;
   bits<5> mRy;
-  field bits<1> dontcare1;
 
-  let alu = {mLockId, dontcare1, 0b10, mRy, 0b0010, 0b0};
+  let alu = {mLockId, dontcare{1}, 0b10, mRy, 0b0010, 0b0};
 }
 
 class AIE2_select_r_rr_inst_alu < bits<1> eSelect, dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_inst_alu_instr32 <outs, ins, pattern, opcodestr, argstr> {
-   field bits<16> select_r_rr;
   bits<5> mRx;
   bits<5> mRx0;
   bits<5> mRy;
@@ -991,11 +939,10 @@ class AIE2_select_r_rr_inst_alu < bits<1> eSelect, dag outs, dag ins, list<dag> 
 
 class AIE2_tm_lda_inst_lda < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_inst_lda_instr32 <outs, ins, pattern, opcodestr, argstr> {
-  field bits<6> dontcare6;
   bits<3> ptr;
   bits<5> dst;
 
-  let lda = {ptr,dontcare6,0b1110,dst,0b000};
+  let lda = {ptr,dontcare{6-1},0b1110,dst,0b000};
 }
 
 class AIE2_vacc_inst_vec < bits<1> md2, bits<1> md1, dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
@@ -1023,19 +970,16 @@ class AIE2_vaddmac_inst_vec < bits<1> mdm, bits<1> md2, dag outs, dag ins, list<
 class AIE2_vclr_inst_vec < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_inst_vec_instr32 <outs, ins, pattern, opcodestr, argstr> {
   bits<4> dst;
-  field bits<5> dontcare5;
-  field bits<4> dontcare4;
 
-  field bits<25> vclr = {dontcare5, dontcare4, 0b0, 0b1111, 0b0000, dst, 0b1, 0b0, 0b0};
+  field bits<25> vclr = {dontcare{5-1}, dontcare{4-1}, 0b0, 0b1111, 0b0000, dst, 0b1, 0b0, 0b0};
   let vec = {vclr,0b0};
 }
 
 class AIE2_vclr_bf_inst_vec < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_inst_vec_instr32 <outs, ins, pattern, opcodestr, argstr> {
   bits<5> dst;
-  field bits<5> dontcare5;
 
-  field bits<25> vclr_bf = {dontcare5, 0b11111, 0b1111, 0b0000, dst, 0b0, 0b0};
+  field bits<25> vclr_bf = {dontcare{5-1}, 0b11111, 0b1111, 0b0000, dst, 0b0, 0b0};
   let vec = {vclr_bf,0b1};
 }
 
@@ -1064,11 +1008,10 @@ class AIE2_vec_add_select_inst_mv < bits<5> op, bits<2> word_size,  dag outs, da
 
 class AIE2_vec_bf_compare_inst_mv < bits<5> op, dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_inst_mv_instr32 <outs, ins, pattern, opcodestr, argstr> {
-  field bits<4> dontcare4;
   bits<3> cmp;
   bits<4> s1;
   bits<4> s2;
-  field bits<22> vec_bf_compare = {dontcare4, cmp, op, s1, s2, 0b01};
+  field bits<22> vec_bf_compare = {dontcare{4-1}, cmp, op, s1, s2, 0b01};
 
   let mv = {vec_bf_compare};
 }
@@ -1089,27 +1032,23 @@ class AIE2_vec_broadcast_inst_mv < dag outs, dag ins, list<dag> pattern, string 
   bits<2> vec_insert_src_0;
   bits<5> vec_insert_src_1;
   bits<4> dst;
-  field bits<1> dontcare1;
-  field bits<2> dontcare2;
-  let mv = {dst,vec_insert_src_0,0b0,vec_insert_src_1,dontcare1,0b0,dontcare2,0b1111,0b01};
+  let mv = {dst,vec_insert_src_0,0b0,vec_insert_src_1,dontcare{1},0b0,dontcare{2-1},0b1111,0b01};
 }
 
 class AIE2_vec_compare_inst_mv < bits<5> op, bits<2> vec_size, dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_inst_mv_instr32 <outs, ins, pattern, opcodestr, argstr> {
-  field bits<4> dontcare4;
   bits<3> cmp;
   bits<4> s1;
   bits<4> s2;
-  field bits<22> vec_compare = {dontcare4, cmp, op, s1, s2, vec_size};
+  field bits<22> vec_compare = {dontcare{4-1}, cmp, op, s1, s2, vec_size};
   let mv = {vec_compare};
 }
 
 class AIE2_vec_eqz_inst_mv < bits<2> vec_size, dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
     AIE2_inst_mv_instr32 <outs, ins, pattern, opcodestr, argstr> {
-  field bits<4> dontcare4;
   bits<3> cmp;
   bits<4> s2;
-  field bits<22> vec_eqz = {dontcare4, cmp, 0b01111, dontcare4, s2, vec_size};
+  field bits<22> vec_eqz = {dontcare{4-1}, cmp, 0b01111, dontcare{4-1}, s2, vec_size};
   let mv = {vec_eqz};
 }
 
@@ -1119,9 +1058,8 @@ class AIE2_vec_insert_inst_mv < dag outs, dag ins, list<dag> pattern, string opc
   bits<2> vec_insert_src_0;
   bits<5> vec_insert_src_1;
   bits<4> s1;
-  field bits<1> dontcare1;
 
-  let mv = {dst,vec_insert_src_0,dontcare1,vec_insert_src_1,s1,0b1100,0b01};
+  let mv = {dst,vec_insert_src_0,dontcare{1},vec_insert_src_1,s1,0b1100,0b01};
 }
 
 class AIE2_vec_log_inst_mv < bits<5> op, dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
@@ -1129,9 +1067,8 @@ class AIE2_vec_log_inst_mv < bits<5> op, dag outs, dag ins, list<dag> pattern, s
   bits<4> d;
   bits<4> s1;
   bits<4> s2;
-  field bits<3> dontcare3;
 
-  let mv = {d,dontcare3,op,s1,s2,0b10};
+  let mv = {d,dontcare{3-1},op,s1,s2,0b10};
 }
 
 class AIE2_vec_push_hi_inst_mv < dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">:
@@ -1194,8 +1131,7 @@ class AIE2_vmov_inst_vec < dag outs, dag ins, list<dag> pattern, string opcodest
     AIE2_inst_vec_instr32 <outs, ins, pattern, opcodestr, argstr> {
   bits<4> csrc;
   bits<4> cdst;
-  field bits<5> dontcare5;
-  field bits<25> vmov = {dontcare5, csrc, 0b0, 0b1111, 0b0000, cdst, 0b0, 0b0, 0b0};
+  field bits<25> vmov = {dontcare{5-1}, csrc, 0b0, 0b1111, 0b0000, cdst, 0b0, 0b0, 0b0};
   let vec = {vmov,0b0};
 }
 
