@@ -265,7 +265,7 @@ bool AIE2AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     else {
       // Lex to end of line
       while (!(getLexer().is(llvm::AsmToken::EndOfStatement) &&
-                (getLexer().getTok().getString().empty() ||
+               (getLexer().getTok().getString().empty() ||
                 getLexer().getTok().getString()[0] == '\n')))
         Lex();
       Bundle.clear();

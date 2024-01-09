@@ -23,44 +23,44 @@ let Namespace = "AIE2" in
   def unknown_slot : InstSlot<"unknown", 0, true>;
 
   def lda_slot     : InstSlot<"lda", 21> {
-    let DecoderMethod = "decodeLdaInstruction";
+    let DecoderMethod = "decodeLdaSlot";
     let FieldToFind = "lda";
   }
 
   def ldb_slot     : InstSlot<"ldb", 16> {
-    let DecoderMethod = "decodeLdbInstruction";
+    let DecoderMethod = "decodeLdbSlot";
     let FieldToFind = "ldb";
   }
 
   def alu_slot     : InstSlot<"alu", 20> {
-    let DecoderMethod = "decodeAluInstruction";
+    let DecoderMethod = "decodeAluSlot";
     let FieldToFind = "alu";
   }
 
   def mv_slot     : InstSlot<"mv", 22> {
-    let DecoderMethod = "decodeMvInstruction";
+    let DecoderMethod = "decodeMvSlot";
     let FieldToFind = "mv";
   }
 
   def st_slot      : InstSlot<"st", 21> {
-    let DecoderMethod = "decodeStInstruction";
+    let DecoderMethod = "decodeStSlot";
     let FieldToFind = "st";
   }
 
   def vec_slot : InstSlot<"vec", 26> {
-    let DecoderMethod = "decodeVecInstruction";
+    let DecoderMethod = "decodeVecSlot";
     let FieldToFind = "vec";
   }
 
   def lng_slot     : InstSlot<"lng", 42> {
-    let DecoderMethod = "decodeLngInstruction";
+    let DecoderMethod = "decodeLngSlot";
     let FieldToFind = "lng";
   }
 
   // Cooked up Slot for 16-bit InsnFormat.
   // In AIE2 this has a single instruction nop.
   def nop16_slot     : InstSlot<"nop16", 12> {
-    let DecoderMethod = "decodeNopInstruction";
+    let DecoderMethod = "decodeNopSlot";
     let FieldToFind = "nop16";
   }
 }
