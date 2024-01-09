@@ -216,8 +216,9 @@ define dso_local void @_Z12test_put_mcdDv8_u7__acc64i(<8 x i64> noundef %a, i32 
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    mov crMCDEn, r0
+; CHECK-NEXT:    vmov MCD, bml0
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vmov MCD, bml0 // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
@@ -232,8 +233,9 @@ define dso_local void @_Z12test_put_mcdDv32_si(<32 x i16> noundef %a, i32 nounde
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    mov crMCDEn, r0
+; CHECK-NEXT:    vmov MCD, x0
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vmov MCD, x0 // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
@@ -249,8 +251,9 @@ define dso_local void @_Z16test_put_mcd_en0Dv8_u7__acc64(<8 x i64> noundef %a) l
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    mov crMCDEn, #0
+; CHECK-NEXT:    vmov MCD, bml0
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vmov MCD, bml0 // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
@@ -265,8 +268,9 @@ define dso_local void @_Z16test_put_mcd_en0Dv32_s(<32 x i16> noundef %a) local_u
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    mov crMCDEn, #0
+; CHECK-NEXT:    vmov MCD, x0
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vmov MCD, x0 // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
@@ -281,8 +285,9 @@ define dso_local void @_Z16test_put_mcd_en1Dv8_u7__acc64(<8 x i64> noundef %a) l
 ; CHECK-LABEL: _Z16test_put_mcd_en1Dv8_u7__acc64:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    vmov MCD, bml0
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vmov MCD, bml0 // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
@@ -296,8 +301,9 @@ define dso_local void @_Z16test_put_mcd_en1Dv32_s(<32 x i16> noundef %a) local_u
 ; CHECK-LABEL: _Z16test_put_mcd_en1Dv32_s:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    vmov MCD, x0
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vmov MCD, x0 // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
