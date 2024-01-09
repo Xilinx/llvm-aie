@@ -8,7 +8,7 @@
 //
 //===----------------------------------------------------------------------===//
 class AIE2CompositeInst<dag slot_ins>
-  : AIE2Inst<(outs), slot_ins, "opcodestr", "argstr", []>
+  : AIE2Inst<(outs), slot_ins, "opcodestr", "argstr">
 {
   let isComposite = true;
   let hasSideEffects = 0;

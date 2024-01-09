@@ -14,7 +14,7 @@ include "AIE2GenInstrFormats.td"
 
 
 class AIE2_event<string opcodestr = "event", string argstr = "$val">
-    : AIE2_inst_alu_instr32<(outs), (ins t02u:$val), [], opcodestr, argstr> {
+    : AIE2_inst_alu_instr32<(outs), (ins t02u:$val), opcodestr, argstr> {
   field bits<12> unused;
   bits<2> val;
   let hasSideEffects = 1;
@@ -24,9 +24,9 @@ class AIE2_event<string opcodestr = "event", string argstr = "$val">
 }
 
 // Pseudo instructions
-class Pseudo<dag outs, dag ins, list<dag> pattern, string opcodestr = "",
+class Pseudo<dag outs, dag ins, string opcodestr = "",
              string argstr = "">
-    : AIE2Inst<outs, ins, opcodestr, argstr, pattern> {
+    : AIE2Inst<outs, ins, opcodestr, argstr> {
   let isPseudo = 1;
   let isCodeGenOnly = 1;
   let isComposite = 0;
@@ -36,7 +36,7 @@ class Pseudo<dag outs, dag ins, list<dag> pattern, string opcodestr = "",
 // This instruction could be materialized to different VLIW slots.
 class MultiSlot_Pseudo<dag outs, dag ins, string opcodestr = "",
              string argstr = "", list<AIE2Inst> insts = []>
-    : AIE2Inst<outs, ins, opcodestr, argstr, []/*pattern*/>{
+    : AIE2Inst<outs, ins, opcodestr, argstr>{
   let isPseudo = 1;
   bits<1> isMultiSlotPseudo = 1;
   list<AIE2Inst> materializableInto = insts;
@@ -44,4 +44,4 @@ class MultiSlot_Pseudo<dag outs, dag ins, string opcodestr = "",
   let isComposite = 0;
 }
 
-class SplitPseudo<dag outs, dag ins> : Pseudo<outs, ins, []>, AIE_HasTiedSubregister {}
+class SplitPseudo<dag outs, dag ins> : Pseudo<outs, ins>, AIE_HasTiedSubregister {}
