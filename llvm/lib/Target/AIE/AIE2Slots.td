@@ -66,16 +66,16 @@ let Namespace = "AIE2" in
 }
 
 
-class AIE2Inst<dag outs, dag ins, string opcodestr, string argstr, list<dag> pattern>
-    : AIEBaseInst <outs, ins, pattern> {
+class AIE2Inst<dag outs, dag ins, string opcodestr, string argstr>
+    : AIEBaseInst <outs, ins, []> {
   field bits<32> dontcare = 0;
   let Namespace = "AIE2";
   let AsmString = opcodestr # "\t" # argstr;
 }
 
-class AIE2_inst_alu_instr32 <dag outs, dag ins, list<dag> pattern,
+class AIE2_inst_alu_instr32 <dag outs, dag ins,
       string opcodestr = "", string argstr = "">
-    : AIE2Inst <outs, ins, opcodestr, argstr, pattern> {
+    : AIE2Inst <outs, ins, opcodestr, argstr> {
   bits<20> alu;
   field bits<20> Inst;
 
@@ -84,9 +84,8 @@ class AIE2_inst_alu_instr32 <dag outs, dag ins, list<dag> pattern,
   let Slot = alu_slot;
 }
 
-class AIE2_inst_lda_instr32 < dag outs, dag ins, list<dag> pattern,
-      string opcodestr = "", string argstr = "">
-    : AIE2Inst<outs, ins, opcodestr, argstr, pattern> {
+class AIE2_inst_lda_instr32 < dag outs, dag ins, string opcodestr = "", string argstr = "">
+    : AIE2Inst<outs, ins, opcodestr, argstr> {
   bits<21> lda;
   field bits<21> Inst;
 
@@ -95,9 +94,9 @@ class AIE2_inst_lda_instr32 < dag outs, dag ins, list<dag> pattern,
   let Slot = lda_slot;
 }
 
-class AIE2_inst_st_instr32 < dag outs, dag ins, list<dag> pattern,
+class AIE2_inst_st_instr32 < dag outs, dag ins,
       string opcodestr = "", string argstr = "">
-    : AIE2Inst <outs, ins, opcodestr, argstr, pattern> {
+    : AIE2Inst <outs, ins, opcodestr, argstr> {
   bits<21> st;
   field bits<21> Inst;
 
@@ -106,9 +105,9 @@ class AIE2_inst_st_instr32 < dag outs, dag ins, list<dag> pattern,
   let Slot = st_slot;
 }
 
-class AIE2_inst_ldb_instr32 < dag outs, dag ins, list<dag> pattern,
+class AIE2_inst_ldb_instr32 < dag outs, dag ins,
       string opcodestr = "", string argstr = "">
-    : AIE2Inst<outs, ins, opcodestr, argstr, pattern> {
+    : AIE2Inst<outs, ins, opcodestr, argstr> {
   bits<16> ldb;
   field bits<16> Inst;
 
@@ -117,9 +116,9 @@ class AIE2_inst_ldb_instr32 < dag outs, dag ins, list<dag> pattern,
   let Slot = ldb_slot; 
 }
 
-class AIE2_inst_lng_instr48 < dag outs, dag ins, list<dag> pattern,
+class AIE2_inst_lng_instr48 < dag outs, dag ins,
       string opcodestr = "", string argstr = "">
-    : AIE2Inst <outs, ins, opcodestr, argstr, pattern> {
+    : AIE2Inst <outs, ins, opcodestr, argstr> {
   bits<42> lng;
   field bits<42> Inst;
 
@@ -129,9 +128,9 @@ class AIE2_inst_lng_instr48 < dag outs, dag ins, list<dag> pattern,
   let Slot = lng_slot;
 }
 
-class AIE2_inst_mv_instr32 < dag outs, dag ins, list<dag> pattern,
+class AIE2_inst_mv_instr32 < dag outs, dag ins,
       string opcodestr = "", string argstr = "">
-    : AIE2Inst <outs, ins, opcodestr, argstr, pattern> {
+    : AIE2Inst <outs, ins, opcodestr, argstr> {
   bits<22> mv;
   field bits<22> Inst;
 
@@ -140,9 +139,9 @@ class AIE2_inst_mv_instr32 < dag outs, dag ins, list<dag> pattern,
   let Slot = mv_slot;
 }
 
-class AIE2_inst_vec_instr32 <dag outs, dag ins, list<dag> pattern,
+class AIE2_inst_vec_instr32 <dag outs, dag ins,
       string opcodestr = "", string argstr = "">
-    : AIE2Inst <outs, ins, opcodestr, argstr, pattern> {
+    : AIE2Inst <outs, ins, opcodestr, argstr> {
   bits<26> vec;
   bits<26> Inst;
 
@@ -151,9 +150,9 @@ class AIE2_inst_vec_instr32 <dag outs, dag ins, list<dag> pattern,
   let Slot = vec_slot;
 }
 
-class AIE2_inst_nop_instr16 < dag outs, dag ins, list<dag> pattern,
+class AIE2_inst_nop_instr16 < dag outs, dag ins,
       string opcodestr = "", string argstr = "">
-  : AIE2Inst <outs, ins, opcodestr, argstr, pattern> {
+  : AIE2Inst <outs, ins, opcodestr, argstr> {
   field bits<12> Inst;
 
   bits<12> nop16;

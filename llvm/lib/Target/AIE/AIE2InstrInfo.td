@@ -374,15 +374,15 @@ def : Pat<(int_aie2_event t02u:$val), (EVENT t02u:$val)>;
 
 let Itinerary = II_RET, hasDelaySlot = true, Uses = [lr],
     hasSideEffects = false, mayLoad = false, mayStore = false in {
-  def RET : AIE2_jump_return_inst_alu <(outs), (ins), [], "ret lr", ""> ;
+  def RET : AIE2_jump_return_inst_alu <(outs), (ins), "ret lr", ""> ;
 }
 
 let isMeta = true, hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
-  def DelayedSchedBarrier : Pseudo<(outs), (ins), []>;
+  def DelayedSchedBarrier : Pseudo<(outs), (ins)>;
 }
 
 let isMeta = true, hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
-  def CYCLE_SEPARATOR : Pseudo<(outs), (ins), []>;
+  def CYCLE_SEPARATOR : Pseudo<(outs), (ins)>;
 }
 
 // Pseudo instructions for branches. Those are used by ISel and carry the right
@@ -390,19 +390,19 @@ let isMeta = true, hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
 // scheduling to target instructions with encoding information.
 let hasDelaySlot = true, isBranch = true, isTerminator = true,
     hasSideEffects = false, mayLoad = 0, mayStore = 0 in {
-  def PseudoJZ : Pseudo<(outs), (ins eR:$mRx, addr20:$cpmaddr), []>,
+  def PseudoJZ : Pseudo<(outs), (ins eR:$mRx, addr20:$cpmaddr)>,
       PreSchedInstExpansion<JZ, DelayedSchedBarrier>;
-  def PseudoJNZ : Pseudo<(outs), (ins eR:$mRx, addr20:$cpmaddr), []>,
+  def PseudoJNZ : Pseudo<(outs), (ins eR:$mRx, addr20:$cpmaddr)>,
       PreSchedInstExpansion<JNZ, DelayedSchedBarrier>;
 
   let isIndirectBranch = true, Defs = [srCarry] in
-  def PseudoJNZD : Pseudo<(outs eR:$mRx), (ins eR:$mRx0, eP:$mPm), []>,
+  def PseudoJNZD : Pseudo<(outs eR:$mRx), (ins eR:$mRx0, eP:$mPm)>,
       PreSchedInstExpansion<JNZD, DelayedSchedBarrier>;
 
   let isBarrier = true in {
-    def PseudoJ_jump_imm : Pseudo<(outs), (ins addr20:$cpmaddr), []>,
+    def PseudoJ_jump_imm : Pseudo<(outs), (ins addr20:$cpmaddr)>,
         PreSchedInstExpansion<J_jump_imm, DelayedSchedBarrier>;
-    def PseudoJ_jump_ind : Pseudo<(outs), (ins eP:$mPm), []>,
+    def PseudoJ_jump_ind : Pseudo<(outs), (ins eP:$mPm)>,
         PreSchedInstExpansion<J_jump_ind, DelayedSchedBarrier>;
   }
 }
@@ -411,16 +411,16 @@ let hasDelaySlot = true, isBranch = true, isTerminator = true,
 let Uses = [lr],
     hasDelaySlot = 1, isBarrier = 1, isReturn = 1, isTerminator = 1,
     hasSideEffects = false, mayLoad = 0, mayStore = 0 in
-def PseudoRET : Pseudo<(outs), (ins), []>,
+def PseudoRET : Pseudo<(outs), (ins)>,
                 PreSchedInstExpansion<RET, DelayedSchedBarrier>;
 
 // Pre-scheduling pseudo instructions for calls.
 let Defs = [lr],
     hasDelaySlot = true, isCall = true, isTerminator = false,
     hasSideEffects = true, mayLoad = false, mayStore = false  in {
-  def PseudoJL : Pseudo<(outs), (ins imm20:$cpmaddr), []>,
+  def PseudoJL : Pseudo<(outs), (ins imm20:$cpmaddr)>,
       PreSchedInstExpansion<JL, DelayedSchedBarrier>;
-  def PseudoJL_IND : Pseudo<(outs), (ins eP:$mPm), []>,
+  def PseudoJL_IND : Pseudo<(outs), (ins eP:$mPm)>,
       PreSchedInstExpansion<JL_IND, DelayedSchedBarrier>;
 }
 
@@ -435,18 +435,17 @@ def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_CallSeqStart,
 def callseq_end   : SDNode<"ISD::CALLSEQ_END", SDT_CallSeqEnd,
                            [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
 // Pessimistically assume the stack pointer will be clobbered
-let Defs = [SP], Uses = [SP] in {
-def ADJCALLSTACKUP   : Pseudo<(outs), (ins i32imm:$amt1, i32imm:$amt2),
-                              [(callseq_start timm:$amt1, timm:$amt2)]>;
-def ADJCALLSTACKDOWN : Pseudo<(outs), (ins i32imm:$amt1, i32imm:$amt2),
-                              [(callseq_end timm:$amt1, timm:$amt2)]>;
+let Defs = [SP], Uses = [SP],
+    hasSideEffects=false, mayLoad=false, mayStore=false in {
+  def ADJCALLSTACKUP   : Pseudo<(outs), (ins i32imm:$amt1, i32imm:$amt2)>;
+  def ADJCALLSTACKDOWN : Pseudo<(outs), (ins i32imm:$amt1, i32imm:$amt2)>;
 }
 
 // Placeholder for a bare frameindex. This pseudo represents the
 // pointer register to be allocated, initialized with the address
 // represented by the frameindex in its only operand.
-let Uses = [SP] in
-def PseudoFI : Pseudo<(outs eP:$dst), (ins i32imm:$imm), []>;
+let Uses = [SP] in 
+def PseudoFI : Pseudo<(outs eP:$dst), (ins i32imm:$imm)>;
 
 
 // Nops
@@ -501,7 +500,7 @@ class vec_nop {
 // These are instances of formats with only nops.
 
 let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
-  def NOP : AIE2_inst_nop_instr16<(outs), (ins), [], "nop", ""> {
+  def NOP : AIE2_inst_nop_instr16<(outs), (ins), "nop", ""> {
     field bits<12> dontcare12;
     let nop16 = dontcare12;
   }
@@ -545,45 +544,45 @@ def NOP128 : AIE2__instr128__ldb__lda__st__alu__mv__vec<(ins)>, ldb_nop, lda_nop
 // NOPs for each VLIW Slots
 
 let hasSideEffects = 0, mayLoad = 0, mayStore = 0, isSlotNOP = true in {
-  def NOPA : AIE2_nop_lda_inst_lda<(outs), (ins), [], "nopa">;
-  def NOPB : AIE2_nop_ldb_inst_ldb<(outs), (ins), [], "nopb">;
-  def NOPX : AIE2_nop_alu_inst_alu<(outs), (ins), [], "nopx">;
-  def NOPM : AIE2_nop_mv_inst_mv<(outs), (ins), [], "nopm">;
-  def NOPS : AIE2_nop_sts_inst_st<(outs), (ins), [], "nops">;
-  def NOPV : AIE2_nop_vec_inst_vec<(outs), (ins), [], "nopv">;
-  def NOPXM : AIE2_nop_lng_lng<(outs), (ins), [], "nopxm">;
+  def NOPA : AIE2_nop_lda_inst_lda<(outs), (ins), "nopa">;
+  def NOPB : AIE2_nop_ldb_inst_ldb<(outs), (ins), "nopb">;
+  def NOPX : AIE2_nop_alu_inst_alu<(outs), (ins), "nopx">;
+  def NOPM : AIE2_nop_mv_inst_mv<(outs), (ins), "nopm">;
+  def NOPS : AIE2_nop_sts_inst_st<(outs), (ins), "nops">;
+  def NOPV : AIE2_nop_vec_inst_vec<(outs), (ins), "nopv">;
+  def NOPXM : AIE2_nop_lng_lng<(outs), (ins), "nopxm">;
 }
 
 // Spill instructions
 let hasSideEffects = false, Uses = [SP] in {
 let Itinerary = II_LDA, mayLoad = true, mayStore = false in
-def LDA_dms_spill : AIE2_dms_lda_inst_lda<(outs OP_mLdaScl:$mLdaScl), (ins imm12x4:$imm), [],
-    "lda", "$mLdaScl, [sp, $imm]">,
+def LDA_dms_spill : AIE2_dms_lda_inst_lda<(outs OP_mLdaScl:$mLdaScl), (ins imm12x4:$imm),
+    "lda", "$mLdaScl, [sp, $imm]">, 
   AIE2_ag_all__ag_spill;
 
 let Itinerary = II_ST, mayLoad = false, mayStore = true in
-def ST_dms_spill : AIE2_dms_sts_inst_st<(outs), (ins OP_mSclSt:$mSclSt, imm12x4:$imm), [],
+def ST_dms_spill : AIE2_dms_sts_inst_st<(outs), (ins OP_mSclSt:$mSclSt, imm12x4:$imm),
     "st", "$mSclSt, [sp, $imm]">,
   AIE2_ag_all__ag_spill;
 
 let mayLoad = true, mayStore = false in {
-def VLDA_L_SPILL : Pseudo<(outs eL:$dst), (ins imm12x4:$imm), [], "vlda_l_spill", "$dst, [sp, $imm]">;
-def VLDA_X_SPILL : Pseudo<(outs VEC512:$dst), (ins  imm12x32_neg:$imm), [], "vlda_x_spill", "${dst}, [sp, $imm]">;
-def VLDA_Y_SPILL : Pseudo<(outs VEC1024:$dst), (ins imm12x32_neg:$imm), [], "vlda_y_spill", "${dst}, [sp, $imm]">;
-def VLDA_BM_SPILL : Pseudo<(outs ACC512:$dst), (ins  imm12x32_neg:$imm), [], "vlda_bm_spill", "${dst}, [sp, $imm]">;
-def VLDA_CM_SPILL : Pseudo<(outs ACC1024:$dst), (ins imm12x32_neg:$imm), [], "vlda_cm_spill", "${dst}, [sp, $imm]">;
-def LDA_D_SPILL : Pseudo<(outs eD:$dst), (ins imm12x4:$imm), [], "lda_d_spill", "${dst}, [sp, $imm]">;
-def LDA_DS_SPILL : Pseudo<(outs eDS:$dst), (ins imm12x4:$imm), [], "lda_ds_spill", "${dst}, [sp, $imm]">;
+def VLDA_L_SPILL : Pseudo<(outs eL:$dst), (ins imm12x4:$imm), "vlda_l_spill", "$dst, [sp, $imm]">;
+def VLDA_X_SPILL : Pseudo<(outs VEC512:$dst), (ins  imm12x32_neg:$imm), "vlda_x_spill", "${dst}, [sp, $imm]">;
+def VLDA_Y_SPILL : Pseudo<(outs VEC1024:$dst), (ins imm12x32_neg:$imm), "vlda_y_spill", "${dst}, [sp, $imm]">;
+def VLDA_BM_SPILL : Pseudo<(outs ACC512:$dst), (ins  imm12x32_neg:$imm), "vlda_bm_spill", "${dst}, [sp, $imm]">;
+def VLDA_CM_SPILL : Pseudo<(outs ACC1024:$dst), (ins imm12x32_neg:$imm), "vlda_cm_spill", "${dst}, [sp, $imm]">;
+def LDA_D_SPILL : Pseudo<(outs eD:$dst), (ins imm12x4:$imm), "lda_d_spill", "${dst}, [sp, $imm]">;
+def LDA_DS_SPILL : Pseudo<(outs eDS:$dst), (ins imm12x4:$imm), "lda_ds_spill", "${dst}, [sp, $imm]">;
 } // let mayLoad = true, mayStore = false
 
 let mayLoad = false, mayStore = true in {
-def VST_L_SPILL : Pseudo<(outs ), (ins eL:$src, imm12x4:$imm), [], "vst_l_spill", "$src, [sp, $imm]">;
-def VST_X_SPILL : Pseudo<(outs ), (ins VEC512:$src,  imm12x32_neg:$imm), [], "vst_x_spill", "${src}, [sp, $imm]">;
-def VST_Y_SPILL : Pseudo<(outs ), (ins VEC1024:$src, imm12x32_neg:$imm), [], "vst_y_spill", "${src}, [sp, $imm]">;
-def VST_BM_SPILL : Pseudo<(outs ), (ins ACC512:$src,  imm12x32_neg:$imm), [], "vst_bm_spill", "${src}, [sp, $imm]">;
-def VST_CM_SPILL : Pseudo<(outs ), (ins ACC1024:$src, imm12x32_neg:$imm), [], "vst_cm_spill", "${src}, [sp, $imm]">;
-def ST_D_SPILL : Pseudo<(outs ), (ins eD:$src, imm12x4:$imm), [], "st_d_spill", "$src, [sp, $imm]">;
-def ST_DS_SPILL : Pseudo<(outs ), (ins eDS:$src, imm12x4:$imm), [], "st_ds_spill", "$src, [sp, $imm]">;
+def VST_L_SPILL : Pseudo<(outs ), (ins eL:$src, imm12x4:$imm), "vst_l_spill", "$src, [sp, $imm]">;
+def VST_X_SPILL : Pseudo<(outs ), (ins VEC512:$src,  imm12x32_neg:$imm), "vst_x_spill", "${src}, [sp, $imm]">;
+def VST_Y_SPILL : Pseudo<(outs ), (ins VEC1024:$src, imm12x32_neg:$imm), "vst_y_spill", "${src}, [sp, $imm]">;
+def VST_BM_SPILL : Pseudo<(outs ), (ins ACC512:$src,  imm12x32_neg:$imm), "vst_bm_spill", "${src}, [sp, $imm]">;
+def VST_CM_SPILL : Pseudo<(outs ), (ins ACC1024:$src, imm12x32_neg:$imm), "vst_cm_spill", "${src}, [sp, $imm]">;
+def ST_D_SPILL : Pseudo<(outs ), (ins eD:$src, imm12x4:$imm), "st_d_spill", "$src, [sp, $imm]">;
+def ST_DS_SPILL : Pseudo<(outs ), (ins eDS:$src, imm12x4:$imm), "st_ds_spill", "$src, [sp, $imm]">;
 } // let mayLoad = true, mayStore = false
 
 } // let hasSideEffects = false, Uses = [SP]
@@ -591,18 +590,18 @@ def ST_DS_SPILL : Pseudo<(outs ), (ins eDS:$src, imm12x4:$imm), [], "st_ds_spill
 // Loop related Pseudos
 let hasSideEffects = 0, mayLoad = 0, mayStore = 0, Defs = [srCarry] in
 def LoopDec :
-    Pseudo<(outs eR:$dst), (ins eR:$src), [], "loop_dec", "${dst}, ${src}">;
+    Pseudo<(outs eR:$dst), (ins eR:$src), "loop_dec", "${dst}, ${src}">;
 
 let hasSideEffects = 0,  mayLoad = 0, mayStore = 0, isBranch = 1, isIndirectBranch = 1, isTerminator = true in
 def LoopJNZ :
-    Pseudo<(outs), (ins eR:$tc, eP:$target),[], "loop_jnz", "${tc}, ${target}">;
+    Pseudo<(outs), (ins eR:$tc, eP:$target), "loop_jnz", "${tc}, ${target}">;
 
 // Pseudo Copy
 // Target specific impl. of isCopyInstrImp causes the MOVE to be deleted, the Pseudo is
 // kind of work around so that its not deleted
 let Itinerary = II_MOV_SCL, hasSideEffects = 0,  mayLoad = 0, mayStore = 0 in {
   def PseudoMove :
-      Pseudo<(outs OP_mMvSclDst:$mMvSclDst), (ins OP_mMvSclSrc:$mMvSclSrc), [], "copy","$mMvSclDst, $mMvSclSrc">;
+      Pseudo<(outs OP_mMvSclDst:$mMvSclDst), (ins OP_mMvSclSrc:$mMvSclSrc), "copy","$mMvSclDst, $mMvSclSrc">;
 }
 
 include "AIE2MultiSlotPseudoInstrInfo.td"
