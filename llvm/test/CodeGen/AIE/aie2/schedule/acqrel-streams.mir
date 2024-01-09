@@ -104,11 +104,15 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: ACQ_mLockId_imm 0, $r0
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: VMOV_mv_mcd killed $bml0, implicit $crmcden
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
@@ -140,11 +144,15 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: REL_mLockId_imm 0, $r0
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: VMOV_mv_mcd killed $bml0, implicit $crmcden
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
