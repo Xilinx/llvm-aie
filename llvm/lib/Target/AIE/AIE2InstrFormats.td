@@ -8,8 +8,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+include "AIEBaseInstrFormats.td"
 include "AIE2Slots.td"
 include "AIE2GenInstrFormats.td"
+
 
 class AIE2_event<string opcodestr = "event", string argstr = "$val">
     : AIE2_inst_alu_instr32<(outs), (ins t02u:$val), [], opcodestr, argstr> {
