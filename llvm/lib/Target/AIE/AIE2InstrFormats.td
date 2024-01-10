@@ -13,16 +13,6 @@ include "AIE2Slots.td"
 include "AIE2GenInstrFormats.td"
 
 
-class AIE2_event<string opcodestr = "event", string argstr = "$val">
-    : AIE2_inst_alu_instr32<(outs), (ins t02u:$val), opcodestr, argstr> {
-  field bits<12> unused;
-  bits<2> val;
-  let hasSideEffects = 1;
-  let mayLoad = 0;
-  let mayStore = 0;
-  let alu = {val, unused, 0b100000};
-}
-
 // Pseudo instructions
 class Pseudo<dag outs, dag ins, string opcodestr = "",
              string argstr = "">

@@ -374,9 +374,9 @@ class AIE2_done_inst_alu < dag outs, dag ins, string opcodestr = "", string args
 
 class AIE2_event_inst_alu < dag outs, dag ins, string opcodestr = "", string argstr = "">:
     AIE2_inst_alu_instr32 <outs, ins, opcodestr, argstr> {
-  bits<2> eEvent;
+  bits<2> val;
 
-  let alu = {eEvent,0b0000,0b0000,0b0000,0b10000,0b0};
+  let alu = {val,0b0000,0b0000,0b0000,0b10000,0b0};
 }
 
 class AIE2_jump_imm_lng < dag outs, dag ins, string opcodestr = "", string argstr = "">:

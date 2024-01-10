@@ -369,7 +369,9 @@ include "AIE2CompositeFormats.td"
 include "AIE2GenFixupInstrInfo.td"
 
 //Intrinsics
-def EVENT : AIE2_event<"event">;
+let hasSideEffects = 1, mayLoad = 0, mayStore = 0 in {
+  def EVENT : AIE2_event_inst_alu<(outs), (ins t02u:$val), "event", "$val">;
+}
 def : Pat<(int_aie2_event t02u:$val), (EVENT t02u:$val)>;
 
 let Itinerary = II_RET, hasDelaySlot = true, Uses = [lr],
