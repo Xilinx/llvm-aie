@@ -39,6 +39,9 @@ using namespace llvm;
 static llvm::cl::opt<unsigned>
     ReservedGPRs("aie-reserved-gprs", cl::Hidden, cl::init(0),
                  cl::desc("Number of artificially reserved GPRs"));
+static llvm::cl::opt<unsigned>
+    ReservedMODs("aie-reserved-mods", cl::Hidden, cl::init(0),
+                 cl::desc("Number of artificially reserved MODs"));
 
 static llvm::cl::opt<bool>
     SpillStoGPR("aie2-spill-s-to-r", cl::Hidden, cl::init(true),
@@ -84,13 +87,21 @@ BitVector AIE2RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   // If requested, reserve GPRs to artificially increase the register pressure.
   // We reserve them "from the end" because the first GPRs are typically used
   // by the calling convention.
-  unsigned CurrentReservedGPRs = 0;
-  for (auto &Reg : reverse(AIE2::eRRegClass)) {
-    if (CurrentReservedGPRs == ReservedGPRs)
-      break;
-    ++CurrentReservedGPRs;
-    markSuperRegs(Reserved, Reg);
-  }
+  auto ReserveRegs = [&](const TargetRegisterClass &RC, unsigned Num) {
+    unsigned CurrentReservedRegs = 0;
+    for (auto &Reg : reverse(RC)) {
+      if (CurrentReservedRegs == Num)
+        break;
+      ++CurrentReservedRegs;
+      for (MCSubRegIterator SubReg(Reg, this, /*self=*/true); SubReg.isValid();
+           ++SubReg) {
+        markSuperRegs(Reserved, *SubReg);
+      }
+    }
+  };
+
+  ReserveRegs(AIE2::eRRegClass, ReservedGPRs);
+  ReserveRegs(AIE2::eDRegClass, ReservedMODs);
 
   assert(checkAllSuperRegsMarked(Reserved));
   return Reserved;
