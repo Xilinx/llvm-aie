@@ -503,8 +503,7 @@ class vec_nop {
 
 let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
   def NOP : AIE2_inst_nop_instr16<(outs), (ins), "nop", ""> {
-    field bits<12> dontcare12;
-    let nop16 = dontcare12;
+    let nop = dontcare{12-1};
   }
 }
 

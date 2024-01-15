@@ -44,6 +44,8 @@ class InstSlot<string slotname, int Size, bit isDefault=false>  : Operand<OtherV
   // CodeGenFormat needs exactly one default slot by set of slots in a given
   // Namespace.
   bit isDefaultSlot = isDefault;
+
+  let DecoderMethod = "decode" # SlotName # "Slot";
 }
 
 class CodeGenFormat

@@ -22,46 +22,38 @@ let Namespace = "AIE2" in
 {
   def unknown_slot : InstSlot<"unknown", 0, true>;
 
-  def lda_slot     : InstSlot<"lda", 21> {
-    let DecoderMethod = "decodeLdaSlot";
+  def lda_slot     : InstSlot<"Lda", 21> {
     let FieldToFind = "lda";
   }
 
-  def ldb_slot     : InstSlot<"ldb", 16> {
-    let DecoderMethod = "decodeLdbSlot";
+  def ldb_slot     : InstSlot<"Ldb", 16> {
     let FieldToFind = "ldb";
   }
 
-  def alu_slot     : InstSlot<"alu", 20> {
-    let DecoderMethod = "decodeAluSlot";
+  def alu_slot     : InstSlot<"Alu", 20> {
     let FieldToFind = "alu";
   }
 
-  def mv_slot     : InstSlot<"mv", 22> {
-    let DecoderMethod = "decodeMvSlot";
+  def mv_slot     : InstSlot<"Mv", 22> {
     let FieldToFind = "mv";
   }
 
-  def st_slot      : InstSlot<"st", 21> {
-    let DecoderMethod = "decodeStSlot";
+  def st_slot      : InstSlot<"St", 21> {
     let FieldToFind = "st";
   }
 
-  def vec_slot : InstSlot<"vec", 26> {
-    let DecoderMethod = "decodeVecSlot";
+  def vec_slot : InstSlot<"Vec", 26> {
     let FieldToFind = "vec";
   }
 
-  def lng_slot     : InstSlot<"lng", 42> {
-    let DecoderMethod = "decodeLngSlot";
+  def lng_slot     : InstSlot<"Lng", 42> {
     let FieldToFind = "lng";
   }
 
   // Cooked up Slot for 16-bit InsnFormat.
   // In AIE2 this has a single instruction nop.
-  def nop16_slot     : InstSlot<"nop16", 12> {
-    let DecoderMethod = "decodeNopSlot";
-    let FieldToFind = "nop16";
+  def nop_slot     : InstSlot<"Nop", 12> {
+    let FieldToFind = "nop";
   }
 }
 
@@ -73,93 +65,76 @@ class AIE2Inst<dag outs, dag ins, string opcodestr, string argstr>
   let AsmString = opcodestr # "\t" # argstr;
 }
 
-class AIE2_inst_alu_instr32 <dag outs, dag ins,
-      string opcodestr = "", string argstr = "">
+class AIE2SlotInst<InstSlot slot,
+      dag outs, dag ins, string opcodestr, string argstr>
     : AIE2Inst <outs, ins, opcodestr, argstr> {
+
+  let Slot = slot;
+
+  // We use the slotname for the decode namespace, so that we will not have
+  // any conflicts between the coding of distinct slots.
+  let DecoderNamespace = slot.SlotName; 
+  
+  // The Size of a slot is mostly irrelevant, except in instructions that
+  // need relocation. There we make a search for the smallest format in which
+  // it fits, and then translate it to the slot where we need it.
+  // We code the smallest size of a format that contains the slot, which are
+  // always the stand-alone instructions. The default Size here covers most
+  // slots; outliers are 2 for the 16 bit Nop slot and 6 for the Lng slot. 
+  // Please also note that the slot decoder table name will include the bitsize
+  // as a suffix.
+  let Size = 4;
+  let DecoderNamespace = slot.SlotName; 
+}
+
+class AIE2_inst_alu_instr32<dag outs, dag ins, string opcodestr, string argstr>
+  : AIE2SlotInst<alu_slot, outs, ins, opcodestr, argstr> {
   bits<20> alu;
-  field bits<20> Inst;
-
-  let Inst = alu;
-  let DecoderNamespace = "Alu";
-  let Slot = alu_slot;
+  bits<20> Inst = alu;
 }
 
-class AIE2_inst_lda_instr32 < dag outs, dag ins, string opcodestr = "", string argstr = "">
-    : AIE2Inst<outs, ins, opcodestr, argstr> {
+class AIE2_inst_lda_instr32<dag outs, dag ins, string opcodestr, string argstr>
+  : AIE2SlotInst<lda_slot, outs, ins, opcodestr, argstr> {
   bits<21> lda;
-  field bits<21> Inst;
-
-  let Inst = lda;
-  let DecoderNamespace = "Lda";
-  let Slot = lda_slot;
+  bits<21> Inst = lda;
 }
 
-class AIE2_inst_st_instr32 < dag outs, dag ins,
-      string opcodestr = "", string argstr = "">
-    : AIE2Inst <outs, ins, opcodestr, argstr> {
+class AIE2_inst_st_instr32<dag outs, dag ins, string opcodestr, string argstr>
+  : AIE2SlotInst<st_slot, outs, ins, opcodestr, argstr> {
   bits<21> st;
-  field bits<21> Inst;
-
-  let Inst = st;
-  let DecoderNamespace = "St";
-  let Slot = st_slot;
+  bits<21> Inst = st;
 }
 
-class AIE2_inst_ldb_instr32 < dag outs, dag ins,
-      string opcodestr = "", string argstr = "">
-    : AIE2Inst<outs, ins, opcodestr, argstr> {
+class AIE2_inst_ldb_instr32<dag outs, dag ins, string opcodestr, string argstr>
+  : AIE2SlotInst<ldb_slot, outs, ins, opcodestr, argstr> {
   bits<16> ldb;
-  field bits<16> Inst;
-
-  let Inst = ldb;
-  let DecoderNamespace = "Ldb";
-  let Slot = ldb_slot; 
+  bits<16> Inst = ldb;
 }
 
-class AIE2_inst_lng_instr48 < dag outs, dag ins,
-      string opcodestr = "", string argstr = "">
-    : AIE2Inst <outs, ins, opcodestr, argstr> {
+class AIE2_inst_lng_instr48<dag outs, dag ins, string opcodestr, string argstr>
+  : AIE2SlotInst<lng_slot, outs, ins, opcodestr, argstr> {
   bits<42> lng;
-  field bits<42> Inst;
-
-  let Inst = lng;
-  let DecoderNamespace = "Lng";
+  bits<42> Inst = lng;
+  
   let Size = 6;
-  let Slot = lng_slot;
 }
 
-class AIE2_inst_mv_instr32 < dag outs, dag ins,
-      string opcodestr = "", string argstr = "">
-    : AIE2Inst <outs, ins, opcodestr, argstr> {
+class AIE2_inst_mv_instr32<dag outs, dag ins, string opcodestr, string argstr>
+  : AIE2SlotInst<mv_slot, outs, ins, opcodestr, argstr> {
   bits<22> mv;
-  field bits<22> Inst;
-
-  let Inst = mv;
-  let DecoderNamespace = "Mv";
-  let Slot = mv_slot;
+  bits<22> Inst = mv;
 }
 
-class AIE2_inst_vec_instr32 <dag outs, dag ins,
-      string opcodestr = "", string argstr = "">
-    : AIE2Inst <outs, ins, opcodestr, argstr> {
+class AIE2_inst_vec_instr32<dag outs, dag ins, string opcodestr, string argstr>
+  : AIE2SlotInst<vec_slot, outs, ins, opcodestr, argstr> {
   bits<26> vec;
-  bits<26> Inst;
-
-  let Inst = vec;
-  let DecoderNamespace = "Vec";
-  let Slot = vec_slot;
+  bits<26> Inst = vec;
 }
 
-class AIE2_inst_nop_instr16 < dag outs, dag ins,
-      string opcodestr = "", string argstr = "">
-  : AIE2Inst <outs, ins, opcodestr, argstr> {
-  field bits<12> Inst;
-
-  bits<12> nop16;
-  field bits<12> Inst;
+class AIE2_inst_nop_instr16<dag outs, dag ins, string opcodestr, string argstr>
+  : AIE2SlotInst<nop_slot, outs, ins, opcodestr, argstr> {
+  bits<12> nop;
+  bits<12> Inst = nop;
   
   let Size = 2;
-  let Inst = nop16;
-  let DecoderNamespace = "Nop";
-  let Slot = nop16_slot;
 }
