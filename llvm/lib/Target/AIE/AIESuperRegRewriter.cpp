@@ -15,6 +15,7 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/CodeGen/LiveIntervals.h"
 #include "llvm/CodeGen/LiveRegMatrix.h"
+#include "llvm/CodeGen/LiveStacks.h"
 #include "llvm/CodeGen/MachineBlockFrequencyInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -48,6 +49,8 @@ public:
     AU.addPreserved<VirtRegMap>();
     AU.addRequired<SlotIndexes>();
     AU.addPreserved<SlotIndexes>();
+    AU.addRequired<LiveStacks>();
+    AU.addPreserved<LiveStacks>();
     AU.addRequired<LiveIntervals>();
     AU.addPreserved<LiveIntervals>();
     AU.addRequired<LiveRegMatrix>();
@@ -103,6 +106,17 @@ bool AIESuperRegRewriter::runOnMachineFunction(MachineFunction &MF) {
     if (MRI.reg_nodbg_empty(Reg) || !VRM.hasPhys(Reg))
       continue;
 
+    // Skip vregs that are spilled, they would anyway be disregarded by
+    // getRewritableSubRegs due to the spill instructions using the whole reg
+    // without any subreg indices.
+    if (VRM.getStackSlot(Reg) != VirtRegMap::NO_STACK_SLOT) {
+      LLVM_DEBUG(dbgs() << "Skipping spilled register "
+                        << printReg(Reg, &TRI, 0, &MRI) << '\n');
+      continue;
+    }
+
+    LLVM_DEBUG(dbgs() << "Analysing " << printReg(Reg, &TRI, 0, &MRI) << ":"
+                      << printRegClassOrBank(Reg, MRI, &TRI) << '\n');
     if (!getRewritableSubRegs(Reg, MRI, TRI).empty()) {
       AssignedPhysRegs[Reg] = VRM.getPhys(Reg);
       LRM.unassign(LIS.getInterval(Reg));
