@@ -26,6 +26,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/IndexedMap.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -148,6 +149,11 @@ static cl::opt<unsigned> SplitThresholdForRegWithHint(
     cl::desc("The threshold for splitting a virtual register with a hint, in "
              "percentate"),
     cl::init(75), cl::Hidden);
+
+static cl::opt<bool> PreferPreviousRAAssignment(
+    "greedy-prefer-previous-assignments",
+    cl::desc("Maintain preference for phys regs assigned in previous RA runs"),
+    cl::init(true), cl::Hidden);
 
 static RegisterRegAlloc greedyRegAlloc("greedy", "greedy register allocator",
                                        createGreedyRegisterAllocator);
@@ -306,7 +312,7 @@ void RAGreedy::enqueue(PQueue &CurQueue, const LiveInterval *LI) {
 }
 
 void RAGreedy::noteAllocatedReg(const LiveInterval *LI) {
-  ExtraInfo->setStage(*LI, RS_Spill);
+  ExtraInfo->setStage(*LI, RS_Split);
 }
 
 unsigned DefaultPriorityAdvisor::getPriority(const LiveInterval &LI) const {
@@ -2174,6 +2180,20 @@ MCRegister RAGreedy::selectOrSplit(const LiveInterval &VirtReg,
                     "depth for recoloring reached. Use "
                     "-fexhaustive-register-search to skip cutoffs");
   }
+
+  for (Register VReg : NewVRegs) {
+    if (!VRM->hasRequiredPhys(VReg)) {
+      continue;
+    }
+    if (none_of(MRI->reg_instructions(VReg), [](const MachineInstr &MI) {
+          return MI.hasExtraDefRegAllocReq() || MI.hasExtraSrcRegAllocReq();
+        })) {
+      if (PreferPreviousRAAssignment)
+        MRI->setSimpleHint(VReg, VRM->getRequiredPhys(VReg));
+      VRM->unsetRequiredPhys(VReg);
+    }
+  }
+
   return Reg;
 }
 
@@ -2478,9 +2498,7 @@ MCRegister RAGreedy::selectOrSplitImpl(const LiveInterval &VirtReg,
   // Wait until the second time, when all smaller ranges have been allocated.
   // This gives a better picture of the interference to split around.
   if (Stage < RS_Split) {
-    LiveRangeStage NextStage =
-        VRM->hasRequiredPhys(VirtReg.reg()) ? RS_Spill : RS_Split;
-    ExtraInfo->setStage(VirtReg, NextStage);
+    ExtraInfo->setStage(VirtReg, RS_Split);
     LLVM_DEBUG(dbgs() << "wait for second round\n");
     NewVRegs.push_back(VirtReg.reg());
     return 0;

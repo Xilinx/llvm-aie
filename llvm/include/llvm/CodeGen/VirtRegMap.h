@@ -139,6 +139,9 @@ class TargetInstrInfo;
     /// required to be ultimately assigned to.
     void setRequiredPhys(Register virtReg, MCPhysReg physReg);
 
+    /// Remove requirement for \p virtReg to be mapped to a specific physreg.
+    void unsetRequiredPhys(Register virtReg);
+
     bool isShapeMapEmpty() const { return Virt2ShapeMap.empty(); }
 
     bool hasShape(Register virtReg) const {

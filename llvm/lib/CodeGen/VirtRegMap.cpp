@@ -122,6 +122,11 @@ void VirtRegMap::setRequiredPhys(Register virtReg, MCPhysReg physReg) {
   Virt2RequiredPhysMap[virtReg.id()] = physReg;
 }
 
+void VirtRegMap::unsetRequiredPhys(Register virtReg) {
+  assert(virtReg.isVirtual());
+  Virt2RequiredPhysMap[virtReg.id()] = NO_PHYS_REG;
+}
+
 unsigned VirtRegMap::createSpillSlot(const TargetRegisterClass *RC) {
   unsigned Size = TRI->getSpillSize(*RC);
   Align Alignment = TRI->getSpillAlign(*RC);
