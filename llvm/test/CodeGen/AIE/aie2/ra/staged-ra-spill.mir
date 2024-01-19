@@ -22,13 +22,9 @@ body:             |
     ; RA: liveins: $d1, $d2, $d3, $d4, $d5, $d6, $d7, $p0, $p1
     ; RA-NEXT: {{  $}}
     ; RA-NEXT: renamable $dn0 = LDA_dms_lda_idx_imm renamable $p1, 0
-    ; RA-NEXT: ST_D_SPILL renamable $d0, %stack.0, implicit $sp :: (store (s128) into %stack.0, align 4)
-    ; RA-NEXT: renamable $d0 = LDA_D_SPILL %stack.0, implicit $sp :: (load (s128) from %stack.0, align 4)
     ; RA-NEXT: renamable $m0 = LDA_dms_lda_idx_imm renamable $p1, 4
-    ; RA-NEXT: ST_D_SPILL killed renamable $d0, %stack.0, implicit $sp :: (store (s128) into %stack.0, align 4)
-    ; RA-NEXT: renamable $d0 = LDA_D_SPILL %stack.0, implicit $sp :: (load (s128) from %stack.0, align 4)
     ; RA-NEXT: renamable $dj0 = LDA_dms_lda_idx_imm renamable $p1, 8
-    ; RA-NEXT: ST_D_SPILL killed renamable $d0, %stack.0, implicit $sp :: (store (s128) into %stack.0, align 4)
+    ; RA-NEXT: ST_D_SPILL renamable $d0, %stack.0, implicit $sp :: (store (s128) into %stack.0, align 4)
     ; RA-NEXT: renamable $dj0 = MOV_PD_imm10_pseudo 12
     ; RA-NEXT: renamable $r0 = LDA_dms_lda_idx renamable $p1, killed renamable $dj0
     ; RA-NEXT: renamable $d0 = LDA_D_SPILL %stack.0, implicit $sp :: (load (s128) from %stack.0, align 4)

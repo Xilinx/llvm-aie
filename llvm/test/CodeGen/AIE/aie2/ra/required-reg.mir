@@ -13,6 +13,8 @@
 # Here we make sure that those choices are enforced even if they induce spills.
 # See preferred-reg.mir as well.
 
+# %0 isn't used by any instructions with special RA requirements like PADDA_2D.
+# Therefore, its "required" assignment into $r13 is actually not necessary.
 ---
 name:            test_force_r13
 alignment:       16
@@ -29,19 +31,18 @@ body:             |
     ; CHECK-LABEL: name: test_force_r13
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: renamable $r13 = LDA_dms_lda_idx_imm $p0, 0
-    ; CHECK-NEXT: ST_dms_spill killed renamable $r13, %stack.0, implicit $sp :: (store (s32) into %stack.0)
+    ; CHECK-NEXT: renamable $r1 = LDA_dms_lda_idx_imm $p0, 0
     ; CHECK-NEXT: renamable $r0 = LDA_dms_lda_idx_imm $p0, 4
-    ; CHECK-NEXT: renamable $r13 = LDA_dms_spill %stack.0, implicit $sp :: (load (s32) from %stack.0)
-    ; CHECK-NEXT: $r13 = MUL_mul_r_rr killed renamable $r13, killed renamable $r0
-    ; CHECK-NEXT: renamable $r13 = LDA_dms_spill %stack.0, implicit $sp :: (load (s32) from %stack.0)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $r13
+    ; CHECK-NEXT: $r13 = MUL_mul_r_rr renamable $r1, killed renamable $r0
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $r1
     %0:er = LDA_dms_lda_idx_imm $p0, 0
     %1:er = LDA_dms_lda_idx_imm $p0, 4
     $r13 = MUL_mul_r_rr %0, %1
     PseudoRET implicit $lr, implicit %0
 ...
 
+# %0 is required to be assigned to $d3, and it is used by PADDA_2D.
+# Therefore, the assignment cannot be overruled.
 ---
 name:            test_force_d3
 alignment:       16
@@ -58,13 +59,11 @@ body:             |
     ; CHECK-LABEL: name: test_force_d3
     ; CHECK: liveins: $d1, $p0
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: ST_D_SPILL $d1, %stack.0, implicit $sp :: (store (s128) into %stack.0, align 4)
-    ; CHECK-NEXT: renamable $d3 = LDA_D_SPILL %stack.0, implicit $sp :: (load (s128) from %stack.0, align 4)
+    ; CHECK-NEXT: renamable $d3 = COPY $d1
     ; CHECK-NEXT: dead $p0, $dc3 = PADDA_2D_split killed $p0, $m3, $dn3, $dj3, $dc3
-    ; CHECK-NEXT: ST_D_SPILL killed renamable $d3, %stack.0, implicit $sp :: (store (s128) into %stack.0, align 4)
+    ; CHECK-NEXT: renamable $dc0 = COPY killed renamable $dc3
     ; CHECK-NEXT: $d3 = COPY $d1
-    ; CHECK-NEXT: renamable $d3 = LDA_D_SPILL %stack.0, implicit $sp :: (load (s128) from %stack.0, align 4)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $dc3
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $dc0
     %0:ep = COPY $p0
     %1:ed = COPY $d1
     %0:ep, %1.sub_dim_count:ed = PADDA_2D_split %0, %1.sub_mod, %1.sub_dim_size, %1.sub_dim_stride, %1.sub_dim_count
@@ -92,15 +91,15 @@ body:             |
     ; CHECK: liveins: $m0, $m4, $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: renamable $dn1 = COPY killed renamable $m0
-    ; CHECK-NEXT: ST_dms_spill $m4, %stack.0, implicit $sp :: (store (s32) into %stack.0)
+    ; CHECK-NEXT: renamable $m0 = COPY $m4
     ; CHECK-NEXT: renamable $dn0 = COPY $m4
     ; CHECK-NEXT: renamable $dj0 = COPY $m4
     ; CHECK-NEXT: renamable $dc0 = COPY $m4
-    ; CHECK-NEXT: renamable $m0 = LDA_dms_spill %stack.0, implicit $sp :: (load (s32) from %stack.0)
-    ; CHECK-NEXT: $p0, dead $dc0 = PADDA_2D_split killed $p0, killed $m0, killed $dn0, killed $dj0, killed $dc0
+    ; CHECK-NEXT: $p0, dead $dc0 = PADDA_2D_split killed $p0, $m0, killed $dn0, killed $dj0, killed $dc0
+    ; CHECK-NEXT: renamable $m1 = COPY killed renamable $m0
     ; CHECK-NEXT: renamable $m0 = COPY killed renamable $dn1
     ; CHECK-NEXT: dead renamable $p0 = PADDA_lda_ptr_inc_idx killed renamable $p0, renamable $m0
-    ; CHECK-NEXT: $m4 = LDA_dms_spill %stack.0, implicit $sp :: (load (s32) from %stack.0)
+    ; CHECK-NEXT: $m4 = COPY killed renamable $m1
     ; CHECK-NEXT: PseudoRET implicit $lr
     %10:em = COPY $m0
     %11:spill_edn_to_er = COPY %10
