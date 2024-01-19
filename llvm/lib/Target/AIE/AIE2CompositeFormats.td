@@ -62,8 +62,8 @@ class AIE2_instr64_Composite<dag slot_ins> : AIE2CompositeInst<slot_ins>
 class AIE2_instr16_Composite<dag slot_ins> : AIE2CompositeInst<slot_ins>
 {
   bits<16> Inst;
-  bits<12> instr16;
-  let Inst = {instr16, 0b0001};
+  bits<1> instr16;
+  let Inst = {instr16, dontcare{11-1}, 0b0001};
   let Size = 2;
 }
 
@@ -998,17 +998,18 @@ class AIE2__instr64__alu__vec<dag slot_ins>
   let inst_alu_vec = {0b0000000000 /*xxxxxxxxxx*/, alu, 0b01, vec, 0b10};
 }
 
-class AIE2__instr64__lng<dag slot_ins>
+class AIE2__instr64__nop__lng<dag slot_ins>
   : AIE2_instr64_Composite<slot_ins>
 {
   // Base slots
   bits<42> lng;
+  bits<1> nop;
   // Intermediate fields
   bits<60> inst_alu_mv;
   bits<43> alu_mv;
   // Hierarchical definition
   let instr64 = {inst_alu_mv};
-  let inst_alu_mv = {0b0000000000 /*xxxxxxxxxx*/, alu_mv, 0b0000100 /*xxxx100*/};
+  let inst_alu_mv = {nop, 0b000000000 /*xxxxxxxxx*/, alu_mv, 0b0000100 /*xxxx100*/};
   let alu_mv = {lng, 0b0};
 }
 
@@ -1105,7 +1106,7 @@ class AIE2__instr16__nop<dag slot_ins>
   : AIE2_instr16_Composite<slot_ins>
 {
   // Only slot
-  bits<12> nop16;
+  bits<1> nop16;
   // There is just one insn which is nop
   let instr16 = {nop16};
 }
@@ -1319,7 +1320,7 @@ def I64_LDA_VEC : AIE2__instr64__lda__vec<(ins lda_slot:$lda, vec_slot:$vec)>;
 def I64_LDA_LDB_ST : AIE2__instr64__lda__ldb__st<(ins lda_slot:$lda, ldb_slot:$ldb, st_slot:$st)>;
 def I64_LDA_LDB_ALU : AIE2__instr64__lda__ldb__alu<(ins lda_slot:$lda, ldb_slot:$ldb, alu_slot:$alu)>;
 def I64_ALU_VEC : AIE2__instr64__alu__vec<(ins alu_slot:$alu, vec_slot:$vec)>;
-def I64_LNG : AIE2__instr64__lng<(ins lng_slot:$lng)>;
+def I64_NOP_LNG : AIE2__instr64__nop__lng<(ins nop_slot:$nop, lng_slot:$lng)>;
 def I64_ALU_MV : AIE2__instr64__alu__mv<(ins alu_slot:$alu, mv_slot:$mv)>;
 // nop_slot has all don't care bits
 def I16_NOP : AIE2__instr16__nop<(ins nop_slot:$nop16)>;

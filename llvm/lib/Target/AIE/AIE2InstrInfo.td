@@ -501,12 +501,6 @@ class vec_nop {
 
 // These are instances of formats with only nops.
 
-let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
-  def NOP : AIE2_inst_nop_instr16<(outs), (ins), "nop", ""> {
-    let nop = dontcare{12-1};
-  }
-}
-
 def NOP32 : AIE2__instr32__alu<(ins)>, alu_nop {
   let AsmString = "nop32";
   let isCodeGenOnly = true;
@@ -542,9 +536,9 @@ def NOP128 : AIE2__instr128__ldb__lda__st__alu__mv__vec<(ins)>, ldb_nop, lda_nop
   let isCodeGenOnly = true;
 }
 
-// NOPs for each VLIW Slots
-
+// NOPs for each VLIW Slot
 let hasSideEffects = 0, mayLoad = 0, mayStore = 0, isSlotNOP = true in {
+  def NOP : AIE2_nop_nop_inst_nop<(outs), (ins), "nop">;
   def NOPA : AIE2_nop_lda_inst_lda<(outs), (ins), "nopa">;
   def NOPB : AIE2_nop_ldb_inst_ldb<(outs), (ins), "nopb">;
   def NOPX : AIE2_nop_alu_inst_alu<(outs), (ins), "nopx">;
