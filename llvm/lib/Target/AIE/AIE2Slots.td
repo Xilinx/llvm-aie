@@ -51,8 +51,15 @@ let Namespace = "AIE2" in
   }
 
   // Cooked up Slot for 16-bit InsnFormat.
-  // In AIE2 this has a single instruction nop.
-  def nop_slot     : InstSlot<"Nop", 12> {
+  // In AIE2 this has a single instruction nop. We keep the size small, so that
+  // we can reuse it as artificial nop slot in other formats. This is another
+  // trick, used to disambiguate equivalent formats with different size. 
+  // As prime example, XM fits stand-alone in 48 bit and in 64 bits, where we
+  // want to use the bigger one for alignmment purposes. We tell the encoder
+  // which one to use by adding a nop instruction in the bundle. The encoder
+  // will find the smallest format covering these two slots, and end up at the
+  // 64 bit one. 
+  def nop_slot     : InstSlot<"Nop", 1> {
     let FieldToFind = "nop";
   }
 }
@@ -84,7 +91,6 @@ class AIE2SlotInst<InstSlot slot,
   // Please also note that the slot decoder table name will include the bitsize
   // as a suffix.
   let Size = 4;
-  let DecoderNamespace = slot.SlotName; 
 }
 
 class AIE2_inst_alu_instr32<dag outs, dag ins, string opcodestr, string argstr>
@@ -133,8 +139,8 @@ class AIE2_inst_vec_instr32<dag outs, dag ins, string opcodestr, string argstr>
 
 class AIE2_inst_nop_instr16<dag outs, dag ins, string opcodestr, string argstr>
   : AIE2SlotInst<nop_slot, outs, ins, opcodestr, argstr> {
-  bits<12> nop;
-  bits<12> Inst = nop;
+  bits<1> nop;
+  bits<1> Inst = nop;
   
   let Size = 2;
 }

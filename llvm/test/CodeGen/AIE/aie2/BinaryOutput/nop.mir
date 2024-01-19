@@ -19,6 +19,11 @@
 # CHECK: 12: 19 00 00 08 nops
 # CHECK: 16: 09 78 00 00 nopv
 # CHECK: 1a: 15 00 00 00 00 00 nopxm
+# CHECK: 20: 43 00 00 00 00 00 00 00 nop{{.*}}nopxm
+# CHECK: 28: bb 00 00 00 00 00 00 00 00 00 nopa{{.*}}nopxm
+# CHECK: 32: 27 78 00 00 0e 00 00 00 00 00 00 00 nopa{{.*}}nopb{{.*}}nops{{.*}}nopv
+# CHECK: 3e: 7f 00 00 00 71 00 00 00 00 00 00 00 00 00 nopa{{.*}}nopb{{.*}}nopx{{.*}}nopm{{.*}}nops
+# CHECK: 4c: c0 03 00 88 03 00 00 00 00 00 00 00 00 00 00 00 nopb{{.*}}nopa{{.*}}nops{{.*}}nopx{{.*}}nopm{{.*}}nopv
 ---
 name:            test_call
 alignment:       16
@@ -32,4 +37,28 @@ body:             |
     NOPS
     NOPV
     NOPXM
+    NOPXM {
+      NOP
+    }
+    NOPA {
+      NOPXM
+    }
+    NOPA {
+      NOPB
+      NOPS
+      NOPV
+    }
+    NOPX {
+      NOPM
+      NOPS
+      NOPB
+      NOPA
+    }
+    NOPV {
+      NOPA
+      NOPB
+      NOPS
+      NOPX
+      NOPM
+    }
 ...

@@ -845,6 +845,12 @@ class AIE2_nop_alu_inst_alu < dag outs, dag ins, string opcodestr = "", string a
   let alu = {0b0000,0b0000,0b000000,0b00000,0b0};
 }
 
+class AIE2_nop_nop_inst_nop < dag outs, dag ins, string opcodestr = "", string argstr = "">:
+    AIE2_inst_nop_instr16 <outs, ins, opcodestr, argstr> {
+
+  let nop = {0b0};
+}
+
 class AIE2_nop_lda_inst_lda < dag outs, dag ins, string opcodestr = "", string argstr = "">:
     AIE2_inst_lda_instr32 <outs, ins, opcodestr, argstr> {
 
