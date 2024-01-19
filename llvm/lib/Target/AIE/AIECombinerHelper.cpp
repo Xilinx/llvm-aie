@@ -37,7 +37,7 @@ static cl::opt<bool> EnableGreedyAddressCombine(
     cl::desc("Enable greedy combines without checking for later uses of the "
              "base pointer"));
 static cl::opt<bool>
-    EnableS20Narrowing("aie-s20-narrowing", cl::Hidden, cl::init(false),
+    EnableS20Narrowing("aie-s20-narrowing", cl::Hidden, cl::init(true),
                        cl::desc("Enable s20 operand narrowing optimization"));
 
 MachineInstr *findPreIncMatch(MachineInstr &MemI, MachineRegisterInfo &MRI,

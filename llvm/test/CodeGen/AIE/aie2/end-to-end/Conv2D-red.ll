@@ -5,7 +5,7 @@
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
 ; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-; RUN: llc -O2 -mtriple=aie2 --aie-s20-narrowing --enable-pipeliner=0 %s -o - | FileCheck %s --check-prefix=ASM
+; RUN: llc -O2 -mtriple=aie2 --enable-pipeliner=0 %s -o - | FileCheck %s --check-prefix=ASM
 
 
 ; This is a reduced version of the Conv2D_0 MLLib benchmark which only contains
