@@ -12,10 +12,10 @@ declare i32 @callee_i32()
 define void @test_call_i32() {
   ; CHECK-LABEL: name: test_call_i32
   ; CHECK: bb.1 (%ir-block.0):
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
-  ; CHECK-NEXT:   JL @callee_i32, csr_aie2, implicit-def $lr, implicit-def $r0
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   PseudoJL @callee_i32, csr_aie2, implicit-def $lr, implicit-def $r0
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(s32) = COPY $r0
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   %res = call i32 @callee_i32()
   ret void
@@ -25,12 +25,12 @@ declare i64 @callee_i64()
 define void @test_call_i64() {
   ; CHECK-LABEL: name: test_call_i64
   ; CHECK: bb.1 (%ir-block.0):
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
-  ; CHECK-NEXT:   JL @callee_i64, csr_aie2, implicit-def $lr, implicit-def $r0, implicit-def $r1
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   PseudoJL @callee_i64, csr_aie2, implicit-def $lr, implicit-def $r0, implicit-def $r1
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(s32) = COPY $r0
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:_(s32) = COPY $r1
   ; CHECK-NEXT:   [[MV:%[0-9]+]]:_(s64) = G_MERGE_VALUES [[COPY]](s32), [[COPY1]](s32)
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   %res = call i64 @callee_i64()
   ret void
@@ -40,23 +40,23 @@ declare i1 @callee_i1()
 define void @test_call_i1() {
   ; CHECK-LABEL: name: test_call_i1
   ; CHECK: bb.1 (%ir-block.0):
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
-  ; CHECK-NEXT:   JL @callee_i1, csr_aie2, implicit-def $lr, implicit-def $r0
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   PseudoJL @callee_i1, csr_aie2, implicit-def $lr, implicit-def $r0
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(s32) = COPY $r0
   ; CHECK-NEXT:   [[TRUNC:%[0-9]+]]:_(s1) = G_TRUNC [[COPY]](s32)
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
-  ; CHECK-NEXT:   JL @callee_i1, csr_aie2, implicit-def $lr, implicit-def $r0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   PseudoJL @callee_i1, csr_aie2, implicit-def $lr, implicit-def $r0
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:_(s32) = COPY $r0
   ; CHECK-NEXT:   [[ASSERT_SEXT:%[0-9]+]]:_(s32) = G_ASSERT_SEXT [[COPY1]], 1
   ; CHECK-NEXT:   [[TRUNC1:%[0-9]+]]:_(s1) = G_TRUNC [[ASSERT_SEXT]](s32)
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
-  ; CHECK-NEXT:   JL @callee_i1, csr_aie2, implicit-def $lr, implicit-def $r0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   PseudoJL @callee_i1, csr_aie2, implicit-def $lr, implicit-def $r0
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:_(s32) = COPY $r0
   ; CHECK-NEXT:   [[ASSERT_ZEXT:%[0-9]+]]:_(s32) = G_ASSERT_ZEXT [[COPY2]], 1
   ; CHECK-NEXT:   [[TRUNC2:%[0-9]+]]:_(s1) = G_TRUNC [[ASSERT_ZEXT]](s32)
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   %res1 = call i1 @callee_i1()
   %res2 = call signext i1 @callee_i1()
@@ -68,23 +68,23 @@ declare i8 @callee_i8()
 define void @test_call_i8() {
   ; CHECK-LABEL: name: test_call_i8
   ; CHECK: bb.1 (%ir-block.0):
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
-  ; CHECK-NEXT:   JL @callee_i8, csr_aie2, implicit-def $lr, implicit-def $r0
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   PseudoJL @callee_i8, csr_aie2, implicit-def $lr, implicit-def $r0
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(s32) = COPY $r0
   ; CHECK-NEXT:   [[TRUNC:%[0-9]+]]:_(s8) = G_TRUNC [[COPY]](s32)
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
-  ; CHECK-NEXT:   JL @callee_i8, csr_aie2, implicit-def $lr, implicit-def $r0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   PseudoJL @callee_i8, csr_aie2, implicit-def $lr, implicit-def $r0
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:_(s32) = COPY $r0
   ; CHECK-NEXT:   [[ASSERT_SEXT:%[0-9]+]]:_(s32) = G_ASSERT_SEXT [[COPY1]], 8
   ; CHECK-NEXT:   [[TRUNC1:%[0-9]+]]:_(s8) = G_TRUNC [[ASSERT_SEXT]](s32)
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
-  ; CHECK-NEXT:   JL @callee_i8, csr_aie2, implicit-def $lr, implicit-def $r0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   PseudoJL @callee_i8, csr_aie2, implicit-def $lr, implicit-def $r0
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:_(s32) = COPY $r0
   ; CHECK-NEXT:   [[ASSERT_ZEXT:%[0-9]+]]:_(s32) = G_ASSERT_ZEXT [[COPY2]], 8
   ; CHECK-NEXT:   [[TRUNC2:%[0-9]+]]:_(s8) = G_TRUNC [[ASSERT_ZEXT]](s32)
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   %res1 = call i8 @callee_i8()
   %res2 = call signext i8 @callee_i8()
@@ -96,23 +96,23 @@ declare i16 @callee_i16()
 define void @test_call_i16() {
   ; CHECK-LABEL: name: test_call_i16
   ; CHECK: bb.1 (%ir-block.0):
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
-  ; CHECK-NEXT:   JL @callee_i16, csr_aie2, implicit-def $lr, implicit-def $r0
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   PseudoJL @callee_i16, csr_aie2, implicit-def $lr, implicit-def $r0
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(s32) = COPY $r0
   ; CHECK-NEXT:   [[TRUNC:%[0-9]+]]:_(s16) = G_TRUNC [[COPY]](s32)
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
-  ; CHECK-NEXT:   JL @callee_i16, csr_aie2, implicit-def $lr, implicit-def $r0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   PseudoJL @callee_i16, csr_aie2, implicit-def $lr, implicit-def $r0
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:_(s32) = COPY $r0
   ; CHECK-NEXT:   [[ASSERT_SEXT:%[0-9]+]]:_(s32) = G_ASSERT_SEXT [[COPY1]], 16
   ; CHECK-NEXT:   [[TRUNC1:%[0-9]+]]:_(s16) = G_TRUNC [[ASSERT_SEXT]](s32)
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
-  ; CHECK-NEXT:   JL @callee_i16, csr_aie2, implicit-def $lr, implicit-def $r0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   PseudoJL @callee_i16, csr_aie2, implicit-def $lr, implicit-def $r0
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:_(s32) = COPY $r0
   ; CHECK-NEXT:   [[ASSERT_ZEXT:%[0-9]+]]:_(s32) = G_ASSERT_ZEXT [[COPY2]], 16
   ; CHECK-NEXT:   [[TRUNC2:%[0-9]+]]:_(s16) = G_TRUNC [[ASSERT_ZEXT]](s32)
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   %res1 = call i16 @callee_i16()
   %res2 = call signext i16 @callee_i16()
@@ -124,10 +124,10 @@ declare i32* @callee_ptr()
 define void @test_call_ptr() {
   ; CHECK-LABEL: name: test_call_ptr
   ; CHECK: bb.1 (%ir-block.0):
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
-  ; CHECK-NEXT:   JL @callee_ptr, csr_aie2, implicit-def $lr, implicit-def $p0
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   PseudoJL @callee_ptr, csr_aie2, implicit-def $lr, implicit-def $p0
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $p0
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   %res = call i32* @callee_ptr()
   ret void
@@ -137,10 +137,10 @@ declare float @callee_float()
 define void @test_callee_float() {
   ; CHECK-LABEL: name: test_callee_float
   ; CHECK: bb.1 (%ir-block.0):
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
-  ; CHECK-NEXT:   JL @callee_float, csr_aie2, implicit-def $lr, implicit-def $r0
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   PseudoJL @callee_float, csr_aie2, implicit-def $lr, implicit-def $r0
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(s32) = COPY $r0
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   %res = call float @callee_float()
   ret void
@@ -150,12 +150,12 @@ declare double @callee_double()
 define void @test_callee_double() {
   ; CHECK-LABEL: name: test_callee_double
   ; CHECK: bb.1 (%ir-block.0):
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
-  ; CHECK-NEXT:   JL @callee_double, csr_aie2, implicit-def $lr, implicit-def $r0, implicit-def $r1
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   PseudoJL @callee_double, csr_aie2, implicit-def $lr, implicit-def $r0, implicit-def $r1
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(s32) = COPY $r0
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:_(s32) = COPY $r1
   ; CHECK-NEXT:   [[MV:%[0-9]+]]:_(s64) = G_MERGE_VALUES [[COPY]](s32), [[COPY1]](s32)
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   %res = call double @callee_double()
   ret void

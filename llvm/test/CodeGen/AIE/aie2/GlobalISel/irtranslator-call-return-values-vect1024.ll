@@ -13,10 +13,10 @@ declare <32 x i32> @callee_v32int32()
 define void @call_v32int32() {
   ; CHECK-LABEL: name: call_v32int32
   ; CHECK: bb.1 (%ir-block.0):
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
-  ; CHECK-NEXT:   JL @callee_v32int32, csr_aie2, implicit-def $lr, implicit-def $y2
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   PseudoJL @callee_v32int32, csr_aie2, implicit-def $lr, implicit-def $y2
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<32 x s32>) = COPY $y2
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   %res = call <32 x i32> @callee_v32int32()
   ret void
@@ -26,10 +26,10 @@ declare <64 x i16> @callee_v64int16()
 define void @call_v64int16() {
   ; CHECK-LABEL: name: call_v64int16
   ; CHECK: bb.1 (%ir-block.0):
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
-  ; CHECK-NEXT:   JL @callee_v64int16, csr_aie2, implicit-def $lr, implicit-def $y2
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   PseudoJL @callee_v64int16, csr_aie2, implicit-def $lr, implicit-def $y2
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<64 x s16>) = COPY $y2
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   %res = call <64 x i16> @callee_v64int16()
   ret void
@@ -39,10 +39,10 @@ declare <128 x i8> @callee_v128int8()
 define void @call_v128int8() {
   ; CHECK-LABEL: name: call_v128int8
   ; CHECK: bb.1 (%ir-block.0):
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
-  ; CHECK-NEXT:   JL @callee_v128int8, csr_aie2, implicit-def $lr, implicit-def $y2
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   PseudoJL @callee_v128int8, csr_aie2, implicit-def $lr, implicit-def $y2
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<128 x s8>) = COPY $y2
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   %res = call <128 x i8> @callee_v128int8()
   ret void
@@ -52,10 +52,10 @@ declare <32 x float> @callee_v32float()
 define void @call_v32float() {
   ; CHECK-LABEL: name: call_v32float
   ; CHECK: bb.1 (%ir-block.0):
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
-  ; CHECK-NEXT:   JL @callee_v32float, csr_aie2, implicit-def $lr, implicit-def $y2
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   PseudoJL @callee_v32float, csr_aie2, implicit-def $lr, implicit-def $y2
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<32 x s32>) = COPY $y2
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   %res = call <32 x float> @callee_v32float()
   ret void

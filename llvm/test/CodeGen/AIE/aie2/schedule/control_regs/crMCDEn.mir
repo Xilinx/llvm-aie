@@ -20,6 +20,12 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $crmcden = MOVXM_lng_cg 0
     ; CHECK-NEXT: VMOV_mv_mcd killed $bml0, implicit $crmcden
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
     $crmcden  = MOVXM_lng_cg 0
     VMOV_mv_mcd $bml0, implicit $crmcden
 ...

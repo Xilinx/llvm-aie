@@ -12,7 +12,7 @@ name:            vmulf_vnegmulf_latency_bm
 alignment:       16
 body:             |
   bb.0.entry:
-    ; CHECK-LABEL: name: vmulf_vnegmulf
+    ; CHECK-LABEL: name: vmulf_vnegmulf_latency_bm
     ; CHECK: $bml0 = VMUL_F_vmac_bm_core_dense $x0, $x1, $r0, implicit-def $srfpflags, implicit $crfpmask
     ; CHECK-NEXT: $bml1 = VNEGMUL_F_vmac_bm_core_dense killed $x0, killed $x1, killed $r0, implicit-def $srfpflags, implicit $crfpmask
     ; CHECK-NEXT: NOP
@@ -35,7 +35,7 @@ name:            vmacf_vmscf_latency_bm
 alignment:       16
 body:             |
   bb.0.entry:
-    ; CHECK-LABEL: name: vmacf_vmscf
+    ; CHECK-LABEL: name: vmacf_vmscf_latency_bm
     ; CHECK: $bml0 = VMAC_F_vmac_bm_core_dense killed $bml0, $x0, $x1, $r1, implicit-def $srfpflags, implicit $crfpmask
     ; CHECK-NEXT: $bml1 = VMSC_F_vmac_bm_core_dense killed $bml1, killed $x0, killed $x1, killed $r1, implicit-def $srfpflags, implicit $crfpmask
     ; CHECK-NEXT: NOP

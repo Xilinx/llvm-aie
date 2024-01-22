@@ -12,12 +12,12 @@
 define void @callee_v4int32(<4 x i32>, <4 x i32>, <4 x i32>, <4 x i32>, <4 x i32>, <4 x i32>,
   ; CHECK-LABEL: name: callee_v4int32
   ; CHECK: fixedStack:
-  ; CHECK:   - { id: 0, type: default, offset: -32, size: 16, alignment: 32, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
-  ; CHECK:   - { id: 1, type: default, offset: -16, size: 16, alignment: 16, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 0, type: default, offset: -32, size: 16, alignment: 32, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 1, type: default, offset: -16, size: 16, alignment: 16, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
   ; CHECK: bb.1 (%ir-block.26):
   ; CHECK-NEXT:   liveins: $wh0, $wh1, $wh2, $wh3, $wh4, $wh5, $wh6, $wh7, $wh8, $wh9, $wh10, $wh11, $wl0, $wl1, $wl2, $wl3, $wl4, $wl5, $wl6, $wl7, $wl8, $wl9, $wl10, $wl11
   ; CHECK-NEXT: {{  $}}
@@ -84,12 +84,12 @@ define void @callee_v4int32(<4 x i32>, <4 x i32>, <4 x i32>, <4 x i32>, <4 x i32
 define void @callee_v8int16(<8 x i16>, <8 x i16>, <8 x i16>, <8 x i16>, <8 x i16>, <8 x i16>,
   ; CHECK-LABEL: name: callee_v8int16
   ; CHECK: fixedStack:
-  ; CHECK:   - { id: 0, type: default, offset: -32, size: 16, alignment: 32, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
-  ; CHECK:   - { id: 1, type: default, offset: -16, size: 16, alignment: 16, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 0, type: default, offset: -32, size: 16, alignment: 32, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 1, type: default, offset: -16, size: 16, alignment: 16, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
   ; CHECK: bb.1 (%ir-block.26):
   ; CHECK-NEXT:   liveins: $wh0, $wh1, $wh2, $wh3, $wh4, $wh5, $wh6, $wh7, $wh8, $wh9, $wh10, $wh11, $wl0, $wl1, $wl2, $wl3, $wl4, $wl5, $wl6, $wl7, $wl8, $wl9, $wl10, $wl11
   ; CHECK-NEXT: {{  $}}
@@ -156,12 +156,12 @@ define void @callee_v8int16(<8 x i16>, <8 x i16>, <8 x i16>, <8 x i16>, <8 x i16
 define void @callee_v16int8(<16 x i8>, <16 x i8>, <16 x i8>, <16 x i8>, <16 x i8>, <16 x i8>,
   ; CHECK-LABEL: name: callee_v16int8
   ; CHECK: fixedStack:
-  ; CHECK:   - { id: 0, type: default, offset: -32, size: 16, alignment: 32, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
-  ; CHECK:   - { id: 1, type: default, offset: -16, size: 16, alignment: 16, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 0, type: default, offset: -32, size: 16, alignment: 32, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 1, type: default, offset: -16, size: 16, alignment: 16, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
   ; CHECK: bb.1 (%ir-block.26):
   ; CHECK-NEXT:   liveins: $wh0, $wh1, $wh2, $wh3, $wh4, $wh5, $wh6, $wh7, $wh8, $wh9, $wh10, $wh11, $wl0, $wl1, $wl2, $wl3, $wl4, $wl5, $wl6, $wl7, $wl8, $wl9, $wl10, $wl11
   ; CHECK-NEXT: {{  $}}
@@ -228,12 +228,12 @@ define void @callee_v16int8(<16 x i8>, <16 x i8>, <16 x i8>, <16 x i8>, <16 x i8
 define void @callee_v4float(<4 x float>, <4 x float>, <4 x float>, <4 x float>, <4 x float>, <4 x float>,
   ; CHECK-LABEL: name: callee_v4float
   ; CHECK: fixedStack:
-  ; CHECK:   - { id: 0, type: default, offset: -32, size: 16, alignment: 32, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
-  ; CHECK:   - { id: 1, type: default, offset: -16, size: 16, alignment: 16, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 0, type: default, offset: -32, size: 16, alignment: 32, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 1, type: default, offset: -16, size: 16, alignment: 16, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
   ; CHECK: bb.1 (%ir-block.26):
   ; CHECK-NEXT:   liveins: $wh0, $wh1, $wh2, $wh3, $wh4, $wh5, $wh6, $wh7, $wh8, $wh9, $wh10, $wh11, $wl0, $wl1, $wl2, $wl3, $wl4, $wl5, $wl6, $wl7, $wl8, $wl9, $wl10, $wl11
   ; CHECK-NEXT: {{  $}}

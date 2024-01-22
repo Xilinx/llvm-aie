@@ -15,7 +15,7 @@ define void @call_v32int32() {
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
   ; CHECK-NEXT:   [[BUILD_VECTOR:%[0-9]+]]:_(<32 x s32>) = G_BUILD_VECTOR [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32)
-  ; CHECK-NEXT:   ADJCALLSTACKUP 128, 0
+  ; CHECK-NEXT:   ADJCALLSTACKUP 128, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $sp
   ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 -128
   ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C1]](s32)
@@ -24,8 +24,8 @@ define void @call_v32int32() {
   ; CHECK-NEXT:   $y3 = COPY [[BUILD_VECTOR]](<32 x s32>)
   ; CHECK-NEXT:   $y4 = COPY [[BUILD_VECTOR]](<32 x s32>)
   ; CHECK-NEXT:   $y5 = COPY [[BUILD_VECTOR]](<32 x s32>)
-  ; CHECK-NEXT:   JL @callee_v32int32, csr_aie2, implicit-def $lr, implicit $y2, implicit $y3, implicit $y4, implicit $y5
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 128, 0
+  ; CHECK-NEXT:   PseudoJL @callee_v32int32, csr_aie2, implicit-def $lr, implicit $y2, implicit $y3, implicit $y4, implicit $y5
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 128, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   call void @callee_v32int32(<32 x i32> zeroinitializer, <32 x i32> zeroinitializer, <32 x i32> zeroinitializer, <32 x i32> zeroinitializer, <32 x i32> zeroinitializer)
   ret void
@@ -37,7 +37,7 @@ define void @call_v64int16() {
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s16) = G_CONSTANT i16 0
   ; CHECK-NEXT:   [[BUILD_VECTOR:%[0-9]+]]:_(<64 x s16>) = G_BUILD_VECTOR [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16)
-  ; CHECK-NEXT:   ADJCALLSTACKUP 128, 0
+  ; CHECK-NEXT:   ADJCALLSTACKUP 128, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $sp
   ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 -128
   ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C1]](s32)
@@ -46,8 +46,8 @@ define void @call_v64int16() {
   ; CHECK-NEXT:   $y3 = COPY [[BUILD_VECTOR]](<64 x s16>)
   ; CHECK-NEXT:   $y4 = COPY [[BUILD_VECTOR]](<64 x s16>)
   ; CHECK-NEXT:   $y5 = COPY [[BUILD_VECTOR]](<64 x s16>)
-  ; CHECK-NEXT:   JL @callee_v64int16, csr_aie2, implicit-def $lr, implicit $y2, implicit $y3, implicit $y4, implicit $y5
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 128, 0
+  ; CHECK-NEXT:   PseudoJL @callee_v64int16, csr_aie2, implicit-def $lr, implicit $y2, implicit $y3, implicit $y4, implicit $y5
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 128, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   call void @callee_v64int16(<64 x i16> zeroinitializer, <64 x i16> zeroinitializer, <64 x i16> zeroinitializer, <64 x i16> zeroinitializer, <64 x i16> zeroinitializer)
   ret void
@@ -59,7 +59,7 @@ define void @call_v128int8() {
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s8) = G_CONSTANT i8 0
   ; CHECK-NEXT:   [[BUILD_VECTOR:%[0-9]+]]:_(<128 x s8>) = G_BUILD_VECTOR [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8)
-  ; CHECK-NEXT:   ADJCALLSTACKUP 128, 0
+  ; CHECK-NEXT:   ADJCALLSTACKUP 128, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $sp
   ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 -128
   ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C1]](s32)
@@ -68,8 +68,8 @@ define void @call_v128int8() {
   ; CHECK-NEXT:   $y3 = COPY [[BUILD_VECTOR]](<128 x s8>)
   ; CHECK-NEXT:   $y4 = COPY [[BUILD_VECTOR]](<128 x s8>)
   ; CHECK-NEXT:   $y5 = COPY [[BUILD_VECTOR]](<128 x s8>)
-  ; CHECK-NEXT:   JL @callee_v128int8, csr_aie2, implicit-def $lr, implicit $y2, implicit $y3, implicit $y4, implicit $y5
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 128, 0
+  ; CHECK-NEXT:   PseudoJL @callee_v128int8, csr_aie2, implicit-def $lr, implicit $y2, implicit $y3, implicit $y4, implicit $y5
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 128, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   call void @callee_v128int8(<128 x i8> zeroinitializer, <128 x i8> zeroinitializer, <128 x i8> zeroinitializer, <128 x i8> zeroinitializer, <128 x i8> zeroinitializer)
   ret void
@@ -81,7 +81,7 @@ define void @call_v32float() {
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s32) = G_FCONSTANT float 0.000000e+00
   ; CHECK-NEXT:   [[BUILD_VECTOR:%[0-9]+]]:_(<32 x s32>) = G_BUILD_VECTOR [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32)
-  ; CHECK-NEXT:   ADJCALLSTACKUP 128, 0
+  ; CHECK-NEXT:   ADJCALLSTACKUP 128, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $sp
   ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 -128
   ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C1]](s32)
@@ -90,8 +90,8 @@ define void @call_v32float() {
   ; CHECK-NEXT:   $y3 = COPY [[BUILD_VECTOR]](<32 x s32>)
   ; CHECK-NEXT:   $y4 = COPY [[BUILD_VECTOR]](<32 x s32>)
   ; CHECK-NEXT:   $y5 = COPY [[BUILD_VECTOR]](<32 x s32>)
-  ; CHECK-NEXT:   JL @callee_v32float, csr_aie2, implicit-def $lr, implicit $y2, implicit $y3, implicit $y4, implicit $y5
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 128, 0
+  ; CHECK-NEXT:   PseudoJL @callee_v32float, csr_aie2, implicit-def $lr, implicit $y2, implicit $y3, implicit $y4, implicit $y5
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 128, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   call void @callee_v32float(<32 x float> zeroinitializer, <32 x float> zeroinitializer, <32 x float> zeroinitializer, <32 x float> zeroinitializer, <32 x float> zeroinitializer)
   ret void

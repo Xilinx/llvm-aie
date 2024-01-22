@@ -15,11 +15,11 @@ define void @call_retcc_reserved_am() {
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s64) = G_CONSTANT i64 0
   ; CHECK-NEXT:   [[BUILD_VECTOR:%[0-9]+]]:_(<4 x s64>) = G_BUILD_VECTOR [[C]](s64), [[C]](s64), [[C]](s64), [[C]](s64)
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   $amll1 = COPY [[BUILD_VECTOR]](<4 x s64>)
-  ; CHECK-NEXT:   JL @retcc_reserved_am, csr_aie2, implicit-def $lr, implicit $amll1, implicit-def $cm0
+  ; CHECK-NEXT:   PseudoJL @retcc_reserved_am, csr_aie2, implicit-def $lr, implicit $amll1, implicit-def $cm0
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<16 x s64>) = COPY $cm0
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   call <16 x i64> @retcc_reserved_am(<4 x i64> zeroinitializer)
   ret void
@@ -33,11 +33,11 @@ define void @call_retcc_reserved_bm() {
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s64) = G_CONSTANT i64 0
   ; CHECK-NEXT:   [[BUILD_VECTOR:%[0-9]+]]:_(<8 x s64>) = G_BUILD_VECTOR [[C]](s64), [[C]](s64), [[C]](s64), [[C]](s64), [[C]](s64), [[C]](s64), [[C]](s64), [[C]](s64)
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   $bml1 = COPY [[BUILD_VECTOR]](<8 x s64>)
-  ; CHECK-NEXT:   JL @retcc_reserved_bm, csr_aie2, implicit-def $lr, implicit $bml1, implicit-def $cm0
+  ; CHECK-NEXT:   PseudoJL @retcc_reserved_bm, csr_aie2, implicit-def $lr, implicit $bml1, implicit-def $cm0
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<16 x s64>) = COPY $cm0
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   call <16 x i64> @retcc_reserved_bm(<8 x i64> zeroinitializer)
   ret void
@@ -51,11 +51,11 @@ define void @call_retcc_reserved_cm() {
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s64) = G_CONSTANT i64 0
   ; CHECK-NEXT:   [[BUILD_VECTOR:%[0-9]+]]:_(<16 x s64>) = G_BUILD_VECTOR [[C]](s64), [[C]](s64), [[C]](s64), [[C]](s64), [[C]](s64), [[C]](s64), [[C]](s64), [[C]](s64), [[C]](s64), [[C]](s64), [[C]](s64), [[C]](s64), [[C]](s64), [[C]](s64), [[C]](s64), [[C]](s64)
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   $cm1 = COPY [[BUILD_VECTOR]](<16 x s64>)
-  ; CHECK-NEXT:   JL @retcc_reserved_cm, csr_aie2, implicit-def $lr, implicit $cm1, implicit-def $cm0
+  ; CHECK-NEXT:   PseudoJL @retcc_reserved_cm, csr_aie2, implicit-def $lr, implicit $cm1, implicit-def $cm0
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<16 x s64>) = COPY $cm0
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   call <16 x i64> @retcc_reserved_cm(<16 x i64> zeroinitializer)
   ret void

@@ -10,9 +10,9 @@
 define void @callee_v4int64(<4 x i64>, <4 x i64>, <4 x i64>, <4 x i64>, <4 x i64>, <4 x i64>,
   ; CHECK-LABEL: name: callee_v4int64
   ; CHECK: fixedStack:
-  ; CHECK:   - { id: 0, type: default, offset: -32, size: 32, alignment: 32, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 0, type: default, offset: -32, size: 32, alignment: 32, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
   ; CHECK: bb.1 (%ir-block.61):
   ; CHECK-NEXT:   liveins: $amhh0, $amhh1, $amhh2, $amhh3, $amhh4, $amhh5, $amhh6, $amhh7, $amhh8, $amhl0, $amhl1, $amhl2, $amhl3, $amhl4, $amhl5, $amhl6, $amhl7, $amhl8, $amlh0, $amlh1, $amlh2, $amlh3, $amlh4, $amlh5, $amlh6, $amlh7, $amlh8, $amll0, $amll1, $amll2, $amll3, $amll4, $amll5, $amll6, $amll7, $amll8, $wh0, $wh1, $wh2, $wh3, $wh4, $wh5, $wh6, $wh7, $wh8, $wh9, $wh10, $wh11, $wl0, $wl1, $wl2, $wl3, $wl4, $wl5, $wl6, $wl7, $wl8, $wl9, $wl10, $wl11
   ; CHECK-NEXT: {{  $}}
@@ -95,9 +95,9 @@ define void @callee_v4int64(<4 x i64>, <4 x i64>, <4 x i64>, <4 x i64>, <4 x i64
 define void @callee_v8int64(<8 x i64>, <8 x i64>, <8 x i64>, <8 x i64>, <8 x i64>, <8 x i64>,
   ; CHECK-LABEL: name: callee_v8int64
   ; CHECK: fixedStack:
-  ; CHECK:   - { id: 0, type: default, offset: -64, size: 64, alignment: 32, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 0, type: default, offset: -64, size: 64, alignment: 32, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
   ; CHECK: bb.1 (%ir-block.19):
   ; CHECK-NEXT:   liveins: $bmh0, $bmh1, $bmh2, $bmh3, $bmh4, $bmh5, $bmh6, $bmh7, $bmh8, $bml0, $bml1, $bml2, $bml3, $bml4, $bml5, $bml6, $bml7, $bml8
   ; CHECK-NEXT: {{  $}}
@@ -131,9 +131,9 @@ define void @callee_v8int64(<8 x i64>, <8 x i64>, <8 x i64>, <8 x i64>, <8 x i64
 define void @callee_v16int64(<16 x i64>, <16 x i64>, <16 x i64>, <16 x i64>, <16 x i64>, <16 x i64>,
   ; CHECK-LABEL: name: callee_v16int64
   ; CHECK: fixedStack:
-  ; CHECK:   - { id: 0, type: default, offset: -128, size: 128, alignment: 32, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 0, type: default, offset: -128, size: 128, alignment: 32, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
   ; CHECK: bb.1 (%ir-block.10):
   ; CHECK-NEXT:   liveins: $cm0, $cm1, $cm2, $cm3, $cm4, $cm5, $cm6, $cm7, $cm8
   ; CHECK-NEXT: {{  $}}

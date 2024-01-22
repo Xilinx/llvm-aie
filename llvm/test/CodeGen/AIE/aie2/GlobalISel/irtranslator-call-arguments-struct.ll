@@ -32,7 +32,7 @@ define void @call_pass_3S4I() {
   ; CHECK-NEXT:   [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 6
   ; CHECK-NEXT:   [[C6:%[0-9]+]]:_(s32) = G_CONSTANT i32 7
   ; CHECK-NEXT:   [[C7:%[0-9]+]]:_(s32) = G_CONSTANT i32 8
-  ; CHECK-NEXT:   ADJCALLSTACKUP 16, 0
+  ; CHECK-NEXT:   ADJCALLSTACKUP 16, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $sp
   ; CHECK-NEXT:   [[C8:%[0-9]+]]:_(s32) = G_CONSTANT i32 -4
   ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C8]](s32)
@@ -54,8 +54,8 @@ define void @call_pass_3S4I() {
   ; CHECK-NEXT:   $r5 = COPY [[C5]](s32)
   ; CHECK-NEXT:   $r6 = COPY [[C6]](s32)
   ; CHECK-NEXT:   $r7 = COPY [[C7]](s32)
-  ; CHECK-NEXT:   JL @pass_3S4I, csr_aie2, implicit-def $lr, implicit $r0, implicit $r1, implicit $r2, implicit $r3, implicit $r4, implicit $r5, implicit $r6, implicit $r7
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 16, 0
+  ; CHECK-NEXT:   PseudoJL @pass_3S4I, csr_aie2, implicit-def $lr, implicit $r0, implicit $r1, implicit $r2, implicit $r3, implicit $r4, implicit $r5, implicit $r6, implicit $r7
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 16, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
 entry:
   call void @pass_3S4I(%struct.S4I { i32 1, i32 2, i32 3, i32 4 },
@@ -72,7 +72,7 @@ define void @call_pass_2S4P() {
   ; CHECK-NEXT:   [[GV1:%[0-9]+]]:_(p0) = G_GLOBAL_VALUE @G2
   ; CHECK-NEXT:   [[GV2:%[0-9]+]]:_(p0) = G_GLOBAL_VALUE @G3
   ; CHECK-NEXT:   [[GV3:%[0-9]+]]:_(p0) = G_GLOBAL_VALUE @G4
-  ; CHECK-NEXT:   ADJCALLSTACKUP 8, 0
+  ; CHECK-NEXT:   ADJCALLSTACKUP 8, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $sp
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 -4
   ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C]](s32)
@@ -86,8 +86,8 @@ define void @call_pass_2S4P() {
   ; CHECK-NEXT:   $p3 = COPY [[GV3]](p0)
   ; CHECK-NEXT:   $p4 = COPY [[GV]](p0)
   ; CHECK-NEXT:   $p5 = COPY [[GV1]](p0)
-  ; CHECK-NEXT:   JL @pass_2S4P, csr_aie2, implicit-def $lr, implicit $p0, implicit $p1, implicit $p2, implicit $p3, implicit $p4, implicit $p5
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 8, 0
+  ; CHECK-NEXT:   PseudoJL @pass_2S4P, csr_aie2, implicit-def $lr, implicit $p0, implicit $p1, implicit $p2, implicit $p3, implicit $p4, implicit $p5
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 8, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
 entry:
   call void @pass_2S4P(%struct.S4P { i32* @G1, i32* @G2, i32* @G3, i32* @G4 }, %struct.S4P { i32* @G1, i32* @G2, i32* @G3, i32* @G4 })
@@ -106,7 +106,7 @@ define void @call_pass_2S2I2P() {
   ; CHECK-NEXT:   [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 4
   ; CHECK-NEXT:   [[GV2:%[0-9]+]]:_(p0) = G_GLOBAL_VALUE @G3
   ; CHECK-NEXT:   [[GV3:%[0-9]+]]:_(p0) = G_GLOBAL_VALUE @G4
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   $r0 = COPY [[C]](s32)
   ; CHECK-NEXT:   $r1 = COPY [[C1]](s32)
   ; CHECK-NEXT:   $p0 = COPY [[GV]](p0)
@@ -115,8 +115,8 @@ define void @call_pass_2S2I2P() {
   ; CHECK-NEXT:   $r3 = COPY [[C3]](s32)
   ; CHECK-NEXT:   $p2 = COPY [[GV2]](p0)
   ; CHECK-NEXT:   $p3 = COPY [[GV3]](p0)
-  ; CHECK-NEXT:   JL @pass_2S2I2P, csr_aie2, implicit-def $lr, implicit $r0, implicit $r1, implicit $p0, implicit $p1, implicit $r2, implicit $r3, implicit $p2, implicit $p3
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
+  ; CHECK-NEXT:   PseudoJL @pass_2S2I2P, csr_aie2, implicit-def $lr, implicit $r0, implicit $r1, implicit $p0, implicit $p1, implicit $r2, implicit $r3, implicit $p2, implicit $p3
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
 entry:
   call void @pass_2S2I2P(%struct.S2I2P { i32 1, i32 2, i32* @G1, i32* @G2 }, %struct.S2I2P { i32 3, i32 4, i32* @G3, i32* @G4 })
@@ -134,7 +134,7 @@ define void @call_pass_S4I_boundary() {
   ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
   ; CHECK-NEXT:   [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
   ; CHECK-NEXT:   [[C4:%[0-9]+]]:_(s32) = G_CONSTANT i32 4
-  ; CHECK-NEXT:   ADJCALLSTACKUP 8, 0
+  ; CHECK-NEXT:   ADJCALLSTACKUP 8, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $sp
   ; CHECK-NEXT:   [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 -4
   ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C5]](s32)
@@ -150,8 +150,8 @@ define void @call_pass_S4I_boundary() {
   ; CHECK-NEXT:   $r5 = COPY [[C]](s32)
   ; CHECK-NEXT:   $r6 = COPY [[C1]](s32)
   ; CHECK-NEXT:   $r7 = COPY [[C2]](s32)
-  ; CHECK-NEXT:   JL @pass_S4I_boundary, csr_aie2, implicit-def $lr, implicit $r0, implicit $r1, implicit $r2, implicit $r3, implicit $r4, implicit $r5, implicit $r6, implicit $r7
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 8, 0
+  ; CHECK-NEXT:   PseudoJL @pass_S4I_boundary, csr_aie2, implicit-def $lr, implicit $r0, implicit $r1, implicit $r2, implicit $r3, implicit $r4, implicit $r5, implicit $r6, implicit $r7
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 8, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
 entry:
   call void @pass_S4I_boundary([6 x i32] zeroinitializer, %struct.S4I { i32 1, i32 2, i32 3, i32 4 })
@@ -171,7 +171,7 @@ define void @call_pass_SLII_boundary() {
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
   ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s64) = G_CONSTANT i64 4
   ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 5
-  ; CHECK-NEXT:   ADJCALLSTACKUP 8, 0
+  ; CHECK-NEXT:   ADJCALLSTACKUP 8, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   [[UV:%[0-9]+]]:_(s32), [[UV1:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[C1]](s64)
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $sp
   ; CHECK-NEXT:   [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 -8
@@ -188,8 +188,8 @@ define void @call_pass_SLII_boundary() {
   ; CHECK-NEXT:   $r5 = COPY [[C]](s32)
   ; CHECK-NEXT:   $r6 = COPY [[C]](s32)
   ; CHECK-NEXT:   $r7 = COPY [[C2]](s32)
-  ; CHECK-NEXT:   JL @pass_SLII_boundary, csr_aie2, implicit-def $lr, implicit $r0, implicit $r1, implicit $r2, implicit $r3, implicit $r4, implicit $r5, implicit $r6, implicit $r7
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 8, 0
+  ; CHECK-NEXT:   PseudoJL @pass_SLII_boundary, csr_aie2, implicit-def $lr, implicit $r0, implicit $r1, implicit $r2, implicit $r3, implicit $r4, implicit $r5, implicit $r6, implicit $r7
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 8, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   call void @pass_SLII_boundary([7 x i32] zeroinitializer, %struct.SLII { i64 4, i32 5 })
   ret void
@@ -202,14 +202,14 @@ define void @test_retcc_reserved_GPRs() {
   ; CHECK-LABEL: name: test_retcc_reserved_GPRs
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   $r4 = COPY [[C]](s32)
-  ; CHECK-NEXT:   JL @retcc_reserved_GPRs, csr_aie2, implicit-def $lr, implicit $r4, implicit-def $r0, implicit-def $r1, implicit-def $r2, implicit-def $r3
+  ; CHECK-NEXT:   PseudoJL @retcc_reserved_GPRs, csr_aie2, implicit-def $lr, implicit $r4, implicit-def $r0, implicit-def $r1, implicit-def $r2, implicit-def $r3
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(s32) = COPY $r0
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:_(s32) = COPY $r1
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:_(s32) = COPY $r2
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:_(s32) = COPY $r3
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   call %struct.S4I @retcc_reserved_GPRs(i32 1)
   ret void

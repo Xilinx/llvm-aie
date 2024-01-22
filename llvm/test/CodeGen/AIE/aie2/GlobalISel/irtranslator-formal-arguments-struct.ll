@@ -20,18 +20,18 @@
 define void @use_3S4I(%struct.S4I %a, %struct.S4I %b, %struct.S4I %c) {
   ; CHECK-LABEL: name: use_3S4I
   ; CHECK: fixedStack:
-  ; CHECK:   - { id: 0, type: default, offset: -16, size: 4, alignment: 16, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
-  ; CHECK:   - { id: 1, type: default, offset: -12, size: 4, alignment: 4, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
-  ; CHECK:   - { id: 2, type: default, offset: -8, size: 4, alignment: 8, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
-  ; CHECK:   - { id: 3, type: default, offset: -4, size: 4, alignment: 4, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 0, type: default, offset: -16, size: 4, alignment: 16, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 1, type: default, offset: -12, size: 4, alignment: 4, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 2, type: default, offset: -8, size: 4, alignment: 8, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 3, type: default, offset: -4, size: 4, alignment: 4, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
   ; CHECK: bb.1.entry:
   ; CHECK-NEXT:   liveins: $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7
   ; CHECK-NEXT: {{  $}}
@@ -66,12 +66,12 @@ entry:
 define void @pass_2S4P(%struct.S4P, %struct.S4P) {
   ; CHECK-LABEL: name: pass_2S4P
   ; CHECK: fixedStack:
-  ; CHECK:   - { id: 0, type: default, offset: -8, size: 3, alignment: 8, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
-  ; CHECK:   - { id: 1, type: default, offset: -4, size: 3, alignment: 4, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 0, type: default, offset: -8, size: 3, alignment: 8, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 1, type: default, offset: -4, size: 3, alignment: 4, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
   ; CHECK: bb.1.entry:
   ; CHECK-NEXT:   liveins: $p0, $p1, $p2, $p3, $p4, $p5
   ; CHECK-NEXT: {{  $}}
@@ -114,12 +114,12 @@ entry:
 define void @use_S4I_boundary([6 x i32] %a, %struct.S4I %s) {
   ; CHECK-LABEL: name: use_S4I_boundary
   ; CHECK: fixedStack:
-  ; CHECK:   - { id: 0, type: default, offset: -8, size: 4, alignment: 8, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
-  ; CHECK:   - { id: 1, type: default, offset: -4, size: 4, alignment: 4, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 0, type: default, offset: -8, size: 4, alignment: 8, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 1, type: default, offset: -4, size: 4, alignment: 4, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
   ; CHECK: bb.1.entry:
   ; CHECK-NEXT:   liveins: $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7
   ; CHECK-NEXT: {{  $}}
@@ -154,12 +154,12 @@ entry:
 define void @use_SLII_boundary([7 x i32] %a, %struct.SLII %s) {
   ; CHECK-LABEL: name: use_SLII_boundary
   ; CHECK: fixedStack:
-  ; CHECK:   - { id: 0, type: default, offset: -4, size: 4, alignment: 4, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
-  ; CHECK:   - { id: 1, type: default, offset: -8, size: 4, alignment: 8, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 0, type: default, offset: -4, size: 4, alignment: 4, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 1, type: default, offset: -8, size: 4, alignment: 8, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
   ; CHECK: bb.1.entry:
   ; CHECK-NEXT:   liveins: $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7
   ; CHECK-NEXT: {{  $}}

@@ -13,11 +13,11 @@ declare <4 x i32> @callee_v4int32()
 define void @call_v4int32() {
   ; CHECK-LABEL: name: call_v4int32
   ; CHECK: bb.1 (%ir-block.0):
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
-  ; CHECK-NEXT:   JL @callee_v4int32, csr_aie2, implicit-def $lr, implicit-def $wl0
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   PseudoJL @callee_v4int32, csr_aie2, implicit-def $lr, implicit-def $wl0
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<8 x s32>) = COPY $wl0
   ; CHECK-NEXT:   [[UV:%[0-9]+]]:_(<4 x s32>), [[UV1:%[0-9]+]]:_(<4 x s32>) = G_UNMERGE_VALUES [[COPY]](<8 x s32>)
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   %res = call <4 x i32> @callee_v4int32()
   ret void
@@ -27,11 +27,11 @@ declare <8 x i16> @callee_v8int16()
 define void @call_v8int16() {
   ; CHECK-LABEL: name: call_v8int16
   ; CHECK: bb.1 (%ir-block.0):
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
-  ; CHECK-NEXT:   JL @callee_v8int16, csr_aie2, implicit-def $lr, implicit-def $wl0
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   PseudoJL @callee_v8int16, csr_aie2, implicit-def $lr, implicit-def $wl0
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<16 x s16>) = COPY $wl0
   ; CHECK-NEXT:   [[UV:%[0-9]+]]:_(<8 x s16>), [[UV1:%[0-9]+]]:_(<8 x s16>) = G_UNMERGE_VALUES [[COPY]](<16 x s16>)
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   %res = call <8 x i16> @callee_v8int16()
   ret void
@@ -41,11 +41,11 @@ declare <16 x i8> @callee_v16int8()
 define void @call_v16int8() {
   ; CHECK-LABEL: name: call_v16int8
   ; CHECK: bb.1 (%ir-block.0):
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
-  ; CHECK-NEXT:   JL @callee_v16int8, csr_aie2, implicit-def $lr, implicit-def $wl0
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   PseudoJL @callee_v16int8, csr_aie2, implicit-def $lr, implicit-def $wl0
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<32 x s8>) = COPY $wl0
   ; CHECK-NEXT:   [[UV:%[0-9]+]]:_(<16 x s8>), [[UV1:%[0-9]+]]:_(<16 x s8>) = G_UNMERGE_VALUES [[COPY]](<32 x s8>)
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   %res = call <16 x i8> @callee_v16int8()
   ret void
@@ -55,11 +55,11 @@ declare <4 x float> @callee_v4float()
 define void @call_v4float() {
   ; CHECK-LABEL: name: call_v4float
   ; CHECK: bb.1 (%ir-block.0):
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
-  ; CHECK-NEXT:   JL @callee_v4float, csr_aie2, implicit-def $lr, implicit-def $wl0
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   PseudoJL @callee_v4float, csr_aie2, implicit-def $lr, implicit-def $wl0
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<8 x s32>) = COPY $wl0
   ; CHECK-NEXT:   [[UV:%[0-9]+]]:_(<4 x s32>), [[UV1:%[0-9]+]]:_(<4 x s32>) = G_UNMERGE_VALUES [[COPY]](<8 x s32>)
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   %res = call <4 x float> @callee_v4float()
   ret void

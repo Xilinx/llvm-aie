@@ -21,13 +21,13 @@ declare %struct.S4I @ret_S4I()
 define void @call_ret_S4I() {
   ; CHECK-LABEL: name: call_ret_S4I
   ; CHECK: bb.1 (%ir-block.0):
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
-  ; CHECK-NEXT:   JL @ret_S4I, csr_aie2, implicit-def $lr, implicit-def $r0, implicit-def $r1, implicit-def $r2, implicit-def $r3
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   PseudoJL @ret_S4I, csr_aie2, implicit-def $lr, implicit-def $r0, implicit-def $r1, implicit-def $r2, implicit-def $r3
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(s32) = COPY $r0
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:_(s32) = COPY $r1
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:_(s32) = COPY $r2
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:_(s32) = COPY $r3
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   call %struct.S4I @ret_S4I()
   ret void
@@ -37,8 +37,8 @@ declare %struct.S4S @ret_S4S()
 define void @call_ret_S4S() {
   ; CHECK-LABEL: name: call_ret_S4S
   ; CHECK: bb.1 (%ir-block.0):
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
-  ; CHECK-NEXT:   JL @ret_S4S, csr_aie2, implicit-def $lr, implicit-def $r0, implicit-def $r1, implicit-def $r2, implicit-def $r3
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   PseudoJL @ret_S4S, csr_aie2, implicit-def $lr, implicit-def $r0, implicit-def $r1, implicit-def $r2, implicit-def $r3
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(s32) = COPY $r0
   ; CHECK-NEXT:   [[TRUNC:%[0-9]+]]:_(s16) = G_TRUNC [[COPY]](s32)
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:_(s32) = COPY $r1
@@ -47,7 +47,7 @@ define void @call_ret_S4S() {
   ; CHECK-NEXT:   [[TRUNC2:%[0-9]+]]:_(s16) = G_TRUNC [[COPY2]](s32)
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:_(s32) = COPY $r3
   ; CHECK-NEXT:   [[TRUNC3:%[0-9]+]]:_(s16) = G_TRUNC [[COPY3]](s32)
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   call %struct.S4S @ret_S4S()
   ret void
@@ -57,14 +57,14 @@ declare %struct.SILI @ret_SILI()
 define void @call_ret_SILI() {
   ; CHECK-LABEL: name: call_ret_SILI
   ; CHECK: bb.1 (%ir-block.0):
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
-  ; CHECK-NEXT:   JL @ret_SILI, csr_aie2, implicit-def $lr, implicit-def $r0, implicit-def $r1, implicit-def $r2, implicit-def $r3
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   PseudoJL @ret_SILI, csr_aie2, implicit-def $lr, implicit-def $r0, implicit-def $r1, implicit-def $r2, implicit-def $r3
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(s32) = COPY $r0
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:_(s32) = COPY $r1
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:_(s32) = COPY $r2
   ; CHECK-NEXT:   [[MV:%[0-9]+]]:_(s64) = G_MERGE_VALUES [[COPY1]](s32), [[COPY2]](s32)
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:_(s32) = COPY $r3
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   call %struct.SILI @ret_SILI()
   ret void
@@ -74,13 +74,13 @@ declare %struct.S4P @ret_S4P()
 define void @call_ret_S4P() {
   ; CHECK-LABEL: name: call_ret_S4P
   ; CHECK: bb.1.entry:
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
-  ; CHECK-NEXT:   JL @ret_S4P, csr_aie2, implicit-def $lr, implicit-def $p0, implicit-def $p1, implicit-def $p2, implicit-def $p3
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   PseudoJL @ret_S4P, csr_aie2, implicit-def $lr, implicit-def $p0, implicit-def $p1, implicit-def $p2, implicit-def $p3
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $p0
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:_(p0) = COPY $p1
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:_(p0) = COPY $p2
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:_(p0) = COPY $p3
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
 entry:
   call %struct.S4P @ret_S4P()

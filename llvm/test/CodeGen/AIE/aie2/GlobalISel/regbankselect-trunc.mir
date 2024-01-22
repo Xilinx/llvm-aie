@@ -17,7 +17,9 @@ body: |
   bb.0:
     liveins: $r0
     ; CHECK-LABEL: name: TRUNC_s32_s16
-    ; CHECK: [[COPY:%[0-9]+]]:gprregbank(s32) = COPY $r0
+    ; CHECK: liveins: $r0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:gprregbank(s32) = COPY $r0
     ; CHECK-NEXT: [[TRUNC:%[0-9]+]]:gprregbank(s16) = G_TRUNC [[COPY]](s32)
     %0:_(s32) = COPY $r0
     %1:_(s16) = G_TRUNC %0

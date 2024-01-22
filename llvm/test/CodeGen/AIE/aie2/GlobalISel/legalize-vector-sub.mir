@@ -19,8 +19,8 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<64 x s8>) = COPY $x2
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<64 x s8>) = COPY $x4
-    ; CHECK-NEXT: [[ADD:%[0-9]+]]:_(<64 x s8>) = G_SUB [[COPY1]], [[COPY]]
-    ; CHECK-NEXT: $x0 = COPY [[ADD]](<64 x s8>)
+    ; CHECK-NEXT: [[SUB:%[0-9]+]]:_(<64 x s8>) = G_SUB [[COPY1]], [[COPY]]
+    ; CHECK-NEXT: $x0 = COPY [[SUB]](<64 x s8>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
     %1:_(<64 x s8>) = COPY $x2
     %2:_(<64 x s8>) = COPY $x4
@@ -42,8 +42,8 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<32 x s16>) = COPY $x2
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<32 x s16>) = COPY $x4
-    ; CHECK-NEXT: [[ADD:%[0-9]+]]:_(<32 x s16>) = G_SUB [[COPY1]], [[COPY]]
-    ; CHECK-NEXT: $x0 = COPY [[ADD]](<32 x s16>)
+    ; CHECK-NEXT: [[SUB:%[0-9]+]]:_(<32 x s16>) = G_SUB [[COPY1]], [[COPY]]
+    ; CHECK-NEXT: $x0 = COPY [[SUB]](<32 x s16>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
     %1:_(<32 x s16>) = COPY $x2
     %2:_(<32 x s16>) = COPY $x4
@@ -64,8 +64,8 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s32>) = COPY $x2
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<16 x s32>) = COPY $x4
-    ; CHECK-NEXT: [[ADD:%[0-9]+]]:_(<16 x s32>) = G_SUB [[COPY1]], [[COPY]]
-    ; CHECK-NEXT: $x0 = COPY [[ADD]](<16 x s32>)
+    ; CHECK-NEXT: [[SUB:%[0-9]+]]:_(<16 x s32>) = G_SUB [[COPY1]], [[COPY]]
+    ; CHECK-NEXT: $x0 = COPY [[SUB]](<16 x s32>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
     %1:_(<16 x s32>) = COPY $x2
     %2:_(<16 x s32>) = COPY $x4

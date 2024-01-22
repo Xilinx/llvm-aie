@@ -29,6 +29,12 @@ body:             |
     ; CHECK: $bmh2 = VSHUFFLE killed $x0, killed $x1, killed $r0
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: VMOV_mv_mcd killed $bmh2, implicit $crmcden
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
     $bmh2 = VSHUFFLE $x0, $x1, $r0
     VMOV_mv_mcd $bmh2, implicit $crmcden
 ...

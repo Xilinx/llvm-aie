@@ -56,6 +56,8 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
     $amll0 = VLDA_dmw_lda_am_ag_idx_imm $p0, 0
     VMOV_mv_mcd $bml0, implicit $crmcden
     $crmcden = MOV_mv_cg 0
