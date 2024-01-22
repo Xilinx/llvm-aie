@@ -19,7 +19,6 @@
 #include <vector>
 
 namespace llvm {
-
 using SlotBits = uint64_t;
 const int MaxSlots = 64;
 class MCSlotKind;
@@ -40,22 +39,28 @@ public:
     const MCSlotKind *End = nullptr;
   };
   constexpr VLIWFormat(unsigned Opcode, const char *Name, SlotKindRange Range,
-                       SlotBits Bits)
-      : Opcode(Opcode), Name(Name), Slots(Range), SlotSet(Bits) {}
+                       unsigned Size, SlotBits Bits)
+      : Opcode(Opcode), Name(Name), Slots(Range), Size(Size), SlotSet(Bits) {}
 
   const SlotKindRange &getSlots() const { return Slots; }
+
+  const unsigned &getSize() const { return Size; }
 
   /// \returns whether this format can accommodate all slots in \p Slots
   bool covers(SlotBits Slots) const;
 
   // Opcode of the format
   unsigned Opcode;
+
   // Name of the format
   const char *Name;
 
 private:
   // The slots in the format-specific order
   SlotKindRange Slots;
+
+  // Size of the format
+  unsigned Size;
 
   // Precomputed set of the above slots
   SlotBits SlotSet = 0;

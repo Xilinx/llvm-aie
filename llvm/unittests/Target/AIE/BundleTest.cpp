@@ -35,11 +35,15 @@ const MCSlotKind Slots[] = {
 };
 
 const VLIWFormat FormatData[] = {
-    {0b1100, "ALUMV", {&Slots[0], &Slots[2]}, 0b11},   // in slotkind order
-    {0b0011, "LNGST", {&Slots[2], &Slots[4]}, 0b1100}, // not in slotkind order
+    {0b1100, "ALUMV", {&Slots[0], &Slots[2]}, 8, 0b11}, // in slotkind order
+    {0b0011,
+     "LNGST",
+     {&Slots[2], &Slots[4]},
+     12,
+     0b1100}, // not in slotkind order
     // Superslot, only use if necessary
-    {0b1111, "ALL", {&Slots[4], &Slots[8]}, 0b1111},
-    {0, nullptr, {}, 0}};
+    {0b1111, "ALL", {&Slots[4], &Slots[8]}, 12, 0b1111},
+    {0, nullptr, {}, 0, 0}};
 const PacketFormats MyFormats{FormatData};
 
 constexpr MCSlotInfo SlotInfos[4] = {{"ALU", 1, 0b0001, 0},
