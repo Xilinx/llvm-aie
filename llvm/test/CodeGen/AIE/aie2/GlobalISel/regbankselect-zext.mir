@@ -16,7 +16,9 @@ body: |
   bb.0:
     liveins: $m0
     ; CHECK-LABEL: name: ZEXT_s20_s32
-    ; CHECK: [[COPY:%[0-9]+]]:modregbank(s20) = COPY $m0
+    ; CHECK: liveins: $m0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:modregbank(s20) = COPY $m0
     ; CHECK-NEXT: [[ZEXT:%[0-9]+]]:gprregbank(s32) = G_ZEXT [[COPY]](s20)
     ; CHECK-NEXT: $r0 = COPY [[ZEXT]](s32)
     %0:_(s20) = COPY $m0

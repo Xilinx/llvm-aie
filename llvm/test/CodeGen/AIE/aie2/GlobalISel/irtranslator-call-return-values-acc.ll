@@ -11,10 +11,10 @@ declare <4 x i64> @callee_v4int64()
 define void @call_v4int64() {
   ; CHECK-LABEL: name: call_v4int64
   ; CHECK: bb.1 (%ir-block.0):
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
-  ; CHECK-NEXT:   JL @callee_v4int64, csr_aie2, implicit-def $lr, implicit-def $amll0
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   PseudoJL @callee_v4int64, csr_aie2, implicit-def $lr, implicit-def $amll0
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<4 x s64>) = COPY $amll0
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   %res = call <4 x i64> @callee_v4int64()
   ret void
@@ -24,10 +24,10 @@ declare <8 x i64> @callee_v8int64()
 define void @call_v8int64() {
   ; CHECK-LABEL: name: call_v8int64
   ; CHECK: bb.1 (%ir-block.0):
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
-  ; CHECK-NEXT:   JL @callee_v8int64, csr_aie2, implicit-def $lr, implicit-def $bml0
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   PseudoJL @callee_v8int64, csr_aie2, implicit-def $lr, implicit-def $bml0
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<8 x s64>) = COPY $bml0
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   %res = call <8 x i64> @callee_v8int64()
   ret void
@@ -37,10 +37,10 @@ declare <16 x i64> @callee_v16int64()
 define void @call_v16int64() {
   ; CHECK-LABEL: name: call_v16int64
   ; CHECK: bb.1 (%ir-block.0):
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
-  ; CHECK-NEXT:   JL @callee_v16int64, csr_aie2, implicit-def $lr, implicit-def $cm0
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+  ; CHECK-NEXT:   PseudoJL @callee_v16int64, csr_aie2, implicit-def $lr, implicit-def $cm0
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<16 x s64>) = COPY $cm0
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   %res = call <16 x i64> @callee_v16int64()
   ret void

@@ -12,9 +12,9 @@
 define void @callee_v16int32(<16 x i32>, <16 x i32>, <16 x i32>, <16 x i32>, <16 x i32>, <16 x i32>,
   ; CHECK-LABEL: name: callee_v16int32
   ; CHECK: fixedStack:
-  ; CHECK:   - { id: 0, type: default, offset: -64, size: 64, alignment: 32, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 0, type: default, offset: -64, size: 64, alignment: 32, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
   ; CHECK: bb.1 (%ir-block.13):
   ; CHECK-NEXT:   liveins: $x0, $x1, $x2, $x3, $x4, $x5, $x6, $x7, $x8, $x9, $x10, $x11
   ; CHECK-NEXT: {{  $}}
@@ -34,7 +34,7 @@ define void @callee_v16int32(<16 x i32>, <16 x i32>, <16 x i32>, <16 x i32>, <16
   ; CHECK-NEXT:   [[LOAD:%[0-9]+]]:_(<16 x s32>) = G_LOAD [[FRAME_INDEX]](p0) :: (invariant load (<16 x s32>) from %fixed-stack.0, align 32)
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
   ; CHECK-NEXT:   [[BUILD_VECTOR:%[0-9]+]]:_(<16 x s32>) = G_BUILD_VECTOR [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32)
-  ; CHECK-NEXT:   ADJCALLSTACKUP 64, 0
+  ; CHECK-NEXT:   ADJCALLSTACKUP 64, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   [[COPY12:%[0-9]+]]:_(p0) = COPY $sp
   ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 -64
   ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY12]], [[C1]](s32)
@@ -51,8 +51,8 @@ define void @callee_v16int32(<16 x i32>, <16 x i32>, <16 x i32>, <16 x i32>, <16
   ; CHECK-NEXT:   $x7 = COPY [[BUILD_VECTOR]](<16 x s32>)
   ; CHECK-NEXT:   $x9 = COPY [[BUILD_VECTOR]](<16 x s32>)
   ; CHECK-NEXT:   $x11 = COPY [[BUILD_VECTOR]](<16 x s32>)
-  ; CHECK-NEXT:   JL @callee_v16int32, csr_aie2, implicit-def $lr, implicit $x0, implicit $x2, implicit $x4, implicit $x6, implicit $x8, implicit $x10, implicit $x1, implicit $x3, implicit $x5, implicit $x7, implicit $x9, implicit $x11
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 64, 0
+  ; CHECK-NEXT:   PseudoJL @callee_v16int32, csr_aie2, implicit-def $lr, implicit $x0, implicit $x2, implicit $x4, implicit $x6, implicit $x8, implicit $x10, implicit $x1, implicit $x3, implicit $x5, implicit $x7, implicit $x9, implicit $x11
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 64, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
                               <16 x i32>, <16 x i32>, <16 x i32>, <16 x i32>, <16 x i32>, <16 x i32>,
                               <16 x i32>) {
@@ -65,9 +65,9 @@ define void @callee_v16int32(<16 x i32>, <16 x i32>, <16 x i32>, <16 x i32>, <16
 define void @callee_v32int16(<32 x i16>, <32 x i16>, <32 x i16>, <32 x i16>, <32 x i16>, <32 x i16>,
   ; CHECK-LABEL: name: callee_v32int16
   ; CHECK: fixedStack:
-  ; CHECK:   - { id: 0, type: default, offset: -64, size: 64, alignment: 32, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 0, type: default, offset: -64, size: 64, alignment: 32, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
   ; CHECK: bb.1 (%ir-block.13):
   ; CHECK-NEXT:   liveins: $x0, $x1, $x2, $x3, $x4, $x5, $x6, $x7, $x8, $x9, $x10, $x11
   ; CHECK-NEXT: {{  $}}
@@ -87,7 +87,7 @@ define void @callee_v32int16(<32 x i16>, <32 x i16>, <32 x i16>, <32 x i16>, <32
   ; CHECK-NEXT:   [[LOAD:%[0-9]+]]:_(<32 x s16>) = G_LOAD [[FRAME_INDEX]](p0) :: (invariant load (<32 x s16>) from %fixed-stack.0, align 32)
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s16) = G_CONSTANT i16 0
   ; CHECK-NEXT:   [[BUILD_VECTOR:%[0-9]+]]:_(<32 x s16>) = G_BUILD_VECTOR [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16)
-  ; CHECK-NEXT:   ADJCALLSTACKUP 64, 0
+  ; CHECK-NEXT:   ADJCALLSTACKUP 64, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   [[COPY12:%[0-9]+]]:_(p0) = COPY $sp
   ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 -64
   ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY12]], [[C1]](s32)
@@ -104,8 +104,8 @@ define void @callee_v32int16(<32 x i16>, <32 x i16>, <32 x i16>, <32 x i16>, <32
   ; CHECK-NEXT:   $x7 = COPY [[BUILD_VECTOR]](<32 x s16>)
   ; CHECK-NEXT:   $x9 = COPY [[BUILD_VECTOR]](<32 x s16>)
   ; CHECK-NEXT:   $x11 = COPY [[BUILD_VECTOR]](<32 x s16>)
-  ; CHECK-NEXT:   JL @callee_v32int16, csr_aie2, implicit-def $lr, implicit $x0, implicit $x2, implicit $x4, implicit $x6, implicit $x8, implicit $x10, implicit $x1, implicit $x3, implicit $x5, implicit $x7, implicit $x9, implicit $x11
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 64, 0
+  ; CHECK-NEXT:   PseudoJL @callee_v32int16, csr_aie2, implicit-def $lr, implicit $x0, implicit $x2, implicit $x4, implicit $x6, implicit $x8, implicit $x10, implicit $x1, implicit $x3, implicit $x5, implicit $x7, implicit $x9, implicit $x11
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 64, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
                               <32 x i16>, <32 x i16>, <32 x i16>, <32 x i16>, <32 x i16>, <32 x i16>,
                               <32 x i16>) {
@@ -118,9 +118,9 @@ define void @callee_v32int16(<32 x i16>, <32 x i16>, <32 x i16>, <32 x i16>, <32
 define void @callee_v64int8(<64 x i8>, <64 x i8>, <64 x i8>, <64 x i8>, <64 x i8>, <64 x i8>,
   ; CHECK-LABEL: name: callee_v64int8
   ; CHECK: fixedStack:
-  ; CHECK:   - { id: 0, type: default, offset: -64, size: 64, alignment: 32, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 0, type: default, offset: -64, size: 64, alignment: 32, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
   ; CHECK: bb.1 (%ir-block.13):
   ; CHECK-NEXT:   liveins: $x0, $x1, $x2, $x3, $x4, $x5, $x6, $x7, $x8, $x9, $x10, $x11
   ; CHECK-NEXT: {{  $}}
@@ -140,7 +140,7 @@ define void @callee_v64int8(<64 x i8>, <64 x i8>, <64 x i8>, <64 x i8>, <64 x i8
   ; CHECK-NEXT:   [[LOAD:%[0-9]+]]:_(<64 x s8>) = G_LOAD [[FRAME_INDEX]](p0) :: (invariant load (<64 x s8>) from %fixed-stack.0, align 32)
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s8) = G_CONSTANT i8 0
   ; CHECK-NEXT:   [[BUILD_VECTOR:%[0-9]+]]:_(<64 x s8>) = G_BUILD_VECTOR [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8)
-  ; CHECK-NEXT:   ADJCALLSTACKUP 64, 0
+  ; CHECK-NEXT:   ADJCALLSTACKUP 64, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   [[COPY12:%[0-9]+]]:_(p0) = COPY $sp
   ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 -64
   ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY12]], [[C1]](s32)
@@ -157,8 +157,8 @@ define void @callee_v64int8(<64 x i8>, <64 x i8>, <64 x i8>, <64 x i8>, <64 x i8
   ; CHECK-NEXT:   $x7 = COPY [[BUILD_VECTOR]](<64 x s8>)
   ; CHECK-NEXT:   $x9 = COPY [[BUILD_VECTOR]](<64 x s8>)
   ; CHECK-NEXT:   $x11 = COPY [[BUILD_VECTOR]](<64 x s8>)
-  ; CHECK-NEXT:   JL @callee_v64int8, csr_aie2, implicit-def $lr, implicit $x0, implicit $x2, implicit $x4, implicit $x6, implicit $x8, implicit $x10, implicit $x1, implicit $x3, implicit $x5, implicit $x7, implicit $x9, implicit $x11
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 64, 0
+  ; CHECK-NEXT:   PseudoJL @callee_v64int8, csr_aie2, implicit-def $lr, implicit $x0, implicit $x2, implicit $x4, implicit $x6, implicit $x8, implicit $x10, implicit $x1, implicit $x3, implicit $x5, implicit $x7, implicit $x9, implicit $x11
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 64, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
                              <64 x i8>, <64 x i8>, <64 x i8>, <64 x i8>, <64 x i8>, <64 x i8>,
                              <64 x i8>) {
@@ -171,9 +171,9 @@ define void @callee_v64int8(<64 x i8>, <64 x i8>, <64 x i8>, <64 x i8>, <64 x i8
 define void @callee_v16float(<16 x float>, <16 x float>, <16 x float>, <16 x float>, <16 x float>, <16 x float>,
   ; CHECK-LABEL: name: callee_v16float
   ; CHECK: fixedStack:
-  ; CHECK:   - { id: 0, type: default, offset: -64, size: 64, alignment: 32, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 0, type: default, offset: -64, size: 64, alignment: 32, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
   ; CHECK: bb.1 (%ir-block.13):
   ; CHECK-NEXT:   liveins: $x0, $x1, $x2, $x3, $x4, $x5, $x6, $x7, $x8, $x9, $x10, $x11
   ; CHECK-NEXT: {{  $}}
@@ -193,7 +193,7 @@ define void @callee_v16float(<16 x float>, <16 x float>, <16 x float>, <16 x flo
   ; CHECK-NEXT:   [[LOAD:%[0-9]+]]:_(<16 x s32>) = G_LOAD [[FRAME_INDEX]](p0) :: (invariant load (<16 x s32>) from %fixed-stack.0, align 32)
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s32) = G_FCONSTANT float 0.000000e+00
   ; CHECK-NEXT:   [[BUILD_VECTOR:%[0-9]+]]:_(<16 x s32>) = G_BUILD_VECTOR [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32)
-  ; CHECK-NEXT:   ADJCALLSTACKUP 64, 0
+  ; CHECK-NEXT:   ADJCALLSTACKUP 64, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   [[COPY12:%[0-9]+]]:_(p0) = COPY $sp
   ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 -64
   ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY12]], [[C1]](s32)
@@ -210,8 +210,8 @@ define void @callee_v16float(<16 x float>, <16 x float>, <16 x float>, <16 x flo
   ; CHECK-NEXT:   $x7 = COPY [[BUILD_VECTOR]](<16 x s32>)
   ; CHECK-NEXT:   $x9 = COPY [[BUILD_VECTOR]](<16 x s32>)
   ; CHECK-NEXT:   $x11 = COPY [[BUILD_VECTOR]](<16 x s32>)
-  ; CHECK-NEXT:   JL @callee_v16float, csr_aie2, implicit-def $lr, implicit $x0, implicit $x2, implicit $x4, implicit $x6, implicit $x8, implicit $x10, implicit $x1, implicit $x3, implicit $x5, implicit $x7, implicit $x9, implicit $x11
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 64, 0
+  ; CHECK-NEXT:   PseudoJL @callee_v16float, csr_aie2, implicit-def $lr, implicit $x0, implicit $x2, implicit $x4, implicit $x6, implicit $x8, implicit $x10, implicit $x1, implicit $x3, implicit $x5, implicit $x7, implicit $x9, implicit $x11
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 64, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
                               <16 x float>, <16 x float>, <16 x float>, <16 x float>, <16 x float>, <16 x float>,
                               <16 x float>) {

@@ -261,9 +261,9 @@ define void @test_arg_max_reg(i32 %arg1, i32 %arg2, i32 %arg3, i32 %arg4, i32 %a
 define void @test_arg_stack_i1([8 x i32] %regs, i1 %stack) {
   ; CHECK-LABEL: name: test_arg_stack_i1
   ; CHECK: fixedStack:
-  ; CHECK:   - { id: 0, type: default, offset: -4, size: 4, alignment: 4, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 0, type: default, offset: -4, size: 4, alignment: 4, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   liveins: $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7
   ; CHECK-NEXT: {{  $}}
@@ -288,15 +288,15 @@ define void @test_arg_stack_i1([8 x i32] %regs, i1 %stack) {
 define void @test_arg_stack_i8([8 x i32] %regs, i8 %stack1, i8 signext %stack2, i8 zeroext %stack3) {
   ; CHECK-LABEL: name: test_arg_stack_i8
   ; CHECK: fixedStack:
-  ; CHECK:   - { id: 0, type: default, offset: -12, size: 4, alignment: 4, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
-  ; CHECK:   - { id: 1, type: default, offset: -8, size: 4, alignment: 8, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
-  ; CHECK:   - { id: 2, type: default, offset: -4, size: 4, alignment: 4, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 0, type: default, offset: -12, size: 4, alignment: 4, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 1, type: default, offset: -8, size: 4, alignment: 8, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 2, type: default, offset: -4, size: 4, alignment: 4, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   liveins: $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7
   ; CHECK-NEXT: {{  $}}
@@ -326,15 +326,15 @@ define void @test_arg_stack_i8([8 x i32] %regs, i8 %stack1, i8 signext %stack2, 
 define void @test_arg_stack_i16([8 x i32] %regs, i16 %stack1, i16 signext %stack2, i16 zeroext %stack3) {
   ; CHECK-LABEL: name: test_arg_stack_i16
   ; CHECK: fixedStack:
-  ; CHECK:   - { id: 0, type: default, offset: -12, size: 4, alignment: 4, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
-  ; CHECK:   - { id: 1, type: default, offset: -8, size: 4, alignment: 8, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
-  ; CHECK:   - { id: 2, type: default, offset: -4, size: 4, alignment: 4, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 0, type: default, offset: -12, size: 4, alignment: 4, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 1, type: default, offset: -8, size: 4, alignment: 8, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 2, type: default, offset: -4, size: 4, alignment: 4, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   liveins: $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7
   ; CHECK-NEXT: {{  $}}
@@ -364,9 +364,9 @@ define void @test_arg_stack_i16([8 x i32] %regs, i16 %stack1, i16 signext %stack
 define void @test_arg_stack_i32([8 x i32] %regs, i32 %stack) {
   ; CHECK-LABEL: name: test_arg_stack_i32
   ; CHECK: fixedStack:
-  ; CHECK:   - { id: 0, type: default, offset: -4, size: 4, alignment: 4, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 0, type: default, offset: -4, size: 4, alignment: 4, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   liveins: $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7
   ; CHECK-NEXT: {{  $}}
@@ -387,12 +387,12 @@ define void @test_arg_stack_i32([8 x i32] %regs, i32 %stack) {
 define void @test_arg_stack_i64([8 x i32] %regs, i64 %stack) {
   ; CHECK-LABEL: name: test_arg_stack_i64
   ; CHECK: fixedStack:
-  ; CHECK:   - { id: 0, type: default, offset: -4, size: 4, alignment: 4, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
-  ; CHECK:   - { id: 1, type: default, offset: -8, size: 4, alignment: 8, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 0, type: default, offset: -4, size: 4, alignment: 4, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 1, type: default, offset: -8, size: 4, alignment: 8, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   liveins: $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7
   ; CHECK-NEXT: {{  $}}
@@ -416,9 +416,9 @@ define void @test_arg_stack_i64([8 x i32] %regs, i64 %stack) {
 define void @test_arg_stack_ptr(i8* %p0, i8* %p1, i8* %p2, i8* %p3, i8* %p4, i8* %p5, i8* %stack) {
   ; CHECK-LABEL: name: test_arg_stack_ptr
   ; CHECK: fixedStack:
-  ; CHECK:   - { id: 0, type: default, offset: -4, size: 3, alignment: 4, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 0, type: default, offset: -4, size: 3, alignment: 4, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   liveins: $p0, $p1, $p2, $p3, $p4, $p5
   ; CHECK-NEXT: {{  $}}
@@ -443,12 +443,12 @@ define void @test_arg_stack_ptr(i8* %p0, i8* %p1, i8* %p2, i8* %p3, i8* %p4, i8*
 define void @test_cross_stack_reg_boundary(i64 %r01, i64 %r23, i64 %r45, i32 %r6, i64 %stack, i32 %r7) {
   ; CHECK-LABEL: name: test_cross_stack_reg_boundary
   ; CHECK: fixedStack:
-  ; CHECK:   - { id: 0, type: default, offset: -4, size: 4, alignment: 4, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
-  ; CHECK:   - { id: 1, type: default, offset: -8, size: 4, alignment: 8, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 0, type: default, offset: -4, size: 4, alignment: 4, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 1, type: default, offset: -8, size: 4, alignment: 8, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   liveins: $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7
   ; CHECK-NEXT: {{  $}}

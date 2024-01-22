@@ -12,9 +12,9 @@
 define void @callee_v2int32(<2 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, <2 x i32>,
   ; CHECK-LABEL: name: callee_v2int32
   ; CHECK: fixedStack:
-  ; CHECK:   - { id: 0, type: default, offset: -8, size: 8, alignment: 8, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 0, type: default, offset: -8, size: 8, alignment: 8, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
   ; CHECK: bb.1 (%ir-block.9):
   ; CHECK-NEXT:   liveins: $l0, $l1, $l2, $l3, $l4, $l5, $l6, $l7
   ; CHECK-NEXT: {{  $}}
@@ -36,9 +36,9 @@ define void @callee_v2int32(<2 x i32>, <2 x i32>, <2 x i32>, <2 x i32>, <2 x i32
 define void @callee_v4int16(<4 x i16>, <4 x i16>, <4 x i16>, <4 x i16>, <4 x i16>, <4 x i16>, <4 x i16>, <4 x i16>,
   ; CHECK-LABEL: name: callee_v4int16
   ; CHECK: fixedStack:
-  ; CHECK:   - { id: 0, type: default, offset: -8, size: 8, alignment: 8, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 0, type: default, offset: -8, size: 8, alignment: 8, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
   ; CHECK: bb.1 (%ir-block.9):
   ; CHECK-NEXT:   liveins: $l0, $l1, $l2, $l3, $l4, $l5, $l6, $l7
   ; CHECK-NEXT: {{  $}}
@@ -60,9 +60,9 @@ define void @callee_v4int16(<4 x i16>, <4 x i16>, <4 x i16>, <4 x i16>, <4 x i16
 define void @callee_v8int8(<8 x i8>, <8 x i8>, <8 x i8>, <8 x i8>, <8 x i8>, <8 x i8>, <8 x i8>, <8 x i8>,
   ; CHECK-LABEL: name: callee_v8int8
   ; CHECK: fixedStack:
-  ; CHECK:   - { id: 0, type: default, offset: -8, size: 8, alignment: 8, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 0, type: default, offset: -8, size: 8, alignment: 8, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
   ; CHECK: bb.1 (%ir-block.9):
   ; CHECK-NEXT:   liveins: $l0, $l1, $l2, $l3, $l4, $l5, $l6, $l7
   ; CHECK-NEXT: {{  $}}

@@ -12,9 +12,9 @@
 define void @callee_v8int32(<8 x i32>, <8 x i32>, <8 x i32>, <8 x i32>, <8 x i32>, <8 x i32>,
   ; CHECK-LABEL: name: callee_v8int32
   ; CHECK: fixedStack:
-  ; CHECK:   - { id: 0, type: default, offset: -32, size: 32, alignment: 32, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 0, type: default, offset: -32, size: 32, alignment: 32, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
   ; CHECK: bb.1 (%ir-block.61):
   ; CHECK-NEXT:   liveins: $amhh0, $amhh1, $amhh2, $amhh3, $amhh4, $amhh5, $amhh6, $amhh7, $amhh8, $amhl0, $amhl1, $amhl2, $amhl3, $amhl4, $amhl5, $amhl6, $amhl7, $amhl8, $amlh0, $amlh1, $amlh2, $amlh3, $amlh4, $amlh5, $amlh6, $amlh7, $amlh8, $amll0, $amll1, $amll2, $amll3, $amll4, $amll5, $amll6, $amll7, $amll8, $wh0, $wh1, $wh2, $wh3, $wh4, $wh5, $wh6, $wh7, $wh8, $wh9, $wh10, $wh11, $wl0, $wl1, $wl2, $wl3, $wl4, $wl5, $wl6, $wl7, $wl8, $wl9, $wl10, $wl11
   ; CHECK-NEXT: {{  $}}
@@ -95,9 +95,9 @@ define void @callee_v8int32(<8 x i32>, <8 x i32>, <8 x i32>, <8 x i32>, <8 x i32
 define void @callee_v16int16(<16 x i16>, <16 x i16>, <16 x i16>, <16 x i16>, <16 x i16>, <16 x i16>,
   ; CHECK-LABEL: name: callee_v16int16
   ; CHECK: fixedStack:
-  ; CHECK:   - { id: 0, type: default, offset: -32, size: 32, alignment: 32, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 0, type: default, offset: -32, size: 32, alignment: 32, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
   ; CHECK: bb.1 (%ir-block.61):
   ; CHECK-NEXT:   liveins: $amhh0, $amhh1, $amhh2, $amhh3, $amhh4, $amhh5, $amhh6, $amhh7, $amhh8, $amhl0, $amhl1, $amhl2, $amhl3, $amhl4, $amhl5, $amhl6, $amhl7, $amhl8, $amlh0, $amlh1, $amlh2, $amlh3, $amlh4, $amlh5, $amlh6, $amlh7, $amlh8, $amll0, $amll1, $amll2, $amll3, $amll4, $amll5, $amll6, $amll7, $amll8, $wh0, $wh1, $wh2, $wh3, $wh4, $wh5, $wh6, $wh7, $wh8, $wh9, $wh10, $wh11, $wl0, $wl1, $wl2, $wl3, $wl4, $wl5, $wl6, $wl7, $wl8, $wl9, $wl10, $wl11
   ; CHECK-NEXT: {{  $}}
@@ -178,9 +178,9 @@ define void @callee_v16int16(<16 x i16>, <16 x i16>, <16 x i16>, <16 x i16>, <16
 define void @callee_v32int8(<32 x i8>, <32 x i8>, <32 x i8>, <32 x i8>, <32 x i8>, <32 x i8>,
   ; CHECK-LABEL: name: callee_v32int8
   ; CHECK: fixedStack:
-  ; CHECK:   - { id: 0, type: default, offset: -32, size: 32, alignment: 32, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 0, type: default, offset: -32, size: 32, alignment: 32, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
   ; CHECK: bb.1 (%ir-block.61):
   ; CHECK-NEXT:   liveins: $amhh0, $amhh1, $amhh2, $amhh3, $amhh4, $amhh5, $amhh6, $amhh7, $amhh8, $amhl0, $amhl1, $amhl2, $amhl3, $amhl4, $amhl5, $amhl6, $amhl7, $amhl8, $amlh0, $amlh1, $amlh2, $amlh3, $amlh4, $amlh5, $amlh6, $amlh7, $amlh8, $amll0, $amll1, $amll2, $amll3, $amll4, $amll5, $amll6, $amll7, $amll8, $wh0, $wh1, $wh2, $wh3, $wh4, $wh5, $wh6, $wh7, $wh8, $wh9, $wh10, $wh11, $wl0, $wl1, $wl2, $wl3, $wl4, $wl5, $wl6, $wl7, $wl8, $wl9, $wl10, $wl11
   ; CHECK-NEXT: {{  $}}
@@ -261,9 +261,9 @@ define void @callee_v32int8(<32 x i8>, <32 x i8>, <32 x i8>, <32 x i8>, <32 x i8
 define void @callee_v8float(<8 x float>, <8 x float>, <8 x float>, <8 x float>, <8 x float>, <8 x float>,
   ; CHECK-LABEL: name: callee_v8float
   ; CHECK: fixedStack:
-  ; CHECK:   - { id: 0, type: default, offset: -32, size: 32, alignment: 32, stack-id: default,
-  ; CHECK:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true,
-  ; CHECK:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK-NEXT:   - { id: 0, type: default, offset: -32, size: 32, alignment: 32, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
   ; CHECK: bb.1 (%ir-block.61):
   ; CHECK-NEXT:   liveins: $amhh0, $amhh1, $amhh2, $amhh3, $amhh4, $amhh5, $amhh6, $amhh7, $amhh8, $amhl0, $amhl1, $amhl2, $amhl3, $amhl4, $amhl5, $amhl6, $amhl7, $amhl8, $amlh0, $amlh1, $amlh2, $amlh3, $amlh4, $amlh5, $amlh6, $amlh7, $amlh8, $amll0, $amll1, $amll2, $amll3, $amll4, $amll5, $amll6, $amll7, $amll8, $wh0, $wh1, $wh2, $wh3, $wh4, $wh5, $wh6, $wh7, $wh8, $wh9, $wh10, $wh11, $wl0, $wl1, $wl2, $wl3, $wl4, $wl5, $wl6, $wl7, $wl8, $wl9, $wl10, $wl11
   ; CHECK-NEXT: {{  $}}

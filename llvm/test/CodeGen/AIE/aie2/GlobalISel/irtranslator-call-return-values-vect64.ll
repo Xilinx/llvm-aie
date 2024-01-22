@@ -16,7 +16,7 @@ define void @call_v2int32() {
   ; CHECK-LABEL: name: call_v2int32
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
-  ; CHECK-NEXT:   JL @callee_v2int32, CustomRegMask($lr,$l1,$l2,$l3,$p6,$p7,$r18,$r19,$r20,$r21,$r22,$r23), implicit-def $lr, implicit-def $l0
+  ; CHECK-NEXT:   PseudoJL @callee_v2int32, CustomRegMask($lr,$l1,$l2,$l3,$p6,$p7,$r18,$r19,$r20,$r21,$r22,$r23), implicit-def $lr, implicit-def $l0
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<2 x s32>) = COPY $l0
   ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
@@ -29,7 +29,7 @@ define void @call_v4int16() {
   ; CHECK-LABEL: name: call_v4int16
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
-  ; CHECK-NEXT:   JL @callee_v4int16, CustomRegMask($lr,$l1,$l2,$l3,$p6,$p7,$r18,$r19,$r20,$r21,$r22,$r23), implicit-def $lr, implicit-def $l0
+  ; CHECK-NEXT:   PseudoJL @callee_v4int16, CustomRegMask($lr,$l1,$l2,$l3,$p6,$p7,$r18,$r19,$r20,$r21,$r22,$r23), implicit-def $lr, implicit-def $l0
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<4 x s16>) = COPY $l0
   ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
@@ -42,7 +42,7 @@ define void @call_v8int8() {
   ; CHECK-LABEL: name: call_v8int8
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
-  ; CHECK-NEXT:   JL @callee_v8int8, CustomRegMask($lr,$l1,$l2,$l3,$p6,$p7,$r18,$r19,$r20,$r21,$r22,$r23), implicit-def $lr, implicit-def $l0
+  ; CHECK-NEXT:   PseudoJL @callee_v8int8, CustomRegMask($lr,$l1,$l2,$l3,$p6,$p7,$r18,$r19,$r20,$r21,$r22,$r23), implicit-def $lr, implicit-def $l0
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<8 x s8>) = COPY $l0
   ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
@@ -55,7 +55,7 @@ define void @call_S2v2int32() {
   ; CHECK-LABEL: name: call_S2v2int32
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
-  ; CHECK-NEXT:   JL @callee_S2v2int32, CustomRegMask($lr,$l2,$l3,$p6,$p7,$r20,$r21,$r22,$r23), implicit-def $lr, implicit-def $l0, implicit-def $l1
+  ; CHECK-NEXT:   PseudoJL @callee_S2v2int32, CustomRegMask($lr,$l2,$l3,$p6,$p7,$r20,$r21,$r22,$r23), implicit-def $lr, implicit-def $l0, implicit-def $l1
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<2 x s32>) = COPY $l0
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:_(<2 x s32>) = COPY $l1
   ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp

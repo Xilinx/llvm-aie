@@ -29,7 +29,7 @@ define void @call_v2int32() {
   ; CHECK-NEXT:   $l5 = COPY [[BUILD_VECTOR]](<2 x s32>)
   ; CHECK-NEXT:   $l6 = COPY [[BUILD_VECTOR]](<2 x s32>)
   ; CHECK-NEXT:   $l7 = COPY [[BUILD_VECTOR]](<2 x s32>)
-  ; CHECK-NEXT:   JL @callee_v2int32, CustomRegMask($lr,$p6,$p7), implicit-def $lr, implicit $l0, implicit $l1, implicit $l2, implicit $l3, implicit $l4, implicit $l5, implicit $l6, implicit $l7
+  ; CHECK-NEXT:   PseudoJL @callee_v2int32, CustomRegMask($lr,$p6,$p7), implicit-def $lr, implicit $l0, implicit $l1, implicit $l2, implicit $l3, implicit $l4, implicit $l5, implicit $l6, implicit $l7
   ; CHECK-NEXT:   ADJCALLSTACKDOWN 8, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   call void @callee_v2int32(<2 x i32> zeroinitializer, <2 x i32> zeroinitializer, <2 x i32> zeroinitializer, <2 x i32> zeroinitializer, <2 x i32> zeroinitializer, <2 x i32> zeroinitializer, <2 x i32> zeroinitializer, <2 x i32> zeroinitializer,
@@ -57,7 +57,7 @@ define void @call_v4int16() {
   ; CHECK-NEXT:   $l5 = COPY [[BUILD_VECTOR]](<4 x s16>)
   ; CHECK-NEXT:   $l6 = COPY [[BUILD_VECTOR]](<4 x s16>)
   ; CHECK-NEXT:   $l7 = COPY [[BUILD_VECTOR]](<4 x s16>)
-  ; CHECK-NEXT:   JL @callee_v4int16, CustomRegMask($lr,$p6,$p7), implicit-def $lr, implicit $l0, implicit $l1, implicit $l2, implicit $l3, implicit $l4, implicit $l5, implicit $l6, implicit $l7
+  ; CHECK-NEXT:   PseudoJL @callee_v4int16, CustomRegMask($lr,$p6,$p7), implicit-def $lr, implicit $l0, implicit $l1, implicit $l2, implicit $l3, implicit $l4, implicit $l5, implicit $l6, implicit $l7
   ; CHECK-NEXT:   ADJCALLSTACKDOWN 8, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   call void @callee_v4int16(<4 x i16> zeroinitializer, <4 x i16> zeroinitializer, <4 x i16> zeroinitializer, <4 x i16> zeroinitializer, <4 x i16> zeroinitializer, <4 x i16> zeroinitializer, <4 x i16> zeroinitializer, <4 x i16> zeroinitializer,
@@ -85,7 +85,7 @@ define void @call_v8int8() {
   ; CHECK-NEXT:   $l5 = COPY [[BUILD_VECTOR]](<8 x s8>)
   ; CHECK-NEXT:   $l6 = COPY [[BUILD_VECTOR]](<8 x s8>)
   ; CHECK-NEXT:   $l7 = COPY [[BUILD_VECTOR]](<8 x s8>)
-  ; CHECK-NEXT:   JL @callee_v8int8, CustomRegMask($lr,$p6,$p7), implicit-def $lr, implicit $l0, implicit $l1, implicit $l2, implicit $l3, implicit $l4, implicit $l5, implicit $l6, implicit $l7
+  ; CHECK-NEXT:   PseudoJL @callee_v8int8, CustomRegMask($lr,$p6,$p7), implicit-def $lr, implicit $l0, implicit $l1, implicit $l2, implicit $l3, implicit $l4, implicit $l5, implicit $l6, implicit $l7
   ; CHECK-NEXT:   ADJCALLSTACKDOWN 8, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   call void @callee_v8int8(<8 x i8> zeroinitializer, <8 x i8> zeroinitializer, <8 x i8> zeroinitializer, <8 x i8> zeroinitializer, <8 x i8> zeroinitializer, <8 x i8> zeroinitializer, <8 x i8> zeroinitializer, <8 x i8> zeroinitializer,

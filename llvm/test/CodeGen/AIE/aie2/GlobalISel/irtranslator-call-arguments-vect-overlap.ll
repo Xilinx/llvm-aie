@@ -15,13 +15,13 @@ define void @call_retcc_reserved_wl() {
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
   ; CHECK-NEXT:   [[BUILD_VECTOR:%[0-9]+]]:_(<8 x s32>) = G_BUILD_VECTOR [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32)
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   $wl0 = COPY [[BUILD_VECTOR]](<8 x s32>)
   ; CHECK-NEXT:   $wl2 = COPY [[BUILD_VECTOR]](<8 x s32>)
   ; CHECK-NEXT:   $wl6 = COPY [[BUILD_VECTOR]](<8 x s32>)
-  ; CHECK-NEXT:   JL @retcc_reserved_wl, csr_aie2, implicit-def $lr, implicit $wl0, implicit $wl2, implicit $wl6, implicit-def $y2
+  ; CHECK-NEXT:   PseudoJL @retcc_reserved_wl, csr_aie2, implicit-def $lr, implicit $wl0, implicit $wl2, implicit $wl6, implicit-def $y2
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<32 x s32>) = COPY $y2
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   call <32 x i32> @retcc_reserved_wl(<8 x i32> zeroinitializer, <8 x i32> zeroinitializer, <8 x i32> zeroinitializer)
   ret void
@@ -35,13 +35,13 @@ define void @call_retcc_reserved_x() {
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
   ; CHECK-NEXT:   [[BUILD_VECTOR:%[0-9]+]]:_(<16 x s32>) = G_BUILD_VECTOR [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32)
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   $x0 = COPY [[BUILD_VECTOR]](<16 x s32>)
   ; CHECK-NEXT:   $x2 = COPY [[BUILD_VECTOR]](<16 x s32>)
   ; CHECK-NEXT:   $x6 = COPY [[BUILD_VECTOR]](<16 x s32>)
-  ; CHECK-NEXT:   JL @retcc_reserved_x, csr_aie2, implicit-def $lr, implicit $x0, implicit $x2, implicit $x6, implicit-def $y2
+  ; CHECK-NEXT:   PseudoJL @retcc_reserved_x, csr_aie2, implicit-def $lr, implicit $x0, implicit $x2, implicit $x6, implicit-def $y2
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<32 x s32>) = COPY $y2
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   call <32 x i32> @retcc_reserved_x(<16 x i32> zeroinitializer, <16 x i32> zeroinitializer, <16 x i32> zeroinitializer)
   ret void
@@ -55,11 +55,11 @@ define void @call_retcc_reserved_y() {
   ; CHECK: bb.1 (%ir-block.0):
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
   ; CHECK-NEXT:   [[BUILD_VECTOR:%[0-9]+]]:_(<32 x s32>) = G_BUILD_VECTOR [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32)
-  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   $y3 = COPY [[BUILD_VECTOR]](<32 x s32>)
-  ; CHECK-NEXT:   JL @retcc_reserved_y, csr_aie2, implicit-def $lr, implicit $y3, implicit-def $y2
+  ; CHECK-NEXT:   PseudoJL @retcc_reserved_y, csr_aie2, implicit-def $lr, implicit $y3, implicit-def $y2
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<32 x s32>) = COPY $y2
-  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0
+  ; CHECK-NEXT:   ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   PseudoRET implicit $lr
   call <32 x i32> @retcc_reserved_y(<32 x i32> zeroinitializer)
   ret void
