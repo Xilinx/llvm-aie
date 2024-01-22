@@ -248,7 +248,7 @@ void CodeGenFormat::run(raw_ostream &o) {
       SlotData.finish();
       // Add a sentinel, (The 0 opcode is used by the getFormat lookup)
       FormatData.mark("Sentinel");
-      FormatData << "{\n  0, nullptr, {nullptr, nullptr}, 0}\n";
+      FormatData << "{\n  0, nullptr, {nullptr, nullptr}, 0, 0}\n";
       FormatData.finish();
 
       o << SlotData << FormatData
@@ -758,6 +758,7 @@ void TGInstrLayout::emitPacketEntry(ConstTable &Packets,
     SlotData.next();
   }
   Packets << "  { " << SlotData.ref(0) << "," << SlotData.refNext() << "},\n";
+  Packets << "  " << getSize() / 8 << std::dec << ",\n";
   Packets << "  " << std::hex << std::showbase << Bits << std::dec << "},\n";
 }
 
