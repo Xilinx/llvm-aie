@@ -407,7 +407,14 @@ mulsc3.c # copyPhysReg
 os_version_check.c # No OS
 trampoline_setup.c # Trampoline stuff
 )
-set(aie2_SOURCES ${aie_SOURCES})
+set(aie2_SOURCES
+  ${aie_SOURCES}
+  aie2/divsi3.c
+  aie2/modsi3.c
+  aie2/udivsi3.c
+  aie2/umodsi3.c
+)
+
 list(REMOVE_ITEM aie2_SOURCES
   bswapdi2.c    # unsupported instruction : G_BSWAP
   bswapsi2.c    # unsupported instruction : G_BSWAP
