@@ -161,6 +161,8 @@ AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
         .clampScalar(0, S32, S64)
         .widenScalarToNextPow2(0)
         .clampScalar(1, S32, S64);
+
+    getActionDefinitionsBuilder(G_FABS).customFor({S32, S64});
   }
 
   // Since the only integers smaller than 32 bits we produce are S20 (from
@@ -417,6 +419,8 @@ bool AIELegalizerInfo::legalizeCustom(LegalizerHelper &Helper,
     return legalizeG_FPTRUNC(Helper, MI);
   case TargetOpcode::G_FPEXT:
     return legalizeG_FPEXT(Helper, MI);
+  case TargetOpcode::G_FABS:
+    return legalizeG_FABS(Helper, MI);
   }
 
   llvm_unreachable("Un-expected custom legalization");
@@ -913,6 +917,35 @@ bool AIELegalizerInfo::legalizeG_FPEXT(LegalizerHelper &Helper,
   Register AnyExt = MIRBuilder.buildAnyExt(S32, SrcReg).getReg(0);
   Register Cst = MIRBuilder.buildConstant(S32, 16).getReg(0);
   MIRBuilder.buildShl(DstReg, AnyExt, Cst);
+
+  MI.eraseFromParent();
+  return true;
+}
+
+// Legalized by masking sign bit of both double and float
+bool AIELegalizerInfo::legalizeG_FABS(LegalizerHelper &Helper,
+                                      MachineInstr &MI) const {
+  MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
+  MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
+
+  Register DstReg = MI.getOperand(0).getReg();
+  Register SrcReg = MI.getOperand(1).getReg();
+  LLT SrcTy = MRI.getType(SrcReg);
+  if (SrcTy == LLT::scalar(64)) {
+    Register SrcLSB = MRI.createGenericVirtualRegister(LLT::scalar(32));
+    Register SrcMSB = MRI.createGenericVirtualRegister(LLT::scalar(32));
+    Register AndDst = MRI.createGenericVirtualRegister(LLT::scalar(32));
+
+    MIRBuilder.buildInstr(TargetOpcode::G_UNMERGE_VALUES, {SrcLSB, SrcMSB},
+                          {SrcReg});
+    auto Ones = MIRBuilder.buildConstant(LLT::scalar(32), 0x7fffffff);
+    MIRBuilder.buildAnd(AndDst, SrcMSB, Ones);
+    MIRBuilder.buildInstr(TargetOpcode::G_MERGE_VALUES, {DstReg},
+                          {SrcLSB, AndDst});
+  } else if (SrcTy == LLT::scalar(32)) {
+    auto Ones = MIRBuilder.buildConstant(LLT::scalar(32), 0x7fffffff);
+    MIRBuilder.buildAnd(DstReg, SrcReg, Ones);
+  }
 
   MI.eraseFromParent();
   return true;
