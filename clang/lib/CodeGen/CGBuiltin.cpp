@@ -20984,6 +20984,8 @@ static llvm::Intrinsic::ID getAIE2IntrinsicFunction(unsigned BuiltinID) {
     return Intrinsic::aie2_put_ms_nb_packet_header;
   case AIE::BI__builtin_aiev2_put_ms_nb_ctrl_packet_header:
     return Intrinsic::aie2_put_ms_nb_ctrl_packet_header;
+  case AIE::BI__builtin_aiev2_divstep:
+    return Intrinsic::aie2_divs;
   default:
     break;
   }
@@ -21041,6 +21043,29 @@ Value *CodeGenFunction::EmitAIE2BuiltinExpr(unsigned BuiltinID,
     Builder.CreateDefaultAlignedStore(Cmp, CmpAddr);
 
     return Builder.CreateExtractValue(Val, 0);
+  }
+  case AIE::BI__builtin_aiev2_divstep: {
+
+    SmallVector<Value *, 3> Ops;
+    for (unsigned I = 0; I < E->getNumArgs(); I++)
+      Ops.push_back(EmitScalarExpr(E->getArg(I)));
+
+    llvm::Intrinsic::ID IntrinsicID = getAIE2IntrinsicFunction(BuiltinID);
+    assert(IntrinsicID != Intrinsic::not_intrinsic);
+    Function *F = CGM.getIntrinsic(IntrinsicID);
+    Value *Val = Builder.CreateCall(F, Ops);
+
+    // The second member of the returned struct is the division result,
+    // store it to the first input reference
+    Value *Rem = Builder.CreateExtractValue(Val, 1);
+    Value *RemAddr = EmitLValue(E->getArg(0)).getPointer(*this);
+    Builder.CreateDefaultAlignedStore(Rem, RemAddr);
+
+    // The first member of the returned struct is the remainder result,
+    // store it to the second input reference
+    Value *Div = Builder.CreateExtractValue(Val, 0);
+    Value *DivAddr = EmitLValue(E->getArg(1)).getPointer(*this);
+    return Builder.CreateDefaultAlignedStore(Div, DivAddr);
   }
   case AIE::BI__builtin_aiev2_add_2d: {
     // Custom lowering is used for addr intrinsics to introduce truncation

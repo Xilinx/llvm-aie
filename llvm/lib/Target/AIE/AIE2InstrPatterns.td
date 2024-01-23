@@ -937,3 +937,7 @@ def : Pat<(int_aie2_v16bf16_to_v16i32 VEC256:$src, mSs:$shft),
 // VCLR_vclr_BF
 def : Pat<(int_aie2_clr16f_conf),
           (VCLR_vclr_BF)>;
+
+// DIVS
+def : Pat<(int_aie2_divs eR31:$sd_in, eR:$src0, eR:$src1),
+          (DIVS eR31:$sd_in, eR:$src0, eR:$src1)>;
