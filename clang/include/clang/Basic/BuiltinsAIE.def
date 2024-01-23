@@ -107,6 +107,8 @@ BUILTIN(__builtin_aie_pack_v16int16, "V16cV16s", "nc")
 BUILTIN(__builtin_aiev2_event, "vi", "nc")
 //bitcounting
 BUILTIN(__builtin_aiev2_clb, "UiUi", "nc")
+//division/mod
+BUILTIN(__builtin_aiev2_divstep, "vUi&Ui&Ui", "nc")
 //semaphores
 BUILTIN(__builtin_aiev2_acquire, "vUiUi", "nc")
 BUILTIN(__builtin_aiev2_acquire_cond, "vUiUii", "nc")
