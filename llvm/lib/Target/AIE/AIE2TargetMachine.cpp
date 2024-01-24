@@ -51,6 +51,9 @@ static cl::opt<bool>
                             cl::desc("Enable splitting super-regs into their "
                                      "smaller components to facilitate RA"));
 static cl::opt<bool>
+    EnableReservedRegsLICM("aie-reserved-regs-licm", cl::Hidden, cl::init(true),
+                           cl::desc("Enable LICM for some reserved registers"));
+static cl::opt<bool>
     AllocateMRegsFirst("aie-mod-ra-first", cl::Hidden, cl::init(false),
                        cl::desc("Allocate M registers first in staged RA."));
 static cl::opt<bool> EnablePreMISchedCoalescer(
@@ -132,6 +135,10 @@ bool AIE2PassConfig::addGlobalInstructionSelect() {
     addPass(createAIEPostSelectOptimize());
     addPass(
         createDeadMachineInstructionElim(/*KeepLifetimeInstructions=*/true));
+    if (EnableReservedRegsLICM) {
+      /// Try and hoist assignments to reserved registers out of loops.
+      insertPass(&EarlyMachineLICMID, &ReservedRegsLICMID);
+    }
   }
   return false;
 }

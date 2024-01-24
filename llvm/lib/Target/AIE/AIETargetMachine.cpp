@@ -94,6 +94,7 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIETarget() {
   initializeAIEBaseExternalAAWrapperPass(*PR);
   initializeAIESplitInstrBuilderPass(*PR);
   initializeAIESplitInstrReplacerPass(*PR);
+  initializeReservedRegsLICMPass(*PR);
 }
 
 static StringRef computeDataLayout(const Triple &TT) {
