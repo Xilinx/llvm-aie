@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 // This header file defines macros for declaring attributes for functions,
 // types, and variables.
@@ -25,6 +28,8 @@
 #define LIBC_UNUSED __attribute__((unused))
 
 #ifdef LIBC_TARGET_ARCH_IS_GPU
+#define LIBC_THREAD_LOCAL
+#elif defined(LIBC_TARGET_ARCH_IS_AIE)
 #define LIBC_THREAD_LOCAL
 #else
 #define LIBC_THREAD_LOCAL thread_local
