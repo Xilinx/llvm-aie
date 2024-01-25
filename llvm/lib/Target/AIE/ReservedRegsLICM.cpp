@@ -33,6 +33,7 @@ namespace {
 /// Track registers that have been defined/changed
 class RegDefMap {
   const TargetRegisterInfo &TRI;
+  DenseMap<MCRegister, MachineInstr *> UniqueDefs;
   BitVector PhysRegChanged;
 
 public:
@@ -44,14 +45,24 @@ public:
 
   /// Whether \p Reg or any of its aliases has been changed.
   bool hasChanged(MCRegister Reg) const;
+
+  /// Whether \p Reg has been defined a single time.
+  MachineInstr *getUniqueDef(MCRegister Reg) const;
 };
 
 void RegDefMap::addChangedRegs(MachineInstr &MI) {
   for (const MachineOperand &MO : MI.operands()) {
     if (MO.isRegMask()) {
       PhysRegChanged.setBitsNotInMask(MO.getRegMask());
+      UniqueDefs.clear();
     } else if (MO.isReg() && MO.isDef() && MO.getReg().isPhysical()) {
       MCRegister Reg = MO.getReg();
+      if (!PhysRegChanged.test(Reg)) {
+        assert(!UniqueDefs.contains(Reg));
+        UniqueDefs[Reg] = &MI;
+      } else {
+        UniqueDefs.erase(Reg);
+      }
       PhysRegChanged.set(Reg);
     }
   }
@@ -60,6 +71,13 @@ void RegDefMap::addChangedRegs(MachineInstr &MI) {
 bool RegDefMap::hasChanged(MCRegister Reg) const {
   assert(range_size(TRI.regunits(Reg)) == 1 && "Phys reg has aliases.");
   return PhysRegChanged.test(Reg);
+}
+
+MachineInstr *RegDefMap::getUniqueDef(MCRegister Reg) const {
+  assert(range_size(TRI.regunits(Reg)) == 1 && "Phys reg has aliases.");
+  if (auto It = UniqueDefs.find(Reg); It != UniqueDefs.end())
+    return It->second;
+  return nullptr;
 }
 
 /// Information about a register and its defining instruction that is
@@ -147,7 +165,7 @@ private:
 
   /// Verify if \p Cand is loop invariant and can be safely hoisted.
   /// \pre Cand->DefinedReg has a unique live value within the loop. This is
-  /// verified by processForExitSink().
+  /// verified by processForExitSink() or processForPreheaderHoist().
   bool isLoopInvariantInst(const CandidateInfo &Cand, const MachineLoop &L);
 };
 
@@ -238,6 +256,7 @@ void ReservedRegsLICM::runOnLoop(MachineLoop &L) {
 
   BitVector ReservedLiveins = collectLoopReservedLiveins(L);
   processForExitSink(L, ReservedLiveins);
+  processForPreheaderHoist(L, ReservedLiveins);
 }
 
 void ReservedRegsLICM::processForExitSink(MachineLoop &L,
@@ -269,6 +288,28 @@ void ReservedRegsLICM::processForExitSink(MachineLoop &L,
 
   for (auto &[Reg, CandInfo] : SinkCandidates) {
     Changed |= trySinkToExitBlock(CandInfo, L);
+  }
+}
+
+void ReservedRegsLICM::processForPreheaderHoist(
+    MachineLoop &L, const BitVector &ReservedLiveins) {
+  Candidates HoistCandidates;
+
+  // Walk the entire loop to find unique defs and LICM candidates
+  assert(L.getNumBlocks() == 1 && L.getHeader());
+  RegDefMap PhysRegChanged(*TRI);
+  for (MachineInstr &MI : *L.getHeader()) {
+    PhysRegChanged.addChangedRegs(MI);
+    HoistCandidates.getInfo(MI);
+  }
+
+  for (auto &[Reg, CandInfo] : HoistCandidates) {
+    // Reg is defined a single time in the loop and is not loop-livein.
+    // Try to hoist it to the pre-header
+    if (PhysRegChanged.getUniqueDef(Reg) && !ReservedLiveins.test(Reg)) {
+      CandInfo.HoistCandidate = PhysRegChanged.getUniqueDef(Reg);
+      Changed |= tryHoistToPreHeader(CandInfo, L);
+    }
   }
 }
 
@@ -312,9 +353,15 @@ bool ReservedRegsLICM::trySinkToExitBlock(const CandidateInfo &Cand,
   }
   return false;
 }
+
 bool ReservedRegsLICM::tryHoistToPreHeader(const CandidateInfo &Cand,
                                            MachineLoop &L) {
-  // TODO: use Preheader->getFirstTerminator();
+  if (isLoopInvariantInst(Cand, L)) {
+    MachineBasicBlock *InsertMBB = L.getLoopPreheader();
+    assert(InsertMBB);
+    moveInstruction(Cand, InsertMBB->getFirstTerminator(), *InsertMBB);
+    return true;
+  }
   return false;
 }
 
