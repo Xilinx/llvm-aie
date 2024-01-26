@@ -185,7 +185,7 @@ define dso_local noundef <16 x i32> @test_bfloat16_to_int(<16 x bfloat> noundef 
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopv // Delay Slot 5
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    mov s0, r0 // Delay Slot 3
 ; CHECK-NEXT:    vfloor.s32.bf16 x0, wl2, s0 // Delay Slot 2

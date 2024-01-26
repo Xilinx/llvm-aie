@@ -18,7 +18,7 @@ define <16 x i16> @_Z12test_alignasv() {
 ; CHECK-LABEL: _Z12test_alignasv:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #2048; nopa ; nops ; nopx ; nopm ; nopv
+; CHECK-NEXT:    paddb [sp], #2048; nopa ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    st lr, [sp, #-2048] // 4-byte Folded Spill
 ; CHECK-NEXT:    jl #memcpy
 ; CHECK-NEXT:    mov p1, sp // Delay Slot 5
@@ -26,7 +26,7 @@ define <16 x i16> @_Z12test_alignasv() {
 ; CHECK-NEXT:    st p1, [sp, #-992] // 4-byte Folded Spill Delay Slot 3
 ; CHECK-NEXT:    movxm p2, #.L__const._Z12test_alignasv.a // Delay Slot 2
 ; CHECK-NEXT:    mova r0, #32 // Delay Slot 1
-; CHECK-NEXT:    lda p0, [sp, #-992]; nops ; nopv // 4-byte Folded Reload
+; CHECK-NEXT:    lda p0, [sp, #-992]; nopxm // 4-byte Folded Reload
 ; CHECK-NEXT:    lda lr, [sp, #-2048] // 4-byte Folded Reload
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop

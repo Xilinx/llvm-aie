@@ -9,14 +9,14 @@
 ---
 
 #Check alignment padding for the return address.
-#CHECK: 20: {{.*}} 	nopa	;		nopb	;		event	#0x0;		nopm	;		nops	
-#CHECK: 40: {{.*}} nopa    ;               nops    ;               event   #0x0;           nopm
-#CHECK: 60: {{.*}} nopb    ;               event   #0x0;           nopv
+#CHECK: 20: {{.*}} 	nopa	;		nopb	;		event	#0x0;		nopm	;		nops
+#CHECK: 40: {{.*}}  nopa	;		nopb	;		event	#0x0;		nopm	
+#CHECK: 60: {{.*}}  nopa	;		event	#0x0;		nopm
 #CHECK: 80: {{.*}} nopa    ;               nopb    ;               event   #0x0
 #CHECK: a0: {{.*}}     nopa    ;               event   #0x0
 #CHECK: c0: {{.*}}   event   #0x0
 #CHECK: e0: {{.*}} nopb    ;               nopa    ;               nops    ;               event   #0x0;           nopm    ;               nopv
-#CHECK: 110: {{.*}} nopa    ;               nops    ;               event   #0x0;           nopm
+#CHECK: 110: {{.*}} nopa	;		nopb	;		event	#0x0;		nopm	
 #CHECK: 11c: {{.*}}  ret lr
 
 name:            test

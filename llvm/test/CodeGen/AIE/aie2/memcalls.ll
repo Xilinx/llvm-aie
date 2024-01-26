@@ -10,7 +10,7 @@ define void @callmemcpy(ptr %p, ptr %q) {
 ; CHECK-LABEL: callmemcpy:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; paddb [sp], #32
+; CHECK-NEXT:    paddb [sp], #32; nopx
 ; CHECK-NEXT:    st lr, [sp, #-32] // 4-byte Folded Spill
 ; CHECK-NEXT:    jl #memcpy
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -40,7 +40,7 @@ define void @callmemmov(ptr %p, ptr %q) {
 ; CHECK-LABEL: callmemmov:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; paddb [sp], #32
+; CHECK-NEXT:    paddb [sp], #32; nopx
 ; CHECK-NEXT:    st lr, [sp, #-32] // 4-byte Folded Spill
 ; CHECK-NEXT:    jl #memmov
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -71,7 +71,7 @@ define void @callmemset(ptr %p) {
 ; CHECK-LABEL: callmemset:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; paddb [sp], #32
+; CHECK-NEXT:    paddb [sp], #32; nopx
 ; CHECK-NEXT:    st lr, [sp, #-32] // 4-byte Folded Spill
 ; CHECK-NEXT:    jl #memset
 ; CHECK-NEXT:    nop // Delay Slot 5

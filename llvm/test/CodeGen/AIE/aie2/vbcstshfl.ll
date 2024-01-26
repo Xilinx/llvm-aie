@@ -13,7 +13,7 @@ define dso_local noundef <64 x i8> @_Z15test_shuffle_s8ij(i32 noundef %b, i32 no
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopv // Delay Slot 5
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    mov r29, r1 // Delay Slot 3
 ; CHECK-NEXT:    vbcstshfl.8 x0, r0, r29 // Delay Slot 2
@@ -30,7 +30,7 @@ define dso_local noundef <32 x i16> @_Z16test_shuffle_s16ij(i32 noundef %b, i32 
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopv // Delay Slot 5
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    mov r29, r1 // Delay Slot 3
 ; CHECK-NEXT:    vbcstshfl.16 x0, r0, r29 // Delay Slot 2
@@ -47,7 +47,7 @@ define dso_local noundef <16 x i32> @_Z16test_shuffle_s32ij(i32 noundef %b, i32 
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopv // Delay Slot 5
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    mov r29, r1 // Delay Slot 3
 ; CHECK-NEXT:    vbcstshfl.32 x0, r0, r29 // Delay Slot 2
@@ -63,7 +63,7 @@ define dso_local noundef <8 x i64> @_Z19test_shuffle_s8_accij(i32 noundef %b, i3
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopv // Delay Slot 5
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    mov r29, r1 // Delay Slot 3
 ; CHECK-NEXT:    vbcstshfl.8 bml0, r0, r29 // Delay Slot 2
@@ -80,7 +80,7 @@ define dso_local noundef <8 x i64> @_Z20test_shuffle_s16_accij(i32 noundef %b, i
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopv // Delay Slot 5
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    mov r29, r1 // Delay Slot 3
 ; CHECK-NEXT:    vbcstshfl.16 bml0, r0, r29 // Delay Slot 2
@@ -97,7 +97,7 @@ define dso_local noundef <8 x i64> @_Z20test_shuffle_s32_accij(i32 noundef %b, i
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopv // Delay Slot 5
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    mov r29, r1 // Delay Slot 3
 ; CHECK-NEXT:    vbcstshfl.32 bml0, r0, r29 // Delay Slot 2
@@ -113,7 +113,7 @@ define dso_local noundef <16 x i32> @_Z16test_shuffle_s64Dv2_ij(<2 x i32> nounde
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopv // Delay Slot 5
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    mov r29, r0 // Delay Slot 3
 ; CHECK-NEXT:    vbcstshfl.64 x0, r17:r16, r29 // Delay Slot 2
@@ -128,7 +128,7 @@ define dso_local noundef <8 x i64> @_Z20test_shuffle_s64_accDv2_ij(<2 x i32> nou
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopv // Delay Slot 5
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    mov r29, r0 // Delay Slot 3
 ; CHECK-NEXT:    vbcstshfl.64 bml0, r17:r16, r29 // Delay Slot 2

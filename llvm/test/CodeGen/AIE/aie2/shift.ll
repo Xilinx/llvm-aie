@@ -29,7 +29,7 @@ define dso_local noundef <16 x i32> @_Z11test_shiftxDv16_iS_ii(<16 x i32> nounde
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopv // Delay Slot 5
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    mov s0, r0 // Delay Slot 3
 ; CHECK-NEXT:    vshift.align x0, x2, s0, x4, r1 // Delay Slot 2
@@ -44,7 +44,7 @@ define dso_local noundef <16 x i32> @_Z18test_shiftx_v16i32Dv16_iS_ii(<16 x i32>
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopv // Delay Slot 5
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    mov s0, r0 // Delay Slot 3
 ; CHECK-NEXT:    vshift.align x0, x2, s0, x4, r1 // Delay Slot 2
@@ -59,7 +59,7 @@ define dso_local noundef <32 x i16> @_Z11test_shiftxDv32_tS_ii(<32 x i16> nounde
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopv // Delay Slot 5
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    mov s0, r0 // Delay Slot 3
 ; CHECK-NEXT:    vshift.align x0, x2, s0, x4, r1 // Delay Slot 2

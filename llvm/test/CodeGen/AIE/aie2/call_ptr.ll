@@ -22,7 +22,7 @@ define ptr @test(ptr %x) {
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    st p6, [sp, #-32] // 4-byte Folded Spill Delay Slot 2
 ; CHECK-NEXT:    mov p6, p1 // Delay Slot 1
-; CHECK-NEXT:    nopb ; lda lr, [sp, #-28]; nops ; nopx ; nopm ; nopv // 4-byte Folded Reload
+; CHECK-NEXT:    nopb ; lda lr, [sp, #-28]; nops ; nopxm ; nopv // 4-byte Folded Reload
 ; CHECK-NEXT:    mov p0, p6
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
