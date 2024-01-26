@@ -772,6 +772,29 @@ void ScheduleDAGMI::enterRegion(MachineBasicBlock *bb,
   SchedImpl->initPolicy(begin, end, regioninstrs);
 }
 
+void ScheduleDAGMI::movePickedSU(const SUnit &SU, bool IsTopNode) {
+  MachineInstr *MI = SU.getInstr();
+  if (IsTopNode) {
+    assert(SU.isTopReady() && "node still has unscheduled dependencies");
+    if (&*CurrentTop == MI)
+      CurrentTop = nextIfDebug(++CurrentTop, CurrentBottom);
+    else
+      moveInstruction(MI, CurrentTop);
+  } else {
+    assert(SU.isBottomReady() && "node still has unscheduled dependencies");
+    MachineBasicBlock::iterator PriorII =
+        priorNonDebug(CurrentBottom, CurrentTop);
+    if (&*PriorII == MI) {
+      CurrentBottom = PriorII;
+    } else {
+      if (&*CurrentTop == MI)
+        CurrentTop = nextIfDebug(++CurrentTop, PriorII);
+      moveInstruction(MI, CurrentBottom);
+      CurrentBottom = MI;
+    }
+  }
+}
+
 /// This is normally called from the main scheduler loop but may also be invoked
 /// by the scheduling strategy to perform additional code motion.
 void ScheduleDAGMI::moveInstruction(
@@ -840,26 +863,9 @@ void ScheduleDAGMI::schedule() {
     if (!checkSchedLimit())
       break;
 
-    MachineInstr *MI = SU->getInstr();
-    if (IsTopNode) {
-      assert(SU->isTopReady() && "node still has unscheduled dependencies");
-      if (&*CurrentTop == MI)
-        CurrentTop = nextIfDebug(++CurrentTop, CurrentBottom);
-      else
-        moveInstruction(MI, CurrentTop);
-    } else {
-      assert(SU->isBottomReady() && "node still has unscheduled dependencies");
-      MachineBasicBlock::iterator priorII =
-        priorNonDebug(CurrentBottom, CurrentTop);
-      if (&*priorII == MI)
-        CurrentBottom = priorII;
-      else {
-        if (&*CurrentTop == MI)
-          CurrentTop = nextIfDebug(++CurrentTop, priorII);
-        moveInstruction(MI, CurrentBottom);
-        CurrentBottom = MI;
-      }
-    }
+    // Move the picked instruction to the scheduled Top or Bot zone.
+    movePickedSU(*SU, IsTopNode);
+
     // Notify the scheduling strategy before updating the DAG.
     // This sets the scheduled node's ReadyCycle to CurrCycle. When updateQueues
     // runs, it can then use the accurate ReadyCycle time to determine whether
