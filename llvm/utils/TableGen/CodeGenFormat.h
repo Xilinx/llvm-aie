@@ -165,6 +165,8 @@ private:
   static unsigned EmissionID;
   /// Specific ID of the instance
   unsigned InstrID;
+  /// Computed slot set
+  uint64_t SlotSet = 0;
 
 public:
   TGInstrLayout(const CodeGenInstruction *const CGI,
@@ -190,6 +192,7 @@ public:
   static const NOPSlotMap &getNOPSlotMapper() { return NOPMapper; }
 
   unsigned getSize() const;
+  uint64_t getSlotSet() const { return SlotSet; }
   const std::string &getInstrName() const { return InstrName; }
   bool isPacketFormat() const { return IsComposite; }
   bool hasMultipleSlotOptions() const { return IsMultipleSlotOptions; }
@@ -220,8 +223,11 @@ public:
   void emitAlternateInstsOpcodeSet(raw_ostream &o) const;
   /// Emit a case table to get AlternateInsts based of InstrName/PseudoOpcode
   void emitAlternateInstsOpcode(raw_ostream &o, unsigned int index) const;
+
   /// Emit the Packet-Format table, used in the FormatSelector.
   void emitPacketEntry(ConstTable &FormatData, ConstTable &SlotData) const;
+  /// Helper of emitPacketEntry()
+  void computeSlotSet();
 
   void addAlternateInstInMultiSlotPseudo(
       const std::vector<TGInstrLayout> &InstFormats);

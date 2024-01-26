@@ -28,7 +28,7 @@ define void @_ZL11window_initP15window_internaliPaii(%struct.window_internal* in
 ; CHECK-LABEL: _ZL11window_initP15window_internaliPaii:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    padda [sp], #32; nop ; mov r13, p0
+; CHECK-NEXT:    padda [sp], #32; mov r13, p0; nop
 ; CHECK-NEXT:    mov p0, r13
 ; CHECK-NEXT:    mov r12, p1
 ; CHECK-NEXT:    st.spil p0, [sp, #-32]
@@ -91,14 +91,14 @@ define void @_ZL11window_initP15window_internaliPaii(%struct.window_internal* in
 ; CHECK-NEXT:    mov r12, p0
 ; CHECK-NEXT:    lda.spil p0, [sp, #-32]
 ; CHECK-NEXT:    mov r14, p1
-; CHECK-NEXT:    add r12, r12, r14; mov p1, r13; nop_mv1
+; CHECK-NEXT:    nop ; mov p1, r13; add r12, r12, r14
 ; CHECK-NEXT:    mov r13, p1
 ; CHECK-NEXT:    mov r14, p2
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mul r13, r13, r14
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mov r14, p0
-; CHECK-NEXT:    add r13, r14, r13; mov p0, r12; nop_mv1
+; CHECK-NEXT:    nop ; mov p0, r12; add r13, r14, r13
 ; CHECK-NEXT:    mov p1, r13
 ; CHECK-NEXT:    st p0, [p1, cs0]
 ; CHECK-NEXT:    j .LBB0_3

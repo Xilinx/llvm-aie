@@ -42,7 +42,7 @@ define dso_local noundef <32 x i32> @_Z8test_andDv32_iS_(<32 x i32> noundef %a, 
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopv // Delay Slot 5
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    vband x5, x9, x7 // Delay Slot 3
 ; CHECK-NEXT:    vband x4, x8, x6 // Delay Slot 2
@@ -87,7 +87,7 @@ define dso_local noundef <32 x i32> @_Z7test_orDv32_iS_(<32 x i32> noundef %a, <
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopv // Delay Slot 5
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    vbor x5, x9, x7 // Delay Slot 3
 ; CHECK-NEXT:    vbor x4, x8, x6 // Delay Slot 2

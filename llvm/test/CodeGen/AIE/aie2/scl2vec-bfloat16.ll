@@ -15,7 +15,7 @@ define dso_local noundef <32 x bfloat> @_Z11test_shiftxDv32_u6__bf16S_ii(<32 x b
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopv // Delay Slot 5
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    mov s0, r0 // Delay Slot 3
 ; CHECK-NEXT:    vshift.align x0, x2, s0, x4, r1 // Delay Slot 2
@@ -31,7 +31,7 @@ define dso_local noundef <32 x bfloat> @_Z11test_insertDv32_u6__bf16i8bfloat16(<
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopv // Delay Slot 5
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    mov r29, r0 // Delay Slot 3
 ; CHECK-NEXT:    vinsert.16 x0, x2, r29, r1 // Delay Slot 2
@@ -48,7 +48,7 @@ define dso_local noundef <32 x bfloat> @_Z11test_insertDv32_u6__bf16iDv2_u6__bf1
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopv // Delay Slot 5
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    mov r29, r0 // Delay Slot 3
 ; CHECK-NEXT:    vinsert.32 x0, x2, r29, r1 // Delay Slot 2
@@ -64,7 +64,7 @@ define dso_local noundef <32 x bfloat> @_Z11test_insertDv32_u6__bf16iDv4_u6__bf1
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopv // Delay Slot 5
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    mov r29, r0 // Delay Slot 3
 ; CHECK-NEXT:    vinsert.64 x0, x2, r29, r17:r16 // Delay Slot 2
@@ -146,7 +146,7 @@ define dso_local noundef <32 x bfloat> @_Z21test_shuffle_bfloat168bfloat16j(%cla
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopv // Delay Slot 5
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    mov r29, r1 // Delay Slot 3
 ; CHECK-NEXT:    vbcstshfl.16 x0, r0, r29 // Delay Slot 2

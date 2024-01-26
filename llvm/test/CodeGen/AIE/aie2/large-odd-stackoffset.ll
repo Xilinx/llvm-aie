@@ -16,7 +16,7 @@ define void @f() {
 ; CHECK-LABEL: f:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #1120; nopa ; nops ; nopx ; nopm ; nopv
+; CHECK-NEXT:    paddb [sp], #1120; nopa ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    st lr, [sp, #-1120] // 4-byte Folded Spill
 ; CHECK-NEXT:    jl #f0
 ; CHECK-NEXT:    movxm m0, #-1115 // Delay Slot 5

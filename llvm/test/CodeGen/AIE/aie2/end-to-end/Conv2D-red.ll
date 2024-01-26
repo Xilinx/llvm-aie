@@ -27,10 +27,10 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ASM-LABEL: conv2d.loop.nest:
 ; ASM:         .p2align 4
 ; ASM-NEXT:  // %bb.0: // %newFuncRoot
-; ASM-NEXT:    paddb [sp], #32; mova dj3, #0; nops ; nopx ; nopm ; nopv
+; ASM-NEXT:    paddb [sp], #32; mova dj3, #0; nops ; nopxm ; nopv
 ; ASM-NEXT:    // implicit-def: $x2
 ; ASM-NEXT:    // implicit-def: $x4
-; ASM-NEXT:    nopa ; st p7, [sp, #-32] // 4-byte Folded Spill
+; ASM-NEXT:    st p7, [sp, #-32]; nopx // 4-byte Folded Spill
 ; ASM-NEXT:    mov p7, sp
 ; ASM-NEXT:    paddb [p7], #-44; st p6, [sp, #-28] // 4-byte Folded Spill
 ; ASM-NEXT:    lda m0, [p7, #0]; mov p7, sp
@@ -172,7 +172,7 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ASM-NEXT:    padda.3d [p1], d2; mov dc5, r26 // Delay Slot 2
 ; ASM-NEXT:    padda.2d [p3], d5 // Delay Slot 1
 ; ASM-NEXT:  // %bb.4: // %exitStub
-; ASM-NEXT:    lda p7, [sp, #-32]; nopxm ; nopv // 4-byte Folded Reload
+; ASM-NEXT:    lda p7, [sp, #-32]; nopb ; nopxm // 4-byte Folded Reload
 ; ASM-NEXT:    lda p6, [sp, #-28] // 4-byte Folded Reload
 ; ASM-NEXT:    ret lr
 ; ASM-NEXT:    nop // Delay Slot 5

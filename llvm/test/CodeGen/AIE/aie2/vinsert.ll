@@ -12,7 +12,7 @@ define dso_local noundef <64 x i8> @_Z12test_insert8Dv64_aic(<64 x i8> noundef %
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopv // Delay Slot 5
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    mov r29, r0 // Delay Slot 3
 ; CHECK-NEXT:    vinsert.8 x0, x2, r29, r1 // Delay Slot 2
@@ -30,7 +30,7 @@ define dso_local noundef <64 x i8> @_Z13test_insert16Dv64_ais(<64 x i8> noundef 
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopv // Delay Slot 5
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    mov r29, r0 // Delay Slot 3
 ; CHECK-NEXT:    vinsert.16 x0, x2, r29, r1 // Delay Slot 2
@@ -48,7 +48,7 @@ define dso_local noundef <64 x i8> @_Z13test_insert32Dv64_aii(<64 x i8> noundef 
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopv // Delay Slot 5
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    mov r29, r0 // Delay Slot 3
 ; CHECK-NEXT:    vinsert.32 x0, x2, r29, r1 // Delay Slot 2
@@ -65,7 +65,7 @@ define dso_local noundef <64 x i8> @_Z13test_insert64Dv64_aiDv8_a(<64 x i8> noun
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopv // Delay Slot 5
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    mov r29, r0 // Delay Slot 3
 ; CHECK-NEXT:    vinsert.64 x0, x2, r29, r17:r16 // Delay Slot 2
@@ -106,7 +106,7 @@ define <2 x i32> @test_64bit(<2 x i32> %vec, i32 %c) {
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopv // Delay Slot 5
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    mov r16, r18 // Delay Slot 2
@@ -137,7 +137,7 @@ define <8 x i32> @test_256bit(<8 x i32> %vec, i32 %c) {
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopv // Delay Slot 5
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    mova r29, #1 // Delay Slot 3
 ; CHECK-NEXT:    vinsert.32 x0, x2, r29, r0 // Delay Slot 2
@@ -152,7 +152,7 @@ define <16 x i16> @test_256bit_dyn_idx(<16 x i16> %vec, i32 %b, i16 %c) {
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopv // Delay Slot 5
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    mov r29, r0 // Delay Slot 3
 ; CHECK-NEXT:    vinsert.16 x0, x2, r29, r1 // Delay Slot 2
@@ -167,7 +167,7 @@ define <64 x i8> @test_512bit(<64 x i8> %vec, i8 %c) {
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopv // Delay Slot 5
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    mova r29, #5 // Delay Slot 3
 ; CHECK-NEXT:    vinsert.8 x0, x2, r29, r0 // Delay Slot 2
@@ -182,7 +182,7 @@ define <32 x i16> @test_512bit_dyn_idx(<32 x i16> %vec, i32 %b, i16 %c) {
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopv // Delay Slot 5
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    mov r29, r0 // Delay Slot 3
 ; CHECK-NEXT:    vinsert.16 x0, x2, r29, r1 // Delay Slot 2
@@ -227,7 +227,7 @@ define <32 x i32> @test_1024bit_dyn_idx(<32 x i32> %vec, i32 %b, i32 %c) {
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; mova r2, #16; nops ; movx r3, #0; nopm ; nopv
-; CHECK-NEXT:    nopa ; nops ; lt r27, r0, r2; mov r4, r16
+; CHECK-NEXT:    nopa ; nopb ; lt r27, r0, r2; mov r4, r16
 ; CHECK-NEXT:    sel.nez r2, r3, r2, r27
 ; CHECK-NEXT:    sub r29, r0, r2
 ; CHECK-NEXT:    add r16, r27, #-1

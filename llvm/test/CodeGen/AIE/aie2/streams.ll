@@ -14,7 +14,7 @@ define void @put_ms(i32 inreg %a, i32 inreg %tlast) local_unnamed_addr {
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopv // Delay Slot 5
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    mov r28, r1 // Delay Slot 4
 ; CHECK-NEXT:    mov ms, r0, r28 // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
@@ -29,7 +29,7 @@ define i32 @put_ms_nb(i32 inreg %a) local_unnamed_addr {
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopv // Delay Slot 5
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    mov.nb.tlast ms, r1 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
@@ -43,7 +43,7 @@ define { i32, i32 } @get_ss(i32 inreg %a) local_unnamed_addr {
 ; CHECK-LABEL: get_ss:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mov r0, SS; nopxm ; nopv
+; CHECK-NEXT:    mov r0, SS; nopb ; nopxm
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
@@ -61,7 +61,7 @@ define { i32, i32 } @get_ss_nb(i32 inreg %a) local_unnamed_addr {
 ; CHECK-LABEL: get_ss_nb:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mov.nb r0, SS; nopxm ; nopv
+; CHECK-NEXT:    mov.nb r0, SS; nopb ; nopxm
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr

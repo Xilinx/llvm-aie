@@ -11,7 +11,7 @@ define i32 @accumulate(i32 %size, ptr %array) {
 ; CHECK-LABEL: accumulate:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r2, #0; nopxm ; nopv
+; CHECK-NEXT:    mova r2, #0; nopb ; nopxm
 ; CHECK-NEXT:    ge r0, r2, r1
 ; CHECK-NEXT:    jnz r0, #.LBB0_4
 ; CHECK-NEXT:    nop // Delay Slot 5

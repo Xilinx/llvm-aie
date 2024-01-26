@@ -22,7 +22,7 @@ define i32 @test(i32 %x) {
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    st r16, [sp, #-32] // 4-byte Folded Spill Delay Slot 2
 ; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
-; CHECK-NEXT:    nopb ; lda lr, [sp, #-28]; nops ; nopx ; nopm ; nopv // 4-byte Folded Reload
+; CHECK-NEXT:    nopb ; lda lr, [sp, #-28]; nops ; nopxm ; nopv // 4-byte Folded Reload
 ; CHECK-NEXT:    mov r0, r16
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop

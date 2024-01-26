@@ -17,7 +17,7 @@ define dso_local i32 @dot(ptr nocapture readonly %a, ptr nocapture readonly %b, 
 ; CHECK-LABEL: dot:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r0, #0; nopxm ; nopv
+; CHECK-NEXT:    mova r0, #0; nopb ; nopxm
 ; CHECK-NEXT:    ge r2, r0, r1
 ; CHECK-NEXT:    jnz r2, #.LBB0_6
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -62,7 +62,7 @@ define dso_local i32 @dot(ptr nocapture readonly %a, ptr nocapture readonly %b, 
 ; CHECK-NEXT:    or r0, r2, r0; mov r2, r1
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB0_5:
-; CHECK-NEXT:    nopa ; nops ; and r1, r3, r2; nopm
+; CHECK-NEXT:    nopa ; nopb ; and r1, r3, r2; nopm
 ; CHECK-NEXT:    or r0, r1, r0
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB0_6: // %for.cond.cleanup

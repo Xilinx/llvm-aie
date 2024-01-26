@@ -63,8 +63,7 @@ body:             |
     ; CHECK-NEXT:   NOPB
     ; CHECK-NEXT:   $r0 = MOVA_lda_cg 0
     ; CHECK-NEXT:   NOPS
-    ; CHECK-NEXT:   NOPX
-    ; CHECK-NEXT:   NOPM
+    ; CHECK-NEXT:   NOPXM
     ; CHECK-NEXT:   NOPV
     ; CHECK-NEXT: }
     ; CHECK-NEXT: BUNDLE {

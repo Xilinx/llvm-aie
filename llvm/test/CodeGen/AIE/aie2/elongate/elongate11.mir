@@ -16,12 +16,11 @@ body:             |
     ; CHECK-NEXT:   NOPB
     ; CHECK-NEXT:   $p0 = PADDA_lda_ptr_inc_idx $p0, $m0
     ; CHECK-NEXT:   NOPS
-    ; CHECK-NEXT:   NOPX
-    ; CHECK-NEXT:   NOPM
+    ; CHECK-NEXT:   NOPXM
     ; CHECK-NEXT:   NOPV
     ; CHECK-NEXT: }
     ; CHECK-NEXT: BUNDLE {
-    ; CHECK-NEXT:   NOPV
+    ; CHECK-NEXT:   NOPX
     ; CHECK-NEXT: }
     ; CHECK-NEXT: BUNDLE {
     ; CHECK-NEXT:   NOP
@@ -62,7 +61,7 @@ body:             |
     ; CHECK-NEXT: DelayedSchedBarrier csr_aie2
     ; CHECK-NEXT: BUNDLE {
     ; CHECK-NEXT:   NOPA
-    ; CHECK-NEXT:   NOPS
+    ; CHECK-NEXT:   NOPB
     ; CHECK-NEXT:   EVENT 0
     ; CHECK-NEXT:   NOPM
     ; CHECK-NEXT: }

@@ -12,7 +12,7 @@ define  i32 @test(i8 signext %i) noinline nounwind optnone {
 ; CHECK-LABEL: test:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #32; nopa ; nops ; nopx ; nopm ; nopv
+; CHECK-NEXT:    paddb [sp], #32; nopa ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    st p6, [sp, #-32] // 4-byte Folded Spill
 ; CHECK-NEXT:    mov p6, sp
 ; CHECK-NEXT:    paddb [p6], #-24
@@ -40,7 +40,7 @@ define  i32 @test(i8 signext %i) noinline nounwind optnone {
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    st lr, [sp, #-28] // 4-byte Folded Spill Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %entry
-; CHECK-NEXT:    nopa ; movxm r1, #1048575; nopv
+; CHECK-NEXT:    nopa ; nopb ; movxm r1, #1048575
 ; CHECK-NEXT:    and r0, r0, r1
 ; CHECK-NEXT:    mova r1, #2
 ; CHECK-NEXT:    lshl r0, r0, r1
@@ -124,7 +124,7 @@ define  i32 @test(i8 signext %i) noinline nounwind optnone {
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB0_7: // %sw.epilog
-; CHECK-NEXT:    nopb ; lda lr, [sp, #-28]; nops ; nopx ; nopm ; nopv // 4-byte Folded Reload
+; CHECK-NEXT:    nopb ; lda lr, [sp, #-28]; nops ; nopxm ; nopv // 4-byte Folded Reload
 ; CHECK-NEXT:    lda.s8 r0, [p6, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop

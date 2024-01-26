@@ -224,14 +224,18 @@ void CodeGenFormat::run(raw_ostream &o) {
     // isn't Copy-assignable).
     std::vector<const TGInstrLayout *> Packets;
 
-    for (const TGInstrLayout &Inst : InstFormats)
-      if (Inst.isPacketFormat())
+    for (TGInstrLayout &Inst : InstFormats)
+      if (Inst.isPacketFormat()) {
+        Inst.computeSlotSet();
         Packets.push_back(&Inst);
+      }
 
-    // Sort the Packets by size
+    // Sort the Packets by (size, slotSet)
     std::sort(Packets.begin(), Packets.end(),
               [](const TGInstrLayout *Packet0, const TGInstrLayout *Packet1) {
-                return Packet0->getSize() < Packet1->getSize();
+                return Packet0->getSize() != Packet1->getSize()
+                           ? Packet0->getSize() < Packet1->getSize()
+                           : Packet0->getSlotSet() < Packet1->getSlotSet();
               });
     {
       // Create two flat tables, one holding all slot ranges
@@ -750,16 +754,23 @@ void TGInstrLayout::emitPacketEntry(ConstTable &Packets,
   const std::string TargetSlotKindName = Target + SlotsRegistry.GenSlotKindName;
 
   SlotData << "// " << getInstrName() << " : " << SlotData.mark() << "\n";
-  uint64_t Bits = 0;
   for (auto &Slot : SlotsVec) {
-    Bits |= uint64_t(1) << Slot->getSlot()->getNumSlot();
     SlotData << TargetSlotKindName
              << "::" << Slot->getSlot()->getEnumerationString();
     SlotData.next();
   }
   Packets << "  { " << SlotData.ref(0) << "," << SlotData.refNext() << "},\n";
   Packets << "  " << getSize() / 8 << std::dec << ",\n";
-  Packets << "  " << std::hex << std::showbase << Bits << std::dec << "},\n";
+  Packets << "  " << std::hex << std::showbase << SlotSet << std::dec << "},\n";
+}
+
+/// Precompute the slot bits for sorting
+void TGInstrLayout::computeSlotSet() {
+  uint64_t Bits = 0;
+  for (const auto *Slot : slots()) {
+    Bits |= uint64_t(1) << Slot->getSlot()->getNumSlot();
+  }
+  SlotSet = Bits;
 }
 
 /// Returns true whether each all of the bits are not complete

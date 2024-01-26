@@ -13,7 +13,7 @@ define dso_local <8 x i64> @_Z9test_lupsDv8_ji(<8 x i32> noundef %a, i32 noundef
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopv // Delay Slot 5
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    mov s0, r0 // Delay Slot 4
 ; CHECK-NEXT:    vups.s64.d32 bml0, wl0, s0 // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
@@ -28,7 +28,7 @@ define dso_local <8 x i64> @_Z9test_lupsDv8_ji_1(<8 x i32> noundef %a, i32 nound
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopv // Delay Slot 5
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    mov s0, r0 // Delay Slot 4
 ; CHECK-NEXT:    vups.s64.s32 bml0, wl0, s0 // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
@@ -178,7 +178,7 @@ define <16 x i64> @test_ups_to_v32acc32(<32 x i16> %a, i32 %shft) {
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopv // Delay Slot 5
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    mov s0, r0 // Delay Slot 4
 ; CHECK-NEXT:    vups.s32.d16 cm0, x0, s0 // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
