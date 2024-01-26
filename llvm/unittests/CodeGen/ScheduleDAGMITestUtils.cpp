@@ -46,9 +46,10 @@ void DummyScheduleDAGMI::prepareForBB(MachineBasicBlock *MBB) {
   initQueues(TopRoots, BotRoots);
 }
 
-void DummyScheduleDAGMI::scheduleInstr(MachineInstr *MI, bool IsTop) {
+void DummyScheduleDAGMI::scheduleInstr(MachineInstr *MI, bool IsTop,
+                                       std::optional<unsigned> EmissionCycle) {
   SUnit *SU = getSUnit(MI);
-  movePickedSU(*SU, IsTop);
+  movePickedSU(*SU, IsTop, EmissionCycle);
 }
 
 ScheduleDAGMITest::ScheduleDAGMITest() : Mod("Module", Ctx) {

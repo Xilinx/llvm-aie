@@ -256,6 +256,17 @@ public:
   /// be scheduled at the bottom.
   virtual SUnit *pickNode(bool &IsTopNode) = 0;
 
+  /// Variant of \p pickNode which allows specifying a cycle in which to emit
+  /// the instruction. This only works for bottom nodes, i.e. when \p IsTopNode
+  /// is false. Targets that implement pickNodeAndCycle are required to either
+  /// set a \p BotEmissionCycle for all "bottom" nodes, or for none.
+  /// If \p BotEmissionCycle is left unchanged, the SU will be emitted in the
+  /// current cycle.
+  virtual SUnit *pickNodeAndCycle(bool &IsTopNode,
+                                  std::optional<unsigned> &BotEmissionCycle) {
+    return pickNode(IsTopNode);
+  }
+
   /// Scheduler callback to notify that a new subtree is scheduled.
   virtual void scheduleTree(unsigned SubtreeID) {}
 
@@ -291,6 +302,10 @@ protected:
 
   /// Ordered list of DAG postprocessing steps.
   std::vector<std::unique_ptr<ScheduleDAGMutation>> Mutations;
+
+  /// Instructions for which pickNodeAndCycle() requested an explicit emission
+  /// cycle in the Bot zone.
+  DenseMap<const SUnit *, unsigned> BotEmissionCycles;
 
   /// The top of the unscheduled zone.
   MachineBasicBlock::iterator CurrentTop;
@@ -364,7 +379,8 @@ public:
   /// Change the position of a picked SU.
   /// This will figure out the right insertion point in the Top or Bot zone
   /// and eventually call \p moveInstruction.
-  void movePickedSU(const SUnit &SU, bool IsTopNode);
+  void movePickedSU(const SUnit &SU, bool IsTopNode,
+                    std::optional<unsigned> BotEmissionCycle);
 
   /// Change the position of an instruction within the basic block and update
   /// live ranges and region boundary iterators.
@@ -409,6 +425,12 @@ protected:
   void releaseSuccessors(SUnit *SU);
   void releasePred(SUnit *SU, SDep *PredEdge);
   void releasePredecessors(SUnit *SU);
+
+  /// Find the insertion point for a newly-picked SU in the Bot zone.
+  /// If an \p EmissionCycle is provided, this will ensure that the insertion
+  /// point is above any instruction which has been emitted in a lower cycle.
+  MachineBasicBlock::iterator
+  findBottomInsertPosForCycle(std::optional<unsigned> EmissionCycle);
 };
 
 /// ScheduleDAGMILive is an implementation of ScheduleDAGInstrs that schedules
