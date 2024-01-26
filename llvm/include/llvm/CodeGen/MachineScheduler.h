@@ -361,6 +361,11 @@ public:
   void startBlock(MachineBasicBlock *bb) override;
   void finishBlock() override;
 
+  /// Change the position of a picked SU.
+  /// This will figure out the right insertion point in the Top or Bot zone
+  /// and eventually call \p moveInstruction.
+  void movePickedSU(const SUnit &SU, bool IsTopNode);
+
   /// Change the position of an instruction within the basic block and update
   /// live ranges and region boundary iterators.
   void moveInstruction(MachineInstr *MI, MachineBasicBlock::iterator InsertPos);

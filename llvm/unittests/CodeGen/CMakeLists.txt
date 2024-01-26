@@ -39,6 +39,8 @@ add_llvm_unittest(CodeGenTests
   PassManagerTest.cpp
   ScalableVectorMVTsTest.cpp
   SchedBoundary.cpp
+  ScheduleDAGMITest.cpp
+  ScheduleDAGMITestUtils.cpp
   SelectionDAGAddressAnalysisTest.cpp
   SelectionDAGPatternMatchTest.cpp
   TypeTraitsTest.cpp
