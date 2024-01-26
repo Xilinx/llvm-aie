@@ -770,21 +770,59 @@ void ScheduleDAGMI::enterRegion(MachineBasicBlock *bb,
   ScheduleDAGInstrs::enterRegion(bb, begin, end, regioninstrs);
 
   SchedImpl->initPolicy(begin, end, regioninstrs);
+
+  // No need to keep emissions cycles for instructions not in this region.
+  BotEmissionCycles.clear();
 }
 
-void ScheduleDAGMI::movePickedSU(const SUnit &SU, bool IsTopNode) {
+MachineBasicBlock::iterator ScheduleDAGMI::findBottomInsertPosForCycle(
+    std::optional<unsigned> EmissionCycle) {
+  if (!EmissionCycle)
+    return bottom();
+
+  auto HasGreaterEmissionCycle = [&](const MachineInstr &MI,
+                                     unsigned EmissionCycle) {
+    SUnit *PosSU = getSUnit(const_cast<MachineInstr *>(&MI));
+    if (!PosSU) // Skip instructions without SUnit
+      return true;
+    auto PosCycleIt = BotEmissionCycles.find(PosSU);
+    assert(PosCycleIt != BotEmissionCycles.end() &&
+           "Some SUs are missing an EmissionCycle");
+    return PosCycleIt->getSecond() > EmissionCycle;
+  };
+
+  // Find the first instruction in [bottom(), end()) that has a lower or equal
+  // emission cycle. We want to insert above it.
+  return std::lower_bound(bottom(), end(), *EmissionCycle,
+                          HasGreaterEmissionCycle);
+}
+
+void ScheduleDAGMI::movePickedSU(const SUnit &SU, bool IsTopNode,
+                                 std::optional<unsigned> BotEmissionCycle) {
   MachineInstr *MI = SU.getInstr();
   if (IsTopNode) {
     assert(SU.isTopReady() && "node still has unscheduled dependencies");
+    assert(!BotEmissionCycle.has_value());
     if (&*CurrentTop == MI)
       CurrentTop = nextIfDebug(++CurrentTop, CurrentBottom);
     else
       moveInstruction(MI, CurrentTop);
   } else {
     assert(SU.isBottomReady() && "node still has unscheduled dependencies");
+    if (BotEmissionCycle)
+      BotEmissionCycles[&SU] = *BotEmissionCycle;
     MachineBasicBlock::iterator PriorII =
         priorNonDebug(CurrentBottom, CurrentTop);
-    if (&*PriorII == MI) {
+    MachineBasicBlock::iterator InsertPos =
+        findBottomInsertPosForCycle(BotEmissionCycle);
+    if (InsertPos != CurrentBottom) {
+      // We are inserting MI below CurrentBottom because MI has a lower
+      // EmissionCycle. Do not update CurrentBottom to MI, otherwise this
+      // would mean the previous CurrentBottom is considered unscheduled.
+      if (&*CurrentTop == MI)
+        CurrentTop = nextIfDebug(++CurrentTop, PriorII);
+      moveInstruction(MI, InsertPos);
+    } else if (&*PriorII == MI) {
       CurrentBottom = PriorII;
     } else {
       if (&*CurrentTop == MI)
@@ -856,7 +894,8 @@ void ScheduleDAGMI::schedule() {
   bool IsTopNode = false;
   while (true) {
     LLVM_DEBUG(dbgs() << "** ScheduleDAGMI::schedule picking next node\n");
-    SUnit *SU = SchedImpl->pickNode(IsTopNode);
+    std::optional<unsigned> BotEmissionCycle;
+    SUnit *SU = SchedImpl->pickNodeAndCycle(IsTopNode, BotEmissionCycle);
     if (!SU) break;
 
     assert(!SU->isScheduled && "Node already scheduled");
@@ -864,7 +903,7 @@ void ScheduleDAGMI::schedule() {
       break;
 
     // Move the picked instruction to the scheduled Top or Bot zone.
-    movePickedSU(*SU, IsTopNode);
+    movePickedSU(*SU, IsTopNode, BotEmissionCycle);
 
     // Notify the scheduling strategy before updating the DAG.
     // This sets the scheduled node's ReadyCycle to CurrCycle. When updateQueues

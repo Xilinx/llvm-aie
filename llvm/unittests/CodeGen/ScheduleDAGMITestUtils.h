@@ -26,7 +26,8 @@ public:
   void prepareForBB(MachineBasicBlock *MBB);
 
   /// Move \p MI to the Top or Bot Zone
-  void scheduleInstr(MachineInstr *MI, bool IsTop);
+  void scheduleInstr(MachineInstr *MI, bool IsTop,
+                     std::optional<unsigned> EmissionCycle = std::nullopt);
 };
 
 class ScheduleDAGMITest : public testing::Test {
