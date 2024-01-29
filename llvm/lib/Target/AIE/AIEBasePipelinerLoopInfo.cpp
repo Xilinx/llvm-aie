@@ -36,7 +36,44 @@ cl::opt<bool> TrackRegPressure(
 AIEBasePipelinerLoopInfo::AIEBasePipelinerLoopInfo(MachineInstr *EndLoop,
                                                    const AIEBaseInstrInfo &TII)
     : TII(TII), MRI(EndLoop->getMF()->getRegInfo()), EndLoop(EndLoop),
-      LoopBlock(EndLoop->getParent()) {}
+      LoopBlock(EndLoop->getParent()) {
+
+  const BasicBlock *BBLK = LoopBlock->getBasicBlock();
+  if (BBLK == nullptr)
+    return;
+
+  const Instruction *TI = BBLK->getTerminator();
+  if (TI == nullptr)
+    return;
+
+  MDNode *LoopID = TI->getMetadata(LLVMContext::MD_loop);
+  if (LoopID == nullptr)
+    return;
+
+  assert(LoopID->getNumOperands() > 0 && "requires at least one operand");
+  assert(LoopID->getOperand(0) == LoopID && "invalid loop");
+
+  for (unsigned i = 1, e = LoopID->getNumOperands(); i < e; ++i) {
+    MDNode *MD = dyn_cast<MDNode>(LoopID->getOperand(i));
+
+    if (MD == nullptr)
+      continue;
+
+    MDString *S = dyn_cast<MDString>(MD->getOperand(0));
+    if (S == nullptr)
+      continue;
+
+    if (S->getString() == "llvm.loop.itercount.range") {
+      assert((MD->getNumOperands() >= 2 && MD->getNumOperands() <= 3) &&
+             "Iteration count hint should have one or two numeric operands.");
+      MinTripCount =
+          mdconst::extract<ConstantInt>(MD->getOperand(1))->getSExtValue();
+      assert(MinTripCount >= 0 && "Range lwb should not be negative.");
+      LLVM_DEBUG(dbgs() << "PLI: MinTripCount from pragma =  " << MinTripCount
+                        << "\n");
+    }
+  }
+}
 
 void AIEBasePipelinerLoopInfo::setMinTripCount(int64_t TC) {
   LLVM_DEBUG(dbgs() << "TripCount = " << TC << "\n");
@@ -589,6 +626,7 @@ void DownCountLoop::startExpand() {
       .addImm(-Adjust * Step);
   Phi->getOperand(InitIdx).setReg(NewReg);
 }
+
 } // namespace
 
 std::unique_ptr<TargetInstrInfo::PipelinerLoopInfo>
