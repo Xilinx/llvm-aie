@@ -11,8 +11,8 @@ define dso_local noundef signext i8 @_Z11test_selectbcc(i1 noundef zeroext %sel,
 ; CHECK-LABEL: _Z11test_selectbcc:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
+; CHECK-NEXT:    nopv // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    mov r27, r1 // Delay Slot 2
@@ -26,8 +26,8 @@ define dso_local noundef signext i16 @_Z11test_selectbss(i1 noundef zeroext %sel
 ; CHECK-LABEL: _Z11test_selectbss:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
+; CHECK-NEXT:    nopv // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    mov r27, r1 // Delay Slot 2
@@ -41,8 +41,8 @@ define dso_local noundef i32 @_Z11test_selectbii(i1 noundef zeroext %sel, i32 no
 ; CHECK-LABEL: _Z11test_selectbii:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
+; CHECK-NEXT:    nopv // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    mov r27, r1 // Delay Slot 2
@@ -56,7 +56,7 @@ define dso_local ptr @_Z11test_selectbPvS_(i1 noundef zeroext %sel, ptr readnone
 ; CHECK-LABEL: _Z11test_selectbPvS_:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nops ; ret lr ; nopm
 ; CHECK-NEXT:    mov r27, r0 // Delay Slot 5
 ; CHECK-NEXT:    mov r0, p1 // Delay Slot 4
 ; CHECK-NEXT:    mov r1, p2 // Delay Slot 3

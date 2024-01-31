@@ -68,7 +68,7 @@ define dso_local noundef i32 @bar() {
 ; CHECK-LABEL: bar:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    movxm p0, #(Y+4)
+; CHECK-NEXT:    nopb ; movxm p0, #(Y+4)
 ; CHECK-NEXT:    lda.s16 r0, [p0, #-2]
 ; CHECK-NEXT:    lda.s16 r1, [p0, #-4]
 ; CHECK-NEXT:    lda.s8 r2, [p0], #4

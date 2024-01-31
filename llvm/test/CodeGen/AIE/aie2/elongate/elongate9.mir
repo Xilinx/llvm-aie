@@ -1,0 +1,29 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+
+# RUN: llc -mtriple=aie2 -start-after=aie-finalize-mi-bundles %s --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -d %t | FileCheck %s
+# CHECK: a: 4d 96 3b 0b d0 40    lda	r0, [p2, #4];		mov	p3, r23
+---
+name:    missing_format_pad_2
+body:             |
+  bb.0.entry:
+    liveins: $p6, $p7, $r16, $r18, $r19, $r20, $r21, $r22, $r23
+    BUNDLE {
+      NOP
+    }
+  
+    DelayedSchedBarrier csr_aie2, implicit killed $p0
+    BUNDLE implicit-def $p6, implicit-def $p2, implicit $sp, implicit $r19 {
+      renamable $p6 = LDA_dms_spill -32, implicit $sp :: (load (s32))
+      $p2 = MOV_mv_scl $r19
+    }
+
+    BUNDLE implicit-def $r0, implicit-def $p3, implicit $p2, implicit $r23 {
+      renamable $r0 = LDA_dms_lda_idx_imm renamable $p2, 4 :: (dereferenceable load (p0))
+      $p3 = MOV_mv_scl $r23
+    }
+...

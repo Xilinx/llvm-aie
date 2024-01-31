@@ -76,6 +76,7 @@ add_llvm_target(AIECodeGen
    AIEMIRFormatter.cpp
    AIEMCInstLower.cpp
    AIEFinalizeBundle.cpp
+   AIEMachineAlignment.cpp
    AIEMachineBlockPlacement.cpp
    AIEMachineFunctionInfo.cpp
    AIEMachineScheduler.cpp

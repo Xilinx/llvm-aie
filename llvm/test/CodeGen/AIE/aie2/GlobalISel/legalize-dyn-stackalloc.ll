@@ -3,7 +3,7 @@
 ;  Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 ;  See https://llvm.org/LICENSE.txt for license information.
 ;  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-;  
+;
 ; Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -mtriple=aie2 --issue-limit=1 -verify-machineinstrs -o - < %s \
 ; RUN:   | FileCheck %s
@@ -12,8 +12,8 @@ define void @test_simple_dyn_alloca(i32 noundef %n) {
 ; CHECK-LABEL: test_simple_dyn_alloca:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #32
-; CHECK-NEXT:    mova r1, #2
+; CHECK-NEXT:    paddb [sp], #32; nopa ; nops ; nopx ; nopm ; nopv
+; CHECK-NEXT:    mova r1, #2; nopm
 ; CHECK-NEXT:    st lr, [sp, #-28] // 4-byte Folded Spill
 ; CHECK-NEXT:    lshl r0, r0, r1
 ; CHECK-NEXT:    add r0, r0, #31
@@ -21,15 +21,14 @@ define void @test_simple_dyn_alloca(i32 noundef %n) {
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    st p7, [sp, #-32] // 4-byte Folded Spill
 ; CHECK-NEXT:    mov p7, sp
-; CHECK-NEXT:    padda [p7], #-32
-; CHECK-NEXT:    mov [[P1:p.?]], p0
+; CHECK-NEXT:    mov p1, p0
 ; CHECK-NEXT:    jl #extern_call
 ; CHECK-NEXT:    and r0, r0, r1 // Delay Slot 5
 ; CHECK-NEXT:    mov m0, r0 // Delay Slot 4
-; CHECK-NEXT:    paddb [[[P1]]], m0 // Delay Slot 3
-; CHECK-NEXT:    mov sp, [[P1]] // Delay Slot 2
-; CHECK-NEXT:    nop // Delay Slot 1
-; CHECK-NEXT:    mov sp, p7
+; CHECK-NEXT:    paddb [p1], m0 // Delay Slot 3
+; CHECK-NEXT:    padda [p7], #-32 // Delay Slot 2
+; CHECK-NEXT:    mov sp, p1 // Delay Slot 1
+; CHECK-NEXT:    nopa ; nopb ; nopx ; mov sp, p7; nops
 ; CHECK-NEXT:    lda lr, [sp, #-28] // 4-byte Folded Reload
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -54,7 +53,7 @@ define void @test_loop_dyn_alloca(i32 noundef %n) {
 ; CHECK-LABEL: test_loop_dyn_alloca:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #64
+; CHECK-NEXT:    paddb [sp], #64; nopx ; nopm ; nopv
 ; CHECK-NEXT:    st p7, [sp, #-64] // 4-byte Folded Spill
 ; CHECK-NEXT:    mov p7, sp
 ; CHECK-NEXT:    st lr, [sp, #-32] // 4-byte Folded Spill
@@ -75,18 +74,17 @@ define void @test_loop_dyn_alloca(i32 noundef %n) {
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB1_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    lshl r0, r17, r19
+; CHECK-NEXT:    nopb ; lshl r0, r17, r19; nopv
 ; CHECK-NEXT:    add r0, r0, #31
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    mov p6, sp
-; CHECK-NEXT:    mov [[P1]], p0
+; CHECK-NEXT:    mov p1, p0
 ; CHECK-NEXT:    jl #extern_call
 ; CHECK-NEXT:    and r0, r0, r20 // Delay Slot 5
 ; CHECK-NEXT:    mov m0, r0 // Delay Slot 4
-; CHECK-NEXT:    paddb [[[P1]]], m0 // Delay Slot 3
-; CHECK-NEXT:    mov sp, [[P1]] // Delay Slot 2
-; CHECK-NEXT:    nop // Delay Slot 1
-; CHECK-NEXT:    add r17, r17, #1
+; CHECK-NEXT:    paddb [p1], m0 // Delay Slot 3
+; CHECK-NEXT:    mov p6, sp // Delay Slot 2
+; CHECK-NEXT:    mov sp, p1 // Delay Slot 1
+; CHECK-NEXT:    nopa ; nopb ; add r17, r17, #1; nopm ; nops
 ; CHECK-NEXT:    ltu r0, r17, r16
 ; CHECK-NEXT:    add r21, r21, r0
 ; CHECK-NEXT:    xor r0, r17, r18
@@ -98,7 +96,7 @@ define void @test_loop_dyn_alloca(i32 noundef %n) {
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    mov sp, p6 // Delay Slot 1
 ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup
-; CHECK-NEXT:    mov sp, p7
+; CHECK-NEXT:    nopa ; nops ; nopx ; mov sp, p7
 ; CHECK-NEXT:    lda lr, [sp, #-32] // 4-byte Folded Reload
 ; CHECK-NEXT:    lda p7, [sp, #-64] // 4-byte Folded Reload
 ; CHECK-NEXT:    lda p6, [sp, #-60] // 4-byte Folded Reload
@@ -135,51 +133,50 @@ define  void @test_huge_stack(i32 noundef %n) #0 {
 ; CHECK-LABEL: test_huge_stack:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #40064
+; CHECK-NEXT:    nopa ; paddb [sp], #40064; nopx
 ; CHECK-NEXT:    st p7, [sp, #-40064] // 4-byte Folded Spill
 ; CHECK-NEXT:    mov p7, sp
 ; CHECK-NEXT:    movxm m0, #-40064
 ; CHECK-NEXT:    padda [p7], m0
-; CHECK-NEXT:    mov [[P1:p.?]], p7
+; CHECK-NEXT:    mov p1, p7
 ; CHECK-NEXT:    movxm m0, #-40048
-; CHECK-NEXT:    paddb [[[P1]]], m0
-; CHECK-NEXT:    st r0, [[[P1]], #0]
-; CHECK-NEXT:    lda r0, [[[P1]], #0]
-; CHECK-NEXT:    mov [[P2:p.?]], p7
+; CHECK-NEXT:    paddb [p1], m0
+; CHECK-NEXT:    st r0, [p1, #0]
+; CHECK-NEXT:    lda r0, [p1, #0]
+; CHECK-NEXT:    mov p1, p7
 ; CHECK-NEXT:    movxm m0, #-40032
 ; CHECK-NEXT:    mova r2, #2
 ; CHECK-NEXT:    st lr, [sp, #-40052] // 4-byte Folded Spill
-; CHECK-NEXT:    paddb [[[P2]]], m0
+; CHECK-NEXT:    paddb [p1], m0
 ; CHECK-NEXT:    st r16, [sp, #-40056] // 4-byte Folded Spill
 ; CHECK-NEXT:    lshl r2, r0, r2
 ; CHECK-NEXT:    st p6, [sp, #-40060] // 4-byte Folded Spill
-; CHECK-NEXT:    mov r16, [[P2]]
+; CHECK-NEXT:    mov r16, p1
 ; CHECK-NEXT:    mov p6, p7
-; CHECK-NEXT:    mov [[P2]], p7
-; CHECK-NEXT:    add r2, r2, #31
+; CHECK-NEXT:    mov p1, p7
 ; CHECK-NEXT:    mova r3, #-32
-; CHECK-NEXT:    mov [[P4:p.?]], sp
+; CHECK-NEXT:    mov p2, sp
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    paddb [p6], #-32
-; CHECK-NEXT:    paddb [[[P2]]], #-24
+; CHECK-NEXT:    paddb [p1], #-24
 ; CHECK-NEXT:    mova r1, #0
-; CHECK-NEXT:    st [[P4]], [p6, #0]
-; CHECK-NEXT:    mov [[P4]], p0
-; CHECK-NEXT:    st r0, [[[P2]]], #4
-; CHECK-NEXT:    st r1, [[[P2]], #0]
+; CHECK-NEXT:    st p2, [p6, #0]
+; CHECK-NEXT:    mov p2, p0
+; CHECK-NEXT:    st r0, [p1], #4
+; CHECK-NEXT:    add r2, r2, #31
 ; CHECK-NEXT:    jl #extern_call
 ; CHECK-NEXT:    and r2, r2, r3 // Delay Slot 5
 ; CHECK-NEXT:    mov m0, r2 // Delay Slot 4
-; CHECK-NEXT:    paddb [[[P4]]], m0 // Delay Slot 3
-; CHECK-NEXT:    mov sp, [[P4]] // Delay Slot 2
-; CHECK-NEXT:    nop // Delay Slot 1
-; CHECK-NEXT:    jl #extern_call
-; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    st r1, [p1, #0] // Delay Slot 3
+; CHECK-NEXT:    paddb [p2], m0 // Delay Slot 2
+; CHECK-NEXT:    mov sp, p2 // Delay Slot 1
+; CHECK-NEXT:    nopb ; nopa ; nops ; jl #extern_call; nopv
+; CHECK-NEXT:    nopa ; nopm // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov p0, r16 // Delay Slot 2
-; CHECK-NEXT:    nop // Delay Slot 1
-; CHECK-NEXT:    lda p0, [p6, #0]
+; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    mov p0, r16 // Delay Slot 1
+; CHECK-NEXT:    lda p0, [p6, #0]; nopm
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop

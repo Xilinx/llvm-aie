@@ -1,0 +1,70 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+
+# RUN: llc -mtriple=aie2 -start-after=aie-finalize-mi-bundles %s --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -d %t | FileCheck %s
+# CHECK: 30: {{.*}} nopm
+# CHECK: 3c: {{.*}} ret lr
+# Region1 Starts with EVENT 0
+---
+name:  region0_pad14_region1_pad8
+alignment:       16
+body:             |
+  bb.0.entry (align 16):
+  BUNDLE {
+    NOP
+  }
+  BUNDLE {
+    NOP
+  }
+  BUNDLE {
+    NOP
+  }
+  BUNDLE {
+    NOP
+  }
+  BUNDLE {
+    NOP
+  }
+  BUNDLE {
+    NOP
+  }
+  BUNDLE {
+    NOP
+  }
+  BUNDLE {
+    NOP
+  }
+  BUNDLE {
+    NOP
+  }
+  BUNDLE {
+    JL 32, implicit-def $lr
+  }
+  BUNDLE {
+    NOP
+  }
+  BUNDLE {
+    NOP
+  }
+  BUNDLE {
+    NOP
+  }
+  BUNDLE {
+    NOP
+  }
+  BUNDLE {
+    NOP
+  }
+  DelayedSchedBarrier csr_aie2
+  BUNDLE {
+    EVENT 0
+  }
+  BUNDLE {
+    RET implicit $lr
+  }
+  DelayedSchedBarrier
+...

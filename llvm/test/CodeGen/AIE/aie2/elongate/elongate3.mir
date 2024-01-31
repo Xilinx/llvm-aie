@@ -1,0 +1,91 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+
+# RUN: llc --start-after=aie-finalize-mi-bundles %s --filetype=obj -o - | \
+# RUN: llvm-objdump --triple=aie2 -d - | FileCheck %s
+
+# CHECK: 40: {{.*}} ret lr
+--- |
+  target triple = "aie2"
+  
+  define dso_local void @test() {
+  entry:
+    ret void
+  }
+  
+  declare dso_local void @callee(i32 noundef)
+  
+...
+# AM AM AM AM AB ABSXMV X X X N N
+# 5 * 6 + 16 + 3 * 4 + 2 * 2 = 62 = 3 * 16 + 14 padding 2
+# non-overfill takes AB to 64 +2
+---
+name:            test
+alignment:       16
+body:             |
+  bb.0.entry (align 16):
+    liveins: $p0, $p1, $r1, $cm0, $cm1
+    BUNDLE {
+      $p0 = PADDA_lda_ptr_inc_idx_imm $p0, 4
+      $r0 = MOV_mv_scl $r1
+    }
+    BUNDLE {
+      $p0 = PADDA_lda_ptr_inc_idx_imm $p0, 4
+      $r0 = MOV_mv_scl $r1
+    }
+    BUNDLE {
+      $p0 = PADDA_lda_ptr_inc_idx_imm $p0, 4
+      $r0 = MOV_mv_scl $r1
+    }
+    BUNDLE {
+      $p0 = PADDA_lda_ptr_inc_idx_imm $p0, 4
+      $r0 = MOV_mv_scl $r1
+    }
+    BUNDLE {
+      $p0 = PADDA_lda_ptr_inc_idx_imm $p0, 4
+      $p0 = PADDB_ldb_ptr_inc_nrm_imm $p0, 4
+    }
+    BUNDLE {
+      $p0 = PADDA_lda_ptr_inc_idx_imm $p0, 4
+      $p0 = PADDB_ldb_ptr_inc_nrm_imm $p0, 4
+      $p0 = PADDS_st_ptr_inc_idx_imm $p0, 4
+      JL @callee, implicit-def $lr
+      $cm0 = VADD $cm0, $cm2, $r1
+    }
+    BUNDLE {
+      EVENT 0
+    }
+    BUNDLE {
+      EVENT 0
+    }
+    BUNDLE {
+      EVENT 0
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      RET implicit $lr
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+...

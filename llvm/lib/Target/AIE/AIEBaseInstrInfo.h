@@ -90,6 +90,9 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   /// Check whether Opc represents a JZ instruction.
   virtual bool isJZ(unsigned Opc) const { return false; }
 
+  /// Check whether Opc represents a JL/JAL instruction.
+  virtual bool isCall(unsigned Opc) const { return false; }
+
   // Detect instructions that induce control flow to unknown targets,
   // in particular after pseudo expansion, where they are no longer
   // terminators

@@ -26,4 +26,29 @@ const VLIWFormat *PacketFormats::getFormat(SlotBits Slots) const {
   return nullptr;
 }
 
+const VLIWFormat *PacketFormats::getFormatBySize(SlotBits Slots,
+                                                 unsigned Size) const {
+  const VLIWFormat *Fmt = nullptr;
+  auto FormatsRange = getFormatsRangeBySlots(Slots);
+  for (auto it = FormatsRange.begin(), end = FormatsRange.end(); it != end;
+       ++it) {
+    const VLIWFormat *Format = *it;
+    // Find the first match
+    if (Format->getSize() == Size) {
+      Fmt = Format;
+      break;
+    }
+  }
+  return Fmt;
+}
+
+llvm::iterator_range<FormatIterator>
+PacketFormats::getFormatsRangeBySlots(SlotBits SlotSet) const {
+  const_iterator b =
+      FormatIterator(findFirstMatchingFormat(FormatsTable, SlotSet), SlotSet);
+  const_iterator e =
+      FormatIterator(findLastMatchingFormat(FormatsTable, SlotSet), SlotSet);
+  return llvm::make_range(b, ++e);
+}
+
 } // namespace llvm

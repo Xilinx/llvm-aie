@@ -11,7 +11,7 @@ define noundef <8 x bfloat> @test_extract_v8bfloat16_512(<32 x bfloat> noundef %
 ; CHECK-LABEL: test_extract_v8bfloat16_512:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mova r1, #4 // Delay Slot 4
 ; CHECK-NEXT:    lshl r0, r0, r1 // Delay Slot 3
@@ -32,7 +32,7 @@ define noundef <8 x bfloat> @test_extract_v8bfloat16_256(<16 x bfloat> noundef %
 ; CHECK-LABEL: test_extract_v8bfloat16_256:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mova r1, #4 // Delay Slot 4
 ; CHECK-NEXT:    lshl r0, r0, r1 // Delay Slot 3
@@ -54,7 +54,7 @@ define noundef <16 x bfloat> @test_set_v8bfloat16_idx(i32 noundef %idx, <8 x bfl
 ; CHECK-LABEL: test_set_v8bfloat16_idx:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nops ; ret lr ; nopm
 ; CHECK-NEXT:    mova r1, #4 // Delay Slot 5
 ; CHECK-NEXT:    mova r2, #64; lshl r0, r0, r1 // Delay Slot 4
 ; CHECK-NEXT:    sub r0, r2, r0 // Delay Slot 3
@@ -92,8 +92,8 @@ define dso_local noundef <32 x bfloat> @test_insert_v16bfloat16_512(<32 x bfloat
 ; CHECK-LABEL: test_insert_v16bfloat16_512:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
+; CHECK-NEXT:    nopv // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    vmov x0, x2 // Delay Slot 3
 ; CHECK-NEXT:    vmov wh0, wl4 // Delay Slot 2
@@ -122,8 +122,8 @@ define dso_local noundef <32 x bfloat> @test_concat_v16bfloat16_512(<16 x bfloat
 ; CHECK-LABEL: test_concat_v16bfloat16_512:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
+; CHECK-NEXT:    nopv // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    vmov wl0, wl2 // Delay Slot 3
 ; CHECK-NEXT:    vmov wh0, wl4 // Delay Slot 2
@@ -152,7 +152,7 @@ define dso_local noundef <64 x bfloat> @test_insert_v16bfloat16_1024(<64 x bfloa
 ; CHECK-LABEL: test_insert_v16bfloat16_1024:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    vmov x5, x7 // Delay Slot 4
 ; CHECK-NEXT:    vmov x4, x6 // Delay Slot 3
@@ -182,7 +182,7 @@ define dso_local noundef <64 x bfloat> @test_concat_v16bfloat16_1024(<16 x bfloa
 ; CHECK-LABEL: test_concat_v16bfloat16_1024:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    vmov wl4, wl0 // Delay Slot 5
 ; CHECK-NEXT:    vmov wh4, wl2 // Delay Slot 4
 ; CHECK-NEXT:    vmov wl5, wl6 // Delay Slot 3
@@ -212,8 +212,8 @@ define dso_local noundef <64 x bfloat> @test_insert_v32bfloat16_1024(<64 x bfloa
 ; CHECK-LABEL: test_insert_v32bfloat16_1024:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
+; CHECK-NEXT:    nopv // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    vmov x4, x6 // Delay Slot 3
 ; CHECK-NEXT:    vmov x5, x0 // Delay Slot 2
@@ -242,8 +242,8 @@ define dso_local noundef <64 x bfloat> @test_concat_v32bfloat16_1024(<32 x bfloa
 ; CHECK-LABEL: test_concat_v32bfloat16_1024:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
+; CHECK-NEXT:    nopv // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    vmov x4, x0 // Delay Slot 3
 ; CHECK-NEXT:    vmov x5, x2 // Delay Slot 2

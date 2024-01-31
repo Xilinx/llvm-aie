@@ -40,6 +40,7 @@ body:             |
     ; CHECK-NEXT: }
     ; CHECK-NEXT: DelayedSchedBarrier
     ; CHECK-NEXT: BUNDLE implicit-def $lr, implicit killed $p5 {
+    ; CHECK-NEXT:   NOPA
     ; CHECK-NEXT:   JL_IND killed $p5, implicit-def $lr
     ; CHECK-NEXT: }
     ; CHECK-NEXT: BUNDLE {
@@ -59,6 +60,7 @@ body:             |
     ; CHECK-NEXT: }
     ; CHECK-NEXT: DelayedSchedBarrier
     ; CHECK-NEXT: BUNDLE {
+    ; CHECK-NEXT:   NOP
     ; CHECK-NEXT:   J_jump_imm 1048575
     ; CHECK-NEXT: }
     ; CHECK-NEXT: BUNDLE {

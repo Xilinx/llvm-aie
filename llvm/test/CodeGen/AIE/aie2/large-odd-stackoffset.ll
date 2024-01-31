@@ -16,15 +16,14 @@ define void @f() {
 ; CHECK-LABEL: f:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #1120
-; CHECK-NEXT:    movxm m0, #-1115
+; CHECK-NEXT:    paddb [sp], #1120; nopa ; nops ; nopx ; nopm ; nopv
 ; CHECK-NEXT:    st lr, [sp, #-1120] // 4-byte Folded Spill
 ; CHECK-NEXT:    jl #f0
-; CHECK-NEXT:    mov p0, sp // Delay Slot 5
-; CHECK-NEXT:    mov p1, sp // Delay Slot 4
-; CHECK-NEXT:    padda [p0], #-1116 // Delay Slot 3
-; CHECK-NEXT:    paddb [p1], m0 // Delay Slot 2
-; CHECK-NEXT:    nop // Delay Slot 1
+; CHECK-NEXT:    movxm m0, #-1115 // Delay Slot 5
+; CHECK-NEXT:    mov p0, sp // Delay Slot 4
+; CHECK-NEXT:    mov p1, sp // Delay Slot 3
+; CHECK-NEXT:    padda [p0], #-1116 // Delay Slot 2
+; CHECK-NEXT:    paddb [p1], m0 // Delay Slot 1
 ; CHECK-NEXT:    lda lr, [sp, #-1120] // 4-byte Folded Reload
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop

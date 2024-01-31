@@ -14,7 +14,7 @@ define i32 @test() {
 ; CHECK-LABEL: test:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #32
+; CHECK-NEXT:    paddb [sp], #32; nopx ; nopm ; nopv
 ; CHECK-NEXT:    st lr, [sp, #-32] // 4-byte Folded Spill
 ; CHECK-NEXT:    jl #f
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -22,8 +22,8 @@ define i32 @test() {
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
-; CHECK-NEXT:    lda lr, [sp, #-32] // 4-byte Folded Reload
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    nopb ; lda lr, [sp, #-32]; nops ; nopx ; nopm ; nopv // 4-byte Folded Reload
+; CHECK-NEXT:    nopv
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
