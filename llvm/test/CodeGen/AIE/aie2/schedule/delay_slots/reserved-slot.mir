@@ -16,14 +16,12 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: JL_reverse_slot
-    ; CHECK: $r1 = MOVA_lda_cg 1 {
-    ; CHECK-NEXT:   JL 0, implicit-def $lr
-    ; CHECK-NEXT: }
+    ; CHECK: JL 0, implicit-def $lr
+    ; CHECK-NEXT: $r1 = MOVA_lda_cg 1
     ; CHECK-NEXT: $r2 = MOVA_lda_cg 2
     ; CHECK-NEXT: $r3 = MOVA_lda_cg 3
     ; CHECK-NEXT: $r4 = MOVA_lda_cg 4
     ; CHECK-NEXT: $r5 = MOVA_lda_cg 5
-    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: DelayedSchedBarrier implicit killed $r1, implicit killed $r2, implicit killed $r3, implicit killed $r4, implicit killed $r5
   $r1 = MOVA_lda_cg 1
   $r2 = MOVA_lda_cg 2
@@ -40,14 +38,12 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: JL_IND_reverse_slot
-    ; CHECK: $r1 = MOVA_lda_cg 1 {
-    ; CHECK-NEXT:   JL_IND killed $p1, implicit-def $lr
-    ; CHECK-NEXT: }
+    ; CHECK: JL_IND killed $p1, implicit-def $lr
+    ; CHECK-NEXT: $r1 = MOVA_lda_cg 1
     ; CHECK-NEXT: $r2 = MOVA_lda_cg 2
     ; CHECK-NEXT: $r3 = MOVA_lda_cg 3
     ; CHECK-NEXT: $r4 = MOVA_lda_cg 4
     ; CHECK-NEXT: $r5 = MOVA_lda_cg 5
-    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: DelayedSchedBarrier implicit killed $r1, implicit killed $r2, implicit killed $r3, implicit killed $r4, implicit killed $r5
   $r1 = MOVA_lda_cg 1
   $r2 = MOVA_lda_cg 2

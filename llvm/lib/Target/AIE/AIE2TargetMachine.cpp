@@ -20,6 +20,7 @@
 #include "AIEDumpArtifacts.h"
 #include "AIEFinalizeBundle.h"
 #include "AIEFormatSelector.h"
+#include "AIEMachineAlignment.h"
 #include "AIEMachineBlockPlacement.h"
 #include "AIETargetObjectFile.h"
 #include "llvm/ADT/STLExtras.h"
@@ -239,6 +240,7 @@ void AIE2PassConfig::addPreSched2() {
   addPass(&PostMachineSchedulerID);
   // After scheduling, create the bundles from the BundleWithPred flags
   addPass(createAIEFinalizeBundle());
+  addPass(createAIEMachineAlignment());
   if (AIEDumpArtifacts)
     addPass(createMachineFunctionDumperPass(/*Suffix=*/"after-post-ra-sched"));
 }

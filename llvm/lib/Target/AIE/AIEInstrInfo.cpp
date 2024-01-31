@@ -725,6 +725,8 @@ unsigned AIEInstrInfo::getCallOpcode(const MachineFunction &CallerF,
   return IsIndirect ? AIE::JAL_IND : AIE::JAL;
 }
 
+bool AIEInstrInfo::isCall(unsigned Opc) const { return Opc == AIE::JAL; }
+
 unsigned AIEInstrInfo::getNopOpcode(size_t Size) const {
   switch (Size) {
   case 0:

@@ -4,7 +4,8 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -O2 --march=aie2 --start-after=aie-finalize-mi-bundles --filetype=obj %s -o %t
+
+# RUN: llc -O2 --march=aie2 --start-after=aie-machine-alignment --filetype=obj %s -o %t
 # RUN: llvm-objdump --triple=aie2 -dr %t | FileCheck %s
 # CHECK: 0: 01 00 nop
 # CHECK: 2: 19 00 00 10 nopx

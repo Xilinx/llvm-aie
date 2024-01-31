@@ -4,11 +4,12 @@
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
 ; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+
 ; RUN: llc -march=aie2 -O2 %s --filetype=obj -o %t.o
 ; RUN: llvm-objdump -dr --triple=aie2 %t.o | FileCheck --check-prefix=CHECK %s
 ; CHECK-LABEL: getData
-; CHECK: movxm
-; CHECK-NEXT: R_AIE_42 data+0x4
+; CHECK: nopa	;		nopb	;		movxm	p0, #0x0;		nop
+; CHECK-NEXT: R_AIE_49 data+0x4
 
 @data = dso_local local_unnamed_addr global [2 x i32] [i32 10, i32 20], align 4
 

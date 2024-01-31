@@ -51,7 +51,7 @@ define void @mul2d(ptr noalias %in_ptr0, ptr noalias %in_ptr1, ptr noalias %out_
 ; CHECK-LABEL: mul2d:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r1, #2; extend.u16 r0, r4
+; CHECK-NEXT:    mova r1, #2; nops ; extend.u16 r0, r4; nopm
 ; CHECK-NEXT:    ltu r1, r0, r1
 ; CHECK-NEXT:    jnz r1, #.LBB0_3
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -60,7 +60,7 @@ define void @mul2d(ptr noalias %in_ptr0, ptr noalias %in_ptr1, ptr noalias %out_
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %for.body.lr.ph
-; CHECK-NEXT:    movx r3, #1; mov p3, sp
+; CHECK-NEXT:    nopb ; nopa ; nops ; movx r3, #1; mov p3, sp; nopv
 ; CHECK-NEXT:    mova r4, #0; paddb [p3], #-4; movx r2, #-1
 ; CHECK-NEXT:    lda.u8 r1, [p3, #0]; lshl r0, r0, r2; mov p3, sp
 ; CHECK-NEXT:    mova dc0, #0; paddb [p3], #-8; movx r2, #808; vbcst.8 x0, r4
@@ -82,8 +82,8 @@ define void @mul2d(ptr noalias %in_ptr0, ptr noalias %in_ptr1, ptr noalias %out_
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB0_2: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    vlda wl2, [p1], #32; add r0, r0, #-1; vmov wh4, wl0
-; CHECK-NEXT:    vlda.3d wl4, [p0], d0; mov crSRSSign, r1
+; CHECK-NEXT:    nopb ; vlda wl2, [p1], #32; nops ; add r0, r0, #-1; vmov wh4, wl0; nopv
+; CHECK-NEXT:    vlda.3d wl4, [p0], d0; nops ; nopx ; mov crSRSSign, r1
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -116,7 +116,7 @@ define void @mul2d(ptr noalias %in_ptr0, ptr noalias %in_ptr1, ptr noalias %out_
 ; CHECK-NEXT:    mov crSRSSign, #0 // Delay Slot 1
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB0_3: // %for.cond.cleanup
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3

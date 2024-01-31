@@ -186,8 +186,11 @@ public:
   }
 
   /// return the minimum size valid format for this bundle, if any
-  const VLIWFormat *getFormatOrNull() const {
+  const VLIWFormat *getFormatOrNull(unsigned Size = 0) const {
     assert(!isStandalone());
+    if (Size)
+      return FormatInterface->getPacketFormats().getFormatBySize(OccupiedSlots,
+                                                                 Size);
     return FormatInterface->getPacketFormats().getFormat(OccupiedSlots);
   }
 
@@ -258,6 +261,27 @@ public:
     return false;
   }
 
+  bool isNOPBundle() const {
+    const VLIWFormat *Format = getFormatOrNull();
+    assert(Format);
+    for (MCSlotKind Slot : Format->getSlots()) {
+      const MCSlotInfo *SlotInfo = FormatInterface->getSlotInfo(Slot);
+      assert(SlotInfo);
+
+      llvm::MachineInstr *Instr = at(Slot);
+      if (Instr->getOpcode() != SlotInfo->getNOPOpcode())
+        return false;
+    }
+    return true;
+  }
+  void clearBundle() const {
+    const VLIWFormat *Format = getFormatOrNull();
+    assert(Format);
+    for (MCSlotKind Slot : Format->getSlots()) {
+      llvm::MachineInstr *Instr = at(Slot);
+      Instr->removeFromBundle();
+    }
+  }
   // The subtarget, holding bundle-related data like formats
   const AIEBaseMCFormats *FormatInterface;
 

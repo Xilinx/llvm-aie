@@ -12,8 +12,8 @@ define dso_local <8 x i64> @_Z9test_lupsDv8_ji(<8 x i32> noundef %a, i32 noundef
 ; CHECK-LABEL: _Z9test_lupsDv8_ji:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
+; CHECK-NEXT:    nopv // Delay Slot 5
 ; CHECK-NEXT:    mov s0, r0 // Delay Slot 4
 ; CHECK-NEXT:    vups.s64.d32 bml0, wl0, s0 // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
@@ -27,8 +27,8 @@ define dso_local <8 x i64> @_Z9test_lupsDv8_ji_1(<8 x i32> noundef %a, i32 nound
 ; CHECK-LABEL: _Z9test_lupsDv8_ji_1:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
+; CHECK-NEXT:    nopv // Delay Slot 5
 ; CHECK-NEXT:    mov s0, r0 // Delay Slot 4
 ; CHECK-NEXT:    vups.s64.s32 bml0, wl0, s0 // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
@@ -42,7 +42,7 @@ define dso_local <8 x i64> @_Z9test_lupsDv8_iii(<8 x i32> noundef %a, i32 nounde
 ; CHECK-LABEL: _Z9test_lupsDv8_iii:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov s0, r0 // Delay Slot 5
 ; CHECK-NEXT:    mov crUPSSign, r1 // Delay Slot 4
 ; CHECK-NEXT:    vups.s64.d32 bml0, wl0, s0 // Delay Slot 3
@@ -57,7 +57,7 @@ define dso_local <16 x i64> @_Z9test_supsDv32_hii(<32 x i8> noundef %a, i32 noun
 ; CHECK-LABEL: _Z9test_supsDv32_hii:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov s0, r0 // Delay Slot 5
 ; CHECK-NEXT:    mov crUPSSign, r1 // Delay Slot 4
 ; CHECK-NEXT:    vups.s32.d8 cm0, wl0, s0 // Delay Slot 3
@@ -72,7 +72,7 @@ define dso_local <16 x i64> @_Z9test_lupsDv16_sii(<16 x i16> noundef %a, i32 nou
 ; CHECK-LABEL: _Z9test_lupsDv16_sii:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov s0, r0 // Delay Slot 5
 ; CHECK-NEXT:    mov crUPSSign, r1 // Delay Slot 4
 ; CHECK-NEXT:    vups.s64.d16 cm0, wl0, s0 // Delay Slot 3
@@ -87,7 +87,7 @@ define dso_local <8 x i64> @_Z19test_ups_to_v8acc64Dv8_iii(<8 x i32> noundef %a,
 ; CHECK-LABEL: _Z19test_ups_to_v8acc64Dv8_iii:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov s0, r0 // Delay Slot 5
 ; CHECK-NEXT:    mov crUPSSign, r1 // Delay Slot 4
 ; CHECK-NEXT:    vups.s64.d32 bml0, wl0, s0 // Delay Slot 3
@@ -102,7 +102,7 @@ define dso_local <8 x i64> @_Z20test_ups_to_v16acc32Dv16_tii(<16 x i16> noundef 
 ; CHECK-LABEL: _Z20test_ups_to_v16acc32Dv16_tii:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov s0, r0 // Delay Slot 5
 ; CHECK-NEXT:    mov crUPSSign, r1 // Delay Slot 4
 ; CHECK-NEXT:    vups.s32.d16 bml0, wl0, s0 // Delay Slot 3
@@ -117,7 +117,7 @@ define dso_local <16 x i64> @_Z20test_ups_to_v16acc64Dv16_iii(<16 x i32> noundef
 ; CHECK-LABEL: _Z20test_ups_to_v16acc64Dv16_iii:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov s0, r0 // Delay Slot 5
 ; CHECK-NEXT:    mov crUPSSign, r1 // Delay Slot 4
 ; CHECK-NEXT:    vups.s64.d32 cm0, x0, s0 // Delay Slot 3
@@ -132,7 +132,7 @@ define dso_local <16 x i64> @_Z20test_ups_to_v32acc32Dv32_sii(<32 x i16> noundef
 ; CHECK-LABEL: _Z20test_ups_to_v32acc32Dv32_sii:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov s0, r0 // Delay Slot 5
 ; CHECK-NEXT:    mov crUPSSign, r1 // Delay Slot 4
 ; CHECK-NEXT:    vups.s32.d16 cm0, x0, s0 // Delay Slot 3
@@ -177,8 +177,8 @@ define <16 x i64> @test_ups_to_v32acc32(<32 x i16> %a, i32 %shft) {
 ; CHECK-LABEL: test_ups_to_v32acc32:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
+; CHECK-NEXT:    nopv // Delay Slot 5
 ; CHECK-NEXT:    mov s0, r0 // Delay Slot 4
 ; CHECK-NEXT:    vups.s32.d16 cm0, x0, s0 // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2

@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple aie2 --issue-limit=8 -start-before=postmisched -stop-before=%last-mi-pass %s -o - | FileCheck %s
+# RUN: llc -mtriple aie2 --issue-limit=8 -start-before=postmisched -stop-after=aie-finalize-mi-bundles %s -o - | FileCheck %s
 
 
 # Verify bundling of instructions in VLIW formats of different sizes.

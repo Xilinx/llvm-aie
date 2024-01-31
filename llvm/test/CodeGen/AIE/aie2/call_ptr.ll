@@ -14,15 +14,15 @@ define ptr @test(ptr %x) {
 ; CHECK-LABEL: test:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #32
+; CHECK-NEXT:    nopa ; paddb [sp], #32; nopx
 ; CHECK-NEXT:    st lr, [sp, #-28] // 4-byte Folded Spill
 ; CHECK-NEXT:    jl #f
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    st p6, [sp, #-32] // 4-byte Folded Spill Delay Slot 3
-; CHECK-NEXT:    mov p6, p1 // Delay Slot 2
-; CHECK-NEXT:    nop // Delay Slot 1
-; CHECK-NEXT:    lda lr, [sp, #-28] // 4-byte Folded Reload
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    st p6, [sp, #-32] // 4-byte Folded Spill Delay Slot 2
+; CHECK-NEXT:    mov p6, p1 // Delay Slot 1
+; CHECK-NEXT:    nopb ; lda lr, [sp, #-28]; nops ; nopx ; nopm ; nopv // 4-byte Folded Reload
 ; CHECK-NEXT:    mov p0, p6
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop

@@ -4,7 +4,8 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple=aie2 -start-after=aie-finalize-mi-bundles %s --filetype=obj -o %t --issue-limit=6
+
+# RUN: llc -mtriple=aie2 -start-after=aie-finalize-mi-bundles %s --filetype=obj -o %t --skip-machine-alignment --issue-limit=6
 # RUN: llvm-objdump --triple=aie2 -d %t | FileCheck %s
 ---
 

@@ -1,0 +1,120 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+
+# RUN: llc -mtriple=aie2 -start-before=aie-finalize-mi-bundles %s --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -d %t | FileCheck %s
+---
+
+#Check alignment padding for the return address.
+#CHECK: 20: {{.*}} 	nopa	;		nopb	;		event	#0x0;		nopm	;		nops	
+#CHECK: 40: {{.*}} nopa    ;               nops    ;               event   #0x0;           nopm
+#CHECK: 60: {{.*}} nopb    ;               event   #0x0;           nopv
+#CHECK: 80: {{.*}} nopa    ;               nopb    ;               event   #0x0
+#CHECK: a0: {{.*}}     nopa    ;               event   #0x0
+#CHECK: c0: {{.*}}   event   #0x0
+#CHECK: e0: {{.*}} nopb    ;               nopa    ;               nops    ;               event   #0x0;           nopm    ;               nopv
+#CHECK: 110: {{.*}} nopa    ;               nops    ;               event   #0x0;           nopm
+#CHECK: 11c: {{.*}}  ret lr
+
+name:            test
+body:             |
+  bb.1.entry:
+    EVENT 0
+    JL 32, implicit-def $lr
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier csr_aie2
+    EVENT 0
+    NOP
+    JL 32, implicit-def $lr
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier csr_aie2
+    EVENT 0
+    NOP
+    NOP
+    JL 32, implicit-def $lr
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier csr_aie2
+    EVENT 0
+    NOP
+    NOP
+    NOP
+    JL 32, implicit-def $lr
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier csr_aie2
+    EVENT 0
+    NOP
+    NOP
+    NOP
+    NOP
+    JL 32, implicit-def $lr
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier csr_aie2
+    EVENT 0
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    JL 32, implicit-def $lr
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier csr_aie2
+    EVENT 0
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    JL 32, implicit-def $lr
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier csr_aie2
+    EVENT 0
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    JL 32, implicit-def $lr
+    NOP
+    NOP
+    NOP
+    NOP
+    NOP
+    DelayedSchedBarrier csr_aie2
+    EVENT 0
+    RET implicit $lr
+    DelayedSchedBarrier
+...

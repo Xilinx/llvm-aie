@@ -41,6 +41,7 @@ bool LowerAIEMachineOperandToMCOperand(const MachineOperand &MO,
 
 FunctionPass *createAIEISelDag(AIETargetMachine &TM);
 FunctionPass *createAIEFinalizeBundle();
+FunctionPass *createAIEMachineAlignment();
 FunctionPass *createAIEMachineBlockPlacement();
 // createAIEDelaySlotFillerPass - This pass fills delay slots
 // with useful instructions or nop's
@@ -60,6 +61,7 @@ void initializeAIEClusterBaseAddressPass(PassRegistry &);
 extern char &AIEFormatSelectorID;
 void initializeAIEFormatSelectorPass(PassRegistry &);
 void initializeAIEFinalizeBundlePass(PassRegistry &);
+void initializeAIEMachineAlignmentPass(PassRegistry &);
 void initializeAIEMachineBlockPlacementPass(PassRegistry &);
 extern char &AIEPacketizerID;
 void initializeAIEPacketizerPass(PassRegistry &);

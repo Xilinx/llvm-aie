@@ -1,0 +1,32 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+
+# RUN: llc -mtriple=aie2 -start-after=aie-finalize-mi-bundles %s --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -d %t | FileCheck %s
+# CHECK: 8: {{.*}} event	#0x0
+# Expand NOP
+---
+name:    missing_format_pad_2
+alignment:       16
+body:             |
+  bb.0.entry:
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+  
+    DelayedSchedBarrier csr_aie2, implicit killed $p0
+    BUNDLE implicit-def $p6, implicit-def $p2, implicit $sp, implicit $r19 {
+      $p0 = PADDB_ldb_ptr_inc_nrm_imm killed $p0, -28
+      NOPS
+      EVENT 0
+    }
+...

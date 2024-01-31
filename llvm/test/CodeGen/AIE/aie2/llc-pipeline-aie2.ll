@@ -252,6 +252,7 @@
 
 ; AIE-O0123-NEXT:      PostRA Machine Instruction Scheduler
 ; AIE-O0123-NEXT:      AIE Bundle Finalization
+; AIE-O0123-NEXT:      AIE Machine Alignment
 ; AIE-O0123-NEXT:      Analyze Machine Code For Garbage Collection
 ; AIE-O0123-NEXT:      Insert fentry calls
 ; AIE-O0123-NEXT:      Insert XRay ops

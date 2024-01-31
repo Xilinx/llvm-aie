@@ -15,7 +15,10 @@
 
 #include "AIE.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/iterator.h"
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/ErrorHandling.h"
+#include <memory>
 #include <vector>
 
 namespace llvm {
@@ -44,6 +47,8 @@ public:
 
   const SlotKindRange &getSlots() const { return Slots; }
 
+  SlotBits getSlotSet() const { return SlotSet; }
+
   const unsigned &getSize() const { return Size; }
 
   /// \returns whether this format can accommodate all slots in \p Slots
@@ -58,7 +63,6 @@ public:
 private:
   // The slots in the format-specific order
   SlotKindRange Slots;
-
   // Size of the format
   unsigned Size;
 
@@ -66,12 +70,77 @@ private:
   SlotBits SlotSet = 0;
 };
 
-class PacketFormats {
+class FormatIterator {
 public:
-  PacketFormats(const VLIWFormat *Formats) : FormatsTable(Formats){};
-  const VLIWFormat *getFormat(SlotBits SlotSet) const;
+  using const_iterator = const VLIWFormat *;
+  FormatIterator(const VLIWFormat *Fmts, const SlotBits Slots) : Slots(Slots) {
+    if (Fmts->covers(Slots))
+      CurrentFormat = Fmts;
+    else {
+      CurrentFormat = *(++(*this));
+    }
+  }
+
+  FormatIterator &operator++() {
+    findNextMatchingFormat();
+    return *this;
+  }
+
+  const VLIWFormat *operator*() const { return CurrentFormat; }
+
+  bool operator!=(const FormatIterator &other) const {
+    return CurrentFormat != other.CurrentFormat;
+  }
+  ~FormatIterator() = default;
 
 private:
+  SlotBits Slots;
+  const VLIWFormat *CurrentFormat;
+
+  void findNextMatchingFormat() {
+    while (CurrentFormat != nullptr && CurrentFormat->Opcode) {
+      ++CurrentFormat;
+      if (CurrentFormat && CurrentFormat->covers(Slots)) {
+        break;
+      }
+    }
+  }
+};
+
+class PacketFormats {
+public:
+  using const_iterator = FormatIterator;
+  PacketFormats(const VLIWFormat *Formats) : FormatsTable(Formats){};
+
+  const VLIWFormat *getFormat(SlotBits SlotSet) const;
+
+  const VLIWFormat *getFormatBySize(SlotBits SlotSet, unsigned Size) const;
+
+  llvm::iterator_range<FormatIterator>
+  getFormatsRangeBySlots(SlotBits SlotSet) const;
+
+private:
+  const VLIWFormat *findFirstMatchingFormat(const VLIWFormat *Fmts,
+                                            SlotBits Slots) const {
+    while (Fmts->Opcode && !Fmts->covers(Slots)) {
+      ++Fmts;
+    }
+    return Fmts->Opcode ? Fmts : nullptr;
+  }
+
+  const VLIWFormat *findLastMatchingFormat(const VLIWFormat *Fmts,
+                                           SlotBits Slots) const {
+    const VLIWFormat *lastFormat = nullptr;
+    while (Fmts->Opcode) {
+      if (Fmts->covers(Slots)) {
+        lastFormat = Fmts;
+        Fmts++;
+        continue;
+      }
+      ++Fmts;
+    }
+    return lastFormat;
+  }
   const VLIWFormat *FormatsTable;
 };
 

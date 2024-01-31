@@ -66,13 +66,12 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: E1_MOV_SCL_E1_JL
-    ; CHECK: $r1 = MOV_mv_scl $m0
-    ; CHECK-NEXT: JL_IND killed $p1, implicit-def $lr
+    ; CHECK: JL_IND killed $p1, implicit-def $lr
+    ; CHECK-NEXT: $r1 = MOV_mv_scl $m0
     ; CHECK-NEXT: $r1 = MOV_mv_scl $m0
     ; CHECK-NEXT: $r1 = MOV_mv_scl $m0
     ; CHECK-NEXT: $r1 = MOV_mv_scl $m0
     ; CHECK-NEXT: $r1 = MOV_mv_scl killed $m0
-    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: DelayedSchedBarrier
   $r1 = MOV_mv_scl $m0
   $r1 = MOV_mv_scl $m0

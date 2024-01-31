@@ -87,6 +87,10 @@ unsigned AIE2InstrInfo::getOppositeBranchOpcode(unsigned Opc) const {
 
 bool AIE2InstrInfo::isJNZ(unsigned Opc) const { return Opc == AIE2::PseudoJNZ; }
 bool AIE2InstrInfo::isJZ(unsigned Opc) const { return Opc == AIE2::PseudoJZ; }
+bool AIE2InstrInfo::isCall(unsigned Opc) const {
+  return Opc == AIE2::JL || Opc == AIE2::JL_IND;
+}
+
 bool AIE2InstrInfo::jumpsToUnknown(unsigned Opc) const {
   // The use-case of this function is to check whether all our successor blocks
   // are known after pseudo expansion.
@@ -802,9 +806,7 @@ bool AIE2InstrInfo::isSchedBarrier(const MachineInstr &MI) const {
 }
 
 unsigned AIE2InstrInfo::getNumReservedDelaySlots(const MachineInstr &MI) const {
-  // Calls only need 1 cycle for alignment purposes.
-  unsigned Opc = MI.getOpcode();
-  return (Opc == AIE2::JL || Opc == AIE2::JL_IND) ? 1 : 0;
+  return 0;
 }
 
 SmallVector<TiedRegOperands, 4>
