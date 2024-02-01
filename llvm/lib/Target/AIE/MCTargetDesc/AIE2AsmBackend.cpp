@@ -44,51 +44,11 @@ bool AIE2AsmBackend::isDelaySlotInstr(unsigned Opcode) const {
 
 void AIE2AsmBackend::relaxInstruction(MCInst &Inst,
                                       const MCSubtargetInfo &STI) const {
-
-  switch (Inst.getOpcode()) {
-  default:
-    break;
-  case AIE2::I16_NOP:
-    Inst.setOpcode(AIE2::NOP32);
-    return;
-  case AIE2::NOP32:
-    Inst.setOpcode(AIE2::NOP48);
-    return;
-  case AIE2::NOP48:
-    Inst.setOpcode(AIE2::NOP64);
-    return;
-  case AIE2::NOP64:
-    Inst.setOpcode(AIE2::NOP80);
-    return;
-  case AIE2::NOP80:
-    Inst.setOpcode(AIE2::NOP96);
-    return;
-  case AIE2::NOP96:
-    Inst.setOpcode(AIE2::NOP112);
-    return;
-  case AIE2::NOP112:
-    Inst.setOpcode(AIE2::NOP128);
-    return;
-  }
-  llvm_unreachable("Opcode not expected!");
+  llvm_unreachable("relaxInstruction call not expected in AIE2");
 }
 
 unsigned AIE2AsmBackend::maxRelaxIncrement(const MCInst &Inst,
                                            const MCSubtargetInfo &STI) const {
-
-  switch (Inst.getOpcode()) {
-  default:
-    break;
-  case AIE2::I16_NOP:
-  case AIE2::NOP32:
-  case AIE2::NOP48:
-  case AIE2::NOP64:
-  case AIE2::NOP80:
-  case AIE2::NOP96:
-  case AIE2::NOP112:
-    return 2;
-  }
-
   return 0;
 }
 

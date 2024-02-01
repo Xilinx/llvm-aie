@@ -5,14 +5,18 @@
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 
-# RUN: llc -mtriple=aie2 -start-after=aie-finalize-mi-bundles %s --filetype=obj -o %t --skip-machine-alignment --issue-limit=6
-# RUN: llvm-objdump --triple=aie2 -d %t | FileCheck %s
+# RUN: llc -mtriple=aie2 -start-after=aie-finalize-mi-bundles %s --filetype=obj -o - | \
+# RUN: llvm-objdump --triple=aie2 -d - | FileCheck %s
 ---
 
 # The bundled JL instructions will be delayslot filled with 5 nops;
-# alignment padding for the return address will expand the last one.
+# alignment padding for the return address will expand to have the
+# return address aligned.
 # The EVENT instructions (except the first) mark the return address and
-# should sit on a 16 byte alignment
+# should sit on a 16 byte alignment. That's tested by checking the last
+# hex digit of the address with the event instruction somewhere
+# in the bundle. Padding mostly occurs in the first bundle, leaving
+# the nops in the delay slots unchanged
 
 
 # CHECK-LABEL: <test>:
@@ -22,8 +26,8 @@
 # CHECK-NEXT: nop
 # CHECK-NEXT: nop
 # CHECK-NEXT: nop
-# CHECK-NEXT: nopa ; nops ; nopm ; nopv
-# CHECK-NEXT: 0: {{.*}} event
+# CHECK-NEXT: nop
+# CHECK-NEXT: 0: {{.*}} event {{.*}}
 
 # CHECK-NEXT: nop
 # CHECK-NEXT: jl
@@ -31,8 +35,8 @@
 # CHECK-NEXT: nop
 # CHECK-NEXT: nop
 # CHECK-NEXT: nop
-# CHECK-NEXT: nops ; nopb ; nopx ; nopm
-# CHECK-NEXT: 0: {{.*}} event
+# CHECK-NEXT: nop
+# CHECK-NEXT: 0: {{.*}} event {{.*}}
 
 # CHECK-NEXT: nop
 # CHECK-NEXT: nop
@@ -41,21 +45,9 @@
 # CHECK-NEXT: nop
 # CHECK-NEXT: nop
 # CHECK-NEXT: nop
-# CHECK-NEXT: nopa ; nopb ; nopm
-# CHECK-NEXT: 0: {{.*}} event
+# CHECK-NEXT: nop
+# CHECK-NEXT: 0: {{.*}} event {{.*}}
 
-# CHECK-NEXT: nop
-# CHECK-NEXT: nop
-# CHECK-NEXT: nop
-# CHECK-NEXT: jl
-# CHECK-NEXT: nop
-# CHECK-NEXT: nop
-# CHECK-NEXT: nop
-# CHECK-NEXT: nop
-# CHECK-NEXT: nops ; nopm
-# CHECK-NEXT: 0: {{.*}} event
-
-# CHECK-NEXT: nop
 # CHECK-NEXT: nop
 # CHECK-NEXT: nop
 # CHECK-NEXT: nop
@@ -64,10 +56,9 @@
 # CHECK-NEXT: nop
 # CHECK-NEXT: nop
 # CHECK-NEXT: nop
-# CHECK-NEXT: nopxm
-# CHECK-NEXT: 0: {{.*}} event
-
 # CHECK-NEXT: nop
+# CHECK-NEXT: 0: {{.*}} event {{.*}}
+
 # CHECK-NEXT: nop
 # CHECK-NEXT: nop
 # CHECK-NEXT: nop
@@ -77,10 +68,9 @@
 # CHECK-NEXT: nop
 # CHECK-NEXT: nop
 # CHECK-NEXT: nop
-# CHECK-NEXT: nopx
-# CHECK-NEXT: 0: {{.*}} event
-
 # CHECK-NEXT: nop
+# CHECK-NEXT: 0: {{.*}} event {{.*}}
+
 # CHECK-NEXT: nop
 # CHECK-NEXT: nop
 # CHECK-NEXT: nop
@@ -92,7 +82,21 @@
 # CHECK-NEXT: nop
 # CHECK-NEXT: nop
 # CHECK-NEXT: nop
-# CHECK-NEXT: 0: {{.*}} event
+# CHECK-NEXT: 0: {{.*}} event {{.*}}
+
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: jl
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: nop
+# CHECK-NEXT: 0: {{.*}} event {{.*}}
 
 # CHECK-NEXT: nop
 # CHECK-NEXT: nop
@@ -106,20 +110,19 @@
 # CHECK-NEXT: nop
 # CHECK-NEXT: nop
 # CHECK-NEXT: nop
-# CHECK-NEXT: nopb ; nopa ; nops ; nopx ; nopm ; nopv
-# CHECK-NEXT: 0: {{.*}} event
+# CHECK-NEXT: nop
+# CHECK-NEXT: 0: {{.*}} event {{.*}}
 
 # CHECK-LABEL: <test1>:
 #CHECK: lda	p0, [p6, #0]
 #CHECK-NEXT: jl
+#CHECK-NEXT: nop	
+#CHECK-NEXT: nop	
+#CHECK-NEXT: nop	
+#CHECK-NEXT: nop	
 #CHECK-NEXT: nop
-#CHECK-NEXT: nop
-#CHECK-NEXT: nop
-#CHECK-NEXT: nop
-#CHECK-NEXT: nopa	;		nops	;		nopm	;		nopv
-#CHECK-NEXT: lda	p6, [sp, #-32];		mov	p2, r19
+#CHECK-NEXT: 0: {{.*}} lda	p6, [sp, #-32]; {{.*}} mov	p2, r19
 #CHECK-NEXT: lda	r0, [p2, #4];		mov	p3, r23
-#CHECK-NEXT: nopx
 
 name:            test
 body:             |
