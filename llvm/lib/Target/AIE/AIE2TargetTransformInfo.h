@@ -63,6 +63,8 @@ public:
   bool isHardwareLoopProfitable(Loop *L, ScalarEvolution &SE,
                                 AssumptionCache &AC, TargetLibraryInfo *LibInfo,
                                 HardwareLoopInfo &HWLoopInfo);
+
+  bool isProfitableOuterLSR(const Loop &L) const;
 };
 
 } // end namespace llvm
