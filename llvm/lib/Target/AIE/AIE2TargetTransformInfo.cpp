@@ -27,6 +27,10 @@ static cl::opt<bool>
                 cl::desc("Enable true zero overhead hardware loops on AIE"),
                 cl::init(false), cl::Hidden);
 
+static cl::opt<bool>
+    ConsiderLSROuterLoops("aie-lsr-consider-outer", cl::Hidden, cl::init(false),
+                          cl::desc("Whether to consider outer loops for LSR"));
+
 bool AIE2TTIImpl::isHardwareLoopProfitable(Loop *L, ScalarEvolution &SE,
                                            AssumptionCache &AC,
                                            TargetLibraryInfo *LibInfo,
@@ -69,4 +73,12 @@ bool AIE2TTIImpl::isHardwareLoopProfitable(Loop *L, ScalarEvolution &SE,
     HWLoopInfo.CounterInReg = true;
   }
   return true;
+}
+
+bool AIE2TTIImpl::isProfitableOuterLSR(const Loop &L) const {
+  // Down-counting loops are essentially always profitable for AIE.
+  // They typically need a single GPR for counting down, while "up-counting"
+  // loop need one for the IV, and one for the upper bound.
+  return ConsiderLSROuterLoops.getNumOccurrences() > 0 ? ConsiderLSROuterLoops
+                                                       : true;
 }
