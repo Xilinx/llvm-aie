@@ -5,10 +5,11 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -march=aie2 -run-pass=postmisched --issue-limit=6 %s -o - | FileCheck %s
+
+# RUN: llc -march=aie2 -run-pass=aie-aa-wrapper,aie-aa,postmisched --issue-limit=6 %s -o - | FileCheck %s
 
 # This test shows that memory dependencies are handled correctly with a
-# "must alias" MMO or without.
+# "noalias" MMO, must alias" MMO, or without.
 # LLVM indeed creates different types of edges, so one needs to be sure
 # to handle both (Memory and Barrier)
 
@@ -22,6 +23,26 @@
   entry:
     ret void
   }
+
+  define <8 x i32> @ptr_add_2d_intrinsic(<8 x i64> %acc, ptr noalias %ptr0, ptr noalias %ptr1, i32 %off, i32 %size1, i32 %count1, i32 %inc1) {
+  entry:
+    %0 = tail call <8 x i32> @llvm.aie2.I256.v8.acc64.srs(<8 x i64> %acc, i32 0, i32 1)
+    store <8 x i32> %0, ptr %ptr1, align 32
+    %1 = trunc i32 %off to i20
+    %2 = trunc i32 %inc1 to i20
+    %3 = trunc i32 %size1 to i20
+    %4 = trunc i32 %count1 to i20
+    %5 = tail call { ptr, i20 } @llvm.aie2.add.2d(ptr %ptr0, i20 %1, i20 %2, i20 %3, i20 %4)
+    %6 = extractvalue { ptr, i20 } %5, 0
+    %7 = load <8 x i32>, ptr %6, align 32
+    ret <8 x i32> %7
+  }
+
+  ; Function Attrs: nofree nosync nounwind memory(none)
+  declare <8 x i32> @llvm.aie2.I256.v8.acc64.srs(<8 x i64>, i32, i32)
+
+  ; Function Attrs: nofree nosync nounwind memory(none)
+  declare { ptr, i20 } @llvm.aie2.add.2d(ptr, i20, i20, i20, i20)
 ...
 
 # Both stores have MMOs, llvm creates a Memory edge
@@ -67,4 +88,44 @@ body:             |
     $r2 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32) from %ir.a)
     VST_SRS_D8_S32_ag_idx_imm $p0, 0, $cm0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
     ST_dms_sts_idx_imm $r6, $p0, 0 :: (store (s32) into %ir.a)
+...
+
+# Verify that the VLD can be moved before VST.SRS because their addresses do not
+# alias. The SchedGraph should know that thanks to AIE-custom AA that interprets
+# ptr add intrinsics.
+---
+name:            ptr_add_2d_intrinsic
+alignment:       16
+body:             |
+  bb.0.entry (align 16):
+    liveins: $bml0, $p0, $p1, $r0, $r1, $r2, $r3
+
+    ; CHECK-LABEL: name: ptr_add_2d_intrinsic
+    ; CHECK: liveins: $bml0, $p0, $p1, $r0, $r1, $r2, $r3
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: $m0 = MOV_mv_scl $r0
+    ; CHECK-NEXT: $dj0 = MOV_mv_scl killed $r3
+    ; CHECK-NEXT: $dn0 = MOV_mv_scl killed $r1
+    ; CHECK-NEXT: $dc0 = MOV_mv_scl killed $r2
+    ; CHECK-NEXT: $p0, dead $dc0 = PADDA_2D killed $p0, killed $d0
+    ; CHECK-NEXT: renamable $wl0 = VLDA_dmw_lda_w_ag_idx_imm killed renamable $p0, 0 :: (load (<8 x s32>) from %ir.6)
+    ; CHECK-NEXT: RET implicit $lr
+    ; CHECK-NEXT: $s0 = MOV_mv_scl killed $r0
+    ; CHECK-NEXT: VST_SRS_S32_S64_ag_idx_imm killed renamable $p1, 0, killed renamable $bml0, killed renamable $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<8 x s32>) into %ir.ptr1)
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: renamable $r0 = MOVA_lda_cg 0
+    ; CHECK-NEXT: DelayedSchedBarrier implicit killed $wl0
+    $s0 = MOV_mv_scl killed $r0
+    $m0 = MOV_mv_scl killed $r0
+    $dj0 = MOV_mv_scl killed $r3
+    $dn0 = MOV_mv_scl killed $r1
+    $dc0 = MOV_mv_scl killed $r2
+    $p0, dead $dc0 = PADDA_2D killed $p0, $d0
+    VST_SRS_S32_S64_ag_idx_imm killed renamable $p1, 0, killed renamable $bml0, killed renamable $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<8 x s32>) into %ir.ptr1)
+    renamable $wl0 = VLDA_dmw_lda_w_ag_idx_imm killed renamable $p0, 0 :: (load (<8 x s32>) from %ir.6)
+    renamable $r0 = MOV_RLC_imm10_pseudo 0
+    RET implicit $lr
+    DelayedSchedBarrier implicit $wl0
+
 ...
