@@ -384,6 +384,15 @@ class RegionEndEdges : public ScheduleDAGMutation {
   };
 };
 
+/// Collect all "weak" edges in a separate vector. This allows modifying
+/// \p SU.Preds without invalidating iterators.
+SmallVector<SDep, 4> getWeakPreds(SUnit &SU) {
+  SmallVector<SDep, 4> WeakPreds;
+  copy_if(SU.Preds, std::back_inserter(WeakPreds),
+          [](SDep &PredEdge) { return PredEdge.isWeak(); });
+  return WeakPreds;
+}
+
 /// Pre-RA MachineScheduler will add "weak" edges to try and limit the number of
 /// COPY instructions that actually materialize into MOVs. Here we turn those
 /// into "strong" edges to help with register pressure.
@@ -403,9 +412,7 @@ class EnforceCopyEdges : public ScheduleDAGMutation {
       SUnit *SU = DAG->getSUnit(&MI);
       if (!SU || !MI.isCopy())
         continue;
-      for (SDep &PredEdge : SU->Preds) {
-        if (!PredEdge.isWeak())
-          continue;
+      for (SDep &PredEdge : getWeakPreds(*SU)) {
         // Note: We are now forcing the whole dependence tree of MI to come
         // after PredEdge.getSUnit(), this might increase the overall latency.
         // See indirect-copy-dep-incr-latency.mir
