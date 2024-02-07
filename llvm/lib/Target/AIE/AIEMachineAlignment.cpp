@@ -98,23 +98,6 @@ void elongateBundle(AIE::MachineBundle &Bundle,
   }
 }
 
-bool isAlignmentCandidate(MachineBasicBlock::iterator MII, unsigned &Counter) {
-  const AIEBaseInstrInfo *TII = getTII(MII);
-  MachineBasicBlock::const_instr_iterator I = ++MII->getIterator();
-  MachineBasicBlock::instr_iterator E = MII->getParent()->instr_end();
-  bool isAlgnCandidate = false;
-  while (I != E && I->isInsideBundle()) {
-    MachineInstr *MI = const_cast<MachineInstr *>(&(*I));
-    if (TII->isCall(MI->getOpcode())) {
-      Counter = TII->getNumDelaySlots(*MI);
-      isAlgnCandidate = true;
-    }
-    /* look for other candidate e.g. HW loop addresses */
-    I++;
-  }
-  return isAlgnCandidate;
-}
-
 unsigned applyRegionAlignment(MachineBasicBlock::iterator MI,
                               MachineBasicBlock::iterator EndMI,
                               unsigned PadBytes, bool AllowCrossingPadBytes) {
@@ -210,39 +193,23 @@ void AIEMachineAlignment::applyBundlesAlignment(
     }
   }
 }
+
 // Find Regions for Alignment Candidate e.g. Region ending with Return Address,
 // End of BB, etc.
 static std::vector<llvm::iterator_range<MachineBasicBlock::iterator>>
 findRegions(MachineBasicBlock &MBB) {
-  MachineBasicBlock::iterator MI = MBB.begin();
-  MachineBasicBlock::iterator End = MBB.end();
+  auto *TII = static_cast<const AIEBaseInstrInfo *>(
+      MBB.getParent()->getSubtarget().getInstrInfo());
   MachineBasicBlock::iterator RegionBegin = MBB.begin();
-  MachineBasicBlock::iterator RegionEnd = MBB.end();
   std::vector<llvm::iterator_range<MachineBasicBlock::iterator>> Regions;
-  unsigned Counter = 0;
-  while (MI != End) {
-    if (MI->isBundle()) {
-      bool isAlgnCandidate = isAlignmentCandidate(MI, Counter);
-      while (Counter != 0) {
-        ++MI;
-        Counter--;
-      }
-      if (isAlgnCandidate) {
-        RegionEnd = std::next(MI);
-        Regions.emplace_back(llvm::make_range(RegionBegin, RegionEnd));
-        RegionBegin = RegionEnd;
-      }
-    } else if (MI->isMetaInstruction()) {
-      ++MI;
-      continue;
-    } else {
-      // single instruction , there should not be any
-      // after Bundle Finalization Pass
-      llvm_unreachable("Unexpectedly reached here !");
-    }
-    ++MI;
+  std::vector<MachineBasicBlock::iterator> AlgnCandidate =
+      TII->getAlignmentBoundaries(MBB);
+  for (auto MII : AlgnCandidate) {
+    MachineBasicBlock::iterator RegionEnd = MII;
+    Regions.emplace_back(llvm::make_range(RegionBegin, RegionEnd));
+    RegionBegin = RegionEnd;
   }
-  Regions.emplace_back(llvm::make_range(RegionBegin, End));
+  Regions.emplace_back(llvm::make_range(RegionBegin, MBB.end()));
   return Regions;
 }
 

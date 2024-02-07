@@ -314,6 +314,21 @@ bool AIEBaseInstrInfo::isSchedulingBoundary(const MachineInstr &MI,
   return false;
 }
 
+bool AIEBaseInstrInfo::isCallBundle(MachineBasicBlock::iterator MII) const {
+  MachineBasicBlock::const_instr_iterator I = ++MII->getIterator();
+  MachineBasicBlock::instr_iterator E = MII->getParent()->instr_end();
+  bool isReturnAddr = false;
+  while (I != E && I->isInsideBundle()) {
+    MachineInstr *MI = const_cast<MachineInstr *>(&(*I));
+    if (isCall(MI->getOpcode())) {
+      isReturnAddr = true;
+      break;
+    }
+    I++;
+  }
+  return isReturnAddr;
+}
+
 unsigned computeRegStateFlags(const MachineOperand &RegOp) {
   assert(RegOp.isReg() && "Not a register operand");
   assert(!RegOp.getSubReg() && "RegOp has SubReg flags set");
