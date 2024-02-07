@@ -1408,6 +1408,14 @@ bool AIE2InstrInfo::isHardwareLoopJNZ(unsigned Opcode) const {
   return Opcode == AIE2::LoopJNZ;
 }
 
+bool AIE2InstrInfo::isHardwareLoopStart(unsigned Opcode) const {
+  return Opcode == AIE2::LoopStart;
+}
+
+bool AIE2InstrInfo::isHardwareLoopEnd(unsigned Opcode) const {
+  return Opcode == AIE2::PseudoLoopEnd;
+}
+
 unsigned AIE2InstrInfo::getPseudoJNZDOpcode() const { return AIE2::PseudoJNZD; }
 
 unsigned AIE2InstrInfo::getNumBypassedCycles(const InstrItineraryData *ItinData,

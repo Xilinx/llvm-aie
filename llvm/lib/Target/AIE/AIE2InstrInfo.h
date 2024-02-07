@@ -71,6 +71,8 @@ public:
 
   virtual bool isHardwareLoopDec(unsigned Opcode) const override;
   virtual bool isHardwareLoopJNZ(unsigned Opcode) const override;
+  virtual bool isHardwareLoopStart(unsigned Opcode) const override;
+  virtual bool isHardwareLoopEnd(unsigned Opcode) const override;
 
   virtual unsigned getPseudoJNZDOpcode() const override;
 
