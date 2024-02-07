@@ -91,6 +91,8 @@ static void parseCondBranch(MachineInstr &LastInst, MachineBasicBlock *&Target,
   // Block ends with fall-through condbranch.
   assert(LastInst.getDesc().isConditionalBranch() &&
          "Unknown conditional branch");
+  assert((Cond.size() == 2 || Cond.size() == 0 || Cond.size() == 3) &&
+         "AIE branch conditions have two components!");
   Target = LastInst.getOperand(1).getMBB();
   Cond.push_back(MachineOperand::CreateImm(LastInst.getOpcode()));
   Cond.push_back(LastInst.getOperand(0));
@@ -166,6 +168,13 @@ bool AIEBaseInstrInfo::analyzeBranch(MachineBasicBlock &MBB,
 
   // Handle a single conditional branch.
   if (NumTerminators == 1 && I->getDesc().isConditionalBranch()) {
+    if (isHardwareLoopEnd(I->getOpcode())) {
+      TBB = I->getOperand(0).getMBB();
+      Cond.push_back(MachineOperand::CreateImm(I->getOpcode()));
+      Cond.push_back(I->getOperand(0));
+      Cond.push_back(I->getOperand(1));
+      return Success;
+    }
     parseCondBranch(*I, TBB, Cond);
     return Success;
   }
@@ -173,7 +182,19 @@ bool AIEBaseInstrInfo::analyzeBranch(MachineBasicBlock &MBB,
   // Handle a conditional branch followed by an unconditional branch.
   if (NumTerminators == 2 && std::prev(I)->getDesc().isConditionalBranch() &&
       I->getDesc().isUnconditionalBranch()) {
-    parseCondBranch(*std::prev(I), TBB, Cond);
+    // PseudoLoopEnd
+    if (isHardwareLoopEnd(std::prev(I)->getOpcode())) {
+      TBB = std::prev(I)->getOperand(0).getMBB();
+      Cond.push_back(MachineOperand::CreateImm(std::prev(I)->getOpcode()));
+      Cond.push_back(std::prev(I)->getOperand(0));
+      Cond.push_back(std::prev(I)->getOperand(1));
+    } else
+      // JNZD
+      if (!(std::prev(I)->getOperand(1).isMBB()))
+        return Unhandled;
+      else
+        parseCondBranch(*std::prev(I), TBB, Cond);
+
     // We might have unconditional branches to symbols that aren't
     // Basic Blocks because of tail call elimination.
     if (!I->getOperand(0).isMBB())
@@ -238,8 +259,6 @@ unsigned AIEBaseInstrInfo::insertBranch(
 
   // Shouldn't be a fall through.
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
-  assert((Cond.size() == 2 || Cond.size() == 0) &&
-         "AIE branch conditions have two components!");
 
   // Unconditional branch.
   if (Cond.empty()) {
@@ -248,6 +267,12 @@ unsigned AIEBaseInstrInfo::insertBranch(
       *BytesAdded += getInstSizeInBytes(MI);
     return 1;
   }
+
+  if (Cond.size() == 3) {
+    BuildMI(&MBB, DL, get(Cond[0].getImm())).addMBB(TBB).add(Cond[2]);
+    return 1;
+  }
+
   // Either a one or two-way conditional branch.
   unsigned Opc = Cond[0].getImm();
   MachineInstr &CondMI = *BuildMI(&MBB, DL, get(Opc)).add(Cond[1]).addMBB(TBB);

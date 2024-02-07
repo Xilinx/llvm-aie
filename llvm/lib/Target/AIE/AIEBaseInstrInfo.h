@@ -129,6 +129,8 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   // Opcodes related to hardware loop handling
   virtual bool isHardwareLoopDec(unsigned Opcode) const { return false; }
   virtual bool isHardwareLoopJNZ(unsigned Opcode) const { return false; }
+  virtual bool isHardwareLoopStart(unsigned Opcode) const { return false; }
+  virtual bool isHardwareLoopEnd(unsigned Opcode) const { return false; }
 
   virtual unsigned getPseudoJNZDOpcode() const {
     llvm_unreachable("Need to implement this hook for hardware loop support.");
