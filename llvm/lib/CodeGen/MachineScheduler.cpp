@@ -2354,12 +2354,15 @@ init(ScheduleDAGMI *DAG, const TargetSchedModel *SchedModel) {
   }
 }
 
-void SchedBoundary::
-init(ScheduleDAGMI *dag, const TargetSchedModel *smodel, SchedRemainder *rem) {
+void SchedBoundary::init(ScheduleDAGMI *DAG,
+                         const MachineSchedStrategy *SchedImpl,
+                         const TargetSchedModel *SModel, SchedRemainder *Rem) {
   reset();
-  DAG = dag;
-  SchedModel = smodel;
-  Rem = rem;
+  this->DAG = DAG;
+  this->SchedImpl = SchedImpl;
+  this->SchedModel = SModel;
+  this->Rem = Rem;
+
   if (SchedModel->hasInstrSchedModel()) {
     unsigned ResourceCount = SchedModel->getNumProcResourceKinds();
     ReservedCyclesIndex.resize(ResourceCount);
@@ -2622,10 +2625,10 @@ void SchedBoundary::releaseNode(SUnit *SU, unsigned ReadyCycle, bool InPQueue,
   // Check for interlocks first. For the purpose of other heuristics, an
   // instruction that cannot issue appears as if it's not in the ReadyQueue.
   bool IsBuffered = SchedModel->getMicroOpBufferSize() != 0;
-  bool HazardDetected = (!IsBuffered && ReadyCycle > CurrCycle) ||
-                        checkHazard(SU) || (Available.size() >= ReadyListLimit);
+  bool IsAvailable =
+      SchedImpl->isAvailableNode(*SU, *this, /*VerifyReadyCycle=*/!IsBuffered);
 
-  if (!HazardDetected) {
+  if (IsAvailable && Available.size() < ReadyListLimit) {
     Available.push(SU);
 
     if (InPQueue)
@@ -2939,7 +2942,7 @@ SUnit *SchedBoundary::pickOnlyChoice() {
 
   // Defer any ready instrs that now have a hazard.
   for (ReadyQueue::iterator I = Available.begin(); I != Available.end();) {
-    if (checkHazard(*I)) {
+    if (!SchedImpl->isAvailableNode(**I, *this, /*VerifyReadyCycle=*/false)) {
       Pending.push(*I);
       I = Available.remove(I);
       continue;
@@ -3018,6 +3021,18 @@ LLVM_DUMP_METHOD void SchedBoundary::dumpScheduledState() const {
     dumpReservedCycles();
 }
 #endif
+
+//===----------------------------------------------------------------------===//
+// MachineSchedStrategy - Base interface for scheduler implementations.
+//===----------------------------------------------------------------------===//
+
+bool MachineSchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
+                                           bool VerifyReadyCycle) const {
+  unsigned ReadyCycle = Zone.isTop() ? SU.TopReadyCycle : SU.BotReadyCycle;
+  if (VerifyReadyCycle && ReadyCycle > Zone.getCurrCycle())
+    return false;
+  return !Zone.checkHazard(&SU);
+}
 
 //===----------------------------------------------------------------------===//
 // GenericScheduler - Generic implementation of MachineSchedStrategy.
@@ -3310,8 +3325,8 @@ void GenericScheduler::initialize(ScheduleDAGMI *dag) {
     DAG->computeDFSResult();
 
   Rem.init(DAG, SchedModel);
-  Top.init(DAG, SchedModel, &Rem);
-  Bot.init(DAG, SchedModel, &Rem);
+  Top.init(DAG, this, SchedModel, &Rem);
+  Bot.init(DAG, this, SchedModel, &Rem);
 
   // Initialize resource counts.
 

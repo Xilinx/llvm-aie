@@ -125,6 +125,7 @@ class ScheduleHazardRecognizer;
 class TargetInstrInfo;
 class TargetPassConfig;
 class TargetRegisterInfo;
+class SchedBoundary;
 
 /// MachineSchedContext provides enough context from the MachineScheduler pass
 /// for the target to instantiate a scheduler.
@@ -266,6 +267,15 @@ public:
                                   std::optional<unsigned> &BotEmissionCycle) {
     return pickNode(IsTopNode);
   }
+
+  /// Whether or not \p SU can be moved to the Available queue of \p Zone.
+  ///
+  /// This will typically check if \p SU has a hazard with any instruction
+  /// already scheduled in \p Zone using Zone.checkHazard(), but can be
+  /// overridden by schedulers that try to release successors/predecessors early
+  /// to schedule "out of order".
+  virtual bool isAvailableNode(SUnit &SU, SchedBoundary &Zone,
+                               bool VerifyReadyCycle) const;
 
   /// Scheduler callback to notify that a new subtree is scheduled.
   virtual void scheduleTree(unsigned SubtreeID) {}
@@ -879,6 +889,7 @@ public:
   };
 
   ScheduleDAGMI *DAG = nullptr;
+  const MachineSchedStrategy *SchedImpl = nullptr;
   const TargetSchedModel *SchedModel = nullptr;
   SchedRemainder *Rem = nullptr;
 
@@ -990,8 +1001,8 @@ public:
 
   void reset();
 
-  void init(ScheduleDAGMI *dag, const TargetSchedModel *smodel,
-            SchedRemainder *rem);
+  void init(ScheduleDAGMI *DAG, const MachineSchedStrategy *SchedImpl,
+            const TargetSchedModel *SModel, SchedRemainder *Rem);
 
   bool isTop() const {
     return Available.getID() == TopQID;
