@@ -200,7 +200,7 @@ void AIEPostRASchedStrategy::initialize(ScheduleDAGMI *Dag) {
   PostGenericScheduler::initialize(Dag);
   assert(!ForceBottomUp && !ForceTopDown);
 
-  Bot.init(DAG, SchedModel, &Rem);
+  Bot.init(DAG, this, SchedModel, &Rem);
   const InstrItineraryData *Itin = SchedModel->getInstrItineraries();
   if (!Bot.HazardRec) {
     Bot.HazardRec =
