@@ -1416,6 +1416,47 @@ bool AIE2InstrInfo::isHardwareLoopEnd(unsigned Opcode) const {
   return Opcode == AIE2::PseudoLoopEnd;
 }
 
+std::vector<MachineBasicBlock::iterator>
+AIE2InstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
+  std::vector<MachineBasicBlock::iterator> AlgnCandidates;
+  unsigned DelaySlot = 0;
+  bool IsCall = false;
+  for (auto MI = MBB.begin(), End = MBB.end(); MI != End; ++MI) {
+    if (MI->isBundle()) {
+      // Return Address Candidate
+      IsCall = isCallBundle(MI);
+      if (IsCall && DelaySlot > 0)
+        llvm_unreachable("Cannot have branch in branch delay slot!\n");
+
+      if (DelaySlot > 0) {
+        DelaySlot--;
+        if (DelaySlot == 0)
+          /* Region + 1 => RegionEnd */
+          AlgnCandidates.emplace_back(std::next(MI));
+      }
+
+      if (IsCall)
+        DelaySlot = getNumDelaySlots(*MI);
+
+      // Look for other candidate e.g. HW loop addresses */
+    } else if (MI->isMetaInstruction()) {
+      continue;
+    } else {
+      bool IsHWLoopEnd = isHardwareLoopEnd(MI->getOpcode());
+      if (IsHWLoopEnd && DelaySlot > 0)
+        llvm_unreachable("Cannot have HWLoopEnd in branch delay slot!\n");
+      if (IsHWLoopEnd) {
+        AlgnCandidates.emplace_back(std::prev(MI));
+        continue;
+      }
+      // single instruction , there should not be any
+      // after Bundle Finalization Pass
+      llvm_unreachable("Found an un-expected standalone instruction !");
+    }
+  }
+  return AlgnCandidates;
+}
+
 unsigned AIE2InstrInfo::getPseudoJNZDOpcode() const { return AIE2::PseudoJNZD; }
 
 unsigned AIE2InstrInfo::getNumBypassedCycles(const InstrItineraryData *ItinData,

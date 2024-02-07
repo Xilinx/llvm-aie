@@ -5,12 +5,11 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-#RUN: llc  -mtriple=aie2  -start-after=postmisched -stop-before=aie-machine-alignment \
-# RUN: -verify-machineinstrs %s -o - | FileCheck %s
+
+# RUN: llc -mtriple aie2 -run-pass=aie-machine-alignment %s -verify-machineinstrs -o - | FileCheck %s
 --- |
 
-
-  define void @simple(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef %size) {
+  define void @zerooverhead_simple(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef %size) {
   for.body.lr.ph:
     %out.promoted = load i32, ptr %out, align 4
     call void @llvm.set.loop.iterations.i32(i32 %size)
@@ -32,42 +31,40 @@
     br i1 %2, label %for.body, label %for.cond.cleanup
   }
 
-  declare void @llvm.set.loop.iterations.i32(i32)
+  ; Function Attrs: nocallback noduplicate nofree nosync nounwind willreturn
+  declare void @llvm.set.loop.iterations.i32(i32) #0
 
-  declare i1 @llvm.loop.decrement.i32(i32)
+  ; Function Attrs: nocallback noduplicate nofree nosync nounwind willreturn
+  declare i1 @llvm.loop.decrement.i32(i32) #0
+
+  attributes #0 = { nocallback noduplicate nofree nosync nounwind willreturn }
+
 
 ...
 ---
-name:            simple
+name:            zerooverhead_simple
 body:             |
-  ; CHECK-LABEL: name: simple
+  ; CHECK-LABEL: name: zerooverhead_simple
   ; CHECK: bb.0.for.body.lr.ph (align 16):
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT:   liveins: $p0, $p1, $r0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   BUNDLE implicit-def $r1, implicit $p0 {
+  ; CHECK-NEXT:   BUNDLE implicit-def $r1, implicit-def $r2, implicit-def $r3, implicit $p0 {
+  ; CHECK-NEXT:     NOPB
   ; CHECK-NEXT:     renamable $r1 = LDA_dms_lda_idx_imm renamable $p0, 0 :: (load (s32) from %ir.out)
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit-def $r2 {
+  ; CHECK-NEXT:     NOPS
   ; CHECK-NEXT:     renamable $r2 = MOVX_alu_cg 0
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit-def $r3 {
   ; CHECK-NEXT:     renamable $r3 = MOV_mv_cg 2
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit-def $lc, implicit $r0 {
-  ; CHECK-NEXT:     $lc = MOV_mv_scl $r0
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit-def $ls {
-  ; CHECK-NEXT:     $ls = MOVXM_lng_cg %bb.1
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit-def $le {
-  ; CHECK-NEXT:     $le = MOVXM_lng_cg <mcsymbol .L_1120>
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit killed $r0 {
-  ; CHECK-NEXT:     LoopStart killed renamable $r0
+  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     PseudoJ_jump_imm %bb.1
+  ; CHECK-NEXT:     $lc = MOV_mv_scl $r0
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   BUNDLE {
+  ; CHECK-NEXT:     $ls = MOVXM_lng_cg %bb.1
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   BUNDLE {
+  ; CHECK-NEXT:     $le = MOVXM_lng_cg <mcsymbol .L_1120>
   ; CHECK-NEXT:   }
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1.for.body (align 16):
@@ -75,7 +72,12 @@ body:             |
   ; CHECK-NEXT:   liveins: $p0, $p1, $r0, $r1, $r2, $r3
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   BUNDLE implicit-def $r4, implicit $r2, implicit $r3 {
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPS
   ; CHECK-NEXT:     renamable $r4 = LSHL renamable $r2, renamable $r3
+  ; CHECK-NEXT:     NOPM
+  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $dj0, implicit killed $r4 {
   ; CHECK-NEXT:     $dj0 = MOV_mv_scl killed $r4
@@ -111,11 +113,17 @@ body:             |
   ; CHECK-NEXT:     ST_dms_sts_idx_imm renamable $r1, renamable $p0, 0 :: (store (s32) into %ir.out)
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     PseudoLoopEnd %bb.1, <mcsymbol .L_1120>
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   PseudoLoopEnd %bb.1, <mcsymbol .L_1120>
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2.for.cond.cleanup:
   ; CHECK-NEXT:   BUNDLE implicit $lr {
+  ; CHECK-NEXT:     NOPA
   ; CHECK-NEXT:     RET implicit $lr
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE {
@@ -138,40 +146,86 @@ body:             |
     successors: %bb.1(0x80000000)
     liveins: $p0, $p1, $r0
 
+    BUNDLE implicit-def $r1, implicit-def $r2, implicit-def $r3, implicit $p0 {
       renamable $r1 = LDA_dms_lda_idx_imm renamable $p0, 0 :: (load (s32) from %ir.out)
       renamable $r2 = MOVX_alu_cg 0
       renamable $r3 = MOV_mv_cg 2
+    }
+    BUNDLE {
       $lc = MOV_mv_scl $r0
+    }
+    BUNDLE {
       $ls = MOVXM_lng_cg %bb.1
+    }
+
+    BUNDLE {
       $le = MOVXM_lng_cg <mcsymbol .L_1120>
-      LoopStart killed renamable $r0
-      PseudoJ_jump_imm %bb.1
+    }
   bb.1.for.body (align 16):
     successors: %bb.1(0x7c000000), %bb.2(0x04000000)
     liveins: $p0, $p1, $r0, $r1, $r2, $r3
 
+    BUNDLE implicit-def $r4, implicit $r2, implicit $r3 {
       renamable $r4 = LSHL renamable $r2, renamable $r3
+    }
+    BUNDLE implicit-def $dj0, implicit killed $r4 {
       $dj0 = MOV_mv_scl killed $r4
+    }
+    BUNDLE implicit-def $r4, implicit $p1, implicit killed $dj0 {
       renamable $r4 = LDA_dms_lda_idx renamable $p1, killed renamable $dj0 :: (load (s32) from %ir.arrayidx)
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE implicit-def $r1, implicit-def $srcarry, implicit killed $r1, implicit killed $r4 {
       renamable $r1 = nsw ADD killed renamable $r1, killed renamable $r4, implicit-def $srcarry
+    }
+    BUNDLE implicit-def $r2, implicit-def $srcarry, implicit killed $r2 {
       renamable $r2 = nuw nsw ADD_add_r_ri killed renamable $r2, 1, implicit-def $srcarry
+    }
+    BUNDLE implicit $r1, implicit $p0 {
       ST_dms_sts_idx_imm renamable $r1, renamable $p0, 0 :: (store (s32) into %ir.out)
+    }
+    BUNDLE {
+      NOP
+    }
 
-  PseudoLoopEnd %bb.1, <mcsymbol .L_1120>
+     PseudoLoopEnd %bb.1, <mcsymbol .L_1120>
 
   bb.2.for.cond.cleanup:
+    BUNDLE implicit $lr {
       RET implicit $lr
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
+    }
+    BUNDLE {
       NOP
+    }
     DelayedSchedBarrier
 
 ...

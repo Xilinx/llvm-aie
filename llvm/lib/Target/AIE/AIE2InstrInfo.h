@@ -74,6 +74,9 @@ public:
   virtual bool isHardwareLoopStart(unsigned Opcode) const override;
   virtual bool isHardwareLoopEnd(unsigned Opcode) const override;
 
+  virtual std::vector<MachineBasicBlock::iterator>
+  getAlignmentBoundaries(MachineBasicBlock &MBB) const override;
+
   virtual unsigned getPseudoJNZDOpcode() const override;
 
   unsigned getNumBypassedCycles(const InstrItineraryData *ItinData,

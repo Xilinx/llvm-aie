@@ -132,6 +132,11 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   virtual bool isHardwareLoopStart(unsigned Opcode) const { return false; }
   virtual bool isHardwareLoopEnd(unsigned Opcode) const { return false; }
 
+  // Return the vector of Alignment Region Boundaries.
+  virtual std::vector<MachineBasicBlock::iterator>
+  getAlignmentBoundaries(MachineBasicBlock &MBB) const {
+    llvm_unreachable("Target didn't implement getAlignmentBoundaries!");
+  }
   virtual unsigned getPseudoJNZDOpcode() const {
     llvm_unreachable("Need to implement this hook for hardware loop support.");
   }
@@ -205,6 +210,9 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
                     const MachineInstr &DefMI, unsigned DefIdx,
                     const MachineInstr &UseMI,
                     unsigned UseIdx) const override;
+
+  // Check if the MII points to a BUNDLE which contains a call instruction
+  bool isCallBundle(MachineBasicBlock::iterator MII) const;
 
   /// Central place to compute RAW/WAR/WAW operand latencies.
   /// This uses itineraries when they exist. It returns std::nullopt for
