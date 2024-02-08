@@ -60,6 +60,9 @@ public:
   /// This may also bump the cycle until a instruction is ready to be issued.
   SUnit *pickNode(bool &IsTopNode) override;
 
+  bool isAvailableNode(SUnit &SU, SchedBoundary &Zone,
+                       bool VerifyReadyCycle) const override;
+
   /// Called after an SU is picked and its instruction re-inserted in the BB.
   /// This essentially updates the node's ReadyCycle to CurCycle, and notifies
   /// the HazardRecognizer of the newly-emitted instruction.
@@ -164,6 +167,9 @@ public:
   void enterRegion(MachineBasicBlock *BB, MachineBasicBlock::iterator Begin,
                    MachineBasicBlock::iterator End, unsigned RegionInstrs);
   void leaveRegion(const SUnit &ExitSU);
+
+  bool isAvailableNode(SUnit &SU, SchedBoundary &Zone,
+                       bool VerifyReadyCycle) const override;
 
 private:
   MachineBasicBlock *CurMBB = nullptr;

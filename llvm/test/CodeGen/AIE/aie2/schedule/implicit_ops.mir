@@ -47,15 +47,17 @@ body:             |
 ...
 
 # Due to the implicit-def, there is a WAW dependency between $x0 and $wh0.
-# The edge gets a default latency of 1, the instructions cannot issue in parallel.
+# The edge gets a default latency of 0 because we are considered "out-of-order".
+# The instructions can issue in parallel.
 ---
 name:            implicit_WAW
 alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: implicit_WAW
-    ; CHECK: $wl0 = VLDA_dmw_lda_w_ag_idx_imm killed $p0, 0, implicit-def $x0 :: (load (<8 x s32>) from stack - 64)
-    ; CHECK-NEXT: $wh0 = VLDB_dmw_ldb_ag_idx_imm killed $p1, 0 :: (load (<8 x s32>) from stack - 32)
+    ; CHECK: $wl0 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0, implicit-def $x0 :: (load (<8 x s32>) from stack - 64) {
+    ; CHECK-NEXT:   $wh0 = VLDB_dmw_ldb_ag_idx_imm killed $p1, 0 :: (load (<8 x s32>) from stack - 32)
+    ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP

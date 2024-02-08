@@ -287,6 +287,13 @@ SUnit *AIEPostRASchedStrategy::pickNode(bool &IsTopNode) {
   return SU;
 }
 
+bool AIEPostRASchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
+                                             bool /*VerifyReadyCycle*/) const {
+  // Force verifying if SU is ready to be scheduled in terms of cycle.
+  return MachineSchedStrategy::isAvailableNode(SU, Zone,
+                                               /*VerifyReadyCycle=*/true);
+}
+
 /// Called after ScheduleDAGMI has scheduled an instruction and updated
 /// scheduled/remaining flags in the DAG nodes.
 void AIEPostRASchedStrategy::schedNode(SUnit *SU, bool IsTopNode) {
@@ -542,6 +549,13 @@ void AIEPreRASchedStrategy::leaveRegion(const SUnit &ExitSU) {
   CurMBB = nullptr;
   RegionBegin = nullptr;
   RegionEnd = nullptr;
+}
+
+bool AIEPreRASchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
+                                            bool /*VerifyReadyCycle*/) const {
+  // Force verifying if SU is ready to be scheduled in terms of cycle.
+  return MachineSchedStrategy::isAvailableNode(SU, Zone,
+                                               /*VerifyReadyCycle=*/true);
 }
 
 AIEPostRASchedStrategy *AIEScheduleDAGMI::getSchedImpl() const {
