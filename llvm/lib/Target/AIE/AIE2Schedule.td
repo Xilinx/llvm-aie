@@ -933,7 +933,16 @@ def AIE2SchedModel : SchedMachineModel {
   // Issue limit is anyway limited by VLIW formats, but there is no universal
   // syntax for "no issue limit".
   int IssueWidth = 1000;
-  int MicroOpBufferSize = 0; // We are in-order
+
+  // Allow some kind of controlled out-order execution through negative latencies
+  // This is mostly to convince the scheduler that it doesn't need to bump the
+  // current cycle by `x` after scheduling an instruction in cycle `CurrCycle + x`.
+  // However, in pre-RA mode, MicroOpBufferSize also enables the heuristics for
+  // acyclic latency of the local region vs cyclic critical path latency of the
+  // enclosing loop in pre-RA mode. See checkAcyclicLatency().
+  // I haven't seen any effect on QoR at this point.
+  int MicroOpBufferSize = 1000;
+
   let Itineraries = AIE2Itineraries;
   int LoadLatency = 5; // FIXME
   int MispredictPenalty = 4; // FIXME
