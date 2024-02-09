@@ -39,56 +39,11 @@ namespace AIE {
 
 /// \a I needs to provide getOpcode().
 template <class I> class Bundle {
-private:
-  /// Maps a "multi-slot" instruction to its assigned slot
-  std::unordered_map<const I *, MCSlotKind> SelectedSlot;
-
-  /// Finds an unoccupied slot that can accommodate the instruction.
-  /// This interprets multislot pseudos by trying all alternatives
-  std::optional<MCSlotKind> findFreeSlot(unsigned int InstOpCode) const {
-    std::vector<MCSlotKind> SupportedSlots =
-        FormatInterface->getSlotAlternatives(InstOpCode);
-    // Iterate on possible slots. Check if the slot free and forms a valid
-    // format
-    // TODO : Future scope today we return true for the first valid format,
-    // which in turn gives priority based on list mentioned while defining
-    // Multi-Slot Pseudo. This could lead to unoptimized bundles. We should look
-    // ahead and select the slot accordingly. For Ex. PADD followed by VLADA, in
-    // such case PADD should be mapped to slot B.
-    //
-    // One way would be to dynamically keep track of the slots each
-    // sub-instruction can be materialized into.
-    // Bundle { PADD(A/B/S) }
-    //   --> canAdd(VST) = true
-    //   --> add(VST) becomes:
-    // Bundle { PADD(A/B), VST }
-    //   --> canAdd(LDB) = true
-    //   --> add(LDB) becomes:
-    // Bundle { PADD(A), VST, LDB }
-    for (const auto &Kind : SupportedSlots) {
-      SlotBits NewSlots = FormatInterface->getSlotInfo(Kind)->getSlotSet();
-      if (OccupiedSlots & NewSlots) {
-        continue;
-      }
-      // Now search the table for a matching format
-      if (FormatInterface->getPacketFormats().getFormat(
-              SlotBits(OccupiedSlots | NewSlots)))
-        return Kind;
-    }
-    return {};
-  }
-
 public:
   /// Construct a bundle
   /// \param FormatInterface The architecture's interface to the formats.
   Bundle(const AIEBaseMCFormats *FormatInterface)
       : FormatInterface(FormatInterface) {}
-
-  void assignInstructionToSlot(const I *Instr, MCSlotKind Slot) {
-    assert((!SelectedSlot.count(Instr) || SelectedSlot[Instr] == Slot) &&
-           "Slot for Multi-Slot instr is already selected");
-    SelectedSlot[Instr] = Slot;
-  }
 
   template <class II> bool isPostRA(II *) const { return true; }
 
@@ -126,14 +81,23 @@ public:
     if (isStandalone())
       return false;
 
-    auto Found = findFreeSlot(InstOpCode);
-    return Found.has_value();
+    // Instructions with no format/slot cannot be added in a non-empty Bundle.
+    if (!FormatInterface->isSupportedInstruction(InstOpCode))
+      return false;
+
+    // Veryfy there is a format that can accomodate the new slots
+    MCSlotKind Slot = FormatInterface->getSlotKind(InstOpCode);
+    assert(Slot != MCSlotKind());
+    SlotBits NewSlots = FormatInterface->getSlotInfo(Slot)->getSlotSet();
+    return (OccupiedSlots & NewSlots) == 0 &&
+           FormatInterface->getPacketFormats().getFormat(OccupiedSlots |
+                                                         NewSlots);
   }
 
   /// Add an instruction to the bundle
   /// \param Instr Instruction to add
   /// \pre canAdd(Instr);
-  void add(I *Instr) {
+  void add(I *Instr, std::optional<MCSlotKind> SelectedSlot = std::nullopt) {
     if (isMetaInstruction(Instr->getOpcode())) {
       MetaInstrs.push_back(Instr);
       return;
@@ -156,9 +120,9 @@ public:
 
     MCSlotKind FinalSlot;
     if (SupportedSlots.size() > 1) {
-      assert(SelectedSlot.count(Instr) &&
+      assert(SelectedSlot.has_value() &&
              "Expected a slot for Multi-Slot Instr");
-      FinalSlot = SelectedSlot[Instr];
+      FinalSlot = *SelectedSlot;
     } else {
       FinalSlot = SupportedSlots.front();
     }
@@ -167,8 +131,6 @@ public:
     assert(!(OccupiedSlots & NewSlots) && "Selected slot already occupied");
     SlotMap[FinalSlot] = Instr;
     OccupiedSlots |= NewSlots;
-
-    SelectedSlot.clear();
   }
 
   /// Expand multi-slot pseudo instruction in the Bundle.
@@ -200,7 +162,6 @@ public:
     Instrs.clear();
     MetaInstrs.clear();
     SlotMap.clear();
-    SelectedSlot.clear();
   }
 
   /// Check if empty
@@ -216,17 +177,6 @@ public:
       return nullptr;
     }
     return Found->second;
-  }
-
-  /// Find the slot a given Instruction was assigned to.
-  /// Returns nullopt if \p Instr isn't in the Bundle.
-  std::optional<MCSlotKind> findSlotForInstr(I *Instr) const {
-    auto It = find_if(SlotMap,
-                      [Instr](const std::pair<MCSlotKind, I *> &SlotAndInstr) {
-                        return Instr == SlotAndInstr.second;
-                      });
-    return It != SlotMap.end() ? std::optional<MCSlotKind>(It->first)
-                               : std::nullopt;
   }
 
   /// Read only access to the contained instructions

@@ -110,23 +110,25 @@ bool AIEResourceCycle::canReserveResources(MachineInstr &MI) {
   if (!AlternateInsts)
     return Bundle.canAdd(&MI);
 
-  unsigned int AltInstsCount = AlternateInsts->size();
-  if (AltInstsCount == 1)
-    return Bundle.canAdd(MI.getOpcode());
-
-  // Identify the first best slot that creates a valid VLIW instruction
-  for (const auto AltInstOpcode : *AlternateInsts) {
-    if (!Bundle.canAdd(AltInstOpcode))
-      continue;
-    MCSlotKind SelectedSlot =
-        Bundle.FormatInterface->getSlotKind(AltInstOpcode);
-    Bundle.assignInstructionToSlot(&MI, SelectedSlot);
-    return true;
-  }
-  return false;
+  return any_of(*AlternateInsts,
+                [&](unsigned AltOpcode) { return Bundle.canAdd(AltOpcode); });
 }
 
-void AIEResourceCycle::reserveResources(MachineInstr &MI) { Bundle.add(&MI); }
+void AIEResourceCycle::reserveResources(MachineInstr &MI) {
+  const std::vector<unsigned int> *AlternateInsts =
+      Bundle.FormatInterface->getAlternateInstsOpcode(MI.getOpcode());
+
+  if (!AlternateInsts)
+    return Bundle.add(&MI);
+
+  for (unsigned AltOpcode : *AlternateInsts) {
+    if (Bundle.canAdd(AltOpcode)) {
+      MCSlotKind SelectedSlot = Bundle.FormatInterface->getSlotKind(AltOpcode);
+      return Bundle.add(&MI, SelectedSlot);
+    }
+  }
+  llvm_unreachable("No alternative opcode can reserve resources");
+}
 
 // issue-limit:
 // Setting it to one will generate sequential code.
@@ -238,6 +240,7 @@ void AIEHazardRecognizer::Reset() {
   }
   ReservedCycles = 0;
   Scoreboard.reset();
+  SelectedAltOpcodes.clear();
 }
 
 ScheduleHazardRecognizer::HazardType
@@ -280,12 +283,7 @@ AIEHazardRecognizer::getHazardType(SUnit *SU, int DeltaCycles) {
       // Check if there is NoHazard, If there is a Hazard or NoopHazard check
       // for the next possible Opcode.
       if (Haz == NoHazard) {
-        // TODO : Keep a track of possible slot a given multi-slot can be mapped
-        // to. This information should be used in future work to improve the
-        // slot materialization.
-        MCSlotKind SelectedSlot =
-            CurrentBundle.FormatInterface->getSlotKind(AltInstOpcode);
-        CurrentBundle.assignInstructionToSlot(MI, SelectedSlot);
+        SelectedAltOpcodes[MI] = AltInstOpcode;
         return NoHazard;
       }
     }
@@ -351,37 +349,28 @@ void AIEHazardRecognizer::EmitInstruction(SUnit *SU) {
 
 void AIEHazardRecognizer::EmitInstruction(SUnit *SU, int DeltaCycles) {
   assert(DeltaCycles == 0);
-  LLVM_DEBUG(dbgs() << "Emit Instruction\n");
   MachineInstr *MI = SU->getInstr();
-  CurrentBundle.add(MI);
-  if (TII->isZeroCost(MI->getOpcode())) {
-    return;
-  }
+  LLVM_DEBUG(dbgs() << "Emit Instruction: " << *MI);
 
-  // Expand bundles having multi-slot pseudo instruction to real target
-  // instruction based on the slot to which multi-slot pseudo instruction is
-  // mapped.
-  // We need to do this early so that we reserve the right resources timely,
-  // to avoid any kind of data hazard
-  if (CurrentBundle.isPostRA(MI)) {
-    CurrentBundle.materializePseudos();
-    emitInScoreboard(MI->getDesc().getSchedClass(), DeltaCycles, std::nullopt);
-  } else if (!CurrentBundle.FormatInterface->hasMultipleSlotOptions(
-                 MI->getOpcode())) {
+  std::optional<int> FUDepthLimit;
+  if (!CurrentBundle.isPostRA(MI))
+    FUDepthLimit = PreRAFuncUnitDepth;
+
+  if (!CurrentBundle.FormatInterface->hasMultipleSlotOptions(MI->getOpcode())) {
     // Default case: Instruction is "final" and does not have multiple
     // "materialization options".
-    emitInScoreboard(MI->getDesc().getSchedClass(), DeltaCycles,
-                     PreRAFuncUnitDepth);
-  } else if (std::optional<MCSlotKind> SelectedSlot =
-                 CurrentBundle.findSlotForInstr(MI)) {
+    CurrentBundle.add(MI);
+    emitInScoreboard(MI->getDesc().getSchedClass(), DeltaCycles, FUDepthLimit);
+  } else {
     // If the instruction has multiple options, find its assigned slot and
     // derive the opcode to use to update the scoreboard.
-    if (std::optional<unsigned> Opcode =
-            CurrentBundle.FormatInterface->getMaterializableOpcodeForSlot(
-                MI->getOpcode(), *SelectedSlot)) {
-      emitInScoreboard(TII->get(Opcode.value()).getSchedClass(), DeltaCycles,
-                       PreRAFuncUnitDepth);
-    }
+    unsigned SelectedOpcode = SelectedAltOpcodes[MI];
+    MCSlotKind SelectedSlot =
+        CurrentBundle.FormatInterface->getSlotKind(SelectedOpcode);
+    assert(SelectedSlot != MCSlotKind());
+    CurrentBundle.add(MI, SelectedSlot);
+    emitInScoreboard(TII->get(SelectedOpcode).getSchedClass(), DeltaCycles,
+                     FUDepthLimit);
   }
 
   // When requested, we switch off VLIW scheduling after the specified number
