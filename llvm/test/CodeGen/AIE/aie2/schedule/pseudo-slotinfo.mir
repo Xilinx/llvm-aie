@@ -5,14 +5,11 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -march=aie2 --issue-limit=8 --enable-misched=1 -run-pass=machine-scheduler -run-pass=postmisched %s -o - | FileCheck %s
+# RUN: llc -march=aie2 -run-pass=postmisched %s -o - | FileCheck %s
 
-# The test check if the AIE2GenFormats.inc contains slot info of Pseudo,
-# and it can use the information to bundle in a same VLIW test.
-#
-# This test checks for PADD pseudo instruction since those can be materialized to Slot A and B,
-# we should see a bundle with two PADD instruction.
-
+# This tests how instructions with multiple slot alternatives are scheduled
+# by the post-RA scheduler. Those should also be "materialized" into "fixed-slot"
+# instructions as a consequence.
 
 ---
 name:            load_padd
@@ -23,8 +20,10 @@ body:             |
     ; CHECK: $r6 = LDA_dms_lda_idx_imm $p1, 4 {
     ; CHECK-NEXT:   $p1 = PADDB_ldb_ptr_inc_nospill_nrm killed $p1, killed $m1
     ; CHECK-NEXT: }
-    ; CHECK-NEXT: $wl1 = VLDB_dmw_ldb_ag_idx_imm killed $p1, 0
-    ; CHECK-NEXT: $p2 = PADDB_ldb_ptr_inc_nospill_nrm killed $p2, killed $m2
+    ; CHECK-NEXT: $p2 = PADDA_lda_ptr_inc_idx $p2, $m2 {
+    ; CHECK-NEXT:   $wl1 = VLDB_dmw_ldb_ag_idx_imm killed $p1, 0
+    ; CHECK-NEXT: }
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
@@ -59,13 +58,13 @@ body:             |
   bb.0 (align 16):
     ; $p0 = PADD_imm_pseudo $p0, 4
     ; CHECK-LABEL: name: padd_imm
-    ; CHECK: $p1 = PADDB_ldb_ptr_inc_nrm_imm killed $p1, -4
-    ; CHECK-NEXT: $p1 = PADDA_lda_ptr_inc_idx_imm $p1, 100 {
-    ; CHECK-NEXT:   $p3 = PADDB_ldb_ptr_inc_nrm_imm killed $p3, 1020
+    ; CHECK: $p3 = PADDA_lda_ptr_inc_idx_imm $p3, 1020 {
+    ; CHECK-NEXT:   $p1 = PADDB_ldb_ptr_inc_nrm_imm killed $p1, -4
     ; CHECK-NEXT: }
-    ; CHECK-NEXT: $p1 = PADDA_lda_ptr_inc_idx_imm $p1, -100 {
-    ; CHECK-NEXT:   $p2 = PADDB_ldb_ptr_inc_nrm_imm killed $p2, 1020
+    ; CHECK-NEXT: $p2 = PADDA_lda_ptr_inc_idx_imm $p2, 1020 {
+    ; CHECK-NEXT:   $p1 = PADDB_ldb_ptr_inc_nrm_imm killed $p1, 100
     ; CHECK-NEXT: }
+    ; CHECK-NEXT: $p1 = PADDB_ldb_ptr_inc_nrm_imm killed $p1, -100
     $p1 = PADD_imm_pseudo $p1, -4
     $p1 = PADD_imm_pseudo $p1, 100
     $p3 = PADD_imm_pseudo $p3, 1020
@@ -93,15 +92,29 @@ body:             |
     PADD_sp_imm_pseudo 65504, implicit-def $sp, implicit $sp
 ...
 
+# Schedule two PADD where one is pre-selected as PADDB
 ---
-name:            negative_padd
+name:            padd_forced_b
 alignment:       16
 body:             |
   bb.0 (align 16):
-    ; CHECK-LABEL: name: negative_padd
+    ; CHECK-LABEL: name: padd_forced_b
+    ; CHECK: $p1 = PADDB_ldb_ptr_inc_nospill_nrm killed $p1, killed $m1
+    ; CHECK-NEXT: PADDB_sp_imm 32, implicit-def $sp, implicit $sp
+    $p1 = PADD_mod_pseudo $p1, $m1
+    PADDB_sp_imm 32, implicit-def $sp, implicit $sp
+...
+
+# Same as above but the instruction order is reversed
+---
+name:            padd_forced_b_reversed
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; CHECK-LABEL: name: padd_forced_b_reversed
     ; CHECK: $p1 = PADDA_lda_ptr_inc_idx $p1, $m1 {
     ; CHECK-NEXT:   PADDB_sp_imm 32, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: }
-    $p1 = PADD_mod_pseudo $p1, $m1
     PADDB_sp_imm 32, implicit-def $sp, implicit $sp
+    $p1 = PADD_mod_pseudo $p1, $m1
 ...
