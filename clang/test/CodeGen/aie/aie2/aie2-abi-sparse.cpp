@@ -28,16 +28,16 @@ sparsity_t ret_sparsity_t(void) { return {}; }
 // CHECK-SAME: (i128 noundef [[TMP0:%.*]]) #[[ATTR0:[0-9]+]] {
 void pass_sparsity_t(sparsity_t) {}
 
-// CHECK-LABEL: define {{[^@]*}}void @ret_v128int8_sparse
-// CHECK-SAME: (ptr noalias sret([[STRUCT_V128INT8_SPARSE:%.*]]) align 16 [[AGG_RESULT:%.*]]) #[[ATTR0:[0-9]+]] {
+// CHECK-LABEL: define {{[^@]*}}%struct.v128int8_sparse @ret_v128int8_sparse
+// CHECK-SAME: () #[[ATTR0:[0-9]+]] {
 v128int8_sparse ret_v128int8_sparse(void) { return {}; }
 
 // CHECK-LABEL: define {{[^@]*}}void @pass_v128int8_sparse
 // CHECK-SAME: ([[STRUCT_V128INT8_SPARSE:%.*]] [[DOTCOERCE:%.*]]) #[[ATTR0:[0-9]+]] {
 void pass_v128int8_sparse(v128int8_sparse) {}
 
-// CHECK-LABEL: define {{[^@]*}}void @ret_v128uint8_sparse
-// CHECK-SAME: (ptr noalias sret([[STRUCT_V128UINT8_SPARSE:%.*]]) align 16 [[AGG_RESULT:%.*]]) #[[ATTR0:[0-9]+]] {
+// CHECK-LABEL: define {{[^@]*}}%struct.v128uint8_sparse @ret_v128uint8_sparse
+// CHECK-SAME: () #[[ATTR0:[0-9]+]] {
 v128uint8_sparse ret_v128uint8_sparse(void) { return {}; }
 
 // CHECK-LABEL: define {{[^@]*}}void @pass_v128uint8_sparse
@@ -45,16 +45,16 @@ v128uint8_sparse ret_v128uint8_sparse(void) { return {}; }
 void pass_v128uint8_sparse(v128uint8_sparse) {}
 
 
-// CHECK-LABEL: define {{[^@]*}}void @ret_v256int4_sparse
-// CHECK-SAME: (ptr noalias sret([[STRUCT_V256INT4_SPARSE:%.*]]) align 16 [[AGG_RESULT:%.*]]) #[[ATTR0:[0-9]+]] {
+// CHECK-LABEL: define {{[^@]*}}%struct.v256int4_sparse @ret_v256int4_sparse
+// CHECK-SAME: () #[[ATTR0:[0-9]+]] {
 v256int4_sparse ret_v256int4_sparse(void) { return {}; }
 
 // CHECK-LABEL: define {{[^@]*}}void @pass_v256int4_sparse
 // CHECK-SAME: ([[STRUCT_V256INT4_SPARSE:%.*]] [[DOTCOERCE:%.*]]) #[[ATTR0:[0-9]+]] {
 void pass_v256int4_sparse(v256int4_sparse) {}
 
-// CHECK-LABEL: define {{[^@]*}}void @ret_v256uint4_sparse
-// CHECK-SAME: (ptr noalias sret([[STRUCT_V256UINT4_SPARSE:%.*]]) align 16 [[AGG_RESULT:%.*]]) #[[ATTR0:[0-9]+]] {
+// CHECK-LABEL: define {{[^@]*}}%struct.v256uint4_sparse @ret_v256uint4_sparse
+// CHECK-SAME: () #[[ATTR0:[0-9]+]] {
 v256uint4_sparse ret_v256uint4_sparse(void) { return {}; }
 
 // CHECK-LABEL: define {{[^@]*}}void @pass_v256uint4_sparse
@@ -62,28 +62,27 @@ v256uint4_sparse ret_v256uint4_sparse(void) { return {}; }
 void pass_v256uint4_sparse(v256uint4_sparse) {}
 
 
-// CHECK-LABEL: define {{[^@]*}}void @ret_v64int16_sparse
-// CHECK-SAME: (ptr noalias sret([[STRUCT_V64INT16_SPARSE:%.*]]) align 16 [[AGG_RESULT:%.*]]) #[[ATTR0:[0-9]+]] {
+// CHECK-LABEL: define {{[^@]*}}%struct.v64int16_sparse @ret_v64int16_sparse
+// CHECK-SAME: () #[[ATTR0:[0-9]+]] {
 v64int16_sparse ret_v64int16_sparse(void) { return {}; }
 
 // CHECK-LABEL: define {{[^@]*}}void @pass_v64int16_sparse
 // CHECK-SAME: ([[STRUCT_V64INT16_SPARSE:%.*]] [[DOTCOERCE:%.*]]) #[[ATTR0:[0-9]+]] {
 void pass_v64int16_sparse(v64int16_sparse) {}
 
-// CHECK-LABEL: define {{[^@]*}}void @ret_v64uint16_sparse
-// CHECK-SAME: (ptr noalias sret([[STRUCT_V64UINT16_SPARSE:%.*]]) align 16 [[AGG_RESULT:%.*]]) #[[ATTR0:[0-9]+]] {
+// CHECK-LABEL: define {{[^@]*}}%struct.v64uint16_sparse @ret_v64uint16_sparse
+// CHECK-SAME: () #[[ATTR0:[0-9]+]] {
 v64uint16_sparse ret_v64uint16_sparse(void) { return {}; }
 
 // CHECK-LABEL: define {{[^@]*}}void @pass_v64uint16_sparse
 // CHECK-SAME: ([[STRUCT_V64UINT16_SPARSE:%.*]] [[DOTCOERCE:%.*]]) #[[ATTR0:[0-9]+]] {
 void pass_v64uint16_sparse(v64uint16_sparse) {}
 
-// CHECK-LABEL: define {{[^@]*}}void @ret_v64bfloat16_sparse
-// CHECK-SAME: (ptr noalias sret([[STRUCT_V64BFLOAT16_SPARSE:%.*]]) align 16 [[AGG_RESULT:%.*]]) #[[ATTR0:[0-9]+]] {
+// CHECK-LABEL: define {{[^@]*}}%struct.v64bfloat16_sparse @ret_v64bfloat16_sparse
+// CHECK-SAME: () #[[ATTR0:[0-9]+]] {
 v64bfloat16_sparse ret_v64bfloat16_sparse(void) { return {}; }
 
 // CHECK-LABEL: define {{[^@]*}}void @pass_v64bfloat16_sparse
 // CHECK-SAME: ([[STRUCT_V64BFLOAT16_SPARSE:%.*]] [[DOTCOERCE:%.*]]) #[[ATTR0:[0-9]+]] {
 void pass_v64bfloat16_sparse(v64bfloat16_sparse) {}
-
 }
