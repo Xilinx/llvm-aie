@@ -97,7 +97,7 @@ public:
   /// Add an instruction to the bundle
   /// \param Instr Instruction to add
   /// \pre canAdd(Instr);
-  void add(I *Instr, std::optional<MCSlotKind> SelectedSlot = std::nullopt) {
+  void add(I *Instr, std::optional<unsigned> SelectedOpcode = std::nullopt) {
     if (isMetaInstruction(Instr->getOpcode())) {
       MetaInstrs.push_back(Instr);
       return;
@@ -106,45 +106,20 @@ public:
     assert(!isStandalone() &&
            "Tried to add an instruction in a standalone Bundle");
 
-    std::vector<MCSlotKind> SupportedSlots =
-        FormatInterface->getSlotAlternatives(Instr->getOpcode());
     Instrs.push_back(Instr);
 
-    if (SupportedSlots.empty()) {
-      // The bundle must contain only the newly added unknown instruction,
-      // otherwise it contradicts the pre-condition.
+    MCSlotKind FinalSlot = FormatInterface->getSlotKind(
+        SelectedOpcode ? *SelectedOpcode : Instr->getOpcode());
+    if (FinalSlot == MCSlotKind()) {
       assert(Instrs.size() == 1 &&
              "Tried to add an unknown slot instruction in a valid Bundle");
       return;
-    }
-
-    MCSlotKind FinalSlot;
-    if (SupportedSlots.size() > 1) {
-      assert(SelectedSlot.has_value() &&
-             "Expected a slot for Multi-Slot Instr");
-      FinalSlot = *SelectedSlot;
-    } else {
-      FinalSlot = SupportedSlots.front();
     }
 
     SlotBits NewSlots = FormatInterface->getSlotInfo(FinalSlot)->getSlotSet();
     assert(!(OccupiedSlots & NewSlots) && "Selected slot already occupied");
     SlotMap[FinalSlot] = Instr;
     OccupiedSlots |= NewSlots;
-  }
-
-  /// Expand multi-slot pseudo instruction in the Bundle.
-  /// This is expected to be called after the final scheduling.
-  void materializePseudos() {
-    for (auto &[Slot, MI] : SlotMap) {
-      if (const auto Opcode = FormatInterface->getMaterializableOpcodeForSlot(
-              MI->getOpcode(), Slot)) {
-        MachineFunction *MF = MI->getParent()->getParent();
-        const auto *TII = static_cast<const AIEBaseInstrInfo *>(
-            MF->getSubtarget().getInstrInfo());
-        MI->setDesc(TII->get(Opcode.value()));
-      }
-    }
   }
 
   /// return the minimum size valid format for this bundle, if any
@@ -197,9 +172,8 @@ public:
   /// NOTE: if this flag is set, then OccupiedSlots and SlotMap have no
   /// meaning.
   bool isStandalone() const {
-    return Instrs.size() == 1 &&
-           ((FormatInterface->getSlotAlternatives(Instrs.front()->getOpcode()))
-                .empty());
+    return Instrs.size() == 1 && !FormatInterface->isSupportedInstruction(
+                                     Instrs.front()->getOpcode());
   }
 
   bool isMetaInstruction(unsigned Opcode) const {

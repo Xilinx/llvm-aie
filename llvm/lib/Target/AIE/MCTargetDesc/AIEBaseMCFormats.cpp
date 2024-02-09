@@ -74,33 +74,6 @@ bool AIEBaseMCFormats::isSupportedInstruction(unsigned int Opcode) const {
   return getFormatDescIndex(Opcode) ? true : false;
 }
 
-bool AIEBaseMCFormats::hasMultipleSlotOptions(unsigned Opcode) const {
-  const std::vector<unsigned int> *AlternateInsts =
-      getAlternateInstsOpcode(Opcode);
-  if (AlternateInsts)
-    return (AlternateInsts->size() > 1);
-  else
-    return false;
-}
-
-std::optional<const unsigned>
-AIEBaseMCFormats::getMaterializableOpcodeForSlot(unsigned int Opcode,
-                                                 MCSlotKind TargetSlot) const {
-  const std::vector<unsigned int> *AlternateInsts =
-      getAlternateInstsOpcode(Opcode);
-  if (AlternateInsts) {
-    // Find the Opcode from possible AlternateInstsOpcode set which matches
-    // the slot.
-    for (const auto AltInstOpcode : *AlternateInsts) {
-      if (getSlotKind(AltInstOpcode) == TargetSlot) {
-        return AltInstOpcode;
-      }
-    }
-  }
-
-  return std::nullopt;
-}
-
 const MCSlotKind AIEBaseMCFormats::getSlotKind(unsigned int Opcode) const {
   // First, we check that the instruction has a format defined.
   // Some KILLs instructions are still in the pipeline for example...
@@ -110,45 +83,6 @@ const MCSlotKind AIEBaseMCFormats::getSlotKind(unsigned int Opcode) const {
   // Then we retrieve the format.
   const AIEInstFormat &SIF = getSubInstFormat(Opcode);
   return SIF.getSlot();
-}
-
-const std::vector<MCSlotKind>
-AIEBaseMCFormats::getSlotAlternatives(unsigned int Opcode) const {
-  // First, we check that the instruction has a format defined.
-  // Some KILLs instructions are still in the pipeline for example...
-  if (!isSupportedInstruction(Opcode)) {
-    // (No known valid slot for given Opcode)
-    return {};
-  }
-
-  std::vector<MCSlotKind> Slots;
-  const std::vector<unsigned int> *AlternateInsts =
-      getAlternateInstsOpcode(Opcode);
-  if (AlternateInsts) {
-    for (const auto AltInstOpcode : *AlternateInsts) {
-      const MCSlotKind Slot = getSlotKind(AltInstOpcode);
-      if (Slot != MCSlotKind())
-        Slots.push_back(Slot);
-      else {
-        LLVM_DEBUG(
-            dbgs() << "Unsupported instruction: " << Opcode << "\n"
-                   << "please verify that it isn't Pseudo/GenericOpCode\n");
-        llvm_unreachable("Unknown Slot for Multi-Slot Pseudo");
-      }
-    }
-  } else {
-    const MCSlotKind Slot = getSlotKind(Opcode);
-    if (Slot != MCSlotKind())
-      Slots.push_back(Slot);
-    else {
-      LLVM_DEBUG(
-          dbgs()
-          << "Unsupported instruction: " << Opcode << "\n"
-          << "please verify that it isn't Multi-Slot/Pseudo/GenericOpCode\n");
-      llvm_unreachable("Unknown Slot could be Pseudo/Generic Opcode");
-    }
-  }
-  return Slots;
 }
 
 } // end namespace llvm

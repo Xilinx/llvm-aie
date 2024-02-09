@@ -379,9 +379,6 @@ public:
   /// the table for this particular instruction).
   virtual bool isSupportedInstruction(unsigned int Opcode) const;
 
-  /// Returns true if the instruction is a MultiSlotPseudo instruction
-  virtual bool hasMultipleSlotOptions(unsigned Opcode) const;
-
   /// Returns Format Description, index based on the opcode.
   virtual std::optional<unsigned int>
   getFormatDescIndex(unsigned int Opcode) const = 0;
@@ -390,12 +387,6 @@ public:
   /// unsupported opcode it returns an empty set
   virtual const std::vector<unsigned int> *
   getAlternateInstsOpcode(unsigned int Opcode) const = 0;
-
-  /// Based on the Opcode and TargetSlot return the real instructions.
-  /// The Opcode is expected to be of Multi-Slot Pseudo instruction.
-  std::optional<const unsigned>
-  getMaterializableOpcodeForSlot(unsigned int Opcode,
-                                 MCSlotKind TargetSlot) const;
 
   /// Retrieve directly the Packet Format, based on the opcode.
   /// \pre isPacket()
@@ -406,9 +397,6 @@ public:
   const AIEInstFormat &getSubInstFormat(unsigned int Opcode) const;
 
   virtual const MCSlotKind getSlotKind(unsigned int Opcode) const;
-
-  virtual const std::vector<MCSlotKind>
-  getSlotAlternatives(unsigned int Opcode) const;
 
   virtual const MCSlotInfo *getSlotInfo(const MCSlotKind Kind) const = 0;
 

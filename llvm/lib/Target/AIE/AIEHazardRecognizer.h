@@ -134,6 +134,10 @@ public:
   // Dump the scoreboard
   void dumpScoreboard() const;
 
+  /// For instructions with multiple "alternative opcodes", this will return
+  /// the opcode selected during scheduling.
+  std::optional<unsigned> getSelectedAltOpcode(MachineInstr *MI) const;
+
 protected:
   ScheduleHazardRecognizer::HazardType
   getHazardType(unsigned SchedClass, int DeltaCycles,
