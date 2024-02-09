@@ -92,6 +92,38 @@ unsigned AIE2TargetLowering::getNumRegistersForCallingConv(LLVMContext &Context,
   return TargetLowering::getNumRegistersForCallingConv(Context, CC, VT);
 }
 
+// Returns true if type name matches with a sparse type name
+bool isTyNameSparse(StringRef TyName) {
+  if (TyName.ends_with("struct.v128int8_sparse"))
+    return true;
+  else if (TyName.ends_with("struct.v128uint8_sparse"))
+    return true;
+  else if (TyName.ends_with("struct.v256int4_sparse"))
+    return true;
+  else if (TyName.ends_with("struct.v256uint4_sparse"))
+    return true;
+  else if (TyName.ends_with("struct.v64int16_sparse"))
+    return true;
+  else if (TyName.ends_with("struct.v64uint16_sparse"))
+    return true;
+  else if (TyName.ends_with("struct.v64bfloat16_sparse"))
+    return true;
+  else
+    return false;
+}
+
+bool AIE2TargetLowering::functionArgumentNeedsConsecutiveRegisters(
+    Type *Ty, CallingConv::ID CallConv, bool isVarArg,
+    const DataLayout &DL) const {
+  StructType *STy = dyn_cast<StructType>(Ty);
+  if (!STy || STy->isLiteral())
+    return false;
+  if (isTyNameSparse(STy->getName())) {
+    return true;
+  }
+  return false;
+}
+
 TargetLoweringBase::LegalizeTypeAction
 AIE2TargetLowering::getPreferredVectorAction(MVT VT) const {
   return TypeWidenVector;
