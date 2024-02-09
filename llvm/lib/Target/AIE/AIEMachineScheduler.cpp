@@ -353,6 +353,7 @@ void AIEPostRASchedStrategy::enterRegion(MachineBasicBlock *BB,
 
 void AIEPostRASchedStrategy::leaveRegion(const SUnit &ExitSU) {
   LLVM_DEBUG(dbgs() << "Leave Region\n");
+  materializeMultiOpcodeInstrs();
   finalizeCurrentBundle(Top);
   finalizeCurrentBundle(Bot);
   handleRegionConflicts(ExitSU);
@@ -361,6 +362,27 @@ void AIEPostRASchedStrategy::leaveRegion(const SUnit &ExitSU) {
   RegionBegin = nullptr;
   RegionEnd = nullptr;
   IsBottomRegion = false;
+}
+
+void AIEPostRASchedStrategy::materializeMultiOpcodeInstrs() {
+  const TargetInstrInfo *TII = getTII(CurMBB);
+  const AIEHazardRecognizer &TopHazardRec = *getAIEHazardRecognizer(Top);
+  const AIEHazardRecognizer &BotHazardRec = *getAIEHazardRecognizer(Bot);
+
+  auto MaterializePseudo = [&TII](MachineInstr &MI,
+                                  const AIEHazardRecognizer &HazardRec) {
+    // Materialize instructions with multiple opcode options
+    if (std::optional<unsigned> AltOpcode =
+            HazardRec.getSelectedAltOpcode(&MI)) {
+      MI.setDesc(TII->get(*AltOpcode));
+    }
+  };
+
+  assert(DAG->top() == DAG->bottom());
+  for (MachineInstr &MI : make_range(DAG->begin(), DAG->top()))
+    MaterializePseudo(MI, TopHazardRec);
+  for (MachineInstr &MI : make_range(DAG->bottom(), DAG->end()))
+    MaterializePseudo(MI, BotHazardRec);
 }
 
 bool AIEPostRASchedStrategy::checkInterZoneConflicts() const {
@@ -442,7 +464,6 @@ void AIEPostRASchedStrategy::leaveSchedulingZone(SchedBoundary &Zone) {
       TII->insertNoop(*CurMBB, It);
       continue;
     }
-    Bundle.materializePseudos();
     It = std::next(Bundle.getInstrs().back()->getIterator());
   }
 

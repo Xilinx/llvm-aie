@@ -123,8 +123,7 @@ void AIEResourceCycle::reserveResources(MachineInstr &MI) {
 
   for (unsigned AltOpcode : *AlternateInsts) {
     if (Bundle.canAdd(AltOpcode)) {
-      MCSlotKind SelectedSlot = Bundle.FormatInterface->getSlotKind(AltOpcode);
-      return Bundle.add(&MI, SelectedSlot);
+      return Bundle.add(&MI, AltOpcode);
     }
   }
   llvm_unreachable("No alternative opcode can reserve resources");
@@ -356,22 +355,12 @@ void AIEHazardRecognizer::EmitInstruction(SUnit *SU, int DeltaCycles) {
   if (!CurrentBundle.isPostRA(MI))
     FUDepthLimit = PreRAFuncUnitDepth;
 
-  if (!CurrentBundle.FormatInterface->hasMultipleSlotOptions(MI->getOpcode())) {
-    // Default case: Instruction is "final" and does not have multiple
-    // "materialization options".
-    CurrentBundle.add(MI);
-    emitInScoreboard(MI->getDesc().getSchedClass(), DeltaCycles, FUDepthLimit);
-  } else {
-    // If the instruction has multiple options, find its assigned slot and
-    // derive the opcode to use to update the scoreboard.
-    unsigned SelectedOpcode = SelectedAltOpcodes[MI];
-    MCSlotKind SelectedSlot =
-        CurrentBundle.FormatInterface->getSlotKind(SelectedOpcode);
-    assert(SelectedSlot != MCSlotKind());
-    CurrentBundle.add(MI, SelectedSlot);
-    emitInScoreboard(TII->get(SelectedOpcode).getSchedClass(), DeltaCycles,
-                     FUDepthLimit);
-  }
+  // If the instruction has multiple options, find the opcode that was selected
+  // and use the latter to update the scoreboard.
+  unsigned SelectedOpcode = getSelectedAltOpcode(MI).value_or(MI->getOpcode());
+  CurrentBundle.add(MI, SelectedOpcode);
+  emitInScoreboard(TII->get(SelectedOpcode).getSchedClass(), DeltaCycles,
+                   FUDepthLimit);
 
   // When requested, we switch off VLIW scheduling after the specified number
   // of instructions are scheduled.
@@ -482,4 +471,11 @@ unsigned AIEHazardRecognizer::computeScoreboardDepth() const {
     ScoreboardDepth *= 2;
   }
   return ScoreboardDepth;
+}
+
+std::optional<unsigned>
+AIEHazardRecognizer::getSelectedAltOpcode(MachineInstr *MI) const {
+  if (auto It = SelectedAltOpcodes.find(MI); It != SelectedAltOpcodes.end())
+    return It->second;
+  return std::nullopt;
 }

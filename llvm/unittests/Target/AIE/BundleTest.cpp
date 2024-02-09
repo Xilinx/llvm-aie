@@ -53,6 +53,8 @@ constexpr MCSlotInfo SlotInfos[4] = {{"ALU", 1, 0b0001, 0},
 
 // Stay clear of standard opcodes
 static const int FirstOpcode = 1000;
+static const int FirstMultiOptOpcode = FirstOpcode + 4;
+static const int FirstUnsupportedOpcode = FirstMultiOptOpcode + 1;
 class MockInstr {
 public:
   unsigned Opcode = 0;
@@ -61,11 +63,25 @@ public:
 };
 using MockBundle = AIE::Bundle<MockInstr>;
 
-class MockMCFormats : public AIEMCFormats {
+class MockMCFormats : public AIEBaseMCFormats {
   const MCSlotInfo *getSlotInfo(const MCSlotKind Kind) const override {
     return &SlotInfos[Kind];
   }
   const PacketFormats &getPacketFormats() const override { return MyFormats; }
+
+  bool isSupportedInstruction(unsigned int Opcode) const override {
+    return Opcode >= FirstOpcode && Opcode < FirstUnsupportedOpcode;
+  }
+
+  std::optional<unsigned int>
+  getFormatDescIndex(unsigned int Opcode) const override {
+    llvm_unreachable("Un-implemented");
+  }
+
+  const std::vector<unsigned int> *
+  getAlternateInstsOpcode(unsigned int Opcode) const override {
+    llvm_unreachable("Un-implemented");
+  }
 
   // Real instructions are constructed 1-1 with slotkinds
   const MCSlotKind getSlotKind(unsigned int Opcode) const override {
@@ -74,6 +90,7 @@ class MockMCFormats : public AIEMCFormats {
     case FirstOpcode + 1:
     case FirstOpcode + 2:
     case FirstOpcode + 3:
+      assert(Opcode < FirstMultiOptOpcode);
       return Opcode - FirstOpcode;
     default:
       break;
@@ -81,20 +98,8 @@ class MockMCFormats : public AIEMCFormats {
     return {};
   }
 
-  const std::vector<MCSlotKind>
-  getSlotAlternatives(unsigned int Opcode) const override {
-    std::vector<MCSlotKind> SlotKind;
-    switch (Opcode) {
-    case FirstOpcode:
-    case FirstOpcode + 1:
-    case FirstOpcode + 2:
-    case FirstOpcode + 3:
-      SlotKind.push_back(Opcode - FirstOpcode);
-      return SlotKind;
-    default:
-      break;
-    }
-    return {};
+  const MCFormatDesc *getMCFormats() const override {
+    llvm_unreachable("Un-implemented");
   }
 };
 
@@ -192,7 +197,7 @@ TEST(Bundle, Standalone) {
 
   auto *St = TII[SLOTST];
   auto *Lng = TII[SLOTLNG];
-  auto *Unknown = TII[4];
+  auto *Unknown = TII[FirstUnsupportedOpcode - FirstOpcode];
 
   // Create a standalone bundle
   EXPECT_TRUE(B.canAdd(Unknown));
@@ -265,4 +270,26 @@ TEST(Bundle, Meta) {
   B.add(Lng);
   EXPECT_TRUE(B.canAdd(St));
   B.add(St);
+}
+
+TEST(Bundle, MultiOpt) {
+  MockTII TII;
+  MockMCFormats FormatInterface;
+  MockBundle B(&FormatInterface);
+
+  unsigned StSlotOpcode = TII[SLOTST]->getOpcode();
+
+  // Add a multi-option instruction to be materialized as StSlotOpcode.
+  MockInstr *MultiOpt = TII[FirstMultiOptOpcode - FirstOpcode];
+  EXPECT_TRUE(B.canAdd(StSlotOpcode));
+  B.add(MultiOpt, StSlotOpcode);
+  EXPECT_FALSE(B.isStandalone());
+
+  // Now an instruction with the same slots will conflict.
+  EXPECT_FALSE(B.canAdd(StSlotOpcode));
+
+  // But e.g. LNG slot is still free
+  MockInstr *LngInst = TII[SLOTLNG];
+  ASSERT_TRUE(B.canAdd(LngInst));
+  B.add(LngInst);
 }

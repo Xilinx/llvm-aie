@@ -133,6 +133,10 @@ protected:
   /// Minimum number of cycles to be scheduled bottom-up in the current region.
   unsigned RegionBottomUpCycles = 0;
 
+  /// Materialize "multi-opcode" instructions into the option that was selected
+  /// at schedule time. See AIEHazardRecognizer::getSelectedAltOpcode().
+  void materializeMultiOpcodeInstrs();
+
   /// Returns true if, when "concatenated", the Top and Bot zone have resource
   /// conflicts or timing issues.
   bool checkInterZoneConflicts() const;
