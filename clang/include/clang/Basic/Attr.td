@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 // The documentation is organized by category. Attributes can have category-
@@ -426,6 +429,7 @@ class TargetSpec {
 class TargetArch<list<string> arches> : TargetSpec {
   let Arches = arches;
 }
+def TargetAIE2 : TargetArch<["aie2"]>;
 def TargetARM : TargetArch<["arm", "thumb", "armeb", "thumbeb"]>;
 def TargetAArch64 : TargetArch<["aarch64", "aarch64_be", "aarch64_32"]>;
 def TargetAnyArm : TargetArch<!listconcat(TargetARM.Arches, TargetAArch64.Arches)>;
@@ -3208,6 +3212,13 @@ def AnyX86NoCallerSavedRegisters : InheritableAttr,
   let Spellings = [GCC<"no_caller_saved_registers">];
   let Documentation = [AnyX86NoCallerSavedRegistersDocs];
   let SimpleHandler = 1;
+}
+
+def AIE2ReturnInRegisters : InheritableAttr,
+                                   TargetSpecificAttr<TargetAIE2> {
+  let Spellings = [GCC<"return_in_regs">];
+  let Subjects = SubjectList<[Record], ErrorDiag>;
+  let Documentation = [Undocumented];
 }
 
 def AnyX86NoCfCheck : DeclOrTypeAttr, TargetSpecificAttr<TargetAnyX86>{

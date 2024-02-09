@@ -41,10 +41,12 @@ ABIArgInfo AIEABIInfo::classifyReturnType(QualType RetTy) const {
 
   // Aggregates can be returned in registers if they don't exceed 16 bytes.
   // In particular: this also means that a struct of 16 chars gets returned
-  // directly.
+  // directly. An exception to this are sparse types which should be returned
+  // in registers.
   const unsigned MaxAggregateReturnSize = 128;
   if (isAggregateTypeForABI(RetTy) &&
-      getContext().getTypeSize(RetTy) > MaxAggregateReturnSize)
+      (getContext().getTypeSize(RetTy) > MaxAggregateReturnSize &&
+       !RetTy->getAsRecordDecl()->hasAttr<AIE2ReturnInRegistersAttr>()))
     return getNaturalAlignIndirect(RetTy);
 
   // Treat an enum type as its underlying type.

@@ -1,8 +1,16 @@
+// This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its
+// affiliates
+
 // RUN: clang-tblgen -gen-clang-test-pragma-attribute-supported-attributes -I%src_include_dir %src_include_dir/clang/Basic/Attr.td -o - | FileCheck %s
 
 // The number of supported attributes should never go down!
 
 // CHECK: #pragma clang attribute supports the following attributes:
+// CHECK-NEXT: AIE2ReturnInRegisters (SubjectMatchRule_record)
 // CHECK-NEXT: AMDGPUFlatWorkGroupSize (SubjectMatchRule_function)
 // CHECK-NEXT: AMDGPUNumSGPR (SubjectMatchRule_function)
 // CHECK-NEXT: AMDGPUNumVGPR (SubjectMatchRule_function)

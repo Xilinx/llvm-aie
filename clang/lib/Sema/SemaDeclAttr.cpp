@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 //  This file implements decl-related attribute processing.
@@ -2324,6 +2327,24 @@ static void handleVecReturnAttr(Sema &S, Decl *D, const ParsedAttr &AL) {
   }
 
   D->addAttr(::new (S.Context) VecReturnAttr(S.Context, AL));
+}
+
+// AIE2 specific.
+static void handleReturnInRegsAttr(Sema &S, Decl *D, const ParsedAttr &AL) {
+
+  if (AIE2ReturnInRegistersAttr *A = D->getAttr<AIE2ReturnInRegistersAttr>()) {
+    S.Diag(AL.getLoc(), diag::err_repeat_attribute) << A;
+    return;
+  }
+
+  const auto *R = cast<RecordDecl>(D);
+
+  if (!isa<RecordDecl>(R)) {
+    S.Diag(AL.getLoc(), diag::err_attribute_return_in_regs);
+    return;
+  }
+
+  D->addAttr(::new (S.Context) AIE2ReturnInRegistersAttr(S.Context, AL));
 }
 
 static void handleDependencyAttr(Sema &S, Scope *Scope, Decl *D,
@@ -9168,6 +9189,9 @@ ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D, const ParsedAttr &AL,
     break;
   case ParsedAttr::AT_VecReturn:
     handleVecReturnAttr(S, D, AL);
+    break;
+  case ParsedAttr::AT_AIE2ReturnInRegisters:
+    handleReturnInRegsAttr(S, D, AL);
     break;
   case ParsedAttr::AT_ObjCOwnership:
     handleObjCOwnershipAttr(S, D, AL);

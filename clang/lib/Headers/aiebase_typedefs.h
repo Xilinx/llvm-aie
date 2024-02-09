@@ -355,31 +355,38 @@ typedef unsigned _BitInt(128) sparsity_t __attribute__((aligned(16)));
 struct v256int4_sparse {
   v128int4 data;
   sparsity_t mask;
-} __attribute__((packed)) __attribute__((aligned(16)));
+} __attribute__((packed)) __attribute__((aligned(16)))
+__attribute__((return_in_regs));
 struct v128int8_sparse {
   v64int8 data;
   sparsity_t mask;
-} __attribute__((packed)) __attribute__((aligned(16)));
+} __attribute__((packed)) __attribute__((aligned(16)))
+__attribute__((return_in_regs));
 struct v64int16_sparse {
   v32int16 data;
   sparsity_t mask;
-} __attribute__((packed)) __attribute__((aligned(16)));
+} __attribute__((packed)) __attribute__((aligned(16)))
+__attribute__((return_in_regs));
 struct v256uint4_sparse {
   v128uint4 data;
   sparsity_t mask;
-} __attribute__((packed)) __attribute__((aligned(16)));
+} __attribute__((packed)) __attribute__((aligned(16)))
+__attribute__((return_in_regs));
 struct v128uint8_sparse {
   v64uint8 data;
   sparsity_t mask;
-} __attribute__((packed)) __attribute__((aligned(16)));
+} __attribute__((packed)) __attribute__((aligned(16)))
+__attribute__((return_in_regs));
 struct v64uint16_sparse {
   v32uint16 data;
   sparsity_t mask;
-} __attribute__((packed)) __attribute__((aligned(16)));
+} __attribute__((packed)) __attribute__((aligned(16)))
+__attribute__((return_in_regs));
 struct v64bfloat16_sparse {
   v32bfloat16 data;
   sparsity_t mask;
-} __attribute__((packed)) __attribute__((aligned(16)));
+} __attribute__((packed)) __attribute__((aligned(16)))
+__attribute__((return_in_regs));
 
 #endif //__AIEARCH__ == 20
 
