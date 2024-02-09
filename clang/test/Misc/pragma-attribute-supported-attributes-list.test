@@ -10,6 +10,7 @@
 // The number of supported attributes should never go down!
 
 // CHECK: #pragma clang attribute supports the following attributes:
+// CHECK-NEXT: AIE2IsSparse (SubjectMatchRule_record)
 // CHECK-NEXT: AIE2ReturnInRegisters (SubjectMatchRule_record)
 // CHECK-NEXT: AMDGPUFlatWorkGroupSize (SubjectMatchRule_function)
 // CHECK-NEXT: AMDGPUNumSGPR (SubjectMatchRule_function)

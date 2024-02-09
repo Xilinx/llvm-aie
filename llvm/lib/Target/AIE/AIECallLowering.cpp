@@ -81,11 +81,11 @@ struct AIEOutgoingValueHandler : public CallLowering::OutgoingValueHandler {
   Register getStackAddress(uint64_t Size, int64_t Offset,
                            MachinePointerInfo &MPO,
                            ISD::ArgFlagsTy Flags) override {
-    auto SizeInSlots =
-        alignTo(Size, AIEBaseTargetLowering::getStackArgumentAlignment());
-    assert(
-        isAligned(AIEBaseTargetLowering::getStackArgumentAlignment(), Offset) &&
-        "Stack offset is not aligned");
+    Align StackSlotAlign =
+        std::max(Flags.getNonZeroMemAlign(),
+                 AIEBaseTargetLowering::getStackArgumentAlignment());
+    auto SizeInSlots = alignTo(Size, StackSlotAlign);
+    assert(isAligned(StackSlotAlign, Offset) && "Stack offset is not aligned");
     MachineFunction &MF = MIRBuilder.getMF();
     LLT PtrTy = LLT::pointer(0, 20);
     LLT S32 = LLT::scalar(32);
@@ -292,11 +292,12 @@ struct AIEIncomingValueHandler : public CallLowering::IncomingValueHandler {
   Register getStackAddress(uint64_t Size, int64_t Offset,
                            MachinePointerInfo &MPO,
                            ISD::ArgFlagsTy Flags) override {
-    auto SizeInSlots =
-        alignTo(Size, AIEBaseTargetLowering::getStackArgumentAlignment());
-    assert(
-        isAligned(AIEBaseTargetLowering::getStackArgumentAlignment(), Offset) &&
-        "Stack offset is not aligned");
+    Align StackSlotAlign =
+        std::max(Flags.getNonZeroMemAlign(),
+                 AIEBaseTargetLowering::getStackArgumentAlignment());
+    auto SizeInSlots = alignTo(Size, StackSlotAlign);
+
+    assert(isAligned(StackSlotAlign, Offset) && "Stack offset is not aligned");
 
     auto &MFI = MIRBuilder.getMF().getFrameInfo();
 
@@ -378,7 +379,6 @@ bool AIECallLowering::lowerFormalArguments(MachineIRBuilder &MIRBuilder,
   unsigned Idx = 0;
   for (const auto &Arg : F.args()) {
     ArgInfo OrigArgInfo(VRegs[Idx], Arg.getType(), Idx);
-
     setArgFlags(OrigArgInfo, Idx + AttributeList::FirstArgIndex, DL, F);
     splitToValueTypes(OrigArgInfo, SplitArgInfos, DL, F.getCallingConv());
 

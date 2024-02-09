@@ -72,6 +72,11 @@ ABIArgInfo AIEABIInfo::classifyArgumentType(QualType Ty) const {
     if (RAA == CGCXXABI::RAA_DirectInMemory) {
       return getNaturalAlignIndirect(Ty, /*ByVal=*/true);
     }
+    // The stack alignment is set to 32 bytes for sparse types.
+    return ABIArgInfo::getDirect(
+        CGT.ConvertType(Ty), /*Offset=*/0, /*Padding=*/nullptr,
+        /*CanBeFlattened=*/false,
+        /*Align=*/Ty->getAsRecordDecl()->hasAttr<AIE2IsSparseAttr>() ? 32 : 0);
   }
 
   // Treat an enum type as its underlying type.

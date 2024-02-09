@@ -2346,6 +2346,14 @@ static void handleReturnInRegsAttr(Sema &S, Decl *D, const ParsedAttr &AL) {
 
   D->addAttr(::new (S.Context) AIE2ReturnInRegistersAttr(S.Context, AL));
 }
+static void handleIsSparseAttr(Sema &S, Decl *D, const ParsedAttr &AL) {
+
+  if (AIE2IsSparseAttr *A = D->getAttr<AIE2IsSparseAttr>()) {
+    S.Diag(AL.getLoc(), diag::err_repeat_attribute) << A;
+    return;
+  }
+  D->addAttr(::new (S.Context) AIE2IsSparseAttr(S.Context, AL));
+}
 
 static void handleDependencyAttr(Sema &S, Scope *Scope, Decl *D,
                                  const ParsedAttr &AL) {
@@ -9192,6 +9200,9 @@ ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D, const ParsedAttr &AL,
     break;
   case ParsedAttr::AT_AIE2ReturnInRegisters:
     handleReturnInRegsAttr(S, D, AL);
+    break;
+  case ParsedAttr::AT_AIE2IsSparse:
+    handleIsSparseAttr(S, D, AL);
     break;
   case ParsedAttr::AT_ObjCOwnership:
     handleObjCOwnershipAttr(S, D, AL);

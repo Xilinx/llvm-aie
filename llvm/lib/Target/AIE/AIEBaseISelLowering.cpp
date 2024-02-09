@@ -17,6 +17,7 @@
 #include "AIESubtarget.h" // For AIEBaseSubTarget
 #include "MCTargetDesc/AIE2MCTargetDesc.h"
 #include "MCTargetDesc/AIEMCTargetDesc.h"
+#include "llvm/MC/MCRegister.h"
 
 using namespace llvm;
 
@@ -116,6 +117,57 @@ static bool CC_AIE2_Handle_Split_Arg(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
   return Handle_Split_Arg(ValNo, ValVT, LocVT, LocInfo, ArgFlags, State,
                           {AIE2::r0, AIE2::r1, AIE2::r2, AIE2::r3, AIE2::r4,
                            AIE2::r5, AIE2::r6, AIE::r7});
+}
+namespace {
+const std::array<std::array<MCPhysReg, 2>, 4> SparseRegPairs = {
+    {{AIE2::x0, AIE2::q0},
+     {AIE2::x2, AIE2::q2},
+     {AIE2::x1, AIE2::q1},
+     {AIE2::x3, AIE2::q3}}};
+}
+ArrayRef<MCPhysReg> AllocateSparseRegPair(CCState &State) {
+  for (const std::array<MCPhysReg, 2> &RegPair : SparseRegPairs) {
+    if (unsigned Block = State.AllocateRegBlock(RegPair, 2))
+      return RegPair;
+  }
+  return ArrayRef<MCPhysReg>();
+}
+
+static bool CC_AIE2_SPARSE(unsigned ValNo, MVT ValVT, MVT LocVT,
+                           CCValAssign::LocInfo LocInfo,
+                           ISD::ArgFlagsTy ArgFlags, CCState &State) {
+  if (LocVT == MVT::v64i8 || LocVT == MVT::v32i16 || LocVT == MVT::v16i32 ||
+      LocVT == MVT::v32bf16 || LocVT == MVT::v16f32) {
+    // Delay assignments until we get both the x and q components of the sparse
+    // type
+    State.getPendingLocs().push_back(
+        CCValAssign::getPending(ValNo, ValVT, LocVT, LocInfo));
+    return true;
+  }
+
+  if (LocVT == MVT::i128) {
+    // Allocate both the pending X register, and the current mask register.
+    CCValAssign VecLoc = State.getPendingLocs().front();
+    State.getPendingLocs().clear();
+    auto SparseRegPair = AllocateSparseRegPair(State);
+    if (!SparseRegPair.empty()) {
+      auto VecReg = SparseRegPair.front();
+      auto MaskReg = SparseRegPair.back();
+      VecLoc.convertToReg(VecReg);
+      State.addLoc(VecLoc);
+      State.addLoc(CCValAssign::getReg(ValNo, ValVT, MaskReg, LocVT, LocInfo));
+      return true;
+    } else {
+      VecLoc.convertToMem(State.AllocateStack(64, Align(32)));
+      State.addLoc(VecLoc);
+      unsigned OffsetMask = State.AllocateStack(16, Align(32));
+      State.addLoc(
+          CCValAssign::getMem(ValNo, ValVT, OffsetMask, LocVT, LocInfo));
+      return true;
+    }
+  }
+
+  return false; // CC didn't match.
 }
 
 static bool CC_AIE_Handle_Split_Arg_Ret(unsigned &ValNo, MVT &ValVT, MVT &LocVT,

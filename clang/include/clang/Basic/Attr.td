@@ -3220,6 +3220,12 @@ def AIE2ReturnInRegisters : InheritableAttr,
   let Subjects = SubjectList<[Record], ErrorDiag>;
   let Documentation = [Undocumented];
 }
+def AIE2IsSparse : InheritableAttr,
+                                   TargetSpecificAttr<TargetAIE2> {
+  let Spellings = [GCC<"is_sparse">];
+  let Subjects = SubjectList<[Record], ErrorDiag>;
+  let Documentation = [Undocumented];
+}
 
 def AnyX86NoCfCheck : DeclOrTypeAttr, TargetSpecificAttr<TargetAnyX86>{
   let Spellings = [GCC<"nocf_check">];

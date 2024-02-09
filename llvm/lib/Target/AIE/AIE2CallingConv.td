@@ -145,6 +145,12 @@ def CC_AIE2_Stack : CallingConv<[
 ]>;
 
 def CC_AIE2 : CallingConv<[
+  // isInConsecutiveRegs flag is unset by default for all arguments. We set it
+  // for sparse arguments in AIECallLowering.cpp and detect it here to
+  // dynamically switch the calling convention.
+  CCIf<"ArgFlags.isInConsecutiveRegs()",
+       CCCustom<"CC_AIE2_SPARSE">>,
+
   // pointers are passed in registers
   CCIfType<[ptr0], AssignToPTR>,
 

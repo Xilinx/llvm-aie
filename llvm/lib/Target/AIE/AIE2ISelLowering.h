@@ -42,6 +42,10 @@ public:
   unsigned getNumRegistersForCallingConv(LLVMContext &Context,
                                          CallingConv::ID CC,
                                          EVT VT) const override;
+
+  bool functionArgumentNeedsConsecutiveRegisters(
+      Type *Ty, CallingConv::ID CallConv, bool isVarArg,
+      const DataLayout &DL) const override;
 };
 
 } // namespace llvm
