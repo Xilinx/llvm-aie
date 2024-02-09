@@ -442,6 +442,7 @@ void AIEPostRASchedStrategy::leaveSchedulingZone(SchedBoundary &Zone) {
       TII->insertNoop(*CurMBB, It);
       continue;
     }
+    Bundle.materializePseudos();
     It = std::next(Bundle.getInstrs().back()->getIterator());
   }
 

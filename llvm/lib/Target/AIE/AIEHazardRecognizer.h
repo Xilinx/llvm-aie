@@ -143,6 +143,7 @@ protected:
 
 private:
   ResourceScoreboard<FuncUnitWrapper> Scoreboard;
+  std::map<MachineInstr *, unsigned> SelectedAltOpcodes;
   const AIEBaseInstrInfo *TII;
   const InstrItineraryData *ItinData;
   static int NumInstrsScheduled;
