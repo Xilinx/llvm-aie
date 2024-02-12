@@ -46,22 +46,6 @@ static AIEHazardRecognizer *getAIEHazardRecognizer(const SchedBoundary &Zone) {
   return static_cast<AIEHazardRecognizer *>(Zone.HazardRec);
 }
 
-/// Flush any in-flight bundle in the zone's HazardRecognizer
-static void finalizeCurrentBundle(SchedBoundary &Zone) {
-  LLVM_DEBUG(Zone.dumpScheduledState());
-  AIEHazardRecognizer *HazardRec = getAIEHazardRecognizer(Zone);
-  if (!HazardRec) {
-    return;
-  }
-
-  // Finalize the current bundle, if any.
-  if (HazardRec->currentCycleHasInstr()) {
-    Zone.bumpCycle(Zone.getCurrCycle() + 1);
-    LLVM_DEBUG(dbgs() << "  Finalized Bundle. CurrentCycle="
-                      << Zone.getCurrCycle() << "\n");
-  }
-}
-
 AIEPostRASchedStrategy::AIEPostRASchedStrategy(const MachineSchedContext *C)
     : PostGenericScheduler(C), Bot(SchedBoundary::BotQID, "BotQ") {
   assert((!ForceBottomUp || !ForceTopDown) &&
@@ -77,6 +61,85 @@ namespace {
 const AIEBaseInstrInfo *getTII(MachineBasicBlock *MBB) {
   return static_cast<const AIEBaseInstrInfo *>(
       MBB->getParent()->getSubtarget().getInstrInfo());
+}
+const AIEBaseInstrInfo *getTII(const ScheduleDAGMI &DAG) {
+  return static_cast<const AIEBaseInstrInfo *>(DAG.TII);
+}
+
+void bumpCycleForBundles(unsigned ToCycle,
+                         std::vector<AIE::MachineBundle> &Bundles,
+                         AIE::MachineBundle &CurrBundle) {
+  unsigned CurrCycle = Bundles.size();
+  assert(ToCycle > CurrCycle);
+
+  auto BumpCycle = [&CurrCycle, &Bundles](const AIE::MachineBundle &NewCycle) {
+    Bundles.push_back(NewCycle);
+    ++CurrCycle;
+    LLVM_DEBUG(dbgs() << "  Bump to CurrCycle=" << CurrCycle << "\n");
+  };
+
+  // Push the CurrentBundle
+  BumpCycle(CurrBundle);
+  CurrBundle.clear();
+
+  // Push empty bundles until making ToCycle the current cycle.
+  const AIE::MachineBundle EmptyBundle(CurrBundle.FormatInterface);
+  while (ToCycle != CurrCycle) {
+    BumpCycle(EmptyBundle);
+  }
+}
+
+std::vector<AIE::MachineBundle> computeAndFinalizeBundles(SchedBoundary &Zone) {
+  LLVM_DEBUG(dbgs() << "Computing Bundles for Zone "
+                    << (Zone.isTop() ? "Top\n" : "Bot\n"));
+  const ScheduleDAGMI &DAG = *Zone.DAG;
+  std::vector<AIE::MachineBundle> Bundles;
+  AIE::MachineBundle CurrBundle(getTII(DAG)->getFormatInterface());
+
+  auto AddInBundles = [&](auto Range, const AIEHazardRecognizer &HazardRec) {
+    // Iterate over all instructions between Begin and End to create
+    // the sequence of MachineBundles.
+    for (MachineInstr &MI : Range) {
+      SUnit *SU = DAG.getSUnit(&MI);
+      if (!SU)
+        continue;
+      unsigned EmitCycle = Zone.isTop() ? SU->TopReadyCycle : SU->BotReadyCycle;
+      if (EmitCycle != Bundles.size())
+        bumpCycleForBundles(EmitCycle, Bundles, CurrBundle);
+
+      LLVM_DEBUG(dbgs() << "  Add to CurrBundle: " << MI);
+      CurrBundle.add(&MI, HazardRec.getSelectedAltOpcode(&MI));
+    }
+  };
+
+  if (Zone.isTop())
+    AddInBundles(make_range(DAG.begin(), DAG.top()),
+                 *getAIEHazardRecognizer(Zone));
+  else
+    AddInBundles(reverse(make_range(DAG.bottom(), DAG.end())),
+                 *getAIEHazardRecognizer(Zone));
+
+  // Ensure Zone.getCurrCycle() represents the number of non-empty bundles
+  if (!CurrBundle.empty()) {
+    Zone.bumpCycle(Zone.getCurrCycle() + 1);
+    LLVM_DEBUG(dbgs() << "  Finalized Bundle. CurrentCycle="
+                      << Zone.getCurrCycle() << "\n");
+  }
+
+  // Flush CurrBundle and push NOP Bundles until reaching Zone's current cycle.
+  if (Zone.getCurrCycle() != Bundles.size())
+    bumpCycleForBundles(Zone.getCurrCycle(), Bundles, CurrBundle);
+
+  // Re-order bundles and instructions within so they appear in the same order
+  // as in their parent basic block. This canonical order is required by
+  // applyBundles, and facilitates generic NOP insertion.
+  if (!Zone.isTop()) {
+    std::reverse(Bundles.begin(), Bundles.end());
+    for (AIE::MachineBundle &Bundle : Bundles) {
+      std::reverse(Bundle.Instrs.begin(), Bundle.Instrs.end());
+    }
+  }
+  return Bundles;
 }
 
 /// Search for instructions that might jump to an unknown target block
@@ -354,11 +417,11 @@ void AIEPostRASchedStrategy::enterRegion(MachineBasicBlock *BB,
 void AIEPostRASchedStrategy::leaveRegion(const SUnit &ExitSU) {
   LLVM_DEBUG(dbgs() << "Leave Region\n");
   materializeMultiOpcodeInstrs();
-  finalizeCurrentBundle(Top);
-  finalizeCurrentBundle(Bot);
-  handleRegionConflicts(ExitSU);
-  leaveSchedulingZone(Top);
-  leaveSchedulingZone(Bot);
+  std::vector<AIE::MachineBundle> TopBundles = computeAndFinalizeBundles(Top);
+  std::vector<AIE::MachineBundle> BotBundles = computeAndFinalizeBundles(Bot);
+  handleRegionConflicts(ExitSU, TopBundles, BotBundles);
+  leaveSchedulingZone(Top, TopBundles);
+  leaveSchedulingZone(Bot, BotBundles);
   RegionBegin = nullptr;
   RegionEnd = nullptr;
   IsBottomRegion = false;
@@ -385,7 +448,8 @@ void AIEPostRASchedStrategy::materializeMultiOpcodeInstrs() {
     MaterializePseudo(MI, BotHazardRec);
 }
 
-bool AIEPostRASchedStrategy::checkInterZoneConflicts() const {
+bool AIEPostRASchedStrategy::checkInterZoneConflicts(
+    const std::vector<AIE::MachineBundle> &BotBundles) const {
   const AIEHazardRecognizer *TopHazardRec = getAIEHazardRecognizer(Top);
   const AIEHazardRecognizer *BotHazardRec = getAIEHazardRecognizer(Bot);
 
@@ -400,7 +464,7 @@ bool AIEPostRASchedStrategy::checkInterZoneConflicts() const {
   // Verify if each instruction in the Bot zone has its timing requirements met
   // for dependencies with the Top zone.
   unsigned CurTopCycle = Top.getCurrCycle();
-  for (const AIE::MachineBundle &Bundle : reverse(BotHazardRec->getBundles())) {
+  for (const AIE::MachineBundle &Bundle : BotBundles) {
     for (MachineInstr *MI : Bundle.getInstrs()) {
       SUnit *SU = DAG->getSUnit(MI);
       if (SU->TopReadyCycle > CurTopCycle)
@@ -411,7 +475,9 @@ bool AIEPostRASchedStrategy::checkInterZoneConflicts() const {
   return false;
 }
 
-void AIEPostRASchedStrategy::handleRegionConflicts(const SUnit &ExitSU) {
+void AIEPostRASchedStrategy::handleRegionConflicts(
+    const SUnit &ExitSU, std::vector<AIE::MachineBundle> &TopBundles,
+    const std::vector<AIE::MachineBundle> &BotBundles) {
 
   // Make sure no instructions are in flight after leaving the region.
   unsigned ExitReadyCycle = ExitSU.TopReadyCycle;
@@ -425,31 +491,22 @@ void AIEPostRASchedStrategy::handleRegionConflicts(const SUnit &ExitSU) {
   // Add NOPs between the two scheduling zones until:
   // - Their scoreboards do not overlap
   // - All register dependencies are met
-  while (checkInterZoneConflicts()) {
-    LLVM_DEBUG(dbgs() << "** checkInterZoneConflicts: Bump current cycle\n");
+  while (checkInterZoneConflicts(BotBundles)) {
+    LLVM_DEBUG(dbgs() << "** checkInterZoneConflicts: Bump Top cycle\n");
     Top.bumpCycle(Top.getCurrCycle() + 1);
+  }
+
+  // Top's cycle may have been bumped, update TopBundles to reflect the change
+  if (Top.getCurrCycle() != TopBundles.size()) {
+    AIE::MachineBundle DummyCurrBundle(getTII(*DAG)->getFormatInterface());
+    bumpCycleForBundles(Top.getCurrCycle(), TopBundles, DummyCurrBundle);
   }
 }
 
-void AIEPostRASchedStrategy::leaveSchedulingZone(SchedBoundary &Zone) {
-  AIEHazardRecognizer *HazardRec = getAIEHazardRecognizer(Zone);
-  if (!HazardRec) {
-    return;
-  }
-
-  LLVM_DEBUG(dbgs() << "  NumBundles=" << HazardRec->getBundles().size()
-                    << "\n");
-
-  // Re-order bundles and instructions within so they appear in the same order
-  // as in their parent basic block. This canonical order is required by
-  // applyBundles, and facilitates generic NOP insertion.
-  std::vector<AIE::MachineBundle> OrderedBundles = HazardRec->getBundles();
-  if (!Zone.isTop()) {
-    std::reverse(OrderedBundles.begin(), OrderedBundles.end());
-    for (AIE::MachineBundle &Bundle : OrderedBundles) {
-      std::reverse(Bundle.Instrs.begin(), Bundle.Instrs.end());
-    }
-  }
+void AIEPostRASchedStrategy::leaveSchedulingZone(
+    SchedBoundary &Zone,
+    const std::vector<AIE::MachineBundle> &OrderedBundles) {
+  LLVM_DEBUG(dbgs() << "  NumBundles=" << OrderedBundles.size() << "\n");
 
   // Contrary to PRAS, the MachineScheduler does not automatically insert NOPs.
   // That isn't a problem, since the callbacks to the HazardRecognizer were a
@@ -458,7 +515,7 @@ void AIEPostRASchedStrategy::leaveSchedulingZone(SchedBoundary &Zone) {
   // insert NOPs because the sequence of Bundles gives us the full picture.
   const TargetInstrInfo *TII = getTII(CurMBB);
   auto It = RegionBegin;
-  for (AIE::MachineBundle &Bundle : OrderedBundles) {
+  for (const AIE::MachineBundle &Bundle : OrderedBundles) {
     if (Bundle.empty()) {
       // Empty bundle means 1-cycle stall.
       TII->insertNoop(*CurMBB, It);
@@ -482,13 +539,6 @@ void AIEPostRASchedStrategy::leaveSchedulingZone(SchedBoundary &Zone) {
     TopBundles.insert(TopBundles.end(), OrderedBundles.begin(),
                       OrderedBundles.end());
   }
-
-  HazardRec->getBundles().clear();
-}
-
-AIEHazardRecognizer *
-AIEPostRASchedStrategy::getAIEHazardRecognizer(const SchedBoundary &Zone) {
-  return static_cast<AIEHazardRecognizer *>(Zone.HazardRec);
 }
 
 void AIEPostRASchedStrategy::releaseBottomNode(SUnit *SU) {
@@ -553,16 +603,16 @@ void AIEPreRASchedStrategy::leaveRegion(const SUnit &ExitSU) {
   LLVM_DEBUG(dbgs() << "Leave Region\n");
   assert(RegionPolicy.OnlyBottomUp);
 
-  finalizeCurrentBundle(Bot);
+  std::vector<AIE::MachineBundle> BotBundles = computeAndFinalizeBundles(Bot);
 
+  // If requested, insert a CYCLE_SEPARATOR after each bundle.
   if (InsertCycleSeparators) {
-    AIEHazardRecognizer &HazardRec = *getAIEHazardRecognizer(Bot);
     auto *TII = static_cast<const AIEBaseInstrInfo *>(
         CurMBB->getParent()->getSubtarget().getInstrInfo());
     auto It = RegionBegin;
-    for (AIE::MachineBundle &Bundle : reverse(HazardRec.getBundles())) {
+    for (const AIE::MachineBundle &Bundle : BotBundles) {
       if (!Bundle.empty())
-        It = std::next(Bundle.getInstrs().front()->getIterator());
+        It = std::next(Bundle.getInstrs().back()->getIterator());
       BuildMI(*CurMBB, It, DebugLoc(),
               TII->get(TII->getCycleSeparatorOpcode()));
     }

@@ -224,11 +224,6 @@ void AIEHazardRecognizer::applyBundles(
   }
 }
 
-bool AIEHazardRecognizer::currentCycleHasInstr(bool CountMetaInstrs) const {
-  return !CurrentBundle.empty() ||
-         (CountMetaInstrs && !CurrentBundle.MetaInstrs.empty());
-}
-
 void AIEHazardRecognizer::Reset() {
   LLVM_DEBUG(dbgs() << "Reset hazard recognizer\n");
   // Assuming this is the start of a new region. We should
