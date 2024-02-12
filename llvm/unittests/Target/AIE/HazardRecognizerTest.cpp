@@ -308,6 +308,20 @@ TEST(HazardRecognizer, splitCycles) {
   EXPECT_FALSE(HR.hazard(10, -2));
 }
 
+/// Check scoreboard conflicts from slot utilization
+TEST(HazardRecognizer, slotHazard) {
+  MockHR HR;
+
+  HR.emit(1, -2, /*SlotSet=*/0b01);
+
+  // Classes 1 and 3 have no resource conflicts in MockStages, they can only
+  // conflict because of slots.
+  EXPECT_FALSE(HR.hazard(3, -2, /*SlotSet=*/0b00));
+  EXPECT_FALSE(HR.hazard(3, -2, /*SlotSet=*/0b10));
+  EXPECT_TRUE(HR.hazard(3, -2, /*SlotSet=*/0b11));
+  EXPECT_TRUE(HR.hazard(3, -2, /*SlotSet=*/0b01));
+}
+
 TEST(HazardRecognizer, composeConflicting) {
   // Check that we can add conflicting itineraries
   // without crashing. This allows replaying/merging scoreboards from
@@ -316,12 +330,12 @@ TEST(HazardRecognizer, composeConflicting) {
 
   HR.emit(8, -2);
   HR.emit(8, 0);
-  HR.emit(9, -1);
-  HR.emit(9, 0);
+  HR.emit(9, -1, /*SlotSet=*/0b1);
+  HR.emit(9, 0, /*SlotSet=*/0b1);
 
   // redundant, but harmless
   HR.emit(8, -2);
-  HR.emit(9, 0);
+  HR.emit(9, 0, /*SlotSet=*/0b1);
 
   for (int C = -4; C <= 0; C++) {
     EXPECT_EQ(HR.hazard(8, C), C == -2 || C == 0);
