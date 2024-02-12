@@ -104,11 +104,6 @@ public:
   static void applyBundles(const std::vector<AIE::MachineBundle> &Bundles,
                            MachineBasicBlock *MBB);
 
-  bool currentCycleHasInstr(bool CountMetaInstrs = false) const;
-
-  const std::vector<AIE::MachineBundle> &getBundles() const { return Bundles; }
-  std::vector<AIE::MachineBundle> &getBundles() { return Bundles; }
-
   /// Sets the number of cycles (from the current cycle) for which instructions
   /// cannot be scheduled, with the exception of delay slot instructions.
   /// That number is decremented every time the current cycle is advanced

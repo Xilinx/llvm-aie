@@ -139,19 +139,22 @@ protected:
 
   /// Returns true if, when "concatenated", the Top and Bot zone have resource
   /// conflicts or timing issues.
-  bool checkInterZoneConflicts() const;
+  bool checkInterZoneConflicts(
+      const std::vector<AIE::MachineBundle> &BotBundles) const;
 
   /// Identify and fix issues in the scheduling region by inserting NOPs.
   /// In particular, this makes sure no instructions are in flight when leaving
   /// the region, and that the Top and Bot zones can be safely "concatenated".
   /// See checkInterZoneConflicts().
-  void handleRegionConflicts(const SUnit &ExitSU);
+  void handleRegionConflicts(const SUnit &ExitSU,
+                             std::vector<AIE::MachineBundle> &TopBundles,
+                             const std::vector<AIE::MachineBundle> &BotBundles);
 
   /// Post-process the bundles in \ref Zone to insert any required NOP
   /// and order nested instructions in a canonical order.
-  void leaveSchedulingZone(SchedBoundary &Zone);
-
-  static AIEHazardRecognizer *getAIEHazardRecognizer(const SchedBoundary &Zone);
+  void
+  leaveSchedulingZone(SchedBoundary &Zone,
+                      const std::vector<AIE::MachineBundle> &OrderedBundles);
 
 private:
   /// Save ordered scheduled bundles for all the regions in a MBB.
