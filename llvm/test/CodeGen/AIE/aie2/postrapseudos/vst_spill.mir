@@ -98,3 +98,18 @@ body:             |
     ; CHECK-NEXT: VST_dmw_sts_w_ag_spill killed undef $wh1, -64, implicit $sp :: (store (s256) into %stack.0 + 32)
     VST_X_SPILL killed undef $x1, -96, implicit $sp :: (store (s512) into %stack.0, align 32)
 ...
+
+---
+name:            test_sparse_vec640
+alignment:       32
+stack:
+  - { id: 0, name: '', type: spill-slot, offset: 0, size: 128, alignment: 32 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_sparse_vec640
+    ; CHECK: VST_dmw_sts_w_ag_spill killed $wl0, -96, implicit $sp :: (store (s256) into %stack.0)
+    ; CHECK-NEXT: VST_dmw_sts_w_ag_spill killed $wh0, -64, implicit $sp :: (store (s256) into %stack.0 + 32)
+    ; CHECK-NEXT: ST_dmv_sts_q_ag_spill killed $q0, -32, implicit $sp :: (store (s128) into %stack.0 + 64, align 32)
+    VST_QX_SPILL killed renamable $qx0, -96, implicit $sp :: (store (s640) into %stack.0, align 32)
+...
