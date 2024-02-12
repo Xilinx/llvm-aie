@@ -192,6 +192,126 @@ bfloat16 bfloat16_assign() {
   const bfloat16 bfloat16_one    = 1.0;
   return bfloat16_one;
 }
+
+// CHECK-LABEL: @_Z13operator_plus8bfloat16S_(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[A_COERCE_FCA_0_EXTRACT_I:%.*]] = extractvalue [[CLASS_BFLOAT16:%.*]] [[A_COERCE:%.*]], 0
+// CHECK-NEXT:    [[B_COERCE_FCA_0_EXTRACT_I:%.*]] = extractvalue [[CLASS_BFLOAT16]] [[B_COERCE:%.*]], 0
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast bfloat [[A_COERCE_FCA_0_EXTRACT_I]] to i16
+// CHECK-NEXT:    [[CONV_I_I:%.*]] = zext i16 [[TMP0]] to i32
+// CHECK-NEXT:    [[SHL_I_I:%.*]] = shl nuw i32 [[CONV_I_I]], 16
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast i32 [[SHL_I_I]] to float
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast bfloat [[B_COERCE_FCA_0_EXTRACT_I]] to i16
+// CHECK-NEXT:    [[CONV_I2_I:%.*]] = zext i16 [[TMP2]] to i32
+// CHECK-NEXT:    [[SHL_I3_I:%.*]] = shl nuw i32 [[CONV_I2_I]], 16
+// CHECK-NEXT:    [[TMP3:%.*]] = bitcast i32 [[SHL_I3_I]] to float
+// CHECK-NEXT:    [[ADD_I:%.*]] = fadd float [[TMP1]], [[TMP3]]
+// CHECK-NEXT:    [[TMP4:%.*]] = bitcast float [[ADD_I]] to i32
+// CHECK-NEXT:    [[AND_I_I:%.*]] = and i32 [[TMP4]], 32768
+// CHECK-NEXT:    [[CMP_NOT_I_I:%.*]] = icmp eq i32 [[AND_I_I]], 0
+// CHECK-NEXT:    [[TMP5:%.*]] = and i32 [[TMP4]], 98303
+// CHECK-NEXT:    [[BRMERGE_NOT_I_I:%.*]] = icmp eq i32 [[TMP5]], 0
+// CHECK-NEXT:    [[ADD_I_I:%.*]] = add i32 [[TMP4]], 65536
+// CHECK-NEXT:    [[TMP6:%.*]] = or i1 [[CMP_NOT_I_I]], [[BRMERGE_NOT_I_I]]
+// CHECK-NEXT:    [[I32_0_I_I:%.*]] = select i1 [[TMP6]], i32 [[TMP4]], i32 [[ADD_I_I]]
+// CHECK-NEXT:    [[SHR_I_I:%.*]] = lshr i32 [[I32_0_I_I]], 16
+// CHECK-NEXT:    [[CONV_I4_I:%.*]] = trunc i32 [[SHR_I_I]] to i16
+// CHECK-NEXT:    [[TMP7:%.*]] = bitcast i16 [[CONV_I4_I]] to bfloat
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[CLASS_BFLOAT16]] poison, bfloat [[TMP7]], 0
+// CHECK-NEXT:    ret [[CLASS_BFLOAT16]] [[DOTFCA_0_INSERT_I]]
+//
+bfloat16 operator_plus(bfloat16 a, bfloat16 b) {
+  return a + b;
+}
+
+// CHECK-LABEL: @_Z14operator_minus8bfloat16S_(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[A_COERCE_FCA_0_EXTRACT_I:%.*]] = extractvalue [[CLASS_BFLOAT16:%.*]] [[A_COERCE:%.*]], 0
+// CHECK-NEXT:    [[B_COERCE_FCA_0_EXTRACT_I:%.*]] = extractvalue [[CLASS_BFLOAT16]] [[B_COERCE:%.*]], 0
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast bfloat [[A_COERCE_FCA_0_EXTRACT_I]] to i16
+// CHECK-NEXT:    [[CONV_I_I:%.*]] = zext i16 [[TMP0]] to i32
+// CHECK-NEXT:    [[SHL_I_I:%.*]] = shl nuw i32 [[CONV_I_I]], 16
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast i32 [[SHL_I_I]] to float
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast bfloat [[B_COERCE_FCA_0_EXTRACT_I]] to i16
+// CHECK-NEXT:    [[CONV_I2_I:%.*]] = zext i16 [[TMP2]] to i32
+// CHECK-NEXT:    [[SHL_I3_I:%.*]] = shl nuw i32 [[CONV_I2_I]], 16
+// CHECK-NEXT:    [[TMP3:%.*]] = bitcast i32 [[SHL_I3_I]] to float
+// CHECK-NEXT:    [[SUB_I:%.*]] = fsub float [[TMP1]], [[TMP3]]
+// CHECK-NEXT:    [[TMP4:%.*]] = bitcast float [[SUB_I]] to i32
+// CHECK-NEXT:    [[AND_I_I:%.*]] = and i32 [[TMP4]], 32768
+// CHECK-NEXT:    [[CMP_NOT_I_I:%.*]] = icmp eq i32 [[AND_I_I]], 0
+// CHECK-NEXT:    [[TMP5:%.*]] = and i32 [[TMP4]], 98303
+// CHECK-NEXT:    [[BRMERGE_NOT_I_I:%.*]] = icmp eq i32 [[TMP5]], 0
+// CHECK-NEXT:    [[ADD_I_I:%.*]] = add i32 [[TMP4]], 65536
+// CHECK-NEXT:    [[TMP6:%.*]] = or i1 [[CMP_NOT_I_I]], [[BRMERGE_NOT_I_I]]
+// CHECK-NEXT:    [[I32_0_I_I:%.*]] = select i1 [[TMP6]], i32 [[TMP4]], i32 [[ADD_I_I]]
+// CHECK-NEXT:    [[SHR_I_I:%.*]] = lshr i32 [[I32_0_I_I]], 16
+// CHECK-NEXT:    [[CONV_I4_I:%.*]] = trunc i32 [[SHR_I_I]] to i16
+// CHECK-NEXT:    [[TMP7:%.*]] = bitcast i16 [[CONV_I4_I]] to bfloat
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[CLASS_BFLOAT16]] poison, bfloat [[TMP7]], 0
+// CHECK-NEXT:    ret [[CLASS_BFLOAT16]] [[DOTFCA_0_INSERT_I]]
+//
+bfloat16 operator_minus(bfloat16 a, bfloat16 b) {
+  return a - b;
+}
+
+// CHECK-LABEL: @_Z12operator_mul8bfloat16S_(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[A_COERCE_FCA_0_EXTRACT_I:%.*]] = extractvalue [[CLASS_BFLOAT16:%.*]] [[A_COERCE:%.*]], 0
+// CHECK-NEXT:    [[B_COERCE_FCA_0_EXTRACT_I:%.*]] = extractvalue [[CLASS_BFLOAT16]] [[B_COERCE:%.*]], 0
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast bfloat [[A_COERCE_FCA_0_EXTRACT_I]] to i16
+// CHECK-NEXT:    [[CONV_I_I:%.*]] = zext i16 [[TMP0]] to i32
+// CHECK-NEXT:    [[SHL_I_I:%.*]] = shl nuw i32 [[CONV_I_I]], 16
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast i32 [[SHL_I_I]] to float
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast bfloat [[B_COERCE_FCA_0_EXTRACT_I]] to i16
+// CHECK-NEXT:    [[CONV_I2_I:%.*]] = zext i16 [[TMP2]] to i32
+// CHECK-NEXT:    [[SHL_I3_I:%.*]] = shl nuw i32 [[CONV_I2_I]], 16
+// CHECK-NEXT:    [[TMP3:%.*]] = bitcast i32 [[SHL_I3_I]] to float
+// CHECK-NEXT:    [[MUL_I:%.*]] = fmul float [[TMP1]], [[TMP3]]
+// CHECK-NEXT:    [[TMP4:%.*]] = bitcast float [[MUL_I]] to i32
+// CHECK-NEXT:    [[AND_I_I:%.*]] = and i32 [[TMP4]], 32768
+// CHECK-NEXT:    [[CMP_NOT_I_I:%.*]] = icmp eq i32 [[AND_I_I]], 0
+// CHECK-NEXT:    [[TMP5:%.*]] = and i32 [[TMP4]], 98303
+// CHECK-NEXT:    [[BRMERGE_NOT_I_I:%.*]] = icmp eq i32 [[TMP5]], 0
+// CHECK-NEXT:    [[ADD_I_I:%.*]] = add i32 [[TMP4]], 65536
+// CHECK-NEXT:    [[TMP6:%.*]] = or i1 [[CMP_NOT_I_I]], [[BRMERGE_NOT_I_I]]
+// CHECK-NEXT:    [[I32_0_I_I:%.*]] = select i1 [[TMP6]], i32 [[TMP4]], i32 [[ADD_I_I]]
+// CHECK-NEXT:    [[SHR_I_I:%.*]] = lshr i32 [[I32_0_I_I]], 16
+// CHECK-NEXT:    [[CONV_I4_I:%.*]] = trunc i32 [[SHR_I_I]] to i16
+// CHECK-NEXT:    [[TMP7:%.*]] = bitcast i16 [[CONV_I4_I]] to bfloat
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[CLASS_BFLOAT16]] poison, bfloat [[TMP7]], 0
+// CHECK-NEXT:    ret [[CLASS_BFLOAT16]] [[DOTFCA_0_INSERT_I]]
+//
+bfloat16 operator_mul(bfloat16 a, bfloat16 b) {
+  return a * b;
+}
+
+// CHECK-LABEL: @_Z12operator_neg8bfloat16(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[B_COERCE_FCA_0_EXTRACT_I_I:%.*]] = extractvalue [[CLASS_BFLOAT16:%.*]] [[A_COERCE:%.*]], 0
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast bfloat [[B_COERCE_FCA_0_EXTRACT_I_I]] to i16
+// CHECK-NEXT:    [[CONV_I2_I_I:%.*]] = zext i16 [[TMP0]] to i32
+// CHECK-NEXT:    [[SHL_I3_I_I:%.*]] = shl nuw i32 [[CONV_I2_I_I]], 16
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast i32 [[SHL_I3_I_I]] to float
+// CHECK-NEXT:    [[SUB_I_I:%.*]] = fsub float 0.000000e+00, [[TMP1]]
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast float [[SUB_I_I]] to i32
+// CHECK-NEXT:    [[AND_I_I_I:%.*]] = and i32 [[TMP2]], 32768
+// CHECK-NEXT:    [[CMP_NOT_I_I_I:%.*]] = icmp eq i32 [[AND_I_I_I]], 0
+// CHECK-NEXT:    [[TMP3:%.*]] = and i32 [[TMP2]], 98303
+// CHECK-NEXT:    [[BRMERGE_NOT_I_I_I:%.*]] = icmp eq i32 [[TMP3]], 0
+// CHECK-NEXT:    [[ADD_I_I_I:%.*]] = add i32 [[TMP2]], 65536
+// CHECK-NEXT:    [[TMP4:%.*]] = or i1 [[CMP_NOT_I_I_I]], [[BRMERGE_NOT_I_I_I]]
+// CHECK-NEXT:    [[I32_0_I_I_I:%.*]] = select i1 [[TMP4]], i32 [[TMP2]], i32 [[ADD_I_I_I]]
+// CHECK-NEXT:    [[SHR_I_I_I:%.*]] = lshr i32 [[I32_0_I_I_I]], 16
+// CHECK-NEXT:    [[CONV_I4_I_I:%.*]] = trunc i32 [[SHR_I_I_I]] to i16
+// CHECK-NEXT:    [[TMP5:%.*]] = bitcast i16 [[CONV_I4_I_I]] to bfloat
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I_I:%.*]] = insertvalue [[CLASS_BFLOAT16]] poison, bfloat [[TMP5]], 0
+// CHECK-NEXT:    ret [[CLASS_BFLOAT16]] [[DOTFCA_0_INSERT_I_I]]
+//
+bfloat16 operator_neg(bfloat16 a) {
+  return -a;
+}
+
 // CHECK-LABEL: @_Z13bfloat16_div08bfloat16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[B_COERCE_FCA_0_EXTRACT_I:%.*]] = extractvalue [[CLASS_BFLOAT16:%.*]] [[ARG_COERCE:%.*]], 0
@@ -335,6 +455,24 @@ bool bfloat_cmp_le(bfloat16 arg0, bfloat16 arg1) {
 //
 bool bfloat_cmp_ne(bfloat16 arg0, bfloat16 arg1) {
   return (arg0 != arg1);
+}
+// CHECK-LABEL: @_Z13bfloat_cmp_eq8bfloat16S_(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[A_COERCE_FCA_0_EXTRACT_I:%.*]] = extractvalue [[CLASS_BFLOAT16:%.*]] [[ARG0_COERCE:%.*]], 0
+// CHECK-NEXT:    [[B_COERCE_FCA_0_EXTRACT_I:%.*]] = extractvalue [[CLASS_BFLOAT16]] [[ARG1_COERCE:%.*]], 0
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast bfloat [[A_COERCE_FCA_0_EXTRACT_I]] to i16
+// CHECK-NEXT:    [[CONV_I_I:%.*]] = zext i16 [[TMP0]] to i32
+// CHECK-NEXT:    [[SHL_I_I:%.*]] = shl nuw i32 [[CONV_I_I]], 16
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast i32 [[SHL_I_I]] to float
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast bfloat [[B_COERCE_FCA_0_EXTRACT_I]] to i16
+// CHECK-NEXT:    [[CONV_I2_I:%.*]] = zext i16 [[TMP2]] to i32
+// CHECK-NEXT:    [[SHL_I3_I:%.*]] = shl nuw i32 [[CONV_I2_I]], 16
+// CHECK-NEXT:    [[TMP3:%.*]] = bitcast i32 [[SHL_I3_I]] to float
+// CHECK-NEXT:    [[CMP_I:%.*]] = fcmp oeq float [[TMP1]], [[TMP3]]
+// CHECK-NEXT:    ret i1 [[CMP_I]]
+//
+bool bfloat_cmp_eq(bfloat16 arg0, bfloat16 arg1) {
+  return (arg0 == arg1);
 }
 // CHECK-LABEL: @_Z15pass_v2bfloat16Dv2_u6__bf16(
 // CHECK-NEXT:  entry:
