@@ -36,8 +36,9 @@ def sub_hi_mask : SubRegIndex<64, 64>;
 def sub_q : SubRegIndex<64,   0>;
 def sub_w : SubRegIndex<256, 64>;
 
-def sub_lo_vecmask : SubRegIndex<320,   0>;
-def sub_hi_vecmask : SubRegIndex<320, 320>;
+def sub_sparse_q : SubRegIndex<128,   512>;
+def sub_sparse_x : SubRegIndex<512,   0>;
+
 }
 
 class AIE2VReg<bits<4> Enc, string n, list<Register> subregs = []> : Register<n> {
@@ -55,6 +56,7 @@ def VEC1024 : AIE2Vector1024RegisterClass<(add eYs)>;
 def ACC256 : AIE2Acc256RegisterClass<(add eAMHH, eAMHL, eAMLH, eAMLL, mAMm, mAMs)>;
 def ACC512 : AIE2Acc512RegisterClass<(add eBMH, eBML, eBMSH, eBMSL, mBMSm, mBMm, mBMs, mBMa)>;
 def ACC1024 : AIE2Acc1024RegisterClass<(add eCM)>;
+def SPARSEVEC640 : AIE2Vector640RegisterClass<(add eQQXEs, eQQXOs)>;
 
 let Namespace = "AIE2" in {
   // This is a strange class, but llvm would define it anyway by performing an

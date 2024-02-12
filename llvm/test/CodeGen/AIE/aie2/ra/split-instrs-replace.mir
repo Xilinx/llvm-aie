@@ -131,7 +131,7 @@ body:             |
   ; CHECK-NEXT:   renamable $dc4 = COPY killed renamable $r2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
-  ; CHECK-NEXT:   liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $d0_3d:0x0000000000070870
+  ; CHECK-NEXT:   liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $d0_3d:0x000000000001C870
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $p0, $dc0, $dc4 = PADDA_3D killed $p0, $d0_3d
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
@@ -187,7 +187,7 @@ body:             |
   bb.0.entry:
     liveins: $dc4, $dj4, $dn4, $p0, $m0, $dn0, $dj0, $dc0
     ; CHECK-LABEL: name: PADD_3D
-    ; CHECK: liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $d0_3d:0x0000000000070870
+    ; CHECK: liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $d0_3d:0x000000000001C870
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $p0, $dc0, $dc4 = PADDA_3D killed $p0, $d0_3d
     ; CHECK-NEXT: $p0, $dc0, $dc4 = PADDB_3D killed $p0, $d0_3d
@@ -226,7 +226,7 @@ body:             |
   bb.0.entry:
     liveins: $dc4, $dj4, $dn4, $p0, $m0, $dn0, $dj0, $dc0
     ; CHECK-LABEL: name: VLD_3D
-    ; CHECK: liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $d0_3d:0x0000000000070870
+    ; CHECK: liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $d0_3d:0x000000000001C870
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: dead $wl0, $p0, $dc0, $dc4 = VLDA_3D_dmw_lda_w killed $p0, $d0_3d :: (load (<8 x s32>))
     ; CHECK-NEXT: dead $amll0, $p0, $dc0, $dc4 = VLDA_3D_dmw_lda_am killed $p0, $d0_3d :: (load (<8 x s32>))
@@ -282,7 +282,7 @@ body:             |
   bb.0.entry:
     liveins: $dc4, $dj4, $dn4, $p0, $m0, $dn0, $dj0, $dc0
     ; CHECK-LABEL: name: VLDB_3D_UNPACK
-    ; CHECK: liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $d0_3d:0x0000000000070870
+    ; CHECK: liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $d0_3d:0x000000000001C870
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: dead $x0, $p0, $dc0, $dc4 = VLDB_3D_UNPACK_S8_S4 killed $p0, $d0_3d :: (load (<8 x s32>))
     ; CHECK-NEXT: dead $x0, $p0, $dc0, $dc4 = VLDB_3D_UNPACK_S16_S8 killed $p0, $d0_3d :: (load (<8 x s32>))
@@ -304,7 +304,7 @@ body:             |
   bb.0.entry:
     liveins: $dc4, $dj4, $dn4, $p0, $m0, $dn0, $dj0, $dc0
     ; CHECK-LABEL: name: VLD_3D_CONV
-    ; CHECK: liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $d0_3d:0x0000000000070870
+    ; CHECK: liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $d0_3d:0x000000000001C870
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: dead $bml0, $p0, $dc0, $dc4 = VLDA_3D_CONV_FP32_BF16 killed $p0, $d0_3d :: (load (<8 x s32>))
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
@@ -362,7 +362,7 @@ body:             |
     liveins: $dc4, $dj4, $dn4, $p0, $m0, $dn0, $dj0, $dc0, $x0
 
     ; CHECK-LABEL: name: VST_3D_PACK
-    ; CHECK: liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $x0, $d0_3d:0x0000000000070870
+    ; CHECK: liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $x0, $d0_3d:0x000000000001C870
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $p0, $dc0, $dc4 = VST_3D_PACK_D4_D8 killed $p0, $d0_3d, $x0, implicit $crsat, implicit $crpacksign :: (store (<8 x s32>))
     ; CHECK-NEXT: $p0, $dc0, $dc4 = VST_3D_PACK_D8_D16 killed $p0, $d0_3d, $x0, implicit $crsat, implicit $crpacksign :: (store (<8 x s32>))
@@ -400,7 +400,7 @@ body:             |
   bb.0.entry:
     liveins: $dc4, $dj4, $dn4, $p0, $m0, $dn0, $dj0, $dc0, $wl0, $amll0
     ; CHECK-LABEL: name: VST_3D
-    ; CHECK: liveins: $amll0, $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $wl0, $d0_3d:0x0000000000070870
+    ; CHECK: liveins: $amll0, $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $wl0, $d0_3d:0x000000000001C870
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $p0, $dc0, $dc4 = VST_3D_dmw_sts_w $wl0, killed $p0, $d0_3d :: (store (<8 x s32>))
     ; CHECK-NEXT: $p0, $dc0, $dc4 = VST_3D_128 killed $wl0, killed $p0, $d0_3d :: (store (<8 x s32>))
@@ -419,7 +419,7 @@ body:             |
   bb.0.entry:
     liveins: $dc4, $dj4, $dn4, $p0, $m0, $dn0, $dj0, $dc0, $q0
     ; CHECK-LABEL: name: ST_3D_Q
-    ; CHECK: liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $q0, $d0_3d:0x0000000000070870
+    ; CHECK: liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $q0, $d0_3d:0x000000000001C870
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $p0, $dc0, $dc4 = ST_3D_dmv_sts_q killed $q0, killed $p0, $d0_3d :: (store (<4 x s32>))
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
@@ -464,7 +464,7 @@ body:             |
   bb.0.entry:
     liveins: $dc4, $dj4, $dn4, $p0, $m0, $dn0, $dj0, $dc0, $s0
     ; CHECK-LABEL: name: VLD_UPS_3D
-    ; CHECK: liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $s0, $d0_3d:0x0000000000070870
+    ; CHECK: liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $s0, $d0_3d:0x000000000001C870
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $bml0, $p0, $dc0, $dc4 = VLDA_3D_UPS_S32_D16 $s0, killed $p0, $d0_3d, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>))
     ; CHECK-NEXT: $bml0, $p0, $dc0, $dc4 = VLDA_3D_UPS_S64_D32 $s0, killed $p0, $d0_3d, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>))
@@ -523,7 +523,7 @@ body:             |
   bb.0.entry:
     liveins: $dc4, $dj4, $dn4, $p0, $m0, $dn0, $dj0, $dc0, $bml0, $cm1, $s0
     ; CHECK-LABEL: name: VST_SRS_3D
-    ; CHECK: liveins: $bml0, $cm1, $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $s0, $d0_3d:0x0000000000070870
+    ; CHECK: liveins: $bml0, $cm1, $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $s0, $d0_3d:0x000000000001C870
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $p0, $dc0, $dc4 = VST_3D_SRS_D8_S32 killed $p0, $d0_3d, $cm1, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<8 x s32>))
     ; CHECK-NEXT: $p0, $dc0, $dc4 = VST_3D_SRS_D16_S64 killed $p0, $d0_3d, $cm1, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<8 x s32>))
@@ -569,7 +569,7 @@ body:             |
     liveins: $dc4, $dj4, $dn4, $p0, $m0, $dn0, $dj0, $dc0, $bml0
 
     ; CHECK-LABEL: name: VST_CONV_3D
-    ; CHECK: liveins: $bml0, $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $d0_3d:0x0000000000070870
+    ; CHECK: liveins: $bml0, $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $d0_3d:0x000000000001C870
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $p0, $dc0, $dc4 = VST_CONV_3D_BF16_FP32 killed $p0, $d0_3d, $bml0, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask :: (store (<8 x s32>))
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
@@ -600,7 +600,7 @@ body:             |
   bb.0.entry:
     liveins: $dc4, $dj4, $dn4, $p0, $m0, $dn0, $dj0, $dc0
     ; CHECK-LABEL: name: VLD_3D_128
-    ; CHECK: liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $d0_3d:0x0000000000070870
+    ; CHECK: liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $d0_3d:0x000000000001C870
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: dead $wl0, $p0, $dc0, $dc4 = VLDB_3D_128 killed $p0, $d0_3d :: (load (<8 x s16>))
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
@@ -641,7 +641,7 @@ body:             |
   bb.0.entry:
     liveins: $dc4, $dj4, $dn4, $p0, $m0, $dn0, $dj0, $dc0
     ; CHECK-LABEL: name: LDA_3D
-    ; CHECK: liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $d0_3d:0x0000000000070870
+    ; CHECK: liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $d0_3d:0x000000000001C870
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $r0, $p0, $dc0, $dc4 = LDA_3D_dms_lda killed $p0, $d0_3d :: (load (s32))
     ; CHECK-NEXT: $r0, $p0, $dc0, $dc4 = LDA_3D_S8_dmhb_lda killed $p0, $d0_3d :: (load (s32))
@@ -680,7 +680,7 @@ body:             |
   bb.0.entry:
     liveins: $dc4, $dj4, $dn4, $p0, $m0, $dn0, $dj0, $dc0
     ; CHECK-LABEL: name: LDA_3D_Q
-    ; CHECK: liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $d0_3d:0x0000000000070870
+    ; CHECK: liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $d0_3d:0x000000000001C870
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $q0, $p0, $dc0, $dc4 = LDA_3D_dmv_lda_q killed $p0, $d0_3d :: (load (s32))
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
@@ -710,7 +710,7 @@ body:             |
   bb.0.entry:
     liveins: $dc4, $dj4, $dn4, $p0, $m0, $dn0, $dj0, $dc0, $r0
     ; CHECK-LABEL: name: ST_3D
-    ; CHECK: liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $r0, $d0_3d:0x0000000000070870
+    ; CHECK: liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $r0, $d0_3d:0x000000000001C870
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $p0, $dc0, $dc4 = ST_3D_dms_sts $r0, killed $p0, $d0_3d :: (store (s32))
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
@@ -742,7 +742,7 @@ body:             |
   bb.0.entry:
     liveins: $dc4, $dj4, $dn4, $p0, $m0, $dn0, $dj0, $dc0, $r0
     ; CHECK-LABEL: name: STHB_3D
-    ; CHECK: liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $r0, $d0_3d:0x0000000000070870
+    ; CHECK: liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $r0, $d0_3d:0x000000000001C870
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $p0, $dc0, $dc4 = ST_3D_S8 $r0, $p0, $d0_3d :: (store (s8))
     ; CHECK-NEXT: $p0, $dc0, $dc4 = ST_3D_S16 $r0, killed $p0, $d0_3d :: (store (s16))

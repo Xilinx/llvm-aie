@@ -38,6 +38,11 @@ class AIE2RegisterClass <int size, int align, list<ValueType> regTypes, dag regl
   class AIE2ScalarRegisterClass<dag reglist, RegAltNameIndex idx = NoRegAltName>
       : AIE2RegisterClass<32, 32, [v8i1, v16i1, bf16, i20, v2bf16, i32, f32, v4i8, v2i16], reglist,
                           idx>;
+// i32 in the list of regTypes is only there to keep TableGen happy as it does not like an empty list of "legal types".
+// This is not an issue for us since it is a SelectionDAG concept.
+  class AIE2Vector640RegisterClass<dag reglist, RegAltNameIndex idx = NoRegAltName>
+      : AIE2RegisterClass<640, 256, [i32], reglist,
+                          idx>;
 
   class AIE2Vector128RegisterClass<dag reglist> :
       AIE2RegisterClass<128, 128, [v16i8, v8i16, v8bf16, v4i32, v4f32], reglist> {
@@ -647,26 +652,33 @@ class AIE2Dim3DRegisterClass <dag reglist, RegAltNameIndex idx = NoRegAltName> :
   }
 
   // 640-bit vector-mask registers
-  // These consist of two 320-bit vector-mask registers
+  // These consist of one 128-bit mask and a 512-bit vector register
   foreach i = 0 - 3 in {
-    let SubRegIndices = [sub_lo_vecmask, sub_hi_vecmask], CoveredBySubRegs = 1 in {
-      def qx #i : AIE2VReg<i, "qx" #i, [!cast<Register>("qwl" #i), !cast<Register>("qwh" #i)]>;
+    let SubRegIndices = [sub_sparse_x, sub_sparse_q],
+        CoveredBySubRegs = 1 in {
+          def qx #i : AIE2VReg<i, "qx" #i, [!cast<Register>("x" #i), !cast<Register>("q" #i)]>;
     }
   }
 
-  def eQQXEs : AIE2ScalarRegisterClass<(add qx0, qx2)>;
-  def eQQXOs : AIE2ScalarRegisterClass<(add qx1, qx3)>;
+  def eQQXEs : AIE2Vector640RegisterClass<(add qx0, qx2)>;
+  def eQQXOs : AIE2Vector640RegisterClass<(add qx1, qx3)>;
 
-  def eQXHEs : AIE2ScalarRegisterClass<(add qwh0, qwh2)>;
-  def eQXHOs : AIE2ScalarRegisterClass<(add qwh1, qwh3)>;
+// 320-bit sparse registers (qwh and qwl) are set to be non allocatable to avoid handling spilling
+// of ql and qh mask registers. We can do this because these registers are only used by sparse
+// loads (vld.sparse) which originate from intrinsics which we can translate to pseudo-instructions
+// loading to qx registers that can be expanded after register allocation to qw register loads.
+  let isAllocatable = false in {
+    def eQXHEs : AIE2ScalarRegisterClass<(add qwh0, qwh2)>;
+    def eQXHOs : AIE2ScalarRegisterClass<(add qwh1, qwh3)>;
+    def eQXLEs : AIE2ScalarRegisterClass<(add qwl0, qwl2)>;
+    def eQXLOs : AIE2ScalarRegisterClass<(add qwl1, qwl3)>;
+    def mQXHb : AIE2ScalarRegisterClass<(add eQXHEs, eQXHOs)>;
+    def mQXLb : AIE2ScalarRegisterClass<(add eQXLEs, eQXLOs)>;
+    def mQXHLb : AIE2ScalarRegisterClass<(add mQXHb, mQXLb)>;
+  }
 
-  def eQXLEs : AIE2ScalarRegisterClass<(add qwl0, qwl2)>;
-  def eQXLOs : AIE2ScalarRegisterClass<(add qwl1, qwl3)>;
+  def mQQXw : AIE2Vector640RegisterClass<(add eQQXEs, eQQXOs)>;
 
-  def mQXHb : AIE2ScalarRegisterClass<(add eQXHEs, eQXHOs)>;
-  def mQXLb : AIE2ScalarRegisterClass<(add eQXLEs, eQXLOs)>;
-  def mQQXw : AIE2ScalarRegisterClass<(add eQQXEs, eQQXOs)>;
-  def mQXHLb : AIE2ScalarRegisterClass<(add mQXHb, mQXLb)>;
 
 // These are compound register classes. Generating the register pressure logic
 // for them and all their intersections/unions can get complicated and it is
