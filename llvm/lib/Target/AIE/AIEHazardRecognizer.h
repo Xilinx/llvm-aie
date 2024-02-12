@@ -84,21 +84,14 @@ public:
 
   void Reset() override;
   HazardType getHazardType(SUnit *SU, int DeltaCycles) override;
-  bool emitNoopsIfNoInstructionsAvailable() override { return true; }
   void EmitInstruction(SUnit *) override;
   void EmitInstruction(SUnit *, int DeltaCycles) override;
-  void EmitNoop() override;
-  unsigned PreEmitNoops(SUnit *) override;
   void AdvanceCycle() override;
   void RecedeCycle() override;
 
   /// Check conflict with Other shifted by DeltaCycles into the
   /// future relative to *this.
   bool conflict(const AIEHazardRecognizer &Other, int DeltaCycles) const;
-
-  /// Obsolescent interfaces for PRAS
-  void StartBlock(MachineBasicBlock *MBB) override;
-  void EndBlock(MachineBasicBlock *MBB) override;
 
   /// Bundle real instructions and move meta instructions afterwards.
   /// TODO: Once PRAS is dropped, this function should not be in here.
@@ -152,8 +145,6 @@ private:
   const AIEBaseInstrInfo *TII;
   const InstrItineraryData *ItinData;
   static int NumInstrsScheduled;
-  std::vector<AIE::MachineBundle> Bundles;
-  AIE::MachineBundle CurrentBundle;
   unsigned IssueLimit = 1;
   unsigned ReservedCycles = 0;
 };

@@ -159,7 +159,7 @@ static bool isPostRA(const MachineInstr *Instr) {
 AIEHazardRecognizer::AIEHazardRecognizer(const AIEBaseInstrInfo *TII,
                                          const InstrItineraryData *II,
                                          const ScheduleDAG *SchedDAG)
-    : TII(TII), ItinData(II), CurrentBundle(TII->getFormatInterface()) {
+    : TII(TII), ItinData(II) {
 
   int Depth = computeScoreboardDepth();
   Scoreboard.reset(Depth);
@@ -172,30 +172,6 @@ AIEHazardRecognizer::AIEHazardRecognizer(const AIEBaseInstrInfo *TII,
   if (MaxVLIWInstrs >= 0 && NumInstrsScheduled > MaxVLIWInstrs) {
     IssueLimit = 1;
   }
-}
-
-void AIEHazardRecognizer::StartBlock(MachineBasicBlock *MBB) {
-  // NOTE: This callback is obsolesent
-}
-
-void AIEHazardRecognizer::EndBlock(MachineBasicBlock *MBB) {
-  // NOTE: This callback is obsolesent
-
-  // This runs after reordering the instruction list in MBB.
-  // Now we can set the bundling attributes from the bundles we collected
-  // without confusing the reordering.
-
-  // Flushes unfinished bundles at the end of scheduling a basic block.
-  // FIXME: Would be nicer if this was guaranteed by the scheduler itself.
-  if (!CurrentBundle.empty()) {
-    Bundles.emplace_back(CurrentBundle);
-    CurrentBundle.clear();
-  }
-
-  applyBundles(Bundles, MBB);
-
-  // Clean up BB-local stuff.
-  Bundles.clear();
 }
 
 void AIEHazardRecognizer::applyBundles(
@@ -232,12 +208,6 @@ void AIEHazardRecognizer::applyBundles(
 
 void AIEHazardRecognizer::Reset() {
   LLVM_DEBUG(dbgs() << "Reset hazard recognizer\n");
-  // Assuming this is the start of a new region. We should
-  // flush the previous
-  if (!CurrentBundle.empty()) {
-    Bundles.emplace_back(CurrentBundle);
-    CurrentBundle.clear();
-  }
   ReservedCycles = 0;
   Scoreboard.reset();
   SelectedAltOpcodes.clear();
@@ -298,8 +268,6 @@ bool AIEHazardRecognizer::conflict(const AIEHazardRecognizer &Other,
 // due to an architecture hazard/resource contention.
 void AIEHazardRecognizer::AdvanceCycle() {
   LLVM_DEBUG(dbgs() << "Advance cycle, clear state\n");
-  Bundles.emplace_back(CurrentBundle);
-  CurrentBundle.clear();
   if (ReservedCycles)
     --ReservedCycles;
   Scoreboard.advance();
@@ -308,8 +276,6 @@ void AIEHazardRecognizer::AdvanceCycle() {
 // Similar to AdvanceCycle, but for bottom-up scheduling.
 void AIEHazardRecognizer::RecedeCycle() {
   LLVM_DEBUG(dbgs() << "Recede cycle, clear state\n");
-  Bundles.emplace_back(CurrentBundle);
-  CurrentBundle.clear();
   if (ReservedCycles)
     --ReservedCycles;
   Scoreboard.recede();
@@ -327,8 +293,6 @@ void AIEHazardRecognizer::recedeScoreboard(int N) {
 }
 void AIEHazardRecognizer::dumpScoreboard() const { Scoreboard.dump(); }
 
-unsigned AIEHazardRecognizer::PreEmitNoops(SUnit *SU) { return 0; }
-
 void AIEHazardRecognizer::EmitInstruction(SUnit *SU) {
   return EmitInstruction(SU, 0);
 }
@@ -345,7 +309,6 @@ void AIEHazardRecognizer::EmitInstruction(SUnit *SU, int DeltaCycles) {
   // If the instruction has multiple options, find the opcode that was selected
   // and use the latter to update the scoreboard.
   unsigned SelectedOpcode = getSelectedAltOpcode(MI).value_or(MI->getOpcode());
-  CurrentBundle.add(MI, SelectedOpcode);
   if (!AIE::MachineBundle::isNoHazardMetaInstruction(SelectedOpcode))
     emitInScoreboard(TII->get(SelectedOpcode), DeltaCycles, FUDepthLimit);
 
@@ -359,15 +322,6 @@ void AIEHazardRecognizer::EmitInstruction(SUnit *SU, int DeltaCycles) {
         dbgs() << "VLIW switched off after reaching instruction limit\n");
     IssueLimit = 1;
   }
-}
-
-void AIEHazardRecognizer::EmitNoop() {
-  LLVM_DEBUG(dbgs() << "Emit Noop\n");
-  // Scheduler will add a nop to the instruction stream when
-  // emitting the schedule. It should only do so if the
-  // current cycle is empty. We could just advance the scoreboard state,
-  // but for consistency we also force an empty bundle.
-  AdvanceCycle();
 }
 
 void AIEHazardRecognizer::setReservedCycles(unsigned Cycles) {

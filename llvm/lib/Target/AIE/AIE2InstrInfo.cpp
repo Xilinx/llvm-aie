@@ -756,16 +756,16 @@ bool AIE2InstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
 
 ScheduleHazardRecognizer *AIE2InstrInfo::CreateTargetPostRAHazardRecognizer(
     const InstrItineraryData *II, const ScheduleDAG *DAG) const {
-
-  // AIE has a fully exposed pipeline, so we have to insert
-  // Noops in the case of instruction dependence hazards.
-  return new AIEHazardRecognizer(this, II, DAG);
+  llvm_unreachable("AIE2 is not meant to use the post-RA list scheduler. "
+                   "Please use the MI scheduler instead: postmisched");
 }
 
 ScheduleHazardRecognizer *
 AIE2InstrInfo::CreateTargetMIHazardRecognizer(const InstrItineraryData *II,
                                               const ScheduleDAGMI *DAG) const {
-  return CreateTargetPostRAHazardRecognizer(II, DAG);
+  // AIE has a fully exposed pipeline, resource and format conflicts must be
+  // exactly modelled.
+  return new AIEHazardRecognizer(this, II, DAG);
 }
 
 /// insertNoop - Insert a noop into the instruction stream at the specified
