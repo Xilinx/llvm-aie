@@ -280,3 +280,99 @@ body:             |
     ; reload %0 / $ q0 before PseudoRET
     PseudoRET implicit $lr, implicit %0
 ...
+
+---
+name:            test_640_sparse_regs_qx
+alignment:       16
+legalized:       true
+regBankSelected: true
+selected:        true
+tracksRegLiveness: true
+body:             |
+  bb.1.entry:
+    liveins: $p0, $qx1, $qx2, $qx3, $dp
+
+    ; CHECK-LABEL: name: test_640_sparse_regs_qx
+    ; CHECK: liveins: $dp, $p0, $qx1, $qx2, $qx3
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: renamable $qx0 = COPY $x2
+    ; CHECK-NEXT: renamable $wl0 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
+    ; CHECK-NEXT: VST_QX_SPILL killed renamable $qx0, %stack.0, implicit $sp :: (store (s640) into %stack.0, align 32)
+    ; CHECK-NEXT: $qx0 = COPY $qx1
+    ; CHECK-NEXT: VST_dmw_sts_w_ag_idx_imm $wl0, $p0, 0, implicit $qx1, implicit $qx2, implicit $qx3
+    ; CHECK-NEXT: renamable $qx0 = VLDA_QX_SPILL %stack.0, implicit $sp :: (load (s640) from %stack.0, align 32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $qx0
+    %0:sparsevec640 = COPY $x2; -> only $qx0 is available
+    %0.sub_256_lo = VLDA_dmw_lda_w_ag_idx_imm $p0, 0, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
+
+    ; spill $qx0 before it is re-defined and used
+    $qx0 = COPY $qx1
+    VST_dmw_sts_w_ag_idx_imm $wl0, $p0, 0, implicit $qx1, implicit $qx2, implicit $qx3
+
+    ; reload %0 / $ qx0 before PseudoRET
+    PseudoRET implicit $lr, implicit %0
+...
+
+---
+name:            test_640_sparse_regs_x
+alignment:       16
+legalized:       true
+regBankSelected: true
+selected:        true
+tracksRegLiveness: true
+body:             |
+  bb.1.entry:
+    liveins: $p0, $qx1, $qx2, $qx3, $dp, $qx0
+
+    ; CHECK-LABEL: name: test_640_sparse_regs_x
+    ; CHECK: liveins: $dp, $p0, $qx0, $qx1, $qx2, $qx3
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: renamable $qx0 = COPY $x2
+    ; CHECK-NEXT: renamable $wl0 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
+    ; CHECK-NEXT: VST_QX_SPILL killed renamable $qx0, %stack.0, implicit $sp :: (store (s640) into %stack.0, align 32)
+    ; CHECK-NEXT: $x0 = COPY $x1
+    ; CHECK-NEXT: VST_dmw_sts_w_ag_idx_imm $wl0, $p0, 0, implicit $qx1, implicit $qx2, implicit $qx3
+    ; CHECK-NEXT: renamable $qx0 = VLDA_QX_SPILL %stack.0, implicit $sp :: (load (s640) from %stack.0, align 32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $qx0
+    %0:sparsevec640 = COPY $x2; -> only $qx0 is available
+    %0.sub_256_lo = VLDA_dmw_lda_w_ag_idx_imm $p0, 0, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
+
+    ; spill $qx0 before it is re-defined and used
+    $x0 = COPY $x1
+    VST_dmw_sts_w_ag_idx_imm $wl0, $p0, 0, implicit $qx1, implicit $qx2, implicit $qx3
+
+    ; reload %0 / $ qx0 before PseudoRET
+    PseudoRET implicit $lr, implicit %0
+...
+
+---
+name:            test_640_sparse_regs_q
+alignment:       16
+legalized:       true
+regBankSelected: true
+selected:        true
+tracksRegLiveness: true
+body:             |
+  bb.1.entry:
+    liveins: $p0, $qx1, $qx2, $qx3, $dp, $qx0
+
+    ; CHECK-LABEL: name: test_640_sparse_regs_q
+    ; CHECK: liveins: $dp, $p0, $qx0, $qx1, $qx2, $qx3
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: renamable $qx0 = COPY $x2
+    ; CHECK-NEXT: renamable $wl0 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
+    ; CHECK-NEXT: VST_QX_SPILL killed renamable $qx0, %stack.0, implicit $sp :: (store (s640) into %stack.0, align 32)
+    ; CHECK-NEXT: $q0 = COPY $q1
+    ; CHECK-NEXT: ST_dmv_sts_q_ag_spill $q0, 0, implicit $sp, implicit $qx1, implicit $qx2, implicit $qx3
+    ; CHECK-NEXT: renamable $qx0 = VLDA_QX_SPILL %stack.0, implicit $sp :: (load (s640) from %stack.0, align 32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit killed renamable $qx0
+    %0:sparsevec640 = COPY $x2; -> only $qx0 is available
+    %0.sub_256_lo = VLDA_dmw_lda_w_ag_idx_imm $p0, 0, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
+
+    ; spill $qx0 before it is re-defined and used
+    $q0 = COPY $q1
+    ST_dmv_sts_q_ag_spill $q0, 0, implicit $sp, implicit $qx1, implicit $qx2, implicit $qx3
+
+    ; reload %0 / $ qx0 before PseudoRET
+    PseudoRET implicit $lr, implicit %0
+...

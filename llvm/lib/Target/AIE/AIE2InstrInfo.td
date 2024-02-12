@@ -476,6 +476,7 @@ def ST_dms_spill : AIE2_dms_sts_inst_st<(outs), (ins OP_mSclSt:$mSclSt, imm12x4:
 let mayLoad = true, mayStore = false in {
 def VLDA_L_SPILL : Pseudo<(outs eL:$dst), (ins imm12x4:$imm), "vlda_l_spill", "$dst, [sp, $imm]">;
 def VLDA_X_SPILL : Pseudo<(outs VEC512:$dst), (ins  imm12x32_neg:$imm), "vlda_x_spill", "${dst}, [sp, $imm]">;
+def VLDA_QX_SPILL : Pseudo<(outs SPARSEVEC640:$dst), (ins  imm12x32_neg:$imm), "vlda_qx_spill", "${dst}, [sp, $imm]">;
 def VLDA_Y_SPILL : Pseudo<(outs VEC1024:$dst), (ins imm12x32_neg:$imm), "vlda_y_spill", "${dst}, [sp, $imm]">;
 def VLDA_BM_SPILL : Pseudo<(outs ACC512:$dst), (ins  imm12x32_neg:$imm), "vlda_bm_spill", "${dst}, [sp, $imm]">;
 def VLDA_CM_SPILL : Pseudo<(outs ACC1024:$dst), (ins imm12x32_neg:$imm), "vlda_cm_spill", "${dst}, [sp, $imm]">;
@@ -486,6 +487,7 @@ def LDA_DS_SPILL : Pseudo<(outs eDS:$dst), (ins imm12x4:$imm), "lda_ds_spill", "
 let mayLoad = false, mayStore = true in {
 def VST_L_SPILL : Pseudo<(outs ), (ins eL:$src, imm12x4:$imm), "vst_l_spill", "$src, [sp, $imm]">;
 def VST_X_SPILL : Pseudo<(outs ), (ins VEC512:$src,  imm12x32_neg:$imm), "vst_x_spill", "${src}, [sp, $imm]">;
+def VST_QX_SPILL : Pseudo<(outs ), (ins SPARSEVEC640:$src,  imm12x32_neg:$imm), "vst_qx_spill", "${src}, [sp, $imm]">;
 def VST_Y_SPILL : Pseudo<(outs ), (ins VEC1024:$src, imm12x32_neg:$imm), "vst_y_spill", "${src}, [sp, $imm]">;
 def VST_BM_SPILL : Pseudo<(outs ), (ins ACC512:$src,  imm12x32_neg:$imm), "vst_bm_spill", "${src}, [sp, $imm]">;
 def VST_CM_SPILL : Pseudo<(outs ), (ins ACC1024:$src, imm12x32_neg:$imm), "vst_cm_spill", "${src}, [sp, $imm]">;

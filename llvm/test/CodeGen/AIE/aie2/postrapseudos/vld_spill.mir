@@ -84,6 +84,7 @@ body:             |
     $cm3 = VLDA_CM_SPILL -128, implicit $sp :: (load (s1024) from %stack.0, align 32)
 ...
 
+
 # Test how "dead" is expanded
 ---
 name:            test_flags
@@ -97,4 +98,19 @@ body:             |
     ; CHECK: dead $wl1 = VLDA_dmw_lda_w_ag_spill -96, implicit $sp :: (load (s256) from %stack.0)
     ; CHECK-NEXT: dead $wh1 = VLDA_dmw_lda_w_ag_spill -64, implicit $sp :: (load (s256) from %stack.0 + 32)
     dead $x1 = VLDA_X_SPILL -96, implicit $sp :: (load (s512) from %stack.0, align 32)
+...
+
+---
+name:            test_sparse_vec640
+alignment:       32
+stack:
+  - { id: 0, name: '', type: spill-slot, offset: 0, size: 128, alignment: 32 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_sparse_vec640
+    ; CHECK: $wl0 = VLDA_dmw_lda_w_ag_spill -96, implicit $sp :: (load (s256) from %stack.0)
+    ; CHECK-NEXT: $wh0 = VLDA_dmw_lda_w_ag_spill -64, implicit $sp :: (load (s256) from %stack.0 + 32)
+    ; CHECK-NEXT: $q0 = LDA_dmv_lda_q_ag_spill -32, implicit $sp :: (load (s128) from %stack.0 + 64, align 32)
+    renamable $qx0 = VLDA_QX_SPILL -96, implicit $sp :: (load (s640) from %stack.0, align 32)
 ...

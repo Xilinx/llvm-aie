@@ -400,6 +400,7 @@ unsigned AIE2InstrInfo::isLoadFromStackSlot(const MachineInstr &MI,
   case AIE2::VLDA_dmw_lda_w_ag_spill:
   case AIE2::VLDA_L_SPILL:
   case AIE2::VLDA_X_SPILL:
+  case AIE2::VLDA_QX_SPILL:
   case AIE2::VLDA_Y_SPILL:
   case AIE2::VLDA_BM_SPILL:
   case AIE2::VLDA_CM_SPILL:
@@ -427,6 +428,7 @@ unsigned AIE2InstrInfo::isStoreToStackSlot(const MachineInstr &MI,
   case AIE2::VST_dmw_sts_w_ag_spill:
   case AIE2::VST_L_SPILL:
   case AIE2::VST_X_SPILL:
+  case AIE2::VST_QX_SPILL:
   case AIE2::VST_Y_SPILL:
   case AIE2::VST_BM_SPILL:
   case AIE2::VST_CM_SPILL:
@@ -493,6 +495,8 @@ void AIE2InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     Opcode = AIE2::ST_dmv_sts_q_ag_spill;
   } else if (regClassMatches(AIE2::VEC512RegClass, RC, SrcReg)) {
     Opcode = AIE2::VST_X_SPILL;
+  } else if (regClassMatches(AIE2::SPARSEVEC640RegClass, RC, SrcReg)) {
+    Opcode = AIE2::VST_QX_SPILL;
   } else if (regClassMatches(AIE2::VEC1024RegClass, RC, SrcReg)) {
     Opcode = AIE2::VST_Y_SPILL;
   } else if (regClassMatches(AIE2::ACC256RegClass, RC, SrcReg)) {
@@ -568,6 +572,8 @@ void AIE2InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     Opcode = AIE2::VLDA_X_SPILL;
   } else if (regClassMatches(AIE2::VEC1024RegClass, RC, DstReg)) {
     Opcode = AIE2::VLDA_Y_SPILL;
+  } else if (regClassMatches(AIE2::SPARSEVEC640RegClass, RC, DstReg)) {
+    Opcode = AIE2::VLDA_QX_SPILL;
   } else if (regClassMatches(AIE2::ACC256RegClass, RC, DstReg)) {
     Opcode = AIE2::VLDA_dmw_lda_am_ag_spill;
   } else if (regClassMatches(AIE2::ACC512RegClass, RC, DstReg)) {
@@ -616,6 +622,10 @@ AIE2InstrInfo::getSpillPseudoExpandInfo(const MachineInstr &MI) const {
   case AIE2::VLDA_X_SPILL:
     return {{AIE2::VLDA_dmw_lda_w_ag_spill, AIE2::sub_256_lo},
             {AIE2::VLDA_dmw_lda_w_ag_spill, AIE2::sub_256_hi}};
+  case AIE2::VLDA_QX_SPILL:
+    return {{AIE2::VLDA_dmw_lda_w_ag_spill, AIE2::sub_256_lo},
+            {AIE2::VLDA_dmw_lda_w_ag_spill, AIE2::sub_256_hi},
+            {AIE2::LDA_dmv_lda_q_ag_spill, AIE2::sub_sparse_q}};
   case AIE2::VLDA_Y_SPILL:
     return {{AIE2::VLDA_X_SPILL, AIE2::sub_512_lo},
             {AIE2::VLDA_X_SPILL, AIE2::sub_512_hi}};
@@ -625,6 +635,10 @@ AIE2InstrInfo::getSpillPseudoExpandInfo(const MachineInstr &MI) const {
   case AIE2::VST_X_SPILL:
     return {{AIE2::VST_dmw_sts_w_ag_spill, AIE2::sub_256_lo},
             {AIE2::VST_dmw_sts_w_ag_spill, AIE2::sub_256_hi}};
+  case AIE2::VST_QX_SPILL:
+    return {{AIE2::VST_dmw_sts_w_ag_spill, AIE2::sub_256_lo},
+            {AIE2::VST_dmw_sts_w_ag_spill, AIE2::sub_256_hi},
+            {AIE2::ST_dmv_sts_q_ag_spill, AIE2::sub_sparse_q}};
   case AIE2::VST_Y_SPILL:
     return {{AIE2::VST_X_SPILL, AIE2::sub_512_lo},
             {AIE2::VST_X_SPILL, AIE2::sub_512_hi}};
@@ -728,7 +742,9 @@ bool AIE2InstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
   case AIE2::VLDA_L_SPILL:
   case AIE2::VST_L_SPILL:
   case AIE2::VLDA_X_SPILL:
+  case AIE2::VLDA_QX_SPILL:
   case AIE2::VST_X_SPILL:
+  case AIE2::VST_QX_SPILL:
   case AIE2::VLDA_BM_SPILL:
   case AIE2::VST_BM_SPILL:
   case AIE2::VLDA_Y_SPILL:

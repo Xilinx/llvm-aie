@@ -168,7 +168,9 @@ bool AIE2RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   case AIE2::VLDA_L_SPILL:
   case AIE2::VST_L_SPILL:
   case AIE2::VLDA_X_SPILL:
+  case AIE2::VLDA_QX_SPILL:
   case AIE2::VST_X_SPILL:
+  case AIE2::VST_QX_SPILL:
   case AIE2::VLDA_BM_SPILL:
   case AIE2::VST_BM_SPILL:
   case AIE2::VLDA_Y_SPILL:
