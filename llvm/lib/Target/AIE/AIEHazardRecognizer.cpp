@@ -269,9 +269,6 @@ AIEHazardRecognizer::getHazardType(SUnit *SU, int DeltaCycles) {
       TII->getFormatInterface()->getAlternateInstsOpcode(MI->getOpcode());
   if (AlternateInsts) {
     for (const auto AltInstOpcode : *AlternateInsts) {
-      // Check if the real instruction can be added in the current bundle
-      if (!CurrentBundle.canAdd(AltInstOpcode))
-        continue;
       ScheduleHazardRecognizer::HazardType Haz =
           getHazardType(TII->get(AltInstOpcode), DeltaCycles, FUDepthLimit);
       // Check if there is NoHazard, If there is a Hazard or NoopHazard check
@@ -287,10 +284,6 @@ AIEHazardRecognizer::getHazardType(SUnit *SU, int DeltaCycles) {
     return NoopHazard;
   }
 
-  if (!CurrentBundle.canAdd(MI)) {
-    LLVM_DEBUG(dbgs() << "Format hazard\n");
-    return NoopHazard;
-  }
   return getHazardType(MI->getDesc(), DeltaCycles, FUDepthLimit);
 }
 
@@ -383,9 +376,13 @@ void AIEHazardRecognizer::setReservedCycles(unsigned Cycles) {
 
 static SlotBits getSlotSet(const MCInstrDesc &Desc,
                            const AIEBaseMCFormats &Formats) {
-  // TODO: return an actual SlotSet using Formats.
-  // This is so far un-used anyway.
-  return 0;
+  MCSlotKind SlotKind = Formats.getSlotKind(Desc.getOpcode());
+  if (SlotKind != MCSlotKind())
+    return Formats.getSlotInfo(SlotKind)->getSlotSet();
+
+  // Instructions with no format/slot cannot be added in a non-empty Bundle.
+  // Therefore, act as if they block all slots.
+  return ~0;
 }
 
 // These functions interpret the itinerary, translating InstrStages
@@ -407,6 +404,12 @@ AIEHazardRecognizer::getHazardType(unsigned SchedClass, SlotBits SlotSet,
                                    int DeltaCycles,
                                    std::optional<int> FUDepthLimit) {
   assert(Scoreboard.isValidDelta(DeltaCycles));
+
+  // Verify format hazards
+  FuncUnitWrapper EmissionCycle(/*Req=*/0, /*Res=*/0, SlotSet);
+  if (EmissionCycle.conflict(Scoreboard[DeltaCycles]))
+    return ScheduleHazardRecognizer::NoopHazard;
+
   // Note that Delta will be negative for bottom-up scheduling.
   // Cycle is 'our' cycle at which each stage of the itinerary starts.
   // It gets updated by the increment from the InstrStage.
@@ -449,6 +452,9 @@ void AIEHazardRecognizer::emitInScoreboard(unsigned SchedClass,
                                            std::optional<int> FUDepthLimit) {
   assert(Scoreboard.isValidDelta(DeltaCycles));
 
+  // Append slot usage
+  FuncUnitWrapper EmissionCycle(/*Req=*/0, /*Res=*/0, SlotSet);
+  Scoreboard[DeltaCycles] |= EmissionCycle;
 
   int Cycle = DeltaCycles;
   Scoreboard[Cycle].IssueCount++;
