@@ -69,6 +69,7 @@ add_llvm_target(AIECodeGen
    AIEFormatSelector.cpp
    AIEFrameLowering.cpp
    AIEHazardRecognizer.cpp
+   AIEHazardRecognizerPRAS.cpp
    AIEInstrInfo.cpp
    AIEInstructionSelector.cpp
    AIEISelDAGToDAG.cpp

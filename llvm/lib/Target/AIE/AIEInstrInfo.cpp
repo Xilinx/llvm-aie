@@ -14,7 +14,7 @@
 
 #include "AIEInstrInfo.h"
 #include "AIE.h"
-#include "AIEHazardRecognizer.h"
+#include "AIEHazardRecognizerPRAS.h"
 #include "AIESubtarget.h"
 #include "AIETargetMachine.h"
 #include "MCTargetDesc/AIEFormat.h"
@@ -66,7 +66,7 @@ AIEInstrInfo::CreateTargetPostRAHazardRecognizer(
 
     // AIE has a fully exposed pipeline, so we have to insert
     // Noops in the case of instruction dependence hazards.
-    return new AIEHazardRecognizer(this, II, DAG);
+  return new AIEHazardRecognizerPRAS(this, II, DAG);
 }
 
 unsigned AIEInstrInfo::isLoadFromStackSlot(const MachineInstr &MI,
