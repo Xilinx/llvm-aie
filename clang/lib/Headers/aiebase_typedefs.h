@@ -227,20 +227,8 @@ class bfloat16 {
 
 public:
   bfloat16() = default;
-  // CHECK: should we make this constructor explicit?
-  // in that case we will disallow implicit cast
-  inline bfloat16(__bf16 m) { m0 = m; }
-  /* Following implementation causes sub-optimal code
-   * for some simple cases like bfloat16 foo(bfloat16 arg) {
-   *   return arg
-   * }
-   * need to revisit bfloat16 implementation with volatile qualifier
-   * same will be applicable to copy assignment with volatile
-   * bfloat16(volatile const bfloat16 &m) { m0 = m.m0; } */
-  constexpr inline bfloat16(int a0);
-  constexpr inline bfloat16(unsigned int a0);
   constexpr inline bfloat16(float a0);
-  constexpr inline bfloat16(double a0);
+
   inline operator float() const {
     const uint16_t I16 = __builtin_bit_cast(const uint16_t, m0);
     uint32_t I32 = int32_t(I16) << 16;
@@ -270,6 +258,15 @@ public:
   /* Implicit cast from __bf16 to bfloat16 */                                  \
   inline bfloat16 operator/(bfloat16 a, type b) {                              \
     return (float(a) / float(b));                                              \
+  }                                                                            \
+  inline bfloat16 operator*(bfloat16 a, type b) {                              \
+    return (float(a) * float(b));                                              \
+  }                                                                            \
+  inline bfloat16 operator+(bfloat16 a, type b) {                              \
+    return (float(a) + float(b));                                              \
+  }                                                                            \
+  inline bfloat16 operator-(bfloat16 a, type b) {                              \
+    return (float(a) - float(b));                                              \
   }
 
 BFLOAT16_OPS(bfloat16)
@@ -277,10 +274,14 @@ BFLOAT16_OPS(float)
 BFLOAT16_OPS(int)
 #undef BFLOAT16_OPS
 
+inline bfloat16 operator-(bfloat16 a) { return bfloat16(0) - a; }
+inline bfloat16 operator+(bfloat16 a) { return bfloat16(0) + a; }
+
 /* compare operation with bfloat16 operands */
 inline bool operator>(bfloat16 a, bfloat16 b) { return ((float)b < (float)a); }
 inline bool operator<=(bfloat16 a, bfloat16 b) { return !((float)a > (float)b); }
 inline bool operator!=(bfloat16 a, bfloat16 b) { return !((float)a == (float)b); }
+inline bool operator==(bfloat16 a, bfloat16 b) { return (float)a == (float)b; }
 #endif
 /* 8-bit types */
 typedef buint8_t v2uint4;

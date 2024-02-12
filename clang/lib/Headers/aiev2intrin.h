@@ -63,18 +63,7 @@ constexpr inline bfloat16::bfloat16(float a0) {
   const uint16_t IBF = I32 >> 16;
   m0 = __builtin_bit_cast(__bf16, IBF);
 }
-constexpr inline bfloat16::bfloat16(double a0) {
-  bfloat16 t = (float)a0;
-  m0 = t.m0;
-}
-constexpr inline bfloat16::bfloat16(int a0) {
-  bfloat16 t = (float)a0;
-  m0 = t.m0;
-}
-constexpr inline bfloat16::bfloat16(unsigned int a0) {
-  bfloat16 t = (float)a0;
-  m0 = t.m0;
-}
+
 #endif /* __cplusplus */
 
 // Locks
