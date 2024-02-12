@@ -83,11 +83,11 @@ class MockHR : public AIEHazardRecognizer {
 public:
   ~MockHR() = default;
   MockHR() : AIEHazardRecognizer(&InstrInfo, &Itins, nullptr) {}
-  void emit(unsigned SchedClass, int Delta) {
-    emitInScoreboard(SchedClass, Delta, std::nullopt);
+  void emit(unsigned SchedClass, int Delta, SlotBits SlotSet = 0) {
+    emitInScoreboard(SchedClass, SlotSet, Delta, std::nullopt);
   }
-  bool hazard(unsigned SchedClass, int Delta) {
-    return getHazardType(SchedClass, Delta, std::nullopt) != NoHazard;
+  bool hazard(unsigned SchedClass, int Delta, SlotBits SlotSet = 0) {
+    return getHazardType(SchedClass, SlotSet, Delta, std::nullopt) != NoHazard;
   }
 };
 

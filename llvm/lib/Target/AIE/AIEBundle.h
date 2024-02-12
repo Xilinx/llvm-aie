@@ -45,14 +45,6 @@ public:
   Bundle(const AIEBaseMCFormats *FormatInterface)
       : FormatInterface(FormatInterface) {}
 
-  template <class II> bool isPostRA(II *) const { return true; }
-
-  bool isPostRA(MachineInstr *Instr) const {
-    const MachineFunction *MF = Instr->getParent()->getParent();
-    return MF->getProperties().hasProperty(
-        MachineFunctionProperties::Property::NoVRegs);
-  }
-
   /// Returns whether adding Instr to the current bundle leaves it valid.
   /// \param Instr instruction to add.
   bool canAdd(I *Instr) const { return canAdd(Instr->getOpcode()); }
@@ -73,7 +65,7 @@ public:
       return true;
     }
 
-    if (isMetaInstruction(InstOpCode)) {
+    if (isNoHazardMetaInstruction(InstOpCode)) {
       return true;
     }
 
@@ -98,7 +90,7 @@ public:
   /// \param Instr Instruction to add
   /// \pre canAdd(Instr);
   void add(I *Instr, std::optional<unsigned> SelectedOpcode = std::nullopt) {
-    if (isMetaInstruction(Instr->getOpcode())) {
+    if (isNoHazardMetaInstruction(Instr->getOpcode())) {
       MetaInstrs.push_back(Instr);
       return;
     }
@@ -176,7 +168,9 @@ public:
                                      Instrs.front()->getOpcode());
   }
 
-  bool isMetaInstruction(unsigned Opcode) const {
+  /// Whether the opcode represents a meta instruction that can be ignored for
+  /// format hazards.
+  static bool isNoHazardMetaInstruction(unsigned Opcode) {
     switch (Opcode) {
     case TargetOpcode::IMPLICIT_DEF:
     case TargetOpcode::KILL:

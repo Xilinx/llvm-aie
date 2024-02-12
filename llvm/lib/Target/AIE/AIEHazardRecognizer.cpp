@@ -150,6 +150,12 @@ static cl::opt<int>
 
 int AIEHazardRecognizer::NumInstrsScheduled = 0;
 
+static bool isPostRA(const MachineInstr *Instr) {
+  const MachineFunction *MF = Instr->getParent()->getParent();
+  return MF->getProperties().hasProperty(
+      MachineFunctionProperties::Property::NoVRegs);
+}
+
 AIEHazardRecognizer::AIEHazardRecognizer(const AIEBaseInstrInfo *TII,
                                          const InstrItineraryData *II,
                                          const ScheduleDAG *SchedDAG)
@@ -240,7 +246,7 @@ void AIEHazardRecognizer::Reset() {
 ScheduleHazardRecognizer::HazardType
 AIEHazardRecognizer::getHazardType(SUnit *SU, int DeltaCycles) {
   MachineInstr *MI = SU->getInstr();
-  if (CurrentBundle.isMetaInstruction(MI->getOpcode())) {
+  if (AIE::MachineBundle::isNoHazardMetaInstruction(MI->getOpcode())) {
     LLVM_DEBUG(dbgs() << "Meta instruction\n");
     return NoHazard;
   }
@@ -250,30 +256,24 @@ AIEHazardRecognizer::getHazardType(SUnit *SU, int DeltaCycles) {
     return NoopHazard;
   }
 
-  // TODO: In general, we should be able to rely on just the scoreboard,
-  // CurrentBundle only applies to DeltaCycles=0:
-  //   if (Scoreboard[DeltaCycles].IssueCount >= IssueLimit)
-  // Currently, we don't always update the scoreboard, missing
-  // some instructions there that *are* inserted in the bundle.
-  // See AIECC-451.
-  if (CurrentBundle.size() >= IssueLimit) {
+  if (Scoreboard[DeltaCycles].IssueCount >= IssueLimit) {
     LLVM_DEBUG(dbgs() << "At issue limit\n");
     return NoopHazard;
   }
 
   std::optional<int> FUDepthLimit;
-  if (!CurrentBundle.isPostRA(MI))
+  if (!isPostRA(MI))
     FUDepthLimit = PreRAFuncUnitDepth;
 
   const std::vector<unsigned int> *AlternateInsts =
-      CurrentBundle.FormatInterface->getAlternateInstsOpcode(MI->getOpcode());
+      TII->getFormatInterface()->getAlternateInstsOpcode(MI->getOpcode());
   if (AlternateInsts) {
     for (const auto AltInstOpcode : *AlternateInsts) {
       // Check if the real instruction can be added in the current bundle
       if (!CurrentBundle.canAdd(AltInstOpcode))
         continue;
-      ScheduleHazardRecognizer::HazardType Haz = getHazardType(
-          TII->get(AltInstOpcode).getSchedClass(), DeltaCycles, FUDepthLimit);
+      ScheduleHazardRecognizer::HazardType Haz =
+          getHazardType(TII->get(AltInstOpcode), DeltaCycles, FUDepthLimit);
       // Check if there is NoHazard, If there is a Hazard or NoopHazard check
       // for the next possible Opcode.
       if (Haz == NoHazard) {
@@ -291,8 +291,7 @@ AIEHazardRecognizer::getHazardType(SUnit *SU, int DeltaCycles) {
     LLVM_DEBUG(dbgs() << "Format hazard\n");
     return NoopHazard;
   }
-  return getHazardType(MI->getDesc().getSchedClass(), DeltaCycles,
-                       FUDepthLimit);
+  return getHazardType(MI->getDesc(), DeltaCycles, FUDepthLimit);
 }
 
 bool AIEHazardRecognizer::conflict(const AIEHazardRecognizer &Other,
@@ -347,15 +346,15 @@ void AIEHazardRecognizer::EmitInstruction(SUnit *SU, int DeltaCycles) {
   LLVM_DEBUG(dbgs() << "Emit Instruction: " << *MI);
 
   std::optional<int> FUDepthLimit;
-  if (!CurrentBundle.isPostRA(MI))
+  if (!isPostRA(MI))
     FUDepthLimit = PreRAFuncUnitDepth;
 
   // If the instruction has multiple options, find the opcode that was selected
   // and use the latter to update the scoreboard.
   unsigned SelectedOpcode = getSelectedAltOpcode(MI).value_or(MI->getOpcode());
   CurrentBundle.add(MI, SelectedOpcode);
-  emitInScoreboard(TII->get(SelectedOpcode).getSchedClass(), DeltaCycles,
-                   FUDepthLimit);
+  if (!AIE::MachineBundle::isNoHazardMetaInstruction(SelectedOpcode))
+    emitInScoreboard(TII->get(SelectedOpcode), DeltaCycles, FUDepthLimit);
 
   // When requested, we switch off VLIW scheduling after the specified number
   // of instructions are scheduled.
@@ -382,13 +381,30 @@ void AIEHazardRecognizer::setReservedCycles(unsigned Cycles) {
   this->ReservedCycles = Cycles;
 }
 
+static SlotBits getSlotSet(const MCInstrDesc &Desc,
+                           const AIEBaseMCFormats &Formats) {
+  // TODO: return an actual SlotSet using Formats.
+  // This is so far un-used anyway.
+  return 0;
+}
+
 // These functions interpret the itinerary, translating InstrStages
 // to ResourceCycles to apply.
 // We deviate from the standard ScoreboardHazardRecognizer by not
 // recognising alternatives
 //
 ScheduleHazardRecognizer::HazardType
-AIEHazardRecognizer::getHazardType(unsigned SchedClass, const int DeltaCycles,
+AIEHazardRecognizer::getHazardType(const MCInstrDesc &Desc,
+                                   const int DeltaCycles,
+                                   std::optional<int> FUDepthLimit) {
+  return getHazardType(Desc.getSchedClass(),
+                       getSlotSet(Desc, *TII->getFormatInterface()),
+                       DeltaCycles, FUDepthLimit);
+}
+
+ScheduleHazardRecognizer::HazardType
+AIEHazardRecognizer::getHazardType(unsigned SchedClass, SlotBits SlotSet,
+                                   int DeltaCycles,
                                    std::optional<int> FUDepthLimit) {
   assert(Scoreboard.isValidDelta(DeltaCycles));
   // Note that Delta will be negative for bottom-up scheduling.
@@ -420,9 +436,19 @@ AIEHazardRecognizer::getHazardType(unsigned SchedClass, const int DeltaCycles,
   return ScheduleHazardRecognizer::NoHazard;
 }
 
-void AIEHazardRecognizer::emitInScoreboard(unsigned SchedClass, int DeltaCycles,
+void AIEHazardRecognizer::emitInScoreboard(const MCInstrDesc &Desc,
+                                           int DeltaCycles,
+                                           std::optional<int> FUDepthLimit) {
+  emitInScoreboard(Desc.getSchedClass(),
+                   getSlotSet(Desc, *TII->getFormatInterface()), DeltaCycles,
+                   FUDepthLimit);
+}
+
+void AIEHazardRecognizer::emitInScoreboard(unsigned SchedClass,
+                                           SlotBits SlotSet, int DeltaCycles,
                                            std::optional<int> FUDepthLimit) {
   assert(Scoreboard.isValidDelta(DeltaCycles));
+
 
   int Cycle = DeltaCycles;
   Scoreboard[Cycle].IssueCount++;

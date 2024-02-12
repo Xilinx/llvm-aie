@@ -61,8 +61,9 @@ public:
   void blockResources();
   FuncUnitWrapper() = default;
   FuncUnitWrapper(InstrStage::FuncUnits Req) : Required(Req), Reserved(0) {}
-  FuncUnitWrapper(InstrStage::FuncUnits Req, InstrStage::FuncUnits Res)
-      : Required(Req), Reserved(Res) {}
+  FuncUnitWrapper(InstrStage::FuncUnits Req, InstrStage::FuncUnits Res,
+                  SlotBits Slots = 0)
+      : Required(Req), Reserved(Res), Slots(Slots) {}
 
   /// Dump a readable version
   void dump() const;
@@ -117,7 +118,7 @@ public:
   ///        resources are recorded in the scoreboard. This is mainly for
   ///        use from the pre-RA scheduler, where detailed resource modelling
   ///        doesn't pay off.
-  void emitInScoreboard(unsigned SchedClass, int DeltaCycles,
+  void emitInScoreboard(const MCInstrDesc &Desc, int DeltaCycles,
                         std::optional<int> FUDepthLimit);
 
   /// Block all scoreboard resources at DeltaCycles
@@ -135,8 +136,13 @@ public:
 
 protected:
   ScheduleHazardRecognizer::HazardType
-  getHazardType(unsigned SchedClass, int DeltaCycles,
+  getHazardType(const MCInstrDesc &Desc, int DeltaCycles,
                 std::optional<int> FUDepthLimit);
+  ScheduleHazardRecognizer::HazardType
+  getHazardType(unsigned SchedClass, SlotBits SlotSet, int DeltaCycles,
+                std::optional<int> FUDepthLimit);
+  void emitInScoreboard(unsigned SchedClass, SlotBits SlotSet, int DeltaCycles,
+                        std::optional<int> FUDepthLimit);
 
   unsigned computeScoreboardDepth() const;
 
