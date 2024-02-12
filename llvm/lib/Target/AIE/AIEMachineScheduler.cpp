@@ -596,9 +596,10 @@ void AIEScheduleDAGMI::enterRegion(MachineBasicBlock *BB,
 
   // The MachineScheduler skips regions with a single instruction.
   // AIE has an exposed pipeline and some NOPs might still be needed for
-  // correctness.
-  if (RegionInstrs == 1) {
-    LLVM_DEBUG(dbgs() << "Force scheduling for single instruction\n");
+  // correctness. This also ensures that the state within SchedImpl is
+  // correctly initialized...
+  if (RegionInstrs <= 1) {
+    LLVM_DEBUG(dbgs() << "Force scheduling for skipped region\n");
     ScheduleDAGMI::schedule();
   }
 }
@@ -620,6 +621,12 @@ void AIEScheduleDAGMILive::enterRegion(MachineBasicBlock *BB,
   // to enter/exit regions. Let's give it some.
   static_cast<AIEPreRASchedStrategy *>(SchedImpl.get())
       ->enterRegion(BB, Begin, End, RegionInstrs);
+
+  // Similar to AIEScheduleDAGMI, ensure correct state for SchedImpl.
+  if (RegionInstrs <= 1) {
+    LLVM_DEBUG(dbgs() << "Force scheduling for skipped region\n");
+    ScheduleDAGMILive::schedule();
+  }
 }
 
 void AIEScheduleDAGMILive::exitRegion() {
