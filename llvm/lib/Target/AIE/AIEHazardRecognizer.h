@@ -26,6 +26,10 @@
 
 namespace llvm {
 
+void applyFormatOrdering(AIE::MachineBundle &Bundle, const VLIWFormat &Format,
+                         MachineInstr *BundleRoot,
+                         MachineBasicBlock::iterator InsertPoint);
+
 // To be merged with AIEResourceCycle
 class FuncUnitWrapper {
   /// The format interface to interpret bundle constraints
