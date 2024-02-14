@@ -19,7 +19,6 @@
 #include "AIEBaseAliasAnalysis.h"
 #include "AIEDumpArtifacts.h"
 #include "AIEFinalizeBundle.h"
-#include "AIEFormatSelector.h"
 #include "AIEMachineAlignment.h"
 #include "AIEMachineBlockPlacement.h"
 #include "AIETargetObjectFile.h"

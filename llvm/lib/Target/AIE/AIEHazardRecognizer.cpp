@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEHazardRecognizer.h"
-#include "AIEFormatSelector.h"
 #include "MCTargetDesc/AIEMCFormats.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -177,6 +176,36 @@ AIEHazardRecognizer::AIEHazardRecognizer(const AIEBaseInstrInfo *TII,
     IssueLimit = 1;
   }
 }
+
+namespace llvm {
+void applyFormatOrdering(AIE::MachineBundle &Bundle, const VLIWFormat &Format,
+                         MachineInstr *BundleRoot,
+                         MachineBasicBlock::iterator InsertPoint) {
+  if (Bundle.empty())
+    return;
+
+  MachineBasicBlock &MBB = *Bundle.getInstrs()[0]->getParent();
+  auto *TII = static_cast<const AIEBaseInstrInfo *>(
+      MBB.getParent()->getSubtarget().getInstrInfo());
+
+  // Run over the slots of the format and either insert the occupying
+  // instruction or a nop. Reapply bundling.
+  for (MCSlotKind Slot : Format.getSlots()) {
+    const MCSlotInfo *SlotInfo = TII->getSlotInfo(Slot);
+    assert(SlotInfo);
+
+    llvm::MachineInstr *Instr = Bundle.at(Slot);
+    if (Instr) {
+      Instr->removeFromBundle();
+      MBB.insert(InsertPoint, Instr);
+    }
+    if (!BundleRoot)
+      BundleRoot = Instr;
+    else if (Instr)
+      Instr->bundleWithPred();
+  }
+}
+} // namespace llvm
 
 void AIEHazardRecognizer::applyBundles(
     const std::vector<AIE::MachineBundle> &Bundles, MachineBasicBlock *MBB) {
