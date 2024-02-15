@@ -163,7 +163,20 @@ AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
         .clampScalar(1, S32, S64);
 
     getActionDefinitionsBuilder(G_FABS).customFor({S32, S64});
+
+    getActionDefinitionsBuilder({G_FADD, G_FSUB})
+        .legalFor({V16S32})
+        .customFor({S16})
+        .libcallFor({S32, S64});
+
+    getActionDefinitionsBuilder({G_FMUL, G_FDIV, G_FREM})
+        .clampScalar(0, S32, S64)
+        .libcallFor({S32, S64});
   }
+
+  if (!ST.isAIE2())
+    getActionDefinitionsBuilder({G_FMUL, G_FDIV, G_FADD, G_FSUB, G_FREM})
+        .libcallFor({S32, S64});
 
   // Since the only integers smaller than 32 bits we produce are S20 (from
   // G_PTRTOINT), the only legal extension is S20 -> S32.
@@ -198,9 +211,6 @@ AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
       .clampScalar(1, S32, S32);
 
   getActionDefinitionsBuilder(G_TRUNC).alwaysLegal();
-
-  getActionDefinitionsBuilder({G_FMUL, G_FDIV, G_FADD, G_FSUB, G_FREM})
-      .libcallFor({S32, S64});
 
   auto &SELECT = getActionDefinitionsBuilder(G_SELECT)
                      .legalFor({{S32, S32}, {P0, S32}})
@@ -422,6 +432,9 @@ bool AIELegalizerInfo::legalizeCustom(LegalizerHelper &Helper,
     return legalizeG_FPEXT(Helper, MI);
   case TargetOpcode::G_FABS:
     return legalizeG_FABS(Helper, MI);
+  case TargetOpcode::G_FADD:
+  case TargetOpcode::G_FSUB:
+    return legalizeG_FADDSUB(Helper, MI);
   }
 
   llvm_unreachable("Un-expected custom legalization");
@@ -947,6 +960,63 @@ bool AIELegalizerInfo::legalizeG_FABS(LegalizerHelper &Helper,
     auto Ones = MIRBuilder.buildConstant(LLT::scalar(32), 0x7fffffff);
     MIRBuilder.buildAnd(DstReg, SrcReg, Ones);
   }
+
+  MI.eraseFromParent();
+  return true;
+}
+
+bool AIELegalizerInfo::legalizeG_FADDSUB(LegalizerHelper &Helper,
+                                         MachineInstr &MI) const {
+  MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
+  MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
+
+  Register DstReg = MI.getOperand(0).getReg();
+  Register SrcReg1 = MI.getOperand(1).getReg();
+  Register SrcReg2 = MI.getOperand(2).getReg();
+
+  assert(MRI.getType(DstReg) == LLT::scalar(16) &&
+         "Expected bfloat16 type in custom legalization.");
+
+  const LLT S32 = LLT::scalar(32);
+  const LLT V16BF16 = LLT::fixed_vector(16, 16);
+  const LLT V16FP32 = LLT::fixed_vector(16, 32);
+  const LLT ACC512 = LLT::fixed_vector(8, 64);
+
+  Register NewSrcReg1 = MIRBuilder.buildFPExt(S32, SrcReg1).getReg(0);
+  Register NewSrcReg2 = MIRBuilder.buildFPExt(S32, SrcReg2).getReg(0);
+  Register IdxReg = MIRBuilder.buildConstant(S32, 0).getReg(0);
+  Register Src1Vec = MIRBuilder.buildUndef(V16FP32).getReg(0);
+  Register Src2Vec = MIRBuilder.buildUndef(V16FP32).getReg(0);
+
+  Register NewSrc1 = MIRBuilder
+                         .buildInstr(AIE2::G_AIE_INSERT_VECTOR_ELT, {V16FP32},
+                                     {Src1Vec, NewSrcReg1, IdxReg})
+                         .getReg(0);
+  Register NewSrc2 = MIRBuilder
+                         .buildInstr(AIE2::G_AIE_INSERT_VECTOR_ELT, {V16FP32},
+                                     {Src2Vec, NewSrcReg2, IdxReg})
+                         .getReg(0);
+
+  Register FPOp;
+  if (MI.getOpcode() == TargetOpcode::G_FADD)
+    FPOp = MIRBuilder.buildFAdd(V16FP32, NewSrc1, NewSrc2).getReg(0);
+  else
+    FPOp = MIRBuilder.buildFSub(V16FP32, NewSrc1, NewSrc2).getReg(0);
+
+  Register FPRes = MIRBuilder.buildBitcast(ACC512, FPOp).getReg(0);
+  Register Conv = MIRBuilder
+                      .buildIntrinsic(Intrinsic::aie2_v16accfloat_to_v16bf16,
+                                      {V16BF16}, false, false)
+                      .addUse(FPRes)
+                      .getReg(0);
+
+  const Register ExtEltDstReg = MRI.createGenericVirtualRegister(S32);
+  const Register ExtDstReg = MRI.createGenericVirtualRegister(S32);
+  MIRBuilder.buildInstr(AIE2::G_AIE_SEXT_EXTRACT_VECTOR_ELT, {ExtEltDstReg},
+                        {Conv, IdxReg});
+  MIRBuilder.buildAssertInstr(TargetOpcode::G_ASSERT_SEXT, ExtDstReg,
+                              ExtEltDstReg, 16);
+  MIRBuilder.buildTrunc(DstReg, ExtDstReg);
 
   MI.eraseFromParent();
   return true;

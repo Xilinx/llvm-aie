@@ -212,6 +212,18 @@ AIE2RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
            "Expected to see only 32-or-64 to 16-or-20-or-32 bit truncations");
     return AIEBaseRegisterBankInfo::getInstrMapping(MI);
   }
+  case TargetOpcode::G_FADD:
+  case TargetOpcode::G_FSUB: {
+    assert(MRI.getType(MI.getOperand(0).getReg()) ==
+               LLT::fixed_vector(16, 32) &&
+           "Only support 16 x FP32 arithmetic");
+    return getInstructionMapping(
+        /*ID*/ DefaultMappingID, /*Cost*/ 1,
+        getOperandsMapping({getValueMapping(PMI_ACC512, 512),
+                            getValueMapping(PMI_ACC512, 512),
+                            getValueMapping(PMI_ACC512, 512)}),
+        /*NumOperands*/ 3);
+  }
   default:
     // Base class implementation for others
     return AIEBaseRegisterBankInfo::getInstrMapping(MI);
