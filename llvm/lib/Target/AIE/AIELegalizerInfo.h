@@ -44,6 +44,7 @@ private:
   bool legalizeG_FPTRUNC(LegalizerHelper &Helper, MachineInstr &MI) const;
   bool legalizeG_FPEXT(LegalizerHelper &Helper, MachineInstr &MI) const;
   bool legalizeG_FABS(LegalizerHelper &Helper, MachineInstr &MI) const;
+  bool legalizeG_FADDSUB(LegalizerHelper &Helper, MachineInstr &MI) const;
 };
 } // end namespace llvm
 #endif

@@ -64,7 +64,7 @@ class AIE2RegisterClass <int size, int align, list<ValueType> regTypes, dag regl
   }
 
   class AIE2Acc512RegisterClass<dag reglist> :
-      AIE2RegisterClass<512, 256, [v8i64], reglist> {
+      AIE2RegisterClass<512, 256, [v8i64, v16f32], reglist> {
     let hasCompleteDecoder = 0;
   }
 
