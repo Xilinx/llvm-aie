@@ -35,6 +35,11 @@ struct AIEBaseRegisterInfo : public TargetRegisterInfo {
   virtual const std::set<int> &getSubRegSplit(int RegClassId) const {
     llvm_unreachable("Target didn't implement getSubRegSplit()");
   }
+  // Whether redundant assignments to reserved registers can be simplified by
+  // WAWEdges
+  virtual bool isSimplifiableReservedReg(MCRegister PhysReg) const {
+    return false;
+  }
 #if 0
   /// Returns a BitVector of the intersection of GPR RegClass
   /// and CalleeSaved Registers

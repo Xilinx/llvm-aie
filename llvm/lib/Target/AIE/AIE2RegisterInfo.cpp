@@ -17,6 +17,7 @@
 #include "AIE2.h"
 #include "AIE2RegisterBankInfo.h"
 #include "AIE2Subtarget.h"
+#include "AIEBaseRegisterInfo.h"
 #include "MCTargetDesc/AIE2MCTargetDesc.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -50,6 +51,10 @@ static llvm::cl::opt<bool>
 static llvm::cl::opt<bool>
     Spill1DModstoGPR("aie2-spill-mods-to-r", cl::Hidden, cl::init(true),
                      cl::desc("Allow spilling 1D modifier registers to GPRs"));
+
+static llvm::cl::opt<bool> SimplifyCRSRRegs(
+    "aie2-simplify-crsr-edges", cl::Hidden, cl::init(true),
+    cl::desc("Allow simplifying redundant CR and SR reg assignments"));
 
 AIE2RegisterInfo::AIE2RegisterInfo(unsigned HwMode)
     : AIE2GenRegisterInfo(AIE2::SP, /*DwarfFlavour*/ 0, /*EHFlavor*/ 0,
@@ -105,6 +110,11 @@ BitVector AIE2RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 
   assert(checkAllSuperRegsMarked(Reserved));
   return Reserved;
+}
+
+bool AIE2RegisterInfo::isSimplifiableReservedReg(MCRegister PhysReg) const {
+  return SimplifyCRSRRegs && (AIE2::mCRmRegClass.contains(PhysReg) ||
+                              AIE2::mSRmRegClass.contains(PhysReg));
 }
 
 const uint32_t *AIE2RegisterInfo::getNoPreservedMask() const {

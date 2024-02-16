@@ -17,7 +17,7 @@ define void @nested(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; CHECK-LABEL: nested:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %for.cond3.preheader.lr.ph
-; CHECK-NEXT:    lda r2, [p0, #0]
+; CHECK-NEXT:    lda r2, [p0, #0]; nopb ; nopx
 ; CHECK-NEXT:    mova r3, #0
 ; CHECK-NEXT:    add.nc r0, r0, #-1
 ; CHECK-NEXT:    mova r4, #2
@@ -27,7 +27,7 @@ define void @nested(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; CHECK-NEXT:  .LBB0_1: // %for.cond3.preheader
 ; CHECK-NEXT:    // =>This Loop Header: Depth=1
 ; CHECK-NEXT:    // Child Loop BB0_2 Depth 2
-; CHECK-NEXT:    lshl r5, r3, r4
+; CHECK-NEXT:    nopa ; lshl r5, r3, r4; nopm
 ; CHECK-NEXT:    mov dj0, r5
 ; CHECK-NEXT:    lda p4, [p1, dj0]
 ; CHECK-NEXT:    add.nc r5, r1, #-1
@@ -39,7 +39,7 @@ define void @nested(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; CHECK-NEXT:  .LBB0_2: // %for.body6
 ; CHECK-NEXT:    // Parent Loop BB0_1 Depth=1
 ; CHECK-NEXT:    // => This Inner Loop Header: Depth=2
-; CHECK-NEXT:    lshl r7, r6, r4
+; CHECK-NEXT:    nopa ; lshl r7, r6, r4
 ; CHECK-NEXT:    mov dj0, r7
 ; CHECK-NEXT:    lda r7, [p4, dj0]
 ; CHECK-NEXT:    add r6, r6, #1
@@ -58,8 +58,8 @@ define void @nested(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  // %bb.3: // %for.cond3.for.cond.cleanup5_crit_edge
 ; CHECK-NEXT:    // in Loop: Header=BB0_1 Depth=1
-; CHECK-NEXT:    add r3, r3, #1
-; CHECK-NEXT:    jnzd r0, r0, p3
+; CHECK-NEXT:    nopb ; nopa ; nops ; add r3, r3, #1; nopm ; nopv
+; CHECK-NEXT:    nopa ; jnzd r0, r0, p3
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
@@ -67,7 +67,7 @@ define void @nested(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  // %bb.4: // %for.cond.cleanup
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
