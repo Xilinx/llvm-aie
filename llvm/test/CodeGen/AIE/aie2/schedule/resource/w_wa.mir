@@ -144,16 +144,14 @@ body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: E2_VFLOOR_E7_VLDA
     ; CHECK: $wl0 = VLDA_dmw_lda_w_ag_idx_imm killed $p0, 0
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $x1 = VFLOOR_S32_BF16_mFl2FxSrc_W $wl2, $s1, implicit-def $srf2iflags, implicit $crf2imask
+    ; CHECK-NEXT: $x1 = VFLOOR_S32_BF16_mFl2FxSrc_W $wl2, $s1, implicit-def $srf2iflags, implicit $crf2imask
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: $x0 = VFLOOR_S32_BF16_mFl2FxSrc_AM $amll3, $s0, implicit-def $srf2iflags, implicit $crf2imask
     ; CHECK-NEXT: $x0 = VFLOOR_S32_BF16_mFl2FxSrc_AM $amll3, $s0, implicit-def $srf2iflags, implicit $crf2imask
     ; CHECK-NEXT: $x0 = VFLOOR_S32_BF16_mFl2FxSrc_AM killed $amll3, killed $s0, implicit-def $srf2iflags, implicit $crf2imask
-    ; CHECK-NEXT: $x1 = VFLOOR_S32_BF16_mFl2FxSrc_W $wl2, $s1, implicit-def $srf2iflags, implicit $crf2imask
-    ; CHECK-NEXT: $x1 = VFLOOR_S32_BF16_mFl2FxSrc_W $wl2, $s1, implicit-def $srf2iflags, implicit $crf2imask
     ; CHECK-NEXT: $x1 = VFLOOR_S32_BF16_mFl2FxSrc_W killed $wl2, killed $s1, implicit-def $srf2iflags, implicit $crf2imask
     ; CHECK-NEXT: NOP
     $wl0 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0

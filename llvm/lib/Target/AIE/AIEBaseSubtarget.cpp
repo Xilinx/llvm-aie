@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEBaseSubtarget.h"
+#include "AIEBaseRegisterInfo.h"
 #include "AIEMachineScheduler.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -477,6 +478,86 @@ class MemoryEdges : public ScheduleDAGMutation {
   };
 };
 
+void dumpDependencies(ScheduleDAGInstrs *DAG, SDep::Kind depType,
+                      const char *DepName) {
+  const TargetRegisterInfo *TRI = DAG->MF.getSubtarget().getRegisterInfo();
+  dbgs() << (DAG->MF).getName() << " " << DepName << " dependencies\n";
+  for (SUnit &SU : DAG->SUnits) {
+    for (const SDep &Dep : SU.Succs) {
+      if (Dep.getKind() != depType)
+        continue;
+      dbgs() << "SU(" << SU.NodeNum << ")->SU(" << Dep.getSUnit()->NodeNum
+             << ") ";
+      Dep.dump();
+      dbgs() << " " << printReg(Dep.getReg(), TRI) << "\n";
+    }
+  }
+}
+
+/// Prevent WAW dependencies on physical register writes. Instructions that
+/// write a register have very limited scheduler freedom. That could be improved
+/// by ignoring the writes that don't reach a read. Algorithm starts with the
+/// live set of MBB, backtrack the DAG and update the live set. Whenever an edge
+/// points to a non-live write, it is updated to the subsequent live write.
+class WAWEdges : public ScheduleDAGMutation {
+  // Collect all edges in a separate vector. This allows modifying SU.Preds
+  // without invalidating iterators.
+  SmallVector<SDep, 4> getPreds(SUnit &SU) {
+    SmallVector<SDep, 4> Preds;
+    copy(SU.Preds, std::back_inserter(Preds));
+    return Preds;
+  }
+  // Updates the dependency to the instruction with last live write of the same
+  // register
+  void updateOutputDeps(SUnit *SU, Register Reg,
+                        std::map<Register, SUnit *> &PhysRegWriters) {
+    for (const SDep &Dep : getPreds(*SU)) {
+      if (Dep.getKind() == SDep::Output && Dep.getReg() == Reg) {
+        auto It = PhysRegWriters.find(Dep.getReg());
+        if (It != PhysRegWriters.end()) {
+          It->second->addPred(Dep);
+        }
+        SU->removePred(Dep);
+      }
+    }
+  }
+  void apply(ScheduleDAGInstrs *DAG) override {
+    MachineFunction &MF = DAG->MF;
+    MachineRegisterInfo &MRI = MF.getRegInfo();
+    const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
+    auto *RI = static_cast<const AIEBaseRegisterInfo *>(TRI);
+    LivePhysRegs LiveRegs;
+    LiveRegs.init(*TRI);
+    // Reserved registers are considered always live
+    for (MCPhysReg PhysReg : MRI.getReservedRegs().set_bits()) {
+      if (RI->isSimplifiableReservedReg(PhysReg))
+        LiveRegs.addReg(PhysReg);
+    }
+    // Stores latest live write of physical register.
+    std::map<Register, SUnit *> PhysRegWriters;
+    for (SUnit &SU : reverse(DAG->SUnits)) {
+      MachineInstr &MI = *SU.getInstr();
+      for (MIBundleOperands MO(MI); MO.isValid(); ++MO) {
+        // Checks if operand is a Physical register and it is written in MI
+        if (MO->isReg() && MO->isDef() &&
+            RI->isSimplifiableReservedReg(MO->getReg())) {
+          Register PhysReg = MO->getReg();
+          SUnit *SU = DAG->getSUnit(&MI);
+          if (!LiveRegs.contains(PhysReg)) {
+            // The physical register isn't live, simplify WAW dependencies that
+            // are internal to the region
+            updateOutputDeps(SU, PhysReg, PhysRegWriters);
+          } else {
+            PhysRegWriters[PhysReg] = SU;
+          }
+        }
+      }
+      LiveRegs.stepBackward(MI);
+    }
+    LLVM_DEBUG(dumpDependencies(DAG, SDep::Output, "WAW"));
+  };
+};
+
 } // namespace
 
 std::vector<std::unique_ptr<ScheduleDAGMutation>>
@@ -486,6 +567,7 @@ AIEBaseSubtarget::getPostRAMutationsImpl(const Triple &TT) {
   if (!TT.isAIE1()) {
     Mutations.emplace_back(std::make_unique<RegionEndEdges>());
     Mutations.emplace_back(std::make_unique<MemoryEdges>());
+    Mutations.emplace_back(std::make_unique<WAWEdges>());
   }
   return Mutations;
 }

@@ -1,0 +1,114 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+
+# RUN: llc -mtriple=aie2 --run-pass=postmisched --issue-limit=1 -debug-only=machine-scheduler %s -o - 2>%t.log
+# RUN: cat %t.log | FileCheck %s --check-prefix=CHECK-WAW
+# REQUIRES: asserts
+
+# This test checks the write-after-write(WAW) dependencies
+
+---
+# Here we have two WAW dependencies with srcarry W1->W3, W2->W3, where W3 is a live write
+name:            test_WAW
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0.entry :
+    liveins: $r1, $r2, $r3, $r4
+    ; CHECK-WAW-LABEL: test_WAW WAW dependencies
+    ; CHECK-WAW: SU(0)->SU(2) Out  Latency=1 $r0
+    ; CHECK-WAW-NEXT: SU(0)->SU(2) Out  Latency=1 $srcarry
+    ; CHECK-WAW-NEXT: SU(1)->SU(2) Out  Latency=1 $srcarry
+    ; CHECK-WAW-NEXT: SU(2)->SU(3) Out  Latency=1 $r0
+    ; CHECK-WAW-NEXT: SU(2)->SU(3) Out  Latency=1 $srcarry
+
+    renamable $r0 = nsw ADD $r1, $r2, implicit-def $srcarry
+    renamable $r1 = nsw ADD $r3, $r4, implicit-def $srcarry
+    renamable $r0 = nsw ADD killed renamable $r0, $r4, implicit-def $srcarry
+    $r0 = nsw ADC killed renamable $r1, killed renamable $r0, implicit-def $srcarry, implicit $srcarry
+    RET implicit $lr
+    DelayedSchedBarrier implicit $r0
+...
+
+---
+# Here we have three WAW dependencies with srcarry W1->W4, W2->W4, W3->W4 where W2 is a live write
+name:            test_WAW_2
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    liveins: $r1, $r2, $r3, $r4
+    ; CHECK-WAW-LABEL: test_WAW_2 WAW dependencies
+    ; CHECK-WAW: SU(0)->SU(2) Out  Latency=1 $r0
+    ; CHECK-WAW-NEXT: SU(0)->SU(3) Out  Latency=1 $srcarry
+    ; CHECK-WAW-NEXT: SU(1)->SU(3) Out  Latency=1 $r1
+    ; CHECK-WAW-NEXT: SU(1)->SU(3) Out  Latency=1 $srcarry
+    ; CHECK-WAW-NEXT: SU(2)->SU(4) Out  Latency=1 $r0
+    ; CHECK-WAW-NEXT: SU(2)->SU(3) Out  Latency=1 $srcarry
+    ; CHECK-WAW-NEXT: SU(3)->SU(4) Out  Latency=1 $srcarry
+
+    renamable $r0 = nsw ADD $r1, $r2, implicit-def $srcarry
+    renamable $r1 = nsw ADD $r3, $r4, implicit-def $srcarry
+    renamable $r0 = nsw ADD killed renamable $r0, killed renamable $r1, implicit-def $srcarry
+    renamable $r1 = nsw ADD $r2, $r4, implicit-def $srcarry
+    $r0 = nsw ADC killed renamable $r0, killed renamable $r1, implicit-def $srcarry, implicit $srcarry
+    RET implicit $lr
+    DelayedSchedBarrier implicit $r0
+...
+
+---
+# Variant of two WAW using MOV_mv_scl
+name:            test_MOV_mv_scl
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    liveins: $r1, $r2, $r3
+    ; CHECK-WAW-LABEL: test_MOV_mv_scl WAW dependencies
+    ; CHECK-WAW: SU(0)->SU(2) Out  Latency=1 $r0
+    ; CHECK-WAW-NEXT: SU(0)->SU(2) Out  Latency=1 $srcarry
+    ; CHECK-WAW-NEXT: SU(1)->SU(3) Out  Latency=1 $r1
+    ; CHECK-WAW-NEXT: SU(1)->SU(2) Out  Latency=1 $srcarry
+    ; CHECK-WAW-NEXT: SU(2)->SU(4) Out  Latency=1 $r0
+    ; CHECK-WAW-NEXT: SU(2)->SU(4) Out  Latency=1 $srcarry
+    
+    renamable $r0 = nsw ADD $r1, $r2, implicit-def $srcarry
+    renamable $r1 = nsw ADD $r2, $r3, implicit-def $srcarry
+    renamable $r0 = nsw ADD killed renamable $r0, killed renamable $r1, implicit-def $srcarry
+    $r1 = MOV_mv_scl $srcarry
+    $r0 = nsw ADD killed renamable $r0, killed renamable $r1, implicit-def $srcarry
+    RET implicit $lr
+    DelayedSchedBarrier implicit $r0
+...
+
+---
+# Variant of three WAW using MOV_mv_scl
+name:            test_MOV_mv_scl_2
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    liveins: $r1, $r2, $r3, $r4
+    ; CHECK-WAW-LABEL: test_MOV_mv_scl_2 WAW dependencies
+    ; CHECK-WAW: SU(0)->SU(2) Out  Latency=1 $r0
+    ; CHECK-WAW-NEXT: SU(0)->SU(3) Out  Latency=1 $srcarry
+    ; CHECK-WAW-NEXT: SU(1)->SU(4) Out  Latency=1 $r1
+    ; CHECK-WAW-NEXT: SU(1)->SU(3) Out  Latency=1 $srcarry
+    ; CHECK-WAW-NEXT: SU(2)->SU(3) Out  Latency=1 $r0
+    ; CHECK-WAW-NEXT: SU(2)->SU(3) Out  Latency=1 $srcarry
+    ; CHECK-WAW-NEXT: SU(3)->SU(5) Out  Latency=1 $r0
+    ; CHECK-WAW-NEXT: SU(3)->SU(5) Out  Latency=1 $srcarry
+
+
+    renamable $r0 = nsw ADD $r1, $r2, implicit-def $srcarry
+    renamable $r1 = nsw ADD $r3, $r4, implicit-def $srcarry
+    renamable $r0 = nsw ADD killed renamable $r0, killed renamable $r1, implicit-def $srcarry
+    renamable $r0 = nsw ADD killed renamable $r0, $r4, implicit-def $srcarry
+    $r1 = MOV_mv_scl $srcarry
+    $r0 = nsw ADD killed renamable $r0, killed renamable $r1, implicit-def $srcarry
+    RET implicit $lr
+    DelayedSchedBarrier implicit $r0
+...

@@ -11,7 +11,7 @@ define void @simple(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; CHECK-LABEL: simple:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %for.body.lr.ph
-; CHECK-NEXT:    lda r1, [p0, #0]
+; CHECK-NEXT:    lda r1, [p0, #0]; nopb ; nopxm
 ; CHECK-NEXT:    mova r2, #0
 ; CHECK-NEXT:    add.nc r0, r0, #-1
 ; CHECK-NEXT:    mova r3, #2
@@ -20,7 +20,7 @@ define void @simple(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB0_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    lshl r4, r2, r3
+; CHECK-NEXT:    nopa ; lshl r4, r2, r3
 ; CHECK-NEXT:    mov dj0, r4
 ; CHECK-NEXT:    lda r4, [p1, dj0]
 ; CHECK-NEXT:    add r2, r2, #1
@@ -38,7 +38,7 @@ define void @simple(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
