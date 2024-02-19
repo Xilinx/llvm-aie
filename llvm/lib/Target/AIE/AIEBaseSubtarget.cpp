@@ -363,6 +363,12 @@ class RegionEndEdges : public ScheduleDAGMutation {
         assert(EdgeLatency < DelaySlots);
         EdgeLatency = DelaySlots + 1;
       }
+      // Between writing Registers (lc, le, ls) and the end of the loop,
+      // there must be a distance of 112 bytes in terms of PM addresses.
+      // 112 bytes correspond to 7 fully-expanded 128-bit instructions and
+      // hence adding a latency of 8 from LoopStart to the ExitSU.
+      if (TII->isZeroOverheadLoopSetupInstr(MI))
+        EdgeLatency = 8;
 
       ExitDep.setLatency(EdgeLatency);
       DAG->ExitSU.addPred(ExitDep, /*Required=*/true);

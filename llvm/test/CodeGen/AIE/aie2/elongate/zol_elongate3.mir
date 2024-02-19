@@ -58,6 +58,55 @@ body:             |
   ; CHECK-NEXT:   BUNDLE {
   ; CHECK-NEXT:     $le = MOVXM_lng_cg <mcsymbol .L_1120>
   ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   BUNDLE {
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOPV
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   BUNDLE {
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOPV
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   BUNDLE {
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOPV
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   BUNDLE {
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOPV
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   BUNDLE {
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOPV
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   BUNDLE {
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOPV
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   BUNDLE {
+  ; CHECK-NEXT:     NOPB
+  ; CHECK-NEXT:     NOPA
+  ; CHECK-NEXT:     NOPS
+  ; CHECK-NEXT:     NOPXM
+  ; CHECK-NEXT:     NOPV
+  ; CHECK-NEXT:   }
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1.for.body (align 16):
   ; CHECK-NEXT:   successors: %bb.1(0x7c000000), %bb.2(0x04000000)
@@ -106,6 +155,27 @@ body:             |
 
     BUNDLE {
       $le = MOVXM_lng_cg <mcsymbol .L_1120>
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
+    }
+    BUNDLE {
+      NOP
     }
   bb.1.for.body (align 16):
     successors: %bb.1(0x7c000000), %bb.2(0x04000000)

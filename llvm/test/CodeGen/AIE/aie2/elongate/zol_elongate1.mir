@@ -57,15 +57,6 @@ body:             |
   ; CHECK-NEXT:     renamable $r3 = MOV_mv_cg 2
   ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     $lc = MOV_mv_scl $r0
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     $ls = MOVXM_lng_cg %bb.1
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE {
-  ; CHECK-NEXT:     $le = MOVXM_lng_cg <mcsymbol .L_1120>
-  ; CHECK-NEXT:   }
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1.for.body (align 16):
   ; CHECK-NEXT:   successors: %bb.1(0x7c000000), %bb.2(0x04000000)
@@ -150,16 +141,6 @@ body:             |
       renamable $r1 = LDA_dms_lda_idx_imm renamable $p0, 0 :: (load (s32) from %ir.out)
       renamable $r2 = MOVX_alu_cg 0
       renamable $r3 = MOV_mv_cg 2
-    }
-    BUNDLE {
-      $lc = MOV_mv_scl $r0
-    }
-    BUNDLE {
-      $ls = MOVXM_lng_cg %bb.1
-    }
-
-    BUNDLE {
-      $le = MOVXM_lng_cg <mcsymbol .L_1120>
     }
   bb.1.for.body (align 16):
     successors: %bb.1(0x7c000000), %bb.2(0x04000000)

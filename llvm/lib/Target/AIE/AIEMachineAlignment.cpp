@@ -70,6 +70,8 @@ void elongateBundle(AIE::MachineBundle &Bundle,
     return;
   const VLIWFormat *CurrentFormat = Bundle.getFormatOrNull();
   assert(CurrentFormat);
+  if (CurrentFormat->getSize() == ElongatedFormat.getSize())
+    return;
   MachineBasicBlock &MBB = *Bundle.getInstrs()[0]->getParent();
   auto *TII = static_cast<const AIEBaseInstrInfo *>(
       MBB.getParent()->getSubtarget().getInstrInfo());
