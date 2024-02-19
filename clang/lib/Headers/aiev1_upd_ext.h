@@ -12,18 +12,11 @@
 #define __AIEV1_UPD_EXT_H__
 
 // handle compile time assert in AIE
-constexpr void handle_assertion(bool value) {
-  if (!value) {
-    extern
-        __attribute__((__error__("The 2nd argument of this operation must be "
-                                 "an immediate operand within: { 0, 1 }"))) void
-        aie_static_assert(void);
-    aie_static_assert();
-  }
-}
+#define DIAGNOSE_UPD_IDX                                                       \
+  __attribute__((                                                              \
+      diagnose_if(idx < 0 || idx > 1, "index out of range [0,1]", "error")))
 
-INTRINSIC(v8int32) upd_v(v8int32 sbuff, int idx, v4int32 val) {
-  handle_assertion(__builtin_constant_p(idx) && (idx == 0 || idx == 1));
+INTRINSIC(v8int32) upd_v(v8int32 sbuff, int idx, v4int32 val) DIAGNOSE_UPD_IDX {
   v8int32 ret;
   if (idx == 0) {
     ret = __builtin_aie_upd_v_v8i32_lo(sbuff, val);
@@ -33,8 +26,8 @@ INTRINSIC(v8int32) upd_v(v8int32 sbuff, int idx, v4int32 val) {
   return ret;
 }
 
-INTRINSIC(v16int32) upd_w(v16int32 sbuff, int idx, v8int32 val) {
-  handle_assertion(__builtin_constant_p(idx) && (idx == 0 || idx == 1));
+INTRINSIC(v16int32)
+upd_w(v16int32 sbuff, int idx, v8int32 val) DIAGNOSE_UPD_IDX {
   v16int32 ret;
   if (idx == 0) {
     ret = __builtin_aie_upd_w_v16i32_lo(sbuff, val);
@@ -44,8 +37,7 @@ INTRINSIC(v16int32) upd_w(v16int32 sbuff, int idx, v8int32 val) {
   return ret;
 }
 
-INTRINSIC(v4int32) ext_v(v8int32 sbuff, int idx) {
-  handle_assertion(__builtin_constant_p(idx) && (idx == 0 || idx == 1));
+INTRINSIC(v4int32) ext_v(v8int32 sbuff, int idx) DIAGNOSE_UPD_IDX {
   v4int32 ret;
   if (idx == 0) {
     ret = __builtin_aie_ext_v_v8i32_lo(sbuff);
@@ -55,8 +47,8 @@ INTRINSIC(v4int32) ext_v(v8int32 sbuff, int idx) {
   return ret;
 }
 
-INTRINSIC(v8int32) ext_w(v16int32 sbuff, int idx) {
-  handle_assertion(__builtin_constant_p(idx) && (idx == 0 || idx == 1));
+INTRINSIC(v8int32) ext_w(v16int32 sbuff, int idx) DIAGNOSE_UPD_IDX {
+
   v8int32 ret;
   if (idx == 0) {
     ret = __builtin_aie_ext_w_v16i32_lo(sbuff);
@@ -66,8 +58,7 @@ INTRINSIC(v8int32) ext_w(v16int32 sbuff, int idx) {
   return ret;
 }
 
-INTRINSIC(v16int16) ext_w(v32int16 sbuff, int idx) {
-  handle_assertion(__builtin_constant_p(idx) && (idx == 0 || idx == 1));
+INTRINSIC(v16int16) ext_w(v32int16 sbuff, int idx) DIAGNOSE_UPD_IDX {
   v16int16 ret;
   if (idx == 0) {
     ret = __builtin_aie_ext_w_v32i16_lo(sbuff);
