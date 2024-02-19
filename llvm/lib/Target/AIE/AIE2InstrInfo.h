@@ -74,6 +74,8 @@ public:
   virtual bool isHardwareLoopStart(unsigned Opcode) const override;
   virtual bool isHardwareLoopEnd(unsigned Opcode) const override;
 
+  virtual bool
+  isZeroOverheadLoopSetupInstr(const MachineInstr &) const override;
   virtual std::vector<MachineBasicBlock::iterator>
   getAlignmentBoundaries(MachineBasicBlock &MBB) const override;
 

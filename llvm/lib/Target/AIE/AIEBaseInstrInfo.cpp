@@ -329,6 +329,32 @@ bool AIEBaseInstrInfo::isCallBundle(MachineBasicBlock::iterator MII) const {
   return isReturnAddr;
 }
 
+bool AIEBaseInstrInfo::isZOLSetupBundle(MachineBasicBlock::iterator MII) const {
+  MachineBasicBlock::const_instr_iterator I = ++MII->getIterator();
+  MachineBasicBlock::instr_iterator E = MII->getParent()->instr_end();
+  bool isLoopStartSetup = false;
+  while (I != E && I->isInsideBundle()) {
+    MachineInstr *MI = const_cast<MachineInstr *>(&(*I));
+    if (isZeroOverheadLoopSetupInstr(*MI)) {
+      isLoopStartSetup = true;
+      break;
+    }
+    I++;
+  }
+  return isLoopStartSetup;
+}
+
+// Look for the last LoopSetup Bundle.
+bool AIEBaseInstrInfo::isLastZOLSetupBundleInMBB(
+    MachineBasicBlock::iterator MII) const {
+  MachineBasicBlock *MBB = MII->getParent();
+  for (auto MI = std::next(MII), End = MBB->end(); MI != End; ++MI) {
+    if (isZOLSetupBundle(MI))
+      return false;
+  }
+  return true;
+}
+
 unsigned computeRegStateFlags(const MachineOperand &RegOp) {
   assert(RegOp.isReg() && "Not a register operand");
   assert(!RegOp.getSubReg() && "RegOp has SubReg flags set");

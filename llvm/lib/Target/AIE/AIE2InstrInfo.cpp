@@ -1432,10 +1432,23 @@ bool AIE2InstrInfo::isHardwareLoopEnd(unsigned Opcode) const {
   return Opcode == AIE2::PseudoLoopEnd;
 }
 
+bool AIE2InstrInfo::isZeroOverheadLoopSetupInstr(const MachineInstr &MI) const {
+  return (MI.getOpcode() == AIE2::MOV_mv_scl ||
+          MI.getOpcode() == AIE2::MOVXM_lng_cg) &&
+         (MI.getOperand(0).getReg() == AIE2::LC ||
+          MI.getOperand(0).getReg() == AIE2::LS ||
+          MI.getOperand(0).getReg() == AIE2::LE);
+}
+
 std::vector<MachineBasicBlock::iterator>
 AIE2InstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
   std::vector<MachineBasicBlock::iterator> AlgnCandidates;
   unsigned DelaySlot = 0;
+
+  // LoopSetupDistance will be set to number of instructions (7). In
+  // PostRAScheduler, this is enforced by setting the exit latency in the
+  // schduler dag mutator
+  unsigned LoopSetupDistance = 0;
   bool IsCall = false;
   for (auto MI = MBB.begin(), End = MBB.end(); MI != End; ++MI) {
     if (MI->isBundle()) {
@@ -1451,8 +1464,21 @@ AIE2InstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
           AlgnCandidates.emplace_back(std::next(MI));
       }
 
+      // create regions of singleton bundle for schedule margin bundles,
+      // alignment algorithm will force fill each bundle to 128-bit due
+      // to the alignment requirement of 16-byte for the alignment region.
+      if (LoopSetupDistance > 0) {
+        AlgnCandidates.emplace_back(MI);
+        LoopSetupDistance--;
+      }
+
       if (IsCall)
         DelaySlot = getNumDelaySlots(*MI);
+
+      // Distance of 112 bytes in terms of PM addresses corresponds to
+      // 7 fully-expanded 128-bit instructions.
+      if (isZOLSetupBundle(MI) && isLastZOLSetupBundleInMBB(MI))
+        LoopSetupDistance = 7;
 
       // Look for other candidate e.g. HW loop addresses */
     } else if (MI->isMetaInstruction()) {
@@ -1470,6 +1496,10 @@ AIE2InstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
       llvm_unreachable("Found an un-expected standalone instruction !");
     }
   }
+  if (LoopSetupDistance > 0)
+    llvm_unreachable(
+        "LoopStart Region must have a length of at-least 7 bundles!\n");
+
   return AlgnCandidates;
 }
 
