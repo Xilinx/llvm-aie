@@ -1780,62 +1780,52 @@ INTRINSIC(v8cacc64) concat(v4cacc64 a0, v4cacc64 a1) {
 }
 #endif
 
-constexpr void handle_assertion(bool value, int max) {
-  if (value) {
-    // FIXME : Find a way to handle parameterize __error__
-    // AND use message : idx must be in range [0, max]
-    extern __attribute__((__error__("idx is out of allowed range"))) void
-    aie_static_assert(void);
-    aie_static_assert();
-  }
-}
+#define DIAGNOSE_EXTRACT_IDX(MAX)                                              \
+  __attribute__((diagnose_if(idx < 0 || idx > MAX,                             \
+                             "index out of range [0," #MAX "]", "error")))
 
-#define __EXT_128B_CHECK(idx, max)                                             \
-  handle_assertion((__builtin_constant_p(idx) && (idx < 0 || idx > max)), max);
-
-// Extract 128-bit portion from 256-bit register
-INTRINSIC(v32uint4) extract_v32uint4(v128uint4 a, int idx) {
-  __EXT_128B_CHECK(idx, 3)
+// Extract 128-bit portion from 512-bit register
+INTRINSIC(v32uint4)
+extract_v32uint4(v128uint4 a, int idx) DIAGNOSE_EXTRACT_IDX(3) {
   v128uint4 dest =
       __builtin_aiev2_vshift_I512_I512(a, undef_v128uint4(), 0x0, 16 * idx);
   // extract 128-bit from 512-bit dest.
   return __builtin_aiev2_extract_I128_I512(dest);
 }
 
-INTRINSIC(v32int4) extract_v32int4(v128int4 a, int idx) {
-  __EXT_128B_CHECK(idx, 3)
+INTRINSIC(v32int4)
+extract_v32int4(v128int4 a, int idx) DIAGNOSE_EXTRACT_IDX(3) {
   v128int4 dest =
       __builtin_aiev2_vshift_I512_I512(a, undef_v128int4(), 0x0, 16 * idx);
   // extract 128-bit from 512-bit dest.
   return __builtin_aiev2_extract_I128_I512(dest);
 }
 
-INTRINSIC(v16uint8) extract_v16uint8(v64uint8 a, int idx) {
-  __EXT_128B_CHECK(idx, 3)
+INTRINSIC(v16uint8)
+extract_v16uint8(v64uint8 a, int idx) DIAGNOSE_EXTRACT_IDX(3) {
   v64uint8 dest =
       __builtin_aiev2_vshift_I512_I512(a, undef_v64uint8(), 0x0, 16 * idx);
   // extract 128-bit from 512-bit dest.
   return __builtin_aiev2_extract_I128_I512(dest);
 }
 
-INTRINSIC(v16int8) extract_v16int8(v64int8 a, int idx) {
-  __EXT_128B_CHECK(idx, 3)
+INTRINSIC(v16int8) extract_v16int8(v64int8 a, int idx) DIAGNOSE_EXTRACT_IDX(3) {
   v64int8 dest =
       __builtin_aiev2_vshift_I512_I512(a, undef_v64int8(), 0x0, 16 * idx);
   // extract 128-bit from 512-bit dest.
   return __builtin_aiev2_extract_I128_I512(dest);
 }
 
-INTRINSIC(v8uint16) extract_v8uint16(v32uint16 a, int idx) {
-  __EXT_128B_CHECK(idx, 3)
+INTRINSIC(v8uint16)
+extract_v8uint16(v32uint16 a, int idx) DIAGNOSE_EXTRACT_IDX(3) {
   v32uint16 dest =
       __builtin_aiev2_vshift_I512_I512(a, undef_v32uint16(), 0x0, 16 * idx);
   // extract 128-bit from 512-bit dest.
   return __builtin_aiev2_extract_I128_I512(dest);
 }
 
-INTRINSIC(v8int16) extract_v8int16(v32int16 a, int idx) {
-  __EXT_128B_CHECK(idx, 3)
+INTRINSIC(v8int16)
+extract_v8int16(v32int16 a, int idx) DIAGNOSE_EXTRACT_IDX(3) {
   v32int16 dest =
       __builtin_aiev2_vshift_I512_I512(a, undef_v32int16(), 0x0, 16 * idx);
   // extract 128-bit from 512-bit dest.
@@ -1843,24 +1833,23 @@ INTRINSIC(v8int16) extract_v8int16(v32int16 a, int idx) {
 }
 
 #if 0
-INTRINSIC(v4cint16) extract_v4cint16(v16cint16 a, int idx) {
-  __EXT_128B_CHECK(idx, 3)
+INTRINSIC(v4cint16) extract_v4cint16(v16cint16 a, int idx) DIAGNOSE_EXTRACT_IDX(3) {
   v16cint16 dest =  __builtin_aiev2_vshift_I512_I512(a, undef_v16cint16(), 0x0, 16 * idx);
   // extract 128-bit from 512-bit dest.
   return __builtin_aiev2_extract_I128_I512(dest);
 }
 #endif
 
-INTRINSIC(v4uint32) extract_v4uint32(v16uint32 a, int idx) {
-  __EXT_128B_CHECK(idx, 3)
+INTRINSIC(v4uint32)
+extract_v4uint32(v16uint32 a, int idx) DIAGNOSE_EXTRACT_IDX(3) {
   v16uint32 dest =
       __builtin_aiev2_vshift_I512_I512(a, undef_v16uint32(), 0x0, 16 * idx);
   // extract 128-bit from 512-bit dest.
   return __builtin_aiev2_extract_I128_I512(dest);
 }
 
-INTRINSIC(v4int32) extract_v4int32(v16int32 a, int idx) {
-  __EXT_128B_CHECK(idx, 3)
+INTRINSIC(v4int32)
+extract_v4int32(v16int32 a, int idx) DIAGNOSE_EXTRACT_IDX(3) {
   v16int32 dest =
       __builtin_aiev2_vshift_I512_I512(a, undef_v16int32(), 0x0, 16 * idx);
   // extract 128-bit from 512-bit dest.
@@ -1868,8 +1857,7 @@ INTRINSIC(v4int32) extract_v4int32(v16int32 a, int idx) {
 }
 
 #if 0
-INTRINSIC(v2cint32) extract_v2cint32(v8cint32 a, int idx) {
-  __EXT_128B_CHECK(idx, 3)
+INTRINSIC(v2cint32) extract_v2cint32(v8cint32 a, int idx) DIAGNOSE_EXTRACT_IDX(3) {
   v8cint32 dest =  __builtin_aiev2_vshift_I512_I512(a, undef_v8cint32(),
                                                     0x0, 16 * idx);
   // extract 128-bit from 512-bit dest.
@@ -1877,16 +1865,16 @@ INTRINSIC(v2cint32) extract_v2cint32(v8cint32 a, int idx) {
 }
 #endif
 
-INTRINSIC(v4float) extract_v4float(v16float a, int idx) {
-  __EXT_128B_CHECK(idx, 3)
+INTRINSIC(v4float)
+extract_v4float(v16float a, int idx) DIAGNOSE_EXTRACT_IDX(3) {
   v16float dest =
       __builtin_aiev2_vshift_I512_I512(a, undef_v16float(), 0x0, 16 * idx);
   // extract 128-bit from 512-bit dest.
   return __builtin_aiev2_extract_I128_I512(dest);
 }
 
-INTRINSIC(v8bfloat16) extract_v8bfloat16(v32bfloat16 a, int idx) {
-  __EXT_128B_CHECK(idx, 3)
+INTRINSIC(v8bfloat16)
+extract_v8bfloat16(v32bfloat16 a, int idx) DIAGNOSE_EXTRACT_IDX(3) {
   v32bfloat16 dest =
       __builtin_aiev2_vshift_I512_I512(a, undef_v32bfloat16(), 0x0, 16 * idx);
   // extract 128-bit from 512-bit dest.
@@ -1894,8 +1882,8 @@ INTRINSIC(v8bfloat16) extract_v8bfloat16(v32bfloat16 a, int idx) {
 }
 
 // Set 128-bit portion of 256-bit register
-INTRINSIC(v128uint4) set_v128uint4(int idx, v32uint4 a) {
-  __EXT_128B_CHECK(idx, 3)
+INTRINSIC(v128uint4)
+set_v128uint4(int idx, v32uint4 a) DIAGNOSE_EXTRACT_IDX(3) {
   if (__builtin_constant_p(idx) && (idx == 0))
     return __builtin_aiev2_set_I512_I128(a);
   else {
@@ -1906,8 +1894,7 @@ INTRINSIC(v128uint4) set_v128uint4(int idx, v32uint4 a) {
   }
 }
 
-INTRINSIC(v128int4) set_v128int4(int idx, v32int4 a) {
-  __EXT_128B_CHECK(idx, 3)
+INTRINSIC(v128int4) set_v128int4(int idx, v32int4 a) DIAGNOSE_EXTRACT_IDX(3) {
   if (__builtin_constant_p(idx) && (idx == 0))
     return __builtin_aiev2_set_I512_I128(a);
   else {
@@ -1918,8 +1905,7 @@ INTRINSIC(v128int4) set_v128int4(int idx, v32int4 a) {
   }
 }
 
-INTRINSIC(v64uint8) set_v64uint8(int idx, v16uint8 a) {
-  __EXT_128B_CHECK(idx, 3)
+INTRINSIC(v64uint8) set_v64uint8(int idx, v16uint8 a) DIAGNOSE_EXTRACT_IDX(3) {
   if (__builtin_constant_p(idx) && (idx == 0))
     return __builtin_aiev2_set_I512_I128(a);
   else {
@@ -1930,8 +1916,7 @@ INTRINSIC(v64uint8) set_v64uint8(int idx, v16uint8 a) {
   }
 }
 
-INTRINSIC(v64int8) set_v64int8(int idx, v16int8 a) {
-  __EXT_128B_CHECK(idx, 3)
+INTRINSIC(v64int8) set_v64int8(int idx, v16int8 a) DIAGNOSE_EXTRACT_IDX(3) {
   if (__builtin_constant_p(idx) && (idx == 0))
     return __builtin_aiev2_set_I512_I128(a);
   else {
@@ -1942,8 +1927,8 @@ INTRINSIC(v64int8) set_v64int8(int idx, v16int8 a) {
   }
 }
 
-INTRINSIC(v32uint16) set_v32uint16(int idx, v8uint16 a) {
-  __EXT_128B_CHECK(idx, 3)
+INTRINSIC(v32uint16)
+set_v32uint16(int idx, v8uint16 a) DIAGNOSE_EXTRACT_IDX(3) {
   if (__builtin_constant_p(idx) && (idx == 0))
     return __builtin_aiev2_set_I512_I128(a);
   else {
@@ -1954,8 +1939,7 @@ INTRINSIC(v32uint16) set_v32uint16(int idx, v8uint16 a) {
   }
 }
 
-INTRINSIC(v32int16) set_v32int16(int idx, v8int16 a) {
-  __EXT_128B_CHECK(idx, 3)
+INTRINSIC(v32int16) set_v32int16(int idx, v8int16 a) DIAGNOSE_EXTRACT_IDX(3) {
   if (__builtin_constant_p(idx) && (idx == 0))
     return __builtin_aiev2_set_I512_I128(a);
   else {
@@ -1967,8 +1951,7 @@ INTRINSIC(v32int16) set_v32int16(int idx, v8int16 a) {
 }
 
 #if 0
-INTRINSIC(v16cint16) set_v16cint16(int idx, v4cint16 a) {
-  __EXT_128B_CHECK(idx, 3)
+INTRINSIC(v16cint16) set_v16cint16(int idx, v4cint16 a) DIAGNOSE_EXTRACT_IDX(3) {
   if (__builtin_constant_p(idx) && (idx == 0))
     return __builtin_aiev2_set_I512_I128(a);
   else {
@@ -1979,8 +1962,8 @@ INTRINSIC(v16cint16) set_v16cint16(int idx, v4cint16 a) {
 }
 #endif
 
-INTRINSIC(v16uint32) set_v16uint32(int idx, v4uint32 a) {
-  __EXT_128B_CHECK(idx, 3)
+INTRINSIC(v16uint32)
+set_v16uint32(int idx, v4uint32 a) DIAGNOSE_EXTRACT_IDX(3) {
   if (__builtin_constant_p(idx) && (idx == 0))
     return __builtin_aiev2_set_I512_I128(a);
   else {
@@ -1991,8 +1974,7 @@ INTRINSIC(v16uint32) set_v16uint32(int idx, v4uint32 a) {
   }
 }
 
-INTRINSIC(v16int32) set_v16int32(int idx, v4int32 a) {
-  __EXT_128B_CHECK(idx, 3)
+INTRINSIC(v16int32) set_v16int32(int idx, v4int32 a) DIAGNOSE_EXTRACT_IDX(3) {
   if (__builtin_constant_p(idx) && (idx == 0))
     return __builtin_aiev2_set_I512_I128(a);
   else {
@@ -2003,8 +1985,8 @@ INTRINSIC(v16int32) set_v16int32(int idx, v4int32 a) {
   }
 }
 
-INTRINSIC(v32bfloat16) set_v32bfloat16(int idx, v8bfloat16 a) {
-  __EXT_128B_CHECK(idx, 3)
+INTRINSIC(v32bfloat16)
+set_v32bfloat16(int idx, v8bfloat16 a) DIAGNOSE_EXTRACT_IDX(3) {
   if (__builtin_constant_p(idx) && (idx == 0))
     return __builtin_aiev2_set_I512_I128(a);
   else {
@@ -2016,8 +1998,7 @@ INTRINSIC(v32bfloat16) set_v32bfloat16(int idx, v8bfloat16 a) {
 }
 
 #if 0
-INTRINSIC(v8cint32) set_v8cint32(int idx, v2cint32 a) {
-  __EXT_128B_CHECK(idx, 3)
+INTRINSIC(v8cint32) set_v8cint32(int idx, v2cint32 a) DIAGNOSE_EXTRACT_IDX(3) {
   if (__builtin_constant_p(idx) && (idx == 0))
     return __builtin_aiev2_set_I512_I128(a);
   else {
@@ -2029,8 +2010,7 @@ INTRINSIC(v8cint32) set_v8cint32(int idx, v2cint32 a) {
 }
 #endif
 
-INTRINSIC(v16float) set_v16float(int idx, v4float a) {
-  __EXT_128B_CHECK(idx, 3)
+INTRINSIC(v16float) set_v16float(int idx, v4float a) DIAGNOSE_EXTRACT_IDX(3) {
   if (__builtin_constant_p(idx) && (idx == 0))
     return __builtin_aiev2_set_I512_I128(a);
   else {
@@ -2042,84 +2022,77 @@ INTRINSIC(v16float) set_v16float(int idx, v4float a) {
 }
 
 // Extract 128-bit portion from 512-bit register
-INTRINSIC(v32uint4) extract_v32uint4(v64uint4 a, int idx) {
-  __EXT_128B_CHECK(idx, 1)
+INTRINSIC(v32uint4)
+extract_v32uint4(v64uint4 a, int idx) DIAGNOSE_EXTRACT_IDX(1) {
   return extract_v32uint4(set_v128uint4(0, a), idx);
 }
 
 // Extract 128-bit portion from 512-bit register
-INTRINSIC(v32int4) extract_v32int4(v64int4 a, int idx) {
-  __EXT_128B_CHECK(idx, 1)
+INTRINSIC(v32int4) extract_v32int4(v64int4 a, int idx) DIAGNOSE_EXTRACT_IDX(1) {
   return extract_v32int4(set_v128int4(0, a), idx);
 }
 
 // Extract 128-bit portion from 512-bit register
-INTRINSIC(v16uint8) extract_v16uint8(v32uint8 a, int idx) {
-  __EXT_128B_CHECK(idx, 1)
+INTRINSIC(v16uint8)
+extract_v16uint8(v32uint8 a, int idx) DIAGNOSE_EXTRACT_IDX(1) {
   return extract_v16uint8(set_v64uint8(0, a), idx);
 }
 
 // Extract 128-bit portion from 512-bit register
-INTRINSIC(v16int8) extract_v16int8(v32int8 a, int idx) {
-  __EXT_128B_CHECK(idx, 1)
+INTRINSIC(v16int8) extract_v16int8(v32int8 a, int idx) DIAGNOSE_EXTRACT_IDX(1) {
   return extract_v16int8(set_v64int8(0, a), idx);
 }
 
 // Extract 128-bit portion from 512-bit register
-INTRINSIC(v8uint16) extract_v8uint16(v16uint16 a, int idx) {
-  __EXT_128B_CHECK(idx, 1)
+INTRINSIC(v8uint16)
+extract_v8uint16(v16uint16 a, int idx) DIAGNOSE_EXTRACT_IDX(1) {
   return extract_v8uint16(set_v32uint16(0, a), idx);
 }
 
 // Extract 128-bit portion from 512-bit register
-INTRINSIC(v8int16) extract_v8int16(v16int16 a, int idx) {
-  __EXT_128B_CHECK(idx, 1)
+INTRINSIC(v8int16)
+extract_v8int16(v16int16 a, int idx) DIAGNOSE_EXTRACT_IDX(1) {
   return extract_v8int16(set_v32int16(0, a), idx);
 }
 
 #if 0
 // Extract 128-bit portion from 512-bit register
-INTRINSIC(v4cint16) extract_v4cint16(v8cint16 a, int idx) {
-  __EXT_128B_CHECK(idx, 1)
+INTRINSIC(v4cint16) extract_v4cint16(v8cint16 a, int idx) DIAGNOSE_EXTRACT_IDX(1) {
   return extract_v4cint16(set_v16cint16(0, a), idx);
 }
 #endif
 
 // Extract 128-bit portion from 512-bit register
-INTRINSIC(v4uint32) extract_v4uint32(v8uint32 a, int idx) {
-  __EXT_128B_CHECK(idx, 1)
+INTRINSIC(v4uint32)
+extract_v4uint32(v8uint32 a, int idx) DIAGNOSE_EXTRACT_IDX(1) {
   return extract_v4uint32(set_v16uint32(0, a), idx);
 }
 
 // Extract 128-bit portion from 512-bit register
-INTRINSIC(v4int32) extract_v4int32(v8int32 a, int idx) {
-  __EXT_128B_CHECK(idx, 1)
+INTRINSIC(v4int32) extract_v4int32(v8int32 a, int idx) DIAGNOSE_EXTRACT_IDX(1) {
   return extract_v4int32(set_v16int32(0, a), idx);
 }
 
 // Extract 128-bit portion from 512-bit register
-INTRINSIC(v8bfloat16) extract_v8bfloat16(v16bfloat16 a, int idx) {
-  __EXT_128B_CHECK(idx, 1)
+INTRINSIC(v8bfloat16)
+extract_v8bfloat16(v16bfloat16 a, int idx) DIAGNOSE_EXTRACT_IDX(1) {
   return extract_v8bfloat16(set_v32bfloat16(0, a), idx);
 }
 
 #if 0
 // Extract 128-bit portion from 512-bit register
-INTRINSIC(v2cint32) extract_v2cint32(v4cint32 a, int idx) {
-  __EXT_128B_CHECK(idx, 1)
+INTRINSIC(v2cint32) extract_v2cint32(v4cint32 a, int idx) DIAGNOSE_EXTRACT_IDX(1) {
   return extract_v2cint32(set_v8cint32(0, a), idx);
 }
 
 // Extract 128-bit portion from 512-bit register
-INTRINSIC(v4float) extract_v4float(v8float a, int idx) {
-  __EXT_128B_CHECK(idx, 1)
+INTRINSIC(v4float) extract_v4float(v8float a, int idx) DIAGNOSE_EXTRACT_IDX(1) {
   return extract_v4float(set_v16float(0, a), idx);
 }
 #endif
 
 // Set 128-bit portion of 512-bit register
-INTRINSIC(v64uint4) set_v64uint4(int idx, v32uint4 a) {
-  __EXT_128B_CHECK(idx, 1)
+INTRINSIC(v64uint4) set_v64uint4(int idx, v32uint4 a) DIAGNOSE_EXTRACT_IDX(1) {
   if (__builtin_constant_p(idx) && (idx == 0))
     return __builtin_aiev2_get_I256_I128(a);
   else
@@ -2127,8 +2100,7 @@ INTRINSIC(v64uint4) set_v64uint4(int idx, v32uint4 a) {
 }
 
 // Set 128-bit portion of 512-bit register
-INTRINSIC(v64int4) set_v64int4(int idx, v32int4 a) {
-  __EXT_128B_CHECK(idx, 1)
+INTRINSIC(v64int4) set_v64int4(int idx, v32int4 a) DIAGNOSE_EXTRACT_IDX(1) {
   if (__builtin_constant_p(idx) && (idx == 0))
     return __builtin_aiev2_get_I256_I128(a);
   else
@@ -2136,8 +2108,7 @@ INTRINSIC(v64int4) set_v64int4(int idx, v32int4 a) {
 }
 
 // Set 128-bit portion of 512-bit register
-INTRINSIC(v32uint8) set_v32uint8(int idx, v16uint8 a) {
-  __EXT_128B_CHECK(idx, 1)
+INTRINSIC(v32uint8) set_v32uint8(int idx, v16uint8 a) DIAGNOSE_EXTRACT_IDX(1) {
   if (__builtin_constant_p(idx) && (idx == 0))
     return __builtin_aiev2_get_I256_I128(a);
   else
@@ -2145,8 +2116,7 @@ INTRINSIC(v32uint8) set_v32uint8(int idx, v16uint8 a) {
 }
 
 // Set 128-bit portion of 512-bit register
-INTRINSIC(v32int8) set_v32int8(int idx, v16int8 a) {
-  __EXT_128B_CHECK(idx, 1)
+INTRINSIC(v32int8) set_v32int8(int idx, v16int8 a) DIAGNOSE_EXTRACT_IDX(1) {
   if (__builtin_constant_p(idx) && (idx == 0))
     return __builtin_aiev2_get_I256_I128(a);
   else
@@ -2154,8 +2124,8 @@ INTRINSIC(v32int8) set_v32int8(int idx, v16int8 a) {
 }
 
 // Set 128-bit portion of 512-bit register
-INTRINSIC(v16uint16) set_v16uint16(int idx, v8uint16 a) {
-  __EXT_128B_CHECK(idx, 1)
+INTRINSIC(v16uint16)
+set_v16uint16(int idx, v8uint16 a) DIAGNOSE_EXTRACT_IDX(1) {
   if (__builtin_constant_p(idx) && (idx == 0))
     return __builtin_aiev2_get_I256_I128(a);
   else
@@ -2163,8 +2133,7 @@ INTRINSIC(v16uint16) set_v16uint16(int idx, v8uint16 a) {
 }
 
 // Set 128-bit portion of 512-bit register
-INTRINSIC(v16int16) set_v16int16(int idx, v8int16 a) {
-  __EXT_128B_CHECK(idx, 1)
+INTRINSIC(v16int16) set_v16int16(int idx, v8int16 a) DIAGNOSE_EXTRACT_IDX(1) {
   if (__builtin_constant_p(idx) && (idx == 0))
     return __builtin_aiev2_get_I256_I128(a);
   else
@@ -2173,8 +2142,7 @@ INTRINSIC(v16int16) set_v16int16(int idx, v8int16 a) {
 
 #if 0
 // Set 128-bit portion of 512-bit register
-INTRINSIC(v8cint16) set_v8cint16(int idx, v4cint16 a) {
-  __EXT_128B_CHECK(idx, 1)
+INTRINSIC(v8cint16) set_v8cint16(int idx, v4cint16 a) DIAGNOSE_EXTRACT_IDX(1) {
   if (__builtin_constant_p(idx) && (idx == 0))
     return __builtin_aiev2_get_I256_I128(a);
   else
@@ -2183,8 +2151,7 @@ INTRINSIC(v8cint16) set_v8cint16(int idx, v4cint16 a) {
 #endif
 
 // Set 128-bit portion of 512-bit register
-INTRINSIC(v8uint32) set_v8uint32(int idx, v4uint32 a) {
-  __EXT_128B_CHECK(idx, 1)
+INTRINSIC(v8uint32) set_v8uint32(int idx, v4uint32 a) DIAGNOSE_EXTRACT_IDX(1) {
   if (__builtin_constant_p(idx) && (idx == 0))
     return __builtin_aiev2_get_I256_I128(a);
   else
@@ -2192,8 +2159,7 @@ INTRINSIC(v8uint32) set_v8uint32(int idx, v4uint32 a) {
 }
 
 // Set 128-bit portion of 512-bit register
-INTRINSIC(v8int32) set_v8int32(int idx, v4int32 a) {
-  __EXT_128B_CHECK(idx, 1)
+INTRINSIC(v8int32) set_v8int32(int idx, v4int32 a) DIAGNOSE_EXTRACT_IDX(1) {
   if (__builtin_constant_p(idx) && (idx == 0))
     return __builtin_aiev2_get_I256_I128(a);
   else
@@ -2207,8 +2173,7 @@ INTRINSIC(v16bfloat16) set_v16bfloat16(int idx, v8bfloat16 a) {
 
 #if 0
 // Set 128-bit portion of 512-bit register
-INTRINSIC(v4cint32) set_v4cint32(int idx, v2cint32 a) {
-  __EXT_128B_CHECK(idx, 1)
+INTRINSIC(v4cint32) set_v4cint32(int idx, v2cint32 a) DIAGNOSE_EXTRACT_IDX(1) {
   if (__builtin_constant_p(idx) && (idx == 0))
     return __builtin_aiev2_get_I256_I128(a);
   else
@@ -2216,8 +2181,7 @@ INTRINSIC(v4cint32) set_v4cint32(int idx, v2cint32 a) {
 }
 
 // Set 128-bit portion of 512-bit register
-INTRINSIC(v8float) set_v8float(int idx, v4float a) {
-  __EXT_128B_CHECK(idx, 1)
+INTRINSIC(v8float) set_v8float(int idx, v4float a) DIAGNOSE_EXTRACT_IDX(1) {
   if (__builtin_constant_p(idx) && (idx == 0))
     return __builtin_aiev2_get_I256_I128(a);
   else
@@ -2226,8 +2190,8 @@ INTRINSIC(v8float) set_v8float(int idx, v4float a) {
 #endif
 
 // Insert 128-bit in 512-bit register
-INTRINSIC(v128uint4) insert(v128uint4 v, int idx, v32uint4 b) {
-  __EXT_128B_CHECK(idx, 3)
+INTRINSIC(v128uint4)
+insert(v128uint4 v, int idx, v32uint4 b) DIAGNOSE_EXTRACT_IDX(3) {
   v16int32 tmp = (v16int32)set_v128uint4(idx, b);
 
   const unsigned mask_elems = 4;
@@ -2238,8 +2202,8 @@ INTRINSIC(v128uint4) insert(v128uint4 v, int idx, v32uint4 b) {
 }
 
 // Insert 128-bit in 512-bit register
-INTRINSIC(v128int4) insert(v128int4 v, int idx, v32int4 b) {
-  __EXT_128B_CHECK(idx, 3)
+INTRINSIC(v128int4)
+insert(v128int4 v, int idx, v32int4 b) DIAGNOSE_EXTRACT_IDX(3) {
   v16int32 tmp = (v16int32)set_v128int4(idx, b);
 
   const unsigned mask_elems = 4;
@@ -2250,8 +2214,8 @@ INTRINSIC(v128int4) insert(v128int4 v, int idx, v32int4 b) {
 }
 
 // Insert 128-bit in 512-bit register
-INTRINSIC(v64uint8) insert(v64uint8 v, int idx, v16uint8 b) {
-  __EXT_128B_CHECK(idx, 3)
+INTRINSIC(v64uint8)
+insert(v64uint8 v, int idx, v16uint8 b) DIAGNOSE_EXTRACT_IDX(3) {
   v16int32 tmp = (v16int32)set_v64uint8(idx, b);
 
   const unsigned mask_elems = 4;
@@ -2262,8 +2226,8 @@ INTRINSIC(v64uint8) insert(v64uint8 v, int idx, v16uint8 b) {
 }
 
 // Insert 128-bit in 512-bit register
-INTRINSIC(v64int8) insert(v64int8 v, int idx, v16int8 b) {
-  __EXT_128B_CHECK(idx, 3)
+INTRINSIC(v64int8)
+insert(v64int8 v, int idx, v16int8 b) DIAGNOSE_EXTRACT_IDX(3) {
   v16int32 tmp = (v16int32)set_v64int8(idx, b);
 
   const unsigned mask_elems = 4;
@@ -2274,8 +2238,8 @@ INTRINSIC(v64int8) insert(v64int8 v, int idx, v16int8 b) {
 }
 
 // Insert 128-bit in 512-bit register
-INTRINSIC(v32uint16) insert(v32uint16 v, int idx, v8uint16 b) {
-  __EXT_128B_CHECK(idx, 3)
+INTRINSIC(v32uint16)
+insert(v32uint16 v, int idx, v8uint16 b) DIAGNOSE_EXTRACT_IDX(3) {
   v16int32 tmp = (v16int32)set_v32uint16(idx, b);
 
   const unsigned mask_elems = 4;
@@ -2286,8 +2250,8 @@ INTRINSIC(v32uint16) insert(v32uint16 v, int idx, v8uint16 b) {
 }
 
 // Insert 128-bit in 512-bit register
-INTRINSIC(v32int16) insert(v32int16 v, int idx, v8int16 b) {
-  __EXT_128B_CHECK(idx, 3)
+INTRINSIC(v32int16)
+insert(v32int16 v, int idx, v8int16 b) DIAGNOSE_EXTRACT_IDX(3) {
   v16int32 tmp = (v16int32)set_v32int16(idx, b);
 
   const unsigned mask_elems = 4;
@@ -2299,8 +2263,7 @@ INTRINSIC(v32int16) insert(v32int16 v, int idx, v8int16 b) {
 
 #if 0
 // Insert 128-bit in 512-bit register
-INTRINSIC(v16cint16) insert(v16cint16 v, int idx, v4cint16 b) {
-  __EXT_128B_CHECK(idx, 3)
+INTRINSIC(v16cint16) insert(v16cint16 v, int idx, v4cint16 b) DIAGNOSE_EXTRACT_IDX(3) {
   v16int32 tmp = (v16int32)set_v16cint16(idx, b);
 
   const unsigned mask_elems = 4;
@@ -2312,8 +2275,8 @@ INTRINSIC(v16cint16) insert(v16cint16 v, int idx, v4cint16 b) {
 #endif
 
 // Insert 128-bit in 512-bit register
-INTRINSIC(v16uint32) insert(v16uint32 v, int idx, v4uint32 b) {
-  __EXT_128B_CHECK(idx, 3)
+INTRINSIC(v16uint32)
+insert(v16uint32 v, int idx, v4uint32 b) DIAGNOSE_EXTRACT_IDX(3) {
   v16int32 tmp = (v16int32)set_v16uint32(idx, b);
 
   const unsigned mask_elems = 4;
@@ -2324,8 +2287,8 @@ INTRINSIC(v16uint32) insert(v16uint32 v, int idx, v4uint32 b) {
 }
 
 // Insert 128-bit in 512-bit register
-INTRINSIC(v16int32) insert(v16int32 v, int idx, v4int32 b) {
-  __EXT_128B_CHECK(idx, 3)
+INTRINSIC(v16int32)
+insert(v16int32 v, int idx, v4int32 b) DIAGNOSE_EXTRACT_IDX(3) {
   v16int32 tmp = (v16int32)set_v16int32(idx, b);
 
   const unsigned mask_elems = 4;
@@ -2336,8 +2299,8 @@ INTRINSIC(v16int32) insert(v16int32 v, int idx, v4int32 b) {
 }
 
 // Insert 128-bit in 512-bit register
-INTRINSIC(v32bfloat16) insert(v32bfloat16 v, int idx, v8bfloat16 b) {
-  __EXT_128B_CHECK(idx, 3)
+INTRINSIC(v32bfloat16)
+insert(v32bfloat16 v, int idx, v8bfloat16 b) DIAGNOSE_EXTRACT_IDX(3) {
   v16int32 tmp = (v16int32)set_v32bfloat16(idx, b);
 
   const unsigned mask_elems = 4;
@@ -2349,8 +2312,7 @@ INTRINSIC(v32bfloat16) insert(v32bfloat16 v, int idx, v8bfloat16 b) {
 
 #if 0
 // Insert 128-bit in 512-bit register
-INTRINSIC(v8cint32) insert(v8cint32 v, int idx, v2cint32 b) {
-  __EXT_128B_CHECK(idx, 3)
+INTRINSIC(v8cint32) insert(v8cint32 v, int idx, v2cint32 b) DIAGNOSE_EXTRACT_IDX(3) {
   v16int32 tmp = (v16int32)set_v8cint32(idx, b);
 
   const unsigned mask_elems = 4;
@@ -2361,8 +2323,7 @@ INTRINSIC(v8cint32) insert(v8cint32 v, int idx, v2cint32 b) {
 }
 
 // Insert 128-bit in 512-bit register
-INTRINSIC(v16float) insert(v16float v, int idx, v4float b) {
-  __EXT_128B_CHECK(idx, 3)
+INTRINSIC(v16float) insert(v16float v, int idx, v4float b) DIAGNOSE_EXTRACT_IDX(3) {
   v16int32 tmp = (v16int32)set_v16float(idx, b);
 
   const unsigned mask_elems = 4;
@@ -2374,77 +2335,74 @@ INTRINSIC(v16float) insert(v16float v, int idx, v4float b) {
 #endif
 
 // Insert 128-bit in 512-bit register
-INTRINSIC(v64uint4) insert(v64uint4 a, int idx, v32uint4 b) {
-  __EXT_128B_CHECK(idx, 1)
+INTRINSIC(v64uint4)
+insert(v64uint4 a, int idx, v32uint4 b) DIAGNOSE_EXTRACT_IDX(1) {
   return extract_v64uint4(insert(set_v128uint4(0, a), idx, b), 0);
 }
 
 // Insert 128-bit in 512-bit register
-INTRINSIC(v64int4) insert(v64int4 a, int idx, v32int4 b) {
-  __EXT_128B_CHECK(idx, 1)
+INTRINSIC(v64int4)
+insert(v64int4 a, int idx, v32int4 b) DIAGNOSE_EXTRACT_IDX(1) {
   return extract_v64int4(insert(set_v128int4(0, a), idx, b), 0);
 }
 
 // Insert 128-bit in 512-bit register
-INTRINSIC(v32uint8) insert(v32uint8 a, int idx, v16uint8 b) {
-  __EXT_128B_CHECK(idx, 1)
+INTRINSIC(v32uint8)
+insert(v32uint8 a, int idx, v16uint8 b) DIAGNOSE_EXTRACT_IDX(1) {
   return extract_v32uint8(insert(set_v64uint8(0, a), idx, b), 0);
 }
 
 // Insert 128-bit in 512-bit register
-INTRINSIC(v32int8) insert(v32int8 a, int idx, v16int8 b) {
-  __EXT_128B_CHECK(idx, 1)
+INTRINSIC(v32int8)
+insert(v32int8 a, int idx, v16int8 b) DIAGNOSE_EXTRACT_IDX(1) {
   return extract_v32int8(insert(set_v64int8(0, a), idx, b), 0);
 }
 
 // Insert 128-bit in 512-bit register
-INTRINSIC(v16uint16) insert(v16uint16 a, int idx, v8uint16 b) {
-  __EXT_128B_CHECK(idx, 1)
+INTRINSIC(v16uint16)
+insert(v16uint16 a, int idx, v8uint16 b) DIAGNOSE_EXTRACT_IDX(1) {
   return extract_v16uint16(insert(set_v32uint16(0, a), idx, b), 0);
 }
 
 // Insert 128-bit in 512-bit register
-INTRINSIC(v16int16) insert(v16int16 a, int idx, v8int16 b) {
-  __EXT_128B_CHECK(idx, 1)
+INTRINSIC(v16int16)
+insert(v16int16 a, int idx, v8int16 b) DIAGNOSE_EXTRACT_IDX(1) {
   return extract_v16int16(insert(set_v32int16(0, a), idx, b), 0);
 }
 
 #if 0
 // Insert 128-bit in 512-bit register
-INTRINSIC(v8cint16) insert(v8cint16 a, int idx, v4cint16 b) {
-  __EXT_128B_CHECK(idx, 1)
+INTRINSIC(v8cint16) insert(v8cint16 a, int idx, v4cint16 b) DIAGNOSE_EXTRACT_IDX(1) {
   return extract_v8cint16(insert(set_v16cint16(0, a), idx, b), 0);
 }
 #endif
 
 // Insert 128-bit in 512-bit register
-INTRINSIC(v8uint32) insert(v8uint32 a, int idx, v4uint32 b) {
-  __EXT_128B_CHECK(idx, 1)
+INTRINSIC(v8uint32)
+insert(v8uint32 a, int idx, v4uint32 b) DIAGNOSE_EXTRACT_IDX(1) {
   return extract_v8uint32(insert(set_v16uint32(0, a), idx, b), 0);
 }
 
 // Insert 128-bit in 512-bit register
-INTRINSIC(v8int32) insert(v8int32 a, int idx, v4int32 b) {
-  __EXT_128B_CHECK(idx, 1)
+INTRINSIC(v8int32)
+insert(v8int32 a, int idx, v4int32 b) DIAGNOSE_EXTRACT_IDX(1) {
   return extract_v8int32(insert(set_v16int32(0, a), idx, b), 0);
 }
 
 // Insert 128-bit in 512-bit register
-INTRINSIC(v16bfloat16) insert(v16bfloat16 a, int idx, v8bfloat16 b) {
-  __EXT_128B_CHECK(idx, 1)
+INTRINSIC(v16bfloat16)
+insert(v16bfloat16 a, int idx, v8bfloat16 b) DIAGNOSE_EXTRACT_IDX(1) {
   return extract_v16bfloat16(insert(set_v32bfloat16(0, a), idx, b), 0);
 }
 
 #if 0
 // Insert 128-bit in 512-bit register
-INTRINSIC(v4cint32) insert(v4cint32 a, int idx, v2cint32 b) {
-  __EXT_128B_CHECK(idx, 1)
+INTRINSIC(v4cint32) insert(v4cint32 a, int idx, v2cint32 b) DIAGNOSE_EXTRACT_IDX(1) {
   return extract_v4cint32(insert(set_v8cint32(0, a), idx, b), 0);
 }
 
 // Insert 128-bit in 512-bit register
-INTRINSIC(v8float) insert(v8float a, int idx, v4float b) {
-  __EXT_128B_CHECK(idx, 1)
+INTRINSIC(v8float) insert(v8float a, int idx, v4float b) DIAGNOSE_EXTRACT_IDX(1) {
   return extract_v8float(insert(set_v16float(0, a), idx, b), 0);
 }
 #endif

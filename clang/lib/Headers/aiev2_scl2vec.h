@@ -941,663 +941,673 @@ INTRINSIC(v64bfloat16_sparse) shuffle(v64bfloat16_sparse qx, int itlv) {
 #endif
 
 // Extract an element from a vector with dynamic sign
-constexpr void handle_assertion_ext(bool value) {
-  if (value) {
-    extern __attribute__((__error__(
-        "2nd parameter of extract intrinsic should be const in [0, 63]."))) void
-    aie_static_assert(void);
-    aie_static_assert();
-  }
-}
-
-#define CHECK_EXT_IDX                                                          \
-  handle_assertion_ext(__builtin_constant_p(idx) && (idx < 0 || idx >= 64));
+#define DIAGNOSE_EXT_IDX                                                       \
+  __attribute__((                                                              \
+      diagnose_if(idx < 0 || idx > 63, "index out of range [0,63]", "error")))
 
 INTRINSIC(v2int4)
-ext_v2int4(v128int4 v, int idx, int sign) {
-  CHECK_EXT_IDX return __builtin_aiev2_vextract_elem8_I512(v, idx, sign);
+ext_v2int4(v128int4 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return __builtin_aiev2_vextract_elem8_I512(v, idx, sign);
 }
 
 INTRINSIC(v4int4)
-ext_v4int4(v128int4 v, int idx, int sign) {
-  CHECK_EXT_IDX return (v4int4)(short)__builtin_aiev2_vextract_elem16_I512(
-      v, idx, sign);
+ext_v4int4(v128int4 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return (v4int4)(short)__builtin_aiev2_vextract_elem16_I512(v, idx, sign);
 }
 
 INTRINSIC(v8int4)
-ext_v8int4(v128int4 v, int idx, int sign) {
-  CHECK_EXT_IDX return (v8int4)__builtin_aiev2_vextract_elem32_I512(v, idx,
-                                                                    sign);
+ext_v8int4(v128int4 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return (v8int4)__builtin_aiev2_vextract_elem32_I512(v, idx, sign);
 }
 
 INTRINSIC(v16int4)
-ext_v16int4(v128int4 v, int idx, int sign) {
-  CHECK_EXT_IDX return __builtin_aiev2_vextract_elem64_I512(v, idx, sign);
+ext_v16int4(v128int4 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return __builtin_aiev2_vextract_elem64_I512(v, idx, sign);
 }
 
 INTRINSIC(char)
-ext_elem(v64int8 v, int idx, int sign) {
-  CHECK_EXT_IDX return __builtin_aiev2_vextract_elem8_I512(v, idx, sign);
+ext_elem(v64int8 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return __builtin_aiev2_vextract_elem8_I512(v, idx, sign);
 }
 
 INTRINSIC(v2int8)
-ext_v2int8(v64int8 v, int idx, int sign) {
-  CHECK_EXT_IDX return (v2int8)(short)__builtin_aiev2_vextract_elem16_I512(
-      v, idx, sign);
+ext_v2int8(v64int8 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return (v2int8)(short)__builtin_aiev2_vextract_elem16_I512(v, idx, sign);
 }
 
 INTRINSIC(v4int8)
-ext_v4int8(v64int8 v, int idx, int sign) {
-  CHECK_EXT_IDX return (v4int8)__builtin_aiev2_vextract_elem32_I512(v, idx,
-                                                                    sign);
+ext_v4int8(v64int8 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return (v4int8)__builtin_aiev2_vextract_elem32_I512(v, idx, sign);
 }
 
 INTRINSIC(v8int8)
-ext_v8int8(v64int8 v, int idx, int sign) {
-  CHECK_EXT_IDX return __builtin_aiev2_vextract_elem64_I512(v, idx, sign);
+ext_v8int8(v64int8 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return __builtin_aiev2_vextract_elem64_I512(v, idx, sign);
 }
 
 INTRINSIC(short)
-ext_elem(v32int16 v, int idx, int sign) {
-  CHECK_EXT_IDX return __builtin_aiev2_vextract_elem16_I512(v, idx, sign);
+ext_elem(v32int16 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return __builtin_aiev2_vextract_elem16_I512(v, idx, sign);
 }
 
 INTRINSIC(v2int16)
-ext_v2int16(v32int16 v, int idx, int sign) {
-  CHECK_EXT_IDX return (v2int16)__builtin_aiev2_vextract_elem32_I512(v, idx,
-                                                                     sign);
+ext_v2int16(v32int16 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return (v2int16)__builtin_aiev2_vextract_elem32_I512(v, idx, sign);
 }
 
 INTRINSIC(v4int16)
-ext_v4int16(v32int16 v, int idx, int sign) {
-  CHECK_EXT_IDX return __builtin_aiev2_vextract_elem64_I512(v, idx, sign);
+ext_v4int16(v32int16 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return __builtin_aiev2_vextract_elem64_I512(v, idx, sign);
 }
 
 INTRINSIC(int)
-ext_elem(v16int32 v, int idx, int sign) {
-  CHECK_EXT_IDX return __builtin_aiev2_vextract_elem32_I512(v, idx, sign);
+ext_elem(v16int32 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return __builtin_aiev2_vextract_elem32_I512(v, idx, sign);
 }
 
 INTRINSIC(v2int32)
-ext_v2int32(v16int32 v, int idx, int sign) {
-  CHECK_EXT_IDX return __builtin_aiev2_vextract_elem64_I512(v, idx, sign);
+ext_v2int32(v16int32 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return __builtin_aiev2_vextract_elem64_I512(v, idx, sign);
 }
 
 INTRINSIC(v2uint4)
-ext_v2uint4(v128uint4 v, int idx, int sign) {
-  CHECK_EXT_IDX return __builtin_aiev2_vextract_elem8_I512(v, idx, sign);
+ext_v2uint4(v128uint4 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return __builtin_aiev2_vextract_elem8_I512(v, idx, sign);
 }
 
 INTRINSIC(v4uint4)
-ext_v4uint4(v128uint4 v, int idx, int sign) {
-  CHECK_EXT_IDX return (v4uint4)(short)__builtin_aiev2_vextract_elem16_I512(
-      v, idx, sign);
+ext_v4uint4(v128uint4 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return (v4uint4)(short)__builtin_aiev2_vextract_elem16_I512(v, idx, sign);
 }
 
 INTRINSIC(v8uint4)
-ext_v8uint4(v128uint4 v, int idx, int sign) {
-  CHECK_EXT_IDX return (v8uint4)__builtin_aiev2_vextract_elem32_I512(v, idx,
-                                                                     sign);
+ext_v8uint4(v128uint4 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return (v8uint4)__builtin_aiev2_vextract_elem32_I512(v, idx, sign);
 }
 
 INTRINSIC(v16uint4)
-ext_v16uint4(v128uint4 v, int idx, int sign) {
-  CHECK_EXT_IDX return __builtin_aiev2_vextract_elem64_I512(v, idx, sign);
+ext_v16uint4(v128uint4 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return __builtin_aiev2_vextract_elem64_I512(v, idx, sign);
 }
 
 INTRINSIC(unsigned char)
-ext_elem(v64uint8 v, int idx, int sign) {
-  CHECK_EXT_IDX return __builtin_aiev2_vextract_elem8_I512(v, idx, sign);
+ext_elem(v64uint8 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return __builtin_aiev2_vextract_elem8_I512(v, idx, sign);
 }
 
 INTRINSIC(v2uint8)
-ext_v2uint8(v64uint8 v, int idx, int sign) {
-  CHECK_EXT_IDX return (v2uint8)(short)__builtin_aiev2_vextract_elem16_I512(
-      v, idx, sign);
+ext_v2uint8(v64uint8 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return (v2uint8)(short)__builtin_aiev2_vextract_elem16_I512(v, idx, sign);
 }
 
 INTRINSIC(v4uint8)
-ext_v4uint8(v64uint8 v, int idx, int sign) {
-  CHECK_EXT_IDX return (v4uint8)__builtin_aiev2_vextract_elem32_I512(v, idx,
-                                                                     sign);
+ext_v4uint8(v64uint8 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return (v4uint8)__builtin_aiev2_vextract_elem32_I512(v, idx, sign);
 }
 
 INTRINSIC(v8uint8)
-ext_v8uint8(v64uint8 v, int idx, int sign) {
-  CHECK_EXT_IDX return __builtin_aiev2_vextract_elem64_I512(v, idx, sign);
+ext_v8uint8(v64uint8 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return __builtin_aiev2_vextract_elem64_I512(v, idx, sign);
 }
 
 INTRINSIC(unsigned short)
-ext_elem(v32uint16 v, int idx, int sign) {
-  CHECK_EXT_IDX return __builtin_aiev2_vextract_elem16_I512(v, idx, sign);
+ext_elem(v32uint16 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return __builtin_aiev2_vextract_elem16_I512(v, idx, sign);
 }
 
 INTRINSIC(v2uint16)
-ext_v2uint16(v32uint16 v, int idx, int sign) {
-  CHECK_EXT_IDX return (v2uint16)__builtin_aiev2_vextract_elem32_I512(v, idx,
-                                                                      sign);
+ext_v2uint16(v32uint16 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return (v2uint16)__builtin_aiev2_vextract_elem32_I512(v, idx, sign);
 }
 
 INTRINSIC(v4uint16)
-ext_v4uint16(v32uint16 v, int idx, int sign) {
-  CHECK_EXT_IDX return __builtin_aiev2_vextract_elem64_I512(v, idx, sign);
+ext_v4uint16(v32uint16 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return __builtin_aiev2_vextract_elem64_I512(v, idx, sign);
 }
 
 INTRINSIC(unsigned int)
-ext_elem(v16uint32 v, int idx, int sign) {
-  CHECK_EXT_IDX return __builtin_aiev2_vextract_elem32_I512(v, idx, sign);
+ext_elem(v16uint32 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return __builtin_aiev2_vextract_elem32_I512(v, idx, sign);
 }
 
 INTRINSIC(v2uint32)
-ext_v2uint32(v16uint32 v, int idx, int sign) {
-  CHECK_EXT_IDX return __builtin_aiev2_vextract_elem64_I512(v, idx, sign);
+ext_v2uint32(v16uint32 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return __builtin_aiev2_vextract_elem64_I512(v, idx, sign);
 }
 
 #if 0
 INTRINSIC(cint16)
-ext_elem(v16cint16 v, int idx, int sign) {
-  CHECK_EXT_IDX return __builtin_aiev2_vextract_elem32_I512(v, idx, sign);
+ext_elem(v16cint16 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+   return __builtin_aiev2_vextract_elem32_I512(v, idx, sign);
 }
 
 INTRINSIC(v2cint16)
-ext_v2cint16(v16cint16 v, int idx, int sign) {
-  CHECK_EXT_IDX return __builtin_aiev2_vextract_elem64_I512(v, idx, sign);
+ext_v2cint16(v16cint16 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+   return __builtin_aiev2_vextract_elem64_I512(v, idx, sign);
 }
 #endif
 
 INTRINSIC(unsigned long long)
-ext_u64(v128int4 v, int idx, int sign) {
-  CHECK_EXT_IDX
+ext_u64(v128int4 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+
   return (
       unsigned long long)(__builtin_aiev2_vextract_elem64_I512(v, idx, sign));
 }
 
 INTRINSIC(unsigned long long)
-ext_u64(v64int8 v, int idx, int sign) {
-  CHECK_EXT_IDX
+ext_u64(v64int8 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+
   return (
       unsigned long long)(__builtin_aiev2_vextract_elem64_I512(v, idx, sign));
 }
 
 INTRINSIC(unsigned long long)
-ext_u64(v32int16 v, int idx, int sign) {
-  CHECK_EXT_IDX
+ext_u64(v32int16 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+
   return (
       unsigned long long)(__builtin_aiev2_vextract_elem64_I512(v, idx, sign));
 }
 
 INTRINSIC(unsigned long long)
-ext_u64(v16int32 v, int idx, int sign) {
-  CHECK_EXT_IDX
+ext_u64(v16int32 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+
   return (
       unsigned long long)(__builtin_aiev2_vextract_elem64_I512(v, idx, sign));
 }
 
 INTRINSIC(unsigned long long)
-ext_u64(v128uint4 v, int idx, int sign) {
-  CHECK_EXT_IDX
+ext_u64(v128uint4 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+
   return (
       unsigned long long)(__builtin_aiev2_vextract_elem64_I512(v, idx, sign));
 }
 
 INTRINSIC(unsigned long long)
-ext_u64(v64uint8 v, int idx, int sign) {
-  CHECK_EXT_IDX
+ext_u64(v64uint8 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+
   return (
       unsigned long long)(__builtin_aiev2_vextract_elem64_I512(v, idx, sign));
 }
 
 INTRINSIC(unsigned long long)
-ext_u64(v32uint16 v, int idx, int sign) {
-  CHECK_EXT_IDX
+ext_u64(v32uint16 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+
   return (
       unsigned long long)(__builtin_aiev2_vextract_elem64_I512(v, idx, sign));
 }
 
 INTRINSIC(unsigned long long)
-ext_u64(v16uint32 v, int idx, int sign) {
-  CHECK_EXT_IDX
+ext_u64(v16uint32 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+
   return (
       unsigned long long)(__builtin_aiev2_vextract_elem64_I512(v, idx, sign));
 }
 
 INTRINSIC(bfloat16)
-ext_elem(v32bfloat16 v, int idx, int sign) {
-  CHECK_EXT_IDX
+ext_elem(v32bfloat16 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+
   int elem = __builtin_aiev2_vextract_elem16_I512((v32int16)v, idx, sign);
   return *reinterpret_cast<bfloat16 *>(&elem);
 }
 
 #if 0
 INTRINSIC(unsigned long long)
-ext_u64(v16cint16 v, int idx, int sign) {
-  CHECK_EXT_IDX
+ext_u64(v16cint16 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+
   return __builtin_aiev2_vextract_elem64_I512(v, idx, sign);
 }
 
 INTRINSIC(cint32)
-ext_elem(v8cint32 v, int idx, int sign) {
-  CHECK_EXT_IDX return (cint32)__builtin_aiev2_vextract_elem64_I512(v, idx, sign);
+ext_elem(v8cint32 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+   return (cint32)__builtin_aiev2_vextract_elem64_I512(v, idx, sign);
 }
 #endif
 INTRINSIC(unsigned long long)
-ext_u64(v32bfloat16 v, int idx, int sign) {
-  CHECK_EXT_IDX
+ext_u64(v32bfloat16 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+
   return (unsigned long long)__builtin_aiev2_vextract_elem64_I512((v32int16)v,
                                                                   idx, sign);
 }
 
 INTRINSIC(v2bfloat16)
-ext_v2bfloat16(v32bfloat16 v, int idx, int sign) {
-  CHECK_EXT_IDX
+ext_v2bfloat16(v32bfloat16 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+
   int elem = __builtin_aiev2_vextract_elem32_I512((v32int16)v, idx, sign);
   return *reinterpret_cast<v2bfloat16 *>(&elem);
 }
 
 INTRINSIC(v4bfloat16)
-ext_v4bfloat16(v32bfloat16 v, int idx, int sign) {
-  CHECK_EXT_IDX
+ext_v4bfloat16(v32bfloat16 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+
   v2int32 elem = __builtin_aiev2_vextract_elem64_I512((v32int16)v, idx, sign);
   return *reinterpret_cast<v4bfloat16 *>(&elem);
 }
 
-INTRINSIC(v2int4) extract_v2int4(v128int4 v, int idx, int sign) {
-  CHECK_EXT_IDX return ext_v2int4(v, idx, sign);
+INTRINSIC(v2int4)
+extract_v2int4(v128int4 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return ext_v2int4(v, idx, sign);
 }
 
-INTRINSIC(v4int4) extract_v4int4(v128int4 v, int idx, int sign) {
-  CHECK_EXT_IDX return ext_v4int4(v, idx, sign);
+INTRINSIC(v4int4)
+extract_v4int4(v128int4 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return ext_v4int4(v, idx, sign);
 }
 
-INTRINSIC(v8int4) extract_v8int4(v128int4 v, int idx, int sign) {
-  CHECK_EXT_IDX return ext_v8int4(v, idx, sign);
+INTRINSIC(v8int4)
+extract_v8int4(v128int4 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return ext_v8int4(v, idx, sign);
 }
 
-INTRINSIC(v16int4) extract_v16int4(v128int4 v, int idx, int sign) {
-  CHECK_EXT_IDX return ext_v16int4(v, idx, sign);
+INTRINSIC(v16int4)
+extract_v16int4(v128int4 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return ext_v16int4(v, idx, sign);
 }
 
-INTRINSIC(char) extract_elem(v64int8 v, int idx, int sign) {
-  CHECK_EXT_IDX return ext_elem(v, idx, sign);
+INTRINSIC(char) extract_elem(v64int8 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return ext_elem(v, idx, sign);
 }
 
-INTRINSIC(v2int8) extract_v2int8(v64int8 v, int idx, int sign) {
-  CHECK_EXT_IDX return ext_v2int8(v, idx, sign);
+INTRINSIC(v2int8)
+extract_v2int8(v64int8 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return ext_v2int8(v, idx, sign);
 }
 
-INTRINSIC(v4int8) extract_v4int8(v64int8 v, int idx, int sign) {
-  CHECK_EXT_IDX return ext_v4int8(v, idx, sign);
+INTRINSIC(v4int8)
+extract_v4int8(v64int8 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return ext_v4int8(v, idx, sign);
 }
 
-INTRINSIC(v8int8) extract_v8int8(v64int8 v, int idx, int sign) {
-  CHECK_EXT_IDX return ext_v8int8(v, idx, sign);
+INTRINSIC(v8int8)
+extract_v8int8(v64int8 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return ext_v8int8(v, idx, sign);
 }
 
-INTRINSIC(short) extract_elem(v32int16 v, int idx, int sign) {
-  CHECK_EXT_IDX return ext_elem(v, idx, sign);
+INTRINSIC(short) extract_elem(v32int16 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return ext_elem(v, idx, sign);
 }
 
-INTRINSIC(v2int16) extract_v2int16(v32int16 v, int idx, int sign) {
-  CHECK_EXT_IDX return ext_v2int16(v, idx, sign);
+INTRINSIC(v2int16)
+extract_v2int16(v32int16 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return ext_v2int16(v, idx, sign);
 }
 
-INTRINSIC(v4int16) extract_v4int16(v32int16 v, int idx, int sign) {
-  CHECK_EXT_IDX return ext_v4int16(v, idx, sign);
+INTRINSIC(v4int16)
+extract_v4int16(v32int16 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return ext_v4int16(v, idx, sign);
 }
 
-INTRINSIC(int) extract_elem(v16int32 v, int idx, int sign) {
-  CHECK_EXT_IDX return ext_elem(v, idx, sign);
+INTRINSIC(int) extract_elem(v16int32 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return ext_elem(v, idx, sign);
 }
 
-INTRINSIC(v2int32) extract_v2int32(v16int32 v, int idx, int sign) {
-  CHECK_EXT_IDX return ext_v2int32(v, idx, sign);
+INTRINSIC(v2int32)
+extract_v2int32(v16int32 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return ext_v2int32(v, idx, sign);
 }
 
-INTRINSIC(v2uint4) extract_v2uint4(v128uint4 v, int idx, int sign) {
-  CHECK_EXT_IDX return ext_v2uint4(v, idx, sign);
+INTRINSIC(v2uint4)
+extract_v2uint4(v128uint4 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return ext_v2uint4(v, idx, sign);
 }
 
-INTRINSIC(v4uint4) extract_v4uint4(v128uint4 v, int idx, int sign) {
-  CHECK_EXT_IDX return ext_v4uint4(v, idx, sign);
+INTRINSIC(v4uint4)
+extract_v4uint4(v128uint4 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return ext_v4uint4(v, idx, sign);
 }
 
-INTRINSIC(v8uint4) extract_v8uint4(v128uint4 v, int idx, int sign) {
-  CHECK_EXT_IDX return ext_v8uint4(v, idx, sign);
+INTRINSIC(v8uint4)
+extract_v8uint4(v128uint4 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return ext_v8uint4(v, idx, sign);
 }
 
-INTRINSIC(v16uint4) extract_v16uint4(v128uint4 v, int idx, int sign) {
-  CHECK_EXT_IDX return ext_v16uint4(v, idx, sign);
+INTRINSIC(v16uint4)
+extract_v16uint4(v128uint4 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return ext_v16uint4(v, idx, sign);
 }
 
-INTRINSIC(unsigned char) extract_elem(v64uint8 v, int idx, int sign) {
-  CHECK_EXT_IDX return ext_elem(v, idx, sign);
+INTRINSIC(unsigned char)
+extract_elem(v64uint8 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return ext_elem(v, idx, sign);
 }
 
-INTRINSIC(v2uint8) extract_v2uint8(v64uint8 v, int idx, int sign) {
-  CHECK_EXT_IDX return ext_v2uint8(v, idx, sign);
+INTRINSIC(v2uint8)
+extract_v2uint8(v64uint8 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return ext_v2uint8(v, idx, sign);
 }
 
-INTRINSIC(v4uint8) extract_v4uint8(v64uint8 v, int idx, int sign) {
-  CHECK_EXT_IDX return ext_v4uint8(v, idx, sign);
+INTRINSIC(v4uint8)
+extract_v4uint8(v64uint8 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return ext_v4uint8(v, idx, sign);
 }
 
-INTRINSIC(v8uint8) extract_v8uint8(v64uint8 v, int idx, int sign) {
-  CHECK_EXT_IDX return ext_v8uint8(v, idx, sign);
+INTRINSIC(v8uint8)
+extract_v8uint8(v64uint8 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return ext_v8uint8(v, idx, sign);
 }
 
-INTRINSIC(unsigned short) extract_elem(v32uint16 v, int idx, int sign) {
-  CHECK_EXT_IDX return ext_elem(v, idx, sign);
+INTRINSIC(unsigned short)
+extract_elem(v32uint16 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return ext_elem(v, idx, sign);
 }
 
-INTRINSIC(v2uint16) extract_v2uint16(v32uint16 v, int idx, int sign) {
-  CHECK_EXT_IDX return ext_v2uint16(v, idx, sign);
+INTRINSIC(v2uint16)
+extract_v2uint16(v32uint16 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return ext_v2uint16(v, idx, sign);
 }
 
-INTRINSIC(v4uint16) extract_v4uint16(v32uint16 v, int idx, int sign) {
-  CHECK_EXT_IDX return ext_v4uint16(v, idx, sign);
+INTRINSIC(v4uint16)
+extract_v4uint16(v32uint16 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return ext_v4uint16(v, idx, sign);
 }
 
-INTRINSIC(unsigned) int extract_elem(v16uint32 v, int idx, int sign) {
-  CHECK_EXT_IDX return ext_elem(v, idx, sign);
+INTRINSIC(unsigned)
+int extract_elem(v16uint32 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return ext_elem(v, idx, sign);
 }
 
-INTRINSIC(v2uint32) extract_v2uint32(v16uint32 v, int idx, int sign) {
-  CHECK_EXT_IDX return ext_v2uint32(v, idx, sign);
+INTRINSIC(v2uint32)
+extract_v2uint32(v16uint32 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return ext_v2uint32(v, idx, sign);
 }
 
-INTRINSIC(bfloat16) extract_elem(v32bfloat16 v, int idx, int sign) {
-  CHECK_EXT_IDX return ext_elem(v, idx, sign);
+INTRINSIC(bfloat16)
+extract_elem(v32bfloat16 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return ext_elem(v, idx, sign);
 }
 
-INTRINSIC(v2bfloat16) extract_v2bfloat16(v32bfloat16 v, int idx, int sign) {
-  CHECK_EXT_IDX return ext_v2bfloat16(v, idx, sign);
+INTRINSIC(v2bfloat16)
+extract_v2bfloat16(v32bfloat16 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return ext_v2bfloat16(v, idx, sign);
 }
 
-INTRINSIC(v4bfloat16) extract_v4bfloat16(v32bfloat16 v, int idx, int sign) {
-  CHECK_EXT_IDX return ext_v4bfloat16(v, idx, sign);
+INTRINSIC(v4bfloat16)
+extract_v4bfloat16(v32bfloat16 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+  return ext_v4bfloat16(v, idx, sign);
 }
 
-INTRINSIC(float) extract_elem(v16float v, int idx, int sign) {
+INTRINSIC(float) extract_elem(v16float v, int idx, int sign) DIAGNOSE_EXT_IDX {
   int elem = __builtin_aiev2_vextract_elem32_I512(v, idx, sign);
-  CHECK_EXT_IDX return *reinterpret_cast<float *>(&elem);
+  return *reinterpret_cast<float *>(&elem);
 }
 
 #if 0
-INTRINSIC(cint32) extract_elem(v8cint32 v, int idx, int sign) {
-  CHECK_EXT_IDX return __builtin_aiev2_vextract_elem64_I512(v, idx, sign);
+INTRINSIC(cint32) extract_elem(v8cint32 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+   return __builtin_aiev2_vextract_elem64_I512(v, idx, sign);
 }
 
-INTRINSIC(cint16) extract_elem(v16cint16 v, int idx, int sign) {
-  CHECK_EXT_IDX return ext_elem(v, idx, sign);
+INTRINSIC(cint16) extract_elem(v16cint16 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+   return ext_elem(v, idx, sign);
 }
 
-INTRINSIC(v2cint16) extract_v2cint16(v16cint16 v, int idx, int sign) {
-  CHECK_EXT_IDX return ext_v2cint16(v, idx, sign);
+INTRINSIC(v2cint16) extract_v2cint16(v16cint16 v, int idx, int sign) DIAGNOSE_EXT_IDX {
+   return ext_v2cint16(v, idx, sign);
 }
 #endif
 
 // Extract an element from a vector
-INTRINSIC(v2int4) ext_v2int4(v128int4 v, int idx) {
-  CHECK_EXT_IDX return ext_v2int4(v, idx, __SIGN_SIGNED);
+INTRINSIC(v2int4) ext_v2int4(v128int4 v, int idx) DIAGNOSE_EXT_IDX {
+  return ext_v2int4(v, idx, __SIGN_SIGNED);
 }
 
-INTRINSIC(v4int4) ext_v4int4(v128int4 v, int idx) {
-  CHECK_EXT_IDX return ext_v4int4(v, idx, __SIGN_SIGNED);
+INTRINSIC(v4int4) ext_v4int4(v128int4 v, int idx) DIAGNOSE_EXT_IDX {
+  return ext_v4int4(v, idx, __SIGN_SIGNED);
 }
 
-INTRINSIC(v8int4) ext_v8int4(v128int4 v, int idx) {
-  CHECK_EXT_IDX return ext_v8int4(v, idx, __SIGN_SIGNED);
+INTRINSIC(v8int4) ext_v8int4(v128int4 v, int idx) DIAGNOSE_EXT_IDX {
+  return ext_v8int4(v, idx, __SIGN_SIGNED);
 }
 
-INTRINSIC(v16int4) ext_v16int4(v128int4 v, int idx) {
-  CHECK_EXT_IDX return ext_v16int4(v, idx, __SIGN_SIGNED);
+INTRINSIC(v16int4) ext_v16int4(v128int4 v, int idx) DIAGNOSE_EXT_IDX {
+  return ext_v16int4(v, idx, __SIGN_SIGNED);
 }
 
-INTRINSIC(char) ext_elem(v64int8 v, int idx) {
-  CHECK_EXT_IDX return ext_elem(v, idx, __SIGN_SIGNED);
+INTRINSIC(char) ext_elem(v64int8 v, int idx) DIAGNOSE_EXT_IDX {
+  return ext_elem(v, idx, __SIGN_SIGNED);
 }
 
-INTRINSIC(v2int8) ext_v2int8(v64int8 v, int idx) {
-  CHECK_EXT_IDX return ext_v2int8(v, idx, __SIGN_SIGNED);
+INTRINSIC(v2int8) ext_v2int8(v64int8 v, int idx) DIAGNOSE_EXT_IDX {
+  return ext_v2int8(v, idx, __SIGN_SIGNED);
 }
 
-INTRINSIC(v4int8) ext_v4int8(v64int8 v, int idx) {
-  CHECK_EXT_IDX return ext_v4int8(v, idx, __SIGN_SIGNED);
+INTRINSIC(v4int8) ext_v4int8(v64int8 v, int idx) DIAGNOSE_EXT_IDX {
+  return ext_v4int8(v, idx, __SIGN_SIGNED);
 }
 
-INTRINSIC(v8int8) ext_v8int8(v64int8 v, int idx) {
-  CHECK_EXT_IDX return ext_v8int8(v, idx, __SIGN_SIGNED);
+INTRINSIC(v8int8) ext_v8int8(v64int8 v, int idx) DIAGNOSE_EXT_IDX {
+  return ext_v8int8(v, idx, __SIGN_SIGNED);
 }
 
-INTRINSIC(short) ext_elem(v32int16 v, int idx) {
-  CHECK_EXT_IDX return ext_elem(v, idx, __SIGN_SIGNED);
+INTRINSIC(short) ext_elem(v32int16 v, int idx) DIAGNOSE_EXT_IDX {
+  return ext_elem(v, idx, __SIGN_SIGNED);
 }
 
-INTRINSIC(v2int16) ext_v2int16(v32int16 v, int idx) {
-  CHECK_EXT_IDX return ext_v2int16(v, idx, __SIGN_SIGNED);
+INTRINSIC(v2int16) ext_v2int16(v32int16 v, int idx) DIAGNOSE_EXT_IDX {
+  return ext_v2int16(v, idx, __SIGN_SIGNED);
 }
 
-INTRINSIC(v4int16) ext_v4int16(v32int16 v, int idx) {
-  CHECK_EXT_IDX return ext_v4int16(v, idx, __SIGN_SIGNED);
+INTRINSIC(v4int16) ext_v4int16(v32int16 v, int idx) DIAGNOSE_EXT_IDX {
+  return ext_v4int16(v, idx, __SIGN_SIGNED);
 }
 
-INTRINSIC(int) ext_elem(v16int32 v, int idx) {
-  CHECK_EXT_IDX return ext_elem(v, idx, __SIGN_SIGNED);
+INTRINSIC(int) ext_elem(v16int32 v, int idx) DIAGNOSE_EXT_IDX {
+  return ext_elem(v, idx, __SIGN_SIGNED);
 }
 
-INTRINSIC(v2int32) ext_v2int32(v16int32 v, int idx) {
-  CHECK_EXT_IDX return ext_v2int32(v, idx, __SIGN_SIGNED);
+INTRINSIC(v2int32) ext_v2int32(v16int32 v, int idx) DIAGNOSE_EXT_IDX {
+  return ext_v2int32(v, idx, __SIGN_SIGNED);
 }
 
-INTRINSIC(v2uint4) ext_v2uint4(v128uint4 v, int idx) {
-  CHECK_EXT_IDX return ext_v2uint4(v, idx, __SIGN_UNSIGNED);
+INTRINSIC(v2uint4) ext_v2uint4(v128uint4 v, int idx) DIAGNOSE_EXT_IDX {
+  return ext_v2uint4(v, idx, __SIGN_UNSIGNED);
 }
 
-INTRINSIC(v4uint4) ext_v4uint4(v128uint4 v, int idx) {
-  CHECK_EXT_IDX return ext_v4uint4(v, idx, __SIGN_UNSIGNED);
+INTRINSIC(v4uint4) ext_v4uint4(v128uint4 v, int idx) DIAGNOSE_EXT_IDX {
+  return ext_v4uint4(v, idx, __SIGN_UNSIGNED);
 }
 
-INTRINSIC(v8uint4) ext_v8uint4(v128uint4 v, int idx) {
-  CHECK_EXT_IDX return ext_v8uint4(v, idx, __SIGN_UNSIGNED);
+INTRINSIC(v8uint4) ext_v8uint4(v128uint4 v, int idx) DIAGNOSE_EXT_IDX {
+  return ext_v8uint4(v, idx, __SIGN_UNSIGNED);
 }
 
-INTRINSIC(v16uint4) ext_v16uint4(v128uint4 v, int idx) {
-  CHECK_EXT_IDX return ext_v16uint4(v, idx, __SIGN_UNSIGNED);
+INTRINSIC(v16uint4) ext_v16uint4(v128uint4 v, int idx) DIAGNOSE_EXT_IDX {
+  return ext_v16uint4(v, idx, __SIGN_UNSIGNED);
 }
 
-INTRINSIC(unsigned char) ext_elem(v64uint8 v, int idx) {
-  CHECK_EXT_IDX return ext_elem(v, idx, __SIGN_UNSIGNED);
+INTRINSIC(unsigned char) ext_elem(v64uint8 v, int idx) DIAGNOSE_EXT_IDX {
+  return ext_elem(v, idx, __SIGN_UNSIGNED);
 }
 
-INTRINSIC(v2uint8) ext_v2uint8(v64uint8 v, int idx) {
-  CHECK_EXT_IDX return ext_v2uint8(v, idx, __SIGN_UNSIGNED);
+INTRINSIC(v2uint8) ext_v2uint8(v64uint8 v, int idx) DIAGNOSE_EXT_IDX {
+  return ext_v2uint8(v, idx, __SIGN_UNSIGNED);
 }
 
-INTRINSIC(v4uint8) ext_v4uint8(v64uint8 v, int idx) {
-  CHECK_EXT_IDX return ext_v4uint8(v, idx, __SIGN_UNSIGNED);
+INTRINSIC(v4uint8) ext_v4uint8(v64uint8 v, int idx) DIAGNOSE_EXT_IDX {
+  return ext_v4uint8(v, idx, __SIGN_UNSIGNED);
 }
 
-INTRINSIC(v8uint8) ext_v8uint8(v64uint8 v, int idx) {
-  CHECK_EXT_IDX return ext_v8uint8(v, idx, __SIGN_UNSIGNED);
+INTRINSIC(v8uint8) ext_v8uint8(v64uint8 v, int idx) DIAGNOSE_EXT_IDX {
+  return ext_v8uint8(v, idx, __SIGN_UNSIGNED);
 }
 
-INTRINSIC(unsigned short) ext_elem(v32uint16 v, int idx) {
-  CHECK_EXT_IDX return ext_elem(v, idx, __SIGN_UNSIGNED);
+INTRINSIC(unsigned short) ext_elem(v32uint16 v, int idx) DIAGNOSE_EXT_IDX {
+  return ext_elem(v, idx, __SIGN_UNSIGNED);
 }
 
-INTRINSIC(v2uint16) ext_v2uint16(v32uint16 v, int idx) {
-  CHECK_EXT_IDX return ext_v2uint16(v, idx, __SIGN_UNSIGNED);
+INTRINSIC(v2uint16) ext_v2uint16(v32uint16 v, int idx) DIAGNOSE_EXT_IDX {
+  return ext_v2uint16(v, idx, __SIGN_UNSIGNED);
 }
 
-INTRINSIC(v4uint16) ext_v4uint16(v32uint16 v, int idx) {
-  CHECK_EXT_IDX return ext_v4uint16(v, idx, __SIGN_UNSIGNED);
+INTRINSIC(v4uint16) ext_v4uint16(v32uint16 v, int idx) DIAGNOSE_EXT_IDX {
+  return ext_v4uint16(v, idx, __SIGN_UNSIGNED);
 }
 
-INTRINSIC(unsigned) int ext_elem(v16uint32 v, int idx) {
-  CHECK_EXT_IDX return ext_elem(v, idx, __SIGN_UNSIGNED);
+INTRINSIC(unsigned) int ext_elem(v16uint32 v, int idx) DIAGNOSE_EXT_IDX {
+  return ext_elem(v, idx, __SIGN_UNSIGNED);
 }
 
-INTRINSIC(v2uint32) ext_v2uint32(v16uint32 v, int idx) {
-  CHECK_EXT_IDX return ext_v2uint32(v, idx, __SIGN_UNSIGNED);
+INTRINSIC(v2uint32) ext_v2uint32(v16uint32 v, int idx) DIAGNOSE_EXT_IDX {
+  return ext_v2uint32(v, idx, __SIGN_UNSIGNED);
 }
 
-INTRINSIC(bfloat16) ext_elem(v32bfloat16 v, int idx) {
-  CHECK_EXT_IDX return ext_elem(v, idx, __SIGN_SIGNED);
+INTRINSIC(bfloat16) ext_elem(v32bfloat16 v, int idx) DIAGNOSE_EXT_IDX {
+  return ext_elem(v, idx, __SIGN_SIGNED);
 }
 
-INTRINSIC(v2bfloat16) ext_v2bfloat16(v32bfloat16 v, int idx) {
-  CHECK_EXT_IDX return ext_v2bfloat16(v, idx, __SIGN_SIGNED);
+INTRINSIC(v2bfloat16) ext_v2bfloat16(v32bfloat16 v, int idx) DIAGNOSE_EXT_IDX {
+  return ext_v2bfloat16(v, idx, __SIGN_SIGNED);
 }
 
-INTRINSIC(v4bfloat16) ext_v4bfloat16(v32bfloat16 v, int idx) {
-  CHECK_EXT_IDX return ext_v4bfloat16(v, idx, __SIGN_SIGNED);
+INTRINSIC(v4bfloat16) ext_v4bfloat16(v32bfloat16 v, int idx) DIAGNOSE_EXT_IDX {
+  return ext_v4bfloat16(v, idx, __SIGN_SIGNED);
 }
 
 #if 0
-INTRINSIC(cint16) ext_elem(v16cint16 v, int idx) {
-  CHECK_EXT_IDX return ext_elem(v, idx, __SIGN_SIGNED);
+INTRINSIC(cint16) ext_elem(v16cint16 v, int idx) DIAGNOSE_EXT_IDX {
+   return ext_elem(v, idx, __SIGN_SIGNED);
 }
 
-INTRINSIC(v2cint16) ext_v2cint16(v16cint16 v, int idx) {
-  CHECK_EXT_IDX return ext_v2cint16(v, idx, __SIGN_SIGNED);
+INTRINSIC(v2cint16) ext_v2cint16(v16cint16 v, int idx) DIAGNOSE_EXT_IDX {
+   return ext_v2cint16(v, idx, __SIGN_SIGNED);
 }
 
-INTRINSIC(cint32) ext_elem(v8cint32 v, int idx) {
-  CHECK_EXT_IDX return ext_elem(v, idx, __SIGN_SIGNED);
+INTRINSIC(cint32) ext_elem(v8cint32 v, int idx) DIAGNOSE_EXT_IDX {
+   return ext_elem(v, idx, __SIGN_SIGNED);
 }
 #endif
 
-INTRINSIC(v2int4) extract_v2int4(v128int4 v, int idx) {
-  CHECK_EXT_IDX return extract_v2int4(v, idx, __SIGN_SIGNED);
+INTRINSIC(v2int4) extract_v2int4(v128int4 v, int idx) DIAGNOSE_EXT_IDX {
+  return extract_v2int4(v, idx, __SIGN_SIGNED);
 }
 
-INTRINSIC(v4int4) extract_v4int4(v128int4 v, int idx) {
-  CHECK_EXT_IDX return extract_v4int4(v, idx, __SIGN_SIGNED);
+INTRINSIC(v4int4) extract_v4int4(v128int4 v, int idx) DIAGNOSE_EXT_IDX {
+  return extract_v4int4(v, idx, __SIGN_SIGNED);
 }
 
-INTRINSIC(v8int4) extract_v8int4(v128int4 v, int idx) {
-  CHECK_EXT_IDX return extract_v8int4(v, idx, __SIGN_SIGNED);
+INTRINSIC(v8int4) extract_v8int4(v128int4 v, int idx) DIAGNOSE_EXT_IDX {
+  return extract_v8int4(v, idx, __SIGN_SIGNED);
 }
 
-INTRINSIC(v16int4) extract_v16int4(v128int4 v, int idx) {
-  CHECK_EXT_IDX return extract_v16int4(v, idx, __SIGN_SIGNED);
+INTRINSIC(v16int4) extract_v16int4(v128int4 v, int idx) DIAGNOSE_EXT_IDX {
+  return extract_v16int4(v, idx, __SIGN_SIGNED);
 }
 
-INTRINSIC(char) extract_elem(v64int8 v, int idx) {
-  CHECK_EXT_IDX return extract_elem(v, idx, __SIGN_SIGNED);
+INTRINSIC(char) extract_elem(v64int8 v, int idx) DIAGNOSE_EXT_IDX {
+  return extract_elem(v, idx, __SIGN_SIGNED);
 }
 
-INTRINSIC(v2int8) extract_v2int8(v64int8 v, int idx) {
-  CHECK_EXT_IDX return extract_v2int8(v, idx, __SIGN_SIGNED);
+INTRINSIC(v2int8) extract_v2int8(v64int8 v, int idx) DIAGNOSE_EXT_IDX {
+  return extract_v2int8(v, idx, __SIGN_SIGNED);
 }
 
-INTRINSIC(v4int8) extract_v4int8(v64int8 v, int idx) {
-  CHECK_EXT_IDX return extract_v4int8(v, idx, __SIGN_SIGNED);
+INTRINSIC(v4int8) extract_v4int8(v64int8 v, int idx) DIAGNOSE_EXT_IDX {
+  return extract_v4int8(v, idx, __SIGN_SIGNED);
 }
 
-INTRINSIC(v8int8) extract_v8int8(v64int8 v, int idx) {
-  CHECK_EXT_IDX return extract_v8int8(v, idx, __SIGN_SIGNED);
+INTRINSIC(v8int8) extract_v8int8(v64int8 v, int idx) DIAGNOSE_EXT_IDX {
+  return extract_v8int8(v, idx, __SIGN_SIGNED);
 }
 
-INTRINSIC(short) extract_elem(v32int16 v, int idx) {
-  CHECK_EXT_IDX return extract_elem(v, idx, __SIGN_SIGNED);
+INTRINSIC(short) extract_elem(v32int16 v, int idx) DIAGNOSE_EXT_IDX {
+  return extract_elem(v, idx, __SIGN_SIGNED);
 }
 
-INTRINSIC(v2int16) extract_v2int16(v32int16 v, int idx) {
-  CHECK_EXT_IDX return extract_v2int16(v, idx, __SIGN_SIGNED);
+INTRINSIC(v2int16) extract_v2int16(v32int16 v, int idx) DIAGNOSE_EXT_IDX {
+  return extract_v2int16(v, idx, __SIGN_SIGNED);
 }
 
-INTRINSIC(v4int16) extract_v4int16(v32int16 v, int idx) {
-  CHECK_EXT_IDX return extract_v4int16(v, idx, __SIGN_SIGNED);
+INTRINSIC(v4int16) extract_v4int16(v32int16 v, int idx) DIAGNOSE_EXT_IDX {
+  return extract_v4int16(v, idx, __SIGN_SIGNED);
 }
 
-INTRINSIC(int) extract_elem(v16int32 v, int idx) {
-  CHECK_EXT_IDX return extract_elem(v, idx, __SIGN_SIGNED);
+INTRINSIC(int) extract_elem(v16int32 v, int idx) DIAGNOSE_EXT_IDX {
+  return extract_elem(v, idx, __SIGN_SIGNED);
 }
 
-INTRINSIC(v2int32) extract_v2int32(v16int32 v, int idx) {
-  CHECK_EXT_IDX return extract_v2int32(v, idx, __SIGN_SIGNED);
+INTRINSIC(v2int32) extract_v2int32(v16int32 v, int idx) DIAGNOSE_EXT_IDX {
+  return extract_v2int32(v, idx, __SIGN_SIGNED);
 }
 
-INTRINSIC(v2uint4) extract_v2uint4(v128uint4 v, int idx) {
-  CHECK_EXT_IDX return extract_v2uint4(v, idx, __SIGN_UNSIGNED);
+INTRINSIC(v2uint4) extract_v2uint4(v128uint4 v, int idx) DIAGNOSE_EXT_IDX {
+  return extract_v2uint4(v, idx, __SIGN_UNSIGNED);
 }
 
-INTRINSIC(v4uint4) extract_v4uint4(v128uint4 v, int idx) {
-  CHECK_EXT_IDX return extract_v4uint4(v, idx, __SIGN_UNSIGNED);
+INTRINSIC(v4uint4) extract_v4uint4(v128uint4 v, int idx) DIAGNOSE_EXT_IDX {
+  return extract_v4uint4(v, idx, __SIGN_UNSIGNED);
 }
 
-INTRINSIC(v8uint4) extract_v8uint4(v128uint4 v, int idx) {
-  CHECK_EXT_IDX return extract_v8uint4(v, idx, __SIGN_UNSIGNED);
+INTRINSIC(v8uint4) extract_v8uint4(v128uint4 v, int idx) DIAGNOSE_EXT_IDX {
+  return extract_v8uint4(v, idx, __SIGN_UNSIGNED);
 }
 
-INTRINSIC(v16uint4) extract_v16uint4(v128uint4 v, int idx) {
-  CHECK_EXT_IDX return extract_v16uint4(v, idx, __SIGN_UNSIGNED);
+INTRINSIC(v16uint4) extract_v16uint4(v128uint4 v, int idx) DIAGNOSE_EXT_IDX {
+  return extract_v16uint4(v, idx, __SIGN_UNSIGNED);
 }
 
-INTRINSIC(unsigned char) extract_elem(v64uint8 v, int idx) {
-  CHECK_EXT_IDX return extract_elem(v, idx, __SIGN_UNSIGNED);
+INTRINSIC(unsigned char) extract_elem(v64uint8 v, int idx) DIAGNOSE_EXT_IDX {
+  return extract_elem(v, idx, __SIGN_UNSIGNED);
 }
 
-INTRINSIC(v2uint8) extract_v2uint8(v64uint8 v, int idx) {
-  CHECK_EXT_IDX return extract_v2uint8(v, idx, __SIGN_UNSIGNED);
+INTRINSIC(v2uint8) extract_v2uint8(v64uint8 v, int idx) DIAGNOSE_EXT_IDX {
+  return extract_v2uint8(v, idx, __SIGN_UNSIGNED);
 }
 
-INTRINSIC(v4uint8) extract_v4uint8(v64uint8 v, int idx) {
-  CHECK_EXT_IDX return extract_v4uint8(v, idx, __SIGN_UNSIGNED);
+INTRINSIC(v4uint8) extract_v4uint8(v64uint8 v, int idx) DIAGNOSE_EXT_IDX {
+  return extract_v4uint8(v, idx, __SIGN_UNSIGNED);
 }
 
-INTRINSIC(v8uint8) extract_v8uint8(v64uint8 v, int idx) {
-  CHECK_EXT_IDX return extract_v8uint8(v, idx, __SIGN_UNSIGNED);
+INTRINSIC(v8uint8) extract_v8uint8(v64uint8 v, int idx) DIAGNOSE_EXT_IDX {
+  return extract_v8uint8(v, idx, __SIGN_UNSIGNED);
 }
 
-INTRINSIC(unsigned short) extract_elem(v32uint16 v, int idx) {
-  CHECK_EXT_IDX return extract_elem(v, idx, __SIGN_UNSIGNED);
+INTRINSIC(unsigned short) extract_elem(v32uint16 v, int idx) DIAGNOSE_EXT_IDX {
+  return extract_elem(v, idx, __SIGN_UNSIGNED);
 }
 
-INTRINSIC(v2uint16) extract_v2uint16(v32uint16 v, int idx) {
-  CHECK_EXT_IDX return extract_v2uint16(v, idx, __SIGN_UNSIGNED);
+INTRINSIC(v2uint16) extract_v2uint16(v32uint16 v, int idx) DIAGNOSE_EXT_IDX {
+  return extract_v2uint16(v, idx, __SIGN_UNSIGNED);
 }
 
-INTRINSIC(v4uint16) extract_v4uint16(v32uint16 v, int idx) {
-  CHECK_EXT_IDX return extract_v4uint16(v, idx, __SIGN_UNSIGNED);
+INTRINSIC(v4uint16) extract_v4uint16(v32uint16 v, int idx) DIAGNOSE_EXT_IDX {
+  return extract_v4uint16(v, idx, __SIGN_UNSIGNED);
 }
 
-INTRINSIC(unsigned int) extract_elem(v16uint32 v, int idx) {
-  CHECK_EXT_IDX return extract_elem(v, idx, __SIGN_UNSIGNED);
+INTRINSIC(unsigned int) extract_elem(v16uint32 v, int idx) DIAGNOSE_EXT_IDX {
+  return extract_elem(v, idx, __SIGN_UNSIGNED);
 }
 
-INTRINSIC(v2uint32) extract_v2uint32(v16uint32 v, int idx) {
-  CHECK_EXT_IDX return extract_v2uint32(v, idx, __SIGN_UNSIGNED);
+INTRINSIC(v2uint32) extract_v2uint32(v16uint32 v, int idx) DIAGNOSE_EXT_IDX {
+  return extract_v2uint32(v, idx, __SIGN_UNSIGNED);
 }
 
-INTRINSIC(bfloat16) extract_elem(v32bfloat16 v, int idx) {
-  CHECK_EXT_IDX return extract_elem(v, idx, __SIGN_SIGNED);
+INTRINSIC(bfloat16) extract_elem(v32bfloat16 v, int idx) DIAGNOSE_EXT_IDX {
+  return extract_elem(v, idx, __SIGN_SIGNED);
 }
 
-INTRINSIC(v2bfloat16) extract_v2bfloat16(v32bfloat16 v, int idx) {
-  CHECK_EXT_IDX return extract_v2bfloat16(v, idx, __SIGN_SIGNED);
+INTRINSIC(v2bfloat16)
+extract_v2bfloat16(v32bfloat16 v, int idx) DIAGNOSE_EXT_IDX {
+  return extract_v2bfloat16(v, idx, __SIGN_SIGNED);
 }
 
-INTRINSIC(v4bfloat16) extract_v4bfloat16(v32bfloat16 v, int idx) {
-  CHECK_EXT_IDX return extract_v4bfloat16(v, idx, __SIGN_SIGNED);
+INTRINSIC(v4bfloat16)
+extract_v4bfloat16(v32bfloat16 v, int idx) DIAGNOSE_EXT_IDX {
+  return extract_v4bfloat16(v, idx, __SIGN_SIGNED);
 }
 
-INTRINSIC(float) extract_elem(v16float v, int idx) {
-  CHECK_EXT_IDX return extract_elem(v, idx, __SIGN_SIGNED);
+INTRINSIC(float) extract_elem(v16float v, int idx) DIAGNOSE_EXT_IDX {
+  return extract_elem(v, idx, __SIGN_SIGNED);
 }
 
 #if 0
-INTRINSIC(cint16) extract_elem(v16cint16 v, int idx) {
-  CHECK_EXT_IDX return extract_elem(v, idx, __SIGN_SIGNED);
+INTRINSIC(cint16) extract_elem(v16cint16 v, int idx) DIAGNOSE_EXT_IDX {
+   return extract_elem(v, idx, __SIGN_SIGNED);
 }
 
-INTRINSIC(v2cint16) extract_v2cint16(v16cint16 v, int idx) {
-  CHECK_EXT_IDX return extract_v2cint16(v, idx, __SIGN_SIGNED);
+INTRINSIC(v2cint16) extract_v2cint16(v16cint16 v, int idx) DIAGNOSE_EXT_IDX {
+   return extract_v2cint16(v, idx, __SIGN_SIGNED);
 }
 
-INTRINSIC(cint32) extract_elem(v8cint32 v, int idx) {
-  CHECK_EXT_IDX return extract_elem(v, idx, __SIGN_SIGNED);
+INTRINSIC(cint32) extract_elem(v8cint32 v, int idx) DIAGNOSE_EXT_IDX {
+   return extract_elem(v, idx, __SIGN_SIGNED);
 }
 #endif
 
