@@ -477,8 +477,10 @@ void SwingSchedulerDAG::setMII(unsigned ResMII, unsigned RecMII) {
     MII = SwpForceII;
   else if (II_setByPragma > 0)
     MII = II_setByPragma;
-  else
+  else {
     MII = std::max(ResMII, RecMII);
+    MII = std::max(MII, LoopPipelinerInfo->getMinII());
+  }
 }
 
 void SwingSchedulerDAG::setMAX_II() {

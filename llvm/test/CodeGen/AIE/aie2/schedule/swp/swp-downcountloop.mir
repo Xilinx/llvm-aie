@@ -19,12 +19,57 @@ debugInstrRef:   false
 liveins:         []
 body:             |
   ; CHECK-LABEL: name: maxCanon
-  ; CHECK: [[INIT:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 16
-  ; CHECK: [[DEC1:%[0-9]+]]:er = ADD_add_r_ri [[INIT]], -2
-  ; CHECK: [[PHI:%[0-9]+]]:er = PHI
-  ; CHECK-SAME: [[DEC1]]
-  ; CHECK: [[LDEC:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -1
-  ; CHECK: PseudoRET
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.3(0x80000000)
+  ; CHECK-NEXT:   liveins: $p0, $p1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:ep = COPY $p0
+  ; CHECK-NEXT:   dead [[COPY1:%[0-9]+]]:ep = COPY $p1
+  ; CHECK-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 4
+  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:em = COPY [[MOV_RLC_imm10_pseudo]]
+  ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 0
+  ; CHECK-NEXT:   [[MOV_RLC_imm10_pseudo1:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 16
+  ; CHECK-NEXT:   [[ADD_add_r_ri:%[0-9]+]]:er = ADD_add_r_ri [[MOV_RLC_imm10_pseudo1]], -1, implicit-def $srcarry
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.3:
+  ; CHECK-NEXT:   successors: %bb.4(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[LDA_dms_lda_idx_imm:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY]], 0
+  ; CHECK-NEXT:   [[PADD_mod_pseudo:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY]], [[COPY2]]
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.4:
+  ; CHECK-NEXT:   successors: %bb.4(0x40000000), %bb.5(0x40000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:er = PHI [[ADD_add_r_ri]], %bb.3, %24, %bb.4
+  ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:ep = PHI [[PADD_mod_pseudo]], %bb.3, %20, %bb.4
+  ; CHECK-NEXT:   [[PHI2:%[0-9]+]]:er = PHI [[MOV_RLC_imm11_pseudo]], %bb.3, %23, %bb.4
+  ; CHECK-NEXT:   [[PHI3:%[0-9]+]]:er = PHI [[LDA_dms_lda_idx_imm]], %bb.3, %19, %bb.4
+  ; CHECK-NEXT:   [[LDA_dms_lda_idx_imm1:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[PHI1]], 0
+  ; CHECK-NEXT:   [[PADD_mod_pseudo1:%[0-9]+]]:ep = PADD_mod_pseudo [[PHI1]], [[COPY2]]
+  ; CHECK-NEXT:   [[ABS:%[0-9]+]]:er = ABS [[PHI3]], implicit-def $srcarry
+  ; CHECK-NEXT:   [[LT:%[0-9]+]]:er27 = LT [[PHI2]], [[ABS]]
+  ; CHECK-NEXT:   [[SELNEZ:%[0-9]+]]:er = SELNEZ [[ABS]], [[PHI2]], [[LT]]
+  ; CHECK-NEXT:   [[ADD_add_r_ri1:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -1, implicit-def $srcarry
+  ; CHECK-NEXT:   [[EQZ:%[0-9]+]]:er = EQZ [[ADD_add_r_ri1]]
+  ; CHECK-NEXT:   PseudoJZ [[EQZ]], %bb.4
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.5
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.5:
+  ; CHECK-NEXT:   successors: %bb.2(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[PHI4:%[0-9]+]]:er = PHI [[ADD_add_r_ri1]], %bb.4
+  ; CHECK-NEXT:   [[PHI5:%[0-9]+]]:er = PHI [[SELNEZ]], %bb.4
+  ; CHECK-NEXT:   [[PHI6:%[0-9]+]]:er = PHI [[LDA_dms_lda_idx_imm1]], %bb.4
+  ; CHECK-NEXT:   [[ABS1:%[0-9]+]]:er = ABS [[PHI6]], implicit-def $srcarry
+  ; CHECK-NEXT:   [[LT1:%[0-9]+]]:er27 = LT [[PHI5]], [[ABS1]]
+  ; CHECK-NEXT:   [[SELNEZ1:%[0-9]+]]:er = SELNEZ [[ABS1]], [[PHI5]], [[LT1]]
+  ; CHECK-NEXT:   [[ADD_add_r_ri2:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI4]], -1, implicit-def $srcarry
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   $r0 = COPY [[SELNEZ1]]
+  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit $r0
   bb.1:
     liveins: $p0, $p1
     %1:ep = COPY $p0
@@ -60,12 +105,56 @@ debugInstrRef:   false
 liveins:         []
 body:             |
   ; CHECK-LABEL: name: maxRev
-  ; CHECK: [[INIT:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 16
-  ; CHECK: [[DEC1:%[0-9]+]]:er = ADD_add_r_ri [[INIT]], -2
-  ; CHECK: [[PHI:%[0-9]+]]:er = PHI
-  ; CHECK-SAME: [[DEC1]]
-  ; CHECK: [[LDEC:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -1
-  ; CHECK: PseudoRET
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.3(0x80000000)
+  ; CHECK-NEXT:   liveins: $p0, $p1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:ep = COPY $p0
+  ; CHECK-NEXT:   dead [[COPY1:%[0-9]+]]:ep = COPY $p1
+  ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 4
+  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:em = COPY [[MOV_RLC_imm11_pseudo]]
+  ; CHECK-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 0
+  ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo1:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 16
+  ; CHECK-NEXT:   [[ADD_add_r_ri:%[0-9]+]]:er = ADD_add_r_ri [[MOV_RLC_imm11_pseudo1]], -1, implicit-def $srcarry
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.3:
+  ; CHECK-NEXT:   successors: %bb.4(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[LDA_dms_lda_idx_imm:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY]], 0
+  ; CHECK-NEXT:   [[PADD_mod_pseudo:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY]], [[COPY2]]
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.4:
+  ; CHECK-NEXT:   successors: %bb.4(0x40000000), %bb.5(0x40000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:er = PHI [[ADD_add_r_ri]], %bb.3, %23, %bb.4
+  ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:ep = PHI [[PADD_mod_pseudo]], %bb.3, %19, %bb.4
+  ; CHECK-NEXT:   [[PHI2:%[0-9]+]]:er = PHI [[MOV_RLC_imm10_pseudo]], %bb.3, %22, %bb.4
+  ; CHECK-NEXT:   [[PHI3:%[0-9]+]]:er = PHI [[LDA_dms_lda_idx_imm]], %bb.3, %18, %bb.4
+  ; CHECK-NEXT:   [[LDA_dms_lda_idx_imm1:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[PHI1]], 0
+  ; CHECK-NEXT:   [[PADD_mod_pseudo1:%[0-9]+]]:ep = PADD_mod_pseudo [[PHI1]], [[COPY2]]
+  ; CHECK-NEXT:   [[ABS:%[0-9]+]]:er = ABS [[PHI3]], implicit-def $srcarry
+  ; CHECK-NEXT:   [[LT:%[0-9]+]]:er27 = LT [[PHI2]], [[ABS]]
+  ; CHECK-NEXT:   [[SELNEZ:%[0-9]+]]:er = SELNEZ [[ABS]], [[PHI2]], [[LT]]
+  ; CHECK-NEXT:   [[ADD_add_r_ri1:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -1, implicit-def $srcarry
+  ; CHECK-NEXT:   PseudoJNZ [[ADD_add_r_ri1]], %bb.4
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.5
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.5:
+  ; CHECK-NEXT:   successors: %bb.2(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[PHI4:%[0-9]+]]:er = PHI [[ADD_add_r_ri1]], %bb.4
+  ; CHECK-NEXT:   [[PHI5:%[0-9]+]]:er = PHI [[SELNEZ]], %bb.4
+  ; CHECK-NEXT:   [[PHI6:%[0-9]+]]:er = PHI [[LDA_dms_lda_idx_imm1]], %bb.4
+  ; CHECK-NEXT:   [[ABS1:%[0-9]+]]:er = ABS [[PHI6]], implicit-def $srcarry
+  ; CHECK-NEXT:   [[LT1:%[0-9]+]]:er27 = LT [[PHI5]], [[ABS1]]
+  ; CHECK-NEXT:   [[SELNEZ1:%[0-9]+]]:er = SELNEZ [[ABS1]], [[PHI5]], [[LT1]]
+  ; CHECK-NEXT:   [[ADD_add_r_ri2:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI4]], -1, implicit-def $srcarry
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   $r0 = COPY [[SELNEZ1]]
+  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit $r0
   bb.1:
     liveins: $p0, $p1
     %1:ep = COPY $p0
@@ -100,13 +189,80 @@ debugInstrRef:   false
 liveins:         []
 body:             |
   ; CHECK-LABEL: name: maxRevTwoNegations
-  ; CHECK: [[INIT:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 16
-  ; CHECK: [[DEC1:%[0-9]+]]:er = ADD_add_r_ri [[INIT]], -2
-  ; CHECK: [[DEC2:%[0-9]+]]:er = nsw ADD_add_r_ri [[DEC1]], -1
-  ; CHECK: [[PHI:%[0-9]+]]:er = PHI
-  ; CHECK-SAME: [[DEC2]]
-  ; CHECK: [[LDEC:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -1
-  ; CHECK: PseudoRET
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.3(0x80000000)
+  ; CHECK-NEXT:   liveins: $p0, $p1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:ep = COPY $p0
+  ; CHECK-NEXT:   dead [[COPY1:%[0-9]+]]:ep = COPY $p1
+  ; CHECK-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 4
+  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:em = COPY [[MOV_RLC_imm10_pseudo]]
+  ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 0
+  ; CHECK-NEXT:   [[MOV_RLC_imm10_pseudo1:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 16
+  ; CHECK-NEXT:   [[ADD_add_r_ri:%[0-9]+]]:er = ADD_add_r_ri [[MOV_RLC_imm10_pseudo1]], -2, implicit-def $srcarry
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.3:
+  ; CHECK-NEXT:   successors: %bb.4(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[LDA_dms_lda_idx_imm:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY]], 0
+  ; CHECK-NEXT:   [[PADD_mod_pseudo:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY]], [[COPY2]]
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.4:
+  ; CHECK-NEXT:   successors: %bb.5(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[ABS:%[0-9]+]]:er = ABS [[LDA_dms_lda_idx_imm]], implicit-def $srcarry
+  ; CHECK-NEXT:   [[LT:%[0-9]+]]:er27 = LT [[MOV_RLC_imm11_pseudo]], [[ABS]]
+  ; CHECK-NEXT:   [[SELNEZ:%[0-9]+]]:er = SELNEZ [[ABS]], [[MOV_RLC_imm11_pseudo]], [[LT]]
+  ; CHECK-NEXT:   [[ADD_add_r_ri1:%[0-9]+]]:er = nsw ADD_add_r_ri [[ADD_add_r_ri]], -1, implicit-def $srcarry
+  ; CHECK-NEXT:   [[EQZ:%[0-9]+]]:er = EQZ [[ADD_add_r_ri1]]
+  ; CHECK-NEXT:   [[LDA_dms_lda_idx_imm1:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[PADD_mod_pseudo]], 0
+  ; CHECK-NEXT:   [[PADD_mod_pseudo1:%[0-9]+]]:ep = PADD_mod_pseudo [[PADD_mod_pseudo]], [[COPY2]]
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.5
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.5:
+  ; CHECK-NEXT:   successors: %bb.5(0x40000000), %bb.6(0x40000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:er = PHI [[ADD_add_r_ri1]], %bb.4, %37, %bb.5
+  ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:ep = PHI [[PADD_mod_pseudo1]], %bb.4, %32, %bb.5
+  ; CHECK-NEXT:   [[PHI2:%[0-9]+]]:er = PHI [[SELNEZ]], %bb.4, %36, %bb.5
+  ; CHECK-NEXT:   [[PHI3:%[0-9]+]]:er = PHI [[LDA_dms_lda_idx_imm1]], %bb.4, %31, %bb.5
+  ; CHECK-NEXT:   [[PHI4:%[0-9]+]]:er = PHI [[EQZ]], %bb.4, %38, %bb.5
+  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:er = COPY [[PHI4]]
+  ; CHECK-NEXT:   [[EQZ1:%[0-9]+]]:er = EQZ [[COPY3]]
+  ; CHECK-NEXT:   [[LDA_dms_lda_idx_imm2:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[PHI1]], 0
+  ; CHECK-NEXT:   [[PADD_mod_pseudo2:%[0-9]+]]:ep = PADD_mod_pseudo [[PHI1]], [[COPY2]]
+  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:er = COPY [[EQZ1]]
+  ; CHECK-NEXT:   [[ABS1:%[0-9]+]]:er = ABS [[PHI3]], implicit-def $srcarry
+  ; CHECK-NEXT:   [[LT1:%[0-9]+]]:er27 = LT [[PHI2]], [[ABS1]]
+  ; CHECK-NEXT:   [[SELNEZ1:%[0-9]+]]:er = SELNEZ [[ABS1]], [[PHI2]], [[LT1]]
+  ; CHECK-NEXT:   [[ADD_add_r_ri2:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -1, implicit-def $srcarry
+  ; CHECK-NEXT:   [[EQZ2:%[0-9]+]]:er = EQZ [[ADD_add_r_ri2]]
+  ; CHECK-NEXT:   PseudoJNZ [[COPY4]], %bb.5
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.6
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.6:
+  ; CHECK-NEXT:   successors: %bb.7(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[PHI5:%[0-9]+]]:er = PHI [[ADD_add_r_ri2]], %bb.5
+  ; CHECK-NEXT:   [[PHI6:%[0-9]+]]:er = PHI [[SELNEZ1]], %bb.5
+  ; CHECK-NEXT:   [[PHI7:%[0-9]+]]:er = PHI [[LDA_dms_lda_idx_imm2]], %bb.5
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.7:
+  ; CHECK-NEXT:   successors: %bb.2(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[PHI8:%[0-9]+]]:er = PHI [[PHI5]], %bb.6
+  ; CHECK-NEXT:   [[PHI9:%[0-9]+]]:er = PHI [[PHI6]], %bb.6
+  ; CHECK-NEXT:   [[PHI10:%[0-9]+]]:er = PHI [[PHI7]], %bb.6
+  ; CHECK-NEXT:   [[ABS2:%[0-9]+]]:er = ABS [[PHI10]], implicit-def $srcarry
+  ; CHECK-NEXT:   [[LT2:%[0-9]+]]:er27 = LT [[PHI9]], [[ABS2]]
+  ; CHECK-NEXT:   [[SELNEZ2:%[0-9]+]]:er = SELNEZ [[ABS2]], [[PHI9]], [[LT2]]
+  ; CHECK-NEXT:   [[ADD_add_r_ri3:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI8]], -1, implicit-def $srcarry
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   $r0 = COPY [[SELNEZ2]]
+  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit $r0
   bb.1:
     liveins: $p0, $p1
     %1:ep = COPY $p0
@@ -143,13 +299,6 @@ tracksRegLiveness: true
 debugInstrRef:   false
 liveins:         []
 body:             |
-  ; CHECK-LABEL: name: maxCanonStep2
-  ; CHECK: [[INIT:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 32
-  ; CHECK: [[DEC1:%[0-9]+]]:er = ADD_add_r_ri [[INIT]], -4
-  ; CHECK: [[PHI:%[0-9]+]]:er = PHI
-  ; CHECK-SAME: [[DEC1]]
-  ; CHECK: [[LDEC:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -2
-  ; CHECK: PseudoRET
   bb.1:
     liveins: $p0, $p1
     %1:ep = COPY $p0
@@ -184,11 +333,34 @@ debugInstrRef:   false
 liveins:         []
 body:             |
   ; CHECK-LABEL: name: maxNegationMismatch
-  ; CHECK: [[INIT:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 16
-  ; CHECK: [[PHI:%[0-9]+]]:er = PHI
-  ; CHECK-SAME: [[INIT]]
-  ; CHECK: [[LDEC:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -1
-  ; CHECK: PseudoRET
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $p0, $p1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:ep = COPY $p0
+  ; CHECK-NEXT:   dead [[COPY1:%[0-9]+]]:ep = COPY $p1
+  ; CHECK-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 4
+  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:em = COPY [[MOV_RLC_imm10_pseudo]]
+  ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 0
+  ; CHECK-NEXT:   [[MOV_RLC_imm10_pseudo1:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 16
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:er = PHI [[MOV_RLC_imm10_pseudo1]], %bb.0, %7, %bb.1
+  ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:ep = PHI [[COPY]], %bb.0, %9, %bb.1
+  ; CHECK-NEXT:   [[PHI2:%[0-9]+]]:er = PHI [[MOV_RLC_imm11_pseudo]], %bb.0, %11, %bb.1
+  ; CHECK-NEXT:   [[LDA_dms_lda_idx_imm:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[PHI1]], 0
+  ; CHECK-NEXT:   [[PADD_mod_pseudo:%[0-9]+]]:ep = PADD_mod_pseudo [[PHI1]], [[COPY2]]
+  ; CHECK-NEXT:   [[ABS:%[0-9]+]]:er = ABS [[LDA_dms_lda_idx_imm]], implicit-def $srcarry
+  ; CHECK-NEXT:   [[LT:%[0-9]+]]:er27 = LT [[PHI2]], [[ABS]]
+  ; CHECK-NEXT:   [[SELNEZ:%[0-9]+]]:er = SELNEZ [[ABS]], [[PHI2]], [[LT]]
+  ; CHECK-NEXT:   [[ADD_add_r_ri:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -1, implicit-def $srcarry
+  ; CHECK-NEXT:   PseudoJZ [[ADD_add_r_ri]], %bb.1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   $r0 = COPY [[SELNEZ]]
+  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit $r0
   bb.1:
     liveins: $p0, $p1
     %1:ep = COPY $p0
@@ -223,11 +395,35 @@ debugInstrRef:   false
 liveins:         []
 body:             |
   ; CHECK-LABEL: name: maxMultiTerminator
-  ; CHECK: [[INIT:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 16
-  ; CHECK: [[PHI:%[0-9]+]]:er = PHI
-  ; CHECK-SAME: [[INIT]]
-  ; CHECK: [[LDEC:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -1
-  ; CHECK: PseudoRET
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $p0, $p1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:ep = COPY $p0
+  ; CHECK-NEXT:   dead [[COPY1:%[0-9]+]]:ep = COPY $p1
+  ; CHECK-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 4
+  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:em = COPY [[MOV_RLC_imm10_pseudo]]
+  ; CHECK-NEXT:   [[MOV_RLC_imm10_pseudo1:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 0
+  ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 16
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.2(0x40000000), %bb.1(0x40000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:er = PHI [[MOV_RLC_imm11_pseudo]], %bb.0, %7, %bb.1
+  ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:ep = PHI [[COPY]], %bb.0, %9, %bb.1
+  ; CHECK-NEXT:   [[PHI2:%[0-9]+]]:er = PHI [[MOV_RLC_imm10_pseudo1]], %bb.0, %11, %bb.1
+  ; CHECK-NEXT:   [[LDA_dms_lda_idx_imm:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[PHI1]], 0
+  ; CHECK-NEXT:   [[PADD_mod_pseudo:%[0-9]+]]:ep = PADD_mod_pseudo [[PHI1]], [[COPY2]]
+  ; CHECK-NEXT:   [[ABS:%[0-9]+]]:er = ABS [[LDA_dms_lda_idx_imm]], implicit-def $srcarry
+  ; CHECK-NEXT:   [[LT:%[0-9]+]]:er27 = LT [[PHI2]], [[ABS]]
+  ; CHECK-NEXT:   [[SELNEZ:%[0-9]+]]:er = SELNEZ [[ABS]], [[PHI2]], [[LT]]
+  ; CHECK-NEXT:   [[ADD_add_r_ri:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -1, implicit-def $srcarry
+  ; CHECK-NEXT:   PseudoJNZ [[ADD_add_r_ri]], %bb.2
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   $r0 = COPY [[SELNEZ]]
+  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit $r0
   bb.1:
     liveins: $p0, $p1
     %1:ep = COPY $p0
@@ -263,11 +459,35 @@ debugInstrRef:   false
 liveins:         []
 body:             |
   ; CHECK-LABEL: name: maxCanonOddStep2
-  ; CHECK: [[INIT:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 31
-  ; CHECK: [[PHI:%[0-9]+]]:er = PHI
-  ; CHECK-SAME: [[INIT]]
-  ; CHECK: [[LDEC:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -2
-  ; CHECK: PseudoRET
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $p0, $p1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:ep = COPY $p0
+  ; CHECK-NEXT:   dead [[COPY1:%[0-9]+]]:ep = COPY $p1
+  ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 4
+  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:em = COPY [[MOV_RLC_imm11_pseudo]]
+  ; CHECK-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 0
+  ; CHECK-NEXT:   [[MOV_RLC_imm10_pseudo1:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 31
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:er = PHI [[MOV_RLC_imm10_pseudo1]], %bb.0, %7, %bb.1
+  ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:ep = PHI [[COPY]], %bb.0, %9, %bb.1
+  ; CHECK-NEXT:   [[PHI2:%[0-9]+]]:er = PHI [[MOV_RLC_imm10_pseudo]], %bb.0, %11, %bb.1
+  ; CHECK-NEXT:   [[LDA_dms_lda_idx_imm:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[PHI1]], 0
+  ; CHECK-NEXT:   [[PADD_mod_pseudo:%[0-9]+]]:ep = PADD_mod_pseudo [[PHI1]], [[COPY2]]
+  ; CHECK-NEXT:   [[ABS:%[0-9]+]]:er = ABS [[LDA_dms_lda_idx_imm]], implicit-def $srcarry
+  ; CHECK-NEXT:   [[LT:%[0-9]+]]:er27 = LT [[PHI2]], [[ABS]]
+  ; CHECK-NEXT:   [[SELNEZ:%[0-9]+]]:er = SELNEZ [[ABS]], [[PHI2]], [[LT]]
+  ; CHECK-NEXT:   [[ADD_add_r_ri:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -2, implicit-def $srcarry
+  ; CHECK-NEXT:   [[EQZ:%[0-9]+]]:er = EQZ [[ADD_add_r_ri]]
+  ; CHECK-NEXT:   PseudoJZ [[EQZ]], %bb.1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   $r0 = COPY [[SELNEZ]]
+  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit $r0
   bb.1:
     liveins: $p0, $p1
     %1:ep = COPY $p0
@@ -303,11 +523,35 @@ debugInstrRef:   false
 liveins:         []
 body:             |
   ; CHECK-LABEL: name: maxCanonPosStep
-  ; CHECK: [[INIT:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 16
-  ; CHECK: [[PHI:%[0-9]+]]:er = PHI
-  ; CHECK-SAME: [[INIT]]
-  ; CHECK: [[LDEC:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], 1
-  ; CHECK: PseudoRET
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $p0, $p1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:ep = COPY $p0
+  ; CHECK-NEXT:   dead [[COPY1:%[0-9]+]]:ep = COPY $p1
+  ; CHECK-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 4
+  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:em = COPY [[MOV_RLC_imm10_pseudo]]
+  ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 0
+  ; CHECK-NEXT:   [[MOV_RLC_imm10_pseudo1:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 16
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:er = PHI [[MOV_RLC_imm10_pseudo1]], %bb.0, %7, %bb.1
+  ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:ep = PHI [[COPY]], %bb.0, %9, %bb.1
+  ; CHECK-NEXT:   [[PHI2:%[0-9]+]]:er = PHI [[MOV_RLC_imm11_pseudo]], %bb.0, %11, %bb.1
+  ; CHECK-NEXT:   [[LDA_dms_lda_idx_imm:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[PHI1]], 0
+  ; CHECK-NEXT:   [[PADD_mod_pseudo:%[0-9]+]]:ep = PADD_mod_pseudo [[PHI1]], [[COPY2]]
+  ; CHECK-NEXT:   [[ABS:%[0-9]+]]:er = ABS [[LDA_dms_lda_idx_imm]], implicit-def $srcarry
+  ; CHECK-NEXT:   [[LT:%[0-9]+]]:er27 = LT [[PHI2]], [[ABS]]
+  ; CHECK-NEXT:   [[SELNEZ:%[0-9]+]]:er = SELNEZ [[ABS]], [[PHI2]], [[LT]]
+  ; CHECK-NEXT:   [[ADD_add_r_ri:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], 1, implicit-def $srcarry
+  ; CHECK-NEXT:   [[EQZ:%[0-9]+]]:er = EQZ [[ADD_add_r_ri]]
+  ; CHECK-NEXT:   PseudoJZ [[EQZ]], %bb.1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   $r0 = COPY [[SELNEZ]]
+  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit $r0
   bb.1:
     liveins: $p0, $p1
     %1:ep = COPY $p0
@@ -341,14 +585,59 @@ tracksRegLiveness: true
 debugInstrRef:   false
 liveins:         []
 body:             |
-  ; This is the accept boundary case for minimum tripcount
   ; CHECK-LABEL: name: maxCanonMinIter
-  ; CHECK: [[INIT:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 3
-  ; CHECK: [[DEC1:%[0-9]+]]:er = ADD_add_r_ri [[INIT]], -2
-  ; CHECK: [[PHI:%[0-9]+]]:er = PHI
-  ; CHECK-SAME: [[DEC1]]
-  ; CHECK: [[LDEC:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -1
-  ; CHECK: PseudoRET
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.3(0x80000000)
+  ; CHECK-NEXT:   liveins: $p0, $p1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:ep = COPY $p0
+  ; CHECK-NEXT:   dead [[COPY1:%[0-9]+]]:ep = COPY $p1
+  ; CHECK-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 4
+  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:em = COPY [[MOV_RLC_imm10_pseudo]]
+  ; CHECK-NEXT:   [[MOV_RLC_imm10_pseudo1:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 0
+  ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 3
+  ; CHECK-NEXT:   [[ADD_add_r_ri:%[0-9]+]]:er = ADD_add_r_ri [[MOV_RLC_imm11_pseudo]], -1, implicit-def $srcarry
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.3:
+  ; CHECK-NEXT:   successors: %bb.4(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[LDA_dms_lda_idx_imm:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY]], 0
+  ; CHECK-NEXT:   [[PADD_mod_pseudo:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY]], [[COPY2]]
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.4:
+  ; CHECK-NEXT:   successors: %bb.4(0x40000000), %bb.5(0x40000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:er = PHI [[ADD_add_r_ri]], %bb.3, %24, %bb.4
+  ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:ep = PHI [[PADD_mod_pseudo]], %bb.3, %20, %bb.4
+  ; CHECK-NEXT:   [[PHI2:%[0-9]+]]:er = PHI [[MOV_RLC_imm10_pseudo1]], %bb.3, %23, %bb.4
+  ; CHECK-NEXT:   [[PHI3:%[0-9]+]]:er = PHI [[LDA_dms_lda_idx_imm]], %bb.3, %19, %bb.4
+  ; CHECK-NEXT:   [[LDA_dms_lda_idx_imm1:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[PHI1]], 0
+  ; CHECK-NEXT:   [[PADD_mod_pseudo1:%[0-9]+]]:ep = PADD_mod_pseudo [[PHI1]], [[COPY2]]
+  ; CHECK-NEXT:   [[ABS:%[0-9]+]]:er = ABS [[PHI3]], implicit-def $srcarry
+  ; CHECK-NEXT:   [[LT:%[0-9]+]]:er27 = LT [[PHI2]], [[ABS]]
+  ; CHECK-NEXT:   [[SELNEZ:%[0-9]+]]:er = SELNEZ [[ABS]], [[PHI2]], [[LT]]
+  ; CHECK-NEXT:   [[ADD_add_r_ri1:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -1, implicit-def $srcarry
+  ; CHECK-NEXT:   [[EQZ:%[0-9]+]]:er = EQZ [[ADD_add_r_ri1]]
+  ; CHECK-NEXT:   PseudoJZ [[EQZ]], %bb.4
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.5
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.5:
+  ; CHECK-NEXT:   successors: %bb.2(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[PHI4:%[0-9]+]]:er = PHI [[ADD_add_r_ri1]], %bb.4
+  ; CHECK-NEXT:   [[PHI5:%[0-9]+]]:er = PHI [[SELNEZ]], %bb.4
+  ; CHECK-NEXT:   [[PHI6:%[0-9]+]]:er = PHI [[LDA_dms_lda_idx_imm1]], %bb.4
+  ; CHECK-NEXT:   [[ABS1:%[0-9]+]]:er = ABS [[PHI6]], implicit-def $srcarry
+  ; CHECK-NEXT:   [[LT1:%[0-9]+]]:er27 = LT [[PHI5]], [[ABS1]]
+  ; CHECK-NEXT:   [[SELNEZ1:%[0-9]+]]:er = SELNEZ [[ABS1]], [[PHI5]], [[LT1]]
+  ; CHECK-NEXT:   [[ADD_add_r_ri2:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI4]], -1, implicit-def $srcarry
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   $r0 = COPY [[SELNEZ1]]
+  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit $r0
+  ; This is the accept boundary case for minimum tripcount
   bb.1:
     liveins: $p0, $p1
     %1:ep = COPY $p0
@@ -384,11 +673,58 @@ liveins:         []
 body:             |
   ; This is the reject boundary case for minimum tripcount
   ; CHECK-LABEL: name: maxCanonLtMinIter
-  ; CHECK: [[INIT:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 2
-  ; CHECK: [[PHI:%[0-9]+]]:er = PHI
-  ; CHECK-SAME: [[INIT]]
-  ; CHECK: [[LDEC:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -1
-  ; CHECK: PseudoRET
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.3(0x80000000)
+  ; CHECK-NEXT:   liveins: $p0, $p1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:ep = COPY $p0
+  ; CHECK-NEXT:   dead [[COPY1:%[0-9]+]]:ep = COPY $p1
+  ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 4
+  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:em = COPY [[MOV_RLC_imm11_pseudo]]
+  ; CHECK-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 0
+  ; CHECK-NEXT:   [[MOV_RLC_imm10_pseudo1:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 2
+  ; CHECK-NEXT:   [[ADD_add_r_ri:%[0-9]+]]:er = ADD_add_r_ri [[MOV_RLC_imm10_pseudo1]], -1, implicit-def $srcarry
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.3:
+  ; CHECK-NEXT:   successors: %bb.4(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[LDA_dms_lda_idx_imm:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY]], 0
+  ; CHECK-NEXT:   [[PADD_mod_pseudo:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY]], [[COPY2]]
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.4:
+  ; CHECK-NEXT:   successors: %bb.4(0x40000000), %bb.5(0x40000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:er = PHI [[ADD_add_r_ri]], %bb.3, %24, %bb.4
+  ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:ep = PHI [[PADD_mod_pseudo]], %bb.3, %20, %bb.4
+  ; CHECK-NEXT:   [[PHI2:%[0-9]+]]:er = PHI [[MOV_RLC_imm10_pseudo]], %bb.3, %23, %bb.4
+  ; CHECK-NEXT:   [[PHI3:%[0-9]+]]:er = PHI [[LDA_dms_lda_idx_imm]], %bb.3, %19, %bb.4
+  ; CHECK-NEXT:   [[LDA_dms_lda_idx_imm1:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[PHI1]], 0
+  ; CHECK-NEXT:   [[PADD_mod_pseudo1:%[0-9]+]]:ep = PADD_mod_pseudo [[PHI1]], [[COPY2]]
+  ; CHECK-NEXT:   [[ABS:%[0-9]+]]:er = ABS [[PHI3]], implicit-def $srcarry
+  ; CHECK-NEXT:   [[LT:%[0-9]+]]:er27 = LT [[PHI2]], [[ABS]]
+  ; CHECK-NEXT:   [[SELNEZ:%[0-9]+]]:er = SELNEZ [[ABS]], [[PHI2]], [[LT]]
+  ; CHECK-NEXT:   [[ADD_add_r_ri1:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -1, implicit-def $srcarry
+  ; CHECK-NEXT:   [[EQZ:%[0-9]+]]:er = EQZ [[ADD_add_r_ri1]]
+  ; CHECK-NEXT:   PseudoJZ [[EQZ]], %bb.4
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.5
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.5:
+  ; CHECK-NEXT:   successors: %bb.2(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[PHI4:%[0-9]+]]:er = PHI [[ADD_add_r_ri1]], %bb.4
+  ; CHECK-NEXT:   [[PHI5:%[0-9]+]]:er = PHI [[SELNEZ]], %bb.4
+  ; CHECK-NEXT:   [[PHI6:%[0-9]+]]:er = PHI [[LDA_dms_lda_idx_imm1]], %bb.4
+  ; CHECK-NEXT:   [[ABS1:%[0-9]+]]:er = ABS [[PHI6]], implicit-def $srcarry
+  ; CHECK-NEXT:   [[LT1:%[0-9]+]]:er27 = LT [[PHI5]], [[ABS1]]
+  ; CHECK-NEXT:   [[SELNEZ1:%[0-9]+]]:er = SELNEZ [[ABS1]], [[PHI5]], [[LT1]]
+  ; CHECK-NEXT:   [[ADD_add_r_ri2:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI4]], -1, implicit-def $srcarry
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   $r0 = COPY [[SELNEZ1]]
+  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit $r0
+  ; This is the reject boundary case for minimum tripcount
   bb.1:
     liveins: $p0, $p1
     %1:ep = COPY $p0
@@ -423,12 +759,57 @@ debugInstrRef:   false
 liveins:         []
 body:             |
   ; CHECK-LABEL: name: maxCanonRevBranchTargets
-  ; CHECK: [[INIT:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 16
-  ; CHECK: [[DEC1:%[0-9]+]]:er = ADD_add_r_ri [[INIT]], -2
-  ; CHECK: [[PHI:%[0-9]+]]:er = PHI
-  ; CHECK-SAME: [[DEC1]]
-  ; CHECK: [[LDEC:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -1
-  ; CHECK: PseudoRET
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.3(0x80000000)
+  ; CHECK-NEXT:   liveins: $p0, $p1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:ep = COPY $p0
+  ; CHECK-NEXT:   dead [[COPY1:%[0-9]+]]:ep = COPY $p1
+  ; CHECK-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 4
+  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:em = COPY [[MOV_RLC_imm10_pseudo]]
+  ; CHECK-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 0
+  ; CHECK-NEXT:   [[MOV_RLC_imm10_pseudo1:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 16
+  ; CHECK-NEXT:   [[ADD_add_r_ri:%[0-9]+]]:er = ADD_add_r_ri [[MOV_RLC_imm10_pseudo1]], -1, implicit-def $srcarry
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.3:
+  ; CHECK-NEXT:   successors: %bb.4(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[LDA_dms_lda_idx_imm:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY]], 0
+  ; CHECK-NEXT:   [[PADD_mod_pseudo:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY]], [[COPY2]]
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.4:
+  ; CHECK-NEXT:   successors: %bb.5(0x40000000), %bb.4(0x40000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:er = PHI [[ADD_add_r_ri]], %bb.3, %24, %bb.4
+  ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:ep = PHI [[PADD_mod_pseudo]], %bb.3, %20, %bb.4
+  ; CHECK-NEXT:   [[PHI2:%[0-9]+]]:er = PHI [[MOV_RLC_imm11_pseudo]], %bb.3, %23, %bb.4
+  ; CHECK-NEXT:   [[PHI3:%[0-9]+]]:er = PHI [[LDA_dms_lda_idx_imm]], %bb.3, %19, %bb.4
+  ; CHECK-NEXT:   [[LDA_dms_lda_idx_imm1:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[PHI1]], 0
+  ; CHECK-NEXT:   [[PADD_mod_pseudo1:%[0-9]+]]:ep = PADD_mod_pseudo [[PHI1]], [[COPY2]]
+  ; CHECK-NEXT:   [[ABS:%[0-9]+]]:er = ABS [[PHI3]], implicit-def $srcarry
+  ; CHECK-NEXT:   [[LT:%[0-9]+]]:er27 = LT [[PHI2]], [[ABS]]
+  ; CHECK-NEXT:   [[SELNEZ:%[0-9]+]]:er = SELNEZ [[ABS]], [[PHI2]], [[LT]]
+  ; CHECK-NEXT:   [[ADD_add_r_ri1:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -1, implicit-def $srcarry
+  ; CHECK-NEXT:   [[EQZ:%[0-9]+]]:er = EQZ [[ADD_add_r_ri1]]
+  ; CHECK-NEXT:   PseudoJNZ [[EQZ]], %bb.5
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.5:
+  ; CHECK-NEXT:   successors: %bb.2(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[PHI4:%[0-9]+]]:er = PHI [[ADD_add_r_ri1]], %bb.4
+  ; CHECK-NEXT:   [[PHI5:%[0-9]+]]:er = PHI [[SELNEZ]], %bb.4
+  ; CHECK-NEXT:   [[PHI6:%[0-9]+]]:er = PHI [[LDA_dms_lda_idx_imm1]], %bb.4
+  ; CHECK-NEXT:   [[ABS1:%[0-9]+]]:er = ABS [[PHI6]], implicit-def $srcarry
+  ; CHECK-NEXT:   [[LT1:%[0-9]+]]:er27 = LT [[PHI5]], [[ABS1]]
+  ; CHECK-NEXT:   [[SELNEZ1:%[0-9]+]]:er = SELNEZ [[ABS1]], [[PHI5]], [[LT1]]
+  ; CHECK-NEXT:   [[ADD_add_r_ri2:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI4]], -1, implicit-def $srcarry
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   $r0 = COPY [[SELNEZ1]]
+  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit $r0
   bb.1:
     liveins: $p0, $p1
     %1:ep = COPY $p0

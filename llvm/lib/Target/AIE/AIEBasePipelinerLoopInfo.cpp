@@ -248,6 +248,11 @@ public:
   DownCountLoop(MachineInstr *EndLoop, const AIEBaseInstrInfo &TII)
       : AIEBasePipelinerLoopInfo(EndLoop, TII) {}
 
+  unsigned getMinII() const override {
+    // One branch and five delay slots
+    return 6;
+  }
+
   bool shouldIgnoreForPipelining(const MachineInstr *MI) const override {
     return false;
 
