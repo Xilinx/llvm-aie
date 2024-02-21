@@ -24,6 +24,9 @@ public:
   explicit AIE2TargetLowering(const TargetMachine &TM,
                               const AIEBaseSubtarget &STI);
 
+  MVT getRegisterTypeForCallingConvAssignment(LLVMContext &Context,
+                                              CallingConv::ID CC,
+                                              EVT VT) const override;
   MVT getRegisterTypeForCallingConv(LLVMContext &Context, CallingConv::ID CC,
                                     EVT VT) const override;
 

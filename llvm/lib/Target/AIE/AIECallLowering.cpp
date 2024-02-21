@@ -31,6 +31,8 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/Register.h"
+#include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <cstdint>
@@ -191,11 +193,13 @@ bool AIECallLowering::determineAndLegalizeAssignments(
 
   // We might have determined the argument locations using illegal types (e.g.
   // 128-bits vectors on AIE2).
-  const TargetLowering *TLI = getTLI();
+  const auto *TLI = getTLI<AIEBaseTargetLowering>();
   for (CCValAssign &Loc : AA.getArgLocs()) {
     if (!Loc.isRegLoc())
       continue;
-    MVT NewVT = TLI->getRegisterType(Loc.getLocVT());
+    MVT NewVT = TLI->getRegisterTypeForCallingConvAssignment(
+        AA.getCCInfo().getContext(), AA.getCCInfo().getCallingConv(),
+        Loc.getLocVT());
     if (NewVT != Loc.getLocVT()) {
       SetLocVT(Loc, NewVT);
     }

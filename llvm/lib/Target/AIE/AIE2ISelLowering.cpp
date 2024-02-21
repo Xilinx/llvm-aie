@@ -15,6 +15,9 @@
 #include "AIE2ISelLowering.h"
 #include "AIESubtarget.h"
 #include "MCTargetDesc/AIE2MCTargetDesc.h"
+#include "llvm/CodeGen/ISDOpcodes.h"
+#include "llvm/CodeGen/TargetLowering.h"
+#include "llvm/CodeGen/ValueTypes.h"
 
 using namespace llvm;
 
@@ -45,6 +48,14 @@ AIE2TargetLowering::AIE2TargetLowering(const TargetMachine &TM,
   computeRegisterProperties(STI.getRegisterInfo());
 
   setStackPointerRegisterToSaveRestore(AIE2::SP);
+}
+MVT AIE2TargetLowering::getRegisterTypeForCallingConvAssignment(
+    LLVMContext &Context, CallingConv::ID CC, EVT VT) const {
+  // 128-bit vectors are passed in 256-bit W registers
+  if (VT.isSimple() && VT.is128BitVector())
+    return getRegisterType(VT.getSimpleVT());
+  return AIEBaseTargetLowering::getRegisterTypeForCallingConvAssignment(Context,
+                                                                        CC, VT);
 }
 
 MVT AIE2TargetLowering::getRegisterTypeForCallingConv(LLVMContext &Context,
