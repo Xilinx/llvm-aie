@@ -83,7 +83,7 @@ def RetCC_AIE2 : CallingConv<[
   CCIfType<[i1, i8, i16, bf16], CCPromoteToType<i32>>,
 
   // Remaining scalars are returned in GPRs
-  CCIfType<[i32, f32, v2bf16, i64], AssignToGPR>,
+  CCIfType<[i32, f32, v2bf16], AssignToGPR>,
 
   // 32-bits vectors go in GPRs
   CCIfType<AIE2VTypes.V32Bits, AssignToGPR>,
