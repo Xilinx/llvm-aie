@@ -231,6 +231,9 @@ foreach Ty = [i20, i32, ptr0] in {
 def : StPat<store, ST_dms_sts_idx_imm, ptr0, eP>; // Handle stores from PTR
 def : StPat<store, ST_dms_sts_idx_imm, i20, eM>; // Handle stores from MOD
 
+// Mask store of 128-bit scalar mask. The mask store for the 128-bit vectors are handled in AIE2InstructionSelector.cpp
+def : StPat<store, ST_dmv_sts_q_ag_idx_imm, i128, mQQs>;
+
 class PartWordStPat<PatFrag StoreOp, AIE2Inst InstInd, ValueType type, RegisterClass RegClass>
     : Pat<(StoreOp (type RegClass:$rs2), eP:$rs1), (InstInd RegClass:$rs2, eP:$rs1, (i32 0))>;
 foreach Ty = [i32] in {
