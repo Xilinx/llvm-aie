@@ -2684,7 +2684,7 @@ unsigned SchedBoundary::countResource(const MCSchedClassDesc *SC, unsigned PIdx,
 }
 
 /// Move the boundary of scheduled code by one SUnit.
-void SchedBoundary::bumpNode(SUnit *SU) {
+void SchedBoundary::bumpNode(SUnit *SU, int DeltaCycles) {
   // Update the reservation table.
   if (HazardRec->isEnabled()) {
     if (!isTop() && SU->isCall) {
@@ -2692,7 +2692,7 @@ void SchedBoundary::bumpNode(SUnit *SU) {
       // scheduling, clear the pipeline state before emitting.
       HazardRec->Reset();
     }
-    HazardRec->EmitInstruction(SU, 0);
+    HazardRec->EmitInstruction(SU, DeltaCycles);
     // Scheduling an instruction may have made pending instructions available.
     CheckPending = true;
   }
