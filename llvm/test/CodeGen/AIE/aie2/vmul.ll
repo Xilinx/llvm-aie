@@ -11,7 +11,7 @@ define  <16 x i64> @_Z18test_mul_4x16_16x8v() {
 ; CHECK-LABEL: _Z18test_mul_4x16_16x8v:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r0, #0
+; CHECK-NEXT:    nopb ; mova r0, #0; nops ; nopxm ; nopv
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vmul cm0, x0, x0, r0 // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -30,7 +30,7 @@ define  <16 x i64> @_Z26test_mul_conv_8x8_4ch_confDv64_aDv64_h(<64 x i8> noundef
 ; CHECK-LABEL: _Z26test_mul_conv_8x8_4ch_confDv64_aDv64_h:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    movxm r0, #2408
+; CHECK-NEXT:    nopb ; nopa ; nops ; movxm r0, #2408; nopv
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vmul cm0, x0, x2, r0 // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -47,7 +47,7 @@ define  <16 x i64> @_Z3mulDv32_tS_(<32 x i16> noundef %a, <32 x i16> noundef %b)
 ; CHECK-LABEL: _Z3mulDv32_tS_:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r0, #56
+; CHECK-NEXT:    nopb ; mova r0, #56; nops ; nopxm ; nopv
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vmul cm0, x0, x2, r0 // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -65,7 +65,7 @@ define <16 x i64> @_Z16test_mul_2x8_8x8v() {
 ; CHECK-LABEL: _Z16test_mul_2x8_8x8v:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r0, #274
+; CHECK-NEXT:    nopb ; mova r0, #274; nops ; nopxm ; nopv
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vmul cm0, x0, x0, r0 // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -85,7 +85,7 @@ define  <16 x i64> @_Z18test_mul_elem_32_2iDv64_hi(i32 noundef %sgn_x, <64 x i8>
 ; CHECK-LABEL: _Z18test_mul_elem_32_2iDv64_hi:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r2, #9
+; CHECK-NEXT:    mova r2, #9; nopb ; nopx
 ; CHECK-NEXT:    mova r3, #8
 ; CHECK-NEXT:    lshl r0, r0, r2
 ; CHECK-NEXT:    lshl r1, r1, r3

@@ -11,7 +11,7 @@ define i64 @test_eqz_v64i8(<64 x i8> %a) {
 ; CHECK-LABEL: test_eqz_v64i8:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    veqz.8 r25:r24, x0 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
@@ -27,7 +27,7 @@ define i32 @test_eqz_v32i16(<32 x i16> %a) {
 ; CHECK-LABEL: test_eqz_v32i16:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
 ; CHECK-NEXT:    veqz.16 r16, x0 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
@@ -42,7 +42,7 @@ define i32 @test_eqz_v16i32(<16 x i32> %a) {
 ; CHECK-LABEL: test_eqz_v16i32:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
 ; CHECK-NEXT:    veqz.32 r16, x0 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
@@ -57,7 +57,7 @@ define i32 @test_eqz_v32bf16(<32 x bfloat> %a) {
 ; CHECK-LABEL: test_eqz_v32bf16:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
 ; CHECK-NEXT:    veqz.16 r16, x0 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3

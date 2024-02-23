@@ -12,8 +12,8 @@ define dso_local noundef <8 x i32> @test_load_4x16_lo(<8 x i32> %0) local_unname
 ; CHECK-LABEL: test_load_4x16_lo:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0:
-; CHECK-NEXT:    vldb.4x16.lo wl0, wl2
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    vldb.4x16.lo wl0, wl2; nopa ; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
@@ -27,8 +27,8 @@ define dso_local noundef <8 x i32> @test_load_4x16_hi(<8 x i32> %0) local_unname
 ; CHECK-LABEL: test_load_4x16_hi:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0:
-; CHECK-NEXT:    vldb.4x16.hi wl0, wl2
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    vldb.4x16.hi wl0, wl2; nopa ; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
@@ -42,8 +42,8 @@ define dso_local noundef <8 x i32> @test_load_4x32_lo(<8 x i32> %0) local_unname
 ; CHECK-LABEL: test_load_4x32_lo:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0:
-; CHECK-NEXT:    vldb.4x32.lo wl0, wl2
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    vldb.4x32.lo wl0, wl2; nopa ; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
@@ -57,8 +57,8 @@ define dso_local noundef <8 x i32> @test_load_4x32_hi(<8 x i32> %0) local_unname
 ; CHECK-LABEL: test_load_4x32_hi:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0:
-; CHECK-NEXT:    vldb.4x32.hi wl0, wl2
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    vldb.4x32.hi wl0, wl2; nopa ; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
@@ -72,8 +72,8 @@ define dso_local noundef <8 x i32> @test_load_4x64_lo(<8 x i32> %0) local_unname
 ; CHECK-LABEL: test_load_4x64_lo:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0:
-; CHECK-NEXT:    vldb.4x64.lo wl0, wl2
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    vldb.4x64.lo wl0, wl2; nopa ; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
@@ -87,8 +87,8 @@ define dso_local noundef <8 x i32> @test_load_4x64_hi(<8 x i32> %0) local_unname
 ; CHECK-LABEL: test_load_4x64_hi:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0:
-; CHECK-NEXT:    vldb.4x64.hi wl0, wl2
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    vldb.4x64.hi wl0, wl2; nopa ; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3

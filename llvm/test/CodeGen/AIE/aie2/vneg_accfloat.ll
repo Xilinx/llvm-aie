@@ -12,7 +12,7 @@ define <8 x i64> @test_vneg_acc32(<8 x i64> noundef %acc) {
 ; CHECK-LABEL: test_vneg_acc32:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r0, #0
+; CHECK-NEXT:    mova r0, #0; nopb ; nopxm ; nops
 ; CHECK-NEXT:    vneg.f bml0, bml1, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5

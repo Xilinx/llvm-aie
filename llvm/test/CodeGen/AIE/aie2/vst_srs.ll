@@ -379,8 +379,8 @@ define dso_local noundef <16 x i16> @test_postincrement(ptr %array, <8 x i64> no
 ; CHECK-LABEL: test_postincrement:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r0, #2
-; CHECK-NEXT:    mov s0, r0
+; CHECK-NEXT:    nopb ; mova r0, #2; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; mov s0, r0
 ; CHECK-NEXT:    vst.srs.d16.s32 bml0, s0, [p0], #32
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop

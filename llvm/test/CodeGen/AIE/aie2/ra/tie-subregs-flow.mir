@@ -200,12 +200,12 @@ body:             |
     ; CHECK-NEXT: $dc7 = MOV_mv_scl killed $r3
     ; CHECK-NEXT: $p2 = MOV_mv_scl $p1
     ; CHECK-NEXT: dead $p2, $dc7 = PADDA_2D killed $p2, $d7
-    ; CHECK-NEXT: $dn1 = MOV_mv_scl killed $r5
-    ; CHECK-NEXT: RET implicit $lr
-    ; CHECK-NEXT: $dj1 = MOV_mv_scl killed $r6
     ; CHECK-NEXT: frame-destroy PADDB_sp_imm -32, implicit-def $sp, implicit $sp
-    ; CHECK-NEXT: $dc1 = MOV_mv_scl killed $r7
+    ; CHECK-NEXT: RET implicit $lr
+    ; CHECK-NEXT: $dn1 = MOV_mv_scl killed $r5
+    ; CHECK-NEXT: $dj1 = MOV_mv_scl killed $r6
     ; CHECK-NEXT: $p0, dead $dc7 = PADDA_2D killed $p0, killed $d7
+    ; CHECK-NEXT: $dc1 = MOV_mv_scl killed $r7
     ; CHECK-NEXT: $p1, dead $dc1 = PADDA_2D killed $p1, killed $d1
     ; CHECK-NEXT: DelayedSchedBarrier implicit killed renamable $p0, implicit killed renamable $p1, implicit killed $m0, implicit killed $d2, implicit killed $d3, implicit killed $d4, implicit killed $d5, implicit killed $d6
     %0:em =  COPY $r0

@@ -11,7 +11,7 @@ define dso_local noundef <16 x i64> @test_addmac_acc32(<64 x i8> noundef %a, i32
 ; CHECK-LABEL: test_addmac_acc32:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r2, #9
+; CHECK-NEXT:    mova r2, #9; nopb ; nopxm
 ; CHECK-NEXT:    mova r3, #8
 ; CHECK-NEXT:    lshl r0, r0, r2
 ; CHECK-NEXT:    lshl r1, r1, r3
@@ -36,7 +36,7 @@ define dso_local noundef <16 x i64> @test_addmsc_acc32(<64 x i8> noundef %a, i32
 ; CHECK-LABEL: test_addmsc_acc32:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r2, #9
+; CHECK-NEXT:    mova r2, #9; nopb ; nopxm
 ; CHECK-NEXT:    mova r3, #8
 ; CHECK-NEXT:    lshl r0, r0, r2
 ; CHECK-NEXT:    lshl r1, r1, r3
@@ -61,7 +61,7 @@ define dso_local noundef <16 x i64> @test_submac_acc32(<64 x i8> noundef %a, i32
 ; CHECK-LABEL: test_submac_acc32:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r2, #9
+; CHECK-NEXT:    mova r2, #9; nopb ; nopxm
 ; CHECK-NEXT:    mova r3, #8
 ; CHECK-NEXT:    lshl r0, r0, r2
 ; CHECK-NEXT:    lshl r1, r1, r3
@@ -86,7 +86,7 @@ define dso_local noundef <16 x i64> @test_submsc_acc32(<64 x i8> noundef %a, i32
 ; CHECK-LABEL: test_submsc_acc32:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r2, #9
+; CHECK-NEXT:    mova r2, #9; nopb ; nopxm
 ; CHECK-NEXT:    mova r3, #8
 ; CHECK-NEXT:    lshl r0, r0, r2
 ; CHECK-NEXT:    lshl r1, r1, r3

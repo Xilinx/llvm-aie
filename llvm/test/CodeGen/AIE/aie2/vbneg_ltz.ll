@@ -11,10 +11,10 @@ define dso_local noundef <64 x i8> @_Z22test_bneg_ltz_v64uint8Dv64_hRy(<64 x i8>
 ; CHECK-LABEL: _Z22test_bneg_ltz_v64uint8Dv64_hRy:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mova r0, #-1 // Delay Slot 5
-; CHECK-NEXT:    st r0, [p0], #4 // Delay Slot 4
-; CHECK-NEXT:    vbneg_ltz.s8 x0, r25:r24, x2 // Delay Slot 3
+; CHECK-NEXT:    vbneg_ltz.s8 x0, r25:r24, x2 // Delay Slot 4
+; CHECK-NEXT:    st r0, [p0], #4 // Delay Slot 3
 ; CHECK-NEXT:    st r0, [p0, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
@@ -28,7 +28,7 @@ define dso_local noundef <32 x i16> @_Z23test_bneg_ltz_v32uint16Dv32_tRj(<32 x i
 ; CHECK-LABEL: _Z23test_bneg_ltz_v32uint16Dv32_tRj:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
 ; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
 ; CHECK-NEXT:    mova r0, #-1 // Delay Slot 4
 ; CHECK-NEXT:    vbneg_ltz.s16 x0, r16, x2 // Delay Slot 3
@@ -45,7 +45,7 @@ define dso_local noundef <16 x i32> @_Z23test_bneg_ltz_v16uint32Dv16_jRj(<16 x i
 ; CHECK-LABEL: _Z23test_bneg_ltz_v16uint32Dv16_jRj:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
 ; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
 ; CHECK-NEXT:    mova r0, #-1 // Delay Slot 4
 ; CHECK-NEXT:    vbneg_ltz.s32 x0, r16, x2 // Delay Slot 3

@@ -154,8 +154,8 @@ define dso_local noundef <64 x bfloat> @test_insert_v16bfloat16_1024(<64 x bfloa
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    vmov x5, x7 // Delay Slot 4
-; CHECK-NEXT:    vmov x4, x6 // Delay Slot 3
+; CHECK-NEXT:    vmov x4, x6 // Delay Slot 4
+; CHECK-NEXT:    vmov x5, x7 // Delay Slot 3
 ; CHECK-NEXT:    vmov wl5, wl0 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:

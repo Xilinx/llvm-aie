@@ -48,9 +48,9 @@ define <2 x i32> @preserve_L(<2 x i32> %a, <2 x i32> %b) {
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    mov r16, r18 // Delay Slot 3
-; CHECK-NEXT:    mov r17, r19 // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 3
+; CHECK-NEXT:    mov r16, r18 // Delay Slot 2
+; CHECK-NEXT:    mov r17, r19 // Delay Slot 1
   call void @foo(<2 x i32> %b)
   ret <2 x i32> %a
 }
