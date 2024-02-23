@@ -53,6 +53,8 @@ RegisterBankInfo::PartialMapping AIE2GenRegisterBankInfo::PartMappings[]{
     {0, 512, AIE2::AccRegBank},
     // 12: AccREG 1024-bit value
     {0, 1024, AIE2::AccRegBank},
+    // 13: VREG 128-bit value
+    {0, 128, AIE2::VRegBank},
 };
 
 // ValueMappings.
@@ -99,6 +101,7 @@ RegisterBankInfo::ValueMapping AIE2GenRegisterBankInfo::ValMappings[]{
     {&PartMappings[PMI_ACC512 - PMI_Min], 1},
     // 27:
     {&PartMappings[PMI_ACC1024 - PMI_Min], 1},
+    {&PartMappings[PMI_VREG128 - PMI_Min], 1},
 };
 
 const RegisterBankInfo::ValueMapping *
@@ -119,6 +122,10 @@ AIE2GenRegisterBankInfo::getValueMapping(PartialMappingIdx RBIdx,
   case PMI_MOD:
   case PMI_GPR64:
     PMIdx = PartialMappingIdx::PMI_Min;
+    break;
+  case PMI_VREG128:
+    PMIdx = PartialMappingIdx::PMI_VREG128;
+    VMIdx = ValueMappingIdx::S128_Idx;
     break;
   case PMI_VREG256:
   case PMI_VREG512:
