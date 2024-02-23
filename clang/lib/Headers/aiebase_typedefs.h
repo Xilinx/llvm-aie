@@ -349,7 +349,7 @@ typedef __bf16 v32bfloat16 __attribute__((__vector_size__(64)))
 __attribute__((aligned(32)));
 typedef __bf16 v64bfloat16 __attribute__((__vector_size__(128)))
 __attribute__((aligned(32)));
-// Sparse types
+/*Sparse vector types*/
 typedef unsigned _BitInt(128) sparsity_t __attribute__((aligned(16)));
 /* sparse vector types in aiev2*/
 struct v256int4_sparse {
@@ -453,6 +453,28 @@ struct v16bfloat16_compress {
   int x;
 };
 struct v32bfloat16_compress {
+  int x;
+};
+/*Compressed sparse vector types*/
+struct v256int4_sparse_compress {
+  int x;
+};
+struct v128int8_sparse_compress {
+  int x;
+};
+struct v64int16_sparse_compress {
+  int x;
+};
+struct v256uint4_sparse_compress {
+  int x;
+};
+struct v128uint8_sparse_compress {
+  int x;
+};
+struct v64uint16_sparse_compress {
+  int x;
+};
+struct v64bfloat16_sparse_compress {
   int x;
 };
 
