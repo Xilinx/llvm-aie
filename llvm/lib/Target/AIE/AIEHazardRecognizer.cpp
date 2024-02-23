@@ -225,7 +225,7 @@ AIEHazardRecognizer::getHazardType(SUnit *SU, int DeltaCycles) {
     return NoHazard;
   }
 
-  if (ReservedCycles && !MI->hasDelaySlot()) {
+  if (int(ReservedCycles) + DeltaCycles > 0 && !MI->hasDelaySlot()) {
     LLVM_DEBUG(dbgs() << "Reserved cycle\n");
     return NoopHazard;
   }
@@ -302,9 +302,9 @@ void AIEHazardRecognizer::EmitInstruction(SUnit *SU) {
 }
 
 void AIEHazardRecognizer::EmitInstruction(SUnit *SU, int DeltaCycles) {
-  assert(DeltaCycles == 0);
   MachineInstr *MI = SU->getInstr();
   LLVM_DEBUG(dbgs() << "Emit Instruction: " << *MI);
+  LLVM_DEBUG(dbgs() << "  With Delta=" << DeltaCycles << "\n");
 
   std::optional<int> FUDepthLimit;
   if (!isPostRA(MI))

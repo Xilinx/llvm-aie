@@ -11,8 +11,8 @@ define <64 x i8> @test_vsub_ge_v64int8(<64 x i8> %a, <64 x i8>  %b, i1 %sgn, ptr
 ; CHECK-LABEL: test_vsub_ge_v64int8:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r1, #1
-; CHECK-NEXT:    and r0, r0, r1
+; CHECK-NEXT:    nopb ; mova r1, #1; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; and r0, r0, r1
 ; CHECK-NEXT:    mov crVaddSign, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vsub_ge.d8 x0, r25:r24, x2, x4 // Delay Slot 5
@@ -33,7 +33,7 @@ define <64 x i8> @test_vsub_ge_v64uint8_sign0(<64 x i8>  %a, <64 x i8>  %b, ptr 
 ; CHECK-LABEL: test_vsub_ge_v64uint8_sign0:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    vsub_ge.d8 x0, r25:r24, x2, x4 // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    st r24, [p0], #4 // Delay Slot 3
@@ -51,7 +51,7 @@ define <64 x i8> @test_vsub_ge_v64uint8_sign1(<64 x i8>  %a, <64 x i8>  %b, ptr 
 ; CHECK-LABEL: test_vsub_ge_v64uint8_sign1:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    vsub_ge.s8 x0, r25:r24, x2, x4 // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    st r24, [p0], #4 // Delay Slot 3
@@ -69,15 +69,15 @@ define <32 x i16> @test_vsub_ge_v32uint16_tbRj(<32 x i16>  %a, <32 x i16>  %b, i
 ; CHECK-LABEL: test_vsub_ge_v32uint16_tbRj:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r1, #1
+; CHECK-NEXT:    mova r1, #1; nopb ; nopxm ; nops
 ; CHECK-NEXT:    and r0, r0, r1
 ; CHECK-NEXT:    mov r2, r16
 ; CHECK-NEXT:    mov crVaddSign, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vsub_ge.d16 x0, r16, x2, x4 // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 3
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 2
+; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
+; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r2 // Delay Slot 1
 entry:
   %conv.i = zext i1 %sgn to i32
@@ -92,7 +92,7 @@ define <32 x i16> @test_vsub_ge_v32uint16_sign0(<32 x i16>  %a, <32 x i16>  %b, 
 ; CHECK-LABEL: test_vsub_ge_v32uint16_sign0:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r0, r16 // Delay Slot 5
 ; CHECK-NEXT:    vsub_ge.d16 x0, r16, x2, x4 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
@@ -110,7 +110,7 @@ define <32 x i16> @test_vsub_ge_v32uint16_sign1(<32 x i16>  %a, <32 x i16>  %b, 
 ; CHECK-LABEL: test_vsub_ge_v32uint16_sign1:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r0, r16 // Delay Slot 5
 ; CHECK-NEXT:    vsub_ge.s16 x0, r16, x2, x4 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
@@ -128,15 +128,15 @@ define <16 x i32> @test_vsub_ge_v16int32(<16 x i32>  %a, <16 x i32> %b, i1 %sgn,
 ; CHECK-LABEL: test_vsub_ge_v16int32:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r1, #1
+; CHECK-NEXT:    mova r1, #1; nopb ; nopxm ; nops
 ; CHECK-NEXT:    and r0, r0, r1
 ; CHECK-NEXT:    mov r2, r16
 ; CHECK-NEXT:    mov crVaddSign, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vsub_ge.d32 x0, r16, x2, x4 // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 3
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 2
+; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
+; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r2 // Delay Slot 1
 entry:
   %conv.i = zext i1 %sgn to i32
@@ -151,7 +151,7 @@ define <16 x i32> @test_vsub_ge_v16int32_sign0(<16 x i32>  %a, <16 x i32> %b, pt
 ; CHECK-LABEL: test_vsub_ge_v16int32_sign0:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r0, r16 // Delay Slot 5
 ; CHECK-NEXT:    vsub_ge.d32 x0, r16, x2, x2 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
@@ -169,7 +169,7 @@ define <16 x i32> @test_vsub_ge_v16int32_sign1(<16 x i32>  %a, <16 x i32>  %b, p
 ; CHECK-LABEL: test_vsub_ge_v16int32_sign1:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r0, r16 // Delay Slot 5
 ; CHECK-NEXT:    vsub_ge.s32 x0, r16, x2, x4 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
@@ -188,8 +188,8 @@ define <64 x i8> @test_vsub_lt_v64int8(<64 x i8> %a, <64 x i8>  %b, i1 %sgn, ptr
 ; CHECK-LABEL: test_vsub_lt_v64int8:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r1, #1
-; CHECK-NEXT:    and r0, r0, r1
+; CHECK-NEXT:    nopb ; mova r1, #1; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; and r0, r0, r1
 ; CHECK-NEXT:    mov crVaddSign, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vsub_lt.d8 x0, r25:r24, x2, x4 // Delay Slot 5
@@ -210,7 +210,7 @@ define <64 x i8> @test_vsub_lt_v64uint8_sign0(<64 x i8>  %a, <64 x i8>  %b, ptr 
 ; CHECK-LABEL: test_vsub_lt_v64uint8_sign0:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    vsub_lt.d8 x0, r25:r24, x2, x4 // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    st r24, [p0], #4 // Delay Slot 3
@@ -228,7 +228,7 @@ define <64 x i8> @test_vsub_lt_v64uint8_sign1(<64 x i8>  %a, <64 x i8>  %b, ptr 
 ; CHECK-LABEL: test_vsub_lt_v64uint8_sign1:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    vsub_lt.s8 x0, r25:r24, x2, x4 // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    st r24, [p0], #4 // Delay Slot 3
@@ -246,15 +246,15 @@ define <32 x i16> @test_vsub_lt_v32uint16_tbRj(<32 x i16>  %a, <32 x i16>  %b, i
 ; CHECK-LABEL: test_vsub_lt_v32uint16_tbRj:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r1, #1
+; CHECK-NEXT:    mova r1, #1; nopb ; nopxm ; nops
 ; CHECK-NEXT:    and r0, r0, r1
 ; CHECK-NEXT:    mov r2, r16
 ; CHECK-NEXT:    mov crVaddSign, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vsub_lt.d16 x0, r16, x2, x4 // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 3
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 2
+; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
+; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r2 // Delay Slot 1
 entry:
   %conv.i = zext i1 %sgn to i32
@@ -269,7 +269,7 @@ define <32 x i16> @test_vsub_lt_v32uint16_sign0(<32 x i16>  %a, <32 x i16>  %b, 
 ; CHECK-LABEL: test_vsub_lt_v32uint16_sign0:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r0, r16 // Delay Slot 5
 ; CHECK-NEXT:    vsub_lt.d16 x0, r16, x2, x4 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
@@ -287,7 +287,7 @@ define <32 x i16> @test_vsub_lt_v32uint16_sign1(<32 x i16>  %a, <32 x i16>  %b, 
 ; CHECK-LABEL: test_vsub_lt_v32uint16_sign1:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r0, r16 // Delay Slot 5
 ; CHECK-NEXT:    vsub_lt.s16 x0, r16, x2, x4 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
@@ -305,15 +305,15 @@ define <16 x i32> @test_vsub_lt_v16int32(<16 x i32>  %a, <16 x i32> %b, i1 %sgn,
 ; CHECK-LABEL: test_vsub_lt_v16int32:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r1, #1
+; CHECK-NEXT:    mova r1, #1; nopb ; nopxm ; nops
 ; CHECK-NEXT:    and r0, r0, r1
 ; CHECK-NEXT:    mov r2, r16
 ; CHECK-NEXT:    mov crVaddSign, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vsub_lt.d32 x0, r16, x2, x4 // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 3
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 2
+; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
+; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r2 // Delay Slot 1
 entry:
   %conv.i = zext i1 %sgn to i32
@@ -328,7 +328,7 @@ define <16 x i32> @test_vsub_lt_v16int32_sign0(<16 x i32>  %a, <16 x i32> %b, pt
 ; CHECK-LABEL: test_vsub_lt_v16int32_sign0:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r0, r16 // Delay Slot 5
 ; CHECK-NEXT:    vsub_lt.d32 x0, r16, x2, x2 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
@@ -346,7 +346,7 @@ define <16 x i32> @test_vsub_lt_v16int32_sign1(<16 x i32>  %a, <16 x i32>  %b, p
 ; CHECK-LABEL: test_vsub_lt_v16int32_sign1:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r0, r16 // Delay Slot 5
 ; CHECK-NEXT:    vsub_lt.s32 x0, r16, x2, x4 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3

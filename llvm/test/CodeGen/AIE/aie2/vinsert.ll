@@ -213,8 +213,8 @@ define <128 x i8> @test_1024bit_hi(<128 x i8> %vec, i8 %c) {
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    vmov x5, x7 // Delay Slot 4
-; CHECK-NEXT:    mova r29, #4; vmov x4, x6 // Delay Slot 3
+; CHECK-NEXT:    vmov x4, x6 // Delay Slot 4
+; CHECK-NEXT:    mova r29, #4; vmov x5, x7 // Delay Slot 3
 ; CHECK-NEXT:    vinsert.8 x5, x5, r29, r0 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:

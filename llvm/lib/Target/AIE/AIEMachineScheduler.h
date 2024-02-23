@@ -58,7 +58,8 @@ public:
   /// Decides which zone to schedule from, and pick a node from it.
   /// As a consequence, this can change the value of \p IsTopDown.
   /// This may also bump the cycle until a instruction is ready to be issued.
-  SUnit *pickNode(bool &IsTopNode) override;
+  SUnit *pickNodeAndCycle(bool &IsTopNode,
+                          std::optional<unsigned> &BotEmissionCycle) override;
 
   bool isAvailableNode(SUnit &SU, SchedBoundary &Zone,
                        bool VerifyReadyCycle) const override;
@@ -120,6 +121,10 @@ protected:
   ///    5 cycles before the end of the region.
   /// See \p pickNode()
   SchedBoundary &getSchedZone() { return IsTopDown ? Top : Bot; }
+
+  /// Maximum (absolute) distance between the current cycle and the emission
+  /// cycle of instructions to be scheduled.
+  int getMaxDeltaCycles(const SchedBoundary &Zone) const;
 
   SchedBoundary Bot;
 

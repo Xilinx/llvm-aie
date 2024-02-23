@@ -11,7 +11,7 @@ define dso_local noundef <8 x i32> @_Z8test_andbDv8_iS_(i1 noundef zeroext %sel,
 ; CHECK-LABEL: _Z8test_andbDv8_iS_:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mov r1, r16 // Delay Slot 4
 ; CHECK-NEXT:    add r16, r0, #-1 // Delay Slot 3
@@ -26,7 +26,7 @@ define dso_local noundef <16 x i32> @_Z8test_andbDv16_iS_(i1 noundef zeroext %se
 ; CHECK-LABEL: _Z8test_andbDv16_iS_:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mov r1, r16 // Delay Slot 4
 ; CHECK-NEXT:    add r16, r0, #-1 // Delay Slot 3
@@ -41,7 +41,7 @@ define dso_local noundef <32 x i32> @_Z8test_andbDv32_iS_(i1 noundef zeroext %se
 ; CHECK-LABEL: _Z8test_andbDv32_iS_:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
 ; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
 ; CHECK-NEXT:    add r16, r0, #-1 // Delay Slot 4
 ; CHECK-NEXT:    vsel.32 x5, x7, x9, r16 // Delay Slot 3

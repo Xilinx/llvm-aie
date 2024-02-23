@@ -27,7 +27,7 @@ define dso_local noundef <32 x i16> @_Z18test_neg_v32uint16Dv32_t(<32 x i16> nou
 ; CHECK-LABEL: _Z18test_neg_v32uint16Dv32_t:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mov r0, r16 // Delay Slot 4
 ; CHECK-NEXT:    vneg_gtz16 x0, r16, x2 // Delay Slot 3
@@ -43,7 +43,7 @@ define dso_local noundef <16 x i32> @_Z18test_neg_v16uint32Dv16_j(<16 x i32> nou
 ; CHECK-LABEL: _Z18test_neg_v16uint32Dv16_j:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    mov r0, r16 // Delay Slot 4
 ; CHECK-NEXT:    vneg_gtz32 x0, r16, x2 // Delay Slot 3

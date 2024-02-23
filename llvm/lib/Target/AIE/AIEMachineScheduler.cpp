@@ -25,6 +25,9 @@ static cl::opt<bool> InsertCycleSeparators(
 static cl::opt<unsigned> BottomUpCycles(
     "aie-bottomup-cycles", cl::init(0),
     cl::desc("[AIE] Min number of cycles to be scheduled bottom-up"));
+static cl::opt<int> BottomUpDelta(
+    "aie-bottomup-delta", cl::init(0),
+    cl::desc("[AIE] Max cycles delta relative to current for bottom-up sched"));
 static cl::opt<unsigned> ReservedDelaySlots(
     "aie-reserved-delay-slots", cl::init(0),
     cl::desc("[AIE] Number of delay slots to be left empty"));
@@ -324,7 +327,25 @@ void AIEPostRASchedStrategy::initialize(ScheduleDAGMI *Dag) {
     LLVM_DEBUG(dbgs() << "*** Using top-down scheduling for the region ***\n");
 }
 
-SUnit *AIEPostRASchedStrategy::pickNode(bool &IsTopNode) {
+/// Compute the minimum cycle for Zone in which one can ever find
+/// an instruction to schedule.
+static unsigned getMinSchedulableCycle(SchedBoundary &Zone) {
+  unsigned MinSchedulableCycle = std::numeric_limits<unsigned>::max();
+  auto SchedCycle = [&Zone](const SUnit *SU) -> unsigned {
+    return Zone.isTop() ? SU->TopReadyCycle : SU->BotReadyCycle;
+  };
+  for (const SUnit *SU : Zone.Available) {
+    MinSchedulableCycle = std::min(MinSchedulableCycle, SchedCycle(SU));
+  }
+  for (const SUnit *SU : Zone.Pending) {
+    MinSchedulableCycle = std::min(MinSchedulableCycle, SchedCycle(SU));
+  }
+  assert(MinSchedulableCycle != std::numeric_limits<unsigned>::max());
+  return MinSchedulableCycle;
+}
+
+SUnit *AIEPostRASchedStrategy::pickNodeAndCycle(
+    bool &IsTopNode, std::optional<unsigned> &BotEmissionCycle) {
   LLVM_DEBUG(dbgs() << "** AIEPostRASchedStrategy::pickNode TopCycle="
                     << Top.getCurrCycle() << " BotCycle=" << Bot.getCurrCycle()
                     << "\n");
@@ -343,6 +364,14 @@ SUnit *AIEPostRASchedStrategy::pickNode(bool &IsTopNode) {
     assert(Zone.Available.empty() && Zone.Pending.empty() && "ReadyQ garbage");
     return nullptr;
   }
+
+  // Bump the cycle as much as possible to ensure the window of DeltaCycles is
+  // as big as possible.
+  if (unsigned MinSchedCycle = getMinSchedulableCycle(Zone);
+      Zone.getCurrCycle() < MinSchedCycle) {
+    Zone.bumpCycle(MinSchedCycle);
+  }
+
   SUnit *SU;
   do {
     SU = pickNodeUnidirectional(Zone);
@@ -355,16 +384,55 @@ SUnit *AIEPostRASchedStrategy::pickNode(bool &IsTopNode) {
   if (SU->isBottomReady())
     Bot.removeReady(SU);
 
+  // For bottom-up scheduling, we might have picked an instruction to be
+  // scheduled in a cycle greater than CurrCycle. See isAvailableNode().
+  // Make sure to set the EmissionCycle right.
+  if (!Zone.isTop()) {
+    assert(SU->BotReadyCycle >= Zone.getCurrCycle());
+    BotEmissionCycle = SU->BotReadyCycle;
+  }
+
   LLVM_DEBUG(dbgs() << "Scheduling SU(" << SU->NodeNum << ") "
                     << *SU->getInstr());
   return SU;
 }
 
+int AIEPostRASchedStrategy::getMaxDeltaCycles(const SchedBoundary &Zone) const {
+  assert(!Zone.isTop());
+  if (Zone.getCurrCycle() >= RegionBottomUpCycles - 1)
+    return 0;
+  return std::min({int(RegionBottomUpCycles - 1 - Zone.getCurrCycle()),
+                   int(getAIEHazardRecognizer(Zone)->getMaxLookAhead()),
+                   BottomUpDelta.getValue()});
+}
+
 bool AIEPostRASchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
                                              bool /*VerifyReadyCycle*/) const {
-  // Force verifying if SU is ready to be scheduled in terms of cycle.
-  return MachineSchedStrategy::isAvailableNode(SU, Zone,
-                                               /*VerifyReadyCycle=*/true);
+  // Whether or not the zone is Top or Bot, verify if SU is ready to be
+  // scheduled in terms of cycle.
+  if (Zone.isTop())
+    return MachineSchedStrategy::isAvailableNode(SU, Zone,
+                                                 /*VerifyReadyCycle=*/true);
+
+  // Note we use signed integers to avoid wrap-around behavior.
+  const int MinDelta = -getMaxDeltaCycles(Zone);
+  const int ReadyCycle = std::max(Zone.getCurrCycle(), SU.BotReadyCycle);
+  const int CurrCycle = Zone.getCurrCycle();
+
+  for (int DeltaCycles = CurrCycle - ReadyCycle; DeltaCycles >= MinDelta;
+       --DeltaCycles) {
+    // ReadyCycle is always greater or equal to the current cycle,
+    // so DeltaCycles will always be less or equal to 0.
+    if (Zone.checkHazard(&SU, DeltaCycles))
+      continue;
+    SU.BotReadyCycle = CurrCycle - DeltaCycles;
+    return true;
+  }
+
+  // Didn't find a cycle in which to emit SU, move it to the Pending queue.
+  // Still, update BotReadyCycle so next calls to isAvailableNode are quicker
+  SU.BotReadyCycle = std::max(ReadyCycle, CurrCycle - MinDelta);
+  return false;
 }
 
 /// Called after ScheduleDAGMI has scheduled an instruction and updated
@@ -373,8 +441,9 @@ void AIEPostRASchedStrategy::schedNode(SUnit *SU, bool IsTopNode) {
   if (IsTopNode) {
     PostGenericScheduler::schedNode(SU, IsTopNode);
   } else {
-    SU->BotReadyCycle = std::max(SU->BotReadyCycle, Bot.getCurrCycle());
-    Bot.bumpNode(SU);
+    int DeltaCycles = int(Bot.getCurrCycle()) - int(SU->BotReadyCycle);
+    assert(DeltaCycles <= 0);
+    Bot.bumpNode(SU, DeltaCycles);
   }
 }
 
@@ -586,13 +655,50 @@ bool AIEPostRASchedStrategy::tryCandidate(SchedCandidate &Cand,
   SchedBoundary &Zone = getSchedZone();
 
   // Avoid serializing long latency dependence chains.
-  if (Cand.Policy.ReduceLatency && tryLatency(TryCand, Cand, Zone)) {
+  if (Cand.Policy.ReduceLatency && Zone.isTop() &&
+      tryLatency(TryCand, Cand, Zone)) {
     return TryCand.Reason != NoCand;
+  }
+
+  // Custom heuristics for Bot zone due to the introduction of DeltaCycles.
+  // The following relies on BotReadyCycle for comparisons, as this corresponds
+  // to the actual cycle in which the SU will be emitted.
+  if (!Zone.isTop()) {
+
+    // Prefer placing down instructions with long dependence chains, regardless
+    // of their emission cycle. This helps scheduling the critical path first.
+    if (tryGreater(TryCand.SU->getDepth(), Cand.SU->getDepth(), TryCand, Cand,
+                   BotPathReduce)) {
+      return TryCand.Reason != NoCand;
+    }
+
+    // Prefer the instruction whose dependent chain is estimated to
+    // finish executing later. This can help reducing the overall height
+    // of the region.
+    if (tryGreater(TryCand.SU->BotReadyCycle + TryCand.SU->getDepth(),
+                   Cand.SU->BotReadyCycle + Cand.SU->getDepth(), TryCand, Cand,
+                   BotHeightReduce)) {
+      return TryCand.Reason != NoCand;
+    }
+
+    // Otherwise, prefer instructions booking resources close to CurrCycle.
+    // This helps "packing" the scoreboard.
+    auto ReverseEmitCycle = [](const SUnit &SU) -> int {
+      // Compute the first Bot cycle where the instruction books resources.
+      // Note: The result might be negative due to interblock scheduling
+      return int(SU.BotReadyCycle) - int(SU.Latency) + 1;
+    };
+    if (tryLess(ReverseEmitCycle(*TryCand.SU), ReverseEmitCycle(*Cand.SU),
+                TryCand, Cand, ResourceDemand)) {
+      return TryCand.Reason != NoCand;
+    }
   }
 
   // Fall through to original instruction order.
   if ((Zone.isTop() && TryCand.SU->NodeNum < Cand.SU->NodeNum) ||
-      (!Zone.isTop() && TryCand.SU->NodeNum > Cand.SU->NodeNum)) {
+      (!Zone.isTop() &&
+       (TryCand.SU->NodeNum > Cand.SU->NodeNum) ==
+           (TryCand.SU->BotReadyCycle <= Cand.SU->BotReadyCycle))) {
     TryCand.Reason = NodeOrder;
     return true;
   }

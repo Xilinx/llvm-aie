@@ -11,7 +11,7 @@ define dso_local noundef <64 x i8> @_Z20test_abs_gtz_v64int8Dv64_abRy(<64 x i8> 
 ; CHECK-LABEL: _Z20test_abs_gtz_v64int8Dv64_abRy:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mov crVaddSign, r0
+; CHECK-NEXT:    nopa ; nopx ; mov crVaddSign, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vabs_gtz.d8 x0, r25:r24, x2 // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -31,7 +31,7 @@ define dso_local noundef <64 x i8> @_Z27test_abs_gtz_v64uint8_sign0Dv64_hRy(<64 
 ; CHECK-LABEL: _Z27test_abs_gtz_v64uint8_sign0Dv64_hRy:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    vabs_gtz.d8 x0, r25:r24, x2 // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    st r24, [p0], #4 // Delay Slot 3
@@ -49,7 +49,7 @@ define dso_local noundef <64 x i8> @_Z27test_abs_gtz_v64uint8_sign1Dv64_hRy(<64 
 ; CHECK-LABEL: _Z27test_abs_gtz_v64uint8_sign1Dv64_hRy:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    vabs_gtz.s8 x0, r25:r24, x2 // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    st r24, [p0], #4 // Delay Slot 3
@@ -67,13 +67,13 @@ define dso_local noundef <32 x i16> @_Z22test_abs_gtz_v32uint16Dv32_tbRj(<32 x i
 ; CHECK-LABEL: _Z22test_abs_gtz_v32uint16Dv32_tbRj:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mov r1, r16
+; CHECK-NEXT:    nopa ; mov r1, r16
 ; CHECK-NEXT:    mov crVaddSign, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vabs_gtz.d16 x0, r16, x2 // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 3
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 2
+; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
+; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
 entry:
   %conv.i = zext i1 %sgn to i32
@@ -88,7 +88,7 @@ define dso_local noundef <32 x i16> @_Z28test_abs_gtz_v32uint16_sign0Dv32_tRj(<3
 ; CHECK-LABEL: _Z28test_abs_gtz_v32uint16_sign0Dv32_tRj:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r0, r16 // Delay Slot 5
 ; CHECK-NEXT:    vabs_gtz.d16 x0, r16, x2 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
@@ -106,7 +106,7 @@ define dso_local noundef <32 x i16> @_Z28test_abs_gtz_v32uint16_sign1Dv32_tRj(<3
 ; CHECK-LABEL: _Z28test_abs_gtz_v32uint16_sign1Dv32_tRj:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r0, r16 // Delay Slot 5
 ; CHECK-NEXT:    vabs_gtz.s16 x0, r16, x2 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
@@ -124,13 +124,13 @@ define dso_local noundef <16 x i32> @_Z21test_abs_gtz_v16int32Dv16_ibRj(<16 x i3
 ; CHECK-LABEL: _Z21test_abs_gtz_v16int32Dv16_ibRj:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mov r1, r16
+; CHECK-NEXT:    nopa ; mov r1, r16
 ; CHECK-NEXT:    mov crVaddSign, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vabs_gtz.d32 x0, r16, x2 // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 3
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 2
+; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
+; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
 entry:
   %conv.i = zext i1 %sgn to i32
@@ -145,7 +145,7 @@ define dso_local noundef <16 x i32> @_Z27test_abs_gtz_v16int32_sign0Dv16_iRj(<16
 ; CHECK-LABEL: _Z27test_abs_gtz_v16int32_sign0Dv16_iRj:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r0, r16 // Delay Slot 5
 ; CHECK-NEXT:    vabs_gtz.d32 x0, r16, x2 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
@@ -163,7 +163,7 @@ define dso_local noundef <16 x i32> @_Z27test_abs_gtz_v16int32_sign1Dv16_iRj(<16
 ; CHECK-LABEL: _Z27test_abs_gtz_v16int32_sign1Dv16_iRj:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r0, r16 // Delay Slot 5
 ; CHECK-NEXT:    vabs_gtz.s32 x0, r16, x2 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3

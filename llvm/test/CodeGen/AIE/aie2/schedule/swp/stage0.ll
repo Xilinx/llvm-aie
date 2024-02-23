@@ -26,9 +26,8 @@ define dso_local i32 @dot(ptr nocapture readonly %a, ptr nocapture readonly %b, 
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %for.body
-; CHECK-NEXT:    lda r2, [p0, #0]
+; CHECK-NEXT:    lda r2, [p0, #0]; nopb ; add r5, r1, #-1
 ; CHECK-NEXT:    lda r3, [p1, #0]
-; CHECK-NEXT:    add r5, r1, #-1
 ; CHECK-NEXT:    jz r5, #.LBB0_5
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -36,8 +35,8 @@ define dso_local i32 @dot(ptr nocapture readonly %a, ptr nocapture readonly %b, 
 ; CHECK-NEXT:    padda [p0], #2044 // Delay Slot 2
 ; CHECK-NEXT:    padda [p1], #2044 // Delay Slot 1
 ; CHECK-NEXT:  // %bb.2: // %for.body
-; CHECK-NEXT:    lda r4, [p1, #0]; nopb ; add r5, r5, #-1
-; CHECK-NEXT:    lda r1, [p0, #0]
+; CHECK-NEXT:    lda r1, [p0, #0]; nopb ; add r5, r5, #-1
+; CHECK-NEXT:    lda r4, [p1, #0]
 ; CHECK-NEXT:    jz r5, #.LBB0_4
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -47,9 +46,9 @@ define dso_local i32 @dot(ptr nocapture readonly %a, ptr nocapture readonly %b, 
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB0_3: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    nopb ; lda r4, [p1, #0]; nops ; and r6, r3, r2; mov r3, r4; nopv
-; CHECK-NEXT:    lda r1, [p0, #0]; mov r2, r1
-; CHECK-NEXT:    add r5, r5, #-1
+; CHECK-NEXT:    lda r4, [p1, #0]; nopb ; and r6, r3, r2; mov r3, r4; nops
+; CHECK-NEXT:    add r5, r5, #-1; mov r2, r1
+; CHECK-NEXT:    lda r1, [p0, #0]
 ; CHECK-NEXT:    jnz r5, #.LBB0_3
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4

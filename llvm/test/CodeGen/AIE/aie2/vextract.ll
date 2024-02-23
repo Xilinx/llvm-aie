@@ -11,7 +11,7 @@ define dso_local noundef signext i32 @_Z15test_ext_v2int4Dv16_iii(<16 x i32> nou
 ; CHECK-LABEL: _Z15test_ext_v2int4Dv16_iii:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mov r1, r16
+; CHECK-NEXT:    nopa ; mov r1, r16
 ; CHECK-NEXT:    mova r16, #63
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    mov crVaddSign, r2 // Delay Slot 5
@@ -30,7 +30,7 @@ define dso_local noundef signext i32 @_Z15test_ext_v4int4Dv16_iii(<16 x i32> nou
 ; CHECK-LABEL: _Z15test_ext_v4int4Dv16_iii:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mov r1, r16
+; CHECK-NEXT:    nopa ; mov r1, r16
 ; CHECK-NEXT:    mova r16, #50
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    mov crVaddSign, r2 // Delay Slot 5
@@ -49,7 +49,7 @@ define dso_local noundef i32 @_Z15test_ext_v8int4Dv16_iii(<16 x i32> noundef %v,
 ; CHECK-LABEL: _Z15test_ext_v8int4Dv16_iii:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mov r1, r16
+; CHECK-NEXT:    nopa ; mov r1, r16
 ; CHECK-NEXT:    mova r16, #10
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    mov crVaddSign, r2 // Delay Slot 5
@@ -67,7 +67,7 @@ define dso_local noundef signext i32 @_Z21test_ext_v2int4_sign1Dv16_ii(<16 x i32
 ; CHECK-LABEL: _Z21test_ext_v2int4_sign1Dv16_ii:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
 ; CHECK-NEXT:    mova r16, #6 // Delay Slot 4
 ; CHECK-NEXT:    vextract.s8 r0, x0, r16 // Delay Slot 3
@@ -84,7 +84,7 @@ define dso_local noundef signext i32 @_Z21test_ext_v4int4_sign1Dv16_ii(<16 x i32
 ; CHECK-LABEL: _Z21test_ext_v4int4_sign1Dv16_ii:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
 ; CHECK-NEXT:    mova r16, #5 // Delay Slot 4
 ; CHECK-NEXT:    vextract.s16 r0, x0, r16 // Delay Slot 3
@@ -101,7 +101,7 @@ define dso_local noundef i32 @_Z21test_ext_v8int4_sign1Dv16_ii(<16 x i32> nounde
 ; CHECK-LABEL: _Z21test_ext_v8int4_sign1Dv16_ii:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
 ; CHECK-NEXT:    mova r16, #1 // Delay Slot 4
 ; CHECK-NEXT:    vextract.s32 r0, x0, r16 // Delay Slot 3
@@ -117,7 +117,7 @@ define dso_local noundef signext i32 @_Z21test_ext_v2int4_sign0Dv16_ii(<16 x i32
 ; CHECK-LABEL: _Z21test_ext_v2int4_sign0Dv16_ii:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
 ; CHECK-NEXT:    mova r16, #16 // Delay Slot 4
 ; CHECK-NEXT:    vextract.d8 r0, x0, r16 // Delay Slot 3
@@ -134,7 +134,7 @@ define dso_local noundef signext i32 @_Z21test_ext_v4int4_sign0Dv16_ii(<16 x i32
 ; CHECK-LABEL: _Z21test_ext_v4int4_sign0Dv16_ii:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
 ; CHECK-NEXT:    mova r16, #51 // Delay Slot 4
 ; CHECK-NEXT:    vextract.d16 r0, x0, r16 // Delay Slot 3
@@ -151,7 +151,7 @@ define dso_local noundef i32 @_Z21test_ext_v8int4_sign0Dv16_ii(<16 x i32> nounde
 ; CHECK-LABEL: _Z21test_ext_v8int4_sign0Dv16_ii:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
 ; CHECK-NEXT:    mova r16, #41 // Delay Slot 4
 ; CHECK-NEXT:    vextract.d32 r0, x0, r16 // Delay Slot 3
@@ -166,7 +166,7 @@ define dso_local noundef <8 x i8> @_Z16test_ext_v16int4Dv64_DB8_ii(<64 x i8> nou
 ; CHECK-LABEL: _Z16test_ext_v16int4Dv64_DB8_ii:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mova r16, #1 // Delay Slot 5
 ; CHECK-NEXT:    mov crVaddSign, r1 // Delay Slot 4
 ; CHECK-NEXT:    vextract.d64 r17:r16, x0, r16 // Delay Slot 3
@@ -183,7 +183,7 @@ define dso_local noundef i64 @_Z12test_ext_u64Dv16_iii(<16 x i32> noundef %v, i3
 ; CHECK-LABEL: _Z12test_ext_u64Dv16_iii:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mov r4, r16
+; CHECK-NEXT:    nopa ; nopb ; nopx ; mov r4, r16; nops
 ; CHECK-NEXT:    mov r16, r2
 ; CHECK-NEXT:    mov crVaddSign, r3
 ; CHECK-NEXT:    vextract.d64 r25:r24, x0, r16
@@ -208,7 +208,7 @@ define dso_local noundef zeroext i16 @_Z5test0Dv16_t(<16 x i16> noundef %vec)  {
 ; CHECK-LABEL: _Z5test0Dv16_t:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
 ; CHECK-NEXT:    mova r16, #1 // Delay Slot 4
 ; CHECK-NEXT:    vextract.d16 r0, x0, r16 // Delay Slot 3
@@ -223,7 +223,7 @@ define dso_local noundef signext i16 @_Z5test1Dv16_s(<16 x i16> noundef %vec)  {
 ; CHECK-LABEL: _Z5test1Dv16_s:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
 ; CHECK-NEXT:    mova r16, #1 // Delay Slot 4
 ; CHECK-NEXT:    vextract.s16 r0, x0, r16 // Delay Slot 3
@@ -238,7 +238,7 @@ define dso_local noundef signext i8 @_Z5test2Dv32_a(<32 x i8> noundef %vec)  {
 ; CHECK-LABEL: _Z5test2Dv32_a:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
 ; CHECK-NEXT:    mova r16, #1 // Delay Slot 4
 ; CHECK-NEXT:    vextract.s8 r0, x0, r16 // Delay Slot 3
@@ -253,7 +253,7 @@ define dso_local noundef zeroext i8 @_Z5test3Dv32_h(<32 x i8> noundef %vec)  {
 ; CHECK-LABEL: _Z5test3Dv32_h:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
 ; CHECK-NEXT:    mova r16, #1 // Delay Slot 4
 ; CHECK-NEXT:    vextract.d8 r0, x0, r16 // Delay Slot 3
@@ -268,7 +268,7 @@ define dso_local noundef i32 @_Z5test4Dv8_i(<8 x i32> noundef %vec)  {
 ; CHECK-LABEL: _Z5test4Dv8_i:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
 ; CHECK-NEXT:    mova r16, #1 // Delay Slot 4
 ; CHECK-NEXT:    vextract.s32 r0, x0, r16 // Delay Slot 3
@@ -283,7 +283,7 @@ define dso_local noundef i32 @_Z5test5Dv8_j(<8 x i32> noundef %vec)  {
 ; CHECK-LABEL: _Z5test5Dv8_j:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
 ; CHECK-NEXT:    mova r16, #1 // Delay Slot 4
 ; CHECK-NEXT:    vextract.s32 r0, x0, r16 // Delay Slot 3
@@ -297,7 +297,7 @@ define dso_local noundef zeroext i16 @_Z5test0Dv32_t(<32 x i16> noundef %vec)  {
 ; CHECK-LABEL: _Z5test0Dv32_t:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
 ; CHECK-NEXT:    mova r16, #1 // Delay Slot 4
 ; CHECK-NEXT:    vextract.d16 r0, x0, r16 // Delay Slot 3
@@ -312,7 +312,7 @@ define dso_local noundef signext i16 @_Z5test1Dv32_s(<32 x i16> noundef %vec)  {
 ; CHECK-LABEL: _Z5test1Dv32_s:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
 ; CHECK-NEXT:    mova r16, #1 // Delay Slot 4
 ; CHECK-NEXT:    vextract.s16 r0, x0, r16 // Delay Slot 3
@@ -327,7 +327,7 @@ define dso_local noundef signext i8 @_Z5test2Dv64_a(<64 x i8> noundef %vec)  {
 ; CHECK-LABEL: _Z5test2Dv64_a:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
 ; CHECK-NEXT:    mova r16, #1 // Delay Slot 4
 ; CHECK-NEXT:    vextract.s8 r0, x0, r16 // Delay Slot 3
@@ -342,7 +342,7 @@ define dso_local noundef zeroext i8 @_Z5test3Dv64_h(<64 x i8> noundef %vec)  {
 ; CHECK-LABEL: _Z5test3Dv64_h:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
 ; CHECK-NEXT:    mova r16, #1 // Delay Slot 4
 ; CHECK-NEXT:    vextract.d8 r0, x0, r16 // Delay Slot 3
@@ -357,7 +357,7 @@ define dso_local noundef i32 @_Z5test4Dv16_i(<16 x i32> noundef %vec)  {
 ; CHECK-LABEL: _Z5test4Dv16_i:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
 ; CHECK-NEXT:    mova r16, #1 // Delay Slot 4
 ; CHECK-NEXT:    vextract.s32 r0, x0, r16 // Delay Slot 3
@@ -372,7 +372,7 @@ define dso_local noundef i32 @_Z5test5Dv16_j(<16 x i32> noundef %vec)  {
 ; CHECK-LABEL: _Z5test5Dv16_j:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
 ; CHECK-NEXT:    mova r16, #1 // Delay Slot 4
 ; CHECK-NEXT:    vextract.s32 r0, x0, r16 // Delay Slot 3
@@ -417,7 +417,7 @@ define dso_local noundef signext i8 @_Z5test1Dv128_a(<128 x i8> noundef %vec)  {
 ; CHECK-LABEL: _Z5test1Dv128_a:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #32
+; CHECK-NEXT:    paddb [sp], #32; nopxm
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    lda r0, [p0, #0]
@@ -448,7 +448,7 @@ define dso_local noundef signext i16 @_Z5test2Dv64_s(<64 x i16> noundef %vec)  {
 ; CHECK-LABEL: _Z5test2Dv64_s:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #32
+; CHECK-NEXT:    nopa ; paddb [sp], #32; nopx
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    lda r0, [p0, #0]
@@ -479,7 +479,7 @@ define dso_local noundef i32 @_Z5test3Dv32_i(<32 x i32> noundef %vec)  {
 ; CHECK-LABEL: _Z5test3Dv32_i:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #32
+; CHECK-NEXT:    nopa ; paddb [sp], #32; nopx
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    lda r0, [p0, #0]
@@ -524,12 +524,13 @@ define dso_local noundef signext i8 @_Z16extract_8bit_256Dv32_a(<32 x i8> nounde
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    lda.s8 r0, [p0, #0]
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
 entry:
   %ret = alloca i8, align 4
   %vecext = extractelement <32 x i8> %vec, i64 5
@@ -556,12 +557,13 @@ define dso_local noundef zeroext i16 @_Z17extract_16bit_256Dv16_t(<16 x i16> nou
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    lda.u16 r0, [p0, #0]
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
 entry:
   %ret = alloca i16, align 4
   %vecext = extractelement <16 x i16> %vec, i64 15
@@ -588,12 +590,13 @@ define dso_local noundef signext i8 @_Z16extract_8bit_512Dv64_a(<64 x i8> nounde
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    lda.s8 r0, [p0, #0]
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
 entry:
   %ret = alloca i8, align 4
   %vecext = extractelement <64 x i8> %vec, i64 63
@@ -620,12 +623,13 @@ define dso_local noundef zeroext i16 @_Z17extract_16bit_512Dv32_t(<32 x i16> nou
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    lda.u16 r0, [p0, #0]
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
 entry:
   %ret = alloca i16, align 4
   %vecext = extractelement <32 x i16> %vec, i64 15
@@ -653,12 +657,13 @@ define dso_local noundef signext i8 @_Z17extract_8bit_1024Dv128_a(<128 x i8> nou
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    lda.s8 r0, [p0, #0]
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
 entry:
   %ret = alloca i8, align 4
   %vecext = extractelement <128 x i8> %vec, i64 127
@@ -686,12 +691,13 @@ define dso_local noundef zeroext i16 @_Z18extract_16bit_1024Dv64_t(<64 x i16> no
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    lda.u16 r0, [p0, #0]
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
 entry:
   %ret = alloca i16, align 4
   %vecext = extractelement <64 x i16> %vec, i64 63

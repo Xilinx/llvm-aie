@@ -12,7 +12,7 @@ define dso_local noundef <8 x i64> @_Z16test_mul_4x8_8x4Dv32_u6__bf16S_(<32 x bf
 ; CHECK-LABEL: _Z16test_mul_4x8_8x4Dv32_u6__bf16S_:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r0, #28
+; CHECK-NEXT:    mova r0, #28; nopb ; nopxm ; nops
 ; CHECK-NEXT:    vmul.f bml0, x0, x2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -29,7 +29,7 @@ define dso_local noundef <8 x i64> @_Z19test_negmul_4x8_8x4Dv32_u6__bf16S_(<32 x
 ; CHECK-LABEL: _Z19test_negmul_4x8_8x4Dv32_u6__bf16S_:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r0, #28
+; CHECK-NEXT:    mova r0, #28; nopb ; nopxm ; nops
 ; CHECK-NEXT:    vnegmul.f bml0, x0, x2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -46,7 +46,7 @@ define dso_local noundef <8 x i64> @_Z16test_mac_4x8_8x4Dv32_u6__bf16S_Dv16_u10_
 ; CHECK-LABEL: _Z16test_mac_4x8_8x4Dv32_u6__bf16S_Dv16_u10__accfloat:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r0, #28
+; CHECK-NEXT:    mova r0, #28; nopb ; nopxm ; nops
 ; CHECK-NEXT:    vmac.f bml0, bml1, x0, x2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -63,7 +63,7 @@ define dso_local noundef <8 x i64> @_Z16test_msc_4x8_8x4Dv32_u6__bf16S_Dv16_u10_
 ; CHECK-LABEL: _Z16test_msc_4x8_8x4Dv32_u6__bf16S_Dv16_u10__accfloat:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r0, #28
+; CHECK-NEXT:    mova r0, #28; nopb ; nopxm ; nops
 ; CHECK-NEXT:    vmsc.f bml0, bml1, x0, x2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -80,7 +80,7 @@ define dso_local noundef <8 x i64> @_Z19test_addmac_4x8_8x4Dv32_u6__bf16S_Dv16_u
 ; CHECK-LABEL: _Z19test_addmac_4x8_8x4Dv32_u6__bf16S_Dv16_u10__accfloatS0_:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r0, #28
+; CHECK-NEXT:    mova r0, #28; nopxm
 ; CHECK-NEXT:    vmov bml0, bml1
 ; CHECK-NEXT:    vaddmac.f bml0, bml0, bml2, x0, x2, r0
 ; CHECK-NEXT:    ret lr
@@ -98,7 +98,7 @@ define dso_local noundef <8 x i64> @_Z19test_addmsc_4x8_8x4Dv32_u6__bf16S_Dv16_u
 ; CHECK-LABEL: _Z19test_addmsc_4x8_8x4Dv32_u6__bf16S_Dv16_u10__accfloatS0_:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r0, #28
+; CHECK-NEXT:    mova r0, #28; nopxm
 ; CHECK-NEXT:    vmov bml0, bml1
 ; CHECK-NEXT:    vaddmsc.f bml0, bml0, bml2, x0, x2, r0
 ; CHECK-NEXT:    ret lr
