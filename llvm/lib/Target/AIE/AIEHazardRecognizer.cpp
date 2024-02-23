@@ -37,6 +37,10 @@ static llvm::cl::opt<int> PreRAFuncUnitDepth(
     "aie-prera-func-unit-depth", cl::Hidden, cl::init(0),
     cl::desc("Ignore FuncUnits past certain depth in pre-RA scoreboard"));
 
+static cl::opt<unsigned>
+    UserScoreboardDepth("aie-scoreboard-depth", cl::init(0),
+                        cl::desc("Override maximum scoreboard depth to use."));
+
 const AIEBaseMCFormats *FuncUnitWrapper::FormatInterface = nullptr;
 void FuncUnitWrapper::setFormatInterface(const AIEBaseMCFormats *Formats) {
   FormatInterface = Formats;
@@ -445,6 +449,8 @@ unsigned AIEHazardRecognizer::computeScoreboardDepth() const {
   if (ItinDepth == 0) {
     return 0;
   }
+
+  ItinDepth = std::max(ItinDepth, UserScoreboardDepth.getValue());
 
   // Find the next power-of-2 >= ItinDepth
   unsigned ScoreboardDepth = 1;
