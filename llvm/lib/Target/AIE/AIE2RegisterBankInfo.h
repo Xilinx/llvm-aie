@@ -35,9 +35,10 @@ protected:
     First3OpsIdx = 1,
     FirstVecOpsIdx = 16,
     FirstAccOpsIdx = 25,
-    LastOpsIdx = 27,
+    LastOpsIdx = 30,
     DistanceBetweenRegBanks = 3,
     DistanceBetweenAccRegBanks = 1,
+    S128_Idx = 28,
   };
 
   /// Get the pointer to the ValueMapping representing the RegisterBank

@@ -51,6 +51,11 @@ unsigned AIEBaseRegisterBankInfo::getRegBankBaseIdxOffset(unsigned RBIdx,
       return 0;
     return -1;
   }
+  if (RBIdx == PMI_VREG128) {
+    if (Size <= 128)
+      return 0;
+    return -1;
+  }
   if (RBIdx == PMI_VREG256) {
     if (Size <= 256)
       return 0;
@@ -218,7 +223,7 @@ AIEBaseRegisterBankInfo::getPartialMappingIdx(const LLT &Ty) {
   else if (Ty.isScalar()) {
     unsigned short ScalarSize = Ty.getScalarSizeInBits();
     return ScalarSize <= 32 ? (ScalarSize == 20 ? PMI_MOD : PMI_GPR)
-                            : PMI_GPR64;
+                            : (ScalarSize <= 64 ? PMI_GPR64 : PMI_VREG128);
   } else {
     switch (Ty.getSizeInBits()) {
     case 32:

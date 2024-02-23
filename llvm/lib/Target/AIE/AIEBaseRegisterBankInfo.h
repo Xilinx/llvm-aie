@@ -39,7 +39,8 @@ protected:
     PMI_ACC512 = 12,
     PMI_ACC1024 = 13,
     PMI_VREGMin = PMI_VREG256,
-    PMI_Min = PMI_GPR
+    PMI_Min = PMI_GPR,
+    PMI_VREG128 = 14
   };
 
   enum ValueMappingIdx {
