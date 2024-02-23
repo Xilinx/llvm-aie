@@ -1096,7 +1096,13 @@ public:
                          unsigned Cycles, unsigned ReadyCycle,
                          unsigned StartAtCycle);
 
-  void bumpNode(SUnit *SU);
+  /// Track effects of moving \p SU to the scheduled boundary of the Region.
+  /// This in particular notifies \p HazardRecognizer and can update the current
+  /// cycle depending on the scheduling model.
+  ///
+  /// \param DeltaCycles is the signed distance from the current cycle to the
+  ///   emission cycle. It is mainly used to correctly update the scoreboard.
+  void bumpNode(SUnit *SU, int DeltaCycles = 0);
 
   void releasePending();
 
