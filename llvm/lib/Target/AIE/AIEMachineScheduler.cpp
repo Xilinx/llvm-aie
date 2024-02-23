@@ -119,14 +119,25 @@ std::vector<AIE::MachineBundle> computeAndFinalizeBundles(SchedBoundary &Zone) {
     AddInBundles(reverse(make_range(DAG.bottom(), DAG.end())),
                  *getAIEHazardRecognizer(Zone));
 
-  // Ensure Zone.getCurrCycle() represents the number of non-empty bundles
+  // Flush any non-empty CurrBundle
   if (!CurrBundle.empty()) {
-    Zone.bumpCycle(Zone.getCurrCycle() + 1);
-    LLVM_DEBUG(dbgs() << "  Finalized Bundle. CurrentCycle="
-                      << Zone.getCurrCycle() << "\n");
+    bumpCycleForBundles(Bundles.size() + 1, Bundles, CurrBundle);
+    LLVM_DEBUG(dbgs() << "  Finalized Bundle. NumBundles=" << Bundles.size()
+                      << "\n");
   }
 
-  // Flush CurrBundle and push NOP Bundles until reaching Zone's current cycle.
+  // Make sure the zone's cycle is greater or equal to the number of Bundles
+  // In particular for Bot, instructions can be emitted in cycles greater than
+  // CurrCycle.
+  if (Bundles.size() > Zone.getCurrCycle()) {
+    Zone.bumpCycle(Bundles.size());
+    LLVM_DEBUG(dbgs() << "  Updated zone CurrCycle=" << Zone.getCurrCycle()
+                      << "\n");
+  }
+
+  // Push NOP Bundles until reaching Zone's current cycle.
+  // In particular for Top, the CurrCycle might have been bumped beyond the
+  // emission cycle of the last bundle.
   if (Zone.getCurrCycle() != Bundles.size())
     bumpCycleForBundles(Zone.getCurrCycle(), Bundles, CurrBundle);
 
