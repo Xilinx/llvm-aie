@@ -97,6 +97,8 @@ AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
   // 1024-bit accumulators
   const LLT ACC1024 = LLT::fixed_vector(16, 64);
 
+  const LLT S128 = LLT::scalar(128);
+
   static const std::initializer_list<LLT> AIE2VectorTypes = {
       /* Begin 256-bit types */
       V8S32, V16S16, V32S8,
@@ -331,6 +333,7 @@ AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
           {V32S32, P0, V32S32, 32}, {V64S16, P0, V64S16, 32},
           {V128S8, P0, V128S8, 32}, {ACC256, P0, ACC256, 32},
           {ACC512, P0, ACC512, 32}, {ACC1024, P0, ACC1024, 32},
+          {S128, P0, S128, 16},
       })
       .widenScalarToNextPow2(0)
       .lowerIfMemSizeNotPow2()
