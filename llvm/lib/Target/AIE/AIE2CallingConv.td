@@ -59,6 +59,9 @@ def AssignToVecBM : CCAssignToReg<[
 def AssignToVecCM : CCAssignToReg<[
   cm0,cm1,cm2,cm3,cm4,cm5,cm6,cm7,cm8]>;
 
+// Mask registers
+def AssignToVecQ : CCAssignToReg<[q0, q2, q1, q3]>;
+
 // Let's define the list of vector types in a single place.
 // TODO: bfloat and complex types are not yet supported.
 class VectorTypes {
@@ -104,6 +107,8 @@ def RetCC_AIE2 : CallingConv<[
   CCIfType<AIE2VTypes.Acc512Bits, AssignToVecBM>,
   // 1024-bits accumulators go in CM regs
   CCIfType<AIE2VTypes.Acc1024Bits, AssignToVecCM>,
+  // 128-bits masks go in Q regs
+  CCIfType<[i128], AssignToVecQ>,
 ]>;
 
 //===----------------------------------------------------------------------===//
@@ -125,8 +130,9 @@ def CC_AIE2_Stack : CallingConv<[
   CCIfType<AIE2VTypes.V32Bits, CCAssignToStack<4, 4>>,
   // 64-bits vectors are 4-bytes aligned
   CCIfType<AIE2VTypes.V64Bits, CCAssignToStack<8, 4>>,
-  // 128-bits vectors are 16-bytes aligned
+  // 128-bits vectors and masks are 16-bytes aligned
   CCIfType<AIE2VTypes.V128Bits, CCAssignToStack<16, 16>>,
+  CCIfType<[i128], CCAssignToStack<16, 16>>,
   // 256, 512 and 1024 bits vectors are 32-bytes aligned
   CCIfType<AIE2VTypes.V256Bits, CCAssignToStack<32, 32>>,
   CCIfType<AIE2VTypes.V512Bits, CCAssignToStack<64, 32>>,
@@ -174,6 +180,8 @@ def CC_AIE2 : CallingConv<[
   CCIfType<AIE2VTypes.Acc512Bits, AssignToVecBM>,
   // 1024-bits accumulators go in CM regs
   CCIfType<AIE2VTypes.Acc1024Bits, AssignToVecCM>,
+  // 128-bits masks go in Q regs
+  CCIfType<[i128], AssignToVecQ>,
 
   // Couldn't pass in registers, must be on the stack
   CCDelegateTo<CC_AIE2_Stack>

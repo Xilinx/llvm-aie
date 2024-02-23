@@ -45,7 +45,7 @@ class AIE2RegisterClass <int size, int align, list<ValueType> regTypes, dag regl
                           idx>;
 
   class AIE2Vector128RegisterClass<dag reglist> :
-      AIE2RegisterClass<128, 128, [v16i8, v8i16, v8bf16, v4i32, v4f32], reglist> {
+      AIE2RegisterClass<128, 128, [v16i8, v8i16, v8bf16, v4i32, v4f32, i128], reglist> {
     let hasCompleteDecoder = 0;
   }
 

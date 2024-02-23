@@ -349,6 +349,8 @@ typedef __bf16 v32bfloat16 __attribute__((__vector_size__(64)))
 __attribute__((aligned(32)));
 typedef __bf16 v64bfloat16 __attribute__((__vector_size__(128)))
 __attribute__((aligned(32)));
+// Sparse types
+typedef unsigned _BitInt(128) sparsity_t __attribute__((aligned(16)));
 
 #endif //__AIEARCH__ == 20
 

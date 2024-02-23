@@ -13,6 +13,7 @@
 @g_ptr_16 = global i16 0
 @g_ptr_32 = global i32 0
 @g_ptr_64 = global i64 0
+@g_ptr_128 = global i128 0
 
 define void @test_unreachable(i32 %a) {
   ; CHECK-LABEL: name: test_unreachable
@@ -51,6 +52,45 @@ define void @test_arg_i64(i64 %a) {
   ; CHECK-NEXT:   G_STORE [[MV]](s64), [[GV]](p0) :: (store (s64) into @g_ptr_64, align 4)
   ; CHECK-NEXT:   PseudoRET implicit $lr
   store i64 %a, i64* @g_ptr_64
+  ret void
+}
+
+define void @test_arg_i128([3 x i128] %b, i128 %a) {
+  ; CHECK-LABEL: name: test_arg_i128
+  ; CHECK: fixedStack:
+  ; CHECK: bb.1 (%ir-block.0):
+  ; CHECK-NEXT:   liveins: $q0, $q1, $q2, $q3
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(s128) = COPY $q0
+  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:_(s128) = COPY $q2
+  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:_(s128) = COPY $q1
+  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:_(s128) = COPY $q3
+  ; CHECK-NEXT:   [[GV:%[0-9]+]]:_(p0) = G_GLOBAL_VALUE @g_ptr_128
+  ; CHECK-NEXT:   G_STORE [[COPY3]](s128), [[GV]](p0) :: (store (s128) into @g_ptr_128, align 4)
+  ; CHECK-NEXT:   PseudoRET implicit $lr
+  store i128 %a, i128* @g_ptr_128
+  ret void
+}
+
+define void @test_arg_i128_stack([4 x i128] %a, i128 %stack) {
+  ; CHECK-LABEL: name: test_arg_i128_stack
+  ; CHECK: fixedStack:
+  ; CHECK-NEXT:   - { id: 0, type: default, offset: -16, size: 16, alignment: 16, stack-id: default, 
+  ; CHECK-NEXT:       isImmutable: true, isAliased: false, callee-saved-register: '', callee-saved-restored: true, 
+  ; CHECK-NEXT:       debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  ; CHECK: bb.1 (%ir-block.0):
+  ; CHECK-NEXT:   liveins: $q0, $q1, $q2, $q3
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(s128) = COPY $q0
+  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:_(s128) = COPY $q2
+  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:_(s128) = COPY $q1
+  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:_(s128) = COPY $q3
+  ; CHECK-NEXT:   [[FRAME_INDEX:%[0-9]+]]:_(p0) = G_FRAME_INDEX %fixed-stack.0
+  ; CHECK-NEXT:   [[LOAD:%[0-9]+]]:_(s128) = G_LOAD [[FRAME_INDEX]](p0) :: (invariant load (s128) from %fixed-stack.0)
+  ; CHECK-NEXT:   [[GV:%[0-9]+]]:_(p0) = G_GLOBAL_VALUE @g_ptr_128
+  ; CHECK-NEXT:   G_STORE [[LOAD]](s128), [[GV]](p0) :: (store (s128) into @g_ptr_128, align 4)
+  ; CHECK-NEXT:   PseudoRET implicit $lr
+  store i128 %stack, i128* @g_ptr_128
   ret void
 }
 
