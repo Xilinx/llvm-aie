@@ -40,6 +40,15 @@ define i64 @test_ret_i64() {
   ret i64 0
 }
 
+define i128 @test_ret_i128() {
+  ; CHECK-LABEL: name: test_ret_i128
+  ; CHECK: bb.1 (%ir-block.0):
+  ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s128) = G_CONSTANT i128 0
+  ; CHECK-NEXT:   $q0 = COPY [[C]](s128)
+  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit $q0
+  ret i128 0
+}
+
 define i1 @test_ret_i1() {
   ; CHECK-LABEL: name: test_ret_i1
   ; CHECK: bb.1 (%ir-block.0):

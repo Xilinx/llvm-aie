@@ -38,6 +38,10 @@ public:
   // that properly implements CTLZ.
   // I wonder why this isn't the default.
   bool isCheapToSpeculateCtlz(Type *) const override { return true; }
+
+  unsigned getNumRegistersForCallingConv(LLVMContext &Context,
+                                         CallingConv::ID CC,
+                                         EVT VT) const override;
 };
 
 } // namespace llvm
