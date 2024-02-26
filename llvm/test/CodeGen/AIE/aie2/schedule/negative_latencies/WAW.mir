@@ -61,8 +61,8 @@ body:             |
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $r0 = MOVXM_lng_cg 0
-    ; CHECK-NEXT: ST_dms_sts_idx_imm killed $r0, $p0, 20
-    ; CHECK-NEXT: $r0 = LDA_dms_lda_idx_imm killed $p0, 4
+    ; CHECK-NEXT: ST_dms_sts_idx_imm killed $r0, $p0, 4 :: (store (s32) into stack - 4)
+    ; CHECK-NEXT: $r0 = LDA_dms_lda_idx_imm killed $p0, 0 :: (load (s32) from stack - 8)
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
@@ -70,6 +70,6 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     $r0 = MOVXM_lng_cg 0
-    ST_dms_sts_idx_imm $r0, $p0, 20
-    $r0 = LDA_dms_lda_idx_imm $p0, 4
+    ST_dms_sts_idx_imm $r0, $p0, 4 :: (store (s32) into stack - 4)
+    $r0 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32) from stack - 8)
 ...

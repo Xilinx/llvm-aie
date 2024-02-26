@@ -13,16 +13,17 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: read_E1_write_E7
-    ; CHECK: ST_dms_sts_idx_imm killed $r6, killed $p0, 20
-    ; CHECK-NEXT: $r6 = LDA_dms_lda_idx_imm killed $p1, 4
+    ; CHECK: $r6 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32) from stack - 8) {
+    ; CHECK-NEXT:   ST_dms_sts_idx_imm killed $r6, killed $p0, 4 :: (store (s32) into stack - 4)
+    ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ST_dms_sts_idx_imm $r6, $p0, 20
-    $r6 = LDA_dms_lda_idx_imm $p1, 4
+    ST_dms_sts_idx_imm $r6, $p0, 4 :: (store (s32) into stack - 4)
+    $r6 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32) from stack - 8)
 ...
 
 ---
@@ -71,10 +72,10 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: read_E1_write_E2
-    ; CHECK: ST_dms_sts_idx_imm $r6, $p0, 4 {
+    ; CHECK: $r0 = ADD_add_r_ri $r6, 1, implicit-def $srcarry {
     ; CHECK-NEXT:   $r6 = VEXTRACT_S32 killed $x2, killed $r16
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
-    ST_dms_sts_idx_imm $r6, $p0, 4
+    $r0 = ADD_add_r_ri $r6, 1, implicit-def $srcarry
     $r6 = VEXTRACT_S32 $x2,  $r16
 ...
