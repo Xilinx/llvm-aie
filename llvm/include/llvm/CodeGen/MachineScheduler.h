@@ -431,9 +431,9 @@ protected:
   void findRootsAndBiasEdges(SmallVectorImpl<SUnit*> &TopRoots,
                              SmallVectorImpl<SUnit*> &BotRoots);
 
-  void releaseSucc(SUnit *SU, SDep *SuccEdge);
+  virtual void releaseSucc(SUnit *SU, SDep *SuccEdge);
   void releaseSuccessors(SUnit *SU);
-  void releasePred(SUnit *SU, SDep *PredEdge);
+  virtual void releasePred(SUnit *SU, SDep *PredEdge);
   void releasePredecessors(SUnit *SU);
 
   /// Find the insertion point for a newly-picked SU in the Bot zone.
