@@ -20,9 +20,9 @@ define dso_local noundef <8 x i64> @_Z5test0Dv16_s(<16 x i16> noundef %arg0) loc
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova r0, #4
 ; CHECK-NEXT:    mov s0, r0
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    paddb [p0], #-64
 ; CHECK-NEXT:    vst amhh0, [p0, #32]
@@ -69,9 +69,9 @@ define dso_local noundef <8 x i64> @_Z5test1Dv8_i(<8 x i32> noundef %arg0) local
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova r0, #4
 ; CHECK-NEXT:    mov s0, r0
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    paddb [p0], #-64
 ; CHECK-NEXT:    vst amhh0, [p0, #32]
@@ -112,9 +112,9 @@ define dso_local noundef <16 x i64> @_Z5test2Dv32_a(<32 x i8> noundef %arg0) loc
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova r0, #4
 ; CHECK-NEXT:    mov s0, r0
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    paddb [p0], #-128
 ; CHECK-NEXT:    vst amhh0, [p0, #96]
@@ -159,9 +159,9 @@ define dso_local noundef <8 x i64> @_Z5test3Dv16_s(<16 x i16> noundef %arg0) loc
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova r0, #4
 ; CHECK-NEXT:    mov s0, r0
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    paddb [p0], #-64
 ; CHECK-NEXT:    vst amhh0, [p0, #32]
@@ -202,9 +202,9 @@ define dso_local noundef <16 x i64> @_Z5test4Dv16_s(<16 x i16> noundef %arg0) lo
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova r0, #4
 ; CHECK-NEXT:    mov s0, r0
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    paddb [p0], #-128
 ; CHECK-NEXT:    vst amhh0, [p0, #96]
@@ -249,9 +249,9 @@ define dso_local noundef <16 x i64> @_Z5test5Dv16_s(<16 x i16> noundef %arg0) lo
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova r0, #4
 ; CHECK-NEXT:    mov s0, r0
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    paddb [p0], #-128
 ; CHECK-NEXT:    vst amhh0, [p0, #96]
@@ -296,9 +296,9 @@ define dso_local noundef <16 x i64> @_Z5test6Dv16_s(<16 x i16> noundef %arg0) lo
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova r0, #4
 ; CHECK-NEXT:    mov s0, r0
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    paddb [p0], #-128
 ; CHECK-NEXT:    vst amhh0, [p0, #96]
@@ -343,9 +343,9 @@ define dso_local noundef <8 x i64> @_Z5test7Dv16_s(<16 x i16> noundef %arg0) loc
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova r0, #4
 ; CHECK-NEXT:    mov s0, r0
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    paddb [p0], #-64
 ; CHECK-NEXT:    vst amhh0, [p0, #32]
@@ -386,9 +386,9 @@ define dso_local noundef <8 x i64> @_Z5test8Dv16_t(<16 x i16> noundef %arg0) loc
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova r0, #4
 ; CHECK-NEXT:    mov s0, r0
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    paddb [p0], #-64
 ; CHECK-NEXT:    vst amhh0, [p0, #32]

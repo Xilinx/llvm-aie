@@ -24,8 +24,8 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: $s0 = MOV_mv_cg 0
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     $bmh0 = VLDA_UPS_S32_S16_ag_idx_imm $s0, $p0, 0, implicit-def $srups_of, implicit $crsat
     $s0 = MOV_mv_cg 0
@@ -43,8 +43,8 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: $s0 = MOV_mv_cg 0
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     $bmh0, $p0 = VLDA_UPS_S32_D16_ag_pstm_nrm_imm $s0, $p0, 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign
     $s0 = MOV_mv_cg 0
@@ -62,8 +62,8 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: $s0 = MOV_mv_cg 0
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     $bmh0, $p0, $dc4 = VLDA_2D_UPS_S32_D16 $s0, $p0, $d4, implicit-def $srups_of, implicit $crsat, implicit $crupssign
     $s0 = MOV_mv_cg 0
@@ -81,8 +81,8 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: $s0 = MOV_mv_cg 0
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     $bmh0, $p0, $dc3, $dc7 = VLDA_3D_UPS_S32_D16 $s0, $p0, $d3_3d, implicit-def $srups_of, implicit $crsat, implicit $crupssign
     $s0 = MOV_mv_cg 0
