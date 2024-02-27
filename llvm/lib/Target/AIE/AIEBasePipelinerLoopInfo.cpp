@@ -270,8 +270,10 @@ public:
 
   bool shouldUseSchedule(SwingSchedulerDAG &SSD, SMSchedule &SMS) override;
 
-  // This adjusts the incoming tripcount.
-  void startExpand() override;
+  // This adjusts the incoming tripcount. The return value tells the modulo
+  // extractor whether to extract in reverse stage order
+  //
+  bool startExpand() override;
 
   /// Check whether EndLoop can be dealt with by the software pipeliner.
   /// Returns zero for success or a failure reason
@@ -424,7 +426,7 @@ std::optional<bool> DownCountLoop::createTripCountGreaterCondition(
   return {};
 }
 
-void DownCountLoop::startExpand() {
+bool DownCountLoop::startExpand() {
   // We have recorded the stage in which the loop condition
   // is computed. That matches the number of updates that
   // will not get extracted into the prologue, which is the adjustment
@@ -432,7 +434,7 @@ void DownCountLoop::startExpand() {
   assert(ConditionStage);
   const int Adjust = *ConditionStage;
   if (!Adjust) {
-    return;
+    return true;
   }
 
   // We have
@@ -460,6 +462,8 @@ void DownCountLoop::startExpand() {
       .addReg(Reg)
       .addImm(-Adjust * Step);
   Phi->getOperand(InitIdx).setReg(NewReg);
+
+  return true;
 }
 } // namespace
 

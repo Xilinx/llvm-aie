@@ -761,8 +761,9 @@ public:
     }
 
     /// This is called from the modulo schedule expander before any other
-    /// modification
-    virtual void startExpand() {}
+    /// modification. It returns whether to extract instructions in
+    /// stage-reversed order
+    virtual bool startExpand() { return false; }
 
     /// Create a condition to determine if the trip count of the loop is greater
     /// than TC, where TC is always one more than for the previous prologue or

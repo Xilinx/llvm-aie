@@ -106,7 +106,7 @@ void ModuloScheduleExpander::generatePipelinedLoop() {
   // LoopInfo = TII->analyzeLoopForPipelining(BB);
   assert(LoopInfo && "Must be able to analyze loop!");
 
-  LoopInfo->startExpand();
+  bool ExtractStageReversed = LoopInfo->startExpand();
 
   // Create a new basic block for the kernel and add it to the CFG.
   MachineBasicBlock *KernelBB = MF.CreateMachineBasicBlock(BB->getBasicBlock());
@@ -134,14 +134,21 @@ void ModuloScheduleExpander::generatePipelinedLoop() {
 
   // Rearrange the instructions to generate the new, pipelined loop,
   // and update register names as needed.
-  for (MachineInstr *CI : Schedule.getInstructions()) {
-    if (CI->isPHI())
-      continue;
-    unsigned StageNum = Schedule.getStage(CI);
-    MachineInstr *NewMI = cloneInstr(CI, MaxStageCount, StageNum);
-    updateInstruction(NewMI, false, MaxStageCount, StageNum, VRMap);
-    KernelBB->push_back(NewMI);
-    InstrMap[NewMI] = CI;
+  // Optionally, we extract instructions in reverse-stage order
+  const int NumPasses = ExtractStageReversed ? MaxStageCount : 0;
+  for (int ThisStage = NumPasses; ThisStage >= 0; ThisStage--) {
+    for (MachineInstr *CI : Schedule.getInstructions()) {
+      if (CI->isPHI())
+        continue;
+      unsigned StageNum = Schedule.getStage(CI);
+      if (ExtractStageReversed && int(StageNum) != ThisStage) {
+        continue;
+      }
+      MachineInstr *NewMI = cloneInstr(CI, MaxStageCount, StageNum);
+      updateInstruction(NewMI, false, MaxStageCount, StageNum, VRMap);
+      KernelBB->push_back(NewMI);
+      InstrMap[NewMI] = CI;
+    }
   }
 
   // Copy any terminator instructions to the new kernel, and update
