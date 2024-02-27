@@ -282,6 +282,7 @@ AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
       .libcall();
 
   getActionDefinitionsBuilder(G_DYN_STACKALLOC).custom();
+  getActionDefinitionsBuilder({G_STACKSAVE, G_STACKRESTORE}).lower();
 
   getActionDefinitionsBuilder({G_SMIN, G_SMAX, G_UMIN, G_UMAX})
       .widenScalarToNextPow2(0, 32)
