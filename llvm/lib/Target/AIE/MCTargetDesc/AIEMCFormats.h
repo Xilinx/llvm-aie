@@ -39,10 +39,8 @@ public:
     size_t operator()(MCSlotKind SK) const { return SK; }
   };
 
-  /// Set of Kinds of all AIE subtargets
-  enum SlotKind : int {
-    SLOT_UNKNOWN = -1,
-  };
+  static const int SLOT_UNKNOWN = -1;
+
   enum AIESlotKind : int {
 #define GET_FORMATS_SLOTKINDS
 #include "AIEGenFormats.inc"

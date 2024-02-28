@@ -28,33 +28,20 @@ let Namespace = "TEST" in
 // CHECK-NOT: SLOT_UNKNOWN
 // CHECK:     #endif // GET_FORMATS_SLOTKINDS
 
-// Let's check that there is no instance generated for the default slot.
-// We check the non-existence of unknown_slot before and after the declarations
-// of our slots.
-// CHECK:       #ifdef GET_FORMATS_HEADER
-// CHECK:       class TESTSlotInfo;
-// CHECK-NOT:   extern const TESTSlotInfo unknown_slot;
-// CHECK-NEXT:  extern const TESTSlotInfo fu0_slot;
-// CHECK-NEXT:  extern const TESTSlotInfo fu1_slot;
-// CHECK-NOT:   extern const TESTSlotInfo unknown_slot;
-// CHECK:       #endif // GET_FORMATS_HEADER
-
 // CHECK:       #ifdef GET_FORMATS_CLASS_DEF
 // CHECK:       class TESTSlotKind: public MCSlotKind
 // CHECK:       #endif // GET_FORMATS_CLASS_DEF
 
-// Check there is no wild instanciation of the default slot
+// Check there is no wild instantiation of the default slot
 // CHECK:       #ifdef GET_FORMATS_SLOTS_DEFS
-// CHECK-NOT:   constexpr const TESTSlotInfo unknown_slot = {
-// CHECK:       constexpr const TESTSlotInfo fu0_slot = {
-// CHECK-NEXT:    TESTSlotKind::TEST_SLOT_FU0,
-// CHECK-NEXT:    "fu0",
-// CHECK-NEXT:    12,
-// CHECK-NOT:   constexpr const TESTSlotInfo unknown_slot = {
-// CHECK:       constexpr const TESTSlotInfo fu1_slot = {
-// CHECK-NEXT:    TESTSlotKind::TEST_SLOT_FU1,
-// CHECK-NEXT:    "fu1",
-// CHECK-NEXT:    42,
-// CHECK-NOT:   constexpr const TESTSlotInfo unknown_slot = {
+// CHECK:       static constexpr const TESTSlotInfo TESTSlots[] = {
+
+// CHECK:       TESTSlotKind::TEST_SLOT_FU0,
+// CHECK-NEXT:  "fu0"
+// CHECK-NEXT:  12
+// CHECK:       TESTSlotKind::TEST_SLOT_FU1,
+// CHECK-NEXT:  "fu1"
+// CHECK NEXT:  42,
+// CHECK-NOT:   "unknown",
 // CHECK:       #endif // GET_FORMATS_SLOTS_DEFS
 }
