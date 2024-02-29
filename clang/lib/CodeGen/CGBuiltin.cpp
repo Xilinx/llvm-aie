@@ -20986,6 +20986,78 @@ static llvm::Intrinsic::ID getAIE2IntrinsicFunction(unsigned BuiltinID) {
     return Intrinsic::aie2_put_ms_nb_ctrl_packet_header;
   case AIE::BI__builtin_aiev2_divstep:
     return Intrinsic::aie2_divs;
+  case AIE::BI__builtin_aiev2_sparse_pop_16_and_get_pointer:
+    return Intrinsic::aie2_sparse_pop_16_and_get_pointer;
+  case AIE::BI__builtin_aiev2_sparse_pop_16_set_lo:
+    return Intrinsic::aie2_sparse_pop_16_set_lo;
+  case AIE::BI__builtin_aiev2_sparse_pop_16_insert_hi:
+    return Intrinsic::aie2_sparse_pop_16_insert_hi;
+  case AIE::BI__builtin_aiev2_sparse_peek_16_and_get_pointer:
+    return Intrinsic::aie2_sparse_peek_16_and_get_pointer;
+  case AIE::BI__builtin_aiev2_sparse_peek_16_set_lo:
+    return Intrinsic::aie2_sparse_peek_16_set_lo;
+  case AIE::BI__builtin_aiev2_sparse_peek_16_insert_hi:
+    return Intrinsic::aie2_sparse_peek_16_insert_hi;
+  case AIE::BI__builtin_aiev2_sparse_pop_8_and_get_pointer:
+    return Intrinsic::aie2_sparse_pop_8_and_get_pointer;
+  case AIE::BI__builtin_aiev2_sparse_pop_8_set_lo:
+    return Intrinsic::aie2_sparse_pop_8_set_lo;
+  case AIE::BI__builtin_aiev2_sparse_pop_8_insert_hi:
+    return Intrinsic::aie2_sparse_pop_8_insert_hi;
+  case AIE::BI__builtin_aiev2_sparse_peek_8_and_get_pointer:
+    return Intrinsic::aie2_sparse_peek_8_and_get_pointer;
+  case AIE::BI__builtin_aiev2_sparse_peek_8_set_lo:
+    return Intrinsic::aie2_sparse_peek_8_set_lo;
+  case AIE::BI__builtin_aiev2_sparse_peek_8_insert_hi:
+    return Intrinsic::aie2_sparse_peek_8_insert_hi;
+  case AIE::BI__builtin_aiev2_sparse_pop_4_and_get_pointer:
+    return Intrinsic::aie2_sparse_pop_4_and_get_pointer;
+  case AIE::BI__builtin_aiev2_sparse_pop_4_set_lo:
+    return Intrinsic::aie2_sparse_pop_4_set_lo;
+  case AIE::BI__builtin_aiev2_sparse_pop_4_insert_hi:
+    return Intrinsic::aie2_sparse_pop_4_insert_hi;
+  case AIE::BI__builtin_aiev2_sparse_peek_4_and_get_pointer:
+    return Intrinsic::aie2_sparse_peek_4_and_get_pointer;
+  case AIE::BI__builtin_aiev2_sparse_peek_4_set_lo:
+    return Intrinsic::aie2_sparse_peek_4_set_lo;
+  case AIE::BI__builtin_aiev2_sparse_peek_4_insert_hi:
+    return Intrinsic::aie2_sparse_peek_4_insert_hi;
+  case AIE::BI__builtin_aiev2_sparse_reset_16:
+    return Intrinsic::aie2_sparse_reset_16;
+  case AIE::BI__builtin_aiev2_sparse_reset_16_and_get_pointer:
+    return Intrinsic::aie2_sparse_reset_16_and_get_pointer;
+  case AIE::BI__builtin_aiev2_sparse_reset_8:
+    return Intrinsic::aie2_sparse_reset_8;
+  case AIE::BI__builtin_aiev2_sparse_reset_8_and_get_pointer:
+    return Intrinsic::aie2_sparse_reset_8_and_get_pointer;
+  case AIE::BI__builtin_aiev2_sparse_reset_4:
+    return Intrinsic::aie2_sparse_reset_4;
+  case AIE::BI__builtin_aiev2_sparse_reset_4_and_get_pointer:
+    return Intrinsic::aie2_sparse_reset_4_and_get_pointer;
+  case AIE::BI__builtin_aiev2_sparse_fill_16:
+    return Intrinsic::aie2_sparse_fill_16;
+  case AIE::BI__builtin_aiev2_sparse_fill_16_and_get_pointer:
+    return Intrinsic::aie2_sparse_fill_16_and_get_pointer;
+  case AIE::BI__builtin_aiev2_sparse_fill_8:
+    return Intrinsic::aie2_sparse_fill_8;
+  case AIE::BI__builtin_aiev2_sparse_fill_8_and_get_pointer:
+    return Intrinsic::aie2_sparse_fill_8_and_get_pointer;
+  case AIE::BI__builtin_aiev2_sparse_fill_4:
+    return Intrinsic::aie2_sparse_fill_4;
+  case AIE::BI__builtin_aiev2_sparse_fill_4_and_get_pointer:
+    return Intrinsic::aie2_sparse_fill_4_and_get_pointer;
+  case AIE::BI__builtin_aiev2_sparse_pop_16_bfloat_and_get_pointer:
+    return Intrinsic::aie2_sparse_pop_16_bfloat_and_get_pointer;
+  case AIE::BI__builtin_aiev2_sparse_pop_16_bfloat_set_lo:
+    return Intrinsic::aie2_sparse_pop_16_bfloat_set_lo;
+  case AIE::BI__builtin_aiev2_sparse_pop_16_bfloat_insert_hi:
+    return Intrinsic::aie2_sparse_pop_16_bfloat_insert_hi;
+  case AIE::BI__builtin_aiev2_sparse_peek_16_bfloat_and_get_pointer:
+    return Intrinsic::aie2_sparse_peek_16_bfloat_and_get_pointer;
+  case AIE::BI__builtin_aiev2_sparse_peek_16_bfloat_set_lo:
+    return Intrinsic::aie2_sparse_peek_16_bfloat_set_lo;
+  case AIE::BI__builtin_aiev2_sparse_peek_16_bfloat_insert_hi:
+    return Intrinsic::aie2_sparse_peek_16_bfloat_insert_hi;
   default:
     break;
   }
@@ -21135,6 +21207,94 @@ Value *CodeGenFunction::EmitAIE2BuiltinExpr(unsigned BuiltinID,
     Value *SuccAddr =
         EmitLValue(E->getArg(E->getNumArgs() - 1)).getPointer(*this);
     return Builder.CreateDefaultAlignedStore(Val, SuccAddr);
+  }
+  case AIE::BI__builtin_aiev2_sparse_peek_4_and_get_pointer:
+  case AIE::BI__builtin_aiev2_sparse_peek_4_set_lo:
+  case AIE::BI__builtin_aiev2_sparse_pop_4_and_get_pointer:
+  case AIE::BI__builtin_aiev2_sparse_pop_4_set_lo:
+  case AIE::BI__builtin_aiev2_sparse_peek_8_and_get_pointer:
+  case AIE::BI__builtin_aiev2_sparse_peek_8_set_lo:
+  case AIE::BI__builtin_aiev2_sparse_pop_8_and_get_pointer:
+  case AIE::BI__builtin_aiev2_sparse_pop_8_set_lo:
+  case AIE::BI__builtin_aiev2_sparse_peek_16_and_get_pointer:
+  case AIE::BI__builtin_aiev2_sparse_peek_16_set_lo:
+  case AIE::BI__builtin_aiev2_sparse_pop_16_and_get_pointer:
+  case AIE::BI__builtin_aiev2_sparse_pop_16_set_lo:
+  case AIE::BI__builtin_aiev2_sparse_peek_16_bfloat_and_get_pointer:
+  case AIE::BI__builtin_aiev2_sparse_peek_16_bfloat_set_lo:
+  case AIE::BI__builtin_aiev2_sparse_pop_16_bfloat_and_get_pointer:
+  case AIE::BI__builtin_aiev2_sparse_pop_16_bfloat_set_lo: {
+    SmallVector<Value *, 3> Ops;
+    for (unsigned I = 0; I < E->getNumArgs(); I++)
+      Ops.push_back(EmitScalarExpr(E->getArg(I)));
+
+    llvm::Intrinsic::ID IntrinsicID = getAIE2IntrinsicFunction(BuiltinID);
+    assert(IntrinsicID != Intrinsic::not_intrinsic);
+    Function *F = CGM.getIntrinsic(IntrinsicID);
+    Value *Val = Builder.CreateCall(F, Ops);
+
+    Value *Ptr = Builder.CreateExtractValue(Val, 0);
+    Value *Vec = Builder.CreateExtractValue(Val, 1);
+    Value *Mask = Builder.CreateExtractValue(Val, 2);
+
+    Value *VecAddr = EmitLValue(E->getArg(0)).getPointer(*this);
+    Value *MaskAddr = EmitLValue(E->getArg(1)).getPointer(*this);
+    Value *PtrAddr = EmitLValue(E->getArg(2)).getPointer(*this);
+
+    Builder.CreateDefaultAlignedStore(Vec, VecAddr);
+    Builder.CreateDefaultAlignedStore(Mask, MaskAddr);
+    return Builder.CreateDefaultAlignedStore(Ptr, PtrAddr);
+  }
+  case AIE::BI__builtin_aiev2_sparse_peek_4_insert_hi:
+  case AIE::BI__builtin_aiev2_sparse_pop_4_insert_hi:
+  case AIE::BI__builtin_aiev2_sparse_peek_8_insert_hi:
+  case AIE::BI__builtin_aiev2_sparse_pop_8_insert_hi:
+  case AIE::BI__builtin_aiev2_sparse_peek_16_insert_hi:
+  case AIE::BI__builtin_aiev2_sparse_pop_16_insert_hi:
+  case AIE::BI__builtin_aiev2_sparse_peek_16_bfloat_insert_hi:
+  case AIE::BI__builtin_aiev2_sparse_pop_16_bfloat_insert_hi: {
+    SmallVector<Value *, 3> Ops;
+    for (unsigned I = 0; I < E->getNumArgs(); I++)
+      Ops.push_back(EmitScalarExpr(E->getArg(I)));
+
+    llvm::Intrinsic::ID IntrinsicID = getAIE2IntrinsicFunction(BuiltinID);
+    assert(IntrinsicID != Intrinsic::not_intrinsic);
+    Function *F = CGM.getIntrinsic(IntrinsicID);
+    Value *Val = Builder.CreateCall(F, Ops);
+
+    Value *Ptr = Builder.CreateExtractValue(Val, 0);
+    Value *Vec = Builder.CreateExtractValue(Val, 1);
+    Value *Mask = Builder.CreateExtractValue(Val, 2);
+
+    Value *VecAddr = EmitLValue(E->getArg(0)).getPointer(*this);
+    Value *MaskAddr = EmitLValue(E->getArg(1)).getPointer(*this);
+    Value *PtrAddr = EmitLValue(E->getArg(4)).getPointer(*this);
+
+    Builder.CreateDefaultAlignedStore(Vec, VecAddr);
+    Builder.CreateDefaultAlignedStore(Mask, MaskAddr);
+    return Builder.CreateDefaultAlignedStore(Ptr, PtrAddr);
+  }
+  case AIE::BI__builtin_aiev2_sparse_reset_16:
+  case AIE::BI__builtin_aiev2_sparse_reset_16_and_get_pointer:
+  case AIE::BI__builtin_aiev2_sparse_reset_8:
+  case AIE::BI__builtin_aiev2_sparse_reset_8_and_get_pointer:
+  case AIE::BI__builtin_aiev2_sparse_reset_4:
+  case AIE::BI__builtin_aiev2_sparse_reset_4_and_get_pointer:
+  case AIE::BI__builtin_aiev2_sparse_fill_16:
+  case AIE::BI__builtin_aiev2_sparse_fill_16_and_get_pointer:
+  case AIE::BI__builtin_aiev2_sparse_fill_8:
+  case AIE::BI__builtin_aiev2_sparse_fill_8_and_get_pointer:
+  case AIE::BI__builtin_aiev2_sparse_fill_4:
+  case AIE::BI__builtin_aiev2_sparse_fill_4_and_get_pointer: {
+    SmallVector<Value *, 1> Ops;
+    for (unsigned I = 0; I < E->getNumArgs(); I++)
+      Ops.push_back(EmitScalarExpr(E->getArg(I)));
+    llvm::Intrinsic::ID IntrinsicID = getAIE2IntrinsicFunction(BuiltinID);
+    assert(IntrinsicID != Intrinsic::not_intrinsic);
+    Function *F = CGM.getIntrinsic(IntrinsicID);
+    Value *Val = Builder.CreateCall(F, Ops);
+    Value *PtrAddr = EmitLValue(E->getArg(0)).getPointer(*this);
+    return Builder.CreateDefaultAlignedStore(Val, PtrAddr);
   }
   default:
     break;

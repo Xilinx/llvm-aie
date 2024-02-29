@@ -42,6 +42,7 @@
 #include "aiev2_vmult.h"
 #include "aiev2_addr.h"
 #include "aiev2_core.h"
+#include "aiev2_vld_sparse.h"
 // clang-format on
 // float_to_bfloat16
 constexpr inline bfloat16::bfloat16(float a0) {
@@ -85,6 +86,7 @@ INTRINSIC(void)
 write_tm(uint32 regVal, uint32 regAddr, uint32 TMAddrSpaceStart = 0x80000) {
   return __builtin_aiev2_write_tm(regVal, (int *)(TMAddrSpaceStart + regAddr));
 }
+
 #endif /* __cplusplus && !(__AIECC__DISABLE_READ_WRITE_TM) */
 
 #endif /* __AIEV2INTRIN_H */
