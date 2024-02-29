@@ -389,6 +389,8 @@ class AIE2Dim3DRegisterClass <dag reglist, RegAltNameIndex idx = NoRegAltName> :
 
   def eDNL : AIE220BitRegisterClass<(add dn0, dn1, dn2, dn3)>;
 
+  def eDN0 : AIE220BitRegisterClass<(add dn0)>;
+
   foreach i = 0 - 7 in {
     def m #i : AIE220BitReg<i, "m" #i>, DwarfRegNum<[!add(i, 182)]>;
   }
