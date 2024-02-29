@@ -94,6 +94,7 @@ public:
   }
   bool hasBitIntType() const override { return true; }
   bool hasBFloat16Type() const override { return isAIE2(getTriple()); }
+  bool hasInt128Type() const override { return isAIE2(getTriple()); }
   bool isCLZForZeroUndef() const override {
     if (isAIE2(getTriple()))
       return false;
