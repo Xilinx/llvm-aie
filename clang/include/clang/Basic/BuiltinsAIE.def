@@ -500,4 +500,47 @@ BUILTIN(__builtin_aiev2_extract_I128_I512, "V4iV16i", "nc")
 // Set sub-vector
 BUILTIN(__builtin_aiev2_set_I512_I128, "V16iV4i", "nc")
 
+// Sparse loads 16
+BUILTIN(__builtin_aiev2_sparse_pop_16_and_get_pointer, "vV32s&LLLi&i*", "nc")
+BUILTIN(__builtin_aiev2_sparse_pop_16_set_lo, "vV32s&LLLi&i*", "nc")
+BUILTIN(__builtin_aiev2_sparse_pop_16_insert_hi, "vV32s&LLLi&V32s&LLLi&i*", "nc")
+BUILTIN(__builtin_aiev2_sparse_peek_16_and_get_pointer, "vV32s&LLLi&i*", "nc")
+BUILTIN(__builtin_aiev2_sparse_peek_16_set_lo, "vV32s&LLLi&i*", "nc")
+BUILTIN(__builtin_aiev2_sparse_peek_16_insert_hi, "vV32s&LLLi&V32s&LLLi&i*", "nc")
+// Sparse loads 8
+BUILTIN(__builtin_aiev2_sparse_pop_8_and_get_pointer, "vV64c&LLLi&i*", "nc")
+BUILTIN(__builtin_aiev2_sparse_pop_8_set_lo, "vV64c&LLLi&i*", "nc")
+BUILTIN(__builtin_aiev2_sparse_pop_8_insert_hi, "vV64c&LLLi&V64c&LLLi&i*", "nc")
+BUILTIN(__builtin_aiev2_sparse_peek_8_and_get_pointer, "vV64c&LLLi&i*", "nc")
+BUILTIN(__builtin_aiev2_sparse_peek_8_set_lo, "vV64c&LLLi&i*", "nc")
+BUILTIN(__builtin_aiev2_sparse_peek_8_insert_hi, "vV64c&LLLi&V64c&LLLi&i*", "nc")
+// Sparse loads 4
+BUILTIN(__builtin_aiev2_sparse_pop_4_and_get_pointer, "vV16i&LLLi&i*", "nc")
+BUILTIN(__builtin_aiev2_sparse_pop_4_set_lo, "vV16i&LLLi&i*", "nc")
+BUILTIN(__builtin_aiev2_sparse_pop_4_insert_hi, "vV16i&LLLi&V16i&LLLi&i*", "nc")
+BUILTIN(__builtin_aiev2_sparse_peek_4_and_get_pointer, "vV16i&LLLi&i*", "nc")
+BUILTIN(__builtin_aiev2_sparse_peek_4_set_lo, "vV16i&LLLi&i*", "nc")
+BUILTIN(__builtin_aiev2_sparse_peek_4_insert_hi, "vV16i&LLLi&V16i&LLLi&i*", "nc")
+// sparse reset
+BUILTIN(__builtin_aiev2_sparse_reset_16, "vi*", "nc")
+BUILTIN(__builtin_aiev2_sparse_reset_16_and_get_pointer, "vi*", "nc")
+BUILTIN(__builtin_aiev2_sparse_reset_8, "vi*", "nc")
+BUILTIN(__builtin_aiev2_sparse_reset_8_and_get_pointer, "vi*", "nc")
+BUILTIN(__builtin_aiev2_sparse_reset_4, "vi*", "nc")
+BUILTIN(__builtin_aiev2_sparse_reset_4_and_get_pointer, "vi*", "nc")
+// sparse fill
+BUILTIN(__builtin_aiev2_sparse_fill_16, "vi*", "nc")
+BUILTIN(__builtin_aiev2_sparse_fill_16_and_get_pointer, "vi*", "nc")
+BUILTIN(__builtin_aiev2_sparse_fill_8, "vi*", "nc")
+BUILTIN(__builtin_aiev2_sparse_fill_8_and_get_pointer, "vi*", "nc")
+BUILTIN(__builtin_aiev2_sparse_fill_4, "vi*", "nc")
+BUILTIN(__builtin_aiev2_sparse_fill_4_and_get_pointer, "vi*", "nc")
+// Sparse loads 16 bfloat
+BUILTIN(__builtin_aiev2_sparse_pop_16_bfloat_and_get_pointer, "vV32y&LLLi&i*", "nc")
+BUILTIN(__builtin_aiev2_sparse_pop_16_bfloat_set_lo, "vV32y&LLLi&i*", "nc")
+BUILTIN(__builtin_aiev2_sparse_pop_16_bfloat_insert_hi, "vV32y&LLLi&V32y&LLLi&i*", "nc")
+BUILTIN(__builtin_aiev2_sparse_peek_16_bfloat_and_get_pointer, "vV32y&LLLi&i*", "nc")
+BUILTIN(__builtin_aiev2_sparse_peek_16_bfloat_set_lo, "vV32y&LLLi&i*", "nc")
+BUILTIN(__builtin_aiev2_sparse_peek_16_bfloat_insert_hi, "vV32y&LLLi&V32y&LLLi&i*", "nc")
+
 #undef BUILTIN

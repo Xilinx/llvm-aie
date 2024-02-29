@@ -61,6 +61,7 @@ set(aie_files
   aiev2_vadd.h
   aiev2_core.h
   aiev2_vmult.h
+  aiev2_vld_sparse.h
   aiev2_pckt_header.h
   aiev2_scl2vec.h
   aiev2_upd_ext.h

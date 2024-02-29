@@ -383,6 +383,39 @@ class AIEV2Add3D : Intrinsic<[llvm_ptr_ty, llvm_i20_ty, llvm_i20_ty],
       [llvm_ptr_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty],
       [IntrNoMem]>;
 
+// VLD.SPARSE.POP / VLD.SPARSE.PEEK
+class AIEV2SPARSE_OP_V64I16_set_lo : Intrinsic<[llvm_ptr_ty, llvm_v32i16_ty, llvm_i128_ty],
+     [llvm_v32i16_ty, llvm_i128_ty, llvm_ptr_ty],
+     []>;
+class AIEV2SPARSE_OP_V64I16_insert_hi : Intrinsic<[llvm_ptr_ty, llvm_v32i16_ty, llvm_i128_ty],
+     [llvm_v32i16_ty, llvm_i128_ty, llvm_v32i16_ty, llvm_i128_ty, llvm_ptr_ty],
+     []>;
+
+class AIEV2SPARSE_OP_V128I8_set_lo : Intrinsic<[llvm_ptr_ty, llvm_v64i8_ty, llvm_i128_ty],
+     [llvm_v64i8_ty, llvm_i128_ty, llvm_ptr_ty],
+     []>;
+class AIEV2SPARSE_OP_V128I8_insert_hi : Intrinsic<[llvm_ptr_ty, llvm_v64i8_ty, llvm_i128_ty],
+     [llvm_v64i8_ty, llvm_i128_ty, llvm_v64i8_ty, llvm_i128_ty, llvm_ptr_ty],
+     []>;
+
+class AIEV2SPARSE_OP_V256I4_set_lo : Intrinsic<[llvm_ptr_ty, llvm_v16i32_ty, llvm_i128_ty],
+     [llvm_v16i32_ty, llvm_i128_ty, llvm_ptr_ty],
+     []>;
+class AIEV2SPARSE_OP_V256I4_insert_hi : Intrinsic<[llvm_ptr_ty, llvm_v16i32_ty, llvm_i128_ty],
+     [llvm_v16i32_ty, llvm_i128_ty, llvm_v16i32_ty, llvm_i128_ty, llvm_ptr_ty],
+     []>;
+
+class AIEV2SPARSE_OP_V64BF16_set_lo : Intrinsic<[llvm_ptr_ty, llvm_v32bf16_ty, llvm_i128_ty],
+     [llvm_v32bf16_ty, llvm_i128_ty, llvm_ptr_ty],
+     []>;
+class AIEV2SPARSE_OP_V64BF16_insert_hi : Intrinsic<[llvm_ptr_ty, llvm_v32bf16_ty, llvm_i128_ty],
+     [llvm_v32bf16_ty, llvm_i128_ty, llvm_v32bf16_ty, llvm_i128_ty, llvm_ptr_ty],
+     []>;
+
+class AIEV2SPARSE_RESET_FILL : Intrinsic<[llvm_ptr_ty],
+     [llvm_ptr_ty],
+     []>;
+
 // LOAD_4X
 class AIEV2LOAD4X : DefaultAttrsIntrinsic<[llvm_v8i32_ty], [llvm_v8i32_ty],
       [IntrReadMem]>;
@@ -602,6 +635,51 @@ def int_aie2_v8float : ClangBuiltin<"__builtin_aiev2_v8float">, AIEV2UNDV8Float;
 def int_aie2_v16float : ClangBuiltin<"__builtin_aiev2_v16float">, AIEV2UNDV16Float;
 def int_aie2_v32float : ClangBuiltin<"__builtin_aiev2_v32float">, AIEV2UNDV32Float;
 
+def int_aie2_sparse_reset_16_and_get_pointer : AIEV2SPARSE_RESET_FILL;
+def int_aie2_sparse_reset_16 : AIEV2SPARSE_RESET_FILL;
+def int_aie2_sparse_reset_8_and_get_pointer : AIEV2SPARSE_RESET_FILL;
+def int_aie2_sparse_reset_8 : AIEV2SPARSE_RESET_FILL;
+def int_aie2_sparse_reset_4_and_get_pointer : AIEV2SPARSE_RESET_FILL;
+def int_aie2_sparse_reset_4 : AIEV2SPARSE_RESET_FILL;
+
+def int_aie2_sparse_fill_16_and_get_pointer : AIEV2SPARSE_RESET_FILL;
+def int_aie2_sparse_fill_16 : AIEV2SPARSE_RESET_FILL;
+def int_aie2_sparse_fill_8_and_get_pointer : AIEV2SPARSE_RESET_FILL;
+def int_aie2_sparse_fill_8 : AIEV2SPARSE_RESET_FILL;
+def int_aie2_sparse_fill_4_and_get_pointer : AIEV2SPARSE_RESET_FILL;
+def int_aie2_sparse_fill_4 : AIEV2SPARSE_RESET_FILL;
+
+def int_aie2_sparse_pop_16_and_get_pointer : AIEV2SPARSE_OP_V64I16_set_lo;
+def int_aie2_sparse_pop_16_set_lo : AIEV2SPARSE_OP_V64I16_set_lo;
+def int_aie2_sparse_pop_16_insert_hi : AIEV2SPARSE_OP_V64I16_insert_hi;
+
+def int_aie2_sparse_peek_16_and_get_pointer : AIEV2SPARSE_OP_V64I16_set_lo;
+def int_aie2_sparse_peek_16_set_lo : AIEV2SPARSE_OP_V64I16_set_lo;
+def int_aie2_sparse_peek_16_insert_hi : AIEV2SPARSE_OP_V64I16_insert_hi;
+
+def int_aie2_sparse_pop_8_and_get_pointer : AIEV2SPARSE_OP_V128I8_set_lo;
+def int_aie2_sparse_pop_8_set_lo : AIEV2SPARSE_OP_V128I8_set_lo;
+def int_aie2_sparse_pop_8_insert_hi : AIEV2SPARSE_OP_V128I8_insert_hi;
+
+def int_aie2_sparse_peek_8_and_get_pointer : AIEV2SPARSE_OP_V128I8_set_lo;
+def int_aie2_sparse_peek_8_set_lo : AIEV2SPARSE_OP_V128I8_set_lo;
+def int_aie2_sparse_peek_8_insert_hi : AIEV2SPARSE_OP_V128I8_insert_hi;
+
+def int_aie2_sparse_pop_4_and_get_pointer : AIEV2SPARSE_OP_V256I4_set_lo;
+def int_aie2_sparse_pop_4_set_lo : AIEV2SPARSE_OP_V256I4_set_lo;
+def int_aie2_sparse_pop_4_insert_hi : AIEV2SPARSE_OP_V256I4_insert_hi;
+
+def int_aie2_sparse_peek_4_and_get_pointer : AIEV2SPARSE_OP_V256I4_set_lo;
+def int_aie2_sparse_peek_4_set_lo : AIEV2SPARSE_OP_V256I4_set_lo;
+def int_aie2_sparse_peek_4_insert_hi : AIEV2SPARSE_OP_V256I4_insert_hi;
+
+def int_aie2_sparse_pop_16_bfloat_and_get_pointer : AIEV2SPARSE_OP_V64BF16_set_lo;
+def int_aie2_sparse_pop_16_bfloat_set_lo : AIEV2SPARSE_OP_V64BF16_set_lo;
+def int_aie2_sparse_pop_16_bfloat_insert_hi : AIEV2SPARSE_OP_V64BF16_insert_hi;
+
+def int_aie2_sparse_peek_16_bfloat_and_get_pointer : AIEV2SPARSE_OP_V64BF16_set_lo;
+def int_aie2_sparse_peek_16_bfloat_set_lo : AIEV2SPARSE_OP_V64BF16_set_lo;
+def int_aie2_sparse_peek_16_bfloat_insert_hi : AIEV2SPARSE_OP_V64BF16_insert_hi;
 
 //return 256-reg from 128-reg
 def int_aie2_get_I256_I128 : ClangBuiltin<"__builtin_aiev2_get_I256_I128">, AIEV2GET_I256_I128;
