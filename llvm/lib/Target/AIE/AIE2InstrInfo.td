@@ -387,6 +387,55 @@ let isMeta = true, hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
   def CYCLE_SEPARATOR : Pseudo<(outs), (ins)>;
 }
 
+// Pseudo instructions for VLD.SPARSE to be expanded after RA. 
+// They allow us to keep QW registers as non allocatable to avoid 
+// spilling half mask registers.
+let mayLoad = true, mayStore = true, hasSideEffects = true in {
+  let Constraints = "$ptr_out = $ptr" in {
+    class PSEUDO_VLD_SPARSE_OP_set_low : Pseudo<
+      (outs eP:$ptr_out, SPARSEVEC640:$dst),
+      (ins eP:$ptr)>;
+  }
+  let Constraints = "$ptr_out = $ptr, $dst = $src" in {
+    class PSEUDO_VLD_SPARSE_OP_insert_hi : Pseudo<
+      (outs eP:$ptr_out, SPARSEVEC640:$dst),
+      (ins eP:$ptr, SPARSEVEC640:$src)>;
+  }
+  class PSEUDO_VLD_SPARSE_OP_and_get_pointer : Pseudo<
+    (outs eDN0:$ptr_out, SPARSEVEC640:$dst),
+    (ins eP:$ptr)>;
+  class PSEUDO_VLD_SPARSE_INIT_and_get_pointer : Pseudo<
+    (outs eDN0:$ptr_out), (ins eP:$ptr)>;
+
+  def PSEUDO_VLD_SPARSE_PEEK_16_set_low : PSEUDO_VLD_SPARSE_OP_set_low;
+  def PSEUDO_VLD_SPARSE_PEEK_16_insert_hi : PSEUDO_VLD_SPARSE_OP_insert_hi;
+  def PSEUDO_VLD_SPARSE_PEEK_16_and_get_pointer : PSEUDO_VLD_SPARSE_OP_and_get_pointer;
+  def PSEUDO_VLD_SPARSE_POP_16_set_low : PSEUDO_VLD_SPARSE_OP_set_low;
+  def PSEUDO_VLD_SPARSE_POP_16_insert_hi : PSEUDO_VLD_SPARSE_OP_insert_hi;
+  def PSEUDO_VLD_SPARSE_POP_16_and_get_pointer : PSEUDO_VLD_SPARSE_OP_and_get_pointer;
+
+  def PSEUDO_VLD_SPARSE_PEEK_8_set_low : PSEUDO_VLD_SPARSE_OP_set_low;
+  def PSEUDO_VLD_SPARSE_PEEK_8_insert_hi : PSEUDO_VLD_SPARSE_OP_insert_hi;
+  def PSEUDO_VLD_SPARSE_PEEK_8_and_get_pointer : PSEUDO_VLD_SPARSE_OP_and_get_pointer;
+  def PSEUDO_VLD_SPARSE_POP_8_set_low : PSEUDO_VLD_SPARSE_OP_set_low;
+  def PSEUDO_VLD_SPARSE_POP_8_insert_hi : PSEUDO_VLD_SPARSE_OP_insert_hi;
+  def PSEUDO_VLD_SPARSE_POP_8_and_get_pointer : PSEUDO_VLD_SPARSE_OP_and_get_pointer;
+
+  def PSEUDO_VLD_SPARSE_PEEK_4_set_low : PSEUDO_VLD_SPARSE_OP_set_low;
+  def PSEUDO_VLD_SPARSE_PEEK_4_insert_hi : PSEUDO_VLD_SPARSE_OP_insert_hi;
+  def PSEUDO_VLD_SPARSE_PEEK_4_and_get_pointer : PSEUDO_VLD_SPARSE_OP_and_get_pointer;
+  def PSEUDO_VLD_SPARSE_POP_4_set_low : PSEUDO_VLD_SPARSE_OP_set_low;
+  def PSEUDO_VLD_SPARSE_POP_4_insert_hi : PSEUDO_VLD_SPARSE_OP_insert_hi;
+  def PSEUDO_VLD_SPARSE_POP_4_and_get_pointer : PSEUDO_VLD_SPARSE_OP_and_get_pointer;
+
+  def PSEUDO_VLD_SPARSE_RESET_16_and_get_pointer : PSEUDO_VLD_SPARSE_INIT_and_get_pointer;
+  def PSEUDO_VLD_SPARSE_FILL_16_and_get_pointer : PSEUDO_VLD_SPARSE_INIT_and_get_pointer;
+  def PSEUDO_VLD_SPARSE_RESET_8_and_get_pointer : PSEUDO_VLD_SPARSE_INIT_and_get_pointer;
+  def PSEUDO_VLD_SPARSE_FILL_8_and_get_pointer : PSEUDO_VLD_SPARSE_INIT_and_get_pointer;
+  def PSEUDO_VLD_SPARSE_RESET_4_and_get_pointer : PSEUDO_VLD_SPARSE_INIT_and_get_pointer;
+  def PSEUDO_VLD_SPARSE_FILL_4_and_get_pointer : PSEUDO_VLD_SPARSE_INIT_and_get_pointer;
+}
+
 // Pseudo instructions for branches. Those are used by ISel and carry the right
 // attributes for optimizations to work. They get expanded right before post-RA
 // scheduling to target instructions with encoding information.

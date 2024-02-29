@@ -112,6 +112,8 @@ public:
                                Register Incr2Reg, Register Size1Reg,
                                Register Count1Reg, Register Size2Reg,
                                Register Count2Reg, MachineRegisterInfo &MRI);
+  Register createSparseRegSequence(Register Vec, Register Mask,
+                                   MachineRegisterInfo &MRI);
   void insertPtrAddForOffset(MachineRegisterInfo &MRI, MachineInstr &MemI);
   bool selectCopy(MachineInstr &I, MachineRegisterInfo &MRI);
   /// set \a CRReg based on \a ValueReg before \a I and set \a CRReg based on \a
@@ -198,6 +200,8 @@ public:
   bool selectGetSS(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectPutMSB(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectPutMSNB(MachineInstr &I, MachineRegisterInfo &MRI);
+  bool selectVLDSparseOP_Pseudo(MachineInstr &I, MachineRegisterInfo &MRI);
+  bool selectVLDSparseINIT_Pseudo(MachineInstr &I, MachineRegisterInfo &MRI);
 
   static const char *getName() { return DEBUG_TYPE; }
 
@@ -682,6 +686,44 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
       return selectPutMSB(I, MRI);
     case Intrinsic::aie2_put_ms_nb:
       return selectPutMSNB(I, MRI);
+    case Intrinsic::aie2_sparse_pop_16_and_get_pointer:
+    case Intrinsic::aie2_sparse_pop_16_set_lo:
+    case Intrinsic::aie2_sparse_pop_16_insert_hi:
+    case Intrinsic::aie2_sparse_peek_16_and_get_pointer:
+    case Intrinsic::aie2_sparse_peek_16_set_lo:
+    case Intrinsic::aie2_sparse_peek_16_insert_hi:
+    case Intrinsic::aie2_sparse_pop_16_bfloat_and_get_pointer:
+    case Intrinsic::aie2_sparse_pop_16_bfloat_set_lo:
+    case Intrinsic::aie2_sparse_pop_16_bfloat_insert_hi:
+    case Intrinsic::aie2_sparse_peek_16_bfloat_and_get_pointer:
+    case Intrinsic::aie2_sparse_peek_16_bfloat_set_lo:
+    case Intrinsic::aie2_sparse_peek_16_bfloat_insert_hi:
+    case Intrinsic::aie2_sparse_pop_8_and_get_pointer:
+    case Intrinsic::aie2_sparse_pop_8_set_lo:
+    case Intrinsic::aie2_sparse_pop_8_insert_hi:
+    case Intrinsic::aie2_sparse_peek_8_and_get_pointer:
+    case Intrinsic::aie2_sparse_peek_8_set_lo:
+    case Intrinsic::aie2_sparse_peek_8_insert_hi:
+    case Intrinsic::aie2_sparse_pop_4_and_get_pointer:
+    case Intrinsic::aie2_sparse_pop_4_set_lo:
+    case Intrinsic::aie2_sparse_pop_4_insert_hi:
+    case Intrinsic::aie2_sparse_peek_4_and_get_pointer:
+    case Intrinsic::aie2_sparse_peek_4_set_lo:
+    case Intrinsic::aie2_sparse_peek_4_insert_hi:
+      return selectVLDSparseOP_Pseudo(I, MRI);
+    case Intrinsic::aie2_sparse_reset_16_and_get_pointer:
+    case Intrinsic::aie2_sparse_reset_16:
+    case Intrinsic::aie2_sparse_fill_16_and_get_pointer:
+    case Intrinsic::aie2_sparse_fill_16:
+    case Intrinsic::aie2_sparse_reset_8_and_get_pointer:
+    case Intrinsic::aie2_sparse_reset_8:
+    case Intrinsic::aie2_sparse_fill_8_and_get_pointer:
+    case Intrinsic::aie2_sparse_fill_8:
+    case Intrinsic::aie2_sparse_reset_4_and_get_pointer:
+    case Intrinsic::aie2_sparse_reset_4:
+    case Intrinsic::aie2_sparse_fill_4_and_get_pointer:
+    case Intrinsic::aie2_sparse_fill_4:
+      return selectVLDSparseINIT_Pseudo(I, MRI);
     default:
       return selectImpl(I, *CoverageInfo);
     }
@@ -2878,6 +2920,22 @@ Register AIE2InstructionSelector::createDRegSequence(Register ModifierReg,
 
   return MI.getReg(0);
 }
+Register
+AIE2InstructionSelector::createSparseRegSequence(Register Vec, Register Mask,
+                                                 MachineRegisterInfo &MRI) {
+  Register DstDReg = MRI.createVirtualRegister(&AIE2::SPARSEVEC640RegClass);
+  MachineInstrBuilder MI =
+      MIB.buildInstr(TargetOpcode::REG_SEQUENCE, {DstDReg}, {})
+          .addReg(Vec)
+          .addImm(AIE2::sub_sparse_x)
+          .addReg(Mask)
+          .addImm(AIE2::sub_sparse_q);
+  constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *MI, AIE2::VEC512RegClass,
+                           MI->getOperand(1));
+  constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *MI, AIE2::VEC128RegClass,
+                           MI->getOperand(3));
+  return MI.getReg(0);
+}
 
 Register AIE2InstructionSelector::createDSRegSequence(
     Register ModifierReg, Register Incr1Reg, Register Incr2Reg,
@@ -4879,6 +4937,228 @@ bool AIE2InstructionSelector::selectPutMSNB(MachineInstr &I,
 
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
+}
+unsigned int getVLDSparseOpcode(MachineInstr &I) {
+  switch (cast<GIntrinsic>(I).getIntrinsicID()) {
+  case Intrinsic::aie2_sparse_pop_16_and_get_pointer:
+  case Intrinsic::aie2_sparse_pop_16_bfloat_and_get_pointer:
+    return AIE2::PSEUDO_VLD_SPARSE_POP_16_and_get_pointer;
+  case Intrinsic::aie2_sparse_pop_16_set_lo:
+  case Intrinsic::aie2_sparse_pop_16_bfloat_set_lo:
+    return AIE2::PSEUDO_VLD_SPARSE_POP_16_set_low;
+  case Intrinsic::aie2_sparse_pop_16_insert_hi:
+  case Intrinsic::aie2_sparse_pop_16_bfloat_insert_hi:
+    return AIE2::PSEUDO_VLD_SPARSE_POP_16_insert_hi;
+  case Intrinsic::aie2_sparse_peek_16_and_get_pointer:
+  case Intrinsic::aie2_sparse_peek_16_bfloat_and_get_pointer:
+    return AIE2::PSEUDO_VLD_SPARSE_PEEK_16_and_get_pointer;
+  case Intrinsic::aie2_sparse_peek_16_set_lo:
+  case Intrinsic::aie2_sparse_peek_16_bfloat_set_lo:
+    return AIE2::PSEUDO_VLD_SPARSE_PEEK_16_set_low;
+  case Intrinsic::aie2_sparse_peek_16_insert_hi:
+  case Intrinsic::aie2_sparse_peek_16_bfloat_insert_hi:
+    return AIE2::PSEUDO_VLD_SPARSE_PEEK_16_insert_hi;
+  case Intrinsic::aie2_sparse_pop_8_and_get_pointer:
+    return AIE2::PSEUDO_VLD_SPARSE_POP_8_and_get_pointer;
+  case Intrinsic::aie2_sparse_pop_8_set_lo:
+    return AIE2::PSEUDO_VLD_SPARSE_POP_8_set_low;
+  case Intrinsic::aie2_sparse_pop_8_insert_hi:
+    return AIE2::PSEUDO_VLD_SPARSE_POP_8_insert_hi;
+  case Intrinsic::aie2_sparse_peek_8_and_get_pointer:
+    return AIE2::PSEUDO_VLD_SPARSE_PEEK_8_and_get_pointer;
+  case Intrinsic::aie2_sparse_peek_8_set_lo:
+    return AIE2::PSEUDO_VLD_SPARSE_PEEK_8_set_low;
+  case Intrinsic::aie2_sparse_peek_8_insert_hi:
+    return AIE2::PSEUDO_VLD_SPARSE_PEEK_8_insert_hi;
+  case Intrinsic::aie2_sparse_pop_4_and_get_pointer:
+    return AIE2::PSEUDO_VLD_SPARSE_POP_4_and_get_pointer;
+  case Intrinsic::aie2_sparse_pop_4_set_lo:
+    return AIE2::PSEUDO_VLD_SPARSE_POP_4_set_low;
+  case Intrinsic::aie2_sparse_pop_4_insert_hi:
+    return AIE2::PSEUDO_VLD_SPARSE_POP_4_insert_hi;
+  case Intrinsic::aie2_sparse_peek_4_and_get_pointer:
+    return AIE2::PSEUDO_VLD_SPARSE_PEEK_4_and_get_pointer;
+  case Intrinsic::aie2_sparse_peek_4_set_lo:
+    return AIE2::PSEUDO_VLD_SPARSE_PEEK_4_set_low;
+  case Intrinsic::aie2_sparse_peek_4_insert_hi:
+    return AIE2::PSEUDO_VLD_SPARSE_PEEK_4_insert_hi;
+  case Intrinsic::aie2_sparse_reset_16:
+    return AIE2::VLDB_SPARSE_RESET_16;
+  case Intrinsic::aie2_sparse_fill_16:
+    return AIE2::VLDB_SPARSE_FILL_16;
+  case Intrinsic::aie2_sparse_reset_16_and_get_pointer:
+    return AIE2::PSEUDO_VLD_SPARSE_RESET_16_and_get_pointer;
+  case Intrinsic::aie2_sparse_fill_16_and_get_pointer:
+    return AIE2::PSEUDO_VLD_SPARSE_FILL_16_and_get_pointer;
+  case Intrinsic::aie2_sparse_reset_8:
+    return AIE2::VLDB_SPARSE_RESET_8;
+  case Intrinsic::aie2_sparse_fill_8:
+    return AIE2::VLDB_SPARSE_FILL_8;
+  case Intrinsic::aie2_sparse_reset_8_and_get_pointer:
+    return AIE2::PSEUDO_VLD_SPARSE_RESET_8_and_get_pointer;
+  case Intrinsic::aie2_sparse_fill_8_and_get_pointer:
+    return AIE2::PSEUDO_VLD_SPARSE_FILL_8_and_get_pointer;
+  case Intrinsic::aie2_sparse_reset_4:
+    return AIE2::VLDB_SPARSE_RESET_4;
+  case Intrinsic::aie2_sparse_fill_4:
+    return AIE2::VLDB_SPARSE_FILL_4;
+  case Intrinsic::aie2_sparse_reset_4_and_get_pointer:
+    return AIE2::PSEUDO_VLD_SPARSE_RESET_4_and_get_pointer;
+  case Intrinsic::aie2_sparse_fill_4_and_get_pointer:
+    return AIE2::PSEUDO_VLD_SPARSE_FILL_4_and_get_pointer;
+  }
+  llvm_unreachable("unreachable: Failed to get sparse load opcode");
+  return AIE2::INSTRUCTION_LIST_END;
+}
+bool AIE2InstructionSelector::selectVLDSparseOP_Pseudo(
+    MachineInstr &I, MachineRegisterInfo &MRI) {
+  switch (cast<GIntrinsic>(I).getIntrinsicID()) {
+  case Intrinsic::aie2_sparse_pop_16_and_get_pointer:
+  case Intrinsic::aie2_sparse_pop_16_bfloat_and_get_pointer:
+  case Intrinsic::aie2_sparse_pop_8_and_get_pointer:
+  case Intrinsic::aie2_sparse_pop_4_and_get_pointer:
+  case Intrinsic::aie2_sparse_peek_16_and_get_pointer:
+  case Intrinsic::aie2_sparse_peek_16_bfloat_and_get_pointer:
+  case Intrinsic::aie2_sparse_peek_8_and_get_pointer:
+  case Intrinsic::aie2_sparse_peek_4_and_get_pointer: {
+    Register PtrOut = I.getOperand(0).getReg();
+    Register VecOut = I.getOperand(1).getReg();
+    Register MaskOut = I.getOperand(2).getReg();
+    Register PtrIn = I.getOperand(6).getReg();
+
+    Register OutPtrLow = MRI.createVirtualRegister(&AIE2::eDN0RegClass);
+    Register OutSparseVecLow =
+        MRI.createVirtualRegister(&AIE2::SPARSEVEC640RegClass);
+    MachineInstrBuilder PseudoMI = MIB.buildInstr(
+        getVLDSparseOpcode(I), {OutPtrLow, OutSparseVecLow}, {PtrIn});
+
+    auto VecCopyMI = MIB.buildInstr(TargetOpcode::COPY, {VecOut}, {})
+                         .addReg(OutSparseVecLow, 0, AIE2::sub_sparse_x);
+    auto MaskCopyMI = MIB.buildInstr(TargetOpcode::COPY, {MaskOut}, {})
+                          .addReg(OutSparseVecLow, 0, AIE2::sub_sparse_q);
+    constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *VecCopyMI,
+                             AIE2::VEC512RegClass, VecCopyMI->getOperand(0));
+    constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *MaskCopyMI,
+                             AIE2::VEC128RegClass, MaskCopyMI->getOperand(0));
+    MIB.buildInstr(TargetOpcode::COPY, {PtrOut}, {}).addReg(OutPtrLow);
+
+    I.eraseFromParent();
+    return constrainSelectedInstRegOperands(*PseudoMI, TII, TRI, RBI);
+  }
+  case Intrinsic::aie2_sparse_pop_16_set_lo:
+  case Intrinsic::aie2_sparse_pop_16_bfloat_set_lo:
+  case Intrinsic::aie2_sparse_pop_8_set_lo:
+  case Intrinsic::aie2_sparse_pop_4_set_lo:
+  case Intrinsic::aie2_sparse_peek_16_set_lo:
+  case Intrinsic::aie2_sparse_peek_16_bfloat_set_lo:
+  case Intrinsic::aie2_sparse_peek_8_set_lo:
+  case Intrinsic::aie2_sparse_peek_4_set_lo: {
+    Register PtrOut = I.getOperand(0).getReg();
+    Register VecOut = I.getOperand(1).getReg();
+    Register MaskOut = I.getOperand(2).getReg();
+    Register PtrIn = I.getOperand(6).getReg();
+
+    Register OutPtrLow = MRI.createVirtualRegister(&AIE2::ePRegClass);
+    Register OutSparseVecLow =
+        MRI.createVirtualRegister(&AIE2::SPARSEVEC640RegClass);
+    MachineInstrBuilder PseudoMI = MIB.buildInstr(
+        getVLDSparseOpcode(I), {OutPtrLow, OutSparseVecLow}, {PtrIn});
+
+    auto VecCopyMI = MIB.buildInstr(TargetOpcode::COPY, {VecOut}, {})
+                         .addReg(OutSparseVecLow, 0, AIE2::sub_sparse_x);
+    auto MaskCopyMI = MIB.buildInstr(TargetOpcode::COPY, {MaskOut}, {})
+                          .addReg(OutSparseVecLow, 0, AIE2::sub_sparse_q);
+    constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *VecCopyMI,
+                             AIE2::VEC512RegClass, VecCopyMI->getOperand(0));
+    constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *MaskCopyMI,
+                             AIE2::VEC128RegClass, MaskCopyMI->getOperand(0));
+    MIB.buildInstr(TargetOpcode::COPY, {PtrOut}, {}).addReg(OutPtrLow);
+
+    I.eraseFromParent();
+    return constrainSelectedInstRegOperands(*PseudoMI, TII, TRI, RBI);
+  }
+  case Intrinsic::aie2_sparse_pop_16_insert_hi:
+  case Intrinsic::aie2_sparse_pop_16_bfloat_insert_hi:
+  case Intrinsic::aie2_sparse_pop_8_insert_hi:
+  case Intrinsic::aie2_sparse_pop_4_insert_hi:
+  case Intrinsic::aie2_sparse_peek_16_insert_hi:
+  case Intrinsic::aie2_sparse_peek_16_bfloat_insert_hi:
+  case Intrinsic::aie2_sparse_peek_8_insert_hi:
+  case Intrinsic::aie2_sparse_peek_4_insert_hi: {
+    Register PtrOut = I.getOperand(0).getReg();
+    Register VecOut = I.getOperand(1).getReg();
+    Register MaskOut = I.getOperand(2).getReg();
+    Register VecIn = I.getOperand(6).getReg();
+    Register MaskIn = I.getOperand(7).getReg();
+    Register PtrIn = I.getOperand(8).getReg();
+
+    Register OutPtr = MRI.createVirtualRegister(&AIE2::ePRegClass);
+    Register InSparseVecSeq = createSparseRegSequence(VecIn, MaskIn, MRI);
+    Register OutSparseVec =
+        MRI.createVirtualRegister(&AIE2::SPARSEVEC640RegClass);
+    MachineInstrBuilder PseudoMI = MIB.buildInstr(
+        getVLDSparseOpcode(I), {OutPtr, OutSparseVec}, {PtrIn, InSparseVecSeq});
+
+    auto VecCopyMI = MIB.buildInstr(TargetOpcode::COPY, {VecOut}, {})
+                         .addReg(OutSparseVec, 0, AIE2::sub_sparse_x);
+    auto MaskCopyMI = MIB.buildInstr(TargetOpcode::COPY, {MaskOut}, {})
+                          .addReg(OutSparseVec, 0, AIE2::sub_sparse_q);
+    auto PtrCopyMI = MIB.buildInstr(TargetOpcode::COPY, {PtrOut}, {OutPtr});
+
+    constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *PtrCopyMI,
+                             AIE2::ePRegClass, PtrCopyMI->getOperand(0));
+    constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *VecCopyMI,
+                             AIE2::VEC512RegClass, VecCopyMI->getOperand(0));
+    constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *MaskCopyMI,
+                             AIE2::VEC128RegClass, MaskCopyMI->getOperand(0));
+
+    I.eraseFromParent();
+    return constrainSelectedInstRegOperands(*PseudoMI, TII, TRI, RBI);
+  }
+  }
+  return false;
+}
+
+bool AIE2InstructionSelector::selectVLDSparseINIT_Pseudo(
+    MachineInstr &I, MachineRegisterInfo &MRI) {
+  switch (cast<GIntrinsic>(I).getIntrinsicID()) {
+  case Intrinsic::aie2_sparse_fill_4:
+  case Intrinsic::aie2_sparse_reset_4:
+  case Intrinsic::aie2_sparse_fill_8:
+  case Intrinsic::aie2_sparse_reset_8:
+  case Intrinsic::aie2_sparse_fill_16:
+  case Intrinsic::aie2_sparse_reset_16: {
+    Register PtrIn = I.getOperand(2).getReg();
+    Register OutPtr = MRI.createVirtualRegister(&AIE2::ePRegClass);
+    MachineInstrBuilder MI =
+        MIB.buildInstr(getVLDSparseOpcode(I), {OutPtr}, {PtrIn});
+    Register PtrOut = I.getOperand(0).getReg();
+    auto PtrCopyMI = MIB.buildInstr(TargetOpcode::COPY, {PtrOut}, {OutPtr});
+    constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *PtrCopyMI,
+                             AIE2::ePRegClass, PtrCopyMI->getOperand(0));
+    I.eraseFromParent();
+    return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
+  }
+  case Intrinsic::aie2_sparse_fill_4_and_get_pointer:
+  case Intrinsic::aie2_sparse_reset_4_and_get_pointer:
+  case Intrinsic::aie2_sparse_fill_8_and_get_pointer:
+  case Intrinsic::aie2_sparse_reset_8_and_get_pointer:
+  case Intrinsic::aie2_sparse_fill_16_and_get_pointer:
+  case Intrinsic::aie2_sparse_reset_16_and_get_pointer: {
+    Register PtrIn = I.getOperand(2).getReg();
+    Register OutPtr = MRI.createVirtualRegister(&AIE2::eDN0RegClass);
+    MachineInstrBuilder MI =
+        MIB.buildInstr(getVLDSparseOpcode(I), {OutPtr}, {PtrIn});
+    Register PtrOut = I.getOperand(0).getReg();
+    auto PtrCopyMI = MIB.buildInstr(TargetOpcode::COPY, {PtrOut}, {OutPtr});
+    constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *PtrCopyMI,
+                             AIE2::ePRegClass, PtrCopyMI->getOperand(0));
+    I.eraseFromParent();
+    return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
+  }
+    return false;
+  }
+  return false;
 }
 
 namespace llvm {
