@@ -29,6 +29,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/MachineScheduler.h"
+#include "llvm/CodeGen/Register.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
@@ -732,6 +733,49 @@ unsigned AIE2InstrInfo::getCycleSeparatorOpcode() const {
   return AIE2::CYCLE_SEPARATOR;
 }
 
+unsigned int getVLDSparseOpcode(unsigned int PseudoOpc) {
+  switch (PseudoOpc) {
+  case AIE2::PSEUDO_VLD_SPARSE_POP_16_set_low:
+  case AIE2::PSEUDO_VLD_SPARSE_POP_16_and_get_pointer:
+  case AIE2::PSEUDO_VLD_SPARSE_POP_16_insert_hi:
+    return AIE2::VLDB_SPARSE_POP_16;
+  case AIE2::PSEUDO_VLD_SPARSE_PEEK_16_set_low:
+  case AIE2::PSEUDO_VLD_SPARSE_PEEK_16_and_get_pointer:
+  case AIE2::PSEUDO_VLD_SPARSE_PEEK_16_insert_hi:
+    return AIE2::VLDB_SPARSE_PEEK_16;
+  case AIE2::PSEUDO_VLD_SPARSE_RESET_16_and_get_pointer:
+    return AIE2::VLDB_SPARSE_RESET_16;
+  case AIE2::PSEUDO_VLD_SPARSE_FILL_16_and_get_pointer:
+    return AIE2::VLDB_SPARSE_FILL_16;
+  case AIE2::PSEUDO_VLD_SPARSE_POP_8_set_low:
+  case AIE2::PSEUDO_VLD_SPARSE_POP_8_and_get_pointer:
+  case AIE2::PSEUDO_VLD_SPARSE_POP_8_insert_hi:
+    return AIE2::VLDB_SPARSE_POP_8;
+  case AIE2::PSEUDO_VLD_SPARSE_PEEK_8_set_low:
+  case AIE2::PSEUDO_VLD_SPARSE_PEEK_8_and_get_pointer:
+  case AIE2::PSEUDO_VLD_SPARSE_PEEK_8_insert_hi:
+    return AIE2::VLDB_SPARSE_PEEK_8;
+  case AIE2::PSEUDO_VLD_SPARSE_RESET_8_and_get_pointer:
+    return AIE2::VLDB_SPARSE_RESET_8;
+  case AIE2::PSEUDO_VLD_SPARSE_FILL_8_and_get_pointer:
+    return AIE2::VLDB_SPARSE_FILL_8;
+  case AIE2::PSEUDO_VLD_SPARSE_POP_4_set_low:
+  case AIE2::PSEUDO_VLD_SPARSE_POP_4_and_get_pointer:
+  case AIE2::PSEUDO_VLD_SPARSE_POP_4_insert_hi:
+    return AIE2::VLDB_SPARSE_POP_4;
+  case AIE2::PSEUDO_VLD_SPARSE_PEEK_4_set_low:
+  case AIE2::PSEUDO_VLD_SPARSE_PEEK_4_and_get_pointer:
+  case AIE2::PSEUDO_VLD_SPARSE_PEEK_4_insert_hi:
+    return AIE2::VLDB_SPARSE_PEEK_4;
+  case AIE2::PSEUDO_VLD_SPARSE_RESET_4_and_get_pointer:
+    return AIE2::VLDB_SPARSE_RESET_4;
+  case AIE2::PSEUDO_VLD_SPARSE_FILL_4_and_get_pointer:
+    return AIE2::VLDB_SPARSE_FILL_4;
+  }
+  llvm_unreachable("unreachable: Failed to get sparse load opcode");
+  return AIE2::INSTRUCTION_LIST_END;
+}
+
 bool AIE2InstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
   auto DL = MI.getDebugLoc();
   MachineBasicBlock &MBB = *MI.getParent();
@@ -763,6 +807,78 @@ bool AIE2InstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
     Register Src = MI.getOperand(1).getReg();
     BuildMI(MBB, MI, DL, get(AIE2::MOV_mv_scl), Dst)
         .addReg(Src, getKillRegState(true));
+    MI.eraseFromParent();
+    return true;
+  }
+  case AIE2::PSEUDO_VLD_SPARSE_PEEK_4_set_low:
+  case AIE2::PSEUDO_VLD_SPARSE_POP_4_set_low:
+  case AIE2::PSEUDO_VLD_SPARSE_PEEK_8_set_low:
+  case AIE2::PSEUDO_VLD_SPARSE_POP_8_set_low:
+  case AIE2::PSEUDO_VLD_SPARSE_PEEK_16_set_low:
+  case AIE2::PSEUDO_VLD_SPARSE_POP_16_set_low: {
+    Register PtrIn = MI.getOperand(2).getReg();
+    Register PtrOut = MI.getOperand(0).getReg();
+    Register SparseOut = MI.getOperand(1).getReg();
+    Register QWl = SparseOut.asMCReg() - 4;
+
+    BuildMI(MBB, MI, DL, get(getVLDSparseOpcode(MI.getOpcode())))
+        .addDef(PtrOut)
+        .addDef(QWl)
+        .addUse(PtrIn);
+
+    MI.eraseFromParent();
+    return true;
+  }
+  case AIE2::PSEUDO_VLD_SPARSE_PEEK_4_and_get_pointer:
+  case AIE2::PSEUDO_VLD_SPARSE_POP_4_and_get_pointer:
+  case AIE2::PSEUDO_VLD_SPARSE_PEEK_8_and_get_pointer:
+  case AIE2::PSEUDO_VLD_SPARSE_POP_8_and_get_pointer:
+  case AIE2::PSEUDO_VLD_SPARSE_PEEK_16_and_get_pointer:
+  case AIE2::PSEUDO_VLD_SPARSE_POP_16_and_get_pointer: {
+    Register PtrIn = MI.getOperand(2).getReg();
+    Register SparseOut = MI.getOperand(1).getReg();
+    Register QWl = SparseOut.asMCReg() - 4;
+    BuildMI(MBB, MI, DL, get(getVLDSparseOpcode(MI.getOpcode())))
+        .addDef(PtrIn)
+        .addDef(QWl)
+        .addUse(PtrIn);
+    BuildMI(MBB, MI, DL, get(AIE2::MOV_mv_scl))
+        .addDef(AIE2::dn0)
+        .addUse(AIE2::DP);
+    MI.eraseFromParent();
+    return true;
+  }
+  case AIE2::PSEUDO_VLD_SPARSE_PEEK_4_insert_hi:
+  case AIE2::PSEUDO_VLD_SPARSE_POP_4_insert_hi:
+  case AIE2::PSEUDO_VLD_SPARSE_PEEK_8_insert_hi:
+  case AIE2::PSEUDO_VLD_SPARSE_POP_8_insert_hi:
+  case AIE2::PSEUDO_VLD_SPARSE_PEEK_16_insert_hi:
+  case AIE2::PSEUDO_VLD_SPARSE_POP_16_insert_hi: {
+    Register PtrIn = MI.getOperand(2).getReg();
+    Register PtrOut = MI.getOperand(0).getReg();
+    Register SparseOut = MI.getOperand(1).getReg();
+    Register QWh = SparseOut.asMCReg() - 8;
+
+    BuildMI(MBB, MI, DL, get(getVLDSparseOpcode(MI.getOpcode())))
+        .addDef(PtrOut)
+        .addDef(QWh)
+        .addUse(PtrIn);
+    MI.eraseFromParent();
+    return true;
+  }
+  case AIE2::PSEUDO_VLD_SPARSE_RESET_4_and_get_pointer:
+  case AIE2::PSEUDO_VLD_SPARSE_FILL_4_and_get_pointer:
+  case AIE2::PSEUDO_VLD_SPARSE_RESET_8_and_get_pointer:
+  case AIE2::PSEUDO_VLD_SPARSE_FILL_8_and_get_pointer:
+  case AIE2::PSEUDO_VLD_SPARSE_RESET_16_and_get_pointer:
+  case AIE2::PSEUDO_VLD_SPARSE_FILL_16_and_get_pointer: {
+    Register PtrIn = MI.getOperand(1).getReg();
+    BuildMI(MBB, MI, DL, get(getVLDSparseOpcode(MI.getOpcode())))
+        .addDef(PtrIn)
+        .addUse(PtrIn);
+    BuildMI(MBB, MI, DL, get(AIE2::MOV_mv_scl))
+        .addDef(AIE2::dn0)
+        .addUse(AIE2::DP);
     MI.eraseFromParent();
     return true;
   }
