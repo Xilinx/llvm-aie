@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 /// \file
 ///
@@ -167,6 +170,11 @@ static cl::opt<bool> PerformMandatoryInliningsFirst(
     "mandatory-inlining-first", cl::init(false), cl::Hidden,
     cl::desc("Perform mandatory inlinings module-wide, before performing "
              "inlining"));
+
+static cl::opt<bool> PerformMandatoryInliningsBeforeOpt(
+    "mandatory-inlining-before-opt", cl::init(true), cl::Hidden,
+    cl::desc(
+        "Perform mandatory inlinings before performing module optimizations"));
 
 static cl::opt<bool> EnableEagerlyInvalidateAnalyses(
     "eagerly-invalidate-analyses", cl::init(true), cl::Hidden,
@@ -1137,7 +1145,8 @@ PassBuilder::buildModuleSimplificationPipeline(OptimizationLevel Level,
   if (EnableSyntheticCounts && !PGOOpt)
     MPM.addPass(SyntheticCountsPropagation());
 
-  MPM.addPass(AlwaysInlinerPass(/*InsertLifetimeIntrinsics=*/true));
+  if (PerformMandatoryInliningsBeforeOpt)
+    MPM.addPass(AlwaysInlinerPass(/*InsertLifetimeIntrinsics=*/true));
 
   if (EnableModuleInliner)
     MPM.addPass(buildModuleInlinerPipeline(Level, Phase));
