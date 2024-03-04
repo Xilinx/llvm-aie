@@ -9,6 +9,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIETestTarget.h"
+#include "AIEBaseInstrInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/TargetFrameLowering.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
@@ -46,11 +47,11 @@ SubtargetSubTypeKV ProcModels[] = {SubtargetSubTypeKV{
 
 } // namespace
 
-class AIETestSubTarget : public TestSubTarget<TargetInstrInfo> {
+class AIETestSubTarget : public TestSubTarget<AIEBaseInstrInfo> {
 public:
   AIETestSubTarget(TargetMachine &TM)
-      : TestSubTarget<TargetInstrInfo>(TM, "aie-test", "aie-test", ProcModels) {
-  }
+      : TestSubTarget<AIEBaseInstrInfo>(TM, "aie-test", "aie-test",
+                                        ProcModels) {}
 };
 
 LLVMTargetMachine *llvm::AIE::createAIETestTargetMachine() {

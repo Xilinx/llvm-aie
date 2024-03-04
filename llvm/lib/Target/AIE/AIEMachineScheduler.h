@@ -28,6 +28,10 @@ using BlockType = AIE::BlockType;
 using Region = AIE::Region;
 using ScoreboardTrust = AIE::ScoreboardTrust;
 
+namespace AIE {
+std::vector<AIE::MachineBundle> computeAndFinalizeBundles(SchedBoundary &Zone);
+} // namespace AIE
+
 /// A MachineSchedStrategy implementation for AIE post RA scheduling.
 class AIEPostRASchedStrategy : public PostGenericScheduler {
   /// Maintain the state of interblock/loop-aware scheduling

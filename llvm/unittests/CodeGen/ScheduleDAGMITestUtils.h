@@ -78,7 +78,7 @@ protected:
 /// instructions without actual name or valid MCDesc.
 struct MISeq {
   std::vector<const MachineInstr *> Seq;
-  MISeq(std::initializer_list<const MachineInstr *> L) : Seq(L) {}
+  MISeq(ArrayRef<const MachineInstr *> L) : Seq(L) {}
   MISeq(const MachineBasicBlock &MBB) {
     for (const MachineInstr &MI : MBB)
       Seq.push_back(&MI);
