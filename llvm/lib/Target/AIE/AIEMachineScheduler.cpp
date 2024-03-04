@@ -132,7 +132,10 @@ void bumpCycleForBundles(unsigned ToCycle,
   }
 }
 
-std::vector<AIE::MachineBundle> computeAndFinalizeBundles(SchedBoundary &Zone) {
+} // namespace
+
+std::vector<AIE::MachineBundle>
+llvm::AIE::computeAndFinalizeBundles(SchedBoundary &Zone) {
   LLVM_DEBUG(dbgs() << "Computing Bundles for Zone "
                     << (Zone.isTop() ? "Top\n" : "Bot\n"));
   const ScheduleDAGMI &DAG = *Zone.DAG;
@@ -148,6 +151,14 @@ std::vector<AIE::MachineBundle> computeAndFinalizeBundles(SchedBoundary &Zone) {
       if (!SU)
         continue;
       unsigned EmitCycle = Zone.isTop() ? SU->TopReadyCycle : SU->BotReadyCycle;
+
+      if (!ComputeSlots && EmitCycle < Bundles.size()) {
+        // The pre-RA scheduler can actually re-order copies and immediate
+        // moves, disregarding the emission cycle.
+        // See GenericScheduler::reschedulePhysReg().
+        EmitCycle = Bundles.size();
+      }
+
       if (EmitCycle != Bundles.size())
         bumpCycleForBundles(EmitCycle, Bundles, CurrBundle);
 
@@ -197,6 +208,7 @@ std::vector<AIE::MachineBundle> computeAndFinalizeBundles(SchedBoundary &Zone) {
   return Bundles;
 }
 
+namespace {
 /// Search for instructions that might jump to an unknown target block
 bool hasUnknownSuccessors(
     llvm::iterator_range<MachineBasicBlock::iterator> Region,
