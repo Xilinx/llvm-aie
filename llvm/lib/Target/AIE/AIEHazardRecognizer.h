@@ -80,6 +80,12 @@ public:
 /// with PostRASchedulerList to implement an in-order VLIW scheduling
 /// model without interlocks.
 class AIEHazardRecognizer : public ScheduleHazardRecognizer {
+  int PipelineDepth = -1;
+  int MaxLatency = -1;
+
+  /// Compute the limits from the itinerary data
+  void computeMaxima();
+
 public:
   AIEHazardRecognizer(const AIEBaseInstrInfo *TII, const InstrItineraryData *II,
                       const ScheduleDAG *DAG);
@@ -131,6 +137,24 @@ public:
   /// the opcode selected during scheduling.
   std::optional<unsigned> getSelectedAltOpcode(MachineInstr *MI) const;
 
+  /// The pipeline depth is the depth of the deepest instruction.
+  /// We compute that once from the itineraries.
+  unsigned getPipelineDepth() const;
+
+  /// The maximum latency is the worst case latency we can get according to the
+  /// operand latencies. This may be overestimating, since we don't take
+  /// bypasses or the difference between RAW, WAW and WAR into account.
+  unsigned getMaxLatency() const;
+
+  /// This is the maximum of the pipeline depth and the maximum latency. It is
+  /// the maximum distance at which two instructions can influence each other.
+  int getConflictHorizon() const;
+
+  /// The default scoreboard depth is twice the pipeline depth, so that
+  /// we can insert in the past during backward scheduling.
+  /// For efficiency, this size is rounded up to a power of two.
+  unsigned computeScoreboardDepth() const;
+
 protected:
   ScheduleHazardRecognizer::HazardType
   getHazardType(const MCInstrDesc &Desc, int DeltaCycles,
@@ -140,8 +164,6 @@ protected:
                 std::optional<int> FUDepthLimit);
   void emitInScoreboard(unsigned SchedClass, SlotBits SlotSet, int DeltaCycles,
                         std::optional<int> FUDepthLimit);
-
-  unsigned computeScoreboardDepth() const;
 
 private:
   ResourceScoreboard<FuncUnitWrapper> Scoreboard;

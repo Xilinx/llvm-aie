@@ -186,8 +186,8 @@ public:
 
   /// Return the cycle for the given class and operand. Return std::nullopt if
   /// the information is not available for the operand.
-  std::optional<unsigned> getOperandCycle(unsigned ItinClassIndx,
-                                          unsigned OperandIdx) const {
+  virtual std::optional<unsigned> getOperandCycle(unsigned ItinClassIndx,
+                                                  unsigned OperandIdx) const {
     if (isEmpty())
       return std::nullopt;
 

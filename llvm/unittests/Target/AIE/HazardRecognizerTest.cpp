@@ -71,6 +71,10 @@ public:
     return SchedClass > 12;
   }
   bool isEmpty() const override { return false; }
+  std::optional<unsigned> getOperandCycle(unsigned SchedClass,
+                                          unsigned OpIdx) const override {
+    return {};
+  }
 };
 
 // Not really used, except to get a FormatInterface.
