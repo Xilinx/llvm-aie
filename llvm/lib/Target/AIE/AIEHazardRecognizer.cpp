@@ -380,30 +380,44 @@ static SlotBits getSlotSet(const MCInstrDesc &Desc,
   return ~0;
 }
 
+namespace {
+auto toHazardType(bool Conflict) {
+  return Conflict ? ScheduleHazardRecognizer::NoopHazard
+                  : ScheduleHazardRecognizer::NoHazard;
+}
+} // namespace
+
 // These functions interpret the itinerary, translating InstrStages
 // to ResourceCycles to apply.
 // We deviate from the standard ScoreboardHazardRecognizer by not
 // recognising alternatives
-//
 ScheduleHazardRecognizer::HazardType
 AIEHazardRecognizer::getHazardType(const MCInstrDesc &Desc,
                                    const int DeltaCycles,
                                    std::optional<int> FUDepthLimit) {
-  return getHazardType(Desc.getSchedClass(),
-                       getSlotSet(Desc, *TII->getFormatInterface()),
-                       DeltaCycles, FUDepthLimit);
+  return toHazardType(checkConflict(
+      Scoreboard, ItinData, Desc.getSchedClass(),
+      getSlotSet(Desc, *TII->getFormatInterface()), DeltaCycles, FUDepthLimit));
 }
 
 ScheduleHazardRecognizer::HazardType
 AIEHazardRecognizer::getHazardType(unsigned SchedClass, SlotBits SlotSet,
                                    int DeltaCycles,
                                    std::optional<int> FUDepthLimit) {
+  return toHazardType(checkConflict(Scoreboard, ItinData, SchedClass, SlotSet,
+                                    DeltaCycles, FUDepthLimit));
+}
+
+bool AIEHazardRecognizer::checkConflict(
+    const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+    const InstrItineraryData *ItinData, unsigned SchedClass, SlotBits SlotSet,
+    int DeltaCycles, std::optional<int> FUDepthLimit) {
   assert(Scoreboard.isValidDelta(DeltaCycles));
 
   // Verify format hazards
   FuncUnitWrapper EmissionCycle(/*Req=*/0, /*Res=*/0, SlotSet);
   if (EmissionCycle.conflict(Scoreboard[DeltaCycles]))
-    return ScheduleHazardRecognizer::NoopHazard;
+    return true;
 
   // Note that Delta will be negative for bottom-up scheduling.
   // Cycle is 'our' cycle at which each stage of the itinerary starts.
@@ -423,7 +437,7 @@ AIEHazardRecognizer::getHazardType(unsigned SchedClass, SlotBits SlotSet,
       if (ThisCycle.conflict(Scoreboard[StageCycle])) {
         LLVM_DEBUG(dbgs() << "*** Hazard in execution cycle"
                           << StageCycle - DeltaCycles << ", ");
-        return ScheduleHazardRecognizer::NoopHazard;
+        return true;
       }
     }
 
@@ -431,20 +445,29 @@ AIEHazardRecognizer::getHazardType(unsigned SchedClass, SlotBits SlotSet,
     Cycle += IS.getNextCycles();
   }
 
-  return ScheduleHazardRecognizer::NoHazard;
+  return false;
 }
 
 void AIEHazardRecognizer::emitInScoreboard(const MCInstrDesc &Desc,
                                            int DeltaCycles,
                                            std::optional<int> FUDepthLimit) {
-  emitInScoreboard(Desc.getSchedClass(),
-                   getSlotSet(Desc, *TII->getFormatInterface()), DeltaCycles,
-                   FUDepthLimit);
+  enterResources(Scoreboard, ItinData, Desc.getSchedClass(),
+                 getSlotSet(Desc, *TII->getFormatInterface()), DeltaCycles,
+                 FUDepthLimit);
 }
 
-void AIEHazardRecognizer::emitInScoreboard(unsigned SchedClass,
-                                           SlotBits SlotSet, int DeltaCycles,
-                                           std::optional<int> FUDepthLimit) {
+void AIEHazardRecognizer::emitInScoreboard(
+    ResourceScoreboard<FuncUnitWrapper> &TheScoreboard, const MCInstrDesc &Desc,
+    int DeltaCycles, std::optional<int> FUDepthLimit) const {
+  enterResources(TheScoreboard, ItinData, Desc.getSchedClass(),
+                 getSlotSet(Desc, *TII->getFormatInterface()), DeltaCycles,
+                 FUDepthLimit);
+}
+
+void AIEHazardRecognizer::enterResources(
+    ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+    const InstrItineraryData *ItinData, unsigned SchedClass, SlotBits SlotSet,
+    int DeltaCycles, std::optional<int> FUDepthLimit) {
   assert(Scoreboard.isValidDelta(DeltaCycles));
 
   // Append slot usage

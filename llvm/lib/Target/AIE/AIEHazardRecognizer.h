@@ -119,12 +119,16 @@ public:
   /// issued again.
   void setReservedCycles(unsigned Cycles);
 
-  /// Update the scoreboard for Schedclass at DeltaCycles. It only touches the
+  /// Update Scoreboard for Schedclass at DeltaCycles. It only touches the
   /// scoreboard, in particular, it doesn't add instructions to the bundle.
   /// \param FUDepthLimit Restricts the depth to which itinerary
   ///        resources are recorded in the scoreboard. This is mainly for
   ///        use from the pre-RA scheduler, where detailed resource modelling
   ///        doesn't pay off.
+  void emitInScoreboard(ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+                        const MCInstrDesc &Desc, int DeltaCycles,
+                        std::optional<int> FUDepthLimit) const;
+  // Apply the above function to the local scoreboard.
   void emitInScoreboard(const MCInstrDesc &Desc, int DeltaCycles,
                         std::optional<int> FUDepthLimit);
 
@@ -166,8 +170,17 @@ protected:
   ScheduleHazardRecognizer::HazardType
   getHazardType(unsigned SchedClass, SlotBits SlotSet, int DeltaCycles,
                 std::optional<int> FUDepthLimit);
-  void emitInScoreboard(unsigned SchedClass, SlotBits SlotSet, int DeltaCycles,
-                        std::optional<int> FUDepthLimit);
+
+  static bool
+  checkConflict(const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+                const InstrItineraryData *ItinData, unsigned SchedClass,
+                SlotBits SlotSet, int DeltaCycles,
+                std::optional<int> FUDepthLimit);
+
+  static void enterResources(ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+                             const InstrItineraryData *ItinData,
+                             unsigned SchedClass, SlotBits SlotSet,
+                             int DeltaCycles, std::optional<int> FUDepthLimit);
 
 private:
   ResourceScoreboard<FuncUnitWrapper> Scoreboard;
