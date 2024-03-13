@@ -25,6 +25,7 @@
 #include "llvm/Support/WithColor.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cassert>
+#include <limits>
 #include <optional>
 
 using namespace llvm;
@@ -164,6 +165,7 @@ AIEHazardRecognizer::AIEHazardRecognizer(const AIEBaseInstrInfo *TII,
                                          const ScheduleDAG *SchedDAG)
     : TII(TII), ItinData(II) {
 
+  computeMaxima();
   int Depth = computeScoreboardDepth();
   Scoreboard.reset(Depth);
   MaxLookAhead = Depth;
@@ -464,8 +466,18 @@ void AIEHazardRecognizer::emitInScoreboard(unsigned SchedClass,
   });
 }
 
-unsigned AIEHazardRecognizer::computeScoreboardDepth() const {
+unsigned AIEHazardRecognizer::getPipelineDepth() const { return PipelineDepth; }
+
+unsigned AIEHazardRecognizer::getMaxLatency() const { return MaxLatency; }
+
+int AIEHazardRecognizer::getConflictHorizon() const {
+  return int(std::max(PipelineDepth, MaxLatency));
+}
+
+void AIEHazardRecognizer::computeMaxima() {
   assert(ItinData && !ItinData->isEmpty());
+  unsigned FirstRW = std::numeric_limits<unsigned>().max();
+  unsigned LastRW = 0;
   unsigned ItinDepth = 0;
   for (unsigned SchedClass = 0; !ItinData->isEndMarker(SchedClass);
        ++SchedClass) {
@@ -474,16 +486,37 @@ unsigned AIEHazardRecognizer::computeScoreboardDepth() const {
       ItinDepth = std::max(ItinDepth, CurCycle + IS.getCycles());
       CurCycle += IS.getNextCycles();
     }
+    for (unsigned OpIdx = 0;; OpIdx++) {
+      std::optional<unsigned> OpLat =
+          ItinData->getOperandCycle(SchedClass, OpIdx);
+      if (!OpLat) {
+        break;
+      }
+      FirstRW = std::min(FirstRW, *OpLat);
+      LastRW = std::max(LastRW, *OpLat);
+    }
   }
-  if (ItinDepth == 0) {
+
+  PipelineDepth = ItinDepth;
+
+  // This is worst case, ignoring bypasses and same-cycle WAR
+  MaxLatency = LastRW - FirstRW + 1;
+  FirstRW = TII->getMinFirstMemoryCycle();
+  LastRW = TII->getMaxLastMemoryCycle();
+  MaxLatency = std::max(MaxLatency, int(LastRW - FirstRW + 1));
+}
+
+unsigned AIEHazardRecognizer::computeScoreboardDepth() const {
+  unsigned Depth = getPipelineDepth();
+  if (Depth == 0) {
     return 0;
   }
 
-  ItinDepth = std::max(ItinDepth, UserScoreboardDepth.getValue());
+  Depth = std::max(Depth, UserScoreboardDepth.getValue());
 
-  // Find the next power-of-2 >= ItinDepth
+  // Find the next power-of-2 >= Depth
   unsigned ScoreboardDepth = 1;
-  while (ItinDepth > ScoreboardDepth) {
+  while (ScoreboardDepth < Depth) {
     ScoreboardDepth *= 2;
   }
   return ScoreboardDepth;
