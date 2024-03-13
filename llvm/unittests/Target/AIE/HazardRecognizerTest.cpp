@@ -12,6 +12,7 @@
 #include "AIEHazardRecognizer.h"
 #include "MCTargetDesc/AIEFormat.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/ResourceScoreboard.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/MC/TargetRegistry.h"
@@ -84,14 +85,29 @@ MockItineraries Itins;
 
 // Derived class to access protected methods
 class MockHR : public AIEHazardRecognizer {
+  ResourceScoreboard<FuncUnitWrapper> MockScoreboard;
+
 public:
   ~MockHR() = default;
-  MockHR() : AIEHazardRecognizer(&InstrInfo, &Itins, nullptr) {}
+  MockHR() : AIEHazardRecognizer(&InstrInfo, &Itins) {
+    MockScoreboard.reset(computeScoreboardDepth());
+  }
   void emit(unsigned SchedClass, int Delta, SlotBits SlotSet = 0) {
-    emitInScoreboard(SchedClass, SlotSet, Delta, std::nullopt);
+    enterResources(MockScoreboard, &Itins, SchedClass, SlotSet, Delta,
+                   std::nullopt);
   }
   bool hazard(unsigned SchedClass, int Delta, SlotBits SlotSet = 0) {
-    return getHazardType(SchedClass, SlotSet, Delta, std::nullopt) != NoHazard;
+    return checkConflict(MockScoreboard, &Itins, SchedClass, SlotSet, Delta,
+                         std::nullopt);
+  }
+  void AdvanceCycle() override { MockScoreboard.advance(); }
+  void RecedeCycle() override { MockScoreboard.recede(); }
+  void Reset() override {
+    AIEHazardRecognizer::Reset();
+    MockScoreboard.reset();
+  }
+  bool conflict(const MockHR &Other, int DeltaCycles) const {
+    return MockScoreboard.conflict(Other.MockScoreboard, DeltaCycles);
   }
 };
 
