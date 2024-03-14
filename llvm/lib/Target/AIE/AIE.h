@@ -54,7 +54,8 @@ FunctionPass *createAIEBaseHardwareLoopsPass();
 FunctionPass *createAIEPseudoBranchExpansion();
 FunctionPass *createAIESubRegConstrainer();
 MachineFunctionPass *createAIEClusterBaseAddress();
-llvm::FunctionPass *createAIESuperRegRewriter();
+FunctionPass *createAIESuperRegRewriter();
+FunctionPass *createAIEPostSelectOptimize();
 
 void initializeAIEBaseHardwareLoopsPass(PassRegistry &);
 void initializeAIEClusterBaseAddressPass(PassRegistry &);
@@ -65,6 +66,7 @@ void initializeAIEMachineAlignmentPass(PassRegistry &);
 void initializeAIEMachineBlockPlacementPass(PassRegistry &);
 extern char &AIEPacketizerID;
 void initializeAIEPacketizerPass(PassRegistry &);
+void initializeAIEPostSelectOptimizePass(PassRegistry &);
 void initializeAIEPseudoBranchExpansionPass(PassRegistry &);
 extern char &AIESubRegConstrainerID;
 void initializeAIESubRegConstrainerPass(PassRegistry &);

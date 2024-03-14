@@ -53,18 +53,17 @@ define void @test_loop_dyn_alloca(i32 noundef %n) {
 ; CHECK-LABEL: test_loop_dyn_alloca:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; paddb [sp], #64; nopxm
-; CHECK-NEXT:    st p7, [sp, #-64] // 4-byte Folded Spill
+; CHECK-NEXT:    paddb [sp], #32; nopa ; nops ; nopxm ; nopv
+; CHECK-NEXT:    st p7, [sp, #-32] // 4-byte Folded Spill
 ; CHECK-NEXT:    mov p7, sp
-; CHECK-NEXT:    st lr, [sp, #-32] // 4-byte Folded Spill
-; CHECK-NEXT:    st r16, [sp, #-36] // 4-byte Folded Spill
-; CHECK-NEXT:    st r17, [sp, #-40] // 4-byte Folded Spill
-; CHECK-NEXT:    st r18, [sp, #-44] // 4-byte Folded Spill
-; CHECK-NEXT:    st r19, [sp, #-48] // 4-byte Folded Spill
-; CHECK-NEXT:    st r20, [sp, #-52] // 4-byte Folded Spill
-; CHECK-NEXT:    st r21, [sp, #-56] // 4-byte Folded Spill
-; CHECK-NEXT:    st p6, [sp, #-60] // 4-byte Folded Spill
-; CHECK-NEXT:    padda [p7], #-64
+; CHECK-NEXT:    st lr, [sp, #-4] // 4-byte Folded Spill
+; CHECK-NEXT:    st r16, [sp, #-8] // 4-byte Folded Spill
+; CHECK-NEXT:    st r17, [sp, #-12] // 4-byte Folded Spill
+; CHECK-NEXT:    st r18, [sp, #-16] // 4-byte Folded Spill
+; CHECK-NEXT:    st r19, [sp, #-20] // 4-byte Folded Spill
+; CHECK-NEXT:    st r20, [sp, #-24] // 4-byte Folded Spill
+; CHECK-NEXT:    st r21, [sp, #-28] // 4-byte Folded Spill
+; CHECK-NEXT:    padda [p7], #-32
 ; CHECK-NEXT:    mova r16, #1
 ; CHECK-NEXT:    mova r17, #0
 ; CHECK-NEXT:    mova r18, #10
@@ -74,17 +73,16 @@ define void @test_loop_dyn_alloca(i32 noundef %n) {
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB1_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    nopa ; lshl r0, r17, r19; nopm
-; CHECK-NEXT:    add r0, r0, #31
+; CHECK-NEXT:    nopa ; nopb ; lshl r0, r17, r19; nopm ; nops
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    mov p1, p0
+; CHECK-NEXT:    add r0, r0, #31
 ; CHECK-NEXT:    jl #extern_call
 ; CHECK-NEXT:    and r0, r0, r20 // Delay Slot 5
-; CHECK-NEXT:    mov m0, r0 // Delay Slot 4
-; CHECK-NEXT:    paddb [p1], m0 // Delay Slot 3
-; CHECK-NEXT:    mov p6, sp // Delay Slot 2
+; CHECK-NEXT:    mov p1, p0 // Delay Slot 4
+; CHECK-NEXT:    mov m0, r0 // Delay Slot 3
+; CHECK-NEXT:    paddb [p1], m0 // Delay Slot 2
 ; CHECK-NEXT:    mov sp, p1 // Delay Slot 1
-; CHECK-NEXT:    nopa ; nopb ; add r17, r17, #1; nopm ; nops
+; CHECK-NEXT:    nopb ; nopa ; nops ; add r17, r17, #1; nopm ; nopv
 ; CHECK-NEXT:    ltu r0, r17, r16
 ; CHECK-NEXT:    add r21, r21, r0
 ; CHECK-NEXT:    xor r0, r17, r18
@@ -94,24 +92,23 @@ define void @test_loop_dyn_alloca(i32 noundef %n) {
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov sp, p6 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup
-; CHECK-NEXT:    nopa ; nopb ; nopx ; mov sp, p7
-; CHECK-NEXT:    lda lr, [sp, #-32] // 4-byte Folded Reload
-; CHECK-NEXT:    lda p7, [sp, #-64] // 4-byte Folded Reload
-; CHECK-NEXT:    lda p6, [sp, #-60] // 4-byte Folded Reload
-; CHECK-NEXT:    lda r21, [sp, #-56] // 4-byte Folded Reload
-; CHECK-NEXT:    lda r20, [sp, #-52] // 4-byte Folded Reload
-; CHECK-NEXT:    lda r19, [sp, #-48] // 4-byte Folded Reload
-; CHECK-NEXT:    lda r18, [sp, #-44] // 4-byte Folded Reload
-; CHECK-NEXT:    lda r17, [sp, #-40] // 4-byte Folded Reload
-; CHECK-NEXT:    lda r16, [sp, #-36] // 4-byte Folded Reload
+; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; mov sp, p7; nopv
+; CHECK-NEXT:    lda lr, [sp, #-4] // 4-byte Folded Reload
+; CHECK-NEXT:    lda p7, [sp, #-32] // 4-byte Folded Reload
+; CHECK-NEXT:    lda r21, [sp, #-28] // 4-byte Folded Reload
+; CHECK-NEXT:    lda r20, [sp, #-24] // 4-byte Folded Reload
+; CHECK-NEXT:    lda r19, [sp, #-20] // 4-byte Folded Reload
+; CHECK-NEXT:    lda r18, [sp, #-16] // 4-byte Folded Reload
+; CHECK-NEXT:    lda r17, [sp, #-12] // 4-byte Folded Reload
+; CHECK-NEXT:    lda r16, [sp, #-8] // 4-byte Folded Reload
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-64 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
 entry:
   br label %for.body
 
