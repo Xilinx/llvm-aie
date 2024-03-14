@@ -91,6 +91,7 @@ public:
   bool addPreISel() override;
   void addPreEmitPass() override;
   bool addInstSelector() override;
+  bool addGlobalInstructionSelect() override;
   void addPreRegAlloc() override;
   bool addRegAssignAndRewriteOptimized() override;
   void addPostRewrite() override;
@@ -150,6 +151,14 @@ void AIE2PassConfig::addPreRegBankSelect() {
     addPass(createAIEClusterBaseAddress());
     addPass(createAIE2PostLegalizerCustomCombiner());
   }
+}
+
+bool AIE2PassConfig::addGlobalInstructionSelect() {
+  addPass(new InstructionSelect(getOptLevel()));
+  if (getOptLevel() != CodeGenOptLevel::None) {
+    addPass(createAIEPostSelectOptimize());
+  }
+  return false;
 }
 
 void AIE2PassConfig::addPreRegAlloc() {

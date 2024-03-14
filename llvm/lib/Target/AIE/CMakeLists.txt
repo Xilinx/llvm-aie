@@ -81,6 +81,7 @@ add_llvm_target(AIECodeGen
    AIEMachineBlockPlacement.cpp
    AIEMachineFunctionInfo.cpp
    AIEMachineScheduler.cpp
+   AIEPostSelectOptimize.cpp
    AIEPseudoBranchExpansion.cpp
    AIERegisterInfo.cpp
    AIESplitInstructionRewriter.cpp
