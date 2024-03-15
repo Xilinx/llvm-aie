@@ -67,19 +67,19 @@ unsigned int test_extract_uint32(unsigned long long a, int idx) {
 
 // CHECK-LABEL: @_Z15test_concat_ulljj(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[A:%.*]], 0
-// CHECK-NEXT:    br i1 [[CMP_I]], label [[IF_THEN_I:%.*]], label [[IF_ELSE_I:%.*]]
-// CHECK:       if.then.i:
+// CHECK-NEXT:    [[CMP_I_I:%.*]] = icmp eq i32 [[A:%.*]], 0
+// CHECK-NEXT:    br i1 [[CMP_I_I]], label [[IF_THEN_I_I:%.*]], label [[IF_ELSE_I_I:%.*]]
+// CHECK:       if.then.i.i:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call <2 x i32> @llvm.aie2.set.I64.I32(i32 0, i32 0)
-// CHECK-NEXT:    br label [[_ZL7SET_U64IJ_EXIT:%.*]]
-// CHECK:       if.else.i:
+// CHECK-NEXT:    br label [[_ZL6CONCATJJ_EXIT:%.*]]
+// CHECK:       if.else.i.i:
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call <2 x i32> @llvm.aie2.set.I64.I32(i32 0, i32 1)
-// CHECK-NEXT:    br label [[_ZL7SET_U64IJ_EXIT]]
-// CHECK:       _ZL7set_u64ij.exit:
-// CHECK-NEXT:    [[RETVAL_0_IN_I:%.*]] = phi <2 x i32> [ [[TMP0]], [[IF_THEN_I]] ], [ [[TMP1]], [[IF_ELSE_I]] ]
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call <2 x i32> @llvm.aie2.upd.I64.I32(<2 x i32> [[RETVAL_0_IN_I]], i32 [[B:%.*]], i32 1)
-// CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = bitcast <2 x i32> [[TMP2]] to i64
-// CHECK-NEXT:    ret i64 [[RETVAL_0_I_I]]
+// CHECK-NEXT:    br label [[_ZL6CONCATJJ_EXIT]]
+// CHECK:       _ZL6concatjj.exit:
+// CHECK-NEXT:    [[RETVAL_0_IN_I_I:%.*]] = phi <2 x i32> [ [[TMP0]], [[IF_THEN_I_I]] ], [ [[TMP1]], [[IF_ELSE_I_I]] ]
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <2 x i32> @llvm.aie2.upd.I64.I32(<2 x i32> [[RETVAL_0_IN_I_I]], i32 [[B:%.*]], i32 1)
+// CHECK-NEXT:    [[RETVAL_0_I4_I:%.*]] = bitcast <2 x i32> [[TMP2]] to i64
+// CHECK-NEXT:    ret i64 [[RETVAL_0_I4_I]]
 //
 unsigned long long test_concat_ull(unsigned int a, unsigned int b) {
   return concat(a,b);
@@ -210,7 +210,6 @@ v64uint4 test_extract_v64uint4 (v128uint4 a, int idx){
 }
 
 
-//
 // CHECK-LABEL: @_Z23test_insert_upd_512_256Dv64_DU8_iDv32_S_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[IDX:%.*]], 0
