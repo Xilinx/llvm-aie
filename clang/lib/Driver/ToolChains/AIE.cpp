@@ -100,6 +100,10 @@ void AIEToolChain::addClangTargetOptions(
   if (!DriverArgs.hasFlag(options::OPT_fthreadsafe_statics,
                           options::OPT_fno_threadsafe_statics, false))
     CC1Args.push_back("-fno-threadsafe-statics");
+
+  // Make sure to perform most optimizations before mandatory inlinings,
+  // otherwise noalias attributes can get lost and hurt AA results.
+  CC1Args.append({"-mllvm", "-mandatory-inlining-before-opt=false"});
 }
 
 // Avoid using newer dwarf versions, as the simulator doesn't understand newer
