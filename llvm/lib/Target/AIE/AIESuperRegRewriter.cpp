@@ -185,6 +185,54 @@ bool AIESuperRegRewriter::runOnMachineFunction(MachineFunction &MF) {
   return !AssignedPhysRegs.empty();
 }
 
+/// Return a mask of all the lanes that are live at \p Index
+static LaneBitmask getLiveLanesAt(SlotIndex Index, Register Reg,
+                                  const LiveIntervals &LIS) {
+  const LiveInterval &LI = LIS.getInterval(Reg);
+  if (!LI.hasSubRanges())
+    return LaneBitmask::getAll();
+
+  LaneBitmask LiveLanes;
+  for (const LiveInterval::SubRange &SubLI : LI.subranges()) {
+    if (SubLI.liveAt(Index))
+      LiveLanes |= SubLI.LaneMask;
+  }
+  return LiveLanes;
+}
+
+/// Rewrite a full copy into multiple copies using the subregs in \p CopySubRegs
+static void rewriteFullCopy(MachineInstr &MI, const std::set<int> &CopySubRegs,
+                            LiveIntervals &LIS, const TargetInstrInfo &TII,
+                            const TargetRegisterInfo &TRI) {
+  assert(MI.isFullCopy());
+  SlotIndex CopyIndex = LIS.getInstructionIndex(MI);
+  LLVM_DEBUG(dbgs() << "  Changing full copy at " << CopyIndex << ": " << MI);
+  Register DstReg = MI.getOperand(0).getReg();
+  Register SrcReg = MI.getOperand(1).getReg();
+  LaneBitmask LiveSrcLanes = getLiveLanesAt(CopyIndex, SrcReg, LIS);
+
+  LIS.removeVRegDefAt(LIS.getInterval(DstReg), CopyIndex.getRegSlot());
+  for (int SubRegIdx : CopySubRegs) {
+    if ((LiveSrcLanes & TRI.getSubRegIndexLaneMask(SubRegIdx)).none()) {
+      LLVM_DEBUG(dbgs() << "        Skip undef subreg "
+                        << TRI.getSubRegIndexName(SubRegIdx) << "\n");
+      continue;
+    }
+
+    MachineInstr *PartCopy = BuildMI(*MI.getParent(), MI, MI.getDebugLoc(),
+                                     TII.get(TargetOpcode::COPY))
+                                 .addReg(DstReg, RegState::Define, SubRegIdx)
+                                 .addReg(SrcReg, 0, SubRegIdx)
+                                 .getInstr();
+    LLVM_DEBUG(dbgs() << "        to " << *PartCopy);
+    LIS.InsertMachineInstrInMaps(*PartCopy);
+    LIS.getInterval(PartCopy->getOperand(0).getReg());
+  }
+
+  LIS.RemoveMachineInstrFromMaps(MI);
+  MI.eraseFromParent();
+}
+
 void AIESuperRegRewriter::rewriteSuperReg(
     Register Reg, Register AssignedPhysReg, MachineRegisterInfo &MRI,
     const AIEBaseRegisterInfo &TRI, VirtRegMap &VRM, LiveRegMatrix &LRM,
@@ -205,28 +253,9 @@ void AIESuperRegRewriter::rewriteSuperReg(
 
   // Rewrite full copies into multiple copies using subregs
   for (MachineInstr &MI : make_early_inc_range(MRI.reg_instructions(Reg))) {
-    if (!MI.isFullCopy())
-      continue;
-    LLVM_DEBUG(dbgs() << "  Changing full copy: " << MI);
-    LLVM_DEBUG(dbgs() << "  Range: " << LIS.getInterval(Reg) << "\n");
-    Register DstReg = MI.getOperand(0).getReg();
-    Register SrcReg = MI.getOperand(1).getReg();
-    LIS.removeVRegDefAt(LIS.getInterval(DstReg),
-                        Indexes.getInstructionIndex(MI).getRegSlot());
-    auto &CopySubRegs = TRI.getSubRegSplit(MRI.getRegClass(Reg)->getID());
-    MachineInstrSpan MIS(MI, MI.getParent());
-    for (int SubRegIdx : CopySubRegs) {
-      MachineInstr *PartCopy = BuildMI(*MI.getParent(), MI, MI.getDebugLoc(),
-                                       TII->get(TargetOpcode::COPY))
-                                   .addReg(DstReg, RegState::Define, SubRegIdx)
-                                   .addReg(SrcReg, 0, SubRegIdx)
-                                   .getInstr();
-      LLVM_DEBUG(dbgs() << "        to " << *PartCopy);
-      LIS.InsertMachineInstrInMaps(*PartCopy);
-      LIS.getInterval(PartCopy->getOperand(0).getReg());
-    }
-    LIS.RemoveMachineInstrFromMaps(MI);
-    MI.eraseFromParent();
+    if (MI.isFullCopy())
+      rewriteFullCopy(MI, TRI.getSubRegSplit(MRI.getRegClass(Reg)->getID()),
+                      LIS, *TII, TRI);
   }
 
   LLVM_DEBUG(dbgs() << "  Splitting range " << LIS.getInterval(Reg) << "\n");

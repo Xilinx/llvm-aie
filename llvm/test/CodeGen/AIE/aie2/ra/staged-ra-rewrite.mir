@@ -343,6 +343,61 @@ body:             |
     PseudoRET implicit $lr, implicit %20, implicit %100.sub_dim_count
 ...
 
+
+# Similar to test_split_2d_undef above, but there is a full COPY to be rewritten
+# and its source register is partially defined.
+---
+name:            test_split_2d_undef_through_copy
+tracksRegLiveness: true
+body:             |
+  ; VREGS-LABEL: name: test_split_2d_undef_through_copy
+  ; VREGS: bb.0.entry:
+  ; VREGS-NEXT:   successors: %bb.1(0x80000000)
+  ; VREGS-NEXT:   liveins: $p0, $p1
+  ; VREGS-NEXT: {{  $}}
+  ; VREGS-NEXT:   [[COPY:%[0-9]+]]:ep = COPY $p0
+  ; VREGS-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p1
+  ; VREGS-NEXT:   [[LDA_dms_lda_idx_imm:%[0-9]+]]:edn_as_32bit = LDA_dms_lda_idx_imm [[COPY1]], 4
+  ; VREGS-NEXT:   [[LDA_dms_lda_idx_imm1:%[0-9]+]]:edj_as_32bit = LDA_dms_lda_idx_imm [[COPY1]], 8
+  ; VREGS-NEXT:   [[LDA_dms_lda_idx_imm2:%[0-9]+]]:edc_as_32bit = LDA_dms_lda_idx_imm [[COPY1]], 12
+  ; VREGS-NEXT: {{  $}}
+  ; VREGS-NEXT: bb.1:
+  ; VREGS-NEXT:   [[COPY2:%[0-9]+]]:edc = COPY [[LDA_dms_lda_idx_imm2]]
+  ; VREGS-NEXT:   [[COPY3:%[0-9]+]]:edn = COPY [[LDA_dms_lda_idx_imm]]
+  ; VREGS-NEXT:   [[COPY4:%[0-9]+]]:edj = COPY [[LDA_dms_lda_idx_imm1]]
+  ; VREGS-NEXT:   [[COPY:%[0-9]+]]:ep, [[COPY2:%[0-9]+]]:edc = PADDA_2D_split [[COPY]], undef %11:em, [[COPY3]], [[COPY4]], [[COPY2]]
+  ; VREGS-NEXT:   PseudoRET implicit $lr, implicit [[COPY]], implicit [[COPY2]]
+  ;
+  ; RA-LABEL: name: test_split_2d_undef_through_copy
+  ; RA: bb.0.entry:
+  ; RA-NEXT:   successors: %bb.1(0x80000000)
+  ; RA-NEXT:   liveins: $p0, $p1
+  ; RA-NEXT: {{  $}}
+  ; RA-NEXT:   renamable $dn0 = LDA_dms_lda_idx_imm renamable $p1, 4
+  ; RA-NEXT:   renamable $dj0 = LDA_dms_lda_idx_imm renamable $p1, 8
+  ; RA-NEXT:   renamable $dc0 = LDA_dms_lda_idx_imm killed renamable $p1, 12
+  ; RA-NEXT: {{  $}}
+  ; RA-NEXT: bb.1:
+  ; RA-NEXT:   liveins: $dc0, $dj0, $dn0, $p0
+  ; RA-NEXT: {{  $}}
+  ; RA-NEXT:   $p0, $dc0 = PADDA_2D_split killed $p0, undef $m0, killed $dn0, killed $dj0, killed $dc0
+  ; RA-NEXT:   PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0
+  bb.1.entry:
+    liveins: $p0, $p1
+
+    %20:ep = COPY $p0
+    %21:ep = COPY $p1
+    undef %1.sub_dim_size:ed = LDA_dms_lda_idx_imm %21, 4
+    %1.sub_dim_stride:ed = LDA_dms_lda_idx_imm %21, 8
+    %1.sub_dim_count:ed = LDA_dms_lda_idx_imm %21, 12
+
+  bb.2:
+    %100:ed = COPY %1
+    %20:ep, %100.sub_dim_count:ed = PADDA_2D_split %20, undef %100.sub_mod, %100.sub_dim_size, %100.sub_dim_stride, %100.sub_dim_count
+    PseudoRET implicit $lr, implicit %20, implicit %100.sub_dim_count
+...
+
+
 # Test splitting a 3D reg that's defined through 4 1D subregs, and 1 2D subreg.
 # This is currently not split into independent vregs.
 ---
