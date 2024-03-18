@@ -143,3 +143,13 @@ body: |
     ; CHECK-NEXT: $r19 = MOV_mv_scl $r21
   $l1 = COPY $l2
 ...
+
+---
+name:            test_copy_qx
+body: |
+  bb.0:
+    ; CHECK-LABEL: name: test_copy_qx
+    ; CHECK: $x0 = VMOV_mv_x $x1
+    ; CHECK-NEXT: $q0 = VMOV_mv_w $q1
+  $qx0 = COPY $qx1
+...

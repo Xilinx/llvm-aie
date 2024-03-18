@@ -21,9 +21,11 @@
 #include "AIEHazardRecognizer.h"
 #include "AIEMachineFunctionInfo.h"
 #include "AIETiedRegOperands.h"
+#include "MCTargetDesc/AIE2MCTargetDesc.h"
 #include "MCTargetDesc/AIEMCFormats.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -32,7 +34,6 @@
 #include "llvm/CodeGen/Register.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
-#include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/IntrinsicsAIE2.h"
 #include "llvm/MC/TargetRegistry.h"
@@ -351,6 +352,16 @@ void AIE2InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     BuildMI(MBB, MBBI, DL, get(AIE2::VMOV_mv_x),
             TRI.getSubReg(DstReg, AIE2::sub_512_hi))
         .addReg(TRI.getSubReg(SrcReg, AIE2::sub_512_hi),
+                getKillRegState(KillSrc));
+  } else if ((AIE2::SPARSEVEC640RegClass.contains(SrcReg)) &&
+             (AIE2::SPARSEVEC640RegClass.contains(DstReg))) {
+    BuildMI(MBB, MBBI, DL, get(AIE2::VMOV_mv_x),
+            TRI.getSubReg(DstReg, AIE2::sub_sparse_x))
+        .addReg(TRI.getSubReg(SrcReg, AIE2::sub_sparse_x),
+                getKillRegState(KillSrc));
+    BuildMI(MBB, MBBI, DL, get(AIE2::VMOV_mv_w),
+            TRI.getSubReg(DstReg, AIE2::sub_sparse_q))
+        .addReg(TRI.getSubReg(SrcReg, AIE2::sub_sparse_q),
                 getKillRegState(KillSrc));
   } else {
     llvm_unreachable("unhandled case in copyPhysReg");
