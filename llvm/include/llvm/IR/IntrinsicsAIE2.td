@@ -32,6 +32,55 @@ class AIE2LockCondIntr
 class AIE2DoneIntr
      : Intrinsic<[], [], [IntrHasSideEffects, IntrNoMem]>;
 
+// Sparse
+class AIEV2I512I1024MULConf
+      : Intrinsic<[llvm_v16i64_ty], [llvm_v64i8_ty, llvm_v64i8_ty, llvm_i128_ty, llvm_i32_ty],
+					 [IntrNoMem]>;
+
+class AIEV2I512I1024MACConf
+      : Intrinsic<[llvm_v16i64_ty], [llvm_v64i8_ty, llvm_v64i8_ty, llvm_i128_ty, llvm_v16i64_ty, llvm_i32_ty],
+					 [IntrNoMem]>;
+
+class AIEV2I512I1024ADDMACConf
+      : Intrinsic<[llvm_v16i64_ty], [llvm_v64i8_ty, llvm_v64i8_ty, llvm_i128_ty, llvm_v16i64_ty, llvm_v16i64_ty, llvm_i32_ty],
+					 [IntrNoMem]>;
+
+class AIEV2I1024I1024MULConf
+      : Intrinsic<[llvm_v16i64_ty], [llvm_v128i8_ty, llvm_v16i32_ty, llvm_i128_ty, llvm_i32_ty],
+					 [IntrNoMem]>;
+
+class AIEV2I1024I1024MACConf
+      : Intrinsic<[llvm_v16i64_ty], [llvm_v128i8_ty, llvm_v16i32_ty, llvm_i128_ty, llvm_v16i64_ty, llvm_i32_ty],
+					 [IntrNoMem]>;
+
+class AIEV2I1024I1024ADDMACConf
+      : Intrinsic<[llvm_v16i64_ty], [llvm_v128i8_ty, llvm_v16i32_ty, llvm_i128_ty, llvm_v16i64_ty, llvm_v16i64_ty, llvm_i32_ty],
+					 [IntrNoMem]>;
+
+class AIEV2I1024I1024MULConfBF16
+      : Intrinsic<[llvm_v8i64_ty], [llvm_v64bf16_ty, llvm_v32bf16_ty, llvm_i128_ty, llvm_i32_ty],
+					 [IntrNoMem]>;
+
+class AIEV2I1024I1024MACConfBF16
+      : Intrinsic<[llvm_v8i64_ty], [llvm_v64bf16_ty, llvm_v32bf16_ty, llvm_i128_ty, llvm_v8i64_ty, llvm_i32_ty],
+					 [IntrNoMem]>;
+
+class AIEV2I1024I1024ADDMACConfBF16
+      : Intrinsic<[llvm_v8i64_ty], [llvm_v64bf16_ty, llvm_v32bf16_ty, llvm_i128_ty, llvm_v8i64_ty, llvm_v8i64_ty, llvm_i32_ty],
+					 [IntrNoMem]>;
+
+class AIEV2I512I1024MULConfBF16
+      : Intrinsic<[llvm_v8i64_ty], [llvm_v32bf16_ty, llvm_v32bf16_ty, llvm_i128_ty, llvm_i32_ty],
+					 [IntrNoMem]>;
+
+class AIEV2I512I1024MACConfBF16
+      : Intrinsic<[llvm_v8i64_ty], [llvm_v32bf16_ty, llvm_v32bf16_ty, llvm_i128_ty, llvm_v8i64_ty, llvm_i32_ty],
+					 [IntrNoMem]>;
+
+class AIEV2I512I1024ADDMACConfBF16
+      : Intrinsic<[llvm_v8i64_ty], [llvm_v32bf16_ty, llvm_v32bf16_ty, llvm_i128_ty, llvm_v8i64_ty, llvm_v8i64_ty, llvm_i32_ty],
+					 [IntrNoMem]>;
+
 class AIEV2I512I512MULConf
 	 : Intrinsic<[llvm_v16i64_ty], [llvm_v64i8_ty, llvm_v16i32_ty, llvm_i32_ty],
 					 [IntrNoMem]>;
@@ -430,6 +479,53 @@ def int_aie2_I512_I512_ACC1024_ACC1024_acc64_submac_conf : ClangBuiltin<"__built
 def int_aie2_I512_I512_ACC1024_ACC1024_acc64_submsc_conf : ClangBuiltin<"__builtin_aiev2_I512_I512_ACC1024_ACC1024_acc64_submsc_conf">, AIEV2I512I512AddMaconf;
 def int_aie2_I512_I512_ACC1024_acc64_msc_conf : ClangBuiltin<"__builtin_aiev2_I512_I512_ACC1024_acc64_msc_conf">, AIEV2I512I512MACConf;
 def int_aie2_I512_I512_ACC1024_acc64_negmsc_conf : ClangBuiltin<"__builtin_aiev2_I512_I512_ACC1024_acc64_negmsc_conf">, AIEV2I512I512MACConf;
+// Sparse
+def int_aie2_I512_I1024_ACC1024_acc32_mul_conf : ClangBuiltin<"__builtin_aiev2_I512_I1024_ACC1024_acc32_mul_conf">, AIEV2I512I1024MULConf;
+def int_aie2_I512_I1024_ACC1024_acc32_negmul_conf : ClangBuiltin<"__builtin_aiev2_I512_I1024_ACC1024_acc32_negmul_conf">, AIEV2I512I1024MULConf;
+def int_aie2_I512_I1024_ACC1024_acc32_mac_conf : ClangBuiltin<"__builtin_aiev2_I512_I1024_ACC1024_acc32_mac_conf">, AIEV2I512I1024MACConf;
+def int_aie2_I512_I1024_ACC1024_acc32_msc_conf : ClangBuiltin<"__builtin_aiev2_I512_I1024_ACC1024_acc32_msc_conf">, AIEV2I512I1024MACConf;
+def int_aie2_I512_I1024_ACC1024_acc32_negmac_conf : ClangBuiltin<"__builtin_aiev2_I512_I1024_ACC1024_acc32_negmac_conf">, AIEV2I512I1024MACConf;
+def int_aie2_I512_I1024_ACC1024_acc32_negmsc_conf : ClangBuiltin<"__builtin_aiev2_I512_I1024_ACC1024_acc32_negmsc_conf">, AIEV2I512I1024MACConf;
+def int_aie2_I512_I1024_ACC1024_ACC1024_acc32_addmac_conf : ClangBuiltin<"__builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_addmac_conf">, AIEV2I512I1024ADDMACConf;
+def int_aie2_I512_I1024_ACC1024_ACC1024_acc32_addmsc_conf : ClangBuiltin<"__builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_addmsc_conf">, AIEV2I512I1024ADDMACConf;
+def int_aie2_I512_I1024_ACC1024_ACC1024_acc32_submac_conf : ClangBuiltin<"__builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_submac_conf">, AIEV2I512I1024ADDMACConf;
+def int_aie2_I512_I1024_ACC1024_ACC1024_acc32_submsc_conf : ClangBuiltin<"__builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_submsc_conf">, AIEV2I512I1024ADDMACConf;
+
+def int_aie2_I512_I1024_ACC1024_acc64_mul_conf : ClangBuiltin<"__builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf">, AIEV2I512I1024MULConf;
+def int_aie2_I512_I1024_ACC1024_acc64_negmul_conf : ClangBuiltin<"__builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf">, AIEV2I512I1024MULConf;
+def int_aie2_I512_I1024_ACC1024_acc64_mac_conf : ClangBuiltin<"__builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf">, AIEV2I512I1024MACConf;
+def int_aie2_I512_I1024_ACC1024_acc64_msc_conf : ClangBuiltin<"__builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf">, AIEV2I512I1024MACConf;
+def int_aie2_I512_I1024_ACC1024_acc64_negmac_conf : ClangBuiltin<"__builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf">, AIEV2I512I1024MACConf;
+def int_aie2_I512_I1024_ACC1024_acc64_negmsc_conf : ClangBuiltin<"__builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf">, AIEV2I512I1024MACConf;
+def int_aie2_I512_I1024_ACC1024_ACC1024_acc64_addmac_conf : ClangBuiltin<"__builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmac_conf">, AIEV2I512I1024ADDMACConf;
+def int_aie2_I512_I1024_ACC1024_ACC1024_acc64_addmsc_conf : ClangBuiltin<"__builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmsc_conf">, AIEV2I512I1024ADDMACConf;
+def int_aie2_I512_I1024_ACC1024_ACC1024_acc64_submac_conf : ClangBuiltin<"__builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submac_conf">, AIEV2I512I1024ADDMACConf;
+def int_aie2_I512_I1024_ACC1024_ACC1024_acc64_submsc_conf : ClangBuiltin<"__builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submsc_conf">, AIEV2I512I1024ADDMACConf;
+
+def int_aie2_I1024_I1024_ACC1024_acc32_mul_conf : ClangBuiltin<"__builtin_aiev2_I1024_I1024_ACC1024_acc32_mul_conf">, AIEV2I1024I1024MULConf;
+def int_aie2_I1024_I1024_ACC1024_acc32_negmul_conf : ClangBuiltin<"__builtin_aiev2_I1024_I1024_ACC1024_acc32_negmul_conf">, AIEV2I1024I1024MULConf;
+def int_aie2_I1024_I1024_ACC1024_acc32_mac_conf : ClangBuiltin<"__builtin_aiev2_I1024_I1024_ACC1024_acc32_mac_conf">, AIEV2I1024I1024MACConf;
+def int_aie2_I1024_I1024_ACC1024_acc32_msc_conf : ClangBuiltin<"__builtin_aiev2_I1024_I1024_ACC1024_acc32_msc_conf">, AIEV2I1024I1024MACConf;
+def int_aie2_I1024_I1024_ACC1024_acc32_negmac_conf : ClangBuiltin<"__builtin_aiev2_I1024_I1024_ACC1024_acc32_negmac_conf">, AIEV2I1024I1024MACConf;
+def int_aie2_I1024_I1024_ACC1024_acc32_negmsc_conf : ClangBuiltin<"__builtin_aiev2_I1024_I1024_ACC1024_acc32_negmsc_conf">, AIEV2I1024I1024MACConf;
+def int_aie2_I1024_I1024_ACC1024_ACC1024_acc32_addmac_conf : ClangBuiltin<"__builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_addmac_conf">, AIEV2I1024I1024ADDMACConf;
+def int_aie2_I1024_I1024_ACC1024_ACC1024_acc32_addmsc_conf : ClangBuiltin<"__builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_addmsc_conf">, AIEV2I1024I1024ADDMACConf;
+def int_aie2_I1024_I1024_ACC1024_ACC1024_acc32_submac_conf : ClangBuiltin<"__builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_submac_conf">, AIEV2I1024I1024ADDMACConf;
+def int_aie2_I1024_I1024_ACC1024_ACC1024_acc32_submsc_conf : ClangBuiltin<"__builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_submsc_conf">, AIEV2I1024I1024ADDMACConf;
+
+def int_aie2_I1024_I1024_ACC1024_accfloat_bf_mul_conf : ClangBuiltin<"__builtin_aiev2_I1024_I1024_ACC1024_accfloat_bf_mul_conf">, AIEV2I1024I1024MULConfBF16;
+def int_aie2_I1024_I1024_ACC1024_accfloat_bf_negmul_conf : ClangBuiltin<"__builtin_aiev2_I1024_I1024_ACC1024_accfloat_bf_negmul_conf">, AIEV2I1024I1024MULConfBF16;
+def int_aie2_I1024_I1024_ACC1024_accfloat_bf_mac_conf : ClangBuiltin<"__builtin_aiev2_I1024_I1024_ACC1024_accfloat_bf_mac_conf">, AIEV2I1024I1024MACConfBF16;
+def int_aie2_I1024_I1024_ACC1024_accfloat_bf_msc_conf : ClangBuiltin<"__builtin_aiev2_I1024_I1024_ACC1024_accfloat_bf_msc_conf">, AIEV2I1024I1024MACConfBF16;
+def int_aie2_I1024_I1024_ACC1024_ACC1024_accfloat_bf_addmac_conf : ClangBuiltin<"__builtin_aiev2_I1024_I1024_ACC1024_ACC1024_accfloat_bf_addmac_conf">, AIEV2I1024I1024ADDMACConfBF16;
+def int_aie2_I1024_I1024_ACC1024_ACC1024_accfloat_bf_addmsc_conf : ClangBuiltin<"__builtin_aiev2_I1024_I1024_ACC1024_ACC1024_accfloat_bf_addmsc_conf">, AIEV2I1024I1024ADDMACConfBF16;
+
+def int_aie2_I512_I1024_ACC1024_accfloat_bf_mul_conf : ClangBuiltin<"__builtin_aiev2_I512_I1024_ACC1024_accfloat_bf_mul_conf">, AIEV2I512I1024MULConfBF16;
+def int_aie2_I512_I1024_ACC1024_accfloat_bf_negmul_conf : ClangBuiltin<"__builtin_aiev2_I512_I1024_ACC1024_accfloat_bf_negmul_conf">, AIEV2I512I1024MULConfBF16;
+def int_aie2_I512_I1024_ACC1024_accfloat_bf_mac_conf : ClangBuiltin<"__builtin_aiev2_I512_I1024_ACC1024_accfloat_bf_mac_conf">, AIEV2I512I1024MACConfBF16;
+def int_aie2_I512_I1024_ACC1024_accfloat_bf_msc_conf : ClangBuiltin<"__builtin_aiev2_I512_I1024_ACC1024_accfloat_bf_msc_conf">, AIEV2I512I1024MACConfBF16;
+def int_aie2_I512_I1024_ACC1024_ACC1024_accfloat_bf_addmac_conf : ClangBuiltin<"__builtin_aiev2_I512_I1024_ACC1024_ACC1024_accfloat_bf_addmac_conf">, AIEV2I512I1024ADDMACConfBF16;
+def int_aie2_I512_I1024_ACC1024_ACC1024_accfloat_bf_addmsc_conf : ClangBuiltin<"__builtin_aiev2_I512_I1024_ACC1024_ACC1024_accfloat_bf_addmsc_conf">, AIEV2I512I1024ADDMACConfBF16;
 
 def int_aie2_I512_I512_acc32_mul_conf : ClangBuiltin<"__builtin_aiev2_I512_I512_ACC1024_acc32_mul_conf">, AIEV2I512I512MULConf;
 def int_aie2_I512_I512_acc32_negmul_conf : ClangBuiltin<"__builtin_aiev2_I512_I512_ACC1024_acc32_negmul_conf">, AIEV2I512I512MULConf;
