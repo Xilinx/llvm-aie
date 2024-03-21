@@ -250,3 +250,404 @@ body:             |
     $cm0 = COPY %0:accregbank(<16 x s64>)
     PseudoRET implicit $lr, implicit $cm0
 ...
+
+
+
+---
+name:            VADDMAC_ACC32_sparse_wide
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+  liveins: $cm1, $cm2, $q0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $y2
+    ; CHECK-LABEL: name: VADDMAC_ACC32_sparse_wide
+    ; CHECK: liveins: $cm1, $cm2, $q0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $y2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec1024 = COPY $y2
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec128 = COPY $q0
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc1024 = COPY $cm1
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:acc1024 = COPY $cm2
+    ; CHECK-NEXT: [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 32
+    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:mxw = COPY [[COPY1]]
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:sparsevec640 = REG_SEQUENCE [[COPY5]], %subreg.sub_sparse_x, [[COPY2]], %subreg.sub_sparse_q
+    ; CHECK-NEXT: [[VADDMAC_vmac_cm_core_sparse_wide:%[0-9]+]]:acc1024 = VADDMAC_vmac_cm_core_sparse_wide [[COPY3]], [[COPY4]], [[COPY]], [[REG_SEQUENCE]], [[MOV_RLC_imm10_pseudo]]
+    ; CHECK-NEXT: $cm0 = COPY [[VADDMAC_vmac_cm_core_sparse_wide]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $cm0
+  %1:vregbank(<128 x s8>) = COPY $y2
+  %2:vregbank(<64 x s8>) = COPY $x0
+  %3:vregbank(s128) = COPY $q0
+  %20:accregbank(<16 x s64>) = COPY $cm1
+  %21:accregbank(<16 x s64>) = COPY $cm2
+  %47:gprregbank(s32) = G_CONSTANT i32 32
+  %46:vregbank(<16 x s32>) = G_BITCAST %2:vregbank(<64 x s8>)
+  %0:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.I1024.I1024.ACC1024.ACC1024.acc32.addmac.conf), %1:vregbank(<128 x s8>), %46:vregbank(<16 x s32>), %3:vregbank(s128), %20:accregbank(<16 x s64>), %21:accregbank(<16 x s64>), %47:gprregbank(s32)
+  $cm0 = COPY %0:accregbank(<16 x s64>)
+  PseudoRET implicit $lr, implicit $cm0
+...
+---
+name:            VADDMAC_ACC32_sparse_narrow
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $cm1, $cm2, $q2, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $x2
+    ; CHECK-LABEL: name: VADDMAC_ACC32_sparse_narrow
+    ; CHECK: liveins: $cm1, $cm2, $q2, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $x2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:mxw = COPY $x2
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec128 = COPY $q2
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc1024 = COPY $cm1
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:acc1024 = COPY $cm2
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 680
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:sparsevec640 = REG_SEQUENCE [[COPY1]], %subreg.sub_sparse_x, [[COPY2]], %subreg.sub_sparse_q
+    ; CHECK-NEXT: [[VADDMAC_vmac_cm_core_sparse_narrow:%[0-9]+]]:acc1024 = VADDMAC_vmac_cm_core_sparse_narrow [[COPY3]], [[COPY4]], [[COPY]], [[REG_SEQUENCE]], [[MOV_RLC_imm11_pseudo]]
+    ; CHECK-NEXT: $cm0 = COPY [[VADDMAC_vmac_cm_core_sparse_narrow]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $cm0
+    %1:vregbank(<64 x s8>) = COPY $x0
+    %2:vregbank(<64 x s8>) = COPY $x2
+    %3:vregbank(s128) = COPY $q2
+    %20:accregbank(<16 x s64>) = COPY $cm1
+    %21:accregbank(<16 x s64>) = COPY $cm2
+    %46:gprregbank(s32) = G_CONSTANT i32 680
+    %0:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.I512.I1024.ACC1024.ACC1024.acc32.addmac.conf), %1:vregbank(<64 x s8>), %2:vregbank(<64 x s8>), %3:vregbank(s128), %20:accregbank(<16 x s64>), %21:accregbank(<16 x s64>), %46:gprregbank(s32)
+    $cm0 = COPY %0:accregbank(<16 x s64>)
+    PseudoRET implicit $lr, implicit $cm0
+...
+---
+name:            VADDMSC_ACC32_sparse_wide
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $cm1, $cm2, $q0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $y2
+    ; CHECK-LABEL: name: VADDMSC_ACC32_sparse_wide
+    ; CHECK: liveins: $cm1, $cm2, $q0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $y2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec1024 = COPY $y2
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec128 = COPY $q0
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc1024 = COPY $cm1
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:acc1024 = COPY $cm2
+    ; CHECK-NEXT: [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 32
+    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:mxw = COPY [[COPY1]]
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:sparsevec640 = REG_SEQUENCE [[COPY5]], %subreg.sub_sparse_x, [[COPY2]], %subreg.sub_sparse_q
+    ; CHECK-NEXT: [[VADDMSC_vmac_cm_core_sparse_wide:%[0-9]+]]:acc1024 = VADDMSC_vmac_cm_core_sparse_wide [[COPY3]], [[COPY4]], [[COPY]], [[REG_SEQUENCE]], [[MOV_RLC_imm10_pseudo]]
+    ; CHECK-NEXT: $cm0 = COPY [[VADDMSC_vmac_cm_core_sparse_wide]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $cm0
+    %1:vregbank(<128 x s8>) = COPY $y2
+    %2:vregbank(<64 x s8>) = COPY $x0
+    %3:vregbank(s128) = COPY $q0
+    %20:accregbank(<16 x s64>) = COPY $cm1
+    %21:accregbank(<16 x s64>) = COPY $cm2
+    %47:gprregbank(s32) = G_CONSTANT i32 32
+    %46:vregbank(<16 x s32>) = G_BITCAST %2:vregbank(<64 x s8>)
+    %0:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.I1024.I1024.ACC1024.ACC1024.acc32.addmsc.conf), %1:vregbank(<128 x s8>), %46:vregbank(<16 x s32>), %3:vregbank(s128), %20:accregbank(<16 x s64>), %21:accregbank(<16 x s64>), %47:gprregbank(s32)
+    $cm0 = COPY %0:accregbank(<16 x s64>)
+    PseudoRET implicit $lr, implicit $cm0
+...
+---
+name:            VADDMSC_ACC32_sparse_narrow
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $cm1, $cm2, $q2, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $x2
+    ; CHECK-LABEL: name: VADDMSC_ACC32_sparse_narrow
+    ; CHECK: liveins: $cm1, $cm2, $q2, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $x2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:mxw = COPY $x2
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec128 = COPY $q2
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc1024 = COPY $cm1
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:acc1024 = COPY $cm2
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 680
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:sparsevec640 = REG_SEQUENCE [[COPY1]], %subreg.sub_sparse_x, [[COPY2]], %subreg.sub_sparse_q
+    ; CHECK-NEXT: [[VADDMSC_vmac_cm_core_sparse_narrow:%[0-9]+]]:acc1024 = VADDMSC_vmac_cm_core_sparse_narrow [[COPY3]], [[COPY4]], [[COPY]], [[REG_SEQUENCE]], [[MOV_RLC_imm11_pseudo]]
+    ; CHECK-NEXT: $cm0 = COPY [[VADDMSC_vmac_cm_core_sparse_narrow]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $cm0
+    %1:vregbank(<64 x s8>) = COPY $x0
+    %2:vregbank(<64 x s8>) = COPY $x2
+    %3:vregbank(s128) = COPY $q2
+    %20:accregbank(<16 x s64>) = COPY $cm1
+    %21:accregbank(<16 x s64>) = COPY $cm2
+    %46:gprregbank(s32) = G_CONSTANT i32 680
+    %0:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.I512.I1024.ACC1024.ACC1024.acc32.addmsc.conf), %1:vregbank(<64 x s8>), %2:vregbank(<64 x s8>), %3:vregbank(s128), %20:accregbank(<16 x s64>), %21:accregbank(<16 x s64>), %46:gprregbank(s32)
+    $cm0 = COPY %0:accregbank(<16 x s64>)
+    PseudoRET implicit $lr, implicit $cm0
+...
+
+
+---
+name:            VSUBMAC_ACC32_sparse_wide
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $cm1, $cm2, $q0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $y2
+    ; CHECK-LABEL: name: VSUBMAC_ACC32_sparse_wide
+    ; CHECK: liveins: $cm1, $cm2, $q0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $y2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec1024 = COPY $y2
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec128 = COPY $q0
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc1024 = COPY $cm1
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:acc1024 = COPY $cm2
+    ; CHECK-NEXT: [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 32
+    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:mxw = COPY [[COPY1]]
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:sparsevec640 = REG_SEQUENCE [[COPY5]], %subreg.sub_sparse_x, [[COPY2]], %subreg.sub_sparse_q
+    ; CHECK-NEXT: [[VSUBMAC_vmac_cm_core_sparse_wide:%[0-9]+]]:acc1024 = VSUBMAC_vmac_cm_core_sparse_wide [[COPY3]], [[COPY4]], [[COPY]], [[REG_SEQUENCE]], [[MOV_RLC_imm10_pseudo]]
+    ; CHECK-NEXT: $cm0 = COPY [[VSUBMAC_vmac_cm_core_sparse_wide]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $cm0
+    %1:vregbank(<128 x s8>) = COPY $y2
+    %2:vregbank(<64 x s8>) = COPY $x0
+    %3:vregbank(s128) = COPY $q0
+    %20:accregbank(<16 x s64>) = COPY $cm1
+    %21:accregbank(<16 x s64>) = COPY $cm2
+    %47:gprregbank(s32) = G_CONSTANT i32 32
+    %46:vregbank(<16 x s32>) = G_BITCAST %2:vregbank(<64 x s8>)
+    %0:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.I1024.I1024.ACC1024.ACC1024.acc32.submac.conf), %1:vregbank(<128 x s8>), %46:vregbank(<16 x s32>), %3:vregbank(s128), %20:accregbank(<16 x s64>), %21:accregbank(<16 x s64>), %47:gprregbank(s32)
+    $cm0 = COPY %0:accregbank(<16 x s64>)
+    PseudoRET implicit $lr, implicit $cm0
+...
+
+---
+name:            VSUBMAC_ACC32_sparse_narrow
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $cm1, $cm2, $q2, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $x2
+    ; CHECK-LABEL: name: VSUBMAC_ACC32_sparse_narrow
+    ; CHECK: liveins: $cm1, $cm2, $q2, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $x2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:mxw = COPY $x2
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec128 = COPY $q2
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc1024 = COPY $cm1
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:acc1024 = COPY $cm2
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 680
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:sparsevec640 = REG_SEQUENCE [[COPY1]], %subreg.sub_sparse_x, [[COPY2]], %subreg.sub_sparse_q
+    ; CHECK-NEXT: [[VSUBMAC_vmac_cm_core_sparse_narrow:%[0-9]+]]:acc1024 = VSUBMAC_vmac_cm_core_sparse_narrow [[COPY3]], [[COPY4]], [[COPY]], [[REG_SEQUENCE]], [[MOV_RLC_imm11_pseudo]]
+    ; CHECK-NEXT: $cm0 = COPY [[VSUBMAC_vmac_cm_core_sparse_narrow]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $cm0
+    %1:vregbank(<64 x s8>) = COPY $x0
+    %2:vregbank(<64 x s8>) = COPY $x2
+    %3:vregbank(s128) = COPY $q2
+    %20:accregbank(<16 x s64>) = COPY $cm1
+    %21:accregbank(<16 x s64>) = COPY $cm2
+    %46:gprregbank(s32) = G_CONSTANT i32 680
+    %0:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.I512.I1024.ACC1024.ACC1024.acc32.submac.conf), %1:vregbank(<64 x s8>), %2:vregbank(<64 x s8>), %3:vregbank(s128), %20:accregbank(<16 x s64>), %21:accregbank(<16 x s64>), %46:gprregbank(s32)
+    $cm0 = COPY %0:accregbank(<16 x s64>)
+    PseudoRET implicit $lr, implicit $cm0
+
+...
+
+---
+name:            VSUBMSC_ACC32_sparse_wide
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $cm1, $cm2, $q0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $y2
+    ; CHECK-LABEL: name: VSUBMSC_ACC32_sparse_wide
+    ; CHECK: liveins: $cm1, $cm2, $q0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $y2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec1024 = COPY $y2
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec128 = COPY $q0
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc1024 = COPY $cm1
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:acc1024 = COPY $cm2
+    ; CHECK-NEXT: [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 32
+    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:mxw = COPY [[COPY1]]
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:sparsevec640 = REG_SEQUENCE [[COPY5]], %subreg.sub_sparse_x, [[COPY2]], %subreg.sub_sparse_q
+    ; CHECK-NEXT: [[VSUBMSC_vmac_cm_core_sparse_wide:%[0-9]+]]:acc1024 = VSUBMSC_vmac_cm_core_sparse_wide [[COPY3]], [[COPY4]], [[COPY]], [[REG_SEQUENCE]], [[MOV_RLC_imm10_pseudo]]
+    ; CHECK-NEXT: $cm0 = COPY [[VSUBMSC_vmac_cm_core_sparse_wide]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $cm0
+    %1:vregbank(<128 x s8>) = COPY $y2
+    %2:vregbank(<64 x s8>) = COPY $x0
+    %3:vregbank(s128) = COPY $q0
+    %20:accregbank(<16 x s64>) = COPY $cm1
+    %21:accregbank(<16 x s64>) = COPY $cm2
+    %47:gprregbank(s32) = G_CONSTANT i32 32
+    %46:vregbank(<16 x s32>) = G_BITCAST %2:vregbank(<64 x s8>)
+    %0:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.I1024.I1024.ACC1024.ACC1024.acc32.submsc.conf), %1:vregbank(<128 x s8>), %46:vregbank(<16 x s32>), %3:vregbank(s128), %20:accregbank(<16 x s64>), %21:accregbank(<16 x s64>), %47:gprregbank(s32)
+    $cm0 = COPY %0:accregbank(<16 x s64>)
+    PseudoRET implicit $lr, implicit $cm0
+...
+
+
+---
+name:            VSUBMSC_ACC32_sparse_narrow
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $cm1, $cm2, $q2, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $x2
+    ; CHECK-LABEL: name: VSUBMSC_ACC32_sparse_narrow
+    ; CHECK: liveins: $cm1, $cm2, $q2, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $x2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:mxw = COPY $x2
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec128 = COPY $q2
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc1024 = COPY $cm1
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:acc1024 = COPY $cm2
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 680
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:sparsevec640 = REG_SEQUENCE [[COPY1]], %subreg.sub_sparse_x, [[COPY2]], %subreg.sub_sparse_q
+    ; CHECK-NEXT: [[VSUBMSC_vmac_cm_core_sparse_narrow:%[0-9]+]]:acc1024 = VSUBMSC_vmac_cm_core_sparse_narrow [[COPY3]], [[COPY4]], [[COPY]], [[REG_SEQUENCE]], [[MOV_RLC_imm11_pseudo]]
+    ; CHECK-NEXT: $cm0 = COPY [[VSUBMSC_vmac_cm_core_sparse_narrow]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $cm0
+    %1:vregbank(<64 x s8>) = COPY $x0
+    %2:vregbank(<64 x s8>) = COPY $x2
+    %3:vregbank(s128) = COPY $q2
+    %20:accregbank(<16 x s64>) = COPY $cm1
+    %21:accregbank(<16 x s64>) = COPY $cm2
+    %46:gprregbank(s32) = G_CONSTANT i32 680
+    %0:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.I512.I1024.ACC1024.ACC1024.acc32.submsc.conf), %1:vregbank(<64 x s8>), %2:vregbank(<64 x s8>), %3:vregbank(s128), %20:accregbank(<16 x s64>), %21:accregbank(<16 x s64>), %46:gprregbank(s32)
+    $cm0 = COPY %0:accregbank(<16 x s64>)
+    PseudoRET implicit $lr, implicit $cm0
+...
+
+
+---
+name:            VADDMAC_ACC64_sparse_narrow
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $cm1, $cm2, $q2, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $x2
+    ; CHECK-LABEL: name: VADDMAC_ACC64_sparse_narrow
+    ; CHECK: liveins: $cm1, $cm2, $q2, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $x2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:mxw = COPY $x2
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec128 = COPY $q2
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc1024 = COPY $cm1
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:acc1024 = COPY $cm2
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 850
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:sparsevec640 = REG_SEQUENCE [[COPY1]], %subreg.sub_sparse_x, [[COPY2]], %subreg.sub_sparse_q
+    ; CHECK-NEXT: [[VADDMAC_vmac_cm_core_sparse_narrow:%[0-9]+]]:acc1024 = VADDMAC_vmac_cm_core_sparse_narrow [[COPY3]], [[COPY4]], [[COPY]], [[REG_SEQUENCE]], [[MOV_RLC_imm11_pseudo]]
+    ; CHECK-NEXT: $cm0 = COPY [[VADDMAC_vmac_cm_core_sparse_narrow]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $cm0
+    %1:vregbank(<32 x s16>) = COPY $x0
+    %2:vregbank(<64 x s8>) = COPY $x2
+    %3:vregbank(s128) = COPY $q2
+    %20:accregbank(<16 x s64>) = COPY $cm1
+    %21:accregbank(<16 x s64>) = COPY $cm2
+    %47:gprregbank(s32) = G_CONSTANT i32 850
+    %46:vregbank(<64 x s8>) = G_BITCAST %1:vregbank(<32 x s16>)
+    %0:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.I512.I1024.ACC1024.ACC1024.acc64.addmac.conf), %46:vregbank(<64 x s8>), %2:vregbank(<64 x s8>), %3:vregbank(s128), %20:accregbank(<16 x s64>), %21:accregbank(<16 x s64>), %47:gprregbank(s32)
+    $cm0 = COPY %0:accregbank(<16 x s64>)
+    PseudoRET implicit $lr, implicit $cm0
+...
+
+
+---
+name:            VADDMSC_ACC64_sparse_narrow
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $cm1, $cm2, $q2, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $x2
+    ; CHECK-LABEL: name: VADDMSC_ACC64_sparse_narrow
+    ; CHECK: liveins: $cm1, $cm2, $q2, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $x2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:mxw = COPY $x2
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec128 = COPY $q2
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc1024 = COPY $cm1
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:acc1024 = COPY $cm2
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 850
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:sparsevec640 = REG_SEQUENCE [[COPY1]], %subreg.sub_sparse_x, [[COPY2]], %subreg.sub_sparse_q
+    ; CHECK-NEXT: [[VADDMSC_vmac_cm_core_sparse_narrow:%[0-9]+]]:acc1024 = VADDMSC_vmac_cm_core_sparse_narrow [[COPY3]], [[COPY4]], [[COPY]], [[REG_SEQUENCE]], [[MOV_RLC_imm11_pseudo]]
+    ; CHECK-NEXT: $cm0 = COPY [[VADDMSC_vmac_cm_core_sparse_narrow]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $cm0
+    %1:vregbank(<32 x s16>) = COPY $x0
+    %2:vregbank(<64 x s8>) = COPY $x2
+    %3:vregbank(s128) = COPY $q2
+    %20:accregbank(<16 x s64>) = COPY $cm1
+    %21:accregbank(<16 x s64>) = COPY $cm2
+    %47:gprregbank(s32) = G_CONSTANT i32 850
+    %46:vregbank(<64 x s8>) = G_BITCAST %1:vregbank(<32 x s16>)
+    %0:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.I512.I1024.ACC1024.ACC1024.acc64.addmsc.conf), %46:vregbank(<64 x s8>), %2:vregbank(<64 x s8>), %3:vregbank(s128), %20:accregbank(<16 x s64>), %21:accregbank(<16 x s64>), %47:gprregbank(s32)
+    $cm0 = COPY %0:accregbank(<16 x s64>)
+    PseudoRET implicit $lr, implicit $cm0
+...
+
+
+---
+name:            VSUBMAC_ACC64_sparse_narrow
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $cm1, $cm2, $q2, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $x2
+    ; CHECK-LABEL: name: VSUBMAC_ACC64_sparse_narrow
+    ; CHECK: liveins: $cm1, $cm2, $q2, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $x2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:mxw = COPY $x2
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec128 = COPY $q2
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc1024 = COPY $cm1
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:acc1024 = COPY $cm2
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 850
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:sparsevec640 = REG_SEQUENCE [[COPY1]], %subreg.sub_sparse_x, [[COPY2]], %subreg.sub_sparse_q
+    ; CHECK-NEXT: [[VSUBMAC_vmac_cm_core_sparse_narrow:%[0-9]+]]:acc1024 = VSUBMAC_vmac_cm_core_sparse_narrow [[COPY3]], [[COPY4]], [[COPY]], [[REG_SEQUENCE]], [[MOV_RLC_imm11_pseudo]]
+    ; CHECK-NEXT: $cm0 = COPY [[VSUBMAC_vmac_cm_core_sparse_narrow]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $cm0
+    %1:vregbank(<32 x s16>) = COPY $x0
+    %2:vregbank(<64 x s8>) = COPY $x2
+    %3:vregbank(s128) = COPY $q2
+    %20:accregbank(<16 x s64>) = COPY $cm1
+    %21:accregbank(<16 x s64>) = COPY $cm2
+    %47:gprregbank(s32) = G_CONSTANT i32 850
+    %46:vregbank(<64 x s8>) = G_BITCAST %1:vregbank(<32 x s16>)
+    %0:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.I512.I1024.ACC1024.ACC1024.acc64.submac.conf), %46:vregbank(<64 x s8>), %2:vregbank(<64 x s8>), %3:vregbank(s128), %20:accregbank(<16 x s64>), %21:accregbank(<16 x s64>), %47:gprregbank(s32)
+    $cm0 = COPY %0:accregbank(<16 x s64>)
+    PseudoRET implicit $lr, implicit $cm0
+...
+
+---
+name:            VSUBMSC_ACC64_sparse_narrow
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $cm1, $cm2, $q2, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $x2
+    ; CHECK-LABEL: name: VSUBMSC_ACC64_sparse_narrow
+    ; CHECK: liveins: $cm1, $cm2, $q2, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $x2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:mxw = COPY $x2
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec128 = COPY $q2
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc1024 = COPY $cm1
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:acc1024 = COPY $cm2
+    ; CHECK-NEXT: [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 850
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:sparsevec640 = REG_SEQUENCE [[COPY1]], %subreg.sub_sparse_x, [[COPY2]], %subreg.sub_sparse_q
+    ; CHECK-NEXT: [[VSUBMSC_vmac_cm_core_sparse_narrow:%[0-9]+]]:acc1024 = VSUBMSC_vmac_cm_core_sparse_narrow [[COPY3]], [[COPY4]], [[COPY]], [[REG_SEQUENCE]], [[MOV_RLC_imm11_pseudo]]
+    ; CHECK-NEXT: $cm0 = COPY [[VSUBMSC_vmac_cm_core_sparse_narrow]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $cm0
+    %1:vregbank(<32 x s16>) = COPY $x0
+    %2:vregbank(<64 x s8>) = COPY $x2
+    %3:vregbank(s128) = COPY $q2
+    %20:accregbank(<16 x s64>) = COPY $cm1
+    %21:accregbank(<16 x s64>) = COPY $cm2
+    %47:gprregbank(s32) = G_CONSTANT i32 850
+    %46:vregbank(<64 x s8>) = G_BITCAST %1:vregbank(<32 x s16>)
+    %0:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.I512.I1024.ACC1024.ACC1024.acc64.submsc.conf), %46:vregbank(<64 x s8>), %2:vregbank(<64 x s8>), %3:vregbank(s128), %20:accregbank(<16 x s64>), %21:accregbank(<16 x s64>), %47:gprregbank(s32)
+    $cm0 = COPY %0:accregbank(<16 x s64>)
+    PseudoRET implicit $lr, implicit $cm0
+...
