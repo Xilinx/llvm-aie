@@ -18410,44 +18410,48 @@ submsc_4x2_2x4_conf(v16int32 a, int sgn_x, v32int16 b, int sgn_y, v16acc64 acc1,
   return __builtin_aiev2_I512_I512_ACC1024_ACC1024_acc64_submsc_conf(
       a, b, acc1, acc2, conf);
 }
-#if 0  // sparse Type
 
+#if 1 // sparse Type
 
 INTRINSIC(v32acc32) mul_4x32_32x8(v128uint8 a, v256uint4_sparse b) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 0, 1, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mul_conf(a, b, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mul_conf(a, b.data, b.mask,
+                                                            conf);
 }
 INTRINSIC(v32acc32) negmul_4x32_32x8(v128uint8 a, v256uint4_sparse b) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 0, 1, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmul_conf(a, b.data,
+                                                               b.mask, conf);
 }
 INTRINSIC(v32acc32)
 mac_4x32_32x8(v128uint8 a, v256uint4_sparse b, v32acc32 acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 0, 1, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mac_conf(a, b.data, b.mask,
+                                                            acc1, conf);
 }
 INTRINSIC(v32acc32)
 msc_4x32_32x8(v128uint8 a, v256uint4_sparse b, v32acc32 acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 0, 1, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_msc_conf(a, b.data, b.mask,
+                                                            acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmac_4x32_32x8(v128uint8 a, v256uint4_sparse b, v32acc32 acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 0, 1, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmac_conf(a, b, acc1,
-                                                               conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmac_conf(
+      a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmsc_4x32_32x8(v128uint8 a, v256uint4_sparse b, v32acc32 acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 0, 1, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmsc_conf(a, b, acc1,
-                                                               conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmsc_conf(
+      a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v32acc32)
 addmac_4x32_32x8(v128uint8 a, v256uint4_sparse b, v32acc32 acc1,
@@ -18455,7 +18459,7 @@ addmac_4x32_32x8(v128uint8 a, v256uint4_sparse b, v32acc32 acc1,
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 0, 1, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 addmsc_4x32_32x8(v128uint8 a, v256uint4_sparse b, v32acc32 acc1,
@@ -18463,7 +18467,7 @@ addmsc_4x32_32x8(v128uint8 a, v256uint4_sparse b, v32acc32 acc1,
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 0, 1, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submac_4x32_32x8(v128uint8 a, v256uint4_sparse b, v32acc32 acc1,
@@ -18471,7 +18475,7 @@ submac_4x32_32x8(v128uint8 a, v256uint4_sparse b, v32acc32 acc1,
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 0, 1, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submsc_4x32_32x8(v128uint8 a, v256uint4_sparse b, v32acc32 acc1,
@@ -18479,113 +18483,121 @@ submsc_4x32_32x8(v128uint8 a, v256uint4_sparse b, v32acc32 acc1,
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 0, 1, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 mul_4x32_32x8(v128uint8 a, int sgn_x, v256uint4_sparse b, int sgn_y) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mul_conf(a, b, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mul_conf(a, b.data, b.mask,
+                                                            conf);
 }
 INTRINSIC(v32acc32)
 negmul_4x32_32x8(v128uint8 a, int sgn_x, v256uint4_sparse b, int sgn_y) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmul_conf(a, b.data,
+                                                               b.mask, conf);
 }
 INTRINSIC(v32acc32)
 mac_4x32_32x8(v128uint8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
               v32acc32 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mac_conf(a, b.data, b.mask,
+                                                            acc1, conf);
 }
 INTRINSIC(v32acc32)
 msc_4x32_32x8(v128uint8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
               v32acc32 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_msc_conf(a, b.data, b.mask,
+                                                            acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmac_4x32_32x8(v128uint8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
                  v32acc32 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmac_conf(a, b, acc1,
-                                                               conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmac_conf(
+      a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmsc_4x32_32x8(v128uint8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
                  v32acc32 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmsc_conf(a, b, acc1,
-                                                               conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmsc_conf(
+      a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v32acc32)
 addmac_4x32_32x8(v128uint8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
                  v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 addmsc_4x32_32x8(v128uint8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
                  v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submac_4x32_32x8(v128uint8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
                  v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submsc_4x32_32x8(v128uint8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
                  v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 mul_4x32_32x8_conf(v128uint8 a, v256uint4_sparse b, int sub_mul) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 0, 1, 0,
                                    0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mul_conf(a, b, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mul_conf(a, b.data, b.mask,
+                                                            conf);
 }
 INTRINSIC(v32acc32)
 negmul_4x32_32x8_conf(v128uint8 a, v256uint4_sparse b, int sub_mul) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 0, 1, 0,
                                    0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmul_conf(a, b.data,
+                                                               b.mask, conf);
 }
 INTRINSIC(v32acc32)
 mac_4x32_32x8_conf(v128uint8 a, v256uint4_sparse b, v32acc32 acc1,
                    int zero_acc1, int shift16, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 0, 1,
                                    zero_acc1, shift16, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mac_conf(a, b.data, b.mask,
+                                                            acc1, conf);
 }
 INTRINSIC(v32acc32)
 msc_4x32_32x8_conf(v128uint8 a, v256uint4_sparse b, v32acc32 acc1,
                    int zero_acc1, int shift16, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 0, 1,
                                    zero_acc1, shift16, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_msc_conf(a, b.data, b.mask,
+                                                            acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmsc_4x32_32x8_conf(v128uint8 a, v256uint4_sparse b, v32acc32 acc1,
                       int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 0, 1,
                                    zero_acc1, 0, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmsc_conf(a, b, acc1,
-                                                               conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmsc_conf(
+      a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmac_4x32_32x8_conf(v128uint8 a, v256uint4_sparse b, v32acc32 acc1,
                       int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 0, 1,
                                    zero_acc1, 0, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmac_conf(a, b, acc1,
-                                                               conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmac_conf(
+      a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v32acc32)
 addmac_4x32_32x8_conf(v128uint8 a, v256uint4_sparse b, v32acc32 acc1,
@@ -18595,7 +18607,7 @@ addmac_4x32_32x8_conf(v128uint8 a, v256uint4_sparse b, v32acc32 acc1,
       aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 0, 1,
                             zero_acc1, shift16, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 addmsc_4x32_32x8_conf(v128uint8 a, v256uint4_sparse b, v32acc32 acc1,
@@ -18605,7 +18617,7 @@ addmsc_4x32_32x8_conf(v128uint8 a, v256uint4_sparse b, v32acc32 acc1,
       aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 0, 1,
                             zero_acc1, shift16, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submac_4x32_32x8_conf(v128uint8 a, v256uint4_sparse b, v32acc32 acc1,
@@ -18615,7 +18627,7 @@ submac_4x32_32x8_conf(v128uint8 a, v256uint4_sparse b, v32acc32 acc1,
       aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 0, 1,
                             zero_acc1, 0, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submsc_4x32_32x8_conf(v128uint8 a, v256uint4_sparse b, v32acc32 acc1,
@@ -18625,21 +18637,23 @@ submsc_4x32_32x8_conf(v128uint8 a, v256uint4_sparse b, v32acc32 acc1,
       aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 0, 1,
                             zero_acc1, 0, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 mul_4x32_32x8_conf(v128uint8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
                    int sub_mul) {
   int conf =
       aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mul_conf(a, b, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mul_conf(a, b.data, b.mask,
+                                                            conf);
 }
 INTRINSIC(v32acc32)
 negmul_4x32_32x8_conf(v128uint8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
                       int sub_mul) {
   int conf =
       aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmul_conf(a, b.data,
+                                                               b.mask, conf);
 }
 INTRINSIC(v32acc32)
 mac_4x32_32x8_conf(v128uint8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
@@ -18647,7 +18661,8 @@ mac_4x32_32x8_conf(v128uint8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
                    int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, zero_acc1, shift16,
                                    sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mac_conf(a, b.data, b.mask,
+                                                            acc1, conf);
 }
 INTRINSIC(v32acc32)
 msc_4x32_32x8_conf(v128uint8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
@@ -18655,23 +18670,24 @@ msc_4x32_32x8_conf(v128uint8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
                    int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, zero_acc1, shift16,
                                    sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_msc_conf(a, b.data, b.mask,
+                                                            acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmsc_4x32_32x8_conf(v128uint8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
                       v32acc32 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, zero_acc1, 0, sub_mul,
                                    sub_acc1, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmsc_conf(a, b, acc1,
-                                                               conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmsc_conf(
+      a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmac_4x32_32x8_conf(v128uint8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
                       v32acc32 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, zero_acc1, 0, sub_mul,
                                    sub_acc1, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmac_conf(a, b, acc1,
-                                                               conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmac_conf(
+      a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v32acc32)
 addmac_4x32_32x8_conf(v128uint8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
@@ -18680,7 +18696,7 @@ addmac_4x32_32x8_conf(v128uint8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, zero_acc1, shift16,
                                    sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 addmsc_4x32_32x8_conf(v128uint8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
@@ -18689,7 +18705,7 @@ addmsc_4x32_32x8_conf(v128uint8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, zero_acc1, shift16,
                                    sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submac_4x32_32x8_conf(v128uint8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
@@ -18698,7 +18714,7 @@ submac_4x32_32x8_conf(v128uint8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, zero_acc1, 0, sub_mul,
                                    sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submsc_4x32_32x8_conf(v128uint8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
@@ -18707,177 +18723,189 @@ submsc_4x32_32x8_conf(v128uint8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, zero_acc1, 0, sub_mul,
                                    sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 };
 INTRINSIC(v32acc32) mul_4x32_32x8(v128uint8 a, v256int4_sparse b) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 0, 1, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mul_conf(a, b, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mul_conf(a, b.data, b.mask,
+                                                            conf);
 }
 INTRINSIC(v32acc32) negmul_4x32_32x8(v128uint8 a, v256int4_sparse b) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 0, 1, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmul_conf(a, b.data,
+                                                               b.mask, conf);
 }
 INTRINSIC(v32acc32)
 mac_4x32_32x8(v128uint8 a, v256int4_sparse b, v32acc32 acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 0, 1, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mac_conf(a, b.data, b.mask,
+                                                            acc1, conf);
 }
 INTRINSIC(v32acc32)
 msc_4x32_32x8(v128uint8 a, v256int4_sparse b, v32acc32 acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 0, 1, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_msc_conf(a, b.data, b.mask,
+                                                            acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmac_4x32_32x8(v128uint8 a, v256int4_sparse b, v32acc32 acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 0, 1, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmac_conf(a, b, acc1,
-                                                               conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmac_conf(
+      a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmsc_4x32_32x8(v128uint8 a, v256int4_sparse b, v32acc32 acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 0, 1, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmsc_conf(a, b, acc1,
-                                                               conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmsc_conf(
+      a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v32acc32)
 addmac_4x32_32x8(v128uint8 a, v256int4_sparse b, v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 0, 1, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 addmsc_4x32_32x8(v128uint8 a, v256int4_sparse b, v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 0, 1, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submac_4x32_32x8(v128uint8 a, v256int4_sparse b, v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 0, 1, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submsc_4x32_32x8(v128uint8 a, v256int4_sparse b, v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 0, 1, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 mul_4x32_32x8(v128uint8 a, int sgn_x, v256int4_sparse b, int sgn_y) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mul_conf(a, b, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mul_conf(a, b.data, b.mask,
+                                                            conf);
 }
 INTRINSIC(v32acc32)
 negmul_4x32_32x8(v128uint8 a, int sgn_x, v256int4_sparse b, int sgn_y) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmul_conf(a, b.data,
+                                                               b.mask, conf);
 }
 INTRINSIC(v32acc32)
 mac_4x32_32x8(v128uint8 a, int sgn_x, v256int4_sparse b, int sgn_y,
               v32acc32 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mac_conf(a, b.data, b.mask,
+                                                            acc1, conf);
 }
 INTRINSIC(v32acc32)
 msc_4x32_32x8(v128uint8 a, int sgn_x, v256int4_sparse b, int sgn_y,
               v32acc32 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_msc_conf(a, b.data, b.mask,
+                                                            acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmac_4x32_32x8(v128uint8 a, int sgn_x, v256int4_sparse b, int sgn_y,
                  v32acc32 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmac_conf(a, b, acc1,
-                                                               conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmac_conf(
+      a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmsc_4x32_32x8(v128uint8 a, int sgn_x, v256int4_sparse b, int sgn_y,
                  v32acc32 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmsc_conf(a, b, acc1,
-                                                               conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmsc_conf(
+      a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v32acc32)
 addmac_4x32_32x8(v128uint8 a, int sgn_x, v256int4_sparse b, int sgn_y,
                  v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 addmsc_4x32_32x8(v128uint8 a, int sgn_x, v256int4_sparse b, int sgn_y,
                  v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submac_4x32_32x8(v128uint8 a, int sgn_x, v256int4_sparse b, int sgn_y,
                  v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submsc_4x32_32x8(v128uint8 a, int sgn_x, v256int4_sparse b, int sgn_y,
                  v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 mul_4x32_32x8_conf(v128uint8 a, v256int4_sparse b, int sub_mul) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 0, 1, 0,
                                    0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mul_conf(a, b, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mul_conf(a, b.data, b.mask,
+                                                            conf);
 }
 INTRINSIC(v32acc32)
 negmul_4x32_32x8_conf(v128uint8 a, v256int4_sparse b, int sub_mul) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 0, 1, 0,
                                    0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmul_conf(a, b.data,
+                                                               b.mask, conf);
 }
 INTRINSIC(v32acc32)
 mac_4x32_32x8_conf(v128uint8 a, v256int4_sparse b, v32acc32 acc1, int zero_acc1,
                    int shift16, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 0, 1,
                                    zero_acc1, shift16, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mac_conf(a, b.data, b.mask,
+                                                            acc1, conf);
 }
 INTRINSIC(v32acc32)
 msc_4x32_32x8_conf(v128uint8 a, v256int4_sparse b, v32acc32 acc1, int zero_acc1,
                    int shift16, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 0, 1,
                                    zero_acc1, shift16, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_msc_conf(a, b.data, b.mask,
+                                                            acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmsc_4x32_32x8_conf(v128uint8 a, v256int4_sparse b, v32acc32 acc1,
                       int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 0, 1,
                                    zero_acc1, 0, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmsc_conf(a, b, acc1,
-                                                               conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmsc_conf(
+      a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmac_4x32_32x8_conf(v128uint8 a, v256int4_sparse b, v32acc32 acc1,
                       int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 0, 1,
                                    zero_acc1, 0, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmac_conf(a, b, acc1,
-                                                               conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmac_conf(
+      a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v32acc32)
 addmac_4x32_32x8_conf(v128uint8 a, v256int4_sparse b, v32acc32 acc1,
@@ -18887,7 +18915,7 @@ addmac_4x32_32x8_conf(v128uint8 a, v256int4_sparse b, v32acc32 acc1,
       aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 0, 1, zero_acc1,
                             shift16, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 addmsc_4x32_32x8_conf(v128uint8 a, v256int4_sparse b, v32acc32 acc1,
@@ -18897,7 +18925,7 @@ addmsc_4x32_32x8_conf(v128uint8 a, v256int4_sparse b, v32acc32 acc1,
       aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 0, 1, zero_acc1,
                             shift16, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submac_4x32_32x8_conf(v128uint8 a, v256int4_sparse b, v32acc32 acc1,
@@ -18907,7 +18935,7 @@ submac_4x32_32x8_conf(v128uint8 a, v256int4_sparse b, v32acc32 acc1,
       aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 0, 1, zero_acc1,
                             0, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submsc_4x32_32x8_conf(v128uint8 a, v256int4_sparse b, v32acc32 acc1,
@@ -18917,21 +18945,23 @@ submsc_4x32_32x8_conf(v128uint8 a, v256int4_sparse b, v32acc32 acc1,
       aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 0, 1, zero_acc1,
                             0, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 mul_4x32_32x8_conf(v128uint8 a, int sgn_x, v256int4_sparse b, int sgn_y,
                    int sub_mul) {
   int conf =
       aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mul_conf(a, b, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mul_conf(a, b.data, b.mask,
+                                                            conf);
 }
 INTRINSIC(v32acc32)
 negmul_4x32_32x8_conf(v128uint8 a, int sgn_x, v256int4_sparse b, int sgn_y,
                       int sub_mul) {
   int conf =
       aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmul_conf(a, b.data,
+                                                               b.mask, conf);
 }
 INTRINSIC(v32acc32)
 mac_4x32_32x8_conf(v128uint8 a, int sgn_x, v256int4_sparse b, int sgn_y,
@@ -18939,7 +18969,8 @@ mac_4x32_32x8_conf(v128uint8 a, int sgn_x, v256int4_sparse b, int sgn_y,
                    int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, zero_acc1, shift16,
                                    sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mac_conf(a, b.data, b.mask,
+                                                            acc1, conf);
 }
 INTRINSIC(v32acc32)
 msc_4x32_32x8_conf(v128uint8 a, int sgn_x, v256int4_sparse b, int sgn_y,
@@ -18947,23 +18978,24 @@ msc_4x32_32x8_conf(v128uint8 a, int sgn_x, v256int4_sparse b, int sgn_y,
                    int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, zero_acc1, shift16,
                                    sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_msc_conf(a, b.data, b.mask,
+                                                            acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmsc_4x32_32x8_conf(v128uint8 a, int sgn_x, v256int4_sparse b, int sgn_y,
                       v32acc32 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, zero_acc1, 0, sub_mul,
                                    sub_acc1, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmsc_conf(a, b, acc1,
-                                                               conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmsc_conf(
+      a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmac_4x32_32x8_conf(v128uint8 a, int sgn_x, v256int4_sparse b, int sgn_y,
                       v32acc32 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, zero_acc1, 0, sub_mul,
                                    sub_acc1, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmac_conf(a, b, acc1,
-                                                               conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmac_conf(
+      a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v32acc32)
 addmac_4x32_32x8_conf(v128uint8 a, int sgn_x, v256int4_sparse b, int sgn_y,
@@ -18972,7 +19004,7 @@ addmac_4x32_32x8_conf(v128uint8 a, int sgn_x, v256int4_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, zero_acc1, shift16,
                                    sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 addmsc_4x32_32x8_conf(v128uint8 a, int sgn_x, v256int4_sparse b, int sgn_y,
@@ -18981,7 +19013,7 @@ addmsc_4x32_32x8_conf(v128uint8 a, int sgn_x, v256int4_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, zero_acc1, shift16,
                                    sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submac_4x32_32x8_conf(v128uint8 a, int sgn_x, v256int4_sparse b, int sgn_y,
@@ -18990,7 +19022,7 @@ submac_4x32_32x8_conf(v128uint8 a, int sgn_x, v256int4_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, zero_acc1, 0, sub_mul,
                                    sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submsc_4x32_32x8_conf(v128uint8 a, int sgn_x, v256int4_sparse b, int sgn_y,
@@ -18999,177 +19031,189 @@ submsc_4x32_32x8_conf(v128uint8 a, int sgn_x, v256int4_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, zero_acc1, 0, sub_mul,
                                    sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 };
 INTRINSIC(v32acc32) mul_4x32_32x8(v128int8 a, v256uint4_sparse b) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 0, 1, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mul_conf(a, b, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mul_conf(a, b.data, b.mask,
+                                                            conf);
 }
 INTRINSIC(v32acc32) negmul_4x32_32x8(v128int8 a, v256uint4_sparse b) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 0, 1, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmul_conf(a, b.data,
+                                                               b.mask, conf);
 }
 INTRINSIC(v32acc32)
 mac_4x32_32x8(v128int8 a, v256uint4_sparse b, v32acc32 acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 0, 1, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mac_conf(a, b.data, b.mask,
+                                                            acc1, conf);
 }
 INTRINSIC(v32acc32)
 msc_4x32_32x8(v128int8 a, v256uint4_sparse b, v32acc32 acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 0, 1, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_msc_conf(a, b.data, b.mask,
+                                                            acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmac_4x32_32x8(v128int8 a, v256uint4_sparse b, v32acc32 acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 0, 1, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmac_conf(a, b, acc1,
-                                                               conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmac_conf(
+      a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmsc_4x32_32x8(v128int8 a, v256uint4_sparse b, v32acc32 acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 0, 1, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmsc_conf(a, b, acc1,
-                                                               conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmsc_conf(
+      a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v32acc32)
 addmac_4x32_32x8(v128int8 a, v256uint4_sparse b, v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 0, 1, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 addmsc_4x32_32x8(v128int8 a, v256uint4_sparse b, v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 0, 1, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submac_4x32_32x8(v128int8 a, v256uint4_sparse b, v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 0, 1, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submsc_4x32_32x8(v128int8 a, v256uint4_sparse b, v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 0, 1, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 mul_4x32_32x8(v128int8 a, int sgn_x, v256uint4_sparse b, int sgn_y) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mul_conf(a, b, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mul_conf(a, b.data, b.mask,
+                                                            conf);
 }
 INTRINSIC(v32acc32)
 negmul_4x32_32x8(v128int8 a, int sgn_x, v256uint4_sparse b, int sgn_y) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmul_conf(a, b.data,
+                                                               b.mask, conf);
 }
 INTRINSIC(v32acc32)
 mac_4x32_32x8(v128int8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
               v32acc32 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mac_conf(a, b.data, b.mask,
+                                                            acc1, conf);
 }
 INTRINSIC(v32acc32)
 msc_4x32_32x8(v128int8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
               v32acc32 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_msc_conf(a, b.data, b.mask,
+                                                            acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmac_4x32_32x8(v128int8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
                  v32acc32 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmac_conf(a, b, acc1,
-                                                               conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmac_conf(
+      a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmsc_4x32_32x8(v128int8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
                  v32acc32 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmsc_conf(a, b, acc1,
-                                                               conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmsc_conf(
+      a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v32acc32)
 addmac_4x32_32x8(v128int8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
                  v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 addmsc_4x32_32x8(v128int8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
                  v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submac_4x32_32x8(v128int8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
                  v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submsc_4x32_32x8(v128int8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
                  v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 mul_4x32_32x8_conf(v128int8 a, v256uint4_sparse b, int sub_mul) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 0, 1, 0,
                                    0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mul_conf(a, b, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mul_conf(a, b.data, b.mask,
+                                                            conf);
 }
 INTRINSIC(v32acc32)
 negmul_4x32_32x8_conf(v128int8 a, v256uint4_sparse b, int sub_mul) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 0, 1, 0,
                                    0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmul_conf(a, b.data,
+                                                               b.mask, conf);
 }
 INTRINSIC(v32acc32)
 mac_4x32_32x8_conf(v128int8 a, v256uint4_sparse b, v32acc32 acc1, int zero_acc1,
                    int shift16, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 0, 1,
                                    zero_acc1, shift16, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mac_conf(a, b.data, b.mask,
+                                                            acc1, conf);
 }
 INTRINSIC(v32acc32)
 msc_4x32_32x8_conf(v128int8 a, v256uint4_sparse b, v32acc32 acc1, int zero_acc1,
                    int shift16, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 0, 1,
                                    zero_acc1, shift16, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_msc_conf(a, b.data, b.mask,
+                                                            acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmsc_4x32_32x8_conf(v128int8 a, v256uint4_sparse b, v32acc32 acc1,
                       int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 0, 1,
                                    zero_acc1, 0, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmsc_conf(a, b, acc1,
-                                                               conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmsc_conf(
+      a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmac_4x32_32x8_conf(v128int8 a, v256uint4_sparse b, v32acc32 acc1,
                       int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 0, 1,
                                    zero_acc1, 0, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmac_conf(a, b, acc1,
-                                                               conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmac_conf(
+      a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v32acc32)
 addmac_4x32_32x8_conf(v128int8 a, v256uint4_sparse b, v32acc32 acc1,
@@ -19179,7 +19223,7 @@ addmac_4x32_32x8_conf(v128int8 a, v256uint4_sparse b, v32acc32 acc1,
       aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 0, 1, zero_acc1,
                             shift16, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 addmsc_4x32_32x8_conf(v128int8 a, v256uint4_sparse b, v32acc32 acc1,
@@ -19189,7 +19233,7 @@ addmsc_4x32_32x8_conf(v128int8 a, v256uint4_sparse b, v32acc32 acc1,
       aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 0, 1, zero_acc1,
                             shift16, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submac_4x32_32x8_conf(v128int8 a, v256uint4_sparse b, v32acc32 acc1,
@@ -19199,7 +19243,7 @@ submac_4x32_32x8_conf(v128int8 a, v256uint4_sparse b, v32acc32 acc1,
       aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 0, 1, zero_acc1,
                             0, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submsc_4x32_32x8_conf(v128int8 a, v256uint4_sparse b, v32acc32 acc1,
@@ -19209,21 +19253,23 @@ submsc_4x32_32x8_conf(v128int8 a, v256uint4_sparse b, v32acc32 acc1,
       aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 0, 1, zero_acc1,
                             0, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 mul_4x32_32x8_conf(v128int8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
                    int sub_mul) {
   int conf =
       aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mul_conf(a, b, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mul_conf(a, b.data, b.mask,
+                                                            conf);
 }
 INTRINSIC(v32acc32)
 negmul_4x32_32x8_conf(v128int8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
                       int sub_mul) {
   int conf =
       aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmul_conf(a, b.data,
+                                                               b.mask, conf);
 }
 INTRINSIC(v32acc32)
 mac_4x32_32x8_conf(v128int8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
@@ -19231,7 +19277,8 @@ mac_4x32_32x8_conf(v128int8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
                    int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, zero_acc1, shift16,
                                    sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mac_conf(a, b.data, b.mask,
+                                                            acc1, conf);
 }
 INTRINSIC(v32acc32)
 msc_4x32_32x8_conf(v128int8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
@@ -19239,23 +19286,24 @@ msc_4x32_32x8_conf(v128int8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
                    int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, zero_acc1, shift16,
                                    sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_msc_conf(a, b.data, b.mask,
+                                                            acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmsc_4x32_32x8_conf(v128int8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
                       v32acc32 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, zero_acc1, 0, sub_mul,
                                    sub_acc1, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmsc_conf(a, b, acc1,
-                                                               conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmsc_conf(
+      a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmac_4x32_32x8_conf(v128int8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
                       v32acc32 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, zero_acc1, 0, sub_mul,
                                    sub_acc1, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmac_conf(a, b, acc1,
-                                                               conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmac_conf(
+      a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v32acc32)
 addmac_4x32_32x8_conf(v128int8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
@@ -19264,7 +19312,7 @@ addmac_4x32_32x8_conf(v128int8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, zero_acc1, shift16,
                                    sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 addmsc_4x32_32x8_conf(v128int8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
@@ -19273,7 +19321,7 @@ addmsc_4x32_32x8_conf(v128int8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, zero_acc1, shift16,
                                    sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submac_4x32_32x8_conf(v128int8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
@@ -19282,7 +19330,7 @@ submac_4x32_32x8_conf(v128int8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, zero_acc1, 0, sub_mul,
                                    sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submsc_4x32_32x8_conf(v128int8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
@@ -19291,177 +19339,189 @@ submsc_4x32_32x8_conf(v128int8 a, int sgn_x, v256uint4_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, zero_acc1, 0, sub_mul,
                                    sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 };
 INTRINSIC(v32acc32) mul_4x32_32x8(v128int8 a, v256int4_sparse b) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 0, 1, 0, 0,
                                    0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mul_conf(a, b, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mul_conf(a, b.data, b.mask,
+                                                            conf);
 }
 INTRINSIC(v32acc32) negmul_4x32_32x8(v128int8 a, v256int4_sparse b) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 0, 1, 0, 0,
                                    0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmul_conf(a, b.data,
+                                                               b.mask, conf);
 }
 INTRINSIC(v32acc32)
 mac_4x32_32x8(v128int8 a, v256int4_sparse b, v32acc32 acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 0, 1, 0, 0,
                                    0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mac_conf(a, b.data, b.mask,
+                                                            acc1, conf);
 }
 INTRINSIC(v32acc32)
 msc_4x32_32x8(v128int8 a, v256int4_sparse b, v32acc32 acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 0, 1, 0, 0,
                                    0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_msc_conf(a, b.data, b.mask,
+                                                            acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmac_4x32_32x8(v128int8 a, v256int4_sparse b, v32acc32 acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 0, 1, 0, 0,
                                    0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmac_conf(a, b, acc1,
-                                                               conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmac_conf(
+      a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmsc_4x32_32x8(v128int8 a, v256int4_sparse b, v32acc32 acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 0, 1, 0, 0,
                                    0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmsc_conf(a, b, acc1,
-                                                               conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmsc_conf(
+      a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v32acc32)
 addmac_4x32_32x8(v128int8 a, v256int4_sparse b, v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 0, 1, 0, 0,
                                    0, 0, 0, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 addmsc_4x32_32x8(v128int8 a, v256int4_sparse b, v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 0, 1, 0, 0,
                                    0, 0, 0, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submac_4x32_32x8(v128int8 a, v256int4_sparse b, v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 0, 1, 0, 0,
                                    0, 0, 0, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submsc_4x32_32x8(v128int8 a, v256int4_sparse b, v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 0, 1, 0, 0,
                                    0, 0, 0, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 mul_4x32_32x8(v128int8 a, int sgn_x, v256int4_sparse b, int sgn_y) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mul_conf(a, b, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mul_conf(a, b.data, b.mask,
+                                                            conf);
 }
 INTRINSIC(v32acc32)
 negmul_4x32_32x8(v128int8 a, int sgn_x, v256int4_sparse b, int sgn_y) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmul_conf(a, b.data,
+                                                               b.mask, conf);
 }
 INTRINSIC(v32acc32)
 mac_4x32_32x8(v128int8 a, int sgn_x, v256int4_sparse b, int sgn_y,
               v32acc32 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mac_conf(a, b.data, b.mask,
+                                                            acc1, conf);
 }
 INTRINSIC(v32acc32)
 msc_4x32_32x8(v128int8 a, int sgn_x, v256int4_sparse b, int sgn_y,
               v32acc32 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_msc_conf(a, b.data, b.mask,
+                                                            acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmac_4x32_32x8(v128int8 a, int sgn_x, v256int4_sparse b, int sgn_y,
                  v32acc32 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmac_conf(a, b, acc1,
-                                                               conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmac_conf(
+      a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmsc_4x32_32x8(v128int8 a, int sgn_x, v256int4_sparse b, int sgn_y,
                  v32acc32 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmsc_conf(a, b, acc1,
-                                                               conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmsc_conf(
+      a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v32acc32)
 addmac_4x32_32x8(v128int8 a, int sgn_x, v256int4_sparse b, int sgn_y,
                  v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 addmsc_4x32_32x8(v128int8 a, int sgn_x, v256int4_sparse b, int sgn_y,
                  v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submac_4x32_32x8(v128int8 a, int sgn_x, v256int4_sparse b, int sgn_y,
                  v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submsc_4x32_32x8(v128int8 a, int sgn_x, v256int4_sparse b, int sgn_y,
                  v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 mul_4x32_32x8_conf(v128int8 a, v256int4_sparse b, int sub_mul) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 0, 1, 0, 0,
                                    sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mul_conf(a, b, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mul_conf(a, b.data, b.mask,
+                                                            conf);
 }
 INTRINSIC(v32acc32)
 negmul_4x32_32x8_conf(v128int8 a, v256int4_sparse b, int sub_mul) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 0, 1, 0, 0,
                                    sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmul_conf(a, b.data,
+                                                               b.mask, conf);
 }
 INTRINSIC(v32acc32)
 mac_4x32_32x8_conf(v128int8 a, v256int4_sparse b, v32acc32 acc1, int zero_acc1,
                    int shift16, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 0, 1,
                                    zero_acc1, shift16, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mac_conf(a, b.data, b.mask,
+                                                            acc1, conf);
 }
 INTRINSIC(v32acc32)
 msc_4x32_32x8_conf(v128int8 a, v256int4_sparse b, v32acc32 acc1, int zero_acc1,
                    int shift16, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 0, 1,
                                    zero_acc1, shift16, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_msc_conf(a, b.data, b.mask,
+                                                            acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmsc_4x32_32x8_conf(v128int8 a, v256int4_sparse b, v32acc32 acc1,
                       int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 0, 1,
                                    zero_acc1, 0, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmsc_conf(a, b, acc1,
-                                                               conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmsc_conf(
+      a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmac_4x32_32x8_conf(v128int8 a, v256int4_sparse b, v32acc32 acc1,
                       int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 0, 1,
                                    zero_acc1, 0, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmac_conf(a, b, acc1,
-                                                               conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmac_conf(
+      a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v32acc32)
 addmac_4x32_32x8_conf(v128int8 a, v256int4_sparse b, v32acc32 acc1,
@@ -19471,7 +19531,7 @@ addmac_4x32_32x8_conf(v128int8 a, v256int4_sparse b, v32acc32 acc1,
       aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 0, 1, zero_acc1,
                             shift16, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 addmsc_4x32_32x8_conf(v128int8 a, v256int4_sparse b, v32acc32 acc1,
@@ -19481,7 +19541,7 @@ addmsc_4x32_32x8_conf(v128int8 a, v256int4_sparse b, v32acc32 acc1,
       aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 0, 1, zero_acc1,
                             shift16, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submac_4x32_32x8_conf(v128int8 a, v256int4_sparse b, v32acc32 acc1,
@@ -19491,7 +19551,7 @@ submac_4x32_32x8_conf(v128int8 a, v256int4_sparse b, v32acc32 acc1,
       aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 0, 1, zero_acc1, 0,
                             sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submsc_4x32_32x8_conf(v128int8 a, v256int4_sparse b, v32acc32 acc1,
@@ -19501,21 +19561,23 @@ submsc_4x32_32x8_conf(v128int8 a, v256int4_sparse b, v32acc32 acc1,
       aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 0, 1, zero_acc1, 0,
                             sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 mul_4x32_32x8_conf(v128int8 a, int sgn_x, v256int4_sparse b, int sgn_y,
                    int sub_mul) {
   int conf =
       aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mul_conf(a, b, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mul_conf(a, b.data, b.mask,
+                                                            conf);
 }
 INTRINSIC(v32acc32)
 negmul_4x32_32x8_conf(v128int8 a, int sgn_x, v256int4_sparse b, int sgn_y,
                       int sub_mul) {
   int conf =
       aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, 0, 0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmul_conf(a, b.data,
+                                                               b.mask, conf);
 }
 INTRINSIC(v32acc32)
 mac_4x32_32x8_conf(v128int8 a, int sgn_x, v256int4_sparse b, int sgn_y,
@@ -19523,7 +19585,8 @@ mac_4x32_32x8_conf(v128int8 a, int sgn_x, v256int4_sparse b, int sgn_y,
                    int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, zero_acc1, shift16,
                                    sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_mac_conf(a, b.data, b.mask,
+                                                            acc1, conf);
 }
 INTRINSIC(v32acc32)
 msc_4x32_32x8_conf(v128int8 a, int sgn_x, v256int4_sparse b, int sgn_y,
@@ -19531,23 +19594,24 @@ msc_4x32_32x8_conf(v128int8 a, int sgn_x, v256int4_sparse b, int sgn_y,
                    int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, zero_acc1, shift16,
                                    sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_msc_conf(a, b.data, b.mask,
+                                                            acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmsc_4x32_32x8_conf(v128int8 a, int sgn_x, v256int4_sparse b, int sgn_y,
                       v32acc32 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, zero_acc1, 0, sub_mul,
                                    sub_acc1, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmsc_conf(a, b, acc1,
-                                                               conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmsc_conf(
+      a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmac_4x32_32x8_conf(v128int8 a, int sgn_x, v256int4_sparse b, int sgn_y,
                       v32acc32 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, zero_acc1, 0, sub_mul,
                                    sub_acc1, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmac_conf(a, b, acc1,
-                                                               conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_acc32_negmac_conf(
+      a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v32acc32)
 addmac_4x32_32x8_conf(v128int8 a, int sgn_x, v256int4_sparse b, int sgn_y,
@@ -19556,7 +19620,7 @@ addmac_4x32_32x8_conf(v128int8 a, int sgn_x, v256int4_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, zero_acc1, shift16,
                                    sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 addmsc_4x32_32x8_conf(v128int8 a, int sgn_x, v256int4_sparse b, int sgn_y,
@@ -19565,7 +19629,7 @@ addmsc_4x32_32x8_conf(v128int8 a, int sgn_x, v256int4_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, zero_acc1, shift16,
                                    sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submac_4x32_32x8_conf(v128int8 a, int sgn_x, v256int4_sparse b, int sgn_y,
@@ -19574,7 +19638,7 @@ submac_4x32_32x8_conf(v128int8 a, int sgn_x, v256int4_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, zero_acc1, 0, sub_mul,
                                    sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submsc_4x32_32x8_conf(v128int8 a, int sgn_x, v256int4_sparse b, int sgn_y,
@@ -19583,173 +19647,191 @@ submsc_4x32_32x8_conf(v128int8 a, int sgn_x, v256int4_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 0, 1, zero_acc1, 0, sub_mul,
                                    sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_acc32_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 };
 ;
 
 INTRINSIC(v32acc32) mul_4x16_16x8(v64uint8 a, v128uint8_sparse b) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 1, 5, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v32acc32) negmul_4x16_16x8(v64uint8 a, v128uint8_sparse b) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 1, 5, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v32acc32)
 mac_4x16_16x8(v64uint8 a, v128uint8_sparse b, v32acc32 acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 1, 5, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v32acc32)
 msc_4x16_16x8(v64uint8 a, v128uint8_sparse b, v32acc32 acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 1, 5, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmac_4x16_16x8(v64uint8 a, v128uint8_sparse b, v32acc32 acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 1, 5, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmsc_4x16_16x8(v64uint8 a, v128uint8_sparse b, v32acc32 acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 1, 5, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v32acc32)
 addmac_4x16_16x8(v64uint8 a, v128uint8_sparse b, v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 1, 5, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 addmsc_4x16_16x8(v64uint8 a, v128uint8_sparse b, v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 1, 5, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submac_4x16_16x8(v64uint8 a, v128uint8_sparse b, v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 1, 5, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submsc_4x16_16x8(v64uint8 a, v128uint8_sparse b, v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 1, 5, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 mul_4x16_16x8(v64uint8 a, int sgn_x, v128uint8_sparse b, int sgn_y) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v32acc32)
 negmul_4x16_16x8(v64uint8 a, int sgn_x, v128uint8_sparse b, int sgn_y) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v32acc32)
 mac_4x16_16x8(v64uint8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
               v32acc32 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v32acc32)
 msc_4x16_16x8(v64uint8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
               v32acc32 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmac_4x16_16x8(v64uint8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                  v32acc32 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmsc_4x16_16x8(v64uint8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                  v32acc32 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v32acc32)
 addmac_4x16_16x8(v64uint8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                  v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 addmsc_4x16_16x8(v64uint8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                  v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submac_4x16_16x8(v64uint8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                  v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submsc_4x16_16x8(v64uint8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                  v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 mul_4x16_16x8_conf(v64uint8 a, v128uint8_sparse b, int sub_mul) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 1, 5, 0,
                                    0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v32acc32)
 negmul_4x16_16x8_conf(v64uint8 a, v128uint8_sparse b, int sub_mul) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 1, 5, 0,
                                    0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v32acc32)
 mac_4x16_16x8_conf(v64uint8 a, v128uint8_sparse b, v32acc32 acc1, int zero_acc1,
                    int shift16, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 1, 5,
                                    zero_acc1, shift16, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v32acc32)
 msc_4x16_16x8_conf(v64uint8 a, v128uint8_sparse b, v32acc32 acc1, int zero_acc1,
                    int shift16, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 1, 5,
                                    zero_acc1, shift16, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmsc_4x16_16x8_conf(v64uint8 a, v128uint8_sparse b, v32acc32 acc1,
                       int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 1, 5,
                                    zero_acc1, 0, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmac_4x16_16x8_conf(v64uint8 a, v128uint8_sparse b, v32acc32 acc1,
                       int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 1, 5,
                                    zero_acc1, 0, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v32acc32)
 addmac_4x16_16x8_conf(v64uint8 a, v128uint8_sparse b, v32acc32 acc1,
@@ -19759,7 +19841,7 @@ addmac_4x16_16x8_conf(v64uint8 a, v128uint8_sparse b, v32acc32 acc1,
       aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 1, 5,
                             zero_acc1, shift16, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 addmsc_4x16_16x8_conf(v64uint8 a, v128uint8_sparse b, v32acc32 acc1,
@@ -19769,7 +19851,7 @@ addmsc_4x16_16x8_conf(v64uint8 a, v128uint8_sparse b, v32acc32 acc1,
       aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 1, 5,
                             zero_acc1, shift16, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submac_4x16_16x8_conf(v64uint8 a, v128uint8_sparse b, v32acc32 acc1,
@@ -19779,7 +19861,7 @@ submac_4x16_16x8_conf(v64uint8 a, v128uint8_sparse b, v32acc32 acc1,
       aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 1, 5,
                             zero_acc1, 0, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submsc_4x16_16x8_conf(v64uint8 a, v128uint8_sparse b, v32acc32 acc1,
@@ -19789,21 +19871,23 @@ submsc_4x16_16x8_conf(v64uint8 a, v128uint8_sparse b, v32acc32 acc1,
       aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 0, 1, 5,
                             zero_acc1, 0, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 mul_4x16_16x8_conf(v64uint8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                    int sub_mul) {
   int conf =
       aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v32acc32)
 negmul_4x16_16x8_conf(v64uint8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                       int sub_mul) {
   int conf =
       aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v32acc32)
 mac_4x16_16x8_conf(v64uint8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
@@ -19811,7 +19895,8 @@ mac_4x16_16x8_conf(v64uint8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                    int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, zero_acc1, shift16,
                                    sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v32acc32)
 msc_4x16_16x8_conf(v64uint8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
@@ -19819,21 +19904,24 @@ msc_4x16_16x8_conf(v64uint8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                    int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, zero_acc1, shift16,
                                    sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmsc_4x16_16x8_conf(v64uint8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                       v32acc32 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, zero_acc1, 0, sub_mul,
                                    sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmac_4x16_16x8_conf(v64uint8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                       v32acc32 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, zero_acc1, 0, sub_mul,
                                    sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v32acc32)
 addmac_4x16_16x8_conf(v64uint8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
@@ -19842,7 +19930,7 @@ addmac_4x16_16x8_conf(v64uint8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, zero_acc1, shift16,
                                    sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 addmsc_4x16_16x8_conf(v64uint8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
@@ -19851,7 +19939,7 @@ addmsc_4x16_16x8_conf(v64uint8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, zero_acc1, shift16,
                                    sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submac_4x16_16x8_conf(v64uint8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
@@ -19860,7 +19948,7 @@ submac_4x16_16x8_conf(v64uint8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, zero_acc1, 0, sub_mul,
                                    sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submsc_4x16_16x8_conf(v64uint8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
@@ -19869,171 +19957,189 @@ submsc_4x16_16x8_conf(v64uint8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, zero_acc1, 0, sub_mul,
                                    sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 };
 INTRINSIC(v32acc32) mul_4x16_16x8(v64uint8 a, v128int8_sparse b) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 1, 5, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v32acc32) negmul_4x16_16x8(v64uint8 a, v128int8_sparse b) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 1, 5, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v32acc32)
 mac_4x16_16x8(v64uint8 a, v128int8_sparse b, v32acc32 acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 1, 5, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v32acc32)
 msc_4x16_16x8(v64uint8 a, v128int8_sparse b, v32acc32 acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 1, 5, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmac_4x16_16x8(v64uint8 a, v128int8_sparse b, v32acc32 acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 1, 5, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmsc_4x16_16x8(v64uint8 a, v128int8_sparse b, v32acc32 acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 1, 5, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v32acc32)
 addmac_4x16_16x8(v64uint8 a, v128int8_sparse b, v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 1, 5, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 addmsc_4x16_16x8(v64uint8 a, v128int8_sparse b, v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 1, 5, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submac_4x16_16x8(v64uint8 a, v128int8_sparse b, v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 1, 5, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submsc_4x16_16x8(v64uint8 a, v128int8_sparse b, v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 1, 5, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 mul_4x16_16x8(v64uint8 a, int sgn_x, v128int8_sparse b, int sgn_y) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v32acc32)
 negmul_4x16_16x8(v64uint8 a, int sgn_x, v128int8_sparse b, int sgn_y) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v32acc32)
 mac_4x16_16x8(v64uint8 a, int sgn_x, v128int8_sparse b, int sgn_y,
               v32acc32 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v32acc32)
 msc_4x16_16x8(v64uint8 a, int sgn_x, v128int8_sparse b, int sgn_y,
               v32acc32 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmac_4x16_16x8(v64uint8 a, int sgn_x, v128int8_sparse b, int sgn_y,
                  v32acc32 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmsc_4x16_16x8(v64uint8 a, int sgn_x, v128int8_sparse b, int sgn_y,
                  v32acc32 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v32acc32)
 addmac_4x16_16x8(v64uint8 a, int sgn_x, v128int8_sparse b, int sgn_y,
                  v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 addmsc_4x16_16x8(v64uint8 a, int sgn_x, v128int8_sparse b, int sgn_y,
                  v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submac_4x16_16x8(v64uint8 a, int sgn_x, v128int8_sparse b, int sgn_y,
                  v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submsc_4x16_16x8(v64uint8 a, int sgn_x, v128int8_sparse b, int sgn_y,
                  v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 mul_4x16_16x8_conf(v64uint8 a, v128int8_sparse b, int sub_mul) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 1, 5, 0,
                                    0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v32acc32)
 negmul_4x16_16x8_conf(v64uint8 a, v128int8_sparse b, int sub_mul) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 1, 5, 0,
                                    0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v32acc32)
 mac_4x16_16x8_conf(v64uint8 a, v128int8_sparse b, v32acc32 acc1, int zero_acc1,
                    int shift16, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 1, 5,
                                    zero_acc1, shift16, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v32acc32)
 msc_4x16_16x8_conf(v64uint8 a, v128int8_sparse b, v32acc32 acc1, int zero_acc1,
                    int shift16, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 1, 5,
                                    zero_acc1, shift16, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmsc_4x16_16x8_conf(v64uint8 a, v128int8_sparse b, v32acc32 acc1,
                       int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 1, 5,
                                    zero_acc1, 0, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmac_4x16_16x8_conf(v64uint8 a, v128int8_sparse b, v32acc32 acc1,
                       int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 1, 5,
                                    zero_acc1, 0, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v32acc32)
 addmac_4x16_16x8_conf(v64uint8 a, v128int8_sparse b, v32acc32 acc1,
@@ -20043,7 +20149,7 @@ addmac_4x16_16x8_conf(v64uint8 a, v128int8_sparse b, v32acc32 acc1,
       aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 1, 5, zero_acc1,
                             shift16, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 addmsc_4x16_16x8_conf(v64uint8 a, v128int8_sparse b, v32acc32 acc1,
@@ -20053,7 +20159,7 @@ addmsc_4x16_16x8_conf(v64uint8 a, v128int8_sparse b, v32acc32 acc1,
       aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 1, 5, zero_acc1,
                             shift16, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submac_4x16_16x8_conf(v64uint8 a, v128int8_sparse b, v32acc32 acc1,
@@ -20063,7 +20169,7 @@ submac_4x16_16x8_conf(v64uint8 a, v128int8_sparse b, v32acc32 acc1,
       aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 1, 5, zero_acc1,
                             0, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submsc_4x16_16x8_conf(v64uint8 a, v128int8_sparse b, v32acc32 acc1,
@@ -20073,21 +20179,23 @@ submsc_4x16_16x8_conf(v64uint8 a, v128int8_sparse b, v32acc32 acc1,
       aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 0, 1, 5, zero_acc1,
                             0, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 mul_4x16_16x8_conf(v64uint8 a, int sgn_x, v128int8_sparse b, int sgn_y,
                    int sub_mul) {
   int conf =
       aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v32acc32)
 negmul_4x16_16x8_conf(v64uint8 a, int sgn_x, v128int8_sparse b, int sgn_y,
                       int sub_mul) {
   int conf =
       aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v32acc32)
 mac_4x16_16x8_conf(v64uint8 a, int sgn_x, v128int8_sparse b, int sgn_y,
@@ -20095,7 +20203,8 @@ mac_4x16_16x8_conf(v64uint8 a, int sgn_x, v128int8_sparse b, int sgn_y,
                    int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, zero_acc1, shift16,
                                    sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v32acc32)
 msc_4x16_16x8_conf(v64uint8 a, int sgn_x, v128int8_sparse b, int sgn_y,
@@ -20103,21 +20212,24 @@ msc_4x16_16x8_conf(v64uint8 a, int sgn_x, v128int8_sparse b, int sgn_y,
                    int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, zero_acc1, shift16,
                                    sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmsc_4x16_16x8_conf(v64uint8 a, int sgn_x, v128int8_sparse b, int sgn_y,
                       v32acc32 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, zero_acc1, 0, sub_mul,
                                    sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmac_4x16_16x8_conf(v64uint8 a, int sgn_x, v128int8_sparse b, int sgn_y,
                       v32acc32 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, zero_acc1, 0, sub_mul,
                                    sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v32acc32)
 addmac_4x16_16x8_conf(v64uint8 a, int sgn_x, v128int8_sparse b, int sgn_y,
@@ -20126,7 +20238,7 @@ addmac_4x16_16x8_conf(v64uint8 a, int sgn_x, v128int8_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, zero_acc1, shift16,
                                    sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 addmsc_4x16_16x8_conf(v64uint8 a, int sgn_x, v128int8_sparse b, int sgn_y,
@@ -20135,7 +20247,7 @@ addmsc_4x16_16x8_conf(v64uint8 a, int sgn_x, v128int8_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, zero_acc1, shift16,
                                    sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submac_4x16_16x8_conf(v64uint8 a, int sgn_x, v128int8_sparse b, int sgn_y,
@@ -20144,7 +20256,7 @@ submac_4x16_16x8_conf(v64uint8 a, int sgn_x, v128int8_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, zero_acc1, 0, sub_mul,
                                    sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submsc_4x16_16x8_conf(v64uint8 a, int sgn_x, v128int8_sparse b, int sgn_y,
@@ -20153,171 +20265,189 @@ submsc_4x16_16x8_conf(v64uint8 a, int sgn_x, v128int8_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, zero_acc1, 0, sub_mul,
                                    sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 };
 INTRINSIC(v32acc32) mul_4x16_16x8(v64int8 a, v128uint8_sparse b) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 1, 5, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v32acc32) negmul_4x16_16x8(v64int8 a, v128uint8_sparse b) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 1, 5, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v32acc32)
 mac_4x16_16x8(v64int8 a, v128uint8_sparse b, v32acc32 acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 1, 5, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v32acc32)
 msc_4x16_16x8(v64int8 a, v128uint8_sparse b, v32acc32 acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 1, 5, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmac_4x16_16x8(v64int8 a, v128uint8_sparse b, v32acc32 acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 1, 5, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmsc_4x16_16x8(v64int8 a, v128uint8_sparse b, v32acc32 acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 1, 5, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v32acc32)
 addmac_4x16_16x8(v64int8 a, v128uint8_sparse b, v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 1, 5, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 addmsc_4x16_16x8(v64int8 a, v128uint8_sparse b, v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 1, 5, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submac_4x16_16x8(v64int8 a, v128uint8_sparse b, v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 1, 5, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submsc_4x16_16x8(v64int8 a, v128uint8_sparse b, v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 1, 5, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 mul_4x16_16x8(v64int8 a, int sgn_x, v128uint8_sparse b, int sgn_y) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v32acc32)
 negmul_4x16_16x8(v64int8 a, int sgn_x, v128uint8_sparse b, int sgn_y) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v32acc32)
 mac_4x16_16x8(v64int8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
               v32acc32 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v32acc32)
 msc_4x16_16x8(v64int8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
               v32acc32 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmac_4x16_16x8(v64int8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                  v32acc32 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmsc_4x16_16x8(v64int8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                  v32acc32 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v32acc32)
 addmac_4x16_16x8(v64int8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                  v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 addmsc_4x16_16x8(v64int8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                  v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submac_4x16_16x8(v64int8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                  v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submsc_4x16_16x8(v64int8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                  v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 mul_4x16_16x8_conf(v64int8 a, v128uint8_sparse b, int sub_mul) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 1, 5, 0,
                                    0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v32acc32)
 negmul_4x16_16x8_conf(v64int8 a, v128uint8_sparse b, int sub_mul) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 1, 5, 0,
                                    0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v32acc32)
 mac_4x16_16x8_conf(v64int8 a, v128uint8_sparse b, v32acc32 acc1, int zero_acc1,
                    int shift16, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 1, 5,
                                    zero_acc1, shift16, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v32acc32)
 msc_4x16_16x8_conf(v64int8 a, v128uint8_sparse b, v32acc32 acc1, int zero_acc1,
                    int shift16, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 1, 5,
                                    zero_acc1, shift16, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmsc_4x16_16x8_conf(v64int8 a, v128uint8_sparse b, v32acc32 acc1,
                       int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 1, 5,
                                    zero_acc1, 0, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmac_4x16_16x8_conf(v64int8 a, v128uint8_sparse b, v32acc32 acc1,
                       int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 1, 5,
                                    zero_acc1, 0, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v32acc32)
 addmac_4x16_16x8_conf(v64int8 a, v128uint8_sparse b, v32acc32 acc1,
@@ -20327,7 +20457,7 @@ addmac_4x16_16x8_conf(v64int8 a, v128uint8_sparse b, v32acc32 acc1,
       aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 1, 5, zero_acc1,
                             shift16, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 addmsc_4x16_16x8_conf(v64int8 a, v128uint8_sparse b, v32acc32 acc1,
@@ -20337,7 +20467,7 @@ addmsc_4x16_16x8_conf(v64int8 a, v128uint8_sparse b, v32acc32 acc1,
       aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 1, 5, zero_acc1,
                             shift16, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submac_4x16_16x8_conf(v64int8 a, v128uint8_sparse b, v32acc32 acc1,
@@ -20347,7 +20477,7 @@ submac_4x16_16x8_conf(v64int8 a, v128uint8_sparse b, v32acc32 acc1,
       aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 1, 5, zero_acc1,
                             0, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submsc_4x16_16x8_conf(v64int8 a, v128uint8_sparse b, v32acc32 acc1,
@@ -20357,21 +20487,23 @@ submsc_4x16_16x8_conf(v64int8 a, v128uint8_sparse b, v32acc32 acc1,
       aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 0, 1, 5, zero_acc1,
                             0, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 mul_4x16_16x8_conf(v64int8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                    int sub_mul) {
   int conf =
       aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v32acc32)
 negmul_4x16_16x8_conf(v64int8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                       int sub_mul) {
   int conf =
       aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v32acc32)
 mac_4x16_16x8_conf(v64int8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
@@ -20379,7 +20511,8 @@ mac_4x16_16x8_conf(v64int8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                    int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, zero_acc1, shift16,
                                    sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v32acc32)
 msc_4x16_16x8_conf(v64int8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
@@ -20387,21 +20520,24 @@ msc_4x16_16x8_conf(v64int8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                    int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, zero_acc1, shift16,
                                    sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmsc_4x16_16x8_conf(v64int8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                       v32acc32 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, zero_acc1, 0, sub_mul,
                                    sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmac_4x16_16x8_conf(v64int8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                       v32acc32 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, zero_acc1, 0, sub_mul,
                                    sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v32acc32)
 addmac_4x16_16x8_conf(v64int8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
@@ -20410,7 +20546,7 @@ addmac_4x16_16x8_conf(v64int8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, zero_acc1, shift16,
                                    sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 addmsc_4x16_16x8_conf(v64int8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
@@ -20419,7 +20555,7 @@ addmsc_4x16_16x8_conf(v64int8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, zero_acc1, shift16,
                                    sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submac_4x16_16x8_conf(v64int8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
@@ -20428,7 +20564,7 @@ submac_4x16_16x8_conf(v64int8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, zero_acc1, 0, sub_mul,
                                    sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submsc_4x16_16x8_conf(v64int8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
@@ -20437,169 +20573,187 @@ submsc_4x16_16x8_conf(v64int8 a, int sgn_x, v128uint8_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, zero_acc1, 0, sub_mul,
                                    sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 };
 INTRINSIC(v32acc32) mul_4x16_16x8(v64int8 a, v128int8_sparse b) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 1, 5, 0, 0,
                                    0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v32acc32) negmul_4x16_16x8(v64int8 a, v128int8_sparse b) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 1, 5, 0, 0,
                                    0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v32acc32) mac_4x16_16x8(v64int8 a, v128int8_sparse b, v32acc32 acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 1, 5, 0, 0,
                                    0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v32acc32) msc_4x16_16x8(v64int8 a, v128int8_sparse b, v32acc32 acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 1, 5, 0, 0,
                                    0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmac_4x16_16x8(v64int8 a, v128int8_sparse b, v32acc32 acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 1, 5, 0, 0,
                                    0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmsc_4x16_16x8(v64int8 a, v128int8_sparse b, v32acc32 acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 1, 5, 0, 0,
                                    0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v32acc32)
 addmac_4x16_16x8(v64int8 a, v128int8_sparse b, v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 1, 5, 0, 0,
                                    0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 addmsc_4x16_16x8(v64int8 a, v128int8_sparse b, v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 1, 5, 0, 0,
                                    0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submac_4x16_16x8(v64int8 a, v128int8_sparse b, v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 1, 5, 0, 0,
                                    0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submsc_4x16_16x8(v64int8 a, v128int8_sparse b, v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 1, 5, 0, 0,
                                    0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 mul_4x16_16x8(v64int8 a, int sgn_x, v128int8_sparse b, int sgn_y) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v32acc32)
 negmul_4x16_16x8(v64int8 a, int sgn_x, v128int8_sparse b, int sgn_y) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v32acc32)
 mac_4x16_16x8(v64int8 a, int sgn_x, v128int8_sparse b, int sgn_y,
               v32acc32 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v32acc32)
 msc_4x16_16x8(v64int8 a, int sgn_x, v128int8_sparse b, int sgn_y,
               v32acc32 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmac_4x16_16x8(v64int8 a, int sgn_x, v128int8_sparse b, int sgn_y,
                  v32acc32 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmsc_4x16_16x8(v64int8 a, int sgn_x, v128int8_sparse b, int sgn_y,
                  v32acc32 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v32acc32)
 addmac_4x16_16x8(v64int8 a, int sgn_x, v128int8_sparse b, int sgn_y,
                  v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 addmsc_4x16_16x8(v64int8 a, int sgn_x, v128int8_sparse b, int sgn_y,
                  v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submac_4x16_16x8(v64int8 a, int sgn_x, v128int8_sparse b, int sgn_y,
                  v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submsc_4x16_16x8(v64int8 a, int sgn_x, v128int8_sparse b, int sgn_y,
                  v32acc32 acc1, v32acc32 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 mul_4x16_16x8_conf(v64int8 a, v128int8_sparse b, int sub_mul) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 1, 5, 0, 0,
                                    sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v32acc32)
 negmul_4x16_16x8_conf(v64int8 a, v128int8_sparse b, int sub_mul) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 1, 5, 0, 0,
                                    sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v32acc32)
 mac_4x16_16x8_conf(v64int8 a, v128int8_sparse b, v32acc32 acc1, int zero_acc1,
                    int shift16, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 1, 5,
                                    zero_acc1, shift16, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v32acc32)
 msc_4x16_16x8_conf(v64int8 a, v128int8_sparse b, v32acc32 acc1, int zero_acc1,
                    int shift16, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 1, 5,
                                    zero_acc1, shift16, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmsc_4x16_16x8_conf(v64int8 a, v128int8_sparse b, v32acc32 acc1,
                       int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 1, 5,
                                    zero_acc1, 0, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmac_4x16_16x8_conf(v64int8 a, v128int8_sparse b, v32acc32 acc1,
                       int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 1, 5,
                                    zero_acc1, 0, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v32acc32)
 addmac_4x16_16x8_conf(v64int8 a, v128int8_sparse b, v32acc32 acc1,
@@ -20609,7 +20763,7 @@ addmac_4x16_16x8_conf(v64int8 a, v128int8_sparse b, v32acc32 acc1,
       aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 1, 5, zero_acc1,
                             shift16, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 addmsc_4x16_16x8_conf(v64int8 a, v128int8_sparse b, v32acc32 acc1,
@@ -20619,7 +20773,7 @@ addmsc_4x16_16x8_conf(v64int8 a, v128int8_sparse b, v32acc32 acc1,
       aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 1, 5, zero_acc1,
                             shift16, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submac_4x16_16x8_conf(v64int8 a, v128int8_sparse b, v32acc32 acc1,
@@ -20629,7 +20783,7 @@ submac_4x16_16x8_conf(v64int8 a, v128int8_sparse b, v32acc32 acc1,
       aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 1, 5, zero_acc1, 0,
                             sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submsc_4x16_16x8_conf(v64int8 a, v128int8_sparse b, v32acc32 acc1,
@@ -20639,21 +20793,23 @@ submsc_4x16_16x8_conf(v64int8 a, v128int8_sparse b, v32acc32 acc1,
       aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 0, 1, 5, zero_acc1, 0,
                             sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 mul_4x16_16x8_conf(v64int8 a, int sgn_x, v128int8_sparse b, int sgn_y,
                    int sub_mul) {
   int conf =
       aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v32acc32)
 negmul_4x16_16x8_conf(v64int8 a, int sgn_x, v128int8_sparse b, int sgn_y,
                       int sub_mul) {
   int conf =
       aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, 0, 0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v32acc32)
 mac_4x16_16x8_conf(v64int8 a, int sgn_x, v128int8_sparse b, int sgn_y,
@@ -20661,7 +20817,8 @@ mac_4x16_16x8_conf(v64int8 a, int sgn_x, v128int8_sparse b, int sgn_y,
                    int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, zero_acc1, shift16,
                                    sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v32acc32)
 msc_4x16_16x8_conf(v64int8 a, int sgn_x, v128int8_sparse b, int sgn_y,
@@ -20669,21 +20826,24 @@ msc_4x16_16x8_conf(v64int8 a, int sgn_x, v128int8_sparse b, int sgn_y,
                    int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, zero_acc1, shift16,
                                    sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmsc_4x16_16x8_conf(v64int8 a, int sgn_x, v128int8_sparse b, int sgn_y,
                       v32acc32 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, zero_acc1, 0, sub_mul,
                                    sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v32acc32)
 negmac_4x16_16x8_conf(v64int8 a, int sgn_x, v128int8_sparse b, int sgn_y,
                       v32acc32 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, zero_acc1, 0, sub_mul,
                                    sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc32_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v32acc32)
 addmac_4x16_16x8_conf(v64int8 a, int sgn_x, v128int8_sparse b, int sgn_y,
@@ -20692,7 +20852,7 @@ addmac_4x16_16x8_conf(v64int8 a, int sgn_x, v128int8_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, zero_acc1, shift16,
                                    sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 addmsc_4x16_16x8_conf(v64int8 a, int sgn_x, v128int8_sparse b, int sgn_y,
@@ -20701,7 +20861,7 @@ addmsc_4x16_16x8_conf(v64int8 a, int sgn_x, v128int8_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, zero_acc1, shift16,
                                    sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submac_4x16_16x8_conf(v64int8 a, int sgn_x, v128int8_sparse b, int sgn_y,
@@ -20710,7 +20870,7 @@ submac_4x16_16x8_conf(v64int8 a, int sgn_x, v128int8_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, zero_acc1, 0, sub_mul,
                                    sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v32acc32)
 submsc_4x16_16x8_conf(v64int8 a, int sgn_x, v128int8_sparse b, int sgn_y,
@@ -20719,43 +20879,49 @@ submsc_4x16_16x8_conf(v64int8 a, int sgn_x, v128int8_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 0, 1, 5, zero_acc1, 0, sub_mul,
                                    sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc32_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 };
 ;
 
 INTRINSIC(v16acc64) mul_2x16_16x8(v32uint16 a, v128uint8_sparse b) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 2, 2, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v16acc64) negmul_2x16_16x8(v32uint16 a, v128uint8_sparse b) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 2, 2, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v16acc64)
 mac_2x16_16x8(v32uint16 a, v128uint8_sparse b, v16acc64 acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 2, 2, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 msc_2x16_16x8(v32uint16 a, v128uint8_sparse b, v16acc64 acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 2, 2, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmac_2x16_16x8(v32uint16 a, v128uint8_sparse b, v16acc64 acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 2, 2, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmsc_2x16_16x8(v32uint16 a, v128uint8_sparse b, v16acc64 acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 2, 2, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 addmac_2x16_16x8(v32uint16 a, v128uint8_sparse b, v16acc64 acc1,
@@ -20763,7 +20929,7 @@ addmac_2x16_16x8(v32uint16 a, v128uint8_sparse b, v16acc64 acc1,
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 2, 2, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 addmsc_2x16_16x8(v32uint16 a, v128uint8_sparse b, v16acc64 acc1,
@@ -20771,7 +20937,7 @@ addmsc_2x16_16x8(v32uint16 a, v128uint8_sparse b, v16acc64 acc1,
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 2, 2, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submac_2x16_16x8(v32uint16 a, v128uint8_sparse b, v16acc64 acc1,
@@ -20779,7 +20945,7 @@ submac_2x16_16x8(v32uint16 a, v128uint8_sparse b, v16acc64 acc1,
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 2, 2, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submsc_2x16_16x8(v32uint16 a, v128uint8_sparse b, v16acc64 acc1,
@@ -20787,109 +20953,121 @@ submsc_2x16_16x8(v32uint16 a, v128uint8_sparse b, v16acc64 acc1,
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 2, 2, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 mul_2x16_16x8(v32uint16 a, int sgn_x, v128uint8_sparse b, int sgn_y) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v16acc64)
 negmul_2x16_16x8(v32uint16 a, int sgn_x, v128uint8_sparse b, int sgn_y) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v16acc64)
 mac_2x16_16x8(v32uint16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
               v16acc64 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 msc_2x16_16x8(v32uint16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
               v16acc64 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmac_2x16_16x8(v32uint16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                  v16acc64 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmsc_2x16_16x8(v32uint16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                  v16acc64 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 addmac_2x16_16x8(v32uint16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                  v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 addmsc_2x16_16x8(v32uint16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                  v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submac_2x16_16x8(v32uint16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                  v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submsc_2x16_16x8(v32uint16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                  v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 mul_2x16_16x8_conf(v32uint16 a, v128uint8_sparse b, int sub_mul) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 2, 2, 0,
                                    0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v16acc64)
 negmul_2x16_16x8_conf(v32uint16 a, v128uint8_sparse b, int sub_mul) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 2, 2, 0,
                                    0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v16acc64)
 mac_2x16_16x8_conf(v32uint16 a, v128uint8_sparse b, v16acc64 acc1,
                    int zero_acc1, int shift16, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 2, 2,
                                    zero_acc1, shift16, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 msc_2x16_16x8_conf(v32uint16 a, v128uint8_sparse b, v16acc64 acc1,
                    int zero_acc1, int shift16, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 2, 2,
                                    zero_acc1, shift16, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmsc_2x16_16x8_conf(v32uint16 a, v128uint8_sparse b, v16acc64 acc1,
                       int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 2, 2,
                                    zero_acc1, 0, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmac_2x16_16x8_conf(v32uint16 a, v128uint8_sparse b, v16acc64 acc1,
                       int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 2, 2,
                                    zero_acc1, 0, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 addmac_2x16_16x8_conf(v32uint16 a, v128uint8_sparse b, v16acc64 acc1,
@@ -20899,7 +21077,7 @@ addmac_2x16_16x8_conf(v32uint16 a, v128uint8_sparse b, v16acc64 acc1,
       aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 2, 2,
                             zero_acc1, shift16, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 addmsc_2x16_16x8_conf(v32uint16 a, v128uint8_sparse b, v16acc64 acc1,
@@ -20909,7 +21087,7 @@ addmsc_2x16_16x8_conf(v32uint16 a, v128uint8_sparse b, v16acc64 acc1,
       aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 2, 2,
                             zero_acc1, shift16, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submac_2x16_16x8_conf(v32uint16 a, v128uint8_sparse b, v16acc64 acc1,
@@ -20919,7 +21097,7 @@ submac_2x16_16x8_conf(v32uint16 a, v128uint8_sparse b, v16acc64 acc1,
       aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 2, 2,
                             zero_acc1, 0, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submsc_2x16_16x8_conf(v32uint16 a, v128uint8_sparse b, v16acc64 acc1,
@@ -20929,21 +21107,23 @@ submsc_2x16_16x8_conf(v32uint16 a, v128uint8_sparse b, v16acc64 acc1,
       aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 2, 2,
                             zero_acc1, 0, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 mul_2x16_16x8_conf(v32uint16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                    int sub_mul) {
   int conf =
       aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v16acc64)
 negmul_2x16_16x8_conf(v32uint16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                       int sub_mul) {
   int conf =
       aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v16acc64)
 mac_2x16_16x8_conf(v32uint16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
@@ -20951,7 +21131,8 @@ mac_2x16_16x8_conf(v32uint16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                    int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, zero_acc1, shift16,
                                    sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 msc_2x16_16x8_conf(v32uint16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
@@ -20959,21 +21140,24 @@ msc_2x16_16x8_conf(v32uint16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                    int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, zero_acc1, shift16,
                                    sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmsc_2x16_16x8_conf(v32uint16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                       v16acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, zero_acc1, 0, sub_mul,
                                    sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmac_2x16_16x8_conf(v32uint16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                       v16acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, zero_acc1, 0, sub_mul,
                                    sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 addmac_2x16_16x8_conf(v32uint16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
@@ -20982,7 +21166,7 @@ addmac_2x16_16x8_conf(v32uint16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, zero_acc1, shift16,
                                    sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 addmsc_2x16_16x8_conf(v32uint16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
@@ -20991,7 +21175,7 @@ addmsc_2x16_16x8_conf(v32uint16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, zero_acc1, shift16,
                                    sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submac_2x16_16x8_conf(v32uint16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
@@ -21000,7 +21184,7 @@ submac_2x16_16x8_conf(v32uint16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, zero_acc1, 0, sub_mul,
                                    sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submsc_2x16_16x8_conf(v32uint16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
@@ -21009,171 +21193,189 @@ submsc_2x16_16x8_conf(v32uint16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, zero_acc1, 0, sub_mul,
                                    sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 };
 INTRINSIC(v16acc64) mul_2x16_16x8(v32uint16 a, v128int8_sparse b) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 2, 2, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v16acc64) negmul_2x16_16x8(v32uint16 a, v128int8_sparse b) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 2, 2, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v16acc64)
 mac_2x16_16x8(v32uint16 a, v128int8_sparse b, v16acc64 acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 2, 2, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 msc_2x16_16x8(v32uint16 a, v128int8_sparse b, v16acc64 acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 2, 2, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmac_2x16_16x8(v32uint16 a, v128int8_sparse b, v16acc64 acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 2, 2, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmsc_2x16_16x8(v32uint16 a, v128int8_sparse b, v16acc64 acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 2, 2, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 addmac_2x16_16x8(v32uint16 a, v128int8_sparse b, v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 2, 2, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 addmsc_2x16_16x8(v32uint16 a, v128int8_sparse b, v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 2, 2, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submac_2x16_16x8(v32uint16 a, v128int8_sparse b, v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 2, 2, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submsc_2x16_16x8(v32uint16 a, v128int8_sparse b, v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 2, 2, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 mul_2x16_16x8(v32uint16 a, int sgn_x, v128int8_sparse b, int sgn_y) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v16acc64)
 negmul_2x16_16x8(v32uint16 a, int sgn_x, v128int8_sparse b, int sgn_y) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v16acc64)
 mac_2x16_16x8(v32uint16 a, int sgn_x, v128int8_sparse b, int sgn_y,
               v16acc64 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 msc_2x16_16x8(v32uint16 a, int sgn_x, v128int8_sparse b, int sgn_y,
               v16acc64 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmac_2x16_16x8(v32uint16 a, int sgn_x, v128int8_sparse b, int sgn_y,
                  v16acc64 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmsc_2x16_16x8(v32uint16 a, int sgn_x, v128int8_sparse b, int sgn_y,
                  v16acc64 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 addmac_2x16_16x8(v32uint16 a, int sgn_x, v128int8_sparse b, int sgn_y,
                  v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 addmsc_2x16_16x8(v32uint16 a, int sgn_x, v128int8_sparse b, int sgn_y,
                  v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submac_2x16_16x8(v32uint16 a, int sgn_x, v128int8_sparse b, int sgn_y,
                  v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submsc_2x16_16x8(v32uint16 a, int sgn_x, v128int8_sparse b, int sgn_y,
                  v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 mul_2x16_16x8_conf(v32uint16 a, v128int8_sparse b, int sub_mul) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 2, 2, 0,
                                    0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v16acc64)
 negmul_2x16_16x8_conf(v32uint16 a, v128int8_sparse b, int sub_mul) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 2, 2, 0,
                                    0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v16acc64)
 mac_2x16_16x8_conf(v32uint16 a, v128int8_sparse b, v16acc64 acc1, int zero_acc1,
                    int shift16, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 2, 2,
                                    zero_acc1, shift16, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 msc_2x16_16x8_conf(v32uint16 a, v128int8_sparse b, v16acc64 acc1, int zero_acc1,
                    int shift16, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 2, 2,
                                    zero_acc1, shift16, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmsc_2x16_16x8_conf(v32uint16 a, v128int8_sparse b, v16acc64 acc1,
                       int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 2, 2,
                                    zero_acc1, 0, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmac_2x16_16x8_conf(v32uint16 a, v128int8_sparse b, v16acc64 acc1,
                       int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 2, 2,
                                    zero_acc1, 0, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 addmac_2x16_16x8_conf(v32uint16 a, v128int8_sparse b, v16acc64 acc1,
@@ -21183,7 +21385,7 @@ addmac_2x16_16x8_conf(v32uint16 a, v128int8_sparse b, v16acc64 acc1,
       aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 2, 2, zero_acc1,
                             shift16, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 addmsc_2x16_16x8_conf(v32uint16 a, v128int8_sparse b, v16acc64 acc1,
@@ -21193,7 +21395,7 @@ addmsc_2x16_16x8_conf(v32uint16 a, v128int8_sparse b, v16acc64 acc1,
       aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 2, 2, zero_acc1,
                             shift16, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submac_2x16_16x8_conf(v32uint16 a, v128int8_sparse b, v16acc64 acc1,
@@ -21203,7 +21405,7 @@ submac_2x16_16x8_conf(v32uint16 a, v128int8_sparse b, v16acc64 acc1,
       aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 2, 2, zero_acc1,
                             0, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submsc_2x16_16x8_conf(v32uint16 a, v128int8_sparse b, v16acc64 acc1,
@@ -21213,21 +21415,23 @@ submsc_2x16_16x8_conf(v32uint16 a, v128int8_sparse b, v16acc64 acc1,
       aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 2, 2, zero_acc1,
                             0, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 mul_2x16_16x8_conf(v32uint16 a, int sgn_x, v128int8_sparse b, int sgn_y,
                    int sub_mul) {
   int conf =
       aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v16acc64)
 negmul_2x16_16x8_conf(v32uint16 a, int sgn_x, v128int8_sparse b, int sgn_y,
                       int sub_mul) {
   int conf =
       aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v16acc64)
 mac_2x16_16x8_conf(v32uint16 a, int sgn_x, v128int8_sparse b, int sgn_y,
@@ -21235,7 +21439,8 @@ mac_2x16_16x8_conf(v32uint16 a, int sgn_x, v128int8_sparse b, int sgn_y,
                    int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, zero_acc1, shift16,
                                    sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 msc_2x16_16x8_conf(v32uint16 a, int sgn_x, v128int8_sparse b, int sgn_y,
@@ -21243,21 +21448,24 @@ msc_2x16_16x8_conf(v32uint16 a, int sgn_x, v128int8_sparse b, int sgn_y,
                    int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, zero_acc1, shift16,
                                    sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmsc_2x16_16x8_conf(v32uint16 a, int sgn_x, v128int8_sparse b, int sgn_y,
                       v16acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, zero_acc1, 0, sub_mul,
                                    sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmac_2x16_16x8_conf(v32uint16 a, int sgn_x, v128int8_sparse b, int sgn_y,
                       v16acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, zero_acc1, 0, sub_mul,
                                    sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 addmac_2x16_16x8_conf(v32uint16 a, int sgn_x, v128int8_sparse b, int sgn_y,
@@ -21266,7 +21474,7 @@ addmac_2x16_16x8_conf(v32uint16 a, int sgn_x, v128int8_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, zero_acc1, shift16,
                                    sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 addmsc_2x16_16x8_conf(v32uint16 a, int sgn_x, v128int8_sparse b, int sgn_y,
@@ -21275,7 +21483,7 @@ addmsc_2x16_16x8_conf(v32uint16 a, int sgn_x, v128int8_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, zero_acc1, shift16,
                                    sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submac_2x16_16x8_conf(v32uint16 a, int sgn_x, v128int8_sparse b, int sgn_y,
@@ -21284,7 +21492,7 @@ submac_2x16_16x8_conf(v32uint16 a, int sgn_x, v128int8_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, zero_acc1, 0, sub_mul,
                                    sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submsc_2x16_16x8_conf(v32uint16 a, int sgn_x, v128int8_sparse b, int sgn_y,
@@ -21293,171 +21501,189 @@ submsc_2x16_16x8_conf(v32uint16 a, int sgn_x, v128int8_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, zero_acc1, 0, sub_mul,
                                    sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 };
 INTRINSIC(v16acc64) mul_2x16_16x8(v32int16 a, v128uint8_sparse b) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 2, 2, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v16acc64) negmul_2x16_16x8(v32int16 a, v128uint8_sparse b) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 2, 2, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v16acc64)
 mac_2x16_16x8(v32int16 a, v128uint8_sparse b, v16acc64 acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 2, 2, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 msc_2x16_16x8(v32int16 a, v128uint8_sparse b, v16acc64 acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 2, 2, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmac_2x16_16x8(v32int16 a, v128uint8_sparse b, v16acc64 acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 2, 2, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmsc_2x16_16x8(v32int16 a, v128uint8_sparse b, v16acc64 acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 2, 2, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 addmac_2x16_16x8(v32int16 a, v128uint8_sparse b, v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 2, 2, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 addmsc_2x16_16x8(v32int16 a, v128uint8_sparse b, v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 2, 2, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submac_2x16_16x8(v32int16 a, v128uint8_sparse b, v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 2, 2, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submsc_2x16_16x8(v32int16 a, v128uint8_sparse b, v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 2, 2, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 mul_2x16_16x8(v32int16 a, int sgn_x, v128uint8_sparse b, int sgn_y) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v16acc64)
 negmul_2x16_16x8(v32int16 a, int sgn_x, v128uint8_sparse b, int sgn_y) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v16acc64)
 mac_2x16_16x8(v32int16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
               v16acc64 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 msc_2x16_16x8(v32int16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
               v16acc64 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmac_2x16_16x8(v32int16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                  v16acc64 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmsc_2x16_16x8(v32int16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                  v16acc64 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 addmac_2x16_16x8(v32int16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                  v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 addmsc_2x16_16x8(v32int16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                  v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submac_2x16_16x8(v32int16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                  v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submsc_2x16_16x8(v32int16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                  v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 mul_2x16_16x8_conf(v32int16 a, v128uint8_sparse b, int sub_mul) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 2, 2, 0,
                                    0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v16acc64)
 negmul_2x16_16x8_conf(v32int16 a, v128uint8_sparse b, int sub_mul) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 2, 2, 0,
                                    0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v16acc64)
 mac_2x16_16x8_conf(v32int16 a, v128uint8_sparse b, v16acc64 acc1, int zero_acc1,
                    int shift16, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 2, 2,
                                    zero_acc1, shift16, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 msc_2x16_16x8_conf(v32int16 a, v128uint8_sparse b, v16acc64 acc1, int zero_acc1,
                    int shift16, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 2, 2,
                                    zero_acc1, shift16, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmsc_2x16_16x8_conf(v32int16 a, v128uint8_sparse b, v16acc64 acc1,
                       int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 2, 2,
                                    zero_acc1, 0, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmac_2x16_16x8_conf(v32int16 a, v128uint8_sparse b, v16acc64 acc1,
                       int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 2, 2,
                                    zero_acc1, 0, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 addmac_2x16_16x8_conf(v32int16 a, v128uint8_sparse b, v16acc64 acc1,
@@ -21467,7 +21693,7 @@ addmac_2x16_16x8_conf(v32int16 a, v128uint8_sparse b, v16acc64 acc1,
       aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 2, 2, zero_acc1,
                             shift16, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 addmsc_2x16_16x8_conf(v32int16 a, v128uint8_sparse b, v16acc64 acc1,
@@ -21477,7 +21703,7 @@ addmsc_2x16_16x8_conf(v32int16 a, v128uint8_sparse b, v16acc64 acc1,
       aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 2, 2, zero_acc1,
                             shift16, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submac_2x16_16x8_conf(v32int16 a, v128uint8_sparse b, v16acc64 acc1,
@@ -21487,7 +21713,7 @@ submac_2x16_16x8_conf(v32int16 a, v128uint8_sparse b, v16acc64 acc1,
       aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 2, 2, zero_acc1,
                             0, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submsc_2x16_16x8_conf(v32int16 a, v128uint8_sparse b, v16acc64 acc1,
@@ -21497,21 +21723,23 @@ submsc_2x16_16x8_conf(v32int16 a, v128uint8_sparse b, v16acc64 acc1,
       aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 2, 2, zero_acc1,
                             0, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 mul_2x16_16x8_conf(v32int16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                    int sub_mul) {
   int conf =
       aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v16acc64)
 negmul_2x16_16x8_conf(v32int16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                       int sub_mul) {
   int conf =
       aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v16acc64)
 mac_2x16_16x8_conf(v32int16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
@@ -21519,7 +21747,8 @@ mac_2x16_16x8_conf(v32int16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                    int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, zero_acc1, shift16,
                                    sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 msc_2x16_16x8_conf(v32int16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
@@ -21527,21 +21756,24 @@ msc_2x16_16x8_conf(v32int16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                    int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, zero_acc1, shift16,
                                    sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmsc_2x16_16x8_conf(v32int16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                       v16acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, zero_acc1, 0, sub_mul,
                                    sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmac_2x16_16x8_conf(v32int16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
                       v16acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, zero_acc1, 0, sub_mul,
                                    sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 addmac_2x16_16x8_conf(v32int16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
@@ -21550,7 +21782,7 @@ addmac_2x16_16x8_conf(v32int16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, zero_acc1, shift16,
                                    sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 addmsc_2x16_16x8_conf(v32int16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
@@ -21559,7 +21791,7 @@ addmsc_2x16_16x8_conf(v32int16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, zero_acc1, shift16,
                                    sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submac_2x16_16x8_conf(v32int16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
@@ -21568,7 +21800,7 @@ submac_2x16_16x8_conf(v32int16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, zero_acc1, 0, sub_mul,
                                    sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submsc_2x16_16x8_conf(v32int16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
@@ -21577,171 +21809,189 @@ submsc_2x16_16x8_conf(v32int16 a, int sgn_x, v128uint8_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, zero_acc1, 0, sub_mul,
                                    sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 };
 INTRINSIC(v16acc64) mul_2x16_16x8(v32int16 a, v128int8_sparse b) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 2, 2, 0, 0,
                                    0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v16acc64) negmul_2x16_16x8(v32int16 a, v128int8_sparse b) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 2, 2, 0, 0,
                                    0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v16acc64)
 mac_2x16_16x8(v32int16 a, v128int8_sparse b, v16acc64 acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 2, 2, 0, 0,
                                    0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 msc_2x16_16x8(v32int16 a, v128int8_sparse b, v16acc64 acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 2, 2, 0, 0,
                                    0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmac_2x16_16x8(v32int16 a, v128int8_sparse b, v16acc64 acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 2, 2, 0, 0,
                                    0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmsc_2x16_16x8(v32int16 a, v128int8_sparse b, v16acc64 acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 2, 2, 0, 0,
                                    0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 addmac_2x16_16x8(v32int16 a, v128int8_sparse b, v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 2, 2, 0, 0,
                                    0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 addmsc_2x16_16x8(v32int16 a, v128int8_sparse b, v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 2, 2, 0, 0,
                                    0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submac_2x16_16x8(v32int16 a, v128int8_sparse b, v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 2, 2, 0, 0,
                                    0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submsc_2x16_16x8(v32int16 a, v128int8_sparse b, v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 2, 2, 0, 0,
                                    0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 mul_2x16_16x8(v32int16 a, int sgn_x, v128int8_sparse b, int sgn_y) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v16acc64)
 negmul_2x16_16x8(v32int16 a, int sgn_x, v128int8_sparse b, int sgn_y) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v16acc64)
 mac_2x16_16x8(v32int16 a, int sgn_x, v128int8_sparse b, int sgn_y,
               v16acc64 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 msc_2x16_16x8(v32int16 a, int sgn_x, v128int8_sparse b, int sgn_y,
               v16acc64 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmac_2x16_16x8(v32int16 a, int sgn_x, v128int8_sparse b, int sgn_y,
                  v16acc64 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmsc_2x16_16x8(v32int16 a, int sgn_x, v128int8_sparse b, int sgn_y,
                  v16acc64 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 addmac_2x16_16x8(v32int16 a, int sgn_x, v128int8_sparse b, int sgn_y,
                  v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 addmsc_2x16_16x8(v32int16 a, int sgn_x, v128int8_sparse b, int sgn_y,
                  v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submac_2x16_16x8(v32int16 a, int sgn_x, v128int8_sparse b, int sgn_y,
                  v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submsc_2x16_16x8(v32int16 a, int sgn_x, v128int8_sparse b, int sgn_y,
                  v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 mul_2x16_16x8_conf(v32int16 a, v128int8_sparse b, int sub_mul) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 2, 2, 0, 0,
                                    sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v16acc64)
 negmul_2x16_16x8_conf(v32int16 a, v128int8_sparse b, int sub_mul) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 2, 2, 0, 0,
                                    sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v16acc64)
 mac_2x16_16x8_conf(v32int16 a, v128int8_sparse b, v16acc64 acc1, int zero_acc1,
                    int shift16, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 2, 2,
                                    zero_acc1, shift16, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 msc_2x16_16x8_conf(v32int16 a, v128int8_sparse b, v16acc64 acc1, int zero_acc1,
                    int shift16, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 2, 2,
                                    zero_acc1, shift16, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmsc_2x16_16x8_conf(v32int16 a, v128int8_sparse b, v16acc64 acc1,
                       int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 2, 2,
                                    zero_acc1, 0, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmac_2x16_16x8_conf(v32int16 a, v128int8_sparse b, v16acc64 acc1,
                       int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 2, 2,
                                    zero_acc1, 0, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 addmac_2x16_16x8_conf(v32int16 a, v128int8_sparse b, v16acc64 acc1,
@@ -21751,7 +22001,7 @@ addmac_2x16_16x8_conf(v32int16 a, v128int8_sparse b, v16acc64 acc1,
       aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 2, 2, zero_acc1,
                             shift16, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 addmsc_2x16_16x8_conf(v32int16 a, v128int8_sparse b, v16acc64 acc1,
@@ -21761,7 +22011,7 @@ addmsc_2x16_16x8_conf(v32int16 a, v128int8_sparse b, v16acc64 acc1,
       aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 2, 2, zero_acc1,
                             shift16, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submac_2x16_16x8_conf(v32int16 a, v128int8_sparse b, v16acc64 acc1,
@@ -21771,7 +22021,7 @@ submac_2x16_16x8_conf(v32int16 a, v128int8_sparse b, v16acc64 acc1,
       aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 2, 2, zero_acc1, 0,
                             sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submsc_2x16_16x8_conf(v32int16 a, v128int8_sparse b, v16acc64 acc1,
@@ -21781,21 +22031,23 @@ submsc_2x16_16x8_conf(v32int16 a, v128int8_sparse b, v16acc64 acc1,
       aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 2, 2, zero_acc1, 0,
                             sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 mul_2x16_16x8_conf(v32int16 a, int sgn_x, v128int8_sparse b, int sgn_y,
                    int sub_mul) {
   int conf =
       aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v16acc64)
 negmul_2x16_16x8_conf(v32int16 a, int sgn_x, v128int8_sparse b, int sgn_y,
                       int sub_mul) {
   int conf =
       aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, 0, 0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v16acc64)
 mac_2x16_16x8_conf(v32int16 a, int sgn_x, v128int8_sparse b, int sgn_y,
@@ -21803,7 +22055,8 @@ mac_2x16_16x8_conf(v32int16 a, int sgn_x, v128int8_sparse b, int sgn_y,
                    int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, zero_acc1, shift16,
                                    sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 msc_2x16_16x8_conf(v32int16 a, int sgn_x, v128int8_sparse b, int sgn_y,
@@ -21811,21 +22064,24 @@ msc_2x16_16x8_conf(v32int16 a, int sgn_x, v128int8_sparse b, int sgn_y,
                    int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, zero_acc1, shift16,
                                    sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmsc_2x16_16x8_conf(v32int16 a, int sgn_x, v128int8_sparse b, int sgn_y,
                       v16acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, zero_acc1, 0, sub_mul,
                                    sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmac_2x16_16x8_conf(v32int16 a, int sgn_x, v128int8_sparse b, int sgn_y,
                       v16acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, zero_acc1, 0, sub_mul,
                                    sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 addmac_2x16_16x8_conf(v32int16 a, int sgn_x, v128int8_sparse b, int sgn_y,
@@ -21834,7 +22090,7 @@ addmac_2x16_16x8_conf(v32int16 a, int sgn_x, v128int8_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, zero_acc1, shift16,
                                    sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 addmsc_2x16_16x8_conf(v32int16 a, int sgn_x, v128int8_sparse b, int sgn_y,
@@ -21843,7 +22099,7 @@ addmsc_2x16_16x8_conf(v32int16 a, int sgn_x, v128int8_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, zero_acc1, shift16,
                                    sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submac_2x16_16x8_conf(v32int16 a, int sgn_x, v128int8_sparse b, int sgn_y,
@@ -21852,7 +22108,7 @@ submac_2x16_16x8_conf(v32int16 a, int sgn_x, v128int8_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, zero_acc1, 0, sub_mul,
                                    sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submsc_2x16_16x8_conf(v32int16 a, int sgn_x, v128int8_sparse b, int sgn_y,
@@ -21861,173 +22117,191 @@ submsc_2x16_16x8_conf(v32int16 a, int sgn_x, v128int8_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 2, 2, zero_acc1, 0, sub_mul,
                                    sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 };
 ;
 
 INTRINSIC(v16acc64) mul_2x8_8x8(v32uint16 a, v64uint16_sparse b) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 3, 5, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v16acc64) negmul_2x8_8x8(v32uint16 a, v64uint16_sparse b) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 3, 5, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v16acc64)
 mac_2x8_8x8(v32uint16 a, v64uint16_sparse b, v16acc64 acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 3, 5, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 msc_2x8_8x8(v32uint16 a, v64uint16_sparse b, v16acc64 acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 3, 5, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmac_2x8_8x8(v32uint16 a, v64uint16_sparse b, v16acc64 acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 3, 5, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmsc_2x8_8x8(v32uint16 a, v64uint16_sparse b, v16acc64 acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 3, 5, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 addmac_2x8_8x8(v32uint16 a, v64uint16_sparse b, v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 3, 5, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 addmsc_2x8_8x8(v32uint16 a, v64uint16_sparse b, v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 3, 5, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submac_2x8_8x8(v32uint16 a, v64uint16_sparse b, v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 3, 5, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submsc_2x8_8x8(v32uint16 a, v64uint16_sparse b, v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 3, 5, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 mul_2x8_8x8(v32uint16 a, int sgn_x, v64uint16_sparse b, int sgn_y) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v16acc64)
 negmul_2x8_8x8(v32uint16 a, int sgn_x, v64uint16_sparse b, int sgn_y) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v16acc64)
 mac_2x8_8x8(v32uint16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
             v16acc64 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 msc_2x8_8x8(v32uint16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
             v16acc64 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmac_2x8_8x8(v32uint16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
                v16acc64 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmsc_2x8_8x8(v32uint16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
                v16acc64 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 addmac_2x8_8x8(v32uint16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
                v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 addmsc_2x8_8x8(v32uint16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
                v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submac_2x8_8x8(v32uint16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
                v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submsc_2x8_8x8(v32uint16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
                v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 mul_2x8_8x8_conf(v32uint16 a, v64uint16_sparse b, int sub_mul) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 3, 5, 0,
                                    0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v16acc64)
 negmul_2x8_8x8_conf(v32uint16 a, v64uint16_sparse b, int sub_mul) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 3, 5, 0,
                                    0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v16acc64)
 mac_2x8_8x8_conf(v32uint16 a, v64uint16_sparse b, v16acc64 acc1, int zero_acc1,
                  int shift16, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 3, 5,
                                    zero_acc1, shift16, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 msc_2x8_8x8_conf(v32uint16 a, v64uint16_sparse b, v16acc64 acc1, int zero_acc1,
                  int shift16, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 3, 5,
                                    zero_acc1, shift16, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmsc_2x8_8x8_conf(v32uint16 a, v64uint16_sparse b, v16acc64 acc1,
                     int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 3, 5,
                                    zero_acc1, 0, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmac_2x8_8x8_conf(v32uint16 a, v64uint16_sparse b, v16acc64 acc1,
                     int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 3, 5,
                                    zero_acc1, 0, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 addmac_2x8_8x8_conf(v32uint16 a, v64uint16_sparse b, v16acc64 acc1,
@@ -22037,7 +22311,7 @@ addmac_2x8_8x8_conf(v32uint16 a, v64uint16_sparse b, v16acc64 acc1,
       aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 3, 5,
                             zero_acc1, shift16, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 addmsc_2x8_8x8_conf(v32uint16 a, v64uint16_sparse b, v16acc64 acc1,
@@ -22047,7 +22321,7 @@ addmsc_2x8_8x8_conf(v32uint16 a, v64uint16_sparse b, v16acc64 acc1,
       aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 3, 5,
                             zero_acc1, shift16, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submac_2x8_8x8_conf(v32uint16 a, v64uint16_sparse b, v16acc64 acc1,
@@ -22057,7 +22331,7 @@ submac_2x8_8x8_conf(v32uint16 a, v64uint16_sparse b, v16acc64 acc1,
       aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 3, 5,
                             zero_acc1, 0, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submsc_2x8_8x8_conf(v32uint16 a, v64uint16_sparse b, v16acc64 acc1,
@@ -22067,21 +22341,23 @@ submsc_2x8_8x8_conf(v32uint16 a, v64uint16_sparse b, v16acc64 acc1,
       aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_UNSIGNED, 1, 3, 5,
                             zero_acc1, 0, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 mul_2x8_8x8_conf(v32uint16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
                  int sub_mul) {
   int conf =
       aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v16acc64)
 negmul_2x8_8x8_conf(v32uint16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
                     int sub_mul) {
   int conf =
       aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v16acc64)
 mac_2x8_8x8_conf(v32uint16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
@@ -22089,7 +22365,8 @@ mac_2x8_8x8_conf(v32uint16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
                  int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, zero_acc1, shift16,
                                    sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 msc_2x8_8x8_conf(v32uint16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
@@ -22097,21 +22374,24 @@ msc_2x8_8x8_conf(v32uint16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
                  int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, zero_acc1, shift16,
                                    sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmsc_2x8_8x8_conf(v32uint16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
                     v16acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, zero_acc1, 0, sub_mul,
                                    sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmac_2x8_8x8_conf(v32uint16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
                     v16acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, zero_acc1, 0, sub_mul,
                                    sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 addmac_2x8_8x8_conf(v32uint16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
@@ -22120,7 +22400,7 @@ addmac_2x8_8x8_conf(v32uint16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, zero_acc1, shift16,
                                    sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 addmsc_2x8_8x8_conf(v32uint16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
@@ -22129,7 +22409,7 @@ addmsc_2x8_8x8_conf(v32uint16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, zero_acc1, shift16,
                                    sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submac_2x8_8x8_conf(v32uint16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
@@ -22138,7 +22418,7 @@ submac_2x8_8x8_conf(v32uint16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, zero_acc1, 0, sub_mul,
                                    sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submsc_2x8_8x8_conf(v32uint16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
@@ -22147,169 +22427,187 @@ submsc_2x8_8x8_conf(v32uint16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, zero_acc1, 0, sub_mul,
                                    sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 };
 INTRINSIC(v16acc64) mul_2x8_8x8(v32uint16 a, v64int16_sparse b) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 3, 5, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v16acc64) negmul_2x8_8x8(v32uint16 a, v64int16_sparse b) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 3, 5, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v16acc64) mac_2x8_8x8(v32uint16 a, v64int16_sparse b, v16acc64 acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 3, 5, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64) msc_2x8_8x8(v32uint16 a, v64int16_sparse b, v16acc64 acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 3, 5, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmac_2x8_8x8(v32uint16 a, v64int16_sparse b, v16acc64 acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 3, 5, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmsc_2x8_8x8(v32uint16 a, v64int16_sparse b, v16acc64 acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 3, 5, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 addmac_2x8_8x8(v32uint16 a, v64int16_sparse b, v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 3, 5, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 addmsc_2x8_8x8(v32uint16 a, v64int16_sparse b, v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 3, 5, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submac_2x8_8x8(v32uint16 a, v64int16_sparse b, v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 3, 5, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submsc_2x8_8x8(v32uint16 a, v64int16_sparse b, v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 3, 5, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 mul_2x8_8x8(v32uint16 a, int sgn_x, v64int16_sparse b, int sgn_y) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v16acc64)
 negmul_2x8_8x8(v32uint16 a, int sgn_x, v64int16_sparse b, int sgn_y) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v16acc64)
 mac_2x8_8x8(v32uint16 a, int sgn_x, v64int16_sparse b, int sgn_y,
             v16acc64 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 msc_2x8_8x8(v32uint16 a, int sgn_x, v64int16_sparse b, int sgn_y,
             v16acc64 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmac_2x8_8x8(v32uint16 a, int sgn_x, v64int16_sparse b, int sgn_y,
                v16acc64 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmsc_2x8_8x8(v32uint16 a, int sgn_x, v64int16_sparse b, int sgn_y,
                v16acc64 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 addmac_2x8_8x8(v32uint16 a, int sgn_x, v64int16_sparse b, int sgn_y,
                v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 addmsc_2x8_8x8(v32uint16 a, int sgn_x, v64int16_sparse b, int sgn_y,
                v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submac_2x8_8x8(v32uint16 a, int sgn_x, v64int16_sparse b, int sgn_y,
                v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submsc_2x8_8x8(v32uint16 a, int sgn_x, v64int16_sparse b, int sgn_y,
                v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 mul_2x8_8x8_conf(v32uint16 a, v64int16_sparse b, int sub_mul) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 3, 5, 0,
                                    0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v16acc64)
 negmul_2x8_8x8_conf(v32uint16 a, v64int16_sparse b, int sub_mul) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 3, 5, 0,
                                    0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v16acc64)
 mac_2x8_8x8_conf(v32uint16 a, v64int16_sparse b, v16acc64 acc1, int zero_acc1,
                  int shift16, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 3, 5,
                                    zero_acc1, shift16, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 msc_2x8_8x8_conf(v32uint16 a, v64int16_sparse b, v16acc64 acc1, int zero_acc1,
                  int shift16, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 3, 5,
                                    zero_acc1, shift16, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmsc_2x8_8x8_conf(v32uint16 a, v64int16_sparse b, v16acc64 acc1,
                     int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 3, 5,
                                    zero_acc1, 0, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmac_2x8_8x8_conf(v32uint16 a, v64int16_sparse b, v16acc64 acc1,
                     int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 3, 5,
                                    zero_acc1, 0, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 addmac_2x8_8x8_conf(v32uint16 a, v64int16_sparse b, v16acc64 acc1,
@@ -22319,7 +22617,7 @@ addmac_2x8_8x8_conf(v32uint16 a, v64int16_sparse b, v16acc64 acc1,
       aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 3, 5, zero_acc1,
                             shift16, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 addmsc_2x8_8x8_conf(v32uint16 a, v64int16_sparse b, v16acc64 acc1,
@@ -22329,7 +22627,7 @@ addmsc_2x8_8x8_conf(v32uint16 a, v64int16_sparse b, v16acc64 acc1,
       aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 3, 5, zero_acc1,
                             shift16, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submac_2x8_8x8_conf(v32uint16 a, v64int16_sparse b, v16acc64 acc1,
@@ -22339,7 +22637,7 @@ submac_2x8_8x8_conf(v32uint16 a, v64int16_sparse b, v16acc64 acc1,
       aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 3, 5, zero_acc1,
                             0, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submsc_2x8_8x8_conf(v32uint16 a, v64int16_sparse b, v16acc64 acc1,
@@ -22349,21 +22647,23 @@ submsc_2x8_8x8_conf(v32uint16 a, v64int16_sparse b, v16acc64 acc1,
       aiev2_compute_control(__SIGN_UNSIGNED, __SIGN_SIGNED, 1, 3, 5, zero_acc1,
                             0, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 mul_2x8_8x8_conf(v32uint16 a, int sgn_x, v64int16_sparse b, int sgn_y,
                  int sub_mul) {
   int conf =
       aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v16acc64)
 negmul_2x8_8x8_conf(v32uint16 a, int sgn_x, v64int16_sparse b, int sgn_y,
                     int sub_mul) {
   int conf =
       aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v16acc64)
 mac_2x8_8x8_conf(v32uint16 a, int sgn_x, v64int16_sparse b, int sgn_y,
@@ -22371,7 +22671,8 @@ mac_2x8_8x8_conf(v32uint16 a, int sgn_x, v64int16_sparse b, int sgn_y,
                  int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, zero_acc1, shift16,
                                    sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 msc_2x8_8x8_conf(v32uint16 a, int sgn_x, v64int16_sparse b, int sgn_y,
@@ -22379,21 +22680,24 @@ msc_2x8_8x8_conf(v32uint16 a, int sgn_x, v64int16_sparse b, int sgn_y,
                  int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, zero_acc1, shift16,
                                    sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmsc_2x8_8x8_conf(v32uint16 a, int sgn_x, v64int16_sparse b, int sgn_y,
                     v16acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, zero_acc1, 0, sub_mul,
                                    sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmac_2x8_8x8_conf(v32uint16 a, int sgn_x, v64int16_sparse b, int sgn_y,
                     v16acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, zero_acc1, 0, sub_mul,
                                    sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 addmac_2x8_8x8_conf(v32uint16 a, int sgn_x, v64int16_sparse b, int sgn_y,
@@ -22402,7 +22706,7 @@ addmac_2x8_8x8_conf(v32uint16 a, int sgn_x, v64int16_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, zero_acc1, shift16,
                                    sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 addmsc_2x8_8x8_conf(v32uint16 a, int sgn_x, v64int16_sparse b, int sgn_y,
@@ -22411,7 +22715,7 @@ addmsc_2x8_8x8_conf(v32uint16 a, int sgn_x, v64int16_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, zero_acc1, shift16,
                                    sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submac_2x8_8x8_conf(v32uint16 a, int sgn_x, v64int16_sparse b, int sgn_y,
@@ -22420,7 +22724,7 @@ submac_2x8_8x8_conf(v32uint16 a, int sgn_x, v64int16_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, zero_acc1, 0, sub_mul,
                                    sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submsc_2x8_8x8_conf(v32uint16 a, int sgn_x, v64int16_sparse b, int sgn_y,
@@ -22429,169 +22733,187 @@ submsc_2x8_8x8_conf(v32uint16 a, int sgn_x, v64int16_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, zero_acc1, 0, sub_mul,
                                    sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 };
 INTRINSIC(v16acc64) mul_2x8_8x8(v32int16 a, v64uint16_sparse b) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 3, 5, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v16acc64) negmul_2x8_8x8(v32int16 a, v64uint16_sparse b) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 3, 5, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v16acc64) mac_2x8_8x8(v32int16 a, v64uint16_sparse b, v16acc64 acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 3, 5, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64) msc_2x8_8x8(v32int16 a, v64uint16_sparse b, v16acc64 acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 3, 5, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmac_2x8_8x8(v32int16 a, v64uint16_sparse b, v16acc64 acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 3, 5, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmsc_2x8_8x8(v32int16 a, v64uint16_sparse b, v16acc64 acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 3, 5, 0,
                                    0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 addmac_2x8_8x8(v32int16 a, v64uint16_sparse b, v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 3, 5, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 addmsc_2x8_8x8(v32int16 a, v64uint16_sparse b, v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 3, 5, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submac_2x8_8x8(v32int16 a, v64uint16_sparse b, v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 3, 5, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submsc_2x8_8x8(v32int16 a, v64uint16_sparse b, v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 3, 5, 0,
                                    0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 mul_2x8_8x8(v32int16 a, int sgn_x, v64uint16_sparse b, int sgn_y) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v16acc64)
 negmul_2x8_8x8(v32int16 a, int sgn_x, v64uint16_sparse b, int sgn_y) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v16acc64)
 mac_2x8_8x8(v32int16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
             v16acc64 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 msc_2x8_8x8(v32int16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
             v16acc64 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmac_2x8_8x8(v32int16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
                v16acc64 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmsc_2x8_8x8(v32int16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
                v16acc64 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 addmac_2x8_8x8(v32int16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
                v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 addmsc_2x8_8x8(v32int16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
                v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submac_2x8_8x8(v32int16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
                v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submsc_2x8_8x8(v32int16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
                v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 mul_2x8_8x8_conf(v32int16 a, v64uint16_sparse b, int sub_mul) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 3, 5, 0,
                                    0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v16acc64)
 negmul_2x8_8x8_conf(v32int16 a, v64uint16_sparse b, int sub_mul) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 3, 5, 0,
                                    0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v16acc64)
 mac_2x8_8x8_conf(v32int16 a, v64uint16_sparse b, v16acc64 acc1, int zero_acc1,
                  int shift16, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 3, 5,
                                    zero_acc1, shift16, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 msc_2x8_8x8_conf(v32int16 a, v64uint16_sparse b, v16acc64 acc1, int zero_acc1,
                  int shift16, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 3, 5,
                                    zero_acc1, shift16, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmsc_2x8_8x8_conf(v32int16 a, v64uint16_sparse b, v16acc64 acc1,
                     int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 3, 5,
                                    zero_acc1, 0, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmac_2x8_8x8_conf(v32int16 a, v64uint16_sparse b, v16acc64 acc1,
                     int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 3, 5,
                                    zero_acc1, 0, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 addmac_2x8_8x8_conf(v32int16 a, v64uint16_sparse b, v16acc64 acc1,
@@ -22601,7 +22923,7 @@ addmac_2x8_8x8_conf(v32int16 a, v64uint16_sparse b, v16acc64 acc1,
       aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 3, 5, zero_acc1,
                             shift16, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 addmsc_2x8_8x8_conf(v32int16 a, v64uint16_sparse b, v16acc64 acc1,
@@ -22611,7 +22933,7 @@ addmsc_2x8_8x8_conf(v32int16 a, v64uint16_sparse b, v16acc64 acc1,
       aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 3, 5, zero_acc1,
                             shift16, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submac_2x8_8x8_conf(v32int16 a, v64uint16_sparse b, v16acc64 acc1,
@@ -22621,7 +22943,7 @@ submac_2x8_8x8_conf(v32int16 a, v64uint16_sparse b, v16acc64 acc1,
       aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 3, 5, zero_acc1,
                             0, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submsc_2x8_8x8_conf(v32int16 a, v64uint16_sparse b, v16acc64 acc1,
@@ -22631,21 +22953,23 @@ submsc_2x8_8x8_conf(v32int16 a, v64uint16_sparse b, v16acc64 acc1,
       aiev2_compute_control(__SIGN_SIGNED, __SIGN_UNSIGNED, 1, 3, 5, zero_acc1,
                             0, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 mul_2x8_8x8_conf(v32int16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
                  int sub_mul) {
   int conf =
       aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v16acc64)
 negmul_2x8_8x8_conf(v32int16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
                     int sub_mul) {
   int conf =
       aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v16acc64)
 mac_2x8_8x8_conf(v32int16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
@@ -22653,7 +22977,8 @@ mac_2x8_8x8_conf(v32int16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
                  int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, zero_acc1, shift16,
                                    sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 msc_2x8_8x8_conf(v32int16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
@@ -22661,21 +22986,24 @@ msc_2x8_8x8_conf(v32int16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
                  int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, zero_acc1, shift16,
                                    sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmsc_2x8_8x8_conf(v32int16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
                     v16acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, zero_acc1, 0, sub_mul,
                                    sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmac_2x8_8x8_conf(v32int16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
                     v16acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, zero_acc1, 0, sub_mul,
                                    sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 addmac_2x8_8x8_conf(v32int16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
@@ -22684,7 +23012,7 @@ addmac_2x8_8x8_conf(v32int16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, zero_acc1, shift16,
                                    sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 addmsc_2x8_8x8_conf(v32int16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
@@ -22693,7 +23021,7 @@ addmsc_2x8_8x8_conf(v32int16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, zero_acc1, shift16,
                                    sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submac_2x8_8x8_conf(v32int16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
@@ -22702,7 +23030,7 @@ submac_2x8_8x8_conf(v32int16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, zero_acc1, 0, sub_mul,
                                    sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submsc_2x8_8x8_conf(v32int16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
@@ -22711,169 +23039,187 @@ submsc_2x8_8x8_conf(v32int16 a, int sgn_x, v64uint16_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, zero_acc1, 0, sub_mul,
                                    sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 };
 INTRINSIC(v16acc64) mul_2x8_8x8(v32int16 a, v64int16_sparse b) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 3, 5, 0, 0,
                                    0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v16acc64) negmul_2x8_8x8(v32int16 a, v64int16_sparse b) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 3, 5, 0, 0,
                                    0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v16acc64) mac_2x8_8x8(v32int16 a, v64int16_sparse b, v16acc64 acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 3, 5, 0, 0,
                                    0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64) msc_2x8_8x8(v32int16 a, v64int16_sparse b, v16acc64 acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 3, 5, 0, 0,
                                    0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmac_2x8_8x8(v32int16 a, v64int16_sparse b, v16acc64 acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 3, 5, 0, 0,
                                    0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmsc_2x8_8x8(v32int16 a, v64int16_sparse b, v16acc64 acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 3, 5, 0, 0,
                                    0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 addmac_2x8_8x8(v32int16 a, v64int16_sparse b, v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 3, 5, 0, 0,
                                    0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 addmsc_2x8_8x8(v32int16 a, v64int16_sparse b, v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 3, 5, 0, 0,
                                    0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submac_2x8_8x8(v32int16 a, v64int16_sparse b, v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 3, 5, 0, 0,
                                    0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submsc_2x8_8x8(v32int16 a, v64int16_sparse b, v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 3, 5, 0, 0,
                                    0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 mul_2x8_8x8(v32int16 a, int sgn_x, v64int16_sparse b, int sgn_y) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v16acc64)
 negmul_2x8_8x8(v32int16 a, int sgn_x, v64int16_sparse b, int sgn_y) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v16acc64)
 mac_2x8_8x8(v32int16 a, int sgn_x, v64int16_sparse b, int sgn_y,
             v16acc64 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 msc_2x8_8x8(v32int16 a, int sgn_x, v64int16_sparse b, int sgn_y,
             v16acc64 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmac_2x8_8x8(v32int16 a, int sgn_x, v64int16_sparse b, int sgn_y,
                v16acc64 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmsc_2x8_8x8(v32int16 a, int sgn_x, v64int16_sparse b, int sgn_y,
                v16acc64 acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 addmac_2x8_8x8(v32int16 a, int sgn_x, v64int16_sparse b, int sgn_y,
                v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 addmsc_2x8_8x8(v32int16 a, int sgn_x, v64int16_sparse b, int sgn_y,
                v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submac_2x8_8x8(v32int16 a, int sgn_x, v64int16_sparse b, int sgn_y,
                v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submsc_2x8_8x8(v32int16 a, int sgn_x, v64int16_sparse b, int sgn_y,
                v16acc64 acc1, v16acc64 acc2) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 mul_2x8_8x8_conf(v32int16 a, v64int16_sparse b, int sub_mul) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 3, 5, 0, 0,
                                    sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v16acc64)
 negmul_2x8_8x8_conf(v32int16 a, v64int16_sparse b, int sub_mul) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 3, 5, 0, 0,
                                    sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v16acc64)
 mac_2x8_8x8_conf(v32int16 a, v64int16_sparse b, v16acc64 acc1, int zero_acc1,
                  int shift16, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 3, 5,
                                    zero_acc1, shift16, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 msc_2x8_8x8_conf(v32int16 a, v64int16_sparse b, v16acc64 acc1, int zero_acc1,
                  int shift16, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 3, 5,
                                    zero_acc1, shift16, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmsc_2x8_8x8_conf(v32int16 a, v64int16_sparse b, v16acc64 acc1, int zero_acc1,
                     int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 3, 5,
                                    zero_acc1, 0, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmac_2x8_8x8_conf(v32int16 a, v64int16_sparse b, v16acc64 acc1, int zero_acc1,
                     int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 3, 5,
                                    zero_acc1, 0, sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 addmac_2x8_8x8_conf(v32int16 a, v64int16_sparse b, v16acc64 acc1, v16acc64 acc2,
@@ -22883,7 +23229,7 @@ addmac_2x8_8x8_conf(v32int16 a, v64int16_sparse b, v16acc64 acc1, v16acc64 acc2,
       aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 3, 5, zero_acc1,
                             shift16, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 addmsc_2x8_8x8_conf(v32int16 a, v64int16_sparse b, v16acc64 acc1, v16acc64 acc2,
@@ -22893,7 +23239,7 @@ addmsc_2x8_8x8_conf(v32int16 a, v64int16_sparse b, v16acc64 acc1, v16acc64 acc2,
       aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 3, 5, zero_acc1,
                             shift16, sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submac_2x8_8x8_conf(v32int16 a, v64int16_sparse b, v16acc64 acc1, v16acc64 acc2,
@@ -22902,7 +23248,7 @@ submac_2x8_8x8_conf(v32int16 a, v64int16_sparse b, v16acc64 acc1, v16acc64 acc2,
       aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 3, 5, zero_acc1, 0,
                             sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submsc_2x8_8x8_conf(v32int16 a, v64int16_sparse b, v16acc64 acc1, v16acc64 acc2,
@@ -22911,21 +23257,23 @@ submsc_2x8_8x8_conf(v32int16 a, v64int16_sparse b, v16acc64 acc1, v16acc64 acc2,
       aiev2_compute_control(__SIGN_SIGNED, __SIGN_SIGNED, 1, 3, 5, zero_acc1, 0,
                             sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 mul_2x8_8x8_conf(v32int16 a, int sgn_x, v64int16_sparse b, int sgn_y,
                  int sub_mul) {
   int conf =
       aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mul_conf(a, b.data, b.mask,
+                                                           conf);
 }
 INTRINSIC(v16acc64)
 negmul_2x8_8x8_conf(v32int16 a, int sgn_x, v64int16_sparse b, int sgn_y,
                     int sub_mul) {
   int conf =
       aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, 0, 0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmul_conf(a, b.data, b.mask,
+                                                              conf);
 }
 INTRINSIC(v16acc64)
 mac_2x8_8x8_conf(v32int16 a, int sgn_x, v64int16_sparse b, int sgn_y,
@@ -22933,7 +23281,8 @@ mac_2x8_8x8_conf(v32int16 a, int sgn_x, v64int16_sparse b, int sgn_y,
                  int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, zero_acc1, shift16,
                                    sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_mac_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 msc_2x8_8x8_conf(v32int16 a, int sgn_x, v64int16_sparse b, int sgn_y,
@@ -22941,21 +23290,24 @@ msc_2x8_8x8_conf(v32int16 a, int sgn_x, v64int16_sparse b, int sgn_y,
                  int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, zero_acc1, shift16,
                                    sub_mul, sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_msc_conf(a, b.data, b.mask,
+                                                           acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmsc_2x8_8x8_conf(v32int16 a, int sgn_x, v64int16_sparse b, int sgn_y,
                     v16acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, zero_acc1, 0, sub_mul,
                                    sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmsc_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 negmac_2x8_8x8_conf(v32int16 a, int sgn_x, v64int16_sparse b, int sgn_y,
                     v16acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, zero_acc1, 0, sub_mul,
                                    sub_acc1, 0, 0);
-  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b, acc1, conf);
+  return __builtin_aiev2_I512_I1024_ACC1024_acc64_negmac_conf(a, b.data, b.mask,
+                                                              acc1, conf);
 }
 INTRINSIC(v16acc64)
 addmac_2x8_8x8_conf(v32int16 a, int sgn_x, v64int16_sparse b, int sgn_y,
@@ -22964,7 +23316,7 @@ addmac_2x8_8x8_conf(v32int16 a, int sgn_x, v64int16_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, zero_acc1, shift16,
                                    sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 addmsc_2x8_8x8_conf(v32int16 a, int sgn_x, v64int16_sparse b, int sgn_y,
@@ -22973,7 +23325,7 @@ addmsc_2x8_8x8_conf(v32int16 a, int sgn_x, v64int16_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, zero_acc1, shift16,
                                    sub_mul, sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submac_2x8_8x8_conf(v32int16 a, int sgn_x, v64int16_sparse b, int sgn_y,
@@ -22982,7 +23334,7 @@ submac_2x8_8x8_conf(v32int16 a, int sgn_x, v64int16_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, zero_acc1, 0, sub_mul,
                                    sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16acc64)
 submsc_2x8_8x8_conf(v32int16 a, int sgn_x, v64int16_sparse b, int sgn_y,
@@ -22991,80 +23343,82 @@ submsc_2x8_8x8_conf(v32int16 a, int sgn_x, v64int16_sparse b, int sgn_y,
   int conf = aiev2_compute_control(sgn_x, sgn_y, 1, 3, 5, zero_acc1, 0, sub_mul,
                                    sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I512_I1024_ACC1024_ACC1024_acc64_submsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 };
 ;
 
 INTRINSIC(v16accfloat) mul_4x16_16x4(v64bfloat16 a, v64bfloat16_sparse b) {
   int conf = aiev2_compute_control(0, 0, 2, 3, 2, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_accfloat_bf_mul_conf(a, b, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_accfloat_bf_mul_conf(a, b.data,
+                                                                  b.mask, conf);
 }
 INTRINSIC(v16accfloat) negmul_4x16_16x4(v64bfloat16 a, v64bfloat16_sparse b) {
   int conf = aiev2_compute_control(0, 0, 2, 3, 2, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_accfloat_bf_negmul_conf(a, b,
-                                                                     conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_accfloat_bf_negmul_conf(
+      a, b.data, b.mask, conf);
 }
 INTRINSIC(v16accfloat)
 mac_4x16_16x4(v64bfloat16 a, v64bfloat16_sparse b, v16accfloat acc1) {
   int conf = aiev2_compute_control(0, 0, 2, 3, 2, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_accfloat_bf_mac_conf(a, b, acc1,
-                                                                  conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_accfloat_bf_mac_conf(
+      a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v16accfloat)
 msc_4x16_16x4(v64bfloat16 a, v64bfloat16_sparse b, v16accfloat acc1) {
   int conf = aiev2_compute_control(0, 0, 2, 3, 2, 0, 0, 0, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_accfloat_bf_msc_conf(a, b, acc1,
-                                                                  conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_accfloat_bf_msc_conf(
+      a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v16accfloat)
 addmac_4x16_16x4(v64bfloat16 a, v64bfloat16_sparse b, v16accfloat acc1,
                  v16accfloat acc2) {
   int conf = aiev2_compute_control(0, 0, 2, 3, 2, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_accfloat_bf_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16accfloat)
 addmsc_4x16_16x4(v64bfloat16 a, v64bfloat16_sparse b, v16accfloat acc1,
                  v16accfloat acc2) {
   int conf = aiev2_compute_control(0, 0, 2, 3, 2, 0, 0, 0, 0, 0, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_accfloat_bf_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16accfloat)
 mul_4x16_16x4_conf(v64bfloat16 a, v64bfloat16_sparse b, int sub_mul) {
   int conf = aiev2_compute_control(0, 0, 2, 3, 2, 0, 0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_accfloat_bf_mul_conf(a, b, conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_accfloat_bf_mul_conf(a, b.data,
+                                                                  b.mask, conf);
 }
 INTRINSIC(v16accfloat)
 negmul_4x16_16x4_conf(v64bfloat16 a, v64bfloat16_sparse b, int sub_mul) {
   int conf = aiev2_compute_control(0, 0, 2, 3, 2, 0, 0, sub_mul, 0, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_accfloat_bf_negmul_conf(a, b,
-                                                                     conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_accfloat_bf_negmul_conf(
+      a, b.data, b.mask, conf);
 }
 INTRINSIC(v16accfloat)
 mac_4x16_16x4_conf(v64bfloat16 a, v64bfloat16_sparse b, v16accfloat acc1,
                    int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(0, 0, 2, 3, 2, zero_acc1, 0, sub_mul,
                                    sub_acc1, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_accfloat_bf_mac_conf(a, b, acc1,
-                                                                  conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_accfloat_bf_mac_conf(
+      a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v16accfloat)
 msc_4x16_16x4_conf(v64bfloat16 a, v64bfloat16_sparse b, v16accfloat acc1,
                    int zero_acc1, int sub_mul, int sub_acc1) {
   int conf = aiev2_compute_control(0, 0, 2, 3, 2, zero_acc1, 0, sub_mul,
                                    sub_acc1, 0, 0);
-  return __builtin_aiev2_I1024_I1024_ACC1024_accfloat_bf_msc_conf(a, b, acc1,
-                                                                  conf);
+  return __builtin_aiev2_I1024_I1024_ACC1024_accfloat_bf_msc_conf(
+      a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v16accfloat)
-addmac_4x16_16x4_conf(v64bfloat16 a, v64bfloat16_sparse b, v16accfloat acc1,
-                      v16accfloat acc2, int zero_acc1, int sub_mul,
-                      int sub_acc1, int sub_acc2) {
+addmac_²4_conf(v64bfloat16 a, v64bfloat16_sparse b, v16accfloat acc1,
+               v16accfloat acc2, int zero_acc1, int sub_mul, int sub_acc1,
+               int sub_acc2) {
   int conf = aiev2_compute_control(0, 0, 2, 3, 2, zero_acc1, 0, sub_mul,
                                    sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_accfloat_bf_addmac_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 }
 INTRINSIC(v16accfloat)
 addmsc_4x16_16x4_conf(v64bfloat16 a, v64bfloat16_sparse b, v16accfloat acc1,
@@ -23073,7 +23427,7 @@ addmsc_4x16_16x4_conf(v64bfloat16 a, v64bfloat16_sparse b, v16accfloat acc1,
   int conf = aiev2_compute_control(0, 0, 2, 3, 2, zero_acc1, 0, sub_mul,
                                    sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_accfloat_bf_addmsc_conf(
-      a, b, acc1, acc2, conf);
+      a, b.data, b.mask, acc1, acc2, conf);
 };
 #endif // End sparse
 
