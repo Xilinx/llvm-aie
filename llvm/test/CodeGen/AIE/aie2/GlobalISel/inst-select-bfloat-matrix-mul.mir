@@ -169,3 +169,185 @@ body:             |
     $bml0 = COPY %0:accregbank(<8 x s64>)
     PseudoRET implicit $lr, implicit $bml0
 ...
+
+
+---
+name:            BF_MUL_sparse
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $q0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $y2
+    ; CHECK-LABEL: name: BF_MUL_sparse
+    ; CHECK: liveins: $q0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $y2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec1024 = COPY $y2
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:mxw = COPY $x0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec128 = COPY $q0
+    ; CHECK-NEXT: [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 92
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:sparsevec640 = REG_SEQUENCE [[COPY1]], %subreg.sub_sparse_x, [[COPY2]], %subreg.sub_sparse_q
+    ; CHECK-NEXT: [[VMUL_F_vmac_bm_core_sparse_wide:%[0-9]+]]:acc512 = VMUL_F_vmac_bm_core_sparse_wide [[COPY]], [[REG_SEQUENCE]], [[MOV_RLC_imm10_pseudo]], implicit-def dead $srfpflags, implicit $crfpmask
+    ; CHECK-NEXT: $bml0 = COPY [[VMUL_F_vmac_bm_core_sparse_wide]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $bml0
+    %1:vregbank(<64 x s16>) = COPY $y2
+    %2:vregbank(<32 x s16>) = COPY $x0
+    %3:vregbank(s128) = COPY $q0
+    %44:gprregbank(s32) = G_CONSTANT i32 92
+    %0:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.I1024.I1024.ACC1024.accfloat.bf.mul.conf), %1:vregbank(<64 x s16>), %2:vregbank(<32 x s16>), %3:vregbank(s128), %44:gprregbank(s32)
+    $bml0 = COPY %0:accregbank(<8 x s64>)
+    PseudoRET implicit $lr, implicit $bml0
+...
+
+---
+name:            BF_NEGMUL_sparse
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $q0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $y2
+    ; CHECK-LABEL: name: BF_NEGMUL_sparse
+    ; CHECK: liveins: $q0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $y2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec1024 = COPY $y2
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:mxw = COPY $x0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec128 = COPY $q0
+    ; CHECK-NEXT: [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 92
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:sparsevec640 = REG_SEQUENCE [[COPY1]], %subreg.sub_sparse_x, [[COPY2]], %subreg.sub_sparse_q
+    ; CHECK-NEXT: [[VNEGMUL_F_vmac_bm_core_sparse_wide:%[0-9]+]]:acc512 = VNEGMUL_F_vmac_bm_core_sparse_wide [[COPY]], [[REG_SEQUENCE]], [[MOV_RLC_imm10_pseudo]], implicit-def dead $srfpflags, implicit $crfpmask
+    ; CHECK-NEXT: $bml0 = COPY [[VNEGMUL_F_vmac_bm_core_sparse_wide]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $bml0
+    %1:vregbank(<64 x s16>) = COPY $y2
+    %2:vregbank(<32 x s16>) = COPY $x0
+    %3:vregbank(s128) = COPY $q0
+    %44:gprregbank(s32) = G_CONSTANT i32 92
+    %0:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.I1024.I1024.ACC1024.accfloat.bf.negmul.conf), %1:vregbank(<64 x s16>), %2:vregbank(<32 x s16>), %3:vregbank(s128), %44:gprregbank(s32)
+    $bml0 = COPY %0:accregbank(<8 x s64>)
+    PseudoRET implicit $lr, implicit $bml0
+...
+
+---
+name:            BF_MAC_sparse
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $bml1, $q0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $y2
+    ; CHECK-LABEL: name: BF_MAC_sparse
+    ; CHECK: liveins: $bml1, $q0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $y2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec1024 = COPY $y2
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:mxw = COPY $x0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec128 = COPY $q0
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc512 = COPY $bml1
+    ; CHECK-NEXT: [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 92
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:sparsevec640 = REG_SEQUENCE [[COPY1]], %subreg.sub_sparse_x, [[COPY2]], %subreg.sub_sparse_q
+    ; CHECK-NEXT: [[VMAC_F_vmac_bm_core_sparse_wide:%[0-9]+]]:acc512 = VMAC_F_vmac_bm_core_sparse_wide [[COPY3]], [[COPY]], [[REG_SEQUENCE]], [[MOV_RLC_imm10_pseudo]], implicit-def dead $srfpflags, implicit $crfpmask
+    ; CHECK-NEXT: $bml0 = COPY [[VMAC_F_vmac_bm_core_sparse_wide]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $bml0
+    %1:vregbank(<64 x s16>) = COPY $y2
+    %2:vregbank(<32 x s16>) = COPY $x0
+    %3:vregbank(s128) = COPY $q0
+    %20:accregbank(<8 x s64>) = COPY $bml1
+    %45:gprregbank(s32) = G_CONSTANT i32 92
+    %0:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.I1024.I1024.ACC1024.accfloat.bf.mac.conf), %1:vregbank(<64 x s16>), %2:vregbank(<32 x s16>), %3:vregbank(s128), %20:accregbank(<8 x s64>), %45:gprregbank(s32)
+    $bml0 = COPY %0:accregbank(<8 x s64>)
+    PseudoRET implicit $lr, implicit $bml0
+...
+
+
+---
+name:            BF_MSC_sparse
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $bml1, $q0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $y2
+    ; CHECK-LABEL: name: BF_MSC_sparse
+    ; CHECK: liveins: $bml1, $q0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $y2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec1024 = COPY $y2
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:mxw = COPY $x0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec128 = COPY $q0
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc512 = COPY $bml1
+    ; CHECK-NEXT: [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 92
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:sparsevec640 = REG_SEQUENCE [[COPY1]], %subreg.sub_sparse_x, [[COPY2]], %subreg.sub_sparse_q
+    ; CHECK-NEXT: [[VMSC_F_vmac_bm_core_sparse_wide:%[0-9]+]]:acc512 = VMSC_F_vmac_bm_core_sparse_wide [[COPY3]], [[COPY]], [[REG_SEQUENCE]], [[MOV_RLC_imm10_pseudo]], implicit-def dead $srfpflags, implicit $crfpmask
+    ; CHECK-NEXT: $bml0 = COPY [[VMSC_F_vmac_bm_core_sparse_wide]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $bml0
+    %1:vregbank(<64 x s16>) = COPY $y2
+    %2:vregbank(<32 x s16>) = COPY $x0
+    %3:vregbank(s128) = COPY $q0
+    %20:accregbank(<8 x s64>) = COPY $bml1
+    %45:gprregbank(s32) = G_CONSTANT i32 92
+    %0:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.I1024.I1024.ACC1024.accfloat.bf.msc.conf), %1:vregbank(<64 x s16>), %2:vregbank(<32 x s16>), %3:vregbank(s128), %20:accregbank(<8 x s64>), %45:gprregbank(s32)
+    $bml0 = COPY %0:accregbank(<8 x s64>)
+    PseudoRET implicit $lr, implicit $bml0
+...
+
+---
+name:            BF_ADDMAC_sparse
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $bml1, $bml2, $q0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $y2
+    ; CHECK-LABEL: name: BF_ADDMAC_sparse
+    ; CHECK: liveins: $bml1, $bml2, $q0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $y2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec1024 = COPY $y2
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:mxw = COPY $x0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec128 = COPY $q0
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc512 = COPY $bml1
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:acc512 = COPY $bml2
+    ; CHECK-NEXT: [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 92
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:sparsevec640 = REG_SEQUENCE [[COPY1]], %subreg.sub_sparse_x, [[COPY2]], %subreg.sub_sparse_q
+    ; CHECK-NEXT: [[VADDMAC_F_vmac_bm_core_sparse_wide:%[0-9]+]]:acc512 = VADDMAC_F_vmac_bm_core_sparse_wide [[COPY3]], [[COPY4]], [[COPY]], [[REG_SEQUENCE]], [[MOV_RLC_imm10_pseudo]], implicit-def dead $srfpflags, implicit $crfpmask
+    ; CHECK-NEXT: $bml0 = COPY [[VADDMAC_F_vmac_bm_core_sparse_wide]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $bml0
+    %1:vregbank(<64 x s16>) = COPY $y2
+    %2:vregbank(<32 x s16>) = COPY $x0
+    %3:vregbank(s128) = COPY $q0
+    %20:accregbank(<8 x s64>) = COPY $bml1
+    %21:accregbank(<8 x s64>) = COPY $bml2
+    %46:gprregbank(s32) = G_CONSTANT i32 92
+    %0:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.I1024.I1024.ACC1024.ACC1024.accfloat.bf.addmac.conf), %1:vregbank(<64 x s16>), %2:vregbank(<32 x s16>), %3:vregbank(s128), %20:accregbank(<8 x s64>), %21:accregbank(<8 x s64>), %46:gprregbank(s32)
+    $bml0 = COPY %0:accregbank(<8 x s64>)
+    PseudoRET implicit $lr, implicit $bml0
+...
+
+---
+name:            BF_ADDMSC_sparse
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $bml1, $bml2, $q0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $y2
+    ; CHECK-LABEL: name: BF_ADDMSC_sparse
+    ; CHECK: liveins: $bml1, $bml2, $q0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $x0, $y2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec1024 = COPY $y2
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:mxw = COPY $x0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec128 = COPY $q0
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc512 = COPY $bml1
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:acc512 = COPY $bml2
+    ; CHECK-NEXT: [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 92
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:sparsevec640 = REG_SEQUENCE [[COPY1]], %subreg.sub_sparse_x, [[COPY2]], %subreg.sub_sparse_q
+    ; CHECK-NEXT: [[VADDMSC_F_vmac_bm_core_sparse_wide:%[0-9]+]]:acc512 = VADDMSC_F_vmac_bm_core_sparse_wide [[COPY3]], [[COPY4]], [[COPY]], [[REG_SEQUENCE]], [[MOV_RLC_imm10_pseudo]], implicit-def dead $srfpflags, implicit $crfpmask
+    ; CHECK-NEXT: $bml0 = COPY [[VADDMSC_F_vmac_bm_core_sparse_wide]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $bml0
+    %1:vregbank(<64 x s16>) = COPY $y2
+    %2:vregbank(<32 x s16>) = COPY $x0
+    %3:vregbank(s128) = COPY $q0
+    %20:accregbank(<8 x s64>) = COPY $bml1
+    %21:accregbank(<8 x s64>) = COPY $bml2
+    %46:gprregbank(s32) = G_CONSTANT i32 92
+    %0:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.I1024.I1024.ACC1024.ACC1024.accfloat.bf.addmsc.conf), %1:vregbank(<64 x s16>), %2:vregbank(<32 x s16>), %3:vregbank(s128), %20:accregbank(<8 x s64>), %21:accregbank(<8 x s64>), %46:gprregbank(s32)
+    $bml0 = COPY %0:accregbank(<8 x s64>)
+    PseudoRET implicit $lr, implicit $bml0
+...
