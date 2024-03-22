@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -march=aie2 --issue-limit=1 -verify-machineinstrs \
+# RUN: llc -march=aie2 %topdown-single -verify-machineinstrs \
 # RUN:   -run-pass=postmisched %s -o - | FileCheck %s
 
 # This test checks the input latency of the control register crUPSSign.

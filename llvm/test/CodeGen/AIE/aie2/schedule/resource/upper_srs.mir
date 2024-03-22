@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -march=aie2 -run-pass=postmisched --issue-limit=8 --verify-machineinstrs %s -o - | FileCheck %s
+# RUN: llc -march=aie2 -run-pass=postmisched %topdown-multi --verify-machineinstrs %s -o - | FileCheck %s
 # Structural Conflicts - Upper half of the SRS
 # VSRS/VST.SRS with CM input register E1 - both access this stage at E1, no
 # VLIW packing should happen

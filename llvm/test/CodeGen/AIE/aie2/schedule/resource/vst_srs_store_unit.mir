@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -march=aie2 -run-pass=postmisched %s -o - | FileCheck %s
+# RUN: llc -march=aie2 -run-pass=postmisched %topdown-multi %s -o - | FileCheck %s
 
 # This test triggers a structural conflict with the memory store interface (STORE_UNIT).
 

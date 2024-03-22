@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -march=aie2 -verify-machineinstrs -run-pass=postmisched --issue-limit=6 %s -o - | FileCheck %s
+# RUN: llc -march=aie2 -verify-machineinstrs -run-pass=postmisched %topdown-multi %s -o - | FileCheck %s
 
 # A bundle should not be created in a manner which write to a same register in same cycle
 

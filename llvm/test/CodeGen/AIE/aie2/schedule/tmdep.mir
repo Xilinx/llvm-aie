@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc --run-pass=postmisched -O2 --issue-limit=6 %s -o - | FileCheck %s
+# RUN: llc --run-pass=postmisched -O2 %topdown-multi %s -o - | FileCheck %s
 
 # We check that there's no dep between TM end normal memory
 # and that there are proper deps between TM

@@ -5,8 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-
-# RUN: llc -march=aie2 -run-pass=aie-aa-wrapper,aie-aa,postmisched --issue-limit=6 %s -o - | FileCheck %s
+# RUN: llc -march=aie2 -run-pass=aie-aa-wrapper,aie-aa,postmisched %topdown-multi %s -o - | FileCheck %s
 
 # This test shows that memory dependencies are handled correctly with a
 # "noalias" MMO, must alias" MMO, or without.

@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -march=aie2 -run-pass=postmisched --issue-limit=6 %s -o - | FileCheck %s
+# RUN: llc -march=aie2 -run-pass=postmisched %topdown-multi %s -o - | FileCheck %s
 
 # VST_W and VST_2D_W access W_RS_PORT at E1 and VUNPACK does so in E7.
 # The scheduler needs to insert NOPs to accomodate for this fact.

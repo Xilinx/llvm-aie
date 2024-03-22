@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -march=aie2 --issue-limit=6 -run-pass=postmisched %s -o - \
+# RUN: llc -march=aie2 %topdown-multi -run-pass=postmisched %s -o - \
 # RUN:   | FileCheck %s
 
 # Loads and stores should finish before a lock is taken or released

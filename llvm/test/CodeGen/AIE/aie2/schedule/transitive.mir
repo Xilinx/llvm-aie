@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc --mtriple=aie2 --issue-limit=6 --start-after=instruction-select --debug-only=pipeliner -O2 %s -o - 2>&1 | FileCheck %s
+# RUN: llc --mtriple=aie2 %topdown-multi --start-after=instruction-select --debug-only=pipeliner -O2 %s -o - 2>&1 | FileCheck %s
 # REQUIRES: asserts
 
 # The edges to the 'isZeroCost' instructions INSERT_SUBREG

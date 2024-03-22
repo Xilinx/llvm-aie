@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -march=aie2 -run-pass=postmisched %s -o - | FileCheck %s
+# RUN: llc -march=aie2 -run-pass=postmisched %topdown-multi %s -o - | FileCheck %s
 
 # VEXTRACT accesses WM write port in cycle 2, MOV in cycle 1
 # The scheduler needs to insert an additional NOP such that the

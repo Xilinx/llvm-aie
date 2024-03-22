@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -march=aie2 -run-pass=postmisched %s -issue-limit=6 -o - | FileCheck %s
+# RUN: llc -march=aie2 -run-pass=postmisched %s %topdown-single -o - | FileCheck %s
 
 # Note the NOP in the first cycle. There is a one-cycle dep between the
 # instructions. This pushes VST in the second cycle. Given that meta

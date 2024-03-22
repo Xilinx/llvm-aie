@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple=aie2 -run-pass=postmisched %s -o - | FileCheck %s
+# RUN: llc -mtriple=aie2 -run-pass=postmisched %topdown-multi %s -o - | FileCheck %s
 
 # partial store does a late read of its source register as part
 # of read-modify write

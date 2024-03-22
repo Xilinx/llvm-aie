@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple=aie2 --issue-limit=8 -run-pass=postmisched %s -o - | FileCheck %s
+# RUN: llc -mtriple=aie2 %topdown-multi -run-pass=postmisched %s -o - | FileCheck %s
 
 # VLIW scheduling didn't account for instructions already emitted in the
 # current cycle when filling out with nops.

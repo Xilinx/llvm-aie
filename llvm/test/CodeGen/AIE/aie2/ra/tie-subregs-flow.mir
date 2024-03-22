@@ -5,11 +5,11 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -O2 -mtriple=aie2 --issue-limit=1 -verify-machineinstrs \
+# RUN: llc -O2 -mtriple=aie2 %topdown-single -verify-machineinstrs \
 # RUN:    -start-before=phi-node-elimination -stop-before=aie-finalize-mi-bundles \
 # RUN:    %s -o - | FileCheck %s
 # Just make sure we don't crash on this.
-# RUN: llc -O0 -mtriple=aie2 --issue-limit=1 -verify-machineinstrs \
+# RUN: llc -O0 -mtriple=aie2 %topdown-single -verify-machineinstrs \
 # RUN:    -start-before=phi-node-elimination -stop-before=aie-finalize-mi-bundles %s -o -
 
 ---

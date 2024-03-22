@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -march=aie2 -run-pass=postmisched %s --issue-limit=8 -o - | FileCheck %s
+# RUN: llc -march=aie2 -run-pass=postmisched %s %topdown-multi -o - | FileCheck %s
 
 # This test checks that we are not trying to schedule LDA instructions and VLDB.4x
 # at the same time since they both use the memory load interface A in E2.

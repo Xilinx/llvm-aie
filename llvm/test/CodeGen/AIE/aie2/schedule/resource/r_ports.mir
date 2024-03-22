@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -march=aie2 -run-pass=postmisched --issue-limit=8 --verify-machineinstrs %s -o - | FileCheck %s
+# RUN: llc -march=aie2 -run-pass=postmisched %topdown-multi --verify-machineinstrs %s -o - | FileCheck %s
 
 # OR and MOV should not have a resource conflict on gpr ports
 ---

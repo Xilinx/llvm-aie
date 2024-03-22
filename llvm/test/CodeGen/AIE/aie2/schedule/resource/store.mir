@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -march=aie2 -run-pass=postmisched %s -o - | FileCheck %s
+# RUN: llc -march=aie2 -run-pass=postmisched %topdown-single %s -o - | FileCheck %s
 
 # Different store instructions touch the store interface in different cycles
 # STHB in E8, VST_SRS in E4, the rest in E2
