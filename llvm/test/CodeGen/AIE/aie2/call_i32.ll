@@ -14,16 +14,14 @@ define i32 @test(i32 %x) {
 ; CHECK-LABEL: test:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; paddb [sp], #32; nopx
-; CHECK-NEXT:    st lr, [sp, #-28] // 4-byte Folded Spill
-; CHECK-NEXT:    jl #f
+; CHECK-NEXT:    nopa ; nopb ; jl #f; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    paddb [sp], #32 // Delay Slot 4
+; CHECK-NEXT:    st lr, [sp, #-28] // 4-byte Folded Spill Delay Slot 3
 ; CHECK-NEXT:    st r16, [sp, #-32] // 4-byte Folded Spill Delay Slot 2
 ; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
 ; CHECK-NEXT:    nopb ; lda lr, [sp, #-28]; nops ; nopxm ; nopv // 4-byte Folded Reload
-; CHECK-NEXT:    mov r0, r16
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -33,7 +31,7 @@ define i32 @test(i32 %x) {
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    mov r0, r16 // Delay Slot 2
 ; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
 
 entry:

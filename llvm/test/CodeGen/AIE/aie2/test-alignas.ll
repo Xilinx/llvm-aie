@@ -18,16 +18,16 @@ define <16 x i16> @_Z12test_alignasv() {
 ; CHECK-LABEL: _Z12test_alignasv:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #2048; nopa ; nops ; nopxm ; nopv
-; CHECK-NEXT:    st lr, [sp, #-2048] // 4-byte Folded Spill
+; CHECK-NEXT:    nopb ; nopa ; nops ; movxm p2, #.L__const._Z12test_alignasv.a; nopv
+; CHECK-NEXT:    paddb [sp], #2048; nopx
 ; CHECK-NEXT:    jl #memcpy
-; CHECK-NEXT:    movxm p2, #.L__const._Z12test_alignasv.a // Delay Slot 5
-; CHECK-NEXT:    mov p1, sp // Delay Slot 4
+; CHECK-NEXT:    mov p1, sp // Delay Slot 5
+; CHECK-NEXT:    st lr, [sp, #-2048] // 4-byte Folded Spill Delay Slot 4
 ; CHECK-NEXT:    padda [p1], #-1792 // Delay Slot 3
 ; CHECK-NEXT:    st p1, [sp, #-992] // 4-byte Folded Spill Delay Slot 2
 ; CHECK-NEXT:    mova r0, #32 // Delay Slot 1
 ; CHECK-NEXT:    lda p0, [sp, #-992]; nopxm // 4-byte Folded Reload
-; CHECK-NEXT:    lda lr, [sp, #-2048] // 4-byte Folded Reload
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -35,7 +35,7 @@ define <16 x i16> @_Z12test_alignasv() {
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vlda wh0, [p0, #0]
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    lda lr, [sp, #-2048] // 4-byte Folded Reload
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -66,23 +66,17 @@ define i32 @_Z13test_alignas1v() {
 ; CHECK-LABEL: _Z13test_alignas1v:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; paddb [sp], #2048; nopx
+; CHECK-NEXT:    paddb [sp], #2048
 ; CHECK-NEXT:    mov p2, sp
 ; CHECK-NEXT:    padda [p2], #-2048
 ; CHECK-NEXT:    lda r0, [p2, #0]
-; CHECK-NEXT:    mov p1, sp
 ; CHECK-NEXT:    movxm p0, #n9
-; CHECK-NEXT:    padda [p1], #-1792
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    st r0, [p1, #0]
 ; CHECK-NEXT:    lda r0, [p0, #0]
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    mov p1, sp // Delay Slot 4
+; CHECK-NEXT:    padda [p1], #-1792 // Delay Slot 3
+; CHECK-NEXT:    st r0, [p1, #0] // Delay Slot 2
 ; CHECK-NEXT:    paddb [sp], #-2048 // Delay Slot 1
 entry:
   %s1 = alloca %struct.S1, align 512

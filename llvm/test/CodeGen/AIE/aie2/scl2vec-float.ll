@@ -28,7 +28,7 @@ define float @test_extract_elem_floatv16(<16 x float> %v, i32 %idx, i32 %sign) {
 ; CHECK-LABEL: test_extract_elem_floatv16:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mov r3, r16
+; CHECK-NEXT:    nopa ; mov r3, r16
 ; CHECK-NEXT:    mov r16, r1
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    mov crVaddSign, r2 // Delay Slot 5

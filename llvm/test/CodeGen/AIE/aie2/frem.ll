@@ -12,26 +12,23 @@ define bfloat @test_frem_bfloat(bfloat %a, bfloat %b) {
 ; CHECK-LABEL: test_frem_bfloat:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #32
-; CHECK-NEXT:    st lr, [sp, #-28]; jl #fmodf // 4-byte Folded Spill
+; CHECK-NEXT:    nopa ; jl #fmodf
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    mova r0, #16 // Delay Slot 3
+; CHECK-NEXT:    paddb [sp], #32 // Delay Slot 4
+; CHECK-NEXT:    mova r0, #16; st lr, [sp, #-28] // 4-byte Folded Spill Delay Slot 3
 ; CHECK-NEXT:    st r16, [sp, #-32]; lshl r1, r1, r0 // 4-byte Folded Spill Delay Slot 2
 ; CHECK-NEXT:    lshl r2, r2, r0 // Delay Slot 1
-; CHECK-NEXT:    nopb ; mova r16, #0; nops ; nopxm ; nopv
-; CHECK-NEXT:    lda lr, [sp, #-28]; mov r29, r16 // 4-byte Folded Reload
-; CHECK-NEXT:    nopa ; vinsert.32 x0, x0, r29, r0
-; CHECK-NEXT:    vmov bmh0, x0
+; CHECK-NEXT:    lda lr, [sp, #-28]; nopx // 4-byte Folded Reload
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vconv.bf16.fp32 wl0, bmh0
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vextract.s16 r0, x0, r16
-; CHECK-NEXT:    lda r16, [sp, #-32] // 4-byte Folded Reload
+; CHECK-NEXT:    mova r16, #0
+; CHECK-NEXT:    mov r29, r16
+; CHECK-NEXT:    vinsert.32 x0, x0, r29, r0
+; CHECK-NEXT:    lda r16, [sp, #-32]; vmov bmh0, x0 // 4-byte Folded Reload
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    vconv.bf16.fp32 wl0, bmh0 // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    vextract.s16 r0, x0, r16 // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
 entry:
@@ -43,11 +40,10 @@ define float @test_frem_float(float %a, float %b) {
 ; CHECK-LABEL: test_frem_float:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; paddb [sp], #32; nopxm
-; CHECK-NEXT:    st lr, [sp, #-32]; jl #fmodf // 4-byte Folded Spill
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    nopb ; nopa ; nops ; jl #fmodf; nopv
+; CHECK-NEXT:    nopx // Delay Slot 5
+; CHECK-NEXT:    paddb [sp], #32 // Delay Slot 4
+; CHECK-NEXT:    st lr, [sp, #-32] // 4-byte Folded Spill Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:    lda lr, [sp, #-32] // 4-byte Folded Reload
@@ -72,11 +68,10 @@ define double @test_frem_double(double %a, double %b) {
 ; CHECK-LABEL: test_frem_double:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; paddb [sp], #32; nopxm
-; CHECK-NEXT:    st lr, [sp, #-32]; jl #fmod // 4-byte Folded Spill
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    nopb ; nopa ; nops ; jl #fmod; nopv
+; CHECK-NEXT:    nopx // Delay Slot 5
+; CHECK-NEXT:    paddb [sp], #32 // Delay Slot 4
+; CHECK-NEXT:    st lr, [sp, #-32] // 4-byte Folded Spill Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:    lda lr, [sp, #-32] // 4-byte Folded Reload

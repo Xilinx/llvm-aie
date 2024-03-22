@@ -20,96 +20,36 @@ define dso_local noundef i32 @_Z3foov() #0 {
 ; CHECK-LABEL: _Z3foov:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    movxm p0, #(X+92)
+; CHECK-NEXT:    nopa ; nopb ; movxm p0, #(X+92)
 ; CHECK-NEXT:    mova dj0, #96
-; CHECK-NEXT:    lda r0, [p0, #8]
-; CHECK-NEXT:    lda.u8 r1, [p0, dj0]
-; CHECK-NEXT:    mov p1, p0
 ; CHECK-NEXT:    mova dj1, #-68
 ; CHECK-NEXT:    mova dj2, #-56
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    add r0, r0, r1
+; CHECK-NEXT:    mov p1, p0
+; CHECK-NEXT:    lda r0, [p0, #8]
+; CHECK-NEXT:    lda.u8 r1, [p0, dj0]
 ; CHECK-NEXT:    lda r1, [p1], #8
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    add r0, r0, r1
 ; CHECK-NEXT:    lda.u16 r1, [p0, dj1]
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    add r0, r0, r1
 ; CHECK-NEXT:    lda.u8 r1, [p0, dj2]
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    add r0, r0, r1
 ; CHECK-NEXT:    lda r1, [p0, #4]
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    add r0, r0, r1
+; CHECK-NEXT:    add r0, r0, r1
+; CHECK-NEXT:    add r0, r0, r1
 ; CHECK-NEXT:    add r0, r0, r1
 ; CHECK-NEXT:    lda r1, [p0, #80]
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    add r0, r0, r1
 ; CHECK-NEXT:    lda r1, [p0, #92]
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    add r0, r0, r1
 ; CHECK-NEXT:    lda r1, [p0, #44]
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    add r0, r0, r1
 ; CHECK-NEXT:    lda r1, [p1, #0]
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    add r0, r0, r1
 ; CHECK-NEXT:    lda r1, [p0, #76]
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    add r0, r0, r1
 ; CHECK-NEXT:    lda r1, [p0, #-60]
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    add r0, r0, r1
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    add r0, r0, r1 // Delay Slot 5
+; CHECK-NEXT:    add r0, r0, r1 // Delay Slot 4
+; CHECK-NEXT:    add r0, r0, r1 // Delay Slot 3
+; CHECK-NEXT:    add r0, r0, r1 // Delay Slot 2
 ; CHECK-NEXT:    add r0, r0, r1 // Delay Slot 1
 entry:
   %0 = load i32, ptr getelementptr inbounds (%struct.conv2d_internal_params, ptr @X, i32 0, i32 51), align 4

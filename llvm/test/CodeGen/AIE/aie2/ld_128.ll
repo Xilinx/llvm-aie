@@ -10,7 +10,7 @@ define dso_local noundef <8 x i32> @test1() {
 ; CHECK-LABEL: test1:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #32
+; CHECK-NEXT:    paddb [sp], #32; nopx
 ; CHECK-NEXT:    lda q0, [sp, #-32]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -31,7 +31,7 @@ define dso_local noundef <8 x i32> @test2() {
 ; CHECK-LABEL: test2:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova p0, #0
+; CHECK-NEXT:    mova p0, #0; nopb ; nopxm ; nops
 ; CHECK-NEXT:    vlda.128 wl0, [p0]
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -49,7 +49,7 @@ define dso_local noundef <8 x i32> @test3() {
 ; CHECK-LABEL: test3:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #32
+; CHECK-NEXT:    nopa ; paddb [sp], #32; nopxm ; nops
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    lda q0, [p0, #480]
@@ -73,10 +73,10 @@ define dso_local noundef <8 x i32> @test4() {
 ; CHECK-LABEL: test4:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #32
+; CHECK-NEXT:    paddb [sp], #32; nopa ; nops ; nopxm ; nopv
+; CHECK-NEXT:    mova dj0, #512
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    paddb [p0], #-32
-; CHECK-NEXT:    mova dj0, #512
 ; CHECK-NEXT:    vldb.128 wl0, [p0, dj0]
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5

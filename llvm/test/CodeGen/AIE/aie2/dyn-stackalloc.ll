@@ -14,12 +14,12 @@ define void @test_simple_dyn_alloca(i32 noundef %n) {
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    paddb [sp], #32; nopa ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    mova r1, #2; nopx
-; CHECK-NEXT:    st lr, [sp, #-28] // 4-byte Folded Spill
-; CHECK-NEXT:    lshl r0, r0, r1
-; CHECK-NEXT:    mova r1, #-32
-; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    st p7, [sp, #-32] // 4-byte Folded Spill
 ; CHECK-NEXT:    mov p7, sp
+; CHECK-NEXT:    mov p0, sp
+; CHECK-NEXT:    lshl r0, r0, r1
+; CHECK-NEXT:    mova r1, #-32
+; CHECK-NEXT:    st lr, [sp, #-28] // 4-byte Folded Spill
 ; CHECK-NEXT:    padda [p7], #-32
 ; CHECK-NEXT:    add r0, r0, #31
 ; CHECK-NEXT:    jl #extern_call
@@ -56,25 +56,25 @@ define void @test_loop_dyn_alloca(i32 noundef %n) {
 ; CHECK-NEXT:    paddb [sp], #32; nopa ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    st p7, [sp, #-32] // 4-byte Folded Spill
 ; CHECK-NEXT:    mov p7, sp
-; CHECK-NEXT:    st lr, [sp, #-4] // 4-byte Folded Spill
 ; CHECK-NEXT:    st r16, [sp, #-8] // 4-byte Folded Spill
-; CHECK-NEXT:    st r17, [sp, #-12] // 4-byte Folded Spill
-; CHECK-NEXT:    st r18, [sp, #-16] // 4-byte Folded Spill
-; CHECK-NEXT:    st r19, [sp, #-20] // 4-byte Folded Spill
-; CHECK-NEXT:    st r20, [sp, #-24] // 4-byte Folded Spill
-; CHECK-NEXT:    st r21, [sp, #-28] // 4-byte Folded Spill
-; CHECK-NEXT:    padda [p7], #-32
 ; CHECK-NEXT:    mova r16, #1
+; CHECK-NEXT:    st r17, [sp, #-12] // 4-byte Folded Spill
 ; CHECK-NEXT:    mova r17, #0
+; CHECK-NEXT:    st r18, [sp, #-16] // 4-byte Folded Spill
 ; CHECK-NEXT:    mova r18, #10
+; CHECK-NEXT:    st r19, [sp, #-20] // 4-byte Folded Spill
 ; CHECK-NEXT:    mova r19, #2
+; CHECK-NEXT:    st r20, [sp, #-24] // 4-byte Folded Spill
 ; CHECK-NEXT:    mova r20, #-32
+; CHECK-NEXT:    st r21, [sp, #-28] // 4-byte Folded Spill
 ; CHECK-NEXT:    mova r21, #0
+; CHECK-NEXT:    st lr, [sp, #-4] // 4-byte Folded Spill
+; CHECK-NEXT:    padda [p7], #-32
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB1_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    nopa ; nopb ; lshl r0, r17, r19; nopm ; nops
-; CHECK-NEXT:    mov p0, sp
+; CHECK-NEXT:    nopa ; nopb ; nopx ; mov p0, sp; nops
+; CHECK-NEXT:    lshl r0, r17, r19
 ; CHECK-NEXT:    add r0, r0, #31
 ; CHECK-NEXT:    jl #extern_call
 ; CHECK-NEXT:    mov p1, p0 // Delay Slot 5
@@ -95,8 +95,8 @@ define void @test_loop_dyn_alloca(i32 noundef %n) {
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup
 ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; mov sp, p7; nopv
-; CHECK-NEXT:    lda lr, [sp, #-4] // 4-byte Folded Reload
 ; CHECK-NEXT:    lda p7, [sp, #-32] // 4-byte Folded Reload
+; CHECK-NEXT:    lda lr, [sp, #-4] // 4-byte Folded Reload
 ; CHECK-NEXT:    lda r21, [sp, #-28] // 4-byte Folded Reload
 ; CHECK-NEXT:    lda r20, [sp, #-24] // 4-byte Folded Reload
 ; CHECK-NEXT:    lda r19, [sp, #-20] // 4-byte Folded Reload
@@ -131,34 +131,34 @@ define  void @test_huge_stack(i32 noundef %n) #0 {
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; paddb [sp], #40064; nopx
+; CHECK-NEXT:    movxm m0, #-40064
+; CHECK-NEXT:    mova r1, #0
+; CHECK-NEXT:    mova r2, #2
+; CHECK-NEXT:    mova r3, #-32
 ; CHECK-NEXT:    st p7, [sp, #-40064] // 4-byte Folded Spill
 ; CHECK-NEXT:    mov p7, sp
-; CHECK-NEXT:    movxm m0, #-40064
-; CHECK-NEXT:    padda [p7], m0
-; CHECK-NEXT:    mov p1, p7
-; CHECK-NEXT:    movxm m0, #-40048
-; CHECK-NEXT:    paddb [p1], m0
-; CHECK-NEXT:    st r0, [p1, #0]
-; CHECK-NEXT:    lda r0, [p1, #0]
-; CHECK-NEXT:    mov p1, p7
-; CHECK-NEXT:    movxm m0, #-40032
-; CHECK-NEXT:    mova r2, #2
-; CHECK-NEXT:    st lr, [sp, #-40052] // 4-byte Folded Spill
-; CHECK-NEXT:    paddb [p1], m0
-; CHECK-NEXT:    st r16, [sp, #-40056] // 4-byte Folded Spill
-; CHECK-NEXT:    lshl r2, r0, r2
-; CHECK-NEXT:    st p6, [sp, #-40060] // 4-byte Folded Spill
-; CHECK-NEXT:    mov r16, p1
-; CHECK-NEXT:    mov p6, p7
-; CHECK-NEXT:    mov p1, p7
-; CHECK-NEXT:    mova r3, #-32
 ; CHECK-NEXT:    mov p2, sp
 ; CHECK-NEXT:    mov p0, sp
+; CHECK-NEXT:    st lr, [sp, #-40052] // 4-byte Folded Spill
+; CHECK-NEXT:    st r16, [sp, #-40056] // 4-byte Folded Spill
+; CHECK-NEXT:    st p6, [sp, #-40060] // 4-byte Folded Spill
+; CHECK-NEXT:    padda [p7], m0
+; CHECK-NEXT:    movxm m0, #-40048
+; CHECK-NEXT:    mov p1, p7
+; CHECK-NEXT:    mov p6, p7
+; CHECK-NEXT:    paddb [p1], m0
 ; CHECK-NEXT:    paddb [p6], #-32
-; CHECK-NEXT:    paddb [p1], #-24
-; CHECK-NEXT:    mova r1, #0
+; CHECK-NEXT:    movxm m0, #-40032
 ; CHECK-NEXT:    st p2, [p6, #0]
+; CHECK-NEXT:    st r0, [p1, #0]
+; CHECK-NEXT:    lda r0, [p1, #0]
 ; CHECK-NEXT:    mov p2, p0
+; CHECK-NEXT:    mov p1, p7
+; CHECK-NEXT:    paddb [p1], m0
+; CHECK-NEXT:    mov r16, p1
+; CHECK-NEXT:    mov p1, p7
+; CHECK-NEXT:    paddb [p1], #-24
+; CHECK-NEXT:    lshl r2, r0, r2
 ; CHECK-NEXT:    st r0, [p1], #4
 ; CHECK-NEXT:    add r2, r2, #31
 ; CHECK-NEXT:    jl #extern_call
@@ -183,11 +183,11 @@ define  void @test_huge_stack(i32 noundef %n) #0 {
 ; CHECK-NEXT:    mov sp, p0
 ; CHECK-NEXT:    mov sp, p7
 ; CHECK-NEXT:    lda lr, [sp, #-40052] // 4-byte Folded Reload
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    lda p7, [sp, #-40064] // 4-byte Folded Reload
 ; CHECK-NEXT:    lda p6, [sp, #-40060] // 4-byte Folded Reload
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    lda r16, [sp, #-40056] // 4-byte Folded Reload
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5

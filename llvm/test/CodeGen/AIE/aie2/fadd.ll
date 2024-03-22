@@ -12,14 +12,13 @@ define bfloat @test_fadd_bfloat(bfloat %a, bfloat %b) {
 ; CHECK-LABEL: test_fadd_bfloat:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopb ; nopa ; nops ; movx r0, #16; mov r3, r16; nopv
-; CHECK-NEXT:    mova r16, #0; lshl r1, r1, r0
-; CHECK-NEXT:    lshl r0, r2, r0; mov r29, r16
-; CHECK-NEXT:    vinsert.32 x0, x0, r29, r1
-; CHECK-NEXT:    mova r0, #28; vinsert.32 x2, x0, r29, r0
-; CHECK-NEXT:    vmov bmh0, x0
-; CHECK-NEXT:    vmov bmh1, x2
-; CHECK-NEXT:    vadd.f bmh0, bmh0, bmh1, r0
+; CHECK-NEXT:    nopa ; nopb ; nopx ; mov r3, r16
+; CHECK-NEXT:    mova r16, #0; movx r0, #16
+; CHECK-NEXT:    lshl r1, r1, r0; mov r29, r16
+; CHECK-NEXT:    lshl r0, r2, r0; vinsert.32 x0, x0, r29, r1
+; CHECK-NEXT:    vinsert.32 x2, x0, r29, r0
+; CHECK-NEXT:    mova r0, #28; vmov bmh0, x0
+; CHECK-NEXT:    vmov bmh1, x2; vadd.f bmh0, bmh0, bmh1, r0
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -39,11 +38,10 @@ define float @test_fadd_float(float %a, float %b) {
 ; CHECK-LABEL: test_fadd_float:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; paddb [sp], #32; nopxm
-; CHECK-NEXT:    st lr, [sp, #-32]; jl #__addsf3 // 4-byte Folded Spill
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    nopb ; nopa ; nops ; jl #__addsf3; nopv
+; CHECK-NEXT:    nopx // Delay Slot 5
+; CHECK-NEXT:    paddb [sp], #32 // Delay Slot 4
+; CHECK-NEXT:    st lr, [sp, #-32] // 4-byte Folded Spill Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:    lda lr, [sp, #-32] // 4-byte Folded Reload
@@ -68,11 +66,10 @@ define double @test_fadd_double(double %a, double %b) {
 ; CHECK-LABEL: test_fadd_double:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; paddb [sp], #32; nopxm
-; CHECK-NEXT:    st lr, [sp, #-32]; jl #__adddf3 // 4-byte Folded Spill
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    nopb ; nopa ; nops ; jl #__adddf3; nopv
+; CHECK-NEXT:    nopx // Delay Slot 5
+; CHECK-NEXT:    paddb [sp], #32 // Delay Slot 4
+; CHECK-NEXT:    st lr, [sp, #-32] // 4-byte Folded Spill Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:    lda lr, [sp, #-32] // 4-byte Folded Reload
