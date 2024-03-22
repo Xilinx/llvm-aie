@@ -13,14 +13,12 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: read_E1_write_E7
-    ; CHECK: $r6 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32) from stack - 8) {
-    ; CHECK-NEXT:   ST_dms_sts_idx_imm killed $r6, killed $p0, 4 :: (store (s32) into stack - 4)
-    ; CHECK-NEXT: }
+    ; CHECK: $r6 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32) from stack - 8)
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: ST_dms_sts_idx_imm killed $r6, killed $p0, 4 :: (store (s32) into stack - 4)
     ; CHECK-NEXT: NOP
     ST_dms_sts_idx_imm $r6, $p0, 4 :: (store (s32) into stack - 4)
     $r6 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32) from stack - 8)
@@ -55,12 +53,10 @@ body:             |
     ; CHECK-LABEL: name: read_E1_write_E5
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: VST_dmw_sts_am_ag_idx_imm $amll0, $p0, 0 {
-    ; CHECK-NEXT:   $cm0 = VMAC_vmac_cm_core_dense killed $cm2, killed $x2, killed $x3, killed $r1
-    ; CHECK-NEXT: }
+    ; CHECK-NEXT: $cm0 = VMAC_vmac_cm_core_dense killed $cm2, killed $x2, killed $x3, killed $r1
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: VST_dmw_sts_am_ag_idx_imm killed $amll0, killed $p0, 0
     ; CHECK-NEXT: NOP
     VST_dmw_sts_am_ag_idx_imm $amll0, $p0, 0
     $cm0 = VMAC_vmac_cm_core_dense $cm2, $x2, $x3, $r1
@@ -72,10 +68,8 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: read_E1_write_E2
-    ; CHECK: $r0 = ADD_add_r_ri $r6, 1, implicit-def $srcarry {
-    ; CHECK-NEXT:   $r6 = VEXTRACT_S32 killed $x2, killed $r16
-    ; CHECK-NEXT: }
-    ; CHECK-NEXT: NOP
+    ; CHECK: $r6 = VEXTRACT_S32 killed $x2, killed $r16
+    ; CHECK-NEXT: $r0 = ADD_add_r_ri killed $r6, 1, implicit-def $srcarry
     $r0 = ADD_add_r_ri $r6, 1, implicit-def $srcarry
     $r6 = VEXTRACT_S32 $x2,  $r16
 ...

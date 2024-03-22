@@ -50,12 +50,11 @@ body: |
     ; CHECK-LABEL: name: test_lda_st
     ; CHECK: liveins: $r0, $p0, $p1
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: BUNDLE implicit-def $p0, implicit $p0, implicit killed $r0, implicit killed $p1 {
-    ; CHECK-NEXT:   $p0 = PADDA_lda_ptr_inc_idx_imm $p0, 4
+    ; CHECK-NEXT: BUNDLE implicit killed $r0, implicit killed $p1 {
     ; CHECK-NEXT:   ST_dms_sts_idx_imm killed $r0, killed $p1, 0
     ; CHECK-NEXT: }
-    ; CHECK-NEXT: BUNDLE {
-    ; CHECK-NEXT:   NOP
+    ; CHECK-NEXT: BUNDLE implicit-def $p0, implicit killed $p0 {
+    ; CHECK-NEXT:   $p0 = PADDA_lda_ptr_inc_idx_imm killed $p0, 4
     ; CHECK-NEXT: }
       $p0 = PADDA_lda_ptr_inc_idx_imm $p0, 4
       ST_dms_sts_idx_imm $r0, $p1, 0
@@ -104,29 +103,28 @@ body: |
     ; CHECK-LABEL: name: test_lda_st_mv_vec
     ; CHECK: liveins: $r0, $r1, $p1, $x0
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: BUNDLE implicit-def $p1, implicit-def $r0, implicit-def $srcarry, implicit-def $r2, implicit $p1, implicit killed $x0, implicit $crmcden, implicit killed $r0, implicit killed $r1 {
-    ; CHECK-NEXT:   $p1 = PADDA_lda_ptr_inc_idx_imm $p1, 4
+    ; CHECK-NEXT: BUNDLE implicit killed $x0, implicit $crmcden {
     ; CHECK-NEXT:   VMOV_mv_mcd killed $x0, implicit $crmcden
+    ; CHECK-NEXT: }
+    ; CHECK-NEXT: BUNDLE {
+    ; CHECK-NEXT:   NOP
+    ; CHECK-NEXT: }
+    ; CHECK-NEXT: BUNDLE {
+    ; CHECK-NEXT:   NOP
+    ; CHECK-NEXT: }
+    ; CHECK-NEXT: BUNDLE {
+    ; CHECK-NEXT:   NOP
+    ; CHECK-NEXT: }
+    ; CHECK-NEXT: BUNDLE {
+    ; CHECK-NEXT:   NOP
+    ; CHECK-NEXT: }
+    ; CHECK-NEXT: BUNDLE {
+    ; CHECK-NEXT:   NOP
+    ; CHECK-NEXT: }
+    ; CHECK-NEXT: BUNDLE implicit-def $p1, implicit-def $r0, implicit-def $srcarry, implicit-def $r2, implicit $p1, implicit killed $r0, implicit killed $r1 {
+    ; CHECK-NEXT:   $p1 = PADDA_lda_ptr_inc_idx_imm $p1, 4
     ; CHECK-NEXT:   $r0 = ADD killed $r0, $r1, implicit-def $srcarry
     ; CHECK-NEXT:   $r2 = MOV_mv_scl killed $r1
-    ; CHECK-NEXT: }
-    ; CHECK-NEXT: BUNDLE {
-    ; CHECK-NEXT:   NOP
-    ; CHECK-NEXT: }
-    ; CHECK-NEXT: BUNDLE {
-    ; CHECK-NEXT:   NOP
-    ; CHECK-NEXT: }
-    ; CHECK-NEXT: BUNDLE {
-    ; CHECK-NEXT:   NOP
-    ; CHECK-NEXT: }
-    ; CHECK-NEXT: BUNDLE {
-    ; CHECK-NEXT:   NOP
-    ; CHECK-NEXT: }
-    ; CHECK-NEXT: BUNDLE {
-    ; CHECK-NEXT:   NOP
-    ; CHECK-NEXT: }
-    ; CHECK-NEXT: BUNDLE {
-    ; CHECK-NEXT:   NOP
     ; CHECK-NEXT: }
       $r0 = ADD $r0, $r1, implicit-def $srcarry
       $r2 = MOV_mv_scl $r1

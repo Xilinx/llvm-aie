@@ -27,28 +27,14 @@ body:             |
     ; CHECK: liveins: $r0, $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $r6 = LDA_dms_lda_idx_imm $p1, 0 :: (load (s32) from %ir.b)
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: ST_dms_sts_idx_imm killed $r6, $p0, 0 :: (store (s32) into %ir.a)
     ; CHECK-NEXT: $r6 = LDA_dms_lda_idx_imm $p1, 4 :: (load (s32) from %ir.b)
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: ST_dms_sts_idx_imm killed $r6, $p0, 4 :: (store (s32) into %ir.a)
     ; CHECK-NEXT: $r6 = LDA_dms_lda_idx_imm killed $p1, 8 :: (load (s32) from %ir.b)
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: ST_dms_sts_idx_imm $r6, $p0, 0 :: (store (s32) into %ir.a)
+    ; CHECK-NEXT: ST_dms_sts_idx_imm $r6, $p0, 4 :: (store (s32) into %ir.a)
     ; CHECK-NEXT: ST_dms_sts_idx_imm killed $r6, killed $p0, 8 :: (store (s32) into %ir.a)
     ; CHECK-NEXT: NOP
     $r6 = LDA_dms_lda_idx_imm $p1, 0 :: (load (s32) from %ir.b)

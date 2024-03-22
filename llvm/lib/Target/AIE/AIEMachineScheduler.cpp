@@ -23,11 +23,24 @@ static cl::opt<bool> InsertCycleSeparators(
     "aie-prera-cycle-separators", cl::init(false),
     cl::desc("[AIE] Insert CYCLE_SEPARATOR meta instructions"));
 static cl::opt<unsigned> BottomUpCycles(
-    "aie-bottomup-cycles", cl::init(0),
+    "aie-bottomup-cycles", cl::init(std::numeric_limits<int>::max()),
     cl::desc("[AIE] Min number of cycles to be scheduled bottom-up"));
 static cl::opt<int> BottomUpDelta(
-    "aie-bottomup-delta", cl::init(0),
+    "aie-bottomup-delta", cl::init(128),
     cl::desc("[AIE] Max cycles delta relative to current for bottom-up sched"));
+
+// Note: For AIE2 the latest register access is in E9, this can create negative
+// latencies of -8 with E1 accessors.
+// Still, does not hurt to be a bit more conservative with -10.
+static cl::opt<int> NegativeLatencyLowerBound(
+    "aie-neglatency-lowerbound", cl::init(-10),
+    cl::desc("[AIE] Lower bound for negative-latency dependencies. Used to "
+             "bump the window of schedulable cycles without hampering "
+             "scheduling opportunities."));
+
+static cl::opt<bool>
+    AllowNegativeLatencies("aie-negative-latencies", cl::init(true),
+                           cl::desc("[AIE] Allow negative-latency scheduling"));
 static cl::opt<unsigned> ReservedDelaySlots(
     "aie-reserved-delay-slots", cl::init(0),
     cl::desc("[AIE] Number of delay slots to be left empty"));
@@ -332,7 +345,15 @@ void AIEPostRASchedStrategy::initialize(ScheduleDAGMI *Dag) {
 static unsigned getMinSchedulableCycle(SchedBoundary &Zone) {
   unsigned MinSchedulableCycle = std::numeric_limits<unsigned>::max();
   auto SchedCycle = [&Zone](const SUnit *SU) -> unsigned {
-    return Zone.isTop() ? SU->TopReadyCycle : SU->BotReadyCycle;
+    if (Zone.isTop())
+      return SU->TopReadyCycle;
+    // For bottom-up, dependent instructions can actually be scheduled in a
+    // cycle smaller than SU->BotReadyCycle due to negative latencies.
+    // Instead, compute the minimum cycle in which a dependent can be emitted.
+    // Use a static lower bound to avoid traversing the predecessor tree.
+    int EarliestPredSchedCycle =
+        int(SU->BotReadyCycle) + NegativeLatencyLowerBound;
+    return std::max(EarliestPredSchedCycle, 0);
   };
   for (const SUnit *SU : Zone.Available) {
     MinSchedulableCycle = std::min(MinSchedulableCycle, SchedCycle(SU));
@@ -775,6 +796,32 @@ void AIEScheduleDAGMI::exitRegion() {
   // to enter/exit regions. Let's give it some.
   getSchedImpl()->leaveRegion(ExitSU);
   ScheduleDAGMI::exitRegion();
+}
+
+void AIEScheduleDAGMI::finalizeSchedule() {
+  if (AllowNegativeLatencies) {
+    // Negative latencies can make it seem that one reads undefined registers
+    // if not accounting for timing.
+    MRI.invalidateLiveness();
+  }
+  ScheduleDAGMI::finalizeSchedule();
+}
+
+void AIEScheduleDAGMI::releasePred(SUnit *SU, SDep *PredEdge) {
+  if (PredEdge->isWeak()) {
+    return ScheduleDAGMI::releasePred(SU, PredEdge);
+  }
+
+  // Update the ready cycle of SU's predecessor
+  SUnit *PredSU = PredEdge->getSUnit();
+  int Latency = AllowNegativeLatencies ? PredEdge->getSignedLatency()
+                                       : PredEdge->getLatency();
+  PredSU->BotReadyCycle =
+      std::max(int(PredSU->BotReadyCycle), int(SU->BotReadyCycle) + Latency);
+
+  --PredSU->NumSuccsLeft;
+  if (PredSU->NumSuccsLeft == 0 && PredSU != &EntrySU)
+    SchedImpl->releaseBottomNode(PredSU);
 }
 
 void AIEScheduleDAGMILive::enterRegion(MachineBasicBlock *BB,

@@ -27,9 +27,8 @@ body:             |
     ; CHECK-LABEL: name: antidep_minus_2_plus_bypass
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: $cm1 = VMAC_vmac_cm_core_dense killed $cm0, killed $x0, killed $x1, $r1
-    ; CHECK-NEXT: $cm0 = VMAC_vmac_cm_core_dense killed $cm2, killed $x2, killed $x3, killed $r1
-    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $cm0 = VMAC_vmac_cm_core_dense killed $cm2, killed $x2, killed $x3, $r1
+    ; CHECK-NEXT: $cm1 = VMAC_vmac_cm_core_dense $cm0, killed $x0, killed $x1, killed $r1
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
@@ -89,9 +88,8 @@ body:             |
     ; CHECK-LABEL: name: antidep_minus_1
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: $wl1 = VMOV_mv_w killed $wh0
     ; CHECK-NEXT: $x0 = VBAND killed $x2, killed $x4
-    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $wl1 = VMOV_mv_w $wh0
     ; CHECK-NEXT: VST_dmw_sts_w_ag_idx_imm killed $wh0, killed $p0, 0
     ; CHECK-NEXT: NOP
     $wl1 = VMOV_mv_w $wh0
@@ -118,9 +116,8 @@ body:             |
     ; CHECK-LABEL: name: antidep_minus_1_simple
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: VST_dmw_sts_w_ag_idx_imm killed $wh0, $p0, 16
     ; CHECK-NEXT: $x0 = VBAND killed $x2, killed $x4
-    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: VST_dmw_sts_w_ag_idx_imm $wh0, $p0, 16
     ; CHECK-NEXT: VST_dmw_sts_w_ag_idx_imm killed $wh0, killed $p0, 0
     ; CHECK-NEXT: NOP
     VST_dmw_sts_w_ag_idx_imm $wh0, $p0, 16

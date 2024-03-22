@@ -26,43 +26,19 @@ body:             |
     ; CHECK-NEXT: $dj0 = MOVA_lda_cg 14
     ; CHECK-NEXT: $r3 = LDA_S16_ag_idx $p0, killed $dj0
     ; CHECK-NEXT: $dj0 = MOVA_lda_cg 16
+    ; CHECK-NEXT: $r4 = LDA_S16_ag_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVA_lda_cg 18
+    ; CHECK-NEXT: $r4 = LDA_S16_ag_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVA_lda_cg 20
+    ; CHECK-NEXT: $r4 = LDA_S16_ag_idx $p0, killed $dj0
+    ; CHECK-NEXT: $dj0 = MOVA_lda_cg 22
     ; CHECK-NEXT: $r4 = LDA_S16_ag_idx killed $p0, killed $dj0
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $dj0 = MOVA_lda_cg 18
-    ; CHECK-NEXT: $r4 = LDA_S16_ag_idx $p0, $dj0 {
-    ; CHECK-NEXT:   $r3 = ADD killed $r3, killed $r4, implicit-def $srcarry
-    ; CHECK-NEXT: }
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $dj0 = MOVA_lda_cg 20
-    ; CHECK-NEXT: $r4 = LDA_S16_ag_idx $p0, $dj0 {
-    ; CHECK-NEXT:   $r3 = ADD killed $r3, killed $r4, implicit-def $srcarry
-    ; CHECK-NEXT: }
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $dj0 = MOVA_lda_cg 22
-    ; CHECK-NEXT: $r4 = LDA_S16_ag_idx $p0, $dj0 {
-    ; CHECK-NEXT:   $r3 = ADD killed $r3, killed $r4, implicit-def $srcarry
-    ; CHECK-NEXT: }
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $r3 = ADD killed $r3, $r4, implicit-def $srcarry
+    ; CHECK-NEXT: $r3 = ADD killed $r3, $r4, implicit-def $srcarry
     ; CHECK-NEXT: RET implicit $lr
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $r3 = ADD killed $r3, $r4, implicit-def $srcarry
     ; CHECK-NEXT: $r3 = ADD killed $r3, killed $r4, implicit-def $srcarry
     ; CHECK-NEXT: ST_dms_sts_idx_imm killed $r3, killed $p1, 0
     ; CHECK-NEXT: NOP
@@ -102,43 +78,22 @@ body:             |
     ; CHECK-NEXT: $r3 = LDA_S16_ag_idx $p0, $dj0 {
     ; CHECK-NEXT:   $dj0 = MOV_mv_cg 16
     ; CHECK-NEXT: }
+    ; CHECK-NEXT: $r4 = LDA_S16_ag_idx $p0, $dj0 {
+    ; CHECK-NEXT:   $dj0 = MOV_mv_cg 18
+    ; CHECK-NEXT: }
+    ; CHECK-NEXT: $r4 = LDA_S16_ag_idx $p0, $dj0 {
+    ; CHECK-NEXT:   $dj0 = MOV_mv_cg 20
+    ; CHECK-NEXT: }
+    ; CHECK-NEXT: $r4 = LDA_S16_ag_idx $p0, $dj0 {
+    ; CHECK-NEXT:   $dj0 = MOV_mv_cg 22
+    ; CHECK-NEXT: }
     ; CHECK-NEXT: $r4 = LDA_S16_ag_idx killed $p0, killed $dj0
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $dj0 = MOV_mv_cg 18
-    ; CHECK-NEXT: $r4 = LDA_S16_ag_idx $p0, $dj0 {
-    ; CHECK-NEXT:   $r3 = ADD killed $r3, killed $r4, implicit-def $srcarry
-    ; CHECK-NEXT: }
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $dj0 = MOV_mv_cg 20
-    ; CHECK-NEXT: $r4 = LDA_S16_ag_idx $p0, $dj0 {
-    ; CHECK-NEXT:   $r3 = ADD killed $r3, killed $r4, implicit-def $srcarry
-    ; CHECK-NEXT: }
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $dj0 = MOV_mv_cg 22
-    ; CHECK-NEXT: $r4 = LDA_S16_ag_idx $p0, $dj0 {
-    ; CHECK-NEXT:   $r3 = ADD killed $r3, killed $r4, implicit-def $srcarry
-    ; CHECK-NEXT: }
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $r3 = ADD killed $r3, $r4, implicit-def $srcarry
+    ; CHECK-NEXT: $r3 = ADD killed $r3, $r4, implicit-def $srcarry
+    ; CHECK-NEXT: $r3 = ADD killed $r3, $r4, implicit-def $srcarry
     ; CHECK-NEXT: $r3 = ADD killed $r3, killed $r4, implicit-def $srcarry
     ; CHECK-NEXT: ST_dms_sts_idx_imm killed $r3, killed $p1, 0
     ; CHECK-NEXT: NOP
