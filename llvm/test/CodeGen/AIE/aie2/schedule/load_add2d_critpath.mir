@@ -21,6 +21,7 @@ body:             |
     ; CHECK-LABEL: name: single_bb
     ; CHECK: liveins: $dc0, $dc4, $p0, $p1, $p2, $p3, $r0, $r1, $r2, $d0_3d:0x0000000000004010
     ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: renamable $wh0 = VLDA_dmw_lda_w_ag_idx_imm killed renamable $p0, 32 :: (load (<16 x s16>) from stack - 128)
     ; CHECK-NEXT: renamable $wl0 = VLDA_dmw_lda_w_ag_idx_imm renamable $p0, 0 :: (load (<16 x s16>) from stack - 128) {
     ; CHECK-NEXT:   $p4 = MOV_mv_scl killed $p3
     ; CHECK-NEXT: }
@@ -32,30 +33,27 @@ body:             |
     ; CHECK-NEXT: renamable $dn0, renamable $p4 = LDA_dms_lda_pstm_nrm_imm killed renamable $p4, -8 :: (dereferenceable load (s20) from stack - 4, align 4)
     ; CHECK-NEXT: renamable $dj0, renamable $p4 = LDA_dms_lda_pstm_nrm_imm killed renamable $p4, 12 :: (dereferenceable load (s20) from stack - 4, align 4)
     ; CHECK-NEXT: renamable $dn4, renamable $p4 = LDA_dms_lda_pstm_nrm_imm killed renamable $p4, -8 :: (dereferenceable load (s20) from stack - 4, align 4)
-    ; CHECK-NEXT: renamable $dj4, renamable $p4 = LDA_dms_lda_pstm_nrm_imm renamable $p4, -36 :: (dereferenceable load (s20) from stack - 4, align 4) {
-    ; CHECK-NEXT:   renamable $bml0 = VCONV_FP32_BF16 killed renamable $wl0
-    ; CHECK-NEXT: }
-    ; CHECK-NEXT: renamable $r4, renamable $p4 = LDA_dms_lda_pstm_nrm_imm renamable $p4, 16 :: (dereferenceable load (s32) from stack - 4) {
-    ; CHECK-NEXT:   renamable $bml1 = VCONV_FP32_BF16 killed renamable $wl2
-    ; CHECK-NEXT: }
-    ; CHECK-NEXT: renamable $wh0 = VLDA_dmw_lda_w_ag_idx_imm killed renamable $p0, 32 :: (load (<16 x s16>) from stack - 128)
+    ; CHECK-NEXT: renamable $dj4, renamable $p4 = LDA_dms_lda_pstm_nrm_imm killed renamable $p4, -36 :: (dereferenceable load (s20) from stack - 4, align 4)
+    ; CHECK-NEXT: renamable $r4, renamable $p4 = LDA_dms_lda_pstm_nrm_imm killed renamable $p4, 16 :: (dereferenceable load (s32) from stack - 4)
     ; CHECK-NEXT: renamable $wh2 = VLDA_dmw_lda_w_ag_idx_imm renamable $p1, 32 :: (load (<16 x s16>) from stack - 128)
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $p1, $dc0, $dc4 = PADDA_3D killed $p1, killed $d0_3d
-    ; CHECK-NEXT: renamable $bml0 = VADD_F killed renamable $bml1, killed renamable $bml0, renamable $r4, implicit-def $srfpflags, implicit $crfpmask
     ; CHECK-NEXT: renamable $bmh0 = VCONV_FP32_BF16 killed renamable $wh0
+    ; CHECK-NEXT: renamable $bml0 = VCONV_FP32_BF16 killed renamable $wl0
+    ; CHECK-NEXT: renamable $bml1 = VCONV_FP32_BF16 renamable $wl2 {
+    ; CHECK-NEXT:   renamable $bml0 = VADD_F killed renamable $bml1, killed renamable $bml0, renamable $r4, implicit-def $srfpflags, implicit $crfpmask
+    ; CHECK-NEXT: }
     ; CHECK-NEXT: renamable $bmh1 = VCONV_FP32_BF16 renamable $wh2 {
     ; CHECK-NEXT:   renamable $bmh0 = VADD_F killed renamable $bmh1, killed renamable $bmh0, killed renamable $r4, implicit-def $srfpflags, implicit $crfpmask
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: renamable $wl0 = VCONV_BF16_FP32 killed renamable $bml0, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd
-    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: renamable $wh0 = VCONV_BF16_FP32 killed renamable $bmh0, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd
-    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $p1, $dc0, $dc4 = PADDA_3D killed $p1, killed $d0_3d
     renamable $wh0 = VLDA_dmw_lda_w_ag_idx_imm renamable $p0, 32 :: (load (<16 x s16>) from stack - 128)
     renamable $wl0 = VLDA_dmw_lda_w_ag_idx_imm renamable $p0, 0 :: (load (<16 x s16>) from stack - 128)
     renamable $wh2 = VLDA_dmw_lda_w_ag_idx_imm renamable $p1, 32 :: (load (<16 x s16>) from stack - 128)

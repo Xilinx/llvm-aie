@@ -202,8 +202,13 @@ public:
 
   void exitRegion() override;
 
+  void finalizeSchedule() override;
+
   // Give dag mutators access to the scheduler state
   AIEPostRASchedStrategy *getSchedImpl() const;
+
+protected:
+  void releasePred(SUnit *SU, SDep *PredEdge) override;
 };
 
 /// Similar to AIEScheduleDAGMI but for ScheduleDAGMILive.

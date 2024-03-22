@@ -28,16 +28,12 @@ body:             |
     ; CHECK-LABEL: name: late_write
     ; CHECK: liveins: $r0, $p0
     ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: $r1 = LDA_dms_lda_idx_imm killed $p1, 0 :: (load (s32) from %ir.b)
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: $r1 = ADD killed $r6, $r7, implicit-def $srcarry
     ; CHECK-NEXT: $r1 = MUL_mul_r_rr killed $r1, killed $r7
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: ST_dms_sts_idx_imm killed $r1, killed $p0, 0 :: (store (s32) into %ir.a)
-    ; CHECK-NEXT: $r1 = LDA_dms_lda_idx_imm killed $p1, 0 :: (load (s32) from %ir.b)
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     $r1 = ADD $r6, $r7, implicit-def $srcarry
     $r1 = MUL_mul_r_rr $r1, $r7

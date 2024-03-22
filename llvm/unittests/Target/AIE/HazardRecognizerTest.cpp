@@ -203,6 +203,7 @@ TEST(HazardRecognizer, flush) {
   }
   EXPECT_TRUE(CheckEmpty());
 
+  HR.Reset();
   Fill();
   EXPECT_FALSE(CheckEmpty());
   // Flush it in reverse

@@ -38,7 +38,7 @@ static llvm::cl::opt<int> PreRAFuncUnitDepth(
     cl::desc("Ignore FuncUnits past certain depth in pre-RA scoreboard"));
 
 static cl::opt<unsigned>
-    UserScoreboardDepth("aie-scoreboard-depth", cl::init(0),
+    UserScoreboardDepth("aie-scoreboard-depth", cl::init(128),
                         cl::desc("Override maximum scoreboard depth to use."));
 
 const AIEBaseMCFormats *FuncUnitWrapper::FormatInterface = nullptr;

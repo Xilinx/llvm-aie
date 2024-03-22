@@ -16,13 +16,12 @@ body:             |
     ; CHECK-LABEL: name: write_E1_read_E7
     ; CHECK: liveins: $r0, $p0
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: $r0 = MOVXM_lng_cg 0
     ; CHECK-NEXT: ST_S16_ag_idx_imm killed $r0, killed $p0, 2
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $r0 = MOVXM_lng_cg 0
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     $r0 = MOVXM_lng_cg 0
