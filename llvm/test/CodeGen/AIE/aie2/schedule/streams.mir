@@ -27,20 +27,16 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: $r28 = MOV_mv_scl $srss0
-    ; CHECK-NEXT: RET implicit $lr
     ; CHECK-NEXT: MOV_mv_scl2ms_doTlast_reg renamable $r0, killed renamable $r28
     ; CHECK-NEXT: MOV_mv_scl2ms renamable $r0
-    ; CHECK-NEXT: MOV_TLAST_mv_scl2ms renamable $r0
+    ; CHECK-NEXT: MOV_TLAST_mv_scl2ms killed renamable $r0
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: DelayedSchedBarrier implicit killed $r0
     renamable $r0 = MOV_mv_ss2scl implicit-def $srss0
     $r28 = MOV_mv_scl $srss0
     MOV_mv_scl2ms_doTlast_reg renamable $r0, killed renamable $r28
     MOV_mv_scl2ms renamable $r0
     MOV_TLAST_mv_scl2ms renamable $r0
-    RET implicit $lr
-    DelayedSchedBarrier implicit $r0
 
 ...
 ---
@@ -64,21 +60,18 @@ body:             |
     ; CHECK-NEXT: $r28 = MOV_mv_scl $srss0
     ; CHECK-NEXT: MOV_NB_mv_scl2ms_doTlast_reg renamable $r1, killed renamable $r28, implicit-def $srms0
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: RET implicit $lr
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: $r0 = MOV_mv_scl $srms0
     ; CHECK-NEXT: MOV_NB_mv_scl2ms renamable $r1, implicit-def $srms0
     ; CHECK-NEXT: MOV_NB_TLAST_mv_scl2ms killed renamable $r1, implicit-def $srms0
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: DelayedSchedBarrier implicit killed $r0
     renamable $r1 = MOV_NB_mv_ss2scl implicit-def $srss0
     $r28 = MOV_mv_scl $srss0
     MOV_NB_mv_scl2ms_doTlast_reg renamable $r1, killed renamable $r28, implicit-def $srms0
     $r0 = MOV_mv_scl $srms0
     MOV_NB_mv_scl2ms renamable $r1, implicit-def $srms0
     MOV_NB_TLAST_mv_scl2ms killed renamable $r1, implicit-def $srms0
-    RET implicit $lr
-    DelayedSchedBarrier implicit $r0
 
 ...
 

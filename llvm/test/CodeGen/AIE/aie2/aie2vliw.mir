@@ -110,6 +110,24 @@ body: |
     ; CHECK-NEXT:   $r0 = ADD killed $r0, $r1, implicit-def $srcarry
     ; CHECK-NEXT:   $r2 = MOV_mv_scl killed $r1
     ; CHECK-NEXT: }
+    ; CHECK-NEXT: BUNDLE {
+    ; CHECK-NEXT:   NOP
+    ; CHECK-NEXT: }
+    ; CHECK-NEXT: BUNDLE {
+    ; CHECK-NEXT:   NOP
+    ; CHECK-NEXT: }
+    ; CHECK-NEXT: BUNDLE {
+    ; CHECK-NEXT:   NOP
+    ; CHECK-NEXT: }
+    ; CHECK-NEXT: BUNDLE {
+    ; CHECK-NEXT:   NOP
+    ; CHECK-NEXT: }
+    ; CHECK-NEXT: BUNDLE {
+    ; CHECK-NEXT:   NOP
+    ; CHECK-NEXT: }
+    ; CHECK-NEXT: BUNDLE {
+    ; CHECK-NEXT:   NOP
+    ; CHECK-NEXT: }
       $r0 = ADD $r0, $r1, implicit-def $srcarry
       $r2 = MOV_mv_scl $r1
       $p1 = PADDA_lda_ptr_inc_idx_imm $p1, 4
