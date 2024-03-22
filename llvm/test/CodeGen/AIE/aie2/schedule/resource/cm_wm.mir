@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -march=aie2 --issue-limit=1 -run-pass=postmisched %s -o - \
+# RUN: llc -march=aie2 %topdown-single -run-pass=postmisched %s -o - \
 # RUN:   | FileCheck %s
 
 # VUPS accesses CM_WM write port in cycle 3, VSHUFFLE in cycle 2

@@ -5,8 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
-
-# RUN: llc -mtriple aie2 -run-pass=postmisched %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple aie2 -run-pass=postmisched %topdown-multi %s -verify-machineinstrs -o - | FileCheck %s
 # The test is adding scheduler margin of 7-cycles afer the start block
 
 ---
