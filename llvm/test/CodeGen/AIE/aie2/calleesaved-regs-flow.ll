@@ -30,12 +30,10 @@ define <2 x i32> @preserve_L(<2 x i32> %a, <2 x i32> %b) {
 ; CHECK-LABEL: preserve_L:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0:
-; CHECK-NEXT:    nopa ; paddb [sp], #32; nopx
-; CHECK-NEXT:    st lr, [sp, #-32] // 4-byte Folded Spill
-; CHECK-NEXT:    jl #foo
+; CHECK-NEXT:    nopa ; nopb ; jl #foo; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    paddb [sp], #32 // Delay Slot 4
+; CHECK-NEXT:    st lr, [sp, #-32] // 4-byte Folded Spill Delay Slot 3
 ; CHECK-NEXT:    mov r16, r20 // Delay Slot 2
 ; CHECK-NEXT:    mov r17, r21 // Delay Slot 1
 ; CHECK-NEXT:    nopb ; lda lr, [sp, #-32]; nops ; nopxm ; nopv // 4-byte Folded Reload
@@ -59,16 +57,14 @@ define i32 @preserve_R(i32 %a, <2 x i32> %b) {
 ; CHECK-LABEL: preserve_R:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0:
-; CHECK-NEXT:    nopa ; paddb [sp], #32; nopx
-; CHECK-NEXT:    st lr, [sp, #-28] // 4-byte Folded Spill
-; CHECK-NEXT:    jl #foo
+; CHECK-NEXT:    nopa ; nopb ; jl #foo; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    paddb [sp], #32 // Delay Slot 4
+; CHECK-NEXT:    st lr, [sp, #-28] // 4-byte Folded Spill Delay Slot 3
 ; CHECK-NEXT:    st r18, [sp, #-32] // 4-byte Folded Spill Delay Slot 2
 ; CHECK-NEXT:    mov r18, r1 // Delay Slot 1
 ; CHECK-NEXT:    nopb ; lda lr, [sp, #-28]; nops ; nopxm ; nopv // 4-byte Folded Reload
-; CHECK-NEXT:    mov r0, r18
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -78,7 +74,7 @@ define i32 @preserve_R(i32 %a, <2 x i32> %b) {
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    mov r0, r18 // Delay Slot 2
 ; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
   call void @foo(<2 x i32> %b)
   ret i32 %a

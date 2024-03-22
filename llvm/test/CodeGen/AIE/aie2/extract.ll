@@ -73,14 +73,14 @@ define dso_local noundef <32 x i8> @_Z30test_extract_v64uint4_256_1024Dv128_DU8_
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    paddb [sp], #160; nopx
-; CHECK-NEXT:    st lr, [sp, #-156] // 4-byte Folded Spill
 ; CHECK-NEXT:    mova r2, #4
 ; CHECK-NEXT:    mov r1, r0
 ; CHECK-NEXT:    st r16, [sp, #-160] // 4-byte Folded Spill
+; CHECK-NEXT:    vst wl4, [sp, #-128] // 32-byte Folded Spill
 ; CHECK-NEXT:    jl #__modsi3
-; CHECK-NEXT:    vst wl4, [sp, #-128] // 32-byte Folded Spill Delay Slot 5
-; CHECK-NEXT:    vst wh4, [sp, #-96] // 32-byte Folded Spill Delay Slot 4
-; CHECK-NEXT:    vst wl5, [sp, #-64] // 32-byte Folded Spill Delay Slot 3
+; CHECK-NEXT:    vst wh4, [sp, #-96] // 32-byte Folded Spill Delay Slot 5
+; CHECK-NEXT:    vst wl5, [sp, #-64] // 32-byte Folded Spill Delay Slot 4
+; CHECK-NEXT:    st lr, [sp, #-156] // 4-byte Folded Spill Delay Slot 3
 ; CHECK-NEXT:    vst wh5, [sp, #-32] // 32-byte Folded Spill Delay Slot 2
 ; CHECK-NEXT:    mova r16, #2 // Delay Slot 1
 ; CHECK-NEXT:    nopb ; nopa ; nops ; eq r1, r0, r16; nopm ; nopv
@@ -435,14 +435,14 @@ define dso_local noundef <4 x i64> @_Z20test_extract_v8acc32Dv32_u7__acc32i(<16 
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    paddb [sp], #160; nopx
-; CHECK-NEXT:    st lr, [sp, #-156] // 4-byte Folded Spill
 ; CHECK-NEXT:    mova r2, #4
 ; CHECK-NEXT:    mov r1, r0
 ; CHECK-NEXT:    st r16, [sp, #-160] // 4-byte Folded Spill
+; CHECK-NEXT:    vst amll1, [sp, #-128] // 32-byte Folded Spill
 ; CHECK-NEXT:    jl #__modsi3
-; CHECK-NEXT:    vst amll1, [sp, #-128] // 32-byte Folded Spill Delay Slot 5
-; CHECK-NEXT:    vst amlh1, [sp, #-96] // 32-byte Folded Spill Delay Slot 4
-; CHECK-NEXT:    vst amhl1, [sp, #-64] // 32-byte Folded Spill Delay Slot 3
+; CHECK-NEXT:    vst amlh1, [sp, #-96] // 32-byte Folded Spill Delay Slot 5
+; CHECK-NEXT:    vst amhl1, [sp, #-64] // 32-byte Folded Spill Delay Slot 4
+; CHECK-NEXT:    st lr, [sp, #-156] // 4-byte Folded Spill Delay Slot 3
 ; CHECK-NEXT:    vst amhh1, [sp, #-32] // 32-byte Folded Spill Delay Slot 2
 ; CHECK-NEXT:    mova r16, #2 // Delay Slot 1
 ; CHECK-NEXT:    nopb ; nopa ; nops ; eq r1, r0, r16; nopm ; nopv
@@ -666,14 +666,14 @@ define dso_local noundef <4 x i64> @_Z20test_extract_v4acc64Dv16_u7__acc64i(<16 
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    paddb [sp], #160; nopx
-; CHECK-NEXT:    st lr, [sp, #-156] // 4-byte Folded Spill
 ; CHECK-NEXT:    mova r2, #4
 ; CHECK-NEXT:    mov r1, r0
 ; CHECK-NEXT:    st r16, [sp, #-160] // 4-byte Folded Spill
+; CHECK-NEXT:    vst amll1, [sp, #-128] // 32-byte Folded Spill
 ; CHECK-NEXT:    jl #__modsi3
-; CHECK-NEXT:    vst amll1, [sp, #-128] // 32-byte Folded Spill Delay Slot 5
-; CHECK-NEXT:    vst amlh1, [sp, #-96] // 32-byte Folded Spill Delay Slot 4
-; CHECK-NEXT:    vst amhl1, [sp, #-64] // 32-byte Folded Spill Delay Slot 3
+; CHECK-NEXT:    vst amlh1, [sp, #-96] // 32-byte Folded Spill Delay Slot 5
+; CHECK-NEXT:    vst amhl1, [sp, #-64] // 32-byte Folded Spill Delay Slot 4
+; CHECK-NEXT:    st lr, [sp, #-156] // 4-byte Folded Spill Delay Slot 3
 ; CHECK-NEXT:    vst amhh1, [sp, #-32] // 32-byte Folded Spill Delay Slot 2
 ; CHECK-NEXT:    mova r16, #2 // Delay Slot 1
 ; CHECK-NEXT:    nopb ; nopa ; nops ; eq r1, r0, r16; nopm ; nopv

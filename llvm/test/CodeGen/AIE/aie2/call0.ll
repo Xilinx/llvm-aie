@@ -13,12 +13,10 @@ define void @test(i32 %x) {
 ; CHECK-LABEL: test:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #32
-; CHECK-NEXT:    st lr, [sp, #-32] // 4-byte Folded Spill
-; CHECK-NEXT:    jl #f
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    nopb ; nopa ; nops ; jl #f; nopv
+; CHECK-NEXT:    nopx // Delay Slot 5
+; CHECK-NEXT:    paddb [sp], #32 // Delay Slot 4
+; CHECK-NEXT:    st lr, [sp, #-32] // 4-byte Folded Spill Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:    lda lr, [sp, #-32] // 4-byte Folded Reload

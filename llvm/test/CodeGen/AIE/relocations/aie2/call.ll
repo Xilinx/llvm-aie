@@ -9,7 +9,7 @@
 
 ; CHECK-LABEL: f0
 ; CHECK: jl
-; CHECK-NEXT: R_AIE_1 f
+; CHECK-NEXT: R_AIE_0 f
 
 define void @f0(i32 noundef %x) {
 entry:

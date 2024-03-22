@@ -16,8 +16,8 @@ define dso_local noundef <16 x i16> @_Z5test0Dv16_u7__acc32(<8 x i64> noundef %a
 ; CHECK-NEXT:    paddb [sp], #32
 ; CHECK-NEXT:    mova r0, #2
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    mov s0, r0
+; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    vst.srs.d16.s32 bml0, s0, [p0, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -52,8 +52,8 @@ define dso_local noundef <8 x i32> @_Z5test1Dv8_u7__acc64(<8 x i64> noundef %acc
 ; CHECK-NEXT:    paddb [sp], #32
 ; CHECK-NEXT:    mova r0, #2
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    mov s0, r0
+; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    vst.srs.d32.s64 bml0, s0, [p0, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -82,8 +82,8 @@ define dso_local noundef <16 x i16> @_Z5test2Dv16_u7__acc32(<8 x i64> noundef %a
 ; CHECK-NEXT:    paddb [sp], #32
 ; CHECK-NEXT:    mova r0, #2
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    mov s0, r0
+; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    vst.srs.s16.s32 bml0, s0, [p0, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -112,8 +112,8 @@ define dso_local noundef <8 x i32> @_Z5test3Dv8_u7__acc64(<8 x i64> noundef %acc
 ; CHECK-NEXT:    paddb [sp], #32
 ; CHECK-NEXT:    mova r0, #2
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    mov s0, r0
+; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    vst.srs.s32.s64 bml0, s0, [p0, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -142,8 +142,8 @@ define dso_local noundef <16 x i16> @_Z5test4Dv16_u7__acc64(<16 x i64> noundef %
 ; CHECK-NEXT:    paddb [sp], #32
 ; CHECK-NEXT:    mova r0, #2
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    mov s0, r0
+; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    vst.srs.s16.s64 cm0, s0, [p0, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -172,8 +172,8 @@ define dso_local noundef <32 x i8> @_Z5test5Dv32_u7__acc32(<16 x i64> noundef %a
 ; CHECK-NEXT:    paddb [sp], #32
 ; CHECK-NEXT:    mova r0, #2
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    mov s0, r0
+; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    vst.srs.s8.s32 cm0, s0, [p0, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -202,8 +202,8 @@ define dso_local noundef <16 x i16> @_Z5test6Dv16_u7__acc64(<16 x i64> noundef %
 ; CHECK-NEXT:    paddb [sp], #32
 ; CHECK-NEXT:    mova r0, #2
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    mov s0, r0
+; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    vst.srs.d16.s64 cm0, s0, [p0, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -232,8 +232,8 @@ define dso_local noundef <32 x i8> @_Z5test7Dv32_u7__acc32(<16 x i64> noundef %a
 ; CHECK-NEXT:    paddb [sp], #32
 ; CHECK-NEXT:    mova r0, #2
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    mov s0, r0
+; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    vst.srs.d8.s32 cm0, s0, [p0, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -262,8 +262,8 @@ define dso_local noundef <16 x i16> @_Z5test8Dv16_u7__acc64(<16 x i64> noundef %
 ; CHECK-NEXT:    paddb [sp], #32
 ; CHECK-NEXT:    mova r0, #2
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    mov s0, r0
+; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    vst.srs.s16.s64 cm0, s0, [p0, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -292,8 +292,8 @@ define dso_local noundef <32 x i8> @_Z5test9Dv32_u7__acc32(<16 x i64> noundef %a
 ; CHECK-NEXT:    paddb [sp], #32
 ; CHECK-NEXT:    mova r0, #2
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    mov s0, r0
+; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    vst.srs.s8.s32 cm0, s0, [p0, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -322,8 +322,8 @@ define dso_local noundef <16 x i16> @_Z6test10Dv16_u7__acc32(<8 x i64> noundef %
 ; CHECK-NEXT:    paddb [sp], #32
 ; CHECK-NEXT:    mova r0, #4
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    mov s0, r0
+; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    vst.srs.d16.s32 bml0, s0, [p0, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -352,8 +352,8 @@ define dso_local noundef <8 x i32> @_Z6test11Dv8_u7__acc64(<8 x i64> noundef %ac
 ; CHECK-NEXT:    paddb [sp], #32
 ; CHECK-NEXT:    mova r0, #4
 ; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    mov s0, r0
+; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    vst.srs.d32.s64 bml0, s0, [p0, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop

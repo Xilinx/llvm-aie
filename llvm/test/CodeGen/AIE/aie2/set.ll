@@ -74,11 +74,11 @@ define dso_local noundef <128 x i8> @_Z27test_set_v256uint4_1024_256iDv32_DU8_(i
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; paddb [sp], #160; nopxm ; nops
 ; CHECK-NEXT:    mova r2, #4
-; CHECK-NEXT:    st lr, [sp, #-156] // 4-byte Folded Spill
+; CHECK-NEXT:    mov r1, r0
 ; CHECK-NEXT:    jl #__modsi3
-; CHECK-NEXT:    mov r1, r0 // Delay Slot 5
-; CHECK-NEXT:    vmov wh5, wl0 // Delay Slot 4
-; CHECK-NEXT:    st r16, [sp, #-160] // 4-byte Folded Spill Delay Slot 3
+; CHECK-NEXT:    vmov wh5, wl0 // Delay Slot 5
+; CHECK-NEXT:    st r16, [sp, #-160] // 4-byte Folded Spill Delay Slot 4
+; CHECK-NEXT:    st lr, [sp, #-156] // 4-byte Folded Spill Delay Slot 3
 ; CHECK-NEXT:    vst wh5, [sp, #-32] // 32-byte Folded Spill Delay Slot 2
 ; CHECK-NEXT:    mova r16, #2 // Delay Slot 1
 ; CHECK-NEXT:    nopb ; nopa ; nops ; eq r1, r0, r16; nopm ; nopv
@@ -100,8 +100,8 @@ define dso_local noundef <128 x i8> @_Z27test_set_v256uint4_1024_256iDv32_DU8_(i
 ; CHECK-NEXT:  // %bb.2: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; jnz r0, #.LBB2_6; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    vlda wl4, [sp, #-128] // 32-byte Folded Reload Delay Slot 4
-; CHECK-NEXT:    vlda wh4, [sp, #-96] // 32-byte Folded Reload Delay Slot 3
+; CHECK-NEXT:    vlda wh4, [sp, #-96] // 32-byte Folded Reload Delay Slot 4
+; CHECK-NEXT:    vlda wl4, [sp, #-128] // 32-byte Folded Reload Delay Slot 3
 ; CHECK-NEXT:    vlda wh5, [sp, #-32] // 32-byte Folded Reload Delay Slot 2
 ; CHECK-NEXT:    vlda wl5, [sp, #-64] // 32-byte Folded Reload Delay Slot 1
 ; CHECK-NEXT:  // %bb.3: // %if.then.i
@@ -124,12 +124,12 @@ define dso_local noundef <128 x i8> @_Z27test_set_v256uint4_1024_256iDv32_DU8_(i
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB2_5: // %if.then7.i
 ; CHECK-NEXT:    vlda wh5, [sp, #-32]; nopb ; nopxm // 32-byte Folded Reload
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vlda wl4, [sp, #-128] // 32-byte Folded Reload
 ; CHECK-NEXT:    vlda wh4, [sp, #-96] // 32-byte Folded Reload
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vmov wl5, wh5
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB2_6: // %_ZL13set_v256uint4iDv32_DU8_.exit
@@ -380,11 +380,11 @@ define dso_local noundef <16 x i64> @_Z17test_set_v32acc32iDv8_u7__acc32(i32 nou
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; paddb [sp], #160; nopxm ; nops
 ; CHECK-NEXT:    mova r2, #4
-; CHECK-NEXT:    st lr, [sp, #-156] // 4-byte Folded Spill
+; CHECK-NEXT:    mov r1, r0
 ; CHECK-NEXT:    jl #__modsi3
-; CHECK-NEXT:    mov r1, r0 // Delay Slot 5
-; CHECK-NEXT:    vmov amhl0, amll1 // Delay Slot 4
-; CHECK-NEXT:    st r16, [sp, #-160] // 4-byte Folded Spill Delay Slot 3
+; CHECK-NEXT:    vmov amhl0, amll1 // Delay Slot 5
+; CHECK-NEXT:    st r16, [sp, #-160] // 4-byte Folded Spill Delay Slot 4
+; CHECK-NEXT:    st lr, [sp, #-156] // 4-byte Folded Spill Delay Slot 3
 ; CHECK-NEXT:    vst amhl0, [sp, #-64] // 32-byte Folded Spill Delay Slot 2
 ; CHECK-NEXT:    mova r16, #2 // Delay Slot 1
 ; CHECK-NEXT:    nopb ; nopa ; nops ; eq r1, r0, r16; nopm ; nopv
@@ -563,11 +563,11 @@ define dso_local noundef <16 x i64> @_Z17test_set_v16acc64iDv4_u7__acc64(i32 nou
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; paddb [sp], #160; nopxm ; nops
 ; CHECK-NEXT:    mova r2, #4
-; CHECK-NEXT:    st lr, [sp, #-156] // 4-byte Folded Spill
+; CHECK-NEXT:    mov r1, r0
 ; CHECK-NEXT:    jl #__modsi3
-; CHECK-NEXT:    mov r1, r0 // Delay Slot 5
-; CHECK-NEXT:    vmov amhl0, amll1 // Delay Slot 4
-; CHECK-NEXT:    st r16, [sp, #-160] // 4-byte Folded Spill Delay Slot 3
+; CHECK-NEXT:    vmov amhl0, amll1 // Delay Slot 5
+; CHECK-NEXT:    st r16, [sp, #-160] // 4-byte Folded Spill Delay Slot 4
+; CHECK-NEXT:    st lr, [sp, #-156] // 4-byte Folded Spill Delay Slot 3
 ; CHECK-NEXT:    vst amhl0, [sp, #-64] // 32-byte Folded Spill Delay Slot 2
 ; CHECK-NEXT:    mova r16, #2 // Delay Slot 1
 ; CHECK-NEXT:    nopb ; nopa ; nops ; eq r1, r0, r16; nopm ; nopv

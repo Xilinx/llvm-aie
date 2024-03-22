@@ -13,9 +13,9 @@ define dso_local noundef <16 x i64> @test_addmac_acc32(<64 x i8> noundef %a, i32
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    mova r2, #9; nopb ; nopxm
 ; CHECK-NEXT:    mova r3, #8
+; CHECK-NEXT:    vmov cm0, cm1
 ; CHECK-NEXT:    lshl r0, r0, r2
 ; CHECK-NEXT:    lshl r1, r1, r3
-; CHECK-NEXT:    vmov cm0, cm1
 ; CHECK-NEXT:    or r0, r1, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vaddmac cm0, cm0, cm2, x0, x2, r0 // Delay Slot 5
@@ -38,9 +38,9 @@ define dso_local noundef <16 x i64> @test_addmsc_acc32(<64 x i8> noundef %a, i32
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    mova r2, #9; nopb ; nopxm
 ; CHECK-NEXT:    mova r3, #8
+; CHECK-NEXT:    vmov cm0, cm1
 ; CHECK-NEXT:    lshl r0, r0, r2
 ; CHECK-NEXT:    lshl r1, r1, r3
-; CHECK-NEXT:    vmov cm0, cm1
 ; CHECK-NEXT:    or r0, r1, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vaddmsc cm0, cm0, cm2, x0, x2, r0 // Delay Slot 5
@@ -63,9 +63,9 @@ define dso_local noundef <16 x i64> @test_submac_acc32(<64 x i8> noundef %a, i32
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    mova r2, #9; nopb ; nopxm
 ; CHECK-NEXT:    mova r3, #8
+; CHECK-NEXT:    vmov cm0, cm1
 ; CHECK-NEXT:    lshl r0, r0, r2
 ; CHECK-NEXT:    lshl r1, r1, r3
-; CHECK-NEXT:    vmov cm0, cm1
 ; CHECK-NEXT:    or r0, r1, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vsubmac cm0, cm0, cm2, x0, x2, r0 // Delay Slot 5
@@ -88,9 +88,9 @@ define dso_local noundef <16 x i64> @test_submsc_acc32(<64 x i8> noundef %a, i32
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    mova r2, #9; nopb ; nopxm
 ; CHECK-NEXT:    mova r3, #8
+; CHECK-NEXT:    vmov cm0, cm1
 ; CHECK-NEXT:    lshl r0, r0, r2
 ; CHECK-NEXT:    lshl r1, r1, r3
-; CHECK-NEXT:    vmov cm0, cm1
 ; CHECK-NEXT:    or r0, r1, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vsubmsc cm0, cm0, cm2, x0, x2, r0 // Delay Slot 5
@@ -113,11 +113,11 @@ define dso_local noundef <16 x i64> @test_addmac_acc64(<32 x i16> noundef %a, i3
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    mova r2, #9
 ; CHECK-NEXT:    mova r3, #8
+; CHECK-NEXT:    mova r4, #18
+; CHECK-NEXT:    vmov cm0, cm1
 ; CHECK-NEXT:    lshl r0, r0, r2
 ; CHECK-NEXT:    lshl r1, r1, r3
-; CHECK-NEXT:    mova r4, #18
 ; CHECK-NEXT:    or r0, r0, r1
-; CHECK-NEXT:    vmov cm0, cm1
 ; CHECK-NEXT:    or r0, r0, r4
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vaddmac cm0, cm0, cm2, x0, x2, r0 // Delay Slot 5
@@ -142,11 +142,11 @@ define dso_local noundef <16 x i64> @test_addmsc_acc64(<32 x i16> noundef %a, i3
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    mova r2, #9
 ; CHECK-NEXT:    mova r3, #8
+; CHECK-NEXT:    mova r4, #18
+; CHECK-NEXT:    vmov cm0, cm1
 ; CHECK-NEXT:    lshl r0, r0, r2
 ; CHECK-NEXT:    lshl r1, r1, r3
-; CHECK-NEXT:    mova r4, #18
 ; CHECK-NEXT:    or r0, r0, r1
-; CHECK-NEXT:    vmov cm0, cm1
 ; CHECK-NEXT:    or r0, r0, r4
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vaddmsc cm0, cm0, cm2, x0, x2, r0 // Delay Slot 5
@@ -171,11 +171,11 @@ define dso_local noundef <16 x i64> @test_subadd_acc64(<32 x i16> noundef %a, i3
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    mova r2, #9
 ; CHECK-NEXT:    mova r3, #8
+; CHECK-NEXT:    mova r4, #18
+; CHECK-NEXT:    vmov cm0, cm1
 ; CHECK-NEXT:    lshl r0, r0, r2
 ; CHECK-NEXT:    lshl r1, r1, r3
-; CHECK-NEXT:    mova r4, #18
 ; CHECK-NEXT:    or r0, r0, r1
-; CHECK-NEXT:    vmov cm0, cm1
 ; CHECK-NEXT:    or r0, r0, r4
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vsubmac cm0, cm0, cm2, x0, x2, r0 // Delay Slot 5
@@ -200,11 +200,11 @@ define dso_local noundef <16 x i64> @test_submsc_acc64(<32 x i16> noundef %a, i3
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    mova r2, #9
 ; CHECK-NEXT:    mova r3, #8
+; CHECK-NEXT:    mova r4, #18
+; CHECK-NEXT:    vmov cm0, cm1
 ; CHECK-NEXT:    lshl r0, r0, r2
 ; CHECK-NEXT:    lshl r1, r1, r3
-; CHECK-NEXT:    mova r4, #18
 ; CHECK-NEXT:    or r0, r0, r1
-; CHECK-NEXT:    vmov cm0, cm1
 ; CHECK-NEXT:    or r0, r0, r4
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vsubmsc cm0, cm0, cm2, x0, x2, r0 // Delay Slot 5

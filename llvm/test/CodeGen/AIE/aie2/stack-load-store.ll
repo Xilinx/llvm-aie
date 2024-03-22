@@ -11,7 +11,7 @@ define dso_local noundef <8 x i32> @_Z4testDv8_i(<8 x i32> noundef %vec) local_u
 ; CHECK-LABEL: _Z4testDv8_i:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #32
+; CHECK-NEXT:    nopa ; paddb [sp], #32; nopx
 ; CHECK-NEXT:    vst wl2, [sp, #-32]
 ; CHECK-NEXT:    vlda wl0, [sp, #-32]
 ; CHECK-NEXT:    ret lr
@@ -36,7 +36,7 @@ define dso_local noundef <4 x i64> @_Z4testDv8_u7__acc32(<4 x i64> noundef %vec)
 ; CHECK-LABEL: _Z4testDv8_u7__acc32:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #32
+; CHECK-NEXT:    nopa ; paddb [sp], #32; nopx
 ; CHECK-NEXT:    vst amll1, [sp, #-32]
 ; CHECK-NEXT:    vlda amll0, [sp, #-32]
 ; CHECK-NEXT:    ret lr

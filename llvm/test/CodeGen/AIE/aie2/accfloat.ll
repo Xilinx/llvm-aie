@@ -11,12 +11,12 @@ define dso_local noundef <8 x i64> @test_add_conf(<8 x i64> noundef %acc1, <8 x 
 ; CHECK-LABEL: test_add_conf:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r3, #12
-; CHECK-NEXT:    mova r4, #13
+; CHECK-NEXT:    nopb ; mova r3, #12; nops ; nopxm ; nopv
+; CHECK-NEXT:    mova r4, #13; nopx
+; CHECK-NEXT:    mova r5, #28
 ; CHECK-NEXT:    lshl r1, r1, r3
 ; CHECK-NEXT:    lshl r2, r2, r4
 ; CHECK-NEXT:    or r0, r1, r0
-; CHECK-NEXT:    mova r5, #28
 ; CHECK-NEXT:    or r0, r0, r2
 ; CHECK-NEXT:    or r0, r0, r5
 ; CHECK-NEXT:    vadd.f bml0, bml1, bml2, r0
@@ -41,12 +41,12 @@ define dso_local noundef <8 x i64> @test_sub_conf(<8 x i64> noundef %acc1, <8 x 
 ; CHECK-LABEL: test_sub_conf:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r3, #12
-; CHECK-NEXT:    mova r4, #13
+; CHECK-NEXT:    nopb ; mova r3, #12; nops ; nopxm ; nopv
+; CHECK-NEXT:    mova r4, #13; nopx
+; CHECK-NEXT:    mova r5, #28
 ; CHECK-NEXT:    lshl r1, r1, r3
 ; CHECK-NEXT:    lshl r2, r2, r4
 ; CHECK-NEXT:    or r0, r1, r0
-; CHECK-NEXT:    mova r5, #28
 ; CHECK-NEXT:    or r0, r0, r2
 ; CHECK-NEXT:    or r0, r0, r5
 ; CHECK-NEXT:    vsub.f bml0, bml1, bml2, r0
@@ -71,7 +71,7 @@ define dso_local noundef <8 x i64> @test_add(<8 x i64> noundef %acc1, <8 x i64> 
 ; CHECK-LABEL: test_add:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r0, #28
+; CHECK-NEXT:    mova r0, #28; nopb ; nopxm ; nops
 ; CHECK-NEXT:    vadd.f bml0, bml1, bml2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -89,7 +89,7 @@ define dso_local noundef <8 x i64> @test_sub(<8 x i64> noundef %acc1, <8 x i64> 
 ; CHECK-LABEL: test_sub:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r0, #28
+; CHECK-NEXT:    mova r0, #28; nopb ; nopxm ; nops
 ; CHECK-NEXT:    vsub.f bml0, bml1, bml2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -107,8 +107,8 @@ define dso_local noundef <8 x i64> @test_broadcast_zero_to_v16accfloat() {
 ; CHECK-LABEL: test_broadcast_zero_to_v16accfloat:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    vclr bml0
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; vclr bml0
+; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3

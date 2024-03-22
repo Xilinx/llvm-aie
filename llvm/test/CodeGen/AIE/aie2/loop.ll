@@ -20,11 +20,11 @@ define i32 @accumulate(i32 %size, ptr %array) {
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1:
-; CHECK-NEXT:    nopb ; mova r1, #2; nops ; movx r0, #0; nopm ; nopv
+; CHECK-NEXT:    nopb ; mova r0, #0; nops ; movx r1, #2; nopm ; nopv
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB0_2: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    nopb ; nopa ; nops ; lshl r3, r2, r1; nopm ; nopv
+; CHECK-NEXT:    lshl r3, r2, r1
 ; CHECK-NEXT:    mov dj0, r3
 ; CHECK-NEXT:    lda r3, [p0, dj0]
 ; CHECK-NEXT:    nop
@@ -32,7 +32,7 @@ define i32 @accumulate(i32 %size, ptr %array) {
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    add r2, r2, #1
 ; CHECK-NEXT:    eq r4, r2, r3
 ; CHECK-NEXT:    jz r4, #.LBB0_2
 ; CHECK-NEXT:    nop // Delay Slot 5

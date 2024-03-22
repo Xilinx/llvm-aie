@@ -69,9 +69,9 @@ define <32 x i16> @test_vsub_ge_v32uint16_tbRj(<32 x i16>  %a, <32 x i16>  %b, i
 ; CHECK-LABEL: test_vsub_ge_v32uint16_tbRj:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r1, #1; nopb ; nopxm ; nops
+; CHECK-NEXT:    nopa ; nopb ; nopx ; mov r2, r16; nops
+; CHECK-NEXT:    mova r1, #1
 ; CHECK-NEXT:    and r0, r0, r1
-; CHECK-NEXT:    mov r2, r16
 ; CHECK-NEXT:    mov crVaddSign, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vsub_ge.d16 x0, r16, x2, x4 // Delay Slot 5
@@ -128,9 +128,9 @@ define <16 x i32> @test_vsub_ge_v16int32(<16 x i32>  %a, <16 x i32> %b, i1 %sgn,
 ; CHECK-LABEL: test_vsub_ge_v16int32:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r1, #1; nopb ; nopxm ; nops
+; CHECK-NEXT:    nopa ; nopb ; nopx ; mov r2, r16; nops
+; CHECK-NEXT:    mova r1, #1
 ; CHECK-NEXT:    and r0, r0, r1
-; CHECK-NEXT:    mov r2, r16
 ; CHECK-NEXT:    mov crVaddSign, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vsub_ge.d32 x0, r16, x2, x4 // Delay Slot 5
@@ -246,9 +246,9 @@ define <32 x i16> @test_vsub_lt_v32uint16_tbRj(<32 x i16>  %a, <32 x i16>  %b, i
 ; CHECK-LABEL: test_vsub_lt_v32uint16_tbRj:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r1, #1; nopb ; nopxm ; nops
+; CHECK-NEXT:    nopa ; nopb ; nopx ; mov r2, r16; nops
+; CHECK-NEXT:    mova r1, #1
 ; CHECK-NEXT:    and r0, r0, r1
-; CHECK-NEXT:    mov r2, r16
 ; CHECK-NEXT:    mov crVaddSign, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vsub_lt.d16 x0, r16, x2, x4 // Delay Slot 5
@@ -305,9 +305,9 @@ define <16 x i32> @test_vsub_lt_v16int32(<16 x i32>  %a, <16 x i32> %b, i1 %sgn,
 ; CHECK-LABEL: test_vsub_lt_v16int32:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r1, #1; nopb ; nopxm ; nops
+; CHECK-NEXT:    nopa ; nopb ; nopx ; mov r2, r16; nops
+; CHECK-NEXT:    mova r1, #1
 ; CHECK-NEXT:    and r0, r0, r1
-; CHECK-NEXT:    mov r2, r16
 ; CHECK-NEXT:    mov crVaddSign, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vsub_lt.d32 x0, r16, x2, x4 // Delay Slot 5

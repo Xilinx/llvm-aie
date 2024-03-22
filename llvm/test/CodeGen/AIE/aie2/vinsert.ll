@@ -226,11 +226,11 @@ define <32 x i32> @test_1024bit_dyn_idx(<32 x i32> %vec, i32 %b, i32 %c) {
 ; CHECK-LABEL: test_1024bit_dyn_idx:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopb ; mova r2, #16; nops ; movx r3, #0; nopm ; nopv
-; CHECK-NEXT:    nopa ; nopb ; lt r27, r0, r2; mov r4, r16
+; CHECK-NEXT:    nopb ; mova r2, #16; nops ; nopxm ; nopv
+; CHECK-NEXT:    mova r3, #0; nopb ; lt r27, r0, r2
 ; CHECK-NEXT:    sel.nez r2, r3, r2, r27
 ; CHECK-NEXT:    sub r29, r0, r2
-; CHECK-NEXT:    add r16, r27, #-1
+; CHECK-NEXT:    add r16, r27, #-1; mov r4, r16
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vsel.32 x0, x6, x7, r16 // Delay Slot 5
 ; CHECK-NEXT:    vinsert.32 x0, x0, r29, r1 // Delay Slot 4

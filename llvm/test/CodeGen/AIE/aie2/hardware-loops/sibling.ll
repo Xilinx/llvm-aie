@@ -11,24 +11,24 @@ define void @sibling(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef
 ; CHECK-LABEL: sibling:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %for.body.lr.ph
-; CHECK-NEXT:    lda r3, [p0, #0]; nopxm
-; CHECK-NEXT:    mova r2, #0
+; CHECK-NEXT:    mova r2, #0; nopxm
 ; CHECK-NEXT:    add.nc r0, r0, #-1
 ; CHECK-NEXT:    mova r4, #2
 ; CHECK-NEXT:    movxm p2, #.LBB0_1
 ; CHECK-NEXT:    mova r5, #0
+; CHECK-NEXT:    lda r3, [p0, #0]
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB0_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    nopa ; lshl r6, r5, r4
 ; CHECK-NEXT:    mov dj0, r6
 ; CHECK-NEXT:    lda r6, [p1, dj0]
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    add r5, r5, #1
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    add r3, r3, r6
 ; CHECK-NEXT:    jnzd r0, r0, p2
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -38,24 +38,22 @@ define void @sibling(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  // %bb.2: // %for.body6.lr.ph
-; CHECK-NEXT:    lda r0, [p0, #0]; nopb ; nopxm ; nops
-; CHECK-NEXT:    add.nc r1, r1, #-1
-; CHECK-NEXT:    mova r3, #2
+; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; add.nc r1, r1, #-1; nopv
+; CHECK-NEXT:    mova r3, #2; nopx
 ; CHECK-NEXT:    movxm p2, #.LBB0_3
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    lda r0, [p0, #0]
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB0_3: // %for.body6
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    nopa ; lshl r4, r2, r3
 ; CHECK-NEXT:    mov dj0, r4
 ; CHECK-NEXT:    lda r4, [p1, dj0]
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    add r2, r2, #1
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    add r0, r0, r4
 ; CHECK-NEXT:    jnzd r1, r1, p2
 ; CHECK-NEXT:    nop // Delay Slot 5
