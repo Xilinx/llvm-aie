@@ -75,6 +75,134 @@ entry:
   ret { i32, i32 } %0
 }
 
+define void @put_ms_ph_doTlastReg(i32 inreg %tlast, i32 inreg %dstID) local_unnamed_addr {
+; CHECK-LABEL: put_ms_ph_doTlastReg:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; mov r28, r0; nopv
+; CHECK-NEXT:    mov.ph ms, r1, #6, r28; ret lr
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+entry:
+  tail call void @llvm.aie2.put.ms.packet.header(i32 %tlast, i32 %dstID, i32 150)
+  ret void
+}
+
+define void @put_ms_ph(i32 inreg %dstID) local_unnamed_addr {
+; CHECK-LABEL: put_ms_ph:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    mov.ph.tlast ms, r0, #5; ret lr
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+entry:
+  tail call void @llvm.aie2.put.ms.packet.header(i32 1, i32 %dstID, i32 5)
+  ret void
+}
+
+define i32 @put_ms_ph_nb_doTlastReg(i32 inreg %tlast, i32 inreg %dstID) local_unnamed_addr {
+; CHECK-LABEL: put_ms_ph_nb_doTlastReg:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    nopa ; nopb ; nopx ; mov r28, r1; nops
+; CHECK-NEXT:    mov.ph.nb ms, r2, #5, r28; ret lr
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    mov r0, srMS0 // Delay Slot 1
+entry:
+  %0 = tail call i32 @llvm.aie2.put.ms.nb.packet.header(i32 %tlast, i32 %dstID, i32 5)
+  ret i32 %0
+}
+
+define i32 @put_ms_ph_nb(i32 inreg %dstID) local_unnamed_addr {
+; CHECK-LABEL: put_ms_ph_nb:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    nopb ; nopa ; mov.ph.nb ms, r1, #5; ret lr ; nopm ; nopv
+; CHECK-NEXT:    nopa ; nopx // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    mov r0, srMS0 // Delay Slot 1
+entry:
+  %0 = tail call i32 @llvm.aie2.put.ms.nb.packet.header(i32 0, i32 %dstID, i32 5)
+  ret i32 %0
+}
+
+define void @put_ms_cph_doTlastReg(i32 inreg %tlast, i32 inreg %addr, i32 inreg %rspID) local_unnamed_addr {
+; CHECK-LABEL: put_ms_cph_doTlastReg:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    nopa ; nopb ; nopx ; mov r28, r0
+; CHECK-NEXT:    mov m0, r1
+; CHECK-NEXT:    mov.cph ms, m0, #0, #3, r2, r28; ret lr
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+entry:
+  tail call void @llvm.aie2.put.ms.ctrl.packet.header(i32 %tlast, i32 %addr, i32 1, i32 3, i32 %rspID)
+  ret void
+}
+
+define void @put_ms_cph(i32 inreg %addr, i32 inreg %rspID) local_unnamed_addr {
+; CHECK-LABEL: put_ms_cph:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; mov m0, r0; nopv
+; CHECK-NEXT:    mov.cph.tlast ms, m0, #3, #3, r1; ret lr
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+entry:
+  tail call void @llvm.aie2.put.ms.ctrl.packet.header(i32 1, i32 %addr, i32 4, i32 3, i32 %rspID)
+  ret void
+}
+
+define i32 @put_ms_cph_nb_doTlastReg(i32 inreg %tlast, i32 inreg %addr, i32 inreg %rspID) local_unnamed_addr {
+; CHECK-LABEL: put_ms_cph_nb_doTlastReg:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    nopa ; nopx ; mov r28, r1
+; CHECK-NEXT:    mov m0, r2
+; CHECK-NEXT:    mov.cph.nb ms, m0, #3, #3, r3, r28; ret lr
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    mov r0, srMS0 // Delay Slot 1
+entry:
+  %0 = tail call i32 @llvm.aie2.put.ms.nb.ctrl.packet.header(i32 %tlast, i32 %addr, i32 4, i32 3, i32 %rspID)
+  ret i32 %0
+}
+
+define i32 @put_ms_cph_nb(i32 inreg %addr, i32 inreg %rspID) local_unnamed_addr {
+; CHECK-LABEL: put_ms_cph_nb:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    nopa ; nopb ; nopx ; mov m0, r1; nops
+; CHECK-NEXT:    mov.cph.nb ms, m0, #0, #1, r2; ret lr
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    mov r0, srMS0 // Delay Slot 1
+entry:
+  %0 = tail call i32 @llvm.aie2.put.ms.nb.ctrl.packet.header(i32 0, i32 %addr, i32 1, i32 13, i32 %rspID)
+  ret i32 %0
+}
+
 ; Function Attrs: nocallback nofree nosync nounwind willreturn
 declare { i32, i32 } @llvm.aie2.get.ss() #0
 
@@ -87,6 +215,10 @@ declare void @llvm.aie2.put.ms(i32, i32) #0
 ; Function Attrs: nocallback nofree nosync nounwind willreturn
 declare i32 @llvm.aie2.put.ms.nb(i32, i32) #0
 
+declare void @llvm.aie2.put.ms.packet.header(i32, i32, i32)
+declare i32 @llvm.aie2.put.ms.nb.packet.header(i32, i32, i32)
+declare void @llvm.aie2.put.ms.ctrl.packet.header(i32, i32, i32, i32, i32)
+declare i32 @llvm.aie2.put.ms.nb.ctrl.packet.header(i32, i32, i32, i32, i32)
 
 
 attributes #0 = { nocallback nofree nosync nounwind willreturn }
