@@ -202,6 +202,12 @@ public:
   bool selectPutMSNB(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVLDSparseOP_Pseudo(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVLDSparseINIT_Pseudo(MachineInstr &I, MachineRegisterInfo &MRI);
+  // Select a packet header stream write instruction from the corresponding
+  // intrinsic.
+  bool selectPutMS_PH(MachineInstr &I, MachineRegisterInfo &MRI);
+  // Select a control packet header stream write instruction from the
+  // corresponding intrinsic.
+  bool selectPutMS_CPH(MachineInstr &I, MachineRegisterInfo &MRI);
 
   static const char *getName() { return DEBUG_TYPE; }
 
@@ -724,6 +730,12 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
     case Intrinsic::aie2_sparse_fill_4_and_get_pointer:
     case Intrinsic::aie2_sparse_fill_4:
       return selectVLDSparseINIT_Pseudo(I, MRI);
+    case Intrinsic::aie2_put_ms_packet_header:
+    case Intrinsic::aie2_put_ms_nb_packet_header:
+      return selectPutMS_PH(I, MRI);
+    case Intrinsic::aie2_put_ms_ctrl_packet_header:
+    case Intrinsic::aie2_put_ms_nb_ctrl_packet_header:
+      return selectPutMS_CPH(I, MRI);
     default:
       return selectImpl(I, *CoverageInfo);
     }
@@ -5159,6 +5171,107 @@ bool AIE2InstructionSelector::selectVLDSparseINIT_Pseudo(
     return false;
   }
   return false;
+}
+
+bool AIE2InstructionSelector::selectPutMS_PH(MachineInstr &I,
+                                             MachineRegisterInfo &MRI) {
+  // The number of operands is used to detect a non blocking or a blocking write
+  // and select the right instructions. A non blocking write has 5 operands
+  // whereas a blocking write has 4.
+  auto NumOperands = I.getNumOperands();
+  bool isNonBlocking = (I.getNumOperands() == 5);
+
+  Register TLastReg = I.getOperand(NumOperands - 3).getReg();
+  Register DstIDReg = I.getOperand(NumOperands - 2).getReg();
+  Register PcktTyReg = I.getOperand(NumOperands - 1).getReg();
+  auto TLastVal = getIConstantVRegValWithLookThrough(TLastReg, MRI);
+  auto PcktTy = getIConstantVRegValWithLookThrough(PcktTyReg, MRI);
+  if (!PcktTy) {
+    dbgs() << "Cannot select: " << I << "\n";
+    llvm_unreachable("Parameter 'pcktType' must be a compile time constant");
+  }
+  unsigned OpCode = isNonBlocking ? AIE2::MOV_NB_mv_ph2ms_doTlast_reg
+                                  : AIE2::MOV_mv_ph2ms_doTlast_reg;
+  if (TLastVal) {
+    unsigned ConstTLastVal = TLastVal->Value.getZExtValue();
+    if (isNonBlocking) {
+      OpCode = (ConstTLastVal == 0) ? AIE2::MOV_NB_mv_ph2ms
+                                    : AIE2::MOV_NB_TLAST_mv_ph2ms;
+    } else
+      OpCode =
+          (ConstTLastVal == 0) ? AIE2::MOV_mv_ph2ms : AIE2::MOV_TLAST_mv_ph2ms;
+  }
+  auto PcktTyVal3Bit = PcktTy->Value.getLoBits(3).getZExtValue();
+  MachineInstrBuilder MI =
+      MIB.buildInstr(OpCode, {}, {DstIDReg, PcktTyVal3Bit});
+  if (!TLastVal) {
+    MI.addReg(TLastReg);
+  }
+  if (isNonBlocking) {
+    Register StatusReg = I.getOperand(NumOperands - 5).getReg();
+    auto CopyInstr = MIB.buildInstr(TargetOpcode::COPY, {StatusReg},
+                                    {Register(AIE2::srMS0)});
+    if (!selectCopy(*CopyInstr, MRI)) {
+      return false;
+    }
+  }
+
+  I.eraseFromParent();
+  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
+}
+
+bool AIE2InstructionSelector::selectPutMS_CPH(MachineInstr &I,
+                                              MachineRegisterInfo &MRI) {
+  // The number of operands is used to detect a non blocking or a blocking write
+  // and select the right instructions. A non blocking write has 7 operands
+  // whereas a blocking write has 6.
+  auto NumOperands = I.getNumOperands();
+  bool isNonBlocking = (I.getNumOperands() == 7);
+
+  Register TLastReg = I.getOperand(NumOperands - 5).getReg();
+  Register AddrReg = I.getOperand(NumOperands - 4).getReg();
+  auto NWordsReg = I.getOperand(NumOperands - 3).getReg();
+  auto OpTypeReg = I.getOperand(NumOperands - 2).getReg();
+  Register RspID = I.getOperand(NumOperands - 1).getReg();
+  auto TLastVal = getIConstantVRegValWithLookThrough(TLastReg, MRI);
+  auto NWords = getIConstantVRegValWithLookThrough(NWordsReg, MRI);
+  auto OpType = getIConstantVRegValWithLookThrough(OpTypeReg, MRI);
+  if (!NWords || !OpType) {
+    dbgs() << "Cannot select: " << I << "\n";
+    llvm_unreachable(
+        "Parameters 'n_words' and 'op_type' must be compile time constants");
+  }
+  unsigned OpCode = (isNonBlocking) ? AIE2::MOV_NB_mv_cph2ms_doTlast_reg
+                                    : AIE2::MOV_mv_cph2ms_doTlast_reg;
+  if (TLastVal) {
+    unsigned ConstTLastVal = TLastVal->Value.getZExtValue();
+    if (isNonBlocking) {
+      OpCode = (ConstTLastVal == 0) ? AIE2::MOV_NB_mv_cph2ms
+                                    : AIE2::MOV_NB_TLAST_mv_cph2ms;
+    } else {
+      OpCode = (ConstTLastVal == 0) ? AIE2::MOV_mv_cph2ms
+                                    : AIE2::MOV_TLAST_mv_cph2ms;
+    }
+  }
+  auto NWordsVal2Bit = (NWords->Value - 1).getLoBits(2).getZExtValue();
+  auto OpTypeVal2Bit = OpType->Value.getLoBits(2).getZExtValue();
+  MachineInstrBuilder MI = MIB.buildInstr(
+      OpCode, {}, {AddrReg, NWordsVal2Bit, OpTypeVal2Bit, RspID});
+  if (!TLastVal) {
+    MI.addReg(TLastReg);
+  }
+
+  if (isNonBlocking) {
+    Register StatusReg = I.getOperand(NumOperands - 7).getReg();
+    auto CopyInstr = MIB.buildInstr(TargetOpcode::COPY, {StatusReg},
+                                    {Register(AIE2::srMS0)});
+    if (!selectCopy(*CopyInstr, MRI)) {
+      return false;
+    }
+  }
+
+  I.eraseFromParent();
+  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
 }
 
 namespace llvm {
