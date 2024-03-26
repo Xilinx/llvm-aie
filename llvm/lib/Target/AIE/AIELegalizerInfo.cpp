@@ -116,7 +116,7 @@ AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
       ACC1024};
 
   auto &IMPLICIT = getActionDefinitionsBuilder({G_IMPLICIT_DEF, G_FREEZE})
-                       .legalFor({S20, S32, P0});
+                       .legalFor({S20, S32, P0, S128});
   if (ST.isAIE2()) {
     IMPLICIT.legalFor(AIE2VectorTypes);
     IMPLICIT.legalFor(AIE2AccumulatorTypes);
