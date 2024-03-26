@@ -388,6 +388,74 @@ struct v64bfloat16_sparse {
 } __attribute__((packed)) __attribute__((aligned(16)))
 __attribute__((return_in_regs)) __attribute__((is_sparse));
 
+/*
+Compressed vector types are defined as a struct of an integer.
+The integer in the struct does not represent anything and is never used.
+These types are used to overload the compressed load intrinsics and
+represent pointers to the memory location where the compressed vector is
+to be loaded from (e.g. v64int4_compress *& is used instead of
+v64int4_compress).
+*/
+/*Compressed 256-bit integer vector types*/
+struct v64int4_compress {
+  int x;
+};
+struct v32int8_compress {
+  int x;
+};
+struct v16int16_compress {
+  int x;
+};
+struct v64uint4_compress {
+  int x;
+};
+struct v32uint8_compress {
+  int x;
+};
+struct v16uint16_compress {
+  int x;
+};
+struct v8int32_compress {
+  int x;
+};
+struct v8uint32_compress {
+  int x;
+};
+
+/*Compressed 512-bit integer vector types*/
+struct v128int4_compress {
+  int x;
+};
+struct v64int8_compress {
+  int x;
+};
+struct v32int16_compress {
+  int x;
+};
+struct v128uint4_compress {
+  int x;
+};
+struct v64uint8_compress {
+  int x;
+};
+struct v32uint16_compress {
+  int x;
+};
+struct v16int32_compress {
+  int x;
+};
+struct v16uint32_compress {
+  int x;
+};
+
+/*Compressed floating-point vector types*/
+struct v16bfloat16_compress {
+  int x;
+};
+struct v32bfloat16_compress {
+  int x;
+};
+
 #endif //__AIEARCH__ == 20
 
 #endif /*  __AIEBASE_TYPEDEFS_H */
