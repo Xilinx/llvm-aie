@@ -429,7 +429,9 @@ class TargetSpec {
 class TargetArch<list<string> arches> : TargetSpec {
   let Arches = arches;
 }
-def TargetAIE2 : TargetArch<["aie2"]>;
+def TargetAIE2 : TargetSpec {
+  let CustomCode = [{ Target.getTriple().isAIE() }];
+}
 def TargetARM : TargetArch<["arm", "thumb", "armeb", "thumbeb"]>;
 def TargetAArch64 : TargetArch<["aarch64", "aarch64_be", "aarch64_32"]>;
 def TargetAnyArm : TargetArch<!listconcat(TargetARM.Arches, TargetAArch64.Arches)>;
