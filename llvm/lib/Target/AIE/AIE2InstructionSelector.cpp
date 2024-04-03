@@ -140,6 +140,8 @@ public:
   bool selectAddrInsn(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectCascadeStreamInsn(MachineInstr &I, MachineRegisterInfo &MRI,
                                bool isWrite);
+  bool selectG_AIE_ADD_VECTOR_ELT_LEFT(MachineInstr &I,
+                                       MachineRegisterInfo &MRI);
   bool selectG_CONCAT_VECTORS(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_BRCOND(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_BRINDIRECT(MachineInstr &I, MachineRegisterInfo &MRI);
@@ -737,6 +739,8 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
     return selectG_STORE(I, MRI);
   case G_UNMERGE_VALUES:
     return selectG_UNMERGE_VALUES(I, MRI);
+  case AIE2::G_AIE_ADD_VECTOR_ELT_LEFT:
+    return selectG_AIE_ADD_VECTOR_ELT_LEFT(I, MRI);
   case G_CONCAT_VECTORS:
     return selectG_CONCAT_VECTORS(I, MRI);
   case AIE2::G_AIE_OFFSET_STORE:
@@ -798,6 +802,44 @@ bool AIE2InstructionSelector::selectStartLoop(MachineInstr &I,
           .addImm(-1);
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*ADDI, TII, TRI, RBI);
+}
+
+bool AIE2InstructionSelector::selectG_AIE_ADD_VECTOR_ELT_LEFT(
+    MachineInstr &I, MachineRegisterInfo &MRI) {
+  const Register Dst = I.getOperand(0).getReg();
+  const Register Src = I.getOperand(1).getReg();
+  const Register Value = I.getOperand(2).getReg();
+  const LLT VecEltDstTy = MRI.getType(Dst).getElementType();
+  const TypeSize VecEltDstTySize = VecEltDstTy.getSizeInBits();
+
+  // We assume that we always receive a vector operand and that the vector types
+  // are always true. As of 03/24, this may not be true due to vint64s being
+  // used for accumulators instead.
+  unsigned Opcode;
+  switch (VecEltDstTySize) {
+  case 8:
+    Opcode = AIE2::VPUSH_LO_8;
+    break;
+  case 16:
+    Opcode = AIE2::VPUSH_LO_16;
+    break;
+  case 32:
+    Opcode = AIE2::VPUSH_LO_32;
+    break;
+  case 64:
+    llvm_unreachable(
+        "Unexpected accumulator vector in selection of G_AIE_ADD_VECTOR_LEFT");
+  default:
+    llvm_unreachable(
+        "Unexpected vector size in selection of G_AIE_ADD_VECTOR_ELT_LEFT");
+  }
+
+  // This is the opposite order from the ISA which expects vector, value. This
+  // is choice made in TD which takes it in this opposite order.
+  MachineInstr &MI = *MIB.buildInstr(Opcode, {Dst}, {Value, Src});
+  I.eraseFromParent();
+
+  return constrainSelectedInstRegOperands(MI, TII, TRI, RBI);
 }
 
 // WIP: Implement this as a tablegen pattern instead, it is very similar to the
