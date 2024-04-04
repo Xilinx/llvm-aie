@@ -545,6 +545,50 @@ bool AIELegalizerInfo::pack32BitVector(LegalizerHelper &Helper,
   return true;
 }
 
+bool AIELegalizerInfo::unpack32BitVector(LegalizerHelper &Helper,
+                                         MachineInstr &MI,
+                                         Register SourceReg) const {
+  MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
+  MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
+
+  const LLT SourceRegTy = MRI.getType(SourceReg);
+  assert(SourceRegTy.getSizeInBits() == 32 &&
+         "cannot pack or unpack vectors larger or smaller than 32-bit");
+
+  const LLT S32 = LLT::scalar(32);
+  unsigned Offset = 0;
+  Register DstCastReg = MRI.createGenericVirtualRegister(S32);
+
+  // We want to skip the destination vector for unmerging and the source vector
+  // for merging
+  MachineOperand *Operand = MI.operands_begin(),
+                 *OperandEnd = MI.operands_end() - 1;
+  MIRBuilder.buildBitcast(DstCastReg, SourceReg);
+  while (Operand != OperandEnd) {
+    Register DestinationOperand = Operand->getReg();
+    const LLT RegTy = MRI.getType(DestinationOperand);
+
+    // Avoid a useless shift for the first element, since it doesn't get
+    // optimized out in O0.
+    if (Offset != 0) {
+      const MachineInstrBuilder ShiftConstant =
+          MIRBuilder.buildConstant(S32, Offset);
+      const MachineInstrBuilder Masked =
+          MIRBuilder.buildLShr(S32, DstCastReg, ShiftConstant);
+      MIRBuilder.buildTrunc(DestinationOperand, Masked);
+
+    } else {
+      MIRBuilder.buildTrunc(DestinationOperand, DstCastReg);
+    }
+
+    Offset += RegTy.getScalarSizeInBits();
+    ++Operand;
+  }
+
+  MI.eraseFromParent();
+  return true;
+}
+
 bool AIELegalizerInfo::legalizeG_BUILD_VECTOR(LegalizerHelper &Helper,
                                               MachineInstr &MI) const {
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
@@ -613,7 +657,7 @@ bool AIELegalizerInfo::legalizeG_BUILD_VECTOR(LegalizerHelper &Helper,
 bool AIELegalizerInfo::legalizeG_UNMERGE_VALUES(LegalizerHelper &Helper,
                                                 MachineInstr &MI) const {
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
-  const MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
+  MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
 
   const Register FirstReg = MI.getOperand(0).getReg();
   const Register LastReg = MI.getOperand(MI.getNumOperands() - 1).getReg();
@@ -630,6 +674,9 @@ bool AIELegalizerInfo::legalizeG_UNMERGE_VALUES(LegalizerHelper &Helper,
     const LLT CurrentTy = MRI.getType(Current);
     assert(CurrentTy.isScalar() &&
            "this operation is only supported for scalar types");
+
+    if (LastTy.getSizeInBits() == 32)
+      return unpack32BitVector(Helper, MI, LastReg);
 
     // We build the constant ourselves since the default behaviour
     // of the builtin is to create 64-bit constants.
