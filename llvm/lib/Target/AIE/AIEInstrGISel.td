@@ -84,6 +84,12 @@ def G_AIE_INSERT_VECTOR_ELT : AIEGenericInstruction {
   let hasSideEffects = false;
 }
 
+def G_AIE_ADD_VECTOR_ELT_LEFT : AIEGenericInstruction {
+  let OutOperandList = (outs type0:$dst);
+  let InOperandList = (ins type0:$src, type1:$elt);
+  let hasSideEffects = false;
+}
+
 def G_AIE_BROADCAST_VECTOR : AIEGenericInstruction {
   let OutOperandList = (outs type0:$dst);
   let InOperandList = (ins type1:$src);

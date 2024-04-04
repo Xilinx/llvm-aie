@@ -21,3 +21,452 @@ body:             |
     %2:_(<2 x s32>) = G_BUILD_VECTOR %0, %1
     PseudoRET implicit $lr, implicit %2
 ...
+
+---
+name:            test_build_vector_32bit_256
+stack:
+  - {id: 0, name: "", type: default, offset: 0, size: 32, alignment: 32}
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: test_build_vector_32bit_256
+    ; CHECK: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 9
+    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 12
+    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 13
+    ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[DEF]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT1:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT2:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT1]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT3:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT2]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT4:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT3]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT5:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT4]], [[C2]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT6:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT5]], [[C1]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT7:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT6]], [[C]](s32)
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<8 x s32>), [[UV1:%[0-9]+]]:_(<8 x s32>) = G_UNMERGE_VALUES [[AIE_ADD_VECTOR_ELT_LEFT7]](<16 x s32>)
+    ; CHECK-NEXT: [[FRAME_INDEX:%[0-9]+]]:_(p0) = G_FRAME_INDEX %stack.0
+    ; CHECK-NEXT: G_STORE [[UV]](<8 x s32>), [[FRAME_INDEX]](p0) :: (store (<8 x s32>))
+    %2:_(s32) = G_CONSTANT i32 9
+    %3:_(s32) = G_CONSTANT i32 12
+    %4:_(s32) = G_CONSTANT i32 13
+    %5:_(s32) = G_CONSTANT i32 0
+    %1:_(<8 x s32>) = G_BUILD_VECTOR %2(s32), %3(s32), %4(s32), %5(s32), %5(s32), %5(s32), %5(s32), %5(s32)
+    %0:_(p0) = G_FRAME_INDEX %stack.0
+    G_STORE %1(<8 x s32>), %0(p0) :: (store (<8 x s32>))
+...
+
+---
+name:            test_build_vector_32bit_512
+stack:
+  - {id: 0, name: "", type: default, offset: 0, size: 64, alignment: 32}
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: test_build_vector_32bit_512
+    ; CHECK: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 4
+    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 12
+    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 9
+    ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[DEF]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT1:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT2:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT1]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT3:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT2]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT4:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT3]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT5:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT4]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT6:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT5]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT7:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT6]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT8:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT7]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT9:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT8]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT10:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT9]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT11:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT10]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT12:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT11]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT13:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT12]], [[C2]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT14:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT13]], [[C1]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT15:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT14]], [[C]](s32)
+    ; CHECK-NEXT: [[FRAME_INDEX:%[0-9]+]]:_(p0) = G_FRAME_INDEX %stack.0
+    ; CHECK-NEXT: G_STORE [[AIE_ADD_VECTOR_ELT_LEFT15]](<16 x s32>), [[FRAME_INDEX]](p0) :: (store (<16 x s32>), align 32)
+    %2:_(s32) = G_CONSTANT i32 4
+    %3:_(s32) = G_CONSTANT i32 12
+    %4:_(s32) = G_CONSTANT i32 9
+    %5:_(s32) = G_CONSTANT i32 0
+    %1:_(<16 x s32>) = G_BUILD_VECTOR %2(s32), %3(s32), %4(s32), %5(s32), %5(s32), %5(s32), %5(s32), %5(s32), %5(s32), %5(s32), %5(s32), %5(s32), %5(s32), %5(s32), %5(s32), %5(s32)
+    %0:_(p0) = G_FRAME_INDEX %stack.0
+    G_STORE %1(<16 x s32>), %0(p0) :: (store (<16 x s32>), align 32)
+...
+
+---
+name:            test_build_vector_32bit_1024
+stack:
+  - {id: 0, name: "", type: default, offset: 0, size: 128, alignment: 32}
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: test_build_vector_32bit_1024
+    ; CHECK: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 42
+    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 12
+    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 11
+    ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[DEF]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT1:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT2:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT1]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT3:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT2]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT4:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT3]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT5:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT4]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT6:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT5]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT7:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT6]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT8:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT7]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT9:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT8]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT10:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT9]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT11:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT10]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT12:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT11]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT13:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT12]], [[C2]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT14:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT13]], [[C1]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT15:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT14]], [[C]](s32)
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s32>) = COPY [[DEF]](<16 x s32>)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT16:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[COPY]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT17:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT16]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT18:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT17]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT19:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT18]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT20:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT19]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT21:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT20]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT22:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT21]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT23:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT22]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT24:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT23]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT25:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT24]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT26:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT25]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT27:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT26]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT28:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT27]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT29:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT28]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT30:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT29]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT31:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT30]], [[C3]](s32)
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[AIE_ADD_VECTOR_ELT_LEFT15]](<16 x s32>), [[AIE_ADD_VECTOR_ELT_LEFT31]](<16 x s32>)
+    ; CHECK-NEXT: [[FRAME_INDEX:%[0-9]+]]:_(p0) = G_FRAME_INDEX %stack.0
+    ; CHECK-NEXT: G_STORE [[CONCAT_VECTORS]](<32 x s32>), [[FRAME_INDEX]](p0) :: (store (<32 x s32>), align 32)
+    %2:_(s32) = G_CONSTANT i32 42
+    %3:_(s32) = G_CONSTANT i32 12
+    %4:_(s32) = G_CONSTANT i32 11
+    %5:_(s32) = G_CONSTANT i32 0
+    %1:_(<32 x s32>) = G_BUILD_VECTOR %2(s32), %3(s32), %4(s32), %5(s32), %5(s32), %5(s32), %5(s32), %5(s32), %5(s32), %5(s32), %5(s32), %5(s32), %5(s32), %5(s32), %5(s32), %5(s32), %5(s32), %5(s32), %5(s32), %5(s32), %5(s32), %5(s32), %5(s32), %5(s32), %5(s32), %5(s32), %5(s32), %5(s32), %5(s32), %5(s32), %5(s32), %5(s32)
+    %0:_(p0) = G_FRAME_INDEX %stack.0
+    G_STORE %1(<32 x s32>), %0(p0) :: (store (<32 x s32>), align 32)
+...
+
+---
+name:            test_build_vector_8bit_256
+stack:
+  - {id: 0, name: "", type: default, offset: 0, size: 32, alignment: 32}
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: test_build_vector_8bit_256
+    ; CHECK: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 9
+    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 12
+    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 4
+    ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<64 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT:%[0-9]+]]:_(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_LEFT [[DEF]], [[C3]](s32)
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT1:%[0-9]+]]:_(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT]], [[COPY]](s32)
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT2:%[0-9]+]]:_(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT1]], [[COPY1]](s32)
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT3:%[0-9]+]]:_(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT2]], [[COPY2]](s32)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT4:%[0-9]+]]:_(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT3]], [[COPY3]](s32)
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT5:%[0-9]+]]:_(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT4]], [[COPY4]](s32)
+    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT6:%[0-9]+]]:_(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT5]], [[COPY5]](s32)
+    ; CHECK-NEXT: [[COPY6:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT7:%[0-9]+]]:_(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT6]], [[COPY6]](s32)
+    ; CHECK-NEXT: [[COPY7:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT8:%[0-9]+]]:_(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT7]], [[COPY7]](s32)
+    ; CHECK-NEXT: [[COPY8:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT9:%[0-9]+]]:_(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT8]], [[COPY8]](s32)
+    ; CHECK-NEXT: [[COPY9:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT10:%[0-9]+]]:_(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT9]], [[COPY9]](s32)
+    ; CHECK-NEXT: [[COPY10:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT11:%[0-9]+]]:_(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT10]], [[COPY10]](s32)
+    ; CHECK-NEXT: [[COPY11:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT12:%[0-9]+]]:_(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT11]], [[COPY11]](s32)
+    ; CHECK-NEXT: [[COPY12:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT13:%[0-9]+]]:_(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT12]], [[COPY12]](s32)
+    ; CHECK-NEXT: [[COPY13:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT14:%[0-9]+]]:_(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT13]], [[COPY13]](s32)
+    ; CHECK-NEXT: [[COPY14:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT15:%[0-9]+]]:_(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT14]], [[COPY14]](s32)
+    ; CHECK-NEXT: [[COPY15:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT16:%[0-9]+]]:_(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT15]], [[COPY15]](s32)
+    ; CHECK-NEXT: [[COPY16:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT17:%[0-9]+]]:_(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT16]], [[COPY16]](s32)
+    ; CHECK-NEXT: [[COPY17:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT18:%[0-9]+]]:_(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT17]], [[COPY17]](s32)
+    ; CHECK-NEXT: [[COPY18:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT19:%[0-9]+]]:_(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT18]], [[COPY18]](s32)
+    ; CHECK-NEXT: [[COPY19:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT20:%[0-9]+]]:_(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT19]], [[COPY19]](s32)
+    ; CHECK-NEXT: [[COPY20:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT21:%[0-9]+]]:_(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT20]], [[COPY20]](s32)
+    ; CHECK-NEXT: [[COPY21:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT22:%[0-9]+]]:_(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT21]], [[COPY21]](s32)
+    ; CHECK-NEXT: [[COPY22:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT23:%[0-9]+]]:_(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT22]], [[COPY22]](s32)
+    ; CHECK-NEXT: [[COPY23:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT24:%[0-9]+]]:_(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT23]], [[COPY23]](s32)
+    ; CHECK-NEXT: [[COPY24:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT25:%[0-9]+]]:_(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT24]], [[COPY24]](s32)
+    ; CHECK-NEXT: [[COPY25:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT26:%[0-9]+]]:_(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT25]], [[COPY25]](s32)
+    ; CHECK-NEXT: [[COPY26:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT27:%[0-9]+]]:_(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT26]], [[COPY26]](s32)
+    ; CHECK-NEXT: [[COPY27:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT28:%[0-9]+]]:_(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT27]], [[COPY27]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT29:%[0-9]+]]:_(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT28]], [[C2]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT30:%[0-9]+]]:_(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT29]], [[C1]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT31:%[0-9]+]]:_(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT30]], [[C]](s32)
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<32 x s8>), [[UV1:%[0-9]+]]:_(<32 x s8>) = G_UNMERGE_VALUES [[AIE_ADD_VECTOR_ELT_LEFT31]](<64 x s8>)
+    ; CHECK-NEXT: [[FRAME_INDEX:%[0-9]+]]:_(p0) = G_FRAME_INDEX %stack.0
+    ; CHECK-NEXT: G_STORE [[UV]](<32 x s8>), [[FRAME_INDEX]](p0) :: (store (<32 x s8>))
+    %2:_(s8) = G_CONSTANT i8 9
+    %3:_(s8) = G_CONSTANT i8 12
+    %4:_(s8) = G_CONSTANT i8 4
+    %5:_(s8) = G_CONSTANT i8 0
+    %1:_(<32 x s8>) = G_BUILD_VECTOR %2(s8), %3(s8), %4(s8), %5(s8), %5(s8), %5(s8), %5(s8), %5(s8), %5(s8), %5(s8), %5(s8), %5(s8), %5(s8), %5(s8), %5(s8), %5(s8), %5(s8), %5(s8), %5(s8), %5(s8), %5(s8), %5(s8), %5(s8), %5(s8), %5(s8), %5(s8), %5(s8), %5(s8), %5(s8), %5(s8), %5(s8), %5(s8)
+    %0:_(p0) = G_FRAME_INDEX %stack.0
+    G_STORE %1(<32 x s8>), %0(p0) :: (store (<32 x s8>))
+...
+
+---
+name:            test_build_vector_16bit_1024
+stack:
+  - {id: 0, name: "", type: default, offset: 0, size: 128, alignment: 32}
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: test_build_vector_16bit_1024
+    ; CHECK: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 19
+    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 32
+    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 42
+    ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<32 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[DEF]], [[C3]](s32)
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT1:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT]], [[COPY]](s32)
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT2:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT1]], [[COPY1]](s32)
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT3:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT2]], [[COPY2]](s32)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT4:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT3]], [[COPY3]](s32)
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT5:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT4]], [[COPY4]](s32)
+    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT6:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT5]], [[COPY5]](s32)
+    ; CHECK-NEXT: [[COPY6:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT7:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT6]], [[COPY6]](s32)
+    ; CHECK-NEXT: [[COPY7:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT8:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT7]], [[COPY7]](s32)
+    ; CHECK-NEXT: [[COPY8:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT9:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT8]], [[COPY8]](s32)
+    ; CHECK-NEXT: [[COPY9:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT10:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT9]], [[COPY9]](s32)
+    ; CHECK-NEXT: [[COPY10:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT11:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT10]], [[COPY10]](s32)
+    ; CHECK-NEXT: [[COPY11:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT12:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT11]], [[COPY11]](s32)
+    ; CHECK-NEXT: [[COPY12:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT13:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT12]], [[COPY12]](s32)
+    ; CHECK-NEXT: [[COPY13:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT14:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT13]], [[COPY13]](s32)
+    ; CHECK-NEXT: [[COPY14:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT15:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT14]], [[COPY14]](s32)
+    ; CHECK-NEXT: [[COPY15:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT16:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT15]], [[COPY15]](s32)
+    ; CHECK-NEXT: [[COPY16:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT17:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT16]], [[COPY16]](s32)
+    ; CHECK-NEXT: [[COPY17:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT18:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT17]], [[COPY17]](s32)
+    ; CHECK-NEXT: [[COPY18:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT19:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT18]], [[COPY18]](s32)
+    ; CHECK-NEXT: [[COPY19:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT20:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT19]], [[COPY19]](s32)
+    ; CHECK-NEXT: [[COPY20:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT21:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT20]], [[COPY20]](s32)
+    ; CHECK-NEXT: [[COPY21:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT22:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT21]], [[COPY21]](s32)
+    ; CHECK-NEXT: [[COPY22:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT23:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT22]], [[COPY22]](s32)
+    ; CHECK-NEXT: [[COPY23:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT24:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT23]], [[COPY23]](s32)
+    ; CHECK-NEXT: [[COPY24:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT25:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT24]], [[COPY24]](s32)
+    ; CHECK-NEXT: [[COPY25:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT26:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT25]], [[COPY25]](s32)
+    ; CHECK-NEXT: [[COPY26:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT27:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT26]], [[COPY26]](s32)
+    ; CHECK-NEXT: [[COPY27:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT28:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT27]], [[COPY27]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT29:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT28]], [[C2]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT30:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT29]], [[C1]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT31:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT30]], [[C]](s32)
+    ; CHECK-NEXT: [[COPY28:%[0-9]+]]:_(<32 x s16>) = COPY [[DEF]](<32 x s16>)
+    ; CHECK-NEXT: [[COPY29:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT32:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[COPY28]], [[COPY29]](s32)
+    ; CHECK-NEXT: [[COPY30:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT33:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT32]], [[COPY30]](s32)
+    ; CHECK-NEXT: [[COPY31:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT34:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT33]], [[COPY31]](s32)
+    ; CHECK-NEXT: [[COPY32:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT35:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT34]], [[COPY32]](s32)
+    ; CHECK-NEXT: [[COPY33:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT36:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT35]], [[COPY33]](s32)
+    ; CHECK-NEXT: [[COPY34:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT37:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT36]], [[COPY34]](s32)
+    ; CHECK-NEXT: [[COPY35:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT38:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT37]], [[COPY35]](s32)
+    ; CHECK-NEXT: [[COPY36:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT39:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT38]], [[COPY36]](s32)
+    ; CHECK-NEXT: [[COPY37:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT40:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT39]], [[COPY37]](s32)
+    ; CHECK-NEXT: [[COPY38:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT41:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT40]], [[COPY38]](s32)
+    ; CHECK-NEXT: [[COPY39:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT42:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT41]], [[COPY39]](s32)
+    ; CHECK-NEXT: [[COPY40:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT43:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT42]], [[COPY40]](s32)
+    ; CHECK-NEXT: [[COPY41:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT44:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT43]], [[COPY41]](s32)
+    ; CHECK-NEXT: [[COPY42:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT45:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT44]], [[COPY42]](s32)
+    ; CHECK-NEXT: [[COPY43:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT46:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT45]], [[COPY43]](s32)
+    ; CHECK-NEXT: [[COPY44:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT47:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT46]], [[COPY44]](s32)
+    ; CHECK-NEXT: [[COPY45:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT48:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT47]], [[COPY45]](s32)
+    ; CHECK-NEXT: [[COPY46:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT49:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT48]], [[COPY46]](s32)
+    ; CHECK-NEXT: [[COPY47:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT50:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT49]], [[COPY47]](s32)
+    ; CHECK-NEXT: [[COPY48:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT51:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT50]], [[COPY48]](s32)
+    ; CHECK-NEXT: [[COPY49:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT52:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT51]], [[COPY49]](s32)
+    ; CHECK-NEXT: [[COPY50:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT53:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT52]], [[COPY50]](s32)
+    ; CHECK-NEXT: [[COPY51:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT54:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT53]], [[COPY51]](s32)
+    ; CHECK-NEXT: [[COPY52:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT55:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT54]], [[COPY52]](s32)
+    ; CHECK-NEXT: [[COPY53:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT56:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT55]], [[COPY53]](s32)
+    ; CHECK-NEXT: [[COPY54:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT57:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT56]], [[COPY54]](s32)
+    ; CHECK-NEXT: [[COPY55:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT58:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT57]], [[COPY55]](s32)
+    ; CHECK-NEXT: [[COPY56:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT59:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT58]], [[COPY56]](s32)
+    ; CHECK-NEXT: [[COPY57:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT60:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT59]], [[COPY57]](s32)
+    ; CHECK-NEXT: [[COPY58:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT61:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT60]], [[COPY58]](s32)
+    ; CHECK-NEXT: [[COPY59:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT62:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT61]], [[COPY59]](s32)
+    ; CHECK-NEXT: [[COPY60:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT63:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT62]], [[COPY60]](s32)
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<64 x s16>) = G_CONCAT_VECTORS [[AIE_ADD_VECTOR_ELT_LEFT31]](<32 x s16>), [[AIE_ADD_VECTOR_ELT_LEFT63]](<32 x s16>)
+    ; CHECK-NEXT: [[FRAME_INDEX:%[0-9]+]]:_(p0) = G_FRAME_INDEX %stack.0
+    ; CHECK-NEXT: G_STORE [[CONCAT_VECTORS]](<64 x s16>), [[FRAME_INDEX]](p0) :: (store (<64 x s16>), align 32)
+    %2:_(s16) = G_CONSTANT i16 19
+    %3:_(s16) = G_CONSTANT i16 32
+    %4:_(s16) = G_CONSTANT i16 42
+    %5:_(s16) = G_CONSTANT i16 0
+    %1:_(<64 x s16>) = G_BUILD_VECTOR %2(s16), %3(s16), %4(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16), %5(s16)
+    %0:_(p0) = G_FRAME_INDEX %stack.0
+    G_STORE %1(<64 x s16>), %0(p0) :: (store (<64 x s16>), align 32)
+...
+
+---
+name: g_build_vector_order_most_to_least_significant
+body:               |
+  bb.1.entry:
+    ; CHECK-LABEL: name: g_build_vector_order_most_to_least_significant
+    ; CHECK: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
+    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
+    ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 4
+    ; CHECK-NEXT: [[C4:%[0-9]+]]:_(s32) = G_CONSTANT i32 5
+    ; CHECK-NEXT: [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 6
+    ; CHECK-NEXT: [[C6:%[0-9]+]]:_(s32) = G_CONSTANT i32 7
+    ; CHECK-NEXT: [[C7:%[0-9]+]]:_(s32) = G_CONSTANT i32 8
+    ; CHECK-NEXT: [[C8:%[0-9]+]]:_(s32) = G_CONSTANT i32 9
+    ; CHECK-NEXT: [[C9:%[0-9]+]]:_(s32) = G_CONSTANT i32 10
+    ; CHECK-NEXT: [[C10:%[0-9]+]]:_(s32) = G_CONSTANT i32 11
+    ; CHECK-NEXT: [[C11:%[0-9]+]]:_(s32) = G_CONSTANT i32 12
+    ; CHECK-NEXT: [[C12:%[0-9]+]]:_(s32) = G_CONSTANT i32 13
+    ; CHECK-NEXT: [[C13:%[0-9]+]]:_(s32) = G_CONSTANT i32 14
+    ; CHECK-NEXT: [[C14:%[0-9]+]]:_(s32) = G_CONSTANT i32 15
+    ; CHECK-NEXT: [[C15:%[0-9]+]]:_(s32) = G_CONSTANT i32 16
+    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[DEF]], [[C15]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT1:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT]], [[C14]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT2:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT1]], [[C13]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT3:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT2]], [[C12]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT4:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT3]], [[C11]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT5:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT4]], [[C10]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT6:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT5]], [[C9]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT7:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT6]], [[C8]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT8:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT7]], [[C7]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT9:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT8]], [[C6]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT10:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT9]], [[C5]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT11:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT10]], [[C4]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT12:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT11]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT13:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT12]], [[C2]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT14:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT13]], [[C1]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT15:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT14]], [[C]](s32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_ADD_VECTOR_ELT_LEFT15]](<16 x s32>)
+    %1:_(s32) = G_CONSTANT i32 1
+    %2:_(s32) = G_CONSTANT i32 2
+    %3:_(s32) = G_CONSTANT i32 3
+    %4:_(s32) = G_CONSTANT i32 4
+    %5:_(s32) = G_CONSTANT i32 5
+    %6:_(s32) = G_CONSTANT i32 6
+    %7:_(s32) = G_CONSTANT i32 7
+    %8:_(s32) = G_CONSTANT i32 8
+    %9:_(s32) = G_CONSTANT i32 9
+    %10:_(s32) = G_CONSTANT i32 10
+    %11:_(s32) = G_CONSTANT i32 11
+    %12:_(s32) = G_CONSTANT i32 12
+    %13:_(s32) = G_CONSTANT i32 13
+    %14:_(s32) = G_CONSTANT i32 14
+    %15:_(s32) = G_CONSTANT i32 15
+    %16:_(s32) = G_CONSTANT i32 16
+    %0:_(<16 x s32>) = G_BUILD_VECTOR %1:_(s32), %2:_(s32), %3:_(s32), %4:_(s32), %5:_(s32), %6:_(s32), %7:_(s32), %8:_(s32), %9:_(s32), %10:_(s32), %11:_(s32), %12:_(s32), %13:_(s32), %14:_(s32), %15:_(s32), %16:_(s32)
+     PseudoRET implicit $lr, implicit %0
+...
+
+---
+name: test_build_vector_32bit_128
+stack:
+  - {id: 0, name: "", type: default, offset: 0, size: 128, alignment: 32}
+body:           |
+  bb.1.entry:
+    ; CHECK-LABEL: name: test_build_vector_32bit_128
+    ; CHECK: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 42
+    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 19
+    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 32
+    ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 12
+    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[DEF]], [[C3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT1:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT]], [[C2]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT2:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT1]], [[C1]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT3:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[AIE_ADD_VECTOR_ELT_LEFT2]], [[C]](s32)
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<4 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_ADD_VECTOR_ELT_LEFT3]](<16 x s32>)
+    ; CHECK-NEXT: [[FRAME_INDEX:%[0-9]+]]:_(p0) = G_FRAME_INDEX %stack.0
+    ; CHECK-NEXT: G_STORE [[AIE_UNPAD_VECTOR]](<4 x s32>), [[FRAME_INDEX]](p0) :: (store (<4 x s32>))
+    ; CHECK-NEXT: PseudoRET implicit $lr
+    %2:_(s32) = G_CONSTANT i32 42
+    %3:_(s32) = G_CONSTANT i32 19
+    %4:_(s32) = G_CONSTANT i32 32
+    %5:_(s32) = G_CONSTANT i32 12
+    %1:_(<4 x s32>) = G_BUILD_VECTOR %2(s32), %3(s32), %4(s32), %5(s32)
+    %0:_(p0) = G_FRAME_INDEX %stack.0
+    G_STORE %1(<4 x s32>), %0(p0) :: (store (<4 x s32>))
+    PseudoRET implicit $lr

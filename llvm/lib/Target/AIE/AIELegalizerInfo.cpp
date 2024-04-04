@@ -402,7 +402,6 @@ AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
         LegalityPredicates::all(isLegalBitCastType(0), isLegalBitCastType(1)));
 
     getActionDefinitionsBuilder(G_MERGE_VALUES).legalFor({{S64, S32}});
-    getActionDefinitionsBuilder(G_BUILD_VECTOR).legalFor({{V2S32, S32}});
     getActionDefinitionsBuilder(G_UNMERGE_VALUES)
         .legalFor({{S32, S64}, {S32, V2S32}})
         // TODO: can be implemented by unpadding the source vector into Src1,
@@ -416,11 +415,21 @@ AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
           return SrcTy.isVector() && DstTy.isScalar() &&
                  DstTy == SrcTy.getElementType();
         });
-  }
 
-  if (ST.isAIE2()) {
     getActionDefinitionsBuilder(G_CONCAT_VECTORS)
         .legalIf(isValidVectorMergeUnmergeOp(0, 1));
+
+    getActionDefinitionsBuilder(G_BUILD_VECTOR)
+        // Legacy legalization for bitcasts
+        .legalFor({{V2S32, S32}})
+        // We clamp the high values and not the low ones, since the former
+        // splits the values but the latter keeps the same G_BUILD_VECTOR in the
+        // output instructions which causes an infinite loop since it can't
+        // reach our custom legalization code.
+        .clampMaxNumElements(0, S8, 64)
+        .clampMaxNumElements(0, S16, 32)
+        .clampMaxNumElements(0, S32, 16)
+        .custom();
   }
 
   getActionDefinitionsBuilder(G_JUMP_TABLE).custom();
@@ -473,11 +482,73 @@ bool AIELegalizerInfo::legalizeCustom(LegalizerHelper &Helper,
   case TargetOpcode::G_FADD:
   case TargetOpcode::G_FSUB:
     return legalizeG_FADDSUB(Helper, MI);
+  case TargetOpcode::G_BUILD_VECTOR:
+    return legalizeG_BUILD_VECTOR(Helper, MI);
   case TargetOpcode::G_UNMERGE_VALUES:
     return legalizeG_UNMERGE_VALUES(Helper, MI);
   }
 
   llvm_unreachable("Un-expected custom legalization");
+}
+
+bool AIELegalizerInfo::legalizeG_BUILD_VECTOR(LegalizerHelper &Helper,
+                                              MachineInstr &MI) const {
+  MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
+  MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
+
+  const Register DstReg = MI.getOperand(0).getReg();
+  LLT DstVecTy = MRI.getType(DstReg);
+  assert(DstVecTy.isVector());
+  unsigned DstVecSize = DstVecTy.getSizeInBits();
+  const LLT DstVecEltTy = DstVecTy.getElementType();
+  const unsigned EltSize = DstVecEltTy.getScalarSizeInBits();
+  assert((EltSize == 8 || EltSize == 16 || EltSize == 32) &&
+         "non-existent integer size");
+  assert(DstVecSize > 64 && DstVecSize <= 1024 &&
+         "non-native vectors are not supported");
+  assert(DstVecSize < 1024 && "vadd takes a 512-bit argument");
+  // We are using an undef since we are building over multiple instructions
+  const TypeSize VecEltTySize = DstVecEltTy.getSizeInBits();
+  const LLT VecTy = LLT::fixed_vector(512 / VecEltTySize, DstVecEltTy);
+  Register Src = MRI.createGenericVirtualRegister(VecTy);
+  MIRBuilder.buildUndef(Src);
+
+  MachineOperand *OperandBegin = MI.operands_begin(),
+                 *Operand = MI.operands_end() - 1;
+  while (Operand != OperandBegin) {
+    Register Reg = Operand->getReg();
+    Register Dst = MRI.createGenericVirtualRegister(VecTy);
+
+    if (DstVecSize == 512 && Operand == OperandBegin + 1)
+      Dst = DstReg;
+
+    // vpush takes 32-bit operands so we sign extend the input variable. This is
+    // required here since we don't have 16 or 32-bit registers.
+    if (DstVecEltTy.getSizeInBits() != 32) {
+      const Register TmpReg32 =
+          MRI.createGenericVirtualRegister(LLT::scalar(32));
+      MIRBuilder.buildInstr(AIE2::G_ANYEXT, {TmpReg32}, {Reg});
+      Reg = TmpReg32;
+    }
+
+    MIRBuilder.buildInstr(AIE2::G_AIE_ADD_VECTOR_ELT_LEFT, {Dst}, {Src, Reg});
+    Src = Dst;
+    --Operand;
+  }
+
+  // For >512, the G_CONCAT_VECTOR is used instead which is added by the
+  // automatic rules.
+  // TODO: replace this with G_EXTRACT_SUBVECTOR when it lands into our tree.
+  //    https://github.com/llvm/llvm-project/pull/84538
+  if (DstVecSize == 256) {
+    const Register UnusedSubReg = MRI.createGenericVirtualRegister(DstVecTy);
+    MIRBuilder.buildUnmerge({DstReg, UnusedSubReg}, Src);
+  } else if (DstVecSize == 128) {
+    MIRBuilder.buildInstr(AIE2::G_AIE_UNPAD_VECTOR, {DstReg}, {Src});
+  }
+
+  MI.eraseFromParent();
+  return true;
 }
 
 bool AIELegalizerInfo::legalizeG_UNMERGE_VALUES(LegalizerHelper &Helper,
