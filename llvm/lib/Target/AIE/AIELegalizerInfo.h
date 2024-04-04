@@ -53,6 +53,8 @@ private:
   // Helper functions for legalization
   bool pack32BitVector(LegalizerHelper &Helper, MachineInstr &MI,
                        Register SourceReg) const;
+  bool unpack32BitVector(LegalizerHelper &Helper, MachineInstr &MI,
+                         Register SourceReg) const;
 };
 } // end namespace llvm
 #endif
