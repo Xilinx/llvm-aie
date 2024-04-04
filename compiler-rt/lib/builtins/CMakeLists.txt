@@ -430,6 +430,37 @@ list(REMOVE_ITEM aie2_SOURCES
   muldc3.c      # unsupported instruction : G_FCOPYSIGN
   mulsc3.c      # unsupported instruction : G_FCOPYSIGN
   udivmoddi4.c  # unsupported instruction : G_CTTZ_ZERO_UNDEF
+  absvti2.c     # unsupported type : __int128_t
+  addvti3.c     # unsupported type : __int128_t
+  ashrti3.c     # unsupported type : __int128_t
+  ashlti3.c     # unsupported type : __int128_t
+  cmpti2.c      # unsupported type : __int128_t
+  clzti2.c      # unsupported type : __int128_t
+  ctzti2.c      # unsupported type : __int128_t
+  ffsti2.c      # unsupported type : __int128_t
+  divti3.c      # unsupported type : __int128_t
+  divmodti4.c   # unsupported type : __int128_t
+  fixunssfti.c  # unsupported type : __int128_t
+  fixunsdfti.c  # unsupported type : __int128_t
+  fixsfti.c     # unsupported type : __int128_t
+  fixdfti.c     # unsupported type : __int128_t
+  floattidf.c   # unsupported type : __int128_t
+  floatuntidf.c # unsupported type : __int128_t
+  floattisf.c   # unsupported type : __int128_t
+  floatuntisf.c # unsupported type : __int128_t
+  lshrti3.c     # unsupported type : __int128_t
+  modti3.c      # unsupported type : __int128_t
+  muloti4.c     # unsupported type : __int128_t
+  multi3.c      # unsupported type : __int128_t
+  mulvti3.c     # unsupported type : __int128_t
+  negti2.c      # unsupported type : __int128_t
+  negvti2.c     # unsupported type : __int128_t
+  parityti2.c   # unsupported type : __int128_t
+  popcountti2.c # unsupported type : __int128_t
+  subvti3.c     # unsupported type : __int128_t
+  ucmpti2.c     # unsupported type : __int128_t
+  udivmodti4.c  # unsupported type : __int128_t
+
 )
 
 # builtin support for Targets that have Arm state or have Thumb2
