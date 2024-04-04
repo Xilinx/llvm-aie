@@ -63,6 +63,16 @@ static LegalizeMutation bitcastAccToVectorType(unsigned TypeIdx) {
   };
 }
 
+static LegalizeMutation bitcastToVectorElement32(const unsigned TypeIdx) {
+  return [=](const LegalityQuery &Query) {
+    const LLT Ty = Query.Types[TypeIdx];
+    unsigned Size = Ty.getSizeInBits();
+    assert(Size % 32 == 0);
+    return std::pair(
+        TypeIdx, LLT::scalarOrVector(ElementCount::getFixed(Size / 32), 32));
+  };
+}
+
 static LegalityPredicate
 isValidVectorMergeUnmergeOp(const unsigned BigVectorId,
                             const unsigned SmallVectorId) {
@@ -394,8 +404,34 @@ AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
           const LLT &EltTy = Query.Types[1].getElementType();
           return Query.Types[0] != EltTy;
         })
-        .customIf(typeInSet(1, {V2S32, V8S32, V16S32, V32S32, V16S16, V32S8,
-                                V32S16, V64S8, V64S16, V128S8}));
+        // If it is 32-bit, the LLVM can perform some bitshifts to legalize it
+        .bitcastIf(
+            [=](const LegalityQuery &Query) {
+              const LLT &VecTy = Query.Types[1];
+              return VecTy.getSizeInBits() == 32;
+            },
+            bitcastToVectorElement32(1))
+        // Extraction is supported for the native types of 32-, 256-, 512- and
+        // 1024-bit
+        .customIf(typeInSet(1, {V4S8, V2S16, V2S32, V8S32, V16S32, V32S32,
+                                V16S16, V32S8, V32S16, V64S8, V64S16, V128S8}))
+        // For 16-bits, we want to increase the number of elements to 4. Since
+        // our architecture doesn't always support all intermediate sizes, we do
+        // it as a special case so that we can use them minimum clamp for the
+        // smallest vector register.
+        .moreElementsIf(
+            [=](const LegalityQuery &Query) {
+              return Query.Types[1].getScalarSizeInBits() == 8 &&
+                     Query.Types[1].getNumElements() == 2;
+            },
+            [=](const LegalityQuery &Query) {
+              return std::make_pair(1, LLT::fixed_vector(4, S8));
+            })
+        // Increase the input vectors if they don't fit in the smallest vector
+        // register
+        .clampMinNumElements(1, S8, 32)
+        .clampMinNumElements(1, S16, 16)
+        .clampMinNumElements(1, S32, 8);
 
     getActionDefinitionsBuilder(G_INSERT_VECTOR_ELT)
         .clampScalar(2, S32, S32) // Clamp the idx to 32 bit since VINSERT
@@ -695,6 +731,16 @@ bool AIELegalizerInfo::legalizeG_UNMERGE_VALUES(LegalizerHelper &Helper,
              LastTy.getSizeInBits() &&
          "This operation is only supported for vectors");
 
+  // Pad vectors of 128-bit vectors to 256-bit
+  Register TargetReg = LastReg;
+  if (LastTy.getSizeInBits() == 128) {
+    const LLT NewRegTy =
+        LLT::fixed_vector(LastTy.getNumElements() * 2, LastTy.getScalarType());
+    const Register NewReg = MRI.createGenericVirtualRegister(NewRegTy);
+    MIRBuilder.buildInstr(AIE2::G_AIE_PAD_VECTOR_UNDEF, {NewReg}, {LastReg});
+    TargetReg = NewReg;
+  }
+
   const unsigned NumOperands = MI.getNumOperands() - 1;
   for (unsigned Index = 0; Index < NumOperands; ++Index) {
     const Register Current = MI.getOperand(Index).getReg();
@@ -703,13 +749,13 @@ bool AIELegalizerInfo::legalizeG_UNMERGE_VALUES(LegalizerHelper &Helper,
            "this operation is only supported for scalar types");
 
     if (LastTy.getSizeInBits() == 32)
-      return unpack32BitVector(Helper, MI, LastReg);
+      return unpack32BitVector(Helper, MI, TargetReg);
 
     // We build the constant ourselves since the default behaviour
     // of the builtin is to create 64-bit constants.
     const MachineInstrBuilder CurrentIndex =
         MIRBuilder.buildConstant(LLT::scalar(32), Index);
-    MIRBuilder.buildExtractVectorElement(Current, LastReg, CurrentIndex);
+    MIRBuilder.buildExtractVectorElement(Current, TargetReg, CurrentIndex);
   }
 
   MI.eraseFromParent();
