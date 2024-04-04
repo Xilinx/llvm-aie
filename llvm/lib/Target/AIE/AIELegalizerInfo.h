@@ -29,6 +29,7 @@ public:
 
 private:
   bool legalizeG_VASTART(LegalizerHelper &Helper, MachineInstr &MI) const;
+  bool legalizeG_BUILD_VECTOR(LegalizerHelper &Helper, MachineInstr &MI) const;
   bool legalizeG_UNMERGE_VALUES(LegalizerHelper &Helper,
                                 MachineInstr &MI) const;
   bool legalizeG_VAARG(LegalizerHelper &Helper, MachineInstr &MI) const;
