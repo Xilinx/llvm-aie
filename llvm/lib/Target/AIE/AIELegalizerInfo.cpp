@@ -491,6 +491,59 @@ bool AIELegalizerInfo::legalizeCustom(LegalizerHelper &Helper,
   llvm_unreachable("Un-expected custom legalization");
 }
 
+bool AIELegalizerInfo::pack32BitVector(LegalizerHelper &Helper,
+                                       MachineInstr &MI,
+                                       Register SourceReg) const {
+  MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
+  MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
+
+  const LLT SourceRegTy = MRI.getType(SourceReg);
+  const Register DstReg = MI.getOperand(0).getReg();
+  assert(SourceRegTy.getSizeInBits() == 32 &&
+         "cannot pack vectors larger or smaller than 32-bit");
+
+  const LLT S32 = LLT::scalar(32);
+  unsigned Offset = 0;
+  Register DstCastReg = MRI.createGenericVirtualRegister(S32);
+
+  // Skip the destination operand since that is where we are writing to.
+  MachineOperand *Operand = MI.operands_begin() + 1,
+                 *OperandEnd = MI.operands_end();
+  MIRBuilder.buildConstant(DstCastReg, 0);
+
+  const LLT RegTy = MRI.getType(DstReg);
+  while (Operand != OperandEnd) {
+    Register DestinationOperand = Operand->getReg();
+
+    if (RegTy.getScalarSizeInBits() != 32) {
+      const Register TmpReg32 = MRI.createGenericVirtualRegister(S32);
+      MIRBuilder.buildInstr(AIE2::G_ZEXT, {TmpReg32}, {DestinationOperand});
+      DestinationOperand = TmpReg32;
+    }
+
+    // Avoid a useless shift for the first element, since it doesn't get
+    // optimized out in O0.
+    const Register AccumulatorReg = MRI.createGenericVirtualRegister(S32);
+    if (Offset != 0) {
+      const MachineInstrBuilder ShiftConstant =
+          MIRBuilder.buildConstant(S32, Offset);
+      const MachineInstrBuilder Masked =
+          MIRBuilder.buildShl(S32, DestinationOperand, ShiftConstant);
+      MIRBuilder.buildOr(AccumulatorReg, DstCastReg, Masked);
+    } else {
+      MIRBuilder.buildOr(AccumulatorReg, DstCastReg, DestinationOperand);
+    }
+
+    DstCastReg = AccumulatorReg;
+    Offset += RegTy.getScalarSizeInBits();
+    ++Operand;
+  }
+
+  MIRBuilder.buildBitcast(DstReg, DstCastReg);
+  MI.eraseFromParent();
+  return true;
+}
+
 bool AIELegalizerInfo::legalizeG_BUILD_VECTOR(LegalizerHelper &Helper,
                                               MachineInstr &MI) const {
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
@@ -504,9 +557,14 @@ bool AIELegalizerInfo::legalizeG_BUILD_VECTOR(LegalizerHelper &Helper,
   const unsigned EltSize = DstVecEltTy.getScalarSizeInBits();
   assert((EltSize == 8 || EltSize == 16 || EltSize == 32) &&
          "non-existent integer size");
-  assert(DstVecSize > 64 && DstVecSize <= 1024 &&
-         "non-native vectors are not supported");
+  assert(DstVecSize == 32 || (DstVecSize > 64 && DstVecSize <= 1024 &&
+                              "non-native vectors are not supported"));
   assert(DstVecSize < 1024 && "vadd takes a 512-bit argument");
+
+  // If our vector is 32-bit we can store it as packed integer vector
+  if (DstVecSize == 32)
+    return pack32BitVector(Helper, MI, DstReg);
+
   // We are using an undef since we are building over multiple instructions
   const TypeSize VecEltTySize = DstVecEltTy.getSizeInBits();
   const LLT VecTy = LLT::fixed_vector(512 / VecEltTySize, DstVecEltTy);
