@@ -66,6 +66,7 @@ add_llvm_target(AIECodeGen
    AIECallLowering.cpp
    AIEDelaySlotFiller.cpp
    AIEDumpArtifacts.cpp
+   AIEFinalizeBundle.cpp
    AIEFrameLowering.cpp
    AIEHazardRecognizer.cpp
    AIEHazardRecognizerPRAS.cpp
@@ -73,13 +74,13 @@ add_llvm_target(AIECodeGen
    AIEInstructionSelector.cpp
    AIEISelDAGToDAG.cpp
    AIELegalizerInfo.cpp
-   AIEMIRFormatter.cpp
-   AIEMCInstLower.cpp
-   AIEFinalizeBundle.cpp
    AIEMachineAlignment.cpp
    AIEMachineBlockPlacement.cpp
    AIEMachineFunctionInfo.cpp
    AIEMachineScheduler.cpp
+   AIEMaxLatencyFinder.cpp
+   AIEMCInstLower.cpp
+   AIEMIRFormatter.cpp
    AIEPostSelectOptimize.cpp
    AIEPseudoBranchExpansion.cpp
    AIERegisterInfo.cpp
