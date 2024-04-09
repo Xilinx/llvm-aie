@@ -69,6 +69,10 @@ public:
                   SlotBits Slots = 0)
       : Required(Req), Reserved(Res), Slots(Slots) {}
 
+  /// Compare two FuncUnitWrappers for equality. This is only used for
+  /// dumping purposes, quite literally saying "this looks the same"
+  bool operator==(const FuncUnitWrapper &Other) const;
+
   /// Dump a readable version
   void dump() const;
 

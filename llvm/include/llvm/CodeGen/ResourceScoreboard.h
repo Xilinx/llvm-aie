@@ -74,7 +74,7 @@ public:
     Cycles.resize(Size);
     Head = 0;
   }
-  bool isValidDelta(int DeltaCycles) {
+  bool isValidDelta(int DeltaCycles) const {
     return DeltaCycles >= -Depth && DeltaCycles <= 0;
   }
 
@@ -109,22 +109,46 @@ public:
     return false;
   }
 
-  // Print the scoreboard.
-  void dump() const {
+  int firstOccupied() const {
     int First = -Depth;
     while (First < 0 && (*this)[First].isEmpty())
       First++;
+    return First;
+  }
+
+  int lastOccupied() const {
     int Last = Depth - 1;
     while ((Last > 0) && (*this)[Last].isEmpty())
       Last--;
 
+    return Last;
+  }
+
+  // Print the scoreboard.
+  void dump() const {
+    int First = firstOccupied();
+    int Last = lastOccupied();
+    RC Previous;
+    int Repeats = 0;
     for (int C = First; C <= Last; C++) {
+      const RC &Cycle = (*this)[C];
       if (C == 0) {
         dbgs() << ">";
+      } else if (C > First && Cycle == Previous) {
+        Repeats++;
+        continue;
+      }
+      if (Repeats) {
+        dbgs() << "+ " << Repeats << " more\n";
+        Repeats = 0;
       }
       dbgs() << "\t";
-      (*this)[C].dump();
+      Cycle.dump();
       dbgs() << "\n";
+      Previous = Cycle;
+    }
+    if (Repeats) {
+      dbgs() << "+ " << Repeats << " more\n";
     }
   }
 };

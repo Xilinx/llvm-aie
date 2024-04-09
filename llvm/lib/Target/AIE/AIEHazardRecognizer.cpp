@@ -45,6 +45,12 @@ const AIEBaseMCFormats *FuncUnitWrapper::FormatInterface = nullptr;
 void FuncUnitWrapper::setFormatInterface(const AIEBaseMCFormats *Formats) {
   FormatInterface = Formats;
 }
+
+bool FuncUnitWrapper::operator==(const FuncUnitWrapper &Other) const {
+  return Required == Other.Required && Reserved == Other.Reserved &&
+         Slots == Other.Slots;
+}
+
 void FuncUnitWrapper::dump() const {
   const char *const Digits = "0123456789";
   const char *const Spacer = "-|";
