@@ -6,8 +6,8 @@
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc --mtriple=aie2 --issue-limit=6 --run-pass=postmisched \
-# RUN:   --aie-latency-margin=0 --aie-interblock-alignment=false %s -o - \
-# RUN:   | FileCheck %s
+# RUN:   --aie-latency-margin=0 --aie-interblock-alignment=false \
+# RUN:   --aie-loop-aware=false %s -o - | FileCheck %s
 
 # Check that inter-block scoreboard is ok. We disable the latency safety
 # margin from the command line to make the test more sensitive.

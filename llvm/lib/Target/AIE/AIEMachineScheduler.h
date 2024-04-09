@@ -16,66 +16,24 @@
 #define LLVM_LIB_TARGET_AIE_AIEMACHINESCHEDULER_H
 
 #include "AIEHazardRecognizer.h"
+#include "AIEInterBlockScheduling.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineScheduler.h"
+#include <memory>
 
 namespace llvm {
 
+using BlockState = AIE::BlockState;
+using BlockType = AIE::BlockType;
+using Region = AIE::Region;
+using ScoreboardTrust = AIE::ScoreboardTrust;
+
 /// A MachineSchedStrategy implementation for AIE post RA scheduling.
 class AIEPostRASchedStrategy : public PostGenericScheduler {
+  /// Maintain the state of interblock/loop-aware scheduling
+  AIE::InterBlockScheduling InterBlock;
+
 public:
-  // Abstraction of the basic block state. It hides the order in which
-  // the regions are created. We may add more state in future, e.g.
-  // live out status registers.
-  using Region = std::vector<AIE::MachineBundle>;
-
-  // BlockType determines scheduling priority, direction and safety margin
-  // handling.
-  enum class BlockType { Regular, Loop, Epilogue };
-
-  class FixedpointState {
-  public:
-    int LatencyMargin = 0;
-    int ResourceMargin = 0;
-  };
-
-  class BlockState {
-    std::vector<Region> Regions;
-
-  public:
-    BlockState(MachineBasicBlock *Block);
-    MachineBasicBlock *TheBlock = nullptr;
-    FixedpointState FixPoint;
-    bool IsScheduled = false;
-    BlockType Kind = BlockType::Regular;
-    // We don't supply an addBottom(), which says we can only
-    // create the block state in bottom-up fashion.
-    void addTop(const Region &TopRegion) { Regions.emplace_back(TopRegion); }
-    const Region &getTop() const { return Regions.back(); }
-    Region &getTop() { return Regions.back(); }
-    const Region &getBottom() const { return Regions.front(); }
-    const char *kindAsString() const {
-      return Kind == BlockType::Loop       ? "Loop"
-             : Kind == BlockType::Epilogue ? "Epilogue"
-                                           : "Regular";
-    }
-    void clearSchedule();
-    unsigned cycleCount() const;
-  protected:
-    void classify();
-  };
-
-  // Represents how accurate our successor information is
-  enum class ScoreboardTrust {
-    // The bundles represent the true start of the blocks
-    Absolute,
-    // The bundles are accurate, but may shift at most one cycle
-    // due to alignment of a successor block
-    AccountForAlign,
-    // We don't have bundles for all successors
-    Conservative
-  };
-
   AIEPostRASchedStrategy(const MachineSchedContext *C);
 
   /// Called after each region entry.
@@ -113,7 +71,7 @@ public:
   /// Called on all the predecessors of an SU after it is scheduled bottom-up.
   void releaseBottomNode(SUnit *SU) override;
 
-  /// Return true if all the successor MBB are scheduled.
+  /// Return true if all the successor MBB are scheduled and converged.
   bool successorsAreScheduled(MachineBasicBlock *MBB) const;
 
   /// Initialize Bot scoreboard by replaying all Bundles from the
@@ -124,12 +82,10 @@ public:
 
   MachineBasicBlock *nextBlock() override;
 
-  // Return the scheduler state for this block
-  const BlockState &getBlockState(MachineBasicBlock *MBB) const;
-  BlockState &getBlockState(MachineBasicBlock *MBB);
-
   // Return the current block
   MachineBasicBlock *getCurMBB() const { return CurMBB; }
+
+  const AIE::InterBlockScheduling &getInterBlock() const { return InterBlock; }
 
 protected:
   /// Apply a set of heuristics to a new candidate for PostRA scheduling.
@@ -182,27 +138,10 @@ protected:
                              std::vector<AIE::MachineBundle> &TopBundles,
                              const std::vector<AIE::MachineBundle> &BotBundles);
 
-  /// Post-process the bundles in \ref Zone to insert any required NOP
-  /// and order nested instructions in a canonical order.
-  void
-  leaveSchedulingZone(SchedBoundary &Zone,
-                      const std::vector<AIE::MachineBundle> &OrderedBundles);
-
-  /// Mark the epilogue of the loops we found after constructing all
-  /// BlockStates
-  void markEpilogueBlocks();
-
-  // compute the order which the blocks will be scheduled.
-  void defineSchedulingOrder(MachineFunction *MF);
+  // After scheduling a block, fill in nops, apply bundling, etc.
+  void commitBlockSchedule(MachineBasicBlock *BB);
 
 private:
-  /// Holding multi-block scheduling information
-  std::map<MachineBasicBlock *, BlockState> ScheduledMBB;
-
-  /// The order in which we are going to schedule blocks and an index into it
-  std::vector<MachineBasicBlock *> MBBSequence;
-  unsigned NextInOrder;
-
   /// This flag is set for the first processed region of a basic block. We force
   /// this to be the bottom one, i.e. the one which connects to successor
   /// blocks whose entry state we're going to propagate

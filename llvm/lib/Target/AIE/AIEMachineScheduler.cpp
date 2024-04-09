@@ -11,14 +11,26 @@
 #include "AIEMachineScheduler.h"
 #include "AIEBaseInstrInfo.h"
 #include "AIEHazardRecognizer.h"
+#include "AIEMaxLatencyFinder.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/CodeGen/MachineScheduler.h"
+#include "llvm/CodeGen/ResourceScoreboard.h"
 #include "llvm/Support/Debug.h"
+#include <memory>
 
 #define DEBUG_TYPE "machine-scheduler"
 
+// This is a more specific debug classes, separating the function and block
+// level logging from the detailed scheduling info.
+// useful combis:
+// --debug-only=sched-blocks,loop-aware
+// --debug-only=sched-blocks,machine-scheduler
+#define DEBUG_BLOCKS(X) DEBUG_WITH_TYPE("sched-blocks", X)
+
 using namespace llvm;
+using namespace llvm::AIE;
 
 static cl::opt<bool> InsertCycleSeparators(
     "aie-prera-cycle-separators", cl::init(false),
@@ -46,10 +58,6 @@ static cl::opt<unsigned> ReservedDelaySlots(
     "aie-reserved-delay-slots", cl::init(0),
     cl::desc("[AIE] Number of delay slots to be left empty"));
 
-static cl::opt<bool>
-    LoopAware("aie-loop-aware", cl::init(false),
-              cl::desc("[AIE] Schedule single block loops iteratively"));
-
 /// This is a testing option. Resetting it prevents inter-block conflicts from
 /// the scoreboard, so that all interblock scheduling effects can be blamed on
 /// the latencies.
@@ -68,7 +76,8 @@ static AIEHazardRecognizer *getAIEHazardRecognizer(const SchedBoundary &Zone) {
 }
 
 AIEPostRASchedStrategy::AIEPostRASchedStrategy(const MachineSchedContext *C)
-    : PostGenericScheduler(C), Bot(SchedBoundary::BotQID, "BotQ") {
+    : PostGenericScheduler(C), InterBlock(C, InterBlockScoreboard),
+      Bot(SchedBoundary::BotQID, "BotQ") {
   assert((!ForceBottomUp || !ForceTopDown) &&
          "-misched-topdown incompatible with -misched-bottomup");
   if (ForceTopDown)
@@ -198,16 +207,20 @@ bool AIEPostRASchedStrategy::successorsAreScheduled(
     MachineBasicBlock *MBB) const {
   return !hasUnknownSuccessors(llvm::make_range(RegionBegin, RegionEnd), MBB) &&
          llvm::all_of(MBB->successors(), [&](MachineBasicBlock *B) {
-           return getBlockState(B).IsScheduled;
+           const auto &BS = InterBlock.getBlockState(B);
+           return BS.isScheduled();
          });
 }
 
 void AIEPostRASchedStrategy::initializeBotScoreBoard(ScoreboardTrust Trust) {
 
   if (!InterBlockScoreboard) {
-    LLVM_DEBUG(dbgs() << "Interblock scoreboard explicitly disabled\n");
+    DEBUG_BLOCKS(dbgs() << "Interblock scoreboard explicitly disabled\n");
     return;
   }
+
+  DEBUG_BLOCKS(dbgs() << "Compute bottom scoreboard of MBB "
+                      << CurMBB->getNumber() << "\n");
 
   // Check that we have forced bottom up regions. This makes sure that
   // getTop() used below behaves sanely.
@@ -236,28 +249,36 @@ void AIEPostRASchedStrategy::initializeBotScoreBoard(ScoreboardTrust Trust) {
 
   // This tracks unknown cycles resulting from blocks that are too short.
   // The conservative estimate is to declare all cycles unknown.
+  // The conservative case includes the fixpoint iteration on a loop. For that
+  // case we are not actually conservative; we assume a number of empty cycles
+  // in the scoreboard given by the fixpoint parameters.
   int FirstBlockedCycle = 0;
-
   if (Trust != ScoreboardTrust::Conservative) {
-    // Depth is a suitable supremum for the minimum we compute.
-    // Note that if the loop isn't entered, the responsibilty lies with
-    // our caller not setting Conservative. This may be legitimate to
-    // represent a done or flush_pipeline instruction in future
-    FirstBlockedCycle = Depth;
+    // The pipeline depth is a suitable supremum for the minimum we compute.
+    // Note that if the loop isn't entered (we have no successors), the
+    // responsibilty lies with our caller not setting Conservative.
+    // This may be legitimate to represent a 'done' or 'flush_pipeline'
+    // instruction in future
+    FirstBlockedCycle = BotHazardRec->getPipelineDepth();
     for (llvm::MachineBasicBlock *SuccMBB : CurMBB->successors()) {
       // Replay bundles into scoreboard.
-      LLVM_DEBUG(dbgs() << "**** Replay bundles of MBBs : "
-                        << SuccMBB->getNumber() << " "
-                        << "for MBB : " << CurMBB->getNumber() << " ****\n");
-      const Region &TopRegion = ScheduledMBB.at(SuccMBB).getTop();
+      DEBUG_BLOCKS(dbgs() << " SuccBB " << SuccMBB->getNumber() << "\n");
+      auto &SBS = InterBlock.getBlockState(SuccMBB);
+      if (SBS.getRegions().empty()) {
+        DEBUG_BLOCKS(dbgs() << " Empty Successor\n");
+        FirstBlockedCycle = 0;
+        continue;
+      }
+      DEBUG_BLOCKS(dbgs() << " Replay bundles\n");
       int Cycle = 0;
-      for (auto &Bundle : TopRegion) {
+      const std::vector<MachineBundle> &TopBundles = SBS.getTop().Bundles;
+      for (auto &Bundle : TopBundles) {
         // There's only so much future we need.
         if (Cycle >= FirstBlockedCycle) {
           break;
         }
-        LLVM_DEBUG(dbgs() << "Cycle " << Cycle << " has "
-                          << Bundle.getInstrs().size() << "instr\n");
+        DEBUG_BLOCKS(dbgs() << "Cycle " << Cycle << " has "
+                            << Bundle.getInstrs().size() << " instrs\n");
         for (MachineInstr *MI : Bundle.getInstrs()) {
           InsertInCycle(*MI, Cycle);
           if (Trust == ScoreboardTrust::AccountForAlign && Cycle + 1 < Depth) {
@@ -270,13 +291,20 @@ void AIEPostRASchedStrategy::initializeBotScoreBoard(ScoreboardTrust Trust) {
     }
   }
 
+  auto Cap = InterBlock.getBlockedResourceCap(CurMBB);
+  if (Cap && IsBottomRegion) {
+    int Margin = BotHazardRec->getPipelineDepth() - *Cap;
+    FirstBlockedCycle = std::max(FirstBlockedCycle, Margin);
+    DEBUG_BLOCKS(dbgs() << "FirstBlockedCycle = " << Margin << "\n");
+  }
+
   // We have to assume the worst for any cycle we haven't completely seen
   for (int Cycle = FirstBlockedCycle; Cycle < Depth; Cycle++) {
     BlockCycle(Cycle);
   }
 
   AlignScoreboardToCycleOne();
-  LLVM_DEBUG(BotHazardRec->dumpScoreboard());
+  DEBUG_BLOCKS(BotHazardRec->dumpScoreboard());
 }
 
 static MachineInstr *getDelaySlotInstr(MachineBasicBlock::iterator RegionBegin,
@@ -305,8 +333,6 @@ void AIEPostRASchedStrategy::initialize(ScheduleDAGMI *Dag) {
   // Update Bot scoreboard of the bottom region with the foreseeable future
   // as found in the top regions of the successor blocks. If we don't know,
   // assume the worst.
-  // TODO: When we include alignment in the schedule, we can change
-  // AccountForAlign to Absolute
   const bool Conservative = !(IsBottomRegion && successorsAreScheduled(CurMBB));
   const ScoreboardTrust NonConservative = InterBlockAlignment
                                               ? ScoreboardTrust::AccountForAlign
@@ -473,124 +499,97 @@ void AIEPostRASchedStrategy::schedNode(SUnit *SU, bool IsTopNode) {
   }
 }
 
-// This sets up the scheduling mode for each block. It defines which
-// CFG edges will be prioritized for interblock scheduling and which blocks
-// should take care of the latency repair.
-void AIEPostRASchedStrategy::markEpilogueBlocks() {
-  // Mark up the epilogues of the Loops we have found
-  for (auto &[MBB, BS] : ScheduledMBB) {
-    if (BS.Kind != BlockType::Loop) {
-      continue;
-    }
-    llvm::for_each(MBB->successors(), [L = MBB, this](auto *S) {
-      if (S != L) {
-        getBlockState(S).Kind = BlockType::Epilogue;
-      }
-    });
-  }
-}
-
 void AIEPostRASchedStrategy::enterFunction(MachineFunction *MF) {
-  // Define our universe of blocks
-  for (MachineBasicBlock &MBB : *MF) {
-    ScheduledMBB.emplace(&MBB, &MBB);
-  }
-  if (LoopAware) {
-    // Mark epilogues of the loops we found. This is only necessary if
-    // we have created Loops in the first place, as indicated by LoopAware.
-    markEpilogueBlocks();
-  }
-
-  defineSchedulingOrder(MF);
+  LLVM_DEBUG(dbgs() << "enterFunction " << MF->getName() << "\n");
+  InterBlock.enterFunction(MF);
 }
 
-void AIEPostRASchedStrategy::leaveFunction() { ScheduledMBB.clear(); }
+void AIEPostRASchedStrategy::leaveFunction() { InterBlock.leaveFunction(); }
 
 void AIEPostRASchedStrategy::enterMBB(MachineBasicBlock *MBB) {
+  InterBlock.enterBlock(MBB);
   CurMBB = MBB;
   // We force bottom up region processing, so the first region
   // from a block is the bottom one. We reset this when leaving any
   // region
   IsBottomRegion = true;
-  LLVM_DEBUG(dbgs() << "Enter MBB " << CurMBB->getBBIDOrNumber() << " "
-                    << getBlockState(MBB).kindAsString() << "\n");
+}
+
+void AIEPostRASchedStrategy::commitBlockSchedule(MachineBasicBlock *BB) {
+  auto &BS = InterBlock.getBlockState(BB);
+  MachineBasicBlock::iterator It = BB->begin();
+  const TargetInstrInfo *TII = getTII(BB);
+
+  // Emit the top safety margin
+  int Margin = InterBlock.getNumEntryNops(BS);
+  while (Margin--) {
+    TII->insertNoop(*BB, It);
+  }
+
+  for (auto &Region : BS.getRegions()) {
+    // Contrary to PRAS, the MachineScheduler does not automatically insert
+    // NOPs. That isn't a problem, since the callbacks to the HazardRecognizer
+    // were a bit flaky (e.g. when to call emitNoop vs advanceCycle).
+    // MachineScheduler just calls advanceCycle, and this is enough for us to
+    // insert NOPs because the sequence of Bundles gives us the full picture.
+    for (const AIE::MachineBundle &Bundle : Region.Bundles) {
+      if (Bundle.empty()) {
+        // Empty bundle means 1-cycle stall.
+        TII->insertNoop(*BB, It);
+        continue;
+      }
+      It = std::next(Bundle.getInstrs().back()->getIterator());
+    }
+    AIEHazardRecognizer::applyBundles(Region.Bundles, BS.TheBlock);
+  }
 }
 
 void AIEPostRASchedStrategy::leaveMBB() {
-  LLVM_DEBUG(dbgs() << "Leave MBB" << CurMBB->getBBIDOrNumber() << "\n");
-
+  if (InterBlock.leaveBlock()) {
+    // Finish it off and move to the next block.
+    commitBlockSchedule(CurMBB);
+  }
   CurMBB = nullptr;
 }
 
-void AIEPostRASchedStrategy::defineSchedulingOrder(MachineFunction *MF) {
-  // First do the (single-block) loops. We don't want these to be constrained
-  // by their epilogues
-  for (auto &[MBB, BS] : ScheduledMBB) {
-    if (BS.Kind == BlockType::Loop) {
-      MBBSequence.push_back(MBB);
-    }
-  }
-
-  // Then the rest in postorder to optimize the number of already scheduled
-  // successors
-  for (MachineBasicBlock *MBB : post_order(MF)) {
-    if (getBlockState(MBB).Kind != BlockType::Loop) {
-      MBBSequence.push_back(MBB);
-    }
-  }
-
-  // Now initialize the index to the start.
-  NextInOrder = 0;
-
-  LLVM_DEBUG(dbgs() << "MBB scheduling sequence : ";
-             for (const auto &MBBSeq
-                  : MBBSequence) dbgs()
-             << MBBSeq->getNumber() << " -> ";
-             dbgs() << "\n";);
-
-  assert(MF->size() == MBBSequence.size() &&
-         "Missing MBB in scheduling sequence");
-}
-
 MachineBasicBlock *AIEPostRASchedStrategy::nextBlock() {
-  if (NextInOrder >= MBBSequence.size()) {
-    return nullptr;
-  }
-  return MBBSequence[NextInOrder++];
-}
-
-const AIEPostRASchedStrategy::BlockState &
-AIEPostRASchedStrategy::getBlockState(MachineBasicBlock *MBB) const {
-  return ScheduledMBB.at(MBB);
-}
-
-AIEPostRASchedStrategy::BlockState &
-AIEPostRASchedStrategy::getBlockState(MachineBasicBlock *MBB) {
-  return ScheduledMBB.at(MBB);
+  return InterBlock.nextBlock();
 }
 
 void AIEPostRASchedStrategy::enterRegion(MachineBasicBlock *BB,
                                          MachineBasicBlock::iterator Begin,
                                          MachineBasicBlock::iterator End,
                                          unsigned RegionInstrs) {
+  InterBlock.enterRegion(BB, Begin, End);
   RegionBegin = Begin;
   RegionEnd = End;
 }
 
 void AIEPostRASchedStrategy::leaveRegion(const SUnit &ExitSU) {
-  LLVM_DEBUG(dbgs() << "Leave Region\n");
+  LLVM_DEBUG(dbgs() << "    << leaveRegion\n");
   materializeMultiOpcodeInstrs();
+
+  auto &BS = InterBlock.getBlockState(CurMBB);
+  if (IsBottomRegion) {
+    // This is the earliest point where we can destroy the recorded
+    // schedule in iterative scheduling. enterMBB and enterRegion are too early,
+    // since then the schedule can't be used to compute interblock latencies on
+    // the backedge of a loop. Note that this is done in a DAG mutator, which
+    // is called after enterRegion.
+    BS.clearSchedule();
+  }
+
   std::vector<AIE::MachineBundle> TopBundles = computeAndFinalizeBundles(Top);
   std::vector<AIE::MachineBundle> BotBundles = computeAndFinalizeBundles(Bot);
   handleRegionConflicts(ExitSU, TopBundles, BotBundles);
-  leaveSchedulingZone(Top, TopBundles);
-  leaveSchedulingZone(Bot, BotBundles);
+  assert(BS.getCurrentRegion().Bundles.empty());
+  BS.addBundles(TopBundles);
+  BS.addBundles(BotBundles);
   RegionBegin = nullptr;
   RegionEnd = nullptr;
   IsBottomRegion = false;
-  // This is the point where we are sure that we have valid bundles.
-  // Trivial blocks do not come here, but will visit leaveMBB
-  getBlockState(CurMBB).IsScheduled = true;
+  BS.advanceRegion();
+  DEBUG_BLOCKS(dbgs() << "    << leaveRegion\n");
 }
 
 void AIEPostRASchedStrategy::materializeMultiOpcodeInstrs() {
@@ -666,45 +665,6 @@ void AIEPostRASchedStrategy::handleRegionConflicts(
   if (Top.getCurrCycle() != TopBundles.size()) {
     AIE::MachineBundle DummyCurrBundle(getTII(*DAG)->getFormatInterface());
     bumpCycleForBundles(Top.getCurrCycle(), TopBundles, DummyCurrBundle);
-  }
-}
-
-void AIEPostRASchedStrategy::leaveSchedulingZone(
-    SchedBoundary &Zone,
-    const std::vector<AIE::MachineBundle> &OrderedBundles) {
-  LLVM_DEBUG(dbgs() << "  NumBundles=" << OrderedBundles.size() << "\n");
-
-  // Contrary to PRAS, the MachineScheduler does not automatically insert NOPs.
-  // That isn't a problem, since the callbacks to the HazardRecognizer were a
-  // bit flaky (e.g. when to call emitNoop vs advanceCycle).
-  // MachineScheduler just calls advanceCycle, and this is enough for us to
-  // insert NOPs because the sequence of Bundles gives us the full picture.
-  const TargetInstrInfo *TII = getTII(CurMBB);
-  auto It = RegionBegin;
-  for (const AIE::MachineBundle &Bundle : OrderedBundles) {
-    if (Bundle.empty()) {
-      // Empty bundle means 1-cycle stall.
-      TII->insertNoop(*CurMBB, It);
-      continue;
-    }
-    It = std::next(Bundle.getInstrs().back()->getIterator());
-  }
-
-  // Bundle real instructions and move meta instructions.
-  // TODO: this should be done here instead of in a HazardRecognizer.
-  AIEHazardRecognizer::applyBundles(OrderedBundles, CurMBB);
-
-  // ScheduledMBB is populated with Bundles for MBB after they are scheduled.
-  // Every scheduled region is saved under the same key/MBB.
-  // Note : Bundles from Top & Bot zone combined created complete bundles for a
-  // region.
-  if (Zone.isTop())
-    ScheduledMBB.at(CurMBB).addTop(OrderedBundles);
-  else {
-    std::vector<AIE::MachineBundle> &TopBundles =
-        ScheduledMBB.at(CurMBB).getTop();
-    TopBundles.insert(TopBundles.end(), OrderedBundles.begin(),
-                      OrderedBundles.end());
   }
 }
 
@@ -914,46 +874,4 @@ void AIEScheduleDAGMILive::exitRegion() {
   // to enter/exit regions. Let's give it some.
   static_cast<AIEPreRASchedStrategy *>(SchedImpl.get())->leaveRegion(ExitSU);
   ScheduleDAGMILive::exitRegion();
-}
-
-llvm::AIEPostRASchedStrategy::BlockState::BlockState(MachineBasicBlock *Block)
-    : TheBlock(Block) { classify(); }
-
-void llvm::AIEPostRASchedStrategy::BlockState::clearSchedule() {
-  Regions.clear();
-}
-
-unsigned llvm::AIEPostRASchedStrategy::BlockState::cycleCount() const {
-  unsigned Size = 0;
-  for (auto &R : Regions) {
-    Size += R.size();
-  }
-  return Size;
-}
-
-void llvm::AIEPostRASchedStrategy::BlockState::classify() {
-  // Detect whether this block is amenable to loop-aware scheduling.
-  // We must push the safety margin to our epilogue block(s)
-  // This can only be done if the epilogue is not itself
-  // a loop.
-  auto IsLoop = [](MachineBasicBlock *MBB) {
-    return llvm::any_of(MBB->successors(), [&](auto *S) { return S == MBB; });
-  };
-  // We generalize slightly; we require an epilogue to have a single
-  // predecessor, which additionally gives it a unique loop to adjust to.
-  auto CanFixLoopSchedule = [L = TheBlock](auto *S) {
-    // Either the backedge, or a dedicated loop exit
-    return S == L || S->pred_size() == 1;
-  };
-
-  // If we don't mark up any loops, we will iterate in the same order and apply
-  // the same safetymargins as before.
-  if (LoopAware && IsLoop(TheBlock) &&
-      llvm::all_of(TheBlock->successors(), CanFixLoopSchedule)) {
-    Kind = BlockType::Loop;
-  }
-
-  // We will mark the epilogues in a second sweep, when all states have been
-  // constructed. That sweep is driven by the Loops we've classified on
-  // on construction.
 }

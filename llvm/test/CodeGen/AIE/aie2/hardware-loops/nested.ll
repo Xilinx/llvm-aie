@@ -53,8 +53,8 @@ define void @nested(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    st r2, [p0, #0] // Delay Slot 2
-; CHECK-NEXT:    nop // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    st r2, [p0, #0] // Delay Slot 1
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  // %bb.3: // %for.cond3.for.cond.cleanup5_crit_edge
 ; CHECK-NEXT:    // in Loop: Header=BB0_1 Depth=1

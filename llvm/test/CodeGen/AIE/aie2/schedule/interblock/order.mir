@@ -4,8 +4,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-=======
-# RUN: llc --mtriple=aie2 --start-before=postmisched --debug-only=machine-scheduler \
+# RUN: llc --mtriple=aie2 --start-before=postmisched --debug-only=sched-blocks \
 # RUN: --aie-loop-aware=1 %s -o /dev/null |& FileCheck %s
 # REQUIRES: asserts
 

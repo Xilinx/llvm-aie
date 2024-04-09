@@ -120,8 +120,8 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ASM-NEXT:  .LBB0_2: // %inner.loop
 ; ASM-NEXT:    // Parent Loop BB0_1 Depth=1
 ; ASM-NEXT:    // => This Inner Loop Header: Depth=2
-; ASM-NEXT:    nopb ; vlda wl6, [p0], m6; nops ; nopxm ; nopv
-; ASM-NEXT:    vlda wh6, [p0], m6; nopx
+; ASM-NEXT:    vlda wl6, [p0], m6; nopx
+; ASM-NEXT:    vlda wh6, [p0], m6
 ; ASM-NEXT:    vlda wl8, [p0], m6
 ; ASM-NEXT:    vlda.3d wh8, [p0], d0
 ; ASM-NEXT:    nop
@@ -134,20 +134,20 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ASM-NEXT:    vshuffle x8, x4, x2, r2
 ; ASM-NEXT:    vshuffle x3, x4, x2, r3
 ; ASM-NEXT:    vshuffle x1, x8, x0, r0; vmac cm2, cm2, x8, x10, r4
-; ASM-NEXT:    vshuffle x5, x3, x0, r0; vmac cm4, cm4, x3, x10, r4
-; ASM-NEXT:    vmac cm3, cm3, x1, x10, r4
-; ASM-NEXT:    vmac cm5, cm5, x5, x10, r4
-; ASM-NEXT:    vmac cm6, cm6, x8, x6, r4
-; ASM-NEXT:    add r6, r6, #-1; vmac cm7, cm7, x1, x6, r4
-; ASM-NEXT:    jnz r6, #.LBB0_2; vmac cm1, cm1, x3, x6, r4
-; ASM-NEXT:    vmac cm0, cm0, x5, x6, r4 // Delay Slot 5
-; ASM-NEXT:    nop // Delay Slot 4
-; ASM-NEXT:    mov r8, p0 // Delay Slot 3
-; ASM-NEXT:    and r8, r8, r1 // Delay Slot 2
-; ASM-NEXT:    add r8, r8, #33 // Delay Slot 1
+; ASM-NEXT:    add r6, r6, #-1; vshuffle x5, x3, x0, r0; vmac cm4, cm4, x3, x10, r4
+; ASM-NEXT:    jnz r6, #.LBB0_2; vmac cm3, cm3, x1, x10, r4
+; ASM-NEXT:    vmac cm5, cm5, x5, x10, r4 // Delay Slot 5
+; ASM-NEXT:    vmac cm6, cm6, x8, x6, r4 // Delay Slot 4
+; ASM-NEXT:    mov r8, p0; vmac cm7, cm7, x1, x6, r4 // Delay Slot 3
+; ASM-NEXT:    and r8, r8, r1; vmac cm1, cm1, x3, x6, r4 // Delay Slot 2
+; ASM-NEXT:    add r8, r8, #33; vmac cm0, cm0, x5, x6, r4 // Delay Slot 1
 ; ASM-NEXT:  // %bb.3: // %outer.loop.latch
 ; ASM-NEXT:    // in Loop: Header=BB0_1 Depth=1
-; ASM-NEXT:    vst.srs.s16.s32 bmh2, s2, [p3, #32]; nopx
+; ASM-NEXT:    nopa ; nopb ; nopxm
+; ASM-NEXT:    nop
+; ASM-NEXT:    nop
+; ASM-NEXT:    nop
+; ASM-NEXT:    vst.srs.s16.s32 bmh2, s2, [p3, #32]
 ; ASM-NEXT:    vst.srs.s16.s32 bml2, s2, [p3], #64
 ; ASM-NEXT:    vst.srs.s16.s32 bmh3, s2, [p3, #32]; mov m2, r30
 ; ASM-NEXT:    vst.srs.s16.s32 bml3, s2, [p3], m2
