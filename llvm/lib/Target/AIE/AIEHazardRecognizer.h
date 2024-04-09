@@ -121,8 +121,7 @@ public:
   /// issued again.
   void setReservedCycles(unsigned Cycles);
 
-  /// Update Scoreboard for Schedclass at DeltaCycles. It only touches the
-  /// scoreboard, in particular, it doesn't add instructions to the bundle.
+  /// Update Scoreboard for Schedclass at DeltaCycles.
   /// \param FUDepthLimit Restricts the depth to which itinerary
   ///        resources are recorded in the scoreboard. This is mainly for
   ///        use from the pre-RA scheduler, where detailed resource modelling

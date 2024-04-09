@@ -249,7 +249,10 @@ public:
   }
 
   /// Per function finalization
-  virtual void leaveFunction() {}
+  virtual void leaveFunction() {
+    assert(NextMBB == CurrFn->end());
+    CurrFn = nullptr;
+  }
 
   virtual MachineBasicBlock *nextBlock() {
     return NextMBB == CurrFn->end() ? nullptr : &(*NextMBB++);

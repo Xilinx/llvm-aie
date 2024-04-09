@@ -12,7 +12,7 @@
 #include "AIEMaxLatencyFinder.h"
 
 #undef DEBUG_TYPE
-#define DEBUG_TYPE "machine-scheduler"
+#define DEBUG_TYPE "sched-blocks"
 
 namespace llvm::AIE {
 
@@ -113,11 +113,13 @@ int MaxLatencyFinder::findEarliestRef(
   int Cycle = 0;
   for (const auto &Bundle : Bundles) {
     if (Cycle >= Prune) {
+      LLVM_DEBUG(dbgs() << " prune at " << Cycle << "\n");
       return Cycle;
     }
     for (MachineInstr *DstMI : Bundle.getInstrs()) {
+      LLVM_DEBUG(dbgs() << "  " << *DstMI);
       if (depends(SrcMI, *DstMI)) {
-        LLVM_DEBUG(dbgs() << *DstMI << " depends in cycle=" << Cycle << "\n");
+        LLVM_DEBUG(dbgs() << "    depends in cycle=" << Cycle << "\n");
         return Cycle;
       }
     }
@@ -125,6 +127,14 @@ int MaxLatencyFinder::findEarliestRef(
   }
   return Cycle;
 }
+
+MaxLatencyFinder::MaxLatencyFinder(
+    const AIEPostRASchedStrategy *const Scheduler,
+    const AIEBaseInstrInfo *const TII,
+    const InstrItineraryData *const Itineraries,
+    const MCRegisterInfo *const TRI, MachineBasicBlock *const CurBB)
+    : Scheduler(Scheduler), TII(TII), Itineraries(Itineraries), TRI(TRI),
+      CurBB(CurBB), InterBlock(true) {}
 
 MaxLatencyFinder::MaxLatencyFinder(AIEScheduleDAGMI *DAG)
     : Scheduler(DAG->getSchedImpl()),
@@ -137,25 +147,48 @@ MaxLatencyFinder::MaxLatencyFinder(AIEScheduleDAGMI *DAG)
                  Scheduler->successorsAreScheduled(CurBB)) {}
 
 unsigned MaxLatencyFinder::operator()(MachineInstr &MI) {
+  LLVM_DEBUG(dbgs() << MI << "\n");
   // If we don't use interblock information, include the 'StageLatency'
   // in maxLatency. This influences the height parameters, telling the
   // scheduler to prefer deep-pipeline instructions over shorter ones.
-  const bool IncludeStages = !InterBlock;
-  int Latency = maxLatency(&MI, *TII, *Itineraries, IncludeStages);
+  int Latency = maxLatency(&MI, *TII, *Itineraries, !InterBlock);
+  LLVM_DEBUG(dbgs() << "MaxLatency=" << Latency << "\n");
+
+  // We have two distinct modes here. For interblock, we have perfect
+  // information, and we try to reduce the latency by detailed analysis of
+  // the successor schedules.
+  // For non interblock, we may be given an optimistic cap on the latency
+  // which will gradually increase during convergence of iteratively
+  // scheduling a loop.
+  const AIE::InterBlockScheduling &IB = Scheduler->getInterBlock();
   if (!InterBlock) {
+    if (auto Cap = IB.getLatencyCap(CurBB)) {
+      LLVM_DEBUG(dbgs() << "Capped at " << *Cap << "\n");
+      Latency = std::min(Latency, *Cap);
+    }
     return Latency;
   }
-  LLVM_DEBUG(dbgs() << MI << "Earliest for " << MI);
+  LLVM_DEBUG(dbgs() << "Earliest for: " << MI);
   // Track the earliest use in any successor block, given the cycles in
   // which these uses are scheduled
   int Earliest = Latency;
   for (MachineBasicBlock *SuccBB : CurBB->successors()) {
-    const AIEPostRASchedStrategy::Region &TopBundles =
-        Scheduler->getBlockState(SuccBB).getTop();
-    Earliest = std::min(Earliest, findEarliestRef(MI, TopBundles, Earliest));
+    auto &SBS = IB.getBlockState(SuccBB);
+    assert(SBS.isScheduled());
+    if (SBS.getRegions().empty()) {
+      // Blocks can be empty. getTop() will fail, and Earliest=0 is
+      // a conservative value
+      Earliest = 0;
+      continue;
+    }
+    const std::vector<AIE::MachineBundle> &TopBundles = SBS.getTop().Bundles;
+    Earliest = findEarliestRef(MI, TopBundles, Earliest);
   }
+
   LLVM_DEBUG(dbgs() << "   Earliest=" << Earliest << "\n");
-  return std::max(Latency - Earliest, 1);
+  Latency = std::max(Latency - Earliest, 1);
+  LLVM_DEBUG(dbgs() << "EffectiveLatency=" << Latency << "\n");
+  return Latency;
 }
 
 } // namespace llvm::AIE

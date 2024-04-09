@@ -392,13 +392,12 @@ class WAWEdges : public ScheduleDAGMutation {
         if (MO->isReg() && MO->isDef() &&
             RI->isSimplifiableReservedReg(MO->getReg())) {
           Register PhysReg = MO->getReg();
-          SUnit *SU = DAG->getSUnit(&MI);
           if (!LiveRegs.contains(PhysReg)) {
             // The physical register isn't live, simplify WAW dependencies that
             // are internal to the region
-            updateOutputDeps(SU, PhysReg, PhysRegWriters);
+            updateOutputDeps(&SU, PhysReg, PhysRegWriters);
           } else {
-            PhysRegWriters[PhysReg] = SU;
+            PhysRegWriters[PhysReg] = &SU;
           }
         }
       }
@@ -416,6 +415,18 @@ AIEBaseSubtarget::getPostRAMutationsImpl(const Triple &TT) {
   Mutations.emplace_back(std::make_unique<LockDelays>());
   if (!TT.isAIE1()) {
     Mutations.emplace_back(std::make_unique<RegionEndEdges>());
+    Mutations.emplace_back(std::make_unique<MemoryEdges>());
+    Mutations.emplace_back(std::make_unique<WAWEdges>());
+  }
+  return Mutations;
+}
+
+// List the Mutations that apply to the interblock DAG construction.
+std::vector<std::unique_ptr<ScheduleDAGMutation>>
+AIEBaseSubtarget::getInterBlockMutationsImpl(const Triple &TT) {
+  std::vector<std::unique_ptr<ScheduleDAGMutation>> Mutations;
+  Mutations.emplace_back(std::make_unique<LockDelays>());
+  if (!TT.isAIE1()) {
     Mutations.emplace_back(std::make_unique<MemoryEdges>());
     Mutations.emplace_back(std::make_unique<WAWEdges>());
   }
