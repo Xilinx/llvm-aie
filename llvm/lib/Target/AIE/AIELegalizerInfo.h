@@ -28,6 +28,8 @@ public:
   AIELegalizerInfo(const AIEBaseSubtarget &ST);
   bool legalizeCustom(LegalizerHelper &Helper, MachineInstr &MI,
                       LostDebugLocObserver &LocObserver) const override;
+  bool legalizeIntrinsic(LegalizerHelper &Helper,
+                         MachineInstr &MI) const override;
 
 private:
   bool legalizeG_VASTART(LegalizerHelper &Helper, MachineInstr &MI) const;
