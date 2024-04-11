@@ -21,6 +21,7 @@
 #include "MCTargetDesc/AIEMCTargetDesc.h"
 #include "llvm/Analysis/VectorUtils.h"
 #include "llvm/CodeGen/GlobalISel/CallLowering.h"
+#include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
 #include "llvm/CodeGen/GlobalISel/LegalizerHelper.h"
 #include "llvm/CodeGen/GlobalISel/LegalizerInfo.h"
 #include "llvm/CodeGen/GlobalISel/LostDebugLocObserver.h"
@@ -1337,5 +1338,36 @@ bool AIELegalizerInfo::legalizeG_FADDSUB(LegalizerHelper &Helper,
   MIRBuilder.buildTrunc(DstReg, ExtDstReg);
 
   MI.eraseFromParent();
+  return true;
+}
+
+bool AIELegalizerInfo::legalizeIntrinsic(LegalizerHelper &Helper,
+                                         MachineInstr &MI) const {
+
+  // The loop_decrement is a bit of an exception in legalization since it
+  // is an architecture-neutral intrinsic to implement hardware loops, not a
+  // dedicated AIE intrinsic. As such it carries a boolean, which should be
+  // legalized to a 32 bit integer type.
+  switch (cast<GIntrinsic>(MI).getIntrinsicID()) {
+  case Intrinsic::loop_decrement: {
+    assert(MI.getOpcode() == TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS);
+
+    MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
+    // Insert after our instruction
+    MIRBuilder.setInsertPt(*MI.getParent(), ++MI.getIterator());
+
+    Register OrigDst = MI.getOperand(0).getReg();
+    Register NewDst =
+        MIRBuilder.getMRI()->createGenericVirtualRegister(LLT::scalar(32));
+    // NOTE: we don't inform the observer about this change as we do not want to
+    // revisit this instruction
+    MI.getOperand(0).setReg(NewDst);
+    Register ZExtValueReg =
+        MIRBuilder.buildAssertZExt(LLT::scalar(32), NewDst, 1).getReg(0);
+    MIRBuilder.buildTrunc(OrigDst, ZExtValueReg);
+    return true;
+  }
+  }
+
   return true;
 }
