@@ -1,3 +1,9 @@
+#
+# Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 include(CMakePushCheckState)
 include(CheckSymbolExists)
 
@@ -146,6 +152,8 @@ macro(test_target_arch arch def)
 endmacro()
 
 macro(detect_target_arch)
+  check_symbol_exists(__aie__ "" __AIE)
+  check_symbol_exists(__AIEARCH__ "" __AIEARCH)
   check_symbol_exists(__arm__ "" __ARM)
   check_symbol_exists(__AVR__ "" __AVR)
   check_symbol_exists(__aarch64__ "" __AARCH64)
@@ -164,7 +172,15 @@ macro(detect_target_arch)
   check_symbol_exists(__wasm32__ "" __WEBASSEMBLY32)
   check_symbol_exists(__wasm64__ "" __WEBASSEMBLY64)
   check_symbol_exists(__ve__ "" __VE)
-  if(__ARM)
+  if(__AIE)
+    if(__AIEARCH EQUAL "10")
+      add_default_target_arch(aie)
+    elseif(__AIEARCH EQUAL "20")
+      add_default_target_arch(aie2)
+    else()
+      message(FATAL_ERROR "Unsupported AIE arch ${__AIEARCH}")
+    endif()
+  elseif(__ARM)
     add_default_target_arch(arm)
   elseif(__AVR)
     add_default_target_arch(avr)
