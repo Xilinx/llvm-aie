@@ -1,3 +1,10 @@
+#
+# Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+
 # This directory contains a large amount of C code which provides
 # generic implementations of the core runtime library along with optimized
 # architecture-specific code in various subdirectories.
@@ -385,6 +392,36 @@ else () # MSVC
   set(i386_SOURCES ${GENERIC_SOURCES} ${x86_ARCH_SOURCES})
 endif () # if (NOT MSVC)
 
+set(aie_SOURCES
+  ${GENERIC_SOURCES}
+)
+list(REMOVE_ITEM aie_SOURCES
+apple_versioning.c # Not apple
+divsc3.c # Needs sitofp
+emutls.c # Needs  __attribute__ ((__regparm__ (1)))
+enable_execute_stack.c # Trampoline stuff
+eprintf.c # Archaeology
+gcc_personality_v0.c # Needs br with Jumptable
+os_version_check.c # No OS
+trampoline_setup.c # Trampoline stuff
+)
+set(aie2_SOURCES ${aie_SOURCES})
+list(REMOVE_ITEM aie2_SOURCES
+  bswapdi2.c    # unsupported instruction : G_BSWAP
+  bswapsi2.c    # unsupported instruction : G_BSWAP
+  ctzdi2.c      # unsupported instruction : G_CTTZ_ZERO_UNDEF
+  divdc3.c      # unsupported instruction : G_FCOPYSIGN
+  ffssi2.c      # unsupported instruction : G_CTTZ_ZERO_UNDEF
+  ffsdi2.c      # unsupported instruction : G_CTTZ_ZERO_UNDEF
+  fixsfdi.c     # unsupported instruction : G_FCMP
+  fixdfdi.c     # unsupported instruction : G_FCMP
+  fixunsdfdi.c  # unsupported instruction : G_FPTOUI
+  fixunssfdi.c  # unsupported instruction : G_FPTOUI
+  floatdidf.c   # unsupported instruction : G_SITOFP
+  muldc3.c      # unsupported instruction : G_FCOPYSIGN
+  mulsc3.c      # unsupported instruction : G_FCOPYSIGN
+  udivmoddi4.c  # unsupported instruction : G_CTTZ_ZERO_UNDEF
+)
 
 # builtin support for Targets that have Arm state or have Thumb2
 set(arm_or_thumb2_base_SOURCES
