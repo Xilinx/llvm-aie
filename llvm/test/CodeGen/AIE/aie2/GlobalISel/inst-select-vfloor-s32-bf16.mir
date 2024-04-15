@@ -25,8 +25,7 @@ body:             |
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
     %1:vregbank(<16 x s16>) = COPY $wl2
     %2:gprregbank(s32) = COPY $r0
-    %0:vregbank(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.v16bf16.to.v16i32), %1(<16 x s16>), %2(s32)
+    %0:vregbank(<16 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.v16bf16.to.v16i32), %1(<16 x s16>), %2(s32)
     $x0 = COPY %0(<16 x s32>)
     PseudoRET implicit $lr, implicit $x0
-
 ...
