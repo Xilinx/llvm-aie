@@ -28,16 +28,41 @@ public:
   // the regions are created. We may add more state in future, e.g.
   // live out status registers.
   using Region = std::vector<AIE::MachineBundle>;
+
+  // BlockType determines scheduling priority, direction and safety margin
+  // handling.
+  enum class BlockType { Regular, Loop, Epilogue };
+
+  class FixedpointState {
+  public:
+    int LatencyMargin = 0;
+    int ResourceMargin = 0;
+  };
+
   class BlockState {
     std::vector<Region> Regions;
 
   public:
+    BlockState(MachineBasicBlock *Block);
+    MachineBasicBlock *TheBlock = nullptr;
+    FixedpointState FixPoint;
+    bool IsScheduled = false;
+    BlockType Kind = BlockType::Regular;
     // We don't supply an addBottom(), which says we can only
     // create the block state in bottom-up fashion.
     void addTop(const Region &TopRegion) { Regions.emplace_back(TopRegion); }
     const Region &getTop() const { return Regions.back(); }
     Region &getTop() { return Regions.back(); }
     const Region &getBottom() const { return Regions.front(); }
+    const char *kindAsString() const {
+      return Kind == BlockType::Loop       ? "Loop"
+             : Kind == BlockType::Epilogue ? "Epilogue"
+                                           : "Regular";
+    }
+    void clearSchedule();
+    unsigned cycleCount() const;
+  protected:
+    void classify();
   };
 
   // Represents how accurate our successor information is
@@ -79,8 +104,6 @@ public:
                    MachineBasicBlock::iterator End, unsigned RegionInstrs);
   void leaveRegion(const SUnit &ExitSU);
 
-  void defineSchedulingOrder(MachineFunction *MF);
-
   /// Explicitly process regions backwards. The first scheduled region in
   /// a block connects with successors.
   bool doMBBSchedRegionsTopDown() const override { return false; }
@@ -103,6 +126,8 @@ public:
 
   // Return the scheduler state for this block
   const BlockState &getBlockState(MachineBasicBlock *MBB) const;
+  BlockState &getBlockState(MachineBasicBlock *MBB);
+
   // Return the current block
   MachineBasicBlock *getCurMBB() const { return CurMBB; }
 
@@ -163,8 +188,15 @@ protected:
   leaveSchedulingZone(SchedBoundary &Zone,
                       const std::vector<AIE::MachineBundle> &OrderedBundles);
 
+  /// Mark the epilogue of the loops we found after constructing all
+  /// BlockStates
+  void markEpilogueBlocks();
+
+  // compute the order which the blocks will be scheduled.
+  void defineSchedulingOrder(MachineFunction *MF);
+
 private:
-  /// Save ordered scheduled bundles for all the regions in a MBB.
+  /// Holding multi-block scheduling information
   std::map<MachineBasicBlock *, BlockState> ScheduledMBB;
 
   /// The order in which we are going to schedule blocks and an index into it
