@@ -737,13 +737,6 @@ void ScheduleDAGInstrs::insertBarrierChain(Value2SUsMap &map) {
   map.reComputeSize();
 }
 
-std::vector<MachineBasicBlock *> ScheduleDAGInstrs::getMBBScheduleSeq() const {
-  std::vector<MachineBasicBlock *> MBBSequence;
-  std::transform(MF.begin(), MF.end(), std::back_inserter(MBBSequence),
-                 [](MachineBasicBlock &MBB) { return &MBB; });
-  return MBBSequence;
-}
-
 void ScheduleDAGInstrs::buildSchedGraph(AAResults *AA,
                                         RegPressureTracker *RPTracker,
                                         PressureDiffs *PDiffs,

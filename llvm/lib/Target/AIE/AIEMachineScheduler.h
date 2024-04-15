@@ -16,6 +16,7 @@
 #define LLVM_LIB_TARGET_AIE_AIEMACHINESCHEDULER_H
 
 #include "AIEHazardRecognizer.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineScheduler.h"
 
 namespace llvm {
@@ -69,11 +70,16 @@ public:
   /// the HazardRecognizer of the newly-emitted instruction.
   void schedNode(SUnit *SU, bool IsTopNode) override;
 
+  void enterFunction(MachineFunction *MF) override;
+  void leaveFunction() override;
+
   void enterMBB(MachineBasicBlock *MBB) override;
   void leaveMBB() override;
   void enterRegion(MachineBasicBlock *BB, MachineBasicBlock::iterator Begin,
                    MachineBasicBlock::iterator End, unsigned RegionInstrs);
   void leaveRegion(const SUnit &ExitSU);
+
+  void defineSchedulingOrder(MachineFunction *MF);
 
   /// Explicitly process regions backwards. The first scheduled region in
   /// a block connects with successors.
@@ -93,11 +99,7 @@ public:
   /// outside of the region, i.e. block all resources.
   void initializeBotScoreBoard(ScoreboardTrust Trust);
 
-  /// Schedule MBB in a sequence such that all the successors are scheduled
-  /// before a given basic block is scheduled. This may not hold true if graph
-  /// is cyclic.
-  std::vector<MachineBasicBlock *>
-  getMBBScheduleSeq(MachineFunction &MF) const override;
+  MachineBasicBlock *nextBlock() override;
 
   // Return the scheduler state for this block
   const BlockState &getBlockState(MachineBasicBlock *MBB) const;
@@ -164,6 +166,10 @@ protected:
 private:
   /// Save ordered scheduled bundles for all the regions in a MBB.
   std::map<MachineBasicBlock *, BlockState> ScheduledMBB;
+
+  /// The order in which we are going to schedule blocks and an index into it
+  std::vector<MachineBasicBlock *> MBBSequence;
+  unsigned NextInOrder;
 
   /// This flag is set for the first processed region of a basic block. We force
   /// this to be the bottom one, i.e. the one which connects to successor

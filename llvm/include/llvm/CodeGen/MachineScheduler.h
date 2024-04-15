@@ -242,11 +242,24 @@ public:
   /// Initialize the strategy after building the DAG for a new region.
   virtual void initialize(ScheduleDAGMI *DAG) = 0;
 
+  /// Per-function initialization
+  virtual void enterFunction(MachineFunction *MF) {
+    CurrFn = MF;
+    NextMBB = CurrFn->begin();
+  }
+
+  /// Per function finalization
+  virtual void leaveFunction() {}
+
+  virtual MachineBasicBlock *nextBlock() {
+    return NextMBB == CurrFn->end() ? nullptr : &(*NextMBB++);
+  }
+
   /// Tell the strategy that MBB is about to be processed.
-  virtual void enterMBB(MachineBasicBlock *MBB) {};
+  virtual void enterMBB(MachineBasicBlock *MBB) {}
 
   /// Tell the strategy that current MBB is done.
-  virtual void leaveMBB() {};
+  virtual void leaveMBB() {}
 
   /// Notify this strategy that all roots have been released (including those
   /// that depend on EntrySU or ExitSU).
@@ -292,12 +305,9 @@ public:
   /// bottom-up scheduling.
   virtual void releaseBottomNode(SUnit *SU) = 0;
 
-  /// Allow targets to decide sequence in which MBB are scheduled.
-  virtual std::vector<MachineBasicBlock *>
-  getMBBScheduleSeq(MachineFunction &MF) const {
-    // This signals SchedDAGMI to fall back to default ordering
-    return {};
-  }
+private:
+  MachineFunction *CurrFn;
+  MachineFunction::iterator NextMBB;
 };
 
 /// ScheduleDAGMI is an implementation of ScheduleDAGInstrs that simply
@@ -349,8 +359,15 @@ public:
     return SchedImpl->doMBBSchedRegionsTopDown();
   }
 
-  /// Supply the scheduling order of blocks
-  std::vector<MachineBasicBlock *> getMBBScheduleSeq() const override;
+  /// Initialize function-wide data
+  void startSchedule(MachineFunction *MF) override;
+
+  /// Finalize function-wide data
+  void finalizeSchedule() override;
+
+  /// Supply the scheduling order of blocks. The target can decide to schedule
+  /// the same block multiple times. Return nullptr when done.
+  MachineBasicBlock *nextBlock() override;
 
   // Returns LiveIntervals instance for use in DAG mutators and such.
   LiveIntervals *getLIS() const { return LIS; }

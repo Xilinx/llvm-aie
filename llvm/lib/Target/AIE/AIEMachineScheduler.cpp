@@ -468,6 +468,12 @@ void AIEPostRASchedStrategy::schedNode(SUnit *SU, bool IsTopNode) {
   }
 }
 
+void AIEPostRASchedStrategy::enterFunction(MachineFunction *MF) {
+  defineSchedulingOrder(MF);
+}
+
+void AIEPostRASchedStrategy::leaveFunction() { ScheduledMBB.clear(); }
+
 void AIEPostRASchedStrategy::enterMBB(MachineBasicBlock *MBB) {
   CurMBB = MBB;
   // We force bottom up region processing, so the first region
@@ -482,13 +488,20 @@ void AIEPostRASchedStrategy::leaveMBB() {
   CurMBB = nullptr;
 }
 
-std::vector<MachineBasicBlock *>
-AIEPostRASchedStrategy::getMBBScheduleSeq(MachineFunction &MF) const {
+MachineBasicBlock *AIEPostRASchedStrategy::nextBlock() {
+  if (NextInOrder >= MBBSequence.size()) {
+    return nullptr;
+  }
+  return MBBSequence[NextInOrder++];
+}
 
-  std::vector<MachineBasicBlock *> MBBSequence;
-  for (MachineBasicBlock *MBB : post_order(&MF)) {
+void AIEPostRASchedStrategy::defineSchedulingOrder(MachineFunction *MF) {
+  for (auto *MBB : post_order(MF)) {
     MBBSequence.push_back(MBB);
   }
+
+  // Now initialize the index to the start.
+  NextInOrder = 0;
 
   LLVM_DEBUG(dbgs() << "MBB scheduling sequence : ";
              for (const auto &MBBSeq
@@ -496,10 +509,8 @@ AIEPostRASchedStrategy::getMBBScheduleSeq(MachineFunction &MF) const {
              << MBBSeq->getNumber() << " -> ";
              dbgs() << "\n";);
 
-  assert(MF.size() == MBBSequence.size() &&
+  assert(MF->size() == MBBSequence.size() &&
          "Missing MBB in scheduling sequence");
-
-  return MBBSequence;
 }
 const AIEPostRASchedStrategy::BlockState &
 AIEPostRASchedStrategy::getBlockState(MachineBasicBlock *MBB) const {
