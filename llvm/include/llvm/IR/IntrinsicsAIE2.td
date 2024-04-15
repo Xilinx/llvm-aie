@@ -441,7 +441,7 @@ class AIEV2BF16ToInt : Intrinsic<[llvm_i32_ty],
       [IntrNoMem]>;
 class AIEV2V16BF16ToV16I : Intrinsic<[llvm_v16i32_ty],
       [llvm_v16bf16_ty, llvm_i32_ty],
-      [IntrNoMem]>;
+      [IntrReadMem, IntrInaccessibleMemOnly]>;
 
 // Streams
 class AIEV2V16I32I32I32 : DefaultAttrsIntrinsic<[llvm_v16i32_ty], [llvm_i32_ty], [IntrInaccessibleMemOnly]>;

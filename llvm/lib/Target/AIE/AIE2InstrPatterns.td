@@ -1113,7 +1113,7 @@ def : Pat<(int_aie2_v16bf16_to_v16accfloat VEC256:$src),
 def : Pat<(int_aie2_sched_barrier), (SCHED_BARRIER)>;
 
 // vector of bfloat16 to vector of int
-def : Pat<(int_aie2_v16bf16_to_v16i32 VEC256:$src, mSs:$shft),
+def : PatInaccessibleMem<(int_aie2_v16bf16_to_v16i32 VEC256:$src, mSs:$shft),
           (VFLOOR_S32_BF16_mFl2FxSrc_W VEC256:$src, mSs:$shft)>;
 
 // VCLR_vclr_BF
