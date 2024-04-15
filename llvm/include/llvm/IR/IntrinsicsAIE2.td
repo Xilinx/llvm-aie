@@ -469,8 +469,8 @@ class AIEV2CLB : Intrinsic<[llvm_i32_ty], [llvm_i32_ty], [IntrNoMem]>;
 class AIEV2DIVS : Intrinsic<[llvm_i32_ty, llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
 
 // Pack-Unpack
-class AIEV2PackI4I8 : Intrinsic<[llvm_v32i8_ty], [llvm_v32i16_ty, llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>; 
-class AIEV2PackI8I16 : Intrinsic<[llvm_v32i8_ty], [llvm_v32i16_ty, llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;  
+class AIEV2PackI4I8 : Intrinsic<[llvm_v32i8_ty], [llvm_v32i16_ty, llvm_i32_ty], [IntrReadMem, IntrInaccessibleMemOnly]>;
+class AIEV2PackI8I16 : Intrinsic<[llvm_v32i8_ty], [llvm_v32i16_ty, llvm_i32_ty], [IntrReadMem, IntrInaccessibleMemOnly]>;
 class AIEV2UnPackI8I4 : Intrinsic<[llvm_v32i16_ty], [llvm_v32i8_ty, llvm_i32_ty], [IntrNoMem]>;
 class AIEV2UnPackI16I8 : Intrinsic<[llvm_v32i16_ty], [llvm_v32i8_ty, llvm_i32_ty], [IntrNoMem]>;
 
