@@ -21,13 +21,11 @@ define void @test_pack_sat_I16_s(<32 x i16> %v, ptr %p1, ptr %p2, i32 %sign) {
 ; CHECK-NEXT:    mov crPackSign, #0 // Delay Slot 1
 entry:
   tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 0)
-  %0 = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-  %1 = tail call <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> %v, i32 %sign, i32 %0)
-  store <32 x i8> %1, ptr %p1, align 32, !tbaa !2
+  %0 = tail call <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> %v, i32 %sign)
+  store <32 x i8> %0, ptr %p1, align 32, !tbaa !2
   tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 1)
-  %2 = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-  %3 = tail call <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> %v, i32 %sign, i32 %2)
-  store <32 x i8> %3, ptr %p2, align 32, !tbaa !2
+  %1 = tail call <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> %v, i32 %sign)
+  store <32 x i8> %1, ptr %p2, align 32, !tbaa !2
   ret void
 }
 
@@ -46,13 +44,11 @@ define void @test_pack_sat_I8_s(<64 x i8>  %v, ptr %p1, ptr %p2, i32 %sign) {
 entry:
   tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 0)
   %0 = bitcast <64 x i8> %v to <32 x i16>
-  %1 = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-  %2 = tail call <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> %0, i32 %sign, i32 %1)
-  store <32 x i8> %2, ptr %p1, align 32, !tbaa !2
+  %1 = tail call <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> %0, i32 %sign)
+  store <32 x i8> %1, ptr %p1, align 32, !tbaa !2
   tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 1)
-  %3 = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-  %4 = tail call <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> %0, i32 %sign, i32 %3)
-  store <32 x i8> %4, ptr %p2, align 32, !tbaa !2
+  %2 = tail call <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> %0, i32 %sign)
+  store <32 x i8> %2, ptr %p2, align 32, !tbaa !2
   ret void
 }
 
@@ -68,13 +64,11 @@ define void @test_pack_sat_I16(<32 x i16> %v, ptr %p1, ptr %p2) {
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 1)
-  %0 = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-  %1 = tail call <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> %v, i32 1, i32 %0)
-  store <32 x i8> %1, ptr %p1, align 32, !tbaa !2
+  %0 = tail call <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> %v, i32 1)
+  store <32 x i8> %0, ptr %p1, align 32, !tbaa !2
   tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 0)
-  %2 = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-  %3 = tail call <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> %v, i32 1, i32 %2)
-  store <32 x i8> %3, ptr %p2, align 32, !tbaa !2
+  %1 = tail call <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> %v, i32 1)
+  store <32 x i8> %1, ptr %p2, align 32, !tbaa !2
   ret void
 }
 
@@ -91,22 +85,16 @@ define void @test_pack_sat_I8(<64 x i8> %v, ptr %p1, ptr %p2) {
 entry:
   tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 0)
   %0 = bitcast <64 x i8> %v to <32 x i16>
-  %1 = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-  %2 = tail call <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> %0, i32 1, i32 %1)
-  store <32 x i8> %2, ptr %p1, align 32, !tbaa !2
+  %1 = tail call <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> %0, i32 1)
+  store <32 x i8> %1, ptr %p1, align 32, !tbaa !2
   tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 1)
-  %3 = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-  %4 = tail call <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> %0, i32 1, i32 %3)
-  store <32 x i8> %4, ptr %p2, align 32, !tbaa !2
+  %2 = tail call <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> %0, i32 1)
+  store <32 x i8> %2, ptr %p2, align 32, !tbaa !2
   ret void
 }
 
-declare <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16>, i32, i32)
-
-declare <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16>, i32, i32)
-
-declare i32 @llvm.aie2.get.ctrl.reg(i32)
-
+declare <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16>, i32)
+declare <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16>, i32)
 declare void @llvm.aie2.set.ctrl.reg(i32, i32)
 
 !2 = !{!3, !3, i64 0}

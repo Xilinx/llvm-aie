@@ -10,12 +10,10 @@
 //===----------------------------------------------------------------------===//
 // RUN: %clang -O2 %s --target=aie2 -S -emit-llvm -o - | FileCheck %s
 
-//
 // CHECK-LABEL: @_Z9test_packDv32_si(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> [[V:%.*]], i32 [[SIGN:%.*]], i32 [[TMP0]])
-// CHECK-NEXT:    ret <32 x i8> [[TMP1]]
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> [[V:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <32 x i8> [[TMP0]]
 //
 v32int8 test_pack(v32int16 v, int sign) {
   return pack(v, sign);
@@ -24,10 +22,9 @@ v32int8 test_pack(v32int16 v, int sign) {
 // CHECK-LABEL: @_Z25test_pack_double_v32int16Dv32_sPDv32_aS1_i(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 0)
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> [[V:%.*]], i32 [[SIGN:%.*]], i32 [[TMP0]])
-// CHECK-NEXT:    store <32 x i8> [[TMP1]], ptr [[P1:%.*]], align 32, !tbaa [[TBAA2:![0-9]+]]
-// CHECK-NEXT:    store <32 x i8> [[TMP1]], ptr [[P2:%.*]], align 32, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> [[V:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    store <32 x i8> [[TMP0]], ptr [[P1:%.*]], align 32, !tbaa [[TBAA2:![0-9]+]]
+// CHECK-NEXT:    store <32 x i8> [[TMP0]], ptr [[P2:%.*]], align 32, !tbaa [[TBAA2]]
 // CHECK-NEXT:    ret void
 //
 void test_pack_double_v32int16 (v32int16 v, v32int8 *p1, v32int8 *p2, int sign) {
@@ -39,13 +36,11 @@ void test_pack_double_v32int16 (v32int16 v, v32int8 *p1, v32int8 *p2, int sign) 
 // CHECK-LABEL: @_Z22test_pack_sat_v32int16Dv32_sPDv32_aS1_i(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 0)
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> [[V:%.*]], i32 [[SIGN:%.*]], i32 [[TMP0]])
-// CHECK-NEXT:    store <32 x i8> [[TMP1]], ptr [[P1:%.*]], align 32, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> [[V:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    store <32 x i8> [[TMP0]], ptr [[P1:%.*]], align 32, !tbaa [[TBAA2]]
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 1)
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-// CHECK-NEXT:    [[TMP3:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> [[V]], i32 [[SIGN]], i32 [[TMP2]])
-// CHECK-NEXT:    store <32 x i8> [[TMP3]], ptr [[P2:%.*]], align 32, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> [[V]], i32 [[SIGN]])
+// CHECK-NEXT:    store <32 x i8> [[TMP1]], ptr [[P2:%.*]], align 32, !tbaa [[TBAA2]]
 // CHECK-NEXT:    ret void
 //
 void test_pack_sat_v32int16 (v32int16 v, v32int8 *p1, v32int8 *p2, int sign) {
@@ -57,9 +52,8 @@ void test_pack_sat_v32int16 (v32int16 v, v32int8 *p1, v32int8 *p2, int sign) {
 
 // CHECK-LABEL: @_Z9test_packDv32_ti(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> [[V:%.*]], i32 [[SIGN:%.*]], i32 [[TMP0]])
-// CHECK-NEXT:    ret <32 x i8> [[TMP1]]
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> [[V:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <32 x i8> [[TMP0]]
 //
 v32uint8 test_pack(v32uint16 v, int sign) {
   return pack(v, sign);
@@ -68,13 +62,11 @@ v32uint8 test_pack(v32uint16 v, int sign) {
 // CHECK-LABEL: @_Z23test_pack_sat_v32uint16Dv32_tPDv32_hS1_i(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 1)
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> [[V:%.*]], i32 [[SIGN:%.*]], i32 [[TMP0]])
-// CHECK-NEXT:    store <32 x i8> [[TMP1]], ptr [[P1:%.*]], align 32, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> [[V:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    store <32 x i8> [[TMP0]], ptr [[P1:%.*]], align 32, !tbaa [[TBAA2]]
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 0)
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-// CHECK-NEXT:    [[TMP3:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> [[V]], i32 [[SIGN]], i32 [[TMP2]])
-// CHECK-NEXT:    store <32 x i8> [[TMP3]], ptr [[P2:%.*]], align 32, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> [[V]], i32 [[SIGN]])
+// CHECK-NEXT:    store <32 x i8> [[TMP1]], ptr [[P2:%.*]], align 32, !tbaa [[TBAA2]]
 // CHECK-NEXT:    ret void
 //
 void test_pack_sat_v32uint16 (v32uint16 v, v32uint8 *p1, v32uint8 *p2, int sign) {
@@ -87,9 +79,8 @@ void test_pack_sat_v32uint16 (v32uint16 v, v32uint8 *p1, v32uint8 *p2, int sign)
 // CHECK-LABEL: @_Z9test_packDv64_ai(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V:%.*]] to <32 x i16>
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> [[TMP0]], i32 [[SIGN:%.*]], i32 [[TMP1]])
-// CHECK-NEXT:    ret <32 x i8> [[TMP2]]
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> [[TMP0]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <32 x i8> [[TMP1]]
 //
 v64int4 test_pack(v64int8 v, int sign) {
   return pack(v, sign);
@@ -99,13 +90,11 @@ v64int4 test_pack(v64int8 v, int sign) {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 1)
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V:%.*]] to <32 x i16>
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> [[TMP0]], i32 [[SIGN:%.*]], i32 [[TMP1]])
-// CHECK-NEXT:    store <32 x i8> [[TMP2]], ptr [[P1:%.*]], align 32, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> [[TMP0]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    store <32 x i8> [[TMP1]], ptr [[P1:%.*]], align 32, !tbaa [[TBAA2]]
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 0)
-// CHECK-NEXT:    [[TMP3:%.*]] = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-// CHECK-NEXT:    [[TMP4:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> [[TMP0]], i32 [[SIGN]], i32 [[TMP3]])
-// CHECK-NEXT:    store <32 x i8> [[TMP4]], ptr [[P2:%.*]], align 32, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> [[TMP0]], i32 [[SIGN]])
+// CHECK-NEXT:    store <32 x i8> [[TMP2]], ptr [[P2:%.*]], align 32, !tbaa [[TBAA2]]
 // CHECK-NEXT:    ret void
 //
 void test_pack_sat_v64int8 (v64int8 v, v64int4 *p1, v64int4 *p2, int sign) {
@@ -118,9 +107,8 @@ void test_pack_sat_v64int8 (v64int8 v, v64int4 *p1, v64int4 *p2, int sign) {
 // CHECK-LABEL: @_Z9test_packDv64_hi(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V:%.*]] to <32 x i16>
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> [[TMP0]], i32 [[SIGN:%.*]], i32 [[TMP1]])
-// CHECK-NEXT:    ret <32 x i8> [[TMP2]]
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> [[TMP0]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <32 x i8> [[TMP1]]
 //
 v64uint4 test_pack(v64uint8 v, int sign) {
   return pack(v, sign);
@@ -130,13 +118,11 @@ v64uint4 test_pack(v64uint8 v, int sign) {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 0)
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V:%.*]] to <32 x i16>
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> [[TMP0]], i32 [[SIGN:%.*]], i32 [[TMP1]])
-// CHECK-NEXT:    store <32 x i8> [[TMP2]], ptr [[P1:%.*]], align 32, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> [[TMP0]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    store <32 x i8> [[TMP1]], ptr [[P1:%.*]], align 32, !tbaa [[TBAA2]]
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 1)
-// CHECK-NEXT:    [[TMP3:%.*]] = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-// CHECK-NEXT:    [[TMP4:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> [[TMP0]], i32 [[SIGN]], i32 [[TMP3]])
-// CHECK-NEXT:    store <32 x i8> [[TMP4]], ptr [[P2:%.*]], align 32, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> [[TMP0]], i32 [[SIGN]])
+// CHECK-NEXT:    store <32 x i8> [[TMP2]], ptr [[P2:%.*]], align 32, !tbaa [[TBAA2]]
 // CHECK-NEXT:    ret void
 //
 void test_pack_sat_v64uint8 (v64uint8 v, v64uint4 *p1, v64uint4 *p2, int sign) {
@@ -148,9 +134,8 @@ void test_pack_sat_v64uint8 (v64uint8 v, v64uint4 *p1, v64uint4 *p2, int sign) {
 
 // CHECK-LABEL: @_Z9test_packDv32_s(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> [[V:%.*]], i32 1, i32 [[TMP0]])
-// CHECK-NEXT:    ret <32 x i8> [[TMP1]]
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> [[V:%.*]], i32 1)
+// CHECK-NEXT:    ret <32 x i8> [[TMP0]]
 //
 v32int8 test_pack(v32int16 v) {
   return pack(v);
@@ -159,13 +144,11 @@ v32int8 test_pack(v32int16 v) {
 // CHECK-LABEL: @_Z22test_pack_sat_v32int16Dv32_sPDv32_aS1_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 0)
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> [[V:%.*]], i32 1, i32 [[TMP0]])
-// CHECK-NEXT:    store <32 x i8> [[TMP1]], ptr [[P1:%.*]], align 32, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> [[V:%.*]], i32 1)
+// CHECK-NEXT:    store <32 x i8> [[TMP0]], ptr [[P1:%.*]], align 32, !tbaa [[TBAA2]]
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 1)
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-// CHECK-NEXT:    [[TMP3:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> [[V]], i32 1, i32 [[TMP2]])
-// CHECK-NEXT:    store <32 x i8> [[TMP3]], ptr [[P2:%.*]], align 32, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> [[V]], i32 1)
+// CHECK-NEXT:    store <32 x i8> [[TMP1]], ptr [[P2:%.*]], align 32, !tbaa [[TBAA2]]
 // CHECK-NEXT:    ret void
 //
 void test_pack_sat_v32int16 (v32int16 v, v32int8 *p1, v32int8 *p2) {
@@ -177,9 +160,8 @@ void test_pack_sat_v32int16 (v32int16 v, v32int8 *p1, v32int8 *p2) {
 
 // CHECK-LABEL: @_Z9test_packDv32_t(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> [[V:%.*]], i32 0, i32 [[TMP0]])
-// CHECK-NEXT:    ret <32 x i8> [[TMP1]]
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> [[V:%.*]], i32 0)
+// CHECK-NEXT:    ret <32 x i8> [[TMP0]]
 //
 v32uint8 test_pack(v32uint16 v) {
   return pack(v);
@@ -188,13 +170,11 @@ v32uint8 test_pack(v32uint16 v) {
 // CHECK-LABEL: @_Z23test_pack_sat_v32uint16Dv32_tPDv32_hS1_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 1)
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> [[V:%.*]], i32 0, i32 [[TMP0]])
-// CHECK-NEXT:    store <32 x i8> [[TMP1]], ptr [[P1:%.*]], align 32, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> [[V:%.*]], i32 0)
+// CHECK-NEXT:    store <32 x i8> [[TMP0]], ptr [[P1:%.*]], align 32, !tbaa [[TBAA2]]
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 0)
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-// CHECK-NEXT:    [[TMP3:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> [[V]], i32 0, i32 [[TMP2]])
-// CHECK-NEXT:    store <32 x i8> [[TMP3]], ptr [[P2:%.*]], align 32, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> [[V]], i32 0)
+// CHECK-NEXT:    store <32 x i8> [[TMP1]], ptr [[P2:%.*]], align 32, !tbaa [[TBAA2]]
 // CHECK-NEXT:    ret void
 //
 void test_pack_sat_v32uint16 (v32uint16 v, v32uint8 *p1, v32uint8 *p2) {
@@ -207,9 +187,8 @@ void test_pack_sat_v32uint16 (v32uint16 v, v32uint8 *p1, v32uint8 *p2) {
 // CHECK-LABEL: @_Z9test_packDv64_a(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V:%.*]] to <32 x i16>
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> [[TMP0]], i32 1, i32 [[TMP1]])
-// CHECK-NEXT:    ret <32 x i8> [[TMP2]]
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> [[TMP0]], i32 1)
+// CHECK-NEXT:    ret <32 x i8> [[TMP1]]
 //
 v64int4 test_pack(v64int8 v) {
   return pack(v);
@@ -219,13 +198,11 @@ v64int4 test_pack(v64int8 v) {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 0)
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V:%.*]] to <32 x i16>
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> [[TMP0]], i32 1, i32 [[TMP1]])
-// CHECK-NEXT:    store <32 x i8> [[TMP2]], ptr [[P1:%.*]], align 32, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> [[TMP0]], i32 1)
+// CHECK-NEXT:    store <32 x i8> [[TMP1]], ptr [[P1:%.*]], align 32, !tbaa [[TBAA2]]
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 1)
-// CHECK-NEXT:    [[TMP3:%.*]] = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-// CHECK-NEXT:    [[TMP4:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> [[TMP0]], i32 1, i32 [[TMP3]])
-// CHECK-NEXT:    store <32 x i8> [[TMP4]], ptr [[P2:%.*]], align 32, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> [[TMP0]], i32 1)
+// CHECK-NEXT:    store <32 x i8> [[TMP2]], ptr [[P2:%.*]], align 32, !tbaa [[TBAA2]]
 // CHECK-NEXT:    ret void
 //
 void test_pack_sat_v64int8 (v64int8 v, v64int4 *p1, v64int4 *p2) {
@@ -239,10 +216,9 @@ void test_pack_sat_v64int8 (v64int8 v, v64int4 *p1, v64int4 *p2) {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 1)
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V:%.*]] to <32 x i16>
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> [[TMP0]], i32 1, i32 [[TMP1]])
-// CHECK-NEXT:    store <32 x i8> [[TMP2]], ptr [[P1:%.*]], align 32, !tbaa [[TBAA2]]
-// CHECK-NEXT:    store <32 x i8> [[TMP2]], ptr [[P2:%.*]], align 32, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> [[TMP0]], i32 1)
+// CHECK-NEXT:    store <32 x i8> [[TMP1]], ptr [[P1:%.*]], align 32, !tbaa [[TBAA2]]
+// CHECK-NEXT:    store <32 x i8> [[TMP1]], ptr [[P2:%.*]], align 32, !tbaa [[TBAA2]]
 // CHECK-NEXT:    ret void
 //
 void test_pack_double_v64int8 (v64int8 v, v64int4 *p1, v64int4 *p2) {
@@ -254,9 +230,8 @@ void test_pack_double_v64int8 (v64int8 v, v64int4 *p1, v64int4 *p2) {
 // CHECK-LABEL: @_Z9test_packDv64_h(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V:%.*]] to <32 x i16>
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> [[TMP0]], i32 0, i32 [[TMP1]])
-// CHECK-NEXT:    ret <32 x i8> [[TMP2]]
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> [[TMP0]], i32 0)
+// CHECK-NEXT:    ret <32 x i8> [[TMP1]]
 //
 v64uint4 test_pack(v64uint8 v) {
   return pack(v);
@@ -266,13 +241,11 @@ v64uint4 test_pack(v64uint8 v) {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 0)
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V:%.*]] to <32 x i16>
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> [[TMP0]], i32 0, i32 [[TMP1]])
-// CHECK-NEXT:    store <32 x i8> [[TMP2]], ptr [[P1:%.*]], align 32, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> [[TMP0]], i32 0)
+// CHECK-NEXT:    store <32 x i8> [[TMP1]], ptr [[P1:%.*]], align 32, !tbaa [[TBAA2]]
 // CHECK-NEXT:    tail call void @llvm.aie2.set.ctrl.reg(i32 9, i32 1)
-// CHECK-NEXT:    [[TMP3:%.*]] = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-// CHECK-NEXT:    [[TMP4:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> [[TMP0]], i32 0, i32 [[TMP3]])
-// CHECK-NEXT:    store <32 x i8> [[TMP4]], ptr [[P2:%.*]], align 32, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> [[TMP0]], i32 0)
+// CHECK-NEXT:    store <32 x i8> [[TMP2]], ptr [[P2:%.*]], align 32, !tbaa [[TBAA2]]
 // CHECK-NEXT:    ret void
 //
 void test_pack_sat_v64uint8 (v64uint8 v, v64uint4 *p1, v64uint4 *p2) {

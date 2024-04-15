@@ -224,6 +224,7 @@ public:
 
 private:
   bool selectImpl(MachineInstr &I, CodeGenCoverage &CoverageInfo) const;
+  void makeDeadMI(MachineInstr &MI, MachineRegisterInfo &MRI);
   void renderFrameIndex(MachineInstrBuilder &MIB, const MachineInstr &MI,
                         int OpIdx) const;
   void renderNegateImm(MachineInstrBuilder &MIB, const MachineInstr &MI,
@@ -356,26 +357,6 @@ void AIE2InstructionSelector::setUnsetCtrlRegister(MachineInstr &I,
                                                    Register ValueReg,
                                                    unsigned DefaultCRVal) {
   setUnsetCtrlRegister(I, I, MRI, CRReg, ValueReg, DefaultCRVal);
-}
-
-void AIE2InstructionSelector::setCtrlRegister(MachineInstr &I,
-                                              MachineRegisterInfo &MRI,
-                                              Register CRReg,
-                                              Register ValueReg) {
-  // Set the crReg based on ValueReg parameter before I
-  MIB.setInstr(I);
-  if (auto Val = getIConstantVRegValWithLookThrough(ValueReg, MRI)) {
-    unsigned ConstCRVal = Val->Value.getZExtValue();
-    MIB.buildInstr(AIE2::MOV_scalar_imm10_pseudo, {CRReg}, {})
-        .addImm(ConstCRVal);
-  } else {
-    auto CopyInstr =
-        MIB.buildInstr(TargetOpcode::COPY, {CRReg}, {}).addReg(ValueReg);
-    if (!selectCopy(*CopyInstr, MRI)) {
-      dbgs() << "Failed to set and unset control register for: " << I << "\n";
-      llvm_unreachable("Failed to set and unset control register");
-    }
-  }
 }
 
 unsigned AIE2InstructionSelector::getOpCode(Intrinsic::ID IntrinsicID) {
@@ -613,9 +594,6 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
     case Intrinsic::aie2_unpack_I8_I4:
     case Intrinsic::aie2_unpack_I16_I8:
       return selectVUNPACK(I, MRI);
-    case Intrinsic::aie2_pack_I4_I8:
-    case Intrinsic::aie2_pack_I8_I16:
-      return selectVPACK(I, MRI);
     case Intrinsic::aie2_I256_v16_acc32_srs:
     case Intrinsic::aie2_I256_v16_acc64_srs:
     case Intrinsic::aie2_I256_v32_acc32_srs:
@@ -675,6 +653,9 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
       return selectSetControlRegister(I, MRI);
     case Intrinsic::aie2_get_ctrl_reg:
       return selectGetControlRegister(I, MRI);
+    case Intrinsic::aie2_pack_I4_I8:
+    case Intrinsic::aie2_pack_I8_I16:
+      return selectVPACK(I, MRI);
     case Intrinsic::start_loop_iterations:
       return selectStartLoop(I, MRI);
     case Intrinsic::aie2_scd_read_vec:
@@ -1441,10 +1422,9 @@ bool AIE2InstructionSelector::selectVPACK(MachineInstr &I,
                                           MachineRegisterInfo &MRI) {
 
   Register DstReg = I.getOperand(0).getReg();
-  // In this case of G_INTRINSIC, operand 1 is target intrinsic.
+  // In this case of G_INTRINSIC_W_SIDE_EFFECTS, operand 1 is target intrinsic.
   Register SrcReg = I.getOperand(2).getReg();
   Register SignReg = I.getOperand(3).getReg();
-  Register CrSatReg = I.getOperand(4).getReg();
   MachineInstrBuilder MI;
 
   if (auto Sign = getIConstantVRegValWithLookThrough(SignReg, MRI)) {
@@ -1467,7 +1447,6 @@ bool AIE2InstructionSelector::selectVPACK(MachineInstr &I,
     setUnsetCtrlRegister(*MI, MRI, AIE2::crPackSign, SignReg);
   }
 
-  setCtrlRegister(*MI, MRI, AIE2::crSat, CrSatReg);
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
 }
@@ -1594,9 +1573,14 @@ bool canCombineUNPACKLoad(MachineInstr &MemOp, MachineInstr &CombOp,
       .has_value();
 }
 
-// make an instruction trivially dead by creating and distributing new virtual
+// Make an instruction trivially dead by creating and distributing new virtual
 // registers to its defs
-void makeDeadMI(MachineInstr &MI, MachineRegisterInfo &MRI) {
+void AIE2InstructionSelector::makeDeadMI(MachineInstr &MI,
+                                         MachineRegisterInfo &MRI) {
+  if (MI.getOpcode() == AIE2::G_INTRINSIC_W_SIDE_EFFECTS) {
+    MI.setDesc(TII.get(AIE2::G_INTRINSIC));
+  }
+
   for (auto *Def = MI.defs().begin(); Def != MI.defs().end(); ++Def) {
     Register NewReg = MRI.cloneVirtualRegister(Def->getReg());
     Def->setReg(NewReg);
@@ -3788,7 +3772,7 @@ getCombinedOpcodePACK(const MachineInstr &MemOp, const MachineInstr &CombOp,
                       bool Is32Lanes) {
   const bool AlwaysFitsImmediateRange = true;
 
-  if (CombOp.getOpcode() != AIE2::G_INTRINSIC ||
+  if (CombOp.getOpcode() != AIE2::G_INTRINSIC_W_SIDE_EFFECTS ||
       (cast<GIntrinsic>(CombOp).getIntrinsicID() != Intrinsic::aie2_pack_I4_I8 &&
        cast<GIntrinsic>(CombOp).getIntrinsicID() != Intrinsic::aie2_pack_I8_I16))
     return {};
@@ -3965,7 +3949,6 @@ bool AIE2InstructionSelector::selectG_AIE_STORE_PACK(MachineInstr &StoreI,
   // Note: Operand 1 is the ID of the intrinsic
   Register SrcReg = PackOp->getOperand(2).getReg();
   Register SignReg = PackOp->getOperand(3).getReg();
-  Register CrSatReg = PackOp->getOperand(4).getReg();
 
   std::optional<LoadStoreOpcodes> LSO;
   bool ConstantSign = false;
@@ -3996,9 +3979,8 @@ bool AIE2InstructionSelector::selectG_AIE_STORE_PACK(MachineInstr &StoreI,
     setUnsetCtrlRegister(*NewInstr, MRI, AIE2::crPackSign, SignReg);
 
   StoreI.eraseFromParent();
-  setCtrlRegister(*NewInstr, MRI, AIE2::crSat, CrSatReg);
+  makeDeadMI(*PackOp, MRI);
   return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
-  return false;
 }
 
 bool AIE2InstructionSelector::select512BitG_AIE_STORE_SRS(

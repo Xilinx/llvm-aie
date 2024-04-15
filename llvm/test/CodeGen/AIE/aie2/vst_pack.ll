@@ -6,8 +6,8 @@
 ;
 ; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -mtriple=aie2 -O2 --filetype=asm %s -o - | FileCheck %s
-; Function Attrs: mustprogress nofree nounwind memory(inaccessiblemem: readwrite)
-define dso_local noundef <32 x i8> @_Z5test0Dv64_a(<64 x i8> noundef %b) local_unnamed_addr #0 {
+
+define <32 x i8> @_Z5test0Dv64_a(<64 x i8> %b) {
 ; CHECK-LABEL: _Z5test0Dv64_a:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
@@ -26,22 +26,18 @@ entry:
   %ret = alloca <32 x i8>, align 32
   call void @llvm.lifetime.start.p0(i64 32, ptr nonnull %ret)
   %0 = bitcast <64 x i8> %b to <32 x i16>
-  %1 = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-  %2 = tail call <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> %0, i32 0, i32 %1)
-  store volatile <32 x i8> %2, ptr %ret, align 32, !tbaa !2
-  %ret.0.ret.0.ret.0.ret.0. = load volatile <32 x i8>, ptr %ret, align 32, !tbaa !2
+  %1 = tail call <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> %0, i32 0)
+  store volatile <32 x i8> %1, ptr %ret, align 32
+  %ret.0.ret.0.ret.0.ret.0. = load volatile <32 x i8>, ptr %ret, align 32
   call void @llvm.lifetime.end.p0(i64 32, ptr nonnull %ret)
   ret <32 x i8> %ret.0.ret.0.ret.0.ret.0.
 }
 
-; Function Attrs: mustprogress nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 declare void @llvm.lifetime.start.p0(i64 immarg, ptr nocapture) #1
 
-; Function Attrs: mustprogress nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 declare void @llvm.lifetime.end.p0(i64 immarg, ptr nocapture) #1
 
-; Function Attrs: mustprogress nofree nounwind memory(inaccessiblemem: readwrite)
-define dso_local noundef <32 x i8> @_Z5test2Dv32_s(<32 x i16> noundef %b) local_unnamed_addr #0 {
+define <32 x i8> @_Z5test2Dv32_s(<32 x i16> %b) {
 ; CHECK-LABEL: _Z5test2Dv32_s:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
@@ -59,16 +55,14 @@ define dso_local noundef <32 x i8> @_Z5test2Dv32_s(<32 x i16> noundef %b) local_
 entry:
   %ret = alloca <32 x i8>, align 32
   call void @llvm.lifetime.start.p0(i64 32, ptr nonnull %ret)
-  %0 = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-  %1 = tail call <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> %b, i32 0, i32 %0)
-  store volatile <32 x i8> %1, ptr %ret, align 32, !tbaa !2
-  %ret.0.ret.0.ret.0.ret.0. = load volatile <32 x i8>, ptr %ret, align 32, !tbaa !2
+  %0 = tail call <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> %b, i32 0)
+  store volatile <32 x i8> %0, ptr %ret, align 32
+  %ret.0.ret.0.ret.0.ret.0. = load volatile <32 x i8>, ptr %ret, align 32
   call void @llvm.lifetime.end.p0(i64 32, ptr nonnull %ret)
   ret <32 x i8> %ret.0.ret.0.ret.0.ret.0.
 }
 
-; Function Attrs: mustprogress nofree nounwind memory(inaccessiblemem: readwrite)
-define dso_local noundef <32 x i8> @_Z5test1Dv64_a(<64 x i8> noundef %b) local_unnamed_addr #0 {
+define <32 x i8> @_Z5test1Dv64_a(<64 x i8> %b) {
 ; CHECK-LABEL: _Z5test1Dv64_a:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
@@ -87,16 +81,14 @@ entry:
   %ret = alloca <32 x i8>, align 32
   call void @llvm.lifetime.start.p0(i64 32, ptr nonnull %ret)
   %0 = bitcast <64 x i8> %b to <32 x i16>
-  %1 = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-  %2 = tail call <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> %0, i32 1, i32 %1)
-  store volatile <32 x i8> %2, ptr %ret, align 32, !tbaa !2
-  %ret.0.ret.0.ret.0.ret.0. = load volatile <32 x i8>, ptr %ret, align 32, !tbaa !2
+  %1 = tail call <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> %0, i32 1)
+  store volatile <32 x i8> %1, ptr %ret, align 32
+  %ret.0.ret.0.ret.0.ret.0. = load volatile <32 x i8>, ptr %ret, align 32
   call void @llvm.lifetime.end.p0(i64 32, ptr nonnull %ret)
   ret <32 x i8> %ret.0.ret.0.ret.0.ret.0.
 }
 
-; Function Attrs: mustprogress nofree nounwind memory(inaccessiblemem: readwrite)
-define dso_local noundef <32 x i8> @_Z5test3Dv32_s(<32 x i16> noundef %b) local_unnamed_addr #0 {
+define <32 x i8> @_Z5test3Dv32_s(<32 x i16> %b) {
 ; CHECK-LABEL: _Z5test3Dv32_s:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
@@ -114,16 +106,14 @@ define dso_local noundef <32 x i8> @_Z5test3Dv32_s(<32 x i16> noundef %b) local_
 entry:
   %ret = alloca <32 x i8>, align 32
   call void @llvm.lifetime.start.p0(i64 32, ptr nonnull %ret)
-  %0 = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-  %1 = tail call <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> %b, i32 1, i32 %0)
-  store volatile <32 x i8> %1, ptr %ret, align 32, !tbaa !2
-  %ret.0.ret.0.ret.0.ret.0. = load volatile <32 x i8>, ptr %ret, align 32, !tbaa !2
+  %0 = tail call <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> %b, i32 1)
+  store volatile <32 x i8> %0, ptr %ret, align 32
+  %ret.0.ret.0.ret.0.ret.0. = load volatile <32 x i8>, ptr %ret, align 32
   call void @llvm.lifetime.end.p0(i64 32, ptr nonnull %ret)
   ret <32 x i8> %ret.0.ret.0.ret.0.ret.0.
 }
 
-; Function Attrs: mustprogress nofree nounwind memory(inaccessiblemem: readwrite)
-define dso_local noundef <32 x i8> @_Z5test4Dv64_a(<64 x i8> noundef %b) local_unnamed_addr #0 {
+define <32 x i8> @_Z5test4Dv64_a(<64 x i8> %b) {
 ; CHECK-LABEL: _Z5test4Dv64_a:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
@@ -142,16 +132,14 @@ entry:
   %ret = alloca <32 x i8>, align 32
   call void @llvm.lifetime.start.p0(i64 32, ptr nonnull %ret)
   %0 = bitcast <64 x i8> %b to <32 x i16>
-  %1 = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-  %2 = tail call <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> %0, i32 1, i32 %1)
-  store volatile <32 x i8> %2, ptr %ret, align 32, !tbaa !2
-  %ret.0.ret.0.ret.0.ret.0. = load volatile <32 x i8>, ptr %ret, align 32, !tbaa !2
+  %1 = tail call <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16> %0, i32 1)
+  store volatile <32 x i8> %1, ptr %ret, align 32
+  %ret.0.ret.0.ret.0.ret.0. = load volatile <32 x i8>, ptr %ret, align 32
   call void @llvm.lifetime.end.p0(i64 32, ptr nonnull %ret)
   ret <32 x i8> %ret.0.ret.0.ret.0.ret.0.
 }
 
-; Function Attrs: mustprogress nofree nounwind memory(inaccessiblemem: readwrite)
-define dso_local noundef <32 x i8> @_Z5test6Dv32_s(<32 x i16> noundef %b) local_unnamed_addr #0 {
+define <32 x i8> @_Z5test6Dv32_s(<32 x i16> %b) {
 ; CHECK-LABEL: _Z5test6Dv32_s:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
@@ -169,28 +157,12 @@ define dso_local noundef <32 x i8> @_Z5test6Dv32_s(<32 x i16> noundef %b) local_
 entry:
   %ret = alloca <32 x i8>, align 32
   call void @llvm.lifetime.start.p0(i64 32, ptr nonnull %ret)
-  %0 = tail call i32 @llvm.aie2.get.ctrl.reg(i32 9)
-  %1 = tail call <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> %b, i32 1, i32 %0)
-  store volatile <32 x i8> %1, ptr %ret, align 32, !tbaa !2
-  %ret.0.ret.0.ret.0.ret.0. = load volatile <32 x i8>, ptr %ret, align 32, !tbaa !2
+  %0 = tail call <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16> %b, i32 1)
+  store volatile <32 x i8> %0, ptr %ret, align 32
+  %ret.0.ret.0.ret.0.ret.0. = load volatile <32 x i8>, ptr %ret, align 32
   call void @llvm.lifetime.end.p0(i64 32, ptr nonnull %ret)
   ret <32 x i8> %ret.0.ret.0.ret.0.ret.0.
 }
 
-; Function Attrs: nofree nosync nounwind memory(none)
-declare <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16>, i32, i32)
-declare <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16>, i32, i32)
-declare i32 @llvm.aie2.get.ctrl.reg(i32)
-
-attributes #0 = { mustprogress nofree nounwind memory(inaccessiblemem: readwrite) "no-trapping-math"="true" "stack-protector-buffer-size"="8" }
-attributes #1 = { mustprogress nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
-attributes #2 = { nofree nosync nounwind memory(none) }
-
-!llvm.module.flags = !{!0}
-!llvm.ident = !{!1}
-
-!0 = !{i32 1, !"wchar_size", i32 4}
-!1 = !{!"clang version 16.0.0"}
-!2 = !{!3, !3, i64 0}
-!3 = !{!"omnipotent char", !4, i64 0}
-!4 = !{!"Simple C++ TBAA"}
+declare <32 x i8> @llvm.aie2.pack.I4.I8(<32 x i16>, i32)
+declare <32 x i8> @llvm.aie2.pack.I8.I16(<32 x i16>, i32)
