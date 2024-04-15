@@ -256,6 +256,10 @@ namespace llvm {
     /// Set of live physical registers for updating kill flags.
     LivePhysRegs LiveRegs;
 
+    /// Default implementation for nextBlock()
+    MachineFunction *CurrFunc;
+    MachineFunction::iterator NextMBB;
+
   public:
     explicit ScheduleDAGInstrs(MachineFunction &mf,
                                const MachineLoopInfo *mli,
@@ -338,8 +342,17 @@ namespace llvm {
     /// overriding enterRegion() or exitRegion().
     virtual void schedule() = 0;
 
-    /// Allow targets to decide sequence in which MBB are scheduled.
-    virtual std::vector<MachineBasicBlock *> getMBBScheduleSeq() const;
+    /// Next block to schedule. Returns nullptr when done. It is explicitly
+    /// allowed to schedule blocks more than once.
+    virtual MachineBasicBlock *nextBlock() {
+      return NextMBB == CurrFunc->end() ? nullptr : &(*NextMBB++);
+    }
+
+    /// Function-wide initialization
+    virtual void startSchedule(MachineFunction *MF) {
+      CurrFunc = MF;
+      NextMBB = MF->begin();
+    }
 
     /// Allow targets to perform final scheduling actions at the level of the
     /// whole MachineFunction. By default does nothing.

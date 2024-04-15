@@ -566,13 +566,16 @@ getSchedRegions(MachineBasicBlock *MBB,
 /// Main driver for both MachineScheduler and PostMachineScheduler.
 void MachineSchedulerBase::scheduleRegions(ScheduleDAGInstrs &Scheduler,
                                            bool FixKillFlags) {
+
+  // Function wide target initialization
+  Scheduler.startSchedule(MF);
+
   // Visit all machine basic blocks.
   //
   // TODO: Visit blocks in global postorder or postorder within the bottom-up
   // loop tree. Then we can optionally compute global RegPressure.
-  for (MachineBasicBlock *MBB : Scheduler.getMBBScheduleSeq()) {
-
-    Scheduler.startBlock(&*MBB);
+  while (MachineBasicBlock *MBB = Scheduler.nextBlock()) {
+    Scheduler.startBlock(MBB);
 
 #ifndef NDEBUG
     if (SchedOnlyFunc.getNumOccurrences() && SchedOnlyFunc != MF->getName())
@@ -597,7 +600,7 @@ void MachineSchedulerBase::scheduleRegions(ScheduleDAGInstrs &Scheduler,
     // added to other regions than the current one without updating MBBRegions.
 
     MBBRegionsVector MBBRegions;
-    getSchedRegions(&*MBB, MBBRegions, Scheduler.doMBBSchedRegionsTopDown());
+    getSchedRegions(MBB, MBBRegions, Scheduler.doMBBSchedRegionsTopDown());
     for (const SchedRegion &R : MBBRegions) {
       MachineBasicBlock::iterator I = R.RegionBegin;
       MachineBasicBlock::iterator RegionEnd = R.RegionEnd;
@@ -605,7 +608,7 @@ void MachineSchedulerBase::scheduleRegions(ScheduleDAGInstrs &Scheduler,
 
       // Notify the scheduler of the region, even if we may skip scheduling
       // it. Perhaps it still needs to be bundled.
-      Scheduler.enterRegion(&*MBB, I, RegionEnd, NumRegionInstrs);
+      Scheduler.enterRegion(MBB, I, RegionEnd, NumRegionInstrs);
 
       // Skip empty scheduling regions (0 or 1 schedulable instructions).
       if (I == RegionEnd || I == std::prev(RegionEnd)) {
@@ -666,13 +669,13 @@ LLVM_DUMP_METHOD void ReadyQueue::dump() const {
 // Provide a vtable anchor.
 ScheduleDAGMI::~ScheduleDAGMI() = default;
 
-std::vector<MachineBasicBlock *> ScheduleDAGMI::getMBBScheduleSeq() const {
-  auto Seq = SchedImpl->getMBBScheduleSeq(MF);
-  if (Seq.empty()) {
-    return ScheduleDAGInstrs::getMBBScheduleSeq();
-  }
-  return Seq;
+void ScheduleDAGMI::startSchedule(MachineFunction *MF) {
+  SchedImpl->enterFunction(MF);
 }
+
+void ScheduleDAGMI::finalizeSchedule() { SchedImpl->leaveFunction(); }
+
+MachineBasicBlock *ScheduleDAGMI::nextBlock() { return SchedImpl->nextBlock(); }
 
 /// ReleaseSucc - Decrement the NumPredsLeft count of a successor. When
 /// NumPredsLeft reaches zero, release the successor node.
