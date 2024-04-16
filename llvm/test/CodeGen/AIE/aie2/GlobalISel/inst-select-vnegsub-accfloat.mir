@@ -28,7 +28,7 @@ body:             |
     %0:accregbank(<8 x s64>) = COPY $bml1
     %1:accregbank(<8 x s64>) = COPY $bml2
     %2:gprregbank(s32) = G_CONSTANT i32 28
-    %3:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.negsub.accfloat), %0:accregbank(<8 x s64>), %1:accregbank(<8 x s64>), %2:gprregbank(s32)
+    %3:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.negsub.accfloat), %0:accregbank(<8 x s64>), %1:accregbank(<8 x s64>), %2:gprregbank(s32)
     $bml0 = COPY %3:accregbank(<8 x s64>)
     PseudoRET implicit $lr, implicit $bml0
 ...
