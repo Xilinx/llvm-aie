@@ -23,7 +23,7 @@ body:             |
     ; CHECK-NEXT: $wl0 = COPY [[VCONV_BF16_FP32_]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $wl0
     %1:accregbank(<8 x s64>) = COPY $bml0
-    %0:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), %1:accregbank(<8 x s64>)
+    %0:vregbank(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), %1:accregbank(<8 x s64>)
     $wl0 = COPY %0:vregbank(<16 x s16>)
     PseudoRET implicit $lr, implicit $wl0
 ...

@@ -975,7 +975,7 @@ bool AIELegalizerInfo::legalizeG_FPTRUNC(LegalizerHelper &Helper,
 
   Register Vec256Reg = MRI.createGenericVirtualRegister(V16S16);
   MIRBuilder
-      .buildIntrinsic(Intrinsic::aie2_v16accfloat_to_v16bf16, Vec256Reg)
+      .buildIntrinsic(Intrinsic::aie2_v16accfloat_to_v16bf16, Vec256Reg, true, false)
       .addUse(Acc512Reg);
 
   MIRBuilder.buildInstr(TargetOpcode::G_EXTRACT_VECTOR_ELT, {DstReg},
@@ -1078,7 +1078,7 @@ bool AIELegalizerInfo::legalizeG_FADDSUB(LegalizerHelper &Helper,
   Register FPRes = MIRBuilder.buildBitcast(ACC512, FPOp).getReg(0);
   Register Conv = MIRBuilder
                       .buildIntrinsic(Intrinsic::aie2_v16accfloat_to_v16bf16,
-                                      {V16BF16}, false, false)
+                                      {V16BF16}, true, false)
                       .addUse(FPRes)
                       .getReg(0);
 

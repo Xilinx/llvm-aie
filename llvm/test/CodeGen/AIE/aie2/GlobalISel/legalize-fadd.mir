@@ -27,7 +27,7 @@ body: |
     ; CHECK-NEXT: [[AIE_INSERT_VECTOR_ELT1:%[0-9]+]]:_(<16 x s32>) = G_AIE_INSERT_VECTOR_ELT [[DEF]], [[SHL1]](s32), [[C1]](s32)
     ; CHECK-NEXT: [[FADD:%[0-9]+]]:_(<16 x s32>) = G_FADD [[AIE_INSERT_VECTOR_ELT]], [[AIE_INSERT_VECTOR_ELT1]]
     ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<8 x s64>) = G_BITCAST [[FADD]](<16 x s32>)
-    ; CHECK-NEXT: [[INT:%[0-9]+]]:_(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), [[BITCAST]](<8 x s64>)
+    ; CHECK-NEXT: [[INT:%[0-9]+]]:_(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), [[BITCAST]](<8 x s64>)
     ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[INT]](<16 x s16>), [[C1]](s32)
     ; CHECK-NEXT: [[ASSERT_SEXT:%[0-9]+]]:_(s32) = G_ASSERT_SEXT [[AIE_SEXT_EXTRACT_VECTOR_ELT]], 16
     ; CHECK-NEXT: $r0 = COPY [[ASSERT_SEXT]](s32)
