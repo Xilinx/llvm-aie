@@ -105,7 +105,7 @@ class AIEV2AddSubAcc : DefaultAttrsIntrinsic<[llvm_v16i64_ty], [llvm_v16i64_ty, 
 					 [IntrNoMem]>;
 
 class AIEV2AddSubAccFloat : DefaultAttrsIntrinsic<[llvm_v8i64_ty], [llvm_v8i64_ty, llvm_v8i64_ty, llvm_i32_ty],
-                              [IntrNoMem]>;
+                              [IntrReadMem, IntrInaccessibleMemOnly]>;
 
 class AIEV2NEGCONF : DefaultAttrsIntrinsic<[llvm_v16i64_ty], [llvm_v16i64_ty, llvm_i32_ty], [IntrNoMem]>;
 class AIEV2NEGFPCONF : DefaultAttrsIntrinsic<[llvm_v8i64_ty], [llvm_v8i64_ty, llvm_i32_ty], [IntrNoMem]>;

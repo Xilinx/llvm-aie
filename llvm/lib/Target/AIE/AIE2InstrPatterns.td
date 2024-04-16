@@ -1072,14 +1072,14 @@ def : Pat<(int_aie2_sub_acc ACC1024:$acc1, ACC1024:$acc2, eR:$c),
           (VSUB ACC1024:$acc1, ACC1024:$acc2, eR:$c)>;
 
 // VADD.f
-def : Pat<(int_aie2_add_accfloat ACC512:$acc1, ACC512:$acc2, eR:$c),
+def : PatInaccessibleMem<(int_aie2_add_accfloat ACC512:$acc1, ACC512:$acc2, eR:$c),
           (VADD_F ACC512:$acc1, ACC512:$acc2, eR:$c)>;
 
 def : Pat<(fadd ACC512:$acc1, ACC512:$acc2),
           (VADD_F ACC512:$acc1, ACC512:$acc2, (i32 accfp32_vecconf.ConfBits))>;
 
 // VSUB.f
-def : Pat<(int_aie2_sub_accfloat ACC512:$acc1, ACC512:$acc2, eR:$c),
+def : PatInaccessibleMem<(int_aie2_sub_accfloat ACC512:$acc1, ACC512:$acc2, eR:$c),
           (VSUB_F ACC512:$acc1, ACC512:$acc2, eR:$c)>;
 
 def : Pat<(fsub ACC512:$acc1, ACC512:$acc2),
@@ -1094,11 +1094,11 @@ def : Pat<(int_aie2_negsub_acc ACC1024:$acc1, ACC1024:$acc2, eR:$c),
           (VNEGSUB ACC1024:$acc1, ACC1024:$acc2, eR:$c)>;
 
 // VNEGADD.f
-def : Pat<(int_aie2_negadd_accfloat ACC512:$acc1, ACC512:$acc2, eR:$c),
+def : PatInaccessibleMem<(int_aie2_negadd_accfloat ACC512:$acc1, ACC512:$acc2, eR:$c),
           (VNEGADD_F ACC512:$acc1, ACC512:$acc2, eR:$c)>;
 
 // VNEGSUB.f
-def : Pat<(int_aie2_negsub_accfloat ACC512:$acc1, ACC512:$acc2, eR:$c),
+def : PatInaccessibleMem<(int_aie2_negsub_accfloat ACC512:$acc1, ACC512:$acc2, eR:$c),
           (VNEGSUB_F ACC512:$acc1, ACC512:$acc2, eR:$c)>;
 
 // VCONV_BF16_FP32
