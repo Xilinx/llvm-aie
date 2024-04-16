@@ -30,7 +30,7 @@ body: |
     %0:ptrregbank(p0) = COPY $p0
     %8:modregbank(s20) = G_CONSTANT i20 32
     %100:accregbank(<8 x s64>) = COPY $bml0
-    %104:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), %100:accregbank(<8 x s64>)
+    %104:vregbank(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), %100:accregbank(<8 x s64>)
 
   bb.1:
     %20:ptrregbank(p0) = G_AIE_POSTINC_STORE %104, %0, %8 :: (store (<16 x s16>))

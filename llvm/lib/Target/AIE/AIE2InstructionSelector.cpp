@@ -4146,7 +4146,7 @@ getCombinedOpcodeCONV(const MachineInstr &MemOp, const MachineInstr &CombOp,
                       std::optional<APInt> Immediate) {
   const bool AlwaysFitsImmediateRange = true;
   const bool NoImmediate = false;
-  if (CombOp.getOpcode() != AIE2::G_INTRINSIC ||
+  if (CombOp.getOpcode() != AIE2::G_INTRINSIC_W_SIDE_EFFECTS ||
       cast<GIntrinsic>(CombOp).getIntrinsicID() != Intrinsic::aie2_v16accfloat_to_v16bf16)
     return {};
 
@@ -4222,6 +4222,7 @@ bool AIE2InstructionSelector::selectG_AIE_STORE_CONV(MachineInstr &StoreI,
 
   NewInstr.cloneMemRefs(StoreI);
 
+  makeDeadMI(*ConvOp, MRI);
   StoreI.eraseFromParent();
   return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
 }

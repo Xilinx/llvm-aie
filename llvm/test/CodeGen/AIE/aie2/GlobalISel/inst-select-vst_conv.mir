@@ -24,7 +24,7 @@ body: |
     ; CHECK-NEXT: PseudoRET implicit $lr
     %0:ptrregbank(p0) = COPY $p0
     %100:accregbank(<8 x s64>) = COPY $bml0
-    %104:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), %100:accregbank(<8 x s64>)
+    %104:vregbank(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), %100:accregbank(<8 x s64>)
     G_STORE %104, %0 :: (store (<16 x s16>))
     PseudoRET implicit $lr
 ...
@@ -51,9 +51,9 @@ body: |
     %10:modregbank(s20) = G_CONSTANT i20 -128
     %11:modregbank(s20) = G_CONSTANT i20 96
     %100:accregbank(<8 x s64>) = COPY $bml0
-    %104:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), %100:accregbank(<8 x s64>)
-    %106:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), %100:accregbank(<8 x s64>)
-    %107:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), %100:accregbank(<8 x s64>)
+    %104:vregbank(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), %100:accregbank(<8 x s64>)
+    %106:vregbank(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), %100:accregbank(<8 x s64>)
+    %107:vregbank(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), %100:accregbank(<8 x s64>)
     G_AIE_OFFSET_STORE %104, %0, %8 :: (store (<16 x s16>))
     G_AIE_OFFSET_STORE %106, %0, %10 :: (store (<16 x s16>))
     G_AIE_OFFSET_STORE %107, %0, %11 :: (store (<16 x s16>))
@@ -87,9 +87,9 @@ body: |
     %9:modregbank(s20) = G_CONSTANT i20 16
     %12:modregbank(s20) = G_CONSTANT i20 128
     %100:accregbank(<8 x s64>) = COPY $bml0
-    %103:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), %100:accregbank(<8 x s64>)
-    %105:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), %100:accregbank(<8 x s64>)
-    %108:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), %100:accregbank(<8 x s64>)
+    %103:vregbank(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), %100:accregbank(<8 x s64>)
+    %105:vregbank(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), %100:accregbank(<8 x s64>)
+    %108:vregbank(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), %100:accregbank(<8 x s64>)
     G_AIE_OFFSET_STORE %103, %0, %7 :: (store (<16 x s16>))
     G_AIE_OFFSET_STORE %105, %0, %9 :: (store (<16 x s16>))
     G_AIE_OFFSET_STORE %108, %0, %12 :: (store (<16 x s16>))
@@ -118,9 +118,9 @@ body: |
     %10:modregbank(s20) = G_CONSTANT i20 -256
     %11:modregbank(s20) = G_CONSTANT i20 224
     %100:accregbank(<8 x s64>) = COPY $bml0
-    %104:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), %100:accregbank(<8 x s64>)
-    %106:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), %100:accregbank(<8 x s64>)
-    %107:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), %100:accregbank(<8 x s64>)
+    %104:vregbank(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), %100:accregbank(<8 x s64>)
+    %106:vregbank(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), %100:accregbank(<8 x s64>)
+    %107:vregbank(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), %100:accregbank(<8 x s64>)
     %20:ptrregbank(p0) = G_AIE_POSTINC_STORE %104, %0, %8 :: (store (<16 x s16>))
     %22:ptrregbank(p0) = G_AIE_POSTINC_STORE %106, %20, %10 :: (store (<16 x s16>))
     %23:ptrregbank(p0) = G_AIE_POSTINC_STORE %107, %22, %11 :: (store (<16 x s16>))
@@ -154,9 +154,9 @@ body: |
     %9:modregbank(s20) = G_CONSTANT i20 16
     %12:modregbank(s20) = G_CONSTANT i20 256
     %100:accregbank(<8 x s64>) = COPY $bml0
-    %103:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), %100:accregbank(<8 x s64>)
-    %105:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), %100:accregbank(<8 x s64>)
-    %108:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), %100:accregbank(<8 x s64>)
+    %103:vregbank(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), %100:accregbank(<8 x s64>)
+    %105:vregbank(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), %100:accregbank(<8 x s64>)
+    %108:vregbank(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), %100:accregbank(<8 x s64>)
     %19:ptrregbank(p0) = G_AIE_POSTINC_STORE %103, %0, %7 :: (store (<16 x s16>))
     %21:ptrregbank(p0) = G_AIE_POSTINC_STORE %105, %19, %9 :: (store (<16 x s16>))
     %24:ptrregbank(p0) = G_AIE_POSTINC_STORE %108, %21, %12 :: (store (<16 x s16>))
@@ -189,7 +189,7 @@ body: |
     %3:edn(s20) = G_CONSTANT i20 3
     %4:edc(s20) = G_CONSTANT i20 4
     %100:accregbank(<8 x s64>) = COPY $bml0
-    %103:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), %100:accregbank(<8 x s64>)
+    %103:vregbank(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), %100:accregbank(<8 x s64>)
     %19:ptrregbank(p0), %7:modregbank(s20) = G_AIE_POSTINC_2D_STORE %103, %0, %1, %2, %3, %4 :: (store (<16 x s16>))
     PseudoRET implicit $lr
 ...
@@ -226,7 +226,7 @@ body: |
     %6:edc(s20) = G_CONSTANT i20 6
     %7:edc(s20) = G_CONSTANT i20 7
     %100:accregbank(<8 x s64>) = COPY $bml0
-    %103:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), %100:accregbank(<8 x s64>)
+    %103:vregbank(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), %100:accregbank(<8 x s64>)
     %19:ptrregbank(p0), %8:modregbank(s20), %9:modregbank(s20) = G_AIE_POSTINC_3D_STORE %103, %0, %1, %2, %3, %4, %6, %5, %7 :: (store (<16 x s16>))
     PseudoRET implicit $lr
 ...
@@ -252,7 +252,7 @@ body: |
     %8:modregbank(s20) = G_CONSTANT i20 32
     %100:accregbank(<8 x s64>) = COPY $bml0
     %101:accregbank(<4 x s64>) = COPY $amll1
-    %104:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), %100:accregbank(<8 x s64>)
+    %104:vregbank(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), %100:accregbank(<8 x s64>)
     %20:ptrregbank(p0) = G_AIE_POSTINC_STORE %101, %0, %8 :: (store (<4 x s64>))
     %21:ptrregbank(p0) = G_AIE_POSTINC_STORE %104, %0, %8 :: (store (<16 x s16>))
     PseudoRET implicit $lr

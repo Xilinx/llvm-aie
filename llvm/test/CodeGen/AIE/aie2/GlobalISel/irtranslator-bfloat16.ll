@@ -117,7 +117,7 @@ define dso_local %class.bfloat16 @_Z13test_ext_elemf(float noundef %x) {
   ; CHECK-NEXT:   [[DEF:%[0-9]+]]:_(s16) = G_IMPLICIT_DEF
   ; CHECK-NEXT:   [[INT:%[0-9]+]]:_(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.v16accfloat)
   ; CHECK-NEXT:   [[INT1:%[0-9]+]]:_(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert32.accfloat), [[INT]](<8 x s64>), [[C]](s32), [[COPY]](s32)
-  ; CHECK-NEXT:   [[INT2:%[0-9]+]]:_(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), [[INT1]](<8 x s64>)
+  ; CHECK-NEXT:   [[INT2:%[0-9]+]]:_(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), [[INT1]](<8 x s64>)
   ; CHECK-NEXT:   [[INT3:%[0-9]+]]:_(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.v16bfloat16)
   ; CHECK-NEXT:   [[INT4:%[0-9]+]]:_(<32 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.concat.bf512.bf256), [[INT2]](<16 x s16>), [[INT3]](<16 x s16>)
   ; CHECK-NEXT:   [[INT5:%[0-9]+]]:_(s32) = G_INTRINSIC intrinsic(@llvm.aie2.vextract.elem16.I512), [[INT4]](<32 x s16>), [[C]](s32), [[C1]](s32)

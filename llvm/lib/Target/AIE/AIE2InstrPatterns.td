@@ -1102,7 +1102,7 @@ def : Pat<(int_aie2_negsub_accfloat ACC512:$acc1, ACC512:$acc2, eR:$c),
           (VNEGSUB_F ACC512:$acc1, ACC512:$acc2, eR:$c)>;
 
 // VCONV_BF16_FP32
-def : Pat<(int_aie2_v16accfloat_to_v16bf16 ACC512:$src),
+def : PatInaccessibleMem<(int_aie2_v16accfloat_to_v16bf16 ACC512:$src),
           (VCONV_BF16_FP32 ACC512:$src)>;
 
 // VCONV_FP32_BF16
