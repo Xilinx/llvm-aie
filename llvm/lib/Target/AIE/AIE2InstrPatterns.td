@@ -384,7 +384,7 @@ def : Pat<(int_aie2_I512_I512_ACC1024_acc64_mac_conf VEC512:$s1, VEC512:$s2, ACC
            (VMAC_vmac_cm_core_dense ACC1024:$acc1, VEC512:$s1, VEC512:$s2, eR:$c)>;
 def : Pat<(int_aie2_I512_I512_ACC1024_acc32_mac_conf VEC512:$s1, VEC512:$s2, ACC1024:$acc1, eR:$c),
            (VMAC_vmac_cm_core_dense ACC1024:$acc1, VEC512:$s1, VEC512:$s2, eR:$c)>;
-def : Pat<(int_aie2_bf_mac16_conf VEC512:$s1, VEC512:$s2, ACC512:$acc1, eR:$c),
+def : PatInaccessibleMem<(int_aie2_bf_mac16_conf VEC512:$s1, VEC512:$s2, ACC512:$acc1, eR:$c),
            (VMAC_F_vmac_bm_core_dense ACC512:$acc1, VEC512:$s1, VEC512:$s2, eR:$c)>;
 def : Pat<(int_aie2_I1024_I1024_ACC1024_acc32_mac_conf VEC1024:$s1, VEC512:$s2, VEC128:$q, ACC1024:$acc1, eR:$c),
            (VMAC_vmac_cm_core_sparse_wide ACC1024:$acc1, VEC1024:$s1,
@@ -410,7 +410,7 @@ def : Pat<(int_aie2_I512_I512_ACC1024_acc64_msc_conf VEC512:$s1, VEC512:$s2, ACC
            (VMSC_vmac_cm_core_dense ACC1024:$acc1, VEC512:$s1, VEC512:$s2, eR:$c)>;
 def : Pat<(int_aie2_I512_I512_ACC1024_acc32_msc_conf VEC512:$s1, VEC512:$s2, ACC1024:$acc1, eR:$c),
            (VMSC_vmac_cm_core_dense ACC1024:$acc1, VEC512:$s1, VEC512:$s2, eR:$c)>;
-def : Pat<(int_aie2_bf_msc16_conf  VEC512:$s1, VEC512:$s2, ACC512:$acc1, eR:$c),
+def : PatInaccessibleMem<(int_aie2_bf_msc16_conf  VEC512:$s1, VEC512:$s2, ACC512:$acc1, eR:$c),
            (VMSC_F_vmac_bm_core_dense ACC512:$acc1, VEC512:$s1, VEC512:$s2, eR:$c)>;
 def : Pat<(int_aie2_I1024_I1024_ACC1024_acc32_msc_conf VEC1024:$s1, VEC512:$s2, VEC128:$q, ACC1024:$acc1, eR:$c),
            (VMSC_vmac_cm_core_sparse_wide ACC1024:$acc1, VEC1024:$s1,
@@ -505,7 +505,7 @@ def : VADDSUB_sparse_narrow<int_aie2_I512_I1024_ACC1024_ACC1024_acc64_addmsc_con
 def : VADDSUB_sparse_narrow<int_aie2_I512_I1024_ACC1024_ACC1024_acc64_submac_conf, VSUBMAC_vmac_cm_core_sparse_narrow>;
 def : VADDSUB_sparse_narrow<int_aie2_I512_I1024_ACC1024_ACC1024_acc64_submsc_conf, VSUBMSC_vmac_cm_core_sparse_narrow>;
 
-def : Pat<(int_aie2_bf_addmac16_conf VEC512:$s1, VEC512:$s2, ACC512:$acc1, ACC512:$acc2, eR:$c),
+def : PatInaccessibleMem<(int_aie2_bf_addmac16_conf VEC512:$s1, VEC512:$s2, ACC512:$acc1, ACC512:$acc2, eR:$c),
            (VADDMAC_F_vmac_bm_core_dense ACC512:$acc1, ACC512:$acc2, VEC512:$s1, VEC512:$s2, eR:$c)>;
 
 def : Pat<(int_aie2_I1024_I1024_ACC1024_ACC1024_accfloat_bf_addmac_conf VEC1024:$s1, VEC512:$s2, VEC128:$q, ACC512:$acc1, ACC512:$acc2, eR:$c),
@@ -518,7 +518,7 @@ def : Pat<(int_aie2_I512_I1024_ACC1024_ACC1024_accfloat_bf_addmac_conf VEC512:$s
            eR:$c)>;
 
 // ADDMSC Intrinsic
-def : Pat<(int_aie2_bf_addmsc16_conf VEC512:$s1, VEC512:$s2, ACC512:$acc1, ACC512:$acc2, eR:$c),
+def : PatInaccessibleMem<(int_aie2_bf_addmsc16_conf VEC512:$s1, VEC512:$s2, ACC512:$acc1, ACC512:$acc2, eR:$c),
            (VADDMSC_F_vmac_bm_core_dense ACC512:$acc1, ACC512:$acc2, VEC512:$s1, VEC512:$s2, eR:$c)>;
 
 def : Pat<(int_aie2_I1024_I1024_ACC1024_ACC1024_accfloat_bf_addmsc_conf VEC1024:$s1, VEC512:$s2, VEC128:$q, ACC512:$acc1, ACC512:$acc2, eR:$c),

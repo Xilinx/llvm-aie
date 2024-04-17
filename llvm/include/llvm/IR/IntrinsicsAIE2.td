@@ -96,11 +96,11 @@ class AIE2bf16MULConf
 	   	       [IntrReadMem, IntrInaccessibleMemOnly]>;
 class AIE2bf16MACConf 
     : Intrinsic<[llvm_v8i64_ty], [llvm_v32bf16_ty, llvm_v32bf16_ty, llvm_v8i64_ty, llvm_i32_ty],
-					 [IntrNoMem]>;
-class AIE2bf16AddMACConf
+					 [IntrReadMem, IntrInaccessibleMemOnly]>;
+class AIE2bf16AddMACConf 
     : Intrinsic<[llvm_v8i64_ty], [llvm_v32bf16_ty, llvm_v32bf16_ty, llvm_v8i64_ty, llvm_v8i64_ty, llvm_i32_ty],
-					 [IntrNoMem]>;
-
+					 [IntrReadMem, IntrInaccessibleMemOnly]>;
+ 
 class AIEV2AddSubAcc : DefaultAttrsIntrinsic<[llvm_v16i64_ty], [llvm_v16i64_ty, llvm_v16i64_ty, llvm_i32_ty],
 					 [IntrNoMem]>;
 
