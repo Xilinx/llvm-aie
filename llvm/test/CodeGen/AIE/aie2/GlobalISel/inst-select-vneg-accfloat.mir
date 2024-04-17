@@ -24,7 +24,7 @@ body:             |
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $bml0
     %0:accregbank(<8 x s64>) = COPY $bml1
     %1:gprregbank(s32) = COPY $r0
-    %2:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.ACC512.accfloat.neg.conf), %0(<8 x s64>), %1(s32)
+    %2:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.ACC512.accfloat.neg.conf), %0(<8 x s64>), %1(s32)
     $bml0 = COPY %2(<8 x s64>)
     PseudoRET implicit $lr, implicit $bml0
 ...

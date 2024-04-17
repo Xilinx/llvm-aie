@@ -17,7 +17,7 @@ body:             |
     ; CHECK: [[VCLR_vclr_BF:%[0-9]+]]:acc512 = VCLR_vclr_BF implicit-def dead $srfpflags, implicit $crfpmask
     ; CHECK-NEXT: $bml0 = COPY [[VCLR_vclr_BF]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $bml0
-    %0:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.clr16f.conf)
+    %0:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.clr16f.conf)
     $bml0 = COPY %0(<8 x s64>)
     PseudoRET implicit $lr, implicit $bml0
 

@@ -93,8 +93,8 @@ class AIEV2I512I512AddMaconf
 
 class AIE2bf16MULConf
     : Intrinsic<[llvm_v8i64_ty], [llvm_v32bf16_ty, llvm_v32bf16_ty, llvm_i32_ty],
-		       [IntrNoMem]>;
-class AIE2bf16MACConf
+	   	       [IntrReadMem, IntrInaccessibleMemOnly]>;
+class AIE2bf16MACConf 
     : Intrinsic<[llvm_v8i64_ty], [llvm_v32bf16_ty, llvm_v32bf16_ty, llvm_v8i64_ty, llvm_i32_ty],
 					 [IntrNoMem]>;
 class AIE2bf16AddMACConf
@@ -104,11 +104,14 @@ class AIE2bf16AddMACConf
 class AIEV2AddSubAcc : DefaultAttrsIntrinsic<[llvm_v16i64_ty], [llvm_v16i64_ty, llvm_v16i64_ty, llvm_i32_ty],
 					 [IntrNoMem]>;
 
-class AIEV2AddSubAccFloat : DefaultAttrsIntrinsic<[llvm_v8i64_ty], [llvm_v8i64_ty, llvm_v8i64_ty, llvm_i32_ty],
-                              [IntrReadMem, IntrInaccessibleMemOnly]>;
+class AIEV2AddSubAccFloat : DefaultAttrsIntrinsic<[llvm_v8i64_ty],
+[llvm_v8i64_ty, llvm_v8i64_ty, llvm_i32_ty],
+[IntrReadMem, IntrInaccessibleMemOnly]>;
 
 class AIEV2NEGCONF : DefaultAttrsIntrinsic<[llvm_v16i64_ty], [llvm_v16i64_ty, llvm_i32_ty], [IntrNoMem]>;
-class AIEV2NEGFPCONF : DefaultAttrsIntrinsic<[llvm_v8i64_ty], [llvm_v8i64_ty, llvm_i32_ty], [IntrNoMem]>;
+class AIEV2NEGFPCONF : DefaultAttrsIntrinsic<[llvm_v8i64_ty],
+                                             [llvm_v8i64_ty, llvm_i32_ty],
+                                             [IntrReadMem, IntrInaccessibleMemOnly]>;
 
 class AIEV2V16AccFloatToV16Bf : Intrinsic<[llvm_v16bf16_ty],
                                           [llvm_v8i64_ty],
@@ -492,7 +495,7 @@ class AIEV2UnPackI16I8 : Intrinsic<[llvm_v32i16_ty], [llvm_v32i8_ty, llvm_i32_ty
 class AIEV2SchedBarrier : Intrinsic<[], [], [IntrNoMem, IntrHasSideEffects, IntrConvergent, IntrWillReturn]>;
 
 // clear accumulator
-class AIEV2CLR16F : Intrinsic<[llvm_v8i64_ty], [], [IntrNoMem]>;
+class AIEV2CLR16F : Intrinsic<[llvm_v8i64_ty], [], [IntrReadMem, IntrInaccessibleMemOnly]>;
 class AIEV2VCLRACC1024 : Intrinsic<[llvm_v16i64_ty], [], [IntrNoMem]>;
 
 // Extract Sub-Vector
