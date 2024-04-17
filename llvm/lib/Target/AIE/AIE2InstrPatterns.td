@@ -328,7 +328,7 @@ def : Pat<(int_aie2_I512_I512_acc64_mul_conf VEC512:$s1, VEC512:$s2, eR:$c),
            (VMUL_vmac_cm_core_dense VEC512:$s1, VEC512:$s2, eR:$c)>;
 def : Pat<(int_aie2_I512_I512_acc32_mul_conf VEC512:$s1, VEC512:$s2, eR:$c),
            (VMUL_vmac_cm_core_dense VEC512:$s1, VEC512:$s2, eR:$c)>;
-def : Pat<(int_aie2_bf_mul16_conf VEC512:$s1, VEC512:$s2, eR:$c),
+def : PatInaccessibleMem<(int_aie2_bf_mul16_conf VEC512:$s1, VEC512:$s2, eR:$c),
            (VMUL_F_vmac_bm_core_dense VEC512:$s1, VEC512:$s2, eR:$c)>;
 def : Pat<(int_aie2_I512_I1024_ACC1024_acc32_mul_conf VEC512:$s1, VEC512:$s2, VEC128:$q, eR:$c),
            (VMUL_vmac_cm_core_sparse_narrow VEC512:$s1,
@@ -358,7 +358,7 @@ def : Pat<(int_aie2_I512_I512_acc64_negmul_conf VEC512:$s1, VEC512:$s2, eR:$c),
            (VNEGMUL_vmac_cm_core_dense VEC512:$s1, VEC512:$s2, eR:$c)>;
 def : Pat<(int_aie2_I512_I512_acc32_negmul_conf VEC512:$s1, VEC512:$s2, eR:$c),
            (VNEGMUL_vmac_cm_core_dense VEC512:$s1, VEC512:$s2, eR:$c)>;
-def : Pat<(int_aie2_bf_negmul16_conf VEC512:$s1, VEC512:$s2, eR:$c),
+def : PatInaccessibleMem<(int_aie2_bf_negmul16_conf VEC512:$s1, VEC512:$s2, eR:$c),
            (VNEGMUL_F_vmac_bm_core_dense VEC512:$s1, VEC512:$s2, eR:$c)>;
 def : Pat<(int_aie2_I1024_I1024_ACC1024_acc32_negmul_conf VEC1024:$s1, VEC512:$s2, VEC128:$q, eR:$c),
            (VNEGMUL_vmac_cm_core_sparse_wide VEC1024:$s1,
@@ -535,7 +535,7 @@ def : Pat<(int_aie2_ACC1024_acc32_neg_conf ACC1024:$s1, eR:$c), (VNEG ACC1024:$s
 def : Pat<(int_aie2_ACC1024_acc64_neg_conf ACC1024:$s1, eR:$c), (VNEG ACC1024:$s1, eR:$c)>;
 
 // VNEG_F Intrinsic
-def : Pat<(int_aie2_ACC512_accfloat_neg_conf ACC512:$s1, eR:$c), (VNEG_F ACC512:$s1, eR:$c)>;
+def : PatInaccessibleMem<(int_aie2_ACC512_accfloat_neg_conf ACC512:$s1, eR:$c), (VNEG_F ACC512:$s1, eR:$c)>;
 
 // UPS Intrinsic
 // Note : Non-constant sign is handled in .cpp
@@ -1117,7 +1117,7 @@ def : PatInaccessibleMem<(int_aie2_v16bf16_to_v16i32 VEC256:$src, mSs:$shft),
           (VFLOOR_S32_BF16_mFl2FxSrc_W VEC256:$src, mSs:$shft)>;
 
 // VCLR_vclr_BF
-def : Pat<(int_aie2_clr16f_conf),
+def : PatInaccessibleMem<(int_aie2_clr16f_conf),
           (VCLR_vclr_BF)>;
 
 // DIVS
