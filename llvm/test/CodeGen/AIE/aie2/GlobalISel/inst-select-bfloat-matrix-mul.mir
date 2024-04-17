@@ -194,7 +194,7 @@ body:             |
     %2:vregbank(<32 x s16>) = COPY $x0
     %3:vregbank(s128) = COPY $q0
     %44:gprregbank(s32) = G_CONSTANT i32 92
-    %0:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.I1024.I1024.ACC1024.accfloat.bf.mul.conf), %1:vregbank(<64 x s16>), %2:vregbank(<32 x s16>), %3:vregbank(s128), %44:gprregbank(s32)
+    %0:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I1024.I1024.ACC1024.accfloat.bf.mul.conf), %1:vregbank(<64 x s16>), %2:vregbank(<32 x s16>), %3:vregbank(s128), %44:gprregbank(s32)
     $bml0 = COPY %0:accregbank(<8 x s64>)
     PseudoRET implicit $lr, implicit $bml0
 ...
@@ -222,7 +222,7 @@ body:             |
     %2:vregbank(<32 x s16>) = COPY $x0
     %3:vregbank(s128) = COPY $q0
     %44:gprregbank(s32) = G_CONSTANT i32 92
-    %0:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.I1024.I1024.ACC1024.accfloat.bf.negmul.conf), %1:vregbank(<64 x s16>), %2:vregbank(<32 x s16>), %3:vregbank(s128), %44:gprregbank(s32)
+    %0:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I1024.I1024.ACC1024.accfloat.bf.negmul.conf), %1:vregbank(<64 x s16>), %2:vregbank(<32 x s16>), %3:vregbank(s128), %44:gprregbank(s32)
     $bml0 = COPY %0:accregbank(<8 x s64>)
     PseudoRET implicit $lr, implicit $bml0
 ...
@@ -252,7 +252,7 @@ body:             |
     %3:vregbank(s128) = COPY $q0
     %20:accregbank(<8 x s64>) = COPY $bml1
     %45:gprregbank(s32) = G_CONSTANT i32 92
-    %0:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.I1024.I1024.ACC1024.accfloat.bf.mac.conf), %1:vregbank(<64 x s16>), %2:vregbank(<32 x s16>), %3:vregbank(s128), %20:accregbank(<8 x s64>), %45:gprregbank(s32)
+    %0:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I1024.I1024.ACC1024.accfloat.bf.mac.conf), %1:vregbank(<64 x s16>), %2:vregbank(<32 x s16>), %3:vregbank(s128), %20:accregbank(<8 x s64>), %45:gprregbank(s32)
     $bml0 = COPY %0:accregbank(<8 x s64>)
     PseudoRET implicit $lr, implicit $bml0
 ...
@@ -283,7 +283,7 @@ body:             |
     %3:vregbank(s128) = COPY $q0
     %20:accregbank(<8 x s64>) = COPY $bml1
     %45:gprregbank(s32) = G_CONSTANT i32 92
-    %0:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.I1024.I1024.ACC1024.accfloat.bf.msc.conf), %1:vregbank(<64 x s16>), %2:vregbank(<32 x s16>), %3:vregbank(s128), %20:accregbank(<8 x s64>), %45:gprregbank(s32)
+    %0:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I1024.I1024.ACC1024.accfloat.bf.msc.conf), %1:vregbank(<64 x s16>), %2:vregbank(<32 x s16>), %3:vregbank(s128), %20:accregbank(<8 x s64>), %45:gprregbank(s32)
     $bml0 = COPY %0:accregbank(<8 x s64>)
     PseudoRET implicit $lr, implicit $bml0
 ...
@@ -315,7 +315,7 @@ body:             |
     %20:accregbank(<8 x s64>) = COPY $bml1
     %21:accregbank(<8 x s64>) = COPY $bml2
     %46:gprregbank(s32) = G_CONSTANT i32 92
-    %0:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.I1024.I1024.ACC1024.ACC1024.accfloat.bf.addmac.conf), %1:vregbank(<64 x s16>), %2:vregbank(<32 x s16>), %3:vregbank(s128), %20:accregbank(<8 x s64>), %21:accregbank(<8 x s64>), %46:gprregbank(s32)
+    %0:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I1024.I1024.ACC1024.ACC1024.accfloat.bf.addmac.conf), %1:vregbank(<64 x s16>), %2:vregbank(<32 x s16>), %3:vregbank(s128), %20:accregbank(<8 x s64>), %21:accregbank(<8 x s64>), %46:gprregbank(s32)
     $bml0 = COPY %0:accregbank(<8 x s64>)
     PseudoRET implicit $lr, implicit $bml0
 ...
@@ -347,7 +347,7 @@ body:             |
     %20:accregbank(<8 x s64>) = COPY $bml1
     %21:accregbank(<8 x s64>) = COPY $bml2
     %46:gprregbank(s32) = G_CONSTANT i32 92
-    %0:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.I1024.I1024.ACC1024.ACC1024.accfloat.bf.addmsc.conf), %1:vregbank(<64 x s16>), %2:vregbank(<32 x s16>), %3:vregbank(s128), %20:accregbank(<8 x s64>), %21:accregbank(<8 x s64>), %46:gprregbank(s32)
+    %0:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I1024.I1024.ACC1024.ACC1024.accfloat.bf.addmsc.conf), %1:vregbank(<64 x s16>), %2:vregbank(<32 x s16>), %3:vregbank(s128), %20:accregbank(<8 x s64>), %21:accregbank(<8 x s64>), %46:gprregbank(s32)
     $bml0 = COPY %0:accregbank(<8 x s64>)
     PseudoRET implicit $lr, implicit $bml0
 ...
