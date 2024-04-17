@@ -59,27 +59,27 @@ class AIEV2I1024I1024ADDMACConf
 
 class AIEV2I1024I1024MULConfBF16
       : Intrinsic<[llvm_v8i64_ty], [llvm_v64bf16_ty, llvm_v32bf16_ty, llvm_i128_ty, llvm_i32_ty],
-					 [IntrNoMem]>;
+					 [IntrReadMem, IntrInaccessibleMemOnly]>;
 
 class AIEV2I1024I1024MACConfBF16
       : Intrinsic<[llvm_v8i64_ty], [llvm_v64bf16_ty, llvm_v32bf16_ty, llvm_i128_ty, llvm_v8i64_ty, llvm_i32_ty],
-					 [IntrNoMem]>;
+					 [IntrReadMem, IntrInaccessibleMemOnly]>;
 
 class AIEV2I1024I1024ADDMACConfBF16
       : Intrinsic<[llvm_v8i64_ty], [llvm_v64bf16_ty, llvm_v32bf16_ty, llvm_i128_ty, llvm_v8i64_ty, llvm_v8i64_ty, llvm_i32_ty],
-					 [IntrNoMem]>;
+					 [IntrReadMem, IntrInaccessibleMemOnly]>;
 
 class AIEV2I512I1024MULConfBF16
       : Intrinsic<[llvm_v8i64_ty], [llvm_v32bf16_ty, llvm_v32bf16_ty, llvm_i128_ty, llvm_i32_ty],
-					 [IntrNoMem]>;
+					 [IntrReadMem, IntrInaccessibleMemOnly]>;
 
 class AIEV2I512I1024MACConfBF16
       : Intrinsic<[llvm_v8i64_ty], [llvm_v32bf16_ty, llvm_v32bf16_ty, llvm_i128_ty, llvm_v8i64_ty, llvm_i32_ty],
-					 [IntrNoMem]>;
+					 [IntrReadMem, IntrInaccessibleMemOnly]>;
 
 class AIEV2I512I1024ADDMACConfBF16
       : Intrinsic<[llvm_v8i64_ty], [llvm_v32bf16_ty, llvm_v32bf16_ty, llvm_i128_ty, llvm_v8i64_ty, llvm_v8i64_ty, llvm_i32_ty],
-					 [IntrNoMem]>;
+					 [IntrReadMem, IntrInaccessibleMemOnly]>;
 
 class AIEV2I512I512MULConf
 	 : Intrinsic<[llvm_v16i64_ty], [llvm_v64i8_ty, llvm_v16i32_ty, llvm_i32_ty],
