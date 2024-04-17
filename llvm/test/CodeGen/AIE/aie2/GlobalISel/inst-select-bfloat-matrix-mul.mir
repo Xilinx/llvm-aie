@@ -79,7 +79,7 @@ body:             |
     %2:vregbank(<32 x s16>) = COPY $x2
     %3:accregbank(<8 x s64>) = COPY $bml1
     %4:gprregbank(s32) = G_CONSTANT i32 28
-    %0:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.bf.mac16.conf), %1:vregbank(<32 x s16>), %2:vregbank(<32 x s16>), %3:accregbank(<8 x s64>), %4:gprregbank(s32)
+    %0:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.bf.mac16.conf), %1:vregbank(<32 x s16>), %2:vregbank(<32 x s16>), %3:accregbank(<8 x s64>), %4:gprregbank(s32)
     $bml0 = COPY %0:accregbank(<8 x s64>)
     PseudoRET implicit $lr, implicit $bml0
 ...
@@ -107,7 +107,7 @@ body:             |
     %2:vregbank(<32 x s16>) = COPY $x2
     %3:accregbank(<8 x s64>) = COPY $bml1
     %4:gprregbank(s32) = G_CONSTANT i32 28
-    %0:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.bf.msc16.conf), %1:vregbank(<32 x s16>), %2:vregbank(<32 x s16>), %3:accregbank(<8 x s64>), %4:gprregbank(s32)
+    %0:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.bf.msc16.conf), %1:vregbank(<32 x s16>), %2:vregbank(<32 x s16>), %3:accregbank(<8 x s64>), %4:gprregbank(s32)
     $bml0 = COPY %0:accregbank(<8 x s64>)
     PseudoRET implicit $lr, implicit $bml0
 ...
@@ -136,7 +136,7 @@ body:             |
     %3:accregbank(<8 x s64>) = COPY $bml1
     %4:accregbank(<8 x s64>) = COPY $bml2
     %5:gprregbank(s32) = G_CONSTANT i32 28
-    %0:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.bf.addmac16.conf), %1:vregbank(<32 x s16>), %2:vregbank(<32 x s16>), %3:accregbank(<8 x s64>), %4:accregbank(<8 x s64>), %5:gprregbank(s32)
+    %0:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.bf.addmac16.conf), %1:vregbank(<32 x s16>), %2:vregbank(<32 x s16>), %3:accregbank(<8 x s64>), %4:accregbank(<8 x s64>), %5:gprregbank(s32)
     $bml0 = COPY %0:accregbank(<8 x s64>)
     PseudoRET implicit $lr, implicit $bml0
 ...
@@ -165,7 +165,7 @@ body:             |
     %3:accregbank(<8 x s64>) = COPY $bml1
     %4:accregbank(<8 x s64>) = COPY $bml2
     %5:gprregbank(s32) = G_CONSTANT i32 28
-    %0:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.bf.addmsc16.conf), %1:vregbank(<32 x s16>), %2:vregbank(<32 x s16>), %3:accregbank(<8 x s64>), %4:accregbank(<8 x s64>), %5:gprregbank(s32)
+    %0:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.bf.addmsc16.conf), %1:vregbank(<32 x s16>), %2:vregbank(<32 x s16>), %3:accregbank(<8 x s64>), %4:accregbank(<8 x s64>), %5:gprregbank(s32)
     $bml0 = COPY %0:accregbank(<8 x s64>)
     PseudoRET implicit $lr, implicit $bml0
 ...
