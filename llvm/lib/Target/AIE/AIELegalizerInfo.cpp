@@ -490,6 +490,15 @@ AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
         .clampMaxNumElements(0, S16, 32)
         .clampMaxNumElements(0, S32, 16)
         .custom();
+
+    getActionDefinitionsBuilder(G_SHUFFLE_VECTOR)
+        .unsupportedIf(IsNotValidDestinationVector)
+        // Checks if the shuffle is "canonical", this enables additional actions
+        // in the LLVM combiner and can change shuffle vectors legalization
+        .lowerIf([=](const LegalityQuery &Query) {
+          return Query.Types[0] == Query.Types[1];
+        })
+        .lower();
   }
 
   getActionDefinitionsBuilder(G_JUMP_TABLE).custom();
