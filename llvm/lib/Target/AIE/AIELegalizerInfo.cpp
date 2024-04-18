@@ -75,6 +75,19 @@ isValidVectorMergeUnmergeOp(const unsigned BigVectorId,
   };
 }
 
+static LegalityPredicate isValidVectorAIE2(const unsigned TypeIdx) {
+  return [=](const LegalityQuery &Query) {
+    const LLT DstTy = Query.Types[TypeIdx];
+    const unsigned DstSize = DstTy.getSizeInBits();
+    return DstTy.isVector() && (DstSize == 32 || DstSize > 64);
+  };
+}
+
+LegalityPredicate
+negatePredicate(const std::function<bool(const LegalityQuery &)> &Func) {
+  return [=](const LegalityQuery &Query) { return !Func(Query); };
+}
+
 AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
   using namespace TargetOpcode;
   const LLT S8 = LLT::scalar(8);
@@ -83,6 +96,10 @@ AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
   const LLT S32 = LLT::scalar(32);
   const LLT S64 = LLT::scalar(64);
   const LLT P0 = LLT::pointer(0, 20);
+
+  // 32-bit vectors
+  const LLT V4S8 = LLT::fixed_vector(4, 8);
+  const LLT V2S16 = LLT::fixed_vector(2, 16);
 
   // 64-bit vectors
   const LLT V2S32 = LLT::fixed_vector(2, 32);
@@ -119,6 +136,8 @@ AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
   const LLT S128 = LLT::scalar(128);
 
   static const std::initializer_list<LLT> AIE2VectorTypes = {
+      /* Begin 32-bit types*/
+      V4S8, V2S16,
       /* Begin 256-bit types */
       V8S32, V16S16, V32S8,
       /* Begin 512-bit types */
@@ -126,6 +145,8 @@ AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
       /* Begin 1024-bit types */
       V32S32, V64S16, V128S8};
 
+  // Accumulator types are 32-bit vectors that pretend to 64-bit vectors of
+  // half the size.
   static const std::initializer_list<LLT> AIE2AccumulatorTypes = {
       /* Begin 256-bit types */
       ACC256,
@@ -398,6 +419,9 @@ AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
 
   // Bitcast - vector source and vector destination - For AIEV2
   if (ST.isAIE2()) {
+    const LegalityPredicate IsNotValidDestinationVector =
+        negatePredicate(isValidVectorAIE2(0));
+
     getActionDefinitionsBuilder(G_BITCAST).legalIf(
         LegalityPredicates::all(isLegalBitCastType(0), isLegalBitCastType(1)));
 
@@ -407,25 +431,28 @@ AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
         // TODO: can be implemented by unpadding the source vector into Src1,
         // shifting and unpadding into Src2
         .unsupportedIf(sizeIs(0, 128))
-        .legalIf(isValidVectorMergeUnmergeOp(1, 0))
         .customIf([=](const LegalityQuery &Query) {
           const LLT &DstTy = Query.Types[0];
           const LLT &SrcTy = Query.Types[1];
 
           return SrcTy.isVector() && DstTy.isScalar() &&
                  DstTy == SrcTy.getElementType();
-        });
+        })
+        .unsupportedIf(IsNotValidDestinationVector)
+        .legalIf(isValidVectorMergeUnmergeOp(1, 0));
 
     getActionDefinitionsBuilder(G_CONCAT_VECTORS)
+        .unsupportedIf(IsNotValidDestinationVector)
         .legalIf(isValidVectorMergeUnmergeOp(0, 1));
 
     getActionDefinitionsBuilder(G_BUILD_VECTOR)
         // Legacy legalization for bitcasts
         .legalFor({{V2S32, S32}})
-        // We clamp the high values and not the low ones, since the former
-        // splits the values but the latter keeps the same G_BUILD_VECTOR in the
-        // output instructions which causes an infinite loop since it can't
-        // reach our custom legalization code.
+        .unsupportedIf(IsNotValidDestinationVector)
+        // We clamp the high values and not the low ones, sice the former
+        // splits the values but the latter keeps the same G_BUILD_VECTOR in
+        // the output instructions which causes an infinite loop since it
+        // can't reach our custom legalization code.
         .clampMaxNumElements(0, S8, 64)
         .clampMaxNumElements(0, S16, 32)
         .clampMaxNumElements(0, S32, 16)
