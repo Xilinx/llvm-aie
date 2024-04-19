@@ -746,6 +746,9 @@ public:
   public:
     virtual ~PipelinerLoopInfo();
 
+    // Supply an upper limit for the II. -1 is unlimited
+    virtual int getIILimit() const;
+
     /// Force the minimum II to at least the value returned by this method.
     virtual unsigned getMinII() const { return 0; }
     /// Return true if the given instruction should not be pipelined and should

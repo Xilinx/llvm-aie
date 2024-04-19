@@ -77,6 +77,10 @@ public:
   /// Once this function is called, no other functions on this object are
   /// valid; the loop has been removed.
   void disposed() override;
+
+  int getIILimit() const override {
+    return 100;
+  }
 };
 
 std::unique_ptr<TargetInstrInfo::PipelinerLoopInfo>

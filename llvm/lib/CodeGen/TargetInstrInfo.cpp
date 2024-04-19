@@ -1858,3 +1858,13 @@ bool TargetInstrInfo::isMBBSafeToOutlineFrom(MachineBasicBlock &MBB,
   }
   return true;
 }
+
+
+static cl::opt<int> SwpMaxMii("pipeliner-max-mii",
+                              cl::desc("Size limit for the MII."), cl::Hidden,
+                              cl::init(27));
+
+
+int TargetInstrInfo::PipelinerLoopInfo::getIILimit() const {
+  return SwpMaxMii;
+}

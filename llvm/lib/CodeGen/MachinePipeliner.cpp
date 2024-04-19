@@ -122,10 +122,6 @@ static cl::opt<bool> EnableSWPOptSize("enable-pipeliner-opt-size",
                                       cl::desc("Enable SWP at Os."), cl::Hidden,
                                       cl::init(false));
 
-/// A command line argument to limit minimum initial interval for pipelining.
-static cl::opt<int> SwpMaxMii("pipeliner-max-mii",
-                              cl::desc("Size limit for the MII."),
-                              cl::Hidden, cl::init(27));
 
 /// A command line argument to force pipeliner to use specified initial
 /// interval.
@@ -537,6 +533,7 @@ void SwingSchedulerDAG::schedule() {
   }
 
   // Don't pipeline large loops.
+  int SwpMaxMii = LoopPipelinerInfo->getIILimit();
   if (SwpMaxMii != -1 && (int)MII > SwpMaxMii) {
     LLVM_DEBUG(dbgs() << "MII > " << SwpMaxMii
                       << ", we don't pipeline large loops\n");
