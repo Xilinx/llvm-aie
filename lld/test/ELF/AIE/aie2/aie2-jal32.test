@@ -1,0 +1,51 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# REQUIRES: aie
+# RUN: yaml2obj %s -o %t.o
+# RUN: ld.lld -Ttext=69630 %t.o -o %t
+# RUN: obj2yaml %t | FileCheck %s
+# RUN: llvm-objdump -d %t | FileCheck -check-prefix=CHECK_ASM %s
+#
+# CHECK:  - Name:            .text
+# CHECK:    Content:         950000184B0301000100010001000100
+#
+# CHECK_ASM:   69630: 95 00 00 18 4b 03    	j	#0x69630
+
+--- !ELF
+FileHeader:
+  Class:           ELFCLASS32
+  Data:            ELFDATA2LSB
+  Type:            ET_REL
+  Machine:         EM_AIE
+  Flags:           [ EF_AIE_AIE2 ]
+  SectionHeaderStringTable: .strtab
+Sections:
+  - Name:            .text
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
+    AddressAlign:    0x10
+    Content:         '95000000000001000100010001000100'
+  - Name:            .rela.text
+    Type:            SHT_RELA
+    Flags:           [ SHF_INFO_LINK ]
+    Link:            .symtab
+    AddressAlign:    0x4
+    Info:            .text
+    Relocations:
+      - Symbol:          foo
+        Type:            R_AIE_1
+  - Type:            SectionHeaderTable
+    Sections:
+      - Name:            .strtab
+      - Name:            .text
+      - Name:            .rela.text
+      - Name:            .symtab
+Symbols:
+  - Name:            foo
+    Section:         .text
+    Binding:         STB_GLOBAL
+...
