@@ -338,21 +338,22 @@ void AIE::relocateAIE2(uint8_t *Loc, const Relocation &rel,
     // automatically generated from the processor description.
 #include "AIE2_rela.inc"
 
-    // 72 : (symbol_addr_AR  + addend )  :  addr [19..0]@0 in w08[4]      //
-    // with default addend 0 73 : (symbol_addr_AR  + addend )  :  addr
-    // [19..0]@0 in w32[1]      // with default addend 0
-  case 72:
-  case 73:
-      checkUInt(Loc, Val, 20, rel);
-      patch4bytes(Loc, Val, 19, 0, 12);
-      return;
-      //74 : (symbol_addr_AR  + addend )  :  t01u [0..0]@0 in w08[4]      // with default addend 0
-      //75 : (symbol_addr_AR  + addend )  :  t01u [0..0]@0 in w32[1]      // with default addend 0
-  case 74:
-  case 75:
-      checkUInt(Loc, Val, 1, rel);
-      patch4bytes(Loc, Val, 0, 0, 31);
-      return;
+    // 50 : (symbol_addr_AR  + addend )  :  addr [19..0]@0 in w08[4]      //
+    // with default addend 0 52 : (symbol_addr_AR  + addend )  :  addr [19..0]@0
+    // in w32[1]      // with default addend 0
+  case 50:
+  case 52:
+    checkUInt(Loc, Val, 20, rel);
+    patch4bytes(Loc, Val, 19, 0, 12);
+    return;
+    // 51 : (symbol_addr_AR  + addend )  :  w32 [31..0]@0 in w08[4]      // with
+    // default addend 0 53 : (symbol_addr_AR  + addend )  :  w32 [31..0]@0 in
+    // w32[1]      // with default addend 0
+  case 51:
+  case 53:
+    checkUInt(Loc, Val, 32, rel);
+    patch4bytes(Loc, Val, 31, 0, 0);
+    return;
 
   default:
     error(getErrorLocation(Loc) +
