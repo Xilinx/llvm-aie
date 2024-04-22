@@ -28,21 +28,6 @@
 // $crsat = COPY %0               |   |    |   ---------------------------
 // %4 = opcode implicit $crsat    |   |    |   %4 = opcode implicit $crsat
 //
-// 2. Deadcode elimination.
-// See Test 5: "crupssign_redundant_reassignments" func in
-// CodeGen/AIE/aie2/GlobalISel/post-select-optimize-erase-physregs.mir
-// E.g. Transform -
-// %0 = COPY $r0                    |   |    | %0 = COPY $r0
-// %1 = COPY $r1                    |   |    | %1 = COPY $r1
-// $crupssign = COPY %0             |   |    | $crupssign = COPY %0
-// %2 = opcode implicit $crupssign  |   |    | %2 = opcode implicit $crupssign
-// $crupssign = MOV 0               |-> to ->| -------------------------------
-// $crupssign = COPY %0             |   |    | -------------------------------
-// %3 = opcode implicit $crupssign  |   |    | %3 = opcode implicit $crupssign
-// $crupssign = MOV 0               |   |    | -------------------------------
-// $crupssign = COPY %1             |   |    | $crupssign = COPY %1
-//
-//===----------------------------------------------------------------------===//
 
 #include "AIE.h"
 #include "llvm/ADT/DenseMap.h"
@@ -85,15 +70,13 @@ private:
    * @brief To track the PhysReg defs and the state of their use.
    */
   struct PhysRegDefInfoStruct {
-    // Tracks the last absolutely required def.
-    MachineInstr *LastRequiredDef = nullptr;
     // Tracks the last visited def. Change with every new def.
     MachineInstr *LastVisitedDef = nullptr;
     // Tracks if the PhysReg is used in between current def and LastVisitedDef.
     bool IsUsed = false;
 
     PhysRegDefInfoStruct(MachineInstr *MI)
-        : LastRequiredDef(MI), LastVisitedDef(MI), IsUsed(false) {}
+        : LastVisitedDef(MI), IsUsed(false) {}
   };
 
   /// Collect all VirtReg to PhysReg copies that can be removed at the last.
@@ -259,47 +242,6 @@ bool AIEPostSelectOptimize::eraseOrStoreRedundantPhysRegDefs(
 
   bool Changed = false;
   MachineInstr *CurrentDef = &MI;
-  if (!DefInfo.IsUsed) {
-    /*CASE 3*/
-    // If MI in the map is not similar to current MI, but there is
-    // redundancy and no instruction reads that physical register between
-    // definitions, erase the MI in the map, since we only need the current MI.
-    // E.g.: a fancy case of dead code elimination.
-    // %0 = COPY $r0
-    // $crupssign = COPY %0 <---------------- LastRequiredDef
-    // %1 = opcode implicit $crupssign
-    // $crupssign = MOV 0 <------------------ LastVisitedDef : dead
-    // $crupssign = COPY %0 <----------------- Current Def
-    // %2 = opcode implicit $crupssign
-    LLVM_DEBUG(dbgs() << "Erasing redundant MI - " << *DefInfo.LastVisitedDef);
-    DefInfo.LastVisitedDef->eraseFromParent();
-    Changed = true;
-
-    /*CASE 4*/
-    // We first removed the deadcode in between and then check if there are
-    // other identical copies.
-    // Continuing the above example -
-    // %0 = COPY $r0
-    // $crupssign = COPY %0 <----------------- LastRequiredDef
-    // %1 = opcode implicit $crupssign
-    // $crupssign = COPY %0 <----------------- Current Def : also redundant
-    // %2 = opcode implicit $crupssign
-    if (DefInfo.LastRequiredDef->isIdenticalTo(MI)) {
-      LLVM_DEBUG(dbgs() << "Erasing redundant MI - " << MI);
-      MI.eraseFromParent();
-
-      // Assign the LastRequiredDef as the CurrentDef, which is eventually
-      // assigned to LastVisitedDef since both the LastVisitedDef and the
-      // current MI have been erased.
-      // This basically serves as another "anchor" to which we can compare
-      // are copies with.
-      CurrentDef = DefInfo.LastRequiredDef;
-    }
-  } else {
-    // Assign LastVisitedDef to LastRequiredDef since there is a use in between
-    // and we cannot remove it.
-    DefInfo.LastRequiredDef = DefInfo.LastVisitedDef;
-  }
   // Change the LastVisitedDef to CurrentDef to increment our "anchor".
   DefInfo.LastVisitedDef = CurrentDef;
   DefInfo.IsUsed = false;
