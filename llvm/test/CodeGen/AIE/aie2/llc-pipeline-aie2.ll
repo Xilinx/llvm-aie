@@ -128,7 +128,9 @@
 ; AIE-O123-NEXT:      Lazy Block Frequency Analysis
 
 ; AIE-O0123-NEXT:      InstructionSelect
+; AIE-O123-NEXT:      Remove dead machine instructions
 ; AIE-O123-NEXT:      AIE Post Select Optimizer
+; AIE-O123-NEXT:      Remove dead machine instructions
 ; AIE-O0123-NEXT:      ResetMachineFunction
 ; AIE-O0123-NEXT:      Finalize ISel and expand pseudo-instructions
 

@@ -156,7 +156,11 @@ void AIE2PassConfig::addPreRegBankSelect() {
 bool AIE2PassConfig::addGlobalInstructionSelect() {
   addPass(new InstructionSelect(getOptLevel()));
   if (getOptLevel() != CodeGenOptLevel::None) {
+    addPass(
+        createDeadMachineInstructionElim(/*KeepLifetimeInstructions=*/true));
     addPass(createAIEPostSelectOptimize());
+    addPass(
+        createDeadMachineInstructionElim(/*KeepLifetimeInstructions=*/true));
   }
   return false;
 }
