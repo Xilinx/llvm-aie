@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This is an extremely simple MachineInstr-level dead-code-elimination pass.
@@ -34,11 +37,15 @@ namespace {
     const MachineRegisterInfo *MRI = nullptr;
     const TargetInstrInfo *TII = nullptr;
     LiveRegUnits LivePhysRegs;
+    bool KeepLifetimeInstructions;
 
   public:
     static char ID; // Pass identification, replacement for typeid
-    DeadMachineInstructionElim() : MachineFunctionPass(ID) {
-     initializeDeadMachineInstructionElimPass(*PassRegistry::getPassRegistry());
+    DeadMachineInstructionElim(bool LifetimeInstructions = false)
+        : MachineFunctionPass(ID),
+          KeepLifetimeInstructions(LifetimeInstructions) {
+      initializeDeadMachineInstructionElimPass(
+          *PassRegistry::getPassRegistry());
     }
 
     void getAnalysisUsage(AnalysisUsage &AU) const override {
@@ -69,6 +76,15 @@ bool DeadMachineInstructionElim::isDead(const MachineInstr *MI) const {
   if (MI->getOpcode() == TargetOpcode::LOCAL_ESCAPE)
     return false;
 
+  // Don't delete marks of start and end of lifetime of a stack, as they give
+  // information about lifetime of stack for next passes.
+  if (KeepLifetimeInstructions) {
+    if (MI->getOpcode() == TargetOpcode::LIFETIME_START ||
+        MI->getOpcode() == TargetOpcode::LIFETIME_END) {
+      return false;
+    }
+  }
+
   // Don't delete instructions with side effects.
   bool SawStore = false;
   if (!MI->isSafeToMove(nullptr, SawStore) && !MI->isPHI())
@@ -78,8 +94,8 @@ bool DeadMachineInstructionElim::isDead(const MachineInstr *MI) const {
   for (const MachineOperand &MO : MI->all_defs()) {
     Register Reg = MO.getReg();
     if (Reg.isPhysical()) {
-      // Don't delete live physreg defs, or any reserved register defs.
-      if (!LivePhysRegs.available(Reg) || MRI->isReserved(Reg))
+      // Don't delete live physreg defs, or any non-simplifiable physreg defs.
+      if (!LivePhysRegs.available(Reg) || !MRI->canSimplifyPhysReg(Reg))
         return false;
     } else {
       if (MO.isDead()) {
@@ -127,6 +143,14 @@ bool DeadMachineInstructionElim::eliminateDeadMI(MachineFunction &MF) {
   for (MachineBasicBlock *MBB : post_order(&MF)) {
     LivePhysRegs.addLiveOuts(*MBB);
 
+    // Reserved registers are considered always live, so consider them as
+    // live-outs for MBB. Inside MBB, dead assignments can still be detected.
+    for (MCPhysReg PhysReg : MRI->getReservedRegs().set_bits()) {
+      if (MRI->canSimplifyPhysReg(PhysReg)) {
+        LivePhysRegs.addReg(PhysReg);
+      }
+    }
+
     // Now scan the instructions and delete dead ones, tracking physreg
     // liveness as we go.
     for (MachineInstr &MI : make_early_inc_range(reverse(*MBB))) {
@@ -149,3 +173,10 @@ bool DeadMachineInstructionElim::eliminateDeadMI(MachineFunction &MF) {
   LivePhysRegs.clear();
   return AnyChanges;
 }
+
+namespace llvm {
+MachineFunctionPass *
+createDeadMachineInstructionElim(bool KeepLifetimeInstructions = false) {
+  return new DeadMachineInstructionElim(KeepLifetimeInstructions);
+}
+} // end namespace llvm

@@ -56,6 +56,8 @@ FunctionPass *createAIESubRegConstrainer();
 MachineFunctionPass *createAIEClusterBaseAddress();
 FunctionPass *createAIESuperRegRewriter();
 FunctionPass *createAIEPostSelectOptimize();
+MachineFunctionPass *
+createDeadMachineInstructionElim(bool KeepLifetimeInstructions);
 
 void initializeAIEBaseHardwareLoopsPass(PassRegistry &);
 void initializeAIEClusterBaseAddressPass(PassRegistry &);
