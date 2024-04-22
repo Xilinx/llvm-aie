@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the MachineRegisterInfo class.
@@ -974,6 +977,15 @@ public:
   bool isAllocatable(MCRegister PhysReg) const {
     return getTargetRegisterInfo()->isInAllocatableClass(PhysReg) &&
       !isReserved(PhysReg);
+  }
+
+  /// Returns true if redundant assignments to \p PhysReg can be simplified.
+  /// This is queried by DeadMachineInstructionElim.
+  /// This essentially means that all assignments of \p PhysReg are visible and
+  /// non volatile.
+  bool canSimplifyPhysReg(MCRegister PhysReg) const {
+    return !isReserved(PhysReg) ||
+           getTargetRegisterInfo()->isSimplifiableReservedReg(PhysReg);
   }
 
   //===--------------------------------------------------------------------===//

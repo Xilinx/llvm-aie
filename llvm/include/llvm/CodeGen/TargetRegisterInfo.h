@@ -549,6 +549,13 @@ public:
     return {};
   }
 
+  /// Whether redundant assignments to reserved registers can be simplified by
+  /// e.g. DeadMachineInstructionElim
+  /// See \p MachineRegisterInfo::canSimplifyPhysReg().
+  virtual bool isSimplifiableReservedReg(MCRegister PhysReg) const {
+    return false;
+  }
+
   /// Returns false if we can't guarantee that Physreg, specified as an IR asm
   /// clobber constraint, will be preserved across the statement.
   virtual bool isAsmClobberable(const MachineFunction &MF,

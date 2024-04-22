@@ -37,7 +37,7 @@ struct AIEBaseRegisterInfo : public TargetRegisterInfo {
   }
   // Whether redundant assignments to reserved registers can be simplified by
   // WAWEdges
-  virtual bool isSimplifiableReservedReg(MCRegister PhysReg) const {
+  bool isSimplifiableReservedReg(MCRegister PhysReg) const override {
     return false;
   }
 #if 0
