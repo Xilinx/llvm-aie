@@ -63,8 +63,9 @@ static LegalizeMutation bitcastAccToVectorType(unsigned TypeIdx) {
   };
 }
 
-static LegalityPredicate isValidVectorMergeOp(const unsigned BigVectorId,
-                                              const unsigned SmallVectorId) {
+static LegalityPredicate
+isValidVectorMergeUnmergeOp(const unsigned BigVectorId,
+                            const unsigned SmallVectorId) {
   return [=](const LegalityQuery &Query) {
     const LLT Big = Query.Types[BigVectorId];
     const LLT Small = Query.Types[SmallVectorId];
@@ -403,12 +404,23 @@ AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
     getActionDefinitionsBuilder(G_MERGE_VALUES).legalFor({{S64, S32}});
     getActionDefinitionsBuilder(G_BUILD_VECTOR).legalFor({{V2S32, S32}});
     getActionDefinitionsBuilder(G_UNMERGE_VALUES)
-        .legalFor({{S32, S64}, {S32, V2S32}});
+        .legalFor({{S32, S64}, {S32, V2S32}})
+        // TODO: can be implemented by unpadding the source vector into Src1,
+        // shifting and unpadding into Src2
+        .unsupportedIf(sizeIs(0, 128))
+        .legalIf(isValidVectorMergeUnmergeOp(1, 0))
+        .customIf([=](const LegalityQuery &Query) {
+          const LLT &DstTy = Query.Types[0];
+          const LLT &SrcTy = Query.Types[1];
+
+          return SrcTy.isVector() && DstTy.isScalar() &&
+                 DstTy == SrcTy.getElementType();
+        });
   }
 
   if (ST.isAIE2()) {
     getActionDefinitionsBuilder(G_CONCAT_VECTORS)
-        .legalIf(isValidVectorMergeOp(0, 1));
+        .legalIf(isValidVectorMergeUnmergeOp(0, 1));
   }
 
   getActionDefinitionsBuilder(G_JUMP_TABLE).custom();
@@ -461,9 +473,43 @@ bool AIELegalizerInfo::legalizeCustom(LegalizerHelper &Helper,
   case TargetOpcode::G_FADD:
   case TargetOpcode::G_FSUB:
     return legalizeG_FADDSUB(Helper, MI);
+  case TargetOpcode::G_UNMERGE_VALUES:
+    return legalizeG_UNMERGE_VALUES(Helper, MI);
   }
 
   llvm_unreachable("Un-expected custom legalization");
+}
+
+bool AIELegalizerInfo::legalizeG_UNMERGE_VALUES(LegalizerHelper &Helper,
+                                                MachineInstr &MI) const {
+  MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
+  const MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
+
+  const Register FirstReg = MI.getOperand(0).getReg();
+  const Register LastReg = MI.getOperand(MI.getNumOperands() - 1).getReg();
+  const LLT FirstTy = MRI.getType(FirstReg);
+  const LLT LastTy = MRI.getType(LastReg);
+  assert(LastTy.isVector() &&
+         (FirstTy.getScalarSizeInBits() * (MI.getNumOperands() - 1)) ==
+             LastTy.getSizeInBits() &&
+         "This operation is only supported for vectors");
+
+  const unsigned NumOperands = MI.getNumOperands() - 1;
+  for (unsigned Index = 0; Index < NumOperands; ++Index) {
+    const Register Current = MI.getOperand(Index).getReg();
+    const LLT CurrentTy = MRI.getType(Current);
+    assert(CurrentTy.isScalar() &&
+           "this operation is only supported for scalar types");
+
+    // We build the constant ourselves since the default behaviour
+    // of the builtin is to create 64-bit constants.
+    const MachineInstrBuilder CurrentIndex =
+        MIRBuilder.buildConstant(LLT::scalar(32), Index);
+    MIRBuilder.buildExtractVectorElement(Current, LastReg, CurrentIndex);
+  }
+
+  MI.eraseFromParent();
+  return true;
 }
 
 bool AIELegalizerInfo::legalizeG_VASTART(LegalizerHelper &Helper,
