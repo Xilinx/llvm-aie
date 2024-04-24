@@ -19,18 +19,25 @@
 #include "AIEMachineFunctionInfo.h"
 #include "AIETargetMachine.h"
 #include "MCTargetDesc/AIEMCTargetDesc.h"
+#include "llvm/Analysis/VectorUtils.h"
 #include "llvm/CodeGen/GlobalISel/CallLowering.h"
 #include "llvm/CodeGen/GlobalISel/LegalizerHelper.h"
 #include "llvm/CodeGen/GlobalISel/LegalizerInfo.h"
 #include "llvm/CodeGen/GlobalISel/LostDebugLocObserver.h"
 #include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
 #include "llvm/CodeGen/LowLevelType.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
+#include "llvm/CodeGen/MachineOperand.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/Register.h"
 #include "llvm/CodeGen/RuntimeLibcalls.h"
+#include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/IR/IntrinsicsAIE.h"
 #include "llvm/IR/IntrinsicsAIE2.h"
 #include "llvm/Support/Alignment.h"
+#include <initializer_list>
 
 using namespace llvm;
 using namespace LegalityPredicates;
@@ -53,6 +60,17 @@ static LegalizeMutation bitcastAccToVectorType(unsigned TypeIdx) {
     unsigned Size = OrigTy.getSizeInBits();
     assert(Size % 32 == 0);
     return std::pair(TypeIdx, LLT::fixed_vector(Size / 32, 32));
+  };
+}
+
+static LegalityPredicate isValidVectorMergeOp(const unsigned BigVectorId,
+                                              const unsigned SmallVectorId) {
+  return [=](const LegalityQuery &Query) {
+    const LLT Big = Query.Types[BigVectorId];
+    const LLT Small = Query.Types[SmallVectorId];
+    return Big.isVector() && Small.isVector() &&
+           Big.getElementType() == Small.getElementType() &&
+           Small.getNumElements() * 2 == Big.getNumElements();
   };
 }
 
@@ -386,6 +404,11 @@ AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
     getActionDefinitionsBuilder(G_BUILD_VECTOR).legalFor({{V2S32, S32}});
     getActionDefinitionsBuilder(G_UNMERGE_VALUES)
         .legalFor({{S32, S64}, {S32, V2S32}});
+  }
+
+  if (ST.isAIE2()) {
+    getActionDefinitionsBuilder(G_CONCAT_VECTORS)
+        .legalIf(isValidVectorMergeOp(0, 1));
   }
 
   getActionDefinitionsBuilder(G_JUMP_TABLE).custom();
