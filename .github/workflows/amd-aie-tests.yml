@@ -7,14 +7,14 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - 'release/**'
+      - 'aie-public'
     paths:
       - 'llvm/**'
       - '.github/workflows/llvm-tests.yml'
       - '.github/workflows/llvm-project-tests.yml'
   pull_request:
     branches:
-      - 'release/**'
+      - 'aie-public'
     paths:
       - 'llvm/**'
       - '.github/workflows/llvm-tests.yml'
