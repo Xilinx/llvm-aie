@@ -1,0 +1,37 @@
+name: AIEngine LLVM Tests
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'release/**'
+    paths:
+      - 'llvm/**'
+      - '.github/workflows/llvm-tests.yml'
+      - '.github/workflows/llvm-project-tests.yml'
+  pull_request:
+    branches:
+      - 'release/**'
+    paths:
+      - 'llvm/**'
+      - '.github/workflows/llvm-tests.yml'
+      - '.github/workflows/llvm-project-tests.yml'
+
+concurrency:
+  # Skip intermediate builds: always.
+  # Cancel intermediate builds: only if it is a pull request build.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+
+jobs:
+  check_all:
+    if: github.repository_owner == 'Xilinx'
+    name: Test llvm,clang
+    uses: ./.github/workflows/llvm-project-tests.yml
+    with:
+      build_target: check-all
+      projects: clang;clang-tools-extra;lld
+      extra_cmake_args: '-DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD="AIE" -DLLVM_TARGETS_TO_BUILD="host"'
