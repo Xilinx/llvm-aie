@@ -24,6 +24,7 @@
 #include "llvm/CodeGen/LowLevelTypeUtils.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineDominators.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -2080,6 +2081,17 @@ bool CombinerHelper::matchCombineUnmergeWithDeadLanesToTrunc(MachineInstr &MI) {
     if (!MRI.use_nodbg_empty(MI.getOperand(Idx).getReg()))
       return false;
   }
+
+  // The combination relies on the target being a scalar, so we need to skip it
+  // whenever we try to combine into vectors.
+  const LLT DstVecTy = MRI.getType(MI.getOperand(0).getReg());
+  const LLT SrcVecTy = MRI.getType(MI.getOperand(MI.getNumDefs()).getReg());
+  const MachineFunction &MF = *MI.getMF();
+  const bool IsAIE = MF.getTarget().getTargetTriple().isAIE();
+
+  if (IsAIE && (DstVecTy.isVector() || SrcVecTy.isVector()))
+    return false;
+
   return true;
 }
 

@@ -36,11 +36,14 @@
 #include "llvm/CodeGen/Register.h"
 #include "llvm/CodeGen/TargetLowering.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
-#include "llvm/IR/IntrinsicInst.h"
+#include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/IntrinsicsAIE.h"
 #include "llvm/IR/IntrinsicsAIE2.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/TypeSize.h"
 #include <optional>
+#include <utility>
 
 #define DEBUG_TYPE "aie2-isel"
 
@@ -137,6 +140,7 @@ public:
   bool selectAddrInsn(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectCascadeStreamInsn(MachineInstr &I, MachineRegisterInfo &MRI,
                                bool isWrite);
+  bool selectG_CONCAT_VECTORS(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_BRCOND(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_BRINDIRECT(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_JUMP_TABLE(MachineInstr &I, MachineRegisterInfo &MRI);
@@ -752,6 +756,8 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
     return selectG_STORE(I, MRI);
   case G_UNMERGE_VALUES:
     return selectG_UNMERGE_VALUES(I, MRI);
+  case G_CONCAT_VECTORS:
+    return selectG_CONCAT_VECTORS(I, MRI);
   case AIE2::G_AIE_OFFSET_STORE:
   case AIE2::G_AIE_POSTINC_STORE:
   case AIE2::G_AIE_POSTINC_2D_STORE:
@@ -811,6 +817,52 @@ bool AIE2InstructionSelector::selectStartLoop(MachineInstr &I,
           .addImm(-1);
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*ADDI, TII, TRI, RBI);
+}
+
+// WIP: Implement this as a tablegen pattern instead, it is very similar to the
+// definition used for instrinsics.
+bool AIE2InstructionSelector::selectG_CONCAT_VECTORS(MachineInstr &I,
+                                                     MachineRegisterInfo &MRI) {
+  const Register DstVecReg = I.getOperand(0).getReg();
+  const Register Src1VecReg = I.getOperand(1).getReg();
+  const Register Src2VecReg = I.getOperand(2).getReg();
+
+  const unsigned DstVecSize = MRI.getType(DstVecReg).getSizeInBits();
+  const unsigned Src1VecSize = MRI.getType(Src1VecReg).getSizeInBits();
+  const unsigned Src2VecSize = MRI.getType(Src2VecReg).getSizeInBits();
+
+  assert(
+      Src1VecSize == Src2VecSize && (DstVecSize == 2 * Src1VecSize) &&
+      (I.getNumOperands() == 3) &&
+      "Vectors can only be concatenated if the size of the two operands are "
+      "the same and are, if added together, equal to the destination vector");
+
+  // We are using a Reg Sequence here instead of copies since using
+  // subregisters causes the SSA violations to occur since it sees %x_hi and
+  // %x_lo as the same register.
+  MachineInstrBuilder RegSeq;
+  const TargetRegisterClass *TRC = nullptr;
+  if (DstVecSize == 512) {
+    RegSeq = MIB.buildInstr(AIE2::REG_SEQUENCE, {DstVecReg}, {})
+                 .addReg(Src1VecReg)
+                 .addImm(AIE2::sub_256_lo)
+                 .addReg(Src2VecReg)
+                 .addImm(AIE2::sub_256_hi);
+    TRC = &AIE2::VEC512RegClass;
+  } else if (DstVecSize == 1024) {
+    RegSeq = MIB.buildInstr(AIE2::REG_SEQUENCE, {DstVecReg}, {})
+                 .addReg(Src1VecReg)
+                 .addImm(AIE2::sub_512_lo)
+                 .addReg(Src2VecReg)
+                 .addImm(AIE2::sub_512_hi);
+    TRC = &AIE2::VEC1024RegClass;
+  }
+
+  constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *RegSeq, *TRC,
+                           RegSeq->getOperand(0));
+
+  I.eraseFromParent();
+  return true;
 }
 
 bool AIE2InstructionSelector::selectG_BRCOND(MachineInstr &I,
