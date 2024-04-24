@@ -1252,28 +1252,60 @@ static void createSubRegCopies(ArrayRef<Register> DstRegs, Register SrcReg,
 bool AIE2InstructionSelector::selectG_UNMERGE_VALUES(MachineInstr &I,
                                                      MachineRegisterInfo &MRI) {
   assert(I.getNumOperands() == 3);
-  Register DstReg1 = I.getOperand(0).getReg();
-  Register DstReg2 = I.getOperand(1).getReg();
-  Register SrcReg = I.getOperand(2).getReg();
+  const Register DstReg1 = I.getOperand(0).getReg();
+  const Register DstReg2 = I.getOperand(1).getReg();
+  const Register SrcReg = I.getOperand(2).getReg();
+
+  const LLT Dst1VecTy = MRI.getType(DstReg1);
+  const LLT SrcVecTy = MRI.getType(SrcReg);
+
   const RegisterBank &Dst1RB = *RBI.getRegBank(DstReg1, MRI, TRI);
   const RegisterBank &Dst2RB = *RBI.getRegBank(DstReg2, MRI, TRI);
   const RegisterBank &SrcRB = *RBI.getRegBank(SrcReg, MRI, TRI);
 
-  if (Dst1RB.getID() != AIE2::GPRRegBankID ||
-      Dst2RB.getID() != AIE2::GPRRegBankID ||
-      SrcRB.getID() != AIE2::GPRRegBankID)
+  // Copy the subregisters from the larger register, this only makes sense
+  // whenever both sides are vectors.
+  unsigned RegBankID;
+  std::pair<unsigned, unsigned> TargetSubRegs;
+
+  if (Dst1VecTy.isVector() && SrcVecTy.isVector()) {
+    assert(SrcVecTy.getSizeInBits() == 2 * Dst1VecTy.getSizeInBits() &&
+           "target register must be exactly half the size of source register");
+    assert(Dst1VecTy == MRI.getType(DstReg2) &&
+           "destination types must be the same");
+    RegBankID = AIE2::VRegBankID;
+
+    if (Dst1VecTy.getSizeInBits() == 256) {
+      TargetSubRegs.first = AIE2::sub_256_lo;
+      TargetSubRegs.second = AIE2::sub_256_hi;
+    } else if (Dst1VecTy.getSizeInBits() == 512) {
+      TargetSubRegs.first = AIE2::sub_512_lo;
+      TargetSubRegs.second = AIE2::sub_512_hi;
+    }
+  } else if (Dst1VecTy.isScalar()) {
+    RegBankID = AIE2::GPRRegBankID;
+    TargetSubRegs.first = AIE2::sub_l_even;
+    TargetSubRegs.second = AIE2::sub_l_odd;
+  } else {
+    llvm_unreachable(
+        "trying to unmerge a value into a non-vector or scalar value");
+  }
+
+  if (Dst1RB.getID() != RegBankID || Dst2RB.getID() != RegBankID ||
+      SrcRB.getID() != RegBankID)
     return false;
 
   createSubRegCopies({DstReg1, DstReg2}, SrcReg,
-                     {AIE2::sub_l_even, AIE2::sub_l_odd}, MIB);
+                     {TargetSubRegs.first, TargetSubRegs.second}, MIB);
 
-  const RegisterBank &GPRBank = RBI.getRegBank(AIE2::GPRRegBankID);
+  const RegisterBank &RegBank = RBI.getRegBank(RegBankID);
   for (MachineOperand &Op : I.operands()) {
     LLT Type = MRI.getType(Op.getReg());
-    const TargetRegisterClass &RC = TRI.getMinClassForRegBank(GPRBank, Type);
+    const TargetRegisterClass &RC = TRI.getMinClassForRegBank(RegBank, Type);
     if (!RBI.constrainGenericRegister(Op.getReg(), RC, MRI))
       return false;
   }
+
   I.eraseFromParent();
   return true;
 }

@@ -70,3 +70,40 @@ body:             |
     %0:ers8(s32), %1:ers8(s32) = G_UNMERGE_VALUES %2(<2 x s32>)
     PseudoRET implicit $lr, implicit %0, implicit %1
 ...
+
+---
+name:            test_unmerge_512_to_256
+legalized:       true
+regBankSelected: true
+tracksRegLiveness: true
+stack:
+  - { id: 0, name: "", size: 128, alignment: 32 }
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test_unmerge_512_to_256
+    ; CHECK: [[DEF:%[0-9]+]]:vec512 = IMPLICIT_DEF
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec256 = COPY [[DEF]].sub_256_lo
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec256 = COPY [[DEF]].sub_256_hi
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[COPY]], implicit [[COPY1]]
+    %0:vregbank(<16 x s32>) = G_IMPLICIT_DEF
+    %1:vregbank(<8 x s32>), %2:vregbank(<8 x s32>) = G_UNMERGE_VALUES %0(<16 x s32>)
+    PseudoRET implicit $lr, implicit %1, implicit %2
+...
+
+---
+name:            test_unmerge_1024_to_512
+legalized:       true
+regBankSelected: true
+tracksRegLiveness: true
+stack:
+  - { id: 0, name: "", size: 128, alignment: 32 }
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test_unmerge_1024_to_512
+    ; CHECK: [[DEF:%[0-9]+]]:vec1024 = IMPLICIT_DEF
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY [[DEF]].sub_512_lo
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY [[DEF]].sub_512_hi
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[COPY]], implicit [[COPY1]]
+    %0:vregbank(<32 x s32>) = G_IMPLICIT_DEF
+    %1:vregbank(<16 x s32>), %2:vregbank(<16 x s32>) = G_UNMERGE_VALUES %0(<32 x s32>)
+    PseudoRET implicit $lr, implicit %1, implicit %2
