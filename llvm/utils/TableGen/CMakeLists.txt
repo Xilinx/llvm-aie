@@ -4,7 +4,6 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-add_subdirectory(GlobalISel)
 # Basic utilities which is the strict minimum needed to build
 # llvm-min-tblgen.
 add_subdirectory(Basic)
@@ -48,11 +47,7 @@ add_tablegen(llvm-tblgen LLVM
   Attributes.cpp
   CallingConvEmitter.cpp
   CodeEmitterGen.cpp
-  CodeGenDAGPatterns.cpp
   CodeGenFormat.cpp
-  CodeGenHwModes.cpp
-  CodeGenInstAlias.cpp
-  CodeGenInstruction.cpp
   CodeGenMapTable.cpp
   CompressInstEmitter.cpp
   CTagsEmitter.cpp
