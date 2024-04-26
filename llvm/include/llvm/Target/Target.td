@@ -560,6 +560,11 @@ class Instruction : InstructionEncoding {
   // Added complexity passed onto matching pattern.
   int AddedComplexity  = 0;
 
+  // Passed onto matching pattern and helps in skipping checks
+  // where mayLoad/mayStore is inferred in the instruction but doesn't
+  // mirror in the pattern.
+  bit ModelsInaccessibleMemThroughRegs = false;
+
   // Indicates if this is a pre-isel opcode that should be
   // legalized/regbankselected/selected.
   bit isPreISelOpcode = false;
