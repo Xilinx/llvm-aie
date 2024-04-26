@@ -584,23 +584,9 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
     case Intrinsic::aie2_vsub_ge16:
     case Intrinsic::aie2_vsub_ge32:
       return selectVSUB_LTGE(I, MRI);
-    case Intrinsic::aie2_acc32_v16_I256_ups:
-    case Intrinsic::aie2_acc32_v32_I256_ups:
-    case Intrinsic::aie2_acc32_v32_I512_ups:
-    case Intrinsic::aie2_acc64_v16_I256_ups:
-    case Intrinsic::aie2_acc64_v16_I512_ups:
-    case Intrinsic::aie2_acc64_v8_I256_ups:
-      return selectVUPS(I, MRI);
     case Intrinsic::aie2_unpack_I8_I4:
     case Intrinsic::aie2_unpack_I16_I8:
       return selectVUNPACK(I, MRI);
-    case Intrinsic::aie2_I256_v16_acc32_srs:
-    case Intrinsic::aie2_I256_v16_acc64_srs:
-    case Intrinsic::aie2_I256_v32_acc32_srs:
-    case Intrinsic::aie2_I256_v8_acc64_srs:
-    case Intrinsic::aie2_I512_v16_acc64_srs:
-    case Intrinsic::aie2_I512_v32_acc32_srs:
-      return selectVSRS(I, MRI);
     case Intrinsic::aie2_v16bf16_to_v16accfloat:
       return selectVCONV(I, MRI);
     case Intrinsic::aie2_vextract_elem8_I512:
@@ -656,6 +642,20 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
     case Intrinsic::aie2_pack_I4_I8:
     case Intrinsic::aie2_pack_I8_I16:
       return selectVPACK(I, MRI);
+    case Intrinsic::aie2_I256_v16_acc32_srs:
+    case Intrinsic::aie2_I256_v16_acc64_srs:
+    case Intrinsic::aie2_I256_v32_acc32_srs:
+    case Intrinsic::aie2_I256_v8_acc64_srs:
+    case Intrinsic::aie2_I512_v16_acc64_srs:
+    case Intrinsic::aie2_I512_v32_acc32_srs:
+      return selectVSRS(I, MRI);
+    case Intrinsic::aie2_acc32_v16_I256_ups:
+    case Intrinsic::aie2_acc32_v32_I256_ups:
+    case Intrinsic::aie2_acc32_v32_I512_ups:
+    case Intrinsic::aie2_acc64_v16_I256_ups:
+    case Intrinsic::aie2_acc64_v16_I512_ups:
+    case Intrinsic::aie2_acc64_v8_I256_ups:
+      return selectVUPS(I, MRI);
     case Intrinsic::start_loop_iterations:
       return selectStartLoop(I, MRI);
     case Intrinsic::aie2_scd_read_vec:
@@ -1682,7 +1682,7 @@ getCombinedOpcodeSRSUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
                         std::optional<APInt> Immediate, bool IsSigned) {
   const bool AlwaysFitsImmediateRange = true;
   const bool NoImmediate = false;
-  if (CombOp.getOpcode() != AIE2::G_INTRINSIC)
+  if (CombOp.getOpcode() != AIE2::G_INTRINSIC_W_SIDE_EFFECTS)
     return {};
 
   unsigned ISelOpcode;
@@ -2758,7 +2758,7 @@ bool AIE2InstructionSelector::select512BitG_AIE_LOAD_UPS(
 bool AIE2InstructionSelector::selectG_AIE_LOAD_UPS(MachineInstr &UPSI,
                                                    MachineRegisterInfo &MRI) {
 
-  // First use is the G_INTRINSIC ID
+  // First use is the G_INTRINSIC_W_SIDE_EFFECTS ID
   Register LoadResult = (std::next(UPSI.uses().begin()))->getReg();
   MachineInstr *LoadOp = MRI.getUniqueVRegDef(LoadResult);
 
@@ -2780,7 +2780,7 @@ bool AIE2InstructionSelector::selectG_AIE_LOAD_UPS(MachineInstr &UPSI,
     return false;
 
   Register DstReg = UPSI.getOperand(0).getReg();
-  // In this case of G_INTRINSIC operand 1 is target intrinsic
+  // In this case of G_INTRINSIC_W_SIDE_EFFECTS operand 1 is target intrinsic
   // In this case the operand 2 is the source register which is the loaded value
   Register ShftReg = UPSI.getOperand(3).getReg();
   Register SignReg = UPSI.getOperand(4).getReg();
@@ -2798,9 +2798,10 @@ bool AIE2InstructionSelector::selectG_AIE_LOAD_UPS(MachineInstr &UPSI,
 
   assert(LSO && "Unexpected VLDA.UPS combine failure");
 
-  if (MRI.getType(LoadResult).getSizeInBits() == 512)
+  if (MRI.getType(LoadResult).getSizeInBits() == 512) {
     return select512BitG_AIE_LOAD_UPS(UPSI, *LSO, *AMI, DstReg, ShftReg,
                                       SignReg, ConstantSign, MRI);
+  }
 
   auto NewInstr = MIB.buildInstr(LSO->ISelOpcode);
 
@@ -2831,7 +2832,7 @@ bool AIE2InstructionSelector::selectVUPS(MachineInstr &I,
     return true;
 
   Register DstReg = I.getOperand(0).getReg();
-  // In this case of G_INTRINSIC operand 1 is target intrinsic
+  // In this case of G_INTRINSIC_W_SIDE_EFFECTS operand 1 is target intrinsic
   Register SrcReg = I.getOperand(2).getReg();
   Register ShftReg = I.getOperand(3).getReg();
   Register SignReg = I.getOperand(4).getReg();
@@ -2855,7 +2856,7 @@ bool AIE2InstructionSelector::selectVSRS(MachineInstr &I,
                                          MachineRegisterInfo &MRI) {
 
   Register DstReg = I.getOperand(0).getReg();
-  // In this case of G_INTRINSIC operand 1 is target intrinsic
+  // In this case of G_INTRINSIC_W_SIDE_EFFECTS operand 1 is target intrinsic
   Register SrcReg = I.getOperand(2).getReg();
   Register ShftReg = I.getOperand(3).getReg();
   Register SignReg = I.getOperand(4).getReg();
@@ -4114,9 +4115,11 @@ bool AIE2InstructionSelector::selectG_AIE_STORE_SRS(MachineInstr &StoreI,
 
   assert(LSO && "Unexpected VST.SRS combine failure");
 
-  if (MRI.getType(SrsResult).getSizeInBits() == 512)
+  if (MRI.getType(SrsResult).getSizeInBits() == 512) {
+    makeDeadMI(*SrsOp, MRI);
     return select512BitG_AIE_STORE_SRS(*LSO, *AMI, SrcReg, ShftReg, SignReg,
                                        ConstantSign, MRI);
+  }
 
   auto NewInstr = MIB.buildInstr(LSO->ISelOpcode);
 
@@ -4133,6 +4136,7 @@ bool AIE2InstructionSelector::selectG_AIE_STORE_SRS(MachineInstr &StoreI,
   if (!ConstantSign)
     setUnsetCtrlRegister(*NewInstr, MRI, AIE2::crSRSSign, SignReg);
 
+  makeDeadMI(*SrsOp, MRI);
   StoreI.eraseFromParent();
   return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
 }

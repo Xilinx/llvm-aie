@@ -21,13 +21,13 @@ body:             |
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:accregbank(<16 x s64>) = COPY $cm0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:gprregbank(s32) = COPY $r0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:gprregbank(s32) = COPY $r1
-    ; CHECK-NEXT: [[INT:%[0-9]+]]:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.I256.v32.acc32.srs), [[COPY]](<16 x s64>), [[COPY1]](s32), [[COPY2]](s32)
+    ; CHECK-NEXT: [[INT:%[0-9]+]]:vregbank(<32 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I256.v32.acc32.srs), [[COPY]](<16 x s64>), [[COPY1]](s32), [[COPY2]](s32)
     ; CHECK-NEXT: $wl0 = COPY [[INT]](<32 x s8>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $wl0
     %1:_(<16 x s64>) = COPY $cm0
     %2:_(s32) = COPY $r0
     %3:_(s32) = COPY $r1
-    %0:_(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.I256.v32.acc32.srs), %1:_(<16 x s64>), %2:_(s32), %3:_(s32)
+    %0:_(<32 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I256.v32.acc32.srs), %1:_(<16 x s64>), %2:_(s32), %3:_(s32)
     $wl0 = COPY %0:_(<32 x s8>)
     PseudoRET implicit $lr, implicit $wl0
 ...
@@ -45,13 +45,13 @@ body:             |
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:accregbank(<16 x s64>) = COPY $cm0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:gprregbank(s32) = COPY $r0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:gprregbank(s32) = COPY $r1
-    ; CHECK-NEXT: [[INT:%[0-9]+]]:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.I256.v16.acc64.srs), [[COPY]](<16 x s64>), [[COPY1]](s32), [[COPY2]](s32)
+    ; CHECK-NEXT: [[INT:%[0-9]+]]:vregbank(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I256.v16.acc64.srs), [[COPY]](<16 x s64>), [[COPY1]](s32), [[COPY2]](s32)
     ; CHECK-NEXT: $wl0 = COPY [[INT]](<16 x s16>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $wl0
     %1:_(<16 x s64>) = COPY $cm0
     %2:_(s32) = COPY $r0
     %3:_(s32) = COPY $r1
-    %0:_(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.I256.v16.acc64.srs), %1:_(<16 x s64>), %2:_(s32), %3:_(s32)
+    %0:_(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I256.v16.acc64.srs), %1:_(<16 x s64>), %2:_(s32), %3:_(s32)
     $wl0 = COPY %0:_(<16 x s16>)
     PseudoRET implicit $lr, implicit $wl0
 ...
@@ -69,13 +69,13 @@ body:             |
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:accregbank(<16 x s64>) = COPY $cm0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:gprregbank(s32) = COPY $r0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:gprregbank(s32) = COPY $r1
-    ; CHECK-NEXT: [[INT:%[0-9]+]]:vregbank(<32 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.I512.v32.acc32.srs), [[COPY]](<16 x s64>), [[COPY1]](s32), [[COPY2]](s32)
+    ; CHECK-NEXT: [[INT:%[0-9]+]]:vregbank(<32 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I512.v32.acc32.srs), [[COPY]](<16 x s64>), [[COPY1]](s32), [[COPY2]](s32)
     ; CHECK-NEXT: $x0 = COPY [[INT]](<32 x s16>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
     %1:_(<16 x s64>) = COPY $cm0
     %2:_(s32) = COPY $r0
     %3:_(s32) = COPY $r1
-    %0:_(<32 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.I512.v32.acc32.srs), %1:_(<16 x s64>), %2:_(s32), %3:_(s32)
+    %0:_(<32 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I512.v32.acc32.srs), %1:_(<16 x s64>), %2:_(s32), %3:_(s32)
     $x0 = COPY %0:_(<32 x s16>)
     PseudoRET implicit $lr, implicit $x0
 ...
@@ -93,13 +93,13 @@ body:             |
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:accregbank(<16 x s64>) = COPY $cm0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:gprregbank(s32) = COPY $r0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:gprregbank(s32) = COPY $r1
-    ; CHECK-NEXT: [[INT:%[0-9]+]]:vregbank(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.I512.v16.acc64.srs), [[COPY]](<16 x s64>), [[COPY1]](s32), [[COPY2]](s32)
+    ; CHECK-NEXT: [[INT:%[0-9]+]]:vregbank(<16 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I512.v16.acc64.srs), [[COPY]](<16 x s64>), [[COPY1]](s32), [[COPY2]](s32)
     ; CHECK-NEXT: $x0 = COPY [[INT]](<16 x s32>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
     %1:_(<16 x s64>) = COPY $cm0
     %2:_(s32) = COPY $r0
     %3:_(s32) = COPY $r1
-    %0:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.I512.v16.acc64.srs), %1:_(<16 x s64>), %2:_(s32), %3:_(s32)
+    %0:_(<16 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I512.v16.acc64.srs), %1:_(<16 x s64>), %2:_(s32), %3:_(s32)
     $x0 = COPY %0:_(<16 x s32>)
     PseudoRET implicit $lr, implicit $x0
 ...
@@ -117,13 +117,13 @@ body:             |
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:accregbank(<8 x s64>) = COPY $bml0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:gprregbank(s32) = COPY $r0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:gprregbank(s32) = COPY $r1
-    ; CHECK-NEXT: [[INT:%[0-9]+]]:vregbank(<8 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.I256.v8.acc64.srs), [[COPY]](<8 x s64>), [[COPY1]](s32), [[COPY2]](s32)
+    ; CHECK-NEXT: [[INT:%[0-9]+]]:vregbank(<8 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I256.v8.acc64.srs), [[COPY]](<8 x s64>), [[COPY1]](s32), [[COPY2]](s32)
     ; CHECK-NEXT: $wl0 = COPY [[INT]](<8 x s32>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $wl0
     %1:_(<8 x s64>) = COPY $bml0
     %2:_(s32) = COPY $r0
     %3:_(s32) = COPY $r1
-    %0:_(<8 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.I256.v8.acc64.srs), %1:_(<8 x s64>), %2:_(s32), %3:_(s32)
+    %0:_(<8 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I256.v8.acc64.srs), %1:_(<8 x s64>), %2:_(s32), %3:_(s32)
     $wl0 = COPY %0:_(<8 x s32>)
     PseudoRET implicit $lr, implicit $wl0
 ...
@@ -141,13 +141,13 @@ body:             |
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:accregbank(<8 x s64>) = COPY $bml0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:gprregbank(s32) = COPY $r0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:gprregbank(s32) = COPY $r1
-    ; CHECK-NEXT: [[INT:%[0-9]+]]:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.I256.v16.acc32.srs), [[COPY]](<8 x s64>), [[COPY1]](s32), [[COPY2]](s32)
+    ; CHECK-NEXT: [[INT:%[0-9]+]]:vregbank(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I256.v16.acc32.srs), [[COPY]](<8 x s64>), [[COPY1]](s32), [[COPY2]](s32)
     ; CHECK-NEXT: $wl0 = COPY [[INT]](<16 x s16>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $wl0
     %1:_(<8 x s64>) = COPY $bml0
     %2:_(s32) = COPY $r0
     %3:_(s32) = COPY $r1
-    %0:_(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.I256.v16.acc32.srs), %1:_(<8 x s64>), %2:_(s32), %3:_(s32)
+    %0:_(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I256.v16.acc32.srs), %1:_(<8 x s64>), %2:_(s32), %3:_(s32)
     $wl0 = COPY %0:_(<16 x s16>)
     PseudoRET implicit $lr, implicit $wl0
 ...
@@ -165,13 +165,13 @@ body:             |
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:accregbank(<16 x s64>) = COPY $cm0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:gprregbank(s32) = COPY $r0
     ; CHECK-NEXT: [[C:%[0-9]+]]:gprregbank(s32) = G_CONSTANT i32 1
-    ; CHECK-NEXT: [[INT:%[0-9]+]]:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.I256.v32.acc32.srs), [[COPY]](<16 x s64>), [[COPY1]](s32), [[C]](s32)
+    ; CHECK-NEXT: [[INT:%[0-9]+]]:vregbank(<32 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I256.v32.acc32.srs), [[COPY]](<16 x s64>), [[COPY1]](s32), [[C]](s32)
     ; CHECK-NEXT: $wl0 = COPY [[INT]](<32 x s8>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $wl0
     %1:_(<16 x s64>) = COPY $cm0
     %2:_(s32) = COPY $r0
     %3:_(s32) = G_CONSTANT i32 1
-    %0:_(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.I256.v32.acc32.srs), %1:_(<16 x s64>), %2:_(s32), %3:_(s32)
+    %0:_(<32 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I256.v32.acc32.srs), %1:_(<16 x s64>), %2:_(s32), %3:_(s32)
     $wl0 = COPY %0:_(<32 x s8>)
     PseudoRET implicit $lr, implicit $wl0
 ...
@@ -189,13 +189,13 @@ body:             |
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:accregbank(<16 x s64>) = COPY $cm0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:gprregbank(s32) = COPY $r0
     ; CHECK-NEXT: [[C:%[0-9]+]]:gprregbank(s32) = G_CONSTANT i32 1
-    ; CHECK-NEXT: [[INT:%[0-9]+]]:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.I256.v16.acc64.srs), [[COPY]](<16 x s64>), [[COPY1]](s32), [[C]](s32)
+    ; CHECK-NEXT: [[INT:%[0-9]+]]:vregbank(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I256.v16.acc64.srs), [[COPY]](<16 x s64>), [[COPY1]](s32), [[C]](s32)
     ; CHECK-NEXT: $wl0 = COPY [[INT]](<16 x s16>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $wl0
     %1:_(<16 x s64>) = COPY $cm0
     %2:_(s32) = COPY $r0
     %3:_(s32) = G_CONSTANT i32 1
-    %0:_(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.I256.v16.acc64.srs), %1:_(<16 x s64>), %2:_(s32), %3:_(s32)
+    %0:_(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I256.v16.acc64.srs), %1:_(<16 x s64>), %2:_(s32), %3:_(s32)
     $wl0 = COPY %0:_(<16 x s16>)
     PseudoRET implicit $lr, implicit $wl0
 ...
@@ -213,13 +213,13 @@ body:             |
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:accregbank(<16 x s64>) = COPY $cm0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:gprregbank(s32) = COPY $r0
     ; CHECK-NEXT: [[C:%[0-9]+]]:gprregbank(s32) = G_CONSTANT i32 1
-    ; CHECK-NEXT: [[INT:%[0-9]+]]:vregbank(<32 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.I512.v32.acc32.srs), [[COPY]](<16 x s64>), [[COPY1]](s32), [[C]](s32)
+    ; CHECK-NEXT: [[INT:%[0-9]+]]:vregbank(<32 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I512.v32.acc32.srs), [[COPY]](<16 x s64>), [[COPY1]](s32), [[C]](s32)
     ; CHECK-NEXT: $x0 = COPY [[INT]](<32 x s16>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
     %1:_(<16 x s64>) = COPY $cm0
     %2:_(s32) = COPY $r0
     %3:_(s32) = G_CONSTANT i32 1
-    %0:_(<32 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.I512.v32.acc32.srs), %1:_(<16 x s64>), %2:_(s32), %3:_(s32)
+    %0:_(<32 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I512.v32.acc32.srs), %1:_(<16 x s64>), %2:_(s32), %3:_(s32)
     $x0 = COPY %0:_(<32 x s16>)
     PseudoRET implicit $lr, implicit $x0
 ...
@@ -237,13 +237,13 @@ body:             |
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:accregbank(<16 x s64>) = COPY $cm0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:gprregbank(s32) = COPY $r0
     ; CHECK-NEXT: [[C:%[0-9]+]]:gprregbank(s32) = G_CONSTANT i32 1
-    ; CHECK-NEXT: [[INT:%[0-9]+]]:vregbank(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.I512.v16.acc64.srs), [[COPY]](<16 x s64>), [[COPY1]](s32), [[C]](s32)
+    ; CHECK-NEXT: [[INT:%[0-9]+]]:vregbank(<16 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I512.v16.acc64.srs), [[COPY]](<16 x s64>), [[COPY1]](s32), [[C]](s32)
     ; CHECK-NEXT: $x0 = COPY [[INT]](<16 x s32>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
     %1:_(<16 x s64>) = COPY $cm0
     %2:_(s32) = COPY $r0
     %3:_(s32) = G_CONSTANT i32 1
-    %0:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.I512.v16.acc64.srs), %1:_(<16 x s64>), %2:_(s32), %3:_(s32)
+    %0:_(<16 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I512.v16.acc64.srs), %1:_(<16 x s64>), %2:_(s32), %3:_(s32)
     $x0 = COPY %0:_(<16 x s32>)
     PseudoRET implicit $lr, implicit $x0
 ...
@@ -261,13 +261,13 @@ body:             |
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:accregbank(<8 x s64>) = COPY $bml0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:gprregbank(s32) = COPY $r0
     ; CHECK-NEXT: [[C:%[0-9]+]]:gprregbank(s32) = G_CONSTANT i32 1
-    ; CHECK-NEXT: [[INT:%[0-9]+]]:vregbank(<8 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.I256.v8.acc64.srs), [[COPY]](<8 x s64>), [[COPY1]](s32), [[C]](s32)
+    ; CHECK-NEXT: [[INT:%[0-9]+]]:vregbank(<8 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I256.v8.acc64.srs), [[COPY]](<8 x s64>), [[COPY1]](s32), [[C]](s32)
     ; CHECK-NEXT: $wl0 = COPY [[INT]](<8 x s32>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $wl0
     %1:_(<8 x s64>) = COPY $bml0
     %2:_(s32) = COPY $r0
     %3:_(s32) = G_CONSTANT i32 1
-    %0:_(<8 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.I256.v8.acc64.srs), %1:_(<8 x s64>), %2:_(s32), %3:_(s32)
+    %0:_(<8 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I256.v8.acc64.srs), %1:_(<8 x s64>), %2:_(s32), %3:_(s32)
     $wl0 = COPY %0:_(<8 x s32>)
     PseudoRET implicit $lr, implicit $wl0
 ...
@@ -285,13 +285,13 @@ body:             |
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:accregbank(<8 x s64>) = COPY $bml0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:gprregbank(s32) = COPY $r0
     ; CHECK-NEXT: [[C:%[0-9]+]]:gprregbank(s32) = G_CONSTANT i32 1
-    ; CHECK-NEXT: [[INT:%[0-9]+]]:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.I256.v16.acc32.srs), [[COPY]](<8 x s64>), [[COPY1]](s32), [[C]](s32)
+    ; CHECK-NEXT: [[INT:%[0-9]+]]:vregbank(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I256.v16.acc32.srs), [[COPY]](<8 x s64>), [[COPY1]](s32), [[C]](s32)
     ; CHECK-NEXT: $wl0 = COPY [[INT]](<16 x s16>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $wl0
     %1:_(<8 x s64>) = COPY $bml0
     %2:_(s32) = COPY $r0
     %3:_(s32) = G_CONSTANT i32 1
-    %0:_(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.I256.v16.acc32.srs), %1:_(<8 x s64>), %2:_(s32), %3:_(s32)
+    %0:_(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I256.v16.acc32.srs), %1:_(<8 x s64>), %2:_(s32), %3:_(s32)
     $wl0 = COPY %0:_(<16 x s16>)
     PseudoRET implicit $lr, implicit $wl0
 ...
