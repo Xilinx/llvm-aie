@@ -4,6 +4,8 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the target-independent interfaces used by SelectionDAG
@@ -1935,9 +1937,11 @@ def atomic_store_64 :
 // their GPRs).
 //
 
-class Pattern<dag patternToMatch, list<dag> resultInstrs> {
+class Pattern<dag patternToMatch, list<dag> resultInstrs,
+              bit modelsInaccessibleMemThroughRegs = false> {
   dag             PatternToMatch  = patternToMatch;
   list<dag>       ResultInstrs    = resultInstrs;
+  bit             ModelsInaccessibleMemThroughRegs = modelsInaccessibleMemThroughRegs;
   list<Predicate> Predicates      = [];  // See class Instruction in Target.td.
   int             AddedComplexity = 0;   // See class Instruction in Target.td.
 }
@@ -1946,6 +1950,7 @@ class Pattern<dag patternToMatch, list<dag> resultInstrs> {
 // not needing a full list.
 class Pat<dag pattern, dag result> : Pattern<pattern, [result]>;
 
+class PatInaccessibleMem<dag pattern, dag result>: Pattern<pattern, [result], true>;
 //===----------------------------------------------------------------------===//
 // Complex pattern definitions.
 //
