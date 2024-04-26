@@ -43,20 +43,20 @@ body:             |
     %10:modregbank(s20) = G_CONSTANT i20 -128
     %11:modregbank(s20) = G_CONSTANT i20 96
     %12:modregbank(s20) = G_CONSTANT i20 128
-    %25:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s16>))
-    %26:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %8 :: (load (<16 x s16>))
-    %27:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %9 :: (load (<16 x s16>))
-    %28:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %10 :: (load (<16 x s16>))
-    %29:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %11 :: (load (<16 x s16>))
-    %30:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %12 :: (load (<16 x s16>))
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = G_CONSTANT i32 0
-    %103:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v16.I256.ups), %25:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %104:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v16.I256.ups), %26:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %105:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v16.I256.ups), %27:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %106:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v16.I256.ups), %28:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %107:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v16.I256.ups), %29:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %108:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v16.I256.ups), %30:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %25:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s16>))
+    %103:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v16.I256.ups), %25:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %26:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %8 :: (load (<16 x s16>))
+    %104:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v16.I256.ups), %26:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %27:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %9 :: (load (<16 x s16>))
+    %105:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v16.I256.ups), %27:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %28:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %10 :: (load (<16 x s16>))
+    %106:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v16.I256.ups), %28:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %29:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %11 :: (load (<16 x s16>))
+    %107:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v16.I256.ups), %29:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %30:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %12 :: (load (<16 x s16>))
+    %108:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v16.I256.ups), %30:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
     PseudoRET implicit $lr, implicit %103, implicit %104, implicit %105, implicit %106, implicit %107, implicit %108
 ...
 
@@ -109,20 +109,20 @@ body:             |
     %10:modregbank(s20) = G_CONSTANT i20 -128
     %11:modregbank(s20) = G_CONSTANT i20 96
     %12:modregbank(s20) = G_CONSTANT i20 128
-    %25:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s16>))
-    %26:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %8 :: (load (<16 x s16>))
-    %27:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %9 :: (load (<16 x s16>))
-    %28:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %10 :: (load (<16 x s16>))
-    %29:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %11 :: (load (<16 x s16>))
-    %30:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %12 :: (load (<16 x s16>))
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = COPY $r1
-    %103:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v16.I256.ups), %25:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %104:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v16.I256.ups), %26:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %105:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v16.I256.ups), %27:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %106:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v16.I256.ups), %28:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %107:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v16.I256.ups), %29:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %108:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v16.I256.ups), %30:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %25:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s16>))
+    %103:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v16.I256.ups), %25:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %26:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %8 :: (load (<16 x s16>))
+    %104:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v16.I256.ups), %26:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %27:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %9 :: (load (<16 x s16>))
+    %105:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v16.I256.ups), %27:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %28:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %10 :: (load (<16 x s16>))
+    %106:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v16.I256.ups), %28:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %29:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %11 :: (load (<16 x s16>))
+    %107:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v16.I256.ups), %29:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %30:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %12 :: (load (<16 x s16>))
+    %108:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v16.I256.ups), %30:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
     PseudoRET implicit $lr, implicit %103, implicit %104, implicit %105, implicit %106, implicit %107, implicit %108
 ...
 
@@ -162,20 +162,20 @@ body:             |
     %10:modregbank(s20) = G_CONSTANT i20 -128
     %11:modregbank(s20) = G_CONSTANT i20 96
     %12:modregbank(s20) = G_CONSTANT i20 128
-    %25:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s16>))
-    %26:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %8 :: (load (<16 x s16>))
-    %27:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %9 :: (load (<16 x s16>))
-    %28:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %10 :: (load (<16 x s16>))
-    %29:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %11 :: (load (<16 x s16>))
-    %30:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %12 :: (load (<16 x s16>))
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = G_CONSTANT i32 1
-    %103:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v16.I256.ups), %25:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %104:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v16.I256.ups), %26:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %105:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v16.I256.ups), %27:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %106:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v16.I256.ups), %28:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %107:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v16.I256.ups), %29:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %108:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v16.I256.ups), %30:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %25:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s16>))
+    %103:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v16.I256.ups), %25:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %26:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %8 :: (load (<16 x s16>))
+    %104:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v16.I256.ups), %26:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %27:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %9 :: (load (<16 x s16>))
+    %105:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v16.I256.ups), %27:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %28:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %10 :: (load (<16 x s16>))
+    %106:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v16.I256.ups), %28:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %29:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %11 :: (load (<16 x s16>))
+    %107:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v16.I256.ups), %29:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %30:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %12 :: (load (<16 x s16>))
+    %108:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v16.I256.ups), %30:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
     PseudoRET implicit $lr, implicit %103, implicit %104, implicit %105, implicit %106, implicit %107, implicit %108
 ...
 
@@ -216,20 +216,20 @@ body:             |
     %10:modregbank(s20) = G_CONSTANT i20 -128
     %11:modregbank(s20) = G_CONSTANT i20 96
     %12:modregbank(s20) = G_CONSTANT i20 128
-    %25:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<8 x s32>))
-    %26:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %8 :: (load (<8 x s32>))
-    %27:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %9 :: (load (<8 x s32>))
-    %28:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %10 :: (load (<8 x s32>))
-    %29:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %11 :: (load (<8 x s32>))
-    %30:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %12 :: (load (<8 x s32>))
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = G_CONSTANT i32 0
-    %103:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v8.I256.ups), %25:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %104:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v8.I256.ups), %26:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %105:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v8.I256.ups), %27:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %106:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v8.I256.ups), %28:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %107:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v8.I256.ups), %29:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %108:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v8.I256.ups), %30:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %25:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<8 x s32>))
+    %103:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v8.I256.ups), %25:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %26:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %8 :: (load (<8 x s32>))
+    %104:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v8.I256.ups), %26:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %27:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %9 :: (load (<8 x s32>))
+    %105:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v8.I256.ups), %27:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %28:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %10 :: (load (<8 x s32>))
+    %106:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v8.I256.ups), %28:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %29:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %11 :: (load (<8 x s32>))
+    %107:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v8.I256.ups), %29:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %30:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %12 :: (load (<8 x s32>))
+    %108:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v8.I256.ups), %30:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
     PseudoRET implicit $lr, implicit %103, implicit %104, implicit %105, implicit %106, implicit %107, implicit %108
 ...
 
@@ -282,20 +282,20 @@ body:             |
     %10:modregbank(s20) = G_CONSTANT i20 -128
     %11:modregbank(s20) = G_CONSTANT i20 96
     %12:modregbank(s20) = G_CONSTANT i20 128
-    %25:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<8 x s32>))
-    %26:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %8 :: (load (<8 x s32>))
-    %27:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %9 :: (load (<8 x s32>))
-    %28:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %10 :: (load (<8 x s32>))
-    %29:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %11 :: (load (<8 x s32>))
-    %30:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %12 :: (load (<8 x s32>))
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = COPY $r1
-    %103:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v8.I256.ups), %25:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %104:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v8.I256.ups), %26:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %105:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v8.I256.ups), %27:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %106:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v8.I256.ups), %28:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %107:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v8.I256.ups), %29:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %108:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v8.I256.ups), %30:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %25:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<8 x s32>))
+    %103:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v8.I256.ups), %25:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %26:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %8 :: (load (<8 x s32>))
+    %104:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v8.I256.ups), %26:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %27:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %9 :: (load (<8 x s32>))
+    %105:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v8.I256.ups), %27:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %28:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %10 :: (load (<8 x s32>))
+    %106:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v8.I256.ups), %28:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %29:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %11 :: (load (<8 x s32>))
+    %107:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v8.I256.ups), %29:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %30:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %12 :: (load (<8 x s32>))
+    %108:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v8.I256.ups), %30:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
     PseudoRET implicit $lr, implicit %103, implicit %104, implicit %105, implicit %106, implicit %107, implicit %108
 ...
 
@@ -336,20 +336,20 @@ body:             |
     %10:modregbank(s20) = G_CONSTANT i20 -128
     %11:modregbank(s20) = G_CONSTANT i20 96
     %12:modregbank(s20) = G_CONSTANT i20 128
-    %25:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<8 x s32>))
-    %26:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %8 :: (load (<8 x s32>))
-    %27:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %9 :: (load (<8 x s32>))
-    %28:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %10 :: (load (<8 x s32>))
-    %29:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %11 :: (load (<8 x s32>))
-    %30:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %12 :: (load (<8 x s32>))
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = G_CONSTANT i32 1
-    %103:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v8.I256.ups), %25:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %104:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v8.I256.ups), %26:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %105:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v8.I256.ups), %27:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %106:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v8.I256.ups), %28:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %107:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v8.I256.ups), %29:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %108:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v8.I256.ups), %30:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %25:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<8 x s32>))
+    %103:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v8.I256.ups), %25:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %26:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %8 :: (load (<8 x s32>))
+    %104:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v8.I256.ups), %26:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %27:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %9 :: (load (<8 x s32>))
+    %105:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v8.I256.ups), %27:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %28:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %10 :: (load (<8 x s32>))
+    %106:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v8.I256.ups), %28:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %29:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %11 :: (load (<8 x s32>))
+    %107:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v8.I256.ups), %29:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %30:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %12 :: (load (<8 x s32>))
+    %108:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v8.I256.ups), %30:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
     PseudoRET implicit $lr, implicit %103, implicit %104, implicit %105, implicit %106, implicit %107, implicit %108
 ...
 
@@ -371,17 +371,17 @@ body:             |
     ; CHECK-NEXT: [[MOV_PD_imm10_pseudo1:%[0-9]+]]:edj = MOV_PD_imm10_pseudo 128
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $r1
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:mss = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_S32_D8_ag_idx:%[0-9]+]]:acc1024 = VLDA_UPS_S32_D8_ag_idx [[COPY3]], [[COPY]], [[COPY1]], implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_S32_D8_ag_idx:%[0-9]+]]:acc1024 = VLDA_UPS_S32_D8_ag_idx [[COPY3]], [[COPY]], [[COPY1]], implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<32 x s8>))
     ; CHECK-NEXT: [[COPY4:%[0-9]+]]:mss = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_S32_D8_ag_idx_imm:%[0-9]+]]:acc1024 = VLDA_UPS_S32_D8_ag_idx_imm [[COPY4]], [[COPY]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_S32_D8_ag_idx_imm:%[0-9]+]]:acc1024 = VLDA_UPS_S32_D8_ag_idx_imm [[COPY4]], [[COPY]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<32 x s8>))
     ; CHECK-NEXT: [[COPY5:%[0-9]+]]:mss = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_S32_D8_ag_idx1:%[0-9]+]]:acc1024 = VLDA_UPS_S32_D8_ag_idx [[COPY5]], [[COPY]], [[MOV_PD_imm10_pseudo]], implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_S32_D8_ag_idx1:%[0-9]+]]:acc1024 = VLDA_UPS_S32_D8_ag_idx [[COPY5]], [[COPY]], [[MOV_PD_imm10_pseudo]], implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<32 x s8>))
     ; CHECK-NEXT: [[COPY6:%[0-9]+]]:mss = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_S32_D8_ag_idx_imm1:%[0-9]+]]:acc1024 = VLDA_UPS_S32_D8_ag_idx_imm [[COPY6]], [[COPY]], -128, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_S32_D8_ag_idx_imm1:%[0-9]+]]:acc1024 = VLDA_UPS_S32_D8_ag_idx_imm [[COPY6]], [[COPY]], -128, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<32 x s8>))
     ; CHECK-NEXT: [[COPY7:%[0-9]+]]:mss = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_S32_D8_ag_idx_imm2:%[0-9]+]]:acc1024 = VLDA_UPS_S32_D8_ag_idx_imm [[COPY7]], [[COPY]], 96, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_S32_D8_ag_idx_imm2:%[0-9]+]]:acc1024 = VLDA_UPS_S32_D8_ag_idx_imm [[COPY7]], [[COPY]], 96, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<32 x s8>))
     ; CHECK-NEXT: [[COPY8:%[0-9]+]]:mss = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_S32_D8_ag_idx2:%[0-9]+]]:acc1024 = VLDA_UPS_S32_D8_ag_idx [[COPY8]], [[COPY]], [[MOV_PD_imm10_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_S32_D8_ag_idx2:%[0-9]+]]:acc1024 = VLDA_UPS_S32_D8_ag_idx [[COPY8]], [[COPY]], [[MOV_PD_imm10_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<32 x s8>))
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_S32_D8_ag_idx]], implicit [[VLDA_UPS_S32_D8_ag_idx_imm]], implicit [[VLDA_UPS_S32_D8_ag_idx1]], implicit [[VLDA_UPS_S32_D8_ag_idx_imm1]], implicit [[VLDA_UPS_S32_D8_ag_idx_imm2]], implicit [[VLDA_UPS_S32_D8_ag_idx2]]
     %0:ptrregbank(p0) = COPY $p0
     %7:modregbank(s20) = COPY $m0
@@ -390,20 +390,20 @@ body:             |
     %10:modregbank(s20) = G_CONSTANT i20 -128
     %11:modregbank(s20) = G_CONSTANT i20 96
     %12:modregbank(s20) = G_CONSTANT i20 128
-    %25:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<8 x s32>))
-    %26:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %8 :: (load (<8 x s32>))
-    %27:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %9 :: (load (<8 x s32>))
-    %28:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %10 :: (load (<8 x s32>))
-    %29:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %11 :: (load (<8 x s32>))
-    %30:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %12 :: (load (<8 x s32>))
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = G_CONSTANT i32 0
-    %103:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v32.I256.ups), %25:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %104:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v32.I256.ups), %26:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %105:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v32.I256.ups), %27:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %106:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v32.I256.ups), %28:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %107:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v32.I256.ups), %29:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %108:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v32.I256.ups), %30:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %25:vregbank(<32 x s8>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<32 x s8>))
+    %103:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v32.I256.ups), %25:vregbank(<32 x s8>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %26:vregbank(<32 x s8>) = G_AIE_OFFSET_LOAD %0, %8 :: (load (<32 x s8>))
+    %104:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v32.I256.ups), %26:vregbank(<32 x s8>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %27:vregbank(<32 x s8>) = G_AIE_OFFSET_LOAD %0, %9 :: (load (<32 x s8>))
+    %105:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v32.I256.ups), %27:vregbank(<32 x s8>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %28:vregbank(<32 x s8>) = G_AIE_OFFSET_LOAD %0, %10 :: (load (<32 x s8>))
+    %106:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v32.I256.ups), %28:vregbank(<32 x s8>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %29:vregbank(<32 x s8>) = G_AIE_OFFSET_LOAD %0, %11 :: (load (<32 x s8>))
+    %107:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v32.I256.ups), %29:vregbank(<32 x s8>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %30:vregbank(<32 x s8>) = G_AIE_OFFSET_LOAD %0, %12 :: (load (<32 x s8>))
+    %108:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v32.I256.ups), %30:vregbank(<32 x s8>), %101:gprregbank(s32), %102:gprregbank(s32)
     PseudoRET implicit $lr, implicit %103, implicit %104, implicit %105, implicit %106, implicit %107, implicit %108
 ...
 
@@ -456,20 +456,20 @@ body:             |
     %10:modregbank(s20) = G_CONSTANT i20 -128
     %11:modregbank(s20) = G_CONSTANT i20 96
     %12:modregbank(s20) = G_CONSTANT i20 128
-    %25:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<8 x s32>))
-    %26:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %8 :: (load (<8 x s32>))
-    %27:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %9 :: (load (<8 x s32>))
-    %28:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %10 :: (load (<8 x s32>))
-    %29:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %11 :: (load (<8 x s32>))
-    %30:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %12 :: (load (<8 x s32>))
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = COPY $r1
-    %103:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v32.I256.ups), %25:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %104:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v32.I256.ups), %26:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %105:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v32.I256.ups), %27:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %106:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v32.I256.ups), %28:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %107:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v32.I256.ups), %29:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %108:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v32.I256.ups), %30:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %25:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<8 x s32>))
+    %103:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v32.I256.ups), %25:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %26:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %8 :: (load (<8 x s32>))
+    %104:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v32.I256.ups), %26:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %27:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %9 :: (load (<8 x s32>))
+    %105:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v32.I256.ups), %27:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %28:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %10 :: (load (<8 x s32>))
+    %106:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v32.I256.ups), %28:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %29:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %11 :: (load (<8 x s32>))
+    %107:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v32.I256.ups), %29:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %30:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %12 :: (load (<8 x s32>))
+    %108:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v32.I256.ups), %30:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
     PseudoRET implicit $lr, implicit %103, implicit %104, implicit %105, implicit %106, implicit %107, implicit %108
 ...
 
@@ -491,17 +491,17 @@ body:             |
     ; CHECK-NEXT: [[MOV_PD_imm10_pseudo1:%[0-9]+]]:edj = MOV_PD_imm10_pseudo 128
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $r1
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:mss = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_S32_S8_ag_idx:%[0-9]+]]:acc1024 = VLDA_UPS_S32_S8_ag_idx [[COPY3]], [[COPY]], [[COPY1]], implicit-def $srups_of, implicit $crsat :: (load (<8 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_S32_S8_ag_idx:%[0-9]+]]:acc1024 = VLDA_UPS_S32_S8_ag_idx [[COPY3]], [[COPY]], [[COPY1]], implicit-def $srups_of, implicit $crsat :: (load (<32 x s8>))
     ; CHECK-NEXT: [[COPY4:%[0-9]+]]:mss = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_S32_S8_ag_idx_imm:%[0-9]+]]:acc1024 = VLDA_UPS_S32_S8_ag_idx_imm [[COPY4]], [[COPY]], 0, implicit-def $srups_of, implicit $crsat :: (load (<8 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_S32_S8_ag_idx_imm:%[0-9]+]]:acc1024 = VLDA_UPS_S32_S8_ag_idx_imm [[COPY4]], [[COPY]], 0, implicit-def $srups_of, implicit $crsat :: (load (<32 x s8>))
     ; CHECK-NEXT: [[COPY5:%[0-9]+]]:mss = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_S32_S8_ag_idx1:%[0-9]+]]:acc1024 = VLDA_UPS_S32_S8_ag_idx [[COPY5]], [[COPY]], [[MOV_PD_imm10_pseudo]], implicit-def $srups_of, implicit $crsat :: (load (<8 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_S32_S8_ag_idx1:%[0-9]+]]:acc1024 = VLDA_UPS_S32_S8_ag_idx [[COPY5]], [[COPY]], [[MOV_PD_imm10_pseudo]], implicit-def $srups_of, implicit $crsat :: (load (<32 x s8>))
     ; CHECK-NEXT: [[COPY6:%[0-9]+]]:mss = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_S32_S8_ag_idx_imm1:%[0-9]+]]:acc1024 = VLDA_UPS_S32_S8_ag_idx_imm [[COPY6]], [[COPY]], -128, implicit-def $srups_of, implicit $crsat :: (load (<8 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_S32_S8_ag_idx_imm1:%[0-9]+]]:acc1024 = VLDA_UPS_S32_S8_ag_idx_imm [[COPY6]], [[COPY]], -128, implicit-def $srups_of, implicit $crsat :: (load (<32 x s8>))
     ; CHECK-NEXT: [[COPY7:%[0-9]+]]:mss = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_S32_S8_ag_idx_imm2:%[0-9]+]]:acc1024 = VLDA_UPS_S32_S8_ag_idx_imm [[COPY7]], [[COPY]], 96, implicit-def $srups_of, implicit $crsat :: (load (<8 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_S32_S8_ag_idx_imm2:%[0-9]+]]:acc1024 = VLDA_UPS_S32_S8_ag_idx_imm [[COPY7]], [[COPY]], 96, implicit-def $srups_of, implicit $crsat :: (load (<32 x s8>))
     ; CHECK-NEXT: [[COPY8:%[0-9]+]]:mss = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_S32_S8_ag_idx2:%[0-9]+]]:acc1024 = VLDA_UPS_S32_S8_ag_idx [[COPY8]], [[COPY]], [[MOV_PD_imm10_pseudo1]], implicit-def $srups_of, implicit $crsat :: (load (<8 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_S32_S8_ag_idx2:%[0-9]+]]:acc1024 = VLDA_UPS_S32_S8_ag_idx [[COPY8]], [[COPY]], [[MOV_PD_imm10_pseudo1]], implicit-def $srups_of, implicit $crsat :: (load (<32 x s8>))
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_S32_S8_ag_idx]], implicit [[VLDA_UPS_S32_S8_ag_idx_imm]], implicit [[VLDA_UPS_S32_S8_ag_idx1]], implicit [[VLDA_UPS_S32_S8_ag_idx_imm1]], implicit [[VLDA_UPS_S32_S8_ag_idx_imm2]], implicit [[VLDA_UPS_S32_S8_ag_idx2]]
     %0:ptrregbank(p0) = COPY $p0
     %7:modregbank(s20) = COPY $m0
@@ -510,20 +510,20 @@ body:             |
     %10:modregbank(s20) = G_CONSTANT i20 -128
     %11:modregbank(s20) = G_CONSTANT i20 96
     %12:modregbank(s20) = G_CONSTANT i20 128
-    %25:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<8 x s32>))
-    %26:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %8 :: (load (<8 x s32>))
-    %27:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %9 :: (load (<8 x s32>))
-    %28:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %10 :: (load (<8 x s32>))
-    %29:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %11 :: (load (<8 x s32>))
-    %30:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %0, %12 :: (load (<8 x s32>))
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = G_CONSTANT i32 1
-    %103:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v32.I256.ups), %25:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %104:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v32.I256.ups), %26:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %105:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v32.I256.ups), %27:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %106:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v32.I256.ups), %28:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %107:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v32.I256.ups), %29:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %108:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v32.I256.ups), %30:vregbank(<8 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %25:vregbank(<32 x s8>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<32 x s8>))
+    %103:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v32.I256.ups), %25:vregbank(<32 x s8>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %26:vregbank(<32 x s8>) = G_AIE_OFFSET_LOAD %0, %8 :: (load (<32 x s8>))
+    %104:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v32.I256.ups), %26:vregbank(<32 x s8>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %27:vregbank(<32 x s8>) = G_AIE_OFFSET_LOAD %0, %9 :: (load (<32 x s8>))
+    %105:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v32.I256.ups), %27:vregbank(<32 x s8>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %28:vregbank(<32 x s8>) = G_AIE_OFFSET_LOAD %0, %10 :: (load (<32 x s8>))
+    %106:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v32.I256.ups), %28:vregbank(<32 x s8>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %29:vregbank(<32 x s8>) = G_AIE_OFFSET_LOAD %0, %11 :: (load (<32 x s8>))
+    %107:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v32.I256.ups), %29:vregbank(<32 x s8>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %30:vregbank(<32 x s8>) = G_AIE_OFFSET_LOAD %0, %12 :: (load (<32 x s8>))
+    %108:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v32.I256.ups), %30:vregbank(<32 x s8>), %101:gprregbank(s32), %102:gprregbank(s32)
     PseudoRET implicit $lr, implicit %103, implicit %104, implicit %105, implicit %106, implicit %107, implicit %108
 ...
 
@@ -564,20 +564,20 @@ body:             |
     %10:modregbank(s20) = G_CONSTANT i20 -128
     %11:modregbank(s20) = G_CONSTANT i20 96
     %12:modregbank(s20) = G_CONSTANT i20 128
-    %25:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s16>))
-    %26:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %8 :: (load (<16 x s16>))
-    %27:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %9 :: (load (<16 x s16>))
-    %28:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %10 :: (load (<16 x s16>))
-    %29:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %11 :: (load (<16 x s16>))
-    %30:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %12 :: (load (<16 x s16>))
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = G_CONSTANT i32 0
-    %103:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I256.ups), %25:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %104:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I256.ups), %26:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %105:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I256.ups), %27:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %106:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I256.ups), %28:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %107:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I256.ups), %29:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %108:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I256.ups), %30:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %25:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s16>))
+    %103:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I256.ups), %25:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %26:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %8 :: (load (<16 x s16>))
+    %104:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I256.ups), %26:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %27:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %9 :: (load (<16 x s16>))
+    %105:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I256.ups), %27:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %28:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %10 :: (load (<16 x s16>))
+    %106:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I256.ups), %28:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %29:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %11 :: (load (<16 x s16>))
+    %107:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I256.ups), %29:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %30:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %12 :: (load (<16 x s16>))
+    %108:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I256.ups), %30:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
     PseudoRET implicit $lr, implicit %103, implicit %104, implicit %105, implicit %106, implicit %107, implicit %108
 ...
 
@@ -630,20 +630,20 @@ body:             |
     %10:modregbank(s20) = G_CONSTANT i20 -128
     %11:modregbank(s20) = G_CONSTANT i20 96
     %12:modregbank(s20) = G_CONSTANT i20 128
-    %25:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s16>))
-    %26:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %8 :: (load (<16 x s16>))
-    %27:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %9 :: (load (<16 x s16>))
-    %28:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %10 :: (load (<16 x s16>))
-    %29:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %11 :: (load (<16 x s16>))
-    %30:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %12 :: (load (<16 x s16>))
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = COPY $r1
-    %103:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I256.ups), %25:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %104:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I256.ups), %26:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %105:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I256.ups), %27:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %106:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I256.ups), %28:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %107:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I256.ups), %29:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %108:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I256.ups), %30:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %25:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s16>))
+    %103:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I256.ups), %25:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %26:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %8 :: (load (<16 x s16>))
+    %104:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I256.ups), %26:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %27:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %9 :: (load (<16 x s16>))
+    %105:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I256.ups), %27:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %28:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %10 :: (load (<16 x s16>))
+    %106:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I256.ups), %28:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %29:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %11 :: (load (<16 x s16>))
+    %107:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I256.ups), %29:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %30:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %12 :: (load (<16 x s16>))
+    %108:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I256.ups), %30:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
     PseudoRET implicit $lr, implicit %103, implicit %104, implicit %105, implicit %106, implicit %107, implicit %108
 ...
 
@@ -684,20 +684,20 @@ body:             |
     %10:modregbank(s20) = G_CONSTANT i20 -128
     %11:modregbank(s20) = G_CONSTANT i20 96
     %12:modregbank(s20) = G_CONSTANT i20 128
-    %25:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s16>))
-    %26:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %8 :: (load (<16 x s16>))
-    %27:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %9 :: (load (<16 x s16>))
-    %28:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %10 :: (load (<16 x s16>))
-    %29:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %11 :: (load (<16 x s16>))
-    %30:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %12 :: (load (<16 x s16>))
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = G_CONSTANT i32 1
-    %103:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I256.ups), %25:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %104:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I256.ups), %26:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %105:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I256.ups), %27:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %106:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I256.ups), %28:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %107:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I256.ups), %29:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %108:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I256.ups), %30:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %25:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s16>))
+    %103:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I256.ups), %25:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %26:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %8 :: (load (<16 x s16>))
+    %104:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I256.ups), %26:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %27:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %9 :: (load (<16 x s16>))
+    %105:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I256.ups), %27:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %28:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %10 :: (load (<16 x s16>))
+    %106:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I256.ups), %28:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %29:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %11 :: (load (<16 x s16>))
+    %107:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I256.ups), %29:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %30:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %12 :: (load (<16 x s16>))
+    %108:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I256.ups), %30:vregbank(<16 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
     PseudoRET implicit $lr, implicit %103, implicit %104, implicit %105, implicit %106, implicit %107, implicit %108
 ...
 
@@ -756,20 +756,20 @@ body: |
     %10:modregbank(s20) = G_CONSTANT i20 -128
     %11:modregbank(s20) = G_CONSTANT i20 64
     %12:modregbank(s20) = G_CONSTANT i20 96
-    %25:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s32>) from stack - 64)
-    %26:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %8 :: (load (<16 x s32>) from stack - 64)
-    %27:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %9 :: (load (<16 x s32>) from stack - 64)
-    %28:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %10 :: (load (<16 x s32>) from stack - 64)
-    %29:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %11 :: (load (<16 x s32>) from stack - 64)
-    %30:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %12 :: (load (<16 x s32>) from stack - 64)
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = G_CONSTANT i32 0
-    %103:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I512.ups), %25:vregbank(<16 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %104:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I512.ups), %26:vregbank(<16 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %105:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I512.ups), %27:vregbank(<16 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %106:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I512.ups), %28:vregbank(<16 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %107:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I512.ups), %29:vregbank(<16 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %108:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I512.ups), %30:vregbank(<16 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %25:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s32>) from stack - 64)
+    %103:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I512.ups), %25:vregbank(<16 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %26:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %8 :: (load (<16 x s32>) from stack - 64)
+    %104:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I512.ups), %26:vregbank(<16 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %27:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %9 :: (load (<16 x s32>) from stack - 64)
+    %105:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I512.ups), %27:vregbank(<16 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %28:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %10 :: (load (<16 x s32>) from stack - 64)
+    %106:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I512.ups), %28:vregbank(<16 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %29:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %11 :: (load (<16 x s32>) from stack - 64)
+    %107:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I512.ups), %29:vregbank(<16 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %30:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %12 :: (load (<16 x s32>) from stack - 64)
+    %108:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I512.ups), %30:vregbank(<16 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
     PseudoRET implicit $lr, implicit %103, implicit %104, implicit %105, implicit %106, implicit %107, implicit %108
 ...
 
@@ -841,20 +841,20 @@ body: |
     %10:modregbank(s20) = G_CONSTANT i20 -128
     %11:modregbank(s20) = G_CONSTANT i20 64
     %12:modregbank(s20) = G_CONSTANT i20 96
-    %25:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s32>) from stack - 64)
-    %26:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %8 :: (load (<16 x s32>) from stack - 64)
-    %27:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %9 :: (load (<16 x s32>) from stack - 64)
-    %28:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %10 :: (load (<16 x s32>) from stack - 64)
-    %29:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %11 :: (load (<16 x s32>) from stack - 64)
-    %30:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %12 :: (load (<16 x s32>) from stack - 64)
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = COPY $r1
-    %103:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I512.ups), %25:vregbank(<16 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %104:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I512.ups), %26:vregbank(<16 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %105:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I512.ups), %27:vregbank(<16 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %106:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I512.ups), %28:vregbank(<16 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %107:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I512.ups), %29:vregbank(<16 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %108:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I512.ups), %30:vregbank(<16 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %25:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s32>) from stack - 64)
+    %103:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I512.ups), %25:vregbank(<16 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %26:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %8 :: (load (<16 x s32>) from stack - 64)
+    %104:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I512.ups), %26:vregbank(<16 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %27:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %9 :: (load (<16 x s32>) from stack - 64)
+    %105:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I512.ups), %27:vregbank(<16 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %28:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %10 :: (load (<16 x s32>) from stack - 64)
+    %106:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I512.ups), %28:vregbank(<16 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %29:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %11 :: (load (<16 x s32>) from stack - 64)
+    %107:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I512.ups), %29:vregbank(<16 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %30:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %12 :: (load (<16 x s32>) from stack - 64)
+    %108:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I512.ups), %30:vregbank(<16 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
     PseudoRET implicit $lr, implicit %103, implicit %104, implicit %105, implicit %106, implicit %107, implicit %108
 ...
 
@@ -913,20 +913,20 @@ body: |
     %10:modregbank(s20) = G_CONSTANT i20 -128
     %11:modregbank(s20) = G_CONSTANT i20 64
     %12:modregbank(s20) = G_CONSTANT i20 96
-    %25:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s32>) from stack - 64)
-    %26:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %8 :: (load (<16 x s32>) from stack - 64)
-    %27:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %9 :: (load (<16 x s32>) from stack - 64)
-    %28:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %10 :: (load (<16 x s32>) from stack - 64)
-    %29:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %11 :: (load (<16 x s32>) from stack - 64)
-    %30:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %12 :: (load (<16 x s32>) from stack - 64)
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = G_CONSTANT i32 1
-    %103:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I512.ups), %25:vregbank(<16 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %104:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I512.ups), %26:vregbank(<16 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %105:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I512.ups), %27:vregbank(<16 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %106:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I512.ups), %28:vregbank(<16 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %107:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I512.ups), %29:vregbank(<16 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %108:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I512.ups), %30:vregbank(<16 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %25:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s32>) from stack - 64)
+    %103:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I512.ups), %25:vregbank(<16 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %26:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %8 :: (load (<16 x s32>) from stack - 64)
+    %104:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I512.ups), %26:vregbank(<16 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %27:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %9 :: (load (<16 x s32>) from stack - 64)
+    %105:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I512.ups), %27:vregbank(<16 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %28:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %10 :: (load (<16 x s32>) from stack - 64)
+    %106:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I512.ups), %28:vregbank(<16 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %29:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %11 :: (load (<16 x s32>) from stack - 64)
+    %107:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I512.ups), %29:vregbank(<16 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %30:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %12 :: (load (<16 x s32>) from stack - 64)
+    %108:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I512.ups), %30:vregbank(<16 x s32>), %101:gprregbank(s32), %102:gprregbank(s32)
     PseudoRET implicit $lr, implicit %103, implicit %104, implicit %105, implicit %106, implicit %107, implicit %108
 ...
 
@@ -985,20 +985,20 @@ body: |
     %10:modregbank(s20) = G_CONSTANT i20 -128
     %11:modregbank(s20) = G_CONSTANT i20 64
     %12:modregbank(s20) = G_CONSTANT i20 96
-    %25:vregbank(<32 x s16>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<32 x s16>) from stack - 64)
-    %26:vregbank(<32 x s16>) = G_AIE_OFFSET_LOAD %0, %8 :: (load (<32 x s16>) from stack - 64)
-    %27:vregbank(<32 x s16>) = G_AIE_OFFSET_LOAD %0, %9 :: (load (<32 x s16>) from stack - 64)
-    %28:vregbank(<32 x s16>) = G_AIE_OFFSET_LOAD %0, %10 :: (load (<32 x s16>) from stack - 64)
-    %29:vregbank(<32 x s16>) = G_AIE_OFFSET_LOAD %0, %11 :: (load (<32 x s16>) from stack - 64)
-    %30:vregbank(<32 x s16>) = G_AIE_OFFSET_LOAD %0, %12 :: (load (<32 x s16>) from stack - 64)
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = G_CONSTANT i32 0
-    %103:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v32.I512.ups), %25:vregbank(<32 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %104:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v32.I512.ups), %26:vregbank(<32 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %105:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v32.I512.ups), %27:vregbank(<32 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %106:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v32.I512.ups), %28:vregbank(<32 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %107:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v32.I512.ups), %29:vregbank(<32 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %108:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v32.I512.ups), %30:vregbank(<32 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %25:vregbank(<32 x s16>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<32 x s16>) from stack - 64)
+    %103:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v32.I512.ups), %25:vregbank(<32 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %26:vregbank(<32 x s16>) = G_AIE_OFFSET_LOAD %0, %8 :: (load (<32 x s16>) from stack - 64)
+    %104:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v32.I512.ups), %26:vregbank(<32 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %27:vregbank(<32 x s16>) = G_AIE_OFFSET_LOAD %0, %9 :: (load (<32 x s16>) from stack - 64)
+    %105:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v32.I512.ups), %27:vregbank(<32 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %28:vregbank(<32 x s16>) = G_AIE_OFFSET_LOAD %0, %10 :: (load (<32 x s16>) from stack - 64)
+    %106:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v32.I512.ups), %28:vregbank(<32 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %29:vregbank(<32 x s16>) = G_AIE_OFFSET_LOAD %0, %11 :: (load (<32 x s16>) from stack - 64)
+    %107:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v32.I512.ups), %29:vregbank(<32 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %30:vregbank(<32 x s16>) = G_AIE_OFFSET_LOAD %0, %12 :: (load (<32 x s16>) from stack - 64)
+    %108:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v32.I512.ups), %30:vregbank(<32 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
     PseudoRET implicit $lr, implicit %103, implicit %104, implicit %105, implicit %106, implicit %107, implicit %108
 ...
 
@@ -1070,20 +1070,20 @@ body: |
     %10:modregbank(s20) = G_CONSTANT i20 -128
     %11:modregbank(s20) = G_CONSTANT i20 64
     %12:modregbank(s20) = G_CONSTANT i20 96
-    %25:vregbank(<32 x s16>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<32 x s16>) from stack - 64)
-    %26:vregbank(<32 x s16>) = G_AIE_OFFSET_LOAD %0, %8 :: (load (<32 x s16>) from stack - 64)
-    %27:vregbank(<32 x s16>) = G_AIE_OFFSET_LOAD %0, %9 :: (load (<32 x s16>) from stack - 64)
-    %28:vregbank(<32 x s16>) = G_AIE_OFFSET_LOAD %0, %10 :: (load (<32 x s16>) from stack - 64)
-    %29:vregbank(<32 x s16>) = G_AIE_OFFSET_LOAD %0, %11 :: (load (<32 x s16>) from stack - 64)
-    %30:vregbank(<32 x s16>) = G_AIE_OFFSET_LOAD %0, %12 :: (load (<32 x s16>) from stack - 64)
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = COPY $r1
-    %103:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v32.I512.ups), %25:vregbank(<32 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %104:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v32.I512.ups), %26:vregbank(<32 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %105:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v32.I512.ups), %27:vregbank(<32 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %106:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v32.I512.ups), %28:vregbank(<32 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %107:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v32.I512.ups), %29:vregbank(<32 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %108:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v32.I512.ups), %30:vregbank(<32 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %25:vregbank(<32 x s16>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<32 x s16>) from stack - 64)
+    %103:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v32.I512.ups), %25:vregbank(<32 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %26:vregbank(<32 x s16>) = G_AIE_OFFSET_LOAD %0, %8 :: (load (<32 x s16>) from stack - 64)
+    %104:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v32.I512.ups), %26:vregbank(<32 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %27:vregbank(<32 x s16>) = G_AIE_OFFSET_LOAD %0, %9 :: (load (<32 x s16>) from stack - 64)
+    %105:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v32.I512.ups), %27:vregbank(<32 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %28:vregbank(<32 x s16>) = G_AIE_OFFSET_LOAD %0, %10 :: (load (<32 x s16>) from stack - 64)
+    %106:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v32.I512.ups), %28:vregbank(<32 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %29:vregbank(<32 x s16>) = G_AIE_OFFSET_LOAD %0, %11 :: (load (<32 x s16>) from stack - 64)
+    %107:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v32.I512.ups), %29:vregbank(<32 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %30:vregbank(<32 x s16>) = G_AIE_OFFSET_LOAD %0, %12 :: (load (<32 x s16>) from stack - 64)
+    %108:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v32.I512.ups), %30:vregbank(<32 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
     PseudoRET implicit $lr, implicit %103, implicit %104, implicit %105, implicit %106, implicit %107, implicit %108
 ...
 
@@ -1142,19 +1142,19 @@ body: |
     %10:modregbank(s20) = G_CONSTANT i20 -128
     %11:modregbank(s20) = G_CONSTANT i20 64
     %12:modregbank(s20) = G_CONSTANT i20 96
-    %25:vregbank(<32 x s16>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<32 x s16>) from stack - 64)
-    %26:vregbank(<32 x s16>) = G_AIE_OFFSET_LOAD %0, %8 :: (load (<32 x s16>) from stack - 64)
-    %27:vregbank(<32 x s16>) = G_AIE_OFFSET_LOAD %0, %9 :: (load (<32 x s16>) from stack - 64)
-    %28:vregbank(<32 x s16>) = G_AIE_OFFSET_LOAD %0, %10 :: (load (<32 x s16>) from stack - 64)
-    %29:vregbank(<32 x s16>) = G_AIE_OFFSET_LOAD %0, %11 :: (load (<32 x s16>) from stack - 64)
-    %30:vregbank(<32 x s16>) = G_AIE_OFFSET_LOAD %0, %12 :: (load (<32 x s16>) from stack - 64)
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = G_CONSTANT i32 1
-    %103:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v32.I512.ups), %25:vregbank(<32 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %104:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v32.I512.ups), %26:vregbank(<32 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %105:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v32.I512.ups), %27:vregbank(<32 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %106:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v32.I512.ups), %28:vregbank(<32 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %107:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v32.I512.ups), %29:vregbank(<32 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
-    %108:accregbank(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc32.v32.I512.ups), %30:vregbank(<32 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %25:vregbank(<32 x s16>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<32 x s16>) from stack - 64)
+    %103:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v32.I512.ups), %25:vregbank(<32 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %26:vregbank(<32 x s16>) = G_AIE_OFFSET_LOAD %0, %8 :: (load (<32 x s16>) from stack - 64)
+    %104:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v32.I512.ups), %26:vregbank(<32 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %27:vregbank(<32 x s16>) = G_AIE_OFFSET_LOAD %0, %9 :: (load (<32 x s16>) from stack - 64)
+    %105:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v32.I512.ups), %27:vregbank(<32 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %28:vregbank(<32 x s16>) = G_AIE_OFFSET_LOAD %0, %10 :: (load (<32 x s16>) from stack - 64)
+    %106:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v32.I512.ups), %28:vregbank(<32 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %29:vregbank(<32 x s16>) = G_AIE_OFFSET_LOAD %0, %11 :: (load (<32 x s16>) from stack - 64)
+    %107:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v32.I512.ups), %29:vregbank(<32 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
+    %30:vregbank(<32 x s16>) = G_AIE_OFFSET_LOAD %0, %12 :: (load (<32 x s16>) from stack - 64)
+    %108:accregbank(<16 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc32.v32.I512.ups), %30:vregbank(<32 x s16>), %101:gprregbank(s32), %102:gprregbank(s32)
     PseudoRET implicit $lr, implicit %103, implicit %104, implicit %105, implicit %106, implicit %107, implicit %108
 ...

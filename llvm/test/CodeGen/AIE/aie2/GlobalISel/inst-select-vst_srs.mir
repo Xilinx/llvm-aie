@@ -27,7 +27,7 @@ body:             |
     %1:gprregbank(s32) = COPY $r0
     %3:ptrregbank(p0) = COPY $p0
     %7:gprregbank(s32) = G_CONSTANT i32 0
-    %6:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.I256.v16.acc32.srs), %0:accregbank(<8 x s64>), %1:gprregbank(s32), %7:gprregbank(s32)
+    %6:vregbank(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I256.v16.acc32.srs), %0:accregbank(<8 x s64>), %1:gprregbank(s32), %7:gprregbank(s32)
     G_STORE %6:vregbank(<16 x s16>), %3:ptrregbank(p0) :: (store (<16 x s16>))
 ...
 
@@ -54,7 +54,7 @@ body:             |
     %1:gprregbank(s32) = COPY $r0
     %3:ptrregbank(p0) = COPY $p0
     %7:gprregbank(s32) = COPY $r1
-    %6:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.I256.v16.acc32.srs), %0:accregbank(<8 x s64>), %1:gprregbank(s32), %7:gprregbank(s32)
+    %6:vregbank(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I256.v16.acc32.srs), %0:accregbank(<8 x s64>), %1:gprregbank(s32), %7:gprregbank(s32)
     G_STORE %6:vregbank(<16 x s16>), %3:ptrregbank(p0) :: (store (<16 x s16>))
 ...
 
@@ -78,7 +78,7 @@ body:             |
     %1:gprregbank(s32) = COPY $r0
     %3:ptrregbank(p0) = COPY $p0
     %7:gprregbank(s32) = G_CONSTANT i32 1
-    %6:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.I256.v16.acc32.srs), %0:accregbank(<8 x s64>), %1:gprregbank(s32), %7:gprregbank(s32)
+    %6:vregbank(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I256.v16.acc32.srs), %0:accregbank(<8 x s64>), %1:gprregbank(s32), %7:gprregbank(s32)
     G_STORE %6:vregbank(<16 x s16>), %3:ptrregbank(p0) :: (store (<16 x s16>))
 ...
 
@@ -102,7 +102,7 @@ body:             |
     %1:gprregbank(s32) = COPY $r0
     %3:ptrregbank(p0) = COPY $p0
     %7:gprregbank(s32) = G_CONSTANT i32 0
-    %6:vregbank(<8 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.I256.v8.acc64.srs), %0:accregbank(<8 x s64>), %1:gprregbank(s32), %7:gprregbank(s32)
+    %6:vregbank(<8 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I256.v8.acc64.srs), %0:accregbank(<8 x s64>), %1:gprregbank(s32), %7:gprregbank(s32)
     G_STORE %6:vregbank(<8 x s32>), %3:ptrregbank(p0) :: (store (<8 x s32>))
 ...
 
@@ -129,7 +129,7 @@ body:             |
     %1:gprregbank(s32) = COPY $r0
     %3:ptrregbank(p0) = COPY $p0
     %7:gprregbank(s32) = COPY $r1
-    %6:vregbank(<8 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.I256.v8.acc64.srs), %0:accregbank(<8 x s64>), %1:gprregbank(s32), %7:gprregbank(s32)
+    %6:vregbank(<8 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I256.v8.acc64.srs), %0:accregbank(<8 x s64>), %1:gprregbank(s32), %7:gprregbank(s32)
     G_STORE %6:vregbank(<8 x s32>), %3:ptrregbank(p0) :: (store (<8 x s32>))
 ...
 
@@ -153,7 +153,7 @@ body:             |
     %1:gprregbank(s32) = COPY $r0
     %3:ptrregbank(p0) = COPY $p0
     %7:gprregbank(s32) = G_CONSTANT i32 1
-    %6:vregbank(<8 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.I256.v8.acc64.srs), %0:accregbank(<8 x s64>), %1:gprregbank(s32), %7:gprregbank(s32)
+    %6:vregbank(<8 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I256.v8.acc64.srs), %0:accregbank(<8 x s64>), %1:gprregbank(s32), %7:gprregbank(s32)
     G_STORE %6:vregbank(<8 x s32>), %3:ptrregbank(p0) :: (store (<8 x s32>))
 ...
 
@@ -177,7 +177,7 @@ body:             |
     %1:gprregbank(s32) = COPY $r0
     %3:ptrregbank(p0) = COPY $p0
     %7:gprregbank(s32) = G_CONSTANT i32 0
-    %6:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.I256.v16.acc64.srs), %0:accregbank(<16 x s64>), %1:gprregbank(s32), %7:gprregbank(s32)
+    %6:vregbank(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I256.v16.acc64.srs), %0:accregbank(<16 x s64>), %1:gprregbank(s32), %7:gprregbank(s32)
     G_STORE %6:vregbank(<16 x s16>), %3:ptrregbank(p0) :: (store (<16 x s16>))
 ...
 
@@ -204,7 +204,7 @@ body:             |
     %1:gprregbank(s32) = COPY $r0
     %3:ptrregbank(p0) = COPY $p0
     %7:gprregbank(s32) = COPY $r1
-    %6:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.I256.v16.acc64.srs), %0:accregbank(<16 x s64>), %1:gprregbank(s32), %7:gprregbank(s32)
+    %6:vregbank(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I256.v16.acc64.srs), %0:accregbank(<16 x s64>), %1:gprregbank(s32), %7:gprregbank(s32)
     G_STORE %6:vregbank(<16 x s16>), %3:ptrregbank(p0) :: (store (<16 x s16>))
 ...
 
@@ -228,7 +228,7 @@ body:             |
     %1:gprregbank(s32) = COPY $r0
     %3:ptrregbank(p0) = COPY $p0
     %7:gprregbank(s32) = G_CONSTANT i32 1
-    %6:vregbank(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.I256.v16.acc64.srs), %0:accregbank(<16 x s64>), %1:gprregbank(s32), %7:gprregbank(s32)
+    %6:vregbank(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I256.v16.acc64.srs), %0:accregbank(<16 x s64>), %1:gprregbank(s32), %7:gprregbank(s32)
     G_STORE %6:vregbank(<16 x s16>), %3:ptrregbank(p0) :: (store (<16 x s16>))
 ...
 
@@ -252,7 +252,7 @@ body:             |
     %1:gprregbank(s32) = COPY $r0
     %3:ptrregbank(p0) = COPY $p0
     %7:gprregbank(s32) = G_CONSTANT i32 0
-    %6:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.I256.v32.acc32.srs), %0:accregbank(<16 x s64>), %1:gprregbank(s32), %7:gprregbank(s32)
+    %6:vregbank(<32 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I256.v32.acc32.srs), %0:accregbank(<16 x s64>), %1:gprregbank(s32), %7:gprregbank(s32)
     G_STORE %6:vregbank(<32 x s8>), %3:ptrregbank(p0) :: (store (<32 x s8>))
 ...
 
@@ -279,7 +279,7 @@ body:             |
     %1:gprregbank(s32) = COPY $r0
     %3:ptrregbank(p0) = COPY $p0
     %7:gprregbank(s32) = COPY $r1
-    %6:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.I256.v32.acc32.srs), %0:accregbank(<16 x s64>), %1:gprregbank(s32), %7:gprregbank(s32)
+    %6:vregbank(<32 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I256.v32.acc32.srs), %0:accregbank(<16 x s64>), %1:gprregbank(s32), %7:gprregbank(s32)
     G_STORE %6:vregbank(<32 x s8>), %3:ptrregbank(p0) :: (store (<32 x s8>))
 ...
 
@@ -303,7 +303,7 @@ body:             |
     %1:gprregbank(s32) = COPY $r0
     %3:ptrregbank(p0) = COPY $p0
     %7:gprregbank(s32) = G_CONSTANT i32 1
-    %6:vregbank(<32 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.I256.v32.acc32.srs), %0:accregbank(<16 x s64>), %1:gprregbank(s32), %7:gprregbank(s32)
+    %6:vregbank(<32 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I256.v32.acc32.srs), %0:accregbank(<16 x s64>), %1:gprregbank(s32), %7:gprregbank(s32)
     G_STORE %6:vregbank(<32 x s8>), %3:ptrregbank(p0) :: (store (<32 x s8>))
 ...
 
@@ -331,7 +331,7 @@ body: |
     %1:gprregbank(s32) = COPY $r0
     %3:ptrregbank(p0) = COPY $p0
     %7:gprregbank(s32) = G_CONSTANT i32 0
-    %6:vregbank(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.I512.v16.acc64.srs), %0:accregbank(<16 x s64>), %1:gprregbank(s32), %7:gprregbank(s32)
+    %6:vregbank(<16 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I512.v16.acc64.srs), %0:accregbank(<16 x s64>), %1:gprregbank(s32), %7:gprregbank(s32)
     G_STORE %6:vregbank(<16 x s32>), %3:ptrregbank(p0) :: (store (<16 x s32>))
 ...
 
@@ -362,7 +362,7 @@ body: |
     %1:gprregbank(s32) = COPY $r0
     %3:ptrregbank(p0) = COPY $p0
     %7:gprregbank(s32) = COPY $r1
-    %6:vregbank(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.I512.v16.acc64.srs), %0:accregbank(<16 x s64>), %1:gprregbank(s32), %7:gprregbank(s32)
+    %6:vregbank(<16 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I512.v16.acc64.srs), %0:accregbank(<16 x s64>), %1:gprregbank(s32), %7:gprregbank(s32)
     G_STORE %6:vregbank(<16 x s32>), %3:ptrregbank(p0) :: (store (<16 x s32>))
 ...
 
@@ -390,7 +390,7 @@ body: |
     %1:gprregbank(s32) = COPY $r0
     %3:ptrregbank(p0) = COPY $p0
     %7:gprregbank(s32) = G_CONSTANT i32 1
-    %6:vregbank(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.I512.v16.acc64.srs), %0:accregbank(<16 x s64>), %1:gprregbank(s32), %7:gprregbank(s32)
+    %6:vregbank(<16 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I512.v16.acc64.srs), %0:accregbank(<16 x s64>), %1:gprregbank(s32), %7:gprregbank(s32)
     G_STORE %6:vregbank(<16 x s32>), %3:ptrregbank(p0) :: (store (<16 x s32>))
 ...
 
@@ -418,7 +418,7 @@ body: |
     %1:gprregbank(s32) = COPY $r0
     %3:ptrregbank(p0) = COPY $p0
     %7:gprregbank(s32) = G_CONSTANT i32 0
-    %6:vregbank(<32 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.I512.v32.acc32.srs), %0:accregbank(<16 x s64>), %1:gprregbank(s32), %7:gprregbank(s32)
+    %6:vregbank(<32 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I512.v32.acc32.srs), %0:accregbank(<16 x s64>), %1:gprregbank(s32), %7:gprregbank(s32)
     G_STORE %6:vregbank(<32 x s16>), %3:ptrregbank(p0) :: (store (<32 x s16>))
 ...
 
@@ -449,7 +449,7 @@ body: |
     %1:gprregbank(s32) = COPY $r0
     %3:ptrregbank(p0) = COPY $p0
     %7:gprregbank(s32) = COPY $r1
-    %6:vregbank(<32 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.I512.v32.acc32.srs), %0:accregbank(<16 x s64>), %1:gprregbank(s32), %7:gprregbank(s32)
+    %6:vregbank(<32 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I512.v32.acc32.srs), %0:accregbank(<16 x s64>), %1:gprregbank(s32), %7:gprregbank(s32)
     G_STORE %6:vregbank(<32 x s16>), %3:ptrregbank(p0) :: (store (<32 x s16>))
 ...
 
@@ -478,6 +478,6 @@ body: |
     %1:gprregbank(s32) = COPY $r0
     %3:ptrregbank(p0) = COPY $p0
     %7:gprregbank(s32) = G_CONSTANT i32 1
-    %6:vregbank(<32 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.I512.v32.acc32.srs), %0:accregbank(<16 x s64>), %1:gprregbank(s32), %7:gprregbank(s32)
+    %6:vregbank(<32 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.I512.v32.acc32.srs), %0:accregbank(<16 x s64>), %1:gprregbank(s32), %7:gprregbank(s32)
     G_STORE %6:vregbank(<32 x s16>), %3:ptrregbank(p0) :: (store (<32 x s16>))
 ...

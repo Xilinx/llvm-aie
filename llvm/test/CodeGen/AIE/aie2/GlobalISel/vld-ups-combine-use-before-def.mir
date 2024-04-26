@@ -36,6 +36,6 @@ body: |
     %25:vregbank(<16 x s16>), %19:ptrregbank(p0) = G_AIE_POSTINC_LOAD %0, %7 :: (load (<16 x s16>))
     $m1 = COPY %19:ptrregbank(p0)
     %12:ptrregbank(p0) = COPY $m1
-    %103:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.acc64.v16.I256.ups), %25:vregbank(<16 x s16>),  %70:gprregbank(s32),  %70:gprregbank(s32)
+    %103:accregbank(<8 x s64>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.acc64.v16.I256.ups), %25:vregbank(<16 x s16>),  %70:gprregbank(s32),  %70:gprregbank(s32)
     PseudoRET implicit $lr, implicit %103, implicit %12
 ...

@@ -539,56 +539,56 @@ def : Pat<(int_aie2_ACC512_accfloat_neg_conf ACC512:$s1, eR:$c), (VNEG_F ACC512:
 
 // UPS Intrinsic
 // Note : Non-constant sign is handled in .cpp
-def : Pat<(int_aie2_acc32_v16_I256_ups VEC256:$src, mSs:$shift, 0x0),
+def : PatInaccessibleMem<(int_aie2_acc32_v16_I256_ups VEC256:$src, mSs:$shift, 0x0),
            (VUPS_S32_D16_mv_ups_w2b VEC256:$src, mSs:$shift)>;
-def : Pat<(int_aie2_acc32_v32_I256_ups VEC256:$src, mSs:$shift, 0x0),
+def : PatInaccessibleMem<(int_aie2_acc32_v32_I256_ups VEC256:$src, mSs:$shift, 0x0),
            (VUPS_S32_D8_mv_ups_w2c VEC256:$src, mSs:$shift)>;
-def : Pat<(int_aie2_acc32_v32_I512_ups VEC512:$src, mSs:$shift, 0x0),
-           (VUPS_S32_D16_mv_ups_x2c VEC512:$src, mSs:$shift)>;
-def : Pat<(int_aie2_acc64_v16_I256_ups VEC256:$src, mSs:$shift, 0x0),
+def : PatInaccessibleMem<(int_aie2_acc32_v32_I512_ups VEC512:$src, mSs:$shift, 0x0),
+           (VUPS_S32_D16_mv_ups_x2c VEC512:$src, mSs:$shift)>;     
+def : PatInaccessibleMem<(int_aie2_acc64_v16_I256_ups VEC256:$src, mSs:$shift, 0x0),
            (VUPS_S64_D16_mv_ups_w2c VEC256:$src, mSs:$shift)>;
-def : Pat<(int_aie2_acc64_v16_I512_ups VEC512:$src, mSs:$shift, 0x0),
+def : PatInaccessibleMem<(int_aie2_acc64_v16_I512_ups VEC512:$src, mSs:$shift, 0x0),
            (VUPS_S64_D32_mv_ups_x2c VEC512:$src, mSs:$shift)>;
-def : Pat<(int_aie2_acc64_v8_I256_ups  VEC256:$src, mSs:$shift, 0x0),
+def : PatInaccessibleMem<(int_aie2_acc64_v8_I256_ups  VEC256:$src, mSs:$shift, 0x0),
            (VUPS_S64_D32_mv_ups_w2b VEC256:$src, mSs:$shift)>;
-def : Pat<(int_aie2_acc32_v16_I256_ups VEC256:$src, mSs:$shift, 0x1),
+def : PatInaccessibleMem<(int_aie2_acc32_v16_I256_ups VEC256:$src, mSs:$shift, 0x1),
            (VUPS_S32_S16_mv_ups_w2b VEC256:$src, mSs:$shift)>;
-def : Pat<(int_aie2_acc32_v32_I256_ups VEC256:$src, mSs:$shift, 0x1),
+def : PatInaccessibleMem<(int_aie2_acc32_v32_I256_ups VEC256:$src, mSs:$shift, 0x1),
            (VUPS_S32_S8_mv_ups_w2c VEC256:$src, mSs:$shift)>;
-def : Pat<(int_aie2_acc32_v32_I512_ups VEC512:$src, mSs:$shift, 0x1),
-           (VUPS_S32_S16_mv_ups_x2c VEC512:$src, mSs:$shift)>;
-def : Pat<(int_aie2_acc64_v16_I256_ups VEC256:$src, mSs:$shift, 0x1),
+def : PatInaccessibleMem<(int_aie2_acc32_v32_I512_ups VEC512:$src, mSs:$shift, 0x1),
+           (VUPS_S32_S16_mv_ups_x2c VEC512:$src, mSs:$shift)>;     
+def : PatInaccessibleMem<(int_aie2_acc64_v16_I256_ups VEC256:$src, mSs:$shift, 0x1),
            (VUPS_S64_S16_mv_ups_w2c VEC256:$src, mSs:$shift)>;
-def : Pat<(int_aie2_acc64_v16_I512_ups VEC512:$src, mSs:$shift, 0x1),
+def : PatInaccessibleMem<(int_aie2_acc64_v16_I512_ups VEC512:$src, mSs:$shift, 0x1),
            (VUPS_S64_S32_mv_ups_x2c VEC512:$src, mSs:$shift)>;
-def : Pat<(int_aie2_acc64_v8_I256_ups  VEC256:$src, mSs:$shift, 0x1),
+def : PatInaccessibleMem<(int_aie2_acc64_v8_I256_ups  VEC256:$src, mSs:$shift, 0x1),
            (VUPS_S64_S32_mv_ups_w2b VEC256:$src, mSs:$shift)>;
 
 // SRS Intrinsic
 // Note : Non-constant sign is handled in .cpp
-def : Pat<(int_aie2_I256_v16_acc32_srs ACC512:$src,  mSs:$shft, 0x0),
+def : PatInaccessibleMem<(int_aie2_I256_v16_acc32_srs ACC512:$src,  mSs:$shft, 0x0),
            (VSRS_D16_S32_mv_w_srs ACC512:$src,  mSs:$shft)>;
-def : Pat<(int_aie2_I256_v16_acc64_srs ACC1024:$src, mSs:$shft, 0x0),
+def : PatInaccessibleMem<(int_aie2_I256_v16_acc64_srs ACC1024:$src, mSs:$shft, 0x0),
            (VSRS_D16_S64_mv_w_srs ACC1024:$src, mSs:$shft)>;
-def : Pat<(int_aie2_I256_v32_acc32_srs ACC1024:$src, mSs:$shft, 0x0),
+def : PatInaccessibleMem<(int_aie2_I256_v32_acc32_srs ACC1024:$src, mSs:$shft, 0x0),
            (VSRS_D8_S32_mv_w_srs  ACC1024:$src, mSs:$shft)>;
-def : Pat<(int_aie2_I256_v8_acc64_srs  ACC512:$src,  mSs:$shft, 0x0),
+def : PatInaccessibleMem<(int_aie2_I256_v8_acc64_srs  ACC512:$src,  mSs:$shft, 0x0),
            (VSRS_D32_S64_mv_w_srs ACC512:$src,  mSs:$shft)>;
-def : Pat<(int_aie2_I512_v16_acc64_srs ACC1024:$src, mSs:$shft, 0x0),
+def : PatInaccessibleMem<(int_aie2_I512_v16_acc64_srs ACC1024:$src, mSs:$shft, 0x0),
            (VSRS_D32_S64_mv_x_srs ACC1024:$src, mSs:$shft)>;
-def : Pat<(int_aie2_I512_v32_acc32_srs ACC1024:$src, mSs:$shft, 0x0),
+def : PatInaccessibleMem<(int_aie2_I512_v32_acc32_srs ACC1024:$src, mSs:$shft, 0x0),
            (VSRS_D16_S32_mv_x_srs ACC1024:$src, mSs:$shft)>;
-def : Pat<(int_aie2_I256_v16_acc32_srs ACC512:$src,  mSs:$shft, 0x1),
+def : PatInaccessibleMem<(int_aie2_I256_v16_acc32_srs ACC512:$src,  mSs:$shft, 0x1),
            (VSRS_S16_S32_mv_w_srs ACC512:$src,  mSs:$shft)>;
-def : Pat<(int_aie2_I256_v16_acc64_srs ACC1024:$src, mSs:$shft, 0x1),
+def : PatInaccessibleMem<(int_aie2_I256_v16_acc64_srs ACC1024:$src, mSs:$shft, 0x1),
            (VSRS_S16_S64_mv_w_srs ACC1024:$src, mSs:$shft)>;
-def : Pat<(int_aie2_I256_v32_acc32_srs ACC1024:$src, mSs:$shft, 0x1),
+def : PatInaccessibleMem<(int_aie2_I256_v32_acc32_srs ACC1024:$src, mSs:$shft, 0x1),
            (VSRS_S8_S32_mv_w_srs  ACC1024:$src, mSs:$shft)>;
-def : Pat<(int_aie2_I256_v8_acc64_srs  ACC512:$src,  mSs:$shft, 0x1),
+def : PatInaccessibleMem<(int_aie2_I256_v8_acc64_srs  ACC512:$src,  mSs:$shft, 0x1),
            (VSRS_S32_S64_mv_w_srs ACC512:$src,  mSs:$shft)>;
-def : Pat<(int_aie2_I512_v16_acc64_srs ACC1024:$src, mSs:$shft, 0x1),
+def : PatInaccessibleMem<(int_aie2_I512_v16_acc64_srs ACC1024:$src, mSs:$shft, 0x1),
            (VSRS_S32_S64_mv_x_srs ACC1024:$src, mSs:$shft)>;
-def : Pat<(int_aie2_I512_v32_acc32_srs ACC1024:$src, mSs:$shft, 0x1),
+def : PatInaccessibleMem<(int_aie2_I512_v32_acc32_srs ACC1024:$src, mSs:$shft, 0x1),
            (VSRS_S16_S32_mv_x_srs ACC1024:$src, mSs:$shft)>;
 
 // VSHUFFLE
