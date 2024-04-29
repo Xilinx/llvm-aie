@@ -6,6 +6,9 @@ permissions:
 on:
   workflow_dispatch:
     inputs:
+      cache-key:
+        required: false
+        default: 'sccache'
       build_target:
         required: false
       projects:
@@ -17,6 +20,11 @@ on:
         default: '["ubuntu-latest", "windows-2019", "macOS-11"]'
   workflow_call:
     inputs:
+      cache-key:
+        required: false
+        type: string
+        default: 'sccache'
+
       build_target:
         required: true
         type: string
@@ -86,8 +94,8 @@ jobs:
           # run creates a new cache entry so we want to ensure that we have
           # enough cache space for all the tests to run at once and still
           # fit under the 10 GB limit.
-          max-size: 500M
-          key: sccache-${{ matrix.os }}
+          max-size: 1.5G
+          key: ${{ inputs.cache-key }}-${{ matrix.os }}
           variant: sccache
       - name: Build and Test
         uses: llvm/actions/build-test-llvm-project@main

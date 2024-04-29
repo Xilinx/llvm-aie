@@ -254,3 +254,16 @@ add_lit_testsuites(LLVM ${CMAKE_CURRENT_SOURCE_DIR}
 add_custom_target(check)
 add_dependencies(check check-all)
 set_target_properties(check PROPERTIES FOLDER "Tests")
+
+
+add_custom_target(check-llvm-aie)
+add_dependencies(check-llvm-aie 
+  check-llvm-codegen-aie
+  check-llvm-codegen-mir-aie 
+  check-llvm-mc-aie
+  check-llvm-object-aie 
+  check-llvm-tablegen
+  check-llvm-transforms-hardwareloops-aie 
+  check-llvm-transforms-simplifycfg-aie 
+  check-llvm-tools-updatetestchecks
+  check-llvm-tools-llvm-dwarfdump-aie)

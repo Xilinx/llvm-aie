@@ -204,3 +204,8 @@ add_subdirectory(MinGW)
 add_subdirectory(wasm)
 
 add_subdirectory(cmake/modules)
+
+add_custom_target(check-lld-aie)
+add_dependencies(check-lld-aie 
+  check-lld-elf-aie
+)
