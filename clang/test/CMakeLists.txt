@@ -196,3 +196,12 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/debuginfo-tests)
     add_subdirectory(debuginfo-tests)
   endif()
 endif()
+
+
+add_custom_target(check-clang-aie)
+add_dependencies(check-clang-aie 
+  check-clang-codegen-aie
+  check-clang-misc
+  check-clang-preprocessor
+  check-clang-driver-aie
+)

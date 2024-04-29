@@ -26,6 +26,7 @@ jobs:
     with:
       build_target: check-all
       projects: clang
+      cache-key: amd-upstream
       extra_cmake_args: '-DLLVM_USE_LINKER=gold -DLLVM_TARGETS_TO_BUILD="X86;ARM;AArch64;AMDGPU"'
       os_list: '["ubuntu-latest", "windows-2019"]'
 
