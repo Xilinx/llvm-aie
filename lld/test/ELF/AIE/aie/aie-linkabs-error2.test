@@ -4,7 +4,8 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# REQUIRES: aie
+
+# REQUIRES: aie, system-linux
 # RUN: yaml2obj %S/aie-linkabs.in0.test -o %t_1.o
 # RUN: yaml2obj %S/aie-linkabs.in0.test -o %t_2.o
 # RUN: yaml2obj %S/aie-linkabs.in1.test -o %t_3.o

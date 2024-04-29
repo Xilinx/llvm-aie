@@ -4,7 +4,10 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-// Requires: aie2
+
+# REQUIRES: aie, system-linux
+# This fails on windows because of 'cat'
+
 // RUN: split-file %s %t
 // RUN: yaml2obj %t/main.yaml -o main.o
 // RUN: yaml2obj %t/ext.yaml -o ext.o

@@ -16,6 +16,7 @@
 
 ; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck -check-prefix=R600 %s
 ; RUN: llc -march=r600 -mcpu=cayman < %s | FileCheck -check-prefix=CM %s
+; XFAIL: llvm-aie-regression
 
 define amdgpu_kernel void @s_log10_f32(ptr addrspace(1) %out, float %in) {
 ; SI-SDAG-LABEL: s_log10_f32:

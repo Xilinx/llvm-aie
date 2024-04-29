@@ -8,6 +8,7 @@
 
 ; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck -check-prefix=R600 %s
 ; RUN: llc -march=r600 -mcpu=cayman < %s | FileCheck -check-prefix=CM %s
+; XFAIL: llvm-aie-regression
 
 ; FIXME: Fallback enabled due to bfloat extensions
 

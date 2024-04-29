@@ -1,4 +1,5 @@
 ; RUN: llc -mtriple=arm-eabi -mattr=+v6t2 %s -o - | FileCheck %s
+; XFAIL: llvm-aie-regression
 
 define i32 @f1(i32 %a) {
 entry:

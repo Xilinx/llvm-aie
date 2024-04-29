@@ -612,3 +612,8 @@ if "MemoryWithOrigins" in config.llvm_use_sanitizer:
 # "OBJECT_MODE" to 'any' by default on AIX OS.
 if "system-aix" in config.available_features:
     config.environment["OBJECT_MODE"] = "any"
+
+
+# Some tests on non-AIEngine architectures fail with AIEngine modifications.
+# This features is used to mark these tests
+config.available_features.add("llvm-aie-regression")

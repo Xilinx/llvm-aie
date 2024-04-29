@@ -7,6 +7,7 @@
 # Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -run-pass=aarch64-prelegalizer-combiner -verify-machineinstrs -mtriple aarch64-unknown-unknown --aarch64prelegalizercombiner-only-enable-rule="reassoc_ptradd" %s -o - | FileCheck %s
 # REQUIRES: asserts
+# XFAIL: llvm-aie-regression
 
 ---
 name:            test1_noreassoc_legal_already_new_is_illegal

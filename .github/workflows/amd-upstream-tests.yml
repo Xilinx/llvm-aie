@@ -1,0 +1,40 @@
+name: AIEngine Upstream Tests
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'aie-public'
+  pull_request:
+    branches:
+      - 'aie-public'
+
+concurrency:
+  # Skip intermediate builds: always.
+  # Cancel intermediate builds: only if it is a pull request build.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+
+jobs:
+  check_all:
+    if: github.repository_owner == 'Xilinx'
+    name: Test llvm,clang
+    uses: ./.github/workflows/llvm-project-tests.yml
+    with:
+      build_target: check-all
+      projects: clang
+      extra_cmake_args: '-DLLVM_USE_LINKER=gold -DLLVM_TARGETS_TO_BUILD="X86;ARM;AArch64;AMDGPU"'
+      os_list: '["ubuntu-latest", "windows-2019"]'
+
+  check_lld:
+    if: github.repository_owner == 'Xilinx'
+    name: Test lld
+    uses: ./.github/workflows/llvm-project-tests.yml
+    with:
+      build_target: check-lld
+      projects: lld
+      os_list: '["ubuntu-latest", "windows-2019"]'
+

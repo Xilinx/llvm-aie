@@ -359,7 +359,7 @@ TGInstrLayout::TGInstrLayout(const CodeGenInstruction *const CGI,
     }
     ++HierarchyLevel;
   }
-
+  (void)BI;
   assert(BI && "No Bits Init found from the base Instr Attribute");
 
   // Recursively search of every fields definition
