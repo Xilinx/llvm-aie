@@ -9,10 +9,10 @@
 //===----------------------------------------------------------------------===//
 // RUN: %clang -O2 -ffast-math --target=aie-none-elf %s -S -o %t
 // RUN: cat %t | FileCheck %s
-// RUN: %clang -O2 -ffast-math --target=aie-none-elf %s -o %t.o
-// RUN: llvm-objdump -dr --triple=aie %t.o | FileCheck %s --check-prefix=CHECK-LINK
 
-// We should automatically link against the builtins.
+// Note that this doesn't actually test linking against the builtins, since
+// we don't necessarily have a good way to require that the runtimes are actually
+// compiled.
 
 #include<stdint.h>
 
