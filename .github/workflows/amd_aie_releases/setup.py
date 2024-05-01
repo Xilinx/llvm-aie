@@ -241,6 +241,23 @@ class CMakeBuild(build_ext):
                 )
             shutil.rmtree(install_dir / "python_packages", ignore_errors=True)
 
+        subprocess.run(
+            [
+                "find",
+                ".",
+                "-exec",
+                "touch",
+                "-a",
+                "-m",
+                "-t",
+                "197001010000",
+                "{}",
+                ";",
+            ],
+            cwd=install_dir,
+            check=False,
+        )
+
 
 def check_env(build):
     return os.environ.get(build, 0) in {"1", "true", "True", "ON", "YES"}

@@ -113,9 +113,6 @@ jobs:
           if [ x"${{ inputs.DEBUG_CI_FAST_BUILD }}" == x"true" ]; then
             DEBUG_CI_FAST_BUILD="true"
           fi
-          
-          DEBUG_CI_FAST_BUILD="true"
-          
           RUN_TESTS="false"
           if [ x"${{ inputs.RUN_TESTS }}" == x"true" ]; then
             RUN_TESTS="true"
@@ -176,6 +173,13 @@ jobs:
 
     steps:
 
+    - name: Checkout actions
+      uses: actions/checkout@v3
+      with:
+        sparse-checkout: .github/workflows/amd_aie_releases
+        # Turning off cone mode ensures that files in the project root are not included during checkout
+        sparse-checkout-cone-mode: false
+
     - uses: makslevental/mlir-wheels/actions/setup_base@b3d5c60b3c6f51e9ce9015e5c3529efc07919f21
       id: setup_base
       with:
@@ -194,13 +198,6 @@ jobs:
         MATRIX_OS: ${{ matrix.OS }}
         MATRIX_ARCH: ${{ matrix.ARCH }}
         WORKSPACE_ROOT: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
-
-    - name: Checkout actions
-      uses: actions/checkout@v3
-      with:
-        sparse-checkout: .github/workflows/amd_aie_releases
-        # Turning off cone mode ensures that files in the project root are not included during checkout
-        sparse-checkout-cone-mode: false
 
       # This step is needed because action/checkout does not support paths.
     - name: Copy stuff to workspace_root
@@ -267,6 +264,26 @@ jobs:
         export RUN_TESTS=0
         pip wheel . -v -w wheelhouse
 
+    - name: Clean llvm-aie
+      working-directory: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
+      run: |
+        
+        rm -rf llvm-aie
+        rm -rf build
+
+    - name: Docker prune
+      if: contains(inputs.MATRIX_OS, 'ubuntu')
+      run: |
+        docker system prune -a -f
+
+    - name: Get wheel version
+      id: get_wheel_version
+      working-directory: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
+      run: |
+        pip install pkginfo
+        WHL=$(ls wheelhouse/llvm_aie-*whl)
+        echo "LLVM_AIE_WHEEL_VERSION=$(python -c "import pkginfo; w = pkginfo.Wheel('$WHL'); print(w.version.split('+')[0] + '+' + w.version.split('+')[1].rsplit('.', 1)[-1])")" | tee -a $GITHUB_OUTPUT
+
     - name: Download cache from container ubuntu
       if: contains(matrix.OS, 'ubuntu') && contains(matrix.ARCH, 'x86_64') && (success() || failure())
       working-directory: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
@@ -283,27 +300,7 @@ jobs:
       run: |
         
         ccache --print-stats
-        find $HOST_CCACHE_DIR -exec touch -a -m -t "${{ needs.settings.outputs.DATETIME }}00" {} \;
-
-    - name: Clean llvm-aie
-      working-directory: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
-      run: |
-        
-        rm -rf llvm-aie
-        rm -rf build
-
-    - name: Docker prune
-      if: contains(matrix.OS, 'ubuntu')
-      run: |
-        docker system prune -a -f
-
-    - name: Get wheel version
-      id: get_wheel_version
-      working-directory: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
-      run: |
-        pip install pkginfo
-        WHL=$(ls wheelhouse/llvm_aie-*whl)
-        echo "LLVM_AIE_WHEEL_VERSION=$(python -c "import pkginfo; w = pkginfo.Wheel('$WHL'); print(w.version.split('+')[0] + '+' + w.version.split('+')[1].rsplit('.', 1)[-1])")" | tee -a $GITHUB_OUTPUT
+        find $HOST_CCACHE_DIR -exec touch -a -m -t 197001010000 {} \;
 
       # git-bash doesn't have rename
     - name: rename non-windows
@@ -328,7 +325,7 @@ jobs:
         ls wheelhouse/llvm_aie-*whl | Rename-Item -NewName {$_ -replace 'cp311-cp311', 'py3-none' }
 
     - name: Build native_tools wheel
-      if: needs.settings.outputs.DEBUG_CI_FAST_BUILD != 'true'
+      if: ${{ needs.settings.outputs.DEBUG_CI_FAST_BUILD != 'true' }}
       working-directory: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
       id: build_native_tools_wheel
       run: |
@@ -352,14 +349,14 @@ jobs:
         pushd native_tools
 
         LLVM_AIE_WHEEL_VERSION=${{ steps.get_wheel_version.outputs.LLVM_AIE_WHEEL_VERSION }} \
-        python setup.py bdist_wheel --dist-dir ../wheelhouse --plat $PLAT
+          python setup.py bdist_wheel --dist-dir ../wheelhouse --plat $PLAT
         
         popd
 
     # done
 
     - name: Upload wheels
-      if: needs.settings.outputs.UPLOAD_ARTIFACTS == 'true'
+      if: ${{ needs.settings.outputs.UPLOAD_ARTIFACTS == 'true' }}
       uses: actions/upload-artifact@v3
       with:
         path: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}/wheelhouse/*.whl
@@ -367,7 +364,7 @@ jobs:
 
   upload_distro_wheels:
 
-    if: needs.settings.outputs.UPLOAD_ARTIFACTS == 'true'
+    if: ${{ needs.settings.outputs.UPLOAD_ARTIFACTS == 'true' }}
 
     needs: build
 
