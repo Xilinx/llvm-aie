@@ -38,6 +38,11 @@ on:
         type: string
         required: false
         default: 'false'
+      DEBUG_CI_FAST_BUILD:
+        description: 'whether to build only one single llvm target (llvm-tblgen)'
+        type: string
+        required: false
+        default: 'false'
 
   pull_request:
   release:
@@ -88,9 +93,54 @@ jobs:
           DATETIME=$(date +"%Y%m%d%H")
           echo "DATETIME=${DATETIME}" | tee -a $GITHUB_OUTPUT
 
-  build:
+  settings:
+
+    runs-on: ubuntu-latest
 
     needs: get_llvm_aie_project_commit
+
+    steps:
+
+      - name: Set commons as env vars
+        id: settings
+        run: |
+          
+          APPLY_PATCHES="true"
+          if [ x"${{ inputs.APPLY_PATCHES }}" == x"false" ]; then
+            APPLY_PATCHES="false"
+          fi 
+          DEBUG_CI_FAST_BUILD="false"
+          if [ x"${{ inputs.DEBUG_CI_FAST_BUILD }}" == x"true" ]; then
+            DEBUG_CI_FAST_BUILD="true"
+          fi
+          
+          DEBUG_CI_FAST_BUILD="true"
+          
+          RUN_TESTS="false"
+          if [ x"${{ inputs.RUN_TESTS }}" == x"true" ]; then
+            RUN_TESTS="true"
+          fi
+          
+          UPLOAD_ARTIFACTS="true"
+          if [ x"${{ github.event.schedule }}" == x"0 */4 * * *" ] || [ x"$DEBUG_CI_FAST_BUILD" == x"true" ]; then
+            UPLOAD_ARTIFACTS="false"
+          fi 
+          
+          echo "APPLY_PATCHES=$APPLY_PATCHES" | tee -a $GITHUB_OUTPUT
+          echo "DEBUG_CI_FAST_BUILD=$DEBUG_CI_FAST_BUILD" | tee -a $GITHUB_OUTPUT
+          echo "RUN_TESTS=$RUN_TESTS" | tee -a $GITHUB_OUTPUT
+          echo "UPLOAD_ARTIFACTS=$UPLOAD_ARTIFACTS" | tee -a $GITHUB_OUTPUT
+
+    outputs:
+      APPLY_PATCHES: ${{ steps.settings.outputs.APPLY_PATCHES }}
+      DEBUG_CI_FAST_BUILD: ${{ steps.settings.outputs.DEBUG_CI_FAST_BUILD }}
+      RUN_TESTS: ${{ steps.settings.outputs.RUN_TESTS }}
+      LLVM_AIE_PROJECT_COMMIT: ${{ needs.get_llvm_aie_project_commit.outputs.LLVM_AIE_PROJECT_COMMIT }}
+      DATETIME: ${{ needs.get_llvm_aie_project_commit.outputs.DATETIME }}
+
+  build:
+
+    needs: settings
 
     name: ${{ matrix.OS }} ${{ matrix.ARCH }}
 
@@ -126,7 +176,7 @@ jobs:
 
     steps:
 
-    - uses: makslevental/mlir-wheels/actions/setup_base@54495f0f8fea29747d85daad4da0f815d8b3d5a4
+    - uses: makslevental/mlir-wheels/actions/setup_base@b3d5c60b3c6f51e9ce9015e5c3529efc07919f21
       id: setup_base
       with:
         # optional
@@ -138,7 +188,7 @@ jobs:
         MATRIX_OS: ${{ matrix.OS }}
         MATRIX_ARCH: ${{ matrix.ARCH }}
 
-    - uses: makslevental/mlir-wheels/actions/setup_ccache@54495f0f8fea29747d85daad4da0f815d8b3d5a4
+    - uses: makslevental/mlir-wheels/actions/setup_ccache@b3d5c60b3c6f51e9ce9015e5c3529efc07919f21
       id: setup_ccache
       with:
         MATRIX_OS: ${{ matrix.OS }}
@@ -152,19 +202,18 @@ jobs:
         # Turning off cone mode ensures that files in the project root are not included during checkout
         sparse-checkout-cone-mode: false
 
-    # This step is needed because action/checkout does not support paths.
-    - name: Move release utils app to workspace_root
+      # This step is needed because action/checkout does not support paths.
+    - name: Copy stuff to workspace_root
       run: |
         
-        shopt -s dotglob
+        ls -lah
         
         WORKSPACE_ROOT="${{ steps.setup_base.outputs.WORKSPACE_ROOT }}"
-        if [[ ${{ matrix.OS }} == *"windows"* ]]; then
+        if [[ "${{ matrix.OS }}" == *"windows"* ]]; then
           WORKSPACE_ROOT=$(echo "/$WORKSPACE_ROOT" | sed -e 's/\\/\//g' -e 's/://')
         fi
+        mv .github/workflows/amd_aie_releases/*  "$WORKSPACE_ROOT"
         
-        ls -lah
-        mv .github/workflows/amd_aie_releases/* "$WORKSPACE_ROOT"
         ls -lah "$WORKSPACE_ROOT"
 
     - name: Get LLVM-AIE
@@ -174,12 +223,30 @@ jobs:
         GH_TOKEN: ${{ github.token }}
       run: |
         
-        LLVM_AIE_PROJECT_COMMIT=${{ needs.get_llvm_aie_project_commit.outputs.LLVM_AIE_PROJECT_COMMIT }}
+        LLVM_AIE_PROJECT_COMMIT=${{ needs.settings.outputs.LLVM_AIE_PROJECT_COMMIT }}
         gh api -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" \
           repos/Xilinx/llvm-aie/zipball/$LLVM_AIE_PROJECT_COMMIT > llvm-aie.zip
         unzip -q llvm-aie.zip
         rm -rf llvm-aie.zip
         mv Xilinx-llvm-aie-* llvm-aie
+
+    - name: Set env variables
+      working-directory: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
+      run: |
+        
+        echo "APPLY_PATCHES=${{ needs.settings.outputs.APPLY_PATCHES }}" >> $GITHUB_ENV
+        echo "DEBUG_CI_FAST_BUILD=${{ needs.settings.outputs.DEBUG_CI_FAST_BUILD }}" >> $GITHUB_ENV
+        echo "RUN_TESTS=${{ needs.settings.outputs.RUN_TESTS }}" >> $GITHUB_ENV
+        echo "DATETIME=${{ needs.settings.outputs.DATETIME }}" >> $GITHUB_ENV
+        echo "LLVM_AIE_PROJECT_COMMIT=${{ needs.settings.outputs.LLVM_AIE_PROJECT_COMMIT }}" >> $GITHUB_ENV
+        
+        echo "CIBW_ARCHS=${{ matrix.ARCH }}" >> $GITHUB_ENV
+        echo "MATRIX_OS=${{ matrix.OS }}" >> $GITHUB_ENV
+        
+        echo "CMAKE_GENERATOR=Ninja" >> $GITHUB_ENV
+        echo "HOST_CCACHE_DIR="$(ccache --get-config cache_dir)"" >> $GITHUB_ENV
+        echo "PARALLEL_LEVEL=2" >> $GITHUB_ENV
+        echo "PIP_FIND_LINKS=https://github.com/makslevental/mlir-wheels/releases/expanded_assets/latest" >> $GITHUB_ENV
 
     # build
 
@@ -189,15 +256,6 @@ jobs:
       working-directory: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
       run: |
         
-        APPLY_PATCHES=${{ inputs.APPLY_PATCHES == '' && 'true' || inputs.APPLY_PATCHES }} \
-        RUN_TESTS=${{ inputs.RUN_TESTS == '' && 'false' || inputs.RUN_TESTS }} \
-        CIBW_ARCHS=${{ matrix.ARCH }} \
-        CMAKE_GENERATOR=Ninja \
-        DATETIME=${{ needs.get_llvm_aie_project_commit.outputs.DATETIME }} \
-        HOST_CCACHE_DIR="$(ccache --get-config cache_dir)" \
-        LLVM_AIE_PROJECT_COMMIT=${{ needs.get_llvm_aie_project_commit.outputs.LLVM_AIE_PROJECT_COMMIT }} \
-        MATRIX_OS=${{ matrix.OS }} \
-        PARALLEL_LEVEL=2 \
         cibuildwheel --output-dir wheelhouse
 
     - name: build aarch ubuntu wheel
@@ -205,16 +263,8 @@ jobs:
       working-directory: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
       run: |
         
-        export APPLY_PATCHES=${{ inputs.APPLY_PATCHES == '' && 'true' || inputs.APPLY_PATCHES }}
         ./scripts/apply_patches.sh
-        
-        CIBW_ARCHS=${{ matrix.ARCH }} \
-        CMAKE_GENERATOR=Ninja \
-        DATETIME=${{ needs.get_llvm_aie_project_commit.outputs.DATETIME }} \
-        LLVM_AIE_PROJECT_COMMIT=${{ needs.get_llvm_aie_project_commit.outputs.LLVM_AIE_PROJECT_COMMIT }} \
-        MATRIX_OS=${{ matrix.OS }} \
-        PARALLEL_LEVEL=2 \
-        PIP_FIND_LINKS="https://github.com/makslevental/mlir-wheels/releases/expanded_assets/latest" \
+        export RUN_TESTS=0
         pip wheel . -v -w wheelhouse
 
     - name: Download cache from container ubuntu
@@ -223,7 +273,6 @@ jobs:
       run: |
         
         ccache -s
-        HOST_CCACHE_DIR="$(ccache --get-config cache_dir)"
         rm -rf $HOST_CCACHE_DIR
         mv ./wheelhouse/.ccache $HOST_CCACHE_DIR
         ls -la $HOST_CCACHE_DIR
@@ -234,8 +283,7 @@ jobs:
       run: |
         
         ccache --print-stats
-        HOST_CCACHE_DIR="$(ccache --get-config cache_dir)"
-        find $HOST_CCACHE_DIR -exec touch -a -m -t "${{ needs.get_llvm_aie_project_commit.outputs.DATETIME }}00" {} \;
+        find $HOST_CCACHE_DIR -exec touch -a -m -t "${{ needs.settings.outputs.DATETIME }}00" {} \;
 
     - name: Clean llvm-aie
       working-directory: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
@@ -254,38 +302,42 @@ jobs:
       working-directory: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
       run: |
         pip install pkginfo
-        WHL=$(ls wheelhouse/llvm-aie-*whl)
+        WHL=$(ls wheelhouse/llvm_aie-*whl)
         echo "LLVM_AIE_WHEEL_VERSION=$(python -c "import pkginfo; w = pkginfo.Wheel('$WHL'); print(w.version.split('+')[0] + '+' + w.version.split('+')[1].rsplit('.', 1)[-1])")" | tee -a $GITHUB_OUTPUT
 
+      # git-bash doesn't have rename
     - name: rename non-windows
       if: contains(matrix.OS, 'ubuntu') || contains(matrix.OS, 'macos')
       working-directory: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
       run: |
         
-        rename 's/cp310-cp310/py3-none/' wheelhouse/llvm-aie-*whl
-        rename 's/cp311-cp311/py3-none/' wheelhouse/llvm-aie-*whl
+        rename 's/cp310-cp310/py3-none/' wheelhouse/llvm_aie-*whl
+        rename 's/cp311-cp311/py3-none/' wheelhouse/llvm_aie-*whl
         
         if [[ ${{ matrix.OS }} == *"ubuntu"* ]] && [ x"${{ matrix.ARCH }}" == x"aarch64" ]; then
-          rename 's/x86_64/aarch64/' wheelhouse/llvm-aie-*whl
+          rename 's/x86_64/aarch64/' wheelhouse/llvm_aie-*whl
         fi
 
     - name: rename windows
       if: contains(matrix.OS, 'windows')
+      shell: pwsh
       working-directory: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
       run: |
-        ls wheelhouse/llvm-aie-*whl | Rename-Item -NewName {$_ -replace 'cp310-cp310', 'py3-none' }
-        ls wheelhouse/llvm-aie-*whl | Rename-Item -NewName {$_ -replace 'cp311-cp311', 'py3-none' }
+        
+        ls wheelhouse/llvm_aie-*whl | Rename-Item -NewName {$_ -replace 'cp310-cp310', 'py3-none' }
+        ls wheelhouse/llvm_aie-*whl | Rename-Item -NewName {$_ -replace 'cp311-cp311', 'py3-none' }
 
     - name: Build native_tools wheel
+      if: needs.settings.outputs.DEBUG_CI_FAST_BUILD != 'true'
       working-directory: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
       id: build_native_tools_wheel
       run: |
         
-        for TOOL in "llvm-tblgen" "llvm-aie-tblgen" "llvm-aie-linalg-ods-yaml-gen" "llvm-aie-pdll" "llvm-config" "FileCheck"; do
+        for TOOL in "llvm-tblgen" "mlir-tblgen" "mlir-linalg-ods-yaml-gen" "mlir-pdll" "llvm-config" "FileCheck"; do
           if [[ ${{ matrix.OS }} == *"windows"* ]]; then
             TOOL="$TOOL.exe"
           fi
-          unzip -j wheelhouse/llvm-aie-*whl "llvm_aie/bin/$TOOL" -d native_tools/
+          unzip -j wheelhouse/llvm_aie-*whl "llvm-aie/bin/$TOOL" -d native_tools/
         done
         
         if [[ ${{ matrix.OS }} == *"ubuntu"* ]]; then
@@ -307,21 +359,15 @@ jobs:
     # done
 
     - name: Upload wheels
-      if: success() || failure()
+      if: needs.settings.outputs.UPLOAD_ARTIFACTS == 'true'
       uses: actions/upload-artifact@v3
       with:
         path: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}/wheelhouse/*.whl
         name: build_artifact
 
-
-    - name: CWD to workspace_root
-      run: |
-        
-        cd "${{ steps.setup_base.outputs.WORKSPACE_ROOT }}"
-
   upload_distro_wheels:
 
-    if: github.event.schedule != '0 */4 * * *'
+    if: needs.settings.outputs.UPLOAD_ARTIFACTS == 'true'
 
     needs: build
 

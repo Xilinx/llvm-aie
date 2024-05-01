@@ -214,23 +214,32 @@ class CMakeBuild(build_ext):
         subprocess.run(
             ["cmake", ext.sourcedir, *cmake_args], cwd=build_temp, check=True
         )
-        subprocess.run(
-            ["cmake", "--build", ".", "--target", "install", *build_args],
-            cwd=build_temp,
-            check=True,
-        )
-        if RUN_TESTS:
-            env = os.environ.copy()
-            # PYTHONPATH needs to be set to find build deps like numpy
-            # https://github.com/llvm/llvm-project/pull/89296
-            env["MLIR_LIT_PYTHONPATH"] = os.pathsep.join(sys.path)
+        if check_env("DEBUG_CI_FAST_BUILD"):
             subprocess.run(
-                ["cmake", "--build", ".", "--target", "check-all", *build_args],
+                ["cmake", "--build", ".", "--target", "llvm-tblgen", *build_args],
                 cwd=build_temp,
-                env=env,
-                check=False,
+                check=True,
             )
-        shutil.rmtree(install_dir / "python_packages", ignore_errors=True)
+            shutil.rmtree(install_dir / "bin", ignore_errors=True)
+            shutil.copytree(build_temp / "bin", install_dir / "bin")
+        else:
+            subprocess.run(
+                ["cmake", "--build", ".", "--target", "install", *build_args],
+                cwd=build_temp,
+                check=True,
+            )
+            if RUN_TESTS:
+                env = os.environ.copy()
+                # PYTHONPATH needs to be set to find build deps like numpy
+                # https://github.com/llvm/llvm-project/pull/89296
+                env["MLIR_LIT_PYTHONPATH"] = os.pathsep.join(sys.path)
+                subprocess.run(
+                    ["cmake", "--build", ".", "--target", "check-all", *build_args],
+                    cwd=build_temp,
+                    env=env,
+                    check=False,
+                )
+            shutil.rmtree(install_dir / "python_packages", ignore_errors=True)
 
 
 def check_env(build):
@@ -262,11 +271,15 @@ if not build_temp.exists():
     build_temp.mkdir(parents=True)
 
 EXE_EXT = ".exe" if platform.system() == "Windows" else ""
-exes = [
-    "mlir-cpu-runner",
-    "mlir-opt",
-    "mlir-translate",
-]
+if not check_env("DEBUG_CI_FAST_BUILD"):
+    exes = [
+        "mlir-cpu-runner",
+        "mlir-opt",
+        "mlir-translate",
+    ]
+else:
+    exes = ["llvm-tblgen"]
+
 data_files = [("bin", [str(build_temp / "bin" / x) + EXE_EXT for x in exes])]
 
 

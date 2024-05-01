@@ -32,14 +32,15 @@ environment-pass = [
     "CMAKE_ARGS",
     "CMAKE_GENERATOR",
     "DATETIME",
+    "DEBUG_CI_FAST_BUILD",
     "HOST_CCACHE_DIR",
     "LLVM_AIE_PROJECT_COMMIT",
     "MATRIX_OS",
+    "MLIR_LIT_PYTHONPATH",
     "PARALLEL_LEVEL",
     "PIP_FIND_LINKS",
     "PIP_NO_BUILD_ISOLATION",
     "RUN_TESTS",
-    "MLIR_LIT_PYTHONPATH",
 ]
 repair-wheel-command = [
     "auditwheel repair -w {dest_dir} {wheel}"
