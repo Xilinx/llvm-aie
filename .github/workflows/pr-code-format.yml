@@ -2,6 +2,7 @@ name: "Check code formatting"
 on: pull_request_target
 permissions:
   pull-requests: write
+  contents: read
 
 jobs:
   code_formatter:
@@ -12,6 +13,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Checkout through merge base
         uses: rmacklin/fetch-through-merge-base@v0
@@ -38,6 +40,7 @@ jobs:
             llvm/utils/git/code-format-helper.py
           sparse-checkout-cone-mode: false
           path: code-format-tools
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: "Listed files"
         env:
