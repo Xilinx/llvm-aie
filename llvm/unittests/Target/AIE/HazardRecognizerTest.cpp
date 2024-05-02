@@ -13,6 +13,7 @@
 #include "MCTargetDesc/AIEFormat.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/ResourceScoreboard.h"
+#include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/MC/TargetRegistry.h"
@@ -79,7 +80,7 @@ public:
 };
 
 // Not really used, except to get a FormatInterface.
-AIE2InstrInfo InstrInfo;
+AIE2InstrInfo DummyInstrInfo;
 
 MockItineraries Itins;
 
@@ -89,7 +90,11 @@ class MockHR : public AIEHazardRecognizer {
 
 public:
   ~MockHR() = default;
-  MockHR() : AIEHazardRecognizer(&InstrInfo, &Itins) {
+  MockHR() : AIEHazardRecognizer(&DummyInstrInfo, &Itins) {
+    MockScoreboard.reset(computeScoreboardDepth());
+  }
+  MockHR(const AIEBaseInstrInfo &InstrInfo)
+      : AIEHazardRecognizer(&InstrInfo, &Itins) {
     MockScoreboard.reset(computeScoreboardDepth());
   }
   void emit(unsigned SchedClass, int Delta, SlotBits SlotSet = 0) {
@@ -331,17 +336,23 @@ TEST(HazardRecognizer, splitCycles) {
 
 /// Check scoreboard conflicts from slot utilization
 TEST(HazardRecognizer, slotHazard) {
-  MockHR HR;
+  // We use a hidden property of  AIE2's FormatInterface here, which is
+  // that any combination of the first two slots is valid.
+  // We construct it here locally, so that we are sure that the format
+  // interface is set up correctly. Note that other unit tests in this
+  // same executable seem to instantiate the AIE1 interface, and they clash
+  // on a static implementation pointer.
+  AIE2InstrInfo InstrInfo;
+  MockHR HR(InstrInfo);
 
   HR.emit(1, -2, /*SlotSet=*/0b01);
 
   // Classes 1 and 3 have no resource conflicts in MockStages, they can only
   // conflict because of slots.
   EXPECT_FALSE(HR.hazard(3, -2, /*SlotSet=*/0b00));
-  // llvm-aie-regression
-  // EXPECT_FALSE(HR.hazard(3, -2, /*SlotSet=*/0b10));
-  // EXPECT_TRUE(HR.hazard(3, -2, /*SlotSet=*/0b11));
-  // EXPECT_TRUE(HR.hazard(3, -2, /*SlotSet=*/0b01));
+  EXPECT_FALSE(HR.hazard(3, -2, /*SlotSet=*/0b10));
+  EXPECT_TRUE(HR.hazard(3, -2, /*SlotSet=*/0b11));
+  EXPECT_TRUE(HR.hazard(3, -2, /*SlotSet=*/0b01));
 }
 
 TEST(HazardRecognizer, composeConflicting) {
