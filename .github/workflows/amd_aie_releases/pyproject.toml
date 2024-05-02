@@ -7,7 +7,7 @@ requires = [
     "pybind11[global]>=2.10.4",
     "numpy",
     "dataclasses",
-    "llvm-aie-native-tools",
+    "mlir-native-tools",
     "PyYAML",
 ]
 build-backend = "setuptools.build_meta"
@@ -20,7 +20,7 @@ manylinux-aarch64-image = "manylinux_2_28"
 manylinux-x86_64-image = "manylinux_2_28"
 
 [tool.cibuildwheel.linux]
-environment = { PATH = "/usr/lib/ccache:/usr/lib64/ccache:/usr/lib/ccache/bin:$PATH" }
+environment = { PATH = "/usr/lib/ccache:/usr/lib64/ccache:/usr/lib/ccache/bin:$PATH", PIP_FIND_LINKS = "https://github.com/makslevental/mlir-wheels/releases/expanded_assets/latest" }
 before-build = [
     "{project}/scripts/docker_prepare_ccache.sh",
     "{project}/scripts/apply_patches.sh",
@@ -47,7 +47,7 @@ repair-wheel-command = [
 ]
 
 [tool.cibuildwheel.macos]
-environment = { PATH = "/usr/local/opt/ccache/libexec:$PATH" }
+environment = { PATH = "/usr/local/opt/ccache/libexec:$PATH", PIP_FIND_LINKS = "https://github.com/makslevental/mlir-wheels/releases/expanded_assets/latest" }
 before-build = [
     "{project}/scripts/apply_patches.sh",
 ]
@@ -56,6 +56,7 @@ repair-wheel-command = [
 ]
 
 [tool.cibuildwheel.windows]
+environment = { PIP_FIND_LINKS = "https://github.com/makslevental/mlir-wheels/releases/expanded_assets/latest" }
 before-build = [
     "pip install delvewheel",
     "bash {project}\\scripts\\apply_patches.sh",
