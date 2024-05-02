@@ -6,6 +6,10 @@ permissions:
 jobs:
   code_formatter:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: read
     if: github.repository == 'Xilinx/llvm-aie'
     steps:
       - name: Fetch LLVM sources
