@@ -6,6 +6,9 @@
 ;
 ; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -O2 -mtriple=aie2 --enable-pipeliner=0 %s -o - | FileCheck %s --check-prefix=ASM
+; RUN: llc -O2 -mtriple=aie2 --enable-pipeliner=0 %s -o - --debug-only=machine-scheduler  \
+; RUN:    2>&1 | %imisched -d - \
+; RUN:    | FileCheck %s --check-prefix=SCHED-DUMP
 
 
 ; This is a reduced version of the Conv2D_0 MLLib benchmark which only contains
@@ -22,6 +25,13 @@
 
 ; The test is meant as a quick way to spot QoR regressions, but if the ASM is
 ; too unstable, we can use different FileCheck lines.
+
+
+; SCHED-DUMP: Region: conv2d.loop.nest:bb.2
+; SCHED-DUMP: Region: conv2d.loop.nest:bb.4
+; SCHED-DUMP: Region: conv2d.loop.nest:bb.3
+; SCHED-DUMP: Region: conv2d.loop.nest:bb.1
+; SCHED-DUMP: Region: conv2d.loop.nest:bb.0
 
 define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %cond, ptr %cond.i50, <16 x i32> %0, i32 %cond67.i79, i20 %idx.ext.i.i81, i20 %idx.ext.i404.i, i20 %idx.ext.i410.i, i20 %idx.ext.i434.i85, i32 %1, i20 %2, i20 %3, i20 %4, i20 %5, i20 %6, i32 %7, i32 %8, i32 %or9.i.i.i.i.i96, i32 %9, i20 %idx.ext.i422.i82, i20 %10, i20 %11, i20 %12, i20 %13, i20 %14, i20 %15, i20 %16, i20 %17, i20 %18, i20 %19, i20 %20, i20 %21, i20 %22, i20 %23, i32 %conv192.i107, i20 %24, i20 %idx.ext.i428.i, i20 %25, i20 %26, i20 %27, i32 %28) #1 {
 ; ASM-LABEL: conv2d.loop.nest:
