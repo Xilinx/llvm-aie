@@ -694,7 +694,6 @@ void TGInstrLayout::emitFormat(ConstTable &FieldsHierarchy, ConstTable &o,
 
   const std::string TargetClassName = Target + SlotsRegistry.GenSlotKindName;
 
-  auto end = slots().end();
   bool firstIter = true;
   for (const auto &SlotField : slots()) {
     if (!firstIter)
