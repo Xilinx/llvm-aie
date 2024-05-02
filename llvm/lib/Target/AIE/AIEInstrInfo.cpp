@@ -64,9 +64,9 @@ ScheduleHazardRecognizer*
 AIEInstrInfo::CreateTargetPostRAHazardRecognizer(
       const InstrItineraryData *II, const ScheduleDAG *DAG) const {
 
-    // AIE has a fully exposed pipeline, so we have to insert
-    // Noops in the case of instruction dependence hazards.
-  return new AIEHazardRecognizerPRAS(this, II, DAG);
+  // AIE has a fully exposed pipeline, so we have to insert
+  // Noops in the case of instruction dependence hazards.
+  return new AIEHazardRecognizerPRAS(this, II);
 }
 
 unsigned AIEInstrInfo::isLoadFromStackSlot(const MachineInstr &MI,

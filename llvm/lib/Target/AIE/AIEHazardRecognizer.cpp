@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/ResourceScoreboard.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
+#include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/MC/MCInstrDesc.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -167,8 +168,7 @@ static bool isPostRA(const MachineInstr *Instr) {
 }
 
 AIEHazardRecognizer::AIEHazardRecognizer(const AIEBaseInstrInfo *TII,
-                                         const InstrItineraryData *II,
-                                         const ScheduleDAG *SchedDAG)
+                                         const InstrItineraryData *II)
     : TII(TII), ItinData(II) {
 
   computeMaxima();
@@ -184,6 +184,11 @@ AIEHazardRecognizer::AIEHazardRecognizer(const AIEBaseInstrInfo *TII,
     IssueLimit = 1;
   }
 }
+
+AIEHazardRecognizer::AIEHazardRecognizer(const TargetSubtargetInfo &Subtarget)
+    : AIEHazardRecognizer(
+          static_cast<const AIEBaseInstrInfo *>(Subtarget.getInstrInfo()),
+          Subtarget.getInstrItineraryData()) {}
 
 namespace llvm {
 void applyFormatOrdering(AIE::MachineBundle &Bundle, const VLIWFormat &Format,
