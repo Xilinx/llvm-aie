@@ -85,6 +85,10 @@ class RegionSchedule:
     sched_units: Dict[int, ScheduleUnit]
     sched_actions: List[ScheduleAction]
 
+    def get_sched_units(self, su_nums: List[int]) -> List[ScheduleUnit]:
+        """Return the SUnits that have the given numbers."""
+        return [self.sched_units[su_num] for su_num in su_nums]
+
 
 def int_or_none(s: str) -> Optional[int]:
     """Convert the string to an int, or return None if it is empty."""

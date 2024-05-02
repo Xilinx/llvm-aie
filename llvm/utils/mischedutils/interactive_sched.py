@@ -8,7 +8,7 @@ from typing import List
 
 from mischedutils import miutils, schedlogparser
 from textual.app import App, ComposeResult
-from textual.containers import VerticalScroll
+from textual.containers import Container, VerticalScroll
 from textual.screen import Screen
 from textual.widgets import Header, Footer, OptionList, Static
 
@@ -34,9 +34,22 @@ class CycleLine(Static):
         self.scroll_visible()
 
 
+class SUQueue(VerticalScroll):
+    """A widget showing a list of SUnits."""
+
+    def __init__(self, queue_name: str) -> None:
+        super().__init__(classes="queue")
+        self.border_title = f"{queue_name} queue"
+
+    def set_su_list(self, su_list: List[schedlogparser.ScheduleUnit]):
+        """Update the list of SUnits debing displayed."""
+        self.remove_children()
+        for su in su_list:
+            self.mount(Static(f"SU({su.su_num}): {miutils.trim_instr_str(su.instr)}"))
+
+
 class RegionSchedScreen(Screen):
     """A screen representing the schedule for one region."""
-
 
     BINDINGS = [
         ("escape", "app.pop_screen", "Regions"),
@@ -54,6 +67,13 @@ class RegionSchedScreen(Screen):
     }
     .cycle_num {
         width: 4;
+    }
+    #info {
+        layout: grid;
+        grid-size: 2;
+        min-height: 4;
+        max-height: 12;
+        height: 30%
     }
     VerticalScroll {
         border: dodgerblue;
@@ -79,6 +99,11 @@ class RegionSchedScreen(Screen):
         cycle_container.border_title = "Schedule"
         yield cycle_container
 
+        self.available_queue = SUQueue("Available")
+        self.pending_queue = SUQueue("Pending")
+        self.update_info_container()
+        yield Container(self.available_queue, self.pending_queue, id="info")
+
         yield Footer()
 
     def action_schedule_next(self):
@@ -89,6 +114,7 @@ class RegionSchedScreen(Screen):
         picked_su = self.sched_region.sched_units[action.picked_su]
         self.cycles[action.picked_cycle].add_su(picked_su)
         self.next_action_idx += 1
+        self.update_info_container()
 
     def action_unschedule_last(self):
         """Remove the last instruction from the schedule."""
@@ -97,6 +123,21 @@ class RegionSchedScreen(Screen):
         self.next_action_idx -= 1
         action = self.sched_region.sched_actions[self.next_action_idx]
         self.cycles[action.picked_cycle].children[-1].remove()
+        self.update_info_container()
+
+    def update_info_container(self):
+        """Update the various info widgets after scheduling/unscheduling a node."""
+        if self.next_action_idx >= len(self.sched_region.sched_actions):
+            self.available_queue.set_su_list([])
+            self.pending_queue.set_su_list([])
+        else:
+            action = self.sched_region.sched_actions[self.next_action_idx]
+            self.available_queue.set_su_list(
+                self.sched_region.get_sched_units(action.available)
+            )
+            self.pending_queue.set_su_list(
+                self.sched_region.get_sched_units(action.pending)
+            )
 
 
 class InteractiveMISchedApp(App):
