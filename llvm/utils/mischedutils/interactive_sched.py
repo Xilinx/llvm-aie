@@ -48,6 +48,7 @@ class PickedDisplay(Static):
 
 class PickDetails(VerticalScroll):
     """A widget explaining why the last SUnit was picked."""
+
     info_str = reactive("", recompose=True)
 
     def __init__(self) -> None:
@@ -65,6 +66,7 @@ class SUQueue(VerticalScroll):
     def __init__(self, queue_name: str) -> None:
         super().__init__(classes="queue")
         self.border_title = f"{queue_name} queue"
+        self.display = queue_name == "Available"
 
     def set_su_list(self, su_list: List[schedlogparser.ScheduleUnit]):
         """Update the list of SUnits debing displayed."""
@@ -80,6 +82,7 @@ class RegionSchedScreen(Screen):
         ("escape", "app.pop_screen", "Regions"),
         ("n", "schedule_next", "Next"),
         ("p", "unschedule_last", "Prev"),
+        ("q", "hide_pending", "Pending Queue"),
     ]
     CSS = """
     CycleLine {
@@ -103,6 +106,7 @@ class RegionSchedScreen(Screen):
         layout: grid;
         grid-size: 2;
         grid-columns: 1fr 2fr;
+        grid-rows: 3fr 2fr;
         min-height: 4;
         max-height: 12;
         height: 30%
@@ -162,6 +166,10 @@ class RegionSchedScreen(Screen):
         action = self.sched_region.sched_actions[self.next_action_idx]
         self.cycles[action.picked_cycle].children[-1].remove()
         self.update_info_container()
+
+    def action_hide_pending(self):
+        """Toggle the pending queue container."""
+        self.pending_queue.display = not self.pending_queue.display
 
     def update_info_container(self):
         """Update the various info widgets after scheduling/unscheduling a node."""
