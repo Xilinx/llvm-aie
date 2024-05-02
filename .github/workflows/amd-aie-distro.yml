@@ -131,6 +131,7 @@ jobs:
     outputs:
       APPLY_PATCHES: ${{ steps.settings.outputs.APPLY_PATCHES }}
       DEBUG_CI_FAST_BUILD: ${{ steps.settings.outputs.DEBUG_CI_FAST_BUILD }}
+      UPLOAD_ARTIFACTS: ${{ steps.settings.outputs.UPLOAD_ARTIFACTS }}
       RUN_TESTS: ${{ steps.settings.outputs.RUN_TESTS }}
       LLVM_AIE_PROJECT_COMMIT: ${{ needs.get_llvm_aie_project_commit.outputs.LLVM_AIE_PROJECT_COMMIT }}
       DATETIME: ${{ needs.get_llvm_aie_project_commit.outputs.DATETIME }}
