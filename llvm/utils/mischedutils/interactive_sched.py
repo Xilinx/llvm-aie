@@ -37,7 +37,12 @@ class CycleLine(Static):
 class RegionSchedScreen(Screen):
     """A screen representing the schedule for one region."""
 
-    BINDINGS = [("escape", "app.pop_screen", "Regions"), ("n", "schedule_next", "Next")]
+
+    BINDINGS = [
+        ("escape", "app.pop_screen", "Regions"),
+        ("n", "schedule_next", "Next"),
+        ("p", "unschedule_last", "Prev"),
+    ]
     CSS = """
     CycleLine {
         layout: horizontal;
@@ -84,6 +89,14 @@ class RegionSchedScreen(Screen):
         picked_su = self.sched_region.sched_units[action.picked_su]
         self.cycles[action.picked_cycle].add_su(picked_su)
         self.next_action_idx += 1
+
+    def action_unschedule_last(self):
+        """Remove the last instruction from the schedule."""
+        if self.next_action_idx == 0:
+            return
+        self.next_action_idx -= 1
+        action = self.sched_region.sched_actions[self.next_action_idx]
+        self.cycles[action.picked_cycle].children[-1].remove()
 
 
 class InteractiveMISchedApp(App):
