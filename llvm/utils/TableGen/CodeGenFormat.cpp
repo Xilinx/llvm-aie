@@ -416,11 +416,10 @@ void TGInstrLayout::addAlternateInstInMultiSlotPseudo(
     bool Found = false;
     for (const TGInstrLayout &Inst : InstFormats) {
       if (Inst.InstrName == AltInst->getName()) {
-
-        const std::vector<TGFieldLayout *> SlotsVec(Inst.slots().begin(),
-                                                    Inst.slots().end());
-        assert(SlotsVec.size() == 1 && "Real Instr should have only one slot");
-        for (auto &SlotField : SlotsVec) {
+        auto beg = Inst.slots().begin();
+        assert(beg != Inst.slots().end() && ++beg == Inst.slots().end() &&
+               "Real Instr should have only one slot");
+        for (const auto &SlotField : Inst.slots()) {
           const TGTargetSlot *Slot = SlotField->SlotClass;
           if (Slot) {
             // Add alternate instr only if no other instr with same slot exist
@@ -693,17 +692,20 @@ void TGInstrLayout::emitFormat(ConstTable &FieldsHierarchy, ConstTable &o,
     << "/* Slots - Fields mapper */\n"
     << "      {";
 
-  const std::vector<TGFieldLayout *> SlotsVec(slots().begin(), slots().end());
   const std::string TargetClassName = Target + SlotsRegistry.GenSlotKindName;
 
-  for (auto &SlotField : SlotsVec) {
+  auto end = slots().end();
+  bool firstIter = true;
+  for (const auto &SlotField : slots()) {
+    if (!firstIter)
+      o << ", ";
+    else
+      firstIter = false;
     o << "{ ";
     o << TargetClassName << "::" << SlotField->SlotClass->getEnumerationString()
       << ", ";
     o << FieldsHierarchy.absRef(SlotField->EmissionID);
     o << " }";
-    if (&SlotField != &SlotsVec.back())
-      o << ", ";
   }
   o << "},\n";
 
@@ -741,10 +743,9 @@ void TGInstrLayout::emitFormat(ConstTable &FieldsHierarchy, ConstTable &o,
 
 void TGInstrLayout::emitPacketEntry(ConstTable &Packets,
                                     ConstTable &SlotData) const {
-  const std::vector<TGFieldLayout *> SlotsVec(slots().begin(), slots().end());
   // Some instructions (DUMMY96, UNKNOWN128...) are indicated as Composite but
   // they don't define a Packet Format... In that case, we don't emit anything.
-  if (SlotsVec.empty())
+  if (slots().begin() == slots().end())
     return;
 
   Packets << "{\n"
@@ -754,7 +755,7 @@ void TGInstrLayout::emitPacketEntry(ConstTable &Packets,
   const std::string TargetSlotKindName = Target + SlotsRegistry.GenSlotKindName;
 
   SlotData << "// " << getInstrName() << " : " << SlotData.mark() << "\n";
-  for (auto &Slot : SlotsVec) {
+  for (auto Slot : slots()) {
     SlotData << TargetSlotKindName
              << "::" << Slot->getSlot()->getEnumerationString();
     SlotData.next();
