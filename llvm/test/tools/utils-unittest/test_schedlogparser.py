@@ -43,6 +43,8 @@ SU(1):   renamable $r1 = FOO_INSTR_1 renamable $r1, implicit-def $status, implic
 #blah
 Queue BotQ.P: 
 Queue BotQ.A: 1 
+# Explain why
+# SU(1) was picked
 Pick Bot Reason-1 Reason-details
 Scheduling SU(1) renamable $r1 = FOO_INSTR_1 renamable $r1, implicit-def $status, implicit $control0, implicit $control1
   Ready @1c
@@ -105,6 +107,7 @@ class TestLogParser(unittest.TestCase):
                 new_cycle=None,
                 pending=[],
                 available=[1],
+                pick_details="# Explain why\n# SU(1) was picked\n",
                 picked_zone="Bot",
                 picked_reason="Reason-1",
                 picked_su=1,
@@ -114,6 +117,7 @@ class TestLogParser(unittest.TestCase):
                 new_cycle=4,
                 pending=[],
                 available=[0],
+                pick_details="",
                 picked_zone="Bot",
                 picked_reason="Reason",
                 picked_su=0,

@@ -11,7 +11,7 @@ from textual.app import App, ComposeResult
 from textual.containers import Container, VerticalScroll
 from textual.reactive import reactive
 from textual.screen import Screen
-from textual.widgets import Header, Footer, OptionList, Static
+from textual.widgets import Footer, Header, Label, OptionList, Static
 
 INSTR_CELL_SIZE = 48
 
@@ -44,6 +44,19 @@ class PickedDisplay(Static):
     def render(self) -> str:
         """Render the widget following an update of the reactive attributes."""
         return f"Picked SU[{self.picked_reason}]: {self.picked_instr}"
+
+
+class PickDetails(VerticalScroll):
+    """A widget explaining why the last SUnit was picked."""
+    info_str = reactive("", recompose=True)
+
+    def __init__(self) -> None:
+        super().__init__(id="pick_details")
+        self.border_title = "Pick details"
+
+    def compose(self) -> ComposeResult:
+        """Create the widget with the current explanation string."""
+        yield Label(f"{self.info_str.rstrip()}")
 
 
 class SUQueue(VerticalScroll):
@@ -83,9 +96,13 @@ class RegionSchedScreen(Screen):
     #picked_display {
         height: 1;
     }
+    #pick_details {
+        row-span: 2;
+    }
     #info {
         layout: grid;
         grid-size: 2;
+        grid-columns: 1fr 2fr;
         min-height: 4;
         max-height: 12;
         height: 30%
@@ -117,10 +134,13 @@ class RegionSchedScreen(Screen):
         self.picked_display = PickedDisplay()
         yield self.picked_display
 
+        self.pick_details = PickDetails()
         self.available_queue = SUQueue("Available")
         self.pending_queue = SUQueue("Pending")
         self.update_info_container()
-        yield Container(self.available_queue, self.pending_queue, id="info")
+        yield Container(
+            self.pick_details, self.available_queue, self.pending_queue, id="info"
+        )
 
         yield Footer()
 
@@ -160,11 +180,13 @@ class RegionSchedScreen(Screen):
         if self.next_action_idx == 0:
             self.picked_display.picked_instr = ""
             self.picked_display.picked_reason = "N/A"
+            self.pick_details.info_str = ""
         else:
             action = self.sched_region.sched_actions[self.next_action_idx - 1]
             su = self.sched_region.sched_units[action.picked_su]
             self.picked_display.picked_instr = miutils.trim_instr_str(su.instr)
             self.picked_display.picked_reason = action.picked_reason
+            self.pick_details.info_str = action.pick_details
 
 
 class InteractiveMISchedApp(App):
