@@ -37,7 +37,7 @@ SCHED_ACTION_RE = re.compile(
     r"(^Cycle: (?P<new_cycle>[0-9]+) (?P<bumped_zone>\w+)Q\.A\n)?"
     r"^Queue BotQ\.P: (?P<pending>[0-9 ]*)\n"
     r"^Queue BotQ\.A: (?P<available>[0-9 ]*)\n"
-    r"(.*\n)*?"
+    r"(?P<pick_details>(.*\n)*?)"
     r"^Pick (?P<picked_zone>\S+) (?P<picked_reason>\S+).*?\n"
     r"^Scheduling SU\((?P<picked_su>[0-9]+)\).+?\n"
     r"^\s+Ready @(?P<ready_cycle>[0-9]+)c\n",
@@ -52,6 +52,7 @@ class ScheduleAction:
     new_cycle: Optional[int]
     pending: List[int]
     available: List[int]
+    pick_details: str
     picked_zone: str
     picked_reason: str
     picked_su: int
@@ -120,6 +121,7 @@ def process_region(sched_fn, sched_bb, begin_mi, end_mi, region_str) -> RegionSc
                 int_or_none(action["new_cycle"]),
                 pending,
                 available,
+                action["pick_details"],
                 action["picked_zone"],
                 action["picked_reason"],
                 int(action["picked_su"]),
