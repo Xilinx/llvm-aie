@@ -23,10 +23,8 @@ using namespace llvm;
 // NOTE: This whole file is obsolesent
 
 AIEHazardRecognizerPRAS::AIEHazardRecognizerPRAS(const AIEBaseInstrInfo *TII,
-                                                 const InstrItineraryData *II,
-                                                 const ScheduleDAG *SchedDAG)
-    : AIEHazardRecognizer(TII, II, SchedDAG),
-      CurrentBundle(TII->getFormatInterface()) {}
+                                                 const InstrItineraryData *II)
+    : AIEHazardRecognizer(TII, II), CurrentBundle(TII->getFormatInterface()) {}
 
 void AIEHazardRecognizerPRAS::StartBlock(MachineBasicBlock *MBB) {}
 

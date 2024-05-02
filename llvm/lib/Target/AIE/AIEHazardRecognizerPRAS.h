@@ -30,7 +30,7 @@ namespace llvm {
 class AIEHazardRecognizerPRAS : public AIEHazardRecognizer {
 public:
   AIEHazardRecognizerPRAS(const AIEBaseInstrInfo *TII,
-                          const InstrItineraryData *II, const ScheduleDAG *DAG);
+                          const InstrItineraryData *II);
 
   ~AIEHazardRecognizerPRAS() override {}
 

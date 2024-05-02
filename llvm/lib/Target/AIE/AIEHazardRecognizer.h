@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/ResourceCycle.h"
 #include "llvm/CodeGen/ResourceScoreboard.h"
 #include "llvm/CodeGen/ScheduleHazardRecognizer.h"
+#include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/MC/MCInstrDesc.h"
 #include "llvm/MC/MCInstrItineraries.h"
 
@@ -91,8 +92,9 @@ class AIEHazardRecognizer : public ScheduleHazardRecognizer {
   void computeMaxima();
 
 public:
-  AIEHazardRecognizer(const AIEBaseInstrInfo *TII, const InstrItineraryData *II,
-                      const ScheduleDAG *DAG);
+  AIEHazardRecognizer(const AIEBaseInstrInfo *TII,
+                      const InstrItineraryData *II);
+  AIEHazardRecognizer(const TargetSubtargetInfo &SubTarget);
 
   ~AIEHazardRecognizer() override {}
 
