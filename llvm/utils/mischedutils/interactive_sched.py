@@ -9,6 +9,7 @@ from typing import List
 from mischedutils import miutils, schedlogparser
 from textual.app import App, ComposeResult
 from textual.containers import Container, VerticalScroll
+from textual.reactive import reactive
 from textual.screen import Screen
 from textual.widgets import Header, Footer, OptionList, Static
 
@@ -32,6 +33,17 @@ class CycleLine(Static):
         new_inst.styles.width = INSTR_CELL_SIZE
         self.mount(new_inst)
         self.scroll_visible()
+
+
+class PickedDisplay(Static):
+    """A widget displaying the last SUnit that was picked."""
+
+    picked_instr = reactive("", layout=True)
+    picked_reason = reactive("", layout=True)
+
+    def render(self) -> str:
+        """Render the widget following an update of the reactive attributes."""
+        return f"Picked SU[{self.picked_reason}]: {self.picked_instr}"
 
 
 class SUQueue(VerticalScroll):
@@ -68,6 +80,9 @@ class RegionSchedScreen(Screen):
     .cycle_num {
         width: 4;
     }
+    #picked_display {
+        height: 1;
+    }
     #info {
         layout: grid;
         grid-size: 2;
@@ -98,6 +113,9 @@ class RegionSchedScreen(Screen):
         cycle_container = VerticalScroll(*self.cycles[::-1], id="cycles")
         cycle_container.border_title = "Schedule"
         yield cycle_container
+
+        self.picked_display = PickedDisplay()
+        yield self.picked_display
 
         self.available_queue = SUQueue("Available")
         self.pending_queue = SUQueue("Pending")
@@ -138,6 +156,15 @@ class RegionSchedScreen(Screen):
             self.pending_queue.set_su_list(
                 self.sched_region.get_sched_units(action.pending)
             )
+
+        if self.next_action_idx == 0:
+            self.picked_display.picked_instr = ""
+            self.picked_display.picked_reason = "N/A"
+        else:
+            action = self.sched_region.sched_actions[self.next_action_idx - 1]
+            su = self.sched_region.sched_units[action.picked_su]
+            self.picked_display.picked_instr = miutils.trim_instr_str(su.instr)
+            self.picked_display.picked_reason = action.picked_reason
 
 
 class InteractiveMISchedApp(App):
