@@ -12,6 +12,7 @@ set(LLVM_ENABLE_RUNTIMES
       compiler-rt
       libc
     CACHE STRING "")
+set(LLVM_LIBC_FULL_BUILD ON CACHE BOOL "")
 
 set(LLVM_BUILTIN_TARGETS "aie-none-unknown-elf;aie2-none-unknown-elf" CACHE STRING "")
 set(LLVM_RUNTIME_TARGETS "${LLVM_BUILTIN_TARGETS}" CACHE STRING "")

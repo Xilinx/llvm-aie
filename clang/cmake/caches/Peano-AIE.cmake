@@ -50,7 +50,7 @@ set(LLVM_DISTRIBUTION_COMPONENTS
   clang
   lld
   clang-resource-headers
-  builtins-aie2
-  runtimes-aie2
+  builtins-aie2-none-unknown-elf
+  runtimes-aie2-none-unknown-elf
   ${LLVM_TOOLCHAIN_TOOLS}
   CACHE STRING "")
