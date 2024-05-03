@@ -111,10 +111,9 @@ View the diff from {self.name} here.
 
     def update_pr(self, comment_text: str, args: FormatArgs, create_new: bool) -> None:
         import github
-        from github import IssueComment, PullRequest, Auth
+        from github import IssueComment, PullRequest
 
-        auth = Auth.Token(args.token)
-        repo = github.Github(auth=auth).get_repo(args.repo)
+        repo = github.Github(args.token).get_repo(args.repo)
         pr = repo.get_issue(args.issue_number).as_pull_request()
 
         comment_text = self.comment_tag + "\n\n" + comment_text
