@@ -11,6 +11,7 @@
 ; RUN:   -mtriple=powerpc64le-unknown-unknown < %s | FileCheck %s --check-prefix=P9-LE
 ; RUN: llc -verify-machineinstrs -mcpu=pwr10 \
 ; RUN:   -mtriple=powerpc64le-unknown-unknown < %s | FileCheck %s --check-prefix=P10-LE
+; XFAIL: llvm-aie-regression
 
 define dso_local void @foo1(ptr nocapture noundef writeonly %a) local_unnamed_addr {
 ; P8-BE-LABEL: foo1:

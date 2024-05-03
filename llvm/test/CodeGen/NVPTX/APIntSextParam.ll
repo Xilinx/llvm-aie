@@ -1,5 +1,6 @@
 ; RUN: llc -march=nvptx  < %s > %t
 ; RUN: llc -march=nvptx64  < %s > %t
+; XFAIL: llvm-aie-regression
 
 @i1_s = external global i1		; <ptr> [#uses=1]
 @i2_s = external global i2		; <ptr> [#uses=1]

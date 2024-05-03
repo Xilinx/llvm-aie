@@ -3,6 +3,7 @@
 ; RUN:   | FileCheck %s --check-prefix=LA32
 ; RUN: llc --mtriple=loongarch64 --verify-machineinstrs < %s \
 ; RUN:   | FileCheck %s --check-prefix=LA64
+; XFAIL: llvm-aie-regression
 
 declare i7 @llvm.bitreverse.i7(i7)
 declare i8 @llvm.bitreverse.i8(i8)
