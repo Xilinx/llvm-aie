@@ -579,3 +579,12 @@ AIEBaseSubtarget::getPreRAMutationsImpl(const Triple &TT) {
     Mutations.emplace_back(std::make_unique<EnforceCopyEdges>());
   return Mutations;
 }
+
+std::vector<std::unique_ptr<ScheduleDAGMutation>>
+AIEBaseSubtarget::getSMSMutationsImpl(const Triple &TT) {
+  std::vector<std::unique_ptr<ScheduleDAGMutation>> Mutations;
+  if (!TT.isAIE1()) {
+    Mutations.emplace_back(std::make_unique<WAWEdges>());
+  }
+  return Mutations;
+}
