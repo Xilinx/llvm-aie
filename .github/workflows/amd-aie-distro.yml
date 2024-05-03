@@ -1,0 +1,397 @@
+name: AMD AIE Distro
+
+on:
+  workflow_dispatch:
+    inputs:
+      DEBUG_ENABLED:
+        description: 'Run the build with tmate debugging enabled (https://github.com/marketplace/actions/debugging-with-tmate)'
+        type: boolean
+        required: false
+        default: false
+      DEBUG_OS:
+        description: 'which runner os to run the tmate action in (if the tmate action is run)'
+        type: string
+        default: 'windows-2019'
+        required: false
+      DEBUG_ARCH:
+        description: 'which runner arch to run the tmate action in (if the tmate action is run)'
+        type: string
+        default: 'x86_64'
+        required: false
+      DEBUG_DETACHED:
+        description: 'whether to launch tmate in detached mode (if the tmate action is run)'
+        type: boolean
+        required: false
+        default: true
+      LLVM_AIE_COMMIT:
+        description: 'llvm-aie commit to build'
+        type: string
+        required: false
+        default: ''
+      APPLY_PATCHES:
+        description: 'whether to apply patches to source'
+        type: string
+        required: false
+        default: 'true'
+      RUN_TESTS:
+        description: 'whether to run llvm tests after build'
+        type: string
+        required: false
+        default: 'false'
+      DEBUG_CI_FAST_BUILD:
+        description: 'whether to build only one single llvm target (llvm-tblgen)'
+        type: string
+        required: false
+        default: 'false'
+
+  pull_request:
+  release:
+    types:
+      - published
+
+  schedule:
+    # At minute 0 past hour 1. (see https://crontab.guru)
+    # this is the actual nightly
+    - cron: '00 01 * * *'
+      # At minute 0 past every 4th hour. (see https://crontab.guru)
+      # this job is to keep the ccache cache warm
+    - cron: '0 */4 * * *'
+
+jobs:
+
+  get_llvm_aie_project_commit:
+
+    name: Get latest LLVM-AIE commit
+
+    runs-on: ubuntu-latest
+
+    outputs:
+      LLVM_AIE_PROJECT_COMMIT: ${{ steps.get_llvm_aie_project_commit.outputs.LLVM_AIE_PROJECT_COMMIT }}
+      DATETIME: ${{ steps.get_llvm_aie_project_commit.outputs.DATETIME }}
+
+    steps:
+      # have to do this until repo is public
+      - name: Checkout actions
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          # check out anything
+          sparse-checkout: .github/workflows/amd_aie_releases
+          sparse-checkout-cone-mode: false
+
+      - name: Get llvm-aie commit
+        id: get_llvm_aie_project_commit
+        run: |
+          
+          if [ x"${{ inputs.LLVM_AIE_COMMIT }}" == x"" ]; then
+            LLVM_AIE_PROJECT_COMMIT=$(git rev-parse ${{ github.head_ref || github.ref_name }})
+            LLVM_AIE_PROJECT_COMMIT=${LLVM_AIE_PROJECT_COMMIT:0:8}
+          else
+            LLVM_AIE_PROJECT_COMMIT="${{ inputs.LLVM_AIE_COMMIT }}"
+          fi
+          echo "LLVM_AIE_PROJECT_COMMIT=${LLVM_AIE_PROJECT_COMMIT}" | tee -a $GITHUB_OUTPUT
+          DATETIME=$(date +"%Y%m%d%H")
+          echo "DATETIME=${DATETIME}" | tee -a $GITHUB_OUTPUT
+
+  settings:
+
+    runs-on: ubuntu-latest
+
+    needs: get_llvm_aie_project_commit
+
+    steps:
+
+      - name: Set commons as env vars
+        id: settings
+        run: |
+          
+          APPLY_PATCHES="true"
+          if [ x"${{ inputs.APPLY_PATCHES }}" == x"false" ]; then
+            APPLY_PATCHES="false"
+          fi 
+          DEBUG_CI_FAST_BUILD="false"
+          if [ x"${{ inputs.DEBUG_CI_FAST_BUILD }}" == x"true" ]; then
+            DEBUG_CI_FAST_BUILD="true"
+          fi
+          RUN_TESTS="false"
+          if [ x"${{ inputs.RUN_TESTS }}" == x"true" ]; then
+            RUN_TESTS="true"
+          fi
+          
+          UPLOAD_ARTIFACTS="true"
+          if [ x"${{ github.event.schedule }}" == x"0 */4 * * *" ] || [ x"$DEBUG_CI_FAST_BUILD" == x"true" ]; then
+            UPLOAD_ARTIFACTS="false"
+          fi 
+          
+          echo "APPLY_PATCHES=$APPLY_PATCHES" | tee -a $GITHUB_OUTPUT
+          echo "DEBUG_CI_FAST_BUILD=$DEBUG_CI_FAST_BUILD" | tee -a $GITHUB_OUTPUT
+          echo "RUN_TESTS=$RUN_TESTS" | tee -a $GITHUB_OUTPUT
+          echo "UPLOAD_ARTIFACTS=$UPLOAD_ARTIFACTS" | tee -a $GITHUB_OUTPUT
+
+    outputs:
+      APPLY_PATCHES: ${{ steps.settings.outputs.APPLY_PATCHES }}
+      DEBUG_CI_FAST_BUILD: ${{ steps.settings.outputs.DEBUG_CI_FAST_BUILD }}
+      UPLOAD_ARTIFACTS: ${{ steps.settings.outputs.UPLOAD_ARTIFACTS }}
+      RUN_TESTS: ${{ steps.settings.outputs.RUN_TESTS }}
+      LLVM_AIE_PROJECT_COMMIT: ${{ needs.get_llvm_aie_project_commit.outputs.LLVM_AIE_PROJECT_COMMIT }}
+      DATETIME: ${{ needs.get_llvm_aie_project_commit.outputs.DATETIME }}
+
+  build:
+
+    needs: settings
+
+    name: ${{ matrix.OS }} ${{ matrix.ARCH }}
+
+    continue-on-error: true
+
+    runs-on: ${{ matrix.OS }}
+
+    outputs:
+      LLVM_AIE_WHEEL_VERSION: ${{ steps.get_wheel_version.outputs.LLVM_AIE_WHEEL_VERSION }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - OS: ubuntu-20.04
+            ARCH: x86_64
+
+# disable until we're public and have more runners
+#          - OS: ubuntu-20.04
+#            ARCH: aarch64
+#
+#          - OS: windows-2019
+#            ARCH: AMD64
+#
+#          - OS: macos-12
+#            ARCH: x86_64
+#
+#          - OS: macos-12
+#            ARCH: arm64
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+
+    - name: Checkout actions
+      uses: actions/checkout@v3
+      with:
+        sparse-checkout: .github/workflows/amd_aie_releases
+        # Turning off cone mode ensures that files in the project root are not included during checkout
+        sparse-checkout-cone-mode: false
+
+    - uses: makslevental/mlir-wheels/actions/setup_base@d77bf5dc69c46a8c2738b44528749768888eb361
+      id: setup_base
+      with:
+        # optional
+        DEBUG_ENABLED: ${{ inputs.DEBUG_ENABLED }}
+        DEBUG_OS: ${{ inputs.DEBUG_OS }}
+        DEBUG_ARCH: ${{ inputs.DEBUG_ARCH }}
+        DEBUG_DETACHED: ${{ inputs.DEBUG_DETACHED }}
+        # required
+        MATRIX_OS: ${{ matrix.OS }}
+        MATRIX_ARCH: ${{ matrix.ARCH }}
+
+    - uses: makslevental/mlir-wheels/actions/setup_ccache@d77bf5dc69c46a8c2738b44528749768888eb361
+      id: setup_ccache
+      with:
+        MATRIX_OS: ${{ matrix.OS }}
+        MATRIX_ARCH: ${{ matrix.ARCH }}
+        WORKSPACE_ROOT: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
+
+      # This step is needed because action/checkout does not support paths.
+    - name: Copy stuff to workspace_root
+      run: |
+        
+        ls -lah
+        
+        WORKSPACE_ROOT="${{ steps.setup_base.outputs.WORKSPACE_ROOT }}"
+        if [[ "${{ matrix.OS }}" == *"windows"* ]]; then
+          WORKSPACE_ROOT=$(echo "/$WORKSPACE_ROOT" | sed -e 's/\\/\//g' -e 's/://')
+        fi
+        mv .github/workflows/amd_aie_releases/*  "$WORKSPACE_ROOT"
+        
+        ls -lah "$WORKSPACE_ROOT"
+
+    - name: Get LLVM-AIE
+      id: get_llvm_aie
+      working-directory: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        
+        LLVM_AIE_PROJECT_COMMIT=${{ needs.settings.outputs.LLVM_AIE_PROJECT_COMMIT }}
+        gh api -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" \
+          repos/Xilinx/llvm-aie/zipball/$LLVM_AIE_PROJECT_COMMIT > llvm-aie.zip
+        unzip -q llvm-aie.zip
+        rm -rf llvm-aie.zip
+        mv Xilinx-llvm-aie-* llvm-aie
+
+    - name: Set env variables
+      working-directory: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
+      run: |
+        
+        echo "APPLY_PATCHES=${{ needs.settings.outputs.APPLY_PATCHES }}" >> $GITHUB_ENV
+        echo "DEBUG_CI_FAST_BUILD=${{ needs.settings.outputs.DEBUG_CI_FAST_BUILD }}" >> $GITHUB_ENV
+        echo "RUN_TESTS=${{ needs.settings.outputs.RUN_TESTS }}" >> $GITHUB_ENV
+        echo "DATETIME=${{ needs.settings.outputs.DATETIME }}" >> $GITHUB_ENV
+        echo "LLVM_AIE_PROJECT_COMMIT=${{ needs.settings.outputs.LLVM_AIE_PROJECT_COMMIT }}" >> $GITHUB_ENV
+        
+        echo "CIBW_ARCHS=${{ matrix.ARCH }}" >> $GITHUB_ENV
+        echo "MATRIX_OS=${{ matrix.OS }}" >> $GITHUB_ENV
+        
+        echo "CMAKE_GENERATOR=Ninja" >> $GITHUB_ENV
+        echo "HOST_CCACHE_DIR="$(ccache --get-config cache_dir)"" >> $GITHUB_ENV
+        echo "PARALLEL_LEVEL=2" >> $GITHUB_ENV
+        echo "PIP_FIND_LINKS=https://github.com/makslevental/mlir-wheels/releases/expanded_assets/latest" >> $GITHUB_ENV
+
+    # build
+
+    - name: cibuildwheel
+      # you need the parens here because of the != and something about yaml???
+      if: (!contains(matrix.OS, 'ubuntu') || matrix.ARCH != 'aarch64')
+      working-directory: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
+      run: |
+        
+        cibuildwheel --output-dir wheelhouse
+
+    - name: build aarch ubuntu wheel
+      if: contains(matrix.OS, 'ubuntu') && matrix.ARCH == 'aarch64'
+      working-directory: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
+      run: |
+        
+        ./scripts/apply_patches.sh
+        export RUN_TESTS=0
+        pip wheel . -v -w wheelhouse
+
+    - name: Clean llvm-aie
+      working-directory: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
+      run: |
+        
+        rm -rf llvm-aie
+        rm -rf build
+
+    - name: Docker prune
+      if: contains(inputs.MATRIX_OS, 'ubuntu')
+      run: |
+        docker system prune -a -f
+
+    - name: Get wheel version
+      id: get_wheel_version
+      working-directory: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
+      run: |
+        pip install pkginfo
+        WHL=$(ls wheelhouse/llvm_aie-*whl)
+        echo "LLVM_AIE_WHEEL_VERSION=$(python -c "import pkginfo; w = pkginfo.Wheel('$WHL'); print(w.version.split('+')[0] + '+' + w.version.split('+')[1].rsplit('.', 1)[-1])")" | tee -a $GITHUB_OUTPUT
+
+    - name: Download cache from container ubuntu
+      if: contains(matrix.OS, 'ubuntu') && contains(matrix.ARCH, 'x86_64') && (success() || failure())
+      working-directory: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
+      run: |
+        
+        ccache -s
+        rm -rf $HOST_CCACHE_DIR
+        mv ./wheelhouse/.ccache $HOST_CCACHE_DIR
+        ls -la $HOST_CCACHE_DIR
+        ccache -s
+
+    - name: Reset datetime ccache
+      working-directory: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
+      run: |
+        
+        ccache --print-stats
+        find $HOST_CCACHE_DIR -exec touch -a -m -t 197001010000 {} \;
+
+      # git-bash doesn't have rename
+    - name: rename non-windows
+      if: contains(matrix.OS, 'ubuntu') || contains(matrix.OS, 'macos')
+      working-directory: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
+      run: |
+        
+        rename 's/cp310-cp310/py3-none/' wheelhouse/llvm_aie-*whl
+        rename 's/cp311-cp311/py3-none/' wheelhouse/llvm_aie-*whl
+        
+        if [[ ${{ matrix.OS }} == *"ubuntu"* ]] && [ x"${{ matrix.ARCH }}" == x"aarch64" ]; then
+          rename 's/x86_64/aarch64/' wheelhouse/llvm_aie-*whl
+        fi
+
+    - name: rename windows
+      if: contains(matrix.OS, 'windows')
+      shell: pwsh
+      working-directory: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
+      run: |
+        
+        ls wheelhouse/llvm_aie-*whl | Rename-Item -NewName {$_ -replace 'cp310-cp310', 'py3-none' }
+        ls wheelhouse/llvm_aie-*whl | Rename-Item -NewName {$_ -replace 'cp311-cp311', 'py3-none' }
+
+    - name: Build native_tools wheel
+      if: ${{ needs.settings.outputs.DEBUG_CI_FAST_BUILD != 'true' }}
+      working-directory: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
+      id: build_native_tools_wheel
+      run: |
+        
+        for TOOL in "llvm-tblgen" "mlir-tblgen" "mlir-linalg-ods-yaml-gen" "mlir-pdll" "llvm-config" "FileCheck"; do
+          if [[ ${{ matrix.OS }} == *"windows"* ]]; then
+            TOOL="$TOOL.exe"
+          fi
+          unzip -j wheelhouse/llvm_aie-*whl "llvm-aie/bin/$TOOL" -d native_tools/
+        done
+        
+        if [[ ${{ matrix.OS }} == *"ubuntu"* ]]; then
+          PLAT="linux"
+        elif [[ ${{ matrix.OS }} == *"macos"* ]]; then
+          PLAT="macosx_12_0"
+        elif [[ ${{ matrix.OS }} == *"windows"* ]]; then
+          PLAT="win"
+        fi
+        
+        PLAT=${PLAT}_$(echo ${{ matrix.ARCH }} | tr '[:upper:]' '[:lower:]')
+        pushd native_tools
+
+        LLVM_AIE_WHEEL_VERSION=${{ steps.get_wheel_version.outputs.LLVM_AIE_WHEEL_VERSION }} \
+          python setup.py bdist_wheel --dist-dir ../wheelhouse --plat $PLAT
+        
+        popd
+
+    # done
+
+    - name: Upload wheels
+      if: ${{ needs.settings.outputs.UPLOAD_ARTIFACTS == 'true' }}
+      uses: actions/upload-artifact@v3
+      with:
+        path: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}/wheelhouse/*.whl
+        name: build_artifact
+
+  upload_distro_wheels:
+
+    if: ${{ needs.settings.outputs.UPLOAD_ARTIFACTS == 'true' }}
+
+    needs: build
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: write
+
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          # unpacks default artifact into dist/
+          # if `name: artifact` is omitted, the action will create extra parent dir
+          name: build_artifact
+          path: dist
+
+      - name: Release current commit
+        uses: ncipollo/release-action@v1.12.0
+        with:
+          artifacts: "dist/*.whl,dist/*.tar.xz"
+          token: "${{ secrets.GITHUB_TOKEN }}"
+          tag: "nightly"
+          name: "nightly"
+          removeArtifacts: false
+          allowUpdates: true
+          replacesArtifacts: true
+          makeLatest: true

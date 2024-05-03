@@ -1,0 +1,35 @@
+name: AMD AIE Clean up old releases
+
+on:
+  workflow_dispatch:
+    branches:
+      - main
+  schedule:
+    # At minute 0 past hour 6. (see https://crontab.guru)
+    - cron: '00 06 * * *'
+
+jobs:
+
+  delete_releases:
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Delete from here
+        shell: bash
+        run: |
+          
+          pip install PyGithub
+          GITHUB_TOKEN=${{ secrets.DELETE_RELEASES_TOKEN }} python scripts/gh_releases.py
