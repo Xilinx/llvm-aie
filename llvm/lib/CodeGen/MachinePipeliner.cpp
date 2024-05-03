@@ -129,12 +129,6 @@ static cl::opt<int> SwpForceII("pipeliner-force-ii",
                                cl::desc("Force pipeliner to use specified II."),
                                cl::Hidden, cl::init(-1));
 
-/// A command line argument to limit the number of stages in the pipeline.
-static cl::opt<int>
-    SwpMaxStages("pipeliner-max-stages",
-                 cl::desc("Maximum stages allowed in the generated scheduled."),
-                 cl::Hidden, cl::init(3));
-
 /// A command line option to disable the pruning of chain dependences due to
 /// an unrelated Phi.
 static cl::opt<bool>
@@ -609,6 +603,7 @@ void SwingSchedulerDAG::schedule() {
     return;
   }
   // Check that the maximum stage count is less than user-defined limit.
+  int SwpMaxStages = LoopPipelinerInfo->getMaxStages();
   if (SwpMaxStages > -1 && (int)numStages > SwpMaxStages) {
     LLVM_DEBUG(dbgs() << "numStages:" << numStages << ">" << SwpMaxStages
                       << " : too many stages, abort\n");
@@ -2028,10 +2023,12 @@ bool SwingSchedulerDAG::schedulePipeline(SMSchedule &Schedule) {
       }
       // Even if we find a schedule, make sure the schedule doesn't exceed the
       // allowable number of stages. We keep trying if this happens.
-      if (scheduleFound)
+      if (scheduleFound) {
+        int SwpMaxStages = LoopPipelinerInfo->getMaxStages();
         if (SwpMaxStages > -1 &&
             Schedule.getMaxStageCount() > (unsigned)SwpMaxStages)
           scheduleFound = false;
+      }
 
       LLVM_DEBUG({
         if (!scheduleFound)

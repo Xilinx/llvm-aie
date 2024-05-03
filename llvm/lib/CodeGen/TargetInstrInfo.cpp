@@ -1864,7 +1864,17 @@ static cl::opt<int> SwpMaxMii("pipeliner-max-mii",
                               cl::desc("Size limit for the MII."), cl::Hidden,
                               cl::init(27));
 
+/// A command line argument to limit the number of stages in the pipeline.
+static cl::opt<int>
+    SwpMaxStages("pipeliner-max-stages",
+                 cl::desc("Maximum stages allowed in the generated scheduled."),
+                 cl::Hidden, cl::init(3));
 
+/// Default implementations for call back methods
 int TargetInstrInfo::PipelinerLoopInfo::getIILimit() const {
   return SwpMaxMii;
+}
+
+int TargetInstrInfo::PipelinerLoopInfo::getMaxStages() const {
+  return SwpMaxStages;
 }

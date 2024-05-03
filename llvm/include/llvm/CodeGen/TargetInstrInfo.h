@@ -751,6 +751,10 @@ public:
 
     /// Force the minimum II to at least the value returned by this method.
     virtual unsigned getMinII() const { return 0; }
+
+    /// Retrieve the maximum number of stages for this loop
+    virtual int getMaxStages() const;
+
     /// Return true if the given instruction should not be pipelined and should
     /// be ignored. An example could be a loop comparison, or induction variable
     /// update with no users being pipelined.
