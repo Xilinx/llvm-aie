@@ -44,7 +44,6 @@ on:
         required: false
         default: 'false'
 
-  pull_request:
   release:
     types:
       - published
