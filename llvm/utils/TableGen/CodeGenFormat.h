@@ -683,9 +683,14 @@ private:
 /// NOTE: We can also implement a base abstract class defining the interface
 /// of this iterator and then make it derives from it (could be nice if we need
 /// to implement a BFS version of this iterator).
-class TGFieldIterator
-    : public std::iterator<std::forward_iterator_tag, TGFieldIterator> {
+class TGFieldIterator {
 public:
+  using iterator_category = std::forward_iterator_tag;
+  using value_type = TGFieldIterator;
+  using difference_type = std::ptrdiff_t;
+  using pointer = TGFieldIterator *;
+  using reference = TGFieldIterator &;
+
   /// Traversal Modes
   enum class Mode { FullTraversal, StopTraversal };
 
