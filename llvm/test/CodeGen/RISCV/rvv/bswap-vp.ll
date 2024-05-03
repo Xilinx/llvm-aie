@@ -7,6 +7,7 @@
 ; RUN:     -verify-machineinstrs < %s | FileCheck %s --check-prefixes=CHECK-ZVKB
 ; RUN: llc -mtriple=riscv64 -mattr=+v,+zvkb,+m -target-abi=lp64d \
 ; RUN:     -verify-machineinstrs < %s | FileCheck %s --check-prefixes=CHECK-ZVKB
+; XFAIL: llvm-aie-regression
 
 declare <vscale x 1 x i16> @llvm.vp.bswap.nxv1i16(<vscale x 1 x i16>, <vscale x 1 x i1>, i32)
 

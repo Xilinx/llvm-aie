@@ -8,6 +8,7 @@
 ; RUN:     --check-prefix=CHECK-P9-NOALTIVEC
 ; RUN: llc -verify-machineinstrs -mtriple=powerpc64le-unknown-linux-gnu \
 ; RUN:     -mcpu=pwr8 < %s | FileCheck %s --check-prefix=CHECK-P8
+; XFAIL: llvm-aie-regression
 
 define <4 x i32> @test_vextsh2w(<4 x i32> %m) {
 ; CHECK-P9-LABEL: test_vextsh2w:

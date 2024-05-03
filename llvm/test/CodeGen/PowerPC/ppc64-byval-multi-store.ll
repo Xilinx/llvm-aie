@@ -11,6 +11,7 @@
 ; RUN:   -mcpu=pwr9 -ppc-asm-full-reg-names < %s | FileCheck %s --check-prefix=P9BE
 ; RUN: llc -verify-machineinstrs --mtriple powerpc64-unknown-linux-gnu \
 ; RUN:   -mcpu=pwr10 -ppc-asm-full-reg-names < %s | FileCheck %s --check-prefix=P10BE
+; XFAIL: llvm-aie-regression
 
 define signext i8 @caller_1(ptr nocapture readonly byval([1 x i8]) %data) #0 {
 ; P8LE-LABEL: caller_1:

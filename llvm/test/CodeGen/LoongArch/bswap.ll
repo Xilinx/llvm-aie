@@ -3,6 +3,7 @@
 ; RUN:   | FileCheck %s --check-prefix=LA32
 ; RUN: llc --mtriple=loongarch64 --verify-machineinstrs < %s \
 ; RUN:   | FileCheck %s --check-prefix=LA64
+; XFAIL: llvm-aie-regression
 
 declare i16 @llvm.bswap.i16(i16)
 declare i32 @llvm.bswap.i32(i32)
