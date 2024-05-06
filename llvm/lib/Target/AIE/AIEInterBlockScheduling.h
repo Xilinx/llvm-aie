@@ -71,8 +71,18 @@ class InterBlockEdges {
 
 public:
   InterBlockEdges(const MachineSchedContext &Context) : DDG(Context) {}
+
+  /// Add a Node to the DAG.
   void addNode(MachineInstr *);
+
+  /// Mark the boundary between the predecessor block and the successor block.
+  /// In normal operation, there should just be one call to this method.
+  /// Nodes added before are part of the predecesor, nodes added after are
+  /// part of the successor
   void markBoundary();
+
+  /// Create all the edges by interpreting read and write events of the nodes
+  // in reverse order.
   void buildEdges() { DDG.buildEdges(); }
 
   /// To iterate forward across the SUnits of the underlying DDG.
