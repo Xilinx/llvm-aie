@@ -13,6 +13,7 @@
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineScheduler.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <memory>
 
 #define DEBUG_TYPE "machine-scheduler"
@@ -93,11 +94,13 @@ bool InterBlockScheduling::leaveBlock() {
   auto &BS = *CurrentBlock;
   if (BS.Kind == BlockType::Loop && !updateFixPoint(BS)) {
     BS.FixPoint.NumIters++;
-    // Iterate on CurMBB
+    // Iterate on CurrentBlock
     // If we are very unlucky, we may step both the latency margin and
     // the resource margin to the max. Any more indicates failure to converge,
     // and we abort to prevent an infinite loop.
-    assert(BS.FixPoint.NumIters <= 2 * HR->getConflictHorizon());
+    if (BS.FixPoint.NumIters > 2 * HR->getConflictHorizon()) {
+      report_fatal_error("Inter-block scheduling did not converge.");
+    }
     return false;
   }
 
