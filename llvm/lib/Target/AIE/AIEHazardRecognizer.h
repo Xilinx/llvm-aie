@@ -89,7 +89,7 @@ class AIEHazardRecognizer : public ScheduleHazardRecognizer {
   int MaxLatency = -1;
 
   /// Compute the limits from the itinerary data
-  void computeMaxima();
+  void computeMaxLatency();
 
 public:
   AIEHazardRecognizer(const AIEBaseInstrInfo *TII,
