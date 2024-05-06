@@ -171,7 +171,7 @@ AIEHazardRecognizer::AIEHazardRecognizer(const AIEBaseInstrInfo *TII,
                                          const InstrItineraryData *II)
     : TII(TII), ItinData(II) {
 
-  computeMaxima();
+  computeMaxLatency();
   int Depth = computeScoreboardDepth();
   Scoreboard.reset(Depth);
   MaxLookAhead = Depth;
@@ -508,7 +508,7 @@ int AIEHazardRecognizer::getConflictHorizon() const {
   return int(std::max(PipelineDepth, MaxLatency));
 }
 
-void AIEHazardRecognizer::computeMaxima() {
+void AIEHazardRecognizer::computeMaxLatency() {
   assert(ItinData && !ItinData->isEmpty());
   unsigned FirstRW = std::numeric_limits<unsigned>().max();
   unsigned LastRW = 0;
