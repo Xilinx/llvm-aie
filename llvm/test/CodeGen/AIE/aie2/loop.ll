@@ -32,7 +32,7 @@ define i32 @accumulate(i32 %size, ptr %array) {
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    add r2, r2, #1
+; CHECK-NEXT:    add.nc r2, r2, #1
 ; CHECK-NEXT:    eq r4, r2, r3
 ; CHECK-NEXT:    jz r4, #.LBB0_2
 ; CHECK-NEXT:    nop // Delay Slot 5

@@ -28,13 +28,13 @@ define void @sibling(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    add r5, r5, #1
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    add r3, r3, r6
 ; CHECK-NEXT:    jnzd r0, r0, p2
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    add.nc r5, r5, #1 // Delay Slot 2
 ; CHECK-NEXT:    st r3, [p0, #0] // Delay Slot 1
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  // %bb.2: // %for.body6.lr.ph
@@ -53,13 +53,13 @@ define void @sibling(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    add r2, r2, #1
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    add r0, r0, r4
 ; CHECK-NEXT:    jnzd r1, r1, p2
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    add.nc r2, r2, #1 // Delay Slot 2
 ; CHECK-NEXT:    st r0, [p0, #0] // Delay Slot 1
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  // %bb.4: // %for.cond.cleanup5

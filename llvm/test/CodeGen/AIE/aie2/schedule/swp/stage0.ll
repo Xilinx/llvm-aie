@@ -27,17 +27,8 @@ define dso_local i32 @dot(ptr nocapture readonly %a, ptr nocapture readonly %b, 
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %for.body
 ; CHECK-NEXT:    lda r2, [p0, #0]; nopx
-; CHECK-NEXT:    lda r3, [p1, #0]; add r5, r1, #-1
-; CHECK-NEXT:    jz r5, #.LBB0_5
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    padda [p0], #2044 // Delay Slot 2
-; CHECK-NEXT:    padda [p1], #2044 // Delay Slot 1
-; CHECK-NEXT:  // %bb.2: // %for.body
-; CHECK-NEXT:    lda r1, [p0, #0]; nopx
-; CHECK-NEXT:    lda r4, [p1, #0]; add r5, r5, #-1
-; CHECK-NEXT:    jz r5, #.LBB0_4
+; CHECK-NEXT:    lda r3, [p1, #0]; add.nc r1, r1, #-1
+; CHECK-NEXT:    jz r1, #.LBB0_3
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
@@ -49,19 +40,15 @@ define dso_local i32 @dot(ptr nocapture readonly %a, ptr nocapture readonly %b, 
 ; CHECK-NEXT:    lda r4, [p0, #0]; nopb ; nopx
 ; CHECK-NEXT:    lda r5, [p1, #0]
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    lda r4, [p1, #0]; add r5, r5, #-1
-; CHECK-NEXT:    jnz r5, #.LBB0_3
+; CHECK-NEXT:    add.nc r1, r1, #-1
+; CHECK-NEXT:    jnz r1, #.LBB0_2
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    and r6, r3, r2; mov r2, r1 // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    padda [p0], #2044; mov r3, r4 // Delay Slot 2
-; CHECK-NEXT:    padda [p1], #2044; or r0, r6, r0 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    and r2, r3, r2 // Delay Slot 3
+; CHECK-NEXT:    padda [p0], #2044; or r0, r2, r0; mov r2, r4 // Delay Slot 2
+; CHECK-NEXT:    padda [p1], #2044; mov r3, r5 // Delay Slot 1
 ; CHECK-NEXT:    .p2align 4
-; CHECK-NEXT:  .LBB0_4:
-; CHECK-NEXT:    and r2, r3, r2; mov r3, r4
-; CHECK-NEXT:    or r0, r2, r0; mov r2, r1
-; CHECK-NEXT:    .p2align 4
-; CHECK-NEXT:  .LBB0_5:
+; CHECK-NEXT:  .LBB0_3:
 ; CHECK-NEXT:    nopa ; nopb ; and r1, r3, r2; nopm
 ; CHECK-NEXT:    or r0, r1, r0
 ; CHECK-NEXT:    .p2align 4

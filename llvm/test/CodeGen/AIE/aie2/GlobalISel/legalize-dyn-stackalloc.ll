@@ -21,7 +21,7 @@ define void @test_simple_dyn_alloca(i32 noundef %n) {
 ; CHECK-NEXT:    mova r1, #-32
 ; CHECK-NEXT:    st lr, [sp, #-28] // 4-byte Folded Spill
 ; CHECK-NEXT:    padda [p7], #-32
-; CHECK-NEXT:    add r0, r0, #31
+; CHECK-NEXT:    add.nc r0, r0, #31
 ; CHECK-NEXT:    jl #extern_call
 ; CHECK-NEXT:    mov p1, p0 // Delay Slot 5
 ; CHECK-NEXT:    and r0, r0, r1 // Delay Slot 4
@@ -75,14 +75,14 @@ define void @test_loop_dyn_alloca(i32 noundef %n) {
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    nopa ; nopb ; nopx ; mov p0, sp; nops
 ; CHECK-NEXT:    lshl r0, r17, r19
-; CHECK-NEXT:    add r0, r0, #31
+; CHECK-NEXT:    add.nc r0, r0, #31
 ; CHECK-NEXT:    jl #extern_call
 ; CHECK-NEXT:    mov p1, p0 // Delay Slot 5
 ; CHECK-NEXT:    and r0, r0, r20 // Delay Slot 4
 ; CHECK-NEXT:    mov m0, r0 // Delay Slot 3
 ; CHECK-NEXT:    paddb [p1], m0 // Delay Slot 2
 ; CHECK-NEXT:    mov sp, p1 // Delay Slot 1
-; CHECK-NEXT:    nopb ; nopa ; nops ; add r17, r17, #1; nopm ; nopv
+; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; add.nc r17, r17, #1; nopv
 ; CHECK-NEXT:    ltu r0, r17, r16
 ; CHECK-NEXT:    add r21, r21, r0
 ; CHECK-NEXT:    xor r0, r17, r18
@@ -160,7 +160,7 @@ define  void @test_huge_stack(i32 noundef %n) #0 {
 ; CHECK-NEXT:    paddb [p1], #-24
 ; CHECK-NEXT:    lshl r2, r0, r2
 ; CHECK-NEXT:    st r0, [p1], #4
-; CHECK-NEXT:    add r2, r2, #31
+; CHECK-NEXT:    add.nc r2, r2, #31
 ; CHECK-NEXT:    jl #extern_call
 ; CHECK-NEXT:    st r1, [p1, #0] // Delay Slot 5
 ; CHECK-NEXT:    and r2, r2, r3 // Delay Slot 4

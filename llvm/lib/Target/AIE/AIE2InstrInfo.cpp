@@ -140,6 +140,10 @@ bool AIE2InstrInfo::isConstStep(const MachineInstr &MI, int64_t &Step) const {
     Step = MI.getOperand(2).getImm();
     return true;
   }
+  if (Opcode == AIE2::ADD_NC_GPR) {
+    Step = MI.getOperand(2).getImm();
+    return true;
+  }
   return false;
 }
 

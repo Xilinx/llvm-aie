@@ -47,24 +47,23 @@ define void @nested(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    add r6, r6, #1
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    add r2, r2, r7
 ; CHECK-NEXT:    jnzd r5, r5, p2
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    add.nc r6, r6, #1 // Delay Slot 2
 ; CHECK-NEXT:    st r2, [p0, #0] // Delay Slot 1
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  // %bb.3: // %for.cond3.for.cond.cleanup5_crit_edge
 ; CHECK-NEXT:    // in Loop: Header=BB0_1 Depth=1
-; CHECK-NEXT:    nopb ; nopa ; nops ; add r3, r3, #1; nopm ; nopv
-; CHECK-NEXT:    nopa ; jnzd r0, r0, p3
+; CHECK-NEXT:    jnzd r0, r0, p3
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    nop // Delay Slot 1
+; CHECK-NEXT:    add.nc r3, r3, #1 // Delay Slot 1
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  // %bb.4: // %for.cond.cleanup
 ; CHECK-NEXT:    nopa ; ret lr

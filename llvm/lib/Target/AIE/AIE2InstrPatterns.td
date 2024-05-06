@@ -91,6 +91,7 @@ multiclass ALUPatterns<ValueType type> {
 // 4.1.5 ABS - Absolute Value
 def : PatGpr<abs, ABS, type>;
 // 4.1.6 ADD – Add Immediate
+def : Pat<(type (add (type eR:$s0), simm6:$imm)), (ADD_NC_GPR eR:$s0, simm6:$imm)>;
 def : Pat<(type (add (type eR:$s0), simm7:$imm)), (ADD_add_r_ri eR:$s0, simm7:$imm)>;
 def : Pat<(type (sub (type eR:$s0), simm7_negated:$imm)),
           (ADD_add_r_ri eR:$s0, (NegateImm simm7_negated:$imm))>;
