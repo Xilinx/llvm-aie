@@ -194,8 +194,6 @@ public:
   /// \pre Kind == Loop
   int getSafetyMargin() const;
 
-  unsigned cycleCount() const;
-
 protected:
   void classify();
 };

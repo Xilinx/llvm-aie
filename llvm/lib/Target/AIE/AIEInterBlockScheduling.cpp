@@ -421,14 +421,6 @@ void BlockState::clearSchedule() {
   CurrentRegion = 0;
 }
 
-unsigned BlockState::cycleCount() const {
-  unsigned Size = 0;
-  for (auto &R : Regions) {
-    Size += R.Bundles.size();
-  }
-  return Size;
-}
-
 void BlockState::classify() {
   // Detect whether this block is amenable to loop-aware scheduling.
   // We must push the safety margin to our epilogue block(s)
