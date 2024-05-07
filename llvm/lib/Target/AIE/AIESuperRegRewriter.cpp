@@ -13,6 +13,7 @@
 
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/CodeGen/LiveDebugVariables.h"
 #include "llvm/CodeGen/LiveIntervals.h"
 #include "llvm/CodeGen/LiveRegMatrix.h"
 #include "llvm/CodeGen/LiveStacks.h"
@@ -49,6 +50,8 @@ public:
     AU.addPreserved<VirtRegMap>();
     AU.addRequired<SlotIndexes>();
     AU.addPreserved<SlotIndexes>();
+    AU.addRequired<LiveDebugVariables>();
+    AU.addPreserved<LiveDebugVariables>();
     AU.addRequired<LiveStacks>();
     AU.addPreserved<LiveStacks>();
     AU.addRequired<LiveIntervals>();
@@ -64,7 +67,7 @@ private:
   void rewriteSuperReg(Register Reg, Register AssignedPhysReg,
                        MachineRegisterInfo &MRI, const AIEBaseRegisterInfo &TRI,
                        VirtRegMap &VRM, LiveRegMatrix &LRM, LiveIntervals &LIS,
-                       SlotIndexes &Indexes);
+                       SlotIndexes &Indexes, LiveDebugVariables &DebugVars);
 };
 
 /// Returns the subreg indices that can be used to rewrite \p Reg into smaller
@@ -144,6 +147,7 @@ bool AIESuperRegRewriter::runOnMachineFunction(MachineFunction &MF) {
   LiveRegMatrix &LRM = getAnalysis<LiveRegMatrix>();
   LiveIntervals &LIS = getAnalysis<LiveIntervals>();
   SlotIndexes &Indexes = getAnalysis<SlotIndexes>();
+  LiveDebugVariables &DebugVars = getAnalysis<LiveDebugVariables>();
   std::map<Register, MCRegister> AssignedPhysRegs;
 
   // Collect already-assigned VRegs that can be split into smaller ones.
@@ -178,7 +182,7 @@ bool AIESuperRegRewriter::runOnMachineFunction(MachineFunction &MF) {
 
   // Re-write all the collected VRegs
   for (auto &[VReg, PhysReg] : AssignedPhysRegs) {
-    rewriteSuperReg(VReg, PhysReg, MRI, TRI, VRM, LRM, LIS, Indexes);
+    rewriteSuperReg(VReg, PhysReg, MRI, TRI, VRM, LRM, LIS, Indexes, DebugVars);
   }
 
   LLVM_DEBUG(VRM.dump());
@@ -236,7 +240,7 @@ static void rewriteFullCopy(MachineInstr &MI, const std::set<int> &CopySubRegs,
 void AIESuperRegRewriter::rewriteSuperReg(
     Register Reg, Register AssignedPhysReg, MachineRegisterInfo &MRI,
     const AIEBaseRegisterInfo &TRI, VirtRegMap &VRM, LiveRegMatrix &LRM,
-    LiveIntervals &LIS, SlotIndexes &Indexes) {
+    LiveIntervals &LIS, SlotIndexes &Indexes, LiveDebugVariables &DebugVars) {
   LLVM_DEBUG(dbgs() << "Rewriting " << printReg(Reg, &TRI, 0, &MRI) << '\n');
   auto *TII = static_cast<const AIEBaseInstrInfo *>(
       VRM.getMachineFunction().getSubtarget().getInstrInfo());
@@ -302,6 +306,11 @@ void AIESuperRegRewriter::rewriteSuperReg(
       LLVM_DEBUG(dbgs() << "  Assigned " << printReg(LI->reg()) << "\n");
     }
   }
+
+  // Announce new VRegs so DBG locations can be updated.
+  auto NewVRegs = SmallVector<Register, 8>(llvm::map_range(
+      SubRegToVReg, [&](auto &Mapping) { return Mapping.second; }));
+  DebugVars.splitRegister(Reg, NewVRegs, LIS);
 }
 
 } // end anonymous namespace
