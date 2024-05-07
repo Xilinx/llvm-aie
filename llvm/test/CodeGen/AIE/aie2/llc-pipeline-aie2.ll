@@ -201,10 +201,8 @@
 ; AIE-O123-NEXT:      Machine Optimization Remark Emitter
 ; AIE-O123-NEXT:      Greedy Register Allocator
 ; AIE-O123-NEXT:      AIE super-reg rewrite
-; AIE-O123-NEXT:      Debug Variable Analysis
 ; AIE-O123-NEXT:      Greedy Register Allocator
 ; AIE-O123-NEXT:      AIE super-reg rewrite
-; AIE-O123-NEXT:      Debug Variable Analysis
 ; AIE-O123-NEXT:      Greedy Register Allocator
 ; AIE-O123-NEXT:      Virtual Register Rewriter
 ; AIE-O123-NEXT:      Stack Slot Coloring
