@@ -668,6 +668,9 @@ private:
   /// Get the VRegs that represent the \p RetVal return value.
   ArrayRef<Register> getOrCreateReturnVRegs(const Value *RetVal);
 
+  /// Get the RetVal for the given \p RI return instruction
+  const Value *getReturnValueForABI(const ReturnInst &RI);
+
   Register getOrCreateVReg(const Value &Val) {
     auto Regs = getOrCreateVRegs(Val);
     if (Regs.empty())
