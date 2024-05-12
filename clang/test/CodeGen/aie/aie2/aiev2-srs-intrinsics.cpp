@@ -15,115 +15,469 @@
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x bfloat> @llvm.aie2.v16accfloat.to.v16bf16(<8 x i64> [[ACC:%.*]])
 // CHECK-NEXT:    ret <16 x bfloat> [[TMP0]]
 //
-v16bfloat16 test_to_v16bfloat16(v16accfloat acc){
-    return to_v16bfloat16(acc);
+v16bfloat16 test_to_v16bfloat16(v16accfloat acc) {
+  return to_v16bfloat16(acc);
 }
 
-// CHECK-LABEL: @_Z14test_ssrs_gen0Dv32_u7__acc32ii(
+// CHECK-LABEL: @_Z9test_ssrsDv32_u7__acc32ii(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i8> @llvm.aie2.I256.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
 // CHECK-NEXT:    ret <32 x i8> [[TMP0]]
 //
-v32int8 test_ssrs_gen0(v32acc32 acc, int shft, int sign) {
-   return ssrs(acc,shft,sign);
+v32int8 test_ssrs(v32acc32 acc, int shft, int sign) {
+  return ssrs(acc, shft, sign);
 }
 
-// CHECK-LABEL: @_Z14test_ssrs_gen1Dv16_u7__acc64ii(
+// CHECK-LABEL: @_Z10test_ussrsDv32_u7__acc32ii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i16> @llvm.aie2.I256.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
-// CHECK-NEXT:    ret <16 x i16> [[TMP0]]
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i8> @llvm.aie2.I256.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <32 x i8> [[TMP0]]
 //
-v16int16 test_ssrs_gen1(v16acc64 acc, int shft, int sign) {
-   return ssrs(acc,shft,sign);
+v32uint8 test_ussrs(v32acc32 acc, int shft, int sign) {
+  return ussrs(acc, shft, sign);
 }
 
-// CHECK-LABEL: @_Z15test_ulsrs_gen0Dv32_u7__acc32ii(
+// CHECK-LABEL: @_Z9test_lsrsDv32_u7__acc32ii(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i16> @llvm.aie2.I512.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
 // CHECK-NEXT:    ret <32 x i16> [[TMP0]]
 //
-v32uint16 test_ulsrs_gen0(v32acc32 acc, int shft, int sign) {
-   return ulsrs(acc,shft,sign);
+v32int16 test_lsrs(v32acc32 acc, int shft, int sign) {
+  return lsrs(acc, shft, sign);
 }
 
-// CHECK-LABEL: @_Z14test_lsrs_gen0Dv16_u7__acc64ii(
+// CHECK-LABEL: @_Z10test_ulsrsDv32_u7__acc32ii(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i32> @llvm.aie2.I512.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
-// CHECK-NEXT:    ret <16 x i32> [[TMP0]]
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i16> @llvm.aie2.I512.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <32 x i16> [[TMP0]]
 //
-v16int32 test_lsrs_gen0(v16acc64 acc, int shft, int sign) {
-   return lsrs(acc,shft,sign);
+v32uint16 test_ulsrs(v32acc32 acc, int shft, int sign) {
+  return ulsrs(acc, shft, sign);
 }
 
-// CHECK-LABEL: @_Z14test_lsrs_gen1Dv8_u7__acc64ii(
-// CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <8 x i32> @llvm.aie2.I256.v8.acc64.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
-// CHECK-NEXT:    ret <8 x i32> [[TMP0]]
-//
-v8int32 test_lsrs_gen1(v8acc64 acc, int shft, int sign) {
-   return lsrs(acc,shft,sign);
-}
-
-// CHECK-LABEL: @_Z14test_lsrs_gen3Dv16_u7__acc32ii(
+// CHECK-LABEL: @_Z9test_lsrsDv16_u7__acc32ii(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i16> @llvm.aie2.I256.v16.acc32.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
 // CHECK-NEXT:    ret <16 x i16> [[TMP0]]
 //
-v16int16 test_lsrs_gen3(v16acc32 acc, int shft, int sign) {
-   return lsrs(acc,shft,sign);
+v16int16 test_lsrs(v16acc32 acc, int shft, int sign) {
+  return lsrs(acc, shft, sign);
 }
 
-// CHECK-LABEL: @_Z17test_ssrs_signed0Dv32_u7__acc32i(
+// CHECK-LABEL: @_Z10test_ulsrsDv16_u7__acc32ii(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i16> @llvm.aie2.I256.v16.acc32.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <16 x i16> [[TMP0]]
+//
+v16uint16 test_ulsrs(v16acc32 acc, int shft, int sign) {
+  return ulsrs(acc, shft, sign);
+}
+
+// CHECK-LABEL: @_Z9test_ssrsDv16_u7__acc64ii(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i16> @llvm.aie2.I256.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <16 x i16> [[TMP0]]
+//
+v16int16 test_ssrs(v16acc64 acc, int shft, int sign) {
+  return ssrs(acc, shft, sign);
+}
+
+// CHECK-LABEL: @_Z10test_ussrsDv16_u7__acc64ii(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i16> @llvm.aie2.I256.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <16 x i16> [[TMP0]]
+//
+v16uint16 test_ussrs(v16acc64 acc, int shft, int sign) {
+  return ussrs(acc, shft, sign);
+}
+
+// CHECK-LABEL: @_Z9test_lsrsDv16_u7__acc64ii(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i32> @llvm.aie2.I512.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <16 x i32> [[TMP0]]
+//
+v16int32 test_lsrs(v16acc64 acc, int shft, int sign) {
+  return lsrs(acc, shft, sign);
+}
+
+// CHECK-LABEL: @_Z10test_ulsrsDv16_u7__acc64ii(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i32> @llvm.aie2.I512.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <16 x i32> [[TMP0]]
+//
+v16uint32 test_ulsrs(v16acc64 acc, int shft, int sign) {
+  return ulsrs(acc, shft, sign);
+}
+
+// CHECK-LABEL: @_Z9test_lsrsDv8_u7__acc64ii(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <8 x i32> @llvm.aie2.I256.v8.acc64.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <8 x i32> [[TMP0]]
+//
+v8int32 test_lsrs(v8acc64 acc, int shft, int sign) {
+  return lsrs(acc, shft, sign);
+}
+
+// CHECK-LABEL: @_Z10test_ulsrsDv8_u7__acc64ii(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <8 x i32> @llvm.aie2.I256.v8.acc64.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <8 x i32> [[TMP0]]
+//
+v8uint32 test_ulsrs(v8acc64 acc, int shft, int sign) {
+  return ulsrs(acc, shft, sign);
+}
+
+// CHECK-LABEL: @_Z9test_ssrsDv32_u7__acc32i(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i8> @llvm.aie2.I256.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
 // CHECK-NEXT:    ret <32 x i8> [[TMP0]]
 //
-v32int8 test_ssrs_signed0(v32acc32 acc, int shft) {
-   return ssrs(acc,shft,1);
+v32int8 test_ssrs(v32acc32 acc, int shft) {
+  return ssrs(acc, shft);
 }
 
-// CHECK-LABEL: @_Z17test_ssrs_signed1Dv16_u7__acc64i(
+// CHECK-LABEL: @_Z10test_ussrsDv32_u7__acc32i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i16> @llvm.aie2.I256.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
-// CHECK-NEXT:    ret <16 x i16> [[TMP0]]
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i8> @llvm.aie2.I256.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
+// CHECK-NEXT:    ret <32 x i8> [[TMP0]]
 //
-v16int16 test_ssrs_signed1(v16acc64 acc, int shft) {
-   return ssrs(acc,shft,1);
+v32uint8 test_ussrs(v32acc32 acc, int shft) {
+  return ussrs(acc, shft);
 }
 
-// CHECK-LABEL: @_Z18test_ulsrs_signed0Dv32_u7__acc32i(
+// CHECK-LABEL: @_Z9test_lsrsDv32_u7__acc32i(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i16> @llvm.aie2.I512.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
 // CHECK-NEXT:    ret <32 x i16> [[TMP0]]
 //
-v32uint16 test_ulsrs_signed0(v32acc32 acc, int shft) {
-   return ulsrs(acc,shft,1);
+v32int16 test_lsrs(v32acc32 acc, int shft) {
+  return lsrs(acc, shft);
 }
 
-// CHECK-LABEL: @_Z17test_lsrs_signed0Dv16_u7__acc64i(
+// CHECK-LABEL: @_Z10test_ulsrsDv32_u7__acc32i(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i32> @llvm.aie2.I512.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
-// CHECK-NEXT:    ret <16 x i32> [[TMP0]]
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i16> @llvm.aie2.I512.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
+// CHECK-NEXT:    ret <32 x i16> [[TMP0]]
 //
-v16int32 test_lsrs_signed0(v16acc64 acc, int shft) {
-   return lsrs(acc,shft,1);
+v32uint16 test_ulsrs(v32acc32 acc, int shft) {
+  return ulsrs(acc, shft);
 }
 
-// CHECK-LABEL: @_Z17test_lsrs_signed1Dv8_u7__acc64i(
-// CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <8 x i32> @llvm.aie2.I256.v8.acc64.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
-// CHECK-NEXT:    ret <8 x i32> [[TMP0]]
-//
-v8int32 test_lsrs_signed1(v8acc64 acc, int shft) {
-   return lsrs(acc,shft,1);
-}
-
-
-// CHECK-LABEL: @_Z17test_lsrs_signed3Dv16_u7__acc32i(
+// CHECK-LABEL: @_Z9test_lsrsDv16_u7__acc32i(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i16> @llvm.aie2.I256.v16.acc32.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
 // CHECK-NEXT:    ret <16 x i16> [[TMP0]]
 //
-v16int16 test_lsrs_signed3(v16acc32 acc, int shft) {
-   return lsrs(acc,shft,1);
+v16int16 test_lsrs(v16acc32 acc, int shft) {
+  return lsrs(acc, shft);
+}
+
+// CHECK-LABEL: @_Z10test_ulsrsDv16_u7__acc32i(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i16> @llvm.aie2.I256.v16.acc32.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
+// CHECK-NEXT:    ret <16 x i16> [[TMP0]]
+//
+v16uint16 test_ulsrs(v16acc32 acc, int shft) {
+  return ulsrs(acc, shft);
+}
+
+// CHECK-LABEL: @_Z9test_ssrsDv16_u7__acc64i(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i16> @llvm.aie2.I256.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
+// CHECK-NEXT:    ret <16 x i16> [[TMP0]]
+//
+v16int16 test_ssrs(v16acc64 acc, int shft) {
+  return ssrs(acc, shft);
+}
+
+// CHECK-LABEL: @_Z10test_ussrsDv16_u7__acc64i(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i16> @llvm.aie2.I256.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
+// CHECK-NEXT:    ret <16 x i16> [[TMP0]]
+//
+v16uint16 test_ussrs(v16acc64 acc, int shft) {
+  return ussrs(acc, shft);
+}
+
+// CHECK-LABEL: @_Z9test_lsrsDv16_u7__acc64i(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i32> @llvm.aie2.I512.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
+// CHECK-NEXT:    ret <16 x i32> [[TMP0]]
+//
+v16int32 test_lsrs(v16acc64 acc, int shft) {
+  return lsrs(acc, shft);
+}
+
+// CHECK-LABEL: @_Z10test_ulsrsDv16_u7__acc64i(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i32> @llvm.aie2.I512.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
+// CHECK-NEXT:    ret <16 x i32> [[TMP0]]
+//
+v16uint32 test_ulsrs(v16acc64 acc, int shft) {
+  return ulsrs(acc, shft);
+}
+
+// CHECK-LABEL: @_Z9test_lsrsDv8_u7__acc64i(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <8 x i32> @llvm.aie2.I256.v8.acc64.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
+// CHECK-NEXT:    ret <8 x i32> [[TMP0]]
+//
+v8int32 test_lsrs(v8acc64 acc, int shft) {
+  return lsrs(acc, shft);
+}
+
+// CHECK-LABEL: @_Z10test_ulsrsDv8_u7__acc64i(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <8 x i32> @llvm.aie2.I256.v8.acc64.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
+// CHECK-NEXT:    ret <8 x i32> [[TMP0]]
+//
+v8uint32 test_ulsrs(v8acc64 acc, int shft) {
+  return ulsrs(acc, shft);
+}
+
+// CHECK-LABEL: @_Z19test_srs_to_v32int8Dv32_u7__acc32ii(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i8> @llvm.aie2.I256.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <32 x i8> [[TMP0]]
+//
+v32int8 test_srs_to_v32int8(v32acc32 acc, int shft, int sign) {
+  return srs_to_v32int8(acc, shft, sign);
+}
+
+// CHECK-LABEL: @_Z20test_srs_to_v32uint8Dv32_u7__acc32ii(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i8> @llvm.aie2.I256.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <32 x i8> [[TMP0]]
+//
+v32uint8 test_srs_to_v32uint8(v32acc32 acc, int shft, int sign) {
+  return srs_to_v32uint8(acc, shft, sign);
+}
+
+// CHECK-LABEL: @_Z20test_srs_to_v32int16Dv32_u7__acc32ii(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i16> @llvm.aie2.I512.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <32 x i16> [[TMP0]]
+//
+v32int16 test_srs_to_v32int16(v32acc32 acc, int shft, int sign) {
+  return srs_to_v32int16(acc, shft, sign);
+}
+
+// CHECK-LABEL: @_Z21test_srs_to_v32uint16Dv32_u7__acc32ii(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i16> @llvm.aie2.I512.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <32 x i16> [[TMP0]]
+//
+v32uint16 test_srs_to_v32uint16(v32acc32 acc, int shft, int sign) {
+  return srs_to_v32uint16(acc, shft, sign);
+}
+
+// CHECK-LABEL: @_Z20test_srs_to_v16int16Dv16_u7__acc32ii(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i16> @llvm.aie2.I256.v16.acc32.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <16 x i16> [[TMP0]]
+//
+v16int16 test_srs_to_v16int16(v16acc32 acc, int shft, int sign) {
+  return srs_to_v16int16(acc, shft, sign);
+}
+
+// CHECK-LABEL: @_Z21test_srs_to_v16uint16Dv16_u7__acc32ii(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i16> @llvm.aie2.I256.v16.acc32.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <16 x i16> [[TMP0]]
+//
+v16uint16 test_srs_to_v16uint16(v16acc32 acc, int shft, int sign) {
+  return srs_to_v16uint16(acc, shft, sign);
+}
+
+// CHECK-LABEL: @_Z20test_srs_to_v16int16Dv16_u7__acc64ii(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i16> @llvm.aie2.I256.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <16 x i16> [[TMP0]]
+//
+v16int16 test_srs_to_v16int16(v16acc64 acc, int shft, int sign) {
+  return srs_to_v16int16(acc, shft, sign);
+}
+
+// CHECK-LABEL: @_Z21test_srs_to_v16uint16Dv16_u7__acc64ii(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i16> @llvm.aie2.I256.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <16 x i16> [[TMP0]]
+//
+v16uint16 test_srs_to_v16uint16(v16acc64 acc, int shft, int sign) {
+  return srs_to_v16uint16(acc, shft, sign);
+}
+
+// CHECK-LABEL: @_Z17test_srs_to_int32Dv16_u7__acc64ii(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i32> @llvm.aie2.I512.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <16 x i32> [[TMP0]]
+//
+v16int32 test_srs_to_int32(v16acc64 acc, int shft, int sign) {
+  return srs_to_int32(acc, shft, sign);
+}
+
+// CHECK-LABEL: @_Z18test_srs_to_uint32Dv16_u7__acc64ii(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i32> @llvm.aie2.I512.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <16 x i32> [[TMP0]]
+//
+v16uint32 test_srs_to_uint32(v16acc64 acc, int shft, int sign) {
+  return srs_to_uint32(acc, shft, sign);
+}
+
+// CHECK-LABEL: @_Z19test_srs_to_v8int32Dv8_u7__acc64ii(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <8 x i32> @llvm.aie2.I256.v8.acc64.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <8 x i32> [[TMP0]]
+//
+v8int32 test_srs_to_v8int32(v8acc64 acc, int shft, int sign) {
+  return srs_to_v8int32(acc, shft, sign);
+}
+
+// CHECK-LABEL: @_Z20test_srs_to_v8uint32Dv8_u7__acc64ii(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <8 x i32> @llvm.aie2.I256.v8.acc64.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <8 x i32> [[TMP0]]
+//
+v8uint32 test_srs_to_v8uint32(v8acc64 acc, int shft, int sign) {
+  return srs_to_v8uint32(acc, shft, sign);
+}
+
+// CHECK-LABEL: @_Z20test_srs_to_v16int32Dv16_u7__acc64ii(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i32> @llvm.aie2.I512.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <16 x i32> [[TMP0]]
+//
+v16int32 test_srs_to_v16int32(v16acc64 acc, int shft, int sign) {
+  return srs_to_v16int32(acc, shft, sign);
+}
+
+// CHECK-LABEL: @_Z21test_srs_to_v16uint32Dv16_u7__acc64ii(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i32> @llvm.aie2.I512.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 [[SIGN:%.*]])
+// CHECK-NEXT:    ret <16 x i32> [[TMP0]]
+//
+v16uint32 test_srs_to_v16uint32(v16acc64 acc, int shft, int sign) {
+  return srs_to_v16uint32(acc, shft, sign);
+}
+
+// CHECK-LABEL: @_Z19test_srs_to_v32int8Dv32_u7__acc32i(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i8> @llvm.aie2.I256.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
+// CHECK-NEXT:    ret <32 x i8> [[TMP0]]
+//
+v32int8 test_srs_to_v32int8(v32acc32 acc, int shft) {
+  return srs_to_v32int8(acc, shft);
+}
+
+// CHECK-LABEL: @_Z20test_srs_to_v32uint8Dv32_u7__acc32i(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i8> @llvm.aie2.I256.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
+// CHECK-NEXT:    ret <32 x i8> [[TMP0]]
+//
+v32uint8 test_srs_to_v32uint8(v32acc32 acc, int shft) {
+  return srs_to_v32uint8(acc, shft);
+}
+
+// CHECK-LABEL: @_Z20test_srs_to_v32int16Dv32_u7__acc32i(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i16> @llvm.aie2.I512.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
+// CHECK-NEXT:    ret <32 x i16> [[TMP0]]
+//
+v32int16 test_srs_to_v32int16(v32acc32 acc, int shft) {
+  return srs_to_v32int16(acc, shft);
+}
+
+// CHECK-LABEL: @_Z21test_srs_to_v32uint16Dv32_u7__acc32i(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i16> @llvm.aie2.I512.v32.acc32.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
+// CHECK-NEXT:    ret <32 x i16> [[TMP0]]
+//
+v32uint16 test_srs_to_v32uint16(v32acc32 acc, int shft) {
+  return srs_to_v32uint16(acc, shft);
+}
+
+// CHECK-LABEL: @_Z20test_srs_to_v16int16Dv16_u7__acc32i(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i16> @llvm.aie2.I256.v16.acc32.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
+// CHECK-NEXT:    ret <16 x i16> [[TMP0]]
+//
+v16int16 test_srs_to_v16int16(v16acc32 acc, int shft) {
+  return srs_to_v16int16(acc, shft);
+}
+
+// CHECK-LABEL: @_Z21test_srs_to_v16uint16Dv16_u7__acc32i(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i16> @llvm.aie2.I256.v16.acc32.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
+// CHECK-NEXT:    ret <16 x i16> [[TMP0]]
+//
+v16uint16 test_srs_to_v16uint16(v16acc32 acc, int shft) {
+  return srs_to_v16uint16(acc, shft);
+}
+
+// CHECK-LABEL: @_Z20test_srs_to_v16int16Dv16_u7__acc64i(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i16> @llvm.aie2.I256.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
+// CHECK-NEXT:    ret <16 x i16> [[TMP0]]
+//
+v16int16 test_srs_to_v16int16(v16acc64 acc, int shft) {
+  return srs_to_v16int16(acc, shft);
+}
+
+// CHECK-LABEL: @_Z21test_srs_to_v16uint16Dv16_u7__acc64i(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i16> @llvm.aie2.I256.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
+// CHECK-NEXT:    ret <16 x i16> [[TMP0]]
+//
+v16uint16 test_srs_to_v16uint16(v16acc64 acc, int shft) {
+  return srs_to_v16uint16(acc, shft);
+}
+
+// CHECK-LABEL: @_Z20test_srs_to_v16int32Dv16_u7__acc64i(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i32> @llvm.aie2.I512.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
+// CHECK-NEXT:    ret <16 x i32> [[TMP0]]
+//
+v16int32 test_srs_to_v16int32(v16acc64 acc, int shft) {
+  return srs_to_v16int32(acc, shft);
+}
+
+// CHECK-LABEL: @_Z21test_srs_to_v16uint32Dv16_u7__acc64i(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i32> @llvm.aie2.I512.v16.acc64.srs(<16 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
+// CHECK-NEXT:    ret <16 x i32> [[TMP0]]
+//
+v16uint32 test_srs_to_v16uint32(v16acc64 acc, int shft) {
+  return srs_to_v16uint32(acc, shft);
+}
+
+// CHECK-LABEL: @_Z19test_srs_to_v8int32Dv8_u7__acc64i(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <8 x i32> @llvm.aie2.I256.v8.acc64.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
+// CHECK-NEXT:    ret <8 x i32> [[TMP0]]
+//
+v8int32 test_srs_to_v8int32(v8acc64 acc, int shft) {
+  return srs_to_v8int32(acc, shft);
+}
+
+// CHECK-LABEL: @_Z20test_srs_to_v8uint32Dv8_u7__acc64i(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <8 x i32> @llvm.aie2.I256.v8.acc64.srs(<8 x i64> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 0)
+// CHECK-NEXT:    ret <8 x i32> [[TMP0]]
+//
+v8uint32 test_srs_to_v8uint32(v8acc64 acc, int shft) {
+  return srs_to_v8uint32(acc, shft);
+}
+
+// CHECK-LABEL: @_Z19test_to_v32bfloat16Dv32_u10__accfloat(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc(<16 x i64> [[ACC:%.*]], i32 0)
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <16 x bfloat> @llvm.aie2.v16accfloat.to.v16bf16(<8 x i64> [[TMP0]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <8 x i64> @llvm.aie2.ext.512.1024.acc(<16 x i64> [[ACC]], i32 1)
+// CHECK-NEXT:    [[TMP3:%.*]] = tail call noundef <16 x bfloat> @llvm.aie2.v16accfloat.to.v16bf16(<8 x i64> [[TMP2]])
+// CHECK-NEXT:    [[TMP4:%.*]] = tail call noundef <32 x bfloat> @llvm.aie2.concat.bf512.bf256(<16 x bfloat> [[TMP1]], <16 x bfloat> [[TMP3]])
+// CHECK-NEXT:    ret <32 x bfloat> [[TMP4]]
+//
+v32bfloat16 test_to_v32bfloat16(v32accfloat acc) {
+  return to_v32bfloat16(acc);
 }
