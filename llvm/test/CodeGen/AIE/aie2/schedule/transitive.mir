@@ -18,21 +18,19 @@
 
 # CHECK: SU(3):   %9:mwa = VLDA_dmw_lda_w_ag_idx_imm %7:ep, 32
 # CHECK:  Successors:
-# CHECK:    SU(6): Data Latency=7 Reg=%9
+# CHECK:    SU(5): Data Latency=7 Reg=%9
 # CHECK: SU(4):   %10:mwa = VLDA_dmw_lda_w_ag_idx_imm %7:ep, 0
 # CHECK:  Successors:
 # CHECK:    SU(5): Data Latency=7 Reg=%10
-# CHECK: SU(5):   %12:mshfldst = INSERT_SUBREG %11:mshfldst(tied-def 0), %10:mwa, %subreg.sub_256_lo
+# CHECK: SU(5):   %13:vec512 = REG_SEQUENCE %9:mwa, %subreg.sub_256_hi, %10:mwa, %subreg.sub_256_lo
 # CHECK:   Predecessors:
 # CHECK:     SU(4): Data Latency=7 Reg=%10
-# CHECK: SU(6):   %13:vec512 = INSERT_SUBREG %12:mshfldst(tied-def 0), %9:mwa, %subreg.sub_256_hi
-# CHECK:   Predecessors:
 # CHECK:     SU(3): Data Latency=7 Reg=%9
 # CHECK:   Successors:
-# CHECK:     SU(7): Data Latency=0 Reg=%13
-# CHECK: SU(7):   %14:er = VEXTRACT_S16 %13:vec512, %1:ers4
+# CHECK:     SU(6): Data Latency=0 Reg=%13
+# CHECK: SU(6):   %14:er = VEXTRACT_S16 %13:vec512, %1:ers4
 # CHECK:  Depth              : 7
-# CHECK: SU(8):   %15:er = EXTENDs16 %14:er
+# CHECK: SU(7):   %15:er = EXTENDs16 %14:er
 
 ...
 ---
