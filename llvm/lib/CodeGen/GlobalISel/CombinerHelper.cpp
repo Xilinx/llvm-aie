@@ -398,6 +398,54 @@ adderGenerator(const int32_t From, const int32_t To, const int32_t StepSize) {
   };
 }
 
+Register CombinerHelper::createUnmergeValue(
+    MachineInstr &MI, const Register SrcReg, const Register DstReg,
+    const uint8_t DestinationIndex, const uint32_t Start, const uint32_t End) {
+  Builder.setInsertPt(*MI.getParent(), MI);
+  const LLT DstTy = MRI.getType(DstReg);
+  const LLT SrcTy = MRI.getType(SrcReg);
+  assert((DstTy.isScalar() ||
+          (SrcTy.getNumElements() % DstTy.getNumElements()) == 0) &&
+         "destination vector must divide source cleanly");
+
+  const unsigned HalfElements = SrcTy.getNumElements() / 2;
+  const LLT ScalarTy = SrcTy.getScalarType();
+  const LLT HalfSizeTy = (HalfElements == 1)
+                             ? ScalarTy
+                             : LLT::fixed_vector(HalfElements, ScalarTy);
+  const Register TmpReg = MRI.createGenericVirtualRegister(HalfSizeTy);
+  Register TargetReg = DstReg;
+  if (DstTy != HalfSizeTy) {
+    TargetReg = MRI.createGenericVirtualRegister(HalfSizeTy);
+  }
+
+  // Each destination fits n times into the source and each iteration we exactly
+  // half the source. Therefore we need to pick on which side we want to iterate
+  // on.
+  const uint32_t DstNumElements = DstTy.isVector() ? DstTy.getNumElements() : 1;
+  const uint32_t HalfWay = Start + ((End - Start) / 2);
+  const uint32_t Position = DestinationIndex * DstNumElements;
+
+  uint32_t NextStart, NextEnd;
+  if (Position < HalfWay) {
+    Builder.buildInstr(TargetOpcode::G_UNMERGE_VALUES, {TargetReg, TmpReg},
+                       {SrcReg});
+    NextStart = Start;
+    NextEnd = HalfWay;
+  } else {
+    Builder.buildInstr(TargetOpcode::G_UNMERGE_VALUES, {TmpReg, TargetReg},
+                       {SrcReg});
+    NextStart = HalfWay;
+    NextEnd = End;
+  }
+
+  if (HalfSizeTy.isVector() && DstTy != HalfSizeTy)
+    return createUnmergeValue(MI, TargetReg, DstReg, DestinationIndex,
+                              NextStart, NextEnd);
+
+  return DstReg;
+}
+
 bool CombinerHelper::tryCombineShuffleVector(MachineInstr &MI) {
   const Register DstReg = MI.getOperand(0).getReg();
   const LLT DstTy = MRI.getType(DstReg);
