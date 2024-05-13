@@ -6305,69 +6305,16 @@ entry:
 }
 
 define i32 @add_pair_v8i16_v4i32_double_sext_zext_shuffle(<8 x i16> %ax, <8 x i16> %ay, <8 x i16> %bx, <8 x i16> %by) {
-; CHECK-SD-BASE-LABEL: add_pair_v8i16_v4i32_double_sext_zext_shuffle:
-; CHECK-SD-BASE:       // %bb.0: // %entry
-; CHECK-SD-BASE-NEXT:    uaddlp v1.4s, v1.8h
-; CHECK-SD-BASE-NEXT:    uaddlp v3.4s, v3.8h
-; CHECK-SD-BASE-NEXT:    uadalp v1.4s, v0.8h
-; CHECK-SD-BASE-NEXT:    uadalp v3.4s, v2.8h
-; CHECK-SD-BASE-NEXT:    add v0.4s, v3.4s, v1.4s
-; CHECK-SD-BASE-NEXT:    addv s0, v0.4s
-; CHECK-SD-BASE-NEXT:    fmov w0, s0
-; CHECK-SD-BASE-NEXT:    ret
-;
-; CHECK-SD-DOT-LABEL: add_pair_v8i16_v4i32_double_sext_zext_shuffle:
-; CHECK-SD-DOT:       // %bb.0: // %entry
-; CHECK-SD-DOT-NEXT:    uaddlp v1.4s, v1.8h
-; CHECK-SD-DOT-NEXT:    uaddlp v3.4s, v3.8h
-; CHECK-SD-DOT-NEXT:    uadalp v1.4s, v0.8h
-; CHECK-SD-DOT-NEXT:    uadalp v3.4s, v2.8h
-; CHECK-SD-DOT-NEXT:    add v0.4s, v3.4s, v1.4s
-; CHECK-SD-DOT-NEXT:    addv s0, v0.4s
-; CHECK-SD-DOT-NEXT:    fmov w0, s0
-; CHECK-SD-DOT-NEXT:    ret
-;
-; CHECK-GI-BASE-LABEL: add_pair_v8i16_v4i32_double_sext_zext_shuffle:
-; CHECK-GI-BASE:       // %bb.0: // %entry
-; CHECK-GI-BASE-NEXT:    ushll v4.4s, v0.4h, #0
-; CHECK-GI-BASE-NEXT:    ushll2 v0.4s, v0.8h, #0
-; CHECK-GI-BASE-NEXT:    ushll v5.4s, v1.4h, #0
-; CHECK-GI-BASE-NEXT:    ushll2 v1.4s, v1.8h, #0
-; CHECK-GI-BASE-NEXT:    ushll v6.4s, v2.4h, #0
-; CHECK-GI-BASE-NEXT:    ushll2 v2.4s, v2.8h, #0
-; CHECK-GI-BASE-NEXT:    ushll v7.4s, v3.4h, #0
-; CHECK-GI-BASE-NEXT:    ushll2 v3.4s, v3.8h, #0
-; CHECK-GI-BASE-NEXT:    add v0.4s, v4.4s, v0.4s
-; CHECK-GI-BASE-NEXT:    add v1.4s, v5.4s, v1.4s
-; CHECK-GI-BASE-NEXT:    add v2.4s, v6.4s, v2.4s
-; CHECK-GI-BASE-NEXT:    add v3.4s, v7.4s, v3.4s
-; CHECK-GI-BASE-NEXT:    add v0.4s, v0.4s, v1.4s
-; CHECK-GI-BASE-NEXT:    add v1.4s, v2.4s, v3.4s
-; CHECK-GI-BASE-NEXT:    add v0.4s, v0.4s, v1.4s
-; CHECK-GI-BASE-NEXT:    addv s0, v0.4s
-; CHECK-GI-BASE-NEXT:    fmov w0, s0
-; CHECK-GI-BASE-NEXT:    ret
-;
-; CHECK-GI-DOT-LABEL: add_pair_v8i16_v4i32_double_sext_zext_shuffle:
-; CHECK-GI-DOT:       // %bb.0: // %entry
-; CHECK-GI-DOT-NEXT:    ushll v4.4s, v0.4h, #0
-; CHECK-GI-DOT-NEXT:    ushll2 v0.4s, v0.8h, #0
-; CHECK-GI-DOT-NEXT:    ushll v5.4s, v1.4h, #0
-; CHECK-GI-DOT-NEXT:    ushll2 v1.4s, v1.8h, #0
-; CHECK-GI-DOT-NEXT:    ushll v6.4s, v2.4h, #0
-; CHECK-GI-DOT-NEXT:    ushll2 v2.4s, v2.8h, #0
-; CHECK-GI-DOT-NEXT:    ushll v7.4s, v3.4h, #0
-; CHECK-GI-DOT-NEXT:    ushll2 v3.4s, v3.8h, #0
-; CHECK-GI-DOT-NEXT:    add v0.4s, v4.4s, v0.4s
-; CHECK-GI-DOT-NEXT:    add v1.4s, v5.4s, v1.4s
-; CHECK-GI-DOT-NEXT:    add v2.4s, v6.4s, v2.4s
-; CHECK-GI-DOT-NEXT:    add v3.4s, v7.4s, v3.4s
-; CHECK-GI-DOT-NEXT:    add v0.4s, v0.4s, v1.4s
-; CHECK-GI-DOT-NEXT:    add v1.4s, v2.4s, v3.4s
-; CHECK-GI-DOT-NEXT:    add v0.4s, v0.4s, v1.4s
-; CHECK-GI-DOT-NEXT:    addv s0, v0.4s
-; CHECK-GI-DOT-NEXT:    fmov w0, s0
-; CHECK-GI-DOT-NEXT:    ret
+; CHECK-LABEL: add_pair_v8i16_v4i32_double_sext_zext_shuffle:
+; CHECK:       // %bb.0: // %entry
+; CHECK-NEXT:    uaddlp v1.4s, v1.8h
+; CHECK-NEXT:    uaddlp v3.4s, v3.8h
+; CHECK-NEXT:    uadalp v1.4s, v0.8h
+; CHECK-NEXT:    uadalp v3.4s, v2.8h
+; CHECK-NEXT:    add v0.4s, v3.4s, v1.4s
+; CHECK-NEXT:    addv s0, v0.4s
+; CHECK-NEXT:    fmov w0, s0
+; CHECK-NEXT:    ret
 entry:
   %axx = zext <8 x i16> %ax to <8 x i32>
   %s1h = shufflevector <8 x i32> %axx, <8 x i32> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>

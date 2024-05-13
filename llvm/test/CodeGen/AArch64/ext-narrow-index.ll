@@ -42,8 +42,7 @@ define <8 x i8> @i8_off8(<16 x i8> %arg1, <16 x i8> %arg2) {
 ;
 ; CHECK-GISEL-LABEL: i8_off8:
 ; CHECK-GISEL:       // %bb.0: // %entry
-; CHECK-GISEL-NEXT:    ext v0.16b, v0.16b, v1.16b, #8
-; CHECK-GISEL-NEXT:    // kill: def $d0 killed $d0 killed $q0
+; CHECK-GISEL-NEXT:    mov d0, v0.d[1]
 ; CHECK-GISEL-NEXT:    ret
 entry:
   %shuffle = shufflevector <16 x i8> %arg1, <16 x i8> %arg2, <8 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
@@ -254,9 +253,7 @@ define <8 x i8> @i8_zero_off8(<16 x i8> %arg1) {
 ;
 ; CHECK-GISEL-LABEL: i8_zero_off8:
 ; CHECK-GISEL:       // %bb.0: // %entry
-; CHECK-GISEL-NEXT:    movi v1.2d, #0000000000000000
-; CHECK-GISEL-NEXT:    ext v0.16b, v0.16b, v1.16b, #8
-; CHECK-GISEL-NEXT:    // kill: def $d0 killed $d0 killed $q0
+; CHECK-GISEL-NEXT:    mov d0, v0.d[1]
 ; CHECK-GISEL-NEXT:    ret
 entry:
   %shuffle = shufflevector <16 x i8> %arg1, <16 x i8> zeroinitializer, <8 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>

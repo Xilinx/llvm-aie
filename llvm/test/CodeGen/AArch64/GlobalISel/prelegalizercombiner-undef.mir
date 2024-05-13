@@ -216,16 +216,16 @@ body:             |
     ; CHECK-LABEL: name: shufflevector_not_all_ops_undef
     ; CHECK: liveins: $d0
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<2 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<2 x s32>) = COPY $d0
-    ; CHECK-NEXT: [[SHUF:%[0-9]+]]:_(<2 x s32>) = G_SHUFFLE_VECTOR [[DEF]](<2 x s32>), [[COPY]], shufflemask(0, 1)
-    ; CHECK-NEXT: $d0 = COPY [[SHUF]](<2 x s32>)
-    ; CHECK-NEXT: RET_ReallyLR implicit $d0
-    %1:_(<2 x s32>) = G_IMPLICIT_DEF
-    %2:_(<2 x s32>) = COPY $d0
-    %0:_(<2 x s32>) = G_SHUFFLE_VECTOR %1(<2 x s32>), %2(<2 x s32>), shufflemask(0, 1)
-    $d0 = COPY %0(<2 x s32>)
-    RET_ReallyLR implicit $d0
+    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<4 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<4 x s32>) = COPY $q0
+    ; CHECK-NEXT: [[SHUF:%[0-9]+]]:_(<4 x s32>) = G_SHUFFLE_VECTOR [[DEF]](<4 x s32>), [[COPY]], shufflemask(0, 1, 2, 1)
+    ; CHECK-NEXT: $q0 = COPY [[SHUF]](<4 x s32>)
+    ; CHECK-NEXT: RET_ReallyLR implicit $q0
+    %1:_(<4 x s32>) = G_IMPLICIT_DEF
+    %2:_(<4 x s32>) = COPY $q0
+    %0:_(<4 x s32>) = G_SHUFFLE_VECTOR %1(<4 x s32>), %2(<4 x s32>), shufflemask(0, 1, 2, 1)
+    $q0 = COPY %0(<4 x s32>)
+    RET_ReallyLR implicit $q0
 
 ...
 ---
