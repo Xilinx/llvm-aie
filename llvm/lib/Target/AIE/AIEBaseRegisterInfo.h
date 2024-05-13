@@ -15,6 +15,7 @@
 #ifndef LLVM_LIB_TARGET_AIE_AIEBASEREGISTERINFO_H
 #define LLVM_LIB_TARGET_AIE_AIEBASEREGISTERINFO_H
 
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include <set>
 
@@ -35,6 +36,12 @@ struct AIEBaseRegisterInfo : public TargetRegisterInfo {
   virtual const std::set<int> &getSubRegSplit(int RegClassId) const {
     llvm_unreachable("Target didn't implement getSubRegSplit()");
   }
+
+  virtual SmallSet<int, 8>
+  getCoveringSubRegs(const TargetRegisterClass &RC) const {
+    return {};
+  }
+
   // Whether redundant assignments to reserved registers can be simplified by
   // WAWEdges
   bool isSimplifiableReservedReg(MCRegister PhysReg) const override {
