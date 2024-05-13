@@ -2046,8 +2046,10 @@ bool SwingSchedulerDAG::schedulePipeline(SMSchedule &Schedule) {
           Schedule.normalizeNonPipelinedInstructions(this, LoopPipelinerInfo);
 
     // If a schedule is found, check if it is a valid schedule too.
-    if (scheduleFound)
-      scheduleFound = Schedule.isValidSchedule(this);
+    if (scheduleFound) {
+      scheduleFound = Schedule.isValidSchedule(this) &&
+                      LoopPipelinerInfo->canAcceptII(Schedule);
+    }
   }
 
   LLVM_DEBUG(dbgs() << "Schedule Found? " << scheduleFound
