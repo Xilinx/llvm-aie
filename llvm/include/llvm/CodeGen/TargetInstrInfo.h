@@ -757,6 +757,11 @@ public:
       return true;
     }
 
+    /// Return true if \p SMS can be scheduled and register-allocated by the
+    /// target or false if the II should be increased due to e.g. high register
+    /// pressure.
+    virtual bool canAcceptII(SMSchedule &SMS) { return true; }
+
     /// This is called from the modulo schedule expander before any other
     /// modification
     virtual void startExpand() {}
