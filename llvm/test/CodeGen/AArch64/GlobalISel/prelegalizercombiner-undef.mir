@@ -226,7 +226,6 @@ body:             |
     %0:_(<2 x s32>) = G_SHUFFLE_VECTOR %1(<2 x s32>), %2(<2 x s32>), shufflemask(0, 1)
     $d0 = COPY %0(<2 x s32>)
     RET_ReallyLR implicit $d0
-
 ...
 ---
 name:            shl_undef_rhs

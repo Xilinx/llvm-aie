@@ -134,6 +134,25 @@ body:             |
 ...
 
 ---
+name:            extract_vector_1024_to_512
+legalized:       false
+body:             |
+  bb.1.entry:
+    liveins: $y2
+    ; CHECK-LABEL: name: extract_vector_1024_to_512
+    ; CHECK: liveins: $y2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<32 x s32>) = COPY $y2
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<16 x s32>), [[UV1:%[0-9]+]]:_(<16 x s32>) = G_UNMERGE_VALUES [[COPY]](<32 x s32>)
+    ; CHECK-NEXT: $x0 = COPY [[UV]](<16 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
+    %1:_(<32 x s32>) = COPY $y2
+    %0:_(<16 x s32>) = G_SHUFFLE_VECTOR %1:_(<32 x s32>), %1:_, shufflemask(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
+    $x0 = COPY %0:_(<16 x s32>)
+    PseudoRET implicit $lr, implicit $x0
+...
+
+---
 name:            concat_vector_32_512_first_start
 legalized:       false
 body:             |
@@ -151,6 +170,26 @@ body:             |
     %2:_(<8 x s32>) = COPY $wl4
     %0:_(<16 x s32>) = G_SHUFFLE_VECTOR %1:_(<8 x s32>), %2:_, shufflemask(-1, -1, -1, -1, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
     $x0 = COPY %0:_(<16 x s32>)
+    PseudoRET implicit $lr, implicit $x0
+...
+
+---
+name:            extract_vector_1024_to_256
+legalized:       false
+body:             |
+  bb.1.entry:
+    liveins: $y2
+    ; CHECK-LABEL: name: extract_vector_1024_to_256
+    ; CHECK: liveins: $y2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<32 x s32>) = COPY $y2
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<16 x s32>), [[UV1:%[0-9]+]]:_(<16 x s32>) = G_UNMERGE_VALUES [[COPY]](<32 x s32>)
+    ; CHECK-NEXT: [[UV2:%[0-9]+]]:_(<8 x s32>), [[UV3:%[0-9]+]]:_(<8 x s32>) = G_UNMERGE_VALUES [[UV]](<16 x s32>)
+    ; CHECK-NEXT: $wl0 = COPY [[UV2]](<8 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
+    %1:_(<32 x s32>) = COPY $y2
+    %0:_(<8 x s32>) = G_SHUFFLE_VECTOR %1:_(<32 x s32>), %1:_, shufflemask(0, 1, 2, 3, 4, 5, 6, 7)
+    $wl0 = COPY %0:_(<8 x s32>)
     PseudoRET implicit $lr, implicit $x0
 ...
 
@@ -258,4 +297,118 @@ body:             |
     %0:_(<16 x s32>) = G_SHUFFLE_VECTOR %1:_(<8 x s32>), %2:_, shufflemask(0, -1, 2, -1, 4, -1, -1, 7, 8, 9, -1, 11, 12, -1, 14, -1)
     $x0 = COPY %0:_(<16 x s32>)
     PseudoRET implicit $lr, implicit $x0
+...
+
+---
+name:            extract_vector_1024_to_128
+legalized:       false
+body:             |
+  bb.1.entry:
+    liveins: $y2
+    ; CHECK-LABEL: name: extract_vector_1024_to_128
+    ; CHECK: liveins: $y2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<32 x s32>) = COPY $y2
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<16 x s32>), [[UV1:%[0-9]+]]:_(<16 x s32>) = G_UNMERGE_VALUES [[COPY]](<32 x s32>)
+    ; CHECK-NEXT: [[UV2:%[0-9]+]]:_(<8 x s32>), [[UV3:%[0-9]+]]:_(<8 x s32>) = G_UNMERGE_VALUES [[UV]](<16 x s32>)
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<4 x s32>) = G_AIE_UNPAD_VECTOR [[UV2]](<8 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_UNPAD_VECTOR]](<4 x s32>)
+    %1:_(<32 x s32>) = COPY $y2
+    %0:_(<4 x s32>) = G_SHUFFLE_VECTOR %1:_(<32 x s32>), %1:_, shufflemask(0, 1, 2, 3)
+    PseudoRET implicit $lr, implicit %0
+...
+
+---
+name:            extract_vector_1024_to_32
+legalized:       false
+body:             |
+  bb.1.entry:
+    liveins: $y2
+    ; CHECK-LABEL: name: extract_vector_1024_to_32
+    ; CHECK: liveins: $y2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<128 x s8>) = COPY $y2
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<64 x s8>), [[UV1:%[0-9]+]]:_(<64 x s8>) = G_UNMERGE_VALUES [[COPY]](<128 x s8>)
+    ; CHECK-NEXT: [[UV2:%[0-9]+]]:_(<32 x s8>), [[UV3:%[0-9]+]]:_(<32 x s8>) = G_UNMERGE_VALUES [[UV]](<64 x s8>)
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<16 x s8>) = G_AIE_UNPAD_VECTOR [[UV2]](<32 x s8>)
+    ; CHECK-NEXT: [[UV4:%[0-9]+]]:_(<8 x s8>), [[UV5:%[0-9]+]]:_(<8 x s8>) = G_UNMERGE_VALUES [[AIE_UNPAD_VECTOR]](<16 x s8>)
+    ; CHECK-NEXT: [[UV6:%[0-9]+]]:_(<4 x s8>), [[UV7:%[0-9]+]]:_(<4 x s8>) = G_UNMERGE_VALUES [[UV4]](<8 x s8>)
+    ; CHECK-NEXT: [[UV8:%[0-9]+]]:_(<2 x s8>), [[UV9:%[0-9]+]]:_(<2 x s8>) = G_UNMERGE_VALUES [[UV6]](<4 x s8>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[UV8]](<2 x s8>)
+    %1:_(<128 x s8>) = COPY $y2
+    %0:_(<2 x s8>) = G_SHUFFLE_VECTOR %1:_(<128 x s8>), %1:_, shufflemask(0, 1)
+    PseudoRET implicit $lr, implicit %0
+...
+
+---
+name:            extract_vector_second_half_512_to_256
+legalized:       false
+body:             |
+  bb.1.entry:
+    liveins: $x0, $x1
+    ; CHECK-LABEL: name: extract_vector_second_half_512_to_256
+    ; CHECK: liveins: $x0, $x1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s32>) = COPY $x0
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<8 x s32>), [[UV1:%[0-9]+]]:_(<8 x s32>) = G_UNMERGE_VALUES [[COPY]](<16 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[UV1]](<8 x s32>)
+    %1:_(<16 x s32>) = COPY $x0
+    %2:_(<8 x s32>) = G_SHUFFLE_VECTOR %1:_(<16 x s32>), %1:_(<16 x s32>), shufflemask(8, 9, 10, 11, 12, 13, 14, 15)
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
+name:            extract_vector_second_half_512_to_128
+legalized:       false
+body:             |
+  bb.1.entry:
+    liveins: $x0, $x1
+    ; CHECK-LABEL: name: extract_vector_second_half_512_to_128
+    ; CHECK: liveins: $x0, $x1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s32>) = COPY $x0
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<8 x s32>), [[UV1:%[0-9]+]]:_(<8 x s32>) = G_UNMERGE_VALUES [[COPY]](<16 x s32>)
+    ; CHECK-NEXT: [[UV2:%[0-9]+]]:_(<4 x s32>), [[UV3:%[0-9]+]]:_(<4 x s32>) = G_UNMERGE_VALUES [[UV]](<8 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[UV3]](<4 x s32>)
+    %1:_(<16 x s32>) = COPY $x0
+    %2:_(<4 x s32>) = G_SHUFFLE_VECTOR %1:_(<16 x s32>), %1:_(<16 x s32>), shufflemask(4, 5, 6, 7)
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
+name:            extract_vector_second_half_1024_to_512
+legalized:       false
+body:             |
+  bb.1.entry:
+    liveins: $y2, $y3
+    ; CHECK-LABEL: name: extract_vector_second_half_1024_to_512
+    ; CHECK: liveins: $y2, $y3
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<128 x s8>) = COPY $y2
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<64 x s8>), [[UV1:%[0-9]+]]:_(<64 x s8>) = G_UNMERGE_VALUES [[COPY]](<128 x s8>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[UV1]](<64 x s8>)
+    %1:_(<128 x s8>) = COPY $y2
+    %2:_(<64 x s8>) = G_SHUFFLE_VECTOR %1:_(<128 x s8>), %1:_(<128 x s8>), shufflemask(64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127)
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
+name:            extract_vector_second_half_1024_to_32
+legalized:       false
+body:             |
+  bb.1.entry:
+    liveins: $y2, $y3
+    ; CHECK-LABEL: name: extract_vector_second_half_1024_to_32
+    ; CHECK: liveins: $y2, $y3
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<128 x s8>) = COPY $y2
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<64 x s8>), [[UV1:%[0-9]+]]:_(<64 x s8>) = G_UNMERGE_VALUES [[COPY]](<128 x s8>)
+    ; CHECK-NEXT: [[UV2:%[0-9]+]]:_(<32 x s8>), [[UV3:%[0-9]+]]:_(<32 x s8>) = G_UNMERGE_VALUES [[UV]](<64 x s8>)
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<16 x s8>) = G_AIE_UNPAD_VECTOR [[UV2]](<32 x s8>)
+    ; CHECK-NEXT: [[UV4:%[0-9]+]]:_(<8 x s8>), [[UV5:%[0-9]+]]:_(<8 x s8>) = G_UNMERGE_VALUES [[AIE_UNPAD_VECTOR]](<16 x s8>)
+    ; CHECK-NEXT: [[UV6:%[0-9]+]]:_(<4 x s8>), [[UV7:%[0-9]+]]:_(<4 x s8>) = G_UNMERGE_VALUES [[UV4]](<8 x s8>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[UV7]](<4 x s8>)
+    %1:_(<128 x s8>) = COPY $y2
+    %2:_(<4 x s8>) = G_SHUFFLE_VECTOR %1:_(<128 x s8>), %1:_(<128 x s8>), shufflemask(4, 5, 6, 7)
+    PseudoRET implicit $lr, implicit %2
 ...
