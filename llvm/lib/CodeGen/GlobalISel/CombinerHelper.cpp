@@ -449,10 +449,19 @@ Register CombinerHelper::createUnmergeValue(
 
 bool CombinerHelper::tryCombineShuffleVector(MachineInstr &MI) {
   const Register DstReg = MI.getOperand(0).getReg();
+  const Register SrcReg1 = MI.getOperand(1).getReg();
+  const Register SrcReg2 = MI.getOperand(2).getReg();
+
   const LLT DstTy = MRI.getType(DstReg);
   const LLT SrcTy = MRI.getType(MI.getOperand(1).getReg());
+
   const unsigned DstNumElts = DstTy.isVector() ? DstTy.getNumElements() : 1;
   const unsigned SrcNumElts = SrcTy.isVector() ? SrcTy.getNumElements() : 1;
+
+  // This test is a bit silly, but it is required because some tests rely on
+  // the legalizer changing the type of the shufflevector.
+  if (DstTy.getScalarSizeInBits() == 1)
+    return false;
 
   // {1, 2, ..., n} -> G_CONCAT_VECTOR
   // Turns a shuffle vector that only increments into a concat vector
@@ -500,6 +509,38 @@ bool CombinerHelper::tryCombineShuffleVector(MachineInstr &MI) {
     return true;
   }
 
+  // {1, 2, ..., |DstVector|} -> G_UNMERGE_VALUES
+  // Extracts the first chunk of the same size of the destination vector from
+  // the source
+  GeneratorType FirstQuarter = adderGenerator(0, DstNumElts - 1, 1);
+  if (matchCombineShuffleVector(MI, FirstQuarter, DstNumElts - 1)) {
+    // This optimization does not work if the target type is not a multiple of
+    // two, this can happen in some backends that support uneven vector types.
+    // We also need to make sure that the vector can be split into two.
+    if (SrcTy == DstTy || ((SrcNumElts / 2) % 2) != 0 ||
+        SrcNumElts % DstNumElts != 0)
+      return false;
+    ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
+    const Register TargetReg = Mask[0] < (int)SrcNumElts ? SrcReg1 : SrcReg2;
+    createUnmergeValue(MI, TargetReg, DstReg, 0, 0, SrcNumElts);
+    MI.eraseFromParent();
+    return true;
+  }
+
+  // {|DstVector|, |DstVector|+1, ..., 2 * |DstVector|} -> G_UNMERGE_VALUES
+  // Extracts the second chunk of the same size of the destination vector from
+  // the source
+  GeneratorType SecondQuarter =
+      adderGenerator(DstNumElts, (DstNumElts * 2) - 1, 1);
+  if (matchCombineShuffleVector(MI, SecondQuarter, DstNumElts - 1)) {
+    if (((SrcNumElts / 2) % 2) != 0 || SrcNumElts % DstNumElts != 0)
+      return false;
+    ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
+    const Register TargetReg = Mask[0] < (int)SrcNumElts ? SrcReg1 : SrcReg2;
+    createUnmergeValue(MI, TargetReg, DstReg, 1, 0, SrcNumElts);
+    MI.eraseFromParent();
+    return true;
+  }
   return false;
 }
 
