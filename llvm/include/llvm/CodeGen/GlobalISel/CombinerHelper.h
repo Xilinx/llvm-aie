@@ -27,6 +27,7 @@
 #include "llvm/CodeGenTypes/LowLevelType.h"
 #include "llvm/IR/InstrTypes.h"
 #include <functional>
+#include <optional>
 
 namespace llvm {
 
@@ -256,8 +257,11 @@ public:
   /// concat_vectors.
   ///
   /// \pre MI.getOpcode() == G_SHUFFLE_VECTOR.
-  bool matchCombineShuffleVector(MachineInstr &MI,
-                                 SmallVectorImpl<Register> &Ops);
+  using GeneratorType = std::function<std::optional<int32_t>()>;
+
+  bool matchCombineShuffleVector(MachineInstr &MI, GeneratorType Generator,
+                                 const size_t TargetDstSize);
+
   /// Replace \p MI with a concat_vectors with \p Ops.
   void applyCombineShuffleVector(MachineInstr &MI,
                                  const ArrayRef<Register> Ops);

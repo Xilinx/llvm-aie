@@ -42,6 +42,8 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetMachine.h"
 #include <cmath>
+#include <cstdint>
+#include <functional>
 #include <optional>
 #include <tuple>
 
@@ -371,7 +373,6 @@ void CombinerHelper::applyCombineShuffleConcat(MachineInstr &MI,
                                                SmallVector<Register> &Ops) {
   LLT SrcTy = MRI.getType(Ops[0]);
   Register UndefReg = 0;
-
   for (unsigned i = 0; i < Ops.size(); i++) {
     if (Ops[i] == 0) {
       if (UndefReg == 0)
@@ -384,17 +385,78 @@ void CombinerHelper::applyCombineShuffleConcat(MachineInstr &MI,
   MI.eraseFromParent();
 }
 
+// Create a stream from 0 to n with a specified number of steps
+CombinerHelper::GeneratorType
+adderGenerator(const int32_t From, const int32_t To, const int32_t StepSize) {
+  int32_t Counter = From;
+  return [Counter, To, StepSize]() mutable {
+    std::optional<int32_t> OldCount = std::optional<int32_t>(Counter);
+    Counter += StepSize;
+    if (OldCount == (To + StepSize))
+      OldCount = {};
+    return OldCount;
+  };
+}
+
 bool CombinerHelper::tryCombineShuffleVector(MachineInstr &MI) {
+  const Register DstReg = MI.getOperand(0).getReg();
+  const LLT DstTy = MRI.getType(DstReg);
+  const LLT SrcTy = MRI.getType(MI.getOperand(1).getReg());
+  const unsigned DstNumElts = DstTy.isVector() ? DstTy.getNumElements() : 1;
+  const unsigned SrcNumElts = SrcTy.isVector() ? SrcTy.getNumElements() : 1;
+
+  // {1, 2, ..., n} -> G_CONCAT_VECTOR
+  // Turns a shuffle vector that only increments into a concat vector
+  // instruction
+  GeneratorType CountUp = adderGenerator(0, DstNumElts - 1, 1);
   SmallVector<Register, 4> Ops;
-  if (matchCombineShuffleVector(MI, Ops)) {
+
+  if (matchCombineShuffleVector(MI, CountUp, 2 * SrcNumElts)) {
+    // The shuffle is concatenating multiple vectors together.
+    // Collect the different operands for that.
+    Register UndefReg;
+    const Register Src1 = MI.getOperand(1).getReg();
+    const Register Src2 = MI.getOperand(2).getReg();
+
+    const ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
+
+    // The destination can be longer than the source, so we separate them into
+    // equal blocks and check them separately to see if one of the blocks can be
+    // copied whole.
+    unsigned NumConcat = DstNumElts / SrcNumElts;
+    unsigned Index = 0;
+    for (unsigned Concat = 0; Concat < NumConcat; Concat++) {
+      unsigned Target = (Concat + 1) * SrcNumElts;
+      while (Index < Target) {
+        int MaskElt = Mask[Index];
+        if (MaskElt >= 0) {
+          Ops.push_back((MaskElt < (int)SrcNumElts) ? Src1 : Src2);
+          break;
+        }
+        Index++;
+      }
+
+      if (Index == Target) {
+        if (!UndefReg) {
+          Builder.setInsertPt(*MI.getParent(), MI);
+          UndefReg = Builder.buildUndef(SrcTy).getReg(0);
+        }
+        Ops.push_back(UndefReg);
+      }
+
+      Index = Target;
+    }
+
     applyCombineShuffleVector(MI, Ops);
     return true;
   }
+
   return false;
 }
 
 bool CombinerHelper::matchCombineShuffleVector(MachineInstr &MI,
-                                               SmallVectorImpl<Register> &Ops) {
+                                               GeneratorType Generator,
+                                               const size_t TargetDstSize) {
   assert(MI.getOpcode() == TargetOpcode::G_SHUFFLE_VECTOR &&
          "Invalid instruction kind");
   LLT DstType = MRI.getType(MI.getOperand(0).getReg());
@@ -421,51 +483,24 @@ bool CombinerHelper::matchCombineShuffleVector(MachineInstr &MI,
   //
   // TODO: If the size between the source and destination don't match
   //       we could still emit an extract vector element in that case.
-  if (DstNumElts < 2 * SrcNumElts && DstNumElts != 1)
+  if ((DstNumElts < TargetDstSize) && DstNumElts != 1)
     return false;
 
-  // Check that the shuffle mask can be broken evenly between the
-  // different sources.
-  if (DstNumElts % SrcNumElts != 0)
-    return false;
-
-  // Mask length is a multiple of the source vector length.
-  // Check if the shuffle is some kind of concatenation of the input
-  // vectors.
-  unsigned NumConcat = DstNumElts / SrcNumElts;
-  SmallVector<int, 8> ConcatSrcs(NumConcat, -1);
   ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
   for (unsigned i = 0; i != DstNumElts; ++i) {
     int Idx = Mask[i];
+    const int32_t ShiftIndex = Generator().value_or(-1);
+
     // Undef value.
-    if (Idx < 0)
+    if (Idx < 0 || ShiftIndex < 0)
       continue;
-    // Ensure the indices in each SrcType sized piece are sequential and that
+
+    // Ensure the indices in each SrcType sized piece are seqential and that
     // the same source is used for the whole piece.
-    if ((Idx % SrcNumElts != (i % SrcNumElts)) ||
-        (ConcatSrcs[i / SrcNumElts] >= 0 &&
-         ConcatSrcs[i / SrcNumElts] != (int)(Idx / SrcNumElts)))
+    if ((Idx % SrcNumElts != (ShiftIndex % SrcNumElts)))
       return false;
-    // Remember which source this index came from.
-    ConcatSrcs[i / SrcNumElts] = Idx / SrcNumElts;
   }
 
-  // The shuffle is concatenating multiple vectors together.
-  // Collect the different operands for that.
-  Register UndefReg;
-  Register Src2 = MI.getOperand(2).getReg();
-  for (auto Src : ConcatSrcs) {
-    if (Src < 0) {
-      if (!UndefReg) {
-        Builder.setInsertPt(*MI.getParent(), MI);
-        UndefReg = Builder.buildUndef(SrcType).getReg(0);
-      }
-      Ops.push_back(UndefReg);
-    } else if (Src == 0)
-      Ops.push_back(Src1);
-    else
-      Ops.push_back(Src2);
-  }
   return true;
 }
 
