@@ -261,6 +261,16 @@ public:
   bool matchCombineShuffleVector(MachineInstr &MI, GeneratorType Generator,
                                  const size_t TargetDstSize);
 
+  /// Create G_UNMERGE_VECTOR instructions until the source has reached a
+  /// target vector size.
+  ///
+  /// Requires that the destination fits evenly in the source register. It
+  /// allows you to pass which of the different destination sized slices
+  /// you require.
+  Register createUnmergeValue(MachineInstr &MI, const Register SrcReg,
+                              const Register DstReg, uint8_t DestinationIndex,
+                              const uint32_t Start, const uint32_t End);
+
   /// Replace \p MI with a concat_vectors with \p Ops.
   void applyCombineShuffleVector(MachineInstr &MI,
                                  const ArrayRef<Register> Ops);
