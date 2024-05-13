@@ -399,6 +399,21 @@ adderGenerator(const int32_t From, const int32_t To, const int32_t StepSize) {
   };
 }
 
+// Move to the next generator if it is exhausted allowing to chain generators
+CombinerHelper::GeneratorType
+concatGenerators(SmallVector<CombinerHelper::GeneratorType> &Generators) {
+  auto *GeneratorIterator = Generators.begin();
+
+  return [GeneratorIterator, Generators]() mutable {
+    std::optional<int32_t> GenValue = (*GeneratorIterator)();
+    if (!GenValue.has_value() && GeneratorIterator != Generators.end()) {
+      GeneratorIterator++;
+      GenValue = (*GeneratorIterator)();
+    }
+    return GenValue;
+  };
+}
+
 Register CombinerHelper::createUnmergeValue(
     MachineInstr &MI, const Register SrcReg, const Register DstReg,
     const uint8_t DestinationIndex, const uint32_t Start, const uint32_t End) {
