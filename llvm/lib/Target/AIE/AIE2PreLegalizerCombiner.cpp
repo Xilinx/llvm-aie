@@ -22,6 +22,7 @@
 #include "llvm/CodeGen/GlobalISel/GIMatchTableExecutorImpl.h"
 #include "llvm/CodeGen/GlobalISel/GISelKnownBits.h"
 #include "llvm/CodeGen/MachineDominators.h"
+#include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/IR/IntrinsicsAIE2.h"
 #include "llvm/InitializePasses.h"
 
@@ -62,9 +63,7 @@ public:
       const LegalizerInfo *LI);
 
   static const char *getName() { return "AIE2PreLegalizerCombiner"; }
-
   bool tryCombineAll(MachineInstr &I) const override;
-
   bool tryCombineAllImpl(MachineInstr &I) const;
 
   bool tryToCombineVectorShiftsByZero(MachineInstr &MI) const;
@@ -166,6 +165,9 @@ bool AIE2PreLegalizerCombinerImpl::tryCombineAll(MachineInstr &MI) const {
   }
   case TargetOpcode::G_INTRINSIC: {
     return tryToCombineIntrinsic(MI);
+  }
+  case TargetOpcode::G_SHUFFLE_VECTOR: {
+    return Helper.tryCombineShuffleVector(MI);
   }
   default:
     break;
