@@ -63,6 +63,7 @@ def AIE2PreLegalizerCombiner
                                                                  combine_globalval_offset,
                                                                  combine_extract_vector_elt_and_zsa_ext,
                                                                  combine_splat_vector ]> {
+    let CombineAllMethodName = "tryCombineAllImpl";
 }
 
 def AIE2PostLegalizerGenericCombiner

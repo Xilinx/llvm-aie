@@ -22,6 +22,7 @@
 #include "llvm/CodeGen/GlobalISel/GIMatchTableExecutorImpl.h"
 #include "llvm/CodeGen/GlobalISel/GISelKnownBits.h"
 #include "llvm/CodeGen/MachineDominators.h"
+#include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/InitializePasses.h"
 
 #define DEBUG_TYPE "aie2-prelegalizer-combiner"
@@ -54,8 +55,8 @@ public:
       const LegalizerInfo *LI);
 
   static const char *getName() { return "AIE2PreLegalizerCombiner"; }
-
   bool tryCombineAll(MachineInstr &I) const override;
+  bool tryCombineAllImpl(MachineInstr &I) const;
 
 private:
 #define GET_GICOMBINER_CLASS_MEMBERS
@@ -81,6 +82,18 @@ AIE2PreLegalizerCombinerImpl::AIE2PreLegalizerCombinerImpl(
 #include "AIE2GenPreLegalizerGICombiner.inc"
 #undef GET_GICOMBINER_CONSTRUCTOR_INITS
 {
+}
+
+bool AIE2PreLegalizerCombinerImpl::tryCombineAll(MachineInstr &MI) const {
+  if (tryCombineAllImpl(MI))
+    return true;
+
+  unsigned Opc = MI.getOpcode();
+  switch (Opc) {
+  case TargetOpcode::G_SHUFFLE_VECTOR:
+    return Helper.tryCombineShuffleVector(MI);
+  }
+  return false;
 }
 
 class AIE2PreLegalizerCombiner : public MachineFunctionPass {
