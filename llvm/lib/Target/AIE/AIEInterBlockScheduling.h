@@ -123,12 +123,19 @@ public:
 // get enter and leave calls. We construct our Regions from the iterators
 // passed to the enterRegion call.
 class Region {
+  // The instrutions in their original order
   std::vector<MachineInstr *> SemanticOrder;
+  // The instruction that starts the next region, if any
+  MachineInstr *ExitInstr = nullptr;
 
 public:
-  Region(MachineBasicBlock::iterator Begin, MachineBasicBlock::iterator End) {
+  Region(MachineBasicBlock *BB, MachineBasicBlock::iterator Begin,
+         MachineBasicBlock::iterator End) {
     for (auto It = Begin; It != End; ++It) {
       SemanticOrder.push_back(&*It);
+    }
+    if (End != BB->end()) {
+      ExitInstr = &*End;
     }
   }
   std::vector<MachineInstr *>::const_iterator begin() const {
@@ -137,6 +144,7 @@ public:
   std::vector<MachineInstr *>::const_iterator end() const {
     return SemanticOrder.end();
   }
+  MachineInstr *getExitInstr() const { return ExitInstr; }
 
   std::vector<MachineBundle> Bundles;
 };
@@ -164,10 +172,10 @@ public:
     auto &TheBundles = Regions.at(CurrentRegion).Bundles;
     TheBundles.insert(TheBundles.end(), Bundles.begin(), Bundles.end());
   }
-  void addRegion(MachineBasicBlock::iterator RegionBegin,
+  void addRegion(MachineBasicBlock *BB, MachineBasicBlock::iterator RegionBegin,
                  MachineBasicBlock::iterator RegionEnd) {
     CurrentRegion = Regions.size();
-    Regions.emplace_back(RegionBegin, RegionEnd);
+    Regions.emplace_back(BB, RegionBegin, RegionEnd);
   }
   auto getCurrentRegion() const { return Regions.at(CurrentRegion); }
   const Region &getTop() const { return Regions.back(); }
@@ -190,6 +198,7 @@ public:
   /// index of the last region created, on following iterations it is the index
   /// of the region we are curently updating.
   void advanceRegion() { ++CurrentRegion; }
+  void resetRegion() { CurrentRegion = 0; }
 
   /// This prepares for the next fixpoint iteration. The region structure stays
   /// intact, but the actual schedule is cleared.
