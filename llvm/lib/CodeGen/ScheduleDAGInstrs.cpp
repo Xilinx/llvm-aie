@@ -633,14 +633,18 @@ void ScheduleDAGInstrs::initSUnits() {
   for (MachineInstr &MI : make_range(RegionBegin, RegionEnd)) {
     initSUnit(MI);
   }
+}
 
+void ScheduleDAGInstrs::makeMaps() {
   // At this point we have all SUnits allocated and their addresses are stable.
   // We can now safely export them.
   MISUnitMap.clear();
   for (auto &SU : SUnits) {
     MISUnitMap[SU.getInstr()] = &SU;
   }
+}
 
+void ScheduleDAGInstrs::setExitSU() {
   // Set the exit instruction. If we have a bb, we take it from there.
   MachineInstr *ExitMI =
       BB ? RegionEnd != BB->end()
@@ -655,6 +659,9 @@ void ScheduleDAGInstrs::recordDbgInstrs() {
   // without emitting the info from the previous call.
   DbgValues.clear();
   FirstDbgValue = nullptr;
+
+  // We connect any Debug machine instruction to the instruction before it.
+  // if there is no instruction before it, it is recorded in FirstDbgValue;
   MachineInstr *DbgMI = nullptr;
   for (MachineBasicBlock::iterator MII = RegionEnd, MIE = RegionBegin;
        MII != MIE; --MII) {
@@ -666,11 +673,7 @@ void ScheduleDAGInstrs::recordDbgInstrs() {
 
     if (MI.isDebugValue() || MI.isDebugPHI()) {
       DbgMI = &MI;
-      continue;
     }
-
-    if (MI.isDebugLabel() || MI.isDebugRef() || MI.isPseudoProbe())
-      continue;
   }
   if (DbgMI)
     FirstDbgValue = DbgMI;
@@ -839,6 +842,8 @@ void ScheduleDAGInstrs::buildSchedGraph(AAResults *AA,
                                         bool TrackLaneMasks) {
   // Create an SUnit for each real instruction.
   initSUnits();
+  setExitSU();
+  makeMaps();
   recordDbgInstrs();
   buildEdges(AA, RPTracker, PDiffs, LIS, TrackLaneMasks);
 }
