@@ -198,11 +198,10 @@ class RegionEndEdges : public ScheduleDAGMutation {
 
     const auto *TII = static_cast<const AIEBaseInstrInfo *>(DAG->TII);
     bool UserSetLatencyMargin = UserLatencyMargin.getNumOccurrences() > 0;
-    for (MachineInstr &MI : *DAG) {
-      SUnit *SU = DAG->getSUnit(&MI);
-      if (!SU)
-        continue;
-      SDep ExitDep(SU, SDep::Artificial);
+    for (SUnit &SU : DAG->SUnits) {
+      MachineInstr &MI = *SU.getInstr();
+
+      SDep ExitDep(&SU, SDep::Artificial);
 
       unsigned DelaySlots = TII->getNumDelaySlots(MI);
       unsigned EdgeLatency = !DelaySlots && UserSetLatencyMargin
