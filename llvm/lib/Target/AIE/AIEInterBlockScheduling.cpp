@@ -81,6 +81,7 @@ void InterBlockScheduling::leaveFunction() {
 
 void InterBlockScheduling::enterBlock(MachineBasicBlock *BB) {
   CurrentBlock = &getBlockState(BB);
+  CurrentBlock->resetRegion();
   DEBUG_BLOCKS(dbgs() << "  >> enterBlock " << BB->getNumber() << " "
                       << CurrentBlock->kindAsString() << " FixPointIter="
                       << CurrentBlock->FixPoint.NumIters << "\n");
@@ -356,7 +357,7 @@ void InterBlockScheduling::enterRegion(MachineBasicBlock *BB,
   DEBUG_BLOCKS(dbgs() << "    >> enterRegion, Iter=" << BS.FixPoint.NumIters
                       << "\n");
   if (!BS.FixPoint.NumIters) {
-    BS.addRegion(RegionBegin, RegionEnd);
+    BS.addRegion(BB, RegionBegin, RegionEnd);
   }
 }
 int InterBlockScheduling::getNumEntryNops(const BlockState &BS) const {
