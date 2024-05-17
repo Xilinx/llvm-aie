@@ -270,6 +270,8 @@ namespace llvm {
     /// Gets the machine model for instruction scheduling.
     const TargetSchedModel *getSchedModel() const { return &SchedModel; }
 
+    MachineBasicBlock *getBB() const { return BB; }
+
     /// Resolves and cache a resolved scheduling class for an SUnit.
     const MCSchedClassDesc *getSchedClass(SUnit *SU) const {
       if (!SU->SchedClass && SchedModel.hasInstrSchedModel())
@@ -323,6 +325,11 @@ namespace llvm {
                          PressureDiffs *PDiffs = nullptr,
                          LiveIntervals *LIS = nullptr,
                          bool TrackLaneMasks = false);
+
+    // Make reverse-lookup maps
+    void makeMaps();
+    void setExitSU();
+    void recordDbgInstrs();
 
     /// Computes the edges by tracking the read and write events in a backward
     /// traversal of the SUnits vector.
@@ -406,8 +413,9 @@ namespace llvm {
     virtual void adjustAndAddPred(SUnit *DstSU, SDep &Dep, int SrcIdx,
                                   int DstIdx);
 
+    // Create the SUnits vector
     void initSUnits();
-    void recordDbgInstrs();
+
     void addPhysRegDataDeps(SUnit *SU, unsigned OperIdx);
     void addPhysRegDeps(SUnit *SU, unsigned OperIdx);
     void addVRegDefDeps(SUnit *SU, unsigned OperIdx);

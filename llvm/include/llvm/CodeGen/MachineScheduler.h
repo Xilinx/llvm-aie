@@ -437,7 +437,7 @@ protected:
   void updateQueues(SUnit *SU, bool IsTopNode);
 
   /// Reinsert debug_values recorded in ScheduleDAGInstrs::DbgValues.
-  void placeDebugValues();
+  virtual void placeDebugValues();
 
   /// dump the scheduled Sequence.
   void dumpSchedule() const;
