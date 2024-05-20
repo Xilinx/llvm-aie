@@ -565,6 +565,7 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
     case Intrinsic::aie2_v16bfloat16:
     case Intrinsic::aie2_v32bfloat16:
     case Intrinsic::aie2_v64bfloat16:
+    case Intrinsic::aie2_v8accfloat:
     case Intrinsic::aie2_v16accfloat:
     case Intrinsic::aie2_v32accfloat:
     case Intrinsic::aie2_v8float:
