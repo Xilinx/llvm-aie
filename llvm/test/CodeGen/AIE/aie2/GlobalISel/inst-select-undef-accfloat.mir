@@ -8,6 +8,22 @@
 # RUN: llc -mtriple aie2 -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s
 
 ---
+name:            v8accfloat_undef
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: v8accfloat_undef
+    ; CHECK: [[DEF:%[0-9]+]]:acc256 = IMPLICIT_DEF
+    ; CHECK-NEXT: $amll0 = COPY [[DEF]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $amll0
+    %0:accregbank(<4 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.v8accfloat)
+    $amll0 = COPY %0:accregbank(<4 x s64>)
+    PseudoRET implicit $lr, implicit $amll0
+...
+
+---
 name:            v16accfloat_undef
 alignment:       16
 legalized:       true
