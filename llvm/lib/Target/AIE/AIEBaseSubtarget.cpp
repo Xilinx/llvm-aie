@@ -30,6 +30,14 @@ static cl::opt<bool> EnableStrongCopyEdges(
     "aie-strong-copy-edges", cl::Hidden, cl::init(true),
     cl::desc("Enforces edges between COPY sources and other users of those "
              "sources to limit live range overlaps"));
+static cl::opt<bool> EnablePreMISchedPropagateIncomingLatencies(
+    "aie-premisched-propagate-incoming-latencies", cl::Hidden, cl::init(false),
+    cl::desc(
+        "Move input latency of copy-like instructions to their successors"));
+static cl::opt<bool> EnablePipelinerSchedPropagateIncomingLatencies(
+    "aie-pipeliner-propagate-incoming-latencies", cl::Hidden, cl::init(true),
+    cl::desc(
+        "Move input latency of copy-like instructions to their successors"));
 
 // These are debugging/testing options.
 
@@ -281,6 +289,52 @@ class EnforceCopyEdges : public ScheduleDAGMutation {
   }
 };
 
+class PropagateIncomingLatencies : public ScheduleDAGMutation {
+  bool OnlyCopyLike;
+
+public:
+  PropagateIncomingLatencies(bool OnlyCopyLike = true)
+      : OnlyCopyLike(OnlyCopyLike) {}
+  void apply(ScheduleDAGInstrs *DAG) override {
+    auto IsData = [](const SDep &D) { return D.getKind() == SDep::Data; };
+    for (SUnit &SU : DAG->SUnits) {
+      MachineInstr &MI = *SU.getInstr();
+
+      // Only look at COPY and REG_SEQUENCE if requested
+      if (OnlyCopyLike && !MI.isCopy() &&
+          MI.getOpcode() != TargetOpcode::REG_SEQUENCE)
+        continue;
+
+      // Do not extend live ranges of phys regs
+      if (any_of(MI.defs(), [](const MachineOperand &MO) {
+            return MO.isReg() && MO.getReg().isPhysical();
+          }))
+        continue;
+
+      // Find the common latency for all predecessors that can be
+      // "moved" to successors.
+      SDep *MinLatencyDep = nullptr;
+      for (SDep &PredEdge : make_filter_range(SU.Preds, IsData)) {
+        if (!MinLatencyDep ||
+            PredEdge.getLatency() < MinLatencyDep->getLatency())
+          MinLatencyDep = &PredEdge;
+      }
+      if (!MinLatencyDep)
+        continue;
+
+      int PropagatableSrcLatency = MinLatencyDep->getLatency();
+      for (SDep &PredEdge : make_filter_range(SU.Preds, IsData)) {
+        updatePredLatency(PredEdge, SU,
+                          PredEdge.getLatency() - PropagatableSrcLatency);
+      }
+      for (SDep &SuccEdge : make_filter_range(SU.Succs, IsData)) {
+        updateSuccLatency(SuccEdge, SU,
+                          SuccEdge.getLatency() + PropagatableSrcLatency);
+      }
+    }
+  }
+};
+
 /// Fix memory dependencies. Based on their type, LLVM gives them a latency of
 /// 0 or 1 cycle by default. This isn't always correct for AIE, so one needs to
 /// fix the latencies to preserve the ordering.
@@ -436,6 +490,8 @@ AIEBaseSubtarget::getInterBlockMutationsImpl(const Triple &TT) {
 std::vector<std::unique_ptr<ScheduleDAGMutation>>
 AIEBaseSubtarget::getPreRAMutationsImpl(const Triple &TT) {
   std::vector<std::unique_ptr<ScheduleDAGMutation>> Mutations;
+  if (EnablePreMISchedPropagateIncomingLatencies)
+    Mutations.emplace_back(std::make_unique<PropagateIncomingLatencies>());
   if (EnableStrongCopyEdges)
     Mutations.emplace_back(std::make_unique<EnforceCopyEdges>());
   return Mutations;
@@ -446,6 +502,8 @@ AIEBaseSubtarget::getSMSMutationsImpl(const Triple &TT) {
   std::vector<std::unique_ptr<ScheduleDAGMutation>> Mutations;
   if (!TT.isAIE1()) {
     Mutations.emplace_back(std::make_unique<WAWEdges>());
+    if (EnablePipelinerSchedPropagateIncomingLatencies)
+      Mutations.emplace_back(std::make_unique<PropagateIncomingLatencies>());
   }
   return Mutations;
 }
