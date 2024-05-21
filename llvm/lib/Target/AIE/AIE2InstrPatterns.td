@@ -961,6 +961,22 @@ def : Concat256<int_aie2_concat_512_256_acc, ACC512, ACC256>;
 def : Concat512<int_aie2_concat_1024_512_acc, ACC1024, ACC512>;
 def : Concat1024<int_aie2_concat_1024_256_acc, ACC1024, ACC256>;
 
+// concat_vector generic opcode
+def : Pat<(v16i32 (concat_vectors (v8i32 VEC256:$src0), (v8i32 VEC256:$src1))),
+  (v16i32 (REG_SEQUENCE VEC512, VEC256:$src0, sub_256_lo, VEC256:$src1, sub_256_hi))>;
+def : Pat<(v32i32 (concat_vectors (v16i32 VEC512:$src0), (v16i32 VEC512:$src1))),
+  (v32i32 (REG_SEQUENCE VEC1024, VEC512:$src0, sub_512_lo, VEC512:$src1, sub_512_hi))>;
+
+def : Pat<(v32i16 (concat_vectors (v16i16 VEC256:$src0), (v16i16 VEC256:$src1))),
+  (v32i16 (REG_SEQUENCE VEC512, VEC256:$src0, sub_256_lo, VEC256:$src1, sub_256_hi))>;
+def : Pat<(v64i16 (concat_vectors (v32i16 VEC512:$src0), (v32i16 VEC512:$src1))),
+  (v64i16 (REG_SEQUENCE VEC1024, VEC512:$src0, sub_512_lo, VEC512:$src1, sub_512_hi))>;
+
+def : Pat<(v64i8 (concat_vectors (v32i8 VEC256:$src0), (v32i8 VEC256:$src1))),
+  (v64i8 (REG_SEQUENCE VEC512, VEC256:$src0, sub_256_lo, VEC256:$src1, sub_256_hi))>;
+def : Pat<(v128i8 (concat_vectors (v64i8 VEC512:$src0), (v64i8 VEC512:$src1))),
+  (v128i8 (REG_SEQUENCE VEC1024, VEC512:$src0, sub_512_lo, VEC512:$src1, sub_512_hi))>;
+
 // Extract
 def : Pat<(int_aie2_ext_I256_I512 VEC512:$src, 0x0),
            (v8i32 (EXTRACT_SUBREG VEC512:$src, sub_256_lo))>;

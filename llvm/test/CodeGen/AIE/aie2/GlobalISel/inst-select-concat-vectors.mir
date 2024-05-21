@@ -18,8 +18,8 @@ stack:
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: vconcat_1024
-    ; CHECK: [[DEF:%[0-9]+]]:vec512 = IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:vec512 = IMPLICIT_DEF
+    ; CHECK: [[DEF:%[0-9]+]]:exe = IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:exo = IMPLICIT_DEF
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec1024 = REG_SEQUENCE [[DEF]], %subreg.sub_512_lo, [[DEF1]], %subreg.sub_512_hi
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]]
     %0:vregbank(<16 x s32>) = G_IMPLICIT_DEF
@@ -29,7 +29,7 @@ body:             |
 ...
 
 ---
-name:            vconcat_512
+name:            vconcat_512_32
 legalized:       true
 regBankSelected: true
 tracksRegLiveness: true
@@ -37,12 +37,92 @@ stack:
   - { id: 0, name: "", size: 128, alignment: 32 }
 body:             |
   bb.0.entry:
-    ; CHECK-LABEL: name: vconcat_512
-    ; CHECK: [[DEF:%[0-9]+]]:vec256 = IMPLICIT_DEF
-    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:vec256 = IMPLICIT_DEF
+    ; CHECK-LABEL: name: vconcat_512_32
+    ; CHECK: [[DEF:%[0-9]+]]:ewl = IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:ewh = IMPLICIT_DEF
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[DEF]], %subreg.sub_256_lo, [[DEF1]], %subreg.sub_256_hi
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]]
     %0:vregbank(<8 x s32>) = G_IMPLICIT_DEF
     %1:vregbank(<8 x s32>) = G_IMPLICIT_DEF
     %2:vregbank(<16 x s32>) = G_CONCAT_VECTORS %0(<8 x s32>), %1(<8 x s32>)
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
+name:            vconcat_512_16
+legalized:       true
+regBankSelected: true
+tracksRegLiveness: true
+stack:
+  - { id: 0, name: "", size: 128, alignment: 32 }
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: vconcat_512_16
+    ; CHECK: [[DEF:%[0-9]+]]:ewl = IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:ewh = IMPLICIT_DEF
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[DEF]], %subreg.sub_256_lo, [[DEF1]], %subreg.sub_256_hi
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]]
+    %0:vregbank(<16 x s16>) = G_IMPLICIT_DEF
+    %1:vregbank(<16 x s16>) = G_IMPLICIT_DEF
+    %2:vregbank(<32 x s16>) = G_CONCAT_VECTORS %0(<16 x s16>), %1(<16 x s16>)
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
+name:            vconcat_1024_16
+legalized:       true
+regBankSelected: true
+tracksRegLiveness: true
+stack:
+  - { id: 0, name: "", size: 128, alignment: 32 }
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: vconcat_1024_16
+    ; CHECK: [[DEF:%[0-9]+]]:exe = IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:exo = IMPLICIT_DEF
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec1024 = REG_SEQUENCE [[DEF]], %subreg.sub_512_lo, [[DEF1]], %subreg.sub_512_hi
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]]
+    %0:vregbank(<32 x s16>) = G_IMPLICIT_DEF
+    %1:vregbank(<32 x s16>) = G_IMPLICIT_DEF
+    %2:vregbank(<64 x s16>) = G_CONCAT_VECTORS %0(<32 x s16>), %1(<32 x s16>)
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
+name:            vconcat_512_8
+legalized:       true
+regBankSelected: true
+tracksRegLiveness: true
+stack:
+  - { id: 0, name: "", size: 128, alignment: 32 }
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: vconcat_512_8
+    ; CHECK: [[DEF:%[0-9]+]]:ewl = IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:ewh = IMPLICIT_DEF
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[DEF]], %subreg.sub_256_lo, [[DEF1]], %subreg.sub_256_hi
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]]
+    %0:vregbank(<32 x s8>) = G_IMPLICIT_DEF
+    %1:vregbank(<32 x s8>) = G_IMPLICIT_DEF
+    %2:vregbank(<64 x s8>) = G_CONCAT_VECTORS %0(<32 x s8>), %1(<32 x s8>)
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
+name:            vconcat_1024_8
+legalized:       true
+regBankSelected: true
+tracksRegLiveness: true
+stack:
+  - { id: 0, name: "", size: 128, alignment: 32 }
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: vconcat_1024_8
+    ; CHECK: [[DEF:%[0-9]+]]:exe = IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:exo = IMPLICIT_DEF
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec1024 = REG_SEQUENCE [[DEF]], %subreg.sub_512_lo, [[DEF1]], %subreg.sub_512_hi
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]]
+    %0:vregbank(<64 x s8>) = G_IMPLICIT_DEF
+    %1:vregbank(<64 x s8>) = G_IMPLICIT_DEF
+    %2:vregbank(<128 x s8>) = G_CONCAT_VECTORS %0(<64 x s8>), %1(<64 x s8>)
     PseudoRET implicit $lr, implicit %2
