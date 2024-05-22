@@ -49,6 +49,11 @@ public:
   bool isAIE2() const { return (TargetTriple.isAIE2()); }
   virtual ~AIEBaseSubtarget() = default;
 
+  // This is meant as an override of TargetSubtargetInfo::overrideSchedPolicy
+  // but AIEBaseSubtarget does not derive from that class...
+  void overrideSchedPolicyBase(MachineSchedPolicy &Policy,
+                               unsigned NumRegionInstrs) const;
+
   // Perform target-specific adjustments to the latency of a schedule
   // dependency.
   // If a pair of operands is associated with the schedule dependency, DefOpIdx
