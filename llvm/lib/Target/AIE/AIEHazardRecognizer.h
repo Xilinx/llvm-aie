@@ -92,9 +92,10 @@ class AIEHazardRecognizer : public ScheduleHazardRecognizer {
   void computeMaxLatency();
 
 public:
-  AIEHazardRecognizer(const AIEBaseInstrInfo *TII,
-                      const InstrItineraryData *II);
-  AIEHazardRecognizer(const TargetSubtargetInfo &SubTarget);
+  AIEHazardRecognizer(const AIEBaseInstrInfo *TII, const InstrItineraryData *II,
+                      bool IsPreRA);
+  AIEHazardRecognizer(const TargetSubtargetInfo &SubTarget,
+                      bool IsPreRA = false);
 
   ~AIEHazardRecognizer() override {}
 
@@ -127,11 +128,9 @@ public:
   ///        use from the pre-RA scheduler, where detailed resource modelling
   ///        doesn't pay off.
   void emitInScoreboard(ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
-                        const MCInstrDesc &Desc, int DeltaCycles,
-                        std::optional<int> FUDepthLimit) const;
+                        const MCInstrDesc &Desc, int DeltaCycles) const;
   // Apply the above function to the local scoreboard.
-  void emitInScoreboard(const MCInstrDesc &Desc, int DeltaCycles,
-                        std::optional<int> FUDepthLimit);
+  void emitInScoreboard(const MCInstrDesc &Desc, int DeltaCycles);
 
   /// Block all scoreboard resources at DeltaCycles
   void blockCycleInScoreboard(int DeltaCycle);
@@ -165,12 +164,10 @@ public:
   unsigned computeScoreboardDepth() const;
 
 protected:
+  ScheduleHazardRecognizer::HazardType getHazardType(const MCInstrDesc &Desc,
+                                                     int DeltaCycles);
   ScheduleHazardRecognizer::HazardType
-  getHazardType(const MCInstrDesc &Desc, int DeltaCycles,
-                std::optional<int> FUDepthLimit);
-  ScheduleHazardRecognizer::HazardType
-  getHazardType(unsigned SchedClass, SlotBits SlotSet, int DeltaCycles,
-                std::optional<int> FUDepthLimit);
+  getHazardType(unsigned SchedClass, SlotBits SlotSet, int DeltaCycles);
 
   static bool
   checkConflict(const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
@@ -191,6 +188,14 @@ private:
   static int NumInstrsScheduled;
   unsigned IssueLimit = 1;
   unsigned ReservedCycles = 0;
+
+  // Ignore FuncUnits past a certain pipeline depth.
+  // This is set to std::nullopt for the post-RA scheduler.
+  std::optional<int> FUDepthLimit;
+
+  // Allow instructions without a known slot to be added to any Bundle.
+  // This is set to false for the post-RA scheduler.
+  bool IgnoreUnknownSlotSets = false;
 };
 
 // Provide the DFAPacketizer interface for the MachinePipeliner

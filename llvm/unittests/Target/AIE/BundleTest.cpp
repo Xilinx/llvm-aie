@@ -232,6 +232,19 @@ TEST(Bundle, Standalone) {
   EXPECT_FALSE(B.canAdd(Unknown));
 }
 
+TEST(Bundle, AddUnknowns) {
+  MockTII TII;
+  MockMCFormats FormatInterface;
+  MockBundle B(&FormatInterface);
+  auto *Unknown = TII[FirstUnsupportedOpcode - FirstOpcode];
+
+  // Test we can create a bundle of two unknown instructions
+  // when not computing VLIW formats.
+  B.add(Unknown);
+  B.add(Unknown, std::nullopt, /*ComputeSlots=*/false);
+  EXPECT_EQ(B.size(), unsigned(2));
+}
+
 TEST(Bundle, Meta) {
   MockTII TII;
   MockMCFormats FormatInterface;

@@ -5,11 +5,11 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -march=aie2 -enable-misched -run-pass=machine-scheduler --aie-prera-func-unit-depth=5 %s -o - | FileCheck %s
+# RUN: llc -march=aie2 -enable-misched -run-pass=machine-scheduler --aie-premisched-fu-depth=5 %s -o - | FileCheck %s
 
 
 # Similar to load_vs_mova.mir, but we limit how deep in the scoreboard
-# resources can be booked with --aie-prera-func-unit-depth=5.
+# resources can be booked with --aie-premisched-fu-depth=5.
 # This means the R_WA_PORT used in E7 by LDA will be ignored, and it
 # can be more efficiently scheduled.
 
@@ -22,9 +22,9 @@ body: |
     ; CHECK-LABEL: name: mix
     ; CHECK: liveins: $p0, $p1
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: dead [[MOVA_lda_cg:%[0-9]+]]:er = MOVA_lda_cg 1
     ; CHECK-NEXT: dead [[MOVA_lda_cg1:%[0-9]+]]:er = MOVA_lda_cg 1
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: dead [[LDA_dms_lda_idx_imm:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY]], 0 :: (load (s32))
     ; CHECK-NEXT: dead [[MOVA_lda_cg2:%[0-9]+]]:er = MOVA_lda_cg 1
     ; CHECK-NEXT: dead [[MOVA_lda_cg3:%[0-9]+]]:er = MOVA_lda_cg 1

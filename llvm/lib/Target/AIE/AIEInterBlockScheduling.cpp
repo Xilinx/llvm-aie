@@ -120,7 +120,7 @@ bool InterBlockScheduling::resourcesConverged(BlockState &BS) const {
 
   for (auto &Bundle : BS.getBottom().Bundles) {
     for (MachineInstr *MI : Bundle.getInstrs()) {
-      HR->emitInScoreboard(Bottom, MI->getDesc(), 0, {});
+      HR->emitInScoreboard(Bottom, MI->getDesc(), 0);
     }
     Bottom.advance();
   }
@@ -143,7 +143,7 @@ bool InterBlockScheduling::resourcesConverged(BlockState &BS) const {
         break;
       }
       for (MachineInstr *MI : Bundle.getInstrs()) {
-        HR->emitInScoreboard(Top, MI->getDesc(), Cycle, {});
+        HR->emitInScoreboard(Top, MI->getDesc(), Cycle);
       }
       Cycle++;
     }
