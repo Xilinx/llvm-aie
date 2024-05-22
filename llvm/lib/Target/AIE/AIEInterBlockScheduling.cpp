@@ -427,10 +427,19 @@ void BlockState::clearSchedule() {
 void BlockState::classify() {
   // Detect whether this block is amenable to loop-aware scheduling.
   // We must push the safety margin to our epilogue block(s)
-  // This can only be done if the epilogue is not itself
+  // This can only be done if we have an epilogue and the epilogue is not itself
   // a loop.
   auto IsLoop = [](MachineBasicBlock *MBB) {
-    return llvm::any_of(MBB->successors(), [&](auto *S) { return S == MBB; });
+    int NumLoopEdges = 0;
+    int NumExitEdges = 0;
+    for (auto *S : MBB->successors()) {
+      if (S == MBB) {
+        NumLoopEdges++;
+      } else {
+        NumExitEdges++;
+      }
+    }
+    return NumLoopEdges == 1 && NumExitEdges == 1;
   };
   // We generalize slightly; we require the epilogue to be a dedicated exit of
   // the loop.
