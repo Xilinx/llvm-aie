@@ -35,6 +35,15 @@ using namespace llvm::AIE;
 static cl::opt<bool> InsertCycleSeparators(
     "aie-prera-cycle-separators", cl::init(false),
     cl::desc("[AIE] Insert CYCLE_SEPARATOR meta instructions"));
+static cl::opt<bool>
+    EnableFinerRPTracking("aie-premisched-finer-rp-tracking", cl::init(true),
+                          cl::desc("Track reg pressure more accurately and "
+                                   "delay some instructions to avoid spills."));
+static cl::opt<unsigned> NumCriticalFreeRegs(
+    "aie-premisched-near-critical-regs", cl::init(4),
+    cl::desc("Number of free registers below which premisched should actively "
+             "try to reduce the pressure."));
+
 static cl::opt<unsigned> BottomUpCycles(
     "aie-bottomup-cycles", cl::init(std::numeric_limits<int>::max()),
     cl::desc("[AIE] Min number of cycles to be scheduled bottom-up"));
@@ -787,11 +796,172 @@ void AIEPreRASchedStrategy::leaveRegion(const SUnit &ExitSU) {
   RegionEnd = nullptr;
 }
 
+PressureDiff estimatePressureDiff(const SUnit &SU,
+                                  const RegPressureTracker &RPT) {
+  const MachineInstr &MI = *SU.getInstr();
+  const MachineRegisterInfo &MRI = MI.getMF()->getRegInfo();
+  PressureDiff PDiff;
+  const LiveRegSet &LiveRegs = RPT.getLiveRegs();
+  LiveRegSet DefinedRegs;
+  DefinedRegs.init(MRI);
+
+  for (const MachineOperand &D : MI.defs()) {
+    if (D.isReg() && D.getReg().isVirtual()) {
+      // Note that we aren't in SSA anymore, so D.getReg() might already be live
+      PDiff.addPressureChange(D.getReg(), /*IsDec=*/true, &MRI);
+      DefinedRegs.insert(RegisterMaskPair(D.getReg(), LaneBitmask::getAll()));
+    }
+  }
+  for (const MachineOperand &U : MI.uses()) {
+    if (!U.isReg() || !U.getReg().isVirtual())
+      continue;
+    // Note that newly-defined registers make in/out regs live again.
+    // e.g. %0 should still be live after receding over `%0 = FOO %0`
+    LaneBitmask LiveLanes =
+        LiveRegs.contains(U.getReg()) & ~DefinedRegs.contains(U.getReg());
+    if (LiveLanes.none())
+      PDiff.addPressureChange(U.getReg(), /*IsDec=*/false, &MRI);
+  }
+  LLVM_DEBUG(dbgs() << "EstPDiff SU(" << SU.NodeNum << "): ");
+  LLVM_DEBUG(PDiff.dump(*MRI.getTargetRegisterInfo()));
+  return PDiff;
+}
+
+/// Return the worst (or best if \p FindMin is false) pressure change
+/// within \p PD.
+PressureChange getPressureChange(const PressureDiff &PD, bool FindMin = true) {
+  if (PD.begin() == PD.end())
+    return {};
+  auto Cmp = [](const PressureChange &Lhs, const PressureChange &Rhs) {
+    return Lhs.getUnitInc() < Rhs.getUnitInc();
+  };
+  return FindMin ? *std::min_element(PD.begin(), PD.end(), Cmp)
+                 : *std::max_element(PD.begin(), PD.end(), Cmp);
+}
+
+/// Try and find a SUnit within \p Nodes that can help reduce the pressure
+/// for \p CriticalPSet. Returns nullptr if not successful.
+const SUnit *findPressureReducer(unsigned CriticalPSet, ArrayRef<SUnit *> Nodes,
+                                 const RegPressureTracker &RPT) {
+  for (const SUnit *SU : Nodes) {
+    PressureDiff PDiff = estimatePressureDiff(*SU, RPT);
+    for (const PressureChange &PC : PDiff) {
+      if (PC.isValid() && PC.getPSet() == CriticalPSet && PC.getUnitInc() < 0)
+        return SU;
+    }
+  }
+  return nullptr;
+}
+
 bool AIEPreRASchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
                                             bool /*VerifyReadyCycle*/) const {
   // Force verifying if SU is ready to be scheduled in terms of cycle.
-  return MachineSchedStrategy::isAvailableNode(SU, Zone,
-                                               /*VerifyReadyCycle=*/true);
+  bool Avail = MachineSchedStrategy::isAvailableNode(SU, Zone,
+                                                     /*VerifyReadyCycle=*/true);
+  if (!EnableFinerRPTracking)
+    return Avail;
+  if (!Avail)
+    return false;
+
+  // The node can be scheduled, but check if it increases the pressure too much.
+  // If so, try to delay it until another instruction decreases the pressure.
+  const RegPressureTracker &BotRPT = DAG->getBotRPTracker();
+  PressureChange WorstPC =
+      getPressureChange(estimatePressureDiff(SU, BotRPT), false);
+  if (WorstPC.getUnitInc() <= 0) {
+    // Improving register pressure, keep node as available
+    return true;
+  }
+
+  unsigned CurrPressure = BotRPT.getRegSetPressureAtPos()[WorstPC.getPSet()];
+  if (CurrPressure + WorstPC.getUnitInc() <
+      TRI->getRegPressureSetLimit(*CurMBB->getParent(), WorstPC.getPSet())) {
+    // Worsening pressure, but still within limits, keep node as available
+    return true;
+  }
+
+  // The node will likely cause a spill, only consider it schedule-able if
+  // there is no pending node that can reduce the register pressure.
+  return findPressureReducer(WorstPC.getPSet(), Zone.Pending.elements(),
+                             BotRPT) == nullptr;
+}
+
+bool AIEPreRASchedStrategy::tryCandidate(SchedCandidate &Cand,
+                                         SchedCandidate &TryCand,
+                                         SchedBoundary *Zone) const {
+  if (!EnableFinerRPTracking)
+    return GenericScheduler::tryCandidate(Cand, TryCand, Zone);
+
+  // Note: Most of the heuristics below are taken from the default
+  // GenericScheduler strategy. However, we then also try to better estimate
+  // the pressure change of both candidates (based on what regs are live,
+  // or made live), and use those to check if the threshold of a pressure set
+  // would be exceeded.
+
+  // Initialize the candidate if needed.
+  if (!Cand.isValid()) {
+    TryCand.Reason = NodeOrder;
+    return true;
+  }
+
+  // Bias PhysReg Defs and copies to their uses and defined respectively.
+  if (tryGreater(biasPhysReg(TryCand.SU, TryCand.AtTop),
+                 biasPhysReg(Cand.SU, Cand.AtTop), TryCand, Cand, PhysReg))
+    return TryCand.Reason != NoCand;
+
+  // Avoid exceeding the target's limit.
+  if (DAG->isTrackingPressure() &&
+      tryPressure(TryCand.RPDelta.Excess, Cand.RPDelta.Excess, TryCand, Cand,
+                  RegExcess, TRI, DAG->MF))
+    return TryCand.Reason != NoCand;
+
+  // Avoid increasing the max critical pressure in the scheduled region.
+  if (DAG->isTrackingPressure() &&
+      tryPressure(TryCand.RPDelta.CriticalMax, Cand.RPDelta.CriticalMax,
+                  TryCand, Cand, RegCritical, TRI, DAG->MF))
+    return TryCand.Reason != NoCand;
+
+  // Weak edges are for clustering and other constraints.
+  if (tryLess(getWeakLeft(TryCand.SU, TryCand.AtTop),
+              getWeakLeft(Cand.SU, Cand.AtTop), TryCand, Cand, Weak))
+    return TryCand.Reason != NoCand;
+
+  // Main change from GenericScheduler: try and better estimate the
+  // pressure changes for both candidates.
+  if (DAG->isTrackingPressure()) {
+    const RegPressureTracker &BotRPT = DAG->getBotRPTracker();
+    auto IsNearCritical = [&](const PressureChange &PC) {
+      if (!PC.isValid())
+        return false;
+      unsigned CurrPressure = BotRPT.getRegSetPressureAtPos()[PC.getPSet()];
+      unsigned Threshold =
+          TRI->getRegPressureSetLimit(*CurMBB->getParent(), PC.getPSet());
+      return Threshold <= NumCriticalFreeRegs ||
+             CurrPressure >= Threshold - NumCriticalFreeRegs;
+    };
+    PressureChange TryCandPC =
+        getPressureChange(estimatePressureDiff(*TryCand.SU, BotRPT));
+    PressureChange CandPC =
+        getPressureChange(estimatePressureDiff(*Cand.SU, BotRPT));
+    if ((IsNearCritical(TryCandPC) || IsNearCritical(CandPC)) &&
+        tryPressure(TryCandPC, CandPC, TryCand, Cand, RegMax, TRI, DAG->MF))
+      return TryCand.Reason != NoCand;
+  }
+
+  // Avoid increasing the max pressure of the entire region.
+  if (DAG->isTrackingPressure() &&
+      tryPressure(TryCand.RPDelta.CurrentMax, Cand.RPDelta.CurrentMax, TryCand,
+                  Cand, RegMax, TRI, DAG->MF))
+    return TryCand.Reason != NoCand;
+
+  // Fall through to original instruction order.
+  if ((Zone->isTop() && TryCand.SU->NodeNum < Cand.SU->NodeNum) ||
+      (!Zone->isTop() && TryCand.SU->NodeNum > Cand.SU->NodeNum)) {
+    TryCand.Reason = NodeOrder;
+    return true;
+  }
+
+  return false;
 }
 
 AIEPostRASchedStrategy *AIEScheduleDAGMI::getSchedImpl() const {

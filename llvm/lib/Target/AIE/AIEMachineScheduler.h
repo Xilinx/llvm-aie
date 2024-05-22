@@ -165,6 +165,17 @@ public:
   bool isAvailableNode(SUnit &SU, SchedBoundary &Zone,
                        bool VerifyReadyCycle) const override;
 
+protected:
+  /// Apply a set of heuristics to a new candidate for scheduling.
+  ///
+  /// \param Cand provides the policy and current best candidate.
+  /// \param TryCand refers to the next SUnit candidate, otherwise
+  /// uninitialized.
+  /// \return \c true if TryCand is better than Cand (Reason is
+  /// NOT NoCand)
+  bool tryCandidate(SchedCandidate &Cand, SchedCandidate &TryCand,
+                    SchedBoundary *Zone) const override;
+
 private:
   MachineBasicBlock *CurMBB = nullptr;
   MachineBasicBlock::iterator RegionBegin = nullptr;

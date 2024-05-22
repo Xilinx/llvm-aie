@@ -137,43 +137,44 @@ define  void @test_huge_stack(i32 noundef %n) #0 {
 ; CHECK-NEXT:    mova r3, #-32
 ; CHECK-NEXT:    st p7, [sp, #-40064] // 4-byte Folded Spill
 ; CHECK-NEXT:    mov p7, sp
-; CHECK-NEXT:    mov p2, sp
-; CHECK-NEXT:    mov p0, sp
+; CHECK-NEXT:    mov p1, sp
 ; CHECK-NEXT:    st lr, [sp, #-40052] // 4-byte Folded Spill
 ; CHECK-NEXT:    st r16, [sp, #-40056] // 4-byte Folded Spill
 ; CHECK-NEXT:    st p6, [sp, #-40060] // 4-byte Folded Spill
 ; CHECK-NEXT:    padda [p7], m0
 ; CHECK-NEXT:    movxm m0, #-40048
-; CHECK-NEXT:    mov p1, p7
+; CHECK-NEXT:    mov p2, p7
+; CHECK-NEXT:    mov p0, p7
+; CHECK-NEXT:    paddb [p0], m0
+; CHECK-NEXT:    st r0, [p0, #0]
+; CHECK-NEXT:    lda r0, [p0, #0]
 ; CHECK-NEXT:    mov p6, p7
-; CHECK-NEXT:    paddb [p1], m0
-; CHECK-NEXT:    paddb [p6], #-32
-; CHECK-NEXT:    movxm m0, #-40032
-; CHECK-NEXT:    st p2, [p6, #0]
-; CHECK-NEXT:    st r0, [p1, #0]
-; CHECK-NEXT:    lda r0, [p1, #0]
-; CHECK-NEXT:    mov p2, p0
-; CHECK-NEXT:    mov p1, p7
-; CHECK-NEXT:    paddb [p1], m0
-; CHECK-NEXT:    mov r16, p1
-; CHECK-NEXT:    mov p1, p7
-; CHECK-NEXT:    paddb [p1], #-24
+; CHECK-NEXT:    paddb [p2], #-32
+; CHECK-NEXT:    mov r16, p2
+; CHECK-NEXT:    st p1, [p2, #0]
+; CHECK-NEXT:    mov p2, p7
+; CHECK-NEXT:    paddb [p2], #-24
+; CHECK-NEXT:    mov p0, sp
+; CHECK-NEXT:    mov p1, p0
 ; CHECK-NEXT:    lshl r2, r0, r2
-; CHECK-NEXT:    st r0, [p1], #4
+; CHECK-NEXT:    st r0, [p2], #4
 ; CHECK-NEXT:    add r2, r2, #31
+; CHECK-NEXT:    st r1, [p2, #0]
+; CHECK-NEXT:    and r2, r2, r3
 ; CHECK-NEXT:    jl #extern_call
-; CHECK-NEXT:    st r1, [p1, #0] // Delay Slot 5
-; CHECK-NEXT:    and r2, r2, r3 // Delay Slot 4
-; CHECK-NEXT:    mov m0, r2 // Delay Slot 3
-; CHECK-NEXT:    paddb [p2], m0 // Delay Slot 2
-; CHECK-NEXT:    mov sp, p2 // Delay Slot 1
+; CHECK-NEXT:    mov m0, r2 // Delay Slot 5
+; CHECK-NEXT:    paddb [p1], m0 // Delay Slot 4
+; CHECK-NEXT:    movxm m0, #-40032 // Delay Slot 3
+; CHECK-NEXT:    paddb [p6], m0 // Delay Slot 2
+; CHECK-NEXT:    mov sp, p1 // Delay Slot 1
 ; CHECK-NEXT:    nopb ; nopa ; nops ; jl #extern_call; nopv
 ; CHECK-NEXT:    nopa ; nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov p0, r16 // Delay Slot 1
-; CHECK-NEXT:    lda p0, [p6, #0]; nopx
+; CHECK-NEXT:    mov p0, p6 // Delay Slot 1
+; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; mov p0, r16; nopv
+; CHECK-NEXT:    lda p0, [p0, #0]; nopx
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
