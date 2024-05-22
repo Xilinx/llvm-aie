@@ -60,6 +60,9 @@ static cl::opt<bool>
 static cl::opt<bool>
     AllocateMRegsFirst("aie-mod-ra-first", cl::Hidden, cl::init(false),
                        cl::desc("Allocate M registers first in staged RA."));
+static cl::opt<bool> EnablePreMISchedCoalescer(
+    "aie-premisched-coalescer", cl::Hidden, cl::init(true),
+    cl::desc("Run the coalescer again after the pre-RA scheduler"));
 
 extern bool AIEDumpArtifacts;
 
@@ -193,6 +196,11 @@ static bool onlyAllocateMRegisters(const TargetRegisterInfo &TRI,
 }
 
 bool AIE2PassConfig::addRegAssignAndRewriteOptimized() {
+
+  // Pre-RA scheduling might have exposed simplifiable copies.
+  if (EnablePreMISchedCoalescer)
+    addPass(&RegisterCoalescerID);
+
   if (!EnableStagedRA && !EnableSuperRegSplitting)
     return TargetPassConfig::addRegAssignAndRewriteOptimized();
 

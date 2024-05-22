@@ -16,14 +16,14 @@ define void @test_simple_dyn_alloca(i32 noundef %n) {
 ; CHECK-NEXT:    mova r1, #2; nopx
 ; CHECK-NEXT:    st p7, [sp, #-32] // 4-byte Folded Spill
 ; CHECK-NEXT:    mov p7, sp
-; CHECK-NEXT:    mov p0, sp
+; CHECK-NEXT:    mov p1, sp
 ; CHECK-NEXT:    lshl r0, r0, r1
 ; CHECK-NEXT:    mova r1, #-32
 ; CHECK-NEXT:    st lr, [sp, #-28] // 4-byte Folded Spill
 ; CHECK-NEXT:    padda [p7], #-32
 ; CHECK-NEXT:    add r0, r0, #31
 ; CHECK-NEXT:    jl #extern_call
-; CHECK-NEXT:    mov p1, p0 // Delay Slot 5
+; CHECK-NEXT:    mov p0, p1 // Delay Slot 5
 ; CHECK-NEXT:    and r0, r0, r1 // Delay Slot 4
 ; CHECK-NEXT:    mov m0, r0 // Delay Slot 3
 ; CHECK-NEXT:    paddb [p1], m0 // Delay Slot 2
@@ -73,11 +73,11 @@ define void @test_loop_dyn_alloca(i32 noundef %n) {
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB1_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    nopa ; nopb ; nopx ; mov p0, sp; nops
+; CHECK-NEXT:    nopa ; nopb ; nopx ; mov p1, sp; nops
 ; CHECK-NEXT:    lshl r0, r17, r19
 ; CHECK-NEXT:    add r0, r0, #31
 ; CHECK-NEXT:    jl #extern_call
-; CHECK-NEXT:    mov p1, p0 // Delay Slot 5
+; CHECK-NEXT:    mov p0, p1 // Delay Slot 5
 ; CHECK-NEXT:    and r0, r0, r20 // Delay Slot 4
 ; CHECK-NEXT:    mov m0, r0 // Delay Slot 3
 ; CHECK-NEXT:    paddb [p1], m0 // Delay Slot 2
@@ -143,19 +143,19 @@ define  void @test_huge_stack(i32 noundef %n) #0 {
 ; CHECK-NEXT:    st p6, [sp, #-40060] // 4-byte Folded Spill
 ; CHECK-NEXT:    padda [p7], m0
 ; CHECK-NEXT:    movxm m0, #-40048
-; CHECK-NEXT:    mov p2, p7
 ; CHECK-NEXT:    mov p0, p7
+; CHECK-NEXT:    mov p2, p7
+; CHECK-NEXT:    mov p6, p7
 ; CHECK-NEXT:    paddb [p0], m0
+; CHECK-NEXT:    paddb [p2], #-32
 ; CHECK-NEXT:    st r0, [p0, #0]
 ; CHECK-NEXT:    lda r0, [p0, #0]
-; CHECK-NEXT:    mov p6, p7
-; CHECK-NEXT:    paddb [p2], #-32
 ; CHECK-NEXT:    mov r16, p2
-; CHECK-NEXT:    st p1, [p2, #0]
+; CHECK-NEXT:    mov p0, sp
+; CHECK-NEXT:    st p0, [p2, #0]
+; CHECK-NEXT:    mov p0, p1
 ; CHECK-NEXT:    mov p2, p7
 ; CHECK-NEXT:    paddb [p2], #-24
-; CHECK-NEXT:    mov p0, sp
-; CHECK-NEXT:    mov p1, p0
 ; CHECK-NEXT:    lshl r2, r0, r2
 ; CHECK-NEXT:    st r0, [p2], #4
 ; CHECK-NEXT:    add r2, r2, #31
