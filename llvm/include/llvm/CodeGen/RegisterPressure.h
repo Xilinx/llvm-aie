@@ -453,6 +453,9 @@ public:
     LiveThruPressure.assign(PressureSet.begin(), PressureSet.end());
   }
 
+  /// Get the live registers at the current position.
+  const LiveRegSet &getLiveRegs() const { return LiveRegs; }
+
   ArrayRef<unsigned> getLiveThru() const { return LiveThruPressure; }
 
   /// Get the resulting register pressure over the traversed region.
