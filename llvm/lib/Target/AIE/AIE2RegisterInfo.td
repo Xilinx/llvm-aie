@@ -56,7 +56,9 @@ def VEC1024 : AIE2Vector1024RegisterClass<(add eYs)>;
 def ACC256 : AIE2Acc256RegisterClass<(add eAMHH, eAMHL, eAMLH, eAMLL, mAMm, mAMs)>;
 def ACC512 : AIE2Acc512RegisterClass<(add eBMH, eBML, eBMSH, eBMSL, mBMSm, mBMm, mBMs, mBMa)>;
 def ACC1024 : AIE2Acc1024RegisterClass<(add eCM)>;
-def SPARSEVEC640 : AIE2Vector640RegisterClass<(add eQQXEs, eQQXOs)>;
+
+let GeneratePressureSet = false in
+  def SPARSEVEC640 : AIE2Vector640RegisterClass<(add eQQXEs, eQQXOs)>;
 
 let Namespace = "AIE2" in {
   // This is a strange class, but llvm would define it anyway by performing an

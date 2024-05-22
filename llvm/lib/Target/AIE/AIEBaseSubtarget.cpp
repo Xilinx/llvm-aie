@@ -34,6 +34,10 @@ static cl::opt<bool> EnablePreMISchedPropagateIncomingLatencies(
     "aie-premisched-propagate-incoming-latencies", cl::Hidden, cl::init(false),
     cl::desc(
         "Move input latency of copy-like instructions to their successors"));
+static cl::opt<unsigned> RegPressureInstrPreMISchedThreshold(
+    "aie-premisched-reg-pressure-instr-threshold", cl::Hidden, cl::init(0),
+    cl::desc("Number of region instructions below which premisched should not "
+             "track register pressure"));
 static cl::opt<bool> EnablePipelinerSchedPropagateIncomingLatencies(
     "aie-pipeliner-propagate-incoming-latencies", cl::Hidden, cl::init(true),
     cl::desc(
@@ -79,6 +83,15 @@ SDep &getBackwardEdge(const SUnit &SrcSU, const SDep &E) {
 }
 
 } // namespace
+
+void AIEBaseSubtarget::overrideSchedPolicyBase(MachineSchedPolicy &Policy,
+                                               unsigned NumRegionInstrs) const {
+  // The default policy is to avoid tracking pressure for "small regions". For
+  // AIE, it is critical to estimate the pressure everywhere, especially small
+  // loops. Spills are very expensive.
+  Policy.ShouldTrackPressure =
+      NumRegionInstrs >= RegPressureInstrPreMISchedThreshold;
+}
 
 // Reminder: this is called for ALL dependencies carried by physical registers,
 // but only for DATA dependencies on virtual registers...
