@@ -150,9 +150,9 @@ body: |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[COPY20:%[0-9]+]]:vec512 = COPY [[COPY11]]
   ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:acc1024 = VMAC_vmac_cm_core_dense [[COPY4]], [[COPY14]], [[COPY20]], [[COPY5]], implicit [[COPY2]], implicit [[COPY3]], implicit [[COPY13]]
+  ; CHECK-NEXT:   [[COPY12:%[0-9]+]]:vec512 = VSHIFT_ALIGN [[COPY12]], [[COPY19]], [[COPY16]], [[COPY5]]
   ; CHECK-NEXT:   [[COPY9:%[0-9]+]]:acc1024 = VMAC_vmac_cm_core_dense [[COPY9]], [[COPY15]], [[COPY20]], [[COPY5]]
   ; CHECK-NEXT:   [[COPY11:%[0-9]+]]:vec512 = COPY [[COPY18]]
-  ; CHECK-NEXT:   [[COPY12:%[0-9]+]]:vec512 = VSHIFT_ALIGN [[COPY12]], [[COPY19]], [[COPY16]], [[COPY5]]
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:vec512 = VSHIFT_ALIGN [[COPY1]], [[COPY19]], [[COPY17]], [[COPY5]]
   ; CHECK-NEXT:   undef [[COPY18:%[0-9]+]].sub_256_lo:vec512, [[COPY6:%[0-9]+]]:ep_as_32bit = VLDA_dmw_lda_w_ag_pstm_nrm_imm [[COPY6]], 32
   ; CHECK-NEXT:   [[COPY18:%[0-9]+]].sub_256_hi:vec512, [[COPY6:%[0-9]+]]:ep_as_32bit = VLDA_dmw_lda_w_ag_pstm_nrm_imm [[COPY6]], 32

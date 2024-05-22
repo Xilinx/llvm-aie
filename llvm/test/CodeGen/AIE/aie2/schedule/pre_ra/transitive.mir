@@ -22,13 +22,10 @@ body: |
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
-    ; CHECK-NEXT: CYCLE_SEPARATOR
     ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_idx_imm:%[0-9]+]]:vec256 = VLDA_dmw_lda_w_ag_idx_imm [[COPY]], 0
     ; CHECK-NEXT: CYCLE_SEPARATOR
     ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_idx_imm1:%[0-9]+]]:vec256 = VLDA_dmw_lda_w_ag_idx_imm [[COPY]], 16
-    ; CHECK-NEXT: CYCLE_SEPARATOR
     ; CHECK-NEXT: undef [[COPY1:%[0-9]+]].sub_256_lo:vec512 = COPY [[VLDA_dmw_lda_w_ag_idx_imm]]
-    ; CHECK-NEXT: CYCLE_SEPARATOR
     ; CHECK-NEXT: [[COPY1:%[0-9]+]].sub_256_hi:vec512 = COPY [[VLDA_dmw_lda_w_ag_idx_imm1]]
     ; CHECK-NEXT: CYCLE_SEPARATOR
     ; CHECK-NEXT: CYCLE_SEPARATOR
@@ -57,13 +54,10 @@ body: |
     ; CHECK: liveins: $p0, $s0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
-    ; CHECK-NEXT: CYCLE_SEPARATOR
     ; CHECK-NEXT: [[VLDA_dmw_lda_am_ag_idx_imm:%[0-9]+]]:acc256 = VLDA_dmw_lda_am_ag_idx_imm [[COPY]], 0
     ; CHECK-NEXT: CYCLE_SEPARATOR
     ; CHECK-NEXT: [[VLDA_dmw_lda_am_ag_idx_imm1:%[0-9]+]]:acc256 = VLDA_dmw_lda_am_ag_idx_imm [[COPY]], 16
-    ; CHECK-NEXT: CYCLE_SEPARATOR
     ; CHECK-NEXT: undef [[COPY1:%[0-9]+]].sub_256_lo:acc512 = COPY [[VLDA_dmw_lda_am_ag_idx_imm]]
-    ; CHECK-NEXT: CYCLE_SEPARATOR
     ; CHECK-NEXT: [[COPY1:%[0-9]+]].sub_256_hi:acc512 = COPY [[VLDA_dmw_lda_am_ag_idx_imm1]]
     ; CHECK-NEXT: CYCLE_SEPARATOR
     ; CHECK-NEXT: CYCLE_SEPARATOR

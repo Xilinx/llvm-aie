@@ -908,7 +908,7 @@ AIE2InstrInfo::CreateTargetMIHazardRecognizer(const InstrItineraryData *II,
                                               const ScheduleDAGMI *DAG) const {
   // AIE has a fully exposed pipeline, resource and format conflicts must be
   // exactly modelled.
-  return new AIEHazardRecognizer(this, II);
+  return new AIEHazardRecognizer(this, II, /*IsPreRA=*/DAG->hasVRegLiveness());
 }
 
 /// insertNoop - Insert a noop into the instruction stream at the specified

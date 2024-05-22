@@ -24,7 +24,8 @@ using namespace llvm;
 
 AIEHazardRecognizerPRAS::AIEHazardRecognizerPRAS(const AIEBaseInstrInfo *TII,
                                                  const InstrItineraryData *II)
-    : AIEHazardRecognizer(TII, II), CurrentBundle(TII->getFormatInterface()) {}
+    : AIEHazardRecognizer(TII, II, /*IsPreRA=*/false),
+      CurrentBundle(TII->getFormatInterface()) {}
 
 void AIEHazardRecognizerPRAS::StartBlock(MachineBasicBlock *MBB) {}
 

@@ -132,6 +132,7 @@ std::vector<AIE::MachineBundle> computeAndFinalizeBundles(SchedBoundary &Zone) {
   LLVM_DEBUG(dbgs() << "Computing Bundles for Zone "
                     << (Zone.isTop() ? "Top\n" : "Bot\n"));
   const ScheduleDAGMI &DAG = *Zone.DAG;
+  bool ComputeSlots = !DAG.hasVRegLiveness();
   std::vector<AIE::MachineBundle> Bundles;
   AIE::MachineBundle CurrBundle(getTII(DAG)->getFormatInterface());
 
@@ -147,7 +148,7 @@ std::vector<AIE::MachineBundle> computeAndFinalizeBundles(SchedBoundary &Zone) {
         bumpCycleForBundles(EmitCycle, Bundles, CurrBundle);
 
       LLVM_DEBUG(dbgs() << "  Add to CurrBundle: " << MI);
-      CurrBundle.add(&MI, HazardRec.getSelectedAltOpcode(&MI));
+      CurrBundle.add(&MI, HazardRec.getSelectedAltOpcode(&MI), ComputeSlots);
     }
   };
 
@@ -242,7 +243,7 @@ void AIEPostRASchedStrategy::initializeBotScoreBoard(ScoreboardTrust Trust) {
   /// make sure we always have enough lookahead available. We arrange for that
   /// by starting in the earliest possible cycle, -Depth
   auto InsertInCycle = [=](MachineInstr &MI, int Cycle) {
-    BotHazardRec->emitInScoreboard(MI.getDesc(), Cycle - Depth, std::nullopt);
+    BotHazardRec->emitInScoreboard(MI.getDesc(), Cycle - Depth);
   };
   auto BlockCycle = [=](int Cycle) {
     BotHazardRec->blockCycleInScoreboard(Cycle - Depth);
