@@ -62,6 +62,11 @@ public:
                    MachineBasicBlock::iterator End, unsigned RegionInstrs);
   void leaveRegion(const SUnit &ExitSU);
 
+  /// We build the graph ourselves from the (original) semantical order
+  void buildGraph(ScheduleDAGMI &DAG, AAResults *AA,
+                  RegPressureTracker *RPTracker, PressureDiffs *PDiffs,
+                  LiveIntervals *LIS, bool TrackLaneMasks) override;
+
   /// Explicitly process regions backwards. The first scheduled region in
   /// a block connects with successors.
   bool doMBBSchedRegionsTopDown() const override { return false; }
@@ -180,6 +185,7 @@ public:
   void exitRegion() override;
 
   void finalizeSchedule() override;
+  void recordDbgInstrs(const Region &CurrentRegion);
 
   // Give dag mutators access to the scheduler state
   AIEPostRASchedStrategy *getSchedImpl() const;
