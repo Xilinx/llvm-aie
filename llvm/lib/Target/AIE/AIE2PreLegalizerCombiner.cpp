@@ -15,6 +15,7 @@
 
 #include "AIE2TargetMachine.h"
 #include "AIECombinerHelper.h"
+#include "MCTargetDesc/AIE2MCTargetDesc.h"
 #include "llvm/CodeGen/GlobalISel/CSEInfo.h"
 #include "llvm/CodeGen/GlobalISel/Combiner.h"
 #include "llvm/CodeGen/GlobalISel/CombinerHelper.h"
@@ -67,6 +68,7 @@ public:
   bool tryCombineAll(MachineInstr &I) const override;
 
   bool tryCombineAllImpl(MachineInstr &I) const;
+  bool tryCombineShuffleVector(MachineInstr &MI) const;
 
   bool tryToCombineVectorShiftsByZero(MachineInstr &MI) const;
 
@@ -150,6 +152,13 @@ bool AIE2PreLegalizerCombinerImpl::tryToCombineIntrinsic(
   return false;
 }
 
+bool AIE2PreLegalizerCombinerImpl::tryCombineShuffleVector(
+    MachineInstr &MI) const {
+  if (Helper.tryCombineShuffleVector(MI))
+    return true;
+
+  return false;
+}
 bool AIE2PreLegalizerCombinerImpl::tryCombineAll(MachineInstr &MI) const {
   if (tryCombineAllImpl(MI))
     return true;
@@ -169,7 +178,7 @@ bool AIE2PreLegalizerCombinerImpl::tryCombineAll(MachineInstr &MI) const {
     return tryToCombineIntrinsic(MI);
   }
   case TargetOpcode::G_SHUFFLE_VECTOR: {
-    return Helper.tryCombineShuffleVector(MI);
+    return tryCombineShuffleVector(MI);
   }
   default:
     break;
