@@ -264,6 +264,15 @@ public:
   /// Tell the strategy that current MBB is done.
   virtual void leaveMBB() {}
 
+  /// This can override DAG construction and postprocessing
+  /// This is useful for iterative scheduling, where the graph is invariant
+  /// over multiple schedule() calls.
+  virtual void buildGraph(ScheduleDAGMI &DAG, AAResults *AA,
+                          RegPressureTracker *RPTracker = nullptr,
+                          PressureDiffs *PDiffs = nullptr,
+                          LiveIntervals *LIS = nullptr,
+                          bool TrackLaneMasks = false);
+
   /// Notify this strategy that all roots have been released (including those
   /// that depend on EntrySU or ExitSU).
   virtual void registerRoots() {}
@@ -399,6 +408,10 @@ public:
                    MachineBasicBlock::iterator end,
                    unsigned regioninstrs) override;
 
+  /// Apply each ScheduleDAGMutation step in order. This allows different
+  /// instances of ScheduleDAGMI to perform custom DAG postprocessing.
+  void postProcessDAG();
+
   /// Implement ScheduleDAGInstrs interface for scheduling a sequence of
   /// reorderable instructions.
   void schedule() override;
@@ -425,10 +438,6 @@ public:
 
 protected:
   // Top-Level entry points for the schedule() driver...
-
-  /// Apply each ScheduleDAGMutation step in order. This allows different
-  /// instances of ScheduleDAGMI to perform custom DAG postprocessing.
-  void postProcessDAG();
 
   /// Release ExitSU predecessors and setup scheduler queues.
   void initQueues(ArrayRef<SUnit*> TopRoots, ArrayRef<SUnit*> BotRoots);

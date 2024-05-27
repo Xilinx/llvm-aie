@@ -875,9 +875,7 @@ void ScheduleDAGMI::schedule() {
   LLVM_DEBUG(dbgs() << "ScheduleDAGMI::schedule starting\n");
   LLVM_DEBUG(SchedImpl->dumpPolicy());
 
-  // Build the DAG.
-  buildSchedGraph(AA);
-
+  SchedImpl->buildGraph(*this, AA);
   postProcessDAG();
 
   SmallVector<SUnit*, 8> TopRoots, BotRoots;
@@ -1543,7 +1541,7 @@ void ScheduleDAGMILive::buildDAGWithRegPressure() {
   if (!ShouldTrackPressure) {
     RPTracker.reset();
     RegionCriticalPSets.clear();
-    buildSchedGraph(AA);
+    SchedImpl->buildGraph(*this, AA);
     return;
   }
 
@@ -1556,7 +1554,8 @@ void ScheduleDAGMILive::buildDAGWithRegPressure() {
     RPTracker.recede();
 
   // Build the DAG, and compute current register pressure.
-  buildSchedGraph(AA, &RPTracker, &SUPressureDiffs, LIS, ShouldTrackLaneMasks);
+  SchedImpl->buildGraph(*this, AA, &RPTracker, &SUPressureDiffs, LIS,
+                        ShouldTrackLaneMasks);
 
   // Initialize top/bottom trackers after computing region pressure.
   initRegPressure();
@@ -2236,6 +2235,14 @@ void CopyConstrain::apply(ScheduleDAGInstrs *DAGInstrs) {
 //===----------------------------------------------------------------------===//
 
 static const unsigned InvalidCycle = ~0U;
+
+// Default virtual of MachineSchedStrategy
+void MachineSchedStrategy::buildGraph(ScheduleDAGMI &DAG, AAResults *AA,
+                                      RegPressureTracker *RPTracker,
+                                      PressureDiffs *PDiffs, LiveIntervals *LIS,
+                                      bool TrackLaneMasks) {
+  DAG.buildSchedGraph(AA, RPTracker, PDiffs, LIS, TrackLaneMasks);
+}
 
 SchedBoundary::~SchedBoundary() { delete HazardRec; }
 
