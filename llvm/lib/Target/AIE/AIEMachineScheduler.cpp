@@ -825,6 +825,31 @@ void AIEScheduleDAGMI::exitRegion() {
   ScheduleDAGMI::exitRegion();
 }
 
+void AIEScheduleDAGMI::recordDbgInstrs(const Region &CurrentRegion) {
+  // Remove any stale debug info; sometimes BuildSchedGraph is called again
+  // without emitting the info from the previous call.
+  DbgValues.clear();
+  FirstDbgValue = nullptr;
+
+  // We connect any Debug machine instruction to the instruction before it.
+  // if there is no instruction before it, it is recorded in FirstDbgValue;
+  MachineInstr *DbgMI = nullptr;
+  for (auto MII = CurrentRegion.end(), MIE = CurrentRegion.begin(); MII != MIE;
+       --MII) {
+    MachineInstr *Prev = *std::prev(MII);
+    if (DbgMI) {
+      DbgValues.emplace_back(DbgMI, Prev);
+      DbgMI = nullptr;
+    }
+
+    if (Prev->isDebugValue() || Prev->isDebugPHI()) {
+      DbgMI = Prev;
+    }
+  }
+  if (DbgMI)
+    FirstDbgValue = DbgMI;
+}
+
 void AIEScheduleDAGMI::finalizeSchedule() {
   if (AllowNegativeLatencies) {
     // Negative latencies can make it seem that one reads undefined registers
@@ -874,4 +899,25 @@ void AIEScheduleDAGMILive::exitRegion() {
   // to enter/exit regions. Let's give it some.
   static_cast<AIEPreRASchedStrategy *>(SchedImpl.get())->leaveRegion(ExitSU);
   ScheduleDAGMILive::exitRegion();
+}
+
+void llvm::AIEPostRASchedStrategy::buildGraph(ScheduleDAGMI &DAG, AAResults *AA,
+                                              RegPressureTracker *RPTracker,
+                                              PressureDiffs *PDiffs,
+                                              LiveIntervals *LIS,
+                                              bool TrackLaneMasks) {
+  /// We are called after enterRegion, which will have recorded the semantic
+  /// order. We can't use the basic block order, since this may have changed
+  /// in earlier iterations of scheduling
+  DAG.clearDAG();
+
+  auto &BS = InterBlock.getBlockState(CurMBB);
+  const auto &Region = BS.getCurrentRegion();
+  for (auto *I : Region) {
+    DAG.initSUnit(*I);
+  }
+  DAG.ExitSU.setInstr(Region.getExitInstr());
+  DAG.makeMaps();
+  DAG.buildEdges(Context->AA);
+  static_cast<AIEScheduleDAGMI &>(DAG).recordDbgInstrs(Region);
 }
