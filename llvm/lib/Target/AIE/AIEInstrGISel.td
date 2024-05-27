@@ -96,6 +96,12 @@ def G_AIE_BROADCAST_VECTOR : AIEGenericInstruction {
   let hasSideEffects = false;
 }
 
+def G_AIE_VSHUFFLE : AIEGenericInstruction {
+  let OutOperandList = (outs type0:$dst);
+  let InOperandList = (ins type0:$src1, type0:$src2, type1:$mode);
+  let hasSideEffects = false;
+}
+
 // Create a larger vector by padding undefined values in the high bits
 def G_AIE_PAD_VECTOR_UNDEF : AIEGenericInstruction {
   let OutOperandList = (outs type0:$dst);

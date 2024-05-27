@@ -150,13 +150,77 @@ bool AIE2PreLegalizerCombinerImpl::tryToCombineIntrinsic(
   return false;
 }
 
+CombinerHelper::GeneratorType sectionGenerator(const int32_t From,
+                                               const int32_t To,
+                                               const int32_t Partitions,
+                                               const int32_t Increment) {
+  int32_t RoundSize = To / Partitions;
+  int32_t Index = 0;
+  int32_t Round = 0;
+
+  return [=]() mutable {
+    int32_t CurrentGroup = (Index / Increment) % Partitions;
+    int32_t GroupFirstElement = CurrentGroup * RoundSize;
+    int32_t IndexInGroup = Index % Increment;
+    int32_t OffsetGroup = Round * Increment;
+    int32_t Next = GroupFirstElement + IndexInGroup + OffsetGroup;
+    if (++Index % (Partitions * Increment) == 0)
+      Round++;
+
+    std::optional<int32_t> Return = std::optional<int32_t>(Next);
+    if (Index == To + 1)
+      Return = {};
+    return Return;
+  };
+}
+
 bool AIE2PreLegalizerCombinerImpl::tryCombineShuffleVector(
     MachineInstr &MI) const {
+  const Register DstReg = MI.getOperand(0).getReg();
+  const LLT DstTy = MRI.getType(DstReg);
+  const LLT SrcTy = MRI.getType(MI.getOperand(1).getReg());
+  const unsigned DstNumElts = DstTy.isVector() ? DstTy.getNumElements() : 1;
+  const unsigned SrcNumElts = SrcTy.isVector() ? SrcTy.getNumElements() : 1;
+  MachineIRBuilder MIB(MI);
+  MachineRegisterInfo &MRI = *MIB.getMRI();
+
   if (Helper.tryCombineShuffleVector(MI))
     return true;
 
+  const LLT V64S8 = LLT::fixed_vector(64, 8);
+  CombinerHelper::GeneratorType FourPartitions =
+      sectionGenerator(0, DstNumElts, 4, 1);
+  if (Helper.matchCombineShuffleVector(MI, FourPartitions, DstNumElts)) {
+    if (DstTy != V64S8)
+      return false;
+
+    const Register Src1 = MI.getOperand(1).getReg();
+    const Register Src2 = MI.getOperand(2).getReg();
+    const Register ShuffleModeReg =
+        MRI.createGenericVirtualRegister(LLT::scalar(32));
+
+    // This combiner only cares about the lower bits, so we can pad the
+    // vector to cover the case where two separate vectors are shuffled.
+    // together
+    MIB.buildConstant(ShuffleModeReg, 35);
+
+    if (SrcTy == V64S8) {
+      MIB.buildInstr(AIE2::G_AIE_VSHUFFLE, {DstReg},
+                     {Src1, Src2, ShuffleModeReg});
+    } else {
+      // We reuse the same register since we ignore the high part of the vector
+      const Register TmpRegister = MRI.createGenericVirtualRegister(V64S8);
+      MIB.buildConcatVectors(TmpRegister, {Src1, Src2});
+      MIB.buildInstr(AIE2::G_AIE_VSHUFFLE, {DstReg},
+                     {TmpRegister, TmpRegister, ShuffleModeReg});
+    }
+
+    MI.eraseFromParent();
+    return true;
+  }
   return false;
 }
+
 bool AIE2PreLegalizerCombinerImpl::tryCombineAll(MachineInstr &MI) const {
   if (tryCombineAllImpl(MI))
     return true;
