@@ -257,6 +257,17 @@ class InterBlockScheduling {
   /// returns true if converged
   bool updateFixPoint(BlockState &BS);
 
+  /// Calculate the number of cycles that are needed to respect
+  /// latencies related to the loop whose the epilogue is associated
+  int getCyclesToRespectTiming(const BlockState &EpilogueBS,
+                               const BlockState &LoopBS) const;
+
+  /// Calculate the number of cycles that are needed to avoid resource
+  /// conflicts between loop and epilogue
+  int getCyclesToAvoidResourceConflicts(int ExistingLatency,
+                                        const BlockState &EpilogueBS,
+                                        const BlockState &LoopBS) const;
+
   BlockState *CurrentBlock = nullptr;
 
 public:
