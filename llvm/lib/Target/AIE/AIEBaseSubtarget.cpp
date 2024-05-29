@@ -355,12 +355,15 @@ public:
 class MemoryEdges : public ScheduleDAGMutation {
   void apply(ScheduleDAGInstrs *DAG) override {
     const auto *TII = static_cast<const AIEBaseInstrInfo *>(DAG->TII);
-
+    // Query individual instruction behavior. This is because we might create
+    // dependencies with already-scheduled blocks where Bundles have been
+    // created.
+    const auto QueryType = MachineInstr::QueryType::IgnoreBundle;
     // Run over all instructions that may load or store, and correct the
     // latencies for all their memory dependencies.
     for (SUnit &SU : DAG->SUnits) {
       MachineInstr &MI = *SU.getInstr();
-      if (!MI.mayLoadOrStore()) {
+      if (!MI.mayLoadOrStore(QueryType)) {
         continue;
       }
 
@@ -369,13 +372,14 @@ class MemoryEdges : public ScheduleDAGMutation {
 
         // Ignore non-memory dependencies. Locks or other instructions with side
         // effects aren't handled with MemInstrItinData itineraries.
-        if (!PredEdge.isNormalMemoryOrBarrier() || !SrcMI.mayLoadOrStore()) {
+        if (!PredEdge.isNormalMemoryOrBarrier() ||
+            !SrcMI.mayLoadOrStore(QueryType)) {
           continue;
         }
 
         // Ignore Load-Load (RAR) dependencies.
         // TODO: Those should probably be removed altogether.
-        if (!SrcMI.mayStore() && !MI.mayStore()) {
+        if (!SrcMI.mayStore(QueryType) && !MI.mayStore(QueryType)) {
           continue;
         }
 
