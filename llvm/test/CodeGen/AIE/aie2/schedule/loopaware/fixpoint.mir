@@ -7,7 +7,9 @@
 # (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
 
 # RUN: llc --mtriple=aie2 --run-pass=postmisched \
-# RUN:     %s -o - | FileCheck %s
+# RUN:  -aie-loop-epilogue-analysis=false %s -o - | FileCheck %s
+# RUN: llc --mtriple=aie2 --run-pass=postmisched \
+# RUN:  %s -o - | FileCheck %s --check-prefix=CHECK-EP-ANALYSIS
 
 # Check that loop-aware scheduling converges properly
 # Note: Comments sometimes refer to cycles. The first cycle is cycle 0
@@ -47,6 +49,33 @@ body:             |
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier implicit killed $r0
+  ;
+  ; CHECK-EP-ANALYSIS-LABEL: name: singleSuccLoopPreheader
+  ; CHECK-EP-ANALYSIS: bb.0:
+  ; CHECK-EP-ANALYSIS-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-EP-ANALYSIS-NEXT: {{  $}}
+  ; CHECK-EP-ANALYSIS-NEXT: {{  $}}
+  ; CHECK-EP-ANALYSIS-NEXT: bb.1:
+  ; CHECK-EP-ANALYSIS-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; CHECK-EP-ANALYSIS-NEXT:   liveins: $r0, $r1, $r2, $cm0, $cm1, $cm2, $r0
+  ; CHECK-EP-ANALYSIS-NEXT: {{  $}}
+  ; CHECK-EP-ANALYSIS-NEXT:   $r10 = OR $r0, $r1
+  ; CHECK-EP-ANALYSIS-NEXT:   $r3 = OR killed $r10, $r2
+  ; CHECK-EP-ANALYSIS-NEXT:   $cm3 = VMOV_mv_cm $cm1 {
+  ; CHECK-EP-ANALYSIS-NEXT:     $cm2 = VADD $cm0, $cm1, killed $r3
+  ; CHECK-EP-ANALYSIS-NEXT:   }
+  ; CHECK-EP-ANALYSIS-NEXT:   PseudoLoopEnd %bb.1, %bb.2
+  ; CHECK-EP-ANALYSIS-NEXT: {{  $}}
+  ; CHECK-EP-ANALYSIS-NEXT: bb.2:
+  ; CHECK-EP-ANALYSIS-NEXT:   liveins: $r0
+  ; CHECK-EP-ANALYSIS-NEXT: {{  $}}
+  ; CHECK-EP-ANALYSIS-NEXT:   RET implicit $lr
+  ; CHECK-EP-ANALYSIS-NEXT:   NOP
+  ; CHECK-EP-ANALYSIS-NEXT:   NOP
+  ; CHECK-EP-ANALYSIS-NEXT:   NOP
+  ; CHECK-EP-ANALYSIS-NEXT:   NOP
+  ; CHECK-EP-ANALYSIS-NEXT:   NOP
+  ; CHECK-EP-ANALYSIS-NEXT:   DelayedSchedBarrier implicit killed $r0
   bb.0:
     successors: %bb.1
   bb.1:

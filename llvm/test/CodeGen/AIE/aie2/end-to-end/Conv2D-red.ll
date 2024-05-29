@@ -153,10 +153,6 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ASM-NEXT:    add r1, r1, #33; vmac cm7, cm7, x5, x6, r4 // Delay Slot 1
 ; ASM-NEXT:  // %bb.3: // %outer.loop.latch
 ; ASM-NEXT:    // in Loop: Header=BB0_1 Depth=1
-; ASM-NEXT:    nopa ; nopb ; nopx
-; ASM-NEXT:    nop
-; ASM-NEXT:    nop
-; ASM-NEXT:    nop
 ; ASM-NEXT:    vst.srs.s16.s32 bmh0, s2, [p3, #32]
 ; ASM-NEXT:    vst.srs.s16.s32 bml0, s2, [p3], #64
 ; ASM-NEXT:    vst.srs.s16.s32 bmh1, s2, [p3, #32]; mov m2, r31

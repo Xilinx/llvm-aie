@@ -9,8 +9,7 @@
 # RUN: llc --mtriple=aie2 --issue-limit=6 --run-pass=postmisched \
 # RUN:     --aie-interblock-scoreboard=false %s -o - | FileCheck %s
 
-# Check that inter-block latencies are respected. We disable the interblock
-# scoreboard from the commandline to make the test more sensitive
+# Check that inter-block latencies are respected.
 
 # Note: Comments sometimes refer to cycles. The first cycle is cycle 0
 
@@ -100,7 +99,6 @@ body:             |
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   liveins: $r1
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   RET implicit $lr
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
@@ -159,12 +157,6 @@ body:             |
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   liveins: $r3
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   RET implicit $lr
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
