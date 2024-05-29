@@ -12,6 +12,7 @@
 #include "AIE2TargetMachine.h"
 #include "AIEBaseInstrInfo.h"
 #include "MCTargetDesc/AIE2MCTargetDesc.h"
+#include "MCTargetDesc/AIEMCTargetDesc.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
 #include "llvm/CodeGen/GlobalISel/Utils.h"
@@ -218,7 +219,10 @@ MachineInstr *findPostIncMatch(MachineInstr &MemI, MachineRegisterInfo &MRI,
                                const AIEBaseInstrInfo &TII) {
   if (!EnablePostIncCombine)
     return nullptr;
-  if (MRI.getType(MemI.getOperand(0).getReg()).getSizeInBits() >= 1024)
+
+  const Register DstReg = MemI.getOperand(0).getReg();
+  const unsigned DstSize = MRI.getType(DstReg).getSizeInBits();
+  if (DstSize >= 1024)
     return nullptr;
 
   Register Addr = MemI.getOperand(1).getReg();
@@ -228,6 +232,15 @@ MachineInstr *findPostIncMatch(MachineInstr &MemI, MachineRegisterInfo &MRI,
         MRI.getType(MemI.getOperand(0).getReg()).getSizeInBits());
     if (!CombinedOpcode || isTriviallyDead(AddrUse, MRI))
       continue;
+
+    // Disable the optimizations for 128 G_STORE since AIE2 lacks
+    // support for 2D and 3D loads/stores
+    const bool isXDAIE2 =
+        CombinedOpcode.value() >= AIE2::G_AIE_POSTINC_2D_LOAD &&
+        CombinedOpcode.value() <= AIE2::G_AIE_POSTINC_3D_ZEXTLOAD;
+    if (DstSize == 128 && isXDAIE2)
+      continue;
+
     if (MemI.getParent() != AddrUse.getParent())
       continue;
     // Find the closest location to the memory operation where the ptr_add can

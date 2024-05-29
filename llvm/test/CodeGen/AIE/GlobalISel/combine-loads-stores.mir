@@ -1505,9 +1505,10 @@ body: |
     ; CHECK-LABEL: name: postinc_2d_combine_128bit_load
     ; CHECK: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
-    ; CHECK-NEXT: [[AIE_POSTINC_2D_LOAD:%[0-9]+]]:_(<16 x s8>), [[AIE_POSTINC_2D_LOAD1:%[0-9]+]]:_(p0), [[AIE_POSTINC_2D_LOAD2:%[0-9]+]]:_(s20) = G_AIE_POSTINC_2D_LOAD [[COPY]], [[C]], [[C]], [[C]], [[C]] :: (load (<16 x s8>))
-    ; CHECK-NEXT: $p0 = COPY [[AIE_POSTINC_2D_LOAD1]](p0)
-    ; CHECK-NEXT: $q0 = COPY [[AIE_POSTINC_2D_LOAD]](<16 x s8>)
+    ; CHECK-NEXT: [[LOAD:%[0-9]+]]:_(<16 x s8>) = G_LOAD [[COPY]](p0) :: (load (<16 x s8>))
+    ; CHECK-NEXT: [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2.add.2d), [[COPY]](p0), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20)
+    ; CHECK-NEXT: $p0 = COPY [[INT]](p0)
+    ; CHECK-NEXT: $q0 = COPY [[LOAD]](<16 x s8>)
       %0:_(p0) = COPY $p0
       %1:_(s20) = G_CONSTANT i20 64
       %2:_(<16 x s8>) = G_LOAD %0(p0) :: (load (<16 x s8>))
@@ -1523,9 +1524,10 @@ body: |
     ; CHECK-LABEL: name: postinc_3d_combine_128bit_load
     ; CHECK: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
-    ; CHECK-NEXT: [[AIE_POSTINC_3D_LOAD:%[0-9]+]]:_(<16 x s8>), [[AIE_POSTINC_3D_LOAD1:%[0-9]+]]:_(p0), [[AIE_POSTINC_3D_LOAD2:%[0-9]+]]:_(s20), [[AIE_POSTINC_3D_LOAD3:%[0-9]+]]:_ = G_AIE_POSTINC_3D_LOAD [[COPY]], [[C]], [[C]], [[C]], [[C]], [[C]], [[C]], [[C]] :: (load (<16 x s8>))
-    ; CHECK-NEXT: $p0 = COPY [[AIE_POSTINC_3D_LOAD1]](p0)
-    ; CHECK-NEXT: $q0 = COPY [[AIE_POSTINC_3D_LOAD]](<16 x s8>)
+    ; CHECK-NEXT: [[LOAD:%[0-9]+]]:_(<16 x s8>) = G_LOAD [[COPY]](p0) :: (load (<16 x s8>))
+    ; CHECK-NEXT: [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(s20), [[INT2:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2.add.3d), [[COPY]](p0), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20), [[C]](s20)
+    ; CHECK-NEXT: $p0 = COPY [[INT]](p0)
+    ; CHECK-NEXT: $q0 = COPY [[LOAD]](<16 x s8>)
       %0:_(p0) = COPY $p0
       %1:_(s20) = G_CONSTANT i20 64
       %2:_(<16 x s8>) = G_LOAD %0(p0) :: (load (<16 x s8>))
