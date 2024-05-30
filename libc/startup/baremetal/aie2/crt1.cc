@@ -4,8 +4,12 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+
 extern "C" {
 extern int _main(int, char **);
-void _Exit(int val) { done(); }
+void _Exit(int val) {
+  (void)val;
+  done();
+}
 void _main_init() { _Exit(_main(0, nullptr)); }
 }
