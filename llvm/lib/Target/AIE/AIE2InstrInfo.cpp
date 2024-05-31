@@ -945,6 +945,7 @@ bool AIE2InstrInfo::isDelayedSchedBarrier(const MachineInstr &MI) const {
 
 bool AIE2InstrInfo::isSchedBarrier(const MachineInstr &MI) const {
   return (MI.getOpcode() == AIE2::SCHED_BARRIER ||
+          MI.getOpcode() == AIE2::PseudoLoopEnd ||
           MI.getOpcode() == AIE2::MOV_CNTR || isDelayedSchedBarrier(MI));
 }
 
@@ -1220,18 +1221,13 @@ AIE2InstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
       // 7 fully-expanded 128-bit instructions.
       if (isZOLSetupBundle(MI) && isLastZOLSetupBundleInMBB(MI))
         LoopSetupDistance = 7;
-
-      // Look for other candidate e.g. HW loop addresses */
-    } else if (MI->isMetaInstruction()) {
-      continue;
-    } else {
-      bool IsHWLoopEnd = isHardwareLoopEnd(MI->getOpcode());
-      if (IsHWLoopEnd && DelaySlot > 0)
+    } else if (isHardwareLoopEnd(MI->getOpcode())) {
+      if (DelaySlot > 0)
         llvm_unreachable("Cannot have HWLoopEnd in branch delay slot!\n");
-      if (IsHWLoopEnd) {
-        AlgnCandidates.emplace_back(std::prev(MI));
-        continue;
-      }
+      // The previous instruction is the last bundle of the hardware loop
+      // and should be aligned.
+      AlgnCandidates.emplace_back(std::prev(MI));
+    } else if (!MI->isMetaInstruction()) {
       // single instruction, there should not be any
       // after Bundle Finalization Pass
       llvm_unreachable("Found an un-expected standalone instruction !");
