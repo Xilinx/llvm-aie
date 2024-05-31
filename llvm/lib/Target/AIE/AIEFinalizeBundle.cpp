@@ -20,8 +20,17 @@ using namespace llvm;
 namespace {
 
 bool isBundleCandidate(MachineBasicBlock::instr_iterator MII) {
+  const MachineBasicBlock *MBB = MII->getParent();
+  auto *MF = MBB->getParent();
+  auto &Subtarget = MF->getSubtarget();
+  const AIEBaseInstrInfo *TII =
+      static_cast<const AIEBaseInstrInfo *>(Subtarget.getInstrInfo());
   MachineInstr *MI = &*MII;
-  if (MI->isMetaInstruction() || MII->isBundled())
+  // LoopStart should be lowered before reaching here
+  assert(!TII->isHardwareLoopStart(MI->getOpcode()) &&
+         "LoopStart is not lowered \n\r");
+  if (MI->isMetaInstruction() || MII->isBundled() ||
+      TII->isHardwareLoopEnd(MI->getOpcode()))
     return false;
   return true;
 }
