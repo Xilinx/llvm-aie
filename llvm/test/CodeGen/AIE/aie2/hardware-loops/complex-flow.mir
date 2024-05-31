@@ -13,6 +13,13 @@
 # to its exit point. This gives rise to insertBranch of a PseudoLoopEnd with
 # a non-null FBB, which should generate an unconditional branch
 
+#             /------------<--------------------\
+# bb0 --> bb1 --> bb2 --> bb3 /-> bb11 --> bb12 --> bb13
+#     |               \-> bb9 --> bb10 /
+#     |                       /---<---\
+#     \-> bb4 --> bb5 --> bb6 --> bb7 --> bb8 -\
+#             |        \------->-------/        |
+#              \--------------<----------------/
 ---
 name:            main
 alignment:       16

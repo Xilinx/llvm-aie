@@ -23,8 +23,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "AIE2InstrInfo.h"
 #include "AIEBaseInstrInfo.h"
 #include "AIEBaseSubtarget.h"
+#include "MCTargetDesc/AIE2MCTargetDesc.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
@@ -42,18 +44,24 @@ using namespace llvm;
 
 namespace {
 
-struct LowOverheadLoop {
-
+class LowOverheadLoop {
+public: // unused
   MachineLoop &ML;
-  MachineBasicBlock *Preheader = nullptr;
   MachineLoopInfo &MLI;
   const TargetRegisterInfo &TRI;
-  const AIEBaseInstrInfo &TII;
   MachineFunction *MF = nullptr;
+
+private:
+  const AIEBaseInstrInfo &TII;
+  // Delayed erasure to avoid invalidating iterators
+  SmallPtrSet<MachineInstr *, 4> Trash;
+
+public:
+  MachineBasicBlock *Preheader = nullptr;
   MachineInstr *Start = nullptr;
   MachineInstr *Dec = nullptr;
   MachineInstr *End = nullptr;
-  SmallPtrSet<MachineInstr *, 4> ToRemove;
+  MachineInstr *LoopEnd = nullptr;
 
   LowOverheadLoop(MachineLoop &ML, MachineLoopInfo &MLI,
                   const TargetRegisterInfo &TRI, const AIEBaseInstrInfo &TII)
@@ -64,8 +72,15 @@ struct LowOverheadLoop {
     else if (auto *MBB = MLI.findLoopPreheader(&ML, true, true))
       Preheader = MBB;
   }
+  ~LowOverheadLoop() {
+    // Responsably empty the trash can
+    for (auto *I : Trash) {
+      LLVM_DEBUG(dbgs() << "AIE Loops: Erasing " << *I);
+      I->eraseFromParent();
+    }
+  }
 
-  bool FoundAllComponents() const {
+  bool foundAllComponents() const {
     return isJNZDLoop() || isZeroOverheadLoop();
   }
 
@@ -76,7 +91,7 @@ struct LowOverheadLoop {
       dbgs() << "AIE Loops: Found Loop Dec: " << *Dec;
     if (End)
       dbgs() << "AIE Loops: Found Loop End: " << *End;
-    if (!FoundAllComponents()) {
+    if (!foundAllComponents()) {
       dbgs() << "AIE Loops: Failed to find all loop components.\n";
       dbgs() << "AIE Loops: Not a low-overhead loop.\n";
     }
@@ -87,8 +102,30 @@ struct LowOverheadLoop {
             TII.isHardwareLoopJNZ(End->getOpcode()));
   }
 
-  // TODO: implement when introducing ZOL lowering
-  bool isZeroOverheadLoop() const { return false; }
+  bool isZeroOverheadLoop() const {
+    return (Start && LoopEnd && TII.isHardwareLoopStart(Start->getOpcode()) &&
+            TII.isHardwareLoopEnd(LoopEnd->getOpcode()));
+  }
+
+  // Detect a degenerate case: ZOL needs to be able to find a last bundle.
+  // If not, the loop is just decrementing the loopcounter and is useless.
+  bool isEmptyZeroOverheadLoop() const {
+    if (!isZeroOverheadLoop()) {
+      return false;
+    }
+    bool LookingForBundle = false;
+    for (auto &MI : reverse(*LoopEnd->getParent())) {
+      if (LookingForBundle && !MI.isDebugInstr()) {
+        return false;
+      }
+      if (&MI == LoopEnd) {
+        LookingForBundle = true;
+        continue;
+      }
+    }
+    return true;
+  }
+  void remove(MachineInstr *Item) { Trash.insert(Item); }
 };
 
 class AIEBaseHardwareLoops : public MachineFunctionPass {
@@ -122,12 +159,12 @@ public:
   StringRef getPassName() const override { return AIE_HARDWARE_LOOPS_NAME; }
 
 private:
-  bool ProcessLoop(MachineLoop *ML);
+  bool processLoop(MachineLoop *ML);
 
-  void ExpandLoopStart(LowOverheadLoop &LoLoop);
-  void ExpandLoopEnd(LowOverheadLoop &LoLoop);
+  void expandLoopStart(LowOverheadLoop &LoLoop);
+  void expandLoopEnd(LowOverheadLoop &LoLoop);
 
-  void Expand(LowOverheadLoop &LoLoop);
+  void expand(LowOverheadLoop &LoLoop);
 };
 } // namespace
 
@@ -151,21 +188,32 @@ bool AIEBaseHardwareLoops::runOnMachineFunction(MachineFunction &mf) {
   bool Changed = false;
   for (auto *ML : *MLI) {
     if (ML->isOutermost())
-      Changed |= ProcessLoop(ML);
+      Changed |= processLoop(ML);
   }
   return Changed;
 }
 
-bool AIEBaseHardwareLoops::ProcessLoop(MachineLoop *ML) {
+bool AIEBaseHardwareLoops::processLoop(MachineLoop *ML) {
 
   bool Changed = false;
 
   // Process inner loops first.
   for (MachineLoop *L : *ML)
-    Changed |= ProcessLoop(L);
+    Changed |= processLoop(L);
+
+  MachineBasicBlock *LastMBB = ML->findLoopControlBlock();
+  // More than one exit, don't generate ZOL.
+  // NOTE: These early returns are assumed to match decisions upstream.
+  // When we return here, there should not be anything to expand, so either
+  // the LLVM IR should not have created hwloop intrinsics or code selection
+  // should have lowered them.
+  if (!LastMBB)
+    return Changed;
+  MachineBasicBlock::iterator LastI = LastMBB->getFirstTerminator();
+  if (LastI == LastMBB->end())
+    return Changed;
 
   LowOverheadLoop LoLoop(*ML, *MLI, *TRI, *TII);
-
   LLVM_DEBUG({
     dbgs() << "AIE Loops: Processing loop containing:\n";
     if (auto *Preheader = LoLoop.Preheader)
@@ -174,6 +222,23 @@ bool AIEBaseHardwareLoops::ProcessLoop(MachineLoop *ML) {
       dbgs() << " - Block: " << printMBBReference(*MBB) << "\n";
   });
 
+  // Look for LoopStart instruction in a given block. If there is only one
+  // loop predecessor BB, look in that block.
+  std::function<MachineInstr *(MachineBasicBlock *)> FindLoopStart =
+      [&FindLoopStart, this](MachineBasicBlock *MBB) -> MachineInstr * {
+    for (auto &MI : *MBB) {
+      if (TII->isHardwareLoopStart(MI.getOpcode()))
+        return &MI;
+    }
+    if (MBB->pred_size() == 1)
+      return FindLoopStart(*MBB->pred_begin());
+    return nullptr;
+  };
+
+  if (!LoLoop.Preheader)
+    return Changed;
+
+  LoLoop.Start = FindLoopStart(LoLoop.Preheader);
   // Find the low-overhead loop components
   for (auto *MBB : reverse(ML->getBlocks())) {
     for (auto &MI : *MBB) {
@@ -186,6 +251,14 @@ bool AIEBaseHardwareLoops::ProcessLoop(MachineLoop *ML) {
         LoLoop.Dec = &MI;
       else if (TII->isHardwareLoopJNZ(Opc))
         LoLoop.End = &MI;
+      else if (TII->isHardwareLoopStart(Opc))
+        LoLoop.Start = &MI;
+      // HardwareLoopEnd is not lowered in this pass, the
+      // information in LoLoop is captured for sanity check
+      // to make sure that all the loop components are found
+      // in the loop.
+      else if (TII->isHardwareLoopEnd(Opc))
+        LoLoop.LoopEnd = &MI;
       else if (MI.getDesc().isCall()) {
         LLVM_DEBUG(dbgs() << "AIE Loops: Found call.\n");
       }
@@ -193,7 +266,7 @@ bool AIEBaseHardwareLoops::ProcessLoop(MachineLoop *ML) {
   }
 
   LLVM_DEBUG(LoLoop.dump());
-  if (!LoLoop.FoundAllComponents())
+  if (!LoLoop.foundAllComponents())
     return Changed;
 
   // Check that the only instruction using LoopDec is LoopEnd
@@ -206,11 +279,11 @@ bool AIEBaseHardwareLoops::ProcessLoop(MachineLoop *ML) {
     }
   }
 
-  Expand(LoLoop);
+  expand(LoLoop);
   return true;
 }
 
-void AIEBaseHardwareLoops::ExpandLoopStart(LowOverheadLoop &LoLoop) {
+void AIEBaseHardwareLoops::expandLoopStart(LowOverheadLoop &LoLoop) {
   LLVM_DEBUG(dbgs() << "AIE Loops: Expanding LoopStart.\n");
 
   if (LoLoop.isJNZDLoop()) {
@@ -218,16 +291,38 @@ void AIEBaseHardwareLoops::ExpandLoopStart(LowOverheadLoop &LoLoop) {
     return;
   }
 
-  // Future: Handle true hardware loop setup code
-  llvm_unreachable("Implement true hardware loop support");
+  // if it's not one of our known loop kinds, we shouldn't be here
+  assert(LoLoop.isZeroOverheadLoop());
+
+  MachineInstr *Start = LoLoop.Start;
+  MachineBasicBlock *MBB = Start->getParent();
+  LLVM_DEBUG(dbgs() << "AIE Loops: ZOL loop. Expanding LoopStart.\n");
+  BuildMI(*MBB, Start, Start->getDebugLoc(), TII->get(AIE2::MOV_mv_scl),
+          AIE2::LC)
+      .addReg(Start->getOperand(0).getReg());
+
+  BuildMI(*MBB, Start, Start->getDebugLoc(), TII->get(AIE2::MOVXM_lng_cg),
+          AIE2::LS)
+      .addMBB(LoLoop.LoopEnd->getOperand(1).getMBB());
+  MachineInstrBuilder MIB;
+  MIB = BuildMI(*MBB, Start, Start->getDebugLoc(), TII->get(AIE2::MOVXM_lng_cg),
+                AIE2::LE)
+            .addSym(LoLoop.LoopEnd->getOperand(0).getMCSymbol());
+  MachineInstr *MI = MIB.getInstr();
+  MI->getOperand(1).ChangeToMCSymbol(
+      LoLoop.LoopEnd->getOperand(0).getMCSymbol());
+
+  LoLoop.remove(LoLoop.Start);
 }
 
-void AIEBaseHardwareLoops::ExpandLoopEnd(LowOverheadLoop &LoLoop) {
+void AIEBaseHardwareLoops::expandLoopEnd(LowOverheadLoop &LoLoop) {
   LLVM_DEBUG(dbgs() << "AIE Loops: Expanding LoopEnd.\n");
 
+  if (!LoLoop.isJNZDLoop()) {
+    return;
+  }
   MachineInstr *Dec = LoLoop.Dec;
   MachineInstr *End = LoLoop.End;
-
   assert(Dec->getOperand(0).getReg() == End->getOperand(0).getReg() &&
          "LoopDec not feeding into LoopEnd!?");
   MachineBasicBlock *MBB = End->getParent();
@@ -235,19 +330,24 @@ void AIEBaseHardwareLoops::ExpandLoopEnd(LowOverheadLoop &LoLoop) {
       .addDef(Dec->getOperand(0).getReg())
       .addReg(Dec->getOperand(1).getReg())
       .addReg(End->getOperand(1).getReg());
-  LoLoop.ToRemove.insert(End);
-  LoLoop.ToRemove.insert(LoLoop.Dec);
+  LoLoop.remove(End);
+  LoLoop.remove(LoLoop.Dec);
 }
 
-void AIEBaseHardwareLoops::Expand(LowOverheadLoop &LoLoop) {
+void AIEBaseHardwareLoops::expand(LowOverheadLoop &LoLoop) {
 
-  ExpandLoopStart(LoLoop);
-  ExpandLoopEnd(LoLoop);
-
-  for (auto *I : LoLoop.ToRemove) {
-    LLVM_DEBUG(dbgs() << "AIE Loops: Erasing " << *I);
-    I->eraseFromParent();
+  if (LoLoop.isEmptyZeroOverheadLoop()) {
+    // Strip empty ZOL instructions from the code.
+    // The loop block will lose itself as successor.
+    LoLoop.remove(LoLoop.Start);
+    LoLoop.remove(LoLoop.LoopEnd);
+    MachineBasicBlock *LoopBlock = LoLoop.LoopEnd->getParent();
+    const bool NormalizeProbabilities = true;
+    LoopBlock->removeSuccessor(LoopBlock, NormalizeProbabilities);
+    return;
   }
+  expandLoopStart(LoLoop);
+  expandLoopEnd(LoLoop);
 }
 
 FunctionPass *llvm::createAIEBaseHardwareLoopsPass() {
