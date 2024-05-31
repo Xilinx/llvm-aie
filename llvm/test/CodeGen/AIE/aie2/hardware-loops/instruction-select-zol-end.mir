@@ -11,7 +11,7 @@ body:             |
   ; CHECK: bb.0:
   ; CHECK-NEXT:   successors: %bb.0(0x40000000), %bb.1(0x40000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   PseudoLoopEnd %bb.0, <mcsymbol .L_LEnd0>
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   PseudoRET implicit $lr

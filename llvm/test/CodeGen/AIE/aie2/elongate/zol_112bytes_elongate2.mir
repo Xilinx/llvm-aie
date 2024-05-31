@@ -146,7 +146,7 @@ body:             |
   ; CHECK-NEXT:     NOPXM
   ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   PseudoLoopEnd %bb.1, <mcsymbol .L_1120>
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2 (align 16):
   ; CHECK-NEXT:   BUNDLE {
@@ -161,7 +161,6 @@ body:             |
     successors: %bb.1(0x80000000)
     liveins: $p0, $p1, $r0
 
-    ; bundle elongation after lc and ls
     BUNDLE implicit-def $r1, implicit-def $r2, implicit-def $lc, implicit $p0, implicit $r0 {
       renamable $r1 = LDA_dms_lda_idx_imm renamable $p0, 0
       renamable $r2 = MOVX_alu_cg 0
@@ -205,7 +204,6 @@ body:             |
     BUNDLE implicit-def $r4, implicit $r2, implicit $r3 {
       renamable $r4 = LSHL renamable $r2, renamable $r3
     }
-    ; bundle elongation after le
     BUNDLE implicit-def $le {
       $le = MOVXM_lng_cg <mcsymbol .L_1120>
     }
@@ -230,7 +228,7 @@ body:             |
     BUNDLE {
       NOP
     }
-    PseudoLoopEnd %bb.1, <mcsymbol .L_1120>
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
 
   bb.2 (align 16):
     BUNDLE {

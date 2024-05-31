@@ -566,8 +566,8 @@ let hasSideEffects = true, mayLoad = false, mayStore = false,
   // since it doesn't need to be emitted itself, it only carries info for
   // its predecessor bundle
   let isBranch = true,  isTerminator = true, isMeta = true in
-    def PseudoLoopEnd : Pseudo<(outs), (ins addr20:$target, addr20:$lastInstr),
-      "pseudo_loop_end", "${target}, ${lastInstr}">;
+    def PseudoLoopEnd : Pseudo<(outs), (ins addr20:$lastInstr, addr20:$target),
+      "pseudo_loop_end", "${lastInstr}, ${target}">;
 }
 
 // Pseudo Copy

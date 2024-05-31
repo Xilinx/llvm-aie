@@ -31,10 +31,8 @@
     br i1 %2, label %for.body, label %for.cond.cleanup
   }
 
-  ; Function Attrs: nocallback noduplicate nofree nosync nounwind willreturn
   declare void @llvm.set.loop.iterations.i32(i32) #0
 
-  ; Function Attrs: nocallback noduplicate nofree nosync nounwind willreturn
   declare i1 @llvm.loop.decrement.i32(i32) #0
 
   attributes #0 = { nocallback noduplicate nofree nosync nounwind willreturn }
@@ -120,7 +118,7 @@ body:             |
   ; CHECK-NEXT:     NOPM
   ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   PseudoLoopEnd %bb.1, <mcsymbol .L_1120>
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2.for.cond.cleanup:
   ; CHECK-NEXT:   BUNDLE implicit $lr {
@@ -185,7 +183,7 @@ body:             |
       renamable $r4 = LSHL renamable $r2, renamable $r3
     }
 
-    PseudoLoopEnd %bb.1, <mcsymbol .L_1120>
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
 
   bb.2.for.cond.cleanup:
     BUNDLE implicit $lr {

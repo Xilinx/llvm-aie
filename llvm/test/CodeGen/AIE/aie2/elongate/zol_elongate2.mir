@@ -579,7 +579,7 @@ body:             |
   ; CHECK-NEXT:     NOPXM
   ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   PseudoLoopEnd %bb.4, <mcsymbol .L_1121>
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1121>, %bb.4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.5.for.cond.cleanup.loopexit.unr-lcssa (align 16):
   ; CHECK-NEXT:   successors: %bb.8(0x30000000), %bb.6(0x50000000)
@@ -722,7 +722,7 @@ body:             |
   ; CHECK-NEXT:     NOPXM
   ; CHECK-NEXT:     NOPV
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   PseudoLoopEnd %bb.7, <mcsymbol .L_1120>
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.7
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.8.for.cond.cleanup (align 16):
   ; CHECK-NEXT:   BUNDLE implicit $lr {
@@ -1125,7 +1125,7 @@ body:             |
     BUNDLE implicit killed $r9, implicit $p1, implicit killed $dj0 {
       ST_dms_sts_idx killed renamable $r9, renamable $p1, killed renamable $dj0 :: (store (s32) into %ir.arrayidx.7, !tbaa !2)
     }
-    PseudoLoopEnd %bb.4, <mcsymbol .L_1121>
+    PseudoLoopEnd <mcsymbol .L_1121>, %bb.4
 
   bb.5.for.cond.cleanup.loopexit.unr-lcssa (align 16):
     successors: %bb.8(0x30000000), %bb.6(0x50000000)
@@ -1228,7 +1228,7 @@ body:             |
     BUNDLE implicit killed $r5, implicit $p1, implicit killed $dj0 {
       ST_dms_sts_idx killed renamable $r5, renamable $p1, killed renamable $dj0 :: (store (s32) into %ir.arrayidx.epil, !tbaa !2)
     }
-    PseudoLoopEnd %bb.7, <mcsymbol .L_1120>
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.7
 
   bb.8.for.cond.cleanup (align 16):
     BUNDLE implicit $lr {

@@ -36,7 +36,7 @@ body:             |
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   $r10 = OR $r0, $r1
-  ; CHECK-NEXT:   PseudoLoopEnd %bb.1, %bb.2
+  ; CHECK-NEXT:   PseudoLoopEnd %bb.2, %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   liveins: $r0, $r10
@@ -57,7 +57,7 @@ body:             |
     $r10 = OR $r0, $r1
     $dj0 = MOV_mv_scl $r2
     $r1 = LDA_dms_lda_idx $p0, $dj0
-    PseudoLoopEnd %bb.1, %bb.2
+    PseudoLoopEnd %bb.2, %bb.1
 
   bb.2:
     liveins: $r0, $r10
