@@ -319,31 +319,31 @@ bool AIEBaseInstrInfo::isSchedulingBoundary(const MachineInstr &MI,
 bool AIEBaseInstrInfo::isCallBundle(MachineBasicBlock::iterator MII) const {
   MachineBasicBlock::const_instr_iterator I = ++MII->getIterator();
   MachineBasicBlock::instr_iterator E = MII->getParent()->instr_end();
-  bool isReturnAddr = false;
+  bool IsReturnAddr = false;
   while (I != E && I->isInsideBundle()) {
     MachineInstr *MI = const_cast<MachineInstr *>(&(*I));
     if (isCall(MI->getOpcode())) {
-      isReturnAddr = true;
+      IsReturnAddr = true;
       break;
     }
     I++;
   }
-  return isReturnAddr;
+  return IsReturnAddr;
 }
 
 bool AIEBaseInstrInfo::isZOLSetupBundle(MachineBasicBlock::iterator MII) const {
   MachineBasicBlock::const_instr_iterator I = ++MII->getIterator();
   MachineBasicBlock::instr_iterator E = MII->getParent()->instr_end();
-  bool isLoopStartSetup = false;
+  bool IsLoopStartSetup = false;
   while (I != E && I->isInsideBundle()) {
     MachineInstr *MI = const_cast<MachineInstr *>(&(*I));
     if (isZeroOverheadLoopSetupInstr(*MI)) {
-      isLoopStartSetup = true;
+      IsLoopStartSetup = true;
       break;
     }
     I++;
   }
-  return isLoopStartSetup;
+  return IsLoopStartSetup;
 }
 
 // Look for the last LoopSetup Bundle.
