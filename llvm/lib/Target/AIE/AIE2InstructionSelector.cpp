@@ -856,7 +856,7 @@ bool AIE2InstructionSelector::selectBrCondLoopDecrement(
     MachineBasicBlock *DestMBB = BrCond.getOperand(1).getMBB();
     MCContext &Context = BrCond.getParent()->getParent()->getContext();
     MCSymbol *EndLabel = Context.createNamedTempSymbol("_LEnd");
-    MIB.buildInstr(AIE2::PseudoLoopEnd).addMBB(DestMBB).addSym(EndLabel);
+    MIB.buildInstr(AIE2::PseudoLoopEnd).addSym(EndLabel).addMBB(DestMBB);
     makeDeadMI(*LoopDec, MRI);
     BrCond.eraseFromParent();
     return true;

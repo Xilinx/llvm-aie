@@ -83,7 +83,7 @@ void AIEBaseAsmPrinter::emitFunctionBodyStart() {
         if (!Prev) {
           llvm_unreachable("LoopEnd without last bundle");
         }
-        Prev->setPreInstrSymbol(*MF, MI.getOperand(1).getMCSymbol());
+        Prev->setPreInstrSymbol(*MF, MI.getOperand(0).getMCSymbol());
       }
       Prev = &MI;
     }

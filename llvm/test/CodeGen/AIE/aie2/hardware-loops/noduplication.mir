@@ -80,7 +80,7 @@ body:             |
   ; CHECK-NEXT:   liveins: $r0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   renamable $r0 = ADD_add_r_ri killed renamable $r0, 1, implicit-def dead $srcarry
-  ; CHECK-NEXT:   PseudoLoopEnd %bb.3, <mcsymbol .L_1120>
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.3
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4:
   ; CHECK-NEXT:   $lr = LDA_dms_spill -16, implicit $sp :: (load (s32) from %stack.0)
@@ -142,6 +142,6 @@ body:             |
 
     %7:er = PHI %9, %bb.6, %0, %bb.4
     %9:er = ADD_add_r_ri %7, 1, implicit-def dead $srcarry
-    PseudoLoopEnd %bb.6, <mcsymbol .L_1120>
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.6
     PseudoJ_jump_imm %bb.5
 ...

@@ -11,8 +11,8 @@
 
 # Simulate a hardware loop that would fit in two cycles.
 # Currently an extra nop is inserted because the ST instruction
-# gets the same latency to ExitSU as the MUL. 
-# fixpoint iterates to LM=2 because of the MUL true dep 
+# gets the same latency to ExitSU as the MUL.
+# fixpoint iterates to LM=2 because of the MUL true dep
 # to the ADD, pushing both MUL and ST up.
 # The latency of ST to ExitSU originates from the
 # 'IncludeStages' in maxLatency. We may want to revisit that
@@ -38,7 +38,7 @@ body:             |
   ; CHECK-NEXT:     $r1 = MUL_mul_r_rr killed $r1, $r1
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   PseudoLoopEnd %bb.1, %bb.2
+  ; CHECK-NEXT:   PseudoLoopEnd %bb.2, %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   successors: %bb.3(0x80000000)
@@ -65,7 +65,7 @@ body:             |
     $r0 = ADD_NC_GPR $r1, 1
     $p0 = ST_dms_sts_pstm_nrm_imm $r0, $p0, 4
     $r1 = MUL_mul_r_rr $r1, $r1
-    PseudoLoopEnd %bb.1, %bb.2
+    PseudoLoopEnd %bb.2, %bb.1
   bb.2:
     liveins: $r1, $r2
     successors: %bb.3

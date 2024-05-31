@@ -27,7 +27,7 @@ body:             |
       $r1, $p0 = LDA_dms_lda_pstm_nrm_imm $p0, 4
       NOPX
     }
-    PseudoLoopEnd %bb.1, <mcsymbol .AnyLabelDefinedHere>
+    PseudoLoopEnd <mcsymbol .AnyLabelDefinedHere>, %bb.1
 
   bb.2:
     PseudoRET implicit $lr
