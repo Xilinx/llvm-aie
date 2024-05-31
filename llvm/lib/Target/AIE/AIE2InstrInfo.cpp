@@ -733,12 +733,11 @@ unsigned AIE2InstrInfo::getConstantMovOpcode(MachineRegisterInfo &MRI,
   }
   if (ImmSize <= 32) {
     return AIE2::MOVXM_lng_cg;
-  } else {
-    dbgs() << "Imm. Size: " << ImmSize << "\n";
-    llvm_unreachable("Expected imm. size <= 32 bits");
   }
+  dbgs() << "Imm. Size: " << ImmSize << "\n"
+         << "DstRegClass ID: " << DstRegClass->getID() << "\n";
+  llvm_unreachable("Expected imm. size <= 32 bits");
   dbgs() << "DstRegClass ID: " << DstRegClass->getID() << "\n";
-  llvm_unreachable("Unexpected RegClass for constant move");
 }
 
 unsigned AIE2InstrInfo::getCycleSeparatorOpcode() const {
@@ -1233,7 +1232,7 @@ AIE2InstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
         AlgnCandidates.emplace_back(std::prev(MI));
         continue;
       }
-      // single instruction , there should not be any
+      // single instruction, there should not be any
       // after Bundle Finalization Pass
       llvm_unreachable("Found an un-expected standalone instruction !");
     }
