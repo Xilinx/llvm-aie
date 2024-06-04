@@ -224,7 +224,12 @@ class RegionEndEdges : public ScheduleDAGMutation {
 
       SDep ExitDep(&SU, SDep::Artificial);
 
-      unsigned DelaySlots = TII->getNumDelaySlots(MI);
+      // By using IgnoreBundle, we can safely apply this mutation to already
+      // bundled instructions without causing misclassification of instructions
+      // that are bundled with control flow ones. Otherwise, the assertion
+      // below can be triggered for correct cases.
+      unsigned DelaySlots =
+          TII->getNumDelaySlots(MI, MachineInstr::QueryType::IgnoreBundle);
       unsigned EdgeLatency = !DelaySlots && UserSetLatencyMargin
                                  ? UserLatencyMargin
                                  : MaxLatency(MI);
