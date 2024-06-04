@@ -3,6 +3,7 @@ on: pull_request_target
 permissions:
   pull-requests: write
   contents: read
+  issues: write
 
 jobs:
   code_formatter:
