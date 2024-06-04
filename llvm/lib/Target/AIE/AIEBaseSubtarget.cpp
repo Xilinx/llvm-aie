@@ -210,7 +210,7 @@ class RegionEndEdges : public ScheduleDAGMutation {
     }
   }
   void apply(ScheduleDAGInstrs *DAG) override {
-    AIE::MaxLatencyFinder MaxLatency(static_cast<AIEScheduleDAGMI *>(DAG));
+    AIE::MaxLatencyFinder MaxLatency(DAG);
 
     // Default edges to ExitSU are conservative, and can't be shrunk.
     // We really should know what we're doing here, so just remove and
