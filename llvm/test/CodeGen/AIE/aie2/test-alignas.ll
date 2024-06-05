@@ -6,7 +6,7 @@
 ;
 ; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -O0 --issue-limit=1 -verify-machineinstrs -mtriple=aie2 %s -o - \
-; RUN:   | FileCheck %s
+; RUN:   -aie-inline-mem-calls=false | FileCheck %s
 
 %struct.S1 = type { i32, [252 x i8] }
 %struct.S7 = type { %struct.S1 }
