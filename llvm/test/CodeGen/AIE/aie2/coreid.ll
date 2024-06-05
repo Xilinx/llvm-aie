@@ -5,7 +5,7 @@
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
 ; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-; RUN: llc -O2 -mtriple=aie2 %s -o - | FileCheck %s
+; RUN: llc -O2 -mtriple=aie2 %s --verify-machineinstrs -o - | FileCheck %s
 
 ; Function Attrs: mustprogress nofree nosync nounwind willreturn memory(none)
 define dso_local noundef i32 @_Z15test_get_coreidv() local_unnamed_addr #0 {
