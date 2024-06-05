@@ -597,6 +597,18 @@ def : Pat<(int_aie2_vshuffle VEC512:$s1, VEC512:$s2, eR:$mod),
 def : Pat<(int_aie2_vshuffle_bf16 VEC512:$s1, VEC512:$s2, eR:$mod),
            (VSHUFFLE VEC512:$s1, VEC512:$s2, eR:$mod)>;
 
+// VSHUFFLE generic opcodes translation
+def vshuffle_node : SDNode<"AIE2::G_AIE_VSHUFFLE",
+                            SDTypeProfile<1, 3, [SDTCisVec<1>, SDTCisVec<2>, SDTCisInt<3>]>>;
+def : GINodeEquiv<G_AIE_VSHUFFLE, vshuffle_node>;
+
+def : Pat<(v16i32 (vshuffle_node (v16i32 VEC512:$v0), (v16i32 VEC512:$v1), (i32 eR:$mode))),
+          (VSHUFFLE VEC512:$v0, VEC512:$v1, i32:$mode)>;
+def : Pat<(v32i16 (vshuffle_node (v32i16 VEC512:$v0), (v32i16 VEC512:$v1), (i32 eR:$mode))),
+          (VSHUFFLE VEC512:$v0, VEC512:$v1, i32:$mode)>;
+def : Pat<(v64i8 (vshuffle_node (v64i8 VEC512:$v0), (v64i8 VEC512:$v1), (i32 eR:$mode))),
+          (VSHUFFLE VEC512:$v0, VEC512:$v1, i32:$mode)>;
+
 // VSHIFT Intrinsic (shift/shiftx/shift_bytes)
 def : Pat<(int_aie2_vshift_I512_I512 VEC512:$s1, VEC512:$s2, 0x0, eR:$shift),
            (VSHIFT VEC512:$s1, VEC512:$s2, eR:$shift)>;

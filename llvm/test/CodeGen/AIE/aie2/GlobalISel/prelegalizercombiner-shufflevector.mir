@@ -853,12 +853,12 @@ body:             |
 ...
 
 ---
-name:            shuffle_vector_32
+name:            shuffle_vector_32_4x4
 legalized:       false
 body:             |
   bb.1.entry:
     liveins: $x0, $x1
-    ; CHECK-LABEL: name: shuffle_vector_32
+    ; CHECK-LABEL: name: shuffle_vector_32_4x4
     ; CHECK: liveins: $x0, $x1
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s32>) = COPY $x0
@@ -874,12 +874,12 @@ body:             |
 ...
 
 ---
-name:            shuffle_vector_16
+name:            shuffle_vector_16_4x4
 legalized:       false
 body:             |
   bb.1.entry:
     liveins: $x0, $x1
-    ; CHECK-LABEL: name: shuffle_vector_16
+    ; CHECK-LABEL: name: shuffle_vector_16_4x4
     ; CHECK: liveins: $x0, $x1
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<32 x s16>) = COPY $x0
@@ -937,5 +937,50 @@ body:             |
     %2:_(<64 x s8>) = COPY $x1
     %0:_(<64 x s8>) = G_SHUFFLE_VECTOR %1:_(<64 x s8>), %2:_, shufflemask(0, 16, 32, 48, 1, 17, 33, 49, 2, 18, 34, 50, 3, 19, 35, 51, 4, 20, 36, 52, 5, 21, 37, 53, 6, 22, 38, 54, 7, 23, 39, 55, 8, 24, 40, 56, 9, 25, 41, 57, 10, 26, 42, 58, 11, 27, 43, 59, 12, 28, 44, 60, 13, 29, 45, 61, 14, 30, 46, 62, 15, 31, 47, 63)
     $x2 = COPY %0:_(<64 x s8>)
+    PseudoRET implicit $lr, implicit $x2
+...
+
+---
+name:            shuffle_vector_1024_4x8
+legalized:       false
+body:             |
+  bb.1.entry:
+    liveins: $x0, $x1
+    ; CHECK-LABEL: name: shuffle_vector_1024_4x8
+    ; CHECK: liveins: $x0, $x1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<32 x s16>) = COPY $x0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<32 x s16>) = COPY $x1
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 29
+    ; CHECK-NEXT: [[AIE_VSHUFFLE:%[0-9]+]]:_(<32 x s16>) = G_AIE_VSHUFFLE [[COPY]], [[COPY1]], [[C]](s32)
+    ; CHECK-NEXT: $x2 = COPY [[AIE_VSHUFFLE]](<32 x s16>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x2
+    %1:_(<32 x s16>) = COPY $x0
+    %2:_(<32 x s16>) = COPY $x1
+    %0:_(<32 x s16>) = G_SHUFFLE_VECTOR %1:_(<32 x s16>), %2:_, shufflemask(0, 1, 8, 9, 16, 17, 24, 25, 2, 3, 10, 11, 18, 19, 26, 27, 4, 5, 12, 13, 20, 21, 28, 29, 6, 7, 14, 15, 22, 23, 30, 31)
+    $x2 = COPY %0:_(<32 x s16>)
+    PseudoRET implicit $lr, implicit $x2
+...
+
+---
+name:            shuffle_vector_512_4x8
+legalized:       false
+body:             |
+  bb.1.entry:
+    liveins: $wl0, $wl1
+    ; CHECK-LABEL: name: shuffle_vector_512_4x8
+    ; CHECK: liveins: $wl0, $wl1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s16>) = COPY $wl0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<16 x s16>) = COPY $wl1
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 29
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[COPY]](<16 x s16>), [[COPY1]](<16 x s16>)
+    ; CHECK-NEXT: [[AIE_VSHUFFLE:%[0-9]+]]:_(<32 x s16>) = G_AIE_VSHUFFLE [[CONCAT_VECTORS]], [[CONCAT_VECTORS]], [[C]](s32)
+    ; CHECK-NEXT: $x2 = COPY [[AIE_VSHUFFLE]](<32 x s16>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x2
+    %1:_(<16 x s16>) = COPY $wl0
+    %2:_(<16 x s16>) = COPY $wl1
+    %0:_(<32 x s16>) = G_SHUFFLE_VECTOR %1:_(<16 x s16>), %2:_, shufflemask(0, 1, 8, 9, 16, 17, 24, 25, 2, 3, 10, 11, 18, 19, 26, 27, 4, 5, 12, 13, 20, 21, 28, 29, 6, 7, 14, 15, 22, 23, 30, 31)
+    $x2 = COPY %0:_(<32 x s16>)
     PseudoRET implicit $lr, implicit $x2
 ...
