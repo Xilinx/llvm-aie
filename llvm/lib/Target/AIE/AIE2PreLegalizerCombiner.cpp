@@ -32,6 +32,10 @@
 
 using namespace llvm;
 
+static cl::opt<bool>
+    InlineMemCalls("aie-inline-mem-calls", cl::init(true), cl::Hidden,
+                   cl::desc("Inline mem calls when profitable."));
+
 namespace {
 
 #define GET_GICOMBINER_TYPES
@@ -57,6 +61,8 @@ public:
 
   bool tryCombineAll(MachineInstr &I) const override;
 
+  bool tryCombineAllImpl(MachineInstr &I) const;
+
 private:
 #define GET_GICOMBINER_CLASS_MEMBERS
 #include "AIE2GenPreLegalizerGICombiner.inc"
@@ -81,6 +87,25 @@ AIE2PreLegalizerCombinerImpl::AIE2PreLegalizerCombinerImpl(
 #include "AIE2GenPreLegalizerGICombiner.inc"
 #undef GET_GICOMBINER_CONSTRUCTOR_INITS
 {
+}
+
+bool AIE2PreLegalizerCombinerImpl::tryCombineAll(MachineInstr &MI) const {
+  if (tryCombineAllImpl(MI))
+    return true;
+
+  unsigned Opc = MI.getOpcode();
+  switch (Opc) {
+
+  case TargetOpcode::G_MEMCPY:
+  case TargetOpcode::G_MEMMOVE:
+  case TargetOpcode::G_MEMSET: {
+    if (InlineMemCalls &&
+        Helper.tryCombineMemCpyFamily(MI, 0 /*Use fed by TargetLowering*/))
+      return true;
+  }
+  }
+
+  return false;
 }
 
 class AIE2PreLegalizerCombiner : public MachineFunctionPass {
