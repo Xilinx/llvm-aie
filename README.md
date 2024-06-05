@@ -2,6 +2,11 @@
 
 This repository extends the LLVM framework to generate code for use with AMD/Xilinx AI Engine processors.
 
+| Architecture | clang/LLVM target | Low-level Intrinsic API | High-Level Intrinsic API (AIE_API) | Architecture Manual |
+| --- | --- | --- | --- | --- |
+| XDNA (Phoenix, Hawk Point) | 	--target=aie2-none-unknown-elf	| [Link](https://www.xilinx.com/htmldocs/xilinx2024_1/aiengine_ml_intrinsics/intrinsics/)	| [Link](https://www.xilinx.com/htmldocs/xilinx2024_1/aiengine_api/aie_api/doc/index.html) | [Link](https://docs.amd.com/r/en-US/am020-versal-aie-ml)
+| XDNA2 (Strix Point)        |	coming soon	                    | coming soon	| coming soon | coming soon
+
 ## Architecture Overview
 
 Generally speaking, AI Engine processors are in-order, exposed-pipeline VLIW processors.  These processors are implemented as part of an array of processors focused on application acceleration targetting AI, Machine Learning, and DSP applications.  They have been integrated in a number of commercial devices including the [Versal AI Core Series](https://www.amd.com/en/products/adaptive-socs-and-fpgas/versal/ai-core-series.html) and [Ryzen-AI SOCs](https://www.amd.com/en/products/processors/consumer/ryzen-ai.html).
@@ -22,30 +27,18 @@ Each VLIW instruction bundle specifies the behavior of one or more functional un
 
 Other key architectural characteristics include varying width instruction slots between different instruction encodings and relatively small address spaces (20-bit pointer registers).  The presence of varying-width instruction slots implies some code alignment restrictions for instructions which are branch or return targets.
 
-For more information, see:
-[AIE1 architecture manual](https://docs.amd.com/r/en-US/am009-versal-ai-engine) and 
-[AIE2 architecture manual](https://docs.amd.com/r/en-US/am020-versal-aie-ml)
-
-
 ## Implementation
-
-The AIE target includes basic support for both AIE1 and AIE2 instruction sets.  These instruction sets are significantly different, but share enough basic concepts and implementation to be handled as LLVM subtargets.  Current development is focused on maturing the AIE2 subtarget and the AIE1 subtarget should eventually be aligned with the updated approach for AIE2.
-
-| Subtarget | Instruction Selection | VLIW scheduling | Software Pipelining | Hardware Loops | delay slot filling | Floating point | Vector Intrinsics | post-increment addressing |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| AIE1 | 	SelectionDAG	| PostRA Scheduler	| No	       | No	            | No    	| Yes, vector fp32	    | Yes, i8, i16, i32	| No  |
-| AIE2 |	GlobalISel	    | Machine Scheduler	| Experimental | Experimental	| Yes	    | Yes, vector bfloat	| Yes, i8, i16   	| Yes |
-
-Support for Clang, LLD, binutils (e.g. 'llvm-objdump'), Compiler-RT, and LLVM-LIBC is also included.
 
 In order to support the unusual architecture features of AI Engine, this repository adds LLVM support for several specific features:
 - support for non-power of 2 pointers;
 - improved TableGen support for specifying operand latencies and resource conflicts of exposed pipeline instructions;
 - scheduler support for negative operand latencies (i.e. an instruction writing to a register may be scheduled *after* a corresponding use);
-- scheduler support for slot assignment when instructions that can be issued in multiple VLIW slots;
+- scheduler support for slot assignment for instructions that can be issued in multiple VLIW slots;
 - support for selecting relocations for instructions with multiple encodings;
 - support for architectures with code alignment restrictions;
 - improved register allocation support for complex register hierarchies, specifically related to spills of sub-registers of large compound-registers;
+
+Support for Clang, LLD, binutils (e.g. 'llvm-objdump'), Compiler-RT, and LLVM-LIBC is also included.
 
 ## Disclaimer
 
