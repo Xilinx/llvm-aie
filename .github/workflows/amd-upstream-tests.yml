@@ -21,21 +21,23 @@ concurrency:
 jobs:
   check_all:
     if: github.repository_owner == 'Xilinx'
-    name: Test llvm,clang
+    name: Test upstream llvm,clang
     uses: ./.github/workflows/llvm-project-tests.yml
     with:
       build_target: check-all
       projects: clang
       cache-key: amd-upstream
-      extra_cmake_args: '-DLLVM_USE_LINKER=gold -DLLVM_TARGETS_TO_BUILD="X86;ARM;AArch64;AMDGPU"'
+      extra_cmake_args: '-DLLVM_USE_LINKER=gold -DLLVM_TARGETS_TO_BUILD="X86;ARM;AArch64;AMDGPU" -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=""'
       os_list: '["ubuntu-latest", "windows-2019"]'
 
   check_lld:
     if: github.repository_owner == 'Xilinx'
-    name: Test lld
+    name: Test upstream lld
     uses: ./.github/workflows/llvm-project-tests.yml
     with:
       build_target: check-lld
       projects: lld
+      cache-key: amd-upstream
+      extra_cmake_args: '-DLLVM_USE_LINKER=gold -DLLVM_TARGETS_TO_BUILD="X86;ARM;AArch64;AMDGPU" -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=""'
       os_list: '["ubuntu-latest", "windows-2019"]'
 

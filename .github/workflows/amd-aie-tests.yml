@@ -21,7 +21,7 @@ concurrency:
 jobs:
   check_all:
     if: github.repository_owner == 'Xilinx'
-    name: Test llvm,clang
+    name: Test AIE llvm,clang,lld
     uses: ./.github/workflows/llvm-project-tests.yml
     with:
       build_target: check-llvm-aie check-clang-aie check-lld-aie
