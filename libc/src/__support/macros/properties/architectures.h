@@ -56,6 +56,10 @@
 #define LIBC_TARGET_ARCH_IS_AIE
 #endif
 
+#if defined(__AIENGINE__) && (__AIEARCH__ == 20)
+#define LIBC_TARGET_ARCH_IS_AIE2
+#endif
+
 #if defined(__riscv) && (__riscv_xlen == 64)
 #define LIBC_TARGET_ARCH_IS_RISCV64
 #endif

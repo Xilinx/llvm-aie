@@ -18,7 +18,10 @@
 
 #include <stddef.h> // size_t
 
-#if defined(LIBC_COPT_MEMCPY_USE_EMBEDDED_TINY)
+#if defined(LIBC_TARGET_ARCH_IS_AIE2)
+#include "src/string/memory_utils/aie/inline_memcpy.h"
+#define LIBC_SRC_STRING_MEMORY_UTILS_MEMCPY inline_memcpy_aie2
+#elif defined(LIBC_COPT_MEMCPY_USE_EMBEDDED_TINY)
 #include "src/string/memory_utils/generic/byte_per_byte.h"
 #define LIBC_SRC_STRING_MEMORY_UTILS_MEMCPY inline_memcpy_byte_per_byte
 #elif defined(LIBC_TARGET_ARCH_IS_X86)
