@@ -61,13 +61,31 @@ void AIEBaseAsmPrinter::emitFunctionBodyStart() {
   // Run through all instructions to collect the MBBs whose address
   // is taken. This later helps us to decide whether or not a MBB
   // might be fall-through.
-  for (const MachineBasicBlock &MBB : *MF) {
+  auto &Subtarget = MF->getSubtarget();
+  auto *TII = static_cast<const AIEBaseInstrInfo *>(Subtarget.getInstrInfo());
+  for (MachineBasicBlock &MBB : *MF) {
     for (const MachineInstr &MI : MBB.instrs()) {
       for (ConstMIBundleOperands OP(MI); OP.isValid(); ++OP) {
         if (OP->isMBB()) {
           FunctionTakenMBBAddresses.insert(OP->getMBB());
         }
       }
+    }
+
+    // Scan for endloops to propagate the last-bundle label.
+    // The loop is separated from the previous one because it needs a bundle
+    // iterator instead of an instruction iterator.
+    MachineInstr *Prev = nullptr;
+    for (MachineInstr &MI : MBB) {
+      if (TII->isHardwareLoopEnd(MI.getOpcode())) {
+        // If we don't have a previous bundle here, someone constructed
+        // an illegal hardware loop. There's nothing we can do.
+        if (!Prev) {
+          llvm_unreachable("LoopEnd without last bundle");
+        }
+        Prev->setPreInstrSymbol(*MF, MI.getOperand(1).getMCSymbol());
+      }
+      Prev = &MI;
     }
   }
 }
