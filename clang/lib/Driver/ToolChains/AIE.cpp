@@ -33,15 +33,16 @@ void aie::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   ArgStringList CmdArgs;
   AddLinkerInputs(ToolChain, Inputs, Args, CmdArgs, JA);
   // CmdArgs.push_back("-shared");
+  ToolChain.AddFilePathLibArgs(Args, CmdArgs);
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nodefaultlibs)) {
     AddRunTimeLibs(ToolChain, ToolChain.getDriver(), CmdArgs, Args);
+    CmdArgs.push_back(Args.MakeArgString("-lc"));
+    CmdArgs.push_back(Args.MakeArgString("-lm"));
   }
-  ToolChain.AddFilePathLibArgs(Args, CmdArgs);
+
   if (!Args.hasArg(options::OPT_nostdlib, options::OPT_nostartfiles,
                    options::OPT_r)) {
-    CmdArgs.push_back(Args.MakeArgString("-lc"));   
-    CmdArgs.push_back(Args.MakeArgString("-lm"));            
     CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crt0.o")));
     CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crt1.o")));
   }

@@ -11,9 +11,9 @@
 // RUN: %clang %s -### --target=aie2-none-unknown-elf -ccc-install-dir  %S/../Inputs/basic_aie_tree/bin 2>&1 \
 // RUN:   | FileCheck -check-prefix=LIBS %s
 // LIBS: "{{.*}}ld.lld"
-// LIBS-SAME: "{{.*}}/lib/clang/{{.*}}/lib/aie2-none-unknown-elf/libclang_rt.builtins.a"
 // LIBS-SAME: "-L{{[^"]*}}/lib/aie2-none-unknown-elf"
 // LIBS-SAME: "-L{{[^"]*}}lib/clang/{{..}}/lib/aie2-none-unknown-elf
+// LIBS-SAME: "{{.*}}/lib/clang/{{.*}}/lib/aie2-none-unknown-elf/libclang_rt.builtins.a"
 // LIBS-SAME: "-lc"
 // LIBS-SAME: "-lm"
 
