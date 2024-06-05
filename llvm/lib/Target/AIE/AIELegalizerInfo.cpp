@@ -42,6 +42,10 @@
 using namespace llvm;
 using namespace LegalityPredicates;
 
+static cl::opt<bool>
+    InlineMemCalls("aie-inline-mem-calls", cl::init(true), cl::Hidden,
+                   cl::desc("Inline mem calls when profitable."));
+
 static LegalityPredicate isLegalBitCastType(unsigned TypeIdx) {
   return [=](const LegalityQuery &Query) {
     LLT Ty = Query.Types[TypeIdx];
@@ -653,6 +657,11 @@ bool AIELegalizerInfo::legalizeG_VAARG(LegalizerHelper &Helper,
 
 bool AIELegalizerInfo::legalizeMemCalls(LegalizerHelper &Helper,
                                         MachineInstr &MI) const {
+
+  if (InlineMemCalls && Helper.lowerMemCpyFamily(MI) ==
+                            LegalizerHelper::LegalizeResult::Legalized)
+    return true;
+
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
   LLVMContext &Ctx = MIRBuilder.getMF().getFunction().getContext();
   MachineRegisterInfo &MRI = *MIRBuilder.getMRI();

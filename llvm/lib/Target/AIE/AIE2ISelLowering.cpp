@@ -48,6 +48,14 @@ AIE2TargetLowering::AIE2TargetLowering(const TargetMachine &TM,
       addRegisterClass(Ty, *RCIt);
     }
   }
+
+  MaxStoresPerMemset = 4;
+  MaxStoresPerMemsetOptSize = 4;
+  MaxStoresPerMemcpy = 4;
+  MaxStoresPerMemcpyOptSize = 2;
+  MaxStoresPerMemmove = 4;
+  MaxStoresPerMemmoveOptSize = 2;
+
   computeRegisterProperties(STI.getRegisterInfo());
 
   setStackPointerRegisterToSaveRestore(AIE2::SP);
