@@ -13,15 +13,17 @@ on:
       - 'aie-public'
 
 concurrency:
-  # Skip intermediate builds: always.
+  # A PR number if a pull request and otherwise the commit hash. This cancels
+  # queued and in-progress runs for the same PR (presubmit) or commit
+  # (postsubmit).
   # Cancel intermediate builds: only if it is a pull request build.
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.number || github.sha }}
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 
 jobs:
   check_all:
     if: github.repository_owner == 'Xilinx'
-    name: Test llvm,clang
+    name: Test AIE llvm,clang,lld
     uses: ./.github/workflows/llvm-project-tests.yml
     with:
       build_target: check-llvm-aie check-clang-aie check-lld-aie
