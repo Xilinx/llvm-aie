@@ -41,6 +41,7 @@ add_tablegen(llvm-tblgen LLVM
   EXPORT LLVM
   AIEMemoryCyclesEmitter.cpp
   AIEPreSchedLoweringEmitter.cpp
+  AIESplitInstrTablesEmitter.cpp
   AsmMatcherEmitter.cpp
   AsmWriterEmitter.cpp
   AsmWriterInst.cpp

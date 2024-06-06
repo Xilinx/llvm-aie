@@ -67,4 +67,7 @@ class SplitPseudo<Instruction RealInst, int idx, dag NewSplitIns> :
   let Defs = RealInst.Defs;
   let Uses = RealInst.Uses;
   let Namespace = RealInst.Namespace;
+
+  // Track the "real" instruction for the TableGen backend to connect the dots
+  Instruction OriginalInstr = RealInst;
 }
