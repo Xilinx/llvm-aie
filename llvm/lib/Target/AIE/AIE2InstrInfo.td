@@ -573,5 +573,52 @@ let Itinerary = II_MOV_SCL, hasSideEffects = 0,  mayLoad = 0, mayStore = 0 in {
       Pseudo<(outs OP_mMvSclDst:$mMvSclDst), (ins OP_mMvSclSrc:$mMvSclSrc), "copy","$mMvSclDst, $mMvSclSrc">;
 }
 
+// Define _split variants for instructions using 2D registers
+class Split2DInstr<Instruction RealInst, int opidx> : SplitPseudo<RealInst,
+    opidx, (ins eM:$mod, eDN:$dim_size, eDJ:$dim_stride, eDC:$dim_count)> {}
+foreach instr = [VLDA_2D_dmw_lda_w, VLDA_2D_dmw_lda_am, VLDA_2D_CONV_FP32_BF16,
+                 VLDB_2D, VLDB_2D_128, LDA_2D_dmv_lda_q, VLDB_2D_UNPACK_S8_S4,
+                 VLDB_2D_UNPACK_S16_S8, VLDB_2D_UNPACK_D8_D4, VLDB_2D_UNPACK_D16_D8,
+                 VST_2D_dmw_sts_w, VST_2D_dmw_sts_am, VST_2D_128, ST_2D_dmv_sts_q,
+                 LDA_2D_dms_lda, LDA_2D_S8_dmhb_lda, LDA_2D_U8_dmhb_lda,
+                 LDA_2D_S16_dmhb_lda, LDA_2D_U16_dmhb_lda,
+                 ST_2D_dms_sts, ST_2D_S8, ST_2D_S16] in
+    def instr # _split : Split2DInstr<instr, /*opidx=*/4>;
+foreach instr = [VLDA_2D_UPS_S32_D16, VLDA_2D_UPS_S64_D32, VLDA_2D_UPS_S32_D8,
+                 VLDA_2D_UPS_S64_D16, VLDA_2D_UPS_S32_S16, VLDA_2D_UPS_S64_S32,
+                 VLDA_2D_UPS_S32_S8, VLDA_2D_UPS_S64_S16] in
+    def instr # _split : Split2DInstr<instr, /*opidx=*/5>;
+foreach instr = [VST_2D_SRS_D8_S32, VST_2D_SRS_D16_S64, VST_2D_SRS_D16_S32,
+                 VST_2D_SRS_D32_S64, VST_2D_SRS_S8_S32, VST_2D_SRS_S16_S64,
+                 VST_2D_SRS_S16_S32, VST_2D_SRS_S32_S64, VST_CONV_2D_BF16_FP32,
+                 VST_2D_PACK_D4_D8, VST_2D_PACK_D8_D16, VST_2D_PACK_S4_S8,
+                 VST_2D_PACK_S8_S16,
+                 PADDA_2D, PADDB_2D, PADDS_2D] in
+    def instr # _split : Split2DInstr<instr, /*opidx=*/3>;
+
+// Define _split variants for instructions using 3D registers
+class Split3DInstr<Instruction RealInst, int opidx> : SplitPseudo<RealInst,
+    opidx, (ins eM:$mod1, eDN:$dim_size1, eDJ:$dim_stride1, eDC:$dim_count1,
+                eM:$mod2, eDN:$dim_size2, eDJ:$dim_stride2, eDC:$dim_count2)> {}
+foreach instr = [VLDA_3D_dmw_lda_w, VLDA_3D_dmw_lda_am, VLDA_3D_CONV_FP32_BF16,
+                 VLDB_3D, VLDB_3D_128, LDA_3D_dmv_lda_q, VLDB_3D_UNPACK_S8_S4,
+                 VLDB_3D_UNPACK_S16_S8, VLDB_3D_UNPACK_D8_D4, VLDB_3D_UNPACK_D16_D8,
+                 VST_3D_dmw_sts_w, VST_3D_dmw_sts_am, VST_3D_128, ST_3D_dmv_sts_q,
+                 LDA_3D_dms_lda, LDA_3D_S8_dmhb_lda, LDA_3D_U8_dmhb_lda,
+                 LDA_3D_S16_dmhb_lda, LDA_3D_U16_dmhb_lda,
+                 ST_3D_dms_sts, ST_3D_S8, ST_3D_S16] in
+    def instr # _split : Split3DInstr<instr, /*opidx=*/5>;
+foreach instr = [VLDA_3D_UPS_S32_D16, VLDA_3D_UPS_S64_D32, VLDA_3D_UPS_S32_D8,
+                 VLDA_3D_UPS_S64_D16, VLDA_3D_UPS_S32_S16, VLDA_3D_UPS_S64_S32,
+                 VLDA_3D_UPS_S32_S8, VLDA_3D_UPS_S64_S16] in
+    def instr # _split : Split3DInstr<instr, /*opidx=*/6>;
+foreach instr = [VST_3D_SRS_D8_S32, VST_3D_SRS_D16_S64, VST_3D_SRS_D16_S32,
+                 VST_3D_SRS_D32_S64, VST_3D_SRS_S8_S32, VST_3D_SRS_S16_S64,
+                 VST_3D_SRS_S16_S32, VST_3D_SRS_S32_S64, VST_CONV_3D_BF16_FP32,
+                 VST_3D_PACK_D4_D8, VST_3D_PACK_D8_D16, VST_3D_PACK_S4_S8,
+                 VST_3D_PACK_S8_S16,
+                 PADDA_3D, PADDB_3D, PADDS_3D] in
+    def instr # _split : Split3DInstr<instr, /*opidx=*/4>;
+
 include "AIE2MultiSlotPseudoInstrInfo.td"
 include "AIE2InstrPatterns.td"

@@ -446,30 +446,6 @@ let hasSideEffects = false, mayLoad = true, mayStore = false in {
       "vldb.3d.128", "$dst, [$ptr], $mod">,
     AIE2_ag_no_imm__ag_pstm_3d;
 
-  // Define _split instructions for VLDs
-  let Constraints = "$ptr_out = $ptr" in {
-    class LD_2D_split_instr<RegisterClass regclass> : SplitPseudo<
-        (outs regclass:$dst, eP:$ptr_out, eDC:$count_out),
-        (ins eP:$ptr, eM:$mod, eDN:$dim_size, eDJ:$dim_stride, eDC:$dim_count)> {}
-    def VLDA_2D_dmw_lda_w_split : LD_2D_split_instr<mWa>;
-    def VLDA_2D_dmw_lda_am_split : LD_2D_split_instr<mAMm>;
-    def VLDA_2D_CONV_FP32_BF16_split : LD_2D_split_instr<mBMs>;
-    def VLDB_2D_split : LD_2D_split_instr<mWa>;
-    def VLDB_2D_128_split : LD_2D_split_instr<mWa>;
-    def LDA_2D_dmv_lda_q_split : LD_2D_split_instr<mQQa>;
-
-    class LD_3D_split_instr<RegisterClass regclass> : SplitPseudo<
-        (outs regclass:$dst, eP:$ptr_out, eDC:$count_lo_out, eDC:$count_hi_out),
-        (ins eP:$ptr, eM:$mod1, eDN:$dim_size1, eDJ:$dim_stride1, eDC:$dim_count1,
-             eM:$mod2, eDN:$dim_size2, eDJ:$dim_stride2, eDC:$dim_count2)> {}
-    def VLDA_3D_dmw_lda_w_split : LD_3D_split_instr<mWa>;
-    def VLDA_3D_dmw_lda_am_split : LD_3D_split_instr<mAMm>;
-    def VLDA_3D_CONV_FP32_BF16_split : LD_3D_split_instr<mBMs>;
-    def VLDB_3D_split : LD_3D_split_instr<mWa>;
-    def VLDB_3D_128_split : LD_3D_split_instr<mWa>;
-    def LDA_3D_dmv_lda_q_split : LD_3D_split_instr<mQQa>;
-  } // Constraints = "$ptr_out = $ptr"
-
 } // hasSideEffects = false, mayLoad = true, mayStore = false
 
 // 3.3 VLD.UNPACK – Vector Loads with unpacking
@@ -518,16 +494,11 @@ let hasSideEffects = false, mayLoad = true, mayStore = false, hasCompleteDecoder
         AIE2_ag_no_imm__ag_pstm_2d;
       def VLDB_2D_UNPACK_S16_S8 : VLDB_2D_dmw_ldb_unpack</*sgn*/1, /*sz*/1, "vldb.2d.unpack.s16.s8">,
         AIE2_ag_no_imm__ag_pstm_2d;
-      def VLDB_2D_UNPACK_S8_S4_split : LD_2D_split_instr<mXs>;
-      def VLDB_2D_UNPACK_S16_S8_split : LD_2D_split_instr<mXs>;
       let Uses = [crUnpackSign] in {
         def VLDB_2D_UNPACK_D8_D4 : VLDB_2D_dmw_ldb_unpack</*sgn*/0, /*sz*/0, "vldb.2d.unpack.d8.d4">,
           AIE2_ag_no_imm__ag_pstm_2d;
         def VLDB_2D_UNPACK_D16_D8 : VLDB_2D_dmw_ldb_unpack</*sgn*/0, /*sz*/1, "vldb.2d.unpack.d16.d8">,
           AIE2_ag_no_imm__ag_pstm_2d;
-        def VLDB_2D_UNPACK_D8_D4_split : LD_2D_split_instr<mXs>;
-        def VLDB_2D_UNPACK_D16_D8_split : LD_2D_split_instr<mXs>;
-
       }
     }
   let Itinerary = II_VLDB_UNPACK_3D, Constraints = "$ptr_out = $ptr" in
@@ -538,15 +509,11 @@ let hasSideEffects = false, mayLoad = true, mayStore = false, hasCompleteDecoder
         AIE2_ag_no_imm__ag_pstm_3d;
       def VLDB_3D_UNPACK_S16_S8 : VLDB_3D_dmw_ldb_unpack</*sgn*/1, /*sz*/1, "vldb.3d.unpack.s16.s8">,
         AIE2_ag_no_imm__ag_pstm_3d;
-      def VLDB_3D_UNPACK_S8_S4_split : LD_3D_split_instr<mXs>;
-      def VLDB_3D_UNPACK_S16_S8_split : LD_3D_split_instr<mXs>;
       let Uses = [crUnpackSign] in {
         def VLDB_3D_UNPACK_D8_D4 : VLDB_3D_dmw_ldb_unpack</*sgn*/0, /*sz*/0, "vldb.3d.unpack.d8.d4">,
           AIE2_ag_no_imm__ag_pstm_3d;
         def VLDB_3D_UNPACK_D16_D8 : VLDB_3D_dmw_ldb_unpack</*sgn*/0, /*sz*/1, "vldb.3d.unpack.d16.d8">,
           AIE2_ag_no_imm__ag_pstm_3d;
-        def VLDB_3D_UNPACK_D8_D4_split : LD_3D_split_instr<mXs>;
-        def VLDB_3D_UNPACK_D16_D8_split : LD_3D_split_instr<mXs>;
       }
     }
 
@@ -707,27 +674,6 @@ let hasSideEffects = false, mayLoad = false, mayStore = true in {
       "st.3d", "$src, [$ptr], $mod">,
     AIE2_ag_all__ag_pstm_3d;
 
-  // Define _split instructions for VSTs
-  let Constraints = "$ptr_out = $ptr" in {
-    class ST_2D_split_instr<RegisterClass regclass> : SplitPseudo<
-        (outs eP:$ptr_out, eDC:$count_out),
-        (ins regclass:$dst, eP:$ptr,
-             eM:$mod, eDN:$dim_size, eDJ:$dim_stride, eDC:$dim_count)> {}
-    def VST_2D_dmw_sts_w_split : ST_2D_split_instr<mWs>;
-    def VST_2D_128_split : ST_2D_split_instr<mWs>;
-    def ST_2D_dmv_sts_q_split : ST_2D_split_instr<mQQa>;
-    def VST_2D_dmw_sts_am_split : ST_2D_split_instr<mAMs>;
-
-    class ST_3D_split_instr<RegisterClass regclass> : SplitPseudo<
-        (outs eP:$ptr_out, eDC:$count_lo_out, eDC:$count_hi_out),
-        (ins regclass:$dst, eP:$ptr,
-             eM:$mod1, eDN:$dim_size1, eDJ:$dim_stride1, eDC:$dim_count1,
-             eM:$mod2, eDN:$dim_size2, eDJ:$dim_stride2, eDC:$dim_count2)> {}
-    def VST_3D_dmw_sts_w_split : ST_3D_split_instr<mWs>;
-    def VST_3D_128_split : ST_3D_split_instr<mWs>;
-    def ST_3D_dmv_sts_q_split : ST_3D_split_instr<mQQa>;
-    def VST_3D_dmw_sts_am_split : ST_3D_split_instr<mAMs>;
-  } // Constraints = "$ptr_out = $ptr"
 } // let hasSideEffects = false, mayLoad = false, mayStore = true
 
 // 3.21 LD.TM - Scalar Load from Tile Memory Map
@@ -1960,9 +1906,6 @@ let mayLoad = true in {
     }
   }
 
-  class VLD_UPS_2D_split_instr<RegisterClass regclass> : SplitPseudo<
-      (outs regclass:$dst, eP:$ptr_out, eDC:$count_out),
-      (ins mSs:$shft, eP:$ptr, eM:$mod, eDN:$dim_size, eDJ:$dim_stride, eDC:$dim_count)> {}
   let Itinerary = II_VLDA_2D_UPS in
   let Constraints = "$ptr_out = $ptr" in
   let Defs = [srUPS_of] in {
@@ -1979,10 +1922,6 @@ let mayLoad = true in {
       let DecoderMethod = "DecodeVLDA_2D_UPS_CMInstruction" in
       def VLDA_2D_UPS_S64_D16 : AIE2_dmw_lda_ups_w2c_inst_lda < (outs mCMs:$dst, eP:$ptr_out, eDC:$count_out) , (ins mSs:$shft, eP:$ptr, eD:$mod),
         "vlda.2d.ups.s64.d16", "$dst, $shft, [$ptr], $mod">, AIE2_ag_nospill__ag_pstm_2d, mv_ups_base<1, 0>;
-      def VLDA_2D_UPS_S32_D16_split : VLD_UPS_2D_split_instr<mBMs>;
-      def VLDA_2D_UPS_S64_D32_split : VLD_UPS_2D_split_instr<mBMs>;
-      def VLDA_2D_UPS_S32_D8_split  : VLD_UPS_2D_split_instr<mCMs>;
-      def VLDA_2D_UPS_S64_D16_split : VLD_UPS_2D_split_instr<mCMs>;
     }
     let Uses = [crSat] in {
       let DecoderMethod = "DecodeVLDA_2D_UPS_BMInstruction" in
@@ -1997,18 +1936,9 @@ let mayLoad = true in {
       let DecoderMethod = "DecodeVLDA_2D_UPS_CMInstruction" in
       def VLDA_2D_UPS_S64_S16 : AIE2_dmw_lda_ups_w2c_inst_lda < (outs mCMs:$dst, eP:$ptr_out, eDC:$count_out) , (ins mSs:$shft, eP:$ptr, eD:$mod),
         "vlda.2d.ups.s64.s16", "$dst, $shft, [$ptr], $mod">, AIE2_ag_nospill__ag_pstm_2d, mv_ups_base<1, 1>;
-      def VLDA_2D_UPS_S32_S16_split : VLD_UPS_2D_split_instr<mBMs>;
-      def VLDA_2D_UPS_S64_S32_split : VLD_UPS_2D_split_instr<mBMs>;
-      def VLDA_2D_UPS_S32_S8_split  : VLD_UPS_2D_split_instr<mCMs>;
-      def VLDA_2D_UPS_S64_S16_split : VLD_UPS_2D_split_instr<mCMs>;
     }
   }
 
-  class VLD_UPS_3D_split_instr<RegisterClass regclass> : SplitPseudo<
-      (outs regclass:$dst, eP:$ptr_out, eDC:$count_lo_out, eDC:$count_hi_out),
-      (ins mSs:$shft, eP:$ptr,
-           eM:$mod1, eDN:$dim_size1, eDJ:$dim_stride1, eDC:$dim_count1,
-           eM:$mod2, eDN:$dim_size2, eDJ:$dim_stride2, eDC:$dim_count2)> {}
   let Itinerary = II_VLDA_3D_UPS in
   let Constraints = "$ptr_out = $ptr" in
   let Defs = [srUPS_of] in {
@@ -2037,10 +1967,6 @@ let mayLoad = true in {
           (ins mSs:$shft, eP:$ptr, eDS:$mod),
           "vlda.3d.ups.s64.d16", "$dst, $shft, [$ptr], $mod">,
         AIE2_ag_nospill__ag_pstm_3d, mv_ups_base<1, 0>;
-      def VLDA_3D_UPS_S32_D16_split : VLD_UPS_3D_split_instr<mBMs>;
-      def VLDA_3D_UPS_S64_D32_split : VLD_UPS_3D_split_instr<mBMs>;
-      def VLDA_3D_UPS_S32_D8_split  : VLD_UPS_3D_split_instr<mCMs>;
-      def VLDA_3D_UPS_S64_D16_split : VLD_UPS_3D_split_instr<mCMs>;
     }
     let Uses = [crSat] in {
       let DecoderMethod = "DecodeVLDA_3D_UPS_BMInstruction" in
@@ -2067,10 +1993,6 @@ let mayLoad = true in {
           (ins mSs:$shft, eP:$ptr, eDS:$mod),
           "vlda.3d.ups.s64.s16", "$dst, $shft, [$ptr], $mod">,
         AIE2_ag_nospill__ag_pstm_3d, mv_ups_base<1, 1>;
-      def VLDA_3D_UPS_S32_S16_split : VLD_UPS_3D_split_instr<mBMs>;
-      def VLDA_3D_UPS_S64_S32_split : VLD_UPS_3D_split_instr<mBMs>;
-      def VLDA_3D_UPS_S32_S8_split  : VLD_UPS_3D_split_instr<mCMs>;
-      def VLDA_3D_UPS_S64_S16_split : VLD_UPS_3D_split_instr<mCMs>;
     }
   }
 } // let mayLoad = true
@@ -2204,10 +2126,6 @@ let mayStore = true in {
     }
   }
 
-  class VST_SRS_2D_split_instr<RegisterClass regclass> : SplitPseudo<
-      (outs eP:$ptr_out, eDC:$count_out),
-      (ins  eP:$ptr, eM:$mod, eDN:$dim_size, eDJ:$dim_stride, eDC:$dim_count,
-            regclass:$dst, mSs:$shft)> {}
   let Itinerary = II_VST_2D_SRS in
   let Constraints = "$ptr_out = $ptr" in
   let Defs = [srSRS_of] in {
@@ -2219,8 +2137,6 @@ let mayStore = true in {
       def VST_2D_SRS_D16_S64 : AIE2_dmw_sts_srs_inst_st< (outs eP:$ptr_out, eDC:$count_out),
           (ins eP:$ptr, eD:$mod, mCMs:$src, mSs:$shft), "vst.2d.srs.d16.s64", "$src, $shft, [$ptr], $mod">,
           AIE2_ag_nospill__ag_pstm_2d, mWdssrs<1, 0>;
-      def VST_2D_SRS_D8_S32_split  : VST_SRS_2D_split_instr<mCMs>;
-      def VST_2D_SRS_D16_S64_split : VST_SRS_2D_split_instr<mCMs>;
     }
     let DecoderMethod = "DecodeVST_2D_SRS_BMInstruction" in
     let Uses = [crSat, crRnd, crSRSSign] in {
@@ -2230,8 +2146,6 @@ let mayStore = true in {
       def VST_2D_SRS_D32_S64 : AIE2_dmw_sts_srs_inst_st< (outs eP:$ptr_out, eDC:$count_out),
           (ins eP:$ptr, eD:$mod, mBMs:$src, mSs:$shft), "vst.2d.srs.d32.s64", "$src, $shft, [$ptr], $mod">,
           AIE2_ag_nospill__ag_pstm_2d, mWlsrsl<1, 0>;
-      def VST_2D_SRS_D16_S32_split : VST_SRS_2D_split_instr<mBMs>;
-      def VST_2D_SRS_D32_S64_split : VST_SRS_2D_split_instr<mBMs>;
     }
     let DecoderMethod = "DecodeVST_2D_SRS_CMInstruction" in
     let Uses = [crSat, crRnd] in {
@@ -2241,8 +2155,6 @@ let mayStore = true in {
       def VST_2D_SRS_S16_S64 : AIE2_dmw_sts_srs_inst_st< (outs eP:$ptr_out, eDC:$count_out),
           (ins eP:$ptr, eD:$mod, mCMs:$src, mSs:$shft), "vst.2d.srs.s16.s64", "$src, $shft, [$ptr], $mod">,
           AIE2_ag_nospill__ag_pstm_2d, mWdssrs<1, 1>;
-      def VST_2D_SRS_S8_S32_split  : VST_SRS_2D_split_instr<mCMs>;
-      def VST_2D_SRS_S16_S64_split : VST_SRS_2D_split_instr<mCMs>;
     }
     let DecoderMethod = "DecodeVST_2D_SRS_BMInstruction" in
     let Uses = [crSat, crRnd] in {
@@ -2252,16 +2164,9 @@ let mayStore = true in {
       def VST_2D_SRS_S32_S64 : AIE2_dmw_sts_srs_inst_st< (outs eP:$ptr_out, eDC:$count_out),
           (ins eP:$ptr, eD:$mod, mBMs:$src, mSs:$shft), "vst.2d.srs.s32.s64", "$src, $shft, [$ptr], $mod">,
           AIE2_ag_nospill__ag_pstm_2d, mWlsrsl<1, 1>;
-      def VST_2D_SRS_S16_S32_split : VST_SRS_2D_split_instr<mBMs>;
-      def VST_2D_SRS_S32_S64_split : VST_SRS_2D_split_instr<mBMs>;
     }
   }
 
-  class VST_SRS_3D_split_instr<RegisterClass regclass> : SplitPseudo<
-      (outs eP:$ptr_out, eDC:$count_lo_out, eDC:$count_hi_out),
-      (ins eP:$ptr, eM:$mod1, eDN:$dim_size1, eDJ:$dim_stride1, eDC:$dim_count1,
-                    eM:$mod2, eDN:$dim_size2, eDJ:$dim_stride2, eDC:$dim_count2,
-           regclass:$src, mSs:$shft)> {}
   let Itinerary = II_VST_3D_SRS in
   let Constraints = "$ptr_out = $ptr" in
   let Defs = [srSRS_of] in {
@@ -2277,8 +2182,6 @@ let mayStore = true in {
           (ins eP:$ptr, eDS:$mod, mCMs:$src, mSs:$shft),
           "vst.3d.srs.d16.s64", "$src, $shft, [$ptr], $mod">,
         AIE2_ag_nospill__ag_pstm_3d, mWdssrs<1, 0>;
-      def VST_3D_SRS_D8_S32_split  : VST_SRS_3D_split_instr<mCMs>;
-      def VST_3D_SRS_D16_S64_split : VST_SRS_3D_split_instr<mCMs>;
     }
     let DecoderMethod = "DecodeVST_3D_SRS_BMInstruction" in
     let Uses = [crSat, crRnd, crSRSSign] in {
@@ -2292,8 +2195,6 @@ let mayStore = true in {
           (ins eP:$ptr, eDS:$mod, mBMs:$src, mSs:$shft),
           "vst.3d.srs.d32.s64", "$src, $shft, [$ptr], $mod">,
         AIE2_ag_nospill__ag_pstm_3d, mWlsrsl<1, 0>;
-      def VST_3D_SRS_D16_S32_split : VST_SRS_3D_split_instr<mBMs>;
-      def VST_3D_SRS_D32_S64_split : VST_SRS_3D_split_instr<mBMs>;
     }
     let DecoderMethod = "DecodeVST_3D_SRS_CMInstruction" in
     let Uses = [crSat, crRnd] in {
@@ -2307,8 +2208,6 @@ let mayStore = true in {
           (ins eP:$ptr, eDS:$mod, mCMs:$src, mSs:$shft),
           "vst.3d.srs.s16.s64", "$src, $shft, [$ptr], $mod">,
         AIE2_ag_nospill__ag_pstm_3d, mWdssrs<1, 1>;
-      def VST_3D_SRS_S8_S32_split  : VST_SRS_3D_split_instr<mCMs>;
-      def VST_3D_SRS_S16_S64_split : VST_SRS_3D_split_instr<mCMs>;
     }
     let DecoderMethod = "DecodeVST_3D_SRS_BMInstruction" in
     let Uses = [crSat, crRnd] in {
@@ -2322,8 +2221,6 @@ let mayStore = true in {
           (ins eP:$ptr, eDS:$mod, mBMs:$src, mSs:$shft),
           "vst.3d.srs.s32.s64", "$src, $shft, [$ptr], $mod">,
         AIE2_ag_nospill__ag_pstm_3d, mWlsrsl<1, 1>;
-      def VST_3D_SRS_S16_S32_split : VST_SRS_3D_split_instr<mBMs>;
-      def VST_3D_SRS_S32_S64_split : VST_SRS_3D_split_instr<mBMs>;
     }
   }
 } // let mayStore = true
@@ -2425,8 +2322,6 @@ let mayStore = true in {
           def VST_CONV_2D_BF16_FP32 : AIE2_dmw_sts_srs_bf_inst_st< (outs eP:$ptr_out, eDC:$count_out),
               (ins eP:$ptr, eD:$mod, mBMs:$src), "vst.2d.conv.bf16.fp32", "$src, [$ptr], $mod">,
               AIE2_ag_nospill__ag_pstm_2d;
-          def VST_CONV_2D_BF16_FP32_split : SplitPseudo<(outs eP:$ptr_out, eDC:$count_out),
-              (ins  eP:$ptr, eM:$mod, eDN:$dim_size, eDJ:$dim_stride, eDC:$dim_count, mBMs:$src)> {}
       }
 
       let Itinerary = II_VST_3D_CONV in
@@ -2435,9 +2330,6 @@ let mayStore = true in {
           def VST_CONV_3D_BF16_FP32 : AIE2_dmw_sts_srs_bf_inst_st< (outs eP:$ptr_out, eDC:$count_lo_out, eDC:$count_hi_out),
               (ins eP:$ptr, eDS:$mod, mBMs:$src), "vst.3d.conv.bf16.fp32", "$src, [$ptr], $mod">,
               AIE2_ag_nospill__ag_pstm_3d;
-          def VST_CONV_3D_BF16_FP32_split : SplitPseudo<(outs eP:$ptr_out, eDC:$count_lo_out, eDC:$count_hi_out),
-              (ins eP:$ptr, eM:$mod1, eDN:$dim_size1, eDJ:$dim_stride1, eDC:$dim_count1,
-                   eM:$mod2, eDN:$dim_size2, eDJ:$dim_stride2, eDC:$dim_count2, mBMs:$src)> {}
       }
     } // let Uses = [crRnd, crF2FMask]
   } // let Defs = [srF2FFlags]
@@ -2514,25 +2406,17 @@ let mayStore = true in {
               (ins eP:$ptr, eD:$mod, mXs:$src),
               opcodestr, "$src, [$ptr], $mod">,
             AIE2_ag_nospill__ag_pstm_2d, mv_pack_src<sgn, sz>;
-      class VST_2D_PACK_split_instr : SplitPseudo<
-            (outs eP:$ptr_out, eDC:$count_out),
-            (ins eP:$ptr, eM:$mod, eDN:$dim_size,
-            eDJ:$dim_stride, eDC:$dim_count, mXs:$src)> {}
       let Uses = [crSat, crPackSign] in {
         def VST_2D_PACK_D4_D8 :
           VST_2D_PACK_ag_pstm_mv_pack_src</*sgn*/0, /*sz*/0, "vst.2d.pack.d4.d8">;
         def VST_2D_PACK_D8_D16 :
           VST_2D_PACK_ag_pstm_mv_pack_src</*sgn*/0, /*sz*/1, "vst.2d.pack.d8.d16">;
-        def VST_2D_PACK_D4_D8_split : VST_2D_PACK_split_instr<>;
-        def VST_2D_PACK_D8_D16_split : VST_2D_PACK_split_instr<>;
       }
       let Uses = [crSat] in {
         def VST_2D_PACK_S4_S8 :
           VST_2D_PACK_ag_pstm_mv_pack_src</*sgn*/1, /*sz*/0, "vst.2d.pack.s4.s8">;
         def VST_2D_PACK_S8_S16 :
           VST_2D_PACK_ag_pstm_mv_pack_src</*sgn*/1, /*sz*/1, "vst.2d.pack.s8.s16">;
-        def VST_2D_PACK_S4_S8_split : VST_2D_PACK_split_instr<>;
-        def VST_2D_PACK_S8_S16_split : VST_2D_PACK_split_instr<>;
       }
     }
   let Itinerary = II_VST_3D_PACK, Constraints = "$ptr_out = $ptr" in
@@ -2543,25 +2427,17 @@ let mayStore = true in {
               (ins eP:$ptr, eDS:$mod, mXs:$src),
               opcodestr, "$src, [$ptr], $mod">,
             AIE2_ag_nospill__ag_pstm_3d, mv_pack_src<sgn, sz>;
-      class VST_3D_PACK_split_instr : SplitPseudo<
-            (outs eP:$ptr_out, eDC:$count_lo_out, eDC:$count_hi_out),
-            (ins eP:$ptr, eM:$mod1, eDN:$dim_size1, eDJ:$dim_stride1, eDC:$dim_count1,
-            eM:$mod2, eDN:$dim_size2, eDJ:$dim_stride2, eDC:$dim_count2, mXs:$src)> {}
       let Uses = [crSat, crPackSign] in {
         def VST_3D_PACK_D4_D8 :
           VST_3D_PACK_ag_pstm_mv_pack_src</*sgn*/0, /*sz*/0, "vst.3d.pack.d4.d8">;
         def VST_3D_PACK_D8_D16 :
           VST_3D_PACK_ag_pstm_mv_pack_src</*sgn*/0, /*sz*/1, "vst.3d.pack.d8.d16">;
-        def VST_3D_PACK_D4_D8_split : VST_3D_PACK_split_instr<>;
-        def VST_3D_PACK_D8_D16_split : VST_3D_PACK_split_instr<>;
       }
       let Uses = [crSat] in {
         def VST_3D_PACK_S4_S8 :
           VST_3D_PACK_ag_pstm_mv_pack_src</*sgn*/1, /*sz*/0, "vst.3d.pack.s4.s8">;
         def VST_3D_PACK_S8_S16 :
           VST_3D_PACK_ag_pstm_mv_pack_src</*sgn*/1, /*sz*/1, "vst.3d.pack.s8.s16">;
-        def VST_3D_PACK_S4_S8_split : VST_3D_PACK_split_instr<>;
-        def VST_3D_PACK_S8_S16_split : VST_3D_PACK_split_instr<>;
       }
     }
 } // let mayStore = true

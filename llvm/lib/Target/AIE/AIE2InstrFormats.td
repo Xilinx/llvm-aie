@@ -29,5 +29,3 @@ class MultiSlot_Pseudo<dag outs, dag ins, string opcodestr = "",
   let isCodeGenOnly = 1;
   let isComposite = 0;
 }
-
-class SplitPseudo<dag outs, dag ins> : Pseudo<outs, ins>, AIE_HasTiedSubregister {}
