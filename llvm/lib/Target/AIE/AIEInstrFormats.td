@@ -138,22 +138,14 @@ def OPC_ALU_R_R_ABS      : AIEOpcode_ALU_R_R<0b1000>;
 
 class AIEInst<dag outs, dag ins, string opcodestr, string argstr,
               list<dag> pattern>
-    : AIEBaseInst<outs, ins, pattern>
-{
-  let Namespace = "AIE";
-
-  let AsmString = opcodestr # "\t" # argstr;
-
+    : AIEBaseInst<outs, ins, pattern, opcodestr, argstr, "AIE"> {
   // Default value of the slot
   let Slot = unknown_slot;
 }
 
 // Pseudo instructions
 class Pseudo<dag outs, dag ins, list<dag> pattern, string opcodestr = "", string argstr = "">
-    : AIEInst<outs, ins, opcodestr, argstr, pattern> {
-  let isPseudo = 1;
-  let isCodeGenOnly = 1;
-}
+    : AIEInst<outs, ins, opcodestr, argstr, pattern>, AIEPseudoInstrAttributes {}
 
 //////////////////////////
 // Instruction classes

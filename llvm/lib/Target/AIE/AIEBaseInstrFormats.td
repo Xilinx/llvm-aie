@@ -12,11 +12,25 @@
 //
 //===----------------------------------------------------------------------===//
 
-class AIEBaseInst<dag outs, dag ins, list<dag> pattern>
+class AIEBaseInst<dag outs, dag ins, list<dag> pattern, string opcodestr, string argstr, string namespace>
     : Instruction, InstFormat {
   let Size = 4;
   dag OutOperandList = outs;
   dag InOperandList = ins;
   let Pattern = pattern;
-  let isComposite = 0;
+  let isComposite = false;
+  let Namespace = namespace;
+  let AsmString = opcodestr # "\t" # argstr;
+
+  // A scratchpad of bits that is used in the encoding to say "these bits do not
+  // matter for encoding or decoding".
+  field bits<32> dontcare = 0;
+}
+
+// Attributes for Pseudo instructions
+class AIEPseudoInstrAttributes {
+  field bit isPseudo;
+  field bit isCodeGenOnly;
+  let isPseudo = true;
+  let isCodeGenOnly = true;
 }

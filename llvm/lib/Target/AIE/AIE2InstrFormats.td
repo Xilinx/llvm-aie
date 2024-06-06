@@ -16,11 +16,7 @@ include "AIE2GenInstrFormats.td"
 // Pseudo instructions
 class Pseudo<dag outs, dag ins, string opcodestr = "",
              string argstr = "">
-    : AIE2Inst<outs, ins, opcodestr, argstr> {
-  let isPseudo = 1;
-  let isCodeGenOnly = 1;
-  let isComposite = 0;
-}
+    : AIE2Inst<outs, ins, opcodestr, argstr>, AIEPseudoInstrAttributes {}
 
 // MultiSlot Pseudo instruction: Use this to define Pseudo for multi slot instructions
 // This instruction could be materialized to different VLIW slots.
