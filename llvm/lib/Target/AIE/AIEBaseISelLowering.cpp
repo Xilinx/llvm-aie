@@ -23,6 +23,11 @@ using namespace llvm;
 
 #define DEBUG_TYPE "aie-lower"
 
+static cl::opt<bool>
+    AllowVecRegMemOps("aie-vect-reg-mem-ops", cl::init(true), cl::Hidden,
+                      cl::desc("Allow the usage of vector registers when "
+                               "lowering mem[cpy|set|mov]."));
+
 AIEBaseTargetLowering::AIEBaseTargetLowering(const TargetMachine &TM,
                                              const AIEBaseSubtarget &STI)
     : TargetLowering(TM), Subtarget(STI) {
@@ -40,6 +45,15 @@ AIEBaseTargetLowering::AIEBaseTargetLowering(const TargetMachine &TM,
 
   // Arguments are 32-bit aligned on the stack
   setMinStackArgumentAlignment(getStackArgumentAlignment());
+
+  if (Subtarget.isAIE2()) {
+    MaxStoresPerMemset = 32;
+    MaxStoresPerMemsetOptSize = 16;
+    MaxStoresPerMemcpy = 32;
+    MaxStoresPerMemcpyOptSize = 16;
+    MaxStoresPerMemmove = 32;
+    MaxStoresPerMemmoveOptSize = 16;
+  }
 }
 
 static bool AllocateSplitArg(CCState &State, ArrayRef<MCPhysReg> RegList) {
@@ -349,6 +363,23 @@ bool AIEBaseTargetLowering::isEligibleForTailCallOptimization(
       return false;
 
   return true;
+}
+
+LLT AIEBaseTargetLowering::getOptimalMemOpLLT(
+    const MemOp &Op, const AttributeList &FuncAttributes) const {
+
+  if (Subtarget.isAIE2()) {
+    if (AllowVecRegMemOps && Op.size() >= 32 && Op.isAligned(Align(32)))
+      return LLT::fixed_vector(8, 32);
+    if (AllowVecRegMemOps && Op.size() >= 16 && Op.isAligned(Align(16)))
+      return LLT::fixed_vector(4, 32);
+    if (Op.size() >= 4 && Op.isAligned(Align(4)))
+      return LLT::scalar(32);
+    if (Op.size() >= 2 && Op.isAligned(Align(2)))
+      return LLT::scalar(16);
+  }
+
+  return LLT();
 }
 
 void AIEBaseTargetLowering::alignFirstVASlot(CCState &CCInfo) {
