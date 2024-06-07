@@ -428,9 +428,6 @@ AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
     getActionDefinitionsBuilder(G_MERGE_VALUES).legalFor({{S64, S32}});
     getActionDefinitionsBuilder(G_UNMERGE_VALUES)
         .legalFor({{S32, S64}, {S32, V2S32}})
-        // TODO: can be implemented by unpadding the source vector into Src1,
-        // shifting and unpadding into Src2
-        .unsupportedIf(sizeIs(0, 128))
         .customIf([=](const LegalityQuery &Query) {
           const LLT &DstTy = Query.Types[0];
           const LLT &SrcTy = Query.Types[1];
@@ -694,6 +691,16 @@ bool AIELegalizerInfo::legalizeG_UNMERGE_VALUES(LegalizerHelper &Helper,
   if (LastTy.getSizeInBits() == 32)
     return unpack32BitVector(Helper, MI, LastReg);
 
+  // Pad vectors of 128-bit vectors to 256-bit
+  Register TargetReg = LastReg;
+  if (LastTy.getSizeInBits() == 128) {
+    const LLT NewRegTy =
+        LLT::fixed_vector(LastTy.getNumElements() * 2, LastTy.getScalarType());
+    const Register NewReg = MRI.createGenericVirtualRegister(NewRegTy);
+    MIRBuilder.buildInstr(AIE2::G_AIE_PAD_VECTOR_UNDEF, {NewReg}, {LastReg});
+    TargetReg = NewReg;
+  }
+
   const unsigned NumOperands = MI.getNumOperands() - 1;
   for (unsigned Index = 0; Index < NumOperands; ++Index) {
     const Register Current = MI.getOperand(Index).getReg();
@@ -705,7 +712,7 @@ bool AIELegalizerInfo::legalizeG_UNMERGE_VALUES(LegalizerHelper &Helper,
     // of the builtin is to create 64-bit constants.
     const MachineInstrBuilder CurrentIndex =
         MIRBuilder.buildConstant(LLT::scalar(32), Index);
-    MIRBuilder.buildExtractVectorElement(Current, LastReg, CurrentIndex);
+    MIRBuilder.buildExtractVectorElement(Current, TargetReg, CurrentIndex);
   }
 
   MI.eraseFromParent();
