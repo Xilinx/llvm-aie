@@ -166,6 +166,10 @@ public:
                        bool VerifyReadyCycle) override;
 
 protected:
+  /// Whether \p DelayedSU can be safely delayed without forming a cycle
+  /// of SUs delaying each other indefinitely.
+  bool canBeDelayed(const SUnit &DelayedSU, const SUnit &Delayer) const;
+
   /// Apply a set of heuristics to a new candidate for scheduling.
   ///
   /// \param Cand provides the policy and current best candidate.
@@ -180,6 +184,11 @@ private:
   MachineBasicBlock *CurMBB = nullptr;
   MachineBasicBlock::iterator RegionBegin = nullptr;
   MachineBasicBlock::iterator RegionEnd = nullptr;
+
+  /// Keeps track of SUs that have been delayed, waiting on another
+  /// pressure-reducing SU to be scheduled first.
+  /// SUDelayerMap[0] = 2 means that SU(0) is waiting on SU(2).
+  std::vector<unsigned> SUDelayerMap;
 };
 
 /// An extension to ScheduleDAGMI that provides callbacks on region entry/exit
