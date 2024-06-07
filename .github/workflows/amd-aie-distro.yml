@@ -155,18 +155,17 @@ jobs:
           - OS: ubuntu-20.04
             ARCH: x86_64
 
-# disable until we're public and have more runners
-#          - OS: ubuntu-20.04
-#            ARCH: aarch64
-#
-#          - OS: windows-2019
-#            ARCH: AMD64
-#
-#          - OS: macos-12
-#            ARCH: x86_64
-#
-#          - OS: macos-12
-#            ARCH: arm64
+          - OS: ubuntu-20.04
+            ARCH: aarch64
+
+          - OS: windows-2019
+            ARCH: AMD64
+
+          - OS: macos-12
+            ARCH: x86_64
+
+          - OS: macos-12
+            ARCH: arm64
 
     defaults:
       run:
