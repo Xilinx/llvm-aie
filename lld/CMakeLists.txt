@@ -206,6 +206,8 @@ add_subdirectory(wasm)
 add_subdirectory(cmake/modules)
 
 add_custom_target(check-lld-aie)
-add_dependencies(check-lld-aie 
-  check-lld-elf-aie
-)
+if(EXISTS check-lld-elf-aie)
+  add_dependencies(check-lld-aie 
+    check-lld-elf-aie
+  )
+endif()
