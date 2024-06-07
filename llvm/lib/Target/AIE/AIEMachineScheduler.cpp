@@ -469,7 +469,7 @@ int AIEPostRASchedStrategy::getMaxDeltaCycles(const SchedBoundary &Zone) const {
 }
 
 bool AIEPostRASchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
-                                             bool /*VerifyReadyCycle*/) const {
+                                             bool /*VerifyReadyCycle*/) {
   // Whether or not the zone is Top or Bot, verify if SU is ready to be
   // scheduled in terms of cycle.
   if (Zone.isTop())
@@ -855,7 +855,7 @@ const SUnit *findPressureReducer(unsigned CriticalPSet, ArrayRef<SUnit *> Nodes,
 }
 
 bool AIEPreRASchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
-                                            bool /*VerifyReadyCycle*/) const {
+                                            bool /*VerifyReadyCycle*/) {
   // Force verifying if SU is ready to be scheduled in terms of cycle.
   bool Avail = MachineSchedStrategy::isAvailableNode(SU, Zone,
                                                      /*VerifyReadyCycle=*/true);

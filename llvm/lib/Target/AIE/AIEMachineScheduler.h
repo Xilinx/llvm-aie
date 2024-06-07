@@ -46,7 +46,7 @@ public:
                           std::optional<unsigned> &BotEmissionCycle) override;
 
   bool isAvailableNode(SUnit &SU, SchedBoundary &Zone,
-                       bool VerifyReadyCycle) const override;
+                       bool VerifyReadyCycle) override;
 
   /// Called after an SU is picked and its instruction re-inserted in the BB.
   /// This essentially updates the node's ReadyCycle to CurCycle, and notifies
@@ -163,7 +163,7 @@ public:
   void leaveRegion(const SUnit &ExitSU);
 
   bool isAvailableNode(SUnit &SU, SchedBoundary &Zone,
-                       bool VerifyReadyCycle) const override;
+                       bool VerifyReadyCycle) override;
 
 protected:
   /// Apply a set of heuristics to a new candidate for scheduling.
