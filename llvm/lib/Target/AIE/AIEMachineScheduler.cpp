@@ -80,6 +80,11 @@ static cl::opt<bool>
     InterBlockAlignment("aie-interblock-alignment", cl::init(true),
                         cl::desc("Allow for alignment of successor blocks"));
 
+namespace {
+// A sentinel value to represent an unknown SUnit.
+const constexpr unsigned UnknownSUNum = ~0;
+} // namespace
+
 static AIEHazardRecognizer *getAIEHazardRecognizer(const SchedBoundary &Zone) {
   return static_cast<AIEHazardRecognizer *>(Zone.HazardRec);
 }
@@ -771,6 +776,7 @@ void AIEPreRASchedStrategy::enterRegion(MachineBasicBlock *BB,
   CurMBB = BB;
   RegionBegin = Begin;
   RegionEnd = End;
+  SUDelayerMap.resize(std::distance(Begin, End), UnknownSUNum);
 }
 
 void AIEPreRASchedStrategy::leaveRegion(const SUnit &ExitSU) {
@@ -795,6 +801,7 @@ void AIEPreRASchedStrategy::leaveRegion(const SUnit &ExitSU) {
   CurMBB = nullptr;
   RegionBegin = nullptr;
   RegionEnd = nullptr;
+  SUDelayerMap.clear();
 }
 
 PressureDiff estimatePressureDiff(const SUnit &SU,
@@ -883,8 +890,34 @@ bool AIEPreRASchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
 
   // The node will likely cause a spill, only consider it schedule-able if
   // there is no pending node that can reduce the register pressure.
-  return findPressureReducer(WorstPC.getPSet(), Zone.Pending.elements(),
-                             BotRPT) == nullptr;
+  if (const SUnit *PendingPressureReducer = findPressureReducer(
+          WorstPC.getPSet(), Zone.Pending.elements(), BotRPT);
+      PendingPressureReducer && canBeDelayed(SU, *PendingPressureReducer)) {
+    LLVM_DEBUG(dbgs() << "** Delaying SU(" << SU.NodeNum << "): Waiting for SU("
+                      << PendingPressureReducer->NodeNum << ")\n");
+
+    // Keep track of PendingPressureReducer to avoid cycles of SUs
+    // delaying each other.
+    SUDelayerMap[SU.NodeNum] = PendingPressureReducer->NodeNum;
+    return false;
+  }
+
+  // Can't prove a pending SU will help reduce reg pressure, keep as available.
+  return true;
+}
+
+bool AIEPreRASchedStrategy::canBeDelayed(const SUnit &DelayedSU,
+                                         const SUnit &Delayer) const {
+  std::function<bool(unsigned)> Impl = [&](unsigned SUNum) {
+    if (SUNum == UnknownSUNum)
+      return true;
+    if (SUNum == DelayedSU.NodeNum)
+      return false;
+    return Impl(SUDelayerMap[SUNum]);
+  };
+  // If SU is delayed by another instruction that is eventually waiting on SU
+  // itself, do not keep delaying SU otherwise this creates an infinite loop.
+  return Impl(Delayer.NodeNum);
 }
 
 bool AIEPreRASchedStrategy::tryCandidate(SchedCandidate &Cand,
