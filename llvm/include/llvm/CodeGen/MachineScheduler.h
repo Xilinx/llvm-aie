@@ -300,7 +300,7 @@ public:
   /// overridden by schedulers that try to release successors/predecessors early
   /// to schedule "out of order".
   virtual bool isAvailableNode(SUnit &SU, SchedBoundary &Zone,
-                               bool VerifyReadyCycle) const;
+                               bool VerifyReadyCycle);
 
   /// Scheduler callback to notify that a new subtree is scheduled.
   virtual void scheduleTree(unsigned SubtreeID) {}
@@ -918,7 +918,7 @@ public:
   };
 
   ScheduleDAGMI *DAG = nullptr;
-  const MachineSchedStrategy *SchedImpl = nullptr;
+  MachineSchedStrategy *SchedImpl = nullptr;
   const TargetSchedModel *SchedModel = nullptr;
   SchedRemainder *Rem = nullptr;
 
@@ -1030,7 +1030,7 @@ public:
 
   void reset();
 
-  void init(ScheduleDAGMI *DAG, const MachineSchedStrategy *SchedImpl,
+  void init(ScheduleDAGMI *DAG, MachineSchedStrategy *SchedImpl,
             const TargetSchedModel *SModel, SchedRemainder *Rem);
 
   bool isTop() const {
