@@ -2316,8 +2316,7 @@ init(ScheduleDAGMI *DAG, const TargetSchedModel *SchedModel) {
   }
 }
 
-void SchedBoundary::init(ScheduleDAGMI *DAG,
-                         const MachineSchedStrategy *SchedImpl,
+void SchedBoundary::init(ScheduleDAGMI *DAG, MachineSchedStrategy *SchedImpl,
                          const TargetSchedModel *SModel, SchedRemainder *Rem) {
   reset();
   this->DAG = DAG;
@@ -2989,7 +2988,7 @@ LLVM_DUMP_METHOD void SchedBoundary::dumpScheduledState() const {
 //===----------------------------------------------------------------------===//
 
 bool MachineSchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
-                                           bool VerifyReadyCycle) const {
+                                           bool VerifyReadyCycle) {
   unsigned ReadyCycle = Zone.isTop() ? SU.TopReadyCycle : SU.BotReadyCycle;
   if (VerifyReadyCycle && ReadyCycle > Zone.getCurrCycle())
     return false;
