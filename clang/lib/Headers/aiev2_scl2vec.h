@@ -521,13 +521,15 @@ broadcast_to_v32bfloat16(v4bfloat16 b) {
 
 INTRINSIC(v16accfloat)
 broadcast_to_v16accfloat(float b) {
-  return __builtin_aiev2_vbroadcastfloat_I512(b);
+  int as_int = __builtin_bit_cast(int, b);
+  return __builtin_aiev2_vbroadcast32_I512(as_int);
 }
 
-#if 0
 INTRINSIC(v16float)
-broadcast_to_v16float (float b) { return __builtin_aiev2_vbroadcast32_I512(b); }
-#endif
+broadcast_to_v16float(float b) {
+  int as_int = __builtin_bit_cast(int, b);
+  return __builtin_aiev2_vbroadcast32_I512(as_int);
+}
 
 INTRINSIC(v32bfloat16)
 broadcast_zero_to_v32bfloat16() { return broadcast_to_v32bfloat16(0); }
