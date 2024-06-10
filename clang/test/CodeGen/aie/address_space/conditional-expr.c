@@ -1,5 +1,16 @@
-// XFAIL: *
-// RUN: %clang_cc1 -fsyntax-only -Wno-pointer-to-int-cast -verify -pedantic -Wsign-conversion %s
+//===- conditional-expr.c ---------------------------------------*- C ---*-===//
+//
+//  Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+//  See https://llvm.org/LICENSE.txt for license information.
+//  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+//
+//===----------------------------------------------------------------------===//
+
+// RUN: %clang_cc1 -triple aie -fsyntax-only -Wno-pointer-to-int-cast -verify -pedantic -Wsign-conversion %s
+// RUN: %clang_cc1 -triple aie2 -fsyntax-only -Wno-pointer-to-int-cast -verify -pedantic -Wsign-conversion %s
+
 void foo(void) {
   *(0 ? (double *)0 : (void *)0) = 0;
   // FIXME: GCC doesn't consider the following two statements to be errors.
@@ -82,7 +93,7 @@ void foo(void) {
   test0 ? adr2 : adr3; // expected-error{{conditional operator with the second and third operands of type  ('__attribute__((address_space(2))) int *' and '__attribute__((address_space(3))) int *') which are pointers to non-overlapping address spaces}}
 
   // Make sure address-space mask ends up in the result type
-  (test0 ? (test0 ? adr2 : adr2) : nonconst_int); // expected-error{{conditional operator with the second and third operands of type  ('__attribute__((address_space(2))) int *' and 'int *') which are pointers to non-overlapping address spaces}}
+  (test0 ? (test0 ? adr2 : adr2) : nonconst_int); // expected-warning {{expression result unused}} // Supported by AIE target
 }
 
 int Postgresql(void) {
