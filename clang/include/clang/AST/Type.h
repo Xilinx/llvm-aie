@@ -520,7 +520,9 @@ public:
            // to implicitly cast into the default address space.
            (A == LangAS::Default &&
             (B == LangAS::cuda_constant || B == LangAS::cuda_device ||
-             B == LangAS::cuda_shared));
+             B == LangAS::cuda_shared)) ||
+           // TODO make following check specific to AIE target only
+           (A == LangAS::Default && isTargetAddressSpace(B));
   }
 
   /// Returns true if the address space in these qualifiers is equal to or

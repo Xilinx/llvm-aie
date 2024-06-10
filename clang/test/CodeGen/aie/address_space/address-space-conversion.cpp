@@ -1,5 +1,14 @@
-// XFAIL: *
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+//===- address-space-conversion.cpp ------------------------------*- C++ -*-===//
+//
+//  Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+//  See https://llvm.org/LICENSE.txt for license information.
+//  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+//
+//===----------------------------------------------------------------------===//
+// RUN: %clang_cc1 -triple aie -fsyntax-only -verify %s 
+// RUN: %clang_cc1 -triple aie2 -fsyntax-only -verify %s 
 
 // This test checks for the various conversions and casting operations
 // with address-space-qualified pointers.
@@ -70,30 +79,30 @@ void test_static_cast(void_ptr vp, void_ptr_1 vp1, void_ptr_2 vp2,
   (void)static_cast<A_ptr_2>(vp2);
   
   // Ill-formed upcasts
-  (void)static_cast<A_ptr>(bp1); // expected-error{{is not allowed}}
-  (void)static_cast<A_ptr>(bp2); // expected-error{{is not allowed}}
+  (void)static_cast<A_ptr>(bp1); // Supported by AIE target
+  (void)static_cast<A_ptr>(bp2); // Supported by AIE target
   (void)static_cast<A_ptr_1>(bp); // expected-error{{is not allowed}}
   (void)static_cast<A_ptr_1>(bp2); // expected-error{{is not allowed}}
   (void)static_cast<A_ptr_2>(bp); // expected-error{{is not allowed}}
   (void)static_cast<A_ptr_2>(bp1); // expected-error{{is not allowed}}
 
   // Ill-formed downcasts
-  (void)static_cast<B_ptr>(ap1); // expected-error{{casts away qualifiers}}
-  (void)static_cast<B_ptr>(ap2); // expected-error{{casts away qualifiers}}
+  (void)static_cast<B_ptr>(ap1); // Supported by AIE target
+  (void)static_cast<B_ptr>(ap2); // Supported by AIE target
   (void)static_cast<B_ptr_1>(ap); // expected-error{{casts away qualifiers}}
   (void)static_cast<B_ptr_1>(ap2); // expected-error{{casts away qualifiers}}
   (void)static_cast<B_ptr_2>(ap); // expected-error{{casts away qualifiers}}
   (void)static_cast<B_ptr_2>(ap1); // expected-error{{casts away qualifiers}}
 
   // Ill-formed cast to/from void
-  (void)static_cast<void_ptr>(ap1); // expected-error{{is not allowed}}
-  (void)static_cast<void_ptr>(ap2); // expected-error{{is not allowed}}
+  (void)static_cast<void_ptr>(ap1); // Supported by AIE target
+  (void)static_cast<void_ptr>(ap2); // Supported by AIE target
   (void)static_cast<void_ptr_1>(ap); // expected-error{{is not allowed}}
   (void)static_cast<void_ptr_1>(ap2); // expected-error{{is not allowed}}
   (void)static_cast<void_ptr_2>(ap); // expected-error{{is not allowed}}
   (void)static_cast<void_ptr_2>(ap1); // expected-error{{is not allowed}}
-  (void)static_cast<A_ptr>(vp1); // expected-error{{casts away qualifiers}}
-  (void)static_cast<A_ptr>(vp2); // expected-error{{casts away qualifiers}}
+  (void)static_cast<A_ptr>(vp1); // Supported by AIE target
+  (void)static_cast<A_ptr>(vp2); // Supported by AIE target
   (void)static_cast<A_ptr_1>(vp); // expected-error{{casts away qualifiers}}
   (void)static_cast<A_ptr_1>(vp2); // expected-error{{casts away qualifiers}}
   (void)static_cast<A_ptr_2>(vp); // expected-error{{casts away qualifiers}}
@@ -113,16 +122,16 @@ void test_dynamic_cast(A_ptr ap, A_ptr_1 ap1, A_ptr_2 ap2,
   (void)dynamic_cast<B_ptr_2>(ap2);
 
   // Ill-formed upcasts
-  (void)dynamic_cast<A_ptr>(bp1); // expected-error{{casts away qualifiers}}
-  (void)dynamic_cast<A_ptr>(bp2); // expected-error{{casts away qualifiers}}
+  (void)dynamic_cast<A_ptr>(bp1); // Supported by AIE target
+  (void)dynamic_cast<A_ptr>(bp2); // Supported by AIE target
   (void)dynamic_cast<A_ptr_1>(bp); // expected-error{{casts away qualifiers}}
   (void)dynamic_cast<A_ptr_1>(bp2); // expected-error{{casts away qualifiers}}
   (void)dynamic_cast<A_ptr_2>(bp); // expected-error{{casts away qualifiers}}
   (void)dynamic_cast<A_ptr_2>(bp1); // expected-error{{casts away qualifiers}}
 
   // Ill-formed downcasts
-  (void)dynamic_cast<B_ptr>(ap1); // expected-error{{casts away qualifiers}}
-  (void)dynamic_cast<B_ptr>(ap2); // expected-error{{casts away qualifiers}}
+  (void)dynamic_cast<B_ptr>(ap1); // Supported by AIE target
+  (void)dynamic_cast<B_ptr>(ap2); // Supported by AIE target
   (void)dynamic_cast<B_ptr_1>(ap); // expected-error{{casts away qualifiers}}
   (void)dynamic_cast<B_ptr_1>(ap2); // expected-error{{casts away qualifiers}}
   (void)dynamic_cast<B_ptr_2>(ap); // expected-error{{casts away qualifiers}}
@@ -134,14 +143,14 @@ void test_reinterpret_cast(void_ptr vp, void_ptr_1 vp1, void_ptr_2 vp2,
                            B_ptr bp, B_ptr_1 bp1, B_ptr_2 bp2,
                            const void __attribute__((address_space(1))) * cvp1) {
   // reinterpret_cast can't be used to cast to a different address space unless they are matching (i.e. overlapping).
-  (void)reinterpret_cast<A_ptr>(ap1); // expected-error{{reinterpret_cast from 'A_ptr_1' (aka '__attribute__((address_space(1))) A *') to 'A_ptr' (aka 'A *') is not allowed}}
-  (void)reinterpret_cast<A_ptr>(ap2); // expected-error{{reinterpret_cast from 'A_ptr_2' (aka '__attribute__((address_space(2))) A *') to 'A_ptr' (aka 'A *') is not allowed}}
+  (void)reinterpret_cast<A_ptr>(ap1); // Supported by AIE target
+  (void)reinterpret_cast<A_ptr>(ap2); // Supported by AIE target
   (void)reinterpret_cast<A_ptr>(bp);
-  (void)reinterpret_cast<A_ptr>(bp1); // expected-error{{reinterpret_cast from 'B_ptr_1' (aka '__attribute__((address_space(1))) B *') to 'A_ptr' (aka 'A *') is not allowed}}
-  (void)reinterpret_cast<A_ptr>(bp2); // expected-error{{reinterpret_cast from 'B_ptr_2' (aka '__attribute__((address_space(2))) B *') to 'A_ptr' (aka 'A *') is not allowed}}
+  (void)reinterpret_cast<A_ptr>(bp1); // Supported by AIE target
+  (void)reinterpret_cast<A_ptr>(bp2); // Supported by AIE target
   (void)reinterpret_cast<A_ptr>(vp);
-  (void)reinterpret_cast<A_ptr>(vp1);   // expected-error{{reinterpret_cast from 'void_ptr_1' (aka '__attribute__((address_space(1))) void *') to 'A_ptr' (aka 'A *') is not allowed}}
-  (void)reinterpret_cast<A_ptr>(vp2);   // expected-error{{reinterpret_cast from 'void_ptr_2' (aka '__attribute__((address_space(2))) void *') to 'A_ptr' (aka 'A *') is not allowed}}
+  (void)reinterpret_cast<A_ptr>(vp1);   // Supported by AIE target
+  (void)reinterpret_cast<A_ptr>(vp2);   // Supported by AIE target
   (void)reinterpret_cast<A_ptr_1>(ap);  // expected-error{{reinterpret_cast from 'A_ptr' (aka 'A *') to 'A_ptr_1' (aka '__attribute__((address_space(1))) A *') is not allowed}}
   (void)reinterpret_cast<A_ptr_1>(ap2); // expected-error{{reinterpret_cast from 'A_ptr_2' (aka '__attribute__((address_space(2))) A *') to 'A_ptr_1' (aka '__attribute__((address_space(1))) A *') is not allowed}}
   (void)reinterpret_cast<A_ptr_1>(bp);  // expected-error{{reinterpret_cast from 'B_ptr' (aka 'B *') to 'A_ptr_1' (aka '__attribute__((address_space(1))) A *') is not allowed}}
@@ -191,8 +200,8 @@ void test_implicit_conversion(void_ptr vp, void_ptr_1 vp1, void_ptr_2 vp2,
   A_ptr_2 ap_A2 = bp2;
 
   // Ill-formed conversions
-  void_ptr vpB = ap1; // expected-error{{cannot initialize a variable of type}}
+  void_ptr vpB = ap1; // Supported by AIE target
   void_ptr_1 vp_1B = ap2; // expected-error{{cannot initialize a variable of type}}
-  A_ptr ap_B = bp1; // expected-error{{cannot initialize a variable of type}}
+  A_ptr ap_B = bp1; // Supported by AIE target
   A_ptr_1 ap_B1 = bp2; // expected-error{{cannot initialize a variable of type}}
 }

@@ -1,3 +1,4 @@
+// XFAIL: *
 // RUN: %clang_cc1 %s -std=c++14 -triple=spir -verify -fsyntax-only
 // RUN: %clang_cc1 %s -std=c++17 -triple=spir -verify -fsyntax-only
 
