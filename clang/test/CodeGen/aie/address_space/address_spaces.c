@@ -1,5 +1,14 @@
-// XFAIL: *
-// RUN: %clang_cc1 %s -fsyntax-only -verify
+//===- address_space.c ------------------------------------------*- C ---*-===//
+//
+//  Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+//  See https://llvm.org/LICENSE.txt for license information.
+//  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+//
+//===----------------------------------------------------------------------===//
+// RUN: %clang_cc1 -triple aie %s -fsyntax-only -verify
+// RUN: %clang_cc1 -triple aie2 %s -fsyntax-only -verify
 
 #define _AS1 __attribute__((address_space(1)))
 #define _AS2 __attribute__((address_space(2)))
@@ -36,13 +45,13 @@ struct _st {
 
 __attribute__((address_space(256))) void * * const base = 0;
 void * get_0(void) {
-  return base[0];  // expected-error {{returning '__attribute__((address_space(256))) void *' from a function with result type 'void *' changes address space of pointer}}
+  return base[0];  // #expected-error {{returning '__attribute__((address_space(256))) void *' from a function with result type 'void *' changes address space of pointer}}
 }
 
 __attribute__((address_space(1))) char test3_array[10];
 void test3(void) {
-  extern void test3_helper(char *p); // expected-note {{passing argument to parameter 'p' here}}
-  test3_helper(test3_array); // expected-error {{changes address space of pointer}}
+  extern void test3_helper(char *p); // #expected-note {{passing argument to parameter 'p' here}}
+  test3_helper(test3_array); // #expected-error {{changes address space of pointer}}
 }
 
 typedef void ft(void);

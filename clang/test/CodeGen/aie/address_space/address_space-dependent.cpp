@@ -1,5 +1,14 @@
-// XFAIL: *
-// RUN: %clang_cc1 -x c++ -std=c++14 -fsyntax-only -verify %s
+//===- address_space-dependent.cpp ------------------------------*- C++ -*-===//
+//
+//  Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+//  See https://llvm.org/LICENSE.txt for license information.
+//  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+//
+//===----------------------------------------------------------------------===//
+// RUN: %clang_cc1 -triple aie -x c++ -std=c++14 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -triple aie2 -x c++ -std=c++14 -fsyntax-only -verify %s
 
 template <int I, int J, int K>
 void car() {
@@ -64,15 +73,15 @@ struct fooFunction {
   __attribute__((address_space(I))) void **const base = 0;
 
   void *get_0(void) {
-    return base[0]; // expected-error {{cannot initialize return object of type 'void *' with an lvalue of type '__attribute__((address_space(1))) void *}}
+    return base[0]; // Supported by AIE target
   }
 
   __attribute__((address_space(I))) ft qf; // expected-error {{function type may not be qualified with an address space}}
   __attribute__((address_space(I))) char *test3_val;
 
   void test3(void) {
-    extern void test3_helper(char *p); // expected-note {{passing argument to parameter 'p' here}}
-    test3_helper(test3_val);           // expected-error {{cannot initialize a parameter of type 'char *' with an lvalue of type '__attribute__((address_space(1))) char *'}}
+    extern void test3_helper(char *p); // Supported by AIE target
+    test3_helper(test3_val);           // Supported by AIE target
   }
 };
 
@@ -110,9 +119,9 @@ int main() {
   cmp<1, 2>(x, y); // expected-note {{in instantiation of function template specialization 'cmp<1, 2>' requested here}}
 
   fooFunction<1> ff;
-  ff.get_0(); // expected-note {{in instantiation of member function 'fooFunction<1>::get_0' requested here}}
+  ff.get_0(); // Supported by AIE target
   ff.qf();
-  ff.test3(); // expected-note {{in instantiation of member function 'fooFunction<1>::test3' requested here}}
+  ff.test3(); // Supported by AIE target
 
   static_assert(partial_spec_deduce_as<int __attribute__((address_space(3))) *>::value == 3, "address space value has been incorrectly deduced");
 
