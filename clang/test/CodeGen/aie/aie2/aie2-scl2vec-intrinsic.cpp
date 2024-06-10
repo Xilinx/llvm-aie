@@ -1162,12 +1162,24 @@ v16accfloat test_shift(v16accfloat a, v16accfloat b, int shift_by) {
 
 // CHECK-LABEL: @_Z29test_broadcast_to_v16accfloatf(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call <16 x float> @llvm.aie2.vbroadcastfloat.I512(float [[B:%.*]])
-// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <16 x float> [[TMP0]] to <8 x i64>
-// CHECK-NEXT:    ret <8 x i64> [[TMP1]]
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast float [[B:%.*]] to i32
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i32> @llvm.aie2.vbroadcast32.I512(i32 [[TMP0]])
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <16 x i32> [[TMP1]] to <8 x i64>
+// CHECK-NEXT:    ret <8 x i64> [[TMP2]]
 //
 v16accfloat test_broadcast_to_v16accfloat (float b) {
    return  broadcast_to_v16accfloat(b);
+}
+
+// CHECK-LABEL: @_Z26test_broadcast_to_v16floatf(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast float [[B:%.*]] to i32
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i32> @llvm.aie2.vbroadcast32.I512(i32 [[TMP0]])
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <16 x i32> [[TMP1]] to <16 x float>
+// CHECK-NEXT:    ret <16 x float> [[TMP2]]
+//
+v16float test_broadcast_to_v16float (float b) {
+   return  broadcast_to_v16float(b);
 }
 
 // CHECK-LABEL: @_Z11test_shiftxDv32_u6__bf16S_ii(
