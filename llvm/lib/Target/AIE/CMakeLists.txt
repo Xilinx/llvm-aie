@@ -53,6 +53,7 @@ add_llvm_target(AIECodeGen
    AIE1ISelLowering.cpp
    AIE1RegisterBankInfo.cpp
    AIE1AsmPrinter.cpp
+   AIEAddressSpaceFlattening.cpp
    AIEBaseAliasAnalysis.cpp
    AIEBaseAsmPrinter.cpp
    AIEBaseFrameLowering.cpp

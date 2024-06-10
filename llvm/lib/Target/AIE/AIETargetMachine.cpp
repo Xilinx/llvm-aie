@@ -52,6 +52,7 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIETarget() {
   //  initializeAIEExpandPseudoPass(*PR);
   auto *PR = PassRegistry::getPassRegistry();
   initializeGlobalISel(*PR);
+  initializeAIEAddressSpaceFlatteningPass(*PR);
   initializeAIEClusterBaseAddressPass(*PR);
   initializeAIE2PreLegalizerCombinerPass(*PR);
   initializeAIE2PostLegalizerGenericCombinerPass(*PR);
