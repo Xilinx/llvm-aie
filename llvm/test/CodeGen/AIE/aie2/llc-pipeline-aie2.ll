@@ -107,10 +107,12 @@
 
 ; AIE-O0123-NEXT:      IRTranslator
 
+; AIE-O0123-NEXT:      Analysis containing CSE Info
+; AIE-O0123-NEXT:      AIE Address Space Flattening Pass
+
 ; AIE-O123-NEXT:      Analysis for ComputingKnownBits
 ; AIE-O123-NEXT:      MachineDominator Tree Construction
 
-; AIE-O0123-NEXT:      Analysis containing CSE Info
 ; AIE-O123-NEXT:      AIE2PreLegalizerCombiner
 
 ; AIE-O0-NEXT:      Analysis for ComputingKnownBits

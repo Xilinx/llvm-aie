@@ -143,6 +143,7 @@ void AIE2PassConfig::addIRPasses() {
 }
 
 void AIE2PassConfig::addPreLegalizeMachineIR() {
+  addPass(createAIEAddressSpaceFlattening());
   if (getOptLevel() != CodeGenOptLevel::None)
     addPass(createAIE2PreLegalizerCombiner());
 }
