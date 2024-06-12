@@ -272,7 +272,6 @@ BUILTIN(__builtin_aiev2_vbroadcast64_I512, "V16iV2i", "nc")
 BUILTIN(__builtin_aiev2_vbroadcast_bf16_bf512, "V32yy", "nc")
 BUILTIN(__builtin_aiev2_vbroadcast_bf32_bf512, "V32yV2y", "nc")
 BUILTIN(__builtin_aiev2_vbroadcast_bf64_bf512, "V32yV4y", "nc")
-BUILTIN(__builtin_aiev2_vbroadcastfloat_I512, "V16ff", "nc")
 BUILTIN(__builtin_aiev2_vbroadcast_zero_acc1024, "V16m", "nc")
 //scl2vec::broadcast_elem
 BUILTIN(__builtin_aiev2_vextract_broadcast8_I512, "V64cV64ci", "nc")

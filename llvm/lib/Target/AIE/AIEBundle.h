@@ -89,16 +89,20 @@ public:
   /// Add an instruction to the bundle
   /// \param Instr Instruction to add
   /// \pre canAdd(Instr);
-  void add(I *Instr, std::optional<unsigned> SelectedOpcode = std::nullopt) {
+  void add(I *Instr, std::optional<unsigned> SelectedOpcode = std::nullopt,
+           bool ComputeSlots = true) {
     if (isNoHazardMetaInstruction(Instr->getOpcode())) {
       MetaInstrs.push_back(Instr);
       return;
     }
     // Check if the pre-condition is ensured
-    assert(!isStandalone() &&
+    assert((!ComputeSlots || !isStandalone()) &&
            "Tried to add an instruction in a standalone Bundle");
 
     Instrs.push_back(Instr);
+
+    if (!ComputeSlots)
+      return;
 
     MCSlotKind FinalSlot = FormatInterface->getSlotKind(
         SelectedOpcode ? *SelectedOpcode : Instr->getOpcode());

@@ -16,6 +16,7 @@
 #define LLVM_LIB_TARGET_AIE_AIEMACHINELEGALIZER_H
 
 #include "llvm/CodeGen/GlobalISel/LegalizerInfo.h"
+#include "llvm/CodeGen/Register.h"
 
 namespace llvm {
 
@@ -48,6 +49,12 @@ private:
   bool legalizeG_FPEXT(LegalizerHelper &Helper, MachineInstr &MI) const;
   bool legalizeG_FABS(LegalizerHelper &Helper, MachineInstr &MI) const;
   bool legalizeG_FADDSUB(LegalizerHelper &Helper, MachineInstr &MI) const;
+
+  // Helper functions for legalization
+  bool pack32BitVector(LegalizerHelper &Helper, MachineInstr &MI,
+                       Register SourceReg) const;
+  bool unpack32BitVector(LegalizerHelper &Helper, MachineInstr &MI,
+                         Register SourceReg) const;
 };
 } // end namespace llvm
 #endif

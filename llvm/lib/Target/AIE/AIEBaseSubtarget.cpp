@@ -30,6 +30,18 @@ static cl::opt<bool> EnableStrongCopyEdges(
     "aie-strong-copy-edges", cl::Hidden, cl::init(true),
     cl::desc("Enforces edges between COPY sources and other users of those "
              "sources to limit live range overlaps"));
+static cl::opt<bool> EnablePreMISchedPropagateIncomingLatencies(
+    "aie-premisched-propagate-incoming-latencies", cl::Hidden, cl::init(false),
+    cl::desc(
+        "Move input latency of copy-like instructions to their successors"));
+static cl::opt<unsigned> RegPressureInstrPreMISchedThreshold(
+    "aie-premisched-reg-pressure-instr-threshold", cl::Hidden, cl::init(0),
+    cl::desc("Number of region instructions below which premisched should not "
+             "track register pressure"));
+static cl::opt<bool> EnablePipelinerSchedPropagateIncomingLatencies(
+    "aie-pipeliner-propagate-incoming-latencies", cl::Hidden, cl::init(true),
+    cl::desc(
+        "Move input latency of copy-like instructions to their successors"));
 
 // These are debugging/testing options.
 
@@ -71,6 +83,15 @@ SDep &getBackwardEdge(const SUnit &SrcSU, const SDep &E) {
 }
 
 } // namespace
+
+void AIEBaseSubtarget::overrideSchedPolicyBase(MachineSchedPolicy &Policy,
+                                               unsigned NumRegionInstrs) const {
+  // The default policy is to avoid tracking pressure for "small regions". For
+  // AIE, it is critical to estimate the pressure everywhere, especially small
+  // loops. Spills are very expensive.
+  Policy.ShouldTrackPressure =
+      NumRegionInstrs >= RegPressureInstrPreMISchedThreshold;
+}
 
 // Reminder: this is called for ALL dependencies carried by physical registers,
 // but only for DATA dependencies on virtual registers...
@@ -189,7 +210,7 @@ class RegionEndEdges : public ScheduleDAGMutation {
     }
   }
   void apply(ScheduleDAGInstrs *DAG) override {
-    AIE::MaxLatencyFinder MaxLatency(static_cast<AIEScheduleDAGMI *>(DAG));
+    AIE::MaxLatencyFinder MaxLatency(DAG);
 
     // Default edges to ExitSU are conservative, and can't be shrunk.
     // We really should know what we're doing here, so just remove and
@@ -198,13 +219,17 @@ class RegionEndEdges : public ScheduleDAGMutation {
 
     const auto *TII = static_cast<const AIEBaseInstrInfo *>(DAG->TII);
     bool UserSetLatencyMargin = UserLatencyMargin.getNumOccurrences() > 0;
-    for (MachineInstr &MI : *DAG) {
-      SUnit *SU = DAG->getSUnit(&MI);
-      if (!SU)
-        continue;
-      SDep ExitDep(SU, SDep::Artificial);
+    for (SUnit &SU : DAG->SUnits) {
+      MachineInstr &MI = *SU.getInstr();
 
-      unsigned DelaySlots = TII->getNumDelaySlots(MI);
+      SDep ExitDep(&SU, SDep::Artificial);
+
+      // By using IgnoreBundle, we can safely apply this mutation to already
+      // bundled instructions without causing misclassification of instructions
+      // that are bundled with control flow ones. Otherwise, the assertion
+      // below can be triggered for correct cases.
+      unsigned DelaySlots =
+          TII->getNumDelaySlots(MI, MachineInstr::QueryType::IgnoreBundle);
       unsigned EdgeLatency = !DelaySlots && UserSetLatencyMargin
                                  ? UserLatencyMargin
                                  : MaxLatency(MI);
@@ -282,6 +307,52 @@ class EnforceCopyEdges : public ScheduleDAGMutation {
   }
 };
 
+class PropagateIncomingLatencies : public ScheduleDAGMutation {
+  bool OnlyCopyLike;
+
+public:
+  PropagateIncomingLatencies(bool OnlyCopyLike = true)
+      : OnlyCopyLike(OnlyCopyLike) {}
+  void apply(ScheduleDAGInstrs *DAG) override {
+    auto IsData = [](const SDep &D) { return D.getKind() == SDep::Data; };
+    for (SUnit &SU : DAG->SUnits) {
+      MachineInstr &MI = *SU.getInstr();
+
+      // Only look at COPY and REG_SEQUENCE if requested
+      if (OnlyCopyLike && !MI.isCopy() &&
+          MI.getOpcode() != TargetOpcode::REG_SEQUENCE)
+        continue;
+
+      // Do not extend live ranges of phys regs
+      if (any_of(MI.defs(), [](const MachineOperand &MO) {
+            return MO.isReg() && MO.getReg().isPhysical();
+          }))
+        continue;
+
+      // Find the common latency for all predecessors that can be
+      // "moved" to successors.
+      SDep *MinLatencyDep = nullptr;
+      for (SDep &PredEdge : make_filter_range(SU.Preds, IsData)) {
+        if (!MinLatencyDep ||
+            PredEdge.getLatency() < MinLatencyDep->getLatency())
+          MinLatencyDep = &PredEdge;
+      }
+      if (!MinLatencyDep)
+        continue;
+
+      int PropagatableSrcLatency = MinLatencyDep->getLatency();
+      for (SDep &PredEdge : make_filter_range(SU.Preds, IsData)) {
+        updatePredLatency(PredEdge, SU,
+                          PredEdge.getLatency() - PropagatableSrcLatency);
+      }
+      for (SDep &SuccEdge : make_filter_range(SU.Succs, IsData)) {
+        updateSuccLatency(SuccEdge, SU,
+                          SuccEdge.getLatency() + PropagatableSrcLatency);
+      }
+    }
+  }
+};
+
 /// Fix memory dependencies. Based on their type, LLVM gives them a latency of
 /// 0 or 1 cycle by default. This isn't always correct for AIE, so one needs to
 /// fix the latencies to preserve the ordering.
@@ -289,12 +360,15 @@ class EnforceCopyEdges : public ScheduleDAGMutation {
 class MemoryEdges : public ScheduleDAGMutation {
   void apply(ScheduleDAGInstrs *DAG) override {
     const auto *TII = static_cast<const AIEBaseInstrInfo *>(DAG->TII);
-
+    // Query individual instruction behavior. This is because we might create
+    // dependencies with already-scheduled blocks where Bundles have been
+    // created.
+    const auto QueryType = MachineInstr::QueryType::IgnoreBundle;
     // Run over all instructions that may load or store, and correct the
     // latencies for all their memory dependencies.
     for (SUnit &SU : DAG->SUnits) {
       MachineInstr &MI = *SU.getInstr();
-      if (!MI.mayLoadOrStore()) {
+      if (!MI.mayLoadOrStore(QueryType)) {
         continue;
       }
 
@@ -303,13 +377,14 @@ class MemoryEdges : public ScheduleDAGMutation {
 
         // Ignore non-memory dependencies. Locks or other instructions with side
         // effects aren't handled with MemInstrItinData itineraries.
-        if (!PredEdge.isNormalMemoryOrBarrier() || !SrcMI.mayLoadOrStore()) {
+        if (!PredEdge.isNormalMemoryOrBarrier() ||
+            !SrcMI.mayLoadOrStore(QueryType)) {
           continue;
         }
 
         // Ignore Load-Load (RAR) dependencies.
         // TODO: Those should probably be removed altogether.
-        if (!SrcMI.mayStore() && !MI.mayStore()) {
+        if (!SrcMI.mayStore(QueryType) && !MI.mayStore(QueryType)) {
           continue;
         }
 
@@ -427,6 +502,7 @@ AIEBaseSubtarget::getInterBlockMutationsImpl(const Triple &TT) {
   std::vector<std::unique_ptr<ScheduleDAGMutation>> Mutations;
   Mutations.emplace_back(std::make_unique<LockDelays>());
   if (!TT.isAIE1()) {
+    Mutations.emplace_back(std::make_unique<RegionEndEdges>());
     Mutations.emplace_back(std::make_unique<MemoryEdges>());
     Mutations.emplace_back(std::make_unique<WAWEdges>());
   }
@@ -436,6 +512,8 @@ AIEBaseSubtarget::getInterBlockMutationsImpl(const Triple &TT) {
 std::vector<std::unique_ptr<ScheduleDAGMutation>>
 AIEBaseSubtarget::getPreRAMutationsImpl(const Triple &TT) {
   std::vector<std::unique_ptr<ScheduleDAGMutation>> Mutations;
+  if (EnablePreMISchedPropagateIncomingLatencies)
+    Mutations.emplace_back(std::make_unique<PropagateIncomingLatencies>());
   if (EnableStrongCopyEdges)
     Mutations.emplace_back(std::make_unique<EnforceCopyEdges>());
   return Mutations;
@@ -446,6 +524,8 @@ AIEBaseSubtarget::getSMSMutationsImpl(const Triple &TT) {
   std::vector<std::unique_ptr<ScheduleDAGMutation>> Mutations;
   if (!TT.isAIE1()) {
     Mutations.emplace_back(std::make_unique<WAWEdges>());
+    if (EnablePipelinerSchedPropagateIncomingLatencies)
+      Mutations.emplace_back(std::make_unique<PropagateIncomingLatencies>());
   }
   return Mutations;
 }

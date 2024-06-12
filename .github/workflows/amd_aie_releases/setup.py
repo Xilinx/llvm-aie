@@ -159,7 +159,7 @@ class CMakeBuild(build_ext):
 
         cmake_args_dict = get_cross_cmake_args()
         cmake_args += [f"-D{k}={v}" for k, v in cmake_args_dict.items()]
-        cmake_args += [f"-DLLVM_ENABLE_PROJECTS=llvm;mlir;clang"]
+        cmake_args += [f"-DLLVM_ENABLE_PROJECTS=llvm;mlir;clang;lld"]
 
         if "CMAKE_ARGS" in os.environ:
             cmake_args += [item for item in os.environ["CMAKE_ARGS"].split(" ") if item]

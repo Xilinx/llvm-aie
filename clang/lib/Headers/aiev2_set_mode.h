@@ -11,6 +11,9 @@
 #ifndef __AIEV2_SET_MODE_H__
 #define __AIEV2_SET_MODE_H__
 
+typedef unsigned int crsat_t;
+typedef unsigned int crrnd_t;
+
 INTRINSIC(void)
 set_satmode(unsigned int val) { __builtin_aiev2_set_ctrl_reg(crSat, val); }
 

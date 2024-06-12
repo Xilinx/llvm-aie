@@ -31,12 +31,12 @@
 
 using namespace llvm;
 
-// FIXME: We currently use a default of 0 to bypass scoreboard checks in pre-RA
-// scheduling. Once bottom-up scheduling is better handling late FuncUnit
-// utilization, we might revisit that decision.
-static llvm::cl::opt<int> PreRAFuncUnitDepth(
-    "aie-prera-func-unit-depth", cl::Hidden, cl::init(0),
+static llvm::cl::opt<int> PreMISchedFUDepth(
+    "aie-premisched-fu-depth", cl::Hidden, cl::init(16),
     cl::desc("Ignore FuncUnits past certain depth in pre-RA scoreboard"));
+static llvm::cl::opt<bool> PreMISchedIgnoreUnknownSlots(
+    "aie-premisched-ignore-unknown-slots", cl::Hidden, cl::init(true),
+    cl::desc("Do not block a whole cycle for unknown-slot instructions"));
 
 static cl::opt<unsigned>
     UserScoreboardDepth("aie-scoreboard-depth", cl::init(128),
@@ -161,14 +161,9 @@ static cl::opt<int>
 
 int AIEHazardRecognizer::NumInstrsScheduled = 0;
 
-static bool isPostRA(const MachineInstr *Instr) {
-  const MachineFunction *MF = Instr->getParent()->getParent();
-  return MF->getProperties().hasProperty(
-      MachineFunctionProperties::Property::NoVRegs);
-}
-
 AIEHazardRecognizer::AIEHazardRecognizer(const AIEBaseInstrInfo *TII,
-                                         const InstrItineraryData *II)
+                                         const InstrItineraryData *II,
+                                         bool IsPreRA)
     : TII(TII), ItinData(II) {
 
   computeMaxLatency();
@@ -183,12 +178,18 @@ AIEHazardRecognizer::AIEHazardRecognizer(const AIEBaseInstrInfo *TII,
   if (MaxVLIWInstrs >= 0 && NumInstrsScheduled > MaxVLIWInstrs) {
     IssueLimit = 1;
   }
+
+  if (IsPreRA) {
+    FUDepthLimit = PreMISchedFUDepth;
+    IgnoreUnknownSlotSets = PreMISchedIgnoreUnknownSlots;
+  }
 }
 
-AIEHazardRecognizer::AIEHazardRecognizer(const TargetSubtargetInfo &Subtarget)
+AIEHazardRecognizer::AIEHazardRecognizer(const TargetSubtargetInfo &Subtarget,
+                                         bool IsPreRA)
     : AIEHazardRecognizer(
           static_cast<const AIEBaseInstrInfo *>(Subtarget.getInstrInfo()),
-          Subtarget.getInstrItineraryData()) {}
+          Subtarget.getInstrItineraryData(), IsPreRA) {}
 
 namespace llvm {
 void applyFormatOrdering(AIE::MachineBundle &Bundle, const VLIWFormat &Format,
@@ -277,16 +278,12 @@ AIEHazardRecognizer::getHazardType(SUnit *SU, int DeltaCycles) {
     return NoopHazard;
   }
 
-  std::optional<int> FUDepthLimit;
-  if (!isPostRA(MI))
-    FUDepthLimit = PreRAFuncUnitDepth;
-
   const std::vector<unsigned int> *AlternateInsts =
       TII->getFormatInterface()->getAlternateInstsOpcode(MI->getOpcode());
   if (AlternateInsts) {
     for (const auto AltInstOpcode : *AlternateInsts) {
       ScheduleHazardRecognizer::HazardType Haz =
-          getHazardType(TII->get(AltInstOpcode), DeltaCycles, FUDepthLimit);
+          getHazardType(TII->get(AltInstOpcode), DeltaCycles);
       // Check if there is NoHazard, If there is a Hazard or NoopHazard check
       // for the next possible Opcode.
       if (Haz == NoHazard) {
@@ -300,7 +297,7 @@ AIEHazardRecognizer::getHazardType(SUnit *SU, int DeltaCycles) {
     return NoopHazard;
   }
 
-  return getHazardType(MI->getDesc(), DeltaCycles, FUDepthLimit);
+  return getHazardType(MI->getDesc(), DeltaCycles);
 }
 
 bool AIEHazardRecognizer::conflict(const AIEHazardRecognizer &Other,
@@ -348,15 +345,11 @@ void AIEHazardRecognizer::EmitInstruction(SUnit *SU, int DeltaCycles) {
   LLVM_DEBUG(dbgs() << "Emit Instruction: " << *MI);
   LLVM_DEBUG(dbgs() << "  With Delta=" << DeltaCycles << "\n");
 
-  std::optional<int> FUDepthLimit;
-  if (!isPostRA(MI))
-    FUDepthLimit = PreRAFuncUnitDepth;
-
   // If the instruction has multiple options, find the opcode that was selected
   // and use the latter to update the scoreboard.
   unsigned SelectedOpcode = getSelectedAltOpcode(MI).value_or(MI->getOpcode());
   if (!AIE::MachineBundle::isNoHazardMetaInstruction(SelectedOpcode))
-    emitInScoreboard(TII->get(SelectedOpcode), DeltaCycles, FUDepthLimit);
+    emitInScoreboard(TII->get(SelectedOpcode), DeltaCycles);
 
   // When requested, we switch off VLIW scheduling after the specified number
   // of instructions are scheduled.
@@ -375,14 +368,15 @@ void AIEHazardRecognizer::setReservedCycles(unsigned Cycles) {
 }
 
 static SlotBits getSlotSet(const MCInstrDesc &Desc,
-                           const AIEBaseMCFormats &Formats) {
+                           const AIEBaseMCFormats &Formats,
+                           bool IgnoreUnkownSlotSets) {
   MCSlotKind SlotKind = Formats.getSlotKind(Desc.getOpcode());
   if (SlotKind != MCSlotKind())
     return Formats.getSlotInfo(SlotKind)->getSlotSet();
 
   // Instructions with no format/slot cannot be added in a non-empty Bundle.
   // Therefore, act as if they block all slots.
-  return ~0;
+  return IgnoreUnkownSlotSets ? 0 : ~0;
 }
 
 namespace {
@@ -395,20 +389,19 @@ auto toHazardType(bool Conflict) {
 // These functions interpret the itinerary, translating InstrStages
 // to ResourceCycles to apply.
 // We deviate from the standard ScoreboardHazardRecognizer by not
-// recognising alternatives
+// recognizing alternatives
 ScheduleHazardRecognizer::HazardType
 AIEHazardRecognizer::getHazardType(const MCInstrDesc &Desc,
-                                   const int DeltaCycles,
-                                   std::optional<int> FUDepthLimit) {
+                                   const int DeltaCycles) {
   return toHazardType(checkConflict(
       Scoreboard, ItinData, Desc.getSchedClass(),
-      getSlotSet(Desc, *TII->getFormatInterface()), DeltaCycles, FUDepthLimit));
+      getSlotSet(Desc, *TII->getFormatInterface(), IgnoreUnknownSlotSets),
+      DeltaCycles, FUDepthLimit));
 }
 
 ScheduleHazardRecognizer::HazardType
 AIEHazardRecognizer::getHazardType(unsigned SchedClass, SlotBits SlotSet,
-                                   int DeltaCycles,
-                                   std::optional<int> FUDepthLimit) {
+                                   int DeltaCycles) {
   return toHazardType(checkConflict(Scoreboard, ItinData, SchedClass, SlotSet,
                                     DeltaCycles, FUDepthLimit));
 }
@@ -454,19 +447,20 @@ bool AIEHazardRecognizer::checkConflict(
 }
 
 void AIEHazardRecognizer::emitInScoreboard(const MCInstrDesc &Desc,
-                                           int DeltaCycles,
-                                           std::optional<int> FUDepthLimit) {
-  enterResources(Scoreboard, ItinData, Desc.getSchedClass(),
-                 getSlotSet(Desc, *TII->getFormatInterface()), DeltaCycles,
-                 FUDepthLimit);
+                                           int DeltaCycles) {
+  enterResources(
+      Scoreboard, ItinData, Desc.getSchedClass(),
+      getSlotSet(Desc, *TII->getFormatInterface(), IgnoreUnknownSlotSets),
+      DeltaCycles, FUDepthLimit);
 }
 
 void AIEHazardRecognizer::emitInScoreboard(
     ResourceScoreboard<FuncUnitWrapper> &TheScoreboard, const MCInstrDesc &Desc,
-    int DeltaCycles, std::optional<int> FUDepthLimit) const {
-  enterResources(TheScoreboard, ItinData, Desc.getSchedClass(),
-                 getSlotSet(Desc, *TII->getFormatInterface()), DeltaCycles,
-                 FUDepthLimit);
+    int DeltaCycles) const {
+  enterResources(
+      TheScoreboard, ItinData, Desc.getSchedClass(),
+      getSlotSet(Desc, *TII->getFormatInterface(), IgnoreUnknownSlotSets),
+      DeltaCycles, FUDepthLimit);
 }
 
 void AIEHazardRecognizer::enterResources(

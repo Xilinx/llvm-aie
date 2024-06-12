@@ -77,7 +77,10 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
 
   /// Returns the number of delay slots that this instruction requires.
   /// This might be 0
-  virtual unsigned getNumDelaySlots(const MachineInstr &MI) const;
+  virtual unsigned
+  getNumDelaySlots(const MachineInstr &MI,
+                   MachineInstr::QueryType Query =
+                       MachineInstr::QueryType::AnyInBundle) const;
 
   /// Returns the number of delay slots that should be reserved, i.e.
   /// not filled in by the scheduler.

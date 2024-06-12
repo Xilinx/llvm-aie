@@ -62,6 +62,11 @@ public:
                    MachineBasicBlock::iterator End, unsigned RegionInstrs);
   void leaveRegion(const SUnit &ExitSU);
 
+  /// We build the graph ourselves from the (original) semantical order
+  void buildGraph(ScheduleDAGMI &DAG, AAResults *AA,
+                  RegPressureTracker *RPTracker, PressureDiffs *PDiffs,
+                  LiveIntervals *LIS, bool TrackLaneMasks) override;
+
   /// Explicitly process regions backwards. The first scheduled region in
   /// a block connects with successors.
   bool doMBBSchedRegionsTopDown() const override { return false; }
@@ -160,6 +165,17 @@ public:
   bool isAvailableNode(SUnit &SU, SchedBoundary &Zone,
                        bool VerifyReadyCycle) const override;
 
+protected:
+  /// Apply a set of heuristics to a new candidate for scheduling.
+  ///
+  /// \param Cand provides the policy and current best candidate.
+  /// \param TryCand refers to the next SUnit candidate, otherwise
+  /// uninitialized.
+  /// \return \c true if TryCand is better than Cand (Reason is
+  /// NOT NoCand)
+  bool tryCandidate(SchedCandidate &Cand, SchedCandidate &TryCand,
+                    SchedBoundary *Zone) const override;
+
 private:
   MachineBasicBlock *CurMBB = nullptr;
   MachineBasicBlock::iterator RegionBegin = nullptr;
@@ -180,6 +196,7 @@ public:
   void exitRegion() override;
 
   void finalizeSchedule() override;
+  void recordDbgInstrs(const Region &CurrentRegion);
 
   // Give dag mutators access to the scheduler state
   AIEPostRASchedStrategy *getSchedImpl() const;

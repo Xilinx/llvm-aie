@@ -662,8 +662,11 @@ class AIE2Dim3DRegisterClass <dag reglist, RegAltNameIndex idx = NoRegAltName> :
     }
   }
 
+let GeneratePressureSet = false in {
   def eQQXEs : AIE2Vector640RegisterClass<(add qx0, qx2)>;
   def eQQXOs : AIE2Vector640RegisterClass<(add qx1, qx3)>;
+  def mQQXw : AIE2Vector640RegisterClass<(add eQQXEs, eQQXOs)>;
+}
 
 // 320-bit sparse registers (qwh and qwl) are set to be non allocatable to avoid handling spilling
 // of ql and qh mask registers. We can do this because these registers are only used by sparse
@@ -678,9 +681,6 @@ class AIE2Dim3DRegisterClass <dag reglist, RegAltNameIndex idx = NoRegAltName> :
     def mQXLb : AIE2ScalarRegisterClass<(add eQXLEs, eQXLOs)>;
     def mQXHLb : AIE2ScalarRegisterClass<(add mQXHb, mQXLb)>;
   }
-
-  def mQQXw : AIE2Vector640RegisterClass<(add eQQXEs, eQQXOs)>;
-
 
 // These are compound register classes. Generating the register pressure logic
 // for them and all their intersections/unions can get complicated and it is

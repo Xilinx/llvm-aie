@@ -253,9 +253,14 @@ ArrayRef<Register> IRTranslator::getOrCreateVRegs(const Value &Val) {
   return *VRegs;
 }
 
-ArrayRef<Register> IRTranslator::getOrCreateReturnVRegs(const Value *RetVal) {
+const Value *IRTranslator::getReturnValueForABI(const ReturnInst &RI) {
+  const Value *RetVal = RI.getReturnValue();
   if (RetVal && DL->getTypeStoreSize(RetVal->getType()).isZero())
-    RetVal = nullptr;
+    return nullptr;
+  return RetVal;
+}
+
+ArrayRef<Register> IRTranslator::getOrCreateReturnVRegs(const Value *RetVal) {
   if (RetVal)
     return getOrCreateVRegs(*RetVal);
   return {};
@@ -370,7 +375,7 @@ bool IRTranslator::translateCompare(const User &U,
 
 bool IRTranslator::translateRet(const User &U, MachineIRBuilder &MIRBuilder) {
   const ReturnInst &RI = cast<ReturnInst>(U);
-  const Value *Ret = RI.getReturnValue();
+  const Value *Ret = getReturnValueForABI(RI);
   ArrayRef<Register> VRegs = getOrCreateReturnVRegs(Ret);
 
   Register SwiftErrorVReg = 0;
@@ -3635,7 +3640,7 @@ bool IRTranslator::runOnMachineFunction(MachineFunction &CurMF) {
       return nullptr;
     };
     if (const ReturnInst *RI = FindReturn(F)) {
-      const Value *RetVal = RI->getReturnValue();
+      const Value *RetVal = getReturnValueForABI(*RI);
       ArrayRef<Register> RetVRegs = getOrCreateReturnVRegs(RetVal);
       if (!CLI->preLowerReturn(RetVal, RetVRegs, FuncInfo)) {
         OptimizationRemarkMissed R("gisel-irtranslator", "GISelFailure",

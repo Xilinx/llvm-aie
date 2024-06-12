@@ -17,6 +17,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachinePipeliner.h"
+#include "llvm/CodeGen/RegisterPressure.h"
 #include "llvm/Support/raw_ostream.h"
 #include <memory>
 
@@ -27,6 +28,10 @@ cl::opt<int> LoopMinTripCount(
     cl::desc("Minimum number of loop iterations (warning: applies to all loop"
              " pipelining candidates)"),
     cl::init(-1), cl::Hidden);
+cl::opt<bool> TrackRegPressure(
+    "aie-pipeliner-track-regpressure",
+    cl::desc("Refuse SWP schedules likely to run into register spills"),
+    cl::init(true), cl::Hidden);
 
 AIEBasePipelinerLoopInfo::AIEBasePipelinerLoopInfo(MachineInstr *EndLoop,
                                                    const AIEBaseInstrInfo &TII)
@@ -265,6 +270,8 @@ public:
 
   bool shouldUseSchedule(SwingSchedulerDAG &SSD, SMSchedule &SMS) override;
 
+  bool canAcceptII(SMSchedule &SMS) override;
+
   // This adjusts the incoming tripcount.
   void startExpand() override;
 
@@ -337,6 +344,119 @@ DownCountLoop::Assessment DownCountLoop::accept(MachineInstr *EndLoop) {
   return Assessment::Accept;
 }
 
+/// Get an instruction sequence from an \p SMS schedule that is estimated
+/// to have a similar register pressure to what would come out of the
+/// premisched.
+///
+/// Currently, this uses "reverse stage extraction", i.e. the stages are laid
+/// down in reverse order and their instructions are not interleaved.
+std::vector<MachineInstr *> getInstrSequence(SMSchedule &Sched) {
+  std::vector<MachineInstr *> Seq;
+
+  for (int Stage = Sched.getMaxStageCount(); Stage >= 0; --Stage) {
+    int FirstSeqCycle =
+        Sched.getFirstCycle() + Stage * Sched.getInitiationInterval();
+    int LastSeqCycle = FirstSeqCycle + Sched.getInitiationInterval() - 1;
+    for (int SeqCycle = FirstSeqCycle; SeqCycle <= LastSeqCycle; ++SeqCycle) {
+      for (SUnit *SU : Sched.getInstructions(SeqCycle)) {
+        Seq.push_back(SU->getInstr());
+      }
+    }
+  }
+
+  return Seq;
+}
+
+/// Replay the instructions in \p Seq and collect all the livein registers.
+std::vector<RegisterMaskPair>
+collectLiveInRegs(const std::vector<MachineInstr *> &Seq,
+                  const MachineFunction &MF) {
+  const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
+  LiveRegSet LiveRegs;
+  LiveRegs.init(MF.getRegInfo());
+
+  for (const MachineInstr *MI : reverse(Seq)) {
+    // Ignore PHI nodes, they make it seem that two values are livein, while
+    // they do not actually increase the pressure if correctly placed/allocated.
+    if (MI->isPHI())
+      continue;
+
+    RegisterOperands RegOpers;
+    RegOpers.collect(*MI, *TRI, MF.getRegInfo(), true, true);
+    for (const RegisterMaskPair &Def : RegOpers.Defs)
+      LiveRegs.erase(Def);
+    for (const RegisterMaskPair &Use : RegOpers.Uses)
+      LiveRegs.insert(Use);
+  }
+
+  std::vector<RegisterMaskPair> LiveInRegs;
+  LiveRegs.appendTo(LiveInRegs);
+  return LiveInRegs;
+}
+
+/// Estimate whether the register allocation pipeline will be able to allocate
+/// the vregs in \p Sched without spilling.
+bool canAllocate(SMSchedule &Sched) {
+  std::vector<MachineInstr *> Seq = getInstrSequence(Sched);
+  if (Seq.empty())
+    return true;
+
+  for (const MachineInstr *MI : Seq) {
+    LLVM_DEBUG(dbgs() << "Predicted order: " << *MI);
+  }
+
+  MachineBasicBlock &MBB = *Seq.front()->getParent();
+  MachineFunction &MF = *MBB.getParent();
+
+  // Init RegPressureTracker
+  RegionPressure RegPressure;
+  RegPressureTracker RPTracker(RegPressure);
+  RegisterClassInfo RegClassInfo;
+  RegClassInfo.runOnMachineFunction(MF);
+  RPTracker.init(&MF, &RegClassInfo, nullptr, &MBB,
+                 MachineBasicBlock::iterator(Seq.back()), false, false);
+  const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
+
+  // Verify and report if a pressure set is overbooked.
+  auto CheckPressureExcess = [&](const RegisterPressure &Pressure) {
+    bool PressureExcess = false;
+    for (unsigned I = 0, E = Pressure.MaxSetPressure.size(); I < E; ++I) {
+      unsigned Limit = RegClassInfo.getRegPressureSetLimit(I);
+      if (Pressure.MaxSetPressure[I] > Limit) {
+        LLVM_DEBUG(dbgs() << TRI->getRegPressureSetName(I) << " Limit " << Limit
+                          << " Actual " << Pressure.MaxSetPressure[I] << "\n");
+        PressureExcess = true;
+      }
+    }
+    return PressureExcess;
+  };
+
+  // Append pressure for each livein register
+  for (const RegisterMaskPair &LiveInReg : collectLiveInRegs(Seq, MF)) {
+    LLVM_DEBUG(
+        dbgs() << "Add Livein Pressure: "
+               << printReg(LiveInReg.RegUnit, TRI, 0, &MF.getRegInfo()) << ":"
+               << printRegClassOrBank(LiveInReg.RegUnit, MF.getRegInfo(), TRI)
+               << "\n");
+
+    // Ignore partially live regs, the RPTracker does not really know how many
+    // pressure units should be added to the current pressure and adds too much.
+    if (LiveInReg.LaneMask !=
+        MF.getRegInfo().getMaxLaneMaskForVReg(LiveInReg.RegUnit)) {
+      LLVM_DEBUG(dbgs() << "Skipped partially live reg\n");
+      continue;
+    }
+    RPTracker.increaseRegPressure(LiveInReg.RegUnit, LaneBitmask::getNone(),
+                                  LiveInReg.LaneMask);
+  }
+
+  bool ExcessIncomingPressure = !CheckPressureExcess(RPTracker.getPressure());
+
+  // If there are too many incoming registers for the loop, the current RA
+  // pipeline will be forced into spilling.
+  return ExcessIncomingPressure;
+}
+
 bool DownCountLoop::shouldUseSchedule(SwingSchedulerDAG &SSD, SMSchedule &SMS) {
   const int PrologCount = SMS.getMaxStageCount();
   const int StageCount = PrologCount + 1;
@@ -370,6 +490,19 @@ bool DownCountLoop::shouldUseSchedule(SwingSchedulerDAG &SSD, SMSchedule &SMS) {
 
   LLVM_DEBUG(dbgs() << "PLI: Accepting schedule for StageCount=" << StageCount
                     << " (dynamic TC)\n");
+  return true;
+}
+
+bool DownCountLoop::canAcceptII(SMSchedule &SMS) {
+  if (TrackRegPressure && !canAllocate(SMS)) {
+    LLVM_DEBUG(
+        dbgs() << "PLI: Rejected schedule (too much block pressure, TotStages="
+               << SMS.getMaxStageCount() + 1
+               << " II=" << SMS.getInitiationInterval() << ")\n");
+    return false;
+  }
+  LLVM_DEBUG(dbgs() << "PLI: Accepting II=" << SMS.getInitiationInterval()
+                    << "\n");
   return true;
 }
 

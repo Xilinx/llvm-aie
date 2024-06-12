@@ -41,6 +41,9 @@ foreach(archive IN ZIP_LISTS
   # with custom targets and in older version of cmake (~pre-3.20, apparently)
   # there is not good support for describing install dependencies on custom targets.
   add_dependencies(${archive_1} libc-headers)
+  if(TARGET libc-startup)
+    add_dependencies(${archive_1} libc-startup)
+  endif()
 
   set_target_properties(
     ${archive_1}

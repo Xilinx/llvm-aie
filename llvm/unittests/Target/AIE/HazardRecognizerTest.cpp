@@ -90,11 +90,11 @@ class MockHR : public AIEHazardRecognizer {
 
 public:
   ~MockHR() = default;
-  MockHR() : AIEHazardRecognizer(&DummyInstrInfo, &Itins) {
+  MockHR() : AIEHazardRecognizer(&DummyInstrInfo, &Itins, /*IsPreRA=*/false) {
     MockScoreboard.reset(computeScoreboardDepth());
   }
   MockHR(const AIEBaseInstrInfo &InstrInfo)
-      : AIEHazardRecognizer(&InstrInfo, &Itins) {
+      : AIEHazardRecognizer(&InstrInfo, &Itins, /*IsPreRA=*/false) {
     MockScoreboard.reset(computeScoreboardDepth());
   }
   void emit(unsigned SchedClass, int Delta, SlotBits SlotSet = 0) {

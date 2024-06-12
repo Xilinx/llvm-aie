@@ -52,7 +52,7 @@ public:
                    const MCRegisterInfo *const TRI,
                    MachineBasicBlock *const CurBB);
 
-  MaxLatencyFinder(AIEScheduleDAGMI *DAG);
+  MaxLatencyFinder(ScheduleDAGInstrs *DAG);
 
   // Find the maximum latency of MI taking  successors into account
   unsigned operator()(MachineInstr &MI);

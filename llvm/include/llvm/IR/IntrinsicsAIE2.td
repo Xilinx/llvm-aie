@@ -721,7 +721,6 @@ def int_aie2_vbroadcast64_I512 : ClangBuiltin<"__builtin_aiev2_vbroadcast64_I512
 def int_aie2_vbroadcast16_bf512 : ClangBuiltin<"__builtin_aiev2_vbroadcast_bf16_bf512">, AIEV2VBCST16bf512;
 def int_aie2_vbroadcast32_bf512 : ClangBuiltin<"__builtin_aiev2_vbroadcast_bf32_bf512">, AIEV2VBCST32bf512;
 def int_aie2_vbroadcast64_bf512 : ClangBuiltin<"__builtin_aiev2_vbroadcast_bf64_bf512">, AIEV2VBCST64bf512;
-def int_aie2_vbroadcastfloat_I512 : ClangBuiltin<"__builtin_aiev2_vbroadcastfloat_I512">, AIEV2VBCSTF32I512;
 def int_aie2_vbroadcast_zero_acc1024 : ClangBuiltin<"__builtin_aiev2_vbroadcast_zero_acc1024">, AIEV2VCLRACC1024;
 //scl2vec::broadcast_elem
 def int_aie2_vextract_broadcast8_I512  : ClangBuiltin<"__builtin_aiev2_vextract_broadcast8_I512">, AIEV2VEXTBCST8I512;

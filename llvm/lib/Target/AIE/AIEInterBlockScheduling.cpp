@@ -32,7 +32,57 @@ static cl::opt<bool>
     LoopAware("aie-loop-aware", cl::init(true),
               cl::desc("[AIE] Schedule single block loops iteratively"));
 
+static cl::opt<bool> LoopEpilogueAnalysis(
+    "aie-loop-epilogue-analysis", cl::init(true),
+    cl::desc("[AIE] Perform Loop/Epilogue analysis with loop scheduling"));
+
 namespace llvm::AIE {
+
+void dumpInterBlock(const InterBlockEdges &Edges) {
+  for (const SUnit &SU : Edges) {
+    dbgs() << "SU" << SU.NodeNum << ": " << *SU.getInstr();
+  }
+}
+
+void emitBundlesInScoreboard(const std::vector<MachineBundle> &Bundles,
+                             ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+                             AIEHazardRecognizer *HR) {
+
+  const int TotalBundles = Bundles.size();
+  const int AmountToEmit = std::min(TotalBundles, HR->getConflictHorizon());
+  // Do not emit more than the specified by the conflict horizon. More
+  // then this will not cause conflicts.
+  for (int i = TotalBundles - AmountToEmit; i < TotalBundles; i++) {
+    for (MachineInstr *MI : Bundles[i].getInstrs())
+      HR->emitInScoreboard(Scoreboard, MI->getDesc(), 0);
+
+    Scoreboard.advance();
+  }
+}
+
+void emitBundlesInScoreboardDelta(
+    const std::vector<MachineBundle> &Bundles,
+    ResourceScoreboard<FuncUnitWrapper> &Scoreboard, int &Delta,
+    AIEHazardRecognizer *HR) {
+
+  for (auto &Bundle : Bundles) {
+    // We don't need to replay more instructions, because we exhausted the
+    // scoreboard.
+    if (Delta >= 0)
+      break;
+
+    for (MachineInstr *MI : Bundle.getInstrs())
+      HR->emitInScoreboard(Scoreboard, MI->getDesc(), Delta);
+
+    Delta++;
+  }
+}
+
+MachineBasicBlock *getSinglePredecessor(const MachineBasicBlock &MBB) {
+  assert(MBB.pred_size() == 1 && "MBB contains more than 1 predecessor");
+  MachineBasicBlock *SinglePredMBB = *MBB.predecessors().begin();
+  return SinglePredMBB;
+}
 
 InterBlockScheduling::InterBlockScheduling(const MachineSchedContext *C,
                                            bool InterBlock)
@@ -81,6 +131,7 @@ void InterBlockScheduling::leaveFunction() {
 
 void InterBlockScheduling::enterBlock(MachineBasicBlock *BB) {
   CurrentBlock = &getBlockState(BB);
+  CurrentBlock->resetRegion();
   DEBUG_BLOCKS(dbgs() << "  >> enterBlock " << BB->getNumber() << " "
                       << CurrentBlock->kindAsString() << " FixPointIter="
                       << CurrentBlock->FixPoint.NumIters << "\n");
@@ -117,12 +168,8 @@ bool InterBlockScheduling::resourcesConverged(BlockState &BS) const {
   ResourceScoreboard<FuncUnitWrapper> Bottom;
   Bottom.reset(Depth);
 
-  for (auto &Bundle : BS.getBottom().Bundles) {
-    for (MachineInstr *MI : Bundle.getInstrs()) {
-      HR->emitInScoreboard(Bottom, MI->getDesc(), 0, {});
-    }
-    Bottom.advance();
-  }
+  emitBundlesInScoreboard(BS.getBottom().Bundles, Bottom, HR.get());
+
   DEBUG_LOOPAWARE(dbgs() << "Bottom scoreboard\n"; Bottom.dump());
   // We have two successors, the loop itself and the epilogue
   assert(BS.TheBlock->succ_size() == 2);
@@ -137,15 +184,9 @@ bool InterBlockScheduling::resourcesConverged(BlockState &BS) const {
     ResourceScoreboard<FuncUnitWrapper> Top;
     Top.reset(Depth);
     int Cycle = -Depth;
-    for (auto &Bundle : BS.getBottom().Bundles) {
-      if (Cycle >= 0) {
-        break;
-      }
-      for (MachineInstr *MI : Bundle.getInstrs()) {
-        HR->emitInScoreboard(Top, MI->getDesc(), Cycle, {});
-      }
-      Cycle++;
-    }
+
+    emitBundlesInScoreboardDelta(BS.getBottom().Bundles, Top, Cycle, HR.get());
+
     DEBUG_LOOPAWARE(dbgs() << "Top scoreboard\n"; Top.dump());
     if (Bottom.conflict(Top, Depth)) {
       return false;
@@ -356,7 +397,7 @@ void InterBlockScheduling::enterRegion(MachineBasicBlock *BB,
   DEBUG_BLOCKS(dbgs() << "    >> enterRegion, Iter=" << BS.FixPoint.NumIters
                       << "\n");
   if (!BS.FixPoint.NumIters) {
-    BS.addRegion(RegionBegin, RegionEnd);
+    BS.addRegion(BB, RegionBegin, RegionEnd);
   }
 }
 int InterBlockScheduling::getNumEntryNops(const BlockState &BS) const {
@@ -368,12 +409,150 @@ int InterBlockScheduling::getNumEntryNops(const BlockState &BS) const {
   }
   const MachineBasicBlock &BB = *BS.TheBlock;
   assert(BB.pred_size() == 1);
-  MachineBasicBlock *Loop = *BB.predecessors().begin();
+  MachineBasicBlock *Loop = getSinglePredecessor(BB);
   auto &LBS = getBlockState(Loop);
 
-  // TODO: we can do better by doing full interblock analysis
-  // between BS and LBS
+  // We can only analyze non-empty epilogue blocks because we need
+  // to build a DDG, which is not possible.
+  // For empty ones, we need to be conservative because we are not aware of
+  // content of epilogues' successor.
+  if (LoopEpilogueAnalysis && BB.size() > 0) {
+    int ExistingLatency = getCyclesToRespectTiming(BS, LBS);
+    // Start the next step only after clearing latencies.
+    return getCyclesToAvoidResourceConflicts(ExistingLatency, BS, LBS);
+  }
+
   return LBS.getSafetyMargin();
+}
+
+int InterBlockScheduling::getCyclesToRespectTiming(
+    const BlockState &EpilogueBS, const BlockState &LoopBS) const {
+
+  const MachineBasicBlock &EpilogueMBB = *EpilogueBS.TheBlock;
+  const MachineBasicBlock *LoopMBB = getSinglePredecessor(EpilogueMBB);
+
+  DEBUG_LOOPAWARE(dbgs() << "** Loop/Epilogue-carried latency dependencies:"
+                         << " Original Loop " << *LoopMBB
+                         << " Original Epilogue " << EpilogueMBB << "\n");
+
+  InterBlockEdges Edges(*Context);
+  std::map<const MachineInstr *, int> DistancesFromLoopEntry;
+  int DistFromLoopEntry = 0;
+  int EntryNops = 0;
+
+  auto AddRegionToEdges = [&](const Region &R) {
+    for (auto &Bundle : R.Bundles) {
+      for (MachineInstr *MI : Bundle.getInstrs()) {
+        DistancesFromLoopEntry[MI] = DistFromLoopEntry;
+        Edges.addNode(MI);
+      }
+      ++DistFromLoopEntry;
+    }
+  };
+
+  // Construction of the superblock containing Loop+Epilogue
+  // First part is the loop
+  AddRegionToEdges(LoopBS.getBottom());
+  Edges.markBoundary();
+  // Second part is the epilogue itself
+  AddRegionToEdges(EpilogueBS.getTop());
+  Edges.buildEdges();
+
+  DEBUG_LOOPAWARE(dumpInterBlock(Edges));
+  // Check cross-boundary latencies.
+  int Height = 1;
+  for (auto &Bundle : reverse(LoopBS.getBottom().Bundles)) {
+    for (auto *PreBoundaryMI : Bundle.getInstrs()) {
+      const SUnit *Pred = Edges.getPreBoundaryNode(PreBoundaryMI);
+
+      for (auto &SDep : Pred->Succs) {
+        auto *Succ = SDep.getSUnit();
+
+        if (!Edges.isPostBoundaryNode(Succ))
+          continue;
+
+        const MachineInstr *PostBoundaryMI = Succ->getInstr();
+
+        const int PostBoundOrExitDist =
+            (PostBoundaryMI != nullptr)
+                ? DistancesFromLoopEntry[PostBoundaryMI]
+                // When getInstr returns nullptr, we reached
+                // ExitSU. We can consider the DistFromLoopEntry as
+                // depth of the ExitSU.
+                : DistFromLoopEntry;
+
+        const int Latency = SDep.getSignedLatency();
+        const int Distance =
+            PostBoundOrExitDist - DistancesFromLoopEntry[PreBoundaryMI];
+
+        DEBUG_LOOPAWARE(dbgs() << "Data dependency found:\n"
+                               << " Loop instruction SU: " << *PreBoundaryMI);
+        DEBUG_LOOPAWARE(dbgs() << " Epilogue instruction: ";
+                        if (PostBoundaryMI) PostBoundaryMI->dump();
+                        else dbgs() << "nullptr (ExitSU)";);
+        DEBUG_LOOPAWARE(dbgs() << "\n Latency: " << Latency
+                               << "\n Distance: " << Distance << "\n");
+
+        EntryNops = std::max(EntryNops, Latency - Distance);
+      }
+    }
+    if (++Height > HR->getConflictHorizon()) {
+      break;
+    }
+  }
+
+  return EntryNops;
+}
+
+int InterBlockScheduling::getCyclesToAvoidResourceConflicts(
+    int ExistingLatency, const BlockState &EpilogueBS,
+    const BlockState &LoopBS) const {
+
+  const MachineBasicBlock &EpilogueMBB = *EpilogueBS.TheBlock;
+  MachineBasicBlock *LoopMBB = LoopBS.TheBlock;
+  int Depth = HR->getMaxLookAhead();
+  ResourceScoreboard<FuncUnitWrapper> Bottom;
+  Bottom.reset(Depth);
+
+  DEBUG_LOOPAWARE(dbgs() << "* Loop/Epilogue-carried resource conflicts:"
+                         << " Original Loop " << *LoopMBB << " Original Epilog "
+                         << EpilogueMBB << "\n");
+
+  emitBundlesInScoreboard(LoopBS.getBottom().Bundles, Bottom, HR.get());
+
+  // We know how many latency cycles we need to respect, and we can advance
+  // the scoreboard to the first possible cycle that can accommodate another
+  // instruction and start the resource verification from this point, tracking
+  // the number of NOPS.
+  int NopCounter = 0;
+  for (NopCounter = 0; NopCounter < ExistingLatency; ++NopCounter)
+    Bottom.advance();
+
+  DEBUG_LOOPAWARE(dbgs() << "Loop scoreboard\n"; Bottom.dump());
+
+  ResourceScoreboard<FuncUnitWrapper> Top;
+  Top.reset(Depth);
+  int Cycle = -Depth;
+
+  auto Bundles = EpilogueBS.getBottom().Bundles;
+
+  emitBundlesInScoreboardDelta(EpilogueBS.getBottom().Bundles, Top, Cycle,
+                               HR.get());
+
+  DEBUG_LOOPAWARE(dbgs() << "Epilogue scoreboard\n"; Top.dump());
+
+  // Use scoreboard comparison to calculate the number of nops
+  while (Bottom.conflict(Top, Depth)) {
+    Bottom.advance();
+    NopCounter++;
+  }
+
+  DEBUG_LOOPAWARE(dbgs() << "Resource conflict avoidance between"
+                         << " loop: " << *LoopMBB
+                         << " And epilogue: " << EpilogueMBB << " Requires "
+                         << NopCounter << " Nops\n");
+
+  return NopCounter;
 }
 
 void InterBlockEdges::addNode(MachineInstr *MI) {
@@ -427,10 +606,19 @@ void BlockState::clearSchedule() {
 void BlockState::classify() {
   // Detect whether this block is amenable to loop-aware scheduling.
   // We must push the safety margin to our epilogue block(s)
-  // This can only be done if the epilogue is not itself
+  // This can only be done if we have an epilogue and the epilogue is not itself
   // a loop.
   auto IsLoop = [](MachineBasicBlock *MBB) {
-    return llvm::any_of(MBB->successors(), [&](auto *S) { return S == MBB; });
+    int NumLoopEdges = 0;
+    int NumExitEdges = 0;
+    for (auto *S : MBB->successors()) {
+      if (S == MBB) {
+        NumLoopEdges++;
+      } else {
+        NumExitEdges++;
+      }
+    }
+    return NumLoopEdges == 1 && NumExitEdges == 1;
   };
   // We generalize slightly; we require the epilogue to be a dedicated exit of
   // the loop.
@@ -449,12 +637,6 @@ void BlockState::classify() {
   // We will mark the epilogues in a second sweep, when all states have been
   // constructed. That sweep is driven by the Loops we've classified on
   // construction.
-}
-
-void dumpInterBlock(const InterBlockEdges &Edges) {
-  for (const SUnit &SU : Edges) {
-    dbgs() << "SU" << SU.NodeNum << ": " << *SU.getInstr();
-  }
 }
 
 void BlockState::initInterBlock(const MachineSchedContext &Context) {

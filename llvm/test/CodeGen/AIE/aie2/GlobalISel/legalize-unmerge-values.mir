@@ -288,3 +288,240 @@ body:             |
     %1(s8), %2(s8), %3(s8), %4(s8), %5(s8), %6(s8), %7(s8), %8(s8), %9(s8), %10(s8), %11(s8), %12(s8), %13(s8), %14(s8), %15(s8), %16(s8), %17(s8), %18(s8), %19(s8), %20(s8), %21(s8), %22(s8), %23(s8), %24(s8), %25(s8), %26(s8), %27(s8), %28(s8), %29(s8), %30(s8), %31(s8), %32(s8) = G_UNMERGE_VALUES %0(<32 x s8>)
     %33(s32) = G_SEXT %8(s8)
     PseudoRET implicit $lr, implicit %33
+...
+---
+name:           test_unmerge_v2s16
+registers:
+  - { id: 0, class: _, preferred-register: '' }
+  - { id: 1, class: _, preferred-register: '' }
+  - { id: 2, class: _, preferred-register: '' }
+  - { id: 3, class: _, preferred-register: '' }
+  - { id: 4, class: _, preferred-register: '' }
+  - { id: 5, class: _, preferred-register: '' }
+  - { id: 6, class: _, preferred-register: '' }
+legalized: false
+body:             |
+  bb.0.entry:
+    liveins: $r0
+    ; CHECK-LABEL: name: test_unmerge_v2s16
+    ; CHECK: liveins: $r0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<2 x s16>) = COPY $r0
+    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(s32) = G_BITCAST [[COPY]](<2 x s16>)
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 16
+    ; CHECK-NEXT: [[LSHR:%[0-9]+]]:_(s32) = G_LSHR [[BITCAST]], [[C]](s32)
+    ; CHECK-NEXT: [[SEXT_INREG:%[0-9]+]]:_(s32) = G_SEXT_INREG [[LSHR]], 16
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[SEXT_INREG]](s32)
+    %0:_(<2 x s16>) = COPY $r0
+    %1(s16), %2(s16) = G_UNMERGE_VALUES %0(<2 x s16>)
+    %3(s32) = G_SEXT %2(s16)
+    PseudoRET implicit $lr, implicit %3
+...
+---
+name:           test_unmerge_v4s8
+registers:
+  - { id: 0, class: _, preferred-register: '' }
+  - { id: 1, class: _, preferred-register: '' }
+  - { id: 2, class: _, preferred-register: '' }
+  - { id: 3, class: _, preferred-register: '' }
+  - { id: 4, class: _, preferred-register: '' }
+  - { id: 5, class: _, preferred-register: '' }
+  - { id: 6, class: _, preferred-register: '' }
+  - { id: 7, class: _, preferred-register: '' }
+  - { id: 8, class: _, preferred-register: '' }
+legalized: false
+body:             |
+  bb.0.entry:
+    liveins: $r0
+    ; CHECK-LABEL: name: test_unmerge_v4s8
+    ; CHECK: liveins: $r0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<4 x s8>) = COPY $r0
+    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(s32) = G_BITCAST [[COPY]](<4 x s8>)
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 24
+    ; CHECK-NEXT: [[LSHR:%[0-9]+]]:_(s32) = G_LSHR [[BITCAST]], [[C]](s32)
+    ; CHECK-NEXT: [[SEXT_INREG:%[0-9]+]]:_(s32) = G_SEXT_INREG [[LSHR]], 8
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[SEXT_INREG]](s32)
+    %0:_(<4 x s8>) = COPY $r0
+    %1(s8), %2(s8), %3(s8), %4(s8) = G_UNMERGE_VALUES %0(<4 x s8>)
+    %5(s32) = G_SEXT %4(s8)
+    PseudoRET implicit $lr, implicit %5
+...
+---
+name:           test_unmerge_32bit_order
+registers:
+  - { id: 0, class: _, preferred-register: '' }
+  - { id: 1, class: _, preferred-register: '' }
+  - { id: 2, class: _, preferred-register: '' }
+  - { id: 3, class: _, preferred-register: '' }
+  - { id: 4, class: _, preferred-register: '' }
+  - { id: 5, class: _, preferred-register: '' }
+  - { id: 6, class: _, preferred-register: '' }
+  - { id: 7, class: _, preferred-register: '' }
+  - { id: 8, class: _, preferred-register: '' }
+legalized: false
+body:             |
+  bb.0.entry:
+    liveins: $r0
+    ; CHECK-LABEL: name: test_unmerge_32bit_order
+    ; CHECK: liveins: $r0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<4 x s8>) = COPY $r0
+    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(s32) = G_BITCAST [[COPY]](<4 x s8>)
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 8
+    ; CHECK-NEXT: [[LSHR:%[0-9]+]]:_(s32) = G_LSHR [[BITCAST]], [[C]](s32)
+    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 16
+    ; CHECK-NEXT: [[LSHR1:%[0-9]+]]:_(s32) = G_LSHR [[BITCAST]], [[C1]](s32)
+    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 24
+    ; CHECK-NEXT: [[LSHR2:%[0-9]+]]:_(s32) = G_LSHR [[BITCAST]], [[C2]](s32)
+    ; CHECK-NEXT: [[SEXT_INREG:%[0-9]+]]:_(s32) = G_SEXT_INREG [[BITCAST]], 8
+    ; CHECK-NEXT: [[SEXT_INREG1:%[0-9]+]]:_(s32) = G_SEXT_INREG [[LSHR]], 8
+    ; CHECK-NEXT: [[SEXT_INREG2:%[0-9]+]]:_(s32) = G_SEXT_INREG [[LSHR1]], 8
+    ; CHECK-NEXT: [[SEXT_INREG3:%[0-9]+]]:_(s32) = G_SEXT_INREG [[LSHR2]], 8
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[SEXT_INREG]](s32), implicit [[SEXT_INREG1]](s32), implicit [[SEXT_INREG2]](s32), implicit [[SEXT_INREG3]](s32)
+    %0:_(<4 x s8>) = COPY $r0
+    %1(s8), %2(s8), %3(s8), %4(s8) = G_UNMERGE_VALUES %0(<4 x s8>)
+    %5(s32) = G_SEXT %1(s8)
+    %6(s32) = G_SEXT %2(s8)
+    %7(s32) = G_SEXT %3(s8)
+    %8(s32) = G_SEXT %4(s8)
+    PseudoRET implicit $lr, implicit %5, implicit %6, implicit %7, implicit %8
+...
+---
+name:           test_unmerge_v8s16
+registers:
+  - { id: 0, class: _, preferred-register: '' }
+  - { id: 1, class: _, preferred-register: '' }
+  - { id: 2, class: _, preferred-register: '' }
+  - { id: 3, class: _, preferred-register: '' }
+  - { id: 4, class: _, preferred-register: '' }
+  - { id: 5, class: _, preferred-register: '' }
+  - { id: 6, class: _, preferred-register: '' }
+  - { id: 7, class: _, preferred-register: '' }
+  - { id: 8, class: _, preferred-register: '' }
+  - { id: 9, class: _, preferred-register: '' }
+  - { id: 10, class: _, preferred-register: '' }
+legalized: false
+body:             |
+  bb.0.entry:
+    liveins: $wl0
+    ; CHECK-LABEL: name: test_unmerge_v8s16
+    ; CHECK: liveins: $wl0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s16>) = COPY $wl0
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<8 x s16>) = G_AIE_UNPAD_VECTOR [[COPY]](<16 x s16>)
+    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<16 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[AIE_UNPAD_VECTOR]](<8 x s16>)
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
+    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[AIE_PAD_VECTOR_UNDEF]](<16 x s16>), [[C]](s32)
+    ; CHECK-NEXT: [[ASSERT_SEXT:%[0-9]+]]:_(s32) = G_ASSERT_SEXT [[AIE_SEXT_EXTRACT_VECTOR_ELT]], 16
+    ; CHECK-NEXT: [[SEXT_INREG:%[0-9]+]]:_(s32) = G_SEXT_INREG [[ASSERT_SEXT]], 16
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[SEXT_INREG]](s32)
+    %0:_(<16 x s16>) = COPY $wl0
+    %10:_(<8 x s16>) = G_AIE_UNPAD_VECTOR %0:_(<16 x s16>)
+    %1(s16), %2(s16), %3(s16), %4(s16), %5(s16), %6(s16), %7(s16), %8(s16) = G_UNMERGE_VALUES %10(<8 x s16>)
+    %9(s32) = G_SEXT %4(s16)
+    PseudoRET implicit $lr, implicit %9
+...
+---
+name:           test_unmerge_v4s32
+registers:
+  - { id: 0, class: _, preferred-register: '' }
+  - { id: 1, class: _, preferred-register: '' }
+  - { id: 2, class: _, preferred-register: '' }
+  - { id: 3, class: _, preferred-register: '' }
+  - { id: 4, class: _, preferred-register: '' }
+  - { id: 5, class: _, preferred-register: '' }
+legalized: false
+body:             |
+  bb.0.entry:
+    liveins: $wl0
+    ; CHECK-LABEL: name: test_unmerge_v4s32
+    ; CHECK: liveins: $wl0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<8 x s32>) = COPY $wl0
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<4 x s32>) = G_AIE_UNPAD_VECTOR [[COPY]](<8 x s32>)
+    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<8 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[AIE_UNPAD_VECTOR]](<4 x s32>)
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
+    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[AIE_PAD_VECTOR_UNDEF]](<8 x s32>), [[C]](s32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s32)
+    %0:_(<8 x s32>) = COPY $wl0
+    %5:_(<4 x s32>) = G_AIE_UNPAD_VECTOR %0:_(<8 x s32>)
+    %1(s32), %2(s32), %3(s32), %4(s32) = G_UNMERGE_VALUES %5(<4 x s32>)
+    PseudoRET implicit $lr, implicit %4
+...
+---
+name:           test_unmerge_v16s8
+registers:
+  - { id: 0, class: _, preferred-register: '' }
+  - { id: 1, class: _, preferred-register: '' }
+  - { id: 2, class: _, preferred-register: '' }
+  - { id: 3, class: _, preferred-register: '' }
+  - { id: 4, class: _, preferred-register: '' }
+  - { id: 5, class: _, preferred-register: '' }
+  - { id: 6, class: _, preferred-register: '' }
+  - { id: 7, class: _, preferred-register: '' }
+  - { id: 8, class: _, preferred-register: '' }
+  - { id: 9, class: _, preferred-register: '' }
+  - { id: 10, class: _, preferred-register: '' }
+  - { id: 11, class: _, preferred-register: '' }
+  - { id: 12, class: _, preferred-register: '' }
+  - { id: 13, class: _, preferred-register: '' }
+  - { id: 14, class: _, preferred-register: '' }
+  - { id: 15, class: _, preferred-register: '' }
+  - { id: 16, class: _, preferred-register: '' }
+  - { id: 17, class: _, preferred-register: '' }
+  - { id: 18, class: _, preferred-register: '' }
+legalized: false
+body:             |
+  bb.0.entry:
+    liveins: $wl0
+    ; CHECK-LABEL: name: test_unmerge_v16s8
+    ; CHECK: liveins: $wl0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<32 x s8>) = COPY $wl0
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<16 x s8>) = G_AIE_UNPAD_VECTOR [[COPY]](<32 x s8>)
+    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<32 x s8>) = G_AIE_PAD_VECTOR_UNDEF [[AIE_UNPAD_VECTOR]](<16 x s8>)
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
+    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[AIE_PAD_VECTOR_UNDEF]](<32 x s8>), [[C]](s32)
+    ; CHECK-NEXT: [[ASSERT_SEXT:%[0-9]+]]:_(s32) = G_ASSERT_SEXT [[AIE_SEXT_EXTRACT_VECTOR_ELT]], 8
+    ; CHECK-NEXT: [[SEXT_INREG:%[0-9]+]]:_(s32) = G_SEXT_INREG [[ASSERT_SEXT]], 8
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[SEXT_INREG]](s32)
+    %0:_(<32 x s8>) = COPY $wl0
+    %18:_(<16 x s8>) = G_AIE_UNPAD_VECTOR %0:_(<32 x s8>)
+    %1(s8), %2(s8), %3(s8), %4(s8), %5(s8), %6(s8), %7(s8), %8(s8), %9(s8), %10(s8), %11(s8), %12(s8), %13(s8), %14(s8), %15(s8), %16(s8) = G_UNMERGE_VALUES %18(<16 x s8>)
+    %17(s32) = G_SEXT %4(s8)
+    PseudoRET implicit $lr, implicit %17
+...
+---
+name:           test_unmerge_128bit_order
+registers:
+  - { id: 0, class: _, preferred-register: '' }
+  - { id: 1, class: _, preferred-register: '' }
+  - { id: 2, class: _, preferred-register: '' }
+  - { id: 3, class: _, preferred-register: '' }
+  - { id: 4, class: _, preferred-register: '' }
+  - { id: 5, class: _, preferred-register: '' }
+legalized: false
+body:             |
+  bb.0.entry:
+    liveins: $wl0
+    ; CHECK-LABEL: name: test_unmerge_128bit_order
+    ; CHECK: liveins: $wl0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<8 x s32>) = COPY $wl0
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<4 x s32>) = G_AIE_UNPAD_VECTOR [[COPY]](<8 x s32>)
+    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<8 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[AIE_UNPAD_VECTOR]](<4 x s32>)
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[AIE_PAD_VECTOR_UNDEF]](<8 x s32>), [[C]](s32)
+    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT1:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[AIE_PAD_VECTOR_UNDEF]](<8 x s32>), [[C1]](s32)
+    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
+    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT2:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[AIE_PAD_VECTOR_UNDEF]](<8 x s32>), [[C2]](s32)
+    ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
+    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT3:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[AIE_PAD_VECTOR_UNDEF]](<8 x s32>), [[C3]](s32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s32), implicit [[AIE_SEXT_EXTRACT_VECTOR_ELT1]](s32), implicit [[AIE_SEXT_EXTRACT_VECTOR_ELT2]](s32), implicit [[AIE_SEXT_EXTRACT_VECTOR_ELT3]](s32)
+    %0:_(<8 x s32>) = COPY $wl0
+    %5:_(<4 x s32>) = G_AIE_UNPAD_VECTOR %0:_(<8 x s32>)
+    %1(s32), %2(s32), %3(s32), %4(s32) = G_UNMERGE_VALUES %5(<4 x s32>)
+    PseudoRET implicit $lr, implicit %1, implicit %2, implicit %3, implicit %4
+...

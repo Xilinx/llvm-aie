@@ -53,8 +53,10 @@ namespace {
 const constexpr unsigned NumDelaySlots = 5;
 } // namespace
 
-unsigned AIEBaseInstrInfo::getNumDelaySlots(const MachineInstr &MI) const {
-  return MI.hasDelaySlot() ? NumDelaySlots : 0;
+unsigned
+AIEBaseInstrInfo::getNumDelaySlots(const MachineInstr &MI,
+                                   MachineInstr::QueryType Query) const {
+  return MI.hasDelaySlot(Query) ? NumDelaySlots : 0;
 }
 
 unsigned

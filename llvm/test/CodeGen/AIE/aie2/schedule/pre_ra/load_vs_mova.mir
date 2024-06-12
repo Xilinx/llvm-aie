@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -march=aie2 -enable-misched -run-pass=machine-scheduler --aie-prera-func-unit-depth=20 %s -o - | FileCheck %s
+# RUN: llc -march=aie2 -enable-misched -run-pass=machine-scheduler --aie-premisched-fu-depth=20 %s -o - | FileCheck %s
 
 # An example that shows the limitation of botom-up pre-RA scheduling.
 # LDA is moved all the way to the top because it can never reserve R_WA_PORT,

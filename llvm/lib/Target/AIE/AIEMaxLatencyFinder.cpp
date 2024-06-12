@@ -136,12 +136,18 @@ MaxLatencyFinder::MaxLatencyFinder(
     : Scheduler(Scheduler), TII(TII), Itineraries(Itineraries), TRI(TRI),
       CurBB(CurBB), InterBlock(true) {}
 
-MaxLatencyFinder::MaxLatencyFinder(AIEScheduleDAGMI *DAG)
-    : Scheduler(DAG->getSchedImpl()),
+// This is called from different contexts, so we need some case analysis
+// If we have a basic block, we are in a regular MachineScheduler invocation,
+// and we will be able to retrieve its strategy,
+// Otherwise we are an abstract region; Scheduler will be nullptr, which
+// will not be derefenced.
+MaxLatencyFinder::MaxLatencyFinder(ScheduleDAGInstrs *DAG)
+    : Scheduler(DAG->getBB()
+                    ? static_cast<AIEScheduleDAGMI *>(DAG)->getSchedImpl()
+                    : nullptr),
       TII(static_cast<const AIEBaseInstrInfo *>(DAG->TII)),
       Itineraries(DAG->getSchedModel()->getInstrItineraries()),
-      TRI(DAG->MF.getSubtarget().getRegisterInfo()),
-      CurBB(Scheduler->getCurMBB()),
+      TRI(DAG->MF.getSubtarget().getRegisterInfo()), CurBB(DAG->getBB()),
       InterBlock(InterBlockLatency && CurBB &&
                  isBottomRegion(DAG->ExitSU.getInstr()) &&
                  Scheduler->successorsAreScheduled(CurBB)) {}
@@ -153,6 +159,11 @@ unsigned MaxLatencyFinder::operator()(MachineInstr &MI) {
   // scheduler to prefer deep-pipeline instructions over shorter ones.
   int Latency = maxLatency(&MI, *TII, *Itineraries, !InterBlock);
   LLVM_DEBUG(dbgs() << "MaxLatency=" << Latency << "\n");
+  if (!CurBB) {
+    // This indicates we are called from an abstract block, e.g.
+    // InterBlockEdges. We don't know successors here.
+    return Latency;
+  }
 
   // We have two distinct modes here. For interblock, we have perfect
   // information, and we try to reduce the latency by detailed analysis of

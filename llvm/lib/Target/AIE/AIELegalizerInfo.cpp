@@ -63,6 +63,16 @@ static LegalizeMutation bitcastAccToVectorType(unsigned TypeIdx) {
   };
 }
 
+static LegalizeMutation bitcastToVectorElement32(const unsigned TypeIdx) {
+  return [=](const LegalityQuery &Query) {
+    const LLT Ty = Query.Types[TypeIdx];
+    unsigned Size = Ty.getSizeInBits();
+    assert(Size % 32 == 0);
+    return std::pair(
+        TypeIdx, LLT::scalarOrVector(ElementCount::getFixed(Size / 32), 32));
+  };
+}
+
 static LegalityPredicate
 isValidVectorMergeUnmergeOp(const unsigned BigVectorId,
                             const unsigned SmallVectorId) {
@@ -75,6 +85,19 @@ isValidVectorMergeUnmergeOp(const unsigned BigVectorId,
   };
 }
 
+static LegalityPredicate isValidVectorAIE2(const unsigned TypeIdx) {
+  return [=](const LegalityQuery &Query) {
+    const LLT DstTy = Query.Types[TypeIdx];
+    const unsigned DstSize = DstTy.getSizeInBits();
+    return DstTy.isVector() && (DstSize == 32 || DstSize > 64);
+  };
+}
+
+LegalityPredicate
+negatePredicate(const std::function<bool(const LegalityQuery &)> &Func) {
+  return [=](const LegalityQuery &Query) { return !Func(Query); };
+}
+
 AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
   using namespace TargetOpcode;
   const LLT S8 = LLT::scalar(8);
@@ -83,6 +106,10 @@ AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
   const LLT S32 = LLT::scalar(32);
   const LLT S64 = LLT::scalar(64);
   const LLT P0 = LLT::pointer(0, 20);
+
+  // 32-bit vectors
+  const LLT V4S8 = LLT::fixed_vector(4, 8);
+  const LLT V2S16 = LLT::fixed_vector(2, 16);
 
   // 64-bit vectors
   const LLT V2S32 = LLT::fixed_vector(2, 32);
@@ -119,6 +146,8 @@ AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
   const LLT S128 = LLT::scalar(128);
 
   static const std::initializer_list<LLT> AIE2VectorTypes = {
+      /* Begin 32-bit types*/
+      V4S8, V2S16,
       /* Begin 256-bit types */
       V8S32, V16S16, V32S8,
       /* Begin 512-bit types */
@@ -126,6 +155,8 @@ AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
       /* Begin 1024-bit types */
       V32S32, V64S16, V128S8};
 
+  // Accumulator types are 32-bit vectors that pretend to 64-bit vectors of
+  // half the size.
   static const std::initializer_list<LLT> AIE2AccumulatorTypes = {
       /* Begin 256-bit types */
       ACC256,
@@ -373,8 +404,34 @@ AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
           const LLT &EltTy = Query.Types[1].getElementType();
           return Query.Types[0] != EltTy;
         })
-        .customIf(typeInSet(1, {V2S32, V8S32, V16S32, V32S32, V16S16, V32S8,
-                                V32S16, V64S8, V64S16, V128S8}));
+        // If it is 32-bit, the LLVM can perform some bitshifts to legalize it
+        .bitcastIf(
+            [=](const LegalityQuery &Query) {
+              const LLT &VecTy = Query.Types[1];
+              return VecTy.getSizeInBits() == 32;
+            },
+            bitcastToVectorElement32(1))
+        // Extraction is supported for the native types of 32-, 256-, 512- and
+        // 1024-bit
+        .customIf(typeInSet(1, {V4S8, V2S16, V2S32, V8S32, V16S32, V32S32,
+                                V16S16, V32S8, V32S16, V64S8, V64S16, V128S8}))
+        // For 16-bits, we want to increase the number of elements to 4. Since
+        // our architecture doesn't always support all intermediate sizes, we do
+        // it as a special case so that we can use them minimum clamp for the
+        // smallest vector register.
+        .moreElementsIf(
+            [=](const LegalityQuery &Query) {
+              return Query.Types[1].getScalarSizeInBits() == 8 &&
+                     Query.Types[1].getNumElements() == 2;
+            },
+            [=](const LegalityQuery &Query) {
+              return std::make_pair(1, LLT::fixed_vector(4, S8));
+            })
+        // Increase the input vectors if they don't fit in the smallest vector
+        // register
+        .clampMinNumElements(1, S8, 32)
+        .clampMinNumElements(1, S16, 16)
+        .clampMinNumElements(1, S32, 8);
 
     getActionDefinitionsBuilder(G_INSERT_VECTOR_ELT)
         .clampScalar(2, S32, S32) // Clamp the idx to 32 bit since VINSERT
@@ -398,34 +455,37 @@ AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
 
   // Bitcast - vector source and vector destination - For AIEV2
   if (ST.isAIE2()) {
+    const LegalityPredicate IsNotValidDestinationVector =
+        negatePredicate(isValidVectorAIE2(0));
+
     getActionDefinitionsBuilder(G_BITCAST).legalIf(
         LegalityPredicates::all(isLegalBitCastType(0), isLegalBitCastType(1)));
 
     getActionDefinitionsBuilder(G_MERGE_VALUES).legalFor({{S64, S32}});
     getActionDefinitionsBuilder(G_UNMERGE_VALUES)
         .legalFor({{S32, S64}, {S32, V2S32}})
-        // TODO: can be implemented by unpadding the source vector into Src1,
-        // shifting and unpadding into Src2
-        .unsupportedIf(sizeIs(0, 128))
-        .legalIf(isValidVectorMergeUnmergeOp(1, 0))
         .customIf([=](const LegalityQuery &Query) {
           const LLT &DstTy = Query.Types[0];
           const LLT &SrcTy = Query.Types[1];
 
           return SrcTy.isVector() && DstTy.isScalar() &&
                  DstTy == SrcTy.getElementType();
-        });
+        })
+        .unsupportedIf(IsNotValidDestinationVector)
+        .legalIf(isValidVectorMergeUnmergeOp(1, 0));
 
     getActionDefinitionsBuilder(G_CONCAT_VECTORS)
+        .unsupportedIf(IsNotValidDestinationVector)
         .legalIf(isValidVectorMergeUnmergeOp(0, 1));
 
     getActionDefinitionsBuilder(G_BUILD_VECTOR)
         // Legacy legalization for bitcasts
         .legalFor({{V2S32, S32}})
-        // We clamp the high values and not the low ones, since the former
-        // splits the values but the latter keeps the same G_BUILD_VECTOR in the
-        // output instructions which causes an infinite loop since it can't
-        // reach our custom legalization code.
+        .unsupportedIf(IsNotValidDestinationVector)
+        // We clamp the high values and not the low ones, sice the former
+        // splits the values but the latter keeps the same G_BUILD_VECTOR in
+        // the output instructions which causes an infinite loop since it
+        // can't reach our custom legalization code.
         .clampMaxNumElements(0, S8, 64)
         .clampMaxNumElements(0, S16, 32)
         .clampMaxNumElements(0, S32, 16)
@@ -491,6 +551,100 @@ bool AIELegalizerInfo::legalizeCustom(LegalizerHelper &Helper,
   llvm_unreachable("Un-expected custom legalization");
 }
 
+bool AIELegalizerInfo::pack32BitVector(LegalizerHelper &Helper,
+                                       MachineInstr &MI,
+                                       Register SourceReg) const {
+  MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
+  MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
+
+  const LLT SourceRegTy = MRI.getType(SourceReg);
+  const Register DstReg = MI.getOperand(0).getReg();
+  assert(SourceRegTy.getSizeInBits() == 32 &&
+         "cannot pack vectors larger or smaller than 32-bit");
+
+  const LLT S32 = LLT::scalar(32);
+  unsigned Offset = 0;
+  Register DstCastReg = MRI.createGenericVirtualRegister(S32);
+
+  // Skip the destination operand since that is where we are writing to.
+  MachineOperand *Operand = MI.operands_begin() + 1,
+                 *OperandEnd = MI.operands_end();
+  MIRBuilder.buildConstant(DstCastReg, 0);
+
+  const LLT RegTy = MRI.getType(DstReg);
+  while (Operand != OperandEnd) {
+    Register DestinationOperand = Operand->getReg();
+
+    if (RegTy.getScalarSizeInBits() != 32) {
+      const Register TmpReg32 = MRI.createGenericVirtualRegister(S32);
+      MIRBuilder.buildInstr(AIE2::G_ZEXT, {TmpReg32}, {DestinationOperand});
+      DestinationOperand = TmpReg32;
+    }
+
+    // Avoid a useless shift for the first element, since it doesn't get
+    // optimized out in O0.
+    const Register AccumulatorReg = MRI.createGenericVirtualRegister(S32);
+    if (Offset != 0) {
+      const MachineInstrBuilder ShiftConstant =
+          MIRBuilder.buildConstant(S32, Offset);
+      const MachineInstrBuilder Masked =
+          MIRBuilder.buildShl(S32, DestinationOperand, ShiftConstant);
+      MIRBuilder.buildOr(AccumulatorReg, DstCastReg, Masked);
+    } else {
+      MIRBuilder.buildOr(AccumulatorReg, DstCastReg, DestinationOperand);
+    }
+
+    DstCastReg = AccumulatorReg;
+    Offset += RegTy.getScalarSizeInBits();
+    ++Operand;
+  }
+
+  MIRBuilder.buildBitcast(DstReg, DstCastReg);
+  MI.eraseFromParent();
+  return true;
+}
+
+bool AIELegalizerInfo::unpack32BitVector(LegalizerHelper &Helper,
+                                         MachineInstr &MI,
+                                         Register SourceReg) const {
+  MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
+  MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
+
+  const LLT SourceRegTy = MRI.getType(SourceReg);
+  assert(SourceRegTy.getSizeInBits() == 32 &&
+         "cannot unpack vectors larger or smaller than 32-bit");
+
+  const LLT S32 = LLT::scalar(32);
+  unsigned Offset = 0;
+  Register DstCastReg = MRI.createGenericVirtualRegister(S32);
+
+  MachineOperand *Operand = MI.operands_begin(),
+                 *OperandEnd = MI.operands_end() - 1;
+  const LLT RegTy = MRI.getType(Operand->getReg());
+  MIRBuilder.buildBitcast(DstCastReg, SourceReg);
+  while (Operand != OperandEnd) {
+    Register DestinationOperand = Operand->getReg();
+    // Avoid a useless shift for the first element, since it doesn't get
+    // optimized out in O0.
+    if (Offset != 0) {
+      const MachineInstrBuilder ShiftConstant =
+          MIRBuilder.buildConstant(S32, Offset);
+      const MachineInstrBuilder Masked =
+          MIRBuilder.buildLShr(S32, DstCastReg, ShiftConstant);
+      MIRBuilder.buildTrunc(DestinationOperand, Masked);
+
+    } else {
+      MIRBuilder.buildTrunc(DestinationOperand, DstCastReg);
+    }
+
+    Offset += RegTy.getScalarSizeInBits();
+    ++Operand;
+  }
+
+  MI.eraseFromParent();
+  return true;
+}
+
 bool AIELegalizerInfo::legalizeG_BUILD_VECTOR(LegalizerHelper &Helper,
                                               MachineInstr &MI) const {
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
@@ -504,9 +658,14 @@ bool AIELegalizerInfo::legalizeG_BUILD_VECTOR(LegalizerHelper &Helper,
   const unsigned EltSize = DstVecEltTy.getScalarSizeInBits();
   assert((EltSize == 8 || EltSize == 16 || EltSize == 32) &&
          "non-existent integer size");
-  assert(DstVecSize > 64 && DstVecSize <= 1024 &&
-         "non-native vectors are not supported");
+  assert(DstVecSize == 32 || (DstVecSize > 64 && DstVecSize <= 1024 &&
+                              "non-native vectors are not supported"));
   assert(DstVecSize < 1024 && "vadd takes a 512-bit argument");
+
+  // If our vector is 32-bit we can store it as packed integer vector
+  if (DstVecSize == 32)
+    return pack32BitVector(Helper, MI, DstReg);
+
   // We are using an undef since we are building over multiple instructions
   const TypeSize VecEltTySize = DstVecEltTy.getSizeInBits();
   const LLT VecTy = LLT::fixed_vector(512 / VecEltTySize, DstVecEltTy);
@@ -554,7 +713,7 @@ bool AIELegalizerInfo::legalizeG_BUILD_VECTOR(LegalizerHelper &Helper,
 bool AIELegalizerInfo::legalizeG_UNMERGE_VALUES(LegalizerHelper &Helper,
                                                 MachineInstr &MI) const {
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
-  const MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
+  MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
 
   const Register FirstReg = MI.getOperand(0).getReg();
   const Register LastReg = MI.getOperand(MI.getNumOperands() - 1).getReg();
@@ -564,6 +723,19 @@ bool AIELegalizerInfo::legalizeG_UNMERGE_VALUES(LegalizerHelper &Helper,
          (FirstTy.getScalarSizeInBits() * (MI.getNumOperands() - 1)) ==
              LastTy.getSizeInBits() &&
          "This operation is only supported for vectors");
+
+  if (LastTy.getSizeInBits() == 32)
+    return unpack32BitVector(Helper, MI, LastReg);
+
+  // Pad vectors of 128-bit vectors to 256-bit
+  Register TargetReg = LastReg;
+  if (LastTy.getSizeInBits() == 128) {
+    const LLT NewRegTy =
+        LLT::fixed_vector(LastTy.getNumElements() * 2, LastTy.getScalarType());
+    const Register NewReg = MRI.createGenericVirtualRegister(NewRegTy);
+    MIRBuilder.buildInstr(AIE2::G_AIE_PAD_VECTOR_UNDEF, {NewReg}, {LastReg});
+    TargetReg = NewReg;
+  }
 
   const unsigned NumOperands = MI.getNumOperands() - 1;
   for (unsigned Index = 0; Index < NumOperands; ++Index) {
@@ -576,7 +748,7 @@ bool AIELegalizerInfo::legalizeG_UNMERGE_VALUES(LegalizerHelper &Helper,
     // of the builtin is to create 64-bit constants.
     const MachineInstrBuilder CurrentIndex =
         MIRBuilder.buildConstant(LLT::scalar(32), Index);
-    MIRBuilder.buildExtractVectorElement(Current, LastReg, CurrentIndex);
+    MIRBuilder.buildExtractVectorElement(Current, TargetReg, CurrentIndex);
   }
 
   MI.eraseFromParent();
