@@ -9,9 +9,8 @@
 .global _sp_start_value_DM_stack
 .global _main_init
 __start:
-        MOVXM sp, #_sp_start_value_DM_stack
         JL  #_main_init
-        NOP
+        MOVXM sp, #_sp_start_value_DM_stack
         NOP
         NOP
         NOP
