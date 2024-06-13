@@ -25,6 +25,13 @@ foreach(target ${LLVM_BUILTIN_TARGETS})
   set(BUILTINS_${target}_CMAKE_C_FLAGS "--target=${target}" CACHE STRING "")
   set(BUILTINS_${target}_CMAKE_CXX_FLAGS "--target=${target}" CACHE STRING "")
   set(BUILTINS_${target}_CMAKE_ASM_FLAGS "--target=${target}" CACHE STRING "")
+  # The runtimes CMake system passes the LLVM_USE_LINKER option set for the host
+  # compilation down to the runtimes build. That triggers a compile & link check
+  # for the cross compiler, which does not have a complete sysroot yet.
+  # As a workaround, pass -nostdlib to the cross compiler. The runtimes build
+  # shouldn't expect the stdlibs to be available anyway
+  set(BUILTINS_${target}_CMAKE_EXE_LINKER_FLAGS "-nostdlib" CACHE STRING "")
+  set(RUNTIMES_${target}_CMAKE_EXE_LINKER_FLAGS "-nostdlib" CACHE STRING "")
 endforeach()
 
 set(LIBCXX_ENABLE_SHARED OFF CACHE BOOL "")
