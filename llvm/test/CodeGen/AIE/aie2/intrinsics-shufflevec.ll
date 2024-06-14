@@ -49,95 +49,26 @@ define <16 x i32> @test_insert_vector(<16 x i32> noundef %a, i32 noundef %idx, <
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; jz r0, #.LBB1_2; nopv
-; CHECK-NEXT:    nopx // Delay Slot 5
+; CHECK-NEXT:    nopa ; nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov r24, r16 // Delay Slot 2
-; CHECK-NEXT:    mova r16, #0 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    vmov wl0, wl4 // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %if.end
-; CHECK-NEXT:    vextract.s32 r0, x2, r16
-; CHECK-NEXT:    vextract.s32 r1, x4, r16
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova r16, #1
-; CHECK-NEXT:    vextract.s32 r2, x2, r16
-; CHECK-NEXT:    vextract.s32 r3, x4, r16
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova r16, #2
-; CHECK-NEXT:    vextract.s32 r4, x2, r16
-; CHECK-NEXT:    vextract.s32 r5, x4, r16
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova r16, #3
-; CHECK-NEXT:    vextract.s32 r6, x2, r16
-; CHECK-NEXT:    vextract.s32 r7, x4, r16
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova r16, #4
-; CHECK-NEXT:    vextract.s32 r8, x2, r16
-; CHECK-NEXT:    vextract.s32 r9, x4, r16
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova r16, #5
-; CHECK-NEXT:    vextract.s32 r10, x2, r16
-; CHECK-NEXT:    vextract.s32 r11, x4, r16
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova r16, #7
-; CHECK-NEXT:    vextract.s32 r12, x2, r16
-; CHECK-NEXT:    j #.LBB1_3
-; CHECK-NEXT:    vextract.s32 r13, x4, r16 // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    mova r16, #6 // Delay Slot 3
-; CHECK-NEXT:    vextract.s32 r14, x2, r16 // Delay Slot 2
-; CHECK-NEXT:    vextract.s32 r15, x4, r16 // Delay Slot 1
+; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
+; CHECK-NEXT:    nopx // Delay Slot 5
+; CHECK-NEXT:    vmov wh2, wl0 // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    vmov x0, x2 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB1_2: // %if.then
-; CHECK-NEXT:    nopa ; nopx ; vextract.s32 r0, x4, r16
-; CHECK-NEXT:    vextract.s32 r1, x2, r16
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova r16, #1
-; CHECK-NEXT:    vextract.s32 r2, x4, r16
-; CHECK-NEXT:    vextract.s32 r3, x2, r16
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova r16, #2
-; CHECK-NEXT:    vextract.s32 r4, x4, r16
-; CHECK-NEXT:    vextract.s32 r5, x2, r16
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova r16, #3
-; CHECK-NEXT:    vextract.s32 r6, x4, r16
-; CHECK-NEXT:    vextract.s32 r7, x2, r16
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova r16, #4
-; CHECK-NEXT:    vextract.s32 r8, x4, r16
-; CHECK-NEXT:    vextract.s32 r9, x2, r16
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova r16, #5
-; CHECK-NEXT:    vextract.s32 r10, x4, r16
-; CHECK-NEXT:    vextract.s32 r11, x2, r16
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova r16, #7
-; CHECK-NEXT:    vextract.s32 r12, x4, r16
-; CHECK-NEXT:    vextract.s32 r13, x2, r16
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova r16, #6
-; CHECK-NEXT:    vextract.s32 r14, x4, r16
-; CHECK-NEXT:    vextract.s32 r15, x2, r16
-; CHECK-NEXT:    .p2align 4
-; CHECK-NEXT:  .LBB1_3: // %cleanup
-; CHECK-NEXT:    nopa ; nopb ; nopx ; vpush.lo.32 x0, r13, x0
-; CHECK-NEXT:    vpush.lo.32 x0, r15, x0
-; CHECK-NEXT:    vpush.lo.32 x0, r11, x0
-; CHECK-NEXT:    vpush.lo.32 x0, r9, x0
-; CHECK-NEXT:    vpush.lo.32 x0, r7, x0
-; CHECK-NEXT:    vpush.lo.32 x0, r5, x0
-; CHECK-NEXT:    vpush.lo.32 x0, r3, x0
-; CHECK-NEXT:    vpush.lo.32 x0, r1, x0
-; CHECK-NEXT:    vpush.lo.32 x0, r12, x0
-; CHECK-NEXT:    vpush.lo.32 x0, r14, x0
-; CHECK-NEXT:    vpush.lo.32 x0, r10, x0
-; CHECK-NEXT:    vpush.lo.32 x0, r8, x0
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vpush.lo.32 x0, r6, x0 // Delay Slot 5
-; CHECK-NEXT:    vpush.lo.32 x0, r4, x0 // Delay Slot 4
-; CHECK-NEXT:    vpush.lo.32 x0, r2, x0 // Delay Slot 3
-; CHECK-NEXT:    vpush.lo.32 x0, r0, x0 // Delay Slot 2
-; CHECK-NEXT:    mov r16, r24 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    vmov wh0, wl2 // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %shuffle = shufflevector <8 x i32> %b, <8 x i32> undef, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
   %cmp = icmp eq i32 %idx, 0
