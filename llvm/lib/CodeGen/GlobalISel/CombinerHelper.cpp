@@ -494,6 +494,50 @@ bool CombinerHelper::tryCombineShuffleVector(MachineInstr &MI) {
     return true;
   }
 
+  // {n/2, n/2+1, ..., n, 0, 1, ..., n/2-1}
+  GeneratorType FirstHalf = adderGenerator(0, SrcNumElts / 2, 1);
+  GeneratorType SecondHalf = adderGenerator(SrcNumElts / 2, SrcNumElts, 1);
+  GeneratorType Reverse =
+      concatGenerators(SmallVector<GeneratorType>{FirstHalf, SecondHalf});
+
+  if (matchCombineShuffleVector(MI, Reverse, SrcNumElts)) {
+    // The shuffle is concatenating multiple vectors together.
+    // Collect the different operands for that.
+    Register UndefReg;
+    const Register Src1 = MI.getOperand(1).getReg();
+    const Register Src2 = MI.getOperand(2).getReg();
+    const ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
+
+    // The destination can be longer than the source, so we separate them into
+    // equal blocks and check them separately to see if one of the blocks can be
+    // copied whole.
+    unsigned NumConcat = DstNumElts / SrcNumElts;
+    unsigned Index = 0;
+    for (unsigned Concat = 0; Concat < NumConcat; Concat++) {
+      unsigned Target = (Concat + 1) * SrcNumElts;
+      while (Index < Target) {
+        int MaskElt = Mask[Index];
+        if (MaskElt >= 0) {
+          Ops.push_back((MaskElt < (int)SrcNumElts) ? Src1 : Src2);
+          break;
+        }
+        Index++;
+      }
+
+      if (Index == Target) {
+        if (!UndefReg) {
+          Builder.setInsertPt(*MI.getParent(), MI);
+          UndefReg = Builder.buildUndef(SrcTy).getReg(0);
+        }
+        Ops.push_back(UndefReg);
+      }
+
+      Index = Target;
+    }
+    applyCombineShuffleVector(MI, {Ops[1], Ops[0]});
+    return true;
+  }
+
   return false;
 }
 
