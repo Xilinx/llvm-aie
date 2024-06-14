@@ -1776,19 +1776,10 @@ entry:
 }
 
 define <16 x i8> @test_concat_v16i8_v16i8_v16i8(<16 x i8> %x, <16 x i8> %y) #0 {
-; CHECK-SD-LABEL: test_concat_v16i8_v16i8_v16i8:
-; CHECK-SD:       // %bb.0: // %entry
-; CHECK-SD-NEXT:    mov v0.d[1], v1.d[0]
-; CHECK-SD-NEXT:    ret
-;
-; CHECK-GI-LABEL: test_concat_v16i8_v16i8_v16i8:
-; CHECK-GI:       // %bb.0: // %entry
-; CHECK-GI-NEXT:    adrp x8, .LCPI126_0
-; CHECK-GI-NEXT:    // kill: def $q0 killed $q0 killed $q0_q1 def $q0_q1
-; CHECK-GI-NEXT:    ldr q2, [x8, :lo12:.LCPI126_0]
-; CHECK-GI-NEXT:    // kill: def $q1 killed $q1 killed $q0_q1 def $q0_q1
-; CHECK-GI-NEXT:    tbl v0.16b, { v0.16b, v1.16b }, v2.16b
-; CHECK-GI-NEXT:    ret
+; CHECK-LABEL: test_concat_v16i8_v16i8_v16i8:
+; CHECK:       // %bb.0: // %entry
+; CHECK-NEXT:    mov v0.d[1], v1.d[0]
+; CHECK-NEXT:    ret
 entry:
   %vecinit30 = shufflevector <16 x i8> %x, <16 x i8> %y, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23>
   ret <16 x i8> %vecinit30
@@ -1803,9 +1794,7 @@ define <16 x i8> @test_concat_v16i8_v8i8_v16i8(<8 x i8> %x, <16 x i8> %y) #0 {
 ;
 ; CHECK-GI-LABEL: test_concat_v16i8_v8i8_v16i8:
 ; CHECK-GI:       // %bb.0: // %entry
-; CHECK-GI-NEXT:    // kill: def $d0 killed $d0 killed $q0_q1 def $q0_q1
-; CHECK-GI-NEXT:    adrp x8, .LCPI127_0
-; CHECK-GI-NEXT:    // kill: def $q1 killed $q1 killed $q0_q1 def $q0_q1
+; CHECK-GI-NEXT:    // kill: def $d0 killed $d0 def $q0
 ; CHECK-GI-NEXT:    mov b2, v0.b[1]
 ; CHECK-GI-NEXT:    mov b3, v0.b[2]
 ; CHECK-GI-NEXT:    mov b4, v0.b[3]
@@ -1814,14 +1803,13 @@ define <16 x i8> @test_concat_v16i8_v8i8_v16i8(<8 x i8> %x, <16 x i8> %y) #0 {
 ; CHECK-GI-NEXT:    mov b7, v0.b[6]
 ; CHECK-GI-NEXT:    mov b16, v0.b[7]
 ; CHECK-GI-NEXT:    mov v0.b[1], v2.b[0]
-; CHECK-GI-NEXT:    ldr q2, [x8, :lo12:.LCPI127_0]
 ; CHECK-GI-NEXT:    mov v0.b[2], v3.b[0]
 ; CHECK-GI-NEXT:    mov v0.b[3], v4.b[0]
 ; CHECK-GI-NEXT:    mov v0.b[4], v5.b[0]
 ; CHECK-GI-NEXT:    mov v0.b[5], v6.b[0]
 ; CHECK-GI-NEXT:    mov v0.b[6], v7.b[0]
 ; CHECK-GI-NEXT:    mov v0.b[7], v16.b[0]
-; CHECK-GI-NEXT:    tbl v0.16b, { v0.16b, v1.16b }, v2.16b
+; CHECK-GI-NEXT:    mov v0.d[1], v1.d[0]
 ; CHECK-GI-NEXT:    ret
 entry:
   %vecext = extractelement <8 x i8> %x, i32 0
@@ -1999,19 +1987,10 @@ entry:
 }
 
 define <8 x i16> @test_concat_v8i16_v8i16_v8i16(<8 x i16> %x, <8 x i16> %y) #0 {
-; CHECK-SD-LABEL: test_concat_v8i16_v8i16_v8i16:
-; CHECK-SD:       // %bb.0: // %entry
-; CHECK-SD-NEXT:    mov v0.d[1], v1.d[0]
-; CHECK-SD-NEXT:    ret
-;
-; CHECK-GI-LABEL: test_concat_v8i16_v8i16_v8i16:
-; CHECK-GI:       // %bb.0: // %entry
-; CHECK-GI-NEXT:    adrp x8, .LCPI130_0
-; CHECK-GI-NEXT:    // kill: def $q0 killed $q0 killed $q0_q1 def $q0_q1
-; CHECK-GI-NEXT:    ldr q2, [x8, :lo12:.LCPI130_0]
-; CHECK-GI-NEXT:    // kill: def $q1 killed $q1 killed $q0_q1 def $q0_q1
-; CHECK-GI-NEXT:    tbl v0.16b, { v0.16b, v1.16b }, v2.16b
-; CHECK-GI-NEXT:    ret
+; CHECK-LABEL: test_concat_v8i16_v8i16_v8i16:
+; CHECK:       // %bb.0: // %entry
+; CHECK-NEXT:    mov v0.d[1], v1.d[0]
+; CHECK-NEXT:    ret
 entry:
   %vecinit14 = shufflevector <8 x i16> %x, <8 x i16> %y, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 8, i32 9, i32 10, i32 11>
   ret <8 x i16> %vecinit14
@@ -2026,17 +2005,14 @@ define <8 x i16> @test_concat_v8i16_v4i16_v8i16(<4 x i16> %x, <8 x i16> %y) #0 {
 ;
 ; CHECK-GI-LABEL: test_concat_v8i16_v4i16_v8i16:
 ; CHECK-GI:       // %bb.0: // %entry
-; CHECK-GI-NEXT:    // kill: def $d0 killed $d0 killed $q0_q1 def $q0_q1
-; CHECK-GI-NEXT:    adrp x8, .LCPI131_0
-; CHECK-GI-NEXT:    // kill: def $q1 killed $q1 killed $q0_q1 def $q0_q1
+; CHECK-GI-NEXT:    // kill: def $d0 killed $d0 def $q0
 ; CHECK-GI-NEXT:    mov h2, v0.h[1]
 ; CHECK-GI-NEXT:    mov h3, v0.h[2]
 ; CHECK-GI-NEXT:    mov h4, v0.h[3]
 ; CHECK-GI-NEXT:    mov v0.h[1], v2.h[0]
-; CHECK-GI-NEXT:    ldr q2, [x8, :lo12:.LCPI131_0]
 ; CHECK-GI-NEXT:    mov v0.h[2], v3.h[0]
 ; CHECK-GI-NEXT:    mov v0.h[3], v4.h[0]
-; CHECK-GI-NEXT:    tbl v0.16b, { v0.16b, v1.16b }, v2.16b
+; CHECK-GI-NEXT:    mov v0.d[1], v1.d[0]
 ; CHECK-GI-NEXT:    ret
 entry:
   %vecext = extractelement <4 x i16> %x, i32 0
@@ -2142,19 +2118,10 @@ entry:
 }
 
 define <4 x i32> @test_concat_v4i32_v4i32_v4i32(<4 x i32> %x, <4 x i32> %y) #0 {
-; CHECK-SD-LABEL: test_concat_v4i32_v4i32_v4i32:
-; CHECK-SD:       // %bb.0: // %entry
-; CHECK-SD-NEXT:    mov v0.d[1], v1.d[0]
-; CHECK-SD-NEXT:    ret
-;
-; CHECK-GI-LABEL: test_concat_v4i32_v4i32_v4i32:
-; CHECK-GI:       // %bb.0: // %entry
-; CHECK-GI-NEXT:    adrp x8, .LCPI134_0
-; CHECK-GI-NEXT:    // kill: def $q0 killed $q0 killed $q0_q1 def $q0_q1
-; CHECK-GI-NEXT:    ldr q2, [x8, :lo12:.LCPI134_0]
-; CHECK-GI-NEXT:    // kill: def $q1 killed $q1 killed $q0_q1 def $q0_q1
-; CHECK-GI-NEXT:    tbl v0.16b, { v0.16b, v1.16b }, v2.16b
-; CHECK-GI-NEXT:    ret
+; CHECK-LABEL: test_concat_v4i32_v4i32_v4i32:
+; CHECK:       // %bb.0: // %entry
+; CHECK-NEXT:    mov v0.d[1], v1.d[0]
+; CHECK-NEXT:    ret
 entry:
   %vecinit6 = shufflevector <4 x i32> %x, <4 x i32> %y, <4 x i32> <i32 0, i32 1, i32 4, i32 5>
   ret <4 x i32> %vecinit6
@@ -2169,13 +2136,10 @@ define <4 x i32> @test_concat_v4i32_v2i32_v4i32(<2 x i32> %x, <4 x i32> %y) #0 {
 ;
 ; CHECK-GI-LABEL: test_concat_v4i32_v2i32_v4i32:
 ; CHECK-GI:       // %bb.0: // %entry
-; CHECK-GI-NEXT:    // kill: def $d0 killed $d0 killed $q0_q1 def $q0_q1
-; CHECK-GI-NEXT:    adrp x8, .LCPI135_0
-; CHECK-GI-NEXT:    // kill: def $q1 killed $q1 killed $q0_q1 def $q0_q1
+; CHECK-GI-NEXT:    // kill: def $d0 killed $d0 def $q0
 ; CHECK-GI-NEXT:    mov s2, v0.s[1]
 ; CHECK-GI-NEXT:    mov v0.s[1], v2.s[0]
-; CHECK-GI-NEXT:    ldr q2, [x8, :lo12:.LCPI135_0]
-; CHECK-GI-NEXT:    tbl v0.16b, { v0.16b, v1.16b }, v2.16b
+; CHECK-GI-NEXT:    mov v0.d[1], v1.d[0]
 ; CHECK-GI-NEXT:    ret
 entry:
   %vecext = extractelement <2 x i32> %x, i32 0

@@ -270,8 +270,10 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<4 x s32>) = COPY $q0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<4 x s32>) = COPY $q1
-    ; CHECK-NEXT: [[SHUF:%[0-9]+]]:_(<4 x s32>) = G_SHUFFLE_VECTOR [[COPY]](<4 x s32>), [[COPY1]], shufflemask(4, 5, 0, 1)
-    ; CHECK-NEXT: RET_ReallyLR implicit [[SHUF]](<4 x s32>)
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<2 x s32>), [[UV1:%[0-9]+]]:_(<2 x s32>) = G_UNMERGE_VALUES [[COPY]](<4 x s32>)
+    ; CHECK-NEXT: [[UV2:%[0-9]+]]:_(<2 x s32>), [[UV3:%[0-9]+]]:_(<2 x s32>) = G_UNMERGE_VALUES [[COPY1]](<4 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<4 x s32>) = G_CONCAT_VECTORS [[UV2]](<2 x s32>), [[UV]](<2 x s32>)
+    ; CHECK-NEXT: RET_ReallyLR implicit [[CONCAT_VECTORS]](<4 x s32>)
     %0:_(<4 x s32>) = COPY $q0
     %1:_(<4 x s32>) = COPY $q1
     %2:_(<4 x s32>) = G_SHUFFLE_VECTOR %0(<4 x s32>), %1(<4 x s32>), shufflemask(4,5,0,1)

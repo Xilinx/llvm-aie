@@ -101,7 +101,9 @@ body:             |
     ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<4 x s8>) = G_IMPLICIT_DEF
     ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s8>) = G_CONCAT_VECTORS %a(<4 x s8>), %b(<4 x s8>), [[DEF]](<4 x s8>), [[DEF]](<4 x s8>)
     ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<16 x s8>) = G_CONCAT_VECTORS %c(<4 x s8>), [[DEF]](<4 x s8>), [[DEF]](<4 x s8>), [[DEF]](<4 x s8>)
-    ; CHECK-NEXT: %z:_(<16 x s8>) = G_SHUFFLE_VECTOR [[CONCAT_VECTORS]](<16 x s8>), [[CONCAT_VECTORS1]], shufflemask(0, undef, 2, 3, 4, 5, 6, 7, 16, 17, 18, 19, undef, undef, undef, undef)
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<8 x s8>), [[UV1:%[0-9]+]]:_(<8 x s8>) = G_UNMERGE_VALUES [[CONCAT_VECTORS]](<16 x s8>)
+    ; CHECK-NEXT: [[UV2:%[0-9]+]]:_(<8 x s8>), [[UV3:%[0-9]+]]:_(<8 x s8>) = G_UNMERGE_VALUES [[CONCAT_VECTORS1]](<16 x s8>)
+    ; CHECK-NEXT: %z:_(<16 x s8>) = G_CONCAT_VECTORS [[UV]](<8 x s8>), [[UV2]](<8 x s8>)
     ; CHECK-NEXT: $q0 = COPY %z(<16 x s8>)
     ; CHECK-NEXT: RET_ReallyLR implicit $q0
     %p1:_(p0) = COPY $x0
@@ -179,7 +181,9 @@ body:             |
     ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<4 x s8>) = G_IMPLICIT_DEF
     ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s8>) = G_CONCAT_VECTORS %a(<4 x s8>), %b(<4 x s8>), [[DEF]](<4 x s8>), [[DEF]](<4 x s8>)
     ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<16 x s8>) = G_CONCAT_VECTORS %c(<4 x s8>), [[DEF]](<4 x s8>), [[DEF]](<4 x s8>), [[DEF]](<4 x s8>)
-    ; CHECK-NEXT: %z:_(<16 x s8>) = G_SHUFFLE_VECTOR [[CONCAT_VECTORS]](<16 x s8>), [[CONCAT_VECTORS1]], shufflemask(undef, 1, 2, 3, 4, 5, 6, 7, 16, 17, 18, 19, undef, undef, undef, undef)
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<8 x s8>), [[UV1:%[0-9]+]]:_(<8 x s8>) = G_UNMERGE_VALUES [[CONCAT_VECTORS]](<16 x s8>)
+    ; CHECK-NEXT: [[UV2:%[0-9]+]]:_(<8 x s8>), [[UV3:%[0-9]+]]:_(<8 x s8>) = G_UNMERGE_VALUES [[CONCAT_VECTORS1]](<16 x s8>)
+    ; CHECK-NEXT: %z:_(<16 x s8>) = G_CONCAT_VECTORS [[UV]](<8 x s8>), [[UV2]](<8 x s8>)
     ; CHECK-NEXT: $q0 = COPY %z(<16 x s8>)
     ; CHECK-NEXT: RET_ReallyLR implicit $q0
     %p1:_(p0) = COPY $x0
