@@ -51,10 +51,8 @@ private:
   bool legalizeG_FADDSUB(LegalizerHelper &Helper, MachineInstr &MI) const;
 
   // Helper functions for legalization
-  bool pack32BitVector(LegalizerHelper &Helper, MachineInstr &MI,
-                       Register SourceReg) const;
-  bool unpack32BitVector(LegalizerHelper &Helper, MachineInstr &MI,
-                         Register SourceReg) const;
+  bool packBitVector(LegalizerHelper &Helper, MachineInstr &MI) const;
+  bool unpackBitVector(LegalizerHelper &Helper, MachineInstr &MI) const;
 };
 } // end namespace llvm
 #endif
