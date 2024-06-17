@@ -176,9 +176,6 @@ let mayLoad = true, mayStore = true in {
 
   let Itinerary = II_STHB_2D, Constraints = "$ptr_out = $ptr" in {
     let DecoderMethod = "DecodeST_2D_HBInstruction" in {
-      class ST_HB_2D_split : SplitPseudo<
-        (outs eP:$ptr_out, eDC:$count_lo_out),
-        (ins eR:$mRv, eP:$ptr, eM:$mod, eDN:$dim_size, eDJ:$dim_stride, eDC:$dim_count)> {}
       def ST_2D_S8 : AIE2_dmhb_sts_inst_lda<0b0,
         (outs eP:$ptr_out, eDC:$count_out ),
         (ins eR:$mRv, eP:$ptr, eD:$mod ), "st.2d.s8", "$mRv, [$ptr], $mod">,
@@ -187,16 +184,10 @@ let mayLoad = true, mayStore = true in {
         (outs eP:$ptr_out, eDC:$count_out ),
         (ins eR:$mRv, eP:$ptr, eD:$mod ), "st.2d.s16", "$mRv, [$ptr], $mod">,
       AIE2_ag_nospill__ag_pstm_2d;
-      def ST_2D_S8_split : ST_HB_2D_split<>;
-      def ST_2D_S16_split : ST_HB_2D_split<>;
     }
   }
   let Itinerary = II_STHB_3D, Constraints = "$ptr_out = $ptr" in {
     let DecoderMethod = "DecodeST_3D_HBInstruction" in {
-      class ST_HB_3D_split : SplitPseudo<
-        (outs eP:$ptr_out, eDC:$count_lo_out, eDC:$count_hi_out),
-        (ins eR:$mRv, eP:$ptr, eM:$mod1, eDN:$dim_size1, eDJ:$dim_stride1,
-             eDC:$dim_count1, eM:$mod2, eDN:$dim_size2, eDJ:$dim_stride2, eDC:$dim_count2)> {}
       def ST_3D_S8 : AIE2_dmhb_sts_inst_lda<0b0,
         (outs eP:$ptr_out, eDC:$count_lo_out, eDC:$count_hi_out ),
         (ins eR:$mRv, eP:$ptr, eDS:$mod ), "st.3d.s8", "$mRv, [$ptr], $mod">,
@@ -205,8 +196,6 @@ let mayLoad = true, mayStore = true in {
         (outs eP:$ptr_out, eDC:$count_lo_out, eDC:$count_hi_out ),
         (ins eR:$mRv, eP:$ptr, eDS:$mod ), "st.3d.s16", "$mRv, [$ptr], $mod">,
       AIE2_ag_nospill__ag_pstm_3d;
-      def ST_3D_S8_split : ST_HB_3D_split<>;
-      def ST_3D_S16_split : ST_HB_3D_split<>;
     }
   }
 }
@@ -230,16 +219,11 @@ let mayLoad = true, mayStore = false in {
 
   let Itinerary = II_LDA_POST_2D, Constraints = "$ptr = $ptr_out" in {
     let DecoderMethod = "DecodeLDA_2D_Instruction" in {
-      class LDA_2D_split : SplitPseudo<
-        (outs OP_mLdaScl:$mLdaScl, eP:$ptr_out, eDC:$count_out),
-        (ins eP:$ptr, eM:$mod, eDN:$dim_size, eDJ:$dim_stride, eDC:$dim_count)> {}
-
       def LDA_2D_dms_lda : AIE2_dms_lda_inst_lda<
         (outs OP_mLdaScl:$mLdaScl, eP:$ptr_out, eDC:$count_out),
         (ins eP:$ptr, eD:$mod),
         "lda.2d", "$mLdaScl, [$ptr], $mod">,
       AIE2_ag_all__ag_pstm_2d;
-      def LDA_2D_dms_lda_split : LDA_2D_split<>;
     }
 
     let DecoderMethod = "DecodeLDA_2D_HBInstruction" in {
@@ -267,25 +251,16 @@ let mayLoad = true, mayStore = false in {
         (ins  eP:$ptr, eD:$mod  ),
         "lda.2d.u16", "$mRa, [$ptr], $mod">,
       AIE2_ag_nospill__ag_pstm_2d;
-      def LDA_2D_S8_dmhb_lda_split : LDA_2D_split<>;
-      def LDA_2D_U8_dmhb_lda_split : LDA_2D_split<>;
-      def LDA_2D_S16_dmhb_lda_split : LDA_2D_split<>;
-      def LDA_2D_U16_dmhb_lda_split : LDA_2D_split<>;
     }
   }
 
   let Itinerary = II_LDA_POST_3D, Constraints = "$ptr = $ptr_out" in {
     let DecoderMethod = "DecodeLDA_3D_Instruction" in {
-      class LDA_3D_split : SplitPseudo<
-              (outs OP_mLdaScl:$mLdaScl, eP:$ptr_out, eDC:$count_lo_out, eDC:$count_hi_out),
-              (ins eP:$ptr, eM:$mod1, eDN:$dim_size1, eDJ:$dim_stride1, eDC:$dim_count1,
-              eM:$mod2, eDN:$dim_size2, eDJ:$dim_stride2, eDC:$dim_count2)> {}
       def LDA_3D_dms_lda : AIE2_dms_lda_inst_lda<
         (outs OP_mLdaScl:$mLdaScl, eP:$ptr_out, eDC:$count_lo_out, eDC:$count_hi_out),
         (ins eP:$ptr, eDS:$mod),
         "lda.3d", "$mLdaScl, [$ptr], $mod">,
       AIE2_ag_all__ag_pstm_3d;
-      def LDA_3D_dms_lda_split : LDA_3D_split<>;
     }
 
     let DecoderMethod = "DecodeLDA_3D_HBInstruction" in {
@@ -313,10 +288,6 @@ let mayLoad = true, mayStore = false in {
         (ins eP:$ptr, eDS:$mod),
         "lda.3d.u16", "$mRa, [$ptr], $mod">,
       AIE2_ag_nospill__ag_pstm_3d;
-      def LDA_3D_S8_dmhb_lda_split : LDA_3D_split<>;
-      def LDA_3D_U8_dmhb_lda_split : LDA_3D_split<>;
-      def LDA_3D_S16_dmhb_lda_split : LDA_3D_split<>;
-      def LDA_3D_U16_dmhb_lda_split : LDA_3D_split<>;
     }
   }
 }
@@ -344,10 +315,6 @@ let mayLoad = false, mayStore = true in {
         (ins OP_mSclSt:$mSclSt, eP:$ptr, eD:$mod),
         "st.2d", "$mSclSt, [$ptr], $mod">,
       AIE2_ag_all__ag_pstm_2d;
-      def ST_2D_dms_sts_split : SplitPseudo<
-        (outs eP:$ptr_out, eDC:$count_lo_out),
-        (ins OP_mLdaScl:$mLdaScl, eP:$ptr, eM:$mod, eDN:$dim_size,
-        eDJ:$dim_stride, eDC:$dim_count)>;
     }
   }
     let Itinerary = II_ST_POST_3D, Constraints = "$ptr = $ptr_out" in {
@@ -357,10 +324,6 @@ let mayLoad = false, mayStore = true in {
         (ins OP_mSclSt:$mSclSt, eP:$ptr, eDS:$mod),
         "st.3d", "$mSclSt, [$ptr], $mod">,
       AIE2_ag_all__ag_pstm_3d;
-      def ST_3D_dms_sts_split : SplitPseudo<
-        (outs eP:$ptr_out, eDC:$count_lo_out, eDC:$count_hi_out),
-        (ins OP_mSclSt:$mSclSt, eP:$ptr, eM:$mod1, eDN:$dim_size1, eDJ:$dim_stride1,
-        eDC:$dim_count1, eM:$mod2, eDN:$dim_size2, eDJ:$dim_stride2, eDC:$dim_count2)>;
     }
   }
 }
@@ -544,12 +507,6 @@ let Itinerary = II_PADD_2D in {
     }
   }
 }
-let OutOperandList = (outs eP:$ptr_out, eDC:$count_out),
-    InOperandList = (ins eP:$ptr, eM:$mod, eDN:$dim_size, eDJ:$dim_stride, eDC:$dim_count) in {
-  def PADDA_2D_split : SplitPseudo<(outs), (ins)>;
-  def PADDB_2D_split : SplitPseudo<(outs), (ins)>;
-  def PADDS_2D_split : SplitPseudo<(outs), (ins)>;
-}
 
 let Itinerary = II_PADD_3D in {
   let Constraints = "$ptr_out = $ptr" in {
@@ -573,13 +530,6 @@ let Itinerary = II_PADD_3D in {
         AIE2_agb_standalone__agb_nospill__ag_pstm_3d;
     }
   }
-}
-let OutOperandList = (outs eP:$ptr_out, eDC:$count_lo_out, eDC:$count_hi_out),
-    InOperandList = (ins eP:$ptr, eM:$mod1, eDN:$dim_size1, eDJ:$dim_stride1, eDC:$dim_count1,
-                                  eM:$mod2, eDN:$dim_size2, eDJ:$dim_stride2, eDC:$dim_count2) in {
-  def PADDA_3D_split : SplitPseudo<(outs), (ins)>;
-  def PADDB_3D_split : SplitPseudo<(outs), (ins)>;
-  def PADDS_3D_split : SplitPseudo<(outs), (ins)>;
 }
 
 // MOVXM is quite expensive in code size, and will block an extra slot, so we don't

@@ -40,6 +40,7 @@ tablegen(LLVM AIE2GenInstrInfo.inc -gen-instr-info -base-instrinfo-class AIEBase
 tablegen(LLVM AIE2GenMCCodeEmitter.inc -gen-emitter)
 tablegen(LLVM AIE2GenMemoryCycles.inc -gen-aie-memory-cycles)
 tablegen(LLVM AIE2GenPreSchedLowering.inc -gen-aie-presched-lowering)
+tablegen(LLVM AIE2GenSplitInstrTables.inc -gen-aie-split-instr-tables)
 tablegen(LLVM AIE2GenMCPseudoLowering.inc -gen-pseudo-lowering)
 tablegen(LLVM AIE2GenRegisterBank.inc -gen-register-bank -base-register-bank-class AIEBaseRegisterBankInfo)
 tablegen(LLVM AIE2GenRegisterInfo.inc -gen-register-info -base-registerinfo-class AIEBaseRegisterInfo)

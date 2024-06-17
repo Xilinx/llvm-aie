@@ -1,0 +1,50 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+
+# RUN: llc -march=aie2 -run-pass=machine-scheduler %s -o -
+
+
+# This is testing a complex case where the reg pressure is critical for
+# both accumulators and vectors. In bb.1, the scheduler will try to delay
+# scheduling "%31:vec256 = VCONV_BF16_FP32 %21:acc512" because it increases the
+# pressure on accumulators and "%30:acc512 = VCONV_FP32_BF16 %20:vec256" can
+# help reducing that pressure. But the latter increases the pressure on vectors
+# so the scheduler will try to delay it because the former can help reduce that
+# pressure on vectors.
+# This can be an infinite loop if not careful.
+---
+name: tied_pressure_reducers
+tracksRegLiveness: true
+body: |
+  bb.0.entry:
+    liveins: $y2, $bml0, $wl0
+
+    %1:vec1024 = COPY $y2
+    %2:vec1024 = COPY $y2
+    %3:vec1024 = COPY $y2
+    %4:vec1024 = COPY $y2
+    %5:vec1024 = COPY $y2
+    %6:vec1024 = COPY $y2
+    %11:acc1024 = COPY $y2
+    %12:acc1024 = COPY $y2
+    %13:acc1024 = COPY $y2
+    %14:acc1024 = COPY $y2
+    %15:acc1024 = COPY $y2
+    %16:acc1024 = COPY $y2
+    %17:acc1024 = COPY $y2
+    %18:acc1024 = COPY $y2
+    %19:acc1024 = COPY $y2
+
+    %20:vec256 = COPY $wl0
+    %21:acc512 = COPY $bml0
+    PseudoJ_jump_imm %bb.1
+
+  bb.1:
+    %30:acc512 = VCONV_FP32_BF16 %20
+    %31:vec256 = VCONV_BF16_FP32 %21, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd
+
+    PseudoRET implicit $lr, implicit %30, implicit %31, implicit %1, implicit %2, implicit %3, implicit %4, implicit %5, implicit %6, implicit %11, implicit %12, implicit %13, implicit %14, implicit %15, implicit %16, implicit %17, implicit %18, implicit %19
+...

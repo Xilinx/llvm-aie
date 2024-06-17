@@ -66,11 +66,7 @@ let Namespace = "AIE2" in
 
 
 class AIE2Inst<dag outs, dag ins, string opcodestr, string argstr>
-    : AIEBaseInst <outs, ins, []> {
-  field bits<32> dontcare = 0;
-  let Namespace = "AIE2";
-  let AsmString = opcodestr # "\t" # argstr;
-}
+    : AIEBaseInst <outs, ins, [], opcodestr, argstr, "AIE2"> {}
 
 class AIE2SlotInst<InstSlot slot,
       dag outs, dag ins, string opcodestr, string argstr>
