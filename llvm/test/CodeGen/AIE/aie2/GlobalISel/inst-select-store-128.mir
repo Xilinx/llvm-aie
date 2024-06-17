@@ -259,3 +259,69 @@ body:             |
     G_AIE_OFFSET_STORE %2:vregbank(<16 x s8>), %3(p0), %10(s20) :: (store (<16 x s8>))
     G_AIE_OFFSET_STORE %2:vregbank(<16 x s8>), %3(p0), %12(s20) :: (store (<16 x s8>))
 ...
+
+---
+name: post-inc-2d-vector-st
+legalized:       true
+regBankSelected: true
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $p0, $q0
+    ; CHECK-LABEL: name: post-inc-2d-vector-st
+    ; CHECK: liveins: $p0, $q0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[MOV_PD_imm10_pseudo:%[0-9]+]]:em = MOV_PD_imm10_pseudo 1
+    ; CHECK-NEXT: [[MOV_PD_imm10_pseudo1:%[0-9]+]]:edj = MOV_PD_imm10_pseudo 2
+    ; CHECK-NEXT: [[MOV_PD_imm10_pseudo2:%[0-9]+]]:edn = MOV_PD_imm10_pseudo 3
+    ; CHECK-NEXT: [[MOV_PD_imm10_pseudo3:%[0-9]+]]:edc = MOV_PD_imm10_pseudo 4
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:mws = COPY $q0
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm10_pseudo]], %subreg.sub_mod, [[MOV_PD_imm10_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm10_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm10_pseudo3]], %subreg.sub_dim_count
+    ; CHECK-NEXT: [[VST_2D_128_:%[0-9]+]]:ep, [[VST_2D_128_1:%[0-9]+]]:edc = VST_2D_128 [[COPY1]], [[COPY]], [[REG_SEQUENCE]] :: (store (<4 x s32>))
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VST_2D_128_]]
+    %0:ptrregbank(p0) = COPY $p0
+    %1:em(s20) = G_CONSTANT i20 1
+    %2:edj(s20) = G_CONSTANT i20 2
+    %3:edn(s20) = G_CONSTANT i20 3
+    %4:edc(s20) = G_CONSTANT i20 4
+    %5:vregbank(<4 x s32>) = COPY $q0
+    %6:ptrregbank(p0), %7:modregbank(s20) = G_AIE_POSTINC_2D_STORE %5, %0, %1, %2, %3, %4 :: (store (<4 x s32>))
+    PseudoRET implicit $lr, implicit %6
+...
+
+---
+name: post-inc-3d-vector-st
+legalized:       true
+regBankSelected: true
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $p0, $q0
+    ; CHECK-LABEL: name: post-inc-3d-vector-st
+    ; CHECK: liveins: $p0, $q0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[MOV_PD_imm10_pseudo:%[0-9]+]]:em = MOV_PD_imm10_pseudo 1
+    ; CHECK-NEXT: [[MOV_PD_imm10_pseudo1:%[0-9]+]]:edj = MOV_PD_imm10_pseudo 2
+    ; CHECK-NEXT: [[MOV_PD_imm10_pseudo2:%[0-9]+]]:edj = MOV_PD_imm10_pseudo 3
+    ; CHECK-NEXT: [[MOV_PD_imm10_pseudo3:%[0-9]+]]:edn = MOV_PD_imm10_pseudo 4
+    ; CHECK-NEXT: [[MOV_PD_imm10_pseudo4:%[0-9]+]]:edn = MOV_PD_imm10_pseudo 5
+    ; CHECK-NEXT: [[MOV_PD_imm10_pseudo5:%[0-9]+]]:edc = MOV_PD_imm10_pseudo 6
+    ; CHECK-NEXT: [[MOV_PD_imm10_pseudo6:%[0-9]+]]:edc = MOV_PD_imm10_pseudo 7
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:mws = COPY $q0
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:eds = REG_SEQUENCE [[MOV_PD_imm10_pseudo]], %subreg.sub_mod, [[MOV_PD_imm10_pseudo3]], %subreg.sub_dim_size, [[MOV_PD_imm10_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm10_pseudo5]], %subreg.sub_dim_count, [[MOV_PD_imm10_pseudo4]], %subreg.sub_hi_dim_then_sub_dim_size, [[MOV_PD_imm10_pseudo2]], %subreg.sub_hi_dim_then_sub_dim_stride, [[MOV_PD_imm10_pseudo6]], %subreg.sub_hi_dim_then_sub_dim_count
+    ; CHECK-NEXT: [[VST_3D_128_:%[0-9]+]]:ep, [[VST_3D_128_1:%[0-9]+]]:edc, [[VST_3D_128_2:%[0-9]+]]:edc = VST_3D_128 [[COPY1]], [[COPY]], [[REG_SEQUENCE]] :: (store (<4 x s32>))
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VST_3D_128_]]
+    %0:ptrregbank(p0) = COPY $p0
+    %1:em(s20) = G_CONSTANT i20 1
+    %2:edj(s20) = G_CONSTANT i20 2
+    %3:edj(s20) = G_CONSTANT i20 3
+    %4:edn(s20) = G_CONSTANT i20 4
+    %5:edn(s20) = G_CONSTANT i20 5
+    %6:edc(s20) = G_CONSTANT i20 6
+    %7:edc(s20) = G_CONSTANT i20 7
+    %8:vregbank(<4 x s32>) = COPY $q0
+    %9:ptrregbank(p0), %10:modregbank(s20), %11:modregbank(s20) = G_AIE_POSTINC_3D_STORE %8, %0, %1, %2, %3, %4, %6, %5, %7 :: (store (<4 x s32>))
+    PseudoRET implicit $lr, implicit %9
+...

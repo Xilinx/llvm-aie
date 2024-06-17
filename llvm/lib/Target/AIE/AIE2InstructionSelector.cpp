@@ -3473,6 +3473,14 @@ LoadStoreOpcodes AIE2InstructionSelector::getLoadStoreOpcode(
                 /*OffsetOpcode=*/AIE2::VST_dmw_sts_w_ag_idx_imm};
       llvm_unreachable("Vector type not in AccRegBank nor VRegBank");
     }
+    if (getLoadStoreSize(I) == 128) {
+      unsigned RBID = deriveRegBankID(I.getOperand(2).getReg(), MRI, RBI);
+      if (RBID == AIE2::VRegBankID) {
+        return {/*ISelOpcode=*/AIE2::VST_2D_128, NoImmediate,
+                /*OffsetOpcode=*/{}};
+      }
+      llvm_unreachable("128-bit vectors have to be in VRegBank");
+    }
     if (getLoadStoreSize(I) == 20 || getLoadStoreSize(I) == 32) {
       return {/*ISelOpcode=*/AIE2::ST_2D_dms_sts, NoImmediate,
               /*OffsetOpcode=*/{}};
@@ -3496,6 +3504,14 @@ LoadStoreOpcodes AIE2InstructionSelector::getLoadStoreOpcode(
         return {/*ISelOpcode=*/AIE2::VST_3D_dmw_sts_w, NoImmediate,
                 /*OffsetOpcode=*/AIE2::VST_dmw_sts_w_ag_idx_imm};
       llvm_unreachable("Vector type not in AccRegBank nor VRegBank");
+    }
+    if (getLoadStoreSize(I) == 128) {
+      unsigned RBID = deriveRegBankID(I.getOperand(3).getReg(), MRI, RBI);
+      if (RBID == AIE2::VRegBankID) {
+        return {/*ISelOpcode=*/AIE2::VST_3D_128, NoImmediate,
+                /*OffsetOpcode=*/{}};
+      }
+      llvm_unreachable("128-bit vectors have to be in VRegBank");
     }
     if (getLoadStoreSize(I) == 20 || getLoadStoreSize(I) == 32) {
       return {/*ISelOpcode=*/AIE2::ST_3D_dms_sts, NoImmediate,
