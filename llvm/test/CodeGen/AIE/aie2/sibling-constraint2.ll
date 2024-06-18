@@ -17,13 +17,13 @@
 define void @test(i8 %a, i32 %b) {
 entry:
   %cmp0 = icmp eq i32 %b, 0
-  %sel0 = select i1 %cmp0, i8 1, i8 0
+  %sel0 = select i1 %cmp0, i8 0, i8 2
   store i8 %sel0, ptr null, align 32
   %cmp1 = icmp ugt i8 %a, 0
   %sel1 = select i1 %cmp0, i1 %cmp1, i1 false
-  %sel2 = select i1 %sel1, i8 1, i8 0
+  %sel2 = select i1 %sel1, i8 0, i8 2
   store i8 %sel2, ptr null, align 2
-  %sel3 = select i1 %cmp1, i16 0, i16 1
+  %sel3 = select i1 %cmp1, i16 0, i16 2
   store i16 %sel3, ptr null, align 2
   ret void
 }
