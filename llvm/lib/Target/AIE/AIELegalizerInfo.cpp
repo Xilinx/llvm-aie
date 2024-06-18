@@ -506,8 +506,8 @@ AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
   verify(*ST.getInstrInfo());
 }
 
-bool AIELegalizerInfo::legalizeCustom(LegalizerHelper &Helper,
-                                      MachineInstr &MI) const {
+bool AIELegalizerInfo::legalizeCustom(LegalizerHelper &Helper, MachineInstr &MI,
+                                      LostDebugLocObserver &LocObserver) const {
   switch (MI.getOpcode()) {
   default:
     break;
@@ -518,7 +518,7 @@ bool AIELegalizerInfo::legalizeCustom(LegalizerHelper &Helper,
   case TargetOpcode::G_MEMSET:
   case TargetOpcode::G_MEMCPY:
   case TargetOpcode::G_MEMMOVE:
-    return legalizeMemCalls(Helper, MI);
+    return legalizeMemCalls(Helper, MI, LocObserver);
   case TargetOpcode::G_BRJT:
     return legalizeG_BRJT(Helper, MI);
   case TargetOpcode::G_FCONSTANT:
@@ -532,7 +532,7 @@ bool AIELegalizerInfo::legalizeCustom(LegalizerHelper &Helper,
   case TargetOpcode::G_INSERT_VECTOR_ELT:
     return legalizeG_INSERT_VECTOR_ELT(Helper, MI);
   case TargetOpcode::G_FCMP:
-    return legalizeG_FCMP(Helper, MI);
+    return legalizeG_FCMP(Helper, MI, LocObserver);
   case TargetOpcode::G_FPTRUNC:
     return legalizeG_FPTRUNC(Helper, MI);
   case TargetOpcode::G_FPEXT:
@@ -823,8 +823,9 @@ bool AIELegalizerInfo::legalizeG_VAARG(LegalizerHelper &Helper,
   return true;
 }
 
-bool AIELegalizerInfo::legalizeMemCalls(LegalizerHelper &Helper,
-                                        MachineInstr &MI) const {
+bool AIELegalizerInfo::legalizeMemCalls(
+    LegalizerHelper &Helper, MachineInstr &MI,
+    LostDebugLocObserver &LocObserver) const {
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
   LLVMContext &Ctx = MIRBuilder.getMF().getFunction().getContext();
   MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
@@ -867,8 +868,8 @@ bool AIELegalizerInfo::legalizeMemCalls(LegalizerHelper &Helper,
     return false;
   }
 
-  auto Status =
-      createLibcall(MIRBuilder, LibEntry, {ResultReg, VoidPtrTy, 0}, Args);
+  auto Status = createLibcall(MIRBuilder, LibEntry, {ResultReg, VoidPtrTy, 0},
+                              Args, LocObserver);
   if (Status != LegalizerHelper::Legalized) {
     return false;
   }
@@ -1114,8 +1115,8 @@ static RTLIB::Libcall getFCmpLibCall(CmpInst::Predicate Predicate,
   }
 }
 
-bool AIELegalizerInfo::legalizeG_FCMP(LegalizerHelper &Helper,
-                                      MachineInstr &MI) const {
+bool AIELegalizerInfo::legalizeG_FCMP(LegalizerHelper &Helper, MachineInstr &MI,
+                                      LostDebugLocObserver &LocObserver) const {
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
   LLVMContext &Ctx = MIRBuilder.getMF().getFunction().getContext();
   MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
@@ -1162,7 +1163,8 @@ bool AIELegalizerInfo::legalizeG_FCMP(LegalizerHelper &Helper,
     auto LibcallResult = MRI.createGenericVirtualRegister(LLT::scalar(32));
     auto Status = createLibcall(MIRBuilder, LibEntry, {LibcallResult, RetTy, 0},
                                 {{MI.getOperand(2).getReg(), ArgTy, 0},
-                                 {MI.getOperand(3).getReg(), ArgTy, 0}});
+                                 {MI.getOperand(3).getReg(), ArgTy, 0}},
+                                LocObserver);
 
     if (Status != LegalizerHelper::Legalized)
       return false;
