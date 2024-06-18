@@ -132,10 +132,8 @@ body: |
     ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 16
     ; CHECK-NEXT: [[SHL1:%[0-9]+]]:_(s32) = G_SHL [[LOAD]], [[C3]](s32)
     ; CHECK-NEXT: [[OR1:%[0-9]+]]:_(s32) = G_OR [[SHL1]], [[OR]]
-    ; CHECK-NEXT: [[TRUNC:%[0-9]+]]:_(s24) = G_TRUNC [[OR1]](s32)
-    ; CHECK-NEXT: [[ASSERT_ZEXT:%[0-9]+]]:_(s24) = G_ASSERT_ZEXT [[TRUNC]], 20
-    ; CHECK-NEXT: [[TRUNC1:%[0-9]+]]:_(s20) = G_TRUNC [[ASSERT_ZEXT]](s24)
-    ; CHECK-NEXT: [[INTTOPTR:%[0-9]+]]:_(p0) = G_INTTOPTR [[TRUNC1]](s20)
+    ; CHECK-NEXT: [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[OR1]](s32)
+    ; CHECK-NEXT: [[INTTOPTR:%[0-9]+]]:_(p0) = G_INTTOPTR [[TRUNC]](s20)
     ; CHECK-NEXT: $p0 = COPY [[INTTOPTR]](p0)
     %0:_(p0) = COPY $p0
     %1:_(p0) = G_LOAD %0 :: (load (p0), align 1)
