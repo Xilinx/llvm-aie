@@ -4915,10 +4915,11 @@ bool AIE2InstructionSelector::selectExtractI128(MachineInstr &I,
     llvm_unreachable("Unexpected input size for extracting 128-bit vector");
   }
 
-  // Select using a COPY to W registers. The upper half will be undefined.
-  MIB.buildInstr(TargetOpcode::COPY, {DstReg}, {}).addReg(SrcReg, 0, SubReg);
-  if (!RBI.constrainGenericRegister(DstReg, AIE2::VEC128RegClass, MRI))
-    return false;
+  // Select using a COPY to a 128-bit register.
+  MachineInstr *CopyMI = MIB.buildInstr(TargetOpcode::COPY, {DstReg}, {})
+                             .addReg(SrcReg, 0, SubReg);
+  constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *CopyMI,
+                           AIE2::VEC128RegClass, CopyMI->getOperand(0));
 
   I.eraseFromParent();
   return true;

@@ -6,16 +6,16 @@
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2 -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s
-...
+
 ---
-name:            test_extract_v4int32
+name:            test_extract_512_to_128
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $x2
 
-    ; CHECK-LABEL: name: test_extract_v4int32
+    ; CHECK-LABEL: name: test_extract_512_to_128
     ; CHECK: liveins: $x2
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x2
@@ -24,8 +24,31 @@ body:             |
     %1:vregbank(<16 x s32>) = COPY $x2
     %2:vregbank(<4 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.extract.I128.I512), %1(<16 x s32>)
     PseudoRET implicit $lr, implicit %2
-
 ...
+
+# Similar to above, but the ins/outs are already in "annoying" reg classes
+---
+name:            test_extract_512_to_128_regclass
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $x2
+
+    ; CHECK-LABEL: name: test_extract_512_to_128_regclass
+    ; CHECK: liveins: $x2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ebml = COPY $x2
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec128 = COPY [[COPY]].sub_256_lo
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:mws = COPY [[COPY1]]
+    ; CHECK-NEXT: $q0 = COPY [[COPY2]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $q0
+    %1:ebml(<16 x s32>) = COPY $x2
+    %2:mws(<4 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.extract.I128.I512), %1(<16 x s32>)
+    $q0 = COPY %2
+    PseudoRET implicit $lr, implicit $q0
+...
+
 ---
 name:            test_set_v32int16
 legalized:       true
