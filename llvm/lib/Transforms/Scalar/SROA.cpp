@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 /// \file
 /// This transformation implements the well known scalar replacement of
@@ -3280,8 +3283,10 @@ private:
 
     // If this doesn't map cleanly onto the alloca type, and that type isn't
     // a single value type, just emit a memcpy.
+    // We assume that ptr types are always "nice" types, which can use normal
+    // load/store pairs instead of memcpy.
     bool EmitMemCpy =
-        !VecTy && !IntTy &&
+        !VecTy && !IntTy && !NewAllocaTy->isPointerTy() &&
         (BeginOffset > NewAllocaBeginOffset || EndOffset < NewAllocaEndOffset ||
          SliceSize !=
              DL.getTypeStoreSize(NewAI.getAllocatedType()).getFixedValue() ||
