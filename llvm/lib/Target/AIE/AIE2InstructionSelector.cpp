@@ -616,19 +616,10 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
     case Intrinsic::aie2_get_coreid:
       return selectGetCoreID(I, MRI);
 
-    case Intrinsic::aie2_get_I256_I128: {
-      Register DstReg = I.getOperand(0).getReg();
-      Register SrcReg = I.getOperand(2).getReg();
-      auto CopyInstr =
-          MIB.buildInstr(TargetOpcode::COPY, {DstReg}, {}).addReg(SrcReg);
-      if (!selectCopy(*CopyInstr, MRI))
-        return false;
-      I.eraseFromParent();
-      return true;
-    }
     case Intrinsic::aie2_extract_I128_I512:
       return selectExtractI128(I, I.getOperand(0).getReg(),
                                I.getOperand(2).getReg(), MRI);
+    case Intrinsic::aie2_get_I256_I128:
     case Intrinsic::aie2_set_I512_I128:
       return selectSetI128(I, I.getOperand(0), I.getOperand(2), MRI);
     default:
