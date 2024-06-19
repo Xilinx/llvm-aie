@@ -198,8 +198,8 @@ public:
   bool selectG_AIE_EXTRACT_VECTOR_ELT(MachineInstr &I,
                                       MachineRegisterInfo &MRI);
   bool selectG_AIE_INSERT_VECTOR_ELT(MachineInstr &I, MachineRegisterInfo &MRI);
-  bool selectSetI128(MachineInstr &I, Register DstReg, Register SrcReg,
-                     MachineRegisterInfo &MRI);
+  bool selectSetI128(MachineInstr &I, MachineOperand &DstReg,
+                     MachineOperand &SrcReg, MachineRegisterInfo &MRI);
   bool selectExtractI128(MachineInstr &I, Register DstReg, Register SrcReg,
                          MachineRegisterInfo &MRI);
   bool selectGetSS(MachineInstr &I, MachineRegisterInfo &MRI);
@@ -630,8 +630,7 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
       return selectExtractI128(I, I.getOperand(0).getReg(),
                                I.getOperand(2).getReg(), MRI);
     case Intrinsic::aie2_set_I512_I128:
-      return selectSetI128(I, I.getOperand(0).getReg(),
-                           I.getOperand(2).getReg(), MRI);
+      return selectSetI128(I, I.getOperand(0), I.getOperand(2), MRI);
     default:
       return selectImpl(I, *CoverageInfo);
     }
@@ -764,8 +763,7 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
   case AIE2::G_AIE_INSERT_VECTOR_ELT:
     return selectG_AIE_INSERT_VECTOR_ELT(I, MRI);
   case AIE2::G_AIE_PAD_VECTOR_UNDEF:
-    return selectSetI128(I, I.getOperand(0).getReg(), I.getOperand(1).getReg(),
-                         MRI);
+    return selectSetI128(I, I.getOperand(0), I.getOperand(1), MRI);
   case AIE2::G_AIE_UNPAD_VECTOR:
     return selectExtractI128(I, I.getOperand(0).getReg(),
                              I.getOperand(1).getReg(), MRI);
@@ -4926,37 +4924,32 @@ bool AIE2InstructionSelector::selectExtractI128(MachineInstr &I,
 }
 
 // Select set 128-bit Intrinsics
-bool AIE2InstructionSelector::selectSetI128(MachineInstr &I, Register DstReg,
-                                            Register SrcReg,
+bool AIE2InstructionSelector::selectSetI128(MachineInstr &I,
+                                            MachineOperand &DstReg,
+                                            MachineOperand &SrcReg,
                                             MachineRegisterInfo &MRI) {
-  LLT SrcTy = MRI.getType(SrcReg);
+  LLT SrcTy = MRI.getType(SrcReg.getReg());
   assert(SrcTy.getSizeInBits() == 128);
-  LLT DstTy = MRI.getType(DstReg);
-  unsigned DstTySize = DstTy.getSizeInBits();
-  const TargetRegisterClass *RC256 = &AIE2::VEC256RegClass;
-  const TargetRegisterClass *RC512 = &AIE2::VEC512RegClass;
+  LLT DstTy = MRI.getType(DstReg.getReg());
+  const unsigned DstTySize = DstTy.getSizeInBits();
+  assert(DstTySize == 256 || DstTySize == 512);
 
-  // Constrain input vector to VEC128 RC
-  if (!RBI.constrainGenericRegister(SrcReg, AIE2::VEC128RegClass, MRI))
-    return false;
+  // Constrain input vector to VEC128 RC, and output to VEC256/VEC512
+  const TargetRegisterClass &OutRC =
+      DstTySize == 256 ? AIE2::VEC256RegClass : AIE2::VEC512RegClass;
+  constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, I, AIE2::VEC128RegClass,
+                           SrcReg);
+  constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, I, OutRC, DstReg);
 
   if (DstTySize == 256) {
-    MIB.buildInstr(TargetOpcode::COPY, {DstReg}, {}).addReg(SrcReg);
-    if (!RBI.constrainGenericRegister(DstReg, *RC256, MRI))
-      return false;
+    MIB.buildInstr(TargetOpcode::COPY, {DstReg}, {SrcReg});
   } else if (DstTySize == 512) {
     auto SrcInW =
-        MIB.buildInstr(TargetOpcode::COPY, {RC256}, {}).addReg(SrcReg);
-    auto SrcUndef = MIB.buildInstr(TargetOpcode::IMPLICIT_DEF, {RC256}, {});
+        MIB.buildInstr(TargetOpcode::COPY, {&AIE2::VEC256RegClass}, {SrcReg});
     // Create 512-bit sources from 256-bit sources.
     MIB.buildInstr(AIE2::REG_SEQUENCE, {DstReg}, {})
         .addReg(SrcInW.getReg(0))
-        .addImm(AIE2::sub_256_lo)
-        .addReg(SrcUndef.getReg(0))
-        .addImm(AIE2::sub_256_hi);
-
-    if (!RBI.constrainGenericRegister(DstReg, *RC512, MRI))
-      return false;
+        .addImm(AIE2::sub_256_lo);
   } else {
     llvm_unreachable("Expected 256 or 512 bit input vector");
   }

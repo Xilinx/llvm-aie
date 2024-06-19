@@ -34,8 +34,7 @@ body:             |
     ; CHECK-LABEL: name: test_unpad_512_bit_v16int32
     ; CHECK: [[COPY:%[0-9]+]]:vec128 = COPY $q0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec256 = COPY [[COPY]]
-    ; CHECK-NEXT: [[DEF:%[0-9]+]]:vec256 = IMPLICIT_DEF
-    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[COPY1]], %subreg.sub_256_lo, [[DEF]], %subreg.sub_256_hi
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[COPY1]], %subreg.sub_256_lo
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]]
     %1:vregbank(<4 x s32>) = COPY $q0
     %2:vregbank(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF %1
