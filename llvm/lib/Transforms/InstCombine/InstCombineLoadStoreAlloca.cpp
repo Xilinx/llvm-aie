@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the visit functions for load, store and alloca.
@@ -681,6 +684,22 @@ static Instruction *combineLoadToOperationType(InstCombinerImpl &IC,
         LoadInst *NewLoad = IC.combineLoadToNewType(Load, DestTy);
         CastUser->replaceAllUsesWith(NewLoad);
         IC.eraseInstFromFunction(*CastUser);
+        return &Load;
+      }
+    }
+
+    // Fold trunc intPtrType (load intType) to load intPtrType if the load is
+    // only used by a IntToPtr instruction.
+    if (auto *TruncUser = dyn_cast<TruncInst>(Load.user_back());
+        TruncUser && TruncUser->hasOneUser()) {
+      Type *TruncTy = TruncUser->getDestTy();
+      const DataLayout &DL = IC.getDataLayout();
+      if (auto *IntToPtrUser = dyn_cast<IntToPtrInst>(TruncUser->user_back());
+          IntToPtrUser &&
+          TruncTy == DL.getIntPtrType(IntToPtrUser->getType())) {
+        LoadInst *NewLoad = IC.combineLoadToNewType(Load, TruncTy);
+        TruncUser->replaceAllUsesWith(NewLoad);
+        IC.eraseInstFromFunction(*TruncUser);
         return &Load;
       }
     }
