@@ -1,0 +1,30 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+#
+# CHECK: 0: 89 42 41 48 vadd.f bmh0, bmh0, bmh2, r9
+# CHECK: 4: 89 43 41 48 vsub.f bmh0, bmh0, bmh2, r9
+# CHECK: 8: 89 15 a1 1a vnegadd.f bml5, bml5, bml2, r3
+# CHECK: c: 89 14 a1 1a vnegsub.f bml5, bml5, bml2, r3
+
+---
+name:            vaac_f
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; VADD.f/VSUB.f – Floating-point accumulator addition/subtraction
+    $bmh0 = VADD_F $bmh0, $bmh2, $r9, implicit-def $srfpflags, implicit $crfpmask
+    $bmh0 = VSUB_F $bmh0, $bmh2, $r9, implicit-def $srfpflags, implicit $crfpmask
+    ; VNEGADD.f / VNEGSUB.f – Floating-point accumulator negated
+    $bml5 = VNEGADD_F $bml5, $bml2, $r3, implicit-def $srfpflags, implicit $crfpmask
+    $bml5 = VNEGSUB_F $bml5, $bml2, $r3, implicit-def $srfpflags, implicit $crfpmask
+...

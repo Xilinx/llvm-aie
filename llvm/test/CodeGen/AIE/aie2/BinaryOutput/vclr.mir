@@ -1,0 +1,33 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+#
+# CHECK: 0: 49 00 fc 07 vclr bml0
+# CHECK: 4: 49 0e fc 07 vclr bmh3
+# CHECK: 8: 49 1e fc 07 vclr bmh7
+# CHECK: c: 09 02 3c 00 vclr cm0
+# CHECK: 10: 09 0e 3c 00 vclr cm3
+# CHECK: 14: 09 1e 3c 00 vclr cm7
+
+---
+name:            vclr
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; VCLR – Clears accumulator word
+    $bml0 = VCLR_vclr_BF implicit-def $srfpflags, implicit $crfpmask
+    $bmh3 = VCLR_vclr_BF implicit-def $srfpflags, implicit $crfpmask
+    $bmh7 = VCLR_vclr_BF implicit-def $srfpflags, implicit $crfpmask
+    $cm0 = VCLR_vclr
+    $cm3 = VCLR_vclr
+    $cm7 = VCLR_vclr
+...

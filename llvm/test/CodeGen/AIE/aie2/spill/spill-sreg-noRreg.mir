@@ -1,0 +1,24 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: not --crash llc -mtriple=aie2 --verify-machineinstrs --aie-reserved-gprs=32 -run-pass=greedy -run-pass=virtregrewriter %s -o - 2>&1 | FileCheck %s
+
+# Only $s0 is available to allocate %0, but the former is used by VUPS.
+# It then needs to be spilled and reloaded to/from memory. But this will fail if
+# there are no GPRs left, as is the case here.
+---
+name:            fail_spill_to_mem
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.1.entry:
+    liveins: $p0, $r0, $r1, $x0, $s0, $s1, $s2, $s3
+    %0:mss = COPY $r1
+    %20:acc1024 = VUPS_S32_D16_mv_ups_x2c $x0, $s0, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    PseudoRET implicit $lr, implicit %20, implicit %0, implicit $s1, implicit $s2, implicit $s3
+...
+
+# CHECK: LLVM ERROR: no registers from class available to allocate

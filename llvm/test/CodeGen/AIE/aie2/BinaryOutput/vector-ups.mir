@@ -1,0 +1,49 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr %t | FileCheck --ignore-case %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr %t | FileCheck %s
+
+# CHECK: 0: d9 07 93 18 vups.s32.d8 cm1, wl0, s1
+# CHECK: 4: d9 17 07 18 vups.s32.s8 cm0, wl4, s0
+# CHECK: 8: d9 cf ab 1b vups.s64.d16 cm7, wh3, s2
+# CHECK: c: d9 47 bf 1a vups.s64.s16 cm5, wl1, s3
+# CHECK: 10: d9 d7 11 18 vups.s32.d16 bml0, wh5, s1
+# CHECK: 14: d9 47 45 1c vups.s32.s16 bmh8, wl1, s0
+# CHECK: 18: d9 9f a9 18 vups.s64.d32 bml1, wh6, s2
+# CHECK: 1c: d9 07 fd 1b vups.s64.s32 bmh7, wl0, s3
+# CHECK: 20: d9 27 12 18 vups.s32.d16 cm0, x4, s1
+# CHECK: 24: d9 0f 86 1a vups.s32.s16 cm5, x1, s0
+# CHECK: 28: d9 17 2a 1c vups.s64.d32 cm8, x2, s2
+# CHECK: 2c: d9 07 be 1b vups.s64.s32 cm7, x0, s3
+
+---
+name:            test_vups
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; 7.4 VUPS - UPS_instructions_vups_w2c
+    $cm1 = VUPS_S32_D8_mv_ups_w2c $wl0, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    $cm0 = VUPS_S32_S8_mv_ups_w2c $wl4, $s0, implicit-def $srups_of, implicit $crsat
+    $cm7 = VUPS_S64_D16_mv_ups_w2c $wh3, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    $cm5 = VUPS_S64_S16_mv_ups_w2c $wl1, $s3, implicit-def $srups_of, implicit $crsat
+
+    ; 7.4 VUPS - UPS_instructions_vups_w2b
+    $bml0 = VUPS_S32_D16_mv_ups_w2b $wh5, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    $bmh8 = VUPS_S32_S16_mv_ups_w2b $wl1, $s0, implicit-def $srups_of, implicit $crsat
+    $bml1 = VUPS_S64_D32_mv_ups_w2b $wh6, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    $bmh7 = VUPS_S64_S32_mv_ups_w2b $wl0, $s3, implicit-def $srups_of, implicit $crsat
+
+    ; 7.4 VUPS - UPS_instructions_vups_x2c
+    $cm0 = VUPS_S32_D16_mv_ups_x2c $x4, $s1, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    $cm5 = VUPS_S32_S16_mv_ups_x2c $x1, $s0, implicit-def $srups_of, implicit $crsat
+    $cm8 = VUPS_S64_D32_mv_ups_x2c $x2, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    $cm7 = VUPS_S64_S32_mv_ups_x2c $x0, $s3, implicit-def $srups_of, implicit $crsat
+...

@@ -1,0 +1,85 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+
+---
+name:            lda_q
+alignment:       16
+body:             |
+  bb.0 (align 16):
+
+    $q0 = LDA_dmv_lda_q_ag_idx_imm $p2, 0
+    $q1 = LDA_dmv_lda_q_ag_idx_imm $p2, 32
+    $q2 = LDA_dmv_lda_q_ag_idx_imm $p5, 496
+    $q3 = LDA_dmv_lda_q_ag_idx_imm $p5, -512
+
+    $q0 = LDA_dmv_lda_q_ag_idx $p5, $dj0
+    $q1 = LDA_dmv_lda_q_ag_idx $p3, $dj1
+    $q2 = LDA_dmv_lda_q_ag_idx $p2, $dj2
+    $q3 = LDA_dmv_lda_q_ag_idx $p0, $dj3
+
+
+    $q0 = LDA_dmv_lda_q_ag_spill -16, implicit $sp
+    $q1 = LDA_dmv_lda_q_ag_spill -32, implicit $sp
+    $q2 = LDA_dmv_lda_q_ag_spill -65520, implicit $sp
+    $q3 = LDA_dmv_lda_q_ag_spill -65536, implicit $sp
+
+    $q0, $p2 = LDA_dmv_lda_q_ag_pstm_nrm $p2, $m4
+    $q1, $p2 = LDA_dmv_lda_q_ag_pstm_nrm $p2, $m3
+    $q2, $p5 = LDA_dmv_lda_q_ag_pstm_nrm $p5, $m2
+    $q3, $p5 = LDA_dmv_lda_q_ag_pstm_nrm $p5, $m0
+
+    $q0, $p2 = LDA_dmv_lda_q_ag_pstm_nrm_imm $p2, 0
+    $q1, $p2 = LDA_dmv_lda_q_ag_pstm_nrm_imm $p2, -1024
+    $q2, $p5 = LDA_dmv_lda_q_ag_pstm_nrm_imm $p5, 1008
+    $q3, $p5 = LDA_dmv_lda_q_ag_pstm_nrm_imm $p5, -256
+
+    $q0, $p2, $dc0 = LDA_2D_dmv_lda_q $p2, $d0
+    $q1, $p2, $dc1 = LDA_2D_dmv_lda_q $p2, $d1
+    $q2, $p5, $dc2 = LDA_2D_dmv_lda_q $p5, $d2
+    $q3, $p5, $dc3 = LDA_2D_dmv_lda_q $p5, $d3
+
+    $q0, $p2, $dc0, $dc4 = LDA_3D_dmv_lda_q $p2, $d0_3d
+    $q1, $p2, $dc1, $dc5 = LDA_3D_dmv_lda_q $p2, $d1_3d
+    $q2, $p5, $dc2, $dc6 = LDA_3D_dmv_lda_q $p5, $d2_3d
+    $q3, $p5, $dc3, $dc7 = LDA_3D_dmv_lda_q $p5, $d3_3d
+
+
+...
+# CHECK: 0: d9 80 02 02 lda q0, [p2, #0]
+# CHECK: 4: d9 90 0a 02 lda q1, [p2, #32]
+# CHECK: 8: d9 a0 7e 05 lda q2, [p5, #496]
+# CHECK: c: d9 b0 82 05 lda q3, [p5, #-512]
+# CHECK: 10: d9 80 10 05 lda q0, [p5, dj0]
+# CHECK: 14: d9 90 30 03 lda q1, [p3, dj1]
+# CHECK: 18: d9 a0 50 02 lda q2, [p2, dj2]
+# CHECK: 1c: d9 b0 70 00 lda q3, [p0, dj3]
+# CHECK: 20: d9 c0 ff 07 lda q0, [sp, #-16]
+# CHECK: 24: d9 50 ff 07 lda q1, [sp, #-32]
+# CHECK: 28: d9 e0 00 00 lda q2, [sp, #-65520]
+# CHECK: 2c: d9 70 00 00 lda q3, [sp, #-65536]
+# CHECK: 30: d9 80 88 02 lda q0, [p2], m4
+# CHECK: 34: d9 90 68 02 lda q1, [p2], m3
+# CHECK: 38: d9 a0 48 05 lda q2, [p5], m2
+# CHECK: 3c: d9 b0 08 05 lda q3, [p5], m0
+# CHECK: 40: d9 80 01 02 lda q0, [p2], #0
+# CHECK: 44: d9 90 81 02 lda q1, [p2], #-1024
+# CHECK: 48: d9 a0 7f 05 lda q2, [p5], #1008
+# CHECK: 4c: d9 b0 e1 05 lda q3, [p5], #-256
+# CHECK: 50: d9 80 18 02 lda.2d q0, [p2], d0
+# CHECK: 54: d9 90 38 02 lda.2d q1, [p2], d1
+# CHECK: 58: d9 a0 58 05 lda.2d q2, [p5], d2
+# CHECK: 5c: d9 b0 78 05 lda.2d q3, [p5], d3
+# CHECK: 60: d9 80 00 02 lda.3d q0, [p2], d0
+# CHECK: 64: d9 90 20 02 lda.3d q1, [p2], d1
+# CHECK: 68: d9 a0 40 05 lda.3d q2, [p5], d2
+# CHECK: 6c: d9 b0 60 05 lda.3d q3, [p5], d3

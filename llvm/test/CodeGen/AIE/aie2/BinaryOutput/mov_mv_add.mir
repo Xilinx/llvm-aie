@@ -1,0 +1,93 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+
+
+# CHECK: 0: f9 bf 02 18 add.nc r0, r5, #31
+# CHECK: 4: 79 c6 42 18 add.nc r1, r5, #-32
+# CHECK: 8: 79 ae c2 1f add.nc r31, r5, #20
+# CHECK: c: f9 bf 02 18 add.nc r0, r5, #31
+# CHECK: 10: 79 c6 42 18 add.nc r1, r5, #-32
+# CHECK: 14: 79 ae c2 1f add.nc r31, r5, #20
+# CHECK: 18: 79 97 32 18 add.nc p0, r5, #10
+# CHECK: 1c: f9 d6 32 1f add.nc p7, r5, #-23
+# CHECK: 20: f9 ae 72 1e add.nc sp, r5, #21
+# CHECK: 24: f9 b6 72 1c add.nc le, r5, #25
+# CHECK: 28: f9 86 72 18 add.nc ls, r5, #1
+# CHECK: 2c: f9 8f 72 1d add.nc lc, r5, #7
+# CHECK: 30: 79 a6 b2 1c add.nc s2, r5, #16
+# CHECK: 34: 79 06 94 1c add.nc crsat, r8, #0
+# CHECK: 38: f9 06 14 1b add.nc crrnd, r8, #1
+# CHECK: 3c: 79 06 94 19 add.nc crfpmask, r8, #0
+# CHECK: 40: f9 06 14 19 add.nc crf2imask, r8, #1
+# CHECK: 44: 79 06 94 18 add.nc crf2fmask, r8, #0
+# CHECK: 48: f9 06 14 1c add.nc crsrssign, r8, #1
+# CHECK: 4c: 79 06 14 1d add.nc crupssign, r8, #0
+# CHECK: 50: f9 06 94 1a add.nc crpacksign, r8, #1
+# CHECK: 54: 79 06 94 1d add.nc crunpacksign, r8, #0
+# CHECK: 58: f9 06 14 18 add.nc crvaddsign, r8, #1
+# CHECK: 5c: 79 06 94 1b add.nc crscden, r8, #0
+# CHECK: 60: f9 06 14 1a add.nc crmcden, r8, #1
+# CHECK: 64: 79 86 d4 1b add.nc srss0, r9, #0
+# CHECK: 68: f9 86 d4 1a add.nc srms0, r9, #1
+# CHECK: 6c: 79 86 54 1b add.nc srsrs_of, r9, #0
+# CHECK: 70: f9 86 d4 1c add.nc srups_of, r9, #1
+# CHECK: 74: 79 86 d4 18 add.nc srcompr_uf, r9, #0
+# CHECK: 78: f9 86 54 1c add.nc srsparse_of, r9, #1
+# CHECK: 7c: 79 86 54 1a add.nc srfpflags, r9, #0
+# CHECK: 80: f9 86 d4 19 add.nc srf2iflags, r9, #1
+# CHECK: 84: 79 86 54 19 add.nc srf2fflags, r9, #0
+# CHECK: 88: f9 86 54 18 add.nc srcarry, r9, #1
+---
+name:            test_call
+alignment:       16
+body:             |
+  bb.0 (align 16):
+
+    $r0  = ADD_NC $r5, 31
+    $r1  = ADD_NC $r5, -32
+    $r31 = ADD_NC $r5, 20
+    $r0  = ADD_NC_GPR $r5, 31
+    $r1  = ADD_NC_GPR $r5, -32
+    $r31 = ADD_NC_GPR $r5, 20
+    $p0  = ADD_NC $r5, 10
+    $p7  = ADD_NC $r5, -23
+    $sp  = ADD_NC $r5, 21
+    $le  = ADD_NC $r5, 25
+    $ls  = ADD_NC $r5, 1
+    $lc  = ADD_NC $r5, 7
+    $s2  = ADD_NC $r5, 16
+
+    $crsat        = ADD_NC $r8, 0
+    $crrnd        = ADD_NC $r8, 1
+    $crfpmask     = ADD_NC $r8, 0
+    $crf2imask    = ADD_NC $r8, 1
+    $crf2fmask    = ADD_NC $r8, 0
+    $crsrssign    = ADD_NC $r8, 1
+    $crupssign    = ADD_NC $r8, 0
+    $crpacksign   = ADD_NC $r8, 1
+    $crunpacksign = ADD_NC $r8, 0
+    $crvaddsign   = ADD_NC $r8, 1
+    $crscden      = ADD_NC $r8, 0
+    $crmcden      = ADD_NC $r8, 1
+
+    $srss0        = ADD_NC $r9, 0
+    $srms0        = ADD_NC $r9, 1
+    $srsrs_of     = ADD_NC $r9, 0
+    $srups_of     = ADD_NC $r9, 1
+    $srcompr_uf   = ADD_NC $r9, 0
+    $srsparse_of  = ADD_NC $r9, 1
+    $srfpflags    = ADD_NC $r9, 0
+    $srf2iflags   = ADD_NC $r9, 1
+    $srf2fflags   = ADD_NC $r9, 0
+    $srcarry      = ADD_NC $r9, 1
+...

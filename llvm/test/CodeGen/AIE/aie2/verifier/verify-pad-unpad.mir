@@ -1,0 +1,52 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: not --crash llc -mtriple=aie2 -run-pass machineverifier -o /dev/null %s 2>&1 | FileCheck %s
+
+# This test ensures that the Machine Verifier detects illegal G_AIE_UNPAD_VECTOR
+# or G_AIE_PAD_VECTOR_UNDEF instructions
+
+---
+name:            ok
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    %1:_(<8 x s32>) = COPY $wl2
+    %2:_(<4 x s32>) = G_AIE_UNPAD_VECTOR %1
+    %3:_(<8 x s32>) = G_AIE_PAD_VECTOR_UNDEF %2
+    $wl2 = COPY %3
+    %4:_(<16 x s32>) = COPY $x4
+    %5:_(<4 x s32>) = G_AIE_UNPAD_VECTOR %4
+    %6:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF %5
+    $x4 = COPY %6
+...
+
+---
+name:            nok
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; CHECK-COUNT-4: Bad machine code: Both vector operands must have the same element type
+    ; CHECK-COUNT-4: Bad machine code: Operand size is illegal
+    ; CHECK-NOT: Bad machine code
+    %1:_(<8 x s32>) = COPY $wl2
+    %2:_(<8 x s16>) = G_AIE_UNPAD_VECTOR %1
+    %3:_(<8 x s32>) = G_AIE_PAD_VECTOR_UNDEF %2
+    $wl2 = COPY %3
+    %4:_(<16 x s32>) = COPY $x4
+    %5:_(<8 x s16>) = G_AIE_UNPAD_VECTOR %4
+    %6:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF %5
+    $x4 = COPY %6
+    %11:_(<8 x s32>) = COPY $wl2
+    %12:_(<2 x s32>) = G_AIE_UNPAD_VECTOR %11
+    %13:_(<32 x s32>) = G_AIE_PAD_VECTOR_UNDEF %12
+    $y4 = COPY %13
+    %14:_(<32 x s32>) = COPY $y4
+    %15:_(<4 x s32>) = G_AIE_UNPAD_VECTOR %14
+    %16:_(<32 x s32>) = G_AIE_PAD_VECTOR_UNDEF %15
+    $y4 = COPY %16
+...

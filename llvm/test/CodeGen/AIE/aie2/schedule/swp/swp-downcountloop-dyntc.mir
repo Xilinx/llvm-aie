@@ -1,0 +1,52 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc --mtriple=aie2 --run-pass=pipeliner --issue-limit=6  %s -o - | FileCheck  %s
+# This checks that dynamic tripcount is properly handled, in particular
+# for the case where we have negations in the loop condition
+# We can only insert guards if the whole condition is scheduled in stage 0
+# Note that this example is carefully crafted, but may be unstable wrt
+# heuristic pipeliner changes. We can be relatively sure that the loop
+# decrement is scheduled in stage0, since MUL is dependent on it. Scheduling
+# the EQZ in stage 1 is more fuzzy.
+# We just observe the effect of rejecting the loop
+
+...
+---
+name:           negationInStage1
+alignment:       16
+tracksRegLiveness: true
+debugInstrRef:   false
+liveins:         []
+body:             |
+  ; CHECK-LABEL: name: negationInStage1
+  ; CHECK: [[INIT:%[0-9]+]]:er = COPY $r0
+  ; CHECK: [[PHI:%[0-9]+]]:er = PHI
+  ; CHECK-SAME: [[INIT]]
+  ; CHECK: [[LDEC:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -1
+  ; CHECK: PseudoRET
+  bb.1:
+    liveins: $p0, $p1, $r0
+    %1:ep = COPY $p0
+    %4:er = MOV_RLC_imm10_pseudo 1
+    %6:er = MOV_RLC_imm11_pseudo 4
+    %7:em = COPY %6
+    %19:er = COPY $r0
+
+  bb.3:
+    %3:er = PHI %19, %bb.1, %16, %bb.3
+    %5:er = PHI %4, %bb.1, %10, %bb.3
+    %8:ep = PHI %1, %bb.1, %9, %bb.3
+    %16:er = nsw ADD_add_r_ri %3, -1, implicit-def $srcarry
+    %10:er = MUL_mul_r_rr %5, %16
+    %9:ep = PADD_mod_pseudo %1, %7
+    %21:er = EQZ %16
+    PseudoJZ %21, %bb.3
+
+  bb.2:
+    PseudoRET implicit $lr
+
+...

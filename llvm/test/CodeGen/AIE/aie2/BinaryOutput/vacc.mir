@@ -1,0 +1,30 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+
+# CHECK: 0: 09 80 38 28 vadd cm0, cm0, cm2, r5
+# CHECK: 4: 09 c6 38 a9 vsub cm1, cm2, cm3, r21
+# CHECK: 8: 09 83 38 28 vnegadd cm0, cm0, cm2, r5
+# CHECK: c: 09 c5 38 a9 vnegsub cm1, cm2, cm3, r21
+
+---
+name:            vacc
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; VADD/VSUB - Accumulator addition/subtraction
+    $cm0 = VADD $cm0, $cm2, $r5
+    $cm1 = VSUB $cm2, $cm3, $r21
+    ; VNEGADD/VNEGSUB - Accumulator negated addition/subtraction
+    $cm0 = VNEGADD $cm0, $cm2, $r5
+    $cm1 = VNEGSUB $cm2, $cm3, $r21
+...

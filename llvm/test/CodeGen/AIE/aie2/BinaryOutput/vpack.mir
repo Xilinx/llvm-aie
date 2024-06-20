@@ -1,0 +1,36 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+
+---
+name:            test_vpack
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; VPACK - Vector word packing
+    $wl0 = VPACK_D4_D8 $x1, implicit $crsat, implicit $crpacksign
+    $wh2 = VPACK_D4_D8 $x3, implicit $crsat, implicit $crpacksign
+    $wl4 = VPACK_D8_D16 $x6, implicit $crsat, implicit $crpacksign
+    $wh5 = VPACK_D8_D16 $x7, implicit $crsat, implicit $crpacksign
+    $wl8 = VPACK_S4_S8 $x9, implicit $crsat
+    $wh10 = VPACK_S4_S8 $x11, implicit $crsat
+    $wl1 = VPACK_S8_S16 $x0, implicit $crsat
+    $wh3 = VPACK_S8_S16 $x2, implicit $crsat
+...
+# CHECK: 0: 99 06 3c 08 vpack.d4.d8 wl0, x1
+# CHECK: 4: 99 0e 7c 09 vpack.d4.d8 wh2, x3
+# CHECK: 8: 99 1a 3d 0a vpack.d8.d16 wl4, x6
+# CHECK: c: 99 1e fd 0a vpack.d8.d16 wh5, x7
+# CHECK: 10: 99 26 3e 0c vpack.s4.s8 wl8, x9
+# CHECK: 14: 99 2e 7e 0d vpack.s4.s8 wh10, x11
+# CHECK: 18: 99 02 bf 08 vpack.s8.s16 wl1, x0
+# CHECK: 1c: 99 0a ff 09 vpack.s8.s16 wh3, x2

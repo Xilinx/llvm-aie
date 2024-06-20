@@ -1,0 +1,42 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+
+
+---
+name:            vst_conv
+alignment:       16
+body:             |
+  bb.0 (align 16):
+
+    VST_CONV_BF16_FP32_ag_idx_imm $p0, -128, $bml0, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask
+    VST_CONV_BF16_FP32_ag_idx_imm $p6, 96, $bmh2, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask
+
+    VST_CONV_BF16_FP32_ag_idx $p0, $dj0, $bmh8, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask
+
+    $p5 = VST_CONV_BF16_FP32_ag_pstm_nrm_imm $p5, -256, $bml5, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask
+    $p1 = VST_CONV_BF16_FP32_ag_pstm_nrm_imm $p1, 224, $bmh3, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask
+
+    $p2 = VST_CONV_BF16_FP32_ag_pstm_nrm $p2, $m7, $bmh1, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask
+
+    $p0, $dc7 = VST_CONV_2D_BF16_FP32 $p0, $d7, $bml0, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask
+    $p0, $dc3, $dc7 = VST_CONV_3D_BF16_FP32 $p0, $d3_3d, $bmh0, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask
+...
+
+# CHECK: 0: d9 01 8d 08 vst.conv.bf16.fp32 bml0, [p0, #-128]
+# CHECK: 4: d9 0b 6d 0e vst.conv.bf16.fp32 bmh2, [p6, #96]
+# CHECK: 8: d9 23 11 08 vst.conv.bf16.fp32 bmh8, [p0, dj0]
+# CHECK: c: d9 15 85 0d vst.conv.bf16.fp32 bml5, [p5], #-256
+# CHECK: 10: d9 0f 75 09 vst.conv.bf16.fp32 bmh3, [p1], #224
+# CHECK: 14: d9 07 e9 0a vst.conv.bf16.fp32 bmh1, [p2], m7
+# CHECK: 18: d9 01 f9 08 vst.2d.conv.bf16.fp32 bml0, [p0], d7
+# CHECK: 1c: d9 03 61 08 vst.3d.conv.bf16.fp32 bmh0, [p0], d3

@@ -1,0 +1,36 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+
+# CHECK: 0: 19 b2 53 10 acq r1, r27
+# CHECK: 4: 19 a2 83 10 acq #4, r26
+# CHECK: 8: 19 32 90 10 rel r2, r3
+# CHECK: c: 19 a2 e1 17 rel #63, r26
+# CHECK: 10: 19 b2 97 10 acq.cond r2, r27, r26
+# CHECK: 14: 19 22 06 10 acq.cond #0, r2, r26
+# CHECK: 18: 19 62 94 10 rel.cond r2, r6, r26
+# CHECK: 1c: 19 52 84 11 rel.cond #12, r5, r26
+---
+name:            test_call
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ACQ_mLockId_reg $r1, $r27
+    ACQ_mLockId_imm 4, $r26
+    REL_mLockId_reg $r2, $r3
+    REL_mLockId_imm 63, $r26
+
+    ACQ_COND_mLockId_reg $r2, $r27, $r26
+    ACQ_COND_mLockId_imm 0, $r2, $r26
+    REL_COND_mLockId_reg $r2, $r6, $r26
+    REL_COND_mLockId_imm 12, $r5, $r26
+...

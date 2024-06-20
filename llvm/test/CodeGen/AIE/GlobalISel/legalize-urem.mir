@@ -1,0 +1,158 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc -mtriple aie -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple aie2 -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s
+
+---
+name: urem_s32
+body: |
+  bb.0:
+    liveins: $r6, $r7
+    ; CHECK-LABEL: name: urem_s32
+    ; CHECK: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; CHECK-NEXT: ADJCALLSTACKUP 0, 0
+    ; CHECK-NEXT: [[ARG0:\$r[0-9]+]] = COPY [[COPY]](s32)
+    ; CHECK-NEXT: [[ARG1:\$r[0-9]+]] = COPY [[COPY1]](s32)
+    ; CHECK-NEXT: {{JA?L}} &__umodsi3, {{csr_aie.?}}, implicit-def $lr, implicit [[ARG0]], implicit [[ARG1]], implicit-def $r0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r0
+    ; CHECK-NEXT: ADJCALLSTACKDOWN 0, 0
+    ; CHECK-NEXT: $r0 = COPY [[COPY2]](s32)
+    %0:_(s32) = COPY $r6
+    %1:_(s32) = COPY $r7
+    %2:_(s32) = G_UREM %0, %1
+    $r0 = COPY %2(s32)
+...
+
+---
+name: urem_8
+body: |
+  bb.0:
+    liveins: $r6, $r7
+    ; CHECK-LABEL: name: urem_8
+    ; CHECK: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 255
+    ; CHECK-NEXT: [[AND:%[0-9]+]]:_(s32) = G_AND [[COPY]], [[C]]
+    ; CHECK-NEXT: [[AND1:%[0-9]+]]:_(s32) = G_AND [[COPY1]], [[C]]
+    ; CHECK-NEXT: ADJCALLSTACKUP 0, 0
+    ; CHECK-NEXT: [[ARG0:\$r[0-9]+]] = COPY [[AND]](s32)
+    ; CHECK-NEXT: [[ARG1:\$r[0-9]+]] = COPY [[AND1]](s32)
+    ; CHECK-NEXT: {{JA?L}} &__umodsi3, {{csr_aie.?}}, implicit-def $lr, implicit [[ARG0]], implicit [[ARG1]], implicit-def $r0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r0
+    ; CHECK-NEXT: ADJCALLSTACKDOWN 0, 0
+    ; CHECK-NEXT: $r0 = COPY [[COPY2]](s32)
+    %0:_(s32) = COPY $r6
+    %1:_(s32) = COPY $r7
+    %2:_(s8) = G_TRUNC %0(s32)
+    %3:_(s8) = G_TRUNC %1(s32)
+    %4:_(s8) = G_UREM %2, %3
+    %5:_(s32) = G_ANYEXT %4(s8)
+    $r0 = COPY %5(s32)
+...
+
+---
+name: urem_16
+body: |
+  bb.0:
+    liveins: $r6, $r7
+    ; CHECK-LABEL: name: urem_16
+    ; CHECK: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 65535
+    ; CHECK-NEXT: [[AND:%[0-9]+]]:_(s32) = G_AND [[COPY]], [[C]]
+    ; CHECK-NEXT: [[AND1:%[0-9]+]]:_(s32) = G_AND [[COPY1]], [[C]]
+    ; CHECK-NEXT: ADJCALLSTACKUP 0, 0
+    ; CHECK-NEXT: [[ARG0:\$r[0-9]+]] = COPY [[AND]](s32)
+    ; CHECK-NEXT: [[ARG1:\$r[0-9]+]] = COPY [[AND1]](s32)
+    ; CHECK-NEXT: {{JA?L}} &__umodsi3, {{csr_aie.?}}, implicit-def $lr, implicit [[ARG0]], implicit [[ARG1]], implicit-def $r0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r0
+    ; CHECK-NEXT: ADJCALLSTACKDOWN 0, 0
+    ; CHECK-NEXT: $r0 = COPY [[COPY2]](s32)
+    %0:_(s32) = COPY $r6
+    %1:_(s32) = COPY $r7
+    %2:_(s16) = G_TRUNC %0(s32)
+    %3:_(s16) = G_TRUNC %1(s32)
+    %4:_(s16) = G_UREM %2, %3
+    %5:_(s32) = G_ANYEXT %4(s16)
+    $r0 = COPY %5(s32)
+...
+
+---
+name: urem_64
+body: |
+  bb.0:
+    liveins: $r6, $r7, $r8, $r9
+    ; CHECK-LABEL: name: urem_64
+    ; CHECK: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r8
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:_(s32) = COPY $r9
+    ; CHECK-NEXT: ADJCALLSTACKUP 0, 0
+    ; CHECK-NEXT: [[ARG0:\$r[0-9]+]] = COPY [[COPY]](s32)
+    ; CHECK-NEXT: [[ARG1:\$r[0-9]+]] = COPY [[COPY1]](s32)
+    ; CHECK-NEXT: [[ARG2:\$r[0-9]+]] = COPY [[COPY2]](s32)
+    ; CHECK-NEXT: [[ARG3:\$r[0-9]+]] = COPY [[COPY3]](s32)
+    ; CHECK-NEXT: {{JA?L}} &__umoddi3, {{csr_aie.?}}, implicit-def $lr, implicit [[ARG0]], implicit [[ARG1]], implicit [[ARG2]], implicit [[ARG3]], implicit-def $r0, implicit-def $r1
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:_(s32) = COPY $r0
+    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:_(s32) = COPY $r1
+    ; CHECK-NEXT: ADJCALLSTACKDOWN 0, 0
+    ; CHECK-NEXT: $r0 = COPY [[COPY4]](s32)
+    ; CHECK-NEXT: $r1 = COPY [[COPY5]](s32)
+    %0:_(s32) = COPY $r6
+    %1:_(s32) = COPY $r7
+    %2:_(s32) = COPY $r8
+    %3:_(s32) = COPY $r9
+    %4:_(s64) = G_MERGE_VALUES %0(s32), %1(s32)
+    %5:_(s64) = G_MERGE_VALUES %2(s32), %3(s32)
+    %6:_(s64) = G_UREM %4, %5
+    %7:_(s32), %8:_(s32) = G_UNMERGE_VALUES %6(s64)
+    $r0 = COPY %7(s32)
+    $r1 = COPY %8(s32)
+...
+
+---
+name: urem_48
+body: |
+  bb.0:
+    liveins: $r6, $r7, $r8, $r9
+    ; CHECK-LABEL: name: urem_48
+    ; CHECK: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r7
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r8
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:_(s32) = COPY $r9
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 -1
+    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 65535
+    ; CHECK-NEXT: [[AND:%[0-9]+]]:_(s32) = G_AND [[COPY]], [[C]]
+    ; CHECK-NEXT: [[AND1:%[0-9]+]]:_(s32) = G_AND [[COPY1]], [[C1]]
+    ; CHECK-NEXT: [[AND2:%[0-9]+]]:_(s32) = G_AND [[COPY2]], [[C]]
+    ; CHECK-NEXT: [[AND3:%[0-9]+]]:_(s32) = G_AND [[COPY3]], [[C1]]
+    ; CHECK-NEXT: ADJCALLSTACKUP 0, 0
+    ; CHECK-NEXT: [[ARG0:\$r[0-9]+]] = COPY [[AND]](s32)
+    ; CHECK-NEXT: [[ARG1:\$r[0-9]+]] = COPY [[AND1]](s32)
+    ; CHECK-NEXT: [[ARG2:\$r[0-9]+]] = COPY [[AND2]](s32)
+    ; CHECK-NEXT: [[ARG3:\$r[0-9]+]] = COPY [[AND3]](s32)
+    ; CHECK-NEXT: {{JA?L}} &__umoddi3, {{csr_aie.?}}, implicit-def $lr, implicit [[ARG0]], implicit [[ARG1]], implicit [[ARG2]], implicit [[ARG3]], implicit-def $r0, implicit-def $r1
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:_(s32) = COPY $r0
+    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:_(s32) = COPY $r1
+    ; CHECK-NEXT: ADJCALLSTACKDOWN 0, 0
+    ; CHECK-NEXT: $r0 = COPY [[COPY4]](s32)
+    ; CHECK-NEXT: $r1 = COPY [[COPY5]](s32)
+    %0:_(s32) = COPY $r6
+    %1:_(s32) = COPY $r7
+    %2:_(s32) = COPY $r8
+    %3:_(s32) = COPY $r9
+    %4:_(s64) = G_MERGE_VALUES %0(s32), %1(s32)
+    %5:_(s64) = G_MERGE_VALUES %2(s32), %3(s32)
+    %6:_(s48) = G_TRUNC %4(s64)
+    %7:_(s48) = G_TRUNC %5(s64)
+    %8:_(s48) = G_UREM %6, %7
+    %9:_(s64) = G_ANYEXT %8(s48)
+    %10:_(s32), %11:_(s32) = G_UNMERGE_VALUES %9(s64)
+    $r0 = COPY %10(s32)
+    $r1 = COPY %11(s32)
+...

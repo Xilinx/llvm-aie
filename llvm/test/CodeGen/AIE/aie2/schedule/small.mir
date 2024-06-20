@@ -1,0 +1,65 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc -march=aie2 -run-pass=postmisched %s -o - | FileCheck %s
+
+---
+name:            empty
+body:             |
+  bb.0.entry:
+    ; CHECK: bb.0.entry
+    ; CHECK-NOT: NOP
+...
+
+---
+name:            only_return
+body:             |
+  bb.0.entry:
+    ; CHECK: bb.0.entry
+    ; CHECK-NEXT: RET implicit $lr
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: DelayedSchedBarrier
+    RET implicit $lr
+    DelayedSchedBarrier
+...
+
+---
+name:            return
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: return
+    ; CHECK: RET implicit $lr
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $r0 = ADD_add_r_ri killed renamable $r0, 1, implicit-def $srcarry
+    ; CHECK-NEXT: DelayedSchedBarrier implicit killed $r0
+    $r0 = ADD_add_r_ri killed renamable $r0, 1, implicit-def $srcarry
+    RET implicit $lr
+    DelayedSchedBarrier implicit $r0
+...
+
+---
+name:            return_latency_2
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: return_latency_2
+    ; CHECK: RET implicit $lr
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $r0 = MUL_mul_r_rr killed $r6, killed $r7
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: DelayedSchedBarrier implicit killed $r0
+    $r0 = MUL_mul_r_rr $r6, $r7
+    RET implicit $lr
+    DelayedSchedBarrier implicit $r0
+...

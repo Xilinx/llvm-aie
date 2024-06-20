@@ -1,0 +1,24 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc %s -mtriple=aie --start-after=postmisched --filetype=obj -o %t.aie1.o
+# RUN: llvm-objdump -r --triple=aie %t.aie1.o | FileCheck --check-prefix=AIE1 %s
+# RUN: llc %s -mtriple=aie2 --start-after=postmisched --filetype=obj -o %t.aie2.o
+# RUN: llvm-objdump -r --triple=aie2 %t.aie2.o | FileCheck --check-prefix=AIE2 %s
+
+# AIE1: RELOCATION RECORDS FOR [.data.align.4]:
+# AIE1: 00000000 R_AIE_72                 X
+# AIE2: RELOCATION RECORDS FOR [.data.align.4]:
+# AIE2: 00000000 R_AIE_50                 X
+
+# Check that we insert the correct relocation type for
+# data relocations in data
+
+
+--- |
+  @X = external dso_local global i32, align 4
+  @p = dso_local local_unnamed_addr global ptr @X, align 4
+...

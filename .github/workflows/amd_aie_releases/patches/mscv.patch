@@ -1,0 +1,12 @@
+diff --git a/cmake/Modules/CMakePolicy.cmake b/cmake/Modules/CMakePolicy.cmake
+--- a/cmake/Modules/CMakePolicy.cmake	(revision be23604c17dd54318f9431bb107b4122c467ea47)
++++ b/cmake/Modules/CMakePolicy.cmake	(date 1714517198548)
+@@ -10,3 +10,7 @@
+ if(POLICY CMP0116)
+   cmake_policy(SET CMP0116 OLD)
+ endif()
++
++if(POLICY CMP0091)
++  cmake_policy(SET CMP0091 NEW)
++endif()
+\ No newline at end of file

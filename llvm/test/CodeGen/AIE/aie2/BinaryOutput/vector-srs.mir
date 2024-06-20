@@ -1,0 +1,57 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+
+# CHECK: 0: 99 0c 9d 0a vsrs.d8.s32 wl5, cm3, s1
+# CHECK: 4: 99 58 1e 0a vsrs.s8.s32 wl4, cm6, s2
+# CHECK: 8: 99 8c dd 0a vsrs.d16.s64 wh5, cm3, s1
+# CHECK: c: 99 d8 5e 0a vsrs.s16.s64 wh4, cm6, s2
+# CHECK: 10: 99 0d 9d 0a vsrs.d16.s32 wl5, bml3, s1
+# CHECK: 14: 99 59 1e 0a vsrs.s16.s32 wl4, bml6, s2
+# CHECK: 18: 99 8f dd 0a vsrs.d32.s64 wh5, bmh3, s1
+# CHECK: 1c: 99 db 5e 0a vsrs.s32.s64 wh4, bmh6, s2
+# CHECK: 20: 99 58 3e 0a vsrs.s16.s32 x4, cm6, s2
+# CHECK: 24: 99 0c bd 0a vsrs.d16.s32 x5, cm3, s1
+# CHECK: 28: 99 8c bd 0a vsrs.d32.s64 x5, cm3, s1
+# CHECK: 2c: 99 d8 3e 0a vsrs.s32.s64 x4, cm6, s2
+# CHECK: 30: 59 07 93 1a vsrsm.d16.s32 wl5, bml3, s1
+# CHECK: 34: 59 c7 66 1a vsrsm.d32.s64 wh4, bmh6, s2
+# CHECK: 38: 59 27 34 19 vsrsm.s16.s32 wl2, bml4, s3
+# CHECK: 3c: 59 e7 87 19 vsrsm.s32.s64 wl3, bmh7, s0
+
+---
+name:            test_call
+alignment:       16
+body:             |
+  bb.0 (align 16):
+
+    ; 7.3 VSRS - Shift-Round-Saturate instructions
+    $wl5 = VSRS_D8_S32_mv_w_srs  $cm3, $s1, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    $wl4 = VSRS_S8_S32_mv_w_srs  $cm6, $s2, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+    $wh5 = VSRS_D16_S64_mv_w_srs $cm3, $s1, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    $wh4 = VSRS_S16_S64_mv_w_srs $cm6, $s2, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+
+    $wl5 = VSRS_D16_S32_mv_w_srs $bml3, $s1, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    $wl4 = VSRS_S16_S32_mv_w_srs $bml6, $s2, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+    $wh5 = VSRS_D32_S64_mv_w_srs $bmh3, $s1, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    $wh4 = VSRS_S32_S64_mv_w_srs $bmh6, $s2, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+
+    $x4 = VSRS_S16_S32_mv_x_srs $cm6, $s2, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+    $x5 = VSRS_D16_S32_mv_x_srs $cm3, $s1, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    $x5 = VSRS_D32_S64_mv_x_srs $cm3, $s1, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    $x4 = VSRS_S32_S64_mv_x_srs $cm6, $s2, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+
+    $wl5 = VSRSM_D16_S32 $bml3, $s1, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    $wh4 = VSRSM_D32_S64 $bmh6, $s2, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    $wl2 = VSRSM_S16_S32 $bml4, $s3, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+    $wl3 = VSRSM_S32_S64 $bmh7, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+...

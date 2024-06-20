@@ -1,0 +1,76 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# REQUIRES: aie 
+# RUN: yaml2obj %s -o %t.o
+# RUN: ld.lld -Tdata=0 %t.o -o %t
+# RUN: obj2yaml %t | FileCheck %s
+#
+# CHECK:  - Name:            .data
+# CHECK:    Content:         0100000000000000DEBC0A0008000000 
+# CHECK:  - Name:            globalData
+# CHECK-NEXT: Type:            STT_OBJECT
+# CHECK-NEXT: Section:         .data
+# CHECK-NEXT: Binding:         STB_GLOBAL
+# CHECK-NEXT: Value:           0x8
+
+--- !ELF
+FileHeader:
+  Class:           ELFCLASS32
+  Data:            ELFDATA2LSB
+  Type:            ET_REL
+  Machine:         EM_AIE
+  Flags:           [ EF_AIE_AIE2 ]
+  SectionHeaderStringTable: .strtab
+Sections:
+  - Name:            .text
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
+    AddressAlign:    0x10
+  - Name:            .data.align.8
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_WRITE, SHF_ALLOC ]
+    AddressAlign:    0x8
+    Content:         '0100000000000000'
+  - Name:            .data.align.4
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_WRITE, SHF_ALLOC ]
+    AddressAlign:    0x4
+    Content:         DEBC0A0000000000
+  - Name:            .rela.data.align.4
+    Type:            SHT_RELA
+    Flags:           [ SHF_INFO_LINK ]
+    Link:            .symtab
+    AddressAlign:    0x4
+    Info:            .data.align.4
+    Relocations:
+      - Offset:          0x4
+        Symbol:          globalData
+        Type:            R_AIE_50
+  - Name:            .llvm_addrsig
+    Type:            SHT_LLVM_ADDRSIG
+    Flags:           [ SHF_EXCLUDE ]
+    Link:            .symtab
+    AddressAlign:    0x1
+    Symbols:         [ globalData ]
+Symbols:
+  - Name:            bigData
+    Type:            STT_OBJECT
+    Section:         .data.align.8
+    Binding:         STB_GLOBAL
+    Size:            0x8
+  - Name:            globalData
+    Type:            STT_OBJECT
+    Section:         .data.align.4
+    Binding:         STB_GLOBAL
+    Size:            0x4
+  - Name:            globalPtr
+    Type:            STT_OBJECT
+    Section:         .data.align.4
+    Binding:         STB_GLOBAL
+    Value:           0x4
+    Size:            0x4
+...

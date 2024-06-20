@@ -1,0 +1,56 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc --issue-limit=8 -start-before=post-RA-sched %s -o - | FileCheck %s
+#
+# This file checks that 2 instructions modifying the stack pointer register
+# can't be issued together.
+--- |
+  ; ModuleID = 'sp_read_write.ll'
+  target triple = "aie"
+  define dso_local void @sp_read_write() {
+  entry:
+    br label %sp_imm_conflict
+  sp_imm_conflict:
+    br label %spis_sp_imm_bundle
+  spis_sp_imm_bundle:
+    ret void
+  }
+...
+# CHECK-LABEL: bb.0
+# CHECK: padda [sp], #-32
+# CHECK-NOT: ;
+# CHECK: paddb [sp], m0
+
+# CHECK-LABEL: bb.1
+# CHECK-NEXT: ldb r0, [sp], #16
+# CHECK-NEXT: nop
+# CHECK-NEXT: padda [sp], #-32
+
+# CHECK-LABEL: bb.2
+# CHECK-NEXT: padda [sp], m0;{{.*}} ldb r0, [sp, #16]
+---
+name:            sp_read_write
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    liveins: $m0
+    ; Both lda/ldb_ptr_inc can't be issued together as they are both
+    ; overwriting the stack pointer value
+    PADDA_sp_imm -32, implicit-def $sp, implicit $sp
+    PADDB_sp $m0, implicit-def $sp, implicit $sp
+    PseudoBR %bb.1
+  bb.1.sp_imm_conflict:
+    ; PADDA (sp_imm) can't be issued with LDB_sp_imm
+    $r0 = LDB_sp_imm 16, implicit-def $sp, implicit $sp
+    PADDA_sp_imm -32, implicit-def $sp, implicit $sp
+  bb.2.spis_sp_imm_bundle:
+    liveins: $m0
+    ; PADDA (spis) can be issued with LDB_sp_imm
+    $r0 = LDB_spis 16, implicit $sp
+    PADDA_sp $m0, implicit-def $sp, implicit $sp
+...

@@ -1,0 +1,56 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc -O2 --march=aie %s --start-after=branch-relaxation --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie -dr %t | FileCheck %s
+# CHECK:       0: 03 00 10 30   add     r0, r0, r1
+# CHECK:       4: 03 00 32 30   add     r0, r2, r3
+# CHECK:       8: 03 00 54 30   add     r0, r4, r5
+# CHECK:       c: 03 00 76 30   add     r0, r6, r7
+# CHECK:      10: 03 00 98 30   add     r0, r8, r9
+# CHECK:      14: 03 00 ba 30   add     r0, r10, r11
+# CHECK:      18: 03 00 dc 30   add     r0, r12, r13
+# CHECK:      1c: 03 00 fe 30   add     r0, r14, r15
+
+--- |
+  ; ModuleID = 't.mir'
+  source_filename = "mir/aie-call.ll"
+  target datalayout = "e-m:e-p:20:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-f32:32:32-i64:32-f64:32-a:0:32-n32"
+
+  declare i32 @external_function(i32)
+
+  ; Function Attrs: nounwind
+  define i32 @test_call_external(i32 %a, i32 %b) #0 {
+    %1 = add i32 %a, %b
+    ret i32 %1
+  }
+
+  attributes #0 = { nounwind }
+
+...
+---
+name:            test_call_external
+alignment:       16
+registers:       []
+liveins:
+  - { reg: '$r6', virtual-reg: '' }
+  - { reg: '$r7', virtual-reg: '' }
+machineFunctionInfo: {}
+body:             |
+  bb.0 (%ir-block.0, align 16):
+    liveins: $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $r8, $r9, $r10, $r11, $r12, $r13, $r14, $r15
+
+     $r0 = ADD   $r0,   $r1
+     $r0 = ADD   $r2,   $r3
+     $r0 = ADD   $r4,   $r5
+     $r0 = ADD   $r6,   $r7
+     $r0 = ADD   $r8,   $r9
+     $r0 = ADD   $r10,  $r11
+     $r0 = ADD   $r12,  $r13
+     $r0 = ADD   $r14,  $r15
+    PseudoRET implicit $lr, implicit killed $r0
+
+...

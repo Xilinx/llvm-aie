@@ -1,0 +1,61 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+#
+# CHECK: 0: 09 08 4d 28 vaddmac cm0, cm0, cm2, x3, x4, r5
+# CHECK: 4: 09 08 4f 28 vaddmac cm0, cm0, cm2, x3, qx0, r5
+# CHECK: 8: 09 48 f7 20 vaddmac cm1, cm1, cm2, y3, qx1, r4
+# CHECK: c: 09 90 4b a9 vaddmac cm2, cm2, cm4, x2, qx2, r21
+# CHECK: 10: 09 cc fb 03 vaddmac cm7, cm7, cm3, y4, qx3, r0
+# CHECK: 14: 09 09 4d 28 vaddmsc cm0, cm0, cm2, x3, x4, r5
+# CHECK: 18: 09 09 cf 03 vaddmsc cm7, cm7, cm2, x3, qx0, r0
+# CHECK: 1c: 09 49 73 f2 vaddmsc cm4, cm4, cm2, y2, qx1, r30
+# CHECK: 20: 09 89 cf 79 vaddmsc cm3, cm3, cm2, x3, qx2, r15
+# CHECK: 24: 09 c9 7f 28 vaddmsc cm0, cm0, cm2, y5, qx3, r5
+# CHECK: 28: 09 82 c4 00 vsubmac cm1, cm1, cm0, x1, x2, r0
+# CHECK: 2c: 09 02 c7 00 vsubmac cm1, cm1, cm0, x1, qx0, r0
+# CHECK: 30: 09 46 73 80 vsubmac cm0, cm0, cm1, y2, qx1, r16
+# CHECK: 34: 09 8a 53 49 vsubmac cm2, cm2, cm2, x4, qx2, r9
+# CHECK: 38: 09 ce ff da vsubmac cm5, cm5, cm3, y5, qx3, r27
+# CHECK: 3c: 09 8b c4 08 vsubmsc cm1, cm1, cm2, x1, x2, r1
+# CHECK: 40: 09 03 d7 98 vsubmsc cm1, cm1, cm0, x5, qx0, r19
+# CHECK: 44: 09 4b 73 b3 vsubmsc cm6, cm6, cm2, y2, qx1, r22
+# CHECK: 48: 09 97 db fa vsubmsc cm5, cm5, cm5, x6, qx2, r31
+# CHECK: 4c: 09 cf 7f 8a vsubmsc cm4, cm4, cm3, y5, qx3, r17
+
+---
+name:            vaddmac
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; VADDMAC / VADDMSC / VSUBMAC / VSUBMSC - Double accumulator matrix mul-acc/sub
+    $cm0 = VADDMAC_vmac_bm_core_dense $cm0, $cm2, $x3, $x4, $r5
+    $cm0 = VADDMAC_vmac_cm_core_sparse_narrow $cm0, $cm2, $x3, $qx0, $r5
+    $cm1 = VADDMAC_vmac_cm_core_sparse_wide $cm1, $cm2, $y3, $qx1, $r4
+    $cm2 = VADDMAC_vmac_cm_core_sparse_narrow $cm2, $cm4, $x2, $qx2, $r21
+    $cm7 = VADDMAC_vmac_cm_core_sparse_wide $cm7, $cm3, $y4, $qx3, $r0
+    $cm0 = VADDMSC_vmac_bm_core_dense $cm0, $cm2, $x3, $x4, $r5
+    $cm7 = VADDMSC_vmac_cm_core_sparse_narrow $cm7, $cm2, $x3, $qx0, $r0
+    $cm4 = VADDMSC_vmac_cm_core_sparse_wide $cm4, $cm2, $y2, $qx1, $r30
+    $cm3 = VADDMSC_vmac_cm_core_sparse_narrow $cm3, $cm2, $x3, $qx2, $r15
+    $cm0 = VADDMSC_vmac_cm_core_sparse_wide $cm0, $cm2, $y5, $qx3, $r5
+    $cm1 = VSUBMAC_vmac_bm_core_dense $cm1, $cm0, $x1, $x2, $r0
+    $cm1 = VSUBMAC_vmac_cm_core_sparse_narrow $cm1, $cm0, $x1, $qx0, $r0
+    $cm0 = VSUBMAC_vmac_cm_core_sparse_wide $cm0, $cm1, $y2, $qx1, $r16
+    $cm2 = VSUBMAC_vmac_cm_core_sparse_narrow $cm2, $cm2, $x4, $qx2, $r9
+    $cm5 = VSUBMAC_vmac_cm_core_sparse_wide $cm5, $cm3, $y5, $qx3, $r27
+    $cm1 = VSUBMSC_vmac_bm_core_dense $cm1, $cm2, $x1, $x2, $r1
+    $cm1 = VSUBMSC_vmac_cm_core_sparse_narrow $cm1, $cm0, $x5, $qx0, $r19
+    $cm6 = VSUBMSC_vmac_cm_core_sparse_wide $cm6, $cm2, $y2, $qx1, $r22
+    $cm5 = VSUBMSC_vmac_cm_core_sparse_narrow $cm5, $cm5, $x6, $qx2, $r31
+    $cm4 = VSUBMSC_vmac_cm_core_sparse_wide $cm4, $cm3, $y5, $qx3, $r17
+...

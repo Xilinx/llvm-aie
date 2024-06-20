@@ -1,0 +1,57 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc %s -mtriple=aie --start-before=livedebugvalues --filetype=obj -show-mc-encoding -o %t
+# RUN: llvm-objdump -d %t --triple=aie | FileCheck %s
+# XFAIL: *
+
+# Disassembly error reproducer:
+# The following Composite Instruction (I128_LDA_LDB_ST_MV0_MV1_VECM) will be
+# decoded as a I128_LDA_LDB_ST_MV0_MV1SSB_VEC_SHFT_VEC_STRM_VEC_SHORT, which is
+# not a problem (in nML, NOP_VECM is equal - in terms of encoding - to an
+# AND-rule of NOP_VECSHFT, NOP_VECSTRM, NOP_VECSHORT, same applies for NOP_MV1
+# and NOP_MV1SSB). The problem is that the disassembler will decode NOP_VECM in
+# the decodeVecShft/decodeVecStrm/decodeVecShort where we should have
+# NOP_VECSHFT, NOP_VECSTRM, NOP_VECSHORT respectively. It is a consequence of
+# encoding them differently (we did that to avoid conflicts on the disassembler
+# side). So we need to find a way to encode NOP_VECM and [NOP_VECSHFT,
+# NOP_VECSTRM, NOP_VECSHORT] in the same way (their encoding within the slot
+# must match) but in the meantime, they need to be different on the encoder's
+# standpoint. We can use the same tricks we have for NOP_VECM and NOP_VECA:
+# 1) They sit in different DecoderTables (32 and 64) so there is no ambiguity
+# when decoding (decodeVecAll checks in DecoderTable64 whereas decodeVecMed
+# checks in DecoderTable32).
+# 2) They both have different "context" encoding: out of the slot, the
+# encoding is different. This part will never be encoded so we can always
+# tweaks values in here (implies that instr32 must be packetized as the other
+# formats).
+
+# CHECK-LABEL: <target_function>:
+# We have currently nop_mv1 ; nop_vecm ; nop_vecm ; nop_vecm ;
+# where we should have
+# CHECK-NEXT: nop_mv1ssb ; nop_vecshft ; nop_vecstrm ; nop_vecshrt ;
+
+--- |
+  ; ModuleID = 'disass.mir'
+
+  define i32 @target_function() {
+  entry:
+    ret i32 0
+  }
+
+...
+---
+name:            target_function
+body:             |
+  bb.0:
+    I128_LDA_LDB_ST_MV0_MV1_VECM 0, 0, 0, 0, 0, 0 {
+      NOP_LDA
+      NOP_LDB
+      NOP_ST
+      NOP_MV0
+      NOP_MV1
+      NOP_VECM
+    }

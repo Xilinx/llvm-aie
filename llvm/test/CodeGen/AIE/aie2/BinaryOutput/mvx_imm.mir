@@ -1,0 +1,46 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+
+# CHECK: 0: 19 01 00 14 movx r0, #-1024
+# CHECK: 4: 19 29 02 10 movx r1, #10
+# CHECK: 8: 19 59 04 10 movx r2, #22
+# CHECK: c: 19 7d 06 10 movx r3, #31
+# CHECK: 10: 19 a5 08 10 movx r4, #41
+# CHECK: 14: 19 85 0a 10 movx r5, #33
+# CHECK: 18: 19 35 0c 10 movx r6, #13
+# CHECK: 1c: 19 4d 0e 10 movx r7, #19
+# CHECK: 20: 19 e9 50 10 movx r8, #122
+# CHECK: 24: 19 01 12 12 movx r9, #512
+# CHECK: 28: 19 c9 d4 13 movx r10, #1010
+# CHECK: 2c: 19 fd d6 13 movx r11, #1023
+# CHECK: 30: 19 91 41 10 movx lc, #100
+
+---
+name:            test
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    $r0  = MOVX_alu_cg -1024
+    $r1  = MOVX_alu_cg 10
+    $r2  = MOVX_alu_cg 22
+    $r3  = MOVX_alu_cg 31
+    $r4  = MOVX_alu_cg 41
+    $r5  = MOVX_alu_cg 33
+    $r6  = MOVX_alu_cg 13
+    $r7  = MOVX_alu_cg 19
+    $r8  = MOVX_alu_cg 122
+    $r9  = MOVX_alu_cg 512
+    $r10 = MOVX_alu_cg 1010
+    $r11 = MOVX_alu_cg 1023
+    $lc  = MOVX_alu_cg 100
+...

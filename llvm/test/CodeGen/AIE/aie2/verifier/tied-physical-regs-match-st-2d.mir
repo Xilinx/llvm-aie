@@ -1,0 +1,56 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: not --crash llc -mtriple=aie2 -run-pass machineverifier -o /dev/null %s 2>&1 | FileCheck %s
+
+# This test ensures that the Machine Verifier detects tied physical registers
+# that don't match.
+
+---
+name:            tied_ok
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    $p6, $dc3 = ST_2D_dms_sts $p6, $p6, $d3
+    $p6, $dc4 = ST_2D_S8 $r6, $p6, $d4
+    $p6, $dc5 = ST_2D_S16 $r6, $p6, $d5
+...
+
+
+# Virtual registers are not required to be tied.
+---
+name:            virtual_ok
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    %0:ep = COPY $p0
+    %10:ed = COPY $d0
+    %20:ep, %21:edc = ST_2D_dms_sts $m4, %0, %10
+    %30:ep, %31:edc = ST_2D_S8 $r5, %0, %10
+    %40:ep, %41:edc = ST_2D_S16 $r6, %0, %10
+...
+
+
+---
+name:            tied_nok
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    ; CHECK-COUNT-3: Bad machine code: Tied physical registers must match
+    $p5, $dc3 = ST_2D_dms_sts $p6, $p5, $d2
+    $p5, $dc4 = ST_2D_S8 $r6, $p5, $d5
+    $p5, $dc1 = ST_2D_S16 $r6, $p5, $d0
+
+
+    ; Below instructions have hasExtraSrcRegAllocReq and hasExtraDefRegAllocReq attributes
+    ; which essentially bypass the register flags. The renamable attributes
+    ; below should trigger no verification error.
+    ; CHECK-NOT: Bad machine code
+    $p3, renamable $dc4 = ST_2D_dms_sts $p2, $p3, renamable $d4
+    $p3, renamable $dc4 = ST_2D_S8 $r2, $p3, renamable $d4
+    $p3, renamable $dc4 = ST_2D_S16 $r2, $p3, renamable $d4
+...

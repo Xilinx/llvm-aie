@@ -1,0 +1,27 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+
+# CHECK: 0: 99 80 1d 1a vneg_gtz8 x4, r19:r18, x1
+# CHECK: 4: 39 82 cd 1a vneg_gtz16 x5, r20, x4
+# CHECK: 8: d9 82 bd 18 vneg_gtz32 x1, r19, x5
+
+---
+name:            test_vneg_gtx
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; VNEG_GTZ - Combined vector negation and zero comparison
+    $x4, $l1  = VNEG_GTZ8  $x1
+    $x5, $r20 = VNEG_GTZ16 $x4
+    $x1, $r19 = VNEG_GTZ32 $x5
+...

@@ -1,0 +1,54 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+#
+# CHECK: 0: 99 00 0c 18 vlt.d8 r17:r16, x0, x1
+# CHECK: 4: b9 11 0c 18 vlt.d16 r16, x2, x3
+# CHECK: 8: d9 22 6c 18 vlt.d32 r22, x4, x5
+# CHECK: c: 99 33 1e 18 vge.d8 r19:r18, x6, x7
+# CHECK: 10: b9 44 1e 18 vge.d16 r17, x8, x9
+# CHECK: 14: d9 55 7e 18 vge.d32 r23, x10, x11
+# CHECK: 18: 99 80 2c 18 vlt.s8 r21:r20, x0, x1
+# CHECK: 1c: b9 91 2c 18 vlt.s16 r18, x2, x3
+# CHECK: 20: d9 a2 5c 18 vlt.s32 r21, x4, x5
+# CHECK: 24: 99 b3 3e 18 vge.s8 r23:r22, x6, x7
+# CHECK: 28: b9 c4 3e 18 vge.s16 r19, x8, x9
+# CHECK: 2c: d9 d5 4e 18 vge.s32 r20, x10, x11
+# CHECK: 30: b9 22 0d 18 vlt.bf16 r16, x4, x5
+# CHECK: 34: 39 1c 7f 18 vge.bf16 r23, x3, x8
+
+---
+name:            vcmp
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; VLT/VGE – Vector comparison
+
+    $l0 = VLT_D8 $x0, $x1, implicit $crvaddsign
+    $r16 = VLT_D16 $x2, $x3, implicit $crvaddsign
+    $r22 = VLT_D32 $x4, $x5, implicit $crvaddsign
+
+    $l1 = VGE_D8 $x6, $x7, implicit $crvaddsign
+    $r17 = VGE_D16 $x8, $x9, implicit $crvaddsign
+    $r23 = VGE_D32 $x10, $x11, implicit $crvaddsign
+
+    $l2 = VLT_S8 $x0, $x1
+    $r18 = VLT_S16 $x2, $x3
+    $r21 = VLT_S32 $x4, $x5
+
+    $l3 = VGE_S8 $x6, $x7
+    $r19 = VGE_S16 $x8, $x9
+    $r20 = VGE_S32 $x10, $x11
+
+    $r16 = VLT_BF16 $x4, $x5
+    $r23 = VGE_BF16 $x3, $x8
+...

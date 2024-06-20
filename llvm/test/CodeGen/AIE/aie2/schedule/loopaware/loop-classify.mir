@@ -1,0 +1,70 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc --mtriple=aie2 --start-before=postmisched --debug-only=sched-blocks \
+# RUN: --aie-loop-aware=1 %s -o /dev/null |& FileCheck %s
+# REQUIRES: asserts
+
+# Check that a loop that has a loop as epilogue isn't considered a loop
+# We should only recognise bb.2 as loop. bb.3, definitely not a loop,
+# gets scheduled before bb.1 because of post-order traversal
+---
+name:            epiLoop
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: epiLoop
+  ; CHECK: MBB scheduling sequence : 2 -> 3 -> 1 -> 0
+  bb.0:
+    liveins: $r0, $r1
+    successors: %bb.1
+  bb.1:
+    liveins: $r0, $r1
+    successors: %bb.1, %bb.2
+    $r0 = ADD_add_r_ri $r0, -1, implicit-def $srcarry
+    JNZ $r0, %bb.1
+    DelayedSchedBarrier
+  bb.2:
+    liveins: $r1
+    successors: %bb.2, %bb.3
+    $r1 = ADD_add_r_ri $r1, -1, implicit-def $srcarry
+    JNZ $r1, %bb.2
+    DelayedSchedBarrier
+  bb.3:
+    RET implicit $lr
+    DelayedSchedBarrier
+...
+
+# bb.2 is not a dedicated exit of the loop bb.1, and can therefore not
+# serve as an epiloge. Hence bb.1 can not be considered as a loop
+---
+name:            nonDedicatedEpi
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: nonDedicatedEpi
+  ; CHECK: MBB scheduling sequence : 3 -> 2 -> 1 -> 0
+  bb.0:
+    liveins: $r0
+    successors: %bb.1, %bb.2
+    JNZ $r0, %bb.2
+    DelayedSchedBarrier
+  bb.1:
+    liveins: $r0
+    successors: %bb.1, %bb.2
+    $r0 = ADD_add_r_ri $r0, -1, implicit-def $srcarry
+    JNZ $r0, %bb.1
+    DelayedSchedBarrier
+  bb.2:
+    liveins: $r0
+    successors: %bb.3
+    $r0 = ADD_add_r_ri $r0, -1, implicit-def $srcarry
+  bb.3:
+    liveins: $r0
+    RET implicit $lr, implicit $r0
+    DelayedSchedBarrier
+...
+
+
+

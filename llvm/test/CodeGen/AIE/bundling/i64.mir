@@ -1,0 +1,124 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc --issue-limit=8 -start-before=post-RA-sched %s -o - | FileCheck %s
+#
+# This file checks that the currently supported instr64 formats are used
+--- |
+  ; ModuleID = 'mix.ll'
+  target triple = "aie"
+
+  define dso_local i32 @mix() {
+  entry:
+    br label %alu_lng
+  alu_lng:
+    br label %alu_mv0_mv1
+  alu_mv0_mv1:
+    br label %menu
+  st_lng:
+    br label %menu
+  st_mv0_mv1:
+    br label %menu
+  st_alu_mv0:
+    br label %menu
+  lda_lng:
+    br label %menu
+  lda_ldb_alu:
+    br label %menu
+  lda_mv0_mv1:
+    br label %menu
+  menu:
+    ret i32 0
+  }
+...
+# CHECK-LABEL: bb.1
+# CHECK: and     r12, r6, r7;            mov.u20 r13, #2
+# CHECK-LABEL: bb.2
+# CHECK: or      r12, r6, r7;            mov     r13, sp;                mov1    r0, SS.md0[8]
+# CHECK-LABEL: bb.3
+# CHECK: st      r6, [p0];               mov.u20 r13, #2
+# CHECK-LABEL: bb.4
+# CHECK: vst     wr0, [p0];              mov     r13, sp;                mov1    r0, SS.md0[8]
+# CHECK-LABEL: bb.5
+# CHECK: vst     wr0, [p0];              eq      r12, r6, r7;            mov     r13, sp
+# CHECK-LABEL: bb.6
+# CHECK: lda     r0, [p0];               mov.u20 r14, #4242
+# CHECK-LABEL: bb.7
+# CHECK: padda   [sp], #-64;             ldb     r1, [sp, #16];          adc     r14, r6, r7
+# CHECK-LABEL: bb.8
+# CHECK: lda     r0, [p0];               mov     r13, sp;                mov1    r1, SS.md0[8]
+
+
+---
+name:            mix
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    liveins: $p0, $p1, $r6, $r7, $r8, $r9, $md0
+    frame-setup PADDA_sp_imm 64, implicit-def $sp, implicit $sp
+    PseudoBR %bb.1
+  bb.1.alu_lng:
+    liveins: $p0, $p1, $r6, $r7, $r8, $r9, $md0
+    $r12 = AND  $r6, renamable $r7
+    $r13 = MOV_U20 2
+    PseudoBR %bb.2
+  bb.2.alu_mv0_mv1:
+    liveins: $p0, $p1, $r6, $r7, $r8, $r9, $md0
+    $r12 = OR  $r6, renamable $r7
+    $r13 = MV_SPECIAL2R $sp
+    $r0 = MV_SSB2SCL_0 $md0
+    PseudoBR %bb.3
+  bb.3.st_lng:
+    liveins: $p0, $p1, $r6, $r7, $r8, $r9, $md0
+    ST_ind_GPR  $r6,  $p0
+    $r13 = MOV_U20 2
+    PseudoBR %bb.4
+  bb.4.st_mv0_mv1:
+    liveins: $p0, $p1, $r6, $r7, $r8, $r9, $md0, $wr0
+    WVST_ind  $wr0,  $p0
+    $r13 = MV_SPECIAL2R $sp
+    $r0 = MV_SSB2SCL_0 $md0
+    PseudoBR %bb.5
+  bb.5.st_alu_mv0:
+    liveins: $p0, $p1, $r6, $r7, $r8, $r9, $md0, $wr0
+    WVST_ind  $wr0,  $p0
+    $r13 = MV_SPECIAL2R $sp
+    $r12 = EQ $r6, $r7
+    PseudoBR %bb.6
+  bb.6.lda_lng:
+    liveins: $p0, $p1, $r6, $r7, $r8, $r9, $md0
+    $r0 = LDA_ind_GPR  $p0
+    $r14 = MOV_U20 4242
+    PseudoBR %bb.7
+  bb.7.lda_ldb_alu:
+    liveins: $p0, $p1, $r6, $r7, $r8, $r9, $md0
+    $r1 = LDB_spis 16, implicit $sp
+    $r14 = ADC $r6, $r7
+    PADDA_sp_imm -64, implicit-def $sp, implicit $sp
+    PseudoBR %bb.8
+  bb.8.lda_mv0_mv1:
+    liveins: $p0, $p1, $r6, $r7, $r8, $r9, $md0
+    $r0 = LDA_ind_GPR  $p0
+    $r13 = MV_SPECIAL2R $sp
+    $r1 = MV_SSB2SCL_0 $md0
+    PseudoBR %bb.100
+  bb.100.menu:
+    liveins: $p0, $p1, $r6, $r7, $r8, $r9, $md0
+    $r12 = MOV $p0
+    $p0 = MOV $r12
+    ST_spis_PTR killed  $p0, -64, implicit $sp
+    $r13 = MV_SPECIAL2R $sp
+    $r12 = nuw ADDI killed $r12, -56
+    $r13 = MOV_U20 2
+    $p0 = MOV $r12
+    ST_ind_GPR killed  $r13,  $p0
+    $r0 = LDA_ind_GPR  $p0
+    $r1 = LDB_ind killed  $p0
+    $p0 = MOV killed $r12
+    frame-destroy PADDA_sp_imm -64, implicit-def $sp, implicit $sp
+    PseudoRET implicit $lr, implicit $r0
+...

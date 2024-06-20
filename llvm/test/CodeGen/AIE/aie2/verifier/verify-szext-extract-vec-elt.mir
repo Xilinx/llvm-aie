@@ -1,0 +1,37 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: not --crash llc -mtriple=aie2 -run-pass machineverifier -o /dev/null %s 2>&1 | FileCheck %s
+
+# This test ensures that the Machine Verifier detects illegal G_<S/Z>EXT_EXTRACT_VECTOR_ELT
+
+---
+name:            ok
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    %0:_(<16 x s16>) = COPY $wl0
+    %1:_(s32) = G_CONSTANT i32 1
+    %2:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %0(<16 x s16>), %1(s32)
+    %3:_(s32) = G_AIE_ZEXT_EXTRACT_VECTOR_ELT %0(<16 x s16>), %1(s32)
+...
+
+---
+name:            nok
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; CHECK-COUNT-4: Bad machine code: Expected 32bit scalar destination
+    ; CHECK-NOT: Bad machine code
+    %0:_(<16 x s16>) = COPY $wl0
+    %1:_(s32) = G_CONSTANT i32 1
+    %2:_(s16) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %0(<16 x s16>), %1(s32)
+    %3:_(s16) = G_AIE_ZEXT_EXTRACT_VECTOR_ELT %0(<16 x s16>), %1(s32)
+    %4:_(<32 x s8>) = COPY $wl0
+    %5:_(s8) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %4(<32 x s8>), %1(s32)
+    %6:_(s8) = G_AIE_ZEXT_EXTRACT_VECTOR_ELT %4(<32 x s8>), %1(s32)
+...

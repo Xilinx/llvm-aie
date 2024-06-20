@@ -1,0 +1,69 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr %t | FileCheck --ignore-case %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr %t | FileCheck %s
+
+# CHECK: 0: 79 ab 08 1a vshuffle x4, x5, x6, r17
+# CHECK: 4: f9 9c 80 18 vshuffle x1, x3, x9, r1
+# CHECK: 8: 79 8a 85 1b vshuffle x7, x1, x4, r11
+# CHECK: c: f9 9c c0 18 vshuffle bml1, x3, x9, r1
+# CHECK: 10: 79 8a c5 1c vshuffle bmh1, x1, x4, r11
+# CHECK: 14: 79 91 47 19 vshuffle bml2, x2, x2, r15
+# CHECK: 18: 79 aa 43 1d vshuffle bmh2, x5, x4, r7
+# CHECK: 1c: f9 10 c6 1a vshuffle bml5, x2, x1, r12
+# CHECK: 20: 79 bb c4 1e vshuffle bmh5, x7, x6, r9
+# CHECK: 24: f9 9c 40 18 vshuffle bml0, x3, x9, r1
+# CHECK: 28: 79 8a 45 1c vshuffle bmh0, x1, x4, r11
+# CHECK: 2c: 79 91 c7 19 vshuffle bml3, x2, x2, r15
+# CHECK: 30: 79 aa c3 1d vshuffle bmh3, x5, x4, r7
+# CHECK: 34: f9 10 46 1b vshuffle bml6, x2, x1, r12
+# CHECK: 38: 79 bb 44 1f vshuffle bmh6, x7, x6, r9
+# CHECK: 3c: f9 9c 40 1a vshuffle bml4, x3, x9, r1
+# CHECK: 40: 79 8a 45 1e vshuffle bmh4, x1, x4, r11
+# CHECK: 44: 79 91 c7 1b vshuffle bml7, x2, x2, r15
+# CHECK: 48: 79 aa c3 1f vshuffle bmh7, x5, x4, r7
+
+
+---
+name:            test_vshuffle
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; 8.2.3 VSHUFFLE - Shuffle vector
+    $x4 = VSHUFFLE $x5, $x6, $r17
+    $x1 = VSHUFFLE $x3, $x9, $r1
+    $x7 = VSHUFFLE $x1, $x4, $r11
+
+    $bml1 = VSHUFFLE $x3, $x9, $r1
+    $bmh1 = VSHUFFLE $x1, $x4, $r11
+
+    $bml2 = VSHUFFLE $x2, $x2, $r15
+    $bmh2 = VSHUFFLE $x5, $x4, $r7
+
+    $bml5 = VSHUFFLE $x2, $x1, $r12
+    $bmh5 = VSHUFFLE $x7, $x6, $r9
+
+
+    $bml0 = VSHUFFLE $x3, $x9, $r1
+    $bmh0 = VSHUFFLE $x1, $x4, $r11
+
+    $bml3 = VSHUFFLE $x2, $x2, $r15
+    $bmh3 = VSHUFFLE $x5, $x4, $r7
+
+    $bml6 = VSHUFFLE $x2, $x1, $r12
+    $bmh6 = VSHUFFLE $x7, $x6, $r9
+
+    $bml4 = VSHUFFLE $x3, $x9, $r1
+    $bmh4 = VSHUFFLE $x1, $x4, $r11
+
+    $bml7 = VSHUFFLE $x2, $x2, $r15
+    $bmh7 = VSHUFFLE $x5, $x4, $r7
+...

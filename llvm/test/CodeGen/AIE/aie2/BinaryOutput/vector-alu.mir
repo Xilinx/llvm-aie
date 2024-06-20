@@ -1,0 +1,89 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck %s
+
+# CHECK: 0: 79 ab 28 1a vshift x4, x5, x6, r17
+# CHECK: 4: 79 ab 18 1a vshift.align x4, x5, s0, x6, r17
+# CHECK: 8: 19 2b 00 1a vadd.8 x4, x5, x6
+# CHECK: c: 39 2b 00 1a vadd.16 x4, x5, x6
+# CHECK: 10: 59 2b 00 1a vadd.32 x4, x5, x6
+# CHECK: 14: 19 2b 01 1a vsub.8 x4, x5, x6
+# CHECK: 18: 39 2b 01 1a vsub.16 x4, x5, x6
+# CHECK: 1c: d9 55 01 1a vsub.32 x4, x10, x11
+# CHECK: 20: 09 54 91 4f vmul cm5, x4, x5, r9
+# CHECK: 24: 09 94 93 4f vmul cm5, x4, qx2, r9
+# CHECK: 28: 09 50 bb 9f vmul cm4, y4, qx1, r19
+# CHECK: 2c: 09 8c 8f a7 vmul cm3, x3, qx2, r20
+# CHECK: 30: 09 48 b7 0f vmul cm2, y3, qx1, r1
+# CHECK: 34: 09 9e 8d 67 vnegmul cm7, x3, x6, r12
+# CHECK: 38: 09 9e 8f 67 vnegmul cm7, x3, qx2, r12
+# CHECK: 3c: 09 5a b7 6f vnegmul cm6, y3, qx1, r13
+# CHECK: 40: 09 86 8b 07 vnegmul cm1, x2, qx2, r0
+# CHECK: 44: 09 42 b3 2f vnegmul cm0, y2, qx1, r5
+# CHECK: 48: 09 54 11 4b vmac cm5, cm6, x4, x5, r9
+# CHECK: 4c: 09 da 08 5c vmsc cm6, cm8, x2, x3, r11
+# CHECK: 50: 09 57 11 4b vnegmac cm5, cm6, x4, x5, r9
+# CHECK: 54: 09 d9 08 5c vnegmsc cm6, cm8, x2, x3, r11
+# CHECK: 58: 09 00 93 48 vmac cm0, cm1, x4, qx0, r9
+# CHECK: 5c: 09 44 33 31 vmac cm1, cm2, y2, qx1, r6
+# CHECK: 60: 09 8b 87 59 vnegmac cm2, cm3, x1, qx2, r11
+# CHECK: 64: 09 cf 3f 12 vnegmac cm3, cm4, y5, qx3, r2
+# CHECK: 68: 09 12 0b fa vmsc cm4, cm4, x2, qx0, r31
+# CHECK: 6c: 09 16 33 b1 vmsc cm5, cm2, y2, qx0, r22
+# CHECK: 70: 09 19 8b 3a vnegmsc cm6, cm5, x2, qx0, r7
+# CHECK: 74: 09 1d 33 03 vnegmsc cm7, cm6, y2, qx0, r0
+---
+name:            test_call
+alignment:       16
+body:             |
+  bb.0 (align 16):
+
+    ; 8.2.4 VSHIFT - Shift vector
+    $x4 = VSHIFT $x5, $x6, $r17
+    ; 8.2.5 VSHIFT_ALIGN - Shift vector
+    $x4 = VSHIFT_ALIGN $x5, $s0, $x6, $r17
+
+    ; 8.3.1 VADD/VSUB - Vector addition / subtraction
+    $x4 = VADD_8 $x5, $x6
+    $x4 = VADD_16 $x5, $x6
+    $x4 = VADD_32 $x5, $x6
+    $x4 = VSUB_8 $x5, $x6
+    $x4 = VSUB_16 $x5, $x6
+    $x4 = VSUB_32 $x10, $x11
+
+    ; 9.9 VMUL / VNEGMUL - Matrix multiplication
+    $cm5 = VMUL_vmac_cm_core_dense $x4, $x5, $r9
+    $cm5 = VMUL_vmac_cm_core_sparse_narrow $x4, $qx2, $r9
+    $cm4 = VMUL_vmac_cm_core_sparse_wide $y4, $qx1, $r19
+    $cm3 = VMUL_vmac_cm_core_sparse_narrow $x3, $qx2, $r20
+    $cm2 = VMUL_vmac_cm_core_sparse_wide $y3, $qx1, $r1
+    $cm7 = VNEGMUL_vmac_cm_core_dense $x3, $x6, $r12
+    $cm7 = VNEGMUL_vmac_cm_core_sparse_narrow $x3, $qx2, $r12
+    $cm6 = VNEGMUL_vmac_cm_core_sparse_wide $y3, $qx1, $r13
+    $cm1 = VNEGMUL_vmac_cm_core_sparse_narrow $x2, $qx2, $r0
+    $cm0 = VNEGMUL_vmac_cm_core_sparse_wide $y2, $qx1, $r5
+
+    ; 9.11 VMAC / VMSC / VNEGMAC / VNEGMSC - Matrix multiplyaccumulate/subtract
+    $cm5 = VMAC_vmac_cm_core_dense $cm6, $x4, $x5, $r9
+    $cm6 = VMSC_vmac_cm_core_dense $cm8, $x2, $x3, $r11
+    $cm5 = VNEGMAC_vmac_cm_core_dense $cm6, $x4, $x5, $r9
+    $cm6 = VNEGMSC_vmac_cm_core_dense $cm8, $x2, $x3, $r11
+
+    $cm0 = VMAC_vmac_cm_core_sparse_narrow $cm1, $x4, $qx0, $r9
+    $cm1 = VMAC_vmac_cm_core_sparse_wide $cm2, $y2, $qx1, $r6
+    $cm2 = VNEGMAC_vmac_cm_core_sparse_narrow $cm3, $x1, $qx2, $r11
+    $cm3 = VNEGMAC_vmac_cm_core_sparse_wide $cm4, $y5, $qx3, $r2
+    $cm4 = VMSC_vmac_cm_core_sparse_narrow $cm4, $x2, $qx0, $r31
+    $cm5 = VMSC_vmac_cm_core_sparse_wide $cm2, $y2, $qx0, $r22
+    $cm6 = VNEGMSC_vmac_cm_core_sparse_narrow $cm5, $x2, $qx0, $r7
+    $cm7 = VNEGMSC_vmac_cm_core_sparse_wide $cm6, $y2, $qx0, $r0
+...

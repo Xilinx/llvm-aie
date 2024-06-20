@@ -1,0 +1,68 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: not --crash llc -mtriple=aie2 -run-pass machineverifier -o /dev/null %s 2>&1 | FileCheck %s
+
+# This test ensures that the Machine Verifier detects tied physical registers
+# that don't match.
+
+---
+name:            tied_ok
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    $dc2, $p6, $dc0, $dc4 = LDA_3D_dms_lda $p6, $d0_3d
+    $r7, $p5, $dc1, $dc5 = LDA_3D_S8_dmhb_lda $p5, $d1_3d
+    $r7, $p6, $dc2, $dc6 = LDA_3D_S16_dmhb_lda $p6, $d2_3d
+    $r8, $p5, $dc3, $dc7 = LDA_3D_U8_dmhb_lda $p5, $d3_3d
+    $r8, $p6, $dc0, $dc4 = LDA_3D_U16_dmhb_lda $p6, $d0_3d
+    $q0, $p6, $dc0, $dc4 = LDA_3D_dmv_lda_q $p6, $d0_3d
+...
+
+
+# Virtual registers are not required to be tied.
+---
+name:            virtual_ok
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    %0:ep = COPY $p0
+    %10:eds = COPY $d0_3d
+    $m3, %20:ep, %21:edc, %22:edc = LDA_3D_dms_lda %0, %10
+    $r5, %30:ep, %31:edc, %32:edc = LDA_3D_S8_dmhb_lda %0, %10
+    $r4, %40:ep, %41:edc, %42:edc = LDA_3D_S16_dmhb_lda %0, %10
+    $r0, %50:ep, %51:edc, %52:edc = LDA_3D_U8_dmhb_lda %0, %10
+    $r3, %60:ep, %61:edc, %62:edc = LDA_3D_U16_dmhb_lda %0, %10
+    $q3, %70:ep, %71:edc, %72:edc = LDA_3D_dmv_lda_q %0, %10
+...
+
+
+---
+name:            tied_nok
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    ; CHECK-COUNT-6: Bad machine code: Tied physical registers must match
+    $p6, $p5, $dc3, $dc7 = LDA_3D_dms_lda $p5, $d2_3d
+    $r7, $p5, $dc7, $dc6 = LDA_3D_S8_dmhb_lda $p5, $d1_3d
+    $r7, $p6, $dc0, $dc5 = LDA_3D_S16_dmhb_lda $p6, $d0_3d
+    $r8, $p5, $dc2, $dc2 = LDA_3D_U8_dmhb_lda $p5, $d3_3d
+    $r8, $p6, $dc3, $dc6 = LDA_3D_U16_dmhb_lda $p6, $d3_3d
+    $q0, $p6, $dc0, $dc4 = LDA_3D_dmv_lda_q $p6, $d1_3d
+
+    ; Below instructions have hasExtraSrcRegAllocReq and hasExtraDefRegAllocReq attributes
+    ; which essentially bypass the register flags. The renamable attributes
+    ; below should trigger no verification error.
+    ; CHECK-NOT: Bad machine code
+    $p2, $p3, renamable $dc2, renamable $dc6 = LDA_3D_dms_lda $p3, renamable $d2_3d
+    $r7, $p5, renamable $dc0, renamable $dc4 = LDA_3D_S8_dmhb_lda $p5, renamable $d0_3d
+    $r7, $p6, renamable $dc1, renamable $dc5 = LDA_3D_S16_dmhb_lda $p6, renamable $d1_3d
+    $r8, $p5, renamable $dc3, renamable $dc7 = LDA_3D_U8_dmhb_lda $p5, renamable $d3_3d
+    $r8, $p6, renamable $dc2, renamable $dc6 = LDA_3D_U16_dmhb_lda $p6, renamable $d2_3d
+    $q0, $p6, renamable $dc0, renamable $dc4 = LDA_3D_dmv_lda_q $p6, renamable $d0_3d
+
+...

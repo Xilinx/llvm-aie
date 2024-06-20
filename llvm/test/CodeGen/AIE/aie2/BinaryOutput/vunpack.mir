@@ -1,0 +1,29 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# CHECK lines automatically generated using update_encodings.py
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2 -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2 -dr --no-print-imm-hex %t | FileCheck --ignore-case %s
+
+# CHECK: 0: 19 00 11 38 vunpack.d8.d4 x4, wl0
+# CHECK: 4: 19 50 51 3b vunpack.d16.d8 x5, wh6
+# CHECK: 8: 19 60 90 3b vunpack.s8.s4 x1, wl7
+# CHECK: c: 19 b0 50 39 vunpack.s16.s8 x2, wh2
+
+---
+name:            test_vnpack
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    ; VUNPACK - Vector word unpacking
+    $x4 = VUNPACK_D8_D4 $wl0, implicit $crunpacksign
+    $x5 = VUNPACK_D16_D8 $wh6, implicit $crunpacksign
+    $x1 = VUNPACK_S8_S4 $wl7
+    $x2 = VUNPACK_S16_S8 $wh2
+...
