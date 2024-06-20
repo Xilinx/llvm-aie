@@ -188,23 +188,16 @@ void ScheduleDAGMutation::anchor() {}
 // Machine Instruction Scheduling Pass and Registry
 //===----------------------------------------------------------------------===//
 
-MachineSchedContext::MachineSchedContext() {
-  RegClassInfo = new RegisterClassInfo();
-}
-
-MachineSchedContext::~MachineSchedContext() {
-  delete RegClassInfo;
-}
-
 namespace {
 
 /// Base class for a machine scheduler class that can run at any point.
-class MachineSchedulerBase : public MachineSchedContext,
-                             public MachineFunctionPass {
+class MachineSchedulerBase : public MachineSchedContext {
 public:
-  MachineSchedulerBase(char &ID): MachineFunctionPass(ID) {}
+  MachineSchedulerBase(char &ID) : MachineSchedContext(ID) {}
 
   void print(raw_ostream &O, const Module* = nullptr) const override;
+
+  bool isPipeliner() const override { return false; }
 
 protected:
   void scheduleRegions(ScheduleDAGInstrs &Scheduler, bool FixKillFlags);
@@ -426,19 +419,15 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
   LLVM_DEBUG(dbgs() << "Before MISched:\n"; mf.print(dbgs()));
 
   // Initialize the context of the pass.
-  MF = &mf;
-  MLI = &getAnalysis<MachineLoopInfo>();
-  MDT = &getAnalysis<MachineDominatorTree>();
-  PassConfig = &getAnalysis<TargetPassConfig>();
-  AA = &getAnalysis<AAResultsWrapperPass>().getAAResults();
-
-  LIS = &getAnalysis<LiveIntervals>();
+  const bool NeedAA = true;
+  const bool NeedRCI = true;
+  const bool NeedLIS = true;
+  initializeContext(mf, NeedAA, NeedRCI, NeedLIS);
 
   if (VerifyScheduling) {
     LLVM_DEBUG(LIS->dump());
-    MF->verify(this, "Before machine scheduling.");
+    mf.verify(this, "Before machine scheduling.");
   }
-  RegClassInfo->runOnMachineFunction(*MF);
 
   // Instantiate the selected scheduler for this target, function, and
   // optimization level.
@@ -447,7 +436,7 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
 
   LLVM_DEBUG(LIS->dump());
   if (VerifyScheduling)
-    MF->verify(this, "After machine scheduling.");
+    mf.verify(this, "After machine scheduling.");
   return true;
 }
 
@@ -466,13 +455,13 @@ bool PostMachineScheduler::runOnMachineFunction(MachineFunction &mf) {
   LLVM_DEBUG(dbgs() << "Before post-MI-sched:\n"; mf.print(dbgs()));
 
   // Initialize the context of the pass.
-  MF = &mf;
-  MLI = &getAnalysis<MachineLoopInfo>();
-  PassConfig = &getAnalysis<TargetPassConfig>();
-  AA = &getAnalysis<AAResultsWrapperPass>().getAAResults();
+  const bool NeedAA = true;
+  const bool NeedRCI = false;
+  const bool NeedLIS = false;
+  initializeContext(mf, NeedAA, NeedRCI, NeedLIS);
 
   if (VerifyScheduling)
-    MF->verify(this, "Before post machine scheduling.");
+    mf.verify(this, "Before post machine scheduling.");
 
   // Instantiate the selected scheduler for this target, function, and
   // optimization level.
@@ -480,7 +469,7 @@ bool PostMachineScheduler::runOnMachineFunction(MachineFunction &mf) {
   scheduleRegions(*Scheduler, true);
 
   if (VerifyScheduling)
-    MF->verify(this, "After post machine scheduling.");
+    mf.verify(this, "After post machine scheduling.");
   return true;
 }
 
@@ -3331,7 +3320,7 @@ void GenericScheduler::initPolicy(MachineBasicBlock::iterator Begin,
   for (unsigned VT = MVT::i32; VT > (unsigned)MVT::i1; --VT) {
     MVT::SimpleValueType LegalIntVT = (MVT::SimpleValueType)VT;
     if (TLI->isTypeLegal(LegalIntVT)) {
-      unsigned NIntRegs = Context->RegClassInfo->getNumAllocatableRegs(
+      unsigned NIntRegs = Context->RegClassInfo.getNumAllocatableRegs(
         TLI->getRegClassFor(LegalIntVT));
       RegionPolicy.ShouldTrackPressure = NumRegionInstrs > (NIntRegs / 2);
     }

@@ -63,6 +63,7 @@
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/MachineSchedContext.h"
 #include "llvm/CodeGen/ModuloSchedule.h"
 #include "llvm/CodeGen/Register.h"
 #include "llvm/CodeGen/RegisterClassInfo.h"
@@ -71,6 +72,7 @@
 #include "llvm/CodeGen/ScheduleDAGMutation.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
+#include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/Config/llvm-config.h"
@@ -249,12 +251,12 @@ bool MachinePipeliner::runOnMachineFunction(MachineFunction &mf) {
        mf.getSubtarget().getInstrItineraryData()->isEmpty()))
     return false;
 
-  MF = &mf;
-  MLI = &getAnalysis<MachineLoopInfo>();
-  MDT = &getAnalysis<MachineDominatorTree>();
+  const bool NeedAA = false;
+  const bool NeedRCI = true;
+  const bool NeedLIS = true;
+  initializeContext(mf, NeedAA, NeedRCI, NeedLIS);
   ORE = &getAnalysis<MachineOptimizationRemarkEmitterPass>().getORE();
   TII = MF->getSubtarget().getInstrInfo();
-  RegClassInfo.runOnMachineFunction(*MF);
 
   for (const auto &L : *MLI)
     scheduleLoop(*L);
@@ -456,8 +458,7 @@ void MachinePipeliner::preprocessPhiNodes(MachineBasicBlock &B) {
 bool MachinePipeliner::swingModuloScheduler(MachineLoop &L) {
   assert(L.getBlocks().size() == 1 && "SMS works on single blocks only.");
 
-  SwingSchedulerDAG SMS(*this, L, getAnalysis<LiveIntervals>(), RegClassInfo,
-                        II_setByPragma, LI.LoopPipelinerInfo.get());
+  SwingSchedulerDAG SMS(*this, L, II_setByPragma, LI.LoopPipelinerInfo.get());
 
   MachineBasicBlock *MBB = L.getHeader();
   // The kernel should not include any terminator instructions.  These
@@ -487,6 +488,7 @@ void MachinePipeliner::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<MachineDominatorTree>();
   AU.addRequired<LiveIntervals>();
   AU.addRequired<MachineOptimizationRemarkEmitterPass>();
+  AU.addRequired<TargetPassConfig>();
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
@@ -511,9 +513,8 @@ void SwingSchedulerDAG::setMAX_II() {
 /// We override the schedule function in ScheduleDAGInstrs to implement the
 /// scheduling part of the Swing Modulo Scheduling algorithm.
 void SwingSchedulerDAG::schedule() {
-  AliasAnalysis *AA = &Pass.getAnalysis<AAResultsWrapperPass>().getAAResults();
-  buildSchedGraph(AA);
-  addLoopCarriedDependences(AA);
+  buildSchedGraph(Pass.AA);
+  addLoopCarriedDependences(Pass.AA);
   updatePhiDependences();
   Topo.InitDAGTopologicalSorting();
   changeDependences();
@@ -678,10 +679,10 @@ void SwingSchedulerDAG::schedule() {
   }
   // The experimental code generator can't work if there are InstChanges.
   if (ExperimentalCodeGen && NewInstrChanges.empty()) {
-    PeelingModuloScheduleExpander MSE(MF, MS, &LIS, LoopPipelinerInfo);
+    PeelingModuloScheduleExpander MSE(MF, MS, Pass.LIS, LoopPipelinerInfo);
     MSE.expand();
   } else {
-    ModuloScheduleExpander MSE(MF, MS, LIS, LoopPipelinerInfo,
+    ModuloScheduleExpander MSE(MF, MS, *Pass.LIS, LoopPipelinerInfo,
                                std::move(NewInstrChanges));
     MSE.expand();
     MSE.cleanup();
@@ -2020,7 +2021,8 @@ void SwingSchedulerDAG::registerPressureFilter(NodeSetType &NodeSets) {
       continue;
     IntervalPressure RecRegPressure;
     RegPressureTracker RecRPTracker(RecRegPressure);
-    RecRPTracker.init(&MF, &RegClassInfo, &LIS, BB, BB->end(), false, true);
+    RecRPTracker.init(&MF, &Pass.RegClassInfo, Pass.LIS, BB, BB->end(), false,
+                      true);
     computeLiveOuts(MF, RecRPTracker, NS);
     RecRPTracker.closeBottom();
 
@@ -2398,7 +2400,7 @@ bool SwingSchedulerDAG::schedulePipeline(SMSchedule &Schedule) {
   if (LimitRegPressure) {
     HRPDetector =
         std::make_unique<HighRegisterPressureDetector>(Loop.getHeader(), MF);
-    HRPDetector->init(RegClassInfo);
+    HRPDetector->init(Pass.RegClassInfo);
   }
   // Keep increasing II until a valid schedule is found.
   for (unsigned II = MII; II <= MAX_II && !scheduleFound; ++II) {

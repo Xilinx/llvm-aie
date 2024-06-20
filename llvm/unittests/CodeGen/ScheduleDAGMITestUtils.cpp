@@ -52,7 +52,8 @@ void DummyScheduleDAGMI::scheduleInstr(MachineInstr *MI, bool IsTop,
   movePickedSU(*SU, IsTop, EmissionCycle);
 }
 
-ScheduleDAGMITest::ScheduleDAGMITest() : Mod("Module", Ctx) {
+char MockID;
+ScheduleDAGMITest::ScheduleDAGMITest() : Mod("Module", Ctx), SchedCtx(MockID) {
   MF = createMachineFunction(Ctx, Mod);
   MBB = MF->CreateMachineBasicBlock();
 }

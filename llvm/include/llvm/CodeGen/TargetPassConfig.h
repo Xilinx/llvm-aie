@@ -22,7 +22,7 @@
 namespace llvm {
 
 class LLVMTargetMachine;
-struct MachineSchedContext;
+class MachineSchedContext;
 class PassConfigImpl;
 class ScheduleDAGInstrs;
 class CSEConfigBase;

@@ -72,9 +72,9 @@ void GCNSchedStrategy::initialize(ScheduleDAGMI *DAG) {
   const GCNSubtarget &ST = MF->getSubtarget<GCNSubtarget>();
 
   SGPRExcessLimit =
-      Context->RegClassInfo->getNumAllocatableRegs(&AMDGPU::SGPR_32RegClass);
+      Context->RegClassInfo.getNumAllocatableRegs(&AMDGPU::SGPR_32RegClass);
   VGPRExcessLimit =
-      Context->RegClassInfo->getNumAllocatableRegs(&AMDGPU::VGPR_32RegClass);
+      Context->RegClassInfo.getNumAllocatableRegs(&AMDGPU::VGPR_32RegClass);
 
   SIMachineFunctionInfo &MFI = *MF->getInfo<SIMachineFunctionInfo>();
   // Set the initial TargetOccupnacy to the maximum occupancy that we can

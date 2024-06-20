@@ -86,6 +86,7 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachinePassRegistry.h"
+#include "llvm/CodeGen/MachineSchedContext.h"
 #include "llvm/CodeGen/RegisterPressure.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
@@ -93,9 +94,9 @@
 #include "llvm/CodeGen/TargetSchedule.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
+#include <llvm/Support/raw_ostream.h>
 #include <algorithm>
 #include <cassert>
-#include <llvm/Support/raw_ostream.h>
 #include <memory>
 #include <string>
 #include <vector>
@@ -127,23 +128,6 @@ class TargetPassConfig;
 class TargetRegisterInfo;
 class SchedBoundary;
 
-/// MachineSchedContext provides enough context from the MachineScheduler pass
-/// for the target to instantiate a scheduler.
-struct MachineSchedContext {
-  MachineFunction *MF = nullptr;
-  const MachineLoopInfo *MLI = nullptr;
-  const MachineDominatorTree *MDT = nullptr;
-  const TargetPassConfig *PassConfig = nullptr;
-  AAResults *AA = nullptr;
-  LiveIntervals *LIS = nullptr;
-
-  RegisterClassInfo *RegClassInfo;
-
-  MachineSchedContext();
-  MachineSchedContext &operator=(const MachineSchedContext &other) = delete;
-  MachineSchedContext(const MachineSchedContext &other) = delete;
-  virtual ~MachineSchedContext();
-};
 
 /// MachineSchedRegistry provides a selection of available machine instruction
 /// schedulers.
@@ -516,7 +500,7 @@ public:
   ScheduleDAGMILive(MachineSchedContext *C,
                     std::unique_ptr<MachineSchedStrategy> S)
       : ScheduleDAGMI(C, std::move(S), /*RemoveKillFlags=*/false),
-        RegClassInfo(C->RegClassInfo), RPTracker(RegPressure),
+        RegClassInfo(&C->RegClassInfo), RPTracker(RegPressure),
         TopRPTracker(TopPressure), BotRPTracker(BotPressure) {}
 
   ~ScheduleDAGMILive() override;

@@ -46,6 +46,7 @@
 #include "llvm/ADT/SetVector.h"
 #include "llvm/CodeGen/DFAPacketizer.h"
 #include "llvm/CodeGen/MachineDominators.h"
+#include "llvm/CodeGen/MachineSchedContext.h"
 #include "llvm/CodeGen/MachineOptimizationRemarkEmitter.h"
 #include "llvm/CodeGen/RegisterClassInfo.h"
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
@@ -66,15 +67,11 @@ extern cl::opt<int> SwpForceIssueWidth;
 
 /// The main class in the implementation of the target independent
 /// software pipeliner pass.
-class MachinePipeliner : public MachineFunctionPass {
+class MachinePipeliner : public MachineSchedContext {
 public:
-  MachineFunction *MF = nullptr;
   MachineOptimizationRemarkEmitter *ORE = nullptr;
-  const MachineLoopInfo *MLI = nullptr;
-  const MachineDominatorTree *MDT = nullptr;
   const InstrItineraryData *InstrItins = nullptr;
   const TargetInstrInfo *TII = nullptr;
-  RegisterClassInfo RegClassInfo;
   bool disabledByPragma = false;
   unsigned II_setByPragma = 0;
 
@@ -96,9 +93,11 @@ public:
 
   static char ID;
 
-  MachinePipeliner() : MachineFunctionPass(ID) {
+  MachinePipeliner() : MachineSchedContext(ID) {
     initializeMachinePipelinerPass(*PassRegistry::getPassRegistry());
   }
+
+  bool isPipeliner() const override { return true; }
 
   bool runOnMachineFunction(MachineFunction &MF) override;
 
@@ -123,8 +122,6 @@ class SwingSchedulerDAG : public ScheduleDAGInstrs {
   /// Set to true if a valid pipelined schedule is found for the loop.
   bool Scheduled = false;
   MachineLoop &Loop;
-  LiveIntervals &LIS;
-  const RegisterClassInfo &RegClassInfo;
   unsigned II_setByPragma = 0;
   TargetInstrInfo::PipelinerLoopInfo *LoopPipelinerInfo = nullptr;
 
@@ -204,12 +201,10 @@ class SwingSchedulerDAG : public ScheduleDAGInstrs {
   };
 
 public:
-  SwingSchedulerDAG(MachinePipeliner &P, MachineLoop &L, LiveIntervals &lis,
-                    const RegisterClassInfo &rci, unsigned II,
+  SwingSchedulerDAG(MachinePipeliner &P, MachineLoop &L, unsigned II,
                     TargetInstrInfo::PipelinerLoopInfo *PLI)
-      : ScheduleDAGInstrs(*P.MF, P.MLI, false), Pass(P), Loop(L), LIS(lis),
-        RegClassInfo(rci), II_setByPragma(II), LoopPipelinerInfo(PLI),
-        Topo(SUnits, &ExitSU) {
+      : ScheduleDAGInstrs(*P.MF, P.MLI, false), Pass(P), Loop(L),
+        II_setByPragma(II), LoopPipelinerInfo(PLI), Topo(SUnits, &ExitSU) {
     P.MF->getSubtarget().getSMSMutations(Mutations);
     if (SwpEnableCopyToPhi)
       Mutations.push_back(std::make_unique<CopyToPhiMutation>());
