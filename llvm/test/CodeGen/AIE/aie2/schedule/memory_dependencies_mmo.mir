@@ -37,10 +37,8 @@
     ret <8 x i32> %7
   }
 
-  ; Function Attrs: nofree nosync nounwind memory(none)
   declare <8 x i32> @llvm.aie2.I256.v8.acc64.srs(<8 x i64>, i32, i32)
 
-  ; Function Attrs: nofree nosync nounwind memory(none)
   declare { ptr, i20 } @llvm.aie2.add.2d(ptr, i20, i20, i20, i20)
 ...
 

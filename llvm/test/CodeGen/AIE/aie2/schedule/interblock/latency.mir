@@ -13,6 +13,9 @@
 
 # Note: Comments sometimes refer to cycles. The first cycle is cycle 0
 
+# The load in the preheader has a single use in the store.
+# This is pushed ALAP into the delay slot, which allows a single nop
+# as safety margin in the preheader
 ---
 name:            singleSuccLoopPreheader
 alignment:       16
@@ -50,9 +53,6 @@ body:             |
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier implicit killed $r0
 
-  ;  The load in the preheader has a single use in the store.
-  ;  This is pushed ALAP into the delay slot, which allows a single nop
-  ;  as safety margin in the preheader
   bb.0:
     liveins: $p0, $p1, $r1
     $r0 = LDA_dms_lda_idx_imm $p0, 0
@@ -69,7 +69,9 @@ body:             |
     DelayedSchedBarrier implicit $r0
 ...
 
-
+# The load has uses in two successor blocks
+# bb.1 uses it in cycle 2, bb2 uses it deep down in the delay slot
+# Check that we observe the earliest one
 ---
 name:            twoSucc
 alignment:       16
@@ -107,9 +109,6 @@ body:             |
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier implicit killed $wl0
 
-  ;  The load has uses in two successor blocks
-  ;  bb.1 uses it in cycle 2, bb2 uses it deep down in the delay slot
-  ;  Check that we observe the earliest one
   bb.0:
     liveins: $p0, $r1
     $wl0 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0

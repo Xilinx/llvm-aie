@@ -56,7 +56,6 @@ name:            padd_imm
 alignment:       16
 body:             |
   bb.0 (align 16):
-    ; $p0 = PADD_imm_pseudo $p0, 4
     ; CHECK-LABEL: name: padd_imm
     ; CHECK: $p3 = PADDA_lda_ptr_inc_idx_imm $p3, 1020 {
     ; CHECK-NEXT:   $p1 = PADDB_ldb_ptr_inc_nrm_imm killed $p1, -4

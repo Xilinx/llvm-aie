@@ -66,19 +66,15 @@ body:             |
     ; CHECK-NEXT: NOP
     $r2 = LDA_dms_lda_idx_imm $p0, 0
     $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0
-    ; II_VST_CONV
     VST_CONV_BF16_FP32_ag_idx_imm $p0, 0, $bml0, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask
     $r2 = LDA_dms_lda_idx_imm $p0, 0
     $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0
-    ; II_VST_CONV_POSTINC
     $p1 = VST_CONV_BF16_FP32_ag_pstm_nrm_imm $p1, 0, $bml0, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask
     $r2 = LDA_dms_lda_idx_imm $p0, 0
     $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0
-    ; II_VST_2D_CONV
     $p2, $dc0 = VST_CONV_2D_BF16_FP32 $p2, $d0, $bml0, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask
     $r2 = LDA_dms_lda_idx_imm $p0, 0
     $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0
-    ; II_VST_3D_CONV
     $p3, $dc1, $dc5 = VST_CONV_3D_BF16_FP32 $p3, $d1_3d, $bml0, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask
     $r2 = LDA_dms_lda_idx_imm $p0, 0
     $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0
@@ -111,16 +107,12 @@ body:             |
     ; CHECK-NEXT: ST_dms_sts_idx_imm killed $r2, killed $p0, 0
     ; CHECK-NEXT: NOP
     ST_dms_sts_idx_imm $r2, $p0, 0
-    ; II_VST_CONV
     VST_CONV_BF16_FP32_ag_idx_imm $p0, 0, $bml0, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask
     ST_dms_sts_idx_imm $r2, $p0, 0
-    ; II_VST_CONV_POSTINC
     $p1 = VST_CONV_BF16_FP32_ag_pstm_nrm_imm $p1, 0, $bml0, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask
     ST_dms_sts_idx_imm $r2, $p0, 0
-    ; II_VST_2D_CONV
     $p2, $dc0 = VST_CONV_2D_BF16_FP32 $p2, $d0, $bml0, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask
     ST_dms_sts_idx_imm $r2, $p0, 0
-    ; II_VST_3D_CONV
     $p3, $dc1, $dc5 = VST_CONV_3D_BF16_FP32 $p3, $d1_3d, $bml0, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask
     ST_dms_sts_idx_imm $r2, $p0, 0
 ...
@@ -151,16 +143,12 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     VST_SRS_D8_S32_ag_idx_imm $p0, 0, $cm0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
-    ; II_VST_CONV
     VST_CONV_BF16_FP32_ag_idx_imm $p0, 0, $bml0, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask
     VST_CONV_BF16_FP32_ag_idx_imm $p0, 0, $bml0, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask
-    ; II_VST_CONV_POSTINC
     $p1 = VST_CONV_BF16_FP32_ag_pstm_nrm_imm $p1, 0, $bml0, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask
     VST_SRS_D8_S32_ag_idx_imm $p0, 0, $cm0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
-    ; II_VST_2D_CONV
     $p2, $dc0 = VST_CONV_2D_BF16_FP32 $p2, $d0, $bml0, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask
     VST_CONV_BF16_FP32_ag_idx_imm $p0, 0, $bml0, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask
-    ; II_VST_3D_CONV
     $p3, $dc1, $dc5 = VST_CONV_3D_BF16_FP32 $p3, $d1_3d, $bml0, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask
     VST_SRS_D8_S32_ag_idx_imm $p0, 0, $cm0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
 ...
@@ -214,16 +202,12 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ST_S8_ag_idx_imm $r2, $p0, 0
-    ; II_VST_CONV
     VST_CONV_BF16_FP32_ag_idx_imm $p0, 0, $bml0, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask
     ST_S8_ag_idx_imm $r2, $p0, 0
-    ; II_VST_CONV_POSTINC
     $p1 = VST_CONV_BF16_FP32_ag_pstm_nrm_imm $p1, 0, $bml0, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask
     ST_S8_ag_idx_imm $r2, $p0, 0
-    ; II_VST_2D_CONV
     $p2, $dc0 = VST_CONV_2D_BF16_FP32 $p2, $d0, $bml0, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask
     ST_S8_ag_idx_imm $r2, $p0, 0
-    ; II_VST_3D_CONV
     $p3, $dc1, $dc5 = VST_CONV_3D_BF16_FP32 $p3, $d1_3d, $bml0, implicit-def $srf2fflags, implicit $crrnd, implicit $crf2fmask
     ST_S8_ag_idx_imm $r2, $p0, 0
 ...

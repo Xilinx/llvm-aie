@@ -27,8 +27,7 @@ body:             |
     ST_dms_sts_idx_imm $r17, $p0, 0
     SCHED_BARRIER
     $r0 = LDA_dms_lda_idx_imm $p0, 0
----
-
+...
 
 ---
 name:            load_barrier_store
@@ -49,7 +48,7 @@ body:             |
     $r0 = LDA_dms_lda_idx_imm $p1, 0
     SCHED_BARRIER
     ST_dms_sts_idx_imm $r17, $p0, 0
----
+...
 
 ---
 name:            done_barrier_load
@@ -74,7 +73,7 @@ body:             |
     DONE
     SCHED_BARRIER
     $r0 = LDA_dms_lda_idx_imm $p0, 0
----
+...
 
 ---
 name:            done_barrier_store
@@ -94,4 +93,4 @@ body:             |
     DONE
     SCHED_BARRIER
     ST_dms_sts_idx_imm $r17, $p0, 0
----
+...

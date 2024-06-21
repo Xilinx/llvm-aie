@@ -15,7 +15,6 @@ name: II_VMOV_CASCADE_READ
 alignment:       16
 body:             |
   bb.0 (align 16):
-    ; 6.3 VMOV - Cascade stream access
     ; CHECK-LABEL: name: II_VMOV_CASCADE_READ
     ; CHECK: $bml2 = VMOV_mv_scd implicit $crscden
     ; CHECK-NEXT: NOP

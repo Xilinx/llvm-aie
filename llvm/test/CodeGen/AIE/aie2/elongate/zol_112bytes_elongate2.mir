@@ -8,6 +8,7 @@
 
 # RUN: llc -mtriple aie2 -run-pass=aie-machine-alignment %s -verify-machineinstrs -o - | FileCheck %s
 
+# Verify bundle elongation after lc and ls in bb.0, and le in bb.1
 ---
 name:            zol_setup_in_different_mbb
 body:             |
