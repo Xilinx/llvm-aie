@@ -28,8 +28,8 @@ def : Pat<(int_intr_1 GPR32:$src),
 // CHECK-NEXT:       GIR_BuildMI, /*InsnID*/0, /*Opcode*/GIMT_Encode2(MyTarget::NOP),
 // CHECK-NEXT:       GIR_Copy, /*NewInsnID*/0, /*OldInsnID*/0, /*OpIdx*/0, // DstI[dst]
 // CHECK-NEXT:       GIR_Copy, /*NewInsnID*/0, /*OldInsnID*/0, /*OpIdx*/2, // src
-// CHECK-NEXT:       GIR_EraseFromParent, /*InsnID*/0,
 // CHECK-NEXT:       GIR_ConstrainSelectedInstOperands, /*InsnID*/0,
+// CHECK-NEXT:       GIR_EraseFromParent, /*InsnID*/0,
 // CHECK-NEXT:       // GIR_Coverage, 0,
 // CHECK-NEXT:       GIR_Done,
 // CHECK-NEXT:     // Label 0: @[[NEXT_OPCODE_LABEL]]

@@ -20,6 +20,7 @@ if(LIBC_TARGET_ARCHITECTURE_IS_GPU AND
   return()
 endif()
 
+add_subdirectory(include)
 add_subdirectory(src)
 
 if(LLVM_LIBC_FULL_BUILD AND NOT LIBC_TARGET_OS_IS_BAREMETAL)

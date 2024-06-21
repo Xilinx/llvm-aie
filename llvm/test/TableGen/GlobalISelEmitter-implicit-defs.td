@@ -50,6 +50,7 @@ def : Pat<(sra (i32 GPR32:$rs1), (i32 GPR32:$rs2)),
 // CHECK-NEXT:       GIR_Copy, /*NewInsnID*/0, /*OldInsnID*/0, /*OpIdx*/0, // DstI[dst]
 // CHECK-NEXT:       GIR_Copy, /*NewInsnID*/0, /*OldInsnID*/0, /*OpIdx*/1, // rs1
 // CHECK-NEXT:       GIR_AddSimpleTempRegister, /*InsnID*/0, /*TempRegID*/0,
+// CHECK-NEXT:       GIR_ConstrainSelectedInstOperands, /*InsnID*/0,
 // CHECK-NEXT:       GIR_EraseFromParent, /*InsnID*/0,
 
 // CHECK:      GIM_CheckNumOperands, /*MI*/0, /*Expected*/3,
@@ -74,4 +75,5 @@ def : Pat<(sra (i32 GPR32:$rs1), (i32 GPR32:$rs2)),
 // CHECK-NEXT:       GIR_Copy, /*NewInsnID*/0, /*OldInsnID*/0, /*OpIdx*/0, // DstI[dst]
 // CHECK-NEXT:       GIR_Copy, /*NewInsnID*/0, /*OldInsnID*/0, /*OpIdx*/1, // rs1
 // CHECK-NEXT:       GIR_AddSimpleTempRegister, /*InsnID*/0, /*TempRegID*/0,
+// CHECK-NEXT:       GIR_ConstrainSelectedInstOperands, /*InsnID*/0,
 // CHECK-NEXT:       GIR_EraseFromParent, /*InsnID*/0,

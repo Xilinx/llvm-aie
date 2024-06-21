@@ -5,15 +5,18 @@
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
 ; Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-; RUN: llc -global-isel=0 -march=amdgcn -mcpu=tahiti < %s | FileCheck -check-prefixes=GCN,SI,GCN-SDAG,SI-SDAG %s
-; RUN: llc -global-isel=1 -march=amdgcn -mcpu=tahiti < %s | FileCheck -check-prefixes=GCN,SI,GCN-GISEL,SI-GISEL %s
-; RUN: llc -global-isel=0 -march=amdgcn -mcpu=tonga < %s | FileCheck -check-prefixes=GCN,VI,GCN-SDAG,VI-SDAG %s
-; RUN: llc -global-isel=1 -march=amdgcn -mcpu=tonga < %s | FileCheck -check-prefixes=GCN,VI,GCN-GISEL,VI-GISEL %s
-; RUN: llc -global-isel=0 -march=amdgcn -mcpu=gfx900 < %s | FileCheck -check-prefixes=GCN,GFX900,GCN-SDAG,GFX900-SDAG %s
-; RUN: llc -global-isel=1 -march=amdgcn -mcpu=gfx900 < %s | FileCheck -check-prefixes=GCN,GFX900,GCN-GISEL,GFX900-GISEL %s
+; RUN: llc -global-isel=0 -mtriple=amdgcn -mcpu=tahiti < %s | FileCheck -check-prefixes=GCN,SI,GCN-SDAG,SI-SDAG %s
+; RUN: llc -global-isel=1 -global-isel-abort=2 -mtriple=amdgcn -mcpu=tahiti < %s | FileCheck -check-prefixes=GCN,SI,GCN-GISEL,SI-GISEL %s
+; RUN: llc -global-isel=0 -mtriple=amdgcn -mcpu=tonga < %s | FileCheck -check-prefixes=GCN,VI,GCN-SDAG,VI-SDAG %s
+; RUN: llc -global-isel=1 -global-isel-abort=2 -mtriple=amdgcn -mcpu=tonga < %s | FileCheck -check-prefixes=GCN,VI,GCN-GISEL,VI-GISEL %s
+; RUN: llc -global-isel=0 -mtriple=amdgcn -mcpu=gfx900 < %s | FileCheck -check-prefixes=GCN,GFX900,GCN-SDAG,GFX900-SDAG %s
+; RUN: llc -global-isel=1 -global-isel-abort=2 -mtriple=amdgcn -mcpu=gfx900 < %s | FileCheck -check-prefixes=GCN,GFX900,GCN-GISEL,GFX900-GISEL %s
 
-; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck -check-prefix=R600 %s
-; RUN: llc -march=r600 -mcpu=cayman < %s | FileCheck -check-prefix=CM %s
+; RUN: llc -mtriple=r600 -mcpu=redwood < %s | FileCheck -check-prefix=R600 %s
+; RUN: llc -mtriple=r600 -mcpu=cayman < %s | FileCheck -check-prefix=CM %s
+
+; Fails due to revert of 6b695846602b2d6aa66e5aae2f5db8eceb4bd41b
+; XFAIL: llvm-aie-regression
 
 define amdgpu_kernel void @s_exp2_f32(ptr addrspace(1) %out, float %in) {
 ; SI-SDAG-LABEL: s_exp2_f32:
@@ -1974,26 +1977,49 @@ define float @v_exp2_f32_from_fpext_math_f16(i16 %src0.i, i16 %src1.i) {
 }
 
 define float @v_exp2_f32_from_fpext_bf16(bfloat %src) {
-; GCN-SDAG-LABEL: v_exp2_f32_from_fpext_bf16:
-; GCN-SDAG:       ; %bb.0:
-; GCN-SDAG-NEXT:    s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
-; GCN-SDAG-NEXT:    s_mov_b32 s4, 0xc2fc0000
-; GCN-SDAG-NEXT:    v_cmp_gt_f32_e32 vcc, s4, v0
-; GCN-SDAG-NEXT:    v_mov_b32_e32 v2, 0x42800000
-; GCN-SDAG-NEXT:    v_cndmask_b32_e32 v2, 0, v2, vcc
-; GCN-SDAG-NEXT:    v_add_f32_e32 v0, v0, v2
-; GCN-SDAG-NEXT:    v_exp_f32_e32 v0, v0
-; GCN-SDAG-NEXT:    v_mov_b32_e32 v1, 0x1f800000
-; GCN-SDAG-NEXT:    v_cndmask_b32_e32 v1, 1.0, v1, vcc
-; GCN-SDAG-NEXT:    v_mul_f32_e32 v0, v0, v1
-; GCN-SDAG-NEXT:    s_setpc_b64 s[30:31]
+; SI-LABEL: v_exp2_f32_from_fpext_bf16:
+; SI:       ; %bb.0:
+; SI-NEXT:    s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
+; SI-NEXT:    s_mov_b32 s4, 0xc2fc0000
+; SI-NEXT:    v_cmp_gt_f32_e32 vcc, s4, v0
+; SI-NEXT:    v_mov_b32_e32 v2, 0x42800000
+; SI-NEXT:    v_cndmask_b32_e32 v2, 0, v2, vcc
+; SI-NEXT:    v_add_f32_e32 v0, v0, v2
+; SI-NEXT:    v_exp_f32_e32 v0, v0
+; SI-NEXT:    v_mov_b32_e32 v1, 0x1f800000
+; SI-NEXT:    v_cndmask_b32_e32 v1, 1.0, v1, vcc
+; SI-NEXT:    v_mul_f32_e32 v0, v0, v1
+; SI-NEXT:    s_setpc_b64 s[30:31]
 ;
-; GCN-GISEL-LABEL: v_exp2_f32_from_fpext_bf16:
-; GCN-GISEL:       ; %bb.0:
-; GCN-GISEL-NEXT:    s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
-; GCN-GISEL-NEXT:    v_cvt_f32_f16_e32 v0, v0
-; GCN-GISEL-NEXT:    v_exp_f32_e32 v0, v0
-; GCN-GISEL-NEXT:    s_setpc_b64 s[30:31]
+; VI-LABEL: v_exp2_f32_from_fpext_bf16:
+; VI:       ; %bb.0:
+; VI-NEXT:    s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
+; VI-NEXT:    v_lshlrev_b32_e32 v0, 16, v0
+; VI-NEXT:    s_mov_b32 s4, 0xc2fc0000
+; VI-NEXT:    v_mov_b32_e32 v1, 0x42800000
+; VI-NEXT:    v_cmp_gt_f32_e32 vcc, s4, v0
+; VI-NEXT:    v_cndmask_b32_e32 v1, 0, v1, vcc
+; VI-NEXT:    v_add_f32_e32 v0, v0, v1
+; VI-NEXT:    v_exp_f32_e32 v0, v0
+; VI-NEXT:    v_mov_b32_e32 v1, 0x1f800000
+; VI-NEXT:    v_cndmask_b32_e32 v1, 1.0, v1, vcc
+; VI-NEXT:    v_mul_f32_e32 v0, v0, v1
+; VI-NEXT:    s_setpc_b64 s[30:31]
+;
+; GFX900-LABEL: v_exp2_f32_from_fpext_bf16:
+; GFX900:       ; %bb.0:
+; GFX900-NEXT:    s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
+; GFX900-NEXT:    v_lshlrev_b32_e32 v0, 16, v0
+; GFX900-NEXT:    s_mov_b32 s4, 0xc2fc0000
+; GFX900-NEXT:    v_cmp_gt_f32_e32 vcc, s4, v0
+; GFX900-NEXT:    v_mov_b32_e32 v2, 0x42800000
+; GFX900-NEXT:    v_cndmask_b32_e32 v2, 0, v2, vcc
+; GFX900-NEXT:    v_add_f32_e32 v0, v0, v2
+; GFX900-NEXT:    v_exp_f32_e32 v0, v0
+; GFX900-NEXT:    v_mov_b32_e32 v1, 0x1f800000
+; GFX900-NEXT:    v_cndmask_b32_e32 v1, 1.0, v1, vcc
+; GFX900-NEXT:    v_mul_f32_e32 v0, v0, v1
+; GFX900-NEXT:    s_setpc_b64 s[30:31]
 ;
 ; R600-LABEL: v_exp2_f32_from_fpext_bf16:
 ; R600:       ; %bb.0:
@@ -2949,5 +2975,3 @@ declare <3 x half> @llvm.exp2.v3f16(<3 x half>) #2
 attributes #0 = { "denormal-fp-math-f32"="ieee,preserve-sign" }
 attributes #1 = { "denormal-fp-math-f32"="dynamic,dynamic" }
 attributes #2 = { nocallback nofree nosync nounwind speculatable willreturn memory(none) }
-;; NOTE: These prefixes are unused and the list is autogenerated. Do not add tests below this line:
-; SI: {{.*}}

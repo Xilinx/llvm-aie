@@ -284,7 +284,8 @@ bool AIE2PassConfig::addInstSelector() {
   return false;
 }
 
-void AIE2TargetMachine::registerPassBuilderCallbacks(PassBuilder &PB) {
+void AIE2TargetMachine::registerPassBuilderCallbacks(
+    PassBuilder &PB, bool PopulateClassToPassNames) {
   if (EnableCustomAliasAnalysis) {
     PB.registerAnalysisRegistrationCallback([](FunctionAnalysisManager &FAM) {
       FAM.registerPass([&] { return AIEBaseAA(); });

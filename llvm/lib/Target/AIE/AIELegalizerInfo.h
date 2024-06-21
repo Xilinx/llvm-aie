@@ -26,7 +26,8 @@ class AIEBaseSubtarget;
 class AIELegalizerInfo : public LegalizerInfo {
 public:
   AIELegalizerInfo(const AIEBaseSubtarget &ST);
-  bool legalizeCustom(LegalizerHelper &Helper, MachineInstr &MI) const override;
+  bool legalizeCustom(LegalizerHelper &Helper, MachineInstr &MI,
+                      LostDebugLocObserver &LocObserver) const override;
 
 private:
   bool legalizeG_VASTART(LegalizerHelper &Helper, MachineInstr &MI) const;
@@ -34,7 +35,8 @@ private:
   bool legalizeG_UNMERGE_VALUES(LegalizerHelper &Helper,
                                 MachineInstr &MI) const;
   bool legalizeG_VAARG(LegalizerHelper &Helper, MachineInstr &MI) const;
-  bool legalizeMemCalls(LegalizerHelper &Helper, MachineInstr &MI) const;
+  bool legalizeMemCalls(LegalizerHelper &Helper, MachineInstr &MI,
+                        LostDebugLocObserver &LocObserver) const;
   bool legalizeG_BRJT(LegalizerHelper &Helper, MachineInstr &MI) const;
   bool legalizeG_FCONSTANT(LegalizerHelper &Helper, MachineInstr &MI) const;
   bool legalizeG_JUMP_TABLE(LegalizerHelper &Helper, MachineInstr &MI) const;
@@ -44,7 +46,8 @@ private:
                                     MachineInstr &MI) const;
   bool legalizeG_INSERT_VECTOR_ELT(LegalizerHelper &Helper,
                                    MachineInstr &MI) const;
-  bool legalizeG_FCMP(LegalizerHelper &Helper, MachineInstr &MI) const;
+  bool legalizeG_FCMP(LegalizerHelper &Helper, MachineInstr &MI,
+                      LostDebugLocObserver &LocObserver) const;
   bool legalizeG_FPTRUNC(LegalizerHelper &Helper, MachineInstr &MI) const;
   bool legalizeG_FPEXT(LegalizerHelper &Helper, MachineInstr &MI) const;
   bool legalizeG_FABS(LegalizerHelper &Helper, MachineInstr &MI) const;
