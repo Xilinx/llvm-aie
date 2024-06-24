@@ -36,19 +36,11 @@ struct cint16 {
 };
 #endif
 
-#if defined(__AIENGINE__) && !defined(__PTHREAD_API__)
-#define COMPLEX_TYPE(type)                                                     \
-  typedef struct {                                                             \
-    type chess_storage(% (sizeof(type) * 2)) real;                             \
-    type imag;                                                                 \
-  } c##type
-#else
 #define COMPLEX_TYPE(type)                                                     \
   typedef struct {                                                             \
     type real;                                                                 \
     type imag;                                                                 \
   } c##type
-#endif
 
 COMPLEX_TYPE(int8_t);
 COMPLEX_TYPE(int32_t);
@@ -220,69 +212,8 @@ typedef int32_t v2int32 __attribute__((__vector_size__(8)));
 
 #if __AIEARCH__ == 20
 typedef int32_t addr_t;
-#ifdef __cplusplus
 /* bfloat16 type */
-class bfloat16 {
-  __bf16 m0;
-
-public:
-  bfloat16() = default;
-  constexpr inline bfloat16(float a0);
-
-  inline operator float() const {
-    const uint16_t I16 = __builtin_bit_cast(const uint16_t, m0);
-    uint32_t I32 = int32_t(I16) << 16;
-    return __builtin_bit_cast(float, I32);
-  }
-  inline operator __bf16() const { return m0; }
-  inline explicit operator int() const { return __builtin_bfloat16_to_int(m0); }
-  inline explicit operator char() const {
-    return (char)(int)*this;
-  }
-  inline explicit operator signed char() const {
-    return (signed char)(int)*this;
-  }
-  inline explicit operator signed short() const {
-    return (signed short)(int)*this;
-  }
-  inline explicit operator unsigned() const { return (unsigned)(int)*this; }
-  inline explicit operator unsigned char() const {
-    return (unsigned char)(unsigned)*this;
-  }
-  inline explicit operator unsigned short() const {
-    return (unsigned short)(unsigned)*this;
-  }
-};
-/* arithmetic operation with bfloat16 operands */
-#define BFLOAT16_OPS(type)                                                     \
-  /* Implicit cast from __bf16 to bfloat16 */                                  \
-  inline bfloat16 operator/(bfloat16 a, type b) {                              \
-    return (float(a) / float(b));                                              \
-  }                                                                            \
-  inline bfloat16 operator*(bfloat16 a, type b) {                              \
-    return (float(a) * float(b));                                              \
-  }                                                                            \
-  inline bfloat16 operator+(bfloat16 a, type b) {                              \
-    return (float(a) + float(b));                                              \
-  }                                                                            \
-  inline bfloat16 operator-(bfloat16 a, type b) {                              \
-    return (float(a) - float(b));                                              \
-  }
-
-BFLOAT16_OPS(bfloat16)
-BFLOAT16_OPS(float)
-BFLOAT16_OPS(int)
-#undef BFLOAT16_OPS
-
-inline bfloat16 operator-(bfloat16 a) { return bfloat16(0) - a; }
-inline bfloat16 operator+(bfloat16 a) { return bfloat16(0) + a; }
-
-/* compare operation with bfloat16 operands */
-inline bool operator>(bfloat16 a, bfloat16 b) { return ((float)b < (float)a); }
-inline bool operator<=(bfloat16 a, bfloat16 b) { return !((float)a > (float)b); }
-inline bool operator!=(bfloat16 a, bfloat16 b) { return !((float)a == (float)b); }
-inline bool operator==(bfloat16 a, bfloat16 b) { return (float)a == (float)b; }
-#endif
+typedef __bf16 bfloat16;
 /* 8-bit types */
 typedef buint8_t v2uint4;
 typedef bint8_t v2int4;

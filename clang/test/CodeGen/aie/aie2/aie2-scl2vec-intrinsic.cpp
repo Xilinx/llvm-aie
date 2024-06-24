@@ -1191,10 +1191,9 @@ v32bfloat16 test_shiftx(v32bfloat16 a, v32bfloat16 b, int step, int shift) {
     return shiftx(a, b, step, shift);
 }
 
-// CHECK-LABEL: @_Z11test_insertDv32_u6__bf16i8bfloat16(
+// CHECK-LABEL: @_Z11test_insertDv32_u6__bf16iu6__bf16(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[B_COERCE_FCA_0_EXTRACT_I:%.*]] = extractvalue [[CLASS_BFLOAT16:%.*]] [[B_COERCE:%.*]], 0
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x bfloat> @llvm.aie2.vinsert16.bf512(<32 x bfloat> [[V:%.*]], i32 [[IDX:%.*]], bfloat [[B_COERCE_FCA_0_EXTRACT_I]])
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x bfloat> @llvm.aie2.vinsert16.bf512(<32 x bfloat> [[V:%.*]], i32 [[IDX:%.*]], bfloat [[B:%.*]])
 // CHECK-NEXT:    ret <32 x bfloat> [[TMP0]]
 //
 v32bfloat16 test_insert(v32bfloat16 v, int idx, bfloat16 b) {
@@ -1229,10 +1228,9 @@ v32bfloat16 test_insert(v32bfloat16 v, int idx, unsigned long long b) {
   return insert(v, idx,(v4bfloat16)b);
 }
 
-// CHECK-LABEL: @_Z29test_broadcast_to_v32bfloat168bfloat16(
+// CHECK-LABEL: @_Z29test_broadcast_to_v32bfloat16u6__bf16(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[B_COERCE_FCA_0_EXTRACT_I:%.*]] = extractvalue [[CLASS_BFLOAT16:%.*]] [[B_COERCE:%.*]], 0
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x bfloat> @llvm.aie2.vbroadcast16.bf512(bfloat [[B_COERCE_FCA_0_EXTRACT_I]])
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x bfloat> @llvm.aie2.vbroadcast16.bf512(bfloat [[B:%.*]])
 // CHECK-NEXT:    ret <32 x bfloat> [[TMP0]]
 //
 v32bfloat16 test_broadcast_to_v32bfloat16 (bfloat16 b) { return broadcast_to_v32bfloat16(b); }
@@ -1251,10 +1249,9 @@ v32bfloat16 test_broadcast_to_v32bfloat16 (v2bfloat16 b) { return broadcast_to_v
 //
 v32bfloat16 test_broadcast_to_v32bfloat16 (v4bfloat16 b) { return broadcast_to_v32bfloat16(b); }
 
-// CHECK-LABEL: @_Z21test_shuffle_bfloat168bfloat16j(
+// CHECK-LABEL: @_Z21test_shuffle_bfloat16u6__bf16j(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[B_COERCE_FCA_0_EXTRACT_I:%.*]] = extractvalue [[CLASS_BFLOAT16:%.*]] [[B_COERCE:%.*]], 0
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x bfloat> @llvm.aie2.vbcst.shuffle.bf16(bfloat [[B_COERCE_FCA_0_EXTRACT_I]], i32 [[M:%.*]])
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x bfloat> @llvm.aie2.vbcst.shuffle.bf16(bfloat [[B:%.*]], i32 [[M:%.*]])
 // CHECK-NEXT:    ret <32 x bfloat> [[TMP0]]
 //
 v32bfloat16 test_shuffle_bfloat16(bfloat16 b, unsigned int m) {  return shuffle_bfloat16(b,m) ;}
@@ -1264,10 +1261,9 @@ v32bfloat16 test_shuffle_bfloat16(bfloat16 b, unsigned int m) {  return shuffle_
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <32 x bfloat> [[V:%.*]] to <32 x i16>
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2.vextract.elem16.I512(<32 x i16> [[TMP0]], i32 [[IDX:%.*]], i32 [[SIGN:%.*]])
-// CHECK-NEXT:    [[ELEM_0_EXTRACT_TRUNC_I:%.*]] = trunc i32 [[TMP1]] to i16
-// CHECK-NEXT:    [[TMP2:%.*]] = bitcast i16 [[ELEM_0_EXTRACT_TRUNC_I]] to bfloat
-// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[CLASS_BFLOAT16:%.*]] poison, bfloat [[TMP2]], 0
-// CHECK-NEXT:    ret [[CLASS_BFLOAT16]] [[DOTFCA_0_INSERT_I]]
+// CHECK-NEXT:    [[ELEM_SROA_0_0_EXTRACT_TRUNC_I:%.*]] = trunc i32 [[TMP1]] to i16
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast i16 [[ELEM_SROA_0_0_EXTRACT_TRUNC_I]] to bfloat
+// CHECK-NEXT:    ret bfloat [[TMP2]]
 //
 bfloat16 test_ext_elem(v32bfloat16 v, int idx, int sign) {
   return ext_elem(v, idx, sign);
