@@ -191,9 +191,8 @@ AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
 
   if (ST.isAIE2()) {
     getActionDefinitionsBuilder(G_FCMP)
-        .customFor({S32, S32})
         .clampScalar(0, S32, S32)
-        .clampScalar(1, S32, S32);
+        .customFor({{S32, S16}, {S32, S32}});
 
     getActionDefinitionsBuilder(G_FPTRUNC)
         .libcallFor({{S32, S64}})
@@ -1129,29 +1128,23 @@ static RTLIB::Libcall getFCmpLibCall(CmpInst::Predicate Predicate,
   }
 }
 
-bool AIELegalizerInfo::legalizeG_FCMP(LegalizerHelper &Helper, MachineInstr &MI,
-                                      LostDebugLocObserver &LocObserver) const {
+bool AIELegalizerInfo::legalizeG_FCMP_FP32(
+    LegalizerHelper &Helper, MachineInstr &MI,
+    const CmpInst::Predicate FPredicate,
+    LostDebugLocObserver &LocObserver) const {
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
-  LLVMContext &Ctx = MIRBuilder.getMF().getFunction().getContext();
   MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
-  assert(MRI.getType(MI.getOperand(2).getReg()) ==
-             MRI.getType(MI.getOperand(3).getReg()) &&
-         "Mismatched operands for G_FCMP");
+  assert(MRI.getType(MI.getOperand(2).getReg()) == LLT::scalar(32) &&
+         MRI.getType(MI.getOperand(3).getReg()) == LLT::scalar(32) &&
+         "Expected single precision floating point operands!");
 
+  LLVMContext &Ctx = MIRBuilder.getMF().getFunction().getContext();
   auto DstReg = MI.getOperand(0).getReg();
-  auto FPredicate =
-      static_cast<CmpInst::Predicate>(MI.getOperand(1).getPredicate());
-  assert(CmpInst::isFPPredicate(FPredicate) && "Unsupported FCmp predicate");
+
   RTLIB::Libcall Libcall = RTLIB::UNKNOWN_LIBCALL;
   CmpInst::Predicate IPredicate = CmpInst::BAD_ICMP_PREDICATE;
   SmallVector<std::pair<RTLIB::Libcall, CmpInst::Predicate>, 2> Libcalls;
   switch (FPredicate) {
-  case CmpInst::FCMP_TRUE:
-  case CmpInst::FCMP_FALSE: {
-    MIRBuilder.buildConstant(DstReg, FPredicate == CmpInst::FCMP_TRUE ? 1 : 0);
-    MI.eraseFromParent();
-    return true;
-  }
   /* Compose ordered and unequal operands as follows:
    * a != b ==> a > b || a < b */
   case CmpInst::FCMP_ONE:
@@ -1200,6 +1193,128 @@ bool AIELegalizerInfo::legalizeG_FCMP(LegalizerHelper &Helper, MachineInstr &MI,
     assert(Results.size() == 2 && "Unexpected Number of Results");
     MIRBuilder.buildOr(DstReg, Results[0], Results[1]);
   }
+  MI.eraseFromParent();
+  return true;
+}
+
+/// @brief Get the AIE2 intrinsic corresponding to the fcmp predicate.
+unsigned getFCmpIntrID(CmpInst::Predicate Predicate, bool &SwapOperands,
+                       bool &PromoteToFP32) {
+  switch (Predicate) {
+  default:
+    PromoteToFP32 = true;
+    return 0;
+  case CmpInst::FCMP_OGE:
+  case CmpInst::FCMP_OEQ:
+    return Intrinsic::aie2_vgebf16;
+  case CmpInst::FCMP_OLT:
+  case CmpInst::FCMP_ONE:
+    return Intrinsic::aie2_vltbf16;
+  case CmpInst::FCMP_OGT:
+    SwapOperands = true;
+    return Intrinsic::aie2_vltbf16;
+  case CmpInst::FCMP_OLE:
+    SwapOperands = true;
+    return Intrinsic::aie2_vgebf16;
+  }
+}
+
+/// Legalize FCMP operations.
+/// For single precision floating pt., we use libcalls.
+/// For bfloat16, we insert the bf16 elements into a 512bit vector (due to lack
+/// of instructions that can directly do floating pt. comparisons), use AIE2
+/// intrinsics to compare the vectors and return the S32 where each bit is a
+/// comparison o/p for each S16 element in the vector.
+/// Ordered predicates mentioned in \ref getFCmpIntrID are lowered to AIE2
+/// intrinsics, otherwise, they are promoted to fp32 and supported using
+/// libcalls.
+bool AIELegalizerInfo::legalizeG_FCMP(LegalizerHelper &Helper, MachineInstr &MI,
+                                      LostDebugLocObserver &LocObserver) const {
+  MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
+  MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
+  auto &CmpMI = cast<GFCmp>(MI);
+  const CmpInst::Predicate FPred = CmpMI.getCond();
+
+  const Register DstReg = CmpMI.getReg(0);
+  const Register LHS = CmpMI.getLHSReg();
+  const Register RHS = CmpMI.getRHSReg();
+  assert(MRI.getType(LHS) == MRI.getType(RHS) &&
+         "Mismatched operands for G_FCMP");
+
+  assert(CmpInst::isFPPredicate(FPred) && "Unsupported FCmp predicate");
+
+  if (FPred == CmpInst::FCMP_TRUE || FPred == CmpInst::FCMP_FALSE) {
+    MIRBuilder.buildConstant(DstReg, FPred == CmpInst::FCMP_TRUE ? 1 : 0);
+    MI.eraseFromParent();
+    return true;
+  }
+
+  const unsigned LHSSize = MRI.getType(LHS).getSizeInBits();
+  if (LHSSize == 32)
+    return legalizeG_FCMP_FP32(Helper, MI, FPred, LocObserver);
+
+  assert(LHSSize == 16 && "Expected bf16 operands for FCmp");
+
+  const LLT S32 = LLT::scalar(32);
+
+  bool SwapOperands = false, PromoteToFP32 = false;
+  const unsigned FCmpIntrID = getFCmpIntrID(FPred, SwapOperands, PromoteToFP32);
+  if (PromoteToFP32) {
+    const Register FPExtDst1 = MRI.createGenericVirtualRegister(S32);
+    const Register FPExtDst2 = MRI.createGenericVirtualRegister(S32);
+    MIRBuilder.buildFPExt(FPExtDst1, LHS);
+    MIRBuilder.buildFPExt(FPExtDst2, RHS);
+    MIRBuilder.buildFCmp(FPred, DstReg, FPExtDst1, FPExtDst2);
+    MI.eraseFromParent();
+    return true;
+  }
+
+  const LLT V32S16 = LLT::fixed_vector(32, 16);
+  const Register VecUndef = MRI.createGenericVirtualRegister(V32S16);
+  MIRBuilder.buildUndef(VecUndef);
+  const Register IdxReg = MRI.createGenericVirtualRegister(S32);
+  MIRBuilder.buildConstant(IdxReg, 0);
+
+  auto CreateAndInsert = [&](const Register &SrcReg) {
+    Register Vec512Reg = MRI.createGenericVirtualRegister(V32S16);
+    MIRBuilder.buildInstr(AIE2::G_INSERT_VECTOR_ELT, {Vec512Reg},
+                          {VecUndef, SrcReg, IdxReg});
+    return Vec512Reg;
+  };
+
+  Register Vec512LHS = CreateAndInsert(LHS);
+  Register Vec512RHS = CreateAndInsert(RHS);
+
+  const bool IsFCmpEq = FPred == CmpInst::FCMP_OEQ;
+  const bool IsFCmpNEq = FPred == CmpInst::FCMP_ONE;
+
+  if (SwapOperands) {
+    std::swap(Vec512LHS, Vec512RHS);
+  }
+
+  Register TmpDstReg = DstReg;
+  if (IsFCmpNEq || IsFCmpEq) {
+    TmpDstReg = MRI.createGenericVirtualRegister(S32);
+  }
+
+  MIRBuilder.buildIntrinsic(FCmpIntrID, TmpDstReg, false, false)
+      .addUse(Vec512LHS)
+      .addUse(Vec512RHS);
+
+  // a != b : a < b || a > b
+  // a == b : a >= b && b >= a
+  if (IsFCmpNEq || IsFCmpEq) {
+    const Register TmpDstReg2 = MRI.createGenericVirtualRegister(S32);
+    MIRBuilder.buildIntrinsic(FCmpIntrID, TmpDstReg2, false, false)
+        .addUse(Vec512RHS)
+        .addUse(Vec512LHS);
+    if (IsFCmpEq) {
+      MIRBuilder.buildAnd(DstReg, TmpDstReg, TmpDstReg2);
+    } else {
+      MIRBuilder.buildOr(DstReg, TmpDstReg, TmpDstReg2);
+    }
+  }
+
   MI.eraseFromParent();
   return true;
 }
