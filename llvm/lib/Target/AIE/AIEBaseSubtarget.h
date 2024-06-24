@@ -21,6 +21,7 @@
 #include "llvm/CodeGenTypes/MachineValueType.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/TargetParser/Triple.h"
+#include <bitset>
 
 namespace llvm {
 
@@ -65,6 +66,8 @@ public:
   void adjustSchedDependency(const InstrItineraryData &Itineraries, SUnit *Def,
                              int DefOpIdx, SUnit *Use, int UseOpIdx,
                              SDep &Dep) const;
+
+  virtual unsigned getMemoryBanksFromAddressSpace(unsigned AddrSpace) const;
 
   /// Required DAG mutations during Post-RA scheduling.
   static std::vector<std::unique_ptr<ScheduleDAGMutation>>

@@ -133,6 +133,12 @@ void AIEBaseSubtarget::adjustSchedDependency(
   }
 }
 
+unsigned
+AIEBaseSubtarget::getMemoryBanksFromAddressSpace(unsigned AddrSpace) const {
+  // By default assume there are no conflicts.
+  return 0;
+}
+
 namespace {
 
 // Set latency and declare height/depth dirty if it changes
