@@ -294,8 +294,9 @@ AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
   // FIXME: G_SADDE/G_SSUBE doesn't support lowering. To support this properly,
   // the action needs to be implemented
   // FIXME: AIE2 has ADC and SBC operations to read the carry.
-  getActionDefinitionsBuilder(
-      {G_UADDO, G_USUBO, G_UADDE, G_USUBE, G_SADDO, G_SSUBO, G_SADDE, G_SSUBE})
+  getActionDefinitionsBuilder({G_UADDO, G_USUBO, G_UADDE, G_USUBE, G_SADDO,
+                               G_SSUBO, G_SADDE, G_SSUBE, G_UADDSAT, G_USUBSAT,
+                               G_SADDSAT, G_SSUBSAT})
       .lower();
 
   getActionDefinitionsBuilder(G_MUL)
