@@ -897,7 +897,6 @@ def int_aie2_load_4x32_hi : ClangBuiltin<"__builtin_aiev2_load_4x32_hi">, AIEV2L
 def int_aie2_load_4x64_lo : ClangBuiltin<"__builtin_aiev2_load_4x64_lo">, AIEV2LOAD4X;
 def int_aie2_load_4x64_hi : ClangBuiltin<"__builtin_aiev2_load_4x64_hi">, AIEV2LOAD4X;
 
-def int_aie2_bfloat16_to_int      : ClangBuiltin<"__builtin_bfloat16_to_int">, AIEV2BF16ToInt;
 // vector bfloat16 to vector int
 def int_aie2_v16bf16_to_v16i32      : ClangBuiltin<"__builtin_aiev2_v16bf16_to_v16i32">, AIEV2V16BF16ToV16I;
 

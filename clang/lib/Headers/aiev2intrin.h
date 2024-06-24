@@ -44,27 +44,6 @@
 #include "aiev2_core.h"
 #include "aiev2_vld_sparse.h"
 // clang-format on
-// float_to_bfloat16
-constexpr inline bfloat16::bfloat16(float a0) {
-  uint32_t I32 = __builtin_bit_cast(unsigned int, a0);
-
-  // This is a temporary implementation to make 'normal' constants
-  // work. Denormalized input and values rounding up near the extrema of
-  // the range might give strange effects
-
-  const bool Rnd = (I32 & 0x8000) != 0;
-  const bool Sticky = (I32 & 0x7FFF) != 0;
-  const bool Lsb = (I32 & 0x10000) != 0;
-  // The tie case (Rnd & !Sticky) should make the result even
-  if (Rnd && (Sticky || Lsb)) {
-    // FIXME: carry into exp kind of works out, carry into sign does not.
-    I32 += 0x10000;
-  }
-
-  const uint16_t IBF = I32 >> 16;
-  m0 = __builtin_bit_cast(__bf16, IBF);
-}
-
 #endif /* __cplusplus */
 
 // Locks
