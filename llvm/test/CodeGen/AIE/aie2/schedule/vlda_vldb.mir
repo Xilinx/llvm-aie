@@ -17,8 +17,8 @@ body:             |
     ; CHECK-LABEL: name: VLDA_VLDB
     ; CHECK: VST_dmw_sts_w_ag_idx_imm killed $wl0, $p0, 0
     ; CHECK-NEXT: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0 {
-    ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0
-    ; CHECK-NEXT:   $wl1 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0
+    ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 6)
+    ; CHECK-NEXT:   $wl1 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>), addrspace 5)
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
@@ -27,9 +27,10 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     VST_dmw_sts_w_ag_idx_imm $wl0, $p0, 0
-    $wl1 = VLDB_dmw_ldb_ag_idx_imm $p0, 0
-    $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0
+    $wl1 = VLDB_dmw_ldb_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 5)
+    $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 6)
 ...
+
 ---
 name:            VLDA_VLDB_128
 alignment:       16
@@ -38,8 +39,8 @@ body:             |
     ; CHECK-LABEL: name: VLDA_VLDB_128
     ; CHECK: VST_128_ag_idx_imm killed $wl0, $p0, 0
     ; CHECK-NEXT: BUNDLE implicit-def $wl2, implicit-def $wl1, implicit killed $p0, implicit killed $dj0 {
-    ; CHECK-NEXT:   $wl2 = VLDA_128 $p0
-    ; CHECK-NEXT:   $wl1 = VLDB_128_ag_idx killed $p0, killed $dj0
+    ; CHECK-NEXT:   $wl2 = VLDA_128 $p0 :: (load (<8 x s32>), addrspace 6)
+    ; CHECK-NEXT:   $wl1 = VLDB_128_ag_idx killed $p0, killed $dj0 :: (load (<8 x s32>), addrspace 5)
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
@@ -48,6 +49,43 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     VST_128_ag_idx_imm $wl0, $p0, 0
-    $wl1 = VLDB_128_ag_idx $p0, $dj0
-    $wl2 = VLDA_128 $p0
+    $wl1 = VLDB_128_ag_idx $p0, $dj0 :: (load (<8 x s32>), addrspace 5)
+    $wl2 = VLDA_128 $p0 :: (load (<8 x s32>), addrspace 6)
+...
+
+---
+name:            VLDA_VLDB_with_MMO_withOut_Addrspace
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: VLDA_VLDB_with_MMO_withOut_Addrspace
+    ; CHECK: $wl1 = VLDB_dmw_ldb_ag_idx_imm $p0, 0 :: (load (<8 x s32>))
+    ; CHECK-NEXT: $wl2 = VLDA_dmw_lda_w_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>))
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    $wl1 = VLDB_dmw_ldb_ag_idx_imm $p0, 0 :: (load (<8 x s32>))
+    $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0 :: (load (<8 x s32>))
+...
+
+# We expect all the load/store to be with MMOs.
+---
+name:            VLDA_VLDB_withOut_MMO
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: VLDA_VLDB_withOut_MMO
+    ; CHECK: $wl1 = VLDB_dmw_ldb_ag_idx_imm $p0, 0
+    ; CHECK-NEXT: $wl2 = VLDA_dmw_lda_w_ag_idx_imm killed $p0, 0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    $wl1 = VLDB_dmw_ldb_ag_idx_imm $p0, 0
+    $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0
 ...

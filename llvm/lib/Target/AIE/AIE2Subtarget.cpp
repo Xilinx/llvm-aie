@@ -77,7 +77,17 @@ InstructionSelector *AIE2Subtarget::getInstructionSelector() const {
   return InstSelector.get();
 }
 
-unsigned
+MemoryBankBits AIE2Subtarget::getDefaultMemoryBank() const {
+  using namespace AIE2;
+  std::bitset<32> MemoryBanks;
+  MemoryBanks.set(static_cast<unsigned>(AIEBanks::A))
+      .set(static_cast<unsigned>(AIEBanks::B))
+      .set(static_cast<unsigned>(AIEBanks::C))
+      .set(static_cast<unsigned>(AIEBanks::D));
+  return MemoryBanks.to_ulong();
+}
+
+MemoryBankBits
 AIE2Subtarget::getMemoryBanksFromAddressSpace(unsigned AddrSpace) const {
   using namespace AIE2;
   std::bitset<32> MemoryBanks;
@@ -120,8 +130,7 @@ AIE2Subtarget::getMemoryBanksFromAddressSpace(unsigned AddrSpace) const {
         .set(static_cast<unsigned>(AIEBanks::D));
     break;
   default:
-    // For unimplemented cases assume all
-    MemoryBanks.set();
+    return getDefaultMemoryBank();
     break;
   }
 

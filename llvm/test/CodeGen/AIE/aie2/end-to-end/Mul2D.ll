@@ -18,21 +18,21 @@ declare <32 x i8> @llvm.aie2.I256.v32.acc32.srs(<16 x i64>, i32, i32)
 declare <16 x i64> @llvm.aie2.v32acc32()
 
 ; AA-LABEL: Function: mul2d
-; AA:  NoAlias:      <8 x i32>* %in_ptr0.addr.058, <8 x i32>* %in_ptr1.addr.057
-; AA:  NoAlias:      <8 x i32>* %in_ptr0.addr.058, <32 x i8>* %out_ptr.addr.056
-; AA:  NoAlias:      <8 x i32>* %in_ptr1.addr.057, <32 x i8>* %out_ptr.addr.056
-; AA:  MayAlias:     <8 x i32>* %13, <8 x i32>* %in_ptr0.addr.058
-; AA:  NoAlias:      <8 x i32>* %13, <8 x i32>* %in_ptr1.addr.057
-; AA:  NoAlias:      <8 x i32>* %13, <32 x i8>* %out_ptr.addr.056
-; AA:  NoAlias:      <8 x i32>* %add.ptr.i, <8 x i32>* %in_ptr0.addr.058
-; AA:  NoAlias:      <8 x i32>* %add.ptr.i, <8 x i32>* %in_ptr1.addr.057
-; AA:  NoAlias:      <8 x i32>* %add.ptr.i, <32 x i8>* %out_ptr.addr.056
-; AA:  NoAlias:      <8 x i32>* %13, <8 x i32>* %add.ptr.i
-; AA:  NoAlias:      <32 x i8>* %add.ptr, <8 x i32>* %in_ptr0.addr.058
-; AA:  NoAlias:      <32 x i8>* %add.ptr, <8 x i32>* %in_ptr1.addr.057
-; AA:  NoAlias:      <32 x i8>* %add.ptr, <32 x i8>* %out_ptr.addr.056
-; AA:  NoAlias:      <8 x i32>* %13, <32 x i8>* %add.ptr
-; AA:  NoAlias:      <32 x i8>* %add.ptr, <8 x i32>* %add.ptr.i
+; AA:  NoAlias:      <8 x i32> addrspace(5)* %in_ptr0.addr.058.ascast, <8 x i32> addrspace(5)* %in_ptr1.addr.057.ascast
+; AA:  NoAlias:      <8 x i32> addrspace(5)* %in_ptr0.addr.058.ascast, <32 x i8> addrspace(6)* %out_ptr.addr.056.ascast
+; AA:  NoAlias:      <8 x i32> addrspace(5)* %in_ptr1.addr.057.ascast, <32 x i8> addrspace(6)* %out_ptr.addr.056.ascast
+; AA:  MayAlias:     <8 x i32> addrspace(5)* %ascast.13, <8 x i32> addrspace(5)* %in_ptr0.addr.058.ascast
+; AA:  NoAlias:      <8 x i32> addrspace(5)* %ascast.13, <8 x i32> addrspace(5)* %in_ptr1.addr.057.ascast
+; AA:  NoAlias:      <8 x i32> addrspace(5)* %ascast.13, <32 x i8> addrspace(6)* %out_ptr.addr.056.ascast
+; AA:  NoAlias:      <8 x i32> addrspace(5)* %ascast.add.ptr.i, <8 x i32> addrspace(5)* %in_ptr0.addr.058.ascast
+; AA:  NoAlias:      <8 x i32> addrspace(5)* %ascast.add.ptr.i, <8 x i32> addrspace(5)* %in_ptr1.addr.057.ascast
+; AA:  NoAlias:      <8 x i32> addrspace(5)* %ascast.add.ptr.i, <32 x i8> addrspace(6)* %out_ptr.addr.056.ascast
+; AA:  NoAlias:      <8 x i32> addrspace(5)* %ascast.13, <8 x i32> addrspace(5)* %ascast.add.ptr.i
+; AA:  NoAlias:      <32 x i8> addrspace(6)* %add.ptr.ascast, <8 x i32> addrspace(5)* %in_ptr0.addr.058.ascast
+; AA:  NoAlias:      <32 x i8> addrspace(6)* %add.ptr.ascast, <8 x i32> addrspace(5)* %in_ptr1.addr.057.ascast
+; AA:  NoAlias:      <32 x i8> addrspace(6)* %add.ptr.ascast, <32 x i8> addrspace(6)* %out_ptr.addr.056.ascast
+; AA:  NoAlias:      <32 x i8> addrspace(6)* %add.ptr.ascast, <8 x i32> addrspace(5)* %ascast.13
+; AA:  NoAlias:      <32 x i8> addrspace(6)* %add.ptr.ascast, <8 x i32> addrspace(5)* %ascast.add.ptr.i
 
 ; Two vectors are loaded and fed to a vmul: one through a vlda.postinc, the
 ; other through a vlda.3d.
@@ -140,14 +140,16 @@ define void @mul2d(ptr noalias %in_ptr0, ptr noalias %in_ptr1, ptr noalias %out_
     %out_ptr.addr.056 = phi ptr [ %out_ptr, %for.body.lr.ph ], [ %add.ptr21, %for.body ]
     %itr_left_cnt0.055 = phi i32 [ 0, %for.body.lr.ph ], [ %29, %for.body ]
     %itr_left_cnt1.054 = phi i32 [ 0, %for.body.lr.ph ], [ %31, %for.body ]
-    %7 = load <8 x i32>, ptr %in_ptr0.addr.058, align 32
+    %in_ptr0.addr.058.ascast = addrspacecast ptr %in_ptr0.addr.058 to ptr addrspace(5)
+    %7 = load <8 x i32>, ptr addrspace(5) %in_ptr0.addr.058.ascast, align 32
     %8 = trunc i32 %itr_left_cnt0.055 to i20
     %9 = trunc i32 %itr_left_cnt1.054 to i20
     %10 = tail call { ptr, i20, i20 } @llvm.aie2.add.3d(ptr nonnull %in_ptr0.addr.058, i20 %2, i20 %3, i20 %4, i20 %5, i20 %8, i20 %6, i20 %9)
     %11 = extractvalue { ptr, i20, i20 } %10, 1
     %12 = extractvalue { ptr, i20, i20 } %10, 2
     %13 = extractvalue { ptr, i20, i20 } %10, 0
-    %14 = load <8 x i32>, ptr %in_ptr1.addr.057, align 32
+    %in_ptr1.addr.057.ascast = addrspacecast ptr %in_ptr1.addr.057 to ptr addrspace(5)
+    %14 = load <8 x i32>, ptr addrspace(5) %in_ptr1.addr.057.ascast, align 32
     %add.ptr.i = getelementptr inbounds i8, ptr %in_ptr1.addr.057, i20 32
     %15 = tail call <16 x i64> @llvm.aie2.v32acc32()
     %16 = tail call <64 x i8> @llvm.aie2.v64int8()
@@ -160,16 +162,19 @@ define void @mul2d(ptr noalias %in_ptr0, ptr noalias %in_ptr1, ptr noalias %out_
     %23 = bitcast <16 x i32> %21 to <64 x i8>
     %24 = tail call <16 x i64> @llvm.aie2.I512.I512.acc32.mul.conf(<64 x i8> %23, <16 x i32> %22, i32 808)
     %25 = tail call <32 x i8> @llvm.aie2.I256.v32.acc32.srs(<16 x i64> %24, i32 %conv5, i32 %conv.i.i.i)
-    store <32 x i8> %25, ptr %out_ptr.addr.056, align 32
+    %out_ptr.addr.056.ascast = addrspacecast ptr %out_ptr.addr.056 to ptr addrspace(6)
+    store <32 x i8> %25, ptr addrspace(6) %out_ptr.addr.056.ascast , align 32
     %add.ptr = getelementptr inbounds i8, ptr %out_ptr.addr.056, i20 32
-    %26 = load <8 x i32>, ptr %13, align 32
+    %ascast.13 = addrspacecast ptr %13 to ptr addrspace(5)
+    %26 = load <8 x i32>, ptr addrspace(5) %ascast.13, align 32
     %27 = tail call { ptr, i20, i20 } @llvm.aie2.add.3d(ptr nonnull %13, i20 %2, i20 %3, i20 %4, i20 %5, i20 %11, i20 %6, i20 %12)
     %28 = extractvalue { ptr, i20, i20 } %27, 1
     %29 = zext i20 %28 to i32
     %30 = extractvalue { ptr, i20, i20 } %27, 2
     %31 = zext i20 %30 to i32
     %32 = extractvalue { ptr, i20, i20 } %27, 0
-    %33 = load <8 x i32>, ptr %add.ptr.i, align 32
+    %ascast.add.ptr.i = addrspacecast ptr %add.ptr.i to ptr addrspace(5)
+    %33 = load <8 x i32>, ptr addrspace(5) %ascast.add.ptr.i, align 32
     %add.ptr.i39 = getelementptr inbounds i8, ptr %in_ptr1.addr.057, i20 64
     %34 = tail call <16 x i32> @llvm.aie2.set.I512.I256(<8 x i32> %26, i32 0)
     %35 = tail call <16 x i32> @llvm.aie2.upd.I512.I256(<16 x i32> %34, <8 x i32> %19, i32 1)
@@ -177,7 +182,8 @@ define void @mul2d(ptr noalias %in_ptr0, ptr noalias %in_ptr1, ptr noalias %out_
     %37 = bitcast <16 x i32> %35 to <64 x i8>
     %38 = tail call <16 x i64> @llvm.aie2.I512.I512.acc32.mul.conf(<64 x i8> %37, <16 x i32> %36, i32 808)
     %39 = tail call <32 x i8> @llvm.aie2.I256.v32.acc32.srs(<16 x i64> %38, i32 %conv5, i32 %conv.i.i.i)
-    store <32 x i8> %39, ptr %add.ptr, align 32
+    %add.ptr.ascast = addrspacecast ptr %add.ptr to ptr addrspace(6)
+    store <32 x i8> %39, ptr addrspace(6) %add.ptr.ascast, align 32
     %add.ptr21 = getelementptr inbounds i8, ptr %out_ptr.addr.056, i20 64
     %lsr.iv.next = add nsw i32 %lsr.iv, -1
     %exitcond.not = icmp eq i32 %lsr.iv.next, 0

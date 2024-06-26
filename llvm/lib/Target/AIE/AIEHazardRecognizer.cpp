@@ -49,24 +49,32 @@ void FuncUnitWrapper::setFormatInterface(const AIEBaseMCFormats *Formats) {
 
 bool FuncUnitWrapper::operator==(const FuncUnitWrapper &Other) const {
   return Required == Other.Required && Reserved == Other.Reserved &&
-         Slots == Other.Slots;
+         Slots == Other.Slots && MemoryBanks == Other.MemoryBanks;
 }
 
 void FuncUnitWrapper::dump() const {
   const char *const Digits = "0123456789";
   const char *const Spacer = "-|";
   const int Upper = std::numeric_limits<InstrStage::FuncUnits>::digits - 1;
-  dbgs() << "Req     : ";
-  for (int J = Upper; J >= 0; J--)
-    dbgs() << ((Required & (1ULL << J)) ? Digits[J % 10] : Spacer[J % 10 == 0]);
-  dbgs() << " Slots : ";
-  for (int J = 9; J >= 0; J--)
-    dbgs() << ((Slots & (1ULL << J)) ? Digits[J] : '-');
+
+  auto printFU = [&](const std::string &FUName, InstrStage::FuncUnits FU) {
+    dbgs() << FUName;
+    for (int J = Upper; J >= 0; J--)
+      dbgs() << ((Required & (1ULL << J)) ? Digits[J % 10]
+                                          : Spacer[J % 10 == 0]);
+  };
+  auto printResource = [&](const std::string &ResourceName, uint64_t Resource) {
+    dbgs() << ResourceName;
+    for (int J = 9; J >= 0; J--)
+      dbgs() << ((Resource & (1ULL << J)) ? Digits[J] : '-');
+  };
+
+  printFU("Req     : ", Required);
+  printResource(" Slots : ", Slots);
+  printResource(" Memorybanks : ", MemoryBanks);
   if (!Reserved)
     return;
-  dbgs() << "\n\t   Rsrv : ";
-  for (int J = Upper; J >= 0; J--)
-    dbgs() << ((Reserved & (1ULL << J)) ? Digits[J % 10] : Spacer[J % 10 == 0]);
+  printFU("\n\t   Rsrv : ", Reserved);
 }
 
 void FuncUnitWrapper::clearResources() {
@@ -74,26 +82,31 @@ void FuncUnitWrapper::clearResources() {
   Required = 0;
   Reserved = 0;
   Slots = 0;
+  MemoryBanks = 0;
 }
 bool FuncUnitWrapper::isEmpty() const {
-  return Required == 0 && Reserved == 0 && Slots == 0;
+  return Required == 0 && Reserved == 0 && Slots == 0 && MemoryBanks == 0;
 }
 
 void FuncUnitWrapper::blockResources() {
   Required = ~0;
   Reserved = ~0;
   Slots = ~0;
+  // Since the HW stalls in the event of memory bank conflicts, we don't need to
+  // block the resource. It is overly conservative if we block all memory banks.
 }
 
 FuncUnitWrapper &FuncUnitWrapper::operator|=(const FuncUnitWrapper &Other) {
   Required |= Other.Required;
   Reserved |= Other.Reserved;
   Slots |= Other.Slots;
+  MemoryBanks |= Other.MemoryBanks;
   return *this;
 }
 
 bool FuncUnitWrapper::conflict(const FuncUnitWrapper &Other) const {
   if ((Required & Other.Required) != 0 || (Slots & Other.Slots) != 0 ||
+      (MemoryBanks & Other.MemoryBanks) != 0 ||
       (Reserved & Other.Required) != 0 || (Required & Other.Reserved) != 0) {
     return true;
   }
@@ -296,8 +309,8 @@ AIEHazardRecognizer::getHazardType(SUnit *SU, int DeltaCycles) {
       TII->getFormatInterface()->getAlternateInstsOpcode(MI->getOpcode());
   if (AlternateInsts) {
     for (const auto AltInstOpcode : *AlternateInsts) {
-      ScheduleHazardRecognizer::HazardType Haz =
-          getHazardType(TII->get(AltInstOpcode), DeltaCycles);
+      ScheduleHazardRecognizer::HazardType Haz = getHazardType(
+          TII->get(AltInstOpcode), getMemoryBanks(MI), DeltaCycles);
       // Check if there is NoHazard, If there is a Hazard or NoopHazard check
       // for the next possible Opcode.
       if (Haz == NoHazard) {
@@ -311,7 +324,7 @@ AIEHazardRecognizer::getHazardType(SUnit *SU, int DeltaCycles) {
     return NoopHazard;
   }
 
-  return getHazardType(MI->getDesc(), DeltaCycles);
+  return getHazardType(MI->getDesc(), getMemoryBanks(MI), DeltaCycles);
 }
 
 bool AIEHazardRecognizer::conflict(const AIEHazardRecognizer &Other,
@@ -363,7 +376,7 @@ void AIEHazardRecognizer::EmitInstruction(SUnit *SU, int DeltaCycles) {
   // and use the latter to update the scoreboard.
   unsigned SelectedOpcode = getSelectedAltOpcode(MI).value_or(MI->getOpcode());
   if (!AIE::MachineBundle::isNoHazardMetaInstruction(SelectedOpcode))
-    emitInScoreboard(TII->get(SelectedOpcode), DeltaCycles);
+    emitInScoreboard(TII->get(SelectedOpcode), getMemoryBanks(MI), DeltaCycles);
 
   // When requested, we switch off VLIW scheduling after the specified number
   // of instructions are scheduled.
@@ -406,23 +419,27 @@ auto toHazardType(bool Conflict) {
 // recognizing alternatives
 ScheduleHazardRecognizer::HazardType
 AIEHazardRecognizer::getHazardType(const MCInstrDesc &Desc,
+                                   MemoryBankBits MemoryBanks,
                                    const int DeltaCycles) {
-  return toHazardType(checkConflict(
-      Scoreboard, ItinData, Desc.getSchedClass(),
+  return getHazardType(
+      Desc.getSchedClass(),
       getSlotSet(Desc, *TII->getFormatInterface(), IgnoreUnknownSlotSets),
-      DeltaCycles, FUDepthLimit));
+      MemoryBanks, DeltaCycles);
 }
 
 ScheduleHazardRecognizer::HazardType
 AIEHazardRecognizer::getHazardType(unsigned SchedClass, SlotBits SlotSet,
+                                   MemoryBankBits MemoryBanks,
                                    int DeltaCycles) {
-  return toHazardType(checkConflict(Scoreboard, ItinData, SchedClass, SlotSet,
-                                    DeltaCycles, FUDepthLimit));
+  return toHazardType(checkConflict(
+      Scoreboard, ItinData, SchedClass, SlotSet, MemoryBanks,
+      TII->getMemoryCycles(SchedClass), DeltaCycles, FUDepthLimit));
 }
 
 bool AIEHazardRecognizer::checkConflict(
     const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
     const InstrItineraryData *ItinData, unsigned SchedClass, SlotBits SlotSet,
+    MemoryBankBits MemoryBanks, SmallVector<int, 2> MemoryAccessCycles,
     int DeltaCycles, std::optional<int> FUDepthLimit) {
   assert(Scoreboard.isValidDelta(DeltaCycles));
 
@@ -430,6 +447,17 @@ bool AIEHazardRecognizer::checkConflict(
   FuncUnitWrapper EmissionCycle(/*Req=*/0, /*Res=*/0, SlotSet);
   if (EmissionCycle.conflict(Scoreboard[DeltaCycles]))
     return true;
+
+  // Verify memory bank hazards
+  if (!MemoryAccessCycles.empty()) {
+    FuncUnitWrapper MemoryBankAccessCycle(/*Req=*/0, /*Res=*/0, /*SlotSet=*/0,
+                                          MemoryBanks);
+    for (auto Cycles : MemoryAccessCycles) {
+      // MemoryAccessCycles starts counting from 1, so we need to subtract 1
+      if (MemoryBankAccessCycle.conflict(Scoreboard[DeltaCycles + Cycles - 1]))
+        return true;
+    }
+  }
 
   // Note that Delta will be negative for bottom-up scheduling.
   // Cycle is 'our' cycle at which each stage of the itinerary starts.
@@ -461,31 +489,40 @@ bool AIEHazardRecognizer::checkConflict(
 }
 
 void AIEHazardRecognizer::emitInScoreboard(const MCInstrDesc &Desc,
+                                           MemoryBankBits MemoryBanks,
                                            int DeltaCycles) {
-  enterResources(
-      Scoreboard, ItinData, Desc.getSchedClass(),
-      getSlotSet(Desc, *TII->getFormatInterface(), IgnoreUnknownSlotSets),
-      DeltaCycles, FUDepthLimit);
+  emitInScoreboard(Scoreboard, Desc, MemoryBanks, DeltaCycles);
 }
 
 void AIEHazardRecognizer::emitInScoreboard(
     ResourceScoreboard<FuncUnitWrapper> &TheScoreboard, const MCInstrDesc &Desc,
-    int DeltaCycles) const {
+    MemoryBankBits MemoryBanks, int DeltaCycles) const {
   enterResources(
       TheScoreboard, ItinData, Desc.getSchedClass(),
       getSlotSet(Desc, *TII->getFormatInterface(), IgnoreUnknownSlotSets),
-      DeltaCycles, FUDepthLimit);
+      MemoryBanks, TII->getMemoryCycles(Desc.getSchedClass()), DeltaCycles,
+      FUDepthLimit);
 }
 
 void AIEHazardRecognizer::enterResources(
     ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
     const InstrItineraryData *ItinData, unsigned SchedClass, SlotBits SlotSet,
+    MemoryBankBits MemoryBanks, SmallVector<int, 2> MemoryAccessCycles,
     int DeltaCycles, std::optional<int> FUDepthLimit) {
   assert(Scoreboard.isValidDelta(DeltaCycles));
 
   // Append slot usage
   FuncUnitWrapper EmissionCycle(/*Req=*/0, /*Res=*/0, SlotSet);
   Scoreboard[DeltaCycles] |= EmissionCycle;
+
+  // Append memory bank usage
+  if (!MemoryAccessCycles.empty()) {
+    FuncUnitWrapper MemoryBankAccessCycle(/*Req=*/0, /*Res=*/0, /*SlotSet=*/0,
+                                          MemoryBanks);
+    for (auto Cycles : MemoryAccessCycles) {
+      Scoreboard[DeltaCycles + Cycles - 1] |= MemoryBankAccessCycle;
+    }
+  }
 
   int Cycle = DeltaCycles;
   Scoreboard[Cycle].IssueCount++;
@@ -569,4 +606,21 @@ AIEHazardRecognizer::getSelectedAltOpcode(MachineInstr *MI) const {
   if (auto It = SelectedAltOpcodes.find(MI); It != SelectedAltOpcodes.end())
     return It->second;
   return std::nullopt;
+}
+
+MemoryBankBits AIEHazardRecognizer::getMemoryBanks(MachineInstr *MI) const {
+  if (!(MI->mayLoad() || MI->mayStore()))
+    return 0;
+
+  if (MI->memoperands_empty())
+    return ~0;
+
+  const AIEBaseSubtarget &STI = AIEBaseSubtarget::get(*MI->getMF());
+  MemoryBankBits MemoryBankUsed = STI.getDefaultMemoryBank();
+  for (auto &MMO : MI->memoperands()) {
+    MemoryBankBits MemoryBank =
+        STI.getMemoryBanksFromAddressSpace(MMO->getAddrSpace());
+    MemoryBankUsed &= MemoryBank;
+  }
+  return MemoryBankUsed;
 }
