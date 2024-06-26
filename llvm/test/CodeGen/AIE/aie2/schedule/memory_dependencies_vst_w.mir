@@ -32,28 +32,28 @@ body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: W_STORE_E5_LOAD_E5
     ; CHECK: BUNDLE implicit-def $r2, implicit-def $wl2, implicit $p0 {
-    ; CHECK-NEXT:   $r2 = LDA_dms_lda_idx_imm $p0, 0
-    ; CHECK-NEXT:   $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0
+    ; CHECK-NEXT:   $r2 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32), addrspace 6)
+    ; CHECK-NEXT:   $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 5)
     ; CHECK-NEXT: }
     ; CHECK-NEXT: VST_dmw_sts_w_ag_idx_imm $wl0, $p0, 0
     ; CHECK-NEXT: BUNDLE implicit-def $r2, implicit-def $wl2, implicit $p0 {
-    ; CHECK-NEXT:   $r2 = LDA_dms_lda_idx_imm $p0, 0
-    ; CHECK-NEXT:   $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0
+    ; CHECK-NEXT:   $r2 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32), addrspace 6)
+    ; CHECK-NEXT:   $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 5)
     ; CHECK-NEXT: }
     ; CHECK-NEXT: $p1 = VST_dmw_sts_w_ag_pstm_nrm_imm $wl0, killed $p1, 0
     ; CHECK-NEXT: BUNDLE implicit-def $r2, implicit-def $wl2, implicit $p0 {
-    ; CHECK-NEXT:   $r2 = LDA_dms_lda_idx_imm $p0, 0
-    ; CHECK-NEXT:   $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0
+    ; CHECK-NEXT:   $r2 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32), addrspace 6)
+    ; CHECK-NEXT:   $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 5)
     ; CHECK-NEXT: }
     ; CHECK-NEXT: $p2, $dc0 = VST_2D_dmw_sts_w $wl0, killed $p2, killed $d0
     ; CHECK-NEXT: BUNDLE implicit-def $r2, implicit-def $wl2, implicit $p0 {
-    ; CHECK-NEXT:   $r2 = LDA_dms_lda_idx_imm $p0, 0
-    ; CHECK-NEXT:   $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0
+    ; CHECK-NEXT:   $r2 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32), addrspace 6)
+    ; CHECK-NEXT:   $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 5)
     ; CHECK-NEXT: }
     ; CHECK-NEXT: $p3, $dc1, $dc5 = VST_3D_dmw_sts_w killed $wl0, killed $p3, killed $d1_3d
     ; CHECK-NEXT: BUNDLE implicit-def $r2, implicit-def $wl2, implicit killed $p0 {
-    ; CHECK-NEXT:   $r2 = LDA_dms_lda_idx_imm $p0, 0
-    ; CHECK-NEXT:   $wl2 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0
+    ; CHECK-NEXT:   $r2 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32), addrspace 6)
+    ; CHECK-NEXT:   $wl2 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>), addrspace 5)
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
@@ -61,20 +61,20 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    $r2 = LDA_dms_lda_idx_imm $p0, 0
-    $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0
+    $r2 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32), addrspace 6)
+    $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 5)
     VST_dmw_sts_w_ag_idx_imm $wl0, $p0, 0                 ; II_VST_W
-    $r2 = LDA_dms_lda_idx_imm $p0, 0
-    $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0
+    $r2 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32), addrspace 6)
+    $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 5)
     $p1 = VST_dmw_sts_w_ag_pstm_nrm_imm $wl0, $p1, 0      ; II_VST_POSTINC_W
-    $r2 = LDA_dms_lda_idx_imm $p0, 0
-    $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0
+    $r2 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32), addrspace 6)
+    $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 5)
     $p2, $dc0 = VST_2D_dmw_sts_w $wl0, $p2, $d0           ; II_VST_2D_W
-    $r2 = LDA_dms_lda_idx_imm $p0, 0
-    $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0
+    $r2 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32), addrspace 6)
+    $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 5)
     $p3, $dc1, $dc5 = VST_3D_dmw_sts_w $wl0, $p3, $d1_3d  ; II_VST_3D_W
-    $r2 = LDA_dms_lda_idx_imm $p0, 0
-    $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0
+    $r2 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32), addrspace 6)
+    $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 5)
 ...
 
 # Tests II_VST_W, II_VST_POSTINC_W, II_VST_2D_W, II_VST_3D_W

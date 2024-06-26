@@ -93,7 +93,9 @@ public:
     return &TSInfo;
   }
 
-  unsigned getMemoryBanksFromAddressSpace(unsigned AddrSpace) const override;
+  MemoryBankBits getDefaultMemoryBank() const override;
+  MemoryBankBits
+  getMemoryBanksFromAddressSpace(unsigned AddrSpace) const override;
 
   // Perform target-specific adjustments to the latency of a schedule
   // dependency.

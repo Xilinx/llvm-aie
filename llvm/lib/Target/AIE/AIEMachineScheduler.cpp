@@ -259,7 +259,8 @@ void AIEPostRASchedStrategy::initializeBotScoreBoard(ScoreboardTrust Trust) {
   /// make sure we always have enough lookahead available. We arrange for that
   /// by starting in the earliest possible cycle, -Depth
   auto InsertInCycle = [=](MachineInstr &MI, int Cycle) {
-    BotHazardRec->emitInScoreboard(MI.getDesc(), Cycle - Depth);
+    BotHazardRec->emitInScoreboard(
+        MI.getDesc(), BotHazardRec->getMemoryBanks(&MI), Cycle - Depth);
   };
   auto BlockCycle = [=](int Cycle) {
     BotHazardRec->blockCycleInScoreboard(Cycle - Depth);

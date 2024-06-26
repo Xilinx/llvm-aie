@@ -59,7 +59,8 @@ void emitBundlesInScoreboard(const std::vector<MachineBundle> &Bundles,
   // then this will not cause conflicts.
   for (int i = TotalBundles - AmountToEmit; i < TotalBundles; i++) {
     for (MachineInstr *MI : Bundles[i].getInstrs())
-      HR->emitInScoreboard(Scoreboard, MI->getDesc(), 0);
+      HR->emitInScoreboard(Scoreboard, MI->getDesc(), HR->getMemoryBanks(MI),
+                           0);
 
     Scoreboard.advance();
   }
@@ -77,7 +78,8 @@ void emitBundlesInScoreboardDelta(
       break;
 
     for (MachineInstr *MI : Bundle.getInstrs())
-      HR->emitInScoreboard(Scoreboard, MI->getDesc(), Delta);
+      HR->emitInScoreboard(Scoreboard, MI->getDesc(), HR->getMemoryBanks(MI),
+                           Delta);
 
     Delta++;
   }
