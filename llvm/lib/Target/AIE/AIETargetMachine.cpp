@@ -43,12 +43,27 @@
 #include "llvm/Support/CodeGen.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Transforms/IPO/GlobalDCE.h"
+#include "llvm/Transforms/IPO/Internalize.h"
 using namespace llvm;
 
 static cl::opt<bool>
     EnableCustomAliasAnalysis("aie-enable-alias-analysis",
                               cl::desc("Enable AIE alias analysis pass"),
                               cl::init(true), cl::Hidden);
+
+// Option to run internalize pass.
+static cl::opt<bool> InternalizeSymbols(
+    "aie-internalize-symbols",
+    cl::desc("Enable elimination of non-kernel functions and unused globals"),
+    cl::init(false), cl::Hidden);
+
+// Option to skip the functions we don't want to internalize.
+static cl::list<std::string>
+    FunctionSkipList("aie-internalize-skip-functions",
+                     cl::desc("List of function names to skip internalization"),
+                     cl::Hidden, cl::list_init<std::string>({"main"}),
+                     cl::CommaSeparated);
 
 extern bool AIEDumpArtifacts;
 
@@ -263,6 +278,22 @@ void AIEBaseTargetMachine::registerDefaultAliasAnalyses(AAManager &AAM) {
   if (EnableCustomAliasAnalysis)
     AAM.registerFunctionAnalysis<AIEBaseAA>();
 }
+
+/// Predicate for Internalize pass.
+/// Preserve functions that can be an entry point or that have uses within the
+/// Module.
+static bool mustPreserveGV(const GlobalValue &GV) {
+  if (const Function *F = dyn_cast<Function>(&GV)) {
+    bool Skip = llvm::any_of(FunctionSkipList, [&](const std::string &Name) {
+      return F->getName().equals(Name);
+    });
+    return F->isDeclaration() || Skip;
+  }
+
+  GV.removeDeadConstantUsers();
+  return !GV.use_empty();
+}
+
 void AIEBaseTargetMachine::registerPassBuilderCallbacks(
     PassBuilder &PB, bool PopulateClassToPassNames) {
   if (EnableCustomAliasAnalysis) {
@@ -276,5 +307,15 @@ void AIEBaseTargetMachine::registerPassBuilderCallbacks(
       }
       return false;
     });
+  }
+
+  if (InternalizeSymbols) {
+    PB.registerPipelineEarlySimplificationEPCallback(
+        [](ModulePassManager &PM, OptimizationLevel) {
+          if (InternalizeSymbols) {
+            PM.addPass(InternalizePass(mustPreserveGV));
+            PM.addPass(GlobalDCEPass());
+          }
+        });
   }
 }
