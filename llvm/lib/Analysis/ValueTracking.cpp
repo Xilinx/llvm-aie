@@ -9,6 +9,9 @@
 // This file contains routines that help analyze properties that chains of
 // computations have.
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/ValueTracking.h"
@@ -56,6 +59,7 @@
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/IntrinsicsAArch64.h"
+#include "llvm/IR/IntrinsicsAIE2.h"
 #include "llvm/IR/IntrinsicsAMDGPU.h"
 #include "llvm/IR/IntrinsicsRISCV.h"
 #include "llvm/IR/IntrinsicsX86.h"
@@ -5903,6 +5907,19 @@ static bool isSameUnderlyingObjectInLoop(const PHINode *PN,
   return true;
 }
 
+static const Value *getUnderlyingObjectAIEIntrinsic(const Value *V) {
+  if (auto *Extract = dyn_cast<ExtractValueInst>(V)) {
+    if (auto *II = dyn_cast<IntrinsicInst>(Extract->getAggregateOperand())) {
+      switch (II->getIntrinsicID()) {
+      case Intrinsic::aie2_add_2d:
+      case Intrinsic::aie2_add_3d:
+        return II->getArgOperand(0);
+      }
+    }
+  }
+  return nullptr;
+}
+
 const Value *llvm::getUnderlyingObject(const Value *V, unsigned MaxLookup) {
   if (!V->getType()->isPointerTy())
     return V;
@@ -5939,6 +5956,9 @@ const Value *llvm::getUnderlyingObject(const Value *V, unsigned MaxLookup) {
           V = RP;
           continue;
         }
+      } else if (auto *AIEObject = getUnderlyingObjectAIEIntrinsic(V)) {
+        V = AIEObject;
+        continue;
       }
 
       return V;
