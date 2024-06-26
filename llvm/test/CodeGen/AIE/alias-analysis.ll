@@ -30,7 +30,7 @@ declare { ptr, i20, i20 } @llvm.aie2.add.3d(ptr, i20, i20, i20, i20, i20, i20, i
 ; ENABLED-AIE-AA: NoAlias:      i8* %2, i8* %p1
 
 ; DISABLED-AIE-AA-LABEL: Function: add_2d_different_base
-; DISABLED-AIE-AA: MayAlias:      i8* %2, i8* %p1
+; DISABLED-AIE-AA: NoAlias:      i8* %2, i8* %p1
 define void @add_2d_different_base(ptr noalias %p, ptr %p1) {
   %1 = tail call { ptr, i20 } @llvm.aie2.add.2d(ptr %p, i20 0, i20 1, i20 2, i20 3)
   %2 = extractvalue { ptr, i20 } %1, 0
@@ -56,7 +56,7 @@ define void @add_2d_potentially_same_base(ptr %p, ptr %p1) {
 ; ENABLED-AIE-AA: NoAlias:      i8* %2, i8* %p1
 
 ; DISABLED-AIE-AA-LABEL: Function: add_3d_different_base
-; DISABLED-AIE-AA: MayAlias:      i8* %2, i8* %p1
+; DISABLED-AIE-AA: NoAlias:      i8* %2, i8* %p1
 define void @add_3d_different_base(ptr noalias %p, ptr %p1) {
   %1 = tail call { ptr, i20, i20 } @llvm.aie2.add.3d(ptr %p, i20 0, i20 1, i20 2, i20 3, i20 4, i20 5, i20 6)
   %2 = extractvalue { ptr, i20, i20 } %1, 0
