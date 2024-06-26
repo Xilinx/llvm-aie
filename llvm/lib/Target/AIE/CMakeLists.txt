@@ -117,6 +117,7 @@ add_llvm_target(AIECodeGen
    Core
    CodeGen
    CodeGenTypes
+   IPO
    MC
    AIEAsmPrinter
    AIEDesc
