@@ -20,7 +20,8 @@ name:            asxmv
 alignment:       16
 body:             |
   bb.0.entry:
-    $p0 = PADDA_lda_ptr_inc_idx_imm $p0, 4 {
+    BUNDLE {
+      $p0 = PADDA_lda_ptr_inc_idx_imm $p0, 4
       ST_dms_sts_idx_imm $r0, $p2, 0
       $r11 = OR $r11, $r12
       $p0 = MOV_mv_scl $p1

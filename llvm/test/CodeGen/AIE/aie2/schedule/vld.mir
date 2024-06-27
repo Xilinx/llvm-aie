@@ -255,7 +255,8 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: vldb_unpack_crUnpackSign
-    ; CHECK: $x0 = VLDB_UNPACK_D8_D4_ag_idx $p0, $dj0, implicit $crunpacksign {
+    ; CHECK: BUNDLE implicit-def $x0, implicit-def $wl0, implicit-def $wh0, implicit-def $crunpacksign, implicit killed $p0, implicit killed $dj0, implicit $crunpacksign, implicit $r0 {
+    ; CHECK-NEXT:   $x0 = VLDB_UNPACK_D8_D4_ag_idx killed $p0, killed $dj0, implicit $crunpacksign
     ; CHECK-NEXT:   $crunpacksign = MOV_mv_scl $r0
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
@@ -275,7 +276,8 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: vldb_unpack_postinc_crUnpackSign
-    ; CHECK: $x0, $p0 = VLDB_UNPACK_D8_D4_pstm_nrm $p0, $m0, implicit $crunpacksign {
+    ; CHECK: BUNDLE implicit-def $x0, implicit-def $wl0, implicit-def $wh0, implicit-def $p0, implicit-def $crunpacksign, implicit killed $p0, implicit killed $m0, implicit $crunpacksign, implicit $r0 {
+    ; CHECK-NEXT:   $x0, $p0 = VLDB_UNPACK_D8_D4_pstm_nrm killed $p0, killed $m0, implicit $crunpacksign
     ; CHECK-NEXT:   $crunpacksign = MOV_mv_scl $r0
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
@@ -295,7 +297,8 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: vldb_unpack_2d_crUnpackSign
-    ; CHECK: $x0, $p0, $dc0 = VLDB_2D_UNPACK_D8_D4 $p0, $d0, implicit $crunpacksign {
+    ; CHECK: BUNDLE implicit-def $x0, implicit-def $wl0, implicit-def $wh0, implicit-def $p0, implicit-def $dc0, implicit-def $crunpacksign, implicit killed $p0, implicit killed $d0, implicit $crunpacksign, implicit $r0 {
+    ; CHECK-NEXT:   $x0, $p0, $dc0 = VLDB_2D_UNPACK_D8_D4 killed $p0, killed $d0, implicit $crunpacksign
     ; CHECK-NEXT:   $crunpacksign = MOV_mv_scl $r0
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
@@ -315,7 +318,8 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: vldb_unpack_3d_crUnpackSign
-    ; CHECK: $x0, $p0, $dc0, $dc4 = VLDB_3D_UNPACK_D8_D4 $p0, $d0_3d, implicit $crunpacksign {
+    ; CHECK: BUNDLE implicit-def $x0, implicit-def $wl0, implicit-def $wh0, implicit-def $p0, implicit-def $dc0, implicit-def $dc4, implicit-def $crunpacksign, implicit killed $p0, implicit killed $d0_3d, implicit $crunpacksign, implicit $r0 {
+    ; CHECK-NEXT:   $x0, $p0, $dc0, $dc4 = VLDB_3D_UNPACK_D8_D4 killed $p0, killed $d0_3d, implicit $crunpacksign
     ; CHECK-NEXT:   $crunpacksign = MOV_mv_scl $r0
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP

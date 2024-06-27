@@ -18,7 +18,8 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: check_bundling
-    ; CHECK: $r3 = ADD $r4, $r5, implicit-def $srcarry {
+    ; CHECK: BUNDLE implicit-def $r3, implicit-def $srcarry, implicit-def $r1, implicit killed $r4, implicit killed $r5, implicit killed $m0 {
+    ; CHECK-NEXT:   $r3 = ADD killed $r4, killed $r5, implicit-def $srcarry
     ; CHECK-NEXT:   $r1 = MOV_mv_scl killed $m0
     ; CHECK-NEXT: }
   $r1 = MOV_mv_scl $m0

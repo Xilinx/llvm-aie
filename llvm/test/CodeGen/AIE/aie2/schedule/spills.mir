@@ -101,7 +101,8 @@ stack:
 body:             |
   bb.0 (align 16):
     ; CHECK-LABEL: name: fixed_spill_slot_mmos_different_offset
-    ; CHECK: ST_dms_spill $dc1, -28, implicit $sp :: (store (s32) into %stack.0 + 4) {
+    ; CHECK: BUNDLE implicit-def $r12, implicit killed $dc1, implicit $sp, implicit killed $r6, implicit killed $r7 {
+    ; CHECK-NEXT:   ST_dms_spill killed $dc1, -28, implicit $sp :: (store (s32) into %stack.0 + 4)
     ; CHECK-NEXT:   $r12 = MUL_mul_r_rr killed $r6, killed $r7
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
@@ -122,7 +123,8 @@ stack:
 body:             |
   bb.0 (align 16):
     ; CHECK-LABEL: name: fixed_spill_slot_mmos_different_slots
-    ; CHECK: ST_dms_spill $dc1, -28, implicit $sp :: (store (s32) into %stack.1) {
+    ; CHECK: BUNDLE implicit-def $r12, implicit killed $dc1, implicit $sp, implicit killed $r6, implicit killed $r7 {
+    ; CHECK-NEXT:   ST_dms_spill killed $dc1, -28, implicit $sp :: (store (s32) into %stack.1)
     ; CHECK-NEXT:   $r12 = MUL_mul_r_rr killed $r6, killed $r7
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
@@ -142,7 +144,8 @@ stack:
 body:             |
   bb.0 (align 16):
     ; CHECK-LABEL: name: fixed_spill_slot_and_stack_mmos
-    ; CHECK: ST_dms_spill $dc1, -28, implicit $sp :: (store (s32) into %stack.0) {
+    ; CHECK: BUNDLE implicit-def $r12, implicit killed $dc1, implicit $sp, implicit killed $r6, implicit killed $r7 {
+    ; CHECK-NEXT:   ST_dms_spill killed $dc1, -28, implicit $sp :: (store (s32) into %stack.0)
     ; CHECK-NEXT:   $r12 = MUL_mul_r_rr killed $r6, killed $r7
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP

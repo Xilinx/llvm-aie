@@ -225,7 +225,8 @@ body:             |
   ; CHECK-NEXT:   $p0 = PADDA_lda_ptr_inc_idx_imm killed $p0, 4
   ; CHECK-NEXT:   $p0 = PADDA_lda_ptr_inc_idx_imm killed $p0, 4
   ; CHECK-NEXT:   $p0 = PADDA_lda_ptr_inc_idx_imm killed $p0, 4
-  ; CHECK-NEXT:   $r2 = LDA_dms_lda_idx $p0, $dj0 {
+  ; CHECK-NEXT:   BUNDLE implicit-def $r2, implicit-def $r1, implicit $p0, implicit $dj0, implicit killed $r1 {
+  ; CHECK-NEXT:     $r2 = LDA_dms_lda_idx $p0, $dj0
   ; CHECK-NEXT:     $r1 = MUL_mul_r_rr killed $r1, $r1
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   DelayedSchedBarrier

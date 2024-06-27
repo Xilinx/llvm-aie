@@ -22,7 +22,8 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: implicit_RAW
-    ; CHECK: VST_dmw_sts_w_ag_idx_imm $wh0, $p0, 0 {
+    ; CHECK: BUNDLE implicit-def $wl0, implicit-def $x0, implicit-def $wh0, implicit killed $wh0, implicit killed $p0, implicit killed $wl2 {
+    ; CHECK-NEXT:   VST_dmw_sts_w_ag_idx_imm killed $wh0, killed $p0, 0
     ; CHECK-NEXT:   $wl0 = VMOV_mv_w killed $wl2, implicit-def $x0
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
@@ -38,7 +39,8 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: implicit_WAR
-    ; CHECK: VST_dmw_sts_w_ag_idx_imm $wl2, $p0, 0 {
+    ; CHECK: BUNDLE implicit-def $wh2, implicit-def $x2, implicit-def $wl2, implicit killed $wl2, implicit killed $p0, implicit killed $wh0 {
+    ; CHECK-NEXT:   VST_dmw_sts_w_ag_idx_imm killed $wl2, killed $p0, 0
     ; CHECK-NEXT:   $wh2 = VMOV_mv_w killed $wh0, implicit-def $x2
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
@@ -55,7 +57,8 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: implicit_WAW
-    ; CHECK: $wl0 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0, implicit-def $x0 :: (load (<8 x s32>) from stack - 64) {
+    ; CHECK: BUNDLE implicit-def $wl0, implicit-def $x0, implicit-def $wh0, implicit killed $p0, implicit killed $p1 {
+    ; CHECK-NEXT:   $wl0 = VLDA_dmw_lda_w_ag_idx_imm killed $p0, 0, implicit-def $x0 :: (load (<8 x s32>) from stack - 64)
     ; CHECK-NEXT:   $wh0 = VLDB_dmw_ldb_ag_idx_imm killed $p1, 0 :: (load (<8 x s32>) from stack - 32)
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP

@@ -16,7 +16,7 @@ body:             |
     ; CHECK: BUNDLE implicit-def $r0, implicit $r0, implicit $r1 {
     ; CHECK-NEXT:   $r0 = OR $r0, $r1
     ; CHECK-NEXT: }
-    ; CHECK-NEXT: BUNDLE implicit-def $r3, implicit $r1, implicit $r2 {
+    ; CHECK-NEXT: BUNDLE {
     ; CHECK-NEXT:   $r3 = OR $r1, $r2
     ; CHECK-NEXT:   NOPS
     ; CHECK-NEXT: }
@@ -25,7 +25,8 @@ body:             |
     ; CHECK-NEXT: }
     ; CHECK-NEXT: DelayedSchedBarrier implicit killed $r0
     $r0 = OR $r0,$r1
-    $r3 = OR $r1, $r2 {
+    BUNDLE {
+      $r3 = OR $r1, $r2
       NOPS
     }
 
@@ -38,11 +39,11 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: bundle_test_bundled_first_insn
-    ; CHECK: BUNDLE implicit-def $r0, implicit-def $r2, implicit $r0, implicit $r1 {
+    ; CHECK: BUNDLE {
     ; CHECK-NEXT:   $r0 = AND $r0, $r1
     ; CHECK-NEXT:   $r2 = MOV_mv_cg 4
     ; CHECK-NEXT: }
-    ; CHECK-NEXT: BUNDLE implicit-def $r3, implicit $r1, implicit $r2 {
+    ; CHECK-NEXT: BUNDLE {
     ; CHECK-NEXT:   $r3 = OR $r1, $r2
     ; CHECK-NEXT:   NOPS
     ; CHECK-NEXT: }
@@ -50,10 +51,12 @@ body:             |
     ; CHECK-NEXT:   RET implicit $lr
     ; CHECK-NEXT: }
     ; CHECK-NEXT: DelayedSchedBarrier implicit killed $r0
-    $r0 = AND $r0,$r1 {
+    BUNDLE {
+      $r0 = AND $r0,$r1
       $r2 = MOV_mv_cg 4
     }
-    $r3 = OR $r1, $r2 {
+    BUNDLE {
+      $r3 = OR $r1, $r2
       NOPS
     }
 
@@ -97,7 +100,7 @@ body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: bundle_implicit_first_standalone_bundled
     ; CHECK: $r0 = IMPLICIT_DEF
-    ; CHECK-NEXT: BUNDLE implicit-def $r3, implicit $r0, implicit $r2 {
+    ; CHECK-NEXT: BUNDLE {
     ; CHECK-NEXT:   $r3 = OR $r0, $r2
     ; CHECK-NEXT:   NOPS
     ; CHECK-NEXT: }
@@ -106,7 +109,8 @@ body:             |
     ; CHECK-NEXT: }
     ; CHECK-NEXT: DelayedSchedBarrier implicit killed $r0
     $r0 = IMPLICIT_DEF
-    $r3 = OR $r0, $r2 {
+    BUNDLE {
+      $r3 = OR $r0, $r2
       NOPS
     }
     $r0 = AND $r0,$r3
@@ -121,23 +125,13 @@ body:             |
     ; CHECK: BUNDLE implicit-def $r0, implicit $r0, implicit $r3 {
     ; CHECK-NEXT:   $r0 = AND $r0, $r3
     ; CHECK-NEXT: }
-    ; CHECK-NEXT: BUNDLE implicit-def $r3, implicit-def $r4, implicit $r0, implicit $r2 {
-    ; CHECK-NEXT:   $r3 = OR $r0, $r2
-    ; CHECK-NEXT:   $r4 = MOV_mv_cg 4
-    ; CHECK-NEXT: }
     ; CHECK-NEXT: $r0 = IMPLICIT_DEF
-    ; CHECK-NEXT: BUNDLE implicit-def $r4, implicit-def $r5, implicit $r0, implicit $r4 {
+    ; CHECK-NEXT: BUNDLE implicit-def $r4, implicit $r0, implicit $r4 {
     ; CHECK-NEXT:   $r4 = OR $r0, $r4
-    ; CHECK-NEXT:   $r5 = MOV_mv_cg 4
     ; CHECK-NEXT: }
     $r0 = AND $r0,$r3
-    $r3 = OR $r0, $r2 {
-      $r4 = MOV_mv_cg 4
-    }
     $r0 = IMPLICIT_DEF
-    $r4 = OR $r0, $r4 {
-      $r5 = MOV_mv_cg 4
-    }
+    $r4 = OR $r0, $r4
 ...
 ---
 name: bundle_implicit_last_standalone_insns
@@ -164,25 +158,26 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: bundle_all_bundled
-    ; CHECK: BUNDLE implicit-def $r0, implicit-def $r2, implicit $r0, implicit $r1 {
+    ; CHECK: BUNDLE {
     ; CHECK-NEXT:   $r0 = AND $r0, $r1
     ; CHECK-NEXT:   $r2 = MOV_mv_cg 4
     ; CHECK-NEXT: }
-    ; CHECK-NEXT: BUNDLE implicit-def $r3, implicit-def $r4, implicit $r0, implicit $r2 {
-    ; CHECK-NEXT:   $r3 = OR $r0, $r2
+    ; CHECK-NEXT: BUNDLE {
     ; CHECK-NEXT:   $r4 = MOV_mv_cg 8
     ; CHECK-NEXT: }
-    ; CHECK-NEXT: BUNDLE implicit-def $r4, implicit $r0, implicit $r4 {
+    ; CHECK-NEXT: BUNDLE {
     ; CHECK-NEXT:   $r4 = OR $r0, $r4
     ; CHECK-NEXT:   NOPS
     ; CHECK-NEXT: }
-    $r0 = AND $r0,$r1 {
+    BUNDLE {
+      $r0 = AND $r0,$r1
       $r2 = MOV_mv_cg 4
     }
-    $r3 = OR $r0, $r2 {
+    BUNDLE {
       $r4 = MOV_mv_cg 8
     }
-    $r4 = OR $r0, $r4 {
+    BUNDLE {
+      $r4 = OR $r0, $r4
       NOPS
     }
 ...

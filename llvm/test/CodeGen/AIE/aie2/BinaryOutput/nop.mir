@@ -37,24 +37,29 @@ body:             |
     NOPS
     NOPV
     NOPXM
-    NOPXM {
+    BUNDLE {
+      NOPXM
       NOP
     }
-    NOPA {
+    BUNDLE {
+      NOPA
       NOPXM
     }
-    NOPA {
+    BUNDLE {
+      NOPA
       NOPB
       NOPS
       NOPV
     }
-    NOPX {
+    BUNDLE {
+      NOPX
       NOPM
       NOPS
       NOPB
       NOPA
     }
-    NOPV {
+    BUNDLE {
+      NOPV
       NOPA
       NOPB
       NOPS

@@ -276,7 +276,8 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
   ; CHECK-NEXT:   liveins: $bml0, $p0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $wl1 = VCONV_BF16_FP32 $bml0, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd {
+  ; CHECK-NEXT:   BUNDLE implicit-def $wl1, implicit-def $srf2fflags, implicit-def $p1, implicit $bml0, implicit $crf2fmask, implicit $crrnd, implicit $p0 {
+  ; CHECK-NEXT:     $wl1 = VCONV_BF16_FP32 $bml0, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd
   ; CHECK-NEXT:     $p1 = MOV_mv_scl $p0
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   $p1 = PADDS_st_ptr_inc_idx_imm killed $p1, 4
@@ -287,7 +288,8 @@ body:             |
   ; CHECK-NEXT:   liveins: $bml0, $p0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $p0 = PADDS_st_ptr_inc_idx_imm killed $p0, 4
-  ; CHECK-NEXT:   $wl1 = VCONV_BF16_FP32 $bml0, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd {
+  ; CHECK-NEXT:   BUNDLE implicit-def $wl1, implicit-def $srf2fflags, implicit-def $p1, implicit killed $bml0, implicit $crf2fmask, implicit $crrnd, implicit killed $p0 {
+  ; CHECK-NEXT:     $wl1 = VCONV_BF16_FP32 killed $bml0, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd
   ; CHECK-NEXT:     $p1 = MOV_mv_scl killed $p0
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   $p1 = PADDS_st_ptr_inc_idx_imm killed $p1, 4
@@ -354,7 +356,8 @@ body:             |
   ; CHECK-NEXT:   RET implicit $lr
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   $p0 = PADDS_st_ptr_inc_idx_imm killed $p0, 4
-  ; CHECK-NEXT:   $wl1 = VCONV_BF16_FP32 $bml0, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd {
+  ; CHECK-NEXT:   BUNDLE implicit-def $wl1, implicit-def $srf2fflags, implicit-def $p1, implicit killed $bml0, implicit $crf2fmask, implicit $crrnd, implicit killed $p0 {
+  ; CHECK-NEXT:     $wl1 = VCONV_BF16_FP32 killed $bml0, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd
   ; CHECK-NEXT:     $p1 = MOV_mv_scl killed $p0
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   $p1 = PADDS_st_ptr_inc_idx_imm killed $p1, 4

@@ -33,7 +33,8 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.0(0x40000000), %bb.1(0x40000000)
   ; CHECK-NEXT:   liveins: $p0, $p1, $r1
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $r0 = LDA_dms_lda_idx_imm $p0, 0 {
+  ; CHECK-NEXT:   BUNDLE implicit-def $r0, implicit $p0, implicit $r1 {
+  ; CHECK-NEXT:     $r0 = LDA_dms_lda_idx_imm $p0, 0
   ; CHECK-NEXT:     JNZ $r1, %bb.0
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   $r0 = LDA_dms_lda_idx_imm $p0, 0

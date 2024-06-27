@@ -218,6 +218,13 @@ void applyFormatOrdering(AIE::MachineBundle &Bundle, const VLIWFormat &Format,
     else if (Instr)
       Instr->bundleWithPred();
   }
+
+  if (!MBB.getParent()->getSubtarget().getTargetTriple().isAIE1()) {
+    // Make sure bundles are finalized otherwise kill flags can be incorrect,
+    // and accessing properties on a bundle header might give un-expected
+    // results.
+    finalizeBundle(MBB, BundleRoot->getIterator());
+  }
 }
 } // namespace llvm
 

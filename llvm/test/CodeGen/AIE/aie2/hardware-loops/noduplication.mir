@@ -36,9 +36,9 @@ body:             |
   ; CHECK-NEXT:   BUNDLE implicit killed $r17, implicit $sp {
   ; CHECK-NEXT:     ST_dms_spill killed $r17, -24, implicit $sp :: (store (s32) into %stack.2)
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit-def dead $p6, implicit $sp {
+  ; CHECK-NEXT:   BUNDLE implicit-def $p6, implicit $sp {
   ; CHECK-NEXT:     renamable $p6 = MOVA_lda_cg 0
-  ; CHECK-NEXT:     ST_dms_spill internal killed $p6, -32, implicit $sp :: (store (s32) into %stack.4)
+  ; CHECK-NEXT:     ST_dms_spill internal $p6, -32, implicit $sp :: (store (s32) into %stack.4)
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $lr, implicit $p6 {
   ; CHECK-NEXT:     JL_IND renamable $p6, implicit-def $lr
@@ -89,8 +89,8 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
   ; CHECK-NEXT:   liveins: $p6, $r17
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   BUNDLE implicit-def $r0, implicit $r0, implicit $p6 {
-  ; CHECK-NEXT:     ST_S8_ag_idx_imm renamable $r0, renamable $p6, 0 :: (store (s8) into `ptr null`, align 4)
+  ; CHECK-NEXT:   BUNDLE implicit-def $r0, implicit killed $r0, implicit killed $p6 {
+  ; CHECK-NEXT:     ST_S8_ag_idx_imm killed renamable $r0, killed renamable $p6, 0 :: (store (s8) into `ptr null`, align 4)
   ; CHECK-NEXT:     renamable $r0 = MOVX_alu_cg 0
   ; CHECK-NEXT:   }
   ; CHECK-NEXT: {{  $}}

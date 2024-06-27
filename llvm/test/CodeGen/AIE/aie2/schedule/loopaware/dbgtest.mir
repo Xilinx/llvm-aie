@@ -153,8 +153,9 @@ body:             |
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DBG_VALUE $p1, $noreg, !13, !DIExpression(DW_OP_LLVM_fragment, 0, 20), debug-location !14
-  ; CHECK-NEXT:   renamable $p0 = nuw PADDB_ldb_ptr_inc_nrm_imm renamable $p0, 4, debug-location !22 {
-  ; CHECK-NEXT:     $p1 = MOV_mv_scl killed $p0
+  ; CHECK-NEXT:   BUNDLE implicit-def $p0, implicit-def $p1, implicit killed $p0, debug-location !22 {
+  ; CHECK-NEXT:     renamable $p0 = nuw PADDB_ldb_ptr_inc_nrm_imm killed renamable $p0, 4, debug-location !22
+  ; CHECK-NEXT:     $p1 = MOV_mv_scl internal $p0
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   DBG_VALUE $p0, $noreg, !13, !DIExpression(DW_OP_LLVM_fragment, 0, 20), debug-location !14
   ; CHECK-NEXT:   DelayedSchedBarrier debug-location !15

@@ -18,8 +18,8 @@ body: |
     ; CHECK-LABEL: name: test_alu_lda
     ; CHECK: liveins: $p0, $r0, $r1
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: BUNDLE implicit-def $p1, implicit-def $r0, implicit-def $srcarry, implicit $p1, implicit killed $r0, implicit killed $r1 {
-    ; CHECK-NEXT:   $p1 = PADDA_lda_ptr_inc_idx_imm $p1, 4
+    ; CHECK-NEXT: BUNDLE implicit-def $p1, implicit-def $r0, implicit-def $srcarry, implicit killed $p1, implicit killed $r0, implicit killed $r1 {
+    ; CHECK-NEXT:   $p1 = PADDA_lda_ptr_inc_idx_imm killed $p1, 4
     ; CHECK-NEXT:   $r0 = ADD killed $r0, killed $r1, implicit-def $srcarry
     ; CHECK-NEXT: }
       $r0 = ADD $r0, $r1, implicit-def $srcarry
@@ -34,8 +34,8 @@ body: |
     ; CHECK-LABEL: name: test_lda_mv
     ; CHECK: liveins: $r1, $p0
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: BUNDLE implicit-def $p0, implicit-def $r0, implicit $p0, implicit killed $r1 {
-    ; CHECK-NEXT:   $p0 = PADDA_lda_ptr_inc_idx_imm $p0, 4
+    ; CHECK-NEXT: BUNDLE implicit-def $p0, implicit-def $r0, implicit killed $p0, implicit killed $r1 {
+    ; CHECK-NEXT:   $p0 = PADDA_lda_ptr_inc_idx_imm killed $p0, 4
     ; CHECK-NEXT:   $r0 = MOV_mv_scl killed $r1
     ; CHECK-NEXT: }
       $r0 = MOV_mv_scl $r1
@@ -68,8 +68,8 @@ body: |
     ; CHECK-LABEL: name: test_lda_alu_mv
     ; CHECK: liveins: $r0, $r1, $p1
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: BUNDLE implicit-def $p1, implicit-def $r0, implicit-def $srcarry, implicit-def $r2, implicit $p1, implicit killed $r0, implicit killed $r1 {
-    ; CHECK-NEXT:   $p1 = PADDA_lda_ptr_inc_idx_imm $p1, 4
+    ; CHECK-NEXT: BUNDLE implicit-def $p1, implicit-def $r0, implicit-def $srcarry, implicit-def $r2, implicit killed $p1, implicit killed $r0, implicit killed $r1 {
+    ; CHECK-NEXT:   $p1 = PADDA_lda_ptr_inc_idx_imm killed $p1, 4
     ; CHECK-NEXT:   $r0 = ADD killed $r0, $r1, implicit-def $srcarry
     ; CHECK-NEXT:   $r2 = MOV_mv_scl killed $r1
     ; CHECK-NEXT: }
@@ -87,8 +87,8 @@ body: |
     ; CHECK-LABEL: name: test_lng_lda
     ; CHECK: liveins: $p1
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: BUNDLE implicit-def $p1, implicit-def $r2, implicit $p1 {
-    ; CHECK-NEXT:   $p1 = PADDA_lda_ptr_inc_idx_imm $p1, 4
+    ; CHECK-NEXT: BUNDLE implicit-def $p1, implicit-def $r2, implicit killed $p1 {
+    ; CHECK-NEXT:   $p1 = PADDA_lda_ptr_inc_idx_imm killed $p1, 4
     ; CHECK-NEXT:   $r2 = MOVXM_lng_cg 64
     ; CHECK-NEXT: }
       $r2 = MOVXM_lng_cg 64
@@ -121,8 +121,8 @@ body: |
     ; CHECK-NEXT: BUNDLE {
     ; CHECK-NEXT:   NOP
     ; CHECK-NEXT: }
-    ; CHECK-NEXT: BUNDLE implicit-def $p1, implicit-def $r0, implicit-def $srcarry, implicit-def $r2, implicit $p1, implicit killed $r0, implicit killed $r1 {
-    ; CHECK-NEXT:   $p1 = PADDA_lda_ptr_inc_idx_imm $p1, 4
+    ; CHECK-NEXT: BUNDLE implicit-def $p1, implicit-def $r0, implicit-def $srcarry, implicit-def $r2, implicit killed $p1, implicit killed $r0, implicit killed $r1 {
+    ; CHECK-NEXT:   $p1 = PADDA_lda_ptr_inc_idx_imm killed $p1, 4
     ; CHECK-NEXT:   $r0 = ADD killed $r0, $r1, implicit-def $srcarry
     ; CHECK-NEXT:   $r2 = MOV_mv_scl killed $r1
     ; CHECK-NEXT: }

@@ -51,7 +51,8 @@ body:             |
     ; CHECK-LABEL: name: meta_plus_bundle
     ; CHECK: liveins: $p0, $r0
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: ST_dms_sts_idx_imm $r0, $p0, 0 {
+    ; CHECK-NEXT: BUNDLE implicit-def $r0, implicit-def $srcarry, implicit killed $r0, implicit killed $p0 {
+    ; CHECK-NEXT:   ST_dms_sts_idx_imm $r0, killed $p0, 0
     ; CHECK-NEXT:   $r0 = ABS killed $r0, implicit-def $srcarry
     ; CHECK-NEXT: }
     ; CHECK-NEXT: $wl0 = IMPLICIT_DEF
@@ -70,7 +71,8 @@ body:             |
     ; CHECK-LABEL: name: meta_in_bundle
     ; CHECK: liveins: $p0, $r0, $r1
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: ST_dms_sts_idx_imm $r1, $p0, 0 {
+    ; CHECK-NEXT: BUNDLE implicit-def $r0, implicit-def $srcarry, implicit killed $r1, implicit killed $p0, implicit killed $r0 {
+    ; CHECK-NEXT:   ST_dms_sts_idx_imm killed $r1, killed $p0, 0
     ; CHECK-NEXT:   $r0 = ABS killed $r0, implicit-def $srcarry
     ; CHECK-NEXT: }
     ; CHECK-NEXT: $wl0 = IMPLICIT_DEF
@@ -89,7 +91,8 @@ body:             |
     ; CHECK-LABEL: name: bundle_plus_meta
     ; CHECK: liveins: $p0, $r0, $r1
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: ST_dms_sts_idx_imm $r1, $p0, 0 {
+    ; CHECK-NEXT: BUNDLE implicit-def $r0, implicit-def $srcarry, implicit killed $r1, implicit killed $p0, implicit killed $r0 {
+    ; CHECK-NEXT:   ST_dms_sts_idx_imm killed $r1, killed $p0, 0
     ; CHECK-NEXT:   $r0 = ABS killed $r0, implicit-def $srcarry
     ; CHECK-NEXT: }
     ; CHECK-NEXT: $wl0 = IMPLICIT_DEF

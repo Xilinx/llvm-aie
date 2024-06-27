@@ -38,7 +38,8 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
   ; CHECK-NEXT:   liveins: $r2
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $r13 = MOVA_lda_cg 3 {
+  ; CHECK-NEXT:   BUNDLE implicit-def $r13, implicit-def $r1, implicit killed $r2 {
+  ; CHECK-NEXT:     $r13 = MOVA_lda_cg 3
   ; CHECK-NEXT:     $r1 = MUL_mul_r_rr killed $r2, $r2
   ; CHECK-NEXT:   }
   ; CHECK-NEXT: {{  $}}
