@@ -17,40 +17,54 @@
 # RUN:     --aie-interblock-scoreboard=false %s -o - | FileCheck %s
 
 # Check that MemoryEdges mutation can process bundled instructions
-# without misclassifying non-memory operations as memory operations.
-# In this test, PADDB_ldb_ptr_inc_nrm_imm cannot be considered a memory
-# operation by being bundled with ST_dms_sts_idx_imm.
-# In case of a misclassification, the compiler will crash.
-
-# Note: Comments sometimes refer to cycles. The first cycle is cycle 0
+# Here, there should be two NOPs between VST_SRS in bb.0 and LDA in bb.1
 
 ---
-name:            testMemoryEdgeMutationWithBundle
+name:            bundled_mem_vs_mem
 alignment:       16
 tracksRegLiveness: true
 body:             |
+  ; CHECK-LABEL: name: bundled_mem_vs_mem
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.0(0x40000000), %bb.1(0x40000000)
+  ; CHECK-NEXT:   liveins: $p0, $cm0, $s0, $r1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   JNZ $r1, %bb.0
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   BUNDLE implicit-def $p0, implicit-def $srsrs_of, implicit killed $p0, implicit $cm0, implicit $s0, implicit $crsat, implicit $crrnd, implicit $crsrssign {
+  ; CHECK-NEXT:     $p0 = PADDB_ldb_ptr_inc_nrm_imm killed $p0, 4
+  ; CHECK-NEXT:     VST_SRS_D8_S32_ag_idx_imm internal $p0, 0, $cm0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   DelayedSchedBarrier
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   liveins: $p0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   BUNDLE implicit-def $r2, implicit-def $p0, implicit killed $p0 {
+  ; CHECK-NEXT:     $r2 = LDA_dms_lda_idx_imm $p0, 0
+  ; CHECK-NEXT:     $p0 = PADDB_ldb_ptr_inc_nrm_imm killed $p0, 4
+  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   $r2 = LDA_dms_lda_idx_imm killed $p0, 0
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
   bb.0:
-    liveins: $p0, $p1, $r1
-    ; CHECK-LABEL: name: testMemoryEdgeMutationWithBundle
-    ; CHECK: liveins: $p0, $p1, $r1
-    ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: $r0 = LDA_dms_lda_idx_imm $p0, 0
-    ; CHECK-NEXT: RET implicit $lr
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: ST_dms_sts_idx_imm $r0, killed $p1, 0
-    ; CHECK-NEXT: BUNDLE implicit-def $p0, implicit-def $r1, implicit-def $srcarry, implicit killed $p0, implicit killed $r1 {
-    ; CHECK-NEXT:   $p0 = PADDB_ldb_ptr_inc_nrm_imm killed $p0, 4
-    ; CHECK-NEXT:   $r1 = nsw ADD_add_r_ri killed $r1, -1, implicit-def $srcarry
-    ; CHECK-NEXT: }
-    ; CHECK-NEXT: DelayedSchedBarrier implicit killed $r0
-    $r0 = LDA_dms_lda_idx_imm $p0, 0
-    $r1 = nsw ADD_add_r_ri $r1, -1, implicit-def $srcarry
-    $p0 = PADD_imm_pseudo $p0, 4 {
-      ST_dms_sts_idx_imm $r0, $p1, 0
-    }
-    RET implicit $lr
-    DelayedSchedBarrier implicit $r0
+    liveins: $p0, $cm0, $s0, $r1
+    VST_SRS_D8_S32_ag_idx_imm $p0, 0, $cm0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    $p0 = PADD_imm_pseudo $p0, 4
+    JNZ $r1, %bb.0
+    DelayedSchedBarrier
+  bb.1:
+    liveins: $p0
+    $r2 = LDA_dms_lda_idx_imm $p0, 0
+    $p0 = PADD_imm_pseudo $p0, 4
+    $r2 = LDA_dms_lda_idx_imm $p0, 0
 ...
