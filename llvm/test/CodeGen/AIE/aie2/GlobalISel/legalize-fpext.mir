@@ -50,3 +50,28 @@ body: |
     $r0 = COPY %2(s32)
     $r1 = COPY %3(s32)
 ...
+
+---
+name: test_fpext_s16_to_s64
+body: |
+  bb.0:
+    liveins: $r2
+    ; CHECK-LABEL: name: test_fpext_s16_to_s64
+    ; CHECK: liveins: $r2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r2
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 16
+    ; CHECK-NEXT: [[SHL:%[0-9]+]]:_(s32) = G_SHL [[COPY]], [[C]](s32)
+    ; CHECK-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $r2 = COPY [[SHL]](s32)
+    ; CHECK-NEXT: PseudoJL &__extendsfdf2, csr_aie2, implicit-def $lr, implicit $r2, implicit-def $r0, implicit-def $r1
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r1
+    ; CHECK-NEXT: [[MV:%[0-9]+]]:_(s64) = G_MERGE_VALUES [[COPY1]](s32), [[COPY2]](s32)
+    ; CHECK-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $l0 = COPY [[MV]](s64)
+    %0:_(s32) = COPY $r2
+    %1:_(s16) = G_TRUNC %0
+    %2:_(s64) = G_FPEXT %1(s16)
+    $l0 = COPY %2(s64)
+...

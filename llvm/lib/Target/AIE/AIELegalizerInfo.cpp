@@ -206,7 +206,9 @@ AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
 
     getActionDefinitionsBuilder(G_FPEXT)
         .libcallFor({{S64, S32}})
-        .customFor({{S32, S16}});
+        .customFor({{S32, S16}})
+        .narrowScalarFor({{S64, S16}},
+                         llvm::LegalizeMutations::changeTo(0, S32));
 
     getActionDefinitionsBuilder({G_FPTOSI, G_FPTOUI})
         .libcallForCartesianProduct({S32, S64})
