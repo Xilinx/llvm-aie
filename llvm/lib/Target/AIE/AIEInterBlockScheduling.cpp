@@ -9,6 +9,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEInterBlockScheduling.h"
+#include "AIELiveRegs.h"
 #include "AIEMaxLatencyFinder.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
@@ -111,9 +112,28 @@ void InterBlockScheduling::enterFunction(MachineFunction *MF) {
   // Get ourselves a hazard recognizer
   HR = std::make_unique<AIEHazardRecognizer>(MF->getSubtarget());
 
+  const TargetRegisterInfo *TRI = MF->getSubtarget().getRegisterInfo();
+  LiveRegs MBBLiveness(MF);
+  const std::map<const MachineBasicBlock *, LivePhysRegs> &LiveIns =
+      MBBLiveness.getLiveIns();
+
   // Define our universe of blocks
   for (MachineBasicBlock &MBB : *MF) {
-    Blocks.emplace(&MBB, &MBB);
+    auto Itr = Blocks.emplace(&MBB, &MBB).first;
+    BlockState &BS = Itr->second;
+    BS.LiveOuts.init(*TRI);
+    // Calculating LiveOuts by iterating over each successor of the MBB and
+    // adding each successor's LiveIns to LiveOuts.
+    for (const MachineBasicBlock *Succ : MBB.successors()) {
+      const LivePhysRegs &MBBLiveins = LiveIns.at(Succ);
+      for (const MCPhysReg Reg : MBBLiveins) {
+        BS.LiveOuts.addReg(Reg);
+      }
+    }
+    LLVM_DEBUG({
+      dbgs() << MBB.getFullName() << " LiveOuts\n";
+      BS.LiveOuts.dump();
+    });
   }
   if (LoopAware) {
     // Mark epilogues of the loops we found. This is only necessary if

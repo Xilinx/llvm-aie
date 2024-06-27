@@ -425,6 +425,8 @@ void dumpDependencies(ScheduleDAGInstrs *DAG, SDep::Kind depType,
 /// live set of MBB, backtrack the DAG and update the live set. Whenever an edge
 /// points to a non-live write, it is updated to the subsequent live write.
 class WAWEdges : public ScheduleDAGMutation {
+
+  AIEPostRASchedStrategy *Scheduler = nullptr;
   // Collect all edges in a separate vector. This allows modifying SU.Preds
   // without invalidating iterators.
   SmallVector<SDep, 4> getPreds(SUnit &SU) {
@@ -446,6 +448,12 @@ class WAWEdges : public ScheduleDAGMutation {
       }
     }
   }
+
+public:
+  void setScheduler(AIEPostRASchedStrategy *Scheduler) {
+    this->Scheduler = Scheduler;
+  }
+
   void apply(ScheduleDAGInstrs *DAG) override {
     MachineFunction &MF = DAG->MF;
     MachineRegisterInfo &MRI = MF.getRegInfo();
@@ -453,10 +461,28 @@ class WAWEdges : public ScheduleDAGMutation {
     auto *RI = static_cast<const AIEBaseRegisterInfo *>(TRI);
     LivePhysRegs LiveRegs;
     LiveRegs.init(*TRI);
-    // Reserved registers are considered always live
-    for (MCPhysReg PhysReg : MRI.getReservedRegs().set_bits()) {
-      if (RI->isSimplifiableReservedReg(PhysReg))
-        LiveRegs.addReg(PhysReg);
+    bool AddReservedRegs = true;
+    if (Scheduler) {
+      MachineBasicBlock *MBB = DAG->getBB();
+      const BlockState &BS = Scheduler->getInterBlock().getBlockState(MBB);
+      auto Region = BS.getCurrentRegion();
+      auto BottomRegion = BS.getBottom();
+      if (*Region.begin() == *BottomRegion.begin()) {
+        // If the region is bottom region, liveouts of region are same as
+        // liveouts of the MBB
+        for (const MCPhysReg Reg : BS.LiveOuts) {
+          LiveRegs.addReg(Reg);
+        }
+        AddReservedRegs = false;
+      }
+    }
+
+    if (AddReservedRegs) {
+      // Reserved registers are considered always live
+      for (const MCPhysReg PhysReg : MRI.getReservedRegs().set_bits()) {
+        if (RI->isSimplifiableReservedReg(PhysReg))
+          LiveRegs.addReg(PhysReg);
+      }
     }
     // Stores latest live write of physical register.
     std::map<Register, SUnit *> PhysRegWriters;
@@ -482,6 +508,26 @@ class WAWEdges : public ScheduleDAGMutation {
   };
 };
 
+// Adds WAW edges for scheduling in the context of the Scheduler.
+// This class extends WAWEdges to apply WAW edges using a Scheduler if available
+// It overrides the apply method to retrieve the Scheduler from the DAG if a
+// BasicBlock is present, otherwise, it uses nullptr.
+class MachineSchedWAWEdges : public WAWEdges {
+  void apply(ScheduleDAGInstrs *DAG) override {
+    AIEPostRASchedStrategy *Scheduler =
+        DAG->getBB() ? static_cast<AIEScheduleDAGMI *>(DAG)->getSchedImpl()
+                     : nullptr;
+    setScheduler(Scheduler);
+    WAWEdges::apply(DAG);
+  }
+};
+
+// This class extends WAWEdges to apply WAW edges without using a Scheduler.
+// This is useful for scenarios where the SWP (Software Pipelining) is performed
+// independently of the Scheduler.
+class SWPWAWEdges : public WAWEdges {
+  void apply(ScheduleDAGInstrs *DAG) override { WAWEdges::apply(DAG); }
+};
 } // namespace
 
 std::vector<std::unique_ptr<ScheduleDAGMutation>>
@@ -491,7 +537,7 @@ AIEBaseSubtarget::getPostRAMutationsImpl(const Triple &TT) {
   if (!TT.isAIE1()) {
     Mutations.emplace_back(std::make_unique<RegionEndEdges>());
     Mutations.emplace_back(std::make_unique<MemoryEdges>());
-    Mutations.emplace_back(std::make_unique<WAWEdges>());
+    Mutations.emplace_back(std::make_unique<MachineSchedWAWEdges>());
   }
   return Mutations;
 }
@@ -504,7 +550,7 @@ AIEBaseSubtarget::getInterBlockMutationsImpl(const Triple &TT) {
   if (!TT.isAIE1()) {
     Mutations.emplace_back(std::make_unique<RegionEndEdges>());
     Mutations.emplace_back(std::make_unique<MemoryEdges>());
-    Mutations.emplace_back(std::make_unique<WAWEdges>());
+    Mutations.emplace_back(std::make_unique<MachineSchedWAWEdges>());
   }
   return Mutations;
 }
@@ -523,7 +569,7 @@ std::vector<std::unique_ptr<ScheduleDAGMutation>>
 AIEBaseSubtarget::getSMSMutationsImpl(const Triple &TT) {
   std::vector<std::unique_ptr<ScheduleDAGMutation>> Mutations;
   if (!TT.isAIE1()) {
-    Mutations.emplace_back(std::make_unique<WAWEdges>());
+    Mutations.emplace_back(std::make_unique<SWPWAWEdges>());
     if (EnablePipelinerSchedPropagateIncomingLatencies)
       Mutations.emplace_back(std::make_unique<PropagateIncomingLatencies>());
   }

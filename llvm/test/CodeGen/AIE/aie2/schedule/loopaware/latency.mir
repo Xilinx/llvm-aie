@@ -142,8 +142,8 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.2(0x40000000), %bb.1(0x40000000)
   ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $r2, $r3
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $r0 = ADD_add_r_ri killed $r0, -11, implicit-def $srcarry
   ; CHECK-NEXT:   $r10 = MOVX_alu_cg 4
+  ; CHECK-NEXT:   $r0 = ADD_add_r_ri killed $r0, -11, implicit-def $srcarry
   ; CHECK-NEXT:   JNZ $r0, %bb.1
   ; CHECK-NEXT:   $r2 = ADD_add_r_ri killed $r2, 1, implicit-def $srcarry
   ; CHECK-NEXT:   $r2 = MUL_mul_r_rr killed $r2, killed $r10

@@ -165,6 +165,7 @@ public:
   MachineBasicBlock *TheBlock = nullptr;
   FixedpointState FixPoint;
   BlockType Kind = BlockType::Regular;
+  LivePhysRegs LiveOuts;
   void initInterBlock(const MachineSchedContext &Context);
 
   // Concatenate Bundles to the current region
