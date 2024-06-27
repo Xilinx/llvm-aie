@@ -225,7 +225,8 @@ bool AIEBaseTargetMachine::parseMachineFunctionInfo(
 MachineFunctionInfo *AIEBaseTargetMachine::createMachineFunctionInfo(
     BumpPtrAllocator &Allocator, const Function &F,
     const TargetSubtargetInfo *STI) const {
-  return new AIEMachineFunctionInfo(F, STI, *this);
+  return new (Allocator.Allocate<AIEMachineFunctionInfo>())
+      AIEMachineFunctionInfo(F, STI, *this);
 }
 
 std::unique_ptr<CSEConfigBase> AIEPassConfig::getCSEConfig() const {
