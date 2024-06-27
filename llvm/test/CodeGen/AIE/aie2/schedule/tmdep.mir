@@ -74,7 +74,7 @@ body:             |
   bb.0.entry:
     liveins: $p0
     ; CHECK-LABEL: name: nodep_wtm_rmem
-    ; CHECK: LDA_dms_lda_idx_imm renamable $p0, 0 :: (load (s32) from %ir.p)
+    ; CHECK: LDA_dms_lda_idx_imm killed renamable $p0, 0 :: (load (s32) from %ir.p)
     ; CHECK: ST_TM killed renamable $r1, killed renamable $p1 :: (store (s32) into custom "TileMemory")
 
     renamable $r1 = MOVA_lda_cg 42
@@ -98,7 +98,7 @@ body:             |
     liveins: $p0, $r1
 
     ; CHECK-LABEL: name: nodep_rtm_wmem
-    ; CHECK: ST_dms_sts_idx_imm renamable $r1, renamable $p0, 0 :: (store (s32) into %ir.p)
+    ; CHECK: ST_dms_sts_idx_imm killed renamable $r1, killed renamable $p0, 0 :: (store (s32) into %ir.p)
     ; CHECK: renamable $r0 = LDA_TM killed renamable $p1 :: (load (s32) from custom "TileMemory")
     renamable $p1 = MOVXM_lng_cg -524282
     ST_dms_sts_idx_imm killed renamable $r1, killed renamable $p0, 0 :: (store (s32) into %ir.p)
@@ -160,7 +160,7 @@ body:             |
     liveins: $r0, $r1
 
     ; CHECK-LABEL: name: out_tm
-    ; CHECK: ST_TM renamable $r3, renamable $p0 :: (store (s32) into custom "TileMemory")
+    ; CHECK: ST_TM killed renamable $r3, killed renamable $p0 :: (store (s32) into custom "TileMemory")
     ; CHECK: ST_TM killed renamable $r0, killed renamable $p0 :: (store (s32) into custom "TileMemory")
     renamable $p0 = MOVXM_lng_cg -524283
     renamable $r2 = MOVXM_lng_cg 524288

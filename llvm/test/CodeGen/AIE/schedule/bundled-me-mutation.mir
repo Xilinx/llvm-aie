@@ -34,14 +34,15 @@ body:             |
     ; CHECK-LABEL: name: testMemoryEdgeMutationWithBundle
     ; CHECK: liveins: $p0, $p1, $r1
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: $r0 = LDA_dms_lda_idx_imm killed $p0, 0
+    ; CHECK-NEXT: $r0 = LDA_dms_lda_idx_imm $p0, 0
     ; CHECK-NEXT: RET implicit $lr
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: ST_dms_sts_idx_imm $r0, killed $p1, 0
-    ; CHECK-NEXT: $p0 = PADDB_ldb_ptr_inc_nrm_imm $p0, 4 {
+    ; CHECK-NEXT: BUNDLE implicit-def $p0, implicit-def $r1, implicit-def $srcarry, implicit killed $p0, implicit killed $r1 {
+    ; CHECK-NEXT:   $p0 = PADDB_ldb_ptr_inc_nrm_imm killed $p0, 4
     ; CHECK-NEXT:   $r1 = nsw ADD_add_r_ri killed $r1, -1, implicit-def $srcarry
     ; CHECK-NEXT: }
     ; CHECK-NEXT: DelayedSchedBarrier implicit killed $r0

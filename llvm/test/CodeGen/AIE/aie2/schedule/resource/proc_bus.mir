@@ -18,7 +18,8 @@ body:             |
     ; CHECK: $r2 = MOVXM_lng_cg 400000
     ; CHECK-NEXT: $r3 = MOVXM_lng_cg 200000
     ; CHECK-NEXT: $r1 = ADD killed $r1, killed $r2, implicit-def $srcarry
-    ; CHECK-NEXT: $r4 = ADD $r1, $r3, implicit-def $srcarry {
+    ; CHECK-NEXT: BUNDLE implicit-def $r4, implicit-def $srcarry, implicit-def $p0, implicit killed $r1, implicit killed $r3 {
+    ; CHECK-NEXT:   $r4 = ADD $r1, killed $r3, implicit-def $srcarry
     ; CHECK-NEXT:   $p0 = MOV_mv_scl killed $r1
     ; CHECK-NEXT: }
     ; CHECK-NEXT: $p1 = MOV_mv_scl killed $r4

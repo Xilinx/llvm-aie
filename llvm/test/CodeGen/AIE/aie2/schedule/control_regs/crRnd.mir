@@ -20,7 +20,8 @@ body:             |
     ; CHECK: liveins: $cm0, $s0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $crrnd = MOVXM_lng_cg 0
-    ; CHECK-NEXT: $wl1 = VSRS_D8_S32_mv_w_srs $cm0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign {
+    ; CHECK-NEXT: BUNDLE implicit-def $wl1, implicit-def $srsrs_of, implicit-def $crrnd, implicit killed $cm0, implicit killed $s0, implicit $crsat, implicit $crrnd, implicit $crsrssign {
+    ; CHECK-NEXT:   $wl1 = VSRS_D8_S32_mv_w_srs killed $cm0, killed $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
     ; CHECK-NEXT:   $crrnd = MOVXM_lng_cg 0
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
@@ -62,7 +63,8 @@ body:             |
     ; CHECK: liveins: $p0, $s0, $cm0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $crrnd = MOVXM_lng_cg 0
-    ; CHECK-NEXT: VST_SRS_S16_S64_ag_idx_imm $p0, 0, $cm0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign {
+    ; CHECK-NEXT: BUNDLE implicit-def $srsrs_of, implicit-def $crrnd, implicit killed $p0, implicit killed $cm0, implicit killed $s0, implicit $crsat, implicit $crrnd, implicit $crsrssign {
+    ; CHECK-NEXT:   VST_SRS_S16_S64_ag_idx_imm killed $p0, 0, killed $cm0, killed $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
     ; CHECK-NEXT:   $crrnd = MOVXM_lng_cg 0
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
@@ -84,7 +86,8 @@ body:             |
     ; CHECK: liveins: $p0, $m7, $bml0, $s0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $crrnd = MOVXM_lng_cg 0
-    ; CHECK-NEXT: $p0 = VST_SRS_D16_S32_ag_pstm_nrm $p0, $m7, $bml0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign {
+    ; CHECK-NEXT: BUNDLE implicit-def $p0, implicit-def $srsrs_of, implicit-def $crrnd, implicit killed $p0, implicit killed $m7, implicit killed $bml0, implicit killed $s0, implicit $crsat, implicit $crrnd, implicit $crsrssign {
+    ; CHECK-NEXT:   $p0 = VST_SRS_D16_S32_ag_pstm_nrm killed $p0, killed $m7, killed $bml0, killed $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
     ; CHECK-NEXT:   $crrnd = MOVXM_lng_cg 0
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
@@ -106,7 +109,8 @@ body:             |
     ; CHECK: liveins: $p0, $s0, $d7, $bml0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $crrnd = MOVXM_lng_cg 0
-    ; CHECK-NEXT: $p0, $dc7 = VST_2D_SRS_D16_S32 $p0, $d7, $bml0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign {
+    ; CHECK-NEXT: BUNDLE implicit-def $p0, implicit-def $dc7, implicit-def $srsrs_of, implicit-def $crrnd, implicit killed $p0, implicit killed $d7, implicit killed $bml0, implicit killed $s0, implicit $crsat, implicit $crrnd, implicit $crsrssign {
+    ; CHECK-NEXT:   $p0, $dc7 = VST_2D_SRS_D16_S32 killed $p0, killed $d7, killed $bml0, killed $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
     ; CHECK-NEXT:   $crrnd = MOVXM_lng_cg 0
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
@@ -128,7 +132,8 @@ body:             |
     ; CHECK: liveins: $p0, $s0, $d0_3d, $bml0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $crrnd = MOVXM_lng_cg 0
-    ; CHECK-NEXT: $p0, $dc0, $dc4 = VST_3D_SRS_D16_S32 $p0, $d0_3d, $bml0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign {
+    ; CHECK-NEXT: BUNDLE implicit-def $p0, implicit-def $dc0, implicit-def $dc4, implicit-def $srsrs_of, implicit-def $crrnd, implicit killed $p0, implicit killed $d0_3d, implicit killed $bml0, implicit killed $s0, implicit $crsat, implicit $crrnd, implicit $crsrssign {
+    ; CHECK-NEXT:   $p0, $dc0, $dc4 = VST_3D_SRS_D16_S32 killed $p0, killed $d0_3d, killed $bml0, killed $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
     ; CHECK-NEXT:   $crrnd = MOVXM_lng_cg 0
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
@@ -150,7 +155,8 @@ body:             |
     ; CHECK: liveins: $bmh0, $bmh1
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $crrnd = MOVXM_lng_cg 12
-    ; CHECK-NEXT: $wh0 = VCONV_BF16_FP32 $bmh1, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd {
+    ; CHECK-NEXT: BUNDLE implicit-def $wh0, implicit-def $srf2fflags, implicit-def $crrnd, implicit killed $bmh1, implicit $crf2fmask, implicit $crrnd {
+    ; CHECK-NEXT:   $wh0 = VCONV_BF16_FP32 killed $bmh1, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd
     ; CHECK-NEXT:   $crrnd = MOVXM_lng_cg 0
     ; CHECK-NEXT: }
     ; CHECK-NEXT: $wh1 = VCONV_BF16_FP32 killed $bmh0, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd

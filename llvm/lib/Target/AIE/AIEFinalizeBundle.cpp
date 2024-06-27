@@ -48,16 +48,11 @@ bool AIEFinalizeBundle::runOnMachineFunction(MachineFunction &MF) {
 
     while (MII != MIE) {
       // Check if MI is a standalone instruction
-      if (!MII->isInsideBundle()) {
-        if (isBundleCandidate(MII)) {
-          finalizeBundle(MBB, MII, std::next(MII));
-          Changed = true;
-        }
-        ++MII;
-      } else {
-        MII = finalizeBundle(MBB, std::prev(MII));
+      if (!MII->isInsideBundle() && isBundleCandidate(MII)) {
+        finalizeBundle(MBB, MII, std::next(MII));
         Changed = true;
       }
+      ++MII;
     }
   }
 

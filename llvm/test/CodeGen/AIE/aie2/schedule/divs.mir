@@ -17,15 +17,16 @@ body:             |
     ; CHECK-LABEL: name: test_inputs
     ; CHECK: liveins: $r0, $r2, $r12, $r31, $p1
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: $r31 = LDA_dms_lda_idx_imm killed $p1, 0
+    ; CHECK-NEXT: $r31 = LDA_dms_lda_idx_imm $p1, 0
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $r0 = LDA_dms_lda_idx_imm $p1, 4 {
-    ; CHECK-NEXT:   $r12, $r31 = DIVS killed $r31, killed $r0, $r2
+    ; CHECK-NEXT: BUNDLE implicit-def $r0, implicit-def $r12, implicit-def $r31, implicit $p1, implicit killed $r31, implicit killed $r2 {
+    ; CHECK-NEXT:   $r0 = LDA_dms_lda_idx_imm $p1, 4
+    ; CHECK-NEXT:   $r12, $r31 = DIVS killed $r31, internal $r0, killed $r2
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
@@ -33,8 +34,9 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $r2 = LDA_dms_lda_idx_imm $p1, 8 {
-    ; CHECK-NEXT:   $r12, $r31 = DIVS killed $r31, $r0, killed $r2
+    ; CHECK-NEXT: BUNDLE implicit-def $r2, implicit-def $r12, implicit-def $r31, implicit killed $p1, implicit killed $r31, implicit $r0 {
+    ; CHECK-NEXT:   $r2 = LDA_dms_lda_idx_imm killed $p1, 8
+    ; CHECK-NEXT:   $r12, $r31 = DIVS killed $r31, $r0, internal $r2
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
@@ -63,7 +65,8 @@ body:             |
     ; CHECK: liveins: $r0, $r2, $r12, $r31, $p1
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $r12, $r31 = DIVS killed $r31, $r0, $r2
-    ; CHECK-NEXT: ST_dms_sts_idx_imm $r12, $p1, 0 {
+    ; CHECK-NEXT: BUNDLE implicit-def $r12, implicit-def $r31, implicit killed $r12, implicit $p1, implicit killed $r31, implicit killed $r0, implicit killed $r2 {
+    ; CHECK-NEXT:   ST_dms_sts_idx_imm killed $r12, $p1, 0
     ; CHECK-NEXT:   $r12, $r31 = DIVS killed $r31, killed $r0, killed $r2
     ; CHECK-NEXT: }
     ; CHECK-NEXT: ST_dms_sts_idx_imm killed $r31, killed $p1, 0

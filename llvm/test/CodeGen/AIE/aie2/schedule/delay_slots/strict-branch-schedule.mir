@@ -20,7 +20,8 @@ body:             |
     ; CHECK-LABEL: name: lda_slot
     ; CHECK: liveins: $r0
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: $r1 = MOVA_lda_cg 1 {
+    ; CHECK-NEXT: BUNDLE implicit-def $r1, implicit killed $r0 {
+    ; CHECK-NEXT:   $r1 = MOVA_lda_cg 1
     ; CHECK-NEXT:   JNZ killed renamable $r0, 200
     ; CHECK-NEXT: }
     ; CHECK-NEXT: $r2 = MOVA_lda_cg 2

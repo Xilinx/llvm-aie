@@ -38,7 +38,8 @@ body:             |
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   $p0 = PADDB_ldb_ptr_inc_nrm_imm $p0, 4 {
+  ; CHECK-NEXT:   BUNDLE implicit-def $p0, implicit killed $p0, implicit $r0, implicit $p1 {
+  ; CHECK-NEXT:     $p0 = PADDB_ldb_ptr_inc_nrm_imm killed $p0, 4
   ; CHECK-NEXT:     ST_dms_sts_idx_imm $r0, $p1, 0
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   DelayedSchedBarrier
@@ -149,8 +150,9 @@ body:             |
   ; CHECK-NEXT:   $r2 = MUL_mul_r_rr killed $r2, killed $r10
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   $dj0 = MOV_mv_scl $r2
-  ; CHECK-NEXT:   $r1 = LDA_dms_lda_idx $p0, $dj0 {
-  ; CHECK-NEXT:     $r3 = OR killed $r3, killed $r1
+  ; CHECK-NEXT:   BUNDLE implicit-def $r1, implicit-def $r3, implicit $p0, implicit killed $dj0, implicit killed $r3 {
+  ; CHECK-NEXT:     $r1 = LDA_dms_lda_idx $p0, killed $dj0
+  ; CHECK-NEXT:     $r3 = OR killed $r3, internal $r1
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}

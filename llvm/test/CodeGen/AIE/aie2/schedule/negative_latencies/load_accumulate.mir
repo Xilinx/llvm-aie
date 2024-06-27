@@ -75,16 +75,20 @@ body:             |
     ; CHECK: liveins: $p0, $p1
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $dj0 = MOV_mv_cg 14
-    ; CHECK-NEXT: $r3 = LDA_S16_ag_idx $p0, $dj0 {
+    ; CHECK-NEXT: BUNDLE implicit-def $r3, implicit-def $dj0, implicit $p0, implicit killed $dj0 {
+    ; CHECK-NEXT:   $r3 = LDA_S16_ag_idx $p0, killed $dj0
     ; CHECK-NEXT:   $dj0 = MOV_mv_cg 16
     ; CHECK-NEXT: }
-    ; CHECK-NEXT: $r4 = LDA_S16_ag_idx $p0, $dj0 {
+    ; CHECK-NEXT: BUNDLE implicit-def $r4, implicit-def $dj0, implicit $p0, implicit killed $dj0 {
+    ; CHECK-NEXT:   $r4 = LDA_S16_ag_idx $p0, killed $dj0
     ; CHECK-NEXT:   $dj0 = MOV_mv_cg 18
     ; CHECK-NEXT: }
-    ; CHECK-NEXT: $r4 = LDA_S16_ag_idx $p0, $dj0 {
+    ; CHECK-NEXT: BUNDLE implicit-def $r4, implicit-def $dj0, implicit $p0, implicit killed $dj0 {
+    ; CHECK-NEXT:   $r4 = LDA_S16_ag_idx $p0, killed $dj0
     ; CHECK-NEXT:   $dj0 = MOV_mv_cg 20
     ; CHECK-NEXT: }
-    ; CHECK-NEXT: $r4 = LDA_S16_ag_idx $p0, $dj0 {
+    ; CHECK-NEXT: BUNDLE implicit-def $r4, implicit-def $dj0, implicit $p0, implicit killed $dj0 {
+    ; CHECK-NEXT:   $r4 = LDA_S16_ag_idx $p0, killed $dj0
     ; CHECK-NEXT:   $dj0 = MOV_mv_cg 22
     ; CHECK-NEXT: }
     ; CHECK-NEXT: $r4 = LDA_S16_ag_idx killed $p0, killed $dj0

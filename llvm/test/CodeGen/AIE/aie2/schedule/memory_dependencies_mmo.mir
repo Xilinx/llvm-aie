@@ -52,7 +52,8 @@ body:             |
     ; CHECK-LABEL: name: must_alias
     ; CHECK: liveins: $r0, $p0
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: $r2 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32) from %ir.a) {
+    ; CHECK-NEXT: BUNDLE implicit-def $r2, implicit-def $srsrs_of, implicit $p0, implicit killed $cm0, implicit killed $s0, implicit $crsat, implicit $crrnd, implicit $crsrssign {
+    ; CHECK-NEXT:   $r2 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32) from %ir.a)
     ; CHECK-NEXT:   VST_SRS_D8_S32_ag_idx_imm $p0, 0, killed $cm0, killed $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<8 x s32>) into %ir.a)
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
@@ -73,7 +74,8 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: no_info
-    ; CHECK: $r2 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32) from %ir.a) {
+    ; CHECK: BUNDLE implicit-def $r2, implicit-def $srsrs_of, implicit $p0, implicit killed $cm0, implicit killed $s0, implicit $crsat, implicit $crrnd, implicit $crsrssign {
+    ; CHECK-NEXT:   $r2 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32) from %ir.a)
     ; CHECK-NEXT:   VST_SRS_D8_S32_ag_idx_imm $p0, 0, killed $cm0, killed $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP

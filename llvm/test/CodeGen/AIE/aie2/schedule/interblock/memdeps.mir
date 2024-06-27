@@ -39,8 +39,9 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
   ; CHECK-NEXT:   liveins: $wl0, $p1
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $p1 = PADDA_lda_ptr_inc_idx_imm $p1, 0 {
-  ; CHECK-NEXT:     VST_dmw_sts_w_ag_idx_imm killed $wl0, killed $p1, 0
+  ; CHECK-NEXT:   BUNDLE implicit-def $p1, implicit killed $p1, implicit killed $wl0 {
+  ; CHECK-NEXT:     $p1 = PADDA_lda_ptr_inc_idx_imm killed $p1, 0
+  ; CHECK-NEXT:     VST_dmw_sts_w_ag_idx_imm killed $wl0, internal $p1, 0
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   $p1 = PADDA_lda_ptr_inc_idx_imm killed $p1, 0
   ; CHECK-NEXT:   $p1 = PADDA_lda_ptr_inc_idx_imm killed $p1, 0
@@ -101,8 +102,9 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $p1 = PADDA_lda_ptr_inc_idx_imm killed $p1, 0
   ; CHECK-NEXT:   $p1 = PADDA_lda_ptr_inc_idx_imm killed $p1, 0
-  ; CHECK-NEXT:   $p1 = PADDA_lda_ptr_inc_idx_imm $p1, 0 {
-  ; CHECK-NEXT:     VST_dmw_sts_w_ag_idx_imm killed $wl0, killed $p1, 0
+  ; CHECK-NEXT:   BUNDLE implicit-def $p1, implicit killed $p1, implicit killed $wl0 {
+  ; CHECK-NEXT:     $p1 = PADDA_lda_ptr_inc_idx_imm killed $p1, 0
+  ; CHECK-NEXT:     VST_dmw_sts_w_ag_idx_imm killed $wl0, internal $p1, 0
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   $p1 = PADDA_lda_ptr_inc_idx_imm killed $p1, 0
   ; CHECK-NEXT:   $p1 = PADDA_lda_ptr_inc_idx_imm killed $p1, 0
@@ -157,8 +159,9 @@ body:             |
   ; CHECK-NEXT:   liveins: $wl0, $p1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $p1 = PADDA_lda_ptr_inc_idx_imm killed $p1, 0
-  ; CHECK-NEXT:   $p1 = PADDA_lda_ptr_inc_idx_imm $p1, 0 {
-  ; CHECK-NEXT:     VST_dmw_sts_w_ag_idx_imm killed $wl0, killed $p1, 0
+  ; CHECK-NEXT:   BUNDLE implicit-def $p1, implicit killed $p1, implicit killed $wl0 {
+  ; CHECK-NEXT:     $p1 = PADDA_lda_ptr_inc_idx_imm killed $p1, 0
+  ; CHECK-NEXT:     VST_dmw_sts_w_ag_idx_imm killed $wl0, internal $p1, 0
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   $p1 = PADDA_lda_ptr_inc_idx_imm killed $p1, 0
   ; CHECK-NEXT:   $p1 = PADDA_lda_ptr_inc_idx_imm killed $p1, 0

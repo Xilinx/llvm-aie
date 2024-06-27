@@ -254,8 +254,9 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $p1, $wh0 = VLDB_COMPR_POP $p1, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp {
-    ; CHECK-NEXT:   $r1 = MOV_mv_scl killed $dp
+    ; CHECK-NEXT: BUNDLE implicit-def $p1, implicit-def $wh0, implicit-def $srcompr_uf, implicit-def $dp, implicit-def $r1, implicit killed $p1, implicit killed $dp {
+    ; CHECK-NEXT:   $p1, $wh0 = VLDB_COMPR_POP killed $p1, implicit-def $srcompr_uf, implicit-def $dp, implicit killed $dp
+    ; CHECK-NEXT:   $r1 = MOV_mv_scl internal $dp
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP

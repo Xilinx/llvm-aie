@@ -17,16 +17,18 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: II_VST_W_E1_VUNPACK_E7
-    ; CHECK: $x1 = VUNPACK_S8_S4 $wl7 {
+    ; CHECK: BUNDLE implicit-def $x1, implicit-def $wl1, implicit-def $wh1, implicit killed $wl7, implicit $wl3, implicit $p2, implicit $dj2 {
+    ; CHECK-NEXT:   $x1 = VUNPACK_S8_S4 killed $wl7
     ; CHECK-NEXT:   VST_dmw_sts_w_ag_idx $wl3, $p2, $dj2
     ; CHECK-NEXT: }
     ; CHECK-NEXT: VST_dmw_sts_w_ag_idx $wl3, $p2, $dj2
     ; CHECK-NEXT: VST_dmw_sts_w_ag_idx $wl3, $p2, $dj2
     ; CHECK-NEXT: VST_dmw_sts_w_ag_idx $wl3, $p2, $dj2
     ; CHECK-NEXT: VST_dmw_sts_w_ag_idx $wl3, $p2, $dj2
-    ; CHECK-NEXT: VST_dmw_sts_w_ag_idx killed $wl3, killed $p2, killed $dj2
+    ; CHECK-NEXT: VST_dmw_sts_w_ag_idx $wl3, $p2, $dj2
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: VST_dmw_sts_w_ag_idx $wl3, $p2, $dj2 {
+    ; CHECK-NEXT: BUNDLE implicit-def $r17, implicit killed $wl3, implicit killed $p2, implicit killed $dj2, implicit killed $x1, implicit killed $r16 {
+    ; CHECK-NEXT:   VST_dmw_sts_w_ag_idx killed $wl3, killed $p2, killed $dj2
     ; CHECK-NEXT:   $r17 = VEXTRACT_S32 killed $x1, killed $r16
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
@@ -47,16 +49,18 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: II_VST_POSTINC_W_E1_VUNPACK_E7
-    ; CHECK: $x1 = VUNPACK_S8_S4 $wl7 {
+    ; CHECK: BUNDLE implicit-def $x1, implicit-def $wl1, implicit-def $wh1, implicit-def $p2, implicit killed $wl7, implicit $wl3, implicit killed $p2 {
+    ; CHECK-NEXT:   $x1 = VUNPACK_S8_S4 killed $wl7
     ; CHECK-NEXT:   $p2 = VST_dmw_sts_w_ag_pstm_nrm_imm $wl3, killed $p2, 0
     ; CHECK-NEXT: }
     ; CHECK-NEXT: $p2 = VST_dmw_sts_w_ag_pstm_nrm_imm $wl3, killed $p2, 0
     ; CHECK-NEXT: $p2 = VST_dmw_sts_w_ag_pstm_nrm_imm $wl3, killed $p2, 0
     ; CHECK-NEXT: $p2 = VST_dmw_sts_w_ag_pstm_nrm_imm $wl3, killed $p2, 0
     ; CHECK-NEXT: $p2 = VST_dmw_sts_w_ag_pstm_nrm_imm $wl3, killed $p2, 0
-    ; CHECK-NEXT: $p2 = VST_dmw_sts_w_ag_pstm_nrm_imm killed $wl3, killed $p2, 0
+    ; CHECK-NEXT: $p2 = VST_dmw_sts_w_ag_pstm_nrm_imm $wl3, killed $p2, 0
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $p2 = VST_dmw_sts_w_ag_pstm_nrm_imm $wl3, $p2, 0 {
+    ; CHECK-NEXT: BUNDLE implicit-def $p2, implicit-def $r17, implicit killed $wl3, implicit killed $p2, implicit killed $x1, implicit killed $r16 {
+    ; CHECK-NEXT:   $p2 = VST_dmw_sts_w_ag_pstm_nrm_imm killed $wl3, killed $p2, 0
     ; CHECK-NEXT:   $r17 = VEXTRACT_S32 killed $x1, killed $r16
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
@@ -77,16 +81,18 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: II_VST_2D_W_E1_VUNPACK_E7
-    ; CHECK: $x1 = VUNPACK_S8_S4 $wl7 {
+    ; CHECK: BUNDLE implicit-def $x1, implicit-def $wl1, implicit-def $wh1, implicit-def $p2, implicit-def $dc2, implicit killed $wl7, implicit $wl3, implicit killed $p2, implicit $d2 {
+    ; CHECK-NEXT:   $x1 = VUNPACK_S8_S4 killed $wl7
     ; CHECK-NEXT:   $p2, $dc2 = VST_2D_dmw_sts_w $wl3, killed $p2, $d2
     ; CHECK-NEXT: }
     ; CHECK-NEXT: $p2, $dc2 = VST_2D_dmw_sts_w $wl3, killed $p2, $d2
     ; CHECK-NEXT: $p2, $dc2 = VST_2D_dmw_sts_w $wl3, killed $p2, $d2
     ; CHECK-NEXT: $p2, $dc2 = VST_2D_dmw_sts_w $wl3, killed $p2, $d2
     ; CHECK-NEXT: $p2, $dc2 = VST_2D_dmw_sts_w $wl3, killed $p2, $d2
-    ; CHECK-NEXT: $p2, $dc2 = VST_2D_dmw_sts_w killed $wl3, killed $p2, killed $d2
+    ; CHECK-NEXT: $p2, $dc2 = VST_2D_dmw_sts_w $wl3, killed $p2, $d2
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $p2, $dc2 = VST_2D_dmw_sts_w $wl3, $p2, $d2 {
+    ; CHECK-NEXT: BUNDLE implicit-def $p2, implicit-def $dc2, implicit-def $r17, implicit killed $wl3, implicit killed $p2, implicit killed $d2, implicit killed $x1, implicit killed $r16 {
+    ; CHECK-NEXT:   $p2, $dc2 = VST_2D_dmw_sts_w killed $wl3, killed $p2, killed $d2
     ; CHECK-NEXT:   $r17 = VEXTRACT_S32 killed $x1, killed $r16
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
@@ -107,16 +113,18 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: II_VST_3D_W_E1_VUNPACK_E7
-    ; CHECK: $x1 = VUNPACK_S8_S4 $wl7 {
+    ; CHECK: BUNDLE implicit-def $x1, implicit-def $wl1, implicit-def $wh1, implicit-def $p2, implicit-def $dc2, implicit-def $dc6, implicit killed $wl7, implicit $wl3, implicit killed $p2, implicit $d2_3d {
+    ; CHECK-NEXT:   $x1 = VUNPACK_S8_S4 killed $wl7
     ; CHECK-NEXT:   $p2, $dc2, $dc6 = VST_3D_dmw_sts_w $wl3, killed $p2, $d2_3d
     ; CHECK-NEXT: }
     ; CHECK-NEXT: $p2, $dc2, $dc6 = VST_3D_dmw_sts_w $wl3, killed $p2, $d2_3d
     ; CHECK-NEXT: $p2, $dc2, $dc6 = VST_3D_dmw_sts_w $wl3, killed $p2, $d2_3d
     ; CHECK-NEXT: $p2, $dc2, $dc6 = VST_3D_dmw_sts_w $wl3, killed $p2, $d2_3d
     ; CHECK-NEXT: $p2, $dc2, $dc6 = VST_3D_dmw_sts_w $wl3, killed $p2, $d2_3d
-    ; CHECK-NEXT: $p2, $dc2, $dc6 = VST_3D_dmw_sts_w killed $wl3, killed $p2, killed $d2_3d
+    ; CHECK-NEXT: $p2, $dc2, $dc6 = VST_3D_dmw_sts_w $wl3, killed $p2, $d2_3d
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $p2, $dc2, $dc6 = VST_3D_dmw_sts_w $wl3, $p2, $d2_3d {
+    ; CHECK-NEXT: BUNDLE implicit-def $p2, implicit-def $dc2, implicit-def $dc6, implicit-def $r17, implicit killed $wl3, implicit killed $p2, implicit killed $d2_3d, implicit killed $x1, implicit killed $r16 {
+    ; CHECK-NEXT:   $p2, $dc2, $dc6 = VST_3D_dmw_sts_w killed $wl3, killed $p2, killed $d2_3d
     ; CHECK-NEXT:   $r17 = VEXTRACT_S32 killed $x1, killed $r16
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
@@ -137,7 +145,8 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VFLOORs32bf16_E1_VUNPACK_E7
-    ; CHECK: $x1 = VUNPACK_S8_S4 $wl7 {
+    ; CHECK: BUNDLE implicit-def $x1, implicit-def $wl1, implicit-def $wh1, implicit-def $x0, implicit-def $wl0, implicit-def $wh0, implicit-def $srf2iflags, implicit killed $wl7, implicit $amll1, implicit $s0, implicit $crf2imask {
+    ; CHECK-NEXT:   $x1 = VUNPACK_S8_S4 killed $wl7
     ; CHECK-NEXT:   $x0 = VFLOOR_S32_BF16_mFl2FxSrc_AM $amll1, $s0, implicit-def $srf2iflags, implicit $crf2imask
     ; CHECK-NEXT: }
     ; CHECK-NEXT: $x0 = VFLOOR_S32_BF16_mFl2FxSrc_AM $amll1, $s0, implicit-def $srf2iflags, implicit $crf2imask
@@ -200,7 +209,8 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $wl4 = VLDB_4x16_LO $wh6 {
+    ; CHECK-NEXT: BUNDLE implicit-def $wl4, implicit-def $r17, implicit killed $wh6, implicit killed $x1, implicit killed $r16 {
+    ; CHECK-NEXT:   $wl4 = VLDB_4x16_LO killed $wh6
     ; CHECK-NEXT:   $r17 = VEXTRACT_S32 killed $x1, killed $r16
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
@@ -226,7 +236,8 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: VPACK_W_RS_E1
-    ; CHECK: $x1 = VUNPACK_S8_S4 $wl7 {
+    ; CHECK: BUNDLE implicit-def $x1, implicit-def $wl1, implicit-def $wh1, implicit-def $wl2, implicit killed $wl7, implicit $x3, implicit $crsat, implicit $crpacksign {
+    ; CHECK-NEXT:   $x1 = VUNPACK_S8_S4 killed $wl7
     ; CHECK-NEXT:   $wl2 = VPACK_D4_D8 $x3, implicit $crsat, implicit $crpacksign
     ; CHECK-NEXT: }
     ; CHECK-NEXT: $wl2 = VPACK_D4_D8 $x3, implicit $crsat, implicit $crpacksign

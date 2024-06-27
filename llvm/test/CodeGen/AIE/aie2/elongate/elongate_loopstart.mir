@@ -14,7 +14,8 @@ body:             |
   bb.0 (align 16):
 
     ; CHECK-LABEL: name: scheduler_margin_loopstart
-    ; CHECK: renamable $r1 = LDA_dms_lda_idx_imm renamable $p0, 0 {
+    ; CHECK: BUNDLE implicit-def $r1, implicit-def $r2, implicit-def $lc, implicit killed $p0, implicit killed $r0 {
+    ; CHECK-NEXT:   renamable $r1 = LDA_dms_lda_idx_imm killed renamable $p0, 0
     ; CHECK-NEXT:   renamable $r2 = MOVX_alu_cg 0
     ; CHECK-NEXT:   $lc = MOV_mv_scl killed $r0
     ; CHECK-NEXT: }

@@ -30,7 +30,8 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $r10 = OR $r0, $r1
   ; CHECK-NEXT:   $r3 = OR killed $r10, $r2
-  ; CHECK-NEXT:   $cm3 = VMOV_mv_cm $cm1 {
+  ; CHECK-NEXT:   BUNDLE implicit-def $cm3, implicit-def $bml3, implicit-def $amll3, implicit-def $amlh3, implicit-def $bmh3, implicit-def $amhl3, implicit-def $amhh3, implicit-def $cm2, implicit-def $bml2, implicit-def $amll2, implicit-def $amlh2, implicit-def $bmh2, implicit-def $amhl2, implicit-def $amhh2, implicit $cm1, implicit $cm0, implicit killed $r3 {
+  ; CHECK-NEXT:     $cm3 = VMOV_mv_cm $cm1
   ; CHECK-NEXT:     $cm2 = VADD $cm0, $cm1, killed $r3
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   PseudoLoopEnd %bb.2, %bb.1
@@ -61,7 +62,8 @@ body:             |
   ; CHECK-EP-ANALYSIS-NEXT: {{  $}}
   ; CHECK-EP-ANALYSIS-NEXT:   $r10 = OR $r0, $r1
   ; CHECK-EP-ANALYSIS-NEXT:   $r3 = OR killed $r10, $r2
-  ; CHECK-EP-ANALYSIS-NEXT:   $cm3 = VMOV_mv_cm $cm1 {
+  ; CHECK-EP-ANALYSIS-NEXT:   BUNDLE implicit-def $cm3, implicit-def $bml3, implicit-def $amll3, implicit-def $amlh3, implicit-def $bmh3, implicit-def $amhl3, implicit-def $amhh3, implicit-def $cm2, implicit-def $bml2, implicit-def $amll2, implicit-def $amlh2, implicit-def $bmh2, implicit-def $amhl2, implicit-def $amhh2, implicit $cm1, implicit $cm0, implicit killed $r3 {
+  ; CHECK-EP-ANALYSIS-NEXT:     $cm3 = VMOV_mv_cm $cm1
   ; CHECK-EP-ANALYSIS-NEXT:     $cm2 = VADD $cm0, $cm1, killed $r3
   ; CHECK-EP-ANALYSIS-NEXT:   }
   ; CHECK-EP-ANALYSIS-NEXT:   PseudoLoopEnd %bb.2, %bb.1

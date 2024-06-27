@@ -14,7 +14,8 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: E1_MOV_E1_OR
-    ; CHECK: $r3 = OR $r1, $r2 {
+    ; CHECK: BUNDLE implicit-def $r3, implicit-def $r0, implicit killed $r1, implicit killed $r2 {
+    ; CHECK-NEXT:   $r3 = OR killed $r1, killed $r2
     ; CHECK-NEXT:   $r0 = MOV_mv_cg 4
     ; CHECK-NEXT: }
     $r0 = MOV_mv_cg 4

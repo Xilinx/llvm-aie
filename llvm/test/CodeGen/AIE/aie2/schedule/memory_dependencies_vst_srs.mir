@@ -31,31 +31,36 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: SRS_STORE_E7_LOAD_E5
-    ; CHECK: $r2 = LDA_dms_lda_idx_imm $p0, 0 {
+    ; CHECK: BUNDLE implicit-def $r2, implicit-def $wl2, implicit-def $srsrs_of, implicit $p0, implicit $cm0, implicit $s0, implicit $crsat, implicit $crrnd, implicit $crsrssign {
+    ; CHECK-NEXT:   $r2 = LDA_dms_lda_idx_imm $p0, 0
     ; CHECK-NEXT:   $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0
     ; CHECK-NEXT:   VST_SRS_D8_S32_ag_idx_imm $p0, 0, $cm0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $r2 = LDA_dms_lda_idx_imm $p0, 0 {
+    ; CHECK-NEXT: BUNDLE implicit-def $r2, implicit-def $wl2, implicit-def $p1, implicit-def $srsrs_of, implicit $p0, implicit killed $p1, implicit $cm0, implicit $s0, implicit $crsat, implicit $crrnd, implicit $crsrssign {
+    ; CHECK-NEXT:   $r2 = LDA_dms_lda_idx_imm $p0, 0
     ; CHECK-NEXT:   $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0
     ; CHECK-NEXT:   $p1 = VST_SRS_D8_S32_ag_pstm_nrm_imm killed $p1, 0, $cm0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $r2 = LDA_dms_lda_idx_imm $p0, 0 {
+    ; CHECK-NEXT: BUNDLE implicit-def $r2, implicit-def $wl2, implicit-def $p2, implicit-def $dc0, implicit-def $srsrs_of, implicit $p0, implicit killed $p2, implicit killed $d0, implicit $cm0, implicit $s0, implicit $crsat, implicit $crrnd, implicit $crsrssign {
+    ; CHECK-NEXT:   $r2 = LDA_dms_lda_idx_imm $p0, 0
     ; CHECK-NEXT:   $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0
     ; CHECK-NEXT:   $p2, $dc0 = VST_2D_SRS_D8_S32 killed $p2, killed $d0, $cm0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $r2 = LDA_dms_lda_idx_imm $p0, 0 {
+    ; CHECK-NEXT: BUNDLE implicit-def $r2, implicit-def $wl2, implicit-def $p3, implicit-def $dc1, implicit-def $dc5, implicit-def $srsrs_of, implicit $p0, implicit killed $p3, implicit killed $d1_3d, implicit killed $cm0, implicit killed $s0, implicit $crsat, implicit $crrnd, implicit $crsrssign {
+    ; CHECK-NEXT:   $r2 = LDA_dms_lda_idx_imm $p0, 0
     ; CHECK-NEXT:   $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0
     ; CHECK-NEXT:   $p3, $dc1, $dc5 = VST_3D_SRS_D8_S32 killed $p3, killed $d1_3d, killed $cm0, killed $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $r2 = LDA_dms_lda_idx_imm $p0, 0 {
+    ; CHECK-NEXT: BUNDLE implicit-def $r2, implicit-def $wl2, implicit killed $p0 {
+    ; CHECK-NEXT:   $r2 = LDA_dms_lda_idx_imm $p0, 0
     ; CHECK-NEXT:   $wl2 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP

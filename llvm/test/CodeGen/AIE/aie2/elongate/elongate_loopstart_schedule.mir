@@ -14,10 +14,12 @@ body:             |
   bb.0 (align 16):
 
     ; CHECK-LABEL: name: scheduler_loopstart_nopslots_utilized
-    ; CHECK: renamable $r1 = LDA_dms_lda_idx_imm renamable $p0, 0 {
+    ; CHECK: BUNDLE implicit-def $r1, implicit-def $le, implicit killed $p0 {
+    ; CHECK-NEXT:   renamable $r1 = LDA_dms_lda_idx_imm killed renamable $p0, 0
     ; CHECK-NEXT:   $le = MOVXM_lng_cg <mcsymbol .L_1120>
     ; CHECK-NEXT: }
-    ; CHECK-NEXT: renamable $r2 = MOVX_alu_cg 0 {
+    ; CHECK-NEXT: BUNDLE implicit-def $r2, implicit-def $lc, implicit killed $r0 {
+    ; CHECK-NEXT:   renamable $r2 = MOVX_alu_cg 0
     ; CHECK-NEXT:   $lc = MOV_mv_scl killed $r0
     ; CHECK-NEXT: }
     ; CHECK-NEXT: $ls = MOVXM_lng_cg 0

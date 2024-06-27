@@ -239,8 +239,9 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $p0 = VLDB_SPARSE_RESET_4 $p0, implicit-def $srsparse_of, implicit-def $dp, implicit $dp {
-    ; CHECK-NEXT:   $r1 = MOV_mv_scl $srsparse_of
+    ; CHECK-NEXT: BUNDLE implicit-def $p0, implicit-def $srsparse_of, implicit-def $dp, implicit-def $r1, implicit killed $p0, implicit killed $dp {
+    ; CHECK-NEXT:   $p0 = VLDB_SPARSE_RESET_4 killed $p0, implicit-def $srsparse_of, implicit-def $dp, implicit killed $dp
+    ; CHECK-NEXT:   $r1 = MOV_mv_scl internal $srsparse_of
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
@@ -259,14 +260,15 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: II_VLDB_SPARSE_PEEK_implicit_RAW
-    ; CHECK: $p1, $qwh0 = VLDB_SPARSE_PEEK_4 killed $p1, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit killed $dp
+    ; CHECK: $p1, $qwh0 = VLDB_SPARSE_PEEK_4 killed $p1, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit $dp
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $p1, $qwh0 = VLDB_SPARSE_PEEK_4 $p1, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit $dp {
-    ; CHECK-NEXT:   $r1 = MOV_mv_scl $srsparse_of
+    ; CHECK-NEXT: BUNDLE implicit-def $p1, implicit-def $qwh0, implicit-def $qh0, implicit-def $wh0, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $r1, implicit killed $p1, implicit killed $dp {
+    ; CHECK-NEXT:   $p1, $qwh0 = VLDB_SPARSE_PEEK_4 killed $p1, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit killed $dp
+    ; CHECK-NEXT:   $r1 = MOV_mv_scl internal $srsparse_of
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
@@ -291,16 +293,18 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $p1, $qwh0 = VLDB_SPARSE_POP_4 $p1, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp {
-    ; CHECK-NEXT:   $r1 = MOV_mv_scl $srsparse_of
+    ; CHECK-NEXT: BUNDLE implicit-def $p1, implicit-def $qwh0, implicit-def $qh0, implicit-def $wh0, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit-def $r1, implicit killed $p1, implicit killed $dp {
+    ; CHECK-NEXT:   $p1, $qwh0 = VLDB_SPARSE_POP_4 killed $p1, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit killed $dp
+    ; CHECK-NEXT:   $r1 = MOV_mv_scl internal $srsparse_of
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $p1, $qwh0 = VLDB_SPARSE_POP_4 $p1, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp {
-    ; CHECK-NEXT:   $r1 = MOV_mv_scl killed $dp
+    ; CHECK-NEXT: BUNDLE implicit-def $p1, implicit-def $qwh0, implicit-def $qh0, implicit-def $wh0, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit-def $r1, implicit killed $p1, implicit killed $dp {
+    ; CHECK-NEXT:   $p1, $qwh0 = VLDB_SPARSE_POP_4 killed $p1, implicit-def $srsparse_of, implicit-def $srcompr_uf, implicit-def $dp, implicit killed $dp
+    ; CHECK-NEXT:   $r1 = MOV_mv_scl internal $dp
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP

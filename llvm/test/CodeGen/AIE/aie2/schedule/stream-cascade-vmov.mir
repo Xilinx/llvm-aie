@@ -48,7 +48,8 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: VMOV_mv_mcd $bml0, implicit $crmcden {
+    ; CHECK-NEXT: BUNDLE implicit-def $crmcden, implicit killed $bml0, implicit $crmcden {
+    ; CHECK-NEXT:   VMOV_mv_mcd killed $bml0, implicit $crmcden
     ; CHECK-NEXT:   $crmcden = MOV_mv_cg 0
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
