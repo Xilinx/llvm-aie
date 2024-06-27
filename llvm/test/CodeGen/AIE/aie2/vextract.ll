@@ -429,8 +429,8 @@ define dso_local noundef signext i8 @_Z5test1Dv128_a(<128 x i8> noundef %vec)  {
 ; CHECK-NEXT:    movx r2, #64
 ; CHECK-NEXT:    lt r27, r0, r2
 ; CHECK-NEXT:    sel.nez r1, r1, r2, r27
-; CHECK-NEXT:    sub r16, r0, r1
 ; CHECK-NEXT:    add r24, r27, #-1
+; CHECK-NEXT:    sub r16, r0, r1
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    mov r25, r24 // Delay Slot 5
 ; CHECK-NEXT:    vsel.8 x0, x4, x5, r25:r24 // Delay Slot 4
@@ -460,8 +460,8 @@ define dso_local noundef signext i16 @_Z5test2Dv64_s(<64 x i16> noundef %vec)  {
 ; CHECK-NEXT:    movx r2, #32
 ; CHECK-NEXT:    lt r27, r0, r2
 ; CHECK-NEXT:    sel.nez r1, r1, r2, r27
-; CHECK-NEXT:    sub r16, r0, r1
 ; CHECK-NEXT:    add r17, r27, #-1
+; CHECK-NEXT:    sub r16, r0, r1
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vsel.16 x0, x4, x5, r17 // Delay Slot 5
 ; CHECK-NEXT:    mov r17, r4 // Delay Slot 4
@@ -491,8 +491,8 @@ define dso_local noundef i32 @_Z5test3Dv32_i(<32 x i32> noundef %vec)  {
 ; CHECK-NEXT:    movx r2, #16
 ; CHECK-NEXT:    lt r27, r0, r2
 ; CHECK-NEXT:    sel.nez r1, r1, r2, r27
-; CHECK-NEXT:    sub r16, r0, r1
 ; CHECK-NEXT:    add r17, r27, #-1
+; CHECK-NEXT:    sub r16, r0, r1
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vsel.32 x0, x4, x5, r17 // Delay Slot 5
 ; CHECK-NEXT:    mov r17, r4 // Delay Slot 4

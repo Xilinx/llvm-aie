@@ -229,10 +229,9 @@ define <32 x i32> @test_1024bit_dyn_idx(<32 x i32> %vec, i32 %b, i32 %c) {
 ; CHECK-NEXT:    nopb ; mova r2, #16; nops ; nopxm ; nopv
 ; CHECK-NEXT:    mova r3, #0; nopb ; lt r27, r0, r2
 ; CHECK-NEXT:    sel.nez r2, r3, r2, r27
-; CHECK-NEXT:    sub r29, r0, r2
 ; CHECK-NEXT:    add r16, r27, #-1; mov r4, r16
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vsel.32 x0, x6, x7, r16 // Delay Slot 5
+; CHECK-NEXT:    sub r29, r0, r2; vsel.32 x0, x6, x7, r16 // Delay Slot 5
 ; CHECK-NEXT:    vinsert.32 x0, x0, r29, r1 // Delay Slot 4
 ; CHECK-NEXT:    vsel.32 x4, x0, x6, r16 // Delay Slot 3
 ; CHECK-NEXT:    vsel.32 x5, x7, x0, r16 // Delay Slot 2

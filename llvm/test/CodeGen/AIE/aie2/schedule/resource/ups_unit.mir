@@ -24,8 +24,8 @@ body:             |
     ; CHECK-NEXT: VMOV_mv_mcd killed $bmh4, implicit $crmcden
     ; CHECK-NEXT: VMOV_mv_mcd killed $bmh5, implicit $crmcden
     ; CHECK-NEXT: VMOV_mv_mcd killed $bmh6, implicit $crmcden
-    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: $cm8 = VUPS_S64_D32_mv_ups_x2c killed $x2, killed $s2, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
@@ -53,8 +53,8 @@ body:             |
     ; CHECK-NEXT: VMOV_mv_mcd killed $bmh4, implicit $crmcden
     ; CHECK-NEXT: VMOV_mv_mcd killed $bmh5, implicit $crmcden
     ; CHECK-NEXT: VMOV_mv_mcd killed $bmh6, implicit $crmcden
-    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: $cm8 = VUPS_S64_D32_mv_ups_x2c killed $x2, killed $s2, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
@@ -82,8 +82,8 @@ body:             |
     ; CHECK-NEXT: VMOV_mv_mcd killed $bmh4, implicit $crmcden
     ; CHECK-NEXT: VMOV_mv_mcd killed $bmh5, implicit $crmcden
     ; CHECK-NEXT: VMOV_mv_mcd killed $bmh6, implicit $crmcden
-    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: $cm8 = VUPS_S64_D32_mv_ups_x2c killed $x2, killed $s2, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
@@ -113,8 +113,8 @@ body:             |
     ; CHECK-NEXT: VMOV_mv_mcd killed $bmh4, implicit $crmcden
     ; CHECK-NEXT: VMOV_mv_mcd killed $bmh5, implicit $crmcden
     ; CHECK-NEXT: VMOV_mv_mcd killed $bmh6, implicit $crmcden
-    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: $cm8 = VUPS_S64_D32_mv_ups_x2c killed $x2, killed $s2, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP

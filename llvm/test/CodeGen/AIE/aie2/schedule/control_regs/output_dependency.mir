@@ -21,6 +21,9 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $crsat = MOVX_mvx_scl killed $r0
     ; CHECK-NEXT: $crsat = MOV_mv_scl killed $r1
+    ; CHECK-NEXT: $r2 = MOV_D1 $crsat
+    ; CHECK-NEXT: NOP
     $crsat = MOVX_mvx_scl $r0
     $crsat = MOV_mv_scl $r1
+    $r2  = MOV_D1 $crsat
 ...
