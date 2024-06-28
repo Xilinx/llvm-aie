@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the primary stateless implementation of the
@@ -68,8 +71,18 @@ using namespace llvm;
 static cl::opt<bool> EnableRecPhiAnalysis("basic-aa-recphi", cl::Hidden,
                                           cl::init(true));
 
+/// Enable full analysis of PHI nodes.
+static cl::opt<bool> EnableFullPHIAnalysis("basic-aa-full-phi-analysis",
+                                           cl::Hidden, cl::init(false));
+
 static cl::opt<bool> EnableSeparateStorageAnalysis("basic-aa-separate-storage",
                                                    cl::Hidden, cl::init(true));
+
+// The max limit of the search depth in DecomposeGEPExpression() and
+// getUnderlyingObject().
+static cl::opt<unsigned>
+    MaxLookupSearchDepth("basic-aa-max-lookup-search-depth", cl::Hidden,
+                         cl::init(6));
 
 /// SearchLimitReached / SearchTimes shows how often the limit of
 /// to decompose GEPs is reached. It will affect the precision
@@ -77,10 +90,6 @@ static cl::opt<bool> EnableSeparateStorageAnalysis("basic-aa-separate-storage",
 STATISTIC(SearchLimitReached, "Number of times the limit to "
                               "decompose GEPs is reached");
 STATISTIC(SearchTimes, "Number of times a GEP is decomposed");
-
-// The max limit of the search depth in DecomposeGEPExpression() and
-// getUnderlyingObject().
-static const unsigned MaxLookupSearchDepth = 6;
 
 bool BasicAAResult::invalidate(Function &Fn, const PreservedAnalyses &PA,
                                FunctionAnalysisManager::Invalidator &Inv) {
@@ -1438,7 +1447,7 @@ AliasResult BasicAAResult::aliasPHI(const PHINode *PN, LocationSize PNSize,
     if (PV1 == PN)
       continue;
 
-    if (isa<PHINode>(PV1)) {
+    if (!(EnableRecPhiAnalysis && EnableFullPHIAnalysis) && isa<PHINode>(PV1)) {
       if (OnePhi && OnePhi != PV1) {
         // To control potential compile time explosion, we choose to be
         // conserviate when we have more than one Phi input.  It is important

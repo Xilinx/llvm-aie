@@ -113,6 +113,12 @@ void AIEToolChain::addClangTargetOptions(
   // Make sure to perform most optimizations before mandatory inlinings,
   // otherwise noalias attributes can get lost and hurt AA results.
   CC1Args.append({"-mllvm", "-mandatory-inlining-before-opt=false"});
+
+  // Perform complete AA analysis on phi nodes.
+  CC1Args.append({"-mllvm", "-basic-aa-full-phi-analysis=true"});
+
+  // Extend the max limit of the search depth in BasicAA
+  CC1Args.append({"-mllvm", "-basic-aa-max-lookup-search-depth=10"});
 }
 
 // Avoid using newer dwarf versions, as the simulator doesn't understand newer
