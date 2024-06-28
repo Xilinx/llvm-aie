@@ -22,6 +22,7 @@
 #include "llvm/CodeGen/GlobalISel/GIMatchTableExecutorImpl.h"
 #include "llvm/CodeGen/GlobalISel/GISelKnownBits.h"
 #include "llvm/CodeGen/MachineDominators.h"
+#include "llvm/IR/IntrinsicsAIE2.h"
 #include "llvm/InitializePasses.h"
 
 #define DEBUG_TYPE "aie2-prelegalizer-combiner"
@@ -36,6 +37,9 @@ static cl::opt<bool>
     InlineMemCalls("aie-inline-mem-calls", cl::init(true), cl::Hidden,
                    cl::desc("Inline mem calls when profitable."));
 
+static cl::opt<bool> CombineVecShiftByZero(
+    "aie-combine-vec-shift-by-zero", cl::init(true), cl::Hidden,
+    cl::desc("Combine vectors shift by zero into copies."));
 namespace {
 
 #define GET_GICOMBINER_TYPES
@@ -63,6 +67,10 @@ public:
 
   bool tryCombineAllImpl(MachineInstr &I) const;
 
+  bool tryToCombineVectorShiftsByZero(MachineInstr &MI) const;
+
+  bool tryToCombineIntrinsic(MachineInstr &MI) const;
+
 private:
 #define GET_GICOMBINER_CLASS_MEMBERS
 #include "AIE2GenPreLegalizerGICombiner.inc"
@@ -89,6 +97,58 @@ AIE2PreLegalizerCombinerImpl::AIE2PreLegalizerCombinerImpl(
 {
 }
 
+/// \returns true if it is possible to combine the below sequence of MIRs
+/// into a COPY.
+/// From : %1:_(<64 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.v64int8/v32int16)
+///        %2:_(<16 x s32>) = G_BITCAST %1:_(<64 x s8>)
+///        %3:_(s32) = G_CONSTANT i32 0
+///        %4:_(<16 x s32>) = G_INTRINSIC
+///        intrinsic(@llvm.aie2.vshift.I512.I512), %X:_(<16 x s32>), %2:_(<16 x
+///        s32>), %3:_(s32), %3:_(s32)
+/// To :   4%:_(<16 x s32>) = COPY %X
+/// Or even:
+/// From : %1:_(<64 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.v16int32)
+///        %2:_(s32) = G_CONSTANT i32 0
+///        %3:_(<16 x s32>) = G_INTRINSIC
+///        intrinsic(@llvm.aie2.vshift.I512.I512), %X:_(<16 x s32>), %1:_(<16 x
+///        s32>), %2:_(s32), %2:_(s32)
+/// To :   3%:_(<16 x s32>) = COPY %X
+bool AIE2PreLegalizerCombinerImpl::tryToCombineVectorShiftsByZero(
+    MachineInstr &MI) const {
+
+  const Register DstReg = MI.getOperand(0).getReg();
+  const Register SrcReg = MI.getOperand(2).getReg();
+  const Register ThirdSrcReg = MI.getOperand(4).getReg();
+  const Register ShiftAmtSrcReg = MI.getOperand(5).getReg();
+
+  auto IsConstantZeroReg = [&](const Register Reg) {
+    auto Cst = getIConstantVRegValWithLookThrough(Reg, MRI);
+    return Cst && Cst->Value.isZero();
+  };
+
+  if (!IsConstantZeroReg(ThirdSrcReg) || !IsConstantZeroReg(ShiftAmtSrcReg))
+    return false;
+
+  MachineIRBuilder MIRBuilder(MI);
+  MIRBuilder.buildCopy(DstReg, SrcReg);
+  MI.eraseFromParent();
+
+  return true;
+}
+
+bool AIE2PreLegalizerCombinerImpl::tryToCombineIntrinsic(
+    MachineInstr &MI) const {
+
+  switch (cast<GIntrinsic>(MI).getIntrinsicID()) {
+  case Intrinsic::aie2_vshift_I512_I512: {
+    return CombineVecShiftByZero && tryToCombineVectorShiftsByZero(MI);
+  }
+  default:
+    break;
+  }
+  return false;
+}
+
 bool AIE2PreLegalizerCombinerImpl::tryCombineAll(MachineInstr &MI) const {
   if (tryCombineAllImpl(MI))
     return true;
@@ -102,7 +162,13 @@ bool AIE2PreLegalizerCombinerImpl::tryCombineAll(MachineInstr &MI) const {
     if (InlineMemCalls &&
         Helper.tryCombineMemCpyFamily(MI, 0 /*Use fed by TargetLowering*/))
       return true;
+    break;
   }
+  case TargetOpcode::G_INTRINSIC: {
+    return tryToCombineIntrinsic(MI);
+  }
+  default:
+    break;
   }
 
   return false;
