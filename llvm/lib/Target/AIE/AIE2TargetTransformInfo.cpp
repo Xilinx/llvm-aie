@@ -57,7 +57,23 @@ bool AIE2TTIImpl::isHardwareLoopProfitable(Loop *L, ScalarEvolution &SE,
     return false;
   }
 
-  // TODO: Check for function calls that are turned into real subroutine calls
+  // For now, we'll handle only single BB loops for AIE
+  // zero-overhead loop.
+  if (L->getNumBlocks() > 1)
+    return false;
+
+  // Scan the loop: loops with calls - make it unprofitable
+  for (BasicBlock *BB : L->blocks()) {
+    for (Instruction &I : *BB) {
+      if (isa<CallInst>(I) || isa<InvokeInst>(I)) {
+        if (const Function *F = cast<CallBase>(I).getCalledFunction()) {
+          if (!isLoweredToCall(F))
+            continue;
+        }
+        return false;
+      }
+    }
+  }
   // We don't want to use ZOL in these cases
   LLVMContext &C = L->getHeader()->getContext();
   HWLoopInfo.CountType = Type::getInt32Ty(C);

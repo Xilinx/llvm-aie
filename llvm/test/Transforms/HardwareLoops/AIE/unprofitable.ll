@@ -131,24 +131,16 @@ define void @pre_existing_inner(ptr nocapture %A, i32 %N) {
 ; CHECK-LABEL: @pre_existing_inner(
 ; CHECK:    llvm.start.loop.iterations
 ; CHECK:    llvm.start.loop.iterations
-; CHECK:    llvm.start.loop.iterations
 ; CHECK:    call i32 @llvm.loop.decrement.reg
 ; CHECK:    call i32 @llvm.loop.decrement.reg
-; CHECK:    icmp ne
-; CHECK:    br i1
-; CHECK:    llvm.loop.decrement.reg
 ; CHECK:    icmp ne
 ; CHECK:    br i1
 ;
 ; CHECK-ZOL-LABEL: @pre_existing_inner(
 ; CHECK-ZOL:    llvm.start.loop.iterations
-; CHECK-ZOL:    llvm.start.loop.iterations
 ; CHECK-ZOL:    llvm.set.loop.iterations
 ; CHECK-ZOL:    llvm.loop.decrement.reg
 ; CHECK-ZOL:    llvm.loop.decrement
-; CHECK-ZOL:    br i1
-; CHECK-ZOL:    llvm.loop.decrement.reg
-; CHECK-ZOL:    icmp ne
 ; CHECK-ZOL:    br i1
 ;
 entry:
