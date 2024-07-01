@@ -3838,20 +3838,8 @@ LegalizerHelper::lower(MachineInstr &MI, unsigned TypeIdx, LLT LowerHintTy) {
     return lowerMergeValues(MI);
   case G_UNMERGE_VALUES:
     return lowerUnmergeValues(MI);
-  case TargetOpcode::G_SEXT_INREG: {
-    assert(MI.getOperand(2).isImm() && "Expected immediate");
-    int64_t SizeInBits = MI.getOperand(2).getImm();
-
-    auto [DstReg, SrcReg] = MI.getFirst2Regs();
-    LLT DstTy = MRI.getType(DstReg);
-    Register TmpRes = MRI.createGenericVirtualRegister(DstTy);
-
-    auto MIBSz = MIRBuilder.buildConstant(DstTy, DstTy.getScalarSizeInBits() - SizeInBits);
-    MIRBuilder.buildShl(TmpRes, SrcReg, MIBSz->getOperand(0));
-    MIRBuilder.buildAShr(DstReg, TmpRes, MIBSz->getOperand(0));
-    MI.eraseFromParent();
-    return Legalized;
-  }
+  case TargetOpcode::G_SEXT_INREG:
+    return lowerSextInreg(MI);
   case G_EXTRACT_VECTOR_ELT:
   case G_INSERT_VECTOR_ELT:
     return lowerExtractInsertVectorElt(MI);
@@ -7118,6 +7106,23 @@ LegalizerHelper::lowerUnmergeValues(MachineInstr &MI) {
     MIRBuilder.buildTrunc(MI.getOperand(I), Shift);
   }
 
+  MI.eraseFromParent();
+  return Legalized;
+}
+
+LegalizerHelper::LegalizeResult
+LegalizerHelper::lowerSextInreg(MachineInstr &MI) {
+  assert(MI.getOperand(2).isImm() && "Expected immediate");
+  int64_t SizeInBits = MI.getOperand(2).getImm();
+
+  auto [DstReg, SrcReg] = MI.getFirst2Regs();
+  LLT DstTy = MRI.getType(DstReg);
+  Register TmpRes = MRI.createGenericVirtualRegister(DstTy);
+
+  auto MIBSz =
+      MIRBuilder.buildConstant(DstTy, DstTy.getScalarSizeInBits() - SizeInBits);
+  MIRBuilder.buildShl(TmpRes, SrcReg, MIBSz->getOperand(0));
+  MIRBuilder.buildAShr(DstReg, TmpRes, MIBSz->getOperand(0));
   MI.eraseFromParent();
   return Legalized;
 }

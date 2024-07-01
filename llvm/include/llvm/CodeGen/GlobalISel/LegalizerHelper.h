@@ -398,6 +398,7 @@ public:
   LegalizeResult lowerFFloor(MachineInstr &MI);
   LegalizeResult lowerMergeValues(MachineInstr &MI);
   LegalizeResult lowerUnmergeValues(MachineInstr &MI);
+  LegalizeResult lowerSextInreg(MachineInstr &MI);
   LegalizeResult lowerExtractInsertVectorElt(MachineInstr &MI);
   LegalizeResult lowerShuffleVector(MachineInstr &MI);
   Register getDynStackAllocTargetPtr(Register SPReg, Register AllocSize,
