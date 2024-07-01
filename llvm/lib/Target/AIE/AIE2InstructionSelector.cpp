@@ -1148,20 +1148,7 @@ bool AIE2InstructionSelector::selectG_SEXT_INREG(MachineInstr &I,
   } else if (Imm == 16) {
     MI = MIB.buildInstr(AIE2::EXTENDs16, {DstReg}, {SrcReg});
   } else {
-    if (Imm < 0 || Imm > 32)
-      return false;
-
-    // Expand sext_inreg into ashr (shl reg, amnt), amnt
-    auto SHLAmount =
-        MIB.buildInstr(AIE2::MOV_RLC_imm10_pseudo, {&AIE2::eRRegClass}, {})
-            .addImm(32 - Imm);
-    MI = MIB.buildInstr(AIE2::LSHL, {&AIE2::eRRegClass},
-                        {SrcReg, SHLAmount.getReg(0)});
-    auto SHRAmount =
-        MIB.buildInstr(AIE2::MOV_RLC_imm10_pseudo, {&AIE2::eRRegClass}, {})
-            .addImm(-(32 - Imm));
-    MI = MIB.buildInstr(AIE2::ASHL, {DstReg},
-                        {MI.getReg(0), SHRAmount.getReg(0)});
+    llvm_unreachable("Cannot handle type in selectG_SEXT_INREG");
   }
 
   I.eraseFromParent();
