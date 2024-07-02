@@ -18,16 +18,29 @@ namespace llvm {
 
 class DummyScheduleDAGMI : public ScheduleDAGMI {
 public:
-  using ScheduleDAGMI::ScheduleDAGMI;
+  DummyScheduleDAGMI(MachineSchedContext *C, bool IsPreRA);
   ~DummyScheduleDAGMI() override;
 
   /// Initialize enough stuff in a similar manner to ScheduleDAGMI::schedule()
   /// so one can do "manual" scheduling.
   void prepareForBB(MachineBasicBlock *MBB);
 
-  /// Move \p MI to the Top or Bot Zone
+  /// Move \p MI to the top or bottom of the scheduling region.
   void scheduleInstr(MachineInstr *MI, bool IsTop,
                      std::optional<unsigned> EmissionCycle = std::nullopt);
+
+  /// Move \p MI to Zone and update its ReadyCycle
+  /// This essentially mimics the body of the scheduling loop inside
+  /// ScheduleDAGMI::schedule().
+  void scheduleInstr(MachineInstr *MI, SchedBoundary &Zone);
+
+  SchedBoundary &getSchedZone() { return SchedZone; }
+
+  bool hasVRegLiveness() const override { return IsPreRA; }
+
+protected:
+  bool IsPreRA;
+  SchedBoundary SchedZone;
 };
 
 class ScheduleDAGMITest : public testing::Test {
@@ -36,7 +49,7 @@ protected:
 
   /// Initialize a DummyScheduleDAGMI so it is ready to schedule instructions
   /// in \p MBB
-  void initializeScheduler();
+  virtual void initializeScheduler(bool IsPreRA = false);
 
   /// Create a dummy instruction for which MachineInstr::isDebugValue() is true
   /// It is pushed at the end of \p MBB
