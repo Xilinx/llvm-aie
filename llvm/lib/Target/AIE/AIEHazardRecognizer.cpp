@@ -161,13 +161,20 @@ static cl::opt<int>
 
 int AIEHazardRecognizer::NumInstrsScheduled = 0;
 
-AIEHazardRecognizer::AIEHazardRecognizer(const AIEBaseInstrInfo *TII,
-                                         const InstrItineraryData *II,
-                                         bool IsPreRA)
+AIEHazardRecognizer::AIEHazardRecognizer(
+    const AIEBaseInstrInfo *TII, const InstrItineraryData *II, bool IsPreRA,
+    std::optional<unsigned> ScoreboardDepth)
     : TII(TII), ItinData(II) {
 
-  computeMaxLatency();
-  int Depth = computeScoreboardDepth();
+  int Depth = 0;
+  if (ScoreboardDepth.has_value()) {
+    MaxLatency = *ScoreboardDepth;
+    Depth = *ScoreboardDepth;
+  } else {
+    computeMaxLatency();
+    Depth = computeScoreboardDepth();
+  }
+
   Scoreboard.reset(Depth);
   MaxLookAhead = Depth;
   if (CLIssueLimit > 0)
