@@ -116,7 +116,7 @@ class CMakeBuild(build_ext):
             "-DLLVM_INSTALL_UTILS=ON",
             "-DLLVM_ENABLE_WARNINGS=ON",
             "-DMLIR_BUILD_MLIR_C_DYLIB=1",
-            "-DMLIR_ENABLE_BINDINGS_PYTHON=ON",
+            "-DMLIR_ENABLE_BINDINGS_PYTHON=OFF",
             "-DMLIR_ENABLE_EXECUTION_ENGINE=ON",
             "-DMLIR_ENABLE_SPIRV_CPU_RUNNER=ON",
             f"MLIR_INCLUDE_INTEGRATION_TESTS={RUN_TESTS}",
