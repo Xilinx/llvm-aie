@@ -115,12 +115,6 @@ class CMakeBuild(build_ext):
             "-DLLVM_INCLUDE_UTILS=ON",
             "-DLLVM_INSTALL_UTILS=ON",
             "-DLLVM_ENABLE_WARNINGS=ON",
-            "-DMLIR_BUILD_MLIR_C_DYLIB=1",
-            "-DMLIR_ENABLE_BINDINGS_PYTHON=OFF",
-            "-DMLIR_ENABLE_EXECUTION_ENGINE=ON",
-            "-DMLIR_ENABLE_SPIRV_CPU_RUNNER=ON",
-            f"MLIR_INCLUDE_INTEGRATION_TESTS={RUN_TESTS}",
-            f"MLIR_INCLUDE_TESTS={RUN_TESTS}",
             # get rid of that annoying af git on the end of .17git
             "-DLLVM_VERSION_SUFFIX=",
             # Disables generation of "version soname" (i.e. libFoo.so.<version>), which
@@ -144,7 +138,6 @@ class CMakeBuild(build_ext):
 
         cmake_args_dict = get_cross_cmake_args()
         cmake_args += [f"-D{k}={v}" for k, v in cmake_args_dict.items()]
-        cmake_args += [f"-DLLVM_ENABLE_PROJECTS=llvm;mlir;clang;clang-tools-extra;lld"]
 
         if "CMAKE_ARGS" in os.environ:
             cmake_args += [item for item in os.environ["CMAKE_ARGS"].split(" ") if item]
