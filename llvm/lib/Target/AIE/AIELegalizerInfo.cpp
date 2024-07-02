@@ -215,7 +215,7 @@ AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
         .widenScalarToNextPow2(0)
         .clampScalar(1, S32, S64);
 
-    getActionDefinitionsBuilder(G_FABS).customFor({S32, S64});
+    getActionDefinitionsBuilder(G_FABS).customFor({S16, S32, S64});
 
     getActionDefinitionsBuilder({G_FADD, G_FSUB})
         .legalFor({V16S32})
@@ -1290,6 +1290,12 @@ bool AIELegalizerInfo::legalizeG_FABS(LegalizerHelper &Helper,
   } else if (SrcTy == LLT::scalar(32)) {
     auto Ones = MIRBuilder.buildConstant(LLT::scalar(32), 0x7fffffff);
     MIRBuilder.buildAnd(DstReg, SrcReg, Ones);
+  } else if (SrcTy == LLT::scalar(16)) {
+    const LLT S32 = LLT::scalar(32);
+    auto AnyExt = MIRBuilder.buildAnyExt(S32, SrcReg);
+    auto Ones = MIRBuilder.buildConstant(S32, 0x7fff);
+    auto And = MIRBuilder.buildAnd(S32, AnyExt, Ones);
+    MIRBuilder.buildTrunc(DstReg, And);
   }
 
   MI.eraseFromParent();
