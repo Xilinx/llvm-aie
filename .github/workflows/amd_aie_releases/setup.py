@@ -98,7 +98,7 @@ class CMakeBuild(build_ext):
             f"-B{build_temp}",
             f"-G {cmake_generator}",
             # load defaults from cache
-            f'-C {LLVM_AIE_SRC_ROOT / "clang" / "cmake" /" caches" /" Peano-AIE.cmake"}',
+            f'-C {LLVM_AIE_SRC_ROOT / "clang" / "cmake" / "caches" / "Peano-AIE.cmake"}',
             "-DLLVM_BUILD_BENCHMARKS=OFF",
             "-DLLVM_BUILD_EXAMPLES=OFF",
             f"-DLLVM_BUILD_TESTS={RUN_TESTS}",
