@@ -92,8 +92,12 @@ class AIEHazardRecognizer : public ScheduleHazardRecognizer {
   void computeMaxLatency();
 
 public:
+  /// ScoreboardDepth can be used to speficy a fixed depth without querying the
+  /// scheduling model. This is mostly used for testing, for other cases we
+  /// should trust the instruction itineraries.
   AIEHazardRecognizer(const AIEBaseInstrInfo *TII, const InstrItineraryData *II,
-                      bool IsPreRA);
+                      bool IsPreRA,
+                      std::optional<unsigned> ScoreboardDepth = std::nullopt);
   AIEHazardRecognizer(const TargetSubtargetInfo &SubTarget,
                       bool IsPreRA = false);
 
