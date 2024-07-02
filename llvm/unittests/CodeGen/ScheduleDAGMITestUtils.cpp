@@ -26,7 +26,19 @@ MCInstrDesc MCIDs[] = {
     {TargetOpcode::DBG_VALUE, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     {TargetOpcode::GENERIC_OP_END + 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
 
+std::unique_ptr<MachineSchedStrategy> getSchedStrategy(MachineSchedContext *C,
+                                                       bool IsPreRA) {
+  if (IsPreRA)
+    return std::make_unique<GenericScheduler>(C);
+  return std::make_unique<PostGenericScheduler>(C);
+}
+
 } // namespace
+
+DummyScheduleDAGMI::DummyScheduleDAGMI(MachineSchedContext *C, bool IsPreRA)
+    : ScheduleDAGMI(C, getSchedStrategy(C, IsPreRA),
+                    /*RemoveKillFlags=*/true),
+      IsPreRA(IsPreRA), SchedZone(SchedBoundary::BotQID, "Zone") {}
 
 DummyScheduleDAGMI::~DummyScheduleDAGMI() {
   if (BB) {
@@ -44,6 +56,8 @@ void DummyScheduleDAGMI::prepareForBB(MachineBasicBlock *MBB) {
   SchedImpl->initialize(this);
   SmallVector<SUnit *, 8> TopRoots, BotRoots;
   initQueues(TopRoots, BotRoots);
+
+  SchedZone.init(this, SchedImpl.get(), getSchedModel(), /*Rem=*/nullptr);
 }
 
 void DummyScheduleDAGMI::scheduleInstr(MachineInstr *MI, bool IsTop,
@@ -52,16 +66,22 @@ void DummyScheduleDAGMI::scheduleInstr(MachineInstr *MI, bool IsTop,
   movePickedSU(*SU, IsTop, EmissionCycle);
 }
 
+void DummyScheduleDAGMI::scheduleInstr(MachineInstr *MI, SchedBoundary &Zone) {
+  scheduleInstr(MI, Zone.isTop());
+  unsigned &ReadyCycle =
+      Zone.isTop() ? getSUnit(MI)->TopReadyCycle : getSUnit(MI)->BotReadyCycle;
+  ReadyCycle = std::max(ReadyCycle, Zone.getCurrCycle());
+  Zone.bumpNode(getSUnit(MI));
+}
+
 ScheduleDAGMITest::ScheduleDAGMITest() : Mod("Module", Ctx) {
   MF = createMachineFunction(Ctx, Mod);
   MBB = MF->CreateMachineBasicBlock();
 }
 
-void ScheduleDAGMITest::initializeScheduler() {
+void ScheduleDAGMITest::initializeScheduler(bool IsPreRA) {
   SchedCtx.MF = MF.get();
-  Scheduler = std::make_unique<DummyScheduleDAGMI>(
-      &SchedCtx, std::make_unique<PostGenericScheduler>(&SchedCtx),
-      /*RemoveKillFlags=*/true);
+  Scheduler = std::make_unique<DummyScheduleDAGMI>(&SchedCtx, IsPreRA);
   Scheduler->prepareForBB(MBB);
 }
 
