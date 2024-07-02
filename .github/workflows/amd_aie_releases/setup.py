@@ -12,6 +12,10 @@ from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 
 
+def check_env(build):
+    return os.environ.get(build, 0) in {"1", "true", "True", "ON", "YES"}
+
+
 class CMakeExtension(Extension):
     def __init__(self, name: str, sourcedir: str = "") -> None:
         super().__init__(name, sources=[])
@@ -80,6 +84,7 @@ class CMakeBuild(build_ext):
         extdir = ext_fullpath.parent.resolve()
         install_dir = extdir / "llvm-aie"
         cfg = "Release"
+        src_dir = Path(ext.sourcedir)
 
         cmake_generator = os.environ.get("CMAKE_GENERATOR", "Ninja")
 
@@ -92,10 +97,10 @@ class CMakeBuild(build_ext):
         cmake_args = [
             f"-B{build_temp}",
             f"-G {cmake_generator}",
-            "-DBUILD_SHARED_LIBS=OFF",
+            # load defaults from cache
+            f'-C {LLVM_AIE_SRC_ROOT / "clang" / "cmake" /" caches" /" Peano-AIE.cmake"}',
             "-DLLVM_BUILD_BENCHMARKS=OFF",
             "-DLLVM_BUILD_EXAMPLES=OFF",
-            "-DLLVM_BUILD_RUNTIMES=OFF",
             f"-DLLVM_BUILD_TESTS={RUN_TESTS}",
             "-DLLVM_BUILD_TOOLS=ON",
             "-DLLVM_BUILD_UTILS=ON",
@@ -105,7 +110,6 @@ class CMakeBuild(build_ext):
             "-DLLVM_ENABLE_ZSTD=OFF",
             "-DLLVM_INCLUDE_BENCHMARKS=OFF",
             "-DLLVM_INCLUDE_EXAMPLES=OFF",
-            "-DLLVM_INCLUDE_RUNTIMES=OFF",
             f"-DLLVM_INCLUDE_TESTS={RUN_TESTS}",
             "-DLLVM_INCLUDE_TOOLS=ON",
             "-DLLVM_INCLUDE_UTILS=ON",
@@ -126,25 +130,6 @@ class CMakeBuild(build_ext):
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}{os.sep}",
             f"-DPython3_EXECUTABLE={PYTHON_EXECUTABLE}",
             f"-DCMAKE_BUILD_TYPE={cfg}",  # not used on MSVC, but no harm
-            # prevent symbol collision that leads to multiple pass registration and such
-            "-DCMAKE_VISIBILITY_INLINES_HIDDEN=ON",
-            "-DCMAKE_C_VISIBILITY_PRESET=hidden",
-            "-DCMAKE_CXX_VISIBILITY_PRESET=hidden",
-            # AIE specific
-            "-DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=AIE",
-            "-DLIBC_ENABLE_USE_BY_CLANG=ON",
-            "-DLLVM_ENABLE_RUNTIMES=compiler-rt;libc",
-            "-DLLVM_BUILTIN_TARGETS=aie2-none-unknown-elf;aie-none-unknown-elf",
-            "-DLLVM_RUNTIME_TARGETS=aie-none-unknown-elf;aie2-none-unknown-elf",
-            "-DBUILTINS_aie-none-unknown-elf_LLVM_USE_LINKER=lld",
-            "-DBUILTINS_aie-none-unknown-elf_CMAKE_BUILD_TYPE=Release",
-            "-DRUNTIMES_aie-none-unknown-elf_LLVM_USE_LINKER=lld",
-            "-DRUNTIMES_aie-none-unknown-elf_CMAKE_BUILD_TYPE=Release",
-            "-DBUILTINS_aie2-none-unknown-elf_LLVM_USE_LINKER=lld",
-            "-DBUILTINS_aie2-none-unknown-elf_CMAKE_BUILD_TYPE=Release",
-            "-DRUNTIMES_aie2-none-unknown-elf_LLVM_USE_LINKER=lld",
-            "-DRUNTIMES_aie2-none-unknown-elf_CMAKE_BUILD_TYPE=Release",
-            "-DLLVM_LIBC_FULL_BUILD=ON",
         ]
         if platform.system() == "Windows":
             cmake_args += [
@@ -159,7 +144,7 @@ class CMakeBuild(build_ext):
 
         cmake_args_dict = get_cross_cmake_args()
         cmake_args += [f"-D{k}={v}" for k, v in cmake_args_dict.items()]
-        cmake_args += [f"-DLLVM_ENABLE_PROJECTS=llvm;mlir;clang;lld"]
+        cmake_args += [f"-DLLVM_ENABLE_PROJECTS=llvm;mlir;clang;clang-tools-extra;lld"]
 
         if "CMAKE_ARGS" in os.environ:
             cmake_args += [item for item in os.environ["CMAKE_ARGS"].split(" ") if item]
@@ -259,24 +244,23 @@ class CMakeBuild(build_ext):
         )
 
 
-def check_env(build):
-    return os.environ.get(build, 0) in {"1", "true", "True", "ON", "YES"}
+LLVM_AIE_SRC_ROOT = Path(
+    os.getenv("LLVM_AIE_SRC_ROOT", Path.cwd() / "llvm-aie")
+).absolute()
 
-
-# cmake_txt = open("llvm-aie/cmake/Modules/LLVMVersion.cmake").read()
-cmake_txt = open("llvm-aie/llvm/CMakeLists.txt").read()
+cmake_txt = open(LLVM_AIE_SRC_ROOT / "llvm" / "CMakeLists.txt").read()
 llvm_version = []
 for v in ["LLVM_VERSION_MAJOR", "LLVM_VERSION_MINOR", "LLVM_VERSION_PATCH"]:
     vn = re.findall(rf"set\({v} (\d+)\)", cmake_txt)
     assert vn, f"couldn't find {v} in cmake txt"
     llvm_version.append(vn[0])
 
-commit_hash = os.environ.get("LLVM_AIE_PROJECT_COMMIT", "DEADBEEF")
+commit_hash = os.getenv("LLVM_AIE_PROJECT_COMMIT", "DEADBEEF")
 if not commit_hash:
     raise ValueError("commit_hash must not be empty")
 
 now = datetime.now()
-llvm_datetime = os.environ.get(
+llvm_datetime = os.getenv(
     "DATETIME", f"{now.year}{now.month:02}{now.day:02}{now.hour:02}"
 )
 
