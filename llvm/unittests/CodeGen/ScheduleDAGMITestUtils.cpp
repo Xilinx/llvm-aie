@@ -66,16 +66,22 @@ void DummyScheduleDAGMI::scheduleInstr(MachineInstr *MI, bool IsTop,
   movePickedSU(*SU, IsTop, EmissionCycle);
 }
 
-void DummyScheduleDAGMI::scheduleInstr(MachineInstr *MI, SchedBoundary &Zone) {
-  scheduleInstr(MI, Zone.isTop());
+void DummyScheduleDAGMI::scheduleInstr(MachineInstr *MI, SchedBoundary &Zone,
+                                       int Delta) {
+  // Move the instruction nat the right place in MBB
+  unsigned EmitCycle = int(Zone.getCurrCycle()) - Delta;
+  scheduleInstr(MI, Zone.isTop(), EmitCycle);
+
+  // Mimic MachineSchedStrategy::schedNode()
   unsigned &ReadyCycle =
       Zone.isTop() ? getSUnit(MI)->TopReadyCycle : getSUnit(MI)->BotReadyCycle;
-  ReadyCycle = std::max(ReadyCycle, Zone.getCurrCycle());
-  Zone.bumpNode(getSUnit(MI));
+  ReadyCycle = std::max(ReadyCycle, EmitCycle);
+  Zone.bumpNode(getSUnit(MI), Delta);
 }
 
-ScheduleDAGMITest::ScheduleDAGMITest() : Mod("Module", Ctx) {
-  MF = createMachineFunction(Ctx, Mod);
+ScheduleDAGMITest::ScheduleDAGMITest(LLVMTargetMachine *TM)
+    : Mod("Module", Ctx) {
+  MF = createMachineFunction(Ctx, Mod, TM);
   MBB = MF->CreateMachineBasicBlock();
 }
 

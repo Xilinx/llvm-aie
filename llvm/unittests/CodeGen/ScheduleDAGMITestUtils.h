@@ -32,7 +32,7 @@ public:
   /// Move \p MI to Zone and update its ReadyCycle
   /// This essentially mimics the body of the scheduling loop inside
   /// ScheduleDAGMI::schedule().
-  void scheduleInstr(MachineInstr *MI, SchedBoundary &Zone);
+  void scheduleInstr(MachineInstr *MI, SchedBoundary &Zone, int Delta = 0);
 
   SchedBoundary &getSchedZone() { return SchedZone; }
 
@@ -45,7 +45,7 @@ protected:
 
 class ScheduleDAGMITest : public testing::Test {
 protected:
-  ScheduleDAGMITest();
+  ScheduleDAGMITest(LLVMTargetMachine *TM = nullptr);
 
   /// Initialize a DummyScheduleDAGMI so it is ready to schedule instructions
   /// in \p MBB
