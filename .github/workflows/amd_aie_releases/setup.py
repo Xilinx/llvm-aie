@@ -264,19 +264,6 @@ build_temp = Path.cwd() / "build" / "temp"
 if not build_temp.exists():
     build_temp.mkdir(parents=True)
 
-EXE_EXT = ".exe" if platform.system() == "Windows" else ""
-if not check_env("DEBUG_CI_FAST_BUILD"):
-    exes = [
-        "mlir-cpu-runner",
-        "mlir-opt",
-        "mlir-translate",
-    ]
-else:
-    exes = ["llvm-tblgen"]
-
-data_files = [("bin", [str(build_temp / "bin" / x) + EXE_EXT for x in exes])]
-
-
 setup(
     name="llvm-aie",
     version=version,
@@ -286,6 +273,5 @@ setup(
     ext_modules=[CMakeExtension("llvm-aie", sourcedir="llvm-aie/llvm")],
     cmdclass={"build_ext": CMakeBuild},
     zip_safe=False,
-    download_url=llvm_url,
-    data_files=data_files,
+    download_url=llvm_url
 )
