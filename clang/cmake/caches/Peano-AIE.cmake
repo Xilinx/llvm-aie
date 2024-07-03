@@ -47,7 +47,10 @@ set(LLVM_TOOLCHAIN_TOOLS
   CACHE STRING "")
 
 set(LLVM_DISTRIBUTION_COMPONENTS
+  LLVM
+  libclang
   clang
+  clang-cpp
   lld
   clang-resource-headers
   builtins-aie2-none-unknown-elf
