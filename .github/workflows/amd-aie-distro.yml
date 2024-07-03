@@ -155,11 +155,11 @@ jobs:
           - OS: ubuntu-20.04
             ARCH: x86_64
 
-          - OS: ubuntu-20.04
-            ARCH: aarch64
+          # - OS: ubuntu-20.04
+          #   ARCH: aarch64
 
-          - OS: windows-2019
-            ARCH: AMD64
+          # - OS: windows-2019
+          #   ARCH: AMD64
 
           # We don't need mac builds.
           # - OS: macos-12
@@ -244,7 +244,6 @@ jobs:
         echo "CMAKE_GENERATOR=Ninja" >> $GITHUB_ENV
         echo "HOST_CCACHE_DIR="$(ccache --get-config cache_dir)"" >> $GITHUB_ENV
         echo "PARALLEL_LEVEL=2" >> $GITHUB_ENV
-        echo "PIP_FIND_LINKS=https://github.com/makslevental/mlir-wheels/releases/expanded_assets/latest" >> $GITHUB_ENV
 
     # build
 
