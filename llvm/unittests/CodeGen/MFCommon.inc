@@ -1,3 +1,14 @@
+//===- MFCommon.inc - Helpers for unit-testing the backend ----------------===//
+//
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
+//===----------------------------------------------------------------------===//
+
 // Add a few Bogus backend classes so we can create MachineInstrs without
 // depending on a real target.
 class BogusTargetLowering : public TargetLowering {
@@ -73,13 +84,15 @@ public:
   }
 };
 
-class BogusSubtarget : public TargetSubtargetInfo {
+template <typename TIIClass> class TestSubTarget : public TargetSubtargetInfo {
 public:
-  BogusSubtarget(TargetMachine &TM)
-      : TargetSubtargetInfo(Triple(""), "", "", "", {}, {}, nullptr, nullptr,
-                            nullptr, nullptr, nullptr, nullptr),
+  TestSubTarget(TargetMachine &TM, StringRef CPU = "", StringRef TuneCPU = "",
+                ArrayRef<SubtargetSubTypeKV> ProcDescs = {})
+      : TargetSubtargetInfo(Triple(""), CPU, TuneCPU, "", {}, ProcDescs,
+                            nullptr, nullptr, nullptr, nullptr, nullptr,
+                            nullptr),
         FL(), TL(TM) {}
-  ~BogusSubtarget() override {}
+  ~TestSubTarget() override {}
 
   const TargetFrameLowering *getFrameLowering() const override { return &FL; }
 
@@ -93,8 +106,9 @@ private:
   BogusFrameLowering FL;
   BogusRegisterInfo TRI;
   BogusTargetLowering TL;
-  TargetInstrInfo TII;
+  TIIClass TII;
 };
+using BogusSubTarget = TestSubTarget<TargetInstrInfo>;
 
 static TargetOptions getTargetOptionsForBogusMachine() {
   TargetOptions Opts;
@@ -102,39 +116,41 @@ static TargetOptions getTargetOptionsForBogusMachine() {
   return Opts;
 }
 
-class BogusTargetMachine : public LLVMTargetMachine {
+template <typename STClass> class TestTargetMachine : public LLVMTargetMachine {
 public:
-  BogusTargetMachine()
+  TestTargetMachine()
       : LLVMTargetMachine(Target(), "", Triple(""), "", "",
                           getTargetOptionsForBogusMachine(), Reloc::Static,
                           CodeModel::Small, CodeGenOptLevel::Default),
         ST(*this) {}
 
-  ~BogusTargetMachine() override {}
+  ~TestTargetMachine() override {}
 
   const TargetSubtargetInfo *getSubtargetImpl(const Function &) const override {
     return &ST;
   }
 
 private:
-  BogusSubtarget ST;
+  STClass ST;
 };
+using BogusTargetMachine = TestTargetMachine<BogusSubTarget>;
 
-BogusTargetMachine *createTargetMachine() {
+[[maybe_unused]] BogusTargetMachine *createTargetMachine() {
   static BogusTargetMachine BogusTM;
   return &BogusTM;
 }
 
-std::unique_ptr<MachineFunction> createMachineFunction(LLVMContext &Ctx,
-                                                       Module &M) {
+[[maybe_unused]] std::unique_ptr<MachineFunction>
+createMachineFunction(LLVMContext &Ctx, Module &M,
+                      LLVMTargetMachine *TM = nullptr) {
   auto Type = FunctionType::get(Type::getVoidTy(Ctx), false);
   auto F = Function::Create(Type, GlobalValue::ExternalLinkage, "Test", &M);
 
-  auto TM = createTargetMachine();
+  if (!TM)
+    TM = createTargetMachine();
   unsigned FunctionNum = 42;
   MachineModuleInfo MMI(TM);
   const TargetSubtargetInfo &STI = *TM->getSubtargetImpl(*F);
 
   return std::make_unique<MachineFunction>(*F, *TM, STI, FunctionNum, MMI);
 }
-
