@@ -42,7 +42,7 @@ environment-pass = [
     "RUN_TESTS",
 ]
 repair-wheel-command = [
-    "auditwheel repair -w {dest_dir} {wheel}"
+    "auditwheel repair -w {dest_dir} {wheel} --exclude libLLVM-18.so"
 ]
 
 [tool.cibuildwheel.macos]
