@@ -45,6 +45,15 @@ public:
   Bundle(const AIEBaseMCFormats *FormatInterface)
       : FormatInterface(FormatInterface) {}
 
+  Bundle(const std::initializer_list<I *> &Instrs,
+         const AIEBaseMCFormats *FormatInterface)
+      : FormatInterface(FormatInterface) {
+    bool ComputeSlots = (FormatInterface != nullptr);
+    for (I *Instr : Instrs) {
+      add(Instr, std::nullopt, ComputeSlots);
+    }
+  }
+
   /// Returns whether adding Instr to the current bundle leaves it valid.
   /// \param Instr instruction to add.
   bool canAdd(I *Instr) const { return canAdd(Instr->getOpcode()); }
@@ -220,6 +229,11 @@ public:
   // Contained meta instructions (These will end up after the bundle)
   std::vector<I *> MetaInstrs;
 };
+
+template <class I> bool operator==(const Bundle<I> &B1, const Bundle<I> &B2) {
+  return std::tie(B1.Instrs, B1.SlotMap, B1.MetaInstrs) ==
+         std::tie(B2.Instrs, B2.SlotMap, B2.MetaInstrs);
+}
 
 using MCBundle = Bundle<MCInst>;
 using MachineBundle = Bundle<MachineInstr>;
