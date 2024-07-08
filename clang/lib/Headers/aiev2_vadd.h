@@ -1291,6 +1291,77 @@ INTRINSIC(v16int32) bfloat16_to_int(v16bfloat16 a, int shft) {
   return __builtin_aiev2_v16bf16_to_v16i32(a, shft);
 }
 
+INTRINSIC(unsigned int) lt(v16float v1, v16float v2) {
+  v32bfloat16 a = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 b = broadcast_zero_to_v32bfloat16();
+  a = insert(a, 0, to_v16bfloat16(sub((v16accfloat)v1, (v16accfloat)v2)));
+  return lt(a, b);
+}
+
+INTRINSIC(v16float) max_lt(v16float v1, v16float v2, unsigned int &cmp) {
+  unsigned int res_cmp = lt(v1, v2);
+  cmp = res_cmp;
+  return (v16float)sel((v16int32)v1, (v16int32)v2, res_cmp);
+}
+
+INTRINSIC(v16float) max(v16float v1, v16float v2) {
+  unsigned int res_cmp = lt(v1, v2);
+  return (v16float)sel((v16int32)v1, (v16int32)v2, res_cmp);
+}
+
+INTRINSIC(unsigned int) ge(v16float v1, v16float v2) {
+  v32bfloat16 a = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 b = broadcast_zero_to_v32bfloat16();
+  a = insert(a, 0, to_v16bfloat16(sub((v16accfloat)v1, (v16accfloat)v2)));
+  return (ge(a, b)) & 0x0000FFFF;
+}
+
+INTRINSIC(v16float) min_ge(v16float v1, v16float v2, unsigned int &cmp) {
+  unsigned int res_cmp = ge(v1, v2);
+  cmp = res_cmp;
+  return (v16float)sel((v16int32)v1, (v16int32)v2, res_cmp);
+}
+
+INTRINSIC(v16float) min(v16float v1, v16float v2) {
+  unsigned int res_cmp = ge(v1, v2);
+  return (v16float)sel((v16int32)v1, (v16int32)v2, res_cmp);
+}
+
+INTRINSIC(unsigned int) gt(v16float v1, v16float v2) {
+  v32bfloat16 a = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 b = broadcast_zero_to_v32bfloat16();
+  a = insert(a, 0, to_v16bfloat16(sub((v16accfloat)v1, (v16accfloat)v2)));
+  return gt(a, b);
+}
+
+INTRINSIC(v16float) abs(v16float v1) { return (v16float)abs((v16int32)v1); }
+
+INTRINSIC(v16float) min_abs(v16float v1, v16float v2) {
+  unsigned int res_cmp = ge(v1, (v16float)abs((v16int32)v2));
+  return (v16float)sel((v16int32)v1, (v16int32)v2, res_cmp);
+}
+
+INTRINSIC(v16float) max_abs(v16float v1, v16float v2) {
+  unsigned int res_cmp = lt(v1, (v16float)abs((v16int32)v2));
+  return (v16float)sel((v16int32)v1, (v16int32)v2, res_cmp);
+}
+
+INTRINSIC(unsigned int) ge_abs(v16float v1, v16float v2) {
+  v32bfloat16 a = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 b = broadcast_zero_to_v32bfloat16();
+  v16float v3 = (v16float)abs((v16int32)v2);
+  a = insert(a, 0, to_v16bfloat16(sub((v16accfloat)v1, (v16accfloat)v3)));
+  return (ge(a, b)) & 0x0000FFFF;
+}
+
+INTRINSIC(unsigned int) lt_abs(v16float v1, v16float v2) {
+  v32bfloat16 a = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 b = broadcast_zero_to_v32bfloat16();
+  v16float v3 = (v16float)abs((v16int32)v2);
+  a = insert(a, 0, to_v16bfloat16(sub((v16accfloat)v1, (v16accfloat)v3)));
+  return lt(a, b);
+}
+
 INTRINSIC(v16float) sel(v16float a, v16float b, unsigned int sel) {
   return __builtin_aiev2_vsel32(a, b, sel);
 }
