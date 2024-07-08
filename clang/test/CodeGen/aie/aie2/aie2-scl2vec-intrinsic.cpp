@@ -1328,3 +1328,121 @@ v4bfloat16 test_extract_v4bfloat16(v32bfloat16 v, int idx, int sign) {
 v16accfloat test_vinsert_accfloat(v16accfloat x, float a0) {
   return __builtin_aiev2_vinsert32_accfloat(x, 0, a0);
 }
+
+// CHECK-LABEL: @_Z11test_insertDv16_fif(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast <16 x float> [[V:%.*]] to <16 x i32>
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast float [[B:%.*]] to i32
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i32> @llvm.aie2.vinsert32.I512(<16 x i32> [[TMP0]], i32 [[IDX:%.*]], i32 [[TMP1]])
+// CHECK-NEXT:    [[TMP3:%.*]] = bitcast <16 x i32> [[TMP2]] to <16 x float>
+// CHECK-NEXT:    ret <16 x float> [[TMP3]]
+//
+v16float test_insert(v16float v, int idx, float b) {
+  return insert(v, idx, b);
+}
+
+// CHECK-LABEL: @_Z12test_shuffleDv16_fS_j(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast <16 x float> [[A:%.*]] to <16 x i32>
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <16 x float> [[B:%.*]] to <16 x i32>
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i32> @llvm.aie2.vshuffle(<16 x i32> [[TMP0]], <16 x i32> [[TMP1]], i32 [[MODE:%.*]])
+// CHECK-NEXT:    [[TMP3:%.*]] = bitcast <16 x i32> [[TMP2]] to <16 x float>
+// CHECK-NEXT:    ret <16 x float> [[TMP3]]
+//
+v16float test_shuffle(v16float a, v16float b, unsigned int mode) { return shuffle(a, b, mode); }
+
+// CHECK-LABEL: @_Z12test_shuffleDv16_fj(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x float> @llvm.aie2.v16float()
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <16 x float> [[A:%.*]] to <16 x i32>
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <16 x float> [[TMP0]] to <16 x i32>
+// CHECK-NEXT:    [[TMP3:%.*]] = tail call <16 x i32> @llvm.aie2.vshuffle(<16 x i32> [[TMP1]], <16 x i32> [[TMP2]], i32 [[MODE:%.*]])
+// CHECK-NEXT:    [[TMP4:%.*]] = bitcast <16 x i32> [[TMP3]] to <16 x float>
+// CHECK-NEXT:    ret <16 x float> [[TMP4]]
+//
+v16float test_shuffle(v16float a, unsigned int mode) {
+  return shuffle(a, mode);
+}
+
+// CHECK-LABEL: @_Z11test_shiftxDv16_fS_ii(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast <16 x float> [[A:%.*]] to <16 x i32>
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <16 x float> [[B:%.*]] to <16 x i32>
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i32> @llvm.aie2.vshift.I512.I512(<16 x i32> [[TMP0]], <16 x i32> [[TMP1]], i32 [[STEP:%.*]], i32 [[SHIFT:%.*]])
+// CHECK-NEXT:    [[TMP3:%.*]] = bitcast <16 x i32> [[TMP2]] to <16 x float>
+// CHECK-NEXT:    ret <16 x float> [[TMP3]]
+//
+v16float test_shiftx(v16float a, v16float b, int step, int shift) {
+  return shiftx(a,b,step,shift);
+}
+
+// CHECK-LABEL: @_Z16test_shift_bytesDv16_fS_i(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast <16 x float> [[A:%.*]] to <16 x i32>
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <16 x float> [[B:%.*]] to <16 x i32>
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i32> @llvm.aie2.vshift.I512.I512(<16 x i32> [[TMP0]], <16 x i32> [[TMP1]], i32 0, i32 [[SHIFT:%.*]])
+// CHECK-NEXT:    [[TMP3:%.*]] = bitcast <16 x i32> [[TMP2]] to <16 x float>
+// CHECK-NEXT:    ret <16 x float> [[TMP3]]
+//
+v16float test_shift_bytes(v16float a, v16float b, int shift) {
+  return shift_bytes(a, b, shift);
+}
+
+// CHECK-LABEL: @_Z10test_shiftDv16_fS_i(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[MUL_I:%.*]] = shl nsw i32 [[SHIFT_BY:%.*]], 2
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast <16 x float> [[A:%.*]] to <16 x i32>
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <16 x float> [[B:%.*]] to <16 x i32>
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i32> @llvm.aie2.vshift.I512.I512(<16 x i32> [[TMP0]], <16 x i32> [[TMP1]], i32 0, i32 [[MUL_I]])
+// CHECK-NEXT:    [[TMP3:%.*]] = bitcast <16 x i32> [[TMP2]] to <16 x float>
+// CHECK-NEXT:    ret <16 x float> [[TMP3]]
+//
+v16float test_shift(v16float a, v16float b, int shift_by) {
+  return shift(a, b, shift_by);
+}
+
+// CHECK-LABEL: @_Z16test_shiftl_elemDv16_ff(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast float [[S:%.*]] to i32
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i32> @llvm.aie2.vbroadcast32.I512(i32 [[TMP0]])
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <16 x float> [[V:%.*]] to <16 x i32>
+// CHECK-NEXT:    [[TMP3:%.*]] = tail call <16 x i32> @llvm.aie2.vshift.I512.I512(<16 x i32> [[TMP2]], <16 x i32> [[TMP1]], i32 0, i32 4)
+// CHECK-NEXT:    [[TMP4:%.*]] = bitcast <16 x i32> [[TMP3]] to <16 x float>
+// CHECK-NEXT:    ret <16 x float> [[TMP4]]
+//
+v16float test_shiftl_elem(v16float v, float s) {
+  return shiftl_elem(v, s);
+}
+
+// CHECK-LABEL: @_Z16test_shiftr_elemDv16_ff(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast float [[S:%.*]] to i32
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i32> @llvm.aie2.vbroadcast32.I512(i32 [[TMP0]])
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <16 x float> [[V:%.*]] to <16 x i32>
+// CHECK-NEXT:    [[TMP3:%.*]] = tail call <16 x i32> @llvm.aie2.vshift.I512.I512(<16 x i32> [[TMP1]], <16 x i32> [[TMP2]], i32 0, i32 60)
+// CHECK-NEXT:    [[TMP4:%.*]] = bitcast <16 x i32> [[TMP3]] to <16 x float>
+// CHECK-NEXT:    ret <16 x float> [[TMP4]]
+//
+v16float test_shiftr_elem(v16float v, float s) {
+  return shiftr_elem(v,s);
+}
+
+// CHECK-LABEL: @_Z19test_broadcast_elemDv16_fi(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast <16 x float> [[V:%.*]] to <16 x i32>
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i32> @llvm.aie2.vextract.broadcast32.I512(<16 x i32> [[TMP0]], i32 [[IDX:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <16 x i32> [[TMP1]] to <16 x float>
+// CHECK-NEXT:    ret <16 x float> [[TMP2]]
+//
+v16float test_broadcast_elem (v16float v, int idx) {
+   return broadcast_elem(v, idx);
+}
+
+// CHECK-LABEL: @_Z18test_shuffle_floatfj(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast float [[B:%.*]] to i32
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i32> @llvm.aie2.vbcst.shuffle32(i32 [[TMP0]], i32 [[M:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <16 x i32> [[TMP1]] to <16 x float>
+// CHECK-NEXT:    ret <16 x float> [[TMP2]]
+//
+v16float test_shuffle_float(float b, unsigned int m) {  return shuffle_float(b,m) ;}
