@@ -155,11 +155,11 @@ jobs:
           - OS: ubuntu-20.04
             ARCH: x86_64
 
-          # - OS: ubuntu-20.04
-          #   ARCH: aarch64
+          - OS: ubuntu-20.04
+            ARCH: aarch64
 
-          # - OS: windows-2019
-          #   ARCH: AMD64
+          - OS: windows-2019
+            ARCH: AMD64
 
           # We don't need mac builds.
           # - OS: macos-12
@@ -244,6 +244,7 @@ jobs:
         echo "CMAKE_GENERATOR=Ninja" >> $GITHUB_ENV
         echo "HOST_CCACHE_DIR="$(ccache --get-config cache_dir)"" >> $GITHUB_ENV
         echo "PARALLEL_LEVEL=2" >> $GITHUB_ENV
+        echo "PIP_FIND_LINKS=https://github.com/makslevental/mlir-wheels/releases/expanded_assets/latest" >> $GITHUB_ENV
 
     # build
 
@@ -323,6 +324,35 @@ jobs:
         
         ls wheelhouse/llvm_aie-*whl | Rename-Item -NewName {$_ -replace 'cp310-cp310', 'py3-none' }
         ls wheelhouse/llvm_aie-*whl | Rename-Item -NewName {$_ -replace 'cp311-cp311', 'py3-none' }
+
+    - name: Build native_tools wheel
+      if: ${{ needs.settings.outputs.DEBUG_CI_FAST_BUILD != 'true' }}
+      working-directory: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}
+      id: build_native_tools_wheel
+      run: |
+        
+        for TOOL in "llvm-tblgen" "mlir-tblgen" "mlir-linalg-ods-yaml-gen" "mlir-pdll" "llvm-config" "FileCheck"; do
+          if [[ ${{ matrix.OS }} == *"windows"* ]]; then
+            TOOL="$TOOL.exe"
+          fi
+          unzip -j wheelhouse/llvm_aie-*whl "llvm-aie/bin/$TOOL" -d native_tools/
+        done
+        
+        if [[ ${{ matrix.OS }} == *"ubuntu"* ]]; then
+          PLAT="linux"
+        elif [[ ${{ matrix.OS }} == *"macos"* ]]; then
+          PLAT="macosx_12_0"
+        elif [[ ${{ matrix.OS }} == *"windows"* ]]; then
+          PLAT="win"
+        fi
+        
+        PLAT=${PLAT}_$(echo ${{ matrix.ARCH }} | tr '[:upper:]' '[:lower:]')
+        pushd native_tools
+
+        LLVM_AIE_WHEEL_VERSION=${{ steps.get_wheel_version.outputs.LLVM_AIE_WHEEL_VERSION }} \
+          python setup.py bdist_wheel --dist-dir ../wheelhouse --plat $PLAT
+        
+        popd
 
     # done
 
