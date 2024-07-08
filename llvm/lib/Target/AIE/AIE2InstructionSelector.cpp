@@ -4427,51 +4427,57 @@ bool AIE2InstructionSelector::select512BitG_AIE_LOAD_STORE(
   }
 }
 
+static bool getVLDA_CONVOpcode(const MachineInstr &MemOp,
+                               const std::optional<APInt> Immediate,
+                               unsigned &ISelOpcode, bool &FitsImmediateRange) {
+  if (!MemOp.mayLoad())
+    return false;
+
+  switch (MemOp.getOpcode()) {
+  case AIE2::G_LOAD:
+    ISelOpcode = AIE2::VLDA_CONV_FP32_BF16_ag_idx_imm;
+    FitsImmediateRange = true;
+    return true;
+  case AIE2::G_AIE_OFFSET_LOAD:
+    FitsImmediateRange = checkImmediateRange<8, 32>(Immediate);
+    ISelOpcode = FitsImmediateRange ? AIE2::VLDA_CONV_FP32_BF16_ag_idx_imm
+                                    : AIE2::VLDA_CONV_FP32_BF16_ag_idx;
+    return true;
+  case AIE2::G_AIE_POSTINC_LOAD:
+    FitsImmediateRange = checkImmediateRange<9, 32>(Immediate);
+    ISelOpcode = FitsImmediateRange ? AIE2::VLDA_CONV_FP32_BF16_pstm_nrm_imm
+                                    : AIE2::VLDA_CONV_FP32_BF16_pstm_nrm;
+    return true;
+  case AIE2::G_AIE_POSTINC_2D_LOAD:
+    ISelOpcode = AIE2::VLDA_2D_CONV_FP32_BF16;
+    FitsImmediateRange = false;
+    return true;
+  case AIE2::G_AIE_POSTINC_3D_LOAD:
+    ISelOpcode = AIE2::VLDA_3D_CONV_FP32_BF16;
+    FitsImmediateRange = false;
+    return true;
+  }
+  return false;
+}
+
 std::optional<LoadStoreOpcodes>
 getCombinedOpcodeCONVLoad(const MachineInstr &MemOp, const MachineInstr &CombOp,
-                          std::optional<APInt> Immediate) {
+                          const std::optional<APInt> Immediate) {
 
-  // const bool AlwaysFitsImmediateRange = true;
-  const bool NoImmediate = false;
   if (CombOp.getOpcode() != AIE2::G_INTRINSIC ||
       cast<GIntrinsic>(CombOp).getIntrinsicID() !=
           Intrinsic::aie2_v16bf16_to_v16accfloat)
     return {};
 
-  if (!MemOp.mayLoad())
+  unsigned ISelOpcode;
+  bool FitsImmediateRange = false;
+
+  if (!getVLDA_CONVOpcode(MemOp, Immediate, ISelOpcode, FitsImmediateRange))
     return {};
 
   assert(getLoadStoreSize(MemOp) == 256 && "Unexpected VLDA.CONV size");
 
-  unsigned ISelOpcode;
-  bool FitsImmediateRange;
-
-  switch (MemOp.getOpcode()) {
-  case AIE2::G_LOAD:
-    return LoadStoreOpcodes{/*ISelOpcode=*/AIE2::VLDA_CONV_FP32_BF16_ag_idx_imm,
-                            true, /*OffsetOpcode=*/{}};
-  case AIE2::G_AIE_OFFSET_LOAD:
-    FitsImmediateRange = checkImmediateRange<8, 32>(Immediate);
-    ISelOpcode = FitsImmediateRange ? AIE2::VLDA_CONV_FP32_BF16_ag_idx_imm
-                                    : AIE2::VLDA_CONV_FP32_BF16_ag_idx;
-    return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
-                            /*OffsetOpcode=*/{}};
-  case AIE2::G_AIE_POSTINC_LOAD:
-    FitsImmediateRange = checkImmediateRange<9, 32>(Immediate);
-    ISelOpcode = FitsImmediateRange ? AIE2::VLDA_CONV_FP32_BF16_pstm_nrm_imm
-                                    : AIE2::VLDA_CONV_FP32_BF16_pstm_nrm;
-    return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
-                            /*OffsetOpcode=*/{}};
-  case AIE2::G_AIE_POSTINC_2D_LOAD:
-    return LoadStoreOpcodes{/*ISelOpcode=*/AIE2::VLDA_2D_CONV_FP32_BF16,
-                            NoImmediate,
-                            /*OffsetOpcode=*/{}};
-  case AIE2::G_AIE_POSTINC_3D_LOAD:
-    return LoadStoreOpcodes{/*ISelOpcode=*/AIE2::VLDA_3D_CONV_FP32_BF16,
-                            NoImmediate,
-                            /*OffsetOpcode=*/{}};
-  }
-  return {};
+  return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange, /*OffsetOpcode=*/{}};
 }
 
 bool canCombineCONVLoad(MachineInstr &MemOp, MachineInstr &CombOp) {
