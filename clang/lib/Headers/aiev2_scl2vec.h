@@ -51,11 +51,10 @@ INTRINSIC(v16accfloat)
 shiftx(v16accfloat a, v16accfloat b, int step, int shift) {
   return __builtin_aiev2_vshift_I512_I512(a, b, step, shift);
 }
-#if 0
+
 INTRINSIC(v16float) shiftx(v16float a, v16float b, int step, int shift) {
     return __builtin_aiev2_vshift_I512_I512(a, b, step, shift);
 }
-#endif
 
 INTRINSIC(v128int4) shift_bytes(v128int4 a, v128int4 b, int shift) {
   return shiftx(a, b, 0, shift);
@@ -95,11 +94,10 @@ INTRINSIC(v32bfloat16) shift_bytes(v32bfloat16 a, v32bfloat16 b, int shift) {
 INTRINSIC(v16accfloat) shift_bytes(v16accfloat a, v16accfloat b, int shift) {
   return shiftx(a, b, 0, shift);
 }
-#if 0
+
 INTRINSIC(v16float) shift_bytes(v16float a, v16float b, int shift) {
   return shiftx(a, b, 0, shift);
 }
-#endif
 
 INTRINSIC(v64int8) shift(v64int8 a, v64int8 b, int shift) {
   return shiftx(a, b, 0, shift * 1);
@@ -133,11 +131,10 @@ INTRINSIC(v32bfloat16) shift(v32bfloat16 a, v32bfloat16 b, int shift) {
 INTRINSIC(v16accfloat) shift(v16accfloat a, v16accfloat b, int shift) {
   return shiftx(a, b, 0, shift * 4);
 }
-#if 0
+
 INTRINSIC(v16float) shift(v16float a, v16float b, int shift) {
   return shiftx(a, b, 0, shift * 4);
 }
-#endif
 
 INTRINSIC(v64int8) upd_elem(v64int8 v, int idx, char b) {
   return __builtin_aiev2_vinsert8_I512(v, idx, b);
@@ -257,10 +254,10 @@ INTRINSIC(v16cint16) insert(v16cint16 v, int idx, cint16 b) {
 INTRINSIC(v16cint16) insert(v16cint16 v, int idx, v2cint16 b) {
   return __builtin_aiev2_vinsert64_I512(v, idx, b);
 }
-INTRINSIC(v16float) insert(v16float v, int idx, float b) {
-  return __builtin_aiev2_vinsert32_I512(v, idx, b);
-}
 #endif
+INTRINSIC(v16float) insert(v16float v, int idx, float b) {
+  return __builtin_aiev2_vinsert32_I512(v, idx, __builtin_bit_cast(int, b));
+}
 INTRINSIC(v32bfloat16) insert(v32bfloat16 v, int idx, bfloat16 b) {
   return __builtin_aiev2_vinsert_bf16_bf512(v, idx, b);
 }
@@ -566,10 +563,10 @@ INTRINSIC(v8cint32) shiftl_elem(v8cint32 v, cint32_w64 s) {
 INTRINSIC(v8cint32) shiftl_elem(v8cint32 v, cint32 s) {
   return shift_bytes(v, broadcast_c32((cint32_w64)s), 8);
 }
+#endif
 INTRINSIC(v16float) shiftl_elem(v16float v, float s) {
   return shift_bytes(v, broadcast_float(s), 4);
 }
-#endif
 INTRINSIC(v32bfloat16) shiftl_elem(v32bfloat16 v, bfloat16 s) {
   return shift_bytes(v, broadcast_bfloat16(s), 2);
 }
@@ -603,10 +600,10 @@ INTRINSIC(v8cint32) shiftr_elem(v8cint32 v, cint32_w64 s) {
 INTRINSIC(v8cint32) shiftr_elem(v8cint32 v, cint32 s) {
   return shift_bytes(broadcast_c32((cint32_w64)s), v, 64 - 8);
 }
+#endif
 INTRINSIC(v16float) shiftr_elem(v16float v, float s) {
   return shift_bytes(broadcast_float(s), v, 64 - 4);
 }
-#endif
 INTRINSIC(v32bfloat16) shiftr_elem(v32bfloat16 v, bfloat16 s) {
   return shift_bytes(broadcast_bfloat16(s), v, 64 - 2);
 }
@@ -782,12 +779,12 @@ INTRINSIC(v8cint32)
 broadcast_elem (v8cint32 v, int idx) {
   return ;
 }
+#endif
 
 INTRINSIC(v16float)
 broadcast_elem (v16float v, int idx) {
   return __builtin_aiev2_vextract_broadcast32_I512(v, idx);
 }
-#endif
 
 INTRINSIC(v16int32) shuffle(v16int32 a, v16int32 b, unsigned int mode) {
   return __builtin_aiev2_vshuffle(a, b, mode);
@@ -818,8 +815,12 @@ INTRINSIC(v128int4) shuffle(v128int4 a, v128int4 b, unsigned int mode) {
 #if 0
 INTRINSIC(v8cint32)    shuffle(v8cint32 a,    v8cint32 b,    unsigned int mode) { return __builtin_aiev2_vshuffle(a, b, mode); }
 INTRINSIC(v16cint16)   shuffle(v16cint16 a,   v16cint16 b,   unsigned int mode) { return __builtin_aiev2_vshuffle(a, b, mode); }
-INTRINSIC(v16float)    shuffle(v16float a,    v16float b,    unsigned int mode) { return __builtin_aiev2_vshuffle(a, b, mode); }
 #endif
+
+INTRINSIC(v16float) shuffle(v16float a, v16float b, unsigned int mode) {
+  return __builtin_aiev2_vshuffle(a, b, mode);
+}
+
 INTRINSIC(v32bfloat16)
 shuffle(v32bfloat16 a, v32bfloat16 b, unsigned int mode) {
   return __builtin_aiev2_vshuffle_bf16(a, b, mode);
@@ -857,8 +858,11 @@ INTRINSIC(v32bfloat16) shuffle(v32bfloat16 a, unsigned int mode) {
 #if 0
 INTRINSIC(v8cint32)    shuffle(v8cint32 a,    unsigned int mode) { return shuffle(a, undef_v8cint32(),    mode); }
 INTRINSIC(v16cint16)   shuffle(v16cint16 a,   unsigned int mode) { return shuffle(a, undef_v16cint16(),   mode); }
-INTRINSIC(v16float)    shuffle(v16float a,    unsigned int mode) { return shuffle(a, undef_v16float(),    mode); }
 #endif
+
+INTRINSIC(v16float) shuffle(v16float a, unsigned int mode) {
+  return shuffle(a, undef_v16float(), mode);
+}
 
 INTRINSIC(v64int8) shuffle_s8(int b, unsigned int m) {
   return __builtin_aiev2_vbcst_shuffle8(b, m);
@@ -887,8 +891,10 @@ INTRINSIC(v16uint32) shuffle_v2u32(v2uint32 b, unsigned int m) {
 
 #if 0
 INTRINSIC(v16cint16)   shuffle_c16     (      cint16 b, unsigned int m) {  return __builtin_aiev2_vbcst_shuffle32(b,m) ;}
-INTRINSIC(v16float)    shuffle_float   (float        b, unsigned int m) {  return __builtin_aiev2_vbcst_shuffle32(b,m) ;}
 #endif
+INTRINSIC(v16float) shuffle_float(float b, unsigned int m) {
+  return __builtin_aiev2_vbcst_shuffle32(__builtin_bit_cast(int, b), m);
+}
 INTRINSIC(v32bfloat16) shuffle_bfloat16(bfloat16 b, unsigned int m) {
   return __builtin_aiev2_vbcst_shuffle_bf16(b, m);
 }
