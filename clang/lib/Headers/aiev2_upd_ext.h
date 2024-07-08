@@ -2084,12 +2084,12 @@ extract_v8bfloat16(v16bfloat16 a, int idx) DIAGNOSE_EXTRACT_IDX(1) {
 INTRINSIC(v2cint32) extract_v2cint32(v4cint32 a, int idx) DIAGNOSE_EXTRACT_IDX(1) {
   return extract_v2cint32(set_v8cint32(0, a), idx);
 }
+#endif
 
 // Extract 128-bit portion from 512-bit register
 INTRINSIC(v4float) extract_v4float(v8float a, int idx) DIAGNOSE_EXTRACT_IDX(1) {
   return extract_v4float(set_v16float(0, a), idx);
 }
-#endif
 
 // Set 128-bit portion of 512-bit register
 INTRINSIC(v64uint4) set_v64uint4(int idx, v32uint4 a) DIAGNOSE_EXTRACT_IDX(1) {
@@ -2179,6 +2179,7 @@ INTRINSIC(v4cint32) set_v4cint32(int idx, v2cint32 a) DIAGNOSE_EXTRACT_IDX(1) {
   else
     return extract_v4cint32(set_v8cint32(idx, a), 0);
 }
+#endif
 
 // Set 128-bit portion of 512-bit register
 INTRINSIC(v8float) set_v8float(int idx, v4float a) DIAGNOSE_EXTRACT_IDX(1) {
@@ -2187,7 +2188,6 @@ INTRINSIC(v8float) set_v8float(int idx, v4float a) DIAGNOSE_EXTRACT_IDX(1) {
   else
     return extract_v8float(set_v16float(idx, a), 0);
 }
-#endif
 
 // Insert 128-bit in 512-bit register
 INTRINSIC(v128uint4)
@@ -2321,6 +2321,7 @@ INTRINSIC(v8cint32) insert(v8cint32 v, int idx, v2cint32 b) DIAGNOSE_EXTRACT_IDX
 
   return (v8cint32)__builtin_aiev2_vsel32(v, tmp, mask);
 }
+#endif
 
 // Insert 128-bit in 512-bit register
 INTRINSIC(v16float) insert(v16float v, int idx, v4float b) DIAGNOSE_EXTRACT_IDX(3) {
@@ -2332,7 +2333,6 @@ INTRINSIC(v16float) insert(v16float v, int idx, v4float b) DIAGNOSE_EXTRACT_IDX(
 
   return (v16float)__builtin_aiev2_vsel32(v, tmp, mask);
 }
-#endif
 
 // Insert 128-bit in 512-bit register
 INTRINSIC(v64uint4)
@@ -2400,12 +2400,12 @@ insert(v16bfloat16 a, int idx, v8bfloat16 b) DIAGNOSE_EXTRACT_IDX(1) {
 INTRINSIC(v4cint32) insert(v4cint32 a, int idx, v2cint32 b) DIAGNOSE_EXTRACT_IDX(1) {
   return extract_v4cint32(insert(set_v8cint32(0, a), idx, b), 0);
 }
+#endif
 
 // Insert 128-bit in 512-bit register
 INTRINSIC(v8float) insert(v8float a, int idx, v4float b) DIAGNOSE_EXTRACT_IDX(1) {
   return extract_v8float(insert(set_v16float(0, a), idx, b), 0);
 }
-#endif
 
 INTRINSIC(v128uint4)
 concat(v32uint4 v0, v32uint4 v1, v32uint4 v2, v32uint4 v3) {
@@ -2495,6 +2495,7 @@ INTRINSIC(v8cint32) concat(v2cint32 v0, v2cint32 v1, v2cint32 v2, v2cint32 v3) {
   r = insert(r, 0, v0);
   return r;
 }
+#endif
 
 INTRINSIC(v16float) concat(v4float v0, v4float v1, v4float v2, v4float v3) {
   v16float r = set_v16float(1, v1);
@@ -2503,7 +2504,6 @@ INTRINSIC(v16float) concat(v4float v0, v4float v1, v4float v2, v4float v3) {
   r = insert(r, 0, v0);
   return r;
 }
-#endif
 
 INTRINSIC(v64uint4) concat(v32uint4 v0, v32uint4 v1) {
   v64uint4 r = set_v64uint4(1, v1);
@@ -2560,14 +2560,15 @@ INTRINSIC(v16bfloat16) concat(v8bfloat16 v0, v8bfloat16 v1) {
   return r;
 }
 
-#if 0
-INTRINSIC(v4cint32) concat(v2cint32 v0, v2cint32 v1) {
-  v4cint32 r = set_v4cint32(1, v1);
+INTRINSIC(v8float) concat(v4float v0, v4float v1) {
+  v8float r = set_v8float(1, v1);
   r = insert(r, 0, v0);
   return r;
 }
-INTRINSIC(v8float) concat(v4float v0, v4float v1) {
-  v8float r = set_v8float(1, v1);
+
+#if 0
+INTRINSIC(v4cint32) concat(v2cint32 v0, v2cint32 v1) {
+  v4cint32 r = set_v4cint32(1, v1);
   r = insert(r, 0, v0);
   return r;
 }

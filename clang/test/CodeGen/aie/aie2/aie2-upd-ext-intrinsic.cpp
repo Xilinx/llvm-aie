@@ -1835,3 +1835,139 @@ v8bfloat16 test_extract_v8bfloat16_512(v32bfloat16 a, int idx) {
 v8bfloat16 test_extract_v8bfloat16_256(v16bfloat16 a, int idx) {
    return extract_v8bfloat16(a,idx);
 }
+
+// CHECK-LABEL: @_Z16test_set_v8floatiDv4_f(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast <4 x float> [[A:%.*]] to <4 x i32>
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i32> @llvm.aie2.set.I512.I128(<4 x i32> [[TMP0]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x float> @llvm.aie2.v16float()
+// CHECK-NEXT:    [[TMP3:%.*]] = bitcast <16 x float> [[TMP2]] to <16 x i32>
+// CHECK-NEXT:    [[TMP4:%.*]] = shl i32 [[IDX:%.*]], 4
+// CHECK-NEXT:    [[MUL_I_I:%.*]] = sub i32 64, [[TMP4]]
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call <16 x i32> @llvm.aie2.vshift.I512.I512(<16 x i32> [[TMP3]], <16 x i32> [[TMP1]], i32 0, i32 [[MUL_I_I]])
+// CHECK-NEXT:    [[TMP6:%.*]] = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> [[TMP5]], i32 0)
+// CHECK-NEXT:    [[RETVAL_0_I:%.*]] = bitcast <8 x i32> [[TMP6]] to <8 x float>
+// CHECK-NEXT:    ret <8 x float> [[RETVAL_0_I]]
+//
+v8float test_set_v8float(int idx, v4float a) {
+  return set_v8float(idx, a);
+}
+
+// CHECK-LABEL: @_Z11test_insertDv16_fiDv4_f(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast <4 x float> [[B:%.*]] to <4 x i32>
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i32> @llvm.aie2.set.I512.I128(<4 x i32> [[TMP0]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x float> @llvm.aie2.v16float()
+// CHECK-NEXT:    [[TMP3:%.*]] = bitcast <16 x float> [[TMP2]] to <16 x i32>
+// CHECK-NEXT:    [[TMP4:%.*]] = shl i32 [[IDX:%.*]], 4
+// CHECK-NEXT:    [[MUL_I_I:%.*]] = sub i32 64, [[TMP4]]
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call <16 x i32> @llvm.aie2.vshift.I512.I512(<16 x i32> [[TMP3]], <16 x i32> [[TMP1]], i32 0, i32 [[MUL_I_I]])
+// CHECK-NEXT:    [[MUL_I:%.*]] = shl i32 [[IDX]], 2
+// CHECK-NEXT:    [[SHL_I:%.*]] = shl i32 15, [[MUL_I]]
+// CHECK-NEXT:    [[TMP6:%.*]] = bitcast <16 x float> [[V:%.*]] to <16 x i32>
+// CHECK-NEXT:    [[TMP7:%.*]] = tail call <16 x i32> @llvm.aie2.vsel32(<16 x i32> [[TMP6]], <16 x i32> [[TMP5]], i32 [[SHL_I]])
+// CHECK-NEXT:    [[TMP8:%.*]] = bitcast <16 x i32> [[TMP7]] to <16 x float>
+// CHECK-NEXT:    ret <16 x float> [[TMP8]]
+//
+v16float test_insert(v16float v, int idx, v4float b) {
+  return insert(v,idx,b);
+}
+
+// CHECK-LABEL: @_Z11test_insertDv8_fiDv4_f(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast <8 x float> [[V:%.*]] to <8 x i32>
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i32> @llvm.aie2.set.I512.I256(<8 x i32> [[TMP0]], i32 0)
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <4 x float> [[B:%.*]] to <4 x i32>
+// CHECK-NEXT:    [[TMP3:%.*]] = tail call <16 x i32> @llvm.aie2.set.I512.I128(<4 x i32> [[TMP2]])
+// CHECK-NEXT:    [[TMP4:%.*]] = tail call noundef <16 x float> @llvm.aie2.v16float()
+// CHECK-NEXT:    [[TMP5:%.*]] = bitcast <16 x float> [[TMP4]] to <16 x i32>
+// CHECK-NEXT:    [[TMP6:%.*]] = shl i32 [[IDX:%.*]], 4
+// CHECK-NEXT:    [[MUL_I_I_I:%.*]] = sub i32 64, [[TMP6]]
+// CHECK-NEXT:    [[TMP7:%.*]] = tail call <16 x i32> @llvm.aie2.vshift.I512.I512(<16 x i32> [[TMP5]], <16 x i32> [[TMP3]], i32 0, i32 [[MUL_I_I_I]])
+// CHECK-NEXT:    [[MUL_I_I:%.*]] = shl i32 [[IDX]], 2
+// CHECK-NEXT:    [[SHL_I_I:%.*]] = shl i32 15, [[MUL_I_I]]
+// CHECK-NEXT:    [[TMP8:%.*]] = tail call <16 x i32> @llvm.aie2.vsel32(<16 x i32> [[TMP1]], <16 x i32> [[TMP7]], i32 [[SHL_I_I]])
+// CHECK-NEXT:    [[TMP9:%.*]] = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> [[TMP8]], i32 0)
+// CHECK-NEXT:    [[RETVAL_0_I3_I:%.*]] = bitcast <8 x i32> [[TMP9]] to <8 x float>
+// CHECK-NEXT:    ret <8 x float> [[RETVAL_0_I3_I]]
+//
+v8float test_insert(v8float v, int idx, v4float b) {
+  return insert(v,idx,b);
+}
+
+// CHECK-LABEL: @_Z20test_extract_v4floatDv16_fi(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast <16 x float> [[V:%.*]] to <16 x i32>
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <16 x float> @llvm.aie2.v16float()
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <16 x float> [[TMP1]] to <16 x i32>
+// CHECK-NEXT:    [[MUL_I:%.*]] = shl nsw i32 [[IDX:%.*]], 4
+// CHECK-NEXT:    [[TMP3:%.*]] = tail call <16 x i32> @llvm.aie2.vshift.I512.I512(<16 x i32> [[TMP0]], <16 x i32> [[TMP2]], i32 0, i32 [[MUL_I]])
+// CHECK-NEXT:    [[TMP4:%.*]] = tail call <4 x i32> @llvm.aie2.extract.I128.I512(<16 x i32> [[TMP3]])
+// CHECK-NEXT:    [[TMP5:%.*]] = bitcast <4 x i32> [[TMP4]] to <4 x float>
+// CHECK-NEXT:    ret <4 x float> [[TMP5]]
+//
+v4float test_extract_v4float(v16float v, int idx) {
+   return extract_v4float(v,idx);
+}
+
+// CHECK-LABEL: @_Z20test_extract_v4floatDv8_fi(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast <8 x float> [[V:%.*]] to <8 x i32>
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i32> @llvm.aie2.set.I512.I256(<8 x i32> [[TMP0]], i32 0)
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x float> @llvm.aie2.v16float()
+// CHECK-NEXT:    [[TMP3:%.*]] = bitcast <16 x float> [[TMP2]] to <16 x i32>
+// CHECK-NEXT:    [[MUL_I_I:%.*]] = shl nsw i32 [[IDX:%.*]], 4
+// CHECK-NEXT:    [[TMP4:%.*]] = tail call <16 x i32> @llvm.aie2.vshift.I512.I512(<16 x i32> [[TMP1]], <16 x i32> [[TMP3]], i32 0, i32 [[MUL_I_I]])
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call <4 x i32> @llvm.aie2.extract.I128.I512(<16 x i32> [[TMP4]])
+// CHECK-NEXT:    [[TMP6:%.*]] = bitcast <4 x i32> [[TMP5]] to <4 x float>
+// CHECK-NEXT:    ret <4 x float> [[TMP6]]
+//
+v4float test_extract_v4float(v8float v, int idx) {
+   return extract_v4float(v,idx);
+}
+
+// CHECK-LABEL: @_Z11test_concatDv4_fS_(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast <4 x float> [[V1:%.*]] to <4 x i32>
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i32> @llvm.aie2.set.I512.I128(<4 x i32> [[TMP0]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x float> @llvm.aie2.v16float()
+// CHECK-NEXT:    [[TMP3:%.*]] = bitcast <16 x float> [[TMP2]] to <16 x i32>
+// CHECK-NEXT:    [[TMP4:%.*]] = tail call <16 x i32> @llvm.aie2.vshift.I512.I512(<16 x i32> [[TMP3]], <16 x i32> [[TMP1]], i32 0, i32 48)
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> [[TMP4]], i32 0)
+// CHECK-NEXT:    [[TMP6:%.*]] = tail call <16 x i32> @llvm.aie2.set.I512.I256(<8 x i32> [[TMP5]], i32 0)
+// CHECK-NEXT:    [[TMP7:%.*]] = bitcast <4 x float> [[V0:%.*]] to <4 x i32>
+// CHECK-NEXT:    [[TMP8:%.*]] = tail call <16 x i32> @llvm.aie2.set.I512.I128(<4 x i32> [[TMP7]])
+// CHECK-NEXT:    [[TMP9:%.*]] = tail call <16 x i32> @llvm.aie2.vsel32(<16 x i32> [[TMP6]], <16 x i32> [[TMP8]], i32 15)
+// CHECK-NEXT:    [[TMP10:%.*]] = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> [[TMP9]], i32 0)
+// CHECK-NEXT:    [[RETVAL_0_I3_I_I:%.*]] = bitcast <8 x i32> [[TMP10]] to <8 x float>
+// CHECK-NEXT:    ret <8 x float> [[RETVAL_0_I3_I_I]]
+//
+v8float test_concat(v4float v0, v4float v1) {
+   return concat(v0, v1);
+}
+
+
+// CHECK-LABEL: @_Z11test_concatDv4_fS_S_S_(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast <4 x float> [[V1:%.*]] to <4 x i32>
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i32> @llvm.aie2.set.I512.I128(<4 x i32> [[TMP0]])
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <16 x float> @llvm.aie2.v16float()
+// CHECK-NEXT:    [[TMP3:%.*]] = bitcast <16 x float> [[TMP2]] to <16 x i32>
+// CHECK-NEXT:    [[TMP4:%.*]] = tail call <16 x i32> @llvm.aie2.vshift.I512.I512(<16 x i32> [[TMP3]], <16 x i32> [[TMP1]], i32 0, i32 48)
+// CHECK-NEXT:    [[TMP5:%.*]] = bitcast <4 x float> [[V2:%.*]] to <4 x i32>
+// CHECK-NEXT:    [[TMP6:%.*]] = tail call <16 x i32> @llvm.aie2.set.I512.I128(<4 x i32> [[TMP5]])
+// CHECK-NEXT:    [[TMP7:%.*]] = tail call <16 x i32> @llvm.aie2.vshift.I512.I512(<16 x i32> [[TMP3]], <16 x i32> [[TMP6]], i32 0, i32 32)
+// CHECK-NEXT:    [[TMP8:%.*]] = tail call <16 x i32> @llvm.aie2.vsel32(<16 x i32> [[TMP4]], <16 x i32> [[TMP7]], i32 3840)
+// CHECK-NEXT:    [[TMP9:%.*]] = bitcast <4 x float> [[V3:%.*]] to <4 x i32>
+// CHECK-NEXT:    [[TMP10:%.*]] = tail call <16 x i32> @llvm.aie2.set.I512.I128(<4 x i32> [[TMP9]])
+// CHECK-NEXT:    [[TMP11:%.*]] = tail call <16 x i32> @llvm.aie2.vshift.I512.I512(<16 x i32> [[TMP3]], <16 x i32> [[TMP10]], i32 0, i32 16)
+// CHECK-NEXT:    [[TMP12:%.*]] = tail call <16 x i32> @llvm.aie2.vsel32(<16 x i32> [[TMP8]], <16 x i32> [[TMP11]], i32 61440)
+// CHECK-NEXT:    [[TMP13:%.*]] = bitcast <4 x float> [[V0:%.*]] to <4 x i32>
+// CHECK-NEXT:    [[TMP14:%.*]] = tail call <16 x i32> @llvm.aie2.set.I512.I128(<4 x i32> [[TMP13]])
+// CHECK-NEXT:    [[TMP15:%.*]] = tail call <16 x i32> @llvm.aie2.vsel32(<16 x i32> [[TMP12]], <16 x i32> [[TMP14]], i32 15)
+// CHECK-NEXT:    [[TMP16:%.*]] = bitcast <16 x i32> [[TMP15]] to <16 x float>
+// CHECK-NEXT:    ret <16 x float> [[TMP16]]
+//
+v16float test_concat(v4float v0, v4float v1, v4float v2, v4float v3) {
+   return concat(v0, v1, v2, v3);
+}
