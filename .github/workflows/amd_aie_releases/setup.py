@@ -12,58 +12,14 @@ from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 
 
+def check_env(build):
+    return os.environ.get(build, 0) in {"1", "true", "True", "ON", "YES"}
+
+
 class CMakeExtension(Extension):
     def __init__(self, name: str, sourcedir: str = "") -> None:
         super().__init__(name, sources=[])
         self.sourcedir = os.fspath(Path(sourcedir).resolve())
-
-
-def get_cross_cmake_args():
-    cmake_args = {}
-
-    def native_tools():
-        nonlocal cmake_args
-
-        native_tools_dir = Path(sys.prefix).absolute() / "bin"
-        assert native_tools_dir is not None, "native_tools_dir missing"
-        assert os.path.exists(native_tools_dir), "native_tools_dir doesn't exist"
-        cmake_args["LLVM_USE_HOST_TOOLS"] = "ON"
-        cmake_args["LLVM_NATIVE_TOOL_DIR"] = str(native_tools_dir)
-
-    CIBW_ARCHS = os.environ.get("CIBW_ARCHS")
-    if CIBW_ARCHS in {"arm64", "aarch64", "ARM64"}:
-        ARCH = cmake_args["LLVM_TARGETS_TO_BUILD"] = "AArch64"
-    elif CIBW_ARCHS in {"x86_64", "AMD64"}:
-        ARCH = cmake_args["LLVM_TARGETS_TO_BUILD"] = "X86"
-    else:
-        raise ValueError(f"unknown CIBW_ARCHS={CIBW_ARCHS}")
-    if CIBW_ARCHS != platform.machine():
-        cmake_args["CMAKE_SYSTEM_NAME"] = platform.system()
-
-    if platform.system() == "Darwin":
-        if ARCH == "AArch64":
-            cmake_args["CMAKE_OSX_ARCHITECTURES"] = "arm64"
-            cmake_args["LLVM_DEFAULT_TARGET_TRIPLE"] = "arm64-apple-darwin21.6.0"
-            cmake_args["LLVM_HOST_TRIPLE"] = "arm64-apple-darwin21.6.0"
-        elif ARCH == "X86":
-            cmake_args["CMAKE_OSX_ARCHITECTURES"] = "x86_64"
-            cmake_args["LLVM_DEFAULT_TARGET_TRIPLE"] = "x86_64-apple-darwin"
-            cmake_args["LLVM_HOST_TRIPLE"] = "x86_64-apple-darwin"
-    elif platform.system() == "Linux":
-        if ARCH == "AArch64":
-            cmake_args["LLVM_DEFAULT_TARGET_TRIPLE"] = "aarch64-linux-gnu"
-            cmake_args["LLVM_HOST_TRIPLE"] = "aarch64-linux-gnu"
-            cmake_args["CMAKE_C_COMPILER"] = "aarch64-linux-gnu-gcc"
-            cmake_args["CMAKE_CXX_COMPILER"] = "aarch64-linux-gnu-g++"
-            cmake_args["CMAKE_CXX_FLAGS"] = "-static-libgcc -static-libstdc++"
-            native_tools()
-        elif ARCH == "X86":
-            cmake_args["LLVM_DEFAULT_TARGET_TRIPLE"] = "x86_64-unknown-linux-gnu"
-            cmake_args["LLVM_HOST_TRIPLE"] = "x86_64-unknown-linux-gnu"
-
-    cmake_args["LLVM_TARGET_ARCH"] = ARCH
-
-    return cmake_args
 
 
 def get_exe_suffix():
@@ -80,6 +36,7 @@ class CMakeBuild(build_ext):
         extdir = ext_fullpath.parent.resolve()
         install_dir = extdir / "llvm-aie"
         cfg = "Release"
+        src_dir = Path(ext.sourcedir)
 
         cmake_generator = os.environ.get("CMAKE_GENERATOR", "Ninja")
 
@@ -92,11 +49,12 @@ class CMakeBuild(build_ext):
         cmake_args = [
             f"-B{build_temp}",
             f"-G {cmake_generator}",
-            "-DBUILD_SHARED_LIBS=OFF",
+            # load defaults from cache
+            f'-C {LLVM_AIE_SRC_ROOT / "clang" / "cmake" / "caches" / "Peano-AIE.cmake"}',
             "-DLLVM_BUILD_BENCHMARKS=OFF",
             "-DLLVM_BUILD_EXAMPLES=OFF",
-            "-DLLVM_BUILD_RUNTIMES=OFF",
             f"-DLLVM_BUILD_TESTS={RUN_TESTS}",
+            "-DLLVM_BUILD_LLVM_DYLIB=ON",
             "-DLLVM_BUILD_TOOLS=ON",
             "-DLLVM_BUILD_UTILS=ON",
             "-DLLVM_CCACHE_BUILD=ON",
@@ -105,18 +63,12 @@ class CMakeBuild(build_ext):
             "-DLLVM_ENABLE_ZSTD=OFF",
             "-DLLVM_INCLUDE_BENCHMARKS=OFF",
             "-DLLVM_INCLUDE_EXAMPLES=OFF",
-            "-DLLVM_INCLUDE_RUNTIMES=OFF",
+            "-DLLVM_LINK_LLVM_DYLIB=ON",
             f"-DLLVM_INCLUDE_TESTS={RUN_TESTS}",
+            "-DLLVM_ENABLE_WARNINGS=ON",
             "-DLLVM_INCLUDE_TOOLS=ON",
             "-DLLVM_INCLUDE_UTILS=ON",
             "-DLLVM_INSTALL_UTILS=ON",
-            "-DLLVM_ENABLE_WARNINGS=ON",
-            "-DMLIR_BUILD_MLIR_C_DYLIB=1",
-            "-DMLIR_ENABLE_BINDINGS_PYTHON=ON",
-            "-DMLIR_ENABLE_EXECUTION_ENGINE=ON",
-            "-DMLIR_ENABLE_SPIRV_CPU_RUNNER=ON",
-            f"MLIR_INCLUDE_INTEGRATION_TESTS={RUN_TESTS}",
-            f"MLIR_INCLUDE_TESTS={RUN_TESTS}",
             # get rid of that annoying af git on the end of .17git
             "-DLLVM_VERSION_SUFFIX=",
             # Disables generation of "version soname" (i.e. libFoo.so.<version>), which
@@ -126,26 +78,8 @@ class CMakeBuild(build_ext):
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}{os.sep}",
             f"-DPython3_EXECUTABLE={PYTHON_EXECUTABLE}",
             f"-DCMAKE_BUILD_TYPE={cfg}",  # not used on MSVC, but no harm
-            # prevent symbol collision that leads to multiple pass registration and such
-            "-DCMAKE_VISIBILITY_INLINES_HIDDEN=ON",
-            "-DCMAKE_C_VISIBILITY_PRESET=hidden",
-            "-DCMAKE_CXX_VISIBILITY_PRESET=hidden",
-            # AIE specific
-            "-DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=AIE",
-            "-DLIBC_ENABLE_USE_BY_CLANG=ON",
-            "-DLLVM_ENABLE_RUNTIMES=compiler-rt;libc",
-            "-DLLVM_BUILTIN_TARGETS=aie2-none-unknown-elf;aie-none-unknown-elf",
-            "-DLLVM_RUNTIME_TARGETS=aie-none-unknown-elf;aie2-none-unknown-elf",
-            "-DBUILTINS_aie-none-unknown-elf_LLVM_USE_LINKER=lld",
-            "-DBUILTINS_aie-none-unknown-elf_CMAKE_BUILD_TYPE=Release",
-            "-DRUNTIMES_aie-none-unknown-elf_LLVM_USE_LINKER=lld",
-            "-DRUNTIMES_aie-none-unknown-elf_CMAKE_BUILD_TYPE=Release",
-            "-DBUILTINS_aie2-none-unknown-elf_LLVM_USE_LINKER=lld",
-            "-DBUILTINS_aie2-none-unknown-elf_CMAKE_BUILD_TYPE=Release",
-            "-DRUNTIMES_aie2-none-unknown-elf_LLVM_USE_LINKER=lld",
-            "-DRUNTIMES_aie2-none-unknown-elf_CMAKE_BUILD_TYPE=Release",
-            "-DLLVM_LIBC_FULL_BUILD=ON",
         ]
+
         if platform.system() == "Windows":
             cmake_args += [
                 "-DCMAKE_C_COMPILER=cl",
@@ -156,10 +90,6 @@ class CMakeBuild(build_ext):
                 "-DLLVM_USE_CRT_MINSIZEREL=MT",
                 "-DLLVM_USE_CRT_RELEASE=MT",
             ]
-
-        cmake_args_dict = get_cross_cmake_args()
-        cmake_args += [f"-D{k}={v}" for k, v in cmake_args_dict.items()]
-        cmake_args += [f"-DLLVM_ENABLE_PROJECTS=llvm;mlir;clang;lld"]
 
         if "CMAKE_ARGS" in os.environ:
             cmake_args += [item for item in os.environ["CMAKE_ARGS"].split(" ") if item]
@@ -224,7 +154,14 @@ class CMakeBuild(build_ext):
             shutil.copytree(build_temp / "bin", install_dir / "bin")
         else:
             subprocess.run(
-                ["cmake", "--build", ".", "--target", "install", *build_args],
+                [
+                    "cmake",
+                    "--build",
+                    ".",
+                    "--target",
+                    "install-distribution",
+                    *build_args,
+                ],
                 cwd=build_temp,
                 check=True,
             )
@@ -259,24 +196,23 @@ class CMakeBuild(build_ext):
         )
 
 
-def check_env(build):
-    return os.environ.get(build, 0) in {"1", "true", "True", "ON", "YES"}
+LLVM_AIE_SRC_ROOT = Path(
+    os.getenv("LLVM_AIE_SRC_ROOT", Path.cwd() / "llvm-aie")
+).absolute()
 
-
-# cmake_txt = open("llvm-aie/cmake/Modules/LLVMVersion.cmake").read()
-cmake_txt = open("llvm-aie/llvm/CMakeLists.txt").read()
+cmake_txt = open(LLVM_AIE_SRC_ROOT / "llvm" / "CMakeLists.txt").read()
 llvm_version = []
 for v in ["LLVM_VERSION_MAJOR", "LLVM_VERSION_MINOR", "LLVM_VERSION_PATCH"]:
     vn = re.findall(rf"set\({v} (\d+)\)", cmake_txt)
     assert vn, f"couldn't find {v} in cmake txt"
     llvm_version.append(vn[0])
 
-commit_hash = os.environ.get("LLVM_AIE_PROJECT_COMMIT", "DEADBEEF")
+commit_hash = os.getenv("LLVM_AIE_PROJECT_COMMIT", "DEADBEEF")
 if not commit_hash:
     raise ValueError("commit_hash must not be empty")
 
 now = datetime.now()
-llvm_datetime = os.environ.get(
+llvm_datetime = os.getenv(
     "DATETIME", f"{now.year}{now.month:02}{now.day:02}{now.hour:02}"
 )
 
@@ -286,19 +222,6 @@ llvm_url = f"https://github.com/Xilinx/llvm-aie/commit/{commit_hash}"
 build_temp = Path.cwd() / "build" / "temp"
 if not build_temp.exists():
     build_temp.mkdir(parents=True)
-
-EXE_EXT = ".exe" if platform.system() == "Windows" else ""
-if not check_env("DEBUG_CI_FAST_BUILD"):
-    exes = [
-        "mlir-cpu-runner",
-        "mlir-opt",
-        "mlir-translate",
-    ]
-else:
-    exes = ["llvm-tblgen"]
-
-data_files = [("bin", [str(build_temp / "bin" / x) + EXE_EXT for x in exes])]
-
 
 setup(
     name="llvm-aie",
@@ -310,5 +233,4 @@ setup(
     cmdclass={"build_ext": CMakeBuild},
     zip_safe=False,
     download_url=llvm_url,
-    data_files=data_files,
 )

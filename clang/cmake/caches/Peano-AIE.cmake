@@ -13,7 +13,7 @@ set(LLVM_ENABLE_TERMINFO OFF CACHE BOOL "")
 set(BUILD_SHARED_LIBS OFF BOOL)
 
 set(LLVM_TARGETS_TO_BUILD
-      X86
+      host
     CACHE STRING "")
 
 set(LLVM_EXPERIMENTAL_TARGETS_TO_BUILD
@@ -47,7 +47,10 @@ set(LLVM_TOOLCHAIN_TOOLS
   CACHE STRING "")
 
 set(LLVM_DISTRIBUTION_COMPONENTS
+  LLVM
+  libclang
   clang
+  clang-cpp
   lld
   clang-resource-headers
   builtins-aie2-none-unknown-elf
