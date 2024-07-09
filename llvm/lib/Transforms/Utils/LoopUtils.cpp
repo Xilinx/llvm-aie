@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines common loop utility functions.
@@ -339,6 +342,77 @@ std::optional<MDNode *> llvm::makeFollowupLoopID(
   MDTuple *FollowupLoopID = MDNode::get(OrigLoopID->getContext(), MDs);
   FollowupLoopID->replaceOperandWith(0, FollowupLoopID);
   return FollowupLoopID;
+}
+
+namespace {
+
+/// Create MDNode with name and up to two integer values
+MDNode *createMetadata(LLVMContext &Context, StringRef Name,
+                       const SmallVector<int64_t, 2> &Values) {
+  Metadata *MDs[3];
+  MDs[0] = MDString::get(Context, Name);
+  size_t Op = 1;
+  for (auto V : Values) {
+    MDs[Op++] =
+        ConstantAsMetadata::get(ConstantInt::get(Type::getInt32Ty(Context), V));
+  }
+
+  return MDNode::get(Context, {MDs, Op});
+}
+} // namespace
+
+/// Update itercounts by applying FixMin and FixMax
+MDNode *llvm::updateIterCounts(LLVMContext &Context, MDNode *LoopID,
+                               std::function<int64_t(int64_t)> FixMin,
+                               std::function<int64_t(int64_t)> FixMax) {
+  if (!LoopID) {
+    return LoopID;
+  }
+
+  const char *const IterCountName = "llvm.loop.itercount.range";
+  SmallVector<Metadata *, 4> MDs;
+  SmallVector<int64_t, 2> IterCounts;
+  bool Found = false;
+
+  // Register and remove old itercounts
+  for (unsigned Lop = 1; Lop < LoopID->getNumOperands(); ++Lop) {
+    MDNode *Node = cast<MDNode>(LoopID->getOperand(Lop));
+    if (Node->getNumOperands()) {
+      MDString *S = dyn_cast<MDString>(Node->getOperand(0));
+      if (S && S->getString().equals(IterCountName)) {
+        if (Node->getNumOperands() > 1) {
+          if (ConstantInt *IntMD =
+                  mdconst::extract_or_null<ConstantInt>(Node->getOperand(1))) {
+            IterCounts.push_back(FixMin(IntMD->getSExtValue()));
+          }
+        }
+        if (Node->getNumOperands() > 2) {
+          if (ConstantInt *IntMD =
+                  mdconst::extract_or_null<ConstantInt>(Node->getOperand(2))) {
+            IterCounts.push_back(FixMax(IntMD->getSExtValue()));
+          }
+        }
+        // Any excess operands or operands of the wrong type are not pushed back
+        // This is a silent repair
+        // We will create a new one, so don't push this one back
+        Found = true;
+        continue;
+      }
+    }
+    MDs.push_back(Node);
+  }
+
+  if (!Found)
+    // nothing needs change; return the original
+    return LoopID;
+
+  // Create the updated metadata.
+  MDs.push_back(createMetadata(Context, IterCountName, IterCounts));
+  // Replace current metadata node with new one.
+  MDNode *NewLoopID = MDNode::get(Context, MDs);
+  // Set operand 0 to refer to the loop id itself.
+  NewLoopID->replaceOperandWith(0, NewLoopID);
+  return NewLoopID;
 }
 
 bool llvm::hasDisableAllTransformsHint(const Loop *L) {

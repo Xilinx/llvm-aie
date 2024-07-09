@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements some loop unrolling utilities for loops with run-time
@@ -1013,10 +1016,10 @@ bool llvm::UnrollRuntimeLoopRemainder(
       formDedicatedExitBlocks(remainderLoop, DT, LI, nullptr, PreserveLCSSA);
   }
 
-  auto UnrollResult = LoopUnrollResult::Unmodified;
+  LoopUnrollReport UnrollReport{};
   if (remainderLoop && UnrollRemainder) {
     LLVM_DEBUG(dbgs() << "Unrolling remainder loop\n");
-    UnrollResult =
+    UnrollReport =
         UnrollLoop(remainderLoop,
                    {/*Count*/ Count - 1, /*Force*/ false, /*Runtime*/ false,
                     /*AllowExpensiveTripCount*/ false,
@@ -1024,7 +1027,7 @@ bool llvm::UnrollRuntimeLoopRemainder(
                    LI, SE, DT, AC, TTI, /*ORE*/ nullptr, PreserveLCSSA);
   }
 
-  if (ResultLoop && UnrollResult != LoopUnrollResult::FullyUnrolled)
+  if (ResultLoop && UnrollReport.Result != LoopUnrollResult::FullyUnrolled)
     *ResultLoop = remainderLoop;
   NumRuntimeUnrolled++;
   return true;
