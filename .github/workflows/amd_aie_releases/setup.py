@@ -76,7 +76,6 @@ class CMakeBuild(build_ext):
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}{os.sep}",
             f"-DPython3_EXECUTABLE={PYTHON_EXECUTABLE}",
             f"-DCMAKE_BUILD_TYPE={cfg}",  # not used on MSVC, but no harm
-            f'-C {LLVM_AIE_SRC_ROOT / "clang" / "cmake" / "caches" / "Peano-AIE.cmake"}',
         ]
 
         if platform.system() == "Windows":
@@ -136,7 +135,11 @@ class CMakeBuild(build_ext):
             build_args += [f"-j{str(2 * os.cpu_count())}"]
         else:
             build_args += [f"-j{os.environ.get('PARALLEL_LEVEL')}"]
-
+            
+        config_cmake = LLVM_AIE_SRC_ROOT / "clang" / "cmake" / "caches" / "Peano-AIE.cmake"
+        assert config_cmake.exists()
+        cmake_args.append(f"-C {config_cmake}")
+        
         print("ENV", pprint(os.environ), file=sys.stderr)
         print("CMAKE_ARGS", cmake_args, file=sys.stderr)
 
