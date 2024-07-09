@@ -23,6 +23,7 @@
 #include "aiebase_chess.h"
 #include "aiebase_typedefs.h"
 #include "aiev2_defines.h"
+#include "aiev2_enums.h"
 #include "aiev2_undef.h"
 
 #ifdef __cplusplus
