@@ -56,11 +56,11 @@ set(_llvm_distribution_components
 
 option(LLVM_BUILD_LLVM_DYLIB "" OFF)
 if(LLVM_BUILD_LLVM_DYLIB)
-  list(APPEND _llvm_targets_to_build LLVM clang-cpp)
+  list(APPEND _llvm_distribution_components LLVM clang-cpp)
 endif()
 
 # there's some bug here where if you list(APPEND ...) to a CACHE variable
 # it doesn't work (neither libLLVM nor clang-cpp were being successfully installed)
-set(LLVM_DISTRIBUTION_COMPONENTS ${_llvm_targets_to_build} CACHE STRING "")
+set(LLVM_DISTRIBUTION_COMPONENTS ${_llvm_distribution_components} CACHE STRING "")
 
 message(STATUS "LLVM_DISTRIBUTION_COMPONENTS: ${LLVM_DISTRIBUTION_COMPONENTS}")
