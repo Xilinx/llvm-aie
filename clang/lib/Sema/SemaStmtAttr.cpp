@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 //  This file implements stmt-related attribute processing.
@@ -137,6 +140,8 @@ static Attr *handleLoopHintAttr(Sema &S, Stmt *St, const ParsedAttr &A,
                  .Case("pipeline", LoopHintAttr::PipelineDisabled)
                  .Case("pipeline_initiation_interval",
                        LoopHintAttr::PipelineInitiationInterval)
+                 .Case("min_iteration_count", LoopHintAttr::MinIterationCount)
+                 .Case("max_iteration_count", LoopHintAttr::MaxIterationCount)
                  .Case("distribute", LoopHintAttr::Distribute)
                  .Default(LoopHintAttr::Vectorize);
     if (Option == LoopHintAttr::VectorizeWidth) {
@@ -150,7 +155,9 @@ static Attr *handleLoopHintAttr(Sema &S, Stmt *St, const ParsedAttr &A,
         State = LoopHintAttr::FixedWidth;
     } else if (Option == LoopHintAttr::InterleaveCount ||
                Option == LoopHintAttr::UnrollCount ||
-               Option == LoopHintAttr::PipelineInitiationInterval) {
+               Option == LoopHintAttr::PipelineInitiationInterval ||
+               Option == LoopHintAttr::MinIterationCount ||
+               Option == LoopHintAttr::MaxIterationCount) {
       assert(ValueExpr && "Attribute must have a valid value expression.");
       if (S.CheckLoopHintExpr(ValueExpr, St->getBeginLoc()))
         return nullptr;
@@ -492,6 +499,10 @@ CheckForIncompatibleAttributes(Sema &S,
     case LoopHintAttr::VectorizePredicate:
       Category = VectorizePredicate;
       break;
+    case LoopHintAttr::MinIterationCount:
+    case LoopHintAttr::MaxIterationCount:
+      // These are in a category of their own, providing general information
+      continue;
     };
 
     assert(Category != NumberOfCategories && "Unhandled loop hint option");

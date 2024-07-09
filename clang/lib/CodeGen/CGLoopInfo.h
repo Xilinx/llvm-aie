@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This is the internal state used for llvm translation for loop statement
@@ -81,6 +84,12 @@ struct LoopAttributes {
 
   /// Value for 'llvm.loop.align' metadata.
   unsigned CodeAlign;
+
+  /// Argument values of llvm.loop.itercount.range metadata;
+  struct {
+    std::optional<int64_t> Lwb;
+    std::optional<int64_t> Upb;
+  } IterationCount;
 
   /// Value for whether the loop is required to make progress.
   bool MustProgress;
@@ -287,6 +296,10 @@ public:
 
   /// Set value of code align for the next loop pushed.
   void setCodeAlign(unsigned C) { StagedAttrs.CodeAlign = C; }
+
+  /// Set values for iteration count
+  void setRangeLwb(int64_t C) { StagedAttrs.IterationCount.Lwb = C; }
+  void setRangeUpb(int64_t C) { StagedAttrs.IterationCount.Upb = C; }
 
   /// Set no progress for the next loop pushed.
   void setMustProgress(bool P) { StagedAttrs.MustProgress = P; }
