@@ -95,6 +95,8 @@ public:
   int getMinLastMemoryCycle() const override;
   int getMaxLastMemoryCycle() const override;
 
+  SmallVector<int, 2> getMemoryCycles(unsigned SchedClass) const override;
+
   SmallVector<TiedRegOperands, 4>
   getTiedRegInfo(unsigned Opcode) const override;
 

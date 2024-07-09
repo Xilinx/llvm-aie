@@ -707,6 +707,11 @@ int AIEBaseInstrInfo::getMaxLastMemoryCycle() const {
   return std::numeric_limits<unsigned>().min();
 }
 
+SmallVector<int, 2>
+AIEBaseInstrInfo::getMemoryCycles(unsigned SchedClass) const {
+  return {};
+}
+
 bool AIEBaseInstrInfo::isLegalTypeToPad(const LLT &Ty,
                                         StringRef *ErrInfo) const {
   if (Ty.isVector() && Ty.getSizeInBits() == 128)

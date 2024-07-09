@@ -236,11 +236,11 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
                             const MachineBasicBlock *MBB,
                             const MachineFunction &MF) const override;
 
-  std::optional<unsigned>
-  getOperandLatency(const InstrItineraryData *ItinData,
-                    const MachineInstr &DefMI, unsigned DefIdx,
-                    const MachineInstr &UseMI,
-                    unsigned UseIdx) const override;
+  std::optional<unsigned> getOperandLatency(const InstrItineraryData *ItinData,
+                                            const MachineInstr &DefMI,
+                                            unsigned DefIdx,
+                                            const MachineInstr &UseMI,
+                                            unsigned UseIdx) const override;
 
   // Check if the MII points to a BUNDLE which contains a call instruction
   bool isCallBundle(MachineBasicBlock::iterator MII) const;
@@ -305,6 +305,8 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   virtual int getMinLastMemoryCycle() const;
   /// Return the maximum of LastMemoryCycle over all sched classes
   virtual int getMaxLastMemoryCycle() const;
+  /// Return cycles for memory operations of an instruction.
+  virtual SmallVector<int, 2> getMemoryCycles(unsigned SchedClass) const;
 
   const AIEBaseMCFormats *getFormatInterface() const { return FormatInterface; }
 

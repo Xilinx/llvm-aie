@@ -33,6 +33,7 @@ class AIEMemoryCyclesEmitter {
     const CodeGenSchedClass *SchedClass; // The sched class.
     unsigned FirstCycle; // The cycle for the first memory operation.
     unsigned LastCycle;  // The cycle for the last memory operation.
+    std::vector<int64_t> MemoryCyclesVec; // The cycles for memory operations.
   };
 
 public:
@@ -55,6 +56,7 @@ public:
 
   /// Generate C++ code from \p ItinMemCycles.
   void emitMemoryCyclesInfo(raw_ostream &OS, MemCycleGetter &Access);
+  void emitAllMemoryCyclesInfo(raw_ostream &OS);
 
   /// Process the SchedClasses, looking for those with MemoryCycles.
   void run(raw_ostream &OS);
@@ -110,8 +112,11 @@ void AIEMemoryCyclesEmitter::evaluateSchedClass(
     PrintFatalError(ItinData->getLoc(),
                     "FirstMemCycle greater than LastMemCycle");
   }
-  ItinMemCycles.emplace_back(
-      MemoryCycles{&SchedClass, unsigned(FirstCycle), unsigned(LastCycle)});
+  std::vector<int64_t> MemoryCyclesVec =
+      ItinData->getValueAsListOfInts("MemCyclesList");
+
+  ItinMemCycles.emplace_back(MemoryCycles{
+      &SchedClass, unsigned(FirstCycle), unsigned(LastCycle), MemoryCyclesVec});
 }
 
 // Generate something like:
@@ -150,6 +155,27 @@ void AIEMemoryCyclesEmitter::emitMemoryCyclesInfo(raw_ostream &OS,
      << EndOfFunction;
 }
 
+void AIEMemoryCyclesEmitter::emitAllMemoryCyclesInfo(raw_ostream &OS) {
+  const std::string Prefix(std::string(Target.getName()) + "InstrInfo::");
+  const std::string EndOfFunction("\n}\n\n");
+  OS << "SmallVector<int, 2>\n";
+  OS << Prefix << "getMemoryCycles(unsigned SchedClass) const {\n";
+  OS << "  switch (SchedClass) {\n" << "  default: return {};\n";
+  for (const MemoryCycles &MemCycles : ItinMemCycles) {
+    assert(MemCycles.MemoryCyclesVec.size() <= 2 && "Too many memory cycles");
+    OS << "  case " << MemCycles.SchedClass->Index << ": return ";
+    OS << "{";
+    for (size_t i = 0; i < MemCycles.MemoryCyclesVec.size(); ++i) {
+      OS << MemCycles.MemoryCyclesVec[i];
+      if (i != MemCycles.MemoryCyclesVec.size() - 1)
+        OS << ", ";
+    }
+    OS << "}";
+    OS << "; // " << MemCycles.SchedClass->Name << "\n";
+  }
+  OS << "  }" << EndOfFunction;
+}
+
 void AIEMemoryCyclesEmitter::run(raw_ostream &OS) {
   Records.startTimer("Process definitions");
   for (const CodeGenSchedClass &SchedClass : SchedModels.explicit_classes())
@@ -162,6 +188,7 @@ void AIEMemoryCyclesEmitter::run(raw_ostream &OS) {
   MemCycleGetter GetLast(/*LastCycles=*/true);
   emitMemoryCyclesInfo(OS, GetFirst);
   emitMemoryCyclesInfo(OS, GetLast);
+  emitAllMemoryCyclesInfo(OS);
 }
 
 static TableGen::Emitter::OptClass<AIEMemoryCyclesEmitter>
