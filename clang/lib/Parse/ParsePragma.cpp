@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the language specific #pragma handlers.
@@ -3618,6 +3621,8 @@ void PragmaLoopHintHandler::HandlePragma(Preprocessor &PP,
                            .Case("unroll_count", true)
                            .Case("pipeline", true)
                            .Case("pipeline_initiation_interval", true)
+                           .Case("min_iteration_count", true)
+                           .Case("max_iteration_count", true)
                            .Default(false);
     if (!OptionValid) {
       PP.Diag(Tok.getLocation(), diag::err_pragma_loop_invalid_option)

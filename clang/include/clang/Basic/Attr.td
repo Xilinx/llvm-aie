@@ -3950,12 +3950,14 @@ def LoopHint : Attr {
   let Args = [EnumArgument<"Option", "OptionType",
                           ["vectorize", "vectorize_width", "interleave", "interleave_count",
                            "unroll", "unroll_count", "unroll_and_jam", "unroll_and_jam_count",
-                           "pipeline", "pipeline_initiation_interval", "distribute",
-                           "vectorize_predicate"],
+                           "pipeline", "pipeline_initiation_interval",
+                           "min_iteration_count", "max_iteration_count",
+                           "distribute", "vectorize_predicate"],
                           ["Vectorize", "VectorizeWidth", "Interleave", "InterleaveCount",
                            "Unroll", "UnrollCount", "UnrollAndJam", "UnrollAndJamCount",
-                           "PipelineDisabled", "PipelineInitiationInterval", "Distribute",
-                           "VectorizePredicate"]>,
+                           "PipelineDisabled", "PipelineInitiationInterval",
+                           "MinIterationCount", "MaxIterationCount",
+                           "Distribute", "VectorizePredicate"]>,
               EnumArgument<"State", "LoopHintState",
                            ["enable", "disable", "numeric", "fixed_width",
                             "scalable_width", "assume_safety", "full"],
@@ -3976,6 +3978,8 @@ def LoopHint : Attr {
     case UnrollAndJamCount: return "unroll_and_jam_count";
     case PipelineDisabled: return "pipeline";
     case PipelineInitiationInterval: return "pipeline_initiation_interval";
+    case MinIterationCount: return "min_iteration_count";
+    case MaxIterationCount: return "max_iteration_count";
     case Distribute: return "distribute";
     case VectorizePredicate: return "vectorize_predicate";
     }

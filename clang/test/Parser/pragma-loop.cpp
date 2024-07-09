@@ -1,3 +1,13 @@
+//--- pargma-loop.cpp -------------------------------------------------------///
+//
+// This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//---------------------------------------------------------------------------///
+
 // RUN: %clang_cc1 -std=c++11 -verify %s
 
 // Note that this puts the expected lines before the directives to work around
@@ -158,7 +168,7 @@ void test(int *List, int Length) { // expected-note {{declared here}}
 /* expected-error {{missing argument; expected 'enable', 'full' or 'disable'}} */ #pragma clang loop unroll()
 /* expected-error {{missing argument; expected 'enable' or 'disable'}} */ #pragma clang loop distribute()
 
-/* expected-error {{missing option; expected vectorize, vectorize_width, interleave, interleave_count, unroll, unroll_count, pipeline, pipeline_initiation_interval, vectorize_predicate, or distribute}} */ #pragma clang loop
+/* expected-error {{missing option; expected vectorize, vectorize_width, interleave, interleave_count, unroll, unroll_count, pipeline, pipeline_initiation_interval, min_iteration_count, max_iteration_count, vectorize_predicate, or distribute}} */ #pragma clang loop
 /* expected-error {{invalid option 'badkeyword'}} */ #pragma clang loop badkeyword
 /* expected-error {{invalid option 'badkeyword'}} */ #pragma clang loop badkeyword(enable)
 /* expected-error {{invalid option 'badkeyword'}} */ #pragma clang loop vectorize(enable) badkeyword(4)
