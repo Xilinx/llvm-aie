@@ -773,7 +773,6 @@ body:             |
 
 # $crfpmask is saved and restored twice around VNEGSUB_F instructions
 # Make sure we simplify this to only one vreg for saving and restoring.
-# FIXME: We use two vregs and copy to $crfpmask in between VNEGSUB_F
 ---
 name:            save_restore_twice
 alignment:       16
@@ -793,11 +792,9 @@ body:             |
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:ercr = COPY $crfpmask
     ; CHECK-NEXT: $crfpmask = MOV_scalar_imm10_pseudo 0
     ; CHECK-NEXT: [[VNEGSUB_F:%[0-9]+]]:acc512 = VNEGSUB_F [[COPY]], [[COPY1]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
-    ; CHECK-NEXT: $crfpmask = COPY [[COPY2]]
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:ercr = COPY $crfpmask
     ; CHECK-NEXT: $crfpmask = MOV_scalar_imm10_pseudo 1
     ; CHECK-NEXT: [[VNEGSUB_F1:%[0-9]+]]:acc512 = VNEGSUB_F [[COPY]], [[VNEGSUB_F]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
-    ; CHECK-NEXT: $crfpmask = COPY [[COPY3]]
+    ; CHECK-NEXT: $crfpmask = COPY [[COPY2]]
     %0:acc512 = COPY $bml1
     %1:acc512 = COPY $bml2
     %2:er = MOV_RLC_imm10_pseudo 28
