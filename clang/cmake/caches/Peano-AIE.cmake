@@ -62,6 +62,6 @@ if(LLVM_BUILD_LLVM_DYLIB)
   list(APPEND LLVM_DISTRIBUTION_COMPONENTS LLVM libclang clang-cpp)
 endif()
 
-get_cmake_property(_variableNames VARIABLES)
-list(SORT _variableNames)
+get_cmake_property(_variable_names VARIABLES)
+list(SORT _variable_names)
 cmake_print_variables(${_variableNames})
