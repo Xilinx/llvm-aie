@@ -7,6 +7,8 @@
 
 # This file sets up a CMakeCache for the Peano AIE toolchain build.
 
+include(CMakePrintHelpers)
+
 set(CMAKE_BUILD_TYPE Release CACHE STRING "")
 set(LLVM_ENABLE_ASSERTIONS ON CACHE BOOL "")
 set(LLVM_ENABLE_TERMINFO OFF CACHE BOOL "")
@@ -59,3 +61,7 @@ option(LLVM_BUILD_LLVM_DYLIB "" OFF)
 if(LLVM_BUILD_LLVM_DYLIB)
   list(APPEND LLVM_DISTRIBUTION_COMPONENTS LLVM libclang clang-cpp)
 endif()
+
+get_cmake_property(_variableNames VARIABLES)
+list(SORT _variableNames)
+cmake_print_variables(${_variableNames})
