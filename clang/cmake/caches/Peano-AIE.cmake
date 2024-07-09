@@ -13,7 +13,7 @@ set(LLVM_ENABLE_TERMINFO OFF CACHE BOOL "")
 set(BUILD_SHARED_LIBS OFF BOOL)
 
 set(LLVM_TARGETS_TO_BUILD
-      X86
+      host
     CACHE STRING "")
 
 set(LLVM_EXPERIMENTAL_TARGETS_TO_BUILD
@@ -46,11 +46,21 @@ set(LLVM_TOOLCHAIN_TOOLS
   opt
   CACHE STRING "")
 
-set(LLVM_DISTRIBUTION_COMPONENTS
+set(_llvm_distribution_components
   clang
   lld
   clang-resource-headers
   builtins-aie2-none-unknown-elf
   runtimes-aie2-none-unknown-elf
-  ${LLVM_TOOLCHAIN_TOOLS}
-  CACHE STRING "")
+  ${LLVM_TOOLCHAIN_TOOLS})
+
+option(LLVM_BUILD_LLVM_DYLIB "" OFF)
+if(LLVM_BUILD_LLVM_DYLIB)
+  list(APPEND _llvm_distribution_components LLVM clang-cpp)
+endif()
+
+# there's some bug here where if you list(APPEND ...) to a CACHE variable
+# it doesn't work (neither libLLVM nor clang-cpp were being successfully installed)
+set(LLVM_DISTRIBUTION_COMPONENTS ${_llvm_distribution_components} CACHE STRING "")
+
+message(STATUS "LLVM_DISTRIBUTION_COMPONENTS: ${LLVM_DISTRIBUTION_COMPONENTS}")
