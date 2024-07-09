@@ -395,6 +395,7 @@ inline v8caccfloat mac_elem_8_accuracy_safe(v8cfloat v1, v8cfloat v2, v8caccfloa
 
         return add(acc, (v8caccfloat)sel((v16float)real_vec, (v16float)imag_vec, 0xaaaaaaaa));
 }
+#endif
 
 inline v16accfloat mul_4x8_8x4_accuracy_safe(v32float v1, v32float v2)
 {
@@ -441,6 +442,8 @@ inline v16accfloat mul_4x8_8x4_accuracy_safe(v32float v1, v32float v2)
     set_rnd(rnd);
     return mac_4x8_8x4(a,d,mac_4x8_8x4(a,e,mac_4x8_8x4(b,d,mac_4x8_8x4(d,c,mac_4x8_8x4(b,e,mac_4x8_8x4(a,f,mac_4x8_8x4(b,f,mac_4x8_8x4(c,e,mul_4x8_8x4(c,f)))))))));
 }
+
+#if 0
 inline v4caccfloat mul_2x8_8x2_accuracy_safe(v16float v1, v16cfloat v2)
 {
 	v32float    w3    = concat(v1,undef_v16float());
@@ -448,6 +451,8 @@ inline v4caccfloat mul_2x8_8x2_accuracy_safe(v16float v1, v16cfloat v2)
 	v8float     out   = extract_v8float((v16float)w4,0);
 	return (v4caccfloat)out;
 }
+#endif
+
 inline v16accfloat mac_4x8_8x4_accuracy_safe(v32float v1, v32float v2, v16accfloat acc)
 {
     int rnd = get_rnd();
@@ -539,6 +544,8 @@ inline v16accfloat mul_4x8_8x4_accuracy_fast(v32float v1, v32float v2)
     set_rnd(rnd);
     return mac_4x8_8x4(a, d, mac_4x8_8x4(a, e, mac_4x8_8x4(b, d, mac_4x8_8x4(d, c, mac_4x8_8x4(b, e, mul_4x8_8x4(a, f))))));
 }
+
+#if 0
 inline v4caccfloat mul_2x8_8x2_accuracy_fast(v16float v1, v16cfloat v2)
 {
         v32float    w3    = concat(v1,undef_v16float());
@@ -546,6 +553,8 @@ inline v4caccfloat mul_2x8_8x2_accuracy_fast(v16float v1, v16cfloat v2)
         v8float     out   = extract_v8float((v16float)w4,0);
         return (v4caccfloat)out;
 }
+#endif
+
 inline v16accfloat mac_4x8_8x4_accuracy_fast(v32float v1, v32float v2, v16accfloat acc)
 {
     int rnd = get_rnd();
@@ -630,6 +639,8 @@ inline v16accfloat mul_4x8_8x4_accuracy_low(v32float v1, v32float v2)
     set_rnd(rnd);
     return mac_4x8_8x4(a,d,mac_4x8_8x4(a,e,mul_4x8_8x4(b,d)));
 }
+
+#if 0
 inline v4caccfloat mul_2x8_8x2_accuracy_low(v16float v1, v16cfloat v2)
 {
         v32float    w3    = concat(v1,undef_v16float());
@@ -637,6 +648,8 @@ inline v4caccfloat mul_2x8_8x2_accuracy_low(v16float v1, v16cfloat v2)
         v8float     out   = extract_v8float((v16float)w4,0);
         return (v4caccfloat)out;
 }
+#endif
+
 inline v16accfloat mac_4x8_8x4_accuracy_low(v32float v1, v32float v2, v16accfloat acc)
 {
     int rnd = get_rnd();
@@ -672,7 +685,6 @@ inline v16accfloat mac_4x8_8x4_accuracy_low(v32float v1, v32float v2, v16accfloa
     set_rnd(rnd);
     return addmac_4x8_8x4(a,d,mac_4x8_8x4(a,e,mul_4x8_8x4(b,d)),acc);
 }
-#endif
 
 #else // defined(AIE2_FP32_EMULATION_SET_RND_MODE)
 
@@ -1022,6 +1034,7 @@ inline v8caccfloat mac_elem_8_accuracy_safe(v8cfloat v1, v8cfloat v2, v8caccfloa
 
 	return add(acc, (v8caccfloat)sel((v16float)real_vec, (v16float)imag_vec, 0xaaaaaaaa));
 }
+#endif
 
 inline v16accfloat mul_4x8_8x4_accuracy_safe(v32float v1, v32float v2)
 {
@@ -1064,6 +1077,8 @@ inline v16accfloat mul_4x8_8x4_accuracy_safe(v32float v1, v32float v2)
     f = insert(f,       1, to_v16bfloat16(msc_elem_16_2(e, dummy1, acc3)));
     return mac_4x8_8x4(a,d,mac_4x8_8x4(a,e,mac_4x8_8x4(b,d,mac_4x8_8x4(d,c,mac_4x8_8x4(b,e,mac_4x8_8x4(a,f,mac_4x8_8x4(b,f,mac_4x8_8x4(c,e,mul_4x8_8x4(c,f)))))))));
 }
+
+#if 0
 inline v4caccfloat mul_2x8_8x2_accuracy_safe(v16float v1, v16cfloat v2)
 {
         v32float    w3    = concat(v1,undef_v16float());
@@ -1071,6 +1086,8 @@ inline v4caccfloat mul_2x8_8x2_accuracy_safe(v16float v1, v16cfloat v2)
         v8float     out   = extract_v8float((v16float)w4,0);
         return (v4caccfloat)out;
 }
+#endif
+
 inline v16accfloat mac_4x8_8x4_accuracy_safe(v32float v1, v32float v2, v16accfloat acc)
 {
     v32bfloat16 a;
@@ -1154,6 +1171,8 @@ inline v16accfloat mul_4x8_8x4_accuracy_fast(v32float v1, v32float v2)
 
     return mac_4x8_8x4(a, d, mac_4x8_8x4(a, e, mac_4x8_8x4(b, d, mac_4x8_8x4(d, c, mac_4x8_8x4(b, e, mul_4x8_8x4(a, f))))));
 }
+
+#if 0
 inline v4caccfloat mul_2x8_8x2_accuracy_fast(v16float v1, v16cfloat v2)
 {
         v32float    w3    = concat(v1,undef_v16float());
@@ -1161,6 +1180,8 @@ inline v4caccfloat mul_2x8_8x2_accuracy_fast(v16float v1, v16cfloat v2)
         v8float     out   = extract_v8float((v16float)w4,0);
         return (v4caccfloat)out;
 }
+#endif
+
 inline v16accfloat mac_4x8_8x4_accuracy_fast(v32float v1, v32float v2, v16accfloat acc)
 {
     v32bfloat16 a;
@@ -1237,6 +1258,8 @@ inline v16accfloat mul_4x8_8x4_accuracy_low(v32float v1, v32float v2)
 
     return mac_4x8_8x4(a,d,mac_4x8_8x4(a,e,mul_4x8_8x4(b,d)));
 }
+
+#if 0
 inline v4caccfloat mul_2x8_8x2_accuracy_low(v16float v1, v16cfloat v2)
 {
         v32float    w3    = concat(v1,undef_v16float());
@@ -1244,6 +1267,8 @@ inline v4caccfloat mul_2x8_8x2_accuracy_low(v16float v1, v16cfloat v2)
         v8float     out   = extract_v8float((v16float)w4,0);
         return (v4caccfloat)out;
 }
+#endif
+
 inline v16accfloat mac_4x8_8x4_accuracy_low(v32float v1, v32float v2, v16accfloat acc)
 {
 
@@ -1276,16 +1301,15 @@ inline v16accfloat mac_4x8_8x4_accuracy_low(v32float v1, v32float v2, v16accfloa
 
     return addmac_4x8_8x4(a,d,mac_4x8_8x4(a,e,mul_4x8_8x4(b,d)),acc);
 }
-#endif // #if 0
 
 #endif
 
-#if 0
 inline v16accfloat negmul_elem_16_accuracy_low(v16float v1, v16float v2)
 {
     return neg(mul_elem_16_accuracy_low(v1,v2));
 }
 
+#if 0
 inline v8caccfloat negmul_elem_8_accuracy_low(v8float v1, v8cfloat v2)
 {
     return neg(mul_elem_8_accuracy_low(v1,v2));
@@ -1298,10 +1322,14 @@ inline v8caccfloat negmul_elem_8_accuracy_low(v8cfloat v1, v8cfloat v2)
 {
     return neg(mul_elem_8_accuracy_low(v1,v2));
 }
+#endif
+
 inline v16accfloat negmul_elem_16_accuracy_fast(v16float v1, v16float v2)
 {
     return neg(mul_elem_16_accuracy_fast(v1,v2));
 }
+
+#if 0
 inline v8caccfloat negmul_elem_8_accuracy_fast(v8float v1, v8cfloat v2)
 {
     return neg(mul_elem_8_accuracy_fast(v1,v2));
@@ -1314,10 +1342,14 @@ inline v8caccfloat negmul_elem_8_accuracy_fast(v8cfloat v1, v8cfloat v2)
 {
     return neg(mul_elem_8_accuracy_fast(v1,v2));
 }
+#endif
+
 inline v16accfloat negmul_elem_16_accuracy_safe(v16float v1, v16float v2)
 {
     return neg(mul_elem_16_accuracy_safe(v1,v2));
 }
+
+#if 0
 inline v8caccfloat negmul_elem_8_accuracy_safe(v8float v1, v8cfloat v2)
 {
     return neg(mul_elem_8_accuracy_safe(v1,v2));
@@ -1423,7 +1455,6 @@ inline v16accfloat addmsc_elem_16_accuracy_low(v16float v1, v16float v2,
   return sub(add(acc1, acc2), mul_elem_16_accuracy_low(v1, v2));
 }
 
-#if 0
 inline v16accfloat negmul_4x8_8x4_accuracy_safe(v32float v1, v32float v2)
 {
     return neg(mul_4x8_8x4_accuracy_safe(v1,v2));
@@ -1472,7 +1503,6 @@ inline v16accfloat addmsc_4x8_8x4_accuracy_low(v32float v1, v32float v2, v16accf
 {
     return sub(add(acc1, acc2),mul_4x8_8x4_accuracy_low(v1,v2));
 }
-#endif
 
 #if defined(AIE2_FP32_EMULATION_ACCURACY_FAST)
 #define mul_elem_16 mul_elem_16_accuracy_fast
@@ -1495,14 +1525,19 @@ inline v8caccfloat msc_elem_8(v8cfloat v1, v8cfloat v2,v8caccfloat acc) { return
 inline v8caccfloat mac_elem_8(v8float v1, v8cfloat v2, v8caccfloat acc)  { return mac_elem_8_accuracy_fast(v1,v2,acc);}
 inline v8caccfloat mac_elem_8(v8cfloat v1, v8float v2, v8caccfloat acc)  { return mac_elem_8_accuracy_fast(v1,v2,acc);}
 inline v8caccfloat mac_elem_8(v8cfloat v1, v8cfloat v2, v8caccfloat acc) { return mac_elem_8_accuracy_fast(v1,v2,acc);}
-inline v16accfloat mul_4x8_8x4(    v32float v1, v32float v2                                     ) { return mul_4x8_8x4_accuracy_fast(    v1, v2             );}
 inline v4caccfloat mul_2x8_8x2(    v16float v1, v16cfloat v2                                    ) { return mul_2x8_8x2_accuracy_fast(    v1, v2             );}
+#endif
+inline v16accfloat mul_4x8_8x4(v32float v1, v32float v2) {
+  return mul_4x8_8x4_accuracy_fast(v1, v2);
+}
 inline v16accfloat negmul_4x8_8x4( v32float v1, v32float v2                                     ) { return negmul_4x8_8x4_accuracy_fast( v1, v2             );}
 inline v16accfloat mac_4x8_8x4(    v32float v1, v32float v2, v16accfloat acc                    ) { return mac_4x8_8x4_accuracy_fast(    v1, v2, acc        );}
 inline v16accfloat msc_4x8_8x4(    v32float v1, v32float v2, v16accfloat acc                    ) { return msc_4x8_8x4_accuracy_fast(    v1, v2, acc        );}
 inline v16accfloat addmac_4x8_8x4( v32float v1, v32float v2, v16accfloat acc1, v16accfloat acc2 ) { return addmac_4x8_8x4_accuracy_fast( v1, v2, acc1, acc2 );}
-inline v16accfloat addmsc_4x8_8x4( v32float v1, v32float v2, v16accfloat acc1, v16accfloat acc2 ) { return addmsc_4x8_8x4_accuracy_fast( v1, v2, acc1, acc2 );}
-#endif
+inline v16accfloat addmsc_4x8_8x4(v32float v1, v32float v2, v16accfloat acc1,
+                                  v16accfloat acc2) {
+  return addmsc_4x8_8x4_accuracy_fast(v1, v2, acc1, acc2);
+}
 
 #elif defined(AIE2_FP32_EMULATION_ACCURACY_LOW)
 #define mul_elem_16 mul_elem_16_accuracy_low
@@ -1525,14 +1560,19 @@ inline v8caccfloat msc_elem_8(v8cfloat v1, v8cfloat v2,v8caccfloat acc) { return
 inline v8caccfloat mac_elem_8(v8float v1, v8cfloat v2, v8caccfloat acc)  { return mac_elem_8_accuracy_low(v1,v2,acc);}
 inline v8caccfloat mac_elem_8(v8cfloat v1, v8float v2, v8caccfloat acc)  { return mac_elem_8_accuracy_low(v1,v2,acc);}
 inline v8caccfloat mac_elem_8(v8cfloat v1, v8cfloat v2, v8caccfloat acc) { return mac_elem_8_accuracy_low(v1,v2,acc);}
-inline v16accfloat mul_4x8_8x4(    v32float v1, v32float v2                                     ) { return mul_4x8_8x4_accuracy_low(    v1, v2             );}
 inline v4caccfloat mul_2x8_8x2(    v16float v1, v16cfloat v2                                    ) { return mul_2x8_8x2_accuracy_low(    v1, v2             );}
+#endif
+inline v16accfloat mul_4x8_8x4(v32float v1, v32float v2) {
+  return mul_4x8_8x4_accuracy_low(v1, v2);
+}
 inline v16accfloat negmul_4x8_8x4( v32float v1, v32float v2                                     ) { return negmul_4x8_8x4_accuracy_low( v1, v2             );}
 inline v16accfloat mac_4x8_8x4(    v32float v1, v32float v2, v16accfloat acc                    ) { return mac_4x8_8x4_accuracy_low(    v1, v2, acc        );}
 inline v16accfloat msc_4x8_8x4(    v32float v1, v32float v2, v16accfloat acc                    ) { return msc_4x8_8x4_accuracy_low(    v1, v2, acc        );}
 inline v16accfloat addmac_4x8_8x4( v32float v1, v32float v2, v16accfloat acc1, v16accfloat acc2 ) { return addmac_4x8_8x4_accuracy_low( v1, v2, acc1, acc2 );}
-inline v16accfloat addmsc_4x8_8x4( v32float v1, v32float v2, v16accfloat acc1, v16accfloat acc2 ) { return addmsc_4x8_8x4_accuracy_low( v1, v2, acc1, acc2 );}
-#endif
+inline v16accfloat addmsc_4x8_8x4(v32float v1, v32float v2, v16accfloat acc1,
+                                  v16accfloat acc2) {
+  return addmsc_4x8_8x4_accuracy_low(v1, v2, acc1, acc2);
+}
 
 #else
 #define mul_elem_16 mul_elem_16_accuracy_safe
@@ -1555,14 +1595,19 @@ inline v8caccfloat msc_elem_8(v8cfloat v1, v8cfloat v2,v8caccfloat acc) { return
 inline v8caccfloat mac_elem_8(v8float v1, v8cfloat v2, v8caccfloat acc)  { return mac_elem_8_accuracy_safe(v1,v2,acc);}
 inline v8caccfloat mac_elem_8(v8cfloat v1, v8float v2, v8caccfloat acc)  { return mac_elem_8_accuracy_safe(v1,v2,acc);}
 inline v8caccfloat mac_elem_8(v8cfloat v1, v8cfloat v2, v8caccfloat acc) { return mac_elem_8_accuracy_safe(v1,v2,acc);}
-inline v16accfloat mul_4x8_8x4(    v32float v1, v32float v2                                     ) { return mul_4x8_8x4_accuracy_safe(    v1, v2             );}
 inline v4caccfloat mul_2x8_8x2(    v16float v1, v16cfloat v2                                    ) { return mul_2x8_8x2_accuracy_safe(    v1, v2             );}
+#endif
+inline v16accfloat mul_4x8_8x4(v32float v1, v32float v2) {
+  return mul_4x8_8x4_accuracy_safe(v1, v2);
+}
 inline v16accfloat negmul_4x8_8x4( v32float v1, v32float v2                                     ) { return negmul_4x8_8x4_accuracy_safe( v1, v2             );}
 inline v16accfloat mac_4x8_8x4(    v32float v1, v32float v2, v16accfloat acc                    ) { return mac_4x8_8x4_accuracy_safe(    v1, v2, acc        );}
 inline v16accfloat msc_4x8_8x4(    v32float v1, v32float v2, v16accfloat acc                    ) { return msc_4x8_8x4_accuracy_safe(    v1, v2, acc        );}
 inline v16accfloat addmac_4x8_8x4( v32float v1, v32float v2, v16accfloat acc1, v16accfloat acc2 ) { return addmac_4x8_8x4_accuracy_safe( v1, v2, acc1, acc2 );}
-inline v16accfloat addmsc_4x8_8x4( v32float v1, v32float v2, v16accfloat acc1, v16accfloat acc2 ) { return addmsc_4x8_8x4_accuracy_safe( v1, v2, acc1, acc2 );}
-#endif
+inline v16accfloat addmsc_4x8_8x4(v32float v1, v32float v2, v16accfloat acc1,
+                                  v16accfloat acc2) {
+  return addmsc_4x8_8x4_accuracy_safe(v1, v2, acc1, acc2);
+}
 
 #endif
 

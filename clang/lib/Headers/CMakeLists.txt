@@ -54,6 +54,7 @@ set(aie_files
   aiev1_ldst.h
   aiev1_vcmp.h
   aiev1intrin.h
+  aiev2_enums.h
   aiev2_scalar.h
   aiev2_srs.h
   aiev2_streams.h
