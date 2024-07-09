@@ -55,3 +55,10 @@ def FOO : TestInstruction {
 // CHECK-NEXT:  return 2147483647;
 // CHECK-LABEL: int TestAIEInstrInfo::getMaxLastMemoryCycle() const {
 // CHECK-NEXT:  return -2147483648;
+
+// CHECK:      SmallVector<int, 2>
+// CHECK-NEXT: TestAIEInstrInfo::getMemoryCycles(unsigned SchedClass) const {
+// CHECK-NEXT:   switch (SchedClass) {
+// CHECK-NEXT:   default: return {};
+// CHECK-NEXT:   }
+// CHECK-NEXT: }

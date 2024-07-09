@@ -20,15 +20,18 @@ class PreSchedInstExpansion<Instruction Target, Instruction Barrier> {
 }
 
 // Scheduling information for instructions that touch memory.
-class MemoryCycles<int First, int Last = -1> {
+class MemoryCycles<list<int> MemCycles> {
+  // Cycles in which memory is accessed 
+  list<int> MemCyclesList = MemCycles;
+
   // Cycle for the first load or store to memory.
-  int FirstCycle = First;
+  int FirstCycle = !head(MemCycles);
 
   // Cycle for the last load or store to memory. This is typically the same as
   // FirstCycle, except for instructions that are read-modify-write. In that
   // case, the instruction touches memory twice, and LastCycle would be
   // different from FirstCycle.
-  int LastCycle = Last;
+  int LastCycle = !if(!empty(!tail(MemCycles)), !head(MemCycles), MemCycles[!sub(!size(MemCycles),1)]);
 }
 
 // An extension of InstrItinData that is able to store MemoryCycles
@@ -39,6 +42,6 @@ class MemInstrItinData<InstrItinClass Class, list<InstrStage> stages,
                        list<Bypass> bypasses = [], int uops = 1> :
     InstrItinData<Class, stages, operandcycles, bypasses, uops> {
   int FirstMemCycle = MemCycles.FirstCycle;
-  int LastMemCycle = !if(!lt(MemCycles.LastCycle, 0),
-                         FirstMemCycle, MemCycles.LastCycle);
+  int LastMemCycle = MemCycles.LastCycle;
+  list<int> MemCyclesList = MemCycles.MemCyclesList;
 }
