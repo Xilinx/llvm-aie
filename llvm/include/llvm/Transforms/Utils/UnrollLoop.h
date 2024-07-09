@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines some loop unrolling utilities. It does not define any
@@ -65,6 +68,18 @@ enum class LoopUnrollResult {
   FullyUnrolled
 };
 
+/// Report back details of final transformation
+class LoopUnrollReport {
+public:
+  LoopUnrollReport() = default;
+  LoopUnrollReport(LoopUnrollResult Result) : Result(Result), Count(0) {}
+  LoopUnrollReport(LoopUnrollResult Result, unsigned Count)
+      : Result(Result), Count(Count){};
+
+  LoopUnrollResult Result = LoopUnrollResult::Unmodified;
+  unsigned Count = 0;
+};
+
 struct UnrollLoopOptions {
   unsigned Count;
   bool Force;
@@ -74,7 +89,7 @@ struct UnrollLoopOptions {
   bool ForgetAllSCEV;
 };
 
-LoopUnrollResult UnrollLoop(Loop *L, UnrollLoopOptions ULO, LoopInfo *LI,
+LoopUnrollReport UnrollLoop(Loop *L, UnrollLoopOptions ULO, LoopInfo *LI,
                             ScalarEvolution *SE, DominatorTree *DT,
                             AssumptionCache *AC,
                             const llvm::TargetTransformInfo *TTI,

@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This pass implements a simple loop unroller.  It works best when loops have
@@ -1271,6 +1274,11 @@ tryToUnrollLoop(Loop *L, DominatorTree &DT, LoopInfo *LI, ScalarEvolution &SE,
 
     ValueToValueMapTy VMap;
     if (peelLoop(L, PP.PeelCount, LI, &SE, DT, &AC, PreserveLCSSA, VMap)) {
+      auto Peel = [&PP](int64_t In) {
+        return In >= PP.PeelCount ? In - PP.PeelCount : 0;
+      };
+      L->setLoopID(updateIterCounts(L->getHeader()->getContext(),
+                                    L->getLoopID(), Peel, Peel));
       simplifyLoopAfterUnroll(L, true, LI, &SE, &DT, &AC, &TTI);
       // If the loop was peeled, we already "used up" the profile information
       // we had, so we don't want to unroll or peel again.
@@ -1300,11 +1308,12 @@ tryToUnrollLoop(Loop *L, DominatorTree &DT, LoopInfo *LI, ScalarEvolution &SE,
 
   // Unroll the loop.
   Loop *RemainderLoop = nullptr;
-  LoopUnrollResult UnrollResult = UnrollLoop(
-      L,
-      {UP.Count, UP.Force, UP.Runtime, UP.AllowExpensiveTripCount,
-       UP.UnrollRemainder, ForgetAllSCEV},
-      LI, &SE, &DT, &AC, &TTI, &ORE, PreserveLCSSA, &RemainderLoop);
+  LoopUnrollReport UnrollReport =
+      UnrollLoop(L,
+                 {UP.Count, UP.Force, UP.Runtime, UP.AllowExpensiveTripCount,
+                  UP.UnrollRemainder, ForgetAllSCEV},
+                 LI, &SE, &DT, &AC, &TTI, &ORE, PreserveLCSSA, &RemainderLoop);
+  LoopUnrollResult UnrollResult = UnrollReport.Result;
   if (UnrollResult == LoopUnrollResult::Unmodified)
     return LoopUnrollResult::Unmodified;
 
@@ -1317,12 +1326,17 @@ tryToUnrollLoop(Loop *L, DominatorTree &DT, LoopInfo *LI, ScalarEvolution &SE,
   }
 
   if (UnrollResult != LoopUnrollResult::FullyUnrolled) {
-    std::optional<MDNode *> NewLoopID =
-        makeFollowupLoopID(OrigLoopID, {LLVMLoopUnrollFollowupAll,
-                                        LLVMLoopUnrollFollowupUnrolled});
+    auto ScaleDown = [&UnrollReport](int64_t In) {
+      return In / UnrollReport.Count;
+    };
+
+    MDNode *Scaled = updateIterCounts(L->getHeader()->getContext(), OrigLoopID,
+                                      ScaleDown, ScaleDown);
+    L->setLoopID(Scaled);
+    std::optional<MDNode *> NewLoopID = makeFollowupLoopID(
+        Scaled, {LLVMLoopUnrollFollowupAll, LLVMLoopUnrollFollowupUnrolled});
     if (NewLoopID) {
       L->setLoopID(*NewLoopID);
-
       // Do not setLoopAlreadyUnrolled if loop attributes have been specified
       // explicitly.
       return UnrollResult;

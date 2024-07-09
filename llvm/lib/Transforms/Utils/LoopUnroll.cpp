@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements some loop unrolling utilities. It does not define any
@@ -292,7 +295,7 @@ void llvm::simplifyLoopAfterUnroll(Loop *L, bool SimplifyIVs, LoopInfo *LI,
 ///
 /// If RemainderLoop is non-null, it will receive the remainder loop (if
 /// required and not fully unrolled).
-LoopUnrollResult llvm::UnrollLoop(Loop *L, UnrollLoopOptions ULO, LoopInfo *LI,
+LoopUnrollReport llvm::UnrollLoop(Loop *L, UnrollLoopOptions ULO, LoopInfo *LI,
                                   ScalarEvolution *SE, DominatorTree *DT,
                                   AssumptionCache *AC,
                                   const TargetTransformInfo *TTI,
@@ -917,8 +920,9 @@ LoopUnrollResult llvm::UnrollLoop(Loop *L, UnrollLoopOptions ULO, LoopInfo *LI,
       simplifyLoop(SubLoop, DT, LI, SE, AC, nullptr, PreserveLCSSA);
   }
 
-  return CompletelyUnroll ? LoopUnrollResult::FullyUnrolled
-                          : LoopUnrollResult::PartiallyUnrolled;
+  return {(CompletelyUnroll ? LoopUnrollResult::FullyUnrolled
+                            : LoopUnrollResult::PartiallyUnrolled),
+          ULO.Count};
 }
 
 /// Given an llvm.loop loop id metadata node, returns the loop hint metadata
