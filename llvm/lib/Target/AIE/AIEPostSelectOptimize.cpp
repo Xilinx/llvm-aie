@@ -103,12 +103,12 @@ public:
     return false;
   }
 
-  /// Returns true if \p MI is a COPY instruction that can be eliminated.
-  bool isRedundantCopy(const MachineInstr &MI) {
-    if (!MI.isCopy())
-      return false;
-    auto [DstReg, SrcReg] = MI.getFirst2Regs();
-    return DstReg.isPhysical() && isCopy(DstReg, SrcReg);
+  /// If it exists, return a virtual register that holds a copy of \p PhysReg.
+  std::optional<Register> getVirtualCopy(MCRegister PhysReg) const {
+    if (auto It = Copies.find(PhysReg);
+        It != Copies.end() && !It->second.empty())
+      return *It->second.begin();
+    return {};
   }
 };
 
@@ -148,6 +148,26 @@ getTrackableCopyOperands(const MachineInstr &MI,
   return {};
 }
 
+/// Returns true if \p MI is a COPY that was eliminated.
+bool trySimplifyCopy(MachineInstr &MI, const PhysRegCopyTracker &CT) {
+  if (!MI.isCopy())
+    return false;
+  auto [DstReg, SrcReg] = MI.getFirst2Regs();
+  if (DstReg.isPhysical() && CT.isCopy(DstReg, SrcReg)) {
+    // Assigning to DstReg a copy of itself. Just remove MI.
+    MI.eraseFromParent();
+    return true;
+  }
+  if (std::optional<Register> EquivVirtSrc;
+      SrcReg.isPhysical() && (EquivVirtSrc = CT.getVirtualCopy(SrcReg))) {
+    // Avoid defining a new VReg if another available one has the same value.
+    MI.getMF()->getRegInfo().replaceRegWith(DstReg, *EquivVirtSrc);
+    MI.eraseFromParent();
+    return true;
+  }
+  return false;
+}
+
 /// Remove copies to phys regs that are redundant.
 bool removeRedundantCopies(MachineBasicBlock &MBB,
                            const MachineRegisterInfo &MRI) {
@@ -157,8 +177,7 @@ bool removeRedundantCopies(MachineBasicBlock &MBB,
 
   /// Go through all instructions to collect copies and simplify redundant ones.
   for (MachineInstr &MI : make_early_inc_range(MBB)) {
-    if (CT.isRedundantCopy(MI)) {
-      MI.eraseFromParent();
+    if (trySimplifyCopy(MI, CT)) {
       Changed = true;
     } else if (auto Ops = getTrackableCopyOperands(MI, TRI)) {
       if (Ops->IsPhysRegDef) {
