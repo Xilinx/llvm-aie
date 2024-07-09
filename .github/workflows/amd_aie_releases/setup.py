@@ -49,7 +49,6 @@ class CMakeBuild(build_ext):
         cmake_args = [
             f"-B{build_temp}",
             f"-G {cmake_generator}",
-            # load defaults from cache
             "-DLLVM_BUILD_LLVM_DYLIB=ON",
             "-DLLVM_LINK_LLVM_DYLIB=ON",
             "-DLLVM_BUILD_BENCHMARKS=OFF",
