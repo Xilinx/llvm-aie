@@ -237,15 +237,8 @@ define dso_local void @lowerMemsetUsingWordVector32() local_unnamed_addr #2 {
 ; CHECK-LABEL: lowerMemsetUsingWordVector32:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopb ; mova r0, #0; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; vpush.lo.32 x0, r0, x0
-; CHECK-NEXT:    vpush.lo.32 x0, r0, x0
-; CHECK-NEXT:    vpush.lo.32 x0, r0, x0
-; CHECK-NEXT:    vpush.lo.32 x0, r0, x0
-; CHECK-NEXT:    vpush.lo.32 x0, r0, x0
-; CHECK-NEXT:    vpush.lo.32 x0, r0, x0
-; CHECK-NEXT:    vpush.lo.32 x0, r0, x0
-; CHECK-NEXT:    vpush.lo.32 x0, r0, x0
+; CHECK-NEXT:    mova r0, #0; nopb ; nopxm ; nops
+; CHECK-NEXT:    vbcst.32 x0, r0
 ; CHECK-NEXT:    movxm p0, #buffer1
 ; CHECK-NEXT:    vst wl0, [p0], #32; ret lr
 ; CHECK-NEXT:    st r0, [p0], #4 // Delay Slot 5

@@ -931,6 +931,7 @@ bool llvm::matchSplatVector(MachineInstr &MI, MachineRegisterInfo &MRI,
   const unsigned DstVecSize = DstVecTy.getSizeInBits();
 
   switch (DstVecSize) {
+  case 256:
   case 512:
     break;
   default:
@@ -955,6 +956,8 @@ bool llvm::applySplatVector(MachineInstr &MI, MachineRegisterInfo &MRI,
   B.setInstrAndDebugLoc(MI);
   auto [DstVecReg, SrcReg] = MatchInfo;
   const LLT SrcTy = MRI.getType(SrcReg);
+  const LLT DstVecTy = MRI.getType(DstVecReg);
+  const unsigned DstVecSize = DstVecTy.getSizeInBits();
 
   if (SrcTy == LLT::scalar(8) || SrcTy == LLT::scalar(16)) {
     const LLT S32 = LLT::scalar(32);
@@ -962,7 +965,26 @@ bool llvm::applySplatVector(MachineInstr &MI, MachineRegisterInfo &MRI,
     B.buildAnyExt(Src32BitReg, SrcReg);
     SrcReg = Src32BitReg;
   }
-  B.buildInstr(AIE2::G_AIE_BROADCAST_VECTOR, {DstVecReg}, {SrcReg});
+  // Check if the destination vector size is 512 bits.
+  if (DstVecSize == 512) {
+    // Build the G_AIE_BROADCAST_VECTOR instruction for a 512-bit vector.
+    B.buildInstr(AIE2::G_AIE_BROADCAST_VECTOR, {DstVecReg}, {SrcReg});
+  } else {
+    const unsigned SrcSize = SrcTy.getSizeInBits();
+    const unsigned DstVec512BitLen = 512 / SrcSize;
+
+    // Create a 512-bit generic virtual register for the destination vector
+    // as 256-bit broadcast support is not available.
+    Register DstVec512BitReg = MRI.createGenericVirtualRegister(
+        LLT::fixed_vector(DstVec512BitLen, SrcSize));
+
+    // Build the G_AIE_BROADCAST_VECTOR instruction for the 512-bit vector.
+    B.buildInstr(AIE2::G_AIE_BROADCAST_VECTOR, {DstVec512BitReg}, {SrcReg});
+    const Register UnusedSubReg = MRI.createGenericVirtualRegister(DstVecTy);
+
+    // Unmerge the 512-bit vector into the 256-bit destination vector.
+    B.buildUnmerge({DstVecReg, UnusedSubReg}, DstVec512BitReg);
+  }
   MI.eraseFromParent();
   return true;
 }
