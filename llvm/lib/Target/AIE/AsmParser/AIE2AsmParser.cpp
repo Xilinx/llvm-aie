@@ -31,93 +31,39 @@
 
 using namespace llvm;
 
+#include "AIEBaseAsmParser.h"
+
 namespace {
 AIE2MCFormats FormatInterface;
 }
 
 namespace {
 
-class AIE2AsmParser : public MCTargetAsmParser {
+class AIE2Operand : public AIEBaseOperand {};
+
+class AIE2AsmParser
+    : public AIEBaseAsmParser<AIE2AsmParser, AIE::MCBundle, AIE2Operand> {
 private:
-  /// Returns true if Imm is an int contained in N bits with a step of F
-  template <unsigned N, unsigned F>
-  constexpr inline bool isValidImm(int64_t Imm) {
-    return isInt<N + F>(Imm);
-  }
-
-  bool validateInstruction(MCInst &Inst, OperandVector &Operands);
-
-  void emitBundle(MCStreamer &Out);
-
 // Auto-generated Match Functions
 #define GET_ASSEMBLER_HEADER
 #include "AIE2GenAsmMatcher.inc"
 
-  /// parseImmediate:
-  ///   ::= "#" Integer
-  ///   ::= "#" Identifier
-  /// F = "#"
-  /// Parse an immediate, emits an error if it fails.
-  bool parseImmediate(OperandVector &Operands);
-
-  /// parseIdentifier:
-  ///   ::= Identifer
-  ///   ::= Identifer ":" Identifier
-  /// F = Identifer
-  /// Parse a register, emits an error if it fails.
-  bool parseIdentifier(OperandVector &Operands);
-
-  /// parseIndirectOrIndexedMode
-  ///   ::= "[" <ptr> "]"
-  ///   ::= "[" <ptr> "," Register "]"
-  ///   ::= "[" <ptr> "," "#" Integer "]"
-  /// F = "["
-  /// Parse an "addressing mode", emits an error if it fails
-  bool parseIndirectOrIndexedMode(OperandVector &Operands);
-
-  /// parseOperand:
-  ///   ::= IndirectOrIndexedMode
-  ///   ::= Register
-  ///   ::= Immediate
-  /// F = "[", "#", Identifier
-  /// Parse an operand, emits an error if no First is matched.
-  /// The parsed operand will be appended in \a Operands
-  bool parseOperand(OperandVector &Operands);
-
-  AIE::MCBundle Bundle;
-
-public:
-  AIE2AsmParser(const MCSubtargetInfo &STI, MCAsmParser &Parser,
-                const MCInstrInfo &MII, const MCTargetOptions &Options)
-      : MCTargetAsmParser(Options, STI, MII), Bundle(&FormatInterface) {
-    // TODO: There might be some stuff we want to initialize
-    setAvailableFeatures(ComputeAvailableFeatures(getSTI().getFeatureBits()));
-  }
-
-  // Parse a register
-  bool parseRegister(MCRegister &RegNo, SMLoc &StartLoc,
-                     SMLoc &EndLoc) override;
-
-  ParseStatus tryParseRegister(MCRegister &RegNo, SMLoc &StartLoc,
-                               SMLoc &EndLoc) override;
-
-  /// Parses ".____" (e.g .delay_slot)
-  bool ParseDirective(AsmToken DirectiveID) override;
-
+  bool parseIdentifier(OperandVector &Operands) override;
+  bool validateInstruction(MCInst &Inst, OperandVector &Operands) override;
+  unsigned matchRegister(std::string Name) override;
   bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                OperandVector &Operands, MCStreamer &Out,
                                uint64_t &ErrorInfo,
                                bool MatchingInlineAsm) override;
 
-  /// ParseInstruction:
-  ///   ::= Identifier
-  ///   ::= Identifier Operand [ "," Operand ]
-  /// Parse an instruction \a Name, storing all operands in \a Operands
-  bool ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
-                        SMLoc NameLoc, OperandVector &Operands) override;
+public:
+  AIE2AsmParser(const MCSubtargetInfo &STI, MCAsmParser &Parser,
+                const MCInstrInfo &MII, const MCTargetOptions &Options)
+      : AIEBaseAsmParser(STI, MII, Options, FormatInterface) {
+    // TODO: There might be some stuff we want to initialize
+    setAvailableFeatures(ComputeAvailableFeatures(getSTI().getFeatureBits()));
+  }
 };
-
-class AIE2Operand : public AIEBaseOperand {};
 
 } // end anonymous namespace
 
@@ -125,6 +71,13 @@ class AIE2Operand : public AIEBaseOperand {};
 #define GET_REGISTER_MATCHER
 #define GET_MNEMONIC_SPELL_CHECKER
 #include "AIE2GenAsmMatcher.inc"
+
+unsigned AIE2AsmParser::matchRegister(std::string Name) {
+  unsigned RegNo = MatchRegisterName(Name);
+  if (RegNo)
+    return RegNo;
+  return MatchRegisterAltName(Name);
+}
 
 bool AIE2AsmParser::validateInstruction(MCInst &Inst, OperandVector &Operands) {
   // The index of the operand in \a Inst and \a Operands will always be
@@ -177,70 +130,6 @@ bool AIE2AsmParser::validateInstruction(MCInst &Inst, OperandVector &Operands) {
   return false;
 }
 
-bool AIE2AsmParser::parseRegister(MCRegister &RegNo, SMLoc &StartLoc,
-                                  SMLoc &EndLoc) {
-
-  return !tryParseRegister(RegNo, StartLoc, EndLoc).isSuccess();
-}
-
-ParseStatus AIE2AsmParser::tryParseRegister(MCRegister &RegNo,
-                                            SMLoc &StartLoc,
-                                            SMLoc &EndLoc) {
-  SmallVector<AsmToken, 3> Lookahead;
-  for (int i = 0; i < 3; i++) {
-    Lookahead.push_back(getTok());
-    Lex();
-  }
-  const AsmToken &Tok = Lookahead.front();
-  StartLoc = Tok.getLoc();
-  EndLoc = Tok.getEndLoc();
-  std::string Name(Tok.getIdentifier());
-  // Check if it is a combined register
-  if (Lookahead[1].is(AsmToken::Colon) &&
-      Lookahead[2].is(AsmToken::Identifier)) {
-    Name += Lookahead[1].getString();
-    Name += Lookahead[2].getString();
-  } else {
-    // Unlex the two last tokens
-    getLexer().UnLex(Lookahead.pop_back_val());
-    getLexer().UnLex(Lookahead.pop_back_val());
-  }
-
-  RegNo = MatchRegisterName(Name);
-  if (RegNo == AIE2::NoRegister)
-    RegNo = MatchRegisterAltName(Name);
-  // Unlex the tokens of the vector if no match was found
-  if (RegNo == AIE2::NoRegister) {
-    for (auto Tok = Lookahead.rbegin(); Tok != Lookahead.rend(); Tok++)
-      getLexer().UnLex(*Tok);
-  }
-  return RegNo == AIE2::NoRegister ? ParseStatus::NoMatch
-                                   : ParseStatus::Success;
-}
-
-bool AIE2AsmParser::ParseDirective(AsmToken DirectiveID) {
-  // TODO
-  return true;
-}
-
-void AIE2AsmParser::emitBundle(MCStreamer &Out) {
-  LLVM_DEBUG(dbgs() << "Emitting bundle\n");
-  MCInst B;
-  const auto *Format = Bundle.getFormatOrNull();
-  assert(Format);
-  for (auto Slot : Format->getSlots()) {
-    if (Bundle.at(Slot))
-      B.addOperand(MCOperand::createInst(Bundle.at(Slot)));
-    else {
-      MCInst *NopInst = getContext().createMCInst();
-      NopInst->setOpcode(FormatInterface.getSlotInfo(Slot)->getNOPOpcode());
-      B.addOperand(MCOperand::createInst(NopInst));
-    }
-  }
-  B.setOpcode(Format->Opcode);
-  Out.emitInstruction(B, getSTI());
-}
-
 bool AIE2AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                             OperandVector &Operands,
                                             MCStreamer &Out,
@@ -256,29 +145,7 @@ bool AIE2AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   default:
     break;
   case Match_Success: {
-    Inst->setLoc(IDLoc);
-    if (validateInstruction(*Inst, Operands))
-      return true;
-
-    if (Bundle.canAdd(Inst))
-      Bundle.add(Inst);
-    else {
-      // Lex to end of line
-      while (!(getLexer().is(llvm::AsmToken::EndOfStatement) &&
-               (getLexer().getTok().getString().empty() ||
-                getLexer().getTok().getString()[0] == '\n')))
-        Lex();
-      Bundle.clear();
-      return Error(IDLoc, "incorrect bundle");
-    }
-
-    const bool EndOfBundle =
-        getTok().getString().empty() || getTok().getString()[0] != ';';
-    if (EndOfBundle) {
-      emitBundle(Out);
-      Bundle.clear();
-    }
-    return false;
+    return processMatchedInstruction(IDLoc, Operands, Out, Inst);
   }
   // TODO: Properly implement the following cases
   case Match_InvalidTiedOperand:
@@ -304,57 +171,7 @@ bool AIE2AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     return Error(IDLoc, "unrecognized instruction mnemonic" + Suggestion);
   }
   }
-  llvm_unreachable("Unkown match type detected");
-}
-
-/// parseImmediate:
-///   ::= "#" Integer
-///   ::= "#" Identifier
-bool AIE2AsmParser::parseImmediate(OperandVector &Operands) {
-  // Consume "#"
-  assert(getTok().getKind() == AsmToken::Hash && "Operand is not '#'");
-  Lex();
-
-  AsmToken const &Tok = getTok();
-  SMLoc S = Tok.getLoc();
-  SMLoc E; // Will get the value later
-  const MCExpr *Res;
-
-  switch (Tok.getKind()) {
-  case AsmToken::Identifier: {
-    StringRef Identifier;
-    if (getParser().parseIdentifier(Identifier))
-      return true /*MatchOperand_ParseFail*/;
-
-    MCSymbol *Sym = getContext().getOrCreateSymbol(Identifier);
-    Res = MCSymbolRefExpr::create(Sym, MCSymbolRefExpr::VK_None, getContext());
-    break;
-  }
-  case AsmToken::Minus:
-  case AsmToken::Integer: {
-    if (getParser().parseExpression(Res, E))
-      return true /*MatchOperand_ParseFail*/;
-    break;
-  }
-  // parse #(global + offset)
-  case AsmToken::LParen: {
-    // Consume '('
-    Lex();
-    const MCExpr *SubExpr;
-    /// parenexpr ::= expr)
-    if (getParser().parseParenExpression(SubExpr, E)) {
-      return true /*MatchOperand_ParseFail*/;
-    }
-    AIEMCExpr::VariantKind VK = AIEMCExpr::VK_AIE_GLOBAL;
-    Res = AIEMCExpr::create(SubExpr, VK, getContext());
-    break;
-  }
-  default:
-    Lex(); // We could not parse the operand, consume it.
-    return Error(S, "immediates must be integers or identifiers");
-  }
-  Operands.push_back(AIE2Operand::CreateImm(getContext(), Res, S, E));
-  return MatchOperand_Success;
+  llvm_unreachable("Unknown match type detected");
 }
 
 static Register convertToD_3D(Register Reg) {
@@ -407,105 +224,6 @@ bool AIE2AsmParser::parseIdentifier(OperandVector &Operands) {
   return MatchOperand_Success;
 }
 
-/// parseIndirectOrIndexedMode
-///   ::= "[" <ptr> "]"
-///   ::= "[" <ptr> "," Register "]"
-///   ::= "[" <ptr> "," "#" Integer "]"
-bool AIE2AsmParser::parseIndirectOrIndexedMode(OperandVector &Operands) {
-  AsmToken const &LBracToken = getLexer().getTok();
-  // First token is "["
-  assert(LBracToken.getString() == "[" && "Operand is not '['");
-  Operands.push_back(AIE2Operand::CreateToken(
-      getContext(), LBracToken.getString(), LBracToken.getLoc()));
-  Lex();
-  if (parseIdentifier(Operands))
-    return true;
-  if (getLexer().is(AsmToken::Comma)) {
-    // Consume ","
-    Lex();
-    AsmToken const &IdxToken = getTok();
-    switch (IdxToken.getKind()) {
-    case AsmToken::Hash:
-      if (parseImmediate(Operands))
-        return true /*MatchOperand_ParseFail*/;
-      break;
-    case AsmToken::Identifier:
-      if (parseIdentifier(Operands))
-        return true /*MatchOperand_ParseFail*/;
-      break;
-    case AsmToken::RBrac:
-      return Error(IdxToken.getLoc(), "missing index operand");
-    default:
-      return Error(IdxToken.getLoc(), "unexpected operand");
-    }
-  }
-  if (getLexer().is(AsmToken::RBrac)) {
-    AsmToken const &RBracToken = getLexer().getTok();
-    Operands.push_back(AIE2Operand::CreateToken(
-        getContext(), RBracToken.getString(), RBracToken.getLoc()));
-    Lex();
-  } else {
-    Error(getLexer().getLoc(), "unexpected operand, expected ']'");
-  }
-  return MatchOperand_Success;
-}
-
-/// parseOperand:
-///   ::= IndirectOrIndexedMode
-///   ::= Register
-///   ::= Immediate
-bool AIE2AsmParser::parseOperand(OperandVector &Operands) {
-  AsmToken const &Token = getLexer().getTok();
-  switch (Token.getKind()) {
-  default:
-    break;
-  case AsmToken::LBrac:
-    return parseIndirectOrIndexedMode(Operands);
-  case AsmToken::Identifier:
-    return parseIdentifier(Operands);
-  case AsmToken::Hash:
-    return parseImmediate(Operands);
-  }
-  return Error(Token.getLoc(), "unexpected operand");
-}
-
-/// ParseInstruction:
-///   ::= Token
-///   ::= Token Operand [ "," Operand ]
-bool AIE2AsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
-                                     SMLoc NameLoc, OperandVector &Operands) {
-  // First operand is token for instruction
-  Operands.push_back(AIE2Operand::CreateToken(getContext(), Name, NameLoc));
-
-  if (getLexer().is(AsmToken::EndOfStatement)) {
-    return false;
-  }
-
-  // Parse the first operand
-  // Exiting before the EndOfStatement doesn't matter.
-  // LLVM will consume all tokens until the next EndOfStatement before calling
-  // ParseInstruction again
-  if (parseOperand(Operands))
-    return true;
-
-  // Collect the rest of operands until the end of the statement, consuming all
-  // commas
-  while (!getLexer().is(AsmToken::EndOfStatement) &&
-         !getLexer().is(AsmToken::Eof)) {
-    AsmToken const &Token = getLexer().getTok();
-    if (!getLexer().is(AsmToken::Comma))
-      return Error(Token.getLoc(), "unexpected operand");
-    Lex();
-
-    if (parseOperand(Operands))
-      return true;
-  }
-
-  // Do NOT consume EndOfStatement: is used to check for end of bundle when
-  // emitting
-  return false;
-}
-
-extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIEAsmParser() {
+void LLVMInitializeAIE2AsmParser() {
   RegisterMCAsmParser<AIE2AsmParser> X(getTheAIE2Target());
 }

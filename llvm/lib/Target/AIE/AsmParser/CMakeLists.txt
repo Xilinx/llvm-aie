@@ -5,6 +5,7 @@
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 add_llvm_component_library(LLVMAIEAsmParser
+  AIE1AsmParser.cpp
   AIE2AsmParser.cpp
   AIEBaseOperand.cpp
 

@@ -59,6 +59,11 @@ public:
   bool isReg() const override { return Kind == Register; };
   bool isMem() const override { llvm_unreachable("No isMem"); };
 
+  /// isCallSymbol - Is this a valid Call Symbol?
+  bool isCallSymbol() const {
+    return true; /* could probably be more picky here. */
+  }
+
   /// getStartLoc - Get the location of the first token of this operand.
   SMLoc getStartLoc() const override { return StartLoc; }
   /// getEndLoc - Get the location of the last token of this operand.
