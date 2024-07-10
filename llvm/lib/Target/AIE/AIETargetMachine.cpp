@@ -266,6 +266,13 @@ MachineFunctionInfo *AIEBaseTargetMachine::createMachineFunctionInfo(
       AIEMachineFunctionInfo(F, STI, *this);
 }
 
+bool AIEBaseTargetMachine::isNoopAddrSpaceCast(unsigned SrcAS,
+                                               unsigned DestAS) const {
+  // AIE address space is used for bank annotation only.
+  // aie-addrspace-flattening pass retyped pointer with a AS to default AS.
+  return true;
+}
+
 std::unique_ptr<CSEConfigBase> AIEPassConfig::getCSEConfig() const {
   // We don't want CSE to run at -O0, as it introduces constrained register
   // operands (r27) that RegAllocFast is not able to resolve.
