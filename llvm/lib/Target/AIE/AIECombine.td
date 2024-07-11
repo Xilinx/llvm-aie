@@ -78,6 +78,14 @@ def combine_load_store_increment : GICombineRule <
   (apply [{ applyLdStInc(*${root}, MRI, B, ${matchinfo}, Observer); }] )
 >;
 
+def combine_add_vector_elt_undef : GICombineRule <
+  (defs root:$root),
+  (match (wip_match_opcode G_AIE_ADD_VECTOR_ELT_LEFT):$root,
+          [{ return matchAddVecEltUndef(*${root}, MRI); }]),
+  (apply [{ applyAddVecEltUndef(*${root}, MRI, B); }] )
+>;
+
 def AIE2PostLegalizerCustomCombiner
-    : GICombiner<"AIE2PostLegalizerCustomCombinerImpl", [ combine_load_store_increment ]> {
+    : GICombiner<"AIE2PostLegalizerCustomCombinerImpl", [ combine_load_store_increment,
+                                                          combine_add_vector_elt_undef ]> {
 }
