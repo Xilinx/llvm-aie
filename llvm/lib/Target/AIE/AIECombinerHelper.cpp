@@ -327,6 +327,37 @@ void llvm::applyLdStInc(MachineInstr &MI, MachineRegisterInfo &MRI,
   MI.removeFromParent();
 }
 
+// Match all equivalents of these:
+// %0:_(<16 x s32>) = G_IMPLICIT_DEF
+// %1:_(s32) = G_IMPLICIT_DEF
+// %2:_(<16 x s32>) =  G_AIE_ADD_VECTOR_ELT_LEFT %0, %1(s32)
+//
+// Combine into:
+// %0:_(<16 x s32>) = G_IMPLICIT_DEF
+// %2:_(<16 x s32>) = COPY %0
+bool llvm::matchAddVecEltUndef(MachineInstr &MI, MachineRegisterInfo &MRI) {
+
+  assert(MI.getOpcode() == AIE2::G_AIE_ADD_VECTOR_ELT_LEFT &&
+         "Expected a G_AIE_ADD_VECTOR_ELT_LEFT");
+  const MachineInstr *SrcVecDef =
+      getDefIgnoringCopies(MI.getOperand(1).getReg(), MRI);
+  const MachineInstr *SrcEltDef =
+      getDefIgnoringCopies(MI.getOperand(2).getReg(), MRI);
+
+  if (SrcVecDef->getOpcode() != TargetOpcode::G_IMPLICIT_DEF ||
+      SrcEltDef->getOpcode() != TargetOpcode::G_IMPLICIT_DEF)
+    return false;
+
+  return true;
+}
+
+void llvm::applyAddVecEltUndef(MachineInstr &MI, MachineRegisterInfo &MRI,
+                               MachineIRBuilder &B) {
+  B.setDebugLoc(MI.getDebugLoc());
+  B.buildCopy(MI.getOperand(0), MI.getOperand(1));
+  MI.removeFromParent();
+}
+
 // Return the base offset, base offset is decided based on the
 // maximum number of distances which are simm3 three bit signed
 // for part-word and/or imm6x4 6-bits scaled by 4 for full word.

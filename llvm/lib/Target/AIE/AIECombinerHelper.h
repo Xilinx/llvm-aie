@@ -44,6 +44,12 @@ bool matchLdStInc(MachineInstr &MI, MachineRegisterInfo &MRI,
 void applyLdStInc(MachineInstr &MI, MachineRegisterInfo &MRI,
                   MachineIRBuilder &B, AIELoadStoreCombineMatchData &MatchData,
                   GISelChangeObserver &Observer);
+/// Look for  with G_IMPLICIT_DEF source operands
+/// \return true if such an instruction is found
+bool matchAddVecEltUndef(MachineInstr &MI, MachineRegisterInfo &MRI);
+/// Combine G_AIE_ADD_VECTOR_ELT_LEFT with COPY
+void applyAddVecEltUndef(MachineInstr &MI, MachineRegisterInfo &MRI,
+                         MachineIRBuilder &B);
 /// combine G_GLOBAL_VALUE with G_CONSTANT and store in \a MatchData
 /// \return true if it is possible to combine
 void applyGlobalValOffset(MachineInstr &MI, MachineRegisterInfo &MRI,
