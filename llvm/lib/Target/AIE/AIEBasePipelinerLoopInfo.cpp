@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEBasePipelinerLoopInfo.h"
+#include "llvm/Analysis/LoopIterator.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineOperand.h"
@@ -172,6 +173,20 @@ AIEBasePipelinerLoopInfo::checkLoopControl(MachineInstr *EndLoop) {
   }
 
   return nullptr;
+}
+
+MachineBasicBlock *AIEBasePipelinerLoopInfo::getLoopStartBlock() {
+  MachineBasicBlock *LoopStartBlock = nullptr;
+  for (auto *Pred : LoopBlock->predecessors()) {
+    if (Pred == LoopBlock) {
+      continue;
+    }
+    if (LoopStartBlock) {
+      return nullptr;
+    }
+    LoopStartBlock = Pred;
+  }
+  return LoopStartBlock;
 }
 
 namespace {
@@ -589,18 +604,77 @@ void DownCountLoop::startExpand() {
       .addImm(-Adjust * Step);
   Phi->getOperand(InitIdx).setReg(NewReg);
 }
+
+/// A Zero overhead loop enters the software pipeliner with
+/// a PseudoLoopEnd as single loop terminator and
+/// a LoopStart instruction somewhere (usually close to the end)
+/// in the preheader block
+///
+class ZeroOverheadLoop : public AIEBasePipelinerLoopInfo {
+  MachineBasicBlock *LoopStartBlock;
+
+public:
+  ZeroOverheadLoop(MachineInstr *EndLoop, const AIEBaseInstrInfo &TII)
+      : AIEBasePipelinerLoopInfo(EndLoop, TII) {}
+  void adjustTripCount(int TripCountAdjust) override;
+  bool accept(MachineInstr *EndLoop);
+};
+
+bool ZeroOverheadLoop::accept(MachineInstr *EndLoop) {
+  if (!TII.isHardwareLoopEnd(EndLoop->getOpcode())) {
+    return false;
+  }
+  if (EndLoop->getOperand(1).getMBB() != LoopBlock) {
+    return false;
+  }
+
+  LoopStartBlock = getLoopStartBlock();
+  if (!LoopStartBlock) {
+    return false;
+  }
+
+  auto FindLoopStart = [&](MachineBasicBlock &Block) {
+    MachineInstr *LoopStart = nullptr;
+    for (auto &MI : reverse(Block)) {
+      if (TII.isHardwareLoopStart(MI.getOpcode())) {
+        LoopStart = &MI;
+        break;
+      }
+    }
+    return LoopStart;
+  };
+
+  if (!FindLoopStart(*LoopStartBlock)) {
+    return false;
+  }
+
+  return false;
+}
+
+void ZeroOverheadLoop::adjustTripCount(int TripCountAdjust) {
+  // Find LoopStart and adjust its operand
+}
+
 } // namespace
 
 std::unique_ptr<TargetInstrInfo::PipelinerLoopInfo>
 createAIEBasePipelinerLoopInfo(MachineInstr *EndLoop,
                                const AIEBaseInstrInfo &TII) {
   LLVM_DEBUG(dbgs() << "PLI: ----START LOOP----\n");
+  LLVM_DEBUG(dbgs() << "  Trying DownCountLoop\n");
   DownCountLoop DCL(EndLoop, TII);
   auto Outcome = DCL.accept(EndLoop);
   if (Outcome == DownCountLoop::Assessment::Accept) {
     LLVM_DEBUG(dbgs() << "PLI: Loop accepted by DownCountLoop\n");
     return std::make_unique<DownCountLoop>(DCL);
   }
+  LLVM_DEBUG(dbgs() << "  Trying ZeroOverHeadLoop\n");
+  ZeroOverheadLoop ZOL(EndLoop, TII);
+  if (ZOL.accept(EndLoop)) {
+    LLVM_DEBUG(dbgs() << "PLI: Loop accepted by ZeroOverheadLoop\n");
+    return std::make_unique<DownCountLoop>(DCL);
+  }
+
   LLVM_DEBUG(dbgs() << "PLI: Loop rejected: " << (int)Outcome << "\n");
   return nullptr;
 }

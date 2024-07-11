@@ -54,6 +54,11 @@ protected:
   /// If successful, it notes the polarity of the branch in \p Negated.
   MachineInstr *checkLoopControl(MachineInstr *EndLoop);
 
+  /// Return the unique predecessor of the loop block that is not the loopblock
+  /// itself.
+  /// If no such block exists, return nullptr
+  MachineBasicBlock *getLoopStartBlock();
+
 public:
   AIEBasePipelinerLoopInfo(MachineInstr *EndLoop, const AIEBaseInstrInfo &TII);
 
@@ -77,6 +82,12 @@ public:
   /// Once this function is called, no other functions on this object are
   /// valid; the loop has been removed.
   void disposed() override;
+
+  /// The default version, no special treatment for any instruction
+  /// except the terminators
+  bool shouldIgnoreForPipelining(const MachineInstr *MI) const override {
+    return false;
+  }
 };
 
 std::unique_ptr<TargetInstrInfo::PipelinerLoopInfo>
