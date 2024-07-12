@@ -599,14 +599,7 @@ unsigned AIEHazardRecognizer::computeScoreboardDepth() const {
     return 0;
   }
 
-  Depth = std::max(Depth, UserScoreboardDepth.getValue());
-
-  // Find the next power-of-2 >= Depth
-  unsigned ScoreboardDepth = 1;
-  while (ScoreboardDepth < Depth) {
-    ScoreboardDepth *= 2;
-  }
-  return ScoreboardDepth;
+  return std::max(Depth, UserScoreboardDepth.getValue());
 }
 
 std::optional<unsigned>

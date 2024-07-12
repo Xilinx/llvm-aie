@@ -64,12 +64,16 @@ public:
   RC &operator[](int Cycle) { return Cycles[(Head + Cycle) & (Size - 1)]; }
 
   void reset(int D = 1) {
+    // Implementation relies on masking to wrap-around, so round up
+    // to a power of two.
+    int Pow2 = 1;
+    while (Pow2 < D) {
+      Pow2 += Pow2;
+    }
     if (Cycles.empty()) {
-      Depth = D;
+      Depth = Pow2;
       Size = 2 * Depth;
     }
-    // Check for a power of two
-    assert((Size & (Size - 1)) == 0);
     Cycles.clear();
     Cycles.resize(Size);
     Head = 0;
@@ -149,6 +153,21 @@ public:
     }
     if (Repeats) {
       dbgs() << "+ " << Repeats << " more\n";
+    }
+  }
+
+  // Print the full scoreboard .
+  void dumpFull() const {
+    int First = firstOccupied();
+    int Last = lastOccupied();
+    for (int C = First; C <= Last; C++) {
+      const RC &Cycle = (*this)[C];
+      if (C == 0) {
+        dbgs() << ">";
+      }
+      dbgs() << "\t";
+      Cycle.dump();
+      dbgs() << "\n";
     }
   }
 };
