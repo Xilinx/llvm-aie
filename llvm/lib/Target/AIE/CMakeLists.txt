@@ -68,6 +68,7 @@ add_llvm_target(AIECodeGen
    AIECallLowering.cpp
    AIEDelaySlotFiller.cpp
    AIEDumpArtifacts.cpp
+   AIEEliminateDuplicatePHI.cpp
    AIEFinalizeBundle.cpp
    AIEFrameLowering.cpp
    AIEHazardRecognizer.cpp

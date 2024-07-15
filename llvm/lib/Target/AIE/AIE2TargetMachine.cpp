@@ -113,6 +113,7 @@ void AIE2PassConfig::addPreLegalizeMachineIR() {
   addPass(createAIEAddressSpaceFlattening());
   if (getOptLevel() != CodeGenOptLevel::None)
     addPass(createAIE2PreLegalizerCombiner());
+  addPass(createAIEEliminateDuplicatePHI());
 }
 
 void AIE2PassConfig::addPreRegBankSelect() {

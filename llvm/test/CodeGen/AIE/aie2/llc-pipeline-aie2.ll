@@ -114,6 +114,7 @@
 ; AIE-O123-NEXT:      MachineDominator Tree Construction
 
 ; AIE-O123-NEXT:      AIE2PreLegalizerCombiner
+; AIE-O0123-NEXT:      AIE Eliminate Duplicate PHI Pass
 
 ; AIE-O0-NEXT:      Analysis for ComputingKnownBits
 ; AIE-O0123-NEXT:      Legalizer
