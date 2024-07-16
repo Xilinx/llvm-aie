@@ -187,6 +187,8 @@ public:
                 const MachineRegisterInfo &MRI, int DeltaCycles) const;
 
 protected:
+  ScheduleHazardRecognizer::HazardType getHazardType(const MCInstrDesc &Desc,
+                                                     int DeltaCycles);
   static bool
   checkConflict(const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
                 const InstrItineraryData *ItinData, unsigned SchedClass,

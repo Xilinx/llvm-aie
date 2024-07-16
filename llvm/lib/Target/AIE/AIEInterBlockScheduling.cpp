@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 // Implementations of the classes used to support inter-block scheduling
@@ -59,11 +59,10 @@ void emitBundlesTopDown(const std::vector<MachineBundle> &Bundles,
   const int AmountToEmit = std::min(TotalBundles, HR->getConflictHorizon());
   // Do not emit more than the specified by the conflict horizon. More
   // then this will not cause conflicts.
-  for (int i = TotalBundles - AmountToEmit; i < TotalBundles; i++) {
-    for (MachineInstr *MI : Bundles[i].getInstrs())
+  for (int I = TotalBundles - AmountToEmit; I < TotalBundles; I++) {
+    for (MachineInstr *MI : Bundles[I].getInstrs())
       HR->emitInScoreboard(Scoreboard, MI->getDesc(), HR->getMemoryBanks(MI),
                            MI->operands(), MI->getMF()->getRegInfo(), 0);
-
     Scoreboard.advance();
   }
 }
