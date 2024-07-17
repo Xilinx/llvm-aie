@@ -46,14 +46,13 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $r1, $p1 = LDA_dms_lda_pstm_nrm_imm killed $p1, 4
   ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   $r0 = ADD_add_r_ri killed $r0, -1, implicit-def $srcarry
   ; CHECK-NEXT:   JNZ $r0, %bb.2
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   $r1 = nsw ADD_add_r_ri killed $r1, 1, implicit-def $srcarry
   ; CHECK-NEXT:   $p0 = ST_dms_sts_pstm_nrm_imm killed $r1, killed $p0, 4
-  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:

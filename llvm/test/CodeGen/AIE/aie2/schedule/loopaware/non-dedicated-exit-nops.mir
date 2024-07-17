@@ -40,22 +40,27 @@ body:             |
   ; CHECK-NEXT:   liveins: $p0, $p1, $r0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
-  ; CHECK-NEXT:   successors: %bb.2(0x7c000000), %bb.3(0x04000000)
+  ; CHECK-NEXT:   successors: %bb.2(0x7c000000), %bb.4(0x04000000)
   ; CHECK-NEXT:   liveins: $p0, $p1, $p2, $r0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $p1 = PADDA_lda_ptr_inc_idx_imm killed $p1, 4
-  ; CHECK-NEXT:   $p1 = PADDA_lda_ptr_inc_idx_imm killed $p1, 4
-  ; CHECK-NEXT:   BUNDLE implicit-def $r1, implicit-def $r0, implicit-def $srcarry, implicit $p1, implicit killed $r0 {
-  ; CHECK-NEXT:     $r1 = LDA_dms_lda_idx_imm $p1, 4
-  ; CHECK-NEXT:     $r0 = ADD_add_r_ri killed $r0, -1, implicit-def $srcarry
-  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   $r0 = ADD_add_r_ri killed $r0, -1, implicit-def $srcarry
   ; CHECK-NEXT:   JNZ $r0, %bb.2
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   $p1 = PADDA_lda_ptr_inc_idx_imm killed $p1, 4
+  ; CHECK-NEXT:   $p1 = PADDA_lda_ptr_inc_idx_imm killed $p1, 4
+  ; CHECK-NEXT:   $r1 = LDA_dms_lda_idx_imm $p1, 4
   ; CHECK-NEXT:   DelayedSchedBarrier
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.4:
+  ; CHECK-NEXT:   successors: %bb.3(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   liveins: $r1
