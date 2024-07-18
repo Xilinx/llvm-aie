@@ -10446,8 +10446,8 @@ TargetLowering::LowerCallTo(TargetLowering::CallLoweringInfo &CLI) const {
     SmallVector<EVT, 4> ValueVTs;
     SmallVector<Type *, 4> IRTypes;
     TypeSize Offset = TypeSize::get(0, Args[i].Ty->isScalableTy());
-    ComputeValueVTs(*this, DL, Args[i].Ty, ValueVTs, /*Offsets=*/nullptr,
-                    Offset, &IRTypes);
+    ComputeValueVTs(*this, DL, Args[i].Ty, ValueVTs, /*MemVTs*/ nullptr,
+                    /*Offsets=*/nullptr, Offset, &IRTypes);
     // FIXME: Split arguments if CLI.IsPostTypeLegalization
     Type *FinalType = Args[i].Ty;
     if (Args[i].IsByVal)
@@ -11001,6 +11001,7 @@ void SelectionDAGISel::LowerArguments(const Function &F) {
     SmallVector<Type *, 4> IRTypes;
     TypeSize Offset = TypeSize::get(0, Arg.getType()->isScalableTy());
     ComputeValueVTs(*TLI, DAG.getDataLayout(), Arg.getType(), ValueVTs,
+                    /*MemVTs*/ nullptr,
                     /*Offsets=*/nullptr, Offset, &IRTypes);
     bool isArgValueUsed = !Arg.use_empty();
     unsigned PartBase = 0;
