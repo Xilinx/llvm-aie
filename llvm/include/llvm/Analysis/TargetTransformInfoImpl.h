@@ -309,6 +309,10 @@ public:
 
   bool isLegalMaskedExpandLoad(Type *DataType) const { return false; }
 
+  bool isLegalStridedLoadStore(Type *DataType, Align Alignment) const {
+    return false;
+  }
+
   bool enableOrderedReductions() const { return false; }
 
   bool hasDivRemOp(Type *DataType, bool IsSigned) const { return false; }
@@ -367,10 +371,6 @@ public:
   bool supportsEfficientVectorElementLoadStore() const { return false; }
 
   bool supportsTailCalls() const { return true; }
-
-  bool supportsTailCallFor(const CallBase *CB) const {
-    return supportsTailCalls();
-  }
 
   bool enableAggressiveInterleaving(bool LoopHasReductions) const {
     return false;
@@ -690,6 +690,14 @@ public:
                                          TTI::TargetCostKind CostKind,
                                          const Instruction *I = nullptr) const {
     return 1;
+  }
+
+  InstructionCost getStridedMemoryOpCost(unsigned Opcode, Type *DataTy,
+                                         const Value *Ptr, bool VariableMask,
+                                         Align Alignment,
+                                         TTI::TargetCostKind CostKind,
+                                         const Instruction *I = nullptr) const {
+    return InstructionCost::getInvalid();
   }
 
   unsigned getInterleavedMemoryOpCost(
@@ -1419,6 +1427,10 @@ public:
     InstructionCost Cost = TargetTTI->getInstructionCost(
         I, Ops, TargetTransformInfo::TCK_SizeAndLatency);
     return Cost >= TargetTransformInfo::TCC_Expensive;
+  }
+
+  bool supportsTailCallFor(const CallBase *CB) const {
+    return static_cast<const T *>(this)->supportsTailCalls();
   }
 };
 } // namespace llvm

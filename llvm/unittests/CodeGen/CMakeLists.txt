@@ -42,6 +42,7 @@ add_llvm_unittest(CodeGenTests
   ScheduleDAGMITest.cpp
   ScheduleDAGMITestUtils.cpp
   SelectionDAGAddressAnalysisTest.cpp
+  SelectionDAGPatternMatchTest.cpp
   TypeTraitsTest.cpp
   TargetOptionsTest.cpp
   TestAsmPrinter.cpp

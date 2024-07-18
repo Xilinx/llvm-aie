@@ -80,6 +80,7 @@ private:
   SDValue lowerStructBufferAtomicIntrin(SDValue Op, SelectionDAG &DAG,
                                         unsigned NewOpcode) const;
 
+  SDValue lowerWaveID(SelectionDAG &DAG, SDValue Op) const;
   SDValue lowerWorkitemID(SelectionDAG &DAG, SDValue Op, unsigned Dim,
                           const ArgDescriptor &ArgDesc) const;
 
@@ -435,7 +436,6 @@ public:
   EmitInstrWithCustomInserter(MachineInstr &MI,
                               MachineBasicBlock *BB) const override;
 
-  bool hasAtomicFaddRtnForTy(SDValue &Op) const;
   bool enableAggressiveFMAFusion(EVT VT) const override;
   bool enableAggressiveFMAFusion(LLT Ty) const override;
   EVT getSetCCResultType(const DataLayout &DL, LLVMContext &Context,

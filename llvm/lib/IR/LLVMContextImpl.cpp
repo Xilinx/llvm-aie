@@ -122,7 +122,9 @@ LLVMContextImpl::~LLVMContextImpl() {
   IntZeroConstants.clear();
   IntOneConstants.clear();
   IntConstants.clear();
+  IntSplatConstants.clear();
   FPConstants.clear();
+  FPSplatConstants.clear();
   CDSConstants.clear();
 
   // Destroy attribute node lists.

@@ -1379,19 +1379,19 @@ class PostGenericScheduler : public GenericSchedulerBase {
 protected:
   ScheduleDAGMI *DAG = nullptr;
   SchedBoundary Top;
-  SmallVector<SUnit*, 8> BotRoots;
+  SchedBoundary Bot;
+  MachineSchedPolicy RegionPolicy;
 
 public:
-  PostGenericScheduler(const MachineSchedContext *C):
-    GenericSchedulerBase(C), Top(SchedBoundary::TopQID, "TopQ") {}
+  PostGenericScheduler(const MachineSchedContext *C)
+      : GenericSchedulerBase(C), Top(SchedBoundary::TopQID, "TopQ"),
+        Bot(SchedBoundary::BotQID, "BotQ") {}
 
   ~PostGenericScheduler() override = default;
 
   void initPolicy(MachineBasicBlock::iterator Begin,
                   MachineBasicBlock::iterator End,
-                  unsigned NumRegionInstrs) override {
-    /* no configurable policy */
-  }
+                  unsigned NumRegionInstrs) override;
 
   /// PostRA scheduling does not track pressure.
   bool shouldTrackPressure() const override { return false; }
@@ -1414,16 +1414,17 @@ public:
     Top.releaseNode(SU, SU->TopReadyCycle, false);
   }
 
-  // Only called for roots.
   void releaseBottomNode(SUnit *SU) override {
-    BotRoots.push_back(SU);
+    if (SU->isScheduled)
+      return;
+    Bot.releaseNode(SU, SU->BotReadyCycle, false);
   }
 
 protected:
   virtual bool tryCandidate(SchedCandidate &Cand, SchedCandidate &TryCand);
 
   /// Pick the best candidate from the available list of \p Zone.
-  void pickNodeFromQueue(SchedCandidate &Cand, SchedBoundary &Zone);
+  void pickNodeFromQueue(SchedBoundary &Zone, SchedCandidate &Cand);
 
   /// Pick an SU from a single zone. This will bump the cycle until at
   /// least one candidate is available.
