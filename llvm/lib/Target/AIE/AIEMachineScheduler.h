@@ -71,11 +71,6 @@ public:
   /// a block connects with successors.
   bool doMBBSchedRegionsTopDown() const override { return false; }
 
-  /// Try inserting a node into the available queue, or add/keep it in the
-  /// pending queue in case of hazards.
-  /// Called on all the predecessors of an SU after it is scheduled bottom-up.
-  void releaseBottomNode(SUnit *SU) override;
-
   /// Return true if all the successor MBB are scheduled and converged.
   bool successorsAreScheduled(MachineBasicBlock *MBB) const;
 
@@ -113,8 +108,6 @@ protected:
   /// Maximum (absolute) distance between the current cycle and the emission
   /// cycle of instructions to be scheduled.
   int getMaxDeltaCycles(const SchedBoundary &Zone) const;
-
-  SchedBoundary Bot;
 
   /// Keeps track of the current zone used for scheduling. See getSchedZone().
   bool IsTopDown = true;

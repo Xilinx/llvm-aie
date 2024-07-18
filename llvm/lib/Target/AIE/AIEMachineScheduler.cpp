@@ -90,8 +90,7 @@ static AIEHazardRecognizer *getAIEHazardRecognizer(const SchedBoundary &Zone) {
 }
 
 AIEPostRASchedStrategy::AIEPostRASchedStrategy(const MachineSchedContext *C)
-    : PostGenericScheduler(C), InterBlock(C, InterBlockScoreboard),
-      Bot(SchedBoundary::BotQID, "BotQ") {
+    : PostGenericScheduler(C), InterBlock(C, InterBlockScoreboard) {
   assert((!ForceBottomUp || !ForceTopDown) &&
          "-misched-topdown incompatible with -misched-bottomup");
   if (ForceTopDown)
@@ -681,13 +680,6 @@ void AIEPostRASchedStrategy::handleRegionConflicts(
     AIE::MachineBundle DummyCurrBundle(getTII(*DAG)->getFormatInterface());
     bumpCycleForBundles(Top.getCurrCycle(), TopBundles, DummyCurrBundle);
   }
-}
-
-void AIEPostRASchedStrategy::releaseBottomNode(SUnit *SU) {
-  PostGenericScheduler::releaseBottomNode(SU);
-  if (SU->isScheduled)
-    return;
-  Bot.releaseNode(SU, SU->BotReadyCycle, false);
 }
 
 /// Apply a set of heuristics to a new candidate for PostRA scheduling.
