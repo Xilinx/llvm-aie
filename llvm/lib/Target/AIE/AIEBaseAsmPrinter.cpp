@@ -100,25 +100,21 @@ static void emitComments(const MachineInstr *MI, raw_ostream &CommentOS) {
 
   // We assume a single instruction only has a spill or reload, not
   // both.
-  std::optional<unsigned> Size;
+  std::optional<LocationSize> Size;
   if ((Size = MI->getRestoreSize(TII))) {
-    CommentOS << *Size << "-byte Reload";
+    CommentOS << Size->getValue() << "-byte Reload";
   } else if ((Size = MI->getFoldedRestoreSize(TII))) {
-    if (*Size) {
-      if (*Size == unsigned(MemoryLocation::UnknownSize))
-        CommentOS << "Unknown-size Folded Reload";
-      else
-        CommentOS << *Size << "-byte Folded Reload";
-    }
+    if (!Size->hasValue())
+      CommentOS << "Unknown-size Folded Reload";
+    else if (Size->getValue())
+      CommentOS << Size->getValue() << "-byte Folded Reload";
   } else if ((Size = MI->getSpillSize(TII))) {
-    CommentOS << *Size << "-byte Spill";
+    CommentOS << Size->getValue() << "-byte Spill";
   } else if ((Size = MI->getFoldedSpillSize(TII))) {
-    if (*Size) {
-      if (*Size == unsigned(MemoryLocation::UnknownSize))
-        CommentOS << "Unknown-size Folded Spill";
-      else
-        CommentOS << *Size << "-byte Folded Spill";
-    }
+    if (!Size->hasValue())
+      CommentOS << "Unknown-size Folded Spill";
+    else if (Size->getValue())
+      CommentOS << Size->getValue() << "-byte Folded Spill";
   }
 
   // Check for spill-induced copies
