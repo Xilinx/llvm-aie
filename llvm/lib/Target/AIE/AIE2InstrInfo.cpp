@@ -402,7 +402,7 @@ constrainRegClass(MachineRegisterInfo &MRI, const TargetRegisterClass *RC,
   return RC;
 }
 
-unsigned AIE2InstrInfo::isLoadFromStackSlot(const MachineInstr &MI,
+Register AIE2InstrInfo::isLoadFromStackSlot(const MachineInstr &MI,
                                             int &FrameIndex) const {
   switch (MI.getOpcode()) {
   default:
@@ -430,7 +430,7 @@ unsigned AIE2InstrInfo::isLoadFromStackSlot(const MachineInstr &MI,
   return 0;
 }
 
-unsigned AIE2InstrInfo::isStoreToStackSlot(const MachineInstr &MI,
+Register AIE2InstrInfo::isStoreToStackSlot(const MachineInstr &MI,
                                            int &FrameIndex) const {
   switch (MI.getOpcode()) {
   default:
