@@ -11,16 +11,16 @@ define i32 @accumulate(i32 %size, ptr %array) {
 ; CHECK-LABEL: accumulate:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r2, #0; nopb ; nopxm
-; CHECK-NEXT:    ge r0, r2, r1
-; CHECK-NEXT:    jnz r0, #.LBB0_4
+; CHECK-NEXT:    mova r0, #0; nopb ; nopxm
+; CHECK-NEXT:    ge r1, r0, r1
+; CHECK-NEXT:    jnz r1, #.LBB0_3
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1:
-; CHECK-NEXT:    nopb ; mova r0, #0; nops ; movx r1, #2; nopm ; nopv
+; CHECK-NEXT:    nopb ; mova r2, #0; nops ; movx r1, #2; nopm ; nopv
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB0_2: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
@@ -40,21 +40,14 @@ define i32 @accumulate(i32 %size, ptr %array) {
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    add r0, r3, r0 // Delay Slot 1
-; CHECK-NEXT:  // %bb.3: // %for.cond.cleanup
+; CHECK-NEXT:    .p2align 4
+; CHECK-NEXT:  .LBB0_3: // %for.cond.cleanup
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
-; CHECK-NEXT:    .p2align 4
-; CHECK-NEXT:  .LBB0_4:
-; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mova r0, #0 // Delay Slot 1
 entry:
   %cmp6 = icmp sgt i32 %size, 0
   br i1 %cmp6, label %for.body, label %for.cond.cleanup
