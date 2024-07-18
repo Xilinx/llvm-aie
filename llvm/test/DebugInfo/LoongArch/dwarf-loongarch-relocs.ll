@@ -8,10 +8,6 @@
 ; RUN: llvm-objdump --source %t.r.o | FileCheck --check-prefix=SOURCE %s
 ; RUN: llvm-dwarfdump --debug-info --debug-line %t.r.o | FileCheck --check-prefix=DWARF %s
 
-; This test failed with upstream commit 93248729cfae82a5ca2323d4a8e15aa3b9b9c707 and
-; got fixed later
-; XFAIL: llvm-aie-regression
-
 ; RELOCS-BOTH:       Relocations [
 ; RELOCS-BOTH-NEXT:    Section ({{.*}}) .rela.text {
 ; RELOCS-BOTH-NEXT:      0x14 R_LARCH_PCALA_HI20 sym 0x0
