@@ -5,10 +5,10 @@
 #
 # (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc --mtriple=aie2 --run-pass=pipeliner --aie-loop-min-tripcount=4 \ 
-# RUN:  --issue-limit=6 --aie-pipeliner-hoist-zol-adjustment=true %s -o - |\
+# RUN: --aie-pipeliner-hoist-zol-adjustment=true --aie-pipeliner-max-stagecount=4 %s -o - |\
 # RUN: FileCheck  %s
 # RUN: llc --mtriple=aie2 --run-pass=pipeliner --aie-loop-min-tripcount=4 \ 
-# RUN:  --issue-limit=6 --aie-pipeliner-hoist-zol-adjustment=false %s -o - | \
+# RUN: --aie-pipeliner-hoist-zol-adjustment=false --aie-pipeliner-max-stagecount=4 %s -o - | \
 # RUN: FileCheck  %s --check-prefix=CHECK-NO-HOIST
 
 # This test set is an adaptation of a subset of tests of

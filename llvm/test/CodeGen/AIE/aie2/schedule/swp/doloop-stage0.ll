@@ -5,7 +5,7 @@
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
 ; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-; RUN: llc --mtriple=aie2 -O2 --issue-limit=6 %s -o - | FileCheck %s
+; RUN: llc --mtriple=aie2 -O2 --aie-pipeliner-max-guards=2 %s -o - | FileCheck %s
 
 ; Similar to stage0.ll, but now with a do-while. Again we expect a three
 ; stage pipeline. We check for two prologue guards and one loop branch;

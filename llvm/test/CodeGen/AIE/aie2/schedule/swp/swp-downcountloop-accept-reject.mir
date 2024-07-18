@@ -29,40 +29,39 @@ tracksRegLiveness: true
 debugInstrRef:   false
 liveins:         []
 body:             |
-  ; CHECK-TC-4: PLI: Rejected schedule (Too many stages, TotStages=4 II=3)
-  ; CHECK-TC-4: PLI: Accepting II=4
+  ; CHECK-TC-4: PLI: Accepting II=5
+  ; CHECK-TC-4: PLI: Accepting schedule for StageCount=3 (static TC)
 
-  ; CHECK-TC-3: PLI: Rejected schedule MaxStageCount=3 MinTripCount=3)
-  ; CHECK-TC-3: PLI: Accepting II=4
+  ; CHECK-TC-3: PLI: Accepting II=5
+  ; CHECK-TC-3: PLI: Accepting schedule for StageCount=3 (static TC)
 
-  ; CHECK-TC-2: PLI: Rejected schedule MaxStageCount=3 MinTripCount=2)
-  ; CHECK-TC-2: PLI: Rejected schedule MaxStageCount=2 MinTripCount=2)
   ; CHECK-TC-2: PLI: Accepting II=5
+  ; CHECK-TC-2: PLI: Rejected schedule (dynamic TC, Loop condition not scheduled in stage 0)
 
-  ; CHECK-TC-1: Not interesting MinTripCount (<=1)!
-  ; CHECK-TC-1-NEXT: Loop rejected
+  ; CHECK-TC-1: PLI: Accepting II=6
+  ; CHECK-TC-1: PLI: Rejected schedule (dynamic TC, Loop condition not scheduled in stage 0)
 
   bb.1:
-    liveins: $p0, $p1
+    liveins: $p0, $p1, $r0
     %1:ep = COPY $p0
     %2:ep = COPY $p1
     %26:er = MOV_RLC_imm10_pseudo 4
     %29:em = COPY %26
     %17:er = MOV_RLC_imm11_pseudo 0
-    %19:er = MOV_RLC_imm10_pseudo 16
-    %20:er = MOV_mv_scl %19:er
-    LoopStart %20:er
+    %19:er = COPY $r0
 
   bb.3:
+    %3:er = PHI %19, %bb.1, %16, %bb.3
     %4:ep = PHI %1, %bb.1, %8, %bb.3
     %5:er = PHI %17, %bb.1, %0, %bb.3
+    %16:er = nsw ADD_add_r_ri %3, -1, implicit-def $srcarry
+    %21:er = EQZ %16
     %9:er = LDA_dms_lda_idx_imm %4, 0
     %8:ep = PADD_mod_pseudo  %4, %29
     %14:er = ABS %9, implicit-def $srcarry
     %24:er27 = LT %5, %14
     %0:er = SELNEZ %14, %5, %24
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.3
-    PseudoJ_jump_imm %bb.2
+    PseudoJZ %21, %bb.3
 
   bb.2:
     $r0 = COPY %0

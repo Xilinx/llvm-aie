@@ -37,6 +37,18 @@ cl::opt<bool> TrackRegPressure(
     "aie-pipeliner-track-regpressure",
     cl::desc("Refuse SWP schedules likely to run into register spills"),
     cl::init(true), cl::Hidden);
+cl::opt<unsigned>
+    LoopMaxStageCount("aie-pipeliner-max-stagecount",
+                      cl::desc("Refuse SWP schedules with too many stages"),
+                      cl::init(3), cl::Hidden);
+cl::opt<int>
+    LoopMaxGuardCount("aie-pipeliner-max-guards",
+                      cl::desc("Refuse SWP schedules with too many guards"),
+                      cl::init(1), cl::Hidden);
+cl::opt<bool> LoopWholeLoopGuard(
+    "aie-pipeliner-whole-guard",
+    cl::desc("Allow SWP schedules requiring a guard around the whole loop"),
+    cl::init(true), cl::Hidden);
 
 // If we hoist we can get a better performance (no clear evidence
 // of the reason). If we don't hoist, we can change the LoopsStart expansion
@@ -53,8 +65,17 @@ AIEBasePipelinerLoopInfo::AIEBasePipelinerLoopInfo(MachineInstr *EndLoop,
 
   std::optional<int64_t> ParsedMinTripCount =
       AIELoopUtils::getMinTripCount(*LoopBlock);
-  if (ParsedMinTripCount)
+  if (ParsedMinTripCount) {
     MinTripCount = *ParsedMinTripCount;
+    LLVM_DEBUG(dbgs() << "PLI: MinTripCount from pragma =  " << MinTripCount
+                      << "\n");
+  }
+
+  if (LoopMinTripCount > MinTripCount) {
+    MinTripCount = LoopMinTripCount;
+    LLVM_DEBUG(dbgs() << "PLI: MinTripCount from CL option =  " << MinTripCount
+                      << "\n");
+  }
 }
 
 SmallVector<ArrayRef<SUnit *>, 4> AIEBasePipelinerLoopInfo::getNodeOrders(
@@ -555,9 +576,6 @@ std::optional<bool> DownCountLoop::createTripCountGreaterCondition(
     return true;
   }
 
-  if (LoopMinTripCount > 0 && LoopMinTripCount >= TC)
-    return true;
-
   // We effectively use the same condition as EndLoop, reusing its register
   // operand, which should be properly remapped to the prologue version by
   // the Modulo Extractor.
@@ -778,12 +796,35 @@ bool ZeroOverheadLoop::canAcceptII(SMSchedule &SMS) {
 } // namespace
 
 bool AIEBasePipelinerLoopInfo::canAcceptII(SMSchedule &SMS) {
+  const unsigned PrologueCount = SMS.getMaxStageCount();
+  const unsigned NumStages = PrologueCount + 1;
+  if (NumStages > LoopMaxStageCount) {
+    LLVM_DEBUG(dbgs() << "PLI: Rejected schedule (Too many stages, TotStages="
+                      << NumStages << " II=" << SMS.getInitiationInterval()
+                      << ")\n");
+    return false;
+  }
+
+  // Typically, two types of guards are relatively cheap: one to bypass the
+  // running state, and one to bypass the whole loop. When we have enough guards
+  // for each prologue, the next one will be for the whole loop. We can then
+  // increase the maximum number of guards if LoopWholeLoopGuard is true.
+  bool ExtraAllowedGuard =
+      LoopWholeLoopGuard && LoopMaxGuardCount >= int(PrologueCount);
+  int MaxGuards = LoopMaxGuardCount + int(ExtraAllowedGuard);
+  int NumGuards = int(NumStages) - MinTripCount;
+  if (NumGuards > MaxGuards) {
+    LLVM_DEBUG(
+        dbgs() << "PLI: Rejected schedule (Too many stages for TC, TotStages="
+               << NumStages << " MaxGuards=" << MaxGuards
+               << " MinTC=" << MinTripCount << ")\n");
+    return false;
+  }
 
   if (TrackRegPressure && !canAllocate(SMS)) {
     LLVM_DEBUG(
         dbgs() << "PLI: Rejected schedule (too much block pressure, TotStages="
-               << SMS.getMaxStageCount() + 1
-               << " II=" << SMS.getInitiationInterval() << ")\n");
+               << NumStages << " II=" << SMS.getInitiationInterval() << ")\n");
     return false;
   }
   LLVM_DEBUG(dbgs() << "PLI: Accepting II=" << SMS.getInitiationInterval()
