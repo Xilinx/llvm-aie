@@ -220,7 +220,6 @@ body:             |
   ; RA-NEXT:   successors: %bb.1(0x80000000)
   ; RA-NEXT:   liveins: $d1, $p0
   ; RA-NEXT: {{  $}}
-  ; RA-NEXT: {{  $}}
   ; RA-NEXT: bb.1:
   ; RA-NEXT:   liveins: $d1:0x0000000000000870, $p0
   ; RA-NEXT: {{  $}}

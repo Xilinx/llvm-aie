@@ -90,6 +90,7 @@ llvm_config.feature_config(
                 "PowerPC": "ppc",
                 "RISCV": "riscv",
                 "Sparc": "sparc",
+                "SystemZ": "systemz",
                 "WebAssembly": "wasm",
                 "X86": "x86",
             },

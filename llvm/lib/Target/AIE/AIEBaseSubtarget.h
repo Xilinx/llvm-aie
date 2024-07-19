@@ -17,10 +17,10 @@
 
 #include "AIEBaseInstrInfo.h"
 #include "Utils/AIEBaseInfo.h"
-#include "llvm/TargetParser/Triple.h"
-#include "llvm/CodeGen/MachineValueType.h"
 #include "llvm/CodeGen/ScheduleDAGMutation.h"
+#include "llvm/CodeGenTypes/MachineValueType.h"
 #include "llvm/MC/MCInstrItineraries.h"
+#include "llvm/TargetParser/Triple.h"
 
 namespace llvm {
 

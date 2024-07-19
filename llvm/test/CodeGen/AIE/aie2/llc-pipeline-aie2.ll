@@ -168,6 +168,7 @@
 ; AIE-O23-NEXT:      Remove dead machine instructions
 
 ; AIE-O123-NEXT:      Detect Dead Lanes
+; AIE-O123-NEXT:      Init Undef Pass
 ; AIE-O123-NEXT:      Process Implicit Definitions
 ; AIE-O123-NEXT:      Remove unreachable machine basic blocks
 ; AIE-O123-NEXT:      Live Variable Analysis

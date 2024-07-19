@@ -659,6 +659,9 @@ def prefetch   : SDNode<"ISD::PREFETCH"   , SDTPrefetch,
 def readcyclecounter : SDNode<"ISD::READCYCLECOUNTER", SDTIntLeaf,
                      [SDNPHasChain, SDNPSideEffect]>;
 
+def readsteadycounter : SDNode<"ISD::READSTEADYCOUNTER", SDTIntLeaf,
+                     [SDNPHasChain, SDNPSideEffect]>;
+
 def membarrier : SDNode<"ISD::MEMBARRIER", SDTNone,
                         [SDNPHasChain, SDNPSideEffect]>;
 

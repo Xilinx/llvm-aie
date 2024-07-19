@@ -23,7 +23,6 @@
 #include "AIEMachineBlockPlacement.h"
 #include "AIETargetObjectFile.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/CodeGen/CodeGenPassBuilder.h"
 #include "llvm/CodeGen/GlobalISel/IRTranslator.h"
 #include "llvm/CodeGen/GlobalISel/InstructionSelect.h"
 #include "llvm/CodeGen/GlobalISel/Legalizer.h"
@@ -35,6 +34,7 @@
 #include "llvm/InitializePasses.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/PassRegistry.h"
+#include "llvm/Passes/CodeGenPassBuilder.h"
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Target/TargetOptions.h"
@@ -125,7 +125,7 @@ void AIE2PassConfig::addPreEmitPass() {}
 void AIE2PassConfig::addIRPasses() {
   // Always expand atomic operations, we don't deal with atomicrmw or cmpxchg
   // ourselves.
-  addPass(createAtomicExpandPass());
+  addPass(createAtomicExpandLegacyPass());
 
   if (TM->getOptLevel() > CodeGenOptLevel::None) {
 

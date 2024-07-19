@@ -118,7 +118,7 @@ TargetPassConfig *AIETargetMachine::createPassConfig(PassManagerBase &PM) {
 }
 
 void AIEPassConfig::addIRPasses() {
-  addPass(createAtomicExpandPass());
+  addPass(createAtomicExpandLegacyPass());
   TargetPassConfig::addIRPasses();
 }
 

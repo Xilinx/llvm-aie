@@ -84,7 +84,8 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[PHI:%[0-9]+]]:er = PHI [[MOV_RLC_imm10_pseudo]], %bb.0, %7, %bb.1
   ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:ep = PHI [[COPY]], %bb.0, %9, %bb.1
-  ; CHECK-NEXT:   [[VLDA_UPS_S64_D32_ag_idx_imm:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY2]], [[PHI1]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>))
+  ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:mss = COPY [[COPY1]]
+  ; CHECK-NEXT:   [[VLDA_UPS_S64_D32_ag_idx_imm:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY5]], [[PHI1]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>))
   ; CHECK-NEXT:   [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo [[PHI1]], 32
   ; CHECK-NEXT:   [[ADD_add_r_ri:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -1, implicit-def $srcarry
   ; CHECK-NEXT:   [[EQZ:%[0-9]+]]:er = EQZ [[ADD_add_r_ri]]
@@ -140,7 +141,6 @@ body:             |
   ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:mss = COPY [[COPY1]]
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:mss = COPY [[COPY2]]
   ; CHECK-NEXT:   [[COPY7:%[0-9]+]]:mss = COPY [[COPY3]]
-  ; CHECK-NEXT:   [[COPY8:%[0-9]+]]:mss = COPY [[COPY4]]
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
@@ -150,6 +150,7 @@ body:             |
   ; CHECK-NEXT:   [[VLDA_UPS_S64_D32_ag_idx_imm:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY5]], [[PHI1]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>))
   ; CHECK-NEXT:   [[VLDA_UPS_S64_D32_ag_idx_imm1:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY6]], [[PHI1]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>))
   ; CHECK-NEXT:   [[VLDA_UPS_S64_D32_ag_idx_imm2:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY7]], [[PHI1]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>))
+  ; CHECK-NEXT:   [[COPY8:%[0-9]+]]:mss = COPY [[COPY4]]
   ; CHECK-NEXT:   [[VLDA_UPS_S64_D32_ag_idx_imm3:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY8]], [[PHI1]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>))
   ; CHECK-NEXT:   [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo [[PHI1]], 32
   ; CHECK-NEXT:   [[ADD_add_r_ri:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -1, implicit-def $srcarry
@@ -213,8 +214,6 @@ body:             |
   ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:mss = COPY [[COPY1]]
   ; CHECK-NEXT:   [[COPY7:%[0-9]+]]:mss = COPY [[COPY2]]
   ; CHECK-NEXT:   [[COPY8:%[0-9]+]]:mss = COPY [[COPY3]]
-  ; CHECK-NEXT:   [[COPY9:%[0-9]+]]:mss = COPY [[COPY4]]
-  ; CHECK-NEXT:   [[COPY10:%[0-9]+]]:mss = COPY [[COPY5]]
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
@@ -224,6 +223,8 @@ body:             |
   ; CHECK-NEXT:   [[VLDA_UPS_S64_D32_ag_idx_imm:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY6]], [[PHI1]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>))
   ; CHECK-NEXT:   [[VLDA_UPS_S64_D32_ag_idx_imm1:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY7]], [[PHI1]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>))
   ; CHECK-NEXT:   [[VLDA_UPS_S64_D32_ag_idx_imm2:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY8]], [[PHI1]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>))
+  ; CHECK-NEXT:   [[COPY9:%[0-9]+]]:mss = COPY [[COPY4]]
+  ; CHECK-NEXT:   [[COPY10:%[0-9]+]]:mss = COPY [[COPY5]]
   ; CHECK-NEXT:   [[VLDA_UPS_S64_D32_ag_idx_imm3:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY9]], [[PHI1]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>))
   ; CHECK-NEXT:   [[VLDA_UPS_S64_D32_ag_idx_imm4:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY10]], [[PHI1]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>))
   ; CHECK-NEXT:   [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo [[PHI1]], 32

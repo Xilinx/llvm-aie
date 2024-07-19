@@ -159,9 +159,7 @@ bfloat16 operator_neg(bfloat16 a) {
 
 // CHECK-LABEL: @_Z13bfloat16_div0u6__bf16(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[EXT:%.*]] = fpext bfloat [[ARG:%.*]] to float
-// CHECK-NEXT:    [[DIV:%.*]] = fdiv float 0.000000e+00, [[EXT]]
-// CHECK-NEXT:    [[UNPROMOTION:%.*]] = fptrunc float [[DIV]] to bfloat
+// CHECK-NEXT:    [[UNPROMOTION:%.*]] = fdiv bfloat 0xR0000, [[ARG:%.*]]
 // CHECK-NEXT:    ret bfloat [[UNPROMOTION]]
 //
 bfloat16 bfloat16_div0(bfloat16 arg) {

@@ -4,6 +4,8 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_LIBC_ERRNO_H
@@ -44,7 +46,19 @@
 #endif
 
 #if !defined(__AMDGPU__) && !defined(__NVPTX__)
+
+#ifdef __cplusplus
+extern "C" {
+#ifdef __AIECC__
+extern int __llvmlibc_errno;
+#else
+extern thread_local int __llvmlibc_errno;
+#endif
+}
+#else
 extern _Thread_local int __llvmlibc_errno;
+#endif // __cplusplus
+
 #define errno __llvmlibc_errno
 #endif
 
