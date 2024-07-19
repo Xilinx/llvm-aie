@@ -756,7 +756,7 @@ def fneg_fneg_fold: GICombineRule <
   (apply (GIReplaceReg $dst, $src))
 >;
 
-// Fold (unmerge(merge x, y, z)) -> z, y, z.
+// Fold (unmerge(merge x, y, z)) -> x, y, z.
 def unmerge_merge_matchinfo : GIDefMatchData<"SmallVector<Register, 8>">;
 def unmerge_merge : GICombineRule<
   (defs root:$d, unmerge_merge_matchinfo:$info),
@@ -764,6 +764,16 @@ def unmerge_merge : GICombineRule<
   [{ return Helper.matchCombineUnmergeMergeToPlainValues(*${d}, ${info}); }]),
   (apply [{ Helper.applyCombineUnmergeMergeToPlainValues(*${d}, ${info}); }])
 >;
+
+// Fold (unmerge(merge x, y, z)) -> z, y, z.
+def shufflevector_merge_matchinfo : GIDefMatchData<"SmallVector<Register, 8>">;
+def shufflevector_merge : GICombineRule<
+  (defs root:$d, shufflevector_merge_matchinfo:$info),
+  (match (wip_match_opcode G_SHUFFLE_VECTOR): $d,
+  [{ return Helper.matchCombineShuffleVectorBuildVector(*${d}, ${info}); }]),
+  (apply [{ Helper.applyCombineShuffleVectorBuildVector(*${d}, ${info}); }])
+>;
+
 
 // Fold merge(unmerge).
 def merge_unmerge : GICombineRule<

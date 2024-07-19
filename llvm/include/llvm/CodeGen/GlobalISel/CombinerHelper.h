@@ -355,6 +355,15 @@ public:
   applyCombineUnmergeMergeToPlainValues(MachineInstr &MI,
                                         SmallVectorImpl<Register> &Operands);
 
+  /// Transform <ty, ...> G_SHUFFLE_VECTOR(G_MERGE ty X Y Z) -> G_MERGE ty X,Y,Z
+  bool
+  matchCombineShuffleVectorBuildVector(MachineInstr &MI,
+                                       SmallVectorImpl<Register> &Operands);
+
+  void
+  applyCombineShuffleVectorBuildVector(MachineInstr &MI,
+                                       SmallVectorImpl<Register> &Operands);
+
   /// Transform G_UNMERGE Constant -> Constant1, Constant2, ...
   bool matchCombineUnmergeConstant(MachineInstr &MI,
                                    SmallVectorImpl<APInt> &Csts);
