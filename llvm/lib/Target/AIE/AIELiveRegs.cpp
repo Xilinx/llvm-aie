@@ -53,20 +53,17 @@ void LiveRegs::computeBlockLiveIns(const MachineBasicBlock *MBB,
 }
 
 bool LiveRegs::equal(LivePhysRegs &CurrentLive, LivePhysRegs &OldLive) {
-  int LiveInCount = 0;
-  bool Equal = true;
-
+  auto CurrentLiveIt = CurrentLive.begin();
   for (const MCPhysReg Reg : OldLive) {
     if (!CurrentLive.contains(Reg)) {
-      Equal = false;
+      return false;
     }
-    LiveInCount++;
+    if (CurrentLiveIt == CurrentLive.end())
+      return false;
+    ++CurrentLiveIt;
   }
 
-  for (const MCPhysReg Reg : CurrentLive) {
-    LiveInCount--;
-  }
-  return LiveInCount == 0 && Equal;
+  return CurrentLiveIt == CurrentLive.end() ? true : false;
 }
 
 void LiveRegs::updateLiveRegs(LivePhysRegs &CurrentLive,
