@@ -4,6 +4,8 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its
+// affiliates
 //===----------------------------------------------------------------------===//
 //
 // Pass to verify generated machine code. The following is checked:
@@ -1308,7 +1310,7 @@ void MachineVerifier::verifyPreISelGenericInstruction(const MachineInstr *MI) {
     if (PtrTy.isPointerOrPointerVector()) {
       const DataLayout &DL = MF->getDataLayout();
       unsigned AS = PtrTy.getAddressSpace();
-      unsigned IndexSizeInBits = DL.getIndexSize(AS) * 8;
+      unsigned IndexSizeInBits = DL.getIndexSizeInBits(AS);
       if (OffsetTy.getScalarSizeInBits() != IndexSizeInBits) {
         report("gep offset operand must match index size for address space",
                MI);
