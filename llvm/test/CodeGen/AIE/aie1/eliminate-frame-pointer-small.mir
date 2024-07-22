@@ -23,6 +23,8 @@
 ---
 name:            eliminate_frame_pointer
 tracksRegLiveness: true
+frameInfo:
+  adjustsStack:    true
 stack:
   - { id: 0, name: key, type: default, offset: 0, size: 12, alignment: 4,
       stack-id: default, callee-saved-register: '', callee-saved-restored: true,

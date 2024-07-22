@@ -24,7 +24,6 @@ define i32 @br_i32(i32  %a, i32  %b, i32 %v, i32* nocapture writeonly %c) {
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  .LBB0_1: // %if.then
 ; CHECK-NEXT:    // Label of block must be emitted
-; CHECK-NEXT:    mov r12, p0
 ; CHECK-NEXT:    st r0, [p0]
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB0_2: // %if.end
@@ -63,7 +62,6 @@ define i32 @br_i16(i16  %a, i16  %b, i32 %v, i32* nocapture writeonly %c) {
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  .LBB1_1: // %if.then
 ; CHECK-NEXT:    // Label of block must be emitted
-; CHECK-NEXT:    mov r12, p0
 ; CHECK-NEXT:    st r0, [p0]
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB1_2: // %if.end
@@ -102,7 +100,6 @@ define i32 @br_i8(i8  %a, i8  %b, i32 %v, i32* nocapture writeonly %c) {
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  .LBB2_1: // %if.then
 ; CHECK-NEXT:    // Label of block must be emitted
-; CHECK-NEXT:    mov r12, p0
 ; CHECK-NEXT:    st r0, [p0]
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB2_2: // %if.end
@@ -151,7 +148,6 @@ define i32 @br_float(float  %a, float  %b, i32 %v, i32* nocapture writeonly %c) 
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  .LBB3_1: // %if.then
 ; CHECK-NEXT:    // Label of block must be emitted
-; CHECK-NEXT:    mov r12, p0
 ; CHECK-NEXT:    st r0, [p0]
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB3_2: // %if.end
@@ -188,7 +184,6 @@ define i32 @br_i20(i32  %a, i32  %b, i32 %v, i32* nocapture writeonly %c) {
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  .LBB4_1: // %if.then
 ; CHECK-NEXT:    // Label of block must be emitted
-; CHECK-NEXT:    mov r12, p0
 ; CHECK-NEXT:    st r0, [p0]
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB4_2: // %if.end
