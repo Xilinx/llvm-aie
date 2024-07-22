@@ -120,7 +120,7 @@ public:
   /// referenced for the current subtarget.
   unsigned classifyGlobalReference(const GlobalValue *GV,
                                    const TargetMachine &TM) const {
-    if (!TM.shouldAssumeDSOLocal(*GV->getParent(), GV)) {
+    if (!TM.shouldAssumeDSOLocal(GV)) {
       return AIEII::MO_GLOBAL;
     }
     return AIEII::MO_None;
