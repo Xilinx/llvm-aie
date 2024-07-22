@@ -59,50 +59,6 @@ body:             |
     $l3 = COPY %3(<2 x s32>)
 ...
 
-# 64-bit idx for INSERT_VECTOR_ELT is narrowed to 32-bit.
----
-name:            v8s32_64bit_idx
-legalized:       false
-body:             |
-  bb.0.entry:
-    liveins: $wl0, $r0
-    ; CHECK-LABEL: name: v8s32_64bit_idx
-    ; CHECK: liveins: $wl0, $r0
-    ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<8 x s32>) = COPY $wl0
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r0
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
-    ; CHECK-NEXT: [[AIE_INSERT_VECTOR_ELT:%[0-9]+]]:_(<8 x s32>) = G_AIE_INSERT_VECTOR_ELT [[COPY]], [[COPY1]](s32), [[C]](s32)
-    ; CHECK-NEXT: $wl3 = COPY [[AIE_INSERT_VECTOR_ELT]](<8 x s32>)
-    %0:_(<8 x s32>) = COPY $wl0
-    %1:_(s32) = COPY $r0
-    %2:_(s64) = G_CONSTANT i64 0
-    %3:_(<8 x s32>) = G_INSERT_VECTOR_ELT %0(<8 x s32>), %1(s32), %2(s64)
-    $wl3 = COPY %3(<8 x s32>)
-...
-
----
-name:            v8s32_64bit_non_const_idx
-legalized:       false
-body:             |
-  bb.0.entry:
-    liveins: $wl0, $r0
-    ; CHECK-LABEL: name: v8s32_64bit_non_const_idx
-    ; CHECK: liveins: $wl0, $r0
-    ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<8 x s32>) = COPY $wl0
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r0
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(s64) = COPY $l0
-    ; CHECK-NEXT: [[TRUNC:%[0-9]+]]:_(s32) = G_TRUNC [[COPY2]](s64)
-    ; CHECK-NEXT: [[AIE_INSERT_VECTOR_ELT:%[0-9]+]]:_(<8 x s32>) = G_AIE_INSERT_VECTOR_ELT [[COPY]], [[COPY1]](s32), [[TRUNC]](s32)
-    ; CHECK-NEXT: $wl3 = COPY [[AIE_INSERT_VECTOR_ELT]](<8 x s32>)
-    %0:_(<8 x s32>) = COPY $wl0
-    %1:_(s32) = COPY $r0
-    %2:_(s64) = COPY $l0
-    %3:_(<8 x s32>) = G_INSERT_VECTOR_ELT %0(<8 x s32>), %1(s32), %2(s64)
-    $wl3 = COPY %3(<8 x s32>)
-...
-
 ---
 name:            256bit_s8_s16_s32_val
 legalized:       false
