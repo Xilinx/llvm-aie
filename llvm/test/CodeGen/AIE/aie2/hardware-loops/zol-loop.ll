@@ -6,8 +6,8 @@
 ;
 ; (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
 
-; RUN: llc -O2 -mtriple=aie2 --enable-aie-hardware-loops --enable-aie-zero-overhead-loops %s -o - | \
-; RUN:   FileCheck %s
+; RUN: llc -O2 -mtriple=aie2 --enable-aie-hardware-loops --enable-aie-zero-overhead-loops \
+; RUN:    --aie-force-hl-gen=true %s -o - | FileCheck %s
 
 define void @simple_loop(i32 noundef %n, ptr nocapture readonly %in, ptr nocapture writeonly %out) {
 ; CHECK-LABEL: simple_loop:

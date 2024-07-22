@@ -16,6 +16,7 @@
 #include "AIE2.h"
 #include "AIE2InstrInfo.h"
 #include "MCTargetDesc/AIE2MCTargetDesc.h"
+#include "Utils/AIELoopUtils.h"
 #include "llvm/Analysis/LoopIterator.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -62,29 +63,10 @@ AIEBasePipelinerLoopInfo::AIEBasePipelinerLoopInfo(MachineInstr *EndLoop,
   if (LoopID == nullptr)
     return;
 
-  assert(LoopID->getNumOperands() > 0 && "requires at least one operand");
-  assert(LoopID->getOperand(0) == LoopID && "invalid loop");
-
-  for (unsigned i = 1, e = LoopID->getNumOperands(); i < e; ++i) {
-    MDNode *MD = dyn_cast<MDNode>(LoopID->getOperand(i));
-
-    if (MD == nullptr)
-      continue;
-
-    MDString *S = dyn_cast<MDString>(MD->getOperand(0));
-    if (S == nullptr)
-      continue;
-
-    if (S->getString() == "llvm.loop.itercount.range") {
-      assert((MD->getNumOperands() >= 2 && MD->getNumOperands() <= 3) &&
-             "Iteration count hint should have one or two numeric operands.");
-      MinTripCount =
-          mdconst::extract<ConstantInt>(MD->getOperand(1))->getSExtValue();
-      assert(MinTripCount >= 0 && "Range lwb should not be negative.");
-      LLVM_DEBUG(dbgs() << "PLI: MinTripCount from pragma =  " << MinTripCount
-                        << "\n");
-    }
-  }
+  std::optional<int64_t> ParsedMinTripCount =
+      AIELoopUtils::getMinTripCount(LoopID);
+  if (ParsedMinTripCount)
+    MinTripCount = *ParsedMinTripCount;
 }
 
 void AIEBasePipelinerLoopInfo::setMinTripCount(int64_t TC) {

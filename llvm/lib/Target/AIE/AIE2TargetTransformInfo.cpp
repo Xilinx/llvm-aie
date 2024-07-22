@@ -9,6 +9,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIE2TargetTransformInfo.h"
+#include "Utils/AIELoopUtils.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/CodeGen/BasicTTIImpl.h"
 #include "llvm/Transforms/Utils/ScalarEvolutionExpander.h"
@@ -26,6 +27,14 @@ static cl::opt<bool>
     AllowAIEZOL("enable-aie-zero-overhead-loops",
                 cl::desc("Enable true zero overhead hardware loops on AIE"),
                 cl::init(false), cl::Hidden);
+
+static cl::opt<int> MinIterCountHLReject(
+    "aie-hardware-loops-minitercount", cl::Hidden, cl::init(3),
+    cl::desc("Minimum trip count threshold for HL rejection"));
+
+static cl::opt<bool>
+    ForceHLGeneration("aie-force-hl-gen", cl::Hidden, cl::init(false),
+                      cl::desc("Force HL generation ignoring metadata info."));
 
 static cl::opt<bool>
     ConsiderLSROuterLoops("aie-lsr-consider-outer", cl::Hidden, cl::init(false),
@@ -61,6 +70,25 @@ bool AIE2TTIImpl::isHardwareLoopProfitable(Loop *L, ScalarEvolution &SE,
   // zero-overhead loop.
   if (L->getNumBlocks() > 1)
     return false;
+
+  if (!ForceHLGeneration) {
+    if (const MDNode *LoopID = L->getLoopID()) {
+      std::optional<int64_t> MinTripCount =
+          AIELoopUtils::getMinTripCount(LoopID);
+      if (MinTripCount) {
+        // Reject HL for this case.
+        if (*MinTripCount <= MinIterCountHLReject) {
+          return false;
+        }
+      } else {
+        // We have metadata, but not iteration information.
+        return false;
+      }
+    } else {
+      // We don't have metadata.
+      return false;
+    }
+  }
 
   // Scan the loop: loops with calls - make it unprofitable
   for (BasicBlock *BB : L->blocks()) {
