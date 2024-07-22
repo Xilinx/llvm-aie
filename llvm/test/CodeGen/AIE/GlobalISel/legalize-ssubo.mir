@@ -23,7 +23,8 @@ body: |
     ; CHECK-NEXT: [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[SUB]](s32), [[COPY]]
     ; CHECK-NEXT: [[ICMP1:%[0-9]+]]:_(s32) = G_ICMP intpred(sgt), [[COPY1]](s32), [[C]]
     ; CHECK-NEXT: [[XOR:%[0-9]+]]:_(s32) = G_XOR [[ICMP1]], [[ICMP]]
-    ; CHECK-NEXT: $r0 = COPY [[SUB]](s32)
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY [[SUB]](s32)
+    ; CHECK-NEXT: $r0 = COPY [[COPY2]](s32)
     ; CHECK-NEXT: $r1 = COPY [[XOR]](s32)
     %0:_(s32) = COPY $r6
     %1:_(s32) = COPY $r7
