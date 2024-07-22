@@ -79,13 +79,15 @@ body: |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[ADD:%[0-9]+]]:_(s32) = G_ADD [[COPY]], [[COPY]]
   ; CHECK-NEXT:   [[ICMP1:%[0-9]+]]:_(s32) = G_ICMP intpred(ult), [[ADD]](s32), [[COPY]]
+  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:_(s32) = COPY [[ADD]](s32)
   ; CHECK-NEXT:   [[ADD1:%[0-9]+]]:_(s32) = G_ADD [[COPY1]], [[COPY1]]
   ; CHECK-NEXT:   [[ADD2:%[0-9]+]]:_(s32) = G_ADD [[ADD1]], [[ICMP1]]
+  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:_(s32) = COPY [[ADD2]](s32)
   ; CHECK-NEXT:   G_BR %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
-  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s32) = G_PHI [[COPY]](s32), %bb.0, [[ADD]](s32), %bb.1
-  ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:_(s32) = G_PHI [[COPY1]](s32), %bb.0, [[ADD2]](s32), %bb.1
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s32) = G_PHI [[COPY]](s32), %bb.0, [[COPY3]](s32), %bb.1
+  ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:_(s32) = G_PHI [[COPY1]](s32), %bb.0, [[COPY4]](s32), %bb.1
   ; CHECK-NEXT:   $r0 = COPY [[PHI]](s32)
   ; CHECK-NEXT:   $r1 = COPY [[PHI1]](s32)
   bb.0:
@@ -361,7 +363,7 @@ body: |
   bb.1:
     successors: %bb.2
 
-    %4:_(s32) = G_CONSTANT i32 8
+    %4:_(s20) = G_CONSTANT i20 8
     %5:_(p0) = G_PTR_ADD %0, %4
     G_BR %bb.2
 

@@ -16,11 +16,11 @@ define void @call_pass_I_va_2I() {
   ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
   ; CHECK-NEXT:   ADJCALLSTACKUP 8, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $sp
-  ; CHECK-NEXT:   [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 -4
-  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C3]](s32)
+  ; CHECK-NEXT:   [[C3:%[0-9]+]]:_(s20) = G_CONSTANT i20 -4
+  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C3]](s20)
   ; CHECK-NEXT:   G_STORE [[C1]](s32), [[PTR_ADD]](p0) :: (store (s32) into stack - 4, basealign 32)
-  ; CHECK-NEXT:   [[C4:%[0-9]+]]:_(s32) = G_CONSTANT i32 -8
-  ; CHECK-NEXT:   [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C4]](s32)
+  ; CHECK-NEXT:   [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 -8
+  ; CHECK-NEXT:   [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C4]](s20)
   ; CHECK-NEXT:   G_STORE [[C2]](s32), [[PTR_ADD1]](p0) :: (store (s32) into stack - 8)
   ; CHECK-NEXT:   $r6 = COPY [[C]](s32)
   ; CHECK-NEXT:   JAL @pass_I_va_2I, csr_aie1, implicit-def $lr, implicit $r6
@@ -46,22 +46,22 @@ define void @call_pass_3LI_va_SILI() {
   ; CHECK-NEXT:   [[UV2:%[0-9]+]]:_(s32), [[UV3:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[C1]](s64)
   ; CHECK-NEXT:   [[UV4:%[0-9]+]]:_(s32), [[UV5:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[C2]](s64)
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $sp
-  ; CHECK-NEXT:   [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 -8
-  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C5]](s32)
+  ; CHECK-NEXT:   [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 -8
+  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C5]](s20)
   ; CHECK-NEXT:   G_STORE [[UV4]](s32), [[PTR_ADD]](p0) :: (store (s32) into stack - 8)
-  ; CHECK-NEXT:   [[C6:%[0-9]+]]:_(s32) = G_CONSTANT i32 -4
-  ; CHECK-NEXT:   [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C6]](s32)
+  ; CHECK-NEXT:   [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 -4
+  ; CHECK-NEXT:   [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C6]](s20)
   ; CHECK-NEXT:   G_STORE [[UV5]](s32), [[PTR_ADD1]](p0) :: (store (s32) into stack - 4, basealign 32)
   ; CHECK-NEXT:   [[ANYEXT:%[0-9]+]]:_(s32) = G_ANYEXT [[C3]](s16)
-  ; CHECK-NEXT:   [[C7:%[0-9]+]]:_(s32) = G_CONSTANT i32 -36
-  ; CHECK-NEXT:   [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C7]](s32)
+  ; CHECK-NEXT:   [[C7:%[0-9]+]]:_(s20) = G_CONSTANT i20 -36
+  ; CHECK-NEXT:   [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C7]](s20)
   ; CHECK-NEXT:   G_STORE [[ANYEXT]](s32), [[PTR_ADD2]](p0) :: (store (s32) into stack - 36, basealign 32)
   ; CHECK-NEXT:   [[UV6:%[0-9]+]]:_(s32), [[UV7:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[C4]](s64)
-  ; CHECK-NEXT:   [[C8:%[0-9]+]]:_(s32) = G_CONSTANT i32 -44
-  ; CHECK-NEXT:   [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C8]](s32)
+  ; CHECK-NEXT:   [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 -44
+  ; CHECK-NEXT:   [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C8]](s20)
   ; CHECK-NEXT:   G_STORE [[UV6]](s32), [[PTR_ADD3]](p0) :: (store (s32) into stack - 44, basealign 8)
-  ; CHECK-NEXT:   [[C9:%[0-9]+]]:_(s32) = G_CONSTANT i32 -40
-  ; CHECK-NEXT:   [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C9]](s32)
+  ; CHECK-NEXT:   [[C9:%[0-9]+]]:_(s20) = G_CONSTANT i20 -40
+  ; CHECK-NEXT:   [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C9]](s20)
   ; CHECK-NEXT:   G_STORE [[UV7]](s32), [[PTR_ADD4]](p0) :: (store (s32) into stack - 40)
   ; CHECK-NEXT:   $r6 = COPY [[UV]](s32)
   ; CHECK-NEXT:   $r7 = COPY [[UV1]](s32)
