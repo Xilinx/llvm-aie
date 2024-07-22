@@ -5,7 +5,8 @@
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
 ; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-; RUN: llc -O2 -mtriple=aie2 --issue-limit=1 --enable-aie-hardware-loops %s -o - | FileCheck %s
+; RUN: llc -O2 -mtriple=aie2 --issue-limit=1 --enable-aie-hardware-loops \
+; RUN:    --aie-force-hl-gen=true %s -o - | FileCheck %s
 
 ; Check that we recognize the two level nested loops as hardware loop candidates.
 ; In the LLVM IR input, the loop guards have been removed to allow for a simpler
