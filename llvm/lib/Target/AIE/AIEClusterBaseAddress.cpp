@@ -236,7 +236,7 @@ private:
   }
 
   unsigned getLoadStoreSize(const MachineInstr &MI) {
-    return (*MI.memoperands_begin())->getSizeInBits();
+    return (*MI.memoperands_begin())->getSizeInBits().getValue();
   }
 
   // Get a set of all reachable MBBs from a given MBB.

@@ -440,7 +440,8 @@ bool llvm::matchGlobalValOffset(MachineInstr &MI, MachineRegisterInfo &MRI,
       return false;
     if (LdStMI) {
       MachineMemOperand *MMO = *UseInstr.memoperands_begin();
-      OffsetElemSizePairSet.insert(std::make_pair(Offset, MMO->getSize()));
+      OffsetElemSizePairSet.insert(
+          std::make_pair(Offset, MMO->getSize().getValue()));
     } else {
       auto Cst = getIConstantVRegValWithLookThrough(
           UseInstr.getOperand(2).getReg(), MRI);
@@ -454,7 +455,7 @@ bool llvm::matchGlobalValOffset(MachineInstr &MI, MachineRegisterInfo &MRI,
         if (dyn_cast<GLoadStore>(&Use)) {
           MachineMemOperand *MMO = *Use.memoperands_begin();
           OffsetElemSizePairSet.insert(
-              std::make_pair(Val.getZExtValue(), MMO->getSize()));
+              std::make_pair(Val.getZExtValue(), MMO->getSize().getValue()));
         }
       }
     }
