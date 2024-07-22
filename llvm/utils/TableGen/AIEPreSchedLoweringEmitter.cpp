@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "CodeGenInstruction.h"
-#include "CodeGenTarget.h"
+#include "Common/CodeGenInstruction.h"
+#include "Common/CodeGenTarget.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
