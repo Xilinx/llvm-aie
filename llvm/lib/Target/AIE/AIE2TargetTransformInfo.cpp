@@ -42,6 +42,39 @@ static cl::opt<bool>
     ConsiderLSROuterLoops("aie-lsr-consider-outer", cl::Hidden, cl::init(false),
                           cl::desc("Whether to consider outer loops for LSR"));
 
+static cl::opt<bool>
+    EnableAutoUnroll("aie-unroll-auto", cl::Hidden, cl::init(true),
+                     cl::desc("Whether to unroll loops without pragmas"));
+static cl::opt<unsigned>
+    MaxUnrollCount("aie-unroll-max-count", cl::Hidden, cl::init(4),
+                   cl::desc("Maximum partial unroll count for loops"));
+static cl::opt<int>
+    MaxUnrollLoads("aie-unroll-max-loads", cl::Hidden, cl::init(-1),
+                   cl::desc("Maximum partial unroll count for loops"));
+static cl::opt<unsigned>
+    MaxUnrollCost("aie-unroll-max-cost", cl::Hidden, cl::init(200),
+                  cl::desc("Maximum partial unroll cost for loops"));
+
+void AIE2TTIImpl::getUnrollingPreferences(Loop *L, ScalarEvolution &SE,
+                                          TTI::UnrollingPreferences &UP,
+                                          OptimizationRemarkEmitter *ORE) {
+  UP.Partial = UP.Runtime = true;
+  BaseT::getUnrollingPreferences(L, SE, UP, ORE);
+  UP.Partial &= UP.Runtime &= EnableAutoUnroll;
+  UP.MaxCount = MaxUnrollCount;
+  UP.FullUnrollMaxCount = 32;
+  UP.Threshold = MaxUnrollCost;
+  UP.AllowExpensiveTripCount = true;
+
+  if (L->getNumBlocks() == 1 && MaxUnrollLoads >= 0) {
+    int NumLoads = count_if(*L->getBlocks().front(), [](const Instruction &I) {
+      return I.mayReadFromMemory();
+    });
+    if (NumLoads)
+      UP.MaxCount = std::min(UP.MaxCount, unsigned(MaxUnrollLoads / NumLoads));
+  }
+}
+
 bool AIE2TTIImpl::isHardwareLoopProfitable(Loop *L, ScalarEvolution &SE,
                                            AssumptionCache &AC,
                                            TargetLibraryInfo *LibInfo,

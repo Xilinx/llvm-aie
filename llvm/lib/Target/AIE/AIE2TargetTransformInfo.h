@@ -53,12 +53,7 @@ public:
   }
   void getUnrollingPreferences(Loop *L, ScalarEvolution &SE,
                                TTI::UnrollingPreferences &UP,
-                               OptimizationRemarkEmitter *ORE) {
-    UP.Partial = UP.Runtime = true;
-    UP.AllowExpensiveTripCount = true;
-    UP.Threshold = 200;
-    BaseT::getUnrollingPreferences(L, SE, UP, ORE);
-  }
+                               OptimizationRemarkEmitter *ORE);
 
   bool isHardwareLoopProfitable(Loop *L, ScalarEvolution &SE,
                                 AssumptionCache &AC, TargetLibraryInfo *LibInfo,
