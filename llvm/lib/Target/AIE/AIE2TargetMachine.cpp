@@ -63,6 +63,9 @@ static cl::opt<bool>
 static cl::opt<bool> EnablePreMISchedCoalescer(
     "aie-premisched-coalescer", cl::Hidden, cl::init(true),
     cl::desc("Run the coalescer again after the pre-RA scheduler"));
+static cl::opt<bool>
+    EnablePHIReorderPass("aie-phi-reorder", cl::Hidden, cl::init(true),
+                         cl::desc("Run the PHI reordering pass"));
 
 extern bool AIEDumpArtifacts;
 
@@ -140,6 +143,9 @@ void AIE2PassConfig::addIRPasses() {
     }
   }
   TargetPassConfig::addIRPasses();
+
+  if (EnablePHIReorderPass && TM->getOptLevel() > CodeGenOptLevel::None)
+    addPass(createAIEPHISorterPass());
 }
 
 void AIE2PassConfig::addPreLegalizeMachineIR() {

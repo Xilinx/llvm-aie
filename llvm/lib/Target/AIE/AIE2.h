@@ -41,10 +41,12 @@ FunctionPass *createAIE2PostLegalizerGenericCombiner();
 InstructionSelector *createAIE2InstructionSelector(const AIE2TargetMachine &,
                                                    AIE2Subtarget &,
                                                    AIE2RegisterBankInfo &);
+FunctionPass *createAIEPHISorterPass();
 
 void initializeAIE2PreLegalizerCombinerPass(PassRegistry &);
 void initializeAIE2PostLegalizerCustomCombinerPass(PassRegistry &);
 void initializeAIE2PostLegalizerGenericCombinerPass(PassRegistry &);
+void initializeAIEPHISorterPass(PassRegistry &);
 } // namespace llvm
 
 #endif
