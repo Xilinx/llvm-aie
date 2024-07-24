@@ -104,8 +104,9 @@ public:
 
 namespace {
 /// Computes the encoding of a signed immediate value that is
-/// represented as a multiple of four in the encoding
+/// represented as a multiple of the step in the encoding
 /// N Is the number of bits of the field
+/// step is the difference between 2 operands of the class
 /// offset A value to be added before coding
 /// isNegative The value is implicitly negated. Used for range check
 /// \param MI The parent machine instruction
@@ -113,60 +114,24 @@ namespace {
 /// \param Op [OUT] Yields the computed encoding
 /// \param Fixups The fixups for the instruction
 /// \param STI The subtarget
-template <int N, int offset, bool isNegative>
-void getSImmOpValueX4(const MCInst &MI, unsigned OpNo, APInt &Op,
-                      SmallVectorImpl<MCFixup> &Fixups,
-                      const MCSubtargetInfo &STI) {
-  const MCOperand &MO = MI.getOperand(OpNo);
-  if (MO.isImm()) {
-    int64_t Imm = MO.getImm();
-    int64_t Min = isNegative ? minIntN(N + 3) : minIntN(N + 2);
-    int64_t Max = isNegative ? -4 : maxIntN(N + 2);
-    Imm = Imm + offset;
-    assert((Imm & 0x3) == 0 && "Value must be divisible by 4!");
-    assert(Imm >= Min && Imm <= Max &&
-           "can not represent value in the given immediate type range!");
-    Imm >>= 2;
-    Op = Imm;
-  } else
-    llvm_unreachable("Unhandled expression!");
-}
 
-/// Similar to getSImmOpValueX4, but for multiples of 16
-template <int N, int offset, bool isNegative>
-void getSImmOpValueX16(const MCInst &MI, unsigned OpNo, APInt &Op,
-                       SmallVectorImpl<MCFixup> &Fixups,
-                       const MCSubtargetInfo &STI) {
+template <int N, unsigned step, int offset, bool isNegative>
+void getSImmOpValueXStep(const MCInst &MI, unsigned OpNo, APInt &Op,
+                         SmallVectorImpl<MCFixup> &Fixups,
+                         const MCSubtargetInfo &STI) {
   const MCOperand &MO = MI.getOperand(OpNo);
+  const unsigned fixedZeroBits = CTLog2<step>();
 
   if (MO.isImm()) {
+    constexpr int hexValue = step - 1;
     int64_t Imm = MO.getImm();
-    int64_t Min = isNegative ? minIntN(N + 5) : minIntN(N + 4);
-    int64_t Max = isNegative ? -16 : maxIntN(N + 4);
-    assert((Imm & 0xF) == 0 && "Value must be divisible by 16!");
+    int64_t Min = isNegative ? minIntN(N + fixedZeroBits + 1)
+                             : minIntN(N + fixedZeroBits);
+    int64_t Max = isNegative ? -step : maxIntN(N + fixedZeroBits);
+    assert((Imm & hexValue) == 0 && "Value must be divisible by step!");
     assert(Imm >= Min && Imm <= Max &&
            "can not represent value in the given immediate type range!");
-    Imm >>= 4;
-    Op = Imm;
-  } else
-    llvm_unreachable("Unhandled expression!");
-}
-
-/// Similar to getSImmOpValue4, but for multiples of 32
-template <int N, int offset, bool isNegative>
-void getSImmOpValueX32(const MCInst &MI, unsigned OpNo, APInt &Op,
-                       SmallVectorImpl<MCFixup> &Fixups,
-                       const MCSubtargetInfo &STI) {
-  const MCOperand &MO = MI.getOperand(OpNo);
-
-  if (MO.isImm()) {
-    int64_t Imm = MO.getImm();
-    int64_t Min = isNegative ? minIntN(N + 6) : minIntN(N + 5);
-    int64_t Max = isNegative ? -32 : maxIntN(N + 5);
-    assert((Imm & 0x1F) == 0 && "Value must be divisible by 32!");
-    assert(Imm >= Min && Imm <= Max &&
-           "can not represent value in the given immediate type range!");
-    Imm >>= 5;
+    Imm >>= fixedZeroBits;
     Op = Imm;
   } else
     llvm_unreachable("Unhandled expression!");
