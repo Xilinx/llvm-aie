@@ -24,7 +24,7 @@ def : Pat<(int_intr_1 GPR32:$src),
 // CHECK-NEXT:       GIM_CheckType, /*MI*/0, /*Op*/2, /*Type*/GILLT_s32,
 // CHECK-NEXT:       GIM_CheckRegBankForClass, /*MI*/0, /*Op*/0, /*RC*/GIMT_Encode2(MyTarget::GPR32RegClassID),
 // CHECK-NEXT:       GIM_CheckRegBankForClass, /*MI*/0, /*Op*/2, /*RC*/GIMT_Encode2(MyTarget::GPR32RegClassID),
-// CHECK-NEXT:       // (intrinsic_w_chain:{ *:[i32] } 180:{ *:[iPTR] }, GPR32:{ *:[i32] }:$src)  =>  (NOP:{ *:[i32] } GPR32:{ *:[i32] }:$src)
+// CHECK-NEXT:       // (intrinsic_w_chain:{ *:[i32] } 185:{ *:[iPTR] }, GPR32:{ *:[i32] }:$src)  =>  (NOP:{ *:[i32] } GPR32:{ *:[i32] }:$src)
 // CHECK-NEXT:       GIR_BuildMI, /*InsnID*/0, /*Opcode*/GIMT_Encode2(MyTarget::NOP),
 // CHECK-NEXT:       GIR_Copy, /*NewInsnID*/0, /*OldInsnID*/0, /*OpIdx*/0, // DstI[dst]
 // CHECK-NEXT:       GIR_Copy, /*NewInsnID*/0, /*OldInsnID*/0, /*OpIdx*/2, // src
