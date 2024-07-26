@@ -15,6 +15,7 @@
 #include "AIETargetMachine.h"
 #include "AIE.h"
 #include "AIE2TargetMachine.h"
+#include "AIEBaseAliasAnalysis.h"
 #include "AIEDumpArtifacts.h"
 #include "AIEFinalizeBundle.h"
 #include "AIEMachineBlockPlacement.h"
@@ -38,10 +39,16 @@
 #include "llvm/InitializePasses.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/PassRegistry.h"
+#include "llvm/Passes/PassBuilder.h"
 #include "llvm/Support/CodeGen.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
+
+static cl::opt<bool>
+    EnableCustomAliasAnalysis("aie-enable-alias-analysis",
+                              cl::desc("Enable AIE alias analysis pass"),
+                              cl::init(true), cl::Hidden);
 
 extern bool AIEDumpArtifacts;
 
@@ -118,7 +125,21 @@ TargetPassConfig *AIETargetMachine::createPassConfig(PassManagerBase &PM) {
 }
 
 void AIEPassConfig::addIRPasses() {
+  // Always expand atomic operations, we don't deal with atomicrmw or cmpxchg
+  // ourselves.
   addPass(createAtomicExpandLegacyPass());
+
+  if (TM->getOptLevel() > CodeGenOptLevel::None) {
+    if (EnableCustomAliasAnalysis) {
+      addPass(createAIEBaseAAWrapperPass());
+      addPass(
+          createExternalAAWrapperPass([](Pass &P, Function &, AAResults &AAR) {
+            if (auto *WrapperPass =
+                    P.getAnalysisIfAvailable<AIEBaseAAWrapperPass>())
+              AAR.addAAResult(WrapperPass->getResult());
+          }));
+    }
+  }
   TargetPassConfig::addIRPasses();
 }
 
@@ -236,4 +257,24 @@ std::unique_ptr<CSEConfigBase> AIEPassConfig::getCSEConfig() const {
   if (TM->getOptLevel() == CodeGenOptLevel::None)
     return std::make_unique<CSEConfigBase>();
   return getStandardCSEConfigForOpt(TM->getOptLevel());
+}
+
+void AIEBaseTargetMachine::registerDefaultAliasAnalyses(AAManager &AAM) {
+  if (EnableCustomAliasAnalysis)
+    AAM.registerFunctionAnalysis<AIEBaseAA>();
+}
+void AIEBaseTargetMachine::registerPassBuilderCallbacks(
+    PassBuilder &PB, bool PopulateClassToPassNames) {
+  if (EnableCustomAliasAnalysis) {
+    PB.registerAnalysisRegistrationCallback([](FunctionAnalysisManager &FAM) {
+      FAM.registerPass([&] { return AIEBaseAA(); });
+    });
+    PB.registerParseAACallback([](StringRef AAName, AAManager &AAM) {
+      if (AAName == "aie-aa") {
+        AAM.registerFunctionAnalysis<AIEBaseAA>();
+        return true;
+      }
+      return false;
+    });
+  }
 }
