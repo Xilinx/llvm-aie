@@ -2,7 +2,7 @@ name: "Check code formatting"
 on:
   pull_request_target:
     branches:
-      - main
+      - 'aie-public'
 
 permissions:
   pull-requests: write
