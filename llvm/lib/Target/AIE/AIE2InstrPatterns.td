@@ -776,7 +776,9 @@ def : VEQZ_INSTR<int_aie2_veqz32, VEQZ_32>;
 
 // VBCST
 def : Pat<(int_aie2_vbroadcast8_I512 eR:$s0),  (VBCST_8 eR:$s0)>;
+def : Pat<(int_aie2_vbroadcast8_I512 (and eR:$rs1, 255)), (VBCST_8 eR:$rs1)>;
 def : Pat<(int_aie2_vbroadcast16_I512 eR:$s0), (VBCST_16 eR:$s0)>;
+def : Pat<(int_aie2_vbroadcast16_I512 (and eR:$rs1, 65535)), (VBCST_16 eR:$rs1)>;
 def : Pat<(int_aie2_vbroadcast32_I512 eR:$s0), (VBCST_32 eR:$s0)>;
 def : Pat<(int_aie2_vbroadcast64_I512 eL:$s0), (VBCST_64 eL:$s0)>;
 def : Pat<(int_aie2_vbroadcast16_bf512 eR:$s0), (VBCST_16 eR:$s0)>;

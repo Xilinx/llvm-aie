@@ -435,7 +435,7 @@ v32uint16 test_insert(v32uint16 v, int idx, unsigned long long b) {
 
 // CHECK-LABEL: @_Z18test_broadcast_s16s(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[CONV_I:%.*]] = sext i16 [[B:%.*]] to i32
+// CHECK-NEXT:    [[CONV_I:%.*]] = zext i16 [[B:%.*]] to i32
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i16> @llvm.aie2.vbroadcast16.I512(i32 [[CONV_I]])
 // CHECK-NEXT:    ret <32 x i16> [[TMP0]]
 //
@@ -473,7 +473,7 @@ v16int32 test_broadcast_v2s32 (v2int32 b) {
 
 // CHECK-LABEL: @_Z26test_broadcast_to_v128int4DB8_(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[CONV_I:%.*]] = sext i8 [[B:%.*]] to i32
+// CHECK-NEXT:    [[CONV_I:%.*]] = zext i8 [[B:%.*]] to i32
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x i8> @llvm.aie2.vbroadcast8.I512(i32 [[CONV_I]])
 // CHECK-NEXT:    ret <64 x i8> [[TMP0]]
 //
@@ -484,7 +484,7 @@ v128int4 test_broadcast_to_v128int4 (v2int4 b) {
 // CHECK-LABEL: @_Z25test_broadcast_to_v64int8Dv2_a(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <2 x i8> [[B:%.*]] to i16
-// CHECK-NEXT:    [[CONV_I:%.*]] = sext i16 [[TMP0]] to i32
+// CHECK-NEXT:    [[CONV_I:%.*]] = zext i16 [[TMP0]] to i32
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call <32 x i16> @llvm.aie2.vbroadcast16.I512(i32 [[CONV_I]])
 // CHECK-NEXT:    [[TMP2:%.*]] = bitcast <32 x i16> [[TMP1]] to <64 x i8>
 // CHECK-NEXT:    ret <64 x i8> [[TMP2]]
@@ -556,9 +556,7 @@ v16float test_broadcast_float(float b) {
 
 // CHECK-LABEL: @_Z16test_shiftl_elemDv64_ai(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[SEXT:%.*]] = shl i32 [[S:%.*]], 24
-// CHECK-NEXT:    [[CONV_I1:%.*]] = ashr exact i32 [[SEXT]], 24
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x i8> @llvm.aie2.vbroadcast8.I512(i32 [[CONV_I1]])
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x i8> @llvm.aie2.vbroadcast8.I512(i32 [[S:%.*]])
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <64 x i8> [[V:%.*]] to <16 x i32>
 // CHECK-NEXT:    [[TMP2:%.*]] = bitcast <64 x i8> [[TMP0]] to <16 x i32>
 // CHECK-NEXT:    [[TMP3:%.*]] = tail call <16 x i32> @llvm.aie2.vshift.I512.I512(<16 x i32> [[TMP1]], <16 x i32> [[TMP2]], i32 0, i32 1)
@@ -581,8 +579,7 @@ v16int32 test_shiftl_elem(v16int32 v, int s) {
 
 // CHECK-LABEL: @_Z16test_shiftl_elemDv32_tj(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[CONV_I1:%.*]] = and i32 [[S:%.*]], 65535
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i16> @llvm.aie2.vbroadcast16.I512(i32 [[CONV_I1]])
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i16> @llvm.aie2.vbroadcast16.I512(i32 [[S:%.*]])
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <32 x i16> [[V:%.*]] to <16 x i32>
 // CHECK-NEXT:    [[TMP2:%.*]] = bitcast <32 x i16> [[TMP0]] to <16 x i32>
 // CHECK-NEXT:    [[TMP3:%.*]] = tail call <16 x i32> @llvm.aie2.vshift.I512.I512(<16 x i32> [[TMP1]], <16 x i32> [[TMP2]], i32 0, i32 2)
@@ -595,9 +592,7 @@ v32uint16 test_shiftl_elem(v32uint16 v, unsigned int s) {
 
 // CHECK-LABEL: @_Z16test_shiftr_elemDv32_si(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[SEXT:%.*]] = shl i32 [[S:%.*]], 16
-// CHECK-NEXT:    [[CONV_I_I:%.*]] = ashr exact i32 [[SEXT]], 16
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i16> @llvm.aie2.vbroadcast16.I512(i32 [[CONV_I_I]])
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i16> @llvm.aie2.vbroadcast16.I512(i32 [[S:%.*]])
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <32 x i16> [[TMP0]] to <16 x i32>
 // CHECK-NEXT:    [[TMP2:%.*]] = bitcast <32 x i16> [[V:%.*]] to <16 x i32>
 // CHECK-NEXT:    [[TMP3:%.*]] = tail call <16 x i32> @llvm.aie2.vshift.I512.I512(<16 x i32> [[TMP1]], <16 x i32> [[TMP2]], i32 0, i32 62)
@@ -611,8 +606,7 @@ v32int16 test_shiftr_elem(v32int16 v, int s) {
 //
 // CHECK-LABEL: @_Z16test_shiftr_elemDv64_hj(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[CONV_I1:%.*]] = and i32 [[S:%.*]], 255
-// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x i8> @llvm.aie2.vbroadcast8.I512(i32 [[CONV_I1]])
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x i8> @llvm.aie2.vbroadcast8.I512(i32 [[S:%.*]])
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <64 x i8> [[TMP0]] to <16 x i32>
 // CHECK-NEXT:    [[TMP2:%.*]] = bitcast <64 x i8> [[V:%.*]] to <16 x i32>
 // CHECK-NEXT:    [[TMP3:%.*]] = tail call <16 x i32> @llvm.aie2.vshift.I512.I512(<16 x i32> [[TMP1]], <16 x i32> [[TMP2]], i32 0, i32 63)
@@ -993,8 +987,8 @@ char test_ext_elem(v64int8 v, int idx) {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V:%.*]] to <32 x i16>
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2.vextract.elem16.I512(<32 x i16> [[TMP0]], i32 [[IDX:%.*]], i32 1)
-// CHECK-NEXT:    [[CONV_I:%.*]] = trunc i32 [[TMP1]] to i16
-// CHECK-NEXT:    [[TMP2:%.*]] = bitcast i16 [[CONV_I]] to <2 x i8>
+// CHECK-NEXT:    [[CONV_I_I:%.*]] = trunc i32 [[TMP1]] to i16
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast i16 [[CONV_I_I]] to <2 x i8>
 // CHECK-NEXT:    ret <2 x i8> [[TMP2]]
 //
 v2int8 test_ext_v2int8(v64int8 v, int idx) {
@@ -1005,8 +999,8 @@ v2int8 test_ext_v2int8(v64int8 v, int idx) {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[V:%.*]] to <32 x i16>
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.aie2.vextract.elem16.I512(<32 x i16> [[TMP0]], i32 2, i32 1)
-// CHECK-NEXT:    [[CONV_I:%.*]] = trunc i32 [[TMP1]] to i16
-// CHECK-NEXT:    [[TMP2:%.*]] = bitcast i16 [[CONV_I]] to <2 x i8>
+// CHECK-NEXT:    [[CONV_I_I:%.*]] = trunc i32 [[TMP1]] to i16
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast i16 [[CONV_I_I]] to <2 x i8>
 // CHECK-NEXT:    ret <2 x i8> [[TMP2]]
 //
 v2int8 test_ext_v2int8_idx2(v64int8 v) {

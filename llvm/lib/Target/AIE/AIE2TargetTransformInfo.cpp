@@ -12,6 +12,8 @@
 #include "Utils/AIELoopUtils.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/CodeGen/BasicTTIImpl.h"
+#include "llvm/IR/IntrinsicsAIE2.h"
+#include "llvm/Transforms/InstCombine/InstCombiner.h"
 #include "llvm/Transforms/Utils/ScalarEvolutionExpander.h"
 
 using namespace llvm;
@@ -125,4 +127,29 @@ bool AIE2TTIImpl::isProfitableOuterLSR(const Loop &L) const {
   // loop need one for the IV, and one for the upper bound.
   return ConsiderLSROuterLoops.getNumOccurrences() > 0 ? ConsiderLSROuterLoops
                                                        : true;
+}
+
+static std::optional<Instruction *>
+instCombineDemandedBits(InstCombiner &IC, IntrinsicInst &II, unsigned numBits) {
+  KnownBits ScalarKnown(32);
+  if (IC.SimplifyDemandedBits(&II, 0, APInt::getLowBitsSet(32, numBits),
+                              ScalarKnown, 0)) {
+    return &II;
+  }
+
+  return std::nullopt;
+}
+
+std::optional<Instruction *>
+AIE2TTIImpl::instCombineIntrinsic(InstCombiner &IC, IntrinsicInst &II) const {
+  Intrinsic::ID IID = II.getIntrinsicID();
+  switch (IID) {
+  default:
+    break;
+  case Intrinsic::aie2_vbroadcast8_I512:
+    return instCombineDemandedBits(IC, II, 8);
+  case Intrinsic::aie2_vbroadcast16_I512:
+    return instCombineDemandedBits(IC, II, 16);
+  }
+  return std::nullopt;
 }
