@@ -34,18 +34,11 @@
 #include "llvm/InitializePasses.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/PassRegistry.h"
-#include "llvm/Passes/CodeGenPassBuilder.h"
-#include "llvm/Passes/PassBuilder.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Transforms/Scalar.h"
 
 using namespace llvm;
-
-static cl::opt<bool>
-    EnableCustomAliasAnalysis("aie-enable-alias-analysis",
-                              cl::desc("Enable AIE alias analysis pass"),
-                              cl::init(true), cl::Hidden);
 
 static cl::opt<bool>
     EnableStagedRA("aie-staged-ra", cl::Hidden, cl::init(true),
@@ -102,16 +95,10 @@ public:
   void addBlockPlacement() override;
   void addPreLegalizeMachineIR() override;
   void addPreRegBankSelect() override;
-  void addIRPasses() override;
 };
 
 TargetPassConfig *AIE2TargetMachine::createPassConfig(PassManagerBase &PM) {
   return new AIE2PassConfig(*this, PM);
-}
-
-void AIE2TargetMachine::registerDefaultAliasAnalyses(AAManager &AAM) {
-  if (EnableCustomAliasAnalysis)
-    AAM.registerFunctionAnalysis<AIEBaseAA>();
 }
 
 bool AIE2PassConfig::addPreISel() {
@@ -121,26 +108,6 @@ bool AIE2PassConfig::addPreISel() {
 }
 
 void AIE2PassConfig::addPreEmitPass() {}
-
-void AIE2PassConfig::addIRPasses() {
-  // Always expand atomic operations, we don't deal with atomicrmw or cmpxchg
-  // ourselves.
-  addPass(createAtomicExpandLegacyPass());
-
-  if (TM->getOptLevel() > CodeGenOptLevel::None) {
-
-    if (EnableCustomAliasAnalysis) {
-      addPass(createAIEBaseAAWrapperPass());
-      addPass(
-          createExternalAAWrapperPass([](Pass &P, Function &, AAResults &AAR) {
-            if (auto *WrapperPass =
-                    P.getAnalysisIfAvailable<AIEBaseAAWrapperPass>())
-              AAR.addAAResult(WrapperPass->getResult());
-          }));
-    }
-  }
-  TargetPassConfig::addIRPasses();
-}
 
 void AIE2PassConfig::addPreLegalizeMachineIR() {
   addPass(createAIEAddressSpaceFlattening());
@@ -283,20 +250,4 @@ bool AIE2PassConfig::addInstSelector() {
   if (AIEDumpArtifacts)
     addPass(createMachineFunctionDumperPass(/*Suffix=*/"after-isel"));
   return false;
-}
-
-void AIE2TargetMachine::registerPassBuilderCallbacks(
-    PassBuilder &PB, bool PopulateClassToPassNames) {
-  if (EnableCustomAliasAnalysis) {
-    PB.registerAnalysisRegistrationCallback([](FunctionAnalysisManager &FAM) {
-      FAM.registerPass([&] { return AIEBaseAA(); });
-    });
-    PB.registerParseAACallback([](StringRef AAName, AAManager &AAM) {
-      if (AAName == "aie-aa") {
-        AAM.registerFunctionAnalysis<AIEBaseAA>();
-        return true;
-      }
-      return false;
-    });
-  }
 }
