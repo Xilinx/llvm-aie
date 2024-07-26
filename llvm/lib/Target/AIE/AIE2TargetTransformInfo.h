@@ -65,6 +65,8 @@ public:
                                 HardwareLoopInfo &HWLoopInfo);
 
   bool isProfitableOuterLSR(const Loop &L) const;
+  std::optional<Instruction *> instCombineIntrinsic(InstCombiner &IC,
+                                                    IntrinsicInst &II) const;
 };
 
 } // end namespace llvm
