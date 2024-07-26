@@ -26,9 +26,9 @@
 
 ; AIE-O123-NEXT:AIE complex addressing modes based Alias Analysis
 ; AIE-O123-NEXT:External Alias Analysis
+; AIE-O123-NEXT:Assumption Cache Tracker
 ; AIE-O123-NEXT:Type-Based Alias Analysis
 ; AIE-O123-NEXT:Scoped NoAlias Alias Analysis
-; AIE-O123-NEXT:Assumption Cache Tracker
 ; AIE-O123-NEXT:Profile summary info
 
 ; AIE-O0123-NEXT:Create Garbage Collector Module Metadata
@@ -47,7 +47,7 @@
 ; AIE-O0123-NEXT:      Expand large div/rem
 ; AIE-O0123-NEXT:      Expand large fp convert
 ; AIE-O0123-NEXT:      Expand Atomic instructions
-
+; AIE-O123-NEXT:      Infer address spaces
 ; AIE-O123-NEXT:      Dominator Tree Construction
 ; AIE-O123-NEXT:      Basic Alias Analysis (stateless AA impl)
 ; AIE-O123-NEXT:      Natural Loop Information

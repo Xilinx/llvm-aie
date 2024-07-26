@@ -45,6 +45,8 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Transforms/IPO/GlobalDCE.h"
 #include "llvm/Transforms/IPO/Internalize.h"
+#include "llvm/Transforms/Scalar.h"
+
 using namespace llvm;
 
 static cl::opt<bool>
@@ -155,6 +157,8 @@ void AIEPassConfig::addIRPasses() {
           }));
     }
   }
+  if (TM->getOptLevel() > CodeGenOptLevel::None)
+    addPass(createInferAddressSpacesPass());
   TargetPassConfig::addIRPasses();
 }
 
