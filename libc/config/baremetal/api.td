@@ -1,15 +1,45 @@
-//===- api.td ----------------------------------------------*- tablegen -*-===//
-//
-// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
-// See https://llvm.org/LICENSE.txt for license information.
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-//
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-//
-//===----------------------------------------------------------------------===//
 include "config/public_api.td"
 
 include "spec/stdc.td"
+include "spec/stdc_ext.td"
+include "spec/bsd_ext.td"
+include "spec/llvm_libc_stdfix_ext.td"
+
+def AssertMacro : MacroDef<"assert"> {
+  let Defn = [{
+    #undef assert
+
+    #ifdef NDEBUG
+    #define assert(e) (void)0
+    #else
+
+    #ifdef __cplusplus
+    extern "C"
+    #endif
+    _Noreturn void __assert_fail(const char *, const char *, unsigned, const char *) __NOEXCEPT;
+
+    #define assert(e)  \
+      ((e) ? (void)0 : __assert_fail(#e, __FILE__, __LINE__, __PRETTY_FUNCTION__))
+
+    #endif
+  }];
+}
+
+def StaticAssertMacro : MacroDef<"static_assert"> {
+  let Defn = [{
+    #ifndef __cplusplus
+    #undef static_assert
+    #define static_assert _Static_assert
+    #endif
+  }];
+}
+
+def AssertAPI : PublicAPI<"assert.h"> {
+  let Macros = [
+    AssertMacro,
+    StaticAssertMacro,
+  ];
+}
 
 def CTypeAPI : PublicAPI<"ctype.h"> {
 }
@@ -22,6 +52,14 @@ def IntTypesAPI : PublicAPI<"inttypes.h"> {
   let Types = ["imaxdiv_t"];
 }
 
+def MathAPI : PublicAPI<"math.h"> {
+  let Types = ["double_t", "float_t"];
+}
+
+def StdIOAPI : PublicAPI<"stdio.h"> {
+  let Types = ["size_t"];
+}
+
 def StdlibAPI : PublicAPI<"stdlib.h"> {
   let Types = [
     "div_t",
@@ -30,7 +68,6 @@ def StdlibAPI : PublicAPI<"stdlib.h"> {
     "size_t",
     "__bsearchcompare_t",
     "__qsortcompare_t",
-    "__atexithandler_t",
   ];
 }
 
@@ -38,14 +75,15 @@ def StringAPI : PublicAPI<"string.h"> {
   let Types = ["size_t"];
 }
 
-def FenvAPI: PublicAPI<"fenv.h"> {
-  let Macros = [
+def TimeAPI : PublicAPI<"time.h"> {
+  let Types = [
+    "clock_t",
+    "time_t",
+    "struct tm",
+    "struct timespec",
   ];
-  let Types = ["fenv_t", "fexcept_t"];
 }
 
-def MathAPI : PublicAPI<"math.h"> {
-  let Macros = [
-  ];
-  let Types = ["double_t", "float_t"];
+def UCharAPI : PublicAPI<"uchar.h"> {
+  let Types = ["mbstate_t"];
 }

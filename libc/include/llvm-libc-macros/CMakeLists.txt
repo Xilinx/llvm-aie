@@ -68,6 +68,12 @@ add_macro_header(
 )
 
 add_macro_header(
+  stdint_macros
+  HDR
+    stdint-macros.h
+)
+
+add_macro_header(
   float_macros
   HDR
     float-macros.h
@@ -135,6 +141,12 @@ add_macro_header(
   sys_auxv_macros
   HDR
     sys-auxv-macros.h
+)
+
+add_macro_header(
+  sys_epoll_macros
+  HDR
+    sys-epoll-macros.h
 )
 
 add_macro_header(

@@ -1,11 +1,9 @@
+
 //===- GlobalISelEmitter.cpp - Generate an instruction selector -----------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-//
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
-// affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -32,15 +30,15 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include "CodeGenDAGPatterns.h"
-#include "CodeGenInstruction.h"
-#include "CodeGenIntrinsics.h"
-#include "CodeGenRegisters.h"
-#include "CodeGenTarget.h"
-#include "GlobalISelMatchTable.h"
-#include "GlobalISelMatchTableExecutorEmitter.h"
-#include "InfoByHwMode.h"
-#include "SubtargetFeatureInfo.h"
+#include "Basic/CodeGenIntrinsics.h"
+#include "Common/CodeGenDAGPatterns.h"
+#include "Common/CodeGenInstruction.h"
+#include "Common/CodeGenRegisters.h"
+#include "Common/CodeGenTarget.h"
+#include "Common/GlobalISel/GlobalISelMatchTable.h"
+#include "Common/GlobalISel/GlobalISelMatchTableExecutorEmitter.h"
+#include "Common/InfoByHwMode.h"
+#include "Common/SubtargetFeatureInfo.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGenTypes/LowLevelType.h"
 #include "llvm/CodeGenTypes/MachineValueType.h"
@@ -292,25 +290,20 @@ static std::string getMangledRootDefName(StringRef DefOperandName) {
 //===- GlobalISelEmitter class --------------------------------------------===//
 
 static Expected<LLTCodeGen> getInstResultType(const TreePatternNode &Dst,
-                                              const CodeGenDAGPatterns &CGP) {
-  const Record *Inst = Dst.getOperator();
-  assert(Inst->isSubClassOf("Instruction"));
-  CodeGenInstruction &InstInfo = CGP.getTargetInfo().getInstruction(Inst);
+                                              const CodeGenTarget &Target) {
+  // While we allow more than one output (both implicit and explicit defs)
+  // below, we only expect one explicit def here.
+  assert(Dst.getOperator()->isSubClassOf("Instruction"));
+  CodeGenInstruction &InstInfo = Target.getInstruction(Dst.getOperator());
+  if (!InstInfo.Operands.NumDefs)
+    return failedImport("Dst pattern child needs a def");
 
-  // This mimics the handling of implicit defs in instructions from
-  // GetNumNodeResults in CodeGenDAGPatterns.cpp
-  // TLDR: For reasons I ignore, implicit defs are counted as 1, irrelevant of
-  // their actual number.
-  int AccountedImplicitDefs = 0;
-  if (InstInfo.HasOneImplicitDefWithKnownVT(CGP.getTargetInfo()) != MVT::Other)
-    ++AccountedImplicitDefs;
-
-  // The instruction used as operand might have implicit defs, only count
-  // explicit ones as results.
   ArrayRef<TypeSetByHwMode> ChildTypes = Dst.getExtTypes();
-  if (ChildTypes.size() - AccountedImplicitDefs != 1)
-    return failedImport("Dst pattern child has multiple results");
+  if (ChildTypes.size() < 1)
+    return failedImport("Dst pattern child has no result");
 
+  // If there are multiple results, just take the first one (this is how
+  // SelectionDAG does it).
   std::optional<LLTCodeGen> MaybeOpTy;
   if (ChildTypes.front().isMachineValueType()) {
     MaybeOpTy = MVTToLLT(ChildTypes.front().getMachineValueType().SimpleTy);
@@ -414,9 +407,11 @@ private:
   createInstructionRenderer(action_iterator InsertPt, RuleMatcher &M,
                             const TreePatternNode &Dst);
 
-  Expected<action_iterator> importExplicitDefRenderers(
-      action_iterator InsertPt, RuleMatcher &M, BuildMIAction &DstMIBuilder,
-      const TreePatternNode &Src, const TreePatternNode &Dst);
+  Expected<action_iterator>
+  importExplicitDefRenderers(action_iterator InsertPt, RuleMatcher &M,
+                             BuildMIAction &DstMIBuilder,
+                             const TreePatternNode &Src,
+                             const TreePatternNode &Dst, unsigned Start = 0);
 
   Expected<action_iterator> importExplicitUseRenderers(
       action_iterator InsertPt, RuleMatcher &M, BuildMIAction &DstMIBuilder,
@@ -1238,7 +1233,7 @@ Expected<action_iterator> GlobalISelEmitter::importExplicitUseRenderer(
     }
 
     if (DstChild.getOperator()->isSubClassOf("Instruction")) {
-      auto OpTy = getInstResultType(DstChild, CGP);
+      auto OpTy = getInstResultType(DstChild, Target);
       if (!OpTy)
         return OpTy.takeError();
 
@@ -1385,6 +1380,14 @@ GlobalISelEmitter::createAndImportSubInstructionRenderer(
   // Assign the result to TempReg.
   DstMIBuilder.addRenderer<TempRegRenderer>(TempRegID, true);
 
+  // Handle additional (ignored) results.
+  if (DstMIBuilder.getCGI()->Operands.NumDefs > 1) {
+    InsertPtOrError = importExplicitDefRenderers(
+        std::prev(*InsertPtOrError), M, DstMIBuilder, Src, Dst, /*Start=*/1);
+    if (auto Error = InsertPtOrError.takeError())
+      return std::move(Error);
+  }
+
   InsertPtOrError = importExplicitUseRenderers(InsertPtOrError.get(), M,
                                                DstMIBuilder, Dst, Src);
   if (auto Error = InsertPtOrError.takeError())
@@ -1513,14 +1516,14 @@ Expected<action_iterator> GlobalISelEmitter::createInstructionRenderer(
 
 Expected<action_iterator> GlobalISelEmitter::importExplicitDefRenderers(
     action_iterator InsertPt, RuleMatcher &M, BuildMIAction &DstMIBuilder,
-    const TreePatternNode &Src, const TreePatternNode &Dst) {
+    const TreePatternNode &Src, const TreePatternNode &Dst, unsigned Start) {
   const CodeGenInstruction *DstI = DstMIBuilder.getCGI();
   const unsigned SrcNumDefs = Src.getExtTypes().size();
   const unsigned DstNumDefs = DstI->Operands.NumDefs;
   if (DstNumDefs == 0)
     return InsertPt;
 
-  for (unsigned I = 0; I < SrcNumDefs; ++I) {
+  for (unsigned I = Start; I < SrcNumDefs; ++I) {
     std::string OpName = getMangledRootDefName(DstI->Operands[I].Name);
     // CopyRenderer saves a StringRef, so cannot pass OpName itself -
     // let's use a string with an appropriate lifetime.
@@ -1573,7 +1576,7 @@ Expected<action_iterator> GlobalISelEmitter::importExplicitUseRenderers(
     if (!ValChild.isLeaf()) {
       // We really have to handle the source instruction, and then insert a
       // copy from the subregister.
-      auto ExtractSrcTy = getInstResultType(ValChild, CGP);
+      auto ExtractSrcTy = getInstResultType(ValChild, Target);
       if (!ExtractSrcTy)
         return ExtractSrcTy.takeError();
 
@@ -1791,10 +1794,11 @@ GlobalISelEmitter::inferRegClassFromPattern(const TreePatternNode &N) {
     return getRegClassFromLeaf(N);
 
   // We don't have a leaf node, so we have to try and infer something. Check
-  // that we have an instruction that we an infer something from.
+  // that we have an instruction that we can infer something from.
 
-  // Only handle things that produce a single type.
-  if (N.getNumTypes() != 1)
+  // Only handle things that produce at least one value (if multiple values,
+  // just take the first one).
+  if (N.getNumTypes() < 1)
     return std::nullopt;
   Record *OpRec = N.getOperator();
 
@@ -1805,8 +1809,6 @@ GlobalISelEmitter::inferRegClassFromPattern(const TreePatternNode &N) {
   // Don't want to try and infer things when there could potentially be more
   // than one candidate register class.
   auto &Inst = Target.getInstruction(OpRec);
-  if (Inst.Operands.NumDefs > 1)
-    return std::nullopt;
 
   // Handle any special-case instructions which we can safely infer register
   // classes from.

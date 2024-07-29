@@ -340,7 +340,7 @@ public:
     case MM_WinCOFF:
       return ".L";
     case MM_GOFF:
-      return "@";
+      return "L#";
     case MM_Mips:
       return "$";
     case MM_MachO:
