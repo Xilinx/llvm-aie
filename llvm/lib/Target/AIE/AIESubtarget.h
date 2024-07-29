@@ -93,8 +93,10 @@ public:
   // If a pair of operands is associated with the schedule dependency, DefOpIdx
   // and UseOpIdx are the indices of the operands in Def and Use, respectively.
   // Otherwise, either may be -1.
-  void adjustSchedDependency(SUnit *Def, int DefOpIdx, SUnit *Use, int UseOpIdx,
-                             SDep &Dep) const override {
+  void
+  adjustSchedDependency(SUnit *Def, int DefOpIdx, SUnit *Use, int UseOpIdx,
+                        SDep &Dep,
+                        const TargetSchedModel *SchedModel) const override {
     AIEBaseSubtarget::adjustSchedDependency(InstrItins, Def, DefOpIdx, Use,
                                             UseOpIdx, Dep);
   }

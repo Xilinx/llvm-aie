@@ -29,11 +29,11 @@ define void @call_sparse() {
   ; CHECK-NEXT:   [[BUILD_VECTOR2:%[0-9]+]]:_(<32 x s16>) = G_BUILD_VECTOR [[C3]](s16), [[C3]](s16), [[C3]](s16), [[C3]](s16), [[C3]](s16), [[C3]](s16), [[C3]](s16), [[C3]](s16), [[C3]](s16), [[C3]](s16), [[C3]](s16), [[C3]](s16), [[C3]](s16), [[C3]](s16), [[C3]](s16), [[C3]](s16), [[C3]](s16), [[C3]](s16), [[C3]](s16), [[C3]](s16), [[C3]](s16), [[C3]](s16), [[C3]](s16), [[C3]](s16), [[C3]](s16), [[C3]](s16), [[C3]](s16), [[C3]](s16), [[C3]](s16), [[C3]](s16), [[C3]](s16), [[C3]](s16)
   ; CHECK-NEXT:   ADJCALLSTACKUP 80, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $sp
-  ; CHECK-NEXT:   [[C4:%[0-9]+]]:_(s32) = G_CONSTANT i32 -64
-  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C4]](s32)
+  ; CHECK-NEXT:   [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 -64
+  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C4]](s20)
   ; CHECK-NEXT:   G_STORE [[BUILD_VECTOR]](<64 x s8>), [[PTR_ADD]](p0) :: (store (<64 x s8>) into stack - 64, align 32)
-  ; CHECK-NEXT:   [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 -96
-  ; CHECK-NEXT:   [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C5]](s32)
+  ; CHECK-NEXT:   [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 -96
+  ; CHECK-NEXT:   [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C5]](s20)
   ; CHECK-NEXT:   G_STORE [[C1]](s128), [[PTR_ADD1]](p0) :: (store (s128) into stack - 96, align 32)
   ; CHECK-NEXT:   $x0 = COPY [[BUILD_VECTOR]](<64 x s8>)
   ; CHECK-NEXT:   $q0 = COPY [[C1]](s128)

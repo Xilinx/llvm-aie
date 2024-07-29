@@ -24,8 +24,9 @@ body:             |
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:_(s32) = COPY $r1
   ; CHECK-NEXT:   [[ADD:%[0-9]+]]:_(s32) = G_ADD [[COPY]], [[COPY1]]
   ; CHECK-NEXT:   [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(ult), [[ADD]](s32), [[COPY1]]
+  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:_(s32) = COPY [[ADD]](s32)
   ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 -1
-  ; CHECK-NEXT:   [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[ICMP]](s32), [[C]], [[ADD]]
+  ; CHECK-NEXT:   [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[ICMP]](s32), [[C]], [[COPY2]]
   ; CHECK-NEXT:   $r0 = COPY [[SELECT]](s32)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
@@ -83,11 +84,12 @@ body:             |
   ; CHECK-NEXT:   [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[ADD]](s32), [[COPY]]
   ; CHECK-NEXT:   [[ICMP1:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[COPY1]](s32), [[C]]
   ; CHECK-NEXT:   [[XOR:%[0-9]+]]:_(s32) = G_XOR [[ICMP1]], [[ICMP]]
+  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:_(s32) = COPY [[ADD]](s32)
   ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 31
-  ; CHECK-NEXT:   [[ASHR:%[0-9]+]]:_(s32) = G_ASHR [[ADD]], [[C1]](s32)
+  ; CHECK-NEXT:   [[ASHR:%[0-9]+]]:_(s32) = G_ASHR [[COPY2]], [[C1]](s32)
   ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 -2147483648
   ; CHECK-NEXT:   [[ADD1:%[0-9]+]]:_(s32) = G_ADD [[ASHR]], [[C2]]
-  ; CHECK-NEXT:   [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[XOR]](s32), [[ADD1]], [[ADD]]
+  ; CHECK-NEXT:   [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[XOR]](s32), [[ADD1]], [[COPY2]]
   ; CHECK-NEXT:   $r0 = COPY [[SELECT]](s32)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
@@ -117,11 +119,12 @@ body:             |
   ; CHECK-NEXT:   [[ICMP:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[SUB]](s32), [[COPY]]
   ; CHECK-NEXT:   [[ICMP1:%[0-9]+]]:_(s32) = G_ICMP intpred(sgt), [[COPY1]](s32), [[C]]
   ; CHECK-NEXT:   [[XOR:%[0-9]+]]:_(s32) = G_XOR [[ICMP1]], [[ICMP]]
+  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:_(s32) = COPY [[SUB]](s32)
   ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 31
-  ; CHECK-NEXT:   [[ASHR:%[0-9]+]]:_(s32) = G_ASHR [[SUB]], [[C1]](s32)
+  ; CHECK-NEXT:   [[ASHR:%[0-9]+]]:_(s32) = G_ASHR [[COPY2]], [[C1]](s32)
   ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 -2147483648
   ; CHECK-NEXT:   [[ADD:%[0-9]+]]:_(s32) = G_ADD [[ASHR]], [[C2]]
-  ; CHECK-NEXT:   [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[XOR]](s32), [[ADD]], [[SUB]]
+  ; CHECK-NEXT:   [[SELECT:%[0-9]+]]:_(s32) = G_SELECT [[XOR]](s32), [[ADD]], [[COPY2]]
   ; CHECK-NEXT:   $r0 = COPY [[SELECT]](s32)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:

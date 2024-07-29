@@ -18,6 +18,7 @@
 #include "AIEBaseSubtarget.h"
 #include "AIEBundle.h"
 #include "AIEHazardRecognizer.h"
+#include "llvm/CodeGen/LivePhysRegs.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/CodeGen/ScheduleHazardRecognizer.h"

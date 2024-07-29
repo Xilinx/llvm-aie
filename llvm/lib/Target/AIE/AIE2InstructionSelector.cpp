@@ -1464,7 +1464,7 @@ unsigned getLoadStoreSize(const MachineInstr &MI) {
   // We are guaranteed to have MMOs during Instruction Selection.
   // We need them to select the correct instruction when they depend on the
   // size in memory and not on the register size. E.g.: part word stores.
-  return (*MI.memoperands_begin())->getSizeInBits();
+  return (*MI.memoperands_begin())->getSizeInBits().getValue();
 }
 
 template <unsigned MaxPow2, unsigned Step>

@@ -18,8 +18,8 @@ define void @call_v2int32() {
   ; CHECK-NEXT:   [[BUILD_VECTOR:%[0-9]+]]:_(<2 x s32>) = G_BUILD_VECTOR [[C]](s32), [[C]](s32)
   ; CHECK-NEXT:   ADJCALLSTACKUP 8, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $sp
-  ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 -8
-  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C1]](s32)
+  ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 -8
+  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C1]](s20)
   ; CHECK-NEXT:   G_STORE [[BUILD_VECTOR]](<2 x s32>), [[PTR_ADD]](p0) :: (store (<2 x s32>) into stack - 8, basealign 32)
   ; CHECK-NEXT:   $l0 = COPY [[BUILD_VECTOR]](<2 x s32>)
   ; CHECK-NEXT:   $l1 = COPY [[BUILD_VECTOR]](<2 x s32>)
@@ -46,8 +46,8 @@ define void @call_v4int16() {
   ; CHECK-NEXT:   [[BUILD_VECTOR:%[0-9]+]]:_(<4 x s16>) = G_BUILD_VECTOR [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16)
   ; CHECK-NEXT:   ADJCALLSTACKUP 8, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $sp
-  ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 -8
-  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C1]](s32)
+  ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 -8
+  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C1]](s20)
   ; CHECK-NEXT:   G_STORE [[BUILD_VECTOR]](<4 x s16>), [[PTR_ADD]](p0) :: (store (<4 x s16>) into stack - 8, basealign 32)
   ; CHECK-NEXT:   $l0 = COPY [[BUILD_VECTOR]](<4 x s16>)
   ; CHECK-NEXT:   $l1 = COPY [[BUILD_VECTOR]](<4 x s16>)
@@ -74,8 +74,8 @@ define void @call_v8int8() {
   ; CHECK-NEXT:   [[BUILD_VECTOR:%[0-9]+]]:_(<8 x s8>) = G_BUILD_VECTOR [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8)
   ; CHECK-NEXT:   ADJCALLSTACKUP 8, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $sp
-  ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 -8
-  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C1]](s32)
+  ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 -8
+  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C1]](s20)
   ; CHECK-NEXT:   G_STORE [[BUILD_VECTOR]](<8 x s8>), [[PTR_ADD]](p0) :: (store (<8 x s8>) into stack - 8, basealign 32)
   ; CHECK-NEXT:   $l0 = COPY [[BUILD_VECTOR]](<8 x s8>)
   ; CHECK-NEXT:   $l1 = COPY [[BUILD_VECTOR]](<8 x s8>)
