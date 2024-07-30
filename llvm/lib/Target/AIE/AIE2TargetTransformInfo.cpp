@@ -21,12 +21,12 @@ using namespace llvm;
 static cl::opt<bool>
     EnableAIEHardwareLoops("enable-aie-hardware-loops",
                            cl::desc("Enable hardware loops on AIE"),
-                           cl::init(false), cl::Hidden);
+                           cl::init(true), cl::Hidden);
 
 static cl::opt<bool>
     AllowAIEZOL("enable-aie-zero-overhead-loops",
                 cl::desc("Enable true zero overhead hardware loops on AIE"),
-                cl::init(false), cl::Hidden);
+                cl::init(true), cl::Hidden);
 
 static cl::opt<int> MinIterCountHLReject(
     "aie-hardware-loops-minitercount", cl::Hidden, cl::init(3),

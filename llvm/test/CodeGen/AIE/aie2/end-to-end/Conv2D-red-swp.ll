@@ -5,9 +5,9 @@
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
 ; (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
-; RUN: llc -O2 -mtriple=aie2 --enable-pipeliner=1 %s -o - | FileCheck %s --check-prefix=DCL
-; RUN: llc -O2 -mtriple=aie2 --enable-pipeliner=1 --enable-aie-hardware-loops=true \
-; RUN:    --enable-aie-zero-overhead-loops=true %s -o - | FileCheck %s --check-prefix=ZOL
+; RUN: llc -O2 -mtriple=aie2 --enable-pipeliner=1 --enable-aie-hardware-loops=false \
+; RUN:     --enable-aie-zero-overhead-loops=false %s -o - | FileCheck %s --check-prefix=DCL
+; RUN: llc -O2 -mtriple=aie2 --enable-pipeliner=1 %s -o - | FileCheck %s --check-prefix=ZOL
 ; RUN: llc -O2 -mtriple=aie2 --enable-pipeliner=0 %s -o - --debug-only=machine-scheduler  \
 ; RUN:    2>&1 | %imisched -d - \
 ; RUN:    | FileCheck %s --check-prefix=SCHED-DUMP
