@@ -5,7 +5,7 @@
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
 ; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-; RUN: llc -O2 -mtriple=aie2 --issue-limit=1 --enable-aie-hardware-loops \
+; RUN: llc -O2 -mtriple=aie2 --issue-limit=1 --enable-aie-zero-overhead-loops=false \
 ; RUN:    --aie-force-hl-gen=true %s -o - | FileCheck %s
 
 define void @sibling(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef %size, i32 noundef %size2) {
