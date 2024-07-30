@@ -28,7 +28,7 @@ declare <16 x i64> @llvm.aie2.v32acc32()
 ; AA:  NoAlias:      <8 x i32> addrspace(5)* %in_ptr0.addr.058.ascast, <8 x i32> addrspace(5)* %in_ptr1.addr.057.ascast
 ; AA:  NoAlias:      <8 x i32> addrspace(5)* %in_ptr0.addr.058.ascast, <32 x i8> addrspace(6)* %out_ptr.addr.056.ascast
 ; AA:  NoAlias:      <8 x i32> addrspace(5)* %in_ptr1.addr.057.ascast, <32 x i8> addrspace(6)* %out_ptr.addr.056.ascast
-; AA:  MayAlias:     <8 x i32> addrspace(5)* %ascast.13, <8 x i32> addrspace(5)* %in_ptr0.addr.058.ascast
+; AA:  NoAlias:      <8 x i32> addrspace(5)* %ascast.13, <8 x i32> addrspace(5)* %in_ptr0.addr.058.ascast
 ; AA:  NoAlias:      <8 x i32> addrspace(5)* %ascast.13, <8 x i32> addrspace(5)* %in_ptr1.addr.057.ascast
 ; AA:  NoAlias:      <8 x i32> addrspace(5)* %ascast.13, <32 x i8> addrspace(6)* %out_ptr.addr.056.ascast
 ; AA:  NoAlias:      <8 x i32> addrspace(5)* %ascast.add.ptr.i, <8 x i32> addrspace(5)* %in_ptr0.addr.058.ascast
