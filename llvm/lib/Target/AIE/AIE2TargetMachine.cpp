@@ -200,6 +200,7 @@ bool AIE2PassConfig::addRegAssignAndRewriteOptimized() {
     addPass(createAIESuperRegRewriter());
   }
   addPass(createGreedyRegisterAllocator());
+  addPass(createAIEWawRegRewriter());
   addPass(createVirtRegRewriter());
 
   return true;
