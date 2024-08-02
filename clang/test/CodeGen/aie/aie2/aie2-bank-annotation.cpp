@@ -9,7 +9,7 @@
 //
 //===----------------------------------------------------------------------===//
 // Test to check the bank annotation for AIE2, specifically the translation of __aie_dm_resource_* to the correct address space.
-// RUN: %clang -O1 --target=aie2 -S -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang -O1 --target=aie2 -nostdlibinc -S -emit-llvm %s -o - | FileCheck %s
 
 // CHECK-LABEL: define dso_local noundef i32 @_Z6squarePU3AS5iS0_(
 // CHECK-SAME: ptr addrspace(5) nocapture readonly [[NUM:%.*]], ptr addrspace(5) nocapture writeonly [[MEM:%.*]]) local_unnamed_addr #[[ATTR0:[0-9]+]] {

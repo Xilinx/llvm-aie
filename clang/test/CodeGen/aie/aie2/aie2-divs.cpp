@@ -6,7 +6,7 @@
 //
 // (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 
-// RUN: %clang -O2 %s --target=aie2 -S -emit-llvm -o - | FileCheck %s
+// RUN: %clang -O2 %s --target=aie2 -nostdlibinc -S -emit-llvm -o - | FileCheck %s
 // CHECK-LABEL: @_Z3divii(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call { i32, i32 } @llvm.aie2.divs(i32 [[A:%.*]], i32 0, i32 [[B:%.*]])

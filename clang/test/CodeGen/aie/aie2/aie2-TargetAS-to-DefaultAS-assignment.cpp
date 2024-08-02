@@ -9,7 +9,7 @@
 //
 //===----------------------------------------------------------------------===//
 // Test expression where pointer with AS is assigned to pointer with Default AS.
-// RUN: %clang -O1 --target=aie2 -S -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang -O1 --target=aie2 -nostdlibinc -S -emit-llvm %s -o - | FileCheck %s
 
 // CHECK-LABEL: define dso_local noundef i32 @_Z29check_assignment_toDefault_ASPU3AS6iPi(
 // CHECK-SAME: ptr addrspace(6) nocapture readonly [[NUM:%.*]], ptr nocapture writeonly [[MEM:%.*]]) local_unnamed_addr #[[ATTR0:[0-9]+]] {

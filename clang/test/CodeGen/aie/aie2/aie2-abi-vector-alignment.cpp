@@ -8,7 +8,7 @@
 // (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
-// RUN: %clang -target aie2  -fsyntax-only %s -o -
+// RUN: %clang -target aie2 -nostdlibinc -fsyntax-only %s -o -
 
 #define VECTOR_ALIGN_16 16
 #define VECTOR_ALIGN_32 32

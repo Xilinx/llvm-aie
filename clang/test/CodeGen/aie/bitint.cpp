@@ -9,7 +9,7 @@
 //
 //===----------------------------------------------------------------------===//
 //RUN: %clang --target=aie -S -emit-llvm %s -o - | FileCheck %s
-//RUN: %clang --target=aie2 -S -emit-llvm %s -o - | FileCheck %s
+//RUN: %clang --target=aie2 -nostdlibinc -S -emit-llvm %s -o - | FileCheck %s
 //
 // CHECK-LABEL: @_Z12bitint2_testDU2_(
 // CHECK-NEXT:  entry:
