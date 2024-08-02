@@ -51,20 +51,8 @@ AIEBasePipelinerLoopInfo::AIEBasePipelinerLoopInfo(MachineInstr *EndLoop,
     : TII(TII), MRI(EndLoop->getMF()->getRegInfo()), EndLoop(EndLoop),
       LoopBlock(EndLoop->getParent()) {
 
-  const BasicBlock *BBLK = LoopBlock->getBasicBlock();
-  if (BBLK == nullptr)
-    return;
-
-  const Instruction *TI = BBLK->getTerminator();
-  if (TI == nullptr)
-    return;
-
-  MDNode *LoopID = TI->getMetadata(LLVMContext::MD_loop);
-  if (LoopID == nullptr)
-    return;
-
   std::optional<int64_t> ParsedMinTripCount =
-      AIELoopUtils::getMinTripCount(LoopID);
+      AIELoopUtils::getMinTripCount(*LoopBlock);
   if (ParsedMinTripCount)
     MinTripCount = *ParsedMinTripCount;
 }
