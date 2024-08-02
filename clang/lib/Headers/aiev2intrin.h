@@ -44,6 +44,7 @@
 #include "aiev2_addr.h"
 #include "aiev2_core.h"
 #include "aiev2_vld_sparse.h"
+#include "aiev2_aie_api_compat.h"
 // clang-format on
 #endif /* __cplusplus */
 
@@ -68,5 +69,20 @@ write_tm(uint32 regVal, uint32 regAddr, uint32 TMAddrSpaceStart = 0x80000) {
 }
 
 #endif /* __cplusplus && !(__AIECC__DISABLE_READ_WRITE_TM) */
+
+INTRINSIC(float) as_float(int x) { return __builtin_bit_cast(float, x); }
+INTRINSIC(int) as_int32(float x) { return __builtin_bit_cast(int, x); }
+INTRINSIC(long long) as_int64(double x) {
+  return __builtin_bit_cast(long long, x);
+}
+INTRINSIC(double) as_double(long long x) {
+  return __builtin_bit_cast(double, x);
+}
+INTRINSIC(bfloat16) as_bfloat16(short x) {
+  return __builtin_bit_cast(bfloat16, x);
+}
+
+// FIXME: this belongs to libc's stdio.h
+void printf(const char *__restrict, ...);
 
 #endif /* __AIEV2INTRIN_H */
