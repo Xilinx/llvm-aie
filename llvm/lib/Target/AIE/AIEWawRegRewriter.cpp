@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/MachineBlockFrequencyInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/SlotIndexes.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
@@ -101,16 +102,19 @@ bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
     Register Reg = KeyValuePair.first->getReg();
     const std::set<MCPhysReg> &AlternativePhyRegs = KeyValuePair.second;
 
-    LLVM_DEBUG(dbgs() << "\nAnalysing " << printReg(Reg, &TRI, 0, &MRI) << ":"
-                      << printRegClassOrBank(Reg, MRI, &TRI) << " ";
-               KeyValuePair.first->getParent()->print(dbgs()); dbgs());
+    LLVM_DEBUG(
+        dbgs() << "\nAnalysing: MBB"
+               << KeyValuePair.first->getParent()->getParent()->getName();
+        dbgs() << "\n     " << printReg(Reg, &TRI, 0, &MRI) << ":"
+               << printRegClassOrBank(Reg, MRI, &TRI) << " ";
+        KeyValuePair.first->getParent()->print(dbgs()););
     // iterate RC and allocate first found reg that does not interfere
     for (const MCPhysReg &PhysReg : AlternativePhyRegs) {
       const llvm::LiveInterval &LI = LIS.getInterval(Reg);
       LiveRegMatrix::InterferenceKind IK = LRM.checkInterference(LI, PhysReg);
       if (IK == llvm::LiveRegMatrix::IK_Free &&
           AlreadyReplaced.end() == find(AlreadyReplaced, PhysReg)) {
-        LLVM_DEBUG(dbgs() << "Potential WAR Issue: Virtual Register "
+        LLVM_DEBUG(dbgs() << "     Potential WAR Issue: Virtual Register "
                           << llvm::Register::virtReg2Index(Reg)
                           << " will replace " << TRI.getName(VRM.getPhys(Reg))
                           << " with " << printReg(PhysReg, &TRI, 0, &MRI)
@@ -138,6 +142,7 @@ AIEWawRegRewriter::getWAR_RenameRegs(MachineFunction const &MF,
                                      const AIEBaseRegisterInfo *TRI,
                                      const MachineRegisterInfo *MRI,
                                      const LiveIntervals &LIS) const {
+  MF.dump();
   std::map<const MachineOperand *, std::set<MCPhysReg>> PriorityRenameRegs;
   for (const MachineBasicBlock &MBB : MF) {
     // collect any register, which that are redefined within te same BB
@@ -150,6 +155,32 @@ AIEWawRegRewriter::getWAR_RenameRegs(MachineFunction const &MF,
       for (const MachineInstr &MI : MBB) {
         const MCInstrDesc &MCID = MI.getDesc();
         MI.dump();
+        if (MI.isCopy()) {
+          assert(
+              MI.getNumOperands() == 2 &&
+              "Copy MI does not have 2 operands, Naive Copy Elimination will "
+              "not work! Please fix.");
+          Register DstReg = MI.getOperand(0).getReg();
+          Register SrcReg = MI.getOperand(1).getReg();
+          MCRegister DstPhyReg, SrcPhyReg;
+          if (DstReg.isVirtual())
+            DstPhyReg = VRM.getPhys(DstReg);
+          else
+            DstPhyReg = DstReg;
+
+          if (SrcReg.isVirtual())
+            SrcPhyReg = VRM.getPhys(SrcReg);
+          else
+            DstPhyReg = VRM.getPhys(DstReg);
+
+          if (DstPhyReg == SrcPhyReg) {
+            // if src and target are equal, this copy will be eliminated, and
+            // therefore should not renamed or even registered, since this MI
+            // will be eliminated
+            continue;
+          }
+        }
+
         for (unsigned I = 0, E = MI.getNumOperands(); I != E; ++I) {
           const MachineOperand &Op = MI.getOperand(I);
           if (Op.isReg())
@@ -166,7 +197,8 @@ AIEWawRegRewriter::getWAR_RenameRegs(MachineFunction const &MF,
                   UsedVirtRegs.end() ==
                   find(UsedVirtRegs, llvm::Register::virtReg2Index(Reg));
 
-              if (MRI->getRegClass(Reg) && FoundPhyReg && FoundVirtReg) {
+              if (MRI->getRegClass(Reg) && FoundPhyReg && FoundVirtReg &&
+                  !MI.isCopy()) {
                 auto Replacements = getPriorityReplacementRegs(
                     MBB, Reg, VRM, LRM, *MRI, LIS, TRI);
                 if (!Replacements.empty()) {
