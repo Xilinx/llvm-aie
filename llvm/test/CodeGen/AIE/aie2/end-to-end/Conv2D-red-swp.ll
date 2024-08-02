@@ -502,7 +502,7 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ZOL-NEXT:    vlda.ups.s32.s16 bmh5, s0, [p2, #32]
 ; ZOL-NEXT:    vlda.ups.s32.s16 bml5, s0, [p2], m1; movxm ls, #.LBB0_2
 ; ZOL-NEXT:    vlda.ups.s32.s16 bmh6, s0, [p2, #32]; add.nc r1, r5, #-2
-; ZOL-NEXT:    vlda.ups.s32.s16 bml6, s0, [p2], m5; mov lc, r1
+; ZOL-NEXT:    vlda.ups.s32.s16 bml6, s0, [p2], m5; add.nc lc, r1, #0
 ; ZOL-NEXT:    vldb wl5, [p0], m6; mov r1, p0
 ; ZOL-NEXT:    vldb wh5, [p0], m6; movxm le, #.L_LEnd0
 ; ZOL-NEXT:    nopb ; vlda.ups.s32.s16 bmh7, s0, [p2, #32]; nops ; and r0, r0, r9; nopm ; nopv

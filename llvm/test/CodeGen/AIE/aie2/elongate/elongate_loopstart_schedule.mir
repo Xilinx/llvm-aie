@@ -20,7 +20,7 @@ body:             |
     ; CHECK-NEXT: }
     ; CHECK-NEXT: BUNDLE implicit-def $r2, implicit-def $lc, implicit killed $r0 {
     ; CHECK-NEXT:   renamable $r2 = MOVX_alu_cg 0
-    ; CHECK-NEXT:   $lc = MOV_mv_scl killed $r0
+    ; CHECK-NEXT:   $lc = ADD_NC killed $r0, 0
     ; CHECK-NEXT: }
     ; CHECK-NEXT: $ls = MOVXM_lng_cg 0
     ; CHECK-NEXT: renamable $r3 = MOV_mv_cg 2
@@ -33,7 +33,7 @@ body:             |
       renamable $r1 = LDA_dms_lda_idx_imm renamable $p0, 0
       $le = MOVXM_lng_cg <mcsymbol .L_1120>
       renamable $r2 = MOVX_alu_cg 0
-      $lc = MOV_mv_scl $r0
+      $lc = ADD_NC $r0, 0
       renamable $r1 = nsw ADD killed renamable $r2, killed renamable $r1, implicit-def $srcarry
       renamable $r3 = MOV_mv_cg 2
       $ls = MOVXM_lng_cg 0

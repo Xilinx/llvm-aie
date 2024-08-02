@@ -31,7 +31,7 @@ body:             |
   ; CHECK-NEXT:   renamable $r5 = LSHL renamable $r3, renamable $r4
   ; CHECK-NEXT:   $dj0 = MOV_mv_scl killed $r5
   ; CHECK-NEXT:   renamable $p3 = LDA_dms_lda_idx renamable $p1, killed renamable $dj0 :: (load (p0), align 4)
-  ; CHECK-NEXT:   $lc = MOV_mv_scl $r1
+  ; CHECK-NEXT:   $lc = ADD_NC $r1, 0
   ; CHECK-NEXT:   $ls = MOVXM_lng_cg %bb.2
   ; CHECK-NEXT:   $le = MOVXM_lng_cg <mcsymbol .L_1120>
   ; CHECK-NEXT:   renamable $r5 = MOV_RLC_imm10_pseudo 0

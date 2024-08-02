@@ -1197,12 +1197,21 @@ bool AIE2InstrInfo::isHardwareLoopEnd(unsigned Opcode) const {
   return Opcode == AIE2::PseudoLoopEnd;
 }
 
+bool AIE2InstrInfo::isZOLTripCountDef(const MachineInstr &MI) const {
+  return MI.getOpcode() == AIE2::ADD_NC &&
+         MI.getOperand(0).getReg() == AIE2::LC;
+}
+
+void AIE2InstrInfo::adjustTripCount(MachineInstr &MI, int Adjustment) const {
+  assert(MI.getOpcode() == AIE2::ADD_NC);
+  auto &Imm = MI.getOperand(2);
+  Imm.setImm(Imm.getImm() + Adjustment);
+}
+
 bool AIE2InstrInfo::isZeroOverheadLoopSetupInstr(const MachineInstr &MI) const {
-  return (MI.getOpcode() == AIE2::MOV_mv_scl ||
-          MI.getOpcode() == AIE2::MOVXM_lng_cg) &&
-         (MI.getOperand(0).getReg() == AIE2::LC ||
-          MI.getOperand(0).getReg() == AIE2::LS ||
-          MI.getOperand(0).getReg() == AIE2::LE);
+  return isZOLTripCountDef(MI) || (MI.getOpcode() == AIE2::MOVXM_lng_cg &&
+                                   (MI.getOperand(0).getReg() == AIE2::LS ||
+                                    MI.getOperand(0).getReg() == AIE2::LE));
 }
 
 std::vector<MachineBasicBlock::iterator>
