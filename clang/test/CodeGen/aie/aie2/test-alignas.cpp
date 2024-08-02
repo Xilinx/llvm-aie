@@ -8,7 +8,7 @@
 // (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
-// RUN: %clang --target=aie2 -S -emit-llvm %s -O0 -o - | FileCheck %s
+// RUN: %clang --target=aie2 -nostdlibinc -S -emit-llvm %s -O0 -o - | FileCheck %s
 
 // CHECK: %struct.S1 = type { i32, [252 x i8] }
 struct S1 {

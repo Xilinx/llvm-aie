@@ -8,7 +8,7 @@
 // (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
-// RUN: %clang -O2 %s --target=aie2 -S -emit-llvm -o - | FileCheck %s
+// RUN: %clang -O2 %s --target=aie2 -nostdlibinc -S -emit-llvm -o - | FileCheck %s
 
 // CHECK-LABEL: @_Z17test_add_v64uint8Dv64_hS_(
 // CHECK-NEXT:  entry:

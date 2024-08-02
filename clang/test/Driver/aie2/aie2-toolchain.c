@@ -35,3 +35,7 @@
 // NOSTART-SAME: "-lm"
 // NOSTART-NOT: "{{.*}}lib{{.*}}aie2-none-unknown-elf{{.*}}crt0.o"
 // NOSTART-NOT: "{{.*}}lib{{.*}}aie2-none-unknown-elf{{.*}}crt1.o"
+
+// RUN: %clang %s -### --target=aie2-none-unknown-elf -ccc-install-dir  %S/../Inputs/basic_aie_tree/bin 2>&1 \
+// RUN:   | FileCheck -check-prefix=C-INCLUDES %s
+// C-INCLUDES: "-internal-externc-isystem" "{{.*}}include{{/|\\\\}}aie2-none-unknown-elf"

@@ -8,7 +8,7 @@
 // (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
-// RUN: %clang --target=aie2 -S -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang --target=aie2 -nostdlibinc -S -emit-llvm %s -o - | FileCheck %s
 // CHECK-LABEL: @_Z3foou10__accfloat(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[ARG_ADDR:%.*]] = alloca i32, align 4

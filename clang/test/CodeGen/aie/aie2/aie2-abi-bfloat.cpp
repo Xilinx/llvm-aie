@@ -8,7 +8,7 @@
 // (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
-// RUN: %clang --target=aie2  -D_LIBCPP_HAS_THREAD_API_PTHREAD -S -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang --target=aie2 -nostdlibinc  -D_LIBCPP_HAS_THREAD_API_PTHREAD -S -emit-llvm %s -o - | FileCheck %s
 
 #include <stdint.h>
 

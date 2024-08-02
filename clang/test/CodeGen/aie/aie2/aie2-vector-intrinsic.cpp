@@ -8,7 +8,7 @@
 // (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
-// RUN: %clang -O2 %s --target=aie2 -S -emit-llvm -o - | FileCheck %s
+// RUN: %clang -O2 %s --target=aie2 -nostdlibinc -S -emit-llvm -o - | FileCheck %s
 // CHECK-LABEL: @_Z21test_mac_4x2_2x4_confiiiiii(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i32> @llvm.aie2.v16int32()

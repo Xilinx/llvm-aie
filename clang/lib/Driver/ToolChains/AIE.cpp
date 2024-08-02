@@ -80,6 +80,50 @@ void AIEToolChain::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
   // Don't pull in system headers from /usr/include or /usr/local/include.
   // All of the basic headers that we need come from the compiler.
   CC1Args.push_back("-nostdsysteminc");
+
+  if (DriverArgs.hasArg(options::OPT_nostdlibinc))
+    return;
+
+  const Driver &D = getDriver();
+  std::string Target = getTripleString();
+  SmallString<128> Path(D.Dir);
+  llvm::sys::path::append(Path, "..", "include", Target);
+  if (getVFS().exists(Path))
+    addExternCSystemInclude(DriverArgs, CC1Args, Path.str());
+}
+
+void AIEToolChain::addLibCxxIncludePaths(
+    const llvm::opt::ArgList &DriverArgs,
+    llvm::opt::ArgStringList &CC1Args) const {
+
+  if (DriverArgs.hasArg(options::OPT_nostdinc, options::OPT_nostdlibinc,
+                        options::OPT_nostdincxx))
+    return;
+
+  // We don't ship libc/libcxx for AIE1
+  if (getTriple().isAIE1())
+    return;
+
+  const Driver &D = getDriver();
+  const std::string Target = getTripleString();
+
+  SmallString<128> Path(D.Dir);
+  llvm::sys::path::append(Path, "..", "include");
+
+  const std::string Version = detectLibcxxVersion(Path);
+  if (Version.empty())
+    return;
+
+  // First add the per-target include path.
+  SmallString<128> TargetDir(Path);
+  llvm::sys::path::append(TargetDir, Target, "c++", Version);
+  if (getVFS().exists(TargetDir))
+    addSystemInclude(DriverArgs, CC1Args, TargetDir);
+
+  // Second add the generic one.
+  SmallString<128> Dir(Path);
+  llvm::sys::path::append(Dir, "c++", Version);
+  addSystemInclude(DriverArgs, CC1Args, Dir);
 }
 
 void AIEToolChain::addClangTargetOptions(

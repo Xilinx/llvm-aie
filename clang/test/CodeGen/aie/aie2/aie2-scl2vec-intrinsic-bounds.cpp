@@ -4,7 +4,7 @@
 //
 // (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 
-// RUN: not %clang -O2 %s --target=aie2 -S -emit-llvm -o - |& FileCheck %s
+// RUN: not %clang -O2 %s --target=aie2 -nostdlibinc -S -emit-llvm -o - |& FileCheck %s
 
 // CHECK: error: index out of range [0,63]
 char test_ext_elem_bounds(v64int8 v, int idx, int sign) {

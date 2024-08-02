@@ -8,7 +8,7 @@
 // (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
-// RUN: %clang -O2 --target=aie2 -S -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang -O2 --target=aie2 -nostdlibinc -S -emit-llvm %s -o - | FileCheck %s
 
 //
 // CHECK-LABEL: @_Z11test_selectbcc(

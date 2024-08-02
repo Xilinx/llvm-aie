@@ -8,7 +8,7 @@
 // (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
-// RUN: %clang --target=aie2 -S -emit-llvm %s -O2 -o - | FileCheck %s
+// RUN: %clang --target=aie2 -nostdlibinc -S -emit-llvm %s -O2 -o - | FileCheck %s
 // CHECK-LABEL: @_Z13test_bfloat16u6__bf16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    ret bfloat [[ARG:%.*]]

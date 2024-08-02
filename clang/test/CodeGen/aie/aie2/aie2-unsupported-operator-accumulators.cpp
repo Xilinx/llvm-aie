@@ -8,7 +8,7 @@
 // (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
-// RUN: not %clang -O1 %s --target=aie2 -ferror-limit=100 -S -emit-llvm -o - 2>&1 | FileCheck %s
+// RUN: not %clang -O1 %s --target=aie2 -nostdlibinc -ferror-limit=100 -S -emit-llvm -o - 2>&1 | FileCheck %s
 
 // CHECK: error: cannot compile this operator for accumulator type yet
 v8accfloat test_operator_plus_accfloat(v8accfloat a, v8accfloat b) {
