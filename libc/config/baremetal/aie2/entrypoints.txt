@@ -67,6 +67,9 @@ set(TARGET_LIBC_ENTRYPOINTS
 #    libc.src.inttypes.strtoimax
 #    libc.src.inttypes.strtoumax
 
+    # stdio.h entrypoints
+    libc.src.stdio.remove
+
     # stdlib.h entrypoints
     libc.src.stdlib.abs
 #    libc.src.stdlib.atoi

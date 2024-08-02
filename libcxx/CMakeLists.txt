@@ -48,6 +48,9 @@ include(CMakeDependentOption)
 include(HandleCompilerRT)
 
 # Basic options ---------------------------------------------------------------
+option(LIBCXX_HEADER_ONLY
+  "Only build the libc++ headers. This is useful for systems that are only interested
+   in the header-library features.")
 option(LIBCXX_ENABLE_ASSERTIONS
   "Enable assertions inside the compiled library, and at the same time make it the
    default when compiling user code. Note that assertions can be enabled or disabled
@@ -856,7 +859,9 @@ endfunction()
 # Setup Source Code And Tests
 #===============================================================================
 add_subdirectory(include)
-add_subdirectory(src)
+if (NOT LIBCXX_HEADER_ONLY)
+  add_subdirectory(src)
+endif()
 add_subdirectory(utils)
 add_subdirectory(modules)
 
