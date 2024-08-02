@@ -158,6 +158,16 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   virtual bool isHardwareLoopStart(unsigned Opcode) const { return false; }
   virtual bool isHardwareLoopEnd(unsigned Opcode) const { return false; }
 
+  /// Check whether this defines the ZOL tripcount
+  virtual bool isZOLTripCountDef(const MachineInstr &MI) const { return false; }
+
+  /// Lower the tripcount defined by MI with Update, which is a small
+  /// negative integer that should be added to the tripcount
+  /// \pre isZOLTripCountDef(MI)
+  virtual void adjustTripCount(MachineInstr &MI, int Update) const {
+    llvm_unreachable("adjustTripCount should have been overridden");
+  }
+
   /// Check whether this is a zero-overhead loop start block
   virtual bool isZeroOverheadLoopSetupInstr(const MachineInstr &) const {
     return false;

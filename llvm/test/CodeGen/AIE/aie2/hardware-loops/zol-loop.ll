@@ -22,7 +22,7 @@ define void @simple_loop(i32 noundef %n, ptr nocapture readonly %in, ptr nocaptu
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %for.body.preheader
-; CHECK-NEXT:    mov lc, r0
+; CHECK-NEXT:    add.nc lc, r0, #0
 ; CHECK-NEXT:    movxm ls, #.LBB0_2
 ; CHECK-NEXT:    movxm le, #.L_LEnd0
 ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv

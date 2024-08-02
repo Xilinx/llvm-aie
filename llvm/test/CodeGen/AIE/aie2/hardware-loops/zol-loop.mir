@@ -26,7 +26,7 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
   ; CHECK-NEXT:   liveins: $p0, $p1, $r0, $r1
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $lc = MOV_mv_scl $r0
+  ; CHECK-NEXT:   $lc = ADD_NC $r0, 0
   ; CHECK-NEXT:   $ls = MOVXM_lng_cg %bb.2
   ; CHECK-NEXT:   $le = MOVXM_lng_cg <mcsymbol .L_1120>
   ; CHECK-NEXT:   renamable $r0 = MOV_RLC_imm10_pseudo 1

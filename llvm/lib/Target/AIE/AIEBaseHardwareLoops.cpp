@@ -297,9 +297,12 @@ void AIEBaseHardwareLoops::expandLoopStart(LowOverheadLoop &LoLoop) {
   MachineInstr *Start = LoLoop.Start;
   MachineBasicBlock *MBB = Start->getParent();
   LLVM_DEBUG(dbgs() << "AIE Loops: ZOL loop. Expanding LoopStart.\n");
-  BuildMI(*MBB, Start, Start->getDebugLoc(), TII->get(AIE2::MOV_mv_scl),
-          AIE2::LC)
-      .addReg(Start->getOperand(0).getReg());
+
+  // We use ADD_NC, which allows PostPipeliner to tweak it by modifying the
+  // immediate value.
+  BuildMI(*MBB, Start, Start->getDebugLoc(), TII->get(AIE2::ADD_NC), AIE2::LC)
+      .addReg(Start->getOperand(0).getReg())
+      .addImm(0);
 
   BuildMI(*MBB, Start, Start->getDebugLoc(), TII->get(AIE2::MOVXM_lng_cg),
           AIE2::LS)
