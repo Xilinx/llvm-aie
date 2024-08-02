@@ -74,6 +74,7 @@ set(aie_files
   aiev2_addlog.h
   aiev2_ldst.h
   aiev2intrin.h
+  aiev2_aie_api_compat.h
 )
 
 set(arm_common_files

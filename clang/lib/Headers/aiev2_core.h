@@ -10,6 +10,31 @@
 
 #ifndef __AIEV2_CORE_H
 #define __AIEV2_CORE_H
+
+#ifndef OP_TERM_NEG_COMPLEX
+#define OP_TERM_NEG_COMPLEX 0x0A
+#endif
+
+#ifndef OP_TERM_NEG_COMPLEX_CONJUGATE_X
+#define OP_TERM_NEG_COMPLEX_CONJUGATE_X 0xA0
+#endif
+
+#ifndef OP_TERM_NEG_COMPLEX_CONJUGATE_Y
+#define OP_TERM_NEG_COMPLEX_CONJUGATE_Y 0x50
+#endif
+
+#ifndef OP_TERM_NEG_COMPLEX_CONJUGATE_X_Y
+#define OP_TERM_NEG_COMPLEX_CONJUGATE_X_Y 0xFA
+#endif
+
+#ifndef OP_TERM_NEG_COMPLEX_CONJUGATE_BUTTERFLY
+#define OP_TERM_NEG_COMPLEX_CONJUGATE_BUTTERFLY 0xC6
+#endif
+
+#ifndef OP_TERM_NEG_COMPLEX_BUTTERFLY
+#define OP_TERM_NEG_COMPLEX_BUTTERFLY 0x9C
+#endif
+
 #ifdef mul_elem_16
 #undef mul_elem_16
 #endif
@@ -1889,5 +1914,85 @@ static constexpr aie_dm_resource aie_dm_resource_get_v =
 template <typename T, aie_dm_resource Resource>
 static constexpr bool aie_dm_resource_is_same_v =
     (Resource == aie_dm_resource_get_v<T>);
+
+enum class aie_stream_resource_in { none, a, b };
+enum class aie_stream_resource_out { none, a, b };
+
+#define __aie_stream_resource_in_a
+#define __aie_stream_resource_in_b
+#define __aie_stream_resource_out_a
+#define __aie_stream_resource_out_b
+
+template <typename T> struct aie_stream_resource_remove {
+  using type = T;
+};
+
+template <typename T, int N>
+struct aie_stream_resource_remove<T __attribute__((address_space(N)))> {
+  using type = T;
+};
+template <typename T, int N>
+struct aie_stream_resource_remove<const T __attribute__((address_space(N)))> {
+  using type = const T;
+};
+template <typename T, int N>
+struct aie_stream_resource_remove<volatile T
+                                  __attribute__((address_space(N)))> {
+  using type = T;
+};
+template <typename T, int N>
+struct aie_stream_resource_remove<const volatile T
+                                  __attribute__((address_space(N)))> {
+  using type = const T;
+};
+
+template <typename T>
+using aie_stream_resource_remove_t =
+    typename aie_stream_resource_remove<T>::type;
+
+template <typename T, aie_stream_resource_in Resource>
+struct aie_stream_resource_in_set {
+  using type = T;
+};
+
+template <typename T, aie_stream_resource_out Resource>
+struct aie_stream_resource_out_set {
+  using type = T;
+};
+
+template <typename T, aie_stream_resource_in Resource>
+using aie_stream_resource_in_set_t =
+    typename aie_stream_resource_in_set<aie_stream_resource_remove_t<T>,
+                                        Resource>::type;
+
+template <typename T, aie_stream_resource_out Resource>
+using aie_stream_resource_out_set_t =
+    typename aie_stream_resource_out_set<aie_stream_resource_remove_t<T>,
+                                         Resource>::type;
+
+template <typename T> struct aie_stream_resource_in_get {
+  static constexpr aie_stream_resource_in value = aie_stream_resource_in::none;
+};
+
+template <typename T> struct aie_stream_resource_out_get {
+  static constexpr aie_stream_resource_out value =
+      aie_stream_resource_out::none;
+};
+
+template <typename T>
+static constexpr aie_stream_resource_in aie_stream_resource_in_get_v =
+    aie_stream_resource_in_get<T>::value;
+
+template <typename T>
+static constexpr aie_stream_resource_out aie_stream_resource_out_get_v =
+    aie_stream_resource_out_get<T>::value;
+
+template <typename T, aie_stream_resource_in Resource>
+static constexpr bool aie_stream_resource_in_is_same_v =
+    (Resource == aie_stream_resource_in_get_v<T>);
+
+template <typename T, aie_stream_resource_out Resource>
+static constexpr bool aie_stream_resource_out_is_same_v =
+    (Resource == aie_stream_resource_out_get_v<T>);
 
 #endif // __AIEV2_CORE_H
