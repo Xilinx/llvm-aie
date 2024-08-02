@@ -40,6 +40,9 @@ include(CMakeDependentOption)
 include(HandleCompilerRT)
 
 # Define options.
+option(LIBCXXABI_HEADER_ONLY
+  "Only build libc++abi headers. This is useful for systems that are only interested
+  in the header-library features." OFF)
 option(LIBCXXABI_ENABLE_EXCEPTIONS
   "Provide support for exceptions in the runtime.
   When disabled, libc++abi does not support stack unwinding and other exceptions-related features." ON)
@@ -445,7 +448,9 @@ endif()
 # Add source code. This also contains all of the logic for deciding linker flags
 # soname, etc...
 add_subdirectory(include)
-add_subdirectory(src)
+if (NOT LIBCXXABI_HEADER_ONLY)
+  add_subdirectory(src)
+endif()
 
 if (LIBCXXABI_INCLUDE_TESTS)
   add_subdirectory(test)
