@@ -524,36 +524,24 @@ bool CombinerHelper::tryCombineShuffleVector(MachineInstr &MI) {
   }
 
   // {1, 2, ..., |DstVector|} -> G_UNMERGE_VALUES
-  // Extracts the first chunk of the same size of the destination vector from
-  // the source
-  GeneratorType FirstQuarter = adderGenerator(0, DstNumElts - 1, 1);
-  if (matchCombineShuffleVector(MI, FirstQuarter, DstNumElts - 1)) {
-    // This optimization does not work if the target type is not a power of two,
-    // this can happen in some backends that support uneven vector types. We
-    // also need to make sure that the vector can be split into two.
-    if (SrcTy == DstTy || ((SrcNumElts / 2) % 2) != 0 ||
-        SrcNumElts % DstNumElts != 0)
-      return false;
-    ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
-    const Register TargetReg = Mask[0] < (int)SrcNumElts ? SrcReg1 : SrcReg2;
-    createUnmergeValue(MI, TargetReg, DstReg, 0, 0, SrcNumElts);
-    MI.eraseFromParent();
-    return true;
-  }
-
-  // {|DstVector|, |DstVector|+1, ..., 2 * |DstVector|} -> G_UNMERGE_VALUES
-  // Extracts the second chunk of the same size of the destination vector from
-  // the source
-  GeneratorType SecondQuarter =
-      adderGenerator(DstNumElts, (DstNumElts * 2) - 1, 1);
-  if (matchCombineShuffleVector(MI, SecondQuarter, DstNumElts - 1)) {
-    if (((SrcNumElts / 2) % 2) != 0 || SrcNumElts % DstNumElts != 0)
-      return false;
-    ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
-    const Register TargetReg = Mask[0] < (int)SrcNumElts ? SrcReg1 : SrcReg2;
-    createUnmergeValue(MI, TargetReg, DstReg, 1, 0, SrcNumElts);
-    MI.eraseFromParent();
-    return true;
+  // Extracts the chunks of the same size of the destination vector from the
+  // source
+  for (uint8_t Current = 0, Total = SrcNumElts; Current < Total; Current++) {
+    uint32_t Start = Current * DstNumElts, End = Start + DstNumElts - 1;
+    GeneratorType Generator = adderGenerator(Start, End, 1);
+    if (matchCombineShuffleVector(MI, Generator, DstNumElts - 1)) {
+      // This optimization does not work if the target type is not a power of
+      // two, this can happen in some backends that support uneven vector types.
+      // We also need to make sure that the vector can be split into two.
+      if (SrcTy == DstTy || ((SrcNumElts / 2) % 2) != 0 ||
+          SrcNumElts % DstNumElts != 0)
+        return false;
+      ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
+      const Register TargetReg = Mask[0] < (int)SrcNumElts ? SrcReg1 : SrcReg2;
+      createUnmergeValue(MI, TargetReg, DstReg, Current, 0, SrcNumElts);
+      MI.eraseFromParent();
+      return true;
+    }
   }
 
   // After this point, it is assumed our shufflevectors work on vectors that can
