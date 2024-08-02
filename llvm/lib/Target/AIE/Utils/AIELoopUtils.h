@@ -16,9 +16,23 @@
 
 #include "llvm/Analysis/LoopInfo.h"
 
+namespace llvm {
+class MachineBasicBlock;
+} // namespace llvm
+
 namespace llvm::AIELoopUtils {
 
-std::optional<int64_t> getMinTripCount(const MDNode *);
+/// Get the tripcount from the LoopID node
+std::optional<int64_t> getMinTripCount(const MDNode *LoopID);
+
+/// LoopBlock should hold the backedge. Since we generally call it for
+/// single block loops, that's automatically true.
+std::optional<int64_t> getMinTripCount(const MachineBasicBlock &LoopBlock);
+
+/// Check that the single block loop represented by LoopBlock has a fallthrough
+/// preheader. Return the preheader if true, nullptr otherwise
+MachineBasicBlock *
+getDedicatedFallThroughPreheader(const MachineBasicBlock &LoopBlock);
 
 } // namespace llvm::AIELoopUtils
 

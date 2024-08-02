@@ -8,6 +8,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include "AIELoopUtils.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/IR/Constants.h"
 
 #define DEBUG_TYPE "aielooputils"
@@ -46,4 +47,40 @@ std::optional<int64_t> getMinTripCount(const MDNode *LoopID) {
   return std::nullopt;
 }
 
+std::optional<int64_t> getMinTripCount(const MachineBasicBlock &LoopBlock) {
+  const BasicBlock *BBLK = LoopBlock.getBasicBlock();
+  if (!BBLK)
+    return std::nullopt;
+
+  const Instruction *TI = BBLK->getTerminator();
+  if (!TI)
+    return std::nullopt;
+
+  const MDNode *LoopID = TI->getMetadata(LLVMContext::MD_loop);
+  return getMinTripCount(LoopID);
+}
+
+MachineBasicBlock *
+getDedicatedFallThroughPreheader(const MachineBasicBlock &LoopBlock) {
+  MachineBasicBlock *Candidate = nullptr;
+  for (auto *P : LoopBlock.predecessors()) {
+    if (P == &LoopBlock) {
+      continue;
+    }
+    if (Candidate) {
+      // This would be the second preheader
+      return nullptr;
+    }
+    Candidate = P;
+  }
+
+  // Dedicated and fallthrough
+  if (Candidate->succ_size() != 1 ||
+      Candidate->getFirstTerminator() != Candidate->end() ||
+      Candidate->getNumber() + 1 != LoopBlock.getNumber()) {
+    return nullptr;
+  }
+
+  return Candidate;
+}
 } // namespace llvm::AIELoopUtils
