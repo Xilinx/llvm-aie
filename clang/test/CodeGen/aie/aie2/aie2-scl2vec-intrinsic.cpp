@@ -11,16 +11,16 @@
 // RUN: %clang -O2 %s --target=aie2 -nostdlibinc -S -emit-llvm -o - | FileCheck %s
 
 
-// CHECK-LABEL: @_Z11test_shiftxDv16_iS_ii(
+// CHECK-LABEL: @_Z11test_shiftxDv16_iS_ij(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x i32> @llvm.aie2.vshift.I512.I512(<16 x i32> [[A:%.*]], <16 x i32> [[B:%.*]], i32 [[STEP:%.*]], i32 [[SHIFT:%.*]])
 // CHECK-NEXT:    ret <16 x i32> [[TMP0]]
 //
-v16int32 test_shiftx(v16int32 a, v16int32 b, int step, int shift) {
+v16int32 test_shiftx(v16int32 a, v16int32 b, int step, unsigned int shift) {
   return shiftx(a,b,step,shift);
 }
 
-// CHECK-LABEL: @_Z11test_shiftxDv32_tS_ii(
+// CHECK-LABEL: @_Z11test_shiftxDv32_tS_ij(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <32 x i16> [[A:%.*]] to <16 x i32>
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <32 x i16> [[B:%.*]] to <16 x i32>
@@ -28,11 +28,11 @@ v16int32 test_shiftx(v16int32 a, v16int32 b, int step, int shift) {
 // CHECK-NEXT:    [[TMP3:%.*]] = bitcast <16 x i32> [[TMP2]] to <32 x i16>
 // CHECK-NEXT:    ret <32 x i16> [[TMP3]]
 //
-v32uint16 test_shiftx(v32uint16 a, v32uint16 b, int step, int shift) {
+v32uint16 test_shiftx(v32uint16 a, v32uint16 b, int step, unsigned int shift) {
   return shiftx(a,b,step,shift);
 }
 
-// CHECK-LABEL: @_Z16test_shift_bytesDv64_aS_i(
+// CHECK-LABEL: @_Z16test_shift_bytesDv64_aS_j(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[A:%.*]] to <16 x i32>
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <64 x i8> [[B:%.*]] to <16 x i32>
@@ -40,11 +40,11 @@ v32uint16 test_shiftx(v32uint16 a, v32uint16 b, int step, int shift) {
 // CHECK-NEXT:    [[TMP3:%.*]] = bitcast <16 x i32> [[TMP2]] to <64 x i8>
 // CHECK-NEXT:    ret <64 x i8> [[TMP3]]
 //
-v64int8 test_shift_bytes(v64int8 a, v64int8 b, int shift) {
+v64int8 test_shift_bytes(v64int8 a, v64int8 b, unsigned int shift) {
   return shift_bytes(a,b,shift);
 }
 
-// CHECK-LABEL: @_Z10test_shiftDv64_hS_i(
+// CHECK-LABEL: @_Z10test_shiftDv64_hS_j(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x i8> [[A:%.*]] to <16 x i32>
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <64 x i8> [[B:%.*]] to <16 x i32>
@@ -52,7 +52,7 @@ v64int8 test_shift_bytes(v64int8 a, v64int8 b, int shift) {
 // CHECK-NEXT:    [[TMP3:%.*]] = bitcast <16 x i32> [[TMP2]] to <64 x i8>
 // CHECK-NEXT:    ret <64 x i8> [[TMP3]]
 //
-v64uint8 test_shift(v64uint8 a, v64uint8 b, int shift_by) {
+v64uint8 test_shift(v64uint8 a, v64uint8 b, unsigned int shift_by) {
    return shift(a,b,shift_by);
 }
 
@@ -1117,7 +1117,7 @@ unsigned long long test_ext_u64(v16int32 v, int idx, int sign) {
 
 /* Test Intrinsic using ACCFLOAT type */
 
-// CHECK-LABEL: @_Z11test_shiftxDv16_u10__accfloatS_ii(
+// CHECK-LABEL: @_Z11test_shiftxDv16_u10__accfloatS_ij(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <8 x i64> [[A:%.*]] to <16 x i32>
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <8 x i64> [[B:%.*]] to <16 x i32>
@@ -1125,11 +1125,11 @@ unsigned long long test_ext_u64(v16int32 v, int idx, int sign) {
 // CHECK-NEXT:    [[TMP3:%.*]] = bitcast <16 x i32> [[TMP2]] to <8 x i64>
 // CHECK-NEXT:    ret <8 x i64> [[TMP3]]
 //
-v16accfloat test_shiftx(v16accfloat a, v16accfloat b, int step, int shift) {
+v16accfloat test_shiftx(v16accfloat a, v16accfloat b, int step, unsigned int shift) {
   return shiftx(a,b,step,shift);
 }
 
-// CHECK-LABEL: @_Z16test_shift_bytesDv16_u10__accfloatS_i(
+// CHECK-LABEL: @_Z16test_shift_bytesDv16_u10__accfloatS_j(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <8 x i64> [[A:%.*]] to <16 x i32>
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <8 x i64> [[B:%.*]] to <16 x i32>
@@ -1137,20 +1137,20 @@ v16accfloat test_shiftx(v16accfloat a, v16accfloat b, int step, int shift) {
 // CHECK-NEXT:    [[TMP3:%.*]] = bitcast <16 x i32> [[TMP2]] to <8 x i64>
 // CHECK-NEXT:    ret <8 x i64> [[TMP3]]
 //
-v16accfloat test_shift_bytes(v16accfloat a, v16accfloat b, int shift) {
+v16accfloat test_shift_bytes(v16accfloat a, v16accfloat b, unsigned int shift) {
   return shift_bytes(a,b,shift);
 }
 
-// CHECK-LABEL: @_Z10test_shiftDv16_u10__accfloatS_i(
+// CHECK-LABEL: @_Z10test_shiftDv16_u10__accfloatS_j(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[MUL_I:%.*]] = shl nsw i32 [[SHIFT_BY:%.*]], 2
+// CHECK-NEXT:    [[MUL_I:%.*]] = shl i32 [[SHIFT_BY:%.*]], 2
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <8 x i64> [[A:%.*]] to <16 x i32>
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <8 x i64> [[B:%.*]] to <16 x i32>
 // CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i32> @llvm.aie2.vshift.I512.I512(<16 x i32> [[TMP0]], <16 x i32> [[TMP1]], i32 0, i32 [[MUL_I]])
 // CHECK-NEXT:    [[TMP3:%.*]] = bitcast <16 x i32> [[TMP2]] to <8 x i64>
 // CHECK-NEXT:    ret <8 x i64> [[TMP3]]
 //
-v16accfloat test_shift(v16accfloat a, v16accfloat b, int shift_by) {
+v16accfloat test_shift(v16accfloat a, v16accfloat b, unsigned int shift_by) {
   return shift(a, b, shift_by);
 }
 
@@ -1176,12 +1176,12 @@ v16float test_broadcast_to_v16float (float b) {
    return  broadcast_to_v16float(b);
 }
 
-// CHECK-LABEL: @_Z11test_shiftxDv32_u6__bf16S_ii(
+// CHECK-LABEL: @_Z11test_shiftxDv32_u6__bf16S_ij(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x bfloat> @llvm.aie2.vshift.bf512.bf512(<32 x bfloat> [[A:%.*]], <32 x bfloat> [[B:%.*]], i32 [[STEP:%.*]], i32 [[SHIFT:%.*]])
 // CHECK-NEXT:    ret <32 x bfloat> [[TMP0]]
 //
-v32bfloat16 test_shiftx(v32bfloat16 a, v32bfloat16 b, int step, int shift) {
+v32bfloat16 test_shiftx(v32bfloat16 a, v32bfloat16 b, int step, unsigned int shift) {
     return shiftx(a, b, step, shift);
 }
 
@@ -1358,7 +1358,7 @@ v16float test_shuffle(v16float a, unsigned int mode) {
   return shuffle(a, mode);
 }
 
-// CHECK-LABEL: @_Z11test_shiftxDv16_fS_ii(
+// CHECK-LABEL: @_Z11test_shiftxDv16_fS_ij(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <16 x float> [[A:%.*]] to <16 x i32>
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <16 x float> [[B:%.*]] to <16 x i32>
@@ -1366,11 +1366,11 @@ v16float test_shuffle(v16float a, unsigned int mode) {
 // CHECK-NEXT:    [[TMP3:%.*]] = bitcast <16 x i32> [[TMP2]] to <16 x float>
 // CHECK-NEXT:    ret <16 x float> [[TMP3]]
 //
-v16float test_shiftx(v16float a, v16float b, int step, int shift) {
+v16float test_shiftx(v16float a, v16float b, int step, unsigned int shift) {
   return shiftx(a,b,step,shift);
 }
 
-// CHECK-LABEL: @_Z16test_shift_bytesDv16_fS_i(
+// CHECK-LABEL: @_Z16test_shift_bytesDv16_fS_j(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <16 x float> [[A:%.*]] to <16 x i32>
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <16 x float> [[B:%.*]] to <16 x i32>
@@ -1378,20 +1378,20 @@ v16float test_shiftx(v16float a, v16float b, int step, int shift) {
 // CHECK-NEXT:    [[TMP3:%.*]] = bitcast <16 x i32> [[TMP2]] to <16 x float>
 // CHECK-NEXT:    ret <16 x float> [[TMP3]]
 //
-v16float test_shift_bytes(v16float a, v16float b, int shift) {
+v16float test_shift_bytes(v16float a, v16float b, unsigned int shift) {
   return shift_bytes(a, b, shift);
 }
 
-// CHECK-LABEL: @_Z10test_shiftDv16_fS_i(
+// CHECK-LABEL: @_Z10test_shiftDv16_fS_j(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[MUL_I:%.*]] = shl nsw i32 [[SHIFT_BY:%.*]], 2
+// CHECK-NEXT:    [[MUL_I:%.*]] = shl i32 [[SHIFT_BY:%.*]], 2
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <16 x float> [[A:%.*]] to <16 x i32>
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <16 x float> [[B:%.*]] to <16 x i32>
 // CHECK-NEXT:    [[TMP2:%.*]] = tail call <16 x i32> @llvm.aie2.vshift.I512.I512(<16 x i32> [[TMP0]], <16 x i32> [[TMP1]], i32 0, i32 [[MUL_I]])
 // CHECK-NEXT:    [[TMP3:%.*]] = bitcast <16 x i32> [[TMP2]] to <16 x float>
 // CHECK-NEXT:    ret <16 x float> [[TMP3]]
 //
-v16float test_shift(v16float a, v16float b, int shift_by) {
+v16float test_shift(v16float a, v16float b, unsigned int shift_by) {
   return shift(a, b, shift_by);
 }
 

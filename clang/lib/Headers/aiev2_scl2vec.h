@@ -11,128 +11,138 @@
 #ifndef __AIEV2_SCL2VEC_H__
 #define __AIEV2_SCL2VEC_H__
 
-INTRINSIC(v128int4) shiftx(v128int4 a, v128int4 b, int step, int shift) {
+INTRINSIC(v128int4)
+shiftx(v128int4 a, v128int4 b, int step, unsigned int shift) {
   return __builtin_aiev2_vshift_I512_I512(a, b, step, shift);
 }
-INTRINSIC(v64int8) shiftx(v64int8 a, v64int8 b, int step, int shift) {
+INTRINSIC(v64int8) shiftx(v64int8 a, v64int8 b, int step, unsigned int shift) {
   return __builtin_aiev2_vshift_I512_I512(a, b, step, shift);
 }
-INTRINSIC(v32int16) shiftx(v32int16 a, v32int16 b, int step, int shift) {
+INTRINSIC(v32int16)
+shiftx(v32int16 a, v32int16 b, int step, unsigned int shift) {
   return __builtin_aiev2_vshift_I512_I512(a, b, step, shift);
 }
-INTRINSIC(v16int32) shiftx(v16int32 a, v16int32 b, int step, int shift) {
+INTRINSIC(v16int32)
+shiftx(v16int32 a, v16int32 b, int step, unsigned int shift) {
   return __builtin_aiev2_vshift_I512_I512(a, b, step, shift);
 }
-INTRINSIC(v128uint4) shiftx(v128uint4 a, v128uint4 b, int step, int shift) {
+INTRINSIC(v128uint4)
+shiftx(v128uint4 a, v128uint4 b, int step, unsigned int shift) {
   return __builtin_aiev2_vshift_I512_I512(a, b, step, shift);
 }
-INTRINSIC(v64uint8) shiftx(v64uint8 a, v64uint8 b, int step, int shift) {
+INTRINSIC(v64uint8)
+shiftx(v64uint8 a, v64uint8 b, int step, unsigned int shift) {
   return __builtin_aiev2_vshift_I512_I512(a, b, step, shift);
 }
-INTRINSIC(v32uint16) shiftx(v32uint16 a, v32uint16 b, int step, int shift) {
+INTRINSIC(v32uint16)
+shiftx(v32uint16 a, v32uint16 b, int step, unsigned int shift) {
   return __builtin_aiev2_vshift_I512_I512(a, b, step, shift);
 }
-INTRINSIC(v16uint32) shiftx(v16uint32 a, v16uint32 b, int step, int shift) {
+INTRINSIC(v16uint32)
+shiftx(v16uint32 a, v16uint32 b, int step, unsigned int shift) {
   return __builtin_aiev2_vshift_I512_I512(a, b, step, shift);
 }
 #if 0
-INTRINSIC(v16cint16) shiftx(v16cint16 a, v16cint16 b, int step, int shift) {
+INTRINSIC(v16cint16) shiftx(v16cint16 a, v16cint16 b, int step, unsigned int shift) {
     return __builtin_aiev2_vshift_I512_I512(a, b, step, shift);
 }
-INTRINSIC(v8cint32) shiftx(v8cint32 a, v8cint32 b, int step, int shift) {
+INTRINSIC(v8cint32) shiftx(v8cint32 a, v8cint32 b, int step, unsigned int shift) {
     return __builtin_aiev2_vshift_I512_I512(a, b, step, shift);
 }
 #endif
 INTRINSIC(v32bfloat16)
-shiftx(v32bfloat16 a, v32bfloat16 b, int step, int shift) {
+shiftx(v32bfloat16 a, v32bfloat16 b, int step, unsigned int shift) {
   return __builtin_aiev2_vshift_bf512_bf512(a, b, step, shift);
 }
 INTRINSIC(v16accfloat)
-shiftx(v16accfloat a, v16accfloat b, int step, int shift) {
+shiftx(v16accfloat a, v16accfloat b, int step, unsigned int shift) {
   return __builtin_aiev2_vshift_I512_I512(a, b, step, shift);
 }
 
-INTRINSIC(v16float) shiftx(v16float a, v16float b, int step, int shift) {
-    return __builtin_aiev2_vshift_I512_I512(a, b, step, shift);
+INTRINSIC(v16float)
+shiftx(v16float a, v16float b, int step, unsigned int shift) {
+  return __builtin_aiev2_vshift_I512_I512(a, b, step, shift);
 }
 
-INTRINSIC(v128int4) shift_bytes(v128int4 a, v128int4 b, int shift) {
+INTRINSIC(v128int4) shift_bytes(v128int4 a, v128int4 b, unsigned int shift) {
   return shiftx(a, b, 0, shift);
 }
-INTRINSIC(v64int8) shift_bytes(v64int8 a, v64int8 b, int shift) {
+INTRINSIC(v64int8) shift_bytes(v64int8 a, v64int8 b, unsigned int shift) {
   return shiftx(a, b, 0, shift);
 }
-INTRINSIC(v32int16) shift_bytes(v32int16 a, v32int16 b, int shift) {
+INTRINSIC(v32int16) shift_bytes(v32int16 a, v32int16 b, unsigned int shift) {
   return shiftx(a, b, 0, shift);
 }
-INTRINSIC(v16int32) shift_bytes(v16int32 a, v16int32 b, int shift) {
+INTRINSIC(v16int32) shift_bytes(v16int32 a, v16int32 b, unsigned int shift) {
   return shiftx(a, b, 0, shift);
 }
-INTRINSIC(v128uint4) shift_bytes(v128uint4 a, v128uint4 b, int shift) {
+INTRINSIC(v128uint4) shift_bytes(v128uint4 a, v128uint4 b, unsigned int shift) {
   return shiftx(a, b, 0, shift);
 }
-INTRINSIC(v64uint8) shift_bytes(v64uint8 a, v64uint8 b, int shift) {
+INTRINSIC(v64uint8) shift_bytes(v64uint8 a, v64uint8 b, unsigned int shift) {
   return shiftx(a, b, 0, shift);
 }
-INTRINSIC(v32uint16) shift_bytes(v32uint16 a, v32uint16 b, int shift) {
+INTRINSIC(v32uint16) shift_bytes(v32uint16 a, v32uint16 b, unsigned int shift) {
   return shiftx(a, b, 0, shift);
 }
-INTRINSIC(v16uint32) shift_bytes(v16uint32 a, v16uint32 b, int shift) {
+INTRINSIC(v16uint32) shift_bytes(v16uint32 a, v16uint32 b, unsigned int shift) {
   return shiftx(a, b, 0, shift);
 }
 #if 0
-INTRINSIC(v16cint16) shift_bytes(v16cint16 a, v16cint16 b, int shift) {
+INTRINSIC(v16cint16) shift_bytes(v16cint16 a, v16cint16 b, unsigned int shift) {
   return shiftx(a, b, 0, shift);
 }
-INTRINSIC(v8cint32) shift_bytes(v8cint32 a, v8cint32 b, int shift) {
+INTRINSIC(v8cint32) shift_bytes(v8cint32 a, v8cint32 b, unsigned int shift) {
   return shiftx(a, b, 0, shift);
 }
 #endif
-INTRINSIC(v32bfloat16) shift_bytes(v32bfloat16 a, v32bfloat16 b, int shift) {
+INTRINSIC(v32bfloat16)
+shift_bytes(v32bfloat16 a, v32bfloat16 b, unsigned int shift) {
   return shiftx(a, b, 0, shift);
 }
-INTRINSIC(v16accfloat) shift_bytes(v16accfloat a, v16accfloat b, int shift) {
+INTRINSIC(v16accfloat)
+shift_bytes(v16accfloat a, v16accfloat b, unsigned int shift) {
   return shiftx(a, b, 0, shift);
 }
 
-INTRINSIC(v16float) shift_bytes(v16float a, v16float b, int shift) {
+INTRINSIC(v16float) shift_bytes(v16float a, v16float b, unsigned int shift) {
   return shiftx(a, b, 0, shift);
 }
 
-INTRINSIC(v64int8) shift(v64int8 a, v64int8 b, int shift) {
+INTRINSIC(v64int8) shift(v64int8 a, v64int8 b, unsigned int shift) {
   return shiftx(a, b, 0, shift * 1);
 }
-INTRINSIC(v32int16) shift(v32int16 a, v32int16 b, int shift) {
+INTRINSIC(v32int16) shift(v32int16 a, v32int16 b, unsigned int shift) {
   return shiftx(a, b, 0, shift * 2);
 }
-INTRINSIC(v16int32) shift(v16int32 a, v16int32 b, int shift) {
+INTRINSIC(v16int32) shift(v16int32 a, v16int32 b, unsigned int shift) {
   return shiftx(a, b, 0, shift * 4);
 }
-INTRINSIC(v64uint8) shift(v64uint8 a, v64uint8 b, int shift) {
+INTRINSIC(v64uint8) shift(v64uint8 a, v64uint8 b, unsigned int shift) {
   return shiftx(a, b, 0, shift * 1);
 }
-INTRINSIC(v32uint16) shift(v32uint16 a, v32uint16 b, int shift) {
+INTRINSIC(v32uint16) shift(v32uint16 a, v32uint16 b, unsigned int shift) {
   return shiftx(a, b, 0, shift * 2);
 }
-INTRINSIC(v16uint32) shift(v16uint32 a, v16uint32 b, int shift) {
+INTRINSIC(v16uint32) shift(v16uint32 a, v16uint32 b, unsigned int shift) {
   return shiftx(a, b, 0, shift * 4);
 }
 #if 0
-INTRINSIC(v16cint16) shift(v16cint16 a, v16cint16 b, int shift) {
+INTRINSIC(v16cint16) shift(v16cint16 a, v16cint16 b, unsigned int shift) {
   return shiftx(a, b, 0, shift * 4);
 }
-INTRINSIC(v8cint32) shift(v8cint32 a, v8cint32 b, int shift) {
+INTRINSIC(v8cint32) shift(v8cint32 a, v8cint32 b, unsigned int shift) {
   return shiftx(a, b, 0, shift * 8);
 }
 #endif
-INTRINSIC(v32bfloat16) shift(v32bfloat16 a, v32bfloat16 b, int shift) {
+INTRINSIC(v32bfloat16) shift(v32bfloat16 a, v32bfloat16 b, unsigned int shift) {
   return shiftx(a, b, 0, shift * 2);
 }
-INTRINSIC(v16accfloat) shift(v16accfloat a, v16accfloat b, int shift) {
+INTRINSIC(v16accfloat) shift(v16accfloat a, v16accfloat b, unsigned int shift) {
   return shiftx(a, b, 0, shift * 4);
 }
 
-INTRINSIC(v16float) shift(v16float a, v16float b, int shift) {
+INTRINSIC(v16float) shift(v16float a, v16float b, unsigned int shift) {
   return shiftx(a, b, 0, shift * 4);
 }
 
