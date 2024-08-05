@@ -37,6 +37,10 @@ static cl::opt<bool> LoopEpilogueAnalysis(
     "aie-loop-epilogue-analysis", cl::init(true),
     cl::desc("[AIE] Perform Loop/Epilogue analysis with loop scheduling"));
 
+static cl::opt<int> MaxExpensiveIterations(
+    "aie-loop-aware-expensive-iterations", cl::init(25),
+    cl::desc("[AIE] Perform Loop/Epilogue analysis with loop scheduling"));
+
 namespace llvm::AIE {
 
 void dumpInterBlock(const InterBlockEdges &Edges) {
@@ -166,10 +170,13 @@ bool InterBlockScheduling::leaveBlock() {
   if (BS.Kind == BlockType::Loop && !updateFixPoint(BS)) {
     BS.FixPoint.NumIters++;
     // Iterate on CurrentBlock
+    // We will first try to increase the latency margin for one instruction at
+    // a time, before increasing that margin for all instructions at once.
     // If we are very unlucky, we may step both the latency margin and
     // the resource margin to the max. Any more indicates failure to converge,
     // and we abort to prevent an infinite loop.
-    if (BS.FixPoint.NumIters > 2 * HR->getConflictHorizon()) {
+    if (BS.FixPoint.NumIters >
+        MaxExpensiveIterations + 2 * HR->getConflictHorizon()) {
       report_fatal_error("Inter-block scheduling did not converge.");
     }
     return false;
@@ -219,7 +226,7 @@ bool InterBlockScheduling::resourcesConverged(BlockState &BS) const {
   return true;
 }
 
-bool InterBlockScheduling::latencyConverged(BlockState &BS) const {
+MachineInstr *InterBlockScheduling::latencyConverged(BlockState &BS) const {
   const auto &SubTarget = BS.TheBlock->getParent()->getSubtarget();
   auto *TII = static_cast<const AIEBaseInstrInfo *>(SubTarget.getInstrInfo());
   auto *ItinData = SubTarget.getInstrItineraryData();
@@ -283,7 +290,7 @@ bool InterBlockScheduling::latencyConverged(BlockState &BS) const {
                                  << " not met (" << Distance << ")\n");
           DEBUG_LOOPAWARE(dbgs() << "  " << Succ->NodeNum << ": "
                                  << *Succ->getInstr());
-          return false;
+          return Pred->getInstr();
         }
       }
     }
@@ -296,7 +303,7 @@ bool InterBlockScheduling::latencyConverged(BlockState &BS) const {
   // upperbound of the latency safety margin that should be provided by
   // the epilogue
   BS.FixPoint.MaxLatencyExtent = MaxExtent;
-  return true;
+  return nullptr;
 }
 
 bool InterBlockScheduling::updateFixPoint(BlockState &BS) {
@@ -316,11 +323,20 @@ bool InterBlockScheduling::updateFixPoint(BlockState &BS) {
     // Iterate on CurMBB
     return false;
   }
-  if (!latencyConverged(BS)) {
-    BS.FixPoint.LatencyMargin++;
+
+  if (MachineInstr *MINeedsHigherCap = latencyConverged(BS)) {
+    auto Res = BS.FixPoint.PerMILatencyMargin.try_emplace(MINeedsHigherCap, 0);
+    // Increase the latency margin per instruction, unless we already iterated
+    // more than MaxExpensiveIterations without converging.
+    if (BS.FixPoint.NumIters <= MaxExpensiveIterations) {
+      ++Res.first->second;
+    } else {
+      BS.FixPoint.LatencyMargin++;
+    }
     DEBUG_LOOPAWARE(dbgs() << "  not converged: latency RM="
-                           << BS.FixPoint.ResourceMargin << " LM=>"
-                           << BS.FixPoint.LatencyMargin << "\n");
+                           << BS.FixPoint.ResourceMargin
+                           << " LM=" << BS.FixPoint.LatencyMargin
+                           << " MIM=" << Res.first->second << "\n");
     // Iterate on CurMBB
     return false;
   }
@@ -341,13 +357,18 @@ bool InterBlockScheduling::successorsAreScheduled(
   });
 }
 
-std::optional<int>
-InterBlockScheduling::getLatencyCap(MachineBasicBlock *BB) const {
-  auto &BS = getBlockState(BB);
+std::optional<int> InterBlockScheduling::getLatencyCap(MachineInstr &MI) const {
+  auto &BS = getBlockState(MI.getParent());
   if (BS.Kind != BlockType::Loop) {
     return {};
   }
-  return BS.FixPoint.LatencyMargin;
+  if (BS.FixPoint.LatencyMargin)
+    return BS.FixPoint.LatencyMargin;
+  if (const auto *It = BS.FixPoint.PerMILatencyMargin.find(&MI);
+      It != BS.FixPoint.PerMILatencyMargin.end()) {
+    return It->second;
+  }
+  return 0;
 }
 
 std::optional<int>

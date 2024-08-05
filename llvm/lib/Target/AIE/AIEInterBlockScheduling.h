@@ -110,6 +110,7 @@ class FixedpointState {
 public:
   bool IsScheduled = false;
   int LatencyMargin = 0;
+  SmallMapVector<MachineInstr *, int, 8> PerMILatencyMargin;
   int ResourceMargin = 0;
   // Results from the convergence test
   int MaxLatencyExtent = 0;
@@ -245,7 +246,10 @@ class InterBlockScheduling {
 
   /// The two components of the convergence test
   bool resourcesConverged(BlockState &BS) const;
-  bool latencyConverged(BlockState &BS) const;
+
+  /// Return one instruction that needs a higher latency cap, or nullptr if all
+  /// latencies converged.
+  MachineInstr *latencyConverged(BlockState &BS) const;
 
   /// After finding the loops, determine the epilogue blocks
   void markEpilogueBlocks();
@@ -301,7 +305,7 @@ public:
   /// Return the maximum interblock latency we need to account for
   /// for the given successor. This represents the latency margin we assume for
   /// an unscheduled successor.
-  std::optional<int> getLatencyCap(MachineBasicBlock *BB) const;
+  std::optional<int> getLatencyCap(MachineInstr &MI) const;
 
   /// Return the maximum number of cycles to block for the given successor.
   /// This represents the resource usage we assume for an unscheduled successor.
