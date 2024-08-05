@@ -154,7 +154,7 @@ def gfx8_combines : GICombineGroup<[expand_promoted_fmed3]>;
 
 def AMDGPUPreLegalizerCombiner: GICombiner<
   "AMDGPUPreLegalizerCombinerImpl",
-  [all_combines, clamp_i64_to_i16, foldable_fneg]> {
+  [all_combines, clamp_i64_to_i16, foldable_fneg, shufflevector_merge]> {
   let CombineAllMethodName = "tryCombineAllImpl";
 }
 

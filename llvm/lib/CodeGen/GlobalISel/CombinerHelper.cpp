@@ -13,6 +13,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallBitVector.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Analysis/CmpInstAnalysis.h"
 #include "llvm/CodeGen/GlobalISel/GISelChangeObserver.h"
 #include "llvm/CodeGen/GlobalISel/GISelKnownBits.h"
@@ -27,6 +28,7 @@
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterBankInfo.h"
@@ -2267,6 +2269,92 @@ static Register peekThroughBitcast(Register Reg,
     ;
 
   return Reg;
+}
+
+bool CombinerHelper::matchCombineShuffleVectorBuildVector(
+    MachineInstr &MI, SmallVectorImpl<Register> &Operands) {
+  assert(MI.getOpcode() == TargetOpcode::G_SHUFFLE_VECTOR &&
+         "Expected a shuffle vector");
+  auto &ShuffleVector = cast<GShuffleVector>(MI);
+  Register SrcReg1 = peekThroughBitcast(ShuffleVector.getSourceReg(0), MRI);
+  Register SrcReg2 = peekThroughBitcast(ShuffleVector.getSourceReg(1), MRI);
+
+  // Check if the Source registers are either merges or implicit definitions
+  auto *SrcInstr1 = getOpcodeDef<GBuildVector>(SrcReg1, MRI);
+  auto *SrcInstr2 = getOpcodeDef<GBuildVector>(SrcReg2, MRI);
+  auto *IsUndef1 = getOpcodeDef(TargetOpcode::G_IMPLICIT_DEF, SrcReg1, MRI);
+  auto *IsUndef2 = getOpcodeDef(TargetOpcode::G_IMPLICIT_DEF, SrcReg2, MRI);
+
+  // Our inputs need to be either be build vectors or undefined, register inputs
+  // break this optimization. You could maybe do something clever were you
+  // concatenate vectors to save half a build vector.
+  if ((!SrcInstr1 && !IsUndef1) || (!SrcInstr2 && !IsUndef2))
+    return false;
+
+  if (IsUndef1 && IsUndef2)
+    return true;
+
+  Register UndefReg;
+  if (SrcInstr1 || SrcInstr2)
+    UndefReg = MRI.createGenericVirtualRegister(MRI.getType(SrcReg1));
+
+  // Since our inputs to shufflevector must be of the same size, we can reuse
+  // the size of the defined register.
+  const unsigned NumElements = (SrcInstr1 != 0) ? SrcInstr1->getNumSources()
+                                                : SrcInstr2->getNumSources();
+  for (unsigned Idx = 0; Idx < NumElements; ++Idx) {
+    const Register Elt =
+        (SrcInstr1 != 0) ? SrcInstr1->getSourceReg(Idx) : UndefReg;
+    Operands.push_back(Elt);
+  }
+
+  for (unsigned Idx = 0; Idx < NumElements; ++Idx) {
+    const Register Elt =
+        (SrcInstr2 != 0) ? SrcInstr2->getSourceReg(Idx) : UndefReg;
+    Operands.push_back(Elt);
+  }
+
+  return true;
+}
+
+void CombinerHelper::applyCombineShuffleVectorBuildVector(
+    MachineInstr &MI, SmallVectorImpl<Register> &Operands) {
+  assert(MI.getOpcode() == TargetOpcode::G_SHUFFLE_VECTOR &&
+         "Expected a shuffle vector");
+  auto &ShuffleVector = cast<GShuffleVector>(MI);
+  const Register SrcReg1 =
+      peekThroughBitcast(ShuffleVector.getSourceReg(0), MRI);
+  const Register SrcReg2 =
+      peekThroughBitcast(ShuffleVector.getSourceReg(1), MRI);
+
+  // Check if the Source registers are either merges or implicit definitions
+  const MachineInstr *IsUndef1 =
+      getOpcodeDef(TargetOpcode::G_IMPLICIT_DEF, SrcReg1, MRI);
+  const MachineInstr *IsUndef2 =
+      getOpcodeDef(TargetOpcode::G_IMPLICIT_DEF, SrcReg2, MRI);
+
+  // If they're both undefined, we will just return an undefined as well.
+  if (IsUndef1 && IsUndef2) {
+    Builder.buildUndef(ShuffleVector.getReg(0));
+    MI.eraseFromParent();
+    return;
+  }
+
+  const LLT SrcReg1Ty = MRI.getType(SrcReg1);
+  const ArrayRef<int> ShiftMask = MI.getOperand(3).getShuffleMask();
+  Register UndefReg;
+  SmallVector<Register, 8> Arguments;
+  for (int Index : ShiftMask) {
+    if (!UndefReg) {
+      UndefReg = Builder.buildUndef(SrcReg1Ty.getScalarType()).getReg(0);
+    }
+
+    const Register Argument = Index >= 0 ? Operands[Index] : UndefReg;
+    Arguments.push_back(Argument);
+  }
+
+  Builder.buildBuildVector(ShuffleVector.getOperand(0), Arguments);
+  MI.eraseFromParent();
 }
 
 bool CombinerHelper::matchCombineUnmergeMergeToPlainValues(

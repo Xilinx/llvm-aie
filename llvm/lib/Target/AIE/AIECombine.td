@@ -62,7 +62,8 @@ def AIE2PreLegalizerCombiner
                                                                  all_combines, combine_S20NarrowingOpt,
                                                                  combine_globalval_offset,
                                                                  combine_extract_vector_elt_and_zsa_ext,
-                                                                 combine_splat_vector ]> {
+                                                                 combine_splat_vector,
+                                                                 shufflevector_merge ]> {
     let CombineAllMethodName = "tryCombineAllImpl";
 }
 

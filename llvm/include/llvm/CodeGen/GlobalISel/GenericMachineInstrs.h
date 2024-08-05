@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 /// \file
 /// Declares convenience wrapper classes for interpreting MachineInstr instances
@@ -237,6 +240,22 @@ public:
 
   static bool classof(const MachineInstr *MI) {
     return MI->getOpcode() == TargetOpcode::G_UNMERGE_VALUES;
+  }
+};
+
+/// Represents a G_SHUFFLE_VECTOR.
+class GShuffleVector : public GenericMachineInstr {
+public:
+  /// Returns the number of source registers.
+  unsigned getNumSources() const { return getNumOperands() - 2; }
+  /// Returns the I'th source register.
+  Register getSourceReg(unsigned I) const {
+    assert(I + 1 <= getNumSources());
+    return getReg(I + 1);
+  }
+
+  static bool classof(const MachineInstr *MI) {
+    return MI->getOpcode() == TargetOpcode::G_SHUFFLE_VECTOR;
   }
 };
 

@@ -8,13 +8,18 @@ declare i32 @llvm.aarch64.neon.uaddv.i32.v4i32(<4 x i32>) #0
 define i32 @bar() {
 ; CHECK-LABEL: bar:
 ; CHECK:       ; %bb.0: ; %bb
-; CHECK-NEXT:    movi.2d v0, #0000000000000000
-; CHECK-NEXT:    mov b1, v0[1]
-; CHECK-NEXT:    mov b2, v0[2]
-; CHECK-NEXT:    mov b3, v0[3]
-; CHECK-NEXT:    mov.h v0[1], v1[0]
+; CHECK-NEXT:    mov w8, #0 ; =0x0
+; CHECK-NEXT:    fmov s0, w8
+; CHECK-NEXT:    mov.16b v1, v0
+; CHECK-NEXT:    mov.b v1[1], v0[0]
+; CHECK-NEXT:    mov.b v1[2], v0[0]
+; CHECK-NEXT:    mov.b v1[3], v0[0]
+; CHECK-NEXT:    mov b0, v1[1]
+; CHECK-NEXT:    mov b2, v1[2]
+; CHECK-NEXT:    mov b3, v1[3]
+; CHECK-NEXT:    mov.h v1[1], v0[0]
 ; CHECK-NEXT:    mov.h v2[1], v3[0]
-; CHECK-NEXT:    ushll.4s v0, v0, #0
+; CHECK-NEXT:    ushll.4s v0, v1, #0
 ; CHECK-NEXT:    ushll.4s v1, v2, #0
 ; CHECK-NEXT:    mov.d v0[1], v1[0]
 ; CHECK-NEXT:    movi.4s v1, #1

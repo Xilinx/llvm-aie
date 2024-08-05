@@ -12,7 +12,7 @@
 include "llvm/Target/GlobalISel/Combine.td"
 
 def RISCVPreLegalizerCombiner: GICombiner<
-  "RISCVPreLegalizerCombinerImpl", [all_combines]> {
+  "RISCVPreLegalizerCombinerImpl", [all_combines, shufflevector_merge]> {
 }
 
 def RISCVO0PreLegalizerCombiner: GICombiner<
