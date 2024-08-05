@@ -67,10 +67,10 @@ define void @mul2d(ptr noalias %in_ptr0, ptr noalias %in_ptr1, ptr noalias %out_
 ; CHECK-NEXT:    paddb [p3], #-20
 ; CHECK-NEXT:    lda dn4, [p3, #0]; mov p3, sp
 ; CHECK-NEXT:    mova dc0, #0; paddb [p3], #-24; movx r2, #1
-; CHECK-NEXT:    lda m0, [p3, #0]; movx r3, #0
-; CHECK-NEXT:    movx r4, #-1; mov dc4, dc0
-; CHECK-NEXT:    extend.u8 r5, r5
-; CHECK-NEXT:    lshl r1, r1, r4; mov s0, r5
+; CHECK-NEXT:    lda m0, [p3, #0]; extend.u8 r5, r5
+; CHECK-NEXT:    movx r3, #0; mov s0, r5
+; CHECK-NEXT:    movx r4, #-1
+; CHECK-NEXT:    lshl r1, r1, r4; mov dc4, dc0
 ; CHECK-NEXT:    ne r2, r0, r2; vbcst.8 x0, r3
 ; CHECK-NEXT:    movx r0, #808; mov crSRSSign, r2
 ; CHECK-NEXT:    .p2align 4

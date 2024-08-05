@@ -151,6 +151,8 @@ class AIEPreRASchedStrategy : public GenericScheduler {
 public:
   AIEPreRASchedStrategy(const MachineSchedContext *C) : GenericScheduler(C) {}
 
+  void initialize(ScheduleDAGMI *DAG) override;
+
   void enterRegion(MachineBasicBlock *BB, MachineBasicBlock::iterator Begin,
                    MachineBasicBlock::iterator End, unsigned RegionInstrs);
   void leaveRegion(const SUnit &ExitSU);
@@ -182,6 +184,8 @@ private:
   /// pressure-reducing SU to be scheduled first.
   /// SUDelayerMap[0] = 2 means that SU(0) is waiting on SU(2).
   std::vector<unsigned> SUDelayerMap;
+
+  std::vector<unsigned> PSetThresholds;
 };
 
 /// An extension to ScheduleDAGMI that provides callbacks on region entry/exit

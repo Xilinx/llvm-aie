@@ -45,35 +45,35 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ASM-NEXT:    mov dc0, dj3
 ; ASM-NEXT:    st p6, [sp, #-28] // 4-byte Folded Spill
 ; ASM-NEXT:    mov p6, sp
-; ASM-NEXT:    paddb [p6], #-44; mov dc4, dj3
-; ASM-NEXT:    lda m0, [p6, #0]; mov p6, sp
-; ASM-NEXT:    paddb [p6], #-48; mov dc1, dj3
-; ASM-NEXT:    lda dj0, [p6, #0]; mov r25, dj3
+; ASM-NEXT:    paddb [p6], #-132; mov dc4, dj3
+; ASM-NEXT:    lda m5, [p6, #0]; mov p6, sp
+; ASM-NEXT:    paddb [p6], #-136; mov dc1, dj3
+; ASM-NEXT:    lda r28, [p6, #0]; mov r25, dj3
 ; ASM-NEXT:    mov p6, sp
-; ASM-NEXT:    paddb [p6], #-52; mov dc2, dj3
-; ASM-NEXT:    lda dj4, [p6, #0]; mov p6, sp
+; ASM-NEXT:    paddb [p6], #-140; mov dc2, dj3
+; ASM-NEXT:    lda r27, [p6, #0]; mov p6, sp
+; ASM-NEXT:    paddb [p6], #-44
+; ASM-NEXT:    lda m0, [p6, #0]; mov p6, sp
+; ASM-NEXT:    paddb [p6], #-48
+; ASM-NEXT:    lda dj0, [p6, #0]; mov p6, sp
+; ASM-NEXT:    paddb [p6], #-52; mov dc6, dj3
+; ASM-NEXT:    lda dj4, [p6, #0]
+; ASM-NEXT:    mov p6, sp
 ; ASM-NEXT:    paddb [p6], #-56
 ; ASM-NEXT:    lda dn0, [p6, #0]; mov p6, sp
 ; ASM-NEXT:    paddb [p6], #-60
 ; ASM-NEXT:    lda dn4, [p6, #0]; mov p6, sp
-; ASM-NEXT:    paddb [p6], #-68; mov dc6, dj3
-; ASM-NEXT:    lda r10, [p6, #0]
+; ASM-NEXT:    paddb [p6], #-68
+; ASM-NEXT:    lda r10, [p6, #0]; mov p6, sp
+; ASM-NEXT:    paddb [p6], #-72; mov dc3, dj3
+; ASM-NEXT:    lda dj1, [p6, #0]
 ; ASM-NEXT:    mov p6, sp
-; ASM-NEXT:    paddb [p6], #-72
-; ASM-NEXT:    lda dj1, [p6, #0]; mov p6, sp
 ; ASM-NEXT:    paddb [p6], #-76
 ; ASM-NEXT:    lda r11, [p6, #0]; mov p6, sp
 ; ASM-NEXT:    paddb [p6], #-80
 ; ASM-NEXT:    lda dn1, [p6, #0]; mov p6, sp
-; ASM-NEXT:    paddb [p6], #-84; mov dc3, dj3
-; ASM-NEXT:    lda r12, [p6, #0]
-; ASM-NEXT:    mov p6, sp
-; ASM-NEXT:    paddb [p6], #-132
-; ASM-NEXT:    lda m5, [p6, #0]; mov p6, sp
-; ASM-NEXT:    paddb [p6], #-136
-; ASM-NEXT:    lda r28, [p6, #0]; mov p6, sp
-; ASM-NEXT:    paddb [p6], #-140
-; ASM-NEXT:    lda r27, [p6, #0]; mov p6, sp
+; ASM-NEXT:    paddb [p6], #-84
+; ASM-NEXT:    lda r12, [p6, #0]; mov p6, sp
 ; ASM-NEXT:    paddb [p6], #-88; mov dc7, dj3
 ; ASM-NEXT:    lda r13, [p6, #0]
 ; ASM-NEXT:    mov p6, sp
