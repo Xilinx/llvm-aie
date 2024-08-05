@@ -31,9 +31,22 @@
 
 using namespace llvm;
 
-#define DEBUG_TYPE "aie-ra"
+#define DEBUG_TYPE "aie-wawreg-rewrite"
 
 namespace {
+
+cl::opt<uint>
+    MaxInstrCount("aie-waw-max-instr-count",
+                  cl::desc("Maximum number instruction for which to enable WAW "
+                           "register renaming pass (default 20)"),
+                  cl::init(20), cl::Hidden);
+// max spill regs
+cl::opt<bool>
+    Spill2Stack("aie-waw-spill2stack",
+                cl::desc("Use all register to perform the WAW replacement. "
+                         "This can cause Register usage, that introduces "
+                         "Callee Save and restore Moves! (default false)"),
+                cl::init(false), cl::Hidden);
 
 ///
 /// This rewrites Registers, if they are redefined in the same Loop body and
@@ -68,20 +81,43 @@ public:
 
 private:
   std::map<const MachineOperand *, std::set<MCPhysReg>>
-  getWAR_RenameRegs(const MachineFunction &MF, const VirtRegMap &VRM,
-                    LiveRegMatrix &LRM, const AIEBaseRegisterInfo *TRI,
-                    const MachineRegisterInfo *MRI,
-                    const LiveIntervals &LIS) const;
+  getWarRenameRegs(const MachineFunction &MF, const VirtRegMap &VRM,
+                   LiveRegMatrix &LRM, const AIEBaseRegisterInfo *TRI,
+                   const MachineRegisterInfo *MRI, const LiveIntervals &LIS,
+                   const std::set<MCPhysReg> &CSPhyRegs) const;
 };
+
+static std::set<MCPhysReg> getCSPhyRegs(const MachineRegisterInfo &MRI,
+                                        const AIEBaseRegisterInfo *TRI);
+
+static std::set<MCPhysReg>
+getBBForbiddenReplacements(const MachineBasicBlock &MBB, const VirtRegMap &VRM,
+                           const MachineRegisterInfo &MRI,
+                           const AIEBaseRegisterInfo *TRI);
 
 static std::set<MCPhysReg> getPriorityReplacementRegs(
     const MachineBasicBlock &MBB, const Register Reg, const VirtRegMap &VRM,
     LiveRegMatrix &LRM, const MachineRegisterInfo &MRI,
-    const LiveIntervals &LIS, const AIEBaseRegisterInfo *TRI);
+    const LiveIntervals &LIS, const AIEBaseRegisterInfo *TRI,
+    const std::set<MCPhysReg> &ForbiddenPhysRegs);
 
 bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
+
+  bool FoundLoop = false;
+  for (const MachineBasicBlock &MBB : MF) {
+    // collect any register, which that are redefined within te same BB
+    if (MBB.succ_end() != find(MBB.successors(), &MBB)) {
+      FoundLoop = true;
+    }
+  }
+  if (!FoundLoop) {
+    return false;
+  }
+
   LLVM_DEBUG(llvm::dbgs() << "*** WAW Loop Register Rewriting: " << MF.getName()
-                          << " ***\n");
+                          << " ***\n"
+                          << "Maximum Instructions in Loop Body set to "
+                          << MaxInstrCount << "\n");
 
   MachineRegisterInfo &MRI = MF.getRegInfo();
   auto &TRI =
@@ -92,8 +128,10 @@ bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
   std::map<Register, MCRegister> AssignedPhysRegs;
   bool Modified = false;
 
+  std::set<MCPhysReg> CSPhyRegs = getCSPhyRegs(MRI, &TRI);
+
   std::map<const MachineOperand *, std::set<MCPhysReg>> PriorityRenameRegs =
-      getWAR_RenameRegs(MF, VRM, LRM, &TRI, &MRI, LIS);
+      getWarRenameRegs(MF, VRM, LRM, &TRI, &MRI, LIS, CSPhyRegs);
 
   // Collect already-assigned VRegs that can be split into smaller ones.
   LLVM_DEBUG(VRM.dump());
@@ -137,19 +175,22 @@ bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
 /// even though they don't interfere. This is done, so that pipelining can be
 /// performed. e.g.
 std::map<const MachineOperand *, std::set<MCPhysReg>>
-AIEWawRegRewriter::getWAR_RenameRegs(MachineFunction const &MF,
-                                     const VirtRegMap &VRM, LiveRegMatrix &LRM,
-                                     const AIEBaseRegisterInfo *TRI,
-                                     const MachineRegisterInfo *MRI,
-                                     const LiveIntervals &LIS) const {
+AIEWawRegRewriter::getWarRenameRegs(
+    MachineFunction const &MF, const VirtRegMap &VRM, LiveRegMatrix &LRM,
+    const AIEBaseRegisterInfo *TRI, const MachineRegisterInfo *MRI,
+    const LiveIntervals &LIS, const std::set<MCPhysReg> &CSPhyRegs) const {
   MF.dump();
   std::map<const MachineOperand *, std::set<MCPhysReg>> PriorityRenameRegs;
   for (const MachineBasicBlock &MBB : MF) {
     // collect any register, which that are redefined within te same BB
-    if (MBB.succ_end() != find(MBB.successors(), &MBB)) {
+    if (MBB.succ_end() != find(MBB.successors(), &MBB) &&
+        MBB.size() <= MaxInstrCount) {
       // check if the virtualRegs map to the same physical register
-      std::set<Register> UsedPhyRegs;
+      std::set<MCPhysReg> UsedPhyRegs;
       std::set<Register> UsedVirtRegs;
+
+      std::set<MCPhysReg> ForbiddenPhysRegs =
+          getBBForbiddenReplacements(MBB, VRM, *MRI, TRI);
 
       // get all reg defines and collect redefines
       for (const MachineInstr &MI : MBB) {
@@ -162,16 +203,16 @@ AIEWawRegRewriter::getWAR_RenameRegs(MachineFunction const &MF,
               "not work! Please fix.");
           Register DstReg = MI.getOperand(0).getReg();
           Register SrcReg = MI.getOperand(1).getReg();
-          MCRegister DstPhyReg, SrcPhyReg;
+          MCPhysReg DstPhyReg, SrcPhyReg;
           if (DstReg.isVirtual())
             DstPhyReg = VRM.getPhys(DstReg);
           else
-            DstPhyReg = DstReg;
+            DstPhyReg = DstReg.asMCReg();
 
           if (SrcReg.isVirtual())
             SrcPhyReg = VRM.getPhys(SrcReg);
           else
-            DstPhyReg = VRM.getPhys(DstReg);
+            SrcPhyReg = SrcReg.asMCReg();
 
           if (DstPhyReg == SrcPhyReg) {
             // if src and target are equal, this copy will be eliminated, and
@@ -200,7 +241,7 @@ AIEWawRegRewriter::getWAR_RenameRegs(MachineFunction const &MF,
               if (MRI->getRegClass(Reg) && FoundPhyReg && FoundVirtReg &&
                   !MI.isCopy()) {
                 auto Replacements = getPriorityReplacementRegs(
-                    MBB, Reg, VRM, LRM, *MRI, LIS, TRI);
+                    MBB, Reg, VRM, LRM, *MRI, LIS, TRI, ForbiddenPhysRegs);
                 if (!Replacements.empty()) {
                   PriorityRenameRegs[&Op] = Replacements;
                   LLVM_DEBUG(
@@ -222,7 +263,8 @@ AIEWawRegRewriter::getWAR_RenameRegs(MachineFunction const &MF,
                               "Visited Nodes: "
                            << printReg(Reg, TRI, 0, MRI) << " With VirtReg of "
                            << llvm::Register::virtReg2Index(Reg)
-                           << " and PhyReg of " << VRM.getPhys(Reg) << '\n');
+                           << " and PhyReg of "
+                           << printReg(VRM.getPhys(Reg), TRI, 0, MRI) << '\n');
               }
             }
           }
@@ -248,40 +290,68 @@ AIEWawRegRewriter::getWAR_RenameRegs(MachineFunction const &MF,
   return PriorityRenameRegs;
 }
 
-static std::set<MCPhysReg> getPriorityReplacementRegs(
-    const MachineBasicBlock &MBB, const Register Reg, const VirtRegMap &VRM,
-    LiveRegMatrix &LRM, const MachineRegisterInfo &MRI,
-    const LiveIntervals &LIS, const AIEBaseRegisterInfo *TRI) {
-  std::set<MCPhysReg> PhysRegs;
-  std::set<MCPhysReg> BBDefs;
+static std::set<MCPhysReg>
+getBBForbiddenReplacements(const MachineBasicBlock &MBB, const VirtRegMap &VRM,
+                           const MachineRegisterInfo &MRI,
+                           const AIEBaseRegisterInfo *TRI) {
+  std::set<MCPhysReg> BlockedPhysRegs;
   for (auto &MI : MBB) {
     for (auto &Op : MI.operands()) {
       if (Op.isReg() && Op.isDef()) {
+        MCPhysReg PhysReg;
         if (Op.getReg().isVirtual()) {
-          BBDefs.insert(VRM.getPhys(Op.getReg()));
+          PhysReg = VRM.getPhys(Op.getReg());
         } else if (Op.getReg().isPhysical()) {
-          BBDefs.insert(Op.getReg());
+          PhysReg = Op.getReg();
         } else {
-          LLVM_DEBUG(dbgs() << "Neither virtual nor physical register: ";
-                     Op.print(dbgs(), TRI));
+          continue;
         }
-      }
+        BlockedPhysRegs.insert(PhysReg);
     }
   }
+  }
+  auto CSPhysRegs = getCSPhyRegs(MRI, TRI);
+  BlockedPhysRegs.insert(CSPhysRegs.begin(), CSPhysRegs.end());
+  return BlockedPhysRegs;
+}
+
+static std::set<MCPhysReg> getPriorityReplacementRegs(
+    const MachineBasicBlock &MBB, const Register Reg, const VirtRegMap &VRM,
+    LiveRegMatrix &LRM, const MachineRegisterInfo &MRI,
+    const LiveIntervals &LIS, const AIEBaseRegisterInfo *TRI,
+    const std::set<MCPhysReg> &ForbiddenPhysRegs) {
+  std::set<MCPhysReg> PhysRegs;
 
   // get all free register that dont interfere, but ignore defs from the MBB
   const TargetRegisterClass *RC = MRI.getRegClass(Reg);
   // iterate RC and allocate first found reg that does not interfere
   for (const MCPhysReg &PhysReg : RC->getRegisters()) {
+  LLVM_DEBUG(dbgs() << printReg(PhysReg, TRI, 0, &MRI) << " ");
+
+  if (ForbiddenPhysRegs.end() != find(ForbiddenPhysRegs, PhysReg)) {
+    LLVM_DEBUG(dbgs() << "Abort - Physical Register is forbidden to be used\n");
+    continue;
+  }
     const llvm::LiveInterval &LI = LIS.getInterval(Reg);
     LiveRegMatrix::InterferenceKind IK = LRM.checkInterference(LI, PhysReg);
-    if (IK == llvm::LiveRegMatrix::IK_Free &&
-        BBDefs.end() == find(BBDefs, Reg)) {
-      PhysRegs.insert(PhysReg);
+    if (IK == llvm::LiveRegMatrix::IK_Free) {
+    LLVM_DEBUG(dbgs() << "Free Register\n");
+    PhysRegs.insert(PhysReg);
+    } else {
+    LLVM_DEBUG(dbgs() << "Blocked Register\n");
     }
   }
-
   return PhysRegs;
+}
+
+static std::set<MCPhysReg> getCSPhyRegs(const MachineRegisterInfo &MRI,
+                                        const AIEBaseRegisterInfo *TRI) {
+  std::set<MCPhysReg> CSPhyRegs;
+  const MCPhysReg *CSRegs = MRI.getCalleeSavedRegs();
+  for (const uint16_t *RegPtr = CSRegs; *RegPtr; ++RegPtr) {
+    CSPhyRegs.insert(*RegPtr);
+  }
+  return CSPhyRegs;
 }
 
 } // end anonymous namespace
