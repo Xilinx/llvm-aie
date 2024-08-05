@@ -173,7 +173,7 @@ unsigned MaxLatencyFinder::operator()(MachineInstr &MI) {
   // scheduling a loop.
   const AIE::InterBlockScheduling &IB = Scheduler->getInterBlock();
   if (!InterBlock) {
-    if (auto Cap = IB.getLatencyCap(CurBB)) {
+    if (auto Cap = IB.getLatencyCap(MI)) {
       LLVM_DEBUG(dbgs() << "Capped at " << *Cap << "\n");
       Latency = std::min(Latency, *Cap);
     }
