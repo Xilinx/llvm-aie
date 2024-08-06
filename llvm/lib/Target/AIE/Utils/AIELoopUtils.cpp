@@ -85,4 +85,16 @@ getDedicatedFallThroughPreheader(const MachineBasicBlock &LoopBlock) {
 
   return Candidate;
 }
+
+bool isSingleMBBLoop(const MachineBasicBlock *MBB) {
+  int NumLoopEdges = 0;
+  int NumExitEdges = 0;
+  for (auto *S : MBB->successors())
+    if (S == MBB)
+      NumLoopEdges++;
+    else
+      NumExitEdges++;
+  return NumLoopEdges == 1 && NumExitEdges == 1;
+}
+
 } // namespace llvm::AIELoopUtils
