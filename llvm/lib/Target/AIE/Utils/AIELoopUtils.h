@@ -37,6 +37,9 @@ std::optional<int64_t> getMinTripCount(const MachineBasicBlock &LoopBlock);
 MachineBasicBlock *
 getDedicatedFallThroughPreheader(const MachineBasicBlock &LoopBlock);
 
+/// Check if this block is a single block loop.
+bool isSingleMBBLoop(const MachineBasicBlock *MBB);
+
 } // namespace llvm::AIELoopUtils
 
 #endif

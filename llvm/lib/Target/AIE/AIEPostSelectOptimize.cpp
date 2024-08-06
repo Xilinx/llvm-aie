@@ -30,7 +30,11 @@
 //
 
 #include "AIE.h"
+#include "AIE2.h"
+#include "AIE2InstrInfo.h"
+#include "AIE2RegisterInfo.h"
 #include "AIEBaseRegisterInfo.h"
+#include "Utils/AIELoopUtils.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -278,6 +282,162 @@ bool combineINSERT_SUBREG(MachineBasicBlock &MBB) {
   return Changed;
 }
 
+/// This function takes one REG_SEQUENCE MI as the main parameter.
+/// Then, the consumer of this instruction is analyzed to see if it
+/// is a load (LoadUses), then its inputs will be mapped back to MI.
+/// For example:
+///   A = REG_SEQUENCE (x, y) <- analyzed MI
+///   ??<data> ??<ptr> = LOAD (??, A)
+/// Will result in:
+///   LoadUses[x] = MI;
+///   LoadUses[y] = MI;
+/// Alternatively, if MI is used by a store, we simply add MI
+/// parameters to the NonLoadUses set. We call this set as NonLoadUses
+/// because it can also catch other situations, like PADDs for example.
+/// Note that we use an asymmetric tracking because we plan to duplicate
+/// registers for load uses, keeping stores with the original registers. Also,
+/// note that an input register (used in REG_SEQUENCE) will  only be considered
+/// for duplication (for load) if it is defined outside the current basic block.
+/// This last rule is important to not create a worst scenario for the
+/// coalescer.
+static void collectIteratorComponentsUsage(
+    MachineInstr &MI, const Register DstReg,
+    DenseMap<Register, SmallPtrSet<MachineInstr *, 8>> &LoadUses,
+    SmallSet<Register, 8> &NonLoadUses, MachineRegisterInfo &MRI) {
+
+  // Take first-use instruction, that will be only one due to the
+  // way we lower addressing register's use:
+  // A  =  REG_SEQUENCE __
+  // __ =  LOAD/STORE (__, A)
+  MachineInstr *UseMI = MRI.use_begin(DstReg)->getParent();
+
+  for (auto &Operand : MI.operands()) {
+    // Ignore first operand (def.).
+    if (!Operand.isReg() || Operand.getReg() == DstReg)
+      continue;
+
+    const Register Reg = Operand.getReg();
+    MachineInstr *DefMI = MRI.getUniqueVRegDef(Reg);
+
+    // Ignore internal definitions (same MBB).
+    if (DefMI && DefMI->getParent() == MI.getParent())
+      continue;
+
+    if (UseMI->mayLoad())
+      LoadUses[Reg].insert(&MI);
+    else
+      NonLoadUses.insert(Reg);
+  }
+}
+
+/// This function does the real duplication. We can consider the following
+/// example, where we can see how the code is changed:
+///  bb.0.entry:
+///  successors: %bb.1
+///  liveins: $p0, $p1, $r0
+///    ???
+///    %2:em = MOV_PD_imm10_pseudo 10
+///    + %new2:em PseudoMove %2
+///    %3:edn = MOV_PD_imm10_pseudo 12
+///    + %new3:edn PseudoMove %3
+///    %4:edj = MOV_PD_imm10_pseudo 14
+///    + %new4:edj PseudoMove %4
+///    LoopStart ???
+///    PseudoJ_jump_imm %bb.1
+///  bb.1:
+///  successors: %bb.1, ???
+///    - %7:ed = REG_SEQUENCE %2, %subreg.sub_mod,
+///    -         %3, %subreg.sub_dim_size, %4, %subreg.sub_dim_stride,
+///    -         ???, %subreg.sub_dim_count
+///    + %7:ed = REG_SEQUENCE %new2, %subreg.sub_mod,
+///    +         %new3, %subreg.sub_dim_size, %new4, %subreg.sub_dim_stride,
+///    +         ???, %subreg.sub_dim_count
+///    ???, ???, ??? = VLDA_2D_dmw_lda_w ???, %7
+///    %11:ed = REG_SEQUENCE %2, %subreg.sub_mod,
+///             %3, %subreg.sub_dim_size, %4, %subreg.sub_dim_stride,
+///             ???, %subreg.sub_dim_count
+///    ???, ??? = VST_2D_dmw_sts_w ???, ???, %11
+///    PseudoLoopEnd <mcsymbol .L_LEnd11>, %bb.1
+///    PseudoJ_jump_imm ???
+static bool tryToDuplicateLoadUse(
+    DenseMap<Register, SmallPtrSet<MachineInstr *, 8>> &LoadUses,
+    SmallSet<Register, 8> &NonLoadUses, MachineRegisterInfo &MRI,
+    const AIEBaseInstrInfo *TII) {
+
+  bool Changed = false;
+  for (auto &RegMILoad : LoadUses) {
+    const Register Reg = RegMILoad.first;
+    if (!NonLoadUses.contains(Reg))
+      continue;
+
+    // Used by both loads and stores. We will duplicate for
+    // load use.
+    MachineInstr *DefReg = MRI.getUniqueVRegDef(Reg);
+
+    MachineBasicBlock::iterator InsertPoint = DefReg->getIterator();
+    Register DstReg = MRI.createVirtualRegister(MRI.getRegClass(Reg));
+    // Here we cannot use COPY, because Machine CSE will run
+    // PerformTrivialCopyPropagation and our work will disappear.
+    // smoothly.
+    BuildMI(*DefReg->getParent(), ++InsertPoint, DefReg->getDebugLoc(),
+            TII->get(TII->getPseudoMoveOpcode()), DstReg)
+        .addReg(Reg);
+
+    for (MachineInstr *UseMI : RegMILoad.second) {
+      for (auto &Operand : UseMI->operands()) {
+        if (Operand.isReg() && Operand.getReg() == Reg)
+          Operand.setReg(DstReg);
+      }
+    }
+    Changed = true;
+  }
+  return Changed;
+}
+
+/// This optimization prevents the coalescing and copy propagation of
+/// Addressing registers in loops with shared descriptors for load and stores.
+//  This is important to avoid unnecessary COPYs of such descriptors when
+//  they are coalesced.
+bool duplicateAdressingRegs(MachineBasicBlock &MBB, MachineRegisterInfo &MRI) {
+
+  const TargetSubtargetInfo &ST = MBB.getParent()->getSubtarget();
+  const AIEBaseInstrInfo *TII =
+      static_cast<const AIEBaseInstrInfo *>(ST.getInstrInfo());
+  const AIEBaseRegisterInfo *TRI =
+      static_cast<const AIEBaseRegisterInfo *>(ST.getRegisterInfo());
+
+  assert(TII->getPseudoMoveOpcode() &&
+         "Target must have a PseudoMove instruction");
+
+  // We consider only loops here.
+  if (!AIELoopUtils::isSingleMBBLoop(&MBB))
+    return false;
+
+  DenseMap<Register, SmallPtrSet<MachineInstr *, 8>> LoadUses;
+  SmallSet<Register, 8> NonLoadUses;
+  const TargetRegisterClass *Iter2DRC = TRI->get2DIteratorRegClass();
+  const TargetRegisterClass *Iter3DRC = TRI->get3DIteratorRegClass();
+
+  // The first part, collect interesting cases.
+  for (MachineInstr &MI : MBB) {
+    if (MI.getOpcode() != TargetOpcode::REG_SEQUENCE)
+      continue;
+
+    const Register DstReg = MI.getOperand(0).getReg();
+    const TargetRegisterClass *RC = MRI.getRegClass(DstReg);
+
+    if (RC != Iter2DRC && RC != Iter3DRC)
+      continue;
+
+    collectIteratorComponentsUsage(MI, DstReg, LoadUses, NonLoadUses, MRI);
+  }
+
+  // The second part, filter the real useful cases,
+  // registers used in both load and stores (or non load uses).
+  // Then duplicate those registers.
+  return tryToDuplicateLoadUse(LoadUses, NonLoadUses, MRI, TII);
+}
+
 bool AIEPostSelectOptimize::runOnMachineFunction(MachineFunction &MF) {
   LLVM_DEBUG(dbgs() << "\n******* POST I-SEL OPTIMIZATION PASS *******\n"
                     << "********** Function: " << MF.getName() << '\n');
@@ -301,6 +461,15 @@ bool AIEPostSelectOptimize::runOnMachineFunction(MachineFunction &MF) {
   // 2. Simplify reserved register assignments
   for (MachineBasicBlock &MBB : MF) {
     Changed |= removeRedundantCopies(MBB, MF.getRegInfo());
+  }
+
+  // 3. Duplicate addressing registers.
+  // As we use getPseudoMoveOpcode from TII, that is only available
+  // in AIE2.
+  if (!MF.getTarget().getTargetTriple().isAIE1()) {
+    for (MachineBasicBlock &MBB : MF) {
+      Changed |= duplicateAdressingRegs(MBB, MF.getRegInfo());
+    }
   }
 
   return Changed;
