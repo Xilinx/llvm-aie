@@ -54,7 +54,27 @@ protected:
   /// If successful, it notes the polarity of the branch in \p Negated.
   MachineInstr *checkLoopControl(MachineInstr *EndLoop);
 
+  /// Return the unique predecessor of the loop block that is not the loopblock
+  /// itself.
+  /// If no such block exists, return nullptr
+  MachineBasicBlock *getLoopStartBlock();
+
 public:
+  enum class Assessment {
+    Accept,
+    InvalidLoopControl,
+    NoExitCondition,
+    ExitAtNonZero,
+    NotACountedLoop,
+    NotDownCounting,
+    NotZeroOverheadLoop,
+    NotRegular,
+    UnboundedLoop,
+    UnsuitableInitVal,
+    InitStepMismatch,
+    TooLowMinTripCount
+  };
+
   AIEBasePipelinerLoopInfo(MachineInstr *EndLoop, const AIEBaseInstrInfo &TII);
 
   void setMinTripCount(int64_t TC);
@@ -77,6 +97,16 @@ public:
   /// Once this function is called, no other functions on this object are
   /// valid; the loop has been removed.
   void disposed() override;
+
+  /// The default version, no special treatment for any instruction
+  /// except the terminators
+  bool shouldIgnoreForPipelining(const MachineInstr *MI) const override {
+    return false;
+  }
+
+  bool shouldUseSchedule(SwingSchedulerDAG &SSD, SMSchedule &SMS) override;
+
+  bool canAcceptII(SMSchedule &SMS) override;
 };
 
 std::unique_ptr<TargetInstrInfo::PipelinerLoopInfo>

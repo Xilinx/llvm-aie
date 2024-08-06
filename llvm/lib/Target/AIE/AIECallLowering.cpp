@@ -88,7 +88,6 @@ struct AIEOutgoingValueHandler : public CallLowering::OutgoingValueHandler {
     assert(isAligned(StackSlotAlign, Offset) && "Stack offset is not aligned");
     MachineFunction &MF = MIRBuilder.getMF();
     LLT PtrTy = LLT::pointer(0, 20);
-    LLT S32 = LLT::scalar(32);
     if (!SPReg) {
       auto *TRI =
           static_cast<const AIEBaseRegisterInfo *>(MRI.getTargetRegisterInfo());
@@ -100,7 +99,8 @@ struct AIEOutgoingValueHandler : public CallLowering::OutgoingValueHandler {
     // with standard down-growing stacks in mind.
     Offset = -Offset - int64_t(SizeInSlots);
 
-    auto OffsetReg = MIRBuilder.buildConstant(S32, Offset);
+    LLT S20 = LLT::scalar(20);
+    auto OffsetReg = MIRBuilder.buildConstant(S20, Offset);
     auto AddrReg = MIRBuilder.buildPtrAdd(PtrTy, SPReg, OffsetReg);
 
     MPO = MachinePointerInfo::getStack(MF, Offset);

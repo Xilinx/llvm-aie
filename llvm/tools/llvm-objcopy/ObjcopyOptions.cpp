@@ -13,6 +13,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/BinaryFormat/COFF.h"
 #include "llvm/ObjCopy/CommonConfig.h"
 #include "llvm/ObjCopy/ConfigManager.h"
@@ -257,6 +258,21 @@ parseSetSectionFlagValue(StringRef FlagValue) {
   return SFU;
 }
 
+static Expected<uint8_t> parseVisibilityType(StringRef VisType) {
+  const uint8_t Invalid = 0xff;
+  uint8_t type = StringSwitch<uint8_t>(VisType)
+                     .Case("default", ELF::STV_DEFAULT)
+                     .Case("hidden", ELF::STV_HIDDEN)
+                     .Case("internal", ELF::STV_INTERNAL)
+                     .Case("protected", ELF::STV_PROTECTED)
+                     .Default(Invalid);
+  if (type == Invalid)
+    return createStringError(errc::invalid_argument,
+                             "'%s' is not a valid symbol visibility",
+                             VisType.str().c_str());
+  return type;
+}
+
 namespace {
 struct TargetInfo {
   FileFormat Format;
@@ -304,6 +320,8 @@ static const StringMap<MachineInfo> TargetMap{
     // LoongArch
     {"elf32-loongarch", {ELF::EM_LOONGARCH, false, true}},
     {"elf64-loongarch", {ELF::EM_LOONGARCH, true, true}},
+    // SystemZ
+    {"elf64-s390", {ELF::EM_S390, true, false}},
 };
 
 static Expected<TargetInfo>
@@ -516,7 +534,7 @@ static Expected<NewSymbolInfo> parseNewSymbolInfo(StringRef FlagValue) {
 // ArgValue, loads data from the file, and stores section name and data
 // into the vector of new sections \p NewSections.
 static Error loadNewSectionData(StringRef ArgValue, StringRef OptionName,
-                                std::vector<NewSectionInfo> &NewSections) {
+                                SmallVector<NewSectionInfo, 0> &NewSections) {
   if (!ArgValue.contains('='))
     return createStringError(errc::invalid_argument,
                              "bad format for " + OptionName + ": missing '='");
@@ -692,6 +710,7 @@ objcopy::parseObjcopyOptions(ArrayRef<const char *> RawArgsArr,
   Config.OutputFormat = StringSwitch<FileFormat>(OutputFormat)
                             .Case("binary", FileFormat::Binary)
                             .Case("ihex", FileFormat::IHex)
+                            .Case("srec", FileFormat::SREC)
                             .Default(FileFormat::Unspecified);
   if (Config.OutputFormat == FileFormat::Unspecified) {
     if (OutputFormat.empty()) {
@@ -722,6 +741,42 @@ objcopy::parseObjcopyOptions(ArrayRef<const char *> RawArgsArr,
       return createStringError(errc::invalid_argument, Reason);
   }
 
+  for (const auto *A : InputArgs.filtered(OBJCOPY_compress_sections)) {
+    SmallVector<StringRef, 0> Fields;
+    StringRef(A->getValue()).split(Fields, '=');
+    if (Fields.size() != 2 || Fields[1].empty()) {
+      return createStringError(
+          errc::invalid_argument,
+          A->getSpelling() +
+              ": parse error, not 'section-glob=[none|zlib|zstd]'");
+    }
+
+    auto Type = StringSwitch<DebugCompressionType>(Fields[1])
+                    .Case("zlib", DebugCompressionType::Zlib)
+                    .Case("zstd", DebugCompressionType::Zstd)
+                    .Default(DebugCompressionType::None);
+    if (Type == DebugCompressionType::None && Fields[1] != "none") {
+      return createStringError(
+          errc::invalid_argument,
+          "invalid or unsupported --compress-sections format: %s",
+          A->getValue());
+    }
+
+    auto &P = Config.compressSections.emplace_back();
+    P.second = Type;
+    auto Matcher =
+        NameOrPattern::create(Fields[0], SectionMatchStyle, ErrorCallback);
+    // =none allows overriding a previous =zlib or =zstd. Reject negative
+    // patterns, which would be confusing.
+    if (Matcher && !Matcher->isPositiveMatch()) {
+      return createStringError(
+          errc::invalid_argument,
+          "--compress-sections: negative pattern is unsupported");
+    }
+    if (Error E = P.first.addMatcher(std::move(Matcher)))
+      return std::move(E);
+  }
+
   Config.AddGnuDebugLink = InputArgs.getLastArgValue(OBJCOPY_add_gnu_debuglink);
   // The gnu_debuglink's target is expected to not change or else its CRC would
   // become invalidated and get rejected. We can avoid recalculating the
@@ -736,7 +791,11 @@ objcopy::parseObjcopyOptions(ArrayRef<const char *> RawArgsArr,
         llvm::crc32(arrayRefFromStringRef(Debug->getBuffer()));
   }
   Config.SplitDWO = InputArgs.getLastArgValue(OBJCOPY_split_dwo);
+
   Config.SymbolsPrefix = InputArgs.getLastArgValue(OBJCOPY_prefix_symbols);
+  Config.SymbolsPrefixRemove =
+      InputArgs.getLastArgValue(OBJCOPY_remove_symbol_prefix);
+
   Config.AllocSectionsPrefix =
       InputArgs.getLastArgValue(OBJCOPY_prefix_alloc_sections);
   if (auto Arg = InputArgs.getLastArg(OBJCOPY_extract_partition))
@@ -960,12 +1019,48 @@ objcopy::parseObjcopyOptions(ArrayRef<const char *> RawArgsArr,
             addSymbolsFromFile(Config.SymbolsToKeep, DC.Alloc, Arg->getValue(),
                                SymbolMatchStyle, ErrorCallback))
       return std::move(E);
+  for (auto *Arg : InputArgs.filtered(OBJCOPY_skip_symbol))
+    if (Error E = Config.SymbolsToSkip.addMatcher(NameOrPattern::create(
+            Arg->getValue(), SymbolMatchStyle, ErrorCallback)))
+      return std::move(E);
+  for (auto *Arg : InputArgs.filtered(OBJCOPY_skip_symbols))
+    if (Error E =
+            addSymbolsFromFile(Config.SymbolsToSkip, DC.Alloc, Arg->getValue(),
+                               SymbolMatchStyle, ErrorCallback))
+      return std::move(E);
   for (auto *Arg : InputArgs.filtered(OBJCOPY_add_symbol)) {
     Expected<NewSymbolInfo> SymInfo = parseNewSymbolInfo(Arg->getValue());
     if (!SymInfo)
       return SymInfo.takeError();
 
     Config.SymbolsToAdd.push_back(*SymInfo);
+  }
+  for (auto *Arg : InputArgs.filtered(OBJCOPY_set_symbol_visibility)) {
+    if (!StringRef(Arg->getValue()).contains('='))
+      return createStringError(errc::invalid_argument,
+                               "bad format for --set-symbol-visibility");
+    auto [Sym, Visibility] = StringRef(Arg->getValue()).split('=');
+    Expected<uint8_t> Type = parseVisibilityType(Visibility);
+    if (!Type)
+      return Type.takeError();
+    ELFConfig.SymbolsToSetVisibility.emplace_back(NameMatcher(), *Type);
+    if (Error E = ELFConfig.SymbolsToSetVisibility.back().first.addMatcher(
+            NameOrPattern::create(Sym, SymbolMatchStyle, ErrorCallback)))
+      return std::move(E);
+  }
+  for (auto *Arg : InputArgs.filtered(OBJCOPY_set_symbols_visibility)) {
+    if (!StringRef(Arg->getValue()).contains('='))
+      return createStringError(errc::invalid_argument,
+                               "bad format for --set-symbols-visibility");
+    auto [File, Visibility] = StringRef(Arg->getValue()).split('=');
+    Expected<uint8_t> Type = parseVisibilityType(Visibility);
+    if (!Type)
+      return Type.takeError();
+    ELFConfig.SymbolsToSetVisibility.emplace_back(NameMatcher(), *Type);
+    if (Error E =
+            addSymbolsFromFile(ELFConfig.SymbolsToSetVisibility.back().first,
+                               DC.Alloc, File, SymbolMatchStyle, ErrorCallback))
+      return std::move(E);
   }
 
   ELFConfig.AllowBrokenLinks = InputArgs.hasArg(OBJCOPY_allow_broken_links);

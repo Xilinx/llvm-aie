@@ -9,20 +9,10 @@
 ; RUN:   | FileCheck %s
 
 define i32 @indirectbr(i8* %target) nounwind {
-
-
-
-
-
-
-
-
-
-
 ; CHECK-LABEL: indirectbr:
-; CHECK:       // %bb.0:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0:
 ; CHECK-NEXT:    mov cb0, p0
-; CHECK-NEXT:    mov r12, p0
 ; CHECK-NEXT:    ja cb0
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -33,7 +23,7 @@ define i32 @indirectbr(i8* %target) nounwind {
 ; CHECK-NEXT:  .LBB0_1: // %test_label
 ; CHECK-NEXT:    // Label of block must be emitted
 ; CHECK-NEXT:    mov.u20 r0, #0
-; CHECK:         ret lr
+; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
@@ -47,18 +37,9 @@ ret:
 }
 
 define i32 @indirectbr_with_offset(i8* %a) nounwind {
-
-
-
-
-
-
-
-
-
-
 ; CHECK-LABEL: indirectbr_with_offset:
-; CHECK:       // %bb.0:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0:
 ; CHECK-NEXT:    mov r12, p0
 ; CHECK-NEXT:    mov.u20 r13, #1380
 ; CHECK-NEXT:    add r12, r12, r13
@@ -73,7 +54,7 @@ define i32 @indirectbr_with_offset(i8* %a) nounwind {
 ; CHECK-NEXT:  .LBB1_1: // %test_label
 ; CHECK-NEXT:    // Label of block must be emitted
 ; CHECK-NEXT:    mov.u20 r0, #0
-; CHECK:         ret lr
+; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3

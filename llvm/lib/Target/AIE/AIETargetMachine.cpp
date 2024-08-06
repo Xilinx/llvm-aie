@@ -15,6 +15,7 @@
 #include "AIETargetMachine.h"
 #include "AIE.h"
 #include "AIE2TargetMachine.h"
+#include "AIEBaseAliasAnalysis.h"
 #include "AIEDumpArtifacts.h"
 #include "AIEFinalizeBundle.h"
 #include "AIEMachineBlockPlacement.h"
@@ -38,10 +39,33 @@
 #include "llvm/InitializePasses.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/PassRegistry.h"
+#include "llvm/Passes/PassBuilder.h"
 #include "llvm/Support/CodeGen.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Transforms/IPO/GlobalDCE.h"
+#include "llvm/Transforms/IPO/Internalize.h"
+#include "llvm/Transforms/Scalar.h"
+
 using namespace llvm;
+
+static cl::opt<bool>
+    EnableCustomAliasAnalysis("aie-enable-alias-analysis",
+                              cl::desc("Enable AIE alias analysis pass"),
+                              cl::init(true), cl::Hidden);
+
+// Option to run internalize pass.
+static cl::opt<bool> InternalizeSymbols(
+    "aie-internalize-symbols",
+    cl::desc("Enable elimination of non-kernel functions and unused globals"),
+    cl::init(false), cl::Hidden);
+
+// Option to skip the functions we don't want to internalize.
+static cl::list<std::string>
+    FunctionSkipList("aie-internalize-skip-functions",
+                     cl::desc("List of function names to skip internalization"),
+                     cl::Hidden, cl::list_init<std::string>({"main"}),
+                     cl::CommaSeparated);
 
 extern bool AIEDumpArtifacts;
 
@@ -53,6 +77,7 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIETarget() {
   auto *PR = PassRegistry::getPassRegistry();
   initializeGlobalISel(*PR);
   initializeAIEAddressSpaceFlatteningPass(*PR);
+  initializeAIEEliminateDuplicatePHIPass(*PR);
   initializeAIEClusterBaseAddressPass(*PR);
   initializeAIE2PreLegalizerCombinerPass(*PR);
   initializeAIE2PostLegalizerGenericCombinerPass(*PR);
@@ -69,6 +94,7 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIETarget() {
   initializeAIEBaseExternalAAWrapperPass(*PR);
   initializeAIESplitInstrBuilderPass(*PR);
   initializeAIESplitInstrReplacerPass(*PR);
+  initializeReservedRegsLICMPass(*PR);
 }
 
 static StringRef computeDataLayout(const Triple &TT) {
@@ -118,7 +144,23 @@ TargetPassConfig *AIETargetMachine::createPassConfig(PassManagerBase &PM) {
 }
 
 void AIEPassConfig::addIRPasses() {
-  addPass(createAtomicExpandPass());
+  // Always expand atomic operations, we don't deal with atomicrmw or cmpxchg
+  // ourselves.
+  addPass(createAtomicExpandLegacyPass());
+
+  if (TM->getOptLevel() > CodeGenOptLevel::None) {
+    if (EnableCustomAliasAnalysis) {
+      addPass(createAIEBaseAAWrapperPass());
+      addPass(
+          createExternalAAWrapperPass([](Pass &P, Function &, AAResults &AAR) {
+            if (auto *WrapperPass =
+                    P.getAnalysisIfAvailable<AIEBaseAAWrapperPass>())
+              AAR.addAAResult(WrapperPass->getResult());
+          }));
+    }
+  }
+  if (TM->getOptLevel() > CodeGenOptLevel::None)
+    addPass(createInferAddressSpacesPass());
   TargetPassConfig::addIRPasses();
 }
 
@@ -230,10 +272,63 @@ MachineFunctionInfo *AIEBaseTargetMachine::createMachineFunctionInfo(
       AIEMachineFunctionInfo(F, STI, *this);
 }
 
+bool AIEBaseTargetMachine::isNoopAddrSpaceCast(unsigned SrcAS,
+                                               unsigned DestAS) const {
+  // AIE address space is used for bank annotation only.
+  // aie-addrspace-flattening pass retyped pointer with a AS to default AS.
+  return true;
+}
+
 std::unique_ptr<CSEConfigBase> AIEPassConfig::getCSEConfig() const {
   // We don't want CSE to run at -O0, as it introduces constrained register
   // operands (r27) that RegAllocFast is not able to resolve.
   if (TM->getOptLevel() == CodeGenOptLevel::None)
     return std::make_unique<CSEConfigBase>();
   return getStandardCSEConfigForOpt(TM->getOptLevel());
+}
+
+void AIEBaseTargetMachine::registerDefaultAliasAnalyses(AAManager &AAM) {
+  if (EnableCustomAliasAnalysis)
+    AAM.registerFunctionAnalysis<AIEBaseAA>();
+}
+
+/// Predicate for Internalize pass.
+/// Preserve functions that can be an entry point or that have uses within the
+/// Module.
+static bool mustPreserveGV(const GlobalValue &GV) {
+  if (const Function *F = dyn_cast<Function>(&GV)) {
+    bool Skip = llvm::any_of(FunctionSkipList, [&](const std::string &Name) {
+      return F->getName().equals(Name);
+    });
+    return F->isDeclaration() || Skip;
+  }
+
+  GV.removeDeadConstantUsers();
+  return !GV.use_empty();
+}
+
+void AIEBaseTargetMachine::registerPassBuilderCallbacks(
+    PassBuilder &PB, bool PopulateClassToPassNames) {
+  if (EnableCustomAliasAnalysis) {
+    PB.registerAnalysisRegistrationCallback([](FunctionAnalysisManager &FAM) {
+      FAM.registerPass([&] { return AIEBaseAA(); });
+    });
+    PB.registerParseAACallback([](StringRef AAName, AAManager &AAM) {
+      if (AAName == "aie-aa") {
+        AAM.registerFunctionAnalysis<AIEBaseAA>();
+        return true;
+      }
+      return false;
+    });
+  }
+
+  if (InternalizeSymbols) {
+    PB.registerPipelineEarlySimplificationEPCallback(
+        [](ModulePassManager &PM, OptimizationLevel) {
+          if (InternalizeSymbols) {
+            PM.addPass(InternalizePass(mustPreserveGV));
+            PM.addPass(GlobalDCEPass());
+          }
+        });
+  }
 }

@@ -68,6 +68,7 @@ add_llvm_target(AIECodeGen
    AIECallLowering.cpp
    AIEDelaySlotFiller.cpp
    AIEDumpArtifacts.cpp
+   AIEEliminateDuplicatePHI.cpp
    AIEFinalizeBundle.cpp
    AIEFrameLowering.cpp
    AIEHazardRecognizer.cpp
@@ -110,6 +111,7 @@ add_llvm_target(AIECodeGen
    AIE2TargetMachine.cpp
    AIE2TargetTransformInfo.cpp
    AIETiedRegOperands.cpp
+   ReservedRegsLICM.cpp
 
    LINK_COMPONENTS
    Analysis
@@ -117,6 +119,7 @@ add_llvm_target(AIECodeGen
    Core
    CodeGen
    CodeGenTypes
+   IPO
    MC
    AIEAsmPrinter
    AIEDesc

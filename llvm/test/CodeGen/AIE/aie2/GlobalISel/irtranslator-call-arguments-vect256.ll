@@ -25,8 +25,8 @@ define void @call_v8int32() {
   ; CHECK-NEXT:   [[BUILD_VECTOR:%[0-9]+]]:_(<8 x s32>) = G_BUILD_VECTOR [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32)
   ; CHECK-NEXT:   ADJCALLSTACKUP 32, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $sp
-  ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 -32
-  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C1]](s32)
+  ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 -32
+  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C1]](s20)
   ; CHECK-NEXT:   G_STORE [[BUILD_VECTOR]](<8 x s32>), [[PTR_ADD]](p0) :: (store (<8 x s32>) into stack - 32)
   ; CHECK-NEXT:   $wl0 = COPY [[BUILD_VECTOR]](<8 x s32>)
   ; CHECK-NEXT:   $wl2 = COPY [[BUILD_VECTOR]](<8 x s32>)
@@ -119,8 +119,8 @@ define void @call_v16int16() {
   ; CHECK-NEXT:   [[BUILD_VECTOR:%[0-9]+]]:_(<16 x s16>) = G_BUILD_VECTOR [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16), [[C]](s16)
   ; CHECK-NEXT:   ADJCALLSTACKUP 32, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $sp
-  ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 -32
-  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C1]](s32)
+  ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 -32
+  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C1]](s20)
   ; CHECK-NEXT:   G_STORE [[BUILD_VECTOR]](<16 x s16>), [[PTR_ADD]](p0) :: (store (<16 x s16>) into stack - 32)
   ; CHECK-NEXT:   $wl0 = COPY [[BUILD_VECTOR]](<16 x s16>)
   ; CHECK-NEXT:   $wl2 = COPY [[BUILD_VECTOR]](<16 x s16>)
@@ -213,8 +213,8 @@ define void @call_v32int8() {
   ; CHECK-NEXT:   [[BUILD_VECTOR:%[0-9]+]]:_(<32 x s8>) = G_BUILD_VECTOR [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8), [[C]](s8)
   ; CHECK-NEXT:   ADJCALLSTACKUP 32, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $sp
-  ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 -32
-  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C1]](s32)
+  ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 -32
+  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C1]](s20)
   ; CHECK-NEXT:   G_STORE [[BUILD_VECTOR]](<32 x s8>), [[PTR_ADD]](p0) :: (store (<32 x s8>) into stack - 32)
   ; CHECK-NEXT:   $wl0 = COPY [[BUILD_VECTOR]](<32 x s8>)
   ; CHECK-NEXT:   $wl2 = COPY [[BUILD_VECTOR]](<32 x s8>)
@@ -307,8 +307,8 @@ define void @call_v8float() {
   ; CHECK-NEXT:   [[BUILD_VECTOR:%[0-9]+]]:_(<8 x s32>) = G_BUILD_VECTOR [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32), [[C]](s32)
   ; CHECK-NEXT:   ADJCALLSTACKUP 32, 0, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $sp
-  ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 -32
-  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C1]](s32)
+  ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 -32
+  ; CHECK-NEXT:   [[PTR_ADD:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C1]](s20)
   ; CHECK-NEXT:   G_STORE [[BUILD_VECTOR]](<8 x s32>), [[PTR_ADD]](p0) :: (store (<8 x s32>) into stack - 32)
   ; CHECK-NEXT:   $wl0 = COPY [[BUILD_VECTOR]](<8 x s32>)
   ; CHECK-NEXT:   $wl2 = COPY [[BUILD_VECTOR]](<8 x s32>)

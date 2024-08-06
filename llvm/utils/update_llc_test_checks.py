@@ -87,7 +87,9 @@ def main():
             triple_in_cmd = None
             m = common.TRIPLE_ARG_RE.search(llc_cmd)
             if m:
-                triple_in_cmd = m.groups()[0]
+                triple_in_cmd = common.applySubstitutions(
+                    m.groups()[0], ti.lit_substitutions
+                )
 
             march_in_cmd = None
             m = common.MARCH_ARG_RE.search(llc_cmd)
@@ -167,6 +169,7 @@ def main():
                 ti.path,
                 preprocess_cmd,
                 verbose=ti.args.verbose,
+                cfg_substitutions=ti.lit_substitutions,
             )
             triple = triple_in_cmd or triple_in_ir
             if not triple:

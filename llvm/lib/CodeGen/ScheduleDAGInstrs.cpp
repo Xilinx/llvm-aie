@@ -204,9 +204,11 @@ void ScheduleDAGInstrs::exitRegion() {
 }
 
 void ScheduleDAGInstrs::adjustAndAddPred(SUnit *DstSU, SDep &Dep, int SrcIdx,
-                                         int DstIdx) {
+                                         int DstIdx,
+                                         const TargetSchedModel *SchedModel) {
   const TargetSubtargetInfo &ST = MF.getSubtarget();
-  ST.adjustSchedDependency(Dep.getSUnit(), SrcIdx, DstSU, DstIdx, Dep);
+  ST.adjustSchedDependency(Dep.getSUnit(), SrcIdx, DstSU, DstIdx, Dep,
+                           SchedModel);
   DstSU->addPred(Dep);
 }
 
@@ -294,7 +296,7 @@ void ScheduleDAGInstrs::addPhysRegDataDeps(SUnit *SU, unsigned OperIdx) {
       } else {
         Dep.setLatency(0);
       }
-      adjustAndAddPred(UseSU, Dep, OperIdx, UseOpIdx);
+      adjustAndAddPred(UseSU, Dep, OperIdx, UseOpIdx, &SchedModel);
     }
   }
 }
@@ -331,7 +333,7 @@ void ScheduleDAGInstrs::addPhysRegDeps(SUnit *SU, unsigned OperIdx) {
         if (Kind != SDep::Anti)
           Dep.setLatency(
               SchedModel.computeOutputLatency(MI, OperIdx, DefSU->getInstr()));
-        adjustAndAddPred(DefSU, Dep, OperIdx, I->OpIdx);
+        adjustAndAddPred(DefSU, Dep, OperIdx, I->OpIdx, &SchedModel);
       }
     }
   }
@@ -459,7 +461,7 @@ void ScheduleDAGInstrs::addVRegDefDeps(SUnit *SU, unsigned OperIdx) {
         SDep Dep(SU, SDep::Data, Reg);
         Dep.setLatency(SchedModel.computeOperandLatency(MI, OperIdx, Use,
                                                         I->OperandIndex));
-        adjustAndAddPred(UseSU, Dep, OperIdx, I->OperandIndex);
+        adjustAndAddPred(UseSU, Dep, OperIdx, I->OperandIndex, &SchedModel);
       }
 
       LaneMask &= ~KillLaneMask;
@@ -1154,7 +1156,7 @@ void ScheduleDAGInstrs::reduceHugeMemNodeMaps(Value2SUsMap &stores,
              dbgs() << "Loading SUnits:\n"; loads.dump());
 }
 
-static void toggleKills(const MachineRegisterInfo &MRI, LivePhysRegs &LiveRegs,
+static void toggleKills(const MachineRegisterInfo &MRI, LiveRegUnits &LiveRegs,
                         MachineInstr &MI, bool addToLiveRegs) {
   for (MachineOperand &MO : MI.operands()) {
     if (!MO.isReg() || !MO.readsReg())
@@ -1164,8 +1166,10 @@ static void toggleKills(const MachineRegisterInfo &MRI, LivePhysRegs &LiveRegs,
       continue;
 
     // Things that are available after the instruction are killed by it.
-    bool IsKill = LiveRegs.available(MRI, Reg);
-    MO.setIsKill(IsKill);
+    bool IsKill = LiveRegs.available(Reg);
+
+    // Exception: Do not kill reserved registers
+    MO.setIsKill(IsKill && !MRI.isReserved(Reg));
     if (addToLiveRegs)
       LiveRegs.addReg(Reg);
   }
@@ -1195,7 +1199,7 @@ void ScheduleDAGInstrs::fixupKills(MachineBasicBlock &MBB) {
           continue;
         LiveRegs.removeReg(Reg);
       } else if (MO.isRegMask()) {
-        LiveRegs.removeRegsInMask(MO);
+        LiveRegs.removeRegsNotPreserved(MO.getRegMask());
       }
     }
 

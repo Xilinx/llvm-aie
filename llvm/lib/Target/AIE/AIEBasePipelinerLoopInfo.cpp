@@ -13,6 +13,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEBasePipelinerLoopInfo.h"
+#include "AIE2.h"
+#include "AIE2InstrInfo.h"
+#include "MCTargetDesc/AIE2MCTargetDesc.h"
+#include "Utils/AIELoopUtils.h"
+#include "llvm/Analysis/LoopIterator.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineOperand.h"
@@ -21,7 +26,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include <memory>
 
-#define DEBUG_TYPE "pipeliner"
+#define DEBUG_TYPE "aie-pipeliner"
 namespace llvm {
 cl::opt<int> LoopMinTripCount(
     "aie-loop-min-tripcount",
@@ -33,10 +38,36 @@ cl::opt<bool> TrackRegPressure(
     cl::desc("Refuse SWP schedules likely to run into register spills"),
     cl::init(true), cl::Hidden);
 
+// If we hoist we can get a better performance (no clear evidence
+// of the reason). If we don't hoist, we can change the LoopsStart expansion
+// to reuse this non-hoisted add.
+cl::opt<bool> HoistZOLAdjust(
+    "aie-pipeliner-hoist-zol-adjustment",
+    cl::desc("Host the trip count adjustment for ZOL (when possible)"),
+    cl::init(false), cl::Hidden);
+
 AIEBasePipelinerLoopInfo::AIEBasePipelinerLoopInfo(MachineInstr *EndLoop,
                                                    const AIEBaseInstrInfo &TII)
     : TII(TII), MRI(EndLoop->getMF()->getRegInfo()), EndLoop(EndLoop),
-      LoopBlock(EndLoop->getParent()) {}
+      LoopBlock(EndLoop->getParent()) {
+
+  const BasicBlock *BBLK = LoopBlock->getBasicBlock();
+  if (BBLK == nullptr)
+    return;
+
+  const Instruction *TI = BBLK->getTerminator();
+  if (TI == nullptr)
+    return;
+
+  MDNode *LoopID = TI->getMetadata(LLVMContext::MD_loop);
+  if (LoopID == nullptr)
+    return;
+
+  std::optional<int64_t> ParsedMinTripCount =
+      AIELoopUtils::getMinTripCount(LoopID);
+  if (ParsedMinTripCount)
+    MinTripCount = *ParsedMinTripCount;
+}
 
 void AIEBasePipelinerLoopInfo::setMinTripCount(int64_t TC) {
   LLVM_DEBUG(dbgs() << "TripCount = " << TC << "\n");
@@ -174,6 +205,31 @@ AIEBasePipelinerLoopInfo::checkLoopControl(MachineInstr *EndLoop) {
   return nullptr;
 }
 
+MachineBasicBlock *AIEBasePipelinerLoopInfo::getLoopStartBlock() {
+  MachineBasicBlock *LoopStartBlock = nullptr;
+  for (auto *Pred : LoopBlock->predecessors()) {
+    if (Pred == LoopBlock)
+      continue;
+    if (LoopStartBlock)
+      return nullptr;
+    LoopStartBlock = Pred;
+  }
+  return LoopStartBlock;
+}
+
+bool AIEBasePipelinerLoopInfo::shouldUseSchedule(SwingSchedulerDAG &SSD,
+                                                 SMSchedule &SMS) {
+  const int PrologCount = SMS.getMaxStageCount();
+  const int StageCount = PrologCount + 1;
+  LLVM_DEBUG(dbgs() << "StageCount = " << StageCount << "\n");
+  if (StageCount <= 1) {
+    LLVM_DEBUG(dbgs() << "PLI: Rejected schedule (StageCount <= 1)\n");
+    return false;
+  }
+
+  return true;
+}
+
 namespace {
 
 // Matches a regular downcounting loop with an explicit decrement of a GPR
@@ -239,17 +295,6 @@ class DownCountLoop : public AIEBasePipelinerLoopInfo {
   std::optional<int> ConditionStage;
 
 public:
-  enum class Assessment {
-    Accept,
-    InvalidLoopControl,
-    NoExitCondition,
-    ExitAtNonZero,
-    NotACountedLoop,
-    NotDownCounting,
-    NotRegular,
-    UnsuitableInitVal,
-    InitStepMismatch
-  };
   DownCountLoop(MachineInstr *EndLoop, const AIEBaseInstrInfo &TII)
       : AIEBasePipelinerLoopInfo(EndLoop, TII) {}
 
@@ -269,8 +314,6 @@ public:
       SmallVectorImpl<MachineOperand> &Cond) override;
 
   bool shouldUseSchedule(SwingSchedulerDAG &SSD, SMSchedule &SMS) override;
-
-  bool canAcceptII(SMSchedule &SMS) override;
 
   // This adjusts the incoming tripcount.
   void startExpand() override;
@@ -460,9 +503,10 @@ bool canAllocate(SMSchedule &Sched) {
 bool DownCountLoop::shouldUseSchedule(SwingSchedulerDAG &SSD, SMSchedule &SMS) {
   const int PrologCount = SMS.getMaxStageCount();
   const int StageCount = PrologCount + 1;
-  LLVM_DEBUG(dbgs() << "StageCount = " << StageCount << "\n");
-  if (StageCount <= 1) {
-    LLVM_DEBUG(dbgs() << "PLI: Rejected schedule (StageCount <= 1)\n");
+
+  // If AIEBasePipelinerLoopInfo refuses it, let's conservatively
+  // keep the decision.
+  if (!AIEBasePipelinerLoopInfo::shouldUseSchedule(SSD, SMS)) {
     return false;
   }
 
@@ -490,19 +534,6 @@ bool DownCountLoop::shouldUseSchedule(SwingSchedulerDAG &SSD, SMSchedule &SMS) {
 
   LLVM_DEBUG(dbgs() << "PLI: Accepting schedule for StageCount=" << StageCount
                     << " (dynamic TC)\n");
-  return true;
-}
-
-bool DownCountLoop::canAcceptII(SMSchedule &SMS) {
-  if (TrackRegPressure && !canAllocate(SMS)) {
-    LLVM_DEBUG(
-        dbgs() << "PLI: Rejected schedule (too much block pressure, TotStages="
-               << SMS.getMaxStageCount() + 1
-               << " II=" << SMS.getInitiationInterval() << ")\n");
-    return false;
-  }
-  LLVM_DEBUG(dbgs() << "PLI: Accepting II=" << SMS.getInitiationInterval()
-                    << "\n");
   return true;
 }
 
@@ -589,18 +620,188 @@ void DownCountLoop::startExpand() {
       .addImm(-Adjust * Step);
   Phi->getOperand(InitIdx).setReg(NewReg);
 }
+
+/// A Zero overhead loop enters the software pipeliner with
+/// a PseudoLoopEnd as single loop terminator and
+/// a LoopStart instruction somewhere (usually close to the end)
+/// in the preheader block
+///
+class ZeroOverheadLoop : public AIEBasePipelinerLoopInfo {
+  // The instruction initializing the counter.
+  MachineInstr *Init;
+  // The instruction defining the value used to initialize
+  // the counter.
+  MachineInstr *DefTripCount;
+  MachineBasicBlock *LoopStartBlock;
+
+public:
+  ZeroOverheadLoop(MachineInstr *EndLoop, const AIEBaseInstrInfo &TII)
+      : AIEBasePipelinerLoopInfo(EndLoop, TII) {}
+  void adjustTripCount(int TripCountAdjust) override;
+  Assessment accept(MachineInstr *EndLoop);
+
+  std::optional<bool> createTripCountGreaterCondition(
+      int TC, MachineBasicBlock &MBB,
+      SmallVectorImpl<MachineOperand> &Cond) override;
+
+  bool canAcceptII(SMSchedule &SMS) override;
+};
+
+ZeroOverheadLoop::Assessment ZeroOverheadLoop::accept(MachineInstr *EndLoop) {
+  // We are using LoopMinTripCount below just for testing purposes.
+  // For MIR test cases without IR, we can't encode loop-related metadata.
+  if (!MinTripCount && LoopMinTripCount <= 0) {
+    LLVM_DEBUG(dbgs() << "Unbounded loop detected!\n");
+    return Assessment::UnboundedLoop;
+  }
+
+  // Overwrite MinTripCount.
+  if (LoopMinTripCount > 0) {
+    MinTripCount = LoopMinTripCount;
+  }
+
+  if (MinTripCount <= 1) {
+    LLVM_DEBUG(dbgs() << "Not interesting MinTripCount (<=1)!\n");
+    return Assessment::TooLowMinTripCount;
+  }
+
+  if (!TII.isHardwareLoopEnd(EndLoop->getOpcode())) {
+    LLVM_DEBUG(dbgs() << "Not a hardware loop!\n");
+    return Assessment::NotZeroOverheadLoop;
+  }
+
+  if (EndLoop->getOperand(1).getMBB() != LoopBlock) {
+    LLVM_DEBUG(
+        dbgs() << "Loop contains a branch to a block other than itself!\n");
+    return Assessment::NotRegular;
+  }
+
+  LoopStartBlock = getLoopStartBlock();
+  if (!LoopStartBlock) {
+    LLVM_DEBUG(dbgs() << "Could not locate loop start block!\n");
+    return Assessment::NotRegular;
+  }
+
+  auto FindLoopStart = [&](MachineBasicBlock &Block) -> MachineInstr * {
+    for (auto &MI : reverse(Block)) {
+      if (TII.isHardwareLoopStart(MI.getOpcode()))
+        return &MI;
+    }
+    return nullptr;
+  };
+
+  Init = FindLoopStart(*LoopStartBlock);
+  if (!Init) {
+    LLVM_DEBUG(dbgs() << "Could not locate loop start instruction!\n");
+    return Assessment::InvalidLoopControl;
+  }
+
+  DefTripCount = getDefInstr(Init, 0);
+  if (!DefTripCount) {
+    LLVM_DEBUG(dbgs() << "Could not locate instr. feeding loop start!\n");
+    return Assessment::UnsuitableInitVal;
+  }
+
+  if (TII.isIConst(DefTripCount->getOpcode())) {
+    int64_t InitVal = DefTripCount->getOperand(1).getImm();
+    setMinTripCount(InitVal);
+  }
+
+  LLVM_DEBUG(dbgs() << "Loop accepted\n");
+  return Assessment::Accept;
+}
+
+std::optional<bool> ZeroOverheadLoop::createTripCountGreaterCondition(
+    int TC, MachineBasicBlock &MBB, SmallVectorImpl<MachineOperand> &Cond) {
+
+  LLVM_DEBUG(dbgs() << "Check TC > " << TC << "\n");
+  // The static case. We know we don't have to guard.
+  // Clarification: do we really care about this?
+  if (MinTripCount > TC) {
+    return true;
+  }
+  llvm_unreachable("We can't reverse ZOL condition");
+  return {};
+}
+
+void ZeroOverheadLoop::adjustTripCount(int TripCountAdjust) {
+  LLVM_DEBUG(dbgs() << "TripCountAdjust =  " << TripCountAdjust << "\n");
+  if (DefTripCount->getOperand(1).isImm()) {
+    // If we have a constant here, just update the value.
+    const int64_t InitVal = DefTripCount->getOperand(1).getImm();
+    DefTripCount->getOperand(1).setImm(InitVal + TripCountAdjust);
+  } else {
+    // Otherwise, add the value.
+    Register Reg = DefTripCount->getOperand(0).getReg();
+    Register NewReg = MRI.createVirtualRegister(MRI.getRegClass(Reg));
+    MachineBasicBlock::iterator InsertPoint = Init->getIterator();
+    MachineInstr *AdjacentInstr = Init;
+
+    if (HoistZOLAdjust) {
+      // Insert the adjustment just after the instruction that defines it.
+      // Probably it will be hoisted.
+      AdjacentInstr = DefTripCount;
+      InsertPoint = DefTripCount->getIterator();
+      InsertPoint++;
+    }
+
+    BuildMI(*AdjacentInstr->getParent(), InsertPoint,
+            AdjacentInstr->getDebugLoc(), TII.get(AIE2::ADD_NC_GPR), NewReg)
+        .addReg(Reg)
+        .addImm(TripCountAdjust);
+    Init->getOperand(0).setReg(NewReg);
+  }
+}
+
+bool ZeroOverheadLoop::canAcceptII(SMSchedule &SMS) {
+
+  if (SMS.getMaxStageCount() >= MinTripCount) {
+    LLVM_DEBUG(dbgs() << "PLI: Rejected schedule MaxStageCount="
+                      << SMS.getMaxStageCount()
+                      << " MinTripCount=" << MinTripCount << ")\n");
+    return false;
+  }
+
+  return AIEBasePipelinerLoopInfo::canAcceptII(SMS);
+}
+
 } // namespace
+
+bool AIEBasePipelinerLoopInfo::canAcceptII(SMSchedule &SMS) {
+
+  if (TrackRegPressure && !canAllocate(SMS)) {
+    LLVM_DEBUG(
+        dbgs() << "PLI: Rejected schedule (too much block pressure, TotStages="
+               << SMS.getMaxStageCount() + 1
+               << " II=" << SMS.getInitiationInterval() << ")\n");
+    return false;
+  }
+  LLVM_DEBUG(dbgs() << "PLI: Accepting II=" << SMS.getInitiationInterval()
+                    << "\n");
+  return true;
+}
 
 std::unique_ptr<TargetInstrInfo::PipelinerLoopInfo>
 createAIEBasePipelinerLoopInfo(MachineInstr *EndLoop,
                                const AIEBaseInstrInfo &TII) {
   LLVM_DEBUG(dbgs() << "PLI: ----START LOOP----\n");
+  LLVM_DEBUG(dbgs() << "  Trying DownCountLoop\n");
+
   DownCountLoop DCL(EndLoop, TII);
   auto Outcome = DCL.accept(EndLoop);
-  if (Outcome == DownCountLoop::Assessment::Accept) {
+  if (Outcome == AIEBasePipelinerLoopInfo::Assessment::Accept) {
     LLVM_DEBUG(dbgs() << "PLI: Loop accepted by DownCountLoop\n");
     return std::make_unique<DownCountLoop>(DCL);
   }
+
+  LLVM_DEBUG(dbgs() << "  Trying ZeroOverheadLoop\n");
+  ZeroOverheadLoop ZOL(EndLoop, TII);
+  Outcome = ZOL.accept(EndLoop);
+  if (Outcome == AIEBasePipelinerLoopInfo::Assessment::Accept) {
+    LLVM_DEBUG(dbgs() << "PLI: Loop accepted by ZeroOverheadLoop\n");
+    return std::make_unique<ZeroOverheadLoop>(ZOL);
+  }
+
   LLVM_DEBUG(dbgs() << "PLI: Loop rejected: " << (int)Outcome << "\n");
   return nullptr;
 }

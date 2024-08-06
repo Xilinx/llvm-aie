@@ -69,8 +69,8 @@ AIEInstrInfo::CreateTargetPostRAHazardRecognizer(
   return new AIEHazardRecognizerPRAS(this, II);
 }
 
-unsigned AIEInstrInfo::isLoadFromStackSlot(const MachineInstr &MI,
-                                             int &FrameIndex) const {
+Register AIEInstrInfo::isLoadFromStackSlot(const MachineInstr &MI,
+                                           int &FrameIndex) const {
   switch (MI.getOpcode()) {
   default:
     return 0;
@@ -90,8 +90,8 @@ unsigned AIEInstrInfo::isLoadFromStackSlot(const MachineInstr &MI,
   return 0;
 }
 
-unsigned AIEInstrInfo::isStoreToStackSlot(const MachineInstr &MI,
-                                            int &FrameIndex) const {
+Register AIEInstrInfo::isStoreToStackSlot(const MachineInstr &MI,
+                                          int &FrameIndex) const {
   switch (MI.getOpcode()) {
   default:
     return 0;

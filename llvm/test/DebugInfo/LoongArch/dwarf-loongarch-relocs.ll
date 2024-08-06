@@ -3,14 +3,10 @@
 ; RUN: llvm-objdump --source %t.o | FileCheck --check-prefix=SOURCE %s
 ; RUN: llvm-dwarfdump --debug-info --debug-line %t.o | FileCheck --check-prefix=DWARF %s
 
-; RUN: llc --filetype=obj --mtriple=loongarch64 --mattr=+relax %s -o %t.r.o
+; RUN: llc --filetype=obj --mtriple=loongarch64 --mattr=+relax --align-all-functions=2 %s -o %t.r.o
 ; RUN: llvm-readobj -r %t.r.o | FileCheck --check-prefixes=RELOCS-BOTH,RELOCS-ENRL %s
 ; RUN: llvm-objdump --source %t.r.o | FileCheck --check-prefix=SOURCE %s
 ; RUN: llvm-dwarfdump --debug-info --debug-line %t.r.o | FileCheck --check-prefix=DWARF %s
-
-; This test failed with upstream commit 93248729cfae82a5ca2323d4a8e15aa3b9b9c707 and
-; got fixed later
-; XFAIL: llvm-aie-regression
 
 ; RELOCS-BOTH:       Relocations [
 ; RELOCS-BOTH-NEXT:    Section ({{.*}}) .rela.text {

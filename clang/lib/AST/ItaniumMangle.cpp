@@ -1065,30 +1065,32 @@ void CXXNameMangler::mangleNameWithAbiTags(GlobalDecl GD,
   //         ::= <local-name>
   //
   const DeclContext *DC = Context.getEffectiveDeclContext(ND);
+  bool IsLambda = isLambda(ND);
 
   // If this is an extern variable declared locally, the relevant DeclContext
   // is that of the containing namespace, or the translation unit.
   // FIXME: This is a hack; extern variables declared locally should have
   // a proper semantic declaration context!
-  if (isLocalContainerContext(DC) && ND->hasLinkage() && !isLambda(ND))
+  if (isLocalContainerContext(DC) && ND->hasLinkage() && !IsLambda)
     while (!DC->isNamespace() && !DC->isTranslationUnit())
       DC = Context.getEffectiveParentContext(DC);
-  else if (GetLocalClassDecl(ND)) {
+  else if (GetLocalClassDecl(ND) &&
+           (!IsLambda || isCompatibleWith(LangOptions::ClangABI::Ver18))) {
     mangleLocalName(GD, AdditionalAbiTags);
     return;
   }
 
   assert(!isa<LinkageSpecDecl>(DC) && "context cannot be LinkageSpecDecl");
 
-  if (isLocalContainerContext(DC)) {
-    mangleLocalName(GD, AdditionalAbiTags);
-    return;
-  }
-
   // Closures can require a nested-name mangling even if they're semantically
   // in the global namespace.
   if (const NamedDecl *PrefixND = getClosurePrefix(ND)) {
     mangleNestedNameWithClosurePrefix(GD, PrefixND, AdditionalAbiTags);
+    return;
+  }
+
+  if (isLocalContainerContext(DC)) {
+    mangleLocalName(GD, AdditionalAbiTags);
     return;
   }
 
@@ -2204,8 +2206,6 @@ void CXXNameMangler::manglePrefix(const DeclContext *DC, bool NoFunction) {
   if (NoFunction && isLocalContainerContext(DC))
     return;
 
-  assert(!isLocalContainerContext(DC));
-
   const NamedDecl *ND = cast<NamedDecl>(DC);
   if (mangleSubstitution(ND))
     return;
@@ -2401,6 +2401,7 @@ bool CXXNameMangler::mangleUnresolvedTypeOrSimpleId(QualType Ty,
   case Type::Complex:
   case Type::Adjusted:
   case Type::Decayed:
+  case Type::ArrayParameter:
   case Type::Pointer:
   case Type::BlockPointer:
   case Type::LValueReference:
@@ -2434,6 +2435,7 @@ bool CXXNameMangler::mangleUnresolvedTypeOrSimpleId(QualType Ty,
   case Type::MacroQualified:
   case Type::BitInt:
   case Type::DependentBitInt:
+  case Type::CountAttributed:
     llvm_unreachable("type is illegal as a nested name specifier");
 
   case Type::SubstTemplateTypeParmPack:
@@ -2451,6 +2453,7 @@ bool CXXNameMangler::mangleUnresolvedTypeOrSimpleId(QualType Ty,
   case Type::TypeOfExpr:
   case Type::TypeOf:
   case Type::Decltype:
+  case Type::PackIndexing:
   case Type::TemplateTypeParm:
   case Type::UnaryTransform:
   case Type::SubstTemplateTypeParm:
@@ -3451,6 +3454,8 @@ StringRef CXXNameMangler::getCallingConvQualifierName(CallingConv CC) {
   case CC_PreserveMost:
   case CC_PreserveAll:
   case CC_M68kRTD:
+  case CC_PreserveNone:
+  case CC_RISCVVectorCall:
     // FIXME: we should be mangling all of the above.
     return "";
 
@@ -4003,7 +4008,8 @@ void CXXNameMangler::mangleAArch64FixedSveVectorType(
 }
 
 void CXXNameMangler::mangleRISCVFixedRVVVectorType(const VectorType *T) {
-  assert(T->getVectorKind() == VectorKind::RVVFixedLengthData &&
+  assert((T->getVectorKind() == VectorKind::RVVFixedLengthData ||
+          T->getVectorKind() == VectorKind::RVVFixedLengthMask) &&
          "expected fixed-length RVV vector!");
 
   QualType EltType = T->getElementType();
@@ -4018,7 +4024,10 @@ void CXXNameMangler::mangleRISCVFixedRVVVectorType(const VectorType *T) {
     TypeNameOS << "int8";
     break;
   case BuiltinType::UChar:
-    TypeNameOS << "uint8";
+    if (T->getVectorKind() == VectorKind::RVVFixedLengthData)
+      TypeNameOS << "uint8";
+    else
+      TypeNameOS << "bool";
     break;
   case BuiltinType::Short:
     TypeNameOS << "int16";
@@ -4057,12 +4066,16 @@ void CXXNameMangler::mangleRISCVFixedRVVVectorType(const VectorType *T) {
   auto VScale = getASTContext().getTargetInfo().getVScaleRange(
       getASTContext().getLangOpts());
   unsigned VLen = VScale->first * llvm::RISCV::RVVBitsPerBlock;
-  TypeNameOS << 'm';
-  if (VecSizeInBits >= VLen)
-    TypeNameOS << (VecSizeInBits / VLen);
-  else
-    TypeNameOS << 'f' << (VLen / VecSizeInBits);
 
+  if (T->getVectorKind() == VectorKind::RVVFixedLengthData) {
+    TypeNameOS << 'm';
+    if (VecSizeInBits >= VLen)
+      TypeNameOS << (VecSizeInBits / VLen);
+    else
+      TypeNameOS << 'f' << (VLen / VecSizeInBits);
+  } else {
+    TypeNameOS << (VLen / VecSizeInBits);
+  }
   TypeNameOS << "_t";
 
   Out << "9__RVV_VLSI" << 'u' << TypeNameStr.size() << TypeNameStr << "Lj"
@@ -4102,7 +4115,8 @@ void CXXNameMangler::mangleType(const VectorType *T) {
              T->getVectorKind() == VectorKind::SveFixedLengthPredicate) {
     mangleAArch64FixedSveVectorType(T);
     return;
-  } else if (T->getVectorKind() == VectorKind::RVVFixedLengthData) {
+  } else if (T->getVectorKind() == VectorKind::RVVFixedLengthData ||
+             T->getVectorKind() == VectorKind::RVVFixedLengthMask) {
     mangleRISCVFixedRVVVectorType(T);
     return;
   }
@@ -4200,6 +4214,13 @@ void CXXNameMangler::mangleType(const PackExpansionType *T) {
   // <type>  ::= Dp <type>          # pack expansion (C++0x)
   Out << "Dp";
   mangleType(T->getPattern());
+}
+
+void CXXNameMangler::mangleType(const PackIndexingType *T) {
+  if (!T->hasSelectedType())
+    mangleType(T->getPattern());
+  else
+    mangleType(T->getSelectedType());
 }
 
 void CXXNameMangler::mangleType(const ObjCInterfaceType *T) {
@@ -4433,6 +4454,10 @@ void CXXNameMangler::mangleType(const DependentBitIntType *T) {
   Out << "D" << (T->isUnsigned() ? "U" : "B");
   mangleExpression(T->getNumBitsExpr());
   Out << "_";
+}
+
+void CXXNameMangler::mangleType(const ArrayParameterType *T) {
+  mangleType(cast<ConstantArrayType>(T));
 }
 
 void CXXNameMangler::mangleIntegerLiteral(QualType T,
@@ -4704,6 +4729,7 @@ recurse:
   case Expr::OMPIteratorExprClass:
   case Expr::CXXInheritedCtorInitExprClass:
   case Expr::CXXParenListInitExprClass:
+  case Expr::PackIndexingExprClass:
     llvm_unreachable("unexpected statement kind");
 
   case Expr::ConstantExprClass:
@@ -6159,7 +6185,7 @@ static bool isZeroInitialized(QualType T, const APValue &V) {
     }
     I = 0;
     for (const FieldDecl *FD : RD->fields()) {
-      if (!FD->isUnnamedBitfield() &&
+      if (!FD->isUnnamedBitField() &&
           !isZeroInitialized(FD->getType(), V.getStructField(I)))
         return false;
       ++I;
@@ -6172,7 +6198,7 @@ static bool isZeroInitialized(QualType T, const APValue &V) {
     assert(RD && "unexpected type for union value");
     // Zero-initialization zeroes the first non-unnamed-bitfield field, if any.
     for (const FieldDecl *FD : RD->fields()) {
-      if (!FD->isUnnamedBitfield())
+      if (!FD->isUnnamedBitField())
         return V.getUnionField() && declaresSameEntity(FD, V.getUnionField()) &&
                isZeroInitialized(FD->getType(), V.getUnionValue());
     }
@@ -6314,7 +6340,7 @@ void CXXNameMangler::mangleValueInTemplateArg(QualType T, const APValue &V,
     llvm::SmallVector<const FieldDecl *, 16> Fields(RD->fields());
     while (
         !Fields.empty() &&
-        (Fields.back()->isUnnamedBitfield() ||
+        (Fields.back()->isUnnamedBitField() ||
          isZeroInitialized(Fields.back()->getType(),
                            V.getStructField(Fields.back()->getFieldIndex())))) {
       Fields.pop_back();
@@ -6334,7 +6360,7 @@ void CXXNameMangler::mangleValueInTemplateArg(QualType T, const APValue &V,
     for (unsigned I = 0, N = Bases.size(); I != N; ++I)
       mangleValueInTemplateArg(Bases[I].getType(), V.getStructBase(I), false);
     for (unsigned I = 0, N = Fields.size(); I != N; ++I) {
-      if (Fields[I]->isUnnamedBitfield())
+      if (Fields[I]->isUnnamedBitField())
         continue;
       mangleValueInTemplateArg(Fields[I]->getType(),
                                V.getStructField(Fields[I]->getFieldIndex()),

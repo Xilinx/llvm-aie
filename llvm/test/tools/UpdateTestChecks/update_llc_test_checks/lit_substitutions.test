@@ -1,0 +1,11 @@
+# REQUIRES: x86-registered-target
+
+## Check that update_llc_test_checks handles --lit-substitutions properly,
+## applying substitutions from config files before running commands.
+
+# RUN: rm -rf %t && cp -r %S/Inputs/test_with_substitutions %t
+
+## One substitution defined in Inputs/test_with_substitutions/lit.cfg
+# RUN: %update_llc_test_checks %t/substitute_triple.ll --lit-substitutions -v
+# RUN: diff -u %S/Inputs/test_with_substitutions/substitute_triple.ll.expected %t/substitute_triple.ll
+

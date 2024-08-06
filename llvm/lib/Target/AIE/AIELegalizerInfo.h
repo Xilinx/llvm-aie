@@ -37,6 +37,7 @@ private:
   bool legalizeG_BUILD_VECTOR(LegalizerHelper &Helper, MachineInstr &MI) const;
   bool legalizeG_UNMERGE_VALUES(LegalizerHelper &Helper,
                                 MachineInstr &MI) const;
+  bool legalizeG_SEXT_INREG(LegalizerHelper &Helper, MachineInstr &MI) const;
   bool legalizeG_VAARG(LegalizerHelper &Helper, MachineInstr &MI) const;
   bool legalizeMemCalls(LegalizerHelper &Helper, MachineInstr &MI,
                         LostDebugLocObserver &LocObserver) const;

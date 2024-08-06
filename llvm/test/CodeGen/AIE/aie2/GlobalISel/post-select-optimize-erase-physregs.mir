@@ -164,7 +164,6 @@ body:             |
     PseudoJ_jump_imm %bb.1
 
   bb.1:
-  ; predecessors: %bb.0
 
     $crfpmask = COPY %3:ercr
     %9:acc512 = VNEGSUB_F %0:acc512, %8:acc512, %2:er, implicit-def $srfpflags, implicit $crfpmask
@@ -208,6 +207,7 @@ body:             |
   ; CHECK-NEXT:   $crfpmask = COPY [[COPY2]]
   ; CHECK-NEXT:   [[VNEGSUB_F5:%[0-9]+]]:acc512 = VNEGSUB_F [[VNEGSUB_F4]], %11, [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
   ; CHECK-NEXT:   [[VNEGSUB_F6:%[0-9]+]]:acc512 = VNEGSUB_F [[COPY]], [[VNEGSUB_F5]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   $crfpmask = COPY %13
   ; CHECK-NEXT:   [[VNEGSUB_F7:%[0-9]+]]:acc512 = VNEGSUB_F [[COPY]], [[VNEGSUB_F6]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.3
   ; CHECK-NEXT: {{  $}}
@@ -222,7 +222,9 @@ body:             |
   ; CHECK-NEXT: bb.3:
   ; CHECK-NEXT:   $crfpmask = COPY [[COPY3]]
   ; CHECK-NEXT:   [[VNEGSUB_F10:%[0-9]+]]:acc512 = VNEGSUB_F [[COPY]], [[VNEGSUB_F7]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   $crfpmask = COPY [[COPY2]]
   ; CHECK-NEXT:   [[VNEGSUB_F11:%[0-9]+]]:acc512 = VNEGSUB_F [[COPY]], [[VNEGSUB_F10]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   $crfpmask = COPY [[COPY3]]
   ; CHECK-NEXT:   [[VNEGSUB_F12:%[0-9]+]]:acc512 = VNEGSUB_F [[COPY]], [[VNEGSUB_F11]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
   bb.0.entry:
     successors: %bb.2(0x80000000); %bb.2(100.00%)
@@ -245,7 +247,6 @@ body:             |
     PseudoJ_jump_imm %bb.2
 
   bb.1:
-  ; predecessors: %bb.2
     successors: %bb.3(0x80000000); %bb.3(100.00%)
 
     $crfpmask = COPY %3:ercr
@@ -257,7 +258,6 @@ body:             |
     PseudoJ_jump_imm %bb.3
 
   bb.2:
-  ; predecessors: %bb.0
     successors: %bb.1(0x80000000); %bb.1(100.00%)
 
     %10:ercr = COPY $crfpmask
@@ -268,7 +268,6 @@ body:             |
     PseudoJ_jump_imm %bb.1
 
   bb.3:
-  ; predecessors: %bb.1
 
     $crfpmask = COPY %10:ercr
     %16:acc512 = VNEGSUB_F %0:acc512, %15:acc512, %2:er, implicit-def $srfpflags, implicit $crfpmask
@@ -385,7 +384,6 @@ body:             |
     PseudoJ_jump_imm %bb.1
 
   bb.1:
-  ; predecessors: %bb.0
 
     %8:ercr = COPY $crsat
     $crsat = MOV_scalar_imm10_pseudo 0
@@ -493,7 +491,6 @@ body:             |
     PseudoJ_jump_imm %bb.1
 
   bb.1:
-  ; predecessors: %bb.0, %bb.1
     successors: %bb.1(0x40000000), %bb.2(0x40000000); %bb.1(50.00%), %bb.2(50.00%)
 
     %8:ercr = COPY $crsat
@@ -508,7 +505,6 @@ body:             |
     PseudoJ_jump_imm %bb.2
 
   bb.2:
-  ; predecessors: %bb.1
     successors: %bb.4(0x80000000); %bb.4(100.00%)
 
     %11:ercr = COPY $crsat
@@ -524,7 +520,6 @@ body:             |
     PseudoJ_jump_imm %bb.4
 
   bb.3:
-  ; predecessors: %bb.0
     successors: %bb.4(0x80000000); %bb.4(100.00%)
 
     $crsat = COPY %2:ercr
@@ -537,7 +532,6 @@ body:             |
     PseudoJ_jump_imm %bb.4
 
   bb.4:
-  ; predecessors: %bb.2, %bb.3
 
     $crsat = COPY %2:ercr
     $crupssign = COPY %1:er
@@ -633,7 +627,6 @@ body:             |
     PseudoJ_jump_imm %bb.1
 
   bb.1:
-  ; predecessors: %bb.0, %bb.3
     successors: %bb.2(0x80000000); %bb.2(100.00%)
 
     $crupssign = COPY %1:er
@@ -644,7 +637,6 @@ body:             |
     PseudoJ_jump_imm %bb.2
 
   bb.2:
-  ; predecessors: %bb.1, %bb.2
     successors: %bb.2(0x40000000), %bb.3(0x40000000); %bb.2(50.00%), %bb.3(50.00%)
     liveins: $r0
     $crupssign = COPY %1:er
@@ -657,7 +649,6 @@ body:             |
     PseudoJ_jump_imm %bb.3
 
   bb.3:
-  ; predecessors: %bb.2
     successors: %bb.1(0x40000000), %bb.4(0x40000000); %bb.1(50.00%), %bb.4(50.00%)
 
     $crupssign = COPY %1:er
@@ -669,7 +660,6 @@ body:             |
     PseudoJ_jump_imm %bb.4
 
   bb.4:
-  ; predecessors: %bb.3
 
     $crupssign = COPY %1:er
     %12:acc1024 = VLDA_UPS_S32_D8_ag_idx_imm %2:mss, %3:ep, 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign
@@ -726,24 +716,94 @@ body:             |
     %3:ep = COPY $p0
     %4:acc1024 = VLDA_UPS_S32_D8_ag_idx_imm %2:mss, %3:ep, 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign
 
-    ;; This MI will be removed due to dominating copy in %bb.2.
     $crupssign = MOV_scalar_imm10_pseudo 0
 
     PseudoJ_jump_imm %bb.1
 
   bb.1:
-  ; predecessors: %bb.0
     successors: %bb.2(0x80000000); %bb.2(100.00%)
 
     %5:er = MOV_RLC_imm10_pseudo 23
     PseudoJ_jump_imm %bb.2
 
   bb.2:
-  ; predecessors: %bb.1
     liveins: $r2
     %6:er = COPY $r2
     $crupssign = COPY %6:er
     %7:acc1024 = VLDA_UPS_S32_D8_ag_idx_imm %2:mss, %3:ep, 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign
     $crupssign = MOV_scalar_imm10_pseudo 0
     %8:acc1024 = VLDA_UPS_S32_D8_ag_idx_imm %2:mss, %3:ep, 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+...
+
+# %10 holds a copy of $crfpmask, but it is invalidated. Make sure uses
+# of %10 after the invalidation aren't simplified using $crfpmask.
+---
+name:            invalidate_copy
+alignment:       16
+legalized:       true
+regBankSelected: true
+selected:        true
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+  liveins: $bml1, $bml2, $r0
+    ; CHECK-LABEL: name: invalidate_copy
+    ; CHECK: liveins: $bml1, $bml2, $r0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:acc512 = COPY $bml1
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:acc512 = COPY $bml2
+    ; CHECK-NEXT: [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 28
+    ; CHECK-NEXT: $crfpmask = COPY $r0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:ercr = COPY $crfpmask
+    ; CHECK-NEXT: $crfpmask = MOV_scalar_imm10_pseudo 0
+    ; CHECK-NEXT: [[VNEGSUB_F:%[0-9]+]]:acc512 = VNEGSUB_F [[COPY]], [[COPY1]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
+    ; CHECK-NEXT: $crfpmask = COPY [[COPY2]]
+    ; CHECK-NEXT: [[VNEGSUB_F1:%[0-9]+]]:acc512 = VNEGSUB_F [[COPY]], [[VNEGSUB_F]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
+    %0:acc512 = COPY $bml1
+    %1:acc512 = COPY $bml2
+    %2:er = MOV_RLC_imm10_pseudo 28
+    %3:er = COPY $r0
+    $crfpmask = COPY $r0
+    %10:ercr = COPY $crfpmask
+    $crfpmask = MOV_scalar_imm10_pseudo 0
+    %4:acc512 = VNEGSUB_F %0:acc512, %1:acc512, %2:er, implicit-def $srfpflags, implicit $crfpmask
+    $crfpmask = COPY %10
+    %5:acc512 = VNEGSUB_F %0:acc512, %4:acc512, %2:er, implicit-def $srfpflags, implicit $crfpmask
+...
+
+# $crfpmask is saved and restored twice around VNEGSUB_F instructions
+# Make sure we simplify this to only one vreg for saving and restoring.
+---
+name:            save_restore_twice
+alignment:       16
+legalized:       true
+regBankSelected: true
+selected:        true
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+  liveins: $bml1, $bml2, $r0
+    ; CHECK-LABEL: name: save_restore_twice
+    ; CHECK: liveins: $bml1, $bml2, $r0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:acc512 = COPY $bml1
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:acc512 = COPY $bml2
+    ; CHECK-NEXT: [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 28
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:ercr = COPY $crfpmask
+    ; CHECK-NEXT: $crfpmask = MOV_scalar_imm10_pseudo 0
+    ; CHECK-NEXT: [[VNEGSUB_F:%[0-9]+]]:acc512 = VNEGSUB_F [[COPY]], [[COPY1]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
+    ; CHECK-NEXT: $crfpmask = MOV_scalar_imm10_pseudo 1
+    ; CHECK-NEXT: [[VNEGSUB_F1:%[0-9]+]]:acc512 = VNEGSUB_F [[COPY]], [[VNEGSUB_F]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
+    ; CHECK-NEXT: $crfpmask = COPY [[COPY2]]
+    %0:acc512 = COPY $bml1
+    %1:acc512 = COPY $bml2
+    %2:er = MOV_RLC_imm10_pseudo 28
+    %10:ercr = COPY $crfpmask
+    $crfpmask = MOV_scalar_imm10_pseudo 0
+    %4:acc512 = VNEGSUB_F %0:acc512, %1:acc512, %2:er, implicit-def $srfpflags, implicit $crfpmask
+    $crfpmask = COPY %10
+    %11:ercr = COPY $crfpmask
+    $crfpmask = MOV_scalar_imm10_pseudo 1
+    %5:acc512 = VNEGSUB_F %0:acc512, %4:acc512, %2:er, implicit-def $srfpflags, implicit $crfpmask
+    $crfpmask = COPY %11
 ...

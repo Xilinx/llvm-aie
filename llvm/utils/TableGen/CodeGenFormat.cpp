@@ -10,14 +10,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "CodeGenFormat.h"
-#include "CodeGenInstruction.h"
-#include "CodeGenTarget.h"
-#include "SubtargetFeatureInfo.h"
-#include "Types.h"
+#include "Common/CodeGenInstruction.h"
+#include "Common/CodeGenTarget.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/IR/PassInstrumentation.h"
 #include "llvm/IR/Value.h"

@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines common loop utility functions.
@@ -341,6 +344,77 @@ std::optional<MDNode *> llvm::makeFollowupLoopID(
   return FollowupLoopID;
 }
 
+namespace {
+
+/// Create MDNode with name and up to two integer values
+MDNode *createMetadata(LLVMContext &Context, StringRef Name,
+                       const SmallVector<int64_t, 2> &Values) {
+  Metadata *MDs[3];
+  MDs[0] = MDString::get(Context, Name);
+  size_t Op = 1;
+  for (auto V : Values) {
+    MDs[Op++] =
+        ConstantAsMetadata::get(ConstantInt::get(Type::getInt32Ty(Context), V));
+  }
+
+  return MDNode::get(Context, {MDs, Op});
+}
+} // namespace
+
+/// Update itercounts by applying FixMin and FixMax
+MDNode *llvm::updateIterCounts(LLVMContext &Context, MDNode *LoopID,
+                               std::function<int64_t(int64_t)> FixMin,
+                               std::function<int64_t(int64_t)> FixMax) {
+  if (!LoopID) {
+    return LoopID;
+  }
+
+  const char *const IterCountName = "llvm.loop.itercount.range";
+  SmallVector<Metadata *, 4> MDs;
+  SmallVector<int64_t, 2> IterCounts;
+  bool Found = false;
+
+  // Register and remove old itercounts
+  for (unsigned Lop = 1; Lop < LoopID->getNumOperands(); ++Lop) {
+    MDNode *Node = cast<MDNode>(LoopID->getOperand(Lop));
+    if (Node->getNumOperands()) {
+      MDString *S = dyn_cast<MDString>(Node->getOperand(0));
+      if (S && S->getString().equals(IterCountName)) {
+        if (Node->getNumOperands() > 1) {
+          if (ConstantInt *IntMD =
+                  mdconst::extract_or_null<ConstantInt>(Node->getOperand(1))) {
+            IterCounts.push_back(FixMin(IntMD->getSExtValue()));
+          }
+        }
+        if (Node->getNumOperands() > 2) {
+          if (ConstantInt *IntMD =
+                  mdconst::extract_or_null<ConstantInt>(Node->getOperand(2))) {
+            IterCounts.push_back(FixMax(IntMD->getSExtValue()));
+          }
+        }
+        // Any excess operands or operands of the wrong type are not pushed back
+        // This is a silent repair
+        // We will create a new one, so don't push this one back
+        Found = true;
+        continue;
+      }
+    }
+    MDs.push_back(Node);
+  }
+
+  if (!Found)
+    // nothing needs change; return the original
+    return LoopID;
+
+  // Create the updated metadata.
+  MDs.push_back(createMetadata(Context, IterCountName, IterCounts));
+  // Replace current metadata node with new one.
+  MDNode *NewLoopID = MDNode::get(Context, MDs);
+  // Set operand 0 to refer to the loop id itself.
+  NewLoopID->replaceOperandWith(0, NewLoopID);
+  return NewLoopID;
+}
+
 bool llvm::hasDisableAllTransformsHint(const Loop *L) {
   return getBooleanLoopAttribute(L, LLVMLoopDisableNonforced);
 }
@@ -468,6 +542,7 @@ llvm::collectChildrenInLoop(DomTreeNode *N, const Loop *CurLoop) {
 
 bool llvm::isAlmostDeadIV(PHINode *PN, BasicBlock *LatchBlock, Value *Cond) {
   int LatchIdx = PN->getBasicBlockIndex(LatchBlock);
+  assert(LatchIdx != -1 && "LatchBlock is not a case in this PHINode");
   Value *IncV = PN->getIncomingValue(LatchIdx);
 
   for (User *U : PN->users())
@@ -604,7 +679,7 @@ void llvm::deleteDeadLoop(Loop *L, DominatorTree *DT, ScalarEvolution *SE,
   // Use a map to unique and a vector to guarantee deterministic ordering.
   llvm::SmallDenseSet<DebugVariable, 4> DeadDebugSet;
   llvm::SmallVector<DbgVariableIntrinsic *, 4> DeadDebugInst;
-  llvm::SmallVector<DPValue *, 4> DeadDPValues;
+  llvm::SmallVector<DbgVariableRecord *, 4> DeadDbgVariableRecords;
 
   if (ExitBlock) {
     // Given LCSSA form is satisfied, we should not have users of instructions
@@ -630,17 +705,17 @@ void llvm::deleteDeadLoop(Loop *L, DominatorTree *DT, ScalarEvolution *SE,
           U.set(Poison);
         }
 
-        // RemoveDIs: do the same as below for DPValues.
+        // RemoveDIs: do the same as below for DbgVariableRecords.
         if (Block->IsNewDbgInfoFormat) {
-          for (DPValue &DPV :
-               llvm::make_early_inc_range(I.getDbgValueRange())) {
-            DebugVariable Key(DPV.getVariable(), DPV.getExpression(),
-                              DPV.getDebugLoc().get());
+          for (DbgVariableRecord &DVR : llvm::make_early_inc_range(
+                   filterDbgVars(I.getDbgRecordRange()))) {
+            DebugVariable Key(DVR.getVariable(), DVR.getExpression(),
+                              DVR.getDebugLoc().get());
             if (!DeadDebugSet.insert(Key).second)
               continue;
-            // Unlinks the DPV from it's container, for later insertion.
-            DPV.removeFromParent();
-            DeadDPValues.push_back(&DPV);
+            // Unlinks the DVR from it's container, for later insertion.
+            DVR.removeFromParent();
+            DeadDbgVariableRecords.push_back(&DVR);
           }
         }
 
@@ -672,11 +747,11 @@ void llvm::deleteDeadLoop(Loop *L, DominatorTree *DT, ScalarEvolution *SE,
       DVI->moveBefore(*ExitBlock, InsertDbgValueBefore);
 
     // Due to the "head" bit in BasicBlock::iterator, we're going to insert
-    // each DPValue right at the start of the block, wheras dbg.values would be
-    // repeatedly inserted before the first instruction. To replicate this
-    // behaviour, do it backwards.
-    for (DPValue *DPV : llvm::reverse(DeadDPValues))
-      ExitBlock->insertDPValueBefore(DPV, InsertDbgValueBefore);
+    // each DbgVariableRecord right at the start of the block, wheras dbg.values
+    // would be repeatedly inserted before the first instruction. To replicate
+    // this behaviour, do it backwards.
+    for (DbgVariableRecord *DVR : llvm::reverse(DeadDbgVariableRecords))
+      ExitBlock->insertDbgRecordBefore(DVR, InsertDbgValueBefore);
   }
 
   // Remove the block from the reference counting scheme, so that we can
@@ -917,6 +992,58 @@ bool llvm::hasIterationCountInvariantInParent(Loop *InnerLoop,
   return true;
 }
 
+unsigned llvm::getArithmeticReductionInstruction(Intrinsic::ID RdxID) {
+  switch (RdxID) {
+  case Intrinsic::vector_reduce_fadd:
+    return Instruction::FAdd;
+  case Intrinsic::vector_reduce_fmul:
+    return Instruction::FMul;
+  case Intrinsic::vector_reduce_add:
+    return Instruction::Add;
+  case Intrinsic::vector_reduce_mul:
+    return Instruction::Mul;
+  case Intrinsic::vector_reduce_and:
+    return Instruction::And;
+  case Intrinsic::vector_reduce_or:
+    return Instruction::Or;
+  case Intrinsic::vector_reduce_xor:
+    return Instruction::Xor;
+  case Intrinsic::vector_reduce_smax:
+  case Intrinsic::vector_reduce_smin:
+  case Intrinsic::vector_reduce_umax:
+  case Intrinsic::vector_reduce_umin:
+    return Instruction::ICmp;
+  case Intrinsic::vector_reduce_fmax:
+  case Intrinsic::vector_reduce_fmin:
+    return Instruction::FCmp;
+  default:
+    llvm_unreachable("Unexpected ID");
+  }
+}
+
+Intrinsic::ID llvm::getMinMaxReductionIntrinsicOp(Intrinsic::ID RdxID) {
+  switch (RdxID) {
+  default:
+    llvm_unreachable("Unknown min/max recurrence kind");
+  case Intrinsic::vector_reduce_umin:
+    return Intrinsic::umin;
+  case Intrinsic::vector_reduce_umax:
+    return Intrinsic::umax;
+  case Intrinsic::vector_reduce_smin:
+    return Intrinsic::smin;
+  case Intrinsic::vector_reduce_smax:
+    return Intrinsic::smax;
+  case Intrinsic::vector_reduce_fmin:
+    return Intrinsic::minnum;
+  case Intrinsic::vector_reduce_fmax:
+    return Intrinsic::maxnum;
+  case Intrinsic::vector_reduce_fminimum:
+    return Intrinsic::minimum;
+  case Intrinsic::vector_reduce_fmaximum:
+    return Intrinsic::maximum;
+  }
+}
+
 Intrinsic::ID llvm::getMinMaxReductionIntrinsicOp(RecurKind RK) {
   switch (RK) {
   default:
@@ -937,6 +1064,25 @@ Intrinsic::ID llvm::getMinMaxReductionIntrinsicOp(RecurKind RK) {
     return Intrinsic::minimum;
   case RecurKind::FMaximum:
     return Intrinsic::maximum;
+  }
+}
+
+RecurKind llvm::getMinMaxReductionRecurKind(Intrinsic::ID RdxID) {
+  switch (RdxID) {
+  case Intrinsic::vector_reduce_smax:
+    return RecurKind::SMax;
+  case Intrinsic::vector_reduce_smin:
+    return RecurKind::SMin;
+  case Intrinsic::vector_reduce_umax:
+    return RecurKind::UMax;
+  case Intrinsic::vector_reduce_umin:
+    return RecurKind::UMin;
+  case Intrinsic::vector_reduce_fmax:
+    return RecurKind::FMax;
+  case Intrinsic::vector_reduce_fmin:
+    return RecurKind::FMin;
+  default:
+    return RecurKind::None;
   }
 }
 

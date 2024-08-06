@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This pass implements a simple loop unroller.  It works best when loops have
@@ -172,6 +175,10 @@ static cl::opt<unsigned>
                            cl::Hidden,
                            cl::desc("Default threshold (max size of unrolled "
                                     "loop), used in all but O3 optimizations"));
+
+static cl::opt<unsigned> PragmaUnrollFullMaxIterations(
+    "pragma-unroll-full-max-iterations", cl::init(1'000'000), cl::Hidden,
+    cl::desc("Maximum allowed iterations to unroll under pragma unroll full."));
 
 /// A magic value for use with the Threshold parameter to indicate
 /// that the loop unroll should be performed regardless of how much
@@ -446,7 +453,15 @@ static std::optional<EstimatedUnrollCost> analyzeLoopUnrollCost(
 
         // First accumulate the cost of this instruction.
         if (!Cost.IsFree) {
-          UnrolledCost += TTI.getInstructionCost(I, CostKind);
+          // Consider simplified operands in instruction cost.
+          SmallVector<Value *, 4> Operands;
+          transform(I->operands(), std::back_inserter(Operands),
+                    [&](Value *Op) {
+                      if (auto Res = SimplifiedValues.lookup(Op))
+                        return Res;
+                      return Op;
+                    });
+          UnrolledCost += TTI.getInstructionCost(I, Operands, CostKind);
           LLVM_DEBUG(dbgs() << "Adding cost of instruction (iteration "
                             << Iteration << "): ");
           LLVM_DEBUG(I->dump());
@@ -776,8 +791,17 @@ shouldPragmaUnroll(Loop *L, const PragmaInfo &PInfo,
       return PInfo.PragmaCount;
   }
 
-  if (PInfo.PragmaFullUnroll && TripCount != 0)
+  if (PInfo.PragmaFullUnroll && TripCount != 0) {
+    // Certain cases with UBSAN can cause trip count to be calculated as
+    // INT_MAX, Block full unrolling at a reasonable limit so that the compiler
+    // doesn't hang trying to unroll the loop. See PR77842
+    if (TripCount > PragmaUnrollFullMaxIterations) {
+      LLVM_DEBUG(dbgs() << "Won't unroll; trip count is too large\n");
+      return std::nullopt;
+    }
+
     return TripCount;
+  }
 
   if (PInfo.PragmaEnableUnroll && !TripCount && MaxTripCount &&
       MaxTripCount <= UP.MaxUpperBound)
@@ -1271,6 +1295,11 @@ tryToUnrollLoop(Loop *L, DominatorTree &DT, LoopInfo *LI, ScalarEvolution &SE,
 
     ValueToValueMapTy VMap;
     if (peelLoop(L, PP.PeelCount, LI, &SE, DT, &AC, PreserveLCSSA, VMap)) {
+      auto Peel = [&PP](int64_t In) {
+        return In >= PP.PeelCount ? In - PP.PeelCount : 0;
+      };
+      L->setLoopID(updateIterCounts(L->getHeader()->getContext(),
+                                    L->getLoopID(), Peel, Peel));
       simplifyLoopAfterUnroll(L, true, LI, &SE, &DT, &AC, &TTI);
       // If the loop was peeled, we already "used up" the profile information
       // we had, so we don't want to unroll or peel again.
@@ -1282,7 +1311,7 @@ tryToUnrollLoop(Loop *L, DominatorTree &DT, LoopInfo *LI, ScalarEvolution &SE,
   }
 
   // Do not attempt partial/runtime unrolling in FullLoopUnrolling
-  if (OnlyFullUnroll && !(UP.Count >= MaxTripCount)) {
+  if (OnlyFullUnroll && (UP.Count < TripCount || UP.Count < MaxTripCount)) {
     LLVM_DEBUG(
         dbgs() << "Not attempting partial/runtime unroll in FullLoopUnroll.\n");
     return LoopUnrollResult::Unmodified;
@@ -1300,11 +1329,12 @@ tryToUnrollLoop(Loop *L, DominatorTree &DT, LoopInfo *LI, ScalarEvolution &SE,
 
   // Unroll the loop.
   Loop *RemainderLoop = nullptr;
-  LoopUnrollResult UnrollResult = UnrollLoop(
-      L,
-      {UP.Count, UP.Force, UP.Runtime, UP.AllowExpensiveTripCount,
-       UP.UnrollRemainder, ForgetAllSCEV},
-      LI, &SE, &DT, &AC, &TTI, &ORE, PreserveLCSSA, &RemainderLoop);
+  LoopUnrollReport UnrollReport =
+      UnrollLoop(L,
+                 {UP.Count, UP.Force, UP.Runtime, UP.AllowExpensiveTripCount,
+                  UP.UnrollRemainder, ForgetAllSCEV},
+                 LI, &SE, &DT, &AC, &TTI, &ORE, PreserveLCSSA, &RemainderLoop);
+  LoopUnrollResult UnrollResult = UnrollReport.Result;
   if (UnrollResult == LoopUnrollResult::Unmodified)
     return LoopUnrollResult::Unmodified;
 
@@ -1317,12 +1347,17 @@ tryToUnrollLoop(Loop *L, DominatorTree &DT, LoopInfo *LI, ScalarEvolution &SE,
   }
 
   if (UnrollResult != LoopUnrollResult::FullyUnrolled) {
-    std::optional<MDNode *> NewLoopID =
-        makeFollowupLoopID(OrigLoopID, {LLVMLoopUnrollFollowupAll,
-                                        LLVMLoopUnrollFollowupUnrolled});
+    auto ScaleDown = [&UnrollReport](int64_t In) {
+      return In / UnrollReport.Count;
+    };
+
+    MDNode *Scaled = updateIterCounts(L->getHeader()->getContext(), OrigLoopID,
+                                      ScaleDown, ScaleDown);
+    L->setLoopID(Scaled);
+    std::optional<MDNode *> NewLoopID = makeFollowupLoopID(
+        Scaled, {LLVMLoopUnrollFollowupAll, LLVMLoopUnrollFollowupUnrolled});
     if (NewLoopID) {
       L->setLoopID(*NewLoopID);
-
       // Do not setLoopAlreadyUnrolled if loop attributes have been specified
       // explicitly.
       return UnrollResult;

@@ -23,7 +23,6 @@
 #include "AIEMachineBlockPlacement.h"
 #include "AIETargetObjectFile.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/CodeGen/CodeGenPassBuilder.h"
 #include "llvm/CodeGen/GlobalISel/IRTranslator.h"
 #include "llvm/CodeGen/GlobalISel/InstructionSelect.h"
 #include "llvm/CodeGen/GlobalISel/Legalizer.h"
@@ -35,17 +34,11 @@
 #include "llvm/InitializePasses.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/PassRegistry.h"
-#include "llvm/Passes/PassBuilder.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Transforms/Scalar.h"
 
 using namespace llvm;
-
-static cl::opt<bool>
-    EnableCustomAliasAnalysis("aie-enable-alias-analysis",
-                              cl::desc("Enable AIE alias analysis pass"),
-                              cl::init(true), cl::Hidden);
 
 static cl::opt<bool>
     EnableStagedRA("aie-staged-ra", cl::Hidden, cl::init(true),
@@ -57,6 +50,9 @@ static cl::opt<bool>
     EnableSuperRegSplitting("aie-split-superregs", cl::Hidden, cl::init(true),
                             cl::desc("Enable splitting super-regs into their "
                                      "smaller components to facilitate RA"));
+static cl::opt<bool>
+    EnableReservedRegsLICM("aie-reserved-regs-licm", cl::Hidden, cl::init(true),
+                           cl::desc("Enable LICM for some reserved registers"));
 static cl::opt<bool>
     AllocateMRegsFirst("aie-mod-ra-first", cl::Hidden, cl::init(false),
                        cl::desc("Allocate M registers first in staged RA."));
@@ -102,16 +98,10 @@ public:
   void addBlockPlacement() override;
   void addPreLegalizeMachineIR() override;
   void addPreRegBankSelect() override;
-  void addIRPasses() override;
 };
 
 TargetPassConfig *AIE2TargetMachine::createPassConfig(PassManagerBase &PM) {
   return new AIE2PassConfig(*this, PM);
-}
-
-void AIE2TargetMachine::registerDefaultAliasAnalyses(AAManager &AAM) {
-  if (EnableCustomAliasAnalysis)
-    AAM.registerFunctionAnalysis<AIEBaseAA>();
 }
 
 bool AIE2PassConfig::addPreISel() {
@@ -122,30 +112,11 @@ bool AIE2PassConfig::addPreISel() {
 
 void AIE2PassConfig::addPreEmitPass() {}
 
-void AIE2PassConfig::addIRPasses() {
-  // Always expand atomic operations, we don't deal with atomicrmw or cmpxchg
-  // ourselves.
-  addPass(createAtomicExpandPass());
-
-  if (TM->getOptLevel() > CodeGenOptLevel::None) {
-
-    if (EnableCustomAliasAnalysis) {
-      addPass(createAIEBaseAAWrapperPass());
-      addPass(
-          createExternalAAWrapperPass([](Pass &P, Function &, AAResults &AAR) {
-            if (auto *WrapperPass =
-                    P.getAnalysisIfAvailable<AIEBaseAAWrapperPass>())
-              AAR.addAAResult(WrapperPass->getResult());
-          }));
-    }
-  }
-  TargetPassConfig::addIRPasses();
-}
-
 void AIE2PassConfig::addPreLegalizeMachineIR() {
   addPass(createAIEAddressSpaceFlattening());
   if (getOptLevel() != CodeGenOptLevel::None)
     addPass(createAIE2PreLegalizerCombiner());
+  addPass(createAIEEliminateDuplicatePHI());
 }
 
 void AIE2PassConfig::addPreRegBankSelect() {
@@ -164,6 +135,10 @@ bool AIE2PassConfig::addGlobalInstructionSelect() {
     addPass(createAIEPostSelectOptimize());
     addPass(
         createDeadMachineInstructionElim(/*KeepLifetimeInstructions=*/true));
+    if (EnableReservedRegsLICM) {
+      /// Try and hoist assignments to reserved registers out of loops.
+      insertPass(&EarlyMachineLICMID, &ReservedRegsLICMID);
+    }
   }
   return false;
 }
@@ -283,20 +258,4 @@ bool AIE2PassConfig::addInstSelector() {
   if (AIEDumpArtifacts)
     addPass(createMachineFunctionDumperPass(/*Suffix=*/"after-isel"));
   return false;
-}
-
-void AIE2TargetMachine::registerPassBuilderCallbacks(
-    PassBuilder &PB, bool PopulateClassToPassNames) {
-  if (EnableCustomAliasAnalysis) {
-    PB.registerAnalysisRegistrationCallback([](FunctionAnalysisManager &FAM) {
-      FAM.registerPass([&] { return AIEBaseAA(); });
-    });
-    PB.registerParseAACallback([](StringRef AAName, AAManager &AAM) {
-      if (AAName == "aie-aa") {
-        AAM.registerFunctionAnalysis<AIEBaseAA>();
-        return true;
-      }
-      return false;
-    });
-  }
 }

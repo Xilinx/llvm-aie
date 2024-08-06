@@ -4,11 +4,15 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 
 #include "CGLoopInfo.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Attr.h"
+#include "clang/AST/Attrs.inc"
 #include "clang/AST/Expr.h"
 #include "clang/Basic/CodeGenOptions.h"
 #include "llvm/IR/BasicBlock.h"
@@ -447,6 +451,18 @@ MDNode *LoopInfo::createMetadata(
                             llvm::Type::getInt32Ty(Ctx), Attrs.CodeAlign))};
     LoopProperties.push_back(MDNode::get(Ctx, Vals));
   }
+  if (Attrs.IterationCount.Lwb) {
+    Metadata *Vals[3];
+    Vals[0] = MDString::get(Ctx, "llvm.loop.itercount.range");
+    Vals[1] = ConstantAsMetadata::get(ConstantInt::get(
+        llvm::Type::getInt64Ty(Ctx), *Attrs.IterationCount.Lwb));
+    size_t NumMD = 2;
+    if (Attrs.IterationCount.Upb) {
+      Vals[NumMD++] = ConstantAsMetadata::get(ConstantInt::get(
+          llvm::Type::getInt64Ty(Ctx), *Attrs.IterationCount.Upb));
+    }
+    LoopProperties.push_back(MDNode::get(Ctx, {Vals, NumMD}));
+  }
 
   LoopProperties.insert(LoopProperties.end(), AdditionalLoopProperties.begin(),
                         AdditionalLoopProperties.end());
@@ -478,6 +494,7 @@ void LoopAttributes::clear() {
   PipelineDisabled = false;
   PipelineInitiationInterval = 0;
   CodeAlign = 0;
+  IterationCount = {};
   MustProgress = false;
 }
 
@@ -497,7 +514,8 @@ LoopInfo::LoopInfo(BasicBlock *Header, const LoopAttributes &Attrs,
       Attrs.VectorizeScalable == LoopAttributes::Unspecified &&
       Attrs.InterleaveCount == 0 && Attrs.UnrollCount == 0 &&
       Attrs.UnrollAndJamCount == 0 && !Attrs.PipelineDisabled &&
-      Attrs.PipelineInitiationInterval == 0 &&
+      Attrs.PipelineInitiationInterval == 0 && !Attrs.IterationCount.Lwb &&
+      !Attrs.IterationCount.Upb &&
       Attrs.VectorizePredicateEnable == LoopAttributes::Unspecified &&
       Attrs.VectorizeEnable == LoopAttributes::Unspecified &&
       Attrs.UnrollEnable == LoopAttributes::Unspecified &&
@@ -673,10 +691,14 @@ void LoopInfoStack::push(BasicBlock *Header, clang::ASTContext &Ctx,
         setPipelineDisabled(true);
         break;
       case LoopHintAttr::UnrollCount:
+        setUnrollState(LoopAttributes::Disable);
+        break;
       case LoopHintAttr::UnrollAndJamCount:
       case LoopHintAttr::VectorizeWidth:
       case LoopHintAttr::InterleaveCount:
       case LoopHintAttr::PipelineInitiationInterval:
+      case LoopHintAttr::MinIterationCount:
+      case LoopHintAttr::MaxIterationCount:
         llvm_unreachable("Options cannot be disabled.");
         break;
       }
@@ -705,6 +727,8 @@ void LoopInfoStack::push(BasicBlock *Header, clang::ASTContext &Ctx,
       case LoopHintAttr::InterleaveCount:
       case LoopHintAttr::PipelineDisabled:
       case LoopHintAttr::PipelineInitiationInterval:
+      case LoopHintAttr::MinIterationCount:
+      case LoopHintAttr::MaxIterationCount:
         llvm_unreachable("Options cannot enabled.");
         break;
       }
@@ -727,6 +751,8 @@ void LoopInfoStack::push(BasicBlock *Header, clang::ASTContext &Ctx,
       case LoopHintAttr::Distribute:
       case LoopHintAttr::PipelineDisabled:
       case LoopHintAttr::PipelineInitiationInterval:
+      case LoopHintAttr::MinIterationCount:
+      case LoopHintAttr::MaxIterationCount:
         llvm_unreachable("Options cannot be used to assume mem safety.");
         break;
       }
@@ -748,6 +774,8 @@ void LoopInfoStack::push(BasicBlock *Header, clang::ASTContext &Ctx,
       case LoopHintAttr::Distribute:
       case LoopHintAttr::PipelineDisabled:
       case LoopHintAttr::PipelineInitiationInterval:
+      case LoopHintAttr::MinIterationCount:
+      case LoopHintAttr::MaxIterationCount:
       case LoopHintAttr::VectorizePredicate:
         llvm_unreachable("Options cannot be used with 'full' hint.");
         break;
@@ -781,6 +809,12 @@ void LoopInfoStack::push(BasicBlock *Header, clang::ASTContext &Ctx,
         break;
       case LoopHintAttr::PipelineInitiationInterval:
         setPipelineInitiationInterval(ValueInt);
+        break;
+      case LoopHintAttr::MinIterationCount:
+        setRangeLwb(ValueInt);
+        break;
+      case LoopHintAttr::MaxIterationCount:
+        setRangeUpb(ValueInt);
         break;
       case LoopHintAttr::Unroll:
       case LoopHintAttr::UnrollAndJam:

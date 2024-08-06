@@ -57,6 +57,61 @@ static cl::opt<bool>
                              cl::desc("Enable post select optimize."));
 
 namespace {
+
+/// Information about a COPY that can be tracked by PhysRegCopyTracker.
+struct TrackableCopyOperands {
+  Register VirtReg;
+  MCRegister PhysReg;
+  bool IsPhysRegDef; // Whether PhysReg is being redefined.
+};
+
+/// Track SSA copies of simple physical registers.
+/// Simple means they don't have sub or super registers.
+class PhysRegCopyTracker {
+  DenseMap<MCRegister, SmallSet<Register, 4>> Copies;
+  const TargetRegisterInfo &TRI;
+
+public:
+  PhysRegCopyTracker(const MachineRegisterInfo &MRI)
+      : TRI(*MRI.getTargetRegisterInfo()) {
+    assert(MRI.isSSA() && "PhysRegCopyTracker can only track SSA copies");
+  }
+
+  /// Invalidate the copies of \p Reg.
+  void invalidateCopies(MCRegister Reg) { Copies.erase(Reg); }
+
+  /// Invalidate copies for any reg defined by \p MI
+  void invalidateDefCopies(const MachineInstr &MI) {
+    for (const MachineOperand &MO : MI.all_defs()) {
+      if (MO.getReg().isPhysical()) {
+        invalidateCopies(MO.getReg());
+      }
+    }
+  }
+
+  /// Track that \p VRegCopy is a copy of \p PhysReg
+  void trackCopy(MCRegister PhysReg, Register VRegCopy) {
+    assert(VRegCopy.isVirtual());
+    assert(range_size(TRI.regunits(PhysReg)) == 1 && "Phys reg has aliases.");
+    Copies[PhysReg].insert(VRegCopy);
+  }
+
+  /// Return true if \p VReg is a copy of \p PhysReg
+  bool isCopy(MCRegister PhysReg, Register VReg) const {
+    if (auto It = Copies.find(PhysReg); It != Copies.end())
+      return It->second.contains(VReg);
+    return false;
+  }
+
+  /// If it exists, return a virtual register that holds a copy of \p PhysReg.
+  std::optional<Register> getVirtualCopy(MCRegister PhysReg) const {
+    if (auto It = Copies.find(PhysReg);
+        It != Copies.end() && !It->second.empty())
+      return *It->second.begin();
+    return {};
+  }
+};
+
 class AIEPostSelectOptimize : public MachineFunctionPass {
 public:
   static char ID;
@@ -64,190 +119,79 @@ public:
   StringRef getPassName() const override { return "AIE Post Select Optimizer"; }
   bool runOnMachineFunction(MachineFunction &MF) override;
   void getAnalysisUsage(AnalysisUsage &AU) const override;
-
-private:
-  const MachineRegisterInfo *MRI;
-
-  /**
-   * @struct PhysRegDefInfoStruct
-   * @brief To track the PhysReg defs and the state of their use.
-   */
-  struct PhysRegDefInfoStruct {
-    // Tracks the last visited def. Change with every new def.
-    MachineInstr *LastVisitedDef = nullptr;
-    // Tracks if the PhysReg is used in between current def and LastVisitedDef.
-    bool IsUsed = false;
-
-    PhysRegDefInfoStruct(MachineInstr *MI)
-        : LastVisitedDef(MI), IsUsed(false) {}
-  };
-
-  /// Collect all VirtReg to PhysReg copies that can be removed at the last.
-  DenseMap<Register, MachineInstr *> ErasableVirtRegToPhysRegCopies;
-
-  bool doPeepholeOpts(MachineBasicBlock &MBB);
-  bool eraseOrStoreRedundantPhysRegDefs(
-      MachineInstr &MI, DenseMap<Register, PhysRegDefInfoStruct> &PhysRegDefs);
-
-  /// Checks if the \p Op is an unallocatable phys reg.
-  bool isUnallocatablePhysReg(const MachineOperand &Op);
-
-  /// Checks if the src %virtreg of \p MI defines the same \p
-  /// PhysReg as the destination register of the \p MI.
-  bool isCopyFromPhysReg(const MachineInstr &MI, const Register PhysReg);
-
-  /// Store the first %virtreg to $physreg copy corresponding to \param MI.
-  void storeFirstIdentityCopy(MachineInstr &MI);
-
-  /// Erase \param MI if it is similar to \param LastVisitedDef.
-  bool eraseSimilarClobber(MachineInstr &MI, MachineInstr &LastVisitedDef);
 };
 } // end anonymous namespace
 
-bool AIEPostSelectOptimize::doPeepholeOpts(MachineBasicBlock &MBB) {
-  bool Changed = false;
-  DenseMap<Register, PhysRegDefInfoStruct> PhysRegDefs;
-  for (MachineInstr &MI : make_early_inc_range(MBB)) {
-    Changed |= eraseOrStoreRedundantPhysRegDefs(MI, PhysRegDefs);
+/// Returns whether the operands of \p MI can be tracked by PhysRegCopyTracker
+std::optional<TrackableCopyOperands>
+getTrackableCopyOperands(const MachineInstr &MI,
+                         const TargetRegisterInfo &TRI) {
+  if (!MI.isCopy())
+    return {};
+
+  // We can track the operands of a copy if one is virtual and the other is a
+  // safe-to-simplify physical register. This is dictated by PhysRegCopyTracker.
+  auto CanTrackCopyOps = [&](Register Op1, Register Op2) {
+    return Op1.isVirtual() && Op2.isPhysical() &&
+           TRI.isSimplifiableReservedReg(Op2);
+  };
+
+  auto [DstReg, SrcReg] = MI.getFirst2Regs();
+  if (CanTrackCopyOps(DstReg, SrcReg)) {
+    return TrackableCopyOperands{DstReg, SrcReg, /*InvalidatePhysReg=*/false};
   }
-  return Changed;
+  if (CanTrackCopyOps(SrcReg, DstReg)) {
+    // Here the phys reg is redefined. Notify PhysRegCopyTracker to invalidate
+    // its tracked copies.
+    return TrackableCopyOperands{SrcReg, DstReg, /*InvalidatePhysReg=*/true};
+  }
+  return {};
 }
 
-/// Check if the virtual register being copied to the phys reg was copied from
-/// from the same phys reg.
-bool AIEPostSelectOptimize::isCopyFromPhysReg(const MachineInstr &MI,
-                                              const Register PhysReg) {
+/// Returns true if \p MI is a COPY that was eliminated.
+bool trySimplifyCopy(MachineInstr &MI, const PhysRegCopyTracker &CT) {
   if (!MI.isCopy())
     return false;
-  Register SrcReg = MI.getOperand(1).getReg();
-  if (SrcReg.isPhysical())
-    return SrcReg == PhysReg;
-  MachineInstr *VRegDef = MRI->getVRegDef(SrcReg);
-  if (!VRegDef)
-    return false;
-  return isCopyFromPhysReg(*VRegDef, PhysReg);
-}
-
-/// Stores the first identity copy to act as anchor for all the other copies and
-/// remove later if applicable.
-void AIEPostSelectOptimize::storeFirstIdentityCopy(MachineInstr &MI) {
-  assert(MI.getNumOperands() == 2 && "Expected only 2 operands in the MI");
-
-  if (!MI.getOperand(1).isReg())
-    return;
-
-  Register DstPhysReg = MI.getOperand(0).getReg();
-  Register SrcReg = MI.getOperand(1).getReg();
-  // We currently have $PhysReg = COPY SrcReg. Check if the SrcReg is virtual
-  // and find the def of the SrcReg to check for %virtreg = COPY $PhysReg.
-  if (ErasableVirtRegToPhysRegCopies.count(SrcReg) ||
-      !isCopyFromPhysReg(MI, DstPhysReg)) {
-    return;
-  }
-
-  // If the copy is found and copy propagation will lead to identity copy,
-  // then just store the current $PhysReg = COPY %virtreg MI to be removed
-  // later.
-  ErasableVirtRegToPhysRegCopies[SrcReg] = &MI;
-}
-
-/// If there is an intervening clobber but copy propagation suggests it
-/// comes from the same PhysReg, it can be removed.
-bool AIEPostSelectOptimize::eraseSimilarClobber(MachineInstr &MI,
-                                                MachineInstr &LastVisitedDef) {
-  if (!isCopyFromPhysReg(LastVisitedDef, MI.getOperand(0).getReg()) ||
-      !isCopyFromPhysReg(MI, LastVisitedDef.getOperand(0).getReg()))
-    return false;
-
-  Register MISrcReg = MI.getOperand(1).getReg();
-  if (ErasableVirtRegToPhysRegCopies.count(MISrcReg) &&
-      ErasableVirtRegToPhysRegCopies[MISrcReg] == &MI) {
-    ErasableVirtRegToPhysRegCopies.erase(MISrcReg);
-  }
-  LLVM_DEBUG(dbgs() << "Erasing redundant MI - " << MI);
-  MI.eraseFromParent();
-  return true;
-}
-
-/// Returns true if the register is an Unallocatable physical register.
-/// E.g. Control Registers.
-inline bool
-AIEPostSelectOptimize::isUnallocatablePhysReg(const MachineOperand &Op) {
-  return Op.isReg() && Op.getReg().isPhysical() && Op.isDef() &&
-         !MRI->isAllocatable(Op.getReg());
-}
-
-/// Erase or store possible redundant copies local to a basic block.
-bool AIEPostSelectOptimize::eraseOrStoreRedundantPhysRegDefs(
-    MachineInstr &MI, DenseMap<Register, PhysRegDefInfoStruct> &PhysRegDefs) {
-  // Update the IsUsed boolean of PhysRegDefs to track for any uses
-  // of the Unallocatable Phys Reg.
-  for (auto &[UnallocatablePhysReg, DefInfo] : PhysRegDefs) {
-    if (MI.readsRegister(UnallocatablePhysReg) ||
-        MI.hasRegisterImplicitUseOperand(UnallocatablePhysReg)) {
-      DefInfo.IsUsed = true;
-    }
-  }
-
-  // Return early if we are not looking at phys reg defines.
-  if (MI.getNumOperands() < 2 || !isUnallocatablePhysReg(MI.getOperand(0)))
-    return false;
-
-  assert(MI.getNumOperands() == 2 &&
-         "Expected only 2 operands in the physreg def!");
-
-  const Register DstPhysReg = MI.getOperand(0).getReg();
-
-  auto PhysRegDefsItr = PhysRegDefs.find(DstPhysReg);
-  const bool PhysRegNotFound = PhysRegDefsItr == PhysRegDefs.end();
-  if (PhysRegNotFound) {
-    // Add a new phys reg defining MI.
-    PhysRegDefs.insert(std::pair(DstPhysReg, PhysRegDefInfoStruct(&MI)));
-  }
-
-  // Store the first identity copy to be erased later.
-  // This is not removed now itself because we need this copy to be treated as
-  // anchor to help us find other copies.
-  storeFirstIdentityCopy(MI);
-
-  if (PhysRegNotFound)
-    return false;
-
-  PhysRegDefInfoStruct &DefInfo = PhysRegDefsItr->second;
-
-  /*CASE 1*/
-  // If the MI in the map corresponding to this UnallocatablePhysReg is
-  // identical to current MI, erase the current MI, since it is redundant.
-  // %0 = COPY $crsat
-  // $crsat = COPY %0
-  // %1 = opcode implicit $crsat
-  // $crsat = COPY %0 <------------ redundant
-  // %2 = opcode implicit $crsat
-  if (DefInfo.LastVisitedDef->isIdenticalTo(MI)) {
-    if (!MI.getOperand(1).isReg() || MI.getOperand(1).getReg().isVirtual()) {
-      LLVM_DEBUG(dbgs() << "Erasing redundant MI - " << MI);
-      MI.eraseFromParent();
-      return true;
-    }
-  }
-
-  /*CASE 2*/
-  // If there is an intervening clobber but copy propagation suggests it
-  // comes from the same PhysReg, it can be removed.
-  // %0 = COPY $crsat
-  // $crsat = COPY %0
-  // %1 = opcode implicit $crsat
-  // %2 = COPY $crsat
-  // $crsat = COPY %2 <------------ redundant
-  // %3 = opcode implicit $crsat
-  if (eraseSimilarClobber(MI, *DefInfo.LastVisitedDef))
+  auto [DstReg, SrcReg] = MI.getFirst2Regs();
+  if (DstReg.isPhysical() && CT.isCopy(DstReg, SrcReg)) {
+    // Assigning to DstReg a copy of itself. Just remove MI.
+    MI.eraseFromParent();
     return true;
+  }
+  if (std::optional<Register> EquivVirtSrc;
+      SrcReg.isPhysical() && (EquivVirtSrc = CT.getVirtualCopy(SrcReg))) {
+    // Avoid defining a new VReg if another available one has the same value.
+    MI.getMF()->getRegInfo().replaceRegWith(DstReg, *EquivVirtSrc);
+    MI.eraseFromParent();
+    return true;
+  }
+  return false;
+}
 
+/// Remove copies to phys regs that are redundant.
+bool removeRedundantCopies(MachineBasicBlock &MBB,
+                           const MachineRegisterInfo &MRI) {
+  const TargetRegisterInfo &TRI = *MRI.getTargetRegisterInfo();
   bool Changed = false;
-  MachineInstr *CurrentDef = &MI;
-  // Change the LastVisitedDef to CurrentDef to increment our "anchor".
-  DefInfo.LastVisitedDef = CurrentDef;
-  DefInfo.IsUsed = false;
+  PhysRegCopyTracker CT(MRI);
+
+  /// Go through all instructions to collect copies and simplify redundant ones.
+  for (MachineInstr &MI : make_early_inc_range(MBB)) {
+    if (trySimplifyCopy(MI, CT)) {
+      Changed = true;
+    } else if (auto Ops = getTrackableCopyOperands(MI, TRI)) {
+      if (Ops->IsPhysRegDef) {
+        // PhysReg is redefined: Track the copy but invalidate previous ones.
+        CT.invalidateCopies(Ops->PhysReg);
+      }
+      CT.trackCopy(Ops->PhysReg, Ops->VirtReg);
+    } else {
+      // For any other instruction, be conservative and invalidate copies for
+      // the phys regs that MI defines.
+      CT.invalidateDefCopies(MI);
+    }
+  }
+
   return Changed;
 }
 
@@ -342,21 +286,9 @@ bool AIEPostSelectOptimize::runOnMachineFunction(MachineFunction &MF) {
     Changed |= combineINSERT_SUBREG(MBB);
   }
 
-  MRI = &MF.getRegInfo();
-
-  ErasableVirtRegToPhysRegCopies.shrink_and_clear();
-
   // 2. Simplify reserved register assignments
   for (MachineBasicBlock &MBB : MF) {
-    Changed |= doPeepholeOpts(MBB);
-  }
-
-  // Remove all the collected VirtReg to UnallocatablePhysReg copies that would
-  // otherwise be inferred as identity copies.
-  for (auto &[_, CopyMI] : ErasableVirtRegToPhysRegCopies) {
-    LLVM_DEBUG(dbgs() << "Erasing redundant MI - " << *CopyMI);
-    CopyMI->eraseFromParent();
-    Changed = true;
+    Changed |= removeRedundantCopies(MBB, MF.getRegInfo());
   }
 
   return Changed;

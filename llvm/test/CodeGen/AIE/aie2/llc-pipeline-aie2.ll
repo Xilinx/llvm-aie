@@ -26,9 +26,9 @@
 
 ; AIE-O123-NEXT:AIE complex addressing modes based Alias Analysis
 ; AIE-O123-NEXT:External Alias Analysis
+; AIE-O123-NEXT:Assumption Cache Tracker
 ; AIE-O123-NEXT:Type-Based Alias Analysis
 ; AIE-O123-NEXT:Scoped NoAlias Alias Analysis
-; AIE-O123-NEXT:Assumption Cache Tracker
 ; AIE-O123-NEXT:Profile summary info
 
 ; AIE-O0123-NEXT:Create Garbage Collector Module Metadata
@@ -46,7 +46,7 @@
 ; AIE-O0123-NEXT:      Expand large div/rem
 ; AIE-O0123-NEXT:      Expand large fp convert
 ; AIE-O0123-NEXT:      Expand Atomic instructions
-
+; AIE-O123-NEXT:      Infer address spaces
 ; AIE-O123-NEXT:      Dominator Tree Construction
 ; AIE-O123-NEXT:      Basic Alias Analysis (stateless AA impl)
 ; AIE-O123-NEXT:      Natural Loop Information
@@ -114,6 +114,7 @@
 ; AIE-O123-NEXT:      MachineDominator Tree Construction
 
 ; AIE-O123-NEXT:      AIE2PreLegalizerCombiner
+; AIE-O0123-NEXT:      AIE Eliminate Duplicate PHI Pass
 
 ; AIE-O0-NEXT:      Analysis for ComputingKnownBits
 ; AIE-O0123-NEXT:      Legalizer
@@ -150,6 +151,7 @@
 ; AIE-O123-NEXT:      Machine Block Frequency Analysis
 ; AIE-O123-NEXT:      Function Alias Analysis Results
 ; AIE-O123-NEXT:      Early Machine Loop Invariant Code Motion
+; AIE-O123-NEXT:      Machine LICM for reserved regs
 ; AIE-O123-NEXT:      MachineDominator Tree Construction
 ; AIE-O123-NEXT:      Machine Block Frequency Analysis
 ; AIE-O123-NEXT:      Machine Common Subexpression Elimination
@@ -168,6 +170,7 @@
 ; AIE-O23-NEXT:      Remove dead machine instructions
 
 ; AIE-O123-NEXT:      Detect Dead Lanes
+; AIE-O123-NEXT:      Init Undef Pass
 ; AIE-O123-NEXT:      Process Implicit Definitions
 ; AIE-O123-NEXT:      Remove unreachable machine basic blocks
 ; AIE-O123-NEXT:      Live Variable Analysis

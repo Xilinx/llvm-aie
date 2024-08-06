@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements some loop unrolling utilities for loops with run-time
@@ -776,7 +779,7 @@ bool llvm::UnrollRuntimeLoopRemainder(
       !isGuaranteedNotToBeUndefOrPoison(TripCount, AC, PreHeaderBR, DT)) {
     TripCount = B.CreateFreeze(TripCount);
     BECount =
-        B.CreateAdd(TripCount, ConstantInt::get(TripCount->getType(), -1));
+        B.CreateAdd(TripCount, Constant::getAllOnesValue(TripCount->getType()));
   } else {
     // If we don't need to freeze, use SCEVExpander for BECount as well, to
     // allow slightly better value reuse.
@@ -917,8 +920,9 @@ bool llvm::UnrollRuntimeLoopRemainder(
     for (Instruction &I : *BB) {
       RemapInstruction(&I, VMap,
                        RF_NoModuleLevelChanges | RF_IgnoreMissingLocals);
-      RemapDPValueRange(M, I.getDbgValueRange(), VMap,
-                        RF_NoModuleLevelChanges | RF_IgnoreMissingLocals);
+      RemapDbgVariableRecordRange(M, I.getDbgRecordRange(), VMap,
+                                  RF_NoModuleLevelChanges |
+                                      RF_IgnoreMissingLocals);
     }
   }
 
@@ -1013,10 +1017,10 @@ bool llvm::UnrollRuntimeLoopRemainder(
       formDedicatedExitBlocks(remainderLoop, DT, LI, nullptr, PreserveLCSSA);
   }
 
-  auto UnrollResult = LoopUnrollResult::Unmodified;
+  LoopUnrollReport UnrollReport{};
   if (remainderLoop && UnrollRemainder) {
     LLVM_DEBUG(dbgs() << "Unrolling remainder loop\n");
-    UnrollResult =
+    UnrollReport =
         UnrollLoop(remainderLoop,
                    {/*Count*/ Count - 1, /*Force*/ false, /*Runtime*/ false,
                     /*AllowExpensiveTripCount*/ false,
@@ -1024,7 +1028,7 @@ bool llvm::UnrollRuntimeLoopRemainder(
                    LI, SE, DT, AC, TTI, /*ORE*/ nullptr, PreserveLCSSA);
   }
 
-  if (ResultLoop && UnrollResult != LoopUnrollResult::FullyUnrolled)
+  if (ResultLoop && UnrollReport.Result != LoopUnrollResult::FullyUnrolled)
     *ResultLoop = remainderLoop;
   NumRuntimeUnrolled++;
   return true;

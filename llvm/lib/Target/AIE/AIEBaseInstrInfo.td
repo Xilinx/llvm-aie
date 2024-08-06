@@ -53,7 +53,7 @@ class immxstep <int n, int step, int fixedEncodedBits, ValueType vt = i32>
     : Operand<vt>, ImmLeaf<vt, [{return isInt<}] # n # [{+}] # fixedEncodedBits # [{>(Imm) && (Imm % }] # step # [{) == 0;}]> {
   bits<1> isNegative = false;
   let DecoderMethod = "decodeSImmOperandXStep<" # n # ", "#step#", "# isNegative #">";
-  let EncoderMethod = "getSImmOpValueX"#step#"<" # n #", /*offset=*/0, "# isNegative #">";
+  let EncoderMethod = "getSImmOpValueXStep<" # n # ", "#step#", /*offset=*/0, "# isNegative #">";
 }
 
 // A signed immediate with n+2 bits and the low-order 2 bits as 0.

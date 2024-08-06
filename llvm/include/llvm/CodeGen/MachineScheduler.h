@@ -1379,19 +1379,24 @@ class PostGenericScheduler : public GenericSchedulerBase {
 protected:
   ScheduleDAGMI *DAG = nullptr;
   SchedBoundary Top;
-  SmallVector<SUnit*, 8> BotRoots;
+  SchedBoundary Bot;
+  MachineSchedPolicy RegionPolicy;
+
+  /// Candidate last picked from Top boundary.
+  SchedCandidate TopCand;
+  /// Candidate last picked from Bot boundary.
+  SchedCandidate BotCand;
 
 public:
-  PostGenericScheduler(const MachineSchedContext *C):
-    GenericSchedulerBase(C), Top(SchedBoundary::TopQID, "TopQ") {}
+  PostGenericScheduler(const MachineSchedContext *C)
+      : GenericSchedulerBase(C), Top(SchedBoundary::TopQID, "TopQ"),
+        Bot(SchedBoundary::BotQID, "BotQ") {}
 
   ~PostGenericScheduler() override = default;
 
   void initPolicy(MachineBasicBlock::iterator Begin,
                   MachineBasicBlock::iterator End,
-                  unsigned NumRegionInstrs) override {
-    /* no configurable policy */
-  }
+                  unsigned NumRegionInstrs) override;
 
   /// PostRA scheduling does not track pressure.
   bool shouldTrackPressure() const override { return false; }
@@ -1401,6 +1406,8 @@ public:
   void registerRoots() override;
 
   SUnit *pickNode(bool &IsTopNode) override;
+
+  SUnit *pickNodeBidirectional(bool &IsTopNode);
 
   void scheduleTree(unsigned SubtreeID) override {
     llvm_unreachable("PostRA scheduler does not support subtree analysis.");
@@ -1412,18 +1419,21 @@ public:
     if (SU->isScheduled)
       return;
     Top.releaseNode(SU, SU->TopReadyCycle, false);
+    TopCand.SU = nullptr;
   }
 
-  // Only called for roots.
   void releaseBottomNode(SUnit *SU) override {
-    BotRoots.push_back(SU);
+    if (SU->isScheduled)
+      return;
+    Bot.releaseNode(SU, SU->BotReadyCycle, false);
+    BotCand.SU = nullptr;
   }
 
 protected:
   virtual bool tryCandidate(SchedCandidate &Cand, SchedCandidate &TryCand);
 
   /// Pick the best candidate from the available list of \p Zone.
-  void pickNodeFromQueue(SchedCandidate &Cand, SchedBoundary &Zone);
+  void pickNodeFromQueue(SchedBoundary &Zone, SchedCandidate &Cand);
 
   /// Pick an SU from a single zone. This will bump the cycle until at
   /// least one candidate is available.

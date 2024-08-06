@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 //  This file implements stmt-related attribute processing.
@@ -109,9 +112,18 @@ static Attr *handleLoopHintAttr(Sema &S, Stmt *St, const ParsedAttr &A,
     SetHints(LoopHintAttr::Unroll, LoopHintAttr::Disable);
   } else if (PragmaName == "unroll") {
     // #pragma unroll N
-    if (ValueExpr)
-      SetHints(LoopHintAttr::UnrollCount, LoopHintAttr::Numeric);
-    else
+    if (ValueExpr) {
+      llvm::APSInt ValueAPS;
+      ExprResult R = S.VerifyIntegerConstantExpression(ValueExpr, &ValueAPS);
+      assert(!R.isInvalid() && "unroll count value must be a valid value, it's "
+                               "should be checked in Sema::CheckLoopHintExpr");
+      (void)R;
+      // The values of 0 and 1 block any unrolling of the loop.
+      if (ValueAPS.isZero() || ValueAPS.isOne())
+        SetHints(LoopHintAttr::UnrollCount, LoopHintAttr::Disable);
+      else
+        SetHints(LoopHintAttr::UnrollCount, LoopHintAttr::Numeric);
+    } else
       SetHints(LoopHintAttr::Unroll, LoopHintAttr::Enable);
   } else if (PragmaName == "nounroll_and_jam") {
     SetHints(LoopHintAttr::UnrollAndJam, LoopHintAttr::Disable);
@@ -137,12 +149,15 @@ static Attr *handleLoopHintAttr(Sema &S, Stmt *St, const ParsedAttr &A,
                  .Case("pipeline", LoopHintAttr::PipelineDisabled)
                  .Case("pipeline_initiation_interval",
                        LoopHintAttr::PipelineInitiationInterval)
+                 .Case("min_iteration_count", LoopHintAttr::MinIterationCount)
+                 .Case("max_iteration_count", LoopHintAttr::MaxIterationCount)
                  .Case("distribute", LoopHintAttr::Distribute)
                  .Default(LoopHintAttr::Vectorize);
     if (Option == LoopHintAttr::VectorizeWidth) {
       assert((ValueExpr || (StateLoc && StateLoc->Ident)) &&
              "Attribute must have a valid value expression or argument.");
-      if (ValueExpr && S.CheckLoopHintExpr(ValueExpr, St->getBeginLoc()))
+      if (ValueExpr && S.CheckLoopHintExpr(ValueExpr, St->getBeginLoc(),
+                                           /*AllowZero=*/false))
         return nullptr;
       if (StateLoc && StateLoc->Ident && StateLoc->Ident->isStr("scalable"))
         State = LoopHintAttr::ScalableWidth;
@@ -150,9 +165,12 @@ static Attr *handleLoopHintAttr(Sema &S, Stmt *St, const ParsedAttr &A,
         State = LoopHintAttr::FixedWidth;
     } else if (Option == LoopHintAttr::InterleaveCount ||
                Option == LoopHintAttr::UnrollCount ||
-               Option == LoopHintAttr::PipelineInitiationInterval) {
+               Option == LoopHintAttr::PipelineInitiationInterval ||
+               Option == LoopHintAttr::MinIterationCount ||
+               Option == LoopHintAttr::MaxIterationCount) {
       assert(ValueExpr && "Attribute must have a valid value expression.");
-      if (S.CheckLoopHintExpr(ValueExpr, St->getBeginLoc()))
+      if (S.CheckLoopHintExpr(ValueExpr, St->getBeginLoc(),
+                              /*AllowZero=*/false))
         return nullptr;
       State = LoopHintAttr::Numeric;
     } else if (Option == LoopHintAttr::Vectorize ||
@@ -303,6 +321,15 @@ static Attr *handleAlwaysInlineAttr(Sema &S, Stmt *St, const ParsedAttr &A,
   return ::new (S.Context) AlwaysInlineAttr(S.Context, A);
 }
 
+static Attr *handleCXXAssumeAttr(Sema &S, Stmt *St, const ParsedAttr &A,
+                                 SourceRange Range) {
+  ExprResult Res = S.ActOnCXXAssumeAttr(St, A, Range);
+  if (!Res.isUsable())
+    return nullptr;
+
+  return ::new (S.Context) CXXAssumeAttr(S.Context, A, Res.get());
+}
+
 static Attr *handleMustTailAttr(Sema &S, Stmt *St, const ParsedAttr &A,
                                 SourceRange Range) {
   // Validation is in Sema::ActOnAttributedStmt().
@@ -397,8 +424,8 @@ static void CheckForDuplicateLoopAttrs(Sema &S, ArrayRef<const Attr *> Attrs) {
           << *FirstItr;
       S.Diag((*FirstItr)->getLocation(), diag::note_previous_attribute);
     }
-    return;
   }
+  return;
 }
 
 static Attr *handleMSConstexprAttr(Sema &S, Stmt *St, const ParsedAttr &A,
@@ -492,6 +519,10 @@ CheckForIncompatibleAttributes(Sema &S,
     case LoopHintAttr::VectorizePredicate:
       Category = VectorizePredicate;
       break;
+    case LoopHintAttr::MinIterationCount:
+    case LoopHintAttr::MaxIterationCount:
+      // These are in a category of their own, providing general information
+      continue;
     };
 
     assert(Category != NumberOfCategories && "Unhandled loop hint option");
@@ -594,6 +625,8 @@ static Attr *ProcessStmtAttribute(Sema &S, Stmt *St, const ParsedAttr &A,
   switch (A.getKind()) {
   case ParsedAttr::AT_AlwaysInline:
     return handleAlwaysInlineAttr(S, St, A, Range);
+  case ParsedAttr::AT_CXXAssume:
+    return handleCXXAssumeAttr(S, St, A, Range);
   case ParsedAttr::AT_FallThrough:
     return handleFallThroughAttr(S, St, A, Range);
   case ParsedAttr::AT_LoopHint:
@@ -640,4 +673,48 @@ void Sema::ProcessStmtAttributes(Stmt *S, const ParsedAttributes &InAttrs,
 bool Sema::CheckRebuiltStmtAttributes(ArrayRef<const Attr *> Attrs) {
   CheckForDuplicateLoopAttrs<CodeAlignAttr>(*this, Attrs);
   return false;
+}
+
+ExprResult Sema::ActOnCXXAssumeAttr(Stmt *St, const ParsedAttr &A,
+                                    SourceRange Range) {
+  if (A.getNumArgs() != 1 || !A.getArgAsExpr(0)) {
+    Diag(A.getLoc(), diag::err_assume_attr_args) << A.getAttrName() << Range;
+    return ExprError();
+  }
+
+  auto *Assumption = A.getArgAsExpr(0);
+  if (Assumption->getDependence() == ExprDependence::None) {
+    ExprResult Res = BuildCXXAssumeExpr(Assumption, A.getAttrName(), Range);
+    if (Res.isInvalid())
+      return ExprError();
+    Assumption = Res.get();
+  }
+
+  if (!getLangOpts().CPlusPlus23)
+    Diag(A.getLoc(), diag::ext_cxx23_attr) << A << Range;
+
+  return Assumption;
+}
+
+ExprResult Sema::BuildCXXAssumeExpr(Expr *Assumption,
+                                    const IdentifierInfo *AttrName,
+                                    SourceRange Range) {
+  ExprResult Res = CorrectDelayedTyposInExpr(Assumption);
+  if (Res.isInvalid())
+    return ExprError();
+
+  Res = CheckPlaceholderExpr(Res.get());
+  if (Res.isInvalid())
+    return ExprError();
+
+  Res = PerformContextuallyConvertToBool(Res.get());
+  if (Res.isInvalid())
+    return ExprError();
+
+  Assumption = Res.get();
+  if (Assumption->HasSideEffects(Context))
+    Diag(Assumption->getBeginLoc(), diag::warn_assume_side_effects)
+        << AttrName << Range;
+
+  return Assumption;
 }

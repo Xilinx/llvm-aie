@@ -26,7 +26,6 @@
 #include "llvm/CodeGen/GlobalISel/LegalizerInfo.h"
 #include "llvm/CodeGen/GlobalISel/LostDebugLocObserver.h"
 #include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
-#include "llvm/CodeGen/LowLevelType.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineOperand.h"
@@ -35,6 +34,7 @@
 #include "llvm/CodeGen/RuntimeLibcalls.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
+#include "llvm/CodeGenTypes/LowLevelType.h"
 #include "llvm/IR/IntrinsicsAIE.h"
 #include "llvm/IR/IntrinsicsAIE2.h"
 #include "llvm/Support/Alignment.h"
@@ -255,8 +255,8 @@ AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
       .clampScalar(0, S32, S32);
 
   getActionDefinitionsBuilder(G_SEXT_INREG)
-      .legalForTypeWithAnyImm({S32})
-      .lower();
+      .custom()
+      .legalForTypeWithAnyImm({S32});
 
   getActionDefinitionsBuilder({G_ASHR, G_LSHR, G_SHL})
       .legalFor({{S32, S32}})
@@ -505,6 +505,15 @@ AIELegalizerInfo::AIELegalizerInfo(const AIEBaseSubtarget &ST) {
         .clampMaxNumElements(0, S16, 32)
         .clampMaxNumElements(0, S32, 16)
         .custom();
+
+    getActionDefinitionsBuilder(G_SHUFFLE_VECTOR)
+        .unsupportedIf(IsNotValidDestinationVector)
+        // Checks if the shuffle is "canonical", this enables additional actions
+        // in the LLVM combiner and can change shuffle vectors legalization
+        .lowerIf([=](const LegalityQuery &Query) {
+          return Query.Types[0] == Query.Types[1];
+        })
+        .lower();
   }
 
   getActionDefinitionsBuilder(G_JUMP_TABLE).custom();
@@ -561,6 +570,8 @@ bool AIELegalizerInfo::legalizeCustom(LegalizerHelper &Helper, MachineInstr &MI,
     return legalizeG_BUILD_VECTOR(Helper, MI);
   case TargetOpcode::G_UNMERGE_VALUES:
     return legalizeG_UNMERGE_VALUES(Helper, MI);
+  case TargetOpcode::G_SEXT_INREG:
+    return legalizeG_SEXT_INREG(Helper, MI);
   }
 
   llvm_unreachable("Un-expected custom legalization");
@@ -767,6 +778,23 @@ bool AIELegalizerInfo::legalizeG_UNMERGE_VALUES(LegalizerHelper &Helper,
   }
 
   MI.eraseFromParent();
+  return true;
+}
+
+bool AIELegalizerInfo::legalizeG_SEXT_INREG(LegalizerHelper &Helper,
+                                            MachineInstr &MI) const {
+
+  MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
+  MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
+
+  const Register DestReg = MI.getOperand(0).getReg();
+  const LLT DestRegTy = MRI.getType(DestReg);
+  const LLT S32 = LLT::scalar(32);
+
+  const int64_t Imm = MI.getOperand(2).getImm();
+  if ((Imm != 8 && Imm != 16) || DestRegTy != S32)
+    Helper.lowerSextInreg(MI);
+
   return true;
 }
 

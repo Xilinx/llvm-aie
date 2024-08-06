@@ -6,6 +6,7 @@
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 add_llvm_component_library(LLVMAIEUtils
   AIEBaseInfo.cpp
+  AIELoopUtils.cpp
 
   LINK_COMPONENTS
   Support

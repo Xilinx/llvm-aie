@@ -11,6 +11,7 @@
 #ifndef LLVM_LIB_TARGET_AIE_AIEBASEOPERAND_H
 #define LLVM_LIB_TARGET_AIE_AIEBASEOPERAND_H
 
+#include "llvm/CodeGen/Register.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
@@ -68,7 +69,7 @@ public:
   /// getEndLoc - Get the location of the last token of this operand.
   SMLoc getEndLoc() const override { return EndLoc; }
 
-  unsigned getReg() const override {
+  MCRegister getReg() const override {
     assert(Kind == Register && "Invalid access!");
 
     return Reg.RegNum;

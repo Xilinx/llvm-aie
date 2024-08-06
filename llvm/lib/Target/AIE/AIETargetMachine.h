@@ -50,6 +50,11 @@ public:
   MachineFunctionInfo *
   createMachineFunctionInfo(BumpPtrAllocator &Allocator, const Function &F,
                             const TargetSubtargetInfo *STI) const override;
+
+  void registerDefaultAliasAnalyses(AAManager &) override;
+  void registerPassBuilderCallbacks(PassBuilder &PB,
+                                    bool PopulateClassToPassNames) override;
+  bool isNoopAddrSpaceCast(unsigned SrcAS, unsigned DestAS) const override;
 };
 
 class AIETargetMachine : public AIEBaseTargetMachine {
