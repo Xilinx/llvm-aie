@@ -8,9 +8,9 @@ on:
     types:
       - completed
 
-permissions:
-  contents: read
-  actions: read
+# permissions:
+#   contents: read
+#   actions: read
 
 jobs:
   pr-comment:
