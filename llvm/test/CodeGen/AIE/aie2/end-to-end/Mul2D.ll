@@ -47,7 +47,7 @@ define void @mul2d(ptr noalias %in_ptr0, ptr noalias %in_ptr1, ptr noalias %out_
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    mova r1, #2; nopb ; extend.u16 r0, r4; nopm
 ; CHECK-NEXT:    ltu r1, r0, r1
-; CHECK-NEXT:    jnz r1, #.LBB0_3
+; CHECK-NEXT:    jnz r1, #.LBB0_4
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
@@ -76,7 +76,7 @@ define void @mul2d(ptr noalias %in_ptr0, ptr noalias %in_ptr1, ptr noalias %out_
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB0_2: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    nopb ; vlda wl2, [p1], #32; nops ; nopxm ; nopv
+; CHECK-NEXT:    vlda wl2, [p1], #32
 ; CHECK-NEXT:    vlda.3d wl6, [p0], d0
 ; CHECK-NEXT:    vlda wl4, [p1], #32
 ; CHECK-NEXT:    vlda.3d wl2, [p0], d0
@@ -85,24 +85,25 @@ define void @mul2d(ptr noalias %in_ptr0, ptr noalias %in_ptr1, ptr noalias %out_
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vmov wh6, wl0
 ; CHECK-NEXT:    vmov wh2, wl0
-; CHECK-NEXT:    vmul cm0, x6, x2, r1
-; CHECK-NEXT:    vmul cm1, x2, x4, r1
+; CHECK-NEXT:    add r0, r0, #-1; vmul cm0, x6, x2, r1
+; CHECK-NEXT:    jnz r0, #.LBB0_2; vmul cm1, x2, x4, r1
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    mov crSRSSign, r2 // Delay Slot 3
+; CHECK-NEXT:    vst.srs.d8.s32 cm0, s0, [p2], #32 // Delay Slot 2
+; CHECK-NEXT:    vst.srs.d8.s32 cm1, s0, [p2], #32 // Delay Slot 1
+; CHECK-NEXT:  // %bb.3:
+; CHECK-NEXT:    nopa ; nopxm
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    add r0, r0, #-1; mov crSRSSign, r2
-; CHECK-NEXT:    jnz r0, #.LBB0_2
-; CHECK-NEXT:    vst.srs.d8.s32 cm0, s0, [p2], #32 // Delay Slot 5
-; CHECK-NEXT:    vst.srs.d8.s32 cm1, s0, [p2], #32 // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    nop // Delay Slot 1
+; CHECK-NEXT:    mov crSRSSign, #0
 ; CHECK-NEXT:    .p2align 4
-; CHECK-NEXT:  .LBB0_3: // %for.cond.cleanup
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:  .LBB0_4: // %for.cond.cleanup
+; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov crSRSSign, #0 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 1
   entry:
     %params.coerce.fca.4.extract = extractvalue %struct.mul2d_params %params.coerce, 4
     %cmp53.not = icmp ult i16 %params.coerce.fca.4.extract, 2

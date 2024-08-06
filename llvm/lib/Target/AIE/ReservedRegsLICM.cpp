@@ -228,6 +228,13 @@ void ReservedRegsLICM::runOnLoop(MachineLoop &L) {
     LLVM_DEBUG(dbgs() << "  Loop has multiple blocks.\n");
     return;
   }
+  const MachineBasicBlock *LoopBlock = L.getExitingBlock();
+
+  if (!ExitBlock->getSinglePredecessor() &&
+      !LoopBlock->canSplitCriticalEdge(ExitBlock)) {
+    LLVM_DEBUG(dbgs() << "  Loop has no dedicated exit.\n");
+    return;
+  }
 
   BitVector ReservedLiveins = collectLoopReservedLiveins(L);
   processForExitSink(L, ReservedLiveins);
@@ -292,6 +299,14 @@ bool ReservedRegsLICM::trySinkToExitBlock(const CandidateInfo &Cand,
   if (isLoopInvariantInst(Cand, L)) {
     MachineBasicBlock *InsertMBB = L.getExitBlock();
     assert(InsertMBB);
+    if (!InsertMBB->getSinglePredecessor()) {
+      MachineBasicBlock *ExitingBlock = L.getExitingBlock();
+      // Note SplitCriticalEdge will also update MachineLoopInfo.
+      InsertMBB = ExitingBlock->SplitCriticalEdge(InsertMBB, *this);
+      assert(InsertMBB);
+      LLVM_DEBUG(dbgs() << "Created dedicated exit: "
+                        << printMBBReference(*InsertMBB) << "\n");
+    }
     moveInstruction(Cand, InsertMBB->getFirstNonPHI(), *InsertMBB);
     return true;
   }
