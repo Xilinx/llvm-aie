@@ -4,7 +4,7 @@ on:
   workflow_run:
     workflows:
       - "Check code formatting"
-      - "Check for private emails used in PRs"
+      # - "Check for private emails used in PRs"  # TODO: Remove comment after debugging.
     types:
       - completed
 
