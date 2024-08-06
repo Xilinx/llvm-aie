@@ -124,8 +124,7 @@ jobs:
         id: build-llvm
         run: |
           if [ "${{ runner.os }}" == "Linux" ]; then
-            builddir="/mnt/build/"
-            mkdir -p $builddir
+            builddir="$(pwd)"/build
             extra_cmake_args="-DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang"
           else
             builddir="$(pwd)"/build
