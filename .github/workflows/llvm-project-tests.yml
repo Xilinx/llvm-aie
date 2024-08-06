@@ -1,3 +1,9 @@
+#
+# Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
 name: LLVM Project Tests
 
 permissions:
@@ -109,7 +115,6 @@ jobs:
           # fit under the 10 GB limit.
           max-size: 1.5G
           key: ${{ inputs.cache-key }}-${{ matrix.os }}
-          variant: sccache
       - name: Build and Test
         env:
           # Workaround for https://github.com/actions/virtual-environments/issues/5900.
