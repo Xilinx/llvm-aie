@@ -57,6 +57,65 @@ body:             |
     PseudoJ_jump_imm %bb.1
 ...
 
+# Similar to above, but the loop has not dedicated exit.
+# A dedicated exit block should be created.
+---
+name:            pack_dyn_sign_loop_no_dedicated_exit
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: pack_dyn_sign_loop_no_dedicated_exit
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.2(0x40000000), %bb.1(0x40000000)
+  ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $x0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r0
+  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:ep = COPY $p0
+  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:er = COPY $r1
+  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:vec512 = COPY $x0
+  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.2
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   PseudoRET implicit $lr
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   successors: %bb.3(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.3:
+  ; CHECK-NEXT:   successors: %bb.3(0x40000000), %bb.4(0x40000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $crpacksign = COPY [[COPY2]]
+  ; CHECK-NEXT:   VST_PACK_D8_D16_ag_idx_imm [[COPY1]], 0, [[COPY3]], implicit $crsat, implicit $crpacksign
+  ; CHECK-NEXT:   PseudoJNZ [[COPY]], %bb.3
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.4:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $crpacksign = MOV_scalar_imm10_pseudo 0
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
+  bb.0:
+    successors: %bb.3, %bb.1
+    liveins: $p0, $r0, $r1, $x0
+    %0:er = COPY $r0
+    %1:ep = COPY $p0
+    %2:er = COPY $r1
+    %3:vec512 = COPY $x0
+    PseudoJNZ %0, %bb.3
+
+  bb.1:
+    PseudoRET implicit $lr
+
+  bb.3:
+    successors: %bb.2
+
+  bb.2:
+    successors: %bb.2, %bb.1
+    $crpacksign = COPY %2
+    VST_PACK_D8_D16_ag_idx_imm %1, 0, %3, implicit $crsat, implicit $crpacksign
+    $crpacksign = MOV_scalar_imm10_pseudo 0
+    PseudoJNZ %0, %bb.2
+    PseudoJ_jump_imm %bb.1
+...
+
 ---
 name:            pack_dyn_sign_nested_loop
 tracksRegLiveness: true
