@@ -8,6 +8,11 @@
 // (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
+//
+// Implementation of a Loop Register rewriting pass, that reduces WAW physical
+// register conflicts, so that software pipelining compact loops better.
+//
+//===----------------------------------------------------------------------===//
 
 #include "AIEBaseInstrInfo.h"
 #include "AIEBaseRegisterInfo.h"
