@@ -235,6 +235,7 @@ enum class ScoreboardTrust {
 
 class InterBlockScheduling {
   const MachineSchedContext *Context;
+  const AIEBaseInstrInfo *TII = nullptr;
 
   // Captures the command line option from AIEMachineScheduler.cpp
   bool InterBlockScoreboard = true;
@@ -314,10 +315,17 @@ public:
   /// This represents the resource usage we assume for an unscheduled successor.
   std::optional<int> getBlockedResourceCap(MachineBasicBlock *BB) const;
 
-  /// Return the number of nops that must be inserted before this block.
-  /// This is typical for epilogue blocks, which supply the safety margin of
-  /// their loops.
-  int getNumEntryNops(const BlockState &BS) const;
+  /// Return the number of nops that must be inserted before the epilogue
+  /// of the loop represented by this block.
+  int getSafetyMargin(MachineBasicBlock *Loop,
+                      MachineBasicBlock *Epilogue) const;
+
+  /// Emit extra code induced by interblock scheduling:
+  /// Safety margins, SWP prologues, SWP epilogues
+  void emitInterBlockTop(const BlockState &BS) const;
+  void emitInterBlockBottom(const BlockState &BS) const;
+
+  bool tryPipeline(ScheduleDAGMI &DAG, MachineBasicBlock *BB);
 };
 
 } // end namespace llvm::AIE
