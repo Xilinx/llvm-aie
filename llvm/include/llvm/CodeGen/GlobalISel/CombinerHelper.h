@@ -270,7 +270,8 @@ public:
   /// you require.
   Register createUnmergeValue(MachineInstr &MI, const Register SrcReg,
                               const Register DstReg, uint8_t DestinationIndex,
-                              const uint32_t Start, const uint32_t End);
+                              const uint32_t Start, const uint32_t End,
+                              SmallVector<Register> &TmpRegisters);
 
   /// Replace \p MI with a concat_vectors with \p Ops.
   void applyCombineShuffleVector(MachineInstr &MI,

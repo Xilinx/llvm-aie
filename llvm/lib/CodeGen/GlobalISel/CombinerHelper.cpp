@@ -13,6 +13,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallBitVector.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Analysis/CmpInstAnalysis.h"
 #include "llvm/CodeGen/GlobalISel/GISelChangeObserver.h"
 #include "llvm/CodeGen/GlobalISel/GISelKnownBits.h"
@@ -36,6 +37,7 @@
 #include "llvm/IR/ConstantRange.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/InstrTypes.h"
+#include "llvm/Support/Alignment.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/DivisionByConstantInfo.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -415,7 +417,8 @@ std::function<std::optional<int32_t>()> concatGenerators(
 
 Register CombinerHelper::createUnmergeValue(
     MachineInstr &MI, const Register SrcReg, const Register DstReg,
-    const uint8_t DestinationIndex, const uint32_t Start, const uint32_t End) {
+    const uint8_t DestinationIndex, const uint32_t Start, const uint32_t End,
+    SmallVector<Register> &TmpRegisters) {
   Builder.setInsertPt(*MI.getParent(), MI);
   const LLT DstTy = MRI.getType(DstReg);
   const LLT SrcTy = MRI.getType(SrcReg);
@@ -434,32 +437,33 @@ Register CombinerHelper::createUnmergeValue(
     TargetReg = MRI.createGenericVirtualRegister(HalfSizeTy);
   }
 
-    // Each destination fits n times into the source and each iteration we
-    // exactly half the source. Therefore we need to pick on which side we want
-    // to iterate on.
-    const uint32_t DstNumElements =
-        DstTy.isVector() ? DstTy.getNumElements() : 1;
-    const uint32_t HalfWay = Start + ((End - Start) / 2);
-    const uint32_t Position = DestinationIndex * DstNumElements;
+  // Each destination fits n times into the source and each iteration we
+  // exactly half the source. Therefore we need to pick on which side we want
+  // to iterate on.
+  const uint32_t DstNumElements = DstTy.isVector() ? DstTy.getNumElements() : 1;
+  const uint32_t HalfWay = Start + ((End - Start) / 2);
+  const uint32_t Position = DestinationIndex * DstNumElements;
 
-    uint32_t NextStart, NextEnd;
-    if (Position < HalfWay) {
-      Builder.buildInstr(TargetOpcode::G_UNMERGE_VALUES, {TargetReg, TmpReg},
-                         {SrcReg});
-      NextStart = Start;
-      NextEnd = HalfWay;
-    } else {
-      Builder.buildInstr(TargetOpcode::G_UNMERGE_VALUES, {TmpReg, TargetReg},
-                         {SrcReg});
-      NextStart = HalfWay;
-      NextEnd = End;
-    }
+  uint32_t NextStart, NextEnd;
+  if (Position < HalfWay) {
+    Builder.buildInstr(TargetOpcode::G_UNMERGE_VALUES, {TargetReg, TmpReg},
+                       {SrcReg});
+    NextStart = Start;
+    NextEnd = HalfWay;
+  } else {
+    Builder.buildInstr(TargetOpcode::G_UNMERGE_VALUES, {TmpReg, TargetReg},
+                       {SrcReg});
+    NextStart = HalfWay;
+    NextEnd = End;
+  }
 
-    if (HalfSizeTy.isVector() && DstTy != HalfSizeTy)
-      return createUnmergeValue(MI, TargetReg, DstReg, DestinationIndex,
-                                NextStart, NextEnd);
+  TmpRegisters.append(1, TmpReg);
 
-    return DstReg;
+  if (HalfSizeTy.isVector() && DstTy != HalfSizeTy)
+    return createUnmergeValue(MI, TargetReg, DstReg, DestinationIndex,
+                              NextStart, NextEnd, TmpRegisters);
+
+  return DstReg;
 }
 
 bool CombinerHelper::tryCombineShuffleVector(MachineInstr &MI) {
@@ -535,19 +539,83 @@ bool CombinerHelper::tryCombineShuffleVector(MachineInstr &MI) {
       // We also need to make sure that the vector can be split into two.
       if (SrcTy == DstTy || ((SrcNumElts / 2) % 2) != 0 ||
           SrcNumElts % DstNumElts != 0)
-        return false;
+        break;
       ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
       const Register TargetReg = Mask[0] < (int)SrcNumElts ? SrcReg1 : SrcReg2;
-      createUnmergeValue(MI, TargetReg, DstReg, Current, 0, SrcNumElts);
+
+      SmallVector<Register> TmpRegisters;
+      createUnmergeValue(MI, TargetReg, DstReg, Current, 0, SrcNumElts,
+                         TmpRegisters);
       MI.eraseFromParent();
       return true;
     }
   }
 
-  // After this point, it is assumed our shufflevectors work on vectors that can
-  // be splint into two
-  if ((DstNumElts % 2) != 0)
+  // After this point, it is assumed our shufflevectors work on vectors that
+  // can be splint into two
+  if ((DstNumElts % 2) != 0 || DstNumElts <= 2)
     return false;
+
+  // We check if there is a jump in the mask, which indicates an insertion.
+  // Sadly, we lose track of how large the vector to be inserted is, so we
+  // track whenever we get back "on track"
+  ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
+  int Jump = 0, Start = -1;
+  unsigned Index = 0;
+  for (int Current = DstNumElts; Index < DstNumElts; Index++) {
+    const int Idx = Mask[Index];
+    if (Idx == Current++ || Idx < 0)
+      continue;
+    if (Idx != Jump)
+      break;
+    if (Start != -1)
+      Start = Index;
+    Jump++;
+  }
+
+  // TODO: might be nice to support non-even jumps for AMDGPU
+  if (Index == DstNumElts && (Jump % 2) == 0) {
+    const LLT VecTy = LLT::fixed_vector(Jump, SrcTy.getScalarType());
+    Register TargetReg = MRI.createGenericVirtualRegister(VecTy);
+
+    unsigned RegisterIndex = (Start / Jump) % (Index / Jump);
+    SmallVector<Register> TmpRegisters;
+    createUnmergeValue(MI, SrcReg1, TargetReg, Start / Jump, 0, SrcNumElts,
+                       TmpRegisters);
+
+    Register TmpReg = MRI.createGenericVirtualRegister(VecTy);
+    createUnmergeValue(MI, SrcReg2, TmpReg, Index / Jump, 0, SrcNumElts,
+                       TmpRegisters);
+
+    // When we unmerge our vector tree we create a binary from the root size
+    // to our target size. Here, only one side is of interest, which is the
+    // one not overriden. Sadly, we lose the information whether this is coming
+    // from the left or right. Luckily, our index can be turned into a binary
+    // tree. By scanning it from least significant to most significant. If it is
+    // zero, we need to merge left and if it is one we need to merge right.
+    auto LogOfSrcElts = std::log2(Index / Jump);
+    for (unsigned LogIndex = 0; LogIndex < LogOfSrcElts; LogIndex += 1) {
+      const Register TmpReg = TmpRegisters.pop_back_val();
+      const LLT TmpRegTy = MRI.getType(TmpReg);
+
+      const unsigned NumElts = TmpRegTy.getNumElements() * 2;
+      const LLT ConcatTy = LLT::fixed_vector(NumElts, TmpRegTy.getScalarType());
+      const Register ConcatReg =
+          (NumElts == SrcNumElts) ? DstReg
+                                  : MRI.createGenericVirtualRegister(ConcatTy);
+
+      if (RegisterIndex & 0x1)
+        Builder.buildConcatVectors(ConcatReg, {TargetReg, TmpReg});
+      else
+        Builder.buildConcatVectors(ConcatReg, {TmpReg, TargetReg});
+
+      RegisterIndex = RegisterIndex >> 1;
+      TargetReg = ConcatReg;
+    }
+
+    MI.eraseFromParent();
+    return false;
+  }
 
   // {1, 2, ..., n/4, n/2, n/2+1, .... 3n/4} -> G_UNMERGE_VALUES
   // Take the first halfs of the two vectors and concatenate them into one
@@ -564,12 +632,16 @@ bool CombinerHelper::tryCombineShuffleVector(MachineInstr &MI) {
     const Register DstReg = MI.getOperand(0).getReg();
     const LLT HalfSrcTy =
         LLT::fixed_vector(SrcNumElts / 2, SrcTy.getScalarType());
-    const Register HalfOfA = createUnmergeValue(
-        MI, MI.getOperand(1).getReg(),
-        MRI.createGenericVirtualRegister(HalfSrcTy), 0, 0, SrcNumElts);
-    const Register HalfOfB = createUnmergeValue(
-        MI, MI.getOperand(2).getReg(),
-        MRI.createGenericVirtualRegister(HalfSrcTy), 0, 0, SrcNumElts);
+
+    SmallVector<Register> TmpRegisters;
+    const Register HalfOfA =
+        createUnmergeValue(MI, MI.getOperand(1).getReg(),
+                           MRI.createGenericVirtualRegister(HalfSrcTy), 0, 0,
+                           SrcNumElts, TmpRegisters);
+    const Register HalfOfB =
+        createUnmergeValue(MI, MI.getOperand(2).getReg(),
+                           MRI.createGenericVirtualRegister(HalfSrcTy), 0, 0,
+                           SrcNumElts, TmpRegisters);
 
     const ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
     if (Mask[0] <= 0) {
@@ -579,50 +651,6 @@ bool CombinerHelper::tryCombineShuffleVector(MachineInstr &MI) {
     }
 
     MI.eraseFromParent();
-    return true;
-  }
-
-  // {n/2, n/2+1, ..., n, 0, 1, ..., n/2-1}
-  GeneratorType FirstHalf = adderGenerator(0, SrcNumElts / 2, 1);
-  GeneratorType SecondHalf = adderGenerator(SrcNumElts / 2, SrcNumElts, 1);
-  GeneratorType Reverse =
-      concatGenerators(SmallVector<GeneratorType>{FirstHalf, SecondHalf});
-
-  if (matchCombineShuffleVector(MI, Reverse, SrcNumElts)) {
-    // The shuffle is concatenating multiple vectors together.
-    // Collect the different operands for that.
-    Register UndefReg;
-    const Register Src1 = MI.getOperand(1).getReg();
-    const Register Src2 = MI.getOperand(2).getReg();
-    const ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
-
-    // The destination can be longer than the source, so we separate them into
-    // equal blocks and check them separately to see if one of the blocks can be
-    // copied whole.
-    unsigned NumConcat = DstNumElts / SrcNumElts;
-    unsigned Index = 0;
-    for (unsigned Concat = 0; Concat < NumConcat; Concat++) {
-      unsigned Target = (Concat + 1) * SrcNumElts;
-      while (Index < Target) {
-        int MaskElt = Mask[Index];
-        if (MaskElt >= 0) {
-          Ops.push_back((MaskElt < (int)SrcNumElts) ? Src1 : Src2);
-          break;
-        }
-        Index++;
-      }
-
-      if (Index == Target) {
-        if (!UndefReg) {
-          Builder.setInsertPt(*MI.getParent(), MI);
-          UndefReg = Builder.buildUndef(SrcTy).getReg(0);
-        }
-        Ops.push_back(UndefReg);
-      }
-
-      Index = Target;
-    }
-    applyCombineShuffleVector(MI, {Ops[1], Ops[0]});
     return true;
   }
 
