@@ -6,17 +6,17 @@
 #
 # (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc --mtriple=aie2 --run-pass=pipeliner --aie-loop-min-tripcount=4 \
-# RUN:   --issue-limit=6 -debug-only=aie-pipeliner %s -o - 2>&1 \
-# RUN:   | FileCheck  %s --check-prefix=CHECK-TC-4
+# RUN:   --issue-limit=6 -debug-only=aie-pipeliner \
+# RUN:   %s -o - 2>&1 | FileCheck  %s --check-prefix=CHECK-TC-4
 # RUN: llc --mtriple=aie2 --run-pass=pipeliner --aie-loop-min-tripcount=3 \
-# RUN:   --issue-limit=6 -debug-only=aie-pipeliner %s -o - 2>&1 \
-# RUN:   | FileCheck  %s --check-prefix=CHECK-TC-3
+# RUN:   --issue-limit=6 -debug-only=aie-pipeliner \
+# RUN:   %s -o - 2>&1 | FileCheck  %s --check-prefix=CHECK-TC-3
 # RUN: llc --mtriple=aie2 --run-pass=pipeliner --aie-loop-min-tripcount=2 \
-# RUN:   --issue-limit=6 -debug-only=aie-pipeliner %s -o - 2>&1 \
-# RUN:   | FileCheck  %s --check-prefix=CHECK-TC-2
+# RUN:   --issue-limit=6 -debug-only=aie-pipeliner \
+# RUN:   %s -o - 2>&1 | FileCheck  %s --check-prefix=CHECK-TC-2
 # RUN: llc --mtriple=aie2 --run-pass=pipeliner --aie-loop-min-tripcount=1 \
-# RUN:   --issue-limit=6 -debug-only=aie-pipeliner %s -o - 2>&1 \
-# RUN:   | FileCheck  %s --check-prefix=CHECK-TC-1
+# RUN:   --issue-limit=6 -debug-only=aie-pipeliner \
+# RUN:   %s -o - 2>&1 | FileCheck  %s --check-prefix=CHECK-TC-1
 
 
 # This test covers the accept or reject behavior of ZOL loops.

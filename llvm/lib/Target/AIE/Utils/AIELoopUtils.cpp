@@ -79,7 +79,7 @@ getDedicatedFallThroughPreheader(const MachineBasicBlock &LoopBlock) {
   // Dedicated and fallthrough
   if (Candidate->succ_size() != 1 ||
       Candidate->getFirstTerminator() != Candidate->end() ||
-      Candidate->getNumber() + 1 != LoopBlock.getNumber()) {
+      !Candidate->isLayoutSuccessor(&LoopBlock)) {
     return nullptr;
   }
 

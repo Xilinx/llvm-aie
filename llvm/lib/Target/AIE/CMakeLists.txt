@@ -89,6 +89,7 @@ add_llvm_target(AIECodeGen
    AIEMaxLatencyFinder.cpp
    AIEMCInstLower.cpp
    AIEMIRFormatter.cpp
+   AIEPostPipeliner.cpp
    AIEPostSelectOptimize.cpp
    AIEPseudoBranchExpansion.cpp
    AIERegisterInfo.cpp

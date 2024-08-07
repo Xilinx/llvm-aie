@@ -17,6 +17,7 @@
 
 #include "AIEHazardRecognizer.h"
 #include "AIEInterBlockScheduling.h"
+#include "AIEPostPipeliner.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineScheduler.h"
 #include <memory>
@@ -90,6 +91,7 @@ public:
   MachineBasicBlock *getCurMBB() const { return CurMBB; }
 
   const AIE::InterBlockScheduling &getInterBlock() const { return InterBlock; }
+  AIE::InterBlockScheduling &getInterBlock() { return InterBlock; }
 
 protected:
   /// Apply a set of heuristics to a new candidate for PostRA scheduling.
@@ -207,6 +209,9 @@ public:
 
   void finalizeSchedule() override;
   void recordDbgInstrs(const Region &CurrentRegion);
+
+  // We override the default schedule method in order to perform PostRASWP
+  void schedule() override;
 
   // Give dag mutators access to the scheduler state
   AIEPostRASchedStrategy *getSchedImpl() const;
