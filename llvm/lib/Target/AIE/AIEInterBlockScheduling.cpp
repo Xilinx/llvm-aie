@@ -166,7 +166,11 @@ void InterBlockScheduling::enterFunction(MachineFunction *MF) {
   DEBUG_BLOCKS(dbgs() << ">> enterFunction " << MF->getName() << "\n");
 
   // Get ourselves a hazard recognizer
-  HR = std::make_unique<AIEHazardRecognizer>(MF->getSubtarget());
+  const auto &Subtarget = MF->getSubtarget();
+  HR = std::make_unique<AIEHazardRecognizer>(Subtarget);
+
+  // And a native InstrInfo
+  TII = static_cast<const AIEBaseInstrInfo *>(Subtarget.getInstrInfo());
 
   const TargetRegisterInfo *TRI = MF->getSubtarget().getRegisterInfo();
   LiveRegs MBBLiveness(MF);
@@ -500,52 +504,56 @@ MachineBasicBlock *splitEdge(MachineBasicBlock *Pred, MachineBasicBlock *Succ) {
   return NewBB;
 }
 
-int InterBlockScheduling::getNumEntryNops(const BlockState &BS) const {
-  // Epilogues should supply the safety margin for their loop.
-  // That loop is the only predecessor by construction of
-  // BlockType::Epilogue
-  if (BS.Kind != BlockType::Epilogue) {
-    return 0;
-  }
-  MachineBasicBlock &BB = *BS.TheBlock;
-
-  MachineBasicBlock *Loop = getLoopPredecessor(BB);
-  assert(Loop);
+int InterBlockScheduling::getSafetyMargin(MachineBasicBlock *Loop,
+                                          MachineBasicBlock *Epilogue) const {
   auto &LBS = getBlockState(Loop);
-  if (BB.pred_size() > 1) {
-    // The loop is a fallthrough predecessor by construction. We insert a
-    // new block that will be a dedicated exit to the loop.
-  }
+  auto &EBS = getBlockState(Epilogue);
 
   // We can only analyze non-empty epilogue blocks because we need
   // to build a DDG, which is not possible.
   // For empty ones, we need to be conservative because we are not aware of
   // content of epilogues' successor.
   int SafetyMargin = LBS.getSafetyMargin();
-  if (LoopEpilogueAnalysis && BB.size() > 0) {
-    int ExistingLatency = getCyclesToRespectTiming(BS, LBS);
+  if (LoopEpilogueAnalysis && Epilogue->size() > 0) {
+    int ExistingLatency = getCyclesToRespectTiming(EBS, LBS);
     // Start the next step only after clearing latencies.
-    SafetyMargin = getCyclesToAvoidResourceConflicts(ExistingLatency, BS, LBS);
-  }
-  if (SafetyMargin && BB.pred_size() > 1) {
-    DEBUG_LOOPAWARE(dbgs() << "New dedicated exit with " << SafetyMargin
-                           << " nops.\n");
-    // The loop is a fallthrough predecessor by construction. We insert a
-    // new block that will be a dedicated exit to the loop.
-    MachineBasicBlock *DedicatedExit = splitEdge(Loop, &BB);
-    const auto &SubTarget = BS.TheBlock->getParent()->getSubtarget();
-    auto *TII = static_cast<const AIEBaseInstrInfo *>(SubTarget.getInstrInfo());
-    // Our caller can't see this block, so we fill nops ourselves. The original
-    // epilogue will not need entry nops, so we can return 0.
-    auto It = DedicatedExit->begin();
-    while (SafetyMargin--) {
-      TII->insertNoop(*DedicatedExit, It);
-    }
-    return 0;
+    SafetyMargin = getCyclesToAvoidResourceConflicts(ExistingLatency, EBS, LBS);
   }
 
   return SafetyMargin;
 }
+
+void InterBlockScheduling::emitInterBlockTop(const BlockState &BS) const {
+  if (BS.Kind != BlockType::Epilogue) {
+    return;
+  }
+
+  MachineBasicBlock *BB = BS.TheBlock;
+  MachineBasicBlock *Loop = getLoopPredecessor(*BB);
+  assert(Loop);
+
+  // Epilogues should supply the safety margin for their loop.
+  // Epilogues of pipelined loops should emit the bundles swp epilog
+  // Both need a dedicated exit. If there isn't one, spawn a new block
+  MachineBasicBlock *DedicatedExit = BB;
+  int SafetyMargin = getSafetyMargin(Loop, BS.TheBlock);
+  if (SafetyMargin && DedicatedExit->pred_size() > 1) {
+    // The loop is a fallthrough predecessor by construction. We insert a
+    // new block that will be a dedicated exit to the loop.
+    DEBUG_LOOPAWARE(dbgs() << "New dedicated exit\n");
+    DedicatedExit = splitEdge(Loop, BB);
+  }
+
+  auto It = DedicatedExit->begin();
+  if (BS.Kind == BlockType::Epilogue) {
+    DEBUG_LOOPAWARE(dbgs() << "Emitting " << SafetyMargin << " safety nops\n");
+    while (SafetyMargin--) {
+      TII->insertNoop(*DedicatedExit, It);
+    }
+  }
+}
+
+void InterBlockScheduling::emitInterBlockBottom(const BlockState &BS) const {}
 
 int InterBlockScheduling::getCyclesToRespectTiming(
     const BlockState &EpilogueBS, const BlockState &LoopBS) const {

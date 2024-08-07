@@ -529,15 +529,12 @@ void AIEPostRASchedStrategy::enterMBB(MachineBasicBlock *MBB) {
 
 void AIEPostRASchedStrategy::commitBlockSchedule(MachineBasicBlock *BB) {
   auto &BS = InterBlock.getBlockState(BB);
+
+  // Safety margin, swp epilogue
+  InterBlock.emitInterBlockTop(BS);
+
   MachineBasicBlock::iterator It = BB->begin();
   const TargetInstrInfo *TII = getTII(BB);
-
-  // Emit the top safety margin
-  int Margin = InterBlock.getNumEntryNops(BS);
-  while (Margin--) {
-    TII->insertNoop(*BB, It);
-  }
-
   for (auto &Region : BS.getRegions()) {
     // Contrary to PRAS, the MachineScheduler does not automatically insert
     // NOPs. That isn't a problem, since the callbacks to the HazardRecognizer
