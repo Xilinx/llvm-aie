@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEHazardRecognizer.h"
+#include "AIEBaseSubtarget.h"
 #include "MCTargetDesc/AIEMCFormats.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -439,6 +440,19 @@ ScheduleHazardRecognizer::HazardType AIEHazardRecognizer::getHazardType(
       getSlotSet(Desc, *TII->getFormatInterface(), IgnoreUnknownSlotSets),
       MemoryBanks, TII->getMemoryCycles(SchedClass), DeltaCycles,
       FUDepthLimit));
+}
+
+bool AIEHazardRecognizer::checkConflict(
+    const ResourceScoreboard<FuncUnitWrapper> &Scoreboard, MachineInstr &MI,
+    int DeltaCycles) const {
+  const MCInstrDesc &Desc = MI.getDesc();
+  const unsigned SchedClass =
+      TII->getSchedClass(Desc, MI.operands(), MI.getMF()->getRegInfo());
+  const MemoryBankBits MemoryBanks = getMemoryBanks(&MI);
+  return checkConflict(
+      Scoreboard, ItinData, SchedClass,
+      getSlotSet(Desc, *TII->getFormatInterface(), IgnoreUnknownSlotSets),
+      MemoryBanks, TII->getMemoryCycles(SchedClass), DeltaCycles, std::nullopt);
 }
 
 bool AIEHazardRecognizer::checkConflict(

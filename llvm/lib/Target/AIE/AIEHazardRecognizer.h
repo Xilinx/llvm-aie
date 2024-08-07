@@ -28,6 +28,8 @@
 
 namespace llvm {
 
+class MachineInstr;
+
 void applyFormatOrdering(AIE::MachineBundle &Bundle, const VLIWFormat &Format,
                          MachineInstr *BundleRoot,
                          MachineBasicBlock::iterator InsertPoint);
@@ -185,6 +187,8 @@ public:
                 const MCInstrDesc &Desc, MemoryBankBits MemoryBanks,
                 iterator_range<const MachineOperand *> MIOperands,
                 const MachineRegisterInfo &MRI, int DeltaCycles) const;
+  bool checkConflict(const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+                     MachineInstr &MI, int DeltaCycles) const;
 
 protected:
   ScheduleHazardRecognizer::HazardType getHazardType(const MCInstrDesc &Desc,

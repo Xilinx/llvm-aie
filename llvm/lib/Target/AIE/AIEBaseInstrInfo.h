@@ -186,8 +186,13 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   virtual bool isHardwareLoopStart(unsigned Opcode) const { return false; }
   virtual bool isHardwareLoopEnd(unsigned Opcode) const { return false; }
 
-  /// Check whether this defines the ZOL tripcount
-  virtual bool isZOLTripCountDef(const MachineInstr &MI) const { return false; }
+  /// Check whether \p MI defines the ZOL tripcount. If this returns true, \p MI
+  /// should be suitable for calling adjustTripCount on it.
+  /// If \p Pristine is set, we check that it wasn't updated before.
+  virtual bool isZOLTripCountDef(const MachineInstr &MI,
+                                 bool Pristine = false) const {
+    return false;
+  }
 
   /// Lower the tripcount defined by MI with Update, which is a small
   /// negative integer that should be added to the tripcount

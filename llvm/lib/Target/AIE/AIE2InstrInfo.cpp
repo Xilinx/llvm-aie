@@ -1185,13 +1185,15 @@ bool AIE2InstrInfo::isHardwareLoopEnd(unsigned Opcode) const {
   return Opcode == AIE2::PseudoLoopEnd;
 }
 
-bool AIE2InstrInfo::isZOLTripCountDef(const MachineInstr &MI) const {
+bool AIE2InstrInfo::isZOLTripCountDef(const MachineInstr &MI,
+                                      bool Pristine) const {
   return MI.getOpcode() == AIE2::ADD_NC &&
-         MI.getOperand(0).getReg() == AIE2::LC;
+         MI.getOperand(0).getReg() == AIE2::LC &&
+         (!Pristine || MI.getOperand(2).getImm() == 0);
 }
 
 void AIE2InstrInfo::adjustTripCount(MachineInstr &MI, int Adjustment) const {
-  assert(MI.getOpcode() == AIE2::ADD_NC);
+  assert(isZOLTripCountDef(MI));
   auto &Imm = MI.getOperand(2);
   Imm.setImm(Imm.getImm() + Adjustment);
 }

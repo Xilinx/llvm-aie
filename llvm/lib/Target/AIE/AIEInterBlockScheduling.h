@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -20,6 +20,7 @@
 #include "AIEBaseSubtarget.h"
 #include "AIEBundle.h"
 #include "AIEHazardRecognizer.h"
+#include "AIEPostPipeliner.h"
 #include "llvm/CodeGen/LivePhysRegs.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineScheduler.h"
@@ -107,13 +108,41 @@ public:
 // handling.
 enum class BlockType { Regular, Loop, Epilogue };
 
+// These are states in the state machine that drives scheduling
+enum class SchedulingStage {
+  // We are scheduling, which includes iterating during loop-aware scheduling
+  Scheduling,
+
+  // This is a fatal error state, when we didn't converge in loop-aware
+  // scheduling. It may not be observable.
+  SchedulingNotConverged,
+
+  // We have found a schedule. This is the final state for regular blocks. SWP
+  // candidates proceed from here into Pipelining with II=1
+  SchedulingDone,
+
+  // We are busy pipelining the loop. Each round will try a larger II
+  Pipelining,
+
+  // We found a SWP schedule. This is a final state.
+  PipeliningDone,
+
+  // We tried pipelining, but didn't find a SWP schedule. This is a final
+  // state equivalent to SchedulingDone, except that it doesn't proceed to
+  // Pipelining anymore.
+  PipeliningFailed
+};
+
 /// Parameters that drive fixpoint convergence
 class FixedpointState {
 public:
-  bool IsScheduled = false;
+  SchedulingStage Stage = SchedulingStage::Scheduling;
+  // Parameters of the loop-aware convergence
   int LatencyMargin = 0;
   SmallMapVector<MachineInstr *, int, 8> PerMILatencyMargin;
   int ResourceMargin = 0;
+  // The II of the modulo schedule we are trying.
+  int II = 0;
   // Results from the convergence test
   int MaxLatencyExtent = 0;
   int MaxResourceExtent = 0;
@@ -148,6 +177,7 @@ public:
   std::vector<MachineInstr *>::const_iterator end() const {
     return SemanticOrder.end();
   }
+  size_t size() const { return SemanticOrder.size(); }
   MachineInstr *getExitInstr() const { return ExitInstr; }
 
   std::vector<MachineBundle> Bundles;
@@ -164,13 +194,25 @@ class BlockState {
   // Currently only used for loops, where both blocks are the same.
   std::unique_ptr<InterBlockEdges> BoundaryEdges;
 
+  // This holds an instance of the PostPipeliner for candidate loops.
+  std::unique_ptr<PostPipeliner> PostSWP;
+
 public:
   BlockState(MachineBasicBlock *Block);
   MachineBasicBlock *TheBlock = nullptr;
   FixedpointState FixPoint;
   BlockType Kind = BlockType::Regular;
   LivePhysRegs LiveOuts;
-  void initInterBlock(const MachineSchedContext &Context);
+
+  /// These are owned bundles of instructions that need to be inserted
+  /// in the top and the bottom of the block respectively.
+  /// PostPipelined loops use these to push out the epilogue and prologue
+  /// in the preheader and exit block.
+  std::vector<MachineBundle> TopInsert;
+  std::vector<MachineBundle> BottomInsert;
+
+  void initInterBlock(const MachineSchedContext &Context,
+                      const AIEHazardRecognizer &HR);
 
   // Concatenate Bundles to the current region
   void addBundles(const std::vector<MachineBundle> &Bundles) {
@@ -182,7 +224,9 @@ public:
     CurrentRegion = Regions.size();
     Regions.emplace_back(BB, RegionBegin, RegionEnd);
   }
-  auto getCurrentRegion() const { return Regions.at(CurrentRegion); }
+  auto &getCurrentRegion() const { return Regions.at(CurrentRegion); }
+  auto &getCurrentRegion() { return Regions[CurrentRegion]; }
+  auto &getPostSWP() const { return *PostSWP; }
   const Region &getTop() const { return Regions.back(); }
   Region &getTop() { return Regions.back(); }
   const Region &getBottom() const { return Regions.front(); }
@@ -210,13 +254,23 @@ public:
   /// It rewinds to the first region.
   void clearSchedule();
 
-  /// Inform the fixpoint iteration that we are done with this block.
-  void setScheduled();
-  bool isScheduled() const { return FixPoint.IsScheduled; }
+  void setPipelined();
+  bool isScheduled() const {
+    return FixPoint.Stage == SchedulingStage::SchedulingDone || isPipelined() ||
+           pipeliningFailed();
+  }
+  bool isPipelined() const {
+    return FixPoint.Stage == SchedulingStage::PipeliningDone;
+  }
+  bool pipeliningFailed() const {
+    return FixPoint.Stage == SchedulingStage::PipeliningFailed;
+  }
 
   /// return the safety margin that the epilogue of this loop should provide
   /// \pre Kind == Loop
   int getSafetyMargin() const;
+
+  int getScheduleLength() const;
 
 protected:
   void classify();
@@ -264,8 +318,11 @@ class InterBlockScheduling {
 
   /// Perform the convergence checks and set convergence parameters
   /// for the next iteration.
-  /// returns true if converged
-  bool updateFixPoint(BlockState &BS);
+  /// Returns the stage this block is now in.
+  SchedulingStage updateFixPoint(BlockState &BS);
+
+  SchedulingStage updateScheduling(BlockState &BS);
+  SchedulingStage updatePipelining(BlockState &BS);
 
   /// Calculate the number of cycles that are needed to respect
   /// latencies related to the loop whose the epilogue is associated
@@ -278,7 +335,7 @@ class InterBlockScheduling {
                                         const BlockState &EpilogueBS,
                                         const BlockState &LoopBS) const;
 
-  BlockState *CurrentBlock = nullptr;
+  BlockState *CurrentBlockState = nullptr;
 
 public:
   InterBlockScheduling(const MachineSchedContext *C, bool InterBlock);
@@ -319,6 +376,16 @@ public:
   /// of the loop represented by this block.
   int getSafetyMargin(MachineBasicBlock *Loop,
                       MachineBasicBlock *Epilogue) const;
+
+  /// Insert the instructions from Bundles into BB before the
+  /// iterator Before.
+  /// Inserts nops for empty bundles and applies MIR bundling to the
+  /// inserted instructions.
+  /// If Move is set, the instructions are assumed to be in the block already,
+  /// and will be moved, not inserted
+  void emitBundles(const std::vector<MachineBundle> &TimedRegion,
+                   MachineBasicBlock *BB, MachineBasicBlock::iterator Before,
+                   bool Move) const;
 
   /// Emit extra code induced by interblock scheduling:
   /// Safety margins, SWP prologues, SWP epilogues

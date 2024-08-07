@@ -7,13 +7,13 @@
 
 # RUN: llc --mtriple=aie2 -O2 --start-before=postmisched %s -o - | FileCheck %s
 
-# load-add-store in which the addition overwrites its operand register with
-# the result.
-# We need two cycles to accomodate the two writes to the same register.
+
+# We have two ALU instruction competing for the A slot. This requires II >= 2.
+# since there's no further complication, we expect to find II=2
 
 --- |
-  define dso_local void @loadAddStore(ptr addrspace(5) noalias nocapture writeonly %d, ptr addrspace(6) noalias nocapture readonly %s, i32 noundef %n) local_unnamed_addr #0 {
-  ; CHECK-LABEL: loadAddStore:
+  define dso_local void @loadAddOrStore(ptr noalias nocapture writeonly %d, ptr noalias nocapture readonly %s, i32 noundef %n) local_unnamed_addr #0 {
+  ; CHECK-LABEL: loadAddOrStore:
   ; CHECK:         .p2align 4
   ; CHECK-NEXT:  // %bb.0: // %entry
   ; CHECK-NEXT:    mova r1, #0; nopb ; nopxm
@@ -42,23 +42,23 @@
   ; CHECK-NEXT:    lda r0, [p1], #4
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    lda r0, [p1], #4
-  ; CHECK-NEXT:    add r0, r0, #1
+  ; CHECK-NEXT:    add r1, r0, #1
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_2: // %for.body
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-  ; CHECK-NEXT:    nopb ; lda r0, [p1], #4; st r0, [p0], #4; nopxm ; nopv
+  ; CHECK-NEXT:    nopb ; lda r0, [p1], #4; nops ; or r2, r1, r1; nopm ; nopv
   ; CHECK-NEXT:  .L_LEnd0:
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; add r0, r0, #1; nopm ; nopv
+  ; CHECK-NEXT:    nopb ; nopa ; st r2, [p0], #4; add r1, r0, #1; nopm ; nopv
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_3: // %for.cond.cleanup
-  ; CHECK-NEXT:    st r0, [p0], #4; nopb ; nopx
-  ; CHECK-NEXT:    add r0, r0, #1
-  ; CHECK-NEXT:    st r0, [p0], #4
-  ; CHECK-NEXT:    add r0, r0, #1
-  ; CHECK-NEXT:    st r0, [p0], #4
-  ; CHECK-NEXT:    add r0, r0, #1
-  ; CHECK-NEXT:    st r0, [p0], #4
-  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    nopb ; nopa ; nops ; or r2, r1, r1; nopm ; nopv
+  ; CHECK-NEXT:    st r2, [p0], #4; add r1, r0, #1
+  ; CHECK-NEXT:    or r2, r1, r1
+  ; CHECK-NEXT:    st r2, [p0], #4; add r1, r0, #1
+  ; CHECK-NEXT:    or r2, r1, r1
+  ; CHECK-NEXT:    st r2, [p0], #4; add r1, r0, #1
+  ; CHECK-NEXT:    or r2, r1, r1
+  ; CHECK-NEXT:    st r2, [p0], #4
   ; CHECK-NEXT:    ret lr
   ; CHECK-NEXT:    nop // Delay Slot 5
   ; CHECK-NEXT:    nop // Delay Slot 4
@@ -77,21 +77,18 @@
     ret void
 
   for.body:                                         ; preds = %for.body.preheader, %for.body
-    %d.addr.07 = phi ptr addrspace(5) [ %incdec.ptr, %for.body ], [ %d, %for.body.preheader ]
-    %s.addr.06 = phi ptr addrspace(6) [ %incdec.ptr1, %for.body ], [ %s, %for.body.preheader ]
-    %0 = load i32, ptr addrspace(6) %s.addr.06, align 4, !tbaa !2
+    %d.addr.07 = phi ptr [ %incdec.ptr, %for.body ], [ %d, %for.body.preheader ]
+    %s.addr.06 = phi ptr [ %incdec.ptr1, %for.body ], [ %s, %for.body.preheader ]
+    %0 = load i32, ptr %s.addr.06, align 4, !tbaa !2
     %add = add nsw i32 %0, 1
-    store i32 %add, ptr addrspace(5) %d.addr.07, align 4, !tbaa !2
-    %incdec.ptr = getelementptr inbounds i32, ptr addrspace(5) %d.addr.07, i20 1
-    %incdec.ptr1 = getelementptr inbounds i32, ptr addrspace(6) %s.addr.06, i20 1
+    store i32 %add, ptr %d.addr.07, align 4, !tbaa !2
+    %incdec.ptr = getelementptr inbounds i32, ptr %d.addr.07, i20 1
+    %incdec.ptr1 = getelementptr inbounds i32, ptr %s.addr.06, i20 1
     %1 = call i1 @llvm.loop.decrement.i32(i32 1)
     br i1 %1, label %for.body, label %for.cond.cleanup, !llvm.loop !6
   }
 
-  ; Function Attrs: nocallback noduplicate nofree nosync nounwind willreturn
   declare void @llvm.set.loop.iterations.i32(i32) #1
-
-  ; Function Attrs: nocallback noduplicate nofree nosync nounwind willreturn
   declare i1 @llvm.loop.decrement.i32(i32) #1
 
   attributes #0 = { nofree norecurse nosync nounwind memory(readwrite, inaccessiblemem: none) "no-trapping-math"="true" "stack-protector-buffer-size"="8" }
@@ -109,10 +106,9 @@
   !6 = distinct !{!6, !7, !8}
   !7 = !{!"llvm.loop.mustprogress"}
   !8 = !{!"llvm.loop.itercount.range", i64 10}
-
 ...
 ---
-name:            loadAddStore
+name:            loadAddOrStore
 alignment:       16
 tracksRegLiveness: true
 body:             |
@@ -138,8 +134,9 @@ body:             |
     liveins: $p0, $p1
 
     renamable $r0, renamable $p1 = LDA_dms_lda_pstm_nrm_imm killed renamable $p1, 4 :: (load (s32) from %ir.s.addr.06, !tbaa !2)
-    renamable $r0 = nsw ADD_add_r_ri killed renamable $r0, 1, implicit-def dead $srcarry
-    renamable $p0 = ST_dms_sts_pstm_nrm_imm killed renamable $r0, killed renamable $p0, 4 :: (store (s32) into %ir.d.addr.07, !tbaa !2)
+    renamable $r1 = nsw ADD_add_r_ri killed renamable $r0, 1, implicit-def dead $srcarry
+    renamable $r2 = OR killed renamable $r1, $r1, implicit-def dead $srcarry
+    renamable $p0 = ST_dms_sts_pstm_nrm_imm killed renamable $r2, killed renamable $p0, 4 :: (store (s32) into %ir.d.addr.07, !tbaa !2)
     PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2
 
   bb.3.for.cond.cleanup (align 16):
