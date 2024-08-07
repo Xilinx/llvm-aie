@@ -4,13 +4,12 @@
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
 ; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-; RUN: opt -mtriple=aie2 --passes="hardware-loops" --enable-aie-hardware-loops %s -S -o - | \
-; RUN:     FileCheck %s
-; RUN: opt -mtriple=aie2 --passes="hardware-loops" --enable-aie-hardware-loops \
-; RUN:                                   --enable-aie-zero-overhead-loops %s -S -o - | \
+; RUN: opt -mtriple=aie2 --passes="hardware-loops" --enable-aie-zero-overhead-loops=false \
+; RUN:     --aie-force-hl-gen %s -S -o - | FileCheck %s
+; RUN: opt -mtriple=aie2 --passes="hardware-loops" --aie-force-hl-gen %s -S -o - | \
 ; RUN:     FileCheck --check-prefix=CHECK-ZOL %s
-; RUN: opt -mtriple=aie2 --passes="hardware-loops" --enable-aie-hardware-loops \
-; RUN:     -pass-remarks-analysis=hardware-loops  %s -S -o - 2>&1 | \
+; RUN: opt -mtriple=aie2 --passes="hardware-loops" -pass-remarks-analysis=hardware-loops \
+; RUN:      --aie-force-hl-gen  %s -S -o - 2>&1 | \
 ; RUN:     FileCheck %s --check-prefix=CHECK-REMARKS
 
 

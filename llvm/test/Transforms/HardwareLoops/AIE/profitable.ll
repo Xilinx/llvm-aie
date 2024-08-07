@@ -5,10 +5,10 @@
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
 ; (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-; RUN: opt -mtriple=aie2 --passes="hardware-loops" --enable-aie-hardware-loops %s -S -o - | \
-; RUN:     FileCheck %s
-; RUN: opt -mtriple=aie2 --passes="hardware-loops" --enable-aie-hardware-loops \
-; RUN:                                   --enable-aie-zero-overhead-loops %s -S -o - | \
+; RUN: opt -mtriple=aie2 --passes="hardware-loops" --aie-force-hl-gen \
+; RUN:     --enable-aie-zero-overhead-loops=false %s -S -o - | FileCheck %s
+; RUN: opt -mtriple=aie2 --passes="hardware-loops" \
+; RUN:     --aie-force-hl-gen %s -S -o - | \
 ; RUN:     FileCheck %s --check-prefix=CHECK-ZOL
 
 ; We can support nested hardware loops.

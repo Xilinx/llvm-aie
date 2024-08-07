@@ -163,7 +163,6 @@ def FPHI12 : SDNodeXForm<fpimm, [{
 def CallSymbol : AsmOperandClass {
   let Name = "CallSymbol";
   let RenderMethod = "addImmOperands";
-  let DiagnosticType = "InvalidCallSymbol";
   let ParserMethod = "parseCallSymbol";
 }
 

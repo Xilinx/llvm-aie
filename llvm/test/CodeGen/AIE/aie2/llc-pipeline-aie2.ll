@@ -151,6 +151,7 @@
 ; AIE-O123-NEXT:      Machine Block Frequency Analysis
 ; AIE-O123-NEXT:      Function Alias Analysis Results
 ; AIE-O123-NEXT:      Early Machine Loop Invariant Code Motion
+; AIE-O123-NEXT:      Machine LICM for reserved regs
 ; AIE-O123-NEXT:      MachineDominator Tree Construction
 ; AIE-O123-NEXT:      Machine Block Frequency Analysis
 ; AIE-O123-NEXT:      Machine Common Subexpression Elimination
