@@ -22,8 +22,6 @@
 #include "llvm/CodeGen/LiveDebugVariables.h"
 #include "llvm/CodeGen/LiveIntervals.h"
 #include "llvm/CodeGen/LiveRegMatrix.h"
-// #include "llvm/CodeGen/LiveStacks.h"
-// #include "llvm/CodeGen/MachineBlockFrequencyInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineOperand.h"
@@ -122,7 +120,6 @@ bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
   std::map<const MachineOperand *, std::set<MCPhysReg>> PriorityRenameRegs =
       getWarRenameRegs(MF, VRM, LRM, &TRI, &MRI, LIS, CSPhyRegs);
 
-  // Collect already-assigned VRegs that can be split into smaller ones.
   LLVM_DEBUG(VRM.dump());
   std::set<Register> AlreadyReplaced;
   for (const auto &KeyValuePair : PriorityRenameRegs) {
@@ -136,10 +133,11 @@ bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
                << printRegClassOrBank(Reg, MRI, &TRI) << " ";
         KeyValuePair.first->getParent()->print(dbgs()););
 
-    // iterate RC and allocate first found reg that
-    // 1) does not interfere
-    // 2) has not been replaced yet
     for (const MCPhysReg &PhysReg : AlternativePhyRegs) {
+      // iterate alternative PhysRegs and allocate first found reg that
+      // 1) has not been replaced yet
+      // 2) does not interfere
+
       if (AlreadyReplaced.end() != find(AlreadyReplaced, PhysReg))
         continue;
 
@@ -167,9 +165,9 @@ bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
   return Modified;
 }
 
-/// Find Virtual Register that should not map to the same physical register,
-/// even though they don't interfere. This is done, so that pipelining can be
-/// performed. e.g.
+/// Find Virtual Register that should not map to the same physical register
+/// in a WAW conflict, even though they don't interfere. This is done,
+/// so that pipelining can be performed.
 std::map<const MachineOperand *, std::set<MCPhysReg>>
 AIEWawRegRewriter::getWarRenameRegs(
     MachineFunction const &MF, const VirtRegMap &VRM, LiveRegMatrix &LRM,
@@ -178,18 +176,18 @@ AIEWawRegRewriter::getWarRenameRegs(
   MF.dump();
   std::map<const MachineOperand *, std::set<MCPhysReg>> PriorityRenameRegs;
   for (const MachineBasicBlock &MBB : MF) {
-    // identify loop body
+
     if (MBB.succ_end() == find(MBB.successors(), &MBB))
       continue;
 
-    // check if the virtualRegs map to the same physical register
     std::set<MCPhysReg> UsedPhyRegs;
     std::set<Register> UsedVirtRegs;
 
     std::set<MCPhysReg> ForbiddenPhysRegs =
         getBBForbiddenReplacements(MBB, VRM, *MRI, TRI, CSPhyRegs);
 
-    // get all reg defines and collect redefines
+    // get all WAW definitions that map to the same physical register
+    // these are candidates for register renaming
     for (const MachineInstr &MI : MBB) {
       const MCInstrDesc &MCID = MI.getDesc();
       MI.dump();
@@ -220,6 +218,7 @@ AIEWawRegRewriter::getWarRenameRegs(
 
         if (MRI->getRegClass(Reg) && FoundPhyReg && FoundVirtReg &&
             !MI.isCopy()) {
+          // get physical register to replace candidate
           auto Replacements = getPriorityReplacementRegs(
               MBB, Reg, VRM, LRM, *MRI, LIS, TRI, ForbiddenPhysRegs);
           if (!Replacements.empty()) {
@@ -294,11 +293,10 @@ static std::set<MCPhysReg> getPriorityReplacementRegs(
     const std::set<MCPhysReg> &ForbiddenPhysRegs) {
   std::set<MCPhysReg> PhysRegs;
 
-  // get all free register that dont interfere, but ignore defs from the MBB
   const TargetRegisterClass *RC = MRI.getRegClass(Reg);
-  // iterate RC and allocate first found reg that does not interfere
-  for (const MCPhysReg &PhysReg : RC->getRegisters()) {
 
+  for (const MCPhysReg &PhysReg : RC->getRegisters()) {
+    // iterate Regs of RC and allocate first found reg that does not interfere
     if (ForbiddenPhysRegs.end() != find(ForbiddenPhysRegs, PhysReg))
       continue;
 
@@ -315,19 +313,16 @@ static std::set<MCPhysReg> getCSPhyRegs(const MachineRegisterInfo &MRI,
   std::set<MCPhysReg> CSPhyRegs;
   LLVM_DEBUG(dbgs() << "Callee-saved registers:\n");
   const MCPhysReg *CSRegs = MRI.getCalleeSavedRegs();
-  // const MCPhysReg * CSRegs = MF
   for (const uint16_t *RegPtr = CSRegs; *RegPtr; ++RegPtr) {
     CSPhyRegs.insert(*RegPtr);
     LLVM_DEBUG(dbgs() << printReg(*RegPtr, TRI, 0, &MRI) << " ");
   }
   LLVM_DEBUG(dbgs() << "\n");
-
   return CSPhyRegs;
 }
 
 bool containsLoop(const MachineFunction &MF) {
   for (const MachineBasicBlock &MBB : MF) {
-    // collect any register, which that are redefined within te same BB
     if (MBB.succ_end() != find(MBB.successors(), &MBB))
       return true;
   }
@@ -339,8 +334,7 @@ bool isCopyElimination(const MachineInstr &MI, const VirtRegMap &VRM) {
     return false;
 
   // if src and target are equal, this copy will be eliminated, and
-  // therefore should not renamed or even registered, since this MI
-  // will be eliminated
+  // therefore should not renamed or even registered
   assert(MI.getNumOperands() == 2 &&
          "Copy MI does not have 2 operands, Naive Copy Elimination will "
          "not work! Please fix.");
