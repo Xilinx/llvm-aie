@@ -205,6 +205,9 @@ AIEWawRegRewriter::getWarRenameRegs(
         if (!Op.getReg().isVirtual())
           continue;
 
+        if (VRM.hasRequiredPhys(Op.getReg()))
+          continue;
+
         int TiedTo = MCID.getOperandConstraint(I, MCOI::TIED_TO);
         if (TiedTo != -1)
           continue;
