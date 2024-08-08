@@ -152,7 +152,7 @@ bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
                           << '\n');
 
         VRM.clearVirt(Reg);
-        VRM.assignVirt2Phys(Reg, PhysReg);
+        LRM.assign(LI, PhysReg);
         AlreadyReplaced.insert(PhysReg);
         Modified = true;
 
