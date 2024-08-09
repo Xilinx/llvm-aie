@@ -446,7 +446,7 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ZOL-NEXT:  .LBB0_1: // %outer.loop.header
 ; ZOL-NEXT:    // =>This Loop Header: Depth=1
 ; ZOL-NEXT:    // Child Loop BB0_2 Depth 2
-; ZOL-NEXT:    vldb wl6, [p1], #32; nopx
+; ZOL-NEXT:    vldb wl6, [p1], #32; nopa ; nops ; nopxm ; nopv
 ; ZOL-NEXT:    vldb wl3, [p0], m6; mov r0, p0
 ; ZOL-NEXT:    vlda.ups.s32.s16 bmh0, s0, [p2, #32]
 ; ZOL-NEXT:    vldb wh6, [p1], #32
@@ -466,19 +466,19 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ZOL-NEXT:    vlda.ups.s32.s16 bmh4, s0, [p2, #32]
 ; ZOL-NEXT:    vlda.ups.s32.s16 bml4, s0, [p2], m5
 ; ZOL-NEXT:    vlda.ups.s32.s16 bmh5, s0, [p2, #32]
-; ZOL-NEXT:    vlda.ups.s32.s16 bml5, s0, [p2], m1; movxm ls, #.LBB0_2
-; ZOL-NEXT:    vlda.ups.s32.s16 bmh6, s0, [p2, #32]; add.nc r1, r5, #-2
-; ZOL-NEXT:    vlda.ups.s32.s16 bml6, s0, [p2], m5; add.nc lc, r1, #0
+; ZOL-NEXT:    vlda.ups.s32.s16 bml5, s0, [p2], m1
+; ZOL-NEXT:    vlda.ups.s32.s16 bmh6, s0, [p2, #32]
+; ZOL-NEXT:    vlda.ups.s32.s16 bml6, s0, [p2], m5; movxm ls, #.LBB0_2
 ; ZOL-NEXT:    vldb wl5, [p0], m6; mov r1, p0
 ; ZOL-NEXT:    vldb wh5, [p0], m6; movxm le, #.L_LEnd0
-; ZOL-NEXT:    nopb ; vlda.ups.s32.s16 bmh7, s0, [p2, #32]; nops ; and r0, r0, r9; nopm ; nopv
+; ZOL-NEXT:    vlda.ups.s32.s16 bmh7, s0, [p2, #32]; and r0, r0, r9; add.nc lc, r5, #-2
 ; ZOL-NEXT:    vldb wl3, [p0], m6; nopa ; nops ; add r0, r0, #33; nopm ; nopv
 ; ZOL-NEXT:    vldb.3d wh3, [p0], d0; nopa ; nops ; nopx ; vshift.align x4, x4, s1, x3, r0; nopv
 ; ZOL-NEXT:    nopb ; vlda.ups.s32.s16 bml7, s0, [p2, #0]; nops ; and r1, r1, r9; vshift.align x2, x2, s1, x7, r0; nopv
 ; ZOL-NEXT:    vldb wh1, [p1], #32; nopa ; nops ; add r0, r1, #33; mov r1, p0; nopv
 ; ZOL-NEXT:    vldb wl10, [p1], #32; nopa ; nops ; nopx ; vshuffle x7, x4, x2, r2; nopv
-; ZOL-NEXT:    nopa ; vldb wh10, [p1], #32; nopx ; vshuffle x9, x7, x0, r8
-; ZOL-NEXT:    and r1, r1, r9
+; ZOL-NEXT:    vldb wh10, [p1], #32; nopa ; nops ; nopx ; vshuffle x9, x7, x0, r8; nopv
+; ZOL-NEXT:    nopb ; nopa ; nops ; and r1, r1, r9; nopm ; nopv
 ; ZOL-NEXT:    .p2align 4
 ; ZOL-NEXT:  .LBB0_2: // %inner.loop
 ; ZOL-NEXT:    // Parent Loop BB0_1 Depth=1

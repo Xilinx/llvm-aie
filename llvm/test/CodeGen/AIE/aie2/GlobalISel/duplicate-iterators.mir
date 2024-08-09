@@ -131,7 +131,7 @@ body:             |
     %4:edj = MOV_PD_imm10_pseudo 14
     %5:edc = MOV_PD_imm10_pseudo 0
     %6:edc = MOV_PD_imm10_pseudo 0
-    LoopStart %14
+    LoopStart %14, 0
     PseudoJ_jump_imm %bb.1
 
   bb.1:
@@ -295,7 +295,7 @@ body:             |
     %15:edc = MOV_PD_imm10_pseudo 0
     %16:edn = MOV_PD_imm10_pseudo 16
     %17:edj = MOV_PD_imm10_pseudo 18
-    LoopStart %18
+    LoopStart %18, 0
     PseudoJ_jump_imm %bb.1
 
   bb.1:

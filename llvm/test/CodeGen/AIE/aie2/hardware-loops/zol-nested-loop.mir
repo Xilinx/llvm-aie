@@ -74,7 +74,7 @@ body:             |
     renamable $r5 = LSHL renamable $r3, renamable $r4
     $dj0 = MOV_mv_scl killed $r5
     renamable $p3 = LDA_dms_lda_idx renamable $p1, killed renamable $dj0 :: (load (p0), align 4)
-    LoopStart renamable $r1
+    LoopStart renamable $r1, 0
     renamable $r5 = MOV_RLC_imm10_pseudo 0
 
   bb.2 (align 16):
