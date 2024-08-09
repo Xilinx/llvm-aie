@@ -340,13 +340,19 @@ body:             |
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
-  ; CHECK-NEXT:   successors: %bb.2(0x80000000)
+  ; CHECK-NEXT:   successors:
   ; CHECK-NEXT:   liveins: $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $r9, $d0_3d:0x000000000001C860
   ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   RET implicit $lr
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   $dc0 = MOV_mv_scl killed $r9
+  ; CHECK-NEXT:   $p0, $dc0, $dc4 = PADDA_3D killed $p0, killed $d0_3d
+  ; CHECK-NEXT:   DelayedSchedBarrier implicit killed renamable $dc0, implicit killed renamable $p0, implicit killed renamable $dc4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2 (align 16):
-  ; CHECK-NEXT:   liveins: $p0, $d0_3d
+  ; CHECK-NEXT:   liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $d0_3d:0x000000000001C870
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   RET implicit $lr
   ; CHECK-NEXT:   NOP
