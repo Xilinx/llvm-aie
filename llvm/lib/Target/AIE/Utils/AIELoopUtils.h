@@ -22,6 +22,9 @@ class MachineBasicBlock;
 
 namespace llvm::AIELoopUtils {
 
+/// Get the LoopID from a single block loop or nullptr
+const MDNode *getLoopID(const MachineBasicBlock &LoopBlock);
+
 /// Get the tripcount from the LoopID node
 std::optional<int64_t> getMinTripCount(const MDNode *LoopID);
 

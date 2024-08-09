@@ -14,9 +14,20 @@
 #define DEBUG_TYPE "aielooputils"
 
 namespace llvm::AIELoopUtils {
+const MDNode *getLoopID(const MachineBasicBlock &LoopBlock) {
+  const BasicBlock *BBLK = LoopBlock.getBasicBlock();
+  if (!BBLK)
+    return nullptr;
+
+  const Instruction *TI = BBLK->getTerminator();
+  if (!TI)
+    return nullptr;
+
+  const MDNode *LoopID = TI->getMetadata(LLVMContext::MD_loop);
+  return LoopID;
+}
 
 std::optional<int64_t> getMinTripCount(const MDNode *LoopID) {
-
   if (LoopID == nullptr)
     return std::nullopt;
 
@@ -48,16 +59,7 @@ std::optional<int64_t> getMinTripCount(const MDNode *LoopID) {
 }
 
 std::optional<int64_t> getMinTripCount(const MachineBasicBlock &LoopBlock) {
-  const BasicBlock *BBLK = LoopBlock.getBasicBlock();
-  if (!BBLK)
-    return std::nullopt;
-
-  const Instruction *TI = BBLK->getTerminator();
-  if (!TI)
-    return std::nullopt;
-
-  const MDNode *LoopID = TI->getMetadata(LLVMContext::MD_loop);
-  return getMinTripCount(LoopID);
+  return getMinTripCount(getLoopID(LoopBlock));
 }
 
 MachineBasicBlock *
