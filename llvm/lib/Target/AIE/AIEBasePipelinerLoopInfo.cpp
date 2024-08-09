@@ -726,7 +726,8 @@ std::optional<bool> ZeroOverheadLoop::createTripCountGreaterCondition(
 
 void ZeroOverheadLoop::adjustTripCount(int TripCountAdjust) {
   LLVM_DEBUG(dbgs() << "TripCountAdjust =  " << TripCountAdjust << "\n");
-  if (DefTripCount->getOperand(1).isImm()) {
+  if (DefTripCount->getOperand(1).isImm() &&
+      MRI.hasOneUse(DefTripCount->getOperand(0).getReg())) {
     // If we have a constant here, just update the value.
     const int64_t InitVal = DefTripCount->getOperand(1).getImm();
     DefTripCount->getOperand(1).setImm(InitVal + TripCountAdjust);
