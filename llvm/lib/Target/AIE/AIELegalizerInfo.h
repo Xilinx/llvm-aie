@@ -15,6 +15,7 @@
 #ifndef LLVM_LIB_TARGET_AIE_AIEMACHINELEGALIZER_H
 #define LLVM_LIB_TARGET_AIE_AIEMACHINELEGALIZER_H
 
+#include "AIELegalizerHelper.h"
 #include "llvm/CodeGen/GlobalISel/LegalizerInfo.h"
 #include "llvm/CodeGen/Register.h"
 #include "llvm/IR/InstrTypes.h"
@@ -25,46 +26,14 @@ class AIEBaseSubtarget;
 
 /// This class provides legalization strategies.
 class AIELegalizerInfo : public LegalizerInfo {
+  AIELegalizerHelper AIEHelper;
+
 public:
   AIELegalizerInfo(const AIEBaseSubtarget &ST);
   bool legalizeCustom(LegalizerHelper &Helper, MachineInstr &MI,
                       LostDebugLocObserver &LocObserver) const override;
   bool legalizeIntrinsic(LegalizerHelper &Helper,
                          MachineInstr &MI) const override;
-
-private:
-  bool legalizeG_VASTART(LegalizerHelper &Helper, MachineInstr &MI) const;
-  bool legalizeG_BUILD_VECTOR(LegalizerHelper &Helper, MachineInstr &MI) const;
-  bool legalizeG_UNMERGE_VALUES(LegalizerHelper &Helper,
-                                MachineInstr &MI) const;
-  bool legalizeG_SEXT_INREG(LegalizerHelper &Helper, MachineInstr &MI) const;
-  bool legalizeG_VAARG(LegalizerHelper &Helper, MachineInstr &MI) const;
-  bool legalizeMemCalls(LegalizerHelper &Helper, MachineInstr &MI,
-                        LostDebugLocObserver &LocObserver) const;
-  bool legalizeG_BRJT(LegalizerHelper &Helper, MachineInstr &MI) const;
-  bool legalizeG_FCONSTANT(LegalizerHelper &Helper, MachineInstr &MI) const;
-  bool legalizeG_JUMP_TABLE(LegalizerHelper &Helper, MachineInstr &MI) const;
-  bool legalizeG_DYN_STACKALLOC(LegalizerHelper &Helper,
-                                MachineInstr &MI) const;
-  bool legalizeG_EXTRACT_VECTOR_ELT(LegalizerHelper &Helper,
-                                    MachineInstr &MI) const;
-  bool legalizeG_INSERT_VECTOR_ELT(LegalizerHelper &Helper,
-                                   MachineInstr &MI) const;
-  bool legalizeG_FCMP(LegalizerHelper &Helper, MachineInstr &MI,
-                      LostDebugLocObserver &LocObserver) const;
-  bool legalizeG_FCMP_FP32(LegalizerHelper &Helper, MachineInstr &MI,
-                           const CmpInst::Predicate FPredicate,
-                           LostDebugLocObserver &LocObserver) const;
-  bool legalizeG_FPTRUNC(LegalizerHelper &Helper, MachineInstr &MI) const;
-  bool legalizeG_FPEXT(LegalizerHelper &Helper, MachineInstr &MI) const;
-  bool legalizeG_FABS(LegalizerHelper &Helper, MachineInstr &MI) const;
-  bool legalizeG_FADDSUB(LegalizerHelper &Helper, MachineInstr &MI) const;
-
-  // Helper functions for legalization
-  bool pack32BitVector(LegalizerHelper &Helper, MachineInstr &MI,
-                       Register SourceReg) const;
-  bool unpack32BitVector(LegalizerHelper &Helper, MachineInstr &MI,
-                         Register SourceReg) const;
 };
 } // end namespace llvm
 #endif

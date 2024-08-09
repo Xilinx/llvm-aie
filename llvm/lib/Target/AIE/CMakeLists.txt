@@ -77,6 +77,7 @@ add_llvm_target(AIECodeGen
    AIEInstructionSelector.cpp
    AIEInterBlockScheduling.cpp
    AIEISelDAGToDAG.cpp
+   AIELegalizerHelper.cpp
    AIELegalizerInfo.cpp
    AIELiveRegs.cpp
    AIEMachineAlignment.cpp
