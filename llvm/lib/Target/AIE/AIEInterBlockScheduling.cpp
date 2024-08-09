@@ -485,9 +485,12 @@ int InterBlockScheduling::getCyclesToRespectTiming(
     for (auto &Bundle : R.Bundles) {
       for (MachineInstr *MI : Bundle.getInstrs()) {
         DistancesFromLoopEntry[MI] = DistFromLoopEntry;
-        Edges.addNode(MI);
       }
       ++DistFromLoopEntry;
+    }
+    // Here we need to iterate using semantic order.
+    for (MachineInstr *MI : R) {
+      Edges.addNode(MI);
     }
   };
 
