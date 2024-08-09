@@ -298,11 +298,12 @@ void AIEBaseHardwareLoops::expandLoopStart(LowOverheadLoop &LoLoop) {
   MachineBasicBlock *MBB = Start->getParent();
   LLVM_DEBUG(dbgs() << "AIE Loops: ZOL loop. Expanding LoopStart.\n");
 
-  // We use ADD_NC, which allows PostPipeliner to tweak it by modifying the
-  // immediate value.
+  // LoopStart carries an immediate operand that is dedicated to the tripcount
+  // update of the pipeliner. We translate to ADD_NC, which has a similar
+  // operand.
   BuildMI(*MBB, Start, Start->getDebugLoc(), TII->get(AIE2::ADD_NC), AIE2::LC)
       .addReg(Start->getOperand(0).getReg())
-      .addImm(0);
+      .addImm(Start->getOperand(1).getImm());
 
   BuildMI(*MBB, Start, Start->getDebugLoc(), TII->get(AIE2::MOVXM_lng_cg),
           AIE2::LS)

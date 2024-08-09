@@ -560,7 +560,7 @@ def LoopJNZ :
 // Zero overhead loops
 let hasSideEffects = true, mayLoad = false, mayStore = false,
     isNotDuplicable = true in {
-  def LoopStart : Pseudo<(outs), (ins eR:$src), "loop_start", "${src}">;
+  def LoopStart : Pseudo<(outs), (ins eR:$src, simm6:$adj), "loop_start", "${src}, ${adj}">;
 
   // PseudoLoopEnd represents the terminator of a ZOL. You can view it as a
   // conditional branch to the loop body. We make this a meta instruction,

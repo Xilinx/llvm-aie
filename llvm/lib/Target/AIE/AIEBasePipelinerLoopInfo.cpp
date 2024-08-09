@@ -50,14 +50,6 @@ cl::opt<bool> LoopWholeLoopGuard(
     cl::desc("Allow SWP schedules requiring a guard around the whole loop"),
     cl::init(true), cl::Hidden);
 
-// If we hoist we can get a better performance (no clear evidence
-// of the reason). If we don't hoist, we can change the LoopsStart expansion
-// to reuse this non-hoisted add.
-cl::opt<bool> HoistZOLAdjust(
-    "aie-pipeliner-hoist-zol-adjustment",
-    cl::desc("Host the trip count adjustment for ZOL (when possible)"),
-    cl::init(false), cl::Hidden);
-
 AIEBasePipelinerLoopInfo::AIEBasePipelinerLoopInfo(MachineInstr *EndLoop,
                                                    const AIEBaseInstrInfo &TII)
     : TII(TII), MRI(EndLoop->getMF()->getRegInfo()), EndLoop(EndLoop),
@@ -753,32 +745,9 @@ std::optional<bool> ZeroOverheadLoop::createTripCountGreaterCondition(
 
 void ZeroOverheadLoop::adjustTripCount(int TripCountAdjust) {
   LLVM_DEBUG(dbgs() << "TripCountAdjust =  " << TripCountAdjust << "\n");
-  if (DefTripCount->getOperand(1).isImm() &&
-      MRI.hasOneUse(DefTripCount->getOperand(0).getReg())) {
-    // If we have a constant here, just update the value.
-    const int64_t InitVal = DefTripCount->getOperand(1).getImm();
-    DefTripCount->getOperand(1).setImm(InitVal + TripCountAdjust);
-  } else {
-    // Otherwise, add the value.
-    Register Reg = DefTripCount->getOperand(0).getReg();
-    Register NewReg = MRI.createVirtualRegister(MRI.getRegClass(Reg));
-    MachineBasicBlock::iterator InsertPoint = Init->getIterator();
-    MachineInstr *AdjacentInstr = Init;
 
-    if (HoistZOLAdjust) {
-      // Insert the adjustment just after the instruction that defines it.
-      // Probably it will be hoisted.
-      AdjacentInstr = DefTripCount;
-      InsertPoint = DefTripCount->getIterator();
-      InsertPoint++;
-    }
-
-    BuildMI(*AdjacentInstr->getParent(), InsertPoint,
-            AdjacentInstr->getDebugLoc(), TII.get(AIE2::ADD_NC_GPR), NewReg)
-        .addReg(Reg)
-        .addImm(TripCountAdjust);
-    Init->getOperand(0).setReg(NewReg);
-  }
+  // LoopStart has a small immediate addend that can accommodate the adjustment
+  Init->getOperand(1).setImm(TripCountAdjust);
 }
 
 bool ZeroOverheadLoop::canAcceptII(SMSchedule &SMS) {

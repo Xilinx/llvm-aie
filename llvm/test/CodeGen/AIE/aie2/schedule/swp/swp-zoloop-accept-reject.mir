@@ -51,7 +51,7 @@ body:             |
     %17:er = MOV_RLC_imm11_pseudo 0
     %19:er = MOV_RLC_imm10_pseudo 16
     %20:er = MOV_mv_scl %19:er
-    LoopStart %20:er
+    LoopStart %20:er, 0
 
   bb.3:
     %4:ep = PHI %1, %bb.1, %8, %bb.3

@@ -59,7 +59,7 @@ body:             |
     successors: %bb.2(0x80000000)
     liveins: $p0, $p1, $r0, $r1
 
-    LoopStart killed renamable $r0
+    LoopStart killed renamable $r0, 0
     renamable $r0 = MOV_RLC_imm10_pseudo 1
     renamable $r2 = MOV_RLC_imm10_pseudo 2
 

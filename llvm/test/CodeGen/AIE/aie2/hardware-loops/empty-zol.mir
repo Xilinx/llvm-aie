@@ -30,7 +30,7 @@ body:             |
   bb.0.entry:
     successors: %bb.1
     liveins: $r0
-    LoopStart $r0
+    LoopStart $r0, 0
   bb.1:
     successors: %bb.1, %bb.2
     PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
