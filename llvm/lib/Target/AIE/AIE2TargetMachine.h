@@ -43,6 +43,7 @@ public:
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
   /// PostRAScheduling is scheduled as part of PreSched2 passes.
   bool targetSchedulesPostRAScheduling() const override { return true; }
+  unsigned getAddressSpaceForPseudoSourceKind(unsigned Kind) const override;
 };
 
 } // namespace llvm
