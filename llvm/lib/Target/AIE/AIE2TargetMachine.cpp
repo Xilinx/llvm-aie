@@ -21,6 +21,7 @@
 #include "AIEFinalizeBundle.h"
 #include "AIEMachineAlignment.h"
 #include "AIEMachineBlockPlacement.h"
+#include "AIEMachineFunctionInfo.h"
 #include "AIETargetObjectFile.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/GlobalISel/IRTranslator.h"
@@ -271,6 +272,8 @@ AIE2TargetMachine::getAddressSpaceForPseudoSourceKind(unsigned Kind) const {
   case PseudoSourceValue::Stack:
   case PseudoSourceValue::FixedStack:
     return StackAddrSpace;
+  case AIETargetPSV::AIETileMem:
+    return static_cast<unsigned>(AIE2::AddressSpaces::TM);
   default:
     return static_cast<unsigned>(AIE2::AddressSpaces::none);
   }

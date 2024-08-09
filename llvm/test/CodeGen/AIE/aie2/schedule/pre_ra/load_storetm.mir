@@ -30,9 +30,9 @@ body: |
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY [[COPY]]
     ; CHECK-NEXT: [[LDA_dms_lda_idx_imm1:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY1]], 0 :: (load (s32) from %ir.p0)
     ; CHECK-NEXT: [[MOVXM_lng_cg:%[0-9]+]]:ep_as_32bit = MOVXM_lng_cg -524284
-    ; CHECK-NEXT: ST_TM [[LDA_dms_lda_idx_imm]], [[MOVXM_lng_cg]] :: (store (s32) into custom "TileMemory")
+    ; CHECK-NEXT: ST_TM [[LDA_dms_lda_idx_imm]], [[MOVXM_lng_cg]] :: (store (s32) into custom "TileMemory", addrspace 15)
     ; CHECK-NEXT: [[MOVXM_lng_cg1:%[0-9]+]]:ep_as_32bit = MOVXM_lng_cg -524280
-    ; CHECK-NEXT: ST_TM [[LDA_dms_lda_idx_imm1]], [[MOVXM_lng_cg1]] :: (store (s32) into custom "TileMemory")
+    ; CHECK-NEXT: ST_TM [[LDA_dms_lda_idx_imm1]], [[MOVXM_lng_cg1]] :: (store (s32) into custom "TileMemory", addrspace 15)
     %100:ep = COPY $p0
     %200:er = LDA_dms_lda_idx_imm %100, 0 :: (load (s32) from %ir.p0)
     %300:ep_as_32bit = MOVXM_lng_cg -524284

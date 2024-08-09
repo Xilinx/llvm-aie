@@ -23,8 +23,8 @@ body:             |
     ; CHECK-NEXT:   $p0 = MOV_mv_scl killed $r1
     ; CHECK-NEXT: }
     ; CHECK-NEXT: $p1 = MOV_mv_scl killed $r4
-    ; CHECK-NEXT: ST_TM killed $r0, killed $p0 :: (store (s32) into custom "TileMemory")
-    ; CHECK-NEXT: $r0 = LDA_TM killed $p1 :: (load (s32) from custom "TileMemory")
+    ; CHECK-NEXT: ST_TM killed $r0, killed $p0 :: (store (s32) into custom "TileMemory", addrspace 15)
+    ; CHECK-NEXT: $r0 = LDA_TM killed $p1 :: (load (s32) from custom "TileMemory", addrspace 15)
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP

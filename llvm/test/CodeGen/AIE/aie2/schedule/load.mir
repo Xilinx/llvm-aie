@@ -39,7 +39,7 @@ body:             |
     ; CHECK-LABEL: name: load_tm
     ; CHECK: liveins: $p1
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: $r6 = LDA_TM killed $p1 :: (load (s32) from custom "TileMemory")
+    ; CHECK-NEXT: $r6 = LDA_TM killed $p1 :: (load (s32) from custom "TileMemory", addrspace 15)
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
