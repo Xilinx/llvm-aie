@@ -129,6 +129,9 @@ AIE2Subtarget::getMemoryBanksFromAddressSpace(unsigned AddrSpace) const {
     MemoryBanks.set(static_cast<unsigned>(AIEBanks::C))
         .set(static_cast<unsigned>(AIEBanks::D));
     break;
+  case AddressSpaces::TM:
+    MemoryBanks.set(static_cast<unsigned>(AIEBanks::TileMemory));
+    break;
   default:
     return getDefaultMemoryBank();
     break;

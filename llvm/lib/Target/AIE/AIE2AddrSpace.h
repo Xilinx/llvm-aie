@@ -38,7 +38,7 @@ enum class AddressSpaces {
   TM     // Address space for TM (Tile Memory)
 };
 
-enum class AIEBanks { A, B, C, D };
+enum class AIEBanks { A, B, C, D, TileMemory };
 
 } // end namespace AIE2
 } // end namespace llvm
