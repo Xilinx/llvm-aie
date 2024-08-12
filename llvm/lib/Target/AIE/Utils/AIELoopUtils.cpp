@@ -20,7 +20,8 @@ std::optional<int64_t> getMinTripCount(const MDNode *LoopID) {
     return std::nullopt;
 
   assert(LoopID->getNumOperands() > 0 && "requires at least one operand");
-  assert(LoopID->getOperand(0) == LoopID && "invalid loop");
+  assert(dyn_cast<MDNode>(LoopID->getOperand(0)) == LoopID &&
+         "invalid loop metadata");
 
   int64_t MinTripCount = 0;
   for (unsigned I = 1, E = LoopID->getNumOperands(); I < E; ++I) {
