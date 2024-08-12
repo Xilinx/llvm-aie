@@ -214,11 +214,23 @@ std::map<int, Register> collectSubregsChain(const MachineInstr &MI) {
   // E.g. %5:vec512 = INSERT_SUBREG %0, %1, %subreg.sub_256_hi
   //      %6:vec512 = INSERT_SUBREG %5, %2, %subreg.sub_256_lo
   std::function<void(const MachineInstr &)> Impl = [&](const MachineInstr &MI) {
+    if (MI.getOpcode() == TargetOpcode::REG_SEQUENCE) {
+      // The source of the INSERT_SUBREG chain is a REG_SEQUENCE. Collect all
+      // its subregs.
+      for (unsigned OpIdx = 1; OpIdx < MI.getNumOperands(); OpIdx += 2) {
+        Subregs.try_emplace(MI.getOperand(OpIdx + 1).getImm(),
+                            MI.getOperand(OpIdx).getReg());
+      }
+      return;
+    }
+
+    // Recursively follow INSERT_SUBREG chain
     assert(MI.getOpcode() == TargetOpcode::INSERT_SUBREG);
     Subregs.try_emplace(MI.getOperand(3).getImm(), MI.getOperand(2).getReg());
     MachineInstr &SrcMI = *MRI.getVRegDef(MI.getOperand(1).getReg());
     if (SrcMI.getParent() == MI.getParent() &&
-        SrcMI.getOpcode() == TargetOpcode::INSERT_SUBREG)
+        (SrcMI.getOpcode() == TargetOpcode::INSERT_SUBREG ||
+         SrcMI.getOpcode() == TargetOpcode::REG_SEQUENCE))
       Impl(SrcMI);
   };
 
