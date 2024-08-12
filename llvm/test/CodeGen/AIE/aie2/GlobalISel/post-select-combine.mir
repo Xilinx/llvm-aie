@@ -158,3 +158,28 @@ body:             |
     $x4 = COPY %6
     PseudoRET implicit $lr, implicit $x4
 ...
+
+
+---
+name:            combine_256_with_reg_sequence
+alignment:       16
+legalized:       true
+regBankSelected: true
+selected:        true
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+  liveins: $wl2, $wh2
+    ; CHECK-LABEL: name: combine_256_with_reg_sequence
+    ; CHECK: liveins: $wl2, $wh2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ewl = COPY $wl2
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec256 = COPY $wh2
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[COPY1]], %subreg.sub_256_hi, [[COPY]], %subreg.sub_256_lo
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]]
+    %1:ewl = COPY $wl2
+    %2:vec256 = COPY $wh2
+    %5:vec512 = REG_SEQUENCE %1, %subreg.sub_256_lo
+    %6:vec512 = INSERT_SUBREG %5, %2, %subreg.sub_256_hi
+    PseudoRET implicit $lr, implicit %6
+...
