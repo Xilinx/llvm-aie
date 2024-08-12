@@ -445,9 +445,15 @@ SmallSet<int, 8>
 AIE2RegisterInfo::getCoveringSubRegs(const TargetRegisterClass &RC) const {
   // TODO: This could be generated from TableGen by looking at MCRegisters.
   SmallSet<int, 8> Subregs;
-  if (AIE2::VEC512RegClass.hasSubClassEq(&RC)) {
+  if (AIE2::VEC512RegClass.hasSubClassEq(&RC) ||
+      AIE2::ACC512RegClass.hasSubClassEq(&RC)) {
     Subregs.insert(AIE2::sub_256_lo);
     Subregs.insert(AIE2::sub_256_hi);
+  }
+  if (AIE2::VEC1024RegClass.hasSubClassEq(&RC) ||
+      AIE2::ACC1024RegClass.hasSubClassEq(&RC)) {
+    Subregs.insert(AIE2::sub_512_lo);
+    Subregs.insert(AIE2::sub_512_hi);
   }
   return Subregs;
 }
