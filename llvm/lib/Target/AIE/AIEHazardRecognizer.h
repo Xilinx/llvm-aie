@@ -179,12 +179,13 @@ public:
   /// For efficiency, this size is rounded up to a power of two.
   unsigned computeScoreboardDepth() const;
 
-protected:
   ScheduleHazardRecognizer::HazardType
-  getHazardType(const MCInstrDesc &Desc, MemoryBankBits MemoryBanks,
+  getHazardType(const ResourceScoreboard<FuncUnitWrapper> &TheScoreboard,
+                const MCInstrDesc &Desc, MemoryBankBits MemoryBanks,
                 iterator_range<const MachineOperand *> MIOperands,
-                const MachineRegisterInfo &MRI, int DeltaCycles);
+                const MachineRegisterInfo &MRI, int DeltaCycles) const;
 
+protected:
   static bool
   checkConflict(const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
                 const InstrItineraryData *ItinData, unsigned SchedClass,
