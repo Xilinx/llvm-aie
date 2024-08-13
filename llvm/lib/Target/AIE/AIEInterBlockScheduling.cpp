@@ -51,9 +51,9 @@ void dumpInterBlock(const InterBlockEdges &Edges) {
   }
 }
 
-void emitBundlesInScoreboard(const std::vector<MachineBundle> &Bundles,
-                             ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
-                             AIEHazardRecognizer *HR) {
+void emitBundlesTopDown(const std::vector<MachineBundle> &Bundles,
+                        ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+                        AIEHazardRecognizer *HR) {
 
   const int TotalBundles = Bundles.size();
   const int AmountToEmit = std::min(TotalBundles, HR->getConflictHorizon());
@@ -85,6 +85,66 @@ void emitBundlesInScoreboardDelta(
 
     Delta++;
   }
+}
+
+ResourceScoreboard<FuncUnitWrapper>
+createBottomUpScoreboard(ArrayRef<MachineBundle> Bundles,
+                         const AIEHazardRecognizer &HR) {
+  const unsigned NumBundles = Bundles.size();
+  const unsigned RequiredCycles = HR.getConflictHorizon();
+
+  ResourceScoreboard<FuncUnitWrapper> Scoreboard;
+  Scoreboard.reset(HR.getMaxLookAhead());
+
+  // We have less known bundles than the minimum number required for
+  // correctness. Conservatively block some cycles.
+  if (NumBundles < RequiredCycles) {
+    unsigned CyclesToBlock = RequiredCycles - Bundles.size();
+    for (unsigned Num = 0; Num < CyclesToBlock; ++Num) {
+      Scoreboard[0].blockResources();
+      Scoreboard.recede();
+    }
+  }
+
+  // Do not emit more Bundles than required for correctness.
+  ArrayRef<MachineBundle> MinBundles(
+      Bundles.begin(), Bundles.begin() + std::min(NumBundles, RequiredCycles));
+  for (const MachineBundle &B : reverse(MinBundles)) {
+    for (MachineInstr *MI : B.getInstrs())
+      HR.emitInScoreboard(Scoreboard, MI->getDesc(), HR.getMemoryBanks(MI),
+                          MI->operands(), MI->getMF()->getRegInfo(), 0);
+    Scoreboard.recede();
+  }
+  return Scoreboard;
+}
+
+/// Replay the \p PredBundles bottom-up into \p ScoreBoard.
+/// If that causes a resource conflict, return the instruction
+/// from \p PredBundles that is responsible for it.
+///
+/// \pre The bundles contain no multi-slot pseudo.
+MachineInstr *
+checkResourceConflicts(const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+                       const std::vector<MachineBundle> &PredBundles,
+                       const AIEHazardRecognizer &HR) {
+  DEBUG_LOOPAWARE(dbgs() << "Interblock Successor scoreboard:\n";
+                  Scoreboard.dump());
+
+  int BottomUpCycle = 0;
+  for (const MachineBundle &B : reverse(PredBundles)) {
+    for (MachineInstr *MI : B.getInstrs()) {
+      if (BottomUpCycle >= HR.getConflictHorizon())
+        break;
+      if (HR.getHazardType(Scoreboard, MI->getDesc(), HR.getMemoryBanks(MI),
+                           MI->operands(), MI->getMF()->getRegInfo(),
+                           -BottomUpCycle))
+        return MI;
+    }
+    ++BottomUpCycle;
+  }
+
+  // All instructions in Bot could be emitted straight after those in Top.
+  return nullptr;
 }
 
 MachineBasicBlock *getLoopPredecessor(const MachineBasicBlock &MBB) {
@@ -200,40 +260,21 @@ bool InterBlockScheduling::leaveBlock() {
 }
 
 bool InterBlockScheduling::resourcesConverged(BlockState &BS) const {
+  assert(!BS.getRegions().empty());
+
   // We are a single-block loop body. Check that there is no resource conflict
   // on the backedge, by overlaying top and bottom region
-  assert(!BS.getRegions().empty());
-  const int Depth = HR->getMaxLookAhead();
-  ResourceScoreboard<FuncUnitWrapper> Bottom;
-  Bottom.reset(Depth);
+  if (MachineInstr *MICausingConflict = checkResourceConflicts(
+          createBottomUpScoreboard(BS.getTop().Bundles, *HR),
+          BS.getBottom().Bundles, *HR))
+    return false;
 
-  emitBundlesInScoreboard(BS.getBottom().Bundles, Bottom, HR.get());
-
-  DEBUG_LOOPAWARE(dbgs() << "Bottom scoreboard\n"; Bottom.dump());
-  // We have two successors, the loop itself and the epilogue
-  assert(BS.TheBlock->succ_size() == 2);
-  for (auto *Succ : BS.TheBlock->successors()) {
-    auto &SBS = getBlockState(Succ);
-    if (SBS.Kind == BlockType::Epilogue) {
-      // We can ignore the epilogue
-      continue;
-    }
-
-    assert(SBS.Kind == BlockType::Loop);
-    ResourceScoreboard<FuncUnitWrapper> Top;
-    Top.reset(Depth);
-    int Cycle = -Depth;
-
-    emitBundlesInScoreboardDelta(BS.getBottom().Bundles, Top, Cycle, HR.get());
-
-    DEBUG_LOOPAWARE(dbgs() << "Top scoreboard\n"; Top.dump());
-    if (Bottom.conflict(Top, Depth)) {
-      return false;
-    }
-  }
   // Bottom represents the resources that are sticking out of the block.
   // The last non-empty cycle is a safe upperbound for the resource
   // safety margin.
+  ResourceScoreboard<FuncUnitWrapper> Bottom;
+  Bottom.reset(HR->getMaxLookAhead());
+  emitBundlesTopDown(BS.getBottom().Bundles, Bottom, HR.get());
   BS.FixPoint.MaxResourceExtent = Bottom.lastOccupied();
   return true;
 }
@@ -614,7 +655,7 @@ int InterBlockScheduling::getCyclesToAvoidResourceConflicts(
                          << " Original Loop " << *LoopMBB << " Original Epilog "
                          << EpilogueMBB << "\n");
 
-  emitBundlesInScoreboard(LoopBS.getBottom().Bundles, Bottom, HR.get());
+  emitBundlesTopDown(LoopBS.getBottom().Bundles, Bottom, HR.get());
 
   // We know how many latency cycles we need to respect, and we can advance
   // the scoreboard to the first possible cycle that can accommodate another
