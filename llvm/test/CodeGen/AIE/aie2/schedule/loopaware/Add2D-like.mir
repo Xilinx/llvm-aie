@@ -47,12 +47,14 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
   ; CHECK-NEXT:   liveins: $cm0, $cm4, $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $m1, $p1, $p2, $p3, $r0, $r1, $s0, $s1, $d0_3d:0x000000000001C870
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   renamable $cm0, renamable $p1 = VLDA_UPS_S32_D8_ag_pstm_nrm renamable $s1, killed renamable $p1, renamable $m1, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<32 x s8>) from stack - 32)
-  ; CHECK-NEXT:   BUNDLE implicit-def $cm4, implicit-def $bml4, implicit-def $amll4, implicit-def $amlh4, implicit-def $bmh4, implicit-def $amhl4, implicit-def $amhh4, implicit-def $p2, implicit-def $dc0, implicit-def $dc4, implicit-def $srups_of, implicit-def $cm8, implicit-def $bml8, implicit-def $amll8, implicit-def $amlh8, implicit-def $bmh8, implicit-def $amhl8, implicit-def $amhh8, implicit $s1, implicit killed $p2, implicit $d0_3d, implicit $crsat, implicit $crupssign, implicit $cm0, implicit $r0 {
-  ; CHECK-NEXT:     $cm4, $p2, $dc0, $dc4 = VLDA_3D_UPS_S32_D8 $s1, killed $p2, $d0_3d, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<32 x s8>) from stack - 64)
-  ; CHECK-NEXT:     renamable $cm8 = VADD internal renamable $cm4, renamable $cm0, renamable $r0
+  ; CHECK-NEXT:   BUNDLE implicit-def $cm0, implicit-def $bml0, implicit-def $amll0, implicit-def $amlh0, implicit-def $bmh0, implicit-def $amhl0, implicit-def $amhh0, implicit-def $p1, implicit-def $srups_of, implicit-def $cm8, implicit-def $bml8, implicit-def $amll8, implicit-def $amlh8, implicit-def $bmh8, implicit-def $amhl8, implicit-def $amhh8, implicit $s1, implicit killed $p1, implicit $m1, implicit $crsat, implicit $crupssign, implicit killed $cm4, implicit $r0 {
+  ; CHECK-NEXT:     renamable $cm0, renamable $p1 = VLDA_UPS_S32_D8_ag_pstm_nrm renamable $s1, killed renamable $p1, renamable $m1, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<32 x s8>) from stack - 32)
+  ; CHECK-NEXT:     renamable $cm8 = VADD killed renamable $cm4, internal renamable $cm0, renamable $r0
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   renamable $r1 = ADD_add_r_ri killed renamable $r1, -4, implicit-def dead $srcarry
+  ; CHECK-NEXT:   BUNDLE implicit-def $cm4, implicit-def $bml4, implicit-def $amll4, implicit-def $amlh4, implicit-def $bmh4, implicit-def $amhl4, implicit-def $amhh4, implicit-def $p2, implicit-def $dc0, implicit-def $dc4, implicit-def $srups_of, implicit-def $r1, implicit-def dead $srcarry, implicit $s1, implicit killed $p2, implicit $d0_3d, implicit $crsat, implicit $crupssign, implicit killed $r1 {
+  ; CHECK-NEXT:     $cm4, $p2, $dc0, $dc4 = VLDA_3D_UPS_S32_D8 $s1, killed $p2, $d0_3d, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<32 x s8>) from stack - 64)
+  ; CHECK-NEXT:     renamable $r1 = ADD_add_r_ri killed renamable $r1, -4, implicit-def dead $srcarry
+  ; CHECK-NEXT:   }
   ; CHECK-NEXT:   JNZ renamable $r1, %bb.1
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP

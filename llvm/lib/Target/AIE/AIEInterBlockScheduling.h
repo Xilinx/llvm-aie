@@ -246,8 +246,9 @@ class InterBlockScheduling {
   std::vector<MachineBasicBlock *> MBBSequence;
   unsigned NextInOrder = 0;
 
-  /// The two components of the convergence test
-  bool resourcesConverged(BlockState &BS) const;
+  /// Return one instruction that needs to be moved higher to avoid a resource
+  /// conflict, or nullptr if all resources converged.
+  MachineInstr *resourcesConverged(BlockState &BS) const;
 
   /// Return one instruction that needs a higher latency cap, or nullptr if all
   /// latencies converged.

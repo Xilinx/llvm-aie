@@ -240,7 +240,7 @@ bool InterBlockScheduling::leaveBlock() {
   return true;
 }
 
-bool InterBlockScheduling::resourcesConverged(BlockState &BS) const {
+MachineInstr *InterBlockScheduling::resourcesConverged(BlockState &BS) const {
   assert(!BS.getRegions().empty());
 
   // We are a single-block loop body. Check that there is no resource conflict
@@ -248,7 +248,7 @@ bool InterBlockScheduling::resourcesConverged(BlockState &BS) const {
   if (MachineInstr *MICausingConflict = checkResourceConflicts(
           createBottomUpScoreboard(BS.getTop().Bundles, *HR),
           BS.getBottom().Bundles, *HR))
-    return false;
+    return MICausingConflict;
 
   // Bottom represents the resources that are sticking out of the block.
   // The last non-empty cycle is a safe upperbound for the resource
@@ -257,7 +257,7 @@ bool InterBlockScheduling::resourcesConverged(BlockState &BS) const {
   Bottom.reset(HR->getMaxLookAhead());
   emitBundlesTopDown(BS.getBottom().Bundles, Bottom, HR.get());
   BS.FixPoint.MaxResourceExtent = Bottom.lastOccupied();
-  return true;
+  return nullptr;
 }
 
 MachineInstr *InterBlockScheduling::latencyConverged(BlockState &BS) const {
@@ -349,15 +349,6 @@ bool InterBlockScheduling::updateFixPoint(BlockState &BS) {
     BS.initInterBlock(*Context);
   }
 
-  if (InterBlockScoreboard && !resourcesConverged(BS)) {
-    BS.FixPoint.ResourceMargin++;
-    DEBUG_LOOPAWARE(dbgs() << "  not converged: resources RM=>"
-                           << BS.FixPoint.ResourceMargin
-                           << " LM=" << BS.FixPoint.LatencyMargin << "\n");
-    // Iterate on CurMBB
-    return false;
-  }
-
   if (MachineInstr *MINeedsHigherCap = latencyConverged(BS)) {
     auto Res = BS.FixPoint.PerMILatencyMargin.try_emplace(MINeedsHigherCap, 0);
     // Increase the latency margin per instruction, unless we already iterated
@@ -368,6 +359,22 @@ bool InterBlockScheduling::updateFixPoint(BlockState &BS) {
       BS.FixPoint.LatencyMargin++;
     }
     DEBUG_LOOPAWARE(dbgs() << "  not converged: latency RM="
+                           << BS.FixPoint.ResourceMargin
+                           << " LM=" << BS.FixPoint.LatencyMargin
+                           << " MIM=" << Res.first->second << "\n");
+    // Iterate on CurMBB
+    return false;
+  }
+
+  if (MachineInstr *MINeedsHigherCap = resourcesConverged(BS);
+      InterBlockScoreboard && MINeedsHigherCap) {
+    auto Res = BS.FixPoint.PerMILatencyMargin.try_emplace(MINeedsHigherCap, 0);
+    if (BS.FixPoint.NumIters <= MaxExpensiveIterations) {
+      ++Res.first->second;
+    } else {
+      BS.FixPoint.ResourceMargin++;
+    }
+    DEBUG_LOOPAWARE(dbgs() << "  not converged: resources RM="
                            << BS.FixPoint.ResourceMargin
                            << " LM=" << BS.FixPoint.LatencyMargin
                            << " MIM=" << Res.first->second << "\n");
