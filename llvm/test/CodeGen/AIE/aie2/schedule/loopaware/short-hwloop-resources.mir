@@ -67,6 +67,10 @@ body:             |
   ; LOOPAWARE-SCOREBOARD-NEXT:   liveins: $s1, $p2
   ; LOOPAWARE-SCOREBOARD-NEXT: {{  $}}
   ; LOOPAWARE-SCOREBOARD-NEXT:   $cm2, $p2 = VLDA_UPS_S32_S8_ag_pstm_nrm_imm $s1, killed $p2, 32, implicit-def $srups_of, implicit $crsat
+  ; LOOPAWARE-SCOREBOARD-NEXT:   NOP
+  ; LOOPAWARE-SCOREBOARD-NEXT:   NOP
+  ; LOOPAWARE-SCOREBOARD-NEXT:   NOP
+  ; LOOPAWARE-SCOREBOARD-NEXT:   NOP
   ; LOOPAWARE-SCOREBOARD-NEXT:   PseudoLoopEnd %bb.2, %bb.1
   ; LOOPAWARE-SCOREBOARD-NEXT: {{  $}}
   ; LOOPAWARE-SCOREBOARD-NEXT: bb.2:
@@ -145,6 +149,10 @@ body:             |
   ; LOOPAWARE-SCOREBOARD-NEXT:   liveins: $s1, $p2
   ; LOOPAWARE-SCOREBOARD-NEXT: {{  $}}
   ; LOOPAWARE-SCOREBOARD-NEXT:   $cm2, $p2 = VLDA_UPS_S32_S8_ag_pstm_nrm_imm $s1, killed $p2, 32, implicit-def $srups_of, implicit $crsat
+  ; LOOPAWARE-SCOREBOARD-NEXT:   NOP
+  ; LOOPAWARE-SCOREBOARD-NEXT:   NOP
+  ; LOOPAWARE-SCOREBOARD-NEXT:   NOP
+  ; LOOPAWARE-SCOREBOARD-NEXT:   NOP
   ; LOOPAWARE-SCOREBOARD-NEXT:   PseudoLoopEnd %bb.2, %bb.1
   ; LOOPAWARE-SCOREBOARD-NEXT: {{  $}}
   ; LOOPAWARE-SCOREBOARD-NEXT: bb.2:
