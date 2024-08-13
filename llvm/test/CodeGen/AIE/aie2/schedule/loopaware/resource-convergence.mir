@@ -30,12 +30,11 @@ body:             |
   ; CHECK-NEXT:   liveins: $r0, $r1, $r2, $p0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $r0 = ADD_add_r_ri killed $r0, -1, implicit-def $srcarry
-  ; CHECK-NEXT:   $r5 = MOV_mv_scl $r0
-  ; CHECK-NEXT:   BUNDLE implicit-def $p0, implicit-def $r1, implicit killed $r5, implicit killed $p0, implicit killed $r1, implicit $r2 {
-  ; CHECK-NEXT:     $p0 = ST_dms_sts_pstm_nrm_imm killed $r5, killed $p0, 4
+  ; CHECK-NEXT:   BUNDLE implicit-def $r1, implicit-def $r5, implicit killed $r1, implicit $r2, implicit $r0 {
   ; CHECK-NEXT:     $r1 = MUL_mul_r_rr killed $r1, $r2
+  ; CHECK-NEXT:     $r5 = MOV_mv_scl $r0
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   $p0 = ST_dms_sts_pstm_nrm_imm killed $r5, killed $p0, 4
   ; CHECK-NEXT:   PseudoLoopEnd %bb.2, %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
