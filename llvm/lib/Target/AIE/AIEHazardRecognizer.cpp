@@ -315,11 +315,12 @@ AIEHazardRecognizer::getHazardType(SUnit *SU, int DeltaCycles) {
 
   const std::vector<unsigned int> *AlternateInsts =
       TII->getFormatInterface()->getAlternateInstsOpcode(MI->getOpcode());
+  const MachineRegisterInfo &MRI = MI->getMF()->getRegInfo();
   if (AlternateInsts) {
     for (const auto AltInstOpcode : *AlternateInsts) {
       ScheduleHazardRecognizer::HazardType Haz =
-          getHazardType(TII->get(AltInstOpcode), getMemoryBanks(MI),
-                        MI->operands(), MI->getMF()->getRegInfo(), DeltaCycles);
+          getHazardType(Scoreboard, TII->get(AltInstOpcode), getMemoryBanks(MI),
+                        MI->operands(), MRI, DeltaCycles);
       // Check if there is NoHazard, If there is a Hazard or NoopHazard check
       // for the next possible Opcode.
       if (Haz == NoHazard) {
@@ -333,8 +334,8 @@ AIEHazardRecognizer::getHazardType(SUnit *SU, int DeltaCycles) {
     return NoopHazard;
   }
 
-  return getHazardType(MI->getDesc(), getMemoryBanks(MI), MI->operands(),
-                       MI->getMF()->getRegInfo(), DeltaCycles);
+  return getHazardType(Scoreboard, MI->getDesc(), getMemoryBanks(MI),
+                       MI->operands(), MRI, DeltaCycles);
 }
 
 bool AIEHazardRecognizer::conflict(const AIEHazardRecognizer &Other,
@@ -429,15 +430,16 @@ auto toHazardType(bool Conflict) {
 // We deviate from the standard ScoreboardHazardRecognizer by not
 // recognizing alternatives
 ScheduleHazardRecognizer::HazardType AIEHazardRecognizer::getHazardType(
+    const ResourceScoreboard<FuncUnitWrapper> &TheScoreboard,
     const MCInstrDesc &Desc, MemoryBankBits MemoryBanks,
     iterator_range<const MachineOperand *> MIOperands,
-    const MachineRegisterInfo &MRI, int DeltaCycles) {
+    const MachineRegisterInfo &MRI, int DeltaCycles) const {
   const unsigned SchedClass = TII->getSchedClass(Desc, MIOperands, MRI);
-  const SlotBits SlotSet =
-      getSlotSet(Desc, *TII->getFormatInterface(), IgnoreUnknownSlotSets);
   return toHazardType(checkConflict(
-      Scoreboard, ItinData, SchedClass, SlotSet, MemoryBanks,
-      TII->getMemoryCycles(SchedClass), DeltaCycles, FUDepthLimit));
+      TheScoreboard, ItinData, SchedClass,
+      getSlotSet(Desc, *TII->getFormatInterface(), IgnoreUnknownSlotSets),
+      MemoryBanks, TII->getMemoryCycles(SchedClass), DeltaCycles,
+      FUDepthLimit));
 }
 
 bool AIEHazardRecognizer::checkConflict(
