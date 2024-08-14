@@ -137,10 +137,12 @@ public:
   ///        doesn't pay off.
   void emitInScoreboard(ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
                         const MCInstrDesc &Desc, MemoryBankBits MemoryBanks,
-                        int DeltaCycles) const;
+                        iterator_range<const MachineOperand *> MIOperands,
+                        const MachineRegisterInfo &MRI, int DeltaCycles) const;
   // Apply the above function to the local scoreboard.
   void emitInScoreboard(const MCInstrDesc &Desc, MemoryBankBits MemoryBanks,
-                        int DeltaCycles);
+                        iterator_range<const MachineOperand *> MIOperands,
+                        const MachineRegisterInfo &MRI, int DeltaCycles);
 
   /// Block all scoreboard resources at DeltaCycles
   void blockCycleInScoreboard(int DeltaCycle);
@@ -157,7 +159,7 @@ public:
 
   /// The instructions with memory bank attribute return the address space
   /// number
-  MemoryBankBits getMemoryBanks(MachineInstr *MI) const;
+  MemoryBankBits getMemoryBanks(const MachineInstr *MI) const;
 
   /// The pipeline depth is the depth of the deepest instruction.
   /// We compute that once from the itineraries.
@@ -178,13 +180,10 @@ public:
   unsigned computeScoreboardDepth() const;
 
 protected:
-  ScheduleHazardRecognizer::HazardType getHazardType(const MCInstrDesc &Desc,
-                                                     MemoryBankBits MemoryBanks,
-                                                     int DeltaCycles);
-  ScheduleHazardRecognizer::HazardType getHazardType(unsigned SchedClass,
-                                                     SlotBits SlotSet,
-                                                     MemoryBankBits MemoryBanks,
-                                                     int DeltaCycles);
+  ScheduleHazardRecognizer::HazardType
+  getHazardType(const MCInstrDesc &Desc, MemoryBankBits MemoryBanks,
+                iterator_range<const MachineOperand *> MIOperands,
+                const MachineRegisterInfo &MRI, int DeltaCycles);
 
   static bool
   checkConflict(const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,

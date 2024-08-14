@@ -317,8 +317,9 @@ AIEHazardRecognizer::getHazardType(SUnit *SU, int DeltaCycles) {
       TII->getFormatInterface()->getAlternateInstsOpcode(MI->getOpcode());
   if (AlternateInsts) {
     for (const auto AltInstOpcode : *AlternateInsts) {
-      ScheduleHazardRecognizer::HazardType Haz = getHazardType(
-          TII->get(AltInstOpcode), getMemoryBanks(MI), DeltaCycles);
+      ScheduleHazardRecognizer::HazardType Haz =
+          getHazardType(TII->get(AltInstOpcode), getMemoryBanks(MI),
+                        MI->operands(), MI->getMF()->getRegInfo(), DeltaCycles);
       // Check if there is NoHazard, If there is a Hazard or NoopHazard check
       // for the next possible Opcode.
       if (Haz == NoHazard) {
@@ -332,7 +333,8 @@ AIEHazardRecognizer::getHazardType(SUnit *SU, int DeltaCycles) {
     return NoopHazard;
   }
 
-  return getHazardType(MI->getDesc(), getMemoryBanks(MI), DeltaCycles);
+  return getHazardType(MI->getDesc(), getMemoryBanks(MI), MI->operands(),
+                       MI->getMF()->getRegInfo(), DeltaCycles);
 }
 
 bool AIEHazardRecognizer::conflict(const AIEHazardRecognizer &Other,
@@ -384,7 +386,8 @@ void AIEHazardRecognizer::EmitInstruction(SUnit *SU, int DeltaCycles) {
   // and use the latter to update the scoreboard.
   unsigned SelectedOpcode = getSelectedAltOpcode(MI).value_or(MI->getOpcode());
   if (!AIE::MachineBundle::isNoHazardMetaInstruction(SelectedOpcode))
-    emitInScoreboard(TII->get(SelectedOpcode), getMemoryBanks(MI), DeltaCycles);
+    emitInScoreboard(TII->get(SelectedOpcode), getMemoryBanks(MI),
+                     MI->operands(), MI->getMF()->getRegInfo(), DeltaCycles);
 
   // When requested, we switch off VLIW scheduling after the specified number
   // of instructions are scheduled.
@@ -425,20 +428,13 @@ auto toHazardType(bool Conflict) {
 // to ResourceCycles to apply.
 // We deviate from the standard ScoreboardHazardRecognizer by not
 // recognizing alternatives
-ScheduleHazardRecognizer::HazardType
-AIEHazardRecognizer::getHazardType(const MCInstrDesc &Desc,
-                                   MemoryBankBits MemoryBanks,
-                                   const int DeltaCycles) {
-  return getHazardType(
-      Desc.getSchedClass(),
-      getSlotSet(Desc, *TII->getFormatInterface(), IgnoreUnknownSlotSets),
-      MemoryBanks, DeltaCycles);
-}
-
-ScheduleHazardRecognizer::HazardType
-AIEHazardRecognizer::getHazardType(unsigned SchedClass, SlotBits SlotSet,
-                                   MemoryBankBits MemoryBanks,
-                                   int DeltaCycles) {
+ScheduleHazardRecognizer::HazardType AIEHazardRecognizer::getHazardType(
+    const MCInstrDesc &Desc, MemoryBankBits MemoryBanks,
+    iterator_range<const MachineOperand *> MIOperands,
+    const MachineRegisterInfo &MRI, int DeltaCycles) {
+  const unsigned SchedClass = TII->getSchedClass(Desc, MIOperands, MRI);
+  const SlotBits SlotSet =
+      getSlotSet(Desc, *TII->getFormatInterface(), IgnoreUnknownSlotSets);
   return toHazardType(checkConflict(
       Scoreboard, ItinData, SchedClass, SlotSet, MemoryBanks,
       TII->getMemoryCycles(SchedClass), DeltaCycles, FUDepthLimit));
@@ -496,20 +492,23 @@ bool AIEHazardRecognizer::checkConflict(
   return false;
 }
 
-void AIEHazardRecognizer::emitInScoreboard(const MCInstrDesc &Desc,
-                                           MemoryBankBits MemoryBanks,
-                                           int DeltaCycles) {
-  emitInScoreboard(Scoreboard, Desc, MemoryBanks, DeltaCycles);
+void AIEHazardRecognizer::emitInScoreboard(
+    const MCInstrDesc &Desc, MemoryBankBits MemoryBanks,
+    iterator_range<const MachineOperand *> MIOperands,
+    const MachineRegisterInfo &MRI, int DeltaCycles) {
+  emitInScoreboard(Scoreboard, Desc, MemoryBanks, MIOperands, MRI, DeltaCycles);
 }
 
 void AIEHazardRecognizer::emitInScoreboard(
     ResourceScoreboard<FuncUnitWrapper> &TheScoreboard, const MCInstrDesc &Desc,
-    MemoryBankBits MemoryBanks, int DeltaCycles) const {
-  enterResources(
-      TheScoreboard, ItinData, Desc.getSchedClass(),
-      getSlotSet(Desc, *TII->getFormatInterface(), IgnoreUnknownSlotSets),
-      MemoryBanks, TII->getMemoryCycles(Desc.getSchedClass()), DeltaCycles,
-      FUDepthLimit);
+    MemoryBankBits MemoryBanks,
+    iterator_range<const MachineOperand *> MIOperands,
+    const MachineRegisterInfo &MRI, int DeltaCycles) const {
+  const unsigned SchedClass = TII->getSchedClass(Desc, MIOperands, MRI);
+  const SlotBits SlotSet =
+      getSlotSet(Desc, *TII->getFormatInterface(), IgnoreUnknownSlotSets);
+  enterResources(TheScoreboard, ItinData, SchedClass, SlotSet, MemoryBanks,
+                 TII->getMemoryCycles(SchedClass), DeltaCycles, FUDepthLimit);
 }
 
 void AIEHazardRecognizer::enterResources(
@@ -609,7 +608,8 @@ AIEHazardRecognizer::getSelectedAltOpcode(MachineInstr *MI) const {
   return std::nullopt;
 }
 
-MemoryBankBits AIEHazardRecognizer::getMemoryBanks(MachineInstr *MI) const {
+MemoryBankBits
+AIEHazardRecognizer::getMemoryBanks(const MachineInstr *MI) const {
   if (!(MI->mayLoad() || MI->mayStore()))
     return 0;
 

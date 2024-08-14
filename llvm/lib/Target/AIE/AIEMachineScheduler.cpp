@@ -260,7 +260,8 @@ void AIEPostRASchedStrategy::initializeBotScoreBoard(ScoreboardTrust Trust) {
   /// by starting in the earliest possible cycle, -Depth
   auto InsertInCycle = [=](MachineInstr &MI, int Cycle) {
     BotHazardRec->emitInScoreboard(
-        MI.getDesc(), BotHazardRec->getMemoryBanks(&MI), Cycle - Depth);
+        MI.getDesc(), BotHazardRec->getMemoryBanks(&MI), MI.operands(),
+        MI.getMF()->getRegInfo(), Cycle - Depth);
   };
   auto BlockCycle = [=](int Cycle) {
     BotHazardRec->blockCycleInScoreboard(Cycle - Depth);
