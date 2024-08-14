@@ -62,7 +62,7 @@ void emitBundlesInScoreboard(const std::vector<MachineBundle> &Bundles,
   for (int i = TotalBundles - AmountToEmit; i < TotalBundles; i++) {
     for (MachineInstr *MI : Bundles[i].getInstrs())
       HR->emitInScoreboard(Scoreboard, MI->getDesc(), HR->getMemoryBanks(MI),
-                           0);
+                           MI->operands(), MI->getMF()->getRegInfo(), 0);
 
     Scoreboard.advance();
   }
@@ -81,7 +81,7 @@ void emitBundlesInScoreboardDelta(
 
     for (MachineInstr *MI : Bundle.getInstrs())
       HR->emitInScoreboard(Scoreboard, MI->getDesc(), HR->getMemoryBanks(MI),
-                           Delta);
+                           MI->operands(), MI->getMF()->getRegInfo(), Delta);
 
     Delta++;
   }
