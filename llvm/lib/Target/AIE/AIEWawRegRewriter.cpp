@@ -14,6 +14,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "AIE2RegisterInfo.h"
 #include "AIEBaseInstrInfo.h"
 #include "AIEBaseRegisterInfo.h"
 
@@ -93,9 +94,6 @@ replaceReg(const Register Reg, const MachineFunction &MF, VirtRegMap &VRM,
            const llvm::SmallVector<MCPhysReg, 16> &ForbiddenPhysRegs,
            llvm::SmallVector<MCPhysReg, 16> &AlreadyReplaced);
 
-static llvm::SmallVector<MCPhysReg, 16>
-getCSPhyRegs(const MachineRegisterInfo &MRI, const AIEBaseRegisterInfo *TRI);
-
 static bool couldBeCalleeSaveEvasiveRegister(
     const MCPhysReg &PhysReg, Register Reg, const MachineFunction &MF,
     const VirtRegMap &VRM, const LiveRegMatrix &LRM,
@@ -104,11 +102,11 @@ static bool couldBeCalleeSaveEvasiveRegister(
 static bool containsLoop(const MachineFunction &MF);
 bool isCopyElimination(const MachineInstr &MI, const VirtRegMap &VRM);
 
-static llvm::SmallVector<MCPhysReg, 16>
-getBBForbiddenReplacements(const MachineBasicBlock *MBB, const VirtRegMap &VRM,
-                           const MachineRegisterInfo &MRI,
-                           const AIEBaseRegisterInfo *TRI,
-                           const llvm::SmallVector<MCPhysReg, 16> &CSPhyRegs);
+template <unsigned CSRegNum>
+static llvm::SmallVector<MCPhysReg, 16> getBBForbiddenReplacements(
+    const MachineBasicBlock *MBB, const VirtRegMap &VRM,
+    const MachineRegisterInfo &MRI, const AIEBaseRegisterInfo *TRI,
+    const llvm::SmallVector<MCPhysReg, CSRegNum> &CSPhyRegs);
 
 /// Find Free register of the same register Class type and
 // exclude the forbidden Physical register from the result
@@ -133,6 +131,8 @@ bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
   MachineRegisterInfo &MRI = MF.getRegInfo();
   auto &TRI =
       *static_cast<const AIEBaseRegisterInfo *>(MRI.getTargetRegisterInfo());
+  auto &AIERegInfo =
+      *static_cast<const AIE2RegisterInfo *>(MRI.getTargetRegisterInfo());
   VirtRegMap &VRM = getAnalysis<VirtRegMap>();
   LiveRegMatrix &LRM = getAnalysis<LiveRegMatrix>();
   LiveIntervals &LIS = getAnalysis<LiveIntervals>();
@@ -141,7 +141,7 @@ bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
   bool Modified = false;
   LLVM_DEBUG(VRM.dump());
 
-  llvm::SmallVector<MCPhysReg, 16> CSPhyRegs = getCSPhyRegs(MRI, &TRI);
+  llvm::SmallVector<MCPhysReg, 15> CSPhyRegs = AIERegInfo.getCSPhyRegs(MF);
   llvm::SmallVector<const MachineBasicBlock *, 4> LoopBBs = getLoopBBs(MLI);
 
   for (const MachineBasicBlock *MBB : LoopBBs) {
@@ -209,11 +209,11 @@ static bool isWAWCandidate(const Register &Reg, const MachineInstr &MI,
   return MRI.getRegClass(Reg) && FoundPhyReg && FoundVirtReg && !MI.isCopy();
 }
 
-static llvm::SmallVector<MCPhysReg, 16>
-getBBForbiddenReplacements(const MachineBasicBlock *MBB, const VirtRegMap &VRM,
-                           const MachineRegisterInfo &MRI,
-                           const AIEBaseRegisterInfo *TRI,
-                           const llvm::SmallVector<MCPhysReg, 16> &CSPhyRegs) {
+template <unsigned CSRegNum>
+static llvm::SmallVector<MCPhysReg, 16> getBBForbiddenReplacements(
+    const MachineBasicBlock *MBB, const VirtRegMap &VRM,
+    const MachineRegisterInfo &MRI, const AIEBaseRegisterInfo *TRI,
+    const llvm::SmallVector<MCPhysReg, CSRegNum> &CSPhyRegs) {
   llvm::SmallVector<MCPhysReg, 16> BlockedPhysRegs;
   MCPhysReg PhysReg;
   for (auto &MI : *MBB) {
@@ -309,19 +309,6 @@ static bool couldBeCalleeSaveEvasiveRegister(
     return !LRM.isPhysRegUsed(PhysReg);
   }
   return false;
-}
-
-static llvm::SmallVector<MCPhysReg, 16>
-getCSPhyRegs(const MachineRegisterInfo &MRI, const AIEBaseRegisterInfo *TRI) {
-  llvm::SmallVector<MCPhysReg, 16> CSPhyRegs;
-  LLVM_DEBUG(dbgs() << "Callee-saved registers:\n");
-  const MCPhysReg *CSRegs = MRI.getCalleeSavedRegs();
-  for (const uint16_t *RegPtr = CSRegs; *RegPtr; ++RegPtr) {
-    CSPhyRegs.push_back(*RegPtr);
-    LLVM_DEBUG(dbgs() << printReg(*RegPtr, TRI, 0, &MRI) << " ");
-  }
-  LLVM_DEBUG(dbgs() << "\n");
-  return CSPhyRegs;
 }
 
 bool containsLoop(const MachineFunction &MF) {

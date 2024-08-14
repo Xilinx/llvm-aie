@@ -195,7 +195,7 @@ def CC_AIE2 : CallingConv<[
 ]>;
 
 def CSR_AIE2
-    : CalleeSavedRegs<(add lr, r16, r17, r18, r19, r20, r21, r22, r23, p6, p7, l0, l1, l2, l3)>;
+    : CalleeSavedRegs<(add lr, r16, r17, r18, r19, r20, r21, r22, r23, p6, p7)>;
 
 // Needed for implementation of AIERegisterInfo::getNoPreservedMask()
 def CSR_NoRegs : CalleeSavedRegs<(add)>;
