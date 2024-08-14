@@ -14,7 +14,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "AIE2RegisterInfo.h"
 #include "AIEBaseInstrInfo.h"
 #include "AIEBaseRegisterInfo.h"
 
@@ -58,15 +57,10 @@ public:
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesCFG();
-    // AU.addPreserved<MachineBlockFrequencyInfo>();
     AU.addRequired<VirtRegMap>();
     AU.addPreserved<VirtRegMap>();
     AU.addRequired<SlotIndexes>();
     AU.addPreserved<SlotIndexes>();
-    // AU.addRequired<LiveDebugVariables>();
-    // AU.addPreserved<LiveDebugVariables>();
-    // AU.addRequired<LiveStacks>();
-    // AU.addPreserved<LiveStacks>();
     AU.addRequired<LiveIntervals>();
     AU.addPreserved<LiveIntervals>();
     AU.addRequired<LiveRegMatrix>();
@@ -81,40 +75,41 @@ public:
 private:
 };
 
+/// Find Free register of the same register Class type and
+// exclude the forbidden Physical register from the result
+
+static llvm::SmallVector<MCPhysReg, 16> getPriorityReplacementRegs(
+    const Register Reg,
+    const llvm::SmallVector<MCPhysReg, 16> &ForbiddenPhysRegs,
+    const llvm::SmallVector<MCPhysReg, 16> &CSPhyRegs,
+    const MachineFunction &MF, const VirtRegMap &VRM, LiveRegMatrix &LRM,
+    const MachineRegisterInfo &MRI, const LiveIntervals &LIS,
+    const AIEBaseRegisterInfo &TRI);
+
+static bool
+replaceReg(const Register Reg,
+           const llvm::SmallVector<MCPhysReg, 16> &ForbiddenPhysRegs,
+           llvm::SmallVector<MCPhysReg, 16> &AlreadyReplaced,
+           const llvm::SmallVector<MCPhysReg, 16> &CSPhyRegs,
+           const MachineFunction &MF, VirtRegMap &VRM, LiveRegMatrix &LRM,
+           const MachineRegisterInfo &MRI, const LiveIntervals &LIS,
+           const AIEBaseRegisterInfo &TRI);
+
 static llvm::SmallVector<const MachineBasicBlock *, 4>
 getLoopBBs(const MachineLoopInfo &MLI);
 static bool isWAWCandidate(const Register &Reg, const MachineInstr &MI,
                            llvm::SmallVector<MCPhysReg, 16> &UsedPhyRegs,
                            llvm::SmallVector<MCPhysReg, 16> &UsedVirtRegs,
                            VirtRegMap &VRM, MachineRegisterInfo &MRI);
-static bool
-replaceReg(const Register Reg, const MachineFunction &MF, VirtRegMap &VRM,
-           LiveRegMatrix &LRM, const MachineRegisterInfo &MRI,
-           const LiveIntervals &LIS, const AIEBaseRegisterInfo *TRI,
-           const llvm::SmallVector<MCPhysReg, 16> &ForbiddenPhysRegs,
-           llvm::SmallVector<MCPhysReg, 16> &AlreadyReplaced);
-
-static bool couldBeCalleeSaveEvasiveRegister(
-    const MCPhysReg &PhysReg, Register Reg, const MachineFunction &MF,
-    const VirtRegMap &VRM, const LiveRegMatrix &LRM,
-    const MachineRegisterInfo &MRI, const AIEBaseRegisterInfo *TRI);
 
 static bool containsLoop(const MachineFunction &MF);
 bool isCopyElimination(const MachineInstr &MI, const VirtRegMap &VRM);
 
-template <unsigned CSRegNum>
-static llvm::SmallVector<MCPhysReg, 16> getBBForbiddenReplacements(
-    const MachineBasicBlock *MBB, const VirtRegMap &VRM,
-    const MachineRegisterInfo &MRI, const AIEBaseRegisterInfo *TRI,
-    const llvm::SmallVector<MCPhysReg, CSRegNum> &CSPhyRegs);
-
-/// Find Free register of the same register Class type and
-// exclude the forbidden Physical register from the result
-static llvm::SmallVector<MCPhysReg, 16> getPriorityReplacementRegs(
-    const Register Reg, const MachineFunction &MF, const VirtRegMap &VRM,
-    LiveRegMatrix &LRM, const MachineRegisterInfo &MRI,
-    const LiveIntervals &LIS, const AIEBaseRegisterInfo *TRI,
-    const llvm::SmallVector<MCPhysReg, 16> &ForbiddenPhysRegs);
+static llvm::SmallVector<MCPhysReg, 16>
+getBBForbiddenReplacements(const MachineBasicBlock *MBB, const VirtRegMap &VRM,
+                           const MachineRegisterInfo &MRI,
+                           const AIEBaseRegisterInfo *TRI,
+                           const llvm::SmallVector<MCPhysReg, 16> &CSPhyRegs);
 
 bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
   if (DisablePass)
@@ -131,8 +126,6 @@ bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
   MachineRegisterInfo &MRI = MF.getRegInfo();
   auto &TRI =
       *static_cast<const AIEBaseRegisterInfo *>(MRI.getTargetRegisterInfo());
-  auto &AIERegInfo =
-      *static_cast<const AIE2RegisterInfo *>(MRI.getTargetRegisterInfo());
   VirtRegMap &VRM = getAnalysis<VirtRegMap>();
   LiveRegMatrix &LRM = getAnalysis<LiveRegMatrix>();
   LiveIntervals &LIS = getAnalysis<LiveIntervals>();
@@ -141,7 +134,7 @@ bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
   bool Modified = false;
   LLVM_DEBUG(VRM.dump());
 
-  llvm::SmallVector<MCPhysReg, 15> CSPhyRegs = AIERegInfo.getCSPhyRegs(MF);
+  llvm::SmallVector<MCPhysReg, 16> CSPhyRegs = TRI.getCSPhyRegs(MF);
   llvm::SmallVector<const MachineBasicBlock *, 4> LoopBBs = getLoopBBs(MLI);
 
   for (const MachineBasicBlock *MBB : LoopBBs) {
@@ -169,9 +162,12 @@ bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
           continue;
 
         Register Reg = Op.getReg();
+        if (!TRI.isNaivleyReplaceable(MRI.getRegClass(Reg), MF))
+          continue;
+
         if (isWAWCandidate(Reg, MI, UsedPhyRegs, UsedVirtRegs, VRM, MRI)) {
-          bool Replaced = replaceReg(Reg, MF, VRM, LRM, MRI, LIS, &TRI,
-                                     ForbiddenPhysRegs, AlreadyReplaced);
+          bool Replaced = replaceReg(Reg, ForbiddenPhysRegs, AlreadyReplaced,
+                                     CSPhyRegs, MF, VRM, LRM, MRI, LIS, TRI);
           if (Replaced)
             Modified = true;
 
@@ -209,11 +205,11 @@ static bool isWAWCandidate(const Register &Reg, const MachineInstr &MI,
   return MRI.getRegClass(Reg) && FoundPhyReg && FoundVirtReg && !MI.isCopy();
 }
 
-template <unsigned CSRegNum>
-static llvm::SmallVector<MCPhysReg, 16> getBBForbiddenReplacements(
-    const MachineBasicBlock *MBB, const VirtRegMap &VRM,
-    const MachineRegisterInfo &MRI, const AIEBaseRegisterInfo *TRI,
-    const llvm::SmallVector<MCPhysReg, CSRegNum> &CSPhyRegs) {
+static llvm::SmallVector<MCPhysReg, 16>
+getBBForbiddenReplacements(const MachineBasicBlock *MBB, const VirtRegMap &VRM,
+                           const MachineRegisterInfo &MRI,
+                           const AIEBaseRegisterInfo *TRI,
+                           const llvm::SmallVector<MCPhysReg, 16> &CSPhyRegs) {
   llvm::SmallVector<MCPhysReg, 16> BlockedPhysRegs;
   MCPhysReg PhysReg;
   for (auto &MI : *MBB) {
@@ -232,14 +228,15 @@ static llvm::SmallVector<MCPhysReg, 16> getBBForbiddenReplacements(
   return BlockedPhysRegs;
 }
 
-static bool
-replaceReg(const Register Reg, const MachineFunction &MF, VirtRegMap &VRM,
-           LiveRegMatrix &LRM, const MachineRegisterInfo &MRI,
-           const LiveIntervals &LIS, const AIEBaseRegisterInfo *TRI,
-           const llvm::SmallVector<MCPhysReg, 16> &ForbiddenPhysRegs,
-           llvm::SmallVector<MCPhysReg, 16> &AlreadyReplaced) {
+bool replaceReg(const Register Reg,
+                const llvm::SmallVector<MCPhysReg, 16> &ForbiddenPhysRegs,
+                llvm::SmallVector<MCPhysReg, 16> &AlreadyReplaced,
+                const llvm::SmallVector<MCPhysReg, 16> &CSPhyRegs,
+                const MachineFunction &MF, VirtRegMap &VRM, LiveRegMatrix &LRM,
+                const MachineRegisterInfo &MRI, const LiveIntervals &LIS,
+                const AIEBaseRegisterInfo &TRI) {
   llvm::SmallVector<MCPhysReg, 16> Replacements = getPriorityReplacementRegs(
-      Reg, MF, VRM, LRM, MRI, LIS, TRI, ForbiddenPhysRegs);
+      Reg, ForbiddenPhysRegs, CSPhyRegs, MF, VRM, LRM, MRI, LIS, TRI);
 
   for (const MCPhysReg &PhysReg : Replacements) {
     if (find(AlreadyReplaced, PhysReg) != AlreadyReplaced.end())
@@ -251,8 +248,9 @@ replaceReg(const Register Reg, const MachineFunction &MF, VirtRegMap &VRM,
     if (IK == llvm::LiveRegMatrix::IK_Free) {
       LLVM_DEBUG(dbgs() << "     Potential WAR Issue: Virtual Register "
                         << llvm::Register::virtReg2Index(Reg)
-                        << " will replace " << TRI->getName(VRM.getPhys(Reg))
-                        << " with " << printReg(PhysReg, TRI, 0, &MRI) << '\n');
+                        << " will replace " << TRI.getName(VRM.getPhys(Reg))
+                        << " with " << printReg(PhysReg, &TRI, 0, &MRI)
+                        << '\n');
 
       VRM.clearVirt(Reg);
       LRM.assign(LI, PhysReg);
@@ -263,11 +261,13 @@ replaceReg(const Register Reg, const MachineFunction &MF, VirtRegMap &VRM,
   return false;
 }
 
-static llvm::SmallVector<MCPhysReg, 16> getPriorityReplacementRegs(
-    const Register Reg, const MachineFunction &MF, const VirtRegMap &VRM,
-    LiveRegMatrix &LRM, const MachineRegisterInfo &MRI,
-    const LiveIntervals &LIS, const AIEBaseRegisterInfo *TRI,
-    const llvm::SmallVector<MCPhysReg, 16> &ForbiddenPhysRegs) {
+llvm::SmallVector<MCPhysReg, 16> getPriorityReplacementRegs(
+    const Register Reg,
+    const llvm::SmallVector<MCPhysReg, 16> &ForbiddenPhysRegs,
+    const llvm::SmallVector<MCPhysReg, 16> &CSPhyRegs,
+    const MachineFunction &MF, const VirtRegMap &VRM, LiveRegMatrix &LRM,
+    const MachineRegisterInfo &MRI, const LiveIntervals &LIS,
+    const AIEBaseRegisterInfo &TRI) {
   llvm::SmallVector<MCPhysReg, 16> PhysRegs;
 
   const TargetRegisterClass *RC = MRI.getRegClass(Reg);
@@ -278,9 +278,6 @@ static llvm::SmallVector<MCPhysReg, 16> getPriorityReplacementRegs(
     if (find(ForbiddenPhysRegs, PhysReg) != ForbiddenPhysRegs.end())
       continue;
 
-    if (couldBeCalleeSaveEvasiveRegister(PhysReg, Reg, MF, VRM, LRM, MRI, TRI))
-      continue;
-
     const llvm::LiveInterval &LI = LIS.getInterval(Reg);
     LiveRegMatrix::InterferenceKind IK = LRM.checkInterference(LI, PhysReg);
     if (IK == llvm::LiveRegMatrix::IK_Free)
@@ -288,27 +285,14 @@ static llvm::SmallVector<MCPhysReg, 16> getPriorityReplacementRegs(
   }
 
   std::sort(PhysRegs.begin(), PhysRegs.end(), std::less<MCPhysReg>());
-  LLVM_DEBUG(dbgs() << "Renaming Candidate " << printReg(Reg, TRI, 0, &MRI)
+  LLVM_DEBUG(dbgs() << "Renaming Candidate " << printReg(Reg, &TRI, 0, &MRI)
                     << " Ordering";
              for (const MCPhysReg &PhysReg
                   : PhysRegs) {
-               dbgs() << " " << printReg(PhysReg, TRI, 0, &MRI);
+               dbgs() << " " << printReg(PhysReg, &TRI, 0, &MRI);
              } dbgs()
              << "\n";);
   return PhysRegs;
-}
-
-static bool couldBeCalleeSaveEvasiveRegister(
-    const MCPhysReg &PhysReg, Register Reg, const MachineFunction &MF,
-    const VirtRegMap &VRM, const LiveRegMatrix &LRM,
-    const MachineRegisterInfo &MRI, const AIEBaseRegisterInfo *TRI) {
-  const TargetRegisterClass *CalleeSaveClass =
-      TRI->getLargestLegalSuperClass(TRI->getGPRRegClass(MF), MF);
-  const TargetRegisterClass *GPRClass = MRI.getRegClass(Reg);
-  if (CalleeSaveClass == GPRClass) {
-    return !LRM.isPhysRegUsed(PhysReg);
-  }
-  return false;
 }
 
 bool containsLoop(const MachineFunction &MF) {

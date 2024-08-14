@@ -81,6 +81,11 @@ struct AIE2RegisterInfo : public AIE2GenRegisterInfo {
   SmallSet<int, 8>
   getCoveringSubRegs(const TargetRegisterClass &RC) const override;
   bool isSimplifiableReservedReg(MCRegister PhysReg) const override;
+
+  const llvm::SmallVector<MCPhysReg, 16>
+  getCSPhyRegs(const MachineFunction &MF) const override;
+  bool isNaivleyReplaceable(const TargetRegisterClass *RC,
+                            const MachineFunction &MF) const override;
 };
 } // namespace llvm
 

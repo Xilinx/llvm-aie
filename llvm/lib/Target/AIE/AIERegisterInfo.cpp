@@ -231,11 +231,10 @@ AIERegisterInfo::getPointerRegClass(const MachineFunction &MF,
   return &AIE::PTRRegClass;
 }
 
-
 const uint32_t *
-AIERegisterInfo::getCallPreservedMask(const MachineFunction & MF,
-                                        CallingConv::ID /*CC*/) const {
-  //auto &Subtarget = MF.getSubtarget<AIESubtarget>();
+AIERegisterInfo::getCallPreservedMask(const MachineFunction &MF,
+                                      CallingConv::ID /*CC*/) const {
+  // auto &Subtarget = MF.getSubtarget<AIESubtarget>();
   return CSR_AIE1_RegMask;
 }
 

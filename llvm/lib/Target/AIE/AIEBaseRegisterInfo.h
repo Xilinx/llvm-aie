@@ -47,6 +47,15 @@ struct AIEBaseRegisterInfo : public TargetRegisterInfo {
   bool isSimplifiableReservedReg(MCRegister PhysReg) const override {
     return false;
   }
+
+  virtual const llvm::SmallVector<MCPhysReg, 16>
+  getCSPhyRegs(const MachineFunction &MF) const {
+    llvm_unreachable("Target didn't implement getCSPhyRegs()");
+  }
+  virtual bool isNaivleyReplaceable(const TargetRegisterClass *RC,
+                                    const MachineFunction &MF) const {
+    llvm_unreachable("Target didn't implement isNaivleyReplaceable()");
+  }
 #if 0
   /// Returns a BitVector of the intersection of GPR RegClass
   /// and CalleeSaved Registers
