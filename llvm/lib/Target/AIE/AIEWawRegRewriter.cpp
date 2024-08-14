@@ -39,6 +39,11 @@ using namespace llvm;
 
 namespace {
 
+cl::opt<bool> DisablePass(
+    "aie-waw-disable",
+    cl::desc("Disable the WAW Register Renaming in loops (default false)"),
+    cl::init(false), cl::Hidden);
+
 ///
 /// This rewrites Registers, if they are redefined in the same Loop body and
 /// could cause WAW issues in the loop pipelining.
@@ -114,6 +119,8 @@ static llvm::SmallVector<MCPhysReg, 16> getPriorityReplacementRegs(
     const llvm::SmallVector<MCPhysReg, 16> &ForbiddenPhysRegs);
 
 bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
+  if (DisablePass)
+    return false;
 
   if (!containsLoop(MF))
     return false;
