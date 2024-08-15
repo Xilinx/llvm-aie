@@ -246,24 +246,23 @@ public:
   /// or an implicit_def if \p Ops is empty.
   void applyCombineShuffleConcat(MachineInstr &MI, SmallVector<Register> &Ops);
 
-  /// Try to combine G_SHUFFLE_VECTOR into G_CONCAT_VECTORS.
   /// A function type that returns either the next value in a
   /// shufflemask or an empty value. Each iteration should return
   /// one value, like a Python iterator or a Lisp stream.
   using GeneratorType = std::function<std::optional<int32_t>()>;
 
+  /// Try to combine G_SHUFFLE_VECTOR into more efficient opcodes.
   /// Returns true if MI changed.
   ///
   /// \pre MI.getOpcode() == G_SHUFFLE_VECTOR.
   bool tryCombineShuffleVector(MachineInstr &MI);
-  /// Check if the G_SHUFFLE_VECTOR \p MI can be replaced by a
-  /// concat_vectors.
-  /// \p Ops will contain the operands needed to produce the flattened
-  /// concat_vectors.
+  /// Check if the G_SHUFFLE_VECTOR \p MI can be replaced by checking
+  /// whether the shufflemask given matches that of a given generator.
   ///
   /// \pre MI.getOpcode() == G_SHUFFLE_VECTOR.
-  bool matchCombineShuffleVector(MachineInstr &MI,
-                                 SmallVectorImpl<Register> &Ops);
+  bool matchCombineShuffleVector(MachineInstr &MI, GeneratorType Generator,
+                                 const size_t TargetDstSize);
+
   /// Replace \p MI with a concat_vectors with \p Ops.
   void applyCombineShuffleVector(MachineInstr &MI,
                                  const ArrayRef<Register> Ops);
