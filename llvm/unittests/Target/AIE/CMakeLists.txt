@@ -15,6 +15,7 @@ set(LLVM_LINK_COMPONENTS
   AIEDesc
   AIEInfo
   CodeGen
+  CodeGenTypes
   Core
   GlobalISel
   MC
@@ -22,6 +23,7 @@ set(LLVM_LINK_COMPONENTS
   SelectionDAG
   Support
   Target
+  TargetParser
 )
 
 add_llvm_target_unittest(AIETests
@@ -30,4 +32,7 @@ add_llvm_target_unittest(AIETests
   AIETestTarget.cpp
   BundleTest.cpp
   HazardRecognizerTest.cpp
+  VirtUnrollAliasAnalysisTest.cpp
   )
+
+set_property(TARGET AIETests PROPERTY FOLDER "Tests/UnitTests/TargetTests")

@@ -18,6 +18,7 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/MemoryLocation.h"
 #include "llvm/Analysis/ValueTracking.h"
+#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicsAIE2.h"
@@ -241,6 +242,10 @@ struct IntrinsicChainInfo {
 
     return false;
   }
+
+  void bumpIteration(const unsigned VirtIteration) {
+    IntrinsicCalls += VirtIteration * TotalIntrinsicCalls;
+  }
 };
 
 static IntrinsicArgsInfo collectIntrinsicOperands(const Value *V) {
@@ -369,7 +374,9 @@ trackIntrinsicChain(const Value *LastUpdate, const Value *TargetPointer) {
 }
 
 static AliasResult aliasAIEIntrinsic(const Value *ValueA, const Value *ValueB,
-                                     const Value *BaseA, const Value *BaseB) {
+                                     const Value *BaseA, const Value *BaseB,
+                                     const unsigned VirtUnrollLevelA,
+                                     const unsigned VirtUnrollLevelB) {
 
   const PHINode *PhiA = dyn_cast<PHINode>(BaseA);
   const PHINode *PhiB = dyn_cast<PHINode>(BaseB);
@@ -449,6 +456,14 @@ static AliasResult aliasAIEIntrinsic(const Value *ValueA, const Value *ValueB,
   if (!BTracking) // Non uniform address update accross the loop.
     return AliasResult::MayAlias;
 
+  // If we are in PostRA SWP, we need to increase the count
+  // by the number of unrolls x complete number of pointer
+  // updates for every completed iteration. In this way,
+  // we will have the notion of distance between different
+  // iterations and associated instructions.
+  ATracking->bumpIteration(VirtUnrollLevelA);
+  BTracking->bumpIteration(VirtUnrollLevelB);
+
   // If there is no overlap, NoAlias
   if (ATracking->mayOverlap(*BTracking))
     return AliasResult::MayAlias;
@@ -464,8 +479,8 @@ AliasResult AIEBaseAAResult::alias(const MemoryLocation &LocA,
   const Value *BaseB = getUnderlyingObjectAIE(LocB.Ptr);
 
   if (DisambiguateAccessSameOriginPointers &&
-      aliasAIEIntrinsic(LocA.Ptr, LocB.Ptr, BaseA, BaseB) ==
-          AliasResult::NoAlias)
+      aliasAIEIntrinsic(LocA.Ptr, LocB.Ptr, BaseA, BaseB, 0, 0
+                        /*No virtually unrolled*/) == AliasResult::NoAlias)
     return AliasResult::NoAlias;
 
   // Our look-through didn't reveal a different object, pass on to the next
@@ -484,4 +499,47 @@ AliasResult AIEBaseAAResult::alias(const MemoryLocation &LocA,
   // NoAlias (based on different base object). In particular, we cannot infer
   // MustAlias, and need to be conservative by returning MayAlias
   return AliasResult::MayAlias;
+}
+
+AliasResult AIE::aliasAcrossVirtualUnrolls(const MachineInstr *MIA,
+                                           const MachineInstr *MIB,
+                                           unsigned UnrollLevelMIA,
+                                           unsigned UnrollLevelMIB) {
+
+  auto GetValueBasePair = [](const MachineMemOperand *MMO)
+      -> std::optional<std::pair<const Value *, const Value *>> {
+    const Value *Val = MMO->getValue();
+    // We know nothing about the MMO.
+    if (!Val)
+      return std::nullopt;
+
+    const Value *Base = getUnderlyingObjectAIE(Val);
+    if (!Base)
+      return std::nullopt;
+
+    return std::make_pair(Val, Base);
+  };
+
+  // Check each pair of memory operands from both instructions.
+  for (auto *MMOA : MIA->memoperands()) {
+
+    auto ValueBasePairA = GetValueBasePair(MMOA);
+    if (!ValueBasePairA)
+      return AliasResult::MayAlias;
+
+    for (auto *MMOB : MIB->memoperands()) {
+
+      auto ValueBasePairB = GetValueBasePair(MMOB);
+      if (!ValueBasePairB)
+        return AliasResult::MayAlias;
+
+      if (aliasAIEIntrinsic(ValueBasePairA->first, ValueBasePairB->first,
+                            ValueBasePairA->second, ValueBasePairB->second,
+                            UnrollLevelMIA,
+                            UnrollLevelMIB) == AliasResult::MayAlias) {
+        return AliasResult::MayAlias;
+      }
+    }
+  }
+  return AliasResult::NoAlias;
 }
