@@ -460,7 +460,7 @@ AIE2RegisterInfo::getCoveringSubRegs(const TargetRegisterClass &RC) const {
 
 const llvm::SmallVector<MCPhysReg, 16>
 AIE2RegisterInfo::getCSPhyRegs(const MachineFunction &MF) const {
-  llvm::SmallVector<MCPhysReg, 15> CSRegs;
+  llvm::SmallVector<MCPhysReg, 16> CSRegs;
   const MCPhysReg *RegularCSRegs = getCalleeSavedRegs(&MF);
   for (const uint16_t *RegPtr = RegularCSRegs; *RegPtr; ++RegPtr) {
     CSRegs.push_back(*RegPtr);
