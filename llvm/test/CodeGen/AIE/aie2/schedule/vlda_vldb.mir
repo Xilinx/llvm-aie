@@ -89,3 +89,22 @@ body:             |
     $wl1 = VLDB_dmw_ldb_ag_idx_imm $p0, 0
     $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0
 ...
+
+---
+name:            VLDA_VLDB_pseudo
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: VLDA_VLDB_pseudo
+    ; CHECK: VST_dmw_sts_w_ag_idx_imm killed $wl0, $p0, 0
+    ; CHECK-NEXT: $wl1 = VLDB_dmw_ldb_ag_idx_imm $p0, 0
+    ; CHECK-NEXT: $wl2 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    VST_dmw_sts_w_ag_idx_imm $wl0, $p0, 0
+    $wl1 = VLD_idx_imm_3x32_pseudo $p0, 0
+    $wl2 = VLD_idx_imm_3x32_pseudo $p0, 0

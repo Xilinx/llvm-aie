@@ -63,16 +63,16 @@ body:             |
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p1
     ; CHECK-NEXT: [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], 128
-    ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_idx_imm:%[0-9]+]]:mwa = VLDA_dmw_lda_w_ag_idx_imm [[COPY]], 96 :: (load (<32 x s32>) from %ir.p, !tbaa !0)
-    ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_idx_imm1:%[0-9]+]]:mwa = VLDA_dmw_lda_w_ag_idx_imm [[COPY]], 64 :: (load (<32 x s32>) from %ir.p, !tbaa !0)
+    ; CHECK-NEXT: [[VLD_idx_imm_3x32_pseudo:%[0-9]+]]:mwa = VLD_idx_imm_3x32_pseudo [[COPY]], 96 :: (load (<32 x s32>) from %ir.p, !tbaa !0)
+    ; CHECK-NEXT: [[VLD_idx_imm_3x32_pseudo1:%[0-9]+]]:mwa = VLD_idx_imm_3x32_pseudo [[COPY]], 64 :: (load (<32 x s32>) from %ir.p, !tbaa !0)
     ; CHECK-NEXT: [[DEF:%[0-9]+]]:mshfldst = IMPLICIT_DEF
-    ; CHECK-NEXT: [[INSERT_SUBREG:%[0-9]+]]:mshfldst = INSERT_SUBREG [[DEF]], [[VLDA_dmw_lda_w_ag_idx_imm1]], %subreg.sub_256_lo
-    ; CHECK-NEXT: [[INSERT_SUBREG1:%[0-9]+]]:mshfldst = INSERT_SUBREG [[INSERT_SUBREG]], [[VLDA_dmw_lda_w_ag_idx_imm]], %subreg.sub_256_hi
-    ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_idx_imm2:%[0-9]+]]:mwa = VLDA_dmw_lda_w_ag_idx_imm [[COPY]], 32 :: (load (<32 x s32>) from %ir.p, !tbaa !0)
-    ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_idx_imm3:%[0-9]+]]:mwa = VLDA_dmw_lda_w_ag_idx_imm [[COPY]], 0 :: (load (<32 x s32>) from %ir.p, !tbaa !0)
+    ; CHECK-NEXT: [[INSERT_SUBREG:%[0-9]+]]:mshfldst = INSERT_SUBREG [[DEF]], [[VLD_idx_imm_3x32_pseudo1]], %subreg.sub_256_lo
+    ; CHECK-NEXT: [[INSERT_SUBREG1:%[0-9]+]]:mshfldst = INSERT_SUBREG [[INSERT_SUBREG]], [[VLD_idx_imm_3x32_pseudo]], %subreg.sub_256_hi
+    ; CHECK-NEXT: [[VLD_idx_imm_3x32_pseudo2:%[0-9]+]]:mwa = VLD_idx_imm_3x32_pseudo [[COPY]], 32 :: (load (<32 x s32>) from %ir.p, !tbaa !0)
+    ; CHECK-NEXT: [[VLD_idx_imm_3x32_pseudo3:%[0-9]+]]:mwa = VLD_idx_imm_3x32_pseudo [[COPY]], 0 :: (load (<32 x s32>) from %ir.p, !tbaa !0)
     ; CHECK-NEXT: [[DEF1:%[0-9]+]]:mshfldst = IMPLICIT_DEF
-    ; CHECK-NEXT: [[INSERT_SUBREG2:%[0-9]+]]:mshfldst = INSERT_SUBREG [[DEF1]], [[VLDA_dmw_lda_w_ag_idx_imm3]], %subreg.sub_256_lo
-    ; CHECK-NEXT: [[INSERT_SUBREG3:%[0-9]+]]:mshfldst = INSERT_SUBREG [[INSERT_SUBREG2]], [[VLDA_dmw_lda_w_ag_idx_imm2]], %subreg.sub_256_hi
+    ; CHECK-NEXT: [[INSERT_SUBREG2:%[0-9]+]]:mshfldst = INSERT_SUBREG [[DEF1]], [[VLD_idx_imm_3x32_pseudo3]], %subreg.sub_256_lo
+    ; CHECK-NEXT: [[INSERT_SUBREG3:%[0-9]+]]:mshfldst = INSERT_SUBREG [[INSERT_SUBREG2]], [[VLD_idx_imm_3x32_pseudo2]], %subreg.sub_256_hi
     ; CHECK-NEXT: [[DEF2:%[0-9]+]]:vec1024 = IMPLICIT_DEF
     ; CHECK-NEXT: [[INSERT_SUBREG4:%[0-9]+]]:vec1024 = INSERT_SUBREG [[DEF2]], [[INSERT_SUBREG3]], %subreg.sub_512_lo
     ; CHECK-NEXT: [[INSERT_SUBREG5:%[0-9]+]]:vec1024 = INSERT_SUBREG [[INSERT_SUBREG4]], [[INSERT_SUBREG1]], %subreg.sub_512_hi
@@ -86,16 +86,16 @@ body:             |
     ; CHECK-NEXT: [[COPY7:%[0-9]+]]:vec256 = COPY [[COPY2]].sub_256_hi
     ; CHECK-NEXT: VST_dmw_sts_w_ag_idx_imm [[COPY7]], [[COPY1]], 32 :: (store (<8 x s32>) into %ir.q + 32, basealign 128, !tbaa !0)
     ; CHECK-NEXT: VST_dmw_sts_w_ag_idx_imm [[COPY6]], [[COPY1]], 0 :: (store (<8 x s32>) into %ir.q, align 128, !tbaa !0)
-    ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_idx_imm4:%[0-9]+]]:mwa = VLDA_dmw_lda_w_ag_idx_imm [[PADD_imm_pseudo]], 96 :: (load (<32 x s32>) from %ir.incdec.ptr, !tbaa !0)
-    ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_idx_imm5:%[0-9]+]]:mwa = VLDA_dmw_lda_w_ag_idx_imm [[PADD_imm_pseudo]], 64 :: (load (<32 x s32>) from %ir.incdec.ptr, !tbaa !0)
+    ; CHECK-NEXT: [[VLD_idx_imm_3x32_pseudo4:%[0-9]+]]:mwa = VLD_idx_imm_3x32_pseudo [[PADD_imm_pseudo]], 96 :: (load (<32 x s32>) from %ir.incdec.ptr, !tbaa !0)
+    ; CHECK-NEXT: [[VLD_idx_imm_3x32_pseudo5:%[0-9]+]]:mwa = VLD_idx_imm_3x32_pseudo [[PADD_imm_pseudo]], 64 :: (load (<32 x s32>) from %ir.incdec.ptr, !tbaa !0)
     ; CHECK-NEXT: [[DEF3:%[0-9]+]]:mshfldst = IMPLICIT_DEF
-    ; CHECK-NEXT: [[INSERT_SUBREG6:%[0-9]+]]:mshfldst = INSERT_SUBREG [[DEF3]], [[VLDA_dmw_lda_w_ag_idx_imm5]], %subreg.sub_256_lo
-    ; CHECK-NEXT: [[INSERT_SUBREG7:%[0-9]+]]:mshfldst = INSERT_SUBREG [[INSERT_SUBREG6]], [[VLDA_dmw_lda_w_ag_idx_imm4]], %subreg.sub_256_hi
-    ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_idx_imm6:%[0-9]+]]:mwa = VLDA_dmw_lda_w_ag_idx_imm [[PADD_imm_pseudo]], 32 :: (load (<32 x s32>) from %ir.incdec.ptr, !tbaa !0)
-    ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_idx_imm7:%[0-9]+]]:mwa = VLDA_dmw_lda_w_ag_idx_imm [[PADD_imm_pseudo]], 0 :: (load (<32 x s32>) from %ir.incdec.ptr, !tbaa !0)
+    ; CHECK-NEXT: [[INSERT_SUBREG6:%[0-9]+]]:mshfldst = INSERT_SUBREG [[DEF3]], [[VLD_idx_imm_3x32_pseudo5]], %subreg.sub_256_lo
+    ; CHECK-NEXT: [[INSERT_SUBREG7:%[0-9]+]]:mshfldst = INSERT_SUBREG [[INSERT_SUBREG6]], [[VLD_idx_imm_3x32_pseudo4]], %subreg.sub_256_hi
+    ; CHECK-NEXT: [[VLD_idx_imm_3x32_pseudo6:%[0-9]+]]:mwa = VLD_idx_imm_3x32_pseudo [[PADD_imm_pseudo]], 32 :: (load (<32 x s32>) from %ir.incdec.ptr, !tbaa !0)
+    ; CHECK-NEXT: [[VLD_idx_imm_3x32_pseudo7:%[0-9]+]]:mwa = VLD_idx_imm_3x32_pseudo [[PADD_imm_pseudo]], 0 :: (load (<32 x s32>) from %ir.incdec.ptr, !tbaa !0)
     ; CHECK-NEXT: [[DEF4:%[0-9]+]]:mshfldst = IMPLICIT_DEF
-    ; CHECK-NEXT: [[INSERT_SUBREG8:%[0-9]+]]:mshfldst = INSERT_SUBREG [[DEF4]], [[VLDA_dmw_lda_w_ag_idx_imm7]], %subreg.sub_256_lo
-    ; CHECK-NEXT: [[INSERT_SUBREG9:%[0-9]+]]:mshfldst = INSERT_SUBREG [[INSERT_SUBREG8]], [[VLDA_dmw_lda_w_ag_idx_imm6]], %subreg.sub_256_hi
+    ; CHECK-NEXT: [[INSERT_SUBREG8:%[0-9]+]]:mshfldst = INSERT_SUBREG [[DEF4]], [[VLD_idx_imm_3x32_pseudo7]], %subreg.sub_256_lo
+    ; CHECK-NEXT: [[INSERT_SUBREG9:%[0-9]+]]:mshfldst = INSERT_SUBREG [[INSERT_SUBREG8]], [[VLD_idx_imm_3x32_pseudo6]], %subreg.sub_256_hi
     ; CHECK-NEXT: [[DEF5:%[0-9]+]]:vec1024 = IMPLICIT_DEF
     ; CHECK-NEXT: [[INSERT_SUBREG10:%[0-9]+]]:vec1024 = INSERT_SUBREG [[DEF5]], [[INSERT_SUBREG9]], %subreg.sub_512_lo
     ; CHECK-NEXT: [[INSERT_SUBREG11:%[0-9]+]]:vec1024 = INSERT_SUBREG [[INSERT_SUBREG10]], [[INSERT_SUBREG7]], %subreg.sub_512_hi
@@ -129,16 +129,16 @@ body:             |
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p1
     ; CHECK-NEXT: [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], 64
-    ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_idx_imm:%[0-9]+]]:vec256 = VLDA_dmw_lda_w_ag_idx_imm [[COPY]], 32 :: (load (<16 x s16>) from %ir.p + 32, basealign 64, !tbaa !0)
-    ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_idx_imm1:%[0-9]+]]:vec256 = VLDA_dmw_lda_w_ag_idx_imm [[COPY]], 0 :: (load (<16 x s16>) from %ir.p, align 64, !tbaa !0)
-    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[VLDA_dmw_lda_w_ag_idx_imm1]], %subreg.sub_256_lo, [[VLDA_dmw_lda_w_ag_idx_imm]], %subreg.sub_256_hi
+    ; CHECK-NEXT: [[VLD_idx_imm_3x32_pseudo:%[0-9]+]]:vec256 = VLD_idx_imm_3x32_pseudo [[COPY]], 32 :: (load (<16 x s16>) from %ir.p + 32, basealign 64, !tbaa !0)
+    ; CHECK-NEXT: [[VLD_idx_imm_3x32_pseudo1:%[0-9]+]]:vec256 = VLD_idx_imm_3x32_pseudo [[COPY]], 0 :: (load (<16 x s16>) from %ir.p, align 64, !tbaa !0)
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[VLD_idx_imm_3x32_pseudo1]], %subreg.sub_256_lo, [[VLD_idx_imm_3x32_pseudo]], %subreg.sub_256_hi
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec256 = COPY [[REG_SEQUENCE]].sub_256_lo
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:vec256 = COPY [[REG_SEQUENCE]].sub_256_hi
     ; CHECK-NEXT: VST_dmw_sts_w_ag_idx_imm [[COPY3]], [[COPY1]], 32 :: (store (<16 x s16>) into %ir.q + 32, basealign 64, !tbaa !0)
     ; CHECK-NEXT: VST_dmw_sts_w_ag_idx_imm [[COPY2]], [[COPY1]], 0 :: (store (<16 x s16>) into %ir.q, align 64, !tbaa !0)
-    ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_idx_imm2:%[0-9]+]]:vec256 = VLDA_dmw_lda_w_ag_idx_imm [[PADD_imm_pseudo]], 32 :: (load (<16 x s16>) from %ir.incdec.ptr + 32, basealign 64, !tbaa !0)
-    ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_idx_imm3:%[0-9]+]]:vec256 = VLDA_dmw_lda_w_ag_idx_imm [[PADD_imm_pseudo]], 0 :: (load (<16 x s16>) from %ir.incdec.ptr, align 64, !tbaa !0)
-    ; CHECK-NEXT: [[REG_SEQUENCE1:%[0-9]+]]:vec512 = REG_SEQUENCE [[VLDA_dmw_lda_w_ag_idx_imm3]], %subreg.sub_256_lo, [[VLDA_dmw_lda_w_ag_idx_imm2]], %subreg.sub_256_hi
+    ; CHECK-NEXT: [[VLD_idx_imm_3x32_pseudo2:%[0-9]+]]:vec256 = VLD_idx_imm_3x32_pseudo [[PADD_imm_pseudo]], 32 :: (load (<16 x s16>) from %ir.incdec.ptr + 32, basealign 64, !tbaa !0)
+    ; CHECK-NEXT: [[VLD_idx_imm_3x32_pseudo3:%[0-9]+]]:vec256 = VLD_idx_imm_3x32_pseudo [[PADD_imm_pseudo]], 0 :: (load (<16 x s16>) from %ir.incdec.ptr, align 64, !tbaa !0)
+    ; CHECK-NEXT: [[REG_SEQUENCE1:%[0-9]+]]:vec512 = REG_SEQUENCE [[VLD_idx_imm_3x32_pseudo3]], %subreg.sub_256_lo, [[VLD_idx_imm_3x32_pseudo2]], %subreg.sub_256_hi
     ; CHECK-NEXT: $x0 = COPY [[REG_SEQUENCE1]]
     %1:ptrregbank(p0) = COPY $p0
     %2:ptrregbank(p0) = COPY $p1
@@ -166,10 +166,10 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p1
-    ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_idx_imm:%[0-9]+]]:vec256 = VLDA_dmw_lda_w_ag_idx_imm [[COPY]], 0 :: (load (<32 x s8>) from %ir.p, !tbaa !0)
-    ; CHECK-NEXT: VST_dmw_sts_w_ag_idx_imm [[VLDA_dmw_lda_w_ag_idx_imm]], [[COPY1]], 0 :: (store (<32 x s8>) into %ir.q, !tbaa !0)
-    ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_idx_imm1:%[0-9]+]]:vec256 = VLDA_dmw_lda_w_ag_idx_imm [[COPY]], 32 :: (load (<32 x s8>) from %ir.incdec.ptr, !tbaa !0)
-    ; CHECK-NEXT: $wl0 = COPY [[VLDA_dmw_lda_w_ag_idx_imm1]]
+    ; CHECK-NEXT: [[VLD_idx_imm_3x32_pseudo:%[0-9]+]]:vec256 = VLD_idx_imm_3x32_pseudo [[COPY]], 0 :: (load (<32 x s8>) from %ir.p, !tbaa !0)
+    ; CHECK-NEXT: VST_dmw_sts_w_ag_idx_imm [[VLD_idx_imm_3x32_pseudo]], [[COPY1]], 0 :: (store (<32 x s8>) into %ir.q, !tbaa !0)
+    ; CHECK-NEXT: [[VLD_idx_imm_3x32_pseudo1:%[0-9]+]]:vec256 = VLD_idx_imm_3x32_pseudo [[COPY]], 32 :: (load (<32 x s8>) from %ir.incdec.ptr, !tbaa !0)
+    ; CHECK-NEXT: $wl0 = COPY [[VLD_idx_imm_3x32_pseudo1]]
     %1:ptrregbank(p0) = COPY $p0
     %2:ptrregbank(p0) = COPY $p1
     %3:modregbank(s20) = G_CONSTANT i20 32

@@ -14,6 +14,7 @@ name:            tied_ok
 alignment:       16
 body:             |
   bb.0 (align 16):
+    $wl0, $p0, $dc0, $dc4 = VLD_3D_pseudo $p0, $d0_3d
     $wl0, $p0, $dc0, $dc4 = VLDA_3D_dmw_lda_w $p0, $d0_3d
     $amll0, $p0, $dc0, $dc4 = VLDA_3D_dmw_lda_am $p0, $d0_3d
     $bmh0, $p0, $dc0, $dc4 = VLDA_3D_UPS_S32_D16 $s0, $p0, $d0_3d, implicit-def $srups_of, implicit $crsat, implicit $crupssign
@@ -40,6 +41,7 @@ body:             |
   bb.0 (align 16):
     %0:ep = COPY $p0
     %10:eds = COPY $d0_3d
+    $wl0, %20:ep, %21:edc, %22:edc = VLD_3D_pseudo %0, %10
     $wl0, %20:ep, %21:edc, %22:edc = VLDA_3D_dmw_lda_w %0, %10
     $amll0, %30:ep, %31:edc, %32:edc = VLDA_3D_dmw_lda_am %0, %10
     $bmh0, %40:ep, %41:edc, %42:edc = VLDA_3D_UPS_S32_D16 $s0, %0, %10, implicit-def $srups_of, implicit $crsat, implicit $crupssign
@@ -64,7 +66,8 @@ alignment:       16
 body:             |
   bb.0 (align 16):
     ; CHECK-NOT: Bad machine code
-    ; CHECK-COUNT-16: Bad machine code: Tied physical registers must match
+    ; CHECK-COUNT-17: Bad machine code: Tied physical registers must match
+    $wl0, $p0, $dc1, $dc3 = VLD_3D_pseudo $p0, $d1_3d
     $wl0, $p0, $dc1, $dc3 = VLDA_3D_dmw_lda_w $p0, $d1_3d
     $wl0, $p0, $dc1, $dc3 = VLDA_3D_dmw_lda_am $p0, $d1_3d
     $bmh0, $p0, $dc0, $dc2 = VLDA_3D_UPS_S32_D16 $s0, $p0, $d3_3d, implicit-def $srups_of, implicit $crsat, implicit $crupssign

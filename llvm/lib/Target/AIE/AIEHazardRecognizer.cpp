@@ -134,6 +134,10 @@ bool AIEResourceCycle::canReserveResources(MachineInstr &MI) {
   if (!AlternateInsts)
     return Bundle.canAdd(&MI);
 
+  // Limit VLD multislot instructions to be NFC for the SW pipeliner.
+  if (MI.mayLoad())
+    return Bundle.canAdd(AlternateInsts->back());
+
   return any_of(*AlternateInsts,
                 [&](unsigned AltOpcode) { return Bundle.canAdd(AltOpcode); });
 }
@@ -144,6 +148,10 @@ void AIEResourceCycle::reserveResources(MachineInstr &MI) {
 
   if (!AlternateInsts)
     return Bundle.add(&MI);
+
+  // Limit VLD multislot instructions to be NFC for the SW pipeliner.
+  if (MI.mayLoad())
+    return Bundle.add(&MI, AlternateInsts->back());
 
   for (unsigned AltOpcode : *AlternateInsts) {
     if (Bundle.canAdd(AltOpcode)) {

@@ -129,17 +129,17 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ASM-NEXT:  .LBB0_2: // %inner.loop
 ; ASM-NEXT:    // Parent Loop BB0_1 Depth=1
 ; ASM-NEXT:    // => This Inner Loop Header: Depth=2
-; ASM-NEXT:    vlda wl6, [p0], m6; nopx
-; ASM-NEXT:    vlda wh6, [p0], m6
-; ASM-NEXT:    vlda wl8, [p0], m6
-; ASM-NEXT:    vlda.3d wh8, [p0], d0
+; ASM-NEXT:    vldb wl6, [p0], m6; nopx
+; ASM-NEXT:    vldb wh6, [p0], m6
+; ASM-NEXT:    vldb wl8, [p0], m6
+; ASM-NEXT:    vldb.3d wh8, [p0], d0
 ; ASM-NEXT:    nop
-; ASM-NEXT:    vlda wl10, [p1], #32
-; ASM-NEXT:    vlda wh10, [p1], #32
+; ASM-NEXT:    vldb wl10, [p1], #32
+; ASM-NEXT:    vldb wh10, [p1], #32
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    nop
-; ASM-NEXT:    vlda wl6, [p1], #32; vshift.align x4, x4, s1, x6, r1
-; ASM-NEXT:    vlda wh6, [p1], #32; vshift.align x2, x2, s1, x8, r1
+; ASM-NEXT:    vldb wl6, [p1], #32; vshift.align x4, x4, s1, x6, r1
+; ASM-NEXT:    vldb wh6, [p1], #32; vshift.align x2, x2, s1, x8, r1
 ; ASM-NEXT:    vshuffle x8, x4, x2, r2
 ; ASM-NEXT:    vshuffle x3, x4, x2, r3
 ; ASM-NEXT:    vshuffle x1, x8, x0, r8; vmac cm0, cm0, x8, x10, r4

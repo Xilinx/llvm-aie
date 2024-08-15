@@ -367,6 +367,7 @@ include "AIE2GenInstrInfo.td"
 include "AIE2CompositeFormats.td"
 // Manual fixes to the auto-generated files
 include "AIE2GenFixupInstrInfo.td"
+include "AIE2MultiSlotPseudoInstrInfo.td"
 
 //Intrinsics
 let hasSideEffects = 1, mayLoad = 0, mayStore = 0 in {
@@ -584,8 +585,8 @@ class Split2DInstr<Instruction RealInst, int opidx> : SplitPseudo<RealInst,
 foreach instr = [VLDA_2D_dmw_lda_w, VLDA_2D_dmw_lda_am, VLDA_2D_CONV_FP32_BF16,
                  VLDB_2D, VLDB_2D_128, LDA_2D_dmv_lda_q, VLDB_2D_UNPACK_S8_S4,
                  VLDB_2D_UNPACK_S16_S8, VLDB_2D_UNPACK_D8_D4, VLDB_2D_UNPACK_D16_D8,
-                 VST_2D_dmw_sts_w, VST_2D_dmw_sts_am, VST_2D_128, ST_2D_dmv_sts_q,
-                 LDA_2D_dms_lda, LDA_2D_S8_dmhb_lda, LDA_2D_U8_dmhb_lda,
+                 VLD_2D_pseudo, VST_2D_dmw_sts_w, VST_2D_dmw_sts_am, VST_2D_128,
+                 ST_2D_dmv_sts_q, LDA_2D_dms_lda, LDA_2D_S8_dmhb_lda, LDA_2D_U8_dmhb_lda,
                  LDA_2D_S16_dmhb_lda, LDA_2D_U16_dmhb_lda,
                  ST_2D_dms_sts, ST_2D_S8, ST_2D_S16] in
     def instr # _split : Split2DInstr<instr, /*opidx=*/4>;
@@ -608,8 +609,8 @@ class Split3DInstr<Instruction RealInst, int opidx> : SplitPseudo<RealInst,
 foreach instr = [VLDA_3D_dmw_lda_w, VLDA_3D_dmw_lda_am, VLDA_3D_CONV_FP32_BF16,
                  VLDB_3D, VLDB_3D_128, LDA_3D_dmv_lda_q, VLDB_3D_UNPACK_S8_S4,
                  VLDB_3D_UNPACK_S16_S8, VLDB_3D_UNPACK_D8_D4, VLDB_3D_UNPACK_D16_D8,
-                 VST_3D_dmw_sts_w, VST_3D_dmw_sts_am, VST_3D_128, ST_3D_dmv_sts_q,
-                 LDA_3D_dms_lda, LDA_3D_S8_dmhb_lda, LDA_3D_U8_dmhb_lda,
+                 VLD_3D_pseudo, VST_3D_dmw_sts_w, VST_3D_dmw_sts_am, VST_3D_128, 
+                 ST_3D_dmv_sts_q, LDA_3D_dms_lda, LDA_3D_S8_dmhb_lda, LDA_3D_U8_dmhb_lda,
                  LDA_3D_S16_dmhb_lda, LDA_3D_U16_dmhb_lda,
                  ST_3D_dms_sts, ST_3D_S8, ST_3D_S16] in
     def instr # _split : Split3DInstr<instr, /*opidx=*/5>;
@@ -625,5 +626,4 @@ foreach instr = [VST_3D_SRS_D8_S32, VST_3D_SRS_D16_S64, VST_3D_SRS_D16_S32,
                  PADDA_3D, PADDB_3D, PADDS_3D] in
     def instr # _split : Split3DInstr<instr, /*opidx=*/4>;
 
-include "AIE2MultiSlotPseudoInstrInfo.td"
 include "AIE2InstrPatterns.td"

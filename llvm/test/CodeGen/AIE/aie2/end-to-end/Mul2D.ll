@@ -83,10 +83,10 @@ define void @mul2d(ptr noalias %in_ptr0, ptr noalias %in_ptr1, ptr noalias %out_
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB0_2: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    vlda wl2, [p1], #32; nopx
-; CHECK-NEXT:    vlda.3d wl6, [p0], d0
-; CHECK-NEXT:    vlda wl4, [p1], #32
-; CHECK-NEXT:    vlda.3d wl2, [p0], d0
+; CHECK-NEXT:    vldb wl2, [p1], #32; nopx
+; CHECK-NEXT:    vldb.3d wl6, [p0], d0
+; CHECK-NEXT:    vldb wl4, [p1], #32
+; CHECK-NEXT:    vldb.3d wl2, [p0], d0
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop

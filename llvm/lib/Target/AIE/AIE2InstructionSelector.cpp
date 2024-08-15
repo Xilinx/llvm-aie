@@ -3265,12 +3265,12 @@ LoadStoreOpcodes AIE2InstructionSelector::getLoadStoreOpcode(
       unsigned RBID = deriveRegBankID(I.getOperand(0).getReg(), MRI, RBI);
       if (RBID == AIE2::AccRegBankID) {
         return {/*ISelOpcode=*/AIE2::VST_dmw_sts_am_ag_idx_imm,
-                /*FitsImmediateRange=*/true,
+                AlwaysFitsImmediateRange,
                 /*OffsetOpcode=*/AIE2::VST_dmw_sts_am_ag_idx_imm};
       }
       if (RBID == AIE2::VRegBankID) {
         return {/*ISelOpcode=*/AIE2::VST_dmw_sts_w_ag_idx_imm,
-                /*FitsImmediateRange=*/true,
+                AlwaysFitsImmediateRange,
                 /*OffsetOpcode=*/AIE2::VST_dmw_sts_w_ag_idx_imm};
       }
       llvm_unreachable("Vector type not in AccRegBank nor VRegBank");
@@ -3497,13 +3497,13 @@ LoadStoreOpcodes AIE2InstructionSelector::getLoadStoreOpcode(
       unsigned RBID = deriveRegBankID(I.getOperand(0).getReg(), MRI, RBI);
       if (RBID == AIE2::AccRegBankID) {
         return {/*ISelOpcode=*/AIE2::VLDA_dmw_lda_am_ag_idx_imm,
-                /*FitsImmediateRange=*/true,
+                AlwaysFitsImmediateRange,
                 /*OffsetOpcode=*/AIE2::VLDA_dmw_lda_am_ag_idx_imm};
       }
       if (RBID == AIE2::VRegBankID) {
-        return {/*ISelOpcode=*/AIE2::VLDA_dmw_lda_w_ag_idx_imm,
-                /*FitsImmediateRange=*/true,
-                /*OffsetOpcode=*/AIE2::VLDA_dmw_lda_w_ag_idx_imm};
+        return {/*ISelOpcode=*/AIE2::VLD_idx_imm_3x32_pseudo,
+                AlwaysFitsImmediateRange,
+                /*OffsetOpcode=*/AIE2::VLD_idx_imm_3x32_pseudo};
       }
       llvm_unreachable("Vector type not in AccRegBank nor VRegBank");
     }
@@ -3527,9 +3527,9 @@ LoadStoreOpcodes AIE2InstructionSelector::getLoadStoreOpcode(
                   /*OffsetOpcode=*/AIE2::VLDA_dmw_lda_am_ag_idx_imm};
         }
         if (RBID == AIE2::VRegBankID) {
-          return {/*ISelOpcode=*/AIE2::VLDA_dmw_lda_w_ag_idx_imm,
+          return {/*ISelOpcode=*/AIE2::VLD_idx_imm_3x32_pseudo,
                   AlwaysFitsImmediateRange,
-                  /*OffsetOpcode=*/AIE2::VLDA_dmw_lda_w_ag_idx_imm};
+                  /*OffsetOpcode=*/{}};
         }
         llvm_unreachable("Vector type not in AccRegBank nor VRegBank");
       }
@@ -3557,10 +3557,30 @@ LoadStoreOpcodes AIE2InstructionSelector::getLoadStoreOpcode(
                 /*OffsetOpcode=*/AIE2::VLDA_dmw_lda_am_ag_idx_imm};
       }
       if (RBID == AIE2::VRegBankID) {
-        FitsImmediateRange = checkImmediateRangeSplitting<11, 32, 32>(Offset);
-        return {/*ISelOpcode=*/AIE2::VLDA_dmw_lda_w_ag_idx_imm,
-                FitsImmediateRange,
-                /*OffsetOpcode=*/AIE2::VLDA_dmw_lda_w_ag_idx_imm};
+        unsigned OffsetOpcode;
+        // First try if the Instruction can be selected as multi-slot offset
+        // load
+        if (checkImmediateRangeSplitting<8, 32, 32>(Offset)) {
+          FitsImmediateRange = true;
+          ISelOpcode = OffsetOpcode = AIE2::VLD_idx_imm_3x32_pseudo;
+        } else if (checkImmediateRange<8, 32>(Offset)) {
+          // When Offset is positive and one of the offset is in range of SlotB
+          ISelOpcode = AIE2::VLD_idx_imm_3x32_pseudo;
+          OffsetOpcode = AIE2::VLDA_dmw_lda_w_ag_idx_imm;
+          FitsImmediateRange = true;
+        } else if (Offset.has_value() && (*Offset).isNegative() &&
+                   checkImmediateRange<8, 32>((*Offset) + 32)) {
+          // When Offset is negative and one of the offset is in range of SlotB
+          ISelOpcode = AIE2::VLDA_dmw_lda_w_ag_idx_imm;
+          OffsetOpcode = AIE2::VLD_idx_imm_3x32_pseudo;
+          FitsImmediateRange = true;
+        } else {
+          // When Offset & Offset+32 are out of range of SlotB
+          FitsImmediateRange = checkImmediateRangeSplitting<11, 32, 32>(Offset);
+          ISelOpcode = OffsetOpcode = AIE2::VLDA_dmw_lda_w_ag_idx_imm;
+        }
+        return {/*ISelOpcode=*/ISelOpcode, FitsImmediateRange,
+                /*OffsetOpcode=*/OffsetOpcode};
       }
       llvm_unreachable("Vector type not in AccRegBank nor VRegBank");
     }
@@ -3574,11 +3594,18 @@ LoadStoreOpcodes AIE2InstructionSelector::getLoadStoreOpcode(
                 /*OffsetOpcode=*/AIE2::VLDA_dmw_lda_am_ag_idx_imm};
       }
       if (RBID == AIE2::VRegBankID) {
-        FitsImmediateRange = checkImmediateRange<11, 32>(Offset);
-        ISelOpcode = FitsImmediateRange ? AIE2::VLDA_dmw_lda_w_ag_idx_imm
-                                        : AIE2::VLDA_dmw_lda_w_ag_idx;
+        // First try if the Instruction can be selected as multi-slot offset
+        // load
+        if (checkImmediateRange<8, 32>(Offset)) {
+          FitsImmediateRange = true;
+          ISelOpcode = AIE2::VLD_idx_imm_3x32_pseudo;
+        } else {
+          FitsImmediateRange = checkImmediateRange<11, 32>(Offset);
+          ISelOpcode = FitsImmediateRange ? AIE2::VLDA_dmw_lda_w_ag_idx_imm
+                                          : AIE2::VLD_idx_pseudo;
+        }
         return {ISelOpcode, FitsImmediateRange,
-                /*OffsetOpcode=*/AIE2::VLDA_dmw_lda_w_ag_idx_imm};
+                /*OffsetOpcode=*/{}};
       }
       llvm_unreachable("Vector type not in AccRegBank nor VRegBank");
     }
@@ -3635,8 +3662,8 @@ LoadStoreOpcodes AIE2InstructionSelector::getLoadStoreOpcode(
         return {/*ISelOpcode=*/AIE2::VLDA_2D_dmw_lda_am, NoImmediate,
                 /*OffsetOpcode=*/AIE2::VLDA_dmw_lda_am_ag_idx_imm};
       if (RBID == AIE2::VRegBankID)
-        return {/*ISelOpcode=*/AIE2::VLDA_2D_dmw_lda_w, NoImmediate,
-                /*OffsetOpcode=*/AIE2::VLDA_dmw_lda_w_ag_idx_imm};
+        return {/*ISelOpcode=*/AIE2::VLD_2D_pseudo, NoImmediate,
+                /*OffsetOpcode=*/AIE2::VLD_idx_imm_3x32_pseudo};
       llvm_unreachable("Vector type not in AccRegBank nor VRegBank");
     }
     if (getLoadStoreSize(I) == 128) {
@@ -3678,8 +3705,8 @@ LoadStoreOpcodes AIE2InstructionSelector::getLoadStoreOpcode(
         return {/*ISelOpcode=*/AIE2::VLDA_3D_dmw_lda_am, NoImmediate,
                 /*OffsetOpcode=*/AIE2::VLDA_dmw_lda_am_ag_idx_imm};
       if (RBID == AIE2::VRegBankID)
-        return {/*ISelOpcode=*/AIE2::VLDA_3D_dmw_lda_w, NoImmediate,
-                /*OffsetOpcode=*/AIE2::VLDA_dmw_lda_w_ag_idx_imm};
+        return {/*ISelOpcode=*/AIE2::VLD_3D_pseudo, NoImmediate,
+                /*OffsetOpcode=*/AIE2::VLD_idx_imm_3x32_pseudo};
       llvm_unreachable("Vector type not in AccRegBank nor VRegBank");
     }
     if (getLoadStoreSize(I) == 128) {
@@ -3725,11 +3752,18 @@ LoadStoreOpcodes AIE2InstructionSelector::getLoadStoreOpcode(
                 /*OffsetOpcode=*/AIE2::VLDA_dmw_lda_am_ag_idx_imm};
       }
       if (RBID == AIE2::VRegBankID) {
-        FitsImmediateRange = checkImmediateRange<12, 32>(Offset);
-        ISelOpcode = FitsImmediateRange ? AIE2::VLDA_dmw_lda_w_ag_pstm_nrm_imm
-                                        : AIE2::VLDA_dmw_lda_w_ag_pstm_nrm;
+        // First try if the Instruction can be selected as multi-slot offset
+        // load
+        if (checkImmediateRange<9, 32>(Offset)) {
+          FitsImmediateRange = true;
+          ISelOpcode = AIE2::VLD_pstm_imm_4x32_pseudo;
+        } else {
+          FitsImmediateRange = checkImmediateRange<12, 32>(Offset);
+          ISelOpcode = FitsImmediateRange ? AIE2::VLDA_dmw_lda_w_ag_pstm_nrm_imm
+                                          : AIE2::VLD_pstm_pseudo;
+        }
         return {ISelOpcode, FitsImmediateRange,
-                /*OffsetOpcode=*/AIE2::VLDA_dmw_lda_w_ag_idx_imm};
+                /*OffsetOpcode=*/AIE2::VLD_idx_imm_3x32_pseudo};
       }
       llvm_unreachable("Vector type not in AccRegBank nor VRegBank");
     }
