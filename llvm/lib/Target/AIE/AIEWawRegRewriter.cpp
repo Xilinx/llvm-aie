@@ -111,6 +111,13 @@ getBBForbiddenReplacements(const MachineBasicBlock *MBB, const VirtRegMap &VRM,
                            const AIEBaseRegisterInfo *TRI,
                            const llvm::SmallVector<MCPhysReg, 16> &CSPhyRegs);
 
+static bool couldBeCalleeSaveEvasiveRegister(const MCPhysReg &PhysReg,
+                                             Register Reg,
+                                             const MachineFunction &MF,
+                                             const LiveRegMatrix &LRM,
+                                             const MachineRegisterInfo &MRI,
+                                             const AIEBaseRegisterInfo &TRI);
+
 bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
   if (DisablePass)
     return false;
@@ -162,8 +169,6 @@ bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
           continue;
 
         Register Reg = Op.getReg();
-        if (!TRI.isNaivleyReplaceable(MRI.getRegClass(Reg), MF))
-          continue;
 
         if (isWAWCandidate(Reg, MI, UsedPhyRegs, UsedVirtRegs, VRM, MRI)) {
           bool Replaced = replaceReg(Reg, ForbiddenPhysRegs, AlreadyReplaced,
@@ -235,6 +240,8 @@ bool replaceReg(const Register Reg,
                 const MachineFunction &MF, VirtRegMap &VRM, LiveRegMatrix &LRM,
                 const MachineRegisterInfo &MRI, const LiveIntervals &LIS,
                 const AIEBaseRegisterInfo &TRI) {
+  LLVM_DEBUG(dbgs() << " WAW RegRewriter: Register to replace"
+                    << TRI.getName(VRM.getPhys(Reg)) << "\n");
   llvm::SmallVector<MCPhysReg, 16> Replacements = getPriorityReplacementRegs(
       Reg, ForbiddenPhysRegs, CSPhyRegs, MF, VRM, LRM, MRI, LIS, TRI);
 
@@ -278,6 +285,9 @@ llvm::SmallVector<MCPhysReg, 16> getPriorityReplacementRegs(
     if (find(ForbiddenPhysRegs, PhysReg) != ForbiddenPhysRegs.end())
       continue;
 
+    if (couldBeCalleeSaveEvasiveRegister(PhysReg, Reg, MF, LRM, MRI, TRI))
+      continue;
+
     const llvm::LiveInterval &LI = LIS.getInterval(Reg);
     LiveRegMatrix::InterferenceKind IK = LRM.checkInterference(LI, PhysReg);
     if (IK == llvm::LiveRegMatrix::IK_Free)
@@ -299,6 +309,20 @@ bool containsLoop(const MachineFunction &MF) {
   for (const MachineBasicBlock &MBB : MF) {
     if (MBB.succ_end() != find(MBB.successors(), &MBB))
       return true;
+  }
+  return false;
+}
+
+static bool couldBeCalleeSaveEvasiveRegister(const MCPhysReg &PhysReg,
+                                             Register Reg,
+                                             const MachineFunction &MF,
+                                             const LiveRegMatrix &LRM,
+                                             const MachineRegisterInfo &MRI,
+                                             const AIEBaseRegisterInfo &TRI) {
+  const TargetRegisterClass *CalleeSaveClass = TRI.getCalleeSaveRegClass(MF);
+  const TargetRegisterClass *GPRClass = MRI.getRegClass(Reg);
+  if (CalleeSaveClass == GPRClass) {
+    return !LRM.isPhysRegUsed(PhysReg);
   }
   return false;
 }

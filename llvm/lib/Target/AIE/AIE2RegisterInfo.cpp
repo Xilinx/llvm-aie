@@ -473,8 +473,7 @@ AIE2RegisterInfo::getCSPhyRegs(const MachineFunction &MF) const {
   return CSRegs;
 }
 
-bool AIE2RegisterInfo::isNaivleyReplaceable(const TargetRegisterClass *RC,
-                                            const MachineFunction &MF) const {
-  const TargetRegisterClass *GPRClas = getGPRRegClass(MF);
-  return RC != GPRClas;
+const TargetRegisterClass *
+AIE2RegisterInfo::getCalleeSaveRegClass(const MachineFunction &MF) const {
+  return getLargestLegalSuperClass(getGPRRegClass(MF), MF);
 }

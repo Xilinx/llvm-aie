@@ -52,9 +52,9 @@ struct AIEBaseRegisterInfo : public TargetRegisterInfo {
   getCSPhyRegs(const MachineFunction &MF) const {
     llvm_unreachable("Target didn't implement getCSPhyRegs()");
   }
-  virtual bool isNaivleyReplaceable(const TargetRegisterClass *RC,
-                                    const MachineFunction &MF) const {
-    llvm_unreachable("Target didn't implement isNaivleyReplaceable()");
+  virtual const TargetRegisterClass *
+  getCalleeSaveRegClass(const MachineFunction &MF) const {
+    llvm_unreachable("Target didn't implement getCalleeSaveRegClass()");
   }
 #if 0
   /// Returns a BitVector of the intersection of GPR RegClass
