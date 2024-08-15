@@ -661,3 +661,111 @@ body:             |
     %5:_(s8) = G_TRUNC %1(s32)
     %6:_(<4 x s8>) = G_BUILD_VECTOR %2(s8), %3(s8), %4(s8), %5(s8)
     PseudoRET implicit $lr, implicit %6
+...
+
+---
+name:            test_build_vector_64_16
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: test_build_vector_64_16
+    ; CHECK: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
+    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
+    ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 4
+    ; CHECK-NEXT: [[C4:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(s32) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 65535
+    ; CHECK-NEXT: [[AND:%[0-9]+]]:_(s32) = G_AND [[C]], [[C5]]
+    ; CHECK-NEXT: [[AND1:%[0-9]+]]:_(s32) = G_AND [[DEF]], [[C4]]
+    ; CHECK-NEXT: [[OR:%[0-9]+]]:_(s32) = G_OR [[C4]], [[AND]]
+    ; CHECK-NEXT: [[OR1:%[0-9]+]]:_(s32) = G_OR [[C4]], [[AND1]]
+    ; CHECK-NEXT: [[AND2:%[0-9]+]]:_(s32) = G_AND [[C1]], [[C5]]
+    ; CHECK-NEXT: [[AND3:%[0-9]+]]:_(s32) = G_AND [[DEF]], [[C4]]
+    ; CHECK-NEXT: [[C6:%[0-9]+]]:_(s32) = G_CONSTANT i32 16
+    ; CHECK-NEXT: [[SHL:%[0-9]+]]:_(s32) = G_SHL [[AND2]], [[C6]](s32)
+    ; CHECK-NEXT: [[SHL1:%[0-9]+]]:_(s32) = G_SHL [[AND3]], [[C6]](s32)
+    ; CHECK-NEXT: [[LSHR:%[0-9]+]]:_(s32) = G_LSHR [[AND2]], [[C6]](s32)
+    ; CHECK-NEXT: [[OR2:%[0-9]+]]:_(s32) = G_OR [[SHL1]], [[LSHR]]
+    ; CHECK-NEXT: [[OR3:%[0-9]+]]:_(s32) = G_OR [[OR]], [[SHL]]
+    ; CHECK-NEXT: [[OR4:%[0-9]+]]:_(s32) = G_OR [[OR1]], [[OR2]]
+    ; CHECK-NEXT: [[AND4:%[0-9]+]]:_(s32) = G_AND [[C2]], [[C5]]
+    ; CHECK-NEXT: [[OR5:%[0-9]+]]:_(s32) = G_OR [[OR3]], [[C4]]
+    ; CHECK-NEXT: [[OR6:%[0-9]+]]:_(s32) = G_OR [[OR4]], [[AND4]]
+    ; CHECK-NEXT: [[AND5:%[0-9]+]]:_(s32) = G_AND [[C3]], [[C5]]
+    ; CHECK-NEXT: [[SHL2:%[0-9]+]]:_(s32) = G_SHL [[AND5]], [[C6]](s32)
+    ; CHECK-NEXT: [[OR7:%[0-9]+]]:_(s32) = G_OR [[OR5]], [[C4]]
+    ; CHECK-NEXT: [[OR8:%[0-9]+]]:_(s32) = G_OR [[OR6]], [[SHL2]]
+    ; CHECK-NEXT: [[MV:%[0-9]+]]:_(s64) = G_MERGE_VALUES [[OR7]](s32), [[OR8]](s32)
+    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<4 x s16>) = G_BITCAST [[MV]](s64)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[BITCAST]](<4 x s16>)
+    %0:_(s16) = G_CONSTANT i16 1
+    %1:_(s16) = G_CONSTANT i16 2
+    %2:_(s16) = G_CONSTANT i16 3
+    %3:_(s16) = G_CONSTANT i16 4
+    %4:_(<4 x s16>) = G_BUILD_VECTOR %0(s16), %1(s16), %2(s16), %3(s16)
+    PseudoRET implicit $lr, implicit %4
+...
+
+---
+name:            test_build_vector_64_8
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: test_build_vector_64_8
+    ; CHECK: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
+    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
+    ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 4
+    ; CHECK-NEXT: [[C4:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(s32) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 255
+    ; CHECK-NEXT: [[AND:%[0-9]+]]:_(s32) = G_AND [[C]], [[C5]]
+    ; CHECK-NEXT: [[AND1:%[0-9]+]]:_(s32) = G_AND [[DEF]], [[C4]]
+    ; CHECK-NEXT: [[OR:%[0-9]+]]:_(s32) = G_OR [[C4]], [[AND]]
+    ; CHECK-NEXT: [[OR1:%[0-9]+]]:_(s32) = G_OR [[C4]], [[AND1]]
+    ; CHECK-NEXT: [[AND2:%[0-9]+]]:_(s32) = G_AND [[C1]], [[C5]]
+    ; CHECK-NEXT: [[AND3:%[0-9]+]]:_(s32) = G_AND [[DEF]], [[C4]]
+    ; CHECK-NEXT: [[C6:%[0-9]+]]:_(s32) = G_CONSTANT i32 8
+    ; CHECK-NEXT: [[SHL:%[0-9]+]]:_(s32) = G_SHL [[AND2]], [[C6]](s32)
+    ; CHECK-NEXT: [[SHL1:%[0-9]+]]:_(s32) = G_SHL [[AND3]], [[C6]](s32)
+    ; CHECK-NEXT: [[C7:%[0-9]+]]:_(s32) = G_CONSTANT i32 24
+    ; CHECK-NEXT: [[LSHR:%[0-9]+]]:_(s32) = G_LSHR [[AND2]], [[C7]](s32)
+    ; CHECK-NEXT: [[OR2:%[0-9]+]]:_(s32) = G_OR [[SHL1]], [[LSHR]]
+    ; CHECK-NEXT: [[OR3:%[0-9]+]]:_(s32) = G_OR [[OR]], [[SHL]]
+    ; CHECK-NEXT: [[OR4:%[0-9]+]]:_(s32) = G_OR [[OR1]], [[OR2]]
+    ; CHECK-NEXT: [[AND4:%[0-9]+]]:_(s32) = G_AND [[C2]], [[C5]]
+    ; CHECK-NEXT: [[AND5:%[0-9]+]]:_(s32) = G_AND [[DEF]], [[C4]]
+    ; CHECK-NEXT: [[C8:%[0-9]+]]:_(s32) = G_CONSTANT i32 16
+    ; CHECK-NEXT: [[SHL2:%[0-9]+]]:_(s32) = G_SHL [[AND4]], [[C8]](s32)
+    ; CHECK-NEXT: [[SHL3:%[0-9]+]]:_(s32) = G_SHL [[AND5]], [[C8]](s32)
+    ; CHECK-NEXT: [[LSHR1:%[0-9]+]]:_(s32) = G_LSHR [[AND4]], [[C8]](s32)
+    ; CHECK-NEXT: [[OR5:%[0-9]+]]:_(s32) = G_OR [[SHL3]], [[LSHR1]]
+    ; CHECK-NEXT: [[OR6:%[0-9]+]]:_(s32) = G_OR [[OR3]], [[SHL2]]
+    ; CHECK-NEXT: [[OR7:%[0-9]+]]:_(s32) = G_OR [[OR4]], [[OR5]]
+    ; CHECK-NEXT: [[AND6:%[0-9]+]]:_(s32) = G_AND [[C3]], [[C5]]
+    ; CHECK-NEXT: [[AND7:%[0-9]+]]:_(s32) = G_AND [[DEF]], [[C4]]
+    ; CHECK-NEXT: [[SHL4:%[0-9]+]]:_(s32) = G_SHL [[AND6]], [[C7]](s32)
+    ; CHECK-NEXT: [[SHL5:%[0-9]+]]:_(s32) = G_SHL [[AND7]], [[C7]](s32)
+    ; CHECK-NEXT: [[LSHR2:%[0-9]+]]:_(s32) = G_LSHR [[AND6]], [[C6]](s32)
+    ; CHECK-NEXT: [[OR8:%[0-9]+]]:_(s32) = G_OR [[SHL5]], [[LSHR2]]
+    ; CHECK-NEXT: [[OR9:%[0-9]+]]:_(s32) = G_OR [[OR6]], [[SHL4]]
+    ; CHECK-NEXT: [[OR10:%[0-9]+]]:_(s32) = G_OR [[OR7]], [[OR8]]
+    ; CHECK-NEXT: [[OR11:%[0-9]+]]:_(s32) = G_OR [[OR9]], [[C4]]
+    ; CHECK-NEXT: [[OR12:%[0-9]+]]:_(s32) = G_OR [[OR10]], [[AND6]]
+    ; CHECK-NEXT: [[SHL6:%[0-9]+]]:_(s32) = G_SHL [[AND4]], [[C6]](s32)
+    ; CHECK-NEXT: [[OR13:%[0-9]+]]:_(s32) = G_OR [[OR11]], [[C4]]
+    ; CHECK-NEXT: [[OR14:%[0-9]+]]:_(s32) = G_OR [[OR12]], [[SHL6]]
+    ; CHECK-NEXT: [[SHL7:%[0-9]+]]:_(s32) = G_SHL [[AND2]], [[C8]](s32)
+    ; CHECK-NEXT: [[OR15:%[0-9]+]]:_(s32) = G_OR [[OR13]], [[C4]]
+    ; CHECK-NEXT: [[OR16:%[0-9]+]]:_(s32) = G_OR [[OR14]], [[SHL7]]
+    ; CHECK-NEXT: [[SHL8:%[0-9]+]]:_(s32) = G_SHL [[AND]], [[C7]](s32)
+    ; CHECK-NEXT: [[OR17:%[0-9]+]]:_(s32) = G_OR [[OR15]], [[C4]]
+    ; CHECK-NEXT: [[OR18:%[0-9]+]]:_(s32) = G_OR [[OR16]], [[SHL8]]
+    ; CHECK-NEXT: [[MV:%[0-9]+]]:_(s64) = G_MERGE_VALUES [[OR17]](s32), [[OR18]](s32)
+    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<8 x s8>) = G_BITCAST [[MV]](s64)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[BITCAST]](<8 x s8>)
+    %0:_(s8) = G_CONSTANT i8 1
+    %1:_(s8) = G_CONSTANT i8 2
+    %2:_(s8) = G_CONSTANT i8 3
+    %3:_(s8) = G_CONSTANT i8 4
+    %4:_(<8 x s8>) = G_BUILD_VECTOR %0(s8), %1(s8), %2(s8), %3(s8), %3(s8), %2(s8), %1(s8), %0(s8)
+    PseudoRET implicit $lr, implicit %4
