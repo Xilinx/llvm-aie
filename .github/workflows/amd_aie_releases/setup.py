@@ -1,11 +1,11 @@
-import shutil
-from datetime import datetime
 import os
 import platform
 import re
+import shutil
 import subprocess
 import sys
-from pathlib import Path, PureWindowsPath
+from datetime import datetime
+from pathlib import Path
 from pprint import pprint
 
 from setuptools import Extension, setup
@@ -49,8 +49,6 @@ class CMakeBuild(build_ext):
         cmake_args = [
             f"-B{build_temp}",
             f"-G {cmake_generator}",
-            "-DLLVM_BUILD_LLVM_DYLIB=ON",
-            "-DLLVM_LINK_LLVM_DYLIB=ON",
             "-DLLVM_BUILD_BENCHMARKS=OFF",
             "-DLLVM_BUILD_EXAMPLES=OFF",
             f"-DLLVM_BUILD_TESTS={RUN_TESTS}",
@@ -75,10 +73,14 @@ class CMakeBuild(build_ext):
             f"-DCMAKE_INSTALL_PREFIX={install_dir}",
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}{os.sep}",
             f"-DPython3_EXECUTABLE={PYTHON_EXECUTABLE}",
-            f"-DCMAKE_BUILD_TYPE={cfg}",  # not used on MSVC, but no harm
+            f"-DCMAKE_BUILD_TYPE={cfg}",  # not used on MSVC, but no harm,
         ]
-
-        if platform.system() == "Windows":
+        if platform.system() != "Windows":
+            cmake_args += [
+                "-DLLVM_BUILD_LLVM_DYLIB=ON",
+                "-DLLVM_LINK_LLVM_DYLIB=ON",
+            ]
+        else:
             cmake_args += [
                 "-DCMAKE_C_COMPILER=cl",
                 "-DCMAKE_CXX_COMPILER=cl",
@@ -87,6 +89,7 @@ class CMakeBuild(build_ext):
                 "-DCMAKE_CXX_FLAGS=/MT",
                 "-DLLVM_USE_CRT_MINSIZEREL=MT",
                 "-DLLVM_USE_CRT_RELEASE=MT",
+                "-DCMAKE_POLICY_DEFAULT_CMP0091=NEW",
             ]
 
         if "CMAKE_ARGS" in os.environ:
@@ -204,7 +207,10 @@ LLVM_AIE_SRC_ROOT = Path(
     os.getenv("LLVM_AIE_SRC_ROOT", Path.cwd() / "llvm-aie")
 ).absolute()
 
-cmake_txt = open(LLVM_AIE_SRC_ROOT / "llvm" / "CMakeLists.txt").read()
+cmake_version_path = Path("llvm-aie/cmake/Modules/LLVMVersion.cmake")
+if not cmake_version_path.exists():
+    cmake_version_path = Path("llvm-aie/llvm/CMakeLists.txt")
+cmake_txt = open(cmake_version_path).read()
 llvm_version = []
 for v in ["LLVM_VERSION_MAJOR", "LLVM_VERSION_MINOR", "LLVM_VERSION_PATCH"]:
     vn = re.findall(rf"set\({v} (\d+)\)", cmake_txt)
