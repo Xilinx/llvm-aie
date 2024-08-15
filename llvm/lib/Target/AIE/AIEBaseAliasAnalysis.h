@@ -14,12 +14,26 @@
 #ifndef LLVM_LIB_TARGET_AIE_AIEBASEALIASANALYSIS_H
 #define LLVM_LIB_TARGET_AIE_AIEBASEALIASANALYSIS_H
 
+#include "AIE.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 
 namespace llvm {
 
 class DataLayout;
 class MemoryLocation;
+
+namespace AIE {
+
+/// Given two machine instructions of a loop, if we virtually
+/// unroll such loop, this function will give an AliasResult
+/// considering that MIA and MIB will be executed in the
+/// UnrollLevelMIA and UnrollLevelMIB iterations, respectively.
+/// UnrollLevel=0 means first iteration.
+AliasResult aliasAcrossVirtualUnrolls(const MachineInstr *MIA,
+                                      const MachineInstr *MIB,
+                                      unsigned UnrollLevelMIA,
+                                      unsigned UnrollLevelMIB);
+} // namespace AIE
 
 class AIEBaseAAResult : public AAResultBase {
   const DataLayout &DL;

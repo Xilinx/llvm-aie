@@ -32,4 +32,7 @@ add_llvm_target_unittest(AIETests
   AIETestTarget.cpp
   BundleTest.cpp
   HazardRecognizerTest.cpp
+  VirtUnrollAliasAnalysisTest.cpp
   )
+
+set_property(TARGET AIETests PROPERTY FOLDER "Tests/UnitTests/TargetTests")
