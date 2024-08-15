@@ -152,6 +152,30 @@ bool AIE2PreLegalizerCombinerImpl::tryToCombineIntrinsic(
   return false;
 }
 
+CombinerHelper::GeneratorType sectionGenerator(const int32_t From,
+                                               const int32_t To,
+                                               const int32_t Partitions,
+                                               const int32_t Increment) {
+  int32_t RoundSize = To / Partitions;
+  int32_t Index = 0;
+  int32_t Round = 0;
+
+  return [=]() mutable {
+    int32_t CurrentGroup = (Index / Increment) % Partitions;
+    int32_t GroupFirstElement = CurrentGroup * RoundSize;
+    int32_t IndexInGroup = Index % Increment;
+    int32_t OffsetGroup = Round * Increment;
+    int32_t Next = GroupFirstElement + IndexInGroup + OffsetGroup;
+    if (++Index % (Partitions * Increment) == 0)
+      Round++;
+
+    std::optional<int32_t> Return = std::optional<int32_t>(Next);
+    if (Index == To + 1)
+      Return = {};
+    return Return;
+  };
+}
+
 bool AIE2PreLegalizerCombinerImpl::tryCombineShuffleVector(
     MachineInstr &MI) const {
   if (Helper.tryCombineShuffleVector(MI))
