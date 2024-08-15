@@ -184,7 +184,7 @@ define dso_local void @lowerMemcpyUsingWordVector32() local_unnamed_addr #0 {
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; movxm p0, #buffer2
-; CHECK-NEXT:    vlda wh0, [p0], #32
+; CHECK-NEXT:    vldb wh0, [p0], #32
 ; CHECK-NEXT:    lda r0, [p0], #4
 ; CHECK-NEXT:    lda r1, [p0], #4
 ; CHECK-NEXT:    lda r2, [p0], #4

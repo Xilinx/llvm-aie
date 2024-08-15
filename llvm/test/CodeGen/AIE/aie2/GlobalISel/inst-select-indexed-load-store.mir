@@ -8,14 +8,14 @@
 # RUN: llc -mtriple aie2 -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s
 
 ---
-name:            VEC256_LOAD_maxOffset
+name:            VEC256_LOAD_maxOffset_slotA
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $p0
-    ; CHECK-LABEL: name: VEC256_LOAD_maxOffset
+    ; CHECK-LABEL: name: VEC256_LOAD_maxOffset_slotA
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -28,14 +28,14 @@ body:             |
 ...
 
 ---
-name:            VEC256_LOAD_minOffset
+name:            VEC256_LOAD_minOffset_slotA
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $p0
-    ; CHECK-LABEL: name: VEC256_LOAD_minOffset
+    ; CHECK-LABEL: name: VEC256_LOAD_minOffset_slotA
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -48,20 +48,60 @@ body:             |
 ...
 
 ---
-name:            VEC256_LOAD_overMaxOffset
+name:            VEC256_LOAD_maxOffset_slotB
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $p0
-    ; CHECK-LABEL: name: VEC256_LOAD_overMaxOffset
+    ; CHECK-LABEL: name: VEC256_LOAD_maxOffset_slotB
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[VLD_idx_imm_3x32_pseudo:%[0-9]+]]:vec256 = VLD_idx_imm_3x32_pseudo [[COPY]], 96 :: (load (<8 x s32>))
+    ; CHECK-NEXT: $wl0 = COPY [[VLD_idx_imm_3x32_pseudo]]
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 96
+    %0:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %1:ptrregbank(p0), %2:modregbank(s20) :: (load (<8 x s32>))
+    $wl0 = COPY %0:vregbank(<8 x s32>)
+...
+
+---
+name:            VEC256_LOAD_minOffset_slotB
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: VEC256_LOAD_minOffset_slotB
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[VLD_idx_imm_3x32_pseudo:%[0-9]+]]:vec256 = VLD_idx_imm_3x32_pseudo [[COPY]], -128 :: (load (<8 x s32>))
+    ; CHECK-NEXT: $wl0 = COPY [[VLD_idx_imm_3x32_pseudo]]
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 -128
+    %0:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %1:ptrregbank(p0), %2:modregbank(s20) :: (load (<8 x s32>))
+    $wl0 = COPY %0:vregbank(<8 x s32>)
+...
+
+---
+name:            VEC256_LOAD_overMaxOffset_slotA
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: VEC256_LOAD_overMaxOffset_slotA
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[MOVXM_lng_cg:%[0-9]+]]:edj_as_32bit = MOVXM_lng_cg 1024
-    ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_idx:%[0-9]+]]:vec256 = VLDA_dmw_lda_w_ag_idx [[COPY]], [[MOVXM_lng_cg]] :: (load (<8 x s32>))
-    ; CHECK-NEXT: $wl0 = COPY [[VLDA_dmw_lda_w_ag_idx]]
+    ; CHECK-NEXT: [[VLD_idx_pseudo:%[0-9]+]]:vec256 = VLD_idx_pseudo [[COPY]], [[MOVXM_lng_cg]] :: (load (<8 x s32>))
+    ; CHECK-NEXT: $wl0 = COPY [[VLD_idx_pseudo]]
     %1:ptrregbank(p0) = COPY $p0
     %2:modregbank(s20) = G_CONSTANT i20 1024
     %0:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %1:ptrregbank(p0), %2:modregbank(s20) :: (load (<8 x s32>))
@@ -69,20 +109,20 @@ body:             |
 ...
 
 ---
-name:            VEC256_LOAD_overMinOffset
+name:            VEC256_LOAD_belowMinOffset_slotA
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $p0
-    ; CHECK-LABEL: name: VEC256_LOAD_overMinOffset
+    ; CHECK-LABEL: name: VEC256_LOAD_belowMinOffset_slotA
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[MOVXM_lng_cg:%[0-9]+]]:edj_as_32bit = MOVXM_lng_cg -1056
-    ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_idx:%[0-9]+]]:vec256 = VLDA_dmw_lda_w_ag_idx [[COPY]], [[MOVXM_lng_cg]] :: (load (<8 x s32>))
-    ; CHECK-NEXT: $wl0 = COPY [[VLDA_dmw_lda_w_ag_idx]]
+    ; CHECK-NEXT: [[VLD_idx_pseudo:%[0-9]+]]:vec256 = VLD_idx_pseudo [[COPY]], [[MOVXM_lng_cg]] :: (load (<8 x s32>))
+    ; CHECK-NEXT: $wl0 = COPY [[VLD_idx_pseudo]]
     %1:ptrregbank(p0) = COPY $p0
     %2:modregbank(s20) = G_CONSTANT i20 -1056
     %0:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %1:ptrregbank(p0), %2:modregbank(s20) :: (load (<8 x s32>))
@@ -90,14 +130,54 @@ body:             |
 ...
 
 ---
-name:            VEC512_LOAD_maxOffset
+name:            VEC256_LOAD_overMaxOffset_slotB
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $p0
-    ; CHECK-LABEL: name: VEC512_LOAD_maxOffset
+    ; CHECK-LABEL: name: VEC256_LOAD_overMaxOffset_slotB
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_idx_imm:%[0-9]+]]:vec256 = VLDA_dmw_lda_w_ag_idx_imm [[COPY]], 128 :: (load (<8 x s32>))
+    ; CHECK-NEXT: $wl0 = COPY [[VLDA_dmw_lda_w_ag_idx_imm]]
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 128
+    %0:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %1:ptrregbank(p0), %2:modregbank(s20) :: (load (<8 x s32>))
+    $wl0 = COPY %0:vregbank(<8 x s32>)
+...
+
+---
+name:            VEC256_LOAD_belowMinOffset_slotB
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: VEC256_LOAD_belowMinOffset_slotB
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_idx_imm:%[0-9]+]]:vec256 = VLDA_dmw_lda_w_ag_idx_imm [[COPY]], -160 :: (load (<8 x s32>))
+    ; CHECK-NEXT: $wl0 = COPY [[VLDA_dmw_lda_w_ag_idx_imm]]
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 -160
+    %0:vregbank(<8 x s32>) = G_AIE_OFFSET_LOAD %1:ptrregbank(p0), %2:modregbank(s20) :: (load (<8 x s32>))
+    $wl0 = COPY %0:vregbank(<8 x s32>)
+...
+
+---
+name:            VEC512_LOAD_maxOffset_slotA
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: VEC512_LOAD_maxOffset_slotA
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -112,14 +192,14 @@ body:             |
 ...
 
 ---
-name:            VEC512_LOAD_minOffset
+name:            VEC512_LOAD_minOffset_slotA
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $p0
-    ; CHECK-LABEL: name: VEC512_LOAD_minOffset
+    ; CHECK-LABEL: name: VEC512_LOAD_minOffset_slotA
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -134,14 +214,14 @@ body:             |
 ...
 
 ---
-name:            VEC512_LOAD_overMaxOffset
+name:            VEC512_LOAD_overMaxOffset_slotA
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $p0
-    ; CHECK-LABEL: name: VEC512_LOAD_overMaxOffset
+    ; CHECK-LABEL: name: VEC512_LOAD_overMaxOffset_slotA
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -157,14 +237,14 @@ body:             |
 ...
 
 ---
-name:            VEC512_LOAD_overMinOffset
+name:            VEC512_LOAD_belowMinOffset_slotA
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $p0
-    ; CHECK-LABEL: name: VEC512_LOAD_overMinOffset
+    ; CHECK-LABEL: name: VEC512_LOAD_belowMinOffset_slotA
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -175,6 +255,116 @@ body:             |
     ; CHECK-NEXT: $x0 = COPY [[REG_SEQUENCE]]
     %1:ptrregbank(p0) = COPY $p0
     %2:modregbank(s20) = G_CONSTANT i20 -1056
+    %0:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %1:ptrregbank(p0), %2:modregbank(s20) :: (load (<16 x s32>))
+    $x0 = COPY %0:vregbank(<16 x s32>)
+...
+
+---
+name:            VEC512_LOAD_maxOffset_slotB
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: VEC512_LOAD_maxOffset_slotB
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_idx_imm:%[0-9]+]]:vec256 = VLDA_dmw_lda_w_ag_idx_imm [[COPY]], 128 :: (load (<8 x s32>) from unknown-address + 32)
+    ; CHECK-NEXT: [[VLD_idx_imm_3x32_pseudo:%[0-9]+]]:vec256 = VLD_idx_imm_3x32_pseudo [[COPY]], 96 :: (load (<8 x s32>), align 64)
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[VLD_idx_imm_3x32_pseudo]], %subreg.sub_256_lo, [[VLDA_dmw_lda_w_ag_idx_imm]], %subreg.sub_256_hi
+    ; CHECK-NEXT: $x0 = COPY [[REG_SEQUENCE]]
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 96
+    %0:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %1:ptrregbank(p0), %2:modregbank(s20) :: (load (<16 x s32>))
+    $x0 = COPY %0:vregbank(<16 x s32>)
+...
+
+---
+name:            VEC512_LOAD_minOffset_slotB
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: VEC512_LOAD_minOffset_slotB
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[VLD_idx_imm_3x32_pseudo:%[0-9]+]]:vec256 = VLD_idx_imm_3x32_pseudo [[COPY]], -96 :: (load (<8 x s32>) from unknown-address + 32)
+    ; CHECK-NEXT: [[VLD_idx_imm_3x32_pseudo1:%[0-9]+]]:vec256 = VLD_idx_imm_3x32_pseudo [[COPY]], -128 :: (load (<8 x s32>), align 64)
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[VLD_idx_imm_3x32_pseudo1]], %subreg.sub_256_lo, [[VLD_idx_imm_3x32_pseudo]], %subreg.sub_256_hi
+    ; CHECK-NEXT: $x0 = COPY [[REG_SEQUENCE]]
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 -128
+    %0:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %1:ptrregbank(p0), %2:modregbank(s20) :: (load (<16 x s32>))
+    $x0 = COPY %0:vregbank(<16 x s32>)
+...
+
+---
+name:            VEC512_LOAD_overMaxOffset_slotB
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: VEC512_LOAD_overMaxOffset_slotB
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_idx_imm:%[0-9]+]]:vec256 = VLDA_dmw_lda_w_ag_idx_imm [[COPY]], 160 :: (load (<8 x s32>) from unknown-address + 32)
+    ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_idx_imm1:%[0-9]+]]:vec256 = VLDA_dmw_lda_w_ag_idx_imm [[COPY]], 128 :: (load (<8 x s32>), align 64)
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[VLDA_dmw_lda_w_ag_idx_imm1]], %subreg.sub_256_lo, [[VLDA_dmw_lda_w_ag_idx_imm]], %subreg.sub_256_hi
+    ; CHECK-NEXT: $x0 = COPY [[REG_SEQUENCE]]
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 128
+    %0:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %1:ptrregbank(p0), %2:modregbank(s20) :: (load (<16 x s32>))
+    $x0 = COPY %0:vregbank(<16 x s32>)
+...
+
+---
+name:            VEC512_LOAD_belowMinOffset_slotB
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: VEC512_LOAD_belowMinOffset_slotB
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[VLD_idx_imm_3x32_pseudo:%[0-9]+]]:vec256 = VLD_idx_imm_3x32_pseudo [[COPY]], -128 :: (load (<8 x s32>) from unknown-address + 32)
+    ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_idx_imm:%[0-9]+]]:vec256 = VLDA_dmw_lda_w_ag_idx_imm [[COPY]], -160 :: (load (<8 x s32>), align 64)
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[VLDA_dmw_lda_w_ag_idx_imm]], %subreg.sub_256_lo, [[VLD_idx_imm_3x32_pseudo]], %subreg.sub_256_hi
+    ; CHECK-NEXT: $x0 = COPY [[REG_SEQUENCE]]
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 -160
+    %0:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %1:ptrregbank(p0), %2:modregbank(s20) :: (load (<16 x s32>))
+    $x0 = COPY %0:vregbank(<16 x s32>)
+...
+
+---
+name:            VEC512_LOAD_maxOffset-32_slotB
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: VEC512_LOAD_maxOffset-32_slotB
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[VLD_idx_imm_3x32_pseudo:%[0-9]+]]:vec256 = VLD_idx_imm_3x32_pseudo [[COPY]], 96 :: (load (<8 x s32>) from unknown-address + 32)
+    ; CHECK-NEXT: [[VLD_idx_imm_3x32_pseudo1:%[0-9]+]]:vec256 = VLD_idx_imm_3x32_pseudo [[COPY]], 64 :: (load (<8 x s32>), align 64)
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[VLD_idx_imm_3x32_pseudo1]], %subreg.sub_256_lo, [[VLD_idx_imm_3x32_pseudo]], %subreg.sub_256_hi
+    ; CHECK-NEXT: $x0 = COPY [[REG_SEQUENCE]]
+    %1:ptrregbank(p0) = COPY $p0
+    %2:modregbank(s20) = G_CONSTANT i20 64
     %0:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %1:ptrregbank(p0), %2:modregbank(s20) :: (load (<16 x s32>))
     $x0 = COPY %0:vregbank(<16 x s32>)
 ...
@@ -241,14 +431,14 @@ body:             |
 ...
 
 ---
-name:            ACC256_LOAD_overMinOffset
+name:            ACC256_LOAD_belowMinOffset
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $p0
-    ; CHECK-LABEL: name: ACC256_LOAD_overMinOffset
+    ; CHECK-LABEL: name: ACC256_LOAD_belowMinOffset
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -329,14 +519,14 @@ body:             |
 ...
 
 ---
-name:            ACC512_LOAD_overMinOffset
+name:            ACC512_LOAD_belowMinOffset
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $p0
-    ; CHECK-LABEL: name: ACC512_LOAD_overMinOffset
+    ; CHECK-LABEL: name: ACC512_LOAD_belowMinOffset
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -413,14 +603,14 @@ body:             |
 ...
 
 ---
-name:            VEC256_STORE_overMinOffset
+name:            VEC256_STORE_belowMinOffset
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $p0, $wl0
-    ; CHECK-LABEL: name: VEC256_STORE_overMinOffset
+    ; CHECK-LABEL: name: VEC256_STORE_belowMinOffset
     ; CHECK: liveins: $p0, $wl0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec256 = COPY $wl0
@@ -504,14 +694,14 @@ body:             |
 ...
 
 ---
-name:            VEC512_STORE_overMinOffset
+name:            VEC512_STORE_belowMinOffset
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $p0, $x0
-    ; CHECK-LABEL: name: VEC512_STORE_overMinOffset
+    ; CHECK-LABEL: name: VEC512_STORE_belowMinOffset
     ; CHECK: liveins: $p0, $x0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
@@ -589,14 +779,14 @@ body:             |
 ...
 
 ---
-name:            ACC256_STORE_overMinOffset
+name:            ACC256_STORE_belowMinOffset
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $amll0, $p0
-    ; CHECK-LABEL: name: ACC256_STORE_overMinOffset
+    ; CHECK-LABEL: name: ACC256_STORE_belowMinOffset
     ; CHECK: liveins: $amll0, $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:acc256 = COPY $amll0
@@ -680,14 +870,14 @@ body:             |
 ...
 
 ---
-name:            ACC512_STORE_overMinOffset
+name:            ACC512_STORE_belowMinOffset
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $bml0, $p0
-    ; CHECK-LABEL: name: ACC512_STORE_overMinOffset
+    ; CHECK-LABEL: name: ACC512_STORE_belowMinOffset
     ; CHECK: liveins: $bml0, $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:acc512 = COPY $bml0
