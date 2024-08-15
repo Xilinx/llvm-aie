@@ -211,11 +211,32 @@ CombinerHelper::GeneratorType sectionGenerator(const int32_t From,
 
 bool AIE2PreLegalizerCombinerImpl::tryCombineShuffleVector(
     MachineInstr &MI) const {
+  const Register DstReg = MI.getOperand(0).getReg();
+  const LLT DstTy = MRI.getType(DstReg);
+  const LLT SrcTy = MRI.getType(MI.getOperand(1).getReg());
+  const unsigned DstNumElts = DstTy.isVector() ? DstTy.getNumElements() : 1;
+  const unsigned SrcNumElts = SrcTy.isVector() ? SrcTy.getNumElements() : 1;
+  MachineIRBuilder MIB(MI);
+  MachineRegisterInfo &MRI = *MIB.getMRI();
+
   if (Helper.tryCombineShuffleVector(MI))
     return true;
 
+  const LLT V64S8 = LLT::fixed_vector(64, 8);
+  CombinerHelper::GeneratorType FourPartitions =
+      sectionGenerator(0, DstNumElts, 4, 1);
+  if (Helper.matchCombineShuffleVector(MI, FourPartitions, DstNumElts))
+    return createVShuffle(MI, V64S8, 35);
+
+  const LLT V32S16 = LLT::fixed_vector(32, 16);
+  CombinerHelper::GeneratorType FourPartitionByTwo =
+      sectionGenerator(0, DstNumElts, 4, 2);
+  if (Helper.matchCombineShuffleVector(MI, FourPartitionByTwo, DstNumElts))
+    return createVShuffle(MI, V32S16, 29);
+
   return false;
 }
+
 bool AIE2PreLegalizerCombinerImpl::tryCombineAll(MachineInstr &MI) const {
   if (tryCombineAllImpl(MI))
     return true;
