@@ -1467,9 +1467,10 @@ unsigned getLoadStoreSize(const MachineInstr &MI) {
   return (*MI.memoperands_begin())->getSizeInBits().getValue();
 }
 
-template <unsigned MaxPow2, unsigned Step>
+template <unsigned NumEncodingBits, unsigned Step>
 bool checkImmediateRange(std::optional<APInt> Immediate) {
-  if (Immediate && isInt<MaxPow2>(Immediate->getSExtValue()) &&
+  unsigned MaxPow2 = NumEncodingBits + llvm::Log2_64(Step);
+  if (Immediate && isIntN(MaxPow2, Immediate->getSExtValue()) &&
       Immediate->getSExtValue() % Step == 0) {
     LLVM_DEBUG(dbgs() << "Immediate " << Immediate << " is valid for MaxPow2 "
                       << MaxPow2 << " and Step " << Step << ".\n");
@@ -1478,10 +1479,10 @@ bool checkImmediateRange(std::optional<APInt> Immediate) {
   return false;
 }
 
-template <unsigned MaxPow2, unsigned Step, unsigned SplitOffset>
+template <unsigned NumEncodingBits, unsigned Step, unsigned SplitOffset>
 bool checkImmediateRangeSplitting(std::optional<APInt> Immediate) {
-  return Immediate && checkImmediateRange<MaxPow2, Step>(Immediate) &&
-         checkImmediateRange<MaxPow2, Step>(*Immediate + SplitOffset);
+  return Immediate && checkImmediateRange<NumEncodingBits, Step>(Immediate) &&
+         checkImmediateRange<NumEncodingBits, Step>(*Immediate + SplitOffset);
 }
 
 std::optional<LoadStoreOpcodes> getCombinedOpcodeUNPACKLoad(
@@ -1739,14 +1740,14 @@ getCombinedOpcodeSRSUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
         switch (cast<GIntrinsic>(CombOp).getIntrinsicID()) {
         case Intrinsic::aie2_I512_v32_acc32_srs:
           FitsImmediateRange =
-              checkImmediateRangeSplitting<8, 32, 32>(Immediate);
+              checkImmediateRangeSplitting<3, 32, 32>(Immediate);
           return LoadStoreOpcodes{
               /*ISelOpcode=*/AIE2::VST_SRS_S16_S32_ag_idx_imm,
               FitsImmediateRange,
               /*OffsetOpcode=*/AIE2::VST_SRS_S16_S32_ag_idx_imm};
         case Intrinsic::aie2_I512_v16_acc64_srs:
           FitsImmediateRange =
-              checkImmediateRangeSplitting<8, 32, 32>(Immediate);
+              checkImmediateRangeSplitting<3, 32, 32>(Immediate);
           return LoadStoreOpcodes{
               /*ISelOpcode=*/AIE2::VST_SRS_S32_S64_ag_idx_imm,
               FitsImmediateRange,
@@ -1756,25 +1757,25 @@ getCombinedOpcodeSRSUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
       if (getLoadStoreSize(MemOp) == 256) {
         switch (cast<GIntrinsic>(CombOp).getIntrinsicID()) {
         case Intrinsic::aie2_I256_v16_acc32_srs:
-          FitsImmediateRange = checkImmediateRange<8, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<3, 32>(Immediate);
           ISelOpcode = FitsImmediateRange ? AIE2::VST_SRS_S16_S32_ag_idx_imm
                                           : AIE2::VST_SRS_S16_S32_ag_idx;
           return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
                                   /*OffsetOpcode=*/{}};
         case Intrinsic::aie2_I256_v16_acc64_srs:
-          FitsImmediateRange = checkImmediateRange<8, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<3, 32>(Immediate);
           ISelOpcode = FitsImmediateRange ? AIE2::VST_SRS_S16_S64_ag_idx_imm
                                           : AIE2::VST_SRS_S16_S64_ag_idx;
           return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
                                   /*OffsetOpcode=*/{}};
         case Intrinsic::aie2_I256_v32_acc32_srs:
-          FitsImmediateRange = checkImmediateRange<8, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<3, 32>(Immediate);
           ISelOpcode = FitsImmediateRange ? AIE2::VST_SRS_S8_S32_ag_idx_imm
                                           : AIE2::VST_SRS_S8_S32_ag_idx;
           return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
                                   /*OffsetOpcode=*/{}};
         case Intrinsic::aie2_I256_v8_acc64_srs:
-          FitsImmediateRange = checkImmediateRange<8, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<3, 32>(Immediate);
           ISelOpcode = FitsImmediateRange ? AIE2::VST_SRS_S32_S64_ag_idx_imm
                                           : AIE2::VST_SRS_S32_S64_ag_idx;
           return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
@@ -1786,7 +1787,7 @@ getCombinedOpcodeSRSUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
       if (getLoadStoreSize(MemOp) == 512) {
         switch (cast<GIntrinsic>(CombOp).getIntrinsicID()) {
         case Intrinsic::aie2_I512_v32_acc32_srs:
-          FitsImmediateRange = checkImmediateRange<9, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
           ISelOpcode = FitsImmediateRange
                            ? AIE2::VST_SRS_S16_S32_ag_pstm_nrm_imm
                            : AIE2::VST_SRS_S16_S32_ag_pstm_nrm;
@@ -1794,7 +1795,7 @@ getCombinedOpcodeSRSUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
               ISelOpcode, FitsImmediateRange,
               /*OffsetOpcode=*/AIE2::VST_SRS_S16_S32_ag_idx_imm};
         case Intrinsic::aie2_I512_v16_acc64_srs:
-          FitsImmediateRange = checkImmediateRange<9, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
           ISelOpcode = FitsImmediateRange
                            ? AIE2::VST_SRS_S32_S64_ag_pstm_nrm_imm
                            : AIE2::VST_SRS_S32_S64_ag_pstm_nrm;
@@ -1806,27 +1807,27 @@ getCombinedOpcodeSRSUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
       if (getLoadStoreSize(MemOp) == 256) {
         switch (cast<GIntrinsic>(CombOp).getIntrinsicID()) {
         case Intrinsic::aie2_I256_v16_acc32_srs:
-          FitsImmediateRange = checkImmediateRange<9, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
           ISelOpcode = FitsImmediateRange
                            ? AIE2::VST_SRS_S16_S32_ag_pstm_nrm_imm
                            : AIE2::VST_SRS_S16_S32_ag_pstm_nrm;
           return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
                                   /*OffsetOpcode=*/{}};
         case Intrinsic::aie2_I256_v16_acc64_srs:
-          FitsImmediateRange = checkImmediateRange<9, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
           ISelOpcode = FitsImmediateRange
                            ? AIE2::VST_SRS_S16_S64_ag_pstm_nrm_imm
                            : AIE2::VST_SRS_S16_S64_ag_pstm_nrm;
           return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
                                   /*OffsetOpcode=*/{}};
         case Intrinsic::aie2_I256_v32_acc32_srs:
-          FitsImmediateRange = checkImmediateRange<9, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
           ISelOpcode = FitsImmediateRange ? AIE2::VST_SRS_S8_S32_ag_pstm_nrm_imm
                                           : AIE2::VST_SRS_S8_S32_ag_pstm_nrm;
           return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
                                   /*OffsetOpcode=*/{}};
         case Intrinsic::aie2_I256_v8_acc64_srs:
-          FitsImmediateRange = checkImmediateRange<9, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
           ISelOpcode = FitsImmediateRange
                            ? AIE2::VST_SRS_S32_S64_ag_pstm_nrm_imm
                            : AIE2::VST_SRS_S32_S64_ag_pstm_nrm;
@@ -1944,14 +1945,14 @@ getCombinedOpcodeSRSUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
         switch (cast<GIntrinsic>(CombOp).getIntrinsicID()) {
         case Intrinsic::aie2_acc64_v16_I512_ups:
           FitsImmediateRange =
-              checkImmediateRangeSplitting<8, 32, 32>(Immediate);
+              checkImmediateRangeSplitting<3, 32, 32>(Immediate);
           return LoadStoreOpcodes{
               /*ISelOpcode=*/AIE2::VLDA_UPS_S64_S32_ag_idx_imm,
               FitsImmediateRange,
               /*OffsetOpcode=*/AIE2::VLDA_UPS_S64_S32_ag_idx_imm};
         case Intrinsic::aie2_acc32_v32_I512_ups:
           FitsImmediateRange =
-              checkImmediateRangeSplitting<8, 32, 32>(Immediate);
+              checkImmediateRangeSplitting<3, 32, 32>(Immediate);
           return LoadStoreOpcodes{
               /*ISelOpcode=*/AIE2::VLDA_UPS_S32_S16_ag_idx_imm,
               FitsImmediateRange,
@@ -1961,25 +1962,25 @@ getCombinedOpcodeSRSUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
       if (getLoadStoreSize(MemOp) == 256) {
         switch (cast<GIntrinsic>(CombOp).getIntrinsicID()) {
         case Intrinsic::aie2_acc32_v16_I256_ups:
-          FitsImmediateRange = checkImmediateRange<8, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<3, 32>(Immediate);
           ISelOpcode = FitsImmediateRange ? AIE2::VLDA_UPS_S32_S16_ag_idx_imm
                                           : AIE2::VLDA_UPS_S32_S16_ag_idx;
           return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
                                   /*OffsetOpcode=*/{}};
         case Intrinsic::aie2_acc64_v16_I256_ups:
-          FitsImmediateRange = checkImmediateRange<8, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<3, 32>(Immediate);
           ISelOpcode = FitsImmediateRange ? AIE2::VLDA_UPS_S64_S16_ag_idx_imm
                                           : AIE2::VLDA_UPS_S64_S16_ag_idx;
           return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
                                   /*OffsetOpcode=*/{}};
         case Intrinsic::aie2_acc32_v32_I256_ups:
-          FitsImmediateRange = checkImmediateRange<8, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<3, 32>(Immediate);
           ISelOpcode = FitsImmediateRange ? AIE2::VLDA_UPS_S32_S8_ag_idx_imm
                                           : AIE2::VLDA_UPS_S32_S8_ag_idx;
           return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
                                   /*OffsetOpcode=*/{}};
         case Intrinsic::aie2_acc64_v8_I256_ups:
-          FitsImmediateRange = checkImmediateRange<8, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<3, 32>(Immediate);
           ISelOpcode = FitsImmediateRange ? AIE2::VLDA_UPS_S64_S32_ag_idx_imm
                                           : AIE2::VLDA_UPS_S64_S32_ag_idx;
           return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
@@ -1991,7 +1992,7 @@ getCombinedOpcodeSRSUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
       if (getLoadStoreSize(MemOp) == 512) {
         switch (cast<GIntrinsic>(CombOp).getIntrinsicID()) {
         case Intrinsic::aie2_acc64_v16_I512_ups:
-          FitsImmediateRange = checkImmediateRange<9, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
           ISelOpcode = FitsImmediateRange
                            ? AIE2::VLDA_UPS_S64_S32_ag_pstm_nrm_imm
                            : AIE2::VLDA_UPS_S64_S32_ag_pstm_nrm;
@@ -1999,7 +2000,7 @@ getCombinedOpcodeSRSUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
               ISelOpcode, FitsImmediateRange,
               /*OffsetOpcode=*/AIE2::VLDA_UPS_S64_S32_ag_idx_imm};
         case Intrinsic::aie2_acc32_v32_I512_ups:
-          FitsImmediateRange = checkImmediateRange<9, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
           ISelOpcode = FitsImmediateRange
                            ? AIE2::VLDA_UPS_S32_S16_ag_pstm_nrm_imm
                            : AIE2::VLDA_UPS_S32_S16_ag_pstm_nrm;
@@ -2011,28 +2012,28 @@ getCombinedOpcodeSRSUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
       if (getLoadStoreSize(MemOp) == 256) {
         switch (cast<GIntrinsic>(CombOp).getIntrinsicID()) {
         case Intrinsic::aie2_acc32_v16_I256_ups:
-          FitsImmediateRange = checkImmediateRange<9, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
           ISelOpcode = FitsImmediateRange
                            ? AIE2::VLDA_UPS_S32_S16_ag_pstm_nrm_imm
                            : AIE2::VLDA_UPS_S32_S16_ag_pstm_nrm;
           return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
                                   /*OffsetOpcode=*/{}};
         case Intrinsic::aie2_acc64_v16_I256_ups:
-          FitsImmediateRange = checkImmediateRange<9, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
           ISelOpcode = FitsImmediateRange
                            ? AIE2::VLDA_UPS_S64_S16_ag_pstm_nrm_imm
                            : AIE2::VLDA_UPS_S64_S16_ag_pstm_nrm;
           return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
                                   /*OffsetOpcode=*/{}};
         case Intrinsic::aie2_acc32_v32_I256_ups:
-          FitsImmediateRange = checkImmediateRange<9, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
           ISelOpcode = FitsImmediateRange
                            ? AIE2::VLDA_UPS_S32_S8_ag_pstm_nrm_imm
                            : AIE2::VLDA_UPS_S32_S8_ag_pstm_nrm;
           return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
                                   /*OffsetOpcode=*/{}};
         case Intrinsic::aie2_acc64_v8_I256_ups:
-          FitsImmediateRange = checkImmediateRange<9, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
           ISelOpcode = FitsImmediateRange
                            ? AIE2::VLDA_UPS_S64_S32_ag_pstm_nrm_imm
                            : AIE2::VLDA_UPS_S64_S32_ag_pstm_nrm;
@@ -2154,14 +2155,14 @@ getCombinedOpcodeSRSUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
         switch (cast<GIntrinsic>(CombOp).getIntrinsicID()) {
         case Intrinsic::aie2_I512_v32_acc32_srs:
           FitsImmediateRange =
-              checkImmediateRangeSplitting<8, 32, 32>(Immediate);
+              checkImmediateRangeSplitting<3, 32, 32>(Immediate);
           return LoadStoreOpcodes{
               /*ISelOpcode=*/AIE2::VST_SRS_D16_S32_ag_idx_imm,
               FitsImmediateRange,
               /*OffsetOpcode=*/AIE2::VST_SRS_D16_S32_ag_idx_imm};
         case Intrinsic::aie2_I512_v16_acc64_srs:
           FitsImmediateRange =
-              checkImmediateRangeSplitting<8, 32, 32>(Immediate);
+              checkImmediateRangeSplitting<3, 32, 32>(Immediate);
           return LoadStoreOpcodes{
               /*ISelOpcode=*/AIE2::VST_SRS_D32_S64_ag_idx_imm,
               FitsImmediateRange,
@@ -2171,25 +2172,25 @@ getCombinedOpcodeSRSUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
       if (getLoadStoreSize(MemOp) == 256) {
         switch (cast<GIntrinsic>(CombOp).getIntrinsicID()) {
         case Intrinsic::aie2_I256_v16_acc32_srs:
-          FitsImmediateRange = checkImmediateRange<8, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<3, 32>(Immediate);
           ISelOpcode = FitsImmediateRange ? AIE2::VST_SRS_D16_S32_ag_idx_imm
                                           : AIE2::VST_SRS_D16_S32_ag_idx;
           return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
                                   /*OffsetOpcode=*/{}};
         case Intrinsic::aie2_I256_v16_acc64_srs:
-          FitsImmediateRange = checkImmediateRange<8, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<3, 32>(Immediate);
           ISelOpcode = FitsImmediateRange ? AIE2::VST_SRS_D16_S64_ag_idx_imm
                                           : AIE2::VST_SRS_D16_S64_ag_idx;
           return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
                                   /*OffsetOpcode=*/{}};
         case Intrinsic::aie2_I256_v32_acc32_srs:
-          FitsImmediateRange = checkImmediateRange<8, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<3, 32>(Immediate);
           ISelOpcode = FitsImmediateRange ? AIE2::VST_SRS_D8_S32_ag_idx_imm
                                           : AIE2::VST_SRS_D8_S32_ag_idx;
           return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
                                   /*OffsetOpcode=*/{}};
         case Intrinsic::aie2_I256_v8_acc64_srs:
-          FitsImmediateRange = checkImmediateRange<8, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<3, 32>(Immediate);
           ISelOpcode = FitsImmediateRange ? AIE2::VST_SRS_D32_S64_ag_idx_imm
                                           : AIE2::VST_SRS_D32_S64_ag_idx;
           return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
@@ -2201,7 +2202,7 @@ getCombinedOpcodeSRSUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
       if (getLoadStoreSize(MemOp) == 512) {
         switch (cast<GIntrinsic>(CombOp).getIntrinsicID()) {
         case Intrinsic::aie2_I512_v32_acc32_srs:
-          FitsImmediateRange = checkImmediateRange<9, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
           ISelOpcode = FitsImmediateRange
                            ? AIE2::VST_SRS_D16_S32_ag_pstm_nrm_imm
                            : AIE2::VST_SRS_D16_S32_ag_pstm_nrm;
@@ -2209,7 +2210,7 @@ getCombinedOpcodeSRSUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
               ISelOpcode, FitsImmediateRange,
               /*OffsetOpcode=*/AIE2::VST_SRS_D16_S32_ag_idx_imm};
         case Intrinsic::aie2_I512_v16_acc64_srs:
-          FitsImmediateRange = checkImmediateRange<9, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
           ISelOpcode = FitsImmediateRange
                            ? AIE2::VST_SRS_D32_S64_ag_pstm_nrm_imm
                            : AIE2::VST_SRS_D32_S64_ag_pstm_nrm;
@@ -2221,27 +2222,27 @@ getCombinedOpcodeSRSUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
       if (getLoadStoreSize(MemOp) == 256) {
         switch (cast<GIntrinsic>(CombOp).getIntrinsicID()) {
         case Intrinsic::aie2_I256_v16_acc32_srs:
-          FitsImmediateRange = checkImmediateRange<9, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
           ISelOpcode = FitsImmediateRange
                            ? AIE2::VST_SRS_D16_S32_ag_pstm_nrm_imm
                            : AIE2::VST_SRS_D16_S32_ag_pstm_nrm;
           return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
                                   /*OffsetOpcode=*/{}};
         case Intrinsic::aie2_I256_v16_acc64_srs:
-          FitsImmediateRange = checkImmediateRange<9, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
           ISelOpcode = FitsImmediateRange
                            ? AIE2::VST_SRS_D16_S64_ag_pstm_nrm_imm
                            : AIE2::VST_SRS_D16_S64_ag_pstm_nrm;
           return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
                                   /*OffsetOpcode=*/{}};
         case Intrinsic::aie2_I256_v32_acc32_srs:
-          FitsImmediateRange = checkImmediateRange<9, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
           ISelOpcode = FitsImmediateRange ? AIE2::VST_SRS_D8_S32_ag_pstm_nrm_imm
                                           : AIE2::VST_SRS_D8_S32_ag_pstm_nrm;
           return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
                                   /*OffsetOpcode=*/{}};
         case Intrinsic::aie2_I256_v8_acc64_srs:
-          FitsImmediateRange = checkImmediateRange<9, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
           ISelOpcode = FitsImmediateRange
                            ? AIE2::VST_SRS_D32_S64_ag_pstm_nrm_imm
                            : AIE2::VST_SRS_D32_S64_ag_pstm_nrm;
@@ -2359,14 +2360,14 @@ getCombinedOpcodeSRSUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
         switch (cast<GIntrinsic>(CombOp).getIntrinsicID()) {
         case Intrinsic::aie2_acc64_v16_I512_ups:
           FitsImmediateRange =
-              checkImmediateRangeSplitting<8, 32, 32>(Immediate);
+              checkImmediateRangeSplitting<3, 32, 32>(Immediate);
           return LoadStoreOpcodes{
               /*ISelOpcode=*/AIE2::VLDA_UPS_S64_D32_ag_idx_imm,
               FitsImmediateRange,
               /*OffsetOpcode=*/AIE2::VLDA_UPS_S64_D32_ag_idx_imm};
         case Intrinsic::aie2_acc32_v32_I512_ups:
           FitsImmediateRange =
-              checkImmediateRangeSplitting<8, 32, 32>(Immediate);
+              checkImmediateRangeSplitting<3, 32, 32>(Immediate);
           return LoadStoreOpcodes{
               /*ISelOpcode=*/AIE2::VLDA_UPS_S32_D16_ag_idx_imm,
               FitsImmediateRange,
@@ -2376,25 +2377,25 @@ getCombinedOpcodeSRSUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
       if (getLoadStoreSize(MemOp) == 256) {
         switch (cast<GIntrinsic>(CombOp).getIntrinsicID()) {
         case Intrinsic::aie2_acc32_v16_I256_ups:
-          FitsImmediateRange = checkImmediateRange<8, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<3, 32>(Immediate);
           ISelOpcode = FitsImmediateRange ? AIE2::VLDA_UPS_S32_D16_ag_idx_imm
                                           : AIE2::VLDA_UPS_S32_D16_ag_idx;
           return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
                                   /*OffsetOpcode=*/{}};
         case Intrinsic::aie2_acc64_v16_I256_ups:
-          FitsImmediateRange = checkImmediateRange<8, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<3, 32>(Immediate);
           ISelOpcode = FitsImmediateRange ? AIE2::VLDA_UPS_S64_D16_ag_idx_imm
                                           : AIE2::VLDA_UPS_S64_D16_ag_idx;
           return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
                                   /*OffsetOpcode=*/{}};
         case Intrinsic::aie2_acc32_v32_I256_ups:
-          FitsImmediateRange = checkImmediateRange<8, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<3, 32>(Immediate);
           ISelOpcode = FitsImmediateRange ? AIE2::VLDA_UPS_S32_D8_ag_idx_imm
                                           : AIE2::VLDA_UPS_S32_D8_ag_idx;
           return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
                                   /*OffsetOpcode=*/{}};
         case Intrinsic::aie2_acc64_v8_I256_ups:
-          FitsImmediateRange = checkImmediateRange<8, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<3, 32>(Immediate);
           ISelOpcode = FitsImmediateRange ? AIE2::VLDA_UPS_S64_D32_ag_idx_imm
                                           : AIE2::VLDA_UPS_S64_D32_ag_idx;
           return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
@@ -2406,7 +2407,7 @@ getCombinedOpcodeSRSUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
       if (getLoadStoreSize(MemOp) == 512) {
         switch (cast<GIntrinsic>(CombOp).getIntrinsicID()) {
         case Intrinsic::aie2_acc64_v16_I512_ups:
-          FitsImmediateRange = checkImmediateRange<9, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
           ISelOpcode = FitsImmediateRange
                            ? AIE2::VLDA_UPS_S64_D32_ag_pstm_nrm_imm
                            : AIE2::VLDA_UPS_S64_D32_ag_pstm_nrm;
@@ -2414,7 +2415,7 @@ getCombinedOpcodeSRSUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
               ISelOpcode, FitsImmediateRange,
               /*OffsetOpcode=*/AIE2::VLDA_UPS_S64_D32_ag_idx_imm};
         case Intrinsic::aie2_acc32_v32_I512_ups:
-          FitsImmediateRange = checkImmediateRange<9, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
           ISelOpcode = FitsImmediateRange
                            ? AIE2::VLDA_UPS_S32_D16_ag_pstm_nrm_imm
                            : AIE2::VLDA_UPS_S32_D16_ag_pstm_nrm;
@@ -2426,28 +2427,28 @@ getCombinedOpcodeSRSUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
       if (getLoadStoreSize(MemOp) == 256) {
         switch (cast<GIntrinsic>(CombOp).getIntrinsicID()) {
         case Intrinsic::aie2_acc32_v16_I256_ups:
-          FitsImmediateRange = checkImmediateRange<9, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
           ISelOpcode = FitsImmediateRange
                            ? AIE2::VLDA_UPS_S32_D16_ag_pstm_nrm_imm
                            : AIE2::VLDA_UPS_S32_D16_ag_pstm_nrm;
           return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
                                   /*OffsetOpcode=*/{}};
         case Intrinsic::aie2_acc64_v16_I256_ups:
-          FitsImmediateRange = checkImmediateRange<9, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
           ISelOpcode = FitsImmediateRange
                            ? AIE2::VLDA_UPS_S64_D16_ag_pstm_nrm_imm
                            : AIE2::VLDA_UPS_S64_D16_ag_pstm_nrm;
           return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
                                   /*OffsetOpcode=*/{}};
         case Intrinsic::aie2_acc32_v32_I256_ups:
-          FitsImmediateRange = checkImmediateRange<9, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
           ISelOpcode = FitsImmediateRange
                            ? AIE2::VLDA_UPS_S32_D8_ag_pstm_nrm_imm
                            : AIE2::VLDA_UPS_S32_D8_ag_pstm_nrm;
           return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
                                   /*OffsetOpcode=*/{}};
         case Intrinsic::aie2_acc64_v8_I256_ups:
-          FitsImmediateRange = checkImmediateRange<9, 32>(Immediate);
+          FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
           ISelOpcode = FitsImmediateRange
                            ? AIE2::VLDA_UPS_S64_D32_ag_pstm_nrm_imm
                            : AIE2::VLDA_UPS_S64_D32_ag_pstm_nrm;
@@ -3324,13 +3325,13 @@ LoadStoreOpcodes AIE2InstructionSelector::getLoadStoreOpcode(
     if (getLoadStoreSize(I) == 512) {
       unsigned RBID = deriveRegBankID(I.getOperand(0).getReg(), MRI, RBI);
       if (RBID == AIE2::AccRegBankID) {
-        FitsImmediateRange = checkImmediateRangeSplitting<11, 32, 32>(Offset);
+        FitsImmediateRange = checkImmediateRangeSplitting<6, 32, 32>(Offset);
         return {/*ISelOpcode=*/AIE2::VST_dmw_sts_am_ag_idx_imm,
                 FitsImmediateRange,
                 /*OffsetOpcode=*/AIE2::VST_dmw_sts_am_ag_idx_imm};
       }
       if (RBID == AIE2::VRegBankID) {
-        FitsImmediateRange = checkImmediateRangeSplitting<11, 32, 32>(Offset);
+        FitsImmediateRange = checkImmediateRangeSplitting<6, 32, 32>(Offset);
         return {/*ISelOpcode=*/AIE2::VST_dmw_sts_w_ag_idx_imm,
                 FitsImmediateRange,
                 /*OffsetOpcode=*/AIE2::VST_dmw_sts_w_ag_idx_imm};
@@ -3340,14 +3341,14 @@ LoadStoreOpcodes AIE2InstructionSelector::getLoadStoreOpcode(
     if (getLoadStoreSize(I) == 256) {
       unsigned RBID = deriveRegBankID(I.getOperand(0).getReg(), MRI, RBI);
       if (RBID == AIE2::AccRegBankID) {
-        FitsImmediateRange = checkImmediateRange<11, 32>(Offset);
+        FitsImmediateRange = checkImmediateRange<6, 32>(Offset);
         ISelOpcode = FitsImmediateRange ? AIE2::VST_dmw_sts_am_ag_idx_imm
                                         : AIE2::VST_dmw_sts_am_ag_idx;
         return {ISelOpcode, FitsImmediateRange,
                 /*OffsetOpcode=*/AIE2::VST_dmw_sts_am_ag_idx_imm};
       }
       if (RBID == AIE2::VRegBankID) {
-        FitsImmediateRange = checkImmediateRange<11, 32>(Offset);
+        FitsImmediateRange = checkImmediateRange<6, 32>(Offset);
         ISelOpcode = FitsImmediateRange ? AIE2::VST_dmw_sts_w_ag_idx_imm
                                         : AIE2::VST_dmw_sts_w_ag_idx;
         return {ISelOpcode, FitsImmediateRange,
@@ -3356,13 +3357,13 @@ LoadStoreOpcodes AIE2InstructionSelector::getLoadStoreOpcode(
       llvm_unreachable("Vector type not in AccRegBank nor VRegBank");
     }
     if (getLoadStoreSize(I) == 128) {
-      FitsImmediateRange = checkImmediateRange<10, 16>(Offset);
+      FitsImmediateRange = checkImmediateRange<6, 16>(Offset);
       ISelOpcode = FitsImmediateRange ? AIE2::ST_dmv_sts_q_ag_idx_imm
                                       : AIE2::ST_dmv_sts_q_ag_idx;
       return {ISelOpcode, FitsImmediateRange, /*OffsetOpcode=*/{}};
     }
     if (getLoadStoreSize(I) == 20 || getLoadStoreSize(I) == 32) {
-      FitsImmediateRange = checkImmediateRange<8, 4>(Offset);
+      FitsImmediateRange = checkImmediateRange<6, 4>(Offset);
       ISelOpcode =
           FitsImmediateRange ? AIE2::ST_dms_sts_idx_imm : AIE2::ST_dms_sts_idx;
       return {ISelOpcode, FitsImmediateRange, /*OffsetOpcode=*/{}};
@@ -3384,7 +3385,7 @@ LoadStoreOpcodes AIE2InstructionSelector::getLoadStoreOpcode(
     if (getLoadStoreSize(I) == 128) {
       unsigned RBID = deriveRegBankID(I.getOperand(1).getReg(), MRI, RBI);
       if (RBID == AIE2::VRegBankID) {
-        FitsImmediateRange = checkImmediateRange<11, 16>(Offset);
+        FitsImmediateRange = checkImmediateRange<7, 16>(Offset);
         ISelOpcode = FitsImmediateRange ? AIE2::ST_dmv_sts_q_ag_pstm_nrm_imm
                                         : AIE2::ST_dmv_sts_q_ag_pstm_nrm;
         return {ISelOpcode, FitsImmediateRange, /*OffsetOpcode=*/{}};
@@ -3394,14 +3395,14 @@ LoadStoreOpcodes AIE2InstructionSelector::getLoadStoreOpcode(
     if (getLoadStoreSize(I) == 256 || getLoadStoreSize(I) == 512) {
       unsigned RBID = deriveRegBankID(I.getOperand(1).getReg(), MRI, RBI);
       if (RBID == AIE2::AccRegBankID) {
-        FitsImmediateRange = checkImmediateRange<12, 32>(Offset);
+        FitsImmediateRange = checkImmediateRange<7, 32>(Offset);
         ISelOpcode = FitsImmediateRange ? AIE2::VST_dmw_sts_am_ag_pstm_nrm_imm
                                         : AIE2::VST_dmw_sts_am_ag_pstm_nrm;
         return {ISelOpcode, FitsImmediateRange,
                 /*OffsetOpcode=*/AIE2::VST_dmw_sts_am_ag_idx_imm};
       }
       if (RBID == AIE2::VRegBankID) {
-        FitsImmediateRange = checkImmediateRange<12, 32>(Offset);
+        FitsImmediateRange = checkImmediateRange<7, 32>(Offset);
         ISelOpcode = FitsImmediateRange ? AIE2::VST_dmw_sts_w_ag_pstm_nrm_imm
                                         : AIE2::VST_dmw_sts_w_ag_pstm_nrm;
         return {ISelOpcode, FitsImmediateRange,
@@ -3410,7 +3411,7 @@ LoadStoreOpcodes AIE2InstructionSelector::getLoadStoreOpcode(
       llvm_unreachable("Vector type not in AccRegBank nor VRegBank");
     }
     if (getLoadStoreSize(I) == 20 || getLoadStoreSize(I) == 32) {
-      FitsImmediateRange = checkImmediateRange<9, 4>(Offset);
+      FitsImmediateRange = checkImmediateRange<7, 4>(Offset);
       ISelOpcode = FitsImmediateRange ? AIE2::ST_dms_sts_pstm_nrm_imm
                                       : AIE2::ST_dms_sts_pstm_nrm;
       return {ISelOpcode, FitsImmediateRange, /*OffsetOpcode=*/{}};
@@ -3551,7 +3552,7 @@ LoadStoreOpcodes AIE2InstructionSelector::getLoadStoreOpcode(
     if (getLoadStoreSize(I) == 512) {
       unsigned RBID = deriveRegBankID(I.getOperand(0).getReg(), MRI, RBI);
       if (RBID == AIE2::AccRegBankID) {
-        FitsImmediateRange = checkImmediateRangeSplitting<11, 32, 32>(Offset);
+        FitsImmediateRange = checkImmediateRangeSplitting<6, 32, 32>(Offset);
         return {/*ISelOpcode=*/AIE2::VLDA_dmw_lda_am_ag_idx_imm,
                 FitsImmediateRange,
                 /*OffsetOpcode=*/AIE2::VLDA_dmw_lda_am_ag_idx_imm};
@@ -3560,23 +3561,23 @@ LoadStoreOpcodes AIE2InstructionSelector::getLoadStoreOpcode(
         unsigned OffsetOpcode;
         // First try if the Instruction can be selected as multi-slot offset
         // load
-        if (checkImmediateRangeSplitting<8, 32, 32>(Offset)) {
+        if (checkImmediateRangeSplitting<3, 32, 32>(Offset)) {
           FitsImmediateRange = true;
           ISelOpcode = OffsetOpcode = AIE2::VLD_idx_imm_3x32_pseudo;
-        } else if (checkImmediateRange<8, 32>(Offset)) {
+        } else if (checkImmediateRange<3, 32>(Offset)) {
           // When Offset is positive and one of the offset is in range of SlotB
           ISelOpcode = AIE2::VLD_idx_imm_3x32_pseudo;
           OffsetOpcode = AIE2::VLDA_dmw_lda_w_ag_idx_imm;
           FitsImmediateRange = true;
         } else if (Offset.has_value() && (*Offset).isNegative() &&
-                   checkImmediateRange<8, 32>((*Offset) + 32)) {
+                   checkImmediateRange<3, 32>((*Offset) + 32)) {
           // When Offset is negative and one of the offset is in range of SlotB
           ISelOpcode = AIE2::VLDA_dmw_lda_w_ag_idx_imm;
           OffsetOpcode = AIE2::VLD_idx_imm_3x32_pseudo;
           FitsImmediateRange = true;
         } else {
           // When Offset & Offset+32 are out of range of SlotB
-          FitsImmediateRange = checkImmediateRangeSplitting<11, 32, 32>(Offset);
+          FitsImmediateRange = checkImmediateRangeSplitting<6, 32, 32>(Offset);
           ISelOpcode = OffsetOpcode = AIE2::VLDA_dmw_lda_w_ag_idx_imm;
         }
         return {/*ISelOpcode=*/ISelOpcode, FitsImmediateRange,
@@ -3587,7 +3588,7 @@ LoadStoreOpcodes AIE2InstructionSelector::getLoadStoreOpcode(
     if (getLoadStoreSize(I) == 256) {
       unsigned RBID = deriveRegBankID(I.getOperand(0).getReg(), MRI, RBI);
       if (RBID == AIE2::AccRegBankID) {
-        FitsImmediateRange = checkImmediateRange<11, 32>(Offset);
+        FitsImmediateRange = checkImmediateRange<6, 32>(Offset);
         ISelOpcode = FitsImmediateRange ? AIE2::VLDA_dmw_lda_am_ag_idx_imm
                                         : AIE2::VLDA_dmw_lda_am_ag_idx;
         return {ISelOpcode, FitsImmediateRange,
@@ -3596,11 +3597,11 @@ LoadStoreOpcodes AIE2InstructionSelector::getLoadStoreOpcode(
       if (RBID == AIE2::VRegBankID) {
         // First try if the Instruction can be selected as multi-slot offset
         // load
-        if (checkImmediateRange<8, 32>(Offset)) {
+        if (checkImmediateRange<3, 32>(Offset)) {
           FitsImmediateRange = true;
           ISelOpcode = AIE2::VLD_idx_imm_3x32_pseudo;
         } else {
-          FitsImmediateRange = checkImmediateRange<11, 32>(Offset);
+          FitsImmediateRange = checkImmediateRange<6, 32>(Offset);
           ISelOpcode = FitsImmediateRange ? AIE2::VLDA_dmw_lda_w_ag_idx_imm
                                           : AIE2::VLD_idx_pseudo;
         }
@@ -3615,13 +3616,13 @@ LoadStoreOpcodes AIE2InstructionSelector::getLoadStoreOpcode(
        * which instruction to select between the available LDA_dmv_lda_q_ag_idx
        * which has 128-bit destination operand vs VLDB_128_ag_idx which has
        * 256-bit destination operand. */
-      FitsImmediateRange = checkImmediateRange<10, 16>(Offset);
+      FitsImmediateRange = checkImmediateRange<6, 16>(Offset);
       ISelOpcode = FitsImmediateRange ? AIE2::LDA_dmv_lda_q_ag_idx_imm
                                       : AIE2::VLDB_128_ag_idx;
       return {ISelOpcode, FitsImmediateRange, /*OffsetOpcode=*/{}};
     }
     if (getLoadStoreSize(I) == 20 || getLoadStoreSize(I) == 32) {
-      FitsImmediateRange = checkImmediateRange<8, 4>(Offset);
+      FitsImmediateRange = checkImmediateRange<6, 4>(Offset);
       ISelOpcode = FitsImmediateRange ? AIE2::LDA_dms_lda_idx_imm
                                       : AIE2::LDA_dms_lda_idx;
       return {ISelOpcode, FitsImmediateRange, /*OffsetOpcode=*/{}};
@@ -3745,7 +3746,7 @@ LoadStoreOpcodes AIE2InstructionSelector::getLoadStoreOpcode(
     if (getLoadStoreSize(I) == 256 || getLoadStoreSize(I) == 512) {
       unsigned RBID = deriveRegBankID(I.getOperand(0).getReg(), MRI, RBI);
       if (RBID == AIE2::AccRegBankID) {
-        FitsImmediateRange = checkImmediateRange<12, 32>(Offset);
+        FitsImmediateRange = checkImmediateRange<7, 32>(Offset);
         ISelOpcode = FitsImmediateRange ? AIE2::VLDA_dmw_lda_am_ag_pstm_nrm_imm
                                         : AIE2::VLDA_dmw_lda_am_ag_pstm_nrm;
         return {ISelOpcode, FitsImmediateRange,
@@ -3754,11 +3755,11 @@ LoadStoreOpcodes AIE2InstructionSelector::getLoadStoreOpcode(
       if (RBID == AIE2::VRegBankID) {
         // First try if the Instruction can be selected as multi-slot offset
         // load
-        if (checkImmediateRange<9, 32>(Offset)) {
+        if (checkImmediateRange<4, 32>(Offset)) {
           FitsImmediateRange = true;
           ISelOpcode = AIE2::VLD_pstm_imm_4x32_pseudo;
         } else {
-          FitsImmediateRange = checkImmediateRange<12, 32>(Offset);
+          FitsImmediateRange = checkImmediateRange<7, 32>(Offset);
           ISelOpcode = FitsImmediateRange ? AIE2::VLDA_dmw_lda_w_ag_pstm_nrm_imm
                                           : AIE2::VLD_pstm_pseudo;
         }
@@ -3776,7 +3777,7 @@ LoadStoreOpcodes AIE2InstructionSelector::getLoadStoreOpcode(
          * between the available LDA_dmv_lda_q_ag_pstm_nrm which has
          * 128-bit destination operand vs VLDB_dmv_ldb_ag_pstm_nrm which
          * has 256-bit destination operand. */
-        FitsImmediateRange = checkImmediateRange<11, 16>(Offset);
+        FitsImmediateRange = checkImmediateRange<7, 16>(Offset);
         ISelOpcode = FitsImmediateRange ? AIE2::LDA_dmv_lda_q_ag_pstm_nrm_imm
                                         : AIE2::VLDB_128_ag_pstm_nrm;
         return {ISelOpcode, FitsImmediateRange,
@@ -3785,7 +3786,7 @@ LoadStoreOpcodes AIE2InstructionSelector::getLoadStoreOpcode(
       llvm_unreachable("Vector type not in VRegBank");
     }
     if (getLoadStoreSize(I) == 20 || getLoadStoreSize(I) == 32) {
-      FitsImmediateRange = checkImmediateRange<9, 4>(Offset);
+      FitsImmediateRange = checkImmediateRange<7, 4>(Offset);
       ISelOpcode = FitsImmediateRange ? AIE2::LDA_dms_lda_pstm_nrm_imm
                                       : AIE2::LDA_dms_lda_pstm_nrm;
       return {ISelOpcode, FitsImmediateRange, /*OffsetOpcode=*/{}};
@@ -3856,13 +3857,13 @@ getCombinedOpcodePACK(const MachineInstr &MemOp, const MachineInstr &CombOp,
       break;
     case AIE2::G_AIE_OFFSET_STORE:
       if (Is32Lanes) {
-        FitsImmediateRange = checkImmediateRange<8, 32>(Immediate);
+        FitsImmediateRange = checkImmediateRange<3, 32>(Immediate);
         ISelOpcode = FitsImmediateRange ? AIE2::VST_PACK_S8_S16_ag_idx_imm
                                         : AIE2::VST_PACK_S8_S16_ag_idx;
         return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
                                 /*OffsetOpcode=*/{}};
       } else {
-        FitsImmediateRange = checkImmediateRange<8, 32>(Immediate);
+        FitsImmediateRange = checkImmediateRange<3, 32>(Immediate);
         ISelOpcode = FitsImmediateRange ? AIE2::VST_PACK_S4_S8_ag_idx_imm
                                         : AIE2::VST_PACK_S4_S8_ag_idx;
         return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
@@ -3870,7 +3871,7 @@ getCombinedOpcodePACK(const MachineInstr &MemOp, const MachineInstr &CombOp,
       }
       break;
     case AIE2::G_AIE_POSTINC_STORE:
-      FitsImmediateRange = checkImmediateRange<9, 32>(Immediate);
+      FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
       if (Is32Lanes) {
         ISelOpcode = FitsImmediateRange ? AIE2::VST_PACK_S8_S16_ag_pstm_nrm_imm
                                         : AIE2::VST_PACK_S8_S16_ag_pstm_nrm;
@@ -3921,13 +3922,13 @@ getCombinedOpcodePACK(const MachineInstr &MemOp, const MachineInstr &CombOp,
       break;
     case AIE2::G_AIE_OFFSET_STORE:
       if (Is32Lanes) {
-        FitsImmediateRange = checkImmediateRange<8, 32>(Immediate);
+        FitsImmediateRange = checkImmediateRange<3, 32>(Immediate);
         ISelOpcode = FitsImmediateRange ? AIE2::VST_PACK_D8_D16_ag_idx_imm
                                         : AIE2::VST_PACK_D8_D16_ag_idx;
         return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
                                 /*OffsetOpcode=*/{}};
       } else {
-        FitsImmediateRange = checkImmediateRange<8, 32>(Immediate);
+        FitsImmediateRange = checkImmediateRange<3, 32>(Immediate);
         ISelOpcode = FitsImmediateRange ? AIE2::VST_PACK_D4_D8_ag_idx_imm
                                         : AIE2::VST_PACK_D4_D8_ag_idx;
         return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
@@ -3935,7 +3936,7 @@ getCombinedOpcodePACK(const MachineInstr &MemOp, const MachineInstr &CombOp,
       }
       break;
     case AIE2::G_AIE_POSTINC_STORE:
-      FitsImmediateRange = checkImmediateRange<9, 32>(Immediate);
+      FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
       if (Is32Lanes) {
         ISelOpcode = FitsImmediateRange ? AIE2::VST_PACK_D8_D16_ag_pstm_nrm_imm
                                         : AIE2::VST_PACK_D8_D16_ag_pstm_nrm;
@@ -4218,13 +4219,13 @@ getCombinedOpcodeCONV(const MachineInstr &MemOp, const MachineInstr &CombOp,
     return LoadStoreOpcodes{/*ISelOpcode=*/AIE2::VST_CONV_BF16_FP32_ag_idx_imm,
                             AlwaysFitsImmediateRange, /*OffsetOpcode=*/{}};
   case AIE2::G_AIE_OFFSET_STORE:
-    FitsImmediateRange = checkImmediateRange<8, 32>(Immediate);
+    FitsImmediateRange = checkImmediateRange<3, 32>(Immediate);
     ISelOpcode = FitsImmediateRange ? AIE2::VST_CONV_BF16_FP32_ag_idx_imm
                                     : AIE2::VST_CONV_BF16_FP32_ag_idx;
     return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
                             /*OffsetOpcode=*/{}};
   case AIE2::G_AIE_POSTINC_STORE:
-    FitsImmediateRange = checkImmediateRange<9, 32>(Immediate);
+    FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
     ISelOpcode = FitsImmediateRange ? AIE2::VST_CONV_BF16_FP32_ag_pstm_nrm_imm
                                     : AIE2::VST_CONV_BF16_FP32_ag_pstm_nrm;
     return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
@@ -4460,12 +4461,12 @@ static bool getVLDA_CONVOpcode(const MachineInstr &MemOp,
     FitsImmediateRange = true;
     return true;
   case AIE2::G_AIE_OFFSET_LOAD:
-    FitsImmediateRange = checkImmediateRange<8, 32>(Immediate);
+    FitsImmediateRange = checkImmediateRange<3, 32>(Immediate);
     ISelOpcode = FitsImmediateRange ? AIE2::VLDA_CONV_FP32_BF16_ag_idx_imm
                                     : AIE2::VLDA_CONV_FP32_BF16_ag_idx;
     return true;
   case AIE2::G_AIE_POSTINC_LOAD:
-    FitsImmediateRange = checkImmediateRange<9, 32>(Immediate);
+    FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
     ISelOpcode = FitsImmediateRange ? AIE2::VLDA_CONV_FP32_BF16_pstm_nrm_imm
                                     : AIE2::VLDA_CONV_FP32_BF16_pstm_nrm;
     return true;
