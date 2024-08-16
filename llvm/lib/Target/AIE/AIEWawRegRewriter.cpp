@@ -19,10 +19,12 @@
 
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/LiveDebugVariables.h"
 #include "llvm/CodeGen/LiveIntervals.h"
 #include "llvm/CodeGen/LiveRegMatrix.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineOperand.h"
@@ -30,8 +32,10 @@
 #include "llvm/CodeGen/SlotIndexes.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
+#include "llvm/MC/MCRegister.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include <map>
 
 using namespace llvm;
 
@@ -118,6 +122,16 @@ static bool couldBeCalleeSaveEvasiveRegister(const MCPhysReg &PhysReg,
                                              const MachineRegisterInfo &MRI,
                                              const AIEBaseRegisterInfo &TRI);
 
+static bool
+isUndefReserved(const MachineOperand &Op, const MachineInstr &MI,
+                std::map<unsigned, llvm::SmallVector<const MachineInstr *, 4>>
+                    &UndefPartReuse,
+                const VirtRegMap &VRM);
+
+static bool
+reuseSubRegs(llvm::SmallVector<const MachineInstr *, 4> &OrigInstr,
+             llvm::SmallVector<const MachineInstr *, 4> &OtherInstr);
+
 bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
   if (DisablePass)
     return false;
@@ -137,7 +151,6 @@ bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
   LiveRegMatrix &LRM = getAnalysis<LiveRegMatrix>();
   LiveIntervals &LIS = getAnalysis<LiveIntervals>();
   MachineLoopInfo &MLI = getAnalysis<MachineLoopInfo>();
-  std::map<Register, MCRegister> AssignedPhysRegs;
   bool Modified = false;
   LLVM_DEBUG(VRM.dump());
 
@@ -151,6 +164,9 @@ bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
 
     llvm::SmallVector<MCPhysReg, 16> ForbiddenPhysRegs =
         getBBForbiddenReplacements(MBB, VRM, MRI, &TRI, CSPhyRegs);
+
+    std::map<unsigned, llvm::SmallVector<const MachineInstr *, 4>>
+        UndefPartReuse;
 
     for (const MachineInstr &MI : *MBB) {
       MI.dump();
@@ -166,6 +182,9 @@ bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
           continue;
 
         if (Op.isTied())
+          continue;
+
+        if (isUndefReserved(Op, MI, UndefPartReuse, VRM))
           continue;
 
         Register Reg = Op.getReg();
@@ -187,6 +206,58 @@ bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
 
   LLVM_DEBUG(VRM.dump());
   return Modified;
+}
+
+static bool
+isUndefReserved(const MachineOperand &Def, const MachineInstr &MI,
+                std::map<unsigned, llvm::SmallVector<const MachineInstr *, 4>>
+                    &UndefPartReuse,
+                const VirtRegMap &VRM) {
+  unsigned ID = Def.getReg().id();
+  if (Def.isUndef()) {
+    if (UndefPartReuse.find(ID) == UndefPartReuse.end()) {
+      UndefPartReuse[ID] = SmallVector<const MachineInstr *, 4>();
+    }
+  }
+
+  if (UndefPartReuse.find(ID) == UndefPartReuse.end())
+    return false;
+
+  UndefPartReuse[ID].push_back(&MI);
+
+  // Undef Reg is still being filled, too early to tell, if it should be removed
+  if (Def.isUndef())
+    return true;
+
+  // find if another SubRegister has already been assigned by a previous copy
+  auto CurrentPhysReg = VRM.getPhys(Def.getReg());
+  for (const auto &Reg : UndefPartReuse) {
+    if (Reg.first == ID)
+      continue;
+    if (VRM.getPhys(Reg.first) == CurrentPhysReg) {
+      if (reuseSubRegs(UndefPartReuse[ID], UndefPartReuse[Reg.first]))
+        return true;
+    }
+  }
+  return false;
+}
+
+static bool
+reuseSubRegs(llvm::SmallVector<const MachineInstr *, 4> &OrigInstr,
+             llvm::SmallVector<const MachineInstr *, 4> &OtherInstr) {
+  for (auto [InstrA, InstrB] : zip(OrigInstr, OtherInstr)) {
+    if (!InstrA->isCopyLike())
+      continue;
+    if (!InstrB->isCopyLike())
+      continue;
+    for (auto [OpA, OpB] : zip(InstrA->uses(), InstrB->uses())) {
+      if (OpA.isReg() && OpB.isReg()) {
+        if (OpA.getReg() == OpB.getReg())
+          return true;
+      }
+    }
+  }
+  return false;
 }
 
 static llvm::SmallVector<const MachineBasicBlock *, 4>
