@@ -39,9 +39,6 @@ body:             |
   ; CHECK-NEXT:   frame-setup BUNDLE implicit-def $sp, implicit $sp {
   ; CHECK-NEXT:     frame-setup PADDB_sp_imm 32, implicit-def $sp, implicit $sp
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit killed $r17, implicit $sp {
-  ; CHECK-NEXT:     ST_dms_spill killed $r17, -24, implicit $sp :: (store (s32) into %stack.2)
-  ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $p6, implicit $sp {
   ; CHECK-NEXT:     renamable $p6 = MOVA_lda_cg 0
   ; CHECK-NEXT:     ST_dms_spill internal $p6, -32, implicit $sp :: (store (s32) into %stack.4)
@@ -52,8 +49,8 @@ body:             |
   ; CHECK-NEXT:   BUNDLE implicit killed $r16, implicit $sp {
   ; CHECK-NEXT:     ST_dms_spill killed $r16, -20, implicit $sp :: (store (s32) into %stack.1)
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit-def $r16, implicit killed $r1 {
-  ; CHECK-NEXT:     $r16 = MOV_mv_scl killed $r1
+  ; CHECK-NEXT:   BUNDLE implicit killed $r17, implicit $sp {
+  ; CHECK-NEXT:     ST_dms_spill killed $r17, -24, implicit $sp :: (store (s32) into %stack.2)
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   BUNDLE implicit-def $p0, implicit $lr, implicit $sp {
   ; CHECK-NEXT:     $p0 = MOVA_lda_cg 0
@@ -63,9 +60,10 @@ body:             |
   ; CHECK-NEXT:     $p1 = MOVA_lda_cg 0
   ; CHECK-NEXT:     ST_dms_spill killed $r18, -28, implicit $sp :: (store (s32) into %stack.3)
   ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit-def $r18, implicit-def $r17 {
+  ; CHECK-NEXT:   BUNDLE implicit-def $r18, implicit-def $r17, implicit-def $r16, implicit killed $r1 {
   ; CHECK-NEXT:     renamable $r18 = MOVA_lda_cg 1
   ; CHECK-NEXT:     renamable $r17 = MOVX_alu_cg 0
+  ; CHECK-NEXT:     $r16 = MOV_mv_scl killed $r1
   ; CHECK-NEXT:   }
   ; CHECK-NEXT:   DelayedSchedBarrier csr_aie2, implicit killed $p0, implicit killed $p1, implicit-def dead $r0
   ; CHECK-NEXT:   BUNDLE implicit-def $r0, implicit killed $r16, implicit killed $r18 {

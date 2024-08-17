@@ -260,3 +260,46 @@ body:             |
   $dc0 = VEXTRACT_S16 killed $x1, killed $r16
   $dc0 = VEXTRACT_S16 killed $x1, killed $r16
 ...
+
+# expected to not be in the same bundle
+---
+name:            mov_P_to_R_and_store_DJ
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: mov_P_to_R_and_store_DJ
+    ; CHECK: ST_dms_sts_idx_imm killed $dj0, $p0, 0
+    ; CHECK-NEXT: $r3 = MOV_mv_scl killed $p0
+    ST_dms_sts_idx_imm $dj0, $p0, 0
+    $r3 = MOV_mv_scl $p0
+...
+
+---
+name:            mov_to_R
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: mov_to_R
+    ; CHECK: BUNDLE implicit-def $r1, implicit-def $r2, implicit-def $r3, implicit killed $r4 {
+    ; CHECK-NEXT:   $r1 = MOVA_lda_cg 0
+    ; CHECK-NEXT:   $r2 = MOVX_alu_cg 1
+    ; CHECK-NEXT:   $r3 = MOV_mv_scl killed $r4
+    ; CHECK-NEXT: }
+    $r1 = MOVA_lda_cg 0
+    $r2 = MOVX_alu_cg 1
+    $r3 = MOV_mv_scl $r4
+...
+
+---
+name:            mov_SCL_to_R
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: mov_SCL_to_R
+    ; CHECK: BUNDLE implicit-def $r1, implicit-def $r0, implicit killed $r4 {
+    ; CHECK-NEXT:   $r1 = MOVX_alu_cg 0
+    ; CHECK-NEXT:   $r0 = MOV_mv_scl killed $r4
+    ; CHECK-NEXT: }
+    $r1 = MOVX_alu_cg 0
+    $r0 = MOV_mv_scl $r4
+...

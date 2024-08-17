@@ -545,8 +545,13 @@ let Itinerary = II_MOV, isMoveImm = 1, isReMaterializable = 1, isAsCheapAsAMove 
 }
 
 let Itinerary = II_MOV_SCL, isMoveReg = 1 in {
-  def MOV_mv_scl : AIE2_mv_scl_inst_mv<(outs OP_mMvSclDst:$mMvSclDst), 
-      (ins OP_mMvSclSrc:$mMvSclSrc  ), "mov", "$mMvSclDst, $mMvSclSrc">;
+  let ItineraryRegPairs = [ItinRegClassPair<II_MOV_SCL_RS,eR>, ItinRegClassPair<II_MOV_SCL_P,eP>, 
+                           ItinRegClassPair<II_MOV_SCL_M,eM>, ItinRegClassPair<II_MOV_SCL_RS,eS>,
+                           ItinRegClassPair<II_MOV_SCL_DC,eDC>, ItinRegClassPair<II_MOV_SCL_DJ,eDJ>,
+                           ItinRegClassPair<II_MOV_SCL_DN,eDN>] in {
+    def MOV_mv_scl : AIE2_mv_scl_inst_mv<(outs OP_mMvSclDst:$mMvSclDst), 
+        (ins OP_mMvSclSrc:$mMvSclSrc), "mov", "$mMvSclDst, $mMvSclSrc">;
+  }
 }
 
 let Itinerary = II_MUL in {

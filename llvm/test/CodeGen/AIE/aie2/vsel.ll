@@ -44,8 +44,8 @@ define dso_local noundef <64 x i8> @test_vsel_s8_zeroinit_from_s32(<64 x i8> nou
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    mov r24, r0 // Delay Slot 4
-; CHECK-NEXT:    mova r25, #0 // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    mova r25, #0; mov r24, r0 // Delay Slot 3
 ; CHECK-NEXT:    vsel.8 x0, x2, x4, r25:r24 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:

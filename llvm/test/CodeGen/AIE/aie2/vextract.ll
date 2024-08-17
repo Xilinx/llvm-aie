@@ -424,8 +424,8 @@ define dso_local noundef signext i8 @_Z5test1Dv128_a(<128 x i8> noundef %vec)  {
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova r1, #0
 ; CHECK-NEXT:    mov r3, r16
+; CHECK-NEXT:    mova r1, #0
 ; CHECK-NEXT:    movx r2, #64
 ; CHECK-NEXT:    lt r27, r0, r2
 ; CHECK-NEXT:    sel.nez r1, r1, r2, r27
@@ -454,9 +454,9 @@ define dso_local noundef signext i16 @_Z5test2Dv64_s(<64 x i16> noundef %vec)  {
 ; CHECK-NEXT:    lda r0, [p0, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova r1, #0
 ; CHECK-NEXT:    mov r3, r16
 ; CHECK-NEXT:    mov r4, r17
+; CHECK-NEXT:    mova r1, #0
 ; CHECK-NEXT:    movx r2, #32
 ; CHECK-NEXT:    lt r27, r0, r2
 ; CHECK-NEXT:    sel.nez r1, r1, r2, r27
@@ -485,9 +485,9 @@ define dso_local noundef i32 @_Z5test3Dv32_i(<32 x i32> noundef %vec)  {
 ; CHECK-NEXT:    lda r0, [p0, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova r1, #0
 ; CHECK-NEXT:    mov r3, r16
 ; CHECK-NEXT:    mov r4, r17
+; CHECK-NEXT:    mova r1, #0
 ; CHECK-NEXT:    movx r2, #16
 ; CHECK-NEXT:    lt r27, r0, r2
 ; CHECK-NEXT:    sel.nez r1, r1, r2, r27
@@ -525,8 +525,8 @@ define dso_local noundef signext i8 @_Z16extract_8bit_256Dv32_a(<32 x i8> nounde
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
 entry:
   %ret = alloca i8, align 4
   %vecext = extractelement <32 x i8> %vec, i64 5
@@ -554,8 +554,8 @@ define dso_local noundef zeroext i16 @_Z17extract_16bit_256Dv16_t(<16 x i16> nou
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
 entry:
   %ret = alloca i16, align 4
   %vecext = extractelement <16 x i16> %vec, i64 15
@@ -583,8 +583,8 @@ define dso_local noundef signext i8 @_Z16extract_8bit_512Dv64_a(<64 x i8> nounde
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
 entry:
   %ret = alloca i8, align 4
   %vecext = extractelement <64 x i8> %vec, i64 63
@@ -612,8 +612,8 @@ define dso_local noundef zeroext i16 @_Z17extract_16bit_512Dv32_t(<32 x i16> nou
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
 entry:
   %ret = alloca i16, align 4
   %vecext = extractelement <32 x i16> %vec, i64 15
@@ -642,8 +642,8 @@ define dso_local noundef signext i8 @_Z17extract_8bit_1024Dv128_a(<128 x i8> nou
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
 entry:
   %ret = alloca i8, align 4
   %vecext = extractelement <128 x i8> %vec, i64 127
@@ -672,8 +672,8 @@ define dso_local noundef zeroext i16 @_Z18extract_16bit_1024Dv64_t(<64 x i16> no
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
 entry:
   %ret = alloca i16, align 4
   %vecext = extractelement <64 x i16> %vec, i64 63

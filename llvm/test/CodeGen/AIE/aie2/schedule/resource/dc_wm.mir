@@ -5,8 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -march=aie2 %topdown-single -run-pass=postmisched %s -o - \
-# RUN:   | FileCheck %s
+# RUN: llc -mtriple=aie2 -run-pass=postmisched %s %topdown-multi -o - | FileCheck %s
 
 # Conflict on dc reg file in mov slot
 ---
@@ -61,9 +60,11 @@ body:             |
   bb.0.entry:
 
     ; CHECK-LABEL: name: E1_MOVA_E2_VEXTRACT
-    ; CHECK: $dc0 = VEXTRACT_S16 killed $x1, killed $r16
+    ; CHECK: BUNDLE implicit-def $dc1, implicit-def $dc0, implicit killed $x1, implicit killed $r16 {
+    ; CHECK-NEXT:   $dc1 = MOVA_lda_cg 2
+    ; CHECK-NEXT:   $dc0 = VEXTRACT_S16 killed $x1, killed $r16
+    ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $dc1 = MOVA_lda_cg 2
     ; CHECK-NEXT: $dc2 = MOVA_lda_cg 2
   $dc0 = VEXTRACT_S16 killed $x1, killed $r16
   $dc1 = MOVA_lda_cg 2
@@ -164,4 +165,46 @@ body:             |
   $dc1 = MOVA_lda_cg 2
   $dc1 = MOVA_lda_cg 2
   $dc1 = MOVA_lda_cg 2
+...
+
+# Once Load use Reg base initinary we expect no NOP
+---
+name:            load_to_M_and_move_R_to_DC
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: load_to_M_and_move_R_to_DC
+    ; CHECK: BUNDLE implicit-def $m0, implicit-def $dc0, implicit killed $p7, implicit $r0 {
+    ; CHECK-NEXT:   $m0 = LDA_dms_lda_idx_imm killed $p7, 0
+    ; CHECK-NEXT:   $dc0 = MOV_mv_scl $r0
+    ; CHECK-NEXT: }
+    ; CHECK-NEXT: $dc0 = MOV_mv_scl $r0
+    ; CHECK-NEXT: $dc0 = MOV_mv_scl $r0
+    ; CHECK-NEXT: $dc0 = MOV_mv_scl $r0
+    ; CHECK-NEXT: $dc0 = MOV_mv_scl $r0
+    ; CHECK-NEXT: $dc0 = MOV_mv_scl $r0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $dc0 = MOV_mv_scl killed $r0
+    $m0 = LDA_dms_lda_idx_imm killed $p7, 0
+    $dc0 = MOV_mv_scl $r0
+    $dc0 = MOV_mv_scl $r0
+    $dc0 = MOV_mv_scl $r0
+    $dc0 = MOV_mv_scl $r0
+    $dc0 = MOV_mv_scl $r0
+    $dc0 = MOV_mv_scl $r0
+    $dc0 = MOV_mv_scl $r0
+...
+
+---
+name:            mov_SCL_to_DC
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: mov_SCL_to_DC
+    ; CHECK: BUNDLE implicit-def $r1, implicit-def $dc0, implicit killed $r4 {
+    ; CHECK-NEXT:   $r1 = MOVX_alu_cg 0
+    ; CHECK-NEXT:   $dc0 = MOV_mv_scl killed $r4
+    ; CHECK-NEXT: }
+    $r1 = MOVX_alu_cg 0
+    $dc0 = MOV_mv_scl $r4
 ...

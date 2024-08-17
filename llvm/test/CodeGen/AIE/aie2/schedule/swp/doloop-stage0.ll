@@ -27,9 +27,8 @@ define dso_local i32 @dot(ptr nocapture readonly %a, ptr nocapture readonly %b, 
 ; CHECK-NEXT:    padda [p1], #2044 // Delay Slot 2
 ; CHECK-NEXT:    mova r0, #0 // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %do.body
-; CHECK-NEXT:    lda r1, [p0, #0]; nopx
-; CHECK-NEXT:    lda r4, [p1, #0]; add r5, r5, #-1
-; CHECK-NEXT:    jz r5, #.LBB0_4
+; CHECK-NEXT:    lda r4, [p1, #0]; nopb ; add r5, r5, #-1
+; CHECK-NEXT:    lda r1, [p0, #0]; jz r5, #.LBB0_4
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
