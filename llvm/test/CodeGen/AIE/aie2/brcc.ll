@@ -153,8 +153,8 @@ define i32 @br_diamond_complex_end(i32  %a, i32  %b, i32 %v, i32* nocapture writ
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov r0, r16 // Delay Slot 2
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    paddb [sp], #-32; mov r0, r16 // Delay Slot 1
 entry:
   %cmp = icmp ugt i32 %a, %b
   br i1 %cmp, label %if.then, label %if.else

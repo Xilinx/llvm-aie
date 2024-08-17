@@ -38,3 +38,17 @@ body:             |
     $s1 = ADD_NC $r2, 20
     $s2 = ADD_NC $r3, -31
 ...
+
+---
+name:            mov_SCL_to_S
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: mov_SCL_to_S
+    ; CHECK: BUNDLE implicit-def $r1, implicit-def $s0, implicit killed $r4 {
+    ; CHECK-NEXT:   $r1 = MOVX_alu_cg 0
+    ; CHECK-NEXT:   $s0 = MOV_mv_scl killed $r4
+    ; CHECK-NEXT: }
+    $r1 = MOVX_alu_cg 0
+    $s0 = MOV_mv_scl $r4
+...

@@ -12,9 +12,8 @@ define bfloat @test_fadd_bfloat(bfloat %a, bfloat %b) {
 ; CHECK-LABEL: test_fadd_bfloat:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; nopx ; mov r3, r16
-; CHECK-NEXT:    mova r16, #0; movx r0, #16
-; CHECK-NEXT:    lshl r1, r1, r0; mov r29, r16
+; CHECK-NEXT:    nopb ; mova r16, #0; nops ; movx r0, #16; mov r3, r16; nopv
+; CHECK-NEXT:    nopa ; lshl r1, r1, r0; mov r29, r16
 ; CHECK-NEXT:    lshl r0, r2, r0; vinsert.32 x0, x0, r29, r1
 ; CHECK-NEXT:    vinsert.32 x2, x0, r29, r0
 ; CHECK-NEXT:    mova r0, #28; vmov bmh0, x0

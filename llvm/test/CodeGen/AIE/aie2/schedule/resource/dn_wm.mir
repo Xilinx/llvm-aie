@@ -5,8 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -march=aie2 %topdown-single -run-pass=postmisched %s -o - \
-# RUN:   | FileCheck %s
+# RUN: llc -mtriple=aie2 -run-pass=postmisched %s %topdown-multi -o - | FileCheck %s
 
 # Conflict on dn reg file in mov slot
 ---
@@ -61,9 +60,11 @@ body:             |
   bb.0.entry:
 
     ; CHECK-LABEL: name: E1_MOVA_E2_VEXTRACT
-    ; CHECK: $dn0 = VEXTRACT_S16 killed $x1, killed $r16
+    ; CHECK: BUNDLE implicit-def $dn1, implicit-def $dn0, implicit killed $x1, implicit killed $r16 {
+    ; CHECK-NEXT:   $dn1 = MOVA_lda_cg 2
+    ; CHECK-NEXT:   $dn0 = VEXTRACT_S16 killed $x1, killed $r16
+    ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $dn1 = MOVA_lda_cg 2
     ; CHECK-NEXT: $dn2 = MOVA_lda_cg 2
   $dn0 = VEXTRACT_S16 killed $x1, killed $r16
   $dn1 = MOVA_lda_cg 2
@@ -167,4 +168,18 @@ body:             |
   $dn1 = MOVA_lda_cg 2
   $dn1 = MOVA_lda_cg 2
   $dn1 = MOVA_lda_cg 2
+...
+
+---
+name:            mov_SCL_to_DN
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: mov_SCL_to_DN
+    ; CHECK: BUNDLE implicit-def $r1, implicit-def $dn0, implicit killed $r4 {
+    ; CHECK-NEXT:   $r1 = MOVX_alu_cg 0
+    ; CHECK-NEXT:   $dn0 = MOV_mv_scl killed $r4
+    ; CHECK-NEXT: }
+    $r1 = MOVX_alu_cg 0
+    $dn0 = MOV_mv_scl $r4
 ...
