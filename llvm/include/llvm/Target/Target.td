@@ -583,6 +583,13 @@ class EncodingByHwMode<list<HwMode> Ms = [], list<InstructionEncoding> Ts = []>
   list<InstructionEncoding> Objects = Ts;
 }
 
+// Allows to specify instrution Itineraries based on RegClass used 
+class ItinRegClassPair<InstrItinClass Itin, RegisterClass Reg, int OperIdx = 0> {
+  InstrItinClass Itinerary = Itin;
+  RegisterClass Regclass  = Reg;
+  int OperandIdx = OperIdx;
+}
+
 //===----------------------------------------------------------------------===//
 // Instruction set description - These classes correspond to the C++ classes in
 // the Target/TargetInstrInfo.h file.
@@ -719,6 +726,7 @@ class Instruction : InstructionEncoding {
   bit hasNoSchedulingInfo = false;
 
   InstrItinClass Itinerary = NoItinerary;// Execution steps used for scheduling.
+  list<ItinRegClassPair> ItineraryRegPairs = [];
 
   // Scheduling information from TargetSchedule.td.
   list<SchedReadWrite> SchedRW;
