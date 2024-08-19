@@ -51,6 +51,7 @@ using namespace llvm;
 #include "AIE2GenMemoryCycles.inc"
 #include "AIE2GenPreSchedLowering.inc"
 #include "AIE2GenSplitInstrTables.inc"
+#include "AIE2GenVarInstructionItin.inc"
 
 namespace {
 const AIE2MCFormats AIE2Formats;
