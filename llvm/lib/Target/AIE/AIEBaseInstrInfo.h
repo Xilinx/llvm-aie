@@ -345,6 +345,13 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   /// Return cycles for memory operations of an instruction.
   virtual SmallVector<int, 2> getMemoryCycles(unsigned SchedClass) const;
 
+  /// Return the schedclass for the given instruction descriptor based on
+  /// operand regclass.
+  virtual unsigned
+  getSchedClass(const MCInstrDesc &Desc,
+                iterator_range<const MachineOperand *> Operands,
+                const MachineRegisterInfo &MRI) const;
+
   const AIEBaseMCFormats *getFormatInterface() const { return FormatInterface; }
 
   /// Verifies whether Ty is legal as an input to G_AIE_PAD_VECTOR_UNDEF or an

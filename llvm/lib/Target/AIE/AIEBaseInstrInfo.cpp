@@ -528,14 +528,11 @@ static bool isPreRA(const MachineFunction &MF) {
 }
 
 // Reminder: this is used to compute the latency of RAW edges only.
-std::optional<unsigned>
-AIEBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
-                                        const MachineInstr &DefMI,
-                                        unsigned DefIdx,
-                                        const MachineInstr &UseMI,
-                                        unsigned UseIdx) const {
-  std::optional<int> Lat = getSignedOperandLatency(
-          ItinData, DefMI, DefIdx, UseMI, UseIdx, SDep::Data);
+std::optional<unsigned> AIEBaseInstrInfo::getOperandLatency(
+    const InstrItineraryData *ItinData, const MachineInstr &DefMI,
+    unsigned DefIdx, const MachineInstr &UseMI, unsigned UseIdx) const {
+  std::optional<int> Lat = getSignedOperandLatency(ItinData, DefMI, DefIdx,
+                                                   UseMI, UseIdx, SDep::Data);
   if (Lat) {
     // We have to maintain the semantics here and "cap" negative latencies at 0.
     int SignedLat = *Lat;
@@ -558,8 +555,10 @@ std::optional<int> AIEBaseInstrInfo::getSignedOperandLatency(
 
   unsigned SrcClass = SrcMI.getDesc().getSchedClass();
   unsigned DstClass = DstMI.getDesc().getSchedClass();
-  std::optional<unsigned> SrcCycle = ItinData->getOperandCycle(SrcClass, SrcOpIdx);
-  std::optional<unsigned> DstCycle = ItinData->getOperandCycle(DstClass, DstOpIdx);
+  std::optional<unsigned> SrcCycle =
+      ItinData->getOperandCycle(SrcClass, SrcOpIdx);
+  std::optional<unsigned> DstCycle =
+      ItinData->getOperandCycle(DstClass, DstOpIdx);
 
   // This architecture has strict scheduling requirements. We require
   // itineraries for all "real" instructions.
@@ -603,11 +602,11 @@ std::optional<int> AIEBaseInstrInfo::getSignedOperandLatency(
   }
 
   // Zero cost instructions like INSERT_SUBREG used as def or use will return
-  // an unknown latency in the standard itinerary logic, which would be max-ed to 0.
-  // By setting the use cycle to the earliest possible, we make sure that the
-  // result operand latency of late writers is respected.
-  // As an example. VLDA -> INSERT_SUBREG -> VMAX_LT wouldn't resepect the
-  // load latency in pre-regalloc scheduling, since both edges get zero latency.
+  // an unknown latency in the standard itinerary logic, which would be max-ed
+  // to 0. By setting the use cycle to the earliest possible, we make sure that
+  // the result operand latency of late writers is respected. As an example.
+  // VLDA -> INSERT_SUBREG -> VMAX_LT wouldn't resepect the load latency in
+  // pre-regalloc scheduling, since both edges get zero latency.
   //
   // Note that this takes the hit of a transitive latency on this intermediate
   // zero-cost node conservatively; a late reading user of DstMI will be pushed
@@ -710,6 +709,13 @@ int AIEBaseInstrInfo::getMaxLastMemoryCycle() const {
 SmallVector<int, 2>
 AIEBaseInstrInfo::getMemoryCycles(unsigned SchedClass) const {
   return {};
+}
+
+unsigned
+AIEBaseInstrInfo::getSchedClass(const MCInstrDesc &Desc,
+                                iterator_range<const MachineOperand *> Operands,
+                                const MachineRegisterInfo &MRI) const {
+  return Desc.getSchedClass();
 }
 
 bool AIEBaseInstrInfo::isLegalTypeToPad(const LLT &Ty,
