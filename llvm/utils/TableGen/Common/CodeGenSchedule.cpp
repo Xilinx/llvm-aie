@@ -897,6 +897,17 @@ void CodeGenSchedModels::collectSchedClasses() {
     // ProcIdx == 0 indicates the class applies to all processors.
     unsigned SCIdx = addSchedClass(ItinDef, Writes, Reads, /*ProcIndices*/ {0});
     InstrClassMap[Inst->TheDef] = SCIdx;
+
+    // Read the alternative itineraries and add to schedClass
+    std::vector<Record *> AltItinary =
+        Inst->TheDef->getValueAsListOfDefs("ItineraryRegPairs");
+    for (Record *AltItin : AltItinary) {
+      Record *AltItinDef = AltItin->getValueAsDef("Itinerary");
+      if (!Inst->TheDef->isValueUnset("SchedRW"))
+        findRWs(Inst->TheDef->getValueAsListOfDefs("SchedRW"), Writes, Reads);
+      addSchedClass(AltItinDef, Writes, Reads,
+                    /*ProcIndices*/ {0});
+    }
   }
   // Create classes for InstRW defs.
   RecVec InstRWDefs = Records.getAllDerivedDefinitions("InstRW");
