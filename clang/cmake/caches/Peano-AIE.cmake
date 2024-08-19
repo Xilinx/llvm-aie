@@ -25,7 +25,6 @@ set(LLVM_ENABLE_PROJECTS
       clang
       clang-tools-extra
       lld
-      libc
     CACHE STRING "")
 
 include(${CMAKE_CURRENT_LIST_DIR}/Peano-AIE-runtime-libraries.cmake)
