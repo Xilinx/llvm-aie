@@ -675,3 +675,327 @@ body:             |
     $dc1 = MOV_mv_scl $dc0
     $x0 = VADD_8 $x0, $x1
 ...
+
+---
+name:            multi_slot_latency_vlda_mod
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: multi_slot_latency_vlda_mod
+    ; CHECK: $wl0 = VLDB_dmw_ldb_ag_idx killed $p0, killed $dj0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $x0 = VADD_8 killed $x0, killed $x1
+    ; CHECK-NEXT: NOP
+    $wl0 = VLD_idx_pseudo $p0, $dj0
+    $x0 = VADD_8 $x0, $x1
+...
+
+---
+name:            multi_slot_latency_vlda_w
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: multi_slot_latency_vlda_w
+    ; CHECK: $wl0 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $x0 = VADD_8 killed $x0, killed $x1
+    ; CHECK-NEXT: NOP
+    $wl0 = VLD_idx_imm_3x32_pseudo $p0, 0
+    $x0 = VADD_8 $x0, $x1
+...
+
+---
+name:            multi_slot_latency_vlda_post_inc_w
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: multi_slot_latency_vlda_post_inc_w
+    ; CHECK: $wl0, $p0 = VLDB_dmw_ldb_ag_pstm_nrm_imm killed $p0, 0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $x0 = VADD_8 killed $x0, killed $x1
+    ; CHECK-NEXT: NOP
+    $wl0, $p0 = VLD_pstm_imm_4x32_pseudo $p0, 0
+    $x0 = VADD_8 $x0, $x1
+...
+
+---
+name:            multi_slot_latency_vlda_2d_w
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: multi_slot_latency_vlda_2d_w
+    ; CHECK: $wl0, $p0, $dc0 = VLDB_2D killed $p0, killed $d0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $x0 = VADD_8 killed $x0, killed $x1
+    ; CHECK-NEXT: NOP
+    $wl0, $p0, $dc0 = VLD_2D_pseudo $p0, $d0
+    $x0 = VADD_8 $x0, $x1
+...
+
+---
+name:            multi_slot_latency_vldb_mod
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: multi_slot_latency_vldb_mod
+    ; CHECK: $wl2 = VLDA_dmw_lda_w_ag_idx_imm killed $p0, 0
+    ; CHECK-NEXT: $wl0 = VLDB_dmw_ldb_ag_idx killed $p1, killed $dj0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $x0 = VADD_8 killed $x0, killed $x1
+    ; CHECK-NEXT: NOP
+    $wl2 = VLDA_dmw_lda_w_ag_idx_imm killed $p0, 0
+    $wl0 = VLD_idx_pseudo $p1, $dj0
+    $x0 = VADD_8 $x0, $x1
+...
+
+---
+name:            multi_slot_latency_vldb_imm
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: multi_slot_latency_vldb_imm
+    ; CHECK: $wl2 = VLDA_dmw_lda_w_ag_idx_imm killed $p0, 0
+    ; CHECK-NEXT: $wl0 = VLDB_dmw_ldb_ag_idx_imm killed $p1, 0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $x0 = VADD_8 killed $x0, killed $x1
+    ; CHECK-NEXT: NOP
+    $wl2 = VLDA_dmw_lda_w_ag_idx_imm killed $p0, 0
+    $wl0 = VLD_idx_imm_3x32_pseudo $p1, 0
+    $x0 = VADD_8 $x0, $x1
+...
+
+---
+name:            multi_slot_latency_vldb_post_inc_mod
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: multi_slot_latency_vldb_post_inc_mod
+    ; CHECK: $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0
+    ; CHECK-NEXT: $wl0, $p0 = VLDB_dmw_ldb_ag_pstm_nrm killed $p0, killed $m0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $x0 = VADD_8 killed $x0, killed $x1
+    ; CHECK-NEXT: NOP
+    $wl2 = VLDA_dmw_lda_w_ag_idx_imm killed $p0, 0
+    $wl0, $p0 = VLD_pstm_pseudo $p0, $m0
+    $x0 = VADD_8 $x0, $x1
+...
+
+---
+name:            multi_slot_latency_vldb_post_inc_imm
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: multi_slot_latency_vldb_post_inc_imm
+    ; CHECK: $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0
+    ; CHECK-NEXT: $wl0, $p0 = VLDB_dmw_ldb_ag_pstm_nrm_imm killed $p0, 0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $x0 = VADD_8 killed $x0, killed $x1
+    ; CHECK-NEXT: NOP
+    $wl2 = VLDA_dmw_lda_w_ag_idx_imm killed $p0, 0
+    $wl0, $p0 = VLD_pstm_imm_4x32_pseudo $p0, 0
+    $x0 = VADD_8 $x0, $x1
+...
+
+
+---
+name:            multi_slot_latency_vldb_2d
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: multi_slot_latency_vldb_2d
+    ; CHECK: $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0
+    ; CHECK-NEXT: $wl0, $p0, $dc0 = VLDB_2D killed $p0, killed $d0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $x0 = VADD_8 killed $x0, killed $x1
+    ; CHECK-NEXT: NOP
+    $wl2 = VLDA_dmw_lda_w_ag_idx_imm killed $p0, 0
+    $wl0, $p0, $dc0 = VLD_2D_pseudo $p0, $d0
+    $x0 = VADD_8 $x0, $x1
+...
+
+---
+name:            multi_slot_latency_vlda_mod1
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: multi_slot_latency_vlda_mod1
+    ; CHECK: $wl2 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0
+    ; CHECK-NEXT: $wl0 = VLDB_dmw_ldb_ag_idx killed $p1, killed $dj0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $x0 = VADD_8 killed $x0, killed $x1
+    ; CHECK-NEXT: NOP
+    $wl2 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0
+    $wl0 = VLD_idx_pseudo $p1, $dj0
+    $x0 = VADD_8 $x0, $x1
+...
+
+---
+name:            multi_slot_latency_vlda_imm
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: multi_slot_latency_vlda_imm
+    ; CHECK: $wl2 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0
+    ; CHECK-NEXT: $wl0 = VLDB_dmw_ldb_ag_idx_imm killed $p1, 0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $x0 = VADD_8 killed $x0, killed $x1
+    ; CHECK-NEXT: NOP
+    $wl2 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0
+    $wl0 = VLD_idx_imm_3x32_pseudo $p1, 0
+    $x0 = VADD_8 $x0, $x1
+...
+
+---
+name:            multi_slot_latency_vlda_post_inc_mod
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: multi_slot_latency_vlda_post_inc_mod
+    ; CHECK: $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0
+    ; CHECK-NEXT: $wl0, $p0 = VLDB_dmw_ldb_ag_pstm_nrm killed $p0, killed $m0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $x0 = VADD_8 killed $x0, killed $x1
+    ; CHECK-NEXT: NOP
+    $wl2 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0
+    $wl0, $p0 = VLD_pstm_pseudo $p0, $m0
+    $x0 = VADD_8 $x0, $x1
+...
+
+---
+name:            multi_slot_latency_vlda_post_inc_imm
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: multi_slot_latency_vlda_post_inc_imm
+    ; CHECK: $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0
+    ; CHECK-NEXT: $wl0, $p0 = VLDB_dmw_ldb_ag_pstm_nrm_imm killed $p0, 0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $x0 = VADD_8 killed $x0, killed $x1
+    ; CHECK-NEXT: NOP
+    $wl2 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0
+    $wl0, $p0 = VLD_pstm_imm_4x32_pseudo $p0, 0
+    $x0 = VADD_8 $x0, $x1
+...
+
+
+---
+name:            multi_slot_latency_vlda_2d
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: multi_slot_latency_vlda_2d
+    ; CHECK: $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0
+    ; CHECK-NEXT: $wl0, $p0, $dc0 = VLDB_2D killed $p0, killed $d0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $x0 = VADD_8 killed $x0, killed $x1
+    ; CHECK-NEXT: NOP
+    $wl2 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0
+    $wl0, $p0, $dc0 = VLD_2D_pseudo $p0, $d0
+    $x0 = VADD_8 $x0, $x1
+...
+
+---
+name:            latency_vlda_3d_pseudo
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: latency_vlda_3d_pseudo
+    ; CHECK: $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0
+    ; CHECK-NEXT: $wl0, $p0, $dc0, $dc4 = VLDB_3D killed $p0, killed $d0_3d
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    $wl2 = VLDA_dmw_lda_w_ag_idx_imm killed $p0, 0
+    $wl0, $p0, $dc0, $dc4 = VLD_3D_pseudo $p0, $d0_3d
+...
+
+---
+name:            latency_vldb_3d_pseudo
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: latency_vldb_3d_pseudo
+    ; CHECK: $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0
+    ; CHECK-NEXT: $wl0, $p0, $dc0, $dc4 = VLDB_3D killed $p0, killed $d0_3d
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    $wl2 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0
+    $wl0, $p0, $dc0, $dc4 = VLD_3D_pseudo $p0, $d0_3d
+...

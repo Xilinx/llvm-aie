@@ -242,11 +242,8 @@ def : PartWordStPat<truncstorei16, ST_S16_ag_idx_imm, Ty, eR>;
 }
 
 // 3.2 VLD - Vector Load
-class VectorLdPat<ValueType ResType, AIE2Inst Inst = VLDA_dmw_lda_w_ag_idx_imm>
-    : Pat<(ResType (load eP:$rs1)), (Inst eP:$rs1, (i20 0))>;
-
 // 1024-bit vector load
-class VectorLdPat1024<ValueType Rtype, ValueType type, AIE2Inst Inst = VLDA_dmw_lda_w_ag_idx_imm>
+class VectorLdPat1024<ValueType Rtype, ValueType type, AIE2Inst Inst = VLD_idx_imm_3x32_pseudo>
     : Pat<(Rtype (load eP:$rs1)),
              (INSERT_SUBREG
                (INSERT_SUBREG

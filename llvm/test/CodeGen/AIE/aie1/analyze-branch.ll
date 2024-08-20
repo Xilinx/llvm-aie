@@ -30,7 +30,7 @@ define void @test_bcc_fallthrough_taken(i32 %in) nounwind {
 ; OPT-NEXT:    padda [sp], #32
 ; OPT-NEXT:    ne r12, r6, r12
 ; OPT-NEXT:    st.spil lr, [sp, #-32] // 4-byte Folded Spill
-; OPT-NEXT:    bnez r12, .LBB0_3
+; OPT-NEXT:    bnez r12, .LBB0_2
 ; OPT-NEXT:    nop // Delay Slot 5
 ; OPT-NEXT:    nop // Delay Slot 4
 ; OPT-NEXT:    nop // Delay Slot 3
@@ -44,9 +44,6 @@ define void @test_bcc_fallthrough_taken(i32 %in) nounwind {
 ; OPT-NEXT:    nop // Delay Slot 3
 ; OPT-NEXT:    nop // Delay Slot 2
 ; OPT-NEXT:    nop // Delay Slot 1
-; OPT-NEXT:    .p2align 4
-; OPT-NEXT:  .LBB0_2: // %true
-; OPT-NEXT:    // Label of block must be emitted
 ; OPT-NEXT:    ldb lr, [sp, #-32] // 4-byte Folded Reload
 ; OPT-NEXT:    padda [sp], #-32
 ; OPT-NEXT:    nop
@@ -62,7 +59,7 @@ define void @test_bcc_fallthrough_taken(i32 %in) nounwind {
 ; OPT-NEXT:    nop // Delay Slot 2
 ; OPT-NEXT:    nop // Delay Slot 1
 ; OPT-NEXT:    .p2align 4
-; OPT-NEXT:  .LBB0_3: // %false
+; OPT-NEXT:  .LBB0_2: // %false
 ; OPT-NEXT:    // Label of block must be emitted
 ; OPT-NEXT:    jal test_false
 ; OPT-NEXT:    nop // Delay Slot 5
@@ -70,7 +67,15 @@ define void @test_bcc_fallthrough_taken(i32 %in) nounwind {
 ; OPT-NEXT:    nop // Delay Slot 3
 ; OPT-NEXT:    nop // Delay Slot 2
 ; OPT-NEXT:    nop // Delay Slot 1
-; OPT-NEXT:    j .LBB0_2
+; OPT-NEXT:    ldb lr, [sp, #-32] // 4-byte Folded Reload
+; OPT-NEXT:    padda [sp], #-32
+; OPT-NEXT:    nop
+; OPT-NEXT:    nop
+; OPT-NEXT:    nop
+; OPT-NEXT:    nop
+; OPT-NEXT:    nop
+; OPT-NEXT:    nop
+; OPT-NEXT:    ret lr
 ; OPT-NEXT:    nop // Delay Slot 5
 ; OPT-NEXT:    nop // Delay Slot 4
 ; OPT-NEXT:    nop // Delay Slot 3
@@ -159,7 +164,7 @@ define void @test_bcc_fallthrough_nottaken(i32 %in) nounwind {
 ; OPT-NEXT:    padda [sp], #32
 ; OPT-NEXT:    ne r12, r6, r12
 ; OPT-NEXT:    st.spil lr, [sp, #-32] // 4-byte Folded Spill
-; OPT-NEXT:    beqz r12, .LBB1_3
+; OPT-NEXT:    beqz r12, .LBB1_2
 ; OPT-NEXT:    nop // Delay Slot 5
 ; OPT-NEXT:    nop // Delay Slot 4
 ; OPT-NEXT:    nop // Delay Slot 3
@@ -173,9 +178,6 @@ define void @test_bcc_fallthrough_nottaken(i32 %in) nounwind {
 ; OPT-NEXT:    nop // Delay Slot 3
 ; OPT-NEXT:    nop // Delay Slot 2
 ; OPT-NEXT:    nop // Delay Slot 1
-; OPT-NEXT:    .p2align 4
-; OPT-NEXT:  .LBB1_2: // %true
-; OPT-NEXT:    // Label of block must be emitted
 ; OPT-NEXT:    ldb lr, [sp, #-32] // 4-byte Folded Reload
 ; OPT-NEXT:    padda [sp], #-32
 ; OPT-NEXT:    nop
@@ -191,7 +193,7 @@ define void @test_bcc_fallthrough_nottaken(i32 %in) nounwind {
 ; OPT-NEXT:    nop // Delay Slot 2
 ; OPT-NEXT:    nop // Delay Slot 1
 ; OPT-NEXT:    .p2align 4
-; OPT-NEXT:  .LBB1_3: // %true
+; OPT-NEXT:  .LBB1_2: // %true
 ; OPT-NEXT:    // Label of block must be emitted
 ; OPT-NEXT:    jal test_true
 ; OPT-NEXT:    nop // Delay Slot 5
@@ -199,7 +201,15 @@ define void @test_bcc_fallthrough_nottaken(i32 %in) nounwind {
 ; OPT-NEXT:    nop // Delay Slot 3
 ; OPT-NEXT:    nop // Delay Slot 2
 ; OPT-NEXT:    nop // Delay Slot 1
-; OPT-NEXT:    j .LBB1_2
+; OPT-NEXT:    ldb lr, [sp, #-32] // 4-byte Folded Reload
+; OPT-NEXT:    padda [sp], #-32
+; OPT-NEXT:    nop
+; OPT-NEXT:    nop
+; OPT-NEXT:    nop
+; OPT-NEXT:    nop
+; OPT-NEXT:    nop
+; OPT-NEXT:    nop
+; OPT-NEXT:    ret lr
 ; OPT-NEXT:    nop // Delay Slot 5
 ; OPT-NEXT:    nop // Delay Slot 4
 ; OPT-NEXT:    nop // Delay Slot 3

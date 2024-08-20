@@ -969,6 +969,7 @@ AIE2InstrInfo::getTiedRegInfo(unsigned Opcode) const {
       SubRegSplit(AIE2::sub_hi_dim_then_sub_dim_count)};
 
   switch (Opcode) {
+  case AIE2::VLD_2D_pseudo:
   case AIE2::LDA_2D_dmv_lda_q:
   case AIE2::LDA_2D_dms_lda:
   case AIE2::LDA_2D_S8_dmhb_lda:
@@ -995,6 +996,7 @@ AIE2InstrInfo::getTiedRegInfo(unsigned Opcode) const {
   case AIE2::LDA_3D_S16_dmhb_lda:
   case AIE2::LDA_3D_U8_dmhb_lda:
   case AIE2::LDA_3D_U16_dmhb_lda:
+  case AIE2::VLD_3D_pseudo:
   case AIE2::VLDA_3D_dmw_lda_w:
   case AIE2::VLDA_3D_dmw_lda_am:
   case AIE2::VLDA_3D_CONV_FP32_BF16:

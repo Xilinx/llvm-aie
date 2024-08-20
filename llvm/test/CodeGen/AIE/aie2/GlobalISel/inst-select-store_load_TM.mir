@@ -18,7 +18,7 @@ body:             |
     ; CHECK-LABEL: name: Read_TM
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[LDA_TM:%[0-9]+]]:er = LDA_TM %2:ep :: (load (s32) from custom "TileMemory")
+    ; CHECK-NEXT: [[LDA_TM:%[0-9]+]]:er = LDA_TM %2:ep :: (load (s32) from custom "TileMemory", addrspace 15)
     ; CHECK-NEXT: $r0 = COPY [[LDA_TM]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
     %1:ptrregbank(p0) = COPY $p0
@@ -39,7 +39,7 @@ body:             |
     ; CHECK-LABEL: name: Write_TM
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: ST_TM %1:er, %2:ep :: (store (s32) into custom "TileMemory")
+    ; CHECK-NEXT: ST_TM %1:er, %2:ep :: (store (s32) into custom "TileMemory", addrspace 15)
     ; CHECK-NEXT: PseudoRET implicit $lr
     %1:ptrregbank(p0) = COPY $p0
     G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.write.tm), %0:gprregbank(s32), %5:ptrregbank(p0)

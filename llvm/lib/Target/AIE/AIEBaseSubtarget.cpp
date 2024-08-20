@@ -13,9 +13,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEBaseSubtarget.h"
+#include "AIE2Subtarget.h"
 #include "AIEBaseRegisterInfo.h"
 #include "AIEMachineScheduler.h"
 #include "AIEMaxLatencyFinder.h"
+#include "AIESubtarget.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
@@ -131,6 +133,28 @@ void AIEBaseSubtarget::adjustSchedDependency(
           &Itineraries, SrcMI, DefIdx, DstMI, UseIdx, Dep.getKind())) {
     Dep.setSignedLatency(*Lat);
   }
+}
+
+const AIEBaseSubtarget &AIEBaseSubtarget::get(const MachineFunction &MF) {
+  if (MF.getTarget().getTargetTriple().isAIE1())
+    return static_cast<const AIEBaseSubtarget &>(
+        MF.getSubtarget<AIESubtarget>());
+  else if (MF.getTarget().getTargetTriple().isAIE2())
+    return static_cast<const AIEBaseSubtarget &>(
+        MF.getSubtarget<AIE2Subtarget>());
+  else
+    llvm_unreachable("Unknown subtarget");
+}
+
+MemoryBankBits
+AIEBaseSubtarget::getMemoryBanksFromAddressSpace(unsigned AddrSpace) const {
+  // By default assume there are no conflicts.
+  return 0;
+}
+
+MemoryBankBits AIEBaseSubtarget::getDefaultMemoryBank() const {
+  // By default assume there are no conflicts.
+  return 0;
 }
 
 namespace {

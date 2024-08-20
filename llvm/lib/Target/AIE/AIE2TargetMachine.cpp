@@ -21,6 +21,7 @@
 #include "AIEFinalizeBundle.h"
 #include "AIEMachineAlignment.h"
 #include "AIEMachineBlockPlacement.h"
+#include "AIEMachineFunctionInfo.h"
 #include "AIETargetObjectFile.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/GlobalISel/IRTranslator.h"
@@ -59,6 +60,11 @@ static cl::opt<bool>
 static cl::opt<bool> EnablePreMISchedCoalescer(
     "aie-premisched-coalescer", cl::Hidden, cl::init(true),
     cl::desc("Run the coalescer again after the pre-RA scheduler"));
+
+static cl::opt<unsigned> StackAddrSpace(
+    "aie-stack-addrspace", cl::init(0),
+    cl::desc("Specify the addrspace where the stack is allocated "
+             "(5: Bank A, 6: Bank B, 7: Bank C, 8: Bank D)"));
 
 extern bool AIEDumpArtifacts;
 
@@ -258,4 +264,17 @@ bool AIE2PassConfig::addInstSelector() {
   if (AIEDumpArtifacts)
     addPass(createMachineFunctionDumperPass(/*Suffix=*/"after-isel"));
   return false;
+}
+
+unsigned
+AIE2TargetMachine::getAddressSpaceForPseudoSourceKind(unsigned Kind) const {
+  switch (Kind) {
+  case PseudoSourceValue::Stack:
+  case PseudoSourceValue::FixedStack:
+    return StackAddrSpace;
+  case AIETargetPSV::AIETileMem:
+    return static_cast<unsigned>(AIE2::AddressSpaces::TM);
+  default:
+    return static_cast<unsigned>(AIE2::AddressSpaces::none);
+  }
 }

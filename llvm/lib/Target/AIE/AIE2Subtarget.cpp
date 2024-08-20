@@ -76,3 +76,66 @@ const RegisterBankInfo *AIE2Subtarget::getRegBankInfo() const {
 InstructionSelector *AIE2Subtarget::getInstructionSelector() const {
   return InstSelector.get();
 }
+
+MemoryBankBits AIE2Subtarget::getDefaultMemoryBank() const {
+  using namespace AIE2;
+  std::bitset<32> MemoryBanks;
+  MemoryBanks.set(static_cast<unsigned>(AIEBanks::A))
+      .set(static_cast<unsigned>(AIEBanks::B))
+      .set(static_cast<unsigned>(AIEBanks::C))
+      .set(static_cast<unsigned>(AIEBanks::D));
+  return MemoryBanks.to_ulong();
+}
+
+MemoryBankBits
+AIE2Subtarget::getMemoryBanksFromAddressSpace(unsigned AddrSpace) const {
+  using namespace AIE2;
+  std::bitset<32> MemoryBanks;
+
+  switch (static_cast<AddressSpaces>(AddrSpace)) {
+  case AddressSpaces::a:
+    MemoryBanks.set(static_cast<unsigned>(AIEBanks::A));
+    break;
+  case AddressSpaces::b:
+    MemoryBanks.set(static_cast<unsigned>(AIEBanks::B));
+    break;
+  case AddressSpaces::c:
+    MemoryBanks.set(static_cast<unsigned>(AIEBanks::C));
+    break;
+  case AddressSpaces::d:
+    MemoryBanks.set(static_cast<unsigned>(AIEBanks::D));
+    break;
+  case AddressSpaces::ab:
+    MemoryBanks.set(static_cast<unsigned>(AIEBanks::A))
+        .set(static_cast<unsigned>(AIEBanks::B));
+    break;
+  case AddressSpaces::ac:
+    MemoryBanks.set(static_cast<unsigned>(AIEBanks::A))
+        .set(static_cast<unsigned>(AIEBanks::C));
+    break;
+  case AddressSpaces::ad:
+    MemoryBanks.set(static_cast<unsigned>(AIEBanks::A))
+        .set(static_cast<unsigned>(AIEBanks::D));
+    break;
+  case AddressSpaces::bc:
+    MemoryBanks.set(static_cast<unsigned>(AIEBanks::B))
+        .set(static_cast<unsigned>(AIEBanks::C));
+    break;
+  case AddressSpaces::bd:
+    MemoryBanks.set(static_cast<unsigned>(AIEBanks::B))
+        .set(static_cast<unsigned>(AIEBanks::D));
+    break;
+  case AddressSpaces::cd:
+    MemoryBanks.set(static_cast<unsigned>(AIEBanks::C))
+        .set(static_cast<unsigned>(AIEBanks::D));
+    break;
+  case AddressSpaces::TM:
+    MemoryBanks.set(static_cast<unsigned>(AIEBanks::TileMemory));
+    break;
+  default:
+    return getDefaultMemoryBank();
+    break;
+  }
+
+  return MemoryBanks.to_ulong();
+}

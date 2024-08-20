@@ -40,7 +40,7 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: ST_TM killed $r6, killed $p0 :: (store (s32) into custom "TileMemory")
+    ; CHECK-NEXT: ST_TM killed $r6, killed $p0 :: (store (s32) into custom "TileMemory", addrspace 15)
     ; CHECK-NEXT: NOP
     $r6 = LDA_dms_lda_idx_imm $p1, 4
     ST_TM $r6, $p0 :: (store (s32) into custom "TileMemory")

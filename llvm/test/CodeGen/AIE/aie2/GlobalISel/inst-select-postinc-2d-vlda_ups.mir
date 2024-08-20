@@ -684,11 +684,11 @@ body: |
     ; CHECK-NEXT: [[MOV_PD_imm10_pseudo2:%[0-9]+]]:edn = MOV_PD_imm10_pseudo 3
     ; CHECK-NEXT: [[MOV_PD_imm10_pseudo3:%[0-9]+]]:edc = MOV_PD_imm10_pseudo 4
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm10_pseudo]], %subreg.sub_mod, [[MOV_PD_imm10_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm10_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm10_pseudo3]], %subreg.sub_dim_count
-    ; CHECK-NEXT: [[VLDA_2D_dmw_lda_w:%[0-9]+]]:vec256, [[VLDA_2D_dmw_lda_w1:%[0-9]+]]:ep, [[VLDA_2D_dmw_lda_w2:%[0-9]+]]:edc = VLDA_2D_dmw_lda_w [[COPY]], [[REG_SEQUENCE]] :: (load (<16 x s16>))
+    ; CHECK-NEXT: [[VLD_2D_pseudo:%[0-9]+]]:vec256, [[VLD_2D_pseudo1:%[0-9]+]]:ep, [[VLD_2D_pseudo2:%[0-9]+]]:edc = VLD_2D_pseudo [[COPY]], [[REG_SEQUENCE]] :: (load (<16 x s16>))
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r1
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:mss = COPY [[COPY1]]
-    ; CHECK-NEXT: [[VUPS_S32_S16_mv_ups_w2b:%[0-9]+]]:acc512 = VUPS_S32_S16_mv_ups_w2b [[VLDA_2D_dmw_lda_w]], [[COPY2]], implicit-def dead $srups_of, implicit $crsat
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VUPS_S32_S16_mv_ups_w2b]], implicit [[VLDA_2D_dmw_lda_w]]
+    ; CHECK-NEXT: [[VUPS_S32_S16_mv_ups_w2b:%[0-9]+]]:acc512 = VUPS_S32_S16_mv_ups_w2b [[VLD_2D_pseudo]], [[COPY2]], implicit-def dead $srups_of, implicit $crsat
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VUPS_S32_S16_mv_ups_w2b]], implicit [[VLD_2D_pseudo]]
     %0:ptrregbank(p0) = COPY $p0
     %1:em(s20) = G_CONSTANT i20 1
     %2:edj(s20) = G_CONSTANT i20 2

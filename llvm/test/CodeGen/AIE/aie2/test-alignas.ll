@@ -33,7 +33,7 @@ define <16 x i16> @_Z12test_alignasv() {
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vlda wh0, [p0, #0]
+; CHECK-NEXT:    vldb wh0, [p0, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    lda lr, [sp, #-2048] // 4-byte Folded Reload
 ; CHECK-NEXT:    nop

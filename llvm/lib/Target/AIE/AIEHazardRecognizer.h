@@ -44,16 +44,20 @@ class FuncUnitWrapper {
   /// The occupied slots. This is currently redundant with Bundle
   SlotBits Slots = 0;
 
+  /// The occupied bank
+  MemoryBankBits MemoryBanks = 0;
+
 public:
   /// IssueCount - Count instructions issued in this cycle.
   unsigned IssueCount = 0;
 
-  FuncUnitWrapper(const InstrStage &IS, SlotBits Slots = 0)
+  FuncUnitWrapper(const InstrStage &IS, SlotBits Slots = 0,
+                  MemoryBankBits MemoryBanks = 0)
       : Required(IS.getReservationKind() == InstrStage::Required ? IS.getUnits()
                                                                  : 0),
         Reserved(IS.getReservationKind() == InstrStage::Reserved ? IS.getUnits()
                                                                  : 0),
-        Slots(Slots) {}
+        Slots(Slots), MemoryBanks(MemoryBanks) {}
 
   static void setFormatInterface(const AIEBaseMCFormats *Formats);
 
@@ -67,8 +71,8 @@ public:
   FuncUnitWrapper() = default;
   FuncUnitWrapper(InstrStage::FuncUnits Req) : Required(Req), Reserved(0) {}
   FuncUnitWrapper(InstrStage::FuncUnits Req, InstrStage::FuncUnits Res,
-                  SlotBits Slots = 0)
-      : Required(Req), Reserved(Res), Slots(Slots) {}
+                  SlotBits Slots = 0, MemoryBankBits MemoryBanks = 0)
+      : Required(Req), Reserved(Res), Slots(Slots), MemoryBanks(MemoryBanks) {}
 
   /// Compare two FuncUnitWrappers for equality. This is only used for
   /// dumping purposes, quite literally saying "this looks the same"
@@ -92,8 +96,12 @@ class AIEHazardRecognizer : public ScheduleHazardRecognizer {
   void computeMaxLatency();
 
 public:
+  /// ScoreboardDepth can be used to speficy a fixed depth without querying the
+  /// scheduling model. This is mostly used for testing, for other cases we
+  /// should trust the instruction itineraries.
   AIEHazardRecognizer(const AIEBaseInstrInfo *TII, const InstrItineraryData *II,
-                      bool IsPreRA);
+                      bool IsPreRA,
+                      std::optional<unsigned> ScoreboardDepth = std::nullopt);
   AIEHazardRecognizer(const TargetSubtargetInfo &SubTarget,
                       bool IsPreRA = false);
 
@@ -128,9 +136,11 @@ public:
   ///        use from the pre-RA scheduler, where detailed resource modelling
   ///        doesn't pay off.
   void emitInScoreboard(ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
-                        const MCInstrDesc &Desc, int DeltaCycles) const;
+                        const MCInstrDesc &Desc, MemoryBankBits MemoryBanks,
+                        int DeltaCycles) const;
   // Apply the above function to the local scoreboard.
-  void emitInScoreboard(const MCInstrDesc &Desc, int DeltaCycles);
+  void emitInScoreboard(const MCInstrDesc &Desc, MemoryBankBits MemoryBanks,
+                        int DeltaCycles);
 
   /// Block all scoreboard resources at DeltaCycles
   void blockCycleInScoreboard(int DeltaCycle);
@@ -144,6 +154,10 @@ public:
   /// For instructions with multiple "alternative opcodes", this will return
   /// the opcode selected during scheduling.
   std::optional<unsigned> getSelectedAltOpcode(MachineInstr *MI) const;
+
+  /// The instructions with memory bank attribute return the address space
+  /// number
+  MemoryBankBits getMemoryBanks(MachineInstr *MI) const;
 
   /// The pipeline depth is the depth of the deepest instruction.
   /// We compute that once from the itineraries.
@@ -165,19 +179,25 @@ public:
 
 protected:
   ScheduleHazardRecognizer::HazardType getHazardType(const MCInstrDesc &Desc,
+                                                     MemoryBankBits MemoryBanks,
                                                      int DeltaCycles);
-  ScheduleHazardRecognizer::HazardType
-  getHazardType(unsigned SchedClass, SlotBits SlotSet, int DeltaCycles);
+  ScheduleHazardRecognizer::HazardType getHazardType(unsigned SchedClass,
+                                                     SlotBits SlotSet,
+                                                     MemoryBankBits MemoryBanks,
+                                                     int DeltaCycles);
 
   static bool
   checkConflict(const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
                 const InstrItineraryData *ItinData, unsigned SchedClass,
-                SlotBits SlotSet, int DeltaCycles,
+                SlotBits SlotSet, MemoryBankBits MemoryBanks,
+                SmallVector<int, 2> MemoryAccessCycles, int DeltaCycles,
                 std::optional<int> FUDepthLimit);
 
   static void enterResources(ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
                              const InstrItineraryData *ItinData,
                              unsigned SchedClass, SlotBits SlotSet,
+                             MemoryBankBits MemoryBanks,
+                             SmallVector<int, 2> MemoryAccessCycles,
                              int DeltaCycles, std::optional<int> FUDepthLimit);
 
 private:

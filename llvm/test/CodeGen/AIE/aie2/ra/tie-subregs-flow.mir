@@ -38,7 +38,6 @@ body:             |
     %3:edc = COPY $r3
     %4:ep = COPY $p0
 
-    ; ISel code for %20(p0), %30(i20) = G_INTRINSIC(add_2d_byte) %4, %0, %1, %2, %3
     %10:ed = REG_SEQUENCE %0, %subreg.sub_mod, %1, %subreg.sub_dim_size, %2, %subreg.sub_dim_stride, %3, %subreg.sub_dim_count
     %20:ep, %30:edc = PADDA_2D %4, %10
 
@@ -110,15 +109,12 @@ body:             |
     %4:ep = COPY $p0
     %5:ep = COPY $p1
 
-    ; ISel code for: %20(p0), %12(i20) = G_INTRINSIC(add_2d_byte) %4, %0, %1, %2, %3
     %10:ed = REG_SEQUENCE %0, %subreg.sub_mod, %1, %subreg.sub_dim_size, %2, %subreg.sub_dim_stride, %3, %subreg.sub_dim_count
     %20:ep, %12:edc = PADDA_2D %4, %10
 
-    ; ISel code for: %40(p0), %32(i20) = G_INTRINSIC(add_2d_byte) %20, %0, %1, %2, %12
     %30:ed = REG_SEQUENCE %0, %subreg.sub_mod, %1, %subreg.sub_dim_size, %2, %subreg.sub_dim_stride, %12, %subreg.sub_dim_count
     %40:ep, %32:edc = PADDA_2D %20, %30
 
-    ; Return the twice-incremented pointer.
     PseudoRET implicit $lr, implicit %40, implicit $m0
 ...
 
@@ -156,19 +152,15 @@ body:             |
     %4:ep = COPY $p0
     %5:ep = COPY $p1
 
-    ; ISel code for: %200(p0), %300(i20) = G_INTRINSIC(add_2d_byte) %4, %0, %1, %2, %3
     %100:ed = REG_SEQUENCE %0, %subreg.sub_mod, %1, %subreg.sub_dim_size, %2, %subreg.sub_dim_stride, %3, %subreg.sub_dim_count
     %200:ep, %300:edc = PADDA_2D %4, %100
 
-    ; ISel code for: %201(p0), %301(i20) = G_INTRINSIC(add_2d_byte) %5, %0, %1, %2, %3
     %101:ed = REG_SEQUENCE %0, %subreg.sub_mod, %1, %subreg.sub_dim_size, %2, %subreg.sub_dim_stride, %3, %subreg.sub_dim_count
     %201:ep, %301:edc = PADDA_2D %5, %101
 
-    ; ISel code for: %202(p0), %302(i20) = G_INTRINSIC(add_2d_byte) %200, %0, %1, %2, %300
     %102:ed = REG_SEQUENCE %0, %subreg.sub_mod, %1, %subreg.sub_dim_size, %2, %subreg.sub_dim_stride, %300, %subreg.sub_dim_count
     %202:ep, %302:edc = PADDA_2D %200, %102
 
-    ; Return the pointers.
     PseudoRET implicit $lr, implicit %201, implicit %202, implicit $m0
 ...
 
@@ -219,23 +211,18 @@ body:             |
     %8:edj = COPY $r6
     %9:edc = COPY $r7
 
-    ; ISel code for: %200(p0), %300(i20) = G_INTRINSIC(add_2d_byte) %4, %0, %1, %2, %3
     %100:ed = REG_SEQUENCE %0, %subreg.sub_mod, %1, %subreg.sub_dim_size, %2, %subreg.sub_dim_stride, %3, %subreg.sub_dim_count
     %200:ep, %300:edc = PADDA_2D %4, %100
 
-    ; ISel code for: %201(p0), %301(i20) = G_INTRINSIC(add_2d_byte) %5, %0, %1, %2, %3
     %101:ed = REG_SEQUENCE %0, %subreg.sub_mod, %1, %subreg.sub_dim_size, %2, %subreg.sub_dim_stride, %3, %subreg.sub_dim_count
     %201:ep, %301:edc = PADDA_2D %5, %101
 
-    ; ISel code for: %202(p0), %302(i20) = G_INTRINSIC(add_2d_byte) %5, %6, %7, %8, %9
     %102:ed = REG_SEQUENCE %6, %subreg.sub_mod, %7, %subreg.sub_dim_size, %8, %subreg.sub_dim_stride, %9, %subreg.sub_dim_count
     %202:ep, %302:edc = PADDA_2D %5, %102
 
-    ; ISel code for: %203(p0), %303(i20) = G_INTRINSIC(add_2d_byte) %200, %0, %1, %2, %300
     %103:ed = REG_SEQUENCE %0, %subreg.sub_mod, %1, %subreg.sub_dim_size, %2, %subreg.sub_dim_stride, %301, %subreg.sub_dim_count
     %203:ep, %303:edc = PADDA_2D %200, %103
 
-    ; Return the twice-incremented pointer.
     PseudoRET implicit $lr, implicit %203, implicit %202, implicit $m0, implicit $d2 , implicit $d3 , implicit $d4 , implicit $d5 , implicit $d6
 ...
 
@@ -459,13 +446,19 @@ body:             |
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
-  ; CHECK-NEXT:   successors: %bb.2(0x80000000)
+  ; CHECK-NEXT:   successors:
   ; CHECK-NEXT:   liveins: $d0:0x0000000000000860, $dj0, $dn0, $m0, $p0, $r5
   ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   RET implicit $lr
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   $dc0 = MOV_mv_scl killed $r5
+  ; CHECK-NEXT:   $p0, $dc0 = PADDA_2D killed $p0, killed $d0
+  ; CHECK-NEXT:   DelayedSchedBarrier implicit killed renamable $dc0, implicit killed renamable $p0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2 (align 16):
-  ; CHECK-NEXT:   liveins: $p0, $d0
+  ; CHECK-NEXT:   liveins: $d0:0x0000000000000870, $dc0, $dj0, $dn0, $m0, $p0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   RET implicit $lr
   ; CHECK-NEXT:   NOP

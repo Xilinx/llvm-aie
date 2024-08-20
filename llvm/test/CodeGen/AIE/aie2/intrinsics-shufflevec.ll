@@ -18,7 +18,7 @@ define <8 x i32> @test_extract_vector(<16 x i32> noundef %a, i32 noundef %idx) {
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    mov r8, r16 // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %if.end
-; CHECK-NEXT:    mova r16, #8
+; CHECK-NEXT:    mova r16, #8; nopb ; nopxm ; nops
 ; CHECK-NEXT:    vextract.s32 r0, x2, r16
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova r16, #9
@@ -35,15 +35,25 @@ define <8 x i32> @test_extract_vector(<16 x i32> noundef %a, i32 noundef %idx) {
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova r16, #13
 ; CHECK-NEXT:    vextract.s32 r5, x2, r16
-; CHECK-NEXT:    j #.LBB0_3
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    mova r16, #15 // Delay Slot 4
-; CHECK-NEXT:    vextract.s32 r6, x2, r16 // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mova r16, #14 // Delay Slot 1
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    mova r16, #15
+; CHECK-NEXT:    vextract.s32 r6, x2, r16
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    mova r16, #14
+; CHECK-NEXT:    vextract.s32 r7, x2, r16
+; CHECK-NEXT:    vpush.lo.32 x0, r6, x0
+; CHECK-NEXT:    vpush.lo.32 x0, r7, x0
+; CHECK-NEXT:    vpush.lo.32 x0, r5, x0
+; CHECK-NEXT:    vpush.lo.32 x0, r4, x0
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    vpush.lo.32 x0, r3, x0 // Delay Slot 5
+; CHECK-NEXT:    vpush.lo.32 x0, r2, x0 // Delay Slot 4
+; CHECK-NEXT:    vpush.lo.32 x0, r1, x0 // Delay Slot 3
+; CHECK-NEXT:    vpush.lo.32 x0, r0, x0 // Delay Slot 2
+; CHECK-NEXT:    mov r16, r8 // Delay Slot 1
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB0_2: // %if.then
-; CHECK-NEXT:    mova r16, #0; nopxm
+; CHECK-NEXT:    mova r16, #0; nopb ; nopxm ; nops
 ; CHECK-NEXT:    vextract.s32 r0, x2, r16
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova r16, #1
@@ -65,9 +75,7 @@ define <8 x i32> @test_extract_vector(<16 x i32> noundef %a, i32 noundef %idx) {
 ; CHECK-NEXT:    vextract.s32 r6, x2, r16
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova r16, #6
-; CHECK-NEXT:    .p2align 4
-; CHECK-NEXT:  .LBB0_3: // %return
-; CHECK-NEXT:    nopx ; vextract.s32 r7, x2, r16
+; CHECK-NEXT:    vextract.s32 r7, x2, r16
 ; CHECK-NEXT:    vpush.lo.32 x0, r6, x0
 ; CHECK-NEXT:    vpush.lo.32 x0, r7, x0
 ; CHECK-NEXT:    vpush.lo.32 x0, r5, x0
@@ -133,7 +141,7 @@ define <16 x i32> @test_insert_vector(<16 x i32> noundef %a, i32 noundef %idx, <
 ; CHECK-NEXT:    vpush.lo.32 x0, r1, x0 // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %if.end
 ; CHECK-NEXT:    nopb ; mova r16, #3; nops ; nopxm ; nopv
-; CHECK-NEXT:    vextract.s32 r0, x2, r19
+; CHECK-NEXT:    nopa ; vextract.s32 r0, x2, r19
 ; CHECK-NEXT:    vextract.s32 r1, x0, r19
 ; CHECK-NEXT:    vextract.s32 r2, x2, r18
 ; CHECK-NEXT:    vextract.s32 r3, x0, r18
@@ -153,15 +161,30 @@ define <16 x i32> @test_insert_vector(<16 x i32> noundef %a, i32 noundef %idx, <
 ; CHECK-NEXT:    mova r16, #7
 ; CHECK-NEXT:    vextract.s32 r12, x2, r16
 ; CHECK-NEXT:    vextract.s32 r13, x0, r16
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    mova r16, #6
+; CHECK-NEXT:    vextract.s32 r14, x2, r16
+; CHECK-NEXT:    vextract.s32 r15, x0, r16
+; CHECK-NEXT:    vpush.lo.32 x0, r13, x0
+; CHECK-NEXT:    vpush.lo.32 x0, r15, x0
+; CHECK-NEXT:    vpush.lo.32 x0, r11, x0
+; CHECK-NEXT:    vpush.lo.32 x0, r9, x0
+; CHECK-NEXT:    vpush.lo.32 x0, r7, x0
+; CHECK-NEXT:    vpush.lo.32 x0, r5, x0
+; CHECK-NEXT:    vpush.lo.32 x0, r3, x0
+; CHECK-NEXT:    vpush.lo.32 x0, r1, x0
+; CHECK-NEXT:    vpush.lo.32 x0, r12, x0
+; CHECK-NEXT:    vpush.lo.32 x0, r14, x0
+; CHECK-NEXT:    vpush.lo.32 x0, r10, x0
 ; CHECK-NEXT:    j #.LBB1_3
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    mova r16, #6 // Delay Slot 4
-; CHECK-NEXT:    vextract.s32 r14, x2, r16 // Delay Slot 3
-; CHECK-NEXT:    vextract.s32 r15, x0, r16 // Delay Slot 2
-; CHECK-NEXT:    nop // Delay Slot 1
+; CHECK-NEXT:    vpush.lo.32 x0, r8, x0 // Delay Slot 5
+; CHECK-NEXT:    vpush.lo.32 x0, r6, x0 // Delay Slot 4
+; CHECK-NEXT:    vpush.lo.32 x0, r4, x0 // Delay Slot 3
+; CHECK-NEXT:    vpush.lo.32 x0, r2, x0 // Delay Slot 2
+; CHECK-NEXT:    vpush.lo.32 x0, r0, x0 // Delay Slot 1
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB1_2: // %if.then
-; CHECK-NEXT:    mova r16, #3; nopx
+; CHECK-NEXT:    mova r16, #3; nopb ; nopx
 ; CHECK-NEXT:    vextract.s32 r0, x0, r19
 ; CHECK-NEXT:    vextract.s32 r1, x2, r19
 ; CHECK-NEXT:    vextract.s32 r2, x0, r18
@@ -186,12 +209,6 @@ define <16 x i32> @test_insert_vector(<16 x i32> noundef %a, i32 noundef %idx, <
 ; CHECK-NEXT:    mova r16, #6
 ; CHECK-NEXT:    vextract.s32 r14, x0, r16
 ; CHECK-NEXT:    vextract.s32 r15, x2, r16
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    .p2align 4
-; CHECK-NEXT:  .LBB1_3: // %cleanup
-; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; mov r19, r27; nopv
-; CHECK-NEXT:    mov r18, r26
-; CHECK-NEXT:    mov r17, r25
 ; CHECK-NEXT:    vpush.lo.32 x0, r13, x0
 ; CHECK-NEXT:    vpush.lo.32 x0, r15, x0
 ; CHECK-NEXT:    vpush.lo.32 x0, r11, x0
@@ -204,11 +221,17 @@ define <16 x i32> @test_insert_vector(<16 x i32> noundef %a, i32 noundef %idx, <
 ; CHECK-NEXT:    vpush.lo.32 x0, r14, x0
 ; CHECK-NEXT:    vpush.lo.32 x0, r10, x0
 ; CHECK-NEXT:    vpush.lo.32 x0, r8, x0
-; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    vpush.lo.32 x0, r6, x0 // Delay Slot 5
-; CHECK-NEXT:    vpush.lo.32 x0, r4, x0 // Delay Slot 4
-; CHECK-NEXT:    vpush.lo.32 x0, r2, x0 // Delay Slot 3
-; CHECK-NEXT:    vpush.lo.32 x0, r0, x0 // Delay Slot 2
+; CHECK-NEXT:    vpush.lo.32 x0, r6, x0
+; CHECK-NEXT:    vpush.lo.32 x0, r4, x0
+; CHECK-NEXT:    vpush.lo.32 x0, r2, x0
+; CHECK-NEXT:    vpush.lo.32 x0, r0, x0
+; CHECK-NEXT:    .p2align 4
+; CHECK-NEXT:  .LBB1_3: // %cleanup
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    mov r19, r27 // Delay Slot 4
+; CHECK-NEXT:    mov r18, r26 // Delay Slot 3
+; CHECK-NEXT:    mov r17, r25 // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r24 // Delay Slot 1
 entry:
   %shuffle = shufflevector <8 x i32> %b, <8 x i32> undef, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>

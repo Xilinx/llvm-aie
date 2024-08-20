@@ -81,8 +81,7 @@ public:
 
 class AIEPassConfig : public TargetPassConfig {
 public:
-  AIEPassConfig(LLVMTargetMachine &TM, PassManagerBase &PM)
-      : TargetPassConfig(TM, PM) {}
+  AIEPassConfig(LLVMTargetMachine &TM, PassManagerBase &PM);
 
   AIETargetMachine &getAIETargetMachine() const {
     return getTM<AIETargetMachine>();

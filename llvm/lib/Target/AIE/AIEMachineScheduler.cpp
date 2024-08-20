@@ -132,7 +132,10 @@ void bumpCycleForBundles(unsigned ToCycle,
   }
 }
 
-std::vector<AIE::MachineBundle> computeAndFinalizeBundles(SchedBoundary &Zone) {
+} // namespace
+
+std::vector<AIE::MachineBundle>
+llvm::AIE::computeAndFinalizeBundles(SchedBoundary &Zone) {
   LLVM_DEBUG(dbgs() << "Computing Bundles for Zone "
                     << (Zone.isTop() ? "Top\n" : "Bot\n"));
   const ScheduleDAGMI &DAG = *Zone.DAG;
@@ -148,6 +151,14 @@ std::vector<AIE::MachineBundle> computeAndFinalizeBundles(SchedBoundary &Zone) {
       if (!SU)
         continue;
       unsigned EmitCycle = Zone.isTop() ? SU->TopReadyCycle : SU->BotReadyCycle;
+
+      if (!ComputeSlots && EmitCycle < Bundles.size()) {
+        // The pre-RA scheduler can actually re-order copies and immediate
+        // moves, disregarding the emission cycle.
+        // See GenericScheduler::reschedulePhysReg().
+        EmitCycle = Bundles.size();
+      }
+
       if (EmitCycle != Bundles.size())
         bumpCycleForBundles(EmitCycle, Bundles, CurrBundle);
 
@@ -197,6 +208,7 @@ std::vector<AIE::MachineBundle> computeAndFinalizeBundles(SchedBoundary &Zone) {
   return Bundles;
 }
 
+namespace {
 /// Search for instructions that might jump to an unknown target block
 bool hasUnknownSuccessors(
     llvm::iterator_range<MachineBasicBlock::iterator> Region,
@@ -247,7 +259,8 @@ void AIEPostRASchedStrategy::initializeBotScoreBoard(ScoreboardTrust Trust) {
   /// make sure we always have enough lookahead available. We arrange for that
   /// by starting in the earliest possible cycle, -Depth
   auto InsertInCycle = [=](MachineInstr &MI, int Cycle) {
-    BotHazardRec->emitInScoreboard(MI.getDesc(), Cycle - Depth);
+    BotHazardRec->emitInScoreboard(
+        MI.getDesc(), BotHazardRec->getMemoryBanks(&MI), Cycle - Depth);
   };
   auto BlockCycle = [=](int Cycle) {
     BotHazardRec->blockCycleInScoreboard(Cycle - Depth);

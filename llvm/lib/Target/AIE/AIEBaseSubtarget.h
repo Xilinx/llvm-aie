@@ -21,6 +21,7 @@
 #include "llvm/CodeGenTypes/MachineValueType.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/TargetParser/Triple.h"
+#include <bitset>
 
 namespace llvm {
 
@@ -33,6 +34,8 @@ class ScheduleDAGMutation;
 class SUnit;
 class SDep;
 
+using MemoryBankBits = uint64_t;
+
 class AIEBaseSubtarget {
 private:
   Triple TargetTriple;
@@ -41,6 +44,7 @@ private:
 public:
   AIEBaseSubtarget(const Triple &TT) : TargetTriple(TT) {}
 
+  static const AIEBaseSubtarget &get(const MachineFunction &MF);
   virtual const TargetRegisterInfo *getRegisterInfo() const = 0;
   virtual const TargetFrameLowering *getFrameLowering() const = 0;
   virtual const AIEBaseInstrInfo *getInstrInfo() const = 0;
@@ -65,6 +69,10 @@ public:
   void adjustSchedDependency(const InstrItineraryData &Itineraries, SUnit *Def,
                              int DefOpIdx, SUnit *Use, int UseOpIdx,
                              SDep &Dep) const;
+
+  virtual MemoryBankBits
+  getMemoryBanksFromAddressSpace(unsigned AddrSpace) const;
+  virtual MemoryBankBits getDefaultMemoryBank() const;
 
   /// Required DAG mutations during Post-RA scheduling.
   static std::vector<std::unique_ptr<ScheduleDAGMutation>>
