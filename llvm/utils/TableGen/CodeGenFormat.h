@@ -352,7 +352,7 @@ private:
 class TGTargetSlots {
 public:
   using RecordSlot = std::pair<const Record *, TGTargetSlot>;
-  using const_iterator = SmallVector<RecordSlot>::const_iterator;
+  using const_iterator = SmallVector<RecordSlot, 16>::const_iterator;
 
   /// Name of the class/enum generated enumerating the different kinds of slot
   /// of the target
@@ -367,7 +367,7 @@ private:
   /// Record representing the Base Slot class in TableGen
   const Record *const BaseSlotClass;
   /// List of pair <Record, Slot> parsed in TableGen
-  SmallVector<RecordSlot> Slots;
+  SmallVector<RecordSlot, 16> Slots;
   /// ID's of the Slots part of this instance
   /// The default slot will have -1 as ID
   /// Valid slots will have >= 0 IDs attributed
