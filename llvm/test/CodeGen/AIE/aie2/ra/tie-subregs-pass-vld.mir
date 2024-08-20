@@ -61,13 +61,14 @@ body:             |
     ; CHECK-NEXT: $x3, %36:ep, [[COPY20]].sub_dim_count:ed = VLDB_2D_UNPACK_D8_D4 [[COPY4]], [[COPY20]], implicit $crunpacksign
     ; CHECK-NEXT: [[COPY21:%[0-9]+]]:ed = COPY [[REG_SEQUENCE]]
     ; CHECK-NEXT: $x6, %38:ep, [[COPY21]].sub_dim_count:ed = VLDB_2D_UNPACK_D16_D8 [[COPY4]], [[COPY21]], implicit $crunpacksign
+    ; CHECK-NEXT: [[COPY22:%[0-9]+]]:ed = COPY [[REG_SEQUENCE]]
+    ; CHECK-NEXT: $wl0, %40:ep, [[COPY22]].sub_dim_count:ed = VLD_2D_pseudo [[COPY4]], [[COPY22]]
     %0:em =  COPY $r0
     %1:edn = COPY $r1
     %2:edj = COPY $r2
     %3:edc = COPY $r3
     %4:ep = COPY $p0
 
-    ; ISel code for add_2d_byte
     %10:ed = REG_SEQUENCE %0, %subreg.sub_mod, %1, %subreg.sub_dim_size, %2, %subreg.sub_dim_stride, %3, %subreg.sub_dim_count
     $wl0, %20:ep, %21:edc = VLDA_2D_dmw_lda_w %4, %10
     $amll0, %30:ep, %31:edc = VLDA_2D_dmw_lda_am %4, %10
@@ -86,6 +87,7 @@ body:             |
     $x1, %160:ep, %161:edc = VLDB_2D_UNPACK_S16_S8 %4, %10
     $x3, %170:ep, %171:edc = VLDB_2D_UNPACK_D8_D4 %4, %10, implicit $crunpacksign
     $x6, %180:ep, %181:edc = VLDB_2D_UNPACK_D16_D8 %4, %10, implicit $crunpacksign
+    $wl0, %190:ep, %191:edc = VLD_2D_pseudo %4, %10
 ...
 
 ---
@@ -137,6 +139,8 @@ body:             |
     ; CHECK-NEXT: $x3, %47:ep, [[COPY17]].sub_dim_count:eds, [[COPY17]].sub_hi_dim_then_sub_dim_count:eds = VLDB_3D_UNPACK_D8_D4 [[COPY]], [[COPY17]], implicit $crunpacksign
     ; CHECK-NEXT: [[COPY18:%[0-9]+]]:eds = COPY [[COPY1]]
     ; CHECK-NEXT: $x6, %50:ep, [[COPY18]].sub_dim_count:eds, [[COPY18]].sub_hi_dim_then_sub_dim_count:eds = VLDB_3D_UNPACK_D16_D8 [[COPY]], [[COPY18]], implicit $crunpacksign
+    ; CHECK-NEXT: [[COPY19:%[0-9]+]]:eds = COPY [[COPY1]]
+    ; CHECK-NEXT: $wl0, %53:ep, [[COPY19]].sub_dim_count:eds, [[COPY19]].sub_hi_dim_then_sub_dim_count:eds = VLD_3D_pseudo [[COPY]], [[COPY19]]
     %0:ep = COPY $p0
     %10:eds = COPY $d0_3d
     $wl0, %20:ep, %21:edc, %22:edc = VLDA_3D_dmw_lda_w %0, %10
@@ -156,4 +160,5 @@ body:             |
     $x1, %160:ep, %161:edc, %162:edc = VLDB_3D_UNPACK_S16_S8 %0, %10
     $x3, %170:ep, %171:edc, %172:edc = VLDB_3D_UNPACK_D8_D4 %0, %10, implicit $crunpacksign
     $x6, %180:ep, %181:edc, %182:edc = VLDB_3D_UNPACK_D16_D8 %0, %10, implicit $crunpacksign
+    $wl0, %190:ep, %191:edc, %192:edc = VLD_3D_pseudo %0, %10
 ...
