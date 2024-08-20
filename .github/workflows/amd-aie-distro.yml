@@ -154,6 +154,8 @@ jobs:
         include:
           - OS: ubuntu-20.04
             ARCH: x86_64
+          - OS: windows-2019
+            ARCH: AMD64
 
     defaults:
       run:
@@ -211,7 +213,7 @@ jobs:
         LLVM_AIE_PROJECT_COMMIT=${{ needs.settings.outputs.LLVM_AIE_PROJECT_COMMIT }}
         gh api -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" \
           repos/Xilinx/llvm-aie/zipball/$LLVM_AIE_PROJECT_COMMIT > llvm-aie.zip
-        unzip -q llvm-aie.zip
+        unzip -qq llvm-aie.zip
         rm -rf llvm-aie.zip
         mv Xilinx-llvm-aie-* llvm-aie
 
