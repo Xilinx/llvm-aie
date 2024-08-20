@@ -19,9 +19,7 @@
 #include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
 #include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
 #include "llvm/CodeGen/RuntimeLibcalls.h"
-
-// FIXME: Remove AIE architecture specific headers
-#include "MCTargetDesc/AIE2MCTargetDesc.h"
+#include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/IR/IntrinsicsAIE2.h"
 
 namespace llvm {
@@ -153,6 +151,7 @@ bool AIELegalizerHelper::legalizeG_BUILD_VECTOR(LegalizerHelper &Helper,
   Register Src = MRI.createGenericVirtualRegister(VecTy);
   MIRBuilder.buildUndef(Src);
 
+  const AIEBaseInstrInfo *II = ST.getInstrInfo();
   MachineOperand *OperandBegin = MI.operands_begin(),
                  *Operand = MI.operands_end() - 1;
   while (Operand != OperandBegin) {
@@ -171,7 +170,8 @@ bool AIELegalizerHelper::legalizeG_BUILD_VECTOR(LegalizerHelper &Helper,
       Reg = TmpReg32;
     }
 
-    MIRBuilder.buildInstr(AIE2::G_AIE_ADD_VECTOR_ELT_LEFT, {Dst}, {Src, Reg});
+    MIRBuilder.buildInstr(II->getGenericAddVectorEltOpcode(), {Dst},
+                          {Src, Reg});
     Src = Dst;
     --Operand;
   }
@@ -184,7 +184,7 @@ bool AIELegalizerHelper::legalizeG_BUILD_VECTOR(LegalizerHelper &Helper,
     const Register UnusedSubReg = MRI.createGenericVirtualRegister(DstVecTy);
     MIRBuilder.buildUnmerge({DstReg, UnusedSubReg}, Src);
   } else if (DstVecSize == 128) {
-    MIRBuilder.buildInstr(AIE2::G_AIE_UNPAD_VECTOR, {DstReg}, {Src});
+    MIRBuilder.buildInstr(II->getGenericUnpadVectorOpcode(), {DstReg}, {Src});
   }
 
   MI.eraseFromParent();
@@ -195,6 +195,7 @@ bool AIELegalizerHelper::legalizeG_UNMERGE_VALUES(LegalizerHelper &Helper,
                                                   MachineInstr &MI) const {
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
   MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
+  const AIEBaseInstrInfo *II = ST.getInstrInfo();
 
   const Register FirstReg = MI.getOperand(0).getReg();
   const Register LastReg = MI.getOperand(MI.getNumOperands() - 1).getReg();
@@ -214,7 +215,7 @@ bool AIELegalizerHelper::legalizeG_UNMERGE_VALUES(LegalizerHelper &Helper,
     const LLT NewRegTy =
         LLT::fixed_vector(LastTy.getNumElements() * 2, LastTy.getScalarType());
     const Register NewReg = MRI.createGenericVirtualRegister(NewRegTy);
-    MIRBuilder.buildInstr(AIE2::G_AIE_PAD_VECTOR_UNDEF, {NewReg}, {LastReg});
+    MIRBuilder.buildInstr(II->getGenericPadVectorOpcode(), {NewReg}, {LastReg});
     TargetReg = NewReg;
   }
 
@@ -482,20 +483,23 @@ bool AIELegalizerHelper::legalizeG_EXTRACT_VECTOR_ELT(LegalizerHelper &Helper,
   case 1024: {
     const LLT S8 = LLT::scalar(8);
     const LLT S16 = LLT::scalar(16);
+    const AIEBaseInstrInfo *II = ST.getInstrInfo();
     bool IsS32 = SrcVecEltTy == S32;
     assert((SrcVecEltTy == S8 || SrcVecEltTy == S16 || IsS32) &&
            "Unexpected vector element type for extract vector elt!");
     if (!IsS32) {
       const Register ExtEltDstReg = MRI.createGenericVirtualRegister(S32);
       const Register ExtDstReg = MRI.createGenericVirtualRegister(S32);
-      MIRBuilder.buildInstr(AIE2::G_AIE_SEXT_EXTRACT_VECTOR_ELT, {ExtEltDstReg},
-                            {SrcVecReg, IdxReg});
+      MIRBuilder.buildInstr(
+          II->getGenericExtractVectorEltOpcode(/*SignExt*/ true),
+          {ExtEltDstReg}, {SrcVecReg, IdxReg});
       MIRBuilder.buildAssertInstr(TargetOpcode::G_ASSERT_SEXT, ExtDstReg,
                                   ExtEltDstReg, SrcVecEltTy.getSizeInBits());
       MIRBuilder.buildTrunc(DstReg, ExtDstReg);
     } else {
-      MIRBuilder.buildInstr(AIE2::G_AIE_SEXT_EXTRACT_VECTOR_ELT, {DstReg},
-                            {SrcVecReg, IdxReg});
+      MIRBuilder.buildInstr(
+          II->getGenericExtractVectorEltOpcode(/*SignExt*/ true), {DstReg},
+          {SrcVecReg, IdxReg});
     }
     break;
   }
@@ -546,6 +550,7 @@ bool AIELegalizerHelper::legalizeG_INSERT_VECTOR_ELT(LegalizerHelper &Helper,
   case 512:
   case 1024: {
     const LLT ValTy = MRI.getType(ValReg);
+    const AIEBaseInstrInfo *II = ST.getInstrInfo();
     if (ValTy == LLT::scalar(64)) {
       llvm_unreachable("Unexpected scalar value type for insert vec elt!");
     }
@@ -556,7 +561,7 @@ bool AIELegalizerHelper::legalizeG_INSERT_VECTOR_ELT(LegalizerHelper &Helper,
     } else {
       NewValReg = ValReg;
     }
-    MIRBuilder.buildInstr(AIE2::G_AIE_INSERT_VECTOR_ELT, {DstVecReg},
+    MIRBuilder.buildInstr(II->getGenericInsertVectorEltOpcode(), {DstVecReg},
                           {SrcVecReg, NewValReg, IdxReg});
     break;
   }
@@ -927,14 +932,16 @@ bool AIELegalizerHelper::legalizeG_FADDSUB(LegalizerHelper &Helper,
   Register Src1Vec = MIRBuilder.buildUndef(V16FP32).getReg(0);
   Register Src2Vec = MIRBuilder.buildUndef(V16FP32).getReg(0);
 
-  Register NewSrc1 = MIRBuilder
-                         .buildInstr(AIE2::G_AIE_INSERT_VECTOR_ELT, {V16FP32},
-                                     {Src1Vec, NewSrcReg1, IdxReg})
-                         .getReg(0);
-  Register NewSrc2 = MIRBuilder
-                         .buildInstr(AIE2::G_AIE_INSERT_VECTOR_ELT, {V16FP32},
-                                     {Src2Vec, NewSrcReg2, IdxReg})
-                         .getReg(0);
+  const unsigned InsertEltOpc =
+      ST.getInstrInfo()->getGenericInsertVectorEltOpcode();
+  Register NewSrc1 =
+      MIRBuilder
+          .buildInstr(InsertEltOpc, {V16FP32}, {Src1Vec, NewSrcReg1, IdxReg})
+          .getReg(0);
+  Register NewSrc2 =
+      MIRBuilder
+          .buildInstr(InsertEltOpc, {V16FP32}, {Src2Vec, NewSrcReg2, IdxReg})
+          .getReg(0);
 
   Register FPOp;
   if (MI.getOpcode() == TargetOpcode::G_FADD)
@@ -951,8 +958,9 @@ bool AIELegalizerHelper::legalizeG_FADDSUB(LegalizerHelper &Helper,
 
   const Register ExtEltDstReg = MRI.createGenericVirtualRegister(S32);
   const Register ExtDstReg = MRI.createGenericVirtualRegister(S32);
-  MIRBuilder.buildInstr(AIE2::G_AIE_SEXT_EXTRACT_VECTOR_ELT, {ExtEltDstReg},
-                        {Conv, IdxReg});
+  const unsigned ExtractEltOpc =
+      ST.getInstrInfo()->getGenericExtractVectorEltOpcode(/*SignExt*/ true);
+  MIRBuilder.buildInstr(ExtractEltOpc, {ExtEltDstReg}, {Conv, IdxReg});
   MIRBuilder.buildAssertInstr(TargetOpcode::G_ASSERT_SEXT, ExtDstReg,
                               ExtEltDstReg, 16);
   MIRBuilder.buildTrunc(DstReg, ExtDstReg);

@@ -744,6 +744,27 @@ unsigned AIE2InstrInfo::getCycleSeparatorOpcode() const {
   return AIE2::CYCLE_SEPARATOR;
 }
 
+unsigned AIE2InstrInfo::getGenericAddVectorEltOpcode() const {
+  return AIE2::G_AIE_ADD_VECTOR_ELT_LEFT;
+}
+
+unsigned AIE2InstrInfo::getGenericInsertVectorEltOpcode() const {
+  return AIE2::G_AIE_INSERT_VECTOR_ELT;
+}
+
+unsigned AIE2InstrInfo::getGenericExtractVectorEltOpcode(bool SignExt) const {
+  return SignExt ? AIE2::G_AIE_SEXT_EXTRACT_VECTOR_ELT
+                 : AIE2::G_AIE_ZEXT_EXTRACT_VECTOR_ELT;
+}
+
+unsigned AIE2InstrInfo::getGenericPadVectorOpcode() const {
+  return AIE2::G_AIE_PAD_VECTOR_UNDEF;
+}
+
+unsigned AIE2InstrInfo::getGenericUnpadVectorOpcode() const {
+  return AIE2::G_AIE_UNPAD_VECTOR;
+}
+
 unsigned int getVLDSparseOpcode(unsigned int PseudoOpc) {
   switch (PseudoOpc) {
   case AIE2::PSEUDO_VLD_SPARSE_POP_16_set_low:
