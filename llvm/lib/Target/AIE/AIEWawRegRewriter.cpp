@@ -41,7 +41,6 @@
 using namespace llvm;
 
 #define DEBUG_TYPE "aie-wawreg-rewrite"
-#define DEBUG_TYPE "aie-wawreg-rewrite"
 
 namespace {
 
@@ -290,8 +289,13 @@ reuseSubRegs(llvm::SmallVector<const MachineInstr *, 4> &OrigInstr,
       continue;
     for (auto [OpA, OpB] : zip(InstrA->uses(), InstrB->uses())) {
       if (OpA.isReg() && OpB.isReg()) {
-        if (OpA.getReg() == OpB.getReg() && OpA.getSubReg() == OpB.getSubReg())
-          return true;
+        if (OpA.getReg() == OpB.getReg() &&
+            OpA.getSubReg() == OpB.getSubReg()) {
+          for (auto [defA, defB] : zip(InstrA->defs(), InstrB->defs())) {
+            if (defA.getSubReg() == defB.getSubReg())
+              return true;
+          }
+        }
       }
     }
   }
