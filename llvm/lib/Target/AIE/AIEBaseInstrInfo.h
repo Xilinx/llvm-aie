@@ -84,6 +84,33 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   virtual unsigned getCycleSeparatorOpcode() const {
     llvm_unreachable("Target didn't implement getCycleSeparatorOpcode");
   }
+  /// Return the opcode to be used for pushing a vector element at the LSB
+  /// position in a vector
+  virtual unsigned getGenericAddVectorEltOpcode() const {
+    llvm_unreachable("Target didn't implement getGenericAddVectorEltOpcode");
+  }
+  /// Return the opcode to be used for inserting a vector element at an
+  /// arbitrary position in a vector
+  virtual unsigned getGenericInsertVectorEltOpcode() const {
+    llvm_unreachable("Target didn't implement getGenericInsertVectorEltOpcode");
+  }
+  /// Return the opcode to be used for extracting a vector element
+  /// \param signExt True if the extracted element shall be sign extended
+  virtual unsigned getGenericExtractVectorEltOpcode(bool SignExt) const {
+    llvm_unreachable(
+        "Target didn't implement getGenericExtractVectorEltOpcode");
+    ;
+  }
+  /// Return the opcode to be used for padding undefined values in the high bits
+  /// of a vector
+  virtual unsigned getGenericPadVectorOpcode() const {
+    llvm_unreachable("Target didn't implement getGenericPadVectorOpcode");
+  }
+  /// Return the opcode to be used for extracting a smaller vector by ignoring
+  /// the high bits
+  virtual unsigned getGenericUnpadVectorOpcode() const {
+    llvm_unreachable("Target didn't implement getGenericUnpadVectorOpcode");
+  }
   /// Check whether Opc represents a lock instruction
   virtual bool isLock(unsigned Opc) const { return false; }
   /// Check whether this is a delayed scheduling barrier induced from

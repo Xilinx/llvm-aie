@@ -42,6 +42,11 @@ public:
   unsigned getPseudoMoveOpcode() const override;
   unsigned getConstantMovOpcode(MachineRegisterInfo &MRI, unsigned int Reg,
                                 APInt &Val) const override;
+  unsigned getGenericAddVectorEltOpcode() const override;
+  unsigned getGenericInsertVectorEltOpcode() const override;
+  unsigned getGenericExtractVectorEltOpcode(bool SignExt) const override;
+  unsigned getGenericPadVectorOpcode() const override;
+  unsigned getGenericUnpadVectorOpcode() const override;
   unsigned getCycleSeparatorOpcode() const override;
   bool isLock(unsigned Opc) const override;
   bool isDelayedSchedBarrier(const MachineInstr &MI) const override;
