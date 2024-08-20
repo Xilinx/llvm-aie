@@ -30,6 +30,29 @@ body:             |
 ...
 
 ---
+name:            VBCST_8_ZEXT
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+      liveins: $r0
+    ; CHECK-LABEL: name: VBCST_8_ZEXT
+    ; CHECK: liveins: $r0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:er = COPY $r0
+    ; CHECK-NEXT: [[VBCST_8_:%[0-9]+]]:vec512 = VBCST_8 [[COPY]]
+    ; CHECK-NEXT: $x0 = COPY [[VBCST_8_]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
+      %2:gprregbank(s32) = COPY $r0
+      %4:gprregbank(s32) = G_CONSTANT i32 255
+      %3:gprregbank(s32) = G_AND %2, %4
+      %0:vregbank(<64 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.vbroadcast8.I512), %3:gprregbank(s32)
+      $x0 = COPY %0:vregbank(<64 x s8>)
+      PseudoRET implicit $lr, implicit $x0
+...
+
+---
 name:            VBCST_16
 alignment:       16
 legalized:       true
@@ -47,6 +70,30 @@ body:             |
     %2:gprregbank(s32) = COPY $r0
     %3:gprregbank(s32) = G_ASSERT_SEXT %2:gprregbank, 16
     %0:vregbank(<32 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.vbroadcast16.I512), %3:gprregbank(s32)
+    $x0 = COPY %0:vregbank(<32 x s16>)
+    PseudoRET implicit $lr, implicit $x0
+...
+
+---
+name:            VBCST_16_ZEXT
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $r0
+    ; CHECK-LABEL: name: VBCST_16_ZEXT
+    ; CHECK: liveins: $r0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:er = COPY $r0
+    ; CHECK-NEXT: [[VBCST_16_:%[0-9]+]]:vec512 = VBCST_16 [[COPY]]
+    ; CHECK-NEXT: $x0 = COPY [[VBCST_16_]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $x0
+    %2:gprregbank(s32) = COPY $r0
+    %3:gprregbank(s32) = G_ASSERT_SEXT %2, 16
+    %5:gprregbank(s32) = G_CONSTANT i32 65535
+    %4:gprregbank(s32) = G_AND %3, %5
+    %0:vregbank(<32 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.vbroadcast16.I512), %4:gprregbank(s32)
     $x0 = COPY %0:vregbank(<32 x s16>)
     PseudoRET implicit $lr, implicit $x0
 ...
