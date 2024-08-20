@@ -15,8 +15,534 @@
 
 #include "AIE2LegalizerInfo.h"
 #include "AIE2Subtarget.h"
+#include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
+#include "llvm/CodeGen/GlobalISel/LostDebugLocObserver.h"
+#include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
 
 using namespace llvm;
+using namespace LegalityPredicates;
 
-AIE2LegalizerInfo::AIE2LegalizerInfo(const AIE2Subtarget &STI)
-    : AIELegalizerInfo(STI) {}
+static LegalityPredicate isLegalBitCastType(unsigned TypeIdx) {
+  return [=](const LegalityQuery &Query) {
+    LLT Ty = Query.Types[TypeIdx];
+    if (Ty.isScalar())
+      return Ty == LLT::scalar(32) || Ty == LLT::scalar(64);
+    const int EltSize = Ty.isVector() ? Ty.getElementType().getSizeInBits() : 0;
+    return EltSize == 8 || EltSize == 16 || EltSize == 32 || EltSize == 64;
+  };
+}
+
+static LegalizeMutation bitcastAccToVectorType(unsigned TypeIdx) {
+  return [=](const LegalityQuery &Query) {
+    LLT OrigTy = Query.Types[TypeIdx];
+    assert(OrigTy.getElementType() == LLT::scalar(64) &&
+           "Expected an accumulator type");
+    unsigned Size = OrigTy.getSizeInBits();
+    assert(Size % 32 == 0);
+    return std::pair(TypeIdx, LLT::fixed_vector(Size / 32, 32));
+  };
+}
+
+static LegalizeMutation bitcastToVectorElement32(const unsigned TypeIdx) {
+  return [=](const LegalityQuery &Query) {
+    const LLT Ty = Query.Types[TypeIdx];
+    unsigned Size = Ty.getSizeInBits();
+    assert(Size % 32 == 0);
+    return std::pair(
+        TypeIdx, LLT::scalarOrVector(ElementCount::getFixed(Size / 32), 32));
+  };
+}
+
+static LegalityPredicate
+isValidVectorMergeUnmergeOp(const unsigned BigVectorId,
+                            const unsigned SmallVectorId) {
+  return [=](const LegalityQuery &Query) {
+    const LLT Big = Query.Types[BigVectorId];
+    const LLT Small = Query.Types[SmallVectorId];
+    return Big.isVector() && Small.isVector() &&
+           Big.getElementType() == Small.getElementType() &&
+           Small.getNumElements() * 2 == Big.getNumElements();
+  };
+}
+
+static LegalityPredicate isValidVectorAIE2(const unsigned TypeIdx) {
+  return [=](const LegalityQuery &Query) {
+    const LLT DstTy = Query.Types[TypeIdx];
+    const unsigned DstSize = DstTy.getSizeInBits();
+    return DstTy.isVector() && (DstSize == 32 || DstSize > 64);
+  };
+}
+
+LegalityPredicate
+negatePredicate(const std::function<bool(const LegalityQuery &)> &Func) {
+  return [=](const LegalityQuery &Query) { return !Func(Query); };
+}
+
+AIE2LegalizerInfo::AIE2LegalizerInfo(const AIE2Subtarget &ST) : AIEHelper(ST) {
+  using namespace TargetOpcode;
+  const LLT S8 = LLT::scalar(8);
+  const LLT S16 = LLT::scalar(16);
+  const LLT S20 = LLT::scalar(20);
+  const LLT S32 = LLT::scalar(32);
+  const LLT S64 = LLT::scalar(64);
+  const LLT P0 = LLT::pointer(0, 20);
+
+  // 32-bit vectors
+  const LLT V4S8 = LLT::fixed_vector(4, 8);
+  const LLT V2S16 = LLT::fixed_vector(2, 16);
+
+  // 64-bit vectors
+  const LLT V2S32 = LLT::fixed_vector(2, 32);
+
+  // 128-bit vectors
+  const LLT V16S8 = LLT::fixed_vector(16, 8);
+  const LLT V8S16 = LLT::fixed_vector(8, 16);
+  const LLT V4S32 = LLT::fixed_vector(4, 32);
+
+  // 256-bit vectors
+  const LLT V8S32 = LLT::fixed_vector(8, 32);
+  const LLT V16S16 = LLT::fixed_vector(16, 16);
+  const LLT V32S8 = LLT::fixed_vector(32, 8);
+
+  // 256-bit accumulators
+  const LLT ACC256 = LLT::fixed_vector(4, 64);
+
+  // 512-bit vectors
+  const LLT V16S32 = LLT::fixed_vector(16, 32);
+  const LLT V32S16 = LLT::fixed_vector(32, 16);
+  const LLT V64S8 = LLT::fixed_vector(64, 8);
+
+  // 512-bit accumulators
+  const LLT ACC512 = LLT::fixed_vector(8, 64);
+
+  // 1024-bit vectors
+  const LLT V32S32 = LLT::fixed_vector(32, 32);
+  const LLT V64S16 = LLT::fixed_vector(64, 16);
+  const LLT V128S8 = LLT::fixed_vector(128, 8);
+
+  // 1024-bit accumulators
+  const LLT ACC1024 = LLT::fixed_vector(16, 64);
+
+  const LLT S128 = LLT::scalar(128);
+
+  static const std::initializer_list<LLT> AIE2VectorTypes = {
+      /* Begin 32-bit types*/
+      V4S8, V2S16,
+      /* Begin 256-bit types */
+      V8S32, V16S16, V32S8,
+      /* Begin 512-bit types */
+      V16S32, V32S16, V64S8,
+      /* Begin 1024-bit types */
+      V32S32, V64S16, V128S8};
+
+  // Accumulator types are 32-bit vectors that pretend to 64-bit vectors of
+  // half the size.
+  static const std::initializer_list<LLT> AIE2AccumulatorTypes = {
+      /* Begin 256-bit types */
+      ACC256,
+      /* Begin 512-bit types */
+      ACC512,
+      /* Begin 1024-bit types */
+      ACC1024};
+
+  getActionDefinitionsBuilder({G_IMPLICIT_DEF, G_FREEZE})
+      .legalFor({S20, S32, P0, S128})
+      .legalFor(AIE2VectorTypes)
+      .legalFor(AIE2AccumulatorTypes)
+      .widenScalarToNextPow2(0)
+      .clampScalar(0, S32, S32);
+
+  getActionDefinitionsBuilder(G_CONSTANT)
+      .legalFor({S20, S32, P0})
+      .widenScalarToNextPow2(0)
+      .clampScalar(0, S32, S32);
+
+  // FIXME: AIE1 actually supports float. But since AIE2 is using the same
+  // legalizer, we will cast both type to int now.
+  getActionDefinitionsBuilder(G_FCONSTANT).customFor({S16, S32, S64});
+
+  getActionDefinitionsBuilder(G_ICMP)
+      .legalFor({{S32, S32}, {S32, P0}})
+      .clampScalar(0, S32, S32)
+      .clampScalar(1, S32, S32);
+
+  getActionDefinitionsBuilder(G_FCMP)
+      .clampScalar(0, S32, S32)
+      .customFor({{S32, S16}, {S32, S32}});
+
+  getActionDefinitionsBuilder(G_FPTRUNC)
+      .libcallFor({{S32, S64}})
+      .customFor({{S16, S32}});
+
+  getActionDefinitionsBuilder({G_SITOFP, G_UITOFP})
+      .libcallForCartesianProduct({S32, S64})
+      .clampScalar(1, S32, S64)
+      .widenScalarToNextPow2(1)
+      .clampScalar(0, S32, S64);
+
+  getActionDefinitionsBuilder(G_FPEXT)
+      .libcallFor({{S64, S32}})
+      .customFor({{S32, S16}})
+      .narrowScalarFor({{S64, S16}}, llvm::LegalizeMutations::changeTo(0, S32));
+
+  getActionDefinitionsBuilder({G_FPTOSI, G_FPTOUI})
+      .libcallForCartesianProduct({S32, S64})
+      .clampScalar(0, S32, S64)
+      .widenScalarToNextPow2(0)
+      .clampScalar(1, S32, S64);
+
+  getActionDefinitionsBuilder(G_FABS).customFor({S16, S32, S64});
+
+  getActionDefinitionsBuilder({G_FADD, G_FSUB})
+      .legalFor({V16S32})
+      .customFor({S16})
+      .libcallFor({S32, S64});
+
+  getActionDefinitionsBuilder({G_FMUL, G_FDIV, G_FREM})
+      .clampScalar(0, S32, S64)
+      .libcallFor({S32, S64});
+
+  // Since the only integers smaller than 32 bits we produce are S20 (from
+  // G_PTRTOINT), the only legal extension is S20 -> S32.
+  // Extensions to types larger than 64 bits have to be broken down into
+  // multiple parts.
+  getActionDefinitionsBuilder({G_ANYEXT, G_SEXT, G_ZEXT})
+      .legalFor({{S32, S20}})
+      .clampScalar(0, S32, S32);
+  // FIXME: (s|z|any)ext s20 to s64 is broken.
+
+  getActionDefinitionsBuilder({G_AND, G_OR})
+      .legalFor({S32})
+      .legalFor(AIE2VectorTypes)
+      .widenScalarToNextPow2(0)
+      .clampScalar(0, S32, S32);
+
+  getActionDefinitionsBuilder(G_XOR)
+      .legalFor({S32})
+      .widenScalarToNextPow2(0)
+      .clampScalar(0, S32, S32);
+
+  getActionDefinitionsBuilder(G_SEXT_INREG).custom();
+
+  getActionDefinitionsBuilder({G_ASHR, G_LSHR, G_SHL})
+      .legalFor({{S32, S32}})
+      .widenScalarToNextPow2(0)
+      .clampScalar(0, S32, S32)
+      .clampScalar(1, S32, S32);
+
+  getActionDefinitionsBuilder(G_TRUNC).alwaysLegal();
+
+  getActionDefinitionsBuilder(G_SELECT)
+      .legalFor({{S32, S32}, {P0, S32}})
+      .widenScalarToNextPow2(0)
+      .clampScalar(0, S32, S32)
+      .clampScalar(1, S32, S32)
+      .legalFor(AIE2VectorTypes)
+      // We support G_SELECT only on the vector register bank
+      // Mapping the G_SELECT operands to the vector register bank
+      // during register bank selection introduces the proper cross-bank
+      // copies. However, we cannot write ISEL patterns expressing accumulator
+      // types on vector register banks, which requires to duplicate the vector
+      // type patterns in C++. Introducing bitcasts during legalization allows
+      // to re-use the existing code for register bank selection and ISEL
+      // patterns.
+      .bitcastIf(typeInSet(0, AIE2AccumulatorTypes), bitcastAccToVectorType(0));
+
+  getActionDefinitionsBuilder({G_ADD, G_SUB})
+      .legalFor({S32})
+      .legalFor({V16S32, V32S16, V64S8})
+      .widenScalarToNextPow2(0)
+      .clampScalar(0, S32, S32);
+
+  // FIXME: G_SADDE/G_SSUBE doesn't support lowering. To support this properly,
+  // the action needs to be implemented
+  // FIXME: AIE2 has ADC and SBC operations to read the carry.
+  getActionDefinitionsBuilder({G_UADDO, G_USUBO, G_UADDE, G_USUBE, G_SADDO,
+                               G_SSUBO, G_SADDE, G_SSUBE, G_UADDSAT, G_USUBSAT,
+                               G_SADDSAT, G_SSUBSAT})
+      .lower();
+
+  getActionDefinitionsBuilder(G_MUL)
+      .legalFor({S32})
+      .widenScalarToNextPow2(0)
+      .minScalar(0, S32)
+      .libcallFor({S64});
+
+  // FIXME: G_SMULO, G_UMULO support
+  getActionDefinitionsBuilder({G_UMULH, G_SMULH}).lower();
+
+  getActionDefinitionsBuilder({G_SDIV, G_UDIV, G_SREM, G_UREM})
+      .libcallFor({S32, S64})
+      .widenScalarToNextPow2(0)
+      .clampScalar(0, S32, S64);
+
+  getActionDefinitionsBuilder({G_SDIVREM, G_UDIVREM})
+      .lowerFor({S32, S64})
+      .widenScalarToNextPow2(0)
+      .clampScalar(0, S32, S64);
+
+  getActionDefinitionsBuilder(G_ABS)
+      .legalFor({S32})
+      .lowerFor({S64})
+      .widenScalarToNextPow2(0)
+      .clampScalar(0, S32, S32);
+
+  // The CLZ instruction implements CTLZ, which also covers CTLZ_ZERO_UNDEF
+  getActionDefinitionsBuilder(G_CTLZ_ZERO_UNDEF)
+      .lowerFor({{S32, S32}})
+      .clampScalar(0, S32, S32)
+      .clampScalar(1, S32, S32);
+
+  getActionDefinitionsBuilder(G_CTLZ)
+      .legalFor({{S32, S32}})
+      .clampScalar(0, S32, S32)
+      .clampScalar(1, S32, S32);
+
+  getActionDefinitionsBuilder({G_FSHL, G_FSHR}).lower();
+
+  getActionDefinitionsBuilder({G_MEMCPY, G_MEMSET, G_MEMMOVE})
+      .customIf([=](const LegalityQuery &Query) {
+        const LLT SizeArg = Query.Types[2];
+        return SizeArg == S20;
+      })
+      .libcall();
+
+  getActionDefinitionsBuilder(G_DYN_STACKALLOC).custom();
+  getActionDefinitionsBuilder({G_STACKSAVE, G_STACKRESTORE}).lower();
+
+  getActionDefinitionsBuilder({G_SMIN, G_SMAX, G_UMIN, G_UMAX})
+      .widenScalarToNextPow2(0, 32)
+      .lower();
+
+  getActionDefinitionsBuilder({G_FRAME_INDEX, G_GLOBAL_VALUE}).legalFor({P0});
+
+  getActionDefinitionsBuilder(G_INTTOPTR)
+      .legalFor({{P0, S20}})
+      .widenScalarToNextPow2(1)
+      .clampScalar(1, S20, S20);
+
+  getActionDefinitionsBuilder(G_PTRTOINT)
+      .legalFor({{S20, P0}})
+      .widenScalarToNextPow2(0)
+      .clampScalar(0, S20, S20);
+
+  // We support pointer arithmetic on both GPRs (32-bits) and pointer regs
+  // (20-bits, where the scalar addend resides in a MOD register). To allow
+  // specifying alternative register bank mappings, we need to truncate the RHS
+  // operand to 20-bits, thus we only allow s20 types for the scalar addend
+  getActionDefinitionsBuilder(G_PTR_ADD)
+      .legalFor({{P0, S20}})
+      .widenScalarToNextPow2(1)
+      .clampScalar(1, S20, S20);
+
+  getActionDefinitionsBuilder({G_LOAD, G_STORE})
+      .legalForTypesWithMemDesc({
+          {S32, P0, S8, 8},         {S32, P0, S16, 16},
+          {S20, P0, S20, 32},       {S32, P0, S32, 32},
+          {P0, P0, S20, 32},        {V16S8, P0, V16S8, 16},
+          {V8S16, P0, V8S16, 16},   {V4S32, P0, V4S32, 16},
+          {V8S32, P0, V8S32, 32},   {V16S16, P0, V16S16, 32},
+          {V32S8, P0, V32S8, 32},   {V16S32, P0, V16S32, 32},
+          {V32S16, P0, V32S16, 32}, {V64S8, P0, V64S8, 32},
+          {V32S32, P0, V32S32, 32}, {V64S16, P0, V64S16, 32},
+          {V128S8, P0, V128S8, 32}, {ACC256, P0, ACC256, 32},
+          {ACC512, P0, ACC512, 32}, {ACC1024, P0, ACC1024, 32},
+          {S128, P0, S128, 16},
+      })
+      .widenScalarToNextPow2(0)
+      .lowerIfMemSizeNotPow2()
+      .bitcastIf(
+          [=](const LegalityQuery &Query) {
+            const LLT &Ty = Query.Types[0];
+            return Ty.isVector() &&
+                   (Ty.getSizeInBits() == 64 || Ty.getSizeInBits() == 32);
+          },
+          [=](const LegalityQuery &Query) {
+            const LLT Ty = Query.Types[0];
+            const unsigned Size = Ty.getSizeInBits();
+            assert(Size % 32 == 0);
+            return std::pair(0, LLT::scalar(Size));
+          })
+      .clampScalar(0, S32, S32)
+      .lower();
+
+  // FIXME: Storing a pointer to an un-aligned address isn't supported.
+  getActionDefinitionsBuilder({G_ZEXTLOAD, G_SEXTLOAD})
+      .legalForTypesWithMemDesc({{S32, P0, S8, 8}, {S32, P0, S16, 16}})
+      .widenScalarToNextPow2(0)
+      .lowerIfMemSizeNotPow2()
+      .clampScalar(0, S32, S32)
+      .lower();
+
+  getActionDefinitionsBuilder(G_EXTRACT_VECTOR_ELT)
+      .unsupportedIf([=](const LegalityQuery &Query) {
+        const LLT &EltTy = Query.Types[1].getElementType();
+        return Query.Types[0] != EltTy;
+      })
+      // If it is 32-bit, the LLVM can perform some bitshifts to legalize it
+      .bitcastIf(
+          [=](const LegalityQuery &Query) {
+            const LLT &VecTy = Query.Types[1];
+            return VecTy.getSizeInBits() == 32;
+          },
+          bitcastToVectorElement32(1))
+      // Extraction is supported for the native types of 32-, 256-, 512- and
+      // 1024-bit
+      .customIf(typeInSet(1, {V4S8, V2S16, V2S32, V8S32, V16S32, V32S32, V16S16,
+                              V32S8, V32S16, V64S8, V64S16, V128S8}))
+      // For 16-bits, we want to increase the number of elements to 4. Since
+      // our architecture doesn't always support all intermediate sizes, we do
+      // it as a special case so that we can use them minimum clamp for the
+      // smallest vector register.
+      .moreElementsIf(
+          [=](const LegalityQuery &Query) {
+            return Query.Types[1].getScalarSizeInBits() == 8 &&
+                   Query.Types[1].getNumElements() == 2;
+          },
+          [=](const LegalityQuery &Query) {
+            return std::make_pair(1, LLT::fixed_vector(4, S8));
+          })
+      // Increase the input vectors if they don't fit in the smallest vector
+      // register
+      .clampMinNumElements(1, S8, 32)
+      .clampMinNumElements(1, S16, 16)
+      .clampMinNumElements(1, S32, 8);
+
+  getActionDefinitionsBuilder(G_INSERT_VECTOR_ELT)
+      .clampScalar(2, S32, S32) // Clamp the idx to 32 bit since VINSERT
+                                // relies on eR29 only for idx.
+      .customIf(typeInSet(0, {V2S32, V8S32, V16S16, V32S8, V16S32, V32S16,
+                              V64S8, V32S32, V64S16, V128S8}));
+
+  // Control-flow
+  getActionDefinitionsBuilder(G_BRCOND).legalFor({S32}).clampScalar(0, S32,
+                                                                    S32);
+
+  getActionDefinitionsBuilder(G_PHI)
+      .legalFor({S20, S32, P0})
+      .legalFor(AIE2VectorTypes)
+      .legalFor(AIE2AccumulatorTypes)
+      .widenScalarToNextPow2(0)
+      .clampScalar(0, S32, S32);
+
+  const LegalityPredicate IsNotValidDestinationVector =
+      negatePredicate(isValidVectorAIE2(0));
+
+  getActionDefinitionsBuilder(G_BITCAST).legalIf(
+      LegalityPredicates::all(isLegalBitCastType(0), isLegalBitCastType(1)));
+
+  getActionDefinitionsBuilder(G_MERGE_VALUES).legalFor({{S64, S32}});
+  getActionDefinitionsBuilder(G_UNMERGE_VALUES)
+      .legalFor({{S32, S64}, {S32, V2S32}})
+      .customIf([=](const LegalityQuery &Query) {
+        const LLT &DstTy = Query.Types[0];
+        const LLT &SrcTy = Query.Types[1];
+
+        return SrcTy.isVector() && DstTy.isScalar() &&
+               DstTy == SrcTy.getElementType();
+      })
+      .unsupportedIf(IsNotValidDestinationVector)
+      .legalIf(isValidVectorMergeUnmergeOp(1, 0));
+
+  getActionDefinitionsBuilder(G_CONCAT_VECTORS)
+      .unsupportedIf(IsNotValidDestinationVector)
+      .legalIf(isValidVectorMergeUnmergeOp(0, 1));
+
+  getActionDefinitionsBuilder(G_BUILD_VECTOR)
+      // Legacy legalization for bitcasts
+      .legalFor({{V2S32, S32}})
+      .unsupportedIf(IsNotValidDestinationVector)
+      // We clamp the high values and not the low ones, sice the former
+      // splits the values but the latter keeps the same G_BUILD_VECTOR in
+      // the output instructions which causes an infinite loop since it
+      // can't reach our custom legalization code.
+      .clampMaxNumElements(0, S8, 64)
+      .clampMaxNumElements(0, S16, 32)
+      .clampMaxNumElements(0, S32, 16)
+      .custom();
+
+  getActionDefinitionsBuilder(G_SHUFFLE_VECTOR)
+      .unsupportedIf(IsNotValidDestinationVector)
+      // Checks if the shuffle is "canonical", this enables additional actions
+      // in the LLVM combiner and can change shuffle vectors legalization
+      .lowerIf([=](const LegalityQuery &Query) {
+        return Query.Types[0] == Query.Types[1];
+      })
+      .lower();
+
+  getActionDefinitionsBuilder(G_JUMP_TABLE).custom();
+
+  getActionDefinitionsBuilder(G_BRJT).custom();
+
+  getActionDefinitionsBuilder(G_BRINDIRECT).legalFor({P0});
+
+  // Variadic functions
+  getActionDefinitionsBuilder(G_VASTART).custom();
+  getActionDefinitionsBuilder(G_VAARG).custom();
+
+  getLegacyLegalizerInfo().computeTables();
+  verify(*ST.getInstrInfo());
+}
+
+bool AIE2LegalizerInfo::legalizeCustom(
+    LegalizerHelper &Helper, MachineInstr &MI,
+    LostDebugLocObserver &LocObserver) const {
+  switch (MI.getOpcode()) {
+  default:
+    break;
+  case TargetOpcode::G_VASTART:
+    return AIEHelper.legalizeG_VASTART(Helper, MI);
+  case TargetOpcode::G_VAARG:
+    return AIEHelper.legalizeG_VAARG(Helper, MI);
+  case TargetOpcode::G_MEMSET:
+  case TargetOpcode::G_MEMCPY:
+  case TargetOpcode::G_MEMMOVE:
+    return AIEHelper.legalizeMemCalls(Helper, MI, LocObserver);
+  case TargetOpcode::G_BRJT:
+    return AIEHelper.legalizeG_BRJT(Helper, MI);
+  case TargetOpcode::G_FCONSTANT:
+    return AIEHelper.legalizeG_FCONSTANT(Helper, MI);
+  case TargetOpcode::G_JUMP_TABLE:
+    return AIEHelper.legalizeG_JUMP_TABLE(Helper, MI);
+  case TargetOpcode::G_DYN_STACKALLOC:
+    return AIEHelper.legalizeG_DYN_STACKALLOC(Helper, MI);
+  case TargetOpcode::G_EXTRACT_VECTOR_ELT:
+    return AIEHelper.legalizeG_EXTRACT_VECTOR_ELT(Helper, MI);
+  case TargetOpcode::G_INSERT_VECTOR_ELT:
+    return AIEHelper.legalizeG_INSERT_VECTOR_ELT(Helper, MI);
+  case TargetOpcode::G_FCMP:
+    return AIEHelper.legalizeG_FCMP(Helper, MI, LocObserver);
+  case TargetOpcode::G_FPTRUNC:
+    return AIEHelper.legalizeG_FPTRUNC(Helper, MI);
+  case TargetOpcode::G_FPEXT:
+    return AIEHelper.legalizeG_FPEXT(Helper, MI);
+  case TargetOpcode::G_FABS:
+    return AIEHelper.legalizeG_FABS(Helper, MI);
+  case TargetOpcode::G_FADD:
+  case TargetOpcode::G_FSUB:
+    return AIEHelper.legalizeG_FADDSUB(Helper, MI);
+  case TargetOpcode::G_BUILD_VECTOR:
+    return AIEHelper.legalizeG_BUILD_VECTOR(Helper, MI);
+  case TargetOpcode::G_UNMERGE_VALUES:
+    return AIEHelper.legalizeG_UNMERGE_VALUES(Helper, MI);
+  case TargetOpcode::G_SEXT_INREG:
+    return AIEHelper.legalizeG_SEXT_INREG(Helper, MI);
+  }
+
+  llvm_unreachable("Un-expected custom legalization");
+}
+
+bool AIE2LegalizerInfo::legalizeIntrinsic(LegalizerHelper &Helper,
+                                          MachineInstr &MI) const {
+
+  // The loop_decrement is a bit of an exception in legalization since it
+  // is an architecture-neutral intrinsic to implement hardware loops, not a
+  // dedicated AIE intrinsic. As such it carries a boolean, which should be
+  // legalized to a 32 bit integer type.
+  switch (cast<GIntrinsic>(MI).getIntrinsicID()) {
+  case Intrinsic::loop_decrement:
+    return AIEHelper.legalizeLoopDecrement(Helper, MI);
+  }
+
+  return true;
+}
