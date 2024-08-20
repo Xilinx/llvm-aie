@@ -54,6 +54,11 @@ static cl::opt<bool>
                               cl::desc("Enable AIE alias analysis pass"),
                               cl::init(true), cl::Hidden);
 
+static cl::opt<bool>
+    EnableTailMergingOpt("aie-enable-tail-merge",
+                         cl::desc("Enable tail merging for AIE."),
+                         cl::init(false), cl::Hidden);
+
 // Option to run internalize pass.
 static cl::opt<bool> InternalizeSymbols(
     "aie-internalize-symbols",
@@ -141,6 +146,11 @@ AIETargetMachine::AIETargetMachine(const Target &T, const Triple &TT,
 
 TargetPassConfig *AIETargetMachine::createPassConfig(PassManagerBase &PM) {
   return new AIEPassConfig(*this, PM);
+}
+
+AIEPassConfig::AIEPassConfig(LLVMTargetMachine &TM, PassManagerBase &PM)
+    : TargetPassConfig(TM, PM) {
+  EnableTailMerge = EnableTailMergingOpt;
 }
 
 void AIEPassConfig::addIRPasses() {

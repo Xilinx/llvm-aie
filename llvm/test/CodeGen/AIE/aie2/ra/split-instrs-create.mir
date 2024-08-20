@@ -111,6 +111,51 @@ body:             |
     dead %2:mwa, dead %20:ep, dead %100.sub_dim_count:eds, dead %100.sub_hi_dim_then_sub_dim_count:eds = VLDB_3D killed %20, killed %100 :: (load (<8 x s32>) from unknown-address)
 ...
 
+---
+name:            VLD_2D_MultiSlot
+legalized:       true
+regBankSelected: true
+selected:        true
+tracksRegLiveness: true
+body:             |
+  bb.1.entry:
+    liveins: $p0, $d1
+    ; CHECK-LABEL: name: VLD_2D_MultiSlot
+    ; CHECK: liveins: $p0, $d1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ed = COPY $d1
+    ; CHECK-NEXT: dead [[VLD_2D_pseudo_split:%[0-9]+]]:mwa, [[COPY:%[0-9]+]]:ep, [[COPY1:%[0-9]+]].sub_dim_count:ed = VLD_2D_pseudo_split killed [[COPY]], killed [[COPY1]].sub_mod, killed [[COPY1]].sub_dim_size, killed [[COPY1]].sub_dim_stride, killed [[COPY1]].sub_dim_count :: (load (<8 x s32>))
+    ; CHECK-NEXT: dead [[VLD_2D_pseudo_split1:%[0-9]+]]:mwa, dead [[COPY:%[0-9]+]]:ep, dead [[COPY1:%[0-9]+]].sub_dim_count:ed = VLD_2D_pseudo_split killed [[COPY]], killed [[COPY1]].sub_mod, killed [[COPY1]].sub_dim_size, killed [[COPY1]].sub_dim_stride, killed [[COPY1]].sub_dim_count :: (load (<8 x s32>))
+    %20:ep = COPY $p0
+    %100:ed = COPY $d1
+    dead %0:mwa, %20:ep, %100.sub_dim_count:ed = VLD_2D_pseudo killed %20, killed %100 :: (load (<8 x s32>) from unknown-address)
+    dead %2:mwa, dead %20:ep, dead %100.sub_dim_count:ed = VLD_2D_pseudo killed %20, killed %100 :: (load (<8 x s32>) from unknown-address)
+...
+
+
+---
+name:            VLD_3D_MultiSlot
+alignment:       16
+legalized:       true
+regBankSelected: true
+selected:        true
+tracksRegLiveness: true
+body:             |
+  bb.1.entry:
+    liveins: $p0, $d1_3d
+    ; CHECK-LABEL: name: VLD_3D_MultiSlot
+    ; CHECK: liveins: $p0, $d1_3d
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:eds = COPY $d1_3d
+    ; CHECK-NEXT: dead [[VLD_3D_pseudo_split:%[0-9]+]]:mwa, [[COPY:%[0-9]+]]:ep, [[COPY1:%[0-9]+]].sub_dim_count:eds, [[COPY1:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = VLD_3D_pseudo_split killed [[COPY]], killed [[COPY1]].sub_mod, killed [[COPY1]].sub_dim_size, killed [[COPY1]].sub_dim_stride, killed [[COPY1]].sub_dim_count, killed undef [[COPY1]].sub_hi_dim_then_sub_mod, killed [[COPY1]].sub_hi_dim_then_sub_dim_size, killed [[COPY1]].sub_hi_dim_then_sub_dim_stride, killed [[COPY1]].sub_hi_dim_then_sub_dim_count :: (load (<8 x s32>))
+    ; CHECK-NEXT: dead [[VLD_3D_pseudo_split1:%[0-9]+]]:mwa, dead [[COPY:%[0-9]+]]:ep, dead [[COPY1:%[0-9]+]].sub_dim_count:eds, dead [[COPY1:%[0-9]+]].sub_hi_dim_then_sub_dim_count:eds = VLD_3D_pseudo_split killed [[COPY]], killed [[COPY1]].sub_mod, killed [[COPY1]].sub_dim_size, killed [[COPY1]].sub_dim_stride, killed [[COPY1]].sub_dim_count, killed undef [[COPY1]].sub_hi_dim_then_sub_mod, killed [[COPY1]].sub_hi_dim_then_sub_dim_size, killed [[COPY1]].sub_hi_dim_then_sub_dim_stride, killed [[COPY1]].sub_hi_dim_then_sub_dim_count :: (load (<8 x s32>))
+    %20:ep = COPY $p0
+    %100:eds = COPY $d1_3d
+    dead %0:mwa, %20:ep, %100.sub_dim_count:eds, %100.sub_hi_dim_then_sub_dim_count:eds = VLD_3D_pseudo killed %20, killed %100 :: (load (<8 x s32>) from unknown-address)
+    dead %2:mwa, dead %20:ep, dead %100.sub_dim_count:eds, dead %100.sub_hi_dim_then_sub_dim_count:eds = VLD_3D_pseudo killed %20, killed %100 :: (load (<8 x s32>) from unknown-address)
+...
 
 ---
 name:            VLD_2D_CONV

@@ -40,7 +40,7 @@ static cl::opt<bool>
                           cl::desc("Track reg pressure more accurately and "
                                    "delay some instructions to avoid spills."));
 static cl::opt<unsigned> NumCriticalFreeRegs(
-    "aie-premisched-near-critical-regs", cl::init(4),
+    "aie-premisched-near-critical-regs", cl::init(2),
     cl::desc("Number of free registers below which premisched should actively "
              "try to reduce the pressure."));
 
@@ -132,7 +132,10 @@ void bumpCycleForBundles(unsigned ToCycle,
   }
 }
 
-std::vector<AIE::MachineBundle> computeAndFinalizeBundles(SchedBoundary &Zone) {
+} // namespace
+
+std::vector<AIE::MachineBundle>
+llvm::AIE::computeAndFinalizeBundles(SchedBoundary &Zone) {
   LLVM_DEBUG(dbgs() << "Computing Bundles for Zone "
                     << (Zone.isTop() ? "Top\n" : "Bot\n"));
   const ScheduleDAGMI &DAG = *Zone.DAG;
@@ -148,6 +151,14 @@ std::vector<AIE::MachineBundle> computeAndFinalizeBundles(SchedBoundary &Zone) {
       if (!SU)
         continue;
       unsigned EmitCycle = Zone.isTop() ? SU->TopReadyCycle : SU->BotReadyCycle;
+
+      if (!ComputeSlots && EmitCycle < Bundles.size()) {
+        // The pre-RA scheduler can actually re-order copies and immediate
+        // moves, disregarding the emission cycle.
+        // See GenericScheduler::reschedulePhysReg().
+        EmitCycle = Bundles.size();
+      }
+
       if (EmitCycle != Bundles.size())
         bumpCycleForBundles(EmitCycle, Bundles, CurrBundle);
 
@@ -197,6 +208,7 @@ std::vector<AIE::MachineBundle> computeAndFinalizeBundles(SchedBoundary &Zone) {
   return Bundles;
 }
 
+namespace {
 /// Search for instructions that might jump to an unknown target block
 bool hasUnknownSuccessors(
     llvm::iterator_range<MachineBasicBlock::iterator> Region,
@@ -247,7 +259,8 @@ void AIEPostRASchedStrategy::initializeBotScoreBoard(ScoreboardTrust Trust) {
   /// make sure we always have enough lookahead available. We arrange for that
   /// by starting in the earliest possible cycle, -Depth
   auto InsertInCycle = [=](MachineInstr &MI, int Cycle) {
-    BotHazardRec->emitInScoreboard(MI.getDesc(), Cycle - Depth);
+    BotHazardRec->emitInScoreboard(
+        MI.getDesc(), BotHazardRec->getMemoryBanks(&MI), Cycle - Depth);
   };
   auto BlockCycle = [=](int Cycle) {
     BotHazardRec->blockCycleInScoreboard(Cycle - Depth);
@@ -761,6 +774,33 @@ bool AIEPostRASchedStrategy::tryCandidate(SchedCandidate &Cand,
   return false;
 }
 
+void AIEPreRASchedStrategy::initialize(ScheduleDAGMI *DAG) {
+  GenericScheduler::initialize(DAG);
+
+  // Cache the threshold for each pressure set.
+  const std::vector<unsigned> &RegionMaxPressure =
+      static_cast<ScheduleDAGMILive *>(DAG)->getRegPressure().MaxSetPressure;
+  PSetThresholds.clear();
+  for (unsigned PSet = 0, EndPSet = RegionMaxPressure.size(); PSet < EndPSet;
+       ++PSet) {
+    unsigned MaxPressure = RegionMaxPressure[PSet];
+    unsigned Limit = Context->RegClassInfo->getRegPressureSetLimit(PSet);
+
+    // If the region has a maximum pressure that exceeds the target threshold,
+    // artificially reduce that threshold to force more conservative scheduling.
+    if (MaxPressure > Limit) {
+      unsigned ExtraPressure = MaxPressure - Limit;
+      if (Limit > ExtraPressure)
+        Limit -= ExtraPressure;
+      else
+        Limit = 0;
+      LLVM_DEBUG(dbgs() << TRI->getRegPressureSetName(PSet)
+                        << " Decreased Threshold to " << Limit << "\n");
+    }
+    PSetThresholds.push_back(Limit);
+  }
+}
+
 void AIEPreRASchedStrategy::enterRegion(MachineBasicBlock *BB,
                                         MachineBasicBlock::iterator Begin,
                                         MachineBasicBlock::iterator End,
@@ -874,8 +914,9 @@ bool AIEPreRASchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
   }
 
   unsigned CurrPressure = BotRPT.getRegSetPressureAtPos()[WorstPC.getPSet()];
-  if (CurrPressure + WorstPC.getUnitInc() <
-      TRI->getRegPressureSetLimit(*CurMBB->getParent(), WorstPC.getPSet())) {
+  if (CurrPressure + WorstPC.getUnitInc() +
+          (NumCriticalFreeRegs * WorstPC.getUnitInc()) <
+      PSetThresholds[WorstPC.getPSet()]) {
     // Worsening pressure, but still within limits, keep node as available
     return true;
   }
@@ -960,10 +1001,11 @@ bool AIEPreRASchedStrategy::tryCandidate(SchedCandidate &Cand,
       if (!PC.isValid())
         return false;
       unsigned CurrPressure = BotRPT.getRegSetPressureAtPos()[PC.getPSet()];
-      unsigned Threshold =
-          TRI->getRegPressureSetLimit(*CurMBB->getParent(), PC.getPSet());
-      return Threshold <= NumCriticalFreeRegs ||
-             CurrPressure >= Threshold - NumCriticalFreeRegs;
+      unsigned Threshold = PSetThresholds[PC.getPSet()];
+      unsigned NumCriticalFreeUnits =
+          NumCriticalFreeRegs * std::abs(PC.getUnitInc());
+      return Threshold <= NumCriticalFreeUnits ||
+             CurrPressure >= Threshold - NumCriticalFreeUnits;
     };
     PressureChange TryCandPC =
         getPressureChange(estimatePressureDiff(*TryCand.SU, BotRPT));
@@ -972,13 +1014,12 @@ bool AIEPreRASchedStrategy::tryCandidate(SchedCandidate &Cand,
     if ((IsNearCritical(TryCandPC) || IsNearCritical(CandPC)) &&
         tryPressure(TryCandPC, CandPC, TryCand, Cand, RegMax, TRI, DAG->MF))
       return TryCand.Reason != NoCand;
-  }
 
-  // Avoid increasing the max pressure of the entire region.
-  if (DAG->isTrackingPressure() &&
-      tryPressure(TryCand.RPDelta.CurrentMax, Cand.RPDelta.CurrentMax, TryCand,
-                  Cand, RegMax, TRI, DAG->MF))
-    return TryCand.Reason != NoCand;
+    // Avoid increasing the max pressure of the entire region.
+    if (tryPressure(TryCand.RPDelta.CurrentMax, Cand.RPDelta.CurrentMax,
+                    TryCand, Cand, RegMax, TRI, DAG->MF))
+      return TryCand.Reason != NoCand;
+  }
 
   // Fall through to original instruction order.
   if ((Zone->isTop() && TryCand.SU->NodeNum < Cand.SU->NodeNum) ||

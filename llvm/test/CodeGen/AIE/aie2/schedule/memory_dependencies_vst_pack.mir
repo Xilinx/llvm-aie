@@ -35,28 +35,28 @@ body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: PACK_STORE_E5_LOAD_E5
     ; CHECK: BUNDLE implicit-def $r2, implicit-def $wl2, implicit $p0 {
-    ; CHECK-NEXT:   $r2 = LDA_dms_lda_idx_imm $p0, 0
-    ; CHECK-NEXT:   $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0
+    ; CHECK-NEXT:   $r2 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32), addrspace 6)
+    ; CHECK-NEXT:   $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 5)
     ; CHECK-NEXT: }
     ; CHECK-NEXT: VST_PACK_D4_D8_ag_idx_imm $p0, 0, $x0, implicit $crsat, implicit $crpacksign
     ; CHECK-NEXT: BUNDLE implicit-def $r2, implicit-def $wl2, implicit $p0 {
-    ; CHECK-NEXT:   $r2 = LDA_dms_lda_idx_imm $p0, 0
-    ; CHECK-NEXT:   $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0
+    ; CHECK-NEXT:   $r2 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32), addrspace 6)
+    ; CHECK-NEXT:   $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 5)
     ; CHECK-NEXT: }
     ; CHECK-NEXT: $p1 = VST_PACK_D4_D8_ag_pstm_nrm_imm killed $p1, 0, $x0, implicit $crsat, implicit $crpacksign
     ; CHECK-NEXT: BUNDLE implicit-def $r2, implicit-def $wl2, implicit $p0 {
-    ; CHECK-NEXT:   $r2 = LDA_dms_lda_idx_imm $p0, 0
-    ; CHECK-NEXT:   $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0
+    ; CHECK-NEXT:   $r2 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32), addrspace 6)
+    ; CHECK-NEXT:   $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 5)
     ; CHECK-NEXT: }
     ; CHECK-NEXT: $p2, $dc0 = VST_2D_PACK_D4_D8 killed $p2, killed $d0, $x0, implicit $crsat, implicit $crpacksign
     ; CHECK-NEXT: BUNDLE implicit-def $r2, implicit-def $wl2, implicit $p0 {
-    ; CHECK-NEXT:   $r2 = LDA_dms_lda_idx_imm $p0, 0
-    ; CHECK-NEXT:   $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0
+    ; CHECK-NEXT:   $r2 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32), addrspace 6)
+    ; CHECK-NEXT:   $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 5)
     ; CHECK-NEXT: }
     ; CHECK-NEXT: $p3, $dc1, $dc5 = VST_3D_PACK_D4_D8 killed $p3, killed $d1_3d, killed $x0, implicit $crsat, implicit $crpacksign
     ; CHECK-NEXT: BUNDLE implicit-def $r2, implicit-def $wl2, implicit killed $p0 {
-    ; CHECK-NEXT:   $r2 = LDA_dms_lda_idx_imm $p0, 0
-    ; CHECK-NEXT:   $wl2 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0
+    ; CHECK-NEXT:   $r2 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32), addrspace 6)
+    ; CHECK-NEXT:   $wl2 = VLDB_dmw_ldb_ag_idx_imm killed $p0, 0 :: (load (<8 x s32>), addrspace 5)
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
@@ -64,20 +64,20 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    $r2 = LDA_dms_lda_idx_imm $p0, 0
-    $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0
+    $r2 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32), addrspace 6)
+    $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 5)
     VST_PACK_D4_D8_ag_idx_imm $p0, 0, $x0, implicit $crsat, implicit $crpacksign
-    $r2 = LDA_dms_lda_idx_imm $p0, 0
-    $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0
+    $r2 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32), addrspace 6)
+    $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 5)
     $p1 = VST_PACK_D4_D8_ag_pstm_nrm_imm $p1, 0, $x0, implicit $crsat, implicit $crpacksign
-    $r2 = LDA_dms_lda_idx_imm $p0, 0
-    $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0
+    $r2 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32), addrspace 6)
+    $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 5)
     $p2, $dc0 = VST_2D_PACK_D4_D8 $p2, $d0, $x0, implicit $crsat, implicit $crpacksign
-    $r2 = LDA_dms_lda_idx_imm $p0, 0
-    $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0
+    $r2 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32), addrspace 6)
+    $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 5)
     $p3, $dc1, $dc5 = VST_3D_PACK_D4_D8 $p3, $d1_3d, $x0, implicit $crsat, implicit $crpacksign
-    $r2 = LDA_dms_lda_idx_imm $p0, 0
-    $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0
+    $r2 = LDA_dms_lda_idx_imm $p0, 0 :: (load (s32), addrspace 6)
+    $wl2 = VLDB_dmw_ldb_ag_idx_imm $p0, 0 :: (load (<8 x s32>), addrspace 5)
 ...
 
 # Tests II_VST_PACK, II_VST_POSTINC_PACK, II_VST_2D_PACK, II_VST_3D_PACK

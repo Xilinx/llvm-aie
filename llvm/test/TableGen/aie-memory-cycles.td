@@ -19,9 +19,9 @@ def II_LATE_ST : InstrItinClass;
 def II_PART_ST : InstrItinClass;
 def II_OTHER : InstrItinClass;
 def AIEItineraries : ProcessorItineraries<[], [], [
-  MemInstrItinData<II_ST, /*stages*/[], [1,1], MemoryCycles<5>>,
-  MemInstrItinData<II_LATE_ST, /*stages*/[], [1,1], MemoryCycles<7>>,
-  MemInstrItinData<II_PART_ST, /*stages*/[], [1,1], MemoryCycles<5, 11>>,
+  MemInstrItinData<II_ST, /*stages*/[], [1,1], MemoryCycles<[5]>>,
+  MemInstrItinData<II_LATE_ST, /*stages*/[], [1,1], MemoryCycles<[7]>>,
+  MemInstrItinData<II_PART_ST, /*stages*/[], [1,1], MemoryCycles<[5, 11]>>,
   InstrItinData<II_OTHER, /*stages*/[], [1,1]>
 ]>;
 
@@ -75,3 +75,13 @@ let Itinerary = II_OTHER in
 // CHECK-NEXT:  return 5;
 // CHECK-LABEL: int TestAIEInstrInfo::getMaxLastMemoryCycle() const {
 // CHECK-NEXT:  return 11;
+
+// CHECK:      SmallVector<int, 2>
+// CHECK-NEXT: TestAIEInstrInfo::getMemoryCycles(unsigned SchedClass) const {
+// CHECK-NEXT:   switch (SchedClass) {
+// CHECK-NEXT:   default: return {};
+// CHECK-NEXT:   case 2: return {7}; // II_LATE_ST
+// CHECK-NEXT:   case 3: return {5, 11}; // II_PART_ST
+// CHECK-NEXT:   case 4: return {5}; // II_ST
+// CHECK-NEXT:   }
+// CHECK-NEXT: }

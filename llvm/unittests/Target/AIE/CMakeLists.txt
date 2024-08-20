@@ -6,6 +6,7 @@
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 include_directories(
   ${LLVM_MAIN_SRC_DIR}/lib/Target/AIE
+  ${LLVM_MAIN_SRC_DIR}/unittests/CodeGen
   ${LLVM_BINARY_DIR}/lib/Target/AIE
   )
 
@@ -24,6 +25,9 @@ set(LLVM_LINK_COMPONENTS
 )
 
 add_llvm_target_unittest(AIETests
+  ${LLVM_MAIN_SRC_DIR}/unittests/CodeGen/ScheduleDAGMITestUtils.cpp
+  AIEScheduleDAGMITest.cpp
+  AIETestTarget.cpp
   BundleTest.cpp
   HazardRecognizerTest.cpp
   )

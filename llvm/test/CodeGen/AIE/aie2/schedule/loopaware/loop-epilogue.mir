@@ -613,3 +613,72 @@ body:             |
     RET implicit $lr
     DelayedSchedBarrier implicit $r3
 ...
+
+# Test 10: the goal here is to test if we can handle negative latencies
+# correctly. In this, case we need to be sure that we are constructing the
+# DAG with the semantic order.
+
+---
+name:            negativeLatLoop
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: negativeLatLoop
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $p0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.2(0x40000000), %bb.1(0x40000000)
+  ; CHECK-NEXT:   liveins: $p0, $r0, $r1, $r2, $r3, $r4
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   JNZ $r0, %bb.1
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   $dj0 = MOV_mv_scl $r2
+  ; CHECK-NEXT:   $r1 = LDA_dms_lda_idx $p0, killed $dj0
+  ; CHECK-NEXT:   $r1 = OR $r2, killed $r3
+  ; CHECK-NEXT:   $r3 = AND $r1, $r4
+  ; CHECK-NEXT:   DelayedSchedBarrier
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   successors: %bb.3(0x80000000)
+  ; CHECK-NEXT:   liveins: $r1, $r3
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   $r2 = nsw ADD_add_r_ri killed $r1, -1, implicit-def $srcarry
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.3:
+  ; CHECK-NEXT:   liveins: $r3
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   RET implicit $lr
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   DelayedSchedBarrier implicit killed $r3
+  bb.0:
+    successors: %bb.1
+    liveins: $p0
+  bb.1:
+    successors: %bb.2, %bb.1
+    liveins: $p0, $r0, $r1, $r2, $r3, $r4
+    $dj0 = MOV_mv_scl $r2
+    $r1 = OR $r2, $r3
+    $r3 = AND $r1, $r4
+    $r1 = LDA_dms_lda_idx $p0, $dj0
+    JNZ $r0, %bb.1
+    DelayedSchedBarrier
+  bb.2:
+    successors: %bb.3
+    liveins: $r1, $r3
+    $r2 = nsw ADD_add_r_ri $r1, -1, implicit-def $srcarry
+  bb.3:
+    successors:
+    liveins: $r3
+    RET implicit $lr
+    DelayedSchedBarrier implicit $r3
+...

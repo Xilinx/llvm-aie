@@ -15,6 +15,7 @@
 #ifndef LLVM_LIB_TARGET_AIE2_AIE2SUBTARGET_H
 #define LLVM_LIB_TARGET_AIE2_AIE2SUBTARGET_H
 #include "AIE2.h"
+#include "AIE2AddrSpace.h"
 #include "AIE2FrameLowering.h"
 #include "AIE2ISelLowering.h"
 #include "AIE2InstrInfo.h"
@@ -91,6 +92,10 @@ public:
   const SelectionDAGTargetInfo *getSelectionDAGInfo() const override {
     return &TSInfo;
   }
+
+  MemoryBankBits getDefaultMemoryBank() const override;
+  MemoryBankBits
+  getMemoryBanksFromAddressSpace(unsigned AddrSpace) const override;
 
   // Perform target-specific adjustments to the latency of a schedule
   // dependency.

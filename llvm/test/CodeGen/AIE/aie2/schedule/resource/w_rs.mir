@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -march=aie2 -run-pass=postmisched %topdown-multi %s -o - | FileCheck %s
+# RUN: llc -mtriple=aie2 -run-pass=postmisched %topdown-multi %s -o - | FileCheck %s
 
 # VST_W and VST_2D_W access W_RS_PORT at E1 and VUNPACK does so in E7.
 # The scheduler needs to insert NOPs to accomodate for this fact.
@@ -256,4 +256,30 @@ body:             |
     $wl2 = VPACK_D4_D8 $x3, implicit $crsat, implicit $crpacksign
     $wl2 = VPACK_D4_D8 $x3, implicit $crsat, implicit $crpacksign
     $wl2 = VPACK_D4_D8 $x3, implicit $crsat, implicit $crpacksign
+...
+
+# This test triggers a structural conflict with Reading rs port (W_RS_PORT),
+# forcing one more NOP to be inserted before VST_PACK, apart of the load
+# latency NOPs.
+# VUNPACK accesses W_RS_PORT in E7 and VST_PACK in E1.
+
+---
+name:            VST_PACK_W_RS_E1
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: VST_PACK_W_RS_E1
+    ; CHECK: $wl3, $p0 = VLDA_dmw_lda_w_ag_pstm_nrm_imm killed $p0, 0
+    ; CHECK-NEXT: $x0 = VUNPACK_S16_S8 $wl3
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $p1 = VST_PACK_S8_S16_ag_pstm_nrm_imm killed $p1, 0, killed $x3, implicit $crsat
+    ; CHECK-NEXT: NOP
+    $wl3, $p0 = VLDA_dmw_lda_w_ag_pstm_nrm_imm $p0, 0
+    $x0 = VUNPACK_S16_S8 $wl3
+    $p1 = VST_PACK_S8_S16_ag_pstm_nrm_imm $p1, 0, $x3, implicit $crsat
 ...

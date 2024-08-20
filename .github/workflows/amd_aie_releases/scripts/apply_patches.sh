@@ -3,7 +3,6 @@ set -uxo pipefail
 
 # note that space before slash is important
 PATCHES="\
-mscv \
 "
 
 if [[ x"${APPLY_PATCHES:-true}" == x"true" ]]; then

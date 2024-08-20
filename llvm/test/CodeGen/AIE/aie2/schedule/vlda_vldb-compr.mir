@@ -17,8 +17,8 @@ body:             |
     ; CHECK-LABEL: name: II_VLDA_II_VLDB_COMPR_FILL
     ; CHECK: VST_dmw_sts_w_ag_idx_imm killed $wl0, $p0, 0
     ; CHECK-NEXT: BUNDLE implicit-def $wl2, implicit-def $p0, implicit killed $p1, implicit killed $p0, implicit killed $dp {
-    ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm killed $p1, 0
-    ; CHECK-NEXT:   $p0 = VLDB_COMPR_FILL killed $p0, implicit killed $dp
+    ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm killed $p1, 0 :: (load (<8 x s32>), addrspace 6)
+    ; CHECK-NEXT:   $p0 = VLDB_COMPR_FILL killed $p0, implicit killed $dp :: (load (<8 x s32>), addrspace 5)
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
@@ -27,8 +27,8 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     VST_dmw_sts_w_ag_idx_imm $wl0, $p0, 0
-    $p0 = VLDB_COMPR_FILL $p0, implicit $dp
-    $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p1, 0
+    $p0 = VLDB_COMPR_FILL $p0, implicit $dp :: (load (<8 x s32>), addrspace 5)
+    $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p1, 0 :: (load (<8 x s32>), addrspace 6)
 ...
 
 ---
@@ -39,8 +39,8 @@ body:             |
     ; CHECK-LABEL: name: II_VLDA_II_VLDB_COMPR_RESET
     ; CHECK: VST_dmw_sts_w_ag_idx_imm killed $wl0, $p0, 0
     ; CHECK-NEXT: BUNDLE implicit-def $wl2, implicit-def $p0, implicit-def $dp, implicit killed $p1, implicit killed $p0, implicit killed $dp {
-    ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm killed $p1, 0
-    ; CHECK-NEXT:   $p0 = VLDB_COMPR_RESET killed $p0, implicit-def $dp, implicit killed $dp
+    ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm killed $p1, 0 :: (load (<8 x s32>), addrspace 6)
+    ; CHECK-NEXT:   $p0 = VLDB_COMPR_RESET killed $p0, implicit-def $dp, implicit killed $dp :: (load (<8 x s32>), addrspace 5)
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
@@ -49,8 +49,8 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     VST_dmw_sts_w_ag_idx_imm $wl0, $p0, 0
-    $p0 = VLDB_COMPR_RESET $p0, implicit-def $dp, implicit $dp
-    $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p1, 0
+    $p0 = VLDB_COMPR_RESET $p0, implicit-def $dp, implicit $dp :: (load (<8 x s32>), addrspace 5)
+    $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p1, 0 :: (load (<8 x s32>), addrspace 6)
 ...
 
 ---
@@ -61,8 +61,8 @@ body:             |
     ; CHECK-LABEL: name: II_VLDA_II_VLDB_COMPR_PEEK
     ; CHECK: VST_dmw_sts_w_ag_idx_imm killed $wl0, $p0, 0
     ; CHECK-NEXT: BUNDLE implicit-def $wl2, implicit-def $p0, implicit-def $wh0, implicit-def $srcompr_uf, implicit killed $p1, implicit killed $p0, implicit killed $dp {
-    ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm killed $p1, 0
-    ; CHECK-NEXT:   $p0, $wh0 = VLDB_COMPR_PEEK killed $p0, implicit-def $srcompr_uf, implicit killed $dp
+    ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm killed $p1, 0 :: (load (<8 x s32>), addrspace 6)
+    ; CHECK-NEXT:   $p0, $wh0 = VLDB_COMPR_PEEK killed $p0, implicit-def $srcompr_uf, implicit killed $dp :: (load (<8 x s32>), addrspace 5)
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
@@ -71,8 +71,8 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     VST_dmw_sts_w_ag_idx_imm $wl0, $p0, 0
-    $p0, $wh0 = VLDB_COMPR_PEEK $p0, implicit-def $srcompr_uf, implicit $dp
-    $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p1, 0
+    $p0, $wh0 = VLDB_COMPR_PEEK $p0, implicit-def $srcompr_uf, implicit $dp :: (load (<8 x s32>), addrspace 5)
+    $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p1, 0 :: (load (<8 x s32>), addrspace 6)
 ...
 
 ---
@@ -83,8 +83,8 @@ body:             |
     ; CHECK-LABEL: name: II_VLDA_II_VLDB_COMPR_POP
     ; CHECK: VST_dmw_sts_w_ag_idx_imm killed $wl0, $p0, 0
     ; CHECK-NEXT: BUNDLE implicit-def $wl2, implicit-def $p0, implicit-def $wh0, implicit-def $srcompr_uf, implicit-def $dp, implicit killed $p1, implicit killed $p0, implicit killed $dp {
-    ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm killed $p1, 0
-    ; CHECK-NEXT:   $p0, $wh0 = VLDB_COMPR_POP killed $p0, implicit-def $srcompr_uf, implicit-def $dp, implicit killed $dp
+    ; CHECK-NEXT:   $wl2 = VLDA_dmw_lda_w_ag_idx_imm killed $p1, 0 :: (load (<8 x s32>), addrspace 6)
+    ; CHECK-NEXT:   $p0, $wh0 = VLDB_COMPR_POP killed $p0, implicit-def $srcompr_uf, implicit-def $dp, implicit killed $dp :: (load (<8 x s32>), addrspace 5)
     ; CHECK-NEXT: }
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
@@ -93,6 +93,6 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     VST_dmw_sts_w_ag_idx_imm $wl0, $p0, 0
-    $p0, $wh0 = VLDB_COMPR_POP $p0, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp
-    $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p1, 0
+    $p0, $wh0 = VLDB_COMPR_POP $p0, implicit-def $srcompr_uf, implicit-def $dp, implicit $dp :: (load (<8 x s32>), addrspace 5)
+    $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p1, 0 :: (load (<8 x s32>), addrspace 6)
 ...

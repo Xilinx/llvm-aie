@@ -4,6 +4,8 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+//
 //===----------------------------------------------------------------------===//
 // Implementations of the classes used to support inter-block scheduling
 //===----------------------------------------------------------------------===//
@@ -37,6 +39,10 @@ static cl::opt<bool> LoopEpilogueAnalysis(
     "aie-loop-epilogue-analysis", cl::init(true),
     cl::desc("[AIE] Perform Loop/Epilogue analysis with loop scheduling"));
 
+static cl::opt<int> MaxExpensiveIterations(
+    "aie-loop-aware-expensive-iterations", cl::init(25),
+    cl::desc("[AIE] Perform Loop/Epilogue analysis with loop scheduling"));
+
 namespace llvm::AIE {
 
 void dumpInterBlock(const InterBlockEdges &Edges) {
@@ -55,7 +61,8 @@ void emitBundlesInScoreboard(const std::vector<MachineBundle> &Bundles,
   // then this will not cause conflicts.
   for (int i = TotalBundles - AmountToEmit; i < TotalBundles; i++) {
     for (MachineInstr *MI : Bundles[i].getInstrs())
-      HR->emitInScoreboard(Scoreboard, MI->getDesc(), 0);
+      HR->emitInScoreboard(Scoreboard, MI->getDesc(), HR->getMemoryBanks(MI),
+                           0);
 
     Scoreboard.advance();
   }
@@ -73,16 +80,25 @@ void emitBundlesInScoreboardDelta(
       break;
 
     for (MachineInstr *MI : Bundle.getInstrs())
-      HR->emitInScoreboard(Scoreboard, MI->getDesc(), Delta);
+      HR->emitInScoreboard(Scoreboard, MI->getDesc(), HR->getMemoryBanks(MI),
+                           Delta);
 
     Delta++;
   }
 }
 
-MachineBasicBlock *getSinglePredecessor(const MachineBasicBlock &MBB) {
-  assert(MBB.pred_size() == 1 && "MBB contains more than 1 predecessor");
-  MachineBasicBlock *SinglePredMBB = *MBB.predecessors().begin();
-  return SinglePredMBB;
+MachineBasicBlock *getLoopPredecessor(const MachineBasicBlock &MBB) {
+  if (MBB.pred_size() == 1) {
+    // if we have only one, it must be the loop
+    return *MBB.predecessors().begin();
+  }
+  // Otherwise, the loop is the fallthrough predecessor by construction
+  for (auto *Pred : MBB.predecessors()) {
+    if (Pred->isLayoutSuccessor(&MBB)) {
+      return Pred;
+    }
+  }
+  return nullptr;
 }
 
 InterBlockScheduling::InterBlockScheduling(const MachineSchedContext *C,
@@ -166,10 +182,13 @@ bool InterBlockScheduling::leaveBlock() {
   if (BS.Kind == BlockType::Loop && !updateFixPoint(BS)) {
     BS.FixPoint.NumIters++;
     // Iterate on CurrentBlock
+    // We will first try to increase the latency margin for one instruction at
+    // a time, before increasing that margin for all instructions at once.
     // If we are very unlucky, we may step both the latency margin and
     // the resource margin to the max. Any more indicates failure to converge,
     // and we abort to prevent an infinite loop.
-    if (BS.FixPoint.NumIters > 2 * HR->getConflictHorizon()) {
+    if (BS.FixPoint.NumIters >
+        MaxExpensiveIterations + 2 * HR->getConflictHorizon()) {
       report_fatal_error("Inter-block scheduling did not converge.");
     }
     return false;
@@ -219,7 +238,7 @@ bool InterBlockScheduling::resourcesConverged(BlockState &BS) const {
   return true;
 }
 
-bool InterBlockScheduling::latencyConverged(BlockState &BS) const {
+MachineInstr *InterBlockScheduling::latencyConverged(BlockState &BS) const {
   const auto &SubTarget = BS.TheBlock->getParent()->getSubtarget();
   auto *TII = static_cast<const AIEBaseInstrInfo *>(SubTarget.getInstrInfo());
   auto *ItinData = SubTarget.getInstrItineraryData();
@@ -283,7 +302,7 @@ bool InterBlockScheduling::latencyConverged(BlockState &BS) const {
                                  << " not met (" << Distance << ")\n");
           DEBUG_LOOPAWARE(dbgs() << "  " << Succ->NodeNum << ": "
                                  << *Succ->getInstr());
-          return false;
+          return Pred->getInstr();
         }
       }
     }
@@ -296,7 +315,7 @@ bool InterBlockScheduling::latencyConverged(BlockState &BS) const {
   // upperbound of the latency safety margin that should be provided by
   // the epilogue
   BS.FixPoint.MaxLatencyExtent = MaxExtent;
-  return true;
+  return nullptr;
 }
 
 bool InterBlockScheduling::updateFixPoint(BlockState &BS) {
@@ -316,11 +335,20 @@ bool InterBlockScheduling::updateFixPoint(BlockState &BS) {
     // Iterate on CurMBB
     return false;
   }
-  if (!latencyConverged(BS)) {
-    BS.FixPoint.LatencyMargin++;
+
+  if (MachineInstr *MINeedsHigherCap = latencyConverged(BS)) {
+    auto Res = BS.FixPoint.PerMILatencyMargin.try_emplace(MINeedsHigherCap, 0);
+    // Increase the latency margin per instruction, unless we already iterated
+    // more than MaxExpensiveIterations without converging.
+    if (BS.FixPoint.NumIters <= MaxExpensiveIterations) {
+      ++Res.first->second;
+    } else {
+      BS.FixPoint.LatencyMargin++;
+    }
     DEBUG_LOOPAWARE(dbgs() << "  not converged: latency RM="
-                           << BS.FixPoint.ResourceMargin << " LM=>"
-                           << BS.FixPoint.LatencyMargin << "\n");
+                           << BS.FixPoint.ResourceMargin
+                           << " LM=" << BS.FixPoint.LatencyMargin
+                           << " MIM=" << Res.first->second << "\n");
     // Iterate on CurMBB
     return false;
   }
@@ -341,13 +369,18 @@ bool InterBlockScheduling::successorsAreScheduled(
   });
 }
 
-std::optional<int>
-InterBlockScheduling::getLatencyCap(MachineBasicBlock *BB) const {
-  auto &BS = getBlockState(BB);
+std::optional<int> InterBlockScheduling::getLatencyCap(MachineInstr &MI) const {
+  auto &BS = getBlockState(MI.getParent());
   if (BS.Kind != BlockType::Loop) {
     return {};
   }
-  return BS.FixPoint.LatencyMargin;
+  if (BS.FixPoint.LatencyMargin)
+    return BS.FixPoint.LatencyMargin;
+  if (const auto *It = BS.FixPoint.PerMILatencyMargin.find(&MI);
+      It != BS.FixPoint.PerMILatencyMargin.end()) {
+    return It->second;
+  }
+  return 0;
 }
 
 std::optional<int>
@@ -420,6 +453,25 @@ void InterBlockScheduling::enterRegion(MachineBasicBlock *BB,
     BS.addRegion(BB, RegionBegin, RegionEnd);
   }
 }
+
+// Create a block, insert it before Succ, and route the control flow edge
+// between Pred and Succ through it.
+// Since we don't add any control flow instructions, the edge should be a
+// fallthrough edge; it will be replaced with two fallthrough edges and a block
+MachineBasicBlock *splitEdge(MachineBasicBlock *Pred, MachineBasicBlock *Succ) {
+  auto *MF = Pred->getParent();
+  MachineBasicBlock *NewBB = MF->CreateMachineBasicBlock(Succ->getBasicBlock());
+  MF->insert(Succ->getIterator(), NewBB);
+  for (auto *Edge : make_early_inc_range(Pred->successors())) {
+    if (Edge == Succ) {
+      Pred->removeSuccessor(Succ);
+    }
+  }
+  NewBB->addSuccessor(Succ);
+  Pred->addSuccessor(NewBB);
+  return NewBB;
+}
+
 int InterBlockScheduling::getNumEntryNops(const BlockState &BS) const {
   // Epilogues should supply the safety margin for their loop.
   // That loop is the only predecessor by construction of
@@ -427,32 +479,53 @@ int InterBlockScheduling::getNumEntryNops(const BlockState &BS) const {
   if (BS.Kind != BlockType::Epilogue) {
     return 0;
   }
-  const MachineBasicBlock &BB = *BS.TheBlock;
-  assert(BB.pred_size() == 1);
-  MachineBasicBlock *Loop = getSinglePredecessor(BB);
+  MachineBasicBlock &BB = *BS.TheBlock;
+
+  MachineBasicBlock *Loop = getLoopPredecessor(BB);
+  assert(Loop);
   auto &LBS = getBlockState(Loop);
+  if (BB.pred_size() > 1) {
+    // The loop is a fallthrough predecessor by construction. We insert a
+    // new block that will be a dedicated exit to the loop.
+  }
 
   // We can only analyze non-empty epilogue blocks because we need
   // to build a DDG, which is not possible.
   // For empty ones, we need to be conservative because we are not aware of
   // content of epilogues' successor.
+  int SafetyMargin = LBS.getSafetyMargin();
   if (LoopEpilogueAnalysis && BB.size() > 0) {
     int ExistingLatency = getCyclesToRespectTiming(BS, LBS);
     // Start the next step only after clearing latencies.
-    return getCyclesToAvoidResourceConflicts(ExistingLatency, BS, LBS);
+    SafetyMargin = getCyclesToAvoidResourceConflicts(ExistingLatency, BS, LBS);
+  }
+  if (SafetyMargin && BB.pred_size() > 1) {
+    DEBUG_LOOPAWARE(dbgs() << "New dedicated exit with " << SafetyMargin
+                           << " nops.\n");
+    // The loop is a fallthrough predecessor by construction. We insert a
+    // new block that will be a dedicated exit to the loop.
+    MachineBasicBlock *DedicatedExit = splitEdge(Loop, &BB);
+    const auto &SubTarget = BS.TheBlock->getParent()->getSubtarget();
+    auto *TII = static_cast<const AIEBaseInstrInfo *>(SubTarget.getInstrInfo());
+    // Our caller can't see this block, so we fill nops ourselves. The original
+    // epilogue will not need entry nops, so we can return 0.
+    auto It = DedicatedExit->begin();
+    while (SafetyMargin--) {
+      TII->insertNoop(*DedicatedExit, It);
+    }
+    return 0;
   }
 
-  return LBS.getSafetyMargin();
+  return SafetyMargin;
 }
 
 int InterBlockScheduling::getCyclesToRespectTiming(
     const BlockState &EpilogueBS, const BlockState &LoopBS) const {
 
   const MachineBasicBlock &EpilogueMBB = *EpilogueBS.TheBlock;
-  const MachineBasicBlock *LoopMBB = getSinglePredecessor(EpilogueMBB);
 
   DEBUG_LOOPAWARE(dbgs() << "** Loop/Epilogue-carried latency dependencies:"
-                         << " Original Loop " << *LoopMBB
+                         << " Original Loop " << *LoopBS.TheBlock
                          << " Original Epilogue " << EpilogueMBB << "\n");
 
   InterBlockEdges Edges(*Context);
@@ -464,9 +537,12 @@ int InterBlockScheduling::getCyclesToRespectTiming(
     for (auto &Bundle : R.Bundles) {
       for (MachineInstr *MI : Bundle.getInstrs()) {
         DistancesFromLoopEntry[MI] = DistFromLoopEntry;
-        Edges.addNode(MI);
       }
       ++DistFromLoopEntry;
+    }
+    // Here we need to iterate using semantic order.
+    for (MachineInstr *MI : R) {
+      Edges.addNode(MI);
     }
   };
 
@@ -628,7 +704,7 @@ void BlockState::classify() {
   // We must push the safety margin to our epilogue block(s)
   // This can only be done if we have an epilogue and the epilogue is not itself
   // a loop.
-  auto IsLoop = [](MachineBasicBlock *MBB) {
+  auto IsLoop = [](const MachineBasicBlock *MBB) {
     int NumLoopEdges = 0;
     int NumExitEdges = 0;
     for (auto *S : MBB->successors()) {
@@ -641,10 +717,13 @@ void BlockState::classify() {
     return NumLoopEdges == 1 && NumExitEdges == 1;
   };
   // We generalize slightly; we require the epilogue to be a dedicated exit of
-  // the loop.
-  auto CanFixLoopSchedule = [L = TheBlock](auto *S) {
-    // Either the backedge, or a dedicated loop exit
-    return S == L || S->pred_size() == 1;
+  // the loop, or a fallthrough block, so that we can squeeze in a dedicated
+  // exit.
+  auto CanFixLoopSchedule = [L = TheBlock,
+                             &IsLoop](const MachineBasicBlock *S) {
+    // Either the backedge, or a dedicated loop exit, or a fallthrough loop exit
+    return S == L || S->pred_size() == 1 ||
+           (L->isLayoutSuccessor(S) && !IsLoop(S));
   };
 
   // If we don't mark up any loops, we will iterate in the same order and apply

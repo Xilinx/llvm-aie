@@ -200,9 +200,9 @@ body: |
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p1
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:em = COPY $m0
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:vec256 = COPY $amll0
-    ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_pstm_nrm:%[0-9]+]]:vec256, [[VLDA_dmw_lda_w_ag_pstm_nrm1:%[0-9]+]]:ep = VLDA_dmw_lda_w_ag_pstm_nrm [[COPY]], [[COPY2]] :: (load (<16 x s16>))
+    ; CHECK-NEXT: [[VLD_pstm_pseudo:%[0-9]+]]:vec256, [[VLD_pstm_pseudo1:%[0-9]+]]:ep = VLD_pstm_pseudo [[COPY]], [[COPY2]] :: (load (<16 x s16>))
     ; CHECK-NEXT: VST_dmw_sts_w_ag_idx_imm [[COPY3]], [[COPY1]], 0 :: (store (<16 x s16>))
-    ; CHECK-NEXT: [[VCONV_FP32_BF16_:%[0-9]+]]:acc512 = VCONV_FP32_BF16 [[VLDA_dmw_lda_w_ag_pstm_nrm]]
+    ; CHECK-NEXT: [[VCONV_FP32_BF16_:%[0-9]+]]:acc512 = VCONV_FP32_BF16 [[VLD_pstm_pseudo]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VCONV_FP32_BF16_]]
     %0:ptrregbank(p0) = COPY $p0
     %20:ptrregbank(p0) = COPY $p1
@@ -229,9 +229,9 @@ body: |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:em = COPY $m0
-    ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_pstm_nrm:%[0-9]+]]:vec256, [[VLDA_dmw_lda_w_ag_pstm_nrm1:%[0-9]+]]:ep = VLDA_dmw_lda_w_ag_pstm_nrm [[COPY]], [[COPY1]] :: (load (<16 x s16>))
-    ; CHECK-NEXT: $m1 = COPY [[VLDA_dmw_lda_w_ag_pstm_nrm1]]
-    ; CHECK-NEXT: [[VCONV_FP32_BF16_:%[0-9]+]]:acc512 = VCONV_FP32_BF16 [[VLDA_dmw_lda_w_ag_pstm_nrm]]
+    ; CHECK-NEXT: [[VLD_pstm_pseudo:%[0-9]+]]:vec256, [[VLD_pstm_pseudo1:%[0-9]+]]:ep = VLD_pstm_pseudo [[COPY]], [[COPY1]] :: (load (<16 x s16>))
+    ; CHECK-NEXT: $m1 = COPY [[VLD_pstm_pseudo1]]
+    ; CHECK-NEXT: [[VCONV_FP32_BF16_:%[0-9]+]]:acc512 = VCONV_FP32_BF16 [[VLD_pstm_pseudo]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VCONV_FP32_BF16_]], implicit $m1
     %0:ptrregbank(p0) = COPY $p0
     %7:modregbank(s20) = COPY $m0

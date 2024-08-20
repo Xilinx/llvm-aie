@@ -3,6 +3,9 @@
 // This file is licensed under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the interblock latency utilities
@@ -173,7 +176,7 @@ unsigned MaxLatencyFinder::operator()(MachineInstr &MI) {
   // scheduling a loop.
   const AIE::InterBlockScheduling &IB = Scheduler->getInterBlock();
   if (!InterBlock) {
-    if (auto Cap = IB.getLatencyCap(CurBB)) {
+    if (auto Cap = IB.getLatencyCap(MI)) {
       LLVM_DEBUG(dbgs() << "Capped at " << *Cap << "\n");
       Latency = std::min(Latency, *Cap);
     }

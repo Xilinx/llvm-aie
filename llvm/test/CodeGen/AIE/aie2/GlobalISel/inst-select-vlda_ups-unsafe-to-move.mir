@@ -22,12 +22,12 @@ body:             |
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:edj = COPY $m0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec256 = COPY $wl0
-    ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_idx:%[0-9]+]]:vec256 = VLDA_dmw_lda_w_ag_idx [[COPY]], [[COPY1]] :: (load (<16 x s16>))
+    ; CHECK-NEXT: [[VLD_idx_pseudo:%[0-9]+]]:vec256 = VLD_idx_pseudo [[COPY]], [[COPY1]] :: (load (<16 x s16>))
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:er = COPY $r1
     ; CHECK-NEXT: [[COPY4:%[0-9]+]]:mss = COPY [[COPY3]]
     ; CHECK-NEXT: [[VUPS_S32_D16_mv_ups_w2b:%[0-9]+]]:acc512 = VUPS_S32_D16_mv_ups_w2b [[COPY2]], [[COPY4]], implicit-def dead $srups_of, implicit $crsat, implicit $crupssign
     ; CHECK-NEXT: [[COPY5:%[0-9]+]]:mss = COPY [[COPY3]]
-    ; CHECK-NEXT: [[VUPS_S32_D16_mv_ups_w2b1:%[0-9]+]]:acc512 = VUPS_S32_D16_mv_ups_w2b [[VLDA_dmw_lda_w_ag_idx]], [[COPY5]], implicit-def dead $srups_of, implicit $crsat, implicit $crupssign
+    ; CHECK-NEXT: [[VUPS_S32_D16_mv_ups_w2b1:%[0-9]+]]:acc512 = VUPS_S32_D16_mv_ups_w2b [[VLD_idx_pseudo]], [[COPY5]], implicit-def dead $srups_of, implicit $crsat, implicit $crupssign
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VUPS_S32_D16_mv_ups_w2b]], implicit [[VUPS_S32_D16_mv_ups_w2b1]]
     %0:ptrregbank(p0) = COPY $p0
     %1:modregbank(s20) = COPY $m0

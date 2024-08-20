@@ -52,8 +52,8 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], 992
-    ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_idx_imm:%[0-9]+]]:vec256 = VLDA_dmw_lda_w_ag_idx_imm [[PADD_imm_pseudo]], 0 :: (load (<8 x s32>))
-    ; CHECK-NEXT: $wl0 = COPY [[VLDA_dmw_lda_w_ag_idx_imm]]
+    ; CHECK-NEXT: [[VLD_idx_imm_3x32_pseudo:%[0-9]+]]:vec256 = VLD_idx_imm_3x32_pseudo [[PADD_imm_pseudo]], 0 :: (load (<8 x s32>))
+    ; CHECK-NEXT: $wl0 = COPY [[VLD_idx_imm_3x32_pseudo]]
     %1:ptrregbank(p0) = COPY $p0
     %2:modregbank(s20) = G_CONSTANT i20 992
     %3:ptrregbank(p0) = G_PTR_ADD %1:ptrregbank, %2:modregbank(s20)

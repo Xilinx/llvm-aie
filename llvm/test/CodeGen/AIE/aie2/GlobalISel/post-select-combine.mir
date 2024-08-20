@@ -158,3 +158,127 @@ body:             |
     $x4 = COPY %6
     PseudoRET implicit $lr, implicit $x4
 ...
+
+
+---
+name:            combine_256_with_reg_sequence
+alignment:       16
+legalized:       true
+regBankSelected: true
+selected:        true
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+  liveins: $wl2, $wh2
+    ; CHECK-LABEL: name: combine_256_with_reg_sequence
+    ; CHECK: liveins: $wl2, $wh2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ewl = COPY $wl2
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec256 = COPY $wh2
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[COPY1]], %subreg.sub_256_hi, [[COPY]], %subreg.sub_256_lo
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]]
+    %1:ewl = COPY $wl2
+    %2:vec256 = COPY $wh2
+    %5:vec512 = REG_SEQUENCE %1, %subreg.sub_256_lo
+    %6:vec512 = INSERT_SUBREG %5, %2, %subreg.sub_256_hi
+    PseudoRET implicit $lr, implicit %6
+...
+
+---
+name:            combine_256_acc
+alignment:       16
+legalized:       true
+regBankSelected: true
+selected:        true
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+  liveins: $bml0, $amll2, $amlh2
+    ; CHECK-LABEL: name: combine_256_acc
+    ; CHECK: liveins: $bml0, $amll2, $amlh2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:acc256 = COPY $amll2
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:acc256 = COPY $amlh2
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:acc512 = REG_SEQUENCE [[COPY1]], %subreg.sub_256_hi, [[COPY]], %subreg.sub_256_lo
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]]
+    %0:acc512 = COPY $bml0
+    %1:acc256 = COPY $amll2
+    %5:acc512 = INSERT_SUBREG %0, %1, %subreg.sub_256_lo
+    %2:acc256 = COPY $amlh2
+    %6:acc512 = INSERT_SUBREG %5, %2, %subreg.sub_256_hi
+    PseudoRET implicit $lr, implicit %6
+...
+
+---
+name:            combine_512_vec
+alignment:       16
+legalized:       true
+regBankSelected: true
+selected:        true
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+  liveins: $y4, $x4, $x5
+    ; CHECK-LABEL: name: combine_512_vec
+    ; CHECK: liveins: $y4, $x4, $x5
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:exe = COPY $x4
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec512 = COPY $x5
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec1024 = REG_SEQUENCE [[COPY1]], %subreg.sub_512_hi, [[COPY]], %subreg.sub_512_lo
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]]
+    %0:vec1024 = COPY $y4
+    %5:exe = COPY $x4
+    %6:vec1024 = INSERT_SUBREG %0, %5, %subreg.sub_512_lo
+    %10:vec512 = COPY $x5
+    %11:vec1024 = INSERT_SUBREG %6, %10, %subreg.sub_512_hi
+    PseudoRET implicit $lr, implicit %11
+...
+
+---
+name:            combine_512_acc
+alignment:       16
+legalized:       true
+regBankSelected: true
+selected:        true
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+  liveins: $cm4, $bml2, $bmh2
+    ; CHECK-LABEL: name: combine_512_acc
+    ; CHECK: liveins: $cm4, $bml2, $bmh2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ebml = COPY $bml2
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:acc512 = COPY $bmh2
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:acc1024 = REG_SEQUENCE [[COPY1]], %subreg.sub_512_hi, [[COPY]], %subreg.sub_512_lo
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]]
+    %0:acc1024 = COPY $cm4
+    %5:ebml = COPY $bml2
+    %6:acc1024 = INSERT_SUBREG %0, %5, %subreg.sub_512_lo
+    %10:acc512 = COPY $bmh2
+    %11:acc1024 = INSERT_SUBREG %6, %10, %subreg.sub_512_hi
+    PseudoRET implicit $lr, implicit %11
+...
+
+---
+name:            combine_512_acc_with_reg_sequence
+alignment:       16
+legalized:       true
+regBankSelected: true
+selected:        true
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+  liveins: $bml2, $bmh2
+    ; CHECK-LABEL: name: combine_512_acc_with_reg_sequence
+    ; CHECK: liveins: $bml2, $bmh2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ebml = COPY $bml2
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:acc512 = COPY $bmh2
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:acc1024 = REG_SEQUENCE [[COPY1]], %subreg.sub_512_hi, [[COPY]], %subreg.sub_512_lo
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]]
+    %5:ebml = COPY $bml2
+    %6:acc1024 = REG_SEQUENCE %5, %subreg.sub_512_lo
+    %10:acc512 = COPY $bmh2
+    %11:acc1024 = INSERT_SUBREG %6, %10, %subreg.sub_512_hi
+    PseudoRET implicit $lr, implicit %11
+...

@@ -29,42 +29,61 @@ namespace llvm {
 
 struct AIEBaseInstrInfo : public TargetInstrInfo {
   using TargetInstrInfo::TargetInstrInfo;
-  /// Return the opcode for a return instruction
 
-  virtual unsigned getReturnOpcode() const = 0;
+  /// Return the opcode for a return instruction
+  virtual unsigned getReturnOpcode() const {
+    llvm_unreachable("Target didn't implement getReturnOpcode");
+  }
 
   /// Return the opcode for a call instruction
   /// \param CallerF The function that makes the call
   /// \param IsIndirect Select function pointer call or direct call
   /// \param Select a tail call variant.
   virtual unsigned getCallOpcode(const MachineFunction &CallerF,
-                                 bool IsIndirect, bool IsTailCall) const = 0;
+                                 bool IsIndirect, bool IsTailCall) const {
+    llvm_unreachable("Target didn't implement getCallOpcode");
+  }
+
   /// Return the kind of slot that this instruction can be executed in.
   /// This is used to direct the packetization of simple instructions.
   /// NOTE: If this is called on a Composite Instruction (i.e. an instruction
   /// defining a Packet format, owning possibly multiples slots), the returned
   /// slot will be the default one (unknown).
-  virtual MCSlotKind getSlotKind(unsigned Opcode) const = 0;
-  virtual const MCSlotInfo *getSlotInfo(const MCSlotKind Kind) const = 0;
+  virtual MCSlotKind getSlotKind(unsigned Opcode) const {
+    llvm_unreachable("Target didn't implement getSlotKind");
+  }
+  virtual const MCSlotInfo *getSlotInfo(const MCSlotKind Kind) const {
+    llvm_unreachable("Target didn't implement getSlotInfo");
+  }
   /// Return the Packet formats for this target
-  virtual const PacketFormats &getPacketFormats() const = 0;
+  virtual const PacketFormats &getPacketFormats() const {
+    llvm_unreachable("Target didn't implement getPacketFormats");
+  }
   /// Return a nop of the given byte size, or the smallest if zero.
-  virtual unsigned getNopOpcode(size_t Size = 0) const = 0;
+  virtual unsigned getNopOpcode(size_t Size = 0) const {
+    llvm_unreachable("Target didn't implement getNopOpcode");
+  }
   /// Return an opcode that reverses the branch condition of a given
   /// instruction
   /// \param Opc Opcode of the branch to reverse
   /// \pre Opc must be a conditional branch
-  virtual unsigned getOppositeBranchOpcode(unsigned Opc) const = 0;
+  virtual unsigned getOppositeBranchOpcode(unsigned Opc) const {
+    llvm_unreachable("Target didn't implement getOppositeBranchOpcode");
+  }
   /// Return the opcode of an unconditional jump
-  virtual unsigned getJumpOpcode() const = 0;
+  virtual unsigned getJumpOpcode() const {
+    llvm_unreachable("Target didn't implement getJumpOpcode");
+  }
   /// Return Multi-Slot Pseudo opcode based on Reg type and imm. size
   virtual unsigned getConstantMovOpcode(MachineRegisterInfo &MRI,
                                         unsigned int Reg, APInt &Val) const {
-    return -1;
+    llvm_unreachable("Target didn't implement getConstantMovOpcode");
   }
   /// Returns the opcode for CYCLE_SEPARATOR meta instruction.
   /// Used for debugging purposes
-  virtual unsigned getCycleSeparatorOpcode() const { return -1; }
+  virtual unsigned getCycleSeparatorOpcode() const {
+    llvm_unreachable("Target didn't implement getCycleSeparatorOpcode");
+  }
   /// Check whether Opc represents a lock instruction
   virtual bool isLock(unsigned Opc) const { return false; }
   /// Check whether this is a delayed scheduling barrier induced from
@@ -124,10 +143,14 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   }
 
   // Used for Load/Store combiners
-  virtual unsigned getOffsetMemOpcode(unsigned BaseMemOpcode) const = 0;
+  virtual unsigned getOffsetMemOpcode(unsigned BaseMemOpcode) const {
+    llvm_unreachable("Target didn't implement getOffsetMemOpcode");
+  }
   virtual std::optional<unsigned>
   getCombinedPostIncOpcode(MachineInstr &BaseMemI, MachineInstr &PtrAddI,
-                           TypeSize Size) const = 0;
+                           TypeSize Size) const {
+    llvm_unreachable("Target didn't implement getCombinedPostIncOpcode");
+  }
 
   // Opcodes related to hardware loop handling
   virtual bool isHardwareLoopDec(unsigned Opcode) const { return false; }
@@ -213,11 +236,11 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
                             const MachineBasicBlock *MBB,
                             const MachineFunction &MF) const override;
 
-  std::optional<unsigned>
-  getOperandLatency(const InstrItineraryData *ItinData,
-                    const MachineInstr &DefMI, unsigned DefIdx,
-                    const MachineInstr &UseMI,
-                    unsigned UseIdx) const override;
+  std::optional<unsigned> getOperandLatency(const InstrItineraryData *ItinData,
+                                            const MachineInstr &DefMI,
+                                            unsigned DefIdx,
+                                            const MachineInstr &UseMI,
+                                            unsigned UseIdx) const override;
 
   // Check if the MII points to a BUNDLE which contains a call instruction
   bool isCallBundle(MachineBasicBlock::iterator MII) const;
@@ -282,6 +305,8 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   virtual int getMinLastMemoryCycle() const;
   /// Return the maximum of LastMemoryCycle over all sched classes
   virtual int getMaxLastMemoryCycle() const;
+  /// Return cycles for memory operations of an instruction.
+  virtual SmallVector<int, 2> getMemoryCycles(unsigned SchedClass) const;
 
   const AIEBaseMCFormats *getFormatInterface() const { return FormatInterface; }
 

@@ -60,9 +60,9 @@ entry:
 declare void @sink_v8i32(<8 x i32>, <8 x i32>)
 define void @load_v8i32(i32 %idx, ptr %array) {
   ; CHECK-LABEL: name: load_v8i32
-  ; CHECK:       VLDA_dmw_lda_w_ag_idx
+  ; CHECK:       VLD_idx_pseudo
   ; CHECK-SAME:  (load (<8 x s32>) from %ir.arrayidx.0)
-  ; CHECK:       VLDA_dmw_lda_w_ag_idx_imm
+  ; CHECK:       VLD_idx_imm_3x32_pseudo
   ; CHECK-SAME:  (load (<8 x s32>) from %ir.arrayidx.1)
 entry:
   %arrayidx.0 = getelementptr inbounds [16 x <8 x i32>], ptr %array, i32 0, i32 %idx
@@ -96,8 +96,8 @@ entry:
 declare void @sink_v32i32(<32 x i32>, <32 x i32>)
 define void @load_v32i32(i32 %idx, ptr %array) {
   ; CHECK-LABEL: name: load_v32i32
-  ; CHECK-COUNT-4: VLDA_dmw_lda_w_ag_idx_imm {{.*}} (load (<32 x s32>) from %ir.arrayidx.0, align 32)
-  ; CHECK-COUNT-4: VLDA_dmw_lda_w_ag_idx_imm {{.*}} (load (<32 x s32>) from %ir.arrayidx.1, align 32)
+  ; CHECK-COUNT-4: VLD_idx_imm_3x32_pseudo  {{.*}} (load (<32 x s32>) from %ir.arrayidx.0, align 32)
+  ; CHECK-COUNT-4: VLD_idx_imm_3x32_pseudo  {{.*}} (load (<32 x s32>) from %ir.arrayidx.1, align 32)
 entry:
   %arrayidx.0 = getelementptr inbounds [16 x <32 x i32>], ptr %array, i32 0, i32 %idx
   %0 = load <32 x i32>, ptr %arrayidx.0, align 32

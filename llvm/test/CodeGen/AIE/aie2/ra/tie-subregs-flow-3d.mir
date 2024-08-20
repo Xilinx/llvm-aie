@@ -47,11 +47,9 @@ body:             |
     %7:edc = COPY $r7
     %8:ep = COPY $p0
 
-    ; ISel code for: %200(p0), %300(i20), %400(i20) = G_INTRINSIC(add_3d_byte) %8, %0, %1, %2, %3, %4, %5, %6, %7
     %100:eds = REG_SEQUENCE %0, %subreg.sub_mod, %1, %subreg.sub_dim_size, %2, %subreg.sub_dim_stride, %3, %subreg.sub_dim_count, %4, %subreg.sub_hi_dim_then_sub_mod, %5, %subreg.sub_hi_dim_then_sub_dim_size, %6, %subreg.sub_hi_dim_then_sub_dim_stride, %7, %subreg.sub_hi_dim_then_sub_dim_count
     %200:ep, %300:edc, %400:edc = PADDA_3D %8, %100
 
-    ; ISel code for: %201(p0), %301(i20), %401(i20) = G_INTRINSIC(add_3d_byte) %8, %0, %1, %2, %300, %4, %5, %6, %400
     %101:eds = REG_SEQUENCE %0, %subreg.sub_mod, %1, %subreg.sub_dim_size, %2, %subreg.sub_dim_stride, %300, %subreg.sub_dim_count, %4, %subreg.sub_hi_dim_then_sub_mod, %5, %subreg.sub_hi_dim_then_sub_dim_size, %6, %subreg.sub_hi_dim_then_sub_dim_stride, %400, %subreg.sub_hi_dim_then_sub_dim_count
     %201:ep, %301:edc, %401:edc = PADDA_3D %200, %101
 
@@ -84,38 +82,42 @@ body:             |
     ; CHECK-LABEL: name: test_4_padd_scarce
     ; CHECK: liveins: $m0, $p0, $p1, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $r8, $r9, $r10, $r11, $r12, $r13, $r14, $r15, $d3_3d
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: $m2 = MOV_mv_scl killed $r8
-    ; CHECK-NEXT: dead renamable $m6 = KILL killed $r12
-    ; CHECK-NEXT: $dn2 = MOV_mv_scl killed $r9
-    ; CHECK-NEXT: $dj2 = MOV_mv_scl killed $r10
-    ; CHECK-NEXT: $dc2 = MOV_mv_scl killed $r11
-    ; CHECK-NEXT: $dn6 = MOV_mv_scl killed $r13
-    ; CHECK-NEXT: $dj6 = MOV_mv_scl killed $r14
-    ; CHECK-NEXT: $dc6 = MOV_mv_scl killed $r15
-    ; CHECK-NEXT: $p2 = MOV_mv_scl $p1
-    ; CHECK-NEXT: $p1, dead $dc2, dead $dc6 = PADDA_3D killed $p1, $d2_3d
-    ; CHECK-NEXT: $m1 = MOV_mv_scl $r0
-    ; CHECK-NEXT: $dn1 = MOV_mv_scl $r1
-    ; CHECK-NEXT: $dj1 = MOV_mv_scl $r2
-    ; CHECK-NEXT: $dc1 = MOV_mv_scl $r3
-    ; CHECK-NEXT: $m5 = MOV_mv_scl $r4
-    ; CHECK-NEXT: $dn5 = MOV_mv_scl $r5
-    ; CHECK-NEXT: $dj5 = MOV_mv_scl $r6
-    ; CHECK-NEXT: $dc5 = MOV_mv_scl $r7
+    ; CHECK-NEXT: frame-setup PADDB_sp_imm 32, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $m2 = MOV_mv_scl killed $r0
+    ; CHECK-NEXT: $m1 = MOV_mv_scl killed $r8
     ; CHECK-NEXT: $dn2 = MOV_mv_scl killed $r1
     ; CHECK-NEXT: $dj2 = MOV_mv_scl killed $r2
-    ; CHECK-NEXT: $m2 = MOV_mv_scl killed $r0
+    ; CHECK-NEXT: $dc2 = MOV_mv_scl killed $r3
+    ; CHECK-NEXT: $m6 = MOV_mv_scl killed $r4
     ; CHECK-NEXT: $dn6 = MOV_mv_scl killed $r5
     ; CHECK-NEXT: $dj6 = MOV_mv_scl killed $r6
-    ; CHECK-NEXT: $p2, dead $dc1, dead $dc5 = PADDA_3D killed $p2, $d1_3d
-    ; CHECK-NEXT: $dc2 = MOV_mv_scl killed $r3
-    ; CHECK-NEXT: RET implicit $lr
     ; CHECK-NEXT: $dc6 = MOV_mv_scl killed $r7
-    ; CHECK-NEXT: $p0, $dc2, $dc6 = PADDA_3D killed $p0, killed $d2_3d
-    ; CHECK-NEXT: dead renamable $m6 = KILL killed $r4
-    ; CHECK-NEXT: $dc1 = MOV_mv_scl killed $dc2
-    ; CHECK-NEXT: $dc5 = MOV_mv_scl killed $dc6
-    ; CHECK-NEXT: $p0, dead $dc1, dead $dc5 = PADDA_3D killed $p0, killed $d1_3d
+    ; CHECK-NEXT: ST_dms_spill killed $m1, -32, implicit $sp :: (store (s32) into %stack.0)
+    ; CHECK-NEXT: $m1 = MOV_mv_scl $m2
+    ; CHECK-NEXT: $dn1 = MOV_mv_scl $dn2
+    ; CHECK-NEXT: $dj1 = MOV_mv_scl $dj2
+    ; CHECK-NEXT: $dc1 = MOV_mv_scl $dc2
+    ; CHECK-NEXT: $m5 = MOV_mv_scl $m6
+    ; CHECK-NEXT: $dn5 = MOV_mv_scl $dn6
+    ; CHECK-NEXT: $dj5 = MOV_mv_scl $dj6
+    ; CHECK-NEXT: $dc5 = MOV_mv_scl $dc6
+    ; CHECK-NEXT: $p0, $dc1, $dc5 = PADDA_3D killed $p0, $d1_3d
+    ; CHECK-NEXT: $m1 = LDA_dms_spill -32, implicit $sp :: (load (s32) from %stack.0)
+    ; CHECK-NEXT: $p2 = MOV_mv_scl $p1
+    ; CHECK-NEXT: $p2, $dc2, $dc6 = PADDA_3D killed $p2, $d2_3d
+    ; CHECK-NEXT: $dn1 = MOV_mv_scl killed $r9
+    ; CHECK-NEXT: $dj1 = MOV_mv_scl killed $r10
+    ; CHECK-NEXT: $dn5 = MOV_mv_scl killed $r13
+    ; CHECK-NEXT: frame-destroy PADDB_sp_imm -32, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $dj5 = MOV_mv_scl killed $r14
+    ; CHECK-NEXT: $dc2 = MOV_mv_scl killed $dc1
+    ; CHECK-NEXT: RET implicit $lr
+    ; CHECK-NEXT: $dc6 = MOV_mv_scl killed $dc5
+    ; CHECK-NEXT: $dc1 = MOV_mv_scl killed $r11
+    ; CHECK-NEXT: $dc5 = MOV_mv_scl killed $r15
+    ; CHECK-NEXT: $p0, dead $dc2, dead $dc6 = PADDA_3D killed $p0, killed $d2_3d
+    ; CHECK-NEXT: $p1, dead $dc1, dead $dc5 = PADDA_3D killed $p1, killed $d1_3d
+    ; CHECK-NEXT: dead renamable $m5 = KILL killed $r12
     ; CHECK-NEXT: DelayedSchedBarrier implicit killed renamable $p0, implicit killed renamable $p1, implicit killed renamable $p2, implicit killed $m0, implicit killed $d3_3d
     %0:em =  COPY $r0
     %1:edn = COPY $r1
@@ -338,13 +340,19 @@ body:             |
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
-  ; CHECK-NEXT:   successors: %bb.2(0x80000000)
+  ; CHECK-NEXT:   successors:
   ; CHECK-NEXT:   liveins: $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $r9, $d0_3d:0x000000000001C860
   ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   RET implicit $lr
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   $dc0 = MOV_mv_scl killed $r9
+  ; CHECK-NEXT:   $p0, $dc0, $dc4 = PADDA_3D killed $p0, killed $d0_3d
+  ; CHECK-NEXT:   DelayedSchedBarrier implicit killed renamable $dc0, implicit killed renamable $p0, implicit killed renamable $dc4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2 (align 16):
-  ; CHECK-NEXT:   liveins: $p0, $d0_3d
+  ; CHECK-NEXT:   liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $d0_3d:0x000000000001C870
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   RET implicit $lr
   ; CHECK-NEXT:   NOP
