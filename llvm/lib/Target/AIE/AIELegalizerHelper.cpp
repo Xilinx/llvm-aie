@@ -58,7 +58,7 @@ bool AIELegalizerHelper::pack32BitVector(LegalizerHelper &Helper,
 
     if (RegTy.getScalarSizeInBits() != 32) {
       const Register TmpReg32 = MRI.createGenericVirtualRegister(S32);
-      MIRBuilder.buildInstr(AIE2::G_ZEXT, {TmpReg32}, {DestinationOperand});
+      MIRBuilder.buildZExt({TmpReg32}, {DestinationOperand});
       DestinationOperand = TmpReg32;
     }
 
@@ -167,7 +167,7 @@ bool AIELegalizerHelper::legalizeG_BUILD_VECTOR(LegalizerHelper &Helper,
     if (DstVecEltTy.getSizeInBits() != 32) {
       const Register TmpReg32 =
           MRI.createGenericVirtualRegister(LLT::scalar(32));
-      MIRBuilder.buildInstr(AIE2::G_ANYEXT, {TmpReg32}, {Reg});
+      MIRBuilder.buildAnyExt({TmpReg32}, {Reg});
       Reg = TmpReg32;
     }
 
@@ -763,7 +763,7 @@ bool AIELegalizerHelper::legalizeG_FCMP(
 
   auto CreateAndInsert = [&](const Register &SrcReg) {
     Register Vec512Reg = MRI.createGenericVirtualRegister(V32S16);
-    MIRBuilder.buildInstr(AIE2::G_INSERT_VECTOR_ELT, {Vec512Reg},
+    MIRBuilder.buildInstr(TargetOpcode::G_INSERT_VECTOR_ELT, {Vec512Reg},
                           {VecUndef, SrcReg, IdxReg});
     return Vec512Reg;
   };
@@ -827,7 +827,7 @@ bool AIELegalizerHelper::legalizeG_FPTRUNC(LegalizerHelper &Helper,
   Register IdxReg = MRI.createGenericVirtualRegister(LLT::scalar(32));
   MIRBuilder.buildUndef(Vec512Undef);
   MIRBuilder.buildConstant(IdxReg, 0);
-  MIRBuilder.buildInstr(AIE2::G_INSERT_VECTOR_ELT, {Vec512Reg},
+  MIRBuilder.buildInstr(TargetOpcode::G_INSERT_VECTOR_ELT, {Vec512Reg},
                         {Vec512Undef, SrcReg, IdxReg});
 
   Register Acc512Reg = MRI.createGenericVirtualRegister(ACC512);
