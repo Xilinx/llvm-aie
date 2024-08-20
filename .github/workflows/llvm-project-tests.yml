@@ -1,3 +1,9 @@
+#
+# Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
 name: LLVM Project Tests
 
 permissions:
@@ -8,7 +14,7 @@ on:
     inputs:
       cache-key:
         required: false
-        default: 'sccache'
+        default: 'ccache'
       build_target:
         required: false
       projects:
@@ -27,7 +33,7 @@ on:
       cache-key:
         required: false
         type: string
-        default: 'sccache'
+        default: 'ccache'
 
       build_target:
         required: false
@@ -109,7 +115,6 @@ jobs:
           # fit under the 10 GB limit.
           max-size: 1.5G
           key: ${{ inputs.cache-key }}-${{ matrix.os }}
-          variant: sccache
       - name: Build and Test
         env:
           # Workaround for https://github.com/actions/virtual-environments/issues/5900.
@@ -119,8 +124,7 @@ jobs:
         id: build-llvm
         run: |
           if [ "${{ runner.os }}" == "Linux" ]; then
-            builddir="/mnt/build/"
-            mkdir -p $builddir
+            builddir="$(pwd)"/build
             extra_cmake_args="-DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang"
           else
             builddir="$(pwd)"/build
@@ -138,8 +142,8 @@ jobs:
                 -DCMAKE_BUILD_TYPE=Release \
                 -DLLVM_ENABLE_ASSERTIONS=ON \
                 -DLLDB_INCLUDE_TESTS=OFF \
-                -DCMAKE_C_COMPILER_LAUNCHER=sccache \
-                -DCMAKE_CXX_COMPILER_LAUNCHER=sccache \
+                -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+                -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
                 $extra_cmake_args \
                 ${{ inputs.extra_cmake_args }}
           ninja -C "$builddir" ${{ inputs.build_target }}
