@@ -35,10 +35,12 @@
 #include "llvm/MC/MCRegister.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include <llvm/CodeGen/MachineBasicBlock.h>
 #include <map>
 
 using namespace llvm;
 
+#define DEBUG_TYPE "aie-wawreg-rewrite"
 #define DEBUG_TYPE "aie-wawreg-rewrite"
 
 namespace {
@@ -46,6 +48,12 @@ namespace {
 cl::opt<bool> DisablePass(
     "aie-waw-disable",
     cl::desc("Disable the WAW Register Renaming in loops (default false)"),
+    cl::init(false), cl::Hidden);
+
+cl::opt<bool> DisableCopySubRegHandling(
+    "aie-waw-disable-copy-sub-reg-handling",
+    cl::desc("Disable Copy Sub register handling, where WAW regs will not be "
+             "replaced, if reg parts are reused."),
     cl::init(false), cl::Hidden);
 
 ///
@@ -124,6 +132,7 @@ static bool couldBeCalleeSaveEvasiveRegister(const MCPhysReg &PhysReg,
 
 static bool
 isUndefReserved(const MachineOperand &Op, const MachineInstr &MI,
+                const MachineBasicBlock &MBB,
                 std::map<unsigned, llvm::SmallVector<const MachineInstr *, 4>>
                     &UndefPartReuse,
                 const VirtRegMap &VRM);
@@ -131,6 +140,9 @@ isUndefReserved(const MachineOperand &Op, const MachineInstr &MI,
 static bool
 reuseSubRegs(llvm::SmallVector<const MachineInstr *, 4> &OrigInstr,
              llvm::SmallVector<const MachineInstr *, 4> &OtherInstr);
+static bool isNotLastDef(const MachineOperand &Def,
+                         const MachineInstr &DefInstr,
+                         const MachineBasicBlock &MBB);
 
 bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
   if (DisablePass)
@@ -184,10 +196,17 @@ bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
         if (Op.isTied())
           continue;
 
-        if (isUndefReserved(Op, MI, UndefPartReuse, VRM))
-          continue;
-
         Register Reg = Op.getReg();
+        Op.dump();
+        // // Subregisters can reuse Constants in the high part of the
+        // // register, therefore renaming a reused physical register can
+        // // prohibit the elimination of a move of constants, thus degrading
+        // // performance if this physical register is removed
+        if (!DisableCopySubRegHandling &&
+            isUndefReserved(Op, MI, *MBB, UndefPartReuse, VRM))
+          continue;
+        // if (VRM.hasKnownPreference(Reg))
+        //   continue;
 
         if (isWAWCandidate(Reg, MI, UsedPhyRegs, UsedVirtRegs, VRM, MRI)) {
           bool Replaced = replaceReg(Reg, ForbiddenPhysRegs, AlreadyReplaced,
@@ -208,8 +227,27 @@ bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
   return Modified;
 }
 
+static bool isNotLastDef(const MachineOperand &Def,
+                         const MachineInstr &DefInstr,
+                         const MachineBasicBlock &MBB) {
+  const Register Reg = Def.getReg();
+  bool foundDef = false;
+  for (const MachineInstr &MI : MBB) {
+    if (!MI.definesRegister(Reg))
+      continue;
+    if (MI.isIdenticalTo(DefInstr)) {
+      foundDef = true;
+      continue;
+    }
+    if (foundDef)
+      return true;
+  }
+  return false;
+}
+
 static bool
 isUndefReserved(const MachineOperand &Def, const MachineInstr &MI,
+                const MachineBasicBlock &MBB,
                 std::map<unsigned, llvm::SmallVector<const MachineInstr *, 4>>
                     &UndefPartReuse,
                 const VirtRegMap &VRM) {
@@ -226,7 +264,7 @@ isUndefReserved(const MachineOperand &Def, const MachineInstr &MI,
   UndefPartReuse[ID].push_back(&MI);
 
   // Undef Reg is still being filled, too early to tell, if it should be removed
-  if (Def.isUndef())
+  if (Def.isUndef() && isNotLastDef(Def, MI, MBB))
     return true;
 
   // find if another SubRegister has already been assigned by a previous copy
@@ -252,7 +290,7 @@ reuseSubRegs(llvm::SmallVector<const MachineInstr *, 4> &OrigInstr,
       continue;
     for (auto [OpA, OpB] : zip(InstrA->uses(), InstrB->uses())) {
       if (OpA.isReg() && OpB.isReg()) {
-        if (OpA.getReg() == OpB.getReg())
+        if (OpA.getReg() == OpB.getReg() && OpA.getSubReg() == OpB.getSubReg())
           return true;
       }
     }
@@ -337,6 +375,35 @@ bool replaceReg(const Register Reg,
     }
   }
   return false;
+}
+
+static std::set<MCPhysReg>
+getBBForbiddenReplacements(const MachineBasicBlock &MBB, const VirtRegMap &VRM,
+                           const MachineRegisterInfo &MRI,
+                           const AIEBaseRegisterInfo *TRI,
+                           const std::set<MCPhysReg> &CSPhyRegs) {
+  std::set<MCPhysReg> BlockedPhysRegs;
+  MCPhysReg PhysReg;
+  for (auto &MI : MBB) {
+    for (auto &Op : MI.operands()) {
+
+      if (!Op.isReg())
+        continue;
+
+      if (!Op.isDef())
+        continue;
+
+      if (Op.getReg().isVirtual())
+        PhysReg = VRM.getPhys(Op.getReg());
+      else
+        PhysReg = Op.getReg();
+
+      BlockedPhysRegs.insert(PhysReg);
+    }
+  }
+
+  BlockedPhysRegs.insert(CSPhyRegs.begin(), CSPhyRegs.end());
+  return BlockedPhysRegs;
 }
 
 llvm::SmallVector<MCPhysReg, 16> getPriorityReplacementRegs(

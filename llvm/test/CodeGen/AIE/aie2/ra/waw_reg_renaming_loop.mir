@@ -255,13 +255,12 @@ body:             |
   ; CHECK-NEXT:   liveins: $d0, $dj0, $p0, $r2, $r4, $r25, $r26, $s0, $x10
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   renamable $r0 = AND $r2, $r4
-  ; CHECK-NEXT:   renamable $r1 = ADD $r2, killed renamable $r0, implicit-def dead $srcarry
+  ; CHECK-NEXT:   dead renamable $r1 = ADD $r2, killed renamable $r0, implicit-def dead $srcarry
   ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
-  ; CHECK-NEXT:   liveins: $d0, $dj0, $p0, $r1, $r2, $r4, $r25, $r26, $s0, $x10
+  ; CHECK-NEXT:   liveins: $d0, $dj0, $p0, $r2, $r4, $r25, $r26, $s0, $x10
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $r0 = COPY killed renamable $r1
   ; CHECK-NEXT:   PseudoRET implicit $lr
   bb.0.entry:
   successors: %bb.1
@@ -282,7 +281,6 @@ body:             |
     PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
   bb.2:
     liveins: $p0, $d0, $r25, $r26, $x10, $dj0, $s0, $r2, $r4
-    $r0 = COPY %21
     PseudoRET implicit $lr
 ...
 ---
@@ -292,52 +290,30 @@ legalized:       true
 tracksRegLiveness: true
 body:             |
   ; CHECK-LABEL: name: redundant_sub_reg_moves
-  ; CHECK: bb.0.entry (align 16):
+  ; CHECK: bb.0.entry:
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT:   liveins: $bml1, $bml2, $p0, $r0, $r6, $wl0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   $lc = MOV_mv_scl killed $r0
-  ; CHECK-NEXT:   $ls = MOVXM_lng_cg %bb.1
-  ; CHECK-NEXT:   $le = MOVXM_lng_cg <mcsymbol .L_1120>
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   LoopStart $r0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.1 (align 16):
+  ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
   ; CHECK-NEXT:   liveins: $bml1, $bml2, $p0, $r6, $wl0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   renamable $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 32
-  ; CHECK-NEXT:   renamable $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 32
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   $wh2 = VMOV_mv_w $wl0
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   BUNDLE implicit-def $bmh0, implicit-def $amhl0, implicit-def $amhh0, implicit-def $bml1, implicit-def $amll1, implicit-def $amlh1, implicit-def dead $srfpflags, implicit $wl2, implicit $x2, implicit $r6, implicit $crfpmask {
-  ; CHECK-NEXT:     renamable $bmh0 = VCONV_FP32_BF16 renamable $wl2
-  ; CHECK-NEXT:     $bml1 = VMAC_F_vmac_bm_core_dense internal renamable $bmh0, renamable $x2, renamable $x2, $r6, implicit-def dead $srfpflags, implicit $crfpmask
-  ; CHECK-NEXT:   }
-  ; CHECK-NEXT:   BUNDLE implicit-def $bmh0, implicit-def $amhl0, implicit-def $amhh0, implicit-def $bml2, implicit-def $amll2, implicit-def $amlh2, implicit-def dead $srfpflags, implicit killed $wl2, implicit killed $x2, implicit $r6, implicit $crfpmask {
-  ; CHECK-NEXT:     renamable $bmh0 = VCONV_FP32_BF16 renamable $wl2
-  ; CHECK-NEXT:     $bml2 = VMAC_F_vmac_bm_core_dense internal renamable $bmh0, killed renamable $x2, renamable $x2, $r6, implicit-def dead $srfpflags, implicit $crfpmask
-  ; CHECK-NEXT:   }
+  ; CHECK-NEXT:   renamable $wh2 = COPY $wl0
+  ; CHECK-NEXT:   renamable $bmh0 = VCONV_FP32_BF16 renamable $wl2
+  ; CHECK-NEXT:   $bml1 = VMAC_F_vmac_bm_core_dense killed renamable $bmh0, killed renamable $x2, renamable $x2, $r6, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   renamable $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0
+  ; CHECK-NEXT:   renamable $wh2 = COPY $wl0
+  ; CHECK-NEXT:   renamable $bmh1 = VCONV_FP32_BF16 renamable $wl2
+  ; CHECK-NEXT:   $bml2 = VMAC_F_vmac_bm_core_dense killed renamable $bmh1, killed renamable $x2, renamable $x2, $r6, implicit-def dead $srfpflags, implicit $crfpmask
   ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   liveins: $bml1, $bml2, $p0, $r6, $wl0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   RET implicit $lr
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   DelayedSchedBarrier
+  ; CHECK-NEXT:   PseudoRET implicit $lr
   bb.0.entry:
   successors: %bb.1
   liveins: $p0, $wl0, $r6, $bml1, $bml2
@@ -353,7 +329,7 @@ body:             |
     %271:acc512 = VCONV_FP32_BF16 %281.sub_256_lo:vec512
     $bml1 = VMAC_F_vmac_bm_core_dense %271, %281:vec512, %281:vec512, $r6, implicit-def dead $srfpflags, implicit $crfpmask
 
-    undef %282.sub_256_lo:vec512 = VLDA_dmw_lda_w_ag_idx_imm $p0, 32
+    undef %282.sub_256_lo:vec512 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0
     %282.sub_256_hi:vec512 = COPY $wl0
     %272:acc512 = VCONV_FP32_BF16 %282.sub_256_lo:vec512
     $bml2 = VMAC_F_vmac_bm_core_dense %272, %282:vec512, %282:vec512, $r6, implicit-def dead $srfpflags, implicit $crfpmask
