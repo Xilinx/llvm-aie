@@ -92,13 +92,13 @@ let hasSideEffects = false, mayLoad = true, mayStore = false in {
   def VLD_2D_pseudo : MultiSlot_Pseudo< (outs mWa:$dst, eP:$ptr_out, eDC:$count_out), 
                                         (ins eP:$ptr, eD:$mod),
       "vld.2d_pseudo", "$dst, [$ptr], $mod", 
-      [VLDB_2D, VLDA_2D_dmw_lda_w]>;
+      [VLDB_2D, VLDA_2D_dmw_lda_w]>, AIE_HasTiedSubregister;
   }
   let Itinerary = II_VLDA_3D_W in
   let Constraints = "$ptr_out = $ptr" in {
   def VLD_3D_pseudo : MultiSlot_Pseudo< (outs mWa:$dst, eP:$ptr_out, eDC:$count_lo_out, eDC:$count_hi_out), 
                                         (ins eP:$ptr, eDS:$mod),
       "vld.3d_pseudo", "$dst, [$ptr], $mod", 
-      [VLDB_3D, VLDA_3D_dmw_lda_w]>;
+      [VLDB_3D, VLDA_3D_dmw_lda_w]>, AIE_HasTiedSubregister;
   }
 }
