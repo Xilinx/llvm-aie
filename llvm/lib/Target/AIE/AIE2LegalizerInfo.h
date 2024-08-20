@@ -1,4 +1,4 @@
-//===- AIE2LegalizerInfo ----------------------------------------*- C++ -*-===//
+//===- AIE2LegalizerInfo.h --------------------------------------*- C++ -*-===//
 //
 // This file is licensed under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -16,16 +16,23 @@
 #ifndef LLVM_LIB_TARGET_AIE2_AIE2MACHINELEGALIZER_H
 #define LLVM_LIB_TARGET_AIE2_AIE2MACHINELEGALIZER_H
 
-#include "AIELegalizerInfo.h"
+#include "AIELegalizerHelper.h"
+#include "llvm/CodeGen/GlobalISel/LegalizerInfo.h"
 
 namespace llvm {
 
 class AIE2Subtarget;
 
 /// This class provides legalization strategies.
-class AIE2LegalizerInfo : public AIELegalizerInfo {
+class AIE2LegalizerInfo : public LegalizerInfo {
+  AIELegalizerHelper AIEHelper;
+
 public:
   AIE2LegalizerInfo(const AIE2Subtarget &ST);
+  bool legalizeCustom(LegalizerHelper &Helper, MachineInstr &MI,
+                      LostDebugLocObserver &LocObserver) const override;
+  bool legalizeIntrinsic(LegalizerHelper &Helper,
+                         MachineInstr &MI) const override;
 };
 } // end namespace llvm
 #endif

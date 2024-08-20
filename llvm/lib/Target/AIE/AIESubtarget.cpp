@@ -14,10 +14,10 @@
 
 #include "AIESubtarget.h"
 #include "AIE.h"
+#include "AIE1LegalizerInfo.h"
 #include "AIE1RegisterBankInfo.h"
 #include "AIECallLowering.h"
 #include "AIEFrameLowering.h"
-#include "AIELegalizerInfo.h"
 #include "AIETargetMachine.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/MC/TargetRegistry.h"
@@ -52,7 +52,7 @@ AIESubtarget::AIESubtarget(const Triple &TT, StringRef CPU, StringRef TuneCPU,
                     << ABIName << "\n");
 
   CallLoweringInfo.reset(new AIECallLowering(*getTargetLowering()));
-  Legalizer.reset(new AIELegalizerInfo(*this));
+  Legalizer.reset(new AIE1LegalizerInfo(*this));
 
   auto *RBI = new AIE1RegisterBankInfo(*getRegisterInfo());
   RegBankInfo.reset(RBI);
