@@ -20,7 +20,8 @@ namespace llvm {
 class AIEFrameLowering : public AIEBaseFrameLowering {
 public:
   explicit AIEFrameLowering(const AIEBaseSubtarget &STI)
-      : AIEBaseFrameLowering(STI) {}
+      : AIEBaseFrameLowering(STI,
+                             /*StackAlignment=*/Align(32)) {}
 
   void emitPrologue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
