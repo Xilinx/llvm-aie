@@ -124,9 +124,14 @@ private:
     for (auto &MI : make_early_inc_range(MBB.phis())) {
       if (!isPointerTypePHI(MRI, MI))
         continue;
-      for (auto &PHI : make_early_inc_range(
-               make_range(std::next(MachineBasicBlock::instr_iterator(MI)),
-                          MachineBasicBlock::instr_iterator(*LastPHI)))) {
+
+      // Ensure that next MI is valid
+      auto NextMI = std::next(MachineBasicBlock::instr_iterator(MI));
+      if (NextMI == MBB.instr_end() || NextMI == LastPHI)
+        break;
+
+      for (auto &PHI : make_early_inc_range(make_range(
+               NextMI, MachineBasicBlock::instr_iterator(*LastPHI)))) {
         if (!isPointerTypePHI(MRI, PHI))
           continue;
         if (MI.isIdenticalTo(PHI, MachineInstr::IgnoreDefs)) {
