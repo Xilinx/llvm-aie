@@ -466,18 +466,6 @@ bool AIEInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
   return false;
 }
 
-// Return true if TRC is a superclass of RC or contains the given reg.
-// This is primarily a helper function for the functions below.  The first
-// case is active when Reg is a virtual register, but is apparently not
-// sufficient alone
-static bool regClassMatches(const TargetRegisterClass &TRC,
-                            const TargetRegisterClass *RC,
-                            unsigned Reg) {
-  if(RC && TRC.hasSubClassEq(RC)) return true;
-  else if(TRC.contains(Reg)) return true;
-  else return false;
-}
-
 // Store a register to a stack slot.  Used in eliminating FrameIndex pseduo-ops.
 void AIEInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                        MachineBasicBlock::iterator I,
