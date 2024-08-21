@@ -56,6 +56,14 @@ struct AIEBaseRegisterInfo : public TargetRegisterInfo {
     llvm_unreachable("Target didn't implement getGPRCalleeSavedRegClass!");
   }
 #endif
+
+  virtual const TargetRegisterClass *get2DIteratorRegClass() const {
+    llvm_unreachable("Target didn't implement get2DIteratorRegClass!");
+  }
+
+  virtual const TargetRegisterClass *get3DIteratorRegClass() const {
+    llvm_unreachable("Target didn't implement get3DIteratorRegClass!");
+  }
 };
 
 } // namespace llvm
