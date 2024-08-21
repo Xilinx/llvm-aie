@@ -23,7 +23,8 @@ class AIE2Subtarget;
 class AIE2FrameLowering : public AIEBaseFrameLowering {
 public:
   explicit AIE2FrameLowering(const AIEBaseSubtarget &STI)
-      : AIEBaseFrameLowering(STI) {}
+      : AIEBaseFrameLowering(STI,
+                             /*StackAlignment=*/Align(32)) {}
 
   void emitPrologue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
