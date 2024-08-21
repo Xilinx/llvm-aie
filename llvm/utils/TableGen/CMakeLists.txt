@@ -42,6 +42,7 @@ add_tablegen(llvm-tblgen LLVM
   AIEMemoryCyclesEmitter.cpp
   AIEPreSchedLoweringEmitter.cpp
   AIESplitInstrTablesEmitter.cpp
+  AIEVariableInstrItineraryEmitter.cpp
   AsmMatcherEmitter.cpp
   AsmWriterEmitter.cpp
   Attributes.cpp

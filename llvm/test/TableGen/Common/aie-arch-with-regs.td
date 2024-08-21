@@ -19,6 +19,7 @@ def TestAIE : Target {
 
 def REG : Register<"REG">;
 def GPR : RegisterClass<"TestAIE", [i32], 32, (add REG)>;
+def PTR : RegisterClass<"TestAIE", [i20], 20, (add REG)>;
 
 class TestInstruction : Instruction {
   let Namespace = "TestAIE";
