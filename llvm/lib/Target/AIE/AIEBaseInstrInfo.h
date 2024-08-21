@@ -369,6 +369,9 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
 
   bool canHoistCheapInst(const MachineInstr &MI) const override;
 
+  static bool regClassMatches(const TargetRegisterClass &TRC,
+                              const TargetRegisterClass *RC, unsigned Reg);
+
 protected:
   /// Expand a spill pseudo-instruction into actual target instructions. This
   /// will essentially split the register being handled into its sub-registers,

@@ -560,7 +560,7 @@ std::optional<int> AIEBaseInstrInfo::getSignedOperandLatency(
   unsigned DstClass = DstMI.getDesc().getSchedClass();
   std::optional<unsigned> SrcCycle = ItinData->getOperandCycle(SrcClass, SrcOpIdx);
   std::optional<unsigned> DstCycle = ItinData->getOperandCycle(DstClass, DstOpIdx);
- 
+
   // This architecture has strict scheduling requirements. We require
   // itineraries for all "real" instructions.
   // For pre-RA scheduling, we cannot expect all instructions to have
@@ -879,6 +879,20 @@ bool AIEBaseInstrInfo::verifyInstruction(const MachineInstr &MI,
 
 bool AIEBaseInstrInfo::canHoistCheapInst(const MachineInstr &MI) const {
   return !NoCheapInstHoisting;
+}
+
+// Return true if TRC is a superclass of RC or contains the given reg.
+// This is primarily a helper function for the functions below.  The first
+// case is active when Reg is a virtual register, but is apparently not
+// sufficient alone
+bool AIEBaseInstrInfo::regClassMatches(const TargetRegisterClass &TRC,
+                                       const TargetRegisterClass *RC,
+                                       unsigned Reg) {
+  if (RC && TRC.hasSubClassEq(RC))
+    return true;
+  if (TRC.contains(Reg))
+    return true;
+  return false;
 }
 
 std::optional<DestSourcePair>
