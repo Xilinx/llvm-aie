@@ -68,25 +68,6 @@ void emitBundlesTopDown(const std::vector<MachineBundle> &Bundles,
   }
 }
 
-void emitBundlesInScoreboardDelta(
-    const std::vector<MachineBundle> &Bundles,
-    ResourceScoreboard<FuncUnitWrapper> &Scoreboard, int &Delta,
-    AIEHazardRecognizer *HR) {
-
-  for (auto &Bundle : Bundles) {
-    // We don't need to replay more instructions, because we exhausted the
-    // scoreboard.
-    if (Delta >= 0)
-      break;
-
-    for (MachineInstr *MI : Bundle.getInstrs())
-      HR->emitInScoreboard(Scoreboard, MI->getDesc(), HR->getMemoryBanks(MI),
-                           MI->operands(), MI->getMF()->getRegInfo(), Delta);
-
-    Delta++;
-  }
-}
-
 ResourceScoreboard<FuncUnitWrapper>
 createBottomUpScoreboard(ArrayRef<MachineBundle> Bundles,
                          const AIEHazardRecognizer &HR) {
@@ -638,6 +619,9 @@ int InterBlockScheduling::getCyclesToRespectTiming(
     }
   }
 
+  DEBUG_LOOPAWARE(
+      dbgs() << "Timing constraints between loop and epilogue require "
+             << EntryNops << " Nops\n");
   return EntryNops;
 }
 
@@ -647,15 +631,12 @@ int InterBlockScheduling::getCyclesToAvoidResourceConflicts(
 
   const MachineBasicBlock &EpilogueMBB = *EpilogueBS.TheBlock;
   MachineBasicBlock *LoopMBB = LoopBS.TheBlock;
-  int Depth = HR->getMaxLookAhead();
-  ResourceScoreboard<FuncUnitWrapper> Bottom;
-  Bottom.reset(Depth);
-
   DEBUG_LOOPAWARE(dbgs() << "* Loop/Epilogue-carried resource conflicts:"
                          << " Original Loop " << *LoopMBB << " Original Epilog "
                          << EpilogueMBB << "\n");
 
-  emitBundlesTopDown(LoopBS.getBottom().Bundles, Bottom, HR.get());
+  ResourceScoreboard<FuncUnitWrapper> Scoreboard =
+      createBottomUpScoreboard(EpilogueBS.getTop().Bundles, *HR);
 
   // We know how many latency cycles we need to respect, and we can advance
   // the scoreboard to the first possible cycle that can accommodate another
@@ -663,25 +644,14 @@ int InterBlockScheduling::getCyclesToAvoidResourceConflicts(
   // the number of NOPS.
   int NopCounter = 0;
   for (NopCounter = 0; NopCounter < ExistingLatency; ++NopCounter)
-    Bottom.advance();
+    Scoreboard.recede();
+  DEBUG_LOOPAWARE(dbgs() << "Epilogue scoreboard\n"; Scoreboard.dump());
 
-  DEBUG_LOOPAWARE(dbgs() << "Loop scoreboard\n"; Bottom.dump());
-
-  ResourceScoreboard<FuncUnitWrapper> Top;
-  Top.reset(Depth);
-  int Cycle = -Depth;
-
-  auto Bundles = EpilogueBS.getBottom().Bundles;
-
-  emitBundlesInScoreboardDelta(EpilogueBS.getBottom().Bundles, Top, Cycle,
-                               HR.get());
-
-  DEBUG_LOOPAWARE(dbgs() << "Epilogue scoreboard\n"; Top.dump());
-
-  // Use scoreboard comparison to calculate the number of nops
-  while (Bottom.conflict(Top, Depth)) {
-    Bottom.advance();
-    NopCounter++;
+  // Increment the number of intermediate nops until there are no resource
+  // conflicts between the last iteration of the loop and the epilogue.
+  while (checkResourceConflicts(Scoreboard, LoopBS.getBottom().Bundles, *HR)) {
+    Scoreboard.recede();
+    ++NopCounter;
   }
 
   DEBUG_LOOPAWARE(dbgs() << "Resource conflict avoidance between"
