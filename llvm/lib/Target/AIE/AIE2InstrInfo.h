@@ -108,7 +108,7 @@ public:
   virtual unsigned
   getSchedClass(const MCInstrDesc &Desc,
                 iterator_range<const MachineOperand *> Operands,
-                const MachineRegisterInfo &MRI) const;
+                const MachineRegisterInfo &MRI) const override;
 
   SmallVector<TiedRegOperands, 4>
   getTiedRegInfo(unsigned Opcode) const override;
