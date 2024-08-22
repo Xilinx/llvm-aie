@@ -430,8 +430,12 @@ let Itinerary = II_JZ, hasDelaySlot = true in {
 }
 
 let Itinerary = II_MOVA, isMoveImm = 1, isReMaterializable = 1, isAsCheapAsAMove = 1 in {
-  def MOVA_lda_cg : AIE2_lda_cg_inst_lda<(outs OP_mLdaCg:$mLdaCg),
-      (ins simm11:$c11s), "mova", "$mLdaCg, $c11s">;
+  let ItineraryRegPairs = [ItinRegClassPair<II_MOVA_R,eR>, ItinRegClassPair<II_MOVA_P,eP>, 
+                           ItinRegClassPair<II_MOVA_M,eM>, ItinRegClassPair<II_MOVA_DC,eDC>,
+                           ItinRegClassPair<II_MOVA_DJ,eDJ>, ItinRegClassPair<II_MOVA_DN,eDN>] in {  
+    def MOVA_lda_cg : AIE2_lda_cg_inst_lda<(outs OP_mLdaCg:$mLdaCg),
+        (ins simm11:$c11s), "mova", "$mLdaCg, $c11s">;
+  }
 }
 
 let Itinerary = II_MOV_SS, Defs = [srSS0],

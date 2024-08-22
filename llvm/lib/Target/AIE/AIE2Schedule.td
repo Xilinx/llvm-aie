@@ -190,6 +190,12 @@ def II_LT : InstrItinClass;
 def II_LTU : InstrItinClass;
 def II_MOV : InstrItinClass;
 def II_MOVA : InstrItinClass;
+def II_MOVA_DC : InstrItinClass;
+def II_MOVA_DJ : InstrItinClass;
+def II_MOVA_DN : InstrItinClass;
+def II_MOVA_M : InstrItinClass;
+def II_MOVA_P : InstrItinClass;
+def II_MOVA_R : InstrItinClass;
 def II_MOVX : InstrItinClass;
 def II_MOV_SCL : InstrItinClass;
 def II_MOV_SCL_DC : InstrItinClass;
@@ -446,6 +452,12 @@ InstrItinData<II_MOV, [PrefixCycle<P_WM_PORT>, PrefixCycle<M_WM_PORT>, PrefixCyc
                        PrefixCycle<DN_WM_PORT>, PrefixCycle<DC_WM_PORT>, SimpleCycle<RS_WM_PORT>], [1,1]>,
 InstrItinData<II_MOVA, [PrefixCycle<P_WM_PORT>, PrefixCycle<M_WM_PORT>, PrefixCycle<DJ_WM_PORT>,
                         PrefixCycle<DN_WM_PORT>, PrefixCycle<DC_WM_PORT>, SimpleCycle<R_WA_PORT>], [1,1]>,
+InstrItinData<II_MOVA_DC, [SimpleCycle<DC_WM_PORT>], [1,1]>,
+InstrItinData<II_MOVA_DJ, [SimpleCycle<DJ_WM_PORT>], [1,1]>,
+InstrItinData<II_MOVA_DN, [SimpleCycle<DN_WM_PORT>], [1,1]>,
+InstrItinData<II_MOVA_M, [SimpleCycle<M_WM_PORT>], [1,1]>,
+InstrItinData<II_MOVA_P, [SimpleCycle<P_WM_PORT>], [1,1]>,
+InstrItinData<II_MOVA_R, [SimpleCycle<R_WA_PORT>], [1,1]>,
 InstrItinData<II_MOVX, [SimpleCycle<R_WX_PORT>], [1,1]>,
 InstrItinData<II_MOV_SCL, [PrefixCycle<P_RM_PORT>, PrefixCycle<RS_WM_PORT>, PrefixCycle<P_WM_PORT>, PrefixCycle<M_WM_PORT>,
                            PrefixCycle<DJ_WM_PORT>, PrefixCycle<DN_WM_PORT>, SimpleCycle<DC_WM_PORT>],

@@ -208,3 +208,35 @@ body:             |
     $r1 = MOVX_alu_cg 0
     $dc0 = MOV_mv_scl $r4
 ...
+
+---
+name:            mova_with_mov_scl_to_DC
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: mova_with_mov_scl_to_DC
+    ; CHECK: BUNDLE implicit-def $r2, implicit-def $r1, implicit-def $dc0, implicit killed $r4 {
+    ; CHECK-NEXT:   $r2 = MOVA_lda_cg 0
+    ; CHECK-NEXT:   $r1 = MOVX_alu_cg 0
+    ; CHECK-NEXT:   $dc0 = MOV_mv_scl killed $r4
+    ; CHECK-NEXT: }
+    $r2 = MOVA_lda_cg 0
+    $r1 = MOVX_alu_cg 0
+    $dc0 = MOV_mv_scl $r4
+...
+
+---
+name:            mova_to_DC
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: mova_to_DC
+    ; CHECK: BUNDLE implicit-def $dc1, implicit-def $r1, implicit-def $r2, implicit killed $r4 {
+    ; CHECK-NEXT:   $dc1 = MOVA_lda_cg 0
+    ; CHECK-NEXT:   $r1 = MOVX_alu_cg 0
+    ; CHECK-NEXT:   $r2 = MOV_mv_scl killed $r4
+    ; CHECK-NEXT: }
+    $dc1 = MOVA_lda_cg 0
+    $r1 = MOVX_alu_cg 0
+    $r2 = MOV_mv_scl $r4
+...

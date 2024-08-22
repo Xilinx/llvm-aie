@@ -30,8 +30,11 @@ body:             |
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
   ; CHECK-NEXT:   NOP
-  ; CHECK-NEXT:   $r13 = MOVXM_lng_cg 12345
-  ; CHECK-NEXT:   $r2 = MOVA_lda_cg 2
+  ; CHECK-NEXT:   NOP
+  ; CHECK-NEXT:   BUNDLE implicit-def $r2, implicit-def $r13 {
+  ; CHECK-NEXT:     $r2 = MOVA_lda_cg 2
+  ; CHECK-NEXT:     $r13 = MOVXM_lng_cg 12345
+  ; CHECK-NEXT:   }
   ; CHECK-NEXT:   DelayedSchedBarrier
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
