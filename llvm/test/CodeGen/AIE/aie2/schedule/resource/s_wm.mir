@@ -52,3 +52,33 @@ body:             |
     $r1 = MOVX_alu_cg 0
     $s0 = MOV_mv_scl $r4
 ...
+
+---
+name:            mov_to_S
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: mov_to_S
+    ; CHECK: BUNDLE implicit-def $r1, implicit-def $s1 {
+    ; CHECK-NEXT:   $r1 = MOVA_lda_cg 0
+    ; CHECK-NEXT:   $s1 = MOV_mv_cg 0
+    ; CHECK-NEXT: }
+    $s1 = MOV_mv_cg 0
+    $r1 = MOVA_lda_cg 0
+...
+
+---
+name:            movx_to_R_mov_to_S
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: movx_to_R_mov_to_S
+    ; CHECK: BUNDLE implicit-def $r1, implicit-def $r2, implicit-def $s1 {
+    ; CHECK-NEXT:   $r1 = MOVA_lda_cg 0
+    ; CHECK-NEXT:   $r2 = MOVX_alu_cg 1
+    ; CHECK-NEXT:   $s1 = MOV_mv_cg 0
+    ; CHECK-NEXT: }
+    $s1 = MOV_mv_cg 0
+    $r2 = MOVX_alu_cg 1
+    $r1 = MOVA_lda_cg 0
+...

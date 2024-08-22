@@ -303,3 +303,95 @@ body:             |
     $r1 = MOVX_alu_cg 0
     $r0 = MOV_mv_scl $r4
 ...
+
+---
+name:            mova_to_dj_mov_to_R
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: mova_to_dj_mov_to_R
+    ; CHECK: BUNDLE implicit-def $dj1, implicit-def $r3 {
+    ; CHECK-NEXT:   $dj1 = MOVA_lda_cg 0
+    ; CHECK-NEXT:   $r3 = MOV_mv_cg 0
+    ; CHECK-NEXT: }
+    $r3 = MOV_mv_cg 0
+    $dj1 = MOVA_lda_cg 0
+...
+
+---
+name:            mova_to_dn_mov_to_R
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: mova_to_dn_mov_to_R
+    ; CHECK: BUNDLE implicit-def $dn1, implicit-def $r3 {
+    ; CHECK-NEXT:   $dn1 = MOVA_lda_cg 0
+    ; CHECK-NEXT:   $r3 = MOV_mv_cg 0
+    ; CHECK-NEXT: }
+    $r3 = MOV_mv_cg 0
+    $dn1 = MOVA_lda_cg 0
+...
+
+---
+name:            movx_to_R_mov_to_R
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: movx_to_R_mov_to_R
+    ; CHECK: BUNDLE implicit-def $r1, implicit-def $r2, implicit-def $r3 {
+    ; CHECK-NEXT:   $r1 = MOVA_lda_cg 0
+    ; CHECK-NEXT:   $r2 = MOVX_alu_cg 1
+    ; CHECK-NEXT:   $r3 = MOV_mv_cg 0
+    ; CHECK-NEXT: }
+    $r3 = MOV_mv_cg 0
+    $r2 = MOVX_alu_cg 1
+    $r1 = MOVA_lda_cg 0
+...
+
+---
+name:            mova_to_dj_movx_to_R_mov_to_R
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: mova_to_dj_movx_to_R_mov_to_R
+    ; CHECK: BUNDLE implicit-def $dj1, implicit-def $r2, implicit-def $r3 {
+    ; CHECK-NEXT:   $dj1 = MOVA_lda_cg 0
+    ; CHECK-NEXT:   $r2 = MOVX_alu_cg 1
+    ; CHECK-NEXT:   $r3 = MOV_mv_cg 0
+    ; CHECK-NEXT: }
+    $r3 = MOV_mv_cg 0
+    $r2 = MOVX_alu_cg 1
+    $dj1 = MOVA_lda_cg 0
+...
+
+---
+name:            mova_to_dn_movx_to_R_mov_to_R
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: mova_to_dn_movx_to_R_mov_to_R
+    ; CHECK: BUNDLE implicit-def $dn1, implicit-def $r2, implicit-def $r3 {
+    ; CHECK-NEXT:   $dn1 = MOVA_lda_cg 0
+    ; CHECK-NEXT:   $r2 = MOVX_alu_cg 1
+    ; CHECK-NEXT:   $r3 = MOV_mv_cg 0
+    ; CHECK-NEXT: }
+    $r3 = MOV_mv_cg 0
+    $r2 = MOVX_alu_cg 1
+    $dn1 = MOVA_lda_cg 0
+...
+
+---
+name:            mova_to_p_movx_to_R_mov_to_R
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: mova_to_p_movx_to_R_mov_to_R
+    ; CHECK: BUNDLE implicit-def $p0, implicit-def $r2, implicit-def $r3 {
+    ; CHECK-NEXT:   $p0 = MOVA_lda_cg 0
+    ; CHECK-NEXT:   $r2 = MOVX_alu_cg 1
+    ; CHECK-NEXT:   $r3 = MOV_mv_cg 0
+    ; CHECK-NEXT: }
+    $r3 = MOV_mv_cg 0
+    $r2 = MOVX_alu_cg 1
+    $p0 = MOVA_lda_cg 0
+...

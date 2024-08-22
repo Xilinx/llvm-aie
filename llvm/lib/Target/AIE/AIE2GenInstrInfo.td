@@ -536,16 +536,22 @@ let Itinerary = II_PADD_3D in {
   }
 }
 
+// MOV & MOVXM instruction have identical itineraries, they differ only in slot usage 
 let Itinerary = II_MOV, isMoveImm = 1, isReMaterializable = 1 in {
-  // MOVXM is quite expensive in code size, and will block an extra slot, so we don't
-  // mark it as isAsCheapAsAMove
-  let isAsCheapAsAMove = 0 in {
-    def MOVXM_lng_cg : AIE2_lng_cg_lng< (outs OP_mMvSclDstCg:$mMvSclDstCg), 
-        (ins simm32:$i), "movxm", "$mMvSclDstCg, $i">;
-  }
-  let isAsCheapAsAMove = 1 in {  
-    def MOV_mv_cg : AIE2_mv_cg_inst_mv< (outs OP_mMvSclDstCg:$dst) , (ins simm10:$i),
-        "mov", "$dst, $i">;
+  let ItineraryRegPairs = [ItinRegClassPair<II_MOV_RS,eR>, ItinRegClassPair<II_MOV_P,eP>, 
+                          ItinRegClassPair<II_MOV_M,eM>, ItinRegClassPair<II_MOV_RS,eS>,
+                          ItinRegClassPair<II_MOV_DC,eDC>, ItinRegClassPair<II_MOV_DJ,eDJ>,
+                          ItinRegClassPair<II_MOV_DN,eDN>] in {
+    // MOVXM is quite expensive in code size, and will block an extra slot, so we don't
+    // mark it as isAsCheapAsAMove
+    let isAsCheapAsAMove = 0 in {
+      def MOVXM_lng_cg : AIE2_lng_cg_lng< (outs OP_mMvSclDstCg:$mMvSclDstCg), 
+          (ins simm32:$i), "movxm", "$mMvSclDstCg, $i">;
+    }
+    let isAsCheapAsAMove = 1 in {  
+      def MOV_mv_cg : AIE2_mv_cg_inst_mv< (outs OP_mMvSclDstCg:$dst) , (ins simm10:$i),
+          "mov", "$dst, $i">;
+    }
   }
 }
 

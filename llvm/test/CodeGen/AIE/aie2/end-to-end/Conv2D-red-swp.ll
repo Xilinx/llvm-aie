@@ -224,7 +224,7 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; DCL-LABEL: conv2d.loop.nest:
 ; DCL:         .p2align 4
 ; DCL-NEXT:  // %bb.0: // %newFuncRoot
-; DCL-NEXT:    mova dj3, #0; nopb ; nopx
+; DCL-NEXT:    mova dj3, #0; nopx
 ; DCL-NEXT:    mov dc0, dj3
 ; DCL-NEXT:    mov dc4, dj3
 ; DCL-NEXT:    mov dc1, dj3
@@ -288,8 +288,8 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; DCL-NEXT:    lda r24, [p6, #0]; mov p6, sp
 ; DCL-NEXT:    paddb [p6], #-284; st m7, [sp, #-96] // 4-byte Folded Spill
 ; DCL-NEXT:    lda m4, [p6, #0]; mov r28, dj3
-; DCL-NEXT:    st dj7, [sp, #-88]; movx r8, #11 // 4-byte Folded Spill
-; DCL-NEXT:    st dn7, [sp, #-92]; movx r9, #31 // 4-byte Folded Spill
+; DCL-NEXT:    st dj7, [sp, #-88] // 4-byte Folded Spill
+; DCL-NEXT:    st dn7, [sp, #-92]; movx r9, #31; mov r8, #11 // 4-byte Folded Spill
 ; DCL-NEXT:    // implicit-def: $x4
 ; DCL-NEXT:    // implicit-def: $x2
 ; DCL-NEXT:    .p2align 4
@@ -400,7 +400,7 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ZOL-LABEL: conv2d.loop.nest:
 ; ZOL:         .p2align 4
 ; ZOL-NEXT:  // %bb.0: // %newFuncRoot
-; ZOL-NEXT:    mova dj3, #0; nopb ; nopx
+; ZOL-NEXT:    mova dj3, #0; nopx
 ; ZOL-NEXT:    mov dc0, dj3
 ; ZOL-NEXT:    mov dc4, dj3
 ; ZOL-NEXT:    mov dc1, dj3
@@ -464,8 +464,8 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ZOL-NEXT:    lda r15, [p6, #0]; mov p6, sp
 ; ZOL-NEXT:    paddb [p6], #-284; st m7, [sp, #-96] // 4-byte Folded Spill
 ; ZOL-NEXT:    lda m4, [p6, #0]; mov r27, dj3
-; ZOL-NEXT:    st dj7, [sp, #-88]; movx r8, #11 // 4-byte Folded Spill
-; ZOL-NEXT:    st dn7, [sp, #-92]; movx r9, #31 // 4-byte Folded Spill
+; ZOL-NEXT:    st dj7, [sp, #-88] // 4-byte Folded Spill
+; ZOL-NEXT:    st dn7, [sp, #-92]; movx r9, #31; mov r8, #11 // 4-byte Folded Spill
 ; ZOL-NEXT:    // implicit-def: $x4
 ; ZOL-NEXT:    // implicit-def: $x2
 ; ZOL-NEXT:    .p2align 4

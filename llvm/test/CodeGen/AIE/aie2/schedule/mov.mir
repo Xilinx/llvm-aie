@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -march=aie2 -run-pass=postmisched %s %topdown-multi -o - | FileCheck %s
+# RUN: llc -mtriple=aie2 -run-pass=postmisched %s %topdown-multi -o - | FileCheck %s
 
 ---
 name:            latency
@@ -166,16 +166,16 @@ body:             |
     $r3 = MOV_RLC_imm10_pseudo 2
 ...
 
-# Lot of cases down are not bundling the INSTR together, because we reserve P_WM_PORT for any kind of D or P reg type. The ISA suggests every register file has its own writeport, which is selected. Once we are able to do that we would start seeing better bundling.
-
 ---
 name:            multi_slot_sched_s20
 alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: multi_slot_sched_s20
-    ; CHECK: $dc1 = MOVA_lda_cg 0
-    ; CHECK-NEXT: $m0 = MOVA_lda_cg 1
+    ; CHECK: BUNDLE implicit-def $dc1, implicit-def $m0 {
+    ; CHECK-NEXT:   $dc1 = MOVA_lda_cg 0
+    ; CHECK-NEXT:   $m0 = MOV_mv_cg 1
+    ; CHECK-NEXT: }
     ; CHECK-NEXT: $p0 = MOVA_lda_cg 2
     $dc1 = MOV_PD_imm10_pseudo 0
     $m0 = MOV_PD_imm10_pseudo 1
@@ -204,11 +204,11 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: multi_slot_sched_s20_MOVX_first
-    ; CHECK: BUNDLE implicit-def $m0, implicit-def $r1 {
+    ; CHECK: BUNDLE implicit-def $m0, implicit-def $r1, implicit-def $p0 {
     ; CHECK-NEXT:   $m0 = MOVA_lda_cg 1
     ; CHECK-NEXT:   $r1 = MOVX_alu_cg 0
+    ; CHECK-NEXT:   $p0 = MOV_mv_cg 2
     ; CHECK-NEXT: }
-    ; CHECK-NEXT: $p0 = MOVA_lda_cg 2
     $r1 = MOVX_alu_cg 0
     $m0 = MOV_PD_imm10_pseudo 1
     $p0 = MOV_PD_imm10_pseudo 2
@@ -220,8 +220,10 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: multi_slot_sched_s20_MOV_first
-    ; CHECK: $r1 = MOV_mv_cg 0
-    ; CHECK-NEXT: $m0 = MOVA_lda_cg 1
+    ; CHECK: BUNDLE implicit-def $m0, implicit-def $r1 {
+    ; CHECK-NEXT:   $m0 = MOVA_lda_cg 1
+    ; CHECK-NEXT:   $r1 = MOV_mv_cg 0
+    ; CHECK-NEXT: }
     ; CHECK-NEXT: $p0 = MOVA_lda_cg 2
     $r1 = MOV_mv_cg 0
     $m0 = MOV_PD_imm10_pseudo 1
@@ -234,8 +236,10 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: multi_slot_sched_s20_MOVXM_first
-    ; CHECK: $r1 = MOVXM_lng_cg 0
-    ; CHECK-NEXT: $m0 = MOVA_lda_cg 1
+    ; CHECK: BUNDLE implicit-def $m0, implicit-def $r1 {
+    ; CHECK-NEXT:   $m0 = MOVA_lda_cg 1
+    ; CHECK-NEXT:   $r1 = MOVXM_lng_cg 0
+    ; CHECK-NEXT: }
     ; CHECK-NEXT: $p0 = MOVA_lda_cg 2
     $r1 = MOVXM_lng_cg 0
     $m0 = MOV_PD_imm10_pseudo 1
@@ -249,11 +253,11 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: multi_slot_sched_s20_MOVA_second
-    ; CHECK: $p1 = MOVA_lda_cg 0
-    ; CHECK-NEXT: BUNDLE implicit-def $r2, implicit-def $m3 {
-    ; CHECK-NEXT:   $r2 = MOVA_lda_cg 1
+    ; CHECK: BUNDLE implicit-def $p1, implicit-def $m3 {
+    ; CHECK-NEXT:   $p1 = MOVA_lda_cg 0
     ; CHECK-NEXT:   $m3 = MOV_mv_cg 2
     ; CHECK-NEXT: }
+    ; CHECK-NEXT: $r2 = MOVA_lda_cg 1
     $p1 = MOV_PD_imm10_pseudo 0
     $r2 = MOVA_lda_cg 1
     $m3 = MOV_PD_imm10_pseudo 2
@@ -266,11 +270,11 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: multi_slot_sched_s20_MOVX_second
-    ; CHECK: BUNDLE implicit-def $p1, implicit-def $r2 {
+    ; CHECK: BUNDLE implicit-def $p1, implicit-def $r2, implicit-def $m3 {
     ; CHECK-NEXT:   $p1 = MOVA_lda_cg 0
     ; CHECK-NEXT:   $r2 = MOVX_alu_cg 1
+    ; CHECK-NEXT:   $m3 = MOV_mv_cg 2
     ; CHECK-NEXT: }
-    ; CHECK-NEXT: $m3 = MOVA_lda_cg 2
     $p1 = MOV_PD_imm10_pseudo 0
     $r2 = MOVX_alu_cg 1
     $m3 = MOV_PD_imm10_pseudo 2
@@ -282,8 +286,10 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: multi_slot_sched_s20_MOV_second
-    ; CHECK: $p1 = MOVA_lda_cg 0
-    ; CHECK-NEXT: $r2 = MOV_mv_cg 1
+    ; CHECK: BUNDLE implicit-def $p1, implicit-def $r2 {
+    ; CHECK-NEXT:   $p1 = MOVA_lda_cg 0
+    ; CHECK-NEXT:   $r2 = MOV_mv_cg 1
+    ; CHECK-NEXT: }
     ; CHECK-NEXT: $m3 = MOVA_lda_cg 2
     $p1 = MOV_PD_imm10_pseudo 0
     $r2 = MOV_mv_cg 1
@@ -297,8 +303,10 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: multi_slot_sched_s20_MOVXM_second
-    ; CHECK: $p1 = MOVA_lda_cg 0
-    ; CHECK-NEXT: $r2 = MOVXM_lng_cg 1
+    ; CHECK: BUNDLE implicit-def $p1, implicit-def $r2 {
+    ; CHECK-NEXT:   $p1 = MOVA_lda_cg 0
+    ; CHECK-NEXT:   $r2 = MOVXM_lng_cg 1
+    ; CHECK-NEXT: }
     ; CHECK-NEXT: $m3 = MOVA_lda_cg 2
     $p1 = MOV_PD_imm10_pseudo 0
     $r2 = MOVXM_lng_cg 1

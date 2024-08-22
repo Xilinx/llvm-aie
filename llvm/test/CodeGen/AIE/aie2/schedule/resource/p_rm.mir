@@ -570,3 +570,19 @@ body:             |
   MOV_NB_mv_cph2ms_doTlast_reg $m1, 1, 2, $r2, $r28, implicit-def $srms0
   $r1 = MOV_mv_scl $m0
 ...
+
+---
+name:            mova_to_dj_movx_to_R_mov_to_P
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: mova_to_dj_movx_to_R_mov_to_P
+    ; CHECK: BUNDLE implicit-def $dj1, implicit-def $r2, implicit-def $p0 {
+    ; CHECK-NEXT:   $dj1 = MOVA_lda_cg 0
+    ; CHECK-NEXT:   $r2 = MOVX_alu_cg 1
+    ; CHECK-NEXT:   $p0 = MOV_mv_cg 0
+    ; CHECK-NEXT: }
+    $p0 = MOV_mv_cg 0
+    $r2 = MOVX_alu_cg 1
+    $dj1 = MOVA_lda_cg 0
+...
