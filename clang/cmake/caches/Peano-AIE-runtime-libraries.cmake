@@ -14,6 +14,8 @@ set(LLVM_ENABLE_RUNTIMES
     CACHE STRING "")
 set(LLVM_LIBC_FULL_BUILD ON CACHE BOOL "")
 set(LLVM_FORCE_BUILD_RUNTIME "libc" CACHE STRING "")
+# deposits libc, libm, crt into lib/aie2-none-unknown-elf instead of lib/
+set(LLVM_ENABLE_PER_TARGET_RUNTIME_DIR ON CACHE BOOL "")
 
 set(LLVM_BUILTIN_TARGETS "aie-none-unknown-elf;aie2-none-unknown-elf" CACHE STRING "")
 set(LLVM_RUNTIME_TARGETS "${LLVM_BUILTIN_TARGETS}" CACHE STRING "")
@@ -33,7 +35,6 @@ foreach(target ${LLVM_BUILTIN_TARGETS})
   # shouldn't expect the stdlibs to be available anyway
   set(BUILTINS_${target}_CMAKE_EXE_LINKER_FLAGS "-nostdlib" CACHE STRING "")
   set(RUNTIMES_${target}_CMAKE_EXE_LINKER_FLAGS "-nostdlib" CACHE STRING "")
-  set(RUNTIMES_${target}_LLVM_ENABLE_PER_TARGET_RUNTIME_DIR ON CACHE BOOL "")
 endforeach()
 
 set(LIBCXX_ENABLE_SHARED OFF CACHE BOOL "")
