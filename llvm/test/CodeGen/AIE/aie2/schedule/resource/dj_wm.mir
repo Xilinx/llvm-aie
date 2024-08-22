@@ -175,3 +175,35 @@ body:             |
     $r1 = MOVX_alu_cg 0
     $dj0 = MOV_mv_scl $r4
 ...
+
+---
+name:            mova_with_mov_scl_to_DJ
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: mova_with_mov_scl_to_DJ
+    ; CHECK: BUNDLE implicit-def $dn1, implicit-def $r1, implicit-def $dj2, implicit killed $r4 {
+    ; CHECK-NEXT:   $dn1 = MOVA_lda_cg 0
+    ; CHECK-NEXT:   $r1 = MOVX_alu_cg 0
+    ; CHECK-NEXT:   $dj2 = MOV_mv_scl killed $r4
+    ; CHECK-NEXT: }
+    $dn1 = MOVA_lda_cg 0
+    $r1 = MOVX_alu_cg 0
+    $dj2 = MOV_mv_scl $r4
+...
+
+---
+name:            mova_to_DJ
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: mova_to_DJ
+    ; CHECK: BUNDLE implicit-def $dj1, implicit-def $r1, implicit-def $r2, implicit killed $r4 {
+    ; CHECK-NEXT:   $dj1 = MOVA_lda_cg 0
+    ; CHECK-NEXT:   $r1 = MOVX_alu_cg 0
+    ; CHECK-NEXT:   $r2 = MOV_mv_scl killed $r4
+    ; CHECK-NEXT: }
+    $dj1 = MOVA_lda_cg 0
+    $r1 = MOVX_alu_cg 0
+    $r2 = MOV_mv_scl $r4
+...

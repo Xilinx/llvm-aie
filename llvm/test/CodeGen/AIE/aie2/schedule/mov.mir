@@ -28,11 +28,11 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: multi_slot_sched
-    ; CHECK: BUNDLE implicit-def $r1, implicit-def $r2 {
+    ; CHECK: BUNDLE implicit-def $r1, implicit-def $r2, implicit-def $r3 {
     ; CHECK-NEXT:   $r1 = MOVA_lda_cg 0
     ; CHECK-NEXT:   $r2 = MOVX_alu_cg 1
+    ; CHECK-NEXT:   $r3 = MOV_mv_cg 2
     ; CHECK-NEXT: }
-    ; CHECK-NEXT: $r3 = MOVA_lda_cg 2
     $r1 = MOV_RLC_imm10_pseudo 0
     $r2 = MOV_RLC_imm10_pseudo 1
     $r3 = MOV_RLC_imm10_pseudo 2
@@ -44,11 +44,11 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: multi_slot_sched_MOVA_first
-    ; CHECK: BUNDLE implicit-def $r1, implicit-def $r2 {
+    ; CHECK: BUNDLE implicit-def $r1, implicit-def $r2, implicit-def $r3 {
     ; CHECK-NEXT:   $r1 = MOVA_lda_cg 0
     ; CHECK-NEXT:   $r2 = MOVX_alu_cg 1
+    ; CHECK-NEXT:   $r3 = MOV_mv_cg 2
     ; CHECK-NEXT: }
-    ; CHECK-NEXT: $r3 = MOVA_lda_cg 2
     $r1 = MOVA_lda_cg 0
     $r2 = MOV_RLC_imm10_pseudo 1
     $r3 = MOV_RLC_imm10_pseudo 2
@@ -60,11 +60,11 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: multi_slot_sched_MOVX_first
-    ; CHECK: BUNDLE implicit-def $r2, implicit-def $r1 {
+    ; CHECK: BUNDLE implicit-def $r2, implicit-def $r1, implicit-def $r3 {
     ; CHECK-NEXT:   $r2 = MOVA_lda_cg 1
     ; CHECK-NEXT:   $r1 = MOVX_alu_cg 0
+    ; CHECK-NEXT:   $r3 = MOV_mv_cg 2
     ; CHECK-NEXT: }
-    ; CHECK-NEXT: $r3 = MOVA_lda_cg 2
     $r1 = MOVX_alu_cg 0
     $r2 = MOV_RLC_imm10_pseudo 1
     $r3 = MOV_RLC_imm10_pseudo 2
@@ -76,11 +76,11 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: multi_slot_sched_MOV_first
-    ; CHECK: BUNDLE implicit-def $r2, implicit-def $r1 {
-    ; CHECK-NEXT:   $r2 = MOVX_alu_cg 1
+    ; CHECK: BUNDLE implicit-def $r2, implicit-def $r3, implicit-def $r1 {
+    ; CHECK-NEXT:   $r2 = MOVA_lda_cg 1
+    ; CHECK-NEXT:   $r3 = MOVX_alu_cg 2
     ; CHECK-NEXT:   $r1 = MOV_mv_cg 0
     ; CHECK-NEXT: }
-    ; CHECK-NEXT: $r3 = MOVA_lda_cg 2
     $r1 = MOV_mv_cg 0
     $r2 = MOV_RLC_imm10_pseudo 1
     $r3 = MOV_RLC_imm10_pseudo 2
@@ -92,11 +92,11 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: multi_slot_sched_MOVXM_first
-    ; CHECK: $r1 = MOVXM_lng_cg 0
-    ; CHECK-NEXT: BUNDLE implicit-def $r2, implicit-def $r3 {
+    ; CHECK: BUNDLE implicit-def $r2, implicit-def $r1 {
     ; CHECK-NEXT:   $r2 = MOVA_lda_cg 1
-    ; CHECK-NEXT:   $r3 = MOVX_alu_cg 2
+    ; CHECK-NEXT:   $r1 = MOVXM_lng_cg 0
     ; CHECK-NEXT: }
+    ; CHECK-NEXT: $r3 = MOVA_lda_cg 2
     $r1 = MOVXM_lng_cg 0
     $r2 = MOV_RLC_imm10_pseudo 1
     $r3 = MOV_RLC_imm10_pseudo 2
@@ -124,11 +124,11 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: multi_slot_sched_MOVX_second
-    ; CHECK: BUNDLE implicit-def $r1, implicit-def $r2 {
+    ; CHECK: BUNDLE implicit-def $r1, implicit-def $r2, implicit-def $r3 {
     ; CHECK-NEXT:   $r1 = MOVA_lda_cg 0
     ; CHECK-NEXT:   $r2 = MOVX_alu_cg 1
+    ; CHECK-NEXT:   $r3 = MOV_mv_cg 2
     ; CHECK-NEXT: }
-    ; CHECK-NEXT: $r3 = MOVA_lda_cg 2
     $r1 = MOV_RLC_imm10_pseudo 0
     $r2 = MOVX_alu_cg 1
     $r3 = MOV_RLC_imm10_pseudo 2
@@ -140,11 +140,11 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: multi_slot_sched_MOV_second
-    ; CHECK: BUNDLE implicit-def $r1, implicit-def $r3 {
+    ; CHECK: BUNDLE implicit-def $r1, implicit-def $r3, implicit-def $r2 {
     ; CHECK-NEXT:   $r1 = MOVA_lda_cg 0
     ; CHECK-NEXT:   $r3 = MOVX_alu_cg 2
+    ; CHECK-NEXT:   $r2 = MOV_mv_cg 1
     ; CHECK-NEXT: }
-    ; CHECK-NEXT: $r2 = MOV_mv_cg 1
     $r1 = MOV_RLC_imm10_pseudo 0
     $r2 = MOV_mv_cg 1
     $r3 = MOV_RLC_imm10_pseudo 2
@@ -156,11 +156,11 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: multi_slot_sched_MOVXM_second
-    ; CHECK: BUNDLE implicit-def $r1, implicit-def $r3 {
+    ; CHECK: BUNDLE implicit-def $r1, implicit-def $r2 {
     ; CHECK-NEXT:   $r1 = MOVA_lda_cg 0
-    ; CHECK-NEXT:   $r3 = MOVX_alu_cg 2
+    ; CHECK-NEXT:   $r2 = MOVXM_lng_cg 1
     ; CHECK-NEXT: }
-    ; CHECK-NEXT: $r2 = MOVXM_lng_cg 1
+    ; CHECK-NEXT: $r3 = MOVA_lda_cg 2
     $r1 = MOV_RLC_imm10_pseudo 0
     $r2 = MOVXM_lng_cg 1
     $r3 = MOV_RLC_imm10_pseudo 2
@@ -188,8 +188,10 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: multi_slot_sched_s20_MOVA_first
-    ; CHECK: $r1 = MOVA_lda_cg 0
-    ; CHECK-NEXT: $m0 = MOVA_lda_cg 1
+    ; CHECK: BUNDLE implicit-def $r1, implicit-def $m0 {
+    ; CHECK-NEXT:   $r1 = MOVA_lda_cg 0
+    ; CHECK-NEXT:   $m0 = MOV_mv_cg 1
+    ; CHECK-NEXT: }
     ; CHECK-NEXT: $p0 = MOVA_lda_cg 2
     $r1 = MOVA_lda_cg 0
     $m0 = MOV_PD_imm10_pseudo 1
@@ -248,8 +250,10 @@ body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: multi_slot_sched_s20_MOVA_second
     ; CHECK: $p1 = MOVA_lda_cg 0
-    ; CHECK-NEXT: $r2 = MOVA_lda_cg 1
-    ; CHECK-NEXT: $m3 = MOVA_lda_cg 2
+    ; CHECK-NEXT: BUNDLE implicit-def $r2, implicit-def $m3 {
+    ; CHECK-NEXT:   $r2 = MOVA_lda_cg 1
+    ; CHECK-NEXT:   $m3 = MOV_mv_cg 2
+    ; CHECK-NEXT: }
     $p1 = MOV_PD_imm10_pseudo 0
     $r2 = MOVA_lda_cg 1
     $m3 = MOV_PD_imm10_pseudo 2
@@ -307,11 +311,11 @@ alignment:       16
 body:             |
   bb.0.entry:
     ; CHECK-LABEL: name: multi_slot_sched_slot_alloc_order
-    ; CHECK: BUNDLE implicit-def $r2, implicit-def $s1 {
-    ; CHECK-NEXT:   $r2 = MOVX_alu_cg 1
+    ; CHECK: BUNDLE implicit-def $r2, implicit-def $r3, implicit-def $s1 {
+    ; CHECK-NEXT:   $r2 = MOVA_lda_cg 1
+    ; CHECK-NEXT:   $r3 = MOVX_alu_cg 2
     ; CHECK-NEXT:   $s1 = MOV_mv_cg 0
     ; CHECK-NEXT: }
-    ; CHECK-NEXT: $r3 = MOVA_lda_cg 2
     $s1 = MOV_S_imm10_pseudo 0
     $r2 = MOV_RLC_imm10_pseudo 1
     $r3 = MOV_RLC_imm10_pseudo 2

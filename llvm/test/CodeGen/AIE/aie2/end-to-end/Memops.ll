@@ -210,9 +210,9 @@ define dso_local void @lowerMemcpyUsingAlignedWordCall() local_unnamed_addr #0 {
 ; CHECK-NEXT:    jl #memcpy
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    paddb [sp], #32 // Delay Slot 4
-; CHECK-NEXT:    st lr, [sp, #-32]; movxm p1, #buffer1 // 4-byte Folded Spill Delay Slot 3
-; CHECK-NEXT:    movxm p2, #buffer2 // Delay Slot 2
-; CHECK-NEXT:    mova r0, #256 // Delay Slot 1
+; CHECK-NEXT:    st lr, [sp, #-32] // 4-byte Folded Spill Delay Slot 3
+; CHECK-NEXT:    movxm p1, #buffer1 // Delay Slot 2
+; CHECK-NEXT:    mova r0, #256; movxm p2, #buffer2 // Delay Slot 1
 ; CHECK-NEXT:    lda lr, [sp, #-32] // 4-byte Folded Reload
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
@@ -259,9 +259,8 @@ define dso_local void @lowerMemsetUsingWordByte() local_unnamed_addr #2 {
 ; CHECK-LABEL: lowerMemsetUsingWordByte:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopb ; nopa ; nops ; movxm p0, #(buffer1+4); nopv
-; CHECK-NEXT:    mova r0, #0; nopb ; nopx
-; CHECK-NEXT:    st r0, [p0, #-4]
+; CHECK-NEXT:    nopb ; mova r0, #0; nops ; movxm p0, #(buffer1+4); nopv
+; CHECK-NEXT:    nopa ; nopb ; nopx ; st r0, [p0, #-4]
 ; CHECK-NEXT:    st.s8 r0, [p0, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr

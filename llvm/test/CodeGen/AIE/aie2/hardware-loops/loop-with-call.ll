@@ -82,17 +82,17 @@ define dso_local void @_Z5test4i(i32 noundef %n) {
 ; CHECK-NEXT:  .LBB1_2: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    nopb ; nopa ; nops ; jl #_Z16addToSymbolTablePKci; nopv
-; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    movx r0, #0; mov p0, p6 // Delay Slot 1
+; CHECK-NEXT:    mova r0, #0; mov p0, p6 // Delay Slot 1
 ; CHECK-NEXT:    nopb ; nopa ; nops ; jl #_Z16addToSymbolTablePKci; nopv
-; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    movx r0, #1; mov p0, p7 // Delay Slot 1
+; CHECK-NEXT:    mova r0, #1; mov p0, p7 // Delay Slot 1
 ; CHECK-NEXT:    nopb ; nopa ; nops ; add r16, r16, #-1; nopm ; nopv
 ; CHECK-NEXT:    jnz r16, #.LBB1_2
 ; CHECK-NEXT:    nop // Delay Slot 5

@@ -37,11 +37,11 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ASM-LABEL: conv2d.loop.nest:
 ; ASM:         .p2align 4
 ; ASM-NEXT:  // %bb.0: // %newFuncRoot
-; ASM-NEXT:    nopa ; paddb [sp], #32; nopxm
+; ASM-NEXT:    paddb [sp], #32; nopxm
 ; ASM-NEXT:    st p7, [sp, #-32] // 4-byte Folded Spill
-; ASM-NEXT:    mova dj3, #0; st p6, [sp, #-28] // 4-byte Folded Spill
+; ASM-NEXT:    st p6, [sp, #-28] // 4-byte Folded Spill
 ; ASM-NEXT:    mov p6, sp
-; ASM-NEXT:    paddb [p6], #-132; mov p7, sp
+; ASM-NEXT:    mova dj3, #0; paddb [p6], #-132; mov p7, sp
 ; ASM-NEXT:    lda m5, [p6, #0]; mov p6, sp
 ; ASM-NEXT:    paddb [p6], #-136; mov dc0, dj3
 ; ASM-NEXT:    lda r28, [p6, #0]; mov dc4, dj3
