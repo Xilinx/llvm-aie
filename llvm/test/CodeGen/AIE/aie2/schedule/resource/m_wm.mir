@@ -185,13 +185,15 @@ body:             |
 ...
 
 ---
-name:            mov_to_M
+name:            movscl_to_M_mova_to_R
 alignment:       16
 body:             |
   bb.0.entry:
-    ; CHECK-LABEL: name: mov_to_M
-    ; CHECK: $r1 = MOVA_lda_cg 0
-    ; CHECK-NEXT: $m0 = MOV_mv_scl killed $r4
+    ; CHECK-LABEL: name: movscl_to_M_mova_to_R
+    ; CHECK: BUNDLE implicit-def $r1, implicit-def $m0, implicit killed $r4 {
+    ; CHECK-NEXT:   $r1 = MOVA_lda_cg 0
+    ; CHECK-NEXT:   $m0 = MOV_mv_scl killed $r4
+    ; CHECK-NEXT: }
     $r1 = MOVA_lda_cg 0
     $m0 = MOV_mv_scl $r4
 ...
@@ -226,4 +228,222 @@ body:             |
     $m1 = MOVA_lda_cg 0
     $r1 = MOVX_alu_cg 0
     $dc0 = MOV_mv_scl $r4
+...
+
+---
+name:            mov_to_M_mova_to_R
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: mov_to_M_mova_to_R
+    ; CHECK: BUNDLE implicit-def $r1, implicit-def $m1 {
+    ; CHECK-NEXT:   $r1 = MOVA_lda_cg 0
+    ; CHECK-NEXT:   $m1 = MOV_mv_cg 0
+    ; CHECK-NEXT: }
+    $m1 = MOV_mv_cg 0
+    $r1 = MOVA_lda_cg 0
+...
+
+---
+name:            mova_to_dc_mov_to_M
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: mova_to_dc_mov_to_M
+    ; CHECK: BUNDLE implicit-def $dc1, implicit-def $m1 {
+    ; CHECK-NEXT:   $dc1 = MOVA_lda_cg 0
+    ; CHECK-NEXT:   $m1 = MOV_mv_cg 0
+    ; CHECK-NEXT: }
+    $m1 = MOV_mv_cg 0
+    $dc1 = MOVA_lda_cg 0
+...
+
+---
+name:            mova_to_dj_mov_to_M
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: mova_to_dj_mov_to_M
+    ; CHECK: BUNDLE implicit-def $dj1, implicit-def $m1 {
+    ; CHECK-NEXT:   $dj1 = MOVA_lda_cg 0
+    ; CHECK-NEXT:   $m1 = MOV_mv_cg 0
+    ; CHECK-NEXT: }
+    $m1 = MOV_mv_cg 0
+    $dj1 = MOVA_lda_cg 0
+...
+
+---
+name:            mova_to_dn_mov_to_M
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: mova_to_dn_mov_to_M
+    ; CHECK: BUNDLE implicit-def $dn1, implicit-def $m1 {
+    ; CHECK-NEXT:   $dn1 = MOVA_lda_cg 0
+    ; CHECK-NEXT:   $m1 = MOV_mv_cg 0
+    ; CHECK-NEXT: }
+    $m1 = MOV_mv_cg 0
+    $dn1 = MOVA_lda_cg 0
+...
+
+---
+name:            mova_to_p_mov_to_M
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: mova_to_p_mov_to_M
+    ; CHECK: BUNDLE implicit-def $p0, implicit-def $m1 {
+    ; CHECK-NEXT:   $p0 = MOVA_lda_cg 0
+    ; CHECK-NEXT:   $m1 = MOV_mv_cg 0
+    ; CHECK-NEXT: }
+    $m1 = MOV_mv_cg 0
+    $p0 = MOVA_lda_cg 0
+...
+
+---
+name:            movx_to_R_mov_to_M
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: movx_to_R_mov_to_M
+    ; CHECK: BUNDLE implicit-def $r1, implicit-def $r2, implicit-def $m1 {
+    ; CHECK-NEXT:   $r1 = MOVA_lda_cg 0
+    ; CHECK-NEXT:   $r2 = MOVX_alu_cg 1
+    ; CHECK-NEXT:   $m1 = MOV_mv_cg 0
+    ; CHECK-NEXT: }
+    $m1 = MOV_mv_cg 0
+    $r2 = MOVX_alu_cg 1
+    $r1 = MOVA_lda_cg 0
+...
+
+---
+name:            mova_to_dc_movx_to_R_mov_to_M
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: mova_to_dc_movx_to_R_mov_to_M
+    ; CHECK: BUNDLE implicit-def $dc1, implicit-def $r2, implicit-def $m1 {
+    ; CHECK-NEXT:   $dc1 = MOVA_lda_cg 0
+    ; CHECK-NEXT:   $r2 = MOVX_alu_cg 1
+    ; CHECK-NEXT:   $m1 = MOV_mv_cg 0
+    ; CHECK-NEXT: }
+    $m1 = MOV_mv_cg 0
+    $r2 = MOVX_alu_cg 1
+    $dc1 = MOVA_lda_cg 0
+...
+
+---
+name:            mova_to_dj_movx_to_R_mov_to_M
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: mova_to_dj_movx_to_R_mov_to_M
+    ; CHECK: BUNDLE implicit-def $dj1, implicit-def $m1 {
+    ; CHECK-NEXT:   $dj1 = MOVA_lda_cg 0
+    ; CHECK-NEXT:   $m1 = MOV_mv_cg 0
+    ; CHECK-NEXT: }
+    $m1 = MOV_mv_cg 0
+    $dj1 = MOVA_lda_cg 0
+...
+
+---
+name:            mova_to_dn_movx_to_R_mov_to_M
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: mova_to_dn_movx_to_R_mov_to_M
+    ; CHECK: BUNDLE implicit-def $dn1, implicit-def $r2, implicit-def $m1 {
+    ; CHECK-NEXT:   $dn1 = MOVA_lda_cg 0
+    ; CHECK-NEXT:   $r2 = MOVX_alu_cg 1
+    ; CHECK-NEXT:   $m1 = MOV_mv_cg 0
+    ; CHECK-NEXT: }
+    $m1 = MOV_mv_cg 0
+    $r2 = MOVX_alu_cg 1
+    $dn1 = MOVA_lda_cg 0
+...
+
+---
+name:            mova_to_p_movx_to_R_mov_to_M
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: mova_to_p_movx_to_R_mov_to_M
+    ; CHECK: BUNDLE implicit-def $p0, implicit-def $r2, implicit-def $m1 {
+    ; CHECK-NEXT:   $p0 = MOVA_lda_cg 0
+    ; CHECK-NEXT:   $r2 = MOVX_alu_cg 1
+    ; CHECK-NEXT:   $m1 = MOV_mv_cg 0
+    ; CHECK-NEXT: }
+    $m1 = MOV_mv_cg 0
+    $r2 = MOVX_alu_cg 1
+    $p0 = MOVA_lda_cg 0
+...
+
+---
+name:            movxm_to_M
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: movxm_to_M
+    ; CHECK: BUNDLE implicit-def $r1, implicit-def $m1 {
+    ; CHECK-NEXT:   $r1 = MOVA_lda_cg 0
+    ; CHECK-NEXT:   $m1 = MOVXM_lng_cg 0
+    ; CHECK-NEXT: }
+    $m1 = MOVXM_lng_cg 0
+    $r1 = MOVA_lda_cg 0
+...
+
+---
+name:            mova_to_dc_movxm_to_M
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: mova_to_dc_movxm_to_M
+    ; CHECK: BUNDLE implicit-def $dc1, implicit-def $m1 {
+    ; CHECK-NEXT:   $dc1 = MOVA_lda_cg 0
+    ; CHECK-NEXT:   $m1 = MOVXM_lng_cg 0
+    ; CHECK-NEXT: }
+    $m1 = MOVXM_lng_cg 0
+    $dc1 = MOVA_lda_cg 0
+...
+
+---
+name:            mova_to_dj_movxm_to_M
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: mova_to_dj_movxm_to_M
+    ; CHECK: BUNDLE implicit-def $dj1, implicit-def $m1 {
+    ; CHECK-NEXT:   $dj1 = MOVA_lda_cg 0
+    ; CHECK-NEXT:   $m1 = MOVXM_lng_cg 0
+    ; CHECK-NEXT: }
+    $m1 = MOVXM_lng_cg 0
+    $dj1 = MOVA_lda_cg 0
+...
+
+---
+name:            mova_to_dn_movxm_to_M
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: mova_to_dn_movxm_to_M
+    ; CHECK: BUNDLE implicit-def $dn1, implicit-def $m1 {
+    ; CHECK-NEXT:   $dn1 = MOVA_lda_cg 0
+    ; CHECK-NEXT:   $m1 = MOVXM_lng_cg 0
+    ; CHECK-NEXT: }
+    $m1 = MOVXM_lng_cg 0
+    $dn1 = MOVA_lda_cg 0
+...
+
+---
+name:            mova_to_p_movxm_to_M
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: mova_to_p_movxm_to_M
+    ; CHECK: BUNDLE implicit-def $p0, implicit-def $m1 {
+    ; CHECK-NEXT:   $p0 = MOVA_lda_cg 0
+    ; CHECK-NEXT:   $m1 = MOVXM_lng_cg 0
+    ; CHECK-NEXT: }
+    $m1 = MOVXM_lng_cg 0
+    $p0 = MOVA_lda_cg 0
 ...

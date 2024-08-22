@@ -28,8 +28,8 @@ define  i32 @test(i8 signext %i) noinline nounwind optnone {
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
+; CHECK-NEXT:    mova r2, #15
 ; CHECK-NEXT:    movxm r1, #1048575
-; CHECK-NEXT:    movx r2, #15
 ; CHECK-NEXT:    add r0, r0, #-1
 ; CHECK-NEXT:    and r1, r0, r1
 ; CHECK-NEXT:    ltu r1, r2, r1

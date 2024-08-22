@@ -35,7 +35,7 @@ define void @add2d(ptr noalias %params, ptr noalias %ifm1_data, ptr noalias %ifm
 ; ASM-LABEL: add2d:
 ; ASM:         .p2align 4
 ; ASM-NEXT:  // %bb.0: // %newFuncRoot
-; ASM-NEXT:    paddb [sp], #32; nopx
+; ASM-NEXT:    paddb [sp], #32
 ; ASM-NEXT:    st p7, [sp, #-32] // 4-byte Folded Spill
 ; ASM-NEXT:    paddb [p0], #40; st p6, [sp, #-28] // 4-byte Folded Spill
 ; ASM-NEXT:    lda m2, [p0], #-4
@@ -92,8 +92,8 @@ define void @add2d(ptr noalias %params, ptr noalias %ifm1_data, ptr noalias %ifm
 ; ASM-NEXT:    paddb [p0], #-92
 ; ASM-NEXT:    lda r13, [p0, #0]; mov p0, r8
 ; ASM-NEXT:    mova r6, #1; st dj4, [p0, #0]
-; ASM-NEXT:    mova r6, #3; ne r4, r4, r6; mov p0, r14
-; ASM-NEXT:    st dn0, [p0, #0]; add r7, r1, #-1
+; ASM-NEXT:    ne r4, r4, r6; mov p0, r14
+; ASM-NEXT:    st dn0, [p0, #0]; add r7, r1, #-1; mov r6, #3
 ; ASM-NEXT:    ltu r7, r7, r6; mov p0, r15
 ; ASM-NEXT:    jz r7, #.LBB0_2
 ; ASM-NEXT:    st dn4, [p7, #0]; nez r0, r0 // Delay Slot 5
