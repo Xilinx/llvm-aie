@@ -33,6 +33,7 @@ foreach(target ${LLVM_BUILTIN_TARGETS})
   # shouldn't expect the stdlibs to be available anyway
   set(BUILTINS_${target}_CMAKE_EXE_LINKER_FLAGS "-nostdlib" CACHE STRING "")
   set(RUNTIMES_${target}_CMAKE_EXE_LINKER_FLAGS "-nostdlib" CACHE STRING "")
+  set(RUNTIMES_${target}_LLVM_ENABLE_PER_TARGET_RUNTIME_DIR ON CACHE BOOL "")
 endforeach()
 
 set(LIBCXX_ENABLE_SHARED OFF CACHE BOOL "")
