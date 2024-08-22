@@ -152,7 +152,6 @@ bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
 
   LLVM_DEBUG(llvm::dbgs() << "*** WAW Loop Register Rewriting: "
                           << MF.getName());
-  MF.dump();
   LLVM_DEBUG(llvm::dbgs() << " ***\n");
 
   MachineRegisterInfo &MRI = MF.getRegInfo();
@@ -163,12 +162,13 @@ bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
   LiveIntervals &LIS = getAnalysis<LiveIntervals>();
   MachineLoopInfo &MLI = getAnalysis<MachineLoopInfo>();
   bool Modified = false;
-  LLVM_DEBUG(VRM.dump());
 
   llvm::SmallVector<MCPhysReg, 16> CSPhyRegs = TRI.getCSPhyRegs(MF);
   llvm::SmallVector<const MachineBasicBlock *, 4> LoopBBs = getLoopBBs(MLI);
 
   for (const MachineBasicBlock *MBB : LoopBBs) {
+    LLVM_DEBUG(dbgs() << "WAW Reg Renaming BasicBlock "; MBB->dump();
+               dbgs() << "\n");
     llvm::SmallVector<MCPhysReg, 16> UsedPhyRegs;
     llvm::SmallVector<MCPhysReg, 16> UsedVirtRegs;
     llvm::SmallVector<MCPhysReg, 16> AlreadyReplaced;
@@ -180,7 +180,7 @@ bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
         UndefPartReuse;
 
     for (const MachineInstr &MI : *MBB) {
-      MI.dump();
+
       if (isCopyElimination(MI, VRM))
         continue;
 
@@ -196,7 +196,6 @@ bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
           continue;
 
         Register Reg = Op.getReg();
-        Op.dump();
         // // Subregisters can reuse Constants in the high part of the
         // // register, therefore renaming a reused physical register can
         // // prohibit the elimination of a move of constants, thus degrading
@@ -210,8 +209,11 @@ bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
         if (isWAWCandidate(Reg, MI, UsedPhyRegs, UsedVirtRegs, VRM, MRI)) {
           bool Replaced = replaceReg(Reg, ForbiddenPhysRegs, AlreadyReplaced,
                                      CSPhyRegs, MF, VRM, LRM, MRI, LIS, TRI);
-          if (Replaced)
+
+          if (Replaced) {
+            MI.dump();
             Modified = true;
+          }
 
         } else {
           // keep track of already visted physical and virtual Regs
@@ -221,8 +223,6 @@ bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
       }
     }
   }
-
-  LLVM_DEBUG(VRM.dump());
   return Modified;
 }
 
@@ -353,7 +353,7 @@ bool replaceReg(const Register Reg,
                 const MachineFunction &MF, VirtRegMap &VRM, LiveRegMatrix &LRM,
                 const MachineRegisterInfo &MRI, const LiveIntervals &LIS,
                 const AIEBaseRegisterInfo &TRI) {
-  LLVM_DEBUG(dbgs() << " WAW RegRewriter: Register to replace"
+  LLVM_DEBUG(dbgs() << " WAW RegRewriter: Register to replace "
                     << TRI.getName(VRM.getPhys(Reg)) << "\n");
   llvm::SmallVector<MCPhysReg, 16> Replacements = getPriorityReplacementRegs(
       Reg, ForbiddenPhysRegs, CSPhyRegs, MF, VRM, LRM, MRI, LIS, TRI);
@@ -366,9 +366,9 @@ bool replaceReg(const Register Reg,
     LiveRegMatrix::InterferenceKind IK = LRM.checkInterference(LI, PhysReg);
 
     if (IK == llvm::LiveRegMatrix::IK_Free) {
-      LLVM_DEBUG(dbgs() << "     Potential WAR Issue: Virtual Register "
+      LLVM_DEBUG(dbgs() << "     WAW Replacement: Virtual Register "
                         << llvm::Register::virtReg2Index(Reg)
-                        << " will replace " << TRI.getName(VRM.getPhys(Reg))
+                        << " will replace $" << TRI.getName(VRM.getPhys(Reg))
                         << " with " << printReg(PhysReg, &TRI, 0, &MRI)
                         << '\n');
 
