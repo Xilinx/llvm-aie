@@ -60,6 +60,7 @@ namespace llvm {
 class AAResults;
 class NodeSet;
 class SMSchedule;
+class HighRegisterPressureDetector;
 
 extern cl::opt<bool> SwpEnableCopyToPhi;
 extern cl::opt<int> SwpForceIssueWidth;
@@ -308,6 +309,9 @@ private:
                          SetVector<SUnit *> &NodesAdded);
   void computeNodeOrder(NodeSetType &NodeSets);
   void checkValidNodeOrder(const NodeSetType &Circuits) const;
+  bool tryScheduleWithII(SMSchedule &Schedule, unsigned II,
+                         ArrayRef<ArrayRef<SUnit *>> NodeOrders,
+                         const HighRegisterPressureDetector *HRPDetector);
   bool schedulePipeline(SMSchedule &Schedule);
   bool computeDelta(MachineInstr &MI, unsigned &Delta);
   MachineInstr *findDefInLoop(Register Reg);

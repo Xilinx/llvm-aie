@@ -1160,6 +1160,9 @@ struct FuncUnitSorter {
   }
 };
 
+} // end anonymous namespace
+
+namespace llvm {
 /// Calculate the maximum register pressure of the scheduled instructions stream
 class HighRegisterPressureDetector {
   MachineBasicBlock *OrigMBB;
@@ -1529,7 +1532,7 @@ public:
   }
 };
 
-} // end anonymous namespace
+} // namespace llvm
 
 /// Calculate the resource constrained minimum initiation interval for the
 /// specified loop. We use the DFA to model the resources needed for
@@ -2384,30 +2387,18 @@ void SwingSchedulerDAG::computeNodeOrder(NodeSetType &NodeSets) {
   });
 }
 
-/// Process the nodes in the computed order and create the pipelined schedule
-/// of the instructions, if possible. Return true if a schedule is found.
-bool SwingSchedulerDAG::schedulePipeline(SMSchedule &Schedule) {
+bool SwingSchedulerDAG::tryScheduleWithII(
+    SMSchedule &Schedule, unsigned II, ArrayRef<ArrayRef<SUnit *>> NodeOrders,
+    const HighRegisterPressureDetector *HRPDetector) {
 
-  if (NodeOrder.empty()){
-    LLVM_DEBUG(dbgs() << "NodeOrder is empty! abort scheduling\n" );
-    return false;
-  }
-
-  bool scheduleFound = false;
-  std::unique_ptr<HighRegisterPressureDetector> HRPDetector;
-  if (LimitRegPressure) {
-    HRPDetector =
-        std::make_unique<HighRegisterPressureDetector>(Loop.getHeader(), MF);
-    HRPDetector->init(RegClassInfo);
-  }
-  // Keep increasing II until a valid schedule is found.
-  for (unsigned II = MII; II <= MAX_II && !scheduleFound; ++II) {
+  for (ArrayRef<SUnit *> Order : NodeOrders) {
+    bool scheduleFound = false;
     Schedule.reset();
     Schedule.setInitiationInterval(II);
     LLVM_DEBUG(dbgs() << "Try to schedule with " << II << "\n");
 
-    SetVector<SUnit *>::iterator NI = NodeOrder.begin();
-    SetVector<SUnit *>::iterator NE = NodeOrder.end();
+    ArrayRef<SUnit *>::iterator NI = Order.begin();
+    ArrayRef<SUnit *>::iterator NE = Order.end();
     do {
       SUnit *SU = *NI;
 
@@ -2485,11 +2476,42 @@ bool SwingSchedulerDAG::schedulePipeline(SMSchedule &Schedule) {
     if (scheduleFound && LimitRegPressure)
       scheduleFound =
           !HRPDetector->detect(this, Schedule, Schedule.getMaxStageCount());
+
+    if (scheduleFound)
+      return true;
+  }
+
+  // Tried all node orders, no schedule was found.
+  return false;
+}
+
+/// Process the nodes in the computed order and create the pipelined schedule
+/// of the instructions, if possible. Return true if a schedule is found.
+bool SwingSchedulerDAG::schedulePipeline(SMSchedule &Schedule) {
+
+  if (NodeOrder.empty()) {
+    LLVM_DEBUG(dbgs() << "NodeOrder is empty! abort scheduling\n");
+    return false;
+  }
+  SmallVector<ArrayRef<SUnit *>, 4> Orders =
+      LoopPipelinerInfo->getNodeOrders(NodeOrder.getArrayRef(), Topo);
+  LLVM_DEBUG(dbgs() << "Available NodeOrders: " << Orders.size() << "\n");
+
+  bool scheduleFound = false;
+  std::unique_ptr<HighRegisterPressureDetector> HRPDetector;
+  if (LimitRegPressure) {
+    HRPDetector =
+        std::make_unique<HighRegisterPressureDetector>(Loop.getHeader(), MF);
+    HRPDetector->init(RegClassInfo);
+  }
+
+  // Keep increasing II until a valid schedule is found.
+  for (unsigned II = MII; II <= MAX_II && !scheduleFound; ++II) {
+    scheduleFound = tryScheduleWithII(Schedule, II, Orders, HRPDetector.get());
   }
 
   LLVM_DEBUG(dbgs() << "Schedule Found? " << scheduleFound
-                    << " (II=" << Schedule.getInitiationInterval()
-                    << ")\n");
+                    << " (II=" << Schedule.getInitiationInterval() << ")\n");
 
   if (scheduleFound) {
     scheduleFound = LoopPipelinerInfo->shouldUseSchedule(*this, Schedule);

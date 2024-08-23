@@ -55,6 +55,7 @@ struct MCSchedModel;
 class Module;
 class ScheduleDAG;
 class ScheduleDAGMI;
+class ScheduleDAGTopologicalSort;
 class ScheduleHazardRecognizer;
 class SDNode;
 class SelectionDAG;
@@ -745,6 +746,14 @@ public:
   /// apply target-specific updates to the loop once pipelining is complete.
   class PipelinerLoopInfo {
   public:
+    /// Return the different node orders to try when looking for a valid
+    /// schedule at a given II.
+    virtual SmallVector<ArrayRef<SUnit *>, 4>
+    getNodeOrders(ArrayRef<SUnit *> DefaultSMSOrder,
+                  const ScheduleDAGTopologicalSort &Topo) {
+      return {DefaultSMSOrder};
+    }
+
     virtual ~PipelinerLoopInfo();
     /// Return true if the given instruction should not be pipelined and should
     /// be ignored. An example could be a loop comparison, or induction variable
