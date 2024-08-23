@@ -35,13 +35,13 @@ define void @add2d(ptr noalias %params, ptr noalias %ifm1_data, ptr noalias %ifm
 ; ASM-LABEL: add2d:
 ; ASM:         .p2align 4
 ; ASM-NEXT:  // %bb.0: // %newFuncRoot
-; ASM-NEXT:    paddb [sp], #416
-; ASM-NEXT:    st p7, [sp, #-416] // 4-byte Folded Spill
-; ASM-NEXT:    paddb [p0], #40; st p6, [sp, #-412] // 4-byte Folded Spill
+; ASM-NEXT:    paddb [sp], #32
+; ASM-NEXT:    st p7, [sp, #-32] // 4-byte Folded Spill
+; ASM-NEXT:    paddb [p0], #40; st p6, [sp, #-28] // 4-byte Folded Spill
 ; ASM-NEXT:    lda m2, [p0], #-4
 ; ASM-NEXT:    lda m5, [p0], #8; mov p6, sp
-; ASM-NEXT:    lda m4, [p0], #8; paddb [p6], #-420; mov p7, sp
-; ASM-NEXT:    lda p6, [p6, #0]; paddb [p7], #-424
+; ASM-NEXT:    lda m4, [p0], #8; paddb [p6], #-36; mov p7, sp
+; ASM-NEXT:    lda p6, [p6, #0]; paddb [p7], #-40
 ; ASM-NEXT:    lda r6, [p7, #0]
 ; ASM-NEXT:    lda m3, [p0], #-24
 ; ASM-NEXT:    lda r4, [p0], #36
@@ -59,37 +59,37 @@ define void @add2d(ptr noalias %params, ptr noalias %ifm1_data, ptr noalias %ifm
 ; ASM-NEXT:    lda r0, [p0], #-36
 ; ASM-NEXT:    st r2, [p4, #0]
 ; ASM-NEXT:    lda r5, [p0, #0]; mov p4, sp
-; ASM-NEXT:    paddb [p4], #-428
+; ASM-NEXT:    paddb [p4], #-44
 ; ASM-NEXT:    lda r7, [p4, #0]; mov p0, sp
-; ASM-NEXT:    paddb [p0], #-440
+; ASM-NEXT:    paddb [p0], #-56
 ; ASM-NEXT:    lda p7, [p0, #0]; nez r3, r0
 ; ASM-NEXT:    mov p4, sp
-; ASM-NEXT:    paddb [p4], #-432
+; ASM-NEXT:    paddb [p4], #-48
 ; ASM-NEXT:    lda r8, [p4, #0]; mov p0, sp
-; ASM-NEXT:    paddb [p0], #-444
+; ASM-NEXT:    paddb [p0], #-60
 ; ASM-NEXT:    lda p5, [p0, #0]; mov p0, sp
-; ASM-NEXT:    paddb [p0], #-448
+; ASM-NEXT:    paddb [p0], #-64
 ; ASM-NEXT:    lda p4, [p0, #0]; mov p4, sp
-; ASM-NEXT:    paddb [p4], #-436; mov p0, sp
-; ASM-NEXT:    lda r14, [p4, #0]; paddb [p0], #-452
+; ASM-NEXT:    paddb [p4], #-52; mov p0, sp
+; ASM-NEXT:    lda r14, [p4, #0]; paddb [p0], #-68
 ; ASM-NEXT:    lda p6, [p0, #0]; mov p0, sp
-; ASM-NEXT:    paddb [p0], #-456; st r3, [p5, #0]
+; ASM-NEXT:    paddb [p0], #-72; st r3, [p5, #0]
 ; ASM-NEXT:    lda r15, [p0, #0]; mov p0, sp
-; ASM-NEXT:    paddb [p0], #-460
+; ASM-NEXT:    paddb [p0], #-76
 ; ASM-NEXT:    lda r9, [p0, #0]; mov p0, sp
-; ASM-NEXT:    paddb [p0], #-464; st m1, [p6, #0]
+; ASM-NEXT:    paddb [p0], #-80; st m1, [p6, #0]
 ; ASM-NEXT:    lda r10, [p0, #0]
 ; ASM-NEXT:    mov p0, r6
 ; ASM-NEXT:    st m0, [p0, #0]
 ; ASM-NEXT:    mov p0, sp
-; ASM-NEXT:    paddb [p0], #-468
+; ASM-NEXT:    paddb [p0], #-84
 ; ASM-NEXT:    lda r11, [p0, #0]; mov p0, r7
 ; ASM-NEXT:    st dj0, [p0, #0]
 ; ASM-NEXT:    mov p0, sp
-; ASM-NEXT:    paddb [p0], #-472
+; ASM-NEXT:    paddb [p0], #-88
 ; ASM-NEXT:    lda r12, [p0, #0]
 ; ASM-NEXT:    mov p0, sp
-; ASM-NEXT:    paddb [p0], #-476
+; ASM-NEXT:    paddb [p0], #-92
 ; ASM-NEXT:    lda r13, [p0, #0]; movx r6, #1; mov p0, r8
 ; ASM-NEXT:    st dj4, [p0, #0]; ne r4, r4, r6
 ; ASM-NEXT:    movx r6, #3; mov p0, r14
@@ -110,105 +110,74 @@ define void @add2d(ptr noalias %params, ptr noalias %ifm1_data, ptr noalias %ifm
 ; ASM-NEXT:    mova r0, #0 // Delay Slot 1
 ; ASM-NEXT:    .p2align 4
 ; ASM-NEXT:  .LBB0_2: // %entry.new
-; ASM-NEXT:    vlda.ups.s32.d8 cm1, s1, [p1], m1; nopb ; nopx ; mov dc0, #0
+; ASM-NEXT:    vlda.ups.s32.d8 cm0, s1, [p1], m1; nopb ; nopx ; mov dc0, #0; nops
 ; ASM-NEXT:    vlda.ups.s32.d8 cm2, s1, [p1], m1; mov dc4, dc0
-; ASM-NEXT:    vlda.3d.ups.s32.d8 cm3, s1, [p2], d0
-; ASM-NEXT:    vlda.ups.s32.d8 cm4, s1, [p1], m1
-; ASM-NEXT:    vlda.3d.ups.s32.d8 cm6, s1, [p2], d0; mov crUPSSign, r3
-; ASM-NEXT:    vlda.3d.ups.s32.d8 cm7, s1, [p2], d0; mov s1, r2
-; ASM-NEXT:    vlda.ups.s32.d8 cm0, s1, [p1], m1
-; ASM-NEXT:    vlda.3d.ups.s32.d8 cm8, s1, [p2], d0
+; ASM-NEXT:    vlda.3d.ups.s32.d8 cm1, s1, [p2], d0
 ; ASM-NEXT:    vlda.ups.s32.d8 cm3, s1, [p1], m1
+; ASM-NEXT:    vlda.3d.ups.s32.d8 cm4, s1, [p2], d0; mov crUPSSign, r3
+; ASM-NEXT:    vlda.3d.ups.s32.d8 cm5, s1, [p2], d0; mov s1, r2
+; ASM-NEXT:    vlda.ups.s32.d8 cm0, s1, [p1], m1
+; ASM-NEXT:    vlda.3d.ups.s32.d8 cm1, s1, [p2], d0
+; ASM-NEXT:    vlda.ups.s32.d8 cm2, s1, [p1], m1
+; ASM-NEXT:    vlda.3d.ups.s32.d8 cm8, s1, [p2], d0
 ; ASM-NEXT:    vlda.ups.s32.d8 cm5, s1, [p1], m1
-; ASM-NEXT:    vlda.ups.s32.d8 cm0, s1, [p1], m1; vadd cm3, cm3, cm1, r0
-; ASM-NEXT:    vlda.ups.s32.d8 cm1, s1, [p1], m1; vadd cm2, cm6, cm2, r0
-; ASM-NEXT:    vlda.3d.ups.s32.d8 cm6, s1, [p2], d0; vadd cm1, cm7, cm4, r0
-; ASM-NEXT:    vlda.3d.ups.s32.d8 cm7, s1, [p2], d0; mov crSRSSign, r4
-; ASM-NEXT:    vlda.3d.ups.s32.d8 cm4, s1, [p2], d0; movx r6, #-4; mov s0, r5
-; ASM-NEXT:    vlda.3d.ups.s32.d8 cm2, s1, [p2], d0; vst.srs.d8.s32 cm3, s0, [p3], #32; and r1, r1, r6
-; ASM-NEXT:    vst.srs.d8.s32 cm2, s0, [p3], #32; add r1, r1, #-4; vadd cm8, cm8, cm0, r0
-; ASM-NEXT:    vst.srs.d8.s32 cm1, s0, [p3], #32; add r1, r1, #-4
-; ASM-NEXT:    jz r1, #.LBB0_5
-; ASM-NEXT:    nop // Delay Slot 5
-; ASM-NEXT:    vst amll1, [sp, #-384] // 32-byte Folded Spill Delay Slot 4
-; ASM-NEXT:    vst amlh1, [sp, #-352] // 32-byte Folded Spill Delay Slot 3
-; ASM-NEXT:    vst amhl1, [sp, #-320] // 32-byte Folded Spill Delay Slot 2
-; ASM-NEXT:    vst amhh1, [sp, #-288] // 32-byte Folded Spill Delay Slot 1
+; ASM-NEXT:    vlda.3d.ups.s32.d8 cm6, s1, [p2], d0
+; ASM-NEXT:    vlda.3d.ups.s32.d8 cm4, s1, [p2], d0; vadd cm6, cm1, cm0, r0
+; ASM-NEXT:    vlda.ups.s32.d8 cm3, s1, [p1], m1
+; ASM-NEXT:    vlda.3d.ups.s32.d8 cm1, s1, [p2], d0; movx r6, #-4; vadd cm4, cm4, cm2, r0
+; ASM-NEXT:    vlda.ups.s32.d8 cm0, s1, [p1], m1; and r1, r1, r6; vadd cm3, cm5, cm3, r0
+; ASM-NEXT:    add r1, r1, #-4; mov crSRSSign, r4
+; ASM-NEXT:    add r1, r1, #-4; mov s0, r5
+; ASM-NEXT:    vst.srs.d8.s32 cm6, s0, [p3], #32; jz r1, #.LBB0_5
+; ASM-NEXT:    vst.srs.d8.s32 cm4, s0, [p3], #32; vadd cm7, cm1, cm0, r0 // Delay Slot 5
+; ASM-NEXT:    vst.srs.d8.s32 cm3, s0, [p3], #32; vadd cm2, cm8, cm2, r0 // Delay Slot 4
+; ASM-NEXT:    nop // Delay Slot 3
+; ASM-NEXT:    nop // Delay Slot 2
+; ASM-NEXT:    nop // Delay Slot 1
 ; ASM-NEXT:    .p2align 4
 ; ASM-NEXT:  .LBB0_3: // %for.body
 ; ASM-NEXT:    // =>This Inner Loop Header: Depth=1
-; ASM-NEXT:    vlda amll4, [sp, #-384]; nopb ; nopx // 32-byte Folded Reload
-; ASM-NEXT:    vlda amlh4, [sp, #-352] // 32-byte Folded Reload
-; ASM-NEXT:    vlda amhl4, [sp, #-320] // 32-byte Folded Reload
-; ASM-NEXT:    vlda amhh4, [sp, #-288] // 32-byte Folded Reload
-; ASM-NEXT:    vlda.ups.s32.d8 cm3, s1, [p1], m1; vadd cm0, cm4, cm0, r0
-; ASM-NEXT:    vlda.ups.s32.d8 cm5, s1, [p1], m1
-; ASM-NEXT:    vlda.ups.s32.d8 cm1, s1, [p1], m1; vadd cm6, cm6, cm3, r0
-; ASM-NEXT:    vlda.ups.s32.d8 cm2, s1, [p1], m1; vadd cm3, cm7, cm5, r0
-; ASM-NEXT:    nop
-; ASM-NEXT:    nop
-; ASM-NEXT:    vst.srs.d8.s32 cm8, s0, [p3], #32
-; ASM-NEXT:    vst.srs.d8.s32 cm6, s0, [p3], #32
-; ASM-NEXT:    vst.srs.d8.s32 cm3, s0, [p3], #32
-; ASM-NEXT:    vlda.3d.ups.s32.d8 cm6, s1, [p2], d0; vst.srs.d8.s32 cm0, s0, [p3], #32; vadd cm8, cm2, cm4, r0
-; ASM-NEXT:    vlda.3d.ups.s32.d8 cm7, s1, [p2], d0; add r1, r1, #-4
-; ASM-NEXT:    vlda.3d.ups.s32.d8 cm4, s1, [p2], d0; jnz r1, #.LBB0_3
-; ASM-NEXT:    vst amll2, [sp, #-384] // 32-byte Folded Spill Delay Slot 5
-; ASM-NEXT:    vst amlh2, [sp, #-352] // 32-byte Folded Spill Delay Slot 4
-; ASM-NEXT:    vlda.3d.ups.s32.d8 cm2, s1, [p2], d0; vmov cm0, cm1 // Delay Slot 3
-; ASM-NEXT:    vst amhl2, [sp, #-320] // 32-byte Folded Spill Delay Slot 2
-; ASM-NEXT:    vst amhh2, [sp, #-288] // 32-byte Folded Spill Delay Slot 1
+; ASM-NEXT:    nopb ; vlda.3d.ups.s32.d8 cm6, s1, [p2], d0; nops ; nopxm ; nopv
+; ASM-NEXT:    vlda.ups.s32.d8 cm2, s1, [p1], m1; nopx
+; ASM-NEXT:    vlda.ups.s32.d8 cm5, s1, [p1], m1; vadd cm5, cm6, cm5, r0
+; ASM-NEXT:    vlda.ups.s32.d8 cm3, s1, [p1], m1; vst.srs.d8.s32 cm7, s0, [p3], #32; add r1, r1, #-4; vadd cm3, cm4, cm3, r0
+; ASM-NEXT:    vlda.3d.ups.s32.d8 cm6, s1, [p2], d0; jnz r1, #.LBB0_3
+; ASM-NEXT:    vlda.3d.ups.s32.d8 cm4, s1, [p2], d0 // Delay Slot 5
+; ASM-NEXT:    vlda.ups.s32.d8 cm0, s1, [p1], m1; vst.srs.d8.s32 cm2, s0, [p3], #32 // Delay Slot 4
+; ASM-NEXT:    vlda.3d.ups.s32.d8 cm1, s1, [p2], d0; vst.srs.d8.s32 cm5, s0, [p3], #32; vadd cm7, cm1, cm0, r0 // Delay Slot 3
+; ASM-NEXT:    vst.srs.d8.s32 cm3, s0, [p3], #32 // Delay Slot 2
+; ASM-NEXT:    vadd cm2, cm6, cm2, r0 // Delay Slot 1
 ; ASM-NEXT:  // %bb.4:
 ; ASM-NEXT:    nopa ; nopb ; nopxm ; nops
 ; ASM-NEXT:    nop
 ; ASM-NEXT:    .p2align 4
 ; ASM-NEXT:  .LBB0_5:
-; ASM-NEXT:    nopa ; vst amll0, [sp, #-256]; nopx // 32-byte Folded Spill
-; ASM-NEXT:    vst amlh0, [sp, #-224] // 32-byte Folded Spill
-; ASM-NEXT:    vst amhl0, [sp, #-192] // 32-byte Folded Spill
-; ASM-NEXT:    vst amhh0, [sp, #-160] // 32-byte Folded Spill
-; ASM-NEXT:    vst amll2, [sp, #-128] // 32-byte Folded Spill
-; ASM-NEXT:    vst amlh2, [sp, #-96] // 32-byte Folded Spill
-; ASM-NEXT:    vst amhl2, [sp, #-64] // 32-byte Folded Spill
-; ASM-NEXT:    vst amhh2, [sp, #-32] // 32-byte Folded Spill
-; ASM-NEXT:    vlda amll4, [sp, #-256] // 32-byte Folded Reload
-; ASM-NEXT:    vlda amlh4, [sp, #-224] // 32-byte Folded Reload
-; ASM-NEXT:    vlda amhl4, [sp, #-192] // 32-byte Folded Reload
-; ASM-NEXT:    vlda amhh4, [sp, #-160] // 32-byte Folded Reload
-; ASM-NEXT:    vlda amll1, [sp, #-384]; vmov cm1, cm4 // 32-byte Folded Reload
-; ASM-NEXT:    vlda amlh1, [sp, #-352] // 32-byte Folded Reload
-; ASM-NEXT:    vlda amhl1, [sp, #-320] // 32-byte Folded Reload
-; ASM-NEXT:    vlda amhh1, [sp, #-288] // 32-byte Folded Reload
-; ASM-NEXT:    vlda amll4, [sp, #-128]; vadd cm2, cm1, cm4, r0 // 32-byte Folded Reload
-; ASM-NEXT:    vlda amlh4, [sp, #-96] // 32-byte Folded Reload
-; ASM-NEXT:    vlda amhl4, [sp, #-64] // 32-byte Folded Reload
-; ASM-NEXT:    vlda amhh4, [sp, #-32] // 32-byte Folded Reload
-; ASM-NEXT:    vadd cm0, cm6, cm3, r0
+; ASM-NEXT:    nopb ; nopa ; nops ; nopxm ; vadd cm5, cm6, cm5, r0
+; ASM-NEXT:    vadd cm3, cm4, cm3, r0
+; ASM-NEXT:    vadd cm0, cm1, cm0, r0
 ; ASM-NEXT:    nop
-; ASM-NEXT:    vadd cm3, cm7, cm5, r0
-; ASM-NEXT:    vst.srs.d8.s32 cm8, s0, [p3], #32
-; ASM-NEXT:    vadd cm1, cm4, cm1, r0
-; ASM-NEXT:    vst.srs.d8.s32 cm0, s0, [p3], #32
 ; ASM-NEXT:    nop
-; ASM-NEXT:    vst.srs.d8.s32 cm3, s0, [p3], #32
-; ASM-NEXT:    vst.srs.d8.s32 cm2, s0, [p3], #32; mov crUPSSign, #0
-; ASM-NEXT:    vst.srs.d8.s32 cm1, s0, [p3], #32; mov r6, dc0
+; ASM-NEXT:    vst.srs.d8.s32 cm7, s0, [p3], #32
+; ASM-NEXT:    vst.srs.d8.s32 cm2, s0, [p3], #32
+; ASM-NEXT:    vst.srs.d8.s32 cm5, s0, [p3], #32
+; ASM-NEXT:    vst.srs.d8.s32 cm3, s0, [p3], #32; mov crUPSSign, #0
+; ASM-NEXT:    vst.srs.d8.s32 cm0, s0, [p3], #32; mov r6, dc0
 ; ASM-NEXT:    mov r0, dc4
 ; ASM-NEXT:    mov crSRSSign, #0
 ; ASM-NEXT:    .p2align 4
 ; ASM-NEXT:  .LBB0_6: // %for.cond.cleanup.unr-lcssa.split
-; ASM-NEXT:    nopb ; lda p7, [sp, #-416]; nops ; nopxm ; nopv // 4-byte Folded Reload
+; ASM-NEXT:    nopb ; lda p7, [sp, #-32]; nops ; nopxm ; nopv // 4-byte Folded Reload
 ; ASM-NEXT:    mov p0, r13
 ; ASM-NEXT:    st r0, [p0, #0]
 ; ASM-NEXT:    mov p0, r12
 ; ASM-NEXT:    st r6, [p0, #0]
-; ASM-NEXT:    lda p6, [sp, #-412]; mov p0, r11 // 4-byte Folded Reload
+; ASM-NEXT:    lda p6, [sp, #-28]; mov p0, r11 // 4-byte Folded Reload
 ; ASM-NEXT:    st p3, [p0, #0]; ret lr
 ; ASM-NEXT:    mov p0, r10 // Delay Slot 5
 ; ASM-NEXT:    st p2, [p0, #0] // Delay Slot 4
 ; ASM-NEXT:    mov p0, r9 // Delay Slot 3
 ; ASM-NEXT:    st p1, [p0, #0] // Delay Slot 2
-; ASM-NEXT:    paddb [sp], #-416 // Delay Slot 1
+; ASM-NEXT:    paddb [sp], #-32 // Delay Slot 1
 newFuncRoot:
   br label %entry.split
 

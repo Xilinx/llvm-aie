@@ -23,6 +23,7 @@ namespace llvm {
 
 class AIEBasePipelinerLoopInfo : public TargetInstrInfo::PipelinerLoopInfo {
 protected:
+  std::vector<SUnit *> TopDownOrder;
   const AIEBaseInstrInfo &TII;
   MachineRegisterInfo &MRI;
   MachineInstr *EndLoop;
@@ -76,6 +77,10 @@ public:
   };
 
   AIEBasePipelinerLoopInfo(MachineInstr *EndLoop, const AIEBaseInstrInfo &TII);
+
+  SmallVector<ArrayRef<SUnit *>, 4>
+  getNodeOrders(ArrayRef<SUnit *> DefaultSMSOrder,
+                const ScheduleDAGTopologicalSort &Topo) override;
 
   void setMinTripCount(int64_t TC);
 
