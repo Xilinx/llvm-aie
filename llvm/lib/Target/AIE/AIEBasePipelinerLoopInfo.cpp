@@ -57,6 +57,27 @@ AIEBasePipelinerLoopInfo::AIEBasePipelinerLoopInfo(MachineInstr *EndLoop,
     MinTripCount = *ParsedMinTripCount;
 }
 
+SmallVector<ArrayRef<SUnit *>, 4> AIEBasePipelinerLoopInfo::getNodeOrders(
+    ArrayRef<SUnit *> DefaultSMSOrder, const ScheduleDAGTopologicalSort &Topo) {
+  LLVM_DEBUG(dbgs() << "PLI: Computing top-down node order\n");
+  TopDownOrder.clear();
+  for (int SUIdx : Topo) {
+    SUnit &SU = Topo.getSUnit(SUIdx);
+    // Only try and place SUs without predecessor once their successors are
+    // placed. Otherwise we might place them too early, preventing a schedule
+    // to be found.
+    if (!SU.Preds.empty())
+      TopDownOrder.push_back(&SU);
+  }
+  for (int SUIdx : Topo) {
+    SUnit &SU = Topo.getSUnit(SUIdx);
+    if (SU.Preds.empty())
+      TopDownOrder.push_back(&SU);
+  }
+
+  return {DefaultSMSOrder, TopDownOrder};
+}
+
 void AIEBasePipelinerLoopInfo::setMinTripCount(int64_t TC) {
   LLVM_DEBUG(dbgs() << "TripCount = " << TC << "\n");
   MinTripCount = TC;
