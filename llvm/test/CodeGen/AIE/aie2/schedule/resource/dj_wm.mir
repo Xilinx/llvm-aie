@@ -539,3 +539,33 @@ body:             |
     $r2 = MOV_mv_scl $r4
     $r2 = MOV_mv_scl $r4
 ...
+
+---
+name:            lda2DPost_to_DJ
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: lda2DPost_to_DJ
+    ; CHECK: BUNDLE implicit-def $dj1, implicit-def $p0, implicit-def $dc0, implicit-def $r1, implicit-def $p2, implicit killed $p0, implicit killed $d0, implicit $r4 {
+    ; CHECK-NEXT:   $dj1, $p0, $dc0 = LDA_2D_dms_lda killed $p0, killed $d0
+    ; CHECK-NEXT:   $r1 = MOVX_alu_cg 0
+    ; CHECK-NEXT:   $p2 = MOV_mv_scl $r4
+    ; CHECK-NEXT: }
+    ; CHECK-NEXT: $p2 = MOV_mv_scl $r4
+    ; CHECK-NEXT: $p2 = MOV_mv_scl $r4
+    ; CHECK-NEXT: $p2 = MOV_mv_scl $r4
+    ; CHECK-NEXT: $p2 = MOV_mv_scl $r4
+    ; CHECK-NEXT: $p2 = MOV_mv_scl $r4
+    ; CHECK-NEXT: $p2 = MOV_mv_scl $r4
+    ; CHECK-NEXT: $p2 = MOV_mv_scl killed $r4
+    $dj1, $p0, $dc0 = LDA_2D_dms_lda $p0, $d0
+    $r1 = MOVX_alu_cg 0
+    $p2 = MOV_mv_scl $r4
+    $p2 = MOV_mv_scl $r4
+    $p2 = MOV_mv_scl $r4
+    $p2 = MOV_mv_scl $r4
+    $p2 = MOV_mv_scl $r4
+    $p2 = MOV_mv_scl $r4
+    $p2 = MOV_mv_scl $r4
+    $p2 = MOV_mv_scl $r4
+...
