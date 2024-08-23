@@ -458,22 +458,32 @@ AIE2RegisterInfo::getCoveringSubRegs(const TargetRegisterClass &RC) const {
   return Subregs;
 }
 
-const llvm::SmallVector<MCPhysReg, 16>
-AIE2RegisterInfo::getCSPhyRegs(const MachineFunction &MF) const {
-  llvm::SmallVector<MCPhysReg, 16> CSRegs;
-  const MCPhysReg *RegularCSRegs = getCalleeSavedRegs(&MF);
-  for (const uint16_t *RegPtr = RegularCSRegs; *RegPtr; ++RegPtr) {
-    CSRegs.push_back(*RegPtr);
-  }
-  // add long register that overlap with CS regs
-  CSRegs.push_back(MCPhysReg(AIE2::l0));
-  CSRegs.push_back(MCPhysReg(AIE2::l1));
-  CSRegs.push_back(MCPhysReg(AIE2::l2));
-  CSRegs.push_back(MCPhysReg(AIE2::l3));
-  return CSRegs;
-}
+bool AIE2RegisterInfo::isVecOrAccRegClass(const TargetRegisterClass *RC) const {
+  // ******** Vector classes ********
+  if (RC->getID() == AIE2::VEC256RegClassID ||
+      find(VEC256Superclasses, RC) != std::end(VEC256Superclasses))
+    return true;
 
-const TargetRegisterClass *
-AIE2RegisterInfo::getCalleeSaveRegClass(const MachineFunction &MF) const {
-  return getLargestLegalSuperClass(getGPRRegClass(MF), MF);
+  if (RC->getID() == AIE2::VEC512RegClassID ||
+      find(VEC512Superclasses, RC) != std::end(VEC512Superclasses))
+    return true;
+
+  if (RC->getID() == AIE2::VEC1024RegClassID ||
+      find(VEC1024Superclasses, RC) != std::end(VEC1024Superclasses))
+    return true;
+
+  // ******** Accumulator classes ********
+  if (RC->getID() == AIE2::ACC256RegClassID ||
+      find(ACC256Superclasses, RC) != std::end(ACC256Superclasses))
+    return true;
+
+  if (RC->getID() == AIE2::ACC512RegClassID ||
+      find(ACC512Superclasses, RC) != std::end(ACC512Superclasses))
+    return true;
+
+  if (RC->getID() == AIE2::ACC1024RegClassID ||
+      find(ACC1024Superclasses, RC) != std::end(ACC1024Superclasses))
+    return true;
+
+  return false;
 }

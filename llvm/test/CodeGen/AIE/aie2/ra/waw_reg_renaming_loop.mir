@@ -234,56 +234,6 @@ body:             |
     PseudoRET implicit $lr
 ...
 ---
-name:            test_waw_gpr_replacement
-alignment:       16
-legalized:       true
-tracksRegLiveness: true
-body:             |
-  ; CHECK-LABEL: name: test_waw_gpr_replacement
-  ; CHECK: bb.0.entry:
-  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
-  ; CHECK-NEXT:   liveins: $d0, $dj0, $p0, $r0, $r1, $r2, $r4, $r25, $r26, $s0, $x10
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   LoopStart $r0
-  ; CHECK-NEXT:   renamable $r0 = ADD $r1, $r2, implicit-def $srcarry
-  ; CHECK-NEXT:   renamable $r1 = ADD renamable $r0, $r1, implicit-def $srcarry
-  ; CHECK-NEXT:   renamable $r0 = AND killed renamable $r1, killed renamable $r0
-  ; CHECK-NEXT:   ST_dms_sts_idx_imm killed renamable $r0, $p0, 0
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.1:
-  ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
-  ; CHECK-NEXT:   liveins: $d0, $dj0, $p0, $r2, $r4, $r25, $r26, $s0, $x10
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   renamable $r0 = AND $r2, $r4
-  ; CHECK-NEXT:   dead renamable $r1 = ADD $r2, killed renamable $r0, implicit-def dead $srcarry
-  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.2:
-  ; CHECK-NEXT:   liveins: $d0, $dj0, $p0, $r2, $r4, $r25, $r26, $s0, $x10
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   PseudoRET implicit $lr
-  bb.0.entry:
-  successors: %bb.1
-  liveins: $p0, $d0, $r25, $r26, $x10, $dj0, $s0
-  liveins: $r0, $r1, $r2, $r4
-  LoopStart $r0
-  %100:er = ADD $r1, $r2, implicit-def $srcarry
-  %101:er = ADD %100, $r1, implicit-def $srcarry
-  %103:er = AND %101, %100
-  ST_dms_sts_idx_imm %103, $p0, 0
-
-  bb.1:
-    successors: %bb.1, %bb.2
-    liveins: $p0, $d0, $r25, $r26, $x10, $dj0, $s0, $r2, $r4
-    %20:er = AND $r2, $r4
-    %21:er = ADD $r2, %20, implicit-def dead $srcarry
-
-    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
-  bb.2:
-    liveins: $p0, $d0, $r25, $r26, $x10, $dj0, $s0, $r2, $r4
-    PseudoRET implicit $lr
-...
----
 name:            redundant_sub_reg_moves
 alignment:       16
 legalized:       true

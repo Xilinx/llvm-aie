@@ -48,13 +48,8 @@ struct AIEBaseRegisterInfo : public TargetRegisterInfo {
     return false;
   }
 
-  virtual const llvm::SmallVector<MCPhysReg, 16>
-  getCSPhyRegs(const MachineFunction &MF) const {
-    llvm_unreachable("Target didn't implement getCSPhyRegs()");
-  }
-  virtual const TargetRegisterClass *
-  getCalleeSaveRegClass(const MachineFunction &MF) const {
-    llvm_unreachable("Target didn't implement getCalleeSaveRegClass()");
+  virtual bool isVecOrAccRegClass(const TargetRegisterClass *TC) const {
+    llvm_unreachable("Target didn't implement isVecOrAccRegClass()");
   }
 #if 0
   /// Returns a BitVector of the intersection of GPR RegClass
