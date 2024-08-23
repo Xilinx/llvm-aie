@@ -126,7 +126,8 @@ let  mayLoad = true, mayStore = false in {
       AIE2_ag_nospill__ag_idx;
   }
 
-  let Itinerary = II_LDA_POST_1D, Constraints = "$ptr_out = $ptr" in {
+  //Part-word load writes only to R type register
+  let Itinerary = II_LDA_POST_1D_R, Constraints = "$ptr_out = $ptr" in {
     def LDA_S8_ag_pstm_nrm_imm : AIE2_dmhb_lda_inst_lda<0b00, (outs eR:$mRa, eP:$ptr_out) , (ins  eP:$ptr, simm4:$imm  ), "lda.s8", "$mRa, [$ptr], $imm">,
       AIE2_ag_nospill__ag_pstm_nrm_imm;
     def LDA_S8_ag_pstm_nrm : AIE2_dmhb_lda_inst_lda<0b00, (outs eR:$mRa, eP:$ptr_out) , (ins  eP:$ptr, eM:$mod  ), "lda.s8", "$mRa, [$ptr], $mod">,
@@ -217,12 +218,19 @@ let mayLoad = true, mayStore = false in {
     }
   }
   let Itinerary = II_LDA_POST_1D, Constraints = "$ptr = $ptr_out" in {
-    def LDA_dms_lda_pstm_nrm : AIE2_dms_lda_inst_lda< (outs OP_mLdaScl:$mLdaScl, eP:$ptr_out ) , (ins eP:$ptr, eM:$mod),
-        "lda", "$mLdaScl, [$ptr], $mod">,
-      AIE2_ag_all__ag_pstm_nrm;
-    def LDA_dms_lda_pstm_nrm_imm : AIE2_dms_lda_inst_lda< (outs OP_mLdaScl:$mLdaScl, eP:$ptr_out ) , (ins eP:$ptr, imm7x4:$imm),
-        "lda", "$mLdaScl, [$ptr], $imm">,
-      AIE2_ag_all__ag_pstm_nrm_imm;
+    let ItineraryRegPairs = [ItinRegClassPair<II_LDA_POST_1D_R,[OperandRegClass<0, eR>]>,
+                             ItinRegClassPair<II_LDA_POST_1D_P,[OperandRegClass<0, eP>]>, 
+                             ItinRegClassPair<II_LDA_POST_1D_M,[OperandRegClass<0, eM>]>,
+                             ItinRegClassPair<II_LDA_POST_1D_DC,[OperandRegClass<0, eDC>]>,
+                             ItinRegClassPair<II_LDA_POST_1D_DJ,[OperandRegClass<0, eDJ>]>,
+                             ItinRegClassPair<II_LDA_POST_1D_DN,[OperandRegClass<0, eDN>]>] in {
+      def LDA_dms_lda_pstm_nrm : AIE2_dms_lda_inst_lda< (outs OP_mLdaScl:$mLdaScl, eP:$ptr_out ) , (ins eP:$ptr, eM:$mod),
+          "lda", "$mLdaScl, [$ptr], $mod">,
+        AIE2_ag_all__ag_pstm_nrm;
+      def LDA_dms_lda_pstm_nrm_imm : AIE2_dms_lda_inst_lda< (outs OP_mLdaScl:$mLdaScl, eP:$ptr_out ) , (ins eP:$ptr, imm7x4:$imm),
+          "lda", "$mLdaScl, [$ptr], $imm">,
+        AIE2_ag_all__ag_pstm_nrm_imm;
+    }
   }
 
   let Itinerary = II_LDA_POST_2D, Constraints = "$ptr = $ptr_out" in {

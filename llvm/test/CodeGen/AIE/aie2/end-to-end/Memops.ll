@@ -15,9 +15,8 @@ define dso_local void @lowerMemcpyUsingWord() local_unnamed_addr #0 {
 ; CHECK-LABEL: lowerMemcpyUsingWord:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopb ; nopa ; nops ; movxm p0, #buffer2; nopv
-; CHECK-NEXT:    lda r0, [p0], #4; nopb ; nopx
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    movxm p0, #buffer2
+; CHECK-NEXT:    lda r0, [p0], #4
 ; CHECK-NEXT:    lda r1, [p0], #4
 ; CHECK-NEXT:    lda r2, [p0], #4
 ; CHECK-NEXT:    lda r3, [p0], #4
