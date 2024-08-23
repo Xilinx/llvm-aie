@@ -795,6 +795,9 @@ class TargetRegisterInfo;
     const_reverse_iterator rbegin() const { return Index2Node.rbegin(); }
     reverse_iterator rend() { return Index2Node.rend(); }
     const_reverse_iterator rend() const { return Index2Node.rend(); }
+
+    /// Returns the SUnit at \p Index, i.e. its Node number.
+    SUnit &getSUnit(int Index) const { return SUnits[Index]; }
   };
 
 } // end namespace llvm
