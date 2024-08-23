@@ -181,6 +181,12 @@ def II_JNZ : InstrItinClass;
 def II_JNZD : InstrItinClass;
 def II_JZ : InstrItinClass;
 def II_LDA : InstrItinClass;
+def II_LDA_DC : InstrItinClass;
+def II_LDA_DJ : InstrItinClass;
+def II_LDA_DN : InstrItinClass;
+def II_LDA_M : InstrItinClass;
+def II_LDA_P : InstrItinClass;
+def II_LDA_R : InstrItinClass;
 def II_LDA_POST_1D : InstrItinClass;
 def II_LDA_POST_2D : InstrItinClass;
 def II_LDA_POST_3D : InstrItinClass;
@@ -440,6 +446,30 @@ MemInstrItinData<II_LDA,
      PrefixCycle<P_WM_PORT>, PrefixCycle<M_WM_PORT>, PrefixCycle<DJ_WM_PORT>,
      PrefixCycle<DN_WM_PORT>, PrefixCycle<DC_WM_PORT>, SimpleCycle<R_WA_PORT>],
     [7,1,1],
+    MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_DC,
+    [AvoidPartWordStore, EmptyCycles<1>, SimpleCycle<LOAD_UNIT_A>,
+	EmptyCycles<4>, SimpleCycle<DC_WM_PORT>], [7,1,1],
+    MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_DJ,
+    [AvoidPartWordStore, EmptyCycles<1>, SimpleCycle<LOAD_UNIT_A>,
+	EmptyCycles<4>, SimpleCycle<DJ_WM_PORT>], [7,1,1],
+    MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_DN,
+    [AvoidPartWordStore, EmptyCycles<1>, SimpleCycle<LOAD_UNIT_A>,
+	EmptyCycles<4>, SimpleCycle<DN_WM_PORT>], [7,1,1],
+    MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_M,
+    [AvoidPartWordStore, EmptyCycles<1>, SimpleCycle<LOAD_UNIT_A>,
+	EmptyCycles<4>, SimpleCycle<M_WM_PORT>], [7,1,1],
+    MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_P,
+    [AvoidPartWordStore, EmptyCycles<1>, SimpleCycle<LOAD_UNIT_A>,
+	EmptyCycles<4>, SimpleCycle<P_WM_PORT>], [7,1,1],
+    MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_R,
+    [AvoidPartWordStore, EmptyCycles<1>, SimpleCycle<LOAD_UNIT_A>,
+	EmptyCycles<4>, SimpleCycle<R_WA_PORT>], [7,1,1],
     MemoryCycles<[5]>>,
 MemInstrItinData<II_LDA_POST_1D,
     [AvoidPartWordStore, EmptyCycles<1>, SimpleCycle<LOAD_UNIT_A>, EmptyCycles<4>,

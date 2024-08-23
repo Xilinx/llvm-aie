@@ -395,3 +395,59 @@ body:             |
     $r2 = MOVX_alu_cg 1
     $p0 = MOVA_lda_cg 0
 ...
+
+---
+name:            ldaImm_to_R
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: ldaImm_to_R
+    ; CHECK: BUNDLE implicit-def $r3, implicit-def $r1, implicit-def $r2, implicit killed $p0, implicit $r4 {
+    ; CHECK-NEXT:   $r3 = LDA_dms_lda_idx_imm killed $p0, 0
+    ; CHECK-NEXT:   $r1 = MOVX_alu_cg 0
+    ; CHECK-NEXT:   $r2 = MOV_mv_scl $r4
+    ; CHECK-NEXT: }
+    ; CHECK-NEXT: $r2 = MOV_mv_scl $r4
+    ; CHECK-NEXT: $r2 = MOV_mv_scl $r4
+    ; CHECK-NEXT: $r2 = MOV_mv_scl $r4
+    ; CHECK-NEXT: $r2 = MOV_mv_scl $r4
+    ; CHECK-NEXT: $dc0 = MOV_mv_scl $r4
+    ; CHECK-NEXT: $r2 = MOV_mv_scl killed $r4
+    $r3 = LDA_dms_lda_idx_imm $p0, 0
+    $r1 = MOVX_alu_cg 0
+    $dc0 = MOV_mv_scl $r4
+    $r2 = MOV_mv_scl $r4
+    $r2 = MOV_mv_scl $r4
+    $r2 = MOV_mv_scl $r4
+    $r2 = MOV_mv_scl $r4
+    $r2 = MOV_mv_scl $r4
+    $r2 = MOV_mv_scl $r4
+...
+
+---
+name:            ldaImm_to_R_MOV_to_R
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: ldaImm_to_R_MOV_to_R
+    ; CHECK: BUNDLE implicit-def $r3, implicit-def $r1, implicit-def $r2, implicit killed $p0, implicit $r4 {
+    ; CHECK-NEXT:   $r3 = LDA_dms_lda_idx_imm killed $p0, 0
+    ; CHECK-NEXT:   $r1 = MOVX_alu_cg 0
+    ; CHECK-NEXT:   $r2 = MOV_mv_scl $r4
+    ; CHECK-NEXT: }
+    ; CHECK-NEXT: $r2 = MOV_mv_scl $r4
+    ; CHECK-NEXT: $r2 = MOV_mv_scl $r4
+    ; CHECK-NEXT: $r2 = MOV_mv_scl $r4
+    ; CHECK-NEXT: $r2 = MOV_mv_scl $r4
+    ; CHECK-NEXT: $r2 = MOV_mv_scl $r4
+    ; CHECK-NEXT: $r2 = MOV_mv_scl killed $r4
+    $r3 = LDA_dms_lda_idx_imm $p0, 0
+    $r1 = MOVX_alu_cg 0
+    $r2 = MOV_mv_scl $r4
+    $r2 = MOV_mv_scl $r4
+    $r2 = MOV_mv_scl $r4
+    $r2 = MOV_mv_scl $r4
+    $r2 = MOV_mv_scl $r4
+    $r2 = MOV_mv_scl $r4
+    $r2 = MOV_mv_scl $r4
+...

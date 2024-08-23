@@ -103,7 +103,8 @@ let Itinerary = II_XOR in {
   def XOR : AIE2_alu_r_rr_inst_alu<0b0110, (outs eR:$mRx), (ins eR:$mRx0, eR:$mRy), "xor", "$mRx, $mRx0, $mRy">;
 }
 let  mayLoad = true, mayStore = false in {
-  let Itinerary = II_LDA in {
+  // Part-word load writes only to R type register
+  let Itinerary = II_LDA_R in {
     def LDA_S8_ag_idx_imm : AIE2_dmhb_lda_inst_lda<0b00, (outs eR:$mRa) , (ins  eP:$ptr, simm3:$imm  ), "lda.s8", "$mRa, [$ptr, $imm]">,
       AIE2_ag_nospill__ag_idx_imm;
     def LDA_S8_ag_idx : AIE2_dmhb_lda_inst_lda<0b00, (outs eR:$mRa) , (ins  eP:$ptr, eDJ:$dj  ), "lda.s8", "$mRa, [$ptr, $dj]">,
@@ -201,12 +202,19 @@ let mayLoad = true, mayStore = true in {
 }
 let mayLoad = true, mayStore = false in {
   let Itinerary = II_LDA in {
-  def LDA_dms_lda_idx : AIE2_dms_lda_inst_lda< (outs OP_mLdaScl:$mLdaScl) , (ins eP:$ptr, eDJ:$dj),
-      "lda", "$mLdaScl, [$ptr, $dj]">, 
-    AIE2_ag_all__ag_idx;
-  def LDA_dms_lda_idx_imm : AIE2_dms_lda_inst_lda< (outs OP_mLdaScl:$mLdaScl) , (ins eP:$ptr, imm6x4:$imm),
-      "lda", "$mLdaScl, [$ptr, $imm]">, 
-    AIE2_ag_all__ag_idx_imm;
+  let ItineraryRegPairs = [ItinRegClassPair<II_LDA_R,[OperandRegClass<0, eR>]>,
+                           ItinRegClassPair<II_LDA_P,[OperandRegClass<0, eP>]>,
+                           ItinRegClassPair<II_LDA_M,[OperandRegClass<0, eM>]>,
+                           ItinRegClassPair<II_LDA_DC,[OperandRegClass<0, eDC>]>,
+                           ItinRegClassPair<II_LDA_DJ,[OperandRegClass<0, eDJ>]>,
+                           ItinRegClassPair<II_LDA_DN,[OperandRegClass<0, eDN>]>] in {
+    def LDA_dms_lda_idx : AIE2_dms_lda_inst_lda< (outs OP_mLdaScl:$mLdaScl) , (ins eP:$ptr, eDJ:$dj),
+        "lda", "$mLdaScl, [$ptr, $dj]">, 
+      AIE2_ag_all__ag_idx;
+    def LDA_dms_lda_idx_imm : AIE2_dms_lda_inst_lda< (outs OP_mLdaScl:$mLdaScl) , (ins eP:$ptr, imm6x4:$imm),
+        "lda", "$mLdaScl, [$ptr, $imm]">, 
+      AIE2_ag_all__ag_idx_imm;
+    }
   }
   let Itinerary = II_LDA_POST_1D, Constraints = "$ptr = $ptr_out" in {
     def LDA_dms_lda_pstm_nrm : AIE2_dms_lda_inst_lda< (outs OP_mLdaScl:$mLdaScl, eP:$ptr_out ) , (ins eP:$ptr, eM:$mod),
