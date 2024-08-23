@@ -61,12 +61,11 @@ define void @mul2d(ptr noalias %in_ptr0, ptr noalias %in_ptr1, ptr noalias %out_
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %for.body.lr.ph
-; CHECK-NEXT:    nopa ; nopx ; mov p3, sp
+; CHECK-NEXT:    nopa ; nopb ; nopx ; mov p3, sp; nops
 ; CHECK-NEXT:    paddb [p3], #-4
 ; CHECK-NEXT:    lda.u8 r0, [p3, #0]; mov p3, sp
 ; CHECK-NEXT:    paddb [p3], #-8
-; CHECK-NEXT:    lda dj0, [p3, #0]
-; CHECK-NEXT:    mov p3, sp
+; CHECK-NEXT:    lda dj0, [p3, #0]; mov p3, sp
 ; CHECK-NEXT:    paddb [p3], #-12
 ; CHECK-NEXT:    lda dj4, [p3, #0]; mov p3, sp
 ; CHECK-NEXT:    paddb [p3], #-16
@@ -75,10 +74,10 @@ define void @mul2d(ptr noalias %in_ptr0, ptr noalias %in_ptr1, ptr noalias %out_
 ; CHECK-NEXT:    lda dn4, [p3, #0]; mov p3, sp
 ; CHECK-NEXT:    paddb [p3], #-24
 ; CHECK-NEXT:    lda m0, [p3, #0]
-; CHECK-NEXT:    mova dc0, #0; extend.u8 r5, r5
-; CHECK-NEXT:    movx r2, #1; mov s0, r5
-; CHECK-NEXT:    mova r4, #-1; movx r3, #0; mov dc4, dc0
-; CHECK-NEXT:    ne r2, r0, r2; vbcst.8 x0, r3
+; CHECK-NEXT:    extend.u8 r5, r5
+; CHECK-NEXT:    mova dc0, #0; mov s0, r5
+; CHECK-NEXT:    mova r3, #0; movx r2, #1; mov dc4, dc0
+; CHECK-NEXT:    mova r4, #-1; ne r2, r0, r2; vbcst.8 x0, r3
 ; CHECK-NEXT:    mova r0, #808; lshl r1, r1, r4; mov crSRSSign, r2
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB0_2: // %for.body

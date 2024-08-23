@@ -28,8 +28,8 @@ define dso_local ptr @test_add_2d_ptr(ptr %a, i32 noundef %off, i32 noundef %siz
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    mova r3, #6; nopx
-; CHECK-NEXT:    lda dc0, [p2, #0]
 ; CHECK-NEXT:    mov dn0, r1
+; CHECK-NEXT:    lda dc0, [p2, #0]
 ; CHECK-NEXT:    mov p0, p1
 ; CHECK-NEXT:    lshl r0, r0, r3
 ; CHECK-NEXT:    mov m0, r0
@@ -60,12 +60,12 @@ define dso_local ptr @test_add_2d_byte(ptr %a, i32 noundef %off, i32 noundef %si
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; lda dc0, [p2, #0]; nops ; nopxm ; nopv
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mov m0, r0
 ; CHECK-NEXT:    mov dj0, r2
-; CHECK-NEXT:    mov dn0, r1
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    mov p0, p1 // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    mov dn0, r1 // Delay Slot 5
+; CHECK-NEXT:    mov p0, p1 // Delay Slot 4
 ; CHECK-NEXT:    padda.2d [p0], d0 // Delay Slot 3
 ; CHECK-NEXT:    st dc0, [p2, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
@@ -133,15 +133,14 @@ define dso_local ptr @test_add_3d_byte(ptr %a, i32 noundef %off, i32 noundef %si
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; mov m0, r0; nopv
-; CHECK-NEXT:    mov dj0, r2
-; CHECK-NEXT:    lda dc0, [p2, #0]
+; CHECK-NEXT:    lda dc0, [p2, #0]; nopx
 ; CHECK-NEXT:    lda dc4, [p3, #0]
+; CHECK-NEXT:    mov dj0, r2
 ; CHECK-NEXT:    mov dj4, r4
 ; CHECK-NEXT:    mov dn0, r1
 ; CHECK-NEXT:    mov dn4, r3
-; CHECK-NEXT:    mov p0, p1
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    mov p0, p1 // Delay Slot 5
 ; CHECK-NEXT:    padda.3d [p0], d0 // Delay Slot 4
 ; CHECK-NEXT:    st dc0, [p2, #0] // Delay Slot 3
 ; CHECK-NEXT:    st dc4, [p3, #0] // Delay Slot 2
