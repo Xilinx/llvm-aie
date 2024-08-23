@@ -234,16 +234,23 @@ let mayLoad = true, mayStore = false in {
   }
 
   let Itinerary = II_LDA_POST_2D, Constraints = "$ptr = $ptr_out" in {
-    let DecoderMethod = "DecodeLDA_2D_Instruction" in {
+    let ItineraryRegPairs = [ItinRegClassPair<II_LDA_POST_2D_R,[OperandRegClass<0, eR>]>,
+                             ItinRegClassPair<II_LDA_POST_2D_P,[OperandRegClass<0, eP>]>, 
+                             ItinRegClassPair<II_LDA_POST_2D_M,[OperandRegClass<0, eM>]>,
+                             ItinRegClassPair<II_LDA_POST_2D_DC,[OperandRegClass<0, eDC>]>,
+                             ItinRegClassPair<II_LDA_POST_2D_DJ,[OperandRegClass<0, eDJ>]>,
+                             ItinRegClassPair<II_LDA_POST_2D_DN,[OperandRegClass<0, eDN>]>], 
+               DecoderMethod = "DecodeLDA_2D_Instruction" in {
       def LDA_2D_dms_lda : AIE2_dms_lda_inst_lda<
         (outs OP_mLdaScl:$mLdaScl, eP:$ptr_out, eDC:$count_out),
         (ins eP:$ptr, eD:$mod),
         "lda.2d", "$mLdaScl, [$ptr], $mod">,
       AIE2_ag_all__ag_pstm_2d;
     }
+  }
 
+  let Itinerary = II_LDA_POST_2D_R, Constraints = "$ptr = $ptr_out" in {
     let DecoderMethod = "DecodeLDA_2D_HBInstruction" in {
-
       def LDA_2D_S8_dmhb_lda : AIE2_dmhb_lda_inst_lda<0b00,
         (outs eR:$mRa, eP:$ptr_out, eDC:$count_out),
         (ins  eP:$ptr, eD:$mod  ),
