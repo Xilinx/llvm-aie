@@ -70,8 +70,8 @@ def EXEC_TRACE_UNIT : FuncUnit;
 
 // Reading (rv port)
 def R_RV_PORT : FuncUnit;
-// Writing (wm port)
-def R_WM_PORT : FuncUnit;
+// Writing (wm port), shared with S RegClass
+def RS_WM_PORT : FuncUnit;
 // Writing (wx port)
 def R_WX_PORT : FuncUnit;
 // Writing (wa port)
@@ -98,10 +98,9 @@ def DC_WM_PORT : FuncUnit;
 
 
 // 11.4 Other Scalar Register Ports
-
-// TESTME-VLIW: Conflict between VEXTRACT and other instructions
-// in the mov slot
-def S_WM_PORT : FuncUnit;
+// The S register is a separate register file, however, there is a common part between the 
+// R and S register file wm port which prevents them from being used in parallel.
+// RS_WM_PORT ports model the necessary behavior
 
 // 11.5 Vector Register Ports
 
@@ -362,9 +361,9 @@ def II_VMOV_D : InstrItinClass;
 
 def AIE2Itineraries : ProcessorItineraries<
 [EMPTY_FU,
- R_WX_PORT, R_WA_PORT, R_RV_PORT, R_WM_PORT,
+ R_WX_PORT, R_WA_PORT, R_RV_PORT, RS_WM_PORT,
  P_RM_PORT, P_WM_PORT,
- S_WM_PORT, M_WM_PORT, DC_WM_PORT, DJ_WM_PORT, DN_WM_PORT,
+ M_WM_PORT, DC_WM_PORT, DJ_WM_PORT, DN_WM_PORT,
  W_RS_PORT, W_WA_PORT, W_WM_PORT,
  CM_RM_PORT, CM_WA_PORT, CM_WM_PORT, PROC_BUS, PART_WORD_STORE,
  UPPER_SRS, STORE_UNIT, LOAD_UNIT_A, SEMAPHORE, UPS_UNIT, DONE_UNIT],
@@ -381,9 +380,9 @@ InstrItinData<II_ADC, [InstrStage<1,  [R_WX_PORT]>],
 InstrItinData<II_ADD, [InstrStage<1,  [R_WX_PORT]>],
               [1,1,1,/*def:srCarry*/1]>,
 InstrItinData<II_ADD_NC, [PrefixCycle<P_WM_PORT>, PrefixCycle<M_WM_PORT>, PrefixCycle<DJ_WM_PORT>,
-                         PrefixCycle<DN_WM_PORT>, PrefixCycle<DC_WM_PORT>, PrefixCycle<S_WM_PORT>,
-                         SimpleCycle<R_WM_PORT>], [1,1,1]>,
-InstrItinData<II_ADD_NC_GPR, [SimpleCycle<R_WM_PORT>], [1,1,1]>,
+                         PrefixCycle<DN_WM_PORT>, PrefixCycle<DC_WM_PORT>, SimpleCycle<RS_WM_PORT>],
+                         [1,1,1]>,
+InstrItinData<II_ADD_NC_GPR, [SimpleCycle<RS_WM_PORT>], [1,1,1]>,
 InstrItinData<II_AND, [InstrStage<1,  [R_WX_PORT]>], [1,1,1,1]>,
 InstrItinData<II_ASHL, [InstrStage<1,  [R_WX_PORT]>], [1,1,1,1]>,
 InstrItinData<II_CLB, [InstrStage<1,  [R_WX_PORT]>], [1,1,1]>,
@@ -438,23 +437,23 @@ MemInstrItinData<II_LDA_TM,
 InstrItinData<II_LSHL, [InstrStage<1,  [R_WX_PORT]>], [1,1,1,1]>,
 InstrItinData<II_LT, [InstrStage<1,  [R_WX_PORT]>], [1,1,1,1]>,
 InstrItinData<II_LTU, [InstrStage<1,  [R_WX_PORT]>], [1,1,1,1]>,
-InstrItinData<II_MOV, [PrefixCycle<P_WM_PORT>, PrefixCycle<S_WM_PORT>, PrefixCycle<M_WM_PORT>, PrefixCycle<DJ_WM_PORT>,
-                       PrefixCycle<DN_WM_PORT>, PrefixCycle<DC_WM_PORT>, SimpleCycle<R_WM_PORT>], [1,1]>,
+InstrItinData<II_MOV, [PrefixCycle<P_WM_PORT>, PrefixCycle<M_WM_PORT>, PrefixCycle<DJ_WM_PORT>,
+                       PrefixCycle<DN_WM_PORT>, PrefixCycle<DC_WM_PORT>, SimpleCycle<RS_WM_PORT>], [1,1]>,
 InstrItinData<II_MOVA, [PrefixCycle<P_WM_PORT>, PrefixCycle<M_WM_PORT>, PrefixCycle<DJ_WM_PORT>,
                         PrefixCycle<DN_WM_PORT>, PrefixCycle<DC_WM_PORT>, SimpleCycle<R_WA_PORT>], [1,1]>,
 InstrItinData<II_MOVX, [SimpleCycle<R_WX_PORT>], [1,1]>,
-InstrItinData<II_MOVXM, [PrefixCycle<P_WM_PORT>, PrefixCycle<S_WM_PORT>, PrefixCycle<M_WM_PORT>, PrefixCycle<DJ_WM_PORT>,
-                         PrefixCycle<DN_WM_PORT>, PrefixCycle<DC_WM_PORT>, SimpleCycle<R_WM_PORT>], [1,1]>,
-InstrItinData<II_MOV_SCL, [PrefixCycle<P_RM_PORT>, PrefixCycle<R_WM_PORT>, PrefixCycle<P_WM_PORT>, PrefixCycle<M_WM_PORT>,
-                           PrefixCycle<DJ_WM_PORT>, PrefixCycle<DN_WM_PORT>, PrefixCycle<DC_WM_PORT>, SimpleCycle<S_WM_PORT>],
+InstrItinData<II_MOVXM, [PrefixCycle<P_WM_PORT>, PrefixCycle<M_WM_PORT>, PrefixCycle<DJ_WM_PORT>,
+                         PrefixCycle<DN_WM_PORT>, PrefixCycle<DC_WM_PORT>, SimpleCycle<RS_WM_PORT>], [1,1]>,
+InstrItinData<II_MOV_SCL, [PrefixCycle<P_RM_PORT>, PrefixCycle<RS_WM_PORT>, PrefixCycle<P_WM_PORT>, PrefixCycle<M_WM_PORT>,
+                           PrefixCycle<DJ_WM_PORT>, PrefixCycle<DN_WM_PORT>, SimpleCycle<DC_WM_PORT>],
                            [1,1]>,
 InstrItinData<II_MOV_SS, [AvoidSemaphore<7>, EmptyCycles<6>, SimpleCycle<R_WA_PORT>], [7,/*def:srSS0*/8]>,
-InstrItinData<II_MOVd1, [SimpleCycle<P_RM_PORT>, SimpleCycle<R_WM_PORT>], [2,1]>,
-InstrItinData<II_MOVd2, [SimpleCycle<P_RM_PORT>, EmptyCycles<1>, SimpleCycle<R_WM_PORT>], [3,1]>,
-InstrItinData<II_MOVd3, [SimpleCycle<P_RM_PORT>, EmptyCycles<2>, SimpleCycle<R_WM_PORT>], [4,1]>,
-InstrItinData<II_MOVd4, [SimpleCycle<P_RM_PORT>, EmptyCycles<3>, SimpleCycle<R_WM_PORT>], [5,1]>,
-InstrItinData<II_MOVd5, [SimpleCycle<P_RM_PORT>, EmptyCycles<4>, SimpleCycle<R_WM_PORT>], [6,1]>,
-InstrItinData<II_MOVd6, [SimpleCycle<P_RM_PORT>, EmptyCycles<5>, SimpleCycle<R_WM_PORT>], [7,1]>,
+InstrItinData<II_MOVd1, [SimpleCycle<P_RM_PORT>, SimpleCycle<RS_WM_PORT>], [2,1]>,
+InstrItinData<II_MOVd2, [SimpleCycle<P_RM_PORT>, EmptyCycles<1>, SimpleCycle<RS_WM_PORT>], [3,1]>,
+InstrItinData<II_MOVd3, [SimpleCycle<P_RM_PORT>, EmptyCycles<2>, SimpleCycle<RS_WM_PORT>], [4,1]>,
+InstrItinData<II_MOVd4, [SimpleCycle<P_RM_PORT>, EmptyCycles<3>, SimpleCycle<RS_WM_PORT>], [5,1]>,
+InstrItinData<II_MOVd5, [SimpleCycle<P_RM_PORT>, EmptyCycles<4>, SimpleCycle<RS_WM_PORT>], [6,1]>,
+InstrItinData<II_MOVd6, [SimpleCycle<P_RM_PORT>, EmptyCycles<5>, SimpleCycle<RS_WM_PORT>], [7,1]>,
 InstrItinData<II_MUL, [EmptyCycles<1>, SimpleCycle<R_WX_PORT>], [2,1,1]>,
 InstrItinData<II_NE, [InstrStage<1,  [R_WX_PORT]>], [1,1,1,1]>,
 InstrItinData<II_NEZ, [InstrStage<1,  [R_WX_PORT]>], [1,1,1]>,
@@ -570,7 +569,7 @@ MemInstrItinData<II_STHB_3D,
     MemoryCycles<[5, 11]>>,
 InstrItinData<II_SUB, [InstrStage<1,  [R_WX_PORT]>],
               [1,1,1,/*def:srCarry*/1]>,
-InstrItinData<II_VABS_GTZ, [EmptyCycles<1>, PrefixCycle<W_WM_PORT>, SimpleCycle<R_WM_PORT>],
+InstrItinData<II_VABS_GTZ, [EmptyCycles<1>, PrefixCycle<W_WM_PORT>, SimpleCycle<RS_WM_PORT>],
               [2,2,1,/*crVaddSign*/1], [MOV_Bypass,NoBypass,MOV_Bypass]>,
 InstrItinData<II_VACC, [InstrStage<1, [R_RV_PORT]>, EmptyCycles<1>, InstrStage<1, [CM_RM_PORT]>,
               EmptyCycles<1>, InstrStage<1, [CM_WA_PORT]>],
@@ -607,13 +606,12 @@ InstrItinData<II_VBCST, [EmptyCycles<1>, InstrStage<1,  [W_WM_PORT]>],
               [2,1], [MOV_Bypass,NoBypass]>,
 InstrItinData<II_VBCSTSHFL, [EmptyCycles<1>, InstrStage<1,[W_WM_PORT],0>, InstrStage<1,[CM_WM_PORT],0>],
               [2,1,1], [MOV_Bypass,NoBypass,NoBypass]>,
-InstrItinData<II_VBNEG_LTZ, [EmptyCycles<1>, PrefixCycle<W_WM_PORT>, SimpleCycle<R_WM_PORT>],
+InstrItinData<II_VBNEG_LTZ, [EmptyCycles<1>, PrefixCycle<W_WM_PORT>, SimpleCycle<RS_WM_PORT>],
               [2,2,1], [MOV_Bypass,NoBypass,MOV_Bypass]>,
 InstrItinData<II_VEXTBCST, [EmptyCycles<1>, InstrStage<1,  [W_WM_PORT]>],
               [2,1,1], [MOV_Bypass,MOV_Bypass,NoBypass]>,
-InstrItinData<II_VEXTRACT, [EmptyCycles<1>, PrefixCycle<R_WM_PORT>, PrefixCycle<P_WM_PORT>, PrefixCycle<M_WM_PORT>,
-                            PrefixCycle<DJ_WM_PORT>, PrefixCycle<DN_WM_PORT>, PrefixCycle<DC_WM_PORT>,
-                            SimpleCycle<S_WM_PORT>],
+InstrItinData<II_VEXTRACT, [EmptyCycles<1>, PrefixCycle<RS_WM_PORT>, PrefixCycle<P_WM_PORT>, PrefixCycle<M_WM_PORT>,
+                            PrefixCycle<DJ_WM_PORT>, PrefixCycle<DN_WM_PORT>, SimpleCycle<DC_WM_PORT>],
               [2,1,1,/*crVaddSign*/1], [NoBypass,MOV_Bypass,NoBypass]>,
 InstrItinData<II_VINSERT, [EmptyCycles<1>, InstrStage<1,  [W_WM_PORT]>],
               [2,1,1,1], [MOV_Bypass,MOV_Bypass,NoBypass,NoBypass]>,
@@ -757,22 +755,22 @@ MemInstrItinData<II_LDA_3D_Q,
     MemoryCycles<[5]>>,
 InstrItinData<II_VMAC, [InstrStage<1, [R_RV_PORT]>, EmptyCycles<3>, InstrStage<1, [CM_WA_PORT]>],
               [5,3,1,1,1], [VEC_Bypass,VEC_Bypass,NoBypass,NoBypass]>,
-InstrItinData<II_VMAX_LT, [EmptyCycles<1>, PrefixCycle<W_WM_PORT>, SimpleCycle<R_WM_PORT>],
+InstrItinData<II_VMAX_LT, [EmptyCycles<1>, PrefixCycle<W_WM_PORT>, SimpleCycle<RS_WM_PORT>],
               [2,2,1,1,/*crVaddSign*/1], [MOV_Bypass,NoBypass,MOV_Bypass,MOV_Bypass]>,
-InstrItinData<II_VMIN_GE, [EmptyCycles<1>, PrefixCycle<W_WM_PORT>, SimpleCycle<R_WM_PORT>],
+InstrItinData<II_VMIN_GE, [EmptyCycles<1>, PrefixCycle<W_WM_PORT>, SimpleCycle<RS_WM_PORT>],
               [2,2,1,1,/*crVaddSign*/1], [MOV_Bypass,NoBypass,MOV_Bypass,MOV_Bypass]>,
-InstrItinData<II_VSUB_CMP, [EmptyCycles<1>, PrefixCycle<W_WM_PORT>, SimpleCycle<R_WM_PORT>],
+InstrItinData<II_VSUB_CMP, [EmptyCycles<1>, PrefixCycle<W_WM_PORT>, SimpleCycle<RS_WM_PORT>],
               [2,2,1,1,/*crVaddSign*/1], [MOV_Bypass,NoBypass,MOV_Bypass,MOV_Bypass]>,
-InstrItinData<II_VMAXDIFF_LT, [EmptyCycles<1>, PrefixCycle<W_WM_PORT>, SimpleCycle<R_WM_PORT>],
+InstrItinData<II_VMAXDIFF_LT, [EmptyCycles<1>, PrefixCycle<W_WM_PORT>, SimpleCycle<RS_WM_PORT>],
               [2,2,1,1,/*crVaddSign*/1], [MOV_Bypass,NoBypass,MOV_Bypass,MOV_Bypass]>,
 // We don't reserve the W_WM_PORT for VGE/VLT/VEQZ because they don't write to W or X register file.
-InstrItinData<II_VCMP, [EmptyCycles<1>, SimpleCycle<R_WM_PORT>],
+InstrItinData<II_VCMP, [EmptyCycles<1>, SimpleCycle<RS_WM_PORT>],
               [2,1,1,/*crVaddSign*/1], [NoBypass,MOV_Bypass,MOV_Bypass]>,
-InstrItinData<II_VEQZ, [EmptyCycles<1>, SimpleCycle<R_WM_PORT>],
+InstrItinData<II_VEQZ, [EmptyCycles<1>, SimpleCycle<RS_WM_PORT>],
               [2,1], [NoBypass,MOV_Bypass]>,
 InstrItinData<II_VMSC, [InstrStage<1, [R_RV_PORT]>, EmptyCycles<3>, InstrStage<1, [CM_WA_PORT]>],
               [5,3,1,1,1], [VEC_Bypass,VEC_Bypass,NoBypass,NoBypass]>,
-InstrItinData<II_VNEG_GTZ, [EmptyCycles<1>, PrefixCycle<W_WM_PORT>, SimpleCycle<R_WM_PORT>],
+InstrItinData<II_VNEG_GTZ, [EmptyCycles<1>, PrefixCycle<W_WM_PORT>, SimpleCycle<RS_WM_PORT>],
               [2,2,1], [MOV_Bypass,NoBypass,MOV_Bypass]>,
 InstrItinData<II_VNEGMAC, [InstrStage<1, [R_RV_PORT]>, EmptyCycles<3>, InstrStage<1, [CM_WA_PORT]>],
               [5,3,1,1,1], [VEC_Bypass,VEC_Bypass,NoBypass,NoBypass]>,
