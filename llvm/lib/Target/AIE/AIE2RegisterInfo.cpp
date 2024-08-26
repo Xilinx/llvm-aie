@@ -458,6 +458,26 @@ AIE2RegisterInfo::getCoveringSubRegs(const TargetRegisterClass &RC) const {
   return Subregs;
 }
 
+const llvm::SmallVector<MCPhysReg, 16>
+AIE2RegisterInfo::getCSPhyRegs(const MachineFunction &MF) const {
+  llvm::SmallVector<MCPhysReg, 16> CSRegs;
+  const MCPhysReg *RegularCSRegs = getCalleeSavedRegs(&MF);
+  for (const uint16_t *RegPtr = RegularCSRegs; *RegPtr; ++RegPtr) {
+    CSRegs.push_back(*RegPtr);
+  }
+  // add long register that overlap with CS regs
+  CSRegs.push_back(MCPhysReg(AIE2::l0));
+  CSRegs.push_back(MCPhysReg(AIE2::l1));
+  CSRegs.push_back(MCPhysReg(AIE2::l2));
+  CSRegs.push_back(MCPhysReg(AIE2::l3));
+  return CSRegs;
+}
+
+const TargetRegisterClass *
+AIE2RegisterInfo::getCalleeSaveRegClass(const MachineFunction &MF) const {
+  return getLargestLegalSuperClass(getGPRRegClass(MF), MF);
+}
+
 bool AIE2RegisterInfo::isVecOrAccRegClass(const TargetRegisterClass &RC) const {
   // ******** Vector classes ********
   if (AIE2::VEC128RegClass.hasSubClassEq(&RC))

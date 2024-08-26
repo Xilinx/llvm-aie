@@ -48,6 +48,17 @@ struct AIEBaseRegisterInfo : public TargetRegisterInfo {
     return false;
   }
 
+  virtual const llvm::SmallVector<MCPhysReg, 16>
+  getCSPhyRegs(const MachineFunction &MF) const {
+    llvm_unreachable("Target didn't implement getCSPhyRegs()");
+  }
+
+  virtual const TargetRegisterClass *
+  getCalleeSaveRegClass(const MachineFunction &MF) const {
+    llvm_unreachable("Target didn't implement getCalleeSaveRegClass()");
+  }
+
+
   virtual bool isVecOrAccRegClass(const TargetRegisterClass &RC) const {
     llvm_unreachable("Target didn't implement isVecOrAccRegClass()");
   }

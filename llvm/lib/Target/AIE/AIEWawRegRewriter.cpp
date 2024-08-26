@@ -129,6 +129,10 @@ private:
   /// removed for future replacement strategies, i.e. block wl4, wh4, y2 if X4
   /// is used.
   void addAliasRegs(BitVector &BlockedPhysRegs, const MCPhysReg PhysReg) const;
+
+bool couldBeCalleeSaveEvasiveRegister(const MCPhysReg &PhysReg,
+                                                         Register Reg);
+
 };
 
 MCPhysReg
@@ -322,6 +326,9 @@ MCPhysReg AIEWawRegRewriter::getReplacementPhysReg(
     if (BlockedPhysRegs[PhysReg])
       continue;
 
+    if (couldBeCalleeSaveEvasiveRegister(PhysReg, Reg))
+      continue;
+
     LiveRegMatrix::InterferenceKind IK = LRM->checkInterference(LI, PhysReg);
     if (IK == LiveRegMatrix::IK_Free)
       return PhysReg;
@@ -371,6 +378,16 @@ void AIEWawRegRewriter::addAliasRegs(BitVector &BlockedPhysRegs,
     LLVM_DEBUG(dbgs() << printReg(*AI, TRI, 0, MRI) << " ");
   }
   LLVM_DEBUG(dbgs() << "\n");
+}
+
+bool AIEWawRegRewriter::couldBeCalleeSaveEvasiveRegister(const MCPhysReg &PhysReg,
+                                             Register Reg) {
+  const TargetRegisterClass *CalleeSaveClass = TRI->getCalleeSaveRegClass(*MF);
+  const TargetRegisterClass *GPRClass = MRI->getRegClass(Reg);
+  if (CalleeSaveClass == GPRClass) {
+    return !LRM->isPhysRegUsed(PhysReg);
+  }
+  return false;
 }
 
 } // end anonymous namespace

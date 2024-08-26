@@ -82,6 +82,11 @@ struct AIE2RegisterInfo : public AIE2GenRegisterInfo {
   getCoveringSubRegs(const TargetRegisterClass &RC) const override;
   bool isSimplifiableReservedReg(MCRegister PhysReg) const override;
 
+  const llvm::SmallVector<MCPhysReg, 16>
+  getCSPhyRegs(const MachineFunction &MF) const override;
+  const TargetRegisterClass *
+  getCalleeSaveRegClass(const MachineFunction &MF) const override;
+
   const TargetRegisterClass *get2DIteratorRegClass() const override {
     return &AIE2::eDRegClass;
   }
