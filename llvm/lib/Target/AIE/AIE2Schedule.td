@@ -282,6 +282,12 @@ def II_VCONVfp32bf16_WL : InstrItinClass;
 def II_VEQZ : InstrItinClass;
 def II_VEXTBCST : InstrItinClass;
 def II_VEXTRACT : InstrItinClass;
+def II_VEXTRACT_DC : InstrItinClass;
+def II_VEXTRACT_DJ : InstrItinClass;
+def II_VEXTRACT_DN : InstrItinClass;
+def II_VEXTRACT_M : InstrItinClass;
+def II_VEXTRACT_P : InstrItinClass;
+def II_VEXTRACT_RS : InstrItinClass;
 def II_VFLOORs32bf16_AM : InstrItinClass;
 def II_VFLOORs32bf16_W : InstrItinClass;
 def II_VINSERT : InstrItinClass;
@@ -773,6 +779,18 @@ InstrItinData<II_VEXTBCST, [EmptyCycles<1>, InstrStage<1,  [W_WM_PORT]>],
               [2,1,1], [MOV_Bypass,MOV_Bypass,NoBypass]>,
 InstrItinData<II_VEXTRACT, [EmptyCycles<1>, PrefixCycle<RS_WM_PORT>, PrefixCycle<P_WM_PORT>, PrefixCycle<M_WM_PORT>,
                             PrefixCycle<DJ_WM_PORT>, PrefixCycle<DN_WM_PORT>, SimpleCycle<DC_WM_PORT>],
+              [2,1,1,/*crVaddSign*/1], [NoBypass,MOV_Bypass,NoBypass]>,
+InstrItinData<II_VEXTRACT_DC, [EmptyCycles<1>, SimpleCycle<DC_WM_PORT>],
+              [2,1,1,/*crVaddSign*/1], [NoBypass,MOV_Bypass,NoBypass]>,
+InstrItinData<II_VEXTRACT_DJ, [EmptyCycles<1>, SimpleCycle<DJ_WM_PORT>],
+              [2,1,1,/*crVaddSign*/1], [NoBypass,MOV_Bypass,NoBypass]>,
+InstrItinData<II_VEXTRACT_DN, [EmptyCycles<1>, SimpleCycle<DN_WM_PORT>],
+              [2,1,1,/*crVaddSign*/1], [NoBypass,MOV_Bypass,NoBypass]>,
+InstrItinData<II_VEXTRACT_M, [EmptyCycles<1>, SimpleCycle<M_WM_PORT>],
+              [2,1,1,/*crVaddSign*/1], [NoBypass,MOV_Bypass,NoBypass]>,
+InstrItinData<II_VEXTRACT_P, [EmptyCycles<1>, SimpleCycle<P_WM_PORT>],
+              [2,1,1,/*crVaddSign*/1], [NoBypass,MOV_Bypass,NoBypass]>,
+InstrItinData<II_VEXTRACT_RS, [EmptyCycles<1>, SimpleCycle<RS_WM_PORT>],
               [2,1,1,/*crVaddSign*/1], [NoBypass,MOV_Bypass,NoBypass]>,
 InstrItinData<II_VINSERT, [EmptyCycles<1>, InstrStage<1,  [W_WM_PORT]>],
               [2,1,1,1], [MOV_Bypass,MOV_Bypass,NoBypass,NoBypass]>,

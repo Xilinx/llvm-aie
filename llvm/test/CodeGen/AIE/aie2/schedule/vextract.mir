@@ -114,3 +114,155 @@ body:             |
     $r3 = VEXTRACT_S16 $x3, $r16
     $r4 = VEXTRACT_S8  $x3, $r16
 ...
+
+---
+name:            vextract_to_R
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: vextract_to_R
+    ; CHECK: $r3 = VEXTRACT_S8 killed $x3, killed $r16
+    ; CHECK-NEXT: $dc0 = MOVA_lda_cg 1
+    $r3 = VEXTRACT_S8  $x3, $r16
+    $dc0 = MOVA_lda_cg 1
+...
+
+---
+name:            vextract_to_P
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: vextract_to_P
+    ; CHECK: $p0 = VEXTRACT_S8 killed $x3, killed $r16
+    ; CHECK-NEXT: $dc0 = MOVA_lda_cg 1
+    $p0 = VEXTRACT_S8  $x3, $r16
+    $dc0 = MOVA_lda_cg 1
+...
+
+
+---
+name:            vextract_to_M
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: vextract_to_M
+    ; CHECK: $m1 = VEXTRACT_S8 killed $x3, killed $r16
+    ; CHECK-NEXT: $dc0 = MOVA_lda_cg 1
+    $m1 = VEXTRACT_S8  $x3, $r16
+    $dc0 = MOVA_lda_cg 1
+...
+
+---
+name:            vextract_to_DC
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: vextract_to_DC
+    ; CHECK: $dc1 = VEXTRACT_S8 killed $x3, killed $r16
+    ; CHECK-NEXT: $r2 = MOVA_lda_cg 1
+    $dc1 = VEXTRACT_S8  $x3, $r16
+    $r2 = MOVA_lda_cg 1
+...
+
+---
+name:            vextract_to_DJ
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: vextract_to_DJ
+    ; CHECK: $dj1 = VEXTRACT_S8 killed $x3, killed $r16
+    ; CHECK-NEXT: $r2 = MOVA_lda_cg 1
+    $dj1 = VEXTRACT_S8  $x3, $r16
+    $r2 = MOVA_lda_cg 1
+...
+
+---
+name:            vextract_to_DN
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: vextract_to_DN
+    ; CHECK: $dn1 = VEXTRACT_S8 killed $x3, killed $r16
+    ; CHECK-NEXT: $r2 = MOVA_lda_cg 1
+    $dn1 = VEXTRACT_S8  $x3, $r16
+    $r2 = MOVA_lda_cg 1
+...
+
+---
+name:            vextract_raw_to_R
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: vextract_raw_to_R
+    ; CHECK: $r3 = VEXTRACT_S8 killed $x3, killed $r16
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $dc0 = MOV_mv_scl killed $r3
+    $r3 = VEXTRACT_S8  $x3, $r16
+    $dc0 = MOV_mv_scl $r3
+...
+
+---
+name:            vextract_raw_to_P
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: vextract_raw_to_P
+    ; CHECK: $p0 = VEXTRACT_S8 killed $x3, killed $r16
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $dc0 = MOV_mv_scl killed $p0
+    $p0 = VEXTRACT_S8  $x3, $r16
+    $dc0 = MOV_mv_scl $p0
+...
+
+
+---
+name:            vextract_raw_to_M
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: vextract_raw_to_M
+    ; CHECK: $m1 = VEXTRACT_S8 killed $x3, killed $r16
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $dc0 = MOV_mv_scl killed $m1
+    $m1 = VEXTRACT_S8  $x3, $r16
+    $dc0 = MOV_mv_scl $m1
+...
+
+---
+name:            vextract_raw_to_DC
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: vextract_raw_to_DC
+    ; CHECK: $dc1 = VEXTRACT_S8 killed $x3, killed $r16
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $r2 = MOV_mv_scl killed $dc1
+    $dc1 = VEXTRACT_S8  $x3, $r16
+    $r2 = MOV_mv_scl $dc1
+...
+
+---
+name:            vextract_raw_to_DJ
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: vextract_raw_to_DJ
+    ; CHECK: $dj1 = VEXTRACT_S8 killed $x3, killed $r16
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $r2 = MOV_mv_scl killed $dj1
+    $dj1 = VEXTRACT_S8  $x3, $r16
+    $r2 = MOV_mv_scl $dj1
+...
+
+---
+name:            vextract_raw_to_DN
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: vextract_raw_to_DN
+    ; CHECK: $dn1 = VEXTRACT_S8 killed $x3, killed $r16
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $r2 = MOV_mv_scl killed $dn1
+    $dn1 = VEXTRACT_S8  $x3, $r16
+    $r2 = MOV_mv_scl $dn1
+...
