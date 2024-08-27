@@ -94,36 +94,28 @@ inline v8cacc64 lups(v8cint16 a, int shft) { uint6_t sft = (uint6_t)(shft);
 #endif
 
 inline v16acc64 lups(v16int32 a, int shft, int sign) {
-  v16acc64 result = set_v16acc64(0, lups(extract_v8int32(a, 0), shft, sign));
-  result = insert(result, 1, lups(extract_v8int32(a, 1), shft, sign));
-  return result;
+  return __builtin_aiev2_acc64_v16_I512_ups(a, shft, sign);
 }
 inline v16acc64 lups(v16int32 a, int shft) {
   return lups(a, shft, __SIGN_SIGNED);
 }
 
 inline v16acc64 lups(v16uint32 a, int shft, int sign) {
-  v16acc64 result = set_v16acc64(0, lups(extract_v8uint32(a, 0), shft, sign));
-  result = insert(result, 1, lups(extract_v8uint32(a, 1), shft, sign));
-  return result;
+  return __builtin_aiev2_acc64_v16_I512_ups(a, shft, sign);
 }
 inline v16acc64 lups(v16uint32 a, int shft) {
   return lups(a, shft, __SIGN_UNSIGNED);
 }
 
 inline v32acc32 sups(v32int16 a, int shft, int sign) {
-  v32acc32 result = set_v32acc32(0, sups(extract_v16int16(a, 0), shft, sign));
-  result = insert(result, 1, sups(extract_v16int16(a, 1), shft, sign));
-  return result;
+  return __builtin_aiev2_acc32_v32_I512_ups(a, shft, sign);
 }
 inline v32acc32 sups(v32int16 a, int shft) {
   return sups(a, shft, __SIGN_SIGNED);
 }
 
 inline v32acc32 sups(v32uint16 a, int shft, int sign) {
-  v32acc32 result = set_v32acc32(0, sups(extract_v16uint16(a, 0), shft, sign));
-  result = insert(result, 1, sups(extract_v16uint16(a, 1), shft, sign));
-  return result;
+  return __builtin_aiev2_acc32_v32_I512_ups(a, shft, sign);
 }
 inline v32acc32 sups(v32uint16 a, int shft) {
   return sups(a, shft, __SIGN_UNSIGNED);
