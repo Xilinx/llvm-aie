@@ -225,9 +225,9 @@ body:             |
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
-    ; CHECK-NEXT: [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], 992
-    ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_idx_imm:%[0-9]+]]:vec256 = VLDA_dmw_lda_w_ag_idx_imm [[PADD_imm_pseudo]], 32 :: (load (<8 x s32>) from unknown-address + 32)
-    ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_idx_imm1:%[0-9]+]]:vec256 = VLDA_dmw_lda_w_ag_idx_imm [[PADD_imm_pseudo]], 0 :: (load (<8 x s32>), align 64)
+    ; CHECK-NEXT: [[PADD_imm9_pseudo:%[0-9]+]]:ep = PADD_imm9_pseudo [[COPY]], 992
+    ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_idx_imm:%[0-9]+]]:vec256 = VLDA_dmw_lda_w_ag_idx_imm [[PADD_imm9_pseudo]], 32 :: (load (<8 x s32>) from unknown-address + 32)
+    ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_idx_imm1:%[0-9]+]]:vec256 = VLDA_dmw_lda_w_ag_idx_imm [[PADD_imm9_pseudo]], 0 :: (load (<8 x s32>), align 64)
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[VLDA_dmw_lda_w_ag_idx_imm1]], %subreg.sub_256_lo, [[VLDA_dmw_lda_w_ag_idx_imm]], %subreg.sub_256_hi
     ; CHECK-NEXT: $x0 = COPY [[REG_SEQUENCE]]
     %1:ptrregbank(p0) = COPY $p0
@@ -248,9 +248,9 @@ body:             |
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
-    ; CHECK-NEXT: [[PADDA_lda_ptr_inc_idx_imm:%[0-9]+]]:ep = PADDA_lda_ptr_inc_idx_imm [[COPY]], -1056
-    ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_idx_imm:%[0-9]+]]:vec256 = VLDA_dmw_lda_w_ag_idx_imm [[PADDA_lda_ptr_inc_idx_imm]], 32 :: (load (<8 x s32>) from unknown-address + 32)
-    ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_idx_imm1:%[0-9]+]]:vec256 = VLDA_dmw_lda_w_ag_idx_imm [[PADDA_lda_ptr_inc_idx_imm]], 0 :: (load (<8 x s32>), align 64)
+    ; CHECK-NEXT: [[PADD_imm10_pseudo:%[0-9]+]]:ep = PADD_imm10_pseudo [[COPY]], -1056
+    ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_idx_imm:%[0-9]+]]:vec256 = VLDA_dmw_lda_w_ag_idx_imm [[PADD_imm10_pseudo]], 32 :: (load (<8 x s32>) from unknown-address + 32)
+    ; CHECK-NEXT: [[VLDA_dmw_lda_w_ag_idx_imm1:%[0-9]+]]:vec256 = VLDA_dmw_lda_w_ag_idx_imm [[PADD_imm10_pseudo]], 0 :: (load (<8 x s32>), align 64)
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[VLDA_dmw_lda_w_ag_idx_imm1]], %subreg.sub_256_lo, [[VLDA_dmw_lda_w_ag_idx_imm]], %subreg.sub_256_hi
     ; CHECK-NEXT: $x0 = COPY [[REG_SEQUENCE]]
     %1:ptrregbank(p0) = COPY $p0
@@ -507,9 +507,9 @@ body:             |
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
-    ; CHECK-NEXT: [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], 996
-    ; CHECK-NEXT: [[VLDA_dmw_lda_am_ag_idx_imm:%[0-9]+]]:acc256 = VLDA_dmw_lda_am_ag_idx_imm [[PADD_imm_pseudo]], 32 :: (load (<4 x s64>) from unknown-address + 32)
-    ; CHECK-NEXT: [[VLDA_dmw_lda_am_ag_idx_imm1:%[0-9]+]]:acc256 = VLDA_dmw_lda_am_ag_idx_imm [[PADD_imm_pseudo]], 0 :: (load (<4 x s64>), align 64)
+    ; CHECK-NEXT: [[PADD_imm9_pseudo:%[0-9]+]]:ep = PADD_imm9_pseudo [[COPY]], 996
+    ; CHECK-NEXT: [[VLDA_dmw_lda_am_ag_idx_imm:%[0-9]+]]:acc256 = VLDA_dmw_lda_am_ag_idx_imm [[PADD_imm9_pseudo]], 32 :: (load (<4 x s64>) from unknown-address + 32)
+    ; CHECK-NEXT: [[VLDA_dmw_lda_am_ag_idx_imm1:%[0-9]+]]:acc256 = VLDA_dmw_lda_am_ag_idx_imm [[PADD_imm9_pseudo]], 0 :: (load (<4 x s64>), align 64)
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:acc512 = REG_SEQUENCE [[VLDA_dmw_lda_am_ag_idx_imm1]], %subreg.sub_256_lo, [[VLDA_dmw_lda_am_ag_idx_imm]], %subreg.sub_256_hi
     ; CHECK-NEXT: $bml0 = COPY [[REG_SEQUENCE]]
     %1:ptrregbank(p0) = COPY $p0
@@ -530,9 +530,9 @@ body:             |
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
-    ; CHECK-NEXT: [[PADDA_lda_ptr_inc_idx_imm:%[0-9]+]]:ep = PADDA_lda_ptr_inc_idx_imm [[COPY]], -1056
-    ; CHECK-NEXT: [[VLDA_dmw_lda_am_ag_idx_imm:%[0-9]+]]:acc256 = VLDA_dmw_lda_am_ag_idx_imm [[PADDA_lda_ptr_inc_idx_imm]], 32 :: (load (<4 x s64>) from unknown-address + 32)
-    ; CHECK-NEXT: [[VLDA_dmw_lda_am_ag_idx_imm1:%[0-9]+]]:acc256 = VLDA_dmw_lda_am_ag_idx_imm [[PADDA_lda_ptr_inc_idx_imm]], 0 :: (load (<4 x s64>), align 64)
+    ; CHECK-NEXT: [[PADD_imm10_pseudo:%[0-9]+]]:ep = PADD_imm10_pseudo [[COPY]], -1056
+    ; CHECK-NEXT: [[VLDA_dmw_lda_am_ag_idx_imm:%[0-9]+]]:acc256 = VLDA_dmw_lda_am_ag_idx_imm [[PADD_imm10_pseudo]], 32 :: (load (<4 x s64>) from unknown-address + 32)
+    ; CHECK-NEXT: [[VLDA_dmw_lda_am_ag_idx_imm1:%[0-9]+]]:acc256 = VLDA_dmw_lda_am_ag_idx_imm [[PADD_imm10_pseudo]], 0 :: (load (<4 x s64>), align 64)
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:acc512 = REG_SEQUENCE [[VLDA_dmw_lda_am_ag_idx_imm1]], %subreg.sub_256_lo, [[VLDA_dmw_lda_am_ag_idx_imm]], %subreg.sub_256_hi
     ; CHECK-NEXT: $bml0 = COPY [[REG_SEQUENCE]]
     %1:ptrregbank(p0) = COPY $p0
@@ -684,9 +684,9 @@ body:             |
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec256 = COPY [[COPY]].sub_256_lo
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:vec256 = COPY [[COPY]].sub_256_hi
-    ; CHECK-NEXT: [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY1]], 996
-    ; CHECK-NEXT: VST_dmw_sts_w_ag_idx_imm [[COPY3]], [[PADD_imm_pseudo]], 32 :: (store (<8 x s32>) into unknown-address + 32)
-    ; CHECK-NEXT: VST_dmw_sts_w_ag_idx_imm [[COPY2]], [[PADD_imm_pseudo]], 0 :: (store (<8 x s32>), align 64)
+    ; CHECK-NEXT: [[PADD_imm9_pseudo:%[0-9]+]]:ep = PADD_imm9_pseudo [[COPY1]], 996
+    ; CHECK-NEXT: VST_dmw_sts_w_ag_idx_imm [[COPY3]], [[PADD_imm9_pseudo]], 32 :: (store (<8 x s32>) into unknown-address + 32)
+    ; CHECK-NEXT: VST_dmw_sts_w_ag_idx_imm [[COPY2]], [[PADD_imm9_pseudo]], 0 :: (store (<8 x s32>), align 64)
     %0:vregbank(<16 x s32>) = COPY $x0
     %1:ptrregbank(p0) = COPY $p0
     %2:modregbank(s20) = G_CONSTANT i20 996
@@ -708,9 +708,9 @@ body:             |
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec256 = COPY [[COPY]].sub_256_lo
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:vec256 = COPY [[COPY]].sub_256_hi
-    ; CHECK-NEXT: [[PADDA_lda_ptr_inc_idx_imm:%[0-9]+]]:ep = PADDA_lda_ptr_inc_idx_imm [[COPY1]], -1056
-    ; CHECK-NEXT: VST_dmw_sts_w_ag_idx_imm [[COPY3]], [[PADDA_lda_ptr_inc_idx_imm]], 32 :: (store (<8 x s32>) into unknown-address + 32)
-    ; CHECK-NEXT: VST_dmw_sts_w_ag_idx_imm [[COPY2]], [[PADDA_lda_ptr_inc_idx_imm]], 0 :: (store (<8 x s32>), align 64)
+    ; CHECK-NEXT: [[PADD_imm10_pseudo:%[0-9]+]]:ep = PADD_imm10_pseudo [[COPY1]], -1056
+    ; CHECK-NEXT: VST_dmw_sts_w_ag_idx_imm [[COPY3]], [[PADD_imm10_pseudo]], 32 :: (store (<8 x s32>) into unknown-address + 32)
+    ; CHECK-NEXT: VST_dmw_sts_w_ag_idx_imm [[COPY2]], [[PADD_imm10_pseudo]], 0 :: (store (<8 x s32>), align 64)
     %0:vregbank(<16 x s32>) = COPY $x0
     %1:ptrregbank(p0) = COPY $p0
     %2:modregbank(s20) = G_CONSTANT i20 -1056
@@ -860,9 +860,9 @@ body:             |
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:acc256 = COPY [[COPY]].sub_256_lo
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc256 = COPY [[COPY]].sub_256_hi
-    ; CHECK-NEXT: [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY1]], 996
-    ; CHECK-NEXT: VST_dmw_sts_am_ag_idx_imm [[COPY3]], [[PADD_imm_pseudo]], 32 :: (store (<4 x s64>) into unknown-address + 32)
-    ; CHECK-NEXT: VST_dmw_sts_am_ag_idx_imm [[COPY2]], [[PADD_imm_pseudo]], 0 :: (store (<4 x s64>), align 64)
+    ; CHECK-NEXT: [[PADD_imm9_pseudo:%[0-9]+]]:ep = PADD_imm9_pseudo [[COPY1]], 996
+    ; CHECK-NEXT: VST_dmw_sts_am_ag_idx_imm [[COPY3]], [[PADD_imm9_pseudo]], 32 :: (store (<4 x s64>) into unknown-address + 32)
+    ; CHECK-NEXT: VST_dmw_sts_am_ag_idx_imm [[COPY2]], [[PADD_imm9_pseudo]], 0 :: (store (<4 x s64>), align 64)
     %0:accregbank(<8 x s64>) = COPY $bml0
     %1:ptrregbank(p0) = COPY $p0
     %2:modregbank(s20) = G_CONSTANT i20 996
@@ -884,9 +884,9 @@ body:             |
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:acc256 = COPY [[COPY]].sub_256_lo
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:acc256 = COPY [[COPY]].sub_256_hi
-    ; CHECK-NEXT: [[PADDA_lda_ptr_inc_idx_imm:%[0-9]+]]:ep = PADDA_lda_ptr_inc_idx_imm [[COPY1]], -1056
-    ; CHECK-NEXT: VST_dmw_sts_am_ag_idx_imm [[COPY3]], [[PADDA_lda_ptr_inc_idx_imm]], 32 :: (store (<4 x s64>) into unknown-address + 32)
-    ; CHECK-NEXT: VST_dmw_sts_am_ag_idx_imm [[COPY2]], [[PADDA_lda_ptr_inc_idx_imm]], 0 :: (store (<4 x s64>), align 64)
+    ; CHECK-NEXT: [[PADD_imm10_pseudo:%[0-9]+]]:ep = PADD_imm10_pseudo [[COPY1]], -1056
+    ; CHECK-NEXT: VST_dmw_sts_am_ag_idx_imm [[COPY3]], [[PADD_imm10_pseudo]], 32 :: (store (<4 x s64>) into unknown-address + 32)
+    ; CHECK-NEXT: VST_dmw_sts_am_ag_idx_imm [[COPY2]], [[PADD_imm10_pseudo]], 0 :: (store (<4 x s64>), align 64)
     %0:accregbank(<8 x s64>) = COPY $bml0
     %1:ptrregbank(p0) = COPY $p0
     %2:modregbank(s20) = G_CONSTANT i20 -1056

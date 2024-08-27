@@ -25,8 +25,8 @@ body: |
     ; CHECK-LABEL: name: mix
     ; CHECK: liveins: $p0, $p1, $m1, $r1, $s1
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: $p1 = PADD_mod_pseudo $p1, $m1
     ; CHECK-NEXT: dead [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: $p1 = PADD_mod_pseudo $p1, $m1
     ; CHECK-NEXT: $p0 = PADD_mod_pseudo $p0, $m1
     ; CHECK-NEXT: $m1 = MOV_PD_imm10_pseudo 0
     ; CHECK-NEXT: $p0 = MOV_scalar_imm10_pseudo 0

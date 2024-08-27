@@ -63,7 +63,7 @@ body:             |
     renamable $wh2 = VLDA_dmw_lda_w_ag_idx_imm renamable $p1, 32 :: (load (<16 x s16>) from stack - 128)
     renamable $wl2 = VLDA_dmw_lda_w_ag_idx_imm renamable $p1, 0 :: (load (<16 x s16>) from stack - 128)
     $p4 = MOV_mv_scl $p3
-    renamable $p4 = PADD_imm_pseudo killed renamable $p4, 60
+    renamable $p4 = PADD_imm9_pseudo killed renamable $p4, 60
     renamable $r3, renamable $p4 = LDA_dms_lda_pstm_nrm_imm killed renamable $p4, 36 :: (dereferenceable load (s32) from stack - 4)
     renamable $m0, renamable $p4 = LDA_dms_lda_pstm_nrm_imm killed renamable $p4, -8 :: (dereferenceable load (s20) from stack - 4)
     renamable $dn0, renamable $p4 = LDA_dms_lda_pstm_nrm_imm killed renamable $p4, -8 :: (dereferenceable load (s20) from stack - 4)

@@ -726,11 +726,11 @@ body: |
     ; CHECK-NEXT: [[COPY6:%[0-9]+]]:mss = COPY [[COPY2]]
     ; CHECK-NEXT: [[VLDA_UPS_S64_D32_ag_idx_imm3:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY6]], [[COPY]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>) from stack - 64, align 64)
     ; CHECK-NEXT: [[REG_SEQUENCE1:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_UPS_S64_D32_ag_idx_imm3]], %subreg.sub_512_lo, [[VLDA_UPS_S64_D32_ag_idx_imm2]], %subreg.sub_512_hi
-    ; CHECK-NEXT: [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], 16
+    ; CHECK-NEXT: [[PADD_imm9_pseudo:%[0-9]+]]:ep = PADD_imm9_pseudo [[COPY]], 16
     ; CHECK-NEXT: [[COPY7:%[0-9]+]]:mss = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_S64_D32_ag_idx_imm4:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY7]], [[PADD_imm_pseudo]], 32, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>) from stack - 32, basealign 64)
+    ; CHECK-NEXT: [[VLDA_UPS_S64_D32_ag_idx_imm4:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY7]], [[PADD_imm9_pseudo]], 32, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>) from stack - 32, basealign 64)
     ; CHECK-NEXT: [[COPY8:%[0-9]+]]:mss = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_S64_D32_ag_idx_imm5:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY8]], [[PADD_imm_pseudo]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>) from stack - 64, align 64)
+    ; CHECK-NEXT: [[VLDA_UPS_S64_D32_ag_idx_imm5:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY8]], [[PADD_imm9_pseudo]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>) from stack - 64, align 64)
     ; CHECK-NEXT: [[REG_SEQUENCE2:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_UPS_S64_D32_ag_idx_imm5]], %subreg.sub_512_lo, [[VLDA_UPS_S64_D32_ag_idx_imm4]], %subreg.sub_512_hi
     ; CHECK-NEXT: [[COPY9:%[0-9]+]]:mss = COPY [[COPY2]]
     ; CHECK-NEXT: [[VLDA_UPS_S64_D32_ag_idx_imm6:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY9]], [[COPY]], -96, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>) from stack - 32, basealign 64)
@@ -742,11 +742,11 @@ body: |
     ; CHECK-NEXT: [[COPY12:%[0-9]+]]:mss = COPY [[COPY2]]
     ; CHECK-NEXT: [[VLDA_UPS_S64_D32_ag_idx_imm9:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY12]], [[COPY]], 64, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>) from stack - 64, align 64)
     ; CHECK-NEXT: [[REG_SEQUENCE4:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_UPS_S64_D32_ag_idx_imm9]], %subreg.sub_512_lo, [[VLDA_UPS_S64_D32_ag_idx_imm8]], %subreg.sub_512_hi
-    ; CHECK-NEXT: [[PADD_imm_pseudo1:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], 96
+    ; CHECK-NEXT: [[PADD_imm9_pseudo1:%[0-9]+]]:ep = PADD_imm9_pseudo [[COPY]], 96
     ; CHECK-NEXT: [[COPY13:%[0-9]+]]:mss = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_S64_D32_ag_idx_imm10:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY13]], [[PADD_imm_pseudo1]], 32, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>) from stack - 32, basealign 64)
+    ; CHECK-NEXT: [[VLDA_UPS_S64_D32_ag_idx_imm10:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY13]], [[PADD_imm9_pseudo1]], 32, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>) from stack - 32, basealign 64)
     ; CHECK-NEXT: [[COPY14:%[0-9]+]]:mss = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_S64_D32_ag_idx_imm11:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY14]], [[PADD_imm_pseudo1]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>) from stack - 64, align 64)
+    ; CHECK-NEXT: [[VLDA_UPS_S64_D32_ag_idx_imm11:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY14]], [[PADD_imm9_pseudo1]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>) from stack - 64, align 64)
     ; CHECK-NEXT: [[REG_SEQUENCE5:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_UPS_S64_D32_ag_idx_imm11]], %subreg.sub_512_lo, [[VLDA_UPS_S64_D32_ag_idx_imm10]], %subreg.sub_512_hi
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]], implicit [[REG_SEQUENCE1]], implicit [[REG_SEQUENCE2]], implicit [[REG_SEQUENCE3]], implicit [[REG_SEQUENCE4]], implicit [[REG_SEQUENCE5]]
     %0:ptrregbank(p0) = COPY $p0
@@ -803,12 +803,12 @@ body: |
     ; CHECK-NEXT: [[VLDA_UPS_S64_D32_ag_idx_imm3:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY7]], [[COPY]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>) from stack - 64, align 64)
     ; CHECK-NEXT: $crupssign = MOV_scalar_imm10_pseudo 0
     ; CHECK-NEXT: [[REG_SEQUENCE1:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_UPS_S64_D32_ag_idx_imm3]], %subreg.sub_512_lo, [[VLDA_UPS_S64_D32_ag_idx_imm2]], %subreg.sub_512_hi
-    ; CHECK-NEXT: [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], 16
+    ; CHECK-NEXT: [[PADD_imm9_pseudo:%[0-9]+]]:ep = PADD_imm9_pseudo [[COPY]], 16
     ; CHECK-NEXT: $crupssign = COPY [[COPY3]]
     ; CHECK-NEXT: [[COPY8:%[0-9]+]]:mss = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_S64_D32_ag_idx_imm4:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY8]], [[PADD_imm_pseudo]], 32, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>) from stack - 32, basealign 64)
+    ; CHECK-NEXT: [[VLDA_UPS_S64_D32_ag_idx_imm4:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY8]], [[PADD_imm9_pseudo]], 32, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>) from stack - 32, basealign 64)
     ; CHECK-NEXT: [[COPY9:%[0-9]+]]:mss = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_S64_D32_ag_idx_imm5:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY9]], [[PADD_imm_pseudo]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>) from stack - 64, align 64)
+    ; CHECK-NEXT: [[VLDA_UPS_S64_D32_ag_idx_imm5:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY9]], [[PADD_imm9_pseudo]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>) from stack - 64, align 64)
     ; CHECK-NEXT: $crupssign = MOV_scalar_imm10_pseudo 0
     ; CHECK-NEXT: [[REG_SEQUENCE2:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_UPS_S64_D32_ag_idx_imm5]], %subreg.sub_512_lo, [[VLDA_UPS_S64_D32_ag_idx_imm4]], %subreg.sub_512_hi
     ; CHECK-NEXT: $crupssign = COPY [[COPY3]]
@@ -825,12 +825,12 @@ body: |
     ; CHECK-NEXT: [[VLDA_UPS_S64_D32_ag_idx_imm9:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY13]], [[COPY]], 64, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>) from stack - 64, align 64)
     ; CHECK-NEXT: $crupssign = MOV_scalar_imm10_pseudo 0
     ; CHECK-NEXT: [[REG_SEQUENCE4:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_UPS_S64_D32_ag_idx_imm9]], %subreg.sub_512_lo, [[VLDA_UPS_S64_D32_ag_idx_imm8]], %subreg.sub_512_hi
-    ; CHECK-NEXT: [[PADD_imm_pseudo1:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], 96
+    ; CHECK-NEXT: [[PADD_imm9_pseudo1:%[0-9]+]]:ep = PADD_imm9_pseudo [[COPY]], 96
     ; CHECK-NEXT: $crupssign = COPY [[COPY3]]
     ; CHECK-NEXT: [[COPY14:%[0-9]+]]:mss = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_S64_D32_ag_idx_imm10:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY14]], [[PADD_imm_pseudo1]], 32, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>) from stack - 32, basealign 64)
+    ; CHECK-NEXT: [[VLDA_UPS_S64_D32_ag_idx_imm10:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY14]], [[PADD_imm9_pseudo1]], 32, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>) from stack - 32, basealign 64)
     ; CHECK-NEXT: [[COPY15:%[0-9]+]]:mss = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_S64_D32_ag_idx_imm11:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY15]], [[PADD_imm_pseudo1]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>) from stack - 64, align 64)
+    ; CHECK-NEXT: [[VLDA_UPS_S64_D32_ag_idx_imm11:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY15]], [[PADD_imm9_pseudo1]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>) from stack - 64, align 64)
     ; CHECK-NEXT: $crupssign = MOV_scalar_imm10_pseudo 0
     ; CHECK-NEXT: [[REG_SEQUENCE5:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_UPS_S64_D32_ag_idx_imm11]], %subreg.sub_512_lo, [[VLDA_UPS_S64_D32_ag_idx_imm10]], %subreg.sub_512_hi
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]], implicit [[REG_SEQUENCE1]], implicit [[REG_SEQUENCE2]], implicit [[REG_SEQUENCE3]], implicit [[REG_SEQUENCE4]], implicit [[REG_SEQUENCE5]]
@@ -883,11 +883,11 @@ body: |
     ; CHECK-NEXT: [[COPY6:%[0-9]+]]:mss = COPY [[COPY2]]
     ; CHECK-NEXT: [[VLDA_UPS_S64_S32_ag_idx_imm3:%[0-9]+]]:acc512 = VLDA_UPS_S64_S32_ag_idx_imm [[COPY6]], [[COPY]], 0, implicit-def $srups_of, implicit $crsat :: (load (<8 x s32>) from stack - 64, align 64)
     ; CHECK-NEXT: [[REG_SEQUENCE1:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_UPS_S64_S32_ag_idx_imm3]], %subreg.sub_512_lo, [[VLDA_UPS_S64_S32_ag_idx_imm2]], %subreg.sub_512_hi
-    ; CHECK-NEXT: [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], 16
+    ; CHECK-NEXT: [[PADD_imm9_pseudo:%[0-9]+]]:ep = PADD_imm9_pseudo [[COPY]], 16
     ; CHECK-NEXT: [[COPY7:%[0-9]+]]:mss = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_S64_S32_ag_idx_imm4:%[0-9]+]]:acc512 = VLDA_UPS_S64_S32_ag_idx_imm [[COPY7]], [[PADD_imm_pseudo]], 32, implicit-def $srups_of, implicit $crsat :: (load (<8 x s32>) from stack - 32, basealign 64)
+    ; CHECK-NEXT: [[VLDA_UPS_S64_S32_ag_idx_imm4:%[0-9]+]]:acc512 = VLDA_UPS_S64_S32_ag_idx_imm [[COPY7]], [[PADD_imm9_pseudo]], 32, implicit-def $srups_of, implicit $crsat :: (load (<8 x s32>) from stack - 32, basealign 64)
     ; CHECK-NEXT: [[COPY8:%[0-9]+]]:mss = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_S64_S32_ag_idx_imm5:%[0-9]+]]:acc512 = VLDA_UPS_S64_S32_ag_idx_imm [[COPY8]], [[PADD_imm_pseudo]], 0, implicit-def $srups_of, implicit $crsat :: (load (<8 x s32>) from stack - 64, align 64)
+    ; CHECK-NEXT: [[VLDA_UPS_S64_S32_ag_idx_imm5:%[0-9]+]]:acc512 = VLDA_UPS_S64_S32_ag_idx_imm [[COPY8]], [[PADD_imm9_pseudo]], 0, implicit-def $srups_of, implicit $crsat :: (load (<8 x s32>) from stack - 64, align 64)
     ; CHECK-NEXT: [[REG_SEQUENCE2:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_UPS_S64_S32_ag_idx_imm5]], %subreg.sub_512_lo, [[VLDA_UPS_S64_S32_ag_idx_imm4]], %subreg.sub_512_hi
     ; CHECK-NEXT: [[COPY9:%[0-9]+]]:mss = COPY [[COPY2]]
     ; CHECK-NEXT: [[VLDA_UPS_S64_S32_ag_idx_imm6:%[0-9]+]]:acc512 = VLDA_UPS_S64_S32_ag_idx_imm [[COPY9]], [[COPY]], -96, implicit-def $srups_of, implicit $crsat :: (load (<8 x s32>) from stack - 32, basealign 64)
@@ -899,11 +899,11 @@ body: |
     ; CHECK-NEXT: [[COPY12:%[0-9]+]]:mss = COPY [[COPY2]]
     ; CHECK-NEXT: [[VLDA_UPS_S64_S32_ag_idx_imm9:%[0-9]+]]:acc512 = VLDA_UPS_S64_S32_ag_idx_imm [[COPY12]], [[COPY]], 64, implicit-def $srups_of, implicit $crsat :: (load (<8 x s32>) from stack - 64, align 64)
     ; CHECK-NEXT: [[REG_SEQUENCE4:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_UPS_S64_S32_ag_idx_imm9]], %subreg.sub_512_lo, [[VLDA_UPS_S64_S32_ag_idx_imm8]], %subreg.sub_512_hi
-    ; CHECK-NEXT: [[PADD_imm_pseudo1:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], 96
+    ; CHECK-NEXT: [[PADD_imm9_pseudo1:%[0-9]+]]:ep = PADD_imm9_pseudo [[COPY]], 96
     ; CHECK-NEXT: [[COPY13:%[0-9]+]]:mss = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_S64_S32_ag_idx_imm10:%[0-9]+]]:acc512 = VLDA_UPS_S64_S32_ag_idx_imm [[COPY13]], [[PADD_imm_pseudo1]], 32, implicit-def $srups_of, implicit $crsat :: (load (<8 x s32>) from stack - 32, basealign 64)
+    ; CHECK-NEXT: [[VLDA_UPS_S64_S32_ag_idx_imm10:%[0-9]+]]:acc512 = VLDA_UPS_S64_S32_ag_idx_imm [[COPY13]], [[PADD_imm9_pseudo1]], 32, implicit-def $srups_of, implicit $crsat :: (load (<8 x s32>) from stack - 32, basealign 64)
     ; CHECK-NEXT: [[COPY14:%[0-9]+]]:mss = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_S64_S32_ag_idx_imm11:%[0-9]+]]:acc512 = VLDA_UPS_S64_S32_ag_idx_imm [[COPY14]], [[PADD_imm_pseudo1]], 0, implicit-def $srups_of, implicit $crsat :: (load (<8 x s32>) from stack - 64, align 64)
+    ; CHECK-NEXT: [[VLDA_UPS_S64_S32_ag_idx_imm11:%[0-9]+]]:acc512 = VLDA_UPS_S64_S32_ag_idx_imm [[COPY14]], [[PADD_imm9_pseudo1]], 0, implicit-def $srups_of, implicit $crsat :: (load (<8 x s32>) from stack - 64, align 64)
     ; CHECK-NEXT: [[REG_SEQUENCE5:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_UPS_S64_S32_ag_idx_imm11]], %subreg.sub_512_lo, [[VLDA_UPS_S64_S32_ag_idx_imm10]], %subreg.sub_512_hi
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]], implicit [[REG_SEQUENCE1]], implicit [[REG_SEQUENCE2]], implicit [[REG_SEQUENCE3]], implicit [[REG_SEQUENCE4]], implicit [[REG_SEQUENCE5]]
     %0:ptrregbank(p0) = COPY $p0
@@ -955,11 +955,11 @@ body: |
     ; CHECK-NEXT: [[COPY6:%[0-9]+]]:mss = COPY [[COPY2]]
     ; CHECK-NEXT: [[VLDA_UPS_S32_D16_ag_idx_imm3:%[0-9]+]]:acc512 = VLDA_UPS_S32_D16_ag_idx_imm [[COPY6]], [[COPY]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<16 x s16>) from stack - 64, align 64)
     ; CHECK-NEXT: [[REG_SEQUENCE1:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_UPS_S32_D16_ag_idx_imm3]], %subreg.sub_512_lo, [[VLDA_UPS_S32_D16_ag_idx_imm2]], %subreg.sub_512_hi
-    ; CHECK-NEXT: [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], 16
+    ; CHECK-NEXT: [[PADD_imm9_pseudo:%[0-9]+]]:ep = PADD_imm9_pseudo [[COPY]], 16
     ; CHECK-NEXT: [[COPY7:%[0-9]+]]:mss = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_S32_D16_ag_idx_imm4:%[0-9]+]]:acc512 = VLDA_UPS_S32_D16_ag_idx_imm [[COPY7]], [[PADD_imm_pseudo]], 32, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<16 x s16>) from stack - 32, basealign 64)
+    ; CHECK-NEXT: [[VLDA_UPS_S32_D16_ag_idx_imm4:%[0-9]+]]:acc512 = VLDA_UPS_S32_D16_ag_idx_imm [[COPY7]], [[PADD_imm9_pseudo]], 32, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<16 x s16>) from stack - 32, basealign 64)
     ; CHECK-NEXT: [[COPY8:%[0-9]+]]:mss = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_S32_D16_ag_idx_imm5:%[0-9]+]]:acc512 = VLDA_UPS_S32_D16_ag_idx_imm [[COPY8]], [[PADD_imm_pseudo]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<16 x s16>) from stack - 64, align 64)
+    ; CHECK-NEXT: [[VLDA_UPS_S32_D16_ag_idx_imm5:%[0-9]+]]:acc512 = VLDA_UPS_S32_D16_ag_idx_imm [[COPY8]], [[PADD_imm9_pseudo]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<16 x s16>) from stack - 64, align 64)
     ; CHECK-NEXT: [[REG_SEQUENCE2:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_UPS_S32_D16_ag_idx_imm5]], %subreg.sub_512_lo, [[VLDA_UPS_S32_D16_ag_idx_imm4]], %subreg.sub_512_hi
     ; CHECK-NEXT: [[COPY9:%[0-9]+]]:mss = COPY [[COPY2]]
     ; CHECK-NEXT: [[VLDA_UPS_S32_D16_ag_idx_imm6:%[0-9]+]]:acc512 = VLDA_UPS_S32_D16_ag_idx_imm [[COPY9]], [[COPY]], -96, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<16 x s16>) from stack - 32, basealign 64)
@@ -971,11 +971,11 @@ body: |
     ; CHECK-NEXT: [[COPY12:%[0-9]+]]:mss = COPY [[COPY2]]
     ; CHECK-NEXT: [[VLDA_UPS_S32_D16_ag_idx_imm9:%[0-9]+]]:acc512 = VLDA_UPS_S32_D16_ag_idx_imm [[COPY12]], [[COPY]], 64, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<16 x s16>) from stack - 64, align 64)
     ; CHECK-NEXT: [[REG_SEQUENCE4:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_UPS_S32_D16_ag_idx_imm9]], %subreg.sub_512_lo, [[VLDA_UPS_S32_D16_ag_idx_imm8]], %subreg.sub_512_hi
-    ; CHECK-NEXT: [[PADD_imm_pseudo1:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], 96
+    ; CHECK-NEXT: [[PADD_imm9_pseudo1:%[0-9]+]]:ep = PADD_imm9_pseudo [[COPY]], 96
     ; CHECK-NEXT: [[COPY13:%[0-9]+]]:mss = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_S32_D16_ag_idx_imm10:%[0-9]+]]:acc512 = VLDA_UPS_S32_D16_ag_idx_imm [[COPY13]], [[PADD_imm_pseudo1]], 32, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<16 x s16>) from stack - 32, basealign 64)
+    ; CHECK-NEXT: [[VLDA_UPS_S32_D16_ag_idx_imm10:%[0-9]+]]:acc512 = VLDA_UPS_S32_D16_ag_idx_imm [[COPY13]], [[PADD_imm9_pseudo1]], 32, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<16 x s16>) from stack - 32, basealign 64)
     ; CHECK-NEXT: [[COPY14:%[0-9]+]]:mss = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_S32_D16_ag_idx_imm11:%[0-9]+]]:acc512 = VLDA_UPS_S32_D16_ag_idx_imm [[COPY14]], [[PADD_imm_pseudo1]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<16 x s16>) from stack - 64, align 64)
+    ; CHECK-NEXT: [[VLDA_UPS_S32_D16_ag_idx_imm11:%[0-9]+]]:acc512 = VLDA_UPS_S32_D16_ag_idx_imm [[COPY14]], [[PADD_imm9_pseudo1]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<16 x s16>) from stack - 64, align 64)
     ; CHECK-NEXT: [[REG_SEQUENCE5:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_UPS_S32_D16_ag_idx_imm11]], %subreg.sub_512_lo, [[VLDA_UPS_S32_D16_ag_idx_imm10]], %subreg.sub_512_hi
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]], implicit [[REG_SEQUENCE1]], implicit [[REG_SEQUENCE2]], implicit [[REG_SEQUENCE3]], implicit [[REG_SEQUENCE4]], implicit [[REG_SEQUENCE5]]
     %0:ptrregbank(p0) = COPY $p0
@@ -1032,12 +1032,12 @@ body: |
     ; CHECK-NEXT: [[VLDA_UPS_S32_D16_ag_idx_imm3:%[0-9]+]]:acc512 = VLDA_UPS_S32_D16_ag_idx_imm [[COPY7]], [[COPY]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<16 x s16>) from stack - 64, align 64)
     ; CHECK-NEXT: $crupssign = MOV_scalar_imm10_pseudo 0
     ; CHECK-NEXT: [[REG_SEQUENCE1:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_UPS_S32_D16_ag_idx_imm3]], %subreg.sub_512_lo, [[VLDA_UPS_S32_D16_ag_idx_imm2]], %subreg.sub_512_hi
-    ; CHECK-NEXT: [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], 16
+    ; CHECK-NEXT: [[PADD_imm9_pseudo:%[0-9]+]]:ep = PADD_imm9_pseudo [[COPY]], 16
     ; CHECK-NEXT: $crupssign = COPY [[COPY3]]
     ; CHECK-NEXT: [[COPY8:%[0-9]+]]:mss = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_S32_D16_ag_idx_imm4:%[0-9]+]]:acc512 = VLDA_UPS_S32_D16_ag_idx_imm [[COPY8]], [[PADD_imm_pseudo]], 32, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<16 x s16>) from stack - 32, basealign 64)
+    ; CHECK-NEXT: [[VLDA_UPS_S32_D16_ag_idx_imm4:%[0-9]+]]:acc512 = VLDA_UPS_S32_D16_ag_idx_imm [[COPY8]], [[PADD_imm9_pseudo]], 32, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<16 x s16>) from stack - 32, basealign 64)
     ; CHECK-NEXT: [[COPY9:%[0-9]+]]:mss = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_S32_D16_ag_idx_imm5:%[0-9]+]]:acc512 = VLDA_UPS_S32_D16_ag_idx_imm [[COPY9]], [[PADD_imm_pseudo]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<16 x s16>) from stack - 64, align 64)
+    ; CHECK-NEXT: [[VLDA_UPS_S32_D16_ag_idx_imm5:%[0-9]+]]:acc512 = VLDA_UPS_S32_D16_ag_idx_imm [[COPY9]], [[PADD_imm9_pseudo]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<16 x s16>) from stack - 64, align 64)
     ; CHECK-NEXT: $crupssign = MOV_scalar_imm10_pseudo 0
     ; CHECK-NEXT: [[REG_SEQUENCE2:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_UPS_S32_D16_ag_idx_imm5]], %subreg.sub_512_lo, [[VLDA_UPS_S32_D16_ag_idx_imm4]], %subreg.sub_512_hi
     ; CHECK-NEXT: $crupssign = COPY [[COPY3]]
@@ -1054,12 +1054,12 @@ body: |
     ; CHECK-NEXT: [[VLDA_UPS_S32_D16_ag_idx_imm9:%[0-9]+]]:acc512 = VLDA_UPS_S32_D16_ag_idx_imm [[COPY13]], [[COPY]], 64, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<16 x s16>) from stack - 64, align 64)
     ; CHECK-NEXT: $crupssign = MOV_scalar_imm10_pseudo 0
     ; CHECK-NEXT: [[REG_SEQUENCE4:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_UPS_S32_D16_ag_idx_imm9]], %subreg.sub_512_lo, [[VLDA_UPS_S32_D16_ag_idx_imm8]], %subreg.sub_512_hi
-    ; CHECK-NEXT: [[PADD_imm_pseudo1:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], 96
+    ; CHECK-NEXT: [[PADD_imm9_pseudo1:%[0-9]+]]:ep = PADD_imm9_pseudo [[COPY]], 96
     ; CHECK-NEXT: $crupssign = COPY [[COPY3]]
     ; CHECK-NEXT: [[COPY14:%[0-9]+]]:mss = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_S32_D16_ag_idx_imm10:%[0-9]+]]:acc512 = VLDA_UPS_S32_D16_ag_idx_imm [[COPY14]], [[PADD_imm_pseudo1]], 32, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<16 x s16>) from stack - 32, basealign 64)
+    ; CHECK-NEXT: [[VLDA_UPS_S32_D16_ag_idx_imm10:%[0-9]+]]:acc512 = VLDA_UPS_S32_D16_ag_idx_imm [[COPY14]], [[PADD_imm9_pseudo1]], 32, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<16 x s16>) from stack - 32, basealign 64)
     ; CHECK-NEXT: [[COPY15:%[0-9]+]]:mss = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_S32_D16_ag_idx_imm11:%[0-9]+]]:acc512 = VLDA_UPS_S32_D16_ag_idx_imm [[COPY15]], [[PADD_imm_pseudo1]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<16 x s16>) from stack - 64, align 64)
+    ; CHECK-NEXT: [[VLDA_UPS_S32_D16_ag_idx_imm11:%[0-9]+]]:acc512 = VLDA_UPS_S32_D16_ag_idx_imm [[COPY15]], [[PADD_imm9_pseudo1]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<16 x s16>) from stack - 64, align 64)
     ; CHECK-NEXT: $crupssign = MOV_scalar_imm10_pseudo 0
     ; CHECK-NEXT: [[REG_SEQUENCE5:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_UPS_S32_D16_ag_idx_imm11]], %subreg.sub_512_lo, [[VLDA_UPS_S32_D16_ag_idx_imm10]], %subreg.sub_512_hi
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]], implicit [[REG_SEQUENCE1]], implicit [[REG_SEQUENCE2]], implicit [[REG_SEQUENCE3]], implicit [[REG_SEQUENCE4]], implicit [[REG_SEQUENCE5]]
@@ -1112,11 +1112,11 @@ body: |
     ; CHECK-NEXT: [[COPY6:%[0-9]+]]:mss = COPY [[COPY2]]
     ; CHECK-NEXT: [[VLDA_UPS_S32_S16_ag_idx_imm3:%[0-9]+]]:acc512 = VLDA_UPS_S32_S16_ag_idx_imm [[COPY6]], [[COPY]], 0, implicit-def $srups_of, implicit $crsat :: (load (<16 x s16>) from stack - 64, align 64)
     ; CHECK-NEXT: [[REG_SEQUENCE1:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_UPS_S32_S16_ag_idx_imm3]], %subreg.sub_512_lo, [[VLDA_UPS_S32_S16_ag_idx_imm2]], %subreg.sub_512_hi
-    ; CHECK-NEXT: [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], 16
+    ; CHECK-NEXT: [[PADD_imm9_pseudo:%[0-9]+]]:ep = PADD_imm9_pseudo [[COPY]], 16
     ; CHECK-NEXT: [[COPY7:%[0-9]+]]:mss = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_S32_S16_ag_idx_imm4:%[0-9]+]]:acc512 = VLDA_UPS_S32_S16_ag_idx_imm [[COPY7]], [[PADD_imm_pseudo]], 32, implicit-def $srups_of, implicit $crsat :: (load (<16 x s16>) from stack - 32, basealign 64)
+    ; CHECK-NEXT: [[VLDA_UPS_S32_S16_ag_idx_imm4:%[0-9]+]]:acc512 = VLDA_UPS_S32_S16_ag_idx_imm [[COPY7]], [[PADD_imm9_pseudo]], 32, implicit-def $srups_of, implicit $crsat :: (load (<16 x s16>) from stack - 32, basealign 64)
     ; CHECK-NEXT: [[COPY8:%[0-9]+]]:mss = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_S32_S16_ag_idx_imm5:%[0-9]+]]:acc512 = VLDA_UPS_S32_S16_ag_idx_imm [[COPY8]], [[PADD_imm_pseudo]], 0, implicit-def $srups_of, implicit $crsat :: (load (<16 x s16>) from stack - 64, align 64)
+    ; CHECK-NEXT: [[VLDA_UPS_S32_S16_ag_idx_imm5:%[0-9]+]]:acc512 = VLDA_UPS_S32_S16_ag_idx_imm [[COPY8]], [[PADD_imm9_pseudo]], 0, implicit-def $srups_of, implicit $crsat :: (load (<16 x s16>) from stack - 64, align 64)
     ; CHECK-NEXT: [[REG_SEQUENCE2:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_UPS_S32_S16_ag_idx_imm5]], %subreg.sub_512_lo, [[VLDA_UPS_S32_S16_ag_idx_imm4]], %subreg.sub_512_hi
     ; CHECK-NEXT: [[COPY9:%[0-9]+]]:mss = COPY [[COPY2]]
     ; CHECK-NEXT: [[VLDA_UPS_S32_S16_ag_idx_imm6:%[0-9]+]]:acc512 = VLDA_UPS_S32_S16_ag_idx_imm [[COPY9]], [[COPY]], -96, implicit-def $srups_of, implicit $crsat :: (load (<16 x s16>) from stack - 32, basealign 64)
@@ -1128,11 +1128,11 @@ body: |
     ; CHECK-NEXT: [[COPY12:%[0-9]+]]:mss = COPY [[COPY2]]
     ; CHECK-NEXT: [[VLDA_UPS_S32_S16_ag_idx_imm9:%[0-9]+]]:acc512 = VLDA_UPS_S32_S16_ag_idx_imm [[COPY12]], [[COPY]], 64, implicit-def $srups_of, implicit $crsat :: (load (<16 x s16>) from stack - 64, align 64)
     ; CHECK-NEXT: [[REG_SEQUENCE4:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_UPS_S32_S16_ag_idx_imm9]], %subreg.sub_512_lo, [[VLDA_UPS_S32_S16_ag_idx_imm8]], %subreg.sub_512_hi
-    ; CHECK-NEXT: [[PADD_imm_pseudo1:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], 96
+    ; CHECK-NEXT: [[PADD_imm9_pseudo1:%[0-9]+]]:ep = PADD_imm9_pseudo [[COPY]], 96
     ; CHECK-NEXT: [[COPY13:%[0-9]+]]:mss = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_S32_S16_ag_idx_imm10:%[0-9]+]]:acc512 = VLDA_UPS_S32_S16_ag_idx_imm [[COPY13]], [[PADD_imm_pseudo1]], 32, implicit-def $srups_of, implicit $crsat :: (load (<16 x s16>) from stack - 32, basealign 64)
+    ; CHECK-NEXT: [[VLDA_UPS_S32_S16_ag_idx_imm10:%[0-9]+]]:acc512 = VLDA_UPS_S32_S16_ag_idx_imm [[COPY13]], [[PADD_imm9_pseudo1]], 32, implicit-def $srups_of, implicit $crsat :: (load (<16 x s16>) from stack - 32, basealign 64)
     ; CHECK-NEXT: [[COPY14:%[0-9]+]]:mss = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_S32_S16_ag_idx_imm11:%[0-9]+]]:acc512 = VLDA_UPS_S32_S16_ag_idx_imm [[COPY14]], [[PADD_imm_pseudo1]], 0, implicit-def $srups_of, implicit $crsat :: (load (<16 x s16>) from stack - 64, align 64)
+    ; CHECK-NEXT: [[VLDA_UPS_S32_S16_ag_idx_imm11:%[0-9]+]]:acc512 = VLDA_UPS_S32_S16_ag_idx_imm [[COPY14]], [[PADD_imm9_pseudo1]], 0, implicit-def $srups_of, implicit $crsat :: (load (<16 x s16>) from stack - 64, align 64)
     ; CHECK-NEXT: [[REG_SEQUENCE5:%[0-9]+]]:acc1024 = REG_SEQUENCE [[VLDA_UPS_S32_S16_ag_idx_imm11]], %subreg.sub_512_lo, [[VLDA_UPS_S32_S16_ag_idx_imm10]], %subreg.sub_512_hi
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]], implicit [[REG_SEQUENCE1]], implicit [[REG_SEQUENCE2]], implicit [[REG_SEQUENCE3]], implicit [[REG_SEQUENCE4]], implicit [[REG_SEQUENCE5]]
     %0:ptrregbank(p0) = COPY $p0

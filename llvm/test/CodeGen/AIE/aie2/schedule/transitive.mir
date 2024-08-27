@@ -69,7 +69,7 @@ body:             |
     %7:er = VEXTRACT_S16 %6, %8
     %12:er = EXTENDs16 %7
     %0:er = nsw ADD %12, %4, implicit-def $srcarry
-    %14:ep = PADD_imm_pseudo %5, 64
+    %14:ep = PADD_imm9_pseudo %5, 64
     %16:er = nsw ADD_add_r_ri %3, -1, implicit-def $srcarry
     PseudoJZ %16, %bb.2
     PseudoJ_jump_imm %bb.3

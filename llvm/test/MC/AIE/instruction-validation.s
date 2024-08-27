@@ -9,10 +9,10 @@
 //===----------------------------------------------------------------------===//
 // RUN: not llvm-mc -triple aie2 %s -o - 2>&1 | FileCheck %s
 
-// CHECK: PADDA cannot handle immediates > +-2^12
+// CHECK: PADDA/PADDS cannot handle immediates > +-2^12
 padda [p0], #2060
 
-// CHECK: PADDA immediates must be multiples of 4
+// CHECK: PADDA/PADDS immediates must be multiples of 4
 padda [p0], #6
 
 // CHECK: PADDA cannot handle immediates > +-2^17 on the stack pointer

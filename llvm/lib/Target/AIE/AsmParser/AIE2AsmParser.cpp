@@ -85,14 +85,15 @@ bool AIE2AsmParser::validateInstruction(MCInst &Inst, OperandVector &Operands) {
   // sometimes other syntax tokens, such as "[", "]" (it will not contain
   // ",")...
   switch (Inst.getOpcode()) {
-  case AIE2::PADDA_lda_ptr_inc_idx_imm: {
+  case AIE2::PADDA_lda_ptr_inc_idx_imm:
+  case AIE2::PADDS_st_ptr_inc_idx_imm: {
     const int64_t Imm = Inst.getOperand(2).getImm();
     if (!isValidImm<10, 2>(Imm))
       return Error(Operands[3]->getStartLoc(),
-                   "PADDA cannot handle immediates > +-2^12");
+                   "PADDA/PADDS cannot handle immediates > +-2^12");
     if (Imm % 4 != 0)
       return Error(Operands[3]->getStartLoc(),
-                   "PADDA immediates must be multiples of 4");
+                   "PADDA/PADDS immediates must be multiples of 4");
     break;
   }
   case AIE2::PADDB_ldb_ptr_inc_nrm_imm: {

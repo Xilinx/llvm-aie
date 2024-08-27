@@ -19,12 +19,12 @@ body: |
     ; CHECK: liveins: $p0, $p1, $m1, $r1, $s1
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
-    ; CHECK-NEXT: dead [[COPY:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY]], $m1
-    ; CHECK-NEXT: dead [[COPY1:%[0-9]+]]:ep = PADDA_lda_ptr_inc_idx [[COPY1]], $m1
+    ; CHECK-NEXT: dead [[COPY:%[0-9]+]]:ep = PADDA_lda_ptr_inc_idx [[COPY]], $m1
     ; CHECK-NEXT: CYCLE_SEPARATOR
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: dead [[COPY1:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY1]], $m1
     ; CHECK-NEXT: dead [[COPY2:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY2]], $m1
     ; CHECK-NEXT: dead [[COPY3:%[0-9]+]]:ep = PADDA_lda_ptr_inc_idx [[COPY3]], $m1
     ; CHECK-NEXT: CYCLE_SEPARATOR

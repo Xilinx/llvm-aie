@@ -24,7 +24,7 @@ body: |
     ; CHECK-NEXT: $wl0 = VLDA_dmw_lda_w_ag_idx_imm [[COPY]], 0 :: (load (<8 x s32>))
     ; CHECK-NEXT: $wh0 = VLDA_dmw_lda_w_ag_idx_imm [[COPY]], 32 :: (load (<8 x s32>))
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep_as_32bit = COPY [[COPY]]
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep_as_32bit = PADD_imm_pseudo [[COPY1]], 64
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep_as_32bit = PADD_imm9_pseudo [[COPY1]], 64
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:mss = COPY $s0
     ; CHECK-NEXT: $bmh0 = VLDA_UPS_S32_S16_ag_idx_imm [[COPY2]], [[COPY1]], 0, implicit-def $srups_of, implicit $crsat :: (load (<8 x s32>))
     %0:ep_as_32bit = COPY $p0
@@ -32,6 +32,6 @@ body: |
     $wl0 = VLDA_dmw_lda_w_ag_idx_imm %0, 0 :: (load (<8 x s32>))
     $wh0 = VLDA_dmw_lda_w_ag_idx_imm %0, 32 :: (load (<8 x s32>))
     %2:ep_as_32bit = COPY %0
-    %2:ep_as_32bit = PADD_imm_pseudo %2, 64
+    %2:ep_as_32bit = PADD_imm9_pseudo %2, 64
     $bmh0 = VLDA_UPS_S32_S16_ag_idx_imm %1, %2, 0, implicit-def $srups_of, implicit $crsat :: (load (<8 x s32>))
 ...

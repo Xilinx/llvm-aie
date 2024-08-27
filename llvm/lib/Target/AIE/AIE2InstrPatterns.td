@@ -58,13 +58,13 @@ def accfp32_vecconf : VecConf { let amode = AMODE_FP32; let bmode = BMODE_16x16;
 // 3.23 PADD – Pointer increments
 // Pseudo uses predicate imm9x4, since this fits for both slot A and B.
 def : Pat< (ptradd eP:$ptr, (i20 imm9x4:$imm)),
-           (PADD_imm_pseudo eP:$ptr, imm9x4:$imm)>;
-// PADDA allows 10 bits.
-// Here negative complexity reduces the preference of PADDA
+           (PADD_imm9_pseudo eP:$ptr, imm9x4:$imm)>;
+// PADD_imm10_pseudo allows 10 bits.
+// Here negative complexity reduces the preference of PADD_imm10_pseudo
 // when the imm fits in 9 bits (and hence 10 bits).
 // In which case it will use the pseudo insn.
 def : Pat< (ptradd eP:$ptr, (i20 imm10x4:$imm)),
-           (PADDA_lda_ptr_inc_idx_imm eP:$ptr, imm10x4:$imm)> { let AddedComplexity = -1; }
+           (PADD_imm10_pseudo eP:$ptr, imm10x4:$imm)> { let AddedComplexity = -1; }
 def : Pat< (ptradd eP:$ptr, eM:$mod),
            (PADD_mod_pseudo eP:$ptr, eM:$mod)>;
 
