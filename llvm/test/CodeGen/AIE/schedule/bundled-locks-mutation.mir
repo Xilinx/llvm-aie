@@ -109,7 +109,7 @@ body:             |
     $r0 = LDA_dms_lda_idx_imm $p0, 0
     $r0 = LDA_dms_lda_idx_imm $p0, 0
     $r0 = LDA_dms_lda_idx_imm $p0, 0
-    $p0 = PADD_imm_pseudo $p0, 4
+    $p0 = PADD_imm9_pseudo $p0, 4
     JNZ $r1, %bb.0
     DelayedSchedBarrier
   bb.1:

@@ -725,11 +725,11 @@ body: |
     ; CHECK-NEXT: VST_SRS_D16_S32_ag_idx_imm [[COPY]], 0, [[COPY8]], [[COPY11]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<16 x s16>) into stack - 64, align 64)
     ; CHECK-NEXT: [[COPY12:%[0-9]+]]:acc512 = COPY [[COPY2]].sub_512_lo
     ; CHECK-NEXT: [[COPY13:%[0-9]+]]:acc512 = COPY [[COPY2]].sub_512_hi
-    ; CHECK-NEXT: [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], 16
+    ; CHECK-NEXT: [[PADD_imm9_pseudo:%[0-9]+]]:ep = PADD_imm9_pseudo [[COPY]], 16
     ; CHECK-NEXT: [[COPY14:%[0-9]+]]:mss = COPY [[COPY3]]
-    ; CHECK-NEXT: VST_SRS_D16_S32_ag_idx_imm [[PADD_imm_pseudo]], 32, [[COPY13]], [[COPY14]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<16 x s16>) into stack - 32, basealign 64)
+    ; CHECK-NEXT: VST_SRS_D16_S32_ag_idx_imm [[PADD_imm9_pseudo]], 32, [[COPY13]], [[COPY14]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<16 x s16>) into stack - 32, basealign 64)
     ; CHECK-NEXT: [[COPY15:%[0-9]+]]:mss = COPY [[COPY3]]
-    ; CHECK-NEXT: VST_SRS_D16_S32_ag_idx_imm [[PADD_imm_pseudo]], 0, [[COPY12]], [[COPY15]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<16 x s16>) into stack - 64, align 64)
+    ; CHECK-NEXT: VST_SRS_D16_S32_ag_idx_imm [[PADD_imm9_pseudo]], 0, [[COPY12]], [[COPY15]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<16 x s16>) into stack - 64, align 64)
     ; CHECK-NEXT: [[COPY16:%[0-9]+]]:acc512 = COPY [[COPY2]].sub_512_lo
     ; CHECK-NEXT: [[COPY17:%[0-9]+]]:acc512 = COPY [[COPY2]].sub_512_hi
     ; CHECK-NEXT: [[COPY18:%[0-9]+]]:mss = COPY [[COPY3]]
@@ -744,11 +744,11 @@ body: |
     ; CHECK-NEXT: VST_SRS_D16_S32_ag_idx_imm [[COPY]], 64, [[COPY20]], [[COPY23]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<16 x s16>) into stack - 64, align 64)
     ; CHECK-NEXT: [[COPY24:%[0-9]+]]:acc512 = COPY [[COPY2]].sub_512_lo
     ; CHECK-NEXT: [[COPY25:%[0-9]+]]:acc512 = COPY [[COPY2]].sub_512_hi
-    ; CHECK-NEXT: [[PADD_imm_pseudo1:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], 96
+    ; CHECK-NEXT: [[PADD_imm9_pseudo1:%[0-9]+]]:ep = PADD_imm9_pseudo [[COPY]], 96
     ; CHECK-NEXT: [[COPY26:%[0-9]+]]:mss = COPY [[COPY3]]
-    ; CHECK-NEXT: VST_SRS_D16_S32_ag_idx_imm [[PADD_imm_pseudo1]], 32, [[COPY25]], [[COPY26]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<16 x s16>) into stack - 32, basealign 64)
+    ; CHECK-NEXT: VST_SRS_D16_S32_ag_idx_imm [[PADD_imm9_pseudo1]], 32, [[COPY25]], [[COPY26]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<16 x s16>) into stack - 32, basealign 64)
     ; CHECK-NEXT: [[COPY27:%[0-9]+]]:mss = COPY [[COPY3]]
-    ; CHECK-NEXT: VST_SRS_D16_S32_ag_idx_imm [[PADD_imm_pseudo1]], 0, [[COPY24]], [[COPY27]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<16 x s16>) into stack - 64, align 64)
+    ; CHECK-NEXT: VST_SRS_D16_S32_ag_idx_imm [[PADD_imm9_pseudo1]], 0, [[COPY24]], [[COPY27]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<16 x s16>) into stack - 64, align 64)
     %0:ptrregbank(p0) = COPY $p0
     %7:modregbank(s20) = COPY $m0
     %8:modregbank(s20) = G_CONSTANT i20 0
@@ -808,12 +808,12 @@ body: |
     ; CHECK-NEXT: $crsrssign = MOV_scalar_imm10_pseudo 0
     ; CHECK-NEXT: [[COPY13:%[0-9]+]]:acc512 = COPY [[COPY2]].sub_512_lo
     ; CHECK-NEXT: [[COPY14:%[0-9]+]]:acc512 = COPY [[COPY2]].sub_512_hi
-    ; CHECK-NEXT: [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], 16
+    ; CHECK-NEXT: [[PADD_imm9_pseudo:%[0-9]+]]:ep = PADD_imm9_pseudo [[COPY]], 16
     ; CHECK-NEXT: $crsrssign = COPY [[COPY4]]
     ; CHECK-NEXT: [[COPY15:%[0-9]+]]:mss = COPY [[COPY3]]
-    ; CHECK-NEXT: VST_SRS_D16_S32_ag_idx_imm [[PADD_imm_pseudo]], 32, [[COPY14]], [[COPY15]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<16 x s16>) into stack - 32, basealign 64)
+    ; CHECK-NEXT: VST_SRS_D16_S32_ag_idx_imm [[PADD_imm9_pseudo]], 32, [[COPY14]], [[COPY15]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<16 x s16>) into stack - 32, basealign 64)
     ; CHECK-NEXT: [[COPY16:%[0-9]+]]:mss = COPY [[COPY3]]
-    ; CHECK-NEXT: VST_SRS_D16_S32_ag_idx_imm [[PADD_imm_pseudo]], 0, [[COPY13]], [[COPY16]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<16 x s16>) into stack - 64, align 64)
+    ; CHECK-NEXT: VST_SRS_D16_S32_ag_idx_imm [[PADD_imm9_pseudo]], 0, [[COPY13]], [[COPY16]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<16 x s16>) into stack - 64, align 64)
     ; CHECK-NEXT: $crsrssign = MOV_scalar_imm10_pseudo 0
     ; CHECK-NEXT: [[COPY17:%[0-9]+]]:acc512 = COPY [[COPY2]].sub_512_lo
     ; CHECK-NEXT: [[COPY18:%[0-9]+]]:acc512 = COPY [[COPY2]].sub_512_hi
@@ -833,12 +833,12 @@ body: |
     ; CHECK-NEXT: $crsrssign = MOV_scalar_imm10_pseudo 0
     ; CHECK-NEXT: [[COPY25:%[0-9]+]]:acc512 = COPY [[COPY2]].sub_512_lo
     ; CHECK-NEXT: [[COPY26:%[0-9]+]]:acc512 = COPY [[COPY2]].sub_512_hi
-    ; CHECK-NEXT: [[PADD_imm_pseudo1:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], 96
+    ; CHECK-NEXT: [[PADD_imm9_pseudo1:%[0-9]+]]:ep = PADD_imm9_pseudo [[COPY]], 96
     ; CHECK-NEXT: $crsrssign = COPY [[COPY4]]
     ; CHECK-NEXT: [[COPY27:%[0-9]+]]:mss = COPY [[COPY3]]
-    ; CHECK-NEXT: VST_SRS_D16_S32_ag_idx_imm [[PADD_imm_pseudo1]], 32, [[COPY26]], [[COPY27]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<16 x s16>) into stack - 32, basealign 64)
+    ; CHECK-NEXT: VST_SRS_D16_S32_ag_idx_imm [[PADD_imm9_pseudo1]], 32, [[COPY26]], [[COPY27]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<16 x s16>) into stack - 32, basealign 64)
     ; CHECK-NEXT: [[COPY28:%[0-9]+]]:mss = COPY [[COPY3]]
-    ; CHECK-NEXT: VST_SRS_D16_S32_ag_idx_imm [[PADD_imm_pseudo1]], 0, [[COPY25]], [[COPY28]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<16 x s16>) into stack - 64, align 64)
+    ; CHECK-NEXT: VST_SRS_D16_S32_ag_idx_imm [[PADD_imm9_pseudo1]], 0, [[COPY25]], [[COPY28]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<16 x s16>) into stack - 64, align 64)
     ; CHECK-NEXT: $crsrssign = MOV_scalar_imm10_pseudo 0
     %0:ptrregbank(p0) = COPY $p0
     %7:modregbank(s20) = COPY $m0
@@ -894,11 +894,11 @@ body: |
     ; CHECK-NEXT: VST_SRS_S16_S32_ag_idx_imm [[COPY]], 0, [[COPY8]], [[COPY11]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<16 x s16>) into stack - 64, align 64)
     ; CHECK-NEXT: [[COPY12:%[0-9]+]]:acc512 = COPY [[COPY2]].sub_512_lo
     ; CHECK-NEXT: [[COPY13:%[0-9]+]]:acc512 = COPY [[COPY2]].sub_512_hi
-    ; CHECK-NEXT: [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], 16
+    ; CHECK-NEXT: [[PADD_imm9_pseudo:%[0-9]+]]:ep = PADD_imm9_pseudo [[COPY]], 16
     ; CHECK-NEXT: [[COPY14:%[0-9]+]]:mss = COPY [[COPY3]]
-    ; CHECK-NEXT: VST_SRS_S16_S32_ag_idx_imm [[PADD_imm_pseudo]], 32, [[COPY13]], [[COPY14]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<16 x s16>) into stack - 32, basealign 64)
+    ; CHECK-NEXT: VST_SRS_S16_S32_ag_idx_imm [[PADD_imm9_pseudo]], 32, [[COPY13]], [[COPY14]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<16 x s16>) into stack - 32, basealign 64)
     ; CHECK-NEXT: [[COPY15:%[0-9]+]]:mss = COPY [[COPY3]]
-    ; CHECK-NEXT: VST_SRS_S16_S32_ag_idx_imm [[PADD_imm_pseudo]], 0, [[COPY12]], [[COPY15]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<16 x s16>) into stack - 64, align 64)
+    ; CHECK-NEXT: VST_SRS_S16_S32_ag_idx_imm [[PADD_imm9_pseudo]], 0, [[COPY12]], [[COPY15]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<16 x s16>) into stack - 64, align 64)
     ; CHECK-NEXT: [[COPY16:%[0-9]+]]:acc512 = COPY [[COPY2]].sub_512_lo
     ; CHECK-NEXT: [[COPY17:%[0-9]+]]:acc512 = COPY [[COPY2]].sub_512_hi
     ; CHECK-NEXT: [[COPY18:%[0-9]+]]:mss = COPY [[COPY3]]
@@ -913,11 +913,11 @@ body: |
     ; CHECK-NEXT: VST_SRS_S16_S32_ag_idx_imm [[COPY]], 64, [[COPY20]], [[COPY23]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<16 x s16>) into stack - 64, align 64)
     ; CHECK-NEXT: [[COPY24:%[0-9]+]]:acc512 = COPY [[COPY2]].sub_512_lo
     ; CHECK-NEXT: [[COPY25:%[0-9]+]]:acc512 = COPY [[COPY2]].sub_512_hi
-    ; CHECK-NEXT: [[PADD_imm_pseudo1:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], 96
+    ; CHECK-NEXT: [[PADD_imm9_pseudo1:%[0-9]+]]:ep = PADD_imm9_pseudo [[COPY]], 96
     ; CHECK-NEXT: [[COPY26:%[0-9]+]]:mss = COPY [[COPY3]]
-    ; CHECK-NEXT: VST_SRS_S16_S32_ag_idx_imm [[PADD_imm_pseudo1]], 32, [[COPY25]], [[COPY26]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<16 x s16>) into stack - 32, basealign 64)
+    ; CHECK-NEXT: VST_SRS_S16_S32_ag_idx_imm [[PADD_imm9_pseudo1]], 32, [[COPY25]], [[COPY26]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<16 x s16>) into stack - 32, basealign 64)
     ; CHECK-NEXT: [[COPY27:%[0-9]+]]:mss = COPY [[COPY3]]
-    ; CHECK-NEXT: VST_SRS_S16_S32_ag_idx_imm [[PADD_imm_pseudo1]], 0, [[COPY24]], [[COPY27]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<16 x s16>) into stack - 64, align 64)
+    ; CHECK-NEXT: VST_SRS_S16_S32_ag_idx_imm [[PADD_imm9_pseudo1]], 0, [[COPY24]], [[COPY27]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<16 x s16>) into stack - 64, align 64)
     %0:ptrregbank(p0) = COPY $p0
     %7:modregbank(s20) = COPY $m0
     %8:modregbank(s20) = G_CONSTANT i20 0
@@ -972,11 +972,11 @@ body: |
     ; CHECK-NEXT: VST_SRS_D32_S64_ag_idx_imm [[COPY]], 0, [[COPY8]], [[COPY11]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<8 x s32>) into stack - 64, align 64)
     ; CHECK-NEXT: [[COPY12:%[0-9]+]]:acc512 = COPY [[COPY2]].sub_512_lo
     ; CHECK-NEXT: [[COPY13:%[0-9]+]]:acc512 = COPY [[COPY2]].sub_512_hi
-    ; CHECK-NEXT: [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], 16
+    ; CHECK-NEXT: [[PADD_imm9_pseudo:%[0-9]+]]:ep = PADD_imm9_pseudo [[COPY]], 16
     ; CHECK-NEXT: [[COPY14:%[0-9]+]]:mss = COPY [[COPY3]]
-    ; CHECK-NEXT: VST_SRS_D32_S64_ag_idx_imm [[PADD_imm_pseudo]], 32, [[COPY13]], [[COPY14]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<8 x s32>) into stack - 32, basealign 64)
+    ; CHECK-NEXT: VST_SRS_D32_S64_ag_idx_imm [[PADD_imm9_pseudo]], 32, [[COPY13]], [[COPY14]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<8 x s32>) into stack - 32, basealign 64)
     ; CHECK-NEXT: [[COPY15:%[0-9]+]]:mss = COPY [[COPY3]]
-    ; CHECK-NEXT: VST_SRS_D32_S64_ag_idx_imm [[PADD_imm_pseudo]], 0, [[COPY12]], [[COPY15]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<8 x s32>) into stack - 64, align 64)
+    ; CHECK-NEXT: VST_SRS_D32_S64_ag_idx_imm [[PADD_imm9_pseudo]], 0, [[COPY12]], [[COPY15]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<8 x s32>) into stack - 64, align 64)
     ; CHECK-NEXT: [[COPY16:%[0-9]+]]:acc512 = COPY [[COPY2]].sub_512_lo
     ; CHECK-NEXT: [[COPY17:%[0-9]+]]:acc512 = COPY [[COPY2]].sub_512_hi
     ; CHECK-NEXT: [[COPY18:%[0-9]+]]:mss = COPY [[COPY3]]
@@ -991,11 +991,11 @@ body: |
     ; CHECK-NEXT: VST_SRS_D32_S64_ag_idx_imm [[COPY]], 64, [[COPY20]], [[COPY23]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<8 x s32>) into stack - 64, align 64)
     ; CHECK-NEXT: [[COPY24:%[0-9]+]]:acc512 = COPY [[COPY2]].sub_512_lo
     ; CHECK-NEXT: [[COPY25:%[0-9]+]]:acc512 = COPY [[COPY2]].sub_512_hi
-    ; CHECK-NEXT: [[PADD_imm_pseudo1:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], 96
+    ; CHECK-NEXT: [[PADD_imm9_pseudo1:%[0-9]+]]:ep = PADD_imm9_pseudo [[COPY]], 96
     ; CHECK-NEXT: [[COPY26:%[0-9]+]]:mss = COPY [[COPY3]]
-    ; CHECK-NEXT: VST_SRS_D32_S64_ag_idx_imm [[PADD_imm_pseudo1]], 32, [[COPY25]], [[COPY26]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<8 x s32>) into stack - 32, basealign 64)
+    ; CHECK-NEXT: VST_SRS_D32_S64_ag_idx_imm [[PADD_imm9_pseudo1]], 32, [[COPY25]], [[COPY26]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<8 x s32>) into stack - 32, basealign 64)
     ; CHECK-NEXT: [[COPY27:%[0-9]+]]:mss = COPY [[COPY3]]
-    ; CHECK-NEXT: VST_SRS_D32_S64_ag_idx_imm [[PADD_imm_pseudo1]], 0, [[COPY24]], [[COPY27]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<8 x s32>) into stack - 64, align 64)
+    ; CHECK-NEXT: VST_SRS_D32_S64_ag_idx_imm [[PADD_imm9_pseudo1]], 0, [[COPY24]], [[COPY27]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<8 x s32>) into stack - 64, align 64)
     %0:ptrregbank(p0) = COPY $p0
     %7:modregbank(s20) = COPY $m0
     %8:modregbank(s20) = G_CONSTANT i20 0
@@ -1055,12 +1055,12 @@ body: |
     ; CHECK-NEXT: $crsrssign = MOV_scalar_imm10_pseudo 0
     ; CHECK-NEXT: [[COPY13:%[0-9]+]]:acc512 = COPY [[COPY2]].sub_512_lo
     ; CHECK-NEXT: [[COPY14:%[0-9]+]]:acc512 = COPY [[COPY2]].sub_512_hi
-    ; CHECK-NEXT: [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], 16
+    ; CHECK-NEXT: [[PADD_imm9_pseudo:%[0-9]+]]:ep = PADD_imm9_pseudo [[COPY]], 16
     ; CHECK-NEXT: $crsrssign = COPY [[COPY4]]
     ; CHECK-NEXT: [[COPY15:%[0-9]+]]:mss = COPY [[COPY3]]
-    ; CHECK-NEXT: VST_SRS_D32_S64_ag_idx_imm [[PADD_imm_pseudo]], 32, [[COPY14]], [[COPY15]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<8 x s32>) into stack - 32, basealign 64)
+    ; CHECK-NEXT: VST_SRS_D32_S64_ag_idx_imm [[PADD_imm9_pseudo]], 32, [[COPY14]], [[COPY15]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<8 x s32>) into stack - 32, basealign 64)
     ; CHECK-NEXT: [[COPY16:%[0-9]+]]:mss = COPY [[COPY3]]
-    ; CHECK-NEXT: VST_SRS_D32_S64_ag_idx_imm [[PADD_imm_pseudo]], 0, [[COPY13]], [[COPY16]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<8 x s32>) into stack - 64, align 64)
+    ; CHECK-NEXT: VST_SRS_D32_S64_ag_idx_imm [[PADD_imm9_pseudo]], 0, [[COPY13]], [[COPY16]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<8 x s32>) into stack - 64, align 64)
     ; CHECK-NEXT: $crsrssign = MOV_scalar_imm10_pseudo 0
     ; CHECK-NEXT: [[COPY17:%[0-9]+]]:acc512 = COPY [[COPY2]].sub_512_lo
     ; CHECK-NEXT: [[COPY18:%[0-9]+]]:acc512 = COPY [[COPY2]].sub_512_hi
@@ -1080,12 +1080,12 @@ body: |
     ; CHECK-NEXT: $crsrssign = MOV_scalar_imm10_pseudo 0
     ; CHECK-NEXT: [[COPY25:%[0-9]+]]:acc512 = COPY [[COPY2]].sub_512_lo
     ; CHECK-NEXT: [[COPY26:%[0-9]+]]:acc512 = COPY [[COPY2]].sub_512_hi
-    ; CHECK-NEXT: [[PADD_imm_pseudo1:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], 96
+    ; CHECK-NEXT: [[PADD_imm9_pseudo1:%[0-9]+]]:ep = PADD_imm9_pseudo [[COPY]], 96
     ; CHECK-NEXT: $crsrssign = COPY [[COPY4]]
     ; CHECK-NEXT: [[COPY27:%[0-9]+]]:mss = COPY [[COPY3]]
-    ; CHECK-NEXT: VST_SRS_D32_S64_ag_idx_imm [[PADD_imm_pseudo1]], 32, [[COPY26]], [[COPY27]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<8 x s32>) into stack - 32, basealign 64)
+    ; CHECK-NEXT: VST_SRS_D32_S64_ag_idx_imm [[PADD_imm9_pseudo1]], 32, [[COPY26]], [[COPY27]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<8 x s32>) into stack - 32, basealign 64)
     ; CHECK-NEXT: [[COPY28:%[0-9]+]]:mss = COPY [[COPY3]]
-    ; CHECK-NEXT: VST_SRS_D32_S64_ag_idx_imm [[PADD_imm_pseudo1]], 0, [[COPY25]], [[COPY28]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<8 x s32>) into stack - 64, align 64)
+    ; CHECK-NEXT: VST_SRS_D32_S64_ag_idx_imm [[PADD_imm9_pseudo1]], 0, [[COPY25]], [[COPY28]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<8 x s32>) into stack - 64, align 64)
     ; CHECK-NEXT: $crsrssign = MOV_scalar_imm10_pseudo 0
     %0:ptrregbank(p0) = COPY $p0
     %7:modregbank(s20) = COPY $m0
@@ -1141,11 +1141,11 @@ body: |
     ; CHECK-NEXT: VST_SRS_S32_S64_ag_idx_imm [[COPY]], 0, [[COPY8]], [[COPY11]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<8 x s32>) into stack - 64, align 64)
     ; CHECK-NEXT: [[COPY12:%[0-9]+]]:acc512 = COPY [[COPY2]].sub_512_lo
     ; CHECK-NEXT: [[COPY13:%[0-9]+]]:acc512 = COPY [[COPY2]].sub_512_hi
-    ; CHECK-NEXT: [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], 16
+    ; CHECK-NEXT: [[PADD_imm9_pseudo:%[0-9]+]]:ep = PADD_imm9_pseudo [[COPY]], 16
     ; CHECK-NEXT: [[COPY14:%[0-9]+]]:mss = COPY [[COPY3]]
-    ; CHECK-NEXT: VST_SRS_S32_S64_ag_idx_imm [[PADD_imm_pseudo]], 32, [[COPY13]], [[COPY14]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<8 x s32>) into stack - 32, basealign 64)
+    ; CHECK-NEXT: VST_SRS_S32_S64_ag_idx_imm [[PADD_imm9_pseudo]], 32, [[COPY13]], [[COPY14]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<8 x s32>) into stack - 32, basealign 64)
     ; CHECK-NEXT: [[COPY15:%[0-9]+]]:mss = COPY [[COPY3]]
-    ; CHECK-NEXT: VST_SRS_S32_S64_ag_idx_imm [[PADD_imm_pseudo]], 0, [[COPY12]], [[COPY15]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<8 x s32>) into stack - 64, align 64)
+    ; CHECK-NEXT: VST_SRS_S32_S64_ag_idx_imm [[PADD_imm9_pseudo]], 0, [[COPY12]], [[COPY15]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<8 x s32>) into stack - 64, align 64)
     ; CHECK-NEXT: [[COPY16:%[0-9]+]]:acc512 = COPY [[COPY2]].sub_512_lo
     ; CHECK-NEXT: [[COPY17:%[0-9]+]]:acc512 = COPY [[COPY2]].sub_512_hi
     ; CHECK-NEXT: [[COPY18:%[0-9]+]]:mss = COPY [[COPY3]]
@@ -1160,11 +1160,11 @@ body: |
     ; CHECK-NEXT: VST_SRS_S32_S64_ag_idx_imm [[COPY]], 64, [[COPY20]], [[COPY23]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<8 x s32>) into stack - 64, align 64)
     ; CHECK-NEXT: [[COPY24:%[0-9]+]]:acc512 = COPY [[COPY2]].sub_512_lo
     ; CHECK-NEXT: [[COPY25:%[0-9]+]]:acc512 = COPY [[COPY2]].sub_512_hi
-    ; CHECK-NEXT: [[PADD_imm_pseudo1:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], 96
+    ; CHECK-NEXT: [[PADD_imm9_pseudo1:%[0-9]+]]:ep = PADD_imm9_pseudo [[COPY]], 96
     ; CHECK-NEXT: [[COPY26:%[0-9]+]]:mss = COPY [[COPY3]]
-    ; CHECK-NEXT: VST_SRS_S32_S64_ag_idx_imm [[PADD_imm_pseudo1]], 32, [[COPY25]], [[COPY26]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<8 x s32>) into stack - 32, basealign 64)
+    ; CHECK-NEXT: VST_SRS_S32_S64_ag_idx_imm [[PADD_imm9_pseudo1]], 32, [[COPY25]], [[COPY26]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<8 x s32>) into stack - 32, basealign 64)
     ; CHECK-NEXT: [[COPY27:%[0-9]+]]:mss = COPY [[COPY3]]
-    ; CHECK-NEXT: VST_SRS_S32_S64_ag_idx_imm [[PADD_imm_pseudo1]], 0, [[COPY24]], [[COPY27]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<8 x s32>) into stack - 64, align 64)
+    ; CHECK-NEXT: VST_SRS_S32_S64_ag_idx_imm [[PADD_imm9_pseudo1]], 0, [[COPY24]], [[COPY27]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<8 x s32>) into stack - 64, align 64)
     %0:ptrregbank(p0) = COPY $p0
     %7:modregbank(s20) = COPY $m0
     %8:modregbank(s20) = G_CONSTANT i20 0

@@ -76,7 +76,7 @@ void AIE2FrameLowering::adjustReg(MachineBasicBlock &MBB,
   // Note that we assume stack is 32-byte aligned.
   assert(StackPtrIncr % 32 == 0); // We only move the stack 32 bytes at a time.
   if (isInt<10 + 2>(StackPtrIncr)) {
-    BuildMI(MBB, MBBI, DL, TII->get(AIE2::PADDA_lda_ptr_inc_idx_imm))
+    BuildMI(MBB, MBBI, DL, TII->get(AIE2::PADD_imm10_pseudo))
         .addDef(Reg)
         .addUse(Reg)
         .addImm(StackPtrIncr)

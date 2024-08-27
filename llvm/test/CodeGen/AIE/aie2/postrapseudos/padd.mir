@@ -29,16 +29,16 @@ alignment:       16
 body:             |
   bb.0 (align 16):
     ; CHECK-LABEL: name: padd_imm
-    ; CHECK: $p0 = PADD_imm_pseudo $p0, 4
-    ; CHECK-NEXT: $p1 = PADD_imm_pseudo $p1, -4
-    ; CHECK-NEXT: $p1 = PADD_imm_pseudo $p1, 100
-    ; CHECK-NEXT: $p1 = PADD_imm_pseudo $p1, -100
-    ; CHECK-NEXT: $p2 = PADD_imm_pseudo $p2, 1020
-    $p0 = PADD_imm_pseudo $p0, 4
-    $p1 = PADD_imm_pseudo $p1, -4
-    $p1 = PADD_imm_pseudo $p1, 100
-    $p1 = PADD_imm_pseudo $p1, -100
-    $p2 = PADD_imm_pseudo $p2, 1020
+    ; CHECK: $p0 = PADD_imm9_pseudo $p0, 4
+    ; CHECK-NEXT: $p1 = PADD_imm9_pseudo $p1, -4
+    ; CHECK-NEXT: $p1 = PADD_imm9_pseudo $p1, 100
+    ; CHECK-NEXT: $p1 = PADD_imm9_pseudo $p1, -100
+    ; CHECK-NEXT: $p2 = PADD_imm9_pseudo $p2, 1020
+    $p0 = PADD_imm9_pseudo $p0, 4
+    $p1 = PADD_imm9_pseudo $p1, -4
+    $p1 = PADD_imm9_pseudo $p1, 100
+    $p1 = PADD_imm9_pseudo $p1, -100
+    $p2 = PADD_imm9_pseudo $p2, 1020
 ...
 
 ---

@@ -59,12 +59,12 @@ body:             |
   bb.0:
     liveins: $p0, $cm0, $s0, $r1
     VST_SRS_D8_S32_ag_idx_imm $p0, 0, $cm0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
-    $p0 = PADD_imm_pseudo $p0, 4
+    $p0 = PADD_imm9_pseudo $p0, 4
     JNZ $r1, %bb.0
     DelayedSchedBarrier
   bb.1:
     liveins: $p0
     $r2 = LDA_dms_lda_idx_imm $p0, 0
-    $p0 = PADD_imm_pseudo $p0, 4
+    $p0 = PADD_imm9_pseudo $p0, 4
     $r2 = LDA_dms_lda_idx_imm $p0, 0
 ...

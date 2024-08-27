@@ -30,7 +30,7 @@ body:             |
   ; CHECK-NEXT:   [[PHI:%[0-9]+]]:er = PHI [[MOV_RLC_imm10_pseudo]], %bb.0, %4, %bb.1
   ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:ep = PHI [[COPY]], %bb.0, %6, %bb.1
   ; CHECK-NEXT:   [[VLDA_UPS_S64_D32_ag_idx_imm:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY2]], [[PHI1]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>))
-  ; CHECK-NEXT:   [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo [[PHI1]], 32
+  ; CHECK-NEXT:   [[PADD_imm9_pseudo:%[0-9]+]]:ep = PADD_imm9_pseudo [[PHI1]], 32
   ; CHECK-NEXT:   [[ADD_add_r_ri:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -1, implicit-def $srcarry
   ; CHECK-NEXT:   [[EQZ:%[0-9]+]]:er = EQZ [[ADD_add_r_ri]]
   ; CHECK-NEXT:   PseudoJZ [[EQZ]], %bb.1
@@ -49,7 +49,7 @@ body:             |
     %4:ep = PHI %1, %bb.1, %8, %bb.3
     %24:mss = COPY %20
     %9:acc512 = VLDA_UPS_S64_D32_ag_idx_imm %24, %4, 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>))
-    %8:ep = PADD_imm_pseudo  %4, 32
+    %8:ep = PADD_imm9_pseudo  %4, 32
     %16:er = nsw ADD_add_r_ri %3, -1, implicit-def $srcarry
     %21:er = EQZ %16
     PseudoJZ %21, %bb.3
@@ -86,7 +86,7 @@ body:             |
   ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:ep = PHI [[COPY]], %bb.0, %9, %bb.1
   ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:mss = COPY [[COPY1]]
   ; CHECK-NEXT:   [[VLDA_UPS_S64_D32_ag_idx_imm:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY5]], [[PHI1]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>))
-  ; CHECK-NEXT:   [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo [[PHI1]], 32
+  ; CHECK-NEXT:   [[PADD_imm9_pseudo:%[0-9]+]]:ep = PADD_imm9_pseudo [[PHI1]], 32
   ; CHECK-NEXT:   [[ADD_add_r_ri:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -1, implicit-def $srcarry
   ; CHECK-NEXT:   [[EQZ:%[0-9]+]]:er = EQZ [[ADD_add_r_ri]]
   ; CHECK-NEXT:   PseudoJZ [[EQZ]], %bb.1
@@ -108,7 +108,7 @@ body:             |
     %4:ep = PHI %1, %bb.1, %8, %bb.3
     %24:mss = COPY %20
     %9:acc512 = VLDA_UPS_S64_D32_ag_idx_imm %24, %4, 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>))
-    %8:ep = PADD_imm_pseudo  %4, 32
+    %8:ep = PADD_imm9_pseudo  %4, 32
     %16:er = nsw ADD_add_r_ri %3, -1, implicit-def $srcarry
     %21:er = EQZ %16
     PseudoJZ %21, %bb.3
@@ -152,7 +152,7 @@ body:             |
   ; CHECK-NEXT:   [[VLDA_UPS_S64_D32_ag_idx_imm2:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY7]], [[PHI1]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>))
   ; CHECK-NEXT:   [[COPY8:%[0-9]+]]:mss = COPY [[COPY4]]
   ; CHECK-NEXT:   [[VLDA_UPS_S64_D32_ag_idx_imm3:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY8]], [[PHI1]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>))
-  ; CHECK-NEXT:   [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo [[PHI1]], 32
+  ; CHECK-NEXT:   [[PADD_imm9_pseudo:%[0-9]+]]:ep = PADD_imm9_pseudo [[PHI1]], 32
   ; CHECK-NEXT:   [[ADD_add_r_ri:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -1, implicit-def $srcarry
   ; CHECK-NEXT:   [[EQZ:%[0-9]+]]:er = EQZ [[ADD_add_r_ri]]
   ; CHECK-NEXT:   PseudoJZ [[EQZ]], %bb.1
@@ -179,7 +179,7 @@ body:             |
     %93:acc512 = VLDA_UPS_S64_D32_ag_idx_imm %73, %4, 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>))
     %74:mss = COPY %24
     %94:acc512 = VLDA_UPS_S64_D32_ag_idx_imm %74, %4, 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>))
-    %8:ep = PADD_imm_pseudo  %4, 32
+    %8:ep = PADD_imm9_pseudo  %4, 32
     %16:er = nsw ADD_add_r_ri %3, -1, implicit-def $srcarry
     %17:er = EQZ %16
     PseudoJZ %17, %bb.3
@@ -227,7 +227,7 @@ body:             |
   ; CHECK-NEXT:   [[COPY10:%[0-9]+]]:mss = COPY [[COPY5]]
   ; CHECK-NEXT:   [[VLDA_UPS_S64_D32_ag_idx_imm3:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY9]], [[PHI1]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>))
   ; CHECK-NEXT:   [[VLDA_UPS_S64_D32_ag_idx_imm4:%[0-9]+]]:acc512 = VLDA_UPS_S64_D32_ag_idx_imm [[COPY10]], [[PHI1]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>))
-  ; CHECK-NEXT:   [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo [[PHI1]], 32
+  ; CHECK-NEXT:   [[PADD_imm9_pseudo:%[0-9]+]]:ep = PADD_imm9_pseudo [[PHI1]], 32
   ; CHECK-NEXT:   [[ADD_add_r_ri:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -1, implicit-def $srcarry
   ; CHECK-NEXT:   [[EQZ:%[0-9]+]]:er = EQZ [[ADD_add_r_ri]]
   ; CHECK-NEXT:   PseudoJZ [[EQZ]], %bb.1
@@ -257,7 +257,7 @@ body:             |
     %75:mss = COPY %25
     %94:acc512 = VLDA_UPS_S64_D32_ag_idx_imm %74, %4, 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>))
     %95:acc512 = VLDA_UPS_S64_D32_ag_idx_imm %75, %4, 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign :: (load (<8 x s32>))
-    %8:ep = PADD_imm_pseudo  %4, 32
+    %8:ep = PADD_imm9_pseudo  %4, 32
     %16:er = nsw ADD_add_r_ri %3, -1, implicit-def $srcarry
     %17:er = EQZ %16
     PseudoJZ %17, %bb.3

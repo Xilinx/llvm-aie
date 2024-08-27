@@ -228,13 +228,13 @@ bool AIE2RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     // Check for 11 bits (in which 2 LSBs are always zeros)
     // for PADD pseudo to expand to PADD A or B.
     if ((Offset % 4 == 0) && isInt<9 + 2>(Offset)) {
-      BuildMI(MBB, II, DL, TII->get(AIE2::PADD_imm_pseudo), DstReg)
+      BuildMI(MBB, II, DL, TII->get(AIE2::PADD_imm9_pseudo), DstReg)
           .addReg(DstReg)
           .addImm(Offset);
-      // PADDA allows 12 bit imm (include 2 LSBs always 0).
-      // Select PADDA if the offset exceeds the 11 bit range.
+      // PADD_imm10_pseudo allows 12 bit imm (include 2 LSBs always 0).
+      // Select PADD_imm10_pseudo if the offset exceeds the 11 bit range.
     } else if ((Offset % 4 == 0) && isInt<10 + 2>(Offset)) {
-      BuildMI(MBB, II, DL, TII->get(AIE2::PADDA_lda_ptr_inc_idx_imm), DstReg)
+      BuildMI(MBB, II, DL, TII->get(AIE2::PADD_imm10_pseudo), DstReg)
           .addReg(DstReg)
           .addImm(Offset);
       // If offset is greater than the 12 bit range, then we use PADD pseudo

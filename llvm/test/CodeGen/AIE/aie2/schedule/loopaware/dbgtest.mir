@@ -184,7 +184,7 @@ body:             |
     $p1 = MOV_mv_scl $p0
     DBG_VALUE $p1, $noreg, !13, !DIExpression(DW_OP_LLVM_fragment, 0, 20), debug-location !14
     renamable $r0 = LDA_dms_lda_idx_imm $p0, 0, debug-location !16 :: (load (s32) from %ir.vector.addr.0, !tbaa !17)
-    renamable $p0 = nuw PADD_imm_pseudo killed renamable $p0, 4, debug-location !22
+    renamable $p0 = nuw PADD_imm9_pseudo killed renamable $p0, 4, debug-location !22
     DBG_VALUE $p0, $noreg, !13, !DIExpression(DW_OP_LLVM_fragment, 0, 20), debug-location !14
     JNZ killed renamable $r0, %bb.1, debug-location !15
     DelayedSchedBarrier debug-location !15

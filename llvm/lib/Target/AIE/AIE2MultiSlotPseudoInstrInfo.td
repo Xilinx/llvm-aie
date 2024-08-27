@@ -19,11 +19,11 @@
 let mayLoad = false, mayStore = false, hasSideEffects = false, Itinerary = II_PADD in {
   let Constraints = "$ptr = $res" in {
     def PADD_mod_pseudo : MultiSlot_Pseudo< (outs eP:$res), (ins eP:$ptr, eM:$mod),
-                          "padd_mod_pseudo", "[$ptr], $mod", 
-                          [PADDB_ldb_ptr_inc_nospill_nrm, PADDA_lda_ptr_inc_idx] >;
-    def PADD_imm_pseudo : MultiSlot_Pseudo< (outs eP:$res), (ins eP:$ptr, imm9x4:$imm),
-                          "padd_imm_pseudo", "[$ptr], $imm", 
-                          [PADDB_ldb_ptr_inc_nrm_imm, PADDA_lda_ptr_inc_idx_imm] >;
+                          "padd_mod_pseudo", "[$ptr], $mod", [PADDB_ldb_ptr_inc_nospill_nrm, PADDS_st_ptr_inc_idx, PADDA_lda_ptr_inc_idx] >;
+    def PADD_imm9_pseudo : MultiSlot_Pseudo< (outs eP:$res), (ins eP:$ptr, imm9x4:$imm),
+                          "padd_imm_pseudo", "[$ptr], $imm", [PADDB_ldb_ptr_inc_nrm_imm, PADDS_st_ptr_inc_idx_imm, PADDA_lda_ptr_inc_idx_imm] >;
+    def PADD_imm10_pseudo : MultiSlot_Pseudo< (outs eP:$res), (ins eP:$ptr, imm10x4:$imm),
+                          "padd_imm_pseudo", "[$ptr], $imm", [PADDA_lda_ptr_inc_idx_imm, PADDS_st_ptr_inc_idx_imm] >;
   }
   let Defs = [SP], Uses = [SP] in {
     def PADD_sp_imm_pseudo : MultiSlot_Pseudo< (outs ), (ins imm12x32:$imm),

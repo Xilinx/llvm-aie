@@ -61,7 +61,7 @@ body:             |
   bb.1:
     liveins: $p0, $p1, $r0, $r1
     $r1 = nsw ADD_add_r_ri $r1, -1, implicit-def $srcarry
-    $p0 = PADD_imm_pseudo $p0, 4
+    $p0 = PADD_imm9_pseudo $p0, 4
     ST_dms_sts_idx_imm $r0, $p1, 0
     JNZ $r1, %bb.1
     DelayedSchedBarrier
