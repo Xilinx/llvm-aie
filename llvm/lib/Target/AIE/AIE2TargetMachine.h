@@ -16,13 +16,8 @@
 #define LLVM_LIB_TARGET_AIE_AIE2TARGETMACHINE_H
 
 #include "AIE2Subtarget.h"
-#include "AIETargetMachine.h"
+#include "AIEBaseTargetMachine.h"
 #include "MCTargetDesc/AIE2MCTargetDesc.h"
-#include "llvm/CodeGen/SelectionDAGTargetInfo.h"
-#include "llvm/CodeGen/TargetPassConfig.h"
-#include "llvm/IR/DataLayout.h"
-#include "llvm/Target/TargetMachine.h"
-#include <optional>
 
 namespace llvm {
 

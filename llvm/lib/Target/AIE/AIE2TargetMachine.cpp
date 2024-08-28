@@ -85,13 +85,18 @@ AIE2TargetMachine::AIE2TargetMachine(const Target &T, const Triple &TT,
 }
 
 // AIE2 Pass Setup
-class AIE2PassConfig final : public AIEPassConfig {
+class AIE2PassConfig final : public AIEBasePassConfig {
 public:
   AIE2PassConfig(LLVMTargetMachine &TM, PassManagerBase &PM)
-      : AIEPassConfig(TM, PM) {
+      : AIEBasePassConfig(TM, PM) {
     if (!EnableSubregRenaming)
       disablePass(&RenameIndependentSubregsID);
   }
+
+  AIE2TargetMachine &getAIETargetMachine() const {
+    return getTM<AIE2TargetMachine>();
+  }
+
   bool addPreISel() override;
   void addPreEmitPass() override;
   bool addInstSelector() override;

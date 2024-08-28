@@ -66,6 +66,7 @@ add_llvm_target(AIECodeGen
    AIECombinerHelper.cpp
    AIEBaseRegisterBankInfo.cpp
    AIEBaseSubtarget.cpp
+   AIEBaseTargetMachine.cpp
    AIECallLowering.cpp
    AIEDelaySlotFiller.cpp
    AIEDumpArtifacts.cpp
