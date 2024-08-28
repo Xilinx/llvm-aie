@@ -61,11 +61,13 @@ event_error() { return __builtin_aiev2_event(3); }
 #if defined(__cplusplus) && !defined(__AIECC__DISABLE_READ_WRITE_TM)
 // Read/Write for Tile Memory Map
 INTRINSIC(uint32) read_tm(uint32 regAddr, uint32 TMAddrSpaceStart = 0x80000) {
-  return __builtin_aiev2_read_tm((int *)(TMAddrSpaceStart + regAddr));
+  return __builtin_aiev2_read_tm(
+      (int __aie_dm_resource_TM *)(TMAddrSpaceStart + regAddr));
 }
 INTRINSIC(void)
 write_tm(uint32 regVal, uint32 regAddr, uint32 TMAddrSpaceStart = 0x80000) {
-  return __builtin_aiev2_write_tm(regVal, (int *)(TMAddrSpaceStart + regAddr));
+  return __builtin_aiev2_write_tm(
+      regVal, (int __aie_dm_resource_TM *)(TMAddrSpaceStart + regAddr));
 }
 
 #endif /* __cplusplus && !(__AIECC__DISABLE_READ_WRITE_TM) */
