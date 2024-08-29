@@ -83,16 +83,16 @@ define void @mul2d(ptr noalias %in_ptr0, ptr noalias %in_ptr1, ptr noalias %out_
 ; CHECK-NEXT:  .LBB0_2: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    vldb wl2, [p1], #32; nopx
-; CHECK-NEXT:    vldb.3d wl6, [p0], d0
+; CHECK-NEXT:    vldb.3d wl8, [p0], d0
 ; CHECK-NEXT:    vldb wl4, [p1], #32
-; CHECK-NEXT:    vldb.3d wl2, [p0], d0
+; CHECK-NEXT:    vldb.3d wl10, [p0], d0
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    vmov wh6, wl0
-; CHECK-NEXT:    vmov wh2, wl0
-; CHECK-NEXT:    add r1, r1, #-1; vmul cm0, x6, x2, r0
-; CHECK-NEXT:    jnz r1, #.LBB0_2; vmul cm1, x2, x4, r0
+; CHECK-NEXT:    vmov wh8, wl0
+; CHECK-NEXT:    vmov wh10, wl0
+; CHECK-NEXT:    add r1, r1, #-1; vmul cm0, x8, x2, r0
+; CHECK-NEXT:    jnz r1, #.LBB0_2; vmul cm1, x10, x4, r0
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3

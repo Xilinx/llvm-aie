@@ -1,0 +1,275 @@
+# NOTE: Testing the capability to find the innermost loop body, that is defined
+# by having 2 Successors, where the Machine Basic Block is part of the 
+# sucessors.
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# unit test for the WAW register renaming pass and check edge cases
+# RUN: llc -mtriple=aie2 -verify-machineinstrs --debug-only=aielooputils --start-before=greedy --stop-after=virtregrewriter %s -o /dev/null 2>&1 | FileCheck %s
+
+# REQUIRES: asserts
+
+# Check the ability to find nested loop bodies.
+# for() {
+#   for() {
+#       BODY should be detected
+#   }
+#}
+---
+name:            simple_nested_loops
+alignment:       16
+legalized:       true
+tracksRegLiveness: true
+body:             |
+  ; CHECK: Found Single Block Loop: simple_nested_loops:BB5
+  bb.0:;.entry:
+    successors: %bb.1(0x50000000), %bb.3(0x30000000)
+    liveins: $p0, $r0, $r1
+  
+    renamable $r2 = MOV_RLC_imm10_pseudo 0
+    renamable $r3 = GE renamable $r2, renamable $r0
+    PseudoJNZ killed renamable $r3, %bb.3
+    PseudoJ_jump_imm %bb.1
+  
+  bb.1:;for.cond1.preheader.lr.ph:
+    successors: %bb.2(0x80000000)
+    liveins: $p0, $r0, $r1, $r2
+  
+    renamable $r3 = SUB renamable $r2, renamable $r1, implicit-def dead $srcarry
+    renamable $r4 = MOV_RLC_imm10_pseudo 2
+    renamable $r5 = MOV_RLC_imm10_pseudo 0
+  
+  bb.2:;for.cond1.preheader:
+    successors: %bb.5(0x50000000), %bb.4(0x30000000)
+    liveins: $p0, $r0, $r1, $r2, $r3, $r4, $r5
+  
+    renamable $r8 = GE renamable $r2, renamable $r1
+    renamable $r6 = COPY renamable $r5
+    renamable $r7 = MOV_RLC_imm10_pseudo 0
+    PseudoJNZ killed renamable $r8, %bb.4
+    PseudoJ_jump_imm %bb.5
+  
+  bb.3:;for.cond.cleanup:
+    PseudoRET implicit $lr
+  
+  bb.4:;for.cond.cleanup3:
+    successors: %bb.3(0x04000000), %bb.2(0x7c000000)
+    liveins: $p0, $r0, $r1, $r2, $r3, $r4, $r5
+  
+    renamable $r5 = nuw nsw ADD_add_r_ri killed renamable $r5, 1, implicit-def dead $srcarry
+    renamable $r6 = EQ renamable $r0, renamable $r5
+    PseudoJNZ killed renamable $r6, %bb.3
+    PseudoJ_jump_imm %bb.2
+  
+  bb.5:;for.body4:
+    successors: %bb.4(0x04000000), %bb.5(0x7c000000)
+    liveins: $p0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7
+  
+    renamable $r8 = ADD renamable $r5, renamable $r7, implicit-def dead $srcarry
+    renamable $r8 = LSHL killed renamable $r8, renamable $r4
+    renamable $dj0 = COPY killed renamable $r8
+    renamable $r8 = LDA_dms_lda_idx renamable $p0, killed renamable $dj0 
+    renamable $r8 = nsw ADD_add_r_ri killed renamable $r8, 3, implicit-def dead $srcarry
+    renamable $r9 = LSHL renamable $r6, renamable $r4
+    renamable $r7 = nsw ADD_add_r_ri killed renamable $r7, -1, implicit-def dead $srcarry
+    renamable $r10 = EQ renamable $r3, renamable $r7
+    renamable $dj0 = COPY killed renamable $r9
+    ST_dms_sts_idx killed renamable $r8, renamable $p0, killed renamable $dj0 
+    renamable $r6 = nuw ADD_add_r_ri killed renamable $r6, 1, implicit-def dead $srcarry
+    PseudoJNZ killed renamable $r10, %bb.4
+    PseudoJ_jump_imm %bb.5
+
+...
+
+
+# Check the ability to find nested loop bodies in complex and multi level setup.
+#for (int i = 0; i < n; i++) {
+#   for (int j =0; j < m; j++){
+#       BODY should be detected
+#   }
+#   for (int j =0; j < o; j++) {
+#       for(int k =0; k < p; k++){
+#           BODY should be detected
+#       }
+#       for(int k =0; k < q; k++){
+#           BODY should be detected
+#       }
+#   }
+#}
+---
+name:            complex_nested_loop_test
+alignment:       16
+legalized:       true
+tracksRegLiveness: true
+body:             |
+  ; CHECK: Found Single Block Loop: complex_nested_loop_test:BB7
+  ; CHECK-NEXT: Found Single Block Loop: complex_nested_loop_test:BB13
+  ; CHECK-NEXT: Found Single Block Loop: complex_nested_loop_test:BB16
+  bb.0:;.entry:
+    successors: %bb.1(0x50000000), %bb.4(0x30000000)
+    liveins: $p0, $r0, $r1, $r2, $r3, $r4
+  
+    renamable $r5 = MOV_RLC_imm10_pseudo 0
+    renamable $r6 = GE renamable $r5, renamable $r0
+    PseudoJNZ killed renamable $r6, %bb.4
+    PseudoJ_jump_imm %bb.1
+  
+  bb.1:;for.cond1.preheader.lr.ph:
+    successors: %bb.2(0x80000000)
+    liveins: $p0, $r0, $r1, $r2, $r3, $r4, $r5
+  
+    renamable $r6 = MOV_RLC_imm10_pseudo 2
+    renamable $r7 = MOV_RLC_imm10_pseudo 0
+  
+  bb.2:;for.cond1.preheader:
+    successors: %bb.3(0x50000000), %bb.5(0x30000000)
+    liveins: $p0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7
+  
+    renamable $r9 = GE renamable $r5, renamable $r1
+    renamable $r8 = LSHL renamable $r7, renamable $r6
+    PseudoJNZ killed renamable $r9, %bb.5
+    PseudoJ_jump_imm %bb.3
+  
+  bb.3:;for.body4.lr.ph:
+    successors: %bb.7(0x80000000)
+    liveins: $p0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $r8
+  
+    renamable $dj0 = COPY renamable $r8
+    renamable $r9 = MOV_RLC_imm10_pseudo 0
+    PseudoJ_jump_imm %bb.7
+  
+  bb.4:;for.cond.cleanup:
+    PseudoRET implicit $lr
+  
+  bb.5:;for.cond7.preheader:
+    successors: %bb.6(0x50000000), %bb.10(0x30000000)
+    liveins: $p0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $r8
+  
+    renamable $r9 = GE renamable $r5, renamable $r2
+    PseudoJNZ killed renamable $r9, %bb.10
+    PseudoJ_jump_imm %bb.6
+  
+  bb.6:;for.cond11.preheader.lr.ph:
+    successors: %bb.8(0x80000000)
+    liveins: $p0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $r8
+  
+    renamable $dj0 = COPY killed renamable $r8
+    renamable $r8 = MOV_RLC_imm10_pseudo 0
+    PseudoJ_jump_imm %bb.8
+  
+  bb.7:;for.body4:
+    successors: %bb.5(0x04000000), %bb.7(0x7c000000)
+    liveins: $dj0, $p0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $r8, $r9
+  
+    renamable $r10 = LSHL renamable $r9, renamable $r6
+    renamable $dj1 = COPY killed renamable $r10
+    renamable $r10 = LDA_dms_lda_idx renamable $p0, killed renamable $dj1 
+    renamable $r10 = nsw ADD_add_r_ri killed renamable $r10, 3, implicit-def dead $srcarry
+    renamable $r9 = nuw nsw ADD_add_r_ri killed renamable $r9, 1, implicit-def dead $srcarry
+    renamable $r11 = EQ renamable $r1, renamable $r9
+    ST_dms_sts_idx killed renamable $r10, renamable $p0, renamable $dj0 
+    PseudoJNZ killed renamable $r11, %bb.5
+    PseudoJ_jump_imm %bb.7
+  
+  bb.8:;for.cond11.preheader:
+    successors: %bb.9(0x50000000), %bb.11(0x30000000)
+    liveins: $dj0, $p0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $r8
+  
+    renamable $r9 = GE renamable $r5, renamable $r3
+    PseudoJNZ killed renamable $r9, %bb.11
+    PseudoJ_jump_imm %bb.9
+  
+  bb.9:;for.body14.lr.ph:
+    successors: %bb.13(0x80000000)
+    liveins: $dj0, $p0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $r8
+  
+    renamable $r9 = LSHL renamable $r8, renamable $r6
+    renamable $dj1 = COPY killed renamable $r9
+    renamable $r9 = MOV_RLC_imm10_pseudo 0
+    PseudoJ_jump_imm %bb.13
+  
+  bb.10:;for.cond.cleanup9:
+    successors: %bb.4(0x04000000), %bb.2(0x7c000000)
+    liveins: $p0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7
+  
+    renamable $r7 = nuw nsw ADD_add_r_ri killed renamable $r7, 1, implicit-def dead $srcarry
+    renamable $r8 = EQ renamable $r0, renamable $r7
+    PseudoJNZ killed renamable $r8, %bb.4
+    PseudoJ_jump_imm %bb.2
+  
+  bb.11:;for.cond23.preheader:
+    successors: %bb.12(0x50000000), %bb.14(0x30000000)
+    liveins: $dj0, $p0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $r8
+  
+    renamable $r9 = GE renamable $r5, renamable $r4
+    PseudoJNZ killed renamable $r9, %bb.14
+  
+  bb.12:
+    successors: %bb.15(0x80000000)
+    liveins: $dj0, $p0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $r8
+  
+    renamable $r10 = ADD renamable $r7, renamable $r8, implicit-def dead $srcarry
+    PseudoJ_jump_imm %bb.15
+  
+  bb.13:;for.body14:
+    successors: %bb.11(0x04000000), %bb.13(0x7c000000)
+    liveins: $dj0, $dj1, $p0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $r8, $r9
+  
+    renamable $r10 = ADD renamable $r8, renamable $r9, implicit-def dead $srcarry
+    renamable $r10 = LSHL killed renamable $r10, renamable $r6
+    renamable $dj2 = COPY killed renamable $r10
+    renamable $r10 = LDA_dms_lda_idx renamable $p0, killed renamable $dj2 
+    renamable $r10 = nsw ADD_add_r_ri killed renamable $r10, 3, implicit-def dead $srcarry
+    renamable $r9 = nuw nsw ADD_add_r_ri killed renamable $r9, 1, implicit-def dead $srcarry
+    renamable $r11 = EQ renamable $r3, renamable $r9
+    ST_dms_sts_idx killed renamable $r10, renamable $p0, renamable $dj1 
+    PseudoJNZ killed renamable $r11, %bb.11
+    PseudoJ_jump_imm %bb.13
+  
+  bb.14:;for.cond.cleanup25:
+    successors: %bb.10(0x04000000), %bb.8(0x7c000000)
+    liveins: $dj0, $p0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $r8
+  
+    renamable $r8 = nuw nsw ADD_add_r_ri killed renamable $r8, 1, implicit-def dead $srcarry
+    renamable $r9 = EQ renamable $r2, renamable $r8
+    PseudoJNZ killed renamable $r9, %bb.10
+    PseudoJ_jump_imm %bb.8
+  
+  bb.15:;for.body26:
+    successors: %bb.16(0x40000000), %bb.17(0x40000000)
+    liveins: $dj0, $p0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $r8, $r10
+  
+    renamable $r9 = LSHL renamable $r10, renamable $r6
+    renamable $dj1 = COPY killed renamable $r9
+    renamable $r9 = LDA_dms_lda_idx renamable $p0, killed renamable $dj1
+    renamable $r11 = nsw ADD_add_r_ri killed renamable $r9, 3, implicit-def dead $srcarry
+    renamable $r9 = ADD_add_r_ri renamable $r4, -1, implicit-def dead $srcarry
+    renamable $r10 = ADD_add_r_ri killed renamable $r10, 1, implicit-def dead $srcarry
+    PseudoJZ renamable $r9, %bb.17
+    PseudoJ_jump_imm %bb.16
+  
+  bb.16:;for.body26:
+    successors: %bb.17(0x04000000), %bb.16(0x7c000000)
+    liveins: $dj0, $p0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $r8, $r9, $r10, $r11
+  
+    renamable $r12 = LSHL renamable $r10, renamable $r6
+    ST_dms_sts_idx killed renamable $r11, renamable $p0, renamable $dj0 
+    renamable $dj1 = COPY killed renamable $r12
+    renamable $r11 = LDA_dms_lda_idx renamable $p0, killed renamable $dj1 
+    renamable $r10 = ADD_add_r_ri killed renamable $r10, 1, implicit-def dead $srcarry
+    renamable $r9 = ADD_add_r_ri killed renamable $r9, -1, implicit-def dead $srcarry
+    renamable $r11 = nsw ADD_add_r_ri killed renamable $r11, 3, implicit-def dead $srcarry
+    PseudoJZ renamable $r9, %bb.17
+    PseudoJ_jump_imm %bb.16
+  
+  bb.17:
+    successors: %bb.14(0x80000000)
+    liveins: $dj0, $p0, $r0, $r1, $r2, $r3, $r4, $r5, $r6, $r7, $r8, $r11
+  
+    ST_dms_sts_idx killed renamable $r11, renamable $p0, renamable $dj0 
+    PseudoJ_jump_imm %bb.14
+
+...

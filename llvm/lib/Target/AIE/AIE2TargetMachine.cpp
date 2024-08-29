@@ -51,6 +51,11 @@ static cl::opt<bool>
     EnableSuperRegSplitting("aie-split-superregs", cl::Hidden, cl::init(true),
                             cl::desc("Enable splitting super-regs into their "
                                      "smaller components to facilitate RA"));
+
+static cl::opt<bool>
+    EnableWAWRegRewrite("aie-wawreg-rewrite",
+                        cl::desc("Enable the WAW Register Renaming in loops"),
+                        cl::init(true), cl::Hidden);
 static cl::opt<bool>
     EnableReservedRegsLICM("aie-reserved-regs-licm", cl::Hidden, cl::init(true),
                            cl::desc("Enable LICM for some reserved registers"));
@@ -205,6 +210,8 @@ bool AIE2PassConfig::addRegAssignAndRewriteOptimized() {
     addPass(createAIESuperRegRewriter());
   }
   addPass(createGreedyRegisterAllocator());
+  if (EnableWAWRegRewrite)
+    addPass(createAIEWawRegRewriter());
   addPass(createVirtRegRewriter());
 
   return true;

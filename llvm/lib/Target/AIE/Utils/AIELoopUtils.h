@@ -15,6 +15,7 @@
 #define LLVM_LIB_TARGET_AIE_UTILS_AIELOOPUTILS_H
 
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/CodeGen/MachineLoopInfo.h"
 
 namespace llvm {
 class MachineBasicBlock;
@@ -36,6 +37,12 @@ std::optional<int64_t> getMinTripCount(const MachineBasicBlock &LoopBlock);
 /// preheader. Return the preheader if true, nullptr otherwise
 MachineBasicBlock *
 getDedicatedFallThroughPreheader(const MachineBasicBlock &LoopBlock);
+
+// get all the Machine Basic Blocks (MBBs) that contain a Single Block Loop,
+// which is defined by having 2 Successors, where one of the succesors, is the
+// MBB itself.
+SmallVector<const MachineBasicBlock *, 4>
+getSingleBlockLoopMBBs(const MachineFunction &MF);
 
 /// Check if this block is a single block loop.
 bool isSingleMBBLoop(const MachineBasicBlock *MBB);
