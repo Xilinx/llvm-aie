@@ -454,3 +454,57 @@ body:             |
     liveins: $p0, $wl0, $r6, $bml1, $bml2
     PseudoRET implicit $lr
 ...
+
+# In the selection of renaming candidates (%11:mcmm),
+# block the register type (%3:mbma -> $bm1, %4:mbma -> $bm2), but also the
+# remove sub/super register classes
+# ($bmh1 also blocks $cm1, $bmh2 also blocks $cm2).
+---
+name:            super_sub_acc_replacement
+alignment:       16
+legalized:       true
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: super_sub_acc_replacement
+  ; CHECK: bb.0.entry:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $d0, $dj0, $p0, $r0, $r25, $r26, $s0, $x10
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   LoopStart $r0, 0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; CHECK-NEXT:   liveins: $d0, $dj0, $p0, $r25, $r26, $s0, $x10
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   renamable $x0 = VBCST_8 $r25
+  ; CHECK-NEXT:   renamable $cm0 = VLDA_UPS_S64_S16_ag_idx $s0, $p0, $dj0, implicit-def $srups_of, implicit $crsat
+  ; CHECK-NEXT:   renamable $bmh1 = VMUL_F_vmac_bm_core_dense killed renamable $x0, renamable $x0, $r25, implicit-def $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   renamable $bmh2 = VADD_F killed renamable $bmh1, renamable $bmh1, $r25, implicit-def $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   renamable $cm3 = VADD killed renamable $cm0, renamable $cm0, $r25
+  ; CHECK-NEXT:   VST_SRS_D16_S32_ag_idx $p0, $dj0, killed renamable $bmh2, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+  ; CHECK-NEXT:   VST_SRS_D8_S32_ag_idx $p0, $dj0, killed renamable $cm3, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   liveins: $d0, $dj0, $p0, $r25, $r26, $s0, $x10
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   PseudoRET implicit $lr
+  bb.0.entry:
+  successors: %bb.1
+  liveins: $r0, $p0, $d0, $r25, $r26, $x10, $dj0, $s0
+  LoopStart $r0, 0
+  bb.1:
+    successors: %bb.1, %bb.2
+    liveins: $p0, $d0, $r25, $r26, $x10, $dj0, $s0
+    %1:mxm = VBCST_8  $r25
+    %10:mcmm = VLDA_UPS_S64_S16_ag_idx $s0, $p0, $dj0, implicit-def $srups_of, implicit $crsat
+    %3:mbma = VMUL_F_vmac_bm_core_dense %1, %1, $r25, implicit-def $srfpflags, implicit $crfpmask
+    %4:mbma = VADD_F %3, %3, $r25, implicit-def $srfpflags, implicit $crfpmask
+    %11:mcmm = VADD %10, %10, $r25
+    VST_SRS_D16_S32_ag_idx $p0, $dj0, %4, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    VST_SRS_D8_S32_ag_idx $p0, $dj0, %11, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  bb.2:
+    liveins: $p0, $d0, $r25, $r26, $x10, $dj0, $s0
+    PseudoRET implicit $lr
+...

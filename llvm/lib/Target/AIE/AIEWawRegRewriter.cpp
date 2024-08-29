@@ -132,6 +132,11 @@ private:
   /// instruction.
   IndexedMap<const MachineInstr *, VirtReg2IndexFunctor>
   getLastVRegDef(const MachineBasicBlock &MBB) const;
+
+  /// Block every sub- and super-register of a physical register, so that it is
+  /// removed for future replacement strategies, i.e. block wl4, wh4, y2 if X4
+  /// is used.
+  void addAliasRegs(BitVector &BlockedPhysRegs, const MCPhysReg PhysReg) const;
 };
 
 MCPhysReg AIEWawRegRewriter::getAssignedPhysReg(const Register Reg) const {
@@ -293,7 +298,7 @@ AIEWawRegRewriter::getDefinedPhysRegs(const MachineBasicBlock *MBB) const {
     for (const MachineOperand &Op : MI.defs()) {
       MCPhysReg PhysReg = getAssignedPhysReg(Op.getReg());
       if (MCRegister::isPhysicalRegister(PhysReg))
-        BlockedPhysRegs[PhysReg] = true;
+        addAliasRegs(BlockedPhysRegs, PhysReg);
     }
   }
 
@@ -320,7 +325,7 @@ bool AIEWawRegRewriter::replaceReg(const Register Reg,
   const LiveInterval &LI = LIS->getInterval(Reg);
   LRM->unassign(LI);
   LRM->assign(LI, ReplacementPhysReg);
-  BlockedPhysRegs[ReplacementPhysReg] = true;
+  addAliasRegs(BlockedPhysRegs, ReplacementPhysReg);
   return true;
 }
 
@@ -369,6 +374,20 @@ AIEWawRegRewriter::getLastVRegDef(const MachineBasicBlock &MBB) const {
     }
   }
   return LastVRegDef;
+}
+
+void AIEWawRegRewriter::addAliasRegs(BitVector &BlockedPhysRegs,
+                                     const MCPhysReg PhysReg) const {
+  assert(MCRegister::isPhysicalRegister(PhysReg));
+
+  LLVM_DEBUG(dbgs() << "Adding to Blocked Regs ("
+                    << printReg(PhysReg, TRI, 0, MRI) << ") with alias: ");
+  for (MCRegAliasIterator AI(MCRegister(PhysReg), TRI, true); AI.isValid();
+       ++AI) {
+    BlockedPhysRegs[*AI] = true;
+    LLVM_DEBUG(dbgs() << printReg(*AI, TRI, 0, MRI) << " ");
+  }
+  LLVM_DEBUG(dbgs() << "\n");
 }
 
 } // end anonymous namespace
