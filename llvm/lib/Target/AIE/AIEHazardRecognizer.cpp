@@ -57,24 +57,23 @@ void FuncUnitWrapper::dump() const {
   const char *const Spacer = "-|";
   const int Upper = std::numeric_limits<InstrStage::FuncUnits>::digits - 1;
 
-  auto printFU = [&](const std::string &FUName, InstrStage::FuncUnits FU) {
+  auto PrintFU = [&](const std::string &FUName, InstrStage::FuncUnits FU) {
     dbgs() << FUName;
     for (int J = Upper; J >= 0; J--)
-      dbgs() << ((Required & (1ULL << J)) ? Digits[J % 10]
-                                          : Spacer[J % 10 == 0]);
+      dbgs() << ((FU & (1ULL << J)) ? Digits[J % 10] : Spacer[J % 10 == 0]);
   };
-  auto printResource = [&](const std::string &ResourceName, uint64_t Resource) {
+  auto PrintResource = [&](const std::string &ResourceName, uint64_t Resource) {
     dbgs() << ResourceName;
     for (int J = 9; J >= 0; J--)
       dbgs() << ((Resource & (1ULL << J)) ? Digits[J] : '-');
   };
 
-  printFU("Req     : ", Required);
-  printResource(" Slots : ", Slots);
-  printResource(" Memorybanks : ", MemoryBanks);
+  PrintFU("Req     : ", Required);
+  PrintResource(" Slots : ", Slots);
+  PrintResource(" Memorybanks : ", MemoryBanks);
   if (!Reserved)
     return;
-  printFU("\n\t   Rsrv : ", Reserved);
+  PrintFU("\n\t   Rsrv : ", Reserved);
 }
 
 void FuncUnitWrapper::clearResources() {
@@ -291,7 +290,7 @@ void AIEHazardRecognizer::applyBundles(
 void AIEHazardRecognizer::Reset() {
   LLVM_DEBUG(dbgs() << "Reset hazard recognizer\n");
   ReservedCycles = 0;
-  Scoreboard.reset();
+  Scoreboard.clear();
   SelectedAltOpcodes.clear();
 }
 
