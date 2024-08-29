@@ -30,15 +30,15 @@ body:             |
   ; CHECK-NEXT:   liveins: $d0, $d2, $p0, $p1, $p2, $d1_3d
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   renamable $p3 = COPY $p0
-  ; CHECK-NEXT:   renamable $d4 = COPY $d0
-  ; CHECK-NEXT:   $wl0, dead $p3, dead $dc4 = VLDA_2D_dmw_lda_w killed $p3, $d4
-  ; CHECK-NEXT:   renamable $p4 = COPY $p1
+  ; CHECK-NEXT:   renamable $d3 = COPY $d0
+  ; CHECK-NEXT:   $wl0, dead $p3, dead $dc3 = VLDA_2D_dmw_lda_w killed $p3, $d3
+  ; CHECK-NEXT:   renamable $p3 = COPY $p1
   ; CHECK-NEXT:   renamable $d3_3d = COPY $d1_3d
-  ; CHECK-NEXT:   $wl2, dead $p4, dead $dc3, dead $dc7 = VLDA_3D_dmw_lda_w killed $p4, $d3_3d
+  ; CHECK-NEXT:   $wl2, dead $p3, dead $dc3, dead $dc7 = VLDA_3D_dmw_lda_w killed $p3, $d3_3d
   ; CHECK-NEXT:   renamable $x4, dead renamable $l4 = VMAX_LT_D8 renamable $x0, renamable $x2, implicit $crvaddsign
-  ; CHECK-NEXT:   renamable $p5 = COPY $p2
-  ; CHECK-NEXT:   renamable $d6 = COPY $d2
-  ; CHECK-NEXT:   dead $p5, dead $dc6 = VST_2D_dmw_sts_w killed $wl4, killed $p5, $d6
+  ; CHECK-NEXT:   renamable $p3 = COPY $p2
+  ; CHECK-NEXT:   renamable $d3 = COPY $d2
+  ; CHECK-NEXT:   dead $p3, dead $dc3 = VST_2D_dmw_sts_w killed $wl4, killed $p3, $d3
   ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
@@ -247,15 +247,15 @@ body:             |
   ; CHECK-NEXT:   liveins: $d0, $d2, $p0, $p1, $p2, $wh3, $wl0, $wl1, $y2, $y3, $d1_3d
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   renamable $p3 = COPY $p0
-  ; CHECK-NEXT:   renamable $d4 = COPY $d0
-  ; CHECK-NEXT:   $wl2, dead $p3, dead $dc4 = VLDA_2D_dmw_lda_w killed $p3, $d4
-  ; CHECK-NEXT:   renamable $p4 = COPY $p1
+  ; CHECK-NEXT:   renamable $d3 = COPY $d0
+  ; CHECK-NEXT:   $wl2, dead $p3, dead $dc3 = VLDA_2D_dmw_lda_w killed $p3, $d3
+  ; CHECK-NEXT:   renamable $p3 = COPY $p1
   ; CHECK-NEXT:   renamable $d3_3d = COPY $d1_3d
-  ; CHECK-NEXT:   $wl8, dead $p4, dead $dc3, dead $dc7 = VLDA_3D_dmw_lda_w killed $p4, $d3_3d
+  ; CHECK-NEXT:   $wl8, dead $p3, dead $dc3, dead $dc7 = VLDA_3D_dmw_lda_w killed $p3, $d3_3d
   ; CHECK-NEXT:   renamable $x10, dead renamable $l4 = VMAX_LT_D8 renamable $x2, renamable $x8, implicit $crvaddsign
-  ; CHECK-NEXT:   renamable $p5 = COPY $p2
-  ; CHECK-NEXT:   renamable $d6 = COPY $d2
-  ; CHECK-NEXT:   dead $p5, dead $dc6 = VST_2D_dmw_sts_w killed $wl10, killed $p5, $d6
+  ; CHECK-NEXT:   renamable $p3 = COPY $p2
+  ; CHECK-NEXT:   renamable $d3 = COPY $d2
+  ; CHECK-NEXT:   dead $p3, dead $dc3 = VST_2D_dmw_sts_w killed $wl10, killed $p3, $d3
   ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
@@ -283,4 +283,116 @@ body:             |
   bb.2:
     liveins: $wl0, $wl1, $wh3, $y2, $y3
     PseudoRET implicit $lr,  implicit $wl0, implicit $wl1, implicit $wh3, implicit $y2, implicit $y3
+...
+
+# Ignore copy instructions for renaming candidates.
+---
+name:            copy_rename
+alignment:       16
+legalized:       true
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: copy_rename
+  ; CHECK: bb.0.entry:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $d0, $d2, $p0, $p1, $p2, $r0, $d1_3d
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   LoopStart $r0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; CHECK-NEXT:   liveins: $d0, $d2, $p0, $p1, $p2, $d1_3d
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   renamable $p3 = COPY $p0
+  ; CHECK-NEXT:   renamable $d3 = COPY $d0
+  ; CHECK-NEXT:   $wl0, dead $p3, dead $dc3 = VLDA_2D_dmw_lda_w killed $p3, $d3
+  ; CHECK-NEXT:   renamable $p3 = COPY $p1
+  ; CHECK-NEXT:   renamable $d3_3d = COPY $d1_3d
+  ; CHECK-NEXT:   $wl2, dead $p3, dead $dc3, dead $dc7 = VLDA_3D_dmw_lda_w killed $p3, $d3_3d
+  ; CHECK-NEXT:   renamable $x4, dead renamable $l4 = VMAX_LT_D8 killed renamable $x0, renamable $x2, implicit $crvaddsign
+  ; CHECK-NEXT:   renamable $p3 = COPY $p2
+  ; CHECK-NEXT:   renamable $d3 = COPY $d2
+  ; CHECK-NEXT:   dead $p3, dead $dc3 = VST_2D_dmw_sts_w killed $wl4, killed $p3, $d3
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   PseudoRET implicit $lr
+  bb.0.entry:
+  successors: %bb.1
+  liveins: $r0, $p0, $p1, $p2, $d0, $d1_3d, $d2
+  LoopStart $r0, 0
+  bb.1:
+    successors: %bb.1, %bb.2
+    liveins: $p0, $p1, $p2, $d0, $d1_3d, $d2
+    %110:ep = COPY $p0
+    %111:ed = COPY $d0
+    undef %0.sub_256_lo:mxa, %110:ep, %111.sub_dim_count:ed = VLDA_2D_dmw_lda_w %110, killed %111
+    %99:ep = COPY $p1
+    %100:eds = COPY $d1_3d
+    %1:mxa = COPY %0
+    undef %3.sub_256_lo:mxa, %99:ep, %100.sub_dim_count:eds, %100.sub_hi_dim_then_sub_dim_count:eds = VLDA_3D_dmw_lda_w killed %99, killed %100
+    %7:mxm, %8:el = VMAX_LT_D8 %1, %3, implicit $crvaddsign
+    %120:ep = COPY $p2
+    %121:ed = COPY $d2
+    %120:ep, %121.sub_dim_count:ed = VST_2D_dmw_sts_w %7.sub_256_lo:mxm, killed %120, killed %121
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  bb.2:
+    PseudoRET implicit $lr
+...
+
+# Don't rename superregisters
+# (undef %281.sub_256_lo:vec512, undef %282.sub_256_lo:vec512),
+# if parts of the sub-register (%281.sub_256_hi:vec512, %282.sub_256_hi:vec512)
+# are defined by a copy.
+---
+name:            redundant_sub_reg_moves
+alignment:       16
+legalized:       true
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: redundant_sub_reg_moves
+  ; CHECK: bb.0.entry:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $bml1, $bml2, $p0, $r0, $r6, $wl0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   LoopStart $r0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; CHECK-NEXT:   liveins: $bml1, $bml2, $p0, $r6, $wl0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   renamable $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 32
+  ; CHECK-NEXT:   renamable $wh2 = COPY $wl0
+  ; CHECK-NEXT:   renamable $bmh0 = VCONV_FP32_BF16 renamable $wl2
+  ; CHECK-NEXT:   $bml1 = VMAC_F_vmac_bm_core_dense killed renamable $bmh0, killed renamable $x2, renamable $x2, $r6, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   renamable $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0
+  ; CHECK-NEXT:   renamable $wh2 = COPY $wl0
+  ; CHECK-NEXT:   renamable $bmh1 = VCONV_FP32_BF16 renamable $wl2
+  ; CHECK-NEXT:   $bml2 = VMAC_F_vmac_bm_core_dense killed renamable $bmh1, killed renamable $x2, renamable $x2, $r6, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   liveins: $bml1, $bml2, $p0, $r6, $wl0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   PseudoRET implicit $lr
+  bb.0.entry:
+  successors: %bb.1
+  liveins: $r0, $p0, $wl0, $r6, $bml1, $bml2
+  LoopStart $r0, 0
+  bb.1:
+    successors: %bb.1, %bb.2
+    liveins: $p0, $wl0, $r6, $bml1, $bml2
+    undef %281.sub_256_lo:vec512 = VLDA_dmw_lda_w_ag_idx_imm $p0, 32
+    %281.sub_256_hi:vec512 = COPY $wl0
+    %271:acc512 = VCONV_FP32_BF16 %281.sub_256_lo:vec512
+    $bml1 = VMAC_F_vmac_bm_core_dense %271, %281:vec512, %281:vec512, $r6, implicit-def dead $srfpflags, implicit $crfpmask
+
+    undef %282.sub_256_lo:vec512 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0
+    %282.sub_256_hi:vec512 = COPY $wl0
+    %272:acc512 = VCONV_FP32_BF16 %282.sub_256_lo:vec512
+    $bml2 = VMAC_F_vmac_bm_core_dense %272, %282:vec512, %282:vec512, $r6, implicit-def dead $srfpflags, implicit $crfpmask
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  bb.2:
+    liveins: $p0, $wl0, $r6, $bml1, $bml2
+    PseudoRET implicit $lr
 ...
