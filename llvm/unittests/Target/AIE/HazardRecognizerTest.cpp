@@ -113,7 +113,7 @@ public:
   void RecedeCycle() override { MockScoreboard.recede(); }
   void Reset() override {
     AIEHazardRecognizer::Reset();
-    MockScoreboard.reset();
+    MockScoreboard.clear();
   }
   bool conflict(const MockHR &Other, int DeltaCycles) const {
     return MockScoreboard.conflict(Other.MockScoreboard, DeltaCycles);

@@ -63,27 +63,30 @@ public:
   }
   RC &operator[](int Cycle) { return Cycles[(Head + Cycle) & (Size - 1)]; }
 
-  void reset(int D = 1) {
+  void clear() {
+    assert(Size);
+    Cycles.clear();
+    Cycles.resize(Size);
+    Head = 0;
+  }
+
+  void reset(int D) {
     // Implementation relies on masking to wrap-around, so round up
     // to a power of two.
     int Pow2 = 1;
     while (Pow2 < D) {
       Pow2 += Pow2;
     }
-    if (Cycles.empty()) {
-      Depth = Pow2;
-      Size = 2 * Depth;
-    }
-    Cycles.clear();
-    Cycles.resize(Size);
-    Head = 0;
+    Depth = Pow2;
+    Size = 2 * Depth;
+    clear();
   }
   bool isValidDelta(int DeltaCycles) const {
     return DeltaCycles >= -Depth && DeltaCycles <= 0;
   }
 
   void advance() {
-    (*this)[0].clearResources();
+    (*this)[-Depth].clearResources();
     Head = (Head + 1) & (Size - 1);
   }
   void recede() {
