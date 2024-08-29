@@ -89,6 +89,7 @@ struct AIE2RegisterInfo : public AIE2GenRegisterInfo {
   const TargetRegisterClass *get3DIteratorRegClass() const override {
     return &AIE2::eDSRegClass;
   }
+  bool isVecOrAccRegClass(const TargetRegisterClass &RC) const override;
 };
 } // namespace llvm
 

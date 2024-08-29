@@ -510,3 +510,126 @@ body:             |
     liveins: $p0, $d0, $r25, $r26, $x10, $dj0, $s0
     PseudoRET implicit $lr
 ...
+
+# Ignore renaming of general purpose registers.
+---
+name:            gpr_replacement
+alignment:       16
+legalized:       true
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: gpr_replacement
+  ; CHECK: bb.0.entry:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $r0, $r1, $r2, $r8
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   LoopStart $r0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; CHECK-NEXT:   liveins: $r1, $r2, $r8
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   renamable $r0 = AND $r1, $r2
+  ; CHECK-NEXT:   renamable $r3 = AND $r1, $r8
+  ; CHECK-NEXT:   renamable $r0 = AND killed renamable $r0, renamable $r3
+  ; CHECK-NEXT:   dead renamable $r0 = AND killed renamable $r3, killed renamable $r0
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   PseudoRET implicit $lr
+  bb.0.entry:
+  successors: %bb.1
+  liveins: $r0, $r1, $r2, $r8
+  LoopStart $r0
+  bb.1:
+    successors: %bb.1, %bb.2
+    liveins: $r1, $r2, $r8
+    %0:er = AND $r1, $r2
+    %1:er = AND $r1, $r8
+    %2:er = AND %0, %1
+    %3:er = AND %1, %2
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  bb.2:
+    PseudoRET implicit $lr
+...
+
+# Ignore vector registers (%130:er), that are not dedicated vector/accumulator
+# registers.
+---
+name:            vec_acc_class_check
+alignment:       16
+legalized:       true
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: vec_acc_class_check
+  ; CHECK: bb.0.entry:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $p0, $p1, $p2, $r0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   renamable $m0 = LDA_dms_lda_idx_imm renamable $p2, 56
+  ; CHECK-NEXT:   renamable $p1 = LDA_dms_lda_idx_imm killed renamable $p0, 0
+  ; CHECK-NEXT:   renamable $r29 = MOV_RLC_imm10_pseudo 0
+  ; CHECK-NEXT:   renamable $p1 = PADD_mod_pseudo killed renamable $p1, killed renamable $m0
+  ; CHECK-NEXT:   renamable $wl0 = IMPLICIT_DEF
+  ; CHECK-NEXT:   renamable $dc0 = MOV_PD_imm10_pseudo 0
+  ; CHECK-NEXT:   renamable $dc4 = COPY renamable $dc0
+  ; CHECK-NEXT:   LoopStart $r0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; CHECK-NEXT:   liveins: $dc0, $dc4, $p1, $p2, $r29, $x0:0x0000000000000002
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   renamable $p0 = COPY $p2
+  ; CHECK-NEXT:   renamable $p0 = nuw PADD_imm_pseudo killed renamable $p0, 76
+  ; CHECK-NEXT:   renamable $m0, renamable $p0 = LDA_dms_lda_pstm_nrm_imm killed renamable $p0, -8
+  ; CHECK-NEXT:   renamable $dn0, renamable $p0 = LDA_dms_lda_pstm_nrm_imm killed renamable $p0, -8
+  ; CHECK-NEXT:   renamable $dj0, renamable $p0 = LDA_dms_lda_pstm_nrm_imm killed renamable $p0, 12
+  ; CHECK-NEXT:   renamable $dn4, renamable $p0 = LDA_dms_lda_pstm_nrm_imm killed renamable $p0, -8
+  ; CHECK-NEXT:   renamable $dj4, dead renamable $p0 = LDA_dms_lda_pstm_nrm_imm killed renamable $p0, -12
+  ; CHECK-NEXT:   renamable $r0 = LDA_S8_ag_idx_imm renamable $p1, 0
+  ; CHECK-NEXT:   $p1, $dc0, $dc4 = PADDA_3D_split killed $p1, $m0, $dn0, $dj0, killed $dc0, undef $m4, $dn4, $dj4, killed $dc4
+  ; CHECK-NEXT:   renamable $x2 = VINSERT_8 renamable $x0, renamable $r29, killed renamable $r0
+  ; CHECK-NEXT:   $r0, $p1, $dc0, $dc4 = LDA_3D_S8_dmhb_lda_split killed $p1, $m0, $dn0, $dj0, killed $dc0, undef $m4, $dn4, $dj4, killed $dc4
+  ; CHECK-NEXT:   renamable $x4 = VINSERT_8 killed renamable $x2, renamable $r29, killed renamable $r0
+  ; CHECK-NEXT:   $r0, $p1, $dc0, $dc4 = LDA_3D_S8_dmhb_lda_split killed $p1, killed $m0, killed $dn0, killed $dj0, killed $dc0, undef $m4, killed $dn4, killed $dj4, killed $dc4
+  ; CHECK-NEXT:   dead renamable $x6 = VINSERT_8 killed renamable $x4, renamable $r29, killed renamable $r0
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   PseudoRET implicit $lr
+  bb.0.entry:
+    successors:  %bb.1
+    liveins: $p0, $p1, $p2
+    liveins: $p2, $r0
+    %2:ep = COPY $p2
+    %76:em_as_32bit = LDA_dms_lda_idx_imm %2, 56
+    %0:ep = COPY $p0
+    %455:ep_as_32bit = LDA_dms_lda_idx_imm %0, 0
+    %71:er29 = MOV_RLC_imm10_pseudo 0
+    %455:ep_as_32bit = PADD_mod_pseudo %455, %76
+    undef %90.sub_256_lo:vec512 = IMPLICIT_DEF
+    undef %418.sub_dim_count:eds = MOV_PD_imm10_pseudo 0
+    %418.sub_hi_dim_then_sub_dim_count:eds = COPY %418.sub_dim_count
+    LoopStart $r0
+  bb.1:
+    successors: %bb.1, %bb.2
+    liveins: $p2
+    %98:ep_as_32bit = COPY $p2
+    %98:ep_as_32bit = nuw PADD_imm_pseudo %98, 76
+    %418.sub_mod:eds, %98:ep_as_32bit = LDA_dms_lda_pstm_nrm_imm %98, -8
+    %418.sub_dim_size:eds, %98:ep_as_32bit = LDA_dms_lda_pstm_nrm_imm %98, -8
+    %418.sub_dim_stride:eds, %98:ep_as_32bit = LDA_dms_lda_pstm_nrm_imm %98, 12
+    %418.sub_hi_dim_then_sub_dim_size:eds, %98:ep_as_32bit = LDA_dms_lda_pstm_nrm_imm %98, -8
+    %418.sub_hi_dim_then_sub_dim_stride:eds, %98:ep_as_32bit = LDA_dms_lda_pstm_nrm_imm %98, -12
+    %91:er = LDA_S8_ag_idx_imm %455, 0
+    %455:ep_as_32bit, %418.sub_dim_count:eds, %418.sub_hi_dim_then_sub_dim_count:eds = PADDA_3D_split %455, %418.sub_mod, %418.sub_dim_size, %418.sub_dim_stride, %418.sub_dim_count, undef %418.sub_hi_dim_then_sub_mod, %418.sub_hi_dim_then_sub_dim_size, %418.sub_hi_dim_then_sub_dim_stride, %418.sub_hi_dim_then_sub_dim_count
+    %120:vec512 = VINSERT_8 %90, %71, %91
+    %121:er, %455:ep_as_32bit, %418.sub_dim_count:eds, %418.sub_hi_dim_then_sub_dim_count:eds = LDA_3D_S8_dmhb_lda_split %455, %418.sub_mod, %418.sub_dim_size, %418.sub_dim_stride, %418.sub_dim_count, undef %418.sub_hi_dim_then_sub_mod, %418.sub_hi_dim_then_sub_dim_size, %418.sub_hi_dim_then_sub_dim_stride, %418.sub_hi_dim_then_sub_dim_count
+    %129:vec512 = VINSERT_8 %120, %71, %121
+    %130:er, %455:ep_as_32bit, %418.sub_dim_count:eds, %418.sub_hi_dim_then_sub_dim_count:eds = LDA_3D_S8_dmhb_lda_split %455, %418.sub_mod, %418.sub_dim_size, %418.sub_dim_stride, %418.sub_dim_count, undef %418.sub_hi_dim_then_sub_mod, %418.sub_hi_dim_then_sub_dim_size, %418.sub_hi_dim_then_sub_dim_stride, %418.sub_hi_dim_then_sub_dim_count
+    %138:vec512 = VINSERT_8 %129, %71, %130
+
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  bb.2:
+    PseudoRET implicit $lr
+...
