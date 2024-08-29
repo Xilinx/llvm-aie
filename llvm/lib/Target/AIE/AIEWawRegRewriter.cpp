@@ -81,6 +81,7 @@ private:
   VirtRegMap *VRM = nullptr;
   LiveRegMatrix *LRM = nullptr;
   LiveIntervals *LIS = nullptr;
+  const TargetInstrInfo *TII = nullptr;
 
   bool renameMBBPhysRegs(const MachineBasicBlock *MBB);
 
@@ -100,12 +101,19 @@ private:
   MCPhysReg getReplacementPhysReg(const Register Reg,
                                   const BitVector &BlockedPhysRegs) const;
 
-  bool isWorthRenaming(const Register &Reg,
-                       const BitVector &UsedPhysRegs) const;
+  bool isWorthRenaming(const Register &Reg, const BitVector &UsedPhysRegs,
+                       const BitVector &VRegWithCopies) const;
 
   /// return the Physical register of the Register, look it up in VirtRegMap if
   /// the Reg is virtual
   MCPhysReg getAssignedPhysReg(const Register Reg) const;
+
+  bool isIdentityCopy(const MachineInstr &MI) const;
+
+  /// return a BitVector to identify if a VirtualRegister has been defined by at
+  /// least one copy.
+  /// The Virtual Registers are accessed by the VirtRegIndex
+  BitVector getVRegWithCopies(const MachineBasicBlock &MBB) const;
 };
 
 MCPhysReg AIEWawRegRewriter::getAssignedPhysReg(const Register Reg) const {
@@ -131,6 +139,7 @@ bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
   VRM = &getAnalysis<VirtRegMap>();
   LRM = &getAnalysis<LiveRegMatrix>();
   LIS = &getAnalysis<LiveIntervals>();
+  TII = MF.getSubtarget().getInstrInfo();
   bool Modified = false;
 
   LLVM_DEBUG(dbgs() << "*** WAW Loop Register Rewriting: " << MF.getName());
@@ -140,6 +149,38 @@ bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
     Modified |= renameMBBPhysRegs(MBB);
 
   return Modified;
+}
+
+BitVector
+AIEWawRegRewriter::getVRegWithCopies(const MachineBasicBlock &MBB) const {
+  // FIXME: The current heuristic would still rename a register used in a copy
+  // if there are several inner loops in the kernel. A solution could be to keep
+  // a running list of VRegWithCopies across various MBBs.
+
+  SmallVector<unsigned, 16> VRegs;
+  uint MaxVReg = 0;
+  for (const MachineInstr &MI : MBB) {
+    for (const MachineOperand Def : MI.defs()) {
+      Register Reg = Def.getReg();
+
+      if (!Reg.isVirtual())
+        continue;
+
+      unsigned VRegIndex = Reg.virtRegIndex();
+      if (TII->isCopyInstr(MI).has_value())
+        VRegs.push_back(VRegIndex);
+
+      if (VRegIndex > MaxVReg)
+        MaxVReg = VRegIndex;
+    }
+  }
+
+  // copy to BitVector so that lookups become very cheap
+  BitVector VRegWithCopies(MaxVReg + 1);
+  for (const unsigned RegIndex : VRegs)
+    VRegWithCopies[RegIndex] = true;
+
+  return VRegWithCopies;
 }
 
 bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
@@ -156,7 +197,19 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
   // this pass does not introduce WAW dependencies.
   BitVector BlockedPhysRegs = getDefinedPhysRegs(MBB);
 
+  // Collect all the virtual registers that have at least a copy instruction
+  // that defines them. Subregisters may contain constants that may be shared
+  // across different virtual registers. Renaming would reintroduce unnecessary
+  // copies, if physical registers are shared. Also do not rename copies, since
+  // they could be removed in a later pass.
+  BitVector VRegWithCopies = getVRegWithCopies(*MBB);
+
   for (const MachineInstr &MI : *MBB) {
+
+    // Identity copies will be removed in a later pass, therefore, these are not
+    // real defines of a physical register
+    if (isIdentityCopy(MI))
+      continue;
 
     for (const MachineOperand &MO : MI.defs()) {
 
@@ -168,7 +221,7 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
       if (MO.isTied())
         continue;
 
-      if (isWorthRenaming(Reg, UsedPhysRegs) &&
+      if (isWorthRenaming(Reg, UsedPhysRegs, VRegWithCopies) &&
           replaceReg(Reg, BlockedPhysRegs)) {
 
         LLVM_DEBUG(dbgs() << MI);
@@ -194,13 +247,15 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
 }
 
 bool AIEWawRegRewriter::isWorthRenaming(const Register &Reg,
-                                        const BitVector &UsedPhyRegs) const {
+                                        const BitVector &UsedPhysRegs,
+                                        const BitVector &VRegWithCopies) const {
   assert(Reg.isVirtual());
 
   // Only rename registers mapped to a phys reg assigned more than once
-  if (!UsedPhyRegs[VRM->getPhys(Reg)])
+  if (!UsedPhysRegs[VRM->getPhys(Reg)])
     return false;
-  return true;
+
+  return !VRegWithCopies[Reg.virtRegIndex()];
 }
 
 BitVector
@@ -230,7 +285,8 @@ bool AIEWawRegRewriter::replaceReg(const Register Reg,
     return false;
 
   LLVM_DEBUG(dbgs() << "     WAW Replacement: Virtual Register "
-                    << Register::virtReg2Index(Reg) << " will replace "
+                    << printReg(VRM->getPhys(Reg), TRI, 0, MRI)
+                    << " will replace "
                     << printReg(VRM->getPhys(Reg), TRI, 0, MRI) << " with "
                     << printReg(ReplacementPhysReg, TRI, 0, MRI) << '\n');
 
@@ -257,6 +313,15 @@ MCPhysReg AIEWawRegRewriter::getReplacementPhysReg(
       return PhysReg;
   }
   return MCRegister::NoRegister;
+}
+
+bool AIEWawRegRewriter::isIdentityCopy(const MachineInstr &MI) const {
+  std::optional<DestSourcePair> DestSource = TII->isCopyInstr(MI);
+  if (!DestSource.has_value())
+    return false;
+
+  return getAssignedPhysReg(DestSource->Source->getReg()) ==
+         getAssignedPhysReg(DestSource->Destination->getReg());
 }
 
 } // end anonymous namespace
