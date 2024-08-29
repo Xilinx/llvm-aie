@@ -126,6 +126,7 @@ add_llvm_target(AIECodeGen
    AIEAsmPrinter
    AIEDesc
    AIEInfo
+   AIEUtils
    Scalar
    SelectionDAG
    Support

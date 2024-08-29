@@ -9,6 +9,8 @@ add_llvm_component_library(LLVMAIEUtils
   AIELoopUtils.cpp
 
   LINK_COMPONENTS
+  CodeGen
+  Core
   Support
 
   ADD_TO_COMPONENT
