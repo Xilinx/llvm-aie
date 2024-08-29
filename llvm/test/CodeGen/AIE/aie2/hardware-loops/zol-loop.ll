@@ -42,9 +42,9 @@ define void @simple_loop(i32 noundef %n, ptr nocapture readonly %in, ptr nocaptu
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    lshl r4, r1, r0
 ; CHECK-NEXT:    add r1, r1, #1
-; CHECK-NEXT:    add r3, r2, r3; mov dj0, r4
+; CHECK-NEXT:    add r5, r2, r3; mov dj0, r4
 ; CHECK-NEXT:  .L_LEnd0:
-; CHECK-NEXT:    nopb ; nopa ; st r3, [p1, dj0]; add r2, r2, #-1; nopm ; nopv
+; CHECK-NEXT:    nopb ; nopa ; st r5, [p1, dj0]; add r2, r2, #-1; nopm ; nopv
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB0_3: // %for.cond.cleanup
 ; CHECK-NEXT:    nopa ; ret lr
