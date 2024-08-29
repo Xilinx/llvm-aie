@@ -99,12 +99,13 @@ private:
   MCPhysReg getReplacementPhysReg(const Register Reg,
                                   const BitVector &BlockedPhysRegs) const;
 
-  bool isWorthRenaming(const Register &Reg,
+  bool isWorthRenaming(const Register &Reg, const MachineInstr &MI,
                        const BitVector &UsedPhysRegs) const;
 
   /// return the Physical register of the machine operand.
   MCPhysReg getAssignedPhysReg(const MachineOperand &MO) const;
 
+  bool isIdentityCopy(const MachineInstr &MI) const;
 
 };
 
@@ -163,6 +164,11 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
 
   for (const MachineInstr &MI : *MBB) {
 
+    // Identity copies will be removed in a later pass, therefore, these are not
+    // real defines of a physical register
+    if (isIdentityCopy(MI))
+      continue;
+
     for (const MachineOperand &MO : MI.defs()) {
 
       Register Reg = MO.getReg();
@@ -173,7 +179,7 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
       if (MO.isTied())
         continue;
 
-      if (isWorthRenaming(Reg, UsedPhysRegs) &&
+      if (isWorthRenaming(Reg, MI, UsedPhysRegs) &&
           replaceReg(Reg, BlockedPhysRegs)) {
 
         LLVM_DEBUG(dbgs() << MI);
@@ -199,12 +205,16 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
 }
 
 bool AIEWawRegRewriter::isWorthRenaming(const Register &Reg,
+                                        const MachineInstr &MI,
                                         const BitVector &UsedPhyRegs) const {
   assert(Reg.isVirtual() && MRI->getRegClass(Reg));
 
   // Only rename registers mapped to a phys reg assigned more than once
   if (!UsedPhyRegs[VRM->getPhys(Reg)])
     return false;
+  if (MI.isCopy())
+    return false;
+
   return true;
 }
 
@@ -262,6 +272,17 @@ MCPhysReg AIEWawRegRewriter::getReplacementPhysReg(
       return PhysReg;
   }
   return MCRegister::NoRegister;
+}
+
+bool AIEWawRegRewriter::isIdentityCopy(const MachineInstr &MI) const {
+  if (!MI.isCopy())
+    return false;
+
+  const MCPhysReg DstPhysReg = getAssignedPhysReg(MI.getOperand(0));
+
+  const MCPhysReg SrcPhysReg = getAssignedPhysReg(MI.getOperand(1));
+
+  return DstPhysReg == SrcPhysReg;
 }
 
 } // end anonymous namespace
