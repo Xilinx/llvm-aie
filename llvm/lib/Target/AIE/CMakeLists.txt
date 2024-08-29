@@ -132,6 +132,7 @@ add_llvm_target(AIECodeGen
    Support
    Target
    TargetParser
+   TransformUtils
    GlobalISel
 
    ADD_TO_COMPONENT
