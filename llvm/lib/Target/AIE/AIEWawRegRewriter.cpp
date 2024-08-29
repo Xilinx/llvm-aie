@@ -287,6 +287,9 @@ bool AIEWawRegRewriter::isWorthRenaming(const Register &Reg,
   if (!UsedPhysRegs[VRM->getPhys(Reg)])
     return false;
 
+  if (!TRI->isVecOrAccRegClass(*(MRI->getRegClass(Reg))))
+    return false;
+
   return !VRegWithCopies[Reg.virtRegIndex()];
 }
 
