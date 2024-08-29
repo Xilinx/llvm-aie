@@ -26,20 +26,20 @@ define i32 @accumulate(i32 %size, ptr %array) {
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    lshl r3, r2, r1
 ; CHECK-NEXT:    mov dj0, r3
-; CHECK-NEXT:    lda r3, [p0, dj0]
+; CHECK-NEXT:    lda r5, [p0, dj0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    add r2, r2, #1
-; CHECK-NEXT:    eq r4, r2, r3
+; CHECK-NEXT:    eq r4, r2, r5
 ; CHECK-NEXT:    jz r4, #.LBB0_2
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    add r0, r3, r0 // Delay Slot 1
+; CHECK-NEXT:    add r0, r5, r0 // Delay Slot 1
 ; CHECK-NEXT:  // %bb.3: // %for.cond.cleanup
 ; CHECK-NEXT:    nopa ; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5

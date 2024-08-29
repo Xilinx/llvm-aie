@@ -19,14 +19,14 @@ define void @cbz_exit(ptr %in, ptr %res) {
 ; CHECK-NEXT:    nopa ; nopb ; add r0, r0, #1
 ; CHECK-NEXT:    lshl r2, r0, r1
 ; CHECK-NEXT:    mov dj0, r2
-; CHECK-NEXT:    lda r2, [p0, dj0]
+; CHECK-NEXT:    lda r3, [p0, dj0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    jnz r2, #.LBB0_1
+; CHECK-NEXT:    jnz r3, #.LBB0_1
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
@@ -67,14 +67,14 @@ define void @cbnz_exit(ptr %in, ptr %res) {
 ; CHECK-NEXT:    nopa ; nopb ; add r0, r0, #1
 ; CHECK-NEXT:    lshl r2, r0, r1
 ; CHECK-NEXT:    mov dj0, r2
-; CHECK-NEXT:    lda r2, [p0, dj0]
+; CHECK-NEXT:    lda r3, [p0, dj0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    jz r2, #.LBB1_1
+; CHECK-NEXT:    jz r3, #.LBB1_1
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3

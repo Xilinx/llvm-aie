@@ -57,6 +57,7 @@ MachineFunctionPass *createAIEClusterBaseAddress();
 MachineFunctionPass *createAIEAddressSpaceFlattening();
 MachineFunctionPass *createAIEEliminateDuplicatePHI();
 FunctionPass *createAIESuperRegRewriter();
+FunctionPass *createAIEWawRegRewriter();
 FunctionPass *createAIEPostSelectOptimize();
 MachineFunctionPass *
 createDeadMachineInstructionElim(bool KeepLifetimeInstructions);
@@ -78,6 +79,8 @@ extern char &AIESubRegConstrainerID;
 void initializeAIESubRegConstrainerPass(PassRegistry &);
 extern char &AIESuperRegRewriterID;
 void initializeAIESuperRegRewriterPass(PassRegistry &);
+extern char &AIEWawRegRewriterID;
+void initializeAIEWawRegRewriterPass(PassRegistry &);
 
 ImmutablePass *createAIEBaseAAWrapperPass();
 void initializeAIEBaseAAWrapperPassPass(PassRegistry &);

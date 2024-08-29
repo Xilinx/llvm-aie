@@ -114,6 +114,7 @@ add_llvm_target(AIECodeGen
    AIE2TargetTransformInfo.cpp
    AIETiedRegOperands.cpp
    ReservedRegsLICM.cpp
+   AIEWawRegRewriter.cpp
 
    LINK_COMPONENTS
    Analysis

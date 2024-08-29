@@ -86,6 +86,20 @@ getDedicatedFallThroughPreheader(const MachineBasicBlock &LoopBlock) {
   return Candidate;
 }
 
+SmallVector<const MachineBasicBlock *, 4>
+getSingleBlockLoopMBBs(const MachineFunction &MF) {
+  SmallVector<const MachineBasicBlock *, 4> LoopMBBs;
+  for (const MachineBasicBlock &MBB : MF) {
+
+    if (isSingleMBBLoop(&MBB)) {
+      LoopMBBs.push_back(&MBB);
+      LLVM_DEBUG(dbgs() << "Found Single Block Loop: " << MBB.getFullName()
+                        << "\n");
+    }
+  }
+  return LoopMBBs;
+}
+
 bool isSingleMBBLoop(const MachineBasicBlock *MBB) {
   int NumLoopEdges = 0;
   int NumExitEdges = 0;
