@@ -77,19 +77,19 @@ define void @test_loop_dyn_alloca(i32 noundef %n) {
 ; CHECK-NEXT:    nopa ; nopx ; mov p6, sp
 ; CHECK-NEXT:    mov p1, sp
 ; CHECK-NEXT:    lshl r0, r17, r19
-; CHECK-NEXT:    add r1, r0, #31
+; CHECK-NEXT:    add r0, r0, #31
 ; CHECK-NEXT:    jl #extern_call
 ; CHECK-NEXT:    mov p0, p1 // Delay Slot 5
-; CHECK-NEXT:    and r2, r1, r20 // Delay Slot 4
-; CHECK-NEXT:    mov m0, r2 // Delay Slot 3
+; CHECK-NEXT:    and r0, r0, r20 // Delay Slot 4
+; CHECK-NEXT:    mov m0, r0 // Delay Slot 3
 ; CHECK-NEXT:    paddb [p1], m0 // Delay Slot 2
 ; CHECK-NEXT:    mov sp, p1 // Delay Slot 1
 ; CHECK-NEXT:    nopa ; nopb ; add r17, r17, #1; nopm ; nops
-; CHECK-NEXT:    ltu r3, r17, r16
-; CHECK-NEXT:    xor r4, r17, r18
-; CHECK-NEXT:    add r21, r21, r3
-; CHECK-NEXT:    or r5, r4, r21
-; CHECK-NEXT:    jnz r5, #.LBB1_1
+; CHECK-NEXT:    ltu r0, r17, r16
+; CHECK-NEXT:    add r21, r21, r0
+; CHECK-NEXT:    xor r0, r17, r18
+; CHECK-NEXT:    or r0, r0, r21
+; CHECK-NEXT:    jnz r0, #.LBB1_1
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3

@@ -23,14 +23,14 @@ define void @sibling(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    nopb ; nopa ; nops ; lshl r6, r5, r4; nopm ; nopv
 ; CHECK-NEXT:    mov dj0, r6
-; CHECK-NEXT:    lda r7, [p1, dj0]
+; CHECK-NEXT:    lda r6, [p1, dj0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    jnzd r0, r0, p2
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    add r5, r5, #1 // Delay Slot 3
-; CHECK-NEXT:    add r3, r3, r7 // Delay Slot 2
+; CHECK-NEXT:    add r3, r3, r6 // Delay Slot 2
 ; CHECK-NEXT:    st r3, [p0, #0] // Delay Slot 1
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  // %bb.2: // %for.body6.lr.ph
@@ -43,14 +43,14 @@ define void @sibling(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
 ; CHECK-NEXT:    nopb ; nopa ; nops ; lshl r4, r2, r3; nopm ; nopv
 ; CHECK-NEXT:    mov dj0, r4
-; CHECK-NEXT:    lda r5, [p1, dj0]
+; CHECK-NEXT:    lda r4, [p1, dj0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    jnzd r1, r1, p2
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    add r2, r2, #1 // Delay Slot 3
-; CHECK-NEXT:    add r0, r0, r5 // Delay Slot 2
+; CHECK-NEXT:    add r0, r0, r4 // Delay Slot 2
 ; CHECK-NEXT:    st r0, [p0, #0] // Delay Slot 1
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  // %bb.4: // %for.cond.cleanup5

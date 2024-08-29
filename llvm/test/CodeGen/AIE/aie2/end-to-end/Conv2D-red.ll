@@ -37,7 +37,7 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ASM-LABEL: conv2d.loop.nest:
 ; ASM:         .p2align 4
 ; ASM-NEXT:  // %bb.0: // %newFuncRoot
-; ASM-NEXT:    paddb [sp], #32
+; ASM-NEXT:    nopa ; paddb [sp], #32; nopx
 ; ASM-NEXT:    st p6, [sp, #-28] // 4-byte Folded Spill
 ; ASM-NEXT:    mov p6, sp
 ; ASM-NEXT:    paddb [p6], #-132
@@ -54,9 +54,9 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ASM-NEXT:    lda dj4, [p6, #0]; mov p6, sp
 ; ASM-NEXT:    paddb [p6], #-56
 ; ASM-NEXT:    lda dn0, [p6, #0]; mov p6, sp
-; ASM-NEXT:    paddb [p6], #-60; mov r29, r16
+; ASM-NEXT:    paddb [p6], #-60
 ; ASM-NEXT:    lda dn4, [p6, #0]; mov p6, sp
-; ASM-NEXT:    paddb [p6], #-68; mov r30, r17
+; ASM-NEXT:    paddb [p6], #-68
 ; ASM-NEXT:    lda r10, [p6, #0]; mov p6, sp
 ; ASM-NEXT:    paddb [p6], #-72; mov s0, r0
 ; ASM-NEXT:    lda dj1, [p6, #0]; mov p6, sp
@@ -109,7 +109,7 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ASM-NEXT:    vlda.ups.s32.s16 bmh6, s0, [p2, #32]
 ; ASM-NEXT:    vlda.ups.s32.s16 bml6, s0, [p2], m1; mov r0, p0
 ; ASM-NEXT:    vlda.ups.s32.s16 bmh7, s0, [p2, #32]; and r0, r0, r9
-; ASM-NEXT:    vlda.ups.s32.s16 bml7, s0, [p2, #0]; add r17, r0, #33; mov r0, r5
+; ASM-NEXT:    vlda.ups.s32.s16 bml7, s0, [p2, #0]; add r1, r0, #33; mov r0, r5
 ; ASM-NEXT:    .p2align 4
 ; ASM-NEXT:  .LBB0_2: // %inner.loop
 ; ASM-NEXT:    // Parent Loop BB0_1 Depth=1
@@ -123,8 +123,8 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ASM-NEXT:    vldb wh10, [p1], #32
 ; ASM-NEXT:    vldb wl7, [p1], #32
 ; ASM-NEXT:    vldb wh7, [p1], #32
-; ASM-NEXT:    vshift.align x4, x4, s1, x6, r17
-; ASM-NEXT:    vshift.align x2, x2, s1, x8, r17
+; ASM-NEXT:    vshift.align x4, x4, s1, x6, r1
+; ASM-NEXT:    vshift.align x2, x2, s1, x8, r1
 ; ASM-NEXT:    vshuffle x9, x4, x2, r2
 ; ASM-NEXT:    vshuffle x3, x4, x2, r3
 ; ASM-NEXT:    vmac cm0, cm0, x9, x10, r4
@@ -133,8 +133,8 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ASM-NEXT:    vshuffle x5, x3, x0, r8; vmac cm6, cm6, x3, x7, r4 // Delay Slot 5
 ; ASM-NEXT:    vmac cm1, cm1, x1, x10, r4 // Delay Slot 4
 ; ASM-NEXT:    mov r1, p0; vmac cm3, cm3, x5, x10, r4 // Delay Slot 3
-; ASM-NEXT:    and r16, r1, r9; vmac cm5, cm5, x1, x7, r4 // Delay Slot 2
-; ASM-NEXT:    add r17, r16, #33; vmac cm7, cm7, x5, x7, r4 // Delay Slot 1
+; ASM-NEXT:    and r1, r1, r9; vmac cm5, cm5, x1, x7, r4 // Delay Slot 2
+; ASM-NEXT:    add r1, r1, #33; vmac cm7, cm7, x5, x7, r4 // Delay Slot 1
 ; ASM-NEXT:  // %bb.3: // %outer.loop.latch
 ; ASM-NEXT:    // in Loop: Header=BB0_1 Depth=1
 ; ASM-NEXT:    nopa ; nopb ; nopx ; mov s3, r6; vst.srs.s16.s32 bmh0, s2, [p3, #32]
@@ -161,14 +161,14 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ASM-NEXT:    padda.3d [p1], d2; paddb [p2], m1; mov m3, r14 // Delay Slot 2
 ; ASM-NEXT:    padda.3d [p2], d3; mov r25, dc5 // Delay Slot 1
 ; ASM-NEXT:  // %bb.4: // %exitStub
-; ASM-NEXT:    lda p7, [sp, #-32]; nopb ; nopx // 4-byte Folded Reload
+; ASM-NEXT:    lda p7, [sp, #-32]; nopb ; nopxm // 4-byte Folded Reload
 ; ASM-NEXT:    lda p6, [sp, #-28] // 4-byte Folded Reload
 ; ASM-NEXT:    ret lr
 ; ASM-NEXT:    nop // Delay Slot 5
 ; ASM-NEXT:    nop // Delay Slot 4
 ; ASM-NEXT:    nop // Delay Slot 3
-; ASM-NEXT:    mov r17, r30 // Delay Slot 2
-; ASM-NEXT:    paddb [sp], #-32; mov r16, r29 // Delay Slot 1
+; ASM-NEXT:    nop // Delay Slot 2
+; ASM-NEXT:    paddb [sp], #-32 // Delay Slot 1
 newFuncRoot:
   br label %outer.loop.header
 

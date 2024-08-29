@@ -457,3 +457,30 @@ AIE2RegisterInfo::getCoveringSubRegs(const TargetRegisterClass &RC) const {
   }
   return Subregs;
 }
+
+bool AIE2RegisterInfo::isVecOrAccRegClass(const TargetRegisterClass &RC) const {
+  // ******** Vector classes ********
+  if (AIE2::VEC128RegClass.hasSubClassEq(&RC))
+    return true;
+
+  if (AIE2::VEC256RegClass.hasSubClassEq(&RC))
+    return true;
+
+  if (AIE2::VEC512RegClass.hasSubClassEq(&RC))
+    return true;
+
+  if (AIE2::VEC1024RegClass.hasSubClassEq(&RC))
+    return true;
+
+  // ******** Accumulator classes ********
+  if (AIE2::ACC256RegClass.hasSubClassEq(&RC))
+    return true;
+
+  if (AIE2::ACC512RegClass.hasSubClassEq(&RC))
+    return true;
+
+  if (AIE2::ACC1024RegClass.hasSubClassEq(&RC))
+    return true;
+
+  return false;
+}
