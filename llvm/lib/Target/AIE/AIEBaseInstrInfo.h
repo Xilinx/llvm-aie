@@ -15,6 +15,7 @@
 #ifndef LLVM_LIB_TARGET_AIE_AIEBASEINSTRRINFO_H
 #define LLVM_LIB_TARGET_AIE_AIEBASEINSTRRINFO_H
 
+#include "AIEBaseCombinedOpcodes.h"
 #include "AIEMIRFormatter.h"
 #include "AIETiedRegOperands.h"
 #include "MCTargetDesc/AIEFormat.h"
@@ -110,6 +111,10 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   /// the high bits
   virtual unsigned getGenericUnpadVectorOpcode() const {
     llvm_unreachable("Target didn't implement getGenericUnpadVectorOpcode");
+  }
+  /// Return a CombinedOpcodes object
+  virtual const AIEBaseCombinedOpcodes *getCombinedOpcodes() const {
+    llvm_unreachable("Target didn't implement getCombinedOpcodes");
   }
   /// Check whether Opc represents a lock instruction
   virtual bool isLock(unsigned Opc) const { return false; }

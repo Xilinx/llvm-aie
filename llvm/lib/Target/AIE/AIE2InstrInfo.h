@@ -17,6 +17,7 @@
 #define LLVM_LIB_TARGET_AIE2_AIE2INSTRINFO_H
 
 #include "AIE2.h"
+#include "AIE2CombinedOpcodes.h"
 #include "AIE2RegisterInfo.h"
 #include "AIEBaseInstrInfo.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
@@ -47,6 +48,7 @@ public:
   unsigned getGenericExtractVectorEltOpcode(bool SignExt) const override;
   unsigned getGenericPadVectorOpcode() const override;
   unsigned getGenericUnpadVectorOpcode() const override;
+  const AIEBaseCombinedOpcodes *getCombinedOpcodes() const override;
   unsigned getCycleSeparatorOpcode() const override;
   bool isLock(unsigned Opc) const override;
   bool isDelayedSchedBarrier(const MachineInstr &MI) const override;
@@ -168,6 +170,7 @@ public:
   getSerializableDirectMachineOperandTargetFlags() const override;
 
   bool canHoistCheapInst(const MachineInstr &MI) const override;
+  AIE2CombinedOpcodes CombinedOpcodes;
 
 protected:
   SmallVector<AIEPseudoExpandInfo, 4>

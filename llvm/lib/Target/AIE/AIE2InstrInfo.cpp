@@ -15,6 +15,7 @@
 
 #include "AIE2InstrInfo.h"
 #include "AIE2.h"
+#include "AIE2CombinedOpcodes.h"
 #include "AIE2RegisterInfo.h"
 #include "AIE2Subtarget.h"
 #include "AIE2TargetMachine.h"
@@ -751,6 +752,10 @@ unsigned AIE2InstrInfo::getGenericPadVectorOpcode() const {
 
 unsigned AIE2InstrInfo::getGenericUnpadVectorOpcode() const {
   return AIE2::G_AIE_UNPAD_VECTOR;
+}
+
+const AIEBaseCombinedOpcodes *AIE2InstrInfo::getCombinedOpcodes() const {
+  return &CombinedOpcodes;
 }
 
 unsigned int getVLDSparseOpcode(unsigned int PseudoOpc) {

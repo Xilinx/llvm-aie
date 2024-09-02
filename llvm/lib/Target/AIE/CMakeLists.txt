@@ -98,6 +98,7 @@ add_llvm_target(AIECodeGen
    AIETargetMachine.cpp
    AIETargetObjectFile.cpp
    AIE2AsmPrinter.cpp
+   AIE2CombinedOpcodes.cpp
    AIE2FrameLowering.cpp
    AIE2InstrInfo.cpp
    AIE2InstructionSelector.cpp
