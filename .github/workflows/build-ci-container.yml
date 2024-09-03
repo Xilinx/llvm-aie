@@ -81,7 +81,7 @@ jobs:
         # $GITHUB_WORKSPACE to avoid space limitations on the default drive
         # and use the permissions setup for /mnt/podman.
       - name: Download stage1-toolchain
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4.1.7
         with:
           name: stage1-toolchain
           path: /mnt/podman
