@@ -20,7 +20,7 @@ jobs:
       github.event.workflow_run.event == 'pull_request'
     steps:
       - name: 'Download artifact'
-        uses: actions/download-artifact@6b208ae046db98c579e8a3aa621ab581ff575935 # v4.1.1
+        uses: actions/download-artifact@v4.1.7 # v4.1.1
         with:
           github-token: ${{ secrets.ISSUE_WRITE_DOWNLOAD_ARTIFACT }}
           run-id: ${{ github.event.workflow_run.id }}
