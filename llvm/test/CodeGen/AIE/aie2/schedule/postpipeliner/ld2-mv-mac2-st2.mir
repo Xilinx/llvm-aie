@@ -7,13 +7,11 @@
 
 # RUN: llc --mtriple=aie2 -O2 --start-before=postmisched %s -o - | FileCheck %s
 
-# This is a variant of load-add-store-renamed where the tripcount has been adjusted
-# already. That is an indication of being pipelined before, and we reject it for
-# postpipelining
+# A fairly dense loop with two loads, two macs and two stores, fitting in NS=6 x II=2
 
 --- |
-  define dso_local void @loadAddStore(ptr noalias nocapture writeonly %d, ptr noalias nocapture readonly %s, i32 noundef %n) local_unnamed_addr #0 {
-  ; CHECK-LABEL: loadAddStore:
+  define dso_local void @loop(ptr addrspace(5) noalias nocapture writeonly %d, ptr addrspace(6) noalias nocapture readonly %s, i32 noundef %n) local_unnamed_addr #0 {
+  ; CHECK-LABEL: loop:
   ; CHECK:         .p2align 4
   ; CHECK-NEXT:  // %bb.0: // %entry
   ; CHECK-NEXT:    mova r1, #0; nopb ; nopxm
@@ -25,7 +23,7 @@
   ; CHECK-NEXT:    nop // Delay Slot 2
   ; CHECK-NEXT:    nop // Delay Slot 1
   ; CHECK-NEXT:  // %bb.1: // %for.body.preheader
-  ; CHECK-NEXT:    add.nc lc, r0, #-1
+  ; CHECK-NEXT:    add.nc lc, r0, #0
   ; CHECK-NEXT:    movxm ls, #.LBB0_2
   ; CHECK-NEXT:    movxm le, #.L_LEnd0
   ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
@@ -38,16 +36,21 @@
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_2: // %for.body
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-  ; CHECK-NEXT:    nopb ; lda r0, [p1], #4; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    nopa ; vldb wl4, [p0], m2; nopxm ; nops
+  ; CHECK-NEXT:    vldb.2d wl4, [p0], d0
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    vmov wh4, wl0
+  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    vmac cm1, cm0, x4, x2, r0
+  ; CHECK-NEXT:    vmac cm2, cm0, x4, x2, r0
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    add r1, r0, #1
-  ; CHECK-NEXT:  .L_LEnd0:
-  ; CHECK-NEXT:    nopb ; nopa ; st r1, [p0], #4; nopxm ; nopv
+  ; CHECK-NEXT:    vst.srs.d8.s32 cm1, s0, [p1], m2
+  ; CHECK-NEXT:  .L_LEnd9:
+  ; CHECK-NEXT:    nopb ; nopa ; vst.2d.srs.d8.s32 cm2, s0, [p1], d1; nopxm ; nopv
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_3: // %for.cond.cleanup
   ; CHECK-NEXT:    nopa ; ret lr
@@ -68,13 +71,13 @@
     ret void
 
   for.body:                                         ; preds = %for.body.preheader, %for.body
-    %d.addr.07 = phi ptr [ %incdec.ptr, %for.body ], [ %d, %for.body.preheader ]
-    %s.addr.06 = phi ptr [ %incdec.ptr1, %for.body ], [ %s, %for.body.preheader ]
-    %0 = load i32, ptr %s.addr.06, align 4, !tbaa !2
+    %d.addr.07 = phi ptr addrspace(5) [ %incdec.ptr, %for.body ], [ %d, %for.body.preheader ]
+    %s.addr.06 = phi ptr addrspace(6) [ %incdec.ptr1, %for.body ], [ %s, %for.body.preheader ]
+    %0 = load i32, ptr addrspace(6) %s.addr.06, align 4, !tbaa !2
     %add = add nsw i32 %0, 1
-    store i32 %add, ptr %d.addr.07, align 4, !tbaa !2
-    %incdec.ptr = getelementptr inbounds i32, ptr %d.addr.07, i20 1
-    %incdec.ptr1 = getelementptr inbounds i32, ptr %s.addr.06, i20 1
+    store i32 %add, ptr addrspace(5) %d.addr.07, align 4, !tbaa !2
+    %incdec.ptr = getelementptr inbounds i32, ptr addrspace(5) %d.addr.07, i20 1
+    %incdec.ptr1 = getelementptr inbounds i32, ptr addrspace(6) %s.addr.06, i20 1
     %1 = call i1 @llvm.loop.decrement.i32(i32 1)
     br i1 %1, label %for.body, label %for.cond.cleanup, !llvm.loop !6
   }
@@ -103,12 +106,12 @@
 
 ...
 ---
-name:            loadAddStore
+name:            loop
 alignment:       16
 tracksRegLiveness: true
 body:             |
   bb.0.entry (align 16):
-    successors: %bb.1(0x50000000), %bb.3(0x30000000)
+    successors: %bb.1, %bb.3
     liveins: $p0, $p1, $r0
 
     renamable $r1 = MOV_RLC_imm10_pseudo 0
@@ -117,21 +120,24 @@ body:             |
     DelayedSchedBarrier
 
   bb.1.for.body.preheader:
-    successors: %bb.2(0x80000000)
+    successors: %bb.2
     liveins: $p0, $p1, $r0
 
-    $lc = ADD_NC $r0, -1
+    $lc = ADD_NC $r0, 0
     $ls = MOVXM_lng_cg %bb.2
     $le = MOVXM_lng_cg <mcsymbol .L_LEnd0>
 
   bb.2.for.body (align 16):
     successors: %bb.2(0x7c000000), %bb.3(0x04000000)
-    liveins: $p0, $p1
-
-    renamable $r0, renamable $p1 = LDA_dms_lda_pstm_nrm_imm killed renamable $p1, 4 :: (load (s32) from %ir.s.addr.06, !tbaa !2)
-    renamable $r1 = nsw ADD_add_r_ri killed renamable $r0, 1, implicit-def dead $srcarry
-    renamable $p0 = ST_dms_sts_pstm_nrm_imm killed renamable $r1, killed renamable $p0, 4 :: (store (s32) into %ir.d.addr.07, !tbaa !2)
-    PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.2
+    liveins: $p0, $p1, $r0, $m2, $wl0, $cm0, $x2, $d0, $d1, $s0
+    $wl4, $p0 = VLD_pstm_pseudo $p0, $m2, :: (load (<8 x s32>) from %ir.s.addr.06, addrspace 5)
+    $wh4 = VMOV_mv_w $wl0
+    $cm1 = VMAC_vmac_cm_core_dense $cm0, $x4, $x2, $r0
+    $wl4, $p0, $dc0 = VLD_2D_pseudo killed $p0, $d0 :: (load (<8 x s32>) from %ir.s.addr.06, addrspace 5)
+    $cm2 = VMAC_vmac_cm_core_dense $cm0, $x4, $x2, $r0
+    $p1 = VST_SRS_D8_S32_ag_pstm_nrm $p1, $m2, $cm1, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<32 x s8>) into %ir.d.addr.07, addrspace 6)
+    $p1, $dc1 = VST_2D_SRS_D8_S32 $p1, $d1, $cm2, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign :: (store (<32 x s8>) into %ir.d.addr.07, addrspace 7)
+    PseudoLoopEnd <mcsymbol .L_LEnd9>, %bb.2
 
   bb.3.for.cond.cleanup (align 16):
     RET implicit $lr
