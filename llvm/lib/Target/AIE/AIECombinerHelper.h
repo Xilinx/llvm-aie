@@ -61,6 +61,10 @@ bool matchGlobalValOffset(MachineInstr &MI, MachineRegisterInfo &MRI,
 /// post-increment combining
 bool canDelayMemOp(MachineInstr &MemI, MachineInstr &Dest,
                    MachineRegisterInfo &MRI);
+/// \return true if \a Src can be moved just before \a Dest in order to allow
+/// post-increment combining
+bool canDelayOp(MachineInstr &Src, MachineInstr &Dest,
+                MachineRegisterInfo &MRI);
 
 class InstrNode {
   MachineInstr *BaseNode;

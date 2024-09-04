@@ -82,6 +82,16 @@ struct LoadStoreOpcodes {
   std::optional<unsigned> OffsetOpcode;
 };
 
+/// Hold the information needed to select 512-bit instructions that can be
+/// combined into VST.SRS
+struct StoreSRS512BitInfo {
+  // Hold the information of Store
+  LoadStoreOpcodes LSO;
+  // Registers required to select VST.SRS instruction
+  Register SrcReg, ShftReg, SignReg;
+  bool ConstantSign;
+};
+
 /// Create a memory operand representing Tile Memory
 /// \param I Instruction to build it for
 /// \param Mode Store or Load
@@ -188,10 +198,14 @@ public:
                                     AddressingModeInfo &AMI,
                                     MachineRegisterInfo &MRI);
   bool selectG_AIE_STORE_SRS(MachineInstr &StoreI, MachineRegisterInfo &MRI);
-  bool select512BitG_AIE_STORE_SRS(LoadStoreOpcodes &LSO,
-                                   AddressingModeInfo &AMI, Register SrcReg,
-                                   Register ShftReg, Register SignReg,
-                                   bool ConstantSign, MachineRegisterInfo &MRI);
+  bool selectG_AIE_STORE_CONCAT_SRS(MachineInstr &StoreI,
+                                    MachineRegisterInfo &MRI);
+  std::tuple<Register, Register> split512BitReg(Register SrcReg,
+                                                MachineRegisterInfo &MRI);
+  bool select512BitG_AIE_STORE_SRS(StoreSRS512BitInfo SSILo,
+                                   StoreSRS512BitInfo SSIHi,
+                                   AddressingModeInfo &AMI,
+                                   MachineRegisterInfo &MRI);
   bool selectG_AIE_STORE_CONV(MachineInstr &StoreI, MachineRegisterInfo &MRI);
   bool selectG_AIE_LOAD_CONV(MachineInstr &StoreI, MachineRegisterInfo &MRI);
   bool selectG_AIE_STORE_PACK(MachineInstr &StoreI, MachineRegisterInfo &MRI);
@@ -1712,6 +1726,17 @@ getCombinedOpcodeSRSUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
               /*ISelOpcode=*/AIE2::VST_SRS_S32_S64_ag_idx_imm,
               AlwaysFitsImmediateRange,
               /*OffsetOpcode=*/AIE2::VST_SRS_S32_S64_ag_idx_imm};
+        // If two 256-bit SRS are inputs to 512-bit G_STORE through CONCAT
+        case Intrinsic::aie2_I256_v32_acc32_srs:
+          return LoadStoreOpcodes{
+              /*ISelOpcode=*/AIE2::VST_SRS_S8_S32_ag_idx_imm,
+              AlwaysFitsImmediateRange,
+              /*OffsetOpcode=*/AIE2::VST_SRS_S8_S32_ag_idx_imm};
+        case Intrinsic::aie2_I256_v8_acc64_srs:
+          return LoadStoreOpcodes{
+              /*ISelOpcode=*/AIE2::VST_SRS_S32_S64_ag_idx_imm,
+              AlwaysFitsImmediateRange,
+              /*OffsetOpcode=*/AIE2::VST_SRS_S32_S64_ag_idx_imm};
         }
       }
       if (getLoadStoreSize(MemOp) == 256) {
@@ -1751,6 +1776,20 @@ getCombinedOpcodeSRSUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
           return LoadStoreOpcodes{
               /*ISelOpcode=*/AIE2::VST_SRS_S32_S64_ag_idx_imm,
               FitsImmediateRange,
+              /*OffsetOpcode=*/AIE2::VST_SRS_S32_S64_ag_idx_imm};
+        // If two 256-bit SRS are inputs to 512-bit G_AIE_OFFSET_STORE through
+        // CONCAT
+        case Intrinsic::aie2_I256_v32_acc32_srs:
+          FitsImmediateRange =
+              checkImmediateRangeSplitting<3, 32, 32>(Immediate);
+          return LoadStoreOpcodes{
+              AIE2::VST_SRS_S8_S32_ag_idx_imm, FitsImmediateRange,
+              /*OffsetOpcode=*/AIE2::VST_SRS_S8_S32_ag_idx_imm};
+        case Intrinsic::aie2_I256_v8_acc64_srs:
+          FitsImmediateRange =
+              checkImmediateRangeSplitting<3, 32, 32>(Immediate);
+          return LoadStoreOpcodes{
+              AIE2::VST_SRS_S32_S64_ag_idx_imm, FitsImmediateRange,
               /*OffsetOpcode=*/AIE2::VST_SRS_S32_S64_ag_idx_imm};
         }
       }
@@ -1795,6 +1834,23 @@ getCombinedOpcodeSRSUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
               ISelOpcode, FitsImmediateRange,
               /*OffsetOpcode=*/AIE2::VST_SRS_S16_S32_ag_idx_imm};
         case Intrinsic::aie2_I512_v16_acc64_srs:
+          FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
+          ISelOpcode = FitsImmediateRange
+                           ? AIE2::VST_SRS_S32_S64_ag_pstm_nrm_imm
+                           : AIE2::VST_SRS_S32_S64_ag_pstm_nrm;
+          return LoadStoreOpcodes{
+              ISelOpcode, FitsImmediateRange,
+              /*OffsetOpcode=*/AIE2::VST_SRS_S32_S64_ag_idx_imm};
+        // If two 256-bit SRS are inputs to 512-bit G_AIE_POSTINC_STORE through
+        // CONCAT
+        case Intrinsic::aie2_I256_v32_acc32_srs:
+          FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
+          ISelOpcode = FitsImmediateRange ? AIE2::VST_SRS_S8_S32_ag_pstm_nrm_imm
+                                          : AIE2::VST_SRS_S8_S32_ag_pstm_nrm;
+          return LoadStoreOpcodes{
+              ISelOpcode, FitsImmediateRange,
+              /*OffsetOpcode=*/AIE2::VST_SRS_S8_S32_ag_idx_imm};
+        case Intrinsic::aie2_I256_v8_acc64_srs:
           FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
           ISelOpcode = FitsImmediateRange
                            ? AIE2::VST_SRS_S32_S64_ag_pstm_nrm_imm
@@ -1847,6 +1903,16 @@ getCombinedOpcodeSRSUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
           return LoadStoreOpcodes{
               /*ISelOpcode=*/AIE2::VST_2D_SRS_S32_S64, NoImmediate,
               /*OffsetOpcode=*/AIE2::VST_SRS_S32_S64_ag_idx_imm};
+        // If two 256-bit SRS are inputs to 512-bit G_AIE_POSTINC_2D_STORE
+        // through CONCAT
+        case Intrinsic::aie2_I256_v32_acc32_srs:
+          return LoadStoreOpcodes{
+              /*ISelOpcode=*/AIE2::VST_2D_SRS_S8_S32, NoImmediate,
+              /*OffsetOpcode=*/AIE2::VST_SRS_S8_S32_ag_idx_imm};
+        case Intrinsic::aie2_I256_v8_acc64_srs:
+          return LoadStoreOpcodes{
+              /*ISelOpcode=*/AIE2::VST_2D_SRS_S32_S64, NoImmediate,
+              /*OffsetOpcode=*/AIE2::VST_SRS_S32_S64_ag_idx_imm};
         }
       }
       if (getLoadStoreSize(MemOp) == 256) {
@@ -1878,6 +1944,16 @@ getCombinedOpcodeSRSUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
               /*ISelOpcode=*/AIE2::VST_3D_SRS_S16_S32, NoImmediate,
               /*OffsetOpcode=*/AIE2::VST_SRS_S16_S32_ag_idx_imm};
         case Intrinsic::aie2_I512_v16_acc64_srs:
+          return LoadStoreOpcodes{
+              /*ISelOpcode=*/AIE2::VST_3D_SRS_S32_S64, NoImmediate,
+              /*OffsetOpcode=*/AIE2::VST_SRS_S32_S64_ag_idx_imm};
+        // If two 256-bit SRS are inputs to 512-bit G_AIE_POSTINC_3D_STORE
+        // through CONCAT
+        case Intrinsic::aie2_I256_v32_acc32_srs:
+          return LoadStoreOpcodes{
+              /*ISelOpcode=*/AIE2::VST_3D_SRS_S8_S32, NoImmediate,
+              /*OffsetOpcode=*/AIE2::VST_SRS_S8_S32_ag_idx_imm};
+        case Intrinsic::aie2_I256_v8_acc64_srs:
           return LoadStoreOpcodes{
               /*ISelOpcode=*/AIE2::VST_3D_SRS_S32_S64, NoImmediate,
               /*OffsetOpcode=*/AIE2::VST_SRS_S32_S64_ag_idx_imm};
@@ -2127,6 +2203,17 @@ getCombinedOpcodeSRSUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
               /*ISelOpcode=*/AIE2::VST_SRS_D32_S64_ag_idx_imm,
               AlwaysFitsImmediateRange,
               /*OffsetOpcode=*/AIE2::VST_SRS_D32_S64_ag_idx_imm};
+        // If two 256-bit SRS are inputs to 512-bit G_STORE through CONCAT
+        case Intrinsic::aie2_I256_v32_acc32_srs:
+          return LoadStoreOpcodes{
+              /*ISelOpcode=*/AIE2::VST_SRS_D8_S32_ag_idx_imm,
+              AlwaysFitsImmediateRange,
+              /*OffsetOpcode=*/AIE2::VST_SRS_D8_S32_ag_idx_imm};
+        case Intrinsic::aie2_I256_v8_acc64_srs:
+          return LoadStoreOpcodes{
+              /*ISelOpcode=*/AIE2::VST_SRS_D32_S64_ag_idx_imm,
+              AlwaysFitsImmediateRange,
+              /*OffsetOpcode=*/AIE2::VST_SRS_D32_S64_ag_idx_imm};
         }
       }
       if (getLoadStoreSize(MemOp) == 256) {
@@ -2166,6 +2253,20 @@ getCombinedOpcodeSRSUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
           return LoadStoreOpcodes{
               /*ISelOpcode=*/AIE2::VST_SRS_D32_S64_ag_idx_imm,
               FitsImmediateRange,
+              /*OffsetOpcode=*/AIE2::VST_SRS_D32_S64_ag_idx_imm};
+        // If two 256-bit SRS are inputs to 512-bit G_AIE_OFFSET_STORE through
+        // CONCAT
+        case Intrinsic::aie2_I256_v32_acc32_srs:
+          FitsImmediateRange =
+              checkImmediateRangeSplitting<3, 32, 32>(Immediate);
+          return LoadStoreOpcodes{
+              AIE2::VST_SRS_D8_S32_ag_idx_imm, FitsImmediateRange,
+              /*OffsetOpcode=*/AIE2::VST_SRS_D8_S32_ag_idx_imm};
+        case Intrinsic::aie2_I256_v8_acc64_srs:
+          FitsImmediateRange =
+              checkImmediateRangeSplitting<3, 32, 32>(Immediate);
+          return LoadStoreOpcodes{
+              AIE2::VST_SRS_D32_S64_ag_idx_imm, FitsImmediateRange,
               /*OffsetOpcode=*/AIE2::VST_SRS_D32_S64_ag_idx_imm};
         }
       }
@@ -2210,6 +2311,23 @@ getCombinedOpcodeSRSUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
               ISelOpcode, FitsImmediateRange,
               /*OffsetOpcode=*/AIE2::VST_SRS_D16_S32_ag_idx_imm};
         case Intrinsic::aie2_I512_v16_acc64_srs:
+          FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
+          ISelOpcode = FitsImmediateRange
+                           ? AIE2::VST_SRS_D32_S64_ag_pstm_nrm_imm
+                           : AIE2::VST_SRS_D32_S64_ag_pstm_nrm;
+          return LoadStoreOpcodes{
+              ISelOpcode, FitsImmediateRange,
+              /*OffsetOpcode=*/AIE2::VST_SRS_D32_S64_ag_idx_imm};
+        // If two 256-bit SRS are inputs to 512-bit G_AIE_POSTINC_STORE through
+        // CONCAT
+        case Intrinsic::aie2_I256_v32_acc32_srs:
+          FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
+          ISelOpcode = FitsImmediateRange ? AIE2::VST_SRS_D8_S32_ag_pstm_nrm_imm
+                                          : AIE2::VST_SRS_D8_S32_ag_pstm_nrm;
+          return LoadStoreOpcodes{
+              ISelOpcode, FitsImmediateRange,
+              /*OffsetOpcode=*/AIE2::VST_SRS_D8_S32_ag_idx_imm};
+        case Intrinsic::aie2_I256_v8_acc64_srs:
           FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
           ISelOpcode = FitsImmediateRange
                            ? AIE2::VST_SRS_D32_S64_ag_pstm_nrm_imm
@@ -2262,6 +2380,16 @@ getCombinedOpcodeSRSUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
           return LoadStoreOpcodes{
               /*ISelOpcode=*/AIE2::VST_2D_SRS_D32_S64, NoImmediate,
               /*OffsetOpcode=*/AIE2::VST_SRS_D32_S64_ag_idx_imm};
+        // If two 256-bit SRS are inputs to 512-bit G_AIE_POSTINC_2D_STORE
+        // through CONCAT
+        case Intrinsic::aie2_I256_v32_acc32_srs:
+          return LoadStoreOpcodes{
+              /*ISelOpcode=*/AIE2::VST_2D_SRS_D8_S32, NoImmediate,
+              /*OffsetOpcode=*/AIE2::VST_SRS_D8_S32_ag_idx_imm};
+        case Intrinsic::aie2_I256_v8_acc64_srs:
+          return LoadStoreOpcodes{
+              /*ISelOpcode=*/AIE2::VST_2D_SRS_D32_S64, NoImmediate,
+              /*OffsetOpcode=*/AIE2::VST_SRS_D32_S64_ag_idx_imm};
         }
       }
       if (getLoadStoreSize(MemOp) == 256) {
@@ -2293,6 +2421,16 @@ getCombinedOpcodeSRSUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
               /*ISelOpcode=*/AIE2::VST_3D_SRS_D16_S32, NoImmediate,
               /*OffsetOpcode=*/AIE2::VST_SRS_D16_S32_ag_idx_imm};
         case Intrinsic::aie2_I512_v16_acc64_srs:
+          return LoadStoreOpcodes{
+              /*ISelOpcode=*/AIE2::VST_3D_SRS_D32_S64, NoImmediate,
+              /*OffsetOpcode=*/AIE2::VST_SRS_D32_S64_ag_idx_imm};
+        // If two 256-bit SRS are inputs to 512-bit G_AIE_POSTINC_3D_STORE
+        // through CONCAT
+        case Intrinsic::aie2_I256_v32_acc32_srs:
+          return LoadStoreOpcodes{
+              /*ISelOpcode=*/AIE2::VST_3D_SRS_D8_S32, NoImmediate,
+              /*OffsetOpcode=*/AIE2::VST_SRS_D8_S32_ag_idx_imm};
+        case Intrinsic::aie2_I256_v8_acc64_srs:
           return LoadStoreOpcodes{
               /*ISelOpcode=*/AIE2::VST_3D_SRS_D32_S64, NoImmediate,
               /*OffsetOpcode=*/AIE2::VST_SRS_D32_S64_ag_idx_imm};
@@ -4044,78 +4182,81 @@ bool AIE2InstructionSelector::selectG_AIE_STORE_PACK(MachineInstr &StoreI,
   return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
 }
 
-bool AIE2InstructionSelector::select512BitG_AIE_STORE_SRS(
-    LoadStoreOpcodes &LSO, AddressingModeInfo &AMI, Register SrcReg,
-    Register ShftReg, Register SignReg, bool ConstantSign,
-    MachineRegisterInfo &MRI) {
-  assert(LSO.OffsetOpcode && "Expected an offset opcode for 512-bit VST.SRS!?");
-
+std::tuple<Register, Register>
+AIE2InstructionSelector::split512BitReg(Register SrcReg,
+                                        MachineRegisterInfo &MRI) {
   const TargetRegisterClass *RC = &AIE2::ACC512RegClass;
   Register Low512 = MRI.createVirtualRegister(RC);
   Register High512 = MRI.createVirtualRegister(RC);
+  auto LowerBits = MIB.buildInstr(TargetOpcode::COPY, {Low512}, {})
+                       .addReg(SrcReg, 0, AIE2::sub_512_lo);
+  auto HigherBits = MIB.buildInstr(TargetOpcode::COPY, {High512}, {})
+                        .addReg(SrcReg, 0, AIE2::sub_512_hi);
+  return {LowerBits.getReg(0), HigherBits.getReg(0)};
+}
+
+bool AIE2InstructionSelector::select512BitG_AIE_STORE_SRS(
+    StoreSRS512BitInfo SSILo, StoreSRS512BitInfo SSIHi, AddressingModeInfo &AMI,
+    MachineRegisterInfo &MRI) {
+  assert(SSIHi.LSO.OffsetOpcode &&
+         "Expected an offset opcode for 512-bit VST.SRS!?");
 
   switch (AMI.MemI.getOpcode()) {
   case AIE2::G_STORE:
   case AIE2::G_AIE_POSTINC_STORE:
   case AIE2::G_AIE_POSTINC_2D_STORE:
   case AIE2::G_AIE_POSTINC_3D_STORE: {
-    auto LowerBits = MIB.buildInstr(TargetOpcode::COPY, {Low512}, {})
-                         .addReg(SrcReg, 0, AIE2::sub_512_lo);
-    auto HigherBits = MIB.buildInstr(TargetOpcode::COPY, {High512}, {})
-                          .addReg(SrcReg, 0, AIE2::sub_512_hi);
-    auto StoreHigher = MIB.buildInstr(*LSO.OffsetOpcode)
+    auto StoreHigher = MIB.buildInstr(*SSIHi.LSO.OffsetOpcode)
                            .addReg(AMI.PtrOp.getReg())
                            .addImm(32) // Offset
-                           .addReg(HigherBits.getReg(0))
-                           .addReg(ShftReg);
+                           .addReg(SSIHi.SrcReg)
+                           .addReg(SSIHi.ShftReg);
 
-    auto StoreLower = MIB.buildInstr(LSO.ISelOpcode);
+    auto StoreLower = MIB.buildInstr(SSILo.LSO.ISelOpcode);
 
     for (auto Def : AMI.MemI.defs())
       StoreLower.addDef(Def.getReg());
 
-    addAddressingMode(StoreLower, AMI, LSO.FitsImmediateRange, false, MRI);
+    addAddressingMode(StoreLower, AMI, SSILo.LSO.FitsImmediateRange, false,
+                      MRI);
 
-    StoreLower.addReg(LowerBits.getReg(0)).addReg(ShftReg);
+    StoreLower.addReg(SSILo.SrcReg).addReg(SSILo.ShftReg);
 
     addSplitMemOperands(AMI.MemI, StoreHigher, StoreLower, 0, 2);
 
-    if (!ConstantSign)
-      setUnsetCtrlRegister(*StoreHigher, *StoreLower, MRI, AIE2::crSRSSign,
-                           SignReg);
+    if (!SSILo.ConstantSign)
+      setUnsetCtrlRegister(*StoreLower, MRI, AIE2::crSRSSign, SSILo.SignReg);
+
+    if (!SSIHi.ConstantSign)
+      setUnsetCtrlRegister(*StoreHigher, MRI, AIE2::crSRSSign, SSIHi.SignReg);
 
     AMI.MemI.eraseFromParent();
     return constrainSelectedInstRegOperands(*StoreLower, TII, TRI, RBI) &&
            constrainSelectedInstRegOperands(*StoreHigher, TII, TRI, RBI);
   }
   case AIE2::G_AIE_OFFSET_STORE: {
-    auto LowerBits = MIB.buildInstr(TargetOpcode::COPY, {Low512}, {})
-                         .addReg(SrcReg, 0, AIE2::sub_512_lo);
-    auto HigherBits = MIB.buildInstr(TargetOpcode::COPY, {High512}, {})
-                          .addReg(SrcReg, 0, AIE2::sub_512_hi);
-
     MachineInstrBuilder StoreHigher;
-    if (LSO.FitsImmediateRange) {
+    if (SSIHi.LSO.FitsImmediateRange) {
       StoreHigher =
-          MIB.buildInstr(*LSO.OffsetOpcode)
+          MIB.buildInstr(*SSIHi.LSO.OffsetOpcode)
               .addReg(AMI.PtrOp.getReg())
               .addImm(AMI.ImmediateOffset->getSExtValue() + 32) // Offset
-              .addReg(HigherBits.getReg(0))
-              .addReg(ShftReg);
+              .addReg(SSIHi.SrcReg)
+              .addReg(SSIHi.ShftReg);
     } else {
       // In this case we have to emit an PTR_ADD to evaluate the offset
       insertPtrAddForOffset(MRI, AMI.MemI);
-      StoreHigher = MIB.buildInstr(*LSO.OffsetOpcode)
+      StoreHigher = MIB.buildInstr(*SSIHi.LSO.OffsetOpcode)
                         .addReg(AMI.PtrOp.getReg())
                         .addImm(32) // Offset
-                        .addReg(HigherBits.getReg(0))
-                        .addReg(ShftReg);
+                        .addReg(SSIHi.SrcReg)
+                        .addReg(SSIHi.ShftReg);
     }
 
-    auto StoreLower = MIB.buildInstr(LSO.ISelOpcode);
+    auto StoreLower = MIB.buildInstr(SSILo.LSO.ISelOpcode);
 
     StoreLower.addUse(AMI.PtrOp.getReg());
-    if (LSO.FitsImmediateRange) {
+    if (SSILo.LSO.FitsImmediateRange) {
       StoreLower.addImm(AMI.ImmediateOffset->getSExtValue()); // Offset
     } else {
       // In this case we have already inserted a PTR_ADD to add the offset to
@@ -4123,13 +4264,15 @@ bool AIE2InstructionSelector::select512BitG_AIE_STORE_SRS(
       StoreLower.addImm(0); // Offset
     }
 
-    StoreLower.addReg(LowerBits.getReg(0)).addReg(ShftReg);
+    StoreLower.addReg(SSILo.SrcReg).addReg(SSILo.ShftReg);
 
     addSplitMemOperands(AMI.MemI, StoreHigher, StoreLower, 0, 2);
 
-    if (!ConstantSign)
-      setUnsetCtrlRegister(*StoreHigher, *StoreLower, MRI, AIE2::crSRSSign,
-                           SignReg);
+    if (!SSILo.ConstantSign)
+      setUnsetCtrlRegister(*StoreLower, MRI, AIE2::crSRSSign, SSILo.SignReg);
+
+    if (!SSIHi.ConstantSign)
+      setUnsetCtrlRegister(*StoreHigher, MRI, AIE2::crSRSSign, SSIHi.SignReg);
 
     AMI.MemI.eraseFromParent();
     return constrainSelectedInstRegOperands(*StoreLower, TII, TRI, RBI) &&
@@ -4138,6 +4281,93 @@ bool AIE2InstructionSelector::select512BitG_AIE_STORE_SRS(
   default:
     return false;
   }
+}
+
+// Returns the instruction where the Reg is defined ignoring G_BITCAST.
+static MachineInstr *stripBitCast(Register Reg, MachineRegisterInfo &MRI) {
+  MachineInstr *MI = getDefIgnoringCopies(Reg, MRI);
+  if (MI->getOpcode() == TargetOpcode::G_BITCAST)
+    return getDefIgnoringCopies(MI->getOperand(1).getReg(), MRI);
+  return MI;
+}
+
+// If two 256-bit SRS are input to 512-bit STORE through CONCAT, these are
+// combined into VST.SRS
+bool AIE2InstructionSelector::selectG_AIE_STORE_CONCAT_SRS(
+    MachineInstr &StoreI, MachineRegisterInfo &MRI) {
+
+  Register ConcatResult = (StoreI.uses().begin())->getReg();
+  MachineInstr *ConcatOp = MRI.getUniqueVRegDef(ConcatResult);
+
+  assert(ConcatOp && "Expected SSA.");
+
+  // Do not try to combine if one of the concat's defs is used by another
+  // instruction between the concat and the store.
+  if (!canDelayOp(*ConcatOp, StoreI, MRI))
+    return false;
+
+  if (getLoadStoreSize(StoreI) != 512 ||
+      ConcatOp->getOpcode() != AIE2::G_INTRINSIC ||
+      cast<GIntrinsic>(*ConcatOp).getIntrinsicID() !=
+          Intrinsic::aie2_concat_I512_I256)
+    return false;
+
+  MachineInstr *SrsOpLo = stripBitCast(ConcatOp->getOperand(2).getReg(), MRI);
+  MachineInstr *SrsOpHi = stripBitCast(ConcatOp->getOperand(3).getReg(), MRI);
+
+  if (!canCombineSRSUPS(StoreI, *SrsOpLo) ||
+      !canCombineSRSUPS(StoreI, *SrsOpHi))
+    return false;
+
+  std::optional<AddressingModeInfo> AMI =
+      getOrDefineAddressingRegister(StoreI, MRI);
+  if (!AMI)
+    return false;
+
+  auto [SrcRegLo, ShftRegLo, SignRegLo] = std::tuple(
+      SrsOpLo->getOperand(2).getReg(), SrsOpLo->getOperand(3).getReg(),
+      SrsOpLo->getOperand(4).getReg());
+  auto [SrcRegHi, ShftRegHi, SignRegHi] = std::tuple(
+      SrsOpHi->getOperand(2).getReg(), SrsOpHi->getOperand(3).getReg(),
+      SrsOpHi->getOperand(4).getReg());
+
+  std::optional<LoadStoreOpcodes> LSOLo;
+  bool ConstantSignLo = false;
+  if (auto SignVal = getIConstantVRegValWithLookThrough(SignRegLo, MRI)) {
+    // SignVal = 1 for signed and 0 for dynamically signed
+    LSOLo = getCombinedOpcodeSRSUPS(StoreI, *SrsOpLo, AMI->ImmediateOffset,
+                                    SignVal.value().Value == 0x1);
+    ConstantSignLo = true;
+  } else {
+    LSOLo =
+        getCombinedOpcodeSRSUPS(StoreI, *SrsOpLo, AMI->ImmediateOffset, false);
+  }
+
+  assert(LSOLo && "Unexpected VST.SRS combine failure");
+
+  std::optional<LoadStoreOpcodes> LSOHi;
+  bool ConstantSignHi = false;
+  if (auto SignVal = getIConstantVRegValWithLookThrough(SignRegHi, MRI)) {
+    // SignVal = 1 for signed and 0 for dynamically signed
+    LSOHi = getCombinedOpcodeSRSUPS(StoreI, *SrsOpHi, AMI->ImmediateOffset,
+                                    SignVal.value().Value == 0x1);
+    ConstantSignHi = true;
+  } else {
+    LSOHi =
+        getCombinedOpcodeSRSUPS(StoreI, *SrsOpHi, AMI->ImmediateOffset, false);
+  }
+
+  assert(LSOHi && "Unexpected VST.SRS combine failure");
+
+  makeDeadMI(*SrsOpLo, MRI);
+  makeDeadMI(*SrsOpHi, MRI);
+  makeDeadMI(*ConcatOp, MRI);
+  return select512BitG_AIE_STORE_SRS(
+      StoreSRS512BitInfo{*LSOLo, SrcRegLo, ShftRegLo, SignRegLo,
+                         ConstantSignLo},
+      StoreSRS512BitInfo{*LSOHi, SrcRegHi, ShftRegHi, SignRegHi,
+                         ConstantSignHi},
+      *AMI, MRI);
 }
 
 bool AIE2InstructionSelector::selectG_AIE_STORE_SRS(MachineInstr &StoreI,
@@ -4177,8 +4407,11 @@ bool AIE2InstructionSelector::selectG_AIE_STORE_SRS(MachineInstr &StoreI,
 
   if (MRI.getType(SrsResult).getSizeInBits() == 512) {
     makeDeadMI(*SrsOp, MRI);
-    return select512BitG_AIE_STORE_SRS(*LSO, *AMI, SrcReg, ShftReg, SignReg,
-                                       ConstantSign, MRI);
+    auto [SrcRegLo, SrcRegHi] = split512BitReg(SrcReg, MRI);
+    return select512BitG_AIE_STORE_SRS(
+        StoreSRS512BitInfo{*LSO, SrcRegLo, ShftReg, SignReg, ConstantSign},
+        StoreSRS512BitInfo{*LSO, SrcRegHi, ShftReg, SignReg, ConstantSign},
+        *AMI, MRI);
   }
 
   auto NewInstr = MIB.buildInstr(LSO->ISelOpcode);
@@ -4575,7 +4808,7 @@ bool AIE2InstructionSelector::selectG_AIE_LOAD_STORE(MachineInstr &I,
 
   // First try to match CONV, SRS and PACK combine
   if (selectG_AIE_STORE_CONV(I, MRI) || selectG_AIE_STORE_SRS(I, MRI) ||
-      selectG_AIE_STORE_PACK(I, MRI))
+      selectG_AIE_STORE_PACK(I, MRI) || selectG_AIE_STORE_CONCAT_SRS(I, MRI))
     return true;
 
   std::optional<AddressingModeInfo> AMI = getOrDefineAddressingRegister(I, MRI);
