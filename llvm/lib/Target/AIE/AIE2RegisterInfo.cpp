@@ -126,6 +126,21 @@ bool AIE2RegisterInfo::isSimplifiableReservedReg(MCRegister PhysReg) const {
                               AIE2::mSRmRegClass.contains(PhysReg));
 }
 
+bool AIE2RegisterInfo::isReservedStickyReg(MCRegister PhysReg) const {
+  switch (PhysReg) {
+  case AIE2::srCompr_uf:
+  case AIE2::srSparse_of:
+  case AIE2::srF2FFlags:
+  case AIE2::srF2IFlags:
+  case AIE2::srFPFlags:
+  case AIE2::srSRS_of:
+  case AIE2::srUPS_of:
+    return true;
+  default:
+    return false;
+  }
+}
+
 const uint32_t *AIE2RegisterInfo::getNoPreservedMask() const {
   return CSR_NoRegs_RegMask;
 }
