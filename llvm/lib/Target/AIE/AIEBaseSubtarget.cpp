@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEBaseSubtarget.h"
+#include "AIE.h"
 #include "AIE2Subtarget.h"
 #include "AIEBaseRegisterInfo.h"
 #include "AIEInterBlockScheduling.h"
@@ -45,6 +46,14 @@ static cl::opt<bool> EnablePipelinerSchedPropagateIncomingLatencies(
     "aie-pipeliner-propagate-incoming-latencies", cl::Hidden, cl::init(true),
     cl::desc(
         "Move input latency of copy-like instructions to their successors"));
+// The following options are also testing options
+static cl::opt<bool> EnableWAWStickyRegisters(
+    "aie-pipeliner-waw-sticky-registers", cl::Hidden, cl::init(true),
+    cl::desc("Apply sticky registers WAW dependency removal"));
+static cl::opt<unsigned> WAWStickyRegistersMemOpsThreshold(
+    "aie-waw-sticky-register-mem-threshold", cl::Hidden, cl::init(4),
+    cl::desc("Number of memory instructions to enable the register exclusion "
+             "heuristic in WAW sticky registers dep. removal"));
 
 // These are debugging/testing options.
 
@@ -439,6 +448,14 @@ void dumpDependencies(ScheduleDAGInstrs *DAG, SDep::Kind depType,
   }
 }
 
+// Collect all edges in a separate vector. This allows modifying SU.Preds
+// without invalidating iterators.
+static SmallVector<SDep, 4> getPreds(SUnit &SU) {
+  SmallVector<SDep, 4> Preds;
+  copy(SU.Preds, std::back_inserter(Preds));
+  return Preds;
+}
+
 /// Prevent WAW dependencies on physical register writes. Instructions that
 /// write a register have very limited scheduler freedom. That could be improved
 /// by ignoring the writes that don't reach a read. Algorithm starts with the
@@ -447,13 +464,6 @@ void dumpDependencies(ScheduleDAGInstrs *DAG, SDep::Kind depType,
 class WAWEdges : public ScheduleDAGMutation {
 
   AIEPostRASchedStrategy *Scheduler = nullptr;
-  // Collect all edges in a separate vector. This allows modifying SU.Preds
-  // without invalidating iterators.
-  SmallVector<SDep, 4> getPreds(SUnit &SU) {
-    SmallVector<SDep, 4> Preds;
-    copy(SU.Preds, std::back_inserter(Preds));
-    return Preds;
-  }
   // Updates the dependency to the instruction with last live write of the same
   // register
   void updateOutputDeps(SUnit *SU, Register Reg,
@@ -548,6 +558,87 @@ class MachineSchedWAWEdges : public WAWEdges {
 class SWPWAWEdges : public WAWEdges {
   void apply(ScheduleDAGInstrs *DAG) override { WAWEdges::apply(DAG); }
 };
+
+class WAWStickyRegistersEdges : public ScheduleDAGMutation {
+  void apply(ScheduleDAGInstrs *DAG) override {
+    MachineFunction &MF = DAG->MF;
+    const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
+    auto *RI = static_cast<const AIEBaseRegisterInfo *>(TRI);
+
+    BitVector AllRegs(RI->getNumRegs());
+    AllRegs.reset();
+    // Here, we analyze which sticky registers are explicitly redefined
+    // or read. We also track all instructions implicitly reading or
+    // defining such registers.
+    std::map<const Register, SmallVector<const MachineInstr *, 16>> RegMIsMap;
+    for (const MachineInstr &MI : make_range(DAG->begin(), DAG->end())) {
+      for (const MachineOperand &MOP : MI.operands()) {
+        if (!MOP.isReg())
+          continue;
+
+        const Register Reg = MOP.getReg();
+        if (!Reg.isPhysical() || !RI->isReservedStickyReg(Reg))
+          continue;
+
+        if ((!MOP.isImplicit() && (MOP.isDef() || MOP.readsReg())) ||
+            (MOP.isImplicit() && MOP.readsReg())) {
+          AllRegs.set(Reg);
+
+        } else if (MOP.isImplicit() && MOP.isDef()) {
+          // Instruction that could have a dependency removal.
+          // We track it because of the next heuristic.
+          RegMIsMap[Reg].push_back(&MI);
+        }
+      }
+    }
+
+    auto IsLoad = [&](const MachineInstr *MI) -> bool { return MI->mayLoad(); };
+    auto IsStore = [&](const MachineInstr *MI) -> bool {
+      return MI->mayStore();
+    };
+
+    // This is the heuristic component. We catch basically cases where
+    // registers are only defined by loads or store within a region,
+    // For example, cases like exemplified below (region):
+    //   [sequence non-defining sticky regs. instructions.]
+    //   VST.CONV ...
+    //   VST.CONV ...
+    //   VST.CONV ...
+    //   VST.CONV ...
+    // In this case, by removing dependencies between pairs of VST.CONVs,
+    // we give too much freedom to the scheduler to do good, but also
+    // not good choices. In this way, we filter those cases off.
+    for (auto RMIs : RegMIsMap) {
+      const Register Reg = RMIs.first;
+      SmallVector<const MachineInstr *, 16> &MIs = RMIs.second;
+      // The first thing to test is the tuning parameter: we only consider
+      // cases where the number of memory ops are <= the threshold.
+      if (MIs.size() <= WAWStickyRegistersMemOpsThreshold &&
+          ((all_of(MIs, IsLoad) || all_of(MIs, IsStore))))
+        AllRegs.set(Reg);
+    }
+
+    // Next part is to drop all output latencies related to
+    // registers that are not explicitly read or defined also
+    // considering the heuristically filtered cases.
+    for (SUnit &SU : DAG->SUnits) {
+      for (const SDep &Dep : getPreds(SU)) {
+        if (Dep.getKind() != SDep::Kind::Output)
+          continue;
+
+        Register Reg = Dep.getReg();
+        if (!Reg.isPhysical() || !RI->isReservedStickyReg(Reg))
+          continue;
+
+        if (!AllRegs.test(Reg))
+          SU.removePred(Dep);
+      }
+    }
+
+    LLVM_DEBUG(dumpDependencies(DAG, SDep::Output, "WAW"));
+  }
+};
+
 } // namespace
 
 std::vector<std::unique_ptr<ScheduleDAGMutation>>
@@ -590,6 +681,8 @@ AIEBaseSubtarget::getSMSMutationsImpl(const Triple &TT) {
   std::vector<std::unique_ptr<ScheduleDAGMutation>> Mutations;
   if (!TT.isAIE1()) {
     Mutations.emplace_back(std::make_unique<SWPWAWEdges>());
+    if (EnableWAWStickyRegisters)
+      Mutations.emplace_back(std::make_unique<WAWStickyRegistersEdges>());
     if (EnablePipelinerSchedPropagateIncomingLatencies)
       Mutations.emplace_back(std::make_unique<PropagateIncomingLatencies>());
   }

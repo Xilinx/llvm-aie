@@ -142,41 +142,40 @@ body:             |
   ; CHECK-NEXT:   [[VADD_F2:%[0-9]+]]:acc512 = VADD_F [[VADD_F1]], [[COPY4]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
   ; CHECK-NEXT:   [[VADD_F3:%[0-9]+]]:acc512 = VADD_F [[COPY6]], [[COPY2]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
   ; CHECK-NEXT:   [[VADD_F4:%[0-9]+]]:acc512 = VADD_F [[VADD_F3]], [[COPY3]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
-  ; CHECK-NEXT:   [[VADD_F5:%[0-9]+]]:acc512 = VADD_F [[VADD_F4]], [[COPY4]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
   ; CHECK-NEXT:   [[ADD_add_r_ri:%[0-9]+]]:er = nsw ADD_add_r_ri [[COPY1]], -1, implicit-def $srcarry
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4:
   ; CHECK-NEXT:   successors: %bb.4(0x40000000), %bb.5(0x40000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:er = PHI [[ADD_add_r_ri]], %bb.3, %26, %bb.4
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:er = PHI [[ADD_add_r_ri]], %bb.3, %25, %bb.4
   ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:acc512 = PHI [[VADD_F2]], %bb.3, %30, %bb.4
-  ; CHECK-NEXT:   [[PHI2:%[0-9]+]]:acc512 = PHI [[VADD_F5]], %bb.3, %31, %bb.4
-  ; CHECK-NEXT:   [[PHI3:%[0-9]+]]:acc512 = PHI [[VADD_F2]], %bb.3, %30, %bb.4
-  ; CHECK-NEXT:   [[PHI4:%[0-9]+]]:acc512 = PHI [[VADD_F5]], %bb.3, %31, %bb.4
-  ; CHECK-NEXT:   [[VADD_F6:%[0-9]+]]:acc512 = VADD_F [[PHI1]], [[COPY2]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   [[PHI2:%[0-9]+]]:acc512 = PHI [[VADD_F2]], %bb.3, %30, %bb.4
+  ; CHECK-NEXT:   [[PHI3:%[0-9]+]]:acc512 = PHI [[VADD_F4]], %bb.3, %29, %bb.4
+  ; CHECK-NEXT:   [[VADD_F5:%[0-9]+]]:acc512 = VADD_F [[PHI1]], [[COPY2]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
   ; CHECK-NEXT:   [[ADD_add_r_ri1:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -1, implicit-def $srcarry
-  ; CHECK-NEXT:   [[VADD_F7:%[0-9]+]]:acc512 = VADD_F [[PHI2]], [[COPY2]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
-  ; CHECK-NEXT:   VST_dmw_sts_am_ag_idx_imm [[PHI3]].sub_256_lo, [[COPY]], 0
-  ; CHECK-NEXT:   [[VADD_F8:%[0-9]+]]:acc512 = VADD_F [[VADD_F6]], [[COPY3]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
-  ; CHECK-NEXT:   VST_dmw_sts_am_ag_idx_imm [[PHI3]].sub_256_hi, [[COPY]], 0
+  ; CHECK-NEXT:   [[VADD_F6:%[0-9]+]]:acc512 = VADD_F [[PHI3]], [[COPY4]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   [[VADD_F7:%[0-9]+]]:acc512 = VADD_F [[VADD_F6]], [[COPY2]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   [[VADD_F8:%[0-9]+]]:acc512 = VADD_F [[VADD_F5]], [[COPY3]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   VST_dmw_sts_am_ag_idx_imm [[PHI2]].sub_256_lo, [[COPY]], 0
+  ; CHECK-NEXT:   VST_dmw_sts_am_ag_idx_imm [[PHI2]].sub_256_hi, [[COPY]], 0
   ; CHECK-NEXT:   [[VADD_F9:%[0-9]+]]:acc512 = VADD_F [[VADD_F7]], [[COPY3]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
-  ; CHECK-NEXT:   VST_dmw_sts_am_ag_idx_imm [[PHI4]].sub_256_lo, [[COPY]], 0
-  ; CHECK-NEXT:   VST_dmw_sts_am_ag_idx_imm [[PHI4]].sub_256_hi, [[COPY]], 0
+  ; CHECK-NEXT:   VST_dmw_sts_am_ag_idx_imm [[VADD_F6]].sub_256_lo, [[COPY]], 0
+  ; CHECK-NEXT:   VST_dmw_sts_am_ag_idx_imm [[VADD_F6]].sub_256_hi, [[COPY]], 0
   ; CHECK-NEXT:   [[VADD_F10:%[0-9]+]]:acc512 = VADD_F [[VADD_F8]], [[COPY4]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
-  ; CHECK-NEXT:   [[VADD_F11:%[0-9]+]]:acc512 = VADD_F [[VADD_F9]], [[COPY4]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
   ; CHECK-NEXT:   PseudoJNZ [[ADD_add_r_ri1]], %bb.4
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.5
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.5:
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[PHI5:%[0-9]+]]:acc512 = PHI [[VADD_F10]], %bb.4
-  ; CHECK-NEXT:   [[PHI6:%[0-9]+]]:acc512 = PHI [[VADD_F11]], %bb.4
-  ; CHECK-NEXT:   VST_dmw_sts_am_ag_idx_imm [[PHI5]].sub_256_lo, [[COPY]], 0
-  ; CHECK-NEXT:   VST_dmw_sts_am_ag_idx_imm [[PHI5]].sub_256_hi, [[COPY]], 0
-  ; CHECK-NEXT:   VST_dmw_sts_am_ag_idx_imm [[PHI6]].sub_256_lo, [[COPY]], 0
-  ; CHECK-NEXT:   VST_dmw_sts_am_ag_idx_imm [[PHI6]].sub_256_hi, [[COPY]], 0
+  ; CHECK-NEXT:   [[PHI4:%[0-9]+]]:acc512 = PHI [[VADD_F10]], %bb.4
+  ; CHECK-NEXT:   [[PHI5:%[0-9]+]]:acc512 = PHI [[VADD_F9]], %bb.4
+  ; CHECK-NEXT:   [[VADD_F11:%[0-9]+]]:acc512 = VADD_F [[PHI5]], [[COPY4]], [[MOV_RLC_imm10_pseudo]], implicit-def $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   VST_dmw_sts_am_ag_idx_imm [[PHI4]].sub_256_lo, [[COPY]], 0
+  ; CHECK-NEXT:   VST_dmw_sts_am_ag_idx_imm [[PHI4]].sub_256_hi, [[COPY]], 0
+  ; CHECK-NEXT:   VST_dmw_sts_am_ag_idx_imm [[VADD_F11]].sub_256_lo, [[COPY]], 0
+  ; CHECK-NEXT:   VST_dmw_sts_am_ag_idx_imm [[VADD_F11]].sub_256_hi, [[COPY]], 0
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
