@@ -54,12 +54,16 @@ struct v8cfloat {
 };
 struct v16cfloat {};
 
-struct cbfloat16 {};
+struct cbfloat16 {
+  bfloat16 real;
+  bfloat16 imag;
+};
 struct v2cbfloat16 {};
 struct v4cbfloat16 {};
 struct v8cbfloat16 {};
 struct v16cbfloat16 {
   v16cbfloat16(v16cint16);
+  operator v16cint16();
 };
 struct v32cbfloat16 {};
 
