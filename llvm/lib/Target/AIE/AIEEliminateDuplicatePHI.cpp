@@ -120,26 +120,26 @@ private:
   bool processMBB(MachineBasicBlock &MBB, MachineRegisterInfo &MRI,
                   MachineIRBuilder &MIB, GISelObserverWrapper &Observer) {
     bool Changed = false;
-    auto LastPHI = MBB.getFirstNonPHI();
-    for (auto &MI : make_early_inc_range(MBB.phis())) {
-      if (!isPointerTypePHI(MRI, MI))
-        continue;
-
-      // Ensure that next MI is valid
-      auto NextMI = std::next(MachineBasicBlock::instr_iterator(MI));
-      if (NextMI == MBB.instr_end() || NextMI == LastPHI)
+    const auto End = MBB.end();
+    for (auto PhiItA = MBB.begin(); PhiItA != End; ++PhiItA) {
+      auto &PhiA = *PhiItA;
+      if (PhiA.getOpcode() != TargetOpcode::G_PHI)
         break;
-
-      for (auto &PHI : make_early_inc_range(make_range(
-               NextMI, MachineBasicBlock::instr_iterator(*LastPHI)))) {
-        if (!isPointerTypePHI(MRI, PHI))
+      if (!isPointerTypePHI(MRI, PhiA))
+        continue;
+      auto PhiItB = PhiItA;
+      for (++PhiItB; PhiItB != End; ++PhiItB) {
+        auto &PhiB = *PhiItB;
+        if (PhiB.getOpcode() != TargetOpcode::G_PHI)
+          break;
+        if (!isPointerTypePHI(MRI, PhiB))
           continue;
-        if (MI.isIdenticalTo(PHI, MachineInstr::IgnoreDefs)) {
+        if (PhiA.isIdenticalTo(PhiB, MachineInstr::IgnoreDefs)) {
           LLVM_DEBUG(dbgs() << "Identical PHI nodes found\n");
-          LLVM_DEBUG(dbgs() << "  Base PHI: " << MI);
-          LLVM_DEBUG(dbgs() << "  Duplicate PHI: " << PHI);
-          eliminateDuplicatePHIUses(MRI, Observer, MI.getOperand(0).getReg(),
-                                    PHI.getOperand(0).getReg());
+          LLVM_DEBUG(dbgs() << "  Base PHI: " << PhiA);
+          LLVM_DEBUG(dbgs() << "  Duplicate PHI: " << PhiB);
+          eliminateDuplicatePHIUses(MRI, Observer, PhiA.getOperand(0).getReg(),
+                                    PhiB.getOperand(0).getReg());
           Changed = true;
         }
       }
