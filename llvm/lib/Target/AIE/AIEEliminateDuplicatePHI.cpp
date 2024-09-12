@@ -120,18 +120,12 @@ private:
   bool processMBB(MachineBasicBlock &MBB, MachineRegisterInfo &MRI,
                   MachineIRBuilder &MIB, GISelObserverWrapper &Observer) {
     bool Changed = false;
-    auto LastPHI = MBB.getFirstNonPHI();
+    auto FirstNonPHI = MBB.getFirstNonPHI();
     for (auto &MI : make_early_inc_range(MBB.phis())) {
       if (!isPointerTypePHI(MRI, MI))
         continue;
-
-      // Ensure that next MI is valid
-      auto NextMI = std::next(MachineBasicBlock::instr_iterator(MI));
-      if (NextMI == MBB.instr_end() || NextMI == LastPHI)
-        break;
-
-      for (auto &PHI : make_early_inc_range(make_range(
-               NextMI, MachineBasicBlock::instr_iterator(*LastPHI)))) {
+      for (auto &PHI : make_early_inc_range(
+               make_range(++MachineBasicBlock::iterator(MI), FirstNonPHI))) {
         if (!isPointerTypePHI(MRI, PHI))
           continue;
         if (MI.isIdenticalTo(PHI, MachineInstr::IgnoreDefs)) {
