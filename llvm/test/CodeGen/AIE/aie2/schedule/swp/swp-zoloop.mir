@@ -7,7 +7,9 @@
 # (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
 #
 # RUN: llc --mtriple=aie2 --run-pass=pipeliner --aie-loop-min-tripcount=4 %s \
-# RUN:     -o - | FileCheck  %s
+# RUN:     --aie-postpipeliner-limit=1 -o - | FileCheck  %s
+# RUN: llc --mtriple=aie2 --run-pass=pipeliner --aie-loop-min-tripcount=4 %s \
+# RUN:     -o - | FileCheck  --check-prefix=POSTPIPELINER %s
 
 # This test set is an adaptation of a subset of tests of
 # swp-downcountloop.mir to the context of ZOL.
@@ -88,6 +90,72 @@ body:             |
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   $r0 = COPY [[SELNEZ2]]
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit $r0
+  ;
+  ; POSTPIPELINER-LABEL: name: maxCanonMOV_RLC_imm10
+  ; POSTPIPELINER: bb.0:
+  ; POSTPIPELINER-NEXT:   successors: %bb.3(0x80000000)
+  ; POSTPIPELINER-NEXT:   liveins: $p0, $p1
+  ; POSTPIPELINER-NEXT: {{  $}}
+  ; POSTPIPELINER-NEXT:   [[COPY:%[0-9]+]]:ep = COPY $p0
+  ; POSTPIPELINER-NEXT:   dead [[COPY1:%[0-9]+]]:ep = COPY $p1
+  ; POSTPIPELINER-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 4
+  ; POSTPIPELINER-NEXT:   [[COPY2:%[0-9]+]]:em = COPY [[MOV_RLC_imm10_pseudo]]
+  ; POSTPIPELINER-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 0
+  ; POSTPIPELINER-NEXT:   [[MOV_RLC_imm10_pseudo1:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 16
+  ; POSTPIPELINER-NEXT:   LoopStart [[MOV_RLC_imm10_pseudo1]], -2
+  ; POSTPIPELINER-NEXT: {{  $}}
+  ; POSTPIPELINER-NEXT: bb.3:
+  ; POSTPIPELINER-NEXT:   successors: %bb.4(0x80000000)
+  ; POSTPIPELINER-NEXT: {{  $}}
+  ; POSTPIPELINER-NEXT:   [[LDA_dms_lda_idx_imm:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY]], 0
+  ; POSTPIPELINER-NEXT:   [[PADD_mod_pseudo:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY]], [[COPY2]]
+  ; POSTPIPELINER-NEXT:   PseudoJ_jump_imm %bb.4
+  ; POSTPIPELINER-NEXT: {{  $}}
+  ; POSTPIPELINER-NEXT: bb.4:
+  ; POSTPIPELINER-NEXT:   successors: %bb.5(0x80000000)
+  ; POSTPIPELINER-NEXT: {{  $}}
+  ; POSTPIPELINER-NEXT:   [[ABS:%[0-9]+]]:er = ABS [[LDA_dms_lda_idx_imm]], implicit-def $srcarry
+  ; POSTPIPELINER-NEXT:   [[LDA_dms_lda_idx_imm1:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[PADD_mod_pseudo]], 0
+  ; POSTPIPELINER-NEXT:   [[PADD_mod_pseudo1:%[0-9]+]]:ep = PADD_mod_pseudo [[PADD_mod_pseudo]], [[COPY2]]
+  ; POSTPIPELINER-NEXT:   PseudoJ_jump_imm %bb.5
+  ; POSTPIPELINER-NEXT: {{  $}}
+  ; POSTPIPELINER-NEXT: bb.5:
+  ; POSTPIPELINER-NEXT:   successors: %bb.5(0x40000000), %bb.6(0x40000000)
+  ; POSTPIPELINER-NEXT: {{  $}}
+  ; POSTPIPELINER-NEXT:   [[PHI:%[0-9]+]]:ep = PHI [[PADD_mod_pseudo1]], %bb.4, %20, %bb.5
+  ; POSTPIPELINER-NEXT:   [[PHI1:%[0-9]+]]:er = PHI [[MOV_RLC_imm11_pseudo]], %bb.4, %21, %bb.5
+  ; POSTPIPELINER-NEXT:   [[PHI2:%[0-9]+]]:er = PHI [[LDA_dms_lda_idx_imm1]], %bb.4, %19, %bb.5
+  ; POSTPIPELINER-NEXT:   [[PHI3:%[0-9]+]]:er = PHI [[ABS]], %bb.4, %22, %bb.5
+  ; POSTPIPELINER-NEXT:   [[LT:%[0-9]+]]:er27 = LT [[PHI1]], [[PHI3]]
+  ; POSTPIPELINER-NEXT:   [[LDA_dms_lda_idx_imm2:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[PHI]], 0
+  ; POSTPIPELINER-NEXT:   [[PADD_mod_pseudo2:%[0-9]+]]:ep = PADD_mod_pseudo [[PHI]], [[COPY2]]
+  ; POSTPIPELINER-NEXT:   [[SELNEZ:%[0-9]+]]:er = SELNEZ [[PHI3]], [[PHI1]], [[LT]]
+  ; POSTPIPELINER-NEXT:   [[ABS1:%[0-9]+]]:er = ABS [[PHI2]], implicit-def $srcarry
+  ; POSTPIPELINER-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.5
+  ; POSTPIPELINER-NEXT:   PseudoJ_jump_imm %bb.6
+  ; POSTPIPELINER-NEXT: {{  $}}
+  ; POSTPIPELINER-NEXT: bb.6:
+  ; POSTPIPELINER-NEXT:   successors: %bb.7(0x80000000)
+  ; POSTPIPELINER-NEXT: {{  $}}
+  ; POSTPIPELINER-NEXT:   [[PHI4:%[0-9]+]]:er = PHI [[SELNEZ]], %bb.5
+  ; POSTPIPELINER-NEXT:   [[PHI5:%[0-9]+]]:er = PHI [[LDA_dms_lda_idx_imm2]], %bb.5
+  ; POSTPIPELINER-NEXT:   [[PHI6:%[0-9]+]]:er = PHI [[ABS1]], %bb.5
+  ; POSTPIPELINER-NEXT:   [[LT1:%[0-9]+]]:er27 = LT [[PHI4]], [[PHI6]]
+  ; POSTPIPELINER-NEXT:   [[SELNEZ1:%[0-9]+]]:er = SELNEZ [[PHI6]], [[PHI4]], [[LT1]]
+  ; POSTPIPELINER-NEXT: {{  $}}
+  ; POSTPIPELINER-NEXT: bb.7:
+  ; POSTPIPELINER-NEXT:   successors: %bb.2(0x80000000)
+  ; POSTPIPELINER-NEXT: {{  $}}
+  ; POSTPIPELINER-NEXT:   [[PHI7:%[0-9]+]]:er = PHI [[SELNEZ1]], %bb.6
+  ; POSTPIPELINER-NEXT:   [[PHI8:%[0-9]+]]:er = PHI [[PHI5]], %bb.6
+  ; POSTPIPELINER-NEXT:   [[ABS2:%[0-9]+]]:er = ABS [[PHI8]], implicit-def $srcarry
+  ; POSTPIPELINER-NEXT:   [[LT2:%[0-9]+]]:er27 = LT [[PHI7]], [[ABS2]]
+  ; POSTPIPELINER-NEXT:   [[SELNEZ2:%[0-9]+]]:er = SELNEZ [[ABS2]], [[PHI7]], [[LT2]]
+  ; POSTPIPELINER-NEXT:   PseudoJ_jump_imm %bb.2
+  ; POSTPIPELINER-NEXT: {{  $}}
+  ; POSTPIPELINER-NEXT: bb.2:
+  ; POSTPIPELINER-NEXT:   $r0 = COPY [[SELNEZ2]]
+  ; POSTPIPELINER-NEXT:   PseudoRET implicit $lr, implicit $r0
   bb.1:
     liveins: $p0, $p1
     %1:ep = COPY $p0
@@ -192,6 +260,73 @@ body:             |
   ; CHECK-NEXT: bb.2:
   ; CHECK-NEXT:   $r0 = COPY [[SELNEZ2]]
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit $r0
+  ;
+  ; POSTPIPELINER-LABEL: name: maxCanonMOV_mv_scl
+  ; POSTPIPELINER: bb.0:
+  ; POSTPIPELINER-NEXT:   successors: %bb.3(0x80000000)
+  ; POSTPIPELINER-NEXT:   liveins: $p0, $p1
+  ; POSTPIPELINER-NEXT: {{  $}}
+  ; POSTPIPELINER-NEXT:   [[COPY:%[0-9]+]]:ep = COPY $p0
+  ; POSTPIPELINER-NEXT:   dead [[COPY1:%[0-9]+]]:ep = COPY $p1
+  ; POSTPIPELINER-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 4
+  ; POSTPIPELINER-NEXT:   [[COPY2:%[0-9]+]]:em = COPY [[MOV_RLC_imm10_pseudo]]
+  ; POSTPIPELINER-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:er = MOV_RLC_imm11_pseudo 0
+  ; POSTPIPELINER-NEXT:   [[MOV_RLC_imm10_pseudo1:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 16
+  ; POSTPIPELINER-NEXT:   [[MOV_mv_scl:%[0-9]+]]:er = MOV_mv_scl [[MOV_RLC_imm10_pseudo1]]
+  ; POSTPIPELINER-NEXT:   LoopStart [[MOV_mv_scl]], -2
+  ; POSTPIPELINER-NEXT: {{  $}}
+  ; POSTPIPELINER-NEXT: bb.3:
+  ; POSTPIPELINER-NEXT:   successors: %bb.4(0x80000000)
+  ; POSTPIPELINER-NEXT: {{  $}}
+  ; POSTPIPELINER-NEXT:   [[LDA_dms_lda_idx_imm:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[COPY]], 0
+  ; POSTPIPELINER-NEXT:   [[PADD_mod_pseudo:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY]], [[COPY2]]
+  ; POSTPIPELINER-NEXT:   PseudoJ_jump_imm %bb.4
+  ; POSTPIPELINER-NEXT: {{  $}}
+  ; POSTPIPELINER-NEXT: bb.4:
+  ; POSTPIPELINER-NEXT:   successors: %bb.5(0x80000000)
+  ; POSTPIPELINER-NEXT: {{  $}}
+  ; POSTPIPELINER-NEXT:   [[ABS:%[0-9]+]]:er = ABS [[LDA_dms_lda_idx_imm]], implicit-def $srcarry
+  ; POSTPIPELINER-NEXT:   [[LDA_dms_lda_idx_imm1:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[PADD_mod_pseudo]], 0
+  ; POSTPIPELINER-NEXT:   [[PADD_mod_pseudo1:%[0-9]+]]:ep = PADD_mod_pseudo [[PADD_mod_pseudo]], [[COPY2]]
+  ; POSTPIPELINER-NEXT:   PseudoJ_jump_imm %bb.5
+  ; POSTPIPELINER-NEXT: {{  $}}
+  ; POSTPIPELINER-NEXT: bb.5:
+  ; POSTPIPELINER-NEXT:   successors: %bb.5(0x40000000), %bb.6(0x40000000)
+  ; POSTPIPELINER-NEXT: {{  $}}
+  ; POSTPIPELINER-NEXT:   [[PHI:%[0-9]+]]:ep = PHI [[PADD_mod_pseudo1]], %bb.4, %21, %bb.5
+  ; POSTPIPELINER-NEXT:   [[PHI1:%[0-9]+]]:er = PHI [[MOV_RLC_imm11_pseudo]], %bb.4, %22, %bb.5
+  ; POSTPIPELINER-NEXT:   [[PHI2:%[0-9]+]]:er = PHI [[LDA_dms_lda_idx_imm1]], %bb.4, %20, %bb.5
+  ; POSTPIPELINER-NEXT:   [[PHI3:%[0-9]+]]:er = PHI [[ABS]], %bb.4, %23, %bb.5
+  ; POSTPIPELINER-NEXT:   [[LT:%[0-9]+]]:er27 = LT [[PHI1]], [[PHI3]]
+  ; POSTPIPELINER-NEXT:   [[LDA_dms_lda_idx_imm2:%[0-9]+]]:er = LDA_dms_lda_idx_imm [[PHI]], 0
+  ; POSTPIPELINER-NEXT:   [[PADD_mod_pseudo2:%[0-9]+]]:ep = PADD_mod_pseudo [[PHI]], [[COPY2]]
+  ; POSTPIPELINER-NEXT:   [[SELNEZ:%[0-9]+]]:er = SELNEZ [[PHI3]], [[PHI1]], [[LT]]
+  ; POSTPIPELINER-NEXT:   [[ABS1:%[0-9]+]]:er = ABS [[PHI2]], implicit-def $srcarry
+  ; POSTPIPELINER-NEXT:   PseudoLoopEnd <mcsymbol .L_LEnd0>, %bb.5
+  ; POSTPIPELINER-NEXT:   PseudoJ_jump_imm %bb.6
+  ; POSTPIPELINER-NEXT: {{  $}}
+  ; POSTPIPELINER-NEXT: bb.6:
+  ; POSTPIPELINER-NEXT:   successors: %bb.7(0x80000000)
+  ; POSTPIPELINER-NEXT: {{  $}}
+  ; POSTPIPELINER-NEXT:   [[PHI4:%[0-9]+]]:er = PHI [[SELNEZ]], %bb.5
+  ; POSTPIPELINER-NEXT:   [[PHI5:%[0-9]+]]:er = PHI [[LDA_dms_lda_idx_imm2]], %bb.5
+  ; POSTPIPELINER-NEXT:   [[PHI6:%[0-9]+]]:er = PHI [[ABS1]], %bb.5
+  ; POSTPIPELINER-NEXT:   [[LT1:%[0-9]+]]:er27 = LT [[PHI4]], [[PHI6]]
+  ; POSTPIPELINER-NEXT:   [[SELNEZ1:%[0-9]+]]:er = SELNEZ [[PHI6]], [[PHI4]], [[LT1]]
+  ; POSTPIPELINER-NEXT: {{  $}}
+  ; POSTPIPELINER-NEXT: bb.7:
+  ; POSTPIPELINER-NEXT:   successors: %bb.2(0x80000000)
+  ; POSTPIPELINER-NEXT: {{  $}}
+  ; POSTPIPELINER-NEXT:   [[PHI7:%[0-9]+]]:er = PHI [[SELNEZ1]], %bb.6
+  ; POSTPIPELINER-NEXT:   [[PHI8:%[0-9]+]]:er = PHI [[PHI5]], %bb.6
+  ; POSTPIPELINER-NEXT:   [[ABS2:%[0-9]+]]:er = ABS [[PHI8]], implicit-def $srcarry
+  ; POSTPIPELINER-NEXT:   [[LT2:%[0-9]+]]:er27 = LT [[PHI7]], [[ABS2]]
+  ; POSTPIPELINER-NEXT:   [[SELNEZ2:%[0-9]+]]:er = SELNEZ [[ABS2]], [[PHI7]], [[LT2]]
+  ; POSTPIPELINER-NEXT:   PseudoJ_jump_imm %bb.2
+  ; POSTPIPELINER-NEXT: {{  $}}
+  ; POSTPIPELINER-NEXT: bb.2:
+  ; POSTPIPELINER-NEXT:   $r0 = COPY [[SELNEZ2]]
+  ; POSTPIPELINER-NEXT:   PseudoRET implicit $lr, implicit $r0
 
   bb.1:
     liveins: $p0, $p1
