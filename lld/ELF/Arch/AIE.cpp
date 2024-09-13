@@ -45,6 +45,7 @@ public:
 private:
   void relocateAIE1(uint8_t *Loc, const Relocation &rel, uint64_t Val) const;
   void relocateAIE2(uint8_t *Loc, const Relocation &rel, uint64_t Val) const;
+  void relocateAIE2P(uint8_t *Loc, const Relocation &rel, uint64_t Val) const;
 };
 
 } // end anonymous namespace
@@ -361,6 +362,46 @@ void AIE::relocateAIE2(uint8_t *Loc, const Relocation &rel,
     return;
   }
 }
+void AIE::relocateAIE2P(uint8_t *Loc, const Relocation &rel,
+                        uint64_t Val) const {
+  if (errorHandler().verbose)
+    lld::outs() << "Relocation expr=" << rel.expr << " " << rel.type << "@"
+                << getErrorLocation(Loc) << "\n";
+
+  // Relocation applied to debug_info
+  if (rel.expr == R_NONE) {
+    checkUInt(Loc, Val, 20, rel);
+    patch4bytes(Loc, Val, 19, 0, 12);
+    return;
+  }
+
+  switch (rel.type) {
+    // Most relocations are implemented in a file which is
+    // automatically generated from the processor description.
+#include "AIE2P_rela.inc"
+  // 62: (symbol_addr_AR  + addend )  :  addr [19..0]@0 in w8[4]
+  // 64: (symbol_addr_AR  + addend )  :  addr [19..0]@0 in w32[1]
+  // with default addend 0
+  case 62:
+  case 64:
+    checkUInt(Loc, Val, 20, rel);
+    patch4bytes(Loc, Val, 19, 0, 12);
+    return;
+  // 63 : (symbol_addr_AR  + addend )  :  w32 [31..0]@0 in w8[4]
+  // 65 : (symbol_addr_AR  + addend )  :  w32 [31..0]@0 in w32[1]
+  // with default addend 0
+  case 63:
+  case 65:
+    checkUInt(Loc, Val, 32, rel);
+    patch4bytes(Loc, Val, 31, 0, 0);
+    return;
+  default:
+    error(getErrorLocation(Loc) +
+          "unimplemented relocation: " + toString(rel.type));
+    return;
+  }
+}
+
 void AIE::relocate(uint8_t *Loc, const Relocation &rel, uint64_t Val) const {
   unsigned Arch = calcEFlags() & 0x3;
   switch (Arch) {
@@ -371,6 +412,9 @@ void AIE::relocate(uint8_t *Loc, const Relocation &rel, uint64_t Val) const {
     break;
   case 2:
     relocateAIE2(Loc, rel, Val);
+    break;
+  case 3:
+    relocateAIE2P(Loc, rel, Val);
     break;
   default:
     llvm_unreachable("Unknown AIE version in EFLAGS");
