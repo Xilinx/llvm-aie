@@ -1625,6 +1625,7 @@ static uint16_t getBitcodeMachineKind(StringRef path, const Triple &t) {
     return EM_AARCH64;
   case Triple::aie:
   case Triple::aie2:
+  case Triple::aie2p:
     return EM_AIE;
   case Triple::amdgcn:
   case Triple::r600:

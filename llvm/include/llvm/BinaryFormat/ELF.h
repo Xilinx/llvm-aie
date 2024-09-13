@@ -490,9 +490,10 @@ enum : unsigned {
 
 // AIEngine specific e_flags
 enum : unsigned {
-  EF_AIE_AIE1 = 0x00000001, // AMD-Xilinx AIEngine
-  EF_AIE_AIE2 = 0x00000002, // AMD-Xilinx AIE-ML
-  EF_AIE_AIE2P = 0x00000003,
+  EF_AIE_AIE1 = 0x00000001,    // AMD-Xilinx AIEngine
+  EF_AIE_AIE2 = 0x00000002,    // AMD-Xilinx AIE-ML
+  EF_AIE_AIE2P = 0x00000003,   // AMD-Xilinx AIE-ML P
+  EF_AIE_AIEMASK = 0x00000003, // AIE Arch Selection Mask
 };
 
 // ELF Relocation types for AIE
@@ -1034,14 +1035,14 @@ enum : unsigned {
   // (commit hash 296de4def055c871809068e0816325a4ac04eb12)
 
   // Base ABI Modifiers
-  EF_LOONGARCH_ABI_SOFT_FLOAT    = 0x1,
-  EF_LOONGARCH_ABI_SINGLE_FLOAT  = 0x2,
-  EF_LOONGARCH_ABI_DOUBLE_FLOAT  = 0x3,
+  EF_LOONGARCH_ABI_SOFT_FLOAT = 0x1,
+  EF_LOONGARCH_ABI_SINGLE_FLOAT = 0x2,
+  EF_LOONGARCH_ABI_DOUBLE_FLOAT = 0x3,
   EF_LOONGARCH_ABI_MODIFIER_MASK = 0x7,
 
   // Object file ABI versions
-  EF_LOONGARCH_OBJABI_V0   = 0x0,
-  EF_LOONGARCH_OBJABI_V1   = 0x40,
+  EF_LOONGARCH_OBJABI_V0 = 0x0,
+  EF_LOONGARCH_OBJABI_V1 = 0x40,
   EF_LOONGARCH_OBJABI_MASK = 0xC0,
 };
 
