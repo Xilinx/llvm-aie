@@ -146,17 +146,6 @@ const AIEBaseSubtarget &AIEBaseSubtarget::get(const MachineFunction &MF) {
     llvm_unreachable("Unknown subtarget");
 }
 
-MemoryBankBits
-AIEBaseSubtarget::getMemoryBanksFromAddressSpace(unsigned AddrSpace) const {
-  // By default assume there are no conflicts.
-  return 0;
-}
-
-MemoryBankBits AIEBaseSubtarget::getDefaultMemoryBank() const {
-  // By default assume there are no conflicts.
-  return 0;
-}
-
 namespace {
 
 // Set latency and declare height/depth dirty if it changes
