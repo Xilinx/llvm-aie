@@ -71,6 +71,8 @@ public:
   // This type of code can lead to additional pointer arithmetics and
   // and pointer moves (especially due to the pre-pipeliner).
   bool isProfitableFoldGEPIntoPHI() const { return false; }
+
+  bool addrspacesMayAlias(unsigned AS0, unsigned AS1) const;
 };
 
 } // end namespace llvm
