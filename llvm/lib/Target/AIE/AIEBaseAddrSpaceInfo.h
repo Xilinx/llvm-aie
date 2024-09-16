@@ -35,6 +35,11 @@ public:
     // By default assume conflicts.
     return ~0;
   }
+
+  virtual bool addrspacesMayAlias(unsigned AS1, unsigned AS2) const {
+    return getMemoryBanksFromAddressSpace(AS1) &
+           getMemoryBanksFromAddressSpace(AS2);
+  }
 };
 
 } // end namespace llvm

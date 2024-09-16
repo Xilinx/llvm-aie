@@ -21,9 +21,9 @@ using namespace llvm;
 #define DEBUG_TYPE "aie2tti"
 
 static std::optional<Instruction *>
-instCombineDemandedBits(InstCombiner &IC, IntrinsicInst &II, unsigned numBits) {
+instCombineDemandedBits(InstCombiner &IC, IntrinsicInst &II, unsigned NumBits) {
   KnownBits ScalarKnown(32);
-  if (IC.SimplifyDemandedBits(&II, 0, APInt::getLowBitsSet(32, numBits),
+  if (IC.SimplifyDemandedBits(&II, 0, APInt::getLowBitsSet(32, NumBits),
                               ScalarKnown, 0)) {
     return &II;
   }
@@ -62,4 +62,19 @@ bool AIE2TTIImpl::isHardwareLoopProfitable(Loop *L, ScalarEvolution &SE,
 
 bool AIE2TTIImpl::isProfitableOuterLSR(const Loop &L) const {
   return Common.isProfitableOuterLSR(L);
+}
+
+bool AIE2TTIImpl::addrspacesMayAlias(unsigned AS0, unsigned AS1) const {
+  if (AS0 == AS1)
+    return true;
+
+  // Tile Memory and Data Memory are disjoint, since we allways annotate Tile
+  // Memory access even if another address space is not annotated we can assume
+  // that they are disjoint.
+  const unsigned TileMemoryAS = static_cast<unsigned>(AIE2::AddressSpaces::TM);
+  if (AS0 == TileMemoryAS || AS1 == TileMemoryAS)
+    return false;
+
+  const AIEBaseAddrSpaceInfo &ASI = getST()->getAddrSpaceInfo();
+  return ASI.addrspacesMayAlias(AS0, AS1);
 }
