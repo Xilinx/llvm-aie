@@ -47,7 +47,7 @@ AIESubtarget::AIESubtarget(const Triple &TT, StringRef CPU, StringRef TuneCPU,
     : AIEGenSubtargetInfo(TT, CPU, TuneCPU, FS), AIEBaseSubtarget(TT),
       FrameLowering(initializeSubtargetDependencies(TT, CPU, FS, ABIName)),
       InstrInfo(), RegInfo(getHwMode()), TLInfo(TM, *this),
-      InstrItins(getInstrItineraryForCPU(StringRef(CPU))) { // CPUName)) {
+      InstrItins(getInstrItineraryForCPU(StringRef(CPU))) {
   LLVM_DEBUG(dbgs() << "CPU:" << CPU << "." << CPUName << "." << FS << "."
                     << ABIName << "\n");
 
@@ -74,4 +74,8 @@ const RegisterBankInfo *AIESubtarget::getRegBankInfo() const {
 
 InstructionSelector *AIESubtarget::getInstructionSelector() const {
   return InstSelector.get();
+}
+
+const AIEBaseAddrSpaceInfo &AIESubtarget::getAddrSpaceInfo() const {
+  return AddrSpaceInfo;
 }

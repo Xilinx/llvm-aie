@@ -13,6 +13,7 @@
 #ifndef LLVM_LIB_TARGET_AIE_AIEHAZARDRECOGNIZER_H
 #define LLVM_LIB_TARGET_AIE_AIEHAZARDRECOGNIZER_H
 
+#include "AIEBaseAddrSpaceInfo.h"
 #include "AIEBaseSubtarget.h"
 #include "AIEBundle.h"
 #include "MCTargetDesc/AIEMCFormats.h"

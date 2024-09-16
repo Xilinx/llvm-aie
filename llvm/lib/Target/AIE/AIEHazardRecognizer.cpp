@@ -619,10 +619,11 @@ AIEHazardRecognizer::getMemoryBanks(const MachineInstr *MI) const {
     return ~0;
 
   const AIEBaseSubtarget &STI = AIEBaseSubtarget::get(*MI->getMF());
-  MemoryBankBits MemoryBankUsed = STI.getDefaultMemoryBank();
+  const AIEBaseAddrSpaceInfo &ASI = STI.getAddrSpaceInfo();
+  MemoryBankBits MemoryBankUsed = ASI.getDefaultMemoryBank();
   for (auto &MMO : MI->memoperands()) {
     MemoryBankBits MemoryBank =
-        STI.getMemoryBanksFromAddressSpace(MMO->getAddrSpace());
+        ASI.getMemoryBanksFromAddressSpace(MMO->getAddrSpace());
     MemoryBankUsed &= MemoryBank;
   }
   return MemoryBankUsed;
