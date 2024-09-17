@@ -239,12 +239,19 @@ MachineInstr *findPostIncMatch(MachineInstr &MemI, MachineRegisterInfo &MRI,
     // no use before def error if we combine the PtrAdd into the MemI. We need
     // to check that all uses of the new pointer defined by the PtrAdd are after
     // MemI. Note that MemI must also not use the new pointer.
+    // We check that there's no user between the two instructions to be
+    // combined. Note that a user can be before the ptradd def if it is loop
+    // carried. These will be mostly PHI nodes, but the condition is phrased
+    // so as not to rely on strict SSA form.
     if (Helper.dominates(AddrUse, MemI)) {
-      bool MemOpDominatesAddrUses = all_of(
-          MRI.use_nodbg_instructions(AddrUse.getOperand(0).getReg()),
-          [&](MachineInstr &PtrAddUse) {
-            return &MemI != &PtrAddUse && Helper.dominates(MemI, PtrAddUse);
-          });
+      bool MemOpDominatesAddrUses =
+          all_of(MRI.use_nodbg_instructions(AddrUse.getOperand(0).getReg()),
+                 [&](MachineInstr &PtrAddUse) {
+                   return &MemI != &PtrAddUse &&
+                          (PtrAddUse.getParent() != AddrUse.getParent() ||
+                           Helper.dominates(MemI, PtrAddUse) ||
+                           Helper.dominates(PtrAddUse, AddrUse));
+                 });
       MatchData = {&AddrUse, *CombinedOpcode, &MemI,
                    /*ExtraInstrsToMove=*/{},
                    /*RemoveInstr=*/true};

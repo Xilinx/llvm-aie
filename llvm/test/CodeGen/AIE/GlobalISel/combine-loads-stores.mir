@@ -123,6 +123,44 @@ body:             |
     $p0 = COPY %4
 ...
 
+---
+name:            load_to_postinc_ptradd_before_usedinphi
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: load_to_postinc_ptradd_before_usedinphi
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $p0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+  ; CHECK-NEXT:   G_BR %bb.1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(p0) = G_PHI [[COPY]](p0), %bb.0, %2(p0), %bb.1
+  ; CHECK-NEXT:   [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 32
+  ; CHECK-NEXT:   [[TRUNC:%[0-9]+]]:_(s20) = G_TRUNC [[C]](s32)
+  ; CHECK-NEXT:   [[AIE_POSTINC_LOAD:%[0-9]+]]:_(s32), [[AIE_POSTINC_LOAD1:%[0-9]+]]:_(p0) = G_AIE_POSTINC_LOAD [[PHI]], [[TRUNC]](s20) :: (load (s32))
+  ; CHECK-NEXT:   $r0 = COPY [[AIE_POSTINC_LOAD]](s32)
+  ; CHECK-NEXT:   G_BR %bb.1
+  bb.0:
+    successors: %bb.1
+    liveins: $p0
+    %0:_(p0) = COPY $p0
+    G_BR %bb.1
+  bb.1:
+    successors: %bb.1
+    %1:_(p0) = G_PHI %0(p0), %bb.0, %4(p0), %bb.1
+    %2:_(s32) = G_CONSTANT i32 32
+    %3:_(s20) = G_TRUNC %2
+    %4:_(p0) = G_PTR_ADD %1, %3
+    %5:_(s32) = G_LOAD %1 :: (load (s32))
+    $r0 = COPY %5
+    G_BR %bb.1
+...
+
+
 # Our current combine code is not able to move the memory operation up. In this
 # case we cannot just move the pointer add to the load and we therefore don't
 # combine. This could be improved.
