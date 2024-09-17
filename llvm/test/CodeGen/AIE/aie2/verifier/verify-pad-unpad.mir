@@ -23,6 +23,10 @@ body:             |
     %5:_(<4 x s32>) = G_AIE_UNPAD_VECTOR %4
     %6:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF %5
     $x4 = COPY %6
+    %7:_(<16 x s32>) = COPY $x3
+    %8:_(<8 x s32>) = G_AIE_UNPAD_VECTOR %7
+    %9:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF %8
+    $x4 = COPY %9
 ...
 
 ---

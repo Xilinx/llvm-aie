@@ -8,7 +8,8 @@
 # RUN: llc -mtriple aie2 -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s
 
 # Note that G_AIE_UNPAD_VECTOR is always legal, so it would be sufficient to
-# have only two tests: one for extrating from 512 bits, and one from 256 bits.
+# have only three tests: two for extracting lowers 128 bits and lower 256 bits
+# from 512 bits, and one from 256 bits.
 
 ---
 name:            test_unpad_256_bit_v8int32
@@ -56,12 +57,12 @@ body:             |
 ...
 
 ---
-name:            test_unpad_512_bit_v16int32
+name:            test_unpad_512_bit_v16int32_into_128_bits
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
-    ; CHECK-LABEL: name: test_unpad_512_bit_v16int32
+    ; CHECK-LABEL: name: test_unpad_512_bit_v16int32_into_128_bits
     ; CHECK: [[COPY:%[0-9]+]]:vec512 = COPY $x2
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec128 = COPY [[COPY]].sub_256_lo
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[COPY1]]
@@ -71,12 +72,12 @@ body:             |
 ...
 
 ---
-name:            test_unpad_512_bit_v32int16
+name:            test_unpad_512_bit_v32int16_into_128_bits
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
-    ; CHECK-LABEL: name: test_unpad_512_bit_v32int16
+    ; CHECK-LABEL: name: test_unpad_512_bit_v32int16_into_128_bits
     ; CHECK: [[COPY:%[0-9]+]]:vec512 = COPY $x2
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec128 = COPY [[COPY]].sub_256_lo
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[COPY1]]
@@ -86,16 +87,61 @@ body:             |
 ...
 
 ---
-name:            test_unpad_512_bit_v64int8
+name:            test_unpad_512_bit_v64int8_into_128_bits
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
-    ; CHECK-LABEL: name: test_unpad_512_bit_v64int8
+    ; CHECK-LABEL: name: test_unpad_512_bit_v64int8_into_128_bits
     ; CHECK: [[COPY:%[0-9]+]]:vec512 = COPY $x2
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec128 = COPY [[COPY]].sub_256_lo
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[COPY1]]
     %1:vregbank(<64 x s8>) = COPY $x2
     %2:vregbank(<16 x s8>) = G_AIE_UNPAD_VECTOR %1
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
+name:            test_unpad_512_bit_v16int32_into_256_bits
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: test_unpad_512_bit_v16int32_into_256_bits
+    ; CHECK: [[COPY:%[0-9]+]]:vec512 = COPY $x2
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec256 = COPY [[COPY]].sub_256_lo
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[COPY1]]
+    %1:vregbank(<16 x s32>) = COPY $x2
+    %2:vregbank(<8 x s32>) = G_AIE_UNPAD_VECTOR %1
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
+name:            test_unpad_512_bit_v32int16_into_256_bits
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: test_unpad_512_bit_v32int16_into_256_bits
+    ; CHECK: [[COPY:%[0-9]+]]:vec512 = COPY $x2
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec256 = COPY [[COPY]].sub_256_lo
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[COPY1]]
+    %1:vregbank(<32 x s16>) = COPY $x2
+    %2:vregbank(<16 x s16>) = G_AIE_UNPAD_VECTOR %1
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
+name:            test_unpad_512_bit_v64int8_into_256_bits
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: test_unpad_512_bit_v64int8_into_256_bits
+    ; CHECK: [[COPY:%[0-9]+]]:vec512 = COPY $x2
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec256 = COPY [[COPY]].sub_256_lo
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[COPY1]]
+    %1:vregbank(<64 x s8>) = COPY $x2
+    %2:vregbank(<32 x s8>) = G_AIE_UNPAD_VECTOR %1
     PseudoRET implicit $lr, implicit %2
 ...

@@ -26,17 +26,32 @@ body:             |
 ...
 
 ---
-name:            test_unpad_512_bit_v16int32
+name:            test_pad_128_bits_into_512_bit_v16int32
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
-    ; CHECK-LABEL: name: test_unpad_512_bit_v16int32
+    ; CHECK-LABEL: name: test_pad_128_bits_into_512_bit_v16int32
     ; CHECK: [[COPY:%[0-9]+]]:vec128 = COPY $q0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec256 = COPY [[COPY]]
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[COPY1]], %subreg.sub_256_lo
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]]
     %1:vregbank(<4 x s32>) = COPY $q0
+    %2:vregbank(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF %1
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
+name:            test_pad_256_bits_into_512_bit_v16int32
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: test_pad_256_bits_into_512_bit_v16int32
+    ; CHECK: [[COPY:%[0-9]+]]:vec256 = COPY $wl0
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[COPY]], %subreg.sub_256_lo
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]]
+    %1:vregbank(<8 x s32>) = COPY $wl0
     %2:vregbank(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF %1
     PseudoRET implicit $lr, implicit %2
 ...

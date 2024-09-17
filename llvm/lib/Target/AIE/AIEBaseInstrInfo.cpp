@@ -720,7 +720,7 @@ AIEBaseInstrInfo::getSchedClass(const MCInstrDesc &Desc,
 
 bool AIEBaseInstrInfo::isLegalTypeToPad(const LLT &Ty,
                                         StringRef *ErrInfo) const {
-  if (Ty.isVector() && Ty.getSizeInBits() == 128)
+  if (Ty.isVector() && (Ty.getSizeInBits() == 128 || Ty.getSizeInBits() == 256))
     return true;
   if (ErrInfo)
     *ErrInfo = "Operand size is illegal";

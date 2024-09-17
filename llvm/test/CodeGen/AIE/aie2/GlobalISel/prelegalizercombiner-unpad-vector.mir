@@ -66,15 +66,15 @@ body:             |
       $q0 = COPY %1
 ...
 
-# Cannot combine: first sub-vector isn't 128-bit
+# Simple case where a 256-bit vector is "unpadded" from a 512-bit vector
 ---
-name: no_combine_first_subvec_not_128_bits
+name: unpad_512_bits_into_256_bits
 body:             |
   bb.1:
-    ; CHECK-LABEL: name: no_combine_first_subvec_not_128_bits
+    ; CHECK-LABEL: name: unpad_512_bits_into_256_bits
     ; CHECK: [[COPY:%[0-9]+]]:_(<16 x s32>) = COPY $x0
-    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<8 x s32>), [[UV1:%[0-9]+]]:_(<8 x s32>) = G_UNMERGE_VALUES [[COPY]](<16 x s32>)
-    ; CHECK-NEXT: $wh0 = COPY [[UV]](<8 x s32>)
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[COPY]](<16 x s32>)
+    ; CHECK-NEXT: $wh0 = COPY [[AIE_UNPAD_VECTOR]](<8 x s32>)
       %10:_(<16 x s32>) = COPY $x0
       %0:_(<8 x s32>), %1:_(<8 x s32>) = G_UNMERGE_VALUES %10
       $wh0 = COPY %0

@@ -14,8 +14,8 @@ body:             |
     ; CHECK-LABEL: name: test_build_vector_256_8bit_scl
     ; CHECK: [[COPY:%[0-9]+]]:_(s32) = COPY $r0
     ; CHECK-NEXT: [[AIE_BROADCAST_VECTOR:%[0-9]+]]:_(<64 x s8>) = G_AIE_BROADCAST_VECTOR [[COPY]](s32)
-    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<32 x s8>), [[UV1:%[0-9]+]]:_(<32 x s8>) = G_UNMERGE_VALUES [[AIE_BROADCAST_VECTOR]](<64 x s8>)
-    ; CHECK-NEXT: $wl0 = COPY [[UV]](<32 x s8>)
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<32 x s8>) = G_AIE_UNPAD_VECTOR [[AIE_BROADCAST_VECTOR]](<64 x s8>)
+    ; CHECK-NEXT: $wl0 = COPY [[AIE_UNPAD_VECTOR]](<32 x s8>)
     %0:_(s32) = COPY $r0
     %1:_(s8) = G_TRUNC %0:_(s32)
     %2:_(<32 x s8>) = G_BUILD_VECTOR %1:_(s8), %1:_(s8), %1:_(s8), %1:_(s8), %1:_(s8), %1:_(s8), %1:_(s8), %1:_(s8), %1:_(s8), %1:_(s8), %1:_(s8), %1:_(s8), %1:_(s8), %1:_(s8), %1:_(s8), %1:_(s8), %1:_(s8), %1:_(s8), %1:_(s8), %1:_(s8), %1:_(s8), %1:_(s8), %1:_(s8), %1:_(s8), %1:_(s8), %1:_(s8), %1:_(s8), %1:_(s8), %1:_(s8), %1:_(s8), %1:_(s8), %1:_(s8)
@@ -29,8 +29,8 @@ body:             |
     ; CHECK-LABEL: name: test_build_vector_256_16bit_scl
     ; CHECK: [[COPY:%[0-9]+]]:_(s32) = COPY $r0
     ; CHECK-NEXT: [[AIE_BROADCAST_VECTOR:%[0-9]+]]:_(<32 x s16>) = G_AIE_BROADCAST_VECTOR [[COPY]](s32)
-    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<16 x s16>), [[UV1:%[0-9]+]]:_(<16 x s16>) = G_UNMERGE_VALUES [[AIE_BROADCAST_VECTOR]](<32 x s16>)
-    ; CHECK-NEXT: $wl0 = COPY [[UV]](<16 x s16>)
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<16 x s16>) = G_AIE_UNPAD_VECTOR [[AIE_BROADCAST_VECTOR]](<32 x s16>)
+    ; CHECK-NEXT: $wl0 = COPY [[AIE_UNPAD_VECTOR]](<16 x s16>)
     %0:_(s32) = COPY $r0
     %1:_(s16) = G_TRUNC %0:_(s32)
     %2:_(<16 x s16>) = G_BUILD_VECTOR %1:_(s16), %1:_(s16), %1:_(s16), %1:_(s16), %1:_(s16), %1:_(s16), %1:_(s16), %1:_(s16), %1:_(s16), %1:_(s16), %1:_(s16), %1:_(s16), %1:_(s16), %1:_(s16), %1:_(s16), %1:_(s16)
@@ -44,8 +44,8 @@ body:             |
     ; CHECK-LABEL: name: test_build_vector_256_32bit_scl
     ; CHECK: [[COPY:%[0-9]+]]:_(s32) = COPY $r0
     ; CHECK-NEXT: [[AIE_BROADCAST_VECTOR:%[0-9]+]]:_(<16 x s32>) = G_AIE_BROADCAST_VECTOR [[COPY]](s32)
-    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<8 x s32>), [[UV1:%[0-9]+]]:_(<8 x s32>) = G_UNMERGE_VALUES [[AIE_BROADCAST_VECTOR]](<16 x s32>)
-    ; CHECK-NEXT: $wl0 = COPY [[UV]](<8 x s32>)
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_BROADCAST_VECTOR]](<16 x s32>)
+    ; CHECK-NEXT: $wl0 = COPY [[AIE_UNPAD_VECTOR]](<8 x s32>)
     %1:_(s32) = COPY $r0
     %2:_(<8 x s32>) = G_BUILD_VECTOR %1:_(s32), %1:_(s32), %1:_(s32), %1:_(s32), %1:_(s32), %1:_(s32), %1:_(s32), %1:_(s32)
     $wl0 = COPY %2:_(<8 x s32>)
