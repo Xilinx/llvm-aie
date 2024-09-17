@@ -212,6 +212,20 @@ findConstantOffsetsToMove(MachineInstr &PtrAdd, MachineInstr &PtrAddInsertLoc,
   return GConstsToMove;
 }
 
+// Check that MI is after First and not after Last
+bool isBetween(MachineInstr &MI, MachineInstr &First, MachineInstr &Last,
+               CombinerHelper &Helper) {
+  assert(First.getParent() == Last.getParent());
+  // If it's in another block, it can't be between
+  if (MI.getParent() != First.getParent()) {
+    return false;
+  }
+
+  // We want First < MI && MI <= Last :=: !(MI <= First) && (MI <= Last)
+  // and we have dominates(A, B) :=: A <= B
+  return !Helper.dominates(MI, First) && Helper.dominates(MI, Last);
+}
+
 MachineInstr *findPostIncMatch(MachineInstr &MemI, MachineRegisterInfo &MRI,
                                CombinerHelper &Helper,
                                AIELoadStoreCombineMatchData &MatchData,
@@ -222,51 +236,47 @@ MachineInstr *findPostIncMatch(MachineInstr &MemI, MachineRegisterInfo &MRI,
     return nullptr;
 
   Register Addr = MemI.getOperand(1).getReg();
-  for (auto &AddrUse : MRI.use_nodbg_instructions(Addr)) {
-    std::optional<unsigned> CombinedOpcode = TII.getCombinedPostIncOpcode(
-        MemI, AddrUse,
-        MRI.getType(MemI.getOperand(0).getReg()).getSizeInBits());
-    if (!CombinedOpcode || isTriviallyDead(AddrUse, MRI))
+  for (auto &PtrInc : MRI.use_nodbg_instructions(Addr)) {
+    if (MemI.getParent() != PtrInc.getParent())
       continue;
-    if (MemI.getParent() != AddrUse.getParent())
+    std::optional<unsigned> CombinedOpcode = TII.getCombinedPostIncOpcode(
+        MemI, PtrInc, MRI.getType(MemI.getOperand(0).getReg()).getSizeInBits());
+    if (!CombinedOpcode || isTriviallyDead(PtrInc, MRI))
       continue;
     // Find the closest location to the memory operation where the ptr_add can
     // be moved to.
     MachineInstr &PtrAddInsertLoc = *findEarliestInsertPoint(
-        AddrUse, /*NoMoveBeforeInstr=*/MemI,
+        PtrInc, /*NoMoveBeforeInstr=*/MemI,
         /*NoMoveBeforeLastUse=*/true, MRI, Helper, TII);
-    // If the PtrAdd is defined before MemI, we need to make sure that there is
-    // no use before def error if we combine the PtrAdd into the MemI. We need
-    // to check that all uses of the new pointer defined by the PtrAdd are after
-    // MemI. Note that MemI must also not use the new pointer.
-    if (Helper.dominates(AddrUse, MemI)) {
-      bool MemOpDominatesAddrUses = all_of(
-          MRI.use_nodbg_instructions(AddrUse.getOperand(0).getReg()),
-          [&](MachineInstr &PtrAddUse) {
-            return &MemI != &PtrAddUse && Helper.dominates(MemI, PtrAddUse);
-          });
-      MatchData = {&AddrUse, *CombinedOpcode, &MemI,
+    // If the PtrInc is defined before MemI, we need to make sure that there is
+    // no use before def error if we combine the PtrInc into the MemI. We check
+    // that none of the uses is between the PtrInc and the MemOp.
+    if (Helper.dominates(PtrInc, MemI)) {
+      if (any_of(MRI.use_nodbg_instructions(PtrInc.getOperand(0).getReg()),
+                 [&](MachineInstr &PtrIncUse) {
+                   return isBetween(PtrIncUse, PtrInc, MemI, Helper);
+                 })) {
+        continue;
+      }
+      MatchData = {&PtrInc, *CombinedOpcode, &MemI,
                    /*ExtraInstrsToMove=*/{},
                    /*RemoveInstr=*/true};
-      if (!MemOpDominatesAddrUses)
-        continue;
-    }
-    // The offset of the PtrAdd might be defined after MemI, in this case we
-    // want to verify if it would be possible to insert the combined instruction
-    // at the PtrAdd instead of the location of MemI.
-    // Instruction with side effects are also blocking: Loads, stores, calls,
-    // instructions with side effects cannot be moved.
-    // TODO: try move other instructions that block us from combining
-    else if (canDelayMemOp(MemI, PtrAddInsertLoc, MRI)) {
+      // The offset of the PtrInc might be defined after MemI, in this case we
+      // want to verify if it would be possible to insert the combined
+      // instruction at the PtrInc instead of the location of MemI. Instruction
+      // with side effects are also blocking: Loads, stores, calls, instructions
+      // with side effects cannot be moved.
+      // TODO: try move other instructions that block us from combining
+    } else if (canDelayMemOp(MemI, PtrAddInsertLoc, MRI)) {
       // If Definition of the offset is a G_CONSTANT we have to move that
       // instruction up
       MatchData = {
-          &AddrUse, *CombinedOpcode, &PtrAddInsertLoc,
+          &PtrInc, *CombinedOpcode, &PtrAddInsertLoc,
           /*ExtraInstrsToMove=*/
-          findConstantOffsetsToMove(AddrUse, PtrAddInsertLoc, MRI, Helper),
+          findConstantOffsetsToMove(PtrInc, PtrAddInsertLoc, MRI, Helper),
           /*RemoveInstr=*/true};
     } else {
-      LLVM_DEBUG(dbgs() << "    Ignoring candidate " << AddrUse);
+      LLVM_DEBUG(dbgs() << "    Ignoring candidate " << PtrInc);
       continue;
     }
     // Only combine postIncs if we know that the original pointer is not used
@@ -276,9 +286,9 @@ MachineInstr *findPostIncMatch(MachineInstr &MemI, MachineRegisterInfo &MRI,
     // a combine does not dominate the insertion point but can never follow the
     // insertion point, e.g. being in a sibling BB.
     bool AddrUsesDominatesInsertPoint = checkRegUsesDominate(
-        Addr, *MatchData.CombinedInsertPoint, AddrUse, MRI, Helper, TII);
+        Addr, *MatchData.CombinedInsertPoint, PtrInc, MRI, Helper, TII);
     if (EnableGreedyAddressCombine || AddrUsesDominatesInsertPoint)
-      return &AddrUse;
+      return &PtrInc;
   }
   return nullptr;
 }
@@ -303,7 +313,7 @@ void llvm::applyLdStInc(MachineInstr &MI, MachineRegisterInfo &MRI,
   // Debug Loc: Debug Loc of LOAD STORE: MI
   B.setDebugLoc(MI.getDebugLoc());
   auto NewInstr = B.buildInstr(MatchData.CombinedInstrOpcode);
-  for (auto Instr : MatchData.ExtraInstrsToMove) {
+  for (auto *Instr : MatchData.ExtraInstrsToMove) {
     Instr->moveBefore(NewInstr);
   }
   if (MI.mayLoad())
@@ -311,16 +321,16 @@ void llvm::applyLdStInc(MachineInstr &MI, MachineRegisterInfo &MRI,
   if (MatchData.RemoveInstr)
     // If we remove the instr it is because we have defs that would otherwise
     // be redefined. We have to add these defs into the new instruction.
-    for (auto def : MatchData.Instr->defs())
-      if (def.isReg())
-        NewInstr.addDef(def.getReg());
+    for (auto Def : MatchData.Instr->defs())
+      if (Def.isReg())
+        NewInstr.addDef(Def.getReg());
   if (MI.getOpcode() == TargetOpcode::G_STORE)
     NewInstr.addUse(MI.getOperand(0).getReg() /* Stored value */);
-  for (auto use : MatchData.Instr->uses())
-    if (use.isReg())
-      NewInstr.addUse(use.getReg());
-  for (auto mem : MI.memoperands())
-    NewInstr.addMemOperand(mem);
+  for (auto Use : MatchData.Instr->uses())
+    if (Use.isReg())
+      NewInstr.addUse(Use.getReg());
+  for (auto *Mem : MI.memoperands())
+    NewInstr.addMemOperand(Mem);
 
   if (MatchData.RemoveInstr)
     MatchData.Instr->removeFromParent();
