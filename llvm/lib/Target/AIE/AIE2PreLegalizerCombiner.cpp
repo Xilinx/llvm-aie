@@ -69,6 +69,8 @@ public:
 
   bool tryToCombineVectorShiftsByZero(MachineInstr &MI) const;
 
+  bool tryToCombineSetExtract(MachineInstr &MI) const;
+
   bool tryToCombineIntrinsic(MachineInstr &MI) const;
 
 private:
@@ -136,12 +138,54 @@ bool AIE2PreLegalizerCombinerImpl::tryToCombineVectorShiftsByZero(
   return true;
 }
 
+bool AIE2PreLegalizerCombinerImpl::tryToCombineSetExtract(
+    MachineInstr &MI) const {
+  const Register DstReg = MI.getOperand(0).getReg();
+  MachineInstr *ExtOp = getDefIgnoringCopies(MI.getOperand(2).getReg(), MRI);
+
+  if (!isa<GIntrinsic>(MI) || !isa<GIntrinsic>(*ExtOp))
+    return false;
+  switch (cast<GIntrinsic>(MI).getIntrinsicID()) {
+  case Intrinsic::aie2_set_I512_I128: {
+    if (cast<GIntrinsic>(*ExtOp).getIntrinsicID() !=
+        Intrinsic::aie2_extract_I128_I512)
+      return false;
+    break;
+  }
+  case Intrinsic::aie2_set_I512_I256: {
+    if (cast<GIntrinsic>(*ExtOp).getIntrinsicID() !=
+        Intrinsic::aie2_ext_I256_I512)
+      return false;
+    const Register SetOpIdxReg = MI.getOperand(3).getReg();
+    const Register ExtOpIdxReg = ExtOp->getOperand(3).getReg();
+    auto SetOpCst = getIConstantVRegValWithLookThrough(SetOpIdxReg, MRI);
+    auto ExtOpCst = getIConstantVRegValWithLookThrough(ExtOpIdxReg, MRI);
+    if (SetOpIdxReg != ExtOpIdxReg &&
+        (!SetOpCst || !ExtOpCst ||
+         SetOpCst->Value.getZExtValue() != ExtOpCst->Value.getZExtValue()))
+      return false;
+    break;
+  }
+  default:
+    return false;
+  }
+
+  MachineIRBuilder MIRBuilder(MI);
+  MIRBuilder.buildCopy(DstReg, ExtOp->getOperand(2).getReg());
+  MI.eraseFromParent();
+
+  return true;
+}
+
 bool AIE2PreLegalizerCombinerImpl::tryToCombineIntrinsic(
     MachineInstr &MI) const {
 
   switch (cast<GIntrinsic>(MI).getIntrinsicID()) {
   case Intrinsic::aie2_vshift_I512_I512: {
     return CombineVecShiftByZero && tryToCombineVectorShiftsByZero(MI);
+  }
+  case Intrinsic::aie2_set_I512_I128: {
+    return tryToCombineSetExtract(MI);
   }
   default:
     break;
