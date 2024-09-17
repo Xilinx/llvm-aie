@@ -198,6 +198,9 @@ public:
   bool selectG_AIE_EXTRACT_VECTOR_ELT(MachineInstr &I,
                                       MachineRegisterInfo &MRI);
   bool selectG_AIE_INSERT_VECTOR_ELT(MachineInstr &I, MachineRegisterInfo &MRI);
+  bool selectG_AIE_PAD_VECTOR_UNDEF(MachineInstr &I, MachineOperand &DstReg,
+                                    MachineOperand &SrcReg,
+                                    MachineRegisterInfo &MRI);
   bool selectSetI128(MachineInstr &I, MachineOperand &DstReg,
                      MachineOperand &SrcReg, MachineRegisterInfo &MRI);
   bool selectExtractI128(MachineInstr &I, Register DstReg, Register SrcReg,
@@ -762,7 +765,8 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
   case AIE2::G_AIE_INSERT_VECTOR_ELT:
     return selectG_AIE_INSERT_VECTOR_ELT(I, MRI);
   case AIE2::G_AIE_PAD_VECTOR_UNDEF:
-    return selectSetI128(I, I.getOperand(0), I.getOperand(1), MRI);
+    return selectG_AIE_PAD_VECTOR_UNDEF(I, I.getOperand(0), I.getOperand(1),
+                                        MRI);
   case AIE2::G_AIE_UNPAD_VECTOR:
     return selectExtractI128(I, I.getOperand(0).getReg(),
                              I.getOperand(1).getReg(), MRI);
@@ -812,13 +816,13 @@ bool AIE2InstructionSelector::selectG_AIE_ADD_VECTOR_ELT_HI(
   unsigned Opcode;
   switch (VecEltDstTySize) {
   case 8:
-    Opcode = AIE2::VPUSH_LO_8;
+    Opcode = AIE2::VPUSH_HI_8;
     break;
   case 16:
-    Opcode = AIE2::VPUSH_LO_16;
+    Opcode = AIE2::VPUSH_HI_16;
     break;
   case 32:
-    Opcode = AIE2::VPUSH_LO_32;
+    Opcode = AIE2::VPUSH_HI_32;
     break;
   case 64:
     llvm_unreachable("Unexpected accumulator vector in selection of "
@@ -828,9 +832,7 @@ bool AIE2InstructionSelector::selectG_AIE_ADD_VECTOR_ELT_HI(
         "Unexpected vector size in selection of G_AIE_ADD_VECTOR_ELT_HI");
   }
 
-  // This is the opposite order from the ISA which expects vector, value. This
-  // is choice made in TD which takes it in this opposite order.
-  MachineInstr &MI = *MIB.buildInstr(Opcode, {Dst}, {Value, Src});
+  MachineInstr &MI = *MIB.buildInstr(Opcode, {Dst}, {Src, Value});
   I.eraseFromParent();
 
   return constrainSelectedInstRegOperands(MI, TII, TRI, RBI);
@@ -5011,6 +5013,29 @@ bool AIE2InstructionSelector::selectSetI128(MachineInstr &I,
     llvm_unreachable("Expected 256 or 512 bit input vector");
   }
 
+  I.eraseFromParent();
+  return true;
+}
+
+bool AIE2InstructionSelector::selectG_AIE_PAD_VECTOR_UNDEF(
+    MachineInstr &I, MachineOperand &DstReg, MachineOperand &SrcReg,
+    MachineRegisterInfo &MRI) {
+  const LLT SrcTy = MRI.getType(SrcReg.getReg());
+  if (SrcTy.getSizeInBits() == 128)
+    return selectSetI128(I, DstReg, SrcReg, MRI);
+
+  assert(SrcTy.getSizeInBits() == 256);
+  const LLT DstTy = MRI.getType(DstReg.getReg());
+  const unsigned DstTySize = DstTy.getSizeInBits();
+  assert(DstTySize == 512);
+
+  // Constrain input vector to VEC256 RC, and output to VEC512
+  const TargetRegisterClass &OutRC = AIE2::VEC512RegClass;
+  constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, I, AIE2::VEC256RegClass,
+                           SrcReg);
+  constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, I, OutRC, DstReg);
+  MIB.buildInstr(AIE2::REG_SEQUENCE, {DstReg}, {SrcReg})
+      .addImm(AIE2::sub_256_lo);
   I.eraseFromParent();
   return true;
 }

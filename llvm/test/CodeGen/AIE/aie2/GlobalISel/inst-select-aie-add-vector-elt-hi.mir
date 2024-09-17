@@ -21,8 +21,8 @@ body:             |
     ; CHECK-LABEL: name: vpush_int32_512
     ; CHECK: [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 12
     ; CHECK-NEXT: [[DEF:%[0-9]+]]:vec512 = IMPLICIT_DEF
-    ; CHECK-NEXT: [[VPUSH_LO_32_:%[0-9]+]]:vec512 = VPUSH_LO_32 [[MOV_RLC_imm10_pseudo]], [[DEF]]
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VPUSH_LO_32_]]
+    ; CHECK-NEXT: [[VPUSH_HI_32_:%[0-9]+]]:vec512 = VPUSH_HI_32 [[DEF]], [[MOV_RLC_imm10_pseudo]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VPUSH_HI_32_]]
     %0:gprregbank(s32) = G_CONSTANT i32 12
     %1:vregbank(<16 x s32>) = G_IMPLICIT_DEF
     %2:vregbank(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_HI %1, %0(s32)
@@ -41,8 +41,8 @@ body:             |
     ; CHECK-LABEL: name: vpush_int16_512
     ; CHECK: [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 12
     ; CHECK-NEXT: [[DEF:%[0-9]+]]:vec512 = IMPLICIT_DEF
-    ; CHECK-NEXT: [[VPUSH_LO_16_:%[0-9]+]]:vec512 = VPUSH_LO_16 [[MOV_RLC_imm10_pseudo]], [[DEF]]
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VPUSH_LO_16_]]
+    ; CHECK-NEXT: [[VPUSH_HI_16_:%[0-9]+]]:vec512 = VPUSH_HI_16 [[DEF]], [[MOV_RLC_imm10_pseudo]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VPUSH_HI_16_]]
     %0:gprregbank(s32) = G_CONSTANT i32 12
     %1:vregbank(<32 x s16>) = G_IMPLICIT_DEF
     %2:vregbank(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_HI %1, %0(s32)
@@ -61,8 +61,8 @@ body:             |
     ; CHECK-LABEL: name: vpush_int8_512
     ; CHECK: [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 12
     ; CHECK-NEXT: [[DEF:%[0-9]+]]:vec512 = IMPLICIT_DEF
-    ; CHECK-NEXT: [[VPUSH_LO_8_:%[0-9]+]]:vec512 = VPUSH_LO_8 [[MOV_RLC_imm10_pseudo]], [[DEF]]
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VPUSH_LO_8_]]
+    ; CHECK-NEXT: [[VPUSH_HI_8_:%[0-9]+]]:vec512 = VPUSH_HI_8 [[DEF]], [[MOV_RLC_imm10_pseudo]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VPUSH_HI_8_]]
     %0:gprregbank(s32) = G_CONSTANT i32 12
     %1:vregbank(<64 x s8>) = G_IMPLICIT_DEF
     %2:vregbank(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_HI %1, %0(s32)
@@ -81,9 +81,9 @@ body:             |
     ; CHECK-LABEL: name: vpush_int32_256
     ; CHECK: [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 0
     ; CHECK-NEXT: [[DEF:%[0-9]+]]:vec512 = IMPLICIT_DEF
-    ; CHECK-NEXT: [[VPUSH_LO_32_:%[0-9]+]]:vec512 = VPUSH_LO_32 [[MOV_RLC_imm10_pseudo]], [[DEF]]
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec256 = COPY [[VPUSH_LO_32_]].sub_256_lo
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec256 = COPY [[VPUSH_LO_32_]].sub_256_hi
+    ; CHECK-NEXT: [[VPUSH_HI_32_:%[0-9]+]]:vec512 = VPUSH_HI_32 [[DEF]], [[MOV_RLC_imm10_pseudo]]
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec256 = COPY [[VPUSH_HI_32_]].sub_256_lo
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vec256 = COPY [[VPUSH_HI_32_]].sub_256_hi
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[COPY]]
     %0:gprregbank(s32) = G_CONSTANT i32 0
     %1:vregbank(<16 x s32>) = G_IMPLICIT_DEF
