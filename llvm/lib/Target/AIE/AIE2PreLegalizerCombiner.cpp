@@ -40,6 +40,10 @@ static cl::opt<bool>
 static cl::opt<bool> CombineVecShiftByZero(
     "aie-combine-vec-shift-by-zero", cl::init(true), cl::Hidden,
     cl::desc("Combine vectors shift by zero into copies."));
+
+static cl::opt<bool> Combine256To512SetExtract(
+    "combine-256-to-512-set-extract", cl::init(false), cl::Hidden,
+    cl::desc("Combine vectors shift by zero into copies."));
 namespace {
 
 #define GET_GICOMBINER_TYPES
@@ -68,6 +72,8 @@ public:
   bool tryCombineAllImpl(MachineInstr &I) const;
 
   bool tryToCombineVectorShiftsByZero(MachineInstr &MI) const;
+
+  bool tryToCombineSetExtract(MachineInstr &MI) const;
 
   bool tryToCombineIntrinsic(MachineInstr &MI) const;
 
@@ -136,12 +142,57 @@ bool AIE2PreLegalizerCombinerImpl::tryToCombineVectorShiftsByZero(
   return true;
 }
 
+bool AIE2PreLegalizerCombinerImpl::tryToCombineSetExtract(
+    MachineInstr &MI) const {
+  const Register DstReg = MI.getOperand(0).getReg();
+  MachineInstr *ExtOp = getDefIgnoringCopies(MI.getOperand(2).getReg(), MRI);
+
+  if (!isa<GIntrinsic>(MI) || !isa<GIntrinsic>(*ExtOp))
+    return false;
+  switch (cast<GIntrinsic>(MI).getIntrinsicID()) {
+  case Intrinsic::aie2_set_I512_I128: {
+    if (cast<GIntrinsic>(*ExtOp).getIntrinsicID() !=
+        Intrinsic::aie2_extract_I128_I512)
+      return false;
+    break;
+  }
+  case Intrinsic::aie2_set_I512_I256: {
+    if (cast<GIntrinsic>(*ExtOp).getIntrinsicID() !=
+        Intrinsic::aie2_ext_I256_I512)
+      return false;
+    const Register SetOpIdxReg = MI.getOperand(3).getReg();
+    const Register ExtOpIdxReg = ExtOp->getOperand(3).getReg();
+    auto SetOpCst = getIConstantVRegValWithLookThrough(SetOpIdxReg, MRI);
+    auto ExtOpCst = getIConstantVRegValWithLookThrough(ExtOpIdxReg, MRI);
+    if (SetOpIdxReg != ExtOpIdxReg &&
+        (!SetOpCst || !ExtOpCst ||
+         SetOpCst->Value.getZExtValue() != ExtOpCst->Value.getZExtValue()))
+      return false;
+    break;
+  }
+  default:
+    return false;
+  }
+
+  MachineIRBuilder MIRBuilder(MI);
+  MIRBuilder.buildCopy(DstReg, ExtOp->getOperand(2).getReg());
+  MI.eraseFromParent();
+
+  return true;
+}
+
 bool AIE2PreLegalizerCombinerImpl::tryToCombineIntrinsic(
     MachineInstr &MI) const {
 
   switch (cast<GIntrinsic>(MI).getIntrinsicID()) {
   case Intrinsic::aie2_vshift_I512_I512: {
     return CombineVecShiftByZero && tryToCombineVectorShiftsByZero(MI);
+  }
+  case Intrinsic::aie2_set_I512_I128: {
+    return tryToCombineSetExtract(MI);
+  }
+  case Intrinsic::aie2_set_I512_I256: {
+    return Combine256To512SetExtract && tryToCombineSetExtract(MI);
   }
   default:
     break;
