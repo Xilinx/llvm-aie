@@ -752,8 +752,18 @@ let Itinerary = II_MOV_CNTR in
 }
 // 5.6 VMOV - Move vector/accumulator register
 let Itinerary = II_VMOV_W in {
-  def VMOV_mv_w : AIE2_mv_w_inst_mv< (outs OP_mMvAMWQDst:$dst), (ins OP_mMvAMWQSrc:$src),
-      "vmov", "$dst, $src">;
+  let ItineraryRegPairs = [ItinRegClassPair<II_VMOV_W_CM_CM,[OperandRegClass<0, mAMm>, OperandRegClass<1, mAMm>]>,
+                           ItinRegClassPair<II_VMOV_W_CM_WMH,[OperandRegClass<0, mAMm>, OperandRegClass<1, eWH>]>,
+                           ItinRegClassPair<II_VMOV_W_WMH_CM,[OperandRegClass<0, eWH>, OperandRegClass<1, mAMm>]>,
+                           ItinRegClassPair<II_VMOV_W_CM_WML,[OperandRegClass<0, mAMm>, OperandRegClass<1, eWL>]>,
+                           ItinRegClassPair<II_VMOV_W_WML_CM,[OperandRegClass<0, eWL>, OperandRegClass<1, mAMm>]>,
+                           ItinRegClassPair<II_VMOV_W_WMH_WMH,[OperandRegClass<0, eWH>, OperandRegClass<1, eWH>]>,
+                           ItinRegClassPair<II_VMOV_W_WML_WML,[OperandRegClass<0, eWL>, OperandRegClass<1, eWL>]>,
+                           ItinRegClassPair<II_VMOV_W_WMH_WML,[OperandRegClass<0, eWH>, OperandRegClass<1, eWL>]>,						   
+                           ItinRegClassPair<II_VMOV_W_WML_WMH,[OperandRegClass<0, eWL>, OperandRegClass<1, eWH>]>] in {	
+	def VMOV_mv_w : AIE2_mv_w_inst_mv< (outs OP_mMvAMWQDst:$dst), (ins OP_mMvAMWQSrc:$src),
+		"vmov", "$dst, $src">;
+  }
 }
 let Itinerary = II_VMOV_X in {
   def VMOV_mv_x : AIE2_mv_x_inst_mv< (outs OP_mMvBMXDst:$dst), (ins OP_mMvBMXSrc:$src),

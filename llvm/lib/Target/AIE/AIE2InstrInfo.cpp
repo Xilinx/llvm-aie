@@ -1276,7 +1276,6 @@ unsigned AIE2InstrInfo::getNumBypassedCycles(const InstrItineraryData *ItinData,
   auto GetForwardingClass = [&](const MachineInstr &MI, unsigned OpIdx) {
     Register Reg = MI.getOperand(OpIdx).getReg();
     switch (MI.getOpcode()) {
-    case AIE2::VMOV_mv_w:
     case AIE2::VCONV_FP32_BF16:
       assert(OpIdx < 2);
       return Reg.isPhysical() && AIE2::eWLRegClass.contains(Reg)
@@ -1286,8 +1285,11 @@ unsigned AIE2InstrInfo::getNumBypassedCycles(const InstrItineraryData *ItinData,
       return Reg.isPhysical() && AIE2::mXmRegClass.contains(Reg)
                  ? MovSlotBypassClass
                  : 0U;
-    default:
-      return ItinData->getForwardingClass(MI.getDesc().getSchedClass(), OpIdx);
+    default: {
+      const MachineRegisterInfo &MRI = MI.getMF()->getRegInfo();
+      return ItinData->getForwardingClass(
+          getSchedClass(MI.getDesc(), MI.operands(), MRI), OpIdx);
+    }
     }
   };
 
