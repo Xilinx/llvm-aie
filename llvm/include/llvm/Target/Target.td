@@ -583,11 +583,15 @@ class EncodingByHwMode<list<HwMode> Ms = [], list<InstructionEncoding> Ts = []>
   list<InstructionEncoding> Objects = Ts;
 }
 
-// Allows to specify instrution Itineraries based on RegClass used 
-class ItinRegClassPair<InstrItinClass Itin, RegisterClass Reg, int OperIdx = 0> {
-  InstrItinClass Itinerary = Itin;
-  RegisterClass Regclass  = Reg;
+class OperandRegClass<int OperIdx, RegisterClass Reg> {
+  RegisterClass RegClass  = Reg;
   int OperandIdx = OperIdx;
+}
+
+// Allows to specify instrution Itineraries based on RegClass used 
+class ItinRegClassPair<InstrItinClass Itin, list<OperandRegClass> RegType> {
+  InstrItinClass Itinerary = Itin;
+  list<OperandRegClass> RegTypeList = RegType;
 }
 
 //===----------------------------------------------------------------------===//

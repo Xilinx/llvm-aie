@@ -24,8 +24,10 @@ namespace {
 
 class AIEVariableInstrItineraryEmitter {
 
-  std::map<std::vector<std::tuple<llvm::StringRef, llvm::StringRef, unsigned>>,
-           std::vector<llvm::StringRef>>
+  std::map<
+      std::vector<std::tuple<
+          llvm::StringRef, std::vector<std::pair<llvm::StringRef, unsigned>>>>,
+      std::vector<llvm::StringRef>>
       UniqueRegItineraryOpIdx;
 
 public:
@@ -81,9 +83,18 @@ void AIEVariableInstrItineraryEmitter::emitAltItineraryInfo(raw_ostream &OS) {
     for (const auto &Instr : Instrs)
       OS << "  case " << CurrentNamespace << "::" << Instr << ":\n";
     OS << "  {\n";
-    for (const auto &[RegClass, Itinerary, OpIdx] : RegItineraryPairs) {
-      OS << "    if (checkRCForOperand(" << CurrentNamespace << "::" << RegClass
-         << "RegClass," << OpIdx << "))\n";
+    for (const auto &[Itinerary, RegClassList] : RegItineraryPairs) {
+      assert(!RegClassList.empty() && "RegClassList cannot be empty");
+      OS << "    if (";
+      unsigned Count = 0;
+      for (const auto &[RegClass, OpIdx] : RegClassList) {
+        if (Count)
+          OS << " &&\n        ";
+        OS << "checkRCForOperand(" << CurrentNamespace << "::" << RegClass
+           << "RegClass," << OpIdx << ")";
+        Count++;
+      }
+      OS << ")\n";
       OS << "      return " << CurrentNamespace << "::" << "Sched"
          << "::" << Itinerary << ";\n";
     }
@@ -111,21 +122,32 @@ void AIEVariableInstrItineraryEmitter::run(raw_ostream &OS) {
     std::vector<Record *> AltItinary =
         R->getValueAsListOfDefs("ItineraryRegPairs");
     if (AltItinary.size()) {
-      int FirstOperandIdx = AltItinary[0]->getValueAsInt("OperandIdx");
-      for (const auto AltItinerary : AltItinary)
-        if (FirstOperandIdx != AltItinerary->getValueAsInt("OperandIdx"))
-          llvm_unreachable("All alternate itineraries for an instruction must "
-                           "have the same operand index");
-
-      std::vector<std::tuple<llvm::StringRef, llvm::StringRef, unsigned>>
+      std::vector<std::tuple<llvm::StringRef,
+                             std::vector<std::pair<llvm::StringRef, unsigned>>>>
           RegItineraryPairs;
       for (const auto AltItinerary : AltItinary) {
-        RegItineraryPairs.push_back(
-            std::make_tuple(AltItinerary->getValueAsDef("Regclass")->getName(),
-                            AltItinerary->getValueAsDef("Itinerary")->getName(),
-                            FirstOperandIdx));
-      }
+        std::vector<Record *> OpRegType =
+            AltItinerary->getValueAsListOfDefs("RegTypeList");
+        std::vector<std::pair<llvm::StringRef, unsigned>> OperandRegClass;
 
+        auto checkUnique = [&OperandRegClass](unsigned OpIdx) {
+          return !std::any_of(
+              OperandRegClass.begin(), OperandRegClass.end(),
+              [OpIdx](const auto &Operand) { return Operand.second == OpIdx; });
+        };
+
+        for (const auto RegType : OpRegType) {
+          unsigned OpIdx = RegType->getValueAsInt("OperandIdx");
+          assert(checkUnique(OpIdx) && "OperandIdx must be unique");
+          OperandRegClass.push_back(std::make_pair(
+              RegType->getValueAsDef("RegClass")->getName(), OpIdx));
+        }
+
+        assert(!OperandRegClass.empty() && "OperandRegClass cannot be empty");
+        RegItineraryPairs.push_back(
+            std::make_tuple(AltItinerary->getValueAsDef("Itinerary")->getName(),
+                            OperandRegClass));
+      }
       UniqueRegItineraryOpIdx[RegItineraryPairs].push_back(R->getName());
     }
   }

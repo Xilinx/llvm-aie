@@ -430,9 +430,9 @@ let Itinerary = II_JZ, hasDelaySlot = true in {
 }
 
 let Itinerary = II_MOVA, isMoveImm = 1, isReMaterializable = 1, isAsCheapAsAMove = 1 in {
-  let ItineraryRegPairs = [ItinRegClassPair<II_MOVA_R,eR>, ItinRegClassPair<II_MOVA_P,eP>, 
-                           ItinRegClassPair<II_MOVA_M,eM>, ItinRegClassPair<II_MOVA_DC,eDC>,
-                           ItinRegClassPair<II_MOVA_DJ,eDJ>, ItinRegClassPair<II_MOVA_DN,eDN>] in {  
+  let ItineraryRegPairs = [ItinRegClassPair<II_MOVA_R,[OperandRegClass<0, eR>]>, ItinRegClassPair<II_MOVA_P,[OperandRegClass<0, eP>]>, 
+                           ItinRegClassPair<II_MOVA_M,[OperandRegClass<0, eM>]>, ItinRegClassPair<II_MOVA_DC,[OperandRegClass<0, eDC>]>,
+                           ItinRegClassPair<II_MOVA_DJ,[OperandRegClass<0, eDJ>]>, ItinRegClassPair<II_MOVA_DN,[OperandRegClass<0, eDN>]>] in {  
     def MOVA_lda_cg : AIE2_lda_cg_inst_lda<(outs OP_mLdaCg:$mLdaCg),
         (ins simm11:$c11s), "mova", "$mLdaCg, $c11s">;
   }
@@ -538,10 +538,10 @@ let Itinerary = II_PADD_3D in {
 
 // MOV & MOVXM instruction have identical itineraries, they differ only in slot usage 
 let Itinerary = II_MOV, isMoveImm = 1, isReMaterializable = 1 in {
-  let ItineraryRegPairs = [ItinRegClassPair<II_MOV_RS,eR>, ItinRegClassPair<II_MOV_P,eP>, 
-                          ItinRegClassPair<II_MOV_M,eM>, ItinRegClassPair<II_MOV_RS,eS>,
-                          ItinRegClassPair<II_MOV_DC,eDC>, ItinRegClassPair<II_MOV_DJ,eDJ>,
-                          ItinRegClassPair<II_MOV_DN,eDN>] in {
+  let ItineraryRegPairs = [ItinRegClassPair<II_MOV_RS,[OperandRegClass<0, eR>]>, ItinRegClassPair<II_MOV_P,[OperandRegClass<0, eP>]>, 
+                          ItinRegClassPair<II_MOV_M,[OperandRegClass<0, eM>]>, ItinRegClassPair<II_MOV_RS,[OperandRegClass<0, eS>]>,
+                          ItinRegClassPair<II_MOV_DC,[OperandRegClass<0, eDC>]>, ItinRegClassPair<II_MOV_DJ,[OperandRegClass<0, eDJ>]>,
+                          ItinRegClassPair<II_MOV_DN,[OperandRegClass<0, eDN>]>] in {
     // MOVXM is quite expensive in code size, and will block an extra slot, so we don't
     // mark it as isAsCheapAsAMove
     let isAsCheapAsAMove = 0 in {
@@ -556,10 +556,10 @@ let Itinerary = II_MOV, isMoveImm = 1, isReMaterializable = 1 in {
 }
 
 let Itinerary = II_MOV_SCL, isMoveReg = 1 in {
-  let ItineraryRegPairs = [ItinRegClassPair<II_MOV_SCL_RS,eR>, ItinRegClassPair<II_MOV_SCL_P,eP>, 
-                           ItinRegClassPair<II_MOV_SCL_M,eM>, ItinRegClassPair<II_MOV_SCL_RS,eS>,
-                           ItinRegClassPair<II_MOV_SCL_DC,eDC>, ItinRegClassPair<II_MOV_SCL_DJ,eDJ>,
-                           ItinRegClassPair<II_MOV_SCL_DN,eDN>] in {
+  let ItineraryRegPairs = [ItinRegClassPair<II_MOV_SCL_RS,[OperandRegClass<0, eR>]>, ItinRegClassPair<II_MOV_SCL_P,[OperandRegClass<0, eP>]>, 
+                           ItinRegClassPair<II_MOV_SCL_M,[OperandRegClass<0, eM>]>, ItinRegClassPair<II_MOV_SCL_RS,[OperandRegClass<0, eS>]>,
+                           ItinRegClassPair<II_MOV_SCL_DC,[OperandRegClass<0, eDC>]>, ItinRegClassPair<II_MOV_SCL_DJ,[OperandRegClass<0, eDJ>]>,
+                           ItinRegClassPair<II_MOV_SCL_DN,[OperandRegClass<0, eDN>]>] in {
     def MOV_mv_scl : AIE2_mv_scl_inst_mv<(outs OP_mMvSclDst:$mMvSclDst), 
         (ins OP_mMvSclSrc:$mMvSclSrc), "mov", "$mMvSclDst, $mMvSclSrc">;
   }
