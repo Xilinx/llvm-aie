@@ -42,24 +42,37 @@ class MOVInstruction : TestInstruction {
 let Itinerary = II_MOV  in
   def MOV_instr : MOVInstruction<>;
 
-let Itinerary = II_MOV, ItineraryRegPairs = [ItinRegClassPair<II_MOV_GPR,GPR>]  in
+let Itinerary = II_MOV, ItineraryRegPairs = [ItinRegClassPair<II_MOV_GPR,[OperandRegClass<0, GPR>]>]  in
   def MOV_instr_GPR : MOVInstruction<>;
 
-let Itinerary = II_MOV, ItineraryRegPairs = [ItinRegClassPair<II_MOV_PTR,PTR>]  in
+let Itinerary = II_MOV, ItineraryRegPairs = [ItinRegClassPair<II_MOV_PTR,[OperandRegClass<0, PTR>]>]  in
   def MOV_instr_PTR : MOVInstruction<>;
 
-let Itinerary = II_MOV, ItineraryRegPairs = [ItinRegClassPair<II_MOV_GPR,GPR, 1>, ItinRegClassPair<II_MOV_PTR,PTR, 1>]  in
+let Itinerary = II_MOV, ItineraryRegPairs = [ItinRegClassPair<II_MOV_GPR,[OperandRegClass<1, GPR>]>, ItinRegClassPair<II_MOV_PTR,[OperandRegClass<1, PTR>]>]  in
   def MOV_instr_GPR_PTR : MOVInstruction<>;
 
+let Itinerary = II_MOV, ItineraryRegPairs = [ItinRegClassPair<II_MOV_GPR,[OperandRegClass<0, GPR>,OperandRegClass<1, PTR>]>]  in
+  def MOV_instr_GP : MOVInstruction<>;
 
-let Itinerary = II_MOV, ItineraryRegPairs = [ItinRegClassPair<II_MOV_GPR,GPR>]  in {
+let Itinerary = II_MOV, ItineraryRegPairs = [ItinRegClassPair<II_MOV_GPR,[OperandRegClass<0, PTR>,OperandRegClass<1, GPR>]>]  in
+  def MOV_instr_PG : MOVInstruction<>;
+
+let Itinerary = II_MOV, ItineraryRegPairs = [ItinRegClassPair<II_MOV_GPR,[OperandRegClass<0, GPR>,OperandRegClass<1, PTR>]>, ItinRegClassPair<II_MOV_PTR,[OperandRegClass<1, GPR>,OperandRegClass<0, PTR>]>]  in
+  def MOV_instr_GP_PG : MOVInstruction<>;
+
+let Itinerary = II_MOV, ItineraryRegPairs = [ItinRegClassPair<II_MOV_GPR,[OperandRegClass<0, GPR>]>]  in {
   def MOV_instr_GPR_1 : MOVInstruction<>;
   def MOV_instr_GPR_2 : MOVInstruction<>;  
 }
 
-let Itinerary = II_MOV, ItineraryRegPairs = [ItinRegClassPair<II_MOV_GPR,GPR, 1>, ItinRegClassPair<II_MOV_PTR,PTR, 1>]  in {
+let Itinerary = II_MOV, ItineraryRegPairs = [ItinRegClassPair<II_MOV_GPR,[OperandRegClass<1, GPR>]>, ItinRegClassPair<II_MOV_PTR,[OperandRegClass<1, PTR>]>]  in {
   def MOV_instr_GPR_PTR_1 : MOVInstruction<>;
   def MOV_instr_GPR_PTR_2 : MOVInstruction<>;
+}
+
+let Itinerary = II_MOV, ItineraryRegPairs = [ItinRegClassPair<II_MOV_GPR,[OperandRegClass<0, GPR>,OperandRegClass<1, PTR>]>, ItinRegClassPair<II_MOV_PTR,[OperandRegClass<1, GPR>,OperandRegClass<0, PTR>]>]  in {
+  def MOV_instr_GP_PG_1 : MOVInstruction<>;
+  def MOV_instr_GP_PG_2 : MOVInstruction<>;  
 }
 
 // CHECK:      unsigned TestAIEInstrInfo::getSchedClass(
@@ -92,6 +105,29 @@ let Itinerary = II_MOV, ItineraryRegPairs = [ItinRegClassPair<II_MOV_GPR,GPR, 1>
 // CHECK-NEXT:       << Desc.getOpcode() << "\n");
 // CHECK-NEXT:     return Desc.getSchedClass();
 // CHECK-NEXT:   }
+// CHECK-NEXT:   case TestAIE::MOV_instr_GP:
+// CHECK-NEXT:   {
+// CHECK-NEXT:     if (checkRCForOperand(TestAIE::GPRRegClass,0) &&
+// CHECK-NEXT:         checkRCForOperand(TestAIE::PTRRegClass,1))
+// CHECK-NEXT:       return TestAIE::Sched::II_MOV_GPR;
+// CHECK-NEXT:     LLVM_DEBUG(dbgs() << "No matching RegClass found for instruction: "
+// CHECK-NEXT:       << Desc.getOpcode() << "\n");
+// CHECK-NEXT:     return Desc.getSchedClass();
+// CHECK-NEXT:   }
+// CHECK-NEXT:   case TestAIE::MOV_instr_GP_PG:
+// CHECK-NEXT:   case TestAIE::MOV_instr_GP_PG_1:
+// CHECK-NEXT:   case TestAIE::MOV_instr_GP_PG_2:
+// CHECK-NEXT:   {
+// CHECK-NEXT:     if (checkRCForOperand(TestAIE::GPRRegClass,0) &&
+// CHECK-NEXT:         checkRCForOperand(TestAIE::PTRRegClass,1))
+// CHECK-NEXT:       return TestAIE::Sched::II_MOV_GPR;
+// CHECK-NEXT:     if (checkRCForOperand(TestAIE::GPRRegClass,1) &&
+// CHECK-NEXT:         checkRCForOperand(TestAIE::PTRRegClass,0))
+// CHECK-NEXT:       return TestAIE::Sched::II_MOV_PTR;
+// CHECK-NEXT:     LLVM_DEBUG(dbgs() << "No matching RegClass found for instruction: "
+// CHECK-NEXT:       << Desc.getOpcode() << "\n");
+// CHECK-NEXT:     return Desc.getSchedClass();
+// CHECK-NEXT:   }
 // CHECK-NEXT:   case TestAIE::MOV_instr_GPR_PTR:
 // CHECK-NEXT:   case TestAIE::MOV_instr_GPR_PTR_1:
 // CHECK-NEXT:   case TestAIE::MOV_instr_GPR_PTR_2:
@@ -100,6 +136,15 @@ let Itinerary = II_MOV, ItineraryRegPairs = [ItinRegClassPair<II_MOV_GPR,GPR, 1>
 // CHECK-NEXT:       return TestAIE::Sched::II_MOV_GPR;
 // CHECK-NEXT:     if (checkRCForOperand(TestAIE::PTRRegClass,1))
 // CHECK-NEXT:       return TestAIE::Sched::II_MOV_PTR;
+// CHECK-NEXT:     LLVM_DEBUG(dbgs() << "No matching RegClass found for instruction: "
+// CHECK-NEXT:       << Desc.getOpcode() << "\n");
+// CHECK-NEXT:     return Desc.getSchedClass();
+// CHECK-NEXT:   }
+// CHECK-NEXT:   case TestAIE::MOV_instr_PG:
+// CHECK-NEXT:   {
+// CHECK-NEXT:     if (checkRCForOperand(TestAIE::PTRRegClass,0) &&
+// CHECK-NEXT:         checkRCForOperand(TestAIE::GPRRegClass,1))
+// CHECK-NEXT:       return TestAIE::Sched::II_MOV_GPR;
 // CHECK-NEXT:     LLVM_DEBUG(dbgs() << "No matching RegClass found for instruction: "
 // CHECK-NEXT:       << Desc.getOpcode() << "\n");
 // CHECK-NEXT:     return Desc.getSchedClass();
