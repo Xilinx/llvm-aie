@@ -17,7 +17,7 @@ body:             |
     ; CHECK-NEXT: $x0 = COPY [[COPY]](<16 x s32>)
     %0:_(<16 x s32>) = G_IMPLICIT_DEF
     %1:_(s32) = G_IMPLICIT_DEF
-    %2:_(<16 x s32>) =  G_AIE_ADD_VECTOR_ELT_LEFT %0, %1(s32)
+    %2:_(<16 x s32>) =  G_AIE_ADD_VECTOR_ELT_HI %0, %1(s32)
     $x0 = COPY %2:_(<16 x s32>)
 ...
 
@@ -33,12 +33,12 @@ body:             |
     %0:_(<16 x s32>) = G_IMPLICIT_DEF
     %1:_(s32) = G_IMPLICIT_DEF
     %2:_(s32) = COPY %1:_(s32)
-    %3:_(<16 x s32>) =  G_AIE_ADD_VECTOR_ELT_LEFT %0, %2(s32)
-    %4:_(<16 x s32>) =  G_AIE_ADD_VECTOR_ELT_LEFT %3, %1(s32)
+    %3:_(<16 x s32>) =  G_AIE_ADD_VECTOR_ELT_HI %0, %2(s32)
+    %4:_(<16 x s32>) =  G_AIE_ADD_VECTOR_ELT_HI %3, %1(s32)
     $x0 = COPY %4:_(<16 x s32>)
 ...
 
-# All invalid combinations for the G_AIE_ADD_VECTOR_ELT_LEFT combiner
+# All invalid combinations for the G_AIE_ADD_VECTOR_ELT_HI combiner
 ---
 name:            add_vector_elt_left_def
 body:             |
@@ -47,21 +47,21 @@ body:             |
     ; CHECK: [[DEF:%[0-9]+]]:_(s32) = G_IMPLICIT_DEF
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r0
     ; CHECK-NEXT: [[BUILD_VECTOR:%[0-9]+]]:_(<16 x s32>) = G_BUILD_VECTOR [[COPY]](s32), [[COPY]](s32), [[COPY]](s32), [[COPY]](s32), [[COPY]](s32), [[COPY]](s32), [[COPY]](s32), [[COPY]](s32), [[COPY]](s32), [[COPY]](s32), [[COPY]](s32), [[COPY]](s32), [[COPY]](s32), [[COPY]](s32), [[COPY]](s32), [[COPY]](s32)
-    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[BUILD_VECTOR]], [[DEF]](s32)
-    ; CHECK-NEXT: $x0 = COPY [[AIE_ADD_VECTOR_ELT_LEFT]](<16 x s32>)
-    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT1:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[BUILD_VECTOR]], [[COPY]](s32)
-    ; CHECK-NEXT: $x1 = COPY [[AIE_ADD_VECTOR_ELT_LEFT1]](<16 x s32>)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_HI:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_HI [[BUILD_VECTOR]], [[DEF]](s32)
+    ; CHECK-NEXT: $x0 = COPY [[AIE_ADD_VECTOR_ELT_HI]](<16 x s32>)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_HI1:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_HI [[BUILD_VECTOR]], [[COPY]](s32)
+    ; CHECK-NEXT: $x1 = COPY [[AIE_ADD_VECTOR_ELT_HI1]](<16 x s32>)
     ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(s32) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_LEFT2:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT [[DEF1]], [[COPY]](s32)
-    ; CHECK-NEXT: $x2 = COPY [[AIE_ADD_VECTOR_ELT_LEFT2]](<16 x s32>)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_HI2:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_HI [[DEF1]], [[COPY]](s32)
+    ; CHECK-NEXT: $x2 = COPY [[AIE_ADD_VECTOR_ELT_HI2]](<16 x s32>)
     %0:_(s32) = G_IMPLICIT_DEF
     %1:_(s32) = COPY $r0
     %2:_(<16 x s32>) = G_BUILD_VECTOR %1:_(s32), %1:_(s32), %1:_(s32), %1:_(s32), %1:_(s32), %1:_(s32), %1:_(s32), %1:_(s32), %1:_(s32), %1:_(s32), %1:_(s32), %1:_(s32), %1:_(s32), %1:_(s32), %1:_(s32), %1:_(s32)
-    %3:_(<16 x s32>) =  G_AIE_ADD_VECTOR_ELT_LEFT %2, %0(s32)
+    %3:_(<16 x s32>) =  G_AIE_ADD_VECTOR_ELT_HI %2, %0(s32)
     $x0 = COPY %3:_(<16 x s32>)
-    %4:_(<16 x s32>) =  G_AIE_ADD_VECTOR_ELT_LEFT %2, %1(s32)
+    %4:_(<16 x s32>) =  G_AIE_ADD_VECTOR_ELT_HI %2, %1(s32)
     $x1 = COPY %4:_(<16 x s32>)
     %5:_(s32) = G_IMPLICIT_DEF
-    %6:_(<16 x s32>) =  G_AIE_ADD_VECTOR_ELT_LEFT %5, %1(s32)
+    %6:_(<16 x s32>) =  G_AIE_ADD_VECTOR_ELT_HI %5, %1(s32)
     $x2 = COPY %6:_(<16 x s32>)
 ...
