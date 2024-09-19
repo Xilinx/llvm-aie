@@ -394,15 +394,15 @@ void llvm::applyLdStInc(MachineInstr &MI, MachineRegisterInfo &MRI,
 // Match all equivalents of these:
 // %0:_(<16 x s32>) = G_IMPLICIT_DEF
 // %1:_(s32) = G_IMPLICIT_DEF
-// %2:_(<16 x s32>) =  G_AIE_ADD_VECTOR_ELT_LEFT %0, %1(s32)
+// %2:_(<16 x s32>) =  G_AIE_ADD_VECTOR_ELT_HI %0, %1(s32)
 //
 // Combine into:
 // %0:_(<16 x s32>) = G_IMPLICIT_DEF
 // %2:_(<16 x s32>) = COPY %0
 bool llvm::matchAddVecEltUndef(MachineInstr &MI, MachineRegisterInfo &MRI) {
 
-  assert(MI.getOpcode() == AIE2::G_AIE_ADD_VECTOR_ELT_LEFT &&
-         "Expected a G_AIE_ADD_VECTOR_ELT_LEFT");
+  assert(MI.getOpcode() == AIE2::G_AIE_ADD_VECTOR_ELT_HI &&
+         "Expected a G_AIE_ADD_VECTOR_ELT_HI");
   const MachineInstr *SrcVecDef =
       getDefIgnoringCopies(MI.getOperand(1).getReg(), MRI);
   const MachineInstr *SrcEltDef =

@@ -53,8 +53,9 @@ bool AIELegalizerHelper::pack32BitVector(LegalizerHelper &Helper,
   const LLT RegTy = MRI.getType(DstReg);
   while (Operand != OperandEnd) {
     Register DestinationOperand = Operand->getReg();
+    const LLT DstOpTy = MRI.getType(DestinationOperand);
 
-    if (RegTy.getScalarSizeInBits() != 32) {
+    if (DstOpTy.getSizeInBits() != 32) {
       const Register TmpReg32 = MRI.createGenericVirtualRegister(S32);
       MIRBuilder.buildZExt({TmpReg32}, {DestinationOperand});
       DestinationOperand = TmpReg32;
@@ -124,6 +125,14 @@ bool AIELegalizerHelper::unpack32BitVector(LegalizerHelper &Helper,
   return true;
 }
 
+/// @brief Get the AIE intrinsic corresponding to the VSHIFT.
+static unsigned getVShiftIntrID(const AIEBaseSubtarget &ST) {
+  if (ST.isAIE2())
+    return Intrinsic::aie2_vshift_I512_I512;
+
+  llvm_unreachable("Called with unknown target triple!");
+}
+
 bool AIELegalizerHelper::legalizeG_BUILD_VECTOR(LegalizerHelper &Helper,
                                                 MachineInstr &MI) const {
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
@@ -152,28 +161,28 @@ bool AIELegalizerHelper::legalizeG_BUILD_VECTOR(LegalizerHelper &Helper,
   MIRBuilder.buildUndef(Src);
 
   const AIEBaseInstrInfo *II = ST.getInstrInfo();
-  MachineOperand *OperandBegin = MI.operands_begin(),
-                 *Operand = MI.operands_end() - 1;
-  while (Operand != OperandBegin) {
-    Register Reg = Operand->getReg();
+  MachineOperand *OperandBegin = MI.operands_begin() + 1;
+  for (auto &Operand : drop_begin(MI.operands(), 1)) {
+    Register EltReg = Operand.getReg();
+    LLT EltRegTy = MRI.getType(EltReg);
     Register Dst = MRI.createGenericVirtualRegister(VecTy);
 
-    if (DstVecSize == 512 && Operand == OperandBegin + 1)
+    if (DstVecSize == 512 && &Operand == OperandBegin) {
       Dst = DstReg;
+    }
 
     // vpush takes 32-bit operands so we sign extend the input variable. This is
     // required here since we don't have 16 or 32-bit registers.
-    if (DstVecEltTy.getSizeInBits() != 32) {
-      const Register TmpReg32 =
+    if (DstVecEltTy.getSizeInBits() != 32 && EltRegTy.getSizeInBits() != 32) {
+      const Register EltReg32 =
           MRI.createGenericVirtualRegister(LLT::scalar(32));
-      MIRBuilder.buildAnyExt({TmpReg32}, {Reg});
-      Reg = TmpReg32;
+      MIRBuilder.buildAnyExt({EltReg32}, {EltReg});
+      EltReg = EltReg32;
     }
 
     MIRBuilder.buildInstr(II->getGenericAddVectorEltOpcode(), {Dst},
-                          {Src, Reg});
+                          {Src, EltReg});
     Src = Dst;
-    --Operand;
   }
 
   // For >512, the G_CONCAT_VECTOR is used instead which is added by the
@@ -182,9 +191,32 @@ bool AIELegalizerHelper::legalizeG_BUILD_VECTOR(LegalizerHelper &Helper,
   //    https://github.com/llvm/llvm-project/pull/84538
   if (DstVecSize == 256) {
     const Register UnusedSubReg = MRI.createGenericVirtualRegister(DstVecTy);
-    MIRBuilder.buildUnmerge({DstReg, UnusedSubReg}, Src);
+    // As elements are added from the high bits, the 256-bit result is placed in
+    // the upper half of the 512-bit vector.
+    MIRBuilder.buildUnmerge({UnusedSubReg, DstReg}, Src);
   } else if (DstVecSize == 128) {
-    MIRBuilder.buildInstr(II->getGenericUnpadVectorOpcode(), {DstReg}, {Src});
+    const LLT V16S32 = LLT::fixed_vector(16, 32);
+    Register Vec512Reg = MRI.createGenericVirtualRegister(V16S32);
+
+    Register Zero = MIRBuilder.buildConstant(LLT::scalar(32), 0).getReg(0);
+    Register ShiftConstant =
+        MIRBuilder.buildConstant(LLT::scalar(32), 48).getReg(0);
+
+    Register NewSrc1 =
+        EltSize == 32 ? Src : MIRBuilder.buildBitcast(V16S32, Src).getReg(0);
+
+    // Shift the result to the lower 128 bits of a 512-bit vector, as the
+    // result is currently stored in the upper 128 bits of the vector.
+    MIRBuilder.buildIntrinsic(getVShiftIntrID(ST), Vec512Reg, false, false)
+        .addUse(NewSrc1)
+        .addUse(NewSrc1)
+        .addUse(Zero)
+        .addUse(ShiftConstant);
+    Register NewSrc2 =
+        EltSize == 32 ? Vec512Reg
+                      : MIRBuilder.buildBitcast(VecTy, Vec512Reg).getReg(0);
+    MIRBuilder.buildInstr(II->getGenericUnpadVectorOpcode(), {DstReg},
+                          {NewSrc2});
   }
 
   MI.eraseFromParent();

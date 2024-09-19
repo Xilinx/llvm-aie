@@ -104,7 +104,7 @@ def combine_load_store_increment : GICombineRule <
 
 def combine_add_vector_elt_undef : GICombineRule <
   (defs root:$root),
-  (match (wip_match_opcode G_AIE_ADD_VECTOR_ELT_LEFT):$root,
+  (match (wip_match_opcode G_AIE_ADD_VECTOR_ELT_HI):$root,
           [{ return matchAddVecEltUndef(*${root}, MRI); }]),
   (apply [{ applyAddVecEltUndef(*${root}, MRI, B); }] )
 >;

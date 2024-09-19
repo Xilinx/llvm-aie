@@ -85,7 +85,7 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   virtual unsigned getCycleSeparatorOpcode() const {
     llvm_unreachable("Target didn't implement getCycleSeparatorOpcode");
   }
-  /// Return the opcode to be used for pushing a vector element at the LSB
+  /// Return the opcode to be used for pushing a vector element at the MSB
   /// position in a vector
   virtual unsigned getGenericAddVectorEltOpcode() const {
     llvm_unreachable("Target didn't implement getGenericAddVectorEltOpcode");
