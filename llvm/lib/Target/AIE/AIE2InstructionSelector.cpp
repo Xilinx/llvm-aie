@@ -141,8 +141,7 @@ public:
   bool selectAddrInsn(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectCascadeStreamInsn(MachineInstr &I, MachineRegisterInfo &MRI,
                                bool isWrite);
-  bool selectG_AIE_ADD_VECTOR_ELT_LEFT(MachineInstr &I,
-                                       MachineRegisterInfo &MRI);
+  bool selectG_AIE_ADD_VECTOR_ELT_HI(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_BRCOND(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_BRINDIRECT(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_JUMP_TABLE(MachineInstr &I, MachineRegisterInfo &MRI);
@@ -738,8 +737,8 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
     return selectG_STORE(I, MRI);
   case G_UNMERGE_VALUES:
     return selectG_UNMERGE_VALUES(I, MRI);
-  case AIE2::G_AIE_ADD_VECTOR_ELT_LEFT:
-    return selectG_AIE_ADD_VECTOR_ELT_LEFT(I, MRI);
+  case AIE2::G_AIE_ADD_VECTOR_ELT_HI:
+    return selectG_AIE_ADD_VECTOR_ELT_HI(I, MRI);
   case AIE2::G_AIE_OFFSET_STORE:
   case AIE2::G_AIE_POSTINC_STORE:
   case AIE2::G_AIE_POSTINC_2D_STORE:
@@ -799,7 +798,7 @@ bool AIE2InstructionSelector::selectStartLoop(MachineInstr &I,
   return constrainSelectedInstRegOperands(*ADDI, TII, TRI, RBI);
 }
 
-bool AIE2InstructionSelector::selectG_AIE_ADD_VECTOR_ELT_LEFT(
+bool AIE2InstructionSelector::selectG_AIE_ADD_VECTOR_ELT_HI(
     MachineInstr &I, MachineRegisterInfo &MRI) {
   const Register Dst = I.getOperand(0).getReg();
   const Register Src = I.getOperand(1).getReg();
@@ -822,11 +821,11 @@ bool AIE2InstructionSelector::selectG_AIE_ADD_VECTOR_ELT_LEFT(
     Opcode = AIE2::VPUSH_LO_32;
     break;
   case 64:
-    llvm_unreachable(
-        "Unexpected accumulator vector in selection of G_AIE_ADD_VECTOR_LEFT");
+    llvm_unreachable("Unexpected accumulator vector in selection of "
+                     "G_AIE_ADD_VECTOR_ELT_HI");
   default:
     llvm_unreachable(
-        "Unexpected vector size in selection of G_AIE_ADD_VECTOR_ELT_LEFT");
+        "Unexpected vector size in selection of G_AIE_ADD_VECTOR_ELT_HI");
   }
 
   // This is the opposite order from the ISA which expects vector, value. This

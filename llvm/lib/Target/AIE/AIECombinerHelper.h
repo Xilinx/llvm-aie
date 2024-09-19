@@ -47,7 +47,7 @@ void applyLdStInc(MachineInstr &MI, MachineRegisterInfo &MRI,
 /// Look for  with G_IMPLICIT_DEF source operands
 /// \return true if such an instruction is found
 bool matchAddVecEltUndef(MachineInstr &MI, MachineRegisterInfo &MRI);
-/// Combine G_AIE_ADD_VECTOR_ELT_LEFT with COPY
+/// Combine G_AIE_ADD_VECTOR_ELT_HI with COPY
 void applyAddVecEltUndef(MachineInstr &MI, MachineRegisterInfo &MRI,
                          MachineIRBuilder &B);
 /// combine G_GLOBAL_VALUE with G_CONSTANT and store in \a MatchData

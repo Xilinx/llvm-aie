@@ -25,7 +25,7 @@ body:             |
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VPUSH_LO_32_]]
     %0:gprregbank(s32) = G_CONSTANT i32 12
     %1:vregbank(<16 x s32>) = G_IMPLICIT_DEF
-    %2:vregbank(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT %1, %0(s32)
+    %2:vregbank(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_HI %1, %0(s32)
     PseudoRET implicit $lr, implicit %2
 ...
 
@@ -45,7 +45,7 @@ body:             |
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VPUSH_LO_16_]]
     %0:gprregbank(s32) = G_CONSTANT i32 12
     %1:vregbank(<32 x s16>) = G_IMPLICIT_DEF
-    %2:vregbank(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_LEFT %1, %0(s32)
+    %2:vregbank(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_HI %1, %0(s32)
     PseudoRET implicit $lr, implicit %2
 ...
 
@@ -65,7 +65,7 @@ body:             |
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VPUSH_LO_8_]]
     %0:gprregbank(s32) = G_CONSTANT i32 12
     %1:vregbank(<64 x s8>) = G_IMPLICIT_DEF
-    %2:vregbank(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_LEFT %1, %0(s32)
+    %2:vregbank(<64 x s8>) = G_AIE_ADD_VECTOR_ELT_HI %1, %0(s32)
     PseudoRET implicit $lr, implicit %2
 ...
 
@@ -87,6 +87,6 @@ body:             |
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[COPY]]
     %0:gprregbank(s32) = G_CONSTANT i32 0
     %1:vregbank(<16 x s32>) = G_IMPLICIT_DEF
-    %2:vregbank(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_LEFT %1, %0(s32)
+    %2:vregbank(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_HI %1, %0(s32)
     %3:vregbank(<8 x s32>), %4:vregbank(<8 x s32>) = G_UNMERGE_VALUES %2(<16 x s32>)
     PseudoRET implicit $lr, implicit %3
