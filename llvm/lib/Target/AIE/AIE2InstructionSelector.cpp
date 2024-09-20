@@ -1601,7 +1601,7 @@ void AIE2InstructionSelector::makeDeadMI(MachineInstr &MI,
 bool AIE2InstructionSelector::selectG_AIE_LOAD_UNPACK(
     MachineInstr &UNPACKI, MachineRegisterInfo &MRI) {
   Register LoadResult = (std::next(UNPACKI.uses().begin()))->getReg();
-  MachineInstr *LoadOp = MRI.getUniqueVRegDef(LoadResult);
+  MachineInstr *LoadOp = getDefIgnoringCopiesAndBitcasts(LoadResult, MRI);
 
   assert(LoadOp && "Expected SSA.");
 
@@ -2771,7 +2771,7 @@ bool AIE2InstructionSelector::selectG_AIE_LOAD_UPS(MachineInstr &UPSI,
 
   // First use is the G_INTRINSIC_W_SIDE_EFFECTS ID
   Register LoadResult = (std::next(UPSI.uses().begin()))->getReg();
-  MachineInstr *LoadOp = MRI.getUniqueVRegDef(LoadResult);
+  MachineInstr *LoadOp = getDefIgnoringCopiesAndBitcasts(LoadResult, MRI);
 
   assert(LoadOp && "Expected SSA.");
 
@@ -3993,7 +3993,7 @@ bool AIE2InstructionSelector::selectG_AIE_STORE_PACK(MachineInstr &StoreI,
                                                      MachineRegisterInfo &MRI) {
 
   Register PackResult = (StoreI.uses().begin())->getReg();
-  MachineInstr *PackOp = MRI.getUniqueVRegDef(PackResult);
+  MachineInstr *PackOp = getDefIgnoringCopiesAndBitcasts(PackResult, MRI);
 
   assert(PackOp && "Expected SSA.");
 
@@ -4145,7 +4145,7 @@ bool AIE2InstructionSelector::selectG_AIE_STORE_SRS(MachineInstr &StoreI,
                                                     MachineRegisterInfo &MRI) {
 
   Register SrsResult = (StoreI.uses().begin())->getReg();
-  MachineInstr *SrsOp = MRI.getUniqueVRegDef(SrsResult);
+  MachineInstr *SrsOp = getDefIgnoringCopiesAndBitcasts(SrsResult, MRI);
 
   assert(SrsOp && "Expected SSA.");
 
@@ -4252,7 +4252,7 @@ bool AIE2InstructionSelector::selectG_AIE_STORE_CONV(MachineInstr &StoreI,
                                                      MachineRegisterInfo &MRI) {
 
   Register ConvResult = (StoreI.uses().begin())->getReg();
-  MachineInstr *ConvOp = MRI.getUniqueVRegDef(ConvResult);
+  MachineInstr *ConvOp = getDefIgnoringCopiesAndBitcasts(ConvResult, MRI);
 
   assert(ConvOp && "Expected SSA.");
 
@@ -4511,7 +4511,7 @@ bool canCombineCONVLoad(MachineInstr &MemOp, MachineInstr &CombOp) {
 bool AIE2InstructionSelector::selectG_AIE_LOAD_CONV(MachineInstr &CONVI,
                                                     MachineRegisterInfo &MRI) {
   Register LoadResult = (std::next(CONVI.uses().begin()))->getReg();
-  MachineInstr *LoadOp = MRI.getUniqueVRegDef(LoadResult);
+  MachineInstr *LoadOp = getDefIgnoringCopiesAndBitcasts(LoadResult, MRI);
 
   assert(LoadOp && "Expected SSA.");
 
