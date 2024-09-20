@@ -418,7 +418,6 @@ bool CombinerHelper::tryCombineShuffleVector(MachineInstr &MI) {
     Register UndefReg;
     const Register Src1 = MI.getOperand(1).getReg();
     const Register Src2 = MI.getOperand(2).getReg();
-
     const ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
 
     // The destination can be longer than the source, so we separate them into
@@ -451,7 +450,6 @@ bool CombinerHelper::tryCombineShuffleVector(MachineInstr &MI) {
     applyCombineShuffleVector(MI, Ops);
     return true;
   }
-
   return false;
 }
 
