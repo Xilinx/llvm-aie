@@ -337,3 +337,46 @@ body: |
     %3:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.v16bf16.to.v16accfloat), %2:vregbank(<16 x s16>)
     PseudoRET implicit $lr, implicit %3
 ...
+
+---
+name:            VLDA_CONV_COPY
+legalized:       true
+regBankSelected: true
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $p0, $r0
+    ; CHECK-LABEL: name: VLDA_CONV_COPY
+    ; CHECK: liveins: $p0, $r0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[VLDA_CONV_FP32_BF16_ag_idx_imm:%[0-9]+]]:acc512 = VLDA_CONV_FP32_BF16_ag_idx_imm [[COPY]], 0 :: (load (<16 x s16>))
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_CONV_FP32_BF16_ag_idx_imm]]
+    %0:ptrregbank(p0) = COPY $p0
+    %1:vregbank(<16 x s16>) = G_LOAD %0:ptrregbank(p0) :: (load (<16 x s16>))
+    %2:vregbank(<16 x s16>) = COPY %1
+    %3:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.v16bf16.to.v16accfloat), %2:vregbank(<16 x s16>)
+    PseudoRET implicit $lr, implicit %3
+...
+
+---
+name:            VLDA_CONV_COPY_no_single_use
+legalized:       true
+regBankSelected: true
+tracksRegLiveness: true
+body: |
+  bb.0:
+    liveins: $p0, $r0
+    ; CHECK-LABEL: name: VLDA_CONV_COPY_no_single_use
+    ; CHECK: liveins: $p0, $r0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[VLD_idx_imm_3x32_pseudo:%[0-9]+]]:vec256 = VLD_idx_imm_3x32_pseudo [[COPY]], 0 :: (load (<16 x s16>))
+    ; CHECK-NEXT: [[VCONV_FP32_BF16_:%[0-9]+]]:acc512 = VCONV_FP32_BF16 [[VLD_idx_imm_3x32_pseudo]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VCONV_FP32_BF16_]], implicit [[VLD_idx_imm_3x32_pseudo]]
+    %0:ptrregbank(p0) = COPY $p0
+    %1:vregbank(<16 x s16>) = G_LOAD %0:ptrregbank(p0) :: (load (<16 x s16>))
+    %2:vregbank(<16 x s16>) = COPY %1
+    %3:accregbank(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.v16bf16.to.v16accfloat), %2:vregbank(<16 x s16>)
+    PseudoRET implicit $lr, implicit %3, implicit %2
+...

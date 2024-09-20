@@ -215,3 +215,27 @@ body:             |
     %11:vregbank(<32 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.pack.I4.I8), %1:vregbank(<32 x s16>), %6:gprregbank(s32)
     G_AIE_OFFSET_STORE %11:vregbank(<32 x s8>), %2:ptrregbank(p0), %10:modregbank(s20) :: (store (<32 x s8>))
 ...
+
+---
+name:            VST_PACK_D8_D16_COPY_BITCAST
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0, $r0, $x0
+    ; CHECK-LABEL: name: VST_PACK_D8_D16_COPY_BITCAST
+    ; CHECK: liveins: $p0, $r0, $x0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: VST_PACK_D8_D16_ag_idx_imm [[COPY1]], 96, [[COPY]], implicit $crsat, implicit $crpacksign :: (store (<8 x s32>))
+    %0:vregbank(<32 x s16>) = COPY $x0
+    %2:ptrregbank(p0) = COPY $p0
+    %6:gprregbank(s32) = G_CONSTANT i32 0
+    %5:vregbank(<32 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.pack.I8.I16), %0:vregbank(<32 x s16>), %6:gprregbank(s32)
+    %3:modregbank(s20) = G_CONSTANT i20 96
+    %100:vregbank(<8 x s32>) = G_BITCAST %5(<32 x s8>)
+    %110:vregbank(<8 x s32>) = COPY %100(<8 x s32>)
+    G_AIE_OFFSET_STORE %110:vregbank(<8 x s32>), %2:ptrregbank(p0), %3:modregbank(s20) :: (store (<8 x s32>))
+...

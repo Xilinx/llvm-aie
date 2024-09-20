@@ -76,6 +76,32 @@ bool isUseOf(const MachineInstr &MI, const MachineInstr &Use) {
   return false;
 }
 
+///  Check for dead \a InBetweenMI MI and copy-like instructions that can be
+///  coalesced once \a MemI and \a Dest are combined.
+bool isNonCoalesceableUseOf(const MachineInstr &MemI,
+                            const MachineInstr &InBetweenMI,
+                            const MachineInstr &Dest,
+                            const MachineRegisterInfo &MRI) {
+
+  if (isTriviallyDead(InBetweenMI, MRI))
+    return false;
+
+  // We can delay an instruction after a copy, if the copy just
+  // connects MemI and Dest. After combining, this copy will be dead.
+  if (InBetweenMI.isCopy() &&
+      MRI.hasOneNonDBGUse(InBetweenMI.getOperand(1).getReg()) &&
+      MRI.hasOneNonDBGUse(InBetweenMI.getOperand(0).getReg())) {
+    const MachineInstr *CopyOrignMI =
+        MRI.getVRegDef(InBetweenMI.getOperand(1).getReg());
+    const MachineInstr *CopyDestMI =
+        &*MRI.use_instr_nodbg_begin(InBetweenMI.getOperand(0).getReg());
+    if (CopyOrignMI == &MemI && CopyDestMI == &Dest)
+      return false;
+  }
+
+  return isUseOf(InBetweenMI, MemI);
+}
+
 /// \return true if \a MemI can be moved just before \a Dest in order to allow
 /// post-increment combining
 bool llvm::canDelayMemOp(MachineInstr &MemI, MachineInstr &Dest,
@@ -87,10 +113,36 @@ bool llvm::canDelayMemOp(MachineInstr &MemI, MachineInstr &Dest,
   auto InstrRange = make_range(MII, MIE);
   bool SawStore = MemI.mayStore();
   auto UnsafeToMovePast = [&](const MachineInstr &MI) {
-    return (isUseOf(MI, MemI) && !isTriviallyDead(MI, MRI)) ||
+    return isNonCoalesceableUseOf(MemI, MI, Dest, MRI) ||
            !MI.isSafeToMove(nullptr, SawStore);
   };
   return none_of(InstrRange, UnsafeToMovePast);
+}
+
+/// Find the def instruction for \p Reg, folding away any trivial copies and
+/// bitcasts. May return nullptr if \p Reg is not a generic virtual register.
+MachineInstr *
+llvm::getDefIgnoringCopiesAndBitcasts(Register Reg,
+                                      const MachineRegisterInfo &MRI) {
+
+  MachineInstr *DefInstr = MRI.getVRegDef(Reg);
+
+  auto IsSingleUseCopyOrBitcast = [&](const MachineInstr *MI) {
+    return (MI->isCopy() ||
+            (DefInstr->getOpcode() == TargetOpcode::G_BITCAST)) &&
+           MRI.hasOneNonDBGUse(MI->getOperand(0).getReg());
+  };
+
+  auto UseVirtReg = [&](const MachineInstr *MI) {
+    return MI->getOperand(1).getReg().isVirtual();
+  };
+
+  // No other use for this copy/bitcast.
+  // Stop if we reach an use of a physical register.
+  while (DefInstr && IsSingleUseCopyOrBitcast(DefInstr) && UseVirtReg(DefInstr))
+    DefInstr = MRI.getVRegDef(DefInstr->getOperand(1).getReg());
+
+  return DefInstr;
 }
 
 MachineInstr *findLastRegUseInBB(Register Reg, MachineInstr &IgnoreUser,
