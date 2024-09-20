@@ -27,6 +27,7 @@
 #include "llvm/CodeGenTypes/LowLevelType.h"
 #include "llvm/IR/InstrTypes.h"
 #include <functional>
+#include <optional>
 
 namespace llvm {
 
@@ -246,6 +247,11 @@ public:
   void applyCombineShuffleConcat(MachineInstr &MI, SmallVector<Register> &Ops);
 
   /// Try to combine G_SHUFFLE_VECTOR into G_CONCAT_VECTORS.
+  /// A function type that returns either the next value in a
+  /// shufflemask or an empty value. Each iteration should return
+  /// one value, like a Python iterator or a Lisp stream.
+  using GeneratorType = std::function<std::optional<int32_t>()>;
+
   /// Returns true if MI changed.
   ///
   /// \pre MI.getOpcode() == G_SHUFFLE_VECTOR.
