@@ -169,6 +169,15 @@ public:
 
   bool canHoistCheapInst(const MachineInstr &MI) const override;
 
+  std::optional<const VConcatOpInfo>
+  getVConcatOpInfo(const MachineInstr &MI) const override;
+
+  std::optional<const VUpdateOpInfo>
+  getVUpdateOpInfo(const MachineInstr &MI) const override;
+
+  std::optional<const VExtractOpInfo>
+  getVExtractOpInfo(const MachineInstr &MI) const override;
+
 protected:
   SmallVector<AIEPseudoExpandInfo, 4>
   getSpillPseudoExpandInfo(const MachineInstr &MI) const override;

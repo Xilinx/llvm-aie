@@ -11,6 +11,7 @@
 #include "AIECombinerHelper.h"
 #include "AIE2TargetMachine.h"
 #include "AIEBaseInstrInfo.h"
+#include "AIETargetMachine.h"
 #include "MCTargetDesc/AIE2MCTargetDesc.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
@@ -21,6 +22,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/IR/IntrinsicsAIE2.h"
+#include <optional>
 
 #define DEBUG_TYPE "aie-combine"
 
@@ -1117,5 +1119,190 @@ void llvm::applyPadVector(MachineInstr &MI, MachineRegisterInfo &MRI,
   B.setInstrAndDebugLoc(MI);
   Register DstReg = MI.getOperand(0).getReg();
   B.buildInstr(AIE2::G_AIE_PAD_VECTOR_UNDEF, {DstReg}, {MatchedInputVector});
+  MI.eraseFromParent();
+}
+
+/// Match something like this:
+///  %68:_(s32) = G_CONSTANT i32 0
+///  %93:_(s32) = G_CONSTANT i32 1
+///  %209:_(<16 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.concat.1024.512.acc),
+///                   %206(<8 x s64>), %208(<8 x s64>)
+///  %216:_(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.ext.512.1024.acc),
+///                   %209(<16 x s64>), %68(s32)
+///  %219:_(<8 x s64>) = G_INTRINSIC intrinsic(@llvm.aie2.ext.512.1024.acc),
+///                    %209(<16 x s64>), %93(s32)
+
+/// To convert to:
+///   %216:_(<8 x s64>) = COPY %206(<8 x s64>)
+///   %219:_(<8 x s64>) = COPY %208(<8 x s64>)
+bool llvm::matchExtractConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
+                              const AIEBaseInstrInfo &TII,
+                              Register &MatchInfo) {
+
+  std::optional<const AIEBaseInstrInfo::VExtractOpInfo> ExtractOp =
+      TII.getVExtractOpInfo(MI);
+
+  if (!ExtractOp)
+    return false;
+
+  auto Cst = getIConstantVRegValWithLookThrough(
+      MI.getOperand(ExtractOp->SubVectorIndex).getReg(), MRI);
+
+  if (!Cst)
+    return false;
+
+  const unsigned ExtractSize =
+      MRI.getType(MI.getOperand(0).getReg()).getSizeInBits();
+
+  MachineInstr &SrcMI = *MRI.getVRegDef(MI.getOperand(ExtractOp->Src).getReg());
+
+  Register SrcReg;
+  unsigned ConcatSize = 0;
+  const unsigned Index = Cst->Value.getZExtValue();
+
+  if (const auto ConcatOp = TII.getVConcatOpInfo(SrcMI)) {
+    SrcReg = SrcMI.getOperand(Index + ConcatOp->FirstOperand).getReg();
+    ConcatSize = MRI.getType(SrcReg).getSizeInBits();
+  }
+
+  MatchInfo = SrcReg;
+  return ConcatSize == ExtractSize;
+}
+
+void llvm::applyExtractConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
+                              MachineIRBuilder &B, Register &MatchInfo) {
+  B.setInstrAndDebugLoc(MI);
+  Register DstReg = MI.getOperand(0).getReg();
+  Register SrcReg = MatchInfo;
+
+  B.buildCopy(DstReg, SrcReg);
+  MI.eraseFromParent();
+}
+
+/// Match something like this:
+/// %209:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.concat.I512.I256),
+///         %95(<8 x s32>), %98(<8 x s32>)
+/// %252:_(<8 x s32>), %253:_(<8 x s32>) = G_UNMERGE_VALUES %209(<16 x s32>)
+///
+/// To convert to:
+/// 252:_(<8 x s32>) = COPY %95(<8 x s32>)
+/// 253:_(<8 x s32>) = COPY %98(<8 x s32>)
+bool llvm::matchUnmergeConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
+                              const AIEBaseInstrInfo &TII,
+                              std::pair<MachineInstr *, unsigned> &MatchInfo) {
+
+  MachineInstr &SrcMI =
+      *MRI.getVRegDef(MI.getOperand(MI.getNumOperands() - 1).getReg());
+
+  std::optional<const AIEBaseInstrInfo::VConcatOpInfo> ConcatOp =
+      TII.getVConcatOpInfo(SrcMI);
+
+  if (!ConcatOp)
+    return false;
+
+  // We always have more operands for the intrinsic.
+  if (MI.getNumOperands() !=
+      SrcMI.getNumOperands() - ConcatOp->NumOfNonRegOperands)
+    return false;
+
+  MatchInfo = std::make_pair(&SrcMI, ConcatOp->FirstOperand);
+  return true;
+}
+
+void llvm::applyUnmergeConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
+                              MachineIRBuilder &B,
+                              std::pair<MachineInstr *, unsigned> &MatchInfo) {
+  B.setInstrAndDebugLoc(MI);
+  auto [ConcatMI, Offset] = MatchInfo;
+
+  for (unsigned Op = 0; Op < MI.getNumOperands() - 1; Op++) {
+    Register DstReg = MI.getOperand(Op).getReg();
+    Register SrcReg = ConcatMI->getOperand(Op + Offset).getReg();
+    B.buildCopy(DstReg, SrcReg);
+  }
+
+  MI.eraseFromParent();
+}
+
+/// This function tracks chain of vector updates using .upd vector intrinsic.
+static std::map<unsigned, Register>
+trackVectorUpdateChain(MachineInstr &MI, MachineRegisterInfo &MRI,
+                       const AIEBaseInstrInfo &TII) {
+
+  std::optional<const AIEBaseInstrInfo::VUpdateOpInfo> UpdateOp =
+      TII.getVUpdateOpInfo(MI);
+
+  if (!UpdateOp)
+    return {};
+
+  auto Cst = getIConstantVRegValWithLookThrough(
+      MI.getOperand(UpdateOp->SubVectorIndex).getReg(), MRI);
+
+  if (!Cst)
+    return {};
+
+  std::map<unsigned, Register> IndexRegMap = trackVectorUpdateChain(
+      *MRI.getVRegDef(MI.getOperand(UpdateOp->Src).getReg()), MRI, TII);
+
+  const unsigned Index = Cst->Value.getZExtValue();
+  Register RegLane = MI.getOperand(UpdateOp->SrcSubVec).getReg();
+
+  // Check if we already have this update in the chain.
+  if (IndexRegMap.find(Index) != IndexRegMap.end())
+    return {};
+
+  IndexRegMap[Index] = RegLane;
+
+  return IndexRegMap;
+}
+
+/// Match something like this:
+///  %21:_(s32) = G_CONSTANT i32 0
+///  %51:_(s32) = G_CONSTANT i32 1
+///  %96:_(<8 x s32>) = G_BITCAST %95(<32 x s8>)
+///  %97:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.upd.I512.I256),
+///           %9(<16 x s32>), %96(<8 x s32>), %21(s32)
+///  %99:_(<8 x s32>) = G_BITCAST %98(<32 x s8>)
+///  %100:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.upd.I512.I256),
+///           %97(<16 x s32>), %99(<8 x s32>), %51(s32)
+
+/// To convert to:
+///  %96:_(<16 x s32>) = G_CONCAT_VECTORS  %96(<8 x s32>), %99(<8 x s32>)
+bool llvm::matchUpdToConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
+                            const AIEBaseInstrInfo &TII,
+                            std::map<unsigned, Register> &IndexRegMap) {
+
+  IndexRegMap = trackVectorUpdateChain(MI, MRI, TII);
+
+  if (IndexRegMap.size() == 0)
+    return false;
+
+  const unsigned UpdSize =
+      MRI.getType(MI.getOperand(0).getReg()).getSizeInBits();
+
+  unsigned ConcatenatedSize = 0;
+  for (auto IndexReg : IndexRegMap) {
+    Register Reg = IndexReg.second;
+    ConcatenatedSize += MRI.getType(Reg).getSizeInBits();
+  }
+
+  if (UpdSize != ConcatenatedSize)
+    return false;
+
+  return true;
+}
+
+void llvm::applyUpdToConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
+                            MachineIRBuilder &B,
+                            std::map<unsigned, Register> &IndexRegMap) {
+  B.setInstrAndDebugLoc(MI);
+
+  SmallVector<Register, 4> SrcRegs;
+  for (unsigned Op = 0; Op < IndexRegMap.size(); Op++) {
+    SrcRegs.push_back(IndexRegMap[Op]);
+  }
+
+  B.buildConcatVectors(MI.getOperand(0).getReg(), SrcRegs);
+
   MI.eraseFromParent();
 }
