@@ -42,6 +42,8 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetMachine.h"
 #include <cmath>
+#include <cstdint>
+#include <functional>
 #include <optional>
 #include <tuple>
 
@@ -382,6 +384,19 @@ void CombinerHelper::applyCombineShuffleConcat(MachineInstr &MI,
 
   Builder.buildConcatVectors(MI.getOperand(0).getReg(), Ops);
   MI.eraseFromParent();
+}
+
+// Create a stream from 0 to n with a specified number of steps
+CombinerHelper::GeneratorType
+adderGenerator(const int32_t From, const int32_t To, const int32_t StepSize) {
+  int32_t Counter = From;
+  return [Counter, To, StepSize]() mutable {
+    std::optional<int32_t> OldCount = std::optional<int32_t>(Counter);
+    Counter += StepSize;
+    if (OldCount == (To + StepSize))
+      OldCount = {};
+    return OldCount;
+  };
 }
 
 bool CombinerHelper::tryCombineShuffleVector(MachineInstr &MI) {
