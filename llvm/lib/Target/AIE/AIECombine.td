@@ -70,6 +70,30 @@ def AIE2PostLegalizerGenericCombiner
     : GICombiner<"AIE2PostLegalizerGenericCombinerImpl", [ all_combines ]> {
 }
 
+def combine_extract_concat_matchdata: GIDefMatchData<"Register">;
+def combine_extract_concat : GICombineRule<
+  (defs root:$root, combine_extract_concat_matchdata:$matchinfo),
+  (match (wip_match_opcode G_INTRINSIC): $root,
+  [{ return matchExtractConcat(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ applyExtractConcat(*${root}, MRI, B, ${matchinfo}); }])
+>;
+
+def combine_unmerge_concat_matchdata: GIDefMatchData<"std::pair<MachineInstr *, unsigned>">;
+def combine_unmerge_concat : GICombineRule<
+  (defs root:$root, combine_unmerge_concat_matchdata:$matchinfo),
+  (match (wip_match_opcode G_UNMERGE_VALUES): $root,
+  [{ return matchUnmergeConcat(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ applyUnmergeConcat(*${root}, MRI, B, ${matchinfo}); }])
+>;
+
+def combine_unmerge_upd_matchdata: GIDefMatchData<"std::map<unsigned, Register>">;
+def combine_unmerge_upd : GICombineRule<
+  (defs root:$root, combine_unmerge_upd_matchdata:$matchinfo),
+  (match (wip_match_opcode G_UNMERGE_VALUES): $root,
+  [{ return matchUnmergeUpd(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ applyUnmergeUpd(*${root}, MRI, B, ${matchinfo}); }])
+>;
+
 def load_store_increment_matchdata : GIDefMatchData<"AIELoadStoreCombineMatchData">;
 def combine_load_store_increment : GICombineRule <
   (defs root:$root, load_store_increment_matchdata:$matchinfo),
@@ -87,5 +111,9 @@ def combine_add_vector_elt_undef : GICombineRule <
 
 def AIE2PostLegalizerCustomCombiner
     : GICombiner<"AIE2PostLegalizerCustomCombinerImpl", [ combine_load_store_increment,
-                                                          combine_add_vector_elt_undef ]> {
+                                                          combine_add_vector_elt_undef,
+                                                          combine_extract_concat,
+                                                          combine_unmerge_concat,
+                                                          combine_unmerge_upd 
+                                                          ]> {
 }

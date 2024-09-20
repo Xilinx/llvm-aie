@@ -379,6 +379,47 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   static bool regClassMatches(const TargetRegisterClass &TRC,
                               const TargetRegisterClass *RC, unsigned Reg);
 
+  struct VConcatOpInfo {
+    // First input operand index.
+    unsigned FirstOperand;
+    // Number of non-register operands.
+    unsigned NumOfNonRegOperands;
+  };
+
+  /// Return operand information related to vector concat instrinsic.
+  virtual std::optional<const VConcatOpInfo>
+  getVConcatOpInfo(unsigned ID) const {
+    llvm_unreachable("Target didn't implement getVConcatOpInfo!");
+  }
+
+  struct VUpdateOpInfo {
+    // Vector to update operand index.
+    unsigned Src;
+    // Subvector to insert.
+    unsigned SrcSubVec;
+    // Position to insert operand index.
+    unsigned SubVectorIndex;
+  };
+
+  /// Return operand information related to vector update instrinsic.
+  virtual std::optional<const VUpdateOpInfo>
+  getVUpdateOpInfo(unsigned ID) const {
+    llvm_unreachable("Target didn't implement getVUpdateOpInfo!");
+  }
+
+  struct VExtractOpInfo {
+    // Vector to update operand index.
+    unsigned Src;
+    // Position to extract.
+    unsigned SubVectorIndex;
+  };
+
+  /// Return operand information related to vector extract instrinsic.
+  virtual std::optional<const VExtractOpInfo>
+  getVExtractOpInfo(unsigned ID) const {
+    llvm_unreachable("Target didn't implement getVExtractOpInfo!");
+  }
+
 protected:
   /// Expand a spill pseudo-instruction into actual target instructions. This
   /// will essentially split the register being handled into its sub-registers,
