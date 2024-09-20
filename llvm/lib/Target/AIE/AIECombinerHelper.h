@@ -139,6 +139,25 @@ bool matchPadVector(MachineInstr &MI, MachineRegisterInfo &MRI,
 void applyPadVector(MachineInstr &MI, MachineRegisterInfo &MRI,
                     MachineIRBuilder &B, Register MatchedInputVector);
 
+bool matchExtractConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
+                        const AIEBaseInstrInfo &TII, Register &MatchInfo);
+void applyExtractConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
+                        MachineIRBuilder &B, Register &MatchInfo);
+
+bool matchUnmergeConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
+                        const AIEBaseInstrInfo &TII,
+                        std::pair<MachineInstr *, unsigned> &MatchInfo);
+void applyUnmergeConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
+                        MachineIRBuilder &B,
+                        std::pair<MachineInstr *, unsigned> &MatchInfo);
+
+bool matchUpdToConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
+                      const AIEBaseInstrInfo &TII,
+                      std::map<unsigned, Register> &IndexRegMap);
+void applyUpdToConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
+                      MachineIRBuilder &B,
+                      std::map<unsigned, Register> &IndexRegMap);
+
 } // namespace llvm
 
 #endif

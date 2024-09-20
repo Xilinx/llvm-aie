@@ -15,6 +15,7 @@
 #ifndef LLVM_LIB_TARGET_AIE_AIEBASEINSTRRINFO_H
 #define LLVM_LIB_TARGET_AIE_AIEBASEINSTRRINFO_H
 
+#include "AIE.h"
 #include "AIEMIRFormatter.h"
 #include "AIETiedRegOperands.h"
 #include "MCTargetDesc/AIEFormat.h"
@@ -378,6 +379,45 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
 
   static bool regClassMatches(const TargetRegisterClass &TRC,
                               const TargetRegisterClass *RC, unsigned Reg);
+
+  struct VConcatOpInfo {
+    // First input operand index.
+    unsigned FirstOperand;
+    // Number of non-register operands.
+    unsigned NumOfNonRegOperands;
+  };
+
+  /// Return operand information related to vector concat instrinsic.
+  virtual std::optional<const VConcatOpInfo>
+  getVConcatOpInfo(const MachineInstr &MI) const;
+
+  struct VUpdateOpInfo {
+    // Vector to update operand index.
+    unsigned Src;
+    // Subvector to insert.
+    unsigned SrcSubVec;
+    // Position to insert operand index.
+    unsigned SubVectorIndex;
+  };
+
+  /// Return operand information related to vector update instrinsic.
+  virtual std::optional<const VUpdateOpInfo>
+  getVUpdateOpInfo(const MachineInstr &MI) const {
+    llvm_unreachable("Target didn't implement getVUpdateOpInfo!");
+  }
+
+  struct VExtractOpInfo {
+    // Vector to update operand index.
+    unsigned Src;
+    // Position to extract.
+    unsigned SubVectorIndex;
+  };
+
+  /// Return operand information related to vector extract instrinsic.
+  virtual std::optional<const VExtractOpInfo>
+  getVExtractOpInfo(const MachineInstr &MI) const {
+    llvm_unreachable("Target didn't implement getVExtractOpInfo!");
+  }
 
 protected:
   /// Expand a spill pseudo-instruction into actual target instructions. This
