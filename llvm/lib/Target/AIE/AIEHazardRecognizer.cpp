@@ -183,9 +183,10 @@ static cl::opt<int>
 int AIEHazardRecognizer::NumInstrsScheduled = 0;
 
 AIEHazardRecognizer::AIEHazardRecognizer(
-    const AIEBaseInstrInfo *TII, const InstrItineraryData *II, bool IsPreRA,
+    const AIEBaseInstrInfo *TII, const InstrItineraryData *II,
+    AIEAlternateDescriptors &SelectedAlternateDescs, bool IsPreRA,
     std::optional<unsigned> ScoreboardDepth)
-    : TII(TII), ItinData(II) {
+    : TII(TII), ItinData(II), SelectedAltDescs(SelectedAlternateDescs) {
 
   int Depth = 0;
   if (ScoreboardDepth.has_value()) {
@@ -213,11 +214,12 @@ AIEHazardRecognizer::AIEHazardRecognizer(
   }
 }
 
-AIEHazardRecognizer::AIEHazardRecognizer(const TargetSubtargetInfo &Subtarget,
-                                         bool IsPreRA)
+AIEHazardRecognizer::AIEHazardRecognizer(
+    const TargetSubtargetInfo &Subtarget,
+    AIEAlternateDescriptors &SelectedAlternateDescs, bool IsPreRA)
     : AIEHazardRecognizer(
           static_cast<const AIEBaseInstrInfo *>(Subtarget.getInstrInfo()),
-          Subtarget.getInstrItineraryData(), IsPreRA) {}
+          Subtarget.getInstrItineraryData(), SelectedAlternateDescs, IsPreRA) {}
 
 namespace llvm {
 void applyFormatOrdering(AIE::MachineBundle &Bundle, const VLIWFormat &Format,
@@ -292,7 +294,7 @@ void AIEHazardRecognizer::Reset() {
   LLVM_DEBUG(dbgs() << "Reset hazard recognizer\n");
   ReservedCycles = 0;
   Scoreboard.clear();
-  SelectedAltOpcodes.clear();
+  SelectedAltDescs.clear();
 }
 
 ScheduleHazardRecognizer::HazardType
@@ -324,7 +326,7 @@ AIEHazardRecognizer::getHazardType(SUnit *SU, int DeltaCycles) {
       // Check if there is NoHazard, If there is a Hazard or NoopHazard check
       // for the next possible Opcode.
       if (Haz == NoHazard) {
-        SelectedAltOpcodes[MI] = AltInstOpcode;
+        SelectedAltDescs.setAlternateDescriptor(MI, AltInstOpcode);
         return NoHazard;
       }
     }
@@ -385,7 +387,7 @@ void AIEHazardRecognizer::EmitInstruction(SUnit *SU, int DeltaCycles) {
 
   // If the instruction has multiple options, find the opcode that was selected
   // and use the latter to update the scoreboard.
-  unsigned SelectedOpcode = getSelectedAltOpcode(MI).value_or(MI->getOpcode());
+  unsigned SelectedOpcode = SelectedAltDescs.getOpcode(MI);
   if (!AIE::MachineBundle::isNoHazardMetaInstruction(SelectedOpcode))
     emitInScoreboard(TII->get(SelectedOpcode), getMemoryBanks(MI),
                      MI->operands(), MI->getMF()->getRegInfo(), DeltaCycles);
@@ -614,13 +616,6 @@ unsigned AIEHazardRecognizer::computeScoreboardDepth() const {
   }
 
   return std::max(Depth, UserScoreboardDepth.getValue());
-}
-
-std::optional<unsigned>
-AIEHazardRecognizer::getSelectedAltOpcode(MachineInstr *MI) const {
-  if (auto It = SelectedAltOpcodes.find(MI); It != SelectedAltOpcodes.end())
-    return It->second;
-  return std::nullopt;
 }
 
 MemoryBankBits

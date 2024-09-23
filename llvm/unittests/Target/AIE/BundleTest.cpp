@@ -241,7 +241,7 @@ TEST(Bundle, AddUnknowns) {
   // Test we can create a bundle of two unknown instructions
   // when not computing VLIW formats.
   B.add(Unknown);
-  B.add(Unknown, std::nullopt, /*ComputeSlots=*/false);
+  B.add(Unknown, Unknown->getOpcode(), /*ComputeSlots=*/false);
   EXPECT_EQ(B.size(), unsigned(2));
 }
 

@@ -93,6 +93,10 @@ public:
   const AIE::InterBlockScheduling &getInterBlock() const { return InterBlock; }
   AIE::InterBlockScheduling &getInterBlock() { return InterBlock; }
 
+  AIEAlternateDescriptors &getSelectedAltDescs() {
+    return InterBlock.getSelectedAltDescs();
+  }
+
 protected:
   /// Apply a set of heuristics to a new candidate for PostRA scheduling.
   ///
@@ -166,6 +170,8 @@ public:
   bool isAvailableNode(SUnit &SU, SchedBoundary &Zone,
                        bool VerifyReadyCycle) override;
 
+  AIEAlternateDescriptors &getSelectedAltDescs() { return SelectedAltDescs; }
+
 protected:
   /// Whether \p DelayedSU can be safely delayed without forming a cycle
   /// of SUs delaying each other indefinitely.
@@ -192,6 +198,8 @@ private:
   std::vector<unsigned> SUDelayerMap;
 
   std::vector<unsigned> PSetThresholds;
+
+  AIEAlternateDescriptors SelectedAltDescs;
 };
 
 /// An extension to ScheduleDAGMI that provides callbacks on region entry/exit
@@ -230,6 +238,9 @@ public:
                    unsigned RegionInstrs) override;
 
   void exitRegion() override;
+
+  // Give dag mutators access to the scheduler state
+  AIEPreRASchedStrategy *getSchedImpl() const;
 };
 
 } // end namespace llvm

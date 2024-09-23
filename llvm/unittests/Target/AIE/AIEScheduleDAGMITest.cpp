@@ -27,9 +27,12 @@ void PrintTo(const MachineBundle &B, std::ostream *OS) {
 namespace {
 
 class DummyAIEHazardRecognizer : public AIEHazardRecognizer {
+  AIEAlternateDescriptors AlternateDescriptors;
+
 public:
   DummyAIEHazardRecognizer(const ScheduleDAG *DAG)
-      : AIEHazardRecognizer(nullptr, nullptr, DAG, /*ScoreboardDepth=*/0) {}
+      : AIEHazardRecognizer(nullptr, nullptr, AlternateDescriptors, DAG,
+                            /*ScoreboardDepth=*/0) {}
 
   ~DummyAIEHazardRecognizer() override {}
 
