@@ -91,6 +91,21 @@ bool llvm::canDelayMemOp(MachineInstr &MemI, MachineInstr &Dest,
   return none_of(InstrRange, UnsafeToMovePast);
 }
 
+/// \return true if \a Src can be moved just before \a Dest in order to allow
+/// post-increment combining
+bool llvm::canDelayOp(MachineInstr &Src, MachineInstr &Dest,
+                      MachineRegisterInfo &MRI) {
+  if (Src.getParent() != Dest.getParent())
+    return false;
+  auto MII = std::next(Src.getIterator());
+  auto MIE = Dest.getIterator();
+  auto InstrRange = make_range(MII, MIE);
+  auto UnsafeToMovePast = [&](const MachineInstr &MI) {
+    return isUseOf(MI, Src) && !isTriviallyDead(MI, MRI);
+  };
+  return none_of(InstrRange, UnsafeToMovePast);
+}
+
 MachineInstr *findLastRegUseInBB(Register Reg, MachineInstr &IgnoreUser,
                                  MachineRegisterInfo &MRI,
                                  CombinerHelper &Helper,
