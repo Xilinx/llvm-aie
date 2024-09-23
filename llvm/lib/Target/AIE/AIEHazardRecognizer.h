@@ -13,7 +13,7 @@
 #ifndef LLVM_LIB_TARGET_AIE_AIEHAZARDRECOGNIZER_H
 #define LLVM_LIB_TARGET_AIE_AIEHAZARDRECOGNIZER_H
 
-#include "AIEBaseAddrSpaceInfo.h"
+#include "AIEAlternateDescriptors.h"
 #include "AIEBaseSubtarget.h"
 #include "AIEBundle.h"
 #include "MCTargetDesc/AIEMCFormats.h"
@@ -103,9 +103,11 @@ public:
   /// scheduling model. This is mostly used for testing, for other cases we
   /// should trust the instruction itineraries.
   AIEHazardRecognizer(const AIEBaseInstrInfo *TII, const InstrItineraryData *II,
+                      AIEAlternateDescriptors &SelectedAlternateDescs,
                       bool IsPreRA,
                       std::optional<unsigned> ScoreboardDepth = std::nullopt);
   AIEHazardRecognizer(const TargetSubtargetInfo &SubTarget,
+                      AIEAlternateDescriptors &SelectedAlternateDescs,
                       bool IsPreRA = false);
 
   ~AIEHazardRecognizer() override {}
@@ -156,10 +158,6 @@ public:
   // Dump the scoreboard
   void dumpScoreboard() const;
 
-  /// For instructions with multiple "alternative opcodes", this will return
-  /// the opcode selected during scheduling.
-  std::optional<unsigned> getSelectedAltOpcode(MachineInstr *MI) const;
-
   /// The instructions with memory bank attribute return the address space
   /// number
   MemoryBankBits getMemoryBanks(const MachineInstr *MI) const;
@@ -181,6 +179,10 @@ public:
   /// we can insert in the past during backward scheduling.
   /// For efficiency, this size is rounded up to a power of two.
   unsigned computeScoreboardDepth() const;
+
+  AIEAlternateDescriptors &getSelectedAltDescs() const {
+    return SelectedAltDescs;
+  }
 
   ScheduleHazardRecognizer::HazardType
   getHazardType(const ResourceScoreboard<FuncUnitWrapper> &TheScoreboard,
@@ -209,9 +211,9 @@ protected:
 
 private:
   ResourceScoreboard<FuncUnitWrapper> Scoreboard;
-  std::map<MachineInstr *, unsigned> SelectedAltOpcodes;
   const AIEBaseInstrInfo *TII;
   const InstrItineraryData *ItinData;
+  AIEAlternateDescriptors &SelectedAltDescs;
   static int NumInstrsScheduled;
   unsigned IssueLimit = 1;
   unsigned ReservedCycles = 0;

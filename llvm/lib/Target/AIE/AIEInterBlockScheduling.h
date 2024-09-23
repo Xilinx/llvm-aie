@@ -297,6 +297,7 @@ class InterBlockScheduling {
   // A hazard recognizer to interpret itineraries
   std::unique_ptr<AIEHazardRecognizer> HR;
 
+  AIEAlternateDescriptors SelectedAltDescs;
   std::map<MachineBasicBlock *, BlockState> Blocks;
   std::vector<MachineBasicBlock *> MBBSequence;
   unsigned NextInOrder = 0;
@@ -393,6 +394,8 @@ public:
   void emitInterBlockBottom(const BlockState &BS) const;
 
   bool tryPipeline(ScheduleDAGMI &DAG, MachineBasicBlock *BB);
+
+  AIEAlternateDescriptors &getSelectedAltDescs() { return SelectedAltDescs; }
 };
 
 } // end namespace llvm::AIE

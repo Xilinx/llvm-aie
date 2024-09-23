@@ -166,7 +166,8 @@ llvm::AIE::computeAndFinalizeBundles(SchedBoundary &Zone) {
         bumpCycleForBundles(EmitCycle, Bundles, CurrBundle);
 
       LLVM_DEBUG(dbgs() << "  Add to CurrBundle: " << MI);
-      CurrBundle.add(&MI, HazardRec.getSelectedAltOpcode(&MI), ComputeSlots);
+      CurrBundle.add(&MI, HazardRec.getSelectedAltDescs().getOpcode(&MI),
+                     ComputeSlots);
     }
   };
 
@@ -594,6 +595,7 @@ void AIEPostRASchedStrategy::leaveRegion(const SUnit &ExitSU) {
     return;
   }
   materializeMultiOpcodeInstrs();
+  InterBlock.getSelectedAltDescs().clear();
   if (IsBottomRegion) {
     // This is the earliest point where we can destroy the recorded
     // schedule in iterative scheduling. enterMBB and enterRegion are too early,
@@ -625,7 +627,7 @@ void AIEPostRASchedStrategy::materializeMultiOpcodeInstrs() {
                                   const AIEHazardRecognizer &HazardRec) {
     // Materialize instructions with multiple opcode options
     if (std::optional<unsigned> AltOpcode =
-            HazardRec.getSelectedAltOpcode(&MI)) {
+            HazardRec.getSelectedAltDescs().getSelectedOpcode(&MI)) {
       MI.setDesc(TII->get(*AltOpcode));
     }
   };
@@ -831,6 +833,7 @@ void AIEPreRASchedStrategy::leaveRegion(const SUnit &ExitSU) {
   RegionBegin = nullptr;
   RegionEnd = nullptr;
   SUDelayerMap.clear();
+  SelectedAltDescs.clear();
 }
 
 PressureDiff estimatePressureDiff(const SUnit &SU,
@@ -1108,6 +1111,10 @@ void AIEScheduleDAGMI::releasePred(SUnit *SU, SDep *PredEdge) {
   --PredSU->NumSuccsLeft;
   if (PredSU->NumSuccsLeft == 0 && PredSU != &EntrySU)
     SchedImpl->releaseBottomNode(PredSU);
+}
+
+AIEPreRASchedStrategy *AIEScheduleDAGMILive::getSchedImpl() const {
+  return static_cast<AIEPreRASchedStrategy *>(SchedImpl.get());
 }
 
 void AIEScheduleDAGMILive::enterRegion(MachineBasicBlock *BB,

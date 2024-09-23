@@ -176,7 +176,7 @@ void InterBlockScheduling::enterFunction(MachineFunction *MF) {
 
   // Get ourselves a hazard recognizer
   const auto &Subtarget = MF->getSubtarget();
-  HR = std::make_unique<AIEHazardRecognizer>(Subtarget);
+  HR = std::make_unique<AIEHazardRecognizer>(Subtarget, SelectedAltDescs);
 
   // And a native InstrInfo
   TII = static_cast<const AIEBaseInstrInfo *>(Subtarget.getInstrInfo());

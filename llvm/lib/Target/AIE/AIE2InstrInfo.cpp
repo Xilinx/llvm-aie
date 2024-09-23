@@ -20,6 +20,7 @@
 #include "AIE2TargetMachine.h"
 #include "AIEHazardRecognizer.h"
 #include "AIEMachineFunctionInfo.h"
+#include "AIEMachineScheduler.h"
 #include "AIETiedRegOperands.h"
 #include "MCTargetDesc/AIE2MCTargetDesc.h"
 #include "MCTargetDesc/AIEMCFormats.h"
@@ -912,12 +913,23 @@ ScheduleHazardRecognizer *AIE2InstrInfo::CreateTargetPostRAHazardRecognizer(
                    "Please use the MI scheduler instead: postmisched");
 }
 
+static AIEAlternateDescriptors &getSelectedAltDescs(const ScheduleDAGMI *DAG) {
+  if (DAG->hasVRegLiveness())
+    return static_cast<const AIEScheduleDAGMILive *>(DAG)
+        ->getSchedImpl()
+        ->getSelectedAltDescs();
+  return static_cast<const AIEScheduleDAGMI *>(DAG)
+      ->getSchedImpl()
+      ->getSelectedAltDescs();
+}
+
 ScheduleHazardRecognizer *
 AIE2InstrInfo::CreateTargetMIHazardRecognizer(const InstrItineraryData *II,
                                               const ScheduleDAGMI *DAG) const {
   // AIE has a fully exposed pipeline, resource and format conflicts must be
   // exactly modelled.
-  return new AIEHazardRecognizer(this, II, /*IsPreRA=*/DAG->hasVRegLiveness());
+  return new AIEHazardRecognizer(this, II, getSelectedAltDescs(DAG),
+                                 /*IsPreRA=*/DAG->hasVRegLiveness());
 }
 
 /// insertNoop - Insert a noop into the instruction stream at the specified
