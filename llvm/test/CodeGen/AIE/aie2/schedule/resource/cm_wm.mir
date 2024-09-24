@@ -521,3 +521,63 @@ body:             |
     $cm8 = VUPS_S64_D32_mv_ups_x2c $x2, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupssign
     $wl0 = VMOV_mv_w $amhh0
 ...
+
+
+# Test to make sure VMOV_mv_x reserve CM_WM port xen writing to eBMm reg class
+# VUPS accesses CM_WM write port in cycle 3, VMOV_mv_x in cycle 2 when writing to eBMm reg class
+# We expect a NOP to be inserted to prevent resource conflict on CM_WM port
+---
+name:            E3_VUPS_E2_VMOV_am_x
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: E3_VUPS_E2_VMOV_am_x
+    ; CHECK: $cm8 = VUPS_S64_D32_mv_ups_x2c killed $x2, killed $s2, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $bmh0 = VMOV_mv_x killed $x0
+    ; CHECK-NEXT: NOP
+    $cm8 = VUPS_S64_D32_mv_ups_x2c $x2, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    $bmh0 = VMOV_mv_x $x0
+...
+
+---
+name:            E3_VUPS_E2_VMOV_bm_bm
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: E3_VUPS_E2_VMOV_bm_bm
+    ; CHECK: $cm8 = VUPS_S64_D32_mv_ups_x2c killed $x2, killed $s2, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $bmh0 = VMOV_mv_x killed $bml1
+    ; CHECK-NEXT: NOP
+    $cm8 = VUPS_S64_D32_mv_ups_x2c $x2, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    $bmh0 = VMOV_mv_x $bml1
+...
+
+# Test to make sure VMOV_mv_x does not reserve CM_WM port xen writing to mXm reg class
+# VUPS accesses CM_WM write port in cycle 3, VMOV_mv_x in cycle 2 if writing to mBMm reg class
+---
+name:            E3_VUPS_E2_VMOV_x_x
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: E3_VUPS_E2_VMOV_x_x
+    ; CHECK: $cm8 = VUPS_S64_D32_mv_ups_x2c killed $x2, killed $s2, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    ; CHECK-NEXT: $x0 = VMOV_mv_x killed $x1
+    ; CHECK-NEXT: NOP
+    $cm8 = VUPS_S64_D32_mv_ups_x2c $x2, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    $x0 = VMOV_mv_x $x1
+...
+
+---
+name:            E3_VUPS_E2_VMOV_x_bm
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: E3_VUPS_E2_VMOV_x_bm
+    ; CHECK: $cm8 = VUPS_S64_D32_mv_ups_x2c killed $x2, killed $s2, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    ; CHECK-NEXT: $x0 = VMOV_mv_x killed $bmh0
+    ; CHECK-NEXT: NOP
+    $cm8 = VUPS_S64_D32_mv_ups_x2c $x2, $s2, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    $x0 = VMOV_mv_x $bmh0
+...

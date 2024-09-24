@@ -1281,10 +1281,6 @@ unsigned AIE2InstrInfo::getNumBypassedCycles(const InstrItineraryData *ItinData,
       return Reg.isPhysical() && AIE2::eWLRegClass.contains(Reg)
                  ? MovSlotBypassClass
                  : 0U;
-    case AIE2::VMOV_mv_x:
-      return Reg.isPhysical() && AIE2::mXmRegClass.contains(Reg)
-                 ? MovSlotBypassClass
-                 : 0U;
     default: {
       const MachineRegisterInfo &MRI = MI.getMF()->getRegInfo();
       return ItinData->getForwardingClass(

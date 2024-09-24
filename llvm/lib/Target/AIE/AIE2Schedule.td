@@ -319,6 +319,10 @@ def II_VMOV_W_WML_WMH : InstrItinClass;
 def II_VMOV_W_WMH_WML : InstrItinClass;
 def II_VMOV_W_WML_WML : InstrItinClass;
 def II_VMOV_X : InstrItinClass;
+def II_VMOV_X_BM_BM : InstrItinClass;
+def II_VMOV_X_BM_XM : InstrItinClass;
+def II_VMOV_X_XM_BM : InstrItinClass;
+def II_VMOV_X_XM_XM : InstrItinClass;
 def II_VMOV_CM : InstrItinClass;
 def II_VMOV_CASCADE_READ : InstrItinClass;
 def II_VMOV_CASCADE_WRITE : InstrItinClass;
@@ -824,12 +828,6 @@ InstrItinData<II_VMSCf, [InstrStage<1, [R_RV_PORT]>, EmptyCycles<4>, InstrStage<
               [6,3,1,1,1,/*srFPFlags*/7, /*crFPMask*/7]>,
 InstrItinData<II_VMOV_D, [EmptyCycles<4>, InstrStage<1, [CM_WA_PORT]>],
               [5,3], [VEC_Bypass,NoBypass]>,
-// VMOV_W supports bypasses (in both directions) only for wl registers, not for wh registers.
-// This itinerary will be used by Pre-RA scheduling in particular. As the
-// assigned phys regs aren't known, conservatively assume no Bypass.
-// However, Post-RA scheduling needs an exact itinerary, otherwise we might give
-// an optimistic latency to anti-dependencies.
-// See schedule/negative_latencies/bypass.mir for details.
 InstrItinData<II_VMOV_W, [SimpleCycle<CM_RM_PORT>, PrefixCycle<W_WM_PORT>, SimpleCycle<CM_WM_PORT>],
               [2,1], [NoBypass, NoBypass]>,
 InstrItinData<II_VMOV_W_CM_CM, [SimpleCycle<CM_RM_PORT>, SimpleCycle<CM_WM_PORT>],
@@ -850,11 +848,16 @@ InstrItinData<II_VMOV_W_WMH_WML, [EmptyCycles<1>, SimpleCycle<W_WM_PORT>],
               [2,1], [NoBypass, MOV_Bypass]>,
 InstrItinData<II_VMOV_W_WML_WML, [EmptyCycles<1>, SimpleCycle<W_WM_PORT>],
               [2,1], [MOV_Bypass, MOV_Bypass]>,
-// FIXME: II_VMOV_X always book both the vector and accumulator read and write ports.
-// That is overly pessimistic as the instructions actually only use the port according to the register
-// they are reading/writing. We need to find a way to dynamically select itineraries for an instruction
-// based on its operands.
+// FIXME: Remove MOV_Bypass from II_VMOV_X once VCONV_FP32_BF16 starts using new reg base itineraries
 InstrItinData<II_VMOV_X, [SimpleCycle<CM_RM_PORT>, PrefixCycle<W_WM_PORT>, SimpleCycle<CM_WM_PORT>],
+              [2,1], [MOV_Bypass, MOV_Bypass]>,
+InstrItinData<II_VMOV_X_BM_BM, [SimpleCycle<CM_RM_PORT>, SimpleCycle<CM_WM_PORT>],
+              [2,1], [NoBypass, NoBypass]>,
+InstrItinData<II_VMOV_X_XM_BM, [SimpleCycle<CM_RM_PORT>, SimpleCycle<W_WM_PORT>],
+              [2,1], [MOV_Bypass, NoBypass]>,
+InstrItinData<II_VMOV_X_BM_XM, [EmptyCycles<1>, SimpleCycle<CM_WM_PORT>],
+              [2,1], [NoBypass, MOV_Bypass]>,
+InstrItinData<II_VMOV_X_XM_XM, [EmptyCycles<1>, SimpleCycle<W_WM_PORT>],
               [2,1], [MOV_Bypass, MOV_Bypass]>,
 InstrItinData<II_VMOV_CM, [InstrStage<1, [CM_RM_PORT]>, InstrStage<1,  [CM_WM_PORT]>], [2,1]>,
 

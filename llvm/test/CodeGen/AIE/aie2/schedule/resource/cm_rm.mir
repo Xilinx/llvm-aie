@@ -553,3 +553,71 @@ body:             |
     $amlh4 = VMOV_mv_w $wh1
     $amlh5 = VMOV_mv_w $wh1
 ...
+
+# VADDMAC accesses CM_RM read port in cycle 3, VMOV_mv_x in cycle 1 only when reading to mBMm reg class
+# In the following test we expect NOP to be added after VADDMAC
+---
+name:            E3_VADDMAC_E1_VMOV_X_BM
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: E3_VADDMAC_E1_VMOV_X_BM
+    ; CHECK: $cm0 = VADDMAC_vmac_bm_core_dense killed $cm0, killed $cm2, killed $x3, killed $x4, killed $r5
+    ; CHECK-NEXT: $x0 = VMOV_mv_x killed $bmh4
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $x1 = VMOV_mv_x killed $bmh5
+    ; CHECK-NEXT: NOP
+    $cm0 = VADDMAC_vmac_bm_core_dense $cm0, $cm2, $x3, $x4, $r5
+    $x0 = VMOV_mv_x $bmh4
+    $x1 = VMOV_mv_x $bmh5
+...
+
+---
+name:            E3_VADDMAC_E1_VMOV_BM_BM
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: E3_VADDMAC_E1_VMOV_BM_BM
+    ; CHECK: $cm0 = VADDMAC_vmac_bm_core_dense killed $cm0, killed $cm2, killed $x3, killed $x4, killed $r5
+    ; CHECK-NEXT: $bml4 = VMOV_mv_x killed $bmh4
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $bml5 = VMOV_mv_x killed $bmh5
+    ; CHECK-NEXT: NOP
+    $cm0 = VADDMAC_vmac_bm_core_dense $cm0, $cm2, $x3, $x4, $r5
+    $bml4 = VMOV_mv_x $bmh4
+    $bml5 = VMOV_mv_x $bmh5
+...
+
+# VADDMAC accesses CM_RM read port in cycle 3, VMOV_mv_x in cycle 1 only when reading to mBMm reg class
+# In the following test since we are reading from mXm we do NOT expect NOP to be added after VADDMAC
+---
+name:            E3_VADDMAC_E1_VMOV_X_X
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: E3_VADDMAC_E1_VMOV_X_X
+    ; CHECK: $cm0 = VADDMAC_vmac_bm_core_dense killed $cm0, killed $cm2, $x3, killed $x4, killed $r5
+    ; CHECK-NEXT: $x0 = VMOV_mv_x killed $x2
+    ; CHECK-NEXT: $x1 = VMOV_mv_x killed $x3
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    $cm0 = VADDMAC_vmac_bm_core_dense $cm0, $cm2, $x3, $x4, $r5
+    $x0 = VMOV_mv_x $x2
+    $x1 = VMOV_mv_x $x3
+...
+
+---
+name:            E3_VADDMAC_E1_VMOV_BM_X
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: E3_VADDMAC_E1_VMOV_BM_X
+    ; CHECK: $cm0 = VADDMAC_vmac_bm_core_dense killed $cm0, killed $cm2, $x3, killed $x4, killed $r5
+    ; CHECK-NEXT: $bml4 = VMOV_mv_x killed $x2
+    ; CHECK-NEXT: $bml5 = VMOV_mv_x killed $x3
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    $cm0 = VADDMAC_vmac_bm_core_dense $cm0, $cm2, $x3, $x4, $r5
+    $bml4 = VMOV_mv_x $x2
+    $bml5 = VMOV_mv_x $x3
+...
