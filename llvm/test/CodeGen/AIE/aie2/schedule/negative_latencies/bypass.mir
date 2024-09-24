@@ -73,7 +73,29 @@ body:             |
 # CHECK-SU:  Successors:
 # CHECK-SU:    SU(1): Anti Latency=0{{$}}
 # CHECK-SU: SU(1):   $x0 = VBAND $x2, $x4
-
+---
+name:            antidep_minus_1_plus_X_bypass
+alignment:       16
+body:             |
+  bb.0.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: antidep_minus_1_plus_X_bypass
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: $x1 = VMOV_mv_x killed $x0
+    ; CHECK-NEXT: $x0 = VBAND killed $x2, killed $x4
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: VST_dmw_sts_w_ag_idx_imm killed $wh0, killed $p0, 0
+    ; CHECK-NEXT: NOP
+    $x1 = VMOV_mv_x $x0
+    $x0 = VBAND $x2, $x4
+    VST_dmw_sts_w_ag_idx_imm $wh0, $p0, 0
+...
+# CHECK-SU-LABEL: antidep_minus_1_plus_X_bypass:%bb.0 entry
+# CHECK-SU: SU(0):   $x1 = VMOV_mv_x $x0
+# CHECK-SU:  Successors:
+# CHECK-SU:    SU(1): Anti Latency=0{{$}}
+# CHECK-SU: SU(1):   $x0 = VBAND $x2, $x4
 
 # There is an anti-dependency between VMOV and VBAND.
 # VMOV reads in E1 while VBAND writes in E2. There is no potential bypass in use
