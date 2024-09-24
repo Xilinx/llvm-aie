@@ -97,6 +97,35 @@ body:             |
 # CHECK-SU:    SU(1): Anti Latency=0{{$}}
 # CHECK-SU: SU(1):   $x0 = VBAND $x2, $x4
 
+# There is an anti-dependency between VCONV_FP32_BF16 and VBAND.
+# VCONV_FP32_BF16 reads in E1 while VBAND writes in E2. We need to account for the
+# potential WL bypass, otherwise the edge latency would be -1 and the
+# instructions could be re-ordered. They cannot be re-ordered, otherwise
+# the bypass would be taken and VMOV would wrongly take the new value for wl0.
+---
+name:            antidep_minus_1_plus_wl_bypass_VCONV_FP32_BF16
+alignment:       16
+body:             |
+  bb.0.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: antidep_minus_1_plus_wl_bypass_VCONV_FP32_BF16
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: $bmh0 = VCONV_FP32_BF16 killed $wl0
+    ; CHECK-NEXT: $x0 = VBAND killed $x2, killed $x4
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: VST_dmw_sts_w_ag_idx_imm killed $wh0, killed $p0, 0
+    ; CHECK-NEXT: NOP
+    $bmh0 = VCONV_FP32_BF16 $wl0
+    $x0 = VBAND $x2, $x4
+    VST_dmw_sts_w_ag_idx_imm $wh0, $p0, 0
+...
+# CHECK-SU-LABEL: antidep_minus_1_plus_wl_bypass_VCONV_FP32_BF16:%bb.0 entry
+# CHECK-SU: SU(0):   $bmh0 = VCONV_FP32_BF16 $wl0
+# CHECK-SU:  Successors:
+# CHECK-SU:    SU(1): Anti Latency=0{{$}}
+# CHECK-SU: SU(1):   $x0 = VBAND $x2, $x4
+
 # There is an anti-dependency between VMOV and VBAND.
 # VMOV reads in E1 while VBAND writes in E2. There is no potential bypass in use
 # because the MOV slot bypass does not work for wh registers.
