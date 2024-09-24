@@ -958,7 +958,7 @@ let Defs = [srUPS_of] in {
 }
 
 // 7.5 vconv.fp32.bf16 – bfloat16 to float Conversion instructions
-let Itinerary = II_VCONVfp32bf16 in {
+let Itinerary = II_VCONVfp32bf16, ItineraryRegPairs = [ItinRegClassPair<II_VCONVfp32bf16_WL,[OperandRegClass<1, eWL>]>] in {
   def VCONV_FP32_BF16 :
       AIE2_mv_ups_bf_inst_mv <(outs mBMm:$dst), (ins OP_mWm_1:$src),
                             "vconv.fp32.bf16", "$dst, $src">;

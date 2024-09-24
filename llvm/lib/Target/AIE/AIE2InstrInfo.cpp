@@ -1281,26 +1281,10 @@ unsigned AIE2InstrInfo::getNumBypassedCycles(const InstrItineraryData *ItinData,
                                              unsigned DefIdx,
                                              const MachineInstr &UseMI,
                                              unsigned UseIdx) const {
-  // TODO: This should be tablegen-erated. This way we also wouldn't need
-  // trickery to find the class of the MOV_Bypass
-  const unsigned MovSlotBypassClass =
-      ItinData->getForwardingClass(get(AIE2::VMOV_mv_x).getSchedClass(), 0);
-  assert(MovSlotBypassClass != 0);
-
   auto GetForwardingClass = [&](const MachineInstr &MI, unsigned OpIdx) {
-    Register Reg = MI.getOperand(OpIdx).getReg();
-    switch (MI.getOpcode()) {
-    case AIE2::VCONV_FP32_BF16:
-      assert(OpIdx < 2);
-      return Reg.isPhysical() && AIE2::eWLRegClass.contains(Reg)
-                 ? MovSlotBypassClass
-                 : 0U;
-    default: {
-      const MachineRegisterInfo &MRI = MI.getMF()->getRegInfo();
-      return ItinData->getForwardingClass(
-          getSchedClass(MI.getDesc(), MI.operands(), MRI), OpIdx);
-    }
-    }
+    const MachineRegisterInfo &MRI = MI.getMF()->getRegInfo();
+    return ItinData->getForwardingClass(
+        getSchedClass(MI.getDesc(), MI.operands(), MRI), OpIdx);
   };
 
   // FIXME: This assumes one cycle benefit for every pipeline forwarding.

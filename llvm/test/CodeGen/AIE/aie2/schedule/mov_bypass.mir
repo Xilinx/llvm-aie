@@ -161,3 +161,30 @@ body:             |
     $amll1 = VMOV_mv_w $amll0
     $amll2 = VMOV_mv_w $amll1
 ...
+
+---
+name:            bypass_wl_vconv
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: bypass_wl_vconv
+    ; CHECK: $wl1 = VMOV_mv_w killed $wh0
+    ; CHECK-NEXT: $bmh0 = VCONV_FP32_BF16 killed $wl1
+    ; CHECK-NEXT: NOP
+    $wl1 = VMOV_mv_w $wh0
+    $bmh0 = VCONV_FP32_BF16 $wl1
+...
+
+---
+name:            bypass_wh_vconv
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: bypass_wh_vconv
+    ; CHECK: $wh1 = VMOV_mv_w killed $wh0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $bmh0 = VCONV_FP32_BF16 killed $wh1
+    ; CHECK-NEXT: NOP
+    $wh1 = VMOV_mv_w $wh0
+    $bmh0 = VCONV_FP32_BF16 $wh1
+...

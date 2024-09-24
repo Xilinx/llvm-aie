@@ -83,13 +83,6 @@ def R_WA_PORT : FuncUnit;
 // Reading D or P
 def P_RM_PORT : FuncUnit;
 
-// Writing D or P. The ISA suggests every register file has its own writeport, which is selected
-// based on the destination register.
-// FIXME:
-// We represent the instruction as writing P_WM_PORT, but we could prepare
-// itineraries for each of the regfiles. Once we have a way of dynamically selecting an
-// itinerary we can pick the right one, reducing conflicts.
-// Alternatively, we can split the instructions, but this will bloat things tremendously.
 def P_WM_PORT : FuncUnit;
 def M_WM_PORT : FuncUnit;
 def DJ_WM_PORT : FuncUnit;
@@ -285,6 +278,7 @@ def II_VCLR : InstrItinClass;
 def II_VCLRf : InstrItinClass;
 def II_VCONV : InstrItinClass;
 def II_VCONVfp32bf16 : InstrItinClass;
+def II_VCONVfp32bf16_WL : InstrItinClass;
 def II_VEQZ : InstrItinClass;
 def II_VEXTBCST : InstrItinClass;
 def II_VEXTRACT : InstrItinClass;
@@ -969,9 +963,8 @@ InstrItinData<II_VMOV_W_WMH_WML, [EmptyCycles<1>, SimpleCycle<W_WM_PORT>],
               [2,1], [NoBypass, MOV_Bypass]>,
 InstrItinData<II_VMOV_W_WML_WML, [EmptyCycles<1>, SimpleCycle<W_WM_PORT>],
               [2,1], [MOV_Bypass, MOV_Bypass]>,
-// FIXME: Remove MOV_Bypass from II_VMOV_X once VCONV_FP32_BF16 starts using new reg base itineraries
 InstrItinData<II_VMOV_X, [SimpleCycle<CM_RM_PORT>, PrefixCycle<W_WM_PORT>, SimpleCycle<CM_WM_PORT>],
-              [2,1], [MOV_Bypass, MOV_Bypass]>,
+              [2,1], [NoBypass, NoBypass]>,
 InstrItinData<II_VMOV_X_BM_BM, [SimpleCycle<CM_RM_PORT>, SimpleCycle<CM_WM_PORT>],
               [2,1], [NoBypass, NoBypass]>,
 InstrItinData<II_VMOV_X_XM_BM, [SimpleCycle<CM_RM_PORT>, SimpleCycle<W_WM_PORT>],
@@ -1074,10 +1067,10 @@ InstrItinData<II_VFLOORs32bf16_AM, [SimpleCycle<CM_RM_PORT>, SimpleCycle<W_WA_PO
               [2,1,1,/*srF2IFlags*/2,/*crF2IMask*/1]>,
 InstrItinData<II_VFLOORs32bf16_W, [SimpleCycle<W_RS_PORT>, SimpleCycle<W_WA_PORT>],
               [2,1,1,/*srF2IFlags*/2,/*crF2IMask*/1]>,
-// Note: This is a conservative itinerary for pre-RA scheduling, as it does not
-// model the MOV slot bypass correctly. See II_VMOV_W for details.
 InstrItinData<II_VCONVfp32bf16, [EmptyCycles<1>, SimpleCycle<CM_WM_PORT>],
               [2,1]>,
+InstrItinData<II_VCONVfp32bf16_WL, [EmptyCycles<1>, SimpleCycle<CM_WM_PORT>],
+              [2,1], [NoBypass, MOV_Bypass]>, 
 InstrItinData<II_VSHUFFLE, [EmptyCycles<1>, InstrStage<1,[W_WM_PORT],0>, InstrStage<1,[CM_WM_PORT],0>],
               [2,1,1,1], [MOV_Bypass,MOV_Bypass,MOV_Bypass,NoBypass]>,
 InstrItinData<II_VSHIFT, [EmptyCycles<1>, InstrStage<1,  [W_WM_PORT]>],
