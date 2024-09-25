@@ -281,6 +281,8 @@ def II_VLDA_2D_CONV : InstrItinClass;
 def II_VLDA_3D_CONV : InstrItinClass;
 def II_VLDB : InstrItinClass;
 def II_VLDB_POSTINC : InstrItinClass;
+def II_VLDB_POSTINC_PREP : InstrItinClass;
+def II_VLDB_POSTINC_POP : InstrItinClass;
 def II_VLDB_2D : InstrItinClass;
 def II_VLDB_3D : InstrItinClass;
 def II_VLDB_4X : InstrItinClass;
@@ -756,6 +758,10 @@ MemInstrItinData<II_VLDB_COMPR_POP, [AvoidPartWordStore],
     [/*ptr_out*/1,/*dst*/7,/*ptr*/1,/*def:srCompr_uf*/5, /*def:DP*/6,/*use:DP*/6],
     MemoryCycles<[5]>>,
 MemInstrItinData<II_VLDB_POSTINC, [AvoidPartWordStore], [7,1,1,1], MemoryCycles<[5]>>,
+
+MemInstrItinData<II_VLDB_POSTINC_PREP, [AvoidPartWordStore], [6,1,1,1], MemoryCycles<[5]>>,
+InstrItinData<II_VLDB_POSTINC_POP, [], [1,1]>,
+
 MemInstrItinData<II_VLDB_2D, [AvoidPartWordStore], [7,1,1,1,1], MemoryCycles<[5]>>,
 MemInstrItinData<II_VLDB_3D, [AvoidPartWordStore], [7,1,1,1,1,1], MemoryCycles<[5]>>,
 MemInstrItinData<II_VLDB_4X,

@@ -397,6 +397,18 @@ let hasSideEffects = false, mayLoad = true, mayStore = false in {
   AIE2_ag_nospill__ag_pstm_nrm_imm;
   }
 
+  // Note: using a GPR dependency to connect .prep to .pop
+  let Itinerary = II_VLDB_POSTINC_PREP, Slot = ldb_slot in
+  def VLDB_pstm_imm_prep : Pseudo< (outs eR:$dst_sentinel, eP:$ptr_out) , (ins eP:$ptr, imm4x32:$imm),
+      "vldb.prep", "$dst_sentinel, [$ptr], $imm">,
+  AIE2_ag_nospill__ag_pstm_nrm_imm;
+
+  let Itinerary = II_VLDB_POSTINC_POP, isMeta = true in
+  let mayLoad = false in
+  def VLDB_pstm_imm_pop : Pseudo< (outs mWa:$dst) , (ins eR:$sentinel),
+      "vldb.pop", "$dst, $sentinel">,
+  AIE2_ag_nospill__ag_pstm_nrm_imm;
+
   let Itinerary = II_VLDB_2D in
   let DecoderMethod = "DecodeVLDB_2DInstruction" in
   let Constraints = "$ptr_out = $ptr" in
