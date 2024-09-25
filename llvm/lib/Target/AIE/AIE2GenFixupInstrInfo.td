@@ -2442,7 +2442,7 @@ let mayStore = true in {
     }
 } // let mayStore = true
 
-let mayLoad = true in {
+let mayLoad = false in {
   let Itinerary = II_VLDB_4X in {
     class VLDB_dmv_ldb_4x<bits<2> sz, bits<1> off, string opcodestr> :
           AIE2_dmv_ldb_4x_inst_ldb<sz, off, (outs mWs:$dst), (ins mWb:$src), opcodestr, "$dst, $src">;

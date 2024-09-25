@@ -435,7 +435,7 @@ class AIEV2SPARSE_RESET_FILL : Intrinsic<[llvm_ptr_ty],
 
 // LOAD_4X
 class AIEV2LOAD4X : DefaultAttrsIntrinsic<[llvm_v8i32_ty], [llvm_v8i32_ty],
-      [IntrReadMem]>;
+      [IntrNoMem]>;
 
 
 // bfloat16 conversions
