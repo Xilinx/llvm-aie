@@ -7,7 +7,7 @@
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 
-# RUN: llc -mtriple=aie2 -verify-machineinstrs --run-pass=greedy,aie-wawreg-rewrite,virtregrewriter  %s  -o - | FileCheck %s
+# RUN: llc -mtriple=aie2 -verify-machineinstrs --start-before=greedy --stop-after=virtregrewriter  %s  -o - | FileCheck %s
 #
 ---
 name:            long_reg_blocking
@@ -35,7 +35,7 @@ body:             |
   ; CHECK-NEXT:   renamable $p1 = COPY $p0
   ; CHECK-NEXT:   renamable $d0 = COPY $d1
   ; CHECK-NEXT:   $wl0, dead $p1, dead $dc0 = VLDA_2D_dmw_lda_w killed $p1, $d0
-  ; CHECK-NEXT:   dead renamable $x1, $l4 = VMAX_LT_S8 renamable $x0, $x2, implicit $crvaddsign
+  ; CHECK-NEXT:   dead renamable $x4, $l4 = VMAX_LT_S8 renamable $x0, $x2, implicit $crvaddsign
   ; CHECK-NEXT:   renamable $r0 = AND $r7, $r1
   ; CHECK-NEXT:   renamable $r28 = NE killed renamable $r0, $r1
   ; CHECK-NEXT:   ST_TM killed renamable $r28, $p0 :: (store (s32) into custom "TileMemory", addrspace 15)
