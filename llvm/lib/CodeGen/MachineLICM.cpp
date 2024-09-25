@@ -1159,7 +1159,7 @@ bool MachineLICMBase::CanCauseHighRegPressure(
       return true;
 
     for (const auto &RP : BackTrace)
-      if (static_cast<int>(RP[Class]) + RPIdAndCost.second >= Limit)
+      if (static_cast<int>(RP[Class]) + RPIdAndCost.second > Limit)
         return true;
   }
 
