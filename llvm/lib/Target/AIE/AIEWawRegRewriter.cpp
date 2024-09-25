@@ -130,9 +130,8 @@ private:
   /// is used.
   void addAliasRegs(BitVector &BlockedPhysRegs, const MCPhysReg PhysReg) const;
 
-bool couldBeCalleeSaveEvasiveRegister(const MCPhysReg &PhysReg,
-                                                         Register Reg);
-
+  bool couldBeCalleeSaveEvasiveRegister(const MCPhysReg &PhysReg,
+                                        const Register Reg) const;
 };
 
 MCPhysReg
@@ -380,8 +379,8 @@ void AIEWawRegRewriter::addAliasRegs(BitVector &BlockedPhysRegs,
   LLVM_DEBUG(dbgs() << "\n");
 }
 
-bool AIEWawRegRewriter::couldBeCalleeSaveEvasiveRegister(const MCPhysReg &PhysReg,
-                                             Register Reg) {
+bool AIEWawRegRewriter::couldBeCalleeSaveEvasiveRegister(
+    const MCPhysReg &PhysReg, const Register Reg) const {
   const TargetRegisterClass *CalleeSaveClass = TRI->getCalleeSaveRegClass(*MF);
   const TargetRegisterClass *GPRClass = MRI->getRegClass(Reg);
   if (CalleeSaveClass == GPRClass) {
