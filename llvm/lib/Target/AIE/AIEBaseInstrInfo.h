@@ -441,6 +441,20 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
     llvm_unreachable("Target didn't implement isProfitableToSplitType!");
   }
 
+  /// Abstract vector operation to help the decoding of complex operations.
+  struct AbstractVecOp {
+    enum class OperationType : unsigned { ADD, BROADCAST, SELECT };
+    OperationType Type;
+    SmallVector<Register, 4> VectorSrcRegs;
+    Register ScalarSrcReg;
+  };
+
+  /// Retrieve an abstract representation, of an instruction.
+  virtual std::optional<const AbstractVecOp>
+  parseTargetVectorOp(const MachineInstr &MI) const {
+    return std::nullopt;
+  }
+
 protected:
   /// Expand a spill pseudo-instruction into actual target instructions. This
   /// will essentially split the register being handled into its sub-registers,

@@ -34,6 +34,7 @@
 #include "AIE2InstrInfo.h"
 #include "AIE2RegisterInfo.h"
 #include "AIEBaseRegisterInfo.h"
+#include "AIECombinerHelper.h"
 #include "Utils/AIELoopUtils.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DepthFirstIterator.h"
@@ -51,6 +52,7 @@
 #include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include <optional>
 
 using namespace llvm;
 
@@ -438,6 +440,140 @@ bool duplicateAdressingRegs(MachineBasicBlock &MBB, MachineRegisterInfo &MRI) {
   return tryToDuplicateLoadUse(LoadUses, NonLoadUses, MRI, TII);
 }
 
+using Operation = AIEBaseInstrInfo::AbstractVecOp::OperationType;
+using AbstractVecOp = AIEBaseInstrInfo::AbstractVecOp;
+using OptionalVecOp = std::optional<AbstractVecOp>;
+
+bool getGlobalValue(const MachineInstr *MI,
+                    SmallPtrSet<const Value *, 4> &GVSet,
+                    MachineRegisterInfo &MRI) {
+
+  MI = getDefIgnoringCopiesAndBitcasts(MI->getOperand(1).getReg(), MRI);
+
+  for (auto MO : MI->uses()) {
+    if (MO.isGlobal()) {
+      GVSet.insert(MO.getGlobal());
+      return true;
+    }
+  }
+  return false;
+}
+
+// Recognize BROADCAST (GLOBAL)
+bool visitVBroadcast(AbstractVecOp VBroadcast, const AIEBaseInstrInfo *TII,
+                     MachineRegisterInfo &MRI,
+                     SmallPtrSet<const Value *, 4> &GVSet) {
+
+  return getGlobalValue(MRI.getVRegDef(VBroadcast.ScalarSrcReg), GVSet, MRI);
+}
+
+// Recognize SELECT ((SELECT | BROADCAST), ((SELECT | BROADCAST)))
+bool visitVSelect(AbstractVecOp VSelect, const AIEBaseInstrInfo *TII,
+                  MachineRegisterInfo &MRI,
+                  SmallPtrSet<const Value *, 4> &GVSet) {
+
+  bool Success = true;
+  for (const Register Reg : VSelect.VectorSrcRegs) {
+    OptionalVecOp VOp = TII->parseTargetVectorOp(*MRI.getVRegDef(Reg));
+    // We don't recognize this! Here we cannot have anything different
+    // from SELECT or BROADCAST.
+    if (!VOp)
+      return false;
+    if (VOp->Type == Operation::SELECT)
+      Success &= visitVSelect(*VOp, TII, MRI, GVSet);
+    else if (VOp->Type == Operation::BROADCAST)
+      Success &= visitVBroadcast(*VOp, TII, MRI, GVSet);
+    else
+      return false;
+  }
+
+  return Success;
+}
+
+// Recognize ADD ((ADD | SELECT), Unknown)
+bool visitVAdd(const AbstractVecOp &VAdd, const AIEBaseInstrInfo *TII,
+               MachineRegisterInfo &MRI, SmallPtrSet<const Value *, 4> &GVSet) {
+
+  bool UnknownSide = false;
+  bool KnownSide = false;
+
+  for (const Register Reg : VAdd.VectorSrcRegs) {
+    OptionalVecOp VOp = TII->parseTargetVectorOp(*MRI.getVRegDef(Reg));
+
+    // We don't recognize this, but this represents the other side of the
+    // add (offset). It can be anything, but if it leads to out-of-bounds,
+    // we don't care bacause it is UB anyway.
+    if (!VOp) {
+      UnknownSide = true;
+      continue;
+    }
+    // The pointer-side of the add.
+    if (VOp->Type == Operation::ADD)
+      KnownSide = visitVAdd(*VOp, TII, MRI, GVSet);
+    else if (VOp->Type == Operation::SELECT)
+      KnownSide = visitVSelect(*VOp, TII, MRI, GVSet);
+    else
+      return false;
+  }
+  return UnknownSide /*offset side is found*/ &&
+         KnownSide /*broadcasted side is found*/;
+}
+
+// Follow the chain up starting for ADD or directly from SELECT.
+bool traverseVecPointerChain(Register Reg, SmallPtrSet<const Value *, 4> &GVSet,
+                             const AIEBaseInstrInfo *TII,
+                             MachineRegisterInfo &MRI) {
+  const MachineInstr *MI = MRI.getVRegDef(Reg);
+  // Skip subvector copy.
+  if (MI->isCopy() && MI->getOperand(1).getReg().isVirtual())
+    MI = MRI.getVRegDef(MI->getOperand(1).getReg());
+
+  OptionalVecOp VOp = TII->parseTargetVectorOp(*MI);
+  if (!VOp)
+    return false;
+
+  if (VOp->Type == Operation::ADD)
+    return visitVAdd(*VOp, TII, MRI, GVSet);
+
+  if (VOp->Type == Operation::SELECT)
+    return visitVSelect(*VOp, TII, MRI, GVSet);
+
+  return false;
+}
+
+/// This optimization tries to propagate GlobalValues as MMO of load operations
+/// when they are missing.
+bool fixLoadMemOpInfo(MachineFunction &MF, MachineBasicBlock &MBB,
+                      MachineRegisterInfo &MRI) {
+
+  const TargetSubtargetInfo &ST = MBB.getParent()->getSubtarget();
+  const AIEBaseInstrInfo *TII =
+      static_cast<const AIEBaseInstrInfo *>(ST.getInstrInfo());
+
+  bool Changed = false;
+
+  for (MachineInstr &MI : MBB) {
+    // We want to analyze just loads without post increment.
+    if (!MI.mayLoad() || !MI.memoperands_empty() || MI.getNumOperands() != 2)
+      continue;
+    SmallPtrSet<const Value *, 4> GVSet;
+    if (traverseVecPointerChain(MI.getOperand(1).getReg(), GVSet, TII, MRI)) {
+      // Add gathered GlobalValues as MMOs.
+      for (auto GV : GVSet) {
+        // As we only know the base pointer and nothing about the
+        // result of the address calculation, we simply don't assume
+        // size/alignment/offset, so we prevent AA from inferring wrong
+        // information.
+        MachineMemOperand *PtrLoadMMO = MF.getMachineMemOperand(
+            MachinePointerInfo(GV), MachineMemOperand::MOLoad, LLT(), Align());
+        MI.addMemOperand(MF, PtrLoadMMO);
+        Changed = true;
+      }
+    }
+  }
+  return Changed;
+}
+
 bool AIEPostSelectOptimize::runOnMachineFunction(MachineFunction &MF) {
   LLVM_DEBUG(dbgs() << "\n******* POST I-SEL OPTIMIZATION PASS *******\n"
                     << "********** Function: " << MF.getName() << '\n');
@@ -470,6 +606,12 @@ bool AIEPostSelectOptimize::runOnMachineFunction(MachineFunction &MF) {
     for (MachineBasicBlock &MBB : MF) {
       Changed |= duplicateAdressingRegs(MBB, MF.getRegInfo());
     }
+  }
+
+  // 4. Fix MMO for load instructions that don't use pointers
+  // registers (use vector instead, for example).
+  for (MachineBasicBlock &MBB : MF) {
+    Changed |= fixLoadMemOpInfo(MF, MBB, MF.getRegInfo());
   }
 
   return Changed;

@@ -185,6 +185,9 @@ public:
 
   bool isProfitableToSplitType(const LLT Ty) const override;
 
+  std::optional<const AbstractVecOp>
+  parseTargetVectorOp(const MachineInstr &MI) const override;
+
 protected:
   SmallVector<AIEPseudoExpandInfo, 4>
   getSpillPseudoExpandInfo(const MachineInstr &MI) const override;
