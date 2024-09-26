@@ -114,6 +114,24 @@ private:
   /// least one copy.
   /// The Virtual Registers are accessed by the VirtRegIndex
   BitVector getVRegWithCopies(const MachineBasicBlock &MBB) const;
+
+  /// MachineInstructions can write into sub-registers (%0:sub_256_lo and
+  /// %0:sub_256_hi). In the VirtualRegisterMap, they block the same
+  /// register (i.e. $x0). This can cause issues, when detecting Write
+  /// After Write (WAW) dependencies. To mitigate this, only use the last
+  /// definition of a virtual register to count the definitions, so that
+  /// writing into subregisters does not already trigger the register
+  /// replacement. In this case $x0 would have already been replaced, even
+  /// though there is no real WAW dependency.
+  ///                                                                          \
+  /// undef %0.sub_256_lo:mxa, _, _= VLDA_2D_dmw_lda_w _,_                     \
+  /// % 0.sub_256_hi:vec512 = VLDA_dmw_lda_w_ag_idx_imm _,_                    \
+  /// %7:mxm, %8:el = VMAX_LT_D8 %0, $x6                                       \
+  ///                                                                          \
+  /// returns a mapping between a virtual register and its last defining machine
+  /// instruction.
+  IndexedMap<const MachineInstr *, VirtReg2IndexFunctor>
+  getLastVRegDef(const MachineBasicBlock &MBB) const;
 };
 
 MCPhysReg AIEWawRegRewriter::getAssignedPhysReg(const Register Reg) const {
@@ -204,6 +222,9 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
   // they could be removed in a later pass.
   BitVector VRegWithCopies = getVRegWithCopies(*MBB);
 
+  IndexedMap<const MachineInstr *, VirtReg2IndexFunctor> LastVRegDef =
+      getLastVRegDef(*MBB);
+
   for (const MachineInstr &MI : *MBB) {
 
     // Identity copies will be removed in a later pass, therefore, these are not
@@ -219,6 +240,12 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
       if (VRM->hasRequiredPhys(Reg))
         continue;
       if (MO.isTied())
+        continue;
+      // several definitions of the same virtual register are not relevant
+      // because even if the virtual register is renamed, by construction
+      // all the definitions would be renamed as well and achieve nothing wrt
+      // WAW dependecy resolution
+      if (LastVRegDef[Reg] != &MI)
         continue;
 
       if (isWorthRenaming(Reg, UsedPhysRegs, VRegWithCopies) &&
@@ -322,6 +349,26 @@ bool AIEWawRegRewriter::isIdentityCopy(const MachineInstr &MI) const {
 
   return getAssignedPhysReg(DestSource->Source->getReg()) ==
          getAssignedPhysReg(DestSource->Destination->getReg());
+}
+
+IndexedMap<const MachineInstr *, VirtReg2IndexFunctor>
+AIEWawRegRewriter::getLastVRegDef(const MachineBasicBlock &MBB) const {
+  IndexedMap<const MachineInstr *, VirtReg2IndexFunctor> LastVRegDef;
+
+  // Initialize the IndexedMap size
+  LastVRegDef.grow(Register::index2VirtReg(MRI->getNumVirtRegs()));
+
+  for (const MachineInstr &MI : llvm::reverse(MBB)) {
+    for (const MachineOperand &Def : MI.defs()) {
+
+      if (!Def.isReg() || !Def.getReg().isVirtual())
+        continue;
+
+      Register Reg = Def.getReg();
+      LastVRegDef[Reg] = &MI;
+    }
+  }
+  return LastVRegDef;
 }
 
 } // end anonymous namespace

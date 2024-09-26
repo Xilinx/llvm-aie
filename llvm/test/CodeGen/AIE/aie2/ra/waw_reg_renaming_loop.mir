@@ -297,7 +297,7 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT:   liveins: $d0, $d2, $p0, $p1, $p2, $r0, $d1_3d
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   LoopStart $r0
+  ; CHECK-NEXT:   LoopStart $r0, 0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
@@ -355,7 +355,7 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.1(0x80000000)
   ; CHECK-NEXT:   liveins: $bml1, $bml2, $p0, $r0, $r6, $wl0
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   LoopStart $r0
+  ; CHECK-NEXT:   LoopStart $r0, 0
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
@@ -389,6 +389,64 @@ body:             |
 
     undef %282.sub_256_lo:vec512 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0
     %282.sub_256_hi:vec512 = COPY $wl0
+    %272:acc512 = VCONV_FP32_BF16 %282.sub_256_lo:vec512
+    $bml2 = VMAC_F_vmac_bm_core_dense %272, %282:vec512, %282:vec512, $r6, implicit-def dead $srfpflags, implicit $crfpmask
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  bb.2:
+    liveins: $p0, $wl0, $r6, $bml1, $bml2
+    PseudoRET implicit $lr
+...
+
+# Don't rename superregisters on each definition of the subregisters of the same
+#  register, i.e. register %281 is defined twice through its sub-registers
+# (undef %281.sub_256_lo:vec512 and %281.sub_256_hi:vec512). This instance should
+# not be used as a renaming instance. The correct renaming instance would be
+# register %282.
+---
+name:            multiple_sub_regs_defs
+alignment:       16
+legalized:       true
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: multiple_sub_regs_defs
+  ; CHECK: bb.0.entry:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $bml1, $bml2, $p0, $r0, $r6, $wl0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   LoopStart $r0, 0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; CHECK-NEXT:   liveins: $bml1, $bml2, $p0, $r6, $wl0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   renamable $wl0 = VLDA_dmw_lda_w_ag_idx_imm $p0, 32
+  ; CHECK-NEXT:   renamable $wh0 = VLDA_dmw_lda_w_ag_idx_imm $p0, 64
+  ; CHECK-NEXT:   renamable $bmh0 = VCONV_FP32_BF16 renamable $wl0
+  ; CHECK-NEXT:   $bml1 = VMAC_F_vmac_bm_core_dense killed renamable $bmh0, killed renamable $x0, renamable $x0, $r6, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   renamable $wl2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0
+  ; CHECK-NEXT:   renamable $wh2 = VLDA_dmw_lda_w_ag_idx_imm $p0, 96
+  ; CHECK-NEXT:   renamable $bmh1 = VCONV_FP32_BF16 renamable $wl2
+  ; CHECK-NEXT:   $bml2 = VMAC_F_vmac_bm_core_dense killed renamable $bmh1, killed renamable $x2, renamable $x2, $r6, implicit-def dead $srfpflags, implicit $crfpmask
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   liveins: $bml1, $bml2, $p0, $r6, $wl0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   PseudoRET implicit $lr
+  bb.0.entry:
+  successors: %bb.1
+  liveins: $r0, $p0, $wl0, $r6, $bml1, $bml2
+  LoopStart $r0, 0
+  bb.1:
+    successors: %bb.1, %bb.2
+    liveins: $p0, $wl0, $r6, $bml1, $bml2
+    undef %281.sub_256_lo:vec512 = VLDA_dmw_lda_w_ag_idx_imm $p0, 32
+    %281.sub_256_hi:vec512 = VLDA_dmw_lda_w_ag_idx_imm $p0, 64
+    %271:acc512 = VCONV_FP32_BF16 %281.sub_256_lo:vec512
+    $bml1 = VMAC_F_vmac_bm_core_dense %271, %281:vec512, %281:vec512, $r6, implicit-def dead $srfpflags, implicit $crfpmask
+
+    undef %282.sub_256_lo:vec512 = VLDA_dmw_lda_w_ag_idx_imm $p0, 0
+    %282.sub_256_hi:vec512 = VLDA_dmw_lda_w_ag_idx_imm $p0, 96
     %272:acc512 = VCONV_FP32_BF16 %282.sub_256_lo:vec512
     $bml2 = VMAC_F_vmac_bm_core_dense %272, %282:vec512, %282:vec512, $r6, implicit-def dead $srfpflags, implicit $crfpmask
     PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
