@@ -24,6 +24,7 @@
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/Support/ErrorHandling.h"
+#include <cstddef>
 #include <optional>
 
 namespace llvm {
@@ -422,6 +423,21 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   virtual std::optional<const VExtractOpInfo>
   getVExtractOpInfo(const MachineInstr &MI) const {
     llvm_unreachable("Target didn't implement getVExtractOpInfo!");
+  }
+
+  /// Abstract vector operation to help the decoding of complex operations.
+  struct AbstractVecOp {
+    enum class AbstractOpcode : unsigned { ADD, SELECT, BROADCAST };
+    AbstractOpcode Opcode;
+    const Register VectorSrc1;
+    const Register VectorSrc2;
+    const Register ScalarSrc;
+  };
+
+  /// Retrieve an abstract representation, of an instruction.
+  virtual std::optional<const AbstractVecOp>
+  parseTargetVectorOp(const MachineInstr &MI) const {
+    return {};
   }
 
 protected:
