@@ -1445,3 +1445,34 @@ bool AIE2InstrInfo::isProfitableToSplitType(const LLT Ty) const {
 
   return false;
 }
+
+using AbstractOp = AIEBaseInstrInfo::AbstractOp;
+
+std::optional<const AbstractOp>
+AIE2InstrInfo::parseAbstractOp(const MachineInstr &MI) const {
+
+  switch (MI.getOpcode()) {
+  case AIE2::VADD_32:
+    return AbstractOp{AbstractOp::OperationType::VECTOR_ADD,
+                      {MI.getOperand(1).getReg(), MI.getOperand(2).getReg()},
+                      {}};
+  case AIE2::VBCST_32:
+    return AbstractOp{AbstractOp::OperationType::VECTOR_BROADCAST,
+                      {},
+                      {MI.getOperand(1).getReg()}};
+  case AIE2::VSEL_32:
+    return AbstractOp{AbstractOp::OperationType::VECTOR_SELECT,
+                      {MI.getOperand(1).getReg(), MI.getOperand(2).getReg()},
+                      {MI.getOperand(3).getReg()}};
+  case AIE2::VLDB_4x16_LO:
+  case AIE2::VLDB_4x16_HI:
+  case AIE2::VLDB_4x32_LO:
+  case AIE2::VLDB_4x32_HI:
+  case AIE2::VLDB_4x64_LO:
+  case AIE2::VLDB_4x64_HI:
+    return AbstractOp{AbstractOp::OperationType::VECTOR_XWAY_LOAD,
+                      {MI.getOperand(1).getReg()},
+                      {}};
+  }
+  return std::nullopt;
+}
