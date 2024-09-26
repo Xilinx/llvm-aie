@@ -447,6 +447,16 @@ class AIE2Dim3DRegisterClass <dag reglist, RegAltNameIndex idx = NoRegAltName> :
 
   def eP : AIE220BitRegisterClass<(add p0, p1, p2, p3, p4, p5, p6, p7)>;
 
+ // "FIFO" regs
+  foreach i = 0 - 31 in {
+    def fi #i : AIE2GPReg<i, "r" #i>, DwarfRegNum<[!add(i, 234)]>;
+  }
+
+  def eF : AIE2ScalarRegisterClass<(add fi0, fi1, fi2, fi3, fi4, fi5, fi6, fi7, fi8, fi9,
+                                    fi10, fi11, fi12, fi13, fi14, fi15, fi16, fi17, fi18,
+                                    fi19, fi20, fi21, fi22, fi23, fi24, fi25, fi26, fi27,
+                                    fi28, fi29, fi30, fi31)>;
+
   // Scalar registers (GPR)
   foreach i = 0 - 31 in {
     def r #i : AIE2GPReg<i, "r" #i>, DwarfRegNum<[!add(i, 234)]>;

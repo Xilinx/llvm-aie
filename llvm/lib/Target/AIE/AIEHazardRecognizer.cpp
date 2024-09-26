@@ -128,6 +128,10 @@ bool AIEResourceCycle::canReserveResources(MachineInstr &MI) {
   // Note : canAdd() can only be called with a "fixed-slot" instruction or
   // Target specific OpCode
 
+  // HACK: Meta instructions like VLD.pop take no instruction
+  if (MI.isMetaInstruction())
+    return true;
+
   const std::vector<unsigned int> *AlternateInsts =
       Bundle.FormatInterface->getAlternateInstsOpcode(MI.getOpcode());
 
@@ -143,6 +147,9 @@ bool AIEResourceCycle::canReserveResources(MachineInstr &MI) {
 }
 
 void AIEResourceCycle::reserveResources(MachineInstr &MI) {
+  if (MI.isMetaInstruction())
+    return;
+
   const std::vector<unsigned int> *AlternateInsts =
       Bundle.FormatInterface->getAlternateInstsOpcode(MI.getOpcode());
 
