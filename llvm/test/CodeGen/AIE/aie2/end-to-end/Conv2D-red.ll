@@ -114,27 +114,27 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ASM-NEXT:  .LBB0_2: // %inner.loop
 ; ASM-NEXT:    // Parent Loop BB0_1 Depth=1
 ; ASM-NEXT:    // => This Inner Loop Header: Depth=2
-; ASM-NEXT:    vldb wl7, [p0], m6; nopx
-; ASM-NEXT:    vldb wh7, [p0], m6
-; ASM-NEXT:    vldb wl9, [p0], m6
-; ASM-NEXT:    vldb.3d wh9, [p0], d0
+; ASM-NEXT:    vldb wl6, [p0], m6; nopx
+; ASM-NEXT:    vldb wh6, [p0], m6
+; ASM-NEXT:    vldb wl8, [p0], m6
+; ASM-NEXT:    vldb.3d wh8, [p0], d0
 ; ASM-NEXT:    nop
-; ASM-NEXT:    vldb wl11, [p1], #32
-; ASM-NEXT:    vldb wh11, [p1], #32
-; ASM-NEXT:    vldb wl6, [p1], #32
-; ASM-NEXT:    vldb wh6, [p1], #32
-; ASM-NEXT:    vshift.align x4, x4, s1, x7, r17
-; ASM-NEXT:    vshift.align x2, x2, s1, x9, r17
-; ASM-NEXT:    vshuffle x8, x4, x2, r2
+; ASM-NEXT:    vldb wl10, [p1], #32
+; ASM-NEXT:    vldb wh10, [p1], #32
+; ASM-NEXT:    vldb wl7, [p1], #32
+; ASM-NEXT:    vldb wh7, [p1], #32
+; ASM-NEXT:    vshift.align x4, x4, s1, x6, r17
+; ASM-NEXT:    vshift.align x2, x2, s1, x8, r17
+; ASM-NEXT:    vshuffle x9, x4, x2, r2
 ; ASM-NEXT:    vshuffle x3, x4, x2, r3
-; ASM-NEXT:    vmac cm0, cm0, x8, x11, r4
-; ASM-NEXT:    add r0, r0, #-1; vshuffle x1, x8, x0, r8; vmac cm2, cm2, x3, x11, r4
-; ASM-NEXT:    jnz r0, #.LBB0_2; vmac cm4, cm4, x8, x6, r4
-; ASM-NEXT:    vshuffle x5, x3, x0, r8; vmac cm6, cm6, x3, x6, r4 // Delay Slot 5
-; ASM-NEXT:    vmac cm1, cm1, x1, x11, r4 // Delay Slot 4
-; ASM-NEXT:    mov r1, p0; vmac cm3, cm3, x5, x11, r4 // Delay Slot 3
-; ASM-NEXT:    and r16, r1, r9; vmac cm5, cm5, x1, x6, r4 // Delay Slot 2
-; ASM-NEXT:    add r17, r16, #33; vmac cm7, cm7, x5, x6, r4 // Delay Slot 1
+; ASM-NEXT:    vmac cm0, cm0, x9, x10, r4
+; ASM-NEXT:    add r0, r0, #-1; vshuffle x1, x9, x0, r8; vmac cm2, cm2, x3, x10, r4
+; ASM-NEXT:    jnz r0, #.LBB0_2; vmac cm4, cm4, x9, x7, r4
+; ASM-NEXT:    vshuffle x5, x3, x0, r8; vmac cm6, cm6, x3, x7, r4 // Delay Slot 5
+; ASM-NEXT:    vmac cm1, cm1, x1, x10, r4 // Delay Slot 4
+; ASM-NEXT:    mov r1, p0; vmac cm3, cm3, x5, x10, r4 // Delay Slot 3
+; ASM-NEXT:    and r16, r1, r9; vmac cm5, cm5, x1, x7, r4 // Delay Slot 2
+; ASM-NEXT:    add r17, r16, #33; vmac cm7, cm7, x5, x7, r4 // Delay Slot 1
 ; ASM-NEXT:  // %bb.3: // %outer.loop.latch
 ; ASM-NEXT:    // in Loop: Header=BB0_1 Depth=1
 ; ASM-NEXT:    nopa ; nopb ; nopx ; mov s3, r6; vst.srs.s16.s32 bmh0, s2, [p3, #32]
