@@ -19,7 +19,7 @@
   ; CHECK-NEXT:  // %bb.0: // %entry
   ; CHECK-NEXT:    mova r1, #0; nopb ; nopxm
   ; CHECK-NEXT:    ge r1, r1, r0
-  ; CHECK-NEXT:    jnz r1, #.LBB0_3
+  ; CHECK-NEXT:    jnz r1, #.LBB0_4
   ; CHECK-NEXT:    nop // Delay Slot 5
   ; CHECK-NEXT:    nop // Delay Slot 4
   ; CHECK-NEXT:    nop // Delay Slot 3
@@ -29,21 +29,14 @@
   ; CHECK-NEXT:    add.nc lc, r0, #-3
   ; CHECK-NEXT:    movxm ls, #.LBB0_2
   ; CHECK-NEXT:    movxm le, #.L_LEnd0
+  ; CHECK-NEXT:    vldb wh0, [p1, #32]; vlda wh1, [p0, #32]; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vldb wl0, [p1], #64; nopa ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vldb wl1, [p0], #64; nopa ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopa ; nopx
-  ; CHECK-NEXT:    vlda wh1, [p0, #32]; vldb wh0, [p1, #32]
-  ; CHECK-NEXT:    vldb wl0, [p1], #64
-  ; CHECK-NEXT:    vldb wl1, [p0], #64
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    vlda wh1, [p0, #32]; vldb wh0, [p1, #32]
-  ; CHECK-NEXT:    vldb wl0, [p1], #64
-  ; CHECK-NEXT:    vldb wl1, [p0], #64
+  ; CHECK-NEXT:    vldb wh0, [p1, #32]; vlda wh1, [p0, #32]; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vldb wl0, [p1], #64; nopa ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vldb wl1, [p0], #64; nopx
   ; CHECK-NEXT:    vbneg_ltz.s8 x2, r25:r24, x0
   ; CHECK-NEXT:    vbneg_ltz.s8 x3, r25:r24, x1
   ; CHECK-NEXT:    vlda wh1, [p0, #32]; vldb wh0, [p1, #32]; vband x4, x0, x3
@@ -60,9 +53,8 @@
   ; CHECK-NEXT:    vbneg_ltz.s8 x2, r25:r24, x0
   ; CHECK-NEXT:  .L_LEnd0:
   ; CHECK-NEXT:    nopb ; nopa ; vst wh6, [p2, #32]; nopx ; vbneg_ltz.s8 x3, r25:r24, x1; nopv
-  ; CHECK-NEXT:    .p2align 4
-  ; CHECK-NEXT:  .LBB0_3: // %for.cond.cleanup
-  ; CHECK-NEXT:    nopa ; vst wl6, [p2], #64; nopx ; vband x4, x0, x3
+  ; CHECK-NEXT:  // %bb.3: // %for.cond.cleanup
+  ; CHECK-NEXT:    vst wl6, [p2], #64; nopx ; vband x4, x0, x3
   ; CHECK-NEXT:    vband x5, x1, x2
   ; CHECK-NEXT:    vbor x6, x4, x5
   ; CHECK-NEXT:    vbneg_ltz.s8 x2, r25:r24, x0
@@ -77,7 +69,9 @@
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    ret lr
+  ; CHECK-NEXT:    .p2align 4
+  ; CHECK-NEXT:  .LBB0_4: // %for.cond.cleanup
+  ; CHECK-NEXT:    nopa ; ret lr
   ; CHECK-NEXT:    nop // Delay Slot 5
   ; CHECK-NEXT:    nop // Delay Slot 4
   ; CHECK-NEXT:    nop // Delay Slot 3

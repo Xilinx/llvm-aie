@@ -679,23 +679,29 @@ void InterBlockScheduling::emitInterBlockTop(const BlockState &BS) const {
   // Epilogues should supply the safety margin for their loop.
   // Epilogues of pipelined loops should emit the bundles swp epilog
   // Both need a dedicated exit. If there isn't one, spawn a new block
-  MachineBasicBlock *DedicatedExit = BB;
-  int SafetyMargin = getSafetyMargin(Loop, BB);
-  if (SafetyMargin && DedicatedExit->pred_size() > 1) {
-    // The loop is a fallthrough predecessor by construction. We insert a
-    // new block that will be a dedicated exit to the loop.
-    DEBUG_LOOPAWARE(dbgs() << "New dedicated exit\n");
-    DedicatedExit = splitEdge(Loop, BB);
-  }
+  auto MakeDedicated = [Loop](MachineBasicBlock *BB) {
+    auto *DedicatedExit = BB;
+    if (BB->pred_size() > 1) {
+      // The loop is a fallthrough predecessor by construction. We insert a
+      // new block that will be a dedicated exit to the loop.
+      DEBUG_LOOPAWARE(dbgs() << "New dedicated exit\n");
+      DedicatedExit = splitEdge(Loop, BB);
+    }
+    return DedicatedExit;
+  };
 
-  auto It = DedicatedExit->begin();
   if (LBS.isPipelined()) {
+    auto *DedicatedExit = MakeDedicated(BB);
     const bool Move = false;
-    emitBundles(BS.TopInsert, DedicatedExit, It, Move);
+    emitBundles(BS.TopInsert, DedicatedExit, DedicatedExit->begin(), Move);
   } else {
-    DEBUG_LOOPAWARE(dbgs() << "Emitting " << SafetyMargin << " safety nops\n");
-    while (SafetyMargin--) {
-      TII->insertNoop(*DedicatedExit, It);
+    if (int SafetyMargin = getSafetyMargin(Loop, BB)) {
+      auto *DedicatedExit = MakeDedicated(BB);
+      DEBUG_LOOPAWARE(dbgs()
+                      << "Emitting " << SafetyMargin << " safety nops\n");
+      while (SafetyMargin--) {
+        TII->insertNoop(*DedicatedExit, DedicatedExit->begin());
+      }
     }
   }
 }

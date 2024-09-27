@@ -18,7 +18,7 @@
   ; CHECK-NEXT:  // %bb.0: // %entry
   ; CHECK-NEXT:    mova r1, #0; nopb ; nopxm
   ; CHECK-NEXT:    ge r1, r1, r0
-  ; CHECK-NEXT:    jnz r1, #.LBB0_3
+  ; CHECK-NEXT:    jnz r1, #.LBB0_4
   ; CHECK-NEXT:    nop // Delay Slot 5
   ; CHECK-NEXT:    nop // Delay Slot 4
   ; CHECK-NEXT:    nop // Delay Slot 3
@@ -28,20 +28,13 @@
   ; CHECK-NEXT:    add.nc lc, r0, #-4
   ; CHECK-NEXT:    movxm ls, #.LBB0_2
   ; CHECK-NEXT:    movxm le, #.L_LEnd0
+  ; CHECK-NEXT:    nopb ; lda r0, [p1], #4; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    nopb ; lda r0, [p1], #4; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    nopb ; lda r0, [p1], #4; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopa ; nopx
-  ; CHECK-NEXT:    lda r0, [p1], #4
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    lda r0, [p1], #4
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    lda r0, [p1], #4
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    lda r0, [p1], #4
+  ; CHECK-NEXT:    lda r0, [p1], #4; nopb ; nopxm
   ; CHECK-NEXT:    add r1, r0, #1
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_2: // %for.body
@@ -49,9 +42,8 @@
   ; CHECK-NEXT:    nopb ; lda r0, [p1], #4; nops ; or r2, r1, r1; nopm ; nopv
   ; CHECK-NEXT:  .L_LEnd0:
   ; CHECK-NEXT:    nopb ; nopa ; st r2, [p0], #4; add r1, r0, #1; nopm ; nopv
-  ; CHECK-NEXT:    .p2align 4
-  ; CHECK-NEXT:  .LBB0_3: // %for.cond.cleanup
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; or r2, r1, r1; nopm ; nopv
+  ; CHECK-NEXT:  // %bb.3: // %for.cond.cleanup
+  ; CHECK-NEXT:    nopa ; nopb ; or r2, r1, r1; nopm ; nops
   ; CHECK-NEXT:    st r2, [p0], #4; add r1, r0, #1
   ; CHECK-NEXT:    or r2, r1, r1
   ; CHECK-NEXT:    st r2, [p0], #4; add r1, r0, #1
@@ -59,7 +51,9 @@
   ; CHECK-NEXT:    st r2, [p0], #4; add r1, r0, #1
   ; CHECK-NEXT:    or r2, r1, r1
   ; CHECK-NEXT:    st r2, [p0], #4
-  ; CHECK-NEXT:    ret lr
+  ; CHECK-NEXT:    .p2align 4
+  ; CHECK-NEXT:  .LBB0_4: // %for.cond.cleanup
+  ; CHECK-NEXT:    nopa ; ret lr
   ; CHECK-NEXT:    nop // Delay Slot 5
   ; CHECK-NEXT:    nop // Delay Slot 4
   ; CHECK-NEXT:    nop // Delay Slot 3

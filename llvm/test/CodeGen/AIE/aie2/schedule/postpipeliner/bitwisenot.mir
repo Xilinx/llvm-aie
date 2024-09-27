@@ -16,21 +16,14 @@
   ; CHECK-NEXT:    add.nc lc, r0, #-5
   ; CHECK-NEXT:    movxm ls, #.LBB0_2
   ; CHECK-NEXT:    movxm le, #.L_LEnd0
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopa ; nopx
-  ; CHECK-NEXT:    vldb wh0, [p0, #32]
-  ; CHECK-NEXT:    vldb wl0, [p0], #64
-  ; CHECK-NEXT:    vldb wh0, [p0, #32]
-  ; CHECK-NEXT:    vldb wl0, [p0], #64
-  ; CHECK-NEXT:    vldb wh0, [p0, #32]
-  ; CHECK-NEXT:    vldb wl0, [p0], #64
-  ; CHECK-NEXT:    vldb wh0, [p0, #32]
-  ; CHECK-NEXT:    vldb wl0, [p0], #64
+  ; CHECK-NEXT:    vldb wh0, [p0, #32]; nopa ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vldb wl0, [p0], #64; nopa ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vldb wh0, [p0, #32]; nopa ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vldb wl0, [p0], #64; nopa ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vldb wh0, [p0, #32]; nopa ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vldb wl0, [p0], #64; nopa ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vldb wh0, [p0, #32]; nopa ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vldb wl0, [p0], #64; nopx
   ; CHECK-NEXT:    vldb wh0, [p0, #32]; vbneg_ltz.s16 x1, r21, x0
   ; CHECK-NEXT:    vldb wl0, [p0], #64
   ; CHECK-NEXT:  .LBB0_1: // %for.body
