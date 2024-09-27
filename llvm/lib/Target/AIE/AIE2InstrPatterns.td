@@ -976,6 +976,12 @@ def : Pat<(v64i8 (concat_vectors (v32i8 VEC256:$src0), (v32i8 VEC256:$src1))),
 def : Pat<(v128i8 (concat_vectors (v64i8 VEC512:$src0), (v64i8 VEC512:$src1))),
   (v128i8 (REG_SEQUENCE VEC1024, VEC512:$src0, sub_512_lo, VEC512:$src1, sub_512_hi))>;
 
+// additional concat patters for accumulators
+def : Pat<(v8i64 (concat_vectors (v4i64 ACC256:$src0), (v4i64 ACC256:$src1))),
+  (v8i64 (REG_SEQUENCE ACC512, ACC256:$src0, sub_256_lo, ACC256:$src1, sub_256_hi))>;
+def : Pat<(v16i64 (concat_vectors (v8i64 ACC512:$src0), (v8i64 ACC512:$src1))),
+  (v16i64 (REG_SEQUENCE ACC1024, ACC512:$src0, sub_512_lo, ACC512:$src1, sub_512_hi))>;
+
 // Extract
 def : Pat<(int_aie2_ext_I256_I512 VEC512:$src, 0x0),
            (v8i32 (EXTRACT_SUBREG VEC512:$src, sub_256_lo))>;
