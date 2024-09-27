@@ -16,7 +16,7 @@
   ; CHECK-NEXT:  // %bb.0: // %entry
   ; CHECK-NEXT:    mova r1, #0; nopb ; nopxm
   ; CHECK-NEXT:    ge r1, r1, r0
-  ; CHECK-NEXT:    jnz r1, #.LBB0_3
+  ; CHECK-NEXT:    jnz r1, #.LBB0_4
   ; CHECK-NEXT:    nop // Delay Slot 5
   ; CHECK-NEXT:    nop // Delay Slot 4
   ; CHECK-NEXT:    nop // Delay Slot 3
@@ -31,17 +31,17 @@
   ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopa ; nopb ; movx r1, #0; nopm
-  ; CHECK-NEXT:    add r1, r1, #1
+  ; CHECK-NEXT:    nopb ; nopa ; nops ; movx r1, #0; nopm ; nopv
+  ; CHECK-NEXT:    nopb ; nopa ; nops ; add r1, r1, #1; nopm ; nopv
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_2: // %for.body
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
   ; CHECK-NEXT:  .L_LEnd0:
   ; CHECK-NEXT:    nopb ; nopa ; st r1, [p0], #4; add r1, r1, #1; nopm ; nopv
-  ; CHECK-NEXT:    .p2align 4
-  ; CHECK-NEXT:  .LBB0_3: // %for.cond.cleanup
+  ; CHECK-NEXT:  // %bb.3: // %for.cond.cleanup
   ; CHECK-NEXT:    nopb ; nopa ; st r1, [p0], #4; nopxm ; nopv
+  ; CHECK-NEXT:    .p2align 4
+  ; CHECK-NEXT:  .LBB0_4: // %for.cond.cleanup
   ; CHECK-NEXT:    nopa ; ret lr
   ; CHECK-NEXT:    nop // Delay Slot 5
   ; CHECK-NEXT:    nop // Delay Slot 4

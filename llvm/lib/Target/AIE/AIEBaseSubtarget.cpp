@@ -15,6 +15,7 @@
 #include "AIEBaseSubtarget.h"
 #include "AIE2Subtarget.h"
 #include "AIEBaseRegisterInfo.h"
+#include "AIEInterBlockScheduling.h"
 #include "AIEMachineScheduler.h"
 #include "AIEMaxLatencyFinder.h"
 #include "AIESubtarget.h"
@@ -251,8 +252,24 @@ class RegionEndEdges : public ScheduleDAGMutation {
       // there must be a distance of 112 bytes in terms of PM addresses.
       // 112 bytes correspond to 7 fully-expanded 128-bit instructions and
       // hence adding a latency of 8 from LoopStart to the ExitSU.
-      if (TII->isZeroOverheadLoopSetupInstr(MI))
-        EdgeLatency = 8;
+      // We can subtract the number of bundles that interblock pushed into
+      // BottomInsert
+      // FIXME: this holds as long as we insert them unconditionally. If we
+      // integrate them with the bottom region, we just need to keep 8 away
+      // from ExitSU
+      if (TII->isZeroOverheadLoopSetupInstr(MI)) {
+        unsigned PatchCycles = 8;
+        if (DAG->getBB()) {
+          auto *Scheduler =
+              static_cast<AIEScheduleDAGMI *>(DAG)->getSchedImpl();
+          auto &InterBlock = Scheduler->getInterBlock();
+          unsigned InsertedCycles =
+              InterBlock.getBlockState(DAG->getBB()).BottomInsert.size();
+          PatchCycles =
+              PatchCycles >= InsertedCycles ? PatchCycles - InsertedCycles : 0;
+        }
+        EdgeLatency = std::max(EdgeLatency, PatchCycles);
+      }
 
       ExitDep.setLatency(EdgeLatency);
       DAG->ExitSU.addPred(ExitDep, /*Required=*/true);
