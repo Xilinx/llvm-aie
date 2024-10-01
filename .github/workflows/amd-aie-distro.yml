@@ -71,7 +71,7 @@ jobs:
     steps:
       # have to do this until repo is public
       - name: Checkout actions
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref || github.ref_name }}
           # check out anything
@@ -164,7 +164,7 @@ jobs:
     steps:
 
     - name: Checkout actions
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         sparse-checkout: .github/workflows/amd_aie_releases
         # Turning off cone mode ensures that files in the project root are not included during checkout
@@ -317,7 +317,7 @@ jobs:
 
     - name: Upload wheels
       if: ${{ needs.settings.outputs.UPLOAD_ARTIFACTS == 'true' }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         path: ${{ steps.setup_base.outputs.WORKSPACE_ROOT }}/wheelhouse/*.whl
         name: build_artifact
@@ -335,7 +335,7 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           # unpacks default artifact into dist/
           # if `name: artifact` is omitted, the action will create extra parent dir
@@ -343,7 +343,7 @@ jobs:
           path: dist
 
       - name: Release current commit
-        uses: ncipollo/release-action@v1.12.0
+        uses: ncipollo/release-action@v1.14.0
         with:
           artifacts: "dist/*.whl,dist/*.tar.xz"
           token: "${{ secrets.GITHUB_TOKEN }}"
