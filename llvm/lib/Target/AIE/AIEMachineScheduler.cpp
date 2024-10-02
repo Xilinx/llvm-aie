@@ -350,14 +350,6 @@ void AIEPostRASchedStrategy::initialize(ScheduleDAGMI *Dag) {
   PostGenericScheduler::initialize(Dag);
   assert(!ForceBottomUp && !ForceTopDown);
 
-  Bot.init(DAG, this, SchedModel, &Rem);
-  const InstrItineraryData *Itin = SchedModel->getInstrItineraries();
-  if (!Bot.HazardRec) {
-    Bot.HazardRec =
-        DAG->MF.getSubtarget().getInstrInfo()->CreateTargetMIHazardRecognizer(
-            Itin, DAG);
-  }
-
   // Update Bot scoreboard of the bottom region with the foreseeable future
   // as found in the top regions of the successor blocks. If we don't know,
   // assume the worst.
@@ -367,14 +359,6 @@ void AIEPostRASchedStrategy::initialize(ScheduleDAGMI *Dag) {
                                               : ScoreboardTrust::Absolute;
   initializeBotScoreBoard(Conservative ? ScoreboardTrust::Conservative
                                        : NonConservative);
-
-  // TODO:
-  // We could set something like 'InterBlockCycles' here and include
-  // that in RegionBottomUpCycles below to force (some) backward
-  // scheduling.
-  // Currently we rely on checkInterZoneConflicts to resolve the conflicts
-  // with the bottom scoreboard representing the successor blocks, and
-  // backwards scheduling doesn't seem to give a net gain.
 
   // Delay slots are scheduled bottom up to be sure the control-flow instruction
   // is issued exactly TII->getNumDelaySlots() before the end of the region.
