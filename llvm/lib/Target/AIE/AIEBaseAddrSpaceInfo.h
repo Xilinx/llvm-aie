@@ -23,6 +23,8 @@ using MemoryBankBits = uint64_t;
 
 class AIEBaseAddrSpaceInfo {
 public:
+  virtual ~AIEBaseAddrSpaceInfo() = default;
+
   virtual MemoryBankBits getDefaultMemoryBank() const {
     // By default assume conflicts.
     return ~0;
