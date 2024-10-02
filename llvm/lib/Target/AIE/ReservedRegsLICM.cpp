@@ -109,13 +109,13 @@ static MCRegister getSinglePhysRegDef(const MachineInstr &MI) {
 }
 
 CandidateInfo *Candidates::getInfo(const MachineInstr &MI) {
-  const MachineRegisterInfo &MRI = MI.getMF()->getRegInfo();
+  const TargetRegisterInfo &TRI = *MI.getMF()->getSubtarget().getRegisterInfo();
   if (MCRegister Reg = getSinglePhysRegDef(MI)) {
     auto It = Candidates.find(Reg);
     if (It != Candidates.end()) {
       return &It->second;
     }
-    if (MRI.canSimplifyPhysReg(Reg)) {
+    if (TRI.isSimplifiableReservedReg(Reg)) {
       // Only consider "simplifiable" reserved regs in this pass.
       return &Candidates.try_emplace(Reg, Reg).first->second;
     }
