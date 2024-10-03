@@ -266,11 +266,12 @@ bool PostPipeliner::scheduleFirstIteration() {
       return false;
     }
     const int LocalCycle = Actual % II;
+    const MCInstrDesc &Desc = *HR.getSelectedAltDescs().getDesc(MI);
     const MemoryBankBits MemoryBanks = HR.getMemoryBanks(MI);
     LLVM_DEBUG(dbgs() << "  Emit in " << -Depth + LocalCycle << "\n");
     int Cycle = -Depth + LocalCycle;
     LLVM_DEBUG(dbgs() << "  Emit in " << Cycle << "\n");
-    HR.emitInScoreboard(Scoreboard, MI->getDesc(), MemoryBanks, MI->operands(),
+    HR.emitInScoreboard(Scoreboard, Desc, MemoryBanks, MI->operands(),
                         MI->getMF()->getRegInfo(), Cycle);
 
     scheduleNode(SU, Actual);
@@ -317,12 +318,12 @@ bool PostPipeliner::scheduleOtherIterations() {
         LLVM_DEBUG(dbgs() << "  Resource conflict\n");
         return false;
       }
+      const MCInstrDesc &Desc = *HR.getSelectedAltDescs().getDesc(MI);
       const MemoryBankBits MemoryBanks = HR.getMemoryBanks(MI);
       const int LocalCycle = (Insert - CurrentCycle) % II;
       LLVM_DEBUG(dbgs() << "  Emit in " << -Depth + LocalCycle << "\n");
-      HR.emitInScoreboard(Scoreboard, MI->getDesc(), MemoryBanks,
-                          MI->operands(), MI->getMF()->getRegInfo(),
-                          -Depth + LocalCycle);
+      HR.emitInScoreboard(Scoreboard, Desc, MemoryBanks, MI->operands(),
+                          MI->getMF()->getRegInfo(), -Depth + LocalCycle);
       scheduleNode(SU, Insert);
     }
   }

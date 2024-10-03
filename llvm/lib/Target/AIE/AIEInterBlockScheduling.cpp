@@ -70,8 +70,9 @@ void emitBundlesTopDown(const std::vector<MachineBundle> &Bundles,
   // then this will not cause conflicts.
   for (int I = TotalBundles - AmountToEmit; I < TotalBundles; I++) {
     for (MachineInstr *MI : Bundles[I].getInstrs())
-      HR->emitInScoreboard(Scoreboard, MI->getDesc(), HR->getMemoryBanks(MI),
-                           MI->operands(), MI->getMF()->getRegInfo(), 0);
+      HR->emitInScoreboard(Scoreboard, *HR->getSelectedAltDescs().getDesc(MI),
+                           HR->getMemoryBanks(MI), MI->operands(),
+                           MI->getMF()->getRegInfo(), 0);
     Scoreboard.advance();
   }
 }
@@ -100,8 +101,9 @@ createBottomUpScoreboard(ArrayRef<MachineBundle> Bundles,
       Bundles.begin(), Bundles.begin() + std::min(NumBundles, RequiredCycles));
   for (const MachineBundle &B : reverse(MinBundles)) {
     for (MachineInstr *MI : B.getInstrs())
-      HR.emitInScoreboard(Scoreboard, MI->getDesc(), HR.getMemoryBanks(MI),
-                          MI->operands(), MI->getMF()->getRegInfo(), 0);
+      HR.emitInScoreboard(Scoreboard, *HR.getSelectedAltDescs().getDesc(MI),
+                          HR.getMemoryBanks(MI), MI->operands(),
+                          MI->getMF()->getRegInfo(), 0);
     Scoreboard.recede();
   }
   return Scoreboard;
@@ -124,9 +126,9 @@ checkResourceConflicts(const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
     for (MachineInstr *MI : B.getInstrs()) {
       if (BottomUpCycle >= HR.getConflictHorizon())
         break;
-      if (HR.getHazardType(Scoreboard, MI->getDesc(), HR.getMemoryBanks(MI),
-                           MI->operands(), MI->getMF()->getRegInfo(),
-                           -BottomUpCycle))
+      if (HR.getHazardType(Scoreboard, *HR.getSelectedAltDescs().getDesc(MI),
+                           HR.getMemoryBanks(MI), MI->operands(),
+                           MI->getMF()->getRegInfo(), -BottomUpCycle))
         return MI;
     }
     ++BottomUpCycle;
@@ -233,6 +235,7 @@ namespace {
 /// into the appropriate blockstate region.
 /// TimedRegion is built one bundle at the time
 class PipelineExtractor : public PipelineScheduleVisitor {
+  AIEAlternateDescriptors &AlternateDesc;
   BlockState &Loop;
   BlockState *Prologue = nullptr;
   BlockState *Epilogue = nullptr;
@@ -263,14 +266,19 @@ class PipelineExtractor : public PipelineScheduleVisitor {
     // Prologue and epilogue obtain copies.
     MachineInstr *ToBeEmitted =
         InLoop ? MI : Loop.TheBlock->getParent()->CloneMachineInstr(MI);
-    CurrentBundle.add(ToBeEmitted);
+    if (auto AltDesc = AlternateDesc.getSelectedDescriptor(MI);
+        AltDesc.has_value())
+      AlternateDesc.setAlternateDescriptor(ToBeEmitted, AltDesc.value());
+
+    CurrentBundle.add(ToBeEmitted, AlternateDesc.getOpcode(MI));
   }
   void endBundle() override { TimedRegion.emplace_back(CurrentBundle); }
 
 public:
   PipelineExtractor(InterBlockScheduling &InterBlock, BlockState &BS,
                     const AIEBaseInstrInfo &TII)
-      : Loop(BS), CurrentBundle(TII.getFormatInterface()) {
+      : AlternateDesc(InterBlock.getSelectedAltDescs()), Loop(BS),
+        CurrentBundle(TII.getFormatInterface()) {
     MachineBasicBlock *LoopBlock = Loop.TheBlock;
     for (auto *P : LoopBlock->predecessors()) {
       if (P == LoopBlock) {
