@@ -100,6 +100,7 @@ public:
   /// Retrieve the SUnit that represents MI's instance before the
   /// boundary, null if not found.
   const SUnit *getPreBoundaryNode(MachineInstr *MI) const;
+
   /// Check whether SU represents an instruction after the boundary
   bool isPostBoundaryNode(SUnit *SU) const;
 };
