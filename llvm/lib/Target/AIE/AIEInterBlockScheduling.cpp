@@ -295,6 +295,7 @@ bool InterBlockScheduling::leaveBlock() {
   // to schedule next and with what parameters
   auto &BS = *CurrentBlockState;
   switch (updateFixPoint(BS)) {
+  case SchedulingStage::GatheringRegions:
   case SchedulingStage::SchedulingNotConverged:
   case SchedulingStage::Scheduling:
   case SchedulingStage::Pipelining:
@@ -426,12 +427,13 @@ SchedulingStage InterBlockScheduling::updateFixPoint(BlockState &BS) {
     return BS.FixPoint.Stage = SchedulingStage::SchedulingDone;
   }
 
-  if (!BS.FixPoint.NumIters) {
-    // This is the first time we have scheduled this loop. In that first
+  if (BS.FixPoint.Stage == SchedulingStage::GatheringRegions) {
+    // This is the first time we schedule this loop. In that first
     // iteration, we have recorded the region decomposition.
     // Now we can create the interblock edges between the top and the bottom
     // region
     BS.initInterBlock(*Context, *HR);
+    return BS.FixPoint.Stage = SchedulingStage::Scheduling;
   }
 
   BS.FixPoint.NumIters++;
@@ -601,7 +603,9 @@ void InterBlockScheduling::enterRegion(MachineBasicBlock *BB,
   auto &BS = getBlockState(BB);
   DEBUG_BLOCKS(dbgs() << "    >> enterRegion, Iter=" << BS.FixPoint.NumIters
                       << "\n");
-  if (!BS.FixPoint.NumIters) {
+  if (BS.Kind != BlockType::Loop ||
+      BS.FixPoint.Stage == SchedulingStage::GatheringRegions) {
+    // Only add regions of loops when in the GatheringRegions phase
     BS.addRegion(BB, RegionBegin, RegionEnd);
   }
 }
@@ -928,6 +932,7 @@ void BlockState::classify() {
   if (LoopAware && IsLoop(TheBlock) &&
       llvm::all_of(TheBlock->successors(), CanFixLoopSchedule)) {
     Kind = BlockType::Loop;
+    FixPoint.Stage = SchedulingStage::GatheringRegions;
   }
 
   // We will mark the epilogues in a second sweep, when all states have been
@@ -937,6 +942,7 @@ void BlockState::classify() {
 
 void BlockState::initInterBlock(const MachineSchedContext &Context,
                                 const AIEHazardRecognizer &HR) {
+  assert(!BoundaryEdges);
   BoundaryEdges = std::make_unique<InterBlockEdges>(Context);
   if (Regions.size() == 1) {
     // Don't worry, this just constructs a mostly empty container class
