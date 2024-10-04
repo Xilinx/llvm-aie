@@ -1177,7 +1177,12 @@ void llvm::AIEPostRASchedStrategy::buildGraph(ScheduleDAGMI &DAG, AAResults *AA,
 
 void AIEScheduleDAGMI::schedule() {
   BlockState &BS = getSchedImpl()->getInterBlock().getBlockState(getBB());
-  if (BS.FixPoint.Stage == SchedulingStage::Pipelining) {
+
+  switch (BS.FixPoint.Stage) {
+  case SchedulingStage::GatheringRegions:
+    // We are only gathering regions in the MBB, no scheduling to do.
+    return;
+  case SchedulingStage::Pipelining: {
     // We've gone past regular scheduling. Try to find a valid modulo schedule
     // If it succeeds, we need to implement it, if we fail we fall back on the
     // normal loop schedule
@@ -1189,6 +1194,8 @@ void AIEScheduleDAGMI::schedule() {
     }
     return;
   }
-
-  ScheduleDAGMI::schedule();
+  default:
+    ScheduleDAGMI::schedule();
+    return;
+  }
 }

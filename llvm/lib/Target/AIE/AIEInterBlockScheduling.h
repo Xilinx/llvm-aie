@@ -110,6 +110,9 @@ enum class BlockType { Regular, Loop, Epilogue };
 
 // These are states in the state machine that drives scheduling
 enum class SchedulingStage {
+  // We are gathering all regions in the block to initialize the BlockState.
+  GatheringRegions,
+
   // We are scheduling, which includes iterating during loop-aware scheduling
   Scheduling,
 
@@ -221,6 +224,9 @@ public:
   }
   void addRegion(MachineBasicBlock *BB, MachineBasicBlock::iterator RegionBegin,
                  MachineBasicBlock::iterator RegionEnd) {
+    assert((Kind == BlockType::Loop &&
+            FixPoint.Stage == SchedulingStage::GatheringRegions) ||
+           FixPoint.Stage == SchedulingStage::Scheduling);
     CurrentRegion = Regions.size();
     Regions.emplace_back(BB, RegionBegin, RegionEnd);
   }
@@ -231,7 +237,7 @@ public:
   Region &getTop() { return Regions.back(); }
   const Region &getBottom() const { return Regions.front(); }
   const InterBlockEdges &getBoundaryEdges() const {
-    assert(Kind == BlockType::Loop);
+    assert(Kind == BlockType::Loop && BoundaryEdges);
     return *BoundaryEdges;
   }
   const std::vector<Region> &getRegions() const { return Regions; }
