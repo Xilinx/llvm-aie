@@ -83,6 +83,10 @@ static cl::opt<bool>
     InterBlockAlignment("aie-interblock-alignment", cl::init(true),
                         cl::desc("Allow for alignment of successor blocks"));
 
+static cl::opt<bool> UseLoopHeuristics(
+    "aie-loop-sched-heuristics", cl::init(true),
+    cl::desc("Use special picking heuristics when scheduling a loop region"));
+
 namespace {
 // A sentinel value to represent an unknown SUnit.
 const constexpr unsigned UnknownSUNum = ~0;
@@ -694,6 +698,30 @@ void AIEPostRASchedStrategy::handleRegionConflicts(
   }
 }
 
+/// The earliest use of this instruction in the next iteration.
+/// Note that we reason with "bottom-up" cycle, so a larger cycle means it's
+/// used earlier in topological order. If the SU has no loop-carried dependency,
+/// this will be MAX_INT.
+int getEarliestLoopCarriedUse(const SUnit &SU,
+                              const InterBlockEdges &LoopEdges) {
+  const SUnit *SUInCurrentIteration =
+      LoopEdges.getPreBoundaryNode(SU.getInstr());
+  assert(SUInCurrentIteration);
+  assert(SUInCurrentIteration->getHeight() >= SU.getHeight());
+
+  // Look at loop-carried dependencies to see how early the instruction will be
+  // needed in the next iteration.
+  int EarliestCycle = std::numeric_limits<int>::max();
+  for (const SDep &Succ : SUInCurrentIteration->Succs) {
+    if (!LoopEdges.isPostBoundaryNode(Succ.getSUnit()))
+      continue;
+
+    EarliestCycle = std::min(EarliestCycle, int(Succ.getSUnit()->getHeight()));
+  }
+
+  return EarliestCycle;
+}
+
 /// Apply a set of heuristics to a new candidate for PostRA scheduling.
 ///
 /// \param Cand provides the policy and current best candidate.
@@ -737,6 +765,29 @@ bool AIEPostRASchedStrategy::tryCandidate(SchedCandidate &Cand,
     if (tryGreater(TryCand.SU->getDepth(), Cand.SU->getDepth(), TryCand, Cand,
                    BotPathReduce)) {
       return TryCand.Reason != NoCand;
+    }
+
+    // Special heuristics for loops.
+    // Note that they aren't used for the first fixpoint iteration: this is
+    // currently a workaround because we want a very optimistic schedule in that
+    // first iteration. That is because it decides the slot assignments for
+    // multi-slot instructions. This rule can probably be deleted once the
+    // loop-aware scheduler knows how to reassign those.
+    const BlockState &BS = getInterBlock().getBlockState(CurMBB);
+    if (UseLoopHeuristics && BS.Kind == AIE::BlockType::Loop &&
+        BS.getRegions().size() == 1 && BS.FixPoint.NumIters > 0) {
+      const InterBlockEdges &LoopEdges = BS.getBoundaryEdges();
+
+      // For instructions with equal dependence chains, prioritize scheduling
+      // instructions that are used later in the next iteration. The point is
+      // to teach our heuristics a tiny bit about LCDs.
+      if (tryLess(getEarliestLoopCarriedUse(*TryCand.SU, LoopEdges) +
+                      TryCand.SU->BotReadyCycle,
+                  getEarliestLoopCarriedUse(*Cand.SU, LoopEdges) +
+                      Cand.SU->BotReadyCycle,
+                  TryCand, Cand, BotPathReduce)) {
+        return TryCand.Reason != NoCand;
+      }
     }
 
     // Prefer the instruction whose dependent chain is estimated to
