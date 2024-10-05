@@ -179,9 +179,9 @@ define i32 @test_extract_elem(<8 x i32> noundef %a, i32 noundef %idx) {
 ; CHECK-LABEL: test_extract_elem:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
-; CHECK-NEXT:    mov r2, r16 // Delay Slot 5
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 4
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    or r16, r1, r1; mov r2, r16 // Delay Slot 4
 ; CHECK-NEXT:    vextract.s32 r0, x0, r16 // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r2 // Delay Slot 1

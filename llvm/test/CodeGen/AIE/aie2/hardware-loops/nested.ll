@@ -20,8 +20,8 @@ define void @nested(ptr nocapture %out, ptr nocapture readonly %in, i32 noundef 
 ; CHECK-NEXT:  // %bb.0: // %for.cond3.preheader.lr.ph
 ; CHECK-NEXT:    nopa ; nopb ; j #.LBB0_3
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    mova r3, #0 // Delay Slot 4
-; CHECK-NEXT:    mova r4, #2 // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    mova r3, #0; movx r4, #2 // Delay Slot 3
 ; CHECK-NEXT:    movxm p2, #.LBB0_1 // Delay Slot 2
 ; CHECK-NEXT:    lda r2, [p0, #0] // Delay Slot 1
 ; CHECK-NEXT:    .p2align 4

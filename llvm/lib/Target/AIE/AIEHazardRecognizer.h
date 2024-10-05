@@ -29,7 +29,7 @@
 namespace llvm {
 
 class MachineInstr;
-using ConflictTypeBits = uint64_t;
+using ConflictTypeBits = std::uint32_t;
 
 void applyFormatOrdering(AIE::MachineBundle &Bundle, const VLIWFormat &Format,
                          MachineInstr *BundleRoot,
@@ -176,6 +176,11 @@ public:
                              iterator_range<const MachineOperand *> MIOperands,
                              const MachineRegisterInfo &MRI,
                              int DeltaCycles) const;
+  // Apply the above function to the local scoreboard.
+  void releaseFromScoreboard(const MCInstrDesc &Desc,
+                             MemoryBankBits MemoryBanks,
+                             iterator_range<const MachineOperand *> MIOperands,
+                             const MachineRegisterInfo &MRI, int DeltaCycles);
 
   /// Block all scoreboard resources at DeltaCycles
   void blockCycleInScoreboard(int DeltaCycle);
@@ -217,9 +222,22 @@ public:
                 const MCInstrDesc &Desc, MemoryBankBits MemoryBanks,
                 iterator_range<const MachineOperand *> MIOperands,
                 const MachineRegisterInfo &MRI, int DeltaCycles) const;
+  ScheduleHazardRecognizer::HazardType
+  getHazardType(const MCInstrDesc &Desc, MemoryBankBits MemoryBanks,
+                iterator_range<const MachineOperand *> MIOperands,
+                const MachineRegisterInfo &MRI, int DeltaCycles);
+
+  ConflictTypeBits
+  checkConflict(const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+                MachineInstr &MI, const MCInstrDesc &Desc,
+                int DeltaCycles) const;
+  ConflictTypeBits checkConflict(MachineInstr &MI, const MCInstrDesc &Desc,
+                                 int DeltaCycles);
+
   ConflictTypeBits
   checkConflict(const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
                 MachineInstr &MI, int DeltaCycles) const;
+  ConflictTypeBits checkConflict(MachineInstr &MI, int DeltaCycles);
 
 protected:
   ScheduleHazardRecognizer::HazardType getHazardType(const MCInstrDesc &Desc,

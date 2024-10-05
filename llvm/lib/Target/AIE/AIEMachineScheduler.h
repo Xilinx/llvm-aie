@@ -37,6 +37,7 @@ std::vector<AIE::MachineBundle> computeAndFinalizeBundles(SchedBoundary &Zone);
 class AIEPostRASchedStrategy : public PostGenericScheduler {
   /// Maintain the state of interblock/loop-aware scheduling
   AIE::InterBlockScheduling InterBlock;
+  MutateInstructionMap MutateInstruction;
 
 public:
   AIEPostRASchedStrategy(const MachineSchedContext *C);
@@ -50,6 +51,7 @@ public:
   SUnit *pickNodeAndCycle(bool &IsTopNode,
                           std::optional<unsigned> &BotEmissionCycle) override;
 
+  bool canShiftSlot(SUnit &SU, SchedBoundary &Zone, const int DeltaCycle);
   bool isAvailableNode(SUnit &SU, SchedBoundary &Zone,
                        bool VerifyReadyCycle) override;
 
