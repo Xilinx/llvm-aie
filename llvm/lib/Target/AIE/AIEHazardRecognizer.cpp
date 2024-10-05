@@ -122,6 +122,16 @@ FuncUnitWrapper &FuncUnitWrapper::operator|=(const FuncUnitWrapper &Other) {
   return *this;
 }
 
+FuncUnitWrapper &FuncUnitWrapper::operator-=(const FuncUnitWrapper &Other) {
+  // XOR operation with the same FuncUnitWrapper will release resources.
+  Required &= ~Other.Required;
+  Reserved &= ~Other.Reserved;
+  Slots &= ~Other.Slots;
+  MemoryBanks &= ~Other.MemoryBanks;
+  MemObjectsBits &= ~Other.MemObjectsBits;
+  return *this;
+}
+
 bool FuncUnitWrapper::conflict(const FuncUnitWrapper &Other) const {
   if ((Slots & Other.Slots) != 0 || (MemoryBanks & Other.MemoryBanks) != 0 ||
       (MemObjectsBits & Other.MemObjectsBits) != 0 ||
@@ -669,6 +679,19 @@ void AIEHazardRecognizer::emitInScoreboard(
                  FUDepthLimit);
 }
 
+void AIEHazardRecognizer::releaseFromScoreboard(
+    ResourceScoreboard<FuncUnitWrapper> &TheScoreboard, const MCInstrDesc &Desc,
+    MemoryBankBits MemoryBanks, MemoryObjectsBits MemObjectsBits,
+    iterator_range<const MachineOperand *> MIOperands,
+    const MachineRegisterInfo &MRI, int DeltaCycles) const {
+  const unsigned SchedClass = TII->getSchedClass(Desc, MIOperands, MRI);
+  const SlotBits SlotSet =
+      getSlotSet(Desc, *TII->getFormatInterface(), IgnoreUnknownSlotSets);
+  releaseResources(TheScoreboard, ItinData, SchedClass, SlotSet, MemoryBanks,
+                   MemObjectsBits, TII->getMemoryCycles(SchedClass),
+                   DeltaCycles, FUDepthLimit);
+}
+
 void AIEHazardRecognizer::enterResources(
     ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
     const InstrItineraryData *ItinData, unsigned SchedClass, SlotBits SlotSet,
@@ -705,6 +728,46 @@ void AIEHazardRecognizer::enterResources(
 
   LLVM_DEBUG({
     dbgs() << "Scoreboard:\n";
+    Scoreboard.dump();
+  });
+}
+
+void AIEHazardRecognizer::releaseResources(
+    ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+    const InstrItineraryData *ItinData, unsigned SchedClass, SlotBits SlotSet,
+    MemoryBankBits MemoryBanks, MemoryObjectsBits MemObjectsBits,
+    SmallVector<int, 2> MemoryAccessCycles, int DeltaCycles,
+    std::optional<int> FUDepthLimit) {
+
+  // Remove slot usage
+  FuncUnitWrapper EmissionCycle(SlotSet);
+  Scoreboard[DeltaCycles] -= EmissionCycle;
+
+  // Remove memory bank usage
+  if (!MemoryAccessCycles.empty()) {
+    FuncUnitWrapper MemoryBankAndObjectsAccessCycle(/*SlotSet=*/0, MemoryBanks,
+                                                    MemObjectsBits);
+    for (int Cycles : MemoryAccessCycles) {
+      assert(Scoreboard.isInRange(DeltaCycles + Cycles - 1));
+      Scoreboard[DeltaCycles + Cycles - 1] -= MemoryBankAndObjectsAccessCycle;
+    }
+  }
+
+  Scoreboard[DeltaCycles].IssueCount--;
+
+  // Remove ThisCycle at position Cycle relative to the start of the itinerary.
+  auto Remove = [&Scoreboard, DeltaCycles](int Cycle,
+                                           const FuncUnitWrapper &ThisCycle) {
+    const int ScoreboardCycle = Cycle + DeltaCycles;
+    assert(Scoreboard.isInRange(ScoreboardCycle));
+    Scoreboard[ScoreboardCycle] -= ThisCycle;
+    return false;
+  };
+
+  (void)anyStage(ItinData->getStages(SchedClass), Remove, FUDepthLimit);
+
+  LLVM_DEBUG({
+    dbgs() << "Scoreboard after release resources:\n";
     Scoreboard.dump();
   });
 }

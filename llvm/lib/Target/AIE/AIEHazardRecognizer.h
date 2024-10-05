@@ -119,6 +119,7 @@ public:
   void dump() const;
 
   FuncUnitWrapper &operator|=(const FuncUnitWrapper &Other);
+  FuncUnitWrapper &operator-=(const FuncUnitWrapper &Other);
   bool conflict(const FuncUnitWrapper &Other) const;
 };
 
@@ -211,6 +212,15 @@ public:
   // Apply supplying the remaining info (local scoreboard).
   void emitInScoreboard(const MachineInstr &MI, const MCInstrDesc &Desc,
                         int DeltaCycles);
+
+  void releaseFromScoreboard(ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+                             const MCInstrDesc &Desc,
+                             MemoryBankBits MemoryBanks,
+                             MemoryObjectsBits MemObjectsBits,
+                             iterator_range<const MachineOperand *> MIOperands,
+                             const MachineRegisterInfo &MRI,
+                             int DeltaCycles) const;
+
   /// Block all scoreboard resources at DeltaCycles
   void blockCycleInScoreboard(int DeltaCycle);
 
@@ -304,6 +314,15 @@ protected:
                              uint64_t MemObjectsBits,
                              SmallVector<int, 2> MemoryAccessCycles,
                              int DeltaCycles, std::optional<int> FUDepthLimit);
+
+  static void releaseResources(ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+                               const InstrItineraryData *ItinData,
+                               unsigned SchedClass, SlotBits SlotSet,
+                               MemoryBankBits MemoryBanks,
+                               MemoryObjectsBits MemObjectsBits,
+                               SmallVector<int, 2> MemoryAccessCycles,
+                               int DeltaCycles,
+                               std::optional<int> FUDepthLimit);
 
 private:
   ResourceScoreboard<FuncUnitWrapper> Scoreboard;
