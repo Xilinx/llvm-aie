@@ -107,6 +107,7 @@ public:
   void dump() const;
 
   FuncUnitWrapper &operator|=(const FuncUnitWrapper &Other);
+  FuncUnitWrapper &operator^=(const FuncUnitWrapper &Other);
   bool conflict(const FuncUnitWrapper &Other) const;
 };
 
@@ -177,6 +178,13 @@ public:
   void emitInScoreboard(const MCInstrDesc &Desc, MemoryBankBits MemoryBanks,
                         iterator_range<const MachineOperand *> MIOperands,
                         const MachineRegisterInfo &MRI, int DeltaCycles);
+
+  void releaseFromScoreboard(ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+                             const MCInstrDesc &Desc,
+                             MemoryBankBits MemoryBanks,
+                             iterator_range<const MachineOperand *> MIOperands,
+                             const MachineRegisterInfo &MRI,
+                             int DeltaCycles) const;
 
   /// Block all scoreboard resources at DeltaCycles
   void blockCycleInScoreboard(int DeltaCycle);
@@ -253,6 +261,14 @@ protected:
                              MemoryBankBits MemoryBanks,
                              SmallVector<int, 2> MemoryAccessCycles,
                              int DeltaCycles, std::optional<int> FUDepthLimit);
+
+  static void releaseResources(ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+                               const InstrItineraryData *ItinData,
+                               unsigned SchedClass, SlotBits SlotSet,
+                               MemoryBankBits MemoryBanks,
+                               SmallVector<int, 2> MemoryAccessCycles,
+                               int DeltaCycles,
+                               std::optional<int> FUDepthLimit);
 
 private:
   ResourceScoreboard<FuncUnitWrapper> Scoreboard;
