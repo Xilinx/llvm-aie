@@ -440,6 +440,14 @@ auto toHazardType(bool Conflict) {
 }
 } // namespace
 
+ScheduleHazardRecognizer::HazardType AIEHazardRecognizer::getHazardType(
+    const MCInstrDesc &Desc, MemoryBankBits MemoryBanks,
+    iterator_range<const MachineOperand *> MIOperands,
+    const MachineRegisterInfo &MRI, int DeltaCycles) {
+  return getHazardType(Scoreboard, Desc, MemoryBanks, MIOperands, MRI,
+                       DeltaCycles);
+}
+
 // These functions interpret the itinerary, translating InstrStages
 // to ResourceCycles to apply.
 // We deviate from the standard ScoreboardHazardRecognizer by not
@@ -455,6 +463,11 @@ ScheduleHazardRecognizer::HazardType AIEHazardRecognizer::getHazardType(
       getSlotSet(Desc, *TII->getFormatInterface(), IgnoreUnknownSlotSets),
       MemoryBanks, TII->getMemoryCycles(SchedClass), DeltaCycles,
       FUDepthLimit));
+}
+
+ConflictTypeBits AIEHazardRecognizer::checkConflict(MachineInstr &MI,
+                                                    int DeltaCycles) {
+  return checkConflict(Scoreboard, MI, DeltaCycles);
 }
 
 ConflictTypeBits AIEHazardRecognizer::checkConflict(
@@ -476,18 +489,18 @@ ConflictTypeBits AIEHazardRecognizer::checkConflict(
     MemoryBankBits MemoryBanks, SmallVector<int, 2> MemoryAccessCycles,
     int DeltaCycles, std::optional<int> FUDepthLimit) {
   assert(Scoreboard.isValidDelta(DeltaCycles));
-  ConflictTypeBits Conflict = ConflictType::NoConflict;
+  ConflictTypeBits Conflict = static_cast<uint32_t>(ConflictType::NoConflict);
 
   if (checkFormatConflict(Scoreboard, DeltaCycles, SlotSet))
-    Conflict |= ConflictType::Format;
+    Conflict |= static_cast<uint32_t>(ConflictType::Format);
 
   if (checkMemoryBankConflict(MemoryAccessCycles, Scoreboard, DeltaCycles,
                               MemoryBanks))
-    Conflict |= ConflictType::MemoryBank;
+    Conflict |= static_cast<uint32_t>(ConflictType::MemoryBank);
 
   if (checkFUConflict(ItinData, SchedClass, DeltaCycles, Scoreboard,
                       FUDepthLimit))
-    Conflict |= ConflictType::FU;
+    Conflict |= static_cast<uint32_t>(ConflictType::FU);
 
   return Conflict;
 }
@@ -571,6 +584,14 @@ void AIEHazardRecognizer::emitInScoreboard(
       getSlotSet(Desc, *TII->getFormatInterface(), IgnoreUnknownSlotSets);
   enterResources(TheScoreboard, ItinData, SchedClass, SlotSet, MemoryBanks,
                  TII->getMemoryCycles(SchedClass), DeltaCycles, FUDepthLimit);
+}
+
+void AIEHazardRecognizer::releaseFromScoreboard(
+    const MCInstrDesc &Desc, MemoryBankBits MemoryBanks,
+    iterator_range<const MachineOperand *> MIOperands,
+    const MachineRegisterInfo &MRI, int DeltaCycles) {
+  releaseFromScoreboard(Scoreboard, Desc, MemoryBanks, MIOperands, MRI,
+                        DeltaCycles);
 }
 
 void AIEHazardRecognizer::releaseFromScoreboard(
