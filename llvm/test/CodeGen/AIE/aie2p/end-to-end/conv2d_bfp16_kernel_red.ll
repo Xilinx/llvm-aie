@@ -19,8 +19,8 @@ define dso_local void @conv2d_bfp16.for.body90.i(<32 x i32> %fW.sroa.0.1489.i, i
 ; CHECK-LABEL: conv2d_bfp16.for.body90.i:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %newFuncRoot
-; CHECK-NEXT:    paddxm [sp], #64
-; CHECK-NEXT:    st p6, [sp, #-60]; nopx // 4-byte Folded Spill
+; CHECK-NEXT:    nopa ; paddxm [sp], #64
+; CHECK-NEXT:    st p6, [sp, #-60] // 4-byte Folded Spill
 ; CHECK-NEXT:    mov p6, sp
 ; CHECK-NEXT:    padda [p6], #-320
 ; CHECK-NEXT:    vlda bmll3, [p6, #0]
@@ -49,19 +49,19 @@ define dso_local void @conv2d_bfp16.for.body90.i(<32 x i32> %fW.sroa.0.1489.i, i
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mov p6, sp
 ; CHECK-NEXT:    padda [p7], m0; movxm m0, #-1112
-; CHECK-NEXT:    lda p7, [p7, #0]; paddb [p6], m0; movxm m0, #-1116
+; CHECK-NEXT:    padda [p6], m0; movxm m0, #-1116
 ; CHECK-NEXT:    lda r7, [p6, #0]; mov p6, sp
 ; CHECK-NEXT:    padda [p6], m0; movxm m0, #-1120
 ; CHECK-NEXT:    lda r3, [p6, #0]; mov p6, sp
 ; CHECK-NEXT:    padda [p6], m0; movxm m0, #-1088
 ; CHECK-NEXT:    lda r2, [p6, #0]; mov p6, sp
-; CHECK-NEXT:    padda [p6], m0
+; CHECK-NEXT:    lda p7, [p7, #0]; paddb [p6], m0
 ; CHECK-NEXT:    vlda bmll0, [p6, #0]
 ; CHECK-NEXT:    vlda bmlh0, [p6, #64]
 ; CHECK-NEXT:    vlda bmhl0, [p6, #128]
 ; CHECK-NEXT:    vlda bmhh0, [p6, #192]; movx r25, #0
-; CHECK-NEXT:    mova dc4, #0; vldb.fill.512 [p1, lf1, r25]; mov dn0, p3
-; CHECK-NEXT:    mova r24, #0; vldb.fill.512 [p1, lf1, r25]; movs dj0, p4; mov dn4, p5
+; CHECK-NEXT:    vldb.fill.512 [p1, lf1, r25]; mov dn0, p3
+; CHECK-NEXT:    mova dc4, #0; vldb.fill.512 [p1, lf1, r25]; movx r24, #0; mov dn4, p5; movs dj0, p4
 ; CHECK-NEXT:    vlda.fill.512 [p0, lf0, r24]; vldb.pop.576 ex0, [p1, lf1, r25]; movs dc0, dc4; mov m0, p2
 ; CHECK-NEXT:    vlda.pop.576 ex4, [p0, lf0, r24]; vldb.pop.576.3d ex2, [p1, lf1, r25, d0]
 ; CHECK-NEXT:    vldb.fill.512 [p1, lf1, r25]

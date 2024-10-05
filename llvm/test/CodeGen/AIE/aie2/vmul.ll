@@ -85,9 +85,7 @@ define  <16 x i64> @_Z18test_mul_elem_32_2iDv64_hi(i32 noundef %sgn_x, <64 x i8>
 ; CHECK-LABEL: _Z18test_mul_elem_32_2iDv64_hi:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r2, #9; nopb ; nopx
-; CHECK-NEXT:    mova r3, #8
-; CHECK-NEXT:    mova r4, #40
+; CHECK-NEXT:    nopb ; mova r2, #9; nops ; movx r4, #40; mov r3, #8; nopv
 ; CHECK-NEXT:    lshl r0, r0, r2
 ; CHECK-NEXT:    lshl r1, r1, r3
 ; CHECK-NEXT:    or r0, r0, r1

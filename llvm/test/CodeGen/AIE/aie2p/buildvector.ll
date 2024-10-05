@@ -11,9 +11,7 @@ define void @test_single_diff_lane_buildvector() {
 ; CHECK-LABEL: test_single_diff_lane_buildvector:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r0, #111; nopb ; nops ; nopxm ; nopv
-; CHECK-NEXT:    mova r1, #777; nopx
-; CHECK-NEXT:    mova r29, #0
+; CHECK-NEXT:    mova r0, #111; movx r29, #0; mov r1, #777
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vbcst.32 x0, r1 // Delay Slot 5
 ; CHECK-NEXT:    vinsert.32 x0, x0, r29, r0 // Delay Slot 4
@@ -44,10 +42,8 @@ define void @test_multi_diff_lane_buildvector() {
 ; CHECK-LABEL: test_multi_diff_lane_buildvector:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r0, #111; nopxm
-; CHECK-NEXT:    mova r1, #222
-; CHECK-NEXT:    mova r2, #777
-; CHECK-NEXT:    vpush.hi.32 x0, x0, r0
+; CHECK-NEXT:    mova r0, #111; nopb ; nops ; movx r2, #777; mov r1, #222; nopv
+; CHECK-NEXT:    nopx ; vpush.hi.32 x0, x0, r0
 ; CHECK-NEXT:    vpush.hi.32 x0, x0, r1
 ; CHECK-NEXT:    vpush.hi.32 x0, x0, r2
 ; CHECK-NEXT:    vpush.hi.32 x0, x0, r2
