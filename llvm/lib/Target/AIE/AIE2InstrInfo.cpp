@@ -242,7 +242,7 @@ std::optional<unsigned> AIE2InstrInfo::getCombinedPostIncOpcode(
   case TargetOpcode::G_INTRINSIC:
     switch (cast<GIntrinsic>(PostIncI).getIntrinsicID()) {
     case Intrinsic::aie2_add_2d:
-      if (Size >= 512)
+      if (Size >= 1024)
         return {};
       switch (BaseMemI.getOpcode()) {
       case TargetOpcode::G_STORE:
@@ -256,7 +256,7 @@ std::optional<unsigned> AIE2InstrInfo::getCombinedPostIncOpcode(
       }
       break;
     case Intrinsic::aie2_add_3d:
-      if (Size >= 512)
+      if (Size >= 1024)
         return {};
       switch (BaseMemI.getOpcode()) {
       case TargetOpcode::G_STORE:

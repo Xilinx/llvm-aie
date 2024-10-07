@@ -1473,6 +1473,52 @@ body: |
 ...
 
 ---
+name: vector_512_combine_postinc_2d
+body: |
+  bb.0:
+    ; CHECK-LABEL: name: vector_512_combine_postinc_2d
+    ; CHECK: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(p0) = COPY $p1
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
+    ; CHECK-NEXT: [[AIE_POSTINC_2D_LOAD:%[0-9]+]]:_(<32 x s16>), [[AIE_POSTINC_2D_LOAD1:%[0-9]+]]:_(p0), [[AIE_POSTINC_2D_LOAD2:%[0-9]+]]:_(s20) = G_AIE_POSTINC_2D_LOAD [[COPY]], [[C]], [[C]], [[C]], [[C]] :: (load (<32 x s16>))
+    ; CHECK-NEXT: [[AIE_POSTINC_2D_STORE:%[0-9]+]]:_(p0), [[AIE_POSTINC_2D_STORE1:%[0-9]+]]:_(s20) = G_AIE_POSTINC_2D_STORE [[AIE_POSTINC_2D_LOAD]](<32 x s16>), [[COPY1]], [[C]], [[C]], [[C]], [[C]] :: (store (<32 x s16>))
+    ; CHECK-NEXT: $p0 = COPY [[AIE_POSTINC_2D_LOAD1]](p0)
+    ; CHECK-NEXT: $p1 = COPY [[AIE_POSTINC_2D_STORE]](p0)
+      %0:_(p0) = COPY $p0
+      %6:_(p0) = COPY $p1
+      %1:_(s20) = G_CONSTANT i20 64
+      %4:_(<32 x s16>) = G_LOAD %0(p0) :: (load (<32 x s16>))
+      G_STORE %4, %6 :: (store (<32 x s16>))
+      %3:_(p0), %8:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2.add.2d), %0:_(p0), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20)
+      $p0 = COPY %3
+      %7:_(p0), %9:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2.add.2d), %6:_(p0), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20)
+      $p1 = COPY %7
+...
+
+---
+name: vector_512_combine_postinc_3d
+body: |
+  bb.0:
+    ; CHECK-LABEL: name: vector_512_combine_postinc_3d
+    ; CHECK: [[COPY:%[0-9]+]]:_(p0) = COPY $p0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(p0) = COPY $p1
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s20) = G_CONSTANT i20 64
+    ; CHECK-NEXT: [[AIE_POSTINC_3D_LOAD:%[0-9]+]]:_(<32 x s16>), [[AIE_POSTINC_3D_LOAD1:%[0-9]+]]:_(p0), [[AIE_POSTINC_3D_LOAD2:%[0-9]+]]:_(s20), [[AIE_POSTINC_3D_LOAD3:%[0-9]+]]:_ = G_AIE_POSTINC_3D_LOAD [[COPY]], [[C]], [[C]], [[C]], [[C]], [[C]], [[C]], [[C]] :: (load (<32 x s16>))
+    ; CHECK-NEXT: [[AIE_POSTINC_3D_STORE:%[0-9]+]]:_(p0), [[AIE_POSTINC_3D_STORE1:%[0-9]+]]:_(s20), [[AIE_POSTINC_3D_STORE2:%[0-9]+]]:_ = G_AIE_POSTINC_3D_STORE [[AIE_POSTINC_3D_LOAD]](<32 x s16>), [[COPY1]], [[C]], [[C]], [[C]], [[C]], [[C]], [[C]], [[C]] :: (store (<32 x s16>))
+    ; CHECK-NEXT: $p0 = COPY [[AIE_POSTINC_3D_LOAD1]](p0)
+    ; CHECK-NEXT: $p1 = COPY [[AIE_POSTINC_3D_STORE]](p0)
+      %0:_(p0) = COPY $p0
+      %6:_(p0) = COPY $p1
+      %1:_(s20) = G_CONSTANT i20 64
+      %4:_(<32 x s16>) = G_LOAD %0(p0) :: (load (<32 x s16>))
+      G_STORE %4, %6 :: (store (<32 x s16>))
+      %3:_(p0), %8:_(s20), %9:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2.add.3d), %0:_(p0), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20)
+      $p0 = COPY %3
+      %7:_(p0), %10:_(s20), %11:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2.add.3d), %6:_(p0), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20)
+      $p1 = COPY %7
+...
+
+---
 name: no_vector_1024_combine_postinc_yet
 body: |
   bb.0:
