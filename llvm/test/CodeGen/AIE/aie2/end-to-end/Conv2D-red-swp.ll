@@ -330,7 +330,7 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; DCL-NEXT:    vldb wl10, [p1], #32; add r0, r10, #33; mov r10, p0; vmac cm3, cm3, x11, x6, r4 // Delay Slot 2
 ; DCL-NEXT:    vldb wh10, [p1], #32; and r10, r10, r9; vmov x8, x10; vmac cm7, cm7, x11, x8, r4 // Delay Slot 1
 ; DCL-NEXT:  // %bb.3: // in Loop: Header=BB0_1 Depth=1
-; DCL-NEXT:    nopa ; nopx ; vmov x11, x0
+; DCL-NEXT:    nopa ; nopb ; nopx ; vmov x11, x0
 ; DCL-NEXT:    vshuffle x0, x4, x2, r3
 ; DCL-NEXT:    vshuffle x11, x0, x11, r8
 ; DCL-NEXT:    vlda wl0, [sp, #-64] // 32-byte Folded Reload
@@ -367,7 +367,7 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; DCL-NEXT:    vst.srs.s16.s32 bmh5, s3, [p3, #32]; mov m3, r14
 ; DCL-NEXT:    vst.srs.s16.s32 bml5, s3, [p3], #64; mov m1, r11
 ; DCL-NEXT:    padda.3d [p0], d1; vst.srs.s16.s32 bmh4, s3, [p3, #32]; mov m1, r24
-; DCL-NEXT:    padda.2d [p3], d7; vst.srs.s16.s32 bml4, s3, [p3, #0]; add r7, r7, #-1; mov dj7, r25
+; DCL-NEXT:    vst.2d.srs.s16.s32 bml4, s3, [p3], d7; add r7, r7, #-1; mov dj7, r25
 ; DCL-NEXT:    jnz r7, #.LBB0_1
 ; DCL-NEXT:    mov dn7, r26 // Delay Slot 5
 ; DCL-NEXT:    st dc7, [sp, #-84] // 4-byte Folded Spill Delay Slot 4
@@ -494,7 +494,7 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ZOL-NEXT:  .L_LEnd0:
 ; ZOL-NEXT:    vldb wh10, [p1], #32; nopa ; nops ; and r1, r1, r9; vmov x8, x10; vmac cm7, cm7, x11, x8, r4
 ; ZOL-NEXT:  // %bb.3: // in Loop: Header=BB0_1 Depth=1
-; ZOL-NEXT:    nopa ; nopx ; vmov x11, x0
+; ZOL-NEXT:    nopa ; nopb ; nopx ; vmov x11, x0
 ; ZOL-NEXT:    vshuffle x0, x4, x2, r3
 ; ZOL-NEXT:    vshuffle x11, x0, x11, r8
 ; ZOL-NEXT:    vlda wl0, [sp, #-64] // 32-byte Folded Reload
@@ -531,7 +531,7 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ZOL-NEXT:    vst.srs.s16.s32 bmh5, s3, [p3, #32]; mov m3, r13
 ; ZOL-NEXT:    vst.srs.s16.s32 bml5, s3, [p3], #64; mov m1, r10
 ; ZOL-NEXT:    padda.3d [p0], d1; vst.srs.s16.s32 bmh4, s3, [p3, #32]; mov m1, r15
-; ZOL-NEXT:    padda.2d [p3], d7; vst.srs.s16.s32 bml4, s3, [p3, #0]; add r7, r7, #-1; mov dj7, r24
+; ZOL-NEXT:    vst.2d.srs.s16.s32 bml4, s3, [p3], d7; add r7, r7, #-1; mov dj7, r24
 ; ZOL-NEXT:    jnz r7, #.LBB0_1
 ; ZOL-NEXT:    mov dn7, r25 // Delay Slot 5
 ; ZOL-NEXT:    st dc7, [sp, #-84] // 4-byte Folded Spill Delay Slot 4
