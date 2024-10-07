@@ -1051,7 +1051,7 @@ void AIEScheduleDAGMI::enterRegion(MachineBasicBlock *BB,
   // correctly initialized...
   if (RegionInstrs <= 1) {
     LLVM_DEBUG(dbgs() << "Force scheduling for skipped region\n");
-    ScheduleDAGMI::schedule();
+    schedule();
   }
 }
 
@@ -1131,7 +1131,7 @@ void AIEScheduleDAGMILive::enterRegion(MachineBasicBlock *BB,
   // Similar to AIEScheduleDAGMI, ensure correct state for SchedImpl.
   if (RegionInstrs <= 1) {
     LLVM_DEBUG(dbgs() << "Force scheduling for skipped region\n");
-    ScheduleDAGMILive::schedule();
+    schedule();
   }
 }
 
