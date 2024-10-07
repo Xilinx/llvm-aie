@@ -824,7 +824,9 @@ inline __attribute__((always_inline)) v8caccfloat addmsc_elem_8_2(v16cbfloat16 ,
 inline __attribute__((always_inline)) v8caccfloat mul_elem_8_2_conf(v16cbfloat16 , v16cbfloat16 , int );
 inline __attribute__((always_inline)) v8caccfloat negmul_elem_8_2_conf(v16cbfloat16 , v16cbfloat16 , int );
 inline __attribute__((always_inline)) v8caccfloat mac_elem_8_2_conf(v16cbfloat16 , v16cbfloat16 , v8caccfloat , int , int , int );
+inline __attribute__((always_inline)) v8caccfloat mac_elem_8_2_conf(v16cbfloat16, v16cbfloat16, v8caccfloat, int, int, int, int, int);
 inline __attribute__((always_inline)) v8caccfloat msc_elem_8_2_conf(v16cbfloat16 , v16cbfloat16 , v8caccfloat , int , int , int );
+inline __attribute__((always_inline)) v8caccfloat msc_elem_8_2_conf(v16cbfloat16, v16cbfloat16, v8caccfloat, int, int, int, int, int);
 inline __attribute__((always_inline)) v8caccfloat addmac_elem_8_2_conf(v16cbfloat16 , v16cbfloat16 , v8caccfloat , v8caccfloat , int , int , int , int );
 inline __attribute__((always_inline)) v8caccfloat addmsc_elem_8_2_conf(v16cbfloat16 , v16cbfloat16 , v8caccfloat , v8caccfloat , int , int , int , int );
 inline __attribute__((always_inline)) v8caccfloat mul_elem_8_2_conf(v16cbfloat16 , v16bfloat16 , int );
