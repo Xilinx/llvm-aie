@@ -183,10 +183,14 @@ public:
                                       const MachineRegisterInfo &MRI,
                                       const RegisterBankInfo &RBI,
                                       std::optional<APInt> Offset);
-  bool selectG_AIE_LOAD_STORE(MachineInstr &I, MachineRegisterInfo &MRI);
-  bool select512BitG_AIE_LOAD_STORE(MachineInstr &I, LoadStoreOpcodes &LSO,
-                                    AddressingModeInfo &AMI,
-                                    MachineRegisterInfo &MRI);
+  bool selectG_AIE_STORE(MachineInstr &I, MachineRegisterInfo &MRI);
+  bool selectG_AIE_LOAD(MachineInstr &I, MachineRegisterInfo &MRI);
+  bool select512BitG_AIE_STORE(MachineInstr &I, LoadStoreOpcodes &LSO,
+                               AddressingModeInfo &AMI,
+                               MachineRegisterInfo &MRI);
+  bool select512BitG_AIE_LOAD(MachineInstr &I, LoadStoreOpcodes &LSO,
+                              AddressingModeInfo &AMI,
+                              MachineRegisterInfo &MRI);
   bool selectG_AIE_STORE_SRS(MachineInstr &StoreI, MachineRegisterInfo &MRI);
   bool select512BitG_AIE_STORE_SRS(LoadStoreOpcodes &LSO,
                                    AddressingModeInfo &AMI, Register SrcReg,
@@ -743,6 +747,7 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
   case AIE2::G_AIE_POSTINC_STORE:
   case AIE2::G_AIE_POSTINC_2D_STORE:
   case AIE2::G_AIE_POSTINC_3D_STORE:
+    return selectG_AIE_STORE(I, MRI);
   case AIE2::G_AIE_OFFSET_LOAD:
   case AIE2::G_AIE_POSTINC_LOAD:
   case AIE2::G_AIE_POSTINC_2D_LOAD:
@@ -755,7 +760,7 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
   case AIE2::G_AIE_POSTINC_2D_ZEXTLOAD:
   case AIE2::G_AIE_POSTINC_3D_SEXTLOAD:
   case AIE2::G_AIE_POSTINC_3D_ZEXTLOAD:
-    return selectG_AIE_LOAD_STORE(I, MRI);
+    return selectG_AIE_LOAD(I, MRI);
   case AIE2::G_AIE_ZEXT_EXTRACT_VECTOR_ELT:
   case AIE2::G_AIE_SEXT_EXTRACT_VECTOR_ELT:
     return selectG_AIE_EXTRACT_VECTOR_ELT(I, MRI);
@@ -1019,7 +1024,7 @@ bool AIE2InstructionSelector::selectG_LOAD(MachineInstr &I,
 
   // Vector Loads <= 512 bits are handled in selectG_AIE_LOAD_STORE
   if (DstTy.isVector() && LoadSize <= 512)
-    return selectG_AIE_LOAD_STORE(I, MRI);
+    return selectG_AIE_LOAD(I, MRI);
 
   if (LoadSize == 128) {
     // Try selecting mask loads for SP-relative
@@ -1175,7 +1180,7 @@ bool AIE2InstructionSelector::selectG_STORE(MachineInstr &I,
 
   // Vector Stores <= 256 bits are handled in selectG_AIE_LOAD_STORE
   if (StoreSize <= 512)
-    return selectG_AIE_LOAD_STORE(I, MRI);
+    return selectG_AIE_STORE(I, MRI);
 
   bool IsAccumulator = SrcTy.getElementType().getSizeInBits() == 64;
   const unsigned StoreOpc = IsAccumulator ? AIE2::VST_dmw_sts_am_ag_idx_imm
@@ -1610,8 +1615,9 @@ bool AIE2InstructionSelector::selectG_AIE_LOAD_UNPACK(
   if (!canDelayMemOp(*LoadOp, UNPACKI, MRI))
     return false;
 
-  if (!canCombineUNPACKLoad(*LoadOp, UNPACKI, MRI) ||
-      LoadOp->getParent() != UNPACKI.getParent() || !MRI.hasOneUse(LoadResult))
+  if (LoadOp->getParent() != UNPACKI.getParent() ||
+      !canCombineUNPACKLoad(*LoadOp, UNPACKI, MRI) ||
+      !MRI.hasOneUse(LoadResult))
     return false;
 
   std::optional<AddressingModeInfo> AMI =
@@ -2780,8 +2786,8 @@ bool AIE2InstructionSelector::selectG_AIE_LOAD_UPS(MachineInstr &UPSI,
   if (!canDelayMemOp(*LoadOp, UPSI, MRI))
     return false;
 
-  if (!canCombineSRSUPS(*LoadOp, UPSI) ||
-      LoadOp->getParent() != UPSI.getParent() || !MRI.hasOneUse(LoadResult))
+  if (LoadOp->getParent() != UPSI.getParent() ||
+      !canCombineSRSUPS(*LoadOp, UPSI) || !MRI.hasOneUse(LoadResult))
     return false;
 
   std::optional<AddressingModeInfo> AMI =
@@ -3996,8 +4002,8 @@ bool AIE2InstructionSelector::selectG_AIE_STORE_PACK(MachineInstr &StoreI,
 
   assert(PackOp && "Expected SSA.");
 
-  if (!canCombinePACK(StoreI, *PackOp) ||
-      StoreI.getParent() != PackOp->getParent() || !MRI.hasOneUse(PackResult))
+  if (StoreI.getParent() != PackOp->getParent() ||
+      !canCombinePACK(StoreI, *PackOp) || !MRI.hasOneUse(PackResult))
     return false;
 
   std::optional<AddressingModeInfo> AMI =
@@ -4148,8 +4154,8 @@ bool AIE2InstructionSelector::selectG_AIE_STORE_SRS(MachineInstr &StoreI,
 
   assert(SrsOp && "Expected SSA.");
 
-  if (!canCombineSRSUPS(StoreI, *SrsOp) ||
-      StoreI.getParent() != SrsOp->getParent() || !MRI.hasOneUse(SrsResult))
+  if (StoreI.getParent() != SrsOp->getParent() ||
+      !canCombineSRSUPS(StoreI, *SrsOp) || !MRI.hasOneUse(SrsResult))
     return false;
 
   std::optional<AddressingModeInfo> AMI =
@@ -4255,8 +4261,8 @@ bool AIE2InstructionSelector::selectG_AIE_STORE_CONV(MachineInstr &StoreI,
 
   assert(ConvOp && "Expected SSA.");
 
-  if (!canCombineCONV(StoreI, *ConvOp) ||
-      StoreI.getParent() != ConvOp->getParent() || !MRI.hasOneUse(ConvResult))
+  if (StoreI.getParent() != ConvOp->getParent() ||
+      !canCombineCONV(StoreI, *ConvOp) || !MRI.hasOneUse(ConvResult))
     return false;
 
   std::optional<AddressingModeInfo> AMI =
@@ -4287,9 +4293,10 @@ bool AIE2InstructionSelector::selectG_AIE_STORE_CONV(MachineInstr &StoreI,
   return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
 }
 
-bool AIE2InstructionSelector::select512BitG_AIE_LOAD_STORE(
-    MachineInstr &I, LoadStoreOpcodes &LSO, AddressingModeInfo &AMI,
-    MachineRegisterInfo &MRI) {
+bool AIE2InstructionSelector::select512BitG_AIE_LOAD(MachineInstr &I,
+                                                     LoadStoreOpcodes &LSO,
+                                                     AddressingModeInfo &AMI,
+                                                     MachineRegisterInfo &MRI) {
   assert(LSO.OffsetOpcode &&
          "Expected an offset opcode for 512-bit load/store!?");
 
@@ -4302,109 +4309,29 @@ bool AIE2InstructionSelector::select512BitG_AIE_LOAD_STORE(
   Register Low256 = MRI.createVirtualRegister(RC256);
   Register High256 = MRI.createVirtualRegister(RC256);
 
+  MachineInstrBuilder LoadHigher;
+  MachineInstrBuilder LoadLower;
+
   switch (AMI.MemI.getOpcode()) {
-  case AIE2::G_STORE:
-  case AIE2::G_AIE_POSTINC_STORE:
-  case AIE2::G_AIE_POSTINC_2D_STORE:
-  case AIE2::G_AIE_POSTINC_3D_STORE: {
-    auto LowerBits = MIB.buildInstr(TargetOpcode::COPY, {Low256}, {})
-                         .addReg(AMI.SrcDstOp.getReg(), 0, AIE2::sub_256_lo);
-    auto HigherBits = MIB.buildInstr(TargetOpcode::COPY, {High256}, {})
-                          .addReg(AMI.SrcDstOp.getReg(), 0, AIE2::sub_256_hi);
-
-    auto StoreHigher = MIB.buildInstr(*LSO.OffsetOpcode, {}, {})
-                           .addReg(HigherBits.getReg(0))
-                           .addReg(AMI.PtrOp.getReg())
-                           .addImm(32); // Offset
-    auto StoreLower = MIB.buildInstr(LSO.ISelOpcode, {}, {});
-
-    for (auto Def : AMI.MemI.defs())
-      StoreLower.addDef(Def.getReg());
-
-    StoreLower.addReg(LowerBits.getReg(0));
-
-    addAddressingMode(StoreLower, AMI, LSO.FitsImmediateRange, false, MRI);
-
-    addSplitMemOperands(AMI.MemI, StoreHigher, StoreLower, 0, 2);
-
-    AMI.MemI.eraseFromParent();
-    return constrainSelectedInstRegOperands(*StoreLower, TII, TRI, RBI) &&
-           constrainSelectedInstRegOperands(*StoreHigher, TII, TRI, RBI);
-  }
-  case AIE2::G_AIE_OFFSET_STORE: {
-    auto LowerBits = MIB.buildInstr(TargetOpcode::COPY, {Low256}, {})
-                         .addReg(AMI.SrcDstOp.getReg(), 0, AIE2::sub_256_lo);
-    auto HigherBits = MIB.buildInstr(TargetOpcode::COPY, {High256}, {})
-                          .addReg(AMI.SrcDstOp.getReg(), 0, AIE2::sub_256_hi);
-
-    MachineInstrBuilder StoreHigher;
-    if (LSO.FitsImmediateRange) {
-      StoreHigher =
-          MIB.buildInstr(*LSO.OffsetOpcode, {}, {})
-              .addReg(HigherBits.getReg(0))
-              .addReg(AMI.PtrOp.getReg())
-              .addImm(AMI.ImmediateOffset->getSExtValue() + 32); // Offset
-    } else {
-      // In this case we have to emit an PTR_ADD to evaluate the offset
-      insertPtrAddForOffset(MRI, AMI.MemI);
-      StoreHigher = MIB.buildInstr(*LSO.OffsetOpcode, {}, {})
-                        .addReg(HigherBits.getReg(0))
-                        .addReg(AMI.PtrOp.getReg())
-                        .addImm(32); // Offset
-    }
-
-    auto StoreLower = MIB.buildInstr(LSO.ISelOpcode, {}, {});
-
-    StoreLower.addReg(LowerBits.getReg(0));
-
-    StoreLower.addUse(AMI.PtrOp.getReg());
-    if (LSO.FitsImmediateRange) {
-      StoreLower.addImm(AMI.ImmediateOffset->getSExtValue()); // Offset
-    } else {
-      // In this case we have already inserted a PTR_ADD to add the offset to
-      // the base pointer
-      StoreLower.addImm(0); // Offset
-    }
-
-    addSplitMemOperands(AMI.MemI, StoreHigher, StoreLower, 0, 2);
-
-    AMI.MemI.eraseFromParent();
-    return constrainSelectedInstRegOperands(*StoreLower, TII, TRI, RBI) &&
-           constrainSelectedInstRegOperands(*StoreHigher, TII, TRI, RBI);
-  }
   case AIE2::G_LOAD:
   case AIE2::G_AIE_POSTINC_LOAD:
   case AIE2::G_AIE_POSTINC_2D_LOAD:
   case AIE2::G_AIE_POSTINC_3D_LOAD: {
-    auto LoadHigher = MIB.buildInstr(*LSO.OffsetOpcode, {}, {})
-                          .addDef(High256)
-                          .addUse(AMI.PtrOp.getReg())
-                          .addImm(32); // Offset
+    LoadHigher = MIB.buildInstr(*LSO.OffsetOpcode, {}, {})
+                     .addDef(High256)
+                     .addUse(AMI.PtrOp.getReg())
+                     .addImm(32); // Offset
 
-    auto LoadLower = MIB.buildInstr(LSO.ISelOpcode, {Low256}, {});
+    LoadLower = MIB.buildInstr(LSO.ISelOpcode, {Low256}, {});
     // We have to skip the first Def (the 512-bit Dst-Reg)
     for (auto *Def = AMI.MemI.defs().begin() + 1; Def != AMI.MemI.defs().end();
          Def++)
       LoadLower.addDef(Def->getReg());
 
     addAddressingMode(LoadLower, AMI, LSO.FitsImmediateRange, false, MRI);
-
-    addSplitMemOperands(AMI.MemI, LoadHigher, LoadLower, 0, 2);
-
-    MIB.buildInstr(AIE2::REG_SEQUENCE, {AMI.SrcDstOp.getReg()}, {})
-        .addReg(Low256)
-        .addImm(AIE2::sub_256_lo)
-        .addReg(High256)
-        .addImm(AIE2::sub_256_hi);
-
-    Register SrcDstReg = AMI.SrcDstOp.getReg();
-    AMI.MemI.eraseFromParent();
-    return constrainSelectedInstRegOperands(*LoadLower, TII, TRI, RBI) &&
-           constrainSelectedInstRegOperands(*LoadHigher, TII, TRI, RBI) &&
-           RBI.constrainGenericRegister(SrcDstReg, *RC512, MRI);
+    break;
   }
   case AIE2::G_AIE_OFFSET_LOAD: {
-    MachineInstrBuilder LoadHigher;
     if (LSO.FitsImmediateRange) {
       LoadHigher =
           MIB.buildInstr(*LSO.OffsetOpcode, {}, {})
@@ -4420,7 +4347,7 @@ bool AIE2InstructionSelector::select512BitG_AIE_LOAD_STORE(
                        .addImm(32); // Offset
     }
 
-    auto LoadLower =
+    LoadLower =
         MIB.buildInstr(LSO.ISelOpcode, {Low256}, {}).addUse(AMI.PtrOp.getReg());
     if (LSO.FitsImmediateRange) {
       LoadLower.addImm(AMI.ImmediateOffset->getSExtValue()); // Offset
@@ -4429,24 +4356,104 @@ bool AIE2InstructionSelector::select512BitG_AIE_LOAD_STORE(
       // the base pointer
       LoadLower.addImm(0); // Offset
     }
-
-    addSplitMemOperands(AMI.MemI, LoadHigher, LoadLower, 0, 2);
-
-    MIB.buildInstr(AIE2::REG_SEQUENCE, {AMI.SrcDstOp.getReg()}, {})
-        .addReg(Low256)
-        .addImm(AIE2::sub_256_lo)
-        .addReg(High256)
-        .addImm(AIE2::sub_256_hi);
-
-    Register SrcDstReg = AMI.SrcDstOp.getReg();
-    AMI.MemI.eraseFromParent();
-    return constrainSelectedInstRegOperands(*LoadLower, TII, TRI, RBI) &&
-           constrainSelectedInstRegOperands(*LoadHigher, TII, TRI, RBI) &&
-           RBI.constrainGenericRegister(SrcDstReg, *RC512, MRI);
+    break;
   }
   default:
     return false;
   }
+
+  addSplitMemOperands(AMI.MemI, LoadHigher, LoadLower, 0, 2);
+
+  MIB.buildInstr(AIE2::REG_SEQUENCE, {AMI.SrcDstOp.getReg()}, {})
+      .addReg(Low256)
+      .addImm(AIE2::sub_256_lo)
+      .addReg(High256)
+      .addImm(AIE2::sub_256_hi);
+
+  Register SrcDstReg = AMI.SrcDstOp.getReg();
+  AMI.MemI.eraseFromParent();
+  return constrainSelectedInstRegOperands(*LoadLower, TII, TRI, RBI) &&
+         constrainSelectedInstRegOperands(*LoadHigher, TII, TRI, RBI) &&
+         RBI.constrainGenericRegister(SrcDstReg, *RC512, MRI);
+}
+
+bool AIE2InstructionSelector::select512BitG_AIE_STORE(
+    MachineInstr &I, LoadStoreOpcodes &LSO, AddressingModeInfo &AMI,
+    MachineRegisterInfo &MRI) {
+  assert(LSO.OffsetOpcode && "Expected an offset opcode for 512-bit store!?");
+
+  LLT SrcDstTy = MRI.getType(AMI.SrcDstOp.getReg());
+  bool IsAccumulator = SrcDstTy.getElementType().getSizeInBits() == 64;
+  const TargetRegisterClass *RC256 =
+      IsAccumulator ? &AIE2::ACC256RegClass : &AIE2::VEC256RegClass;
+  Register Low256 = MRI.createVirtualRegister(RC256);
+  Register High256 = MRI.createVirtualRegister(RC256);
+
+  auto LowerBits = MIB.buildInstr(TargetOpcode::COPY, {Low256}, {})
+                       .addReg(AMI.SrcDstOp.getReg(), 0, AIE2::sub_256_lo);
+  auto HigherBits = MIB.buildInstr(TargetOpcode::COPY, {High256}, {})
+                        .addReg(AMI.SrcDstOp.getReg(), 0, AIE2::sub_256_hi);
+  MachineInstrBuilder StoreHigher;
+  MachineInstrBuilder StoreLower;
+
+  switch (AMI.MemI.getOpcode()) {
+  case AIE2::G_STORE:
+  case AIE2::G_AIE_POSTINC_STORE:
+  case AIE2::G_AIE_POSTINC_2D_STORE:
+  case AIE2::G_AIE_POSTINC_3D_STORE: {
+    StoreHigher = MIB.buildInstr(*LSO.OffsetOpcode, {}, {})
+                      .addReg(HigherBits.getReg(0))
+                      .addReg(AMI.PtrOp.getReg())
+                      .addImm(32); // Offset
+    StoreLower = MIB.buildInstr(LSO.ISelOpcode, {}, {});
+
+    for (auto Def : AMI.MemI.defs())
+      StoreLower.addDef(Def.getReg());
+
+    StoreLower.addReg(LowerBits.getReg(0));
+
+    addAddressingMode(StoreLower, AMI, LSO.FitsImmediateRange, false, MRI);
+    break;
+  }
+  case AIE2::G_AIE_OFFSET_STORE: {
+    if (LSO.FitsImmediateRange) {
+      StoreHigher =
+          MIB.buildInstr(*LSO.OffsetOpcode, {}, {})
+              .addReg(HigherBits.getReg(0))
+              .addReg(AMI.PtrOp.getReg())
+              .addImm(AMI.ImmediateOffset->getSExtValue() + 32); // Offset
+    } else {
+      // In this case we have to emit an PTR_ADD to evaluate the offset
+      insertPtrAddForOffset(MRI, AMI.MemI);
+      StoreHigher = MIB.buildInstr(*LSO.OffsetOpcode, {}, {})
+                        .addReg(HigherBits.getReg(0))
+                        .addReg(AMI.PtrOp.getReg())
+                        .addImm(32); // Offset
+    }
+
+    StoreLower = MIB.buildInstr(LSO.ISelOpcode, {}, {});
+
+    StoreLower.addReg(LowerBits.getReg(0));
+
+    StoreLower.addUse(AMI.PtrOp.getReg());
+    if (LSO.FitsImmediateRange) {
+      StoreLower.addImm(AMI.ImmediateOffset->getSExtValue()); // Offset
+    } else {
+      // In this case we have already inserted a PTR_ADD to add the offset to
+      // the base pointer
+      StoreLower.addImm(0); // Offset
+    }
+    break;
+  }
+
+  default:
+    return false;
+  }
+  addSplitMemOperands(AMI.MemI, StoreHigher, StoreLower, 0, 2);
+
+  AMI.MemI.eraseFromParent();
+  return constrainSelectedInstRegOperands(*StoreLower, TII, TRI, RBI) &&
+         constrainSelectedInstRegOperands(*StoreHigher, TII, TRI, RBI);
 }
 
 static bool getVLDA_CONVOpcode(const MachineInstr &MemOp,
@@ -4520,8 +4527,8 @@ bool AIE2InstructionSelector::selectG_AIE_LOAD_CONV(MachineInstr &CONVI,
   if (!canDelayMemOp(*LoadOp, CONVI, MRI))
     return false;
 
-  if (!canCombineCONVLoad(*LoadOp, CONVI) ||
-      LoadOp->getParent() != CONVI.getParent() || !MRI.hasOneUse(LoadResult))
+  if (LoadOp->getParent() != CONVI.getParent() ||
+      !canCombineCONVLoad(*LoadOp, CONVI) || !MRI.hasOneUse(LoadResult))
     return false;
 
   std::optional<AddressingModeInfo> AMI =
@@ -4570,9 +4577,8 @@ bool AIE2InstructionSelector::selectVCONV(MachineInstr &I,
   return selectImpl(I, *CoverageInfo);
 }
 
-bool AIE2InstructionSelector::selectG_AIE_LOAD_STORE(MachineInstr &I,
-                                                     MachineRegisterInfo &MRI) {
-
+bool AIE2InstructionSelector::selectG_AIE_STORE(MachineInstr &I,
+                                                MachineRegisterInfo &MRI) {
   // First try to match CONV, SRS and PACK combine
   if (selectG_AIE_STORE_CONV(I, MRI) || selectG_AIE_STORE_SRS(I, MRI) ||
       selectG_AIE_STORE_PACK(I, MRI))
@@ -4587,16 +4593,43 @@ bool AIE2InstructionSelector::selectG_AIE_LOAD_STORE(MachineInstr &I,
   LLT SrcDstTy = MRI.getType(AMI->SrcDstOp.getReg());
 
   if (SrcDstTy.getSizeInBits() == 512)
-    return select512BitG_AIE_LOAD_STORE(I, LSO, *AMI, MRI);
+    return select512BitG_AIE_STORE(I, LSO, *AMI, MRI);
 
   MachineInstrBuilder NewInstr = MIB.buildInstr(LSO.ISelOpcode);
 
   for (auto Def : AMI->MemI.defs())
     NewInstr.addDef(Def.getReg());
 
-  if (AMI->MemI.mayStore())
-    // If the MemOp is a STORE the first use is the value to be stored
-    NewInstr.addUse(AMI->SrcDstOp.getReg());
+  // Any STORE has the value to be stored as first use
+  NewInstr.addUse(AMI->SrcDstOp.getReg());
+
+  addAddressingMode(NewInstr, *AMI, LSO.FitsImmediateRange, true, MRI);
+
+  NewInstr.cloneMemRefs(AMI->MemI);
+
+  AMI->MemI.eraseFromParent();
+
+  return constrainSelectedInstRegOperands(*NewInstr, TII, TRI, RBI);
+}
+
+bool AIE2InstructionSelector::selectG_AIE_LOAD(MachineInstr &I,
+                                               MachineRegisterInfo &MRI) {
+
+  std::optional<AddressingModeInfo> AMI = getOrDefineAddressingRegister(I, MRI);
+  if (!AMI)
+    return false;
+
+  LoadStoreOpcodes LSO =
+      getLoadStoreOpcode(AMI->MemI, MRI, RBI, AMI->ImmediateOffset);
+  LLT SrcDstTy = MRI.getType(AMI->SrcDstOp.getReg());
+
+  if (SrcDstTy.getSizeInBits() == 512)
+    return select512BitG_AIE_LOAD(I, LSO, *AMI, MRI);
+
+  MachineInstrBuilder NewInstr = MIB.buildInstr(LSO.ISelOpcode);
+
+  for (auto Def : AMI->MemI.defs())
+    NewInstr.addDef(Def.getReg());
 
   addAddressingMode(NewInstr, *AMI, LSO.FitsImmediateRange, true, MRI);
 
