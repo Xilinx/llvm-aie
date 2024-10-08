@@ -20,6 +20,7 @@
 #include "AIE2TargetMachine.h"
 #include "AIEHazardRecognizer.h"
 #include "AIEMachineFunctionInfo.h"
+#include "AIEMachineScheduler.h"
 #include "AIETiedRegOperands.h"
 #include "MCTargetDesc/AIE2MCTargetDesc.h"
 #include "MCTargetDesc/AIEMCFormats.h"
@@ -912,12 +913,23 @@ ScheduleHazardRecognizer *AIE2InstrInfo::CreateTargetPostRAHazardRecognizer(
                    "Please use the MI scheduler instead: postmisched");
 }
 
+static AIEAlternateDescriptors &getSelectedAltDescs(const ScheduleDAGMI *DAG) {
+  if (DAG->hasVRegLiveness())
+    return static_cast<const AIEScheduleDAGMILive *>(DAG)
+        ->getSchedImpl()
+        ->getSelectedAltDescs();
+  return static_cast<const AIEScheduleDAGMI *>(DAG)
+      ->getSchedImpl()
+      ->getSelectedAltDescs();
+}
+
 ScheduleHazardRecognizer *
 AIE2InstrInfo::CreateTargetMIHazardRecognizer(const InstrItineraryData *II,
                                               const ScheduleDAGMI *DAG) const {
   // AIE has a fully exposed pipeline, resource and format conflicts must be
   // exactly modelled.
-  return new AIEHazardRecognizer(this, II, /*IsPreRA=*/DAG->hasVRegLiveness());
+  return new AIEHazardRecognizer(this, II, getSelectedAltDescs(DAG),
+                                 /*IsPreRA=*/DAG->hasVRegLiveness());
 }
 
 /// insertNoop - Insert a noop into the instruction stream at the specified
@@ -1185,13 +1197,15 @@ bool AIE2InstrInfo::isHardwareLoopEnd(unsigned Opcode) const {
   return Opcode == AIE2::PseudoLoopEnd;
 }
 
-bool AIE2InstrInfo::isZOLTripCountDef(const MachineInstr &MI) const {
+bool AIE2InstrInfo::isZOLTripCountDef(const MachineInstr &MI,
+                                      bool Pristine) const {
   return MI.getOpcode() == AIE2::ADD_NC &&
-         MI.getOperand(0).getReg() == AIE2::LC;
+         MI.getOperand(0).getReg() == AIE2::LC &&
+         (!Pristine || MI.getOperand(2).getImm() == 0);
 }
 
 void AIE2InstrInfo::adjustTripCount(MachineInstr &MI, int Adjustment) const {
-  assert(MI.getOpcode() == AIE2::ADD_NC);
+  assert(isZOLTripCountDef(MI));
   auto &Imm = MI.getOperand(2);
   Imm.setImm(Imm.getImm() + Adjustment);
 }
@@ -1320,4 +1334,88 @@ bool AIE2InstrInfo::canHoistCheapInst(const MachineInstr &MI) const {
   return MI.getOpcode() == TargetOpcode::COPY &&
          AIE2::eSRegClass.hasSubClassEq(
              MRI.getRegClass(MI.getOperand(0).getReg()));
+}
+
+std::optional<const AIEBaseInstrInfo::VConcatOpInfo>
+AIE2InstrInfo::getVConcatOpInfo(const MachineInstr &MI) const {
+
+  std::optional<const AIEBaseInstrInfo::VConcatOpInfo> BaseOpInfo =
+      AIEBaseInstrInfo::getVConcatOpInfo(MI);
+
+  if (BaseOpInfo)
+    return BaseOpInfo;
+
+  if (MI.getOpcode() != TargetOpcode::G_INTRINSIC)
+    return std::nullopt;
+
+  const GIntrinsic &GMI = cast<const GIntrinsic>(MI);
+
+  switch (GMI.getIntrinsicID()) {
+  case Intrinsic::aie2_concat_I512_I256:
+  case Intrinsic::aie2_concat_I1024_I512:
+  case Intrinsic::aie2_concat_I1024_I256:
+
+  case Intrinsic::aie2_concat_bf512_bf256:
+  case Intrinsic::aie2_concat_bf1024_bf512:
+  case Intrinsic::aie2_concat_bf1024_bf256:
+
+  case Intrinsic::aie2_concat_512_256_acc:
+  case Intrinsic::aie2_concat_1024_512_acc:
+  case Intrinsic::aie2_concat_1024_256_acc:
+    return VConcatOpInfo{2, 1};
+  default:
+    return std::nullopt;
+  }
+}
+
+std::optional<const AIEBaseInstrInfo::VUpdateOpInfo>
+AIE2InstrInfo::getVUpdateOpInfo(const MachineInstr &MI) const {
+
+  if (MI.getOpcode() != TargetOpcode::G_INTRINSIC)
+    return std::nullopt;
+
+  const GIntrinsic &GMI = cast<const GIntrinsic>(MI);
+
+  switch (GMI.getIntrinsicID()) {
+  case Intrinsic::aie2_upd_I512_I256:
+  case Intrinsic::aie2_upd_I1024_I512:
+  case Intrinsic::aie2_upd_I1024_I256:
+
+  case Intrinsic::aie2_upd_bf512_bf256:
+  case Intrinsic::aie2_upd_bf1024_bf512:
+  case Intrinsic::aie2_upd_bf1024_bf256:
+
+  case Intrinsic::aie2_upd_512_256_acc:
+  case Intrinsic::aie2_upd_1024_512_acc:
+  case Intrinsic::aie2_upd_1024_256_acc:
+    return VUpdateOpInfo{2, 3, 4};
+  default:
+    return std::nullopt;
+  }
+}
+
+std::optional<const AIEBaseInstrInfo::VExtractOpInfo>
+AIE2InstrInfo::getVExtractOpInfo(const MachineInstr &MI) const {
+
+  if (MI.getOpcode() != TargetOpcode::G_INTRINSIC)
+    return std::nullopt;
+
+  const GIntrinsic &GMI = cast<const GIntrinsic>(MI);
+
+  switch (GMI.getIntrinsicID()) {
+  case Intrinsic::aie2_ext_I256_I512:
+  case Intrinsic::aie2_ext_I512_I1024:
+  case Intrinsic::aie2_ext_I256_I1024:
+
+  case Intrinsic::aie2_ext_bf256_bf512:
+  case Intrinsic::aie2_ext_bf512_bf1024:
+  case Intrinsic::aie2_ext_bf256_bf1024:
+
+  case Intrinsic::aie2_ext_256_512_acc:
+  case Intrinsic::aie2_ext_512_1024_acc:
+  case Intrinsic::aie2_ext_256_1024_acc:
+    return VExtractOpInfo{2, 3};
+  default:
+    return std::nullopt;
+  }
 }

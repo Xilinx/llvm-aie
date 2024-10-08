@@ -50,7 +50,7 @@ public:
       : FormatInterface(FormatInterface) {
     bool ComputeSlots = (FormatInterface != nullptr);
     for (I *Instr : Instrs) {
-      add(Instr, std::nullopt, ComputeSlots);
+      add(Instr, Instr->getOpcode(), ComputeSlots);
     }
   }
 
@@ -98,8 +98,7 @@ public:
   /// Add an instruction to the bundle
   /// \param Instr Instruction to add
   /// \pre canAdd(Instr);
-  void add(I *Instr, std::optional<unsigned> SelectedOpcode = std::nullopt,
-           bool ComputeSlots = true) {
+  void add(I *Instr, unsigned OpCode, bool ComputeSlots = true) {
     if (isNoHazardMetaInstruction(Instr->getOpcode())) {
       MetaInstrs.push_back(Instr);
       return;
@@ -113,8 +112,7 @@ public:
     if (!ComputeSlots)
       return;
 
-    MCSlotKind FinalSlot = FormatInterface->getSlotKind(
-        SelectedOpcode ? *SelectedOpcode : Instr->getOpcode());
+    MCSlotKind FinalSlot = FormatInterface->getSlotKind(OpCode);
     if (FinalSlot == MCSlotKind()) {
       assert(Instrs.size() == 1 &&
              "Tried to add an unknown slot instruction in a valid Bundle");
@@ -126,6 +124,8 @@ public:
     SlotMap[FinalSlot] = Instr;
     OccupiedSlots |= NewSlots;
   }
+
+  void add(I *Instr) { add(Instr, Instr->getOpcode()); }
 
   /// return the minimum size valid format for this bundle, if any
   const VLIWFormat *getFormatOrNull(unsigned Size = 0) const {

@@ -50,13 +50,10 @@ cl::opt<bool> LoopWholeLoopGuard(
     cl::desc("Allow SWP schedules requiring a guard around the whole loop"),
     cl::init(true), cl::Hidden);
 
-// If we hoist we can get a better performance (no clear evidence
-// of the reason). If we don't hoist, we can change the LoopsStart expansion
-// to reuse this non-hoisted add.
-cl::opt<bool> HoistZOLAdjust(
-    "aie-pipeliner-hoist-zol-adjustment",
-    cl::desc("Host the trip count adjustment for ZOL (when possible)"),
-    cl::init(false), cl::Hidden);
+cl::opt<int> PostPipelinerCandidateLimit(
+    "aie-postpipeliner-limit",
+    cl::desc("II below which postpipeliner preference kicks in"), cl::init(2),
+    cl::Hidden);
 
 AIEBasePipelinerLoopInfo::AIEBasePipelinerLoopInfo(MachineInstr *EndLoop,
                                                    const AIEBaseInstrInfo &TII)
@@ -661,6 +658,9 @@ class ZeroOverheadLoop : public AIEBasePipelinerLoopInfo {
   MachineInstr *DefTripCount;
   MachineBasicBlock *LoopStartBlock;
 
+  // Decide whether the postpipeliner may do a better job
+  bool preferPostPipeliner(SMSchedule &SMS);
+
 public:
   ZeroOverheadLoop(MachineInstr *EndLoop, const AIEBaseInstrInfo &TII)
       : AIEBasePipelinerLoopInfo(EndLoop, TII) {}
@@ -672,6 +672,8 @@ public:
       SmallVectorImpl<MachineOperand> &Cond) override;
 
   bool canAcceptII(SMSchedule &SMS) override;
+
+  bool shouldUseSchedule(SwingSchedulerDAG &SSD, SMSchedule &SMS) override;
 };
 
 ZeroOverheadLoop::Assessment ZeroOverheadLoop::accept(MachineInstr *EndLoop) {
@@ -753,32 +755,34 @@ std::optional<bool> ZeroOverheadLoop::createTripCountGreaterCondition(
 
 void ZeroOverheadLoop::adjustTripCount(int TripCountAdjust) {
   LLVM_DEBUG(dbgs() << "TripCountAdjust =  " << TripCountAdjust << "\n");
-  if (DefTripCount->getOperand(1).isImm() &&
-      MRI.hasOneUse(DefTripCount->getOperand(0).getReg())) {
-    // If we have a constant here, just update the value.
-    const int64_t InitVal = DefTripCount->getOperand(1).getImm();
-    DefTripCount->getOperand(1).setImm(InitVal + TripCountAdjust);
-  } else {
-    // Otherwise, add the value.
-    Register Reg = DefTripCount->getOperand(0).getReg();
-    Register NewReg = MRI.createVirtualRegister(MRI.getRegClass(Reg));
-    MachineBasicBlock::iterator InsertPoint = Init->getIterator();
-    MachineInstr *AdjacentInstr = Init;
 
-    if (HoistZOLAdjust) {
-      // Insert the adjustment just after the instruction that defines it.
-      // Probably it will be hoisted.
-      AdjacentInstr = DefTripCount;
-      InsertPoint = DefTripCount->getIterator();
-      InsertPoint++;
-    }
+  // LoopStart has a small immediate addend that can accommodate the adjustment
+  Init->getOperand(1).setImm(TripCountAdjust);
+}
 
-    BuildMI(*AdjacentInstr->getParent(), InsertPoint,
-            AdjacentInstr->getDebugLoc(), TII.get(AIE2::ADD_NC_GPR), NewReg)
-        .addReg(Reg)
-        .addImm(TripCountAdjust);
-    Init->getOperand(0).setReg(NewReg);
+bool ZeroOverheadLoop::preferPostPipeliner(SMSchedule &SMS) {
+  // Zero overhead loops are candidates for PostPipeliner, which does a better
+  // job on multi-stage live-ranges without spilling or moving.
+  // Spanning multiple stages requires a latency that is longer than the II.
+  // We apply some heuristic upper limit for this rejection criterion.
+  // CHECK: We assume that the resulting II can be smaller than max(latency).
+  // When not, we may need ResMII for this check.
+  int II = SMS.getInitiationInterval();
+  if (II >= PostPipelinerCandidateLimit) {
+    return false;
   }
+
+  for (int C = 0; C < II; C++) {
+    for (auto *SU : SMS.getInstructions(C)) {
+      for (auto &SDep : SU->Succs) {
+        if (SDep.getSignedLatency() >= II) {
+          LLVM_DEBUG(dbgs() << "PLI: Leaving low-II for PostPipeliner\n");
+          return true;
+        }
+      }
+    }
+  }
+  return false;
 }
 
 bool ZeroOverheadLoop::canAcceptII(SMSchedule &SMS) {
@@ -790,7 +794,25 @@ bool ZeroOverheadLoop::canAcceptII(SMSchedule &SMS) {
     return false;
   }
 
+  // If we think the postpipeliner can do better, accept it here to prevent
+  // doing more work than necessary. The final verdict in shouldUseSchedule
+  // will reject it on the same grounds
+  if (preferPostPipeliner(SMS)) {
+    return true;
+  }
+
   return AIEBasePipelinerLoopInfo::canAcceptII(SMS);
+}
+
+bool ZeroOverheadLoop::shouldUseSchedule(SwingSchedulerDAG &SSD,
+                                         SMSchedule &SMS) {
+  // If AIEBasePipelinerLoopInfo refuses it, let's conservatively
+  // keep the decision.
+  if (!AIEBasePipelinerLoopInfo::shouldUseSchedule(SSD, SMS)) {
+    return false;
+  }
+
+  return !preferPostPipeliner(SMS);
 }
 
 } // namespace

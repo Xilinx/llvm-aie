@@ -47,6 +47,11 @@ struct AIEBaseRegisterInfo : public TargetRegisterInfo {
   bool isSimplifiableReservedReg(MCRegister PhysReg) const override {
     return false;
   }
+
+  virtual bool isVecOrAccRegClass(const TargetRegisterClass &RC) const {
+    llvm_unreachable("Target didn't implement isVecOrAccRegClass()");
+  }
+
 #if 0
   /// Returns a BitVector of the intersection of GPR RegClass
   /// and CalleeSaved Registers

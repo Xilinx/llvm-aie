@@ -4,13 +4,16 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
 // This file declares the AIEngine V2 Address Space and DM banks
 //
 //===----------------------------------------------------------------------===//
+
+#include "AIEBaseAddrSpaceInfo.h"
+#include <bitset>
 
 #ifndef LLVM_SUPPORT_AIE2ADDRSPACE_H
 #define LLVM_SUPPORT_AIE2ADDRSPACE_H
@@ -41,6 +44,73 @@ enum class AddressSpaces {
 enum class AIEBanks { A, B, C, D, TileMemory };
 
 } // end namespace AIE2
+
+class AIE2AddrSpaceInfo final : public AIEBaseAddrSpaceInfo {
+
+public:
+  MemoryBankBits getDefaultMemoryBank() const override {
+    std::bitset<32> MemoryBanks;
+    using namespace AIE2;
+    MemoryBanks.set(static_cast<unsigned>(AIEBanks::A))
+        .set(static_cast<unsigned>(AIEBanks::B))
+        .set(static_cast<unsigned>(AIEBanks::C))
+        .set(static_cast<unsigned>(AIEBanks::D));
+    return MemoryBanks.to_ulong();
+  }
+
+  MemoryBankBits
+  getMemoryBanksFromAddressSpace(unsigned AddrSpace) const override {
+    std::bitset<32> MemoryBanks;
+    using namespace AIE2;
+    switch (static_cast<AddressSpaces>(AddrSpace)) {
+    case AddressSpaces::a:
+      MemoryBanks.set(static_cast<unsigned>(AIEBanks::A));
+      break;
+    case AddressSpaces::b:
+      MemoryBanks.set(static_cast<unsigned>(AIEBanks::B));
+      break;
+    case AddressSpaces::c:
+      MemoryBanks.set(static_cast<unsigned>(AIEBanks::C));
+      break;
+    case AddressSpaces::d:
+      MemoryBanks.set(static_cast<unsigned>(AIEBanks::D));
+      break;
+    case AddressSpaces::ab:
+      MemoryBanks.set(static_cast<unsigned>(AIEBanks::A))
+          .set(static_cast<unsigned>(AIEBanks::B));
+      break;
+    case AddressSpaces::ac:
+      MemoryBanks.set(static_cast<unsigned>(AIEBanks::A))
+          .set(static_cast<unsigned>(AIEBanks::C));
+      break;
+    case AddressSpaces::ad:
+      MemoryBanks.set(static_cast<unsigned>(AIEBanks::A))
+          .set(static_cast<unsigned>(AIEBanks::D));
+      break;
+    case AddressSpaces::bc:
+      MemoryBanks.set(static_cast<unsigned>(AIEBanks::B))
+          .set(static_cast<unsigned>(AIEBanks::C));
+      break;
+    case AddressSpaces::bd:
+      MemoryBanks.set(static_cast<unsigned>(AIEBanks::B))
+          .set(static_cast<unsigned>(AIEBanks::D));
+      break;
+    case AddressSpaces::cd:
+      MemoryBanks.set(static_cast<unsigned>(AIEBanks::C))
+          .set(static_cast<unsigned>(AIEBanks::D));
+      break;
+    case AddressSpaces::TM:
+      MemoryBanks.set(static_cast<unsigned>(AIEBanks::TileMemory));
+      break;
+    default:
+      MemoryBanks.set();
+      break;
+    }
+
+    return MemoryBanks.to_ulong();
+  }
+};
+
 } // end namespace llvm
 
 #endif // LLVM_SUPPORT_AIE2ADDRSPACE_H

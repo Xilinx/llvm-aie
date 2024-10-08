@@ -37,6 +37,7 @@ class StringRef;
 class AIESubtarget final : public AIEGenSubtargetInfo, public AIEBaseSubtarget {
   virtual void anchor();
   std::string CPUName;
+  AIEBaseAddrSpaceInfo AddrSpaceInfo;
   AIEFrameLowering FrameLowering;
   AIEInstrInfo InstrInfo;
   AIERegisterInfo RegInfo;
@@ -117,6 +118,7 @@ public:
   const LegalizerInfo *getLegalizerInfo() const override;
   const RegisterBankInfo *getRegBankInfo() const override;
   InstructionSelector *getInstructionSelector() const override;
+  const AIEBaseAddrSpaceInfo &getAddrSpaceInfo() const override;
 };
 } // namespace llvm
 

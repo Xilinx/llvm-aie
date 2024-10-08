@@ -79,7 +79,8 @@ public:
   virtual bool isHardwareLoopStart(unsigned Opcode) const override;
   virtual bool isHardwareLoopEnd(unsigned Opcode) const override;
 
-  bool isZOLTripCountDef(const MachineInstr &MI) const override;
+  bool isZOLTripCountDef(const MachineInstr &MI,
+                         bool Pristine = false) const override;
   void adjustTripCount(MachineInstr &MI, int Adjustment) const override;
 
   virtual bool
@@ -168,6 +169,15 @@ public:
   getSerializableDirectMachineOperandTargetFlags() const override;
 
   bool canHoistCheapInst(const MachineInstr &MI) const override;
+
+  std::optional<const VConcatOpInfo>
+  getVConcatOpInfo(const MachineInstr &MI) const override;
+
+  std::optional<const VUpdateOpInfo>
+  getVUpdateOpInfo(const MachineInstr &MI) const override;
+
+  std::optional<const VExtractOpInfo>
+  getVExtractOpInfo(const MachineInstr &MI) const override;
 
 protected:
   SmallVector<AIEPseudoExpandInfo, 4>

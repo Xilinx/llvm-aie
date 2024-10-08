@@ -11,7 +11,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEInterBlockScheduling.h"
+#include "AIEBaseInstrInfo.h"
+#include "AIEBaseSubtarget.h"
+#include "AIEBundle.h"
+#include "AIEHazardRecognizer.h"
 #include "AIELiveRegs.h"
+#include "AIEMachineScheduler.h"
 #include "AIEMaxLatencyFinder.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
@@ -43,6 +48,10 @@ static cl::opt<int> MaxExpensiveIterations(
     "aie-loop-aware-expensive-iterations", cl::init(25),
     cl::desc("[AIE] Perform Loop/Epilogue analysis with loop scheduling"));
 
+static cl::opt<int> PostPipelinerMaxII(
+    "aie-postpipeliner-maxii", cl::init(10),
+    cl::desc("[AIE] Maximum II to be tried in the post-ra pipeliner"));
+
 namespace llvm::AIE {
 
 void dumpInterBlock(const InterBlockEdges &Edges) {
@@ -59,11 +68,10 @@ void emitBundlesTopDown(const std::vector<MachineBundle> &Bundles,
   const int AmountToEmit = std::min(TotalBundles, HR->getConflictHorizon());
   // Do not emit more than the specified by the conflict horizon. More
   // then this will not cause conflicts.
-  for (int i = TotalBundles - AmountToEmit; i < TotalBundles; i++) {
-    for (MachineInstr *MI : Bundles[i].getInstrs())
+  for (int I = TotalBundles - AmountToEmit; I < TotalBundles; I++) {
+    for (MachineInstr *MI : Bundles[I].getInstrs())
       HR->emitInScoreboard(Scoreboard, MI->getDesc(), HR->getMemoryBanks(MI),
                            MI->operands(), MI->getMF()->getRegInfo(), 0);
-
     Scoreboard.advance();
   }
 }
@@ -167,7 +175,11 @@ void InterBlockScheduling::enterFunction(MachineFunction *MF) {
   DEBUG_BLOCKS(dbgs() << ">> enterFunction " << MF->getName() << "\n");
 
   // Get ourselves a hazard recognizer
-  HR = std::make_unique<AIEHazardRecognizer>(MF->getSubtarget());
+  const auto &Subtarget = MF->getSubtarget();
+  HR = std::make_unique<AIEHazardRecognizer>(Subtarget, SelectedAltDescs);
+
+  // And a native InstrInfo
+  TII = static_cast<const AIEBaseInstrInfo *>(Subtarget.getInstrInfo());
 
   const TargetRegisterInfo *TRI = MF->getSubtarget().getRegisterInfo();
   LiveRegs MBBLiveness(MF);
@@ -207,36 +219,105 @@ void InterBlockScheduling::leaveFunction() {
 }
 
 void InterBlockScheduling::enterBlock(MachineBasicBlock *BB) {
-  CurrentBlock = &getBlockState(BB);
-  CurrentBlock->resetRegion();
+  CurrentBlockState = &getBlockState(BB);
+  CurrentBlockState->resetRegion();
   DEBUG_BLOCKS(dbgs() << "  >> enterBlock " << BB->getNumber() << " "
-                      << CurrentBlock->kindAsString() << " FixPointIter="
-                      << CurrentBlock->FixPoint.NumIters << "\n");
+                      << CurrentBlockState->kindAsString() << " FixPointIter="
+                      << CurrentBlockState->FixPoint.NumIters
+                      << " II=" << CurrentBlockState->FixPoint.II << "\n");
 }
+namespace {
+/// This implements the interface to the postpipeliner to extract the
+/// prologue, steady state and epilogue of the pipelined loop
+/// Each of these code segments is collected in TimedRegion, and then copied
+/// into the appropriate blockstate region.
+/// TimedRegion is built one bundle at the time
+class PipelineExtractor : public PipelineScheduleVisitor {
+  BlockState &Loop;
+  BlockState *Prologue = nullptr;
+  BlockState *Epilogue = nullptr;
+  MachineBundle CurrentBundle;
+  std::vector<MachineBundle> TimedRegion;
+  bool InLoop = false;
 
+  void startPrologue() override {
+    // Nothing at this time, but let's keep the override around
+  }
+  void startLoop() override {
+    Prologue->BottomInsert = TimedRegion;
+    TimedRegion.clear();
+    InLoop = true;
+  }
+  void startEpilogue() override {
+    Loop.getTop().Bundles = TimedRegion;
+    TimedRegion.clear();
+    InLoop = false;
+  }
+  void finish() override {
+    Epilogue->TopInsert = TimedRegion;
+    TimedRegion.clear();
+  }
+  void startBundle() override { CurrentBundle.clear(); }
+  void addToBundle(MachineInstr *MI) override {
+    // We re-emit the original instructions into the loop body.
+    // Prologue and epilogue obtain copies.
+    MachineInstr *ToBeEmitted =
+        InLoop ? MI : Loop.TheBlock->getParent()->CloneMachineInstr(MI);
+    CurrentBundle.add(ToBeEmitted);
+  }
+  void endBundle() override { TimedRegion.emplace_back(CurrentBundle); }
+
+public:
+  PipelineExtractor(InterBlockScheduling &InterBlock, BlockState &BS,
+                    const AIEBaseInstrInfo &TII)
+      : Loop(BS), CurrentBundle(TII.getFormatInterface()) {
+    MachineBasicBlock *LoopBlock = Loop.TheBlock;
+    for (auto *P : LoopBlock->predecessors()) {
+      if (P == LoopBlock) {
+        continue;
+      }
+      Prologue = &InterBlock.getBlockState(P);
+    }
+    for (auto *S : LoopBlock->successors()) {
+      if (S == LoopBlock) {
+        continue;
+      }
+      Epilogue = &InterBlock.getBlockState(S);
+    }
+  }
+};
+
+} // namespace
 bool InterBlockScheduling::leaveBlock() {
   DEBUG_BLOCKS(dbgs() << "  << leaveBlock "
-                      << CurrentBlock->TheBlock->getNumber() << "\n");
+                      << CurrentBlockState->TheBlock->getNumber() << "\n");
   // After scheduling a basic block, check convergence to determine which block
   // to schedule next and with what parameters
-  auto &BS = *CurrentBlock;
-  if (BS.Kind == BlockType::Loop && !updateFixPoint(BS)) {
-    BS.FixPoint.NumIters++;
+  auto &BS = *CurrentBlockState;
+  switch (updateFixPoint(BS)) {
+  case SchedulingStage::SchedulingNotConverged:
+  case SchedulingStage::Scheduling:
+  case SchedulingStage::Pipelining:
     // Iterate on CurrentBlock
-    // We will first try to increase the latency margin for one instruction at
-    // a time, before increasing that margin for all instructions at once.
-    // If we are very unlucky, we may step both the latency margin and
-    // the resource margin to the max. Any more indicates failure to converge,
-    // and we abort to prevent an infinite loop.
-    if (BS.FixPoint.NumIters >
-        MaxExpensiveIterations + 2 * HR->getConflictHorizon()) {
-      report_fatal_error("Inter-block scheduling did not converge.");
-    }
+    // When Scheduling, we have increased the latency margin, at first
+    // per instruction, later for all instructions at once.
+    // When Pipelining, we have incremented II
     return false;
+  case SchedulingStage::PipeliningDone: {
+    // When pipelined, we need to materialize the schedule
+    BS.clearSchedule();
+    PipelineExtractor GenSchedule(*this, BS, *TII);
+    auto &PostSWP = BS.getPostSWP();
+    PostSWP.visitPipelineSchedule(GenSchedule);
+    PostSWP.updateTripCount();
+    break;
+  }
+  case SchedulingStage::SchedulingDone:
+  case SchedulingStage::PipeliningFailed:
+    break;
   }
 
-  BS.setScheduled();
-  CurrentBlock = nullptr;
+  CurrentBlockState = nullptr;
   return true;
 }
 
@@ -340,13 +421,32 @@ MachineInstr *InterBlockScheduling::latencyConverged(BlockState &BS) const {
   return nullptr;
 }
 
-bool InterBlockScheduling::updateFixPoint(BlockState &BS) {
+SchedulingStage InterBlockScheduling::updateFixPoint(BlockState &BS) {
+  if (BS.Kind != BlockType::Loop) {
+    return BS.FixPoint.Stage = SchedulingStage::SchedulingDone;
+  }
+
   if (!BS.FixPoint.NumIters) {
     // This is the first time we have scheduled this loop. In that first
     // iteration, we have recorded the region decomposition.
     // Now we can create the interblock edges between the top and the bottom
     // region
-    BS.initInterBlock(*Context);
+    BS.initInterBlock(*Context, *HR);
+  }
+
+  BS.FixPoint.NumIters++;
+  if (BS.FixPoint.Stage == SchedulingStage::Scheduling) {
+    return updateScheduling(BS);
+  }
+
+  return updatePipelining(BS);
+}
+
+SchedulingStage InterBlockScheduling::updateScheduling(BlockState &BS) {
+  if (BS.FixPoint.NumIters >
+      MaxExpensiveIterations + 2 * HR->getConflictHorizon()) {
+    report_fatal_error("Inter-block scheduling did not converge.");
+    return BS.FixPoint.Stage = SchedulingStage::SchedulingNotConverged;
   }
 
   if (MachineInstr *MINeedsHigherCap = latencyConverged(BS)) {
@@ -363,7 +463,7 @@ bool InterBlockScheduling::updateFixPoint(BlockState &BS) {
                            << " LM=" << BS.FixPoint.LatencyMargin
                            << " MIM=" << Res.first->second << "\n");
     // Iterate on CurMBB
-    return false;
+    return BS.FixPoint.Stage = SchedulingStage::Scheduling;
   }
 
   if (MachineInstr *MINeedsHigherCap = resourcesConverged(BS);
@@ -379,15 +479,37 @@ bool InterBlockScheduling::updateFixPoint(BlockState &BS) {
                            << " LM=" << BS.FixPoint.LatencyMargin
                            << " MIM=" << Res.first->second << "\n");
     // Iterate on CurMBB
-    return false;
+    return BS.FixPoint.Stage = SchedulingStage::Scheduling;
   }
-
   DEBUG_LOOPAWARE(dbgs() << "Converged,"
                          << " LatencyExtent=" << BS.FixPoint.MaxLatencyExtent
                          << " ResourceExtent=" << BS.FixPoint.MaxResourceExtent
                          << "\n");
 
-  return true;
+  // The loop schedule has converged, so we could declare our work done.
+  // But first try SWP
+  if (BS.getRegions().size() == 1 && BS.getPostSWP().canAccept(*BS.TheBlock)) {
+    BS.FixPoint.II = 1;
+    return BS.FixPoint.Stage = SchedulingStage::Pipelining;
+  }
+  return BS.FixPoint.Stage = SchedulingStage::SchedulingDone;
+}
+
+SchedulingStage InterBlockScheduling::updatePipelining(BlockState &BS) {
+  // We have been pipelining. Check whether we were successful.
+  if (BS.FixPoint.Stage == SchedulingStage::PipeliningDone) {
+    return BS.FixPoint.Stage;
+  }
+
+  // Otherwise try a larger II.
+  // We cut off at larger IIs to prevent excessive compilation time.
+  if (++BS.FixPoint.II <= PostPipelinerMaxII) {
+    return BS.FixPoint.Stage = SchedulingStage::Pipelining;
+  }
+
+  // Fall back to the loop schedule. Note that we can only have II != 0
+  // after the loop schedule has stabilized.
+  return BS.FixPoint.Stage = SchedulingStage::PipeliningFailed;
 }
 
 bool InterBlockScheduling::successorsAreScheduled(
@@ -452,7 +574,8 @@ void InterBlockScheduling::defineSchedulingOrder(MachineFunction *MF) {
 
 MachineBasicBlock *InterBlockScheduling::nextBlock() {
   auto &BS = getBlockState(MBBSequence[NextInOrder]);
-  if (!BS.isScheduled()) {
+  if (!BS.isScheduled() ||
+      (BS.FixPoint.II && !BS.isPipelined() && !BS.pipeliningFailed())) {
     return MBBSequence[NextInOrder];
   }
 
@@ -501,51 +624,96 @@ MachineBasicBlock *splitEdge(MachineBasicBlock *Pred, MachineBasicBlock *Succ) {
   return NewBB;
 }
 
-int InterBlockScheduling::getNumEntryNops(const BlockState &BS) const {
-  // Epilogues should supply the safety margin for their loop.
-  // That loop is the only predecessor by construction of
-  // BlockType::Epilogue
-  if (BS.Kind != BlockType::Epilogue) {
-    return 0;
-  }
-  MachineBasicBlock &BB = *BS.TheBlock;
-
-  MachineBasicBlock *Loop = getLoopPredecessor(BB);
-  assert(Loop);
+int InterBlockScheduling::getSafetyMargin(MachineBasicBlock *Loop,
+                                          MachineBasicBlock *Epilogue) const {
   auto &LBS = getBlockState(Loop);
-  if (BB.pred_size() > 1) {
-    // The loop is a fallthrough predecessor by construction. We insert a
-    // new block that will be a dedicated exit to the loop.
-  }
+  auto &EBS = getBlockState(Epilogue);
 
   // We can only analyze non-empty epilogue blocks because we need
   // to build a DDG, which is not possible.
   // For empty ones, we need to be conservative because we are not aware of
   // content of epilogues' successor.
   int SafetyMargin = LBS.getSafetyMargin();
-  if (LoopEpilogueAnalysis && BB.size() > 0) {
-    int ExistingLatency = getCyclesToRespectTiming(BS, LBS);
+  if (LoopEpilogueAnalysis && Epilogue->size() > 0) {
+    int ExistingLatency = getCyclesToRespectTiming(EBS, LBS);
     // Start the next step only after clearing latencies.
-    SafetyMargin = getCyclesToAvoidResourceConflicts(ExistingLatency, BS, LBS);
-  }
-  if (SafetyMargin && BB.pred_size() > 1) {
-    DEBUG_LOOPAWARE(dbgs() << "New dedicated exit with " << SafetyMargin
-                           << " nops.\n");
-    // The loop is a fallthrough predecessor by construction. We insert a
-    // new block that will be a dedicated exit to the loop.
-    MachineBasicBlock *DedicatedExit = splitEdge(Loop, &BB);
-    const auto &SubTarget = BS.TheBlock->getParent()->getSubtarget();
-    auto *TII = static_cast<const AIEBaseInstrInfo *>(SubTarget.getInstrInfo());
-    // Our caller can't see this block, so we fill nops ourselves. The original
-    // epilogue will not need entry nops, so we can return 0.
-    auto It = DedicatedExit->begin();
-    while (SafetyMargin--) {
-      TII->insertNoop(*DedicatedExit, It);
-    }
-    return 0;
+    SafetyMargin = getCyclesToAvoidResourceConflicts(ExistingLatency, EBS, LBS);
   }
 
   return SafetyMargin;
+}
+
+void InterBlockScheduling::emitBundles(
+    const std::vector<MachineBundle> &Bundles, MachineBasicBlock *BB,
+    MachineBasicBlock::iterator Before, bool Move) const {
+  for (auto &Bundle : Bundles) {
+    if (Bundle.empty()) {
+      TII->insertNoop(*BB, Before);
+      continue;
+    }
+    bool InBundle = false;
+    for (auto *MI : Bundle.getInstrs()) {
+      if (Move) {
+        BB->remove_instr(MI);
+      }
+      BB->insert(Before, MI);
+      if (InBundle) {
+        MI->bundleWithPred();
+      }
+      InBundle = true;
+    }
+  }
+  AIEHazardRecognizer::applyBundles(Bundles, BB);
+}
+
+void InterBlockScheduling::emitInterBlockTop(const BlockState &BS) const {
+  if (BS.Kind != BlockType::Epilogue) {
+    return;
+  }
+
+  MachineBasicBlock *BB = BS.TheBlock;
+  MachineBasicBlock *Loop = getLoopPredecessor(*BB);
+  assert(Loop);
+  const BlockState &LBS = getBlockState(Loop);
+
+  // Epilogues should supply the safety margin for their loop.
+  // Epilogues of pipelined loops should emit the bundles swp epilog
+  // Both need a dedicated exit. If there isn't one, spawn a new block
+  auto MakeDedicated = [Loop](MachineBasicBlock *BB) {
+    auto *DedicatedExit = BB;
+    if (BB->pred_size() > 1) {
+      // The loop is a fallthrough predecessor by construction. We insert a
+      // new block that will be a dedicated exit to the loop.
+      DEBUG_LOOPAWARE(dbgs() << "New dedicated exit\n");
+      DedicatedExit = splitEdge(Loop, BB);
+    }
+    return DedicatedExit;
+  };
+
+  if (LBS.isPipelined()) {
+    auto *DedicatedExit = MakeDedicated(BB);
+    const bool Move = false;
+    emitBundles(BS.TopInsert, DedicatedExit, DedicatedExit->begin(), Move);
+  } else {
+    if (int SafetyMargin = getSafetyMargin(Loop, BB)) {
+      auto *DedicatedExit = MakeDedicated(BB);
+      DEBUG_LOOPAWARE(dbgs()
+                      << "Emitting " << SafetyMargin << " safety nops\n");
+      while (SafetyMargin--) {
+        TII->insertNoop(*DedicatedExit, DedicatedExit->begin());
+      }
+    }
+  }
+}
+
+void InterBlockScheduling::emitInterBlockBottom(const BlockState &BS) const {
+  if (BS.BottomInsert.empty()) {
+    return;
+  }
+  MachineBasicBlock *PreHeader = BS.TheBlock;
+  const bool Move = false;
+  emitBundles(BS.BottomInsert, PreHeader, PreHeader->getFirstTerminator(),
+              Move);
 }
 
 int InterBlockScheduling::getCyclesToRespectTiming(
@@ -706,7 +874,17 @@ int BlockState::getSafetyMargin() const {
   return Margin;
 }
 
-void BlockState::setScheduled() { FixPoint.IsScheduled = true; }
+void BlockState::setPipelined() {
+  FixPoint.Stage = SchedulingStage::PipeliningDone;
+}
+
+int BlockState::getScheduleLength() const {
+  int Length = 0;
+  for (auto &R : Regions) {
+    Length += R.Bundles.size();
+  }
+  return Length;
+}
 
 void BlockState::clearSchedule() {
   // We are rescheduling this block. Clear the results of the previous
@@ -734,9 +912,10 @@ void BlockState::classify() {
     }
     return NumLoopEdges == 1 && NumExitEdges == 1;
   };
+
   // We generalize slightly; we require the epilogue to be a dedicated exit of
-  // the loop, or a fallthrough block, so that we can squeeze in a dedicated
-  // exit.
+  // the loop or a fallthrough block that is not a loop, so that we can
+  // squeeze in a dedicated exit.
   auto CanFixLoopSchedule = [L = TheBlock,
                              &IsLoop](const MachineBasicBlock *S) {
     // Either the backedge, or a dedicated loop exit, or a fallthrough loop exit
@@ -745,7 +924,7 @@ void BlockState::classify() {
   };
 
   // If we don't mark up any loops, we will iterate in the same order and apply
-  // the same safetymargins as before.
+  // the same safety margins as before.
   if (LoopAware && IsLoop(TheBlock) &&
       llvm::all_of(TheBlock->successors(), CanFixLoopSchedule)) {
     Kind = BlockType::Loop;
@@ -756,8 +935,13 @@ void BlockState::classify() {
   // construction.
 }
 
-void BlockState::initInterBlock(const MachineSchedContext &Context) {
+void BlockState::initInterBlock(const MachineSchedContext &Context,
+                                const AIEHazardRecognizer &HR) {
   BoundaryEdges = std::make_unique<InterBlockEdges>(Context);
+  if (Regions.size() == 1) {
+    // Don't worry, this just constructs a mostly empty container class
+    PostSWP = std::make_unique<PostPipeliner>(HR, getTop().size());
+  }
 
   // We are called just after the first round of scheduling a block.
   // These loops run over the original 'semantical order' that was collected

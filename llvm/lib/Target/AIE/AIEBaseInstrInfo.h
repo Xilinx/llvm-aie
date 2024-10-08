@@ -15,6 +15,7 @@
 #ifndef LLVM_LIB_TARGET_AIE_AIEBASEINSTRRINFO_H
 #define LLVM_LIB_TARGET_AIE_AIEBASEINSTRRINFO_H
 
+#include "AIE.h"
 #include "AIEMIRFormatter.h"
 #include "AIETiedRegOperands.h"
 #include "MCTargetDesc/AIEFormat.h"
@@ -185,8 +186,13 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   virtual bool isHardwareLoopStart(unsigned Opcode) const { return false; }
   virtual bool isHardwareLoopEnd(unsigned Opcode) const { return false; }
 
-  /// Check whether this defines the ZOL tripcount
-  virtual bool isZOLTripCountDef(const MachineInstr &MI) const { return false; }
+  /// Check whether \p MI defines the ZOL tripcount. If this returns true, \p MI
+  /// should be suitable for calling adjustTripCount on it.
+  /// If \p Pristine is set, we check that it wasn't updated before.
+  virtual bool isZOLTripCountDef(const MachineInstr &MI,
+                                 bool Pristine = false) const {
+    return false;
+  }
 
   /// Lower the tripcount defined by MI with Update, which is a small
   /// negative integer that should be added to the tripcount
@@ -378,6 +384,45 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
 
   static bool regClassMatches(const TargetRegisterClass &TRC,
                               const TargetRegisterClass *RC, unsigned Reg);
+
+  struct VConcatOpInfo {
+    // First input operand index.
+    unsigned FirstOperand;
+    // Number of non-register operands.
+    unsigned NumOfNonRegOperands;
+  };
+
+  /// Return operand information related to vector concat instrinsic.
+  virtual std::optional<const VConcatOpInfo>
+  getVConcatOpInfo(const MachineInstr &MI) const;
+
+  struct VUpdateOpInfo {
+    // Vector to update operand index.
+    unsigned Src;
+    // Subvector to insert.
+    unsigned SrcSubVec;
+    // Position to insert operand index.
+    unsigned SubVectorIndex;
+  };
+
+  /// Return operand information related to vector update instrinsic.
+  virtual std::optional<const VUpdateOpInfo>
+  getVUpdateOpInfo(const MachineInstr &MI) const {
+    llvm_unreachable("Target didn't implement getVUpdateOpInfo!");
+  }
+
+  struct VExtractOpInfo {
+    // Vector to update operand index.
+    unsigned Src;
+    // Position to extract.
+    unsigned SubVectorIndex;
+  };
+
+  /// Return operand information related to vector extract instrinsic.
+  virtual std::optional<const VExtractOpInfo>
+  getVExtractOpInfo(const MachineInstr &MI) const {
+    llvm_unreachable("Target didn't implement getVExtractOpInfo!");
+  }
 
 protected:
   /// Expand a spill pseudo-instruction into actual target instructions. This

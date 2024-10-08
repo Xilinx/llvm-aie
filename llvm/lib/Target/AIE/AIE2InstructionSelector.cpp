@@ -658,7 +658,8 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
     case Intrinsic::start_loop_iterations:
       return selectStartLoop(I, MRI);
     case Intrinsic::set_loop_iterations: {
-      auto LS = MIB.buildInstr(AIE2::LoopStart, {}, {I.getOperand(1)});
+      auto LS =
+          MIB.buildInstr(AIE2::LoopStart, {}, {I.getOperand(1)}).addImm(0);
       I.eraseFromParent();
       return constrainSelectedInstRegOperands(*LS, TII, TRI, RBI);
     }

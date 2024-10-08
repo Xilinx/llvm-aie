@@ -924,3 +924,12 @@ const MIRFormatter *AIEBaseInstrInfo::getMIRFormatter() const {
     Formatter = std::make_unique<AIEMIRFormatter>();
   return Formatter.get();
 }
+
+/// Return operand information related to vector concat instrinsic.
+std::optional<const AIEBaseInstrInfo::VConcatOpInfo>
+AIEBaseInstrInfo::getVConcatOpInfo(const MachineInstr &MI) const {
+
+  if (MI.getOpcode() == TargetOpcode::G_CONCAT_VECTORS)
+    return VConcatOpInfo{1, 0};
+  return std::nullopt;
+}

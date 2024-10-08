@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEHazardRecognizer.h"
+#include "AIEBaseSubtarget.h"
 #include "MCTargetDesc/AIEMCFormats.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -57,24 +58,23 @@ void FuncUnitWrapper::dump() const {
   const char *const Spacer = "-|";
   const int Upper = std::numeric_limits<InstrStage::FuncUnits>::digits - 1;
 
-  auto printFU = [&](const std::string &FUName, InstrStage::FuncUnits FU) {
+  auto PrintFU = [&](const std::string &FUName, InstrStage::FuncUnits FU) {
     dbgs() << FUName;
     for (int J = Upper; J >= 0; J--)
-      dbgs() << ((Required & (1ULL << J)) ? Digits[J % 10]
-                                          : Spacer[J % 10 == 0]);
+      dbgs() << ((FU & (1ULL << J)) ? Digits[J % 10] : Spacer[J % 10 == 0]);
   };
-  auto printResource = [&](const std::string &ResourceName, uint64_t Resource) {
+  auto PrintResource = [&](const std::string &ResourceName, uint64_t Resource) {
     dbgs() << ResourceName;
     for (int J = 9; J >= 0; J--)
       dbgs() << ((Resource & (1ULL << J)) ? Digits[J] : '-');
   };
 
-  printFU("Req     : ", Required);
-  printResource(" Slots : ", Slots);
-  printResource(" Memorybanks : ", MemoryBanks);
+  PrintFU("Req     : ", Required);
+  PrintResource(" Slots : ", Slots);
+  PrintResource(" Memorybanks : ", MemoryBanks);
   if (!Reserved)
     return;
-  printFU("\n\t   Rsrv : ", Reserved);
+  PrintFU("\n\t   Rsrv : ", Reserved);
 }
 
 void FuncUnitWrapper::clearResources() {
@@ -183,9 +183,10 @@ static cl::opt<int>
 int AIEHazardRecognizer::NumInstrsScheduled = 0;
 
 AIEHazardRecognizer::AIEHazardRecognizer(
-    const AIEBaseInstrInfo *TII, const InstrItineraryData *II, bool IsPreRA,
+    const AIEBaseInstrInfo *TII, const InstrItineraryData *II,
+    AIEAlternateDescriptors &SelectedAlternateDescs, bool IsPreRA,
     std::optional<unsigned> ScoreboardDepth)
-    : TII(TII), ItinData(II) {
+    : TII(TII), ItinData(II), SelectedAltDescs(SelectedAlternateDescs) {
 
   int Depth = 0;
   if (ScoreboardDepth.has_value()) {
@@ -213,11 +214,12 @@ AIEHazardRecognizer::AIEHazardRecognizer(
   }
 }
 
-AIEHazardRecognizer::AIEHazardRecognizer(const TargetSubtargetInfo &Subtarget,
-                                         bool IsPreRA)
+AIEHazardRecognizer::AIEHazardRecognizer(
+    const TargetSubtargetInfo &Subtarget,
+    AIEAlternateDescriptors &SelectedAlternateDescs, bool IsPreRA)
     : AIEHazardRecognizer(
           static_cast<const AIEBaseInstrInfo *>(Subtarget.getInstrInfo()),
-          Subtarget.getInstrItineraryData(), IsPreRA) {}
+          Subtarget.getInstrItineraryData(), SelectedAlternateDescs, IsPreRA) {}
 
 namespace llvm {
 void applyFormatOrdering(AIE::MachineBundle &Bundle, const VLIWFormat &Format,
@@ -291,8 +293,8 @@ void AIEHazardRecognizer::applyBundles(
 void AIEHazardRecognizer::Reset() {
   LLVM_DEBUG(dbgs() << "Reset hazard recognizer\n");
   ReservedCycles = 0;
-  Scoreboard.reset();
-  SelectedAltOpcodes.clear();
+  Scoreboard.clear();
+  SelectedAltDescs.clear();
 }
 
 ScheduleHazardRecognizer::HazardType
@@ -324,7 +326,7 @@ AIEHazardRecognizer::getHazardType(SUnit *SU, int DeltaCycles) {
       // Check if there is NoHazard, If there is a Hazard or NoopHazard check
       // for the next possible Opcode.
       if (Haz == NoHazard) {
-        SelectedAltOpcodes[MI] = AltInstOpcode;
+        SelectedAltDescs.setAlternateDescriptor(MI, AltInstOpcode);
         return NoHazard;
       }
     }
@@ -385,7 +387,7 @@ void AIEHazardRecognizer::EmitInstruction(SUnit *SU, int DeltaCycles) {
 
   // If the instruction has multiple options, find the opcode that was selected
   // and use the latter to update the scoreboard.
-  unsigned SelectedOpcode = getSelectedAltOpcode(MI).value_or(MI->getOpcode());
+  unsigned SelectedOpcode = SelectedAltDescs.getOpcode(MI);
   if (!AIE::MachineBundle::isNoHazardMetaInstruction(SelectedOpcode))
     emitInScoreboard(TII->get(SelectedOpcode), getMemoryBanks(MI),
                      MI->operands(), MI->getMF()->getRegInfo(), DeltaCycles);
@@ -440,6 +442,19 @@ ScheduleHazardRecognizer::HazardType AIEHazardRecognizer::getHazardType(
       getSlotSet(Desc, *TII->getFormatInterface(), IgnoreUnknownSlotSets),
       MemoryBanks, TII->getMemoryCycles(SchedClass), DeltaCycles,
       FUDepthLimit));
+}
+
+bool AIEHazardRecognizer::checkConflict(
+    const ResourceScoreboard<FuncUnitWrapper> &Scoreboard, MachineInstr &MI,
+    int DeltaCycles) const {
+  const MCInstrDesc &Desc = MI.getDesc();
+  const unsigned SchedClass =
+      TII->getSchedClass(Desc, MI.operands(), MI.getMF()->getRegInfo());
+  const MemoryBankBits MemoryBanks = getMemoryBanks(&MI);
+  return checkConflict(
+      Scoreboard, ItinData, SchedClass,
+      getSlotSet(Desc, *TII->getFormatInterface(), IgnoreUnknownSlotSets),
+      MemoryBanks, TII->getMemoryCycles(SchedClass), DeltaCycles, std::nullopt);
 }
 
 bool AIEHazardRecognizer::checkConflict(
@@ -603,13 +618,6 @@ unsigned AIEHazardRecognizer::computeScoreboardDepth() const {
   return std::max(Depth, UserScoreboardDepth.getValue());
 }
 
-std::optional<unsigned>
-AIEHazardRecognizer::getSelectedAltOpcode(MachineInstr *MI) const {
-  if (auto It = SelectedAltOpcodes.find(MI); It != SelectedAltOpcodes.end())
-    return It->second;
-  return std::nullopt;
-}
-
 MemoryBankBits
 AIEHazardRecognizer::getMemoryBanks(const MachineInstr *MI) const {
   if (!(MI->mayLoad() || MI->mayStore()))
@@ -619,10 +627,11 @@ AIEHazardRecognizer::getMemoryBanks(const MachineInstr *MI) const {
     return ~0;
 
   const AIEBaseSubtarget &STI = AIEBaseSubtarget::get(*MI->getMF());
-  MemoryBankBits MemoryBankUsed = STI.getDefaultMemoryBank();
+  const AIEBaseAddrSpaceInfo &ASI = STI.getAddrSpaceInfo();
+  MemoryBankBits MemoryBankUsed = ASI.getDefaultMemoryBank();
   for (auto &MMO : MI->memoperands()) {
     MemoryBankBits MemoryBank =
-        STI.getMemoryBanksFromAddressSpace(MMO->getAddrSpace());
+        ASI.getMemoryBanksFromAddressSpace(MMO->getAddrSpace());
     MemoryBankUsed &= MemoryBank;
   }
   return MemoryBankUsed;

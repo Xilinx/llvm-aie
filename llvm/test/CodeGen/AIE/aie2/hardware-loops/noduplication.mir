@@ -215,7 +215,7 @@ body:             |
   bb.4:
     successors: %bb.6(0x80000000)
 
-    LoopStart %0
+    LoopStart %0, 0
     PseudoJ_jump_imm %bb.6
 
   bb.5:

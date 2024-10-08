@@ -47,6 +47,7 @@ public:
 private:
   std::vector<AIE::MachineBundle> Bundles;
   AIE::MachineBundle CurrentBundle;
+  AIEAlternateDescriptors PRASAlternateDescriptors;
 };
 
 } // end namespace llvm

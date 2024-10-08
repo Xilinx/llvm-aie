@@ -11,10 +11,13 @@
 #include "AIEMachineScheduler.h"
 #include "AIEBaseInstrInfo.h"
 #include "AIEHazardRecognizer.h"
+#include "AIEInterBlockScheduling.h"
 #include "AIEMaxLatencyFinder.h"
+#include "AIEPostPipeliner.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/CodeGen/ResourceScoreboard.h"
 #include "llvm/Support/Debug.h"
@@ -163,7 +166,8 @@ llvm::AIE::computeAndFinalizeBundles(SchedBoundary &Zone) {
         bumpCycleForBundles(EmitCycle, Bundles, CurrBundle);
 
       LLVM_DEBUG(dbgs() << "  Add to CurrBundle: " << MI);
-      CurrBundle.add(&MI, HazardRec.getSelectedAltOpcode(&MI), ComputeSlots);
+      CurrBundle.add(&MI, HazardRec.getSelectedAltDescs().getOpcode(&MI),
+                     ComputeSlots);
     }
   };
 
@@ -350,14 +354,6 @@ void AIEPostRASchedStrategy::initialize(ScheduleDAGMI *Dag) {
   PostGenericScheduler::initialize(Dag);
   assert(!ForceBottomUp && !ForceTopDown);
 
-  Bot.init(DAG, this, SchedModel, &Rem);
-  const InstrItineraryData *Itin = SchedModel->getInstrItineraries();
-  if (!Bot.HazardRec) {
-    Bot.HazardRec =
-        DAG->MF.getSubtarget().getInstrInfo()->CreateTargetMIHazardRecognizer(
-            Itin, DAG);
-  }
-
   // Update Bot scoreboard of the bottom region with the foreseeable future
   // as found in the top regions of the successor blocks. If we don't know,
   // assume the worst.
@@ -367,14 +363,6 @@ void AIEPostRASchedStrategy::initialize(ScheduleDAGMI *Dag) {
                                               : ScoreboardTrust::Absolute;
   initializeBotScoreBoard(Conservative ? ScoreboardTrust::Conservative
                                        : NonConservative);
-
-  // TODO:
-  // We could set something like 'InterBlockCycles' here and include
-  // that in RegionBottomUpCycles below to force (some) backward
-  // scheduling.
-  // Currently we rely on checkInterZoneConflicts to resolve the conflicts
-  // with the bottom scoreboard representing the successor blocks, and
-  // backwards scheduling doesn't seem to give a net gain.
 
   // Delay slots are scheduled bottom up to be sure the control-flow instruction
   // is issued exactly TII->getNumDelaySlots() before the end of the region.
@@ -545,31 +533,37 @@ void AIEPostRASchedStrategy::enterMBB(MachineBasicBlock *MBB) {
 
 void AIEPostRASchedStrategy::commitBlockSchedule(MachineBasicBlock *BB) {
   auto &BS = InterBlock.getBlockState(BB);
-  MachineBasicBlock::iterator It = BB->begin();
-  const TargetInstrInfo *TII = getTII(BB);
 
-  // Emit the top safety margin
-  int Margin = InterBlock.getNumEntryNops(BS);
-  while (Margin--) {
-    TII->insertNoop(*BB, It);
-  }
+  // Safety margin, swp epilogue
+  InterBlock.emitInterBlockTop(BS);
 
-  for (auto &Region : BS.getRegions()) {
-    // Contrary to PRAS, the MachineScheduler does not automatically insert
-    // NOPs. That isn't a problem, since the callbacks to the HazardRecognizer
-    // were a bit flaky (e.g. when to call emitNoop vs advanceCycle).
-    // MachineScheduler just calls advanceCycle, and this is enough for us to
-    // insert NOPs because the sequence of Bundles gives us the full picture.
-    for (const AIE::MachineBundle &Bundle : Region.Bundles) {
-      if (Bundle.empty()) {
-        // Empty bundle means 1-cycle stall.
-        TII->insertNoop(*BB, It);
-        continue;
+  if (BS.isPipelined()) {
+    assert(BS.getRegions().size() == 1);
+    MachineBasicBlock::iterator It = BB->getFirstTerminator();
+    const bool Move = true;
+    InterBlock.emitBundles(BS.getRegions().front().Bundles, BB, It, Move);
+  } else {
+    MachineBasicBlock::iterator It = BB->begin();
+    const TargetInstrInfo *TII = getTII(BB);
+    for (auto &Region : BS.getRegions()) {
+      // Contrary to PRAS, the MachineScheduler does not automatically insert
+      // NOPs. That isn't a problem, since the callbacks to the HazardRecognizer
+      // were a bit flaky (e.g. when to call emitNoop vs advanceCycle).
+      // MachineScheduler just calls advanceCycle, and this is enough for us to
+      // insert NOPs because the sequence of Bundles gives us the full picture.
+      for (const AIE::MachineBundle &Bundle : Region.Bundles) {
+        if (Bundle.empty()) {
+          // Empty bundle means 1-cycle stall.
+          TII->insertNoop(*BB, It);
+          continue;
+        }
+        It = std::next(Bundle.getInstrs().back()->getIterator());
       }
-      It = std::next(Bundle.getInstrs().back()->getIterator());
+      AIEHazardRecognizer::applyBundles(Region.Bundles, BS.TheBlock);
     }
-    AIEHazardRecognizer::applyBundles(Region.Bundles, BS.TheBlock);
   }
+  // swp prologue
+  InterBlock.emitInterBlockBottom(BS);
 }
 
 void AIEPostRASchedStrategy::leaveMBB() {
@@ -595,9 +589,13 @@ void AIEPostRASchedStrategy::enterRegion(MachineBasicBlock *BB,
 
 void AIEPostRASchedStrategy::leaveRegion(const SUnit &ExitSU) {
   LLVM_DEBUG(dbgs() << "    << leaveRegion\n");
-  materializeMultiOpcodeInstrs();
 
   auto &BS = InterBlock.getBlockState(CurMBB);
+  if (BS.FixPoint.Stage != SchedulingStage::Scheduling) {
+    return;
+  }
+  materializeMultiOpcodeInstrs();
+  InterBlock.getSelectedAltDescs().clear();
   if (IsBottomRegion) {
     // This is the earliest point where we can destroy the recorded
     // schedule in iterative scheduling. enterMBB and enterRegion are too early,
@@ -629,7 +627,7 @@ void AIEPostRASchedStrategy::materializeMultiOpcodeInstrs() {
                                   const AIEHazardRecognizer &HazardRec) {
     // Materialize instructions with multiple opcode options
     if (std::optional<unsigned> AltOpcode =
-            HazardRec.getSelectedAltOpcode(&MI)) {
+            HazardRec.getSelectedAltDescs().getSelectedOpcode(&MI)) {
       MI.setDesc(TII->get(*AltOpcode));
     }
   };
@@ -835,6 +833,7 @@ void AIEPreRASchedStrategy::leaveRegion(const SUnit &ExitSU) {
   RegionBegin = nullptr;
   RegionEnd = nullptr;
   SUDelayerMap.clear();
+  SelectedAltDescs.clear();
 }
 
 PressureDiff estimatePressureDiff(const SUnit &SU,
@@ -1114,6 +1113,10 @@ void AIEScheduleDAGMI::releasePred(SUnit *SU, SDep *PredEdge) {
     SchedImpl->releaseBottomNode(PredSU);
 }
 
+AIEPreRASchedStrategy *AIEScheduleDAGMILive::getSchedImpl() const {
+  return static_cast<AIEPreRASchedStrategy *>(SchedImpl.get());
+}
+
 void AIEScheduleDAGMILive::enterRegion(MachineBasicBlock *BB,
                                        MachineBasicBlock::iterator Begin,
                                        MachineBasicBlock::iterator End,
@@ -1151,11 +1154,41 @@ void llvm::AIEPostRASchedStrategy::buildGraph(ScheduleDAGMI &DAG, AAResults *AA,
 
   auto &BS = InterBlock.getBlockState(CurMBB);
   const auto &Region = BS.getCurrentRegion();
-  for (auto *I : Region) {
-    DAG.initSUnit(*I);
+  int NCopies = 1;
+  if (int II = BS.FixPoint.II) {
+    assert(BS.Kind == BlockType::Loop);
+    assert(BS.getRegions().size() == 1);
+    // Try to wrap the linear schedule within II.
+    // We virtually unroll the body by the stagecount, computed from rounding
+    // up the length divided by II.
+    NCopies = (BS.getScheduleLength() + II - 1) / II;
+  }
+  DEBUG_BLOCKS(dbgs() << "    buildGraph, NCopies=" << NCopies << "\n");
+  for (int S = 0; S < NCopies; S++) {
+    for (auto *I : Region) {
+      DAG.initSUnit(*I);
+    }
   }
   DAG.ExitSU.setInstr(Region.getExitInstr());
   DAG.makeMaps();
   DAG.buildEdges(Context->AA);
   static_cast<AIEScheduleDAGMI &>(DAG).recordDbgInstrs(Region);
+}
+
+void AIEScheduleDAGMI::schedule() {
+  BlockState &BS = getSchedImpl()->getInterBlock().getBlockState(getBB());
+  if (BS.FixPoint.Stage == SchedulingStage::Pipelining) {
+    // We've gone past regular scheduling. Try to find a valid modulo schedule
+    // If it succeeds, we need to implement it, if we fail we fall back on the
+    // normal loop schedule
+    SchedImpl->buildGraph(*this, AA);
+    auto &PostSWP = BS.getPostSWP();
+    if (PostSWP.schedule(*this, BS.FixPoint.II)) {
+      BS.setPipelined();
+      LLVM_DEBUG(PostSWP.dump());
+    }
+    return;
+  }
+
+  ScheduleDAGMI::schedule();
 }

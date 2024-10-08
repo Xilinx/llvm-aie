@@ -173,6 +173,57 @@ char AIEBaseHardwareLoops::ID = 0;
 INITIALIZE_PASS(AIEBaseHardwareLoops, DEBUG_TYPE, AIE_HARDWARE_LOOPS_NAME,
                 false, false)
 
+namespace {
+// Everything becomes much simpler if ZOLs exit to their layout successor
+// We can achieve that by splitting a non-fallthrough exit jump off into
+// a new fallthrough block.
+// Note that we don't actually check the block layout; we are near the end of
+// the codegen pipeline, and we assume that explicit jumps to a fallthrough
+// block don't occur.
+bool splitLoopEndJump(MachineBasicBlock &MBB, const AIEBaseInstrInfo *TII) {
+  auto Terminator = MBB.getFirstInstrTerminator();
+  if (Terminator == MBB.end() ||
+      !TII->isHardwareLoopEnd((*Terminator).getOpcode())) {
+    return false;
+  }
+  SmallVector<MachineOperand, 4> Cond;
+  MachineBasicBlock *TBB = nullptr, *FBB = nullptr;
+  const bool AllowModify = false;
+  if (TII->analyzeBranch(MBB, TBB, FBB, Cond, AllowModify)) {
+    // can't analyze
+    return false;
+  }
+  if (!FBB) {
+    // Is fallthrough already
+    return false;
+  }
+
+  // So:
+  // 1. Create a new block in fallthrough position
+  // 2. remove the entire control flow
+  // 3. add back the loopend to this block
+  // 4. add back the jump to the new block
+  // 5. fix successors
+  auto *MF = MBB.getParent();
+  MachineBasicBlock *NewBB = MF->CreateMachineBasicBlock(FBB->getBasicBlock());
+  MF->insert(++MBB.getIterator(), NewBB);
+  TII->removeBranch(MBB);
+  DebugLoc DL;
+  TII->insertBranch(MBB, TBB, nullptr, Cond, DL);
+  Cond.clear();
+  TII->insertBranch(*NewBB, FBB, nullptr, Cond, DL);
+  for (auto *Edge : make_early_inc_range(MBB.successors())) {
+    if (Edge == FBB) {
+      MBB.removeSuccessor(FBB);
+    }
+  }
+
+  NewBB->addSuccessor(FBB);
+  MBB.addSuccessor(NewBB);
+  return true;
+}
+} // namespace
+
 bool AIEBaseHardwareLoops::runOnMachineFunction(MachineFunction &mf) {
   MF = &mf;
   LLVM_DEBUG(dbgs() << "AIE Hardware Loops on " << MF->getName()
@@ -186,6 +237,10 @@ bool AIEBaseHardwareLoops::runOnMachineFunction(MachineFunction &mf) {
   TRI = mf.getSubtarget().getRegisterInfo();
 
   bool Changed = false;
+  for (auto &MBB : *MF) {
+    Changed |= splitLoopEndJump(MBB, TII);
+  }
+
   for (auto *ML : *MLI) {
     if (ML->isOutermost())
       Changed |= processLoop(ML);
@@ -298,11 +353,12 @@ void AIEBaseHardwareLoops::expandLoopStart(LowOverheadLoop &LoLoop) {
   MachineBasicBlock *MBB = Start->getParent();
   LLVM_DEBUG(dbgs() << "AIE Loops: ZOL loop. Expanding LoopStart.\n");
 
-  // We use ADD_NC, which allows PostPipeliner to tweak it by modifying the
-  // immediate value.
+  // LoopStart carries an immediate operand that is dedicated to the tripcount
+  // update of the pipeliner. We translate to ADD_NC, which has a similar
+  // operand.
   BuildMI(*MBB, Start, Start->getDebugLoc(), TII->get(AIE2::ADD_NC), AIE2::LC)
       .addReg(Start->getOperand(0).getReg())
-      .addImm(0);
+      .addImm(Start->getOperand(1).getImm());
 
   BuildMI(*MBB, Start, Start->getDebugLoc(), TII->get(AIE2::MOVXM_lng_cg),
           AIE2::LS)

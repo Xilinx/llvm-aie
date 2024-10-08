@@ -23,7 +23,7 @@ Target &getTheAIE2Target() {
   return TheAIE2Target;
 }
 
-}
+} // namespace llvm
 
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIETargetInfo() {
   RegisterTarget<Triple::aie> X(getTheAIETarget(), "aie",

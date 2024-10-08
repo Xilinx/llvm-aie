@@ -39,6 +39,7 @@ class StringRef;
 class AIE2Subtarget : public AIE2GenSubtargetInfo, public AIEBaseSubtarget {
   virtual void anchor();
   std::string CPUName;
+  AIE2AddrSpaceInfo AddrSpaceInfo;
   AIE2FrameLowering FrameLowering;
   AIE2InstrInfo InstrInfo;
   AIE2RegisterInfo RegInfo;
@@ -93,10 +94,6 @@ public:
     return &TSInfo;
   }
 
-  MemoryBankBits getDefaultMemoryBank() const override;
-  MemoryBankBits
-  getMemoryBanksFromAddressSpace(unsigned AddrSpace) const override;
-
   // Perform target-specific adjustments to the latency of a schedule
   // dependency.
   // If a pair of operands is associated with the schedule dependency, DefOpIdx
@@ -143,6 +140,7 @@ public:
   const LegalizerInfo *getLegalizerInfo() const override;
   const RegisterBankInfo *getRegBankInfo() const override;
   InstructionSelector *getInstructionSelector() const override;
+  const AIEBaseAddrSpaceInfo &getAddrSpaceInfo() const override;
 };
 } // namespace llvm
 

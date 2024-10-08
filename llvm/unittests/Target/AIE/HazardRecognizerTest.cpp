@@ -86,15 +86,19 @@ MockItineraries Itins;
 
 // Derived class to access protected methods
 class MockHR : public AIEHazardRecognizer {
+  AIEAlternateDescriptors AlternateDescriptors;
   ResourceScoreboard<FuncUnitWrapper> MockScoreboard;
 
 public:
   ~MockHR() = default;
-  MockHR() : AIEHazardRecognizer(&DummyInstrInfo, &Itins, /*IsPreRA=*/false) {
+  MockHR()
+      : AIEHazardRecognizer(&DummyInstrInfo, &Itins, AlternateDescriptors,
+                            /*IsPreRA=*/false) {
     MockScoreboard.reset(computeScoreboardDepth());
   }
   MockHR(const AIEBaseInstrInfo &InstrInfo)
-      : AIEHazardRecognizer(&InstrInfo, &Itins, /*IsPreRA=*/false) {
+      : AIEHazardRecognizer(&InstrInfo, &Itins, AlternateDescriptors,
+                            /*IsPreRA=*/false) {
     MockScoreboard.reset(computeScoreboardDepth());
   }
   void emit(unsigned SchedClass, int Delta, SlotBits SlotSet = 0,
@@ -113,7 +117,7 @@ public:
   void RecedeCycle() override { MockScoreboard.recede(); }
   void Reset() override {
     AIEHazardRecognizer::Reset();
-    MockScoreboard.reset();
+    MockScoreboard.clear();
   }
   bool conflict(const MockHR &Other, int DeltaCycles) const {
     return MockScoreboard.conflict(Other.MockScoreboard, DeltaCycles);
