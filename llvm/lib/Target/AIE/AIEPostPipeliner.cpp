@@ -270,8 +270,15 @@ bool PostPipeliner::scheduleFirstIteration() {
     LLVM_DEBUG(dbgs() << "  Emit in " << -Depth + LocalCycle << "\n");
     int Cycle = -Depth + LocalCycle;
     LLVM_DEBUG(dbgs() << "  Emit in " << Cycle << "\n");
-    HR.emitInScoreboard(Scoreboard, MI->getDesc(), MemoryBanks, MI->operands(),
-                        MI->getMF()->getRegInfo(), Cycle);
+    for (int N = 0; N < NCopies; N++) {
+      if (N > 0 && HR.checkConflict(Scoreboard, *MI, Cycle)) {
+        return false;
+      }
+
+      HR.emitInScoreboard(Scoreboard, MI->getDesc(), MemoryBanks,
+                          MI->operands(), MI->getMF()->getRegInfo(), Cycle);
+      Cycle += II;
+    }
 
     scheduleNode(SU, Actual);
     Info[N].Scheduled = true;
@@ -286,43 +293,22 @@ bool PostPipeliner::scheduleOtherIterations() {
   // This looks like overkill, but it accommodates dependences that span
   // multiple loop edges. Without these, the pattern should repeat after the
   // first set of copies.
-  int CurrentCycle = 0;
   for (int L = NInstr; L < NTotalInstrs; L += NInstr) {
-    // Forget the previous iteration. We accumulate the resources sticking
-    // out of II, and by inserting all stages we will end up with
-    // the steady state resource allocation
-    for (int C = 0; C < II; C++) {
-      CurrentCycle++;
-      Scoreboard.advance();
-    }
     for (int K = 0; K < NInstr; K++) {
       const int N = L + K;
       SUnit &SU = DAG->SUnits[N];
-      MachineInstr *MI = SU.getInstr();
       // Earliest tracks the latencies of the loop carried deps
       const int Earliest = Info[N].Earliest;
       // Insert supplies the modulo condition.
       const int Insert = Info[N - NInstr].Cycle + II;
 
       // All iterations following the first one should fit exactly
-      LLVM_DEBUG(dbgs() << "Trying " << N << " at " << Insert
-                        << " CurrentCycle=" << CurrentCycle << "\n";
-                 Scoreboard.dumpFull());
       if (Earliest > Insert) {
         LLVM_DEBUG(dbgs() << "  Latency not met (Earliest=" << Earliest
                           << ")\n");
         return false;
       }
-      if (fit(MI, Insert, 1, II) != Insert) {
-        LLVM_DEBUG(dbgs() << "  Resource conflict\n");
-        return false;
-      }
-      const MemoryBankBits MemoryBanks = HR.getMemoryBanks(MI);
-      const int LocalCycle = (Insert - CurrentCycle) % II;
-      LLVM_DEBUG(dbgs() << "  Emit in " << -Depth + LocalCycle << "\n");
-      HR.emitInScoreboard(Scoreboard, MI->getDesc(), MemoryBanks,
-                          MI->operands(), MI->getMF()->getRegInfo(),
-                          -Depth + LocalCycle);
+
       scheduleNode(SU, Insert);
     }
   }
