@@ -55,7 +55,7 @@ static cl::opt<bool>
                        "iterative loop scheduling"));
 
 static cl::opt<int> PostPipelinerMaxII(
-    "aie-postpipeliner-maxii", cl::init(10),
+    "aie-postpipeliner-maxii", cl::init(40),
     cl::desc("[AIE] Maximum II to be tried in the post-ra pipeliner"));
 
 namespace llvm::AIE {
