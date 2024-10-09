@@ -330,15 +330,19 @@ bool PostPipeliner::scheduleOtherIterations() {
 }
 
 bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval) {
+  NTotalInstrs = TheDAG.SUnits.size();
+  assert(NTotalInstrs % NInstr == 0);
+  NCopies = NTotalInstrs / NInstr;
+  if (NCopies == 1) {
+    LLVM_DEBUG(dbgs() << "PostPipeliner: Not feasible\n");
+    return false;
+  }
   II = InitiationInterval;
   DAG = &TheDAG;
-  NTotalInstrs = DAG->SUnits.size();
   FirstUnscheduled = 0;
-  assert(NTotalInstrs % NInstr == 0);
 
   // Let's not skimp on size here. This allows us to insert any instruction
   // in the unrolled dag.
-  NCopies = NTotalInstrs / NInstr;
   Depth = NCopies * II + HR.getPipelineDepth();
   Scoreboard.reset(Depth);
 
