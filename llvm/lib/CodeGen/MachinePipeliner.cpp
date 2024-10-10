@@ -141,7 +141,7 @@ static cl::opt<int> SwpForceII("pipeliner-force-ii",
 static cl::opt<int>
     SwpMaxStages("pipeliner-max-stages",
                  cl::desc("Maximum stages allowed in the generated scheduled."),
-                 cl::Hidden, cl::init(3));
+                 cl::Hidden, cl::init(-1));
 
 /// A command line option to disable the pruning of chain dependences due to
 /// an unrelated Phi.
