@@ -560,9 +560,13 @@ static inline bool isGlobalMemoryObject(MachineInstr *MI) {
          (MI->hasOrderedMemoryRef() && !MI->isDereferenceableInvariantLoad());
 }
 
+bool ScheduleDAGInstrs::mayAlias(SUnit *SUa, SUnit *SUb, bool UseTBAA) {
+  return SUa->getInstr()->mayAlias(AAForDep, *SUb->getInstr(), UseTBAA);
+}
+
 void ScheduleDAGInstrs::addChainDependency (SUnit *SUa, SUnit *SUb,
                                             unsigned Latency) {
-  if (SUa->getInstr()->mayAlias(AAForDep, *SUb->getInstr(), UseTBAA)) {
+  if (mayAlias(SUa, SUb, UseTBAA)) {
     SDep Dep(SUa, SDep::MayAliasMem);
     Dep.setLatency(Latency);
     SUb->addPred(Dep);
