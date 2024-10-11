@@ -218,6 +218,9 @@ public:
   void finalizeSchedule() override;
   void recordDbgInstrs(const Region &CurrentRegion);
 
+  // We hook into the alias analysis to exploit knowledge about virtual unroll
+  bool mayAlias(SUnit *SUa, SUnit *SUb, bool UseTBAA) override;
+
   // We override the default schedule method in order to perform PostRASWP
   void schedule() override;
 
