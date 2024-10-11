@@ -95,6 +95,10 @@ extern char &AIESplitInstrReplacerID;
 void initializeAIESplitInstrReplacerPass(PassRegistry &);
 llvm::FunctionPass *createAIESplitInstrReplacer();
 
+extern char &AIERegClassConstrainerID;
+void initializeAIERegClassConstrainerPass(PassRegistry &);
+llvm::FunctionPass *createAIERegClassConstrainer();
+
 extern char &ReservedRegsLICMID;
 void initializeReservedRegsLICMPass(PassRegistry &);
 llvm::FunctionPass *createReservedRegsLICMPass();
