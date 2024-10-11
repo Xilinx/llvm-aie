@@ -195,6 +195,7 @@
 ; AIE-O123-NEXT:      Machine Instruction Scheduler
 ; AIE-O123-NEXT:      Register Coalescer
 ; AIE-O123-NEXT:      AIE 2D/3D operand splitter
+; AIE-O123-NEXT:      Constrain partially-allocatable classes
 ; AIE-O123-NEXT:      Machine Block Frequency Analysis
 ; AIE-O123-NEXT:      Live Interval Analysis
 ; AIE-O123-NEXT:      Debug Variable Analysis

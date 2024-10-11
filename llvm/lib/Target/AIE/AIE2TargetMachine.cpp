@@ -201,6 +201,8 @@ bool AIE2PassConfig::addRegAssignAndRewriteOptimized() {
   if (EnableSuperRegSplitting)
     addPass(createAIESplitInstrBuilder());
 
+  addPass(createAIERegClassConstrainer());
+
   if (AllocateMRegsFirst)
     addPass(createGreedyRegisterAllocator(onlyAllocateMRegisters));
   if (EnableStagedRA) {
