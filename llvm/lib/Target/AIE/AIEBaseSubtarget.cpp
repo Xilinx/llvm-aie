@@ -225,6 +225,24 @@ class LockDelays : public ScheduleDAGMutation {
 #undef DEBUG_TYPE
 #define DEBUG_TYPE "machine-scheduler"
 
+class BiasDepth : public ScheduleDAGMutation {
+  void apply(ScheduleDAGInstrs *DAG) override {
+    auto *Sched = static_cast<AIEScheduleDAGMI *>(DAG)->getSchedImpl();
+    const AIE::BlockState &BS =
+        Sched->getInterBlock().getBlockState(DAG->getBB());
+
+    // It's important to iterate in topological order over SUnits, because
+    // all its successors will be marked as having a "dirty" depth.
+    for (SUnit &SU : DAG->SUnits) {
+      if (auto *It = BS.FixPoint.PerMIExtraDepth.find(SU.getInstr());
+          It != BS.FixPoint.PerMIExtraDepth.end()) {
+        unsigned NewDepth = std::max(0, int(SU.getDepth()) + It->second);
+        SU.setDepthToAtLeast(NewDepth);
+      }
+    }
+  };
+};
+
 class RegionEndEdges : public ScheduleDAGMutation {
   void removeExitSUPreds(ScheduleDAGInstrs *DAG) {
     SUnit &ExitSU = DAG->ExitSU;
@@ -614,6 +632,7 @@ AIEBaseSubtarget::getPostRAMutationsImpl(const Triple &TT) {
     Mutations.emplace_back(std::make_unique<RegionEndEdges>());
     Mutations.emplace_back(std::make_unique<MemoryEdges>());
     Mutations.emplace_back(std::make_unique<MachineSchedWAWEdges>());
+    Mutations.emplace_back(std::make_unique<BiasDepth>());
   }
   return Mutations;
 }

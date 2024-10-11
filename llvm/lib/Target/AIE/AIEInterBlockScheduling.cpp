@@ -45,8 +45,14 @@ static cl::opt<bool> LoopEpilogueAnalysis(
     cl::desc("[AIE] Perform Loop/Epilogue analysis with loop scheduling"));
 
 static cl::opt<int> MaxExpensiveIterations(
-    "aie-loop-aware-expensive-iterations", cl::init(25),
-    cl::desc("[AIE] Perform Loop/Epilogue analysis with loop scheduling"));
+    "aie-loop-aware-expensive-iterations", cl::init(35),
+    cl::desc("[AIE] Maximum iterations for fine-grained convergence in "
+             "iterative loop scheduling"));
+
+static cl::opt<bool>
+    BiasDepth("aie-loop-aware-bias-depth", cl::init(true),
+              cl::desc("[AIE] Try to bias the depth for hazard avoidance in "
+                       "iterative loop scheduling"));
 
 static cl::opt<int> PostPipelinerMaxII(
     "aie-postpipeliner-maxii", cl::init(10),
@@ -158,6 +164,40 @@ MachineInstr *checkResourceConflictsBottomUp(
 
   // All instructions in Bot could be emitted straight after those in Top.
   return nullptr;
+}
+
+/// Replay the \p SuccBundles top-down into \p ScoreBoard.
+/// If that causes a resource conflict, return an instruction
+/// from \p SuccBundles that is responsible for it.
+/// Note that \p Scoreboard will be modified.
+///
+/// \pre The bundles contain no multi-slot pseudo.
+MachineInstr *
+checkResourceConflictsTopDown(ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+                              const std::vector<MachineBundle> &SuccBundles,
+                              const AIEHazardRecognizer &HR,
+                              const FixedpointState &Fixedpoint) {
+  DEBUG_LOOPAWARE(dbgs() << "Interblock Predecessor scoreboard:\n";
+                  Scoreboard.dump());
+
+  int TopCycle = 0;
+  MachineInstr *ConflictMI = nullptr;
+  for (const MachineBundle &B : SuccBundles) {
+    for (MachineInstr *MI : B.getInstrs()) {
+      if (HR.getHazardType(Scoreboard, MI->getDesc(), HR.getMemoryBanks(MI),
+                           MI->operands(), MI->getMF()->getRegInfo(), 0)) {
+        DEBUG_LOOPAWARE(dbgs() << "Conflicting MI at Top cycle=" << TopCycle
+                               << ": " << *MI);
+        ConflictMI = MI;
+        if (!Fixedpoint.PerMIExtraDepth.contains(MI))
+          return MI;
+      }
+    }
+    ++TopCycle;
+    Scoreboard.advance();
+  }
+
+  return ConflictMI;
 }
 
 MachineBasicBlock *getLoopPredecessor(const MachineBasicBlock &MBB) {
@@ -346,15 +386,19 @@ bool InterBlockScheduling::leaveBlock() {
   return true;
 }
 
-MachineInstr *InterBlockScheduling::resourcesConverged(BlockState &BS) const {
+MachineInstr *
+InterBlockScheduling::resourcesConverged(BlockState &BS,
+                                         bool FindInBottomRegion) const {
   assert(!BS.getRegions().empty());
 
   // We are a single-block loop body. Check that there is no resource conflict
   // on the backedge, by overlaying top and bottom region
-  if (MachineInstr *MICausingConflict = checkResourceConflictsBottomUp(
-          createBottomUpScoreboard(BS.getTop().Bundles, *HR),
-          BS.getBottom().Bundles, *HR))
-    return MICausingConflict;
+  if (FindInBottomRegion) {
+    if (MachineInstr *MICausingConflict = checkResourceConflictsBottomUp(
+            createBottomUpScoreboard(BS.getTop().Bundles, *HR),
+            BS.getBottom().Bundles, *HR))
+      return MICausingConflict;
+  }
 
   // Bottom represents the resources that are sticking out of the block.
   // The last non-empty cycle is a safe upperbound for the resource
@@ -362,6 +406,13 @@ MachineInstr *InterBlockScheduling::resourcesConverged(BlockState &BS) const {
   ResourceScoreboard<FuncUnitWrapper> Bottom =
       createTopDownScoreboard(BS.getBottom().Bundles, *HR);
   BS.FixPoint.MaxResourceExtent = Bottom.lastOccupied();
+
+  if (!FindInBottomRegion) {
+    if (MachineInstr *MICausingConflict = checkResourceConflictsTopDown(
+            Bottom, BS.getTop().Bundles, *HR, BS.FixPoint))
+      return MICausingConflict;
+  }
+
   return nullptr;
 }
 
@@ -491,12 +542,35 @@ SchedulingStage InterBlockScheduling::updateScheduling(BlockState &BS) {
     return BS.FixPoint.Stage = SchedulingStage::Scheduling;
   }
 
-  if (MachineInstr *MINeedsHigherCap = resourcesConverged(BS);
+  // Before pushing BS.getBottom() instructions up to avoid resource hazards,
+  // try and bias the depth of some instructions in BS.getTop()
+  if (BiasDepth && BS.FixPoint.NumIters <= MaxExpensiveIterations) {
+    if (MachineInstr *MINeedsHigherCap =
+            resourcesConverged(BS, /*FindInBottomRegion=*/false);
+        InterBlockScoreboard && MINeedsHigherCap) {
+      auto Res = BS.FixPoint.PerMIExtraDepth.try_emplace(MINeedsHigherCap, 1);
+      int &ExtraDepth = Res.first->second;
+      if (ExtraDepth >= 0) {
+        if (!Res.second) // Depth was already biased, try a negative bias
+          ExtraDepth = -1;
+        DEBUG_LOOPAWARE(dbgs() << "  not converged: resources ExtraDepth="
+                               << ExtraDepth << "\n");
+        // Iterate on CurMBB
+        return BS.FixPoint.Stage = SchedulingStage::Scheduling;
+      }
+      DEBUG_LOOPAWARE(dbgs() << "  not converged: Depth biasing failed\n");
+    }
+  }
+
+  // If biasing did not help, actively push instructions from BS.getBottom() up.
+  if (MachineInstr *MINeedsHigherCap =
+          resourcesConverged(BS, /*FindInBottomRegion=*/true);
       InterBlockScoreboard && MINeedsHigherCap) {
     auto Res = BS.FixPoint.PerMILatencyMargin.try_emplace(MINeedsHigherCap, 0);
     if (BS.FixPoint.NumIters <= MaxExpensiveIterations) {
       ++Res.first->second;
     } else {
+      BS.FixPoint.PerMIExtraDepth.clear();
       BS.FixPoint.ResourceMargin++;
     }
     DEBUG_LOOPAWARE(dbgs() << "  not converged: resources RM="
@@ -506,6 +580,7 @@ SchedulingStage InterBlockScheduling::updateScheduling(BlockState &BS) {
     // Iterate on CurMBB
     return BS.FixPoint.Stage = SchedulingStage::Scheduling;
   }
+
   DEBUG_LOOPAWARE(dbgs() << "Converged,"
                          << " LatencyExtent=" << BS.FixPoint.MaxLatencyExtent
                          << " ResourceExtent=" << BS.FixPoint.MaxResourceExtent

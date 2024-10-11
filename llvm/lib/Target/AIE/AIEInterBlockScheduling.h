@@ -144,6 +144,7 @@ public:
   // Parameters of the loop-aware convergence
   int LatencyMargin = 0;
   SmallMapVector<MachineInstr *, int, 8> PerMILatencyMargin;
+  SmallMapVector<MachineInstr *, int, 8> PerMIExtraDepth;
   int ResourceMargin = 0;
   // The II of the modulo schedule we are trying.
   int II = 0;
@@ -311,7 +312,10 @@ class InterBlockScheduling {
 
   /// Return one instruction that needs to be moved higher to avoid a resource
   /// conflict, or nullptr if all resources converged.
-  MachineInstr *resourcesConverged(BlockState &BS) const;
+  /// \param FindInBottomRegion Whether the conflicting instruction is searched
+  ///        in the Bottom or Top region of \p BS.
+  MachineInstr *resourcesConverged(BlockState &BS,
+                                   bool FindInBottomRegion = true) const;
 
   /// Return one instruction that needs a higher latency cap, or nullptr if all
   /// latencies converged.
