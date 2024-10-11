@@ -485,8 +485,8 @@ void AIE2InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   RC = constrainRegClass(MBB.getParent()->getRegInfo(), RC, SrcReg);
 
   unsigned Opcode;
-  LLVM_DEBUG(dbgs() << "Attempting to Store: " << SrcReg << " To " << FI
-                    << "\n");
+  LLVM_DEBUG(dbgs() << "Attempting to Store: " << printReg(SrcReg, TRI)
+                    << " To " << FI << "\n");
   if (regClassMatches(AIE2::mSclStRegClass, RC, SrcReg)) {
     Opcode = AIE2::ST_dms_spill;
   } else if (regClassMatches(AIE2::eLRegClass, RC, SrcReg)) {
@@ -522,7 +522,7 @@ void AIE2InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     SrcReg = ScratchReg;
     IsKill = true;
   } else {
-    LLVM_DEBUG(I->dump());
+    LLVM_DEBUG(dbgs() << "*** Tried inserting before:"; I->dump());
     llvm_unreachable("Can't store this register to stack slot: is it virtual?");
   }
 
@@ -547,7 +547,6 @@ void AIE2InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   DebugLoc DL;
   if (I != MBB.end())
     DL = I->getDebugLoc();
-  unsigned Opcode;
 
   // Provide a load memory operand for a register load, resolving it
   // from other memory refs during scheduler dag generation
@@ -562,6 +561,9 @@ void AIE2InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
 
   RC = constrainRegClass(MBB.getParent()->getRegInfo(), RC, DstReg);
 
+  unsigned Opcode;
+  LLVM_DEBUG(dbgs() << "Attempting to Load: " << printReg(DstReg, TRI)
+                    << " From " << FI << "\n");
   if (regClassMatches(AIE2::mLdaSclRegClass, RC, DstReg)) {
     Opcode = AIE2::LDA_dms_spill;
   } else if (regClassMatches(AIE2::eLRegClass, RC, DstReg)) {
@@ -598,6 +600,7 @@ void AIE2InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
         .addReg(Reg, getKillRegState(true));
     return;
   } else {
+    LLVM_DEBUG(dbgs() << "*** Tried inserting before:"; I->dump());
     llvm_unreachable(
         "Can't load this register from stack slot: is it virtual?");
   }
