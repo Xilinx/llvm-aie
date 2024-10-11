@@ -475,8 +475,13 @@ bool AIEHazardRecognizer::checkConflict(
                                           MemoryBanks);
     for (auto Cycles : MemoryAccessCycles) {
       // MemoryAccessCycles starts counting from 1, so we need to subtract 1
-      if (MemoryBankAccessCycle.conflict(Scoreboard[DeltaCycles + Cycles - 1]))
+      int AccessCycle = DeltaCycles + Cycles - 1;
+      if (MemoryBankAccessCycle.conflict(Scoreboard[AccessCycle])) {
+        LLVM_DEBUG(dbgs() << "*** Memory bank conflict in cycle=" << AccessCycle
+                          << ":\n";
+                   MemoryBankAccessCycle.dump(); dbgs() << "\n");
         return true;
+      }
     }
   }
 
@@ -496,8 +501,9 @@ bool AIEHazardRecognizer::checkConflict(
       assert(StageCycle < Scoreboard.getDepth());
 
       if (ThisCycle.conflict(Scoreboard[StageCycle])) {
-        LLVM_DEBUG(dbgs() << "*** Hazard in execution cycle"
-                          << StageCycle - DeltaCycles << ", ");
+        LLVM_DEBUG(dbgs() << "*** Hazard in cycle=" << StageCycle
+                          << " EC=" << StageCycle - DeltaCycles << ":\n";
+                   ThisCycle.dump(); dbgs() << "\n");
         return true;
       }
     }
