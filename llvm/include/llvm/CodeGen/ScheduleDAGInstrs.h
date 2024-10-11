@@ -272,6 +272,9 @@ namespace llvm {
     MachineFunction *CurrFunc;
     MachineFunction::iterator NextMBB;
 
+    // Supply specific memory disambiguation
+    virtual bool mayAlias(SUnit *SUa, SUnit *SUb, bool TBAA);
+
   public:
     explicit ScheduleDAGInstrs(MachineFunction &mf,
                                const MachineLoopInfo *mli,
