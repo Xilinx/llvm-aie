@@ -709,6 +709,12 @@ let GeneratePressureSet = false in {
   def mLdaCg : AIE2ScalarRegisterClass<(add eP, eR, eDC, eDJ, eDN, eM, LC)>;
   def mSclMS : AIE2ScalarRegisterClass<(add eR, mDm, eP)>;
 
+  // Same class as mSclMS, but without p7. This is important because the latter
+  // can be used as a frame pointer, and therefore be reserved. If that is the
+  // case, then the class below will be the largest subclass of mLdaScl, mSclSt,
+  // etc. that has no reserved register. This is used by AIERegConstrainer.
+  def mSclMS_fp_taken : AIE2ScalarRegisterClass<(add eR, mDm, p0, p1, p2, p3, p4, p5, p6)>;
+
   def mShflDst   : AIE2Vector512RegisterClass<(add mXm, mBMSm)>;
 
 // VMOV register classes
