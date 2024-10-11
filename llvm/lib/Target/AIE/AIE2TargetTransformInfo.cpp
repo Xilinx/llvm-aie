@@ -54,6 +54,9 @@ static cl::opt<int>
 static cl::opt<unsigned>
     MaxUnrollCost("aie-unroll-max-cost", cl::Hidden, cl::init(200),
                   cl::desc("Maximum partial unroll cost for loops"));
+static cl::opt<unsigned> PreferSwpOverUnroll(
+    "aie-prefer-swp-over-unroll", cl::Hidden, cl::init(9),
+    cl::desc("Aim for pipelining if MinIterCount is at least this value."));
 
 void AIE2TTIImpl::getUnrollingPreferences(Loop *L, ScalarEvolution &SE,
                                           TTI::UnrollingPreferences &UP,
@@ -66,12 +69,21 @@ void AIE2TTIImpl::getUnrollingPreferences(Loop *L, ScalarEvolution &SE,
   UP.Threshold = MaxUnrollCost;
   UP.AllowExpensiveTripCount = true;
 
-  if (L->getNumBlocks() == 1 && MaxUnrollLoads >= 0) {
-    int NumLoads = count_if(*L->getBlocks().front(), [](const Instruction &I) {
-      return I.mayReadFromMemory();
-    });
-    if (NumLoads)
-      UP.MaxCount = std::min(UP.MaxCount, unsigned(MaxUnrollLoads / NumLoads));
+  if (L->getNumBlocks() == 1) {
+    BasicBlock *LoopBlock = L->getHeader();
+    if (MaxUnrollLoads >= 0) {
+      int NumLoads = count_if(*LoopBlock, [](const Instruction &I) {
+        return I.mayReadFromMemory();
+      });
+      if (NumLoads)
+        UP.MaxCount =
+            std::min(UP.MaxCount, unsigned(MaxUnrollLoads / NumLoads));
+    }
+    auto MinIterCount = AIELoopUtils::getMinTripCount(L->getLoopID());
+    if (MinIterCount && *MinIterCount >= PreferSwpOverUnroll) {
+      UP.Partial = false;
+      UP.Runtime = false;
+    }
   }
 }
 
