@@ -60,20 +60,41 @@ void dumpInterBlock(const InterBlockEdges &Edges) {
   }
 }
 
-void emitBundlesTopDown(const std::vector<MachineBundle> &Bundles,
-                        ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
-                        AIEHazardRecognizer *HR) {
+ResourceScoreboard<FuncUnitWrapper>
+createTopDownScoreboard(ArrayRef<MachineBundle> Bundles,
+                        const AIEHazardRecognizer &HR) {
+  ResourceScoreboard<FuncUnitWrapper> Scoreboard;
+  Scoreboard.reset(HR.getMaxLookAhead());
 
   const int TotalBundles = Bundles.size();
-  const int AmountToEmit = std::min(TotalBundles, HR->getConflictHorizon());
+  const int AmountToEmit = std::min(TotalBundles, HR.getConflictHorizon());
   // Do not emit more than the specified by the conflict horizon. More
   // then this will not cause conflicts.
   for (int I = TotalBundles - AmountToEmit; I < TotalBundles; I++) {
     for (MachineInstr *MI : Bundles[I].getInstrs())
-      HR->emitInScoreboard(Scoreboard, MI->getDesc(), HR->getMemoryBanks(MI),
-                           MI->operands(), MI->getMF()->getRegInfo(), 0);
+      HR.emitInScoreboard(Scoreboard, MI->getDesc(), HR.getMemoryBanks(MI),
+                          MI->operands(), MI->getMF()->getRegInfo(), 0);
     Scoreboard.advance();
   }
+
+  DEBUG_LOOPAWARE(dbgs() << "*** Emitted " << TotalBundles << " top-down\n");
+
+  // If an iteration contains less bundles than the number of resources that
+  // stick out into the next one, this means that the first cycles of the
+  // scoreboard could potentially be "clobbered" by previous iterations.
+  // We conservatively block those cycles.
+  const int MaxResourceExtent = Scoreboard.lastOccupied();
+  assert(MaxResourceExtent <= HR.getConflictHorizon());
+  if (MaxResourceExtent > AmountToEmit) {
+    const int NumBlockedCycles = MaxResourceExtent - AmountToEmit;
+    const int FirstBlockedCycle = -AmountToEmit;
+    const int LastBlockedCycle = FirstBlockedCycle + NumBlockedCycles - 1;
+    for (int C = FirstBlockedCycle; C <= LastBlockedCycle; ++C) {
+      Scoreboard[C].blockResources();
+    }
+  }
+
+  return Scoreboard;
 }
 
 ResourceScoreboard<FuncUnitWrapper>
@@ -112,10 +133,10 @@ createBottomUpScoreboard(ArrayRef<MachineBundle> Bundles,
 /// from \p PredBundles that is responsible for it.
 ///
 /// \pre The bundles contain no multi-slot pseudo.
-MachineInstr *
-checkResourceConflicts(const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
-                       const std::vector<MachineBundle> &PredBundles,
-                       const AIEHazardRecognizer &HR) {
+MachineInstr *checkResourceConflictsBottomUp(
+    const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+    const std::vector<MachineBundle> &PredBundles,
+    const AIEHazardRecognizer &HR) {
   DEBUG_LOOPAWARE(dbgs() << "Interblock Successor scoreboard:\n";
                   Scoreboard.dump());
 
@@ -330,7 +351,7 @@ MachineInstr *InterBlockScheduling::resourcesConverged(BlockState &BS) const {
 
   // We are a single-block loop body. Check that there is no resource conflict
   // on the backedge, by overlaying top and bottom region
-  if (MachineInstr *MICausingConflict = checkResourceConflicts(
+  if (MachineInstr *MICausingConflict = checkResourceConflictsBottomUp(
           createBottomUpScoreboard(BS.getTop().Bundles, *HR),
           BS.getBottom().Bundles, *HR))
     return MICausingConflict;
@@ -338,9 +359,8 @@ MachineInstr *InterBlockScheduling::resourcesConverged(BlockState &BS) const {
   // Bottom represents the resources that are sticking out of the block.
   // The last non-empty cycle is a safe upperbound for the resource
   // safety margin.
-  ResourceScoreboard<FuncUnitWrapper> Bottom;
-  Bottom.reset(HR->getMaxLookAhead());
-  emitBundlesTopDown(BS.getBottom().Bundles, Bottom, HR.get());
+  ResourceScoreboard<FuncUnitWrapper> Bottom =
+      createTopDownScoreboard(BS.getBottom().Bundles, *HR);
   BS.FixPoint.MaxResourceExtent = Bottom.lastOccupied();
   return nullptr;
 }
@@ -831,7 +851,8 @@ int InterBlockScheduling::getCyclesToAvoidResourceConflicts(
 
   // Increment the number of intermediate nops until there are no resource
   // conflicts between the last iteration of the loop and the epilogue.
-  while (checkResourceConflicts(Scoreboard, LoopBS.getBottom().Bundles, *HR)) {
+  while (checkResourceConflictsBottomUp(Scoreboard, LoopBS.getBottom().Bundles,
+                                        *HR)) {
     Scoreboard.recede();
     ++NopCounter;
   }
