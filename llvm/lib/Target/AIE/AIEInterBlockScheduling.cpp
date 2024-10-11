@@ -121,13 +121,16 @@ checkResourceConflicts(const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
 
   int BottomUpCycle = 0;
   for (const MachineBundle &B : reverse(PredBundles)) {
+    if (BottomUpCycle >= HR.getConflictHorizon())
+      break;
     for (MachineInstr *MI : B.getInstrs()) {
-      if (BottomUpCycle >= HR.getConflictHorizon())
-        break;
       if (HR.getHazardType(Scoreboard, MI->getDesc(), HR.getMemoryBanks(MI),
                            MI->operands(), MI->getMF()->getRegInfo(),
-                           -BottomUpCycle))
+                           -BottomUpCycle)) {
+        DEBUG_LOOPAWARE(dbgs() << "Conflicting MI at Bottom-up cycle="
+                               << BottomUpCycle << ": " << *MI);
         return MI;
+      }
     }
     ++BottomUpCycle;
   }
