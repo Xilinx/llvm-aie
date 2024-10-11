@@ -568,9 +568,7 @@ class WAWStickyRegistersEdges : public ScheduleDAGMutation {
     BitVector AllRegs(RI->getNumRegs());
     AllRegs.reset();
     // Here, we analyze which sticky registers are explicitly redefined
-    // or read. We also track all instructions implicitly reading or
-    // defining such registers.
-    std::map<const Register, SmallVector<const MachineInstr *, 16>> RegMIsMap;
+    // or read.
     for (const MachineInstr &MI : make_range(DAG->begin(), DAG->end())) {
       for (const MachineOperand &MOP : MI.operands()) {
         if (!MOP.isReg())
@@ -580,47 +578,14 @@ class WAWStickyRegistersEdges : public ScheduleDAGMutation {
         if (!Reg.isPhysical() || !RI->isReservedStickyReg(Reg))
           continue;
 
-        if ((!MOP.isImplicit() && (MOP.isDef() || MOP.readsReg())) ||
-            (MOP.isImplicit() && MOP.readsReg())) {
+        if (MOP.readsReg() || (!MOP.isImplicit() && MOP.isDef())) {
           AllRegs.set(Reg);
-
-        } else if (MOP.isImplicit() && MOP.isDef()) {
-          // Instruction that could have a dependency removal.
-          // We track it because of the next heuristic.
-          RegMIsMap[Reg].push_back(&MI);
         }
       }
     }
 
-    auto IsLoad = [&](const MachineInstr *MI) -> bool { return MI->mayLoad(); };
-    auto IsStore = [&](const MachineInstr *MI) -> bool {
-      return MI->mayStore();
-    };
-
-    // This is the heuristic component. We catch basically cases where
-    // registers are only defined by loads or store within a region,
-    // For example, cases like exemplified below (region):
-    //   [sequence non-defining sticky regs. instructions.]
-    //   VST.CONV ...
-    //   VST.CONV ...
-    //   VST.CONV ...
-    //   VST.CONV ...
-    // In this case, by removing dependencies between pairs of VST.CONVs,
-    // we give too much freedom to the scheduler to do good, but also
-    // not good choices. In this way, we filter those cases off.
-    for (auto RMIs : RegMIsMap) {
-      const Register Reg = RMIs.first;
-      SmallVector<const MachineInstr *, 16> &MIs = RMIs.second;
-      // The first thing to test is the tuning parameter: we only consider
-      // cases where the number of memory ops are <= the threshold.
-      if (MIs.size() <= WAWStickyRegistersMemOpsThreshold &&
-          ((all_of(MIs, IsLoad) || all_of(MIs, IsStore))))
-        AllRegs.set(Reg);
-    }
-
-    // Next part is to drop all output latencies related to
-    // registers that are not explicitly read or defined also
-    // considering the heuristically filtered cases.
+    // Next part is to drop all output dependencies related to
+    // registers that are not explicitly read
     for (SUnit &SU : DAG->SUnits) {
       for (const SDep &Dep : getPreds(SU)) {
         if (Dep.getKind() != SDep::Kind::Output)
