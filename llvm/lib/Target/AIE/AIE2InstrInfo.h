@@ -179,6 +179,12 @@ public:
   std::optional<const VExtractOpInfo>
   getVExtractOpInfo(const MachineInstr &MI) const override;
 
+  unsigned getMaxLoadStoreSize() const override;
+
+  bool canCombineWithLoadStore(const MachineInstr &MI) const override;
+
+  bool isProfitableToSplitType(const LLT Ty) const override;
+
 protected:
   SmallVector<AIEPseudoExpandInfo, 4>
   getSpillPseudoExpandInfo(const MachineInstr &MI) const override;

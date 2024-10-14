@@ -1358,3 +1358,195 @@ void llvm::applyUpdToConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
 
   MI.eraseFromParent();
 }
+
+bool llvm::matchLoadStoreSplit(GLoadStore &MI, MachineRegisterInfo &MRI,
+                               const AIEBaseInstrInfo &TII,
+                               unsigned &MaxMemSize) {
+
+  const Register ValReg = MI.getReg(0);
+  const LLT ValTy = MRI.getType(ValReg);
+  const bool IsLoad = isa<GLoad>(MI);
+  MaxMemSize = TII.getMaxLoadStoreSize();
+
+  if (!TII.isProfitableToSplitType(ValTy))
+    return false;
+
+  /// Avoid splitting operations that can be combined `as is`.
+  if (IsLoad) {
+    for (MachineInstr &ConvInstr : MRI.use_instructions(ValReg)) {
+      if (TII.canCombineWithLoadStore(ConvInstr))
+        return false;
+    }
+  } else {
+    MachineInstr &ConvInstr = *getDefIgnoringCopiesAndBitcasts(ValReg, MRI);
+    if (TII.canCombineWithLoadStore(ConvInstr))
+      return false;
+  }
+
+  return true;
+}
+
+void llvm::applyLoadStoreSplit(GLoadStore &MI, MachineRegisterInfo &MRI,
+                               MachineIRBuilder &B, const unsigned MaxMemSize) {
+
+  assert(MaxMemSize && "MaxMemSize should be specified!");
+  B.setInstrAndDebugLoc(MI);
+  MachineFunction &MF = B.getMF();
+  const bool IsLoad = isa<GLoad>(MI);
+  const Register ValReg = MI.getReg(0);
+  const Register AddrReg = MI.getPointerReg();
+  const LLT ValTy = MRI.getType(ValReg);
+  const LLT PtrTy = MRI.getType(AddrReg);
+  const LLT OffsetTy = LLT::scalar(PtrTy.getSizeInBits());
+  const unsigned NumParts = ValTy.getSizeInBits() / MaxMemSize;
+  const LLT NarrowTy = ValTy.divide(NumParts);
+  const MachineMemOperand MMO = MI.getMMO();
+
+  SmallVector<Register, 8> NarrowRegs;
+  if (!IsLoad)
+    extractParts(ValReg, NarrowTy, NumParts, NarrowRegs, B, MRI);
+
+  for (int I = NumParts - 1; I >= 0; I--) {
+    const unsigned ByteOffset = I * NarrowTy.getSizeInBytes();
+    Register NewAddrReg;
+    B.materializePtrAdd(NewAddrReg, AddrReg, OffsetTy, ByteOffset);
+    MachineMemOperand *NewMMO =
+        MF.getMachineMemOperand(&MMO, ByteOffset, NarrowTy);
+
+    if (IsLoad) {
+      Register Dst = MRI.createGenericVirtualRegister(NarrowTy);
+      NarrowRegs.push_back(Dst);
+      B.buildLoad(Dst, NewAddrReg, *NewMMO);
+    } else {
+      B.buildStore(NarrowRegs[I], NewAddrReg, *NewMMO);
+    }
+  }
+
+  if (IsLoad) {
+    std::reverse(NarrowRegs.begin(), NarrowRegs.end());
+    B.buildConcatVectors(ValReg, NarrowRegs);
+  }
+
+  MI.eraseFromParent();
+}
+
+/// Match something like this:
+///  %293:_(s20) = G_CONSTANT i20 32
+///  %67:_(s20) = G_CONSTANT i20 64
+///  %68:_(p0) = nuw G_PTR_ADD %61, %67(s20)
+///  %295:_(<16 x s16>) = G_AIE_OFFSET_LOAD %68(p0), %293(s20)
+
+/// To convert to:
+///  %298:_(s20) = G_CONSTANT i20 96
+///  %295:_(<16 x s16>) = G_AIE_OFFSET_LOAD %61(p0), %298(s20)
+bool llvm::matchOffsetLoadStorePtrAdd(MachineInstr &MI,
+                                      MachineRegisterInfo &MRI,
+                                      const AIEBaseInstrInfo &TII,
+                                      std::pair<Register, int64_t> &RegOffset) {
+
+  const Register AddrReg = MI.getOperand(1).getReg();
+
+  const auto CstOffsetLoadStore =
+      getIConstantVRegValWithLookThrough(MI.getOperand(2).getReg(), MRI);
+
+  if (!CstOffsetLoadStore)
+    return false;
+
+  MachineInstr *DefAddrRegInstr = MRI.getVRegDef(AddrReg);
+
+  if (DefAddrRegInstr->getOpcode() != TargetOpcode::G_PTR_ADD)
+    return false;
+
+  const auto CstDefAddrRegInstr = getIConstantVRegValWithLookThrough(
+      DefAddrRegInstr->getOperand(2).getReg(), MRI);
+
+  if (!CstDefAddrRegInstr)
+    return false;
+
+  RegOffset.first = DefAddrRegInstr->getOperand(1).getReg();
+  RegOffset.second = CstDefAddrRegInstr->Value.getSExtValue() +
+                     CstOffsetLoadStore->Value.getSExtValue();
+
+  return true;
+}
+
+void llvm::applyOffsetLoadStorePtrAdd(
+    MachineInstr &MI, MachineRegisterInfo &MRI, MachineIRBuilder &B,
+    const std::pair<Register, int64_t> &RegOffset) {
+  B.setInstrAndDebugLoc(MI);
+
+  Register NewOffsetReg =
+      B.buildConstant(LLT::scalar(20), RegOffset.second).getReg(0);
+
+  MI.getOperand(1).setReg(RegOffset.first);
+  MI.getOperand(2).setReg(NewOffsetReg);
+}
+
+/// Match something like this:
+///  %0:_(s20) = COPY $m0
+///  %1:_(p0) = COPY $p0
+///  %2:_(<16 x s32>) = COPY $x0
+///  %6:_(p0) = G_PTR_ADD %1, %0(s20)
+///  %18:_(s20) = G_CONSTANT i20 32
+///  G_AIE_OFFSET_STORE %15(<8 x s32>), %6(p0), %18(s20)
+///  G_AIE_OFFSET_STORE %14(<8 x s32>), %1(p0), %0(s20)
+
+/// To convert to (pointer reuse/CSE):
+///  %0:_(s20) = COPY $m0
+///  %1:_(p0) = COPY $p0
+///  %2:_(<16 x s32>) = COPY $x0
+///  %6:_(p0) = G_PTR_ADD %1, %0(s20)
+///  %18:_(s20) = G_CONSTANT i20 32
+///  %19:_(s20) = G_CONSTANT i20 0
+///  G_AIE_OFFSET_STORE %15(<8 x s32>), %6(p0), %18(s20)
+///  G_AIE_OFFSET_STORE %14(<8 x s32>), %6(p0), %19(s20)
+bool llvm::matchOffsetLoadStoreSharePtrAdd(MachineInstr &MI,
+                                           MachineRegisterInfo &MRI,
+                                           CombinerHelper &Helper,
+                                           const AIEBaseInstrInfo &TII,
+                                           Register &PtrAddReg) {
+  const Register PtrReg = MI.getOperand(1).getReg();
+  const Register OffsetReg = MI.getOperand(2).getReg();
+
+  const auto OffsetCst = getIConstantVRegValWithLookThrough(OffsetReg, MRI);
+
+  // If we have a constant here, don't touch because it is better
+  // to stay folded. Otherwise we will fold again in the previous
+  // combiner.
+  if (OffsetCst)
+    return false;
+
+  for (auto &Use : MRI.use_nodbg_instructions(PtrReg)) {
+    if (Use.getOpcode() != TargetOpcode::G_PTR_ADD)
+      continue;
+    if (Use.getOperand(2).getReg() != OffsetReg)
+      continue;
+    if (Use.getParent() != MI.getParent())
+      continue;
+    if (!Helper.dominates(Use, MI))
+      continue;
+
+    Register PaddDestReg = Use.getOperand(0).getReg();
+
+    // Dead instruction? Don't use it!
+    // Ony use if at least another instruction is using it.
+    if (hasNItemsOrMore(MRI.use_instr_nodbg_begin(PaddDestReg),
+                        MRI.use_instr_nodbg_end(), 1)) {
+      PtrAddReg = PaddDestReg;
+      return true;
+    }
+  }
+
+  return false;
+}
+
+void llvm::applyOffsetLoadStoreSharePtrAdd(MachineInstr &MI,
+                                           MachineRegisterInfo &MRI,
+                                           MachineIRBuilder &B,
+                                           Register &PtrAddReg) {
+
+  Register NewOffsetReg = B.buildConstant(LLT::scalar(20), 0).getReg(0);
+
+  MI.getOperand(1).setReg(PtrAddReg);
+  MI.getOperand(2).setReg(NewOffsetReg);
+}

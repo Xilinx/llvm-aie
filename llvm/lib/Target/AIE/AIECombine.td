@@ -109,8 +109,36 @@ def combine_add_vector_elt_undef : GICombineRule <
   (apply [{ applyAddVecEltUndef(*${root}, MRI, B); }] )
 >;
 
+def combine_load_store_split_matchdata: GIDefMatchData<"unsigned">;
+def combine_load_store_split : GICombineRule<
+  (defs root:$root, combine_load_store_split_matchdata:$matchinfo),
+  (match (wip_match_opcode G_LOAD, G_STORE): $root,
+  [{ return matchLoadStoreSplit(cast<GLoadStore>(*${root}), MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ applyLoadStoreSplit(cast<GLoadStore>(*${root}), MRI, B, ${matchinfo}); }])
+>;
+
+def combine_offset_load_store_ptradd_matchdata: GIDefMatchData<"std::pair<Register, int64_t>">;
+def combine_offset_load_store_ptradd : GICombineRule<
+  (defs root:$root, combine_offset_load_store_ptradd_matchdata:$matchinfo),
+  (match (wip_match_opcode G_AIE_OFFSET_LOAD, G_AIE_OFFSET_STORE): $root,
+  [{ return matchOffsetLoadStorePtrAdd(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ applyOffsetLoadStorePtrAdd(*${root}, MRI, B, ${matchinfo}); }])
+>;
+
+def combine_offset_load_store_share_ptradd_matchdata: GIDefMatchData<"Register">;
+def combine_offset_load_store_share_ptradd : GICombineRule<
+  (defs root:$root, combine_offset_load_store_share_ptradd_matchdata:$matchinfo),
+  (match (wip_match_opcode G_AIE_OFFSET_LOAD, G_AIE_OFFSET_STORE): $root,
+  [{ return matchOffsetLoadStoreSharePtrAdd(*${root}, MRI, Helper, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ applyOffsetLoadStoreSharePtrAdd(*${root}, MRI, B, ${matchinfo}); }])
+>;
+
 def AIE2PostLegalizerCustomCombiner
-    : GICombiner<"AIE2PostLegalizerCustomCombinerImpl", [ combine_load_store_increment,
+    : GICombiner<"AIE2PostLegalizerCustomCombinerImpl", [ combine_load_store_split,
+                                                          ptr_add_immed_chain,
+                                                          combine_load_store_increment,
+                                                          combine_offset_load_store_ptradd,
+                                                          combine_offset_load_store_share_ptradd,
                                                           combine_add_vector_elt_undef,
                                                           combine_extract_concat,
                                                           combine_unmerge_concat,

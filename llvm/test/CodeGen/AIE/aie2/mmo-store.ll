@@ -71,7 +71,7 @@ define void @store_v16i32(i32 %idx, ptr %array, <16 x i32> %val) {
   ; CHECK-LABEL: name: store_v16i32
   ; CHECK: VST_dmw_sts_w_ag_idx_imm
   ; CHECK-SAME: (store (<8 x s32>) into %ir.arrayidx.0 + 32)
-  ; CHECK: VST_dmw_sts_w_ag_idx_imm
+  ; CHECK: VST_dmw_sts_w_ag_idx
   ; CHECK-SAME: (store (<8 x s32>) into %ir.arrayidx.0)
   ; CHECK: VST_dmw_sts_w_ag_idx_imm
   ; CHECK-SAME: (store (<8 x s32>) into %ir.arrayidx.1 + 32)
