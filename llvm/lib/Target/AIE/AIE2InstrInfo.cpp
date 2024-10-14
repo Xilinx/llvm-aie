@@ -1406,3 +1406,42 @@ AIE2InstrInfo::getVExtractOpInfo(const MachineInstr &MI) const {
     return std::nullopt;
   }
 }
+
+unsigned AIE2InstrInfo::getMaxLoadStoreSize() const { return 256; }
+
+bool AIE2InstrInfo::canCombineWithLoadStore(const MachineInstr &MI) const {
+
+  if (!isa<GIntrinsic>(MI))
+    return false;
+
+  const unsigned ID = cast<GIntrinsic>(MI).getIntrinsicID();
+
+  switch (ID) {
+  case Intrinsic::aie2_I256_v16_acc32_srs:
+  case Intrinsic::aie2_I256_v16_acc64_srs:
+  case Intrinsic::aie2_I256_v32_acc32_srs:
+  case Intrinsic::aie2_I256_v8_acc64_srs:
+  case Intrinsic::aie2_I512_v16_acc64_srs:
+  case Intrinsic::aie2_I512_v32_acc32_srs:
+
+  case Intrinsic::aie2_acc32_v16_I256_ups:
+  case Intrinsic::aie2_acc32_v32_I256_ups:
+  case Intrinsic::aie2_acc32_v32_I512_ups:
+  case Intrinsic::aie2_acc64_v16_I256_ups:
+  case Intrinsic::aie2_acc64_v16_I512_ups:
+  case Intrinsic::aie2_acc64_v8_I256_ups:
+    return true;
+  }
+  return false;
+}
+
+bool AIE2InstrInfo::isProfitableToSplitType(const LLT Ty) const {
+  const LLT V16S32 = LLT::fixed_vector(16, 32);
+  const LLT V32S16 = LLT::fixed_vector(32, 16);
+  const LLT V64S8 = LLT::fixed_vector(64, 8);
+
+  if (Ty == V16S32 || Ty == V32S16 || Ty == V64S8)
+    return true;
+
+  return false;
+}

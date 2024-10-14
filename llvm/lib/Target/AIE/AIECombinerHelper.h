@@ -162,6 +162,27 @@ void applyUpdToConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
                       MachineIRBuilder &B,
                       std::map<unsigned, Register> &IndexRegMap);
 
+bool matchLoadStoreSplit(GLoadStore &MI, MachineRegisterInfo &MRI,
+                         const AIEBaseInstrInfo &TII, unsigned &MaxMemSize);
+void applyLoadStoreSplit(GLoadStore &MI, MachineRegisterInfo &MRI,
+                         MachineIRBuilder &B, const unsigned MaxMemSize);
+
+bool matchOffsetLoadStorePtrAdd(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                const AIEBaseInstrInfo &TII,
+                                std::pair<Register, int64_t> &RegOffset);
+
+void applyOffsetLoadStorePtrAdd(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                MachineIRBuilder &B,
+                                const std::pair<Register, int64_t> &RegOffset);
+
+bool matchOffsetLoadStoreSharePtrAdd(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                     CombinerHelper &Helper,
+                                     const AIEBaseInstrInfo &TII,
+                                     Register &PtrAddReg);
+
+void applyOffsetLoadStoreSharePtrAdd(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                     MachineIRBuilder &B, Register &PtrAddReg);
+
 } // namespace llvm
 
 #endif
