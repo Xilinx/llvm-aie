@@ -424,6 +424,21 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
     llvm_unreachable("Target didn't implement getVExtractOpInfo!");
   }
 
+  /// Return the maximun size for memory operations on this target.
+  virtual unsigned getMaxLoadStoreSize() const {
+    llvm_unreachable("Target didn't implement getMaxLoadStoreSize!");
+  }
+
+  /// Return true if this instruction can be combined with a memory operation.
+  virtual bool canCombineWithLoadStore(const MachineInstr &MI) const {
+    llvm_unreachable("Target didn't implement canCombineWithLoadStore!");
+  }
+
+  /// Return true if the type can be splitted to fit target's restrictions.
+  virtual bool isSplittableType(const LLT Ty) const {
+    llvm_unreachable("Target didn't implement isSplittableType!");
+  }
+
 protected:
   /// Expand a spill pseudo-instruction into actual target instructions. This
   /// will essentially split the register being handled into its sub-registers,

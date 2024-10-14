@@ -80,9 +80,9 @@ define void @load_v16i32(i32 %idx, ptr %array) {
   ; CHECK-SAME: (load (<8 x s32>) from %ir.arrayidx.1 + 32)
   ; CHECK: VLDA_dmw_lda_w_ag_idx_imm
   ; CHECK-SAME: (load (<8 x s32>) from %ir.arrayidx.1)
-  ; CHECK: VLDA_dmw_lda_w_ag_idx_imm
+  ; CHECK: VLD_idx_imm_3x32_pseudo
   ; CHECK-SAME: (load (<8 x s32>) from %ir.arrayidx.0 + 32)
-  ; CHECK: VLDA_dmw_lda_w_ag_idx_imm
+  ; CHECK: VLD_idx_imm_3x32_pseudo
   ; CHECK-SAME: (load (<8 x s32>) from %ir.arrayidx.0)
 entry:
   %arrayidx.1 = getelementptr inbounds [16 x <16 x i32>], ptr %array, i32 0, i32 2
