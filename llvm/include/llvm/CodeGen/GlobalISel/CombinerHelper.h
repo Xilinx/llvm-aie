@@ -857,6 +857,10 @@ public:
                                                      BuildFnTy &MatchInfo);
 
   /// Transform:
+  ///  res = G_SHUFFLE_VECTORS a, b, <0, 1> -> res, undef = G_UNMERGE_VALUES a
+  bool matchShuffleToExtractSubvector(MachineInstr &MI, BuildFnTy &MatchInfo);
+
+  /// Transform:
   ///  G_INTTOPTR (int G_CONSTANT x) -> (pointer G_CONSTANT x)
   bool matchIntToPtrContant(MachineInstr &MI, MachineRegisterInfo &MRI,
                             BuildFnTy &MatchInfo);

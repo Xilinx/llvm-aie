@@ -14,6 +14,7 @@
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallBitVector.h"
 #include "llvm/Analysis/CmpInstAnalysis.h"
+#include "llvm/Analysis/VectorUtils.h"
 #include "llvm/CodeGen/GlobalISel/GISelChangeObserver.h"
 #include "llvm/CodeGen/GlobalISel/GISelKnownBits.h"
 #include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
@@ -7252,6 +7253,60 @@ bool CombinerHelper::matchAddOverflow(MachineInstr &MI, BuildFnTy &MatchInfo) {
   }
 
   return false;
+}
+
+bool CombinerHelper::matchShuffleToExtractSubvector(MachineInstr &MI,
+                                                    BuildFnTy &MatchInfo) {
+
+  assert(MI.getOpcode() == TargetOpcode::G_SHUFFLE_VECTOR);
+  const Register DstReg = MI.getOperand(0).getReg();
+  const Register Src1Reg = MI.getOperand(1).getReg();
+  ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
+
+  const LLT DstTy = MRI.getType(DstReg);
+  const LLT Src1Ty = MRI.getType(Src1Reg);
+
+  if (!DstTy.isVector() || !Src1Ty.isVector())
+    return false;
+
+  const unsigned NumDstElems = DstTy.getNumElements();
+  const unsigned NumSrc1Elems = Src1Ty.getNumElements();
+
+  if (NumDstElems * 2 != NumSrc1Elems)
+    return false;
+
+  auto CheckExtractMask = [=](unsigned Start, unsigned NumElems) -> bool {
+    auto ExtractMask = createSequentialMask(Start, NumElems, 0);
+
+    for (unsigned I = 0; I < NumDstElems; I++) {
+      if (Mask[I] == -1)
+        continue;
+
+      if (Mask[I] != ExtractMask[I])
+        return false;
+    }
+
+    return true;
+  };
+
+  const Register UndefReg = MRI.createGenericVirtualRegister(DstTy);
+  Register UnmergeDst1;
+  Register UnmergeDst2;
+  if (CheckExtractMask(0, NumDstElems)) {
+    UnmergeDst1 = DstReg;
+    UnmergeDst2 = UndefReg;
+  } else if (CheckExtractMask(NumDstElems, NumDstElems)) {
+    UnmergeDst1 = UndefReg;
+    UnmergeDst2 = DstReg;
+  } else {
+    return false;
+  }
+
+  MatchInfo = [=](MachineIRBuilder &B) {
+    B.buildUnmerge({UnmergeDst1, UnmergeDst2}, Src1Reg);
+  };
+
+  return true;
 }
 
 bool CombinerHelper::matchIntToPtrContant(MachineInstr &MI,

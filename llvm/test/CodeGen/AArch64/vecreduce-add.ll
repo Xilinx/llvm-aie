@@ -3744,17 +3744,13 @@ define i32 @add_pair_v8i16_v4i32_double_sext_zext_shuffle(<8 x i16> %ax, <8 x i1
 ; CHECK-GI-LABEL: add_pair_v8i16_v4i32_double_sext_zext_shuffle:
 ; CHECK-GI:       // %bb.0: // %entry
 ; CHECK-GI-NEXT:    ushll v4.4s, v0.4h, #0
-; CHECK-GI-NEXT:    ushll2 v0.4s, v0.8h, #0
 ; CHECK-GI-NEXT:    ushll v5.4s, v1.4h, #0
-; CHECK-GI-NEXT:    ushll2 v1.4s, v1.8h, #0
 ; CHECK-GI-NEXT:    ushll v6.4s, v2.4h, #0
-; CHECK-GI-NEXT:    ushll2 v2.4s, v2.8h, #0
 ; CHECK-GI-NEXT:    ushll v7.4s, v3.4h, #0
-; CHECK-GI-NEXT:    ushll2 v3.4s, v3.8h, #0
-; CHECK-GI-NEXT:    add v0.4s, v4.4s, v0.4s
-; CHECK-GI-NEXT:    add v1.4s, v5.4s, v1.4s
-; CHECK-GI-NEXT:    add v2.4s, v6.4s, v2.4s
-; CHECK-GI-NEXT:    add v3.4s, v7.4s, v3.4s
+; CHECK-GI-NEXT:    uaddw2 v0.4s, v4.4s, v0.8h
+; CHECK-GI-NEXT:    uaddw2 v1.4s, v5.4s, v1.8h
+; CHECK-GI-NEXT:    uaddw2 v2.4s, v6.4s, v2.8h
+; CHECK-GI-NEXT:    uaddw2 v3.4s, v7.4s, v3.8h
 ; CHECK-GI-NEXT:    add v0.4s, v0.4s, v1.4s
 ; CHECK-GI-NEXT:    add v1.4s, v2.4s, v3.4s
 ; CHECK-GI-NEXT:    add v0.4s, v0.4s, v1.4s

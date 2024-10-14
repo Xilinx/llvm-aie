@@ -1527,6 +1527,16 @@ def combine_shuffle_concat : GICombineRule<
         [{ return Helper.matchCombineShuffleConcat(*${root}, ${matchinfo}); }]),
   (apply [{ Helper.applyCombineShuffleConcat(*${root}, ${matchinfo}); }])>;
 
+// Combines Shuffles representing vector extracts into Unmerges
+// res = G_SHUFFLE_VECTORS a, b, <0, 1>
+// ===>
+// res, undef = G_UNMERGE_VALUES a
+def combine_shuffle_to_extract_vector : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_SHUFFLE_VECTOR):$root,
+        [{ return Helper.matchShuffleToExtractSubvector(*${root}, ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
+
 def combine_inttoptr_constant : GICombineRule<
   (defs root:$root, build_fn_matchinfo:$info),
   (match (wip_match_opcode G_INTTOPTR):$root,
@@ -1642,7 +1652,7 @@ def all_combines : GICombineGroup<[trivial_combines, vector_ops_combines,
     sub_add_reg, select_to_minmax, redundant_binop_in_equality,
     fsub_to_fneg, commute_constant_to_rhs, match_ands, match_ors,
     combine_concat_vector, double_icmp_zero_and_or_combine, match_addos,
-    combine_shuffle_concat]>;
+    combine_shuffle_concat, combine_shuffle_to_extract_vector]>;
 
 // A combine group used to for prelegalizer combiners at -O0. The combines in
 // this group have been selected based on experiments to balance code size and
