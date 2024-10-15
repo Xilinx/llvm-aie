@@ -134,7 +134,7 @@ int PostPipeliner::getResMII(MachineBasicBlock &LoopBlock) {
 // the next instance of SU.
 void PostPipeliner::scheduleNode(SUnit &SU, int Cycle) {
   LLVM_DEBUG(dbgs() << "PostPipeline " << SU.NodeNum << " in cycle " << Cycle
-                    << "\n");
+                    << ". ");
   Info[SU.NodeNum].Cycle = Cycle;
   for (auto &Dep : SU.Succs) {
     int Latency = Dep.getSignedLatency();
@@ -146,10 +146,10 @@ void PostPipeliner::scheduleNode(SUnit &SU, int Cycle) {
     const int NewEarliest = Cycle + Latency;
     if (NewEarliest > Info[SNum].Earliest) {
       Info[SNum].Earliest = NewEarliest;
-      LLVM_DEBUG(dbgs() << "   Earliest(" << SNum << ") to "
-                        << Info[SNum].Earliest << "\n");
+      LLVM_DEBUG(dbgs() << SNum << " to " << Info[SNum].Earliest << "; ");
     }
   }
+  LLVM_DEBUG(dbgs() << "\n");
 
   int Next = SU.NodeNum + NInstr;
   if (Next < NTotalInstrs) {
