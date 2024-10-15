@@ -448,7 +448,7 @@ ScheduleHazardRecognizer::HazardType AIEHazardRecognizer::getHazardType(
       FUDepthLimit));
 }
 
-bool AIEHazardRecognizer::checkConflict(
+ConflictTypeBits AIEHazardRecognizer::checkConflict(
     const ResourceScoreboard<FuncUnitWrapper> &Scoreboard, MachineInstr &MI,
     int DeltaCycles) const {
   const MCInstrDesc &Desc = MI.getDesc();
@@ -461,18 +461,42 @@ bool AIEHazardRecognizer::checkConflict(
       MemoryBanks, TII->getMemoryCycles(SchedClass), DeltaCycles, std::nullopt);
 }
 
-bool AIEHazardRecognizer::checkConflict(
+ConflictTypeBits AIEHazardRecognizer::checkConflict(
     const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
     const InstrItineraryData *ItinData, unsigned SchedClass, SlotBits SlotSet,
     MemoryBankBits MemoryBanks, SmallVector<int, 2> MemoryAccessCycles,
     int DeltaCycles, std::optional<int> FUDepthLimit) {
   assert(Scoreboard.isValidDelta(DeltaCycles));
+  ConflictTypeBits Conflict = ConflictType::NoConflict;
 
+  if (checkFormatConflict(Scoreboard, DeltaCycles, SlotSet))
+    Conflict |= ConflictType::Format;
+
+  if (checkMemoryBankConflict(MemoryAccessCycles, Scoreboard, DeltaCycles,
+                              MemoryBanks))
+    Conflict |= ConflictType::MemoryBank;
+
+  if (checkFUConflict(ItinData, SchedClass, DeltaCycles, Scoreboard,
+                      FUDepthLimit))
+    Conflict |= ConflictType::FU;
+
+  return Conflict;
+}
+
+// Return true if there is a conflict due to format.
+bool AIEHazardRecognizer::checkFormatConflict(
+    const ResourceScoreboard<FuncUnitWrapper> &Scoreboard, int DeltaCycles,
+    unsigned SlotSet) {
   // Verify format hazards
   FuncUnitWrapper EmissionCycle(/*Req=*/0, /*Res=*/0, SlotSet);
-  if (EmissionCycle.conflict(Scoreboard[DeltaCycles]))
-    return true;
+  return EmissionCycle.conflict(Scoreboard[DeltaCycles]);
+}
 
+// Return true if there is a conflict due to memory banks.
+bool AIEHazardRecognizer::checkMemoryBankConflict(
+    const SmallVector<int, 2> &MemoryAccessCycles,
+    const ResourceScoreboard<FuncUnitWrapper> &Scoreboard, int DeltaCycles,
+    unsigned MemoryBanks) {
   // Verify memory bank hazards
   if (!MemoryAccessCycles.empty()) {
     FuncUnitWrapper MemoryBankAccessCycle(/*Req=*/0, /*Res=*/0, /*SlotSet=*/0,
@@ -488,15 +512,22 @@ bool AIEHazardRecognizer::checkConflict(
       }
     }
   }
+  return false;
+}
+
+// Return true if there is a conflict in the functional units.
+bool AIEHazardRecognizer::checkFUConflict(
+    const InstrItineraryData *ItinData, unsigned SchedClass, int DeltaCycles,
+    const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+    const std::optional<int> &FUDepthLimit) {
 
   // Note that Delta will be negative for bottom-up scheduling.
   // Cycle is 'our' cycle at which each stage of the itinerary starts.
   // It gets updated by the increment from the InstrStage.
   int Cycle = DeltaCycles;
   for (const InstrStage &IS : ItinData->getStages(SchedClass)) {
-    if (FUDepthLimit && (Cycle - DeltaCycles) >= *FUDepthLimit) {
+    if (FUDepthLimit && (Cycle - DeltaCycles) >= *FUDepthLimit)
       break;
-    }
     // Check availability of this stage's resources for the specified number
     // of cycles
     const FuncUnitWrapper ThisCycle(IS);
@@ -504,18 +535,13 @@ bool AIEHazardRecognizer::checkConflict(
       int StageCycle = Cycle + (int)C;
       assert(StageCycle < Scoreboard.getDepth());
 
-      if (ThisCycle.conflict(Scoreboard[StageCycle])) {
-        LLVM_DEBUG(dbgs() << "*** Hazard in cycle=" << StageCycle
-                          << " EC=" << StageCycle - DeltaCycles << ":\n";
-                   ThisCycle.dump(); dbgs() << "\n");
+      if (ThisCycle.conflict(Scoreboard[StageCycle]))
         return true;
-      }
     }
 
     // Advance the cycle to the next stage.
     Cycle += IS.getNextCycles();
   }
-
   return false;
 }
 
