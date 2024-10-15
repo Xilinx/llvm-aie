@@ -29,6 +29,7 @@
 namespace llvm {
 
 class MachineInstr;
+using ConflictTypeBits = uint64_t;
 
 void applyFormatOrdering(AIE::MachineBundle &Bundle, const VLIWFormat &Format,
                          MachineInstr *BundleRoot,
@@ -99,6 +100,13 @@ class AIEHazardRecognizer : public ScheduleHazardRecognizer {
   void computeMaxLatency();
 
 public:
+  enum ConflictType {
+    NoConflict = 0b000,
+    Format = 0b001,
+    MemoryBank = 0b010,
+    FU = 0b100,
+  };
+
   /// ScoreboardDepth can be used to speficy a fixed depth without querying the
   /// scheduling model. This is mostly used for testing, for other cases we
   /// should trust the instruction itineraries.
@@ -189,18 +197,34 @@ public:
                 const MCInstrDesc &Desc, MemoryBankBits MemoryBanks,
                 iterator_range<const MachineOperand *> MIOperands,
                 const MachineRegisterInfo &MRI, int DeltaCycles) const;
-  bool checkConflict(const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
-                     MachineInstr &MI, int DeltaCycles) const;
+  ConflictTypeBits
+  checkConflict(const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+                MachineInstr &MI, int DeltaCycles) const;
 
 protected:
   ScheduleHazardRecognizer::HazardType getHazardType(const MCInstrDesc &Desc,
                                                      int DeltaCycles);
-  static bool
+  static ConflictTypeBits
   checkConflict(const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
                 const InstrItineraryData *ItinData, unsigned SchedClass,
                 SlotBits SlotSet, MemoryBankBits MemoryBanks,
                 SmallVector<int, 2> MemoryAccessCycles, int DeltaCycles,
                 std::optional<int> FUDepthLimit);
+
+  static bool
+  checkFormatConflict(const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+                      int DeltaCycles, unsigned SlotSet);
+
+  static bool
+  checkMemoryBankConflict(const SmallVector<int, 2> &MemoryAccessCycles,
+                          const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+                          int DeltaCycles, unsigned MemoryBanks);
+
+  static bool
+  checkFUConflict(const InstrItineraryData *ItinData, unsigned SchedClass,
+                  int DeltaCycles,
+                  const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+                  const std::optional<int> &FUDepthLimit);
 
   static void enterResources(ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
                              const InstrItineraryData *ItinData,
