@@ -356,7 +356,8 @@ bool MachineLICMBase::runOnMachineFunction(MachineFunction &MF) {
   MRI = &MF.getRegInfo();
   SchedModel.init(&ST);
 
-  PreRegAlloc = MRI->isSSA();
+  PreRegAlloc = !MF.getProperties().hasProperty(
+      MachineFunctionProperties::Property::NoVRegs);
   HasProfileData = MF.getFunction().hasProfileData();
 
   if (PreRegAlloc)
@@ -464,9 +465,11 @@ void MachineLICMBase::ProcessMI(MachineInstr *MI, BitVector &PhysRegDefs,
     assert(Reg.isPhysical() && "Not expecting virtual register!");
 
     if (!MO.isDef()) {
-      if (Reg && (PhysRegDefs.test(Reg) || PhysRegClobbers.test(Reg)))
+      if (PhysRegDefs.test(Reg) || PhysRegClobbers.test(Reg))
         // If it's using a non-loop-invariant register, then it's obviously not
         // safe to hoist.
+        // Note this isn't a final check, as we haven't gathered all the loop
+        // register definitions yet.
         HasNonInvariantUse = true;
       continue;
     }
@@ -540,14 +543,6 @@ void MachineLICMBase::HoistRegionPostRA(MachineLoop *CurLoop,
     const MachineLoop *ML = MLI->getLoopFor(BB);
     if (ML && ML->getHeader()->isEHPad()) continue;
 
-    // Conservatively treat live-in's as an external def.
-    // FIXME: That means a reload that're reused in successor block(s) will not
-    // be LICM'ed.
-    for (const auto &LI : BB->liveins()) {
-      for (MCRegAliasIterator AI(LI.PhysReg, TRI, true); AI.isValid(); ++AI)
-        PhysRegDefs.set(*AI);
-    }
-
     // Funclet entry blocks will clobber all registers
     if (const uint32_t *Mask = BB->getBeginClobberMask(TRI))
       PhysRegClobbers.setBitsNotInMask(Mask);
@@ -556,6 +551,15 @@ void MachineLICMBase::HoistRegionPostRA(MachineLoop *CurLoop,
     for (MachineInstr &MI : *BB)
       ProcessMI(&MI, PhysRegDefs, PhysRegClobbers, StoredFIs, Candidates,
                 CurLoop);
+  }
+
+  // Mark registers as clobbered if they are defined in the loop and also livein
+  for (const auto &LoopLI : CurLoop->getHeader()->liveins()) {
+    MCPhysReg LoopLiveInReg = LoopLI.PhysReg;
+    for (MCRegAliasIterator AI(LoopLiveInReg, TRI, true); AI.isValid(); ++AI) {
+      if (PhysRegDefs.test(*AI))
+        PhysRegClobbers.set(*AI);
+    }
   }
 
   // Gather the registers read / clobbered by the terminator.
