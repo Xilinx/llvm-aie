@@ -68,7 +68,8 @@ void dumpInterBlock(const InterBlockEdges &Edges) {
 
 ResourceScoreboard<FuncUnitWrapper>
 createTopDownScoreboard(ArrayRef<MachineBundle> Bundles,
-                        const AIEHazardRecognizer &HR) {
+                        const AIEHazardRecognizer &HR,
+                        const AIEAlternateDescriptors &SelectedDescriptors) {
   ResourceScoreboard<FuncUnitWrapper> Scoreboard;
   Scoreboard.reset(HR.getMaxLookAhead());
 
@@ -78,8 +79,9 @@ createTopDownScoreboard(ArrayRef<MachineBundle> Bundles,
   // then this will not cause conflicts.
   for (int I = TotalBundles - AmountToEmit; I < TotalBundles; I++) {
     for (MachineInstr *MI : Bundles[I].getInstrs())
-      HR.emitInScoreboard(Scoreboard, MI->getDesc(), HR.getMemoryBanks(MI),
-                          MI->operands(), MI->getMF()->getRegInfo(), 0);
+      HR.emitInScoreboard(Scoreboard, *SelectedDescriptors.getDesc(MI),
+                          HR.getMemoryBanks(MI), MI->operands(),
+                          MI->getMF()->getRegInfo(), 0);
     Scoreboard.advance();
   }
 
@@ -105,7 +107,8 @@ createTopDownScoreboard(ArrayRef<MachineBundle> Bundles,
 
 ResourceScoreboard<FuncUnitWrapper>
 createBottomUpScoreboard(ArrayRef<MachineBundle> Bundles,
-                         const AIEHazardRecognizer &HR) {
+                         const AIEHazardRecognizer &HR,
+                         const AIEAlternateDescriptors &SelectedDescriptors) {
   const unsigned NumBundles = Bundles.size();
   const unsigned RequiredCycles = HR.getConflictHorizon();
 
@@ -127,8 +130,9 @@ createBottomUpScoreboard(ArrayRef<MachineBundle> Bundles,
       Bundles.begin(), Bundles.begin() + std::min(NumBundles, RequiredCycles));
   for (const MachineBundle &B : reverse(MinBundles)) {
     for (MachineInstr *MI : B.getInstrs())
-      HR.emitInScoreboard(Scoreboard, MI->getDesc(), HR.getMemoryBanks(MI),
-                          MI->operands(), MI->getMF()->getRegInfo(), 0);
+      HR.emitInScoreboard(Scoreboard, *SelectedDescriptors.getDesc(MI),
+                          HR.getMemoryBanks(MI), MI->operands(),
+                          MI->getMF()->getRegInfo(), 0);
     Scoreboard.recede();
   }
   return Scoreboard;
@@ -137,12 +141,11 @@ createBottomUpScoreboard(ArrayRef<MachineBundle> Bundles,
 /// Replay the \p PredBundles bottom-up into \p ScoreBoard.
 /// If that causes a resource conflict, return the instruction
 /// from \p PredBundles that is responsible for it.
-///
-/// \pre The bundles contain no multi-slot pseudo.
 MachineInstr *checkResourceConflictsBottomUp(
     const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
     const std::vector<MachineBundle> &PredBundles,
-    const AIEHazardRecognizer &HR) {
+    const AIEHazardRecognizer &HR,
+    const AIEAlternateDescriptors &SelectedDescriptors) {
   DEBUG_LOOPAWARE(dbgs() << "Interblock Successor scoreboard:\n";
                   Scoreboard.dump());
 
@@ -151,9 +154,9 @@ MachineInstr *checkResourceConflictsBottomUp(
     if (BottomUpCycle >= HR.getConflictHorizon())
       break;
     for (MachineInstr *MI : B.getInstrs()) {
-      if (HR.getHazardType(Scoreboard, MI->getDesc(), HR.getMemoryBanks(MI),
-                           MI->operands(), MI->getMF()->getRegInfo(),
-                           -BottomUpCycle)) {
+      if (HR.getHazardType(Scoreboard, *SelectedDescriptors.getDesc(MI),
+                           HR.getMemoryBanks(MI), MI->operands(),
+                           MI->getMF()->getRegInfo(), -BottomUpCycle)) {
         DEBUG_LOOPAWARE(dbgs() << "Conflicting MI at Bottom-up cycle="
                                << BottomUpCycle << ": " << *MI);
         return MI;
@@ -170,13 +173,12 @@ MachineInstr *checkResourceConflictsBottomUp(
 /// If that causes a resource conflict, return an instruction
 /// from \p SuccBundles that is responsible for it.
 /// Note that \p Scoreboard will be modified.
-///
-/// \pre The bundles contain no multi-slot pseudo.
-MachineInstr *
-checkResourceConflictsTopDown(ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
-                              const std::vector<MachineBundle> &SuccBundles,
-                              const AIEHazardRecognizer &HR,
-                              const FixedpointState &Fixedpoint) {
+MachineInstr *checkResourceConflictsTopDown(
+    ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+    const std::vector<MachineBundle> &SuccBundles,
+    const AIEHazardRecognizer &HR,
+    const AIEAlternateDescriptors &SelectedDescriptors,
+    const FixedpointState &Fixedpoint) {
   DEBUG_LOOPAWARE(dbgs() << "Interblock Predecessor scoreboard:\n";
                   Scoreboard.dump());
 
@@ -184,8 +186,9 @@ checkResourceConflictsTopDown(ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
   MachineInstr *ConflictMI = nullptr;
   for (const MachineBundle &B : SuccBundles) {
     for (MachineInstr *MI : B.getInstrs()) {
-      if (HR.getHazardType(Scoreboard, MI->getDesc(), HR.getMemoryBanks(MI),
-                           MI->operands(), MI->getMF()->getRegInfo(), 0)) {
+      if (HR.getHazardType(Scoreboard, *SelectedDescriptors.getDesc(MI),
+                           HR.getMemoryBanks(MI), MI->operands(),
+                           MI->getMF()->getRegInfo(), 0)) {
         DEBUG_LOOPAWARE(dbgs() << "Conflicting MI at Top cycle=" << TopCycle
                                << ": " << *MI);
         ConflictMI = MI;
@@ -395,8 +398,9 @@ InterBlockScheduling::resourcesConverged(BlockState &BS,
   // on the backedge, by overlaying top and bottom region
   if (FindInBottomRegion) {
     if (MachineInstr *MICausingConflict = checkResourceConflictsBottomUp(
-            createBottomUpScoreboard(BS.getTop().Bundles, *HR),
-            BS.getBottom().Bundles, *HR))
+            createBottomUpScoreboard(BS.getTop().Bundles, *HR,
+                                     SelectedAltDescs),
+            BS.getBottom().Bundles, *HR, SelectedAltDescs))
       return MICausingConflict;
   }
 
@@ -404,12 +408,12 @@ InterBlockScheduling::resourcesConverged(BlockState &BS,
   // The last non-empty cycle is a safe upperbound for the resource
   // safety margin.
   ResourceScoreboard<FuncUnitWrapper> Bottom =
-      createTopDownScoreboard(BS.getBottom().Bundles, *HR);
+      createTopDownScoreboard(BS.getBottom().Bundles, *HR, SelectedAltDescs);
   BS.FixPoint.MaxResourceExtent = Bottom.lastOccupied();
 
   if (!FindInBottomRegion) {
     if (MachineInstr *MICausingConflict = checkResourceConflictsTopDown(
-            Bottom, BS.getTop().Bundles, *HR, BS.FixPoint))
+            Bottom, BS.getTop().Bundles, *HR, SelectedAltDescs, BS.FixPoint))
       return MICausingConflict;
   }
 
@@ -912,8 +916,8 @@ int InterBlockScheduling::getCyclesToAvoidResourceConflicts(
                          << " Original Loop " << *LoopMBB << " Original Epilog "
                          << EpilogueMBB << "\n");
 
-  ResourceScoreboard<FuncUnitWrapper> Scoreboard =
-      createBottomUpScoreboard(EpilogueBS.getTop().Bundles, *HR);
+  ResourceScoreboard<FuncUnitWrapper> Scoreboard = createBottomUpScoreboard(
+      EpilogueBS.getTop().Bundles, *HR, SelectedAltDescs);
 
   // We know how many latency cycles we need to respect, and we can advance
   // the scoreboard to the first possible cycle that can accommodate another
@@ -927,7 +931,7 @@ int InterBlockScheduling::getCyclesToAvoidResourceConflicts(
   // Increment the number of intermediate nops until there are no resource
   // conflicts between the last iteration of the loop and the epilogue.
   while (checkResourceConflictsBottomUp(Scoreboard, LoopBS.getBottom().Bundles,
-                                        *HR)) {
+                                        *HR, SelectedAltDescs)) {
     Scoreboard.recede();
     ++NopCounter;
   }
