@@ -106,6 +106,30 @@ bool PostPipeliner::canAccept(MachineBasicBlock &LoopBlock) {
   return true;
 }
 
+int PostPipeliner::getResMII(MachineBasicBlock &LoopBlock) {
+  // For each instruction, find the first cycle in which it fits and collect the
+  // maximum
+  std::vector<uint64_t> Scoreboard(NInstr, 0);
+  int MII = 1;
+  for (auto &MI : LoopBlock) {
+    auto *SlotInfo = TII->getSlotInfo(TII->getSlotKind(MI.getOpcode()));
+    SlotBits Slots = SlotInfo ? SlotInfo->getSlotSet() : 0;
+
+    int C = 0;
+    while (C < NInstr && (Scoreboard[C] & Slots)) {
+      C++;
+    }
+    if (C >= NInstr) {
+      MII = NInstr;
+      break;
+    }
+    Scoreboard[C] |= Slots;
+    MII = std::max(MII, C + 1);
+  }
+  LLVM_DEBUG(dbgs() << "PostPipeliner: ResMII=" << MII << "\n");
+  return MII;
+}
+
 // This assigns Cycle of SU, Earliest of its predecessors and Earliest of
 // the next instance of SU.
 void PostPipeliner::scheduleNode(SUnit &SU, int Cycle) {
