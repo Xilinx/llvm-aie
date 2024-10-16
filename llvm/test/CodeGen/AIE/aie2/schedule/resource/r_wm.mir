@@ -50,29 +50,29 @@ body:             |
 ...
 
 ---
-name:            E2_VEXTRACT_E1_ADD_NC_GPR
+name:            E2_VEXTRACT_E1_ADD_NC_R
 alignment:       16
 body:             |
   bb.0.entry:
-    ; CHECK-LABEL: name: E2_VEXTRACT_E1_ADD_NC_GPR
+    ; CHECK-LABEL: name: E2_VEXTRACT_E1_ADD_NC_R
     ; CHECK: $r2 = VEXTRACT_S32 killed $x2, killed $r16
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $r3 = ADD_NC_GPR killed $r4, -32
+    ; CHECK-NEXT: $r3 = ADD_NC killed $r4, -32
     $r2 = VEXTRACT_S32 $x2, $r16
-    $r3 = ADD_NC_GPR $r4, -32
+    $r3 = ADD_NC $r4, -32
 ...
 
 ---
-name:            E2_VCMP_E1_ADD_NC_GPR
+name:            E2_VCMP_E1_ADD_NC_R
 alignment:       16
 body:             |
   bb.0.entry:
-    ; CHECK-LABEL: name: E2_VCMP_E1_ADD_NC_GPR
+    ; CHECK-LABEL: name: E2_VCMP_E1_ADD_NC_R
     ; CHECK: $r16 = VLT_BF16 killed $x0, killed $x5
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $r3 = ADD_NC_GPR killed $r4, -32
+    ; CHECK-NEXT: $r3 = ADD_NC killed $r4, -32
     $r16 = VLT_BF16 $x0, $x5
-    $r3 = ADD_NC_GPR $r4, -32
+    $r3 = ADD_NC $r4, -32
 ...
 
 ---
@@ -115,29 +115,29 @@ body:             |
 ...
 
 ---
-name:            E2_VMAX_LT_E1_ADD_NC_GPR
+name:            E2_VMAX_LT_E1_ADD_NC_R
 alignment:       16
 body:             |
   bb.0.entry:
-    ; CHECK-LABEL: name: E2_VMAX_LT_E1_ADD_NC_GPR
+    ; CHECK-LABEL: name: E2_VMAX_LT_E1_ADD_NC_R
     ; CHECK: $x0, $r22 = VMAX_LT_BF16 killed $x5, killed $x3
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $r3 = ADD_NC_GPR killed $r4, -32
+    ; CHECK-NEXT: $r3 = ADD_NC killed $r4, -32
     $x0, $r22 = VMAX_LT_BF16 $x5, $x3
-    $r3 = ADD_NC_GPR $r4, -32
+    $r3 = ADD_NC $r4, -32
 ...
 
 ---
-name:            E2_VMAXDIFF_LT_E1_ADD_NC_GPR
+name:            E2_VMAXDIFF_LT_E1_ADD_NC_R
 alignment:       16
 body:             |
   bb.0.entry:
-    ; CHECK-LABEL: name: E2_VMAXDIFF_LT_E1_ADD_NC_GPR
+    ; CHECK-LABEL: name: E2_VMAXDIFF_LT_E1_ADD_NC_R
     ; CHECK: $x0, $r22 = VMAXDIFF_LT_S16 killed $x5, killed $x3
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $r3 = ADD_NC_GPR killed $r4, -32
+    ; CHECK-NEXT: $r3 = ADD_NC killed $r4, -32
     $x0, $r22 = VMAXDIFF_LT_S16 $x5, $x3
-    $r3 = ADD_NC_GPR $r4, -32
+    $r3 = ADD_NC $r4, -32
 ...
 
 # VEQZ accesses WM write port in cycle 2, MOV in cycle 1

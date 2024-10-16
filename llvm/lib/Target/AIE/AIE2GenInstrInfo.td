@@ -24,10 +24,6 @@ let Itinerary = II_ADD_NC in {
     def ADD_NC : AIE2_mv_add_inst_mv<(outs OP_mMvSclDst:$dst), (ins eR:$s0, simm6:$imm), "add.nc", "$dst, $s0, $imm">;
   }
 }
-// II_ADD_NC_GPR was defined to avoid unnecessary resource dependencies when moving the result into a GPR
-let Itinerary = II_ADD_NC_GPR, isCodeGenOnly = 1 in {
-  def ADD_NC_GPR : AIE2_mv_add_inst_mv< (outs OP_mMvSclDst_and_eR:$dst) , (ins  eR:$s0 ,  simm6:$imm  ), "add.nc", "$dst, $s0, $imm">;
-}
 let Itinerary = II_ABS in {
   let Defs = [srCarry] in
   def ABS : AIE2_alu_r_r_inst_alu<0b1000, (outs eR:$mRx), (ins eR:$mRx0), "abs", "$mRx, $mRx0">;

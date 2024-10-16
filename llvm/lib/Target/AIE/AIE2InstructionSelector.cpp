@@ -793,9 +793,8 @@ bool AIE2InstructionSelector::selectStartLoop(MachineInstr &I,
   }
 
   // Not a constant trip count, decrement at runtime
-  auto ADDI =
-      MIB.buildInstr(AIE2::ADD_NC_GPR, {I.getOperand(0)}, {I.getOperand(2)})
-          .addImm(-1);
+  auto ADDI = MIB.buildInstr(AIE2::ADD_NC, {I.getOperand(0)}, {I.getOperand(2)})
+                  .addImm(-1);
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*ADDI, TII, TRI, RBI);
 }
