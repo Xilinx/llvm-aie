@@ -156,7 +156,6 @@ def II_ADD_NC_DN : InstrItinClass;
 def II_ADD_NC_M : InstrItinClass;
 def II_ADD_NC_P : InstrItinClass;
 def II_ADD_NC_RS : InstrItinClass;
-def II_ADD_NC_GPR : InstrItinClass;
 def II_AND : InstrItinClass;
 def II_ASHL : InstrItinClass;
 def II_CLB : InstrItinClass;
@@ -448,7 +447,6 @@ InstrItinData<II_ADD_NC_DN, [SimpleCycle<DN_WM_PORT>], [1,1,1]>,
 InstrItinData<II_ADD_NC_M, [SimpleCycle<M_WM_PORT>], [1,1,1]>,
 InstrItinData<II_ADD_NC_P, [SimpleCycle<P_WM_PORT>], [1,1,1]>,
 InstrItinData<II_ADD_NC_RS, [SimpleCycle<RS_WM_PORT>], [1,1,1]>,	                         
-InstrItinData<II_ADD_NC_GPR, [SimpleCycle<RS_WM_PORT>], [1,1,1]>,
 InstrItinData<II_AND, [InstrStage<1,  [R_WX_PORT]>], [1,1,1,1]>,
 InstrItinData<II_ASHL, [InstrStage<1,  [R_WX_PORT]>], [1,1,1,1]>,
 InstrItinData<II_CLB, [InstrStage<1,  [R_WX_PORT]>], [1,1,1]>,
