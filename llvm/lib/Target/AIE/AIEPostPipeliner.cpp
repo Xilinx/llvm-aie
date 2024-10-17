@@ -183,29 +183,34 @@ void PostPipeliner::computeLoopCarriedParameters() {
   }
 
   // Propagate Earliest upstream, initialize Latest
+  // Unrestricted: last cycle of last stage
+  const int Latest = NCopies * II - 1;
   for (int K = 0; K < NInstr; K++) {
-    const int K2 = K + NInstr;
-    const int Earliest = Info[K2].Earliest - II;
+    const int KNextIter = K + NInstr;
+    const int Earliest = Info[KNextIter].Earliest - II;
     Info[K].Earliest = std::max(Info[K].Earliest, Earliest);
-    // Unrestricted: Beyond the last stage.
-    Info[K].Latest = NCopies * II;
+    Info[K].Latest = Latest;
   }
-  // Propagate Latest upstream. Latest is the latest
-  // that is admissible for Earliest to be achievable within II
-  for (int K = 0; K < NInstr; K++) {
-    const int K2 = K + NInstr;
-    const int Earliest = Info[K2].Earliest;
-    const auto &SU = DAG->SUnits[K2];
-    for (auto &Dep : SU.Preds) {
-      const auto *Pred = Dep.getSUnit();
-      // Any predecessor in the first iteration
-      int K1 = Pred->NodeNum;
-      if (K1 < NInstr) {
-        const int Latest = Earliest - Dep.getSignedLatency();
-        Info[K1].Latest = std::min(Info[K1].Latest, Latest);
+
+  // Compute Latest. Use a fixpoint loop, because plain reversed
+  // order may not be topological for predecessors
+  bool Changed = true;
+  while (Changed) {
+    Changed = false;
+    for (int K = NInstr - 1; K >= 0; K--) {
+      SUnit &SU = DAG->SUnits[K];
+      const int Latest = Info[K].Latest;
+      for (auto &Dep : SU.Preds) {
+        int P = Dep.getSUnit()->NodeNum;
+        int NewLatest = Latest - Dep.getSignedLatency();
+        if (NewLatest < Info[P].Latest) {
+          Info[P].Latest = NewLatest;
+          Changed = true;
+        }
       }
     }
   }
+
   LLVM_DEBUG(for (int K = 0; K < NInstr; K++) {
     dbgs() << "SU" << K << " : " << Info[K].Earliest << " - " << Info[K].Latest
            << "\n";
@@ -231,7 +236,12 @@ void dumpGraph(int NInstr, const std::vector<NodeInfo> &Info,
       if (S >= NInstr) {
         dbgs() << "_" << S % NInstr;
       }
-      dbgs() << "# L=" << Dep.getSignedLatency() << "\n";
+
+      dbgs() << " # L=" << Dep.getSignedLatency();
+      if (Dep.getKind() == SDep::Output) {
+        dbgs() << " WAW";
+      }
+      dbgs() << "\n";
     }
   }
   dbgs() << "}\n";
@@ -244,20 +254,27 @@ int PostPipeliner::mostUrgent() {
   }
   assert(FirstUnscheduled < NInstr);
 
+  // 'Latest' accounts for the critical path of the linear schedule
+  auto Better = [this](int N, int Ref) {
+    if (Info[N].Latest < Info[Ref].Latest) {
+      return true;
+    }
+
+    return false;
+  };
+
   int Best = -1;
   LLVM_DEBUG(dbgs() << "Available:");
   for (int K = FirstUnscheduled; K < NInstr; K++) {
     const auto &SU = DAG->SUnits[K];
     // Check whether it is available
-    if (any_of(SU.Preds, [&](const auto &Dep) {
+    if (Info[K].Scheduled || any_of(SU.Preds, [&](const auto &Dep) {
           return !Info[Dep.getSUnit()->NodeNum].Scheduled;
         })) {
       continue;
     }
     LLVM_DEBUG(dbgs() << " SU" << K);
-    // Yeah, I know. This is a difficult way to schedule in the original
-    // node order. Have patience, my friend.
-    if (Best == -1) {
+    if (Best == -1 || Better(K, Best)) {
       Best = K;
       LLVM_DEBUG(dbgs() << "*");
     }
