@@ -169,6 +169,7 @@ body:             |
     PseudoRET implicit $lr, implicit %48
 ...
 
+# Negative Test Case: vinsert.8s did not combine into G_BUILD_VECTOR_TRUNC due to a missing vinsert.8 for an index
 ---
 name:            vinsert8-I128_idx_miss
 legalized:       false
@@ -247,6 +248,7 @@ body:             |
     PseudoRET implicit $lr, implicit %32
 ...
 
+# Negative Test Case: vinsert.8s did not combine into G_BUILD_VECTOR_TRUNC due to multiple vinsert.8 instructions for a single index
 ---
 name:            vinsert8-I128_idx_multiple
 legalized:       false
@@ -327,4 +329,381 @@ body:             |
     %31:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert8.I512), %30(<16 x s32>), %15(s32), %13(s32)
     %32:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert8.I512), %31(<16 x s32>), %16(s32), %15(s32)
     PseudoRET implicit $lr, implicit %32
+...
+
+---
+name:            vinsert16-I128
+legalized:       false
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: vinsert16-I128
+    ; CHECK: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
+    ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
+    ; CHECK-NEXT: [[C4:%[0-9]+]]:_(s32) = G_CONSTANT i32 4
+    ; CHECK-NEXT: [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 5
+    ; CHECK-NEXT: [[C6:%[0-9]+]]:_(s32) = G_CONSTANT i32 6
+    ; CHECK-NEXT: [[C7:%[0-9]+]]:_(s32) = G_CONSTANT i32 7
+    ; CHECK-NEXT: [[BUILD_VECTOR_TRUNC:%[0-9]+]]:_(<8 x s16>) = G_BUILD_VECTOR_TRUNC [[C]](s32), [[C2]](s32), [[C4]](s32), [[C6]](s32), [[C7]](s32), [[C5]](s32), [[C3]](s32), [[C1]](s32)
+    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[BUILD_VECTOR_TRUNC]](<8 x s16>)
+    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF]](<32 x s16>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[BITCAST]](<16 x s32>)
+    %0:_(<8 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.v8int16)
+    %100:_(<4 x s32>) = G_BITCAST %0(<8 x s16>)
+    %101:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.set.I512.I128), %100(<4 x s32>)
+    %1:_(s32) = G_CONSTANT i32 0
+    %2:_(s32) = G_CONSTANT i32 1
+    %3:_(s32) = G_CONSTANT i32 2
+    %4:_(s32) = G_CONSTANT i32 3
+    %5:_(s32) = G_CONSTANT i32 4
+    %6:_(s32) = G_CONSTANT i32 5
+    %7:_(s32) = G_CONSTANT i32 6
+    %8:_(s32) = G_CONSTANT i32 7
+    %17:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %101(<16 x s32>), %1(s32), %1(s32)
+    %18:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %17(<16 x s32>), %2(s32), %3(s32)
+    %19:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %18(<16 x s32>), %3(s32), %5(s32)
+    %20:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %19(<16 x s32>), %4(s32), %7(s32)
+    %21:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %20(<16 x s32>), %5(s32), %8(s32)
+    %22:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %21(<16 x s32>), %6(s32), %6(s32)
+    %23:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %22(<16 x s32>), %7(s32), %4(s32)
+    %24:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %23(<16 x s32>), %8(s32), %2(s32)
+    PseudoRET implicit $lr, implicit %24
+...
+
+---
+name:            vinsert16-I256
+legalized:       false
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: vinsert16-I256
+    ; CHECK: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
+    ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
+    ; CHECK-NEXT: [[C4:%[0-9]+]]:_(s32) = G_CONSTANT i32 4
+    ; CHECK-NEXT: [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 5
+    ; CHECK-NEXT: [[C6:%[0-9]+]]:_(s32) = G_CONSTANT i32 6
+    ; CHECK-NEXT: [[C7:%[0-9]+]]:_(s32) = G_CONSTANT i32 7
+    ; CHECK-NEXT: [[C8:%[0-9]+]]:_(s32) = G_CONSTANT i32 8
+    ; CHECK-NEXT: [[C9:%[0-9]+]]:_(s32) = G_CONSTANT i32 9
+    ; CHECK-NEXT: [[C10:%[0-9]+]]:_(s32) = G_CONSTANT i32 10
+    ; CHECK-NEXT: [[C11:%[0-9]+]]:_(s32) = G_CONSTANT i32 11
+    ; CHECK-NEXT: [[C12:%[0-9]+]]:_(s32) = G_CONSTANT i32 12
+    ; CHECK-NEXT: [[C13:%[0-9]+]]:_(s32) = G_CONSTANT i32 13
+    ; CHECK-NEXT: [[C14:%[0-9]+]]:_(s32) = G_CONSTANT i32 14
+    ; CHECK-NEXT: [[C15:%[0-9]+]]:_(s32) = G_CONSTANT i32 15
+    ; CHECK-NEXT: [[BUILD_VECTOR_TRUNC:%[0-9]+]]:_(<16 x s16>) = G_BUILD_VECTOR_TRUNC [[C15]](s32), [[C13]](s32), [[C11]](s32), [[C9]](s32), [[C7]](s32), [[C5]](s32), [[C3]](s32), [[C1]](s32), [[C]](s32), [[C2]](s32), [[C4]](s32), [[C6]](s32), [[C8]](s32), [[C10]](s32), [[C12]](s32), [[C14]](s32)
+    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<32 x s16>) = G_AIE_PAD_VECTOR_UNDEF [[BUILD_VECTOR_TRUNC]](<16 x s16>)
+    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[AIE_PAD_VECTOR_UNDEF]](<32 x s16>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[BITCAST]](<16 x s32>)
+    %0:_(<16 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.v16int16)
+    %100:_(<8 x s32>) = G_BITCAST %0(<16 x s16>)
+    %1:_(s32) = G_CONSTANT i32 0
+    %2:_(s32) = G_CONSTANT i32 1
+    %3:_(s32) = G_CONSTANT i32 2
+    %4:_(s32) = G_CONSTANT i32 3
+    %5:_(s32) = G_CONSTANT i32 4
+    %6:_(s32) = G_CONSTANT i32 5
+    %7:_(s32) = G_CONSTANT i32 6
+    %8:_(s32) = G_CONSTANT i32 7
+    %9:_(s32) = G_CONSTANT i32 8
+    %10:_(s32) = G_CONSTANT i32 9
+    %11:_(s32) = G_CONSTANT i32 10
+    %12:_(s32) = G_CONSTANT i32 11
+    %13:_(s32) = G_CONSTANT i32 12
+    %14:_(s32) = G_CONSTANT i32 13
+    %15:_(s32) = G_CONSTANT i32 14
+    %16:_(s32) = G_CONSTANT i32 15
+    %101:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.set.I512.I256), %100(<8 x s32>), %1(s32)
+    %17:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %101(<16 x s32>), %1(s32), %16(s32)
+    %18:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %17(<16 x s32>), %2(s32), %14(s32)
+    %19:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %18(<16 x s32>), %3(s32), %12(s32)
+    %20:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %19(<16 x s32>), %4(s32), %10(s32)
+    %21:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %20(<16 x s32>), %5(s32), %8(s32)
+    %22:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %21(<16 x s32>), %6(s32), %6(s32)
+    %23:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %22(<16 x s32>), %7(s32), %4(s32)
+    %24:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %23(<16 x s32>), %8(s32), %2(s32)
+    %25:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %24(<16 x s32>), %9(s32), %1(s32)
+    %26:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %25(<16 x s32>), %10(s32), %3(s32)
+    %27:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %26(<16 x s32>), %11(s32), %5(s32)
+    %28:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %27(<16 x s32>), %12(s32), %7(s32)
+    %29:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %28(<16 x s32>), %13(s32), %9(s32)
+    %30:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %29(<16 x s32>), %14(s32), %11(s32)
+    %31:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %30(<16 x s32>), %15(s32), %13(s32)
+    %32:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %31(<16 x s32>), %16(s32), %15(s32)
+    PseudoRET implicit $lr, implicit %32
+...
+
+# Negative Test Case: vinsert.16s did not combine into G_BUILD_VECTOR_TRUNC due to a missing vinsert.16 for an index
+---
+name:            vinsert16-I128_idx_miss
+legalized:       false
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: vinsert16-I128_idx_miss
+    ; CHECK: [[INT:%[0-9]+]]:_(<8 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.v8int16)
+    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<4 x s32>) = G_BITCAST [[INT]](<8 x s16>)
+    ; CHECK-NEXT: [[INT1:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.set.I512.I128), [[BITCAST]](<4 x s32>)
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
+    ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
+    ; CHECK-NEXT: [[C4:%[0-9]+]]:_(s32) = G_CONSTANT i32 4
+    ; CHECK-NEXT: [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 5
+    ; CHECK-NEXT: [[C6:%[0-9]+]]:_(s32) = G_CONSTANT i32 6
+    ; CHECK-NEXT: [[C7:%[0-9]+]]:_(s32) = G_CONSTANT i32 7
+    ; CHECK-NEXT: [[INT2:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), [[INT1]](<16 x s32>), [[C]](s32), [[C]](s32)
+    ; CHECK-NEXT: [[INT3:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), [[INT2]](<16 x s32>), [[C1]](s32), [[C2]](s32)
+    ; CHECK-NEXT: [[INT4:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), [[INT3]](<16 x s32>), [[C2]](s32), [[C4]](s32)
+    ; CHECK-NEXT: [[INT5:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), [[INT4]](<16 x s32>), [[C3]](s32), [[C6]](s32)
+    ; CHECK-NEXT: [[INT6:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), [[INT5]](<16 x s32>), [[C4]](s32), [[C7]](s32)
+    ; CHECK-NEXT: [[INT7:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), [[INT6]](<16 x s32>), [[C5]](s32), [[C5]](s32)
+    ; CHECK-NEXT: [[INT8:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), [[INT7]](<16 x s32>), [[C7]](s32), [[C1]](s32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[INT8]](<16 x s32>)
+    %0:_(<8 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.v8int16)
+    %100:_(<4 x s32>) = G_BITCAST %0(<8 x s16>)
+    %101:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.set.I512.I128), %100(<4 x s32>)
+    %1:_(s32) = G_CONSTANT i32 0
+    %2:_(s32) = G_CONSTANT i32 1
+    %3:_(s32) = G_CONSTANT i32 2
+    %4:_(s32) = G_CONSTANT i32 3
+    %5:_(s32) = G_CONSTANT i32 4
+    %6:_(s32) = G_CONSTANT i32 5
+    %7:_(s32) = G_CONSTANT i32 6
+    %8:_(s32) = G_CONSTANT i32 7
+    %17:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %101(<16 x s32>), %1(s32), %1(s32)
+    %18:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %17(<16 x s32>), %2(s32), %3(s32)
+    %19:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %18(<16 x s32>), %3(s32), %5(s32)
+    %20:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %19(<16 x s32>), %4(s32), %7(s32)
+    %21:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %20(<16 x s32>), %5(s32), %8(s32)
+    %22:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %21(<16 x s32>), %6(s32), %6(s32)
+    %23:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %22(<16 x s32>), %8(s32), %2(s32)
+    PseudoRET implicit $lr, implicit %23
+...
+
+# Negative Test Case: vinsert.16s did not combine into G_BUILD_VECTOR_TRUNC due to multiple vinsert.16 instructions for a single index
+---
+name:            vinsert16-I128_idx_multiple
+legalized:       false
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: vinsert16-I128_idx_multiple
+    ; CHECK: [[INT:%[0-9]+]]:_(<8 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.v8int16)
+    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<4 x s32>) = G_BITCAST [[INT]](<8 x s16>)
+    ; CHECK-NEXT: [[INT1:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.set.I512.I128), [[BITCAST]](<4 x s32>)
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
+    ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
+    ; CHECK-NEXT: [[C4:%[0-9]+]]:_(s32) = G_CONSTANT i32 4
+    ; CHECK-NEXT: [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 5
+    ; CHECK-NEXT: [[C6:%[0-9]+]]:_(s32) = G_CONSTANT i32 6
+    ; CHECK-NEXT: [[C7:%[0-9]+]]:_(s32) = G_CONSTANT i32 7
+    ; CHECK-NEXT: [[INT2:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), [[INT1]](<16 x s32>), [[C]](s32), [[C]](s32)
+    ; CHECK-NEXT: [[INT3:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), [[INT2]](<16 x s32>), [[C1]](s32), [[C2]](s32)
+    ; CHECK-NEXT: [[INT4:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), [[INT3]](<16 x s32>), [[C2]](s32), [[C4]](s32)
+    ; CHECK-NEXT: [[INT5:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), [[INT4]](<16 x s32>), [[C6]](s32), [[C7]](s32)
+    ; CHECK-NEXT: [[INT6:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), [[INT5]](<16 x s32>), [[C3]](s32), [[C6]](s32)
+    ; CHECK-NEXT: [[INT7:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), [[INT6]](<16 x s32>), [[C4]](s32), [[C7]](s32)
+    ; CHECK-NEXT: [[INT8:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), [[INT7]](<16 x s32>), [[C5]](s32), [[C5]](s32)
+    ; CHECK-NEXT: [[INT9:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), [[INT8]](<16 x s32>), [[C6]](s32), [[C3]](s32)
+    ; CHECK-NEXT: [[INT10:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), [[INT9]](<16 x s32>), [[C7]](s32), [[C1]](s32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[INT10]](<16 x s32>)
+    %0:_(<8 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.v8int16)
+    %100:_(<4 x s32>) = G_BITCAST %0(<8 x s16>)
+    %101:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.set.I512.I128), %100(<4 x s32>)
+    %1:_(s32) = G_CONSTANT i32 0
+    %2:_(s32) = G_CONSTANT i32 1
+    %3:_(s32) = G_CONSTANT i32 2
+    %4:_(s32) = G_CONSTANT i32 3
+    %5:_(s32) = G_CONSTANT i32 4
+    %6:_(s32) = G_CONSTANT i32 5
+    %7:_(s32) = G_CONSTANT i32 6
+    %8:_(s32) = G_CONSTANT i32 7
+    %17:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %101(<16 x s32>), %1(s32), %1(s32)
+    %18:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %17(<16 x s32>), %2(s32), %3(s32)
+    %19:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %18(<16 x s32>), %3(s32), %5(s32)
+    %230:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %19(<16 x s32>), %7(s32), %8(s32)
+    %20:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %230(<16 x s32>), %4(s32), %7(s32)
+    %21:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %20(<16 x s32>), %5(s32), %8(s32)
+    %22:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %21(<16 x s32>), %6(s32), %6(s32)
+    %23:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %22(<16 x s32>), %7(s32), %4(s32)
+    %24:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %23(<16 x s32>), %8(s32), %2(s32)
+    PseudoRET implicit $lr, implicit %24
+...
+
+---
+name:            vinsert32-I128
+legalized:       false
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: vinsert32-I128
+    ; CHECK: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
+    ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
+    ; CHECK-NEXT: [[BUILD_VECTOR:%[0-9]+]]:_(<4 x s32>) = G_BUILD_VECTOR [[C]](s32), [[C2]](s32), [[C3]](s32), [[C1]](s32)
+    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[BUILD_VECTOR]](<4 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_PAD_VECTOR_UNDEF]](<16 x s32>)
+    %0:_(<4 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.v4int32)
+    %101:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.set.I512.I128), %00(<4 x s32>)
+    %1:_(s32) = G_CONSTANT i32 0
+    %2:_(s32) = G_CONSTANT i32 1
+    %3:_(s32) = G_CONSTANT i32 2
+    %4:_(s32) = G_CONSTANT i32 3
+    %17:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert32.I512), %101(<16 x s32>), %1(s32), %1(s32)
+    %18:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert32.I512), %17(<16 x s32>), %2(s32), %3(s32)
+    %19:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert32.I512), %18(<16 x s32>), %3(s32), %4(s32)
+    %20:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert32.I512), %19(<16 x s32>), %4(s32), %2(s32)
+    PseudoRET implicit $lr, implicit %20
+...
+
+---
+name:            vinsert32-I256
+legalized:       false
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: vinsert32-I256
+    ; CHECK: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
+    ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
+    ; CHECK-NEXT: [[C4:%[0-9]+]]:_(s32) = G_CONSTANT i32 4
+    ; CHECK-NEXT: [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 5
+    ; CHECK-NEXT: [[C6:%[0-9]+]]:_(s32) = G_CONSTANT i32 6
+    ; CHECK-NEXT: [[C7:%[0-9]+]]:_(s32) = G_CONSTANT i32 7
+    ; CHECK-NEXT: [[BUILD_VECTOR:%[0-9]+]]:_(<8 x s32>) = G_BUILD_VECTOR [[C]](s32), [[C2]](s32), [[C4]](s32), [[C6]](s32), [[C7]](s32), [[C5]](s32), [[C3]](s32), [[C1]](s32)
+    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[BUILD_VECTOR]](<8 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_PAD_VECTOR_UNDEF]](<16 x s32>)
+    %0:_(<8 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.v8int32)
+    %1:_(s32) = G_CONSTANT i32 0
+    %2:_(s32) = G_CONSTANT i32 1
+    %3:_(s32) = G_CONSTANT i32 2
+    %4:_(s32) = G_CONSTANT i32 3
+    %5:_(s32) = G_CONSTANT i32 4
+    %6:_(s32) = G_CONSTANT i32 5
+    %7:_(s32) = G_CONSTANT i32 6
+    %8:_(s32) = G_CONSTANT i32 7
+    %101:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.set.I512.I256), %0(<8 x s32>), %1(s32)
+    %17:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert32.I512), %101(<16 x s32>), %1(s32), %1(s32)
+    %18:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert32.I512), %17(<16 x s32>), %2(s32), %3(s32)
+    %19:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert32.I512), %18(<16 x s32>), %3(s32), %5(s32)
+    %20:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert32.I512), %19(<16 x s32>), %4(s32), %7(s32)
+    %21:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert32.I512), %20(<16 x s32>), %5(s32), %8(s32)
+    %22:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert32.I512), %21(<16 x s32>), %6(s32), %6(s32)
+    %23:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert32.I512), %22(<16 x s32>), %7(s32), %4(s32)
+    %24:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert32.I512), %23(<16 x s32>), %8(s32), %2(s32)
+    PseudoRET implicit $lr, implicit %24
+...
+
+# Negative Test Case: vinsert.32s did not combine into G_BUILD_VECTOR_TRUNC due to a missing vinsert.32 for an index
+---
+name:            vinsert32-I128_idx_miss
+legalized:       false
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: vinsert32-I128_idx_miss
+    ; CHECK: [[INT:%[0-9]+]]:_(<4 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.v4int32)
+    ; CHECK-NEXT: [[INT1:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.set.I512.I128), [[INT]](<4 x s32>)
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
+    ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
+    ; CHECK-NEXT: [[INT2:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert32.I512), [[INT1]](<16 x s32>), [[C]](s32), [[C]](s32)
+    ; CHECK-NEXT: [[INT3:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert32.I512), [[INT2]](<16 x s32>), [[C1]](s32), [[C2]](s32)
+    ; CHECK-NEXT: [[INT4:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert32.I512), [[INT3]](<16 x s32>), [[C3]](s32), [[C1]](s32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[INT4]](<16 x s32>)
+    %0:_(<4 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.v4int32)
+    %101:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.set.I512.I128), %00(<4 x s32>)
+    %1:_(s32) = G_CONSTANT i32 0
+    %2:_(s32) = G_CONSTANT i32 1
+    %3:_(s32) = G_CONSTANT i32 2
+    %4:_(s32) = G_CONSTANT i32 3
+    %17:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert32.I512), %101(<16 x s32>), %1(s32), %1(s32)
+    %18:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert32.I512), %17(<16 x s32>), %2(s32), %3(s32)
+    %20:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert32.I512), %18(<16 x s32>), %4(s32), %2(s32)
+    PseudoRET implicit $lr, implicit %20
+...
+
+# Negative Test Case: vinsert.32s did not combine into G_BUILD_VECTOR_TRUNC due to multiple vinsert.32 instructions for a single index
+---
+name:            vinsert32-I128_idx_multiple
+legalized:       false
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: vinsert32-I128_idx_multiple
+    ; CHECK: [[INT:%[0-9]+]]:_(<4 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.v4int32)
+    ; CHECK-NEXT: [[INT1:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.set.I512.I128), [[INT]](<4 x s32>)
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
+    ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
+    ; CHECK-NEXT: [[INT2:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert32.I512), [[INT1]](<16 x s32>), [[C]](s32), [[C]](s32)
+    ; CHECK-NEXT: [[INT3:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert32.I512), [[INT2]](<16 x s32>), [[C2]](s32), [[C3]](s32)
+    ; CHECK-NEXT: [[INT4:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert32.I512), [[INT3]](<16 x s32>), [[C1]](s32), [[C2]](s32)
+    ; CHECK-NEXT: [[INT5:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert32.I512), [[INT4]](<16 x s32>), [[C2]](s32), [[C3]](s32)
+    ; CHECK-NEXT: [[INT6:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert32.I512), [[INT5]](<16 x s32>), [[C3]](s32), [[C1]](s32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[INT6]](<16 x s32>)
+    %0:_(<4 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.v4int32)
+    %101:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.set.I512.I128), %00(<4 x s32>)
+    %1:_(s32) = G_CONSTANT i32 0
+    %2:_(s32) = G_CONSTANT i32 1
+    %3:_(s32) = G_CONSTANT i32 2
+    %4:_(s32) = G_CONSTANT i32 3
+    %17:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert32.I512), %101(<16 x s32>), %1(s32), %1(s32)
+    %190:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert32.I512), %17(<16 x s32>), %3(s32), %4(s32)
+    %18:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert32.I512), %190(<16 x s32>), %2(s32), %3(s32)
+    %19:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert32.I512), %18(<16 x s32>), %3(s32), %4(s32)
+    %20:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert32.I512), %19(<16 x s32>), %4(s32), %2(s32)
+    PseudoRET implicit $lr, implicit %20
+...
+
+# Negative Test Case: vinserts did not combine into G_BUILD_VECTOR_TRUNC due to type mixing among vinsert.8, vinsert.16, and vinsert.32 instructions
+---
+name:            vinsert-I128-type-mix
+legalized:       false
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: vinsert-I128-type-mix
+    ; CHECK: [[INT:%[0-9]+]]:_(<8 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.v8int16)
+    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<4 x s32>) = G_BITCAST [[INT]](<8 x s16>)
+    ; CHECK-NEXT: [[INT1:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.set.I512.I128), [[BITCAST]](<4 x s32>)
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
+    ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
+    ; CHECK-NEXT: [[C4:%[0-9]+]]:_(s32) = G_CONSTANT i32 4
+    ; CHECK-NEXT: [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 5
+    ; CHECK-NEXT: [[C6:%[0-9]+]]:_(s32) = G_CONSTANT i32 6
+    ; CHECK-NEXT: [[C7:%[0-9]+]]:_(s32) = G_CONSTANT i32 7
+    ; CHECK-NEXT: [[INT2:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), [[INT1]](<16 x s32>), [[C]](s32), [[C]](s32)
+    ; CHECK-NEXT: [[INT3:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert32.I512), [[INT2]](<16 x s32>), [[C1]](s32), [[C2]](s32)
+    ; CHECK-NEXT: [[INT4:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), [[INT3]](<16 x s32>), [[C2]](s32), [[C4]](s32)
+    ; CHECK-NEXT: [[INT5:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), [[INT4]](<16 x s32>), [[C3]](s32), [[C6]](s32)
+    ; CHECK-NEXT: [[INT6:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert8.I512), [[INT5]](<16 x s32>), [[C4]](s32), [[C7]](s32)
+    ; CHECK-NEXT: [[INT7:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), [[INT6]](<16 x s32>), [[C5]](s32), [[C5]](s32)
+    ; CHECK-NEXT: [[INT8:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), [[INT7]](<16 x s32>), [[C6]](s32), [[C3]](s32)
+    ; CHECK-NEXT: [[INT9:%[0-9]+]]:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), [[INT8]](<16 x s32>), [[C7]](s32), [[C1]](s32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[INT9]](<16 x s32>)
+    %0:_(<8 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.v8int16)
+    %100:_(<4 x s32>) = G_BITCAST %0(<8 x s16>)
+    %101:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.set.I512.I128), %100(<4 x s32>)
+    %1:_(s32) = G_CONSTANT i32 0
+    %2:_(s32) = G_CONSTANT i32 1
+    %3:_(s32) = G_CONSTANT i32 2
+    %4:_(s32) = G_CONSTANT i32 3
+    %5:_(s32) = G_CONSTANT i32 4
+    %6:_(s32) = G_CONSTANT i32 5
+    %7:_(s32) = G_CONSTANT i32 6
+    %8:_(s32) = G_CONSTANT i32 7
+    %17:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %101(<16 x s32>), %1(s32), %1(s32)
+    %18:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert32.I512), %17(<16 x s32>), %2(s32), %3(s32)
+    %19:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %18(<16 x s32>), %3(s32), %5(s32)
+    %20:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %19(<16 x s32>), %4(s32), %7(s32)
+    %21:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert8.I512), %20(<16 x s32>), %5(s32), %8(s32)
+    %22:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %21(<16 x s32>), %6(s32), %6(s32)
+    %23:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %22(<16 x s32>), %7(s32), %4(s32)
+    %24:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.vinsert16.I512), %23(<16 x s32>), %8(s32), %2(s32)
+    PseudoRET implicit $lr, implicit %24
 ...
