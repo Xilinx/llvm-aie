@@ -190,29 +190,35 @@ void PostPipeliner::computeLoopCarriedParameters() {
   }
 
   // Propagate Earliest upstream, initialize Latest
+  // Unrestricted: last cycle of last stage
+  const int Latest = NCopies * II - 1;
   for (int K = 0; K < NInstr; K++) {
     const int K2 = K + NInstr;
     const int Earliest = Info[K2].Earliest - II;
     Info[K].Earliest = std::max(Info[K].Earliest, Earliest);
-    // Unrestricted: Beyond the last stage.
-    Info[K].Latest = NCopies * II;
+    Info[K].Latest = Latest;
+    Info[K2].Latest = Latest;
   }
-  // Propagate Latest upstream. Latest is the latest
-  // that is admissible for Earliest to be achievable within II
-  for (int K = 0; K < NInstr; K++) {
-    const int K2 = K + NInstr;
-    const int Earliest = Info[K2].Earliest;
-    const auto &SU = DAG->SUnits[K2];
-    for (auto &Dep : SU.Preds) {
-      const auto *Pred = Dep.getSUnit();
-      // Any predecessor in the first iteration
-      int K1 = Pred->NodeNum;
-      if (K1 < NInstr) {
-        const int Latest = Earliest - Dep.getSignedLatency();
-        Info[K1].Latest = std::min(Info[K1].Latest, Latest);
+
+  // Compute Latest. Use a fixpoint loop, because plain reversed
+  // order may not be topological for predecessors
+  bool Changed = true;
+  while (Changed) {
+    Changed = false;
+    for (int K = NInstr - 1; K >= 0; K--) {
+      SUnit &SU = DAG->SUnits[K];
+      const int Latest = Info[K].Latest;
+      for (auto &Dep : SU.Preds) {
+        int P = Dep.getSUnit()->NodeNum;
+        int NewLatest = Latest - Dep.getSignedLatency();
+        if (NewLatest < Info[P].Latest) {
+          Info[P].Latest = NewLatest;
+          Changed = true;
+        }
       }
     }
   }
+
   LLVM_DEBUG(for (int K = 0; K < NInstr; K++) {
     dbgs() << "SU" << K << " : " << Info[K].Earliest << " - " << Info[K].Latest
            << "\n";
