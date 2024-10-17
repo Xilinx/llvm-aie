@@ -55,7 +55,7 @@ static cl::opt<bool>
                        "iterative loop scheduling"));
 
 static cl::opt<int> PostPipelinerMaxII(
-    "aie-postpipeliner-maxii", cl::init(10),
+    "aie-postpipeliner-maxii", cl::init(40),
     cl::desc("[AIE] Maximum II to be tried in the post-ra pipeliner"));
 
 namespace llvm::AIE {
@@ -592,9 +592,12 @@ SchedulingStage InterBlockScheduling::updateScheduling(BlockState &BS) {
 
   // The loop schedule has converged, so we could declare our work done.
   // But first try SWP
-  if (BS.getRegions().size() == 1 && BS.getPostSWP().canAccept(*BS.TheBlock)) {
-    BS.FixPoint.II = 1;
-    return BS.FixPoint.Stage = SchedulingStage::Pipelining;
+  if (BS.getRegions().size() == 1) {
+    auto &PostSWP = BS.getPostSWP();
+    if (PostSWP.canAccept(*BS.TheBlock)) {
+      BS.FixPoint.II = PostSWP.getResMII(*BS.TheBlock);
+      return BS.FixPoint.Stage = SchedulingStage::Pipelining;
+    }
   }
   return BS.FixPoint.Stage = SchedulingStage::SchedulingDone;
 }

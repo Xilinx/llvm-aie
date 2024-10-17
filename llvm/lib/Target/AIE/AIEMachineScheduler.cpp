@@ -9,6 +9,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEMachineScheduler.h"
+#include "AIEBaseAliasAnalysis.h"
 #include "AIEBaseInstrInfo.h"
 #include "AIEHazardRecognizer.h"
 #include "AIEInterBlockScheduling.h"
@@ -1224,6 +1225,21 @@ void llvm::AIEPostRASchedStrategy::buildGraph(ScheduleDAGMI &DAG, AAResults *AA,
   DAG.makeMaps();
   DAG.buildEdges(Context->AA);
   static_cast<AIEScheduleDAGMI &>(DAG).recordDbgInstrs(Region);
+}
+
+bool AIEScheduleDAGMI::mayAlias(SUnit *SUa, SUnit *SUb, bool UseTBAA) {
+  BlockState &BS = getSchedImpl()->getInterBlock().getBlockState(getBB());
+  if (BS.FixPoint.Stage == SchedulingStage::Pipelining) {
+    int II = BS.FixPoint.II;
+    int IterA = SUa->NodeNum / II;
+    int IterB = SUb->NodeNum / II;
+    if (aliasAcrossVirtualUnrolls(SUa->getInstr(), SUb->getInstr(), IterA,
+                                  IterB) == AliasResult::NoAlias) {
+      return false;
+    }
+  }
+
+  return ScheduleDAGMI::mayAlias(SUa, SUb, UseTBAA);
 }
 
 void AIEScheduleDAGMI::schedule() {

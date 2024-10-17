@@ -43,6 +43,10 @@ static cl::opt<unsigned>
     UserScoreboardDepth("aie-scoreboard-depth", cl::init(128),
                         cl::desc("Override maximum scoreboard depth to use."));
 
+static cl::opt<bool> AddressSpaceNoneIsSafe(
+    "aie-addrspace-none-is-safe", cl::Hidden, cl::init(false),
+    cl::desc("Assume that addrspace(0) doesn't cause conflicts."));
+
 const AIEBaseMCFormats *FuncUnitWrapper::FormatInterface = nullptr;
 void FuncUnitWrapper::setFormatInterface(const AIEBaseMCFormats *Formats) {
   FormatInterface = Formats;
@@ -634,11 +638,14 @@ AIEHazardRecognizer::getMemoryBanks(const MachineInstr *MI) const {
 
   const AIEBaseSubtarget &STI = AIEBaseSubtarget::get(*MI->getMF());
   const AIEBaseAddrSpaceInfo &ASI = STI.getAddrSpaceInfo();
-  MemoryBankBits MemoryBankUsed = ASI.getDefaultMemoryBank();
+  MemoryBankBits MemoryBankUsed = 0;
   for (auto &MMO : MI->memoperands()) {
+    unsigned AddrSpace = MMO->getAddrSpace();
     MemoryBankBits MemoryBank =
-        ASI.getMemoryBanksFromAddressSpace(MMO->getAddrSpace());
-    MemoryBankUsed &= MemoryBank;
+        AddrSpace                ? ASI.getMemoryBanksFromAddressSpace(AddrSpace)
+        : AddressSpaceNoneIsSafe ? 0
+                                 : ASI.getDefaultMemoryBank();
+    MemoryBankUsed |= MemoryBank;
   }
   return MemoryBankUsed;
 }

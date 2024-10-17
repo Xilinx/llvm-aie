@@ -52,8 +52,13 @@ cl::opt<bool> LoopWholeLoopGuard(
 
 cl::opt<int> PostPipelinerCandidateLimit(
     "aie-postpipeliner-limit",
-    cl::desc("II below which postpipeliner preference kicks in"), cl::init(2),
+    cl::desc("II below which postpipeliner preference kicks in"), cl::init(4),
     cl::Hidden);
+
+cl::opt<int> PostPipelinerCutoff(
+    "aie-postpipeliner-cutoff",
+    cl::desc("II below which high stage count is left to the postpipeliner"),
+    cl::init(11), cl::Hidden);
 
 AIEBasePipelinerLoopInfo::AIEBasePipelinerLoopInfo(MachineInstr *EndLoop,
                                                    const AIEBaseInstrInfo &TII)
@@ -763,11 +768,23 @@ void ZeroOverheadLoop::adjustTripCount(int TripCountAdjust) {
 bool ZeroOverheadLoop::preferPostPipeliner(SMSchedule &SMS) {
   // Zero overhead loops are candidates for PostPipeliner, which does a better
   // job on multi-stage live-ranges without spilling or moving.
+
+  // PostPipeliner can do nothing without tripcount > 1
+  if (MinTripCount <= 1) {
+    return false;
+  }
+
+  unsigned NS = SMS.getMaxStageCount() + 1;
+  int II = SMS.getInitiationInterval();
+  if (NS > LoopMaxStageCount && II < PostPipelinerCutoff) {
+    LLVM_DEBUG(dbgs() << "PLI: Leaving high stage count for PostPipeliner\n");
+    return true;
+  }
+
   // Spanning multiple stages requires a latency that is longer than the II.
   // We apply some heuristic upper limit for this rejection criterion.
   // CHECK: We assume that the resulting II can be smaller than max(latency).
   // When not, we may need ResMII for this check.
-  int II = SMS.getInitiationInterval();
   if (II >= PostPipelinerCandidateLimit) {
     return false;
   }

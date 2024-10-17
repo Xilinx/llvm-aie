@@ -127,7 +127,11 @@ public:
 
   /// Check whether this is a suitable loop for the PostPipeliner. It also
   /// leaves some useful information.
-  bool canAccept(MachineBasicBlock &Loop);
+  bool canAccept(MachineBasicBlock &LoopBlock);
+
+  /// Get a lowerbound for the II required to accommodate the slots.
+  /// \pre canAccept has returned true
+  int getResMII(MachineBasicBlock &LoopBlock);
 
   // Schedule using the given InitiationInterval. Return true when successful.
   // In that case calls to the query methods below are legitimate
