@@ -39,6 +39,11 @@ static cl::opt<bool> DisambiguateAccessSameOriginPointers(
     cl::desc("Disambiguate pointers derived from the same origin"),
     cl::init(true), cl::Hidden);
 
+static cl::opt<bool>
+    AddrSpaceAA("aie-alias-analysis-addrspace",
+                cl::desc("Disambiguate pointers based on address space"),
+                cl::init(false), cl::Hidden);
+
 #define DEBUG_TYPE "aie-aa"
 
 AnalysisKey AIEBaseAA::Key;
@@ -69,6 +74,7 @@ AIEBaseAAWrapperPass::AIEBaseAAWrapperPass() : ImmutablePass(ID) {
 
 void AIEBaseAAWrapperPass::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
+  AU.addRequired<TargetTransformInfoWrapperPass>();
 }
 
 static bool isAIEPtrAddIntrinsic(Intrinsic::ID ID, unsigned &InPtrIdx) {
@@ -477,6 +483,14 @@ AliasResult AIEBaseAAResult::alias(const MemoryLocation &LocA,
 
   const Value *BaseA = getUnderlyingObjectAIE(LocA.Ptr);
   const Value *BaseB = getUnderlyingObjectAIE(LocB.Ptr);
+
+  if (AddrSpaceAA) {
+    const unsigned AddrSpaceA = LocA.Ptr->getType()->getPointerAddressSpace();
+    const unsigned AddrSpaceB = LocB.Ptr->getType()->getPointerAddressSpace();
+
+    if (!TTI.addrspacesMayAlias(AddrSpaceA, AddrSpaceB))
+      return AliasResult::NoAlias;
+  }
 
   if (DisambiguateAccessSameOriginPointers &&
       aliasAIEIntrinsic(LocA.Ptr, LocB.Ptr, BaseA, BaseB, 0, 0

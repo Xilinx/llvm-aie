@@ -62,6 +62,8 @@ public:
   bool isProfitableOuterLSR(const Loop &L) const;
   std::optional<Instruction *> instCombineIntrinsic(InstCombiner &IC,
                                                     IntrinsicInst &II) const;
+
+  bool addrspacesMayAlias(unsigned AS0, unsigned AS1) const;
 };
 
 } // end namespace llvm

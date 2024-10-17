@@ -16,6 +16,7 @@
 
 #include "AIE.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
 
 namespace llvm {
 
@@ -37,11 +38,13 @@ AliasResult aliasAcrossVirtualUnrolls(const MachineInstr *MIA,
 
 class AIEBaseAAResult : public AAResultBase {
   const DataLayout &DL;
+  const TargetTransformInfo &TTI;
 
 public:
-  explicit AIEBaseAAResult(const DataLayout &DL) : DL(DL) {}
+  explicit AIEBaseAAResult(const DataLayout &DL, const TargetTransformInfo &TTI)
+      : DL(DL), TTI(TTI) {}
   AIEBaseAAResult(AIEBaseAAResult &&Arg)
-      : AAResultBase(std::move(Arg)), DL(Arg.DL) {}
+      : AAResultBase(std::move(Arg)), DL(Arg.DL), TTI(Arg.TTI) {}
 
   /// Handle invalidation events from the new pass manager.
   ///
@@ -51,8 +54,9 @@ public:
     return false;
   }
 
-  AliasResult alias(const MemoryLocation &LocA, const MemoryLocation &LocB,
-                    AAQueryInfo &AAQI, const Instruction *CtxI);
+  virtual AliasResult alias(const MemoryLocation &LocA,
+                            const MemoryLocation &LocB, AAQueryInfo &AAQI,
+                            const Instruction *CtxI);
 };
 
 /// Analysis pass providing a never-invalidated alias analysis result.
@@ -65,7 +69,8 @@ public:
   using Result = AIEBaseAAResult;
 
   AIEBaseAAResult run(Function &F, AnalysisManager<Function> &AM) {
-    return AIEBaseAAResult(F.getParent()->getDataLayout());
+    const TargetTransformInfo &TTI = AM.getResult<TargetIRAnalysis>(F);
+    return AIEBaseAAResult(F.getParent()->getDataLayout(), TTI);
   }
 };
 
@@ -82,7 +87,12 @@ public:
   const AIEBaseAAResult &getResult() const { return *Result; }
 
   bool doInitialization(Module &M) override {
-    Result.reset(new AIEBaseAAResult(M.getDataLayout()));
+    if (!M.getFunctionList().empty()) {
+      const TargetTransformInfo &TTI =
+          getAnalysis<TargetTransformInfoWrapperPass>().getTTI(
+              M.getFunctionList().front());
+      Result.reset(new AIEBaseAAResult(M.getDataLayout(), TTI));
+    }
     return false;
   }
 

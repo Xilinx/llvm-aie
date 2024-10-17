@@ -62,6 +62,14 @@ public:
     UP.Threshold = 200;
     BaseT::getUnrollingPreferences(L, SE, UP, ORE);
   }
+
+  bool addrspacesMayAlias(unsigned AS0, unsigned AS1) const {
+    if (AS0 == AS1)
+      return true;
+
+    const AIEBaseAddrSpaceInfo &ASI = ST->getAddrSpaceInfo();
+    return ASI.addrspacesMayAlias(AS0, AS1);
+  }
 };
 
 } // end namespace llvm
