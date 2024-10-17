@@ -69,6 +69,10 @@ public:
 
   bool tryToCombineVectorShiftsByZero(MachineInstr &MI) const;
 
+  bool tryToCombineSetExtract(MachineInstr &MI) const;
+
+  bool tryToCombineVectorInserts(MachineInstr &MI, int SclSrcBits) const;
+
   bool tryToCombineIntrinsic(MachineInstr &MI) const;
 
 private:
@@ -136,12 +140,126 @@ bool AIE2PreLegalizerCombinerImpl::tryToCombineVectorShiftsByZero(
   return true;
 }
 
+bool AIE2PreLegalizerCombinerImpl::tryToCombineSetExtract(
+    MachineInstr &MI) const {
+  const Register DstReg = MI.getOperand(0).getReg();
+  MachineInstr *ExtOp = getDefIgnoringCopies(MI.getOperand(2).getReg(), MRI);
+
+  if (!isa<GIntrinsic>(MI) || !isa<GIntrinsic>(*ExtOp))
+    return false;
+  switch (cast<GIntrinsic>(MI).getIntrinsicID()) {
+  case Intrinsic::aie2_set_I512_I128: {
+    if (cast<GIntrinsic>(*ExtOp).getIntrinsicID() !=
+        Intrinsic::aie2_extract_I128_I512)
+      return false;
+    break;
+  }
+  case Intrinsic::aie2_set_I512_I256: {
+    if (cast<GIntrinsic>(*ExtOp).getIntrinsicID() !=
+        Intrinsic::aie2_ext_I256_I512)
+      return false;
+    const Register SetOpIdxReg = MI.getOperand(3).getReg();
+    const Register ExtOpIdxReg = ExtOp->getOperand(3).getReg();
+    auto SetOpCst = getIConstantVRegValWithLookThrough(SetOpIdxReg, MRI);
+    auto ExtOpCst = getIConstantVRegValWithLookThrough(ExtOpIdxReg, MRI);
+    if (SetOpIdxReg != ExtOpIdxReg &&
+        (!SetOpCst || !ExtOpCst ||
+         SetOpCst->Value.getZExtValue() != ExtOpCst->Value.getZExtValue()))
+      return false;
+    break;
+  }
+  default:
+    return false;
+  }
+
+  MachineIRBuilder MIRBuilder(MI);
+  MIRBuilder.buildCopy(DstReg, ExtOp->getOperand(2).getReg());
+  MI.eraseFromParent();
+
+  return true;
+}
+
+// Returns a pair containing a map with InsertIndices and registers holding the
+// insert values and the number of bits in the DstReg.
+std::optional<std::pair<std::map<int, Register>, unsigned>>
+getVectorInsertIndices(MachineInstr *CurMI, MachineRegisterInfo &MRI) {
+  std::map<int, Register> RegMap;
+  auto Is8BitVInsert = [](const MachineInstr *MI) {
+    return isa<GIntrinsic>(MI) && cast<GIntrinsic>(*MI).getIntrinsicID() ==
+                                      Intrinsic::aie2_vinsert8_I512;
+  };
+  auto IsSet = [](const MachineInstr *MI) {
+    return isa<GIntrinsic>(MI) && (cast<GIntrinsic>(*MI).getIntrinsicID() ==
+                                       Intrinsic::aie2_set_I512_I128 ||
+                                   cast<GIntrinsic>(*MI).getIntrinsicID() ==
+                                       Intrinsic::aie2_set_I512_I256);
+  };
+
+  while (Is8BitVInsert(CurMI)) {
+    // In this case of G_INTRINSIC operand 1 is target intrinsic
+    const Register SrcReg = CurMI->getOperand(2).getReg();
+    const Register IdxReg = CurMI->getOperand(3).getReg();
+    const Register SclSrcReg = CurMI->getOperand(4).getReg();
+
+    // Collecting registers and their indices
+    auto Cst = getIConstantVRegValWithLookThrough(IdxReg, MRI);
+    if (!Cst ||
+        !RegMap.try_emplace(Cst->Value.getZExtValue(), SclSrcReg).second)
+      return std::nullopt;
+    CurMI = getDefIgnoringCopies(SrcReg, MRI);
+  }
+
+  // For 128/256-bit vectors, not all lanes are explicitly defined. If the
+  // source MI is identified as a Set intrinsic that sets the required lanes,
+  // the transformation can proceed safely.
+  if (!IsSet(CurMI))
+    return std::nullopt;
+  unsigned DstRegBits =
+      MRI.getType(CurMI->getOperand(2).getReg()).getSizeInBits();
+  return std::make_pair(RegMap, DstRegBits);
+}
+
+/// Look for VINSERT sequence that can be rewritten as G_BUILD_VECTOR_TRUNC
+bool AIE2PreLegalizerCombinerImpl::tryToCombineVectorInserts(
+    MachineInstr &MI, int SclSrcBits) const {
+  std::map<int, Register> RegMap;
+  MachineInstr *CurMI = &MI;
+
+  auto InsertIndicesInfo = getVectorInsertIndices(CurMI, MRI);
+  if (!InsertIndicesInfo)
+    return false;
+  std::map<int, Register> InsertIndices = InsertIndicesInfo->first;
+  unsigned DstRegLen = InsertIndicesInfo->second / SclSrcBits;
+
+  MachineIRBuilder MIRBuilder(MI);
+  SmallVector<Register, 16> Regs;
+  // Collect registers in order for G_BUILD_VECTOR_TRUNC
+  for (unsigned I = 0; I < DstRegLen; I++) {
+    auto It = InsertIndices.find(I);
+    if (It == InsertIndices.end())
+      return false;
+    Regs.push_back(It->second);
+  }
+  Register DstRegTrunc = MRI.createGenericVirtualRegister(
+      LLT::fixed_vector(DstRegLen, SclSrcBits));
+  MIRBuilder.buildBuildVectorTrunc(DstRegTrunc, Regs);
+  applyPadVector(MI, MRI, MIRBuilder, DstRegTrunc);
+  return true;
+}
+
 bool AIE2PreLegalizerCombinerImpl::tryToCombineIntrinsic(
     MachineInstr &MI) const {
 
   switch (cast<GIntrinsic>(MI).getIntrinsicID()) {
   case Intrinsic::aie2_vshift_I512_I512: {
     return CombineVecShiftByZero && tryToCombineVectorShiftsByZero(MI);
+  }
+  case Intrinsic::aie2_set_I512_I128:
+  case Intrinsic::aie2_set_I512_I256: {
+    return tryToCombineSetExtract(MI);
+  }
+  case Intrinsic::aie2_vinsert8_I512: {
+    return tryToCombineVectorInserts(MI, 8);
   }
   default:
     break;
