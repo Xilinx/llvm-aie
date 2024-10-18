@@ -106,11 +106,35 @@ bool PostPipeliner::canAccept(MachineBasicBlock &LoopBlock) {
   return true;
 }
 
+int PostPipeliner::getResMII(MachineBasicBlock &LoopBlock) {
+  // For each instruction, find the first cycle in which it fits and collect the
+  // maximum
+  std::vector<uint64_t> Scoreboard(NInstr, 0);
+  int MII = 1;
+  for (auto &MI : LoopBlock) {
+    auto *SlotInfo = TII->getSlotInfo(TII->getSlotKind(MI.getOpcode()));
+    SlotBits Slots = SlotInfo ? SlotInfo->getSlotSet() : 0;
+
+    int C = 0;
+    while (C < NInstr && (Scoreboard[C] & Slots)) {
+      C++;
+    }
+    if (C >= NInstr) {
+      MII = NInstr;
+      break;
+    }
+    Scoreboard[C] |= Slots;
+    MII = std::max(MII, C + 1);
+  }
+  LLVM_DEBUG(dbgs() << "PostPipeliner: ResMII=" << MII << "\n");
+  return MII;
+}
+
 // This assigns Cycle of SU, Earliest of its predecessors and Earliest of
 // the next instance of SU.
 void PostPipeliner::scheduleNode(SUnit &SU, int Cycle) {
   LLVM_DEBUG(dbgs() << "PostPipeline " << SU.NodeNum << " in cycle " << Cycle
-                    << "\n");
+                    << ". ");
   Info[SU.NodeNum].Cycle = Cycle;
   for (auto &Dep : SU.Succs) {
     int Latency = Dep.getSignedLatency();
@@ -122,10 +146,10 @@ void PostPipeliner::scheduleNode(SUnit &SU, int Cycle) {
     const int NewEarliest = Cycle + Latency;
     if (NewEarliest > Info[SNum].Earliest) {
       Info[SNum].Earliest = NewEarliest;
-      LLVM_DEBUG(dbgs() << "   Earliest(" << SNum << ") to "
-                        << Info[SNum].Earliest << "\n");
+      LLVM_DEBUG(dbgs() << SNum << " to " << Info[SNum].Earliest << "; ");
     }
   }
+  LLVM_DEBUG(dbgs() << "\n");
 
   int Next = SU.NodeNum + NInstr;
   if (Next < NTotalInstrs) {
@@ -166,29 +190,35 @@ void PostPipeliner::computeLoopCarriedParameters() {
   }
 
   // Propagate Earliest upstream, initialize Latest
+  // Unrestricted: last cycle of last stage
+  const int Latest = NCopies * II - 1;
   for (int K = 0; K < NInstr; K++) {
     const int K2 = K + NInstr;
     const int Earliest = Info[K2].Earliest - II;
     Info[K].Earliest = std::max(Info[K].Earliest, Earliest);
-    // Unrestricted: Beyond the last stage.
-    Info[K].Latest = NCopies * II;
+    Info[K].Latest = Latest;
+    Info[K2].Latest = Latest;
   }
-  // Propagate Latest upstream. Latest is the latest
-  // that is admissible for Earliest to be achievable within II
-  for (int K = 0; K < NInstr; K++) {
-    const int K2 = K + NInstr;
-    const int Earliest = Info[K2].Earliest;
-    const auto &SU = DAG->SUnits[K2];
-    for (auto &Dep : SU.Preds) {
-      const auto *Pred = Dep.getSUnit();
-      // Any predecessor in the first iteration
-      int K1 = Pred->NodeNum;
-      if (K1 < NInstr) {
-        const int Latest = Earliest - Dep.getSignedLatency();
-        Info[K1].Latest = std::min(Info[K1].Latest, Latest);
+
+  // Compute Latest. Use a fixpoint loop, because plain reversed
+  // order may not be topological for predecessors
+  bool Changed = true;
+  while (Changed) {
+    Changed = false;
+    for (int K = NInstr - 1; K >= 0; K--) {
+      SUnit &SU = DAG->SUnits[K];
+      const int Latest = Info[K].Latest;
+      for (auto &Dep : SU.Preds) {
+        int P = Dep.getSUnit()->NodeNum;
+        int NewLatest = Latest - Dep.getSignedLatency();
+        if (NewLatest < Info[P].Latest) {
+          Info[P].Latest = NewLatest;
+          Changed = true;
+        }
       }
     }
   }
+
   LLVM_DEBUG(for (int K = 0; K < NInstr; K++) {
     dbgs() << "SU" << K << " : " << Info[K].Earliest << " - " << Info[K].Latest
            << "\n";
@@ -270,8 +300,15 @@ bool PostPipeliner::scheduleFirstIteration() {
     LLVM_DEBUG(dbgs() << "  Emit in " << -Depth + LocalCycle << "\n");
     int Cycle = -Depth + LocalCycle;
     LLVM_DEBUG(dbgs() << "  Emit in " << Cycle << "\n");
-    HR.emitInScoreboard(Scoreboard, MI->getDesc(), MemoryBanks, MI->operands(),
-                        MI->getMF()->getRegInfo(), Cycle);
+    for (int N = 0; N < NCopies; N++) {
+      if (N > 0 && HR.checkConflict(Scoreboard, *MI, Cycle)) {
+        return false;
+      }
+
+      HR.emitInScoreboard(Scoreboard, MI->getDesc(), MemoryBanks,
+                          MI->operands(), MI->getMF()->getRegInfo(), Cycle);
+      Cycle += II;
+    }
 
     scheduleNode(SU, Actual);
     Info[N].Scheduled = true;
@@ -286,43 +323,22 @@ bool PostPipeliner::scheduleOtherIterations() {
   // This looks like overkill, but it accommodates dependences that span
   // multiple loop edges. Without these, the pattern should repeat after the
   // first set of copies.
-  int CurrentCycle = 0;
   for (int L = NInstr; L < NTotalInstrs; L += NInstr) {
-    // Forget the previous iteration. We accumulate the resources sticking
-    // out of II, and by inserting all stages we will end up with
-    // the steady state resource allocation
-    for (int C = 0; C < II; C++) {
-      CurrentCycle++;
-      Scoreboard.advance();
-    }
     for (int K = 0; K < NInstr; K++) {
       const int N = L + K;
       SUnit &SU = DAG->SUnits[N];
-      MachineInstr *MI = SU.getInstr();
       // Earliest tracks the latencies of the loop carried deps
       const int Earliest = Info[N].Earliest;
       // Insert supplies the modulo condition.
       const int Insert = Info[N - NInstr].Cycle + II;
 
       // All iterations following the first one should fit exactly
-      LLVM_DEBUG(dbgs() << "Trying " << N << " at " << Insert
-                        << " CurrentCycle=" << CurrentCycle << "\n";
-                 Scoreboard.dumpFull());
       if (Earliest > Insert) {
         LLVM_DEBUG(dbgs() << "  Latency not met (Earliest=" << Earliest
                           << ")\n");
         return false;
       }
-      if (fit(MI, Insert, 1, II) != Insert) {
-        LLVM_DEBUG(dbgs() << "  Resource conflict\n");
-        return false;
-      }
-      const MemoryBankBits MemoryBanks = HR.getMemoryBanks(MI);
-      const int LocalCycle = (Insert - CurrentCycle) % II;
-      LLVM_DEBUG(dbgs() << "  Emit in " << -Depth + LocalCycle << "\n");
-      HR.emitInScoreboard(Scoreboard, MI->getDesc(), MemoryBanks,
-                          MI->operands(), MI->getMF()->getRegInfo(),
-                          -Depth + LocalCycle);
+
       scheduleNode(SU, Insert);
     }
   }
