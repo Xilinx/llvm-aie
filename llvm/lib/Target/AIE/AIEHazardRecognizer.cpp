@@ -467,13 +467,26 @@ ScheduleHazardRecognizer::HazardType AIEHazardRecognizer::getHazardType(
 
 ConflictTypeBits AIEHazardRecognizer::checkConflict(MachineInstr &MI,
                                                     int DeltaCycles) {
+  assert(!TII->getFormatInterface()->getAlternateInstsOpcode(MI.getOpcode()));
   return checkConflict(Scoreboard, MI, DeltaCycles);
 }
 
 ConflictTypeBits AIEHazardRecognizer::checkConflict(
     const ResourceScoreboard<FuncUnitWrapper> &Scoreboard, MachineInstr &MI,
     int DeltaCycles) const {
-  const MCInstrDesc &Desc = MI.getDesc();
+  assert(!TII->getFormatInterface()->getAlternateInstsOpcode(MI.getOpcode()));
+  return checkConflict(Scoreboard, MI, MI.getDesc(), DeltaCycles);
+}
+
+ConflictTypeBits AIEHazardRecognizer::checkConflict(MachineInstr &MI,
+                                                    const MCInstrDesc &Desc,
+                                                    int DeltaCycles) {
+  return checkConflict(Scoreboard, MI, Desc, DeltaCycles);
+}
+
+ConflictTypeBits AIEHazardRecognizer::checkConflict(
+    const ResourceScoreboard<FuncUnitWrapper> &Scoreboard, MachineInstr &MI,
+    const MCInstrDesc &Desc, int DeltaCycles) const {
   const unsigned SchedClass =
       TII->getSchedClass(Desc, MI.operands(), MI.getMF()->getRegInfo());
   const MemoryBankBits MemoryBanks = getMemoryBanks(&MI);

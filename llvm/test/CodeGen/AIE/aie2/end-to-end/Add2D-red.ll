@@ -84,8 +84,8 @@ define void @add2d(ptr noalias %params, ptr noalias %ifm1_data, ptr noalias %ifm
 ; ASM-NEXT:    st dn4, [p5, #0]; nez r0, r0 // Delay Slot 5
 ; ASM-NEXT:    st r0, [p6, #0] // Delay Slot 4
 ; ASM-NEXT:    paddb [p2], m3; st r5, [p7, #0] // Delay Slot 3
-; ASM-NEXT:    padda [p1], m2; paddb [p2], m5; and r8, r1, r6; st r3, [p4, #0] // Delay Slot 2
-; ASM-NEXT:    mova r6, #0; paddb [p2], m4; st r8, [p0, #0] // Delay Slot 1
+; ASM-NEXT:    st r3, [p4, #0]; paddb [p2], m5; and r8, r1, r6 // Delay Slot 2
+; ASM-NEXT:    padda [p1], m2; paddb [p2], m4; movx r6, #0; st r8, [p0, #0] // Delay Slot 1
 ; ASM-NEXT:  // %bb.1:
 ; ASM-NEXT:    nopb ; nopa ; nops ; j #.LBB0_6; nopv
 ; ASM-NEXT:    nopa ; nopx // Delay Slot 5

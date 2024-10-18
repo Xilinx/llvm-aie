@@ -217,6 +217,13 @@ public:
 
   ConflictTypeBits
   checkConflict(const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+                MachineInstr &MI, const MCInstrDesc &Desc,
+                int DeltaCycles) const;
+  ConflictTypeBits checkConflict(MachineInstr &MI, const MCInstrDesc &Desc,
+                                 int DeltaCycles);
+
+  ConflictTypeBits
+  checkConflict(const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
                 MachineInstr &MI, int DeltaCycles) const;
   ConflictTypeBits checkConflict(MachineInstr &MI, int DeltaCycles);
 
