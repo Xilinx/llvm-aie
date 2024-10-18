@@ -178,10 +178,10 @@ body:             |
     ; CHECK-LABEL: name: E3_MOVD2_E2_VEXTRACT
     ; CHECK: $r3 = MOV_D2 killed $r1
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $s0 = VEXTRACT_S16 killed $x1, killed $r16
+    ; CHECK-NEXT: $dc0 = VEXTRACT_S16 killed $x1, killed $r16
     ; CHECK-NEXT: NOP
   $r3 = MOV_D2 $r1
-  $s0 = VEXTRACT_S16 killed $x1, killed $r16
+  $dc0 = VEXTRACT_S16 killed $x1, killed $r16
 ...
 ---
 name:            E4_MOVD3_E2_VEXTRACT
@@ -191,13 +191,13 @@ body:             |
 
     ; CHECK-LABEL: name: E4_MOVD3_E2_VEXTRACT
     ; CHECK: $r4 = MOV_D3 killed $dc2
-    ; CHECK-NEXT: $s0 = VEXTRACT_S16 $x1, $r16
+    ; CHECK-NEXT: $dc0 = VEXTRACT_S16 $x1, $r16
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $s0 = VEXTRACT_S16 killed $x1, killed $r16
+    ; CHECK-NEXT: $dc0 = VEXTRACT_S16 killed $x1, killed $r16
     ; CHECK-NEXT: NOP
   $r4 = MOV_D3 $dc2
-  $s0 = VEXTRACT_S16 killed $x1, killed $r16
-  $s0 = VEXTRACT_S16 killed $x1, killed $r16
+  $dc0 = VEXTRACT_S16 killed $x1, killed $r16
+  $dc0 = VEXTRACT_S16 killed $x1, killed $r16
 ...
 ---
 name:            E5_MOVD4_E2_VEXTRACT
@@ -207,15 +207,15 @@ body:             |
 
     ; CHECK-LABEL: name: E5_MOVD4_E2_VEXTRACT
     ; CHECK: $r4 = MOV_D4 killed $dc2
-    ; CHECK-NEXT: $s0 = VEXTRACT_S16 $x1, $r16
-    ; CHECK-NEXT: $s0 = VEXTRACT_S16 $x1, $r16
+    ; CHECK-NEXT: $dc0 = VEXTRACT_S16 $x1, $r16
+    ; CHECK-NEXT: $dc0 = VEXTRACT_S16 $x1, $r16
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $s0 = VEXTRACT_S16 killed $x1, killed $r16
+    ; CHECK-NEXT: $dc0 = VEXTRACT_S16 killed $x1, killed $r16
     ; CHECK-NEXT: NOP
   $r4 = MOV_D4 $dc2
-  $s0 = VEXTRACT_S16 killed $x1, killed $r16
-  $s0 = VEXTRACT_S16 killed $x1, killed $r16
-  $s0 = VEXTRACT_S16 killed $x1, killed $r16
+  $dc0 = VEXTRACT_S16 killed $x1, killed $r16
+  $dc0 = VEXTRACT_S16 killed $x1, killed $r16
+  $dc0 = VEXTRACT_S16 killed $x1, killed $r16
 
 ...
 ---
@@ -226,17 +226,17 @@ body:             |
 
     ; CHECK-LABEL: name: E6_MOVD5_E2_VEXTRACT
     ; CHECK: $r3 = MOV_D5 killed $r1
-    ; CHECK-NEXT: $s0 = VEXTRACT_S16 $x1, $r16
-    ; CHECK-NEXT: $s0 = VEXTRACT_S16 $x1, $r16
-    ; CHECK-NEXT: $s0 = VEXTRACT_S16 $x1, $r16
+    ; CHECK-NEXT: $dc0 = VEXTRACT_S16 $x1, $r16
+    ; CHECK-NEXT: $dc0 = VEXTRACT_S16 $x1, $r16
+    ; CHECK-NEXT: $dc0 = VEXTRACT_S16 $x1, $r16
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $s0 = VEXTRACT_S16 killed $x1, killed $r16
+    ; CHECK-NEXT: $dc0 = VEXTRACT_S16 killed $x1, killed $r16
     ; CHECK-NEXT: NOP
   $r3 = MOV_D5 $r1
-  $s0 = VEXTRACT_S16 killed $x1, killed $r16
-  $s0 = VEXTRACT_S16 killed $x1, killed $r16
-  $s0 = VEXTRACT_S16 killed $x1, killed $r16
-  $s0 = VEXTRACT_S16 killed $x1, killed $r16
+  $dc0 = VEXTRACT_S16 killed $x1, killed $r16
+  $dc0 = VEXTRACT_S16 killed $x1, killed $r16
+  $dc0 = VEXTRACT_S16 killed $x1, killed $r16
+  $dc0 = VEXTRACT_S16 killed $x1, killed $r16
 ...
 ---
 name:            E7_MOVD6_E2_VEXTRACT
@@ -246,19 +246,19 @@ body:             |
 
     ; CHECK-LABEL: name: E7_MOVD6_E2_VEXTRACT
     ; CHECK: $r3 = MOV_D6 killed $r1
-    ; CHECK-NEXT: $s0 = VEXTRACT_S16 $x1, $r16
-    ; CHECK-NEXT: $s0 = VEXTRACT_S16 $x1, $r16
-    ; CHECK-NEXT: $s0 = VEXTRACT_S16 $x1, $r16
-    ; CHECK-NEXT: $s0 = VEXTRACT_S16 $x1, $r16
+    ; CHECK-NEXT: $dc0 = VEXTRACT_S16 $x1, $r16
+    ; CHECK-NEXT: $dc0 = VEXTRACT_S16 $x1, $r16
+    ; CHECK-NEXT: $dc0 = VEXTRACT_S16 $x1, $r16
+    ; CHECK-NEXT: $dc0 = VEXTRACT_S16 $x1, $r16
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $s0 = VEXTRACT_S16 killed $x1, killed $r16
+    ; CHECK-NEXT: $dc0 = VEXTRACT_S16 killed $x1, killed $r16
     ; CHECK-NEXT: NOP
   $r3 = MOV_D6 $r1
-  $s0 = VEXTRACT_S16 killed $x1, killed $r16
-  $s0 = VEXTRACT_S16 killed $x1, killed $r16
-  $s0 = VEXTRACT_S16 killed $x1, killed $r16
-  $s0 = VEXTRACT_S16 killed $x1, killed $r16
-  $s0 = VEXTRACT_S16 killed $x1, killed $r16
+  $dc0 = VEXTRACT_S16 killed $x1, killed $r16
+  $dc0 = VEXTRACT_S16 killed $x1, killed $r16
+  $dc0 = VEXTRACT_S16 killed $x1, killed $r16
+  $dc0 = VEXTRACT_S16 killed $x1, killed $r16
+  $dc0 = VEXTRACT_S16 killed $x1, killed $r16
 ...
 
 # expected to not be in the same bundle
