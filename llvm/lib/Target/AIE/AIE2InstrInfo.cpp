@@ -1403,3 +1403,23 @@ AIE2InstrInfo::getVExtractOpInfo(const MachineInstr &MI) const {
     return std::nullopt;
   }
 }
+
+using VecOpAbstraction = AIEBaseInstrInfo::AbstractVecOp;
+std::optional<const VecOpAbstraction>
+AIE2InstrInfo::parseTargetVectorOp(const MachineInstr &MI) const {
+
+  switch (MI.getOpcode()) {
+  case AIE2::VADD_32:
+    return VecOpAbstraction{AbstractVecOp::AbstractOpcode::ADD,
+                            MI.getOperand(1).getReg(),
+                            MI.getOperand(2).getReg(), 0};
+  case AIE2::VSEL_32:
+    return AbstractVecOp{AbstractVecOp::AbstractOpcode::SELECT,
+                         MI.getOperand(1).getReg(), MI.getOperand(2).getReg(),
+                         MI.getOperand(3).getReg()};
+  case AIE2::VBCST_32:
+    return AbstractVecOp{AbstractVecOp::AbstractOpcode::BROADCAST, 0, 0,
+                         MI.getOperand(1).getReg()};
+  }
+  return {};
+}

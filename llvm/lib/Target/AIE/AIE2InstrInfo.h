@@ -179,6 +179,9 @@ public:
   std::optional<const VExtractOpInfo>
   getVExtractOpInfo(const MachineInstr &MI) const override;
 
+  std::optional<const AbstractVecOp>
+  parseTargetVectorOp(const MachineInstr &MI) const override;
+
 protected:
   SmallVector<AIEPseudoExpandInfo, 4>
   getSpillPseudoExpandInfo(const MachineInstr &MI) const override;

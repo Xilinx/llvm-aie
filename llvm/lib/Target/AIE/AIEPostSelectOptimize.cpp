@@ -51,6 +51,7 @@
 #include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include <optional>
 
 using namespace llvm;
 
@@ -59,6 +60,17 @@ using namespace llvm;
 static cl::opt<bool>
     EnablePostSelectOptimize("aie-post-select-opt", cl::Hidden, cl::init(true),
                              cl::desc("Enable post select optimize."));
+
+static cl::opt<bool>
+    LoadMMODeepSearch("aie-post-load-mmo-deep-search", cl::Hidden,
+                      cl::init(false),
+                      cl::desc("Enable deep search for load's missing MMOs"));
+
+static cl::opt<unsigned>
+    LoadMMOSearchLimit("aie-post-load-mmo-search-limit", cl::Hidden,
+                       cl::init(100),
+                       cl::desc("Search limit for load's missing MMOs (number "
+                                "of visited instructions)."));
 
 namespace {
 
@@ -438,6 +450,161 @@ bool duplicateAdressingRegs(MachineBasicBlock &MBB, MachineRegisterInfo &MRI) {
   return tryToDuplicateLoadUse(LoadUses, NonLoadUses, MRI, TII);
 }
 
+/// This optimization tries to propagate GlobalValues as MMO of load operations
+/// when they are missing.
+bool findGlobalValues(const MachineInstr *MI,
+                      SmallPtrSet<const Value *, 4> &GVSet,
+                      SmallPtrSet<const MachineInstr *, 4> &VisitedInstrs,
+                      MachineRegisterInfo &MRI, unsigned SearchLimit) {
+
+  // Exhausted the search.
+  if (VisitedInstrs.size() == SearchLimit)
+    return false;
+
+  // Skip copies.
+  while (MI->isCopy() && MI->getOperand(1).getReg().isVirtual())
+    MI = MRI.getVRegDef(MI->getOperand(1).getReg());
+
+  // Loaded values cannot be tracked as Globals, but they can
+  // be part of a final address calculation.
+  if (MI->mayLoad())
+    return true;
+
+  if (VisitedInstrs.find(MI) != VisitedInstrs.end())
+    return true;
+
+  VisitedInstrs.insert(MI);
+  bool Success = true;
+  for (auto MO : MI->uses()) {
+    if (MO.isGlobal()) {
+      GVSet.insert(MO.getGlobal());
+    } else if (MO.isReg() && MO.getReg().isVirtual()) {
+      if (MO.getReg().isVirtual()) {
+        const Register Reg = MO.getReg();
+        if (const MachineInstr *RegDef = MRI.getVRegDef(Reg))
+          Success &=
+              findGlobalValues(RegDef, GVSet, VisitedInstrs, MRI, SearchLimit);
+      } else {
+        // Physical registers can be anything (parameters).
+        return false;
+      }
+    }
+  }
+  return Success;
+}
+
+using Opcodes = AIEBaseInstrInfo::AbstractVecOp::AbstractOpcode;
+using AbstractVecOp = AIEBaseInstrInfo::AbstractVecOp;
+using OptionalVecOp = std::optional<AbstractVecOp>;
+
+/// This optimization tries to propagate GlobalValues as MMO of load operations
+/// when they are missing. This specific implementation considers only the
+/// following pattern:
+/// VADD (VSEL (VBCST(GlobalValue1), VBCST(GlobalValue2), Mask) Value)
+bool findBroadcastedGlobalValues(const MachineInstr *MI,
+                                 SmallPtrSet<const Value *, 4> &GVSet,
+                                 MachineRegisterInfo &MRI) {
+
+  const TargetSubtargetInfo &ST = MI->getParent()->getParent()->getSubtarget();
+  const AIEBaseInstrInfo *TII =
+      static_cast<const AIEBaseInstrInfo *>(ST.getInstrInfo());
+
+  // Skip subvector copy.
+  if (MI->isCopy()) {
+    Register Src = MI->getOperand(1).getReg();
+    if (Src.isVirtual())
+      MI = MRI.getVRegDef(Src);
+    else
+      // We cannot proceed with physical registers.
+      return false;
+  }
+
+  auto ParseByReg = [&](Register Reg, Opcodes Opcode) -> OptionalVecOp {
+    OptionalVecOp VOp = TII->parseTargetVectorOp(*MRI.getVRegDef(Reg));
+    if (VOp && VOp->Opcode == Opcode)
+      return VOp;
+    return {};
+  };
+
+  const OptionalVecOp VAddOp = TII->parseTargetVectorOp(*MI);
+
+  // We start with an ADD.
+  if (!VAddOp || VAddOp->Opcode != Opcodes::ADD)
+    return false;
+
+  // We should have one select in one operand.
+  const AbstractVecOp *VSelect;
+  if (OptionalVecOp Op = ParseByReg(VAddOp->VectorSrc1, Opcodes::SELECT))
+    VSelect = &*Op;
+  else if (OptionalVecOp Op = ParseByReg(VAddOp->VectorSrc2, Opcodes::SELECT))
+    VSelect = &*Op;
+  else
+    return false;
+
+  // We should have two broadcasts.
+  const OptionalVecOp VBcast1 =
+      ParseByReg(VSelect->VectorSrc1, Opcodes::BROADCAST);
+  const OptionalVecOp VBcast2 =
+      ParseByReg(VSelect->VectorSrc2, Opcodes::BROADCAST);
+
+  if (!VBcast1 || !VBcast2)
+    return false;
+
+  // We should end the search in just one last step each broacast.
+  SmallPtrSet<const MachineInstr *, 4> VisitedInstrs;
+  return findGlobalValues(MRI.getVRegDef(VBcast1->ScalarSrc), GVSet,
+                          VisitedInstrs, MRI, 1) &&
+         findGlobalValues(MRI.getVRegDef(VBcast2->ScalarSrc), GVSet,
+                          VisitedInstrs, MRI, VisitedInstrs.size() + 1);
+}
+
+bool fixLoadMemOpInfo(MachineFunction &MF, MachineBasicBlock &MBB,
+                      MachineRegisterInfo &MRI) {
+
+  bool Changed = false;
+
+  for (MachineInstr &MI : MBB) {
+    if (!MI.mayLoad() || !MI.memoperands_empty())
+      continue;
+
+    bool Success = true;
+    SmallPtrSet<const Value *, 4> GVSet;
+    SmallPtrSet<const MachineInstr *, 4> VisitedInstrs;
+
+    // As we don't know which operand is the pointer, we need
+    // to iterate over all uses.
+    for (auto MO : MI.uses()) {
+      if (MO.isReg() && MO.getReg().isVirtual()) {
+        const Register Reg = MO.getReg();
+        if (const MachineInstr *RegDef = MRI.getVRegDef(Reg)) {
+          if (LoadMMODeepSearch)
+            // Look to everything!
+            Success &= findGlobalValues(RegDef, GVSet, VisitedInstrs, MRI,
+                                        LoadMMOSearchLimit);
+          else
+            // Consiser only broadcasted cases.
+            Success &= findBroadcastedGlobalValues(RegDef, GVSet, MRI);
+        }
+      }
+    }
+
+    if (Success) {
+      // Add gathered GlobalValues as MMOs.
+      for (auto GV : GVSet) {
+        // As we only know the base pointer and nothing about the
+        // result of the address calculation, we simply don't assume
+        // size/alignment/offset, so we prevent AA from inferring wrong
+        // information.
+        MachineMemOperand *PtrLoadMMO = MF.getMachineMemOperand(
+            MachinePointerInfo(GV), MachineMemOperand::MOLoad, LLT(), Align());
+        MI.addMemOperand(MF, PtrLoadMMO);
+        Changed = true;
+      }
+    }
+  }
+  return Changed;
+}
+
 bool AIEPostSelectOptimize::runOnMachineFunction(MachineFunction &MF) {
   LLVM_DEBUG(dbgs() << "\n******* POST I-SEL OPTIMIZATION PASS *******\n"
                     << "********** Function: " << MF.getName() << '\n');
@@ -470,6 +637,12 @@ bool AIEPostSelectOptimize::runOnMachineFunction(MachineFunction &MF) {
     for (MachineBasicBlock &MBB : MF) {
       Changed |= duplicateAdressingRegs(MBB, MF.getRegInfo());
     }
+  }
+
+  // 4. Fix MMO for load instructions that don't use pointers
+  // registers (use vector instead, for example).
+  for (MachineBasicBlock &MBB : MF) {
+    Changed |= fixLoadMemOpInfo(MF, MBB, MF.getRegInfo());
   }
 
   return Changed;
