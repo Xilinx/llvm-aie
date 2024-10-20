@@ -24,6 +24,19 @@ body:             |
 ...
 
 ---
+name:            E2_VEXTRACT_E1_MOV_mv_scl_P
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: E2_VEXTRACT_E1_MOV_mv_scl_P
+    ; CHECK: $r2 = VEXTRACT_S32 killed $x2, killed $r16
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $p1 = MOV_mv_scl killed $p0
+    $r2 = VEXTRACT_S32 $x2, $r16
+    $p1 = MOV_mv_scl $p0
+...
+
+---
 name:            E2_VEXTRACT_E1_MOV_mv_cg
 alignment:       16
 body:             |
@@ -34,6 +47,19 @@ body:             |
     ; CHECK-NEXT: $r3 = MOV_mv_cg 0
     $r2 = VEXTRACT_S32 $x2, $r16
     $r3 = MOV_mv_cg 0
+...
+
+---
+name:            E2_VEXTRACT_E1_MOV_mv_cg_D
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: E2_VEXTRACT_E1_MOV_mv_cg_D
+    ; CHECK: $r2 = VEXTRACT_S32 killed $x2, killed $r16
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $dc0 = MOV_mv_cg 0
+    $r2 = VEXTRACT_S32 $x2, $r16
+    $dc0 = MOV_mv_cg 0
 ...
 
 ---
@@ -50,16 +76,16 @@ body:             |
 ...
 
 ---
-name:            E2_VEXTRACT_E1_ADD_NC_R
+name:            E2_VEXTRACT_E1_ADD_NC_S
 alignment:       16
 body:             |
   bb.0.entry:
-    ; CHECK-LABEL: name: E2_VEXTRACT_E1_ADD_NC_R
+    ; CHECK-LABEL: name: E2_VEXTRACT_E1_ADD_NC_S
     ; CHECK: $r2 = VEXTRACT_S32 killed $x2, killed $r16
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: $r3 = ADD_NC killed $r4, -32
+    ; CHECK-NEXT: $s0 = ADD_NC killed $r4, -32
     $r2 = VEXTRACT_S32 $x2, $r16
-    $r3 = ADD_NC $r4, -32
+    $s0 = ADD_NC $r4, -32
 ...
 
 ---
