@@ -1,0 +1,19 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+
+The tests in these directory are single loops that need to be post-pipelined.
+They supply the input to the scheduler and test the generated assembly code. 
+It is likely that the detailed schedule changes over time, and this can be
+automatically updated provided that neither the II nor the stage count grows.
+If the stage count grows, automatic update is allowed if the II shrinks.
+The II is the number of lines between the loop block's label upto and including
+the cycle headed by the loop end label.
+The stage count is determined by the immediate operand of setting the
+lc register.
+
+Note that the LLVM IR doesn't match the actual MIR code. It is just a standard
+loop providing some pointers into different spaces to dereference.
+
