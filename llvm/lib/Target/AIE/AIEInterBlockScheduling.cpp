@@ -300,6 +300,7 @@ namespace {
 /// into the appropriate blockstate region.
 /// TimedRegion is built one bundle at the time
 class PipelineExtractor : public PipelineScheduleVisitor {
+  AIEAlternateDescriptors &AlternateDesc;
   BlockState &Loop;
   BlockState *Prologue = nullptr;
   BlockState *Epilogue = nullptr;
@@ -330,14 +331,19 @@ class PipelineExtractor : public PipelineScheduleVisitor {
     // Prologue and epilogue obtain copies.
     MachineInstr *ToBeEmitted =
         InLoop ? MI : Loop.TheBlock->getParent()->CloneMachineInstr(MI);
-    CurrentBundle.add(ToBeEmitted);
+    if (auto AltDesc = AlternateDesc.getSelectedDescriptor(MI);
+        AltDesc.has_value())
+      AlternateDesc.setAlternateDescriptor(ToBeEmitted, AltDesc.value());
+
+    CurrentBundle.add(ToBeEmitted, AlternateDesc.getOpcode(MI));
   }
   void endBundle() override { TimedRegion.emplace_back(CurrentBundle); }
 
 public:
   PipelineExtractor(InterBlockScheduling &InterBlock, BlockState &BS,
                     const AIEBaseInstrInfo &TII)
-      : Loop(BS), CurrentBundle(TII.getFormatInterface()) {
+      : AlternateDesc(InterBlock.getSelectedAltDescs()), Loop(BS),
+        CurrentBundle(TII.getFormatInterface()) {
     MachineBasicBlock *LoopBlock = Loop.TheBlock;
     for (auto *P : LoopBlock->predecessors()) {
       if (P == LoopBlock) {
