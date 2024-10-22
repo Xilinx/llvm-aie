@@ -14,15 +14,7 @@ let Itinerary = II_ADD in {
   def ADD_add_r_ri : AIE2_add_r_ri_inst_alu<(outs eR:$mRx), (ins eR:$mRx0, simm7:$c7s), "add", "$mRx, $mRx0, $c7s">;
 }
 let Itinerary = II_ADD_NC in {
-  let ItineraryRegPairs = [ItinRegClassPair<II_ADD_NC_RS,[OperandRegClass<0, eR>]>,
-                           ItinRegClassPair<II_ADD_NC_P,[OperandRegClass<0, eP>]>, 
-                           ItinRegClassPair<II_ADD_NC_M,[OperandRegClass<0, eM>]>, 
-                           ItinRegClassPair<II_ADD_NC_RS,[OperandRegClass<0, eS>]>, 
-                           ItinRegClassPair<II_ADD_NC_DC,[OperandRegClass<0, eDC>]>,
-                           ItinRegClassPair<II_ADD_NC_DJ,[OperandRegClass<0, eDJ>]>, 
-                           ItinRegClassPair<II_ADD_NC_DN,[OperandRegClass<0, eDN>]>] in {
-    def ADD_NC : AIE2_mv_add_inst_mv<(outs OP_mMvSclDst:$dst), (ins eR:$s0, simm6:$imm), "add.nc", "$dst, $s0, $imm">;
-  }
+  def ADD_NC : AIE2_mv_add_inst_mv<(outs OP_mMvSclDst:$dst), (ins eR:$s0, simm6:$imm), "add.nc", "$dst, $s0, $imm">;
 }
 let Itinerary = II_ABS in {
   let Defs = [srCarry] in
