@@ -1320,8 +1320,9 @@ void llvm::AIEPostRASchedStrategy::buildGraph(ScheduleDAGMI &DAG, AAResults *AA,
     assert(BS.getRegions().size() == 1);
     // Try to wrap the linear schedule within II.
     // We virtually unroll the body by the stagecount, computed from rounding
-    // up the length divided by II.
-    NCopies = (BS.getScheduleLength() + II - 1) / II;
+    // up the length divided by II, adding one more stage to account for
+    // the added resource contention
+    NCopies = (BS.getScheduleLength() + II - 1) / II + 1;
   }
   DEBUG_BLOCKS(dbgs() << "    buildGraph, NCopies=" << NCopies << "\n");
   for (int S = 0; S < NCopies; S++) {
