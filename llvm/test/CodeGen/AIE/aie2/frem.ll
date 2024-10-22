@@ -18,18 +18,18 @@ define bfloat @test_frem_bfloat(bfloat %a, bfloat %b) {
 ; CHECK-NEXT:    mova r0, #16; st lr, [sp, #-28] // 4-byte Folded Spill Delay Slot 3
 ; CHECK-NEXT:    st r16, [sp, #-32]; lshl r1, r1, r0 // 4-byte Folded Spill Delay Slot 2
 ; CHECK-NEXT:    lshl r2, r2, r0 // Delay Slot 1
-; CHECK-NEXT:    lda lr, [sp, #-28] // 4-byte Folded Reload
-; CHECK-NEXT:    nop
+; CHECK-NEXT:    lda lr, [sp, #-28]; nopx // 4-byte Folded Reload
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova r16, #0
 ; CHECK-NEXT:    mov r29, r16
-; CHECK-NEXT:    lda r16, [sp, #-32]; vinsert.32 x0, x0, r29, r0 // 4-byte Folded Reload
-; CHECK-NEXT:    ret lr ; vmov bmh0, x0
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    vconv.bf16.fp32 wl0, bmh0 // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    vextract.s16 r0, x0, r16 // Delay Slot 2
+; CHECK-NEXT:    vinsert.32 x0, x0, r29, r0
+; CHECK-NEXT:    lda r16, [sp, #-32]; vmov bmh0, x0 // 4-byte Folded Reload
+; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    vconv.bf16.fp32 wl0, bmh0 // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    vextract.s16 r0, x0, r16 // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 1
 entry:
   %frem = frem bfloat %a, %b

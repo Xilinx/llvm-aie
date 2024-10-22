@@ -1012,13 +1012,6 @@ let Itinerary = II_VINSERT in {
 
 // 8.1.2 VEXTRACT - Extract scalar from vector
 let Itinerary = II_VEXTRACT in {
-  let ItineraryRegPairs = [ItinRegClassPair<II_VEXTRACT_RS,[OperandRegClass<0, eR>]>, 
-                           ItinRegClassPair<II_VEXTRACT_P,[OperandRegClass<0, eP>]>, 
-                           ItinRegClassPair<II_VEXTRACT_M,[OperandRegClass<0, eM>]>,
-                           ItinRegClassPair<II_VEXTRACT_RS,[OperandRegClass<0, eS>]>, 
-                           ItinRegClassPair<II_VEXTRACT_DC,[OperandRegClass<0, eDC>]>,
-                           ItinRegClassPair<II_VEXTRACT_DJ,[OperandRegClass<0, eDJ>]>, 
-                           ItinRegClassPair<II_VEXTRACT_DN,[OperandRegClass<0, eDN>]>] in {
   let Uses = [crVaddSign] in {
     def VEXTRACT_D8 :
       AIE2_vec_extract_inst_mv</*sign*/0b0, (outs OP_mMvSclDst:$dst), (ins mXm:$s1, OP_mRS4m:$idx),
@@ -1053,7 +1046,6 @@ let Itinerary = II_VEXTRACT in {
     AIE2_vec_extract_inst_mv</*sign*/0b1,(outs eL:$dst), (ins mXm:$s1, OP_mRS4m:$idx),
                             "vextract.s64", "$dst, $s1, $idx">,
     vec_extract_dest_L</*s2v_wide_64*/0b11>;
-  }
 }
 
 // 8.1.3 VPUSH - Pushes scalar word into vector
