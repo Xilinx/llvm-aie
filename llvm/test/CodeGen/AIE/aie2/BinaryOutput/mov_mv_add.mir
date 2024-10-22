@@ -56,9 +56,9 @@ body:             |
     $r0  = ADD_NC $r5, 31
     $r1  = ADD_NC $r5, -32
     $r31 = ADD_NC $r5, 20
-    $r0  = ADD_NC $r5, 31
-    $r1  = ADD_NC $r5, -32
-    $r31 = ADD_NC $r5, 20
+    $r0  = ADD_NC_GPR $r5, 31
+    $r1  = ADD_NC_GPR $r5, -32
+    $r31 = ADD_NC_GPR $r5, 20
     $p0  = ADD_NC $r5, 10
     $p7  = ADD_NC $r5, -23
     $sp  = ADD_NC $r5, 21
