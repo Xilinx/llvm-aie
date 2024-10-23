@@ -26,6 +26,7 @@ private:
   const Loop *L;
   Instruction *LoopBound0;
   Instruction *LoopBound1;
+  unsigned MinIterCount;
 
   Value *MinValue;
   Value *MaxBoundry;
@@ -39,7 +40,9 @@ private:
 
   Value *getValue(Value *V) const;
   Value *getMinBoundInEqualityComparison(Value *Op) const;
-  const SCEV *getSCEV() const;
+
+  const SCEV *getTruncInductionSCEV();
+  const SCEV *getSCEV();
 
 public:
   PreservedAnalyses run(Loop &L, LoopAnalysisManager &AM,

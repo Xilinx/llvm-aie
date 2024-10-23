@@ -44,6 +44,7 @@ bool LoopMetadata::extractMetaData(Loop &L) {
   LLVM_DEBUG(dbgs() << "\n");
 
   if (MinIterCount.has_value() && MinIterCount.value() > 0) {
+    this->MinIterCount = MinIterCount.value();
 
     LLVM_DEBUG(L.getHeader()->getParent()->dump(););
 
@@ -170,7 +171,8 @@ void LoopMetadata::getBoundries() {
   Value *Op0 = ICmp->getOperand(0);
   Value *Op1 = ICmp->getOperand(1);
   if (ICmpInst::isLT(Pred) || ICmpInst::isLE(Pred)) {
-    MinValue = getValue(Op0);
+    if (!MinValue)
+      MinValue = getValue(Op0);
     MaxBoundry = getValue(Op1);
   } else if (Pred == CmpInst::Predicate::ICMP_EQ) {
     // assume the upper loop bound does not change, so that the max bound has no
@@ -194,7 +196,8 @@ void LoopMetadata::getBoundries() {
     }
 
   } else {
-    MinValue = getValue(Op1);
+    if (!MinValue)
+      MinValue = getValue(Op1);
     MaxBoundry = getValue(Op0);
   }
   LLVM_DEBUG(dbgs() << "MinValue = "; MinValue->dump());
@@ -223,7 +226,7 @@ void LoopMetadata::getBoundries() {
   }
 }
 
-const SCEV *LoopMetadata::getSCEV() const {
+const SCEV *LoopMetadata::getSCEV() {
   if (SE->isSCEVable(LoopBound0->getType())) {
     const SCEV *S = SE->getSCEV(LoopBound0);
     if (S && S->getSCEVType() == SCEVTypes::scAddRecExpr)
@@ -235,7 +238,96 @@ const SCEV *LoopMetadata::getSCEV() const {
       return S;
   }
 
-  return nullptr;
+  return getTruncInductionSCEV();
+}
+
+bool fitstype(unsigned MinValue, const Type *T) {
+  return (uint64_t)MinValue <
+         *APInt::getSignedMaxValue(T->getIntegerBitWidth()).getRawData();
+}
+
+const SCEV *LoopMetadata::getTruncInductionSCEV() {
+  const SCEV *S = nullptr;
+
+  for (BasicBlock *BB : L->blocks()) {
+    for (BasicBlock::iterator IT = BB->begin(), IE = BB->end(); IT != IE;
+         ++IT) {
+      Instruction *I = &(*IT);
+      if (!SE->isSCEVable(I->getType()))
+        continue;
+      LLVM_DEBUG(I->dump());
+
+      // remove all instructions that are not relevant for branch decision
+      bool ValidInstruction = false;
+      for (uint Index = 0; Index < I->getNumOperands(); Index++) {
+        if (I->getOperand(Index) == LoopBound0 ||
+            I->getOperand(Index) == LoopBound1)
+          ValidInstruction = true;
+      }
+      if (!ValidInstruction)
+        continue;
+
+      const SCEV *SIntern = SE->getSCEV(I);
+      LLVM_DEBUG(dbgs() << "SCEV "; SIntern->dump());
+      LLVM_DEBUG(dbgs() << SIntern->getSCEVType() << "\n");
+
+      if (const SCEVAddExpr *AR = dyn_cast<SCEVAddExpr>(SIntern)) {
+        if (const SCEVZeroExtendExpr *Zext =
+                dyn_cast<SCEVZeroExtendExpr>(AR->getOperand(1))) {
+          const SCEVTruncateExpr *Trunc =
+              dyn_cast<SCEVTruncateExpr>(Zext->getOperand(0));
+          if (Trunc) {
+            const SCEV *OrigSCEV = Trunc->getOperand();
+
+            if (const SCEVConstant *SCEVConst =
+                    dyn_cast<SCEVConstant>(AR->getOperand(0))) {
+              const unsigned StepUnsigned =
+                  std::abs(SCEVConst->getValue()->getSExtValue());
+              const SCEV *Step =
+                  SE->getConstant(OrigSCEV->getType(),
+                                  SCEVConst->getValue()->getSExtValue(), true);
+
+              // extract start point from phi of the SCEV
+              const SCEV *Start = nullptr;
+              Value *StartVal = dyn_cast<SCEVUnknown>(OrigSCEV)->getValue();
+              if (StartVal) {
+                PHINode *PN =
+                    dyn_cast<PHINode>(dyn_cast<Instruction>(StartVal));
+                if (PN) {
+                  for (uint Op = 0; Op < PN->getNumOperands(); Op++) {
+                    LLVM_DEBUG(dbgs()
+                               << PN->getIncomingBlock(Op)->getName() << "\n");
+                    if (PN->getIncomingBlock(Op)->getName() ==
+                        L->getLoopPreheader()->getName()) {
+                      Value *V = PN->getOperand(Op);
+                      if (isa<Constant>(V)) {
+                        Start = SE->getSCEV(V);
+                      }
+                    }
+                  }
+                }
+              }
+
+              if (!Start)
+                continue;
+
+              if (fitstype(MinIterCount * StepUnsigned, Trunc->getType())) {
+                S = SE->getAddRecExpr(
+                    Start, Step, L,
+                    llvm::SCEVAddExpr::NoWrapFlags::FlagAnyWrap);
+                // min value already found, so already
+                MinValue = getValue(StartVal);
+                LLVM_DEBUG(dbgs() << "Found SCEV "; S->dump();
+                           dbgs() << "and MinValue "; MinValue->dump());
+                return S;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return S;
 }
 
 void LoopMetadata::addAssumeToLoopHeader(uint64_t MinIterCount,
@@ -254,6 +346,8 @@ void LoopMetadata::addAssumeToLoopHeader(uint64_t MinIterCount,
     dbgs() << " Operand1";
     LoopBound1->dump();
   });
+  MinValue = nullptr;
+  MaxBoundry = nullptr;
 
   // get Scalar Evolution of the loop counter
   const SCEV *S = getSCEV();

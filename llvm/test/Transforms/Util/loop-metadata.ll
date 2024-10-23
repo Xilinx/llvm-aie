@@ -314,6 +314,43 @@ for.end:                                          ; preds = %for.cond
   ret void
 }
 
+; find IV even if it is hidden in a truncation operation
+; Function Attrs: mustprogress nofree norecurse nosync nounwind memory(argmem: readwrite, inaccessiblemem: write)
+define dso_local void @basicIVTruncation(i32 noundef %num_elems, i32 noundef %n) local_unnamed_addr #0 {
+; CHECK-LABEL: @basicIVTruncation(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    br label [[FOR_COND:%.*]]
+; CHECK:       for.cond:
+; CHECK-NEXT:    [[I_0:%.*]] = phi i32 [ 0, [[ENTRY:%.*]] ], [ [[ADD:%.*]], [[FOR_BODY:%.*]] ]
+; CHECK-NEXT:    [[CONV:%.*]] = and i32 [[I_0]], 65535
+; CHECK-NEXT:    [[CMP:%.*]] = icmp ult i32 [[CONV]], [[N:%.*]]
+; CHECK-NEXT:    [[TMP0:%.*]] = icmp sgt i32 [[N]], 3
+; CHECK-NEXT:    tail call void @llvm.assume(i1 [[TMP0]])
+; CHECK-NEXT:    br i1 [[CMP]], label [[FOR_BODY]], label [[FOR_COND_CLEANUP:%.*]]
+; CHECK:       for.cond.cleanup:
+; CHECK-NEXT:    ret void
+; CHECK:       for.body:
+; CHECK-NEXT:    [[ADD]] = add nuw nsw i32 [[CONV]], 1
+; CHECK-NEXT:    br label [[FOR_COND]], !llvm.loop [[LOOP0]]
+;
+entry:
+  br label %for.cond
+
+for.cond:
+  %i.0 = phi i32 [ 0, %entry ], [ %add, %for.body ]
+  %conv = and i32 %i.0, 65535
+  %cmp = icmp ult i32 %conv, %n
+  br i1 %cmp, label %for.body, label %for.cond.cleanup
+
+for.cond.cleanup:                                 ; preds = %for.cond
+  ret void
+
+for.body:                                         ; preds = %for.cond, %for.body
+  %add = add nuw nsw i32 %conv , 1
+  br label %for.cond, !llvm.loop !6
+}
+
+
 !2 = distinct !{!2, !7, !8, !9}
 !6 = distinct !{!6, !7, !8, !9}
 !7 = !{!"llvm.loop.mustprogress"}
