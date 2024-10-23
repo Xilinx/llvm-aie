@@ -33,8 +33,8 @@
 # "tie" the sources together.
 
 # We expect the REG_SEQUENCE for the load of %ir.in1 to be in the second stage, close to
-# its VMUL consumer.
-# FIXME: Make it happen
+# its VMUL consumer. We don't want the VMUL in the steady state to read a PHI node, but
+# rather the REG_SEQUENCE.
 ---
 name:           vmul_256
 alignment:       16
@@ -58,26 +58,25 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[VLDA_dmw_lda_w_ag_pstm_nrm_imm:%[0-9]+]]:vec256, [[VLDA_dmw_lda_w_ag_pstm_nrm_imm1:%[0-9]+]]:ep = VLDA_dmw_lda_w_ag_pstm_nrm_imm [[COPY3]], 32 :: (load (<32 x s8>) from %ir.in1)
   ; CHECK-NEXT:   [[VLDA_dmw_lda_w_ag_pstm_nrm_imm2:%[0-9]+]]:vec256, [[VLDA_dmw_lda_w_ag_pstm_nrm_imm3:%[0-9]+]]:ep = VLDA_dmw_lda_w_ag_pstm_nrm_imm [[COPY4]], 32 :: (load (<32 x s8>) from %ir.in2)
-  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[VBCST_32_]].sub_256_lo, %subreg.sub_256_hi, [[VLDA_dmw_lda_w_ag_pstm_nrm_imm]], %subreg.sub_256_lo
-  ; CHECK-NEXT:   [[REG_SEQUENCE1:%[0-9]+]]:vec512 = REG_SEQUENCE [[VLDA_dmw_lda_w_ag_pstm_nrm_imm2]], %subreg.sub_256_lo
+  ; CHECK-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:vec512 = REG_SEQUENCE [[VLDA_dmw_lda_w_ag_pstm_nrm_imm2]], %subreg.sub_256_lo
   ; CHECK-NEXT:   [[ADD_add_r_ri:%[0-9]+]]:er = nsw ADD_add_r_ri [[COPY1]], -1, implicit-def $srcarry
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.4:
   ; CHECK-NEXT:   successors: %bb.4(0x40000000), %bb.5(0x40000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:er = PHI [[ADD_add_r_ri]], %bb.3, %30, %bb.4
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:er = PHI [[ADD_add_r_ri]], %bb.3, %29, %bb.4
   ; CHECK-NEXT:   [[PHI1:%[0-9]+]]:ep = PHI [[VLDA_dmw_lda_w_ag_pstm_nrm_imm1]], %bb.3, %28, %bb.4
-  ; CHECK-NEXT:   [[PHI2:%[0-9]+]]:ep = PHI [[VLDA_dmw_lda_w_ag_pstm_nrm_imm3]], %bb.3, %33, %bb.4
-  ; CHECK-NEXT:   [[PHI3:%[0-9]+]]:ep = PHI [[COPY5]], %bb.3, %35, %bb.4
-  ; CHECK-NEXT:   [[PHI4:%[0-9]+]]:vec512 = PHI [[REG_SEQUENCE]], %bb.3, %29, %bb.4
-  ; CHECK-NEXT:   [[PHI5:%[0-9]+]]:vec512 = PHI [[REG_SEQUENCE1]], %bb.3, %34, %bb.4
+  ; CHECK-NEXT:   [[PHI2:%[0-9]+]]:ep = PHI [[VLDA_dmw_lda_w_ag_pstm_nrm_imm3]], %bb.3, %32, %bb.4
+  ; CHECK-NEXT:   [[PHI3:%[0-9]+]]:ep = PHI [[COPY5]], %bb.3, %34, %bb.4
+  ; CHECK-NEXT:   [[PHI4:%[0-9]+]]:vec256 = PHI [[VLDA_dmw_lda_w_ag_pstm_nrm_imm]], %bb.3, %27, %bb.4
+  ; CHECK-NEXT:   [[PHI5:%[0-9]+]]:vec512 = PHI [[REG_SEQUENCE]], %bb.3, %33, %bb.4
+  ; CHECK-NEXT:   [[REG_SEQUENCE1:%[0-9]+]]:vec512 = REG_SEQUENCE [[VBCST_32_]].sub_256_lo, %subreg.sub_256_hi, [[PHI4]], %subreg.sub_256_lo
   ; CHECK-NEXT:   [[VLDA_dmw_lda_w_ag_pstm_nrm_imm4:%[0-9]+]]:vec256, [[VLDA_dmw_lda_w_ag_pstm_nrm_imm5:%[0-9]+]]:ep = VLDA_dmw_lda_w_ag_pstm_nrm_imm [[PHI1]], 32 :: (load unknown-size from %ir.in1, align 32)
-  ; CHECK-NEXT:   [[REG_SEQUENCE2:%[0-9]+]]:vec512 = REG_SEQUENCE [[VBCST_32_]].sub_256_lo, %subreg.sub_256_hi, [[VLDA_dmw_lda_w_ag_pstm_nrm_imm4]], %subreg.sub_256_lo
   ; CHECK-NEXT:   [[ADD_add_r_ri1:%[0-9]+]]:er = nsw ADD_add_r_ri [[PHI]], -1, implicit-def $srcarry
-  ; CHECK-NEXT:   [[VMUL_vmac_cm_core_dense:%[0-9]+]]:acc1024 = VMUL_vmac_cm_core_dense [[PHI4]], [[PHI5]], [[COPY]]
+  ; CHECK-NEXT:   [[VMUL_vmac_cm_core_dense:%[0-9]+]]:acc1024 = VMUL_vmac_cm_core_dense [[REG_SEQUENCE1]], [[PHI5]], [[COPY]]
   ; CHECK-NEXT:   [[VLDA_dmw_lda_w_ag_pstm_nrm_imm6:%[0-9]+]]:vec256, [[VLDA_dmw_lda_w_ag_pstm_nrm_imm7:%[0-9]+]]:ep = VLDA_dmw_lda_w_ag_pstm_nrm_imm [[PHI2]], 32 :: (load unknown-size from %ir.in2, align 32)
-  ; CHECK-NEXT:   [[REG_SEQUENCE3:%[0-9]+]]:vec512 = REG_SEQUENCE [[VLDA_dmw_lda_w_ag_pstm_nrm_imm6]], %subreg.sub_256_lo
+  ; CHECK-NEXT:   [[REG_SEQUENCE2:%[0-9]+]]:vec512 = REG_SEQUENCE [[VLDA_dmw_lda_w_ag_pstm_nrm_imm6]], %subreg.sub_256_lo
   ; CHECK-NEXT:   [[VST_SRS_S8_S32_ag_pstm_nrm_imm:%[0-9]+]]:ep = VST_SRS_S8_S32_ag_pstm_nrm_imm [[PHI3]], 32, [[VMUL_vmac_cm_core_dense]], [[COPY2]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store (<32 x s8>) into %ir.out)
   ; CHECK-NEXT:   PseudoJNZ [[ADD_add_r_ri1]], %bb.4
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.5
@@ -86,9 +85,10 @@ body:             |
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[PHI6:%[0-9]+]]:ep = PHI [[VST_SRS_S8_S32_ag_pstm_nrm_imm]], %bb.4
-  ; CHECK-NEXT:   [[PHI7:%[0-9]+]]:vec512 = PHI [[REG_SEQUENCE2]], %bb.4
-  ; CHECK-NEXT:   [[PHI8:%[0-9]+]]:vec512 = PHI [[REG_SEQUENCE3]], %bb.4
-  ; CHECK-NEXT:   [[VMUL_vmac_cm_core_dense1:%[0-9]+]]:acc1024 = VMUL_vmac_cm_core_dense [[PHI7]], [[PHI8]], [[COPY]]
+  ; CHECK-NEXT:   [[PHI7:%[0-9]+]]:vec256 = PHI [[VLDA_dmw_lda_w_ag_pstm_nrm_imm4]], %bb.4
+  ; CHECK-NEXT:   [[PHI8:%[0-9]+]]:vec512 = PHI [[REG_SEQUENCE2]], %bb.4
+  ; CHECK-NEXT:   [[REG_SEQUENCE3:%[0-9]+]]:vec512 = REG_SEQUENCE [[VBCST_32_]].sub_256_lo, %subreg.sub_256_hi, [[PHI7]], %subreg.sub_256_lo
+  ; CHECK-NEXT:   [[VMUL_vmac_cm_core_dense1:%[0-9]+]]:acc1024 = VMUL_vmac_cm_core_dense [[REG_SEQUENCE3]], [[PHI8]], [[COPY]]
   ; CHECK-NEXT:   [[VST_SRS_S8_S32_ag_pstm_nrm_imm1:%[0-9]+]]:ep = VST_SRS_S8_S32_ag_pstm_nrm_imm [[PHI6]], 32, [[VMUL_vmac_cm_core_dense1]], [[COPY2]], implicit-def $srsrs_of, implicit $crsat, implicit $crrnd :: (store unknown-size into %ir.out, align 32)
   ; CHECK-NEXT:   PseudoJ_jump_imm %bb.2
   ; CHECK-NEXT: {{  $}}

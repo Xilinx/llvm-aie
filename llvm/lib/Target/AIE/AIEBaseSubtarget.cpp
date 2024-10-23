@@ -361,10 +361,12 @@ class EnforceCopyEdges : public ScheduleDAGMutation {
 
 class PropagateIncomingLatencies : public ScheduleDAGMutation {
   bool OnlyCopyLike;
+  bool OnlyLocalSources;
 
 public:
-  PropagateIncomingLatencies(bool OnlyCopyLike = true)
-      : OnlyCopyLike(OnlyCopyLike) {}
+  PropagateIncomingLatencies(bool OnlyCopyLike = true,
+                             bool OnlyLocalSources = true)
+      : OnlyCopyLike(OnlyCopyLike), OnlyLocalSources(OnlyLocalSources) {}
   void apply(ScheduleDAGInstrs *DAG) override {
     auto IsData = [](const SDep &D) { return D.getKind() == SDep::Data; };
     for (SUnit &SU : DAG->SUnits) {
@@ -381,25 +383,55 @@ public:
           }))
         continue;
 
-      // Find the common latency for all predecessors that can be
-      // "moved" to successors.
-      SDep *MinLatencyDep = nullptr;
-      for (SDep &PredEdge : make_filter_range(SU.Preds, IsData)) {
-        if (!MinLatencyDep ||
-            PredEdge.getLatency() < MinLatencyDep->getLatency())
-          MinLatencyDep = &PredEdge;
+      // Avoid pushing a REG_SEQUENCE close to its sources if it is likely to
+      // generate a hoistable COPY after regalloc. Keeping that COPY close to
+      // its consumers instead will facilitate MachineLICM.
+      // Indeed, that typically means that only the lanes corresponding to
+      // internal sources will be loop-carried. The external lane will come
+      // directly from the pre-header, and the corresponding COPY can then be
+      // hoisted by MachineLICM.
+      const MachineBasicBlock &MBB = *MI.getParent();
+      const MachineRegisterInfo &MRI = DAG->MRI;
+      auto MayProduceHoistableCopy = [&MBB, &MRI](const MachineInstr &MI) {
+        if (!MI.isRegSequence() || !MRI.isSSA())
+          return false;
+        const auto NumExternal =
+            count_if(MI.uses(), [&MBB, &MRI](const MachineOperand &MO) {
+              return MO.isReg() && MO.getReg().isVirtual() &&
+                     MRI.getVRegDef(MO.getReg())->getParent() != &MBB;
+            });
+        const auto NumInternal = MI.getNumOperands() - 1 - (2 * NumExternal);
+        return NumExternal == 1 && NumInternal >= 1;
+      };
+
+      // Whether to propagate latency from predecessors to successors (true),
+      // or from successors to predecessors (false).
+      const bool MoveLatToSuccessors =
+          !OnlyLocalSources || !MayProduceHoistableCopy(MI);
+
+      // Find the common latency for all predecessors (or successors) that
+      // can be "moved" to successors (or predecessors).
+      const SDep *MinLatencyDep = nullptr;
+      ArrayRef<SDep> SuccsOrPreds = MoveLatToSuccessors ? SU.Preds : SU.Succs;
+      for (const SDep &Edge : make_filter_range(SuccsOrPreds, IsData)) {
+        if (!MinLatencyDep || Edge.getLatency() < MinLatencyDep->getLatency())
+          MinLatencyDep = &Edge;
       }
       if (!MinLatencyDep)
         continue;
 
-      int PropagatableSrcLatency = MinLatencyDep->getLatency();
+      int AmountToShiftToSuccessors = MoveLatToSuccessors
+                                          ? int(MinLatencyDep->getLatency())
+                                          : -int(MinLatencyDep->getLatency());
       for (SDep &PredEdge : make_filter_range(SU.Preds, IsData)) {
         updatePredLatency(PredEdge, SU,
-                          PredEdge.getLatency() - PropagatableSrcLatency);
+                          int(PredEdge.getLatency()) -
+                              AmountToShiftToSuccessors);
       }
       for (SDep &SuccEdge : make_filter_range(SU.Succs, IsData)) {
         updateSuccLatency(SuccEdge, SU,
-                          SuccEdge.getLatency() + PropagatableSrcLatency);
+                          int(SuccEdge.getLatency()) +
+                              AmountToShiftToSuccessors);
       }
     }
   }

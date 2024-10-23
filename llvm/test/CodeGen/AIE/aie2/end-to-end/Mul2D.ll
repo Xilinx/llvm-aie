@@ -61,7 +61,7 @@ define void @mul2d(ptr noalias %in_ptr0, ptr noalias %in_ptr1, ptr noalias %out_
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %for.body.lr.ph
-; CHECK-NEXT:    nopa ; nopx ; mov p3, sp
+; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; mov p3, sp; nopv
 ; CHECK-NEXT:    paddb [p3], #-4
 ; CHECK-NEXT:    lda.u8 r0, [p3, #0]; mov p3, sp
 ; CHECK-NEXT:    paddb [p3], #-8
@@ -77,33 +77,35 @@ define void @mul2d(ptr noalias %in_ptr0, ptr noalias %in_ptr1, ptr noalias %out_
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova dc0, #0; vldb wl2, [p1], #32; extend.u8 r5, r5; mov r4, #-1
-; CHECK-NEXT:    vldb wl8, [p1], #32; lshl r1, r1, r4; mov dc4, dc0
-; CHECK-NEXT:    vldb.3d wl4, [p0], d0; add r1, r1, #-1
+; CHECK-NEXT:    mova r4, #-1
+; CHECK-NEXT:    mova dc0, #0; vldb wl2, [p1], #32; lshl r1, r1, r4
+; CHECK-NEXT:    vldb wl8, [p1], #32; add r1, r1, #-1; mov dc4, dc0
 ; CHECK-NEXT:    vldb.3d wl6, [p0], d0; jz r1, #.LBB0_4
-; CHECK-NEXT:    mova r3, #0; mov s0, r5 // Delay Slot 5
-; CHECK-NEXT:    vbcst.8 x0, r3 // Delay Slot 4
-; CHECK-NEXT:    mova r2, #1; vmov wh4, wl0 // Delay Slot 3
-; CHECK-NEXT:    ne r2, r0, r2; vmov wh6, wl0 // Delay Slot 2
+; CHECK-NEXT:    vldb.3d wl4, [p0], d0 // Delay Slot 5
+; CHECK-NEXT:    extend.u8 r5, r5 // Delay Slot 4
+; CHECK-NEXT:    mova r3, #0; movx r2, #1; mov s0, r5 // Delay Slot 3
+; CHECK-NEXT:    ne r2, r0, r2; vbcst.8 x0, r3 // Delay Slot 2
 ; CHECK-NEXT:    mova r0, #808; mov crSRSSign, r2 // Delay Slot 1
+; CHECK-NEXT:  // %bb.2:
+; CHECK-NEXT:    nopa ; nopb ; nopx ; vmov wh6, wl0
+; CHECK-NEXT:    vmov wh4, wl0
 ; CHECK-NEXT:    .p2align 4
-; CHECK-NEXT:  .LBB0_2: // %for.body
+; CHECK-NEXT:  .LBB0_3: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    vldb wl2, [p1], #32; nopa ; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; vldb.3d wl4, [p0], d0; add r1, r1, #-1; vmul cm0, x4, x2, r0
-; CHECK-NEXT:    vldb.3d wl6, [p0], d0; jnz r1, #.LBB0_2; vmul cm1, x6, x8, r0
+; CHECK-NEXT:    vldb wl2, [p1], #32; nopxm
+; CHECK-NEXT:    vldb.3d wl6, [p0], d0; add r1, r1, #-1; vmul cm0, x6, x2, r0
+; CHECK-NEXT:    vldb.3d wl4, [p0], d0; jnz r1, #.LBB0_3; vmul cm1, x4, x8, r0
 ; CHECK-NEXT:    vldb wl8, [p1], #32 // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    vst.srs.d8.s32 cm0, s0, [p2], #32; vmov wh4, wl0 // Delay Slot 2
-; CHECK-NEXT:    vst.srs.d8.s32 cm1, s0, [p2], #32; vmov wh6, wl0 // Delay Slot 1
-; CHECK-NEXT:  // %bb.3:
-; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
+; CHECK-NEXT:    vst.srs.d8.s32 cm0, s0, [p2], #32 // Delay Slot 2
+; CHECK-NEXT:    vst.srs.d8.s32 cm1, s0, [p2], #32 // Delay Slot 1
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB0_4:
-; CHECK-NEXT:    nopa ; nopx ; vmul cm0, x4, x2, r0
-; CHECK-NEXT:    vmul cm1, x6, x8, r0
+; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; vmov wh6, wl0; nopv
+; CHECK-NEXT:    nopa ; vmov wh4, wl0
+; CHECK-NEXT:    vmul cm0, x6, x2, r0
+; CHECK-NEXT:    vmul cm1, x4, x8, r0
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
