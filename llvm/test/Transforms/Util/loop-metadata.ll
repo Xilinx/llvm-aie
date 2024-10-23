@@ -350,6 +350,60 @@ for.body:                                         ; preds = %for.cond, %for.body
   br label %for.cond, !llvm.loop !6
 }
 
+; Only insert an assertion, if the header already contains the loop bounds Value.
+; Otherwise the IR is not correct and moving the loop Bounds into the header is
+; not yet desired.
+; Function Attrs: mustprogress noinline
+define  dso_local void @assume_insertion_only_in_correct_header(ptr nonnull align 32 dereferenceable(128) %params) {
+; CHECK-LABEL: @assume_insertion_only_in_correct_header(
+; CHECK-NEXT:  for.body.lr.ph:
+; CHECK-NEXT:    [[INNER_G:%.*]] = getelementptr inbounds i8, ptr [[PARAMS:%.*]], i20 12
+; CHECK-NEXT:    [[OUTER_G:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 8
+; CHECK-NEXT:    br label [[FOR_BODY:%.*]]
+; CHECK:       for.cond.cleanup:
+; CHECK-NEXT:    ret void
+; CHECK:       for.body:
+; CHECK-NEXT:    [[J_0349:%.*]] = phi i32 [ 0, [[FOR_BODY_LR_PH:%.*]] ], [ [[INC103:%.*]], [[FOR_COND8_FOR_COND_CLEANUP10_CRIT_EDGE:%.*]] ]
+; CHECK-NEXT:    [[TMP0:%.*]] = load i32, ptr [[INNER_G]], align 4
+; CHECK-NEXT:    br label [[FOR_BODY11:%.*]]
+; CHECK:       for.cond8.for.cond.cleanup10_crit_edge:
+; CHECK-NEXT:    [[INC103]] = add nuw nsw i32 [[J_0349]], 1
+; CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[OUTER_G]], align 8
+; CHECK-NEXT:    [[CMP:%.*]] = icmp ult i32 [[INC103]], [[TMP1]]
+; CHECK-NEXT:    br i1 [[CMP]], label [[FOR_BODY]], label [[FOR_COND_CLEANUP:%.*]], !llvm.loop [[LOOP0]]
+; CHECK:       for.body11:
+; CHECK-NEXT:    [[I_0315:%.*]] = phi i32 [ 0, [[FOR_BODY]] ], [ [[INC:%.*]], [[FOR_BODY11]] ]
+; CHECK-NEXT:    [[INC]] = add nuw nsw i32 [[I_0315]], 1
+; CHECK-NEXT:    [[EXITCOND_NOT:%.*]] = icmp eq i32 [[INC]], [[TMP0]]
+; CHECK-NEXT:    [[TMP2:%.*]] = icmp sgt i32 [[TMP0]], 3
+; CHECK-NEXT:    tail call void @llvm.assume(i1 [[TMP2]])
+; CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label [[FOR_COND8_FOR_COND_CLEANUP10_CRIT_EDGE]], label [[FOR_BODY11]], !llvm.loop [[LOOP0]]
+;
+for.body.lr.ph:
+  %inner_g = getelementptr inbounds i8, ptr %params, i20 12
+  %outer_g = getelementptr inbounds i8, ptr %params, i20 8
+  br label %for.body
+
+for.cond.cleanup:                                 ; preds = %for.cond8.for.cond.cleanup10_crit_edge
+  ret void
+
+for.body:                                         ; preds = %for.body.lr.ph, %for.cond8.for.cond.cleanup10_crit_edge
+  %j.0349 = phi i32 [ 0, %for.body.lr.ph ], [ %inc103, %for.cond8.for.cond.cleanup10_crit_edge ]
+  %46 = load i32, ptr %inner_g, align 4
+  br label %for.body11
+
+for.cond8.for.cond.cleanup10_crit_edge:           ; preds = %for.body11
+  %inc103 = add nuw nsw i32 %j.0349, 1
+  %114 = load i32, ptr %outer_g, align 8
+  %cmp = icmp ult i32 %inc103, %114
+  br i1 %cmp, label %for.body, label %for.cond.cleanup, !llvm.loop !6
+
+for.body11:                                       ; preds = %for.body, %for.body11
+  %i.0315 = phi i32 [ 0, %for.body ], [ %inc, %for.body11 ]
+  %inc = add nuw nsw i32 %i.0315, 1
+  %exitcond.not = icmp eq i32 %inc, %46
+  br i1 %exitcond.not, label %for.cond8.for.cond.cleanup10_crit_edge, label %for.body11, !llvm.loop !6
+}
 
 !2 = distinct !{!2, !7, !8, !9}
 !6 = distinct !{!6, !7, !8, !9}
