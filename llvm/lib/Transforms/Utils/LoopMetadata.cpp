@@ -203,6 +203,22 @@ void LoopMetadata::getBoundries() {
   LLVM_DEBUG(dbgs() << "MinValue = "; MinValue->dump());
   LLVM_DEBUG(dbgs() << "MaxValue = "; MaxBoundry->dump());
 
+  if (isa<Instruction>(MaxBoundry)) {
+    BasicBlock *MaxBB = dyn_cast<Instruction>(MaxBoundry)->getParent();
+    if (MaxBB && !DT->dominates(MaxBB, L->getHeader())) {
+      LLVM_DEBUG(
+          dbgs() << "LoopMetadata-Warning: MaxBoundry is not in the same "
+                    "BB as the Header ("
+                 << L->getHeader()->getName() << ")\nMaxBoundry =";
+          MaxBoundry->dump(););
+      if (MaxBB)
+        LLVM_DEBUG(dbgs() << "MaxBoundry BB = " << MaxBB->getName() << "\n";);
+      MinValue = nullptr;
+      MaxBoundry = nullptr;
+      return;
+    }
+  }
+
   if (isa<Constant>(MaxBoundry)) {
     LLVM_DEBUG(dbgs() << "Iteration Variable (Max value) is an integer and "
                          "therefore no assumption "
