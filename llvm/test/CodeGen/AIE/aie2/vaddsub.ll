@@ -11,10 +11,10 @@ define dso_local noundef <64 x i8> @test_vaddsub_s8(<64 x i8> noundef %a, <64 x 
 ; CHECK-LABEL: test_vaddsub_s8:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    mov r24, r0 // Delay Slot 4
-; CHECK-NEXT:    mov r25, r1 // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    or r24, r0, r0; mov r25, r1 // Delay Slot 3
 ; CHECK-NEXT:    vaddsub.8 x0, x2, x4, r25:r24 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
@@ -58,10 +58,10 @@ define dso_local noundef <32 x i16> @test_vaddsub_s16(<32 x i16> noundef %a, <32
 ; CHECK-LABEL: test_vaddsub_s16:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    mov r1, r16 // Delay Slot 4
-; CHECK-NEXT:    mov r16, r0 // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    or r1, r16, r16; mov r16, r0 // Delay Slot 3
 ; CHECK-NEXT:    vaddsub.16 x0, x2, x4, r16 // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
 entry:
@@ -73,10 +73,10 @@ define dso_local noundef <16 x i32> @test_vaddsub_s32(<16 x i32> noundef %a, <16
 ; CHECK-LABEL: test_vaddsub_s32:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    mov r1, r16 // Delay Slot 4
-; CHECK-NEXT:    mov r16, r0 // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    or r1, r16, r16; mov r16, r0 // Delay Slot 3
 ; CHECK-NEXT:    vaddsub.32 x0, x2, x4, r16 // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
 entry:

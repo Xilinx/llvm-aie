@@ -56,9 +56,9 @@ define dso_local ptr @_Z11test_selectbPvS_(i1 noundef zeroext %sel, ptr readnone
 ; CHECK-LABEL: _Z11test_selectbPvS_:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
-; CHECK-NEXT:    mov r27, r0 // Delay Slot 5
-; CHECK-NEXT:    mov r0, p1 // Delay Slot 4
+; CHECK-NEXT:    nopa ; ret lr ; nopm
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    or r27, r0, r0; mov r0, p1 // Delay Slot 4
 ; CHECK-NEXT:    mov r1, p2 // Delay Slot 3
 ; CHECK-NEXT:    sel.nez r0, r0, r1, r27 // Delay Slot 2
 ; CHECK-NEXT:    mov p0, r0 // Delay Slot 1

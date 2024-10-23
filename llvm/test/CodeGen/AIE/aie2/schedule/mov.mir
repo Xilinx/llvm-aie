@@ -328,3 +328,32 @@ body:             |
     $r2 = MOV_RLC_imm10_pseudo 1
     $r3 = MOV_RLC_imm10_pseudo 2
 ...
+
+---
+name:            multi_slot_mov_or_mov
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: multi_slot_mov_or_mov
+    ; CHECK: BUNDLE implicit-def $r2, implicit-def $r7, implicit killed $r1, implicit killed $r6 {
+    ; CHECK-NEXT:   $r2 = MOV_OR killed $r1
+    ; CHECK-NEXT:   $r7 = MOV_mv_scl killed $r6
+    ; CHECK-NEXT: }
+    $r7 = MOV_mv_scl $r6
+    $r2 = MOV_SCL_pseudo $r1
+...
+
+# Test for reverse order of multi-slot MOV and MOV_OR_GPR
+# Since the multi-slot selection is greedy i.e first availbale slot is
+# selected thus MOV_SCL_pseudo is materialized to M slot
+---
+name:            multi_slot_mov_or_mov_reverse
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: multi_slot_mov_or_mov_reverse
+    ; CHECK: $r2 = MOV_mv_scl killed $r1
+    ; CHECK-NEXT: $r7 = MOV_mv_scl killed $r6
+    $r2 = MOV_SCL_pseudo $r1
+    $r7 = MOV_mv_scl $r6
+...

@@ -21,20 +21,20 @@ define dso_local void @_Z16addToSymbolTablePKci(ptr nocapture readonly %name, i3
 ; CHECK-LABEL: _Z16addToSymbolTablePKci:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #32; nopxm
+; CHECK-NEXT:    nopa ; paddb [sp], #32; nopx
 ; CHECK-NEXT:    st p7, [sp, #-32]; movxm p7, #symbolCount // 4-byte Folded Spill
 ; CHECK-NEXT:    lda r17, [p7, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    mov p2, p0
-; CHECK-NEXT:    mova r1, #56; st r16, [sp, #-20] // 4-byte Folded Spill
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    mova r1, #56; mov p2, p0
 ; CHECK-NEXT:    st r17, [sp, #-24]; jl #strcpy // 4-byte Folded Spill
 ; CHECK-NEXT:    st p6, [sp, #-28]; mul r1, r17, r1 // 4-byte Folded Spill Delay Slot 5
 ; CHECK-NEXT:    st lr, [sp, #-16]; movxm p6, #symbolTable // 4-byte Folded Spill Delay Slot 4
 ; CHECK-NEXT:    mov m0, r1 // Delay Slot 3
-; CHECK-NEXT:    paddb [p6], m0; mov r16, r0 // Delay Slot 2
-; CHECK-NEXT:    mov p1, p6 // Delay Slot 1
+; CHECK-NEXT:    paddb [p6], m0; st r16, [sp, #-20] // 4-byte Folded Spill Delay Slot 2
+; CHECK-NEXT:    or r16, r0, r0; mov p1, p6 // Delay Slot 1
 ; CHECK-NEXT:    lda lr, [sp, #-16]; nopx // 4-byte Folded Reload
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop

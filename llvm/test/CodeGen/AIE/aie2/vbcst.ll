@@ -59,10 +59,10 @@ define dso_local noundef <16 x i32> @_Z27test_broadcast_to_v16uint32y(i64 nounde
 ; CHECK-LABEL: _Z27test_broadcast_to_v16uint32y:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    mov r24, r0 // Delay Slot 4
-; CHECK-NEXT:    mov r25, r1 // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    or r24, r0, r0; mov r25, r1 // Delay Slot 3
 ; CHECK-NEXT:    vbcst.64 x0, r25:r24 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:

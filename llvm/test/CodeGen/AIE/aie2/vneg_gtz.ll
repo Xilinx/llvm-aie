@@ -29,9 +29,9 @@ define dso_local noundef <32 x i16> @_Z18test_neg_v32uint16Dv32_t(<32 x i16> nou
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    mov r0, r16 // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    vneg_gtz16 x0, r16, x2 // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    or r0, r16, r16 // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r0 // Delay Slot 1
 entry:
   %0 = tail call { <32 x i16>, i32 } @llvm.aie2.vneg.gtz16(<32 x i16> %a)
@@ -45,9 +45,9 @@ define dso_local noundef <16 x i32> @_Z18test_neg_v16uint32Dv16_j(<16 x i32> nou
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    mov r0, r16 // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    vneg_gtz32 x0, r16, x2 // Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    or r0, r16, r16 // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r0 // Delay Slot 1
 entry:
   %0 = tail call { <16 x i32>, i32 } @llvm.aie2.vneg.gtz32(<16 x i32> %a)

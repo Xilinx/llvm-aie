@@ -121,10 +121,10 @@ define i32 @br_diamond_complex_end(i32  %a, i32  %b, i32 %v, i32* nocapture writ
 ; CHECK-NEXT:    nopa ; nopb ; geu r0, r2, r1
 ; CHECK-NEXT:    jnz r0, #.LBB3_2
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    paddb [sp], #32 // Delay Slot 4
-; CHECK-NEXT:    st r16, [sp, #-32] // 4-byte Folded Spill Delay Slot 3
-; CHECK-NEXT:    mov r16, r3 // Delay Slot 2
-; CHECK-NEXT:    st lr, [sp, #-28] // 4-byte Folded Spill Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    paddb [sp], #32 // Delay Slot 3
+; CHECK-NEXT:    st r16, [sp, #-32] // 4-byte Folded Spill Delay Slot 2
+; CHECK-NEXT:    st lr, [sp, #-28]; or r16, r3, r3 // 4-byte Folded Spill Delay Slot 1
 ; CHECK-NEXT:  // %bb.1: // %if.then
 ; CHECK-NEXT:    nopb ; nopa ; nops ; j #.LBB3_3; nopv
 ; CHECK-NEXT:    nopa ; nopx // Delay Slot 5

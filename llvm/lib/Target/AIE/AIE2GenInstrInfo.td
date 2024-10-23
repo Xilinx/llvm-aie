@@ -94,6 +94,8 @@ let Itinerary = II_NE in {
 }
 let Itinerary = II_OR in {
   def OR : AIE2_alu_r_rr_inst_alu<0b0101, (outs eR:$mRx), (ins eR:$mRx0, eR:$mRy), "or", "$mRx, $mRx0, $mRy">;
+  let isCodeGenOnly = 1 in 
+    def MOV_OR : AIE2_alu_r_rr_inst_alu_mov_gpr<0b0101, (outs eR:$mRx), (ins eR:$mRx0), "or", "$mRx, $mRx0, $mRx0">;
 }
 let Itinerary = II_SBC in {
   let Defs = [srCarry], Uses = [srCarry] in
