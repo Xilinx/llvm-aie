@@ -181,7 +181,7 @@ AIEWawRegRewriter::getVRegWithCopies(const MachineBasicBlock &MBB) const {
   // a running list of VRegWithCopies across various MBBs.
 
   SmallVector<unsigned, 16> VRegs;
-  uint MaxVReg = 0;
+  unsigned MaxVReg = 0;
   for (const MachineInstr &MI : MBB) {
     for (const MachineOperand Def : MI.defs()) {
       Register Reg = Def.getReg();
