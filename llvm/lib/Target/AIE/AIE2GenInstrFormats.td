@@ -221,6 +221,16 @@ class AIE2_alu_r_rr_inst_alu < bits<4> op, dag outs, dag ins, string opcodestr =
   let alu = {mRx0,mRx,mRy,op,0b1};
 }
 
+// To be used to replace MOV $rx $ry into OR $rx $ry $ry
+class AIE2_alu_r_rr_inst_alu_mov_gpr < bits<4> op, dag outs, dag ins, string opcodestr = "", string argstr = "">:
+    AIE2_inst_alu_instr32 <outs, ins, opcodestr, argstr> {
+  bits<5> mRx;
+  bits<4> eBinArith;
+  bits<5> mRx0;
+
+  let alu = {mRx0,mRx,mRx0,op,0b1};
+}
+
 class AIE2_lng_cg_lng < dag outs, dag ins, string opcodestr = "", string argstr = "">:
     AIE2_inst_lng_instr48 <outs, ins, opcodestr, argstr> {
   bits<32> i;

@@ -82,10 +82,10 @@ define dso_local noundef <32 x i16> @_Z11test_insertDv32_tiy(<32 x i16> noundef 
 ; CHECK-LABEL: _Z11test_insertDv32_tiy:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
-; CHECK-NEXT:    mov r24, r1 // Delay Slot 5
-; CHECK-NEXT:    mov r29, r0 // Delay Slot 4
-; CHECK-NEXT:    mov r25, r2 // Delay Slot 3
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    mov r24, r1 // Delay Slot 4
+; CHECK-NEXT:    or r29, r0, r0; mov r25, r2 // Delay Slot 3
 ; CHECK-NEXT:    vinsert.64 x0, x2, r29, r25:r24 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:

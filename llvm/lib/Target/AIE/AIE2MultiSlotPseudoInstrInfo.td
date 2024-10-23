@@ -32,6 +32,13 @@ let mayLoad = false, mayStore = false, hasSideEffects = false, Itinerary = II_PA
   }
 }
 
+// We use OR to mimic MOV behavior, and not ADD with 0 because ADD uses $srCarry register
+let Itinerary = II_MOV_SCL_RS, isMoveReg = 1, hasSideEffects = false, mayLoad = false, mayStore = false in {
+    def MOV_SCL_pseudo : MultiSlot_Pseudo<(outs eR:$mRx), (ins eR:$mRx0), 
+                                          "mov_scl_pseudo", "$mRx, $mRx0",
+                                          [MOV_mv_scl, MOV_OR]>;
+}
+
 // Pseudo MOV
 let isMoveImm = 1, isReMaterializable = 1, isAsCheapAsAMove = 1, Itinerary = II_MOV,
     hasSideEffects = false, mayLoad = false, mayStore = false in {

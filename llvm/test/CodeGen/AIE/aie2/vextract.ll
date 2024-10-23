@@ -448,25 +448,24 @@ define dso_local noundef signext i16 @_Z5test2Dv64_s(<64 x i16> noundef %vec)  {
 ; CHECK-LABEL: _Z5test2Dv64_s:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; paddb [sp], #32; nopx
+; CHECK-NEXT:    paddb [sp], #32; nopxm
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    lda r0, [p0, #0]
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mov r3, r16
 ; CHECK-NEXT:    mov r4, r17
 ; CHECK-NEXT:    mova r1, #0
-; CHECK-NEXT:    movx r2, #32
+; CHECK-NEXT:    mova r2, #32
+; CHECK-NEXT:    paddb [sp], #-32
 ; CHECK-NEXT:    lt r27, r0, r2
 ; CHECK-NEXT:    sel.nez r1, r1, r2, r27
 ; CHECK-NEXT:    add r17, r27, #-1
-; CHECK-NEXT:    sub r16, r0, r1
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vsel.16 x0, x4, x5, r17 // Delay Slot 5
-; CHECK-NEXT:    mov r17, r4 // Delay Slot 4
+; CHECK-NEXT:    sub r16, r0, r1 // Delay Slot 4
 ; CHECK-NEXT:    vextract.s16 r0, x0, r16 // Delay Slot 3
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    or r17, r4, r4 // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r3 // Delay Slot 1
 entry:
   %idx = alloca i32, align 4
@@ -479,25 +478,24 @@ define dso_local noundef i32 @_Z5test3Dv32_i(<32 x i32> noundef %vec)  {
 ; CHECK-LABEL: _Z5test3Dv32_i:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; paddb [sp], #32; nopx
+; CHECK-NEXT:    paddb [sp], #32; nopxm
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    lda r0, [p0, #0]
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mov r3, r16
 ; CHECK-NEXT:    mov r4, r17
 ; CHECK-NEXT:    mova r1, #0
-; CHECK-NEXT:    movx r2, #16
+; CHECK-NEXT:    mova r2, #16
+; CHECK-NEXT:    paddb [sp], #-32
 ; CHECK-NEXT:    lt r27, r0, r2
 ; CHECK-NEXT:    sel.nez r1, r1, r2, r27
 ; CHECK-NEXT:    add r17, r27, #-1
-; CHECK-NEXT:    sub r16, r0, r1
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vsel.32 x0, x4, x5, r17 // Delay Slot 5
-; CHECK-NEXT:    mov r17, r4 // Delay Slot 4
+; CHECK-NEXT:    sub r16, r0, r1 // Delay Slot 4
 ; CHECK-NEXT:    vextract.s32 r0, x0, r16 // Delay Slot 3
-; CHECK-NEXT:    paddb [sp], #-32 // Delay Slot 2
+; CHECK-NEXT:    or r17, r4, r4 // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r3 // Delay Slot 1
 entry:
   %idx = alloca i32, align 4

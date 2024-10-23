@@ -62,8 +62,7 @@ define dso_local void @TanhTemplated(ptr noalias %ifm, ptr noalias %ofm, ptr non
 ; CHECK-LABEL: TanhTemplated:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %for.body.lr.ph
-; CHECK-NEXT:    nopa ; mov r8, r16
-; CHECK-NEXT:    movxm r3, #16512
+; CHECK-NEXT:    nop ; movxm r3, #16512
 ; CHECK-NEXT:    movxm r4, #-16256
 ; CHECK-NEXT:    movxm r5, #32767
 ; CHECK-NEXT:    movxm r0, #16256
@@ -86,7 +85,7 @@ define dso_local void @TanhTemplated(ptr noalias %ifm, ptr noalias %ofm, ptr non
 ; CHECK-NEXT:    vconv.bf16.fp32 wl3, bmh2; vbcst.16 x4, r7
 ; CHECK-NEXT:    vmov wh6, wl2
 ; CHECK-NEXT:    vmin_ge.bf16 x3, r16, x3, x1
-; CHECK-NEXT:    vmax_lt.bf16 x3, r16, x3, x10
+; CHECK-NEXT:    or r8, r16, r16; vmax_lt.bf16 x3, r16, x3, x10
 ; CHECK-NEXT:    vconv.bf16.fp32 wl5, bmh3; vband x7, x8, x3
 ; CHECK-NEXT:    vmov wh7, wl2
 ; CHECK-NEXT:    vmin_ge.bf16 x5, r16, x5, x1

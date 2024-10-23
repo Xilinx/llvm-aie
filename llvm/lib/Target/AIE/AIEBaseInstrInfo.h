@@ -80,6 +80,10 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
                                         unsigned int Reg, APInt &Val) const {
     llvm_unreachable("Target didn't implement getConstantMovOpcode");
   }
+  /// Return Multi-Slot Pseudo opcode based on Reg type
+  virtual unsigned getScalarMovOpcode(Register DstReg, Register SrcReg) const {
+    llvm_unreachable("Target didn't implement getScalarMovOpcode");
+  }
   /// Returns the opcode for CYCLE_SEPARATOR meta instruction.
   /// Used for debugging purposes
   virtual unsigned getCycleSeparatorOpcode() const {

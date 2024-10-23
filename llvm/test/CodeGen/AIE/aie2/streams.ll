@@ -141,8 +141,7 @@ define void @put_ms_cph_doTlastReg(i32 inreg %tlast, i32 inreg %addr, i32 inreg 
 ; CHECK-LABEL: put_ms_cph_doTlastReg:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; nopx ; mov r28, r0
-; CHECK-NEXT:    mov m0, r1
+; CHECK-NEXT:    nopb ; nopa ; nops ; or r28, r0, r0; mov m0, r1; nopv
 ; CHECK-NEXT:    mov.cph ms, m0, #0, #3, r2, r28; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -174,8 +173,7 @@ define i32 @put_ms_cph_nb_doTlastReg(i32 inreg %tlast, i32 inreg %addr, i32 inre
 ; CHECK-LABEL: put_ms_cph_nb_doTlastReg:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopx ; mov r28, r1
-; CHECK-NEXT:    mov m0, r2
+; CHECK-NEXT:    nopa ; nopb ; or r28, r1, r1; mov m0, r2; nops
 ; CHECK-NEXT:    mov.cph.nb ms, m0, #3, #3, r3, r28; ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4

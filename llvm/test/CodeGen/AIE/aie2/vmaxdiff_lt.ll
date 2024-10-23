@@ -70,13 +70,12 @@ define <32 x i16> @test_vmaxdiff_lt_v32uint16_tbRj(<32 x i16>  %a, <32 x i16>  %
 ; CHECK-LABEL: test_vmaxdiff_lt_v32uint16_tbRj:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; nopx ; mov r2, r16; nops
-; CHECK-NEXT:    mova r1, #1
+; CHECK-NEXT:    nopb ; mova r1, #1; nops ; nopxm ; nopv
 ; CHECK-NEXT:    and r0, r0, r1
 ; CHECK-NEXT:    mov crVaddSign, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vmaxdiff_lt.d16 x0, r16, x2, x4 // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    or r2, r16, r16 // Delay Slot 4
 ; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
 ; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r2 // Delay Slot 1
@@ -94,9 +93,9 @@ define <32 x i16> @test_vmaxdiff_lt_v32uint16_sign0(<32 x i16>  %a, <32 x i16>  
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
-; CHECK-NEXT:    mov r0, r16 // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    vmax_lt.d16 x0, r16, x2, x4 // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    or r0, r16, r16 // Delay Slot 3
 ; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r0 // Delay Slot 1
 entry:
@@ -112,9 +111,9 @@ define <32 x i16> @test_vmaxdiff_lt_v32uint16_sign1(<32 x i16>  %a, <32 x i16>  
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
-; CHECK-NEXT:    mov r0, r16 // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    vmax_lt.s16 x0, r16, x2, x4 // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    or r0, r16, r16 // Delay Slot 3
 ; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r0 // Delay Slot 1
 entry:
@@ -129,13 +128,12 @@ define <16 x i32> @test_vmaxdiff_lt_v16int32(<16 x i32>  %a, <16 x i32> %b, i1 %
 ; CHECK-LABEL: test_vmaxdiff_lt_v16int32:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; nopx ; mov r2, r16; nops
-; CHECK-NEXT:    mova r1, #1
+; CHECK-NEXT:    nopb ; mova r1, #1; nops ; nopxm ; nopv
 ; CHECK-NEXT:    and r0, r0, r1
 ; CHECK-NEXT:    mov crVaddSign, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vmaxdiff_lt.d32 x0, r16, x2, x4 // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    or r2, r16, r16 // Delay Slot 4
 ; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
 ; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r2 // Delay Slot 1
@@ -153,9 +151,9 @@ define <16 x i32> @test_vmaxdiff_lt_v16int32_sign0(<16 x i32>  %a, <16 x i32> %b
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
-; CHECK-NEXT:    mov r0, r16 // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    vmax_lt.d32 x0, r16, x2, x2 // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    or r0, r16, r16 // Delay Slot 3
 ; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r0 // Delay Slot 1
 entry:
@@ -171,9 +169,9 @@ define <16 x i32> @test_vmaxdiff_lt_v16int32_sign1(<16 x i32>  %a, <16 x i32>  %
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
-; CHECK-NEXT:    mov r0, r16 // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    vmax_lt.s32 x0, r16, x2, x4 // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    or r0, r16, r16 // Delay Slot 3
 ; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r0 // Delay Slot 1
 entry:

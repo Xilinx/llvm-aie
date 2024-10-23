@@ -14,11 +14,11 @@ define i64 @test_i64(<2 x i32> %x) {
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopx // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov r0, r16 // Delay Slot 2
-; CHECK-NEXT:    mov r1, r17 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    or r0, r16, r16; mov r1, r17 // Delay Slot 1
 entry:
   %cast = bitcast <2 x i32> %x to i64
   ret i64 %cast
@@ -29,11 +29,11 @@ define <2 x i32> @test_v2i32(i64 %x) {
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nopx // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mov r16, r0 // Delay Slot 2
-; CHECK-NEXT:    mov r17, r1 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    or r16, r0, r0; mov r17, r1 // Delay Slot 1
 entry:
   %cast = bitcast i64 %x to <2 x i32>
   ret <2 x i32> %cast

@@ -143,10 +143,10 @@ define dso_local noundef <16 x i32> @_Z16test_shuffle_s64xj(i64 noundef %b, i32 
 ; CHECK-LABEL: _Z16test_shuffle_s64xj:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
-; CHECK-NEXT:    mov r24, r0 // Delay Slot 5
-; CHECK-NEXT:    mov r29, r2 // Delay Slot 4
-; CHECK-NEXT:    mov r25, r1 // Delay Slot 3
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    mov r24, r0 // Delay Slot 4
+; CHECK-NEXT:    or r29, r2, r2; mov r25, r1 // Delay Slot 3
 ; CHECK-NEXT:    vbcstshfl.64 x0, r25:r24, r29 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
