@@ -415,6 +415,9 @@ MDNode *llvm::updateIterCounts(LLVMContext &Context, MDNode *LoopID,
   return NewLoopID;
 }
 
+std::optional<int> llvm::getMinIterCounts(const Loop *L) {
+  return getOptionalIntLoopAttribute(L, "llvm.loop.itercount.range");
+}
 bool llvm::hasDisableAllTransformsHint(const Loop *L) {
   return getBooleanLoopAttribute(L, LLVMLoopDisableNonforced);
 }
