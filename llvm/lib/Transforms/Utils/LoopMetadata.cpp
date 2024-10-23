@@ -17,6 +17,7 @@
 #define DEBUG_TYPE "loop-metadata"
 
 using namespace llvm;
+bool isRotatable(const Loop *L);
 
 PreservedAnalyses LoopMetadata::run(Loop &L, LoopAnalysisManager &AM,
                                     LoopStandardAnalysisResults &AR,
@@ -46,6 +47,14 @@ bool LoopMetadata::extractMetaData(Loop &L) {
   if (MinIterCount.has_value() && MinIterCount.value() > 0) {
     this->MinIterCount = MinIterCount.value();
 
+    if (!isRotatable(this->L)) {
+      LLVM_DEBUG(dbgs() << "Processing Loop Metadata: "
+                        << L.getHeader()->getParent()->getName() << " "
+                        << L.getName() << " (" << MinIterCount.value()
+                        << ")\nAborting Metadata due to not rotatable!\n");
+      return false;
+    }
+
     LLVM_DEBUG(L.getHeader()->getParent()->dump(););
 
     addAssumeToLoopHeader(MinIterCount.value(), Context);
@@ -56,6 +65,12 @@ bool LoopMetadata::extractMetaData(Loop &L) {
   }
 
   return false;
+}
+
+// check basic loop rotation conditions
+bool isRotatable(const Loop *L) {
+  BranchInst *BI = dyn_cast<BranchInst>(L->getHeader()->getTerminator());
+  return L->isLoopExiting(L->getHeader()) && (BI && BI->isConditional());
 }
 
 bool isIncrement(const SCEV *S) {
