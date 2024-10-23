@@ -283,6 +283,9 @@ MDNode *updateIterCounts(LLVMContext &Context, MDNode *LoopID,
                          std::function<int64_t(int64_t)> FixMin,
                          std::function<int64_t(int64_t)> FixMax);
 
+/// Loop for the attribute that provides minimum iteration counts
+std::optional<int> getMinIterCounts(const Loop *L);
+
 /// Look for the loop attribute that disables all transformation heuristic.
 bool hasDisableAllTransformsHint(const Loop *L);
 
