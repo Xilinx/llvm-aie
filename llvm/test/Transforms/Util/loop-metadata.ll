@@ -233,6 +233,87 @@ for.body:                                         ; preds = %for.cond
 }
 
 
+; make sure that the added compare in the assume has matching types
+; Function Attrs: mustprogress noinline nounwind optnone
+define dso_local void @type_matching(ptr %ptr, i16 noundef signext %n) #0 {
+; CHECK-LABEL: @type_matching(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    [[PTR_ADDR:%.*]] = alloca ptr, align 4
+; CHECK-NEXT:    [[N_ADDR:%.*]] = alloca i16, align 2
+; CHECK-NEXT:    [[I:%.*]] = alloca i16, align 2
+; CHECK-NEXT:    store ptr [[PTR:%.*]], ptr [[PTR_ADDR]], align 4
+; CHECK-NEXT:    store i16 [[N:%.*]], ptr [[N_ADDR]], align 2
+; CHECK-NEXT:    store i16 0, ptr [[I]], align 2
+; CHECK-NEXT:    br label [[FOR_COND:%.*]]
+; CHECK:       for.cond:
+; CHECK-NEXT:    [[TMP0:%.*]] = load i16, ptr [[I]], align 2
+; CHECK-NEXT:    [[CONV:%.*]] = sext i16 [[TMP0]] to i32
+; CHECK-NEXT:    [[TMP1:%.*]] = load i16, ptr [[N_ADDR]], align 2
+; CHECK-NEXT:    [[CONV1:%.*]] = sext i16 [[TMP1]] to i32
+; CHECK-NEXT:    [[CMP:%.*]] = icmp slt i32 [[CONV]], [[CONV1]]
+; CHECK-NEXT:    br i1 [[CMP]], label [[FOR_BODY:%.*]], label [[FOR_END:%.*]]
+; CHECK:       for.body:
+; CHECK-NEXT:    [[TMP2:%.*]] = load ptr, ptr [[PTR_ADDR]], align 4
+; CHECK-NEXT:    [[TMP3:%.*]] = load i16, ptr [[I]], align 2
+; CHECK-NEXT:    [[IDXPROM:%.*]] = sext i16 [[TMP3]] to i32
+; CHECK-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds i32, ptr [[TMP2]], i32 [[IDXPROM]]
+; CHECK-NEXT:    [[TMP4:%.*]] = load i32, ptr [[ARRAYIDX]], align 4
+; CHECK-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP4]], 8
+; CHECK-NEXT:    [[TMP5:%.*]] = load ptr, ptr [[PTR_ADDR]], align 4
+; CHECK-NEXT:    [[TMP6:%.*]] = load i16, ptr [[I]], align 2
+; CHECK-NEXT:    [[IDXPROM2:%.*]] = sext i16 [[TMP6]] to i32
+; CHECK-NEXT:    [[ARRAYIDX3:%.*]] = getelementptr inbounds i32, ptr [[TMP5]], i32 [[IDXPROM2]]
+; CHECK-NEXT:    store i32 [[ADD]], ptr [[ARRAYIDX3]], align 4
+; CHECK-NEXT:    br label [[FOR_INC:%.*]]
+; CHECK:       for.inc:
+; CHECK-NEXT:    [[TMP7:%.*]] = load i16, ptr [[I]], align 2
+; CHECK-NEXT:    [[INC:%.*]] = add i16 [[TMP7]], 1
+; CHECK-NEXT:    store i16 [[INC]], ptr [[I]], align 2
+; CHECK-NEXT:    br label [[FOR_COND]], !llvm.loop [[LOOP4:![0-9]+]]
+; CHECK:       for.end:
+; CHECK-NEXT:    ret void
+;
+entry:
+  %ptr.addr = alloca ptr, align 4
+  %n.addr = alloca i16, align 2
+  %i = alloca i16, align 2
+  store ptr %ptr, ptr %ptr.addr, align 4
+  store i16 %n, ptr %n.addr, align 2
+  store i16 0, ptr %i, align 2
+  br label %for.cond
+
+for.cond:                                         ; preds = %for.inc, %entry
+  %0 = load i16, ptr %i, align 2
+  %conv = sext i16 %0 to i32
+  %1 = load i16, ptr %n.addr, align 2
+  %conv1 = sext i16 %1 to i32
+  %cmp = icmp slt i32 %conv, %conv1
+  br i1 %cmp, label %for.body, label %for.end
+
+for.body:                                         ; preds = %for.cond
+  %2 = load ptr, ptr %ptr.addr, align 4
+  %3 = load i16, ptr %i, align 2
+  %idxprom = sext i16 %3 to i32
+  %arrayidx = getelementptr inbounds i32, ptr %2, i32 %idxprom
+  %4 = load i32, ptr %arrayidx, align 4
+  %add = add nsw i32 %4, 8
+  %5 = load ptr, ptr %ptr.addr, align 4
+  %6 = load i16, ptr %i, align 2
+  %idxprom2 = sext i16 %6 to i32
+  %arrayidx3 = getelementptr inbounds i32, ptr %5, i32 %idxprom2
+  store i32 %add, ptr %arrayidx3, align 4
+  br label %for.inc
+
+for.inc:                                          ; preds = %for.body
+  %7 = load i16, ptr %i, align 2
+  %inc = add i16 %7, 1
+  store i16 %inc, ptr %i, align 2
+  br label %for.cond, !llvm.loop !2
+
+for.end:                                          ; preds = %for.cond
+  ret void
+}
+
 !2 = distinct !{!2, !7, !8, !9}
 !6 = distinct !{!6, !7, !8, !9}
 !7 = !{!"llvm.loop.mustprogress"}

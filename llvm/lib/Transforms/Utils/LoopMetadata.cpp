@@ -284,6 +284,15 @@ void LoopMetadata::addAssumeToLoopHeader(uint64_t MinIterCount,
   IRBuilder<> Builder(L->getHeader()->getTerminator());
 
   Value *Cmp = nullptr;
+  // ensure equalize types in the comparison
+  if (MaxBoundry->getType() != MinIterValue->getType()) {
+    if (MinIterValue->getType()->getScalarSizeInBits() <
+        MaxBoundry->getType()->getScalarSizeInBits()) {
+      MinIterValue = Builder.CreateSExt(MinIterValue, MaxBoundry->getType());
+    } else {
+      MaxBoundry = Builder.CreateSExt(MaxBoundry, MinIterValue->getType());
+    }
+  }
   Cmp = Builder.CreateICmpSGT(MaxBoundry, MinIterValue);
 
   LLVM_DEBUG(dbgs() << "Inserting Condition:"; MinIterValue->dump();
