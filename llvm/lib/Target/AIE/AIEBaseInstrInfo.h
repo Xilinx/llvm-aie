@@ -122,6 +122,12 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   /// Check whether this is a scheduling barrier
   virtual bool isSchedBarrier(const MachineInstr &) const { return false; }
 
+  /// Check whether OpCode is a scalar move instruction
+  virtual bool isScalarMove(unsigned OpCode) const { return false; }
+
+  /// Check if Reg is part of the R-type register file
+  virtual bool isRTypeReg(Register Reg) const { return false; }
+
   /// Returns the number of delay slots that this instruction requires.
   /// This might be 0
   virtual unsigned

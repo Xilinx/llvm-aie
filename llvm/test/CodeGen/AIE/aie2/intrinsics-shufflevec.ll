@@ -93,16 +93,12 @@ define <16 x i32> @test_insert_vector(<16 x i32> noundef %a, i32 noundef %idx, <
 ; CHECK-LABEL: test_insert_vector:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; nopx ; mov r24, r16; nops
-; CHECK-NEXT:    mov r25, r17
-; CHECK-NEXT:    mov r26, r18
-; CHECK-NEXT:    mov r27, r19
-; CHECK-NEXT:    mova r19, #0
-; CHECK-NEXT:    mova r18, #1
-; CHECK-NEXT:    mova r17, #2
-; CHECK-NEXT:    mova r16, #3
+; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; mov r27, r19; nopv
+; CHECK-NEXT:    nopa ; mov r26, r18
+; CHECK-NEXT:    mov r24, r16
+; CHECK-NEXT:    mova r19, #0; movx r16, #3; mov r18, #1
 ; CHECK-NEXT:    vextract.s32 r4, x4, r16
-; CHECK-NEXT:    mova r16, #4
+; CHECK-NEXT:    mova r17, #2; movx r16, #4; mov.d1 r25, r17
 ; CHECK-NEXT:    vextract.s32 r1, x4, r19
 ; CHECK-NEXT:    vextract.s32 r2, x4, r18
 ; CHECK-NEXT:    vextract.s32 r3, x4, r17

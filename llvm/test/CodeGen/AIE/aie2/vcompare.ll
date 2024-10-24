@@ -408,12 +408,10 @@ define i32 @test_eq_v32bfloat16(<32 x bfloat> %a, <32 x bfloat> %b) {
 ; CHECK-LABEL: test_eq_v32bfloat16:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; mov r1, r16; nopv
-; CHECK-NEXT:    nopa ; mov r2, r17
 ; CHECK-NEXT:    vge.bf16 r16, x2, x0
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    ret lr ; mov.d1 r1, r16
 ; CHECK-NEXT:    vge.bf16 r17, x0, x2 // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    mov.d1 r2, r17 // Delay Slot 4
 ; CHECK-NEXT:    and r0, r17, r16 // Delay Slot 3
 ; CHECK-NEXT:    mov r17, r2 // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
@@ -428,12 +426,10 @@ define i32 @test_ne_v32bfloat16(<32 x bfloat> %a, <32 x bfloat> %b) {
 ; CHECK-LABEL: test_ne_v32bfloat16:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; mov r1, r16; nopv
-; CHECK-NEXT:    nopa ; mov r2, r17
 ; CHECK-NEXT:    vlt.bf16 r16, x0, x2
-; CHECK-NEXT:    ret lr
+; CHECK-NEXT:    ret lr ; mov.d1 r1, r16
 ; CHECK-NEXT:    vlt.bf16 r17, x2, x0 // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    mov.d1 r2, r17 // Delay Slot 4
 ; CHECK-NEXT:    or r0, r17, r16 // Delay Slot 3
 ; CHECK-NEXT:    mov r17, r2 // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r1 // Delay Slot 1

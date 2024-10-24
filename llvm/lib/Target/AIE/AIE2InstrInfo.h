@@ -51,6 +51,8 @@ public:
   bool isLock(unsigned Opc) const override;
   bool isDelayedSchedBarrier(const MachineInstr &MI) const override;
   bool isSchedBarrier(const MachineInstr &MI) const override;
+  bool isScalarMove(unsigned OpCode) const override;
+  bool isRTypeReg(Register Reg) const override;
 
   virtual unsigned
   getNumReservedDelaySlots(const MachineInstr &MI) const override;

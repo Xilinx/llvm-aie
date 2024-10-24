@@ -12,15 +12,13 @@ define void @test_simple_dyn_alloca(i32 noundef %n) {
 ; CHECK-LABEL: test_simple_dyn_alloca:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #32; nopa ; nops ; nopxm ; nopv
-; CHECK-NEXT:    mova r1, #2; nopx
+; CHECK-NEXT:    padda [sp], #32; nopb ; movx r1, #2
+; CHECK-NEXT:    lshl r0, r0, r1
 ; CHECK-NEXT:    st p7, [sp, #-32] // 4-byte Folded Spill
 ; CHECK-NEXT:    mov p7, sp
 ; CHECK-NEXT:    mov p1, sp
-; CHECK-NEXT:    lshl r0, r0, r1
-; CHECK-NEXT:    mova r1, #-32
 ; CHECK-NEXT:    st lr, [sp, #-28] // 4-byte Folded Spill
-; CHECK-NEXT:    padda [p7], #-32
+; CHECK-NEXT:    mova r1, #-32; padds [p7], #-32
 ; CHECK-NEXT:    add r0, r0, #31
 ; CHECK-NEXT:    jl #extern_call
 ; CHECK-NEXT:    mov p0, p1 // Delay Slot 5
@@ -53,24 +51,19 @@ define void @test_loop_dyn_alloca(i32 noundef %n) {
 ; CHECK-LABEL: test_loop_dyn_alloca:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; paddb [sp], #64; nopxm
+; CHECK-NEXT:    paddb [sp], #64; nopa ; nops ; nopxm ; nopv
+; CHECK-NEXT:    st r16, [sp, #-36]; nopx // 4-byte Folded Spill
+; CHECK-NEXT:    st r17, [sp, #-40] // 4-byte Folded Spill
+; CHECK-NEXT:    st r18, [sp, #-44] // 4-byte Folded Spill
+; CHECK-NEXT:    mova r16, #1; movx r18, #10; mov r17, #0
+; CHECK-NEXT:    st r19, [sp, #-48] // 4-byte Folded Spill
+; CHECK-NEXT:    st r20, [sp, #-52] // 4-byte Folded Spill
+; CHECK-NEXT:    st r21, [sp, #-56] // 4-byte Folded Spill
 ; CHECK-NEXT:    st p7, [sp, #-64] // 4-byte Folded Spill
 ; CHECK-NEXT:    mov p7, sp
-; CHECK-NEXT:    st r16, [sp, #-36] // 4-byte Folded Spill
-; CHECK-NEXT:    mova r16, #1
-; CHECK-NEXT:    st r17, [sp, #-40] // 4-byte Folded Spill
-; CHECK-NEXT:    mova r17, #0
-; CHECK-NEXT:    st r18, [sp, #-44] // 4-byte Folded Spill
-; CHECK-NEXT:    mova r18, #10
-; CHECK-NEXT:    st r19, [sp, #-48] // 4-byte Folded Spill
-; CHECK-NEXT:    mova r19, #2
-; CHECK-NEXT:    st r20, [sp, #-52] // 4-byte Folded Spill
-; CHECK-NEXT:    mova r20, #-32
-; CHECK-NEXT:    st r21, [sp, #-56] // 4-byte Folded Spill
-; CHECK-NEXT:    mova r21, #0
 ; CHECK-NEXT:    st lr, [sp, #-32] // 4-byte Folded Spill
 ; CHECK-NEXT:    st p6, [sp, #-60] // 4-byte Folded Spill
-; CHECK-NEXT:    padda [p7], #-64
+; CHECK-NEXT:    mova r19, #2; padds [p7], #-64; movx r21, #0; mov r20, #-32
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB1_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
@@ -133,11 +126,9 @@ define  void @test_huge_stack(i32 noundef %n) #0 {
 ; CHECK-LABEL: test_huge_stack:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; paddb [sp], #40064; nopx
+; CHECK-NEXT:    nopa ; paddb [sp], #40064; nopxm
 ; CHECK-NEXT:    movxm m0, #-40064
-; CHECK-NEXT:    mova r1, #0
-; CHECK-NEXT:    mova r2, #2
-; CHECK-NEXT:    mova r3, #-32
+; CHECK-NEXT:    mova r1, #0; movx r3, #-32; mov r2, #2
 ; CHECK-NEXT:    st p7, [sp, #-40064] // 4-byte Folded Spill
 ; CHECK-NEXT:    mov p7, sp
 ; CHECK-NEXT:    mov p1, sp
@@ -150,11 +141,10 @@ define  void @test_huge_stack(i32 noundef %n) #0 {
 ; CHECK-NEXT:    mov p2, p7
 ; CHECK-NEXT:    mov p6, p7
 ; CHECK-NEXT:    paddb [p0], m0
-; CHECK-NEXT:    paddb [p6], #-32
 ; CHECK-NEXT:    movxm m0, #-40032
 ; CHECK-NEXT:    st r0, [p0, #0]
 ; CHECK-NEXT:    lda r0, [p0, #0]
-; CHECK-NEXT:    paddb [p2], m0
+; CHECK-NEXT:    paddb [p6], #-32; padds [p2], m0
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    mov r16, p2
 ; CHECK-NEXT:    st p0, [p6, #0]

@@ -32,9 +32,9 @@ define  <32 x i16> @test_set_v32int16(i32 noundef %idx, ptr nocapture readonly %
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    vlda.128 wl0, [p0]
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    mova r1, #4
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    mova r2, #64 // Delay Slot 5
+; CHECK-NEXT:    mova r1, #4; movx r2, #64 // Delay Slot 5
 ; CHECK-NEXT:    lshl r0, r0, r1 // Delay Slot 4
 ; CHECK-NEXT:    sub r0, r2, r0 // Delay Slot 3
 ; CHECK-NEXT:    vshift x0, x0, x0, r0 // Delay Slot 2
@@ -55,11 +55,9 @@ define <64 x i8> @insert_128_in_512(<64 x i8> noundef %v, i32 noundef %idx, <16 
 ; CHECK-LABEL: insert_128_in_512:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; mov r5, r16; nopv
-; CHECK-NEXT:    mova r1, #4
-; CHECK-NEXT:    mova r2, #64
-; CHECK-NEXT:    mova r3, #2
-; CHECK-NEXT:    mova r4, #15
+; CHECK-NEXT:    nopb ; mova r1, #4; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; mov r5, r16
+; CHECK-NEXT:    mova r2, #64; movx r4, #15; mov r3, #2
 ; CHECK-NEXT:    lshl r1, r0, r1
 ; CHECK-NEXT:    lshl r0, r0, r3
 ; CHECK-NEXT:    ret lr
@@ -87,11 +85,9 @@ define dso_local noundef <32 x i8> @insert_128_in_256(<32 x i8> noundef %v, i32 
 ; CHECK-LABEL: insert_128_in_256:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; mov r5, r16; nopv
-; CHECK-NEXT:    mova r1, #4
-; CHECK-NEXT:    mova r2, #64
-; CHECK-NEXT:    mova r3, #2
-; CHECK-NEXT:    mova r4, #15
+; CHECK-NEXT:    nopb ; mova r1, #4; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; mov r5, r16
+; CHECK-NEXT:    mova r2, #64; movx r4, #15; mov r3, #2
 ; CHECK-NEXT:    lshl r1, r0, r1
 ; CHECK-NEXT:    lshl r0, r0, r3
 ; CHECK-NEXT:    ret lr
@@ -121,15 +117,13 @@ define <64 x i8> @test_concat_4_v32uint4(<16 x i8> noundef %v0, <16 x i8> nounde
 ; CHECK-LABEL: test_concat_4_v32uint4:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    mova r0, #48; nopx
 ; CHECK-NEXT:    mov r3, r16
 ; CHECK-NEXT:    mov r4, r17
 ; CHECK-NEXT:    mov r5, r18
-; CHECK-NEXT:    mova r0, #48
-; CHECK-NEXT:    mova r1, #32
 ; CHECK-NEXT:    movxm r16, #3840
-; CHECK-NEXT:    mova r2, #16
 ; CHECK-NEXT:    movxm r17, #61440
-; CHECK-NEXT:    mova r18, #15
+; CHECK-NEXT:    mova r1, #32; movx r18, #15; mov r2, #16
 ; CHECK-NEXT:    vshift x0, x0, x4, r0
 ; CHECK-NEXT:    vshift x4, x0, x6, r1
 ; CHECK-NEXT:    vsel.32 x0, x0, x4, r16
@@ -164,10 +158,9 @@ define <32 x i8> @test_concat_2_v32uint4(<16 x i8> noundef %v0, <16 x i8> nounde
 ; CHECK-LABEL: test_concat_2_v32uint4:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopx ; mov r1, r16
-; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    mova r0, #48 // Delay Slot 5
-; CHECK-NEXT:    mova r16, #15 // Delay Slot 4
+; CHECK-NEXT:    nopa ; ret lr ; nopm
+; CHECK-NEXT:    mov r1, r16 // Delay Slot 5
+; CHECK-NEXT:    mova r0, #48; movx r16, #15 // Delay Slot 4
 ; CHECK-NEXT:    vshift x0, x0, x4, r0 // Delay Slot 3
 ; CHECK-NEXT:    vsel.32 x0, x0, x2, r16 // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
