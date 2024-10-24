@@ -18,39 +18,22 @@
 #define LLVM_LIB_TARGET_AIE_AIE2TARGETTRANSFORMINFO_H
 
 #include "AIE2TargetMachine.h"
+#include "AIEBaseTargetTransformInfo.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/CodeGen/BasicTTIImpl.h"
 #include "llvm/Transforms/Utils/ScalarEvolutionExpander.h"
 
 namespace llvm {
-class AIE2TTIImpl : public BasicTTIImplBase<AIE2TTIImpl> {
-  typedef BasicTTIImplBase<AIE2TTIImpl> BaseT;
+class AIE2TTIImpl : public AIEBaseTTIImpl<AIE2TTIImpl> {
+  typedef AIEBaseTTIImpl<AIE2TTIImpl> BaseT;
   typedef TargetTransformInfo TTI;
   friend BaseT;
 
-  const AIE2Subtarget *ST;
-  const AIE2TargetLowering *TLI;
-
-  const AIE2Subtarget *getST() const { return ST; }
-  const AIE2TargetLowering *getTLI() const { return TLI; }
-
 public:
   explicit AIE2TTIImpl(const AIE2TargetMachine *TM, const Function &F)
-      : BaseT(TM, F.getParent()->getDataLayout()), ST(TM->getSubtargetImpl(F)),
-        TLI(ST->getTargetLowering()) {}
+      : BaseT(TM, F.getParent()->getDataLayout(),
+              (const AIESubtarget *)TM->getSubtargetImpl(F)) {}
 
-  int getIntImmCost(const APInt &Imm, Type *Ty, TTI::TargetCostKind CostKind) {
-    // TODO Handle Target Specific constant cost
-    //  Larger constants require an add.
-    return TTI::TCC_Basic;
-  }
-  InstructionCost getMaskedMemoryOpCost(
-      unsigned Opcode, Type *Src, Align Alignment, unsigned AddressSpace,
-      TTI::TargetCostKind CostKind = TTI::TCK_RecipThroughput) const {
-    // Default cost is 32.  We can do better than that, but what is the real
-    // cost?
-    return TTI::TCC_Basic;
-  }
   void getUnrollingPreferences(Loop *L, ScalarEvolution &SE,
                                TTI::UnrollingPreferences &UP,
                                OptimizationRemarkEmitter *ORE);
