@@ -417,16 +417,16 @@ define dso_local noundef signext i8 @_Z5test1Dv128_a(<128 x i8> noundef %vec)  {
 ; CHECK-LABEL: _Z5test1Dv128_a:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    paddb [sp], #32; nopxm
+; CHECK-NEXT:    nopa ; paddb [sp], #32; nopx
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    lda r0, [p0, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mov r3, r16
-; CHECK-NEXT:    mova r1, #0
-; CHECK-NEXT:    movx r2, #64
+; CHECK-NEXT:    movx r1, #0; mov r2, #64
 ; CHECK-NEXT:    lt r27, r0, r2
 ; CHECK-NEXT:    sel.nez r1, r1, r2, r27
 ; CHECK-NEXT:    add r24, r27, #-1
@@ -448,16 +448,16 @@ define dso_local noundef signext i16 @_Z5test2Dv64_s(<64 x i16> noundef %vec)  {
 ; CHECK-LABEL: _Z5test2Dv64_s:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; paddb [sp], #32; nopx
+; CHECK-NEXT:    paddb [sp], #32; nopx
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    lda r0, [p0, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mov r3, r16
 ; CHECK-NEXT:    mov r4, r17
-; CHECK-NEXT:    mova r1, #0
-; CHECK-NEXT:    movx r2, #32
+; CHECK-NEXT:    movx r1, #0; mov r2, #32
 ; CHECK-NEXT:    lt r27, r0, r2
 ; CHECK-NEXT:    sel.nez r1, r1, r2, r27
 ; CHECK-NEXT:    add r17, r27, #-1
@@ -479,16 +479,16 @@ define dso_local noundef i32 @_Z5test3Dv32_i(<32 x i32> noundef %vec)  {
 ; CHECK-LABEL: _Z5test3Dv32_i:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; paddb [sp], #32; nopx
+; CHECK-NEXT:    paddb [sp], #32; nopx
 ; CHECK-NEXT:    mov p0, sp
 ; CHECK-NEXT:    paddb [p0], #-32
 ; CHECK-NEXT:    lda r0, [p0, #0]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mov r3, r16
 ; CHECK-NEXT:    mov r4, r17
-; CHECK-NEXT:    mova r1, #0
-; CHECK-NEXT:    movx r2, #16
+; CHECK-NEXT:    movx r1, #0; mov r2, #16
 ; CHECK-NEXT:    lt r27, r0, r2
 ; CHECK-NEXT:    sel.nez r1, r1, r2, r27
 ; CHECK-NEXT:    add r17, r27, #-1
