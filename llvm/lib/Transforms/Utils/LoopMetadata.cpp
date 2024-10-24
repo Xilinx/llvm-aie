@@ -33,7 +33,7 @@ bool LoopMetadata::extractMetaData(Loop &L) {
   this->L = &L;
   Context = &L.getHeader()->getParent()->getContext();
 
-  std::optional<int> MinIterCount = getMinIterCounts(&L);
+  std::optional<int> MinIterCount = getMinTripCount(&L);
 
   // dump loop summary
   LLVM_DEBUG(dbgs() << "Preheader:");
