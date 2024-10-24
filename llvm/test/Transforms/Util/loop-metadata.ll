@@ -498,6 +498,92 @@ for.body.exit:
   br i1 %cmp2, label %for.body, label %for.cond.cleanup, !llvm.loop !6
 }
 
+; properly calculate the assumption, if the loop has a start value
+; increment the IV
+; Function Attrs: mustprogress noinline
+define dso_local void @incrementWithStartValue(ptr %ptr, i32 noundef %n) #0 {
+; CHECK-LABEL: @incrementWithStartValue(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    br label [[FOR_COND:%.*]]
+; CHECK:       for.cond:
+; CHECK-NEXT:    [[I_0:%.*]] = phi i32 [ 5, [[ENTRY:%.*]] ], [ [[INC:%.*]], [[FOR_BODY:%.*]] ]
+; CHECK-NEXT:    [[CMP:%.*]] = icmp slt i32 [[I_0]], [[N:%.*]]
+; CHECK-NEXT:    [[TMP0:%.*]] = icmp sgt i32 [[N]], 8
+; CHECK-NEXT:    tail call void @llvm.assume(i1 [[TMP0]])
+; CHECK-NEXT:    br i1 [[CMP]], label [[FOR_BODY]], label [[FOR_COND_CLEANUP:%.*]]
+; CHECK:       for.cond.cleanup:
+; CHECK-NEXT:    ret void
+; CHECK:       for.body:
+; CHECK-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds i32, ptr [[PTR:%.*]], i32 [[I_0]]
+; CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[ARRAYIDX]], align 4
+; CHECK-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP1]], 8
+; CHECK-NEXT:    store i32 [[ADD]], ptr [[ARRAYIDX]], align 4
+; CHECK-NEXT:    [[INC]] = add nsw i32 [[I_0]], 1
+; CHECK-NEXT:    br label [[FOR_COND]], !llvm.loop [[LOOP4]]
+;
+entry:
+  br label %for.cond
+
+for.cond:                                         ; preds = %for.body, %entry
+  %i.0 = phi i32 [ 5, %entry ], [ %inc, %for.body ]
+  %cmp = icmp slt i32 %i.0, %n
+  br i1 %cmp, label %for.body, label %for.cond.cleanup
+
+for.cond.cleanup:                                 ; preds = %for.cond
+  ret void
+
+for.body:                                         ; preds = %for.cond
+  %arrayidx = getelementptr inbounds i32, ptr %ptr, i32 %i.0
+  %0 = load i32, ptr %arrayidx, align 4
+  %add = add nsw i32 %0, 8
+  store i32 %add, ptr %arrayidx, align 4
+  %inc = add nsw i32 %i.0, 1
+  br label %for.cond, !llvm.loop !6
+}
+
+; properly calculate the assumption, if the loop has a start value
+; decrement the IV
+; Function Attrs: mustprogress nounwind
+define dso_local void @decrementWithStartValue(ptr %ptr, i32 noundef %n) #0 {
+; CHECK-LABEL: @decrementWithStartValue(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    br label [[FOR_COND:%.*]]
+; CHECK:       for.cond:
+; CHECK-NEXT:    [[I_0:%.*]] = phi i32 [ [[N:%.*]], [[ENTRY:%.*]] ], [ [[DEC:%.*]], [[FOR_BODY:%.*]] ]
+; CHECK-NEXT:    [[CMP:%.*]] = icmp sge i32 [[I_0]], 4
+; CHECK-NEXT:    [[TMP0:%.*]] = icmp sgt i32 [[N]], 8
+; CHECK-NEXT:    tail call void @llvm.assume(i1 [[TMP0]])
+; CHECK-NEXT:    br i1 [[CMP]], label [[FOR_BODY]], label [[FOR_COND_CLEANUP:%.*]]
+; CHECK:       for.cond.cleanup:
+; CHECK-NEXT:    ret void
+; CHECK:       for.body:
+; CHECK-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds i32, ptr [[PTR:%.*]], i32 [[I_0]]
+; CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[ARRAYIDX]], align 4
+; CHECK-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP1]], 8
+; CHECK-NEXT:    store i32 [[ADD]], ptr [[ARRAYIDX]], align 4
+; CHECK-NEXT:    [[DEC]] = add nsw i32 [[I_0]], -1
+; CHECK-NEXT:    br label [[FOR_COND]], !llvm.loop [[LOOP4]]
+;
+entry:
+  br label %for.cond
+
+for.cond:                                         ; preds = %for.body, %entry
+  %i.0 = phi i32 [ %n, %entry ], [ %dec, %for.body ]
+  %cmp = icmp sge i32 %i.0, 4
+  br i1 %cmp, label %for.body, label %for.cond.cleanup
+
+for.cond.cleanup:                                 ; preds = %for.cond
+  ret void
+
+for.body:                                         ; preds = %for.cond
+  %arrayidx = getelementptr inbounds i32, ptr %ptr, i32 %i.0
+  %0 = load i32, ptr %arrayidx, align 4
+  %add = add nsw i32 %0, 8
+  store i32 %add, ptr %arrayidx, align 4
+  %dec = add nsw i32 %i.0, -1
+  br label %for.cond, !llvm.loop !6
+}
+
 !2 = distinct !{!2, !7, !8, !9}
 !6 = distinct !{!6, !7, !8, !9}
 !7 = !{!"llvm.loop.mustprogress"}
