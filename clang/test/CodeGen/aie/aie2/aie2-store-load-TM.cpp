@@ -14,9 +14,10 @@
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = xor i32 [[REGADDR:%.*]], 524288
 // CHECK-NEXT:    [[CONV_I:%.*]] = trunc i32 [[TMP0]] to i20
-// CHECK-NEXT:    [[TMP1:%.*]] = inttoptr i20 [[CONV_I]] to ptr
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef i32 @llvm.aie2.read.tm(ptr [[TMP1]])
-// CHECK-NEXT:    ret i32 [[TMP2]]
+// CHECK-NEXT:    [[TMP1:%.*]] = inttoptr i20 [[CONV_I]] to ptr addrspace(15)
+// CHECK-NEXT:    [[TMP2:%.*]] = addrspacecast ptr addrspace(15) [[TMP1]] to ptr
+// CHECK-NEXT:    [[TMP3:%.*]] = tail call noundef i32 @llvm.aie2.read.tm(ptr [[TMP2]])
+// CHECK-NEXT:    ret i32 [[TMP3]]
 //
 uint32 test_read_tm(uint32 regAddr) {
    return read_tm(regAddr);
@@ -26,8 +27,9 @@ uint32 test_read_tm(uint32 regAddr) {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = xor i32 [[REGADDR:%.*]], 524288
 // CHECK-NEXT:    [[CONV_I:%.*]] = trunc i32 [[TMP0]] to i20
-// CHECK-NEXT:    [[TMP1:%.*]] = inttoptr i20 [[CONV_I]] to ptr
-// CHECK-NEXT:    tail call void @llvm.aie2.write.tm(i32 [[REGVAL:%.*]], ptr [[TMP1]])
+// CHECK-NEXT:    [[TMP1:%.*]] = inttoptr i20 [[CONV_I]] to ptr addrspace(15)
+// CHECK-NEXT:    [[TMP2:%.*]] = addrspacecast ptr addrspace(15) [[TMP1]] to ptr
+// CHECK-NEXT:    tail call void @llvm.aie2.write.tm(i32 [[REGVAL:%.*]], ptr [[TMP2]])
 // CHECK-NEXT:    ret void
 //
 void test_write_tm(uint32 regVal, uint32 regAddr) {
@@ -38,9 +40,10 @@ void test_write_tm(uint32 regVal, uint32 regAddr) {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[ADD_I:%.*]] = add i32 [[TMADDRSPACESTART:%.*]], [[REGADDR:%.*]]
 // CHECK-NEXT:    [[CONV_I:%.*]] = trunc i32 [[ADD_I]] to i20
-// CHECK-NEXT:    [[TMP0:%.*]] = inttoptr i20 [[CONV_I]] to ptr
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef i32 @llvm.aie2.read.tm(ptr [[TMP0]])
-// CHECK-NEXT:    ret i32 [[TMP1]]
+// CHECK-NEXT:    [[TMP0:%.*]] = inttoptr i20 [[CONV_I]] to ptr addrspace(15)
+// CHECK-NEXT:    [[TMP1:%.*]] = addrspacecast ptr addrspace(15) [[TMP0]] to ptr
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef i32 @llvm.aie2.read.tm(ptr [[TMP1]])
+// CHECK-NEXT:    ret i32 [[TMP2]]
 //
 uint32 test_read_tm(uint32 regAddr, uint32 TMAddrSpaceStart) {
    return read_tm(regAddr, TMAddrSpaceStart);
@@ -50,8 +53,9 @@ uint32 test_read_tm(uint32 regAddr, uint32 TMAddrSpaceStart) {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[ADD_I:%.*]] = add i32 [[TMADDRSPACESTART:%.*]], [[REGADDR:%.*]]
 // CHECK-NEXT:    [[CONV_I:%.*]] = trunc i32 [[ADD_I]] to i20
-// CHECK-NEXT:    [[TMP0:%.*]] = inttoptr i20 [[CONV_I]] to ptr
-// CHECK-NEXT:    tail call void @llvm.aie2.write.tm(i32 [[REGVAL:%.*]], ptr [[TMP0]])
+// CHECK-NEXT:    [[TMP0:%.*]] = inttoptr i20 [[CONV_I]] to ptr addrspace(15)
+// CHECK-NEXT:    [[TMP1:%.*]] = addrspacecast ptr addrspace(15) [[TMP0]] to ptr
+// CHECK-NEXT:    tail call void @llvm.aie2.write.tm(i32 [[REGVAL:%.*]], ptr [[TMP1]])
 // CHECK-NEXT:    ret void
 //
 void test_write_tm(uint32 regVal, uint32 regAddr, uint32 TMAddrSpaceStart) {

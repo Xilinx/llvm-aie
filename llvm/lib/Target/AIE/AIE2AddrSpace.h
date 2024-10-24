@@ -103,7 +103,7 @@ public:
       MemoryBanks.set(static_cast<unsigned>(AIEBanks::TileMemory));
       break;
     default:
-      MemoryBanks.set();
+      return getDefaultMemoryBank();
       break;
     }
 
