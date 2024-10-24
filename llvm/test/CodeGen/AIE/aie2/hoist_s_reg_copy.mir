@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc --mtriple=aie2 --run-pass=machinelicm %s -o - | FileCheck  %s
+# RUN: llc --mtriple=aie2 --run-pass=early-machinelicm %s -o - | FileCheck  %s
 
 # %24:mss = COPY %20 can be safely hoisted, it doesn't increase the register
 # pressure beyond any threshold.
