@@ -452,8 +452,19 @@ AIE2LegalizerInfo::AIE2LegalizerInfo(const AIE2Subtarget &ST) : AIEHelper(ST) {
       // Legacy legalization for bitcasts
       .legalFor({{V2S32, S32}})
       .unsupportedIf(IsNotValidDestinationVector)
-      // We clamp the high values and not the low ones, sice the former
+      // We clamp the high values and not the low ones, since the former
       // splits the values but the latter keeps the same G_BUILD_VECTOR in
+      // the output instructions which causes an infinite loop since it
+      // can't reach our custom legalization code.
+      .clampMaxNumElements(0, S8, 64)
+      .clampMaxNumElements(0, S16, 32)
+      .clampMaxNumElements(0, S32, 16)
+      .custom();
+
+  getActionDefinitionsBuilder(G_BUILD_VECTOR_TRUNC)
+      .unsupportedIf(IsNotValidDestinationVector)
+      // We clamp the high values and not the low ones, since the former
+      // splits the values but the latter keeps the same G_BUILD_VECTOR_TRUNC in
       // the output instructions which causes an infinite loop since it
       // can't reach our custom legalization code.
       .clampMaxNumElements(0, S8, 64)
@@ -522,6 +533,7 @@ bool AIE2LegalizerInfo::legalizeCustom(
   case TargetOpcode::G_FSUB:
     return AIEHelper.legalizeG_FADDSUB(Helper, MI);
   case TargetOpcode::G_BUILD_VECTOR:
+  case TargetOpcode::G_BUILD_VECTOR_TRUNC:
     return AIEHelper.legalizeG_BUILD_VECTOR(Helper, MI);
   case TargetOpcode::G_UNMERGE_VALUES:
     return AIEHelper.legalizeG_UNMERGE_VALUES(Helper, MI);

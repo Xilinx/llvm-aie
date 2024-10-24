@@ -737,7 +737,7 @@ unsigned AIE2InstrInfo::getCycleSeparatorOpcode() const {
 }
 
 unsigned AIE2InstrInfo::getGenericAddVectorEltOpcode() const {
-  return AIE2::G_AIE_ADD_VECTOR_ELT_LEFT;
+  return AIE2::G_AIE_ADD_VECTOR_ELT_HI;
 }
 
 unsigned AIE2InstrInfo::getGenericInsertVectorEltOpcode() const {
