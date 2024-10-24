@@ -29,19 +29,19 @@ private:
   unsigned MinIterCount;
   bool IsLoopIncrementing;
 
-  Value *MinBoundry;
-  Value *MaxBoundry;
+  Value *MinBoundary;
+  Value *MaxBoundary;
 
   bool extractMetaData(Loop &L);
 
   void addAssumeToLoopHeader(uint64_t MinIterCount, LLVMContext *Context);
 
-  void getBoundries();
+  void getBoundaries();
   Value *getMinIterValue(const SCEV *S, int MinIterCount, LLVMContext *Context);
 
-  void calcIncrement(const SCEV *S);
+  bool calcIncrement(const SCEV *S);
   bool assignBoundsInEqualComparison(Value *Op0, Value *Op1);
-  bool checkBoundries();
+  bool validateBounds();
   Value *getValue(Value *V) const;
   Value *getLoopVariantInEqualityComparison(Value *Op) const;
 
