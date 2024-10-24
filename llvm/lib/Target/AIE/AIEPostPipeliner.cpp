@@ -112,7 +112,8 @@ int PostPipeliner::getResMII(MachineBasicBlock &LoopBlock) {
   std::vector<uint64_t> Scoreboard(NInstr, 0);
   int MII = 1;
   for (auto &MI : LoopBlock) {
-    auto *SlotInfo = TII->getSlotInfo(TII->getSlotKind(MI.getOpcode()));
+    const unsigned Opcode = HR.getSelectedAltDescs().getOpcode(&MI);
+    auto *SlotInfo = TII->getSlotInfo(TII->getSlotKind(Opcode));
     SlotBits Slots = SlotInfo ? SlotInfo->getSlotSet() : 0;
 
     int C = 0;
@@ -290,6 +291,7 @@ bool PostPipeliner::scheduleFirstIteration() {
       return false;
     }
     const int LocalCycle = Actual % II;
+    const MCInstrDesc &Desc = *HR.getSelectedAltDescs().getDesc(MI);
     const MemoryBankBits MemoryBanks = HR.getMemoryBanks(MI);
     LLVM_DEBUG(dbgs() << "  Emit in " << -Depth + LocalCycle << "\n");
     int Cycle = -Depth + LocalCycle;
@@ -299,8 +301,8 @@ bool PostPipeliner::scheduleFirstIteration() {
         return false;
       }
 
-      HR.emitInScoreboard(Scoreboard, MI->getDesc(), MemoryBanks,
-                          MI->operands(), MI->getMF()->getRegInfo(), Cycle);
+      HR.emitInScoreboard(Scoreboard, Desc, MemoryBanks, MI->operands(),
+                          MI->getMF()->getRegInfo(), Cycle);
       Cycle += II;
     }
 

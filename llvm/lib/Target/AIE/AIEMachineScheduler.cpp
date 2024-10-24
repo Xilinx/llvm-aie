@@ -88,6 +88,10 @@ static cl::opt<bool> UseLoopHeuristics(
     "aie-loop-sched-heuristics", cl::init(true),
     cl::desc("Use special picking heuristics when scheduling a loop region"));
 
+static cl::opt<bool> ReAssignMultiSlotInstr(
+    "aie-reassign-multislot-instr", cl::init(true),
+    cl::desc("Re-assign multi-slot instructions during iterative scheduling"));
+
 namespace {
 // A sentinel value to represent an unknown SUnit.
 const constexpr unsigned UnknownSUNum = ~0;
@@ -269,7 +273,8 @@ void AIEPostRASchedStrategy::initializeBotScoreBoard(ScoreboardTrust Trust) {
   /// by starting in the earliest possible cycle, -Depth
   auto InsertInCycle = [=](MachineInstr &MI, int Cycle) {
     BotHazardRec->emitInScoreboard(
-        MI.getDesc(), BotHazardRec->getMemoryBanks(&MI), MI.operands(),
+        *BotHazardRec->getSelectedAltDescs().getDesc(&MI),
+        BotHazardRec->getMemoryBanks(&MI), MI.operands(),
         MI.getMF()->getRegInfo(), Cycle - Depth);
   };
   auto BlockCycle = [=](int Cycle) {
@@ -536,7 +541,20 @@ void AIEPostRASchedStrategy::enterMBB(MachineBasicBlock *MBB) {
   IsBottomRegion = true;
 }
 
+void AIEPostRASchedStrategy::materializeMultiOpcodeInstrs() {
+  for (auto [MI, Desc] : make_range(InterBlock.getSelectedAltDescs().begin(),
+                                    InterBlock.getSelectedAltDescs().end())) {
+    MI->setDesc(*Desc);
+  }
+
+  InterBlock.getSelectedAltDescs().clear();
+}
+
 void AIEPostRASchedStrategy::commitBlockSchedule(MachineBasicBlock *BB) {
+
+  if (ReAssignMultiSlotInstr)
+    materializeMultiOpcodeInstrs();
+
   auto &BS = InterBlock.getBlockState(BB);
 
   // Safety margin, swp epilogue
@@ -599,8 +617,6 @@ void AIEPostRASchedStrategy::leaveRegion(const SUnit &ExitSU) {
   if (BS.FixPoint.Stage != SchedulingStage::Scheduling) {
     return;
   }
-  materializeMultiOpcodeInstrs();
-  InterBlock.getSelectedAltDescs().clear();
   if (IsBottomRegion) {
     // This is the earliest point where we can destroy the recorded
     // schedule in iterative scheduling. enterMBB and enterRegion are too early,
@@ -616,32 +632,13 @@ void AIEPostRASchedStrategy::leaveRegion(const SUnit &ExitSU) {
   assert(BS.getCurrentRegion().Bundles.empty());
   BS.addBundles(TopBundles);
   BS.addBundles(BotBundles);
+  if (!ReAssignMultiSlotInstr)
+    materializeMultiOpcodeInstrs();
   RegionBegin = nullptr;
   RegionEnd = nullptr;
   IsBottomRegion = false;
   BS.advanceRegion();
   DEBUG_BLOCKS(dbgs() << "    << leaveRegion\n");
-}
-
-void AIEPostRASchedStrategy::materializeMultiOpcodeInstrs() {
-  const TargetInstrInfo *TII = getTII(CurMBB);
-  const AIEHazardRecognizer &TopHazardRec = *getAIEHazardRecognizer(Top);
-  const AIEHazardRecognizer &BotHazardRec = *getAIEHazardRecognizer(Bot);
-
-  auto MaterializePseudo = [&TII](MachineInstr &MI,
-                                  const AIEHazardRecognizer &HazardRec) {
-    // Materialize instructions with multiple opcode options
-    if (std::optional<unsigned> AltOpcode =
-            HazardRec.getSelectedAltDescs().getSelectedOpcode(&MI)) {
-      MI.setDesc(TII->get(*AltOpcode));
-    }
-  };
-
-  assert(DAG->top() == DAG->bottom());
-  for (MachineInstr &MI : make_range(DAG->begin(), DAG->top()))
-    MaterializePseudo(MI, TopHazardRec);
-  for (MachineInstr &MI : make_range(DAG->bottom(), DAG->end()))
-    MaterializePseudo(MI, BotHazardRec);
 }
 
 bool AIEPostRASchedStrategy::checkInterZoneConflicts(

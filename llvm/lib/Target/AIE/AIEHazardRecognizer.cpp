@@ -451,7 +451,7 @@ ScheduleHazardRecognizer::HazardType AIEHazardRecognizer::getHazardType(
 bool AIEHazardRecognizer::checkConflict(
     const ResourceScoreboard<FuncUnitWrapper> &Scoreboard, MachineInstr &MI,
     int DeltaCycles) const {
-  const MCInstrDesc &Desc = MI.getDesc();
+  const MCInstrDesc &Desc = *SelectedAltDescs.getDesc(&MI);
   const unsigned SchedClass =
       TII->getSchedClass(Desc, MI.operands(), MI.getMF()->getRegInfo());
   const MemoryBankBits MemoryBanks = getMemoryBanks(&MI);

@@ -31,6 +31,9 @@ public:
   AIEAlternateDescriptors() = default;
   ~AIEAlternateDescriptors() = default;
 
+  MIAltDescsMap::const_iterator begin() const { return AlternateDescs.begin(); }
+  MIAltDescsMap::const_iterator end() const { return AlternateDescs.end(); }
+
   // Construct an alternate descriptor with the given alternate descriptors.
   AIEAlternateDescriptors(const MIAltDescsMap &AltDescs)
       : AlternateDescs(AltDescs) {}
@@ -41,6 +44,10 @@ public:
     const AIEBaseInstrInfo *TII = STI.getInstrInfo();
 
     AlternateDescs[MI] = &TII->get(AltInstOpcode);
+  }
+
+  void setAlternateDescriptor(MachineInstr *MI, const MCInstrDesc *AltDesc) {
+    AlternateDescs[MI] = AltDesc;
   }
 
   // Return the alternate descriptor for the given multi-opcode instruction.
