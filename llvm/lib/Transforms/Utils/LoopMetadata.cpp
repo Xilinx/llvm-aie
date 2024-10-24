@@ -123,7 +123,12 @@ Value *LoopMetadata::getMinIterValue(const SCEV *S, int MinIterCount,
   if (IsLoopIncrementing)
     MaxValue--;
 
-  // dyn_cast<Constant>(MinBoundry)->getUniqueInteger().getSExtValue();
+  // If the loop does not start at 0, add the loop start to the Minimum
+  // Iteration Value
+  assert(isa<Constant>(MinBoundry));
+  int LoopStart =
+      dyn_cast<Constant>(MinBoundry)->getUniqueInteger().getSExtValue();
+  MaxValue += LoopStart;
 
   llvm::ConstantInt *ConstIncValue =
       llvm::ConstantInt::get(llvm::Type::getInt32Ty(*Context), MaxValue, true);
@@ -461,18 +466,18 @@ void LoopMetadata::addAssumeToLoopHeader(uint64_t MinIterCount,
 
   calcIncrement(S);
 
+  getBoundries();
+  if (!MaxBoundry) {
+    LLVM_DEBUG(dbgs() << "LoopMetadata-Warning: Could not find Iteration "
+                         "Variable. Will not process Metadata\n");
+    return;
+  }
+
   Value *MinIterValue = getMinIterValue(S, MinIterCount, Context);
   if (!MinIterValue) {
     LLVM_DEBUG(
         dbgs()
         << "LoopMetadata-Warning: Could not extract Minimum Iteration Value\n");
-    return;
-  }
-
-  getBoundries();
-  if (!MaxBoundry) {
-    LLVM_DEBUG(dbgs() << "LoopMetadata-Warning: Could not find Iteration "
-                         "Variable. Will not process Metadata\n");
     return;
   }
 
