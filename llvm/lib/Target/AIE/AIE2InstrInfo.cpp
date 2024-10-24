@@ -973,6 +973,20 @@ bool AIE2InstrInfo::isSchedBarrier(const MachineInstr &MI) const {
           MI.getOpcode() == AIE2::MOV_CNTR || isDelayedSchedBarrier(MI));
 }
 
+bool AIE2InstrInfo::isScalarMove(unsigned OpCode) const {
+  switch (OpCode) {
+  case AIE2::MOV_mv_scl:
+    return true;
+  default:
+    return false;
+  }
+}
+
+// TODO : Move this to Target Register Info
+bool AIE2InstrInfo::isRTypeReg(Register Reg) const {
+  return Reg.isPhysical() && AIE2::eRRegClass.contains(Reg);
+}
+
 unsigned AIE2InstrInfo::getNumReservedDelaySlots(const MachineInstr &MI) const {
   return 0;
 }

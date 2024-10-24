@@ -159,9 +159,9 @@ define dso_local noundef <32 x i16> @_Z21test_min_ge_v32uint16Dv32_tS_Rj(<32 x i
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
-; CHECK-NEXT:    mov r0, r16 // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    vmin_ge.d16 x0, r16, x2, x4 // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    mov.d1 r0, r16 // Delay Slot 3
 ; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r0 // Delay Slot 1
 entry:
@@ -177,11 +177,10 @@ define dso_local noundef <32 x i16> @_Z21test_min_ge_v32uint16Dv32_tS_bRj(<32 x 
 ; CHECK-LABEL: _Z21test_min_ge_v32uint16Dv32_tS_bRj:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; mov r1, r16
-; CHECK-NEXT:    mov crVaddSign, r0
+; CHECK-NEXT:    nopx ; mov crVaddSign, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vmin_ge.d16 x0, r16, x2, x4 // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    mov.d2 r1, r16 // Delay Slot 4
 ; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
 ; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
@@ -234,9 +233,9 @@ define dso_local noundef <32 x i16> @_Z20test_min_ge_v32int16Dv32_sS_Rj(<32 x i1
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
-; CHECK-NEXT:    mov r0, r16 // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    vmin_ge.s16 x0, r16, x2, x4 // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    mov.d1 r0, r16 // Delay Slot 3
 ; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r0 // Delay Slot 1
 entry:
@@ -252,11 +251,10 @@ define dso_local noundef <32 x i16> @_Z20test_min_ge_v32int16Dv32_sS_bRj(<32 x i
 ; CHECK-LABEL: _Z20test_min_ge_v32int16Dv32_sS_bRj:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; mov r1, r16
-; CHECK-NEXT:    mov crVaddSign, r0
+; CHECK-NEXT:    nopx ; mov crVaddSign, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vmin_ge.d16 x0, r16, x2, x4 // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    mov.d2 r1, r16 // Delay Slot 4
 ; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
 ; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
@@ -308,11 +306,10 @@ define dso_local noundef <16 x i32> @_Z21test_min_ge_v16uint32Dv16_jS_bRj(<16 x 
 ; CHECK-LABEL: _Z21test_min_ge_v16uint32Dv16_jS_bRj:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; mov r1, r16
-; CHECK-NEXT:    mov crVaddSign, r0
+; CHECK-NEXT:    nopx ; mov crVaddSign, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vmin_ge.d32 x0, r16, x2, x4 // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    mov.d2 r1, r16 // Delay Slot 4
 ; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
 ; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
@@ -365,9 +362,9 @@ define dso_local noundef <16 x i32> @_Z20test_min_ge_v16int32Dv16_iS_Rj(<16 x i3
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
-; CHECK-NEXT:    mov r0, r16 // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    vmin_ge.s32 x0, r16, x2, x4 // Delay Slot 4
-; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    mov.d1 r0, r16 // Delay Slot 3
 ; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r0 // Delay Slot 1
 entry:
@@ -383,11 +380,10 @@ define dso_local noundef <16 x i32> @_Z20test_min_ge_v16int32Dv16_iS_bRj(<16 x i
 ; CHECK-LABEL: _Z20test_min_ge_v16int32Dv16_iS_bRj:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; mov r1, r16
-; CHECK-NEXT:    mov crVaddSign, r0
+; CHECK-NEXT:    nopx ; mov crVaddSign, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    vmin_ge.d32 x0, r16, x2, x4 // Delay Slot 5
-; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    mov.d2 r1, r16 // Delay Slot 4
 ; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 3
 ; CHECK-NEXT:    st r16, [p0, #0] // Delay Slot 2
 ; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
