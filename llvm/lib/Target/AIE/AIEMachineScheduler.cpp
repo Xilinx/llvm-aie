@@ -88,6 +88,13 @@ static cl::opt<bool> UseLoopHeuristics(
     "aie-loop-sched-heuristics", cl::init(true),
     cl::desc("Use special picking heuristics when scheduling a loop region"));
 
+/// This option enables instruction mutuation to shift a multislot instruction
+/// in event of a slot conflict.
+static cl::opt<bool> InstructionMutation(
+    "aie-instruction-mutation", cl::init(true),
+    cl::desc("Allow instuction mutation to shift a multislot "
+             "instruction in event of a slot conflict"));
+
 namespace {
 // A sentinel value to represent an unknown SUnit.
 const constexpr unsigned UnknownSUNum = ~0;
@@ -479,6 +486,125 @@ int AIEPostRASchedStrategy::getMaxDeltaCycles(const SchedBoundary &Zone) const {
                    BottomUpDelta.getValue()});
 }
 
+static bool checkSlotConflict(const unsigned OpCodeA, const unsigned OpCodeB,
+                              const AIEBaseMCFormats &Formats) {
+
+  MCSlotKind SlotKindA = Formats.getSlotKind(OpCodeA);
+  MCSlotKind SlotKindB = Formats.getSlotKind(OpCodeB);
+
+  if (SlotKindA != MCSlotKind() && SlotKindB != MCSlotKind()) {
+    return (Formats.getSlotInfo(SlotKindA)->getSlotSet() &
+            Formats.getSlotInfo(SlotKindB)->getSlotSet());
+  }
+  return true;
+}
+
+bool AIEPostRASchedStrategy::canShiftSlot(SUnit &SU, SchedBoundary &Zone,
+                                          const int DeltaCycle) {
+
+  if (!InstructionMutation)
+    return false;
+
+  const AIEBaseMCFormats &Formats = *getTII(*Zone.DAG)->getFormatInterface();
+  AIEHazardRecognizer &HR = *getAIEHazardRecognizer(Zone);
+  bool CanShiftSlot = false;
+
+  if (!(!Formats.getAlternateInstsOpcode(SU.getInstr()->getOpcode()) &&
+        (HR.checkConflict(*SU.getInstr(), DeltaCycle) &
+         static_cast<uint32_t>(AIEHazardRecognizer::ConflictType::Format)))) {
+    // We are only interested in single slot instructions and instructions that
+    // have only format hazard.
+    // TODO : Extend this to SUs that are multi-slot and have only format hazard
+    return false;
+  }
+  for (MachineInstr &MI : *Zone.DAG) {
+    SUnit *ZoneSU = Zone.DAG->getSUnit(&MI);
+    if (!ZoneSU)
+      continue;
+    if (!ZoneSU->isScheduled)
+      continue;
+
+    const int CurrCycle = Zone.getCurrCycle();
+    if (ZoneSU->BotReadyCycle !=
+        static_cast<unsigned int>(CurrCycle - DeltaCycle))
+      continue;
+
+    // Check for a MultiSlot instruction scheduled in the same DeltaCycle, we
+    // focus on multi-slot because they can be scheduled in different slots
+    auto AltOpcodes = Formats.getAlternateInstsOpcode(MI.getOpcode());
+    if (!AltOpcodes)
+      continue;
+
+    // Check if the scheduled multi-slot instruction has a slot conflict
+    // with the new instruction, if so we might have the possiblity to shift
+    // the multi-slot and schedule the new instruction.
+    if (!checkSlotConflict(HR.getSelectedAltDescs().getOpcode(&MI),
+                           SU.getInstr()->getOpcode(), Formats))
+      continue;
+
+    // Release the multi-slot instruction from the scoreboard to check if any
+    // other alternate opcode in presence of the new instruction will not create
+    // a hazard.
+    HR.releaseFromScoreboard(*HR.getSelectedAltDescs().getDesc(&MI),
+                             HR.getMemoryBanks(&MI), MI.operands(),
+                             MI.getMF()->getRegInfo(),
+                             CurrCycle - ZoneSU->BotReadyCycle);
+
+    MachineInstr *NewMI = SU.getInstr();
+    // Check if the new instuction can be scheduled after unscheduling
+    // the conflicting multi-slot instruction.
+    if (HR.getHazardType(NewMI->getDesc(), HR.getMemoryBanks(NewMI),
+                         NewMI->operands(), NewMI->getMF()->getRegInfo(),
+                         DeltaCycle) !=
+        ScheduleHazardRecognizer::HazardType::NoHazard) {
+      // If the new instruction cannot be scheduled after unscheduling the
+      // mulit-slot revert back the state of scoreboard to original state and
+      // continue.
+      HR.emitInScoreboard(*HR.getSelectedAltDescs().getDesc(&MI),
+                          HR.getMemoryBanks(&MI), MI.operands(),
+                          MI.getMF()->getRegInfo(),
+                          CurrCycle - ZoneSU->BotReadyCycle);
+      continue;
+    }
+
+    // Emit the new instruction in the scoreboard. This will help us
+    // to check if the previously unscheduled multi-slot instruction
+    // can be scheduled in the same cycle, with an alternate opcode.
+    HR.emitInScoreboard(NewMI->getDesc(), HR.getMemoryBanks(NewMI),
+                        NewMI->operands(), NewMI->getMF()->getRegInfo(),
+                        DeltaCycle);
+
+    // Check if the previously unscheduled multi-slot instruction
+    // can be rescheduled in presense of the new instruction in the
+    // same cycle, with a different opcode.
+    for (const auto AltOpcodeInside : *AltOpcodes) {
+      const MCInstrDesc &Desc = getTII(*Zone.DAG)->get(AltOpcodeInside);
+      if (HR.getHazardType(Desc, HR.getMemoryBanks(&MI), MI.operands(),
+                           MI.getMF()->getRegInfo(), DeltaCycle) ==
+          ScheduleHazardRecognizer::HazardType::NoHazard) {
+        // Cache the information to mutate the instruction during bumpNode()
+        MutateInstruction.insert(
+            std::make_pair(NewMI, std::make_pair(&MI, &Desc)));
+        CanShiftSlot = true;
+        break;
+      }
+    }
+
+    // Revert back the state of scoreboard to original state.
+    HR.releaseFromScoreboard(NewMI->getDesc(), HR.getMemoryBanks(NewMI),
+                             NewMI->operands(), NewMI->getMF()->getRegInfo(),
+                             DeltaCycle);
+    HR.emitInScoreboard(*HR.getSelectedAltDescs().getDesc(&MI),
+                        HR.getMemoryBanks(&MI), MI.operands(),
+                        MI.getMF()->getRegInfo(),
+                        CurrCycle - ZoneSU->BotReadyCycle);
+
+    if (CanShiftSlot)
+      break;
+  }
+  return CanShiftSlot;
+}
+
 bool AIEPostRASchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
                                              bool /*VerifyReadyCycle*/) {
   // Whether or not the zone is Top or Bot, verify if SU is ready to be
@@ -497,7 +623,8 @@ bool AIEPostRASchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
     // ReadyCycle is always greater or equal to the current cycle,
     // so DeltaCycles will always be less or equal to 0.
     if (Zone.checkHazard(&SU, DeltaCycles))
-      continue;
+      if (!canShiftSlot(SU, Zone, DeltaCycles))
+        continue;
     SU.BotReadyCycle = CurrCycle - DeltaCycles;
     return true;
   }
@@ -514,10 +641,37 @@ void AIEPostRASchedStrategy::schedNode(SUnit *SU, bool IsTopNode) {
   if (IsTopNode) {
     PostGenericScheduler::schedNode(SU, IsTopNode);
   } else {
+    AIEHazardRecognizer &HR = *getAIEHazardRecognizer(Bot);
     int DeltaCycles = int(Bot.getCurrCycle()) - int(SU->BotReadyCycle);
     assert(DeltaCycles <= 0);
+
+    // Check if an instuction needs to be moved to a different slot.
+    if (MutateInstruction.find(SU->getInstr()) != MutateInstruction.end()) {
+      auto [MI, Desc] = MutateInstruction[SU->getInstr()];
+      HR.releaseFromScoreboard(*HR.getSelectedAltDescs().getDesc(MI),
+                               HR.getMemoryBanks(MI), MI->operands(),
+                               MI->getMF()->getRegInfo(), DeltaCycles);
+      // Update the selected opcode for the instruction, refer
+      // AIEPostRASchedStrategy::canShiftSlot()
+      HR.getSelectedAltDescs().setAlternateDescriptor(MI, Desc);
+    }
+
     Bot.bumpNode(SU, DeltaCycles);
+
+    if (MutateInstruction.find(SU->getInstr()) != MutateInstruction.end()) {
+      auto [MI, Desc] = MutateInstruction[SU->getInstr()];
+      assert(HR.getHazardType(*Desc, HR.getMemoryBanks(MI), MI->operands(),
+                              MI->getMF()->getRegInfo(), DeltaCycles) ==
+             ScheduleHazardRecognizer::HazardType::NoHazard);
+      // Reschedule the instruction with the new opcode.
+      HR.emitInScoreboard(*Desc, HR.getMemoryBanks(MI), MI->operands(),
+                          MI->getMF()->getRegInfo(), DeltaCycles);
+    }
   }
+  // Clear the MutateInstruction map since after scheduling the instruction the
+  // validity of mutation map can no longer be guaranteed.
+  MutateInstruction.clear();
+  SU->isScheduled = true;
 }
 
 void AIEPostRASchedStrategy::enterFunction(MachineFunction *MF) {
