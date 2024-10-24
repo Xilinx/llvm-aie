@@ -356,7 +356,6 @@ bool MachineLICMBase::runOnMachineFunction(MachineFunction &MF) {
   MRI = &MF.getRegInfo();
   SchedModel.init(&ST);
 
-  PreRegAlloc = MRI->isSSA();
   HasProfileData = MF.getFunction().hasProfileData();
 
   if (PreRegAlloc)
