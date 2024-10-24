@@ -298,7 +298,8 @@ void AIE2InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   // TODO : add support for 128-bit mask register
   if (AIE2::mMvSclSrcRegClass.contains(SrcReg) &&
       AIE2::mMvSclDstRegClass.contains(DstReg)) {
-    BuildMI(MBB, MBBI, DL, get(AIE2::MOV_mv_scl), DstReg)
+    const unsigned MOVSclOpcode = getScalarMovOpcode(DstReg, SrcReg);
+    BuildMI(MBB, MBBI, DL, get(MOVSclOpcode), DstReg)
         .addReg(SrcReg, getKillRegState(KillSrc));
   } else if ((AIE2::eLRegClass.contains(SrcReg)) &&
              (AIE2::eLRegClass.contains(DstReg))) {
@@ -732,6 +733,14 @@ unsigned AIE2InstrInfo::getConstantMovOpcode(MachineRegisterInfo &MRI,
   dbgs() << "DstRegClass ID: " << DstRegClass->getID() << "\n";
 }
 
+unsigned AIE2InstrInfo::getScalarMovOpcode(Register DstReg,
+                                           Register SrcReg) const {
+  return (AIE2::eRRegClass.contains(SrcReg) &&
+          AIE2::eRRegClass.contains(DstReg))
+             ? AIE2::MOV_SCL_pseudo
+             : AIE2::MOV_mv_scl;
+}
+
 unsigned AIE2InstrInfo::getCycleSeparatorOpcode() const {
   return AIE2::CYCLE_SEPARATOR;
 }
@@ -829,7 +838,8 @@ bool AIE2InstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
   case AIE2::PseudoMove: {
     Register Dst = MI.getOperand(0).getReg();
     Register Src = MI.getOperand(1).getReg();
-    BuildMI(MBB, MI, DL, get(AIE2::MOV_mv_scl), Dst)
+    const unsigned MOVSclOpcode = getScalarMovOpcode(Dst, Src);
+    BuildMI(MBB, MI, DL, get(MOVSclOpcode), Dst)
         .addReg(Src, getKillRegState(true));
     MI.eraseFromParent();
     return true;

@@ -42,6 +42,7 @@ public:
   unsigned getPseudoMoveOpcode() const override;
   unsigned getConstantMovOpcode(MachineRegisterInfo &MRI, unsigned int Reg,
                                 APInt &Val) const override;
+  unsigned getScalarMovOpcode(Register DstReg, Register SrcReg) const override;
   unsigned getGenericAddVectorEltOpcode() const override;
   unsigned getGenericInsertVectorEltOpcode() const override;
   unsigned getGenericExtractVectorEltOpcode(bool SignExt) const override;
