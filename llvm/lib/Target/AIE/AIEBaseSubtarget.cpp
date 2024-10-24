@@ -50,10 +50,6 @@ static cl::opt<bool> EnablePipelinerSchedPropagateIncomingLatencies(
 static cl::opt<bool> EnableWAWStickyRegisters(
     "aie-pipeliner-waw-sticky-registers", cl::Hidden, cl::init(true),
     cl::desc("Apply sticky registers WAW dependency removal"));
-static cl::opt<unsigned> WAWStickyRegistersMemOpsThreshold(
-    "aie-waw-sticky-register-mem-threshold", cl::Hidden, cl::init(4),
-    cl::desc("Number of memory instructions to enable the register exclusion "
-             "heuristic in WAW sticky registers dep. removal"));
 
 // These are debugging/testing options.
 
@@ -629,6 +625,8 @@ AIEBaseSubtarget::getPostRAMutationsImpl(const Triple &TT) {
   std::vector<std::unique_ptr<ScheduleDAGMutation>> Mutations;
   Mutations.emplace_back(std::make_unique<LockDelays>());
   if (!TT.isAIE1()) {
+    if (EnableWAWStickyRegisters)
+      Mutations.emplace_back(std::make_unique<WAWStickyRegistersEdges>());
     Mutations.emplace_back(std::make_unique<RegionEndEdges>());
     Mutations.emplace_back(std::make_unique<MemoryEdges>());
     Mutations.emplace_back(std::make_unique<MachineSchedWAWEdges>());

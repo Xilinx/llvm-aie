@@ -4,11 +4,13 @@
 #
 # (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
 
-# RUN: llc -mtriple=aie2 --run-pass=postmisched --issue-limit=1 -debug-only=machine-scheduler %s -o - 2>%t.log
-# RUN: cat %t.log | FileCheck %s --check-prefix=CHECK-WAW
+# RUN: llc -mtriple=aie2 --run-pass=postmisched --issue-limit=1 \
+# RUN:    -debug-only=machine-scheduler --aie-pipeliner-waw-sticky-registers=0 \
+# RUN:    %s -o /dev/null 2>&1 | FileCheck %s --check-prefix=CHECK-WAW
 # REQUIRES: asserts
 
 # This test checks the write-after-write(WAW) dependencies
+# We have disabled the sticky version, since its dump confuses FileChecking the debug output
 
 ---
 # Here we have two WAW dependencies with srcarry W1->W3, W2->W3, where W3 is a live write
