@@ -361,10 +361,12 @@ class EnforceCopyEdges : public ScheduleDAGMutation {
 
 class PropagateIncomingLatencies : public ScheduleDAGMutation {
   bool OnlyCopyLike;
+  bool OnlyLocalSources;
 
 public:
-  PropagateIncomingLatencies(bool OnlyCopyLike = true)
-      : OnlyCopyLike(OnlyCopyLike) {}
+  PropagateIncomingLatencies(bool OnlyCopyLike = true,
+                             bool OnlyLocalSources = true)
+      : OnlyCopyLike(OnlyCopyLike), OnlyLocalSources(OnlyLocalSources) {}
   void apply(ScheduleDAGInstrs *DAG) override {
     auto IsData = [](const SDep &D) { return D.getKind() == SDep::Data; };
     for (SUnit &SU : DAG->SUnits) {
@@ -379,6 +381,26 @@ public:
       if (any_of(MI.defs(), [](const MachineOperand &MO) {
             return MO.isReg() && MO.getReg().isPhysical();
           }))
+        continue;
+
+      // Do not change the latency if the REG_SEQUENCE has one source
+      // outside this MBB. Such REG_SEQUENCE instructions will typically require
+      // a COPY from the external source to one of the lanes of the destination
+      // register. It is important to then keep the REG_SEQUENCE close to its
+      // consumers, because after MachinePipeliner, this typically means that
+      // only the lanes corresponding to internal sources will be loop-carried.
+      // The external lane will come directly from the pre-header, and the
+      // required COPY can then be hoisted by MachineLICM.
+      const MachineBasicBlock &MBB = *MI.getParent();
+      const MachineRegisterInfo &MRI = DAG->MRI;
+      auto HasExternalAndLocalSources = [&MBB, &MRI](const MachineInstr &MI) {
+        return MI.isRegSequence() && MRI.isSSA() && MI.getNumOperands() > 3 &&
+               count_if(MI.uses(), [&MBB, &MRI](const MachineOperand &MO) {
+                 return MO.isReg() && MO.getReg().isVirtual() &&
+                        MRI.getVRegDef(MO.getReg())->getParent() != &MBB;
+               }) == 1;
+      };
+      if (OnlyLocalSources && HasExternalAndLocalSources(MI))
         continue;
 
       // Find the common latency for all predecessors that can be

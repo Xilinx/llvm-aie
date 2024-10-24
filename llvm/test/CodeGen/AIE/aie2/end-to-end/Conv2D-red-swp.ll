@@ -224,78 +224,77 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; DCL-LABEL: conv2d.loop.nest:
 ; DCL:         .p2align 4
 ; DCL-NEXT:  // %bb.0: // %newFuncRoot
-; DCL-NEXT:    paddb [sp], #192
+; DCL-NEXT:    nopa ; nopb ; nopx ; mov s0, r0
+; DCL-NEXT:    paddb [sp], #192; mov s1, r1
 ; DCL-NEXT:    st p6, [sp, #-188] // 4-byte Folded Spill
 ; DCL-NEXT:    mov p6, sp
-; DCL-NEXT:    paddb [p6], #-292
+; DCL-NEXT:    paddb [p6], #-292; mov s2, r6
 ; DCL-NEXT:    lda m0, [p6, #0]; mov p6, sp
-; DCL-NEXT:    paddb [p6], #-296
+; DCL-NEXT:    paddb [p6], #-296; mov m5, p4
 ; DCL-NEXT:    lda dj0, [p6, #0]; mov p6, sp
-; DCL-NEXT:    paddb [p6], #-300
+; DCL-NEXT:    mova dj3, #0; paddb [p6], #-300; mov s3, r6
 ; DCL-NEXT:    lda dn0, [p6, #0]; mov p6, sp
-; DCL-NEXT:    paddb [p6], #-204
+; DCL-NEXT:    paddb [p6], #-204; mov dc0, dj3
 ; DCL-NEXT:    lda m0, [p6, #0]; mov p6, sp
-; DCL-NEXT:    paddb [p6], #-208; mov s0, r0
+; DCL-NEXT:    paddb [p6], #-208; mov dc4, dj3
 ; DCL-NEXT:    lda dj0, [p6, #0]; mov p6, sp
-; DCL-NEXT:    paddb [p6], #-212; mov s1, r1
+; DCL-NEXT:    paddb [p6], #-212; mov dc1, dj3
 ; DCL-NEXT:    lda dj4, [p6, #0]; mov p6, sp
 ; DCL-NEXT:    paddb [p6], #-216; st m0, [sp, #-96] // 4-byte Folded Spill
 ; DCL-NEXT:    lda dn0, [p6, #0]; mov p6, sp
-; DCL-NEXT:    mova dj3, #0; paddb [p6], #-220; st dj0, [sp, #-88] // 4-byte Folded Spill
+; DCL-NEXT:    paddb [p6], #-220; st dj0, [sp, #-88] // 4-byte Folded Spill
 ; DCL-NEXT:    lda dn4, [p6, #0]; mov p6, sp
-; DCL-NEXT:    paddb [p6], #-228; mov dc0, dj3
+; DCL-NEXT:    paddb [p6], #-228; mov dc5, dj3
 ; DCL-NEXT:    lda r11, [p6, #0]; mov p6, sp
 ; DCL-NEXT:    paddb [p6], #-232; st dn0, [sp, #-92] // 4-byte Folded Spill
 ; DCL-NEXT:    lda dj1, [p6, #0]; mov p6, sp
-; DCL-NEXT:    paddb [p6], #-236; mov dc4, dj3
+; DCL-NEXT:    paddb [p6], #-236; mov dc2, dj3
 ; DCL-NEXT:    lda r12, [p6, #0]; mov p6, sp
-; DCL-NEXT:    paddb [p6], #-240; mov dc1, dj3
+; DCL-NEXT:    paddb [p6], #-240; st p7, [sp, #-192] // 4-byte Folded Spill
 ; DCL-NEXT:    lda dn1, [p6, #0]; mov p6, sp
-; DCL-NEXT:    paddb [p6], #-244; mov dc5, dj3
+; DCL-NEXT:    vst wl0, [sp, #-64]; paddb [p6], #-244; mov dc6, dj3 // 32-byte Folded Spill
 ; DCL-NEXT:    lda dn5, [p6, #0]; mov p6, sp
-; DCL-NEXT:    paddb [p6], #-248; st p7, [sp, #-192] // 4-byte Folded Spill
-; DCL-NEXT:    lda r13, [p6, #0]; mov p6, sp
-; DCL-NEXT:    vst wl0, [sp, #-64]; paddb [p6], #-252; mov p7, sp // 32-byte Folded Spill
-; DCL-NEXT:    lda dj2, [p6, #0]; mov p6, sp
-; DCL-NEXT:    vst wh0, [sp, #-32]; paddb [p6], #-256; mov dc7, dj3 // 32-byte Folded Spill
+; DCL-NEXT:    vst wh0, [sp, #-32]; paddb [p6], #-248; mov p7, sp // 32-byte Folded Spill
+; DCL-NEXT:    lda r13, [p6, #0]; paddb [p7], #-272; mov p6, sp
+; DCL-NEXT:    lda r25, [p7, #0]; paddb [p6], #-252; mov p7, sp
+; DCL-NEXT:    lda dj2, [p6, #0]; paddb [p7], #-200; mov p6, sp
+; DCL-NEXT:    lda m6, [p7, #0]; paddb [p6], #-256; mov dc3, dj3
 ; DCL-NEXT:    lda dj6, [p6, #0]; mov p6, sp
-; DCL-NEXT:    paddb [p6], #-260; st dc7, [sp, #-84] // 4-byte Folded Spill
-; DCL-NEXT:    lda dn2, [p6, #0]; paddb [p7], #-272; mov p6, sp
-; DCL-NEXT:    lda r25, [p7, #0]; paddb [p6], #-264; mov p7, sp
-; DCL-NEXT:    lda dn6, [p6, #0]; paddb [p7], #-200; mov p6, sp
-; DCL-NEXT:    lda m6, [p7, #0]; paddb [p6], #-268; mov dc2, dj3
+; DCL-NEXT:    lda m7, [sp, #-96]; paddb [p6], #-260; mov r28, dj3 // 4-byte Folded Reload
+; DCL-NEXT:    lda dn2, [p6, #0]; mov p6, sp
+; DCL-NEXT:    lda dj7, [sp, #-88]; paddb [p6], #-264; mov dc7, dj3 // 4-byte Folded Reload
+; DCL-NEXT:    lda dn6, [p6, #0]; mov p6, sp
+; DCL-NEXT:    lda dn7, [sp, #-92]; paddb [p6], #-268; mov p7, sp // 4-byte Folded Reload
 ; DCL-NEXT:    lda r14, [p6, #0]; mov p6, sp
-; DCL-NEXT:    lda m7, [sp, #-96]; paddb [p6], #-276; mov dc6, dj3 // 4-byte Folded Reload
+; DCL-NEXT:    paddb [p6], #-276; st dc7, [sp, #-84] // 4-byte Folded Spill
 ; DCL-NEXT:    lda dn3, [p6, #0]; mov p6, sp
-; DCL-NEXT:    lda dj7, [sp, #-88]; paddb [p6], #-280; mov dc3, dj3 // 4-byte Folded Reload
+; DCL-NEXT:    paddb [p6], #-280; st m7, [sp, #-96] // 4-byte Folded Spill
 ; DCL-NEXT:    lda r26, [p6, #0]; mov p6, sp
-; DCL-NEXT:    lda dn7, [sp, #-92]; paddb [p6], #-196; mov p7, sp // 4-byte Folded Reload
-; DCL-NEXT:    lda r15, [p6, #0]; paddb [p7], #-288; mov p6, sp
-; DCL-NEXT:    lda r27, [p7, #0]; paddb [p6], #-224; mov s2, r6
-; DCL-NEXT:    lda r24, [p6, #0]; mov p6, sp
-; DCL-NEXT:    paddb [p6], #-284; st m7, [sp, #-96] // 4-byte Folded Spill
-; DCL-NEXT:    lda m4, [p6, #0]; mov r28, dj3
-; DCL-NEXT:    st dj7, [sp, #-88] // 4-byte Folded Spill
-; DCL-NEXT:    st dn7, [sp, #-92]; movx r9, #31; mov r8, #11 // 4-byte Folded Spill
+; DCL-NEXT:    paddb [p6], #-196; st dj7, [sp, #-88] // 4-byte Folded Spill
+; DCL-NEXT:    lda r15, [p6, #0]; mov p6, sp
+; DCL-NEXT:    paddb [p6], #-224; st dn7, [sp, #-92] // 4-byte Folded Spill
+; DCL-NEXT:    lda r24, [p6, #0]; paddb [p7], #-288; mov p6, sp
+; DCL-NEXT:    lda r27, [p7, #0]; paddb [p6], #-284; movx r8, #11; mov dj5, r12
+; DCL-NEXT:    lda m4, [p6, #0]; movx r9, #31; mov m3, r14
 ; DCL-NEXT:    // implicit-def: $x4
 ; DCL-NEXT:    // implicit-def: $x2
 ; DCL-NEXT:    .p2align 4
 ; DCL-NEXT:  .LBB0_1: // %outer.loop.header
 ; DCL-NEXT:    // =>This Loop Header: Depth=1
 ; DCL-NEXT:    // Child Loop BB0_2 Depth 2
-; DCL-NEXT:    vldb wl6, [p1], #32; nopxm
+; DCL-NEXT:    nopa ; vldb wl6, [p1], #32; nopxm
 ; DCL-NEXT:    vldb wl3, [p0], m6; mov r0, p0
 ; DCL-NEXT:    vlda.ups.s32.s16 bmh0, s0, [p2, #32]
-; DCL-NEXT:    vldb wh6, [p1], #32
-; DCL-NEXT:    vldb wh3, [p0], m6; mov m5, p4
 ; DCL-NEXT:    vlda.ups.s32.s16 bml0, s0, [p2], m5
-; DCL-NEXT:    vldb wl8, [p1], #32
-; DCL-NEXT:    vldb wl7, [p0], m6
+; DCL-NEXT:    vldb wh6, [p1], #32
+; DCL-NEXT:    vldb wh3, [p0], m6
 ; DCL-NEXT:    vlda.ups.s32.s16 bmh1, s0, [p2, #32]; mov m1, p5
 ; DCL-NEXT:    vlda.ups.s32.s16 bml1, s0, [p2], m1
-; DCL-NEXT:    vldb.3d wh7, [p0], d0
+; DCL-NEXT:    vldb wl8, [p1], #32
+; DCL-NEXT:    vldb wl7, [p0], m6
 ; DCL-NEXT:    vlda.ups.s32.s16 bmh2, s0, [p2, #32]
 ; DCL-NEXT:    vlda.ups.s32.s16 bml2, s0, [p2], m5
+; DCL-NEXT:    vldb.3d wh7, [p0], d0
 ; DCL-NEXT:    vlda.ups.s32.s16 bmh3, s0, [p2, #32]; mov m2, r15
 ; DCL-NEXT:    vlda.ups.s32.s16 bml3, s0, [p2], m2
 ; DCL-NEXT:    vlda.ups.s32.s16 bmh4, s0, [p2, #32]
@@ -330,7 +329,7 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; DCL-NEXT:    vldb wl10, [p1], #32; add r0, r10, #33; mov r10, p0; vmac cm3, cm3, x11, x6, r4 // Delay Slot 2
 ; DCL-NEXT:    vldb wh10, [p1], #32; and r10, r10, r9; vmov x8, x10; vmac cm7, cm7, x11, x8, r4 // Delay Slot 1
 ; DCL-NEXT:  // %bb.3: // in Loop: Header=BB0_1 Depth=1
-; DCL-NEXT:    nopa ; nopb ; nopx ; vmov x11, x0
+; DCL-NEXT:    nopx ; vmov x11, x0
 ; DCL-NEXT:    vshuffle x0, x4, x2, r3
 ; DCL-NEXT:    vshuffle x11, x0, x11, r8
 ; DCL-NEXT:    vlda wl0, [sp, #-64] // 32-byte Folded Reload
@@ -352,7 +351,7 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; DCL-NEXT:    vshuffle x3, x4, x2, r3; vmac cm0, cm1, x8, x1, r4
 ; DCL-NEXT:    st dj7, [sp, #-88] // 4-byte Folded Spill
 ; DCL-NEXT:    vshuffle x5, x3, x0, r8; vmac cm1, cm2, x3, x1, r4
-; DCL-NEXT:    lda m7, [sp, #-96]; vst.srs.s16.s32 bmh7, s2, [p3, #32]; mov s3, r6 // 4-byte Folded Reload
+; DCL-NEXT:    lda m7, [sp, #-96]; vst.srs.s16.s32 bmh7, s2, [p3, #32] // 4-byte Folded Reload
 ; DCL-NEXT:    lda dc7, [sp, #-84]; vst.srs.s16.s32 bml7, s3, [p3], #64; vmac cm2, cm3, x5, x1, r4 // 4-byte Folded Reload
 ; DCL-NEXT:    vst.srs.s16.s32 bmh0, s3, [p3, #32]
 ; DCL-NEXT:    vst.srs.s16.s32 bml0, s3, [p3], m4; vmac cm3, cm8, x6, x10, r4
@@ -362,9 +361,9 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; DCL-NEXT:    vst.srs.s16.s32 bml2, s3, [p3], m1; vmac cm5, cm5, x3, x10, r4
 ; DCL-NEXT:    vst.srs.s16.s32 bmh3, s3, [p3, #32]
 ; DCL-NEXT:    vst.srs.s16.s32 bml3, s3, [p3], #64; vmac cm4, cm6, x5, x10, r4
-; DCL-NEXT:    vst.srs.s16.s32 bmh8, s3, [p3, #32]; mov dj5, r12
-; DCL-NEXT:    vst.srs.s16.s32 bml8, s3, [p3], m4; mov m2, r13
-; DCL-NEXT:    vst.srs.s16.s32 bmh5, s3, [p3, #32]; mov m3, r14
+; DCL-NEXT:    vst.srs.s16.s32 bmh8, s3, [p3, #32]
+; DCL-NEXT:    vst.srs.s16.s32 bml8, s3, [p3], m4
+; DCL-NEXT:    vst.srs.s16.s32 bmh5, s3, [p3, #32]; mov m2, r13
 ; DCL-NEXT:    vst.srs.s16.s32 bml5, s3, [p3], #64; mov m1, r11
 ; DCL-NEXT:    padda.3d [p0], d1; vst.srs.s16.s32 bmh4, s3, [p3, #32]; mov m1, r24
 ; DCL-NEXT:    vst.2d.srs.s16.s32 bml4, s3, [p3], d7; add r7, r7, #-1; mov dj7, r25
@@ -387,59 +386,58 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ZOL-LABEL: conv2d.loop.nest:
 ; ZOL:         .p2align 4
 ; ZOL-NEXT:  // %bb.0: // %newFuncRoot
-; ZOL-NEXT:    paddb [sp], #192
+; ZOL-NEXT:    nopa ; nopb ; nopx ; mov s0, r0
+; ZOL-NEXT:    paddb [sp], #192; mov s1, r1
 ; ZOL-NEXT:    st p6, [sp, #-188] // 4-byte Folded Spill
 ; ZOL-NEXT:    mov p6, sp
-; ZOL-NEXT:    paddb [p6], #-292
+; ZOL-NEXT:    paddb [p6], #-292; mov s2, r6
 ; ZOL-NEXT:    lda m0, [p6, #0]; mov p6, sp
-; ZOL-NEXT:    paddb [p6], #-296
+; ZOL-NEXT:    paddb [p6], #-296; mov m5, p4
 ; ZOL-NEXT:    lda dj0, [p6, #0]; mov p6, sp
-; ZOL-NEXT:    paddb [p6], #-300
+; ZOL-NEXT:    mova dj3, #0; paddb [p6], #-300; mov s3, r6
 ; ZOL-NEXT:    lda dn0, [p6, #0]; mov p6, sp
-; ZOL-NEXT:    paddb [p6], #-204
+; ZOL-NEXT:    paddb [p6], #-204; mov dc0, dj3
 ; ZOL-NEXT:    lda m0, [p6, #0]; mov p6, sp
-; ZOL-NEXT:    paddb [p6], #-208; mov s0, r0
+; ZOL-NEXT:    paddb [p6], #-208; mov dc4, dj3
 ; ZOL-NEXT:    lda dj0, [p6, #0]; mov p6, sp
-; ZOL-NEXT:    paddb [p6], #-212; mov s1, r1
+; ZOL-NEXT:    paddb [p6], #-212; mov dc1, dj3
 ; ZOL-NEXT:    lda dj4, [p6, #0]; mov p6, sp
 ; ZOL-NEXT:    paddb [p6], #-216; st m0, [sp, #-96] // 4-byte Folded Spill
 ; ZOL-NEXT:    lda dn0, [p6, #0]; mov p6, sp
-; ZOL-NEXT:    mova dj3, #0; paddb [p6], #-220; st dj0, [sp, #-88] // 4-byte Folded Spill
+; ZOL-NEXT:    paddb [p6], #-220; st dj0, [sp, #-88] // 4-byte Folded Spill
 ; ZOL-NEXT:    lda dn4, [p6, #0]; mov p6, sp
-; ZOL-NEXT:    paddb [p6], #-228; mov dc0, dj3
+; ZOL-NEXT:    paddb [p6], #-228; mov dc5, dj3
 ; ZOL-NEXT:    lda r10, [p6, #0]; mov p6, sp
 ; ZOL-NEXT:    paddb [p6], #-232; st dn0, [sp, #-92] // 4-byte Folded Spill
 ; ZOL-NEXT:    lda dj1, [p6, #0]; mov p6, sp
-; ZOL-NEXT:    paddb [p6], #-236; mov dc4, dj3
+; ZOL-NEXT:    paddb [p6], #-236; mov dc2, dj3
 ; ZOL-NEXT:    lda r11, [p6, #0]; mov p6, sp
-; ZOL-NEXT:    paddb [p6], #-240; mov dc1, dj3
+; ZOL-NEXT:    paddb [p6], #-240; st p7, [sp, #-192] // 4-byte Folded Spill
 ; ZOL-NEXT:    lda dn1, [p6, #0]; mov p6, sp
-; ZOL-NEXT:    paddb [p6], #-244; mov dc5, dj3
+; ZOL-NEXT:    vst wl0, [sp, #-64]; paddb [p6], #-244; mov dc6, dj3 // 32-byte Folded Spill
 ; ZOL-NEXT:    lda dn5, [p6, #0]; mov p6, sp
-; ZOL-NEXT:    paddb [p6], #-248; st p7, [sp, #-192] // 4-byte Folded Spill
-; ZOL-NEXT:    lda r12, [p6, #0]; mov p6, sp
-; ZOL-NEXT:    vst wl0, [sp, #-64]; paddb [p6], #-252; mov p7, sp // 32-byte Folded Spill
-; ZOL-NEXT:    lda dj2, [p6, #0]; mov p6, sp
-; ZOL-NEXT:    vst wh0, [sp, #-32]; paddb [p6], #-256; mov dc7, dj3 // 32-byte Folded Spill
+; ZOL-NEXT:    vst wh0, [sp, #-32]; paddb [p6], #-248; mov p7, sp // 32-byte Folded Spill
+; ZOL-NEXT:    lda r12, [p6, #0]; paddb [p7], #-272; mov p6, sp
+; ZOL-NEXT:    lda r24, [p7, #0]; paddb [p6], #-252; mov p7, sp
+; ZOL-NEXT:    lda dj2, [p6, #0]; paddb [p7], #-200; mov p6, sp
+; ZOL-NEXT:    lda m6, [p7, #0]; paddb [p6], #-256; mov dc3, dj3
 ; ZOL-NEXT:    lda dj6, [p6, #0]; mov p6, sp
-; ZOL-NEXT:    paddb [p6], #-260; st dc7, [sp, #-84] // 4-byte Folded Spill
-; ZOL-NEXT:    lda dn2, [p6, #0]; paddb [p7], #-272; mov p6, sp
-; ZOL-NEXT:    lda r24, [p7, #0]; paddb [p6], #-264; mov p7, sp
-; ZOL-NEXT:    lda dn6, [p6, #0]; paddb [p7], #-200; mov p6, sp
-; ZOL-NEXT:    lda m6, [p7, #0]; paddb [p6], #-268; mov dc2, dj3
+; ZOL-NEXT:    lda m7, [sp, #-96]; paddb [p6], #-260; mov r27, dj3 // 4-byte Folded Reload
+; ZOL-NEXT:    lda dn2, [p6, #0]; mov p6, sp
+; ZOL-NEXT:    lda dj7, [sp, #-88]; paddb [p6], #-264; mov dc7, dj3 // 4-byte Folded Reload
+; ZOL-NEXT:    lda dn6, [p6, #0]; mov p6, sp
+; ZOL-NEXT:    lda dn7, [sp, #-92]; paddb [p6], #-268; mov p7, sp // 4-byte Folded Reload
 ; ZOL-NEXT:    lda r13, [p6, #0]; mov p6, sp
-; ZOL-NEXT:    lda m7, [sp, #-96]; paddb [p6], #-276; mov dc6, dj3 // 4-byte Folded Reload
+; ZOL-NEXT:    paddb [p6], #-276; st dc7, [sp, #-84] // 4-byte Folded Spill
 ; ZOL-NEXT:    lda dn3, [p6, #0]; mov p6, sp
-; ZOL-NEXT:    lda dj7, [sp, #-88]; paddb [p6], #-280; mov dc3, dj3 // 4-byte Folded Reload
+; ZOL-NEXT:    paddb [p6], #-280; st m7, [sp, #-96] // 4-byte Folded Spill
 ; ZOL-NEXT:    lda r25, [p6, #0]; mov p6, sp
-; ZOL-NEXT:    lda dn7, [sp, #-92]; paddb [p6], #-196; mov p7, sp // 4-byte Folded Reload
-; ZOL-NEXT:    lda r14, [p6, #0]; paddb [p7], #-288; mov p6, sp
-; ZOL-NEXT:    lda r26, [p7, #0]; paddb [p6], #-224; mov s2, r6
-; ZOL-NEXT:    lda r15, [p6, #0]; mov p6, sp
-; ZOL-NEXT:    paddb [p6], #-284; st m7, [sp, #-96] // 4-byte Folded Spill
-; ZOL-NEXT:    lda m4, [p6, #0]; mov r27, dj3
-; ZOL-NEXT:    st dj7, [sp, #-88] // 4-byte Folded Spill
-; ZOL-NEXT:    st dn7, [sp, #-92]; movx r9, #31; mov r8, #11 // 4-byte Folded Spill
+; ZOL-NEXT:    paddb [p6], #-196; st dj7, [sp, #-88] // 4-byte Folded Spill
+; ZOL-NEXT:    lda r14, [p6, #0]; mov p6, sp
+; ZOL-NEXT:    paddb [p6], #-224; st dn7, [sp, #-92] // 4-byte Folded Spill
+; ZOL-NEXT:    lda r15, [p6, #0]; paddb [p7], #-288; mov p6, sp
+; ZOL-NEXT:    lda r26, [p7, #0]; paddb [p6], #-284; movx r8, #11; mov dj5, r11
+; ZOL-NEXT:    lda m4, [p6, #0]; movx r9, #31; mov m3, r13
 ; ZOL-NEXT:    // implicit-def: $x4
 ; ZOL-NEXT:    // implicit-def: $x2
 ; ZOL-NEXT:    .p2align 4
@@ -448,21 +446,21 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ZOL-NEXT:    // Child Loop BB0_2 Depth 2
 ; ZOL-NEXT:    vldb wl6, [p1], #32; nopa ; nops ; nopxm ; nopv
 ; ZOL-NEXT:    vldb wl3, [p0], m6; mov r0, p0
-; ZOL-NEXT:    vlda.ups.s32.s16 bmh0, s0, [p2, #32]
-; ZOL-NEXT:    vldb wh6, [p1], #32
-; ZOL-NEXT:    vldb wh3, [p0], m6; mov m5, p4
+; ZOL-NEXT:    vlda.ups.s32.s16 bmh0, s0, [p2, #32]; nopx
 ; ZOL-NEXT:    vlda.ups.s32.s16 bml0, s0, [p2], m5
-; ZOL-NEXT:    vldb wl8, [p1], #32
-; ZOL-NEXT:    vldb wl7, [p0], m6
+; ZOL-NEXT:    vldb wh6, [p1], #32
+; ZOL-NEXT:    vldb wh3, [p0], m6
 ; ZOL-NEXT:    vlda.ups.s32.s16 bmh1, s0, [p2, #32]; mov m1, p5
 ; ZOL-NEXT:    vlda.ups.s32.s16 bml1, s0, [p2], m1
-; ZOL-NEXT:    vldb wh8, [p1], #32
-; ZOL-NEXT:    vldb.3d wh7, [p0], d0
+; ZOL-NEXT:    vldb wl8, [p1], #32
+; ZOL-NEXT:    vldb wl7, [p0], m6
 ; ZOL-NEXT:    vlda.ups.s32.s16 bmh2, s0, [p2, #32]
 ; ZOL-NEXT:    vlda.ups.s32.s16 bml2, s0, [p2], m5
-; ZOL-NEXT:    vldb wl1, [p1], #32
+; ZOL-NEXT:    vldb wh8, [p1], #32
+; ZOL-NEXT:    vldb.3d wh7, [p0], d0
 ; ZOL-NEXT:    vlda.ups.s32.s16 bmh3, s0, [p2, #32]; mov m2, r14
 ; ZOL-NEXT:    vlda.ups.s32.s16 bml3, s0, [p2], m2
+; ZOL-NEXT:    vldb wl1, [p1], #32
 ; ZOL-NEXT:    vlda.ups.s32.s16 bmh4, s0, [p2, #32]
 ; ZOL-NEXT:    vlda.ups.s32.s16 bml4, s0, [p2], m5
 ; ZOL-NEXT:    vlda.ups.s32.s16 bmh5, s0, [p2, #32]
@@ -494,7 +492,7 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ZOL-NEXT:  .L_LEnd0:
 ; ZOL-NEXT:    vldb wh10, [p1], #32; nopa ; nops ; and r1, r1, r9; vmov x8, x10; vmac cm7, cm7, x11, x8, r4
 ; ZOL-NEXT:  // %bb.3: // in Loop: Header=BB0_1 Depth=1
-; ZOL-NEXT:    nopa ; nopb ; nopx ; vmov x11, x0
+; ZOL-NEXT:    nopx ; vmov x11, x0
 ; ZOL-NEXT:    vshuffle x0, x4, x2, r3
 ; ZOL-NEXT:    vshuffle x11, x0, x11, r8
 ; ZOL-NEXT:    vlda wl0, [sp, #-64] // 32-byte Folded Reload
@@ -516,7 +514,7 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ZOL-NEXT:    vshuffle x3, x4, x2, r3; vmac cm0, cm1, x8, x1, r4
 ; ZOL-NEXT:    st dj7, [sp, #-88] // 4-byte Folded Spill
 ; ZOL-NEXT:    vshuffle x5, x3, x0, r8; vmac cm1, cm2, x3, x1, r4
-; ZOL-NEXT:    lda m7, [sp, #-96]; vst.srs.s16.s32 bmh7, s2, [p3, #32]; mov s3, r6 // 4-byte Folded Reload
+; ZOL-NEXT:    lda m7, [sp, #-96]; vst.srs.s16.s32 bmh7, s2, [p3, #32] // 4-byte Folded Reload
 ; ZOL-NEXT:    lda dc7, [sp, #-84]; vst.srs.s16.s32 bml7, s3, [p3], #64; vmac cm2, cm3, x5, x1, r4 // 4-byte Folded Reload
 ; ZOL-NEXT:    vst.srs.s16.s32 bmh0, s3, [p3, #32]
 ; ZOL-NEXT:    vst.srs.s16.s32 bml0, s3, [p3], m4; vmac cm3, cm8, x6, x10, r4
@@ -526,9 +524,9 @@ define dso_local void @conv2d.loop.nest(ptr %add.ptr6.i51, ptr %add.ptr5, ptr %c
 ; ZOL-NEXT:    vst.srs.s16.s32 bml2, s3, [p3], m1; vmac cm5, cm5, x3, x10, r4
 ; ZOL-NEXT:    vst.srs.s16.s32 bmh3, s3, [p3, #32]
 ; ZOL-NEXT:    vst.srs.s16.s32 bml3, s3, [p3], #64; vmac cm4, cm6, x5, x10, r4
-; ZOL-NEXT:    vst.srs.s16.s32 bmh8, s3, [p3, #32]; mov dj5, r11
-; ZOL-NEXT:    vst.srs.s16.s32 bml8, s3, [p3], m4; mov m2, r12
-; ZOL-NEXT:    vst.srs.s16.s32 bmh5, s3, [p3, #32]; mov m3, r13
+; ZOL-NEXT:    vst.srs.s16.s32 bmh8, s3, [p3, #32]
+; ZOL-NEXT:    vst.srs.s16.s32 bml8, s3, [p3], m4
+; ZOL-NEXT:    vst.srs.s16.s32 bmh5, s3, [p3, #32]; mov m2, r12
 ; ZOL-NEXT:    vst.srs.s16.s32 bml5, s3, [p3], #64; mov m1, r10
 ; ZOL-NEXT:    padda.3d [p0], d1; vst.srs.s16.s32 bmh4, s3, [p3, #32]; mov m1, r15
 ; ZOL-NEXT:    vst.2d.srs.s16.s32 bml4, s3, [p3], d7; add r7, r7, #-1; mov dj7, r24
