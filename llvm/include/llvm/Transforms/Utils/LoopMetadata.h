@@ -27,8 +27,9 @@ private:
   Instruction *LoopBound0;
   Instruction *LoopBound1;
   unsigned MinIterCount;
+  bool IsLoopIncrementing;
 
-  Value *MinValue;
+  Value *MinBoundry;
   Value *MaxBoundry;
 
   bool extractMetaData(Loop &L);
@@ -38,10 +39,14 @@ private:
   void getBoundries();
   Value *getMinIterValue(const SCEV *S, int MinIterCount, LLVMContext *Context);
 
+  void calcIncrement(const SCEV *S);
+  bool assignBoundsInEqualComparison(Value *Op0, Value *Op1);
+  bool checkBoundries();
   Value *getValue(Value *V) const;
-  Value *getMinBoundInEqualityComparison(Value *Op) const;
+  Value *getLoopVariantInEqualityComparison(Value *Op) const;
 
   const SCEV *getTruncInductionSCEV();
+  const SCEV *extractSCEVFromTruncation(Instruction *I);
   const SCEV *getSCEV();
 
 public:
