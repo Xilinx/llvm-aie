@@ -50,10 +50,6 @@ static cl::opt<bool> EnablePipelinerSchedPropagateIncomingLatencies(
 static cl::opt<bool> EnableWAWStickyRegisters(
     "aie-pipeliner-waw-sticky-registers", cl::Hidden, cl::init(true),
     cl::desc("Apply sticky registers WAW dependency removal"));
-static cl::opt<unsigned> WAWStickyRegistersMemOpsThreshold(
-    "aie-waw-sticky-register-mem-threshold", cl::Hidden, cl::init(4),
-    cl::desc("Number of memory instructions to enable the register exclusion "
-             "heuristic in WAW sticky registers dep. removal"));
 
 // These are debugging/testing options.
 
