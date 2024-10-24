@@ -95,6 +95,66 @@ body:             |
     PseudoRET implicit $lr
 ...
 
+# Simulate a 2-stage SW pipeline on the previous example.
+# The loads are in the first stage, while the VMOV to fill the hi part of x0 is
+# in the second stage. The load of wl0 makes x0 livein with a lane mask.
+# We should still be able to hoist the VMOV, because it doesn't collide with the
+# lanes of x0 that are livein.
+---
+name:            constant_vmov_sublane
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: constant_vmov_sublane
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $p0, $p1, $p2, $r0, $r1, $s0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $x2 = VBCST_32 $r0
+  ; CHECK-NEXT:   $wl0, $p0 = VLDA_dmw_lda_w_ag_pstm_nrm_imm $p0, 32
+  ; CHECK-NEXT:   $wl1, $p1 = VLDA_dmw_lda_w_ag_pstm_nrm_imm $p1, 32
+  ; CHECK-NEXT:   $wh0 = VMOV_mv_w $wl2
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; CHECK-NEXT:   liveins: $x0:0x0000000000000002, $x1:0x0000000000000002, $x2:0x0000000000000002, $p0, $p1, $p2, $r0, $r1, $s0, $wh0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $cm0 = VMUL_vmac_cm_core_dense $x0, $x1, $r0
+  ; CHECK-NEXT:   $p2 = VST_SRS_S8_S32_ag_pstm_nrm_imm $p2, 32, $cm0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+  ; CHECK-NEXT:   $wl0, $p0 = VLDA_dmw_lda_w_ag_pstm_nrm_imm $p0, 32
+  ; CHECK-NEXT:   $wl1, $p1 = VLDA_dmw_lda_w_ag_pstm_nrm_imm $p1, 32
+  ; CHECK-NEXT:   PseudoJZ $r1, %bb.1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   liveins: $x0:0x0000000000000002, $x1:0x0000000000000002, $x2:0x0000000000000002, $p0, $p1, $p2, $r0, $s0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $wh0 = VMOV_mv_w $wl2
+  ; CHECK-NEXT:   $cm0 = VMUL_vmac_cm_core_dense $x0, $x1, $r0
+  ; CHECK-NEXT:   $p2 = VST_SRS_S8_S32_ag_pstm_nrm_imm $p2, 32, $cm0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+  ; CHECK-NEXT:   PseudoRET implicit $lr
+  bb.1:
+    liveins: $p0, $p1, $p2, $r0, $r1, $s0
+    $x2 = VBCST_32 $r0
+    $wl0, $p0 = VLDA_dmw_lda_w_ag_pstm_nrm_imm $p0, 32
+    $wl1, $p1 = VLDA_dmw_lda_w_ag_pstm_nrm_imm $p1, 32
+
+  bb.3:
+    liveins: $x0:0x02, $x1:0x02, $x2:0x02, $p0, $p1, $p2, $r0, $r1, $s0
+    $wh0 = VMOV_mv_w $wl2
+    $cm0 = VMUL_vmac_cm_core_dense $x0, $x1, $r0
+    $p2 = VST_SRS_S8_S32_ag_pstm_nrm_imm $p2, 32, $cm0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+    $wl0, $p0 = VLDA_dmw_lda_w_ag_pstm_nrm_imm $p0, 32
+    $wl1, $p1 = VLDA_dmw_lda_w_ag_pstm_nrm_imm $p1, 32
+    PseudoJZ $r1, %bb.3
+
+  bb.2:
+    liveins: $x0:0x02, $x1:0x02, $x2:0x02, $p0, $p1, $p2, $r0, $s0
+    $wh0 = VMOV_mv_w $wl2
+    $cm0 = VMUL_vmac_cm_core_dense $x0, $x1, $r0
+    $p2 = VST_SRS_S8_S32_ag_pstm_nrm_imm $p2, 32, $cm0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd
+    PseudoRET implicit $lr
+...
+
 # wh3 is re-defined in the loop through the definition of x3
 # Make sure it's not hoisted
 ---
@@ -139,4 +199,49 @@ body:             |
 
   bb.2:
     PseudoRET implicit $lr
+...
+
+# Here, x6.lo (wl6) is livein for the loop through $x6:0x02, but it's also re-defined.
+# Check $wl6 = VMOV_mv_w ... isn't hoisted.
+---
+name:            overwrite_live_lane
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: overwrite_live_lane
+  ; CHECK: bb.0:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $p0, $p1, $p2, $r0, $r1, $s0, $x0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $x2 = VBCST_32 $r0
+  ; CHECK-NEXT:   $wl6 = VMOV_mv_w $wl2
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; CHECK-NEXT:   liveins: $x0, $x2:0x0000000000000002, $x6:0x0000000000000002, $p0, $r1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $wh6, $p0 = VLDA_dmw_lda_w_ag_pstm_nrm_imm $p0, 32
+  ; CHECK-NEXT:   $x0 = VADD_32 $x0, $x6
+  ; CHECK-NEXT:   $wl6 = VMOV_mv_w $wl2
+  ; CHECK-NEXT:   PseudoJZ $r1, %bb.1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   liveins: $x0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   PseudoRET implicit $lr, implicit $x0
+  bb.1:
+    liveins: $p0, $p1, $p2, $r0, $r1, $s0, $x0
+    $x2 = VBCST_32 $r0
+    $wl6 = VMOV_mv_w $wl2
+
+  bb.3:
+    liveins: $x0, $x2:0x02, $x6:0x02, $p0, $r1
+    $wh6, $p0 = VLDA_dmw_lda_w_ag_pstm_nrm_imm $p0, 32
+    $x0 = VADD_32 $x0, $x6
+    $wl6 = VMOV_mv_w $wl2
+    PseudoJZ $r1, %bb.3
+
+  bb.2:
+    liveins: $x0
+    PseudoRET implicit $lr, implicit $x0
 ...
