@@ -10,6 +10,9 @@ define amdgpu_cs void @_amdgpu_cs_main(float %0, i32 %1) {
 ; GFX10-NEXT:    v_mov_b32_e32 v1, 0
 ; GFX10-NEXT:    s_mov_b32 s4, 0
 ; GFX10-NEXT:    s_mov_b32 s1, 0
+; GFX10-NEXT:    s_mov_b32 s5, s4
+; GFX10-NEXT:    s_mov_b32 s6, s4
+; GFX10-NEXT:    s_mov_b32 s7, s4
 ; GFX10-NEXT:    s_mov_b32 s8, s4
 ; GFX10-NEXT:    s_mov_b32 s9, s4
 ; GFX10-NEXT:    s_mov_b32 s10, s4
@@ -36,11 +39,8 @@ define amdgpu_cs void @_amdgpu_cs_main(float %0, i32 %1) {
 ; GFX10-NEXT:    s_cbranch_execz .LBB0_1
 ; GFX10-NEXT:  ; %bb.3: ; %branch2_merge
 ; GFX10-NEXT:    ; in Loop: Header=BB0_2 Depth=1
-; GFX10-NEXT:    s_mov_b32 s5, s4
-; GFX10-NEXT:    s_mov_b32 s6, s4
-; GFX10-NEXT:    s_mov_b32 s7, s4
-; GFX10-NEXT:    s_andn2_b32 s2, s2, exec_lo
 ; GFX10-NEXT:    image_sample_lz v1, [v2, v2, v1], s[8:15], s[4:7] dmask:0x1 dim:SQ_RSRC_IMG_3D
+; GFX10-NEXT:    s_andn2_b32 s2, s2, exec_lo
 ; GFX10-NEXT:    s_waitcnt vmcnt(0)
 ; GFX10-NEXT:    v_fma_f32 v1, v1, v0, 0
 ; GFX10-NEXT:    v_cmp_le_f32_e64 s0, 0, v1
@@ -57,6 +57,9 @@ define amdgpu_cs void @_amdgpu_cs_main(float %0, i32 %1) {
 ; GFX12-NEXT:    v_mov_b32_e32 v1, 0
 ; GFX12-NEXT:    s_mov_b32 s4, 0
 ; GFX12-NEXT:    s_mov_b32 s1, 0
+; GFX12-NEXT:    s_mov_b32 s5, s4
+; GFX12-NEXT:    s_mov_b32 s6, s4
+; GFX12-NEXT:    s_mov_b32 s7, s4
 ; GFX12-NEXT:    s_mov_b32 s8, s4
 ; GFX12-NEXT:    s_mov_b32 s9, s4
 ; GFX12-NEXT:    s_mov_b32 s10, s4
@@ -83,11 +86,8 @@ define amdgpu_cs void @_amdgpu_cs_main(float %0, i32 %1) {
 ; GFX12-NEXT:    s_cbranch_execz .LBB0_1
 ; GFX12-NEXT:  ; %bb.3: ; %branch2_merge
 ; GFX12-NEXT:    ; in Loop: Header=BB0_2 Depth=1
-; GFX12-NEXT:    s_mov_b32 s5, s4
-; GFX12-NEXT:    s_mov_b32 s6, s4
-; GFX12-NEXT:    s_mov_b32 s7, s4
-; GFX12-NEXT:    s_and_not1_b32 s2, s2, exec_lo
 ; GFX12-NEXT:    image_sample_lz v1, [v2, v2, v1], s[8:15], s[4:7] dmask:0x1 dim:SQ_RSRC_IMG_3D
+; GFX12-NEXT:    s_and_not1_b32 s2, s2, exec_lo
 ; GFX12-NEXT:    s_wait_samplecnt 0x0
 ; GFX12-NEXT:    v_fma_f32 v1, v1, v0, 0
 ; GFX12-NEXT:    s_delay_alu instid0(VALU_DEP_1) | instskip(NEXT) | instid1(VALU_DEP_1)

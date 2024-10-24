@@ -611,9 +611,12 @@ void MachineLICMBase::HoistRegionPostRA(MachineLoop *CurLoop,
   // Mark registers as clobbered if they are defined in the loop and also livein
   for (const auto &LoopLI : CurLoop->getHeader()->liveins()) {
     MCPhysReg LoopLiveInReg = LoopLI.PhysReg;
-    for (MCRegUnitIterator RUI(LoopLiveInReg, TRI); RUI.isValid(); ++RUI) {
-      if (RUDefs.test(*RUI)) {
-        RUClobbers.set(*RUI);
+    LaneBitmask LiveInMask = LoopLI.LaneMask;
+    for (MCRegUnitMaskIterator RUI(LoopLiveInReg, TRI); RUI.isValid(); ++RUI) {
+      auto LiveInUnit = (*RUI).first;
+      LaneBitmask UnitMask = (*RUI).second;
+      if ((UnitMask & LiveInMask).any() && RUDefs.test(LiveInUnit)) {
+        RUClobbers.set(LiveInUnit);
       }
     }
   }
