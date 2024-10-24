@@ -10,6 +10,7 @@
 
 #include "AIE2TargetTransformInfo.h"
 #include "Utils/AIELoopUtils.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/CodeGen/BasicTTIImpl.h"
 #include "llvm/IR/IntrinsicsAIE2.h"
@@ -108,8 +109,7 @@ bool AIE2TTIImpl::isHardwareLoopProfitable(Loop *L, ScalarEvolution &SE,
 
   if (!ForceHLGeneration) {
     if (const MDNode *LoopID = L->getLoopID()) {
-      std::optional<int64_t> MinTripCount =
-          AIELoopUtils::getMinTripCount(LoopID);
+      std::optional<int64_t> MinTripCount = getMinTripCount(LoopID);
       if (MinTripCount) {
         // Reject HL for this case.
         if (*MinTripCount <= MinIterCountHLReject) {

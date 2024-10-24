@@ -46,6 +46,7 @@ class TargetLibraryInfo;
 class LPPassManager;
 class Instruction;
 struct RuntimeCheckingPtrGroup;
+class MachineBasicBlock;
 typedef std::pair<const RuntimeCheckingPtrGroup *,
                   const RuntimeCheckingPtrGroup *>
     RuntimePointerCheck;
@@ -283,8 +284,21 @@ MDNode *updateIterCounts(LLVMContext &Context, MDNode *LoopID,
                          std::function<int64_t(int64_t)> FixMin,
                          std::function<int64_t(int64_t)> FixMax);
 
+/// Get Minimum Trip Count from the LoopID
+std::optional<int64_t> getMinTripCount(const MDNode *LoopID);
+
+/// Get the LoopID from a single block loop or nullptr
+const MDNode *getLoopID(const MachineBasicBlock &LoopBlock);
+
+/// Get LoopID for Latch
+const MDNode *getLoopID(const BasicBlock *LoopBB);
+
+/// LoopBlock should hold the backedge. Since we generally call it for
+/// single block loops, that's automatically true.
+std::optional<int64_t> getMinTripCount(const MachineBasicBlock &LoopBlock);
+
 /// Loop for the attribute that provides minimum iteration counts
-std::optional<int> getMinIterCounts(const Loop *L);
+std::optional<int64_t> getMinTripCount(const Loop *L);
 
 /// Look for the loop attribute that disables all transformation heuristic.
 bool hasDisableAllTransformsHint(const Loop *L);

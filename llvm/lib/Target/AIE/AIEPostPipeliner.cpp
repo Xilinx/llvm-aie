@@ -15,6 +15,7 @@
 #include "Utils/AIELoopUtils.h"
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Transforms/Utils/LoopUtils.h"
 
 #define DEBUG_TYPE "postpipeliner"
 
@@ -92,7 +93,7 @@ bool PostPipeliner::canAccept(MachineBasicBlock &LoopBlock) {
   // 4. We need to peel stages and be left with a positive tripcount.
   // This is just a minimum check to save useless work; the real stage
   // count is checked before accepting the schedule.
-  auto ParsedMinTripCount = AIELoopUtils::getMinTripCount(LoopBlock);
+  auto ParsedMinTripCount = getMinTripCount(LoopBlock);
   if (!ParsedMinTripCount) {
     LLVM_DEBUG(dbgs() << " PostPipeliner: No min tripcount\n");
     return false;

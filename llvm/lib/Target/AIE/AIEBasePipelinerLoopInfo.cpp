@@ -24,6 +24,7 @@
 #include "llvm/CodeGen/MachinePipeliner.h"
 #include "llvm/CodeGen/RegisterPressure.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Transforms/Utils/LoopUtils.h"
 #include <memory>
 
 #define DEBUG_TYPE "aie-pipeliner"
@@ -60,8 +61,7 @@ AIEBasePipelinerLoopInfo::AIEBasePipelinerLoopInfo(MachineInstr *EndLoop,
     : TII(TII), MRI(EndLoop->getMF()->getRegInfo()), EndLoop(EndLoop),
       LoopBlock(EndLoop->getParent()) {
 
-  std::optional<int64_t> ParsedMinTripCount =
-      AIELoopUtils::getMinTripCount(*LoopBlock);
+  std::optional<int64_t> ParsedMinTripCount = getMinTripCount(*LoopBlock);
   if (ParsedMinTripCount) {
     MinTripCount = *ParsedMinTripCount;
     LLVM_DEBUG(dbgs() << "PLI: MinTripCount from pragma =  " << MinTripCount

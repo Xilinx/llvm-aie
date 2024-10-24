@@ -18,7 +18,7 @@ define dso_local void @incrementByOne(ptr %ptr, i32 noundef %n) #0 {
 ; CHECK:       for.cond:
 ; CHECK-NEXT:    [[I_0:%.*]] = phi i32 [ 0, [[ENTRY:%.*]] ], [ [[INC:%.*]], [[FOR_BODY:%.*]] ]
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp slt i32 [[I_0]], [[N:%.*]]
-; CHECK-NEXT:    [[TMP0:%.*]] = icmp sgt i32 [[N]], 3
+; CHECK-NEXT:    [[TMP0:%.*]] = icmp sgt i32 [[N]], 9
 ; CHECK-NEXT:    tail call void @llvm.assume(i1 [[TMP0]])
 ; CHECK-NEXT:    br i1 [[CMP]], label [[FOR_BODY]], label [[FOR_COND_CLEANUP:%.*]]
 ; CHECK:       for.cond.cleanup:
@@ -48,7 +48,7 @@ for.body:                                         ; preds = %for.cond
   %add = add nsw i32 %0, 8
   store i32 %add, ptr %arrayidx, align 4
   %inc = add nsw i32 %i.0, 1
-  br label %for.cond, !llvm.loop !6
+  br label %for.cond, !llvm.loop !3
 }
 
 ; for loop where loop counter is incremented by +7 and starts at 0
@@ -71,7 +71,7 @@ define dso_local void @incrementByMultiple(ptr %ptr, i32 noundef %n) #0 {
 ; CHECK-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP1]], 8
 ; CHECK-NEXT:    store i32 [[ADD]], ptr [[ARRAYIDX]], align 4
 ; CHECK-NEXT:    [[ADD2]] = add nsw i32 [[I_0]], 7
-; CHECK-NEXT:    br label [[FOR_COND]], !llvm.loop [[LOOP0]]
+; CHECK-NEXT:    br label [[FOR_COND]], !llvm.loop [[LOOP4:![0-9]+]]
 ;
 entry:
   br label %for.cond
@@ -117,7 +117,7 @@ define dso_local void @outsideGuard(ptr %ptr, i32 noundef %n) #0 {
 ; CHECK-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP1]], 8
 ; CHECK-NEXT:    store i32 [[ADD]], ptr [[ARRAYIDX]], align 4
 ; CHECK-NEXT:    [[INC]] = add nsw i32 [[I_0]], 1
-; CHECK-NEXT:    br label [[FOR_COND]], !llvm.loop [[LOOP0]]
+; CHECK-NEXT:    br label [[FOR_COND]], !llvm.loop [[LOOP4]]
 ; CHECK:       if.end:
 ; CHECK-NEXT:    ret void
 ;
@@ -168,7 +168,7 @@ define dso_local void @decrement(ptr %ptr, i32 noundef %n) #0 {
 ; CHECK-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP1]], 8
 ; CHECK-NEXT:    store i32 [[ADD]], ptr [[ARRAYIDX]], align 4
 ; CHECK-NEXT:    [[DEC]] = add nsw i32 [[I_0]], -1
-; CHECK-NEXT:    br label [[FOR_COND]], !llvm.loop [[LOOP0]]
+; CHECK-NEXT:    br label [[FOR_COND]], !llvm.loop [[LOOP4]]
 ;
 entry:
   br label %for.cond
@@ -210,7 +210,7 @@ define dso_local void @decrementByMultiple(ptr %ptr, i32 noundef %n) #0 {
 ; CHECK-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP1]], 8
 ; CHECK-NEXT:    store i32 [[ADD]], ptr [[ARRAYIDX]], align 4
 ; CHECK-NEXT:    [[SUB]] = sub nsw i32 [[I_0]], 7
-; CHECK-NEXT:    br label [[FOR_COND]], !llvm.loop [[LOOP0]]
+; CHECK-NEXT:    br label [[FOR_COND]], !llvm.loop [[LOOP4]]
 ;
 entry:
   br label %for.cond
@@ -269,7 +269,7 @@ define dso_local void @type_matching(ptr %ptr, i16 noundef signext %n) #0 {
 ; CHECK-NEXT:    [[TMP7:%.*]] = load i16, ptr [[I]], align 2
 ; CHECK-NEXT:    [[INC:%.*]] = add i16 [[TMP7]], 1
 ; CHECK-NEXT:    store i16 [[INC]], ptr [[I]], align 2
-; CHECK-NEXT:    br label [[FOR_COND]], !llvm.loop [[LOOP4:![0-9]+]]
+; CHECK-NEXT:    br label [[FOR_COND]], !llvm.loop [[LOOP6:![0-9]+]]
 ; CHECK:       for.end:
 ; CHECK-NEXT:    ret void
 ;
@@ -331,7 +331,7 @@ define dso_local void @basicIVTruncation(i32 noundef %num_elems, i32 noundef %n)
 ; CHECK-NEXT:    ret void
 ; CHECK:       for.body:
 ; CHECK-NEXT:    [[ADD]] = add nuw nsw i32 [[CONV]], 1
-; CHECK-NEXT:    br label [[FOR_COND]], !llvm.loop [[LOOP0]]
+; CHECK-NEXT:    br label [[FOR_COND]], !llvm.loop [[LOOP4]]
 ;
 entry:
   br label %for.cond
@@ -370,14 +370,14 @@ define  dso_local void @assume_insertion_only_in_correct_header(ptr nonnull alig
 ; CHECK-NEXT:    [[INC103]] = add nuw nsw i32 [[J_0349]], 1
 ; CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[OUTER_G]], align 8
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp ult i32 [[INC103]], [[TMP1]]
-; CHECK-NEXT:    br i1 [[CMP]], label [[FOR_BODY]], label [[FOR_COND_CLEANUP:%.*]], !llvm.loop [[LOOP0]]
+; CHECK-NEXT:    br i1 [[CMP]], label [[FOR_BODY]], label [[FOR_COND_CLEANUP:%.*]], !llvm.loop [[LOOP4]]
 ; CHECK:       for.body11:
 ; CHECK-NEXT:    [[I_0315:%.*]] = phi i32 [ 0, [[FOR_BODY]] ], [ [[INC:%.*]], [[FOR_BODY11]] ]
 ; CHECK-NEXT:    [[INC]] = add nuw nsw i32 [[I_0315]], 1
 ; CHECK-NEXT:    [[EXITCOND_NOT:%.*]] = icmp eq i32 [[INC]], [[TMP0]]
 ; CHECK-NEXT:    [[TMP2:%.*]] = icmp sgt i32 [[TMP0]], 3
 ; CHECK-NEXT:    tail call void @llvm.assume(i1 [[TMP2]])
-; CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label [[FOR_COND8_FOR_COND_CLEANUP10_CRIT_EDGE]], label [[FOR_BODY11]], !llvm.loop [[LOOP0]]
+; CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label [[FOR_COND8_FOR_COND_CLEANUP10_CRIT_EDGE]], label [[FOR_BODY11]], !llvm.loop [[LOOP4]]
 ;
 for.body.lr.ph:
   %inner_g = getelementptr inbounds i8, ptr %params, i20 12
@@ -428,7 +428,7 @@ define  dso_local void @header_is_loop_exit(ptr nonnull align 32 dereferenceable
 ; CHECK:       for.body.exit:
 ; CHECK-NEXT:    [[ADD]] = add nuw nsw i32 [[I_014]], 1
 ; CHECK-NEXT:    [[CMP2:%.*]] = icmp ult i32 [[ADD]], [[DIV7]]
-; CHECK-NEXT:    br i1 [[CMP2]], label [[FOR_BODY]], label [[FOR_COND_CLEANUP:%.*]], !llvm.loop [[LOOP0]]
+; CHECK-NEXT:    br i1 [[CMP2]], label [[FOR_BODY]], label [[FOR_COND_CLEANUP:%.*]], !llvm.loop [[LOOP4]]
 ;
 entry:
   %0 = load i32, ptr %params, align 32
@@ -477,7 +477,7 @@ define  dso_local void @header_unconditional(ptr nonnull align 32 dereferenceabl
 ; CHECK:       for.body.exit:
 ; CHECK-NEXT:    [[ADD]] = add nuw nsw i32 [[I_014]], 1
 ; CHECK-NEXT:    [[CMP2:%.*]] = icmp ult i32 [[ADD]], [[DIV7]]
-; CHECK-NEXT:    br i1 [[CMP2]], label [[FOR_BODY]], label [[FOR_COND_CLEANUP_LOOPEXIT:%.*]], !llvm.loop [[LOOP0]]
+; CHECK-NEXT:    br i1 [[CMP2]], label [[FOR_BODY]], label [[FOR_COND_CLEANUP_LOOPEXIT:%.*]], !llvm.loop [[LOOP4]]
 ;
 entry:
   %0 = load i32, ptr %params, align 32
@@ -503,4 +503,5 @@ for.body.exit:
 !7 = !{!"llvm.loop.mustprogress"}
 !8 = !{!"llvm.loop.itercount.range", i64 4}
 !9 = !{!"llvm.loop.unroll.disable"}
-
+!3 = distinct !{!3, !11, !7, !9}
+!11 = !{!"llvm.loop.itercount.range", i64 10, i64 65}
