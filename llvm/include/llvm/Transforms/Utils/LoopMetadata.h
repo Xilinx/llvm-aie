@@ -77,7 +77,7 @@ private:
 
   /// If the IV is modified through a trunctation, generate a SCEVAddRecExpr
   /// that can be processed by this pass
-  const SCEV *getTruncInductionSCEV();
+  const SCEV *getTruncatedSCEV();
 
   /// Check if the Instruction is part of a truncated SCEVAddExpr that can be
   /// converted into a SCEVAddRecExpr. During the conversion the truncation is

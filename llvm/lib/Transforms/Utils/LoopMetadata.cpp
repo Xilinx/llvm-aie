@@ -304,7 +304,7 @@ const SCEV *LoopMetadata::getSCEV() {
     }
   }
 
-  return getTruncInductionSCEV();
+  return getTruncatedSCEV();
 }
 
 ///  Check if the minimum value fits into the given type
@@ -406,7 +406,7 @@ const SCEV *LoopMetadata::extractSCEVFromTruncation(Instruction *I) {
   return AddRecExpr;
 }
 
-const SCEV *LoopMetadata::getTruncInductionSCEV() {
+const SCEV *LoopMetadata::getTruncatedSCEV() {
   if (const SCEV *TruncSCEV = extractSCEVFromTruncation(LoopBound0))
     return TruncSCEV;
 
