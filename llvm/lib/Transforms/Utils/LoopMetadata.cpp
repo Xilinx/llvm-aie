@@ -298,7 +298,7 @@ void LoopMetadata::getBoundaries() {
 const SCEV *LoopMetadata::getSCEV() {
   for (Value *Op : LoopCmpInstr->operands()) {
     if (SE->isSCEVable(Op->getType())) {
-      const SCEV *S = SE->getSCEV(LoopBound0);
+      const SCEV *S = SE->getSCEV(Op);
       if (S && S->getSCEVType() == SCEVTypes::scAddRecExpr)
         return S;
     }
@@ -423,7 +423,7 @@ void LoopMetadata::addAssumeToLoopHeader(uint64_t MinIterCount,
   if (!BI)
     return;
 
-  ICmpInst *LoopCmpInstr = dyn_cast<ICmpInst>(BI->getCondition());
+  LoopCmpInstr = dyn_cast<ICmpInst>(BI->getCondition());
   if (!LoopCmpInstr)
     return;
 
