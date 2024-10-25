@@ -61,8 +61,19 @@ private:
   /// decrements
   bool canExtractIncrement(const SCEV *S);
 
+  /// if V is LoopInvariant, return V.
+  /// if V is a PHINode, return the Value that strongly dominates the Value's BB
+  /// (i.e. the Value of a previous BB, which is assumed to be the
+  /// initial value, while the non strongly dominating Value is assumed to be
+  /// the IV)
   Value *getLoopInvariantValue(Value *V) const;
-  Value *getLoopVariantInEqualityComparison(Value *Op) const;
+  /// assume that the loop has a fixed target bound and the changing IV.
+  /// Abort if both operands of the equal-compare Instruction are loop
+  /// variant, since this violates the loop structure assumption.
+  /// Return the strongly-dominated Value of the loop IV (i.e. the Value of a
+  /// previous BB, which is assumed to be the initial value, while the non
+  /// strongly dominating Value is assumed to be the IV)
+  Value *getLoopIVInEqualityComparison(Value *EqCmp) const;
 
   /// If the IV is modified through a trunctation, generate a SCEVAddRecExpr
   /// that can be processed by this pass

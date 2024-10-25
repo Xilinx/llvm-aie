@@ -167,10 +167,10 @@ bool LoopMetadata::assignBoundsInEqualComparison(Value *Op0, Value *Op1) {
   Value *LoopVariant = nullptr;
   Value *LoopInVariant = nullptr;
   if (hasSCEVOperands(SE, Op0)) {
-    LoopVariant = getLoopVariantInEqualityComparison(Op0);
+    LoopVariant = getLoopIVInEqualityComparison(Op0);
     LoopInVariant = getLoopInvariantValue(Op1);
   } else {
-    LoopVariant = getLoopVariantInEqualityComparison(Op1);
+    LoopVariant = getLoopIVInEqualityComparison(Op1);
     LoopInVariant = getLoopInvariantValue(Op0);
   }
 
@@ -184,7 +184,7 @@ bool LoopMetadata::assignBoundsInEqualComparison(Value *Op0, Value *Op1) {
   return true;
 }
 
-Value *LoopMetadata::getLoopVariantInEqualityComparison(Value *Op) const {
+Value *LoopMetadata::getLoopIVInEqualityComparison(Value *Op) const {
   assert(isa<Instruction>(Op));
   // Assumption: IV is incremented or decremented by a fixed amount
   Instruction *Instr = dyn_cast<Instruction>(Op);
