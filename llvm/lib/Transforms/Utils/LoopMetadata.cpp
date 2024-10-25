@@ -194,10 +194,8 @@ Value *LoopMetadata::getLoopIVInEqualityComparison(Value *Op) const {
     return nullptr;
   }
 
-  Value *Op0 = Instr->getOperand(0);
-  PHINode *P0 = dyn_cast<PHINode>(Op0);
-  Value *Op1 = Instr->getOperand(1);
-  PHINode *P1 = dyn_cast<PHINode>(Op1);
+  PHINode *P0 = dyn_cast<PHINode>(Instr->getOperand(0));
+  PHINode *P1 = dyn_cast<PHINode>(Instr->getOperand(1));
   if (P0 && P1) {
     // Assumption: the Loop IV will increment or decrement by a fixed value.
     // if this however cannot be determined, prefer to not extract any
@@ -399,10 +397,12 @@ const SCEV *LoopMetadata::extractSCEVFromTruncation(Instruction *I) {
   const SCEV *SCEVStart = SE->getSCEV(Start);
   const SCEV *AddRecExpr = SE->getAddRecExpr(
       SCEVStart, Step, L, llvm::SCEVAddExpr::NoWrapFlags::FlagAnyWrap);
+
   // min boundry already found, so assign it early
   LowerBoundary = Start;
   LLVM_DEBUG(dbgs() << "Found SCEV "; AddRecExpr->dump();
              dbgs() << "and Lower bound "; LowerBoundary->dump());
+
   return AddRecExpr;
 }
 
@@ -472,7 +472,7 @@ void LoopMetadata::addAssumeToLoopHeader(uint64_t MinIterCount,
   IRBuilder<> Builder(L->getHeader()->getTerminator());
 
   Value *Cmp = nullptr;
-  // ensure equalize types in the comparison
+  // ensure equal types in the comparison
   if (UpperBoundary->getType() != MinIterValue->getType()) {
     if (MinIterValue->getType()->getScalarSizeInBits() <
         UpperBoundary->getType()->getScalarSizeInBits()) {
