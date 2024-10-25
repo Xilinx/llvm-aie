@@ -584,6 +584,81 @@ for.body:                                         ; preds = %for.cond
   br label %for.cond, !llvm.loop !6
 }
 
+; Upper: newer is correct - legacy is wrong
+; lower: newer is correct - legacy is correct
+; testing bounds extraction: phi crawling always fails
+; Function Attrs: mustprogress nofree norecurse nosync nounwind memory(argmem: readwrite, inaccessiblemem: write)
+define dso_local void @phi_crawling(i32 noundef %num_elems, i32 noundef %n, ptr nonnull align 32 dereferenceable(128) %params) local_unnamed_addr #0 {
+entry:
+  br label %for.cond
+
+for.cond:
+  %i.0 = phi i32 [ 0, %entry ], [ %add, %for.body ]
+  %inner_g = getelementptr inbounds i8, ptr %params, i20 12
+  %19 = load i32, ptr %inner_g, align 4
+  %cmp = icmp ult i32 %i.0, %n
+  br i1 %cmp, label %for.body, label %for.cond.cleanup
+
+for.cond.cleanup:                                 ; preds = %for.cond
+  %.lcssa = phi i32 [ %19, %for.cond ]
+  br label %for.cond2.pre
+
+for.body:                                         ; preds = %for.cond, %for.body
+  %add = add nuw nsw i32 %i.0 , 1
+  br label %for.cond, !llvm.loop !6
+
+for.cond2.pre:
+  %cmp2 = icmp eq i32 %n, 22
+  br i1 %cmp2, label %cond.true, label %cond.false
+
+cond.true:
+  %mul475 = mul i32 %.lcssa, 2
+  br label %for.cond.ph2
+
+cond.false:
+  br label %for.cond.ph2
+
+for.cond.ph2:
+  %cond479 = phi i32 [ %mul475, %cond.true ], [ %.lcssa, %cond.false ]
+  br label %for.cond.end2
+
+for.cond.end2:
+  %i.1 = phi i32 [ 0, %for.cond.ph2 ], [ %add2, %for.body2 ]
+  %cmp3 = icmp ult i32 %i.1, %cond479
+  br i1 %cmp3, label %for.body2, label %for.cond.cleanup2
+
+for.cond.cleanup2:
+  ret void
+
+for.body2:
+  %add2 = add nuw nsw i32 %i.1 , 1
+  br label %for.cond.end2, !llvm.loop !23
+
+}
+
+; testing bounds extraction: 
+; Upper: newer is wrong   - legacy is correct 
+; lower: newer is correct - legacy is wrong
+; but metadata annotation run is not necessary!
+; Function Attrs: mustprogress noinline nounwind optnone
+define dso_local void @wrong_selection(ptr %ptr, i32 noundef %n) #0 {
+entry:
+  br label %for.cond
+
+for.cond:                                         ; preds = %for.body, %entry
+  br label %for.body
+  
+
+for.cond.cleanup:                                 ; preds = %for.cond
+  ret void
+
+for.body:                                         ; preds = %for.cond
+  %i.0 = phi i32 [ 0, %for.cond ], [ %inc, %for.body ]
+  %inc = add nsw i32 %i.0, 1
+  %cmp = icmp slt i32 %inc, %n
+  br i1 %cmp, label %for.body, label %for.cond.cleanup, !llvm.loop !6
+}
+
 !2 = distinct !{!2, !7, !8, !9}
 !6 = distinct !{!6, !7, !8, !9}
 !7 = !{!"llvm.loop.mustprogress"}
