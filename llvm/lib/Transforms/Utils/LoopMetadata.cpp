@@ -18,6 +18,23 @@
 
 using namespace llvm;
 bool isRotatable(const Loop *L);
+Value *findLoopInvariantValue(Value *V, const Loop *L, DominatorTree *DT);
+bool hasSCEVOperands(ScalarEvolution *SE, Value *Op);
+///  Check if the minimum value fits into the given type
+bool fitstype(unsigned MinValue, const Type *T);
+
+/// extract the SCEVAddExpr that is in the operands of the Instr
+const SCEVAddExpr *getAddExpr(const Instruction *Instr, ScalarEvolution *SE);
+
+/// get SCEVTruncExpr from the SCEV S
+const SCEVTruncateExpr *getSCEVTruncate(const SCEV *S);
+
+/// extract the step size by which the loop IV changes.
+int getSCEVStepSize(const SCEV *S);
+
+/// based on the SCEVTruncateExpr extract the Loop Start Value
+Value *getSCEVStart(const SCEVTruncateExpr *S, const BasicBlock *LoopPreHeader,
+                    const ScalarEvolution *SE);
 
 PreservedAnalyses LoopMetadata::run(Loop &L, LoopAnalysisManager &AM,
                                     LoopStandardAnalysisResults &AR,
@@ -64,7 +81,7 @@ bool LoopMetadata::assignLoopMetadata(Loop &L) {
   return false;
 }
 
-// check basic loop rotation conditions
+/// check basic loop rotation conditions
 bool isRotatable(const Loop *L) {
   BranchInst *BI = dyn_cast<BranchInst>(L->getHeader()->getTerminator());
   return L->isLoopExiting(L->getHeader()) && (BI && BI->isConditional());
