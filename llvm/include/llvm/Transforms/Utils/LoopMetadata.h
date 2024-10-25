@@ -30,6 +30,7 @@ private:
 
   unsigned MinIterCount;
   bool IsLoopIncrementing;
+  bool IsTruncatedSCEV;
 
   /// lower loop boundary
   Value *LowerBoundary;
@@ -41,8 +42,9 @@ private:
 
   void addAssumeToLoopHeader(uint64_t MinIterCount, LLVMContext *Context);
 
+  Value *getUpperTruncatedBound() const;
   /// get lower and upper boundaries of the loop
-  void getBoundaries();
+  void getBoundaries(const SCEV *S);
   /// In the case of an equal comparison as the loop abort condition,
   bool assignBoundsInEqualComparison(Value *Op0, Value *Op1);
   /// validate that the boundries are correctly extracted and that this pass can

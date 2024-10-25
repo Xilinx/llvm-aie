@@ -289,7 +289,21 @@ bool LoopMetadata::validateBounds() {
   return true;
 }
 
-void LoopMetadata::getBoundaries() {
+/// FIXME: call getLoopInvariantInTruncExpr something like this.
+///  get loop invariant constant (that is either high or low), but a boundry
+Value *LoopMetadata::getUpperTruncatedBound() const {
+  for (Value *Op : LoopCmpInstr->operands()) {
+    if (SE->isSCEVable(Op->getType()) &&
+        dyn_cast<SCEVCastExpr>(SE->getSCEV(Op)) != nullptr) {
+      continue;
+    }
+
+    return Op;
+  }
+  return nullptr;
+}
+
+void LoopMetadata::getBoundaries(const SCEV *S) {
 
   CmpInst::Predicate Pred = LoopCmpInstr->getPredicate();
   Value *Op0 = LoopCmpInstr->getOperand(0);
@@ -310,6 +324,64 @@ void LoopMetadata::getBoundaries() {
       LowerBoundary = getLoopInvariantValue(Op1);
     UpperBoundary = getLoopInvariantValue(Op0);
   }
+
+  Value *L = nullptr;
+  Value *U = nullptr;
+  const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(S);
+  const SCEVConstant *SCEVConst = dyn_cast<SCEVConstant>(AR->getStart());
+
+  if (IsLoopIncrementing) {
+    if (!SCEVConst) {
+      LowerBoundary = nullptr;
+      UpperBoundary = nullptr;
+      return;
+    }
+    L = SCEVConst->getValue();
+    if (IsTruncatedSCEV) {
+      U = getUpperTruncatedBound();
+    } else {
+      if (isa<PHINode>(Op0))
+        U = Op1;
+      else
+        U = Op0;
+    }
+
+  } else {
+
+    if (SCEVConst)
+      U = SCEVConst->getValue();
+
+    if (const SCEVUnknown *S = dyn_cast<SCEVUnknown>(AR->getStart()))
+      U = S->getValue();
+
+    if (IsTruncatedSCEV) {
+      U = getUpperTruncatedBound();
+    } else {
+      if (isa<PHINode>(Op0))
+        L = Op1;
+      else
+        L = Op0;
+    }
+  }
+  // verify that they are the same
+  if (U != UpperBoundary || L != LowerBoundary) {
+    LLVM_DEBUG(
+        dbgs() << "UpperBoundary: " << *UpperBoundary << ", U: " << *U << "\n"
+               << "LowerBoundary: " << *LowerBoundary << ", L: " << *L << "\n");
+    std::string errorMessage = "Boundaries do not match. UpperBoundary: ";
+    llvm::raw_string_ostream stream(errorMessage);
+    UpperBoundary->print(stream);
+    stream << ", U: ";
+    U->print(stream);
+    stream << ", LowerBoundary: ";
+    LowerBoundary->print(stream);
+    stream << ", L: ";
+    L->print(stream);
+
+    llvm_unreachable("Alternative Loop Boundy extraction failed!");
+  }
+  LowerBoundary = L;
+  UpperBoundary = U;
 
   validateBounds();
 }
@@ -430,10 +502,11 @@ const SCEV *LoopMetadata::extractSCEVFromTruncation(Instruction *I) {
 const SCEV *LoopMetadata::getTruncatedSCEV() {
   for (Value *Op : LoopCmpInstr->operands()) {
     if (const SCEV *TruncSCEV =
-            extractSCEVFromTruncation(dyn_cast<Instruction>(Op)))
+            extractSCEVFromTruncation(dyn_cast<Instruction>(Op))) {
+      IsTruncatedSCEV = true;
       return TruncSCEV;
+    }
   }
-
   return nullptr;
 }
 
@@ -456,6 +529,7 @@ void LoopMetadata::addAssumeToLoopHeader(uint64_t MinIterCount,
 
   LowerBoundary = nullptr;
   UpperBoundary = nullptr;
+  IsTruncatedSCEV = false;
 
   // get Scalar Evolution of the loop counter
   const SCEV *S = getSCEV();
@@ -473,7 +547,7 @@ void LoopMetadata::addAssumeToLoopHeader(uint64_t MinIterCount,
     return;
   }
 
-  getBoundaries();
+  getBoundaries(S);
   if (!UpperBoundary) {
     LLVM_DEBUG(dbgs() << "LoopMetadata-Warning: Could not find Iteration "
                          "Variable. Will not process Metadata\n");
