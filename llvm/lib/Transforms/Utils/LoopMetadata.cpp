@@ -327,19 +327,16 @@ bool fitstype(unsigned MinValue, const Type *T) {
 
 const SCEVAddExpr *getAddExpr(const Instruction *Instr, ScalarEvolution *SE) {
   for (unsigned I = 0; I < Instr->getNumOperands(); I++) {
-    Instr->getOperand(I)->dump();
     PHINode *PN = dyn_cast<PHINode>(Instr->getOperand(I));
 
-    const SCEVAddExpr *AddExpr = nullptr;
+    // find loop variant Operand, which coincides with SCEV
     if (PN) {
-      // find loop variant Operand, which coincides with SCEV
       for (Value *Op : PN->operands())
-        AddExpr = dyn_cast<SCEVAddExpr>(SE->getSCEV(Op));
-      if (AddExpr)
-        return AddExpr;
+        if (const SCEVAddExpr *AddExpr = dyn_cast<SCEVAddExpr>(SE->getSCEV(Op)))
+          return AddExpr;
     } else {
-      AddExpr = dyn_cast<SCEVAddExpr>(SE->getSCEV(Instr->getOperand(I)));
-      if (AddExpr)
+      if (const SCEVAddExpr *AddExpr =
+              dyn_cast<SCEVAddExpr>(SE->getSCEV(Instr->getOperand(I))))
         return AddExpr;
     }
   }
@@ -362,7 +359,7 @@ Value *getSCEVStart(const SCEVTruncateExpr *S, const BasicBlock *LoopPreHeader,
                     const ScalarEvolution *SE) {
 
   Value *StartVal = dyn_cast<SCEVUnknown>(S->getOperand())->getValue();
-  
+
   if (StartVal) {
     PHINode *PN = dyn_cast<PHINode>(dyn_cast<Instruction>(StartVal));
     if (PN) {
