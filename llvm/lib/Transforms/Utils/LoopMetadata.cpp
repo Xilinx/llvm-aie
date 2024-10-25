@@ -272,19 +272,9 @@ bool LoopMetadata::validateBounds() {
 
 void LoopMetadata::getBoundaries() {
 
-  BranchInst *BI = dyn_cast<BranchInst>(L->getExitingBlock()->getTerminator());
-  if (!BI)
-    return;
-
-  ICmpInst *ICmp = dyn_cast<ICmpInst>(BI->getCondition());
-  if (!ICmp)
-    return;
-  LLVM_DEBUG(dbgs() << "Branch Instruction Found: "; ICmp->dump();
-             dbgs() << "\n");
-
-  CmpInst::Predicate Pred = ICmp->getPredicate();
-  Value *Op0 = ICmp->getOperand(0);
-  Value *Op1 = ICmp->getOperand(1);
+  CmpInst::Predicate Pred = LoopCmpInstr->getPredicate();
+  Value *Op0 = LoopCmpInstr->getOperand(0);
+  Value *Op1 = LoopCmpInstr->getOperand(1);
 
   if (Pred == CmpInst::Predicate::ICMP_EQ) {
     assignBoundsInEqualComparison(Op0, Op1);
