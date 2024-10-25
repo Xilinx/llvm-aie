@@ -88,13 +88,17 @@ bool isRotatable(const Loop *L) {
 }
 
 bool LoopMetadata::canExtractIncrement(const SCEV *S) {
-  if (const SCEVAddRecExpr *AR = cast<SCEVAddRecExpr>(S)) {
-    IsLoopIncrementing =
-        cast<SCEVConstant>(*AR->getOperand(1)).getValue()->getSExtValue() > 0;
-    return true;
-  }
+  const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(S);
+  if (!AR)
+    return false;
 
-  return false;
+  const SCEVConstant *SCEVConst =
+      dyn_cast<SCEVConstant>(AR->getStepRecurrence(*SE));
+  if (!SCEVConst) {
+    return false;
+  }
+  IsLoopIncrementing = SCEVConst->getValue()->getSExtValue() > 0;
+  return true;
 }
 
 Value *LoopMetadata::calcMinIterValue(const SCEV *S, int MinIterCount,
