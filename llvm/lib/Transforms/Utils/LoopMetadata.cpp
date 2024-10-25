@@ -185,7 +185,8 @@ bool LoopMetadata::assignBoundsInEqualComparison(Value *Op0, Value *Op1) {
 }
 
 Value *LoopMetadata::getLoopVariantInEqualityComparison(Value *Op) const {
-  // Assumption: IV is incremented or decremented by a fixed
+  assert(isa<Instruction>(Op));
+  // Assumption: IV is incremented or decremented by a fixed amount
   Instruction *Instr = dyn_cast<Instruction>(Op);
   if (Instr->getNumOperands() != 2) {
     LLVM_DEBUG(dbgs() << "LoopMetadata-Warning: Instruction not supported!";
@@ -271,9 +272,12 @@ bool LoopMetadata::validateBounds() {
 void LoopMetadata::getBoundaries() {
 
   BranchInst *BI = dyn_cast<BranchInst>(L->getExitingBlock()->getTerminator());
+  if (!BI)
+    return;
 
-  Value *Condition = BI->getCondition();
-  ICmpInst *ICmp = dyn_cast<ICmpInst>(Condition);
+  ICmpInst *ICmp = dyn_cast<ICmpInst>(BI->getCondition());
+  if (!ICmp)
+    return;
   LLVM_DEBUG(dbgs() << "Branch Instruction Found: "; ICmp->dump();
              dbgs() << "\n");
 
@@ -315,6 +319,7 @@ const SCEV *LoopMetadata::getSCEV() {
   return getTruncInductionSCEV();
 }
 
+///  Check if the minimum value fits into the given type
 bool fitstype(unsigned MinValue, const Type *T) {
   return (uint64_t)MinValue <
          *APInt::getSignedMaxValue(T->getIntegerBitWidth()).getRawData();
