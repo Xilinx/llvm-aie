@@ -348,20 +348,20 @@ Value *getSCEVStart(const SCEVTruncateExpr *S, const BasicBlock *LoopPreHeader,
 
   Value *StartVal = dyn_cast<SCEVUnknown>(S->getOperand())->getValue();
 
-  if (StartVal) {
-    PHINode *PN = dyn_cast<PHINode>(dyn_cast<Instruction>(StartVal));
-    if (PN) {
-      for (uint Op = 0; Op < PN->getNumOperands(); Op++) {
-        LLVM_DEBUG(dbgs() << PN->getIncomingBlock(Op)->getName() << "\n");
-        if (PN->getIncomingBlock(Op)->getName() == LoopPreHeader->getName()) {
-          Value *V = PN->getOperand(Op);
-          if (isa<Constant>(V)) {
-            return V;
-          }
-        }
-      }
+  if (!StartVal)
+    return nullptr;
+
+  PHINode *PN = dyn_cast<PHINode>(dyn_cast<Instruction>(StartVal));
+  if (!PN)
+    return nullptr;
+
+  for (uint Op = 0; Op < PN->getNumOperands(); Op++) {
+    if (PN->getIncomingBlock(Op)->getName() == LoopPreHeader->getName() &&
+        isa<Constant>(PN->getOperand(Op))) {
+      return PN->getOperand(Op);
     }
   }
+
   return nullptr;
 }
 
