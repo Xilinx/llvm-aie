@@ -99,40 +99,23 @@ Value *LoopMetadata::getMinIterValue(const SCEV *S, int MinIterCount,
   }
 
   int IncValue = cast<SCEVConstant>(ConstExpr)->getValue()->getSExtValue();
-  switch (S->getSCEVType()) {
-  case scAddRecExpr: {
-    const SCEVAddRecExpr *AR = cast<SCEVAddRecExpr>(S);
-    const SCEV *ConstExpr = AR->getOperand(1);
-    if (AR->isAffine() && isa<SCEVConstant>(ConstExpr)) {
-      IncValue = cast<SCEVConstant>(ConstExpr)->getValue()->getSExtValue();
-      break;
-    }
 
-    LLVM_DEBUG(dbgs() << "LoopMetadata-Warning: Unknown SCEVAddRecExpr ";
-               AR->dump());
-    return nullptr;
-  }
+  int MinIterValue = std::abs(IncValue * MinIterCount);
 
-  default:
-    LLVM_DEBUG(dbgs() << "LoopMetadata-Warning: Unknown SCEV Type!"; S->dump());
-    return nullptr;
-  }
-
-  int MaxValue = std::abs(IncValue * MinIterCount);
-  // if loop condition contains equality and less or more
-  // FIXME: only decrement if the condition is lt (on EQ dont do this)
+  // to emulate builtin_assume, subtract MinIterValue by 1 if loop is
+  // incrementing
   if (IsLoopIncrementing)
-    MaxValue--;
+    MinIterValue--;
 
   // If the loop does not start at 0, add the loop start to the Minimum
   // Iteration Value
   assert(isa<Constant>(MinBoundary));
   int LoopStart =
       dyn_cast<Constant>(MinBoundary)->getUniqueInteger().getSExtValue();
-  MaxValue += LoopStart;
+  MinIterValue += LoopStart;
 
-  llvm::ConstantInt *ConstIncValue =
-      llvm::ConstantInt::get(llvm::Type::getInt32Ty(*Context), MaxValue, true);
+  llvm::ConstantInt *ConstIncValue = llvm::ConstantInt::get(
+      llvm::Type::getInt32Ty(*Context), MinIterValue, true);
   return static_cast<llvm::Value *>(ConstIncValue);
 }
 
