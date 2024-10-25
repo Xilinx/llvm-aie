@@ -491,13 +491,14 @@ void LoopMetadata::addAssumeToLoopHeader(uint64_t MinIterCount,
   }
   Cmp = Builder.CreateICmpSGT(MaxBoundary, MinIterValue);
 
-  LLVM_DEBUG(dbgs() << "Inserting Condition:"; MinIterValue->dump();
-             dbgs() << "With Comparator:"; Cmp->dump());
-
   // Insert the `llvm.assume` Call
   Function *AssumeFn =
       Intrinsic::getDeclaration(L->getHeader()->getModule(), Intrinsic::assume);
   CallInst *Call = Builder.CreateCall(AssumeFn, Cmp);
   Call->setTailCall(true);
   AC->registerAssumption(dyn_cast<AssumeInst>(Call));
+
+  LLVM_DEBUG(dbgs() << "Inserting Condition :"; MinIterValue->dump();
+             dbgs() << "With Comparator   :"; Cmp->dump();
+             dbgs() << "Assume            :"; Call->dump());
 }
