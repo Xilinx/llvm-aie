@@ -296,15 +296,12 @@ void LoopMetadata::getBoundaries() {
 }
 
 const SCEV *LoopMetadata::getSCEV() {
-  if (SE->isSCEVable(LoopBound0->getType())) {
-    const SCEV *S = SE->getSCEV(LoopBound0);
-    if (S && S->getSCEVType() == SCEVTypes::scAddRecExpr)
-      return S;
-  }
-  if (LoopBound1 && SE->isSCEVable(LoopBound1->getType())) {
-    const SCEV *S = SE->getSCEV(LoopBound1);
-    if (S && S->getSCEVType() == SCEVTypes::scAddRecExpr)
-      return S;
+  for (Value *Op : LoopCmpInstr->operands()) {
+    if (SE->isSCEVable(Op->getType())) {
+      const SCEV *S = SE->getSCEV(LoopBound0);
+      if (S && S->getSCEVType() == SCEVTypes::scAddRecExpr)
+        return S;
+    }
   }
 
   return getTruncInductionSCEV();
