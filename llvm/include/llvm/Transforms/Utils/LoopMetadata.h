@@ -42,7 +42,7 @@ private:
   bool calcIncrement(const SCEV *S);
   bool assignBoundsInEqualComparison(Value *Op0, Value *Op1);
   bool validateBounds();
-  Value *getValue(Value *V) const;
+  Value *getLoopInvariantValue(Value *V) const;
   Value *getLoopVariantInEqualityComparison(Value *Op) const;
 
   const SCEV *getTruncInductionSCEV();

@@ -58,9 +58,6 @@ bool LoopMetadata::extractMetaData(Loop &L) {
     LLVM_DEBUG(L.getHeader()->getParent()->dump(););
 
     addAssumeToLoopHeader(MinIterCount.value(), Context);
-    LLVM_DEBUG(dbgs() << "Dumping Full Function:"
-                      << L.getHeader()->getParent()->getName() << "\n";
-               L.getHeader()->getParent()->dump(););
     return true;
   }
 
@@ -145,31 +142,29 @@ Value *LoopMetadata::getMinIterValue(const SCEV *S, int MinIterCount,
   return static_cast<llvm::Value *>(ConstIncValue);
 }
 
-Value *LoopMetadata::getValue(Value *V) const {
-  if (PHINode *MaxPHI = dyn_cast_or_null<PHINode>(V)) {
-    bool HasSecondOp = MaxPHI->getNumOperands() > 1;
-    // Is a function argument, no need to check domination relationship
-    if (!isa<Instruction>(MaxPHI->getOperand(0))) {
-      return MaxPHI->getOperand(0);
-    }
-    // Is a function argument, no need to check domination relationship
-    if (HasSecondOp && !isa<Instruction>(MaxPHI->getOperand(1))) {
-      return MaxPHI->getOperand(1);
-    }
-    // Check if the Op0 is from a previous block, then this is the correct
-    // value
-    if (DT->dominates(dyn_cast<Instruction>(MaxPHI->getOperand(0))->getParent(),
-                      L->getHeader())) {
-      return MaxPHI->getOperand(0);
-    }
-    if (HasSecondOp &&
-        DT->dominates(dyn_cast<Instruction>(MaxPHI->getOperand(1))->getParent(),
-                      L->getHeader())) {
-      return MaxPHI->getOperand(1);
-    }
-    return nullptr;
+Value *findLoopInvariantValue(Value *V, const Loop *L, DominatorTree *DT) {
+  Instruction *Op0 = dyn_cast<Instruction>(V);
+  if (!Op0)
+    return V;
+
+  // if Op0 is from a previous block, this is the loop invariant part
+  if (DT->dominates(Op0->getParent(), L->getHeader()))
+    return V;
+
+  return nullptr;
+}
+
+Value *LoopMetadata::getLoopInvariantValue(Value *V) const {
+  PHINode *MaxPHI = dyn_cast_or_null<PHINode>(V);
+  if (!MaxPHI)
+    return V;
+
+  for (Value *Op : MaxPHI->operands()) {
+    if (Value *LoopInvariant = findLoopInvariantValue(Op, L, DT))
+      return LoopInvariant;
   }
-  return V;
+
+  return nullptr;
 }
 
 bool hasSCEVOperands(ScalarEvolution *SE, Value *Op) {
@@ -191,14 +186,15 @@ bool LoopMetadata::assignBoundsInEqualComparison(Value *Op0, Value *Op1) {
            "Metadata.\n");
     return false;
   }
+
   Value *LoopVariant = nullptr;
   Value *LoopInVariant = nullptr;
   if (hasSCEVOperands(SE, Op0)) {
     LoopVariant = getLoopVariantInEqualityComparison(Op0);
-    LoopInVariant = getValue(Op1);
+    LoopInVariant = getLoopInvariantValue(Op1);
   } else {
     LoopVariant = getLoopVariantInEqualityComparison(Op1);
-    LoopInVariant = getValue(Op0);
+    LoopInVariant = getLoopInvariantValue(Op0);
   }
 
   if (IsLoopIncrementing) {
@@ -220,8 +216,10 @@ Value *LoopMetadata::getLoopVariantInEqualityComparison(Value *Op) const {
     return nullptr;
   }
 
-  PHINode *P0 = dyn_cast<PHINode>(Instr->getOperand(0));
-  PHINode *P1 = dyn_cast<PHINode>(Instr->getOperand(1));
+  Value *Op0 = Instr->getOperand(0);
+  PHINode *P0 = dyn_cast<PHINode>(Op0);
+  Value *Op1 = Instr->getOperand(1);
+  PHINode *P1 = dyn_cast<PHINode>(Op1);
   if (P0 && P1) {
     // Assumption: the Loop IV will increment or decrement by a fixed value.
     // if this however cannot be determined, prefer to not extract any
@@ -235,9 +233,9 @@ Value *LoopMetadata::getLoopVariantInEqualityComparison(Value *Op) const {
   }
 
   if (P0)
-    return getValue(Instr->getOperand(0));
+    return getLoopInvariantValue(P0);
   if (P1)
-    return getValue(Instr->getOperand(1));
+    return getLoopInvariantValue(P1);
 
   LLVM_DEBUG(
       dbgs() << "LoopMetadata-Warning: No Operand is a Phi nodes. This pass "
@@ -314,12 +312,12 @@ void LoopMetadata::getBoundaries() {
 
   if (ICmpInst::isLT(Pred) || ICmpInst::isLE(Pred)) {
     if (!MinBoundary)
-      MinBoundary = getValue(Op0);
-    MaxBoundary = getValue(Op1);
+      MinBoundary = getLoopInvariantValue(Op0);
+    MaxBoundary = getLoopInvariantValue(Op1);
   } else {
     if (!MinBoundary)
-      MinBoundary = getValue(Op1);
-    MaxBoundary = getValue(Op0);
+      MinBoundary = getLoopInvariantValue(Op1);
+    MaxBoundary = getLoopInvariantValue(Op0);
   }
 
   validateBounds();
@@ -382,6 +380,7 @@ Value *getSCEVStart(const SCEVTruncateExpr *S, const BasicBlock *LoopPreHeader,
                     const ScalarEvolution *SE) {
 
   Value *StartVal = dyn_cast<SCEVUnknown>(S->getOperand())->getValue();
+  
   if (StartVal) {
     PHINode *PN = dyn_cast<PHINode>(dyn_cast<Instruction>(StartVal));
     if (PN) {
