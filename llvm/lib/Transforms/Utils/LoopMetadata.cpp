@@ -120,12 +120,12 @@ Value *LoopMetadata::getMinIterValue(const SCEV *S, int MinIterCount,
 }
 
 Value *findLoopInvariantValue(Value *V, const Loop *L, DominatorTree *DT) {
-  Instruction *Op0 = dyn_cast<Instruction>(V);
-  if (!Op0)
+  Instruction *Op = dyn_cast<Instruction>(V);
+  if (!Op)
     return V;
 
   // if Op0 is from a previous block, this is the loop invariant part
-  if (DT->dominates(Op0->getParent(), L->getHeader()))
+  if (DT->dominates(Op->getParent(), L->getHeader()))
     return V;
 
   return nullptr;
