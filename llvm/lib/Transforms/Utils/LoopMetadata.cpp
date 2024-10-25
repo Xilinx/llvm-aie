@@ -239,9 +239,10 @@ bool LoopMetadata::validateBounds() {
           dbgs() << "LoopMetadata-Warning: MaxBoundry is not in the same "
                     "BB as the Header ("
                  << L->getHeader()->getName() << ")\nMaxBoundry =";
-          MaxBoundary->dump(););
-      if (MaxBB)
-        LLVM_DEBUG(dbgs() << "MaxBoundry BB = " << MaxBB->getName() << "\n";);
+          MaxBoundary->dump(); if (MaxBB) {
+            dbgs() << "MaxBoundry BB = " << MaxBB->getName() << "\n";
+          });
+
       MinBoundary = nullptr;
       MaxBoundary = nullptr;
       return false;
