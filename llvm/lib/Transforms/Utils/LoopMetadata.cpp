@@ -71,19 +71,13 @@ bool isRotatable(const Loop *L) {
 }
 
 bool LoopMetadata::calcIncrement(const SCEV *S) {
-  IsLoopIncrementing = false;
-  switch (S->getSCEVType()) {
-  case scAddRecExpr: {
-    const SCEVAddRecExpr *AR = cast<SCEVAddRecExpr>(S);
+  if (const SCEVAddRecExpr *AR = cast<SCEVAddRecExpr>(S)) {
     IsLoopIncrementing =
         cast<SCEVConstant>(*AR->getOperand(1)).getValue()->getSExtValue() > 0;
     return true;
-    break;
   }
 
-  default:
-    return false;
-  }
+  return false;
 }
 
 Value *LoopMetadata::getMinIterValue(const SCEV *S, int MinIterCount,
