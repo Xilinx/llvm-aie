@@ -381,15 +381,15 @@ const SCEV *LoopMetadata::extractSCEVFromTruncation(Instruction *I) {
   if (!I || !SE->isSCEVable(I->getType()))
     return nullptr;
 
-  const SCEV *SIntern = SE->getSCEV(I);
-  LLVM_DEBUG(dbgs() << "SCEV "; SIntern->dump());
-  LLVM_DEBUG(dbgs() << SIntern->getSCEVType() << "\n");
+  const SCEV *S = SE->getSCEV(I);
+  LLVM_DEBUG(dbgs() << "SCEV "; S->dump());
+  LLVM_DEBUG(dbgs() << S->getSCEVType() << "\n");
 
   const SCEVAddExpr *AddExpr = getAddExpr(I, SE);
   if (!AddExpr)
     return nullptr;
 
-  const SCEVTruncateExpr *TruncExpr = getSCEVTruncate(SIntern);
+  const SCEVTruncateExpr *TruncExpr = getSCEVTruncate(S);
   if (!TruncExpr)
     return nullptr;
 
@@ -409,13 +409,13 @@ const SCEV *LoopMetadata::extractSCEVFromTruncation(Instruction *I) {
       SE->getConstant(TruncExpr->getOperand()->getType(), StepSize, true);
 
   const SCEV *SCEVStart = SE->getSCEV(Start);
-  const SCEV *S = SE->getAddRecExpr(
+  const SCEV *AddRecExpr = SE->getAddRecExpr(
       SCEVStart, Step, L, llvm::SCEVAddExpr::NoWrapFlags::FlagAnyWrap);
   // min boundry already found, so assign it early
   MinBoundary = Start;
-  LLVM_DEBUG(dbgs() << "Found SCEV "; S->dump(); dbgs() << "and MinValue ";
-             MinBoundary->dump());
-  return S;
+  LLVM_DEBUG(dbgs() << "Found SCEV "; AddRecExpr->dump();
+             dbgs() << "and MinValue "; MinBoundary->dump());
+  return AddRecExpr;
 }
 
 const SCEV *LoopMetadata::getTruncInductionSCEV() {
