@@ -24,6 +24,7 @@ private:
   AssumptionCache *AC;
   DominatorTree *DT;
   const Loop *L;
+
   /// Branch Compare Data
   ICmpInst *LoopCmpInstr;
   Instruction *LoopBound0;
@@ -32,24 +33,47 @@ private:
   unsigned MinIterCount;
   bool IsLoopIncrementing;
 
-  Value *MinBoundary;
-  Value *MaxBoundary;
+  /// lower loop boundary
+  Value *LowerBoundary;
+  /// upper loop boundary
+  Value *UpperBoundary;
 
-  bool extractMetaData(Loop &L);
+  /// extract loop iteration counts and create an assumption
+  bool assignLoopMetadata(Loop &L);
 
   void addAssumeToLoopHeader(uint64_t MinIterCount, LLVMContext *Context);
 
+  /// get lower and upper boundaries of the loop
   void getBoundaries();
-  Value *getMinIterValue(const SCEV *S, int MinIterCount, LLVMContext *Context);
-
-  bool calcIncrement(const SCEV *S);
+  /// In the case of an equal comparison as the loop abort condition,
   bool assignBoundsInEqualComparison(Value *Op0, Value *Op1);
+  /// validate that the boundries are correctly extracted and that this pass can
+  /// process the boundries
   bool validateBounds();
+
+  /// calculate the minimum difference between lower and upper boundary. The
+  /// minimum iteration counts are provided by MinIterCount, which is extracted
+  /// from the loop metadata.
+  Value *calcMinIterValue(const SCEV *S, int MinIterCount,
+                          LLVMContext *Context);
+
+  /// return true, if it can be determined, if the loop increments or
+  /// decrements
+  bool canExtractIncrement(const SCEV *S);
+
   Value *getLoopInvariantValue(Value *V) const;
   Value *getLoopVariantInEqualityComparison(Value *Op) const;
 
+  /// If the IV is modified through a trunctation, generate a SCEVAddRecExpr
+  /// that can be processed by this pass
   const SCEV *getTruncInductionSCEV();
+
+  /// Check if the Instruction is part of a truncated SCEVAddExpr that can be
+  /// converted into a SCEVAddRecExpr. During the conversion the truncation is
+  /// removed.
   const SCEV *extractSCEVFromTruncation(Instruction *I);
+
+  /// get the SCEV of the loop that describes how the loop IV is modified
   const SCEV *getSCEV();
 
 public:

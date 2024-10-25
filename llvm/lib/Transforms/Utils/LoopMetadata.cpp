@@ -25,11 +25,11 @@ PreservedAnalyses LoopMetadata::run(Loop &L, LoopAnalysisManager &AM,
   SE = &AR.SE;
   AC = &AR.AC;
   DT = &AR.DT;
-  extractMetaData(L);
+  assignLoopMetadata(L);
   return PreservedAnalyses::all();
 }
 
-bool LoopMetadata::extractMetaData(Loop &L) {
+bool LoopMetadata::assignLoopMetadata(Loop &L) {
   this->L = &L;
   Context = &L.getHeader()->getParent()->getContext();
 
@@ -70,7 +70,7 @@ bool isRotatable(const Loop *L) {
   return L->isLoopExiting(L->getHeader()) && (BI && BI->isConditional());
 }
 
-bool LoopMetadata::calcIncrement(const SCEV *S) {
+bool LoopMetadata::canExtractIncrement(const SCEV *S) {
   if (const SCEVAddRecExpr *AR = cast<SCEVAddRecExpr>(S)) {
     IsLoopIncrementing =
         cast<SCEVConstant>(*AR->getOperand(1)).getValue()->getSExtValue() > 0;
@@ -80,8 +80,8 @@ bool LoopMetadata::calcIncrement(const SCEV *S) {
   return false;
 }
 
-Value *LoopMetadata::getMinIterValue(const SCEV *S, int MinIterCount,
-                                     LLVMContext *Context) {
+Value *LoopMetadata::calcMinIterValue(const SCEV *S, int MinIterCount,
+                                      LLVMContext *Context) {
   assert(MinIterCount > 0);
 
   // extract loop counter increment/decrement
@@ -109,9 +109,9 @@ Value *LoopMetadata::getMinIterValue(const SCEV *S, int MinIterCount,
 
   // If the loop does not start at 0, add the loop start to the Minimum
   // Iteration Value
-  assert(isa<Constant>(MinBoundary));
+  assert(isa<Constant>(LowerBoundary));
   int LoopStart =
-      dyn_cast<Constant>(MinBoundary)->getUniqueInteger().getSExtValue();
+      dyn_cast<Constant>(LowerBoundary)->getUniqueInteger().getSExtValue();
   MinIterValue += LoopStart;
 
   llvm::ConstantInt *ConstIncValue = llvm::ConstantInt::get(
@@ -152,8 +152,8 @@ bool LoopMetadata::assignBoundsInEqualComparison(Value *Op0, Value *Op1) {
   if (hasSCEVOperands(SE, Op0) && hasSCEVOperands(SE, Op1)) {
     // since both operands have SCEV, we cannot derive any information about
     // the (fixed) maximum bound of the loop
-    MinBoundary = nullptr;
-    MinBoundary = nullptr;
+    LowerBoundary = nullptr;
+    LowerBoundary = nullptr;
     LLVM_DEBUG(
         dbgs()
         << "LoopMetadata-Warning: Both Condition Operands have a SCEV, "
@@ -175,11 +175,11 @@ bool LoopMetadata::assignBoundsInEqualComparison(Value *Op0, Value *Op1) {
   }
 
   if (IsLoopIncrementing) {
-    MinBoundary = LoopVariant;
-    MaxBoundary = LoopInVariant;
+    LowerBoundary = LoopVariant;
+    UpperBoundary = LoopInVariant;
   } else {
-    MinBoundary = LoopInVariant;
-    MaxBoundary = LoopVariant;
+    LowerBoundary = LoopInVariant;
+    UpperBoundary = LoopVariant;
   }
   return true;
 }
@@ -223,48 +223,48 @@ Value *LoopMetadata::getLoopVariantInEqualityComparison(Value *Op) const {
 }
 
 bool LoopMetadata::validateBounds() {
-  if (!MinBoundary || !MaxBoundary) {
-    MinBoundary = nullptr;
-    MaxBoundary = nullptr;
+  if (!LowerBoundary || !UpperBoundary) {
+    LowerBoundary = nullptr;
+    UpperBoundary = nullptr;
     return false;
   }
 
-  LLVM_DEBUG(dbgs() << "MinValue = "; MinBoundary->dump());
-  LLVM_DEBUG(dbgs() << "MaxValue = "; MaxBoundary->dump());
+  LLVM_DEBUG(dbgs() << "MinValue = "; LowerBoundary->dump());
+  LLVM_DEBUG(dbgs() << "MaxValue = "; UpperBoundary->dump());
 
-  if (isa<Instruction>(MaxBoundary)) {
-    BasicBlock *MaxBB = dyn_cast<Instruction>(MaxBoundary)->getParent();
+  if (isa<Instruction>(UpperBoundary)) {
+    BasicBlock *MaxBB = dyn_cast<Instruction>(UpperBoundary)->getParent();
     if (MaxBB && !DT->dominates(MaxBB, L->getHeader())) {
       LLVM_DEBUG(
           dbgs() << "LoopMetadata-Warning: MaxBoundry is not in the same "
                     "BB as the Header ("
                  << L->getHeader()->getName() << ")\nMaxBoundry =";
-          MaxBoundary->dump(); if (MaxBB) {
+          UpperBoundary->dump(); if (MaxBB) {
             dbgs() << "MaxBoundry BB = " << MaxBB->getName() << "\n";
           });
 
-      MinBoundary = nullptr;
-      MaxBoundary = nullptr;
+      LowerBoundary = nullptr;
+      UpperBoundary = nullptr;
       return false;
     }
   }
 
-  if (isa<Constant>(MaxBoundary)) {
+  if (isa<Constant>(UpperBoundary)) {
     LLVM_DEBUG(dbgs() << "Iteration Variable (Max value) is an integer and "
                          "therefore no assumption "
                          "has to be added!");
-    MinBoundary = nullptr;
-    MaxBoundary = nullptr;
+    LowerBoundary = nullptr;
+    UpperBoundary = nullptr;
     return false;
   }
 
-  if (!isa<Constant>(MinBoundary)) {
+  if (!isa<Constant>(LowerBoundary)) {
     LLVM_DEBUG(dbgs() << "LoopMetadata-Warning:: Annotation with non-constant "
                          "Minimum Values "
                          "is currently not supported! Found ";
-               MinBoundary->getType()->dump());
-    MinBoundary = nullptr;
-    MaxBoundary = nullptr;
+               LowerBoundary->getType()->dump());
+    LowerBoundary = nullptr;
+    UpperBoundary = nullptr;
     return false;
   }
   return true;
@@ -283,13 +283,13 @@ void LoopMetadata::getBoundaries() {
   }
 
   if (ICmpInst::isLT(Pred) || ICmpInst::isLE(Pred)) {
-    if (!MinBoundary)
-      MinBoundary = getLoopInvariantValue(Op0);
-    MaxBoundary = getLoopInvariantValue(Op1);
+    if (!LowerBoundary)
+      LowerBoundary = getLoopInvariantValue(Op0);
+    UpperBoundary = getLoopInvariantValue(Op1);
   } else {
-    if (!MinBoundary)
-      MinBoundary = getLoopInvariantValue(Op1);
-    MaxBoundary = getLoopInvariantValue(Op0);
+    if (!LowerBoundary)
+      LowerBoundary = getLoopInvariantValue(Op1);
+    UpperBoundary = getLoopInvariantValue(Op0);
   }
 
   validateBounds();
@@ -400,9 +400,9 @@ const SCEV *LoopMetadata::extractSCEVFromTruncation(Instruction *I) {
   const SCEV *AddRecExpr = SE->getAddRecExpr(
       SCEVStart, Step, L, llvm::SCEVAddExpr::NoWrapFlags::FlagAnyWrap);
   // min boundry already found, so assign it early
-  MinBoundary = Start;
+  LowerBoundary = Start;
   LLVM_DEBUG(dbgs() << "Found SCEV "; AddRecExpr->dump();
-             dbgs() << "and MinValue "; MinBoundary->dump());
+             dbgs() << "and Lower bound "; LowerBoundary->dump());
   return AddRecExpr;
 }
 
@@ -436,8 +436,8 @@ void LoopMetadata::addAssumeToLoopHeader(uint64_t MinIterCount,
     dbgs() << " Operand1";
     LoopBound1->dump();
   });
-  MinBoundary = nullptr;
-  MaxBoundary = nullptr;
+  LowerBoundary = nullptr;
+  UpperBoundary = nullptr;
 
   // get Scalar Evolution of the loop counter
   const SCEV *S = getSCEV();
@@ -447,7 +447,7 @@ void LoopMetadata::addAssumeToLoopHeader(uint64_t MinIterCount,
     return;
   }
 
-  if (!calcIncrement(S)) {
+  if (!canExtractIncrement(S)) {
     LLVM_DEBUG(
         dbgs() << "LoopMetadata-Warning: Could not calculate "
                   "Increment/Decrement of Loop Counter. Will not process "
@@ -456,13 +456,13 @@ void LoopMetadata::addAssumeToLoopHeader(uint64_t MinIterCount,
   }
 
   getBoundaries();
-  if (!MaxBoundary) {
+  if (!UpperBoundary) {
     LLVM_DEBUG(dbgs() << "LoopMetadata-Warning: Could not find Iteration "
                          "Variable. Will not process Metadata\n");
     return;
   }
 
-  Value *MinIterValue = getMinIterValue(S, MinIterCount, Context);
+  Value *MinIterValue = calcMinIterValue(S, MinIterCount, Context);
   if (!MinIterValue) {
     LLVM_DEBUG(dbgs() << "LoopMetadata-Warning: Could not extract Minimum "
                          "Iteration Value\n");
@@ -470,21 +470,22 @@ void LoopMetadata::addAssumeToLoopHeader(uint64_t MinIterCount,
   }
 
   LLVM_DEBUG(dbgs() << "Min Iteration Value  : "; MinIterValue->dump());
-  LLVM_DEBUG(dbgs() << "Max Value            : "; MaxBoundary->dump());
+  LLVM_DEBUG(dbgs() << "Upper Loop boundry   : "; UpperBoundary->dump());
 
   IRBuilder<> Builder(L->getHeader()->getTerminator());
 
   Value *Cmp = nullptr;
   // ensure equalize types in the comparison
-  if (MaxBoundary->getType() != MinIterValue->getType()) {
+  if (UpperBoundary->getType() != MinIterValue->getType()) {
     if (MinIterValue->getType()->getScalarSizeInBits() <
-        MaxBoundary->getType()->getScalarSizeInBits()) {
-      MinIterValue = Builder.CreateSExt(MinIterValue, MaxBoundary->getType());
+        UpperBoundary->getType()->getScalarSizeInBits()) {
+      MinIterValue = Builder.CreateSExt(MinIterValue, UpperBoundary->getType());
     } else {
-      MaxBoundary = Builder.CreateSExt(MaxBoundary, MinIterValue->getType());
+      UpperBoundary =
+          Builder.CreateSExt(UpperBoundary, MinIterValue->getType());
     }
   }
-  Cmp = Builder.CreateICmpSGT(MaxBoundary, MinIterValue);
+  Cmp = Builder.CreateICmpSGT(UpperBoundary, MinIterValue);
 
   // Insert the `llvm.assume` Call
   Function *AssumeFn =
