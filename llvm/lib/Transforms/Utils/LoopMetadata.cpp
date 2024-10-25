@@ -431,11 +431,18 @@ void LoopMetadata::addAssumeToLoopHeader(uint64_t MinIterCount,
                     << L->getHeader()->getParent()->getName() << " "
                     << L->getName() << " (" << MinIterCount << ")\n");
 
-  ICmpInst *CombInstr = dyn_cast<ICmpInst>(
-      dyn_cast<BranchInst>(L->getExitingBlock()->getTerminator())
-          ->getCondition());
-  LoopBound0 = dyn_cast<Instruction>(CombInstr->getOperand(0));
-  LoopBound1 = dyn_cast<Instruction>(CombInstr->getOperand(1));
+  BranchInst *BI = dyn_cast<BranchInst>(L->getExitingBlock()->getTerminator());
+  if (!BI)
+    return;
+
+  ICmpInst *LoopCmpInstr = dyn_cast<ICmpInst>(BI->getCondition());
+  if (!LoopCmpInstr)
+    return;
+
+  LLVM_DEBUG(dbgs() << "Branch Instruction Found: "; LoopCmpInstr->dump();
+             dbgs() << "\n");
+  LoopBound0 = dyn_cast<Instruction>(LoopCmpInstr->getOperand(0));
+  LoopBound1 = dyn_cast<Instruction>(LoopCmpInstr->getOperand(1));
   LLVM_DEBUG(dbgs() << "Compare Instructions \nOperand0"; LoopBound0->dump());
   LLVM_DEBUG(if (LoopBound1) {
     dbgs() << " Operand1";
