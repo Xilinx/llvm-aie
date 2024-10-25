@@ -27,8 +27,6 @@ private:
 
   /// Branch Compare Data
   ICmpInst *LoopCmpInstr;
-  Instruction *LoopBound0;
-  Instruction *LoopBound1;
 
   unsigned MinIterCount;
   bool IsLoopIncrementing;

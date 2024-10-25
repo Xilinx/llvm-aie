@@ -407,10 +407,13 @@ const SCEV *LoopMetadata::extractSCEVFromTruncation(Instruction *I) {
 }
 
 const SCEV *LoopMetadata::getTruncatedSCEV() {
-  if (const SCEV *TruncSCEV = extractSCEVFromTruncation(LoopBound0))
-    return TruncSCEV;
+  for (Value *Op : LoopCmpInstr->operands()) {
+    if (const SCEV *TruncSCEV =
+            extractSCEVFromTruncation(dyn_cast<Instruction>(Op)))
+      return TruncSCEV;
+  }
 
-  return extractSCEVFromTruncation(LoopBound1);
+  return nullptr;
 }
 
 void LoopMetadata::addAssumeToLoopHeader(uint64_t MinIterCount,
@@ -429,13 +432,7 @@ void LoopMetadata::addAssumeToLoopHeader(uint64_t MinIterCount,
 
   LLVM_DEBUG(dbgs() << "Branch Instruction Found: "; LoopCmpInstr->dump();
              dbgs() << "\n");
-  LoopBound0 = dyn_cast<Instruction>(LoopCmpInstr->getOperand(0));
-  LoopBound1 = dyn_cast<Instruction>(LoopCmpInstr->getOperand(1));
-  LLVM_DEBUG(dbgs() << "Compare Instructions \nOperand0"; LoopBound0->dump());
-  LLVM_DEBUG(if (LoopBound1) {
-    dbgs() << " Operand1";
-    LoopBound1->dump();
-  });
+
   LowerBoundary = nullptr;
   UpperBoundary = nullptr;
 
