@@ -419,8 +419,7 @@ const SCEV *LoopMetadata::extractSCEVFromTruncation(Instruction *I) {
 }
 
 const SCEV *LoopMetadata::getTruncInductionSCEV() {
-  const SCEV *TruncSCEV = extractSCEVFromTruncation(LoopBound0);
-  if (TruncSCEV)
+  if (const SCEV *TruncSCEV = extractSCEVFromTruncation(LoopBound0))
     return TruncSCEV;
 
   return extractSCEVFromTruncation(LoopBound1);
