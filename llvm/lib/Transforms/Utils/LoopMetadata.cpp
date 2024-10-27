@@ -340,7 +340,10 @@ void LoopMetadata::getBoundaries(const SCEV *S) {
     if (IsTruncatedSCEV) {
       U = getUpperTruncatedBound();
     } else {
-      if (isa<PHINode>(Op0))
+      if ((SE->isSCEVable(Op0->getType()) &&
+           (SCEVAddExpr::classof(SE->getSCEV(Op0)) ||
+            SCEVAddRecExpr::classof(SE->getSCEV(Op0)))) ||
+          isa<PHINode>(Op0))
         U = Op1;
       else
         U = Op0;
@@ -357,7 +360,10 @@ void LoopMetadata::getBoundaries(const SCEV *S) {
     if (IsTruncatedSCEV) {
       U = getUpperTruncatedBound();
     } else {
-      if (isa<PHINode>(Op0))
+      if ((SE->isSCEVable(Op0->getType()) &&
+           (SCEVAddExpr::classof(SE->getSCEV(Op0)) ||
+            SCEVAddRecExpr::classof(SE->getSCEV(Op0)))) ||
+          isa<PHINode>(Op0))
         L = Op1;
       else
         L = Op0;
