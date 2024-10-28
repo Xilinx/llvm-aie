@@ -79,7 +79,7 @@ void AIE2TTIImpl::getUnrollingPreferences(Loop *L, ScalarEvolution &SE,
         UP.MaxCount =
             std::min(UP.MaxCount, unsigned(MaxUnrollLoads / NumLoads));
     }
-    auto MinIterCount = AIELoopUtils::getMinTripCount(L->getLoopID());
+    auto MinIterCount = getMinTripCount(L->getLoopID());
     if (MinIterCount && *MinIterCount >= PreferSwpOverUnroll) {
       UP.Partial = false;
       UP.Runtime = false;
@@ -120,8 +120,7 @@ bool AIE2TTIImpl::isHardwareLoopProfitable(Loop *L, ScalarEvolution &SE,
 
   if (!ForceHLGeneration) {
     if (const MDNode *LoopID = L->getLoopID()) {
-      std::optional<int64_t> MinTripCount =
-          AIELoopUtils::getMinTripCount(LoopID);
+      std::optional<int64_t> MinTripCount = getMinTripCount(LoopID);
       if (MinTripCount) {
         // Reject HL for this case.
         if (*MinTripCount <= MinIterCountHLReject) {

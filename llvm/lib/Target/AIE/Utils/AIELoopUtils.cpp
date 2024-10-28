@@ -10,6 +10,7 @@
 #include "AIELoopUtils.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/Transforms/Utils/LoopUtils.h"
 
 #define DEBUG_TYPE "aielooputils"
 
@@ -25,37 +26,6 @@ const MDNode *getLoopID(const MachineBasicBlock &LoopBlock) {
 
   const MDNode *LoopID = TI->getMetadata(LLVMContext::MD_loop);
   return LoopID;
-}
-
-std::optional<int64_t> getMinTripCount(const MDNode *LoopID) {
-  if (LoopID == nullptr)
-    return std::nullopt;
-
-  assert(LoopID->getNumOperands() > 0 && "requires at least one operand");
-  assert(dyn_cast<MDNode>(LoopID->getOperand(0)) == LoopID &&
-         "invalid loop metadata");
-
-  int64_t MinTripCount = 0;
-  for (unsigned I = 1, E = LoopID->getNumOperands(); I < E; ++I) {
-    const MDNode *MD = dyn_cast<MDNode>(LoopID->getOperand(I));
-
-    if (MD == nullptr)
-      continue;
-
-    if (const MDString *S = dyn_cast<MDString>(MD->getOperand(0))) {
-      if (S->getString() == "llvm.loop.itercount.range") {
-        assert((MD->getNumOperands() >= 2 && MD->getNumOperands() <= 3) &&
-               "Iteration count hint should have one or two numeric operands.");
-        MinTripCount =
-            mdconst::extract<ConstantInt>(MD->getOperand(1))->getSExtValue();
-        assert(MinTripCount >= 0 && "Range lwb should not be negative.");
-        LLVM_DEBUG(dbgs() << "AIELoopUtils: MinTripCount from pragma =  "
-                          << MinTripCount << "\n");
-        return MinTripCount;
-      }
-    }
-  }
-  return std::nullopt;
 }
 
 std::optional<int64_t> getMinTripCount(const MachineBasicBlock &LoopBlock) {

@@ -283,6 +283,12 @@ MDNode *updateIterCounts(LLVMContext &Context, MDNode *LoopID,
                          std::function<int64_t(int64_t)> FixMin,
                          std::function<int64_t(int64_t)> FixMax);
 
+/// Get Minimum Trip Count of the LoopID
+std::optional<int64_t> getMinTripCount(const MDNode *LoopID);
+
+/// Get Minimum Trip Count of the Loop
+std::optional<int64_t> getMinTripCount(const Loop *L);
+
 /// Look for the loop attribute that disables all transformation heuristic.
 bool hasDisableAllTransformsHint(const Loop *L);
 

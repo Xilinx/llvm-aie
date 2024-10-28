@@ -56,6 +56,7 @@ using namespace llvm::PatternMatch;
 
 static const char *LLVMLoopDisableNonforced = "llvm.loop.disable_nonforced";
 static const char *LLVMLoopDisableLICM = "llvm.licm.disable";
+static const char *LLVMLoopIterCount = "llvm.loop.itercount.range";
 
 bool llvm::formDedicatedExitBlocks(Loop *L, DominatorTree *DT, LoopInfo *LI,
                                    MemorySSAUpdater *MSSAU,
@@ -413,6 +414,41 @@ MDNode *llvm::updateIterCounts(LLVMContext &Context, MDNode *LoopID,
   // Set operand 0 to refer to the loop id itself.
   NewLoopID->replaceOperandWith(0, NewLoopID);
   return NewLoopID;
+}
+
+std::optional<int64_t> llvm::getMinTripCount(const MDNode *LoopID) {
+  if (LoopID == nullptr)
+    return std::nullopt;
+
+  assert(LoopID->getNumOperands() > 0 && "requires at least one operand");
+
+  assert(dyn_cast<MDNode>(LoopID->getOperand(0)) == LoopID &&
+         "invalid loop metadata");
+
+  for (unsigned I = 1, E = LoopID->getNumOperands(); I < E; ++I) {
+    const MDNode *MD = dyn_cast<MDNode>(LoopID->getOperand(I));
+
+    if (MD == nullptr)
+      continue;
+
+    const MDString *S = dyn_cast<MDString>(MD->getOperand(0));
+    if (S && S->getString() == LLVMLoopIterCount) {
+      assert(dyn_cast<MDString>(MD->getOperand(0))->getString() ==
+             LLVMLoopIterCount);
+      assert((MD->getNumOperands() >= 2 && MD->getNumOperands() <= 3) &&
+             "Iteration count hint should have one or two numeric operands.");
+
+      int64_t MinTripCount =
+          mdconst::extract<ConstantInt>(MD->getOperand(1))->getSExtValue();
+      assert(MinTripCount >= 0 && "Range lwb should not be negative.");
+      return MinTripCount;
+    }
+  }
+  return std::nullopt;
+}
+
+std::optional<int64_t> llvm::getMinTripCount(const Loop *L) {
+  return getMinTripCount(L->getLoopID());
 }
 
 bool llvm::hasDisableAllTransformsHint(const Loop *L) {
