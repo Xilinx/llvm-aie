@@ -52,13 +52,10 @@ bool LoopMetadata::assignLoopMetadata(Loop &L) {
   std::optional<int> MinIterCount = getMinTripCount(&L);
 
   // dump loop summary
-  LLVM_DEBUG(dbgs() << "Preheader:");
-  if (L.getLoopPreheader())
-    LLVM_DEBUG(dbgs() << L.getLoopPreheader()->getName());
-  LLVM_DEBUG(dbgs() << "\nHeader:");
-  if (L.getHeader())
-    LLVM_DEBUG(dbgs() << L.getHeader()->getName());
-  LLVM_DEBUG(dbgs() << "\n");
+  LLVM_DEBUG(if (L.getLoopPreheader()) {
+    dbgs() << "Preheader:" << L.getLoopPreheader()->getName() << "\n";
+  });
+  LLVM_DEBUG(dbgs() << "Header:" << L.getHeader()->getName() << "\n");
 
   if (MinIterCount.has_value() && MinIterCount.value() > 0) {
     this->MinIterCount = MinIterCount.value();
@@ -187,15 +184,12 @@ bool LoopMetadata::validateBounds() {
   return true;
 }
 
-/// FIXME: call getLoopInvariantInTruncExpr something like this.
-///  get loop invariant constant (that is either high or low), but a boundry
-Value *LoopMetadata::getLoopInvariantInTruncation() const {
+Value *LoopMetadata::getTruncatedLoopInvariant() const {
   for (Value *Op : LoopCmpInstr->operands()) {
     if (SE->isSCEVable(Op->getType()) &&
         SCEVCastExpr::classof(SE->getSCEV(Op))) {
       continue;
     }
-
     return Op;
   }
   return nullptr;
@@ -228,7 +222,7 @@ void LoopMetadata::getBoundaries(const SCEV *S) {
     }
     LowerBoundary = SCEVConst->getValue();
     if (IsTruncatedSCEV) {
-      UpperBoundary = getLoopInvariantInTruncation();
+      UpperBoundary = getTruncatedLoopInvariant();
 
     } else {
       UpperBoundary = getLoopInvariant(Op0, Op1, SE);
@@ -243,7 +237,7 @@ void LoopMetadata::getBoundaries(const SCEV *S) {
       UpperBoundary = S->getValue();
 
     if (IsTruncatedSCEV) {
-      LowerBoundary = getLoopInvariantInTruncation();
+      LowerBoundary = getTruncatedLoopInvariant();
     } else {
       LowerBoundary = getLoopInvariant(Op0, Op1, SE);
     }
@@ -317,7 +311,6 @@ Value *getSCEVStart(const SCEVTruncateExpr *S, const BasicBlock *LoopPreHeader,
   // evolution
   for (uint Index = 0; Index < PN->getNumOperands(); Index++) {
     Value *Op = PN->getOperand(Index);
-    PN->getOperand(Index)->dump();
     // Operand must strongly dominate
     if (!SE->isSCEVable(Op->getType()))
       continue;
@@ -377,7 +370,6 @@ const SCEV *LoopMetadata::extractSCEVFromTruncation(Instruction *I) {
 
 const SCEV *LoopMetadata::getTruncatedSCEV() {
   for (Value *Op : LoopCmpInstr->operands()) {
-    Op->dump();
     if (const SCEV *TruncSCEV =
             extractSCEVFromTruncation(dyn_cast<Instruction>(Op))) {
       IsTruncatedSCEV = true;
@@ -387,21 +379,20 @@ const SCEV *LoopMetadata::getTruncatedSCEV() {
   return nullptr;
 }
 
-void LoopMetadata::matchCompareTypes(Value *MinIterValue,
+void LoopMetadata::matchCompareTypes(Value *UpperBoundary, Value *MinIterValue,
                                      IRBuilder<> &Builder) {
-  // ensure equal types in the comparison
-  if (UpperBoundary->getType() != MinIterValue->getType()) {
-    if (MinIterValue->getType()->getScalarSizeInBits() <
-        UpperBoundary->getType()->getScalarSizeInBits()) {
-      MinIterValue = Builder.CreateSExt(MinIterValue, UpperBoundary->getType());
-      LLVM_DEBUG(dbgs() << "Type Matching for Minimum Iteration Value "
-                        << MinIterValue);
-    } else {
-      UpperBoundary =
-          Builder.CreateSExt(UpperBoundary, MinIterValue->getType());
-      LLVM_DEBUG(dbgs() << "Type Matching for Upper loop Boundary "
-                        << UpperBoundary);
-    }
+  if (UpperBoundary->getType() == MinIterValue->getType())
+    return;
+
+  if (MinIterValue->getType()->getScalarSizeInBits() <
+      UpperBoundary->getType()->getScalarSizeInBits()) {
+    MinIterValue = Builder.CreateSExt(MinIterValue, UpperBoundary->getType());
+    LLVM_DEBUG(dbgs() << "Type Matching for Minimum Iteration Value "
+                      << MinIterValue);
+  } else {
+    UpperBoundary = Builder.CreateSExt(UpperBoundary, MinIterValue->getType());
+    LLVM_DEBUG(dbgs() << "Type Matching for Upper loop Boundary "
+                      << UpperBoundary);
   }
 }
 
@@ -463,7 +454,7 @@ void LoopMetadata::addAssumeToLoopHeader(uint64_t MinIterCount,
 
   IRBuilder<> Builder(L->getHeader()->getTerminator());
 
-  matchCompareTypes(MinIterValue, Builder);
+  matchCompareTypes(UpperBoundary, MinIterValue, Builder);
   Value *Cmp = Builder.CreateICmpSGT(UpperBoundary, MinIterValue);
 
   // Insert the `llvm.assume` Call
