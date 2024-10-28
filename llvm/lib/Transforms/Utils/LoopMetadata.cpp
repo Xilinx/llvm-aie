@@ -108,7 +108,7 @@ Value *LoopMetadata::calcMinIterValue(const SCEV *S, int MinIterCount,
   // extract loop counter increment/decrement
   const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(S);
   if (!AR) {
-    LLVM_DEBUG(dbgs() << "LoopMetadata-Warning: S i not a SCEVAddRecExpr ";
+    LLVM_DEBUG(dbgs() << "LoopMetadata-Warning: SCEV S i not a SCEVAddRecExpr ";
                S->dump());
     return nullptr;
   }
@@ -454,9 +454,8 @@ void LoopMetadata::addAssumeToLoopHeader(uint64_t MinIterCount,
 
   IRBuilder<> Builder(L->getHeader()->getTerminator());
 
-  Value *Cmp = nullptr;
   matchCompareTypes(MinIterValue, Builder);
-  Cmp = Builder.CreateICmpSGT(UpperBoundary, MinIterValue);
+  Value *Cmp = Builder.CreateICmpSGT(UpperBoundary, MinIterValue);
 
   // Insert the `llvm.assume` Call
   Function *AssumeFn =
