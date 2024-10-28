@@ -80,7 +80,7 @@ void AIE2TTIImpl::getUnrollingPreferences(Loop *L, ScalarEvolution &SE,
         UP.MaxCount =
             std::min(UP.MaxCount, unsigned(MaxUnrollLoads / NumLoads));
     }
-    auto MinIterCount = AIELoopUtils::getMinTripCount(L->getLoopID());
+    auto MinIterCount = getMinTripCount(L->getLoopID());
     if (MinIterCount && *MinIterCount >= PreferSwpOverUnroll) {
       UP.Partial = false;
       UP.Runtime = false;
