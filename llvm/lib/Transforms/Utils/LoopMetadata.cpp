@@ -116,6 +116,54 @@ Value *LoopMetadata::calcMinIterValue(const SCEV *S, int MinIterCount,
                                 true);
 }
 
+bool LoopMetadata::validateBounds() {
+  if (!LowerBoundary || !UpperBoundary) {
+    LowerBoundary = nullptr;
+    UpperBoundary = nullptr;
+    return false;
+  }
+
+  LLVM_DEBUG(dbgs() << "MinValue = "; LowerBoundary->dump());
+  LLVM_DEBUG(dbgs() << "MaxValue = "; UpperBoundary->dump());
+
+  if (isa<Instruction>(UpperBoundary)) {
+    BasicBlock *MaxBB = dyn_cast<Instruction>(UpperBoundary)->getParent();
+    if (MaxBB && !DT->dominates(MaxBB, L->getHeader())) {
+      LLVM_DEBUG(
+          dbgs() << "LoopMetadata-Warning: MaxBoundry is not in the same "
+                    "BB as the Header ("
+                 << L->getHeader()->getName() << ")\nMaxBoundry =";
+          UpperBoundary->dump(); if (MaxBB) {
+            dbgs() << "MaxBoundry BB = " << MaxBB->getName() << "\n";
+          });
+
+      LowerBoundary = nullptr;
+      UpperBoundary = nullptr;
+      return false;
+    }
+  }
+
+  if (isa<Constant>(UpperBoundary)) {
+    LLVM_DEBUG(dbgs() << "Iteration Variable (Max value) is an integer and "
+                         "therefore no assumption "
+                         "has to be added!");
+    LowerBoundary = nullptr;
+    UpperBoundary = nullptr;
+    return false;
+  }
+
+  if (!isa<Constant>(LowerBoundary)) {
+    LLVM_DEBUG(dbgs() << "LoopMetadata-Warning:: Annotation with non-constant "
+                         "Minimum Values "
+                         "is currently not supported! Found ";
+               LowerBoundary->getType()->dump());
+    LowerBoundary = nullptr;
+    UpperBoundary = nullptr;
+    return false;
+  }
+  return true;
+}
+
 Value *LoopMetadata::getTruncatedLoopInvariant() const {
   for (Value *Op : LoopCmpInstr->operands()) {
     if (SE->isSCEVable(Op->getType()) &&
@@ -174,6 +222,7 @@ void LoopMetadata::getBoundaries(const SCEV *S) {
     }
   }
 
+  validateBounds();
 }
 
 const SCEV *LoopMetadata::getAddRecSCEV(Value *Op) {

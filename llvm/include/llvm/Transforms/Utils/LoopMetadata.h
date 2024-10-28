@@ -46,6 +46,9 @@ private:
 
    /// get lower and upper boundaries of the loop
   void getBoundaries(const SCEV *S);
+  /// validate that the boundries are correctly extracted and that this pass
+  /// can process the boundries
+  bool validateBounds();
 
   /// calculate the minimum difference between lower and upper boundary. The
   /// minimum iteration counts are provided by MinIterCount, which is
