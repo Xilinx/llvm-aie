@@ -92,6 +92,13 @@ Value *LoopMetadata::calcMinIterValue(const SCEV *S, int MinIterCount,
   // calculate the minimum iteration value, since SGE is used, subtract 1
   MinIterValue--;
 
+  // If the loop does not start at 0, add the loop start to the Minimum
+  // Iteration Value
+  assert(isa<Constant>(LowerBoundary));
+  int LoopStart =
+      dyn_cast<Constant>(LowerBoundary)->getUniqueInteger().getSExtValue();
+  MinIterValue += LoopStart;
+
   return llvm::ConstantInt::get(llvm::Type::getInt32Ty(*Context), MinIterValue,
                                 true);
 }

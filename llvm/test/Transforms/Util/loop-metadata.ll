@@ -18,7 +18,7 @@ define dso_local void @incrementByOne(ptr %ptr, i32 noundef %n) #0 {
 ; CHECK:       for.cond:
 ; CHECK-NEXT:    [[I_0:%.*]] = phi i32 [ 0, [[ENTRY:%.*]] ], [ [[INC:%.*]], [[FOR_BODY:%.*]] ]
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp slt i32 [[I_0]], [[N:%.*]]
-; CHECK-NEXT:    [[TMP0:%.*]] = icmp sgt i32 [[N]], 3
+; CHECK-NEXT:    [[TMP0:%.*]] = icmp sgt i32 [[N]], 9
 ; CHECK-NEXT:    tail call void @llvm.assume(i1 [[TMP0]])
 ; CHECK-NEXT:    br i1 [[CMP]], label [[FOR_BODY]], label [[FOR_COND_CLEANUP:%.*]]
 ; CHECK:       for.cond.cleanup:
@@ -48,7 +48,7 @@ for.body:                                         ; preds = %for.cond
   %add = add nsw i32 %0, 8
   store i32 %add, ptr %arrayidx, align 4
   %inc = add nsw i32 %i.0, 1
-  br label %for.cond, !llvm.loop !6
+  br label %for.cond, !llvm.loop !3
 }
 
 ; for loop where loop counter is incremented by +7 and starts at 0
@@ -71,7 +71,7 @@ define dso_local void @incrementByMultiple(ptr %ptr, i32 noundef %n) #0 {
 ; CHECK-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP1]], 8
 ; CHECK-NEXT:    store i32 [[ADD]], ptr [[ARRAYIDX]], align 4
 ; CHECK-NEXT:    [[ADD2]] = add nsw i32 [[I_0]], 7
-; CHECK-NEXT:    br label [[FOR_COND]], !llvm.loop [[LOOP0]]
+; CHECK-NEXT:    br label [[FOR_COND]], !llvm.loop [[LOOP4:![0-9]+]]
 ;
 entry:
   br label %for.cond
@@ -117,7 +117,7 @@ define dso_local void @outsideGuard(ptr %ptr, i32 noundef %n) #0 {
 ; CHECK-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP1]], 8
 ; CHECK-NEXT:    store i32 [[ADD]], ptr [[ARRAYIDX]], align 4
 ; CHECK-NEXT:    [[INC]] = add nsw i32 [[I_0]], 1
-; CHECK-NEXT:    br label [[FOR_COND]], !llvm.loop [[LOOP0]]
+; CHECK-NEXT:    br label [[FOR_COND]], !llvm.loop [[LOOP4]]
 ; CHECK:       if.end:
 ; CHECK-NEXT:    ret void
 ;
@@ -168,7 +168,7 @@ define dso_local void @decrement(ptr %ptr, i32 noundef %n) #0 {
 ; CHECK-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP1]], 8
 ; CHECK-NEXT:    store i32 [[ADD]], ptr [[ARRAYIDX]], align 4
 ; CHECK-NEXT:    [[DEC]] = add nsw i32 [[I_0]], -1
-; CHECK-NEXT:    br label [[FOR_COND]], !llvm.loop [[LOOP0]]
+; CHECK-NEXT:    br label [[FOR_COND]], !llvm.loop [[LOOP4]]
 ;
 entry:
   br label %for.cond
@@ -210,7 +210,7 @@ define dso_local void @decrementByMultiple(ptr %ptr, i32 noundef %n) #0 {
 ; CHECK-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP1]], 8
 ; CHECK-NEXT:    store i32 [[ADD]], ptr [[ARRAYIDX]], align 4
 ; CHECK-NEXT:    [[SUB]] = sub nsw i32 [[I_0]], 7
-; CHECK-NEXT:    br label [[FOR_COND]], !llvm.loop [[LOOP0]]
+; CHECK-NEXT:    br label [[FOR_COND]], !llvm.loop [[LOOP4]]
 ;
 entry:
   br label %for.cond
@@ -252,7 +252,7 @@ define dso_local void @selectMaxBoundWithTwoPHIs(i32 noundef %num_elems, i32 nou
 ; CHECK-NEXT:    br label [[FOR_COND2_PRE:%.*]]
 ; CHECK:       for.body:
 ; CHECK-NEXT:    [[ADD]] = add nuw nsw i32 [[I_0]], 1
-; CHECK-NEXT:    br label [[FOR_COND]], !llvm.loop [[LOOP0]]
+; CHECK-NEXT:    br label [[FOR_COND]], !llvm.loop [[LOOP4]]
 ; CHECK:       for.cond2.pre:
 ; CHECK-NEXT:    [[CMP2:%.*]] = icmp eq i32 [[N]], 22
 ; CHECK-NEXT:    br i1 [[CMP2]], label [[COND_TRUE:%.*]], label [[COND_FALSE:%.*]]
@@ -274,7 +274,7 @@ define dso_local void @selectMaxBoundWithTwoPHIs(i32 noundef %num_elems, i32 nou
 ; CHECK-NEXT:    ret void
 ; CHECK:       for.body2:
 ; CHECK-NEXT:    [[ADD2]] = add nuw nsw i32 [[I_1]], 1
-; CHECK-NEXT:    br label [[FOR_COND_END2]], !llvm.loop [[LOOP0]]
+; CHECK-NEXT:    br label [[FOR_COND_END2]], !llvm.loop [[LOOP4]]
 ;
 entry:
   br label %for.cond
@@ -337,9 +337,9 @@ define dso_local void @selectMaxBoundWithNOPHIs(ptr %ptr, i32 noundef %n) #0 {
 ; CHECK-NEXT:    [[I_0:%.*]] = phi i32 [ 0, [[FOR_COND]] ], [ [[INC:%.*]], [[FOR_BODY]] ]
 ; CHECK-NEXT:    [[INC]] = add nsw i32 [[I_0]], 1
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp slt i32 [[INC]], [[N:%.*]]
-; CHECK-NEXT:    [[TMP0:%.*]] = icmp sgt i32 [[N]], 3
+; CHECK-NEXT:    [[TMP0:%.*]] = icmp sgt i32 [[N]], 4
 ; CHECK-NEXT:    tail call void @llvm.assume(i1 [[TMP0]])
-; CHECK-NEXT:    br i1 [[CMP]], label [[FOR_BODY]], label [[FOR_COND_CLEANUP:%.*]], !llvm.loop [[LOOP0]]
+; CHECK-NEXT:    br i1 [[CMP]], label [[FOR_BODY]], label [[FOR_COND_CLEANUP:%.*]], !llvm.loop [[LOOP4]]
 ;
 entry:
   br label %for.cond
@@ -357,6 +357,50 @@ for.body:                                         ; preds = %for.cond
   %cmp = icmp slt i32 %inc, %n
   br i1 %cmp, label %for.body, label %for.cond.cleanup, !llvm.loop !6
 }
+
+; make sure that the added compare in the assume has matching types
+; Function Attrs: mustprogress noinline nounwind optnone
+define dso_local void @type_matching(ptr %ptr, i16 noundef signext %n) #0 {
+; CHECK-LABEL: @type_matching(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    br label [[FOR_COND:%.*]]
+; CHECK:       for.cond:
+; CHECK-NEXT:    [[I_0:%.*]] = phi i16 [ 0, [[ENTRY:%.*]] ], [ [[INC:%.*]], [[FOR_BODY:%.*]] ]
+; CHECK-NEXT:    [[CMP:%.*]] = icmp slt i16 [[I_0]], [[N:%.*]]
+; CHECK-NEXT:    [[TMP0:%.*]] = sext i16 [[N]] to i32
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp sgt i32 [[TMP0]], 3
+; CHECK-NEXT:    tail call void @llvm.assume(i1 [[TMP1]])
+; CHECK-NEXT:    br i1 [[CMP]], label [[FOR_BODY]], label [[FOR_COND_CLEANUP:%.*]]
+; CHECK:       for.cond.cleanup:
+; CHECK-NEXT:    ret void
+; CHECK:       for.body:
+; CHECK-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds i32, ptr [[PTR:%.*]], i16 [[I_0]]
+; CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[ARRAYIDX]], align 4
+; CHECK-NEXT:    [[ADD:%.*]] = add nsw i32 [[TMP2]], 8
+; CHECK-NEXT:    store i32 [[ADD]], ptr [[ARRAYIDX]], align 4
+; CHECK-NEXT:    [[INC]] = add nsw i16 [[I_0]], 1
+; CHECK-NEXT:    br label [[FOR_COND]], !llvm.loop [[LOOP4]]
+;
+entry:
+  br label %for.cond
+
+for.cond:                                         ; preds = %for.body, %entry
+  %i.0 = phi i16 [ 0, %entry ], [ %inc, %for.body ]
+  %cmp = icmp slt i16 %i.0, %n
+  br i1 %cmp, label %for.body, label %for.cond.cleanup
+
+for.cond.cleanup:                                 ; preds = %for.cond
+  ret void
+
+for.body:                                         ; preds = %for.cond
+  %arrayidx = getelementptr inbounds i32, ptr %ptr, i16 %i.0
+  %0 = load i32, ptr %arrayidx, align 4
+  %add = add nsw i32 %0, 8
+  store i32 %add, ptr %arrayidx, align 4
+  %inc = add nsw i16 %i.0, 1
+  br label %for.cond, !llvm.loop !6
+}
+
 
 !6 = distinct !{!6, !7, !8, !9}
 !7 = !{!"llvm.loop.mustprogress"}
