@@ -122,11 +122,8 @@ Value *LoopMetadata::calcMinIterValue(const SCEV *S, int MinIterCount,
   int IncValue = cast<SCEVConstant>(ConstExpr)->getValue()->getSExtValue();
 
   int MinIterValue = std::abs(IncValue * MinIterCount);
-
-  // to emulate builtin_assume, subtract MinIterValue by 1 if loop is
-  // incrementing
-  if (IsLoopIncrementing)
-    MinIterValue--;
+  // calculate the minimum iteration value, since SGE is used, subtract 1
+  MinIterValue--;
 
   // If the loop does not start at 0, add the loop start to the Minimum
   // Iteration Value
@@ -167,42 +164,6 @@ Value *LoopMetadata::getLoopInvariantValue(Value *V) const {
 
 bool hasSCEVOperands(ScalarEvolution *SE, Value *Op) {
   return SE->isSCEVable(Op->getType()) && SE->getExistingSCEV(Op);
-}
-
-bool LoopMetadata::assignBoundsInEqualComparison(Value *Op0, Value *Op1) {
-  if (hasSCEVOperands(SE, Op0) && hasSCEVOperands(SE, Op1)) {
-    // since both operands have SCEV, we cannot derive any information about
-    // the (fixed) maximum bound of the loop
-    LowerBoundary = nullptr;
-    LowerBoundary = nullptr;
-    LLVM_DEBUG(
-        dbgs()
-        << "LoopMetadata-Warning: Both Condition Operands have a SCEV, "
-           "however "
-           "the maximum value is expected to not have a SCEV since this pass "
-           "assumes that it is loop invariant.\nWill not add loop "
-           "Metadata.\n");
-    return false;
-  }
-
-  Value *LoopVariant = nullptr;
-  Value *LoopInVariant = nullptr;
-  if (hasSCEVOperands(SE, Op0)) {
-    LoopVariant = getLoopIVInEqualityComparison(Op0);
-    LoopInVariant = getLoopInvariantValue(Op1);
-  } else {
-    LoopVariant = getLoopIVInEqualityComparison(Op1);
-    LoopInVariant = getLoopInvariantValue(Op0);
-  }
-
-  if (IsLoopIncrementing) {
-    LowerBoundary = LoopVariant;
-    UpperBoundary = LoopInVariant;
-  } else {
-    LowerBoundary = LoopInVariant;
-    UpperBoundary = LoopVariant;
-  }
-  return true;
 }
 
 Value *LoopMetadata::getLoopIVInEqualityComparison(Value *Op) const {
@@ -305,25 +266,8 @@ Value *LoopMetadata::getUpperTruncatedBound() const {
 
 void LoopMetadata::getBoundaries(const SCEV *S) {
 
-  CmpInst::Predicate Pred = LoopCmpInstr->getPredicate();
   Value *Op0 = LoopCmpInstr->getOperand(0);
   Value *Op1 = LoopCmpInstr->getOperand(1);
-
-  if (Pred == CmpInst::Predicate::ICMP_EQ) {
-    assignBoundsInEqualComparison(Op0, Op1);
-    validateBounds();
-    return;
-  }
-
-  if (ICmpInst::isLT(Pred) || ICmpInst::isLE(Pred)) {
-    if (!LowerBoundary)
-      LowerBoundary = getLoopInvariantValue(Op0);
-    UpperBoundary = getLoopInvariantValue(Op1);
-  } else {
-    if (!LowerBoundary)
-      LowerBoundary = getLoopInvariantValue(Op1);
-    UpperBoundary = getLoopInvariantValue(Op0);
-  }
 
   Value *L = nullptr;
   Value *U = nullptr;
@@ -368,23 +312,6 @@ void LoopMetadata::getBoundaries(const SCEV *S) {
       else
         L = Op0;
     }
-  }
-  // verify that they are the same
-  if (U != UpperBoundary || L != LowerBoundary) {
-    LLVM_DEBUG(
-        dbgs() << "UpperBoundary: " << *UpperBoundary << ", U: " << *U << "\n"
-               << "LowerBoundary: " << *LowerBoundary << ", L: " << *L << "\n");
-    std::string errorMessage = "Boundaries do not match. UpperBoundary: ";
-    llvm::raw_string_ostream stream(errorMessage);
-    UpperBoundary->print(stream);
-    stream << ", U: ";
-    U->print(stream);
-    stream << ", LowerBoundary: ";
-    LowerBoundary->print(stream);
-    stream << ", L: ";
-    L->print(stream);
-
-    llvm_unreachable("Alternative Loop Boundy extraction failed!");
   }
   LowerBoundary = L;
   UpperBoundary = U;

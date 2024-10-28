@@ -157,7 +157,7 @@ define dso_local void @decrement(ptr %ptr, i32 noundef %n) #0 {
 ; CHECK:       for.cond:
 ; CHECK-NEXT:    [[I_0:%.*]] = phi i32 [ [[N:%.*]], [[ENTRY:%.*]] ], [ [[DEC:%.*]], [[FOR_BODY:%.*]] ]
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp sgt i32 [[I_0]], 0
-; CHECK-NEXT:    [[TMP0:%.*]] = icmp sgt i32 [[N]], 4
+; CHECK-NEXT:    [[TMP0:%.*]] = icmp sgt i32 [[N]], 3
 ; CHECK-NEXT:    tail call void @llvm.assume(i1 [[TMP0]])
 ; CHECK-NEXT:    br i1 [[CMP]], label [[FOR_BODY]], label [[FOR_COND_CLEANUP:%.*]]
 ; CHECK:       for.cond.cleanup:
@@ -199,7 +199,7 @@ define dso_local void @decrementByMultiple(ptr %ptr, i32 noundef %n) #0 {
 ; CHECK:       for.cond:
 ; CHECK-NEXT:    [[I_0:%.*]] = phi i32 [ [[N:%.*]], [[ENTRY:%.*]] ], [ [[SUB:%.*]], [[FOR_BODY:%.*]] ]
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp sgt i32 [[I_0]], 0
-; CHECK-NEXT:    [[TMP0:%.*]] = icmp sgt i32 [[N]], 28
+; CHECK-NEXT:    [[TMP0:%.*]] = icmp sgt i32 [[N]], 27
 ; CHECK-NEXT:    tail call void @llvm.assume(i1 [[TMP0]])
 ; CHECK-NEXT:    br i1 [[CMP]], label [[FOR_BODY]], label [[FOR_COND_CLEANUP:%.*]]
 ; CHECK:       for.cond.cleanup:
@@ -375,7 +375,7 @@ define  dso_local void @assume_insertion_only_in_correct_header(ptr nonnull alig
 ; CHECK-NEXT:    [[I_0315:%.*]] = phi i32 [ 0, [[FOR_BODY]] ], [ [[INC:%.*]], [[FOR_BODY11]] ]
 ; CHECK-NEXT:    [[INC]] = add nuw nsw i32 [[I_0315]], 1
 ; CHECK-NEXT:    [[EXITCOND_NOT:%.*]] = icmp eq i32 [[INC]], [[TMP0]]
-; CHECK-NEXT:    [[TMP2:%.*]] = icmp sgt i32 [[TMP0]], 3
+; CHECK-NEXT:    [[TMP2:%.*]] = icmp sgt i32 [[TMP0]], 4
 ; CHECK-NEXT:    tail call void @llvm.assume(i1 [[TMP2]])
 ; CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label [[FOR_COND8_FOR_COND_CLEANUP10_CRIT_EDGE]], label [[FOR_BODY11]], !llvm.loop [[LOOP4]]
 ;
@@ -551,7 +551,7 @@ define dso_local void @decrementWithStartValue(ptr %ptr, i32 noundef %n) #0 {
 ; CHECK:       for.cond:
 ; CHECK-NEXT:    [[I_0:%.*]] = phi i32 [ [[N:%.*]], [[ENTRY:%.*]] ], [ [[DEC:%.*]], [[FOR_BODY:%.*]] ]
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp sge i32 [[I_0]], 4
-; CHECK-NEXT:    [[TMP0:%.*]] = icmp sgt i32 [[N]], 8
+; CHECK-NEXT:    [[TMP0:%.*]] = icmp sgt i32 [[N]], 7
 ; CHECK-NEXT:    tail call void @llvm.assume(i1 [[TMP0]])
 ; CHECK-NEXT:    br i1 [[CMP]], label [[FOR_BODY]], label [[FOR_COND_CLEANUP:%.*]]
 ; CHECK:       for.cond.cleanup:
