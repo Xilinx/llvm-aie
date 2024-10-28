@@ -18,7 +18,6 @@
 
 using namespace llvm;
 bool isRotatable(const Loop *L);
-Value *findLoopInvariantValue(Value *V, const Loop *L, DominatorTree *DT);
 bool hasSCEVOperands(ScalarEvolution *SE, Value *Op);
 ///  Check if the minimum value fits into the given type
 bool fitstype(unsigned MinValue, const Type *T);
@@ -137,69 +136,8 @@ Value *LoopMetadata::calcMinIterValue(const SCEV *S, int MinIterCount,
   return static_cast<llvm::Value *>(ConstIncValue);
 }
 
-Value *findLoopInvariantValue(Value *V, const Loop *L, DominatorTree *DT) {
-  Instruction *Op = dyn_cast<Instruction>(V);
-  if (!Op)
-    return V;
-
-  // if Op0 is from a previous block, this is the loop invariant part
-  if (DT->dominates(Op->getParent(), L->getHeader()))
-    return V;
-
-  return nullptr;
-}
-
-Value *LoopMetadata::getLoopInvariantValue(Value *V) const {
-  PHINode *MaxPHI = dyn_cast_or_null<PHINode>(V);
-  if (!MaxPHI)
-    return V;
-
-  for (Value *Op : MaxPHI->operands()) {
-    if (Value *LoopInvariant = findLoopInvariantValue(Op, L, DT))
-      return LoopInvariant;
-  }
-
-  return nullptr;
-}
-
 bool hasSCEVOperands(ScalarEvolution *SE, Value *Op) {
   return SE->isSCEVable(Op->getType()) && SE->getExistingSCEV(Op);
-}
-
-Value *LoopMetadata::getLoopIVInEqualityComparison(Value *Op) const {
-  assert(isa<Instruction>(Op));
-  // Assumption: IV is incremented or decremented by a fixed amount
-  Instruction *Instr = dyn_cast<Instruction>(Op);
-  if (Instr->getNumOperands() != 2) {
-    LLVM_DEBUG(dbgs() << "LoopMetadata-Warning: Instruction not supported!";
-               Instr->dump());
-    return nullptr;
-  }
-
-  PHINode *P0 = dyn_cast<PHINode>(Instr->getOperand(0));
-  PHINode *P1 = dyn_cast<PHINode>(Instr->getOperand(1));
-  if (P0 && P1) {
-    // Assumption: the Loop IV will increment or decrement by a fixed value.
-    // if this however cannot be determined, prefer to not extract any
-    // information
-    LLVM_DEBUG(
-        dbgs()
-            << "LoopMetadata-Warning: Both Operands are Phi nodes. This pass "
-               "assumes only one Phi node! Abort Metadata annotation.";
-        Instr->getOperand(0)->dump(); Instr->getOperand(1)->dump());
-    return nullptr;
-  }
-
-  if (P0)
-    return getLoopInvariantValue(P0);
-  if (P1)
-    return getLoopInvariantValue(P1);
-
-  LLVM_DEBUG(
-      dbgs() << "LoopMetadata-Warning: No Operand is a Phi nodes. This pass "
-                "assumes only one Phi node! Abort Metadata annotation.";
-      Instr->getOperand(0)->dump(); Instr->getOperand(1)->dump());
-  return nullptr;
 }
 
 bool LoopMetadata::validateBounds() {
