@@ -25,10 +25,10 @@ private:
   DominatorTree *DT;
   const Loop *L;
 
+  unsigned MinIterCount;
+
   /// Branch Compare Data
   ICmpInst *LoopCmpInstr;
-
-  unsigned MinIterCount;
   bool IsLoopIncrementing;
   int64_t LoopStepSize;
   bool IsTruncatedSCEV;
@@ -41,7 +41,7 @@ private:
   /// extract loop iteration counts and create an assumption
   bool assignLoopMetadata(Loop &L);
 
-  void addAssumeToLoopHeader(uint64_t MinIterCount, LLVMContext *Context);
+  void addAssumeToLoopHeader();
 
   /// If the IV is modified through a trunctation, generate a SCEVAddRecExpr
   /// that can be processed by this pass
@@ -55,13 +55,13 @@ private:
   Value *getTruncatedLoopInvariant() const;
   /// get lower and upper boundaries of the loop
   void getBoundaries(const SCEV *S);
-  /// validate that the boundries are correctly extracted and that this pass can
-  /// process the boundries
+  /// validate that the boundries are correctly extracted and that this pass
+  /// can process the boundries
   bool validateBounds();
 
   /// calculate the minimum difference between lower and upper boundary. The
-  /// minimum iteration counts are provided by MinIterCount, which is extracted
-  /// from the loop metadata.
+  /// minimum iteration counts are provided by MinIterCount, which is
+  /// extracted from the loop metadata.
   Value *calcMinIterValue(const SCEV *S, int MinIterCount,
                           LLVMContext *Context);
 
@@ -71,11 +71,8 @@ private:
 
   /// get the SCEV of the loop that describes how the loop IV is modified
   const SCEV *getSCEV();
-
-  /// match the types of the loop bound and the minimum iteration value
-  /// Insert signed Extension Instruciton if needed
-  void matchCompareTypes(Value *UpperLoopBound, Value *MinIterValue,
-                         IRBuilder<> &Builder);
+  /// recursive low level function that can extracts
+  const SCEV *extractSCEV(Value *Op);
 
 public:
   PreservedAnalyses run(Loop &L, LoopAnalysisManager &AM,

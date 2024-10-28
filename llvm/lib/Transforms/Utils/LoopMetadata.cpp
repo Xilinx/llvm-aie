@@ -41,7 +41,9 @@ PreservedAnalyses LoopMetadata::run(Loop &L, LoopAnalysisManager &AM,
   SE = &AR.SE;
   AC = &AR.AC;
   DT = &AR.DT;
+
   assignLoopMetadata(L);
+
   return PreservedAnalyses::all();
 }
 
@@ -63,14 +65,14 @@ bool LoopMetadata::assignLoopMetadata(Loop &L) {
     if (!isRotatable(this->L)) {
       LLVM_DEBUG(dbgs() << "Processing Loop Metadata: "
                         << L.getHeader()->getParent()->getName() << " "
-                        << L.getName() << " (" << MinIterCount.value()
+                        << L.getName() << " (" << this->MinIterCount
                         << ")\nAborting Metadata due to not rotatable!\n");
       return false;
     }
 
     LLVM_DEBUG(L.getHeader()->getParent()->dump(););
 
-    addAssumeToLoopHeader(MinIterCount.value(), Context);
+    addAssumeToLoopHeader();
     return true;
   }
 
@@ -127,9 +129,9 @@ Value *LoopMetadata::calcMinIterValue(const SCEV *S, int MinIterCount,
       dyn_cast<Constant>(LowerBoundary)->getUniqueInteger().getSExtValue();
   MinIterValue += LoopStart;
 
-  llvm::ConstantInt *ConstIncValue = llvm::ConstantInt::get(
-      llvm::Type::getInt32Ty(*Context), MinIterValue, true);
-  return static_cast<llvm::Value *>(ConstIncValue);
+  // llvm::ConstantInt *ConstIncValue =
+  return llvm::ConstantInt::get(llvm::Type::getInt32Ty(*Context), MinIterValue,
+                                true);
 }
 
 bool hasSCEVOperands(ScalarEvolution *SE, Value *Op) {
@@ -246,13 +248,25 @@ void LoopMetadata::getBoundaries(const SCEV *S) {
   validateBounds();
 }
 
+const SCEV *LoopMetadata::extractSCEV(Value *Op) {
+  Op->dump();
+  if (!SE->isSCEVable(Op->getType()))
+    return nullptr;
+
+  const SCEV *S = SE->getSCEV(Op);
+  if (SCEVZeroExtendExpr::classof(S) || SCEVSignExtendExpr::classof(S))
+    return extractSCEV(dyn_cast<Instruction>(Op)->getOperand(0));
+
+  if (SCEVAddRecExpr::classof(S))
+    return S;
+
+  return nullptr;
+}
+
 const SCEV *LoopMetadata::getSCEV() {
   for (Value *Op : LoopCmpInstr->operands()) {
-    if (SE->isSCEVable(Op->getType())) {
-      const SCEV *S = SE->getSCEV(Op);
-      if (S && S->getSCEVType() == SCEVTypes::scAddRecExpr)
-        return S;
-    }
+    if (const SCEV *S = extractSCEV(Op))
+      return S;
   }
 
   return getTruncatedSCEV();
@@ -379,25 +393,27 @@ const SCEV *LoopMetadata::getTruncatedSCEV() {
   return nullptr;
 }
 
-void LoopMetadata::matchCompareTypes(Value *UpperBoundary, Value *MinIterValue,
-                                     IRBuilder<> &Builder) {
-  if (UpperBoundary->getType() == MinIterValue->getType())
-    return;
+/// match the types of the loop bound and the minimum iteration value
+/// Insert signed Extension Instruction if needed
+std::pair<llvm::Value *, llvm::Value *>
+promoteMismatchedType(Value *Value1, Value *Value2, IRBuilder<> &Builder) {
+  Type *Type1 = Value1->getType();
+  Type *Type2 = Value2->getType();
 
-  if (MinIterValue->getType()->getScalarSizeInBits() <
-      UpperBoundary->getType()->getScalarSizeInBits()) {
-    MinIterValue = Builder.CreateSExt(MinIterValue, UpperBoundary->getType());
-    LLVM_DEBUG(dbgs() << "Type Matching for Minimum Iteration Value "
-                      << MinIterValue);
+  if (Type1 == Type2)
+    return std::make_pair(Value1, Value2);
+
+  if (Type2->getScalarSizeInBits() < Type1->getScalarSizeInBits()) {
+    Value2 = Builder.CreateSExt(Value2, Type1);
+    LLVM_DEBUG(dbgs() << "Type Matching for "; Value2->dump());
   } else {
-    UpperBoundary = Builder.CreateSExt(UpperBoundary, MinIterValue->getType());
-    LLVM_DEBUG(dbgs() << "Type Matching for Upper loop Boundary "
-                      << UpperBoundary);
+    Value1 = Builder.CreateSExt(Value1, Type2);
+    LLVM_DEBUG(dbgs() << "Type Matching for  "; Value1->dump());
   }
+  return std::make_pair(Value1, Value2);
 }
 
-void LoopMetadata::addAssumeToLoopHeader(uint64_t MinIterCount,
-                                         LLVMContext *Context) {
+void LoopMetadata::addAssumeToLoopHeader() {
   LLVM_DEBUG(dbgs() << "Processing Loop Metadata: "
                     << L->getHeader()->getParent()->getName() << " "
                     << L->getName() << " (" << MinIterCount << ")\n");
@@ -454,7 +470,8 @@ void LoopMetadata::addAssumeToLoopHeader(uint64_t MinIterCount,
 
   IRBuilder<> Builder(L->getHeader()->getTerminator());
 
-  matchCompareTypes(UpperBoundary, MinIterValue, Builder);
+  std::pair<llvm::Value *, llvm::Value *> CompareOps =
+      promoteMismatchedType(UpperBoundary, MinIterValue, Builder);
   Value *Cmp = Builder.CreateICmpSGT(UpperBoundary, MinIterValue);
 
   // Insert the `llvm.assume` Call

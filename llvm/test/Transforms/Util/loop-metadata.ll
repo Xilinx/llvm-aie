@@ -232,6 +232,29 @@ for.body:                                         ; preds = %for.cond
   br label %for.cond, !llvm.loop !6
 }
 
+; make sure that the added compare in the assume has matching types
+; simple version
+; Function Attrs: mustprogress noinline nounwind optnone
+define dso_local void @type_matching_simple(ptr %ptr, i16 noundef signext %n) #0 {
+entry:
+  br label %for.cond
+
+for.cond:                                         ; preds = %for.body, %entry
+  %i.0 = phi i16 [ 0, %entry ], [ %inc, %for.body ]
+  %cmp = icmp slt i16 %i.0, %n
+  br i1 %cmp, label %for.body, label %for.cond.cleanup
+
+for.cond.cleanup:                                 ; preds = %for.cond
+  ret void
+
+for.body:                                         ; preds = %for.cond
+  %arrayidx = getelementptr inbounds i32, ptr %ptr, i16 %i.0
+  %0 = load i32, ptr %arrayidx, align 4
+  %add = add nsw i32 %0, 8
+  store i32 %add, ptr %arrayidx, align 4
+  %inc = add nsw i16 %i.0, 1
+  br label %for.cond, !llvm.loop !6
+}
 
 ; make sure that the added compare in the assume has matching types
 ; Function Attrs: mustprogress noinline nounwind optnone
@@ -308,7 +331,7 @@ for.inc:                                          ; preds = %for.body
   %7 = load i16, ptr %i, align 2
   %inc = add i16 %7, 1
   store i16 %inc, ptr %i, align 2
-  br label %for.cond, !llvm.loop !2
+  br label %for.cond, !llvm.loop !6
 
 for.end:                                          ; preds = %for.cond
   ret void
