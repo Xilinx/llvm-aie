@@ -402,6 +402,78 @@ for.body:                                         ; preds = %for.cond
 }
 
 
+; find IV even if it is hidden in a truncation operation
+; Function Attrs: mustprogress nofree norecurse nosync nounwind memory(argmem: readwrite, inaccessiblemem: write)
+define dso_local void @basicIVTruncationIncrement(i32 noundef %num_elems, i32 noundef %n) local_unnamed_addr #0 {
+; CHECK-LABEL: @basicIVTruncationIncrement(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    br label [[FOR_COND:%.*]]
+; CHECK:       for.cond:
+; CHECK-NEXT:    [[I_0:%.*]] = phi i32 [ 0, [[ENTRY:%.*]] ], [ [[ADD:%.*]], [[FOR_BODY:%.*]] ]
+; CHECK-NEXT:    [[CONV:%.*]] = and i32 [[I_0]], 65535
+; CHECK-NEXT:    [[CMP:%.*]] = icmp ult i32 [[CONV]], [[N:%.*]]
+; CHECK-NEXT:    [[TMP0:%.*]] = icmp sgt i32 [[N]], 3
+; CHECK-NEXT:    tail call void @llvm.assume(i1 [[TMP0]])
+; CHECK-NEXT:    br i1 [[CMP]], label [[FOR_BODY]], label [[FOR_COND_CLEANUP:%.*]]
+; CHECK:       for.cond.cleanup:
+; CHECK-NEXT:    ret void
+; CHECK:       for.body:
+; CHECK-NEXT:    [[ADD]] = add nuw nsw i32 [[CONV]], 1
+; CHECK-NEXT:    br label [[FOR_COND]], !llvm.loop [[LOOP4]]
+;
+entry:
+  br label %for.cond
+
+for.cond:
+  %i.0 = phi i32 [ 0, %entry ], [ %add, %for.body ]
+  %conv = and i32 %i.0, 65535
+  %cmp = icmp ult i32 %conv, %n
+  br i1 %cmp, label %for.body, label %for.cond.cleanup
+
+for.cond.cleanup:                                 ; preds = %for.cond
+  ret void
+
+for.body:                                         ; preds = %for.cond, %for.body
+  %add = add nuw nsw i32 %conv , 1
+  br label %for.cond, !llvm.loop !6
+}
+
+; find IV even if it is hidden in a truncation operation
+; Function Attrs: mustprogress nofree norecurse nosync nounwind memory(argmem: readwrite, inaccessiblemem: write)
+define dso_local void @basicIVTruncationDecrement(i32 noundef %num_elems, i32 noundef %n) local_unnamed_addr #0 {
+; CHECK-LABEL: @basicIVTruncationDecrement(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    br label [[FOR_COND:%.*]]
+; CHECK:       for.cond:
+; CHECK-NEXT:    [[I_0:%.*]] = phi i32 [ [[N:%.*]], [[ENTRY:%.*]] ], [ [[SUB:%.*]], [[FOR_BODY:%.*]] ]
+; CHECK-NEXT:    [[CONV:%.*]] = and i32 [[I_0]], 65535
+; CHECK-NEXT:    [[CMP:%.*]] = icmp sgt i32 [[CONV]], 0
+; CHECK-NEXT:    [[TMP0:%.*]] = icmp sgt i32 [[N]], 3
+; CHECK-NEXT:    tail call void @llvm.assume(i1 [[TMP0]])
+; CHECK-NEXT:    br i1 [[CMP]], label [[FOR_BODY]], label [[FOR_COND_CLEANUP:%.*]]
+; CHECK:       for.cond.cleanup:
+; CHECK-NEXT:    ret void
+; CHECK:       for.body:
+; CHECK-NEXT:    [[SUB]] = sub nuw nsw i32 [[CONV]], 1
+; CHECK-NEXT:    br label [[FOR_COND]], !llvm.loop [[LOOP4]]
+;
+entry:
+  br label %for.cond
+
+for.cond:
+  %i.0 = phi i32 [ %n, %entry ], [ %sub, %for.body ]
+  %conv = and i32 %i.0, 65535
+  %cmp = icmp sgt i32 %conv, 0
+  br i1 %cmp, label %for.body, label %for.cond.cleanup
+
+for.cond.cleanup:                                 ; preds = %for.cond
+  ret void
+
+for.body:                                         ; preds = %for.cond, %for.body
+  %sub = sub nuw nsw i32 %conv , 1
+  br label %for.cond, !llvm.loop !6
+}
+
 !6 = distinct !{!6, !7, !8, !9}
 !7 = !{!"llvm.loop.mustprogress"}
 !8 = !{!"llvm.loop.itercount.range", i64 4}

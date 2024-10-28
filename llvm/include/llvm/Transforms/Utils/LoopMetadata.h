@@ -31,6 +31,7 @@ private:
   ICmpInst *LoopCmpInstr;
   bool IsLoopIncrementing;
   int64_t LoopStepSize;
+  bool IsTruncatedSCEV;
 
   /// Loop Boundaries
   /// lower loop boundary
@@ -60,6 +61,16 @@ private:
   const SCEV *getSCEV();
   /// recursive low level function that can extracts
   const SCEV *getAddRecSCEV(Value *Op);
+
+  /// If the IV is modified through a trunctation, generate a SCEVAddRecExpr
+  /// that can be processed by this pass
+  const SCEV *getTruncatedSCEV();
+  /// Check if the Instruction is part of a truncated SCEVAddExpr that can be
+  /// converted into a SCEVAddRecExpr. During the conversion the truncation is
+  /// removed.
+  const SCEV *extractSCEVFromTruncation(Instruction *I);
+  /// get the loop invariant value, which is not used in a trunction SCEV
+  Value *getTruncatedLoopInvariant() const;
 
 public:
   PreservedAnalyses run(Loop &L, LoopAnalysisManager &AM,
