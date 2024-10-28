@@ -235,8 +235,8 @@ for.body:                                         ; preds = %for.cond
 ; edge case for maximum loop bound extraction, when both compare operands
 ; consist of phi nodes
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind memory(argmem: readwrite, inaccessiblemem: write)
-define dso_local void @boundSelectionThroughSCEVExpr1(i32 noundef %num_elems, i32 noundef %n, ptr nonnull align 32 dereferenceable(128) %params) local_unnamed_addr #0 {
-; CHECK-LABEL: @boundSelectionThroughSCEVExpr1(
+define dso_local void @selectMaxBoundWithTwoPHIs(i32 noundef %num_elems, i32 noundef %n, ptr nonnull align 32 dereferenceable(128) %params) local_unnamed_addr #0 {
+; CHECK-LABEL: @selectMaxBoundWithTwoPHIs(
 ; CHECK-NEXT:  entry:
 ; CHECK-NEXT:    br label [[FOR_COND:%.*]]
 ; CHECK:       for.cond:
@@ -252,7 +252,7 @@ define dso_local void @boundSelectionThroughSCEVExpr1(i32 noundef %num_elems, i3
 ; CHECK-NEXT:    br label [[FOR_COND2_PRE:%.*]]
 ; CHECK:       for.body:
 ; CHECK-NEXT:    [[ADD]] = add nuw nsw i32 [[I_0]], 1
-; CHECK-NEXT:    br label [[FOR_COND]], !llvm.loop [[LOOP4]]
+; CHECK-NEXT:    br label [[FOR_COND]], !llvm.loop [[LOOP0]]
 ; CHECK:       for.cond2.pre:
 ; CHECK-NEXT:    [[CMP2:%.*]] = icmp eq i32 [[N]], 22
 ; CHECK-NEXT:    br i1 [[CMP2]], label [[COND_TRUE:%.*]], label [[COND_FALSE:%.*]]
@@ -274,7 +274,7 @@ define dso_local void @boundSelectionThroughSCEVExpr1(i32 noundef %num_elems, i3
 ; CHECK-NEXT:    ret void
 ; CHECK:       for.body2:
 ; CHECK-NEXT:    [[ADD2]] = add nuw nsw i32 [[I_1]], 1
-; CHECK-NEXT:    br label [[FOR_COND_END2]], !llvm.loop [[LOOP4]]
+; CHECK-NEXT:    br label [[FOR_COND_END2]], !llvm.loop [[LOOP0]]
 ;
 entry:
   br label %for.cond
@@ -325,8 +325,8 @@ for.body2:
 
 ; extract bounds, even if there is no phi node
 ; Function Attrs: mustprogress noinline nounwind optnone
-define dso_local void @boundSelectionThroughSCEVExpr2(ptr %ptr, i32 noundef %n) #0 {
-; CHECK-LABEL: @boundSelectionThroughSCEVExpr2(
+define dso_local void @selectMaxBoundWithNOPHIs(ptr %ptr, i32 noundef %n) #0 {
+; CHECK-LABEL: @selectMaxBoundWithNOPHIs(
 ; CHECK-NEXT:  entry:
 ; CHECK-NEXT:    br label [[FOR_COND:%.*]]
 ; CHECK:       for.cond:
@@ -337,9 +337,9 @@ define dso_local void @boundSelectionThroughSCEVExpr2(ptr %ptr, i32 noundef %n) 
 ; CHECK-NEXT:    [[I_0:%.*]] = phi i32 [ 0, [[FOR_COND]] ], [ [[INC:%.*]], [[FOR_BODY]] ]
 ; CHECK-NEXT:    [[INC]] = add nsw i32 [[I_0]], 1
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp slt i32 [[INC]], [[N:%.*]]
-; CHECK-NEXT:    [[TMP0:%.*]] = icmp sgt i32 [[N]], 4
+; CHECK-NEXT:    [[TMP0:%.*]] = icmp sgt i32 [[N]], 3
 ; CHECK-NEXT:    tail call void @llvm.assume(i1 [[TMP0]])
-; CHECK-NEXT:    br i1 [[CMP]], label [[FOR_BODY]], label [[FOR_COND_CLEANUP:%.*]], !llvm.loop [[LOOP4]]
+; CHECK-NEXT:    br i1 [[CMP]], label [[FOR_BODY]], label [[FOR_COND_CLEANUP:%.*]], !llvm.loop [[LOOP0]]
 ;
 entry:
   br label %for.cond
@@ -357,133 +357,6 @@ for.body:                                         ; preds = %for.cond
   %cmp = icmp slt i32 %inc, %n
   br i1 %cmp, label %for.body, label %for.cond.cleanup, !llvm.loop !6
 }
-
-; edge case for maximum loop bound extraction, when both compare operands
-; consist of phi nodes
-; Function Attrs: mustprogress nofree norecurse nosync nounwind memory(argmem: readwrite, inaccessiblemem: write)
-define dso_local void @boundSelectionThroughSCEVExpr1(i32 noundef %num_elems, i32 noundef %n, ptr nonnull align 32 dereferenceable(128) %params) local_unnamed_addr #0 {
-; CHECK-LABEL: @boundSelectionThroughSCEVExpr1(
-; CHECK-NEXT:  entry:
-; CHECK-NEXT:    br label [[FOR_COND:%.*]]
-; CHECK:       for.cond:
-; CHECK-NEXT:    [[I_0:%.*]] = phi i32 [ 0, [[ENTRY:%.*]] ], [ [[ADD:%.*]], [[FOR_BODY:%.*]] ]
-; CHECK-NEXT:    [[INNER_G:%.*]] = getelementptr inbounds i8, ptr [[PARAMS:%.*]], i20 12
-; CHECK-NEXT:    [[TMP0:%.*]] = load i32, ptr [[INNER_G]], align 4
-; CHECK-NEXT:    [[CMP:%.*]] = icmp ult i32 [[I_0]], [[N:%.*]]
-; CHECK-NEXT:    [[TMP1:%.*]] = icmp sgt i32 [[N]], 3
-; CHECK-NEXT:    tail call void @llvm.assume(i1 [[TMP1]])
-; CHECK-NEXT:    br i1 [[CMP]], label [[FOR_BODY]], label [[FOR_COND_CLEANUP:%.*]]
-; CHECK:       for.cond.cleanup:
-; CHECK-NEXT:    [[DOTLCSSA:%.*]] = phi i32 [ [[TMP0]], [[FOR_COND]] ]
-; CHECK-NEXT:    br label [[FOR_COND2_PRE:%.*]]
-; CHECK:       for.body:
-; CHECK-NEXT:    [[ADD]] = add nuw nsw i32 [[I_0]], 1
-; CHECK-NEXT:    br label [[FOR_COND]], !llvm.loop [[LOOP4]]
-; CHECK:       for.cond2.pre:
-; CHECK-NEXT:    [[CMP2:%.*]] = icmp eq i32 [[N]], 22
-; CHECK-NEXT:    br i1 [[CMP2]], label [[COND_TRUE:%.*]], label [[COND_FALSE:%.*]]
-; CHECK:       cond.true:
-; CHECK-NEXT:    [[MUL475:%.*]] = mul i32 [[DOTLCSSA]], 2
-; CHECK-NEXT:    br label [[FOR_COND_PH2:%.*]]
-; CHECK:       cond.false:
-; CHECK-NEXT:    br label [[FOR_COND_PH2]]
-; CHECK:       for.cond.ph2:
-; CHECK-NEXT:    [[COND479:%.*]] = phi i32 [ [[MUL475]], [[COND_TRUE]] ], [ [[DOTLCSSA]], [[COND_FALSE]] ]
-; CHECK-NEXT:    br label [[FOR_COND_END2:%.*]]
-; CHECK:       for.cond.end2:
-; CHECK-NEXT:    [[I_1:%.*]] = phi i32 [ 0, [[FOR_COND_PH2]] ], [ [[ADD2:%.*]], [[FOR_BODY2:%.*]] ]
-; CHECK-NEXT:    [[CMP3:%.*]] = icmp ult i32 [[I_1]], [[COND479]]
-; CHECK-NEXT:    [[TMP2:%.*]] = icmp sgt i32 [[COND479]], 3
-; CHECK-NEXT:    tail call void @llvm.assume(i1 [[TMP2]])
-; CHECK-NEXT:    br i1 [[CMP3]], label [[FOR_BODY2]], label [[FOR_COND_CLEANUP2:%.*]]
-; CHECK:       for.cond.cleanup2:
-; CHECK-NEXT:    ret void
-; CHECK:       for.body2:
-; CHECK-NEXT:    [[ADD2]] = add nuw nsw i32 [[I_1]], 1
-; CHECK-NEXT:    br label [[FOR_COND_END2]], !llvm.loop [[LOOP4]]
-;
-entry:
-  br label %for.cond
-
-for.cond:
-  %i.0 = phi i32 [ 0, %entry ], [ %add, %for.body ]
-  %inner_g = getelementptr inbounds i8, ptr %params, i20 12
-  %19 = load i32, ptr %inner_g, align 4
-  %cmp = icmp ult i32 %i.0, %n
-  br i1 %cmp, label %for.body, label %for.cond.cleanup
-
-for.cond.cleanup:                                 ; preds = %for.cond
-  %.lcssa = phi i32 [ %19, %for.cond ]
-  br label %for.cond2.pre
-
-for.body:                                         ; preds = %for.cond, %for.body
-  %add = add nuw nsw i32 %i.0 , 1
-  br label %for.cond, !llvm.loop !6
-
-for.cond2.pre:
-  %cmp2 = icmp eq i32 %n, 22
-  br i1 %cmp2, label %cond.true, label %cond.false
-
-cond.true:
-  %mul475 = mul i32 %.lcssa, 2
-  br label %for.cond.ph2
-
-cond.false:
-  br label %for.cond.ph2
-
-for.cond.ph2:
-  %cond479 = phi i32 [ %mul475, %cond.true ], [ %.lcssa, %cond.false ]
-  br label %for.cond.end2
-
-for.cond.end2:
-  %i.1 = phi i32 [ 0, %for.cond.ph2 ], [ %add2, %for.body2 ]
-  %cmp3 = icmp ult i32 %i.1, %cond479
-  br i1 %cmp3, label %for.body2, label %for.cond.cleanup2
-
-for.cond.cleanup2:
-  ret void
-
-for.body2:
-  %add2 = add nuw nsw i32 %i.1 , 1
-  br label %for.cond.end2, !llvm.loop !6
-}
-
-
-; extract bounds, even if there is no phi node
-; Function Attrs: mustprogress noinline nounwind optnone
-define dso_local void @boundSelectionThroughSCEVExpr2(ptr %ptr, i32 noundef %n) #0 {
-; CHECK-LABEL: @boundSelectionThroughSCEVExpr2(
-; CHECK-NEXT:  entry:
-; CHECK-NEXT:    br label [[FOR_COND:%.*]]
-; CHECK:       for.cond:
-; CHECK-NEXT:    br label [[FOR_BODY:%.*]]
-; CHECK:       for.cond.cleanup:
-; CHECK-NEXT:    ret void
-; CHECK:       for.body:
-; CHECK-NEXT:    [[I_0:%.*]] = phi i32 [ 0, [[FOR_COND]] ], [ [[INC:%.*]], [[FOR_BODY]] ]
-; CHECK-NEXT:    [[INC]] = add nsw i32 [[I_0]], 1
-; CHECK-NEXT:    [[CMP:%.*]] = icmp slt i32 [[INC]], [[N:%.*]]
-; CHECK-NEXT:    [[TMP0:%.*]] = icmp sgt i32 [[N]], 4
-; CHECK-NEXT:    tail call void @llvm.assume(i1 [[TMP0]])
-; CHECK-NEXT:    br i1 [[CMP]], label [[FOR_BODY]], label [[FOR_COND_CLEANUP:%.*]], !llvm.loop [[LOOP4]]
-;
-entry:
-  br label %for.cond
-
-for.cond:                                         ; preds = %for.body, %entry
-  br label %for.body
-
-
-for.cond.cleanup:                                 ; preds = %for.cond
-  ret void
-
-for.body:                                         ; preds = %for.cond
-  %i.0 = phi i32 [ 0, %for.cond ], [ %inc, %for.body ]
-  %inc = add nsw i32 %i.0, 1
-  %cmp = icmp slt i32 %inc, %n
-  br i1 %cmp, label %for.body, label %for.cond.cleanup, !llvm.loop !6
-}
-
 
 !6 = distinct !{!6, !7, !8, !9}
 !7 = !{!"llvm.loop.mustprogress"}

@@ -163,6 +163,26 @@ int getSCEVStepSize(const SCEV *S) {
   return dyn_cast<SCEVConstant>(S)->getValue()->getSExtValue();
 }
 
+/// match the types of the loop bound and the minimum iteration value
+/// Insert signed Extension Instruction if needed
+std::pair<llvm::Value *, llvm::Value *>
+promoteMismatchedType(Value *Value1, Value *Value2, IRBuilder<> &Builder) {
+  Type *Type1 = Value1->getType();
+  Type *Type2 = Value2->getType();
+
+  if (Type1 == Type2)
+    return std::make_pair(Value1, Value2);
+
+  if (Type2->getScalarSizeInBits() < Type1->getScalarSizeInBits()) {
+    Value2 = Builder.CreateSExt(Value2, Type1);
+    LLVM_DEBUG(dbgs() << "Type Matching for "; Value2->dump());
+  } else {
+    Value1 = Builder.CreateSExt(Value1, Type2);
+    LLVM_DEBUG(dbgs() << "Type Matching for  "; Value1->dump());
+  }
+  return std::make_pair(Value1, Value2);
+}
+
 void LoopMetadata::addAssumeToLoopHeader() {
   // reset Loop specific information;
   LowerBoundary = nullptr;
@@ -219,7 +239,9 @@ void LoopMetadata::addAssumeToLoopHeader() {
 
   IRBuilder<> Builder(L->getHeader()->getTerminator());
 
-  Value *Cmp = Builder.CreateICmpSGT(UpperBoundary, MinIterValue);
+  std::pair<llvm::Value *, llvm::Value *> CompareOps =
+      promoteMismatchedType(UpperBoundary, MinIterValue, Builder);
+  Value *Cmp = Builder.CreateICmpSGT(CompareOps.first, CompareOps.second);
 
   // Insert assert
   Function *AssumeFn =
@@ -229,7 +251,7 @@ void LoopMetadata::addAssumeToLoopHeader() {
   AC->registerAssumption(dyn_cast<AssumeInst>(Call));
 
   // first is minIterValue
-  LLVM_DEBUG(dbgs() << "Inserting Condition :"; MinIterValue->dump();
+  LLVM_DEBUG(dbgs() << "Inserting Condition :"; CompareOps.second->dump();
              dbgs() << "With Comparator   :"; Cmp->dump();
              dbgs() << "Assume            :"; Call->dump());
 }
