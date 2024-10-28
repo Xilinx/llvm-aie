@@ -18,6 +18,7 @@
 
 using namespace llvm;
 
+bool isRotatable(const Loop *L);
 ///  Check if the minimum value fits into the given type
 bool fitstype(unsigned MinValue, const Type *T);
 
@@ -61,6 +62,14 @@ bool LoopMetadata::assignLoopMetadata(Loop &L) {
   if (MinIterCount.has_value() && MinIterCount.value() > 0) {
     this->MinIterCount = MinIterCount.value();
 
+    if (!isRotatable(this->L)) {
+      LLVM_DEBUG(dbgs() << "Processing Loop Metadata: "
+                        << L.getHeader()->getParent()->getName() << " "
+                        << L.getName() << " (" << this->MinIterCount
+                        << ")\nAborting Metadata due to not rotatable!\n");
+      return false;
+    }
+
     LLVM_DEBUG(L.getHeader()->getParent()->dump(););
     addAssumeToLoopHeader();
     return true;
@@ -68,6 +77,13 @@ bool LoopMetadata::assignLoopMetadata(Loop &L) {
 
   return false;
 }
+
+/// check basic loop rotation conditions
+bool isRotatable(const Loop *L) {
+  BranchInst *BI = dyn_cast<BranchInst>(L->getHeader()->getTerminator());
+  return L->isLoopExiting(L->getHeader()) && (BI && BI->isConditional());
+}
+
 bool LoopMetadata::canExtractIncrement(const SCEV *S) {
   const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(S);
   if (!AR)
