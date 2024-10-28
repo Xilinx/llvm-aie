@@ -317,7 +317,7 @@ for.end:                                          ; preds = %for.cond
 ; find IV even if it is hidden in a truncation operation
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind memory(argmem: readwrite, inaccessiblemem: write)
 define dso_local void @basicIVTruncationIncrement(i32 noundef %num_elems, i32 noundef %n) local_unnamed_addr #0 {
-; CHECK-LABEL: @basicIVTruncation(
+; CHECK-LABEL: @basicIVTruncationIncrement(
 ; CHECK-NEXT:  entry:
 ; CHECK-NEXT:    br label [[FOR_COND:%.*]]
 ; CHECK:       for.cond:
@@ -353,6 +353,22 @@ for.body:                                         ; preds = %for.cond, %for.body
 ; find IV even if it is hidden in a truncation operation
 ; Function Attrs: mustprogress nofree norecurse nosync nounwind memory(argmem: readwrite, inaccessiblemem: write)
 define dso_local void @basicIVTruncationDecrement(i32 noundef %num_elems, i32 noundef %n) local_unnamed_addr #0 {
+; CHECK-LABEL: @basicIVTruncationDecrement(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    br label [[FOR_COND:%.*]]
+; CHECK:       for.cond:
+; CHECK-NEXT:    [[I_0:%.*]] = phi i32 [ [[N:%.*]], [[ENTRY:%.*]] ], [ [[SUB:%.*]], [[FOR_BODY:%.*]] ]
+; CHECK-NEXT:    [[CONV:%.*]] = and i32 [[I_0]], 65535
+; CHECK-NEXT:    [[CMP:%.*]] = icmp sgt i32 [[CONV]], 0
+; CHECK-NEXT:    [[TMP0:%.*]] = icmp sgt i32 [[N]], 3
+; CHECK-NEXT:    tail call void @llvm.assume(i1 [[TMP0]])
+; CHECK-NEXT:    br i1 [[CMP]], label [[FOR_BODY]], label [[FOR_COND_CLEANUP:%.*]]
+; CHECK:       for.cond.cleanup:
+; CHECK-NEXT:    ret void
+; CHECK:       for.body:
+; CHECK-NEXT:    [[SUB]] = sub nuw nsw i32 [[CONV]], 1
+; CHECK-NEXT:    br label [[FOR_COND]], !llvm.loop [[LOOP4]]
+;
 entry:
   br label %for.cond
 
