@@ -189,7 +189,7 @@ bool LoopMetadata::validateBounds() {
 
 /// FIXME: call getLoopInvariantInTruncExpr something like this.
 ///  get loop invariant constant (that is either high or low), but a boundry
-Value *LoopMetadata::getUpperTruncatedBound() const {
+Value *LoopMetadata::getLoopInvariantInTruncation() const {
   for (Value *Op : LoopCmpInstr->operands()) {
     if (SE->isSCEVable(Op->getType()) &&
         SCEVCastExpr::classof(SE->getSCEV(Op))) {
@@ -199,6 +199,16 @@ Value *LoopMetadata::getUpperTruncatedBound() const {
     return Op;
   }
   return nullptr;
+}
+
+Value *getLoopInvariant(Value *Op0, Value *Op1, ScalarEvolution *SE) {
+  if ((SE->isSCEVable(Op0->getType()) &&
+       (SCEVAddExpr::classof(SE->getSCEV(Op0)) ||
+        SCEVAddRecExpr::classof(SE->getSCEV(Op0)))) ||
+      isa<PHINode>(Op0))
+    return Op1;
+
+  return Op0;
 }
 
 void LoopMetadata::getBoundaries(const SCEV *S) {
@@ -218,15 +228,10 @@ void LoopMetadata::getBoundaries(const SCEV *S) {
     }
     LowerBoundary = SCEVConst->getValue();
     if (IsTruncatedSCEV) {
-      UpperBoundary = getUpperTruncatedBound();
+      UpperBoundary = getLoopInvariantInTruncation();
+
     } else {
-      if ((SE->isSCEVable(Op0->getType()) &&
-           (SCEVAddExpr::classof(SE->getSCEV(Op0)) ||
-            SCEVAddRecExpr::classof(SE->getSCEV(Op0)))) ||
-          isa<PHINode>(Op0))
-        UpperBoundary = Op1;
-      else
-        UpperBoundary = Op0;
+      UpperBoundary = getLoopInvariant(Op0, Op1, SE);
     }
 
   } else {
@@ -238,15 +243,9 @@ void LoopMetadata::getBoundaries(const SCEV *S) {
       UpperBoundary = S->getValue();
 
     if (IsTruncatedSCEV) {
-      UpperBoundary = getUpperTruncatedBound();
+      UpperBoundary = getLoopInvariantInTruncation();
     } else {
-      if ((SE->isSCEVable(Op0->getType()) &&
-           (SCEVAddExpr::classof(SE->getSCEV(Op0)) ||
-            SCEVAddRecExpr::classof(SE->getSCEV(Op0)))) ||
-          isa<PHINode>(Op0))
-        LowerBoundary = Op1;
-      else
-        LowerBoundary = Op0;
+      LowerBoundary = getLoopInvariant(Op0, Op1, SE);
     }
   }
 
@@ -369,6 +368,7 @@ const SCEV *LoopMetadata::extractSCEVFromTruncation(Instruction *I) {
 
 const SCEV *LoopMetadata::getTruncatedSCEV() {
   for (Value *Op : LoopCmpInstr->operands()) {
+    Op->dump();
     if (const SCEV *TruncSCEV =
             extractSCEVFromTruncation(dyn_cast<Instruction>(Op))) {
       IsTruncatedSCEV = true;

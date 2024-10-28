@@ -43,7 +43,7 @@ private:
 
   void addAssumeToLoopHeader(uint64_t MinIterCount, LLVMContext *Context);
 
-  Value *getUpperTruncatedBound() const;
+  Value *getLoopInvariantInTruncation() const;
   /// get lower and upper boundaries of the loop
   void getBoundaries(const SCEV *S);
   /// validate that the boundries are correctly extracted and that this pass can
