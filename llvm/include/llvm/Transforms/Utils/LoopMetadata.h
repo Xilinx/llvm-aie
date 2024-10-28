@@ -30,6 +30,7 @@ private:
 
   unsigned MinIterCount;
   bool IsLoopIncrementing;
+  int64_t LoopStepSize;
   bool IsTruncatedSCEV;
 
   /// lower loop boundary
@@ -70,6 +71,9 @@ private:
 
   /// get the SCEV of the loop that describes how the loop IV is modified
   const SCEV *getSCEV();
+
+  /// match types for the compare instruction
+  void matchCompareTypes(Value *MinIterValue, IRBuilder<> &Builder);
 
 public:
   PreservedAnalyses run(Loop &L, LoopAnalysisManager &AM,
