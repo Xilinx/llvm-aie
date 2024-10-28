@@ -132,6 +132,7 @@
 #include "llvm/Transforms/Utils/CountVisits.h"
 #include "llvm/Transforms/Utils/InjectTLIMappings.h"
 #include "llvm/Transforms/Utils/LibCallsShrinkWrap.h"
+#include "llvm/Transforms/Utils/LoopMetadata.h"
 #include "llvm/Transforms/Utils/Mem2Reg.h"
 #include "llvm/Transforms/Utils/MoveAutoInit.h"
 #include "llvm/Transforms/Utils/NameAnonGlobals.h"
@@ -216,6 +217,10 @@ static cl::opt<bool> EnableUnrollAndJam("enable-unroll-and-jam",
 static cl::opt<bool> EnableLoopFlatten("enable-loop-flatten", cl::init(false),
                                        cl::Hidden,
                                        cl::desc("Enable the LoopFlatten Pass"));
+
+static cl::opt<bool> EnableLoopMetadata(
+    "enable-loop-metadata", cl::Hidden, cl::init(false),
+    cl::desc("Enable Conversion of Loop Metadata to Assumptions."));
 
 // Experimentally allow loop header duplication. This should allow for better
 // optimization at Oz, since loop-idiom recognition can then recognize things
@@ -410,6 +415,9 @@ PassBuilder::buildO1FunctionSimplificationPipeline(OptimizationLevel Level,
 
   FunctionPassManager FPM;
 
+  if (EnableLoopMetadata)
+    FPM.addPass(createFunctionToLoopPassAdaptor(LoopMetadata()));
+
   if (AreStatisticsEnabled())
     FPM.addPass(CountVisitsPass());
 
@@ -462,6 +470,9 @@ PassBuilder::buildO1FunctionSimplificationPipeline(OptimizationLevel Level,
   // TODO: Investigate promotion cap for O1.
   LPM1.addPass(LICMPass(PTO.LicmMssaOptCap, PTO.LicmMssaNoAccForPromotionCap,
                         /*AllowSpeculation=*/false));
+
+  if (EnableLoopMetadata)
+    LPM1.addPass(LoopMetadata());
 
   LPM1.addPass(LoopRotatePass(/* Disable header duplication */ true,
                               isLTOPreLink(Phase)));
@@ -555,6 +566,9 @@ PassBuilder::buildFunctionSimplificationPipeline(OptimizationLevel Level,
     return buildO1FunctionSimplificationPipeline(Level, Phase);
 
   FunctionPassManager FPM;
+
+  if (EnableLoopMetadata)
+    FPM.addPass(createFunctionToLoopPassAdaptor(LoopMetadata()));
 
   if (AreStatisticsEnabled())
     FPM.addPass(CountVisitsPass());
@@ -909,6 +923,11 @@ PassBuilder::buildInlinerPipeline(OptimizationLevel Level,
                                 InlineContext{Phase, InlinePass::CGSCCInliner},
                                 UseInlineAdvisor, MaxDevirtIterations);
 
+  // inlining metadata processing
+  if (EnableLoopMetadata)
+    MIWP.addModulePass(createModuleToFunctionPassAdaptor(
+        createFunctionToLoopPassAdaptor(LoopMetadata())));
+
   // Require the GlobalsAA analysis for the module so we can query it within
   // the CGSCC pipeline.
   if (EnableGlobalAnalyses) {
@@ -1118,6 +1137,10 @@ PassBuilder::buildModuleSimplificationPipeline(OptimizationLevel Level,
     MPM.addPass(LowerTypeTestsPass(nullptr, nullptr, true));
 
   invokePipelineEarlySimplificationEPCallbacks(MPM, Level);
+
+  if (EnableLoopMetadata)
+    MPM.addPass(createModuleToFunctionPassAdaptor(
+        createFunctionToLoopPassAdaptor(LoopMetadata())));
 
   // Interprocedural constant propagation now that basic cleanup has occurred
   // and prior to optimizing globals.
@@ -1351,6 +1374,10 @@ PassBuilder::buildModuleOptimizationPipeline(OptimizationLevel Level,
                                              ThinOrFullLTOPhase LTOPhase) {
   const bool LTOPreLink = isLTOPreLink(LTOPhase);
   ModulePassManager MPM;
+
+  if (EnableLoopMetadata)
+    MPM.addPass(createModuleToFunctionPassAdaptor(
+        createFunctionToLoopPassAdaptor(LoopMetadata())));
 
   // Run partial inlining pass to partially inline functions that have
   // large bodies.
