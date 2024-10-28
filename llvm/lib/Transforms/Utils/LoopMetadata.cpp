@@ -96,7 +96,7 @@ bool LoopMetadata::canExtractIncrement(const SCEV *S) {
   if (!SCEVConst) {
     return false;
   }
-  LoopStepSize = SCEVConst->getValue()->getSExtValue();
+  LoopStepSize = getSCEVStepSize(SCEVConst);
   IsLoopIncrementing = LoopStepSize > 0;
   return true;
 }
@@ -243,7 +243,7 @@ void LoopMetadata::getBoundaries(const SCEV *S) {
       UpperBoundary = S->getValue();
 
     if (IsTruncatedSCEV) {
-      UpperBoundary = getLoopInvariantInTruncation();
+      LowerBoundary = getLoopInvariantInTruncation();
     } else {
       LowerBoundary = getLoopInvariant(Op0, Op1, SE);
     }
@@ -298,11 +298,11 @@ const SCEVTruncateExpr *getSCEVTruncate(const SCEV *S) {
 
 int getSCEVStepSize(const SCEV *S) {
   assert(isa<SCEVConstant>(S));
-  return std::abs(dyn_cast<SCEVConstant>(S)->getValue()->getSExtValue());
+  return dyn_cast<SCEVConstant>(S)->getValue()->getSExtValue();
 }
 
 Value *getSCEVStart(const SCEVTruncateExpr *S, const BasicBlock *LoopPreHeader,
-                    const ScalarEvolution *SE) {
+                    ScalarEvolution *SE) {
 
   Value *StartVal = dyn_cast<SCEVUnknown>(S->getOperand())->getValue();
 
@@ -313,10 +313,19 @@ Value *getSCEVStart(const SCEVTruncateExpr *S, const BasicBlock *LoopPreHeader,
   if (!PN)
     return nullptr;
 
-  for (uint Op = 0; Op < PN->getNumOperands(); Op++) {
-    if (PN->getIncomingBlock(Op)->getName() == LoopPreHeader->getName() &&
-        isa<Constant>(PN->getOperand(Op))) {
-      return PN->getOperand(Op);
+  // get operand that is defined outside of the loop and that has not a scalar
+  // evolution
+  for (uint Index = 0; Index < PN->getNumOperands(); Index++) {
+    Value *Op = PN->getOperand(Index);
+    PN->getOperand(Index)->dump();
+    // Operand must strongly dominate
+    if (!SE->isSCEVable(Op->getType()))
+      continue;
+
+    const SCEV *OpSCEV = SE->getSCEV(Op);
+    if (PN->getIncomingBlock(Index)->getName() == LoopPreHeader->getName() &&
+        (SCEVConstant::classof(OpSCEV) || SCEVUnknown::classof(OpSCEV))) {
+      return PN->getOperand(Index);
     }
   }
 
@@ -348,7 +357,7 @@ const SCEV *LoopMetadata::extractSCEVFromTruncation(Instruction *I) {
   if (!Start)
     return nullptr;
 
-  if (!fitstype(MinIterCount * StepSize, TruncExpr->getType()))
+  if (!fitstype(MinIterCount * std::abs(StepSize), TruncExpr->getType()))
     return nullptr;
 
   const SCEV *Step =
