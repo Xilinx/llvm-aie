@@ -3,6 +3,7 @@
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -mattr=+dotprod %s -o - | FileCheck %s --check-prefixes=CHECK,CHECK-SD,CHECK-SD-DOT
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -global-isel -global-isel-abort=2 %s -o - 2>&1 | FileCheck %s --check-prefixes=CHECK,CHECK-GI,CHECK-GI-BASE
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -global-isel -global-isel-abort=2 %s -o - -mattr=+dotprod 2>&1 | FileCheck %s --check-prefixes=CHECK,CHECK-GI,CHECK-GI-DOT
+; Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
 
 define i32 @addv_v2i32(<2 x i32> %a) {
 ; CHECK-LABEL: addv_v2i32:
@@ -3744,17 +3745,13 @@ define i32 @add_pair_v8i16_v4i32_double_sext_zext_shuffle(<8 x i16> %ax, <8 x i1
 ; CHECK-GI-LABEL: add_pair_v8i16_v4i32_double_sext_zext_shuffle:
 ; CHECK-GI:       // %bb.0: // %entry
 ; CHECK-GI-NEXT:    ushll v4.4s, v0.4h, #0
-; CHECK-GI-NEXT:    ushll2 v0.4s, v0.8h, #0
 ; CHECK-GI-NEXT:    ushll v5.4s, v1.4h, #0
-; CHECK-GI-NEXT:    ushll2 v1.4s, v1.8h, #0
 ; CHECK-GI-NEXT:    ushll v6.4s, v2.4h, #0
-; CHECK-GI-NEXT:    ushll2 v2.4s, v2.8h, #0
 ; CHECK-GI-NEXT:    ushll v7.4s, v3.4h, #0
-; CHECK-GI-NEXT:    ushll2 v3.4s, v3.8h, #0
-; CHECK-GI-NEXT:    add v0.4s, v4.4s, v0.4s
-; CHECK-GI-NEXT:    add v1.4s, v5.4s, v1.4s
-; CHECK-GI-NEXT:    add v2.4s, v6.4s, v2.4s
-; CHECK-GI-NEXT:    add v3.4s, v7.4s, v3.4s
+; CHECK-GI-NEXT:    uaddw2 v0.4s, v4.4s, v0.8h
+; CHECK-GI-NEXT:    uaddw2 v1.4s, v5.4s, v1.8h
+; CHECK-GI-NEXT:    uaddw2 v2.4s, v6.4s, v2.8h
+; CHECK-GI-NEXT:    uaddw2 v3.4s, v7.4s, v3.8h
 ; CHECK-GI-NEXT:    add v0.4s, v0.4s, v1.4s
 ; CHECK-GI-NEXT:    add v1.4s, v2.4s, v3.4s
 ; CHECK-GI-NEXT:    add v0.4s, v0.4s, v1.4s
