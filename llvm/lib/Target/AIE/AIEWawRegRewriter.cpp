@@ -22,24 +22,27 @@
 #include "llvm/CodeGen/LiveIntervals.h"
 #include "llvm/CodeGen/LiveRegMatrix.h"
 #include "llvm/CodeGen/LiveStacks.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineOperand.h"
-#include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/SlotIndexes.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/MC/MCRegister.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/raw_ostream.h"
-#include <llvm/CodeGen/MachineBasicBlock.h>
 
 using namespace llvm;
 
 #define DEBUG_TYPE "aie-waw-reg-rewrite"
 
-namespace {
+static cl::opt<bool>
+    RenameAllRegs("aie-waw-rename-all", cl::Hidden, cl::init(true),
+                  cl::desc("Rename every Register, not only accumulator and "
+                           "vector registers (default true)."));
 
+namespace {
+using PhysRegVec = SmallVector<MCPhysReg, 40>;
 ///
 /// This pass rewrites physical register assignments in critical parts of the
 /// code (like loops) to break WAW and WAR dependencies.
@@ -82,14 +85,23 @@ private:
   LiveRegMatrix *LRM = nullptr;
   LiveIntervals *LIS = nullptr;
   const TargetInstrInfo *TII = nullptr;
+  /// Vector to keep track which additional registers are blocked
+  /// by
+  /// a) being unused GPR registers within the MachineFunction or \
+  /// b) being Callee save registers. \
+  /// Unused GPR registers can be used for spill destinations, therefore
+  /// avoiding costly spills to memory.
+  PhysRegVec AdditionalBlockedRegs;
 
   bool renameMBBPhysRegs(const MachineBasicBlock *MBB);
 
-  /// Get all the defined physical registers that the MachineBasicBlock already
-  /// uses. These physical registers should not be used for replacement
-  /// candidates, since this would introduce new WAW dependencies, which this
-  /// pass tries to remove.
-  BitVector getDefinedPhysRegs(const MachineBasicBlock *MBB) const;
+  /// Return a Bitvector with all the defined physical registers of the
+  /// \param MBB. These physical registers should not be
+  /// used for replacement candidates, since this would introduce new WAW
+  /// dependencies, which this pass tries to remove. Additionally, block all the
+  /// physical register in \param AdditionalBlockedRegs.
+  BitVector getBlockedPhysRegs(const MachineBasicBlock *MBB,
+                               const PhysRegVec &AdditionalBlockedRegs) const;
 
   /// returns true if the physical register of Reg was replaced
   bool replaceReg(const Register Reg, BitVector &BlockedPhysRegs);
@@ -137,6 +149,27 @@ private:
   /// removed for future replacement strategies, i.e. block wl4, wh4, y2 if X4
   /// is used.
   void addAliasRegs(BitVector &BlockedPhysRegs, const MCPhysReg PhysReg) const;
+
+  /// \return additional blocked registers of the \p MF
+  PhysRegVec getAdditionalBlockedRegs(const MachineFunction &MF) const;
+
+  /// Accumulate defined registers within the \param MBB in \param UsedRegs
+  void accumulateDefRegs(const MachineBasicBlock &MBB,
+                         std::set<MCPhysReg> &UsedRegs) const;
+
+  /// Return all the GPR and alias register within \p MF
+  PhysRegVec getGPRAndAliasRegs(const MachineFunction &MF) const;
+
+  /// Add Register to \p UsedRegs, if all its alias register are already used
+  /// and  exist in \p AdditionalUsedRegs , i.e. if r16 and r17 are already
+  /// used, also insert their combined alias register (l0) into \p UsedRegs
+  /// since it is consequently also used.
+  /// Fixme: Work on Regunits and remove this method
+  void setAliasUsage(std::set<MCPhysReg> &UsedRegs,
+                     const PhysRegVec &AdditionalUsedRegs) const;
+
+  /// Remove callee save registers from \param UsedRegs
+  void removeCalleeSaveRegs(std::set<MCPhysReg> &UsedRegs) const;
 };
 
 MCPhysReg AIEWawRegRewriter::getAssignedPhysReg(const Register Reg) const {
@@ -167,6 +200,10 @@ bool AIEWawRegRewriter::runOnMachineFunction(MachineFunction &MF) {
 
   LLVM_DEBUG(dbgs() << "*** WAW Loop Register Rewriting: " << MF.getName());
   LLVM_DEBUG(dbgs() << " ***\n");
+
+  AdditionalBlockedRegs.clear();
+  if (RenameAllRegs)
+    AdditionalBlockedRegs = getAdditionalBlockedRegs(MF);
 
   for (const MachineBasicBlock *MBB : LoopMBBs)
     Modified |= renameMBBPhysRegs(MBB);
@@ -206,6 +243,138 @@ AIEWawRegRewriter::getVRegWithCopies(const MachineBasicBlock &MBB) const {
   return VRegWithCopies;
 }
 
+PhysRegVec
+AIEWawRegRewriter::getGPRAndAliasRegs(const MachineFunction &MF) const {
+  LLVM_DEBUG(dbgs() << "Collecting All GPR and Alias register\n");
+  PhysRegVec GPRRegs;
+
+  for (auto PhysReg : *TRI->getGPRRegClass(MF)) {
+    LLVM_DEBUG(dbgs() << "GPR check: " << printReg(PhysReg, TRI, 0, MRI)
+                      << "\n");
+
+    for (MCRegAliasIterator AI(MCRegister(PhysReg), TRI, true); AI.isValid();
+         ++AI) {
+      auto AliasReg = *AI;
+      if (find(GPRRegs, AliasReg) != GPRRegs.end())
+        continue;
+
+      GPRRegs.push_back(AliasReg);
+      LLVM_DEBUG(dbgs() << "   Added: " << printReg(PhysReg, TRI, 0, MRI)
+                        << "\n");
+    }
+  }
+
+  return GPRRegs;
+}
+
+void AIEWawRegRewriter::setAliasUsage(
+    std::set<MCPhysReg> &UsedRegs, const PhysRegVec &AdditionalUsedRegs) const {
+
+  for (auto PhysReg : AdditionalUsedRegs) {
+    if (UsedRegs.count(PhysReg))
+      continue;
+
+    bool OccupiedAllAliasRegs = true;
+    for (MCRegAliasIterator AI(MCRegister(PhysReg), TRI, true); AI.isValid();
+         ++AI) {
+      auto AliasReg = *AI;
+      if (PhysReg == AliasReg)
+        continue;
+
+      // If even one sub-register of PhysReg is not used, PhysReg is also not
+      // used
+      if (TRI->getRegSizeInBits(PhysReg, *MRI) >=
+              TRI->getRegSizeInBits(AliasReg, *MRI) &&
+          UsedRegs.count(AliasReg) == 0) {
+        OccupiedAllAliasRegs = false;
+        break;
+      }
+    }
+
+    // If all the smaller register classes of PhysReg are used, PhysReg is also
+    // used, even if it is not directly used
+    if (OccupiedAllAliasRegs) {
+      LLVM_DEBUG(dbgs() << "All subregisters are used, so alias is also used: "
+                        << printReg(PhysReg, TRI, 0, MRI) << "\n");
+      UsedRegs.insert(PhysReg);
+    }
+  }
+}
+
+void AIEWawRegRewriter::accumulateDefRegs(const MachineBasicBlock &MBB,
+                                          std::set<MCPhysReg> &UsedRegs) const {
+  for (const MachineInstr &MI : MBB) {
+    for (const MachineOperand &OP : MI.defs()) {
+      MCPhysReg PhysReg = getAssignedPhysReg(OP.getReg());
+      if (!MCRegister::isPhysicalRegister(PhysReg))
+        continue;
+
+      UsedRegs.insert(PhysReg);
+      LLVM_DEBUG(dbgs() << "Encountered " << printReg(PhysReg, TRI, 0, MRI)
+                        << " \n");
+    }
+  }
+}
+
+/// Remove callee save registers from \param UsedRegs
+void AIEWawRegRewriter::removeCalleeSaveRegs(
+    std::set<MCPhysReg> &UsedRegs) const {
+  LLVM_DEBUG(dbgs() << "Removing Calle Save Regs from UsedRegs:\n");
+  const auto *CSRegs = MRI->getCalleeSavedRegs();
+
+  for (unsigned I = 0; CSRegs[I]; ++I) {
+    for (MCRegAliasIterator AI(MCRegister(CSRegs[I]), TRI, true); AI.isValid();
+         ++AI) {
+      auto AliasReg = *AI;
+      if (UsedRegs.count(AliasReg)) {
+        LLVM_DEBUG(dbgs() << "Already blocked: "
+                          << printReg(AliasReg, TRI, 0, MRI) << " \n");
+        continue;
+      }
+
+      UsedRegs.erase(AliasReg);
+      LLVM_DEBUG(dbgs() << "Erasing " << printReg(AliasReg, TRI, 0, MRI)
+                        << "\n");
+    }
+  }
+
+  LLVM_DEBUG(dbgs() << "\n");
+}
+
+PhysRegVec
+AIEWawRegRewriter::getAdditionalBlockedRegs(const MachineFunction &MF) const {
+  // Only GPR registers have to be handled specially, since callee save
+  // registers should not be used for renaming (could cause spilling) and unused
+  // gpr registers can be used for register spilling to regs instead of memory.
+  // Spilling to regs is more performant, therefore block these unused registers
+  // for register renaming
+  LLVM_DEBUG(dbgs() << "Setting Additional Blocked Registers\n");
+
+  PhysRegVec GPRRegs = getGPRAndAliasRegs(MF);
+
+  std::set<MCPhysReg> UsedRegs;
+  for (const MachineBasicBlock &MBB : MF)
+    accumulateDefRegs(MBB, UsedRegs);
+
+  setAliasUsage(UsedRegs, GPRRegs);
+
+  removeCalleeSaveRegs(UsedRegs);
+
+  // Get unused GPR registers by removing the UsedRegs from
+  // the set of all available GPR Registers
+  GPRRegs.erase(std::remove_if(
+                    GPRRegs.begin(), GPRRegs.end(),
+                    [&UsedRegs](MCPhysReg Reg) { return UsedRegs.count(Reg); }),
+                GPRRegs.end());
+
+  LLVM_DEBUG(dbgs() << "Permanently blocking: "; for (auto Reg
+                                                      : GPRRegs) {
+    dbgs() << printReg(Reg, TRI, 0, MRI) << " ";
+  } dbgs() << "\n");
+
+  return GPRRegs;
+}
+
 bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
   LLVM_DEBUG(dbgs() << "WAW Reg Renaming BasicBlock "; MBB->dump();
              dbgs() << "\n");
@@ -218,7 +387,7 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
   // Get a list of registers, that are not allowed as a replacement register.
   // This list gets updated with the newly replaced physical register, so that
   // this pass does not introduce WAW dependencies.
-  BitVector BlockedPhysRegs = getDefinedPhysRegs(MBB);
+  BitVector BlockedPhysRegs = getBlockedPhysRegs(MBB, AdditionalBlockedRegs);
 
   // Collect all the virtual registers that have at least a copy instruction
   // that defines them. Subregisters may contain constants that may be shared
@@ -287,14 +456,15 @@ bool AIEWawRegRewriter::isWorthRenaming(const Register &Reg,
   if (!UsedPhysRegs[VRM->getPhys(Reg)])
     return false;
 
-  if (!TRI->isVecOrAccRegClass(*(MRI->getRegClass(Reg))))
+  if (!RenameAllRegs && !TRI->isVecOrAccRegClass(*(MRI->getRegClass(Reg))))
     return false;
 
   return !VRegWithCopies[Reg.virtRegIndex()];
 }
 
-BitVector
-AIEWawRegRewriter::getDefinedPhysRegs(const MachineBasicBlock *MBB) const {
+BitVector AIEWawRegRewriter::getBlockedPhysRegs(
+    const MachineBasicBlock *MBB,
+    const PhysRegVec &AdditionalBlockedRegs) const {
   BitVector BlockedPhysRegs(TRI->getNumRegs());
 
   for (const MachineInstr &MI : *MBB) {
@@ -305,6 +475,13 @@ AIEWawRegRewriter::getDefinedPhysRegs(const MachineBasicBlock *MBB) const {
     }
   }
 
+  // Do not allow additional blocked regs for register replacement
+  LLVM_DEBUG(dbgs() << "Additionally blocking: \n");
+  for (auto PhysReg : AdditionalBlockedRegs) {
+    addAliasRegs(BlockedPhysRegs, PhysReg);
+  }
+  LLVM_DEBUG(dbgs() << "\n");
+
   return BlockedPhysRegs;
 }
 
@@ -312,7 +489,7 @@ bool AIEWawRegRewriter::replaceReg(const Register Reg,
                                    BitVector &BlockedPhysRegs) {
   assert(Reg.isVirtual());
   LLVM_DEBUG(dbgs() << " WAW RegRewriter: Register to replace "
-                    << TRI->getName(VRM->getPhys(Reg)) << "\n");
+                    << printReg(Reg, TRI, 0, MRI) << "\n");
 
   MCPhysReg ReplacementPhysReg = getReplacementPhysReg(Reg, BlockedPhysRegs);
 
@@ -320,8 +497,7 @@ bool AIEWawRegRewriter::replaceReg(const Register Reg,
     return false;
 
   LLVM_DEBUG(dbgs() << "     WAW Replacement: Virtual Register "
-                    << printReg(VRM->getPhys(Reg), TRI, 0, MRI)
-                    << " will replace "
+                    << printReg(Reg, TRI, 0, MRI) << " will replace "
                     << printReg(VRM->getPhys(Reg), TRI, 0, MRI) << " with "
                     << printReg(ReplacementPhysReg, TRI, 0, MRI) << '\n');
 
@@ -347,6 +523,8 @@ MCPhysReg AIEWawRegRewriter::getReplacementPhysReg(
     if (IK == LiveRegMatrix::IK_Free)
       return PhysReg;
   }
+  LLVM_DEBUG(dbgs() << "No free register found for "
+                    << printReg(Reg, TRI, 0, MRI) << "\n");
   return MCRegister::NoRegister;
 }
 

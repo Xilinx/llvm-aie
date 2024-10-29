@@ -7,7 +7,7 @@
 #
 # (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
 # unit test for the WAW register renaming pass and check edge cases
-# RUN: llc -mtriple=aie2 -verify-machineinstrs --start-before=greedy --stop-after=virtregrewriter %s -o - | FileCheck %s
+# RUN: llc -mtriple=aie2 -verify-machineinstrs --start-before=greedy --stop-after=virtregrewriter --aie-waw-rename-all=1 %s -o - | FileCheck %s
 
 
 # Basic check if %7:mxm will be renamed ($x0 -> $x4) and will not use the another
@@ -529,8 +529,8 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   renamable $r0 = AND $r1, $r2
   ; CHECK-NEXT:   renamable $r3 = AND $r1, $r8
-  ; CHECK-NEXT:   renamable $r0 = AND killed renamable $r0, renamable $r3
-  ; CHECK-NEXT:   dead renamable $r0 = AND killed renamable $r3, killed renamable $r0
+  ; CHECK-NEXT:   renamable $r4 = AND killed renamable $r0, renamable $r3
+  ; CHECK-NEXT:   dead renamable $r5 = AND killed renamable $r3, killed renamable $r4
   ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:
@@ -548,6 +548,195 @@ body:             |
     %3:er = AND %1, %2
     PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
   bb.2:
+    liveins:
     PseudoRET implicit $lr
 ...
 
+# Rename %2 with an already used, free GPR register.
+---
+name:            reuse_gpr_renaming
+alignment:       16
+legalized:       true
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: reuse_gpr_renaming
+  ; CHECK: bb.0.entry:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $r0, $r1, $r2
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   renamable $r3 = AND $r1, $r2
+  ; CHECK-NEXT:   LoopStart $r0, 0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.2(0x80000000)
+  ; CHECK-NEXT:   liveins: $r1, $r2, $r3
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   renamable $r0 = AND $r1, $r2
+  ; CHECK-NEXT:   renamable $r4 = AND $r1, renamable $r3
+  ; CHECK-NEXT:   renamable $r5 = AND renamable $r0, renamable $r4
+  ; CHECK-NEXT:   dead renamable $r4 = AND killed renamable $r4, killed renamable $r5
+  ; CHECK-NEXT:   $r8 = AND killed renamable $r3, killed renamable $r0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   successors: %bb.2(0x40000000), %bb.3(0x40000000)
+  ; CHECK-NEXT:   liveins: $r1, $r2, $r8
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   renamable $r0 = AND $r1, $r2
+  ; CHECK-NEXT:   renamable $r3 = AND $r1, $r8
+  ; CHECK-NEXT:   renamable $r4 = ADD killed renamable $r0, renamable $r3, implicit-def dead $srcarry
+  ; CHECK-NEXT:   dead renamable $r5 = ADD killed renamable $r3, killed renamable $r4, implicit-def dead $srcarry
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.2
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.3:
+  ; CHECK-NEXT:   PseudoRET implicit $lr
+  bb.0.entry:
+  successors: %bb.1
+  liveins: $r0, $r1, $r2
+  %0:er = AND $r1, $r2
+  LoopStart $r0, 0
+
+  bb.1:
+    successors: %bb.2
+    liveins: $r1, $r2
+    %1:er = AND $r1, $r2
+    %2:er = AND $r1, %0
+    %3:er = AND %1, %2
+    %4:er = AND %2, %3
+    $r8 = AND %0, %1
+
+  bb.2:
+    successors: %bb.2, %bb.3
+    liveins: $r1, $r2, $r8
+    %5:er = AND $r1, $r2
+    %6:er = AND $r1, $r8
+    %7:er = ADD %5, %6, implicit-def dead $srcarry
+    %8:er = ADD %6, %7, implicit-def dead $srcarry
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.2
+  bb.3:
+    PseudoRET implicit $lr
+...
+
+
+# check that %10:el is replaced, since long registers are already used in the function
+---
+name:            long_replacement
+alignment:       16
+legalized:       true
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: long_replacement
+  ; CHECK: bb.0.entry:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $d0, $d2, $p0, $p1, $p2, $r0, $x2, $d1_3d
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $x4, $l4 = VMAX_LT_D8 $x2, $x2, implicit $crvaddsign
+  ; CHECK-NEXT:   $x4, $l5 = VMAX_LT_D8 $x2, $x2, implicit $crvaddsign
+  ; CHECK-NEXT:   LoopStart $r0, 0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; CHECK-NEXT:   liveins: $d0, $d2, $p0, $p1, $p2, $d1_3d
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   renamable $p3 = COPY $p0
+  ; CHECK-NEXT:   renamable $d3 = COPY $d0
+  ; CHECK-NEXT:   $wl0, dead $p3, dead $dc3 = VLDA_2D_dmw_lda_w killed $p3, $d3
+  ; CHECK-NEXT:   renamable $p3 = COPY $p1
+  ; CHECK-NEXT:   renamable $d3_3d = COPY $d1_3d
+  ; CHECK-NEXT:   $wl2, dead $p3, dead $dc3, dead $dc7 = VLDA_3D_dmw_lda_w killed $p3, $d3_3d
+  ; CHECK-NEXT:   renamable $x4, dead renamable $l4 = VMAX_LT_D8 renamable $x0, renamable $x2, implicit $crvaddsign
+  ; CHECK-NEXT:   dead renamable $x6, dead renamable $l5 = VMAX_LT_D8 renamable $x0, renamable $x2, implicit $crvaddsign
+  ; CHECK-NEXT:   renamable $p3 = COPY $p2
+  ; CHECK-NEXT:   renamable $d3 = COPY $d2
+  ; CHECK-NEXT:   dead $p3, dead $dc3 = VST_2D_dmw_sts_w killed $wl4, killed $p3, $d3
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   PseudoRET implicit $lr
+  bb.0.entry:
+  successors: %bb.1
+  liveins: $r0, $p0, $p1, $p2, $d0, $d1_3d, $d2, $x2
+  $x4, $l4 = VMAX_LT_D8 $x2, $x2, implicit $crvaddsign
+  $x4, $l5 = VMAX_LT_D8 $x2, $x2, implicit $crvaddsign
+
+  LoopStart $r0, 0
+  bb.1:
+    successors: %bb.1, %bb.2
+    liveins: $p0, $p1, $p2, $d0, $d1_3d, $d2
+    %110:ep = COPY $p0
+    %111:ed = COPY $d0
+    undef %0.sub_256_lo:mxa, %110:ep, %111.sub_dim_count:ed = VLDA_2D_dmw_lda_w %110, killed %111
+    %99:ep = COPY $p1
+    %100:eds = COPY $d1_3d
+    undef %3.sub_256_lo:mxa, %99:ep, %100.sub_dim_count:eds, %100.sub_hi_dim_then_sub_dim_count:eds = VLDA_3D_dmw_lda_w killed %99, killed %100
+    %7:mxm, %8:el = VMAX_LT_D8 %0, %3, implicit $crvaddsign
+    %9:mxm, %10:el = VMAX_LT_D8 %0, %3, implicit $crvaddsign
+    %120:ep = COPY $p2
+    %121:ed = COPY $d2
+    %120:ep, %121.sub_dim_count:ed = VST_2D_dmw_sts_w %7.sub_256_lo:mxm, killed %120, killed %121
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  bb.2:
+    PseudoRET implicit $lr
+...
+
+# check that %10:el is renamed, even though only the underlining GPR registers were used
+---
+name:            defGPRsAllowsLongs
+alignment:       16
+legalized:       true
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: defGPRsAllowsLongs
+  ; CHECK: bb.0.entry:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $d0, $d2, $p0, $p1, $p2, $r0, $r1, $r2, $r8, $d1_3d
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   $r30 = AND $r1, $r2
+  ; CHECK-NEXT:   $r31 = AND $r1, $r8
+  ; CHECK-NEXT:   dead renamable $r1 = AND $r30, $r31
+  ; CHECK-NEXT:   LoopStart $r0, 0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.1(0x40000000), %bb.2(0x40000000)
+  ; CHECK-NEXT:   liveins: $d0, $d2, $p0, $p1, $p2, $d1_3d
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   renamable $p3 = COPY $p0
+  ; CHECK-NEXT:   renamable $d3 = COPY $d0
+  ; CHECK-NEXT:   $wl0, dead $p3, dead $dc3 = VLDA_2D_dmw_lda_w killed $p3, $d3
+  ; CHECK-NEXT:   renamable $p3 = COPY $p1
+  ; CHECK-NEXT:   renamable $d3_3d = COPY $d1_3d
+  ; CHECK-NEXT:   $wl2, dead $p3, dead $dc3, dead $dc7 = VLDA_3D_dmw_lda_w killed $p3, $d3_3d
+  ; CHECK-NEXT:   renamable $x4, dead renamable $l4 = VMAX_LT_D8 renamable $x0, renamable $x2, implicit $crvaddsign
+  ; CHECK-NEXT:   dead renamable $x6, dead renamable $l7 = VMAX_LT_D8 renamable $x0, renamable $x2, implicit $crvaddsign
+  ; CHECK-NEXT:   renamable $p3 = COPY $p2
+  ; CHECK-NEXT:   renamable $d3 = COPY $d2
+  ; CHECK-NEXT:   dead $p3, dead $dc3 = VST_2D_dmw_sts_w killed $wl4, killed $p3, $d3
+  ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.2:
+  ; CHECK-NEXT:   PseudoRET implicit $lr
+  bb.0.entry:
+  successors: %bb.1
+  liveins: $r0, $p0, $p1, $p2, $d0, $d1_3d, $d2, $r1, $r2, $r8
+    $r30 = AND $r1, $r2
+    $r31 = AND $r1, $r8
+    %2:er = AND $r30, $r31
+
+  LoopStart $r0, 0
+  bb.1:
+    successors: %bb.1, %bb.2
+    liveins: $p0, $p1, $p2, $d0, $d1_3d, $d2
+    %110:ep = COPY $p0
+    %111:ed = COPY $d0
+    undef %0.sub_256_lo:mxa, %110:ep, %111.sub_dim_count:ed = VLDA_2D_dmw_lda_w %110, killed %111
+    %99:ep = COPY $p1
+    %100:eds = COPY $d1_3d
+    undef %3.sub_256_lo:mxa, %99:ep, %100.sub_dim_count:eds, %100.sub_hi_dim_then_sub_dim_count:eds = VLDA_3D_dmw_lda_w killed %99, killed %100
+    %7:mxm, %8:el = VMAX_LT_D8 %0, %3, implicit $crvaddsign
+    %9:mxm, %10:el = VMAX_LT_D8 %0, %3, implicit $crvaddsign
+    %120:ep = COPY $p2
+    %121:ed = COPY $d2
+    %120:ep, %121.sub_dim_count:ed = VST_2D_dmw_sts_w %7.sub_256_lo:mxm, killed %120, killed %121
+    PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
+  bb.2:
+    PseudoRET implicit $lr
+...
