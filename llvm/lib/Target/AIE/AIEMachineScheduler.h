@@ -50,6 +50,9 @@ public:
   SUnit *pickNodeAndCycle(bool &IsTopNode,
                           std::optional<unsigned> &BotEmissionCycle) override;
 
+  bool canOptimizeMemoryAccess(SUnit &SU, SchedBoundary &Zone,
+                               const int DeltaCycle);
+
   bool isAvailableNode(SUnit &SU, SchedBoundary &Zone,
                        bool VerifyReadyCycle) override;
 
