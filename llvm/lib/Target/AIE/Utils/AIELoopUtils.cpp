@@ -32,6 +32,29 @@ std::optional<int64_t> getMinTripCount(const MachineBasicBlock &LoopBlock) {
   return getMinTripCount(getLoopID(LoopBlock));
 }
 
+std::optional<bool> getPipelinerDisabled(const MachineBasicBlock &LoopBlock) {
+  auto *LoopID = getLoopID(LoopBlock);
+  if (!LoopID) {
+    return {};
+  }
+  for (const MDOperand &MDO : llvm::drop_begin(LoopID->operands())) {
+    MDNode *MD = dyn_cast<MDNode>(MDO);
+    if (MD == nullptr) {
+      continue;
+    }
+
+    MDString *S = dyn_cast<MDString>(MD->getOperand(0));
+    if (S == nullptr) {
+      continue;
+    }
+
+    if (S->getString() == "llvm.loop.pipeline.disable") {
+      return true;
+    }
+  }
+  return {};
+}
+
 MachineBasicBlock *
 getDedicatedFallThroughPreheader(const MachineBasicBlock &LoopBlock) {
   MachineBasicBlock *Candidate = nullptr;

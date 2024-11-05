@@ -30,6 +30,10 @@ const MDNode *getLoopID(const MachineBasicBlock &LoopBlock);
 /// single block loops, that's automatically true.
 std::optional<int64_t> getMinTripCount(const MachineBasicBlock &LoopBlock);
 
+/// Returns true if this is a loop latch that has a pipeliner disable pragma,
+/// none otherwise.
+std::optional<bool> getPipelinerDisabled(const MachineBasicBlock &LoopBlock);
+
 /// Check that the single block loop represented by LoopBlock has a fallthrough
 /// preheader. Return the preheader if true, nullptr otherwise
 MachineBasicBlock *

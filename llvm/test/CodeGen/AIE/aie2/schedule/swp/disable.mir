@@ -158,10 +158,10 @@ body:             |
   ; CHECK-NEXT: bb.1.for.body:
   ; CHECK-NEXT:   successors: %bb.2(0x04000000), %bb.1(0x7c000000)
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[LDA_dms_lda_pstm_nrm_imm:%[0-9]+]]:er, [[COPY:%[0-9]+]]:ep_as_32bit = LDA_dms_lda_pstm_nrm_imm [[COPY]], 4 :: (load (s32) from %ir.p.addr.04)
   ; CHECK-NEXT:   [[XOR:%[0-9]+]]:er = XOR [[MOV_RLC_imm10_pseudo]], [[MOV_RLC_imm10_pseudo1]]
-  ; CHECK-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = nuw nsw ADD_add_r_ri [[MOV_RLC_imm10_pseudo]], -1, implicit-def dead $srcarry
+  ; CHECK-NEXT:   [[LDA_dms_lda_pstm_nrm_imm:%[0-9]+]]:er, [[COPY:%[0-9]+]]:ep_as_32bit = LDA_dms_lda_pstm_nrm_imm [[COPY]], 4 :: (load (s32) from %ir.p.addr.04)
   ; CHECK-NEXT:   [[XOR1:%[0-9]+]]:er = XOR [[LDA_dms_lda_pstm_nrm_imm]], [[XOR]]
+  ; CHECK-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = nuw nsw ADD_add_r_ri [[MOV_RLC_imm10_pseudo]], -1, implicit-def dead $srcarry
   ; CHECK-NEXT:   PseudoJNZ [[MOV_RLC_imm10_pseudo]], %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2.for.cond.cleanup:

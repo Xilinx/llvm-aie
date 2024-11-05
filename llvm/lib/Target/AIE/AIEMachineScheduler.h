@@ -163,6 +163,9 @@ public:
 
   void initialize(ScheduleDAGMI *DAG) override;
 
+  // We override to be able to skip the prescheduler for specific blocks
+  MachineBasicBlock *nextBlock() override;
+
   void enterRegion(MachineBasicBlock *BB, MachineBasicBlock::iterator Begin,
                    MachineBasicBlock::iterator End, unsigned RegionInstrs);
   void leaveRegion(const SUnit &ExitSU);

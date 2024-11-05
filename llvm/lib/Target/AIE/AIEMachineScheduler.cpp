@@ -15,6 +15,7 @@
 #include "AIEInterBlockScheduling.h"
 #include "AIEMaxLatencyFinder.h"
 #include "AIEPostPipeliner.h"
+#include "Utils/AIELoopUtils.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
@@ -850,6 +851,23 @@ void AIEPreRASchedStrategy::initialize(ScheduleDAGMI *DAG) {
     }
     PSetThresholds.push_back(Limit);
   }
+}
+
+MachineBasicBlock *AIEPreRASchedStrategy::nextBlock() {
+  MachineBasicBlock *Next = nullptr;
+
+  // The pipeliner is usually disabled to give the postpipeliner a chance.
+  // The prescheduler also clutters the view of the postpipeliner, so we skip
+  // such blocks here.
+  auto Skip = [](MachineBasicBlock *Block) {
+    return Block && AIELoopUtils::isSingleMBBLoop(Block) &&
+           AIELoopUtils::getPipelinerDisabled(*Block);
+  };
+
+  do {
+    Next = MachineSchedStrategy::nextBlock();
+  } while (Skip(Next));
+  return Next;
 }
 
 void AIEPreRASchedStrategy::enterRegion(MachineBasicBlock *BB,
