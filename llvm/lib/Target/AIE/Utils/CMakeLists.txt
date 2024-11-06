@@ -12,6 +12,7 @@ add_llvm_component_library(LLVMAIEUtils
   CodeGen
   Core
   Support
+  TransformUtils
 
   ADD_TO_COMPONENT
   AIE
