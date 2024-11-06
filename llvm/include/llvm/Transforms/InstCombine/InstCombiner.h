@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 /// \file
 ///
@@ -45,11 +48,6 @@ class TargetTransformInfo;
 /// This class provides both the logic to recursively visit instructions and
 /// combine them.
 class LLVM_LIBRARY_VISIBILITY InstCombiner {
-  /// Only used to call target specific intrinsic combining.
-  /// It must **NOT** be used for any other purpose, as InstCombine is a
-  /// target-independent canonicalization transform.
-  TargetTransformInfo &TTI;
-
 public:
   /// Maximum size of array considered when transforming.
   uint64_t MaxArraySizeForCombine = 0;
@@ -60,6 +58,12 @@ public:
   BuilderTy &Builder;
 
 protected:
+  /// Only used to call target-specific intrinsic combining and filtering
+  /// of non-profitable combining cases tied to target needs.
+  /// It must be used with caution, as InstCombine is a
+  /// target-independent canonicalization transform.
+  TargetTransformInfo &TTI;
+
   /// A worklist of the instructions that need to be simplified.
   InstructionWorklist &Worklist;
 
@@ -99,7 +103,7 @@ public:
                DominatorTree &DT, OptimizationRemarkEmitter &ORE,
                BlockFrequencyInfo *BFI, BranchProbabilityInfo *BPI,
                ProfileSummaryInfo *PSI, const DataLayout &DL, LoopInfo *LI)
-      : TTI(TTI), Builder(Builder), Worklist(Worklist),
+      : Builder(Builder), TTI(TTI), Worklist(Worklist),
         MinimizeSize(MinimizeSize), AA(AA), AC(AC), TLI(TLI), DT(DT), DL(DL),
         SQ(DL, &TLI, &DT, &AC, nullptr, /*UseInstrInfo*/ true,
            /*CanUseUndef*/ true, &DC),

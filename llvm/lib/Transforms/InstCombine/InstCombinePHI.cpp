@@ -4,6 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// Modifications (c) Copyright 2024 Advanced Micro Devices, Inc. or its
+// affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the visitPHINode function.
@@ -15,6 +18,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/InstructionSimplify.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/PatternMatch.h"
 #include "llvm/Support/CommandLine.h"
@@ -869,7 +873,7 @@ Instruction *InstCombinerImpl::foldPHIArgOpIntoPHI(PHINode &PN) {
 
   Instruction *FirstInst = cast<Instruction>(PN.getIncomingValue(0));
 
-  if (isa<GetElementPtrInst>(FirstInst))
+  if (TTI.isProfitableFoldGEPIntoPHI() && isa<GetElementPtrInst>(FirstInst))
     return foldPHIArgGEPIntoPHI(PN);
   if (isa<LoadInst>(FirstInst))
     return foldPHIArgLoadIntoPHI(PN);
