@@ -62,6 +62,15 @@ public:
   bool isProfitableOuterLSR(const Loop &L) const;
   std::optional<Instruction *> instCombineIntrinsic(InstCombiner &IC,
                                                     IntrinsicInst &II) const;
+
+  // By returning false here, we will prevent the following type
+  // of code from reaching the backend when GEPs are used as incoming values:
+  // for.body:     ; preds = %for.body, %for.preheader
+  //   %phi0 = phi ptr [ %in0, %for.body ], [ %out0, %for.preheader ]
+  //   %phi1 = phi ptr [ %phi0, %for.body ], [ %out1, %for.preheader ]
+  // This type of code can lead to additional pointer arithmetics and
+  // and pointer moves (especially due to the pre-pipeliner).
+  bool isProfitableFoldGEPIntoPHI() const { return false; }
 };
 
 } // end namespace llvm
