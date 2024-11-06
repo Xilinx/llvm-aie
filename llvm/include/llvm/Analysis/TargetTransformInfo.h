@@ -682,6 +682,11 @@ public:
       APInt & UndefElts, APInt & UndefElts2, APInt & UndefElts3,
       std::function<void(Instruction *, unsigned, APInt, APInt &)>
           SimplifyAndSetOp) const;
+  /// Can be used to expose a target-specific instruction combining
+  /// decision related to the folding of GEP into PHIs, as this can
+  /// generate additional PHI nodes and pointer chains that can induce
+  /// negative side effects for targets with indexed loads.
+  bool isProfitableFoldGEPIntoPHI() const;
   /// @}
 
   /// \name Scalar Target Information
@@ -1855,6 +1860,7 @@ public:
       APInt &UndefElts, APInt &UndefElts2, APInt &UndefElts3,
       std::function<void(Instruction *, unsigned, APInt, APInt &)>
           SimplifyAndSetOp) = 0;
+  virtual bool isProfitableFoldGEPIntoPHI() = 0;
   virtual bool isLegalAddImmediate(int64_t Imm) = 0;
   virtual bool isLegalAddScalableImmediate(int64_t Imm) = 0;
   virtual bool isLegalICmpImmediate(int64_t Imm) = 0;
@@ -2314,6 +2320,9 @@ public:
     return Impl.simplifyDemandedVectorEltsIntrinsic(
         IC, II, DemandedElts, UndefElts, UndefElts2, UndefElts3,
         SimplifyAndSetOp);
+  }
+  bool isProfitableFoldGEPIntoPHI() override {
+    return Impl.isProfitableFoldGEPIntoPHI();
   }
   bool isLegalAddImmediate(int64_t Imm) override {
     return Impl.isLegalAddImmediate(Imm);

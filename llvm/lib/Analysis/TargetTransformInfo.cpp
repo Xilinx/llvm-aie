@@ -384,6 +384,10 @@ std::optional<Value *> TargetTransformInfo::simplifyDemandedVectorEltsIntrinsic(
       SimplifyAndSetOp);
 }
 
+bool TargetTransformInfo::isProfitableFoldGEPIntoPHI() const {
+  return TTIImpl->isProfitableFoldGEPIntoPHI();
+}
+
 void TargetTransformInfo::getUnrollingPreferences(
     Loop *L, ScalarEvolution &SE, UnrollingPreferences &UP,
     OptimizationRemarkEmitter *ORE) const {

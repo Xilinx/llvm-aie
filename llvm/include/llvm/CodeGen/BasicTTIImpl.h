@@ -705,6 +705,10 @@ public:
         SimplifyAndSetOp);
   }
 
+  bool isProfitableFoldGEPIntoPHI() {
+    return BaseT::isProfitableFoldGEPIntoPHI();
+  }
+
   virtual std::optional<unsigned>
   getCacheSize(TargetTransformInfo::CacheLevel Level) const {
     return std::optional<unsigned>(

@@ -210,6 +210,8 @@ public:
     return std::nullopt;
   }
 
+  bool isProfitableFoldGEPIntoPHI() { return true; }
+
   void getUnrollingPreferences(Loop *, ScalarEvolution &,
                                TTI::UnrollingPreferences &,
                                OptimizationRemarkEmitter *) const {}
