@@ -89,6 +89,10 @@ static cl::opt<bool> UseLoopHeuristics(
     "aie-loop-sched-heuristics", cl::init(true),
     cl::desc("Use special picking heuristics when scheduling a loop region"));
 
+static cl::opt<bool> PreSchedFollowsSkipPipeliner(
+    "aie-presched-follows-skip-pipeliner", cl::init(true),
+    cl::desc("Don't run the prescheduler if the pipeliner is skipped"));
+
 namespace {
 // A sentinel value to represent an unknown SUnit.
 const constexpr unsigned UnknownSUNum = ~0;
@@ -860,7 +864,8 @@ MachineBasicBlock *AIEPreRASchedStrategy::nextBlock() {
   // The prescheduler also clutters the view of the postpipeliner, so we skip
   // such blocks here.
   auto Skip = [](MachineBasicBlock *Block) {
-    return Block && AIELoopUtils::isSingleMBBLoop(Block) &&
+    return PreSchedFollowsSkipPipeliner && Block &&
+           AIELoopUtils::isSingleMBBLoop(Block) &&
            AIELoopUtils::getPipelinerDisabled(*Block);
   };
 
