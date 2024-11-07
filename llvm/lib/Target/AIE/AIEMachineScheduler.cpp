@@ -88,6 +88,10 @@ static cl::opt<bool> UseLoopHeuristics(
     "aie-loop-sched-heuristics", cl::init(true),
     cl::desc("Use special picking heuristics when scheduling a loop region"));
 
+static cl::opt<bool> IgnoreMemoryBankConflict(
+    "aie-ignore-bank-conflict", cl::init(false),
+    cl::desc("Ignore bank conflicts based on special heuristics"));
+
 namespace {
 // A sentinel value to represent an unknown SUnit.
 const constexpr unsigned UnknownSUNum = ~0;
@@ -479,6 +483,56 @@ int AIEPostRASchedStrategy::getMaxDeltaCycles(const SchedBoundary &Zone) const {
                    BottomUpDelta.getValue()});
 }
 
+bool AIEPostRASchedStrategy::canOptimizeMemoryAccess(SUnit &SU,
+                                                     SchedBoundary &Zone,
+                                                     const int DeltaCycle) {
+  if (!IgnoreMemoryBankConflict)
+    return false;
+
+  if (!SU.getInstr()->mayLoadOrStore()) {
+    return false;
+  }
+
+  const int MinDelta = -getMaxDeltaCycles(Zone);
+  if (!(DeltaCycle - 1 >= MinDelta))
+    return false;
+
+  const AIEBaseMCFormats &Formats = *getTII(*Zone.DAG)->getFormatInterface();
+  AIEHazardRecognizer &HR = *getAIEHazardRecognizer(Zone);
+  MachineInstr *MI = SU.getInstr();
+
+  const std::vector<unsigned int> *AlternateOpcodes;
+  auto DefaultOpcode = std::vector<unsigned int>{SU.getInstr()->getOpcode()};
+  AlternateOpcodes =
+      Formats.getAlternateInstsOpcode(SU.getInstr()->getOpcode())
+          ? Formats.getAlternateInstsOpcode(SU.getInstr()->getOpcode())
+          : &DefaultOpcode;
+
+  unsigned int OpcodeWithMemoryBankConflict = 0;
+  for (const unsigned int AltOpcode : *AlternateOpcodes) {
+    // Check if the conflict was caused by a memory bank.
+    if (HR.checkConflict(*MI, getTII(*Zone.DAG)->get(AltOpcode), DeltaCycle) ==
+        AIEHazardRecognizer::ConflictType::MemoryBank) {
+      OpcodeWithMemoryBankConflict = AltOpcode;
+      break;
+    }
+  }
+  // Check if the memory operation will also have a conflict in the next cycle.
+  // If so, we could schedule the instruction in the current delta cycle, even
+  // though it causes bank conflict.
+  // NOTE : With this optimization if the resultant schedule does not decrease
+  // the total instr. count in the kernel loop by the same number of bank
+  // conflict we are allowing we will see regression.
+  if (OpcodeWithMemoryBankConflict && Zone.checkHazard(&SU, DeltaCycle - 1)) {
+    if (AlternateOpcodes->size() > 1)
+      HR.getSelectedAltDescs().setAlternateDescriptor(
+          MI, OpcodeWithMemoryBankConflict);
+    return true;
+  }
+
+  return false;
+}
+
 bool AIEPostRASchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
                                              bool /*VerifyReadyCycle*/) {
   // Whether or not the zone is Top or Bot, verify if SU is ready to be
@@ -497,7 +551,8 @@ bool AIEPostRASchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
     // ReadyCycle is always greater or equal to the current cycle,
     // so DeltaCycles will always be less or equal to 0.
     if (Zone.checkHazard(&SU, DeltaCycles))
-      continue;
+      if (!canOptimizeMemoryAccess(SU, Zone, DeltaCycles))
+        continue;
     SU.BotReadyCycle = CurrCycle - DeltaCycles;
     return true;
   }
