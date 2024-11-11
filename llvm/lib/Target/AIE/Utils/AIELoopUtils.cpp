@@ -14,6 +14,14 @@
 
 #define DEBUG_TYPE "aielooputils"
 
+namespace llvm {
+cl::opt<int> LoopMinTripCount(
+    "aie-loop-min-tripcount",
+    cl::desc("Minimum number of loop iterations (warning: applies to all loop"
+             " pipelining candidates)"),
+    cl::init(-1), cl::Hidden);
+} // namespace llvm
+
 namespace llvm::AIELoopUtils {
 const MDNode *getLoopID(const MachineBasicBlock &LoopBlock) {
   const BasicBlock *BBLK = LoopBlock.getBasicBlock();
@@ -29,7 +37,11 @@ const MDNode *getLoopID(const MachineBasicBlock &LoopBlock) {
 }
 
 std::optional<int64_t> getMinTripCount(const MachineBasicBlock &LoopBlock) {
-  return getMinTripCount(getLoopID(LoopBlock));
+  std::optional<int64_t> MinTripCount = getMinTripCount(getLoopID(LoopBlock));
+  if (LoopMinTripCount > MinTripCount.value_or(0)) {
+    MinTripCount = LoopMinTripCount;
+  }
+  return MinTripCount;
 }
 
 std::optional<bool> getPipelinerDisabled(const MachineBasicBlock &LoopBlock) {

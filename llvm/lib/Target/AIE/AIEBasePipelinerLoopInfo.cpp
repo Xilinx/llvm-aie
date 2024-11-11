@@ -28,11 +28,6 @@
 
 #define DEBUG_TYPE "aie-pipeliner"
 namespace llvm {
-cl::opt<int> LoopMinTripCount(
-    "aie-loop-min-tripcount",
-    cl::desc("Minimum number of loop iterations (warning: applies to all loop"
-             " pipelining candidates)"),
-    cl::init(-1), cl::Hidden);
 cl::opt<bool> TrackRegPressure(
     "aie-pipeliner-track-regpressure",
     cl::desc("Refuse SWP schedules likely to run into register spills"),
@@ -69,13 +64,7 @@ AIEBasePipelinerLoopInfo::AIEBasePipelinerLoopInfo(MachineInstr *EndLoop,
       AIELoopUtils::getMinTripCount(*LoopBlock);
   if (ParsedMinTripCount) {
     MinTripCount = *ParsedMinTripCount;
-    LLVM_DEBUG(dbgs() << "PLI: MinTripCount from pragma =  " << MinTripCount
-                      << "\n");
-  }
-
-  if (LoopMinTripCount > MinTripCount) {
-    MinTripCount = LoopMinTripCount;
-    LLVM_DEBUG(dbgs() << "PLI: MinTripCount from CL option =  " << MinTripCount
+    LLVM_DEBUG(dbgs() << "PLI: MinTripCount from pragma/CL =  " << MinTripCount
                       << "\n");
   }
 }
@@ -682,16 +671,9 @@ public:
 };
 
 ZeroOverheadLoop::Assessment ZeroOverheadLoop::accept(MachineInstr *EndLoop) {
-  // We are using LoopMinTripCount below just for testing purposes.
-  // For MIR test cases without IR, we can't encode loop-related metadata.
-  if (!MinTripCount && LoopMinTripCount <= 0) {
+  if (!MinTripCount) {
     LLVM_DEBUG(dbgs() << "Unbounded loop detected!\n");
     return Assessment::UnboundedLoop;
-  }
-
-  // Overwrite MinTripCount.
-  if (LoopMinTripCount > 0) {
-    MinTripCount = LoopMinTripCount;
   }
 
   if (MinTripCount <= 1) {
