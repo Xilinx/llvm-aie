@@ -178,3 +178,36 @@ body:             |
     $wh0 = COPY %254:_(<8 x s32>)
     $wh1 = COPY %255:_(<8 x s32>)
 ...
+
+---
+name:            upd_I512.I256_shift_insert_point
+body:             |
+  bb.0:
+    liveins: $p0, $wl2, $wl3
+    ; CHECK-LABEL: name: upd_I512.I256_shift_insert_point
+    ; CHECK: liveins: $p0, $wl2, $wl3
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<32 x s8>) = COPY $wl2
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<32 x s8>) = COPY $wl3
+    ; CHECK-NEXT: [[INT:%[0-9]+]]:_(<64 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.v64int8)
+    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[INT]](<64 x s8>)
+    ; CHECK-NEXT: [[BITCAST1:%[0-9]+]]:_(<8 x s32>) = G_BITCAST [[COPY]](<32 x s8>)
+    ; CHECK-NEXT: [[BITCAST2:%[0-9]+]]:_(<8 x s32>) = G_BITCAST [[COPY1]](<32 x s8>)
+    ; CHECK-NEXT: $x1 = COPY [[BITCAST]](<16 x s32>)
+    ; CHECK-NEXT: $x2 = COPY [[BITCAST]](<16 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[BITCAST1]](<8 x s32>), [[BITCAST2]](<8 x s32>)
+    ; CHECK-NEXT: $x0 = COPY [[CONCAT_VECTORS]](<16 x s32>)
+    %95:_(<32 x s8>) = COPY $wl2
+    %98:_(<32 x s8>) = COPY $wl3
+    %8:_(<64 x s8>) = G_INTRINSIC intrinsic(@llvm.aie2.v64int8)
+    %9:_(<16 x s32>) = G_BITCAST %8(<64 x s8>)
+    %21:_(s32) = G_CONSTANT i32 0
+    %51:_(s32) = G_CONSTANT i32 1
+    %96:_(<8 x s32>) = G_BITCAST %95(<32 x s8>)
+    %97:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.upd.I512.I256), %9(<16 x s32>), %96(<8 x s32>), %21(s32)
+    %99:_(<8 x s32>) = G_BITCAST %98(<32 x s8>)
+    %100:_(<16 x s32>) = G_INTRINSIC intrinsic(@llvm.aie2.upd.I512.I256), %97(<16 x s32>), %99(<8 x s32>), %51(s32)
+    $x1 = COPY %9:_(<16 x s32>)
+    $x2 = COPY %9:_(<16 x s32>)
+    $x0 = COPY %100:_(<16 x s32>)
+...

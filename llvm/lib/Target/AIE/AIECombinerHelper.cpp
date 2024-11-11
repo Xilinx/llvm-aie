@@ -1367,10 +1367,25 @@ bool llvm::matchUpdToConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
   return true;
 }
 
+/// Find a use of \p MI in the same block where it can be moved
+MachineInstr &findClosestToUseInsertPoint(MachineInstr &MI,
+                                          MachineRegisterInfo &MRI) {
+
+  for (auto &User : MRI.use_instructions(MI.getOperand(0).getReg())) {
+    if (User.isPHI())
+      continue;
+    if (User.getParent() == MI.getParent() && canDelayMemOp(MI, User, MRI))
+      return User;
+  }
+
+  return MI;
+}
+
 void llvm::applyUpdToConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
                             MachineIRBuilder &B,
                             std::map<unsigned, Register> &IndexRegMap) {
-  B.setInstrAndDebugLoc(MI);
+  B.setDebugLoc(MI.getDebugLoc());
+  B.setInstr(findClosestToUseInsertPoint(MI, MRI));
 
   SmallVector<Register, 4> SrcRegs;
   for (unsigned Op = 0; Op < IndexRegMap.size(); Op++) {
