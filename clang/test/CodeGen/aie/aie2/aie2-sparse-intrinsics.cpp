@@ -1822,7 +1822,7 @@ v16acc64 test_submsc_2x8_8x8(v32uint16 a, v64uint16_sparse b, v16acc64 acc1, v16
     return submsc_2x8_8x8(a,b,acc1,acc2);
 }
 
-// CHECK-LABEL: @_Z18test_mul_4x16_16x4Dv64_u6__bf1618v64bfloat16_sparse(
+// CHECK-LABEL: @_Z18test_mul_4x16_16x4Dv64_8bfloat1618v64bfloat16_sparse(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[B_COERCE_FCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFLOAT16_SPARSE:%.*]] [[B_COERCE:%.*]], 0
 // CHECK-NEXT:    [[B_COERCE_FCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFLOAT16_SPARSE]] [[B_COERCE]], 1
@@ -1832,7 +1832,7 @@ v16acc64 test_submsc_2x8_8x8(v32uint16 a, v64uint16_sparse b, v16acc64 acc1, v16
 v16accfloat test_mul_4x16_16x4(v64bfloat16 a, v64bfloat16_sparse b) {
     return mul_4x16_16x4(a,b);
 }
-// CHECK-LABEL: @_Z21test_negmul_4x16_16x4Dv64_u6__bf1618v64bfloat16_sparse(
+// CHECK-LABEL: @_Z21test_negmul_4x16_16x4Dv64_8bfloat1618v64bfloat16_sparse(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[B_COERCE_FCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFLOAT16_SPARSE:%.*]] [[B_COERCE:%.*]], 0
 // CHECK-NEXT:    [[B_COERCE_FCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFLOAT16_SPARSE]] [[B_COERCE]], 1
@@ -1843,7 +1843,7 @@ v16accfloat test_negmul_4x16_16x4(v64bfloat16 a, v64bfloat16_sparse b) {
     return negmul_4x16_16x4(a,b);
 }
 
-// CHECK-LABEL: @_Z18test_mac_4x16_16x4Dv64_u6__bf1618v64bfloat16_sparseDv16_u10__accfloat(
+// CHECK-LABEL: @_Z18test_mac_4x16_16x4Dv64_8bfloat1618v64bfloat16_sparseDv16_u10__accfloat(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[B_COERCE_FCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFLOAT16_SPARSE:%.*]] [[B_COERCE:%.*]], 0
 // CHECK-NEXT:    [[B_COERCE_FCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFLOAT16_SPARSE]] [[B_COERCE]], 1
@@ -1853,7 +1853,7 @@ v16accfloat test_negmul_4x16_16x4(v64bfloat16 a, v64bfloat16_sparse b) {
 v16accfloat test_mac_4x16_16x4(v64bfloat16 a, v64bfloat16_sparse b, v16accfloat acc1) {
     return mac_4x16_16x4(a,b,acc1);
 }
-// CHECK-LABEL: @_Z18test_msc_4x16_16x4Dv64_u6__bf1618v64bfloat16_sparseDv16_u10__accfloat(
+// CHECK-LABEL: @_Z18test_msc_4x16_16x4Dv64_8bfloat1618v64bfloat16_sparseDv16_u10__accfloat(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[B_COERCE_FCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFLOAT16_SPARSE:%.*]] [[B_COERCE:%.*]], 0
 // CHECK-NEXT:    [[B_COERCE_FCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFLOAT16_SPARSE]] [[B_COERCE]], 1
@@ -1864,7 +1864,7 @@ v16accfloat test_msc_4x16_16x4(v64bfloat16 a, v64bfloat16_sparse b, v16accfloat 
     return msc_4x16_16x4(a,b,acc1);
 }
 
-// CHECK-LABEL: @_Z21test_addmac_4x16_16x4Dv64_u6__bf1618v64bfloat16_sparseDv16_u10__accfloatS1_(
+// CHECK-LABEL: @_Z21test_addmac_4x16_16x4Dv64_8bfloat1618v64bfloat16_sparseDv16_u10__accfloatS2_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[B_COERCE_FCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFLOAT16_SPARSE:%.*]] [[B_COERCE:%.*]], 0
 // CHECK-NEXT:    [[B_COERCE_FCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFLOAT16_SPARSE]] [[B_COERCE]], 1
@@ -1874,7 +1874,7 @@ v16accfloat test_msc_4x16_16x4(v64bfloat16 a, v64bfloat16_sparse b, v16accfloat 
 v16accfloat test_addmac_4x16_16x4(v64bfloat16 a, v64bfloat16_sparse b, v16accfloat acc1, v16accfloat acc2) {
     return addmac_4x16_16x4(a,b,acc1,acc2);
 }
-// CHECK-LABEL: @_Z21test_addmsc_4x16_16x4Dv64_u6__bf1618v64bfloat16_sparseDv16_u10__accfloatS1_(
+// CHECK-LABEL: @_Z21test_addmsc_4x16_16x4Dv64_8bfloat1618v64bfloat16_sparseDv16_u10__accfloatS2_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[B_COERCE_FCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFLOAT16_SPARSE:%.*]] [[B_COERCE:%.*]], 0
 // CHECK-NEXT:    [[B_COERCE_FCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFLOAT16_SPARSE]] [[B_COERCE]], 1

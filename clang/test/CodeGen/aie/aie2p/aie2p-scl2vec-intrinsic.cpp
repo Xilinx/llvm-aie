@@ -212,7 +212,7 @@ v16int32 test_broadcast_elem_128(v16int32 a, int b){
   v128uint4 test_upd_elem(v128uint4 v, int idx, v2uint4 b) {
     return upd_elem(v, idx, b);
   }
-//
+
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z13test_upd_elemDv64_DU8_iDv2_S_(
 // AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <2 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
@@ -233,7 +233,7 @@ v16int32 test_broadcast_elem_128(v16int32 a, int b){
   v128uint4 test_upd_elem(v128uint4 v, int idx, v8uint4 b) {
     return upd_elem(v, idx, b);
   }
-//
+
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z13test_upd_elemDv64_DU8_iDv8_S_(
 // AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <8 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
@@ -364,7 +364,7 @@ v16int32 test_broadcast_elem_128(v16int32 a, int b){
   v16float test_upd_elem(v16float v, int idx, float b) {
     return upd_elem(v, idx,b);
   }
-// AIE2P-LABEL: define dso_local noundef <32 x bfloat> @_Z13test_upd_elemDv32_u6__bf16iu6__bf16(
+// AIE2P-LABEL: define dso_local noundef <32 x bfloat> @_Z13test_upd_elemDv32_8bfloat16iS_(
 // AIE2P-SAME: <32 x bfloat> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], bfloat noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECINS_I_I:%.*]] = insertelement <32 x bfloat> [[V]], bfloat [[B]], i32 [[IDX]]
@@ -373,7 +373,7 @@ v16int32 test_broadcast_elem_128(v16int32 a, int b){
   v32bfloat16 test_upd_elem(v32bfloat16 v, int idx, bfloat16 b) {
     return upd_elem(v, idx, b);
   }
-// AIE2P-LABEL: define dso_local noundef <32 x bfloat> @_Z13test_upd_elemDv32_u6__bf16iDv2_u6__bf16(
+// AIE2P-LABEL: define dso_local noundef <32 x bfloat> @_Z13test_upd_elemDv32_8bfloat16iDv2_S_(
 // AIE2P-SAME: <32 x bfloat> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <2 x bfloat> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x bfloat> @llvm.aie2p.vinsert32.bf512(<32 x bfloat> [[V]], i32 [[IDX]], <2 x bfloat> [[B]])
@@ -382,7 +382,8 @@ v16int32 test_broadcast_elem_128(v16int32 a, int b){
   v32bfloat16 test_upd_elem(v32bfloat16 v, int idx, v2bfloat16 b) {
     return upd_elem(v, idx, b);
   }
-// AIE2P-LABEL: define dso_local noundef <32 x bfloat> @_Z13test_upd_elemDv32_u6__bf16iDv4_u6__bf16(
+//
+// AIE2P-LABEL: define dso_local noundef <32 x bfloat> @_Z13test_upd_elemDv32_8bfloat16iDv4_S_(
 // AIE2P-SAME: <32 x bfloat> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <4 x bfloat> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x bfloat> @llvm.aie2p.vinsert64.bf512(<32 x bfloat> [[V]], i32 [[IDX]], <4 x bfloat> [[B]])
@@ -392,8 +393,7 @@ v16int32 test_broadcast_elem_128(v16int32 a, int b){
     return upd_elem(v, idx, b);
   }
 
-//
-// AIE2P-LABEL: define dso_local noundef <32 x bfloat> @_Z13test_upd_elemDv32_u6__bf16iy(
+// AIE2P-LABEL: define dso_local noundef <32 x bfloat> @_Z13test_upd_elemDv32_8bfloat16iy(
 // AIE2P-SAME: <32 x bfloat> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i64 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast i64 [[B]] to <4 x bfloat>
@@ -562,7 +562,7 @@ mask64 test_ext_mask64(v16int32 v, int idx, int sign) {
   return (mask64)(ext_mask64(v, idx, sign));
 }
 
-// AIE2P-LABEL: define dso_local noundef <2 x i32> @_Z15test_ext_mask64Dv32_u6__bf16ii(
+// AIE2P-LABEL: define dso_local noundef <2 x i32> @_Z15test_ext_mask64Dv32_8bfloat16ii(
 // AIE2P-SAME: <32 x bfloat> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <32 x bfloat> [[V]] to <16 x i32>
@@ -608,7 +608,6 @@ v16int32 test_shuffle_u64(mask64 b, unsigned int m) {
   return shuffle_u64(b, m);
 }
 
-//
 // AIE2P-LABEL: define dso_local noundef <16 x i32> @_Z11test_insertDv16_iiDv2_j(
 // AIE2P-SAME: <16 x i32> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <2 x i32> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
@@ -641,7 +640,6 @@ v128uint4 test_insert(v128uint4 v, int idx, mask64 b) {
   return insert(v, idx, b);
 }
 
-//
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z11test_insertDv64_hiDv2_j(
 // AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <2 x i32> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
@@ -659,7 +657,6 @@ v64uint8 test_insert(v64uint8 v, int idx, mask64 b) {
   return insert(v, idx, b);
 }
 
-//
 // AIE2P-LABEL: define dso_local noundef <32 x i16> @_Z11test_insertDv32_tiDv2_j(
 // AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <2 x i32> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:

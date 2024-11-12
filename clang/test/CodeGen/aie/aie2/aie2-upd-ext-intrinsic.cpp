@@ -459,14 +459,14 @@ v256uint4 test_concat_2x512 (v128uint4 a0, v128uint4 a1){
 // CHECK-NEXT:    [[TMP3:%.*]] = tail call <16 x i32> @llvm.aie2.set.I512.I128(<4 x i32> [[TMP2]])
 // CHECK-NEXT:    [[TMP4:%.*]] = tail call <16 x i32> @llvm.aie2.v16int32()
 // CHECK-NEXT:    [[TMP5:%.*]] = shl i32 [[IDX:%.*]], 4
-// CHECK-NEXT:    [[MUL_I_I:%.*]] = sub i32 64, [[TMP5]]
-// CHECK-NEXT:    [[TMP6:%.*]] = tail call <16 x i32> @llvm.aie2.vshift.I512.I512(<16 x i32> [[TMP4]], <16 x i32> [[TMP3]], i32 0, i32 [[MUL_I_I]])
-// CHECK-NEXT:    [[MUL_I:%.*]] = shl i32 [[IDX]], 2
-// CHECK-NEXT:    [[SHL_I:%.*]] = shl i32 15, [[MUL_I]]
-// CHECK-NEXT:    [[TMP7:%.*]] = tail call <16 x i32> @llvm.aie2.vsel32(<16 x i32> [[TMP1]], <16 x i32> [[TMP6]], i32 [[SHL_I]])
+// CHECK-NEXT:    [[MUL_I_I_I:%.*]] = sub i32 64, [[TMP5]]
+// CHECK-NEXT:    [[TMP6:%.*]] = tail call <16 x i32> @llvm.aie2.vshift.I512.I512(<16 x i32> [[TMP4]], <16 x i32> [[TMP3]], i32 0, i32 [[MUL_I_I_I]])
+// CHECK-NEXT:    [[MUL_I_I:%.*]] = shl i32 [[IDX]], 2
+// CHECK-NEXT:    [[SHL_I_I:%.*]] = shl i32 15, [[MUL_I_I]]
+// CHECK-NEXT:    [[TMP7:%.*]] = tail call <16 x i32> @llvm.aie2.vsel32(<16 x i32> [[TMP1]], <16 x i32> [[TMP6]], i32 [[SHL_I_I]])
 // CHECK-NEXT:    [[TMP8:%.*]] = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> [[TMP7]], i32 0)
-// CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = bitcast <8 x i32> [[TMP8]] to <32 x i8>
-// CHECK-NEXT:    ret <32 x i8> [[RETVAL_0_I_I]]
+// CHECK-NEXT:    [[RETVAL_0_I3_I:%.*]] = bitcast <8 x i32> [[TMP8]] to <32 x i8>
+// CHECK-NEXT:    ret <32 x i8> [[RETVAL_0_I3_I]]
 //
 v64uint4 insert_v64i4  (v64uint4 a, int idx, v32uint4 b){
    return insert(a,idx,b);
@@ -481,8 +481,8 @@ v64uint4 insert_v64i4  (v64uint4 a, int idx, v32uint4 b){
 // CHECK-NEXT:    [[TMP3:%.*]] = tail call <16 x i32> @llvm.aie2.set.I512.I128(<4 x i32> [[TMP2]])
 // CHECK-NEXT:    [[TMP4:%.*]] = tail call <16 x i32> @llvm.aie2.vsel32(<16 x i32> [[TMP1]], <16 x i32> [[TMP3]], i32 15)
 // CHECK-NEXT:    [[TMP5:%.*]] = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> [[TMP4]], i32 0)
-// CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = bitcast <8 x i32> [[TMP5]] to <32 x i8>
-// CHECK-NEXT:    ret <32 x i8> [[RETVAL_0_I_I]]
+// CHECK-NEXT:    [[RETVAL_0_I3_I:%.*]] = bitcast <8 x i32> [[TMP5]] to <32 x i8>
+// CHECK-NEXT:    ret <32 x i8> [[RETVAL_0_I3_I]]
 //
 v64uint4 insert_v64i4_idx0 (v64uint4 a, int idx, v32uint4 b){
    return insert(a,0,b);
@@ -517,14 +517,14 @@ v128uint4 insert_128_in_512(v128uint4 v, int idx, v32uint4 b ) {
 // CHECK-NEXT:    [[TMP3:%.*]] = tail call <16 x i32> @llvm.aie2.set.I512.I128(<4 x i32> [[TMP2]])
 // CHECK-NEXT:    [[TMP4:%.*]] = tail call <16 x i32> @llvm.aie2.v16int32()
 // CHECK-NEXT:    [[TMP5:%.*]] = shl i32 [[IDX:%.*]], 4
-// CHECK-NEXT:    [[MUL_I_I:%.*]] = sub i32 64, [[TMP5]]
-// CHECK-NEXT:    [[TMP6:%.*]] = tail call <16 x i32> @llvm.aie2.vshift.I512.I512(<16 x i32> [[TMP4]], <16 x i32> [[TMP3]], i32 0, i32 [[MUL_I_I]])
-// CHECK-NEXT:    [[MUL_I:%.*]] = shl i32 [[IDX]], 2
-// CHECK-NEXT:    [[SHL_I:%.*]] = shl i32 15, [[MUL_I]]
-// CHECK-NEXT:    [[TMP7:%.*]] = tail call <16 x i32> @llvm.aie2.vsel32(<16 x i32> [[TMP1]], <16 x i32> [[TMP6]], i32 [[SHL_I]])
+// CHECK-NEXT:    [[MUL_I_I_I:%.*]] = sub i32 64, [[TMP5]]
+// CHECK-NEXT:    [[TMP6:%.*]] = tail call <16 x i32> @llvm.aie2.vshift.I512.I512(<16 x i32> [[TMP4]], <16 x i32> [[TMP3]], i32 0, i32 [[MUL_I_I_I]])
+// CHECK-NEXT:    [[MUL_I_I:%.*]] = shl i32 [[IDX]], 2
+// CHECK-NEXT:    [[SHL_I_I:%.*]] = shl i32 15, [[MUL_I_I]]
+// CHECK-NEXT:    [[TMP7:%.*]] = tail call <16 x i32> @llvm.aie2.vsel32(<16 x i32> [[TMP1]], <16 x i32> [[TMP6]], i32 [[SHL_I_I]])
 // CHECK-NEXT:    [[TMP8:%.*]] = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> [[TMP7]], i32 0)
-// CHECK-NEXT:    [[RETVAL_0_I_I:%.*]] = bitcast <8 x i32> [[TMP8]] to <32 x i8>
-// CHECK-NEXT:    ret <32 x i8> [[RETVAL_0_I_I]]
+// CHECK-NEXT:    [[RETVAL_0_I3_I:%.*]] = bitcast <8 x i32> [[TMP8]] to <32 x i8>
+// CHECK-NEXT:    ret <32 x i8> [[RETVAL_0_I3_I]]
 //
 v64uint4 insert_128_in_256(v64uint4 v, int idx, v32uint4 b ) {
    return insert(v,idx,b);
@@ -568,8 +568,8 @@ v128uint4 test_concat_v32uint4  (v32uint4 v0, v32uint4 v1, v32uint4 v2, v32uint4
 // CHECK-NEXT:    [[TMP7:%.*]] = tail call <16 x i32> @llvm.aie2.set.I512.I128(<4 x i32> [[TMP6]])
 // CHECK-NEXT:    [[TMP8:%.*]] = tail call <16 x i32> @llvm.aie2.vsel32(<16 x i32> [[TMP5]], <16 x i32> [[TMP7]], i32 15)
 // CHECK-NEXT:    [[TMP9:%.*]] = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> [[TMP8]], i32 0)
-// CHECK-NEXT:    [[RETVAL_0_I_I_I:%.*]] = bitcast <8 x i32> [[TMP9]] to <32 x i8>
-// CHECK-NEXT:    ret <32 x i8> [[RETVAL_0_I_I_I]]
+// CHECK-NEXT:    [[RETVAL_0_I3_I_I:%.*]] = bitcast <8 x i32> [[TMP9]] to <32 x i8>
+// CHECK-NEXT:    ret <32 x i8> [[RETVAL_0_I3_I_I]]
 //
 v64uint4 test_concat_v32uint4  (v32uint4 v0, v32uint4 v1 ) {
    return concat(v0,v1);
@@ -1649,7 +1649,7 @@ v16float test_extract_v16float(v32float a, int idx) {
    return extract_v16float(a,idx);
 }
 
-// CHECK-LABEL: @_Z24test_extract_v16bfloat16Dv32_u6__bf16i(
+// CHECK-LABEL: @_Z24test_extract_v16bfloat16Dv32_8bfloat16i(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x bfloat> @llvm.aie2.ext.bf256.bf512(<32 x bfloat> [[A:%.*]], i32 0)
 // CHECK-NEXT:    ret <16 x bfloat> [[TMP0]]
@@ -1658,7 +1658,7 @@ v16bfloat16 test_extract_v16bfloat16(v32bfloat16 a, int idx) {
     return extract_v16bfloat16(a, 0);
 }
 
-// CHECK-LABEL: @_Z11test_insertDv32_u6__bf16iDv16_u6__bf16(
+// CHECK-LABEL: @_Z11test_insertDv32_8bfloat16iDv16_S_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x bfloat> @llvm.aie2.upd.bf512.bf256(<32 x bfloat> [[A:%.*]], <16 x bfloat> [[B:%.*]], i32 1)
 // CHECK-NEXT:    ret <32 x bfloat> [[TMP0]]
@@ -1667,7 +1667,7 @@ v32bfloat16 test_insert(v32bfloat16 a, int idx, v16bfloat16 b) {
     return insert(a,1,b);
 }
 
-// CHECK-LABEL: @_Z20test_set_v32bfloat16iDv16_u6__bf16(
+// CHECK-LABEL: @_Z20test_set_v32bfloat16iDv16_8bfloat16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call <32 x bfloat> @llvm.aie2.set.bf512.bf256(<16 x bfloat> [[B:%.*]], i32 1)
 // CHECK-NEXT:    ret <32 x bfloat> [[TMP0]]
@@ -1676,7 +1676,7 @@ v32bfloat16 test_set_v32bfloat16(int idx, v16bfloat16 b) {
     return set_v32bfloat16(1, b);
 }
 
-// CHECK-LABEL: @_Z11test_concatDv16_u6__bf16S_(
+// CHECK-LABEL: @_Z11test_concatDv16_8bfloat16S0_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x bfloat> @llvm.aie2.concat.bf512.bf256(<16 x bfloat> [[A0:%.*]], <16 x bfloat> [[A1:%.*]])
 // CHECK-NEXT:    ret <32 x bfloat> [[TMP0]]
@@ -1685,7 +1685,7 @@ v32bfloat16 test_concat(v16bfloat16 a0, v16bfloat16 a1) {
   return concat(a0, a1);
 }
 
-// CHECK-LABEL: @_Z24test_extract_v16bfloat16Dv64_u6__bf16i(
+// CHECK-LABEL: @_Z24test_extract_v16bfloat16Dv64_8bfloat16i(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x bfloat> @llvm.aie2.ext.bf256.bf1024(<64 x bfloat> [[A:%.*]], i32 3)
 // CHECK-NEXT:    ret <16 x bfloat> [[TMP0]]
@@ -1694,7 +1694,7 @@ v16bfloat16 test_extract_v16bfloat16(v64bfloat16 a, int idx) {
     return extract_v16bfloat16(a, 3);
 }
 
-// CHECK-LABEL: @_Z11test_insertDv64_u6__bf16iDv16_u6__bf16(
+// CHECK-LABEL: @_Z11test_insertDv64_8bfloat16iDv16_S_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x bfloat> @llvm.aie2.upd.bf1024.bf256(<64 x bfloat> [[A:%.*]], <16 x bfloat> [[B:%.*]], i32 2)
 // CHECK-NEXT:    ret <64 x bfloat> [[TMP0]]
@@ -1703,7 +1703,7 @@ v64bfloat16 test_insert(v64bfloat16 a, int idx, v16bfloat16 b) {
     return insert(a, 2, b);
 }
 
-// CHECK-LABEL: @_Z20test_set_v64bfloat16iDv16_u6__bf16(
+// CHECK-LABEL: @_Z20test_set_v64bfloat16iDv16_8bfloat16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x bfloat> @llvm.aie2.set.bf1024.bf256(<16 x bfloat> [[B:%.*]], i32 1)
 // CHECK-NEXT:    ret <64 x bfloat> [[TMP0]]
@@ -1712,7 +1712,7 @@ v64bfloat16 test_set_v64bfloat16(int idx, v16bfloat16 b) {
     return set_v64bfloat16(1, b);
 }
 
-// CHECK-LABEL: @_Z11test_concatDv16_u6__bf16S_S_S_(
+// CHECK-LABEL: @_Z11test_concatDv16_8bfloat16S0_S0_S0_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x bfloat> @llvm.aie2.concat.bf1024.bf256(<16 x bfloat> [[A0:%.*]], <16 x bfloat> [[A1:%.*]], <16 x bfloat> [[A2:%.*]], <16 x bfloat> [[A3:%.*]])
 // CHECK-NEXT:    ret <64 x bfloat> [[TMP0]]
@@ -1721,7 +1721,7 @@ v64bfloat16 test_concat(v16bfloat16 a0, v16bfloat16 a1, v16bfloat16 a2, v16bfloa
   return concat(a0, a1, a2, a3);
 }
 
-// CHECK-LABEL: @_Z24test_extract_v32bfloat16Dv64_u6__bf16i(
+// CHECK-LABEL: @_Z24test_extract_v32bfloat16Dv64_8bfloat16i(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x bfloat> @llvm.aie2.ext.bf512.bf1024(<64 x bfloat> [[A:%.*]], i32 1)
 // CHECK-NEXT:    ret <32 x bfloat> [[TMP0]]
@@ -1730,7 +1730,7 @@ v32bfloat16 test_extract_v32bfloat16(v64bfloat16 a, int idx) {
     return extract_v32bfloat16(a, 1);
 }
 
-// CHECK-LABEL: @_Z11test_insertDv64_u6__bf16iDv32_u6__bf16(
+// CHECK-LABEL: @_Z11test_insertDv64_8bfloat16iDv32_S_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x bfloat> @llvm.aie2.upd.bf1024.bf512(<64 x bfloat> [[A:%.*]], <32 x bfloat> [[B:%.*]], i32 1)
 // CHECK-NEXT:    ret <64 x bfloat> [[TMP0]]
@@ -1739,7 +1739,7 @@ v64bfloat16 test_insert(v64bfloat16 a, int idx, v32bfloat16 b) {
     return insert(a, 1, b);
 }
 
-// CHECK-LABEL: @_Z20test_set_v64bfloat16iDv32_u6__bf16(
+// CHECK-LABEL: @_Z20test_set_v64bfloat16iDv32_8bfloat16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x bfloat> @llvm.aie2.set.bf1024.bf512(<32 x bfloat> [[B:%.*]], i32 1)
 // CHECK-NEXT:    ret <64 x bfloat> [[TMP0]]
@@ -1748,7 +1748,7 @@ v64bfloat16 test_set_v64bfloat16(int idx, v32bfloat16 b) {
     return set_v64bfloat16(1, b);
 }
 
-// CHECK-LABEL: @_Z11test_concatDv32_u6__bf16S_(
+// CHECK-LABEL: @_Z11test_concatDv32_8bfloat16S0_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x bfloat> @llvm.aie2.concat.bf1024.bf512(<32 x bfloat> [[A0:%.*]], <32 x bfloat> [[A1:%.*]])
 // CHECK-NEXT:    ret <64 x bfloat> [[TMP0]]
@@ -1757,7 +1757,7 @@ v64bfloat16 test_concat(v32bfloat16 a0, v32bfloat16 a1) {
   return concat(a0, a1);
 }
 
-// CHECK-LABEL: @_Z20test_set_v16bfloat16iDv8_u6__bf16(
+// CHECK-LABEL: @_Z20test_set_v16bfloat16iDv8_8bfloat16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <8 x bfloat> [[A:%.*]] to <4 x i32>
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call <8 x i32> @llvm.aie2.get.I256.I128(<4 x i32> [[TMP0]])
@@ -1768,15 +1768,15 @@ v16bfloat16 test_set_v16bfloat16(int idx, v8bfloat16 a) {
     return set_v16bfloat16(0,a);
 }
 
-// CHECK-LABEL: @_Z24test_set_v16bfloat16_idxiDv8_u6__bf16(
+// CHECK-LABEL: @_Z24test_set_v16bfloat16_idxiDv8_8bfloat16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <8 x bfloat> [[A:%.*]] to <4 x i32>
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i32> @llvm.aie2.set.I512.I128(<4 x i32> [[TMP0]])
 // CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x i16> @llvm.aie2.v32int16()
 // CHECK-NEXT:    [[TMP3:%.*]] = bitcast <32 x i16> [[TMP2]] to <16 x i32>
 // CHECK-NEXT:    [[TMP4:%.*]] = shl i32 [[IDX:%.*]], 4
-// CHECK-NEXT:    [[MUL_I:%.*]] = sub i32 64, [[TMP4]]
-// CHECK-NEXT:    [[TMP5:%.*]] = tail call <16 x i32> @llvm.aie2.vshift.I512.I512(<16 x i32> [[TMP3]], <16 x i32> [[TMP1]], i32 0, i32 [[MUL_I]])
+// CHECK-NEXT:    [[MUL_I_I_I:%.*]] = sub i32 64, [[TMP4]]
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call <16 x i32> @llvm.aie2.vshift.I512.I512(<16 x i32> [[TMP3]], <16 x i32> [[TMP1]], i32 0, i32 [[MUL_I_I_I]])
 // CHECK-NEXT:    [[TMP6:%.*]] = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> [[TMP5]], i32 0)
 // CHECK-NEXT:    [[TMP7:%.*]] = bitcast <8 x i32> [[TMP6]] to <16 x bfloat>
 // CHECK-NEXT:    ret <16 x bfloat> [[TMP7]]
@@ -1785,15 +1785,15 @@ v16bfloat16 test_set_v16bfloat16_idx(int idx, v8bfloat16 a) {
    return set_v16bfloat16(idx, a);
 }
 
-// CHECK-LABEL: @_Z11test_insertDv32_u6__bf16iDv8_u6__bf16(
+// CHECK-LABEL: @_Z11test_insertDv32_8bfloat16iDv8_S_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <8 x bfloat> [[B:%.*]] to <4 x i32>
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call <16 x i32> @llvm.aie2.set.I512.I128(<4 x i32> [[TMP0]])
 // CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <32 x bfloat> @llvm.aie2.v32bfloat16()
 // CHECK-NEXT:    [[TMP3:%.*]] = bitcast <32 x bfloat> [[TMP2]] to <16 x i32>
 // CHECK-NEXT:    [[TMP4:%.*]] = shl i32 [[IDX:%.*]], 4
-// CHECK-NEXT:    [[MUL_I3:%.*]] = sub i32 64, [[TMP4]]
-// CHECK-NEXT:    [[TMP5:%.*]] = tail call <16 x i32> @llvm.aie2.vshift.I512.I512(<16 x i32> [[TMP3]], <16 x i32> [[TMP1]], i32 0, i32 [[MUL_I3]])
+// CHECK-NEXT:    [[MUL_I_I:%.*]] = sub i32 64, [[TMP4]]
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call <16 x i32> @llvm.aie2.vshift.I512.I512(<16 x i32> [[TMP3]], <16 x i32> [[TMP1]], i32 0, i32 [[MUL_I_I]])
 // CHECK-NEXT:    [[MUL_I:%.*]] = shl i32 [[IDX]], 2
 // CHECK-NEXT:    [[SHL_I:%.*]] = shl i32 15, [[MUL_I]]
 // CHECK-NEXT:    [[TMP6:%.*]] = bitcast <32 x bfloat> [[V:%.*]] to <16 x i32>
@@ -1805,7 +1805,7 @@ v32bfloat16 test_insert(v32bfloat16 v, int idx, v8bfloat16 b) {
   return insert(v, idx, b);
 }
 
-// CHECK-LABEL: @_Z27test_extract_v8bfloat16_512Dv32_u6__bf16i(
+// CHECK-LABEL: @_Z27test_extract_v8bfloat16_512Dv32_8bfloat16i(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <32 x bfloat> [[A:%.*]] to <16 x i32>
 // CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <32 x bfloat> @llvm.aie2.v32bfloat16()
@@ -1820,7 +1820,7 @@ v8bfloat16 test_extract_v8bfloat16_512(v32bfloat16 a, int idx) {
    return extract_v8bfloat16(a,idx);
 }
 
-// CHECK-LABEL: @_Z27test_extract_v8bfloat16_256Dv16_u6__bf16i(
+// CHECK-LABEL: @_Z27test_extract_v8bfloat16_256Dv16_8bfloat16i(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call <32 x bfloat> @llvm.aie2.set.bf512.bf256(<16 x bfloat> [[A:%.*]], i32 0)
 // CHECK-NEXT:    [[TMP1:%.*]] = bitcast <32 x bfloat> [[TMP0]] to <16 x i32>

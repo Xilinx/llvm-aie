@@ -553,7 +553,7 @@ void test_put_mcd(v16int32 a, int en) { put_mcd(a, en); }
 //
 void test_put_mcd(v16uint32 a, int en) { put_mcd(a, en); }
 
-// CHECK-LABEL: @_Z12test_put_mcdDv32_u6__bf16i(
+// CHECK-LABEL: @_Z12test_put_mcdDv32_8bfloat16i(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <32 x bfloat> [[A:%.*]] to <16 x i32>
 // CHECK-NEXT:    tail call void @llvm.aie2.mcd.write.vec(<16 x i32> [[TMP0]], i32 [[EN:%.*]])
@@ -644,7 +644,7 @@ void test_put_mcd(v16int32 a) { put_mcd(a); }
 //
 void test_put_mcd(v16uint32 a) { put_mcd(a); }
 
-// CHECK-LABEL: @_Z12test_put_mcdDv32_u6__bf16(
+// CHECK-LABEL: @_Z12test_put_mcdDv32_8bfloat16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <32 x bfloat> [[A:%.*]] to <16 x i32>
 // CHECK-NEXT:    tail call void @llvm.aie2.mcd.write.vec(<16 x i32> [[TMP0]], i32 1)

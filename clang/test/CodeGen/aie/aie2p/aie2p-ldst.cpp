@@ -28,7 +28,6 @@ v32int16 test_unpack_v32i16_v32i8(v32int8 v) {
   return unpack(v);
 }
 
-//
 // CHECK-LABEL: @_Z21test_pack_v64i4_v64i8Dv64_hi(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i8> @llvm.aie2p.pack.I512.I4.I8(<64 x i8> [[V:%.*]], i32 [[SIGN:%.*]])
@@ -56,7 +55,6 @@ v64uint8 test_pack_v64i8_v64i16(v64uint16 v, int sign) {
   return pack(v, sign);
 }
 
-//
 // CHECK-LABEL: @_Z24test_unpack_v64i16_v64i8Dv64_h(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x i16> @llvm.aie2p.unpack.I1024.I16.I8(<64 x i8> [[V:%.*]], i32 0)
@@ -2897,7 +2895,7 @@ void test_fifo_st_flush_conv_3d_byte(v16uint32 * restrict &p, fifo_state_t &s, i
                                     size2, count2, inc2);
 }
 
-// CHECK-LABEL: @_Z18test_fifo_st_resetRrPDv32_u6__bf16S_R12fifo_state_t(
+// CHECK-LABEL: @_Z18test_fifo_st_resetRrPDv32_8bfloat16S0_R12fifo_state_t(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
@@ -2917,7 +2915,7 @@ void test_fifo_st_reset(v32bfloat16 * restrict &p, v32bfloat16 v, fifo_state_t &
   return fifo_st_reset(p, v, s);
 }
 
-// CHECK-LABEL: @_Z17test_fifo_st_pushRrPDv32_u6__bf16S_R12fifo_state_t(
+// CHECK-LABEL: @_Z17test_fifo_st_pushRrPDv32_8bfloat16S0_R12fifo_state_t(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
@@ -2937,7 +2935,7 @@ void test_fifo_st_push(v32bfloat16 * restrict &p, v32bfloat16 v, fifo_state_t &s
   return fifo_st_push(p, v, s);
 }
 
-// CHECK-LABEL: @_Z18test_fifo_st_flushRrPDv32_u6__bf16R12fifo_state_t(
+// CHECK-LABEL: @_Z18test_fifo_st_flushRrPDv32_8bfloat16R12fifo_state_t(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
@@ -2956,7 +2954,7 @@ void test_fifo_st_flush(v32bfloat16 * restrict &p, fifo_state_t &s) {
   return fifo_st_flush(p, s);
 }
 
-// CHECK-LABEL: @_Z26test_fifo_st_flush_1d_byteRrPDv32_u6__bf16R12fifo_state_ti(
+// CHECK-LABEL: @_Z26test_fifo_st_flush_1d_byteRrPDv32_8bfloat16R12fifo_state_ti(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
@@ -2976,7 +2974,7 @@ void test_fifo_st_flush_1d_byte(v32bfloat16 * restrict &p, fifo_state_t &s, int 
   return fifo_st_flush_1d_byte(p, s, off);
 }
 
-// CHECK-LABEL: @_Z26test_fifo_st_flush_2d_byteRrPDv32_u6__bf16R12fifo_state_tiiRii(
+// CHECK-LABEL: @_Z26test_fifo_st_flush_2d_byteRrPDv32_8bfloat16R12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
@@ -3004,7 +3002,7 @@ void test_fifo_st_flush_2d_byte(v32bfloat16 * restrict &p, fifo_state_t &s, int 
   return fifo_st_flush_2d_byte(p, s, off, size1, count1, inc1);
 }
 
-// CHECK-LABEL: @_Z26test_fifo_st_flush_3d_byteRrPDv32_u6__bf16R12fifo_state_tiiRiiiS5_i(
+// CHECK-LABEL: @_Z26test_fifo_st_flush_3d_byteRrPDv32_8bfloat16R12fifo_state_tiiRiiiS6_i(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
@@ -3041,7 +3039,7 @@ void test_fifo_st_flush_3d_byte(v32bfloat16 * restrict &p, fifo_state_t &s, int 
                                count2, inc2);
 }
 
-// CHECK-LABEL: @_Z23test_fifo_st_flush_bareRrPDv32_u6__bf16R12fifo_state_t(
+// CHECK-LABEL: @_Z23test_fifo_st_flush_bareRrPDv32_8bfloat16R12fifo_state_t(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
@@ -3060,7 +3058,7 @@ void test_fifo_st_flush_bare(v32bfloat16 * restrict &p, fifo_state_t &s) {
   return fifo_st_flush_bare(p, s);
 }
 
-// CHECK-LABEL: @_Z31test_fifo_st_flush_bare_1d_byteRrPDv32_u6__bf16R12fifo_state_ti(
+// CHECK-LABEL: @_Z31test_fifo_st_flush_bare_1d_byteRrPDv32_8bfloat16R12fifo_state_ti(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
@@ -3081,7 +3079,7 @@ void test_fifo_st_flush_bare_1d_byte(v32bfloat16 * restrict &p, fifo_state_t &s,
   return fifo_st_flush_bare_1d_byte(p, s, off);
 }
 
-// CHECK-LABEL: @_Z31test_fifo_st_flush_bare_2d_byteRrPDv32_u6__bf16R12fifo_state_tiiRii(
+// CHECK-LABEL: @_Z31test_fifo_st_flush_bare_2d_byteRrPDv32_8bfloat16R12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
@@ -3109,7 +3107,7 @@ void test_fifo_st_flush_bare_2d_byte(v32bfloat16 * restrict &p, fifo_state_t &s,
   return fifo_st_flush_bare_2d_byte(p, s, off, size1, count1, inc1);
 }
 
-// CHECK-LABEL: @_Z31test_fifo_st_flush_bare_3d_byteRrPDv32_u6__bf16R12fifo_state_tiiRiiiS5_i(
+// CHECK-LABEL: @_Z31test_fifo_st_flush_bare_3d_byteRrPDv32_8bfloat16R12fifo_state_tiiRiiiS6_i(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
@@ -3146,7 +3144,7 @@ void test_fifo_st_flush_bare_3d_byte(v32bfloat16 * restrict &p, fifo_state_t &s,
                                     size2, count2, inc2);
 }
 
-// CHECK-LABEL: @_Z23test_fifo_st_flush_convRrPDv32_u6__bf16R12fifo_state_t(
+// CHECK-LABEL: @_Z23test_fifo_st_flush_convRrPDv32_8bfloat16R12fifo_state_t(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
@@ -3165,7 +3163,7 @@ void test_fifo_st_flush_conv(v32bfloat16 * restrict &p, fifo_state_t &s) {
   return fifo_st_flush_conv(p, s);
 }
 
-// CHECK-LABEL: @_Z31test_fifo_st_flush_conv_1d_byteRrPDv32_u6__bf16R12fifo_state_ti(
+// CHECK-LABEL: @_Z31test_fifo_st_flush_conv_1d_byteRrPDv32_8bfloat16R12fifo_state_ti(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
@@ -3186,7 +3184,7 @@ void test_fifo_st_flush_conv_1d_byte(v32bfloat16 * restrict &p, fifo_state_t &s,
   return fifo_st_flush_conv_1d_byte(p, s, off);
 }
 
-// CHECK-LABEL: @_Z31test_fifo_st_flush_conv_2d_byteRrPDv32_u6__bf16R12fifo_state_tiiRii(
+// CHECK-LABEL: @_Z31test_fifo_st_flush_conv_2d_byteRrPDv32_8bfloat16R12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
@@ -3214,7 +3212,7 @@ void test_fifo_st_flush_conv_2d_byte(v32bfloat16 * restrict &p, fifo_state_t &s,
   return fifo_st_flush_conv_2d_byte(p, s, off, size1, count1, inc1);
 }
 
-// CHECK-LABEL: @_Z31test_fifo_st_flush_conv_3d_byteRrPDv32_u6__bf16R12fifo_state_tiiRiiiS5_i(
+// CHECK-LABEL: @_Z31test_fifo_st_flush_conv_3d_byteRrPDv32_8bfloat16R12fifo_state_tiiRiiiS6_i(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
@@ -5648,7 +5646,7 @@ v16uint32 test_fifo_ld_pop_3d_byte(v16uint32 *&p, fifo_state_t &s, int off,
 }
 
 
-// CHECK-LABEL: @_Z18test_fifo_ld_resetRPDv32_u6__bf16R12fifo_state_t(
+// CHECK-LABEL: @_Z18test_fifo_ld_resetRPDv32_8bfloat16R12fifo_state_t(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
@@ -5667,7 +5665,7 @@ void test_fifo_ld_reset(v32bfloat16 *&p, fifo_state_t &s) {
   return fifo_ld_reset(p, s);
 }
 
-// CHECK-LABEL: @_Z17test_fifo_ld_fillRPDv32_u6__bf16R12fifo_state_t(
+// CHECK-LABEL: @_Z17test_fifo_ld_fillRPDv32_8bfloat16R12fifo_state_t(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
@@ -5686,7 +5684,7 @@ void test_fifo_ld_fill(v32bfloat16 *&p, fifo_state_t &s) {
   return fifo_ld_fill(p, s);
 }
 
-// CHECK-LABEL: @_Z16test_fifo_ld_popRPDv32_u6__bf16R12fifo_state_t(
+// CHECK-LABEL: @_Z16test_fifo_ld_popRPDv32_8bfloat16R12fifo_state_t(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
@@ -5707,7 +5705,7 @@ v32bfloat16 test_fifo_ld_pop(v32bfloat16 *&p, fifo_state_t &s) {
   return fifo_ld_pop(p, s);
 }
 
-// CHECK-LABEL: @_Z24test_fifo_ld_pop_1d_byteRPDv32_u6__bf16R12fifo_state_ti(
+// CHECK-LABEL: @_Z24test_fifo_ld_pop_1d_byteRPDv32_8bfloat16R12fifo_state_ti(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
@@ -5730,7 +5728,7 @@ v32bfloat16 test_fifo_ld_pop_1d_byte(v32bfloat16 *&p, fifo_state_t &s,
   return fifo_ld_pop_1d_byte(p, s, off);
 }
 
-// CHECK-LABEL: @_Z24test_fifo_ld_pop_2d_byteRPDv32_u6__bf16R12fifo_state_tiiRii(
+// CHECK-LABEL: @_Z24test_fifo_ld_pop_2d_byteRPDv32_8bfloat16R12fifo_state_tiiRii(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
@@ -5760,7 +5758,7 @@ v32bfloat16 test_fifo_ld_pop_2d_byte(v32bfloat16 *&p, fifo_state_t &s, int off,
   return fifo_ld_pop_2d_byte(p, s, off, size1, count1, inc1);
 }
 
-// CHECK-LABEL: @_Z24test_fifo_ld_pop_3d_byteRPDv32_u6__bf16R12fifo_state_tiiRiiiS4_i(
+// CHECK-LABEL: @_Z24test_fifo_ld_pop_3d_byteRPDv32_8bfloat16R12fifo_state_tiiRiiiS5_i(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
@@ -6912,7 +6910,7 @@ v16uint32 test_fifo_ld_popx(v16uint32 *&p, fifo_state_t &s) {
   return fifo_ld_popx(p, s);
 }
 
-// CHECK-LABEL: @_Z17test_fifo_ld_popxRPDv32_u6__bf16R12fifo_state_tii(
+// CHECK-LABEL: @_Z17test_fifo_ld_popxRPDv32_8bfloat16R12fifo_state_tii(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[EXTRA3_I:%.*]] = getelementptr inbounds i8, ptr [[S]], i20 192
@@ -6939,7 +6937,7 @@ v32bfloat16 test_fifo_ld_popx(v32bfloat16 *&p, fifo_state_t &s, int step, int ma
   return fifo_ld_popx(p, s, step, mask);
 }
 
-// CHECK-LABEL: @_Z17test_fifo_ld_popxRPDv32_u6__bf16R12fifo_state_t(
+// CHECK-LABEL: @_Z17test_fifo_ld_popxRPDv32_8bfloat16R12fifo_state_t(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[POS1_I_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[EXTRA3_I_I:%.*]] = getelementptr inbounds i8, ptr [[S]], i20 192

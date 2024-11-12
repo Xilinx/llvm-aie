@@ -11,7 +11,6 @@
 // RUN: %clang -O2 %s --target=aie2 -nostdlibinc -S -emit-llvm -o - | FileCheck %s -check-prefix=CHECK-AIE2
 // RUN: %clang -O2 %s --target=aie2p -nostdlibinc -S -emit-llvm -o - | FileCheck %s -check-prefix=CHECK-AIE2P
 
-//
 // CHECK-AIE2-LABEL: @_Z9test_lupsDv8_ii(
 // CHECK-AIE2-NEXT:  entry:
 // CHECK-AIE2-NEXT:    [[TMP0:%.*]] = tail call noundef <8 x i64> @llvm.aie2.acc64.v8.I256.ups(<8 x i32> [[A:%.*]], i32 [[SHFT:%.*]], i32 1)
@@ -54,7 +53,6 @@ v8acc64 test_lups(v8int32 a, int shft, int sign) {
    return lups(a,shft,sign);
 }
 
-//
 // CHECK-AIE2-LABEL: @_Z9test_supsDv16_si(
 // CHECK-AIE2-NEXT:  entry:
 // CHECK-AIE2-NEXT:    [[TMP0:%.*]] = tail call noundef <8 x i64> @llvm.aie2.acc32.v16.I256.ups(<16 x i16> [[A:%.*]], i32 [[SHFT:%.*]], i32 1)
@@ -494,12 +492,12 @@ v32acc32 test_ups_to_v32acc32(v32int16 a, int shft) {
    return ups_to_v32acc32(a,shft);
 }
 
-// CHECK-AIE2-LABEL: @_Z23test_ups_to_v16accfloatDv16_u6__bf16(
+// CHECK-AIE2-LABEL: @_Z23test_ups_to_v16accfloatDv16_8bfloat16(
 // CHECK-AIE2-NEXT:  entry:
 // CHECK-AIE2-NEXT:    [[TMP0:%.*]] = tail call noundef <8 x i64> @llvm.aie2.v16bf16.to.v16accfloat(<16 x bfloat> [[A:%.*]])
 // CHECK-AIE2-NEXT:    ret <8 x i64> [[TMP0]]
 //
-// CHECK-AIE2P-LABEL: @_Z23test_ups_to_v16accfloatDv16_u6__bf16(
+// CHECK-AIE2P-LABEL: @_Z23test_ups_to_v16accfloatDv16_8bfloat16(
 // CHECK-AIE2P-NEXT:  entry:
 // CHECK-AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x float> @llvm.aie2p.v16bf16.to.v16accfloat(<16 x bfloat> [[A:%.*]])
 // CHECK-AIE2P-NEXT:    ret <16 x float> [[TMP0]]
@@ -508,12 +506,12 @@ v16accfloat test_ups_to_v16accfloat(v16bfloat16 a) {
    return ups_to_v16accfloat(a);
 }
 
-// CHECK-AIE2-LABEL: @_Z8test_upsDv16_u6__bf16(
+// CHECK-AIE2-LABEL: @_Z8test_upsDv16_8bfloat16(
 // CHECK-AIE2-NEXT:  entry:
 // CHECK-AIE2-NEXT:    [[TMP0:%.*]] = tail call noundef <8 x i64> @llvm.aie2.v16bf16.to.v16accfloat(<16 x bfloat> [[A:%.*]])
 // CHECK-AIE2-NEXT:    ret <8 x i64> [[TMP0]]
 //
-// CHECK-AIE2P-LABEL: @_Z8test_upsDv16_u6__bf16(
+// CHECK-AIE2P-LABEL: @_Z8test_upsDv16_8bfloat16(
 // CHECK-AIE2P-NEXT:  entry:
 // CHECK-AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x float> @llvm.aie2p.v16bf16.to.v16accfloat(<16 x bfloat> [[A:%.*]])
 // CHECK-AIE2P-NEXT:    ret <16 x float> [[TMP0]]
@@ -549,12 +547,12 @@ v32acc32 test_ups_to_v32acc32(v32uint16 a, int shft, int sign) {
 v32acc32 test_ups_to_v32acc32(v32uint16 a, int shft) {
    return ups_to_v32acc32(a,shft);
 }
-// CHECK-AIE2-LABEL: @_Z35test_ups_to_v16accfloat_v16bfloat16Dv16_u6__bf16(
+// CHECK-AIE2-LABEL: @_Z35test_ups_to_v16accfloat_v16bfloat16Dv16_8bfloat16(
 // CHECK-AIE2-NEXT:  entry:
 // CHECK-AIE2-NEXT:    [[TMP0:%.*]] = tail call noundef <8 x i64> @llvm.aie2.v16bf16.to.v16accfloat(<16 x bfloat> [[A:%.*]])
 // CHECK-AIE2-NEXT:    ret <8 x i64> [[TMP0]]
 //
-// CHECK-AIE2P-LABEL: @_Z35test_ups_to_v16accfloat_v16bfloat16Dv16_u6__bf16(
+// CHECK-AIE2P-LABEL: @_Z35test_ups_to_v16accfloat_v16bfloat16Dv16_8bfloat16(
 // CHECK-AIE2P-NEXT:  entry:
 // CHECK-AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef <16 x float> @llvm.aie2p.v16bf16.to.v16accfloat(<16 x bfloat> [[A:%.*]])
 // CHECK-AIE2P-NEXT:    ret <16 x float> [[TMP0]]
@@ -562,7 +560,7 @@ v32acc32 test_ups_to_v32acc32(v32uint16 a, int shft) {
 v16accfloat test_ups_to_v16accfloat_v16bfloat16(v16bfloat16 a) {
   return ups_to_v16accfloat(a);
 }
-// CHECK-AIE2-LABEL: @_Z35test_ups_to_v32accfloat_v32bfloat16Dv32_u6__bf16(
+// CHECK-AIE2-LABEL: @_Z35test_ups_to_v32accfloat_v32bfloat16Dv32_8bfloat16(
 // CHECK-AIE2-NEXT:  entry:
 // CHECK-AIE2-NEXT:    [[TMP0:%.*]] = tail call <16 x bfloat> @llvm.aie2.ext.bf256.bf512(<32 x bfloat> [[A:%.*]], i32 0)
 // CHECK-AIE2-NEXT:    [[TMP1:%.*]] = tail call noundef <8 x i64> @llvm.aie2.v16bf16.to.v16accfloat(<16 x bfloat> [[TMP0]])
@@ -571,7 +569,7 @@ v16accfloat test_ups_to_v16accfloat_v16bfloat16(v16bfloat16 a) {
 // CHECK-AIE2-NEXT:    [[TMP4:%.*]] = tail call noundef <16 x i64> @llvm.aie2.concat.1024.512.acc(<8 x i64> [[TMP1]], <8 x i64> [[TMP3]])
 // CHECK-AIE2-NEXT:    ret <16 x i64> [[TMP4]]
 //
-// CHECK-AIE2P-LABEL: @_Z35test_ups_to_v32accfloat_v32bfloat16Dv32_u6__bf16(
+// CHECK-AIE2P-LABEL: @_Z35test_ups_to_v32accfloat_v32bfloat16Dv32_8bfloat16(
 // CHECK-AIE2P-NEXT:  entry:
 // CHECK-AIE2P-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x float> @llvm.aie2p.v32bf16.to.v32accfloat(<32 x bfloat> [[A:%.*]])
 // CHECK-AIE2P-NEXT:    ret <32 x float> [[TMP0]]

@@ -95,7 +95,7 @@ unsigned long long test_ext_u64(v16int32 v, int idx, int sign) {
   return (unsigned long long)(ext_u64(v, idx, sign));
 }
 
-// AIE2-LABEL: define dso_local noundef i64 @_Z12test_ext_u64Dv32_u6__bf16ii(
+// AIE2-LABEL: define dso_local noundef i64 @_Z12test_ext_u64Dv32_8bfloat16ii(
 // AIE2-SAME: <32 x bfloat> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2-NEXT:  entry:
 // AIE2-NEXT:    [[TMP0:%.*]] = bitcast <32 x bfloat> [[V]] to <16 x i32>

@@ -11,7 +11,7 @@
 // RUN: %clang --target=aie2 -nostdlibinc -S -emit-llvm %s -O2 -o - | FileCheck %s
 // RUN: %clang --target=aie2p -nostdlibinc -S -emit-llvm %s -O2 -o - | FileCheck %s
 
-// CHECK-LABEL: @_Z13test_bfloat16u6__bf16(
+// CHECK-LABEL: @_Z13test_bfloat168bfloat16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    ret bfloat [[ARG:%.*]]
 //
@@ -58,8 +58,7 @@ bfloat16 test3_bfloat16(short arg0) {
 bfloat16 test4_bfloat16(char arg0) {
   return (bfloat16)arg0;
 }
-
-// CHECK-LABEL: @_Z14test5_bfloat16u6__bf16(
+// CHECK-LABEL: @_Z14test5_bfloat168bfloat16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CONV:%.*]] = fptosi bfloat [[ARG0:%.*]] to i32
 // CHECK-NEXT:    ret i32 [[CONV]]
@@ -67,7 +66,7 @@ bfloat16 test4_bfloat16(char arg0) {
 int test5_bfloat16(bfloat16 arg0) {
   return (int)arg0;
 }
-// CHECK-LABEL: @_Z14test6_bfloat16u6__bf16(
+// CHECK-LABEL: @_Z14test6_bfloat168bfloat16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CONV:%.*]] = fptoui bfloat [[ARG0:%.*]] to i32
 // CHECK-NEXT:    ret i32 [[CONV]]
@@ -75,7 +74,7 @@ int test5_bfloat16(bfloat16 arg0) {
 unsigned test6_bfloat16(bfloat16 arg0) {
   return (unsigned)arg0;
 }
-// CHECK-LABEL: @_Z14test7_bfloat16u6__bf16(
+// CHECK-LABEL: @_Z14test7_bfloat168bfloat16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CONV:%.*]] = fptosi bfloat [[ARG0:%.*]] to i16
 // CHECK-NEXT:    ret i16 [[CONV]]
@@ -83,7 +82,7 @@ unsigned test6_bfloat16(bfloat16 arg0) {
 short test7_bfloat16(bfloat16 arg0) {
   return (short)arg0;
 }
-// CHECK-LABEL: @_Z14test8_bfloat16u6__bf16(
+// CHECK-LABEL: @_Z14test8_bfloat168bfloat16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CONV:%.*]] = fptoui bfloat [[ARG0:%.*]] to i16
 // CHECK-NEXT:    ret i16 [[CONV]]
@@ -91,7 +90,7 @@ short test7_bfloat16(bfloat16 arg0) {
 unsigned short test8_bfloat16(bfloat16 arg0) {
   return (unsigned short)arg0;
 }
-// CHECK-LABEL: @_Z14test9_bfloat16u6__bf16(
+// CHECK-LABEL: @_Z14test9_bfloat168bfloat16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CONV:%.*]] = fptosi bfloat [[ARG0:%.*]] to i8
 // CHECK-NEXT:    ret i8 [[CONV]]
@@ -99,7 +98,7 @@ unsigned short test8_bfloat16(bfloat16 arg0) {
 char test9_bfloat16(bfloat16 arg0) {
   return (char)arg0;
 }
-// CHECK-LABEL: @_Z15test10_bfloat16u6__bf16(
+// CHECK-LABEL: @_Z15test10_bfloat168bfloat16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CONV:%.*]] = fptosi bfloat [[ARG0:%.*]] to i8
 // CHECK-NEXT:    ret i8 [[CONV]]
@@ -107,7 +106,7 @@ char test9_bfloat16(bfloat16 arg0) {
 signed char test10_bfloat16(bfloat16 arg0) {
   return (signed char)arg0;
 }
-// CHECK-LABEL: @_Z15test11_bfloat16u6__bf16(
+// CHECK-LABEL: @_Z15test11_bfloat168bfloat16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CONV:%.*]] = fptoui bfloat [[ARG0:%.*]] to i8
 // CHECK-NEXT:    ret i8 [[CONV]]
@@ -125,7 +124,7 @@ bfloat16 bfloat16_assign() {
   return bfloat16_one;
 }
 
-// CHECK-LABEL: @_Z13operator_plusu6__bf16u6__bf16(
+// CHECK-LABEL: @_Z13operator_plus8bfloat16S_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[UNPROMOTION:%.*]] = fadd bfloat [[A:%.*]], [[B:%.*]]
 // CHECK-NEXT:    ret bfloat [[UNPROMOTION]]
@@ -134,7 +133,7 @@ bfloat16 operator_plus(bfloat16 a, bfloat16 b) {
   return a + b;
 }
 
-// CHECK-LABEL: @_Z14operator_minusu6__bf16u6__bf16(
+// CHECK-LABEL: @_Z14operator_minus8bfloat16S_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[UNPROMOTION:%.*]] = fsub bfloat [[A:%.*]], [[B:%.*]]
 // CHECK-NEXT:    ret bfloat [[UNPROMOTION]]
@@ -143,7 +142,7 @@ bfloat16 operator_minus(bfloat16 a, bfloat16 b) {
   return a - b;
 }
 
-// CHECK-LABEL: @_Z12operator_mulu6__bf16u6__bf16(
+// CHECK-LABEL: @_Z12operator_mul8bfloat16S_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[UNPROMOTION:%.*]] = fmul bfloat [[A:%.*]], [[B:%.*]]
 // CHECK-NEXT:    ret bfloat [[UNPROMOTION]]
@@ -152,7 +151,7 @@ bfloat16 operator_mul(bfloat16 a, bfloat16 b) {
   return a * b;
 }
 
-// CHECK-LABEL: @_Z12operator_negu6__bf16(
+// CHECK-LABEL: @_Z12operator_neg8bfloat16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[UNPROMOTION:%.*]] = fneg bfloat [[A:%.*]]
 // CHECK-NEXT:    ret bfloat [[UNPROMOTION]]
@@ -161,7 +160,7 @@ bfloat16 operator_neg(bfloat16 a) {
   return -a;
 }
 
-// CHECK-LABEL: @_Z13bfloat16_div0u6__bf16(
+// CHECK-LABEL: @_Z13bfloat16_div08bfloat16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[UNPROMOTION:%.*]] = fdiv bfloat 0xR0000, [[ARG:%.*]]
 // CHECK-NEXT:    ret bfloat [[UNPROMOTION]]
@@ -170,7 +169,7 @@ bfloat16 bfloat16_div0(bfloat16 arg) {
   const bfloat16 bfloat16_zero    = 0.0;
   return bfloat16_zero/arg;
 }
-// CHECK-LABEL: @_Z13bfloat16_div1u6__bf16i(
+// CHECK-LABEL: @_Z13bfloat16_div18bfloat16i(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CONV:%.*]] = sitofp i32 [[I:%.*]] to bfloat
 // CHECK-NEXT:    [[UNPROMOTION:%.*]] = fdiv bfloat [[ARG:%.*]], [[CONV]]
@@ -179,7 +178,7 @@ bfloat16 bfloat16_div0(bfloat16 arg) {
 bfloat16 bfloat16_div1(bfloat16 arg, int i) {
   return arg/i;
 }
-// CHECK-LABEL: @_Z13bfloat16_div2u6__bf16f(
+// CHECK-LABEL: @_Z13bfloat16_div28bfloat16f(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CONV:%.*]] = fpext bfloat [[ARG:%.*]] to float
 // CHECK-NEXT:    [[DIV:%.*]] = fdiv float [[CONV]], [[F:%.*]]
@@ -189,7 +188,7 @@ bfloat16 bfloat16_div1(bfloat16 arg, int i) {
 bfloat16 bfloat16_div2(bfloat16 arg, float f) {
   return arg/f;
 }
-// CHECK-LABEL: @_Z14bfloat16_floatu6__bf16(
+// CHECK-LABEL: @_Z14bfloat16_float8bfloat16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CONV:%.*]] = fpext bfloat [[ARG:%.*]] to float
 // CHECK-NEXT:    ret float [[CONV]]
@@ -198,7 +197,7 @@ float bfloat16_float(bfloat16 arg) {
   float f = arg;
   return f;
 }
-// CHECK-LABEL: @_Z12bfloat_cmp_gu6__bf16u6__bf16(
+// CHECK-LABEL: @_Z12bfloat_cmp_g8bfloat16S_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CMP:%.*]] = fcmp ogt bfloat [[ARG0:%.*]], [[ARG1:%.*]]
 // CHECK-NEXT:    ret i1 [[CMP]]
@@ -206,7 +205,7 @@ float bfloat16_float(bfloat16 arg) {
 bool bfloat_cmp_g(bfloat16 arg0, bfloat16 arg1) {
   return (arg0 > arg1);
 }
-// CHECK-LABEL: @_Z13bfloat_cmp_leu6__bf16u6__bf16(
+// CHECK-LABEL: @_Z13bfloat_cmp_le8bfloat16S_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CMP:%.*]] = fcmp ole bfloat [[ARG0:%.*]], [[ARG1:%.*]]
 // CHECK-NEXT:    ret i1 [[CMP]]
@@ -214,7 +213,7 @@ bool bfloat_cmp_g(bfloat16 arg0, bfloat16 arg1) {
 bool bfloat_cmp_le(bfloat16 arg0, bfloat16 arg1) {
   return (arg0 <= arg1);
 }
-// CHECK-LABEL: @_Z13bfloat_cmp_neu6__bf16u6__bf16(
+// CHECK-LABEL: @_Z13bfloat_cmp_ne8bfloat16S_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CMP:%.*]] = fcmp une bfloat [[ARG0:%.*]], [[ARG1:%.*]]
 // CHECK-NEXT:    ret i1 [[CMP]]
@@ -222,7 +221,7 @@ bool bfloat_cmp_le(bfloat16 arg0, bfloat16 arg1) {
 bool bfloat_cmp_ne(bfloat16 arg0, bfloat16 arg1) {
   return (arg0 != arg1);
 }
-// CHECK-LABEL: @_Z13bfloat_cmp_geu6__bf16u6__bf16(
+// CHECK-LABEL: @_Z13bfloat_cmp_ge8bfloat16S_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CMP:%.*]] = fcmp oge bfloat [[ARG0:%.*]], [[ARG1:%.*]]
 // CHECK-NEXT:    ret i1 [[CMP]]
@@ -230,7 +229,7 @@ bool bfloat_cmp_ne(bfloat16 arg0, bfloat16 arg1) {
 bool bfloat_cmp_ge(bfloat16 arg0, bfloat16 arg1) {
   return (arg0 >= arg1);
 }
-// CHECK-LABEL: @_Z15bfloat16_cmp_ltu6__bf16u6__bf16(
+// CHECK-LABEL: @_Z15bfloat16_cmp_lt8bfloat16S_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CMP:%.*]] = fcmp olt bfloat [[ARG0:%.*]], [[ARG1:%.*]]
 // CHECK-NEXT:    ret i1 [[CMP]]
@@ -238,7 +237,7 @@ bool bfloat_cmp_ge(bfloat16 arg0, bfloat16 arg1) {
 bool bfloat16_cmp_lt(bfloat16 arg0, bfloat16 arg1) {
   return (arg0 < arg1);
 }
-// CHECK-LABEL: @_Z13bfloat_cmp_equ6__bf16u6__bf16(
+// CHECK-LABEL: @_Z13bfloat_cmp_eq8bfloat16S_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CMP:%.*]] = fcmp oeq bfloat [[ARG0:%.*]], [[ARG1:%.*]]
 // CHECK-NEXT:    ret i1 [[CMP]]
@@ -246,32 +245,32 @@ bool bfloat16_cmp_lt(bfloat16 arg0, bfloat16 arg1) {
 bool bfloat_cmp_eq(bfloat16 arg0, bfloat16 arg1) {
   return (arg0 == arg1);
 }
-// CHECK-LABEL: @_Z15pass_v2bfloat16Dv2_u6__bf16(
+// CHECK-LABEL: @_Z15pass_v2bfloat16Dv2_8bfloat16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    ret void
 //
 void pass_v2bfloat16(v2bfloat16) {}
-// CHECK-LABEL: @_Z15pass_v4bfloat16Dv4_u6__bf16(
+// CHECK-LABEL: @_Z15pass_v4bfloat16Dv4_8bfloat16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    ret void
 //
 void pass_v4bfloat16(v4bfloat16) {}
-// CHECK-LABEL: @_Z15pass_v8bfloat16Dv8_u6__bf16(
+// CHECK-LABEL: @_Z15pass_v8bfloat16Dv8_8bfloat16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    ret void
 //
 void pass_v8bfloat16(v8bfloat16) {}
-// CHECK-LABEL: @_Z16pass_v16bfloat16Dv16_u6__bf16(
+// CHECK-LABEL: @_Z16pass_v16bfloat16Dv16_8bfloat16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    ret void
 //
 void pass_v16bfloat16(v16bfloat16) {}
-// CHECK-LABEL: @_Z16pass_v32bfloat16Dv32_u6__bf16(
+// CHECK-LABEL: @_Z16pass_v32bfloat16Dv32_8bfloat16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    ret void
 //
 void pass_v32bfloat16(v32bfloat16) {}
-// CHECK-LABEL: @_Z16pass_v64bfloat16Dv64_u6__bf16(
+// CHECK-LABEL: @_Z16pass_v64bfloat16Dv64_8bfloat16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    ret void
 //
