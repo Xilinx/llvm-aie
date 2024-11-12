@@ -400,7 +400,6 @@ v32int32 test_get_scd_v32int32() { return get_scd_v32int32(); }
 //
 v32uint32 test_get_scd_v32uint32() { return get_scd_v32uint32(); }
 
-//
 // CHECK-LABEL: @_Z24test_get_scd_v32acc32_loi(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i32> @llvm.aie2p.scd.expand.lo(i32 [[EN:%.*]])
@@ -546,7 +545,7 @@ void test_put_mcd(v16int32 a, int en) { put_mcd(a, en); }
 //
 void test_put_mcd(v16uint32 a, int en) { put_mcd(a, en); }
 
-// CHECK-LABEL: @_Z12test_put_mcdDv32_u6__bf16i(
+// CHECK-LABEL: @_Z12test_put_mcdDv32_8bfloat16i(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <32 x bfloat> [[A:%.*]] to <16 x i32>
 // CHECK-NEXT:    tail call void @llvm.aie2p.mcd.write.vec(<16 x i32> [[TMP0]], i32 [[EN:%.*]])
@@ -639,7 +638,7 @@ void test_put_mcd(v16int32 a) { put_mcd(a); }
 //
 void test_put_mcd(v16uint32 a) { put_mcd(a); }
 
-// CHECK-LABEL: @_Z12test_put_mcdDv32_u6__bf16(
+// CHECK-LABEL: @_Z12test_put_mcdDv32_8bfloat16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <32 x bfloat> [[A:%.*]] to <16 x i32>
 // CHECK-NEXT:    tail call void @llvm.aie2p.mcd.write.vec(<16 x i32> [[TMP0]], i32 1)
@@ -2352,7 +2351,7 @@ void test_put_ms(v64uint16 a, int en, int tlast) { put_ms(a, en, tlast); }
 // CHECK-NEXT:    ret void
 //
 void test_put_ms(v32uint32 a, int en, int tlast) { put_ms(a, en, tlast); }
-// CHECK-LABEL: @_Z11test_put_msDv64_u6__bf16ii(
+// CHECK-LABEL: @_Z11test_put_msDv64_8bfloat16ii(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <64 x bfloat> [[A:%.*]] to <32 x i32>
 // CHECK-NEXT:    [[VECEXT_I_I_I5_I_I_I:%.*]] = extractelement <32 x i32> [[TMP0]], i64 0
@@ -2492,7 +2491,7 @@ void test_put_ms(v64bfloat16 a, int en, int tlast) { put_ms(a, en, tlast); }
 // CHECK-NEXT:    ret void
 //
 void test_put_ms(v32float a, int en, int tlast) { put_ms(a, en, tlast); }
-// CHECK-LABEL: @_Z11test_put_msDv32_u6__bf16ii(
+// CHECK-LABEL: @_Z11test_put_msDv32_8bfloat16ii(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <32 x bfloat> [[A:%.*]] to <16 x i32>
 // CHECK-NEXT:    [[VECEXT_I_I_I5_I_I:%.*]] = extractelement <16 x i32> [[TMP0]], i64 0
@@ -2568,7 +2567,7 @@ void test_put_ms(v32bfloat16 a, int en, int tlast) { put_ms(a, en, tlast); }
 // CHECK-NEXT:    ret void
 //
 void test_put_ms(v16float a, int en, int tlast) { put_ms(a, en, tlast); }
-// CHECK-LABEL: @_Z11test_put_msDv16_u6__bf16ii(
+// CHECK-LABEL: @_Z11test_put_msDv16_8bfloat16ii(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <16 x bfloat> [[A:%.*]] to <8 x i32>
 // CHECK-NEXT:    [[VECEXT_I_I_I6_I_I:%.*]] = extractelement <8 x i32> [[TMP0]], i64 0
@@ -2612,7 +2611,7 @@ void test_put_ms(v16bfloat16 a, int en, int tlast) { put_ms(a, en, tlast); }
 // CHECK-NEXT:    ret void
 //
 void test_put_ms(v8float a, int en, int tlast) { put_ms(a, en, tlast); }
-// CHECK-LABEL: @_Z11test_put_msDv8_u6__bf16ii(
+// CHECK-LABEL: @_Z11test_put_msDv8_8bfloat16ii(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <8 x bfloat> [[A:%.*]] to <4 x i32>
 // CHECK-NEXT:    [[VECEXT_I_I_I6_I_I:%.*]] = extractelement <4 x i32> [[TMP0]], i64 0
@@ -2640,7 +2639,7 @@ void test_put_ms(v8bfloat16 a, int en, int tlast) { put_ms(a, en, tlast); }
 // CHECK-NEXT:    ret void
 //
 void test_put_ms(v4float a, int en, int tlast) { put_ms(a, en, tlast); }
-// CHECK-LABEL: @_Z11test_put_msDv2_u6__bf16ii(
+// CHECK-LABEL: @_Z11test_put_msDv2_8bfloat16ii(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = bitcast <2 x bfloat> [[A:%.*]] to i32
 // CHECK-NEXT:    tail call void @llvm.aie2p.put.ms(i32 [[TMP0]], i32 [[TLAST:%.*]])

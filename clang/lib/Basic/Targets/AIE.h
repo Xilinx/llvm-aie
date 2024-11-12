@@ -121,9 +121,11 @@ public:
       return false;
     return true;
   }
-  /// Return the mangled code of bfloat. this is needed, else it asserts
-  // in TargetInfo.h
-  const char *getBFloat16Mangling() const override { return "u6__bf16"; };
+  /// We treat the builtin __bf16 type as a vendor extension type.
+  /// Mangle the type name using its user visible name, "bfloat16".
+  const char *getBFloat16Mangling() const override { return "8bfloat16"; }
+
+  bool treatBFloat16AsVendorType() const override { return true; }
 };
 
 } // namespace targets
