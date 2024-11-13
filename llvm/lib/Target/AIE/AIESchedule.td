@@ -58,6 +58,7 @@ def EMPTY_FU : FuncUnit;
 // Instruction Itinerary classes
 //===----------------------------------------------------------------------===//
 def II_ALU             : InstrItinClass;
+def II_EVENT           : InstrItinClass;
 def II_LOCK            : InstrItinClass;
 def II_LDA             : InstrItinClass;
 def II_LDB             : InstrItinClass;
@@ -136,6 +137,7 @@ def AIEItineraries : ProcessorItineraries<
   [EMPTY_FU, AGUA, AGUB, FU_LDA, FU_LDB, FU_STORE, LOCK, SCALAR_REG_WRITE, VECTOR_REG_READ, SCALAR_REG_READ,
    FU_FX2FLT, FU_FLT2FX], [], [
   InstrItinData<II_ALU          , [InstrStage<1,  [SCALAR_REG_WRITE]>], [1, 1, 1, 1]>,
+  InstrItinData<II_EVENT        , [], [1]>,
   InstrItinData<II_LDA          , [InstrStage<1,  [FU_LDA], 0>,
                                    ReserveLocks<5, 7>,
                                    InstrStage<1,  [SCALAR_REG_WRITE]>], [8, 1, 0 /*cs read in ID stage*/]>,    // 8 cycle loads

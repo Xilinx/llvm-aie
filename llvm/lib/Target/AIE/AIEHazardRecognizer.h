@@ -34,6 +34,18 @@ void applyFormatOrdering(AIE::MachineBundle &Bundle, const VLIWFormat &Format,
                          MachineInstr *BundleRoot,
                          MachineBasicBlock::iterator InsertPoint);
 
+/// Return all the instructions bundled within \p MI, or itself if
+/// it isn't a BUNDLE.
+/// \param IncludeRoot Whether to include the BUNDLE instr in the range
+inline MachineBasicBlock::instr_range bundled_instrs(MachineInstr &MI,
+                                                     bool IncludeRoot = false) {
+  MachineBasicBlock::instr_iterator It = MI.getIterator();
+  if (!MI.isBundle())
+    return make_range(It, std::next(It));
+  auto Begin = IncludeRoot ? It : std::next(It);
+  return make_range(Begin, getBundleEnd(MI.getIterator()));
+}
+
 // To be merged with AIEResourceCycle
 class FuncUnitWrapper {
   /// The format interface to interpret bundle constraints
@@ -217,6 +229,8 @@ private:
   static int NumInstrsScheduled;
   unsigned IssueLimit = 1;
   unsigned ReservedCycles = 0;
+
+  bool IsPreRA = false;
 
   // Ignore FuncUnits past a certain pipeline depth.
   // This is set to std::nullopt for the post-RA scheduler.

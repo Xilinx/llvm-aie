@@ -236,6 +236,7 @@ def II_MOV_SS : InstrItinClass;
 def II_MUL : InstrItinClass;
 def II_NE : InstrItinClass;
 def II_NEZ : InstrItinClass;
+def II_NOP : InstrItinClass;
 def II_OR : InstrItinClass;
 def II_PADD : InstrItinClass;
 def II_PADD_2D : InstrItinClass;
@@ -634,6 +635,7 @@ InstrItinData<II_MOVd6, [SimpleCycle<P_RM_PORT>, EmptyCycles<5>, SimpleCycle<RS_
 InstrItinData<II_MUL, [EmptyCycles<1>, SimpleCycle<R_WX_PORT>], [2,1,1]>,
 InstrItinData<II_NE, [InstrStage<1,  [R_WX_PORT]>], [1,1,1,1]>,
 InstrItinData<II_NEZ, [InstrStage<1,  [R_WX_PORT]>], [1,1,1]>,
+InstrItinData<II_NOP, [], []>,
 InstrItinData<II_OR, [InstrStage<1,  [R_WX_PORT]>], [1,1,1,1]>,
 InstrItinData<II_PADD, [], [1,1,1]>,
 InstrItinData<II_PADD_2D, [], [1,1,1,1]>,

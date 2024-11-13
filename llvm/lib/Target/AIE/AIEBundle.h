@@ -27,8 +27,6 @@
 
 #include "AIEBaseSubtarget.h"
 #include "MCTargetDesc/AIEMCFormats.h"
-#include "llvm-c/DebugInfo.h"
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
 
 #include <unordered_map>
@@ -78,6 +76,10 @@ public:
       return true;
     }
 
+    if (InstOpCode == TargetOpcode::BUNDLE) {
+      return !BundleRoot;
+    }
+
     // if we have a standalone bundle, we can't add anything.
     if (isStandalone())
       return false;
@@ -103,6 +105,16 @@ public:
       MetaInstrs.push_back(Instr);
       return;
     }
+
+    // Keep track of BUNDLE instructions. They need to be cleaned up when
+    // de-bundling before re-bundling. See applyBundles()
+    if (Instr->getOpcode() == TargetOpcode::BUNDLE) {
+      assert(!BundleRoot &&
+             "AIE::Bundle already has a root BUNDLE instruction");
+      BundleRoot = Instr;
+      return;
+    }
+
     // Check if the pre-condition is ensured
     assert((!ComputeSlots || !isStandalone()) &&
            "Tried to add an instruction in a standalone Bundle");
@@ -142,6 +154,7 @@ public:
     Instrs.clear();
     MetaInstrs.clear();
     SlotMap.clear();
+    BundleRoot = nullptr;
   }
 
   /// Check if empty
@@ -192,6 +205,15 @@ public:
     return false;
   }
 
+  /// Erase the BUNDLE root instruction from its parent MBB.
+  /// This does not remove the instructions within the BUNDLE, only the root.
+  void eraseRootFromBlock() {
+    if (BundleRoot) {
+      BundleRoot->eraseFromBundle();
+      BundleRoot = nullptr;
+    }
+  }
+
   bool isNOPBundle() const {
     const VLIWFormat *Format = getFormatOrNull();
     assert(Format);
@@ -228,6 +250,10 @@ public:
 
   // Contained meta instructions (These will end up after the bundle)
   std::vector<I *> MetaInstrs;
+
+private:
+  /// A root BUNDLE instruction if it exists.
+  I *BundleRoot = nullptr;
 };
 
 template <class I> bool operator==(const Bundle<I> &B1, const Bundle<I> &B2) {

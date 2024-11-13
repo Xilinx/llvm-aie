@@ -370,7 +370,7 @@ include "AIE2GenFixupInstrInfo.td"
 include "AIE2MultiSlotPseudoInstrInfo.td"
 
 //Intrinsics
-let hasSideEffects = 1, mayLoad = 0, mayStore = 0 in {
+let Itinerary = II_EVENT, hasSideEffects = 1, mayLoad = 0, mayStore = 0 in {
   def EVENT : AIE2_event_inst_alu<(outs), (ins t02u:$val), "event", "$val">;
 }
 def : Pat<(int_aie2_event t02u:$val), (EVENT t02u:$val)>;
@@ -500,7 +500,7 @@ let Uses = [SP] in
 def PseudoFI : Pseudo<(outs eP:$dst), (ins i32imm:$imm)>;
 
 // NOPs for each VLIW Slot
-let hasSideEffects = 0, mayLoad = 0, mayStore = 0, isSlotNOP = true in {
+let Itinerary = II_NOP, hasSideEffects = 0, mayLoad = 0, mayStore = 0, isSlotNOP = true in {
   def NOP : AIE2_nop_nop_inst_nop<(outs), (ins), "nop">;
   def NOPA : AIE2_nop_lda_inst_lda<(outs), (ins), "nopa">;
   def NOPB : AIE2_nop_ldb_inst_ldb<(outs), (ins), "nopb">;

@@ -175,9 +175,12 @@ llvm::AIE::computeAndFinalizeBundles(SchedBoundary &Zone) {
       if (EmitCycle != Bundles.size())
         bumpCycleForBundles(EmitCycle, Bundles, CurrBundle);
 
-      LLVM_DEBUG(dbgs() << "  Add to CurrBundle: " << MI);
-      CurrBundle.add(&MI, HazardRec.getSelectedAltDescs().getOpcode(&MI),
-                     ComputeSlots);
+      for (MachineInstr &BundledMI : bundled_instrs(MI, /*IncludeRoot=*/true)) {
+        LLVM_DEBUG(dbgs() << "  Add to CurrBundle: " << BundledMI);
+        CurrBundle.add(&BundledMI,
+                       HazardRec.getSelectedAltDescs().getOpcode(&BundledMI),
+                       ComputeSlots);
+      }
     }
   };
 
@@ -557,8 +560,8 @@ void AIEPostRASchedStrategy::commitBlockSchedule(MachineBasicBlock *BB) {
   if (BS.isPipelined()) {
     assert(BS.getRegions().size() == 1);
     MachineBasicBlock::iterator It = BB->getFirstTerminator();
-    const bool Move = true;
-    InterBlock.emitBundles(BS.getRegions().front().Bundles, BB, It, Move);
+    InterBlock.emitBundles(BS.getRegions().front().Bundles, BB, It,
+                           /*Move=*/true, /*EmitNops=*/true);
   } else {
     MachineBasicBlock::iterator It = BB->begin();
     const TargetInstrInfo *TII = getTII(BB);
@@ -574,7 +577,7 @@ void AIEPostRASchedStrategy::commitBlockSchedule(MachineBasicBlock *BB) {
           TII->insertNoop(*BB, It);
           continue;
         }
-        It = std::next(Bundle.getInstrs().back()->getIterator());
+        It = getBundleEnd(Bundle.getInstrs().back()->getIterator());
       }
       AIEHazardRecognizer::applyBundles(Region.Bundles, BS.TheBlock);
     }
@@ -656,6 +659,13 @@ void AIEPostRASchedStrategy::materializeMultiOpcodeInstrs() {
     MaterializePseudo(MI, BotHazardRec);
 }
 
+const SUnit &getBundledSUnit(const ScheduleDAGMI *DAG, MachineInstr *MI) {
+  if (const SUnit *SU = DAG->getSUnit(MI))
+    return *SU;
+  auto BundleStart = getBundleStart(MI->getIterator());
+  return *DAG->getSUnit(&*BundleStart);
+}
+
 bool AIEPostRASchedStrategy::checkInterZoneConflicts(
     const std::vector<AIE::MachineBundle> &BotBundles) const {
   const AIEHazardRecognizer *TopHazardRec = getAIEHazardRecognizer(Top);
@@ -674,8 +684,8 @@ bool AIEPostRASchedStrategy::checkInterZoneConflicts(
   unsigned CurTopCycle = Top.getCurrCycle();
   for (const AIE::MachineBundle &Bundle : BotBundles) {
     for (MachineInstr *MI : Bundle.getInstrs()) {
-      SUnit *SU = DAG->getSUnit(MI);
-      if (SU->TopReadyCycle > CurTopCycle)
+      const SUnit &SU = getBundledSUnit(DAG, MI);
+      if (SU.TopReadyCycle > CurTopCycle)
         return true;
     }
     ++CurTopCycle;

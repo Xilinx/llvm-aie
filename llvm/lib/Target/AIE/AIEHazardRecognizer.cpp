@@ -190,7 +190,8 @@ AIEHazardRecognizer::AIEHazardRecognizer(
     const AIEBaseInstrInfo *TII, const InstrItineraryData *II,
     AIEAlternateDescriptors &SelectedAlternateDescs, bool IsPreRA,
     std::optional<unsigned> ScoreboardDepth)
-    : TII(TII), ItinData(II), SelectedAltDescs(SelectedAlternateDescs) {
+    : TII(TII), ItinData(II), SelectedAltDescs(SelectedAlternateDescs),
+      IsPreRA(IsPreRA) {
 
   int Depth = 0;
   if (ScoreboardDepth.has_value()) {
@@ -227,8 +228,9 @@ AIEHazardRecognizer::AIEHazardRecognizer(
 
 namespace llvm {
 void applyFormatOrdering(AIE::MachineBundle &Bundle, const VLIWFormat &Format,
-                         MachineInstr *BundleRoot,
                          MachineBasicBlock::iterator InsertPoint) {
+  assert(Bundle.SlotMap.size() == Bundle.Instrs.size() &&
+         "Bundle has instructions without slot");
   if (Bundle.empty())
     return;
 
@@ -238,18 +240,20 @@ void applyFormatOrdering(AIE::MachineBundle &Bundle, const VLIWFormat &Format,
 
   // Run over the slots of the format and either insert the occupying
   // instruction or a nop. Reapply bundling.
+  MachineInstr *FirstMI = nullptr;
   for (MCSlotKind Slot : Format.getSlots()) {
     const MCSlotInfo *SlotInfo = TII->getSlotInfo(Slot);
     assert(SlotInfo);
 
     llvm::MachineInstr *Instr = Bundle.at(Slot);
-    if (Instr) {
-      Instr->removeFromBundle();
-      MBB.insert(InsertPoint, Instr);
-    }
-    if (!BundleRoot)
-      BundleRoot = Instr;
-    else if (Instr)
+    if (!Instr)
+      continue;
+
+    Instr->removeFromBundle();
+    MBB.insert(InsertPoint, Instr);
+    if (!FirstMI)
+      FirstMI = Instr;
+    else
       Instr->bundleWithPred();
   }
 
@@ -257,7 +261,7 @@ void applyFormatOrdering(AIE::MachineBundle &Bundle, const VLIWFormat &Format,
     // Make sure bundles are finalized otherwise kill flags can be incorrect,
     // and accessing properties on a bundle header might give un-expected
     // results.
-    finalizeBundle(MBB, BundleRoot->getIterator());
+    finalizeBundle(MBB, FirstMI->getIterator());
   }
 }
 } // namespace llvm
@@ -266,6 +270,11 @@ void AIEHazardRecognizer::applyBundles(
     const std::vector<AIE::MachineBundle> &Bundles, MachineBasicBlock *MBB) {
   for (auto B : Bundles) {
     LLVM_DEBUG(dbgs() << "---Bundle---\n");
+
+    // Erase the BUNDLE root to be sure we do not end up with standalone BUNDLEs
+    // after de-bundling and re-bundling.
+    B.eraseRootFromBlock();
+
     if (B.empty()) {
       // We have no real instructions. We don't need any bundling
       continue;
@@ -279,13 +288,12 @@ void AIEHazardRecognizer::applyBundles(
     // That's where we will re-insert the slot-ordered instructions, as well as
     // meta instructions.
     MachineBasicBlock::iterator BundleEnd =
-        std::next(B.getInstrs().back()->getIterator());
+        getBundleEnd(B.getInstrs().back()->getIterator());
 
     // AIE1 does not always have formats for standalone instructions.
     // Do not re-order for such cases.
     if (B.size() > 1)
-      applyFormatOrdering(B, *B.getFormatOrNull(), /*BundleRoot=*/nullptr,
-                          BundleEnd);
+      applyFormatOrdering(B, *B.getFormatOrNull(), BundleEnd);
 
     for (auto *I : B.getMetaInstrs()) {
       LLVM_DEBUG(dbgs() << "Meta " << *I);
@@ -304,6 +312,8 @@ void AIEHazardRecognizer::Reset() {
 ScheduleHazardRecognizer::HazardType
 AIEHazardRecognizer::getHazardType(SUnit *SU, int DeltaCycles) {
   MachineInstr *MI = SU->getInstr();
+  assert(!MI->isBundled() &&
+         "Unexpected bundled instruction when checking hazards.");
   if (AIE::MachineBundle::isNoHazardMetaInstruction(MI->getOpcode())) {
     LLVM_DEBUG(dbgs() << "Meta instruction\n");
     return NoHazard;
@@ -386,15 +396,21 @@ void AIEHazardRecognizer::EmitInstruction(SUnit *SU) {
 
 void AIEHazardRecognizer::EmitInstruction(SUnit *SU, int DeltaCycles) {
   MachineInstr *MI = SU->getInstr();
+  const MachineRegisterInfo &MRI = MI->getMF()->getRegInfo();
   LLVM_DEBUG(dbgs() << "Emit Instruction: " << *MI);
   LLVM_DEBUG(dbgs() << "  With Delta=" << DeltaCycles << "\n");
 
-  // If the instruction has multiple options, find the opcode that was selected
-  // and use the latter to update the scoreboard.
-  unsigned SelectedOpcode = SelectedAltDescs.getOpcode(MI);
-  if (!AIE::MachineBundle::isNoHazardMetaInstruction(SelectedOpcode))
-    emitInScoreboard(TII->get(SelectedOpcode), getMemoryBanks(MI),
-                     MI->operands(), MI->getMF()->getRegInfo(), DeltaCycles);
+  for (MachineInstr &BundledMI : bundled_instrs(*MI)) {
+    // If the instruction has multiple options, find the opcode that was
+    // selected and use the latter to update the scoreboard.
+    unsigned SelectedOpcode = SelectedAltDescs.getOpcode(&BundledMI);
+
+    if (AIE::MachineBundle::isNoHazardMetaInstruction(SelectedOpcode))
+      continue;
+
+    emitInScoreboard(TII->get(SelectedOpcode), getMemoryBanks(&BundledMI),
+                     BundledMI.operands(), MRI, DeltaCycles);
+  }
 
   // When requested, we switch off VLIW scheduling after the specified number
   // of instructions are scheduled.
@@ -441,6 +457,12 @@ ScheduleHazardRecognizer::HazardType AIEHazardRecognizer::getHazardType(
     iterator_range<const MachineOperand *> MIOperands,
     const MachineRegisterInfo &MRI, int DeltaCycles) const {
   const unsigned SchedClass = TII->getSchedClass(Desc, MIOperands, MRI);
+  if (!IsPreRA && SchedClass == 0 &&
+      !AIE::MachineBundle::isNoHazardMetaInstruction(Desc.getOpcode())) {
+    LLVM_DEBUG(llvm::dbgs() << "Warning!: no Scheduling class for Opcode="
+                            << Desc.getOpcode() << "\n");
+    report_fatal_error("Missing scheduling info.");
+  }
   return toHazardType(checkConflict(
       TheScoreboard, ItinData, SchedClass,
       getSlotSet(Desc, *TII->getFormatInterface(), IgnoreUnknownSlotSets),
@@ -532,6 +554,12 @@ void AIEHazardRecognizer::emitInScoreboard(
     iterator_range<const MachineOperand *> MIOperands,
     const MachineRegisterInfo &MRI, int DeltaCycles) const {
   const unsigned SchedClass = TII->getSchedClass(Desc, MIOperands, MRI);
+  if (!IsPreRA && SchedClass == 0 &&
+      !AIE::MachineBundle::isNoHazardMetaInstruction(Desc.getOpcode())) {
+    LLVM_DEBUG(llvm::dbgs() << "Warning!: no Scheduling class for Opcode="
+                            << Desc.getOpcode() << "\n");
+    report_fatal_error("Missing scheduling info.");
+  }
   const SlotBits SlotSet =
       getSlotSet(Desc, *TII->getFormatInterface(), IgnoreUnknownSlotSets);
   enterResources(TheScoreboard, ItinData, SchedClass, SlotSet, MemoryBanks,

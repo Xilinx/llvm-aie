@@ -761,22 +761,22 @@ int InterBlockScheduling::getSafetyMargin(MachineBasicBlock *Loop,
 
 void InterBlockScheduling::emitBundles(
     const std::vector<MachineBundle> &Bundles, MachineBasicBlock *BB,
-    MachineBasicBlock::iterator Before, bool Move) const {
+    MachineBasicBlock::iterator Before, bool Move, bool EmitNops) const {
   for (auto &Bundle : Bundles) {
     if (Bundle.empty()) {
-      TII->insertNoop(*BB, Before);
+      if (EmitNops)
+        TII->insertNoop(*BB, Before);
+      else {
+        DebugLoc DL;
+        BuildMI(*BB, Before, DL, TII->get(TargetOpcode::BUNDLE));
+      }
       continue;
     }
-    bool InBundle = false;
     for (auto *MI : Bundle.getInstrs()) {
       if (Move) {
         BB->remove_instr(MI);
       }
       BB->insert(Before, MI);
-      if (InBundle) {
-        MI->bundleWithPred();
-      }
-      InBundle = true;
     }
   }
   AIEHazardRecognizer::applyBundles(Bundles, BB);
@@ -808,8 +808,8 @@ void InterBlockScheduling::emitInterBlockTop(const BlockState &BS) const {
 
   if (LBS.isPipelined()) {
     auto *DedicatedExit = MakeDedicated(BB);
-    const bool Move = false;
-    emitBundles(BS.TopInsert, DedicatedExit, DedicatedExit->begin(), Move);
+    emitBundles(BS.TopInsert, DedicatedExit, DedicatedExit->begin(),
+                /*Move=*/false, /*EmitNops=*/true);
   } else {
     if (int SafetyMargin = getSafetyMargin(Loop, BB)) {
       auto *DedicatedExit = MakeDedicated(BB);
@@ -829,8 +829,8 @@ void InterBlockScheduling::emitInterBlockBottom(const BlockState &BS) const {
   MachineBasicBlock *PreHeader = BS.TheBlock;
   assert(PreHeader->end() == PreHeader->getFirstTerminator() &&
          "PreHeader is not fall-through");
-  const bool Move = false;
-  emitBundles(BS.BottomInsert, PreHeader, PreHeader->end(), Move);
+  emitBundles(BS.BottomInsert, PreHeader, PreHeader->end(), /*Move=*/false,
+              /*EmitNops=*/true);
 }
 
 int InterBlockScheduling::getCyclesToRespectTiming(

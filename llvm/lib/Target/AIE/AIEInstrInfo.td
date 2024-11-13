@@ -508,6 +508,7 @@ def : Pat<(v32i16 (vector_insert (v32i16 VEC512:$src), (i32 GPR:$reg), t05u:$lan
 		(v32i16 (S2X_UPD_R16 (v32i16 VEC512:$src), t05u:$lane, (i32 GPR:$reg)))>;
 
 // Intrinsics
+let Itinerary = II_EVENT in
 def EVENT : AIE_event<"event">;
 def : Pat<(int_aie_event t02u:$val), (EVENT t02u:$val)>;
 

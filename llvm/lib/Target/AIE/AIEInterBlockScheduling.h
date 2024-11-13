@@ -416,14 +416,14 @@ public:
                       MachineBasicBlock *Epilogue) const;
 
   /// Insert the instructions from Bundles into BB before the
-  /// iterator Before.
-  /// Inserts nops for empty bundles and applies MIR bundling to the
-  /// inserted instructions.
-  /// If Move is set, the instructions are assumed to be in the block already,
-  /// and will be moved, not inserted
+  /// iterator Before and applies MIR bundling.
+  ///
+  /// \param Move Whether the instructions are assumed to be in the block
+  ///        already, and need to be moved, not inserted
+  /// \param EmitNops Whether to emit a NOP instead of an empty BUNDLE.
   void emitBundles(const std::vector<MachineBundle> &TimedRegion,
                    MachineBasicBlock *BB, MachineBasicBlock::iterator Before,
-                   bool Move) const;
+                   bool Move, bool EmitNops) const;
 
   /// Emit extra code induced by interblock scheduling:
   /// Safety margins, SWP prologues, SWP epilogues

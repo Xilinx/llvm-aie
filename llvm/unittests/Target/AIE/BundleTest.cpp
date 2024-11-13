@@ -8,16 +8,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "AIE.h"
 #include "AIEInstrInfo.h"
 #include "MCTargetDesc/AIEFormat.h"
 #include "MCTargetDesc/AIEMCFormats.h"
-#include "llvm/ADT/StringRef.h"
-#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
-#include "llvm/MC/TargetRegistry.h"
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include <type_traits>
 
 #include "AIEBundle.h"
 
@@ -60,6 +56,8 @@ public:
   unsigned Opcode = 0;
 
   unsigned getOpcode() const { return Opcode; }
+
+  MOCK_METHOD(void, eraseFromBundle, (), ());
 };
 using MockBundle = AIE::Bundle<MockInstr>;
 
@@ -110,6 +108,7 @@ public:
     for (int i = 0; i < 10; i++) {
       MyInstrs[i].Opcode = FirstOpcode + i;
     }
+    getBUNDLE()->Opcode = TargetOpcode::BUNDLE;
     getMeta()->Opcode = TargetOpcode::IMPLICIT_DEF;
   }
   const MCSlotInfo *getSlotInfo(const MCSlotKind Kind) const override {
@@ -124,6 +123,7 @@ public:
     return {};
   }
   MockInstr *operator[](unsigned i) { return &MyInstrs[i]; }
+  MockInstr *getBUNDLE() { return &MyInstrs[8]; }
   MockInstr *getMeta() { return &MyInstrs[9]; }
 
 private:
@@ -243,6 +243,41 @@ TEST(Bundle, AddUnknowns) {
   B.add(Unknown);
   B.add(Unknown, Unknown->getOpcode(), /*ComputeSlots=*/false);
   EXPECT_EQ(B.size(), unsigned(2));
+}
+
+TEST(Bundle, BundleRoot) {
+  MockTII TII;
+  MockMCFormats FormatInterface;
+  MockBundle B(&FormatInterface);
+
+  auto *Alu = TII[SLOTALU];
+  auto *St = TII[SLOTST];
+  auto *Mv = TII[SLOTMV];
+  auto *Root = TII.getBUNDLE();
+
+  // We can add a bundle root at any moment, but there has to be only one
+  EXPECT_TRUE(B.canAdd(Root));
+  B.add(Alu);
+  EXPECT_TRUE(B.canAdd(Root));
+  B.add(Root);
+  EXPECT_FALSE(B.canAdd(Root));
+  B.add(Mv);
+  B.add(St);
+
+  // Bundle root instructions don't influence bundle size
+  EXPECT_EQ(B.size(), size_t(3));
+
+  // ::eraseRootFromBlock should trigger a call to erase the BUNDLE
+  EXPECT_CALL(*Root, eraseFromBundle()).Times(1);
+  B.eraseRootFromBlock();
+  EXPECT_TRUE(B.canAdd(Root));
+
+  // Clearing a bundle also clears the root
+  B.add(Root);
+  EXPECT_FALSE(B.canAdd(Root));
+  B.clear();
+  EXPECT_TRUE(B.empty());
+  EXPECT_TRUE(B.canAdd(Root));
 }
 
 TEST(Bundle, Meta) {
