@@ -807,6 +807,8 @@ void ScheduleDAGMI::enterRegion(MachineBasicBlock *bb,
                                      unsigned regioninstrs)
 {
   ScheduleDAGInstrs::enterRegion(bb, begin, end, regioninstrs);
+  CurrentTop = MachineBasicBlock::iterator();
+  CurrentBottom = MachineBasicBlock::iterator();
 
   SchedImpl->initPolicy(begin, end, regioninstrs);
 
