@@ -544,6 +544,13 @@ void AIEPostRASchedStrategy::enterMBB(MachineBasicBlock *MBB) {
 void AIEPostRASchedStrategy::commitBlockSchedule(MachineBasicBlock *BB) {
   auto &BS = InterBlock.getBlockState(BB);
 
+  // TODO: Update assert when the fixed instructions become part of the
+  // scheduling region.
+  assert(BS.getRegions().empty() ||
+         0 == BS.getTop().getTopFixedBundles().size());
+  assert(BS.getRegions().empty() ||
+         0 == BS.getBottom().getBotFixedBundles().size());
+
   // Safety margin, swp epilogue
   InterBlock.emitInterBlockTop(BS);
 
@@ -1146,16 +1153,14 @@ void AIEScheduleDAGMI::recordDbgInstrs(const Region &CurrentRegion) {
   // We connect any Debug machine instruction to the instruction before it.
   // if there is no instruction before it, it is recorded in FirstDbgValue;
   MachineInstr *DbgMI = nullptr;
-  for (auto MII = CurrentRegion.end(), MIE = CurrentRegion.begin(); MII != MIE;
-       --MII) {
-    MachineInstr *Prev = *std::prev(MII);
+  for (MachineInstr *MI : reverse(CurrentRegion.getFreeInstructions())) {
     if (DbgMI) {
-      DbgValues.emplace_back(DbgMI, Prev);
+      DbgValues.emplace_back(DbgMI, MI);
       DbgMI = nullptr;
     }
 
-    if (Prev->isDebugValue() || Prev->isDebugPHI()) {
-      DbgMI = Prev;
+    if (MI->isDebugValue() || MI->isDebugPHI()) {
+      DbgMI = MI;
     }
   }
   if (DbgMI)
@@ -1240,7 +1245,9 @@ void llvm::AIEPostRASchedStrategy::buildGraph(ScheduleDAGMI &DAG, AAResults *AA,
   }
   DEBUG_BLOCKS(dbgs() << "    buildGraph, NCopies=" << NCopies << "\n");
   for (int S = 0; S < NCopies; S++) {
-    for (auto *I : Region) {
+    // Only add SUnits for "free" instructions, fixed instructions will be added
+    // later in a DAGMutator.
+    for (MachineInstr *I : Region.getFreeInstructions()) {
       DAG.initSUnit(*I);
     }
   }

@@ -166,23 +166,46 @@ class Region {
   // The instruction that starts the next region, if any
   MachineInstr *ExitInstr = nullptr;
 
+  MachineBasicBlock *BB = nullptr;
+
+  /// Instructions that are already scheduled at the top, e.g. an swp epilogue.
+  /// Those should not be re-ordered by the scheduler.
+  ArrayRef<MachineBundle> TopFixedBundles;
+
+  /// Instructions that are already scheduled at the bottom, e.g. an swp
+  /// prologue. Those should not be re-ordered by the scheduler.
+  ArrayRef<MachineBundle> BotFixedBundles;
+
 public:
   Region(MachineBasicBlock *BB, MachineBasicBlock::iterator Begin,
-         MachineBasicBlock::iterator End) {
-    for (auto It = Begin; It != End; ++It) {
-      SemanticOrder.push_back(&*It);
-    }
-    if (End != BB->end()) {
-      ExitInstr = &*End;
-    }
+         MachineBasicBlock::iterator End,
+         ArrayRef<MachineBundle> TopFixedBundles,
+         ArrayRef<MachineBundle> BotFixedBundles);
+
+  using free_iterator = std::vector<MachineInstr *>::const_iterator;
+  using fixed_iterator = MachineBasicBlock::iterator;
+
+  /// Iterate over the "free" instructions in semantic order.
+  inline ArrayRef<MachineInstr *> getFreeInstructions() const {
+    return SemanticOrder;
   }
-  std::vector<MachineInstr *>::const_iterator begin() const {
-    return SemanticOrder.begin();
+
+  /// Iterate over the instructions that are fixed at the top. Typically those
+  /// represent a SWP epilogue.
+  inline iterator_range<fixed_iterator> top_fixed_instrs() const {
+    fixed_iterator FixedEnd = std::next(BB->begin(), TopFixedBundles.size());
+    return make_range(BB->begin(), FixedEnd);
   }
-  std::vector<MachineInstr *>::const_iterator end() const {
-    return SemanticOrder.end();
+  ArrayRef<MachineBundle> getTopFixedBundles() const { return TopFixedBundles; }
+
+  /// Iterate over the instructions that are fixed at the bottom. Typically
+  /// those represent a SWP prologue.
+  inline iterator_range<fixed_iterator> bot_fixed_instrs() const {
+    fixed_iterator FixedBegin = std::prev(BB->end(), BotFixedBundles.size());
+    return make_range(FixedBegin, BB->end());
   }
-  size_t size() const { return SemanticOrder.size(); }
+  ArrayRef<MachineBundle> getBotFixedBundles() const { return BotFixedBundles; }
+
   MachineInstr *getExitInstr() const { return ExitInstr; }
 
   std::vector<MachineBundle> Bundles;
@@ -225,12 +248,15 @@ public:
     TheBundles.insert(TheBundles.end(), Bundles.begin(), Bundles.end());
   }
   void addRegion(MachineBasicBlock *BB, MachineBasicBlock::iterator RegionBegin,
-                 MachineBasicBlock::iterator RegionEnd) {
+                 MachineBasicBlock::iterator RegionEnd,
+                 ArrayRef<MachineBundle> TopFixedBundles,
+                 ArrayRef<MachineBundle> BotFixedBundles) {
     assert((Kind == BlockType::Loop &&
             FixPoint.Stage == SchedulingStage::GatheringRegions) ||
            FixPoint.Stage == SchedulingStage::Scheduling);
     CurrentRegion = Regions.size();
-    Regions.emplace_back(BB, RegionBegin, RegionEnd);
+    Regions.emplace_back(BB, RegionBegin, RegionEnd, TopFixedBundles,
+                         BotFixedBundles);
   }
   auto &getCurrentRegion() const { return Regions.at(CurrentRegion); }
   auto &getCurrentRegion() { return Regions[CurrentRegion]; }

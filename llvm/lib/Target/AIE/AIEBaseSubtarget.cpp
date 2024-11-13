@@ -543,11 +543,10 @@ public:
     LiveRegs.init(*TRI);
     bool AddReservedRegs = true;
     if (Scheduler) {
+      assert(!Scheduler->doMBBSchedRegionsTopDown());
       MachineBasicBlock *MBB = DAG->getBB();
       const BlockState &BS = Scheduler->getInterBlock().getBlockState(MBB);
-      auto Region = BS.getCurrentRegion();
-      auto BottomRegion = BS.getBottom();
-      if (*Region.begin() == *BottomRegion.begin()) {
+      if (&BS.getCurrentRegion() == &BS.getBottom()) {
         // If the region is bottom region, liveouts of region are same as
         // liveouts of the MBB
         for (const MCPhysReg Reg : BS.LiveOuts) {

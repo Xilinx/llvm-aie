@@ -311,6 +311,8 @@ class PipelineExtractor : public PipelineScheduleVisitor {
     // Nothing at this time, but let's keep the override around
   }
   void startLoop() override {
+    assert(Prologue->BottomInsert.empty() &&
+           "PreHeader already has a timed region at Bottom.");
     Prologue->BottomInsert = TimedRegion;
     TimedRegion.clear();
     InLoop = true;
@@ -321,6 +323,8 @@ class PipelineExtractor : public PipelineScheduleVisitor {
     InLoop = false;
   }
   void finish() override {
+    assert(Epilogue->TopInsert.empty() &&
+           "Epilogue already has a timed region at Top.");
     Epilogue->TopInsert = TimedRegion;
     TimedRegion.clear();
   }
@@ -708,10 +712,13 @@ void InterBlockScheduling::enterRegion(MachineBasicBlock *BB,
   auto &BS = getBlockState(BB);
   DEBUG_BLOCKS(dbgs() << "    >> enterRegion, Iter=" << BS.FixPoint.NumIters
                       << "\n");
+
+  // Only add regions of loops when in the GatheringRegions phase
   if (BS.Kind != BlockType::Loop ||
       BS.FixPoint.Stage == SchedulingStage::GatheringRegions) {
-    // Only add regions of loops when in the GatheringRegions phase
-    BS.addRegion(BB, RegionBegin, RegionEnd);
+    ArrayRef<MachineBundle> TopFixedBundles;
+    ArrayRef<MachineBundle> BotFixedBundles;
+    BS.addRegion(BB, RegionBegin, RegionEnd, TopFixedBundles, BotFixedBundles);
   }
 }
 
@@ -820,9 +827,10 @@ void InterBlockScheduling::emitInterBlockBottom(const BlockState &BS) const {
     return;
   }
   MachineBasicBlock *PreHeader = BS.TheBlock;
+  assert(PreHeader->end() == PreHeader->getFirstTerminator() &&
+         "PreHeader is not fall-through");
   const bool Move = false;
-  emitBundles(BS.BottomInsert, PreHeader, PreHeader->getFirstTerminator(),
-              Move);
+  emitBundles(BS.BottomInsert, PreHeader, PreHeader->end(), Move);
 }
 
 int InterBlockScheduling::getCyclesToRespectTiming(
@@ -847,7 +855,8 @@ int InterBlockScheduling::getCyclesToRespectTiming(
       ++DistFromLoopEntry;
     }
     // Here we need to iterate using semantic order.
-    for (MachineInstr *MI : R) {
+    assert(R.top_fixed_instrs().empty() && "SWP epilogue already emitted?");
+    for (MachineInstr *MI : R.getFreeInstructions()) {
       Edges.addNode(MI);
     }
   };
@@ -970,6 +979,40 @@ bool InterBlockEdges::isPostBoundaryNode(SUnit *SU) const {
   return Boundary ? SU->NodeNum >= *Boundary : false;
 }
 
+Region::Region(MachineBasicBlock *BB, MachineBasicBlock::iterator Begin,
+               MachineBasicBlock::iterator End,
+               ArrayRef<MachineBundle> TopFixedBundles,
+               ArrayRef<MachineBundle> BotFixedBundles)
+    : BB(BB), TopFixedBundles(TopFixedBundles),
+      BotFixedBundles(BotFixedBundles) {
+  MachineBasicBlock::iterator FreeBegin =
+      std::next(Begin, TopFixedBundles.size());
+  MachineBasicBlock::iterator FreeEnd = std::prev(End, BotFixedBundles.size());
+
+  // Verify that all fixed instructions are at the right place in the MBB
+  assert(TopFixedBundles.empty() || Begin == BB->begin());
+  assert(TopFixedBundles.empty() ||
+         all_of(TopFixedBundles.back().Instrs, [FreeBegin](
+                                                   const MachineInstr *MI) {
+           return getBundleStart(MI->getIterator()) == std::prev(FreeBegin);
+         }));
+  assert(BotFixedBundles.empty() || End == BB->end());
+  assert(
+      BotFixedBundles.empty() ||
+      all_of(BotFixedBundles.front().Instrs, [FreeEnd](const MachineInstr *MI) {
+        return getBundleStart(MI->getIterator()) == FreeEnd;
+      }));
+
+  // When the region is created, its instructions haven't been re-ordered yet,
+  // so this is effectively saving the semantic order.
+  for (auto It = FreeBegin; It != FreeEnd; ++It) {
+    SemanticOrder.push_back(&*It);
+  }
+  if (End != BB->end()) {
+    ExitInstr = &*End;
+  }
+}
+
 BlockState::BlockState(MachineBasicBlock *Block) : TheBlock(Block) {
   classify();
 }
@@ -1049,20 +1092,28 @@ void BlockState::classify() {
 void BlockState::initInterBlock(const MachineSchedContext &Context,
                                 const AIEHazardRecognizer &HR) {
   assert(!BoundaryEdges);
+  assert(Kind == BlockType::Loop);
+  assert(all_of(Regions,
+                [](const Region &R) {
+                  return R.top_fixed_instrs().empty() &&
+                         R.bot_fixed_instrs().empty();
+                }) &&
+         "Loop cannot have fixed instructions");
   BoundaryEdges = std::make_unique<InterBlockEdges>(Context);
   if (Regions.size() == 1) {
     // Don't worry, this just constructs a mostly empty container class
-    PostSWP = std::make_unique<PostPipeliner>(HR, getTop().size());
+    auto NumInstrs = getTop().getFreeInstructions().size();
+    PostSWP = std::make_unique<PostPipeliner>(HR, NumInstrs);
   }
 
   // We are called just after the first round of scheduling a block.
   // These loops run over the original 'semantical order' that was collected
   // in this first fixpoint iteration
-  for (auto *MI : getBottom()) {
+  for (auto *MI : getBottom().getFreeInstructions()) {
     BoundaryEdges->addNode(MI);
   }
   BoundaryEdges->markBoundary();
-  for (auto *MI : getTop()) {
+  for (auto *MI : getTop().getFreeInstructions()) {
     BoundaryEdges->addNode(MI);
   }
   BoundaryEdges->buildEdges();
