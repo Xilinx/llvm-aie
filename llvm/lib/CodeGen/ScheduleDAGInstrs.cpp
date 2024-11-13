@@ -197,6 +197,10 @@ void ScheduleDAGInstrs::enterRegion(MachineBasicBlock *bb,
   RegionBegin = begin;
   RegionEnd = end;
   NumRegionInstrs = regioninstrs;
+
+  // Ensure all instructions can be given a SUnit without re-allocation.
+  clearDAG();
+  SUnits.reserve(NumRegionInstrs);
 }
 
 void ScheduleDAGInstrs::exitRegion() {
@@ -633,8 +637,6 @@ std::optional<unsigned> ScheduleDAGInstrs::initSUnit(MachineInstr &MI) {
 
 void ScheduleDAGInstrs::initSUnits() {
   ScheduleDAG::clearDAG();
-  // Prevent reallocations for performance.
-  SUnits.reserve(NumRegionInstrs);
   // This loop creates SUnits for real instructions.
   for (MachineInstr &MI : make_range(RegionBegin, RegionEnd)) {
     initSUnit(MI);
