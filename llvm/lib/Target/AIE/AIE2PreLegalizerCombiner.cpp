@@ -56,6 +56,8 @@ protected:
   std::map<unsigned, Register>
   getVectorInsertIndices(MachineInstr *CurMI, unsigned SclSrcBits,
                          MachineRegisterInfo &MRI) const;
+  bool isTruncExtToS20Sequence(Register DstReg, bool SignVal,
+                               unsigned SrcEltSize) const;
 
 public:
   AIE2PreLegalizerCombinerImpl(
@@ -76,6 +78,8 @@ public:
   bool tryToCombineVectorInserts(MachineInstr &MI, unsigned SclSrcBits) const;
 
   bool tryToCombineExtBcst(MachineInstr &MI) const;
+
+  bool tryToCombineVExtractElt(MachineInstr &MI) const;
 
   bool tryToCombineIntrinsic(MachineInstr &MI) const;
 
@@ -293,6 +297,85 @@ bool AIE2PreLegalizerCombinerImpl::tryToCombineExtBcst(MachineInstr &MI) const {
   return true;
 }
 
+/// Determines if it is safe to combine vextract by checking the uses of DstReg,
+/// specifically for a pattern involving TRUNC followed by EXT.
+bool AIE2PreLegalizerCombinerImpl::isTruncExtToS20Sequence(
+    Register DstReg, bool SignVal, unsigned SrcEltSize) const {
+  // Returns the single non-debug use of a register with a specific opcode
+  // and destination size.
+  auto GetOneUseWithOpcode =
+      [&](const Register Reg, const unsigned OpcodeToCheck,
+          const unsigned DstSize) -> std::optional<MachineInstr *> {
+    if (MRI.hasOneNonDBGUser(Reg)) {
+      MachineInstr &Use = *MRI.use_nodbg_instructions(Reg).begin();
+      if (Use.getOpcode() == OpcodeToCheck) {
+        const LLT DstRegTy = MRI.getType(Use.getOperand(0).getReg());
+        if (DstRegTy.getSizeInBits() == DstSize)
+          return &Use;
+      }
+    }
+    return std::nullopt;
+  };
+  auto Trunc = GetOneUseWithOpcode(DstReg, TargetOpcode::G_TRUNC, SrcEltSize);
+  if (!Trunc)
+    return false;
+
+  const MachineInstr *TruncMI = *Trunc;
+  const unsigned ExtOpcode =
+      SignVal ? TargetOpcode::G_SEXT : TargetOpcode::G_ZEXT;
+  const Register UseDstReg = TruncMI->getOperand(0).getReg();
+  return GetOneUseWithOpcode(UseDstReg, ExtOpcode, 20).has_value();
+}
+
+/// \returns true if it is possible to combine the below sequence of MIRs
+/// From : %3:_(s32) = G_INTRINSIC
+///         intrinsic(@llvm.aie2.vextract.elem[8/16].I512), %2(<32 x s16>),
+///         %0(s32), %1(s32)
+///        %4:_(s16) = G_TRUNC %3(s32)
+///        %5:_(s20) = G_SEXT %4(s16)
+/// To :   %9:_(s20) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %2(<32 x s16>), %0(s32)
+///        %10:_(s20) = G_ASSERT_[S/Z]EXT %9, 16
+///        %4:_(s16) = G_TRUNC %10(s20)
+///        %5:_(s20) = G_[S/Z]EXT %4(s16)
+/// This combine enables S20Narrowing for vextract
+bool AIE2PreLegalizerCombinerImpl::tryToCombineVExtractElt(
+    MachineInstr &MI) const {
+  const Register DstReg = MI.getOperand(0).getReg();
+  // In this case of G_INTRINSIC operand 1 is target intrinsic
+  const Register SrcReg = MI.getOperand(2).getReg();
+  const Register IdxReg = MI.getOperand(3).getReg();
+  const Register SignReg = MI.getOperand(4).getReg();
+
+  const auto SignVal = getIConstantVRegSExtVal(SignReg, MRI);
+  if (!SignVal)
+    return false;
+
+  const LLT SrcVecTy = MRI.getType(SrcReg);
+  const unsigned SrcEltSize = SrcVecTy.getScalarSizeInBits();
+  // Checks for the required pattern in uses of DstReg
+  if (!isTruncExtToS20Sequence(DstReg, SignVal.value(), SrcEltSize))
+    return false;
+
+  auto *TII = static_cast<const AIE2InstrInfo *>(STI.getInstrInfo());
+  const unsigned Opcode =
+      TII->getGenericExtractVectorEltOpcode(SignVal.value());
+  const unsigned AssertExtOpcode = SignVal.value()
+                                       ? TargetOpcode::G_ASSERT_SEXT
+                                       : TargetOpcode::G_ASSERT_ZEXT;
+  const unsigned ExtOpcode =
+      SignVal.value() ? TargetOpcode::G_SEXT : TargetOpcode::G_ZEXT;
+  const LLT S20 = LLT::scalar(20);
+  Register DstReg20Bit = MRI.createGenericVirtualRegister(S20);
+  Register ExtReg20Bit = MRI.createGenericVirtualRegister(S20);
+  B.setInstrAndDebugLoc(MI);
+
+  B.buildInstr(Opcode, {DstReg20Bit}, {SrcReg, IdxReg});
+  B.buildAssertInstr(AssertExtOpcode, ExtReg20Bit, DstReg20Bit, SrcEltSize);
+  B.buildInstr(ExtOpcode, {DstReg}, {ExtReg20Bit});
+  MI.eraseFromParent();
+  return true;
+}
+
 bool AIE2PreLegalizerCombinerImpl::tryToCombineIntrinsic(
     MachineInstr &MI) const {
   const unsigned IntrinsicID = cast<GIntrinsic>(MI).getIntrinsicID();
@@ -317,6 +400,10 @@ bool AIE2PreLegalizerCombinerImpl::tryToCombineIntrinsic(
   case Intrinsic::aie2_vbroadcast32_I512:
   case Intrinsic::aie2_vbroadcast64_I512: {
     return tryToCombineExtBcst(MI);
+  }
+  case Intrinsic::aie2_vextract_elem8_I512:
+  case Intrinsic::aie2_vextract_elem16_I512: {
+    return tryToCombineVExtractElt(MI);
   }
   default:
     break;
