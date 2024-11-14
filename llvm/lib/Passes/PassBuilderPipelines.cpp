@@ -132,6 +132,7 @@
 #include "llvm/Transforms/Utils/CountVisits.h"
 #include "llvm/Transforms/Utils/InjectTLIMappings.h"
 #include "llvm/Transforms/Utils/LibCallsShrinkWrap.h"
+#include "llvm/Transforms/Utils/LoopIterCountAssumptions.h"
 #include "llvm/Transforms/Utils/Mem2Reg.h"
 #include "llvm/Transforms/Utils/MoveAutoInit.h"
 #include "llvm/Transforms/Utils/NameAnonGlobals.h"
@@ -306,6 +307,11 @@ static cl::opt<bool> UseLoopVersioningLICM(
     "enable-loop-versioning-licm", cl::init(false), cl::Hidden,
     cl::desc("Enable the experimental Loop Versioning LICM pass"));
 
+static cl::opt<bool> EnableLoopIterCountToAssumptions(
+    "enable-loop-iter-count-assumptions", cl::Hidden, cl::init(false),
+    cl::desc(
+        "Enable Conversion of Loop Iteration Count Metadata to Assumptions."));
+
 namespace llvm {
 extern cl::opt<bool> EnableMemProfContextDisambiguation;
 
@@ -462,6 +468,9 @@ PassBuilder::buildO1FunctionSimplificationPipeline(OptimizationLevel Level,
   // TODO: Investigate promotion cap for O1.
   LPM1.addPass(LICMPass(PTO.LicmMssaOptCap, PTO.LicmMssaNoAccForPromotionCap,
                         /*AllowSpeculation=*/false));
+
+  if (EnableLoopIterCountToAssumptions)
+    LPM1.addPass(LoopIterCountAssumptions());
 
   LPM1.addPass(LoopRotatePass(/* Disable header duplication */ true,
                               isLTOPreLink(Phase)));
@@ -643,6 +652,9 @@ PassBuilder::buildFunctionSimplificationPipeline(OptimizationLevel Level,
   // TODO: Investigate promotion cap for O1.
   LPM1.addPass(LICMPass(PTO.LicmMssaOptCap, PTO.LicmMssaNoAccForPromotionCap,
                         /*AllowSpeculation=*/false));
+
+  if (EnableLoopIterCountToAssumptions)
+    LPM1.addPass(LoopIterCountAssumptions());
 
   // Disable header duplication in loop rotation at -Oz.
   LPM1.addPass(LoopRotatePass(EnableLoopHeaderDuplication ||

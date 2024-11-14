@@ -14,8 +14,9 @@
 // and that the itercounts have been updated appropriately
 
 // CHECK-LABEL: loop28_37
-// CHECK: for.body.preheader:
-// CHECK: for.body.peel.next:
+// CHECK: for.body.peel.next6:
+// CHECK: for.cond.cleanup:
+// CHECK: for.body:
 // CHECK: !llvm.loop !6
 // CHECK: !6 = distinct !{!6, !7, !8, !9}
 // CHECK: !7 = !{!"llvm.loop.peeled.count", i32 2}
