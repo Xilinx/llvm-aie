@@ -184,6 +184,9 @@ void AIEToolChain::addClangTargetOptions(
 
   // Extend the max limit of the search depth in BasicAA
   CC1Args.append({"-mllvm", "-basic-aa-max-lookup-search-depth=10"});
+
+  // Enable Loop Iteration Count Assumptions
+  CC1Args.append({"-mllvm", "-enable-loop-iter-count-assumptions=true"});
 }
 
 // Avoid using newer dwarf versions, as the simulator doesn't understand newer
