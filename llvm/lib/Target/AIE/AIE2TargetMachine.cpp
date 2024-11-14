@@ -71,6 +71,10 @@ static cl::opt<unsigned> StackAddrSpace(
     cl::desc("Specify the addrspace where the stack is allocated "
              "(5: Bank A, 6: Bank B, 7: Bank C, 8: Bank D)"));
 
+static cl::opt<bool> EnableAddressChaining("aie-address-chaining", cl::Hidden,
+                                           cl::init(true),
+                                           cl::desc("Enable ptradd chaining."));
+
 extern bool AIEDumpArtifacts;
 
 void AIE2TargetMachine::anchor() {}
@@ -138,7 +142,8 @@ void AIE2PassConfig::addPreLegalizeMachineIR() {
 void AIE2PassConfig::addPreRegBankSelect() {
   if (getOptLevel() != CodeGenOptLevel::None) {
     addPass(createAIE2PostLegalizerGenericCombiner());
-    addPass(createAIEClusterBaseAddress());
+    if (EnableAddressChaining)
+      addPass(createAIEClusterBaseAddress());
     addPass(createAIE2PostLegalizerCustomCombiner());
   }
 }

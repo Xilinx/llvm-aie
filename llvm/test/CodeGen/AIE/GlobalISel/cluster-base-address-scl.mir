@@ -7,6 +7,9 @@
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2 -run-pass=aie-cluster-base-address --aie-chain-addr-scl-ldst --aie-chain-addr-vec-ldst=false %s -verify-machineinstrs -o - | FileCheck %s
 
+# In this test, we chain the ptradds until we reach a store, then break the chain
+# to not create data dependencies later on.
+
 ---
 name:            loads_and_stores_with_same_base_ptr_single_bb
 body:             |
@@ -24,13 +27,11 @@ body:             |
     ; CHECK-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD]], [[C2]](s20)
     ; CHECK-NEXT: [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD1]](p0) :: (load (s32))
     ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s20) = G_CONSTANT i20 -24
-    ; CHECK-NEXT: [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 -56
-    ; CHECK-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD1]], [[C4]](s20)
+    ; CHECK-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C3]](s20)
     ; CHECK-NEXT: [[LOAD2:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD2]](p0) :: (load (s32))
     ; CHECK-NEXT: G_STORE [[LOAD2]](s32), [[PTR_ADD2]](p0) :: (store (s32))
-    ; CHECK-NEXT: [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 128
-    ; CHECK-NEXT: [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 152
-    ; CHECK-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD2]], [[C6]](s20)
+    ; CHECK-NEXT: [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 128
+    ; CHECK-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C4]](s20)
     %0:_(p0) = COPY $p0
     %1:_(s20) = G_CONSTANT i20 4
     %2:_(p0) = G_PTR_ADD %0:_, %1:_(s20)
@@ -63,19 +64,18 @@ body:             |
     ; CHECK-NEXT: [[LOAD:%[0-9]+]]:_(s32) = G_LOAD [[COPY]](p0) :: (load (s32))
     ; CHECK-NEXT: G_STORE [[LOAD]](s32), [[COPY1]](p0) :: (store (s32))
     ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
-    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
-    ; CHECK-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY1]], [[C2]](s20)
-    ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s20) = G_CONSTANT i20 -28
-    ; CHECK-NEXT: [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 -28
-    ; CHECK-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C4]](s20)
+    ; CHECK-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY1]], [[C1]](s20)
+    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 -28
+    ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s20) = G_CONSTANT i20 -32
+    ; CHECK-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD]], [[C3]](s20)
     ; CHECK-NEXT: [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD]](p0) :: (load (s32))
     ; CHECK-NEXT: G_STORE [[LOAD1]](s32), [[PTR_ADD1]](p0) :: (store (s32))
-    ; CHECK-NEXT: [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 -36
-    ; CHECK-NEXT: [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 -44
-    ; CHECK-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD1]], [[C6]](s20)
-    ; CHECK-NEXT: [[C7:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
-    ; CHECK-NEXT: [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 20
-    ; CHECK-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD]], [[C8]](s20)
+    ; CHECK-NEXT: [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 -36
+    ; CHECK-NEXT: [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 -44
+    ; CHECK-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD1]], [[C5]](s20)
+    ; CHECK-NEXT: [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
+    ; CHECK-NEXT: [[C7:%[0-9]+]]:_(s20) = G_CONSTANT i20 52
+    ; CHECK-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD2]], [[C7]](s20)
     %0:_(p0) = COPY $p0
     %1:_(p0) = COPY $p1
     %2:_(s20) = G_CONSTANT i20 4
@@ -86,9 +86,7 @@ body:             |
     %6:_(p0) = G_PTR_ADD %1:_, %5:_(s20)
     %7:_(s20) = G_CONSTANT i20 -28
     %8:_(p0) = G_PTR_ADD %0:_, %7:_(s20)
-    ; G_LOAD has base ptr %0
     %9:_(s32) = G_LOAD %3:_(p0) :: (load (s32), align 4)
-    ; G_STORE has base ptr %1
     G_STORE %9:_(s32), %6:_(p0) :: (store (s32), align 4)
     %10:_(s20) = G_CONSTANT i20 -36
     %11:_(p0) = G_PTR_ADD %1:_, %10:_(s20)
@@ -125,10 +123,8 @@ body:             |
     %2:_(p0) = G_PTR_ADD %0:_, %1:_(s20)
     %3:_(s32) = G_LOAD %2:_(p0) :: (load (s32), align 4)
     %4:_(s20) = G_CONSTANT i20 12
-    ; This is the first use of the %4
     %5:_(p0) = G_PTR_ADD %0:_, %4:_(s20)
     %6:_(s20) = G_CONSTANT i20 8
-    ; This is the second use of the %4
     %7:_(s20) = G_ADD %4:_(s20), %6:_(s20)
     %8:_(s32) = G_LOAD %5:_(p0) :: (load (s32), align 4)
     %9:_(s20) = G_CONSTANT i20 32
@@ -176,7 +172,6 @@ body:             |
     %9:_(<32 x s16>) = G_LOAD %2:_(p0) :: (load (<32 x s16>))
     %10:_(s32) = G_LOAD %4:_(p0) :: (load (s32))
     %11:_(s20) = G_CONSTANT i20 232
-    ; This ptradd will change according to %10
     %12:_(p0) = G_PTR_ADD %0:_, %11:_(s20)
     %13:_(s32) = G_LOAD %12:_(p0) :: (load (s32))
     %14:_(s20) = G_CONSTANT i20 116
@@ -185,8 +180,8 @@ body:             |
 
 # Here we have multiple ptradds between 2 loads or stores.
 # In this case the immediately succeeding ptr add to the load
-# or store will change, if there is no existing use of the base ptr after that.
-# Rest will remain unaffected.
+# or store will change. The remaining ptr adds will be also
+# chained.
 ---
 name:            multiple_ptradds_between_loads_or_stores_single_bb
 body:             |
@@ -204,17 +199,19 @@ body:             |
     ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
     ; CHECK-NEXT: [[PTR_ADD1:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY1]], [[C1]](s20)
     ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s20) = G_CONSTANT i20 12
-    ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s20) = G_CONSTANT i20 12
-    ; CHECK-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY]], [[C3]](s20)
+    ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
+    ; CHECK-NEXT: [[PTR_ADD2:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD]], [[C3]](s20)
     ; CHECK-NEXT: [[LOAD1:%[0-9]+]]:_(s32) = G_LOAD [[PTR_ADD]](p0) :: (load (s32))
     ; CHECK-NEXT: G_STORE [[LOAD1]](s32), [[PTR_ADD1]](p0) :: (store (s32))
     ; CHECK-NEXT: [[C4:%[0-9]+]]:_(s20) = G_CONSTANT i20 16
-    ; CHECK-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY1]], [[C4]](s20)
-    ; CHECK-NEXT: [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
-    ; CHECK-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[COPY1]], [[C5]](s20)
-    ; CHECK-NEXT: [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
-    ; CHECK-NEXT: [[C7:%[0-9]+]]:_(s20) = G_CONSTANT i20 28
-    ; CHECK-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD]], [[C7]](s20)
+    ; CHECK-NEXT: [[C5:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
+    ; CHECK-NEXT: [[PTR_ADD3:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD1]], [[C5]](s20)
+    ; CHECK-NEXT: [[C6:%[0-9]+]]:_(s20) = G_CONSTANT i20 24
+    ; CHECK-NEXT: [[C7:%[0-9]+]]:_(s20) = G_CONSTANT i20 8
+    ; CHECK-NEXT: [[PTR_ADD4:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD3]], [[C7]](s20)
+    ; CHECK-NEXT: [[C8:%[0-9]+]]:_(s20) = G_CONSTANT i20 32
+    ; CHECK-NEXT: [[C9:%[0-9]+]]:_(s20) = G_CONSTANT i20 20
+    ; CHECK-NEXT: [[PTR_ADD5:%[0-9]+]]:_(p0) = G_PTR_ADD [[PTR_ADD2]], [[C9]](s20)
     %0:_(p0) = COPY $p0
     %1:_(p0) = COPY $p1
     %2:_(s20) = G_CONSTANT i20 4
@@ -228,11 +225,8 @@ body:             |
     %9:_(s32) = G_LOAD %3:_(p0) :: (load (s32), align 4)
     G_STORE %9:_(s32), %6:_(p0) :: (store (s32), align 4)
     %10:_(s20) = G_CONSTANT i20 16
-    ; This ptradd will not change.
-    ; There is a use of %1 later.
     %11:_(p0) = G_PTR_ADD %1:_, %10:_(s20)
     %12:_(s20) = G_CONSTANT i20 24
-    ; This ptradd will not change.
     %13:_(p0) = G_PTR_ADD %1:_, %12:_(s20)
     %14:_(s20) = G_CONSTANT i20 32
     %15:_(p0) = G_PTR_ADD %0:_, %14:_(s20)
@@ -292,7 +286,6 @@ body:             |
     %6:_(s32) = G_ADD %5:_, %1:_
     G_STORE %6:_(s32), %4:_(p0) :: (store (s32))
     %7:_(s20) = G_CONSTANT i20 4
-    ; This ptr add will not change since %0 has use in bb.1
     %8:_(p0) = G_PTR_ADD %0:_, %7:_(s20)
     %9:_(s32) = G_LOAD %8:_(p0) :: (dereferenceable load (s32))
     %10:_(s32) = G_CONSTANT i32 255

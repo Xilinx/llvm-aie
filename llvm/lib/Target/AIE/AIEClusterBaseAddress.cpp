@@ -44,9 +44,7 @@
 // are sure the clustering won't create any copies.
 //===----------------------------------------------------------------------===//
 
-#include "AIEBaseSubtarget.h"
-#include <optional>
-#include <set>
+#include "AIE.h"
 #include "llvm/CodeGen/GlobalISel/CSEInfo.h"
 #include "llvm/CodeGen/GlobalISel/CSEMIRBuilder.h"
 #include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
@@ -57,6 +55,8 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/InitializePasses.h"
+#include <optional>
+#include <set>
 
 #define DEBUG_TYPE "aie-cluster-base-address"
 
@@ -64,10 +64,6 @@ using namespace llvm;
 
 static const char AIE_CLUSTER_BASE_ADDRESS[] =
     "AIE Base Address Clustering Optimization";
-
-static cl::opt<bool> EnableAddressChaining("aie-address-chaining", cl::Hidden,
-                                           cl::init(true),
-                                           cl::desc("Enable ptradd chaining."));
 
 static cl::opt<bool> EnableChainsForScalarLdSt(
     "aie-chain-addr-scl-ldst", cl::Hidden, cl::init(true),
@@ -78,31 +74,13 @@ static cl::opt<bool> EnableChainsForVectorLdSt(
     cl::desc("Enable ptradd chaining for vector loads and stores."));
 
 namespace {
-/**
- * @brief Struct PtrAdd
- *
- * @param PtrAddMI The next ptr add to a load/store MI that has the potential to
- * be chained.
- * @param BaseReg The base ptr of the load/store that is found by traversing the
- * ptr adds backwards. This is also the new operand of the next ptr add.
- * @param NewOffset This is the new offset for the next ptr add to be chained,
- * calculated using the offset information of the previous ptr adds.
- */
-struct PtrAdd {
-  MachineInstr *PtrAddMI;
-  Register BaseReg;
-  int64_t NewOffset;
-};
-
 class AIEClusterBaseAddress : public MachineFunctionPass {
 public:
   static char ID;
   AIEClusterBaseAddress() : MachineFunctionPass(ID) {}
 
   bool runOnMachineFunction(MachineFunction &MF) override {
-    if (!EnableAddressChaining)
-      return false;
-    MachineRegisterInfo &MRI = MF.getRegInfo();
+    MRI = &MF.getRegInfo();
     TargetPassConfig &TPC = getAnalysis<TargetPassConfig>();
     // Enable CSE.
     GISelCSEAnalysisWrapper &Wrapper =
@@ -122,7 +100,7 @@ public:
 
     bool Changed = false;
     for (MachineBasicBlock &MBB : MF) {
-      Changed |= processBasicBlock(MBB, MRI, MIB, Observer);
+      Changed |= processBasicBlock(MBB, MIB, Observer);
     }
     return Changed;
   }
@@ -136,107 +114,141 @@ public:
 
   StringRef getPassName() const override { return AIE_CLUSTER_BASE_ADDRESS; }
 
+  using RegUseMap = std::map<Register, SmallVector<MachineInstr *, 8>>;
+
 private:
-  bool processBasicBlock(MachineBasicBlock &MBB, MachineRegisterInfo &MRI,
-                         MachineIRBuilder &MIB,
+  const MachineRegisterInfo *MRI = nullptr;
+
+  bool processBasicBlock(MachineBasicBlock &MBB, MachineIRBuilder &MIB,
                          GISelObserverWrapper &Observer) {
-    /* Pass 1 :
-      Traverse MBB to try and connect G_LOAD or G_STORE to following PTR_ADDs.
-      This also checks if any MI uses the base ptr and if it does, we simply
-      remove the entire entry from the ChainedPtrAdds map. We avoid combining if
-      the base register of the to-be-chained ptradd is used by another instr.
-      This would otherwise generate a COPY and increase reg pressure.
-      Use a map to store the Load/Store MI and the next ptr add with the base
-      ptr of the Ld/St MI and the new updated offset.
-    */
-    std::map<MachineInstr *, PtrAdd> ChainedPtrAdds =
-        findChainablePtrAdds(MBB, MRI);
 
-    // Return false if ChainedPtrAdds is empty since we have no ptradds to
-    // update.
-    if (ChainedPtrAdds.empty())
-      return false;
+    bool Changed = false;
 
-    /* Pass 2 :
-      Simply update the chainable ptradds in the MBB using the information in
-      the ChainedPtrAdds map.
-    */
-    updatePtrAddsInMBB(MBB, MRI, MIB, Observer, ChainedPtrAdds);
+    // Get all G_PTR_ADDs that use the same pointer.
+    RegUseMap RegAndUses = collectPtrUses(MBB);
 
-    return true;
+    // Create chains, when profitable.
+    for (auto RegAndUse : RegAndUses) {
+
+      SmallVector<MachineInstr *, 8> &Instrs = RegAndUse.second;
+      // Chaining acceptance criteria.
+      if (shouldSkipChaining(RegAndUse.first, Instrs, MBB))
+        continue;
+
+      // Build chain, breaking it (or restarting it) when necessary
+      buildChain(Instrs, MBB, MIB, Observer);
+      Changed = true;
+    }
+    return Changed;
   }
 
-  std::map<MachineInstr *, PtrAdd>
-  findChainablePtrAdds(MachineBasicBlock &MBB, MachineRegisterInfo &MRI) {
-    std::map<MachineInstr *, PtrAdd> ChainedPtrAdds;
+  // Get all candidates, i.e. groups of G_PTR_ADDs in the same
+  // basic block that shares the same input pointer.
+  RegUseMap collectPtrUses(MachineBasicBlock &MBB) {
+    RegUseMap RegAndUses;
     for (MachineInstr &MI : MBB) {
-      if (dyn_cast<GLoadStore>(&MI)) {
-        processLoadOrStore(MI, MRI, ChainedPtrAdds);
+      if (MI.getOpcode() == TargetOpcode::G_PTR_ADD)
+        RegAndUses[MI.getOperand(1).getReg()].push_back(&MI);
+    }
+    return RegAndUses;
+  }
+
+  // Evaluate if we consider a group of G_PTR_ADDs as a candidate to
+  // create a chain.
+  bool shouldSkipChaining(Register PtrReg,
+                          const SmallVector<MachineInstr *, 8> &Instrs,
+                          MachineBasicBlock &MBB) {
+
+    // No chain possibility at all.
+    if (Instrs.size() <= 1)
+      return true;
+
+    // If the base reg is used in any of the successive MBBs, then we don't
+    // want to chain the corresponding ptr adds, since this would introduce a
+    // COPY and increase reg pressure.
+    return isRegUsedInSuccessiveMBBs(&MBB, PtrReg);
+  }
+
+  // Build a chain (or set of chains) of G_PTR_ADDs. We consider as
+  // chain a linear sequence of linked G_PTR_ADDs, tied to output and
+  // input pointers.
+  void buildChain(SmallVector<MachineInstr *, 8> &Instrs,
+                  MachineBasicBlock &MBB, MachineIRBuilder &MIB,
+                  GISelObserverWrapper &Observer) {
+    int64_t AccumulatedOffset = 0;
+    for (unsigned I = 0; I < Instrs.size() - 1; I++) {
+      MachineInstr *MI = Instrs[I];
+      MachineInstr *MINext = Instrs[I + 1];
+      auto OffsetMI =
+          getIConstantVRegValWithLookThrough(MI->getOperand(2).getReg(), *MRI);
+      auto OffsetMINext = getIConstantVRegValWithLookThrough(
+          MINext->getOperand(2).getReg(), *MRI);
+
+      // Evaluate if we should restart the chain from the base
+      // pointer. This is necessary when we deal with unknown offsets
+      // (not constants) and desirable when we share pointers between
+      // loads and stores (avoiding dependencies).
+      if (shouldBreakChain(MI, MINext, OffsetMI, OffsetMINext)) {
+        AccumulatedOffset = 0;
         continue;
       }
 
-      // Check if any base pointer in `ChainedPtrAdds` is used by MI. In this
-      // case, we do not want to chain the addresses, because this would
-      // introduce a COPY that increases the pressure on PTR registers.
+      AccumulatedOffset += OffsetMI->Value.getSExtValue();
+      const int64_t NewNextOffset =
+          OffsetMINext->Value.getSExtValue() - AccumulatedOffset;
+      MIB.setInsertPt(MBB, MINext->getIterator());
 
-      // If MI is a ptradd already chained with a previous load or store,
-      // this is a safe use.
-      if (any_of(ChainedPtrAdds,
-                 [&](std::pair<MachineInstr *const, PtrAdd> &LdStAndPtrAdd) {
-                   return LdStAndPtrAdd.second.PtrAddMI == &MI;
-                 }))
-        continue;
+      Register NewOffsetReg =
+          MIB.buildConstant(LLT::scalar(20), NewNextOffset).getReg(0);
 
-      // Otherwise, remove all chained load/stores that use one of our operands
-      // as base pointer.
-      std::set<MachineInstr *> ToBeErased;
-      for (const MachineOperand &Op : MI.operands()) {
-        if (Op.isReg() && Op.isUse())
-          removeChainedInstrsWithBasePtr(ChainedPtrAdds, Op.getReg());
+      Observer.changingInstr(*MINext);
+      MINext->getOperand(1).setReg(MI->getOperand(0).getReg());
+      MINext->getOperand(2).setReg(NewOffsetReg);
+      Observer.changedInstr(*MINext);
+    }
+  }
+
+  // Evaluate if we should break the chain construction.
+  // Criteria:
+  //  * Unknown offsets.
+  //  * Pointer shared between load(s) and store(s).
+  bool shouldBreakChain(MachineInstr *MIA, MachineInstr *MIB,
+                        std::optional<ValueAndVReg> OffsetA,
+                        std::optional<ValueAndVReg> OffsetB) {
+
+    // If one of the offsets is not constant, it is better to break the chain.
+    if (!OffsetA || !OffsetB)
+      return true;
+
+    return hasMixedLoadStoreUse({MIA, MIB});
+  }
+
+  // Return true if the instructions are used by both loads and stores.
+  bool hasMixedLoadStoreUse(SmallVector<MachineInstr *, 2> Instrs) {
+    unsigned LoadCount = 0;
+    unsigned StoreCount = 0;
+    for (MachineInstr *MI : Instrs) {
+      const Register PtrReg = MI->getOperand(0).getReg();
+      for (const MachineInstr &UseMI : MRI->use_instructions(PtrReg)) {
+        if (!UseMI.mayLoadOrStore())
+          continue;
+        if (UseMI.mayLoad())
+          LoadCount++;
+        else
+          StoreCount++;
+        const LLT MemType = getLoadStoreType(UseMI);
+        // If desired, we also can break the chain between pairs of
+        // pointers that are used to load/store vectors and/or scalars.
+        if ((!EnableChainsForScalarLdSt && MemType.isScalar()) ||
+            (!EnableChainsForVectorLdSt && MemType.isVector()))
+          return true;
       }
     }
-    return ChainedPtrAdds;
+    return (LoadCount > 0 && StoreCount > 0);
   }
 
-  // Process all the encountered load and stores in the basic block.
-  // We find the base register of the Ld/St MI and using that base register, we
-  // find following ptr adds which have the same base register. If we find such
-  // a ptr add, we create an entry in the ChainedPtrAdds map.
-  void processLoadOrStore(MachineInstr &MI, MachineRegisterInfo &MRI,
-                          std::map<MachineInstr *, PtrAdd> &ChainedPtrAdds) {
-    Register LdOrStPtrReg = MI.getOperand(1).getReg();
-    // Find the base defining reg of the given MI and the ptr offset.
-    auto BaseRegAndOffset = findBaseReg(MRI, LdOrStPtrReg);
-    if (!BaseRegAndOffset.has_value())
-      return;
-    if ((!EnableChainsForScalarLdSt && getLoadStoreSize(MI) <= 32) ||
-        (!EnableChainsForVectorLdSt && getLoadStoreSize(MI) >= 256))
-      return;
-    Register BaseReg = BaseRegAndOffset->first;
-    // If the base reg is used in any of the successive MBBs, then we don't want
-    // to chain the corresponding ptr adds. Since that would introduce a COPY
-    // and increase reg pressure.
-    if (isRegUsedInSuccessiveMBBs(MI.getParent(), BaseReg, MRI))
-      return;
-    int64_t BasePtrOffset = BaseRegAndOffset->second;
-    // Find the next G_PTR_ADD MachineInstr that comes after the given
-    // MachineInstr and has the same base register.
-    MachineInstr *NextPtrAddMI = findNextPtrAddForReg(MI, MRI, BaseReg);
-    if (!NextPtrAddMI)
-      return;
-    auto [OffsetReg, ConstVal] = getPtrAddOffsetInfo(*NextPtrAddMI, MRI);
-    if (!ConstVal)
-      return;
-    int64_t NextPtrOffset = ConstVal->Value.getSExtValue();
-    PtrAdd PA;
-    PA.PtrAddMI = NextPtrAddMI;
-    PA.BaseReg = BaseReg;
-    PA.NewOffset = NextPtrOffset - BasePtrOffset;
-    ChainedPtrAdds[&MI] = PA;
-  }
-
-  unsigned getLoadStoreSize(const MachineInstr &MI) {
-    return (*MI.memoperands_begin())->getSizeInBits().getValue();
+  LLT getLoadStoreType(const MachineInstr &MI) {
+    return (*MI.memoperands_begin())->getMemoryType();
   }
 
   // Get a set of all reachable MBBs from a given MBB.
@@ -261,117 +273,13 @@ private:
   }
 
   // Find if a register is used in reachable MBBs.
-  bool isRegUsedInSuccessiveMBBs(MachineBasicBlock *MBB, Register Reg,
-                                 MachineRegisterInfo &MRI) {
+  bool isRegUsedInSuccessiveMBBs(MachineBasicBlock *MBB, Register Reg) {
     std::set<MachineBasicBlock *> ReachableMBBs = findReachableMBBs(MBB);
-    for (MachineInstr &Use : MRI.use_nodbg_instructions(Reg)) {
+    for (MachineInstr &Use : MRI->use_nodbg_instructions(Reg)) {
       if (ReachableMBBs.count(Use.getParent()))
         return true;
     }
     return false;
-  }
-
-  void removeChainedInstrsWithBasePtr(
-      std::map<MachineInstr *, PtrAdd> &ChainedPtrAdds, unsigned BaseReg) {
-    std::set<MachineInstr *> ToBeErased;
-    for (auto &[LdStMI, ChainedPtrAdd] : ChainedPtrAdds) {
-      if (ChainedPtrAdd.BaseReg == BaseReg)
-        ToBeErased.insert(LdStMI);
-    }
-    for (auto &LdStMI : ToBeErased) {
-      ChainedPtrAdds.erase(LdStMI);
-    }
-  }
-
-  void
-  updatePtrAddsInMBB(MachineBasicBlock &MBB, MachineRegisterInfo &MRI,
-                     MachineIRBuilder &MIB, GISelObserverWrapper &Observer,
-                     const std::map<MachineInstr *, PtrAdd> &ChainedPtrAdds) {
-    for (auto &MI : MBB) {
-      auto Entry = ChainedPtrAdds.find(&MI);
-      if (Entry == ChainedPtrAdds.end())
-        continue;
-      MachineInstr *LdOrStMI = Entry->first;
-      Register LdOrStPtrReg = LdOrStMI->getOperand(1).getReg();
-      const PtrAdd &ChainedPtrAdd = Entry->second;
-      MachineInstr *PtrAddMI = ChainedPtrAdd.PtrAddMI;
-      int64_t ChainedOffset = ChainedPtrAdd.NewOffset;
-
-      MIB.setInsertPt(*PtrAddMI->getParent(), PtrAddMI->getIterator());
-      // Change the ptr register operand of PtrAddMI to be the ptr reg operand
-      // of the load/store
-      Observer.changingInstr(*PtrAddMI);
-      PtrAddMI->getOperand(1).setReg(LdOrStPtrReg);
-      Observer.changedInstr(*PtrAddMI);
-      // Build a new G_CONSTANT MachineInstr with NewOffset as its value
-      // If there is a G_CONSTANT present which don't have any further uses
-      // other than a given ptr add, then it would just be eliminated as dead
-      // code.
-      Register NewOffsetReg =
-          MIB.buildConstant(LLT::scalar(20), ChainedOffset).getReg(0);
-      // Change the offset register operand of PtrAddMI to be NewOffsetReg
-      Observer.changingInstr(*PtrAddMI);
-      PtrAddMI->getOperand(2).setReg(NewOffsetReg);
-      Observer.changedInstr(*PtrAddMI);
-    }
-  }
-
-  std::optional<std::pair<Register, int64_t>>
-  findBaseReg(MachineRegisterInfo &MRI, const Register Reg) {
-    Register BaseReg = Reg;
-    int64_t Offset = 0;
-    while (true) {
-      // Get the defining instruction for the register
-      MachineInstr *DefMI = MRI.getVRegDef(BaseReg);
-      if (!DefMI || DefMI->getOpcode() != TargetOpcode::G_PTR_ADD)
-        break;
-      auto [OffsetReg, ConstVal] = getPtrAddOffsetInfo(*DefMI, MRI);
-      // TODO: Handle ptr adds with indirect constant offsets as needed.
-      if (!ConstVal)
-        break;
-      Offset += ConstVal->Value.getSExtValue();
-      BaseReg = DefMI->getOperand(1).getReg();
-    }
-    return std::make_optional(std::make_pair(BaseReg, Offset));
-  }
-
-  // Find next ptr add having the same base register.
-  MachineInstr *findNextPtrAddForReg(MachineInstr &Start,
-                                     MachineRegisterInfo &MRI,
-                                     const Register BaseReg) {
-    MachineBasicBlock *MBB = Start.getParent();
-    MachineBasicBlock::iterator It = std::next(Start.getIterator()),
-                                End = MBB->end();
-    auto FoundIt = std::find_if(It, End, [&](MachineInstr &MI) {
-      if (MI.getOpcode() == TargetOpcode::G_PTR_ADD &&
-          MI.getOperand(1).getReg() == BaseReg)
-        return true;
-      // We search for GLoadStore because we always want to stick to the
-      // immediately preceding GLoadStore to chain the ptr add.
-      if (dyn_cast<GLoadStore>(&MI)) {
-        Register LdOrStPtrReg = MI.getOperand(1).getReg();
-        auto BaseRegAndOffset = findBaseReg(MRI, LdOrStPtrReg);
-        if (!BaseRegAndOffset.has_value())
-          return true;
-        Register BasePtr = BaseRegAndOffset->first;
-        if (BasePtr == BaseReg)
-          return true;
-      }
-      return false;
-    });
-    if (FoundIt != End && FoundIt->getOpcode() == TargetOpcode::G_PTR_ADD)
-      return &*FoundIt;
-    return nullptr;
-  }
-
-  std::pair<Register, std::optional<ValueAndVReg>>
-  getPtrAddOffsetInfo(const MachineInstr &MI, MachineRegisterInfo &MRI) {
-    assert(MI.getOpcode() == TargetOpcode::G_PTR_ADD &&
-           "Expected a ptr add MI");
-    Register OffsetReg = MI.getOperand(2).getReg();
-    std::optional<ValueAndVReg> ConstVal =
-        getIConstantVRegValWithLookThrough(OffsetReg, MRI);
-    return {OffsetReg, ConstVal};
   }
 };
 } // namespace
