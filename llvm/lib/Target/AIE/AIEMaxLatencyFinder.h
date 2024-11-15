@@ -18,7 +18,6 @@
 #include "AIEBaseSubtarget.h"
 #include "AIEMachineScheduler.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/MachineRegisterInfo.h"
 
 using namespace llvm;
 
@@ -27,6 +26,18 @@ namespace llvm::AIE {
 // operand and the memory latency. Include the stage latency if requested.
 int maxLatency(const MachineInstr *MI, const AIEBaseInstrInfo &InstrInfo,
                const InstrItineraryData &Itineraries, bool IncludeStages);
+
+struct InstrAndCycle {
+  MachineInstr *MI = nullptr;
+  int Cycle;
+};
+
+/// Find the first dependence on SrcMI in Bundles[0,Prune)
+/// \returns the Cycle in which the dependence happens or a conservative lower
+///          bound and the instruction responsible for the dependency if it is
+///          found.
+InstrAndCycle findEarliestRef(const MachineInstr &SrcMI,
+                              ArrayRef<MachineBundle> Bundles, int Prune);
 
 class MaxLatencyFinder {
   const AIEPostRASchedStrategy *const Scheduler;
@@ -40,12 +51,6 @@ class MaxLatencyFinder {
   //
   bool isBottomRegion(MachineInstr *ExitMI);
 
-  // Check whether SrcOp and DstOp might refer to the same value
-  bool overlap(MachineOperand &SrcOp, MachineOperand &DstOp) const;
-
-  // Check whether Dst depends on Src
-  bool depends(MachineInstr &Src, MachineInstr &Dst) const;
-
 public:
   // Constructors
   MaxLatencyFinder(const AIEPostRASchedStrategy *const Scheduler,
@@ -58,12 +63,6 @@ public:
 
   // Find the maximum latency of MI taking  successors into account
   unsigned operator()(MachineInstr &MI);
-
-  // Find the first dependence on SrcMI in Bundles or Prune,
-  // whichever is less
-  int findEarliestRef(MachineInstr &SrcMI,
-                      const std::vector<llvm::AIE::MachineBundle> &Bundles,
-                      int Prune);
 };
 
 } // namespace llvm::AIE

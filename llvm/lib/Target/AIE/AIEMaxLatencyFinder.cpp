@@ -62,8 +62,9 @@ bool MaxLatencyFinder::isBottomRegion(MachineInstr *ExitMI) {
   return std::next(It) == CurBB->end();
 }
 
-bool MaxLatencyFinder::overlap(MachineOperand &SrcOp,
-                               MachineOperand &DstOp) const {
+/// Check whether SrcOp and DstOp might refer to the same value
+static bool overlap(const MachineOperand &SrcOp, const MachineOperand &DstOp,
+                    const TargetRegisterInfo *TRI) {
   Register SrcReg = SrcOp.getReg();
   Register DstReg = DstOp.getReg();
   for (MCRegAliasIterator Ali(SrcReg, TRI, true); Ali.isValid(); ++Ali) {
@@ -74,8 +75,9 @@ bool MaxLatencyFinder::overlap(MachineOperand &SrcOp,
   return false;
 }
 
-// Check whether Dst depends on Src
-bool MaxLatencyFinder::depends(MachineInstr &Src, MachineInstr &Dst) const {
+/// Check whether Dst depends on Src
+static bool depends(const MachineInstr &Src, const MachineInstr &Dst,
+                    const TargetRegisterInfo *TRI) {
   // We don't try anything clever in terms of alias analysis
   // The memory latency is accounted for by maxLatency() and any
   // possible dependence will be corrected for by its scheduled cycle.
@@ -99,7 +101,7 @@ bool MaxLatencyFinder::depends(MachineInstr &Src, MachineInstr &Dst) const {
       if (SrcOp.isUse() && DstOp.isUse()) {
         continue;
       }
-      if (overlap(SrcOp, DstOp)) {
+      if (overlap(SrcOp, DstOp, TRI)) {
         return true;
       }
     }
@@ -108,27 +110,27 @@ bool MaxLatencyFinder::depends(MachineInstr &Src, MachineInstr &Dst) const {
   return false;
 }
 
-// Find the first dependence on SrcMI in Bundles or Prune,
-// whichever is less
-int MaxLatencyFinder::findEarliestRef(
-    MachineInstr &SrcMI, const std::vector<llvm::AIE::MachineBundle> &Bundles,
-    int Prune) {
+InstrAndCycle findEarliestRef(const MachineInstr &SrcMI,
+                              ArrayRef<MachineBundle> Bundles, int Prune) {
+  const TargetRegisterInfo *TRI =
+      SrcMI.getMF()->getSubtarget().getRegisterInfo();
+
   int Cycle = 0;
   for (const auto &Bundle : Bundles) {
     if (Cycle >= Prune) {
       LLVM_DEBUG(dbgs() << " prune at " << Cycle << "\n");
-      return Cycle;
+      return {/*MI=*/nullptr, Cycle};
     }
     for (MachineInstr *DstMI : Bundle.getInstrs()) {
       LLVM_DEBUG(dbgs() << "  " << *DstMI);
-      if (depends(SrcMI, *DstMI)) {
+      if (depends(SrcMI, *DstMI, TRI)) {
         LLVM_DEBUG(dbgs() << "    depends in cycle=" << Cycle << "\n");
-        return Cycle;
+        return {DstMI, Cycle};
       }
     }
     Cycle++;
   }
-  return Cycle;
+  return {/*MI=*/nullptr, Cycle};
 }
 
 MaxLatencyFinder::MaxLatencyFinder(
@@ -196,7 +198,7 @@ unsigned MaxLatencyFinder::operator()(MachineInstr &MI) {
       continue;
     }
     const std::vector<AIE::MachineBundle> &TopBundles = SBS.getTop().Bundles;
-    Earliest = findEarliestRef(MI, TopBundles, Earliest);
+    Earliest = findEarliestRef(MI, TopBundles, Earliest).Cycle;
   }
 
   LLVM_DEBUG(dbgs() << "   Earliest=" << Earliest << "\n");
