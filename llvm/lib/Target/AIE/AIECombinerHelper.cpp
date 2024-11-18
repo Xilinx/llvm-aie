@@ -627,11 +627,10 @@ bool canNarrowUserTreeToS20(MachineRegisterInfo &MRI, InstrNode Start,
     }
     switch (Use.getOpcode()) {
     case TargetOpcode::G_TRUNC:
-      // Sanity check that we are not truncating into less than 20 bits and
-      // losing precision. If this happens this means we missed an extension
-      // from that small type back to S20 to feed into our ptr.add intrinsics.
-      assert(MRI.getType(Use.getOperand(0).getReg()).getScalarSizeInBits() >=
-             20);
+      // Check if the scalar size of the operand's type is at least 20 bits,
+      // this ensures that the G_TRUNC can be safely converted to a COPY.
+      if (MRI.getType(Use.getOperand(0).getReg()).getScalarSizeInBits() < 20)
+        return false;
       [[fallthrough]];
     case TargetOpcode::G_PTR_ADD:
     case TargetOpcode::G_STORE: // Data operand is later modified to S20 type

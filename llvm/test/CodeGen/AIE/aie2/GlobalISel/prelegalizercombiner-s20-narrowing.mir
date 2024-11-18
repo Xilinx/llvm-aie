@@ -781,3 +781,92 @@ body:             |
     $r0 = COPY %11
     G_BR %bb.2
 ...
+
+# Invalid narrowing because there is a src trunc which is not into s20
+name:            invalid_trunc_s8
+legalized:       false
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: invalid_trunc_s8
+  ; CHECK: bb.0.entry:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[C:%[0-9]+]]:_(p0) = G_CONSTANT i20 0
+  ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 0
+  ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+  ; CHECK-NEXT:   G_STORE [[C2]](s32), [[C]](p0) :: (store (s32))
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s32) = G_PHI [[C2]](s32), %bb.0, %4(s32), %bb.1
+  ; CHECK-NEXT:   [[TRUNC:%[0-9]+]]:_(s8) = G_TRUNC [[PHI]](s32)
+  ; CHECK-NEXT:   [[TRUNC1:%[0-9]+]]:_(s20) = G_TRUNC [[PHI]](s32)
+  ; CHECK-NEXT:   [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(s20), [[INT2:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2.add.3d), [[C]](p0), [[C1]](s20), [[C1]](s20), [[C1]](s20), [[C1]](s20), [[TRUNC1]](s20), [[C1]](s20), [[C1]](s20)
+  ; CHECK-NEXT:   [[ZEXT:%[0-9]+]]:_(s32) = G_ZEXT [[INT1]](s20)
+  ; CHECK-NEXT:   G_STORE [[TRUNC]](s8), [[INT]](p0) :: (store (s8))
+  ; CHECK-NEXT:   G_BR %bb.1
+  bb.1.entry:
+    successors: %bb.2(0x80000000); %bb.2(100.00%)
+
+    %0:_(p0) = G_CONSTANT i20 0
+    %1:_(s20) = G_CONSTANT i20 0
+    %2:_(s32) = G_CONSTANT i32 0
+    G_STORE %2:_(s32), %0:_(p0) :: (store (s32))
+
+  bb.2:
+    successors: %bb.2(0x80000000); %bb.2(100.00%)
+
+    %3:_(s32) = G_PHI %2:_(s32), %bb.1, %4:_(s32), %bb.2
+    %50:_(s8) = G_TRUNC %3:_(s32)
+    %5:_(s20) = G_TRUNC %3:_(s32)
+    %6:_(p0), %7:_(s20), %8:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2.add.3d), %0:_(p0), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20), %5:_(s20), %1:_(s20), %1:_(s20)
+    %4:_(s32) = G_ZEXT %7:_(s20)
+    G_STORE %50:_(s8), %6:_(p0) :: (store (s8))
+    G_BR %bb.2
+...
+
+# Invalid narrowing because there is a src trunc which is not into s20
+---
+name:            invalid_trunc_s16
+legalized:       false
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: invalid_trunc_s16
+  ; CHECK: bb.0.entry:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[C:%[0-9]+]]:_(p0) = G_CONSTANT i20 0
+  ; CHECK-NEXT:   [[C1:%[0-9]+]]:_(s20) = G_CONSTANT i20 0
+  ; CHECK-NEXT:   [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+  ; CHECK-NEXT:   G_STORE [[C2]](s32), [[C]](p0) :: (store (s32))
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[PHI:%[0-9]+]]:_(s32) = G_PHI [[C2]](s32), %bb.0, %4(s32), %bb.1
+  ; CHECK-NEXT:   [[TRUNC:%[0-9]+]]:_(s16) = G_TRUNC [[PHI]](s32)
+  ; CHECK-NEXT:   [[TRUNC1:%[0-9]+]]:_(s20) = G_TRUNC [[PHI]](s32)
+  ; CHECK-NEXT:   [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(s20), [[INT2:%[0-9]+]]:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2.add.3d), [[C]](p0), [[C1]](s20), [[C1]](s20), [[C1]](s20), [[C1]](s20), [[TRUNC1]](s20), [[C1]](s20), [[C1]](s20)
+  ; CHECK-NEXT:   [[ZEXT:%[0-9]+]]:_(s32) = G_ZEXT [[INT1]](s20)
+  ; CHECK-NEXT:   G_STORE [[TRUNC]](s16), [[INT]](p0) :: (store (s16))
+  ; CHECK-NEXT:   G_BR %bb.1
+  bb.1.entry:
+    successors: %bb.2(0x80000000); %bb.2(100.00%)
+
+    %0:_(p0) = G_CONSTANT i20 0
+    %1:_(s20) = G_CONSTANT i20 0
+    %2:_(s32) = G_CONSTANT i32 0
+    G_STORE %2:_(s32), %0:_(p0) :: (store (s32))
+
+  bb.2:
+    successors: %bb.2(0x80000000); %bb.2(100.00%)
+
+    %3:_(s32) = G_PHI %2:_(s32), %bb.1, %4:_(s32), %bb.2
+    %50:_(s16) = G_TRUNC %3:_(s32)
+    %5:_(s20) = G_TRUNC %3:_(s32)
+    %6:_(p0), %7:_(s20), %8:_(s20) = G_INTRINSIC intrinsic(@llvm.aie2.add.3d), %0:_(p0), %1:_(s20), %1:_(s20), %1:_(s20), %1:_(s20), %5:_(s20), %1:_(s20), %1:_(s20)
+    %4:_(s32) = G_ZEXT %7:_(s20)
+    G_STORE %50:_(s16), %6:_(p0) :: (store (s16))
+    G_BR %bb.2
+...
