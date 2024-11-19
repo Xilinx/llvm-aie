@@ -110,3 +110,38 @@ body:             |
     $l7 = VLDA_L_SPILL %stack.1, implicit $sp
     VST_L_SPILL $l7, %stack.1, implicit $sp
 ...
+
+
+---
+name:            test_fifo
+alignment:       16
+stack:
+  - { id: 0, name: '', type: spill-slot, offset: 0, size: 128, alignment: 32 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_fifo
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 128, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $lf0 = VLDA_FIFO_SPILL -128, implicit $sp
+    ; CHECK-NEXT: VST_FIFO_SPILL $lf0, -128, implicit $sp
+    $lf0 = VLDA_FIFO_SPILL %stack.0, implicit $sp
+    VST_FIFO_SPILL $lf0, %stack.0, implicit $sp
+...
+
+
+---
+name:            test_fifo_plfr
+alignment:       16
+stack:
+  - { id: 0, name: '', type: spill-slot, offset: 0, size: 136, alignment: 32 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_fifo_plfr
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 192, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $plfr0 = VLDA_PLFR_SPILL -192, implicit $sp
+    ; CHECK-NEXT: VST_PLFR_SPILL $plfr0, -192, implicit $sp
+    $plfr0 = VLDA_PLFR_SPILL %stack.0, implicit $sp
+    VST_PLFR_SPILL $plfr0, %stack.0, implicit $sp
+...
+

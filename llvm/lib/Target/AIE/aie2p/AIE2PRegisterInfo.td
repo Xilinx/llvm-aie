@@ -957,8 +957,8 @@ def mMvBMXSrc : AIE2PVector512RegisterClass<(add mMvBMXDst)>;
 foreach RC = [eP, eM, eDN, eDJ, eDC, eSP, eSpecial20] in
     def RC # _as_32Bit : AIE2PScalarRegisterClass<(add RC)>;
 
-class AIE2PVector564FifoRegisterClass<dag reglist> :
-    AIE2PRegisterClass<564, 256, [i32], reglist> {
+class AIE2PVector1076FifoRegisterClass<dag reglist> :
+    AIE2PRegisterClass<1088, 256, [i32], reglist> {
   let hasCompleteDecoder = 0;
 }
 def sub_ptr : SubRegIndex<20,  0>;
@@ -969,7 +969,7 @@ let SubRegIndices = [sub_ptr, sub_fifo, sub_avail], CoveredBySubRegs = 1 in {
   def plfr0 : AIE2P1BitReg<0b0, "plfr0", [p0, lf0, r24]>;
   def plfr1 : AIE2P1BitReg<0b1, "plfr1", [p1, lf1, r25]>;
 }
-def ePSRFLdF : AIE2PVector564FifoRegisterClass<(add plfr0, plfr1)>;
+def ePSRFLdF : AIE2PVector1076FifoRegisterClass<(add plfr0, plfr1)>;
 
 def spill_eS_to_eR : AIE2PScalarRegisterClass<(add eS, eR)>;
 def spill_eP_to_eR : AIE2PScalarRegisterClass<(add eP, eR)>;
