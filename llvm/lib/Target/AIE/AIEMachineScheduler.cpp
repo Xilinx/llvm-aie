@@ -270,6 +270,7 @@ void AIEPostRASchedStrategy::initializeBotScoreBoard(ScoreboardTrust Trust) {
   assert(!doMBBSchedRegionsTopDown());
   AIEHazardRecognizer *BotHazardRec = getAIEHazardRecognizer(Bot);
   const int Depth = BotHazardRec->getMaxLookAhead();
+  assert(unsigned(Depth) >= BotHazardRec->getPipelineDepth());
 
   /// These lambdas are an abstraction of the scoreboard manipulations,
   /// hiding the details of the implementation. In particular, we need to
@@ -479,26 +480,81 @@ SUnit *AIEPostRASchedStrategy::pickNodeAndCycle(
 }
 
 int AIEPostRASchedStrategy::getMaxDeltaCycles(const SchedBoundary &Zone) const {
-  assert(!Zone.isTop());
-  if (Zone.getCurrCycle() >= RegionBottomUpCycles - 1)
+  // Top-down scheduling does not support DeltaCycles
+  if (Zone.isTop() || Zone.getCurrCycle() >= RegionBottomUpCycles - 1)
     return 0;
   return std::min({int(RegionBottomUpCycles - 1 - Zone.getCurrCycle()),
                    int(getAIEHazardRecognizer(Zone)->getMaxLookAhead()),
                    BottomUpDelta.getValue()});
 }
 
+/// Returns the number of emitted instructions in the Top or Bot zone.
+unsigned getNumEmittedInstrs(ScheduleDAGMI *DAG, bool IsTop) {
+  if (IsTop)
+    return DAG->top().isValid() ? std::distance(DAG->begin(), DAG->top()) : 0;
+  return DAG->bottom().isValid() ? std::distance(DAG->bottom(), DAG->end()) : 0;
+}
+
+SUnit *AIEPostRASchedStrategy::getNextUnscheduledFixedInstr(
+    const SchedBoundary &Zone) const {
+  if (Zone.isTop())
+    return nullptr;
+  const Region &Reg = InterBlock.getBlockState(CurMBB).getCurrentRegion();
+  const unsigned NumEmitted = getNumEmittedInstrs(DAG, /*IsTop=*/false);
+
+  // If the zone still has unscheduled fixed instructions, the next one to pick
+  // is (DAG->bottom() - 1) for bottom-up, or DAG->top() for top-down.
+  if (NumEmitted < Reg.getBotFixedBundles().size()) {
+    MachineInstr &NextMI =
+        *std::prev(DAG->bottom().isValid() ? DAG->bottom() : DAG->end());
+    SUnit *NextSU = DAG->getSUnit(&NextMI);
+    assert(NextSU);
+    assert(NextSU->BotReadyCycle == NextSU->getHeight() &&
+           "Fixed instruction won't be placed at the correct cycle");
+    assert(Zone.getCurrCycle() <= NextSU->BotReadyCycle);
+    return NextSU;
+  }
+  return nullptr;
+}
+
+bool AIEPostRASchedStrategy::isFixedSU(const SUnit &SU, bool IsTop) const {
+  if (IsTop) {
+    return FirstTopFixedSU && SU.NodeNum >= *FirstTopFixedSU &&
+           SU.NodeNum < FirstBotFixedSU.value_or(DAG->SUnits.size());
+  }
+  return FirstBotFixedSU && SU.NodeNum >= *FirstBotFixedSU &&
+         SU.NodeNum <= LastBotFixedSU.value();
+}
+
+bool AIEPostRASchedStrategy::isFreeSU(const SUnit &SU) const {
+  const unsigned NumUpperBound = DAG->SUnits.size();
+  return SU.NodeNum < FirstTopFixedSU.value_or(NumUpperBound) &&
+         SU.NodeNum < FirstBotFixedSU.value_or(NumUpperBound);
+}
+
 bool AIEPostRASchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
                                              bool /*VerifyReadyCycle*/) {
+  // Note we use signed integers to avoid wrap-around behavior.
+  const int MinDelta = -getMaxDeltaCycles(Zone);
+  const int ReadyCycle = std::max(Zone.getCurrCycle(), SU.BotReadyCycle);
+  const int CurrCycle = Zone.getCurrCycle();
+
+  // If the Zone has remaining fixed instructions, only one SU is available.
+  if (SUnit *FixedSU = getNextUnscheduledFixedInstr(Zone)) {
+    assert(!Zone.isTop() && "Fixed instructions only expected in Bot zone");
+    const int DeltaCycles = CurrCycle - ReadyCycle;
+    return FixedSU == &SU && DeltaCycles >= MinDelta;
+  }
+
+  // If SU is a fixed instruction in the other zone, it isn't available
+  if (isFixedSU(SU, !Zone.isTop()))
+    return false;
+
   // Whether or not the zone is Top or Bot, verify if SU is ready to be
   // scheduled in terms of cycle.
   if (Zone.isTop())
     return MachineSchedStrategy::isAvailableNode(SU, Zone,
                                                  /*VerifyReadyCycle=*/true);
-
-  // Note we use signed integers to avoid wrap-around behavior.
-  const int MinDelta = -getMaxDeltaCycles(Zone);
-  const int ReadyCycle = std::max(Zone.getCurrCycle(), SU.BotReadyCycle);
-  const int CurrCycle = Zone.getCurrCycle();
 
   for (int DeltaCycles = CurrCycle - ReadyCycle; DeltaCycles >= MinDelta;
        --DeltaCycles) {
@@ -542,6 +598,10 @@ void AIEPostRASchedStrategy::enterMBB(MachineBasicBlock *MBB) {
   // from a block is the bottom one. We reset this when leaving any
   // region
   IsBottomRegion = true;
+
+  // The block may have a timed region, append its instructions.
+  auto &BS = InterBlock.getBlockState(MBB);
+  InterBlock.emitInterBlockBottom(BS);
 }
 
 void AIEPostRASchedStrategy::commitBlockSchedule(MachineBasicBlock *BB) {
@@ -551,10 +611,11 @@ void AIEPostRASchedStrategy::commitBlockSchedule(MachineBasicBlock *BB) {
   // scheduling region.
   assert(BS.getRegions().empty() ||
          0 == BS.getTop().getTopFixedBundles().size());
-  assert(BS.getRegions().empty() ||
-         0 == BS.getBottom().getBotFixedBundles().size());
+  assert(BS.BottomInsert.empty() ||
+         BS.BottomInsert.size() == BS.getBottom().getBotFixedBundles().size());
 
   // Safety margin, swp epilogue
+  // Note that the prologue is handled in a different way. See enterMBB.
   InterBlock.emitInterBlockTop(BS);
 
   if (BS.isPipelined()) {
@@ -582,8 +643,6 @@ void AIEPostRASchedStrategy::commitBlockSchedule(MachineBasicBlock *BB) {
       AIEHazardRecognizer::applyBundles(Region.Bundles, BS.TheBlock);
     }
   }
-  // swp prologue
-  InterBlock.emitInterBlockBottom(BS);
 }
 
 void AIEPostRASchedStrategy::leaveMBB() {
@@ -634,6 +693,9 @@ void AIEPostRASchedStrategy::leaveRegion(const SUnit &ExitSU) {
   RegionBegin = nullptr;
   RegionEnd = nullptr;
   IsBottomRegion = false;
+  FirstTopFixedSU = {};
+  FirstBotFixedSU = {};
+  LastBotFixedSU = {};
   BS.advanceRegion();
   DEBUG_BLOCKS(dbgs() << "    << leaveRegion\n");
 }
@@ -758,6 +820,11 @@ bool AIEPostRASchedStrategy::tryCandidate(SchedCandidate &Cand,
     return true;
   }
 
+  SchedBoundary &Zone = getSchedZone();
+  assert(!getNextUnscheduledFixedInstr(Zone) &&
+         "More than one available SUnit while not all fixed instructions have "
+         "been emitted.");
+
   // Instructions with delay slots are critical and should be scheduled
   // as soon as they are ready.
   if (TryCand.SU->getInstr()->hasDelaySlot()) {
@@ -769,8 +836,6 @@ bool AIEPostRASchedStrategy::tryCandidate(SchedCandidate &Cand,
   if (Cand.SU->getInstr()->hasDelaySlot()) {
     return false;
   }
-
-  SchedBoundary &Zone = getSchedZone();
 
   // Avoid serializing long latency dependence chains.
   if (Cand.Policy.ReduceLatency && Zone.isTop() &&
@@ -1237,6 +1302,11 @@ void llvm::AIEPostRASchedStrategy::buildGraph(ScheduleDAGMI &DAG, AAResults *AA,
                                               PressureDiffs *PDiffs,
                                               LiveIntervals *LIS,
                                               bool TrackLaneMasks) {
+
+  // Let's save the DAG already instead of waiting for initialize().
+  // Some DAG mutators might require a DAG to be set.
+  this->DAG = &DAG;
+
   /// We are called after enterRegion, which will have recorded the semantic
   /// order. We can't use the basic block order, since this may have changed
   /// in earlier iterations of scheduling
@@ -1265,6 +1335,28 @@ void llvm::AIEPostRASchedStrategy::buildGraph(ScheduleDAGMI &DAG, AAResults *AA,
   DAG.makeMaps();
   DAG.buildEdges(Context->AA);
   static_cast<AIEScheduleDAGMI &>(DAG).recordDbgInstrs(Region);
+}
+
+SUnit &AIEPostRASchedStrategy::addFixedSUnit(MachineInstr &MI, bool IsTop) {
+  DEBUG_BLOCKS(dbgs() << "Adding Fixed MI: " << MI);
+  DEBUG_BLOCKS(dbgs() << "  DAG size=" << DAG->SUnits.size()
+                      << " capacity=" << DAG->SUnits.capacity() << "\n");
+  assert(!(IsTop && FirstBotFixedSU) && "Top-fixed SUnits must be added first");
+  assert(DAG->SUnits.size() < DAG->SUnits.capacity() &&
+         "SUnits need to be re-allocated.");
+  unsigned SUNum = DAG->initSUnit(MI).value();
+  SUnit &SU = DAG->SUnits[SUNum];
+
+  if (IsTop) {
+    if (!FirstTopFixedSU)
+      FirstTopFixedSU = SUNum;
+  } else {
+    if (!FirstBotFixedSU)
+      FirstBotFixedSU = SUNum;
+    LastBotFixedSU = SUNum;
+  }
+
+  return SU;
 }
 
 bool AIEScheduleDAGMI::mayAlias(SUnit *SUa, SUnit *SUb, bool UseTBAA) {

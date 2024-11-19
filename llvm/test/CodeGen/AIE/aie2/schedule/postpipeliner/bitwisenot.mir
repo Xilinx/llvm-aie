@@ -13,19 +13,16 @@
   define dso_local void @bitNot(ptr addrspace(5) noalias nocapture writeonly %d, ptr addrspace(6) noalias nocapture readonly %s, i32 noundef %n) local_unnamed_addr #0 {
   ; CHECK-LABEL: bitNot:
   ; CHECK:       // %bb.0:
-  ; CHECK-NEXT:    add.nc lc, r0, #-5
-  ; CHECK-NEXT:    movxm ls, #.LBB0_2
-  ; CHECK-NEXT:    movxm le, #.L_LEnd0
-  ; CHECK-NEXT:    vldb wh0, [p0, #32]; nopa ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    nopa ; vldb wh0, [p0, #32]; nopx ; add.nc lc, r0, #-5
+  ; CHECK-NEXT:    vldb wl0, [p0], #64; movxm ls, #.LBB0_2
+  ; CHECK-NEXT:    vldb wh0, [p0, #32]; movxm le, #.L_LEnd0
   ; CHECK-NEXT:    vldb wl0, [p0], #64; nopa ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    vldb wh0, [p0, #32]; nopa ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    vldb wl0, [p0], #64; nopa ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    vldb wh0, [p0, #32]; nopa ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    vldb wl0, [p0], #64; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    vldb wh0, [p0, #32]; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    vldb wl0, [p0], #64; nopx
-  ; CHECK-NEXT:    vldb wh0, [p0, #32]; vbneg_ltz.s16 x1, r21, x0
-  ; CHECK-NEXT:    vldb wl0, [p0], #64
+  ; CHECK-NEXT:    vldb wh0, [p0, #32]; nopa ; nops ; nopx ; vbneg_ltz.s16 x1, r21, x0; nopv
+  ; CHECK-NEXT:    vldb wl0, [p0], #64; nopa ; nops ; nopxm ; nopv
   ; CHECK-NEXT:  .LBB0_1: // %for.body
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
   ; CHECK-NEXT:    vldb wh0, [p0, #32]; nopa ; vst wh1, [p1, #32]; nopx ; vbneg_ltz.s16 x1, r21, x0; nopv

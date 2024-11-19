@@ -24,17 +24,16 @@
   ; CHECK-NEXT:    nop // Delay Slot 2
   ; CHECK-NEXT:    nop // Delay Slot 1
   ; CHECK-NEXT:  // %bb.1: // %for.body.preheader
-  ; CHECK-NEXT:    add.nc lc, r0, #-8
-  ; CHECK-NEXT:    movxm ls, #.LBB0_2
-  ; CHECK-NEXT:    movxm le, #.L_LEnd0
+  ; CHECK-NEXT:    nopb ; nopa ; nops ; movxm ls, #.LBB0_2; nopv
+  ; CHECK-NEXT:    nopa ; add.nc lc, r0, #-8
+  ; CHECK-NEXT:    lda r0, [p1], #4; movxm le, #.L_LEnd0
   ; CHECK-NEXT:    nopb ; lda r0, [p1], #4; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopb ; lda r0, [p1], #4; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopb ; lda r0, [p1], #4; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopb ; lda r0, [p1], #4; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopb ; lda r0, [p1], #4; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopb ; lda r0, [p1], #4; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    lda r0, [p1], #4; nopxm
-  ; CHECK-NEXT:    lda r0, [p1], #4; add r1, r0, #1
+  ; CHECK-NEXT:    nopb ; lda r0, [p1], #4; nops ; add r1, r0, #1; nopm ; nopv
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_2: // %for.body
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1

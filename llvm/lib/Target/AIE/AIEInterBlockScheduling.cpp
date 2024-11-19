@@ -717,7 +717,9 @@ void InterBlockScheduling::enterRegion(MachineBasicBlock *BB,
   if (BS.Kind != BlockType::Loop ||
       BS.FixPoint.Stage == SchedulingStage::GatheringRegions) {
     ArrayRef<MachineBundle> TopFixedBundles;
-    ArrayRef<MachineBundle> BotFixedBundles;
+    ArrayRef<MachineBundle> BotFixedBundles =
+        RegionEnd == BB->end() ? ArrayRef<MachineBundle>(BS.BottomInsert)
+                               : ArrayRef<MachineBundle>();
     BS.addRegion(BB, RegionBegin, RegionEnd, TopFixedBundles, BotFixedBundles);
   }
 }
@@ -830,7 +832,7 @@ void InterBlockScheduling::emitInterBlockBottom(const BlockState &BS) const {
   assert(PreHeader->end() == PreHeader->getFirstTerminator() &&
          "PreHeader is not fall-through");
   emitBundles(BS.BottomInsert, PreHeader, PreHeader->end(), /*Move=*/false,
-              /*EmitNops=*/true);
+              /*EmitNops=*/false);
 }
 
 int InterBlockScheduling::getCyclesToRespectTiming(

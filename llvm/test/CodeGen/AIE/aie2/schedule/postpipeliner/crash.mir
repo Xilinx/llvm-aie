@@ -8,7 +8,7 @@
 # RUN: llc --mtriple=aie2 -O2 --start-before=postmisched %s -o - | FileCheck %s
 
 # This crashed the postpipeliner because it reaches NCopies=1 which causes an out of
-# bound access when setting up LCD heuristics. 
+# bound access when setting up LCD heuristics.
 # The filecheck reference is the unpipelined loop
 
 --- |

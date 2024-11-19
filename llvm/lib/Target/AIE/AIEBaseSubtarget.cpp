@@ -275,27 +275,14 @@ class RegionEndEdges : public ScheduleDAGMutation {
         assert(EdgeLatency < DelaySlots);
         EdgeLatency = DelaySlots + 1;
       }
+
       // Between writing Registers (lc, le, ls) and the end of the loop,
       // there must be a distance of 112 bytes in terms of PM addresses.
       // 112 bytes correspond to 7 fully-expanded 128-bit instructions and
       // hence adding a latency of 8 from LoopStart to the ExitSU.
-      // We can subtract the number of bundles that interblock pushed into
-      // BottomInsert
-      // FIXME: this holds as long as we insert them unconditionally. If we
-      // integrate them with the bottom region, we just need to keep 8 away
-      // from ExitSU
       if (TII->isZeroOverheadLoopSetupInstr(MI)) {
-        unsigned PatchCycles = 8;
-        if (DAG->getBB()) {
-          auto *Scheduler =
-              static_cast<AIEScheduleDAGMI *>(DAG)->getSchedImpl();
-          auto &InterBlock = Scheduler->getInterBlock();
-          unsigned InsertedCycles =
-              InterBlock.getBlockState(DAG->getBB()).BottomInsert.size();
-          PatchCycles =
-              PatchCycles >= InsertedCycles ? PatchCycles - InsertedCycles : 0;
-        }
-        EdgeLatency = std::max(EdgeLatency, PatchCycles);
+        const unsigned ZOLDistance = 8;
+        EdgeLatency = std::max(EdgeLatency, ZOLDistance);
       }
 
       ExitDep.setLatency(EdgeLatency);
@@ -316,6 +303,63 @@ class RegionEndEdges : public ScheduleDAGMutation {
     }
     DAG->ExitSU.setDepthDirty();
   };
+};
+
+/// This Mutator is responsible for emitting "fixed" SUnits at the top or bottom
+/// of the region. These special SUnits require a specific cycle and cannot be
+/// placed freely by the scheduler.
+///
+/// Here, these special SUnits get created from Region::top_fixed_instrs() or
+/// Region::bot_fixed_instrs(), and dependencies are created between "free" and
+/// "fixed" SUnits.
+class EmitFixedSUnits : public ScheduleDAGMutation {
+public:
+  void apply(ScheduleDAGInstrs *DAG) override {
+    AIEPostRASchedStrategy *Scheduler =
+        static_cast<AIEScheduleDAGMI *>(DAG)->getSchedImpl();
+    auto *TII = static_cast<const AIEBaseInstrInfo *>(DAG->TII);
+    auto *ItinData = DAG->MF.getSubtarget().getInstrItineraryData();
+    const BlockState &BS =
+        Scheduler->getInterBlock().getBlockState(DAG->getBB());
+    const Region &CurRegion = BS.getCurrentRegion();
+
+    // First, create SUnits for all "fixed" instructions
+    // Those will be chained from/to the EntrySU/ExitSU to ensure they are
+    // placed in the correct cycle. The scheduler will enforce that these fixed
+    // SUnits get placed exactly at their depth (for the Top zone) or height
+    // (for the Bot zone).
+    SUnit *Succ = &DAG->ExitSU;
+    for (MachineInstr &MI : reverse(CurRegion.bot_fixed_instrs())) {
+      SUnit &FixedSU = Scheduler->addFixedSUnit(MI, /*IsTop=*/false);
+      SDep Dep(&FixedSU, SDep::Artificial);
+      Dep.setLatency(Succ == &DAG->ExitSU ? 0 : 1);
+      Succ->addPred(Dep);
+      Succ = &FixedSU;
+    }
+    DAG->makeMaps();
+
+    // Then, create dependencies between "free" and "fixed" instructions
+    auto IsFreeSU = [Scheduler](const SUnit &SU) {
+      return Scheduler->isFreeSU(SU);
+    };
+    ArrayRef<AIE::MachineBundle> BotFixedBundles =
+        CurRegion.getBotFixedBundles();
+    for (SUnit &FreeSU : make_filter_range(DAG->SUnits, IsFreeSU)) {
+      const MachineInstr &MI = *FreeSU.getInstr();
+      MachineInstr *FixedDepMI =
+          AIE::findEarliestRef(MI, BotFixedBundles, BotFixedBundles.size()).MI;
+      if (!FixedDepMI)
+        continue;
+
+      SUnit *FixedDepSU =
+          DAG->getSUnit(&*getBundleStart(FixedDepMI->getIterator()));
+      assert(FixedDepSU && "Fixed Bundle has no corresponding SU.");
+      SDep Dep(&FreeSU, SDep::Artificial);
+      Dep.setLatency(
+          AIE::maxLatency(&MI, *TII, *ItinData, /*IncludeStages=*/true));
+      FixedDepSU->addPred(Dep, /*Required=*/true);
+    }
+  }
 };
 
 /// Collect all "weak" edges in a separate vector. This allows modifying
@@ -664,6 +708,7 @@ AIEBaseSubtarget::getPostRAMutationsImpl(const Triple &TT) {
     Mutations.emplace_back(std::make_unique<MemoryEdges>());
     Mutations.emplace_back(std::make_unique<MachineSchedWAWEdges>());
     Mutations.emplace_back(std::make_unique<BiasDepth>());
+    Mutations.emplace_back(std::make_unique<EmitFixedSUnits>());
   }
   return Mutations;
 }

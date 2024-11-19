@@ -72,6 +72,17 @@ public:
                   RegPressureTracker *RPTracker, PressureDiffs *PDiffs,
                   LiveIntervals *LIS, bool TrackLaneMasks) override;
 
+  /// Adds a SUnit for the given fixed instruction
+  /// \param IsTop Whether MI is fixed at the top or bottom of the region
+  SUnit &addFixedSUnit(MachineInstr &MI, bool IsTop);
+
+  /// Whether \p SU is fixed in a specific cycle of the given zone.
+  bool isFixedSU(const SUnit &SU, bool IsTop) const;
+
+  /// Whether \p SU is free to be scheduled anywhere in the region.
+  /// (modulo dependencies and resource conflicts)
+  bool isFreeSU(const SUnit &SU) const;
+
   /// Explicitly process regions backwards. The first scheduled region in
   /// a block connects with successors.
   bool doMBBSchedRegionsTopDown() const override { return false; }
@@ -118,6 +129,16 @@ protected:
   /// Maximum (absolute) distance between the current cycle and the emission
   /// cycle of instructions to be scheduled.
   int getMaxDeltaCycles(const SchedBoundary &Zone) const;
+
+  /// Return the next "fixed" instruction to place down.
+  SUnit *getNextUnscheduledFixedInstr(const SchedBoundary &Zone) const;
+
+  /// SU numbers for fixed instructions.
+  /// "top" fixed SUnits belong in [FirstTopFixedSU,FirstBotFixedSU)
+  /// "bot" fixed SUnits belong in [FirstBotFixedSU,LastBotFixedSU]
+  std::optional<unsigned> FirstTopFixedSU;
+  std::optional<unsigned> FirstBotFixedSU;
+  std::optional<unsigned> LastBotFixedSU;
 
   /// Keeps track of the current zone used for scheduling. See getSchedZone().
   bool IsTopDown = true;

@@ -34,18 +34,16 @@
   ; CHECK-NEXT:    nop // Delay Slot 2
   ; CHECK-NEXT:    nop // Delay Slot 1
   ; CHECK-NEXT:  // %bb.1: // %for.body.preheader
-  ; CHECK-NEXT:    add.nc lc, r0, #-1
-  ; CHECK-NEXT:    movxm ls, #.LBB0_2
-  ; CHECK-NEXT:    movxm le, #.L_LEnd0
-  ; CHECK-NEXT:    nopb ; vlda.ups.s32.s8 cm0, s0, [p0], #32; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; vlda.ups.s32.s8 cm1, s0, [p0], #32; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    nopa ; nopb ; nopx ; add.nc lc, r0, #-1
+  ; CHECK-NEXT:    vlda.ups.s32.s8 cm0, s0, [p0], #32; movxm ls, #.LBB0_2
+  ; CHECK-NEXT:    vlda.ups.s32.s8 cm1, s0, [p0], #32; movxm le, #.L_LEnd0
   ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopa ; nopb ; nopxm
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_2: // %for.body
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
