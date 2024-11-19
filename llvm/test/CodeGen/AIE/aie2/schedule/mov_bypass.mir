@@ -122,6 +122,33 @@ body:             |
 ...
 
 ---
+name:            bypass_wl_q
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: bypass_wl_q
+    ; CHECK: $wl1 = VMOV_mv_w killed $q0
+    ; CHECK-NEXT: $wl0 = VMOV_mv_w killed $wl1
+    ; CHECK-NEXT: NOP
+    $wl1 = VMOV_mv_w $q0
+    $wl0 = VMOV_mv_w $wl1
+...
+
+---
+name:            no_bypass_wh_q
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: no_bypass_wh_q
+    ; CHECK: $wh1 = VMOV_mv_w killed $q0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $wl0 = VMOV_mv_w killed $wh1
+    ; CHECK-NEXT: NOP
+    $wh1 = VMOV_mv_w $q0
+    $wl0 = VMOV_mv_w $wh1
+...
+
+---
 name:            bypass_x
 alignment:       16
 body:             |
@@ -176,11 +203,11 @@ body:             |
 ...
 
 ---
-name:            bypass_wh_vconv
+name:            no_bypass_wh_vconv
 alignment:       16
 body:             |
   bb.0.entry:
-    ; CHECK-LABEL: name: bypass_wh_vconv
+    ; CHECK-LABEL: name: no_bypass_wh_vconv
     ; CHECK: $wh1 = VMOV_mv_w killed $wh0
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: $bmh0 = VCONV_FP32_BF16 killed $wh1

@@ -760,7 +760,9 @@ let Itinerary = II_VMOV_W in {
                            ItinRegClassPair<II_VMOV_W_WMH_WMH,[OperandRegClass<0, eWH>, OperandRegClass<1, eWH>]>,
                            ItinRegClassPair<II_VMOV_W_WML_WML,[OperandRegClass<0, eWL>, OperandRegClass<1, eWL>]>,
                            ItinRegClassPair<II_VMOV_W_WMH_WML,[OperandRegClass<0, eWH>, OperandRegClass<1, eWL>]>,						   
-                           ItinRegClassPair<II_VMOV_W_WML_WMH,[OperandRegClass<0, eWL>, OperandRegClass<1, eWH>]>] in {	
+                           ItinRegClassPair<II_VMOV_W_WML_WMH,[OperandRegClass<0, eWL>, OperandRegClass<1, eWH>]>,
+                           ItinRegClassPair<II_VMOV_W_WML_Q, [OperandRegClass<0, eWL>, OperandRegClass<1, mQQm>]>,
+                           ItinRegClassPair<II_VMOV_W_WMH_Q, [OperandRegClass<0, eWH>, OperandRegClass<1, mQQm>]>] in {	
 	def VMOV_mv_w : AIE2_mv_w_inst_mv< (outs OP_mMvAMWQDst:$dst), (ins OP_mMvAMWQSrc:$src),
 		"vmov", "$dst, $src">;
   }

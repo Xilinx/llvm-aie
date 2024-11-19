@@ -275,3 +275,42 @@ body:             |
     $wl3 = VSRSM_D16_S32 $bmh0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
     $wl3 = VSRSM_D16_S32 $bmh0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
 ...
+
+# VSRSM accesses vector WM write port in cycle 4, VMOV in cycle 2 when writing to eWL/eWH register class
+---
+name:            E4_VSRSM_E2_VMOV_WL_Q
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: E4_VSRSM_E2_VMOV_WL_Q
+    ; CHECK: $wl3 = VSRSM_D16_S32 $bmh0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    ; CHECK-NEXT: $wl3 = VSRSM_D16_S32 $bmh0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    ; CHECK-NEXT: $wl3 = VSRSM_D16_S32 killed $bmh0, killed $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $wl0 = VMOV_mv_w killed $q0
+    ; CHECK-NEXT: NOP
+    $wl0  = VMOV_mv_w  $q0
+    $wl3 = VSRSM_D16_S32 $bmh0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    $wl3 = VSRSM_D16_S32 $bmh0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    $wl3 = VSRSM_D16_S32 $bmh0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+...
+
+---
+name:            E4_VSRSM_E2_VMOV_WH_Q
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: E4_VSRSM_E2_VMOV_WH_Q
+    ; CHECK: $wl3 = VSRSM_D16_S32 $bmh0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    ; CHECK-NEXT: $wl3 = VSRSM_D16_S32 $bmh0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    ; CHECK-NEXT: $wl3 = VSRSM_D16_S32 killed $bmh0, killed $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $wh0 = VMOV_mv_w killed $q0
+    ; CHECK-NEXT: NOP
+    $wh0  = VMOV_mv_w  $q0
+    $wl3 = VSRSM_D16_S32 $bmh0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    $wl3 = VSRSM_D16_S32 $bmh0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+    $wl3 = VSRSM_D16_S32 $bmh0, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+...

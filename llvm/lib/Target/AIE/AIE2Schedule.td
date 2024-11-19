@@ -348,6 +348,8 @@ def II_VMOV_W_WMH_WMH : InstrItinClass;
 def II_VMOV_W_WML_WMH : InstrItinClass;
 def II_VMOV_W_WMH_WML : InstrItinClass;
 def II_VMOV_W_WML_WML : InstrItinClass;
+def II_VMOV_W_WML_Q : InstrItinClass;
+def II_VMOV_W_WMH_Q : InstrItinClass;
 def II_VMOV_X : InstrItinClass;
 def II_VMOV_X_BM_BM : InstrItinClass;
 def II_VMOV_X_BM_XM : InstrItinClass;
@@ -993,6 +995,10 @@ InstrItinData<II_VMOV_W_WMH_WML, [EmptyCycles<1>, SimpleCycle<W_WM_PORT>],
               [2,1], [NoBypass, MOV_Bypass]>,
 InstrItinData<II_VMOV_W_WML_WML, [EmptyCycles<1>, SimpleCycle<W_WM_PORT>],
               [2,1], [MOV_Bypass, MOV_Bypass]>,
+InstrItinData<II_VMOV_W_WML_Q, [EmptyCycles<1>, SimpleCycle<W_WM_PORT>],
+              [2,1], [MOV_Bypass, NoBypass]>,
+InstrItinData<II_VMOV_W_WMH_Q, [EmptyCycles<1>, SimpleCycle<W_WM_PORT>],
+              [2,1], [NoBypass, NoBypass]>,
 InstrItinData<II_VMOV_X, [SimpleCycle<CM_RM_PORT>, PrefixCycle<W_WM_PORT>, SimpleCycle<CM_WM_PORT>],
               [2,1], [NoBypass, NoBypass]>,
 InstrItinData<II_VMOV_X_BM_BM, [SimpleCycle<CM_RM_PORT>, SimpleCycle<CM_WM_PORT>],
