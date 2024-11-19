@@ -69,3 +69,33 @@ body:             |
     VST_DM_SPILL $dm3, -128, implicit $sp :: (store (s1024) into %stack.0, align 64)
 ...
 
+---
+name:            test_fifo
+alignment:       16
+stack:
+  - { id: 0, name: '', type: spill-slot, offset: 0, size: 128, alignment: 32 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_fifo
+    ; CHECK: VST_dmx_sts_fifohl_spill $lfl1, -128, implicit $sp :: (store (s512) into %stack.0)
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_spill $lfh1, -64, implicit $sp :: (store (s512) into %stack.0 + 64)
+    VST_FIFO_SPILL $lf1, -128, implicit $sp :: (store (s1024) into %stack.0, align 64)
+...
+
+---
+name:            test_fifo_plfr
+alignment:       16
+stack:
+  - { id: 0, name: '', type: spill-slot, offset: 0, size: 136, alignment: 32 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_fifo_plfr
+    ; CHECK: ST_dms_sts_spill $p0, -136, implicit $sp :: (store (s32) into %stack.0, align 64)
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_spill $lfl0, -132, implicit $sp :: (store (s512) into %stack.0 + 4, align 4, basealign 64)
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_spill $lfh0, -68, implicit $sp :: (store (s512) into %stack.0 + 68, align 4, basealign 64)
+    ; CHECK-NEXT: ST_dms_sts_spill $r24, -4, implicit $sp :: (store (s32) into %stack.0 + 132, basealign 64)
+    VST_PLFR_SPILL $plfr0, -136, implicit $sp :: (store (s1076) into %stack.0, align 64)
+...
+

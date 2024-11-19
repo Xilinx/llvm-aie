@@ -158,11 +158,15 @@ bool AIE2PRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   case AIE2P::VST_dmx_sts_x_spill:
   case AIE2P::VST_DM_SPILL:
   case AIE2P::VST_CM_SPILL:
+  case AIE2P::VST_FIFO_SPILL:
+  case AIE2P::VST_PLFR_SPILL:
   case AIE2P::VST_Y_SPILL:
   case AIE2P::ST_D_SPILL:
   case AIE2P::ST_DS_SPILL:
   case AIE2P::VLDA_DM_SPILL:
   case AIE2P::VLDA_CM_SPILL:
+  case AIE2P::VLDA_FIFO_SPILL:
+  case AIE2P::VLDA_PLFR_SPILL:
   case AIE2P::VLDA_Y_SPILL:
   case AIE2P::LDA_D_SPILL:
   case AIE2P::LDA_DS_SPILL:

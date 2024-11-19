@@ -713,6 +713,8 @@ Register AIE2PInstrInfo::isLoadFromStackSlot(const MachineInstr &MI,
   case AIE2P::VLDA_L_SPILL:
   case AIE2P::VLDA_Y_SPILL:
   case AIE2P::VLDA_CM_SPILL:
+  case AIE2P::VLDA_FIFO_SPILL:
+  case AIE2P::VLDA_PLFR_SPILL:
   case AIE2P::LDA_D_SPILL:
   case AIE2P::LDA_DS_SPILL:
     break;
@@ -741,6 +743,8 @@ Register AIE2PInstrInfo::isStoreToStackSlot(const MachineInstr &MI,
   case AIE2P::ST_D_SPILL:
   case AIE2P::ST_DS_SPILL:
   case AIE2P::VST_CM_SPILL:
+  case AIE2P::VST_FIFO_SPILL:
+  case AIE2P::VST_PLFR_SPILL:
   case AIE2P::VST_DM_SPILL:
   case AIE2P::VST_L_SPILL:
   case AIE2P::VST_Y_SPILL:
@@ -805,6 +809,10 @@ void AIE2PInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     Opcode = AIE2P::VST_Y_SPILL;
   } else if (regClassMatches(AIE2P::ACC1024RegClass, RC, SrcReg)) {
     Opcode = AIE2P::VST_CM_SPILL;
+  } else if (regClassMatches(AIE2P::eLdFifoRegRegClass, RC, SrcReg)) {
+    Opcode = AIE2P::VST_FIFO_SPILL;
+  } else if (regClassMatches(AIE2P::ePSRFLdFRegClass, RC, SrcReg)) {
+    Opcode = AIE2P::VST_PLFR_SPILL;
   } else if (regClassMatches(AIE2P::ACC2048RegClass, RC, SrcReg)) {
     Opcode = AIE2P::VST_DM_SPILL;
   } else if (regClassMatches(AIE2P::eDRegClass, RC, SrcReg)) {
@@ -881,6 +889,10 @@ void AIE2PInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     Opcode = AIE2P::VLDA_DM_SPILL;
   } else if (regClassMatches(AIE2P::ACC1024RegClass, RC, DstReg)) {
     Opcode = AIE2P::VLDA_CM_SPILL;
+  } else if (regClassMatches(AIE2P::eLdFifoRegRegClass, RC, DstReg)) {
+    Opcode = AIE2P::VLDA_FIFO_SPILL;
+  } else if (regClassMatches(AIE2P::ePSRFLdFRegClass, RC, DstReg)) {
+    Opcode = AIE2P::VLDA_PLFR_SPILL;
   } else if (regClassMatches(AIE2P::VEC1024RegClass, RC, DstReg)) {
     Opcode = AIE2P::VLDA_Y_SPILL;
   } else if (regClassMatches(AIE2P::eLRegClass, RC, DstReg)) {
@@ -927,6 +939,14 @@ AIE2PInstrInfo::getSpillPseudoExpandInfo(const MachineInstr &MI) const {
   case AIE2P::VST_CM_SPILL:
     return {{AIE2P::VST_dmx_sts_bm_spill, AIE2P::sub_512_acc_lo},
             {AIE2P::VST_dmx_sts_bm_spill, AIE2P::sub_512_acc_hi}};
+  case AIE2P::VST_FIFO_SPILL:
+    return {{AIE2P::VST_dmx_sts_fifohl_spill, AIE2P::sub_lo_lf},
+            {AIE2P::VST_dmx_sts_fifohl_spill, AIE2P::sub_hi_lf}};
+  case AIE2P::VST_PLFR_SPILL:
+    return {{AIE2P::ST_dms_sts_spill, AIE2P::sub_ptr},
+            {AIE2P::VST_FIFO_SPILL, AIE2P::sub_fifo},
+            {AIE2P::ST_dms_sts_spill, AIE2P::sub_avail}};
+
   case AIE2P::VST_DM_SPILL:
     return {{AIE2P::VST_CM_SPILL, AIE2P::sub_1024_acc_lo},
             {AIE2P::VST_CM_SPILL, AIE2P::sub_1024_acc_hi}};
@@ -954,6 +974,13 @@ AIE2PInstrInfo::getSpillPseudoExpandInfo(const MachineInstr &MI) const {
   case AIE2P::VLDA_CM_SPILL:
     return {{AIE2P::VLDA_dmx_lda_bm_spill, AIE2P::sub_512_acc_lo},
             {AIE2P::VLDA_dmx_lda_bm_spill, AIE2P::sub_512_acc_hi}};
+  case AIE2P::VLDA_FIFO_SPILL:
+    return {{AIE2P::VLDA_dmx_lda_fifohl_spill, AIE2P::sub_lo_lf},
+            {AIE2P::VLDA_dmx_lda_fifohl_spill, AIE2P::sub_hi_lf}};
+  case AIE2P::VLDA_PLFR_SPILL:
+    return {{AIE2P::LDA_dms_lda_spill, AIE2P::sub_ptr},
+            {AIE2P::VLDA_FIFO_SPILL, AIE2P::sub_fifo},
+            {AIE2P::LDA_dms_lda_spill, AIE2P::sub_avail}};
   case AIE2P::VLDA_DM_SPILL:
     return {{AIE2P::VLDA_CM_SPILL, AIE2P::sub_1024_acc_lo},
             {AIE2P::VLDA_CM_SPILL, AIE2P::sub_1024_acc_hi}};
@@ -1035,12 +1062,16 @@ bool AIE2PInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
   case AIE2P::ST_D_SPILL:
   case AIE2P::ST_DS_SPILL:
   case AIE2P::VST_CM_SPILL:
+  case AIE2P::VST_FIFO_SPILL:
+  case AIE2P::VST_PLFR_SPILL:
   case AIE2P::VST_L_SPILL:
   case AIE2P::VST_Y_SPILL:
   case AIE2P::VLDA_DM_SPILL:
   case AIE2P::LDA_D_SPILL:
   case AIE2P::LDA_DS_SPILL:
   case AIE2P::VLDA_CM_SPILL:
+  case AIE2P::VLDA_FIFO_SPILL:
+  case AIE2P::VLDA_PLFR_SPILL:
   case AIE2P::VLDA_L_SPILL:
   case AIE2P::VLDA_Y_SPILL:
     expandSpillPseudo(MI, TRI, /*SubRegOffsetAlign=*/Align(4));
