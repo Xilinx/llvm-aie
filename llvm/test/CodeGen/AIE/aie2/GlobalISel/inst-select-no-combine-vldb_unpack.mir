@@ -8,66 +8,90 @@
 
 # RUN: llc -mtriple aie2 -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s
 
-# This tests that we don't combine if one of the load's defs is used before the VUNPACK instruction
+
+# This tests that we don't combine if one of the load's defs (data) is used after the VUNPACK instruction (no single use)
+
 ---
-name:            VLD_UNPACK_use
+name:            VLD_UNPACK_use_after
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $p0
-    ; CHECK-LABEL: name: VLD_UNPACK_use
+    ; CHECK-LABEL: name: VLD_UNPACK_use_after
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:em = COPY [[COPY1]]
     ; CHECK-NEXT: [[VLD_pstm_pseudo:%[0-9]+]]:vec256, [[VLD_pstm_pseudo1:%[0-9]+]]:ep = VLD_pstm_pseudo [[COPY]], [[COPY2]] :: (load (<32 x s8>))
-    ; CHECK-NEXT: $m1 = COPY [[VLD_pstm_pseudo1]]
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:ep = COPY $m1
     ; CHECK-NEXT: [[VUNPACK_S16_S8_:%[0-9]+]]:vec512 = VUNPACK_S16_S8 [[VLD_pstm_pseudo]]
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VUNPACK_S16_S8_]], implicit [[COPY3]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VUNPACK_S16_S8_]], implicit [[VLD_pstm_pseudo]]
     %0:ptrregbank(p0) = COPY $p0
     %1:gprregbank(s32) = COPY $r0
     %7:modregbank(s20) = G_TRUNC %1
     %102:gprregbank(s32) = G_CONSTANT i32 1
     %25:vregbank(<32 x s8>), %19:ptrregbank(p0) = G_AIE_POSTINC_LOAD %0, %7 :: (load (<32 x s8>))
-    $m1 = COPY %19:ptrregbank(p0)
-    %12:ptrregbank(p0) = COPY $m1
+    %103:vregbank(<32 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.unpack.I16.I8), %25:vregbank(<32 x s8>), %102:gprregbank(s32)
+    %12:vregbank(<32 x s8>) = COPY %25
+    PseudoRET implicit $lr, implicit %103, implicit %12
+...
+
+# This tests that we don't combine if one of the load's defs (data) is used before the VUNPACK instruction (no single use)
+
+---
+name:            VLD_UNPACK_use_between
+alignment:       16
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: VLD_UNPACK_use_between
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:em = COPY [[COPY1]]
+    ; CHECK-NEXT: [[VLD_pstm_pseudo:%[0-9]+]]:vec256, [[VLD_pstm_pseudo1:%[0-9]+]]:ep = VLD_pstm_pseudo [[COPY]], [[COPY2]] :: (load (<32 x s8>))
+    ; CHECK-NEXT: [[VUNPACK_S16_S8_:%[0-9]+]]:vec512 = VUNPACK_S16_S8 [[VLD_pstm_pseudo]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VUNPACK_S16_S8_]], implicit [[VLD_pstm_pseudo]]
+    %0:ptrregbank(p0) = COPY $p0
+    %1:gprregbank(s32) = COPY $r0
+    %7:modregbank(s20) = G_TRUNC %1
+    %102:gprregbank(s32) = G_CONSTANT i32 1
+    %25:vregbank(<32 x s8>), %19:ptrregbank(p0) = G_AIE_POSTINC_LOAD %0, %7 :: (load (<32 x s8>))
+    %12:vregbank(<32 x s8>) = COPY %25
     %103:vregbank(<32 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.unpack.I16.I8), %25:vregbank(<32 x s8>), %102:gprregbank(s32)
     PseudoRET implicit $lr, implicit %103, implicit %12
 ...
 
-# This tests that we don't combine if a store is in between the load and VUNPACK instruction
 ---
-name:            VLD_UNPACK_store
+name:            VLD_UNPACK_side_effects_between
+alignment:       16
 legalized:       true
 regBankSelected: true
-tracksRegLiveness: true
-body: |
-  bb.0:
-    liveins: $p0, $m0, $m1, $m2, $r0, $amll0, $p1
-    ; CHECK-LABEL: name: VLD_UNPACK_store
-    ; CHECK: liveins: $p0, $m0, $m1, $m2, $r0, $amll0, $p1
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: VLD_UNPACK_side_effects_between
+    ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p1
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $r0
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:em = COPY [[COPY2]]
-    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:vec256 = COPY $amll0
-    ; CHECK-NEXT: [[VLD_pstm_pseudo:%[0-9]+]]:vec256, [[VLD_pstm_pseudo1:%[0-9]+]]:ep = VLD_pstm_pseudo [[COPY]], [[COPY3]] :: (load (<32 x s8>))
-    ; CHECK-NEXT: VST_dmw_sts_w_ag_idx_imm [[COPY4]], [[COPY1]], 0 :: (store (<32 x s8>))
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:em = COPY [[COPY1]]
+    ; CHECK-NEXT: [[VLD_pstm_pseudo:%[0-9]+]]:vec256, [[VLD_pstm_pseudo1:%[0-9]+]]:ep = VLD_pstm_pseudo [[COPY]], [[COPY2]] :: (load (<32 x s8>))
+    ; CHECK-NEXT: $crunpacksign = COPY [[COPY1]]
     ; CHECK-NEXT: [[VUNPACK_S16_S8_:%[0-9]+]]:vec512 = VUNPACK_S16_S8 [[VLD_pstm_pseudo]]
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VUNPACK_S16_S8_]]
     %0:ptrregbank(p0) = COPY $p0
-    %20:ptrregbank(p0) = COPY $p1
     %1:gprregbank(s32) = COPY $r0
     %7:modregbank(s20) = G_TRUNC %1
     %102:gprregbank(s32) = G_CONSTANT i32 1
-    %80:vregbank(<32 x s8>) = COPY $amll0
     %25:vregbank(<32 x s8>), %19:ptrregbank(p0) = G_AIE_POSTINC_LOAD %0, %7 :: (load (<32 x s8>))
-    G_STORE %80:vregbank(<32 x s8>), %20:ptrregbank(p0) :: (store (<32 x s8>))
+    %110:gprregbank(s32) = G_CONSTANT i32 11
+    G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.set.ctrl.reg), %110:gprregbank(s32), %1:gprregbank(s32)
     %103:vregbank(<32 x s16>) = G_INTRINSIC intrinsic(@llvm.aie2.unpack.I16.I8), %25:vregbank(<32 x s8>), %102:gprregbank(s32)
     PseudoRET implicit $lr, implicit %103
 ...

@@ -63,12 +63,12 @@ MachineInstr *findPreIncMatch(MachineInstr &MemI, MachineRegisterInfo &MRI,
   return nullptr;
 }
 
-/// Checks if any operand of \a Use is defined by \a MI.
-/// This is not transitive: it will not look at how the uses of \a MI are
+/// Checks if any operand of \a MI is defined by \a Def.
+/// This is not transitive: it will not look at how the uses of \a Def are
 /// defined.
-bool isUseOf(const MachineInstr &MI, const MachineInstr &Use) {
-  for (auto &Defs : Use.defs()) {
-    for (auto &MIUse : MI.uses()) {
+bool isUseOf(const MachineInstr &MI, const MachineInstr &Def) {
+  for (auto &Defs : Def.all_defs()) {
+    for (auto &MIUse : MI.all_uses()) {
       if (MIUse.isReg() && Defs.getReg() == MIUse.getReg())
         return true;
     }
@@ -117,6 +117,30 @@ bool llvm::canDelayMemOp(MachineInstr &MemI, MachineInstr &Dest,
            !MI.isSafeToMove(nullptr, SawStore);
   };
   return none_of(InstrRange, UnsafeToMovePast);
+}
+
+/// \return true if \a Dest can be moved just after \a MemI in order to allow
+/// combining
+bool llvm::canAdvanceOp(MachineInstr &MemI, MachineInstr &Dest,
+                        const MachineRegisterInfo &MRI) {
+  assert(Dest.getOpcode() != TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS &&
+         "Cannot advance Dest MI with side effects");
+  assert(!Dest.mayLoadOrStore() && "Cannot advance load/store Dest MI");
+  if (MemI.getParent() != Dest.getParent())
+    return false;
+  auto MII = std::next(MemI.getIterator());
+  auto MIE = Dest.getIterator();
+  auto InstrRange = make_range(MII, MIE);
+  auto UnsafeToMoveBefore = [&](const MachineInstr &MI) {
+    // Conditions that indicate it is unsafe to move:
+    // 1 - G_INTRINSIC_W_SIDE_EFFECTS without explicit output, which may include
+    // writing to a control register.
+    // 2 - Crossing the definition of an input operand of Dest.
+    return ((MI.getOpcode() == TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS &&
+             MI.defs().empty()) ||
+            isUseOf(Dest, MI));
+  };
+  return none_of(InstrRange, UnsafeToMoveBefore);
 }
 
 /// Find the def instruction for \p Reg, folding away any trivial copies and

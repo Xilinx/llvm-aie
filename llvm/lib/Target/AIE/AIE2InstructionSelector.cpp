@@ -1604,14 +1604,22 @@ bool AIE2InstructionSelector::selectG_AIE_LOAD_UNPACK(
     MachineInstr &UNPACKI, MachineRegisterInfo &MRI) {
   Register LoadResult = (std::next(UNPACKI.uses().begin()))->getReg();
   MachineInstr *LoadOp = getDefIgnoringCopiesAndBitcasts(LoadResult, MRI);
+  // Should we build the instruction at load's position?
+  bool ShouldAdvanceOp = false;
 
   assert(LoadOp && "Expected SSA.");
 
   // Do not try to combine if one of the load's defs is used by another
   // instruction between the load and the VUNPACK or if there is a store
   // between the load and the VUNPACK.
-  if (!canDelayMemOp(*LoadOp, UNPACKI, MRI))
-    return false;
+  if (!canDelayMemOp(*LoadOp, UNPACKI, MRI)) {
+    // If we cannot delay the load, we can try to advance the combined
+    // instruction to the load's position.
+    if (canAdvanceOp(*LoadOp, UNPACKI, MRI))
+      ShouldAdvanceOp = true;
+    else
+      return false;
+  }
 
   if (!canCombineUNPACKLoad(*LoadOp, UNPACKI, MRI) ||
       LoadOp->getParent() != UNPACKI.getParent() || !MRI.hasOneUse(LoadResult))
@@ -1627,6 +1635,9 @@ bool AIE2InstructionSelector::selectG_AIE_LOAD_UNPACK(
 
   Register DstReg = UNPACKI.getOperand(0).getReg();
   Register SignReg = UNPACKI.getOperand(3).getReg();
+
+  if (ShouldAdvanceOp)
+    MIB.setInstr(*LoadOp);
 
   auto NewInstr = MIB.buildInstr(LSO->ISelOpcode);
 

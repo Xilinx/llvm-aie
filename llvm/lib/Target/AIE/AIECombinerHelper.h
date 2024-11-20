@@ -61,6 +61,10 @@ bool matchGlobalValOffset(MachineInstr &MI, MachineRegisterInfo &MRI,
 /// post-increment combining
 bool canDelayMemOp(MachineInstr &MemI, MachineInstr &Dest,
                    MachineRegisterInfo &MRI);
+/// \return true if \a Dest can be moved just after \a MemI in order to allow
+/// combining
+bool canAdvanceOp(MachineInstr &MemI, MachineInstr &Dest,
+                  const MachineRegisterInfo &MRI);
 /// Find the def instruction for \p Reg, folding away any trivial copies and
 /// bitcasts. May return nullptr if \p Reg is not a generic virtual register.
 MachineInstr *getDefIgnoringCopiesAndBitcasts(Register Reg,
