@@ -4,6 +4,8 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the interface for lazy computation of value constraint
@@ -203,10 +205,14 @@ namespace {
 
       // Insert over-defined values into their own cache to reduce memory
       // overhead.
-      if (Result.isOverdefined())
+      if (Result.isOverdefined()) {
+        LLVM_DEBUG(dbgs() << "OverDefined insertion with " << *Val << "!\n");
         Entry->OverDefined.insert(Val);
-      else
-        Entry->LatticeElements.insert({ Val, Result });
+      } else {
+        LLVM_DEBUG(dbgs() << "Filling Cache: key=" << *Val << " with Value "
+                          << Result << "\n");
+        Entry->LatticeElements.insert({Val, Result});
+      }
 
       addValueHandle(Val);
     }
@@ -217,13 +223,18 @@ namespace {
       if (!Entry)
         return std::nullopt;
 
-      if (Entry->OverDefined.count(V))
+      if (Entry->OverDefined.count(V)) {
+        LLVM_DEBUG(dbgs() << *V << " is overdefined!\n");
         return ValueLatticeElement::getOverdefined();
+      }
 
       auto LatticeIt = Entry->LatticeElements.find_as(V);
-      if (LatticeIt == Entry->LatticeElements.end())
+      if (LatticeIt == Entry->LatticeElements.end()) {
+        LLVM_DEBUG(dbgs() << "Count not find Cached Value.\n");
         return std::nullopt;
+      }
 
+      LLVM_DEBUG(dbgs() << "Found Cached Value: " << LatticeIt->second << "\n");
       return LatticeIt->second;
     }
 
@@ -612,6 +623,8 @@ bool LazyValueInfoImpl::solveBlockValue(Value *Val, BasicBlock *BB) {
   assert(!TheCache.getCachedValueInfo(Val, BB) &&
          "Value should not be in cache");
 
+  LLVM_DEBUG(dbgs() << "-solve block " << *Val << "\n");
+
   // Hold off inserting this value into the Cache in case we have to return
   // false and come back later.
   std::optional<ValueLatticeElement> Res = solveBlockValueImpl(Val, BB);
@@ -619,6 +632,7 @@ bool LazyValueInfoImpl::solveBlockValue(Value *Val, BasicBlock *BB) {
     // Work pushed, will revisit
     return false;
 
+  LLVM_DEBUG(dbgs() << "Value " << *Val << " has result " << *Res << "\n");
   TheCache.insertResult(Val, BB, *Res);
   return true;
 }
@@ -803,8 +817,14 @@ void LazyValueInfoImpl::intersectAssumeOrGuardBlockValueConstantRange(
     // assumes will have already been taken into account when the value was
     // propagated from predecessor blocks.
     auto *I = cast<CallInst>(AssumeVH);
-    if (I->getParent() != BB || !isValidAssumeForContext(I, BBI))
+    LLVM_DEBUG(
+        dbgs() << "Assumption Cache : " << *I << "\nWith valid Assume Context "
+               << !isValidAssumeForContext(I, BBI, nullptr, false) << "\n");
+    if (I->getParent() != BB ||
+        !isValidAssumeForContext(I, BBI, nullptr, false))
       continue;
+
+    LLVM_DEBUG(dbgs() << "Calculating new BBLV\n");
 
     BBLV = intersect(BBLV, *getValueFromCondition(Val, I->getArgOperand(0),
                                                   /*IsTrueDest*/ true,
@@ -825,12 +845,14 @@ void LazyValueInfoImpl::intersectAssumeOrGuardBlockValueConstantRange(
   }
 
   if (BBLV.isOverdefined()) {
+    LLVM_DEBUG(dbgs() << "BBLV is overdefined!\n");
     // Check whether we're checking at the terminator, and the pointer has
     // been dereferenced in this block.
     PointerType *PTy = dyn_cast<PointerType>(Val->getType());
-    if (PTy && BB->getTerminator() == BBI &&
-        isNonNullAtEndOfBlock(Val, BB))
+    if (PTy && BB->getTerminator() == BBI && isNonNullAtEndOfBlock(Val, BB)) {
       BBLV = ValueLatticeElement::getNot(ConstantPointerNull::get(PTy));
+      LLVM_DEBUG(dbgs() << "Updating BBLV with constant pointer not null\n");
+    }
   }
 }
 
@@ -1521,6 +1543,7 @@ ValueLatticeElement LazyValueInfoImpl::getValueInBlock(Value *V, BasicBlock *BB,
                                                        Instruction *CxtI) {
   LLVM_DEBUG(dbgs() << "LVI Getting block end value " << *V << " at '"
                     << BB->getName() << "'\n");
+  LLVM_DEBUG(dbgs() << "With Context Instruction " << *CxtI << "\n");
 
   assert(BlockValueStack.empty() && BlockValueSet.empty());
   std::optional<ValueLatticeElement> OptResult = getBlockValue(V, BB, CxtI);
@@ -1711,6 +1734,17 @@ static bool isKnownNonConstant(Value *V) {
   return false;
 }
 
+bool LazyValueInfo::containsAssumptionCompareValue(Value *V) const {
+  V->dump();
+  if (!AC->assumptionsFor(V).empty())
+    return true;
+  auto *Call = dyn_cast<CallInst>(V);
+  if (!Call)
+    return false;
+  Value *Op = Call->getOperand(0);
+  return !AC->assumptionsFor(Op).empty();
+}
+
 Constant *LazyValueInfo::getConstant(Value *V, Instruction *CxtI) {
   // Bail out early if V is known not to be a Constant.
   if (isKnownNonConstant(V))
@@ -1807,9 +1841,12 @@ getPredicateResult(unsigned Pred, Constant *C, const ValueLatticeElement &Val,
       if (CR.isSingleElement())
         return LazyValueInfo::False;
     } else {
+      LLVM_DEBUG(dbgs() << "Constant: "; C->dump(); dbgs() << "\n");
       // Handle more complex predicates.
       ConstantRange TrueValues = ConstantRange::makeExactICmpRegion(
           (ICmpInst::Predicate)Pred, CI->getValue());
+      LLVM_DEBUG(dbgs() << "Creates following TrueValues: "; TrueValues.dump();
+                 dbgs() << "\n");
       if (TrueValues.contains(CR))
         return LazyValueInfo::True;
       if (TrueValues.inverse().contains(CR))

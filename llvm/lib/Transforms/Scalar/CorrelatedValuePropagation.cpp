@@ -4,6 +4,8 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the Correlated Value Propagation pass.
@@ -18,6 +20,7 @@
 #include "llvm/Analysis/GlobalsModRef.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/LazyValueInfo.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/BasicBlock.h"
@@ -315,14 +318,28 @@ static bool processICmp(ICmpInst *Cmp, LazyValueInfo *LVI) {
 /// information is sufficient to prove this comparison. Even for local
 /// conditions, this can sometimes prove conditions instcombine can't by
 /// exploiting range information.
-static bool constantFoldCmp(CmpInst *Cmp, LazyValueInfo *LVI) {
+static bool constantFoldCmp(CmpInst *Cmp, LazyValueInfo *LVI, bool IsLoop) {
   Value *Op0 = Cmp->getOperand(0);
   Value *Op1 = Cmp->getOperand(1);
+  // dbgs() << "predicate: "
+  //        << llvm::CmpInst::getPredicateName(Cmp->getPredicate()) << "\n";
+  // Op0->dump();
+  // Op1->dump();
+  LLVM_DEBUG(dbgs() << "ConstantFoldCmp "; Cmp->dump(); dbgs() << "\n");
   LazyValueInfo::Tristate Result =
       LVI->getPredicateAt(Cmp->getPredicate(), Op0, Op1, Cmp,
                           /*UseBlockValue=*/true);
   if (Result == LazyValueInfo::Unknown)
     return false;
+
+  // Do not update the Assumption Cache Instructions in the loop, because it
+  // will remove the Assumption and lose critical information
+  if (IsLoop && LVI->containsAssumptionCompareValue(Cmp)) {
+    LLVM_DEBUG(dbgs() << "Do not overwrite Assumption Cache values and "
+                         "potentially remove the Assumption itself!"
+                      << *Cmp << "\n");
+    return false;
+  }
 
   ++NumCmps;
   Constant *TorF =
@@ -332,8 +349,8 @@ static bool constantFoldCmp(CmpInst *Cmp, LazyValueInfo *LVI) {
   return true;
 }
 
-static bool processCmp(CmpInst *Cmp, LazyValueInfo *LVI) {
-  if (constantFoldCmp(Cmp, LVI))
+static bool processCmp(CmpInst *Cmp, LazyValueInfo *LVI, bool IsLoop) {
+  if (constantFoldCmp(Cmp, LVI, IsLoop))
     return true;
 
   if (auto *ICmp = dyn_cast<ICmpInst>(Cmp))
@@ -1155,7 +1172,7 @@ static bool processAnd(BinaryOperator *BinOp, LazyValueInfo *LVI) {
 }
 
 static bool runImpl(Function &F, LazyValueInfo *LVI, DominatorTree *DT,
-                    const SimplifyQuery &SQ) {
+                    const SimplifyQuery &SQ, LoopInfo &LI) {
   bool FnChanged = false;
   // Visiting in a pre-order depth-first traversal causes us to simplify early
   // blocks before querying later blocks (which require us to analyze early
@@ -1164,7 +1181,14 @@ static bool runImpl(Function &F, LazyValueInfo *LVI, DominatorTree *DT,
   // blocks.
   for (BasicBlock *BB : depth_first(&F.getEntryBlock())) {
     bool BBChanged = false;
+    bool IsLoopHeader = false;
+    if (const auto *Loop = LI.getLoopFor(BB)) {
+      Loop->dump();
+      IsLoopHeader = Loop->getHeader() == BB;
+    }
     for (Instruction &II : llvm::make_early_inc_range(*BB)) {
+
+      LLVM_DEBUG(dbgs() << "CorrelatedValuePropagation: " << II << "\n");
       switch (II.getOpcode()) {
       case Instruction::Select:
         BBChanged |= processSelect(cast<SelectInst>(&II), LVI);
@@ -1174,7 +1198,7 @@ static bool runImpl(Function &F, LazyValueInfo *LVI, DominatorTree *DT,
         break;
       case Instruction::ICmp:
       case Instruction::FCmp:
-        BBChanged |= processCmp(cast<CmpInst>(&II), LVI);
+        BBChanged |= processCmp(cast<CmpInst>(&II), LVI, IsLoopHeader);
         break;
       case Instruction::Call:
       case Instruction::Invoke:
@@ -1240,8 +1264,9 @@ PreservedAnalyses
 CorrelatedValuePropagationPass::run(Function &F, FunctionAnalysisManager &AM) {
   LazyValueInfo *LVI = &AM.getResult<LazyValueAnalysis>(F);
   DominatorTree *DT = &AM.getResult<DominatorTreeAnalysis>(F);
+  LoopInfo *LI = &AM.getResult<LoopAnalysis>(F);
 
-  bool Changed = runImpl(F, LVI, DT, getBestSimplifyQuery(AM, F));
+  bool Changed = runImpl(F, LVI, DT, getBestSimplifyQuery(AM, F), *LI);
 
   PreservedAnalyses PA;
   if (!Changed) {

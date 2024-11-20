@@ -4,6 +4,8 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the interface for lazy computation of value constraint
@@ -59,6 +61,8 @@ namespace llvm {
 
     /// This is used to return true/false/dunno results.
     enum Tristate { Unknown = -1, False = 0, True = 1 };
+
+    bool containsAssumptionCompareValue(Value *V) const;
 
     // Public query interface.
 
