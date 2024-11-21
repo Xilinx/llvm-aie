@@ -480,9 +480,9 @@ body:             |
   ; CHECK-NEXT:   renamable $cm0 = VLDA_UPS_S64_S16_ag_idx $s0, $p0, $dj0, implicit-def $srups_of, implicit $crsat
   ; CHECK-NEXT:   renamable $bmh1 = VMUL_F_vmac_bm_core_dense killed renamable $x0, renamable $x0, $r25, implicit-def $srfpflags, implicit $crfpmask
   ; CHECK-NEXT:   renamable $bmh2 = VADD_F killed renamable $bmh1, renamable $bmh1, $r25, implicit-def $srfpflags, implicit $crfpmask
-  ; CHECK-NEXT:   renamable $cm3 = VADD killed renamable $cm0, renamable $cm0, $r25
+  ; CHECK-NEXT:   renamable $cm1 = VADD killed renamable $cm0, renamable $cm0, $r25
   ; CHECK-NEXT:   VST_SRS_D16_S32_ag_idx $p0, $dj0, killed renamable $bmh2, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
-  ; CHECK-NEXT:   VST_SRS_D8_S32_ag_idx $p0, $dj0, killed renamable $cm3, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
+  ; CHECK-NEXT:   VST_SRS_D8_S32_ag_idx $p0, $dj0, killed renamable $cm1, $s0, implicit-def $srsrs_of, implicit $crsat, implicit $crrnd, implicit $crsrssign
   ; CHECK-NEXT:   PseudoLoopEnd <mcsymbol .L_1120>, %bb.1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2:

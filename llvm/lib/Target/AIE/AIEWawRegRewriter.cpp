@@ -17,6 +17,7 @@
 #include "AIEBaseRegisterInfo.h"
 #include "Utils/AIELoopUtils.h"
 
+#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/LiveDebugVariables.h"
 #include "llvm/CodeGen/LiveIntervals.h"
@@ -28,6 +29,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/SlotIndexes.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
+#include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/MC/MCRegister.h"
 #include "llvm/Support/Debug.h"
@@ -39,6 +41,8 @@ using namespace llvm;
 #define DEBUG_TYPE "aie-waw-reg-rewrite"
 
 namespace {
+
+using RoundRobin = std::list<MCPhysReg>;
 
 ///
 /// This pass rewrites physical register assignments in critical parts of the
@@ -94,12 +98,20 @@ private:
   /// returns true if the physical register of Reg was replaced
   bool replaceReg(const Register Reg, BitVector &BlockedPhysRegs);
 
+  bool replaceReg(const Register Reg, RoundRobin &Registers);
+
+  void unassignReg(Register Reg);
+  void assignReg(Register Reg, MCPhysReg PhysReg);
+
   /// Find a free register of the same register class type, but
   /// exclude the blocked physical registers from the result.
   /// Otherwise a new WAW dependencies can be introduced, that was previously
   /// removed.
   MCPhysReg getReplacementPhysReg(const Register Reg,
                                   const BitVector &BlockedPhysRegs) const;
+
+  MCPhysReg getReplacementPhysReg(const Register Reg,
+                                  RoundRobin &Registers) const;
 
   bool isWorthRenaming(const Register &Reg, const BitVector &UsedPhysRegs,
                        const BitVector &VRegWithCopies) const;
@@ -209,7 +221,6 @@ AIEWawRegRewriter::getVRegWithCopies(const MachineBasicBlock &MBB) const {
 bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
   LLVM_DEBUG(dbgs() << "WAW Reg Renaming BasicBlock "; MBB->dump();
              dbgs() << "\n");
-  bool Modified = false;
   // Add the used physical registers one machine instruction at a time.
   // This vector is used to determine, if a physical register has already been
   // defined in the machine basic block.
@@ -230,15 +241,18 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
   IndexedMap<const MachineInstr *, VirtReg2IndexFunctor> LastVRegDef =
       getLastVRegDef(*MBB);
 
-  for (const MachineInstr &MI : *MBB) {
+  using OriginalAllocation =
+      std::vector<std::pair<const MachineOperand *, Register>>;
+  // Record the candidates and their original allocation
+  OriginalAllocation Candidates;
 
+  for (const MachineInstr &MI : *MBB) {
     // Identity copies will be removed in a later pass, therefore, these are not
     // real defines of a physical register
     if (isIdentityCopy(MI))
       continue;
 
     for (const MachineOperand &MO : MI.defs()) {
-
       Register Reg = MO.getReg();
       if (!Reg.isVirtual())
         continue;
@@ -249,33 +263,82 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
       // several definitions of the same virtual register are not relevant
       // because even if the virtual register is renamed, by construction
       // all the definitions would be renamed as well and achieve nothing wrt
-      // WAW dependecy resolution
+      // WAW dependency resolution
       if (LastVRegDef[Reg] != &MI)
         continue;
 
-      if (isWorthRenaming(Reg, UsedPhysRegs, VRegWithCopies) &&
-          replaceReg(Reg, BlockedPhysRegs)) {
-
-        LLVM_DEBUG(dbgs() << MI);
-        Modified = true;
-
-      } else {
-        // Keep track of already visited physical registers.
-        // Incrementally add the encountered physical registers, so that a
-        // second occurrence of a physical register can trigger the register
-        // rewriting
-        // Blocked registers for the replacement are recorded in
-        // BlockedPhysRegs. Initially all the used physical registers
-        // from the MBB are blocked, so that replacements do not introduce WAW
-        // dependencies. Additionally, replaced registers are already blocked in
-        // BlockedPhysRegs, so that an additional replacement will not cause a
-        // WAW, which this pass is trying to remove.
-        UsedPhysRegs[VRM->getPhys(Reg)] = true;
+      // Note: having this before isWorthRenaming disables the 'was used before'
+      // check, so that we try to rename as much as possible.
+      UsedPhysRegs[VRM->getPhys(Reg)] = true;
+      if (isWorthRenaming(Reg, UsedPhysRegs, VRegWithCopies)) {
+        Candidates.emplace_back(&MO, VRM->getPhys(Reg));
       }
     }
   }
 
-  return Modified;
+  // Free physregs of all candidates and register their regclasses
+  std::set<const TargetRegisterClass *> RegClasses;
+  for (auto &[MO, Org] : Candidates) {
+    auto VReg = MO->getReg();
+    unassignReg(VReg);
+    auto *RC = MRI->getRegClass(VReg);
+    RegClasses.insert(RC);
+    LLVM_DEBUG(dbgs() << "VR" << Register::virtReg2Index(VReg) << " RC="
+                      << RC->getID() << " (" << TRI->getName(Org) << ")\n");
+  }
+  LLVM_DEBUG(dbgs() << "Renaming " << Candidates.size() << " candidates in "
+                    << RegClasses.size() << " classes\n");
+
+  // Reallocate all virtual registers in Candidates.
+  // Return true if successful.
+  auto ReAllocate = [&](OriginalAllocation &Candidates, RoundRobin &Registers) {
+    for (auto &[MO, Org] : Candidates) {
+      auto VReg = MO->getReg();
+      if (!replaceReg(VReg, Registers)) {
+        LLVM_DEBUG(dbgs() << "Renaming VR" << Register::virtReg2Index(VReg)
+                          << " failed\n");
+        return false;
+      }
+    }
+    return true;
+  };
+
+  // Reapply the original allocation to the intersection of RC and Candidates
+  auto RevertAllocation = [&](OriginalAllocation &Candidates) {
+    // The partial allocation may conflict with the original one in ugly ways.
+    // To be safe, reset all allocations first.
+    for (auto &[MO, Org] : Candidates) {
+      auto VReg = MO->getReg();
+      if (VRM->hasPhys(VReg)) {
+        unassignReg(VReg);
+      }
+    }
+    for (auto &[MO, Org] : Candidates) {
+      auto VReg = MO->getReg();
+      assignReg(VReg, Org);
+    }
+  };
+
+  // Least-Recently-Used list. Append new uses at the end, search from the start
+  std::list<MCPhysReg> LRURegisters;
+
+  // For each reg class, allocate the candidates in round-robin fashion.
+  // If we fail, we fall back to the original allocation
+  BitVector RegSet{TRI->getNumRegs()};
+  for (const auto *RC : RegClasses) {
+    for (auto PhysReg : RC->getRegisters()) {
+      if (!RegSet[PhysReg]) {
+        LRURegisters.push_back(PhysReg);
+      }
+      RegSet[PhysReg] = true;
+    }
+  }
+  if (!ReAllocate(Candidates, LRURegisters)) {
+    RevertAllocation(Candidates);
+    return false;
+  }
+
+  return true;
 }
 
 bool AIEWawRegRewriter::isWorthRenaming(const Register &Reg,
@@ -308,6 +371,19 @@ AIEWawRegRewriter::getDefinedPhysRegs(const MachineBasicBlock *MBB) const {
   return BlockedPhysRegs;
 }
 
+void AIEWawRegRewriter::unassignReg(Register VReg) {
+  const LiveInterval &LI = LIS->getInterval(VReg);
+  LRM->unassign(LI);
+}
+
+void AIEWawRegRewriter::assignReg(Register VReg, MCPhysReg PhysReg) {
+  const LiveInterval &LI = LIS->getInterval(VReg);
+  if (VRM->hasPhys(VReg)) {
+    LRM->unassign(LI);
+  }
+  LRM->assign(LI, PhysReg);
+}
+
 bool AIEWawRegRewriter::replaceReg(const Register Reg,
                                    BitVector &BlockedPhysRegs) {
   assert(Reg.isVirtual());
@@ -325,10 +401,23 @@ bool AIEWawRegRewriter::replaceReg(const Register Reg,
                     << printReg(VRM->getPhys(Reg), TRI, 0, MRI) << " with "
                     << printReg(ReplacementPhysReg, TRI, 0, MRI) << '\n');
 
-  const LiveInterval &LI = LIS->getInterval(Reg);
-  LRM->unassign(LI);
-  LRM->assign(LI, ReplacementPhysReg);
+  assignReg(Reg, ReplacementPhysReg);
   addAliasRegs(BlockedPhysRegs, ReplacementPhysReg);
+  return true;
+}
+
+bool AIEWawRegRewriter::replaceReg(const Register VReg,
+                                   RoundRobin &LRURegisters) {
+  assert(VReg.isVirtual());
+  MCPhysReg ReplacementPhysReg = getReplacementPhysReg(VReg, LRURegisters);
+
+  if (ReplacementPhysReg == MCRegister::NoRegister)
+    return false;
+
+  LLVM_DEBUG(dbgs() << "     replace: VR" << Register::virtReg2Index(VReg)
+                    << " with " << TRI->getName(ReplacementPhysReg) << '\n');
+
+  assignReg(VReg, ReplacementPhysReg);
   return true;
 }
 
@@ -346,6 +435,33 @@ MCPhysReg AIEWawRegRewriter::getReplacementPhysReg(
     LiveRegMatrix::InterferenceKind IK = LRM->checkInterference(LI, PhysReg);
     if (IK == LiveRegMatrix::IK_Free)
       return PhysReg;
+  }
+  return MCRegister::NoRegister;
+}
+
+MCPhysReg
+AIEWawRegRewriter::getReplacementPhysReg(const Register VReg,
+                                         RoundRobin &LRURegisters) const {
+  assert(VReg.isVirtual() && "Reg has to be a virtual register");
+  const TargetRegisterClass *RC = MRI->getRegClass(VReg);
+  auto ClassRegs = RC->getRegisters();
+  LiveInterval &LI = LIS->getInterval(VReg);
+  // The order in Registers represent the LeastRecentlyUsed, which will
+  // distribute register use evenly
+  for (auto It = LRURegisters.begin(); It != LRURegisters.end(); ++It) {
+    MCPhysReg PhysReg = *It;
+    // FIXME: O(1) membership test would be nice
+    if (llvm::find(ClassRegs, PhysReg) == ClassRegs.end()) {
+      continue;
+    }
+    LiveRegMatrix::InterferenceKind IK = LRM->checkInterference(LI, PhysReg);
+    if (IK == LiveRegMatrix::IK_Free) {
+      // Move it to the end of the list. We return, so don't have to
+      // care about invalidation
+      LRURegisters.erase(It);
+      LRURegisters.emplace_back(PhysReg);
+      return PhysReg;
+    }
   }
   return MCRegister::NoRegister;
 }
