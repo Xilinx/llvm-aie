@@ -14,12 +14,12 @@ define void @caller1() {
 ; CHECK-LABEL: caller1:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopb ; nopa ; nops ; jl #callee1; nopv
-; CHECK-NEXT:    nopx // Delay Slot 5
+; CHECK-NEXT:    nopa ; nopb ; jl #callee1; nops
+; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    paddb [sp], #32 // Delay Slot 4
 ; CHECK-NEXT:    st lr, [sp, #-32] // 4-byte Folded Spill Delay Slot 3
-; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    nop // Delay Slot 1
+; CHECK-NEXT:    mov crSat, #1 // Delay Slot 2
+; CHECK-NEXT:    mov crRnd, #12 // Delay Slot 1
 ; CHECK-NEXT:    lda lr, [sp, #-32] // 4-byte Folded Reload
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop

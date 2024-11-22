@@ -630,6 +630,9 @@ body:             |
     ; CHECK-LABEL: name: live_control_regs_call
     ; CHECK: liveins: $r1, $p0
     ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 0
+    ; CHECK-NEXT: $crsat = COPY [[MOV_RLC_imm10_pseudo]]
+    ; CHECK-NEXT: $crrnd = COPY [[MOV_RLC_imm10_pseudo]]
     ; CHECK-NEXT: PseudoJL 0, csr_aie2
     %0:er = MOV_RLC_imm10_pseudo 0
     $crsat = COPY %0:er

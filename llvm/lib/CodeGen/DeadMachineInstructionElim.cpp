@@ -154,8 +154,23 @@ bool DeadMachineInstructionElimImpl::runImpl(MachineFunction &MF,
   return AnyChanges;
 }
 
+SmallVector<MCPhysReg, 16>
+getSimplifiableReservedRegs(const MachineRegisterInfo *MRI) {
+  BitVector ReservedRegs = MRI->getReservedRegs();
+  SmallVector<MCPhysReg, 16> SimplifiableReservedRegs;
+  for (MCPhysReg PhysReg : ReservedRegs.set_bits()) {
+    if (MRI->canSimplifyPhysReg(PhysReg)) {
+      SimplifiableReservedRegs.push_back(PhysReg);
+    }
+  }
+  return SimplifiableReservedRegs;
+}
+
 bool DeadMachineInstructionElimImpl::eliminateDeadMI(MachineFunction &MF) {
   bool AnyChanges = false;
+
+  SmallVector<MCPhysReg, 16> SimplifiableReservedRegs =
+      getSimplifiableReservedRegs(MRI);
 
   // Loop over all instructions in all blocks, from bottom to top, so that it's
   // more likely that chains of dependent but ultimately dead instructions will
@@ -165,10 +180,8 @@ bool DeadMachineInstructionElimImpl::eliminateDeadMI(MachineFunction &MF) {
 
     // Reserved registers are considered always live, so consider them as
     // live-outs for MBB. Inside MBB, dead assignments can still be detected.
-    for (MCPhysReg PhysReg : MRI->getReservedRegs().set_bits()) {
-      if (MRI->canSimplifyPhysReg(PhysReg)) {
-        LivePhysRegs.addReg(PhysReg);
-      }
+    for (MCPhysReg PhysReg : SimplifiableReservedRegs) {
+      LivePhysRegs.addReg(PhysReg);
     }
 
     // Now scan the instructions and delete dead ones, tracking physreg
@@ -187,6 +200,14 @@ bool DeadMachineInstructionElimImpl::eliminateDeadMI(MachineFunction &MF) {
       }
 
       LivePhysRegs.stepBackward(MI);
+
+      // If the instruction is a call, conservatively assume that it reads
+      // reserved registers.
+      if (MI.isCall()) {
+        for (MCPhysReg PhysReg : SimplifiableReservedRegs) {
+          LivePhysRegs.addReg(PhysReg);
+        }
+      }
     }
   }
 
