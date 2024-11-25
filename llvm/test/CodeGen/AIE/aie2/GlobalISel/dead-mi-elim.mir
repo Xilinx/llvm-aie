@@ -44,7 +44,7 @@ body:             |
     ; CHECK-NEXT: [[VLDA_UPS_S32_D8_ag_idx_imm1:%[0-9]+]]:acc1024 = VLDA_UPS_S32_D8_ag_idx_imm [[COPY2]], [[COPY3]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign
     ; CHECK-NEXT: $crsat = COPY [[COPY1]]
     ; CHECK-NEXT: $crupssign = COPY [[COPY]]
-    ; CHECK-NEXT: [[VLDA_UPS_S32_D8_ag_idx_imm2:%[0-9]+]]:acc1024 = VLDA_UPS_S32_D8_ag_idx_imm [[COPY2]], [[COPY3]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    ; CHECK-NEXT: [[VLDA_UPS_S32_D8_ag_idx_imm:%[0-9]+]]:acc1024 = VLDA_UPS_S32_D8_ag_idx_imm [[COPY2]], [[COPY3]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign
     ; CHECK-NEXT: $crupssign = MOV_scalar_imm10_pseudo 2
     %0:er = MOV_RLC_imm10_pseudo 0
     %1:er = COPY $r0
@@ -129,7 +129,6 @@ body:             |
     PseudoJ_jump_imm %bb.1
 
   bb.1:
-  ; predecessors: %bb.0
     %8:ercr = COPY $crsat
     $crsat = MOV_scalar_imm10_pseudo 3
     $crsat = COPY %8:ercr
@@ -224,7 +223,7 @@ body:             |
   ; CHECK-NEXT:   [[VLDA_UPS_S32_D8_ag_idx_imm8:%[0-9]+]]:acc1024 = VLDA_UPS_S32_D8_ag_idx_imm [[COPY2]], [[COPY3]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign
   ; CHECK-NEXT:   $crsat = COPY [[COPY1]]
   ; CHECK-NEXT:   $crupssign = COPY [[COPY]]
-  ; CHECK-NEXT:   [[VLDA_UPS_S32_D8_ag_idx_imm9:%[0-9]+]]:acc1024 = VLDA_UPS_S32_D8_ag_idx_imm [[COPY2]], [[COPY3]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+  ; CHECK-NEXT:   [[VLDA_UPS_S32_D8_ag_idx_imm7:%[0-9]+]]:acc1024 = VLDA_UPS_S32_D8_ag_idx_imm [[COPY2]], [[COPY3]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign
   ; CHECK-NEXT:   $crupssign = MOV_scalar_imm10_pseudo 9
   ; CHECK-NEXT:   PseudoRET implicit $lr
   bb.0.entry:
@@ -248,7 +247,6 @@ body:             |
     PseudoJ_jump_imm %bb.1
 
   bb.1:
-  ; predecessors: %bb.0, %bb.1
     successors: %bb.1(0x40000000), %bb.2(0x40000000); %bb.1(50.00%), %bb.2(50.00%)
 
     %8:ercr = COPY $crsat
@@ -263,7 +261,6 @@ body:             |
     PseudoJ_jump_imm %bb.2
 
   bb.2:
-  ; predecessors: %bb.1
     successors: %bb.4(0x80000000); %bb.4(100.00%)
 
     %11:ercr = COPY $crsat
@@ -279,7 +276,6 @@ body:             |
     PseudoJ_jump_imm %bb.4
 
   bb.3:
-  ; predecessors: %bb.0
     successors: %bb.4(0x80000000); %bb.4(100.00%)
 
     $crsat = COPY %2:ercr
@@ -292,7 +288,6 @@ body:             |
     PseudoJ_jump_imm %bb.4
 
   bb.4:
-  ; predecessors: %bb.2, %bb.3
 
     $crsat = COPY %2:ercr
     $crupssign = COPY %1:er
@@ -373,7 +368,7 @@ body:             |
   ; CHECK-NEXT:   $crupssign = COPY [[COPY]]
   ; CHECK-NEXT:   [[VLDA_UPS_S32_D8_ag_idx_imm7:%[0-9]+]]:acc1024 = VLDA_UPS_S32_D8_ag_idx_imm [[COPY1]], [[COPY2]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign
   ; CHECK-NEXT:   $crupssign = COPY [[COPY]]
-  ; CHECK-NEXT:   [[VLDA_UPS_S32_D8_ag_idx_imm8:%[0-9]+]]:acc1024 = VLDA_UPS_S32_D8_ag_idx_imm [[COPY1]], [[COPY2]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+  ; CHECK-NEXT:   [[VLDA_UPS_S32_D8_ag_idx_imm6:%[0-9]+]]:acc1024 = VLDA_UPS_S32_D8_ag_idx_imm [[COPY1]], [[COPY2]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign
   ; CHECK-NEXT:   $crupssign = MOV_scalar_imm10_pseudo 5
   ; CHECK-NEXT:   PseudoRET implicit $lr
   bb.0.entry:
@@ -389,7 +384,6 @@ body:             |
     PseudoJ_jump_imm %bb.1
 
   bb.1:
-  ; predecessors: %bb.0, %bb.3
     successors: %bb.2(0x80000000); %bb.2(100.00%)
 
     $crupssign = COPY %1:er
@@ -400,7 +394,6 @@ body:             |
     PseudoJ_jump_imm %bb.2
 
   bb.2:
-  ; predecessors: %bb.1, %bb.2
     successors: %bb.2(0x40000000), %bb.3(0x40000000); %bb.2(50.00%), %bb.3(50.00%)
     liveins: $r0
     $crupssign = COPY %1:er
@@ -413,7 +406,6 @@ body:             |
     PseudoJ_jump_imm %bb.3
 
   bb.3:
-  ; predecessors: %bb.2
     successors: %bb.1(0x40000000), %bb.4(0x40000000); %bb.1(50.00%), %bb.4(50.00%)
 
     $crupssign = COPY %1:er
@@ -425,7 +417,6 @@ body:             |
     PseudoJ_jump_imm %bb.4
 
   bb.4:
-  ; predecessors: %bb.3
 
     $crupssign = COPY %1:er
     %12:acc1024 = VLDA_UPS_S32_D8_ag_idx_imm %2:mss, %3:ep, 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign
@@ -486,14 +477,12 @@ body:             |
     PseudoJ_jump_imm %bb.1
 
   bb.1:
-  ; predecessors: %bb.0
     successors: %bb.2(0x80000000); %bb.2(100.00%)
 
     %5:er = MOV_RLC_imm10_pseudo 23
     PseudoJ_jump_imm %bb.2
 
   bb.2:
-  ; predecessors: %bb.1
     liveins: $r2
     %6:er = COPY $r2
     $crupssign = COPY %6:er
@@ -546,4 +535,104 @@ body:             |
     %9:acc512 = VNEGSUB_F %0:acc512, %1:acc512, %2:er, implicit-def $srfpflags, implicit $crfpmask
     $crfpmask = COPY %3:ercr
     %10:acc512 = VNEGSUB_F %0:acc512, %1:acc512, %2:er, implicit-def $srfpflags, implicit $crfpmask
+...
+
+# Test 7 - Test for liveness of control registers across basic blocks with no use in bb.1.
+---
+name:            live_control_regs_no_use
+alignment:       16
+legalized:       true
+regBankSelected: true
+selected:        true
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: live_control_regs_no_use
+  ; CHECK: bb.0.entry:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $r1, $p0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 0
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r1
+  ; CHECK-NEXT:   $crsat = COPY [[MOV_RLC_imm10_pseudo]]
+  ; CHECK-NEXT:   $crrnd = COPY [[COPY]]
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   PseudoRET implicit $lr
+  bb.0.entry:
+    successors: %bb.1(0x80000000); %bb.1(100.00%)
+    liveins: $r1, $p0
+    %0:er = MOV_RLC_imm10_pseudo 0
+    %1:er = COPY $r1
+    $crsat = COPY %0:er
+    $crrnd = COPY %1:er
+    PseudoJ_jump_imm %bb.1
+  bb.1:
+    %5:er = MOV_RLC_imm10_pseudo 23
+    PseudoRET implicit $lr
+...
+
+# Test 8 - Test for liveness of control registers across basic blocks with use in bb.1.
+---
+name:            live_control_regs
+alignment:       16
+legalized:       true
+regBankSelected: true
+selected:        true
+tracksRegLiveness: true
+body:             |
+  ; CHECK-LABEL: name: live_control_regs
+  ; CHECK: bb.0.entry:
+  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
+  ; CHECK-NEXT:   liveins: $r1, $p0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[MOV_RLC_imm10_pseudo:%[0-9]+]]:er = MOV_RLC_imm10_pseudo 0
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r1
+  ; CHECK-NEXT:   $crsat = COPY [[MOV_RLC_imm10_pseudo]]
+  ; CHECK-NEXT:   $crupssign = COPY [[COPY]]
+  ; CHECK-NEXT:   PseudoJ_jump_imm %bb.1
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT: bb.1:
+  ; CHECK-NEXT:   liveins: $p0
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:mss = COPY [[MOV_RLC_imm10_pseudo]]
+  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:ep = COPY $p0
+  ; CHECK-NEXT:   [[VLDA_UPS_S32_D8_ag_idx_imm:%[0-9]+]]:acc1024 = VLDA_UPS_S32_D8_ag_idx_imm [[COPY1]], [[COPY2]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+  ; CHECK-NEXT:   $crupssign = MOV_scalar_imm10_pseudo 0
+  bb.0.entry:
+    successors: %bb.1(0x80000000); %bb.1(100.00%)
+    liveins: $r1, $p0
+    %0:er = MOV_RLC_imm10_pseudo 0
+    %1:er = COPY $r1
+    $crsat = COPY %0:er
+    $crupssign = COPY %1:er
+    PseudoJ_jump_imm %bb.1
+
+  bb.1:
+    liveins: $p0
+    %2:mss = COPY %0:er
+    %3:ep = COPY $p0
+    %4:acc1024 = VLDA_UPS_S32_D8_ag_idx_imm %2:mss, %3:ep, 0, implicit-def $srups_of, implicit $crsat, implicit $crupssign
+    $crupssign = MOV_scalar_imm10_pseudo 0
+...
+
+# Test 9 - Test for liveness of control registers across call boundaries.
+---
+name:            live_control_regs_call
+alignment:       16
+legalized:       true
+regBankSelected: true
+selected:        true
+tracksRegLiveness: true
+body:             |
+  bb.0.entry:
+    liveins: $r1, $p0
+    ; CHECK-LABEL: name: live_control_regs_call
+    ; CHECK: liveins: $r1, $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: PseudoJL 0, csr_aie2
+    %0:er = MOV_RLC_imm10_pseudo 0
+    $crsat = COPY %0:er
+    $crrnd = COPY %0:er
+    PseudoJL 0, csr_aie2
 ...
