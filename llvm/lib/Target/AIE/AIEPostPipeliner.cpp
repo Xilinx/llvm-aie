@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEPostPipeliner.h"
+#include "AIESlotCounts.h"
 #include "Utils/AIELoopUtils.h"
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
 #include "llvm/Support/MathExtras.h"
@@ -106,32 +107,24 @@ bool PostPipeliner::canAccept(MachineBasicBlock &LoopBlock) {
   return true;
 }
 
-int PostPipeliner::getResMII(MachineBasicBlock &LoopBlock) {
-  // For each instruction, find the first cycle in which it fits and collect the
-  // maximum
-  std::vector<uint64_t> Scoreboard(NInstr, 0);
-  int MII = 1;
-  for (auto &MI : LoopBlock) {
-    auto *SlotInfo = TII->getSlotInfo(TII->getSlotKind(MI.getOpcode()));
-    SlotBits Slots = SlotInfo ? SlotInfo->getSlotSet() : 0;
+static SlotCounts getSlotCounts(MachineInstr &MI, const AIEBaseInstrInfo *TII) {
+  auto *SlotInfo = TII->getSlotInfo(TII->getSlotKind(MI.getOpcode()));
+  return SlotInfo ? SlotInfo->getSlotSet() : 0;
+}
 
-    int C = 0;
-    while (C < NInstr && (Scoreboard[C] & Slots)) {
-      C++;
-    }
-    if (C >= NInstr) {
-      MII = NInstr;
-      break;
-    }
-    Scoreboard[C] |= Slots;
-    MII = std::max(MII, C + 1);
+int PostPipeliner::getResMII(MachineBasicBlock &LoopBlock) {
+  // Add up all slot requirements and return the maximum slot count
+  SlotCounts Counts;
+  for (auto &MI : LoopBlock) {
+    Counts += getSlotCounts(MI, TII);
   }
+  int MII = Counts.max();
   LLVM_DEBUG(dbgs() << "PostPipeliner: ResMII=" << MII << "\n");
   return MII;
 }
 
-// This assigns Cycle of SU, Earliest of its predecessors and Earliest of
-// the next instance of SU.
+// This assigns Cycle of SU, Earliest of its successors and Latest of its
+// predecessors
 void PostPipeliner::scheduleNode(SUnit &SU, int Cycle) {
   LLVM_DEBUG(dbgs() << "PostPipeline " << SU.NodeNum << " in cycle " << Cycle
                     << ". ");

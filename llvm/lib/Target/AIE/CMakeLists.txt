@@ -94,6 +94,7 @@ add_llvm_target(AIECodeGen
    AIEPseudoBranchExpansion.cpp
    AIERegClassConstrainer.cpp
    AIERegisterInfo.cpp
+   AIESlotCounts.cpp
    AIESplitInstructionRewriter.cpp
    AIESubRegConstrainer.cpp
    AIESubtarget.cpp
