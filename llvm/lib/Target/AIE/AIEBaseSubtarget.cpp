@@ -704,6 +704,8 @@ AIEBaseSubtarget::getPostRAMutationsImpl(const Triple &TT) {
   std::vector<std::unique_ptr<ScheduleDAGMutation>> Mutations;
   Mutations.emplace_back(std::make_unique<LockDelays>());
   if (!TT.isAIE1()) {
+    if (EnableWAWStickyRegisters)
+      Mutations.emplace_back(std::make_unique<WAWStickyRegistersEdges>());
     Mutations.emplace_back(std::make_unique<RegionEndEdges>());
     Mutations.emplace_back(std::make_unique<MemoryEdges>());
     Mutations.emplace_back(std::make_unique<MachineSchedWAWEdges>());

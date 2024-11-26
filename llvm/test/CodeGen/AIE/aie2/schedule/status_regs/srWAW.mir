@@ -4,8 +4,9 @@
 #
 # (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
 
-# RUN: llc -mtriple=aie2 --run-pass=postmisched --issue-limit=1 -debug-only=machine-scheduler %s -o - 2>%t.log
-# RUN: cat %t.log | FileCheck %s --check-prefix=CHECK-WAW
+# RUN: llc -mtriple=aie2 --run-pass=postmisched --issue-limit=1 \
+# RUN:   -debug-only=machine-scheduler --aie-pipeliner-waw-sticky-registers=0 \
+# RUN:   %s -o - 2>&1 | FileCheck %s --check-prefix=CHECK-WAW
 # REQUIRES: asserts
 
 # This test checks the write-after-write(WAW) dependencies

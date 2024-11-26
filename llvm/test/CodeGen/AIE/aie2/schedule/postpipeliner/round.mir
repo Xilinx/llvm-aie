@@ -34,39 +34,46 @@
   ; CHECK-NEXT:    nop // Delay Slot 2
   ; CHECK-NEXT:    nop // Delay Slot 1
   ; CHECK-NEXT:  // %bb.1: // %for.body.preheader
-  ; CHECK-NEXT:    nopa ; nopb ; nopx ; add.nc lc, r0, #-1
-  ; CHECK-NEXT:    vlda.ups.s32.s8 cm0, s0, [p0], #32; movxm ls, #.LBB0_2
-  ; CHECK-NEXT:    vlda.ups.s32.s8 cm1, s0, [p0], #32; movxm le, #.L_LEnd0
+  ; CHECK-NEXT:    nopb ; vlda.ups.s32.s8 cm0, s0, [p0], #32; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vlda.ups.s32.s8 cm1, s0, [p0], #32
+  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    vlda.ups.s32.s8 cm0, s0, [p0], #32; add.nc lc, r0, #-3
+  ; CHECK-NEXT:    vlda.ups.s32.s8 cm1, s0, [p0], #32; movxm ls, #.LBB0_2
+  ; CHECK-NEXT:    movxm le, #.L_LEnd0
   ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    nopb ; nopa ; vsrs.s8.s32 wh0, cm0, s1; nopxm ; nopv
+  ; CHECK-NEXT:    nopb ; vlda.ups.s32.s8 cm0, s0, [p0], #32; vsrs.s8.s32 wh2, cm1, s1; nopxm ; nopv
+  ; CHECK-NEXT:    nopb ; vlda.ups.s32.s8 cm1, s0, [p0], #32; nops ; nopxm ; nopv
   ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; vups.s32.s8 cm2, wh0, s1; nopv
+  ; CHECK-NEXT:    nopb ; nopa ; vsrs.s8.s32 wh0, cm0, s1; nopx ; vups.s32.s8 cm3, wh2, s1; nopv
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_2: // %for.body
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-  ; CHECK-NEXT:    vlda.ups.s32.s8 cm0, s0, [p0], #32; nopb ; vsrs.s8.s32 wh0, cm0, s1
-  ; CHECK-NEXT:    vlda.ups.s32.s8 cm1, s0, [p0], #32; vsrs.s8.s32 wh2, cm1, s1
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    nopb ; vlda.ups.s32.s8 cm0, s0, [p0], #32; vsrs.s8.s32 wh2, cm1, s1; nopxm ; nopv
+  ; CHECK-NEXT:    vlda.ups.s32.s8 cm1, s0, [p0], #32; nopb ; vst.srs.s8.s32 cm2, s0, [p1], #32
+  ; CHECK-NEXT:    vst.srs.s8.s32 cm3, s0, [p1], #32
   ; CHECK-NEXT:    vups.s32.s8 cm2, wh0, s1
-  ; CHECK-NEXT:    vups.s32.s8 cm3, wh2, s1
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    vst.srs.s8.s32 cm2, s0, [p1], #32
   ; CHECK-NEXT:  .L_LEnd0:
-  ; CHECK-NEXT:    nopb ; nopa ; vst.srs.s8.s32 cm3, s0, [p1], #32; nopxm ; nopv
+  ; CHECK-NEXT:    nopb ; nopa ; vsrs.s8.s32 wh0, cm0, s1; nopx ; vups.s32.s8 cm3, wh2, s1; nopv
   ; CHECK-NEXT:  // %bb.3: // %for.cond.cleanup
-  ; CHECK-NEXT:    vsrs.s8.s32 wh0, cm0, s1; nopx
+  ; CHECK-NEXT:    nopa ; vsrs.s8.s32 wh2, cm1, s1; nopx
+  ; CHECK-NEXT:    vst.srs.s8.s32 cm2, s0, [p1], #32
+  ; CHECK-NEXT:    vst.srs.s8.s32 cm3, s0, [p1], #32
+  ; CHECK-NEXT:    vups.s32.s8 cm2, wh0, s1
+  ; CHECK-NEXT:    vsrs.s8.s32 wh0, cm0, s1; vups.s32.s8 cm3, wh2, s1
   ; CHECK-NEXT:    vsrs.s8.s32 wh2, cm1, s1
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    vst.srs.s8.s32 cm2, s0, [p1], #32
+  ; CHECK-NEXT:    vst.srs.s8.s32 cm3, s0, [p1], #32
   ; CHECK-NEXT:    vups.s32.s8 cm2, wh0, s1
   ; CHECK-NEXT:    vups.s32.s8 cm3, wh2, s1
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    vst.srs.s8.s32 cm2, s0, [p1], #32
   ; CHECK-NEXT:    vst.srs.s8.s32 cm3, s0, [p1], #32
+  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_4: // %for.cond.cleanup
   ; CHECK-NEXT:    nopa ; ret lr

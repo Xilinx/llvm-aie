@@ -1387,6 +1387,8 @@ void AIEScheduleDAGMI::schedule() {
     // If it succeeds, we need to implement it, if we fail we fall back on the
     // normal loop schedule
     SchedImpl->buildGraph(*this, AA);
+    postProcessDAG();
+
     auto &PostSWP = BS.getPostSWP();
     if (PostSWP.schedule(*this, BS.FixPoint.II)) {
       BS.setPipelined();
