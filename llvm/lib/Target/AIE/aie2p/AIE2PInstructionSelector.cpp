@@ -100,6 +100,9 @@ public:
   bool selectG_LOAD(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_STORE(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_AIE_LOAD_STORE(MachineInstr &I, MachineRegisterInfo &MRI);
+  bool select1024BitG_AIE_LOAD_STORE(MachineInstr &I, LoadStoreOpcodes &LSO,
+                                     AddressingModeInfo &AMI,
+                                     MachineRegisterInfo &MRI);
   bool selectSetI128(MachineInstr &I, MachineOperand &DstReg,
                      MachineOperand &SrcReg, MachineRegisterInfo &MRI);
   bool selectExtractI128(MachineInstr &I, Register DstReg, Register SrcReg,
@@ -1713,7 +1716,33 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
                 /*FitsImmediateRange=*/true,
                 /*OffsetOpcode=*/{}};
       }
-      llvm_unreachable("512-bit vector type must be in AccRegBank or VRegBank");
+      if (RBID == AIE2P::FifoRegBankID) {
+        return {/*ISelOpcode=*/AIE2P::VLDA_dmx_lda_fifohl_idx_imm,
+                /*FitsImmediateRange=*/true,
+                /*OffsetOpcode=*/{}};
+      }
+      llvm_unreachable("512-bit vector type must be in AccRegBank or VRegBank "
+                       "or FifoRegBankID");
+    }
+    if (LoadStoreSize == 1024) {
+      unsigned RBID = deriveRegBankID(I.getOperand(0).getReg(), MRI, RBI);
+      if (RBID == AIE2P::FifoRegBankID) {
+        return {/*ISelOpcode=*/AIE2P::VLDA_dmx_lda_fifohl_idx_imm,
+                AlwaysFitsImmediateRange,
+                /*OffsetOpcode=*/AIE2P::VLDA_dmx_lda_fifohl_idx_imm};
+      }
+      if (RBID == AIE2P::VRegBankID) {
+        return {/*ISelOpcode=*/AIE2P::VLDA_dmx_lda_x_idx_imm,
+                AlwaysFitsImmediateRange,
+                /*OffsetOpcode=*/AIE2P::VLDA_dmx_lda_x_idx_imm};
+      }
+      if (RBID == AIE2P::AccRegBankID) {
+        return {/*ISelOpcode=*/AIE2P::VLDA_dmx_lda_bm_idx_imm,
+                AlwaysFitsImmediateRange,
+                /*OffsetOpcode=*/AIE2P::VLDA_dmx_lda_bm_idx_imm};
+      }
+      llvm_unreachable("512-bit vector type must be in AccRegBank or VRegBank "
+                       "or FifoRegBankID");
     }
     break;
   }
@@ -2004,6 +2033,27 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
                   /*FitsImmediateRange=*/AlwaysFitsImmediateRange,
                   /*OffsetOpcode=*/AIE2P::VST_dmx_sts_x_idx_imm};
         }
+        if (RBID == AIE2P::FifoRegBankID) {
+          return {/*ISelOpcode=*/AIE2P::VST_dmx_sts_fifohl_idx_imm,
+                  /*FitsImmediateRange=*/AlwaysFitsImmediateRange,
+                  /*OffsetOpcode=*/AIE2P::VST_dmx_sts_fifohl_idx_imm};
+        }
+      }
+    } else if (LoadStoreSize == 1024) {
+      if (RBID == AIE2P::FifoRegBankID) {
+        return {/*ISelOpcode=*/AIE2P::VST_dmx_sts_fifohl_idx_imm,
+                /*FitsImmediateRange=*/AlwaysFitsImmediateRange,
+                /*OffsetOpcode=*/AIE2P::VST_dmx_sts_fifohl_idx_imm};
+      }
+      if (RBID == AIE2P::AccRegBankID) {
+        return {/*ISelOpcode=*/AIE2P::VST_dmx_sts_bm_idx_imm,
+                /*FitsImmediateRange=*/AlwaysFitsImmediateRange,
+                /*OffsetOpcode=*/AIE2P::VST_dmx_sts_bm_idx_imm};
+      }
+      if (RBID == AIE2P::VRegBankID) {
+        return {/*ISelOpcode=*/AIE2P::VST_dmx_sts_x_idx_imm,
+                /*FitsImmediateRange=*/AlwaysFitsImmediateRange,
+                /*OffsetOpcode=*/AIE2P::VST_dmx_sts_x_idx_imm};
       }
     }
     break;
@@ -2203,6 +2253,78 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
   llvm_unreachable("Invalid instruction");
 }
 
+bool AIE2PInstructionSelector::select1024BitG_AIE_LOAD_STORE(
+    MachineInstr &I, LoadStoreOpcodes &LSO, AddressingModeInfo &AMI,
+    MachineRegisterInfo &MRI) {
+
+  bool IsFifo = deriveRegBankID(I.getOperand(0).getReg(), MRI, RBI) ==
+                AIE2P::FifoRegBankID;
+  assert(IsFifo && "Expected FiforegBank for 1024-bit load/store. Other banks "
+                   "are unsupported");
+
+  Register Low512 = MRI.createVirtualRegister(&AIE2P::FIFO512RegClass);
+  Register High512 = MRI.createVirtualRegister(&AIE2P::FIFO512RegClass);
+
+  switch (AMI.MemI.getOpcode()) {
+  case AIE2P::G_STORE: {
+    auto LowerBits = MIB.buildInstr(TargetOpcode::COPY, {Low512}, {})
+                         .addReg(AMI.SrcDstOp.getReg(), 0, AIE2P::sub_lo_fifo);
+    auto HigherBits = MIB.buildInstr(TargetOpcode::COPY, {High512}, {})
+                          .addReg(AMI.SrcDstOp.getReg(), 0, AIE2P::sub_hi_fifo);
+
+    auto StoreHigher = MIB.buildInstr(*LSO.OffsetOpcode, {}, {})
+                           .addReg(HigherBits.getReg(0))
+                           .addReg(AMI.PtrOp.getReg())
+                           .addImm(64); // Offset
+    auto StoreLower = MIB.buildInstr(LSO.ISelOpcode, {}, {});
+
+    for (auto Def : AMI.MemI.defs())
+      StoreLower.addDef(Def.getReg());
+
+    StoreLower.addReg(LowerBits.getReg(0));
+
+    addAddressingMode(StoreLower, AMI, LSO.FitsImmediateRange, false, MRI);
+
+    addSplitMemOperands(AMI.MemI, StoreHigher, StoreLower, 0, 2);
+
+    AMI.MemI.eraseFromParent();
+    return constrainSelectedInstRegOperands(*StoreLower, TII, TRI, RBI) &&
+           constrainSelectedInstRegOperands(*StoreHigher, TII, TRI, RBI);
+  }
+  case AIE2P::G_LOAD: {
+    auto LoadHigher = MIB.buildInstr(*LSO.OffsetOpcode, {}, {})
+                          .addDef(High512)
+                          .addUse(AMI.PtrOp.getReg())
+                          .addImm(64); // Offset
+
+    auto LoadLower = MIB.buildInstr(LSO.ISelOpcode, {Low512}, {});
+    // We have to skip the first Def (the 1024-bit Dst-Reg)
+    for (auto *Def = AMI.MemI.defs().begin() + 1; Def != AMI.MemI.defs().end();
+         Def++)
+      LoadLower.addDef(Def->getReg());
+
+    addAddressingMode(LoadLower, AMI, LSO.FitsImmediateRange, false, MRI);
+
+    addSplitMemOperands(AMI.MemI, LoadHigher, LoadLower, 0, 2);
+
+    MIB.buildInstr(AIE2P::REG_SEQUENCE, {AMI.SrcDstOp.getReg()}, {})
+        .addReg(Low512)
+        .addImm(AIE2P::sub_lo_fifo)
+        .addReg(High512)
+        .addImm(AIE2P::sub_hi_fifo);
+
+    Register SrcDstReg = AMI.SrcDstOp.getReg();
+    AMI.MemI.eraseFromParent();
+    return constrainSelectedInstRegOperands(*LoadLower, TII, TRI, RBI) &&
+           constrainSelectedInstRegOperands(*LoadHigher, TII, TRI, RBI) &&
+           RBI.constrainGenericRegister(SrcDstReg, *&AIE2P::FIFO1024RegClass,
+                                        MRI);
+  }
+  default:
+    return false;
+  }
+}
+
 bool AIE2PInstructionSelector::selectG_LOAD(MachineInstr &I,
                                             MachineRegisterInfo &MRI) {
   Register DstReg = I.getOperand(0).getReg();
@@ -2223,8 +2345,9 @@ bool AIE2PInstructionSelector::selectG_LOAD(MachineInstr &I,
   }
 
   // Handle vector loads
-  if (DstTy.isVector())
+  if (DstTy.isVector()) {
     return selectG_AIE_LOAD_STORE(I, MRI);
+  }
 
   return selectImpl(I, *CoverageInfo);
 }
@@ -2261,6 +2384,10 @@ bool AIE2PInstructionSelector::selectG_AIE_LOAD_STORE(
 
   LoadStoreOpcodes LSO =
       getLoadStoreOpcode(AMI->MemI, MRI, RBI, AMI->ImmediateOffset);
+  auto StoreSize = MRI.getType(AMI->SrcDstOp.getReg()).getSizeInBits();
+  if (StoreSize == 1024) {
+    return select1024BitG_AIE_LOAD_STORE(I, LSO, *AMI, MRI);
+  }
   MachineInstrBuilder NewInstr = MIB.buildInstr(LSO.ISelOpcode);
 
   for (auto Def : AMI->MemI.defs())
