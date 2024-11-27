@@ -263,8 +263,6 @@ class AIEV2SET_I1024_I512
      : Intrinsic<[llvm_v32i32_ty], [llvm_v16i32_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2SET_I1024_I256
      : Intrinsic<[llvm_v32i32_ty], [llvm_v8i32_ty,llvm_i32_ty], [IntrNoMem]>;
-class AIEV2SET_bf512_bf256
-     : Intrinsic<[llvm_v32bf16_ty], [llvm_v16bf16_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2SET_bf1024_bf512
      : Intrinsic<[llvm_v64bf16_ty], [llvm_v32bf16_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2SET_bf1024_bf256
@@ -284,8 +282,6 @@ class AIEV2EXT_I512_I1024
      : Intrinsic<[llvm_v16i32_ty], [llvm_v32i32_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2EXT_I256_I1024
      : Intrinsic<[llvm_v8i32_ty] , [llvm_v32i32_ty,llvm_i32_ty], [IntrNoMem]>;
-class AIEV2EXT_bf256_bf512
-     : Intrinsic<[llvm_v16bf16_ty] , [llvm_v32bf16_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2EXT_bf512_bf1024
      : Intrinsic<[llvm_v32bf16_ty], [llvm_v64bf16_ty,llvm_i32_ty], [IntrNoMem]>;
 class AIEV2EXT_bf256_bf1024
@@ -759,7 +755,6 @@ def int_aie2_set_I64_I32    : ClangBuiltin<"__builtin_aiev2_set_I64_I32">,    AI
 def int_aie2_set_I512_I256  : ClangBuiltin<"__builtin_aiev2_set_I512_I256">,  AIEV2SET_I512_I256;
 def int_aie2_set_I1024_I512 : ClangBuiltin<"__builtin_aiev2_set_I1024_I512">, AIEV2SET_I1024_I512;
 def int_aie2_set_I1024_I256 : ClangBuiltin<"__builtin_aiev2_set_I1024_I256">, AIEV2SET_I1024_I256;
-def int_aie2_set_bf512_bf256  : ClangBuiltin<"__builtin_aiev2_set_bf512_bf256">,  AIEV2SET_bf512_bf256;
 def int_aie2_set_bf1024_bf512 : ClangBuiltin<"__builtin_aiev2_set_bf1024_bf512">, AIEV2SET_bf1024_bf512;
 def int_aie2_set_bf1024_bf256 : ClangBuiltin<"__builtin_aiev2_set_bf1024_bf256">, AIEV2SET_bf1024_bf256;
 def int_aie2_set_512_256_acc  :
@@ -773,7 +768,6 @@ def int_aie2_ext_I32_I64    : ClangBuiltin<"__builtin_aiev2_ext_I32_I64">,    AI
 def int_aie2_ext_I256_I512  : ClangBuiltin<"__builtin_aiev2_ext_I256_I512">,  AIEV2EXT_I256_I512;
 def int_aie2_ext_I512_I1024 : ClangBuiltin<"__builtin_aiev2_ext_I512_I1024">, AIEV2EXT_I512_I1024;
 def int_aie2_ext_I256_I1024 : ClangBuiltin<"__builtin_aiev2_ext_I256_I1024">, AIEV2EXT_I256_I1024;
-def int_aie2_ext_bf256_bf512  : ClangBuiltin<"__builtin_aiev2_ext_bf256_bf512">,  AIEV2EXT_bf256_bf512;
 def int_aie2_ext_bf512_bf1024 : ClangBuiltin<"__builtin_aiev2_ext_bf512_bf1024">, AIEV2EXT_bf512_bf1024;
 def int_aie2_ext_bf256_bf1024 : ClangBuiltin<"__builtin_aiev2_ext_bf256_bf1024">, AIEV2EXT_bf256_bf1024;
 

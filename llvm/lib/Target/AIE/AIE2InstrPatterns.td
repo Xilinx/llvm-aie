@@ -850,12 +850,10 @@ def : Pat<(int_aie2_upd_1024_256_acc ACC1024:$src1, ACC256:$src2, 0x3),
             sub_512_hi)>;
 
 // Set
-foreach intr = [int_aie2_set_I512_I256, int_aie2_set_bf512_bf256] in {
-  def : Pat<(intr VEC256:$src, 0x0),
-             (REG_SEQUENCE VEC512, VEC256:$src, sub_256_lo)>;
-  def : Pat<(intr VEC256:$src, 0x1),
-             (REG_SEQUENCE VEC512, VEC256:$src, sub_256_hi)>;
-}
+def : Pat<(int_aie2_set_I512_I256 VEC256:$src, 0x0),
+            (REG_SEQUENCE VEC512, VEC256:$src, sub_256_lo)>;
+def : Pat<(int_aie2_set_I512_I256 VEC256:$src, 0x1),
+            (REG_SEQUENCE VEC512, VEC256:$src, sub_256_hi)>;
 foreach intr = [int_aie2_set_I1024_I512, int_aie2_set_bf1024_bf512] in {
   def : Pat<(intr VEC512:$src, 0x0),
              (REG_SEQUENCE VEC1024, VEC512:$src, sub_512_lo)>;
@@ -958,10 +956,6 @@ def : Pat<(int_aie2_ext_I256_I1024 VEC1024:$src, 0x2),
            (v8i32 (EXTRACT_SUBREG VEC1024:$src, sub_512_hi_256_lo))>;
 def : Pat<(int_aie2_ext_I256_I1024 VEC1024:$src, 0x3),
            (v8i32 (EXTRACT_SUBREG VEC1024:$src, sub_512_hi_256_hi))>;
-def : Pat<(int_aie2_ext_bf256_bf512 VEC512:$src, 0x0),
-           (v16bf16 (EXTRACT_SUBREG VEC512:$src, sub_256_lo))>;
-def : Pat<(int_aie2_ext_bf256_bf512 VEC512:$src, 0x1),
-           (v16bf16 (EXTRACT_SUBREG VEC512:$src, sub_256_hi))>;
 def : Pat<(int_aie2_ext_bf512_bf1024 VEC1024:$src, 0x0),
            (v32bf16 (EXTRACT_SUBREG VEC1024:$src, sub_512_lo))>;
 def : Pat<(int_aie2_ext_bf512_bf1024 VEC1024:$src, 0x1),

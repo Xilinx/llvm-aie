@@ -21,9 +21,6 @@ declare <32 x bfloat> @llvm.aie2.vbroadcast16.bf512(bfloat) #0
 ; Function Attrs: nounwind memory(none)
 declare <32 x bfloat> @llvm.aie2.v32bfloat16() #0
 
-; Function Attrs: nounwind memory(none)
-declare <32 x bfloat> @llvm.aie2.set.bf512.bf256(<16 x bfloat>, i32) #0
-
 ; Function Attrs: nounwind memory(inaccessiblemem: read)
 declare <8 x i64> @llvm.aie2.bf.mul16.conf(<32 x bfloat>, <32 x bfloat>, i32) #1
 
@@ -38,9 +35,6 @@ declare <16 x bfloat> @llvm.aie2.v16bfloat16() #0
 
 ; Function Attrs: nounwind memory(inaccessiblemem: read)
 declare <16 x bfloat> @llvm.aie2.v16accfloat.to.v16bf16(<8 x i64>) #1
-
-; Function Attrs: nounwind memory(none)
-declare <16 x bfloat> @llvm.aie2.ext.bf256.bf512(<32 x bfloat>, i32) #0
 
 ; Function Attrs: nounwind memory(none)
 declare <8 x i64> @llvm.aie2.v16bf16.to.v16accfloat(<16 x bfloat>) #0
@@ -175,18 +169,28 @@ for.body.lr.ph:
   %1 = tail call noundef <8 x i64> @llvm.aie2.v16accfloat()
   %2 = tail call noundef <32 x bfloat> @llvm.aie2.v32bfloat16()
   %3 = tail call noundef <32 x bfloat> @llvm.aie2.vbroadcast16.bf512(bfloat 0xR3F80)
-  %4 = tail call <16 x bfloat> @llvm.aie2.ext.bf256.bf512(<32 x bfloat> %3, i32 0)
+  %cast.0 = bitcast <32 x bfloat> %3 to <16 x i32>
+  %ext.0 = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> %cast.0, i32 0)
+  %4 = bitcast <8 x i32> %ext.0 to <16 x bfloat>
   %5 = tail call noundef <32 x bfloat> @llvm.aie2.vbroadcast16.bf512(bfloat 0xR4000)
-  %6 = tail call <16 x bfloat> @llvm.aie2.ext.bf256.bf512(<32 x bfloat> %5, i32 0)
+  %cast.1 = bitcast <32 x bfloat> %5 to <16 x i32>
+  %ext.1 = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> %cast.1, i32 0)
+  %6 = bitcast <8 x i32> %ext.1 to <16 x bfloat>
   %7 = tail call noundef <8 x i64> @llvm.aie2.v16bf16.to.v16accfloat(<16 x bfloat> %6)
   %8 = tail call noundef <32 x bfloat> @llvm.aie2.vbroadcast16.bf512(bfloat 0xR3F00)
-  %9 = tail call <16 x bfloat> @llvm.aie2.ext.bf256.bf512(<32 x bfloat> %8, i32 0)
+  %cast.2 = bitcast <32 x bfloat> %8 to <16 x i32>
+  %ext.2 = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> %cast.2, i32 0)
+  %9 = bitcast <8 x i32> %ext.2 to <16 x bfloat>
   %10 = tail call noundef <8 x i64> @llvm.aie2.v16bf16.to.v16accfloat(<16 x bfloat> %9)
   %11 = load i32, ptr %params, align 32, !tbaa !4
   %div16 = lshr i32 %11, 5
   %12 = tail call noundef <32 x bfloat> @llvm.aie2.vbroadcast16.bf512(bfloat 0xR0000)
-  %13 = tail call <16 x bfloat> @llvm.aie2.ext.bf256.bf512(<32 x bfloat> %12, i32 0)
-  %14 = tail call <32 x bfloat> @llvm.aie2.set.bf512.bf256(<16 x bfloat> %6, i32 0)
+  %cast.3 = bitcast <32 x bfloat> %12 to <16 x i32>
+  %ext.3 = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> %cast.3, i32 0)
+  %13 = bitcast <8 x i32> %ext.3 to <16 x bfloat>
+  %cast.4 = bitcast <16 x bfloat> %6 to <8 x i32>
+  %set.0 = tail call <16 x i32> @llvm.aie2.set.I512.I256(<8 x i32> %cast.4, i32 0)
+  %14 = bitcast <16 x i32> %set.0 to <32 x bfloat>
   %15 = tail call <32 x bfloat> @llvm.aie2.upd.bf512.bf256(<32 x bfloat> %14, <16 x bfloat> %13, i32 1)
   call void @llvm.set.loop.iterations.i32(i32 %div16)
   br label %for.body
@@ -204,82 +208,116 @@ for.body:                                         ; preds = %for.body, %for.body
   %add.ptr.ascast.i.i = addrspacecast ptr %add.ptr.i.i to ptr addrspace(5)
   %17 = load <16 x bfloat>, ptr addrspace(5) %add.ptr.ascast.i.i, align 32, !tbaa !11
   %add.ptr.i.i.i = getelementptr inbounds i8, ptr %p_in.0.in16, i20 64
-  %18 = tail call <32 x bfloat> @llvm.aie2.set.bf512.bf256(<16 x bfloat> %16, i32 0)
+  %cast.5 = bitcast <16 x bfloat> %16 to <8 x i32>
+  %set.1 = tail call <16 x i32> @llvm.aie2.set.I512.I256(<8 x i32> %cast.5, i32 0)
+  %18 = bitcast <16 x i32> %set.1 to <32 x bfloat>
   %19 = tail call <32 x bfloat> @llvm.aie2.upd.bf512.bf256(<32 x bfloat> %18, <16 x bfloat> %13, i32 1)
   %20 = tail call noundef <8 x i64> @llvm.aie2.bf.mul16.conf(<32 x bfloat> %15, <32 x bfloat> %19, i32 60)
   %21 = tail call noundef <16 x bfloat> @llvm.aie2.v16accfloat.to.v16bf16(<8 x i64> %20)
   %22 = tail call noundef <32 x bfloat> @llvm.aie2.vbroadcast16.bf512(bfloat 0xR4080)
-  %23 = tail call <16 x bfloat> @llvm.aie2.ext.bf256.bf512(<32 x bfloat> %22, i32 0)
-  %24 = tail call <32 x bfloat> @llvm.aie2.set.bf512.bf256(<16 x bfloat> %21, i32 0)
-  %25 = tail call <32 x bfloat> @llvm.aie2.set.bf512.bf256(<16 x bfloat> %23, i32 0)
+  %cast.6 = bitcast <32 x bfloat> %22 to <16 x i32>
+  %23 = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> %cast.6, i32 0)
+  %cast.7 = bitcast <16 x bfloat> %21 to <8 x i32>
+  %set.2 = tail call <16 x i32> @llvm.aie2.set.I512.I256(<8 x i32> %cast.7, i32 0)
+  %24 = bitcast <16 x i32> %set.2 to <32 x bfloat>
+  %set.3 = tail call <16 x i32> @llvm.aie2.set.I512.I256(<8 x i32> %23, i32 0)
+  %25 = bitcast <16 x i32> %set.3 to <32 x bfloat>
   %26 = tail call { <32 x bfloat>, i32 } @llvm.aie2.vmin.gebf16(<32 x bfloat> %24, <32 x bfloat> %25)
   %27 = extractvalue { <32 x bfloat>, i32 } %26, 0
-  %28 = tail call <16 x bfloat> @llvm.aie2.ext.bf256.bf512(<32 x bfloat> %27, i32 0)
+  %cast.8 = bitcast <32 x bfloat> %27 to <16 x i32>
+  %28 = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> %cast.8, i32 0)
   %29 = tail call noundef <32 x bfloat> @llvm.aie2.vbroadcast16.bf512(bfloat 0xRC080)
-  %30 = tail call <16 x bfloat> @llvm.aie2.ext.bf256.bf512(<32 x bfloat> %29, i32 0)
-  %31 = tail call <32 x bfloat> @llvm.aie2.set.bf512.bf256(<16 x bfloat> %28, i32 0)
-  %32 = tail call <32 x bfloat> @llvm.aie2.set.bf512.bf256(<16 x bfloat> %30, i32 0)
+  %cast.9 = bitcast <32 x bfloat> %29 to <16 x i32>
+  %30 = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> %cast.9, i32 0)
+  %set.4 = tail call <16 x i32> @llvm.aie2.set.I512.I256(<8 x i32> %28, i32 0)
+  %31 = bitcast <16 x i32> %set.4 to <32 x bfloat>
+  %set.5 = tail call <16 x i32> @llvm.aie2.set.I512.I256(<8 x i32> %30, i32 0)
+  %32 = bitcast <16 x i32> %set.5 to <32 x bfloat>
   %33 = tail call { <32 x bfloat>, i32 } @llvm.aie2.vmax.ltbf16(<32 x bfloat> %31, <32 x bfloat> %32)
   %34 = extractvalue { <32 x bfloat>, i32 } %33, 0
-  %35 = tail call <16 x bfloat> @llvm.aie2.ext.bf256.bf512(<32 x bfloat> %34, i32 0)
-  %36 = tail call <32 x bfloat> @llvm.aie2.set.bf512.bf256(<16 x bfloat> %35, i32 0)
+  %cast.10 = bitcast <32 x bfloat> %34 to <16 x i32>
+  %35 = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> %cast.10, i32 0)
+  %set.6 = tail call <16 x i32> @llvm.aie2.set.I512.I256(<8 x i32> %35, i32 0)
+  %36 = bitcast <16 x i32> %set.6 to <32 x bfloat>
   %37 = bitcast <32 x bfloat> %36 to <32 x i16>
   %38 = tail call noundef <32 x i16> @llvm.aie2.vbroadcast16.I512(i32 32767)
   %and.i.i.i.i.i.i.i.i.i.i.i = and <32 x i16> %38, %37
-  %39 = bitcast <32 x i16> %and.i.i.i.i.i.i.i.i.i.i.i to <32 x bfloat>
-  %40 = tail call <16 x bfloat> @llvm.aie2.ext.bf256.bf512(<32 x bfloat> %39, i32 0)
+  %39 = bitcast <32 x i16> %and.i.i.i.i.i.i.i.i.i.i.i to <16 x i32>
+  %40 = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> %39, i32 0)
   %41 = tail call noundef <32 x bfloat> @llvm.aie2.vbroadcast16.bf512(bfloat 0xR3D00)
-  %42 = tail call <16 x bfloat> @llvm.aie2.ext.bf256.bf512(<32 x bfloat> %41, i32 0)
-  %43 = tail call <32 x bfloat> @llvm.aie2.set.bf512.bf256(<16 x bfloat> %42, i32 0)
+  %cast.11 = bitcast <32 x bfloat> %41 to <16 x i32>
+  %42 = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> %cast.11, i32 0)
+  %set.7 = tail call <16 x i32> @llvm.aie2.set.I512.I256(<8 x i32> %42, i32 0)
+  %43 = bitcast <16 x i32> %set.7 to <32 x bfloat>
   %44 = tail call <32 x bfloat> @llvm.aie2.upd.bf512.bf256(<32 x bfloat> %43, <16 x bfloat> %13, i32 1)
-  %45 = tail call <32 x bfloat> @llvm.aie2.set.bf512.bf256(<16 x bfloat> %40, i32 0)
+  %set.8 = tail call <16 x i32> @llvm.aie2.set.I512.I256(<8 x i32> %40, i32 0)
+  %45 = bitcast <16 x i32> %set.8 to <32 x bfloat>
   %46 = tail call <32 x bfloat> @llvm.aie2.upd.bf512.bf256(<32 x bfloat> %45, <16 x bfloat> %13, i32 1)
   %47 = tail call noundef <8 x i64> @llvm.aie2.bf.mul16.conf(<32 x bfloat> %44, <32 x bfloat> %46, i32 60)
   %48 = tail call noundef <32 x bfloat> @llvm.aie2.vbroadcast16.bf512(bfloat 0xR3E80)
-  %49 = tail call <16 x bfloat> @llvm.aie2.ext.bf256.bf512(<32 x bfloat> %48, i32 0)
+  %cast.12 = bitcast <32 x bfloat> %48 to <16 x i32>
+  %49 = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> %cast.12, i32 0)
   %50 = tail call <32 x bfloat> @llvm.aie2.upd.bf512.bf256(<32 x bfloat> %36, <16 x bfloat> %13, i32 1)
-  %51 = tail call <32 x bfloat> @llvm.aie2.set.bf512.bf256(<16 x bfloat> %49, i32 0)
+  %set.9 = tail call <16 x i32> @llvm.aie2.set.I512.I256(<8 x i32> %49, i32 0)
+  %51 = bitcast <16 x i32> %set.9 to <32 x bfloat>
   %52 = tail call <32 x bfloat> @llvm.aie2.upd.bf512.bf256(<32 x bfloat> %51, <16 x bfloat> %13, i32 1)
   %53 = tail call noundef <8 x i64> @llvm.aie2.bf.mac16.conf(<32 x bfloat> %50, <32 x bfloat> %52, <8 x i64> %10, i32 60)
   %54 = tail call noundef <16 x bfloat> @llvm.aie2.v16accfloat.to.v16bf16(<8 x i64> %47)
-  %55 = tail call <32 x bfloat> @llvm.aie2.set.bf512.bf256(<16 x bfloat> %54, i32 0)
+  %cast.13 = bitcast <16 x bfloat> %54 to <8 x i32>
+  %set.10 = tail call <16 x i32> @llvm.aie2.set.I512.I256(<8 x i32> %cast.13, i32 0)
+  %55 = bitcast <16 x i32> %set.10 to <32 x bfloat>
   %56 = tail call <32 x bfloat> @llvm.aie2.upd.bf512.bf256(<32 x bfloat> %55, <16 x bfloat> %13, i32 1)
   %57 = tail call noundef <8 x i64> @llvm.aie2.bf.msc16.conf(<32 x bfloat> %56, <32 x bfloat> %50, <8 x i64> %53, i32 60)
   %58 = tail call noundef <16 x bfloat> @llvm.aie2.v16accfloat.to.v16bf16(<8 x i64> %57)
-  %59 = tail call <32 x bfloat> @llvm.aie2.set.bf512.bf256(<16 x bfloat> %58, i32 0)
+  %cast.14 = bitcast <16 x bfloat> %58 to <8 x i32>
+  %set.11 = tail call <16 x i32> @llvm.aie2.set.I512.I256(<8 x i32> %cast.14, i32 0)
+  %59 = bitcast <16 x i32> %set.11 to <32 x bfloat>
   %60 = tail call <32 x bfloat> @llvm.aie2.upd.bf512.bf256(<32 x bfloat> %59, <16 x bfloat> %13, i32 1)
   %61 = tail call noundef <8 x i64> @llvm.aie2.bf.mul16.conf(<32 x bfloat> %60, <32 x bfloat> %15, i32 60)
   %62 = tail call noundef <8 x i64> @llvm.aie2.v16bf16.to.v16accfloat(<16 x bfloat> %4)
   %63 = tail call noundef <8 x i64> @llvm.aie2.sub.accfloat(<8 x i64> %61, <8 x i64> %62, i32 28)
   %64 = tail call noundef <16 x bfloat> @llvm.aie2.v16accfloat.to.v16bf16(<8 x i64> %63)
-  %65 = tail call <32 x bfloat> @llvm.aie2.set.bf512.bf256(<16 x bfloat> %17, i32 0)
+  %cast.15 = bitcast <16 x bfloat> %17 to <8 x i32>
+  %set.12 = tail call <16 x i32> @llvm.aie2.set.I512.I256(<8 x i32> %cast.15, i32 0)
+  %65 = bitcast <16 x i32> %set.12 to <32 x bfloat>
   %66 = tail call <32 x bfloat> @llvm.aie2.upd.bf512.bf256(<32 x bfloat> %65, <16 x bfloat> %13, i32 1)
   %67 = tail call noundef <8 x i64> @llvm.aie2.bf.mul16.conf(<32 x bfloat> %15, <32 x bfloat> %66, i32 60)
   %68 = tail call noundef <16 x bfloat> @llvm.aie2.v16accfloat.to.v16bf16(<8 x i64> %67)
-  %69 = tail call <32 x bfloat> @llvm.aie2.set.bf512.bf256(<16 x bfloat> %68, i32 0)
+  %cast.16 = bitcast <16 x bfloat> %68 to <8 x i32>
+  %set.13 = tail call <16 x i32> @llvm.aie2.set.I512.I256(<8 x i32> %cast.16, i32 0)
+  %69 = bitcast <16 x i32> %set.13 to <32 x bfloat>
   %70 = tail call { <32 x bfloat>, i32 } @llvm.aie2.vmin.gebf16(<32 x bfloat> %69, <32 x bfloat> %25)
   %71 = extractvalue { <32 x bfloat>, i32 } %70, 0
-  %72 = tail call <16 x bfloat> @llvm.aie2.ext.bf256.bf512(<32 x bfloat> %71, i32 0)
-  %73 = tail call <32 x bfloat> @llvm.aie2.set.bf512.bf256(<16 x bfloat> %72, i32 0)
+  %cast.17 = bitcast <32 x bfloat> %71 to <16 x i32>
+  %72 = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> %cast.17, i32 0)
+  %set.14 = tail call <16 x i32> @llvm.aie2.set.I512.I256(<8 x i32> %72, i32 0)
+  %73 = bitcast <16 x i32> %set.14 to <32 x bfloat>
   %74 = tail call { <32 x bfloat>, i32 } @llvm.aie2.vmax.ltbf16(<32 x bfloat> %73, <32 x bfloat> %32)
   %75 = extractvalue { <32 x bfloat>, i32 } %74, 0
-  %76 = tail call <16 x bfloat> @llvm.aie2.ext.bf256.bf512(<32 x bfloat> %75, i32 0)
-  %77 = tail call <32 x bfloat> @llvm.aie2.set.bf512.bf256(<16 x bfloat> %76, i32 0)
+  %cast.18 = bitcast <32 x bfloat> %75 to <16 x i32>
+  %76 = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> %cast.18, i32 0)
+  %set.15 = tail call <16 x i32> @llvm.aie2.set.I512.I256(<8 x i32> %76, i32 0)
+  %77 = bitcast <16 x i32> %set.15 to <32 x bfloat>
   %78 = bitcast <32 x bfloat> %77 to <32 x i16>
   %and.i.i.i.i.i.i.i.i.i.i.i.i = and <32 x i16> %38, %78
-  %79 = bitcast <32 x i16> %and.i.i.i.i.i.i.i.i.i.i.i.i to <32 x bfloat>
-  %80 = tail call <16 x bfloat> @llvm.aie2.ext.bf256.bf512(<32 x bfloat> %79, i32 0)
-  %81 = tail call <32 x bfloat> @llvm.aie2.set.bf512.bf256(<16 x bfloat> %80, i32 0)
+  %79 = bitcast <32 x i16> %and.i.i.i.i.i.i.i.i.i.i.i.i to <16 x i32>
+  %80 = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> %79, i32 0)
+  %set.16 = tail call <16 x i32> @llvm.aie2.set.I512.I256(<8 x i32> %80, i32 0)
+  %81 = bitcast <16 x i32> %set.16 to <32 x bfloat>
   %82 = tail call <32 x bfloat> @llvm.aie2.upd.bf512.bf256(<32 x bfloat> %81, <16 x bfloat> %13, i32 1)
   %83 = tail call noundef <8 x i64> @llvm.aie2.bf.mul16.conf(<32 x bfloat> %44, <32 x bfloat> %82, i32 60)
   %84 = tail call <32 x bfloat> @llvm.aie2.upd.bf512.bf256(<32 x bfloat> %77, <16 x bfloat> %13, i32 1)
   %85 = tail call noundef <8 x i64> @llvm.aie2.bf.mac16.conf(<32 x bfloat> %84, <32 x bfloat> %52, <8 x i64> %10, i32 60)
   %86 = tail call noundef <16 x bfloat> @llvm.aie2.v16accfloat.to.v16bf16(<8 x i64> %83)
-  %87 = tail call <32 x bfloat> @llvm.aie2.set.bf512.bf256(<16 x bfloat> %86, i32 0)
+  %cast.19 = bitcast <16 x bfloat> %86 to <8 x i32>
+  %set.17 = tail call <16 x i32> @llvm.aie2.set.I512.I256(<8 x i32> %cast.19, i32 0)
+  %87 = bitcast <16 x i32> %set.17 to <32 x bfloat>
   %88 = tail call <32 x bfloat> @llvm.aie2.upd.bf512.bf256(<32 x bfloat> %87, <16 x bfloat> %13, i32 1)
   %89 = tail call noundef <8 x i64> @llvm.aie2.bf.msc16.conf(<32 x bfloat> %88, <32 x bfloat> %84, <8 x i64> %85, i32 60)
   %90 = tail call noundef <16 x bfloat> @llvm.aie2.v16accfloat.to.v16bf16(<8 x i64> %89)
-  %91 = tail call <32 x bfloat> @llvm.aie2.set.bf512.bf256(<16 x bfloat> %90, i32 0)
+  %cast.20 = bitcast <16 x bfloat> %90 to <8 x i32>
+  %set.18 = tail call <16 x i32> @llvm.aie2.set.I512.I256(<8 x i32> %cast.20, i32 0)
+  %91 = bitcast <16 x i32> %set.18 to <32 x bfloat>
   %92 = tail call <32 x bfloat> @llvm.aie2.upd.bf512.bf256(<32 x bfloat> %91, <16 x bfloat> %13, i32 1)
   %93 = tail call noundef <8 x i64> @llvm.aie2.bf.mul16.conf(<32 x bfloat> %92, <32 x bfloat> %15, i32 60)
   %94 = tail call noundef <8 x i64> @llvm.aie2.sub.accfloat(<8 x i64> %93, <8 x i64> %62, i32 28)

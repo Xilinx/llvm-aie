@@ -32,15 +32,15 @@ define noundef <8 x bfloat> @test_extract_v8bfloat16_256(<16 x bfloat> noundef %
 ; CHECK-LABEL: test_extract_v8bfloat16_256:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
+; CHECK-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    mova r1, #4 // Delay Slot 4
+; CHECK-NEXT:    mova r1, #4; vmov wh0, wl2 // Delay Slot 4
 ; CHECK-NEXT:    lshl r0, r0, r1 // Delay Slot 3
-; CHECK-NEXT:    vshift x0, x2, x0, r0 // Delay Slot 2
+; CHECK-NEXT:    vshift x0, x0, x0, r0 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
-  %0 = tail call <32 x bfloat> @llvm.aie2.set.bf512.bf256(<16 x bfloat> %a, i32 0)
-  %1 = bitcast <32 x bfloat> %0 to <16 x i32>
+  %0 = bitcast <16 x bfloat> %a to <8 x i32>
+  %1 = tail call <16 x i32> @llvm.aie2.set.I512.I256(<8 x i32> %0, i32 1)
   %2 = tail call <32 x bfloat> @llvm.aie2.v32bfloat16()
   %3 = bitcast <32 x bfloat> %2 to <16 x i32>
   %mul.i.i = shl nsw i32 %idx, 4
@@ -68,9 +68,9 @@ entry:
   %4 = shl i32 %idx, 4
   %mul.i.i = sub i32 64, %4
   %5 = tail call <16 x i32> @llvm.aie2.vshift.I512.I512(<16 x i32> %3, <16 x i32> %1, i32 0, i32 %mul.i.i)
-  %retval.0.i.i = bitcast <16 x i32> %5 to <32 x bfloat>
-  %6 = tail call <16 x bfloat> @llvm.aie2.ext.bf256.bf512(<32 x bfloat> %retval.0.i.i, i32 0)
-  ret <16 x bfloat> %6
+  %6 = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> %5, i32 0)
+  %retval.0.i.i = bitcast <8 x i32> %6 to <16 x bfloat>
+  ret <16 x bfloat> %retval.0.i.i
 }
 
 define dso_local noundef <16 x bfloat> @test_extract_v16bfloat16_512(<32 x bfloat> noundef %a, i32 noundef %idx) local_unnamed_addr #0 {
@@ -84,8 +84,10 @@ define dso_local noundef <16 x bfloat> @test_extract_v16bfloat16_512(<32 x bfloa
 ; CHECK-NEXT:    vmov x0, x2 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
-  %0 = tail call <16 x bfloat> @llvm.aie2.ext.bf256.bf512(<32 x bfloat> %a, i32 0)
-  ret <16 x bfloat> %0
+  %0 = bitcast <32 x bfloat> %a to <16 x i32>
+  %1 = tail call <8 x i32> @llvm.aie2.ext.I256.I512(<16 x i32> %0, i32 0)
+  %2 = bitcast <8 x i32> %1 to <16 x bfloat>
+  ret <16 x bfloat> %2
 }
 
 define dso_local noundef <32 x bfloat> @test_insert_v16bfloat16_512(<32 x bfloat> noundef %a, i32 noundef %idx, <16 x bfloat> noundef %b) local_unnamed_addr #0 {
@@ -114,8 +116,10 @@ define dso_local noundef <32 x bfloat> @test_set_v16bfloat16_512(i32 noundef %id
 ; CHECK-NEXT:    vmov wh0, wl2 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
-  %0 = tail call <32 x bfloat> @llvm.aie2.set.bf512.bf256(<16 x bfloat> %b, i32 1)
-  ret <32 x bfloat> %0
+  %0 = bitcast <16 x bfloat> %b to <8 x i32>
+  %1 = tail call <16 x i32> @llvm.aie2.set.I512.I256(<8 x i32> %0, i32 1)
+  %2 = bitcast <16 x i32> %1 to <32 x bfloat>
+  ret <32 x bfloat> %2
 }
 
 define dso_local noundef <32 x bfloat> @test_concat_v16bfloat16_512(<16 x bfloat> noundef %a0, <16 x bfloat> noundef %a1) local_unnamed_addr #0 {
@@ -253,9 +257,7 @@ entry:
   ret <64 x bfloat> %0
 }
 
-declare <16 x bfloat> @llvm.aie2.ext.bf256.bf512(<32 x bfloat>, i32) #1
 declare <32 x bfloat> @llvm.aie2.upd.bf512.bf256(<32 x bfloat>, <16 x bfloat>, i32) #1
-declare <32 x bfloat> @llvm.aie2.set.bf512.bf256(<16 x bfloat>, i32) #1
 declare <32 x bfloat> @llvm.aie2.concat.bf512.bf256(<16 x bfloat>, <16 x bfloat>) #1
 declare <16 x bfloat> @llvm.aie2.ext.bf256.bf1024(<64 x bfloat>, i32) #1
 declare <64 x bfloat> @llvm.aie2.upd.bf1024.bf256(<64 x bfloat>, <16 x bfloat>, i32) #1
