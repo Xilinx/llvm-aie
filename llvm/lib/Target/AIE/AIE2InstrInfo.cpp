@@ -1179,6 +1179,73 @@ unsigned AIE2InstrInfo::getNumReservedDelaySlots(const MachineInstr &MI) const {
   return 0;
 }
 
+std::optional<int> AIE2InstrInfo::getStreamingStartCycle(unsigned Opode) const {
+  switch (Opode) {
+  default:
+    return {};
+  case AIE2::MOV_mv_ss2scl:
+  case AIE2::MOV_NB_mv_ss2scl:
+    return 1;
+  case AIE2::MOV_mv_scl2ms:
+  case AIE2::MOV_TLAST_mv_scl2ms:
+  case AIE2::MOV_mv_scl2ms_doTlast_reg:
+  case AIE2::MOV_NB_mv_scl2ms:
+  case AIE2::MOV_NB_TLAST_mv_scl2ms:
+  case AIE2::MOV_NB_mv_scl2ms_doTlast_reg:
+  case AIE2::MOV_mv_ph2ms:
+  case AIE2::MOV_TLAST_mv_ph2ms:
+  case AIE2::MOV_mv_ph2ms_doTlast_reg:
+  case AIE2::MOV_NB_mv_ph2ms:
+  case AIE2::MOV_NB_TLAST_mv_ph2ms:
+  case AIE2::MOV_NB_mv_ph2ms_doTlast_reg:
+  case AIE2::MOV_mv_cph2ms:
+  case AIE2::MOV_TLAST_mv_cph2ms:
+  case AIE2::MOV_mv_cph2ms_doTlast_reg:
+  case AIE2::MOV_NB_mv_cph2ms:
+  case AIE2::MOV_NB_TLAST_mv_cph2ms:
+  case AIE2::MOV_NB_mv_cph2ms_doTlast_reg:
+  case AIE2::VMOV_mv_scd:
+  case AIE2::VMOV_HI:
+  case AIE2::VMOV_LO:
+  case AIE2::VMOV_mv_mcd:
+    return 2;
+  }
+}
+
+std::optional<int> AIE2InstrInfo::getStreamingEndCycle(unsigned Opode) const {
+  switch (Opode) {
+  default:
+    return {};
+  case AIE2::MOV_mv_scl2ms:
+  case AIE2::MOV_TLAST_mv_scl2ms:
+  case AIE2::MOV_mv_scl2ms_doTlast_reg:
+  case AIE2::MOV_NB_mv_scl2ms:
+  case AIE2::MOV_NB_TLAST_mv_scl2ms:
+  case AIE2::MOV_NB_mv_scl2ms_doTlast_reg:
+    return 3;
+  case AIE2::MOV_mv_ph2ms:
+  case AIE2::MOV_TLAST_mv_ph2ms:
+  case AIE2::MOV_mv_ph2ms_doTlast_reg:
+  case AIE2::MOV_NB_mv_ph2ms:
+  case AIE2::MOV_NB_TLAST_mv_ph2ms:
+  case AIE2::MOV_NB_mv_ph2ms_doTlast_reg:
+  case AIE2::MOV_mv_cph2ms:
+  case AIE2::MOV_TLAST_mv_cph2ms:
+  case AIE2::MOV_mv_cph2ms_doTlast_reg:
+  case AIE2::MOV_NB_mv_cph2ms:
+  case AIE2::MOV_NB_TLAST_mv_cph2ms:
+  case AIE2::MOV_NB_mv_cph2ms_doTlast_reg:
+    return 6;
+  case AIE2::MOV_mv_ss2scl:
+  case AIE2::MOV_NB_mv_ss2scl:
+  case AIE2::VMOV_mv_scd:
+  case AIE2::VMOV_HI:
+  case AIE2::VMOV_LO:
+  case AIE2::VMOV_mv_mcd:
+    return 7;
+  }
+}
+
 SmallVector<TiedRegOperands, 4>
 AIE2InstrInfo::getTiedRegInfo(unsigned Opcode) const {
   const SmallVector<SubRegSplit, 8> Split2DReg = {

@@ -190,7 +190,8 @@ class LockDelays : public ScheduleDAGMutation {
     // FIXME: Delays for locks to reach the core aren't completely described in
     // the ISA. The numbers are therefore conservative.
     const int CoreStallCycle = 2;
-    const int CoreResumeCycle = 8;
+    const int CoreResumeCycleMemory = 8;
+    const int CoreResumeCycle = 5;
     const auto *TII = static_cast<const AIEBaseInstrInfo *>(DAG->TII);
 
     // Iterate over all the predecessors and successors of Lock instructions
@@ -204,22 +205,40 @@ class LockDelays : public ScheduleDAGMutation {
       }
       for (auto &PredEdge : SU.Preds) {
         MachineInstr *LdSt = PredEdge.getSUnit()->getInstr();
-        if (PredEdge.getKind() != SDep::Order || !LdSt->mayLoadOrStore()) {
+        if (PredEdge.getKind() != SDep::Order) {
           continue;
         }
-        // Ensure memory operation happens before the core stalls
-        int Delay = *TII->getLastMemoryCycle(LdSt->getDesc().SchedClass) -
-                    CoreStallCycle + 1;
+        int Delay = 0;
+        if (auto LastMemCycle =
+                TII->getLastMemoryCycle(LdSt->getDesc().SchedClass)) {
+          // Ensure memory operation happens before the core stalls
+          Delay = *LastMemCycle - CoreStallCycle + 1;
+        } else if (auto StreamingEndCycle =
+                       TII->getStreamingEndCycle(LdSt->getOpcode())) {
+          // Ensure streaming operation happens before the core stalls
+          Delay = *StreamingEndCycle - CoreStallCycle + 1;
+        } else {
+          continue;
+        }
         updatePredLatency(PredEdge, SU, Delay);
       }
       for (auto &SuccEdge : SU.Succs) {
         MachineInstr *LdSt = SuccEdge.getSUnit()->getInstr();
-        if (SuccEdge.getKind() != SDep::Order || !LdSt->mayLoadOrStore()) {
+        if (SuccEdge.getKind() != SDep::Order) {
           continue;
         }
-        // Ensure memory operation happens after the core resumes
-        int Delay = CoreResumeCycle -
-                    *TII->getFirstMemoryCycle(LdSt->getDesc().SchedClass) + 1;
+        int Delay = 0;
+        if (auto FirstMemCycle =
+                TII->getFirstMemoryCycle(LdSt->getDesc().SchedClass)) {
+          // Ensure memory operation happens after the core resumes
+          Delay = CoreResumeCycleMemory - *FirstMemCycle + 1;
+        } else if (auto StreamingStartCycle =
+                       TII->getStreamingStartCycle(LdSt->getOpcode())) {
+          // Ensure streaming operation starts after the core resumes
+          Delay = CoreResumeCycle - *StreamingStartCycle + 1;
+        } else {
+          continue;
+        }
         updateSuccLatency(SuccEdge, SU, Delay);
       }
     }

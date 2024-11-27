@@ -74,6 +74,8 @@ public:
 
   virtual unsigned
   getNumReservedDelaySlots(const MachineInstr &MI) const override;
+  std::optional<int> getStreamingStartCycle(unsigned Opode) const override;
+  std::optional<int> getStreamingEndCycle(unsigned Opode) const override;
 
   bool isJNZ(unsigned Opc) const override;
   bool isJZ(unsigned Opc) const override;

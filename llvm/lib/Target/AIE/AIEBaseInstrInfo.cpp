@@ -64,6 +64,16 @@ AIEBaseInstrInfo::getNumReservedDelaySlots(const MachineInstr &MI) const {
   return getNumDelaySlots(MI);
 }
 
+std::optional<int>
+AIEBaseInstrInfo::getStreamingStartCycle(unsigned Opode) const {
+  return {};
+}
+
+std::optional<int>
+AIEBaseInstrInfo::getStreamingEndCycle(unsigned Opode) const {
+  return {};
+}
+
 std::optional<AIEBaseInstrInfo::PseudoBranchExpandInfo>
 AIEBaseInstrInfo::getPseudoBranchExpandInfo(const MachineInstr &MI) const {
   return {};

@@ -56,8 +56,6 @@ def LOAD_UNIT_A : FuncUnit;
 
 // The Semaphore interface
 def SEMAPHORE : FuncUnit;
-// This is telling other ops to stay clear of a semaphore op.
-class AvoidSemaphore<int n> : InstrStage<n, [SEMAPHORE], 0, Reserved>;
 
 // DONE interface
 // Doesn't look likely to cause a conflict, just for completeness
@@ -629,7 +627,7 @@ InstrItinData<II_MOV_SCL_DN, [PrefixCycle<P_RM_PORT>,PrefixCycle<RS_WM_PORT>,  S
 InstrItinData<II_MOV_SCL_M, [PrefixCycle<P_RM_PORT>,PrefixCycle<RS_WM_PORT>,  SimpleCycle<M_WM_PORT>], [1,1]>,
 InstrItinData<II_MOV_SCL_P, [PrefixCycle<P_RM_PORT>,PrefixCycle<RS_WM_PORT>,  SimpleCycle<P_WM_PORT>], [1,1]>,
 InstrItinData<II_MOV_SCL_RS, [PrefixCycle<P_RM_PORT>, SimpleCycle<RS_WM_PORT>], [1,1]>,
-InstrItinData<II_MOV_SS, [AvoidSemaphore<7>, EmptyCycles<6>, SimpleCycle<R_WA_PORT>], [7,/*def:srSS0*/8]>,
+InstrItinData<II_MOV_SS, [EmptyCycles<6>, SimpleCycle<R_WA_PORT>], [7,/*def:srSS0*/8]>,
 InstrItinData<II_MOVd1, [SimpleCycle<P_RM_PORT>, SimpleCycle<RS_WM_PORT>], [2,1]>,
 InstrItinData<II_MOVd2, [SimpleCycle<P_RM_PORT>, EmptyCycles<1>, SimpleCycle<RS_WM_PORT>], [3,1]>,
 InstrItinData<II_MOVd3, [SimpleCycle<P_RM_PORT>, EmptyCycles<2>, SimpleCycle<RS_WM_PORT>], [4,1]>,
@@ -664,31 +662,31 @@ MemInstrItinData<II_ST,
     [1,1,1],
     MemoryCycles<[5]>>,
 InstrItinData<II_ST_MS,
-    [PrefixCycle<R_RV_PORT>, SimpleCycle<P_RM_PORT>, AvoidSemaphore<2>],
+    [PrefixCycle<R_RV_PORT>, SimpleCycle<P_RM_PORT>],
     [1,1]>,
 InstrItinData<II_ST_MS_NB,
-    [PrefixCycle<R_RV_PORT>, SimpleCycle<P_RM_PORT>, AvoidSemaphore<2>],
+    [PrefixCycle<R_RV_PORT>, SimpleCycle<P_RM_PORT>],
     [1,/*def:srMS0*/3]>,
 InstrItinData<II_ST_MS_NB_TLAST_REG,
-    [PrefixCycle<R_RV_PORT>, SimpleCycle<P_RM_PORT>, AvoidSemaphore<2>],
+    [PrefixCycle<R_RV_PORT>, SimpleCycle<P_RM_PORT>],
     [1,1,/*def:srMS0*/3]>,
 InstrItinData<II_MOV_PH_B,
-    [SimpleCycle<R_RV_PORT>, AvoidSemaphore<5>],
+    [SimpleCycle<R_RV_PORT>],
     [1,1,/*tlast*/1]>,
 InstrItinData<II_MOV_PH_NB,
-    [SimpleCycle<R_RV_PORT>, AvoidSemaphore<5>],
+    [SimpleCycle<R_RV_PORT>],
     [1,1,/*def:srMS0*/3]>,
 InstrItinData<II_MOV_PH_NB_TLAST_REG,
-    [SimpleCycle<R_RV_PORT>, AvoidSemaphore<5>],
+    [SimpleCycle<R_RV_PORT>],
     [1,1,/*tlast*/1,/*def:srMS0*/3]>,
 InstrItinData<II_MOV_CPH_B,
-    [PrefixCycle<P_RM_PORT>, SimpleCycle<R_RV_PORT>, AvoidSemaphore<5>],
+    [PrefixCycle<P_RM_PORT>, SimpleCycle<R_RV_PORT>],
     [1,1,1,1,/*tlast*/1]>,
 InstrItinData<II_MOV_CPH_NB,
-    [PrefixCycle<P_RM_PORT>, SimpleCycle<R_RV_PORT>, AvoidSemaphore<5>],
+    [PrefixCycle<P_RM_PORT>, SimpleCycle<R_RV_PORT>],
     [1,1,1,1,/*def:srMS0*/3]>,
 InstrItinData<II_MOV_CPH_NB_TLAST_REG,
-    [PrefixCycle<P_RM_PORT>, SimpleCycle<R_RV_PORT>, AvoidSemaphore<5>],
+    [PrefixCycle<P_RM_PORT>, SimpleCycle<R_RV_PORT>],
     [1,1,1,1,/*tlast*/1,/*def:srMS0*/3]>,
 MemInstrItinData<II_ST_POST_1D,
     [AvoidPartWordStore, PrefixCycle<R_RV_PORT>, SimpleCycle<P_RM_PORT>,
@@ -1020,9 +1018,9 @@ InstrItinData<II_VMOV_CM, [InstrStage<1, [CM_RM_PORT]>, InstrStage<1,  [CM_WM_PO
 // Note: We reserve the semaphore interface at the same cycles as ACQ/REL to
 // steer cascade streams sufficiently away from them. This is very conservative,
 // and will cause at least three cycles between stream operations and locks.
-InstrItinData<II_VMOV_CASCADE_READ, [EmptyCycles<1>, AvoidSemaphore<6>, EmptyCycles<5>, PrefixCycle<W_WA_PORT>, SimpleCycle<CM_WM_PORT>],
+InstrItinData<II_VMOV_CASCADE_READ, [EmptyCycles<6>, PrefixCycle<W_WA_PORT>, SimpleCycle<CM_WM_PORT>],
               [7,/*crSCDEn*/5]>,
-InstrItinData<II_VMOV_CASCADE_WRITE,[SimpleCycle<W_RS_PORT>, AvoidSemaphore<6>],
+InstrItinData<II_VMOV_CASCADE_WRITE,[SimpleCycle<W_RS_PORT>],
               [1,/*crMCDEn*/1]>,
 
 InstrItinData<II_VMUL, [InstrStage<1, [R_RV_PORT]>, EmptyCycles<3>, InstrStage<1, [CM_WA_PORT]>],

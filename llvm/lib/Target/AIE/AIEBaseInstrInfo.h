@@ -195,6 +195,12 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   /// not filled in by the scheduler.
   virtual unsigned getNumReservedDelaySlots(const MachineInstr &MI) const;
 
+  // Returns the cycle in which the streaming operation reads or writes
+  virtual std::optional<int> getStreamingStartCycle(unsigned Opode) const;
+
+  // Returns the cycle in which the streaming operation reads or writes
+  virtual std::optional<int> getStreamingEndCycle(unsigned Opode) const;
+
   /// Check whether Opc represents a JNZ instruction. This is mainly for
   /// detecting a downcounting loop branch.
   virtual bool isJNZ(unsigned Opc) const { return false; }
