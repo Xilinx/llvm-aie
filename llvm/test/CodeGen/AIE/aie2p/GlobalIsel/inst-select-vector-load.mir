@@ -151,3 +151,103 @@ body:             |
     $bmll0 = COPY %0(<8 x s64>)
 ...
 
+
+
+---
+name:            test_v32x16_fifo
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: test_v32x16_fifo
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm:%[0-9]+]]:mfifohlreg = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 0 :: (load (<32 x s16>))
+    ; CHECK-NEXT: $lfl0 = COPY [[VLDA_dmx_lda_fifohl_idx_imm]]
+    %1:ptrregbank(p0) = COPY $p0
+    %0:fiforegbank(<32 x s16>) = G_LOAD %1(p0) :: (load (<32 x s16>))
+    $lfl0 = COPY %0(<32 x s16>)
+...
+
+---
+name:            test_v16x32_fifo
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: test_v16x32_fifo
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm:%[0-9]+]]:mfifohlreg = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: $lfl0 = COPY [[VLDA_dmx_lda_fifohl_idx_imm]]
+    %1:ptrregbank(p0) = COPY $p0
+    %0:fiforegbank(<16 x s32>) = G_LOAD %1(p0) :: (load (<16 x s32>))
+    $lfl0 = COPY %0(<16 x s32>)
+...
+
+
+---
+name:            test_v32x32_fifo
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: test_v32x32_fifo
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 64 :: (load (<16 x s32>) from unknown-address + 64)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm1:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 0 :: (load (<16 x s32>), align 128)
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:fifo1024 = REG_SEQUENCE [[VLDA_dmx_lda_fifohl_idx_imm1]], %subreg.sub_lo_fifo, [[VLDA_dmx_lda_fifohl_idx_imm]], %subreg.sub_hi_fifo
+    ; CHECK-NEXT: $lf0 = COPY [[REG_SEQUENCE]]
+    %1:ptrregbank(p0) = COPY $p0
+    %0:fiforegbank(<32 x s32>) = G_LOAD %1(p0) :: (load (<32 x s32>))
+    $lf0 = COPY %0(<32 x s32>)
+...
+
+
+---
+name:            test_v64x16_fifo
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: test_v64x16_fifo
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 64 :: (load (<32 x s16>) from unknown-address + 64)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm1:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 0 :: (load (<32 x s16>), align 128)
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:fifo1024 = REG_SEQUENCE [[VLDA_dmx_lda_fifohl_idx_imm1]], %subreg.sub_lo_fifo, [[VLDA_dmx_lda_fifohl_idx_imm]], %subreg.sub_hi_fifo
+    ; CHECK-NEXT: $lf0 = COPY [[REG_SEQUENCE]]
+    %1:ptrregbank(p0) = COPY $p0
+    %0:fiforegbank(<64 x s16>) = G_LOAD %1(p0) :: (load (<64 x s16>))
+    $lf0 = COPY %0(<64 x s16>)
+...
+
+---
+name:            test_v128x8_fifo
+legalized:       true
+regBankSelected: true
+body:             |
+  bb.1.entry:
+    liveins: $p0
+    ; CHECK-LABEL: name: test_v128x8_fifo
+    ; CHECK: liveins: $p0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 64 :: (load (<64 x s8>) from unknown-address + 64)
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm1:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 0 :: (load (<64 x s8>), align 128)
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:fifo1024 = REG_SEQUENCE [[VLDA_dmx_lda_fifohl_idx_imm1]], %subreg.sub_lo_fifo, [[VLDA_dmx_lda_fifohl_idx_imm]], %subreg.sub_hi_fifo
+    ; CHECK-NEXT: $lf0 = COPY [[REG_SEQUENCE]]
+    %1:ptrregbank(p0) = COPY $p0
+    %0:fiforegbank(<128 x s8>) = G_LOAD %1(p0) :: (load (<128 x s8>))
+    $lf0 = COPY %0(<128 x s8>)
+...
+
