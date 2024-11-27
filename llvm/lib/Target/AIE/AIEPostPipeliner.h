@@ -51,6 +51,14 @@ public:
   // The latest cycle at which this can be scheduled. This is a negative value
   // relative to the length of the linear schedule.
   int Latest = -1;
+
+  // Record critical path components
+  // The Pred/Succ that pushed my Earliest/Latest
+  std::optional<int> LastEarliestPusher;
+  std::optional<int> LastLatestPusher;
+  // The number of Succs/Preds whose Earliest/Latest I have pushed.
+  int NumPushedEarliest = 0;
+  int NumPushedLatest = 0;
 };
 
 class PostPipelinerStrategy {

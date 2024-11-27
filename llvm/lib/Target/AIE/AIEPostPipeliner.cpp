@@ -138,8 +138,25 @@ void PostPipeliner::scheduleNode(SUnit &SU, int Cycle) {
     const int SNum = Succ->NodeNum;
     const int NewEarliest = Cycle + Latency;
     if (NewEarliest > Info[SNum].Earliest) {
+      Info[SNum].LastEarliestPusher = SU.NodeNum;
       Info[SNum].Earliest = NewEarliest;
-      LLVM_DEBUG(dbgs() << SNum << " to " << Info[SNum].Earliest << "; ");
+      Info[SU.NodeNum].NumPushedEarliest++;
+      LLVM_DEBUG(dbgs() << SNum << " to " << Info[SNum].Earliest << " -; ");
+    }
+  }
+  for (auto &Dep : SU.Preds) {
+    int Latency = Dep.getSignedLatency();
+    auto *Pred = Dep.getSUnit();
+    if (Pred->isBoundaryNode()) {
+      continue;
+    }
+    const int PNum = Pred->NodeNum;
+    const int NewLatest = Cycle - Latency;
+    if (NewLatest < Info[PNum].Latest) {
+      Info[PNum].LastLatestPusher = SU.NodeNum;
+      Info[PNum].Latest = NewLatest;
+      Info[SU.NodeNum].NumPushedLatest++;
+      LLVM_DEBUG(dbgs() << PNum << " to - " << Info[PNum].Latest << "; ");
     }
   }
   LLVM_DEBUG(dbgs() << "\n");
