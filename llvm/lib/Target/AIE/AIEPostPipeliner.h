@@ -133,7 +133,8 @@ class PostPipeliner {
   int II = 1;
   int NStages = 0;
 
-  /// Place SU in cycle Cycle; update Earliest of dependent instructions
+  /// Place SU in cycle Cycle; update Earliest of successors and Latest
+  /// of predecessors
   void scheduleNode(SUnit &SU, int Cycle);
 
   /// Compute the stage in which each instruction runs

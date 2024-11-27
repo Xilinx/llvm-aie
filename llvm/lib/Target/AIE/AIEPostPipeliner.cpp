@@ -255,6 +255,13 @@ void dumpGraph(int NInstr, const std::vector<NodeInfo> &Info,
       if (S >= NInstr) {
         dbgs() << "_" << S % NInstr;
       }
+      if (Dep.getKind() == SDep::Data) {
+        dbgs() << " [color=red] ";
+      } else if (Dep.getKind() == SDep::Output) {
+        dbgs() << " [color=black] ";
+      } else if (Dep.getKind() == SDep::Anti) {
+        dbgs() << " [color=blue] ";
+      }
 
       dbgs() << " # L=" << Dep.getSignedLatency();
       if (Dep.getKind() == SDep::Output) {
@@ -359,6 +366,16 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
   return true;
 }
 
+namespace {
+void dumpEarliestChain(const std::vector<NodeInfo> &Info, int N) {
+  auto Prev = Info[N].LastEarliestPusher;
+  if (Prev) {
+    dumpEarliestChain(Info, *Prev);
+  }
+  dbgs() << "  --> " << N << " @" << Info[N].Cycle << "\n";
+}
+} // namespace
+
 bool PostPipeliner::scheduleOtherIterations() {
   // Make sure that all the copies can be placed at II from the previous one.
   // This looks like overkill, but it accommodates dependences that span
@@ -375,8 +392,9 @@ bool PostPipeliner::scheduleOtherIterations() {
 
       // All iterations following the first one should fit exactly
       if (Earliest > Insert) {
-        LLVM_DEBUG(dbgs() << "  Latency not met (Earliest=" << Earliest
-                          << ")\n");
+        LLVM_DEBUG(dbgs() << "  Latency not met for " << N
+                          << "(Earliest=" << Earliest << ")\n";
+                   dumpEarliestChain(Info, N););
         return false;
       }
 
