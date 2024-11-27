@@ -15,8 +15,10 @@
 #define LLVM_LIB_TARGET_AIE_AIEPOSTPIPELINER_H
 
 #include "AIEHazardRecognizer.h"
+#include "AIESlotCounts.h"
 #include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/CodeGen/ResourceScoreboard.h"
+#include <unordered_set>
 #include <vector>
 
 namespace llvm {
@@ -43,6 +45,7 @@ public:
   int ModuloCycle = 0;
   // Cycle / II
   int Stage = 0;
+
   // The earliest cycle at which this can be scheduled to meet latencies
   // This includes the lowerbound of the modulo condition, i.e.
   // Earliest(N) >= Cycle(N - NInstr) + II
@@ -50,7 +53,20 @@ public:
 
   // The latest cycle at which this can be scheduled. This is a negative value
   // relative to the length of the linear schedule.
+  // So -1 is the last cycle of the linear schedule, -Length is the first cycle
+  // of the linear schedule. Note that this length is usually rounded up to
+  // the next multiple of the initiation interval
   int Latest = -1;
+
+  // These are the values of Earliest and Latest as computed from the a-priori
+  // computations. During scheduling Earliest and Latest may be adjusted to
+  // more accurate values. The two values are cached here to facilitate cheaper
+  // reset before trying a new strategy for the same II.
+  int StaticEarliest = 0;
+  int StaticLatest = -1;
+
+  // Slots necessary for this instruction.
+  SlotCounts Slots;
 
   // Record critical path components
   // The Pred/Succ that pushed my Earliest/Latest
@@ -59,6 +75,19 @@ public:
   // The number of Succs/Preds whose Earliest/Latest I have pushed.
   int NumPushedEarliest = 0;
   int NumPushedLatest = 0;
+
+  // Latest corrected by taking Earliest of an LCD successor into account
+  int LCDLatest = -1;
+
+  // The transitive closure of my predecessors
+  std::unordered_set<int> Ancestors;
+
+  // The transitive closure of my successors
+  std::unordered_set<int> Offspring;
+
+  /// Reset the node to the values computed statically
+  /// If FullReset is true, also reset the accumulated dynamic data.
+  void reset(bool FullReset);
 };
 
 class PostPipelinerStrategy {
@@ -146,8 +175,21 @@ class PostPipeliner {
   int fit(MachineInstr *MI, int Earliest, int NTries, int II);
 
   /// Provide some look ahead by seeing the effect of the first iteration
-  /// on the second iteration.
-  void computeLoopCarriedParameters();
+  /// on the second iteration. May return false if the II isn't feasible.
+  bool computeLoopCarriedParameters();
+
+  /// Helpers of computeLoopCarriedParameters()
+  void computeForward();
+  bool computeBackward();
+
+  // Given Earliest and Latest of each node in the first iteration,
+  // compute the smallest length of the linear schedule that is feasible.
+  // this length will be a multiple of the InitiationInterval
+  int computeMinScheduleLength();
+
+  /// Try all heuristics, stop at the first that fits the II
+  /// If it returns true, a valid schedule is laid down in Info.
+  bool tryHeuristics();
 
   /// Find the first available unscheduled instruction with the highest
   /// priority

@@ -5,7 +5,8 @@
 #
 # (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
 
-# RUN: llc --mtriple=aie2 -O2 --start-before=postmisched %s -o - | FileCheck %s
+# RUN: llc --mtriple=aie2 -O2 --start-before=postmisched %s \
+# RUN:     --debug-only=postpipeliner-summary -o - 2>&1 | FileCheck %s
 
 # add-store can run in a two-stage II=1 pipeline
 

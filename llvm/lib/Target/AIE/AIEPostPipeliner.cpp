@@ -14,6 +14,7 @@
 #include "AIEPostPipeliner.h"
 #include "AIESlotCounts.h"
 #include "Utils/AIELoopUtils.h"
+#include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
 #include "llvm/Support/MathExtras.h"
 
@@ -186,54 +187,140 @@ int PostPipeliner::fit(MachineInstr *MI, int First, int Last, int II) {
   return -1;
 }
 
-void PostPipeliner::computeLoopCarriedParameters() {
-  // We schedule the first iteration, only using earliest. This updates
-  // earliest of the successors. Any successor in the second iteration
-  // represents a loop carried dependence, and we account for that by
-  // propagating its Earliest back to the first iteration
-  // Note that we don't have to clean the effects of this exploration,
-  // since the real scheduling will overwrite Cycle, and the ultimate Earliest
-  // will never be less than we compute here.
-
+void PostPipeliner::computeForward() {
+  // The forward order defines a topological sort, so we can compute
+  // Earliest and Ancestors in a single forward sweep
   for (int K = 0; K < NInstr; K++) {
+    auto &Me = Info[K];
     SUnit &SU = DAG->SUnits[K];
-    const int Earliest = Info[K].Earliest;
-    scheduleNode(SU, Earliest);
+    for (auto &Dep : SU.Preds) {
+      if (Dep.getKind() != SDep::Data) {
+        continue;
+      }
+      int P = Dep.getSUnit()->NodeNum;
+      assert(P < K);
+      Me.Ancestors.insert(P);
+      auto &Pred = Info[P];
+      for (int Anc : Pred.Ancestors) {
+        Me.Ancestors.insert(Anc);
+      }
+    }
+    for (auto &Dep : SU.Succs) {
+      auto *Succ = Dep.getSUnit();
+      if (Succ->isBoundaryNode()) {
+        continue;
+      }
+      auto &SInfo = Info[Succ->NodeNum];
+      const int NewEarliest = Me.Earliest + Dep.getSignedLatency();
+      SInfo.Earliest = std::max(SInfo.Earliest, NewEarliest);
+    }
+    Me.Slots = getSlotCounts(*SU.getInstr(), TII);
+  }
+}
+
+bool PostPipeliner::computeBackward() {
+  bool Changed = false;
+
+  auto AddOffspring = [&Changed](NodeInfo &Info, int E) {
+    if (Info.Offspring.insert(E).second) {
+      Changed = true;
+    }
+  };
+
+  // Traversing backwards will speed convergence a bit
+  for (int K = NInstr - 1; K >= 0; K--) {
+    SUnit &SU = DAG->SUnits[K];
+    auto &Me = Info[K];
+    const int Latest = Info[K].Latest;
+    for (auto &Dep : SU.Preds) {
+      if (Dep.getKind() != SDep::Data) {
+        continue;
+      }
+      int P = Dep.getSUnit()->NodeNum;
+      auto &Pred = Info[P];
+      AddOffspring(Pred, K);
+      for (auto Offs : Me.Offspring) {
+        AddOffspring(Pred, Offs);
+      }
+      int NewLatest = Latest - Dep.getSignedLatency();
+      if (NewLatest < Pred.Latest) {
+        Pred.Latest = NewLatest;
+        Changed = true;
+      }
+    }
+  }
+  return Changed;
+}
+
+bool PostPipeliner::computeLoopCarriedParameters() {
+
+  // Forward properties like Earliest and Ancestors.
+  computeForward();
+
+  // Backward properties like Latest and Offspring.
+  // Use a fixpoint loop, because plain reversed order may not be topological
+  // for predecessors
+  while (computeBackward()) {
+    /* EMPTY */;
   }
 
-  // Propagate Earliest upstream, initialize Latest
-  // Unrestricted: last cycle of last stage
-  const int Latest = -1;
+  // Adjust Earliest and Latest with resource requirements.
+  // FIXME: We do not account for negative latencies here. This can lead to
+  // suboptimality, but we only include true dependences, where negative
+  // latencies are rare.
+  for (int K = 0; K < NInstr; K++) {
+    auto &Me = Info[K];
+    SlotCounts ASlots(Me.Slots);
+    for (int A : Me.Ancestors) {
+      ASlots += Info[A].Slots;
+    }
+    SlotCounts OSlots(Me.Slots);
+    for (int O : Me.Offspring) {
+      OSlots += Info[O].Slots;
+    }
+    LLVM_DEBUG(dbgs() << "SU" << K << " : " << Info[K].Earliest << " - "
+                      << Info[K].Latest << " " << ASlots << " " << OSlots
+                      << "\n");
+    Me.Earliest = std::max(Me.Earliest, 0 + (ASlots.max() - 1));
+    Me.Latest = std::min(Me.Latest, -1 - (OSlots.max() - 1));
+    LLVM_DEBUG(dbgs() << "    -> " << Info[K].Earliest << " - "
+                      << Info[K].Latest << "\n");
+  }
+
+  // Loop carried dependences will have pushed away Earliest of the second
+  // iteration, which should stay in lock step with the first.
   for (int K = 0; K < NInstr; K++) {
     const int KNextIter = K + NInstr;
     const int Earliest = Info[KNextIter].Earliest - II;
     Info[K].Earliest = std::max(Info[K].Earliest, Earliest);
-    Info[K].Latest = Latest;
   }
 
-  // Compute Latest. Use a fixpoint loop, because plain reversed
-  // order may not be topological for predecessors
-  bool Changed = true;
-  while (Changed) {
-    Changed = false;
-    for (int K = NInstr - 1; K >= 0; K--) {
-      SUnit &SU = DAG->SUnits[K];
-      const int Latest = Info[K].Latest;
-      for (auto &Dep : SU.Preds) {
-        int P = Dep.getSUnit()->NodeNum;
-        int NewLatest = Latest - Dep.getSignedLatency();
-        if (NewLatest < Info[P].Latest) {
-          Info[P].Latest = NewLatest;
-          Changed = true;
-        }
+  // Make Earliest of the second iteration push up Latest of the first
+  for (int K = 0; K < NInstr; K++) {
+    auto &Me = Info[K];
+    int LCDLatest = Me.Latest;
+    auto &SU = DAG->SUnits[K];
+    for (auto &Dep : SU.Succs) {
+      const int S = Dep.getSUnit()->NodeNum;
+      if (S < NInstr) {
+        continue;
       }
+      const int Earliest = Info[S - NInstr].Earliest;
+      const int Latest = Earliest - Dep.getSignedLatency();
+      LCDLatest = std::min(LCDLatest, Latest);
+    }
+    Me.LCDLatest = LCDLatest;
+    if (LCDLatest != Me.Latest) {
+      LLVM_DEBUG(dbgs() << "SU" << K << " LCDLatest=" << Me.LCDLatest << "\n");
     }
   }
 
-  LLVM_DEBUG(for (int K = 0; K < NInstr; K++) {
-    dbgs() << "SU" << K << " : " << Info[K].Earliest << " - " << Info[K].Latest
-           << "\n";
-  });
+  // Save the static values for ease of reset
+  for (auto &N : Info) {
+    N.StaticEarliest = N.Earliest;
+    N.StaticLatest = N.Latest;
+  }
+  return true;
 }
 
 void dumpGraph(int NInstr, const std::vector<NodeInfo> &Info,
@@ -316,10 +403,11 @@ void PostPipeliner::resetSchedule(bool FullReset) {
   Scoreboard.clear();
   for (int K = 0; K < NTotalInstrs; K++) {
     auto &N = Info[K];
-    N.Earliest = 0;
-    N.Latest = -1;
-    N.Cycle = 0;
-    N.Scheduled = false;
+    N.reset(FullReset);
+    if (K < NInstr) {
+      N.Earliest = N.StaticEarliest;
+      N.Latest = N.StaticLatest;
+    }
   }
 
   FirstUnscheduled = 0;
@@ -362,7 +450,8 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
     Info[N].Scheduled = true;
     LLVM_DEBUG(dbgs() << "Scoreboard\n"; Scoreboard.dumpFull(););
   }
-  LLVM_DEBUG(dbgs() << "==== First iteration scheduled ======\n");
+  LLVM_DEBUG(dbgs() << "==== First iteration scheduled by " << Strategy.name()
+                    << "====\n");
   return true;
 }
 
@@ -540,6 +629,19 @@ void PostPipeliner::dump() const {
 void PostPipeliner::updateTripCount() const {
   int Delta = NStages - 1;
   TII->adjustTripCount(*TripCountDef, -Delta);
+}
+
+void NodeInfo::reset(bool FullReset) {
+  Cycle = 0;
+  Scheduled = false;
+  Earliest = 0;
+  Latest = -1;
+  if (FullReset) {
+    NumPushedEarliest = 0;
+    NumPushedLatest = 0;
+    LastEarliestPusher = {};
+    LastLatestPusher = {};
+  }
 }
 
 } // namespace llvm::AIE
