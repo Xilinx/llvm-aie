@@ -47,10 +47,38 @@ public:
   // This includes the lowerbound of the modulo condition, i.e.
   // Earliest(N) >= Cycle(N - NInstr) + II
   int Earliest = 0;
-  // For an LCD K1 -> K2, this holds II + Earliest(K2 - NInstr) - Latency(LCD)
-  // Instructions with lower Latest have higher priority in the
-  // top down scheduling
-  int Latest = 0;
+
+  // The latest cycle at which this can be scheduled. This is a negative value
+  // relative to the length of the linear schedule.
+  int Latest = -1;
+};
+
+class PostPipelinerStrategy {
+protected:
+  ScheduleDAGInstrs &DAG;
+  std::vector<NodeInfo> &Info;
+  int LatestBias = 0;
+
+public:
+  PostPipelinerStrategy(ScheduleDAGInstrs &DAG, std::vector<NodeInfo> &Info,
+                        int LatestBias)
+      : DAG(DAG), Info(Info), LatestBias(LatestBias) {};
+  virtual ~PostPipelinerStrategy() {};
+  // Provide a name for logging purposes
+  virtual std::string name() { return "PostPipelinerStrategy"; }
+  // Choose among available alternatives
+  virtual bool better(const SUnit &A, const SUnit &B) { return false; }
+  // Define the earliest cycle in which to insert \p N
+  virtual int earliest(const SUnit &N) { return Info[N.NodeNum].Earliest; }
+  // Define the latest cycle in which to insert \p N
+  virtual int latest(const SUnit &N) {
+    return Info[N.NodeNum].Latest + LatestBias;
+  }
+  // Select from top or from bottom.
+  virtual bool fromTop() { return true; }
+  // Report a final selection. This marks the start of selecting a new node.
+  // fromTop() should be invariant between calls to selected()
+  virtual void selected(const SUnit &N) {};
 };
 
 class PipelineScheduleVisitor {
@@ -72,6 +100,7 @@ class PostPipeliner {
 
   int NTotalInstrs = 0;
   int FirstUnscheduled = 0;
+  int LastUnscheduled = -1;
 
   /// Holds the cycle of each SUnit. The following should hold:
   /// Cycle(N) mod II == Cycle(N % NInstr) mod II
@@ -113,14 +142,19 @@ class PostPipeliner {
 
   /// Find the first available unscheduled instruction with the highest
   /// priority
-  int mostUrgent();
+  int mostUrgent(PostPipelinerStrategy &Strategy);
 
   /// Schedule the original instructions, taking the modulo scoreboard
   /// into account
-  bool scheduleFirstIteration();
+  bool scheduleFirstIteration(PostPipelinerStrategy &Strategy);
 
   /// Check that all copied instructions can run in the same modulo cycle
   bool scheduleOtherIterations();
+
+  /// Reset dynamic scheduling data.
+  /// If FullReset is set, also reset information collected from earlier
+  /// data mining scheduling rounds
+  void resetSchedule(bool FullReset);
 
 public:
   PostPipeliner(const AIEHazardRecognizer &HR, int NInstr);

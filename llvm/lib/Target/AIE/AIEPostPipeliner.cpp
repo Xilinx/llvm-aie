@@ -153,8 +153,10 @@ void PostPipeliner::scheduleNode(SUnit &SU, int Cycle) {
 // Check resources. We only insert at the position modulo II. Since we insert
 // all iterations separately, the resources that wrap around accumulate in the
 // overflow area, causing conflicts when inserting future iterations
-int PostPipeliner::fit(MachineInstr *MI, int Earliest, int NTries, int II) {
-  for (int C = Earliest; C < Earliest + NTries; C++) {
+int PostPipeliner::fit(MachineInstr *MI, int First, int Last, int II) {
+  const int Step = First > Last ? -1 : 1;
+  LLVM_DEBUG(dbgs() << "   " << First << ", " << Last << ", " << Step << "\n");
+  for (int C = First; C != Last; C += Step) {
     int Mod = C % II;
     LLVM_DEBUG(dbgs() << "   at " << C << " (" << Mod << ")\n");
     if (!HR.checkConflict(Scoreboard, *MI, -Depth + Mod)) {
@@ -184,7 +186,7 @@ void PostPipeliner::computeLoopCarriedParameters() {
 
   // Propagate Earliest upstream, initialize Latest
   // Unrestricted: last cycle of last stage
-  const int Latest = NCopies * II - 1;
+  const int Latest = -1;
   for (int K = 0; K < NInstr; K++) {
     const int KNextIter = K + NInstr;
     const int Earliest = Info[KNextIter].Earliest - II;
@@ -247,34 +249,36 @@ void dumpGraph(int NInstr, const std::vector<NodeInfo> &Info,
   dbgs() << "}\n";
 }
 
-int PostPipeliner::mostUrgent() {
-  assert(FirstUnscheduled < NInstr);
+int PostPipeliner::mostUrgent(PostPipelinerStrategy &Strategy) {
+  assert(FirstUnscheduled <= LastUnscheduled);
   while (Info[FirstUnscheduled].Scheduled) {
     FirstUnscheduled++;
   }
-  assert(FirstUnscheduled < NInstr);
+  while (Info[LastUnscheduled].Scheduled) {
+    LastUnscheduled--;
+  }
+  assert(FirstUnscheduled <= LastUnscheduled);
 
-  // 'Latest' accounts for the critical path of the linear schedule
-  auto Better = [this](int N, int Ref) {
-    if (Info[N].Latest < Info[Ref].Latest) {
-      return true;
+  auto NotScheduled = [&](const auto &Dep) {
+    auto *SU = Dep.getSUnit();
+    if (SU->isBoundaryNode()) {
+      return false;
     }
-
-    return false;
+    int N = SU->NodeNum;
+    return N < NInstr && !Info[N].Scheduled;
   };
 
   int Best = -1;
   LLVM_DEBUG(dbgs() << "Available:");
-  for (int K = FirstUnscheduled; K < NInstr; K++) {
+  for (int K = FirstUnscheduled; K <= LastUnscheduled; K++) {
     const auto &SU = DAG->SUnits[K];
+    auto &Edges = Strategy.fromTop() ? SU.Preds : SU.Succs;
     // Check whether it is available
-    if (Info[K].Scheduled || any_of(SU.Preds, [&](const auto &Dep) {
-          return !Info[Dep.getSUnit()->NodeNum].Scheduled;
-        })) {
+    if (Info[K].Scheduled || any_of(Edges, NotScheduled)) {
       continue;
     }
     LLVM_DEBUG(dbgs() << " SU" << K);
-    if (Best == -1 || Better(K, Best)) {
+    if (Best == -1 || Strategy.better(SU, DAG->SUnits[Best])) {
       Best = K;
       LLVM_DEBUG(dbgs() << "*");
     }
@@ -284,24 +288,40 @@ int PostPipeliner::mostUrgent() {
   return Best;
 }
 
-bool PostPipeliner::scheduleFirstIteration() {
+void PostPipeliner::resetSchedule(bool FullReset) {
+  Scoreboard.clear();
+  for (int K = 0; K < NTotalInstrs; K++) {
+    auto &N = Info[K];
+    N.Earliest = 0;
+    N.Latest = -1;
+    N.Cycle = 0;
+    N.Scheduled = false;
+  }
+
+  FirstUnscheduled = 0;
+  LastUnscheduled = NInstr - 1;
+}
+
+bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
   // Set up the basic schedule from the original instructions
   for (int K = 0; K < NInstr; K++) {
-    const int N = mostUrgent();
+    const int N = mostUrgent(Strategy);
     LLVM_DEBUG(dbgs() << "  Trying " << N << "\n");
     SUnit &SU = DAG->SUnits[N];
     MachineInstr *MI = SU.getInstr();
-    const int Earliest = Info[N].Earliest;
+    const int Earliest = Strategy.earliest(SU);
+    const int Latest = Strategy.latest(SU);
     // Find the first cycle that fits. We try every position modulo II
-    const int Actual = fit(MI, Earliest, II, II);
+    const int Actual = Strategy.fromTop() ? fit(MI, Earliest, Earliest + II, II)
+                                          : fit(MI, Latest, Latest - II, II);
     if (Actual < 0) {
       // out of resources for this II;
       LLVM_DEBUG(dbgs() << "Out of resources\n");
       return false;
     }
+    Strategy.selected(SU);
     const int LocalCycle = Actual % II;
     const MemoryBankBits MemoryBanks = HR.getMemoryBanks(MI);
-    LLVM_DEBUG(dbgs() << "  Emit in " << -Depth + LocalCycle << "\n");
     int Cycle = -Depth + LocalCycle;
     LLVM_DEBUG(dbgs() << "  Emit in " << Cycle << "\n");
     for (int N = 0; N < NCopies; N++) {
@@ -349,6 +369,16 @@ bool PostPipeliner::scheduleOtherIterations() {
   return true;
 }
 
+class DefaultStrategy : public PostPipelinerStrategy {
+public:
+  DefaultStrategy(ScheduleDAGMI &DAG, std::vector<NodeInfo> &Info,
+                  int LatestBias)
+      : PostPipelinerStrategy(DAG, Info, LatestBias) {}
+  bool better(const SUnit &A, const SUnit &B) override {
+    return Info[A.NodeNum].Latest < Info[B.NodeNum].Latest;
+  }
+};
+
 bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval) {
   NTotalInstrs = TheDAG.SUnits.size();
   assert(NTotalInstrs % NInstr == 0);
@@ -359,7 +389,6 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval) {
   }
   II = InitiationInterval;
   DAG = &TheDAG;
-  FirstUnscheduled = 0;
 
   // Let's not skimp on size here. This allows us to insert any instruction
   // in the unrolled dag.
@@ -368,12 +397,19 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval) {
 
   Info.clear();
   Info.resize(NTotalInstrs);
+
   LLVM_DEBUG(for (int I = 0; I < NInstr;
                   I++) { dbgs() << I << " " << *DAG->SUnits[I].getInstr(); });
   LLVM_DEBUG(dumpGraph(NInstr, Info, DAG));
 
+  // Future compatibility: This collects the 'per strategy' reset,
+  // but we currently only run one.
+  resetSchedule(true);
+
   computeLoopCarriedParameters();
-  if (!scheduleFirstIteration() || !scheduleOtherIterations()) {
+  DefaultStrategy Strategy(*DAG, Info, NCopies * II);
+
+  if (!scheduleFirstIteration(Strategy) || !scheduleOtherIterations()) {
     LLVM_DEBUG(dbgs() << "PostPipeliner: No schedule found\n");
     return false;
   }
