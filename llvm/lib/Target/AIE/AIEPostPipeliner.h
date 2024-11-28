@@ -185,7 +185,7 @@ class PostPipeliner {
   // Given Earliest and Latest of each node in the first iteration,
   // compute the smallest length of the linear schedule that is feasible.
   // this length will be a multiple of the InitiationInterval
-  int computeMinScheduleLength();
+  int computeMinScheduleLength() const;
 
   /// Try all heuristics, stop at the first that fits the II
   /// If it returns true, a valid schedule is laid down in Info.

@@ -19,8 +19,15 @@
 #include "llvm/Support/MathExtras.h"
 
 #define DEBUG_TYPE "postpipeliner"
+#define DEBUG_SUMMARY(X) DEBUG_WITH_TYPE("postpipeliner-summary", X)
+#define DEBUG_FULL(X) DEBUG_WITH_TYPE("postpipeliner-full", X)
 
 namespace llvm::AIE {
+
+static cl::opt<int>
+    Heuristic("aie-postpipeliner-heuristic",
+              cl::desc("Select one specific post-pipeliner heuristic"),
+              cl::init(-1), cl::Hidden);
 
 PipelineScheduleVisitor::~PipelineScheduleVisitor() {}
 
@@ -323,6 +330,19 @@ bool PostPipeliner::computeLoopCarriedParameters() {
   return true;
 }
 
+int PostPipeliner::computeMinScheduleLength() const {
+  // The minimum length makes sure that every node has a range in which it
+  // can be scheduled
+  int MinLength = II;
+  for (int K = 0; K < NInstr; K++) {
+    auto &Node = Info[K];
+    while (Node.Earliest > Node.Latest + MinLength) {
+      MinLength += II;
+    }
+  }
+  return MinLength;
+}
+
 void dumpGraph(int NInstr, const std::vector<NodeInfo> &Info,
                ScheduleDAGInstrs *DAG) {
   dbgs() << "digraph {\n";
@@ -424,8 +444,8 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
     const int Earliest = Strategy.earliest(SU);
     const int Latest = Strategy.latest(SU);
     // Find the first cycle that fits. We try every position modulo II
-    const int Actual = Strategy.fromTop() ? fit(MI, Earliest, Earliest + II, II)
-                                          : fit(MI, Latest, Latest - II, II);
+    const int Actual = Strategy.fromTop() ? fit(MI, Earliest, Latest + 1, II)
+                                          : fit(MI, Latest, Earliest - 1, II);
     if (Actual < 0) {
       // out of resources for this II;
       LLVM_DEBUG(dbgs() << "Out of resources\n");
@@ -448,7 +468,7 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
 
     scheduleNode(SU, Actual);
     Info[N].Scheduled = true;
-    LLVM_DEBUG(dbgs() << "Scoreboard\n"; Scoreboard.dumpFull(););
+    DEBUG_FULL(dbgs() << "Scoreboard\n"; Scoreboard.dumpFull(););
   }
   LLVM_DEBUG(dbgs() << "==== First iteration scheduled by " << Strategy.name()
                     << "====\n");
@@ -503,6 +523,153 @@ public:
   }
 };
 
+class ConfigStrategy : public PostPipelinerStrategy {
+public:
+  enum PriorityComponent {
+    NodeNum,
+    Latest,
+    Critical,
+    Sibling,
+    LCDLatest,
+    Size
+  };
+  static std::string getPriorityName(PriorityComponent Component) {
+    switch (Component) {
+    case PriorityComponent::NodeNum:
+      return "NodeNum";
+    case PriorityComponent::Latest:
+      return "Latest";
+    case PriorityComponent::Critical:
+      return "Critical";
+    case PriorityComponent::Sibling:
+      return "Sibling";
+    case PriorityComponent::LCDLatest:
+      return "LcdLatest";
+    default:
+      break;
+    }
+    return "Size - Illegal";
+  }
+
+private:
+  std::string Name;
+  std::set<int> SuccSiblingScheduled;
+  std::function<bool(const SUnit &A, const SUnit &B)>
+      Discriminators[PriorityComponent::Size] = {
+          [&](const SUnit &A, const SUnit &B) { return A.NodeNum < B.NodeNum; },
+          [&](const SUnit &A, const SUnit &B) {
+            auto &IA = Info[A.NodeNum];
+            auto &IB = Info[B.NodeNum];
+            return IA.Latest < IB.Latest;
+          },
+          [&](const SUnit &A, const SUnit &B) {
+            auto &IA = Info[A.NodeNum];
+            auto &IB = Info[B.NodeNum];
+            return IA.NumPushedEarliest > IB.NumPushedEarliest;
+          },
+          [&](const SUnit &A, const SUnit &B) {
+            return SuccSiblingScheduled.count(A.NodeNum) >
+                   SuccSiblingScheduled.count(B.NodeNum);
+          },
+          [&](const SUnit &A, const SUnit &B) {
+            auto &IA = Info[A.NodeNum];
+            auto &IB = Info[B.NodeNum];
+            return IA.LCDLatest < IB.LCDLatest;
+          },
+      };
+  std::vector<PriorityComponent> Priority;
+
+  bool better(const SUnit &A, const SUnit &B) override {
+    for (auto P : Priority) {
+      if (Discriminators[P](A, B)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  void selected(const SUnit &N) override {
+    // Promote the critical path
+    NodeInfo *Pushed = &Info[N.NodeNum];
+    while (Pushed->LastEarliestPusher) {
+      Pushed = &Info[*Pushed->LastEarliestPusher];
+      Pushed->NumPushedEarliest++;
+    }
+
+    // Promote my siblings
+    for (auto &SDep : N.Succs) {
+      if (SDep.getKind() != SDep::Data) {
+        continue;
+      }
+      for (auto &PDep : SDep.getSUnit()->Preds) {
+        if (PDep.getKind() != SDep::Data) {
+          continue;
+        }
+        SuccSiblingScheduled.insert(PDep.getSUnit()->NodeNum);
+      }
+    }
+  }
+
+public:
+  std::string name() override { return Name; }
+  ConfigStrategy(ScheduleDAGInstrs &DAG, std::vector<NodeInfo> &Info,
+                 int Length, ArrayRef<PriorityComponent> Components)
+      : PostPipelinerStrategy(DAG, Info, Length) {
+    Name = "Config_" + std::to_string(Length);
+    for (auto Comp : Components) {
+      Name += "_" + getPriorityName(Comp);
+      Priority.emplace_back(Comp);
+    }
+  }
+};
+
+static const struct {
+  int ExtraStages;
+  bool Rerun;
+  ConfigStrategy::PriorityComponent Components[3];
+} Strategies[] = {
+    // Loosely speaking, a lower value of the first parameter targets
+    // a lower stage count, which benefits code size.
+    {1, false, {ConfigStrategy::Latest}},
+};
+
+bool PostPipeliner::tryHeuristics() {
+  int MinLength = computeMinScheduleLength();
+
+  DEBUG_SUMMARY(dbgs() << "-- MinLength=" << MinLength << "\n");
+
+  int HeuristicIndex = 0;
+  for (auto &[ExtraStages, Rerun, Components] : Strategies) {
+    if (Heuristic >= 0 && Heuristic != HeuristicIndex++) {
+      continue;
+    }
+    ConfigStrategy S(*DAG, Info, MinLength + ExtraStages * II, Components);
+    resetSchedule(/*FullReset=*/true);
+    DEBUG_SUMMARY(dbgs() << "--- Strategy " << S.name());
+    if (scheduleFirstIteration(S) && scheduleOtherIterations()) {
+      DEBUG_SUMMARY(dbgs() << " found II=" << II << "\n");
+      return true;
+    }
+
+    DEBUG_SUMMARY(dbgs() << " failed\n");
+    if (!Rerun) {
+      continue;
+    }
+
+    // Rerun with dynamic information retained
+    resetSchedule(/*FullReset=*/false);
+    DEBUG_SUMMARY(dbgs() << "--- Strategy " << S.name()
+                         << " with critical path");
+    if (scheduleFirstIteration(S) && scheduleOtherIterations()) {
+      DEBUG_SUMMARY(dbgs() << " found II=" << II << "\n");
+      return true;
+    }
+    DEBUG_SUMMARY(dbgs() << " failed\n");
+  }
+  DEBUG_SUMMARY(dbgs() << "=== II=" << II << " Failed ===\n");
+  return false;
+}
+
 bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval) {
   NTotalInstrs = TheDAG.SUnits.size();
   assert(NTotalInstrs % NInstr == 0);
@@ -526,14 +693,9 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval) {
                   I++) { dbgs() << I << " " << *DAG->SUnits[I].getInstr(); });
   LLVM_DEBUG(dumpGraph(NInstr, Info, DAG));
 
-  // Future compatibility: This collects the 'per strategy' reset,
-  // but we currently only run one.
-  resetSchedule(true);
-
   computeLoopCarriedParameters();
-  DefaultStrategy Strategy(*DAG, Info, NCopies * II);
 
-  if (!scheduleFirstIteration(Strategy) || !scheduleOtherIterations()) {
+  if (!tryHeuristics()) {
     LLVM_DEBUG(dbgs() << "PostPipeliner: No schedule found\n");
     return false;
   }
