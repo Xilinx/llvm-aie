@@ -58,11 +58,11 @@ public:
     AU.setPreservesCFG();
     AU.addRequired<VirtRegMap>();
     AU.addPreserved<VirtRegMap>();
-    // no Machine Instructions are added, therefore the SlotIndexes remain
+    // No Machine Instructions are added, therefore the SlotIndexes remain
     // constant and preserved
     AU.addRequired<SlotIndexes>();
     AU.addPreserved<SlotIndexes>();
-    // no new Virtual Registers are generated, therefore the LiveDebugVariables
+    // No new Virtual Registers are generated, therefore the LiveDebugVariables
     // do not have to be updated
     AU.addRequired<LiveDebugVariables>();
     AU.addPreserved<LiveDebugVariables>();
@@ -103,7 +103,7 @@ private:
   BitVector getBlockedPhysRegs(const MachineBasicBlock *MBB,
                                const PhysRegVec &AdditionalBlockedRegs) const;
 
-  /// returns true if the physical register of Reg was replaced
+  /// Returns true if the physical register of Reg was replaced
   bool replaceReg(const Register Reg, BitVector &BlockedPhysRegs);
 
   /// Find a free register of the same register class type, but
@@ -116,13 +116,13 @@ private:
   bool isWorthRenaming(const Register &Reg, const BitVector &UsedPhysRegs,
                        const BitVector &VRegWithCopies) const;
 
-  /// return the Physical register of the Register, look it up in VirtRegMap if
+  /// Return the Physical register of \param Reg , look it up in VirtRegMap if
   /// the Reg is virtual
   MCPhysReg getAssignedPhysReg(const Register Reg) const;
 
   bool isIdentityCopy(const MachineInstr &MI) const;
 
-  /// return a BitVector to identify if a VirtualRegister has been defined by at
+  /// Return a BitVector to identify if a VirtualRegister has been defined by at
   /// least one copy.
   /// The Virtual Registers are accessed by the VirtRegIndex
   BitVector getVRegWithCopies(const MachineBasicBlock &MBB) const;
@@ -235,7 +235,7 @@ AIEWawRegRewriter::getVRegWithCopies(const MachineBasicBlock &MBB) const {
     }
   }
 
-  // copy to BitVector so that lookups become very cheap
+  // Copy to BitVector so that lookups become very cheap
   BitVector VRegWithCopies(MaxVReg + 1);
   for (const unsigned RegIndex : VRegs)
     VRegWithCopies[RegIndex] = true;
@@ -415,7 +415,7 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
         continue;
       if (MO.isTied())
         continue;
-      // several definitions of the same virtual register are not relevant
+      // Several definitions of the same virtual register are not relevant
       // because even if the virtual register is renamed, by construction
       // all the definitions would be renamed as well and achieve nothing wrt
       // WAW dependecy resolution
