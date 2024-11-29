@@ -427,7 +427,8 @@ public:
 
   /// Emit extra code induced by interblock scheduling:
   /// Safety margins, SWP prologues, SWP epilogues
-  void emitInterBlockTop(const BlockState &BS) const;
+  void emitTopSafetyMargin(const BlockState &BS) const;
+  void emitInterBlockTop(BlockState &BS);
   void emitInterBlockBottom(const BlockState &BS) const;
 
   bool tryPipeline(ScheduleDAGMI &DAG, MachineBasicBlock *BB);

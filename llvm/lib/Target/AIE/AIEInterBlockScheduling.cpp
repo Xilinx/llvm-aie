@@ -18,11 +18,13 @@
 #include "AIELiveRegs.h"
 #include "AIEMachineScheduler.h"
 #include "AIEMaxLatencyFinder.h"
+#include "Utils/AIELoopUtils.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <memory>
+#include <optional>
 
 #define DEBUG_TYPE "machine-scheduler"
 
@@ -742,6 +744,21 @@ MachineBasicBlock *splitEdge(MachineBasicBlock *Pred, MachineBasicBlock *Succ) {
   return NewBB;
 }
 
+// If the loop does not have a dedicated exit block, create one and return it.
+// If the current exit is already dedicated, simply return the current exit
+// instead.
+MachineBasicBlock *makeDedicatedLoopExit(MachineBasicBlock *LoopMBB,
+                                         MachineBasicBlock *CurrentBB) {
+  MachineBasicBlock *DedicatedExit = CurrentBB;
+  if (CurrentBB->pred_size() > 1) {
+    // The loop is a fallthrough predecessor by construction. We insert a
+    // new block that will be a dedicated exit to the loop.
+    DEBUG_LOOPAWARE(dbgs() << "New dedicated exit\n");
+    DedicatedExit = splitEdge(LoopMBB, CurrentBB);
+  }
+  return DedicatedExit;
+}
+
 int InterBlockScheduling::getSafetyMargin(MachineBasicBlock *Loop,
                                           MachineBasicBlock *Epilogue) const {
   auto &LBS = getBlockState(Loop);
@@ -784,43 +801,84 @@ void InterBlockScheduling::emitBundles(
   AIEHazardRecognizer::applyBundles(Bundles, BB);
 }
 
-void InterBlockScheduling::emitInterBlockTop(const BlockState &BS) const {
-  if (BS.Kind != BlockType::Epilogue) {
+std::optional<std::pair<MachineBasicBlock *, MachineBasicBlock *>>
+getMBBAndParentLoopMBB(const BlockState &EpilogueBS,
+                       const InterBlockScheduling &InterBlock,
+                       bool IsLoopPipelined) {
+
+  if (EpilogueBS.Kind != BlockType::Epilogue)
+    return std::nullopt;
+
+  MachineBasicBlock *EpilogueBB = EpilogueBS.TheBlock;
+  MachineBasicBlock *LoopMBB = getLoopPredecessor(*EpilogueBB);
+  assert(LoopMBB);
+  const BlockState &LoopBS = InterBlock.getBlockState(LoopMBB);
+
+  if (LoopBS.isPipelined() != IsLoopPipelined)
+    return std::nullopt;
+
+  return {std::make_pair(EpilogueBB, LoopMBB)};
+}
+
+void InterBlockScheduling::emitTopSafetyMargin(const BlockState &BS) const {
+
+  auto EpilogueAndParentLoopMBBs =
+      getMBBAndParentLoopMBB(BS, *this, /*bool IsLoopPipelined=*/false);
+
+  if (!EpilogueAndParentLoopMBBs)
     return;
+
+  auto [EpilogueBB, ParentLoopMBB] = *EpilogueAndParentLoopMBBs;
+
+  // Epilogues of non-pipelined loops should supply the safety margin for their
+  // loops. If this block is not a dedicated exit, spawn a new exclusive exit
+  // block.
+  if (int SafetyMargin = getSafetyMargin(ParentLoopMBB, EpilogueBB)) {
+    auto *DedicatedExit = makeDedicatedLoopExit(ParentLoopMBB, EpilogueBB);
+    DEBUG_LOOPAWARE(dbgs() << "Emitting " << SafetyMargin << " safety nops\n");
+    while (SafetyMargin--) {
+      TII->insertNoop(*DedicatedExit, DedicatedExit->begin());
+    }
   }
+}
 
-  MachineBasicBlock *BB = BS.TheBlock;
-  MachineBasicBlock *Loop = getLoopPredecessor(*BB);
-  assert(Loop);
-  const BlockState &LBS = getBlockState(Loop);
+void InterBlockScheduling::emitInterBlockTop(BlockState &BS) {
 
-  // Epilogues should supply the safety margin for their loop.
-  // Epilogues of pipelined loops should emit the bundles swp epilog
-  // Both need a dedicated exit. If there isn't one, spawn a new block
-  auto MakeDedicated = [Loop](MachineBasicBlock *BB) {
-    auto *DedicatedExit = BB;
-    if (BB->pred_size() > 1) {
-      // The loop is a fallthrough predecessor by construction. We insert a
-      // new block that will be a dedicated exit to the loop.
-      DEBUG_LOOPAWARE(dbgs() << "New dedicated exit\n");
-      DedicatedExit = splitEdge(Loop, BB);
-    }
-    return DedicatedExit;
-  };
+  auto EpilogueAndParentLoopMBBs =
+      getMBBAndParentLoopMBB(BS, *this, /*bool IsLoopPipelined=*/true);
 
-  if (LBS.isPipelined()) {
-    auto *DedicatedExit = MakeDedicated(BB);
+  if (!EpilogueAndParentLoopMBBs)
+    return;
+
+  auto [EpilogueBB, ParentLoopMBB] = *EpilogueAndParentLoopMBBs;
+
+  // Emit the bundles of the swp epilogue in a dedicated exit.
+  // If there isn't one, spawn a new block, add a new block state and put
+  // this block to be scheduled later. Some maintenance of the original block
+  // state is also necessary.
+  auto *DedicatedExit = makeDedicatedLoopExit(ParentLoopMBB, EpilogueBB);
+  if (DedicatedExit == EpilogueBB) {
+    // If we are in the same BB, just emit.
     emitBundles(BS.TopInsert, DedicatedExit, DedicatedExit->begin(),
-                /*Move=*/false, /*EmitNops=*/true);
+                /*Move=*/false, /*EmitNops=*/false);
   } else {
-    if (int SafetyMargin = getSafetyMargin(Loop, BB)) {
-      auto *DedicatedExit = MakeDedicated(BB);
-      DEBUG_LOOPAWARE(dbgs()
-                      << "Emitting " << SafetyMargin << " safety nops\n");
-      while (SafetyMargin--) {
-        TII->insertNoop(*DedicatedExit, DedicatedExit->begin());
-      }
-    }
+    // If not, create a new block state and transfer the timed region,
+    // Change old BS to regular, without TopInsert.
+    auto Itr = Blocks.emplace(DedicatedExit, DedicatedExit).first;
+    BlockState &NewBS = Itr->second;
+    NewBS.Kind = BlockType::Epilogue;
+    NewBS.TopInsert = BS.TopInsert;
+    BS.TopInsert.clear();
+    // But BS can still be the epilogue of a DCL, let's
+    // check it. Otherwise mark as Regular block.
+    BS.Kind = any_of(EpilogueBB->predecessors(),
+                     [this](auto *L) {
+                       return getBlockState(L).Kind == BlockType::Loop;
+                     })
+                  ? BlockType::Epilogue
+                  : BlockType::Regular;
+
+    MBBSequence.push_back(DedicatedExit);
   }
 }
 
