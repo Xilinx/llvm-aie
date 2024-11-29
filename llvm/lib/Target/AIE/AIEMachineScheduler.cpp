@@ -624,22 +624,22 @@ void AIEPostRASchedStrategy::enterMBB(MachineBasicBlock *MBB) {
 
   // The block may have a timed region, append its instructions.
   auto &BS = InterBlock.getBlockState(MBB);
+  InterBlock.emitInterBlockTop(BS);
   InterBlock.emitInterBlockBottom(BS);
 }
 
 void AIEPostRASchedStrategy::commitBlockSchedule(MachineBasicBlock *BB) {
   auto &BS = InterBlock.getBlockState(BB);
 
-  // TODO: Update assert when the fixed instructions become part of the
-  // scheduling region.
   assert(BS.getRegions().empty() ||
          0 == BS.getTop().getTopFixedBundles().size());
   assert(BS.BottomInsert.empty() ||
          BS.BottomInsert.size() == BS.getBottom().getBotFixedBundles().size());
 
-  // Safety margin, swp epilogue
-  // Note that the prologue is handled in a different way. See enterMBB.
-  InterBlock.emitInterBlockTop(BS);
+  // Safety margin that is applied to non-pipelined loops.
+  // Note that the swp epilogue and prologue are handled in a different way. See
+  // enterMBB.
+  InterBlock.emitTopSafetyMargin(BS);
 
   if (BS.isPipelined()) {
     assert(BS.getRegions().size() == 1);
