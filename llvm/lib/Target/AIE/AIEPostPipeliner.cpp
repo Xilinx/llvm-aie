@@ -115,8 +115,10 @@ bool PostPipeliner::canAccept(MachineBasicBlock &LoopBlock) {
   return true;
 }
 
-static SlotCounts getSlotCounts(MachineInstr &MI, const AIEBaseInstrInfo *TII) {
-  auto *SlotInfo = TII->getSlotInfo(TII->getSlotKind(MI.getOpcode()));
+static SlotCounts getSlotCounts(MachineInstr &MI, const AIEBaseInstrInfo *TII,
+                                const AIEHazardRecognizer &HR) {
+  const unsigned Opcode = HR.getSelectedAltDescs().getOpcode(&MI);
+  auto *SlotInfo = TII->getSlotInfo(TII->getSlotKind(Opcode));
   return SlotInfo ? SlotInfo->getSlotSet() : 0;
 }
 
@@ -124,7 +126,7 @@ int PostPipeliner::getResMII(MachineBasicBlock &LoopBlock) {
   // Add up all slot requirements and return the maximum slot count
   SlotCounts Counts;
   for (auto &MI : LoopBlock) {
-    Counts += getSlotCounts(MI, TII);
+    Counts += getSlotCounts(MI, TII, HR);
   }
   int MII = Counts.max();
   LLVM_DEBUG(dbgs() << "PostPipeliner: ResMII=" << MII << "\n");
@@ -221,7 +223,7 @@ void PostPipeliner::computeForward() {
       const int NewEarliest = Me.Earliest + Dep.getSignedLatency();
       SInfo.Earliest = std::max(SInfo.Earliest, NewEarliest);
     }
-    Me.Slots = getSlotCounts(*SU.getInstr(), TII);
+    Me.Slots = getSlotCounts(*SU.getInstr(), TII, HR);
   }
 }
 
@@ -460,9 +462,9 @@ bool PostPipeliner::scheduleFirstIteration(PostPipelinerStrategy &Strategy) {
       if (N > 0 && HR.checkConflict(Scoreboard, *MI, Cycle)) {
         return false;
       }
-
-      HR.emitInScoreboard(Scoreboard, MI->getDesc(), MemoryBanks,
-                          MI->operands(), MI->getMF()->getRegInfo(), Cycle);
+      const MCInstrDesc &Desc = *HR.getSelectedAltDescs().getDesc(MI);
+      HR.emitInScoreboard(Scoreboard, Desc, MemoryBanks, MI->operands(),
+                          MI->getMF()->getRegInfo(), Cycle);
       Cycle += II;
     }
 

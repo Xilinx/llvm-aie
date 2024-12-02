@@ -152,7 +152,7 @@ protected:
 
   /// Materialize "multi-opcode" instructions into the option that was selected
   /// at schedule time. See AIEHazardRecognizer::getSelectedAltOpcode().
-  void materializeMultiOpcodeInstrs();
+  void materializeMultiSlotInstrs();
 
   /// Returns true if, when "concatenated", the Top and Bot zone have resource
   /// conflicts or timing issues.
