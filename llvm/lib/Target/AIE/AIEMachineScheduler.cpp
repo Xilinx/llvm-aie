@@ -502,23 +502,34 @@ unsigned getNumEmittedInstrs(ScheduleDAGMI *DAG, bool IsTop) {
 
 SUnit *AIEPostRASchedStrategy::getNextUnscheduledFixedInstr(
     const SchedBoundary &Zone) const {
-  if (Zone.isTop())
-    return nullptr;
-  const Region &Reg = InterBlock.getBlockState(CurMBB).getCurrentRegion();
-  const unsigned NumEmitted = getNumEmittedInstrs(DAG, /*IsTop=*/false);
-
-  // If the zone still has unscheduled fixed instructions, the next one to pick
-  // is (DAG->bottom() - 1) for bottom-up, or DAG->top() for top-down.
-  if (NumEmitted < Reg.getBotFixedBundles().size()) {
-    MachineInstr &NextMI =
-        *std::prev(DAG->bottom().isValid() ? DAG->bottom() : DAG->end());
-    SUnit *NextSU = DAG->getSUnit(&NextMI);
-    assert(NextSU);
-    assert(NextSU->BotReadyCycle == NextSU->getHeight() &&
-           "Fixed instruction won't be placed at the correct cycle");
-    assert(Zone.getCurrCycle() <= NextSU->BotReadyCycle);
-    return NextSU;
+  const Region &CurRegion = InterBlock.getBlockState(CurMBB).getCurrentRegion();
+  const unsigned NumEmitted = getNumEmittedInstrs(DAG, Zone.isTop());
+  // If the zone still has unscheduled fixed instructions, the next one to
+  // pick is (DAG->bottom() - 1) for bottom-up, or DAG->top() for top-down.
+  if (Zone.isTop()) {
+    if (NumEmitted < CurRegion.getTopFixedBundles().size()) {
+      MachineInstr &NextMI =
+          *(DAG->top().isValid() ? DAG->top() : DAG->begin());
+      SUnit *NextSU = DAG->getSUnit(&NextMI);
+      assert(NextSU);
+      assert(NextSU->TopReadyCycle == NextSU->getDepth() &&
+             "Fixed instruction won't be placed at the correct cycle");
+      assert(Zone.getCurrCycle() <= NextSU->TopReadyCycle);
+      return NextSU;
+    }
+  } else {
+    if (NumEmitted < CurRegion.getBotFixedBundles().size()) {
+      MachineInstr &NextMI =
+          *std::prev(DAG->bottom().isValid() ? DAG->bottom() : DAG->end());
+      SUnit *NextSU = DAG->getSUnit(&NextMI);
+      assert(NextSU);
+      assert(NextSU->BotReadyCycle == NextSU->getHeight() &&
+             "Fixed instruction won't be placed at the correct cycle");
+      assert(Zone.getCurrCycle() <= NextSU->BotReadyCycle);
+      return NextSU;
+    }
   }
+
   return nullptr;
 }
 
@@ -547,9 +558,14 @@ bool AIEPostRASchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
 
   // If the Zone has remaining fixed instructions, only one SU is available.
   if (SUnit *FixedSU = getNextUnscheduledFixedInstr(Zone)) {
-    assert(!Zone.isTop() && "Fixed instructions only expected in Bot zone");
-    const int DeltaCycles = CurrCycle - BotReadyCycle;
-    return FixedSU == &SU && DeltaCycles >= MinDelta;
+    if (FixedSU != &SU)
+      return false;
+    if (Zone.isTop()) {
+      return CurrCycle == TopReadyCycle;
+    } else {
+      const int DeltaCycles = CurrCycle - BotReadyCycle;
+      return DeltaCycles >= MinDelta;
+    }
   }
 
   // If SU is a fixed instruction in the other zone, it isn't available
@@ -632,7 +648,7 @@ void AIEPostRASchedStrategy::commitBlockSchedule(MachineBasicBlock *BB) {
   auto &BS = InterBlock.getBlockState(BB);
 
   assert(BS.getRegions().empty() ||
-         0 == BS.getTop().getTopFixedBundles().size());
+         BS.TopInsert.size() == BS.getTop().getTopFixedBundles().size());
   assert(BS.BottomInsert.empty() ||
          BS.BottomInsert.size() == BS.getBottom().getBotFixedBundles().size());
 
