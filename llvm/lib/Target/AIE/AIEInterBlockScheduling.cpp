@@ -718,7 +718,9 @@ void InterBlockScheduling::enterRegion(MachineBasicBlock *BB,
   // Only add regions of loops when in the GatheringRegions phase
   if (BS.Kind != BlockType::Loop ||
       BS.FixPoint.Stage == SchedulingStage::GatheringRegions) {
-    ArrayRef<MachineBundle> TopFixedBundles;
+    ArrayRef<MachineBundle> TopFixedBundles =
+        RegionBegin == BB->begin() ? ArrayRef<MachineBundle>(BS.TopInsert)
+                                   : ArrayRef<MachineBundle>();
     ArrayRef<MachineBundle> BotFixedBundles =
         RegionEnd == BB->end() ? ArrayRef<MachineBundle>(BS.BottomInsert)
                                : ArrayRef<MachineBundle>();
