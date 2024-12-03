@@ -309,6 +309,13 @@ unsigned AIE2PInstrInfo::getOpCode(MachineInstr &I) const {
   const MachineRegisterInfo &MRI = I.getMF()->getRegInfo();
   unsigned IntrinsicID = cast<GIntrinsic>(I).getIntrinsicID();
   switch (IntrinsicID) {
+    // vconv bfp16
+  case Intrinsic::aie2p_v64accfloat_to_v64bfp16ebs8:
+    return AIE2P::VCONV_bfp16ebs8_fp32;
+  case Intrinsic::aie2p_v64accfloat_to_v64bfp16ebs16:
+    return AIE2P::VCONV_bfp16ebs16_fp32;
+  case Intrinsic::aie2p_v64bfp16ebs8_to_v64bfp16ebs16:
+    return AIE2P::VCONV_bfp16ebs16_ebs8;
   // vsrs
   case Intrinsic::aie2p_I256_v16_acc32_srs:
   case Intrinsic::aie2p_I256_v8_acc64_srs:

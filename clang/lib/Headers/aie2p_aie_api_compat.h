@@ -974,16 +974,6 @@ inline __attribute__((always_inline)) v16bfloat16 srs_to_v16bfloat16_conf(v16acc
 inline __attribute__((always_inline)) v32bfloat16 srs_to_v32bfloat16_conf(v32accfloat , crrnd_t );
 inline __attribute__((always_inline)) v16bfloat16 to_v16bfloat16_conf(v16accfloat , crrnd_t );
 inline __attribute__((always_inline)) v32bfloat16 to_v32bfloat16_conf(v32accfloat , crrnd_t );
-inline __attribute__((always_inline)) v64bfp16ebs8 to_v64bfp16ebs8(v64accfloat );
-inline __attribute__((always_inline)) v64bfp16ebs16 to_v64bfp16ebs16(v64accfloat );
-inline __attribute__((always_inline)) v64bfp16ebs16 to_v64bfp16ebs16(v64bfp16ebs8 );
-inline __attribute__((always_inline)) v64bfp16ebs8 to_v64bfp16ebs8_conf(v64accfloat , crrnd_t );
-inline __attribute__((always_inline)) v64bfp16ebs16 to_v64bfp16ebs16_conf(v64accfloat , crrnd_t );
-inline __attribute__((always_inline)) v64bfp16ebs16 to_v64bfp16ebs16_conf(v64bfp16ebs8 , crrnd_t );
-inline __attribute__((always_inline)) v64bfp16ebs8 to_v64bfp16ebs8(v64float );
-inline __attribute__((always_inline)) v64bfp16ebs16 to_v64bfp16ebs16(v64float );
-inline __attribute__((always_inline)) v64bfp16ebs8 to_v64bfp16ebs8_conf(v64float , crrnd_t );
-inline __attribute__((always_inline)) v64bfp16ebs16 to_v64bfp16ebs16_conf(v64float , crrnd_t );
 inline __attribute__((always_inline)) v4cacc64 lups(v4cint32 , int );
 inline __attribute__((always_inline)) v4cacc64 lups_conf(v4cint32 , int , crsat_t );
 inline __attribute__((always_inline)) v4cacc64 lups(v4cint32 , int , int );

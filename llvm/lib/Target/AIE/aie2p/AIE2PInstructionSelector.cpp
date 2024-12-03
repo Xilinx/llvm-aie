@@ -57,6 +57,7 @@ public:
   bool selectG_AIE_LOAD_UPS(MachineInstr &StoreI, MachineRegisterInfo &MRI,
                             unsigned crUPSModeVal);
   bool selectG_AIE_ADD_VECTOR_ELT_HI(MachineInstr &I, MachineRegisterInfo &MRI);
+  bool selectVCONVbfp16(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_AIE_EXTRACT_VECTOR_ELT(MachineInstr &I,
                                       MachineRegisterInfo &MRI);
   bool selectG_AIE_INSERT_VECTOR_ELT(MachineInstr &I, MachineRegisterInfo &MRI);
@@ -338,6 +339,10 @@ bool AIE2PInstructionSelector::select(MachineInstr &I) {
       return selectPutMSB(I, MRI, MIB);
     case Intrinsic::aie2p_put_ms_nb:
       return selectPutMSNB(I, MRI, MIB);
+    case Intrinsic::aie2p_v64accfloat_to_v64bfp16ebs8:
+    case Intrinsic::aie2p_v64accfloat_to_v64bfp16ebs16:
+    case Intrinsic::aie2p_v64bfp16ebs8_to_v64bfp16ebs16:
+      return selectVCONVbfp16(I, MRI);
     default:
       return selectImpl(I, *CoverageInfo);
     }
@@ -1362,6 +1367,64 @@ bool AIE2PInstructionSelector::selectVUPS(MachineInstr &I,
 
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
+}
+
+bool AIE2PInstructionSelector::selectVCONVbfp16(MachineInstr &I,
+                                                MachineRegisterInfo &MRI) {
+  auto IntrinsicID = cast<GIntrinsic>(I).getIntrinsicID();
+  Register DstReg1 = I.getOperand(0).getReg();
+  Register DstReg2 = I.getOperand(1).getReg();
+  Register DstReg = MRI.createVirtualRegister(&AIE2P::mEXaRegClass);
+  unsigned OpCode = TII.getOpCode(I);
+
+  if (IntrinsicID == Intrinsic::aie2p_v64accfloat_to_v64bfp16ebs8 ||
+      IntrinsicID == Intrinsic::aie2p_v64accfloat_to_v64bfp16ebs16) {
+    Register SrcReg = I.getOperand(3).getReg();
+
+    MachineInstrBuilder MI = MIB.buildInstr(OpCode, {DstReg}, {SrcReg});
+
+    auto MantCopyMI = MIB.buildInstr(TargetOpcode::COPY, {DstReg1}, {})
+                          .addReg(DstReg, 0, AIE2P::sub_bfp16_x);
+    auto ExpCopyMI = MIB.buildInstr(TargetOpcode::COPY, {DstReg2}, {})
+                         .addReg(DstReg, 0, AIE2P::sub_bfp16_e);
+    constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *MantCopyMI,
+                             AIE2P::VEC512RegClass, MantCopyMI->getOperand(0));
+    constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *ExpCopyMI,
+                             AIE2P::EXPVEC64RegClass, ExpCopyMI->getOperand(0));
+
+    I.eraseFromParent();
+    return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
+  } else {
+    Register Src1Reg = I.getOperand(3).getReg();
+    Register Src2Reg = I.getOperand(4).getReg();
+
+    Register SrcReg = MRI.createVirtualRegister(&AIE2P::mEXaRegClass);
+    MachineInstrBuilder RegSeq =
+        MIB.buildInstr(TargetOpcode::REG_SEQUENCE, {SrcReg}, {})
+            .addReg(Src1Reg)
+            .addImm(AIE2P::sub_bfp16_x)
+            .addReg(Src2Reg)
+            .addImm(AIE2P::sub_bfp16_e);
+    constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *RegSeq,
+                             AIE2P::VEC512RegClass, RegSeq->getOperand(1));
+    constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *RegSeq,
+                             AIE2P::EXPVEC64RegClass, RegSeq->getOperand(3));
+
+    MachineInstrBuilder MI = MIB.buildInstr(OpCode, {DstReg}, {SrcReg});
+
+    auto MantCopyMI = MIB.buildInstr(TargetOpcode::COPY, {DstReg1}, {})
+                          .addReg(DstReg, 0, AIE2P::sub_bfp16_x);
+    auto ExpCopyMI = MIB.buildInstr(TargetOpcode::COPY, {DstReg2}, {})
+                         .addReg(DstReg, 0, AIE2P::sub_bfp16_e);
+    constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *MantCopyMI,
+                             AIE2P::VEC512RegClass, MantCopyMI->getOperand(0));
+    constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *ExpCopyMI,
+                             AIE2P::EXPVEC64RegClass, ExpCopyMI->getOperand(0));
+
+    I.eraseFromParent();
+    return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
+  }
+  return false;
 }
 
 bool AIE2PInstructionSelector::selectCascadeStreamInsn(MachineInstr &I,
