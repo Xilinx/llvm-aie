@@ -51,13 +51,14 @@
   ; CHECK-NEXT:  .L_LEnd0:
   ; CHECK-NEXT:    nopb ; lda r7, [p0], #4; st r0, [p1], #4; nopxm ; nopv
   ; CHECK-NEXT:  // %bb.3: // %for.cond.cleanup
-  ; CHECK-NEXT:    st r1, [p1], #4; nopx
+  ; CHECK-NEXT:    st r1, [p1], #4
   ; CHECK-NEXT:    st r2, [p1], #4
   ; CHECK-NEXT:    st r3, [p1], #4
   ; CHECK-NEXT:    st r4, [p1], #4
   ; CHECK-NEXT:    st r5, [p1], #4
   ; CHECK-NEXT:    st r6, [p1], #4
   ; CHECK-NEXT:    st r7, [p1], #4
+  ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_4: // %for.cond.cleanup

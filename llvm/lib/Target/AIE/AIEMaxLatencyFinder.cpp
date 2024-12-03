@@ -30,6 +30,18 @@ static cl::opt<bool>
 // operand and the memory latency. Include the stage latency if requested.
 int maxLatency(const MachineInstr *MI, const AIEBaseInstrInfo &InstrInfo,
                const InstrItineraryData &Itineraries, bool IncludeStages) {
+
+  // If we have a Bundle, query maxLatency for each bundled instruction.
+  if (MI->isBundle()) {
+    int BundleLatency = 0;
+    for (const MachineInstr &BundledMI : const_bundled_instrs(*MI)) {
+      BundleLatency = std::max(
+          maxLatency(&BundledMI, InstrInfo, Itineraries, IncludeStages),
+          BundleLatency);
+    }
+    return BundleLatency;
+  }
+
   int Latency = 0;
   unsigned SrcClass = MI->getDesc().getSchedClass();
   for (unsigned I = 0;; I++) {

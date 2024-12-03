@@ -116,6 +116,7 @@ add_llvm_target(AIECodeGen
    AIEPostSelectOptimize.cpp
    AIEPseudoBranchExpansion.cpp
    AIERegClassConstrainer.cpp
+   AIERegMemEventTracker.cpp
    AIERegisterInfo.cpp
    AIESlotCounts.cpp
    AIESplitInstructionRewriter.cpp

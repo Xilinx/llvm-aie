@@ -46,6 +46,15 @@ inline MachineBasicBlock::instr_range bundled_instrs(MachineInstr &MI,
   return make_range(Begin, getBundleEnd(MI.getIterator()));
 }
 
+inline MachineBasicBlock::const_instr_range
+const_bundled_instrs(const MachineInstr &MI, bool IncludeRoot = false) {
+  MachineBasicBlock::const_instr_iterator It = MI.getIterator();
+  if (!MI.isBundle())
+    return make_range(It, std::next(It));
+  auto Begin = IncludeRoot ? It : std::next(It);
+  return make_range(Begin, getBundleEnd(MI.getIterator()));
+}
+
 // To be merged with AIEResourceCycle
 class FuncUnitWrapper {
   /// The format interface to interpret bundle constraints

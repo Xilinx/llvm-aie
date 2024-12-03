@@ -8,8 +8,8 @@
 ; RUN: llc -O2 -mtriple=aie2 --enable-pipeliner=1 --enable-aie-hardware-loops=false \
 ; RUN:     --enable-aie-zero-overhead-loops=false %s -o - | FileCheck %s --check-prefix=DCL
 ; RUN: llc -O2 -mtriple=aie2 --enable-pipeliner=1 %s -o - | FileCheck %s --check-prefix=ZOL
-; RUN: llc -O2 -mtriple=aie2 --enable-pipeliner=0 %s -o - --debug-only=machine-scheduler  \
-; RUN:    2>&1 | %imisched -d - \
+; RUN: llc -O2 -mtriple=aie2 --enable-pipeliner=0 --aie-postpipeliner-maxii=0 %s -o \
+; RUN:    - --debug-only=machine-scheduler 2>&1 | %imisched -d - \
 ; RUN:    | FileCheck %s --check-prefix=SCHED-DUMP
 
 ; Variation of the already existent test, but enabling SWP under different flavors:

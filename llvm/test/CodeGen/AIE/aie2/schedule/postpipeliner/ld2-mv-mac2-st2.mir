@@ -42,8 +42,8 @@
   ; CHECK-NEXT:  .L_LEnd9:
   ; CHECK-NEXT:    vldb.2d wl4, [p0], d0; nopa ; vst.2d.srs.d8.s32 cm2, s0, [p1], d1; nopx ; vmov wh4, wl0; vmac cm1, cm0, x4, x2, r0
   ; CHECK-NEXT:  // %bb.3: // %for.cond.cleanup
-  ; CHECK-NEXT:    vst.srs.d8.s32 cm1, s0, [p1], m2; vmac cm2, cm0, x4, x2, r0
-  ; CHECK-NEXT:    vst.2d.srs.d8.s32 cm2, s0, [p1], d1; vmov wh4, wl0; vmac cm1, cm0, x4, x2, r0
+  ; CHECK-NEXT:    nopb ; nopa ; vst.srs.d8.s32 cm1, s0, [p1], m2; nopxm ; vmac cm2, cm0, x4, x2, r0
+  ; CHECK-NEXT:    vst.2d.srs.d8.s32 cm2, s0, [p1], d1; nopx ; vmov wh4, wl0; vmac cm1, cm0, x4, x2, r0
   ; CHECK-NEXT:    vst.srs.d8.s32 cm1, s0, [p1], m2; vmac cm2, cm0, x4, x2, r0
   ; CHECK-NEXT:    vst.2d.srs.d8.s32 cm2, s0, [p1], d1; vmov wh4, wl0; vmac cm1, cm0, x4, x2, r0
   ; CHECK-NEXT:    vst.srs.d8.s32 cm1, s0, [p1], m2; vmac cm2, cm0, x4, x2, r0
@@ -54,6 +54,9 @@
   ; CHECK-NEXT:    vst.2d.srs.d8.s32 cm2, s0, [p1], d1
   ; CHECK-NEXT:    vst.srs.d8.s32 cm1, s0, [p1], m2
   ; CHECK-NEXT:    vst.2d.srs.d8.s32 cm2, s0, [p1], d1
+  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_4: // %for.cond.cleanup
   ; CHECK-NEXT:    nopa ; ret lr

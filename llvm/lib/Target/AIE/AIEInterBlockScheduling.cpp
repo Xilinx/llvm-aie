@@ -205,20 +205,6 @@ MachineInstr *checkResourceConflictsTopDown(
   return ConflictMI;
 }
 
-MachineBasicBlock *getLoopPredecessor(const MachineBasicBlock &MBB) {
-  if (MBB.pred_size() == 1) {
-    // if we have only one, it must be the loop
-    return *MBB.predecessors().begin();
-  }
-  // Otherwise, the loop is the fallthrough predecessor by construction
-  for (auto *Pred : MBB.predecessors()) {
-    if (Pred->isLayoutSuccessor(&MBB)) {
-      return Pred;
-    }
-  }
-  return nullptr;
-}
-
 InterBlockScheduling::InterBlockScheduling(const MachineSchedContext *C,
                                            bool InterBlock)
     : Context(C), InterBlockScoreboard(InterBlock) {}
@@ -812,7 +798,7 @@ getMBBAndParentLoopMBB(const BlockState &EpilogueBS,
     return std::nullopt;
 
   MachineBasicBlock *EpilogueBB = EpilogueBS.TheBlock;
-  MachineBasicBlock *LoopMBB = getLoopPredecessor(*EpilogueBB);
+  MachineBasicBlock *LoopMBB = AIELoopUtils::getLoopPredecessor(*EpilogueBB);
   assert(LoopMBB);
   const BlockState &LoopBS = InterBlock.getBlockState(LoopMBB);
 
