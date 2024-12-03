@@ -516,6 +516,14 @@ static bool isAccIntrinsic(const MachineRegisterInfo &MRI,
       return true;
     break;
   }
+  case Intrinsic::aie2p_v64accfloat_to_v64bfp16ebs8:
+  case Intrinsic::aie2p_v64accfloat_to_v64bfp16ebs16: {
+    // Operand at Index 3 is an accumulator operand
+    Register SrcReg = MI.getOperand(3).getReg();
+    if (AccReg == SrcReg)
+      return true;
+    break;
+  }
   default:
     return false;
   }

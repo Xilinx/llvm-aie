@@ -495,6 +495,111 @@ body:             |
     PseudoRET implicit $lr, implicit $bmll0
 
 ...
+
+---
+name:            accfloat_to_bfp16ebs16
+legalized:       true
+regBankSelected: false
+body:             |
+  bb.1.entry:
+    liveins: $dm0
+
+    ; GREEDY-LABEL: name: accfloat_to_bfp16ebs16
+    ; GREEDY: liveins: $dm0
+    ; GREEDY-NEXT: {{  $}}
+    ; GREEDY-NEXT: [[COPY:%[0-9]+]]:accregbank(<64 x s32>) = COPY $dm0
+    ; GREEDY-NEXT: [[INT:%[0-9]+]]:vregbank(<64 x s8>), [[INT1:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.v64accfloat.to.v64bfp16ebs16), [[COPY]](<64 x s32>)
+    ; GREEDY-NEXT: $x0 = COPY [[INT]](<64 x s8>)
+    ; GREEDY-NEXT: $e0 = COPY [[INT1]](<8 x s8>)
+    ; GREEDY-NEXT: PseudoRET implicit $lr, implicit $x0, implicit $e0
+    ;
+    ; FAST-LABEL: name: accfloat_to_bfp16ebs16
+    ; FAST: liveins: $dm0
+    ; FAST-NEXT: {{  $}}
+    ; FAST-NEXT: [[COPY:%[0-9]+]]:accregbank(<64 x s32>) = COPY $dm0
+    ; FAST-NEXT: [[INT:%[0-9]+]]:vregbank(<64 x s8>), [[INT1:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.v64accfloat.to.v64bfp16ebs16), [[COPY]](<64 x s32>)
+    ; FAST-NEXT: $x0 = COPY [[INT]](<64 x s8>)
+    ; FAST-NEXT: $e0 = COPY [[INT1]](<8 x s8>)
+    ; FAST-NEXT: PseudoRET implicit $lr, implicit $x0, implicit $e0
+    %1:_(<64 x s32>) = COPY $dm0
+    %0:_(<64 x s8>), %4:_(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.v64accfloat.to.v64bfp16ebs16), %1(<64 x s32>)
+    $x0 = COPY %0(<64 x s8>)
+    $e0 = COPY %4(<8 x s8>)
+    PseudoRET implicit $lr, implicit $x0, implicit $e0
+...
+
+
+---
+name:            accfloat_to_bfp16ebs8
+legalized:       true
+regBankSelected: false
+body:             |
+  bb.1.entry:
+    liveins: $dm0
+
+    ; GREEDY-LABEL: name: accfloat_to_bfp16ebs8
+    ; GREEDY: liveins: $dm0
+    ; GREEDY-NEXT: {{  $}}
+    ; GREEDY-NEXT: [[COPY:%[0-9]+]]:accregbank(<64 x s32>) = COPY $dm0
+    ; GREEDY-NEXT: [[INT:%[0-9]+]]:vregbank(<64 x s8>), [[INT1:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.v64accfloat.to.v64bfp16ebs8), [[COPY]](<64 x s32>)
+    ; GREEDY-NEXT: $x0 = COPY [[INT]](<64 x s8>)
+    ; GREEDY-NEXT: $e0 = COPY [[INT1]](<8 x s8>)
+    ; GREEDY-NEXT: PseudoRET implicit $lr, implicit $x0, implicit $e0
+    ;
+    ; FAST-LABEL: name: accfloat_to_bfp16ebs8
+    ; FAST: liveins: $dm0
+    ; FAST-NEXT: {{  $}}
+    ; FAST-NEXT: [[COPY:%[0-9]+]]:accregbank(<64 x s32>) = COPY $dm0
+    ; FAST-NEXT: [[INT:%[0-9]+]]:vregbank(<64 x s8>), [[INT1:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.v64accfloat.to.v64bfp16ebs8), [[COPY]](<64 x s32>)
+    ; FAST-NEXT: $x0 = COPY [[INT]](<64 x s8>)
+    ; FAST-NEXT: $e0 = COPY [[INT1]](<8 x s8>)
+    ; FAST-NEXT: PseudoRET implicit $lr, implicit $x0, implicit $e0
+    %1:_(<64 x s32>) = COPY $dm0
+    %0:_(<64 x s8>), %4:_(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.v64accfloat.to.v64bfp16ebs8), %1(<64 x s32>)
+    $x0 = COPY %0(<64 x s8>)
+    $e0 = COPY %4(<8 x s8>)
+    PseudoRET implicit $lr, implicit $x0, implicit $e0
+...
+
+---
+name:            bfp16ebs8_to_bfp16ebs16
+legalized:       true
+regBankSelected: false
+body:             |
+  bb.1.entry:
+    liveins: $dm0, $x1, $e1
+
+    ; GREEDY-LABEL: name: bfp16ebs8_to_bfp16ebs16
+    ; GREEDY: liveins: $dm0, $x1, $e1
+    ; GREEDY-NEXT: {{  $}}
+    ; GREEDY-NEXT: [[COPY:%[0-9]+]]:accregbank(<64 x s32>) = COPY $dm0
+    ; GREEDY-NEXT: [[COPY1:%[0-9]+]]:vregbank(<64 x s8>) = COPY $x1
+    ; GREEDY-NEXT: [[COPY2:%[0-9]+]]:gprregbank(<8 x s8>) = COPY $e1
+    ; GREEDY-NEXT: [[INT:%[0-9]+]]:vregbank(<64 x s8>), [[INT1:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.v64bfp16ebs8.to.v64bfp16ebs16), [[COPY1]](<64 x s8>), [[COPY2]](<8 x s8>)
+    ; GREEDY-NEXT: $x0 = COPY [[INT]](<64 x s8>)
+    ; GREEDY-NEXT: $e0 = COPY [[INT1]](<8 x s8>)
+    ; GREEDY-NEXT: PseudoRET implicit $lr, implicit $x0, implicit $e0
+    ;
+    ; FAST-LABEL: name: bfp16ebs8_to_bfp16ebs16
+    ; FAST: liveins: $dm0, $x1, $e1
+    ; FAST-NEXT: {{  $}}
+    ; FAST-NEXT: [[COPY:%[0-9]+]]:accregbank(<64 x s32>) = COPY $dm0
+    ; FAST-NEXT: [[COPY1:%[0-9]+]]:vregbank(<64 x s8>) = COPY $x1
+    ; FAST-NEXT: [[COPY2:%[0-9]+]]:gprregbank(<8 x s8>) = COPY $e1
+    ; FAST-NEXT: [[INT:%[0-9]+]]:vregbank(<64 x s8>), [[INT1:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.v64bfp16ebs8.to.v64bfp16ebs16), [[COPY1]](<64 x s8>), [[COPY2]](<8 x s8>)
+    ; FAST-NEXT: $x0 = COPY [[INT]](<64 x s8>)
+    ; FAST-NEXT: $e0 = COPY [[INT1]](<8 x s8>)
+    ; FAST-NEXT: PseudoRET implicit $lr, implicit $x0, implicit $e0
+    %1:_(<64 x s32>) = COPY $dm0
+    %2:_(<64 x s8>) = COPY $x1
+    %3:_(<8 x s8>) = COPY $e1
+    %0:_(<64 x s8>), %4:_(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.v64bfp16ebs8.to.v64bfp16ebs16), %2(<64 x s8>), %3(<8 x s8>)
+    $x0 = COPY %0(<64 x s8>)
+    $e0 = COPY %4(<8 x s8>)
+    PseudoRET implicit $lr, implicit $x0, implicit $e0
+...
+
+
 ---
 name:            test_ups_to_v32accfloat
 legalized:       true
