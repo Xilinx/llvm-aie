@@ -971,4 +971,75 @@ INTRINSIC(v16float) srs_to_v16float(v32accfloat acc) {
   return to_v16float(acc);
 }
 
+// Floating-point accumulator to block floating-point vector register
+INTRINSIC(v64bfp16ebs8) to_v64bfp16ebs8(v64accfloat a) {
+  v64bfp16ebs8 r;
+  __builtin_aie2p_v64accfloat_to_v64bfp16ebs8((v64c &)r.mantissa,
+                                              (v8c &)r.exponent, a);
+  return r;
+}
+
+INTRINSIC(v64bfp16ebs16) to_v64bfp16ebs16(v64accfloat a) {
+  v64bfp16ebs16 r;
+  __builtin_aie2p_v64accfloat_to_v64bfp16ebs16((v64c &)r.mantissa,
+                                               (v8c &)r.exponent, a);
+  return r;
+}
+
+INTRINSIC(v64bfp16ebs16) to_v64bfp16ebs16(v64bfp16ebs8 a) {
+  v64int8 mantissa = a.mantissa;
+  v8int8 exponent = a.exponent;
+  v64bfp16ebs16 r;
+  __builtin_aie2p_v64bfp16ebs8_to_v64bfp16ebs16(
+      (v64c &)r.mantissa, (v8c &)r.exponent, mantissa, exponent);
+  return r;
+}
+
+INTRINSIC(v64bfp16ebs8) to_v64bfp16ebs8_conf(v64accfloat a, crrnd_t rnd) {
+  crrnd_t prev_rnd = get_rnd();
+  set_rnd(rnd);
+  v64bfp16ebs8 r = to_v64bfp16ebs8(a);
+  set_rnd(prev_rnd);
+  return r;
+}
+
+INTRINSIC(v64bfp16ebs16) to_v64bfp16ebs16_conf(v64accfloat a, crrnd_t rnd) {
+  crrnd_t prev_rnd = get_rnd();
+  set_rnd(rnd);
+  v64bfp16ebs16 r = to_v64bfp16ebs16(a);
+  set_rnd(prev_rnd);
+  return r;
+}
+
+INTRINSIC(v64bfp16ebs16) to_v64bfp16ebs16_conf(v64bfp16ebs8 a, crrnd_t rnd) {
+  crrnd_t prev_rnd = get_rnd();
+  set_rnd(rnd);
+  v64bfp16ebs16 r = to_v64bfp16ebs16(a);
+  set_rnd(prev_rnd);
+  return r;
+}
+
+INTRINSIC(v64bfp16ebs8) to_v64bfp16ebs8(v64float a) {
+  return to_v64bfp16ebs8((v64accfloat)a);
+}
+INTRINSIC(v64bfp16ebs16) to_v64bfp16ebs16(v64float a) {
+  return to_v64bfp16ebs16((v64accfloat)a);
+}
+
+INTRINSIC(v64bfp16ebs8) to_v64bfp16ebs8_conf(v64float a, crrnd_t rnd) {
+  crrnd_t prev_rnd = get_rnd();
+  set_rnd(rnd);
+  v64bfp16ebs8 r = to_v64bfp16ebs8((v64accfloat)a);
+  set_rnd(prev_rnd);
+  return r;
+}
+
+INTRINSIC(v64bfp16ebs16) to_v64bfp16ebs16_conf(v64float a, crrnd_t rnd) {
+  crrnd_t prev_rnd = get_rnd();
+  set_rnd(rnd);
+  v64bfp16ebs16 r = to_v64bfp16ebs16((v64accfloat)a);
+  set_rnd(prev_rnd);
+  return r;
+}
+
 #endif // AIE2P_SRS_H

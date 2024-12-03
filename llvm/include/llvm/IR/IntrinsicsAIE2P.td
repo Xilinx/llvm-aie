@@ -115,6 +115,14 @@ class AIE2PV16AccFloatToV8Float : Intrinsic<[llvm_v8f32_ty],
                                           [IntrReadMem, IntrInaccessibleMemOnly]>;
 class AIE2PV8FloatToV16AccFloat : Intrinsic<[llvm_v16f32_ty], [llvm_v8f32_ty], [IntrNoMem]>;
 
+// Floating-point accumulator to block floating-point vector register
+class AIE2PV64AccFloatToV64bfp16 : Intrinsic<[llvm_v64i8_ty, llvm_v8i8_ty],
+                                          [llvm_v64f32_ty],
+                                          [IntrReadMem, IntrInaccessibleMemOnly]>;
+class AIE2PV64bfp16ebs8ToV64bfp16ebs16 : Intrinsic<[llvm_v64i8_ty, llvm_v8i8_ty],
+                                          [llvm_v64i8_ty, llvm_v8i8_ty],
+                                          [IntrReadMem, IntrInaccessibleMemOnly]>;
+
 // v32accfloat to v16float
 class AIE2PV32AccFloatToV16Float : Intrinsic<[llvm_v16f32_ty],
                                           [llvm_v32f32_ty],
@@ -390,6 +398,11 @@ def int_aie2p_v32bf16_to_v32accfloat : ClangBuiltin<"__builtin_aie2p_v32bf16_to_
 // v16accfloat to v8float
 def int_aie2p_v16accfloat_to_v8float : ClangBuiltin<"__builtin_aie2p_v16accfloat_to_v8float">, AIE2PV16AccFloatToV8Float;
 def int_aie2p_v8float_to_v16accfloat : ClangBuiltin<"__builtin_aie2p_v8float_to_v16accfloat">, AIE2PV8FloatToV16AccFloat;
+
+// Floating-point accumulator to block floating-point vector register
+def int_aie2p_v64accfloat_to_v64bfp16ebs8 : AIE2PV64AccFloatToV64bfp16;
+def int_aie2p_v64accfloat_to_v64bfp16ebs16 : AIE2PV64AccFloatToV64bfp16;
+def int_aie2p_v64bfp16ebs8_to_v64bfp16ebs16 : AIE2PV64bfp16ebs8ToV64bfp16ebs16;
 
 // v32accfloat to v16float
 def int_aie2p_v32accfloat_to_v16float : ClangBuiltin<"__builtin_aie2p_v32accfloat_to_v16float">, AIE2PV32AccFloatToV16Float;

@@ -155,7 +155,6 @@ v64uint8 v64acc32_to_v64int8_ussrs_conf_test(v64acc32 acc, int shft, int sign, c
   return ussrs_conf(acc, shft, sign, sat, rnd);
 }
 
-//
 // CHECK-LABEL: @_Z36v64acc32_to_v64int8_ssrs_nosign_testDv64_u7__acc32i(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x i8> @llvm.aie2p.I512.v64.acc32.srs(<64 x i32> [[ACC:%.*]], i32 [[SHFT:%.*]], i32 1)
@@ -201,4 +200,154 @@ v64uint8 v64acc32_to_v64int8_ussrs_nosign_test(v64acc32 acc, int shft){
 //
 v64uint8 v64acc32_to_v64int8_ussrs_conf_nosign_test(v64acc32 acc, int shft, crsat_t sat, crrnd_t rnd){
   return ussrs_conf(acc, shft, sat, rnd);
+}
+
+// Floating-point accumulator to block floating-point vector register
+
+// CHECK-LABEL: @_Z20test_to_v64bfp16ebs8Dv64_u10__accfloat(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <8 x i8> } @llvm.aie2p.v64accfloat.to.v64bfp16ebs8(<64 x float> [[A:%.*]])
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <8 x i8> } [[TMP0]], 0
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <8 x i8> } [[TMP0]], 1
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V64BFP16EBS8:%.*]] poison, <64 x i8> [[TMP1]], 0
+// CHECK-NEXT:    [[DOTFCA_1_INSERT_I:%.*]] = insertvalue [[STRUCT_V64BFP16EBS8]] [[DOTFCA_0_INSERT_I]], <8 x i8> [[TMP2]], 1
+// CHECK-NEXT:    ret [[STRUCT_V64BFP16EBS8]] [[DOTFCA_1_INSERT_I]]
+//
+v64bfp16ebs8 test_to_v64bfp16ebs8(v64accfloat a) {
+  return to_v64bfp16ebs8(a);
+}
+
+// CHECK-LABEL: @_Z21test_to_v64bfp16ebs16Dv64_u10__accfloat(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <8 x i8> } @llvm.aie2p.v64accfloat.to.v64bfp16ebs16(<64 x float> [[A:%.*]])
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <8 x i8> } [[TMP0]], 0
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <8 x i8> } [[TMP0]], 1
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V64BFP16EBS16:%.*]] poison, <64 x i8> [[TMP1]], 0
+// CHECK-NEXT:    [[DOTFCA_1_INSERT_I:%.*]] = insertvalue [[STRUCT_V64BFP16EBS16]] [[DOTFCA_0_INSERT_I]], <8 x i8> [[TMP2]], 1
+// CHECK-NEXT:    ret [[STRUCT_V64BFP16EBS16]] [[DOTFCA_1_INSERT_I]]
+//
+v64bfp16ebs16 test_to_v64bfp16ebs16(v64accfloat a) {
+  return to_v64bfp16ebs16(a);
+}
+
+// CHECK-LABEL: @_Z21test_to_v64bfp16ebs1612v64bfp16ebs8(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[A_COERCE_FCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8:%.*]] [[A_COERCE:%.*]], 0
+// CHECK-NEXT:    [[A_COERCE_FCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[A_COERCE]], 1
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <8 x i8> } @llvm.aie2p.v64bfp16ebs8.to.v64bfp16ebs16(<64 x i8> [[A_COERCE_FCA_0_EXTRACT_I]], <8 x i8> [[A_COERCE_FCA_1_EXTRACT_I]])
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <8 x i8> } [[TMP0]], 0
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <8 x i8> } [[TMP0]], 1
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V64BFP16EBS16:%.*]] poison, <64 x i8> [[TMP1]], 0
+// CHECK-NEXT:    [[DOTFCA_1_INSERT_I:%.*]] = insertvalue [[STRUCT_V64BFP16EBS16]] [[DOTFCA_0_INSERT_I]], <8 x i8> [[TMP2]], 1
+// CHECK-NEXT:    ret [[STRUCT_V64BFP16EBS16]] [[DOTFCA_1_INSERT_I]]
+//
+v64bfp16ebs16 test_to_v64bfp16ebs16(v64bfp16ebs8 a) {
+  return to_v64bfp16ebs16(a);
+}
+
+// CHECK-LABEL: @_Z25test_to_v64bfp16ebs8_confDv64_u10__accfloatj(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 1)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[RND:%.*]])
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call { <64 x i8>, <8 x i8> } @llvm.aie2p.v64accfloat.to.v64bfp16ebs8(<64 x float> [[A:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <8 x i8> } [[TMP1]], 0
+// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue { <64 x i8>, <8 x i8> } [[TMP1]], 1
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I_I:%.*]] = insertvalue [[STRUCT_V64BFP16EBS8:%.*]] poison, <64 x i8> [[TMP2]], 0
+// CHECK-NEXT:    [[DOTFCA_1_INSERT_I_I:%.*]] = insertvalue [[STRUCT_V64BFP16EBS8]] [[DOTFCA_0_INSERT_I_I]], <8 x i8> [[TMP3]], 1
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[TMP0]])
+// CHECK-NEXT:    ret [[STRUCT_V64BFP16EBS8]] [[DOTFCA_1_INSERT_I_I]]
+//
+v64bfp16ebs8 test_to_v64bfp16ebs8_conf(v64accfloat a, crrnd_t rnd) {
+  return to_v64bfp16ebs8_conf(a, rnd);
+}
+
+// CHECK-LABEL: @_Z26test_to_v64bfp16ebs16_confDv64_u10__accfloatj(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 1)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[RND:%.*]])
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call { <64 x i8>, <8 x i8> } @llvm.aie2p.v64accfloat.to.v64bfp16ebs16(<64 x float> [[A:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <8 x i8> } [[TMP1]], 0
+// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue { <64 x i8>, <8 x i8> } [[TMP1]], 1
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I_I:%.*]] = insertvalue [[STRUCT_V64BFP16EBS16:%.*]] poison, <64 x i8> [[TMP2]], 0
+// CHECK-NEXT:    [[DOTFCA_1_INSERT_I_I:%.*]] = insertvalue [[STRUCT_V64BFP16EBS16]] [[DOTFCA_0_INSERT_I_I]], <8 x i8> [[TMP3]], 1
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[TMP0]])
+// CHECK-NEXT:    ret [[STRUCT_V64BFP16EBS16]] [[DOTFCA_1_INSERT_I_I]]
+//
+v64bfp16ebs16 test_to_v64bfp16ebs16_conf(v64accfloat a, crrnd_t rnd) {
+  return to_v64bfp16ebs16_conf(a, rnd);
+}
+
+// CHECK-LABEL: @_Z26test_to_v64bfp16ebs16_conf12v64bfp16ebs8j(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 1)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[RND:%.*]])
+// CHECK-NEXT:    [[A_COERCE_FCA_0_EXTRACT_I_I:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8:%.*]] [[A_COERCE:%.*]], 0
+// CHECK-NEXT:    [[A_COERCE_FCA_1_EXTRACT_I_I:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[A_COERCE]], 1
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call { <64 x i8>, <8 x i8> } @llvm.aie2p.v64bfp16ebs8.to.v64bfp16ebs16(<64 x i8> [[A_COERCE_FCA_0_EXTRACT_I_I]], <8 x i8> [[A_COERCE_FCA_1_EXTRACT_I_I]])
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <8 x i8> } [[TMP1]], 0
+// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue { <64 x i8>, <8 x i8> } [[TMP1]], 1
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I_I:%.*]] = insertvalue [[STRUCT_V64BFP16EBS16:%.*]] poison, <64 x i8> [[TMP2]], 0
+// CHECK-NEXT:    [[DOTFCA_1_INSERT_I_I:%.*]] = insertvalue [[STRUCT_V64BFP16EBS16]] [[DOTFCA_0_INSERT_I_I]], <8 x i8> [[TMP3]], 1
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[TMP0]])
+// CHECK-NEXT:    ret [[STRUCT_V64BFP16EBS16]] [[DOTFCA_1_INSERT_I_I]]
+//
+v64bfp16ebs16 test_to_v64bfp16ebs16_conf(v64bfp16ebs8 a, crrnd_t rnd) {
+  return to_v64bfp16ebs16_conf(a, rnd);
+}
+
+// CHECK-LABEL: @_Z20test_to_v64bfp16ebs8Dv64_f(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <8 x i8> } @llvm.aie2p.v64accfloat.to.v64bfp16ebs8(<64 x float> [[A:%.*]])
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <8 x i8> } [[TMP0]], 0
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <8 x i8> } [[TMP0]], 1
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I_I:%.*]] = insertvalue [[STRUCT_V64BFP16EBS8:%.*]] poison, <64 x i8> [[TMP1]], 0
+// CHECK-NEXT:    [[DOTFCA_1_INSERT_I_I:%.*]] = insertvalue [[STRUCT_V64BFP16EBS8]] [[DOTFCA_0_INSERT_I_I]], <8 x i8> [[TMP2]], 1
+// CHECK-NEXT:    ret [[STRUCT_V64BFP16EBS8]] [[DOTFCA_1_INSERT_I_I]]
+//
+v64bfp16ebs8 test_to_v64bfp16ebs8(v64float a) {
+  return to_v64bfp16ebs8(a);
+}
+// CHECK-LABEL: @_Z21test_to_v64bfp16ebs16Dv64_f(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <8 x i8> } @llvm.aie2p.v64accfloat.to.v64bfp16ebs16(<64 x float> [[A:%.*]])
+// CHECK-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <8 x i8> } [[TMP0]], 0
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <8 x i8> } [[TMP0]], 1
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I_I:%.*]] = insertvalue [[STRUCT_V64BFP16EBS16:%.*]] poison, <64 x i8> [[TMP1]], 0
+// CHECK-NEXT:    [[DOTFCA_1_INSERT_I_I:%.*]] = insertvalue [[STRUCT_V64BFP16EBS16]] [[DOTFCA_0_INSERT_I_I]], <8 x i8> [[TMP2]], 1
+// CHECK-NEXT:    ret [[STRUCT_V64BFP16EBS16]] [[DOTFCA_1_INSERT_I_I]]
+//
+v64bfp16ebs16 test_to_v64bfp16ebs16(v64float a) {
+  return to_v64bfp16ebs16(a);
+}
+
+// CHECK-LABEL: @_Z25test_to_v64bfp16ebs8_confDv64_fj(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 1)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[RND:%.*]])
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call { <64 x i8>, <8 x i8> } @llvm.aie2p.v64accfloat.to.v64bfp16ebs8(<64 x float> [[A:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <8 x i8> } [[TMP1]], 0
+// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue { <64 x i8>, <8 x i8> } [[TMP1]], 1
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I_I:%.*]] = insertvalue [[STRUCT_V64BFP16EBS8:%.*]] poison, <64 x i8> [[TMP2]], 0
+// CHECK-NEXT:    [[DOTFCA_1_INSERT_I_I:%.*]] = insertvalue [[STRUCT_V64BFP16EBS8]] [[DOTFCA_0_INSERT_I_I]], <8 x i8> [[TMP3]], 1
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[TMP0]])
+// CHECK-NEXT:    ret [[STRUCT_V64BFP16EBS8]] [[DOTFCA_1_INSERT_I_I]]
+//
+v64bfp16ebs8 test_to_v64bfp16ebs8_conf(v64float a, crrnd_t rnd) {
+  return to_v64bfp16ebs8_conf(a, rnd);
+}
+
+// CHECK-LABEL: @_Z26test_to_v64bfp16ebs16_confDv64_fj(
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef i32 @llvm.aie2p.get.ctrl.reg(i32 1)
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[RND:%.*]])
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call { <64 x i8>, <8 x i8> } @llvm.aie2p.v64accfloat.to.v64bfp16ebs16(<64 x float> [[A:%.*]])
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <8 x i8> } [[TMP1]], 0
+// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue { <64 x i8>, <8 x i8> } [[TMP1]], 1
+// CHECK-NEXT:    [[DOTFCA_0_INSERT_I_I:%.*]] = insertvalue [[STRUCT_V64BFP16EBS16:%.*]] poison, <64 x i8> [[TMP2]], 0
+// CHECK-NEXT:    [[DOTFCA_1_INSERT_I_I:%.*]] = insertvalue [[STRUCT_V64BFP16EBS16]] [[DOTFCA_0_INSERT_I_I]], <8 x i8> [[TMP3]], 1
+// CHECK-NEXT:    tail call void @llvm.aie2p.set.ctrl.reg(i32 1, i32 [[TMP0]])
+// CHECK-NEXT:    ret [[STRUCT_V64BFP16EBS16]] [[DOTFCA_1_INSERT_I_I]]
+//
+v64bfp16ebs16 test_to_v64bfp16ebs16_conf(v64float a, crrnd_t rnd) {
+  return to_v64bfp16ebs16_conf(a, rnd);
 }
