@@ -8,11 +8,18 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "AIEMachineScheduler.h"
+#include "AIE2.h"
+#include "AIE2GenInstrInfo.inc"
+#include "AIE2InstrInfo.h"
+#include "AIE2RegisterInfo.h"
+#include "AIE2Subtarget.h"
+#include "AIE2TargetMachine.h"
+
 #include "AIEBaseAliasAnalysis.h"
 #include "AIEBaseInstrInfo.h"
 #include "AIEHazardRecognizer.h"
 #include "AIEInterBlockScheduling.h"
+#include "AIEMachineScheduler.h"
 #include "AIEMaxLatencyFinder.h"
 #include "AIEPostPipeliner.h"
 #include "Utils/AIELoopUtils.h"
@@ -100,6 +107,9 @@ static cl::opt<bool> InstructionMutation(
     cl::desc("Allow instruction mutation to shift a multislot "
              "instruction in event of a slot conflict"));
 
+static cl::opt<bool>
+    UseDelayedMove("aie-use-delayed-move", cl::init(true),
+                   cl::desc("Allow delayed move to resolve FU conflict"));
 namespace {
 // A sentinel value to represent an unknown SUnit.
 const constexpr unsigned UnknownSUNum = ~0;
@@ -127,6 +137,12 @@ const AIEBaseInstrInfo *getTII(MachineBasicBlock *MBB) {
 }
 const AIEBaseInstrInfo *getTII(const ScheduleDAGMI &DAG) {
   return static_cast<const AIEBaseInstrInfo *>(DAG.TII);
+}
+
+/// Shorthand to get TargetRegisterInfo from a MachineBasicBlock
+const AIEBaseRegisterInfo *getTRI(MachineBasicBlock *MBB) {
+  return static_cast<const AIEBaseRegisterInfo *>(
+      MBB->getParent()->getSubtarget().getRegisterInfo());
 }
 
 void bumpCycleForBundles(unsigned ToCycle,
@@ -539,9 +555,70 @@ bool AIEPostRASchedStrategy::isFreeSU(const SUnit &SU) const {
          SU.NodeNum < FirstBotFixedSU.value_or(NumUpperBound);
 }
 
+bool AIEPostRASchedStrategy::canUseDelayedMove(SUnit &SU, SchedBoundary &Zone,
+                                               const int DeltaCycle) {
+
+  if (!UseDelayedMove)
+    return false;
+
+  const AIEBaseInstrInfo *TII = getTII(CurMBB);
+  const AIEBaseRegisterInfo *TRI = getTRI(CurMBB);
+  MachineInstr *MI = SU.getInstr();
+
+  if (!TII->isScalarMove(MI->getOpcode()))
+    return false;
+
+  // Check if the destination register is a eRType register
+  const Register DstReg = MI->getOperand(0).getReg();
+  if (!TRI->isRTypeReg(DstReg))
+    return false;
+
+  // Check if the conflict is only due to FU
+  AIEHazardRecognizer &HR = *getAIEHazardRecognizer(Zone);
+  if (!(HR.checkConflict(*MI, DeltaCycle) &
+        static_cast<uint32_t>(AIEHazardRecognizer::ConflictType::FuncUnit)))
+    return false;
+
+  // Check if the instruction has only one successor and it is the ExitSU
+  if (SU.Succs.size() == 1 && SU.Succs[0].getSUnit() == &Zone.DAG->ExitSU)
+    return false;
+
+  // Find the max of the BotReadyCycle of the successors, to find by how many
+  // cycles the MOV can be delayed
+  unsigned MaxBotReadyCycle = 0;
+  for (const SDep &Succ : SU.Succs) {
+    // Anit-dependencies are not considered since the delayes MOV reads the src
+    // reg in the same cycle
+    if (Succ.getSUnit() == &Zone.DAG->ExitSU || Succ.getKind() == SDep::Anti)
+      continue;
+    MaxBotReadyCycle =
+        std::max(MaxBotReadyCycle, Succ.getSUnit()->BotReadyCycle);
+  };
+
+  const int CurrCycle = Zone.getCurrCycle();
+  const unsigned CanDelayBy =
+      static_cast<unsigned int>(CurrCycle - DeltaCycle) - MaxBotReadyCycle - 1;
+  if (!CanDelayBy)
+    return false;
+
+  unsigned Delay = 1;
+  for (const auto &DelMove : TII->getDelayedScalarMoveOpcode()) {
+    if (Delay > CanDelayBy)
+      break;
+    const unsigned Conflict =
+        HR.checkConflict(*MI, TII->get(DelMove), DeltaCycle);
+    if (!(Conflict)) {
+      HR.getSelectedAltDescs().setAlternateDescriptor(MI, DelMove);
+      return true;
+    }
+    ++Delay;
+  }
+
+  return false;
+}
+
 static bool checkSlotConflict(const unsigned OpCodeA, const unsigned OpCodeB,
                               const AIEBaseMCFormats &Formats) {
-
   const MCSlotKind SlotKindA = Formats.getSlotKind(OpCodeA);
   const MCSlotKind SlotKindB = Formats.getSlotKind(OpCodeB);
   const MCSlotKind UnknownSlot = MCSlotKind();
@@ -731,7 +808,8 @@ bool AIEPostRASchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
     // so DeltaCycles will always be less or equal to 0.
     if (Zone.checkHazard(&SU, DeltaCycles))
       if (!canShiftSlot(SU, Zone, DeltaCycles))
-        continue;
+        if (!canUseDelayedMove(SU, Zone, DeltaCycles))
+          continue;
     SU.BotReadyCycle = CurrCycle - DeltaCycles;
     return true;
   }

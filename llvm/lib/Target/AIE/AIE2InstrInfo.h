@@ -49,9 +49,12 @@ public:
   unsigned getGenericPadVectorOpcode() const override;
   unsigned getGenericUnpadVectorOpcode() const override;
   unsigned getCycleSeparatorOpcode() const override;
+  std::vector<unsigned> getDelayedScalarMoveOpcode() const override;
+
   bool isLock(unsigned Opc) const override;
   bool isDelayedSchedBarrier(const MachineInstr &MI) const override;
   bool isSchedBarrier(const MachineInstr &MI) const override;
+  bool isScalarMove(unsigned OpCode) const override;
 
   virtual unsigned
   getNumReservedDelaySlots(const MachineInstr &MI) const override;

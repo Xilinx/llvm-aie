@@ -52,6 +52,7 @@ public:
                           std::optional<unsigned> &BotEmissionCycle) override;
 
   bool canShiftSlot(SUnit &SU, SchedBoundary &Zone, const int DeltaCycle);
+  bool canUseDelayedMove(SUnit &SU, SchedBoundary &Zone, const int DeltaCycle);
   bool isAvailableNode(SUnit &SU, SchedBoundary &Zone,
                        bool VerifyReadyCycle) override;
 

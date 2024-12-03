@@ -126,6 +126,9 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   /// Check whether this is a scheduling barrier
   virtual bool isSchedBarrier(const MachineInstr &) const { return false; }
 
+  /// Check whether OpCode is a scalar move instruction
+  virtual bool isScalarMove(unsigned OpCode) const { return false; }
+
   /// Returns the number of delay slots that this instruction requires.
   /// This might be 0
   virtual unsigned
@@ -136,6 +139,12 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   /// Returns the number of delay slots that should be reserved, i.e.
   /// not filled in by the scheduler.
   virtual unsigned getNumReservedDelaySlots(const MachineInstr &MI) const;
+
+  /// Return Opcode for delayed scalar move insturction in increasing order of
+  /// delay
+  virtual std::vector<unsigned> getDelayedScalarMoveOpcode() const {
+    return std::vector<unsigned>();
+  }
 
   /// Check whether Opc represents a JNZ instruction. This is mainly for
   /// detecting a downcounting loop branch.
