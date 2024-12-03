@@ -66,8 +66,8 @@
   ; CHECK-NEXT:  .L_LEnd0:
   ; CHECK-NEXT:    vldb.3d wh7, [p1], d1; nopa ; nops ; nopxm ; vmac.f bml5, bml5, x9, x7, r2
   ; CHECK-NEXT:  // %bb.3: // %for.cond.cleanup
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; vshuffle x3, x3, x3, r6; nopv
-  ; CHECK-NEXT:    nopx
+  ; CHECK-NEXT:    nopa ; vshuffle x3, x3, x3, r6
+  ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    vshuffle x5, x5, x5, r6; vmac.f bmh0, bmh0, x6, x3, r2
   ; CHECK-NEXT:    vmac.f bmh1, bmh1, x11, x3, r2
   ; CHECK-NEXT:    vshuffle x0, x0, x0, r6; vmac.f bmh3, bmh3, x9, x3, r2
@@ -84,6 +84,12 @@
   ; CHECK-NEXT:    vmac.f bml4, bml4, x11, x7, r2
   ; CHECK-NEXT:    vmac.f bml6, bml6, x0, x7, r2
   ; CHECK-NEXT:    vmac.f bml5, bml5, x9, x7, r2
+  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_4: // %for.cond.cleanup
   ; CHECK-NEXT:    nopa ; ret lr

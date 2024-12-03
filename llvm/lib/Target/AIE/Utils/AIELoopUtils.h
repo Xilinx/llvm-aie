@@ -48,6 +48,11 @@ getSingleBlockLoopMBBs(const MachineFunction &MF);
 /// Check if this block is a single block loop.
 bool isSingleMBBLoop(const MachineBasicBlock *MBB);
 
+/// Considering that MBB has a single predecessor that is a loop
+/// and also layout predecessor, return it.
+/// Note: this function should be used only with single MBB loops.
+MachineBasicBlock *getLoopPredecessor(const MachineBasicBlock &EpilogueMBB);
+
 } // namespace llvm::AIELoopUtils
 
 #endif

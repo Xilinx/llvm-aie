@@ -116,4 +116,24 @@ bool isSingleMBBLoop(const MachineBasicBlock *MBB) {
   return NumLoopEdges == 1 && NumExitEdges == 1;
 }
 
+MachineBasicBlock *getLoopPredecessor(const MachineBasicBlock &EpilogueMBB) {
+  MachineBasicBlock *LoopPred = nullptr;
+  if (EpilogueMBB.pred_size() == 1) {
+    // if we have only one, it must be the loop
+    LoopPred = *EpilogueMBB.predecessors().begin();
+  } else {
+    // Otherwise, the loop is the fallthrough predecessor by construction
+    for (auto *Pred : EpilogueMBB.predecessors()) {
+      if (Pred->isLayoutSuccessor(&EpilogueMBB)) {
+        LoopPred = Pred;
+        break;
+      }
+    }
+  }
+
+  assert((!LoopPred || (isSingleMBBLoop(LoopPred))) &&
+         "Layout predecessor is not a loop");
+  return LoopPred;
+}
+
 } // namespace llvm::AIELoopUtils

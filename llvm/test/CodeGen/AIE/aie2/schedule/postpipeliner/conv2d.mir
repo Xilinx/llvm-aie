@@ -119,25 +119,19 @@
   ; CHECK-NEXT:    vldb wh7, [p1], #32; nopa ; nops ; nopx ; mov r6, p0; vmac cm3, cm3, x3, x10, r4
   ; CHECK-NEXT:  // %bb.3: // %outer.loop.latch
   ; CHECK-NEXT:    // in Loop: Header=BB0_1 Depth=1
-  ; CHECK-NEXT:    nopa ; and r5, r6, r9; vshift.align x4, x4, s1, x6, r0; vmac cm4, cm4, x5, x10, r4
-  ; CHECK-NEXT:    vmac cm5, cm5, x9, x7, r4
+  ; CHECK-NEXT:    nopb ; nopa ; nops ; and r5, r6, r9; vshift.align x4, x4, s1, x6, r0; vmac cm4, cm4, x5, x10, r4
+  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; mov s3, r6; vmac cm5, cm5, x9, x7, r4
   ; CHECK-NEXT:    add r0, r5, #33; vshift.align x2, x2, s1, x8, r0; vmac cm6, cm6, x1, x7, r4
-  ; CHECK-NEXT:    vshuffle x9, x4, x2, r2; vmac cm7, cm7, x3, x7, r4
+  ; CHECK-NEXT:    add r7, r7, #-1; vshuffle x9, x4, x2, r2; vmac cm7, cm7, x3, x7, r4
   ; CHECK-NEXT:    vshuffle x1, x9, x0, r8; vmac cm0, cm0, x5, x7, r4
   ; CHECK-NEXT:    vshuffle x3, x4, x2, r3; vmac cm1, cm1, x9, x10, r4
   ; CHECK-NEXT:    vshuffle x5, x3, x0, r8; vmac cm2, cm2, x1, x10, r4
-  ; CHECK-NEXT:    vmac cm3, cm3, x3, x10, r4
-  ; CHECK-NEXT:    vmac cm4, cm4, x5, x10, r4
-  ; CHECK-NEXT:    vmac cm5, cm5, x9, x7, r4
-  ; CHECK-NEXT:    vmac cm6, cm6, x1, x7, r4
-  ; CHECK-NEXT:    vmac cm7, cm7, x3, x7, r4
-  ; CHECK-NEXT:    vmac cm0, cm0, x5, x7, r4
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    vst.srs.s16.s32 bmh1, s2, [p3, #32]; mov s3, r6
-  ; CHECK-NEXT:    vst.srs.s16.s32 bml1, s3, [p3], #64
-  ; CHECK-NEXT:    vst.srs.s16.s32 bmh2, s3, [p3, #32]
+  ; CHECK-NEXT:    mov dc5, r26; vmac cm3, cm3, x3, x10, r4
+  ; CHECK-NEXT:    mov dn5, r27; vmac cm4, cm4, x5, x10, r4
+  ; CHECK-NEXT:    mov dj5, r28; vmac cm5, cm5, x9, x7, r4
+  ; CHECK-NEXT:    vst.srs.s16.s32 bmh1, s2, [p3, #32]; mov m1, r10; vmac cm6, cm6, x1, x7, r4
+  ; CHECK-NEXT:    vst.srs.s16.s32 bml1, s3, [p3], #64; mov m2, r13; vmac cm7, cm7, x3, x7, r4
+  ; CHECK-NEXT:    padda.3d [p1], d2; vst.srs.s16.s32 bmh2, s3, [p3, #32]; mov m3, r14; vmac cm0, cm0, x5, x7, r4
   ; CHECK-NEXT:    vst.srs.s16.s32 bml2, s3, [p3], m4
   ; CHECK-NEXT:    vst.srs.s16.s32 bmh3, s3, [p3, #32]
   ; CHECK-NEXT:    vst.srs.s16.s32 bml3, s3, [p3], #64
@@ -145,18 +139,18 @@
   ; CHECK-NEXT:    vst.srs.s16.s32 bml4, s3, [p3], m7
   ; CHECK-NEXT:    vst.srs.s16.s32 bmh5, s3, [p3, #32]
   ; CHECK-NEXT:    vst.srs.s16.s32 bml5, s3, [p3], #64
-  ; CHECK-NEXT:    vst.srs.s16.s32 bmh6, s3, [p3, #32]; mov dc5, r26
-  ; CHECK-NEXT:    vst.srs.s16.s32 bml6, s3, [p3], m4; mov dn5, r27
-  ; CHECK-NEXT:    vst.srs.s16.s32 bmh7, s3, [p3, #32]; mov dj5, r28
-  ; CHECK-NEXT:    vst.srs.s16.s32 bml7, s3, [p3], #64; mov m1, r10
-  ; CHECK-NEXT:    vst.srs.s16.s32 bmh0, s3, [p3, #32]; mov m2, r13
+  ; CHECK-NEXT:    vst.srs.s16.s32 bmh6, s3, [p3, #32]
+  ; CHECK-NEXT:    vst.srs.s16.s32 bml6, s3, [p3], m4
+  ; CHECK-NEXT:    vst.srs.s16.s32 bmh7, s3, [p3, #32]
+  ; CHECK-NEXT:    vst.srs.s16.s32 bml7, s3, [p3], #64
+  ; CHECK-NEXT:    vst.srs.s16.s32 bmh0, s3, [p3, #32]
   ; CHECK-NEXT:    vst.2d.srs.s16.s32 bml0, s3, [p3], d5; mov dj5, r11
-  ; CHECK-NEXT:    add r7, r7, #-1; mov dn5, r12
+  ; CHECK-NEXT:    mov dn5, r12
   ; CHECK-NEXT:    jnz r7, #.LBB0_1
   ; CHECK-NEXT:    mov r26, dc5 // Delay Slot 5
   ; CHECK-NEXT:    mov dc5, r25 // Delay Slot 4
   ; CHECK-NEXT:    padda.3d [p0], d1; mov m1, r24 // Delay Slot 3
-  ; CHECK-NEXT:    padda.3d [p1], d2; paddb [p2], m1; mov m3, r14 // Delay Slot 2
+  ; CHECK-NEXT:    paddb [p2], m1 // Delay Slot 2
   ; CHECK-NEXT:    padda.3d [p2], d3; mov r25, dc5 // Delay Slot 1
   ; CHECK-NEXT:  // %bb.4: // %exitStub
   ; CHECK-NEXT:    lda p7, [sp, #-32]; nopb ; nopxm // 4-byte Folded Reload
