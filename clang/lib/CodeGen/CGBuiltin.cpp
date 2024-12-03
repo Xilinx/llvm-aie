@@ -22048,6 +22048,12 @@ static llvm::Intrinsic::ID getAIE2PIntrinsicFunction(unsigned BuiltinID) {
     return Intrinsic::aie2p_vsub_lt32;
   case AIE::BI__builtin_aie2p_divstep:
     return Intrinsic::aie2p_divs;
+  case AIE::BI__builtin_aie2p_v64accfloat_to_v64bfp16ebs8:
+    return Intrinsic::aie2p_v64accfloat_to_v64bfp16ebs8;
+  case AIE::BI__builtin_aie2p_v64accfloat_to_v64bfp16ebs16:
+    return Intrinsic::aie2p_v64accfloat_to_v64bfp16ebs16;
+  case AIE::BI__builtin_aie2p_v64bfp16ebs8_to_v64bfp16ebs16:
+    return Intrinsic::aie2p_v64bfp16ebs8_to_v64bfp16ebs16;
   default:
     break;
   }
@@ -22274,6 +22280,31 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
     Value *DivAddr = EmitLValue(E->getArg(1)).getPointer(*this);
     return Builder.CreateDefaultAlignedStore(Div, DivAddr);
   }
+  case AIE::BI__builtin_aie2p_v64accfloat_to_v64bfp16ebs8:
+  case AIE::BI__builtin_aie2p_v64accfloat_to_v64bfp16ebs16:
+  case AIE::BI__builtin_aie2p_v64bfp16ebs8_to_v64bfp16ebs16: {
+    SmallVector<Value *, 3> Ops;
+    if (BuiltinID == AIE::BI__builtin_aie2p_v64accfloat_to_v64bfp16ebs8 ||
+        BuiltinID == AIE::BI__builtin_aie2p_v64accfloat_to_v64bfp16ebs16)
+      Ops.push_back(EmitScalarExpr(E->getArg(E->getNumArgs() - 1)));
+    if (BuiltinID == AIE::BI__builtin_aie2p_v64bfp16ebs8_to_v64bfp16ebs16) {
+      Ops.push_back(EmitScalarExpr(E->getArg(E->getNumArgs() - 2)));
+      Ops.push_back(EmitScalarExpr(E->getArg(E->getNumArgs() - 1)));
+    }
+    llvm::Intrinsic::ID IntrinsicID = getAIEIntrinsicFunction(BuiltinID, Arch);
+    assert(IntrinsicID != Intrinsic::not_intrinsic);
+    Function *F = CGM.getIntrinsic(IntrinsicID);
+    Value *Val = Builder.CreateCall(F, Ops);
+
+    Value *Mant = Builder.CreateExtractValue(Val, 0);
+    Value *MantAddr = EmitLValue(E->getArg(0)).getPointer(*this);
+    Builder.CreateDefaultAlignedStore(Mant, MantAddr);
+
+    Value *Exp = Builder.CreateExtractValue(Val, 1);
+    Value *ExpAddr = EmitLValue(E->getArg(1)).getPointer(*this);
+
+    return Builder.CreateDefaultAlignedStore(Exp, ExpAddr);
+  }
   default:
     break;
   }
@@ -22452,7 +22483,10 @@ Value *CodeGenFunction::EmitAIE2PBuiltinExpr(unsigned BuiltinID,
   case AIE::BI__builtin_aie2p_vsub_lt8:
   case AIE::BI__builtin_aie2p_vsub_lt16:
   case AIE::BI__builtin_aie2p_vsub_lt32:
-  case AIE::BI__builtin_aie2p_divstep: {
+  case AIE::BI__builtin_aie2p_divstep:
+  case AIE::BI__builtin_aie2p_v64accfloat_to_v64bfp16ebs8:
+  case AIE::BI__builtin_aie2p_v64accfloat_to_v64bfp16ebs16:
+  case AIE::BI__builtin_aie2p_v64bfp16ebs8_to_v64bfp16ebs16: {
     return this->EmitAIEBuiltinExpr(BuiltinID, E, Arch);
   }
   default:

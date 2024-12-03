@@ -126,6 +126,12 @@ BUILTIN(__builtin_aie2p_v16accfloat_to_v8float, "V8fV16g", "nc")
 BUILTIN(__builtin_aie2p_v8float_to_v16accfloat, "V16gV8f", "nc")
 BUILTIN(__builtin_aie2p_v32accfloat_to_v16float, "V16fV32g", "nc")
 BUILTIN(__builtin_aie2p_v16float_to_v32accfloat, "V32gV16f", "nc")
+
+// Floating-point accumulator to block floating-point vector register conversion
+BUILTIN(__builtin_aie2p_v64accfloat_to_v64bfp16ebs8, "vV64c&V8c&V64g", "nc")
+BUILTIN(__builtin_aie2p_v64accfloat_to_v64bfp16ebs16, "vV64c&V8c&V64g", "nc")
+BUILTIN(__builtin_aie2p_v64bfp16ebs8_to_v64bfp16ebs16, "vV64c&V8c&V64cV8c", "nc")
+
 // Mode Settings
 // Set Control Registers
 BUILTIN(__builtin_aie2p_set_ctrl_reg, "vUiCUi", "nc")
