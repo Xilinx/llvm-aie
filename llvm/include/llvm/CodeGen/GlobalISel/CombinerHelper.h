@@ -399,6 +399,11 @@ public:
   void applyCombineTruncOfExt(MachineInstr &MI,
                               std::pair<Register, unsigned> &MatchInfo);
 
+  /// Transform (shl (and x, imm1, imm2) to (shl x, imm2)
+  ///    if (~imm1 << imm2) = 0
+  bool matchCombineShlOfAnd(MachineInstr &MI, Register &Reg);
+  void applyCombineShlOfAnd(MachineInstr &MI, Register &Reg);
+
   /// Transform trunc (shl x, K) to shl (trunc x), K
   ///    if K < VT.getScalarSizeInBits().
   ///

@@ -382,39 +382,36 @@ define <2 x i16> @clpeak_imad_pat_v2i16(<2 x i16> %x, <2 x i16> %y) {
 ; GFX67-GISEL-LABEL: clpeak_imad_pat_v2i16:
 ; GFX67-GISEL:       ; %bb.0: ; %entry
 ; GFX67-GISEL-NEXT:    s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v1, vcc, 1, v1
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v0, vcc, 1, v0
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v5, 0xffff, v1
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v1, vcc, 1, v1
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v4, 0xffff, v0
-; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v5, 16, v5
+; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v5, 16, v1
 ; GFX67-GISEL-NEXT:    v_or_b32_e32 v4, v4, v5
 ; GFX67-GISEL-NEXT:    v_lshrrev_b32_e32 v5, 16, v4
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v3, 0xffff, v3
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v4, 0xffff, v4
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v2, 0xffff, v2
-; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v5, v5, v3
+; GFX67-GISEL-NEXT:    v_and_b32_e32 v3, 0xffff, v3
 ; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v4, v4, v2
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v1, vcc, v5, v1
+; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v5, v5, v3
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v0, vcc, v4, v0
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v1, 0xffff, v1
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v1, vcc, v5, v1
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v0, 0xffff, v0
 ; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v1, 16, v1
 ; GFX67-GISEL-NEXT:    v_or_b32_e32 v0, v0, v1
 ; GFX67-GISEL-NEXT:    v_lshrrev_b32_e32 v1, 16, v0
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v0, 0xffff, v0
-; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v1, v1, v3
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v3, vcc, 1, v5
 ; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v0, v0, v2
+; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v1, v1, v3
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v2, vcc, 1, v4
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v3, 0xffff, v3
+; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v3, 16, v5
+; GFX67-GISEL-NEXT:    v_mov_b32_e32 v4, 0x10000
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v2, 0xffff, v2
-; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v3, 16, v3
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v4, vcc, 1, v1
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v3, vcc, v3, v4
 ; GFX67-GISEL-NEXT:    v_or_b32_e32 v2, v2, v3
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v3, vcc, 1, v0
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v4, 0xffff, v4
+; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v5, 16, v1
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v3, 0xffff, v3
-; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v4, 16, v4
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v4, vcc, v5, v4
 ; GFX67-GISEL-NEXT:    v_or_b32_e32 v3, v3, v4
 ; GFX67-GISEL-NEXT:    v_lshrrev_b32_e32 v4, 16, v2
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v0, 0xffff, v0
@@ -917,74 +914,67 @@ define <4 x i16> @clpeak_imad_pat_v4i16(<4 x i16> %x, <4 x i16> %y) {
 ; GFX67-GISEL-LABEL: clpeak_imad_pat_v4i16:
 ; GFX67-GISEL:       ; %bb.0: ; %entry
 ; GFX67-GISEL-NEXT:    s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v1, vcc, 1, v1
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v0, vcc, 1, v0
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v3, vcc, 1, v3
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v9, 0xffff, v1
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v1, vcc, 1, v1
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v2, vcc, 1, v2
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v3, vcc, 1, v3
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v8, 0xffff, v0
-; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v9, 16, v9
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v10, 0xffff, v3
+; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v9, 16, v1
 ; GFX67-GISEL-NEXT:    v_or_b32_e32 v8, v8, v9
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v9, 0xffff, v2
-; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v10, 16, v10
+; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v10, 16, v3
 ; GFX67-GISEL-NEXT:    v_or_b32_e32 v9, v9, v10
 ; GFX67-GISEL-NEXT:    v_lshrrev_b32_e32 v10, 16, v8
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v5, 0xffff, v5
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v8, 0xffff, v8
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v4, 0xffff, v4
-; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v10, v10, v5
+; GFX67-GISEL-NEXT:    v_and_b32_e32 v5, 0xffff, v5
 ; GFX67-GISEL-NEXT:    v_lshrrev_b32_e32 v11, 16, v9
 ; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v8, v8, v4
+; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v10, v10, v5
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v9, 0xffff, v9
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v6, 0xffff, v6
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v7, 0xffff, v7
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v1, vcc, v10, v1
 ; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v9, v9, v6
 ; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v11, v11, v7
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v0, vcc, v8, v0
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v1, 0xffff, v1
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v1, vcc, v10, v1
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v2, vcc, v9, v2
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v3, vcc, v11, v3
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v0, 0xffff, v0
 ; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v1, 16, v1
 ; GFX67-GISEL-NEXT:    v_or_b32_e32 v0, v0, v1
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v1, 0xffff, v2
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v2, 0xffff, v3
-; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v2, 16, v2
+; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v2, 16, v3
 ; GFX67-GISEL-NEXT:    v_or_b32_e32 v1, v1, v2
 ; GFX67-GISEL-NEXT:    v_lshrrev_b32_e32 v2, 16, v0
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v0, 0xffff, v0
-; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v2, v2, v5
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v5, vcc, 1, v10
 ; GFX67-GISEL-NEXT:    v_lshrrev_b32_e32 v3, 16, v1
-; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v0, v0, v4
+; GFX67-GISEL-NEXT:    v_and_b32_e32 v0, 0xffff, v0
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v1, 0xffff, v1
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v4, vcc, 1, v8
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v5, 0xffff, v5
+; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v0, v0, v4
 ; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v1, v1, v6
 ; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v3, v3, v7
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v6, vcc, 1, v9
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v7, vcc, 1, v11
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v4, vcc, 1, v8
+; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v6, 16, v10
+; GFX67-GISEL-NEXT:    v_mov_b32_e32 v7, 0x10000
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v4, 0xffff, v4
-; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v5, 16, v5
-; GFX67-GISEL-NEXT:    v_or_b32_e32 v4, v4, v5
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v5, 0xffff, v6
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v6, 0xffff, v7
-; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v6, 16, v6
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v7, vcc, 1, v2
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v6, vcc, v6, v7
+; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v2, v2, v5
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v5, vcc, 1, v9
+; GFX67-GISEL-NEXT:    v_or_b32_e32 v4, v4, v6
+; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v6, 16, v11
+; GFX67-GISEL-NEXT:    v_and_b32_e32 v5, 0xffff, v5
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v6, vcc, v6, v7
 ; GFX67-GISEL-NEXT:    v_or_b32_e32 v5, v5, v6
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v6, vcc, 1, v0
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v7, 0xffff, v7
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v8, vcc, 1, v1
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v9, vcc, 1, v3
+; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v9, 16, v2
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v6, 0xffff, v6
-; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v7, 16, v7
-; GFX67-GISEL-NEXT:    v_or_b32_e32 v6, v6, v7
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v7, 0xffff, v8
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v8, 0xffff, v9
-; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v8, 16, v8
-; GFX67-GISEL-NEXT:    v_or_b32_e32 v7, v7, v8
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v9, vcc, v9, v7
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v8, vcc, 1, v1
+; GFX67-GISEL-NEXT:    v_or_b32_e32 v6, v6, v9
+; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v9, 16, v3
+; GFX67-GISEL-NEXT:    v_and_b32_e32 v8, 0xffff, v8
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v7, vcc, v9, v7
+; GFX67-GISEL-NEXT:    v_or_b32_e32 v7, v8, v7
 ; GFX67-GISEL-NEXT:    v_lshrrev_b32_e32 v8, 16, v4
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v0, 0xffff, v0
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v4, 0xffff, v4
@@ -1422,39 +1412,36 @@ define <2 x i16> @clpeak_umad_pat_v2i16(<2 x i16> %x, <2 x i16> %y) {
 ; GFX67-GISEL-LABEL: clpeak_umad_pat_v2i16:
 ; GFX67-GISEL:       ; %bb.0: ; %entry
 ; GFX67-GISEL-NEXT:    s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v1, vcc, 1, v1
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v0, vcc, 1, v0
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v5, 0xffff, v1
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v1, vcc, 1, v1
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v4, 0xffff, v0
-; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v5, 16, v5
+; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v5, 16, v1
 ; GFX67-GISEL-NEXT:    v_or_b32_e32 v4, v4, v5
 ; GFX67-GISEL-NEXT:    v_lshrrev_b32_e32 v5, 16, v4
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v3, 0xffff, v3
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v4, 0xffff, v4
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v2, 0xffff, v2
-; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v5, v5, v3
+; GFX67-GISEL-NEXT:    v_and_b32_e32 v3, 0xffff, v3
 ; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v4, v4, v2
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v1, vcc, v5, v1
+; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v5, v5, v3
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v0, vcc, v4, v0
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v1, 0xffff, v1
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v1, vcc, v5, v1
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v0, 0xffff, v0
 ; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v1, 16, v1
 ; GFX67-GISEL-NEXT:    v_or_b32_e32 v0, v0, v1
 ; GFX67-GISEL-NEXT:    v_lshrrev_b32_e32 v1, 16, v0
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v0, 0xffff, v0
-; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v1, v1, v3
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v3, vcc, 1, v5
 ; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v0, v0, v2
+; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v1, v1, v3
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v2, vcc, 1, v4
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v3, 0xffff, v3
+; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v3, 16, v5
+; GFX67-GISEL-NEXT:    v_mov_b32_e32 v4, 0x10000
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v2, 0xffff, v2
-; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v3, 16, v3
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v4, vcc, 1, v1
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v3, vcc, v3, v4
 ; GFX67-GISEL-NEXT:    v_or_b32_e32 v2, v2, v3
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v3, vcc, 1, v0
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v4, 0xffff, v4
+; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v5, 16, v1
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v3, 0xffff, v3
-; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v4, 16, v4
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v4, vcc, v5, v4
 ; GFX67-GISEL-NEXT:    v_or_b32_e32 v3, v3, v4
 ; GFX67-GISEL-NEXT:    v_lshrrev_b32_e32 v4, 16, v2
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v0, 0xffff, v0
@@ -1957,74 +1944,67 @@ define <4 x i16> @clpeak_umad_pat_v4i16(<4 x i16> %x, <4 x i16> %y) {
 ; GFX67-GISEL-LABEL: clpeak_umad_pat_v4i16:
 ; GFX67-GISEL:       ; %bb.0: ; %entry
 ; GFX67-GISEL-NEXT:    s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v1, vcc, 1, v1
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v0, vcc, 1, v0
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v3, vcc, 1, v3
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v9, 0xffff, v1
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v1, vcc, 1, v1
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v2, vcc, 1, v2
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v3, vcc, 1, v3
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v8, 0xffff, v0
-; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v9, 16, v9
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v10, 0xffff, v3
+; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v9, 16, v1
 ; GFX67-GISEL-NEXT:    v_or_b32_e32 v8, v8, v9
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v9, 0xffff, v2
-; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v10, 16, v10
+; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v10, 16, v3
 ; GFX67-GISEL-NEXT:    v_or_b32_e32 v9, v9, v10
 ; GFX67-GISEL-NEXT:    v_lshrrev_b32_e32 v10, 16, v8
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v5, 0xffff, v5
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v8, 0xffff, v8
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v4, 0xffff, v4
-; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v10, v10, v5
+; GFX67-GISEL-NEXT:    v_and_b32_e32 v5, 0xffff, v5
 ; GFX67-GISEL-NEXT:    v_lshrrev_b32_e32 v11, 16, v9
 ; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v8, v8, v4
+; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v10, v10, v5
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v9, 0xffff, v9
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v6, 0xffff, v6
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v7, 0xffff, v7
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v1, vcc, v10, v1
 ; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v9, v9, v6
 ; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v11, v11, v7
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v0, vcc, v8, v0
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v1, 0xffff, v1
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v1, vcc, v10, v1
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v2, vcc, v9, v2
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v3, vcc, v11, v3
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v0, 0xffff, v0
 ; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v1, 16, v1
 ; GFX67-GISEL-NEXT:    v_or_b32_e32 v0, v0, v1
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v1, 0xffff, v2
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v2, 0xffff, v3
-; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v2, 16, v2
+; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v2, 16, v3
 ; GFX67-GISEL-NEXT:    v_or_b32_e32 v1, v1, v2
 ; GFX67-GISEL-NEXT:    v_lshrrev_b32_e32 v2, 16, v0
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v0, 0xffff, v0
-; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v2, v2, v5
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v5, vcc, 1, v10
 ; GFX67-GISEL-NEXT:    v_lshrrev_b32_e32 v3, 16, v1
-; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v0, v0, v4
+; GFX67-GISEL-NEXT:    v_and_b32_e32 v0, 0xffff, v0
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v1, 0xffff, v1
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v4, vcc, 1, v8
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v5, 0xffff, v5
+; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v0, v0, v4
 ; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v1, v1, v6
 ; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v3, v3, v7
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v6, vcc, 1, v9
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v7, vcc, 1, v11
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v4, vcc, 1, v8
+; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v6, 16, v10
+; GFX67-GISEL-NEXT:    v_mov_b32_e32 v7, 0x10000
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v4, 0xffff, v4
-; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v5, 16, v5
-; GFX67-GISEL-NEXT:    v_or_b32_e32 v4, v4, v5
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v5, 0xffff, v6
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v6, 0xffff, v7
-; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v6, 16, v6
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v7, vcc, 1, v2
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v6, vcc, v6, v7
+; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v2, v2, v5
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v5, vcc, 1, v9
+; GFX67-GISEL-NEXT:    v_or_b32_e32 v4, v4, v6
+; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v6, 16, v11
+; GFX67-GISEL-NEXT:    v_and_b32_e32 v5, 0xffff, v5
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v6, vcc, v6, v7
 ; GFX67-GISEL-NEXT:    v_or_b32_e32 v5, v5, v6
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v6, vcc, 1, v0
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v7, 0xffff, v7
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v8, vcc, 1, v1
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v9, vcc, 1, v3
+; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v9, 16, v2
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v6, 0xffff, v6
-; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v7, 16, v7
-; GFX67-GISEL-NEXT:    v_or_b32_e32 v6, v6, v7
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v7, 0xffff, v8
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v8, 0xffff, v9
-; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v8, 16, v8
-; GFX67-GISEL-NEXT:    v_or_b32_e32 v7, v7, v8
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v9, vcc, v9, v7
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v8, vcc, 1, v1
+; GFX67-GISEL-NEXT:    v_or_b32_e32 v6, v6, v9
+; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v9, 16, v3
+; GFX67-GISEL-NEXT:    v_and_b32_e32 v8, 0xffff, v8
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v7, vcc, v9, v7
+; GFX67-GISEL-NEXT:    v_or_b32_e32 v7, v8, v7
 ; GFX67-GISEL-NEXT:    v_lshrrev_b32_e32 v8, 16, v4
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v0, 0xffff, v0
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v4, 0xffff, v4
@@ -7029,83 +7009,76 @@ define <2 x i16> @clpeak_imad_pat_v2i16_x2(<2 x i16> %x, <2 x i16> %y) {
 ; GFX67-GISEL-LABEL: clpeak_imad_pat_v2i16_x2:
 ; GFX67-GISEL:       ; %bb.0: ; %entry
 ; GFX67-GISEL-NEXT:    s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v1, vcc, 1, v1
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v0, vcc, 1, v0
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v5, 0xffff, v1
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v1, vcc, 1, v1
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v4, 0xffff, v0
-; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v5, 16, v5
+; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v5, 16, v1
 ; GFX67-GISEL-NEXT:    v_or_b32_e32 v4, v4, v5
 ; GFX67-GISEL-NEXT:    v_lshrrev_b32_e32 v5, 16, v4
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v3, 0xffff, v3
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v4, 0xffff, v4
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v2, 0xffff, v2
-; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v5, v5, v3
+; GFX67-GISEL-NEXT:    v_and_b32_e32 v3, 0xffff, v3
 ; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v4, v4, v2
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v1, vcc, v5, v1
+; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v5, v5, v3
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v0, vcc, v4, v0
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v1, 0xffff, v1
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v1, vcc, v5, v1
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v0, 0xffff, v0
 ; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v1, 16, v1
 ; GFX67-GISEL-NEXT:    v_or_b32_e32 v0, v0, v1
 ; GFX67-GISEL-NEXT:    v_lshrrev_b32_e32 v1, 16, v0
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v0, 0xffff, v0
-; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v1, v1, v3
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v3, vcc, 1, v5
 ; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v0, v0, v2
+; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v1, v1, v3
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v2, vcc, 1, v4
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v5, 0xffff, v3
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v3, vcc, 1, v5
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v4, 0xffff, v2
-; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v5, 16, v5
+; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v5, 16, v3
 ; GFX67-GISEL-NEXT:    v_or_b32_e32 v4, v4, v5
 ; GFX67-GISEL-NEXT:    v_lshrrev_b32_e32 v5, 16, v4
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v1, 0xffff, v1
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v0, 0xffff, v0
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v4, 0xffff, v4
-; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v5, v1, v5
+; GFX67-GISEL-NEXT:    v_and_b32_e32 v1, 0xffff, v1
 ; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v4, v0, v4
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v3, vcc, v5, v3
+; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v5, v1, v5
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v2, vcc, v4, v2
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v3, 0xffff, v3
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v3, vcc, v5, v3
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v2, 0xffff, v2
 ; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v3, 16, v3
 ; GFX67-GISEL-NEXT:    v_or_b32_e32 v2, v2, v3
 ; GFX67-GISEL-NEXT:    v_lshrrev_b32_e32 v3, 16, v2
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v2, 0xffff, v2
-; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v1, v3, v1
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v3, vcc, 1, v5
 ; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v0, v2, v0
+; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v1, v3, v1
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v2, vcc, 1, v4
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v5, 0xffff, v3
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v3, vcc, 1, v5
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v4, 0xffff, v2
-; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v5, 16, v5
+; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v5, 16, v3
 ; GFX67-GISEL-NEXT:    v_or_b32_e32 v4, v4, v5
 ; GFX67-GISEL-NEXT:    v_lshrrev_b32_e32 v5, 16, v4
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v1, 0xffff, v1
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v0, 0xffff, v0
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v4, 0xffff, v4
-; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v5, v1, v5
+; GFX67-GISEL-NEXT:    v_and_b32_e32 v1, 0xffff, v1
 ; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v4, v0, v4
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v3, vcc, v5, v3
+; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v5, v1, v5
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v2, vcc, v4, v2
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v3, 0xffff, v3
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v3, vcc, v5, v3
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v2, 0xffff, v2
 ; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v3, 16, v3
 ; GFX67-GISEL-NEXT:    v_or_b32_e32 v2, v2, v3
 ; GFX67-GISEL-NEXT:    v_lshrrev_b32_e32 v3, 16, v2
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v2, 0xffff, v2
-; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v1, v3, v1
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v3, vcc, 1, v5
 ; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v0, v2, v0
+; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v1, v3, v1
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v2, vcc, 1, v4
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v3, 0xffff, v3
+; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v3, 16, v5
+; GFX67-GISEL-NEXT:    v_mov_b32_e32 v4, 0x10000
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v2, 0xffff, v2
-; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v3, 16, v3
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v4, vcc, 1, v1
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v3, vcc, v3, v4
 ; GFX67-GISEL-NEXT:    v_or_b32_e32 v2, v2, v3
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v3, vcc, 1, v0
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v4, 0xffff, v4
+; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v5, 16, v1
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v3, 0xffff, v3
-; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v4, 16, v4
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v4, vcc, v5, v4
 ; GFX67-GISEL-NEXT:    v_or_b32_e32 v3, v3, v4
 ; GFX67-GISEL-NEXT:    v_lshrrev_b32_e32 v4, 16, v2
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v0, 0xffff, v0
@@ -7337,83 +7310,76 @@ define <2 x i16> @clpeak_umad_pat_v2i16_x2(<2 x i16> %x, <2 x i16> %y) {
 ; GFX67-GISEL-LABEL: clpeak_umad_pat_v2i16_x2:
 ; GFX67-GISEL:       ; %bb.0: ; %entry
 ; GFX67-GISEL-NEXT:    s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v1, vcc, 1, v1
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v0, vcc, 1, v0
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v5, 0xffff, v1
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v1, vcc, 1, v1
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v4, 0xffff, v0
-; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v5, 16, v5
+; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v5, 16, v1
 ; GFX67-GISEL-NEXT:    v_or_b32_e32 v4, v4, v5
 ; GFX67-GISEL-NEXT:    v_lshrrev_b32_e32 v5, 16, v4
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v3, 0xffff, v3
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v4, 0xffff, v4
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v2, 0xffff, v2
-; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v5, v5, v3
+; GFX67-GISEL-NEXT:    v_and_b32_e32 v3, 0xffff, v3
 ; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v4, v4, v2
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v1, vcc, v5, v1
+; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v5, v5, v3
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v0, vcc, v4, v0
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v1, 0xffff, v1
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v1, vcc, v5, v1
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v0, 0xffff, v0
 ; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v1, 16, v1
 ; GFX67-GISEL-NEXT:    v_or_b32_e32 v0, v0, v1
 ; GFX67-GISEL-NEXT:    v_lshrrev_b32_e32 v1, 16, v0
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v0, 0xffff, v0
-; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v1, v1, v3
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v3, vcc, 1, v5
 ; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v0, v0, v2
+; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v1, v1, v3
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v2, vcc, 1, v4
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v5, 0xffff, v3
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v3, vcc, 1, v5
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v4, 0xffff, v2
-; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v5, 16, v5
+; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v5, 16, v3
 ; GFX67-GISEL-NEXT:    v_or_b32_e32 v4, v4, v5
 ; GFX67-GISEL-NEXT:    v_lshrrev_b32_e32 v5, 16, v4
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v1, 0xffff, v1
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v0, 0xffff, v0
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v4, 0xffff, v4
-; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v5, v1, v5
+; GFX67-GISEL-NEXT:    v_and_b32_e32 v1, 0xffff, v1
 ; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v4, v0, v4
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v3, vcc, v5, v3
+; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v5, v1, v5
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v2, vcc, v4, v2
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v3, 0xffff, v3
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v3, vcc, v5, v3
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v2, 0xffff, v2
 ; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v3, 16, v3
 ; GFX67-GISEL-NEXT:    v_or_b32_e32 v2, v2, v3
 ; GFX67-GISEL-NEXT:    v_lshrrev_b32_e32 v3, 16, v2
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v2, 0xffff, v2
-; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v1, v3, v1
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v3, vcc, 1, v5
 ; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v0, v2, v0
+; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v1, v3, v1
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v2, vcc, 1, v4
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v5, 0xffff, v3
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v3, vcc, 1, v5
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v4, 0xffff, v2
-; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v5, 16, v5
+; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v5, 16, v3
 ; GFX67-GISEL-NEXT:    v_or_b32_e32 v4, v4, v5
 ; GFX67-GISEL-NEXT:    v_lshrrev_b32_e32 v5, 16, v4
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v1, 0xffff, v1
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v0, 0xffff, v0
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v4, 0xffff, v4
-; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v5, v1, v5
+; GFX67-GISEL-NEXT:    v_and_b32_e32 v1, 0xffff, v1
 ; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v4, v0, v4
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v3, vcc, v5, v3
+; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v5, v1, v5
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v2, vcc, v4, v2
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v3, 0xffff, v3
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v3, vcc, v5, v3
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v2, 0xffff, v2
 ; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v3, 16, v3
 ; GFX67-GISEL-NEXT:    v_or_b32_e32 v2, v2, v3
 ; GFX67-GISEL-NEXT:    v_lshrrev_b32_e32 v3, 16, v2
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v2, 0xffff, v2
-; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v1, v3, v1
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v3, vcc, 1, v5
 ; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v0, v2, v0
+; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v1, v3, v1
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v2, vcc, 1, v4
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v3, 0xffff, v3
+; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v3, 16, v5
+; GFX67-GISEL-NEXT:    v_mov_b32_e32 v4, 0x10000
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v2, 0xffff, v2
-; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v3, 16, v3
-; GFX67-GISEL-NEXT:    v_add_i32_e32 v4, vcc, 1, v1
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v3, vcc, v3, v4
 ; GFX67-GISEL-NEXT:    v_or_b32_e32 v2, v2, v3
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v3, vcc, 1, v0
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v4, 0xffff, v4
+; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v5, 16, v1
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v3, 0xffff, v3
-; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v4, 16, v4
+; GFX67-GISEL-NEXT:    v_add_i32_e32 v4, vcc, v5, v4
 ; GFX67-GISEL-NEXT:    v_or_b32_e32 v3, v3, v4
 ; GFX67-GISEL-NEXT:    v_lshrrev_b32_e32 v4, 16, v2
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v0, 0xffff, v0
@@ -8017,9 +7983,8 @@ define <2 x i16> @other_use_mul_mad_v2i16_var(<2 x i16> %x, <2 x i16> %y, <2 x i
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v1, 0xffff, v1
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v2, 0xffff, v3
 ; GFX67-GISEL-NEXT:    v_mul_u32_u24_e32 v1, v1, v2
-; GFX67-GISEL-NEXT:    v_and_b32_e32 v3, 0xffff, v1
 ; GFX67-GISEL-NEXT:    v_and_b32_e32 v2, 0xffff, v0
-; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v3, 16, v3
+; GFX67-GISEL-NEXT:    v_lshlrev_b32_e32 v3, 16, v1
 ; GFX67-GISEL-NEXT:    v_or_b32_e32 v2, v2, v3
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v0, vcc, v0, v4
 ; GFX67-GISEL-NEXT:    v_add_i32_e32 v1, vcc, v1, v5
