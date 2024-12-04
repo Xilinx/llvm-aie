@@ -14,10 +14,10 @@ define dso_local noundef float @bfloat16_to_float_test(%class.bfloat16 %bf.coerc
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
-; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mova r0, #16; extend.u16 r1, r1 // Delay Slot 2
+; CHECK-NEXT:    mova r0, #16 // Delay Slot 2
 ; CHECK-NEXT:    lshl r0, r1, r0 // Delay Slot 1
 entry:
   %bf.coerce.fca.0.extract = extractvalue %class.bfloat16 %bf.coerce, 0

@@ -823,6 +823,15 @@ def trunc_ext_fold: GICombineRule <
 >;
 
 // Under certain conditions, transform:
+// Fold (shl (and x, imm1), imm2) -> (shl x, imm2)
+def shl_and_fold: GICombineRule <
+  (defs root:$root, register_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_SHL):$root,
+         [{ return Helper.matchCombineShlOfAnd(*${root}, ${matchinfo}); }]),
+  (apply [{ Helper.applyCombineShlOfAnd(*${root}, ${matchinfo}); }])
+>;
+
+// Under certain conditions, transform:
 //  trunc (shl x, K)     -> shl (trunc x), K//
 //  trunc ([al]shr x, K) -> (trunc ([al]shr (trunc x), K))
 def trunc_shift_matchinfo : GIDefMatchData<"std::pair<MachineInstr*, LLT>">;
@@ -1588,7 +1597,7 @@ def identity_combines : GICombineGroup<[select_same_val, right_identity_zero,
                                         bitcast_bitcast_fold, fptrunc_fpext_fold,
                                         right_identity_neg_zero_fp,
                                         right_identity_neg_one_fp,
-                                        combine_inttoptr_constant]>;
+                                        combine_inttoptr_constant, shl_and_fold]>;
 
 def const_combines : GICombineGroup<[constant_fold_fp_ops, const_ptradd_to_i2p,
                                      overlapping_and, mulo_by_2, mulo_by_0,

@@ -2553,6 +2553,39 @@ void CombinerHelper::applyCombineTruncOfExt(
   MI.eraseFromParent();
 }
 
+bool CombinerHelper::matchCombineShlOfAnd(MachineInstr &MI, Register &Reg) {
+  // We're trying to match the following pattern:
+  //   %t = G_AND %x, imm1
+  //   %root = G_SHL %t, imm2
+  // -->
+  //   %root = G_SHL %x, imm2
+  // Where (~imm1 << imm2) = 0
+  assert(MI.getOpcode() == TargetOpcode::G_SHL && "Expected a G_SHL");
+  const Register DstReg = MI.getOperand(0).getReg();
+  const Register SrcReg = MI.getOperand(1).getReg();
+  const LLT SrcTy = MRI.getType(SrcReg);
+  const unsigned Size = SrcTy.getSizeInBits();
+
+  // Try to match shl (and x, imm1), imm2
+  int64_t ShiftImm, AndImm;
+  if (!mi_match(DstReg, MRI,
+                m_GShl(m_OneNonDBGUse(m_GAnd(m_Reg(Reg), m_ICst(AndImm))),
+                       m_ICst(ShiftImm))))
+    return false;
+  // Check if AndImm has bits set only in positions that will be shifted out by
+  // ShiftImm. If any significant bits remain after the shift, the AND operation
+  // cannot be removed.
+  uint64_t Mask = ~0ULL >> (64 - Size);
+  return !((~AndImm << ShiftImm) & Mask);
+}
+
+void CombinerHelper::applyCombineShlOfAnd(MachineInstr &MI, Register &Reg) {
+  assert(MI.getOpcode() == TargetOpcode::G_SHL && "Expected a G_SHL");
+  Observer.changingInstr(MI);
+  MI.getOperand(1).setReg(Reg);
+  Observer.changedInstr(MI);
+}
+
 static LLT getMidVTForTruncRightShiftCombine(LLT ShiftTy, LLT TruncTy) {
   const unsigned ShiftSize = ShiftTy.getScalarSizeInBits();
   const unsigned TruncSize = TruncTy.getScalarSizeInBits();
