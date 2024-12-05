@@ -22079,6 +22079,32 @@ static llvm::Intrinsic::ID getAIE2PIntrinsicFunction(unsigned BuiltinID) {
     return Intrinsic::aie2p_fifo_st_flush_3d;
   case AIE::BI__builtin_aie2p_fifo_st_flush_conv_3d_byte:
     return Intrinsic::aie2p_fifo_st_flush_3d_conv;
+  case AIE::BI__builtin_aie2p_fifo_ld_fill:
+    return Intrinsic::aie2p_fifo_ld_fill;
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_512_unaligned:
+    return Intrinsic::aie2p_fifo_ld_pop_unaligned;
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_576_bfp16:
+    return Intrinsic::aie2p_fifo_ld_pop_576_bfp16;
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_544_bfp16:
+    return Intrinsic::aie2p_fifo_ld_pop_544_bfp16;
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_1d_512_unaligned:
+    return Intrinsic::aie2p_fifo_ld_pop_1d_unaligned;
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_1d_576_bfp16:
+    return Intrinsic::aie2p_fifo_ld_pop_576_1d_bfp16;
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_1d_544_bfp16:
+    return Intrinsic::aie2p_fifo_ld_pop_544_1d_bfp16;
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_2d_512_unaligned:
+    return Intrinsic::aie2p_fifo_ld_pop_2d_unaligned;
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_2d_576_bfp16:
+    return Intrinsic::aie2p_fifo_ld_pop_576_2d_bfp16;
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_2d_544_bfp16:
+    return Intrinsic::aie2p_fifo_ld_pop_544_2d_bfp16;
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_3d_512_unaligned:
+    return Intrinsic::aie2p_fifo_ld_pop_3d_unaligned;
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_3d_576_bfp16:
+    return Intrinsic::aie2p_fifo_ld_pop_576_3d_bfp16;
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_3d_544_bfp16:
+    return Intrinsic::aie2p_fifo_ld_pop_544_3d_bfp16;
   default:
     break;
   }
@@ -22469,6 +22495,175 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
     Builder.CreateDefaultAlignedStore(Avail, AvailAddr);
     return Builder.CreateDefaultAlignedStore(Ptr, PtrAddr);
   }
+  case AIE::BI__builtin_aie2p_fifo_ld_fill: {
+    SmallVector<Value *, 3> Ops;
+    for (unsigned I = 0; I < E->getNumArgs(); I++)
+      Ops.push_back(EmitScalarExpr(E->getArg(I)));
+
+    llvm::Intrinsic::ID IntrinsicID = getAIEIntrinsicFunction(BuiltinID, Arch);
+    assert(IntrinsicID != Intrinsic::not_intrinsic);
+    Function *F = CGM.getIntrinsic(IntrinsicID);
+    Value *Val = Builder.CreateCall(F, Ops);
+
+    Value *Ptr = Builder.CreateExtractValue(Val, 0);
+    Value *Fifo = Builder.CreateExtractValue(Val, 1);
+    Value *Avail = Builder.CreateExtractValue(Val, 2);
+    Value *PtrAddr = EmitLValue(E->getArg(0)).getPointer(*this);
+    Value *FifoAddr = EmitLValue(E->getArg(1)).getPointer(*this);
+    Value *AvailAddr = EmitLValue(E->getArg(2)).getPointer(*this);
+
+    Builder.CreateDefaultAlignedStore(Fifo, FifoAddr);
+    Builder.CreateDefaultAlignedStore(Avail, AvailAddr);
+    return Builder.CreateDefaultAlignedStore(Ptr, PtrAddr);
+  }
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_512_unaligned:
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_1d_512_unaligned:
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_2d_512_unaligned:
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_3d_512_unaligned: {
+    SmallVector<Value *, 3> Ops;
+    unsigned NumAddrIncs = 0;
+    if (BuiltinID == AIE::BI__builtin_aie2p_fifo_ld_pop_1d_512_unaligned) {
+      NumAddrIncs = 1;
+    } else if (BuiltinID ==
+               AIE::BI__builtin_aie2p_fifo_ld_pop_2d_512_unaligned) {
+      NumAddrIncs = 4;
+    } else if (BuiltinID ==
+               AIE::BI__builtin_aie2p_fifo_ld_pop_3d_512_unaligned) {
+      NumAddrIncs = 7;
+    }
+
+    for (unsigned I = 0; I < E->getNumArgs() - NumAddrIncs; I++)
+      Ops.push_back(EmitScalarExpr(E->getArg(I)));
+
+    for (unsigned i = E->getNumArgs() - NumAddrIncs, e = E->getNumArgs();
+         i != e; i++) {
+      Ops.push_back(
+          Builder.CreateTrunc(EmitScalarExpr(E->getArg(i)),
+                              llvm::Type::getInt20Ty(getLLVMContext())));
+    }
+
+    llvm::Intrinsic::ID IntrinsicID = getAIEIntrinsicFunction(BuiltinID, Arch);
+    assert(IntrinsicID != Intrinsic::not_intrinsic);
+    Function *F = CGM.getIntrinsic(IntrinsicID);
+    Value *Val = Builder.CreateCall(F, Ops);
+
+    Value *Ptr = Builder.CreateExtractValue(Val, 1);
+    Value *Fifo = Builder.CreateExtractValue(Val, 2);
+    Value *Avail = Builder.CreateExtractValue(Val, 3);
+    Value *PtrAddr = EmitLValue(E->getArg(0)).getPointer(*this);
+    Value *FifoAddr = EmitLValue(E->getArg(1)).getPointer(*this);
+    Value *AvailAddr = EmitLValue(E->getArg(2)).getPointer(*this);
+
+    if (BuiltinID == AIE::BI__builtin_aie2p_fifo_ld_pop_2d_512_unaligned) {
+      Value *Count1 =
+          Builder.CreateZExt(Builder.CreateExtractValue(Val, 4),
+                             llvm::Type::getInt32Ty(getLLVMContext()));
+      Value *Count1Addr = EmitLValue(E->getArg(5)).getPointer(*this);
+      Builder.CreateDefaultAlignedStore(Count1, Count1Addr);
+    } else if (BuiltinID ==
+               AIE::BI__builtin_aie2p_fifo_ld_pop_3d_512_unaligned) {
+      Value *Count1 =
+          Builder.CreateZExt(Builder.CreateExtractValue(Val, 4),
+                             llvm::Type::getInt32Ty(getLLVMContext()));
+      Value *Count1Addr =
+          EmitLValue(E->getArg(E->getNumArgs() - 5)).getPointer(*this);
+      Value *Count2 =
+          Builder.CreateZExt(Builder.CreateExtractValue(Val, 5),
+                             llvm::Type::getInt32Ty(getLLVMContext()));
+      Value *Count2Addr =
+          EmitLValue(E->getArg(E->getNumArgs() - 2)).getPointer(*this);
+      Builder.CreateDefaultAlignedStore(Count1, Count1Addr);
+      Builder.CreateDefaultAlignedStore(Count2, Count2Addr);
+    }
+
+    Builder.CreateDefaultAlignedStore(Fifo, FifoAddr);
+    Builder.CreateDefaultAlignedStore(Avail, AvailAddr);
+    Builder.CreateDefaultAlignedStore(Ptr, PtrAddr);
+    return Builder.CreateExtractValue(Val, 0);
+  }
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_1d_544_bfp16:
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_1d_576_bfp16:
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_2d_576_bfp16:
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_2d_544_bfp16:
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_3d_576_bfp16:
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_3d_544_bfp16:
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_544_bfp16:
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_576_bfp16: {
+    SmallVector<Value *, 3> Ops;
+    unsigned NumAddrIncs = 0;
+    unsigned NumOutIncs = 0;
+    if (BuiltinID == AIE::BI__builtin_aie2p_fifo_ld_pop_1d_544_bfp16 ||
+        BuiltinID == AIE::BI__builtin_aie2p_fifo_ld_pop_1d_576_bfp16) {
+      NumAddrIncs = 1;
+      NumOutIncs = 0;
+    } else if (BuiltinID == AIE::BI__builtin_aie2p_fifo_ld_pop_2d_576_bfp16 ||
+               BuiltinID == AIE::BI__builtin_aie2p_fifo_ld_pop_2d_544_bfp16) {
+      NumAddrIncs = 4;
+      NumOutIncs = 1;
+    } else if (BuiltinID == AIE::BI__builtin_aie2p_fifo_ld_pop_3d_576_bfp16 ||
+               BuiltinID == AIE::BI__builtin_aie2p_fifo_ld_pop_3d_544_bfp16) {
+      NumAddrIncs = 7;
+      NumOutIncs = 2;
+    }
+
+    for (unsigned I = 0; I < E->getNumArgs() - NumAddrIncs - 2; I++)
+      Ops.push_back(EmitScalarExpr(E->getArg(I)));
+    for (unsigned i = E->getNumArgs() - NumAddrIncs - 2,
+                  e = E->getNumArgs() - 2;
+         i != e; i++) {
+      Ops.push_back(
+          Builder.CreateTrunc(EmitScalarExpr(E->getArg(i)),
+                              llvm::Type::getInt20Ty(getLLVMContext())));
+    }
+
+    llvm::Intrinsic::ID IntrinsicID = getAIEIntrinsicFunction(BuiltinID, Arch);
+    assert(IntrinsicID != Intrinsic::not_intrinsic);
+    Function *F = CGM.getIntrinsic(IntrinsicID);
+    Value *Val = Builder.CreateCall(F, Ops);
+
+    Value *Ptr = Builder.CreateExtractValue(Val, 0);
+    Value *Fifo = Builder.CreateExtractValue(Val, 1);
+    Value *Avail = Builder.CreateExtractValue(Val, 2);
+    Value *PtrAddr = EmitLValue(E->getArg(0)).getPointer(*this);
+    Value *FifoAddr = EmitLValue(E->getArg(1)).getPointer(*this);
+    Value *AvailAddr = EmitLValue(E->getArg(2)).getPointer(*this);
+
+    Value *Mantissa = Builder.CreateExtractValue(Val, 3 + NumOutIncs);
+    Value *Exponent = Builder.CreateExtractValue(Val, 4 + NumOutIncs);
+    Value *MantissaAddr =
+        EmitLValue(E->getArg(E->getNumArgs() - 2)).getPointer(*this);
+    Value *ExponentAddr =
+        EmitLValue(E->getArg(E->getNumArgs() - 1)).getPointer(*this);
+
+    if (BuiltinID == AIE::BI__builtin_aie2p_fifo_ld_pop_2d_576_bfp16 ||
+        BuiltinID == AIE::BI__builtin_aie2p_fifo_ld_pop_2d_544_bfp16) {
+      Value *Count1 =
+          Builder.CreateZExt(Builder.CreateExtractValue(Val, 3),
+                             llvm::Type::getInt32Ty(getLLVMContext()));
+      Value *Count1Addr = EmitLValue(E->getArg(5)).getPointer(*this);
+      Builder.CreateDefaultAlignedStore(Count1, Count1Addr);
+    } else if (BuiltinID == AIE::BI__builtin_aie2p_fifo_ld_pop_3d_576_bfp16 ||
+               BuiltinID == AIE::BI__builtin_aie2p_fifo_ld_pop_3d_544_bfp16) {
+      Value *Count1 =
+          Builder.CreateZExt(Builder.CreateExtractValue(Val, 3),
+                             llvm::Type::getInt32Ty(getLLVMContext()));
+      Value *Count1Addr =
+          EmitLValue(E->getArg(E->getNumArgs() - 5 - 2)).getPointer(*this);
+      Value *Count2 =
+          Builder.CreateZExt(Builder.CreateExtractValue(Val, 4),
+                             llvm::Type::getInt32Ty(getLLVMContext()));
+      Value *Count2Addr =
+          EmitLValue(E->getArg(E->getNumArgs() - 2 - 2)).getPointer(*this);
+      Builder.CreateDefaultAlignedStore(Count1, Count1Addr);
+      Builder.CreateDefaultAlignedStore(Count2, Count2Addr);
+    }
+
+    Builder.CreateDefaultAlignedStore(Fifo, FifoAddr);
+    Builder.CreateDefaultAlignedStore(Avail, AvailAddr);
+    Builder.CreateDefaultAlignedStore(Mantissa, MantissaAddr);
+    Builder.CreateDefaultAlignedStore(Exponent, ExponentAddr);
+    return Builder.CreateDefaultAlignedStore(Ptr, PtrAddr);
+  }
   default:
     break;
   }
@@ -22662,7 +22857,20 @@ Value *CodeGenFunction::EmitAIE2PBuiltinExpr(unsigned BuiltinID,
   case AIE::BI__builtin_aie2p_fifo_st_flush_2d_byte:
   case AIE::BI__builtin_aie2p_fifo_st_flush_conv_2d_byte:
   case AIE::BI__builtin_aie2p_fifo_st_flush_3d_byte:
-  case AIE::BI__builtin_aie2p_fifo_st_flush_conv_3d_byte: {
+  case AIE::BI__builtin_aie2p_fifo_st_flush_conv_3d_byte:
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_512_unaligned:
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_576_bfp16:
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_544_bfp16:
+  case AIE::BI__builtin_aie2p_fifo_ld_fill:
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_1d_512_unaligned:
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_1d_576_bfp16:
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_1d_544_bfp16:
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_2d_512_unaligned:
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_2d_576_bfp16:
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_2d_544_bfp16:
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_3d_512_unaligned:
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_3d_576_bfp16:
+  case AIE::BI__builtin_aie2p_fifo_ld_pop_3d_544_bfp16: {
     return this->EmitAIEBuiltinExpr(BuiltinID, E, Arch);
   }
   default:
