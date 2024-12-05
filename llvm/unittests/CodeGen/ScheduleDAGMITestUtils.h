@@ -18,7 +18,7 @@ namespace llvm {
 
 class DummyScheduleDAGMI : public ScheduleDAGMI {
 public:
-  DummyScheduleDAGMI(MachineSchedContext *C, bool IsPreRA);
+  DummyScheduleDAGMI(MachineSchedContext *C, bool IsPreRA, bool IsTopDown);
   ~DummyScheduleDAGMI() override;
 
   /// Initialize enough stuff in a similar manner to ScheduleDAGMI::schedule()
@@ -49,7 +49,8 @@ protected:
 
   /// Initialize a DummyScheduleDAGMI so it is ready to schedule instructions
   /// in \p MBB
-  virtual void initializeScheduler(bool IsPreRA = false);
+  virtual void initializeScheduler(bool IsPreRA = false,
+                                   bool IsTopDown = false);
 
   /// Create a dummy instruction for which MachineInstr::isDebugValue() is true
   /// It is pushed at the end of \p MBB

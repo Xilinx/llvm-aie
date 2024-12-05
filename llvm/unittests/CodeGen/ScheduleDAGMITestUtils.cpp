@@ -35,10 +35,13 @@ std::unique_ptr<MachineSchedStrategy> getSchedStrategy(MachineSchedContext *C,
 
 } // namespace
 
-DummyScheduleDAGMI::DummyScheduleDAGMI(MachineSchedContext *C, bool IsPreRA)
+DummyScheduleDAGMI::DummyScheduleDAGMI(MachineSchedContext *C, bool IsPreRA,
+                                       bool IsTopDown)
     : ScheduleDAGMI(C, getSchedStrategy(C, IsPreRA),
                     /*RemoveKillFlags=*/true),
-      IsPreRA(IsPreRA), SchedZone(SchedBoundary::BotQID, "Zone") {}
+      IsPreRA(IsPreRA),
+      SchedZone(IsTopDown ? SchedBoundary::TopQID : SchedBoundary::BotQID,
+                IsTopDown ? "TopZone" : "BotZone") {}
 
 DummyScheduleDAGMI::~DummyScheduleDAGMI() {
   if (BB) {
@@ -85,9 +88,10 @@ ScheduleDAGMITest::ScheduleDAGMITest(LLVMTargetMachine *TM)
   MBB = MF->CreateMachineBasicBlock();
 }
 
-void ScheduleDAGMITest::initializeScheduler(bool IsPreRA) {
+void ScheduleDAGMITest::initializeScheduler(bool IsPreRA, bool IsTopDown) {
   SchedCtx.MF = MF.get();
-  Scheduler = std::make_unique<DummyScheduleDAGMI>(&SchedCtx, IsPreRA);
+  Scheduler =
+      std::make_unique<DummyScheduleDAGMI>(&SchedCtx, IsPreRA, IsTopDown);
   Scheduler->prepareForBB(MBB);
 }
 

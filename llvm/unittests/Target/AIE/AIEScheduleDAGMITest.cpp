@@ -49,8 +49,9 @@ public:
       : ScheduleDAGMITest(AIE::createAIETestTargetMachine()) {}
 
 protected:
-  void initializeScheduler(bool IsPreRA = false) override {
-    ScheduleDAGMITest::initializeScheduler(IsPreRA);
+  void initializeScheduler(bool IsPreRA = false,
+                           bool IsTopDown = false) override {
+    ScheduleDAGMITest::initializeScheduler(IsPreRA, IsTopDown);
     Scheduler->getSchedZone().HazardRec =
         new DummyAIEHazardRecognizer(Scheduler.get());
   }
@@ -78,6 +79,28 @@ TEST_F(AIEScheduleDAGMITest, SchedNoDelta) {
   EXPECT_EQ(MISeq(*MBB), MISeq({MI1, MI0, MI2}));
 }
 
+/// Case where all instructions are scheduled in Top.getCurrCycle()
+TEST_F(AIEScheduleDAGMITest, SchedNoDeltaTopDown) {
+  auto *MI0 = appendPlainInstr();
+  auto *MI1 = appendPlainInstr();
+  auto *MI2 = appendPlainInstr();
+
+  initializeScheduler(false, true);
+  SchedBoundary &Top = Scheduler->getSchedZone();
+
+  // Mark all instructions as available.
+  for (auto *MI : {MI0, MI1, MI2})
+    Top.releaseNode(Scheduler->getSUnit(MI), /*ReadyCycle=*/0, false);
+
+  Scheduler->scheduleInstr(MI2, Top);
+  Top.bumpCycle(2);
+  Scheduler->scheduleInstr(MI0, Top);
+  Top.bumpCycle(3);
+  Scheduler->scheduleInstr(MI1, Top);
+
+  EXPECT_EQ(MISeq(*MBB), MISeq({MI2, MI0, MI1}));
+}
+
 /// Case where instructions are scheduled with a delta from Bot.getCurrCycle().
 TEST_F(AIEScheduleDAGMITest, SchedWithDelta) {
   auto *MI0 = appendPlainInstr();
@@ -98,6 +121,29 @@ TEST_F(AIEScheduleDAGMITest, SchedWithDelta) {
   Scheduler->scheduleInstr(MI0, Bot); // Emit in cycle 3
 
   EXPECT_EQ(MISeq(*MBB), MISeq({MI2, MI1, MI0}));
+}
+
+/// Case where instructions are scheduled with a delta from Top.getCurrCycle().
+TEST_F(AIEScheduleDAGMITest, SchedWithDeltaTopDown) {
+  auto *MI0 = appendPlainInstr();
+  auto *MI1 = appendPlainInstr();
+  auto *MI2 = appendPlainInstr();
+  auto *MI3 = appendPlainInstr();
+
+  initializeScheduler(false, true);
+  SchedBoundary &Top = Scheduler->getSchedZone();
+
+  // Mark all instructions as available.
+  for (auto *MI : {MI0, MI1, MI2, MI3})
+    Top.releaseNode(Scheduler->getSUnit(MI), /*ReadyCycle=*/0, false);
+
+  Top.bumpCycle(10);
+  Scheduler->scheduleInstr(MI3, Top);    // Emit in cycle 10
+  Scheduler->scheduleInstr(MI2, Top, 8); // Emit in cycle 10-8
+  Scheduler->scheduleInstr(MI1, Top, 5); // Emit in cycle 10-5
+  Scheduler->scheduleInstr(MI0, Top);    // Emit in cycle 10
+
+  EXPECT_EQ(MISeq(*MBB), MISeq({MI2, MI1, MI3, MI0}));
 }
 
 /// Verify the behavior of computeAndFinalizeBundles. In pre-RA scheduling,
