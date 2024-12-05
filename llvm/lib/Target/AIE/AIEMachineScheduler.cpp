@@ -394,7 +394,10 @@ void AIEPostRASchedStrategy::initialize(ScheduleDAGMI *Dag) {
   }
 
   RegionBottomUpCycles = std::max(BottomUpCycles.getValue(), DelaySlotCycles);
-  IsTopDown = (RegionBottomUpCycles == 0);
+  const Region &Reg = InterBlock.getBlockState(CurMBB).getCurrentRegion();
+  RegionTopDownCycles = Reg.getTopFixedBundles().size();
+  // Start with top-down when we have TopInsert bundles.
+  IsTopDown = (RegionBottomUpCycles == 0) || (RegionTopDownCycles > 0);
   if (!IsTopDown)
     LLVM_DEBUG(dbgs() << "*** Using bottom-up scheduling for the region ***\n");
   else
@@ -426,6 +429,32 @@ static unsigned getMinSchedulableCycle(SchedBoundary &Zone) {
   return MinSchedulableCycle;
 }
 
+bool AIEPostRASchedStrategy::doesNotProgressInZone(const SchedBoundary &Zone,
+                                                   const SUnit &SU) const {
+  // If SU is a fixed instruction in the other zone, it isn't available.
+  if (isFixedSU(SU, !Zone.isTop()))
+    return true;
+
+  // We cannot proceed with delay slot instructions in the top zone.
+  return Zone.isTop() && SU.getInstr()->hasDelaySlot();
+}
+
+// This function returns true when it is impossible to continue with top-down
+// without entering an infinite loop because the only remaining instructions
+// cannot be scheduled in the top zone.
+bool AIEPostRASchedStrategy::mustSwitchToBottomUp() {
+  assert(IsTopDown);
+  SchedBoundary &Zone = getSchedZone();
+  ReadyQueue &PQ = Zone.Pending;
+  ReadyQueue &AQ = Zone.Available;
+
+  // We must switch when we have an empty AQ and instructions that cannot
+  // progress in the PQ.
+  return AQ.size() == 0 && all_of(PQ, [&](const SUnit *SU) {
+           return doesNotProgressInZone(Zone, *SU);
+         });
+}
+
 SUnit *AIEPostRASchedStrategy::pickNodeAndCycle(
     bool &IsTopNode, std::optional<unsigned> &EmissionCycle) {
   LLVM_DEBUG(dbgs() << "** AIEPostRASchedStrategy::pickNode TopCycle="
@@ -439,6 +468,13 @@ SUnit *AIEPostRASchedStrategy::pickNodeAndCycle(
     // RegionBottomUpCycles.
     LLVM_DEBUG(dbgs() << "*** Switching to top-down ***\n");
     IsTopDown = true;
+  } else if (IsTopDown && RegionTopDownCycles &&
+             (Top.getCurrCycle() >= RegionTopDownCycles ||
+              mustSwitchToBottomUp())) {
+    // We have scheduled all top-fixed instructions, filling as many slots as
+    // possible. Now it is time to proceed with the bottom-up approach.
+    LLVM_DEBUG(dbgs() << "*** Switching to bottom-up ***\n");
+    IsTopDown = false;
   }
 
   SchedBoundary &Zone = getSchedZone();
@@ -568,8 +604,7 @@ bool AIEPostRASchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
     }
   }
 
-  // If SU is a fixed instruction in the other zone, it isn't available
-  if (isFixedSU(SU, !Zone.isTop()))
+  if (doesNotProgressInZone(Zone, SU))
     return false;
 
   // Whether or not the zone is Top or Bot, verify if SU is ready to be
