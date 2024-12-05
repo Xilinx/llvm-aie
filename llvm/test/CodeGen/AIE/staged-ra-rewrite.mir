@@ -736,7 +736,7 @@ body:             |
   ; AIE2P-RA-NEXT:   renamable $d4 = COPY killed renamable $d5
   ; AIE2P-RA-NEXT: {{  $}}
   ; AIE2P-RA-NEXT: bb.1:
-  ; AIE2P-RA-NEXT:   liveins: $p0, $d0_3d:0x001C000000800E00
+  ; AIE2P-RA-NEXT:   liveins: $p0, $d0_3d:0x0007000000800E00
   ; AIE2P-RA-NEXT: {{  $}}
   ; AIE2P-RA-NEXT:   $p0, $dc0, $dc4 = PADDA_3D_split killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4
   ; AIE2P-RA-NEXT:   PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit renamable $dc4
@@ -826,7 +826,7 @@ body:             |
   ; AIE2P-RA-NEXT:   renamable $d4 = COPY killed renamable $d5
   ; AIE2P-RA-NEXT: {{  $}}
   ; AIE2P-RA-NEXT: bb.1:
-  ; AIE2P-RA-NEXT:   liveins: $p0, $d0_3d:0x001C000000800E00
+  ; AIE2P-RA-NEXT:   liveins: $p0, $d0_3d:0x0007000000800E00
   ; AIE2P-RA-NEXT: {{  $}}
   ; AIE2P-RA-NEXT:   $p0, $dc0, $dc4 = PADDA_3D_split killed $p0, $m0, $dn0, $dj0, $dc0, undef $m4, $dn4, $dj4, $dc4
   ; AIE2P-RA-NEXT:   PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit renamable $dc4

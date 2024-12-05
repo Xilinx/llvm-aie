@@ -155,7 +155,7 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2 (align 16):
   ; CHECK-NEXT:   successors: %bb.3(0x40000000), %bb.2(0x40000000)
-  ; CHECK-NEXT:   liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $r0, $r8, $d0_3d:0x001C000000800E00
+  ; CHECK-NEXT:   liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $r0, $r8, $d0_3d:0x0007000000800E00
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   ST_dms_sts_idx_imm renamable $r0, renamable $p0, 0 :: (store (s32))
   ; CHECK-NEXT:   renamable $r0 = nuw nsw ADD_add_r_ri killed renamable $r0, 1, implicit-def $srcarry
@@ -236,7 +236,7 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors: %bb.2(0x80000000)
-  ; CHECK-NEXT:   liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $d0_3d:0x001C000000800E00
+  ; CHECK-NEXT:   liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $d0_3d:0x0007000000800E00
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $p0, $dc0, dead $dc4 = PADDA_3D killed $p0, killed $d0_3d
   ; CHECK-NEXT: {{  $}}
@@ -302,7 +302,7 @@ body:             |
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.1:
   ; CHECK-NEXT:   successors:
-  ; CHECK-NEXT:   liveins: $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $r9, $d0_3d:0x001C000000800C00
+  ; CHECK-NEXT:   liveins: $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $r9, $d0_3d:0x0007000000800C00
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   RET implicit $lr
   ; CHECK-NEXT:   NOP
@@ -313,7 +313,7 @@ body:             |
   ; CHECK-NEXT:   DelayedSchedBarrier implicit killed renamable $dc0, implicit killed renamable $p0, implicit killed renamable $dc4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.2 (align 16):
-  ; CHECK-NEXT:   liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $d0_3d:0x001C000000800E00
+  ; CHECK-NEXT:   liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $d0_3d:0x0007000000800E00
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   RET implicit $lr
   ; CHECK-NEXT:   NOP
