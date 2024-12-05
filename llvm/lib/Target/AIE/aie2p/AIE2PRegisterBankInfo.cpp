@@ -387,6 +387,14 @@ AIE2PRegisterBankInfo::getInstrAlternativeMappings(
   return AIEBaseRegisterBankInfo::getInstrAlternativeMappings(MI);
 }
 
+static bool checkFifoDstSrc(const MachineInstr &MI,
+                            const Register &FifoRegCandidate,
+                            unsigned DstOpIndex, unsigned SrcOpIndex) {
+  Register FifoDstReg = MI.getOperand(DstOpIndex).getReg();
+  Register FifoSrcReg = MI.getOperand(SrcOpIndex).getReg();
+  return ((FifoRegCandidate == FifoDstReg) || (FifoRegCandidate == FifoSrcReg));
+}
+
 // Check if FifoRegCandidate is one of the fifo operands of the intrinsic
 static bool isUsedAsFifoRegInIntrinsic(const MachineRegisterInfo &MRI,
                                        const MachineInstr &MI,
@@ -394,10 +402,37 @@ static bool isUsedAsFifoRegInIntrinsic(const MachineRegisterInfo &MRI,
   switch (cast<GIntrinsic>(MI).getIntrinsicID()) {
   // TODO: To be extented with more FIFO using intrinsics
   case Intrinsic::aie2p_fifo_ld_fill: {
-    Register FifoDstReg = MI.getOperand(1).getReg();
-    Register FifoSrcReg = MI.getOperand(5).getReg();
-    if ((FifoRegCandidate == FifoDstReg) || (FifoRegCandidate == FifoSrcReg))
-      return true;
+    return checkFifoDstSrc(MI, FifoRegCandidate, 1, 5);
+    break;
+  }
+  case Intrinsic::aie2p_fifo_ld_pop_unaligned:
+  case Intrinsic::aie2p_fifo_ld_pop_1d_unaligned: {
+    return checkFifoDstSrc(MI, FifoRegCandidate, 2, 6);
+    break;
+  }
+  case Intrinsic::aie2p_fifo_ld_pop_544_1d_bfp16:
+  case Intrinsic::aie2p_fifo_ld_pop_576_1d_bfp16:
+  case Intrinsic::aie2p_fifo_ld_pop_544_bfp16:
+  case Intrinsic::aie2p_fifo_ld_pop_576_bfp16: {
+    return checkFifoDstSrc(MI, FifoRegCandidate, 1, 7);
+    break;
+  }
+  case Intrinsic::aie2p_fifo_ld_pop_2d_unaligned: {
+    return checkFifoDstSrc(MI, FifoRegCandidate, 2, 7);
+    break;
+  }
+  case Intrinsic::aie2p_fifo_ld_pop_3d_unaligned: {
+    return checkFifoDstSrc(MI, FifoRegCandidate, 2, 8);
+    break;
+  }
+  case Intrinsic::aie2p_fifo_ld_pop_544_2d_bfp16:
+  case Intrinsic::aie2p_fifo_ld_pop_576_2d_bfp16: {
+    return checkFifoDstSrc(MI, FifoRegCandidate, 1, 8);
+    break;
+  }
+  case Intrinsic::aie2p_fifo_ld_pop_544_3d_bfp16:
+  case Intrinsic::aie2p_fifo_ld_pop_576_3d_bfp16: {
+    return checkFifoDstSrc(MI, FifoRegCandidate, 1, 9);
     break;
   }
   case Intrinsic::aie2p_fifo_st_push_544_bfp16:
@@ -1064,6 +1099,7 @@ AIE2PRegisterBankInfo::getRegBankFromRegClass(const TargetRegisterClass &RC,
   case AIE2P::eSRegClassID:
   case AIE2P::mS2RegClassID:
   case AIE2P::mS3RegClassID:
+  case AIE2P::eERegClassID:
   case AIE2P::EXPVEC64RegClassID:
   case AIE2P::EXPVEC64_with_sub_hi_exp_in_eEheRegClassID:
   case AIE2P::EXPVEC64_with_sub_hi_exp_in_eEhoRegClassID:
