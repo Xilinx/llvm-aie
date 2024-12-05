@@ -218,4 +218,126 @@ TEST_F(ScheduleDAGMITest, MoveInBopInBetween) {
   EXPECT_POS_IN_BB(Scheduler->bottom(), MBB, 2);
 }
 
+/// Schedule an instruction in Top with the same cycle as top()
+/// Similar to SchedInTopNoMove but with explicit EmissionCycle.
+TEST_F(ScheduleDAGMITest, SchedInTopSameCycle) {
+  auto *DV0 = appendDebugInstr();
+  auto *MI1 = appendPlainInstr();
+  auto *DV2 = appendDebugInstr();
+  auto *MI3 = appendPlainInstr();
+
+  initializeScheduler();
+
+  Scheduler->scheduleInstr(MI1, /*IsTop=*/true, /*EmissionCycle=*/2);
+  EXPECT_EQ(MISeq(*MBB), MISeq({DV0, MI1, DV2, MI3}));
+
+  // Now schedule MI3, the debug instructions still stay in place.
+  Scheduler->scheduleInstr(MI3, /*IsTop=*/true, /*EmissionCycle=*/2);
+  EXPECT_EQ(MISeq(*MBB), MISeq({DV0, MI1, DV2, MI3}));
+}
+
+/// Schedule an instruction in Top with a lesser cycle than top()
+/// Similar to SchedInTopNoMove but with explicit EmissionCycle.
+TEST_F(ScheduleDAGMITest, SchedInTopLesserCycle) {
+  auto *DV0 = appendDebugInstr();
+  auto *MI1 = appendPlainInstr();
+  auto *DV2 = appendDebugInstr();
+  auto *MI3 = appendPlainInstr();
+
+  initializeScheduler();
+
+  Scheduler->scheduleInstr(MI1, /*IsTop=*/true, /*EmissionCycle=*/2);
+  EXPECT_EQ(MISeq(*MBB), MISeq({DV0, MI1, DV2, MI3}));
+
+  // Now schedule MI3, the debug instructions still stay in place.
+  Scheduler->scheduleInstr(MI3, /*IsTop=*/true, /*EmissionCycle=*/3);
+  EXPECT_EQ(MISeq(*MBB), MISeq({DV0, MI1, DV2, MI3}));
+}
+
+/// Move an instruction (MI3) to the Top zone, and then move
+/// another one (MI1) above it has a lower EmissionCycle.
+TEST_F(ScheduleDAGMITest, MoveAboveTop) {
+  auto *DV0 = appendDebugInstr();
+  auto *MI1 = appendPlainInstr();
+  auto *DV2 = appendDebugInstr();
+  auto *MI3 = appendPlainInstr();
+
+  initializeScheduler();
+  EXPECT_POS_IN_BB(Scheduler->top(), MBB, 1);
+  EXPECT_POS_IN_BB(Scheduler->bottom(), MBB, 4);
+
+  // Insert MI3 in top-down cycle 6
+  Scheduler->scheduleInstr(MI3, /*IsTop=*/true, /*EmissionCycle=*/6);
+  EXPECT_EQ(MISeq(*MBB), MISeq({DV0, MI3, MI1, DV2}));
+  EXPECT_POS_IN_BB(Scheduler->top(), MBB, 2);
+  EXPECT_POS_IN_BB(Scheduler->bottom(), MBB, 4);
+
+  // Insert MI1 in top-down cycle 2. This is less than MI3's cycle so MI1
+  // should actually be inserted above MI3.
+  Scheduler->scheduleInstr(MI1, /*IsTop=*/true, /*EmissionCycle=*/2);
+  EXPECT_EQ(MISeq(*MBB), MISeq({DV0, MI1, MI3, DV2}));
+  EXPECT_POS_IN_BB(Scheduler->top(), MBB, 4);
+  EXPECT_POS_IN_BB(Scheduler->bottom(), MBB, 4);
+}
+
+/// Schedule an instruction (MI3) in the Top zone.
+/// Then move MI1 above because it has a lower EmissionCycle.
+TEST_F(ScheduleDAGMITest, MoveInTopAboveDbg) {
+  auto *DV0 = appendDebugInstr();
+  auto *MI1 = appendPlainInstr();
+  auto *DV2 = appendDebugInstr();
+  auto *MI3 = appendPlainInstr();
+  auto *DV4 = appendDebugInstr();
+
+  initializeScheduler();
+  EXPECT_POS_IN_BB(Scheduler->top(), MBB, 1);
+  EXPECT_POS_IN_BB(Scheduler->bottom(), MBB, 5);
+
+  // Insert MI3 in top-down cycle 6
+  Scheduler->scheduleInstr(MI3, /*IsTop=*/true, /*EmissionCycle=*/6);
+  EXPECT_EQ(MISeq(*MBB), MISeq({DV0, MI3, MI1, DV2, DV4}));
+  EXPECT_POS_IN_BB(Scheduler->top(), MBB, 2);
+  EXPECT_POS_IN_BB(Scheduler->bottom(), MBB, 5);
+
+  // Insert MI1 in top-down cycle 2. This is less than MI3's cycle so MI1
+  // should actually be inserted above.
+  Scheduler->scheduleInstr(MI1, /*IsTop=*/true, /*EmissionCycle=*/2);
+  EXPECT_EQ(MISeq(*MBB), MISeq({DV0, MI1, MI3, DV2, DV4}));
+  EXPECT_POS_IN_BB(Scheduler->top(), MBB, 5);
+  EXPECT_POS_IN_BB(Scheduler->bottom(), MBB, 5);
+}
+
+/// Move an instruction to the Top zone between two already
+/// scheduled instructions
+TEST_F(ScheduleDAGMITest, MoveInTopInBetween) {
+  auto *DV0 = appendDebugInstr();
+  auto *MI1 = appendPlainInstr();
+  auto *DV2 = appendDebugInstr();
+  auto *MI3 = appendPlainInstr();
+  auto *DV4 = appendDebugInstr();
+  auto *MI5 = appendPlainInstr();
+
+  initializeScheduler();
+  EXPECT_POS_IN_BB(Scheduler->top(), MBB, 1);
+  EXPECT_POS_IN_BB(Scheduler->bottom(), MBB, 6);
+
+  // Insert MI5 in top-down cycle 1
+  Scheduler->scheduleInstr(MI5, /*IsTop=*/true, /*EmissionCycle=*/1);
+  EXPECT_EQ(MISeq(*MBB), MISeq({DV0, MI5, MI1, DV2, MI3, DV4}));
+  EXPECT_POS_IN_BB(Scheduler->top(), MBB, 2);
+  EXPECT_POS_IN_BB(Scheduler->bottom(), MBB, 6);
+
+  // Insert MI3 in  top-down cycle 6
+  Scheduler->scheduleInstr(MI3, /*IsTop=*/true, /*EmissionCycle=*/6);
+  EXPECT_EQ(MISeq(*MBB), MISeq({DV0, MI5, MI3, MI1, DV2, DV4}));
+  EXPECT_POS_IN_BB(Scheduler->top(), MBB, 3);
+  EXPECT_POS_IN_BB(Scheduler->bottom(), MBB, 6);
+
+  // Insert MI1 in top-down cycle 2. It should end up between MI5 and MI3
+  Scheduler->scheduleInstr(MI1, /*IsTop=*/true, /*EmissionCycle=*/2);
+  EXPECT_EQ(MISeq(*MBB), MISeq({DV0, MI5, MI1, MI3, DV2, DV4}));
+  EXPECT_POS_IN_BB(Scheduler->top(), MBB, 6);
+  EXPECT_POS_IN_BB(Scheduler->bottom(), MBB, 6);
+}
+
 } // end namespace

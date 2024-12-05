@@ -814,13 +814,19 @@ void ScheduleDAGMI::enterRegion(MachineBasicBlock *bb,
 
   // No need to keep emissions cycles for instructions not in this region.
   BotEmissionCycles.clear();
+  TopEmissionCycles.clear();
 }
 
-MachineBasicBlock::iterator ScheduleDAGMI::findBottomInsertPosForCycle(
-    std::optional<unsigned> EmissionCycle) {
-  if (!EmissionCycle)
+MachineBasicBlock::iterator
+ScheduleDAGMI::findInsertPosForCycle(std::optional<unsigned> OptEmissionCycle,
+                                     bool IsTopNode) {
+  if (!OptEmissionCycle) {
+    if (IsTopNode)
+      return top();
     return bottom();
+  }
 
+  // For bottom-up: greater emission cycle.
   auto HasGreaterEmissionCycle = [&](const MachineInstr &MI,
                                      unsigned EmissionCycle) {
     SUnit *PosSU = getSUnit(const_cast<MachineInstr *>(&MI));
@@ -832,30 +838,61 @@ MachineBasicBlock::iterator ScheduleDAGMI::findBottomInsertPosForCycle(
     return PosCycleIt->getSecond() > EmissionCycle;
   };
 
-  // Find the first instruction in [bottom(), end()) that has a lower or equal
-  // emission cycle. We want to insert above it.
-  return std::lower_bound(bottom(), end(), *EmissionCycle,
-                          HasGreaterEmissionCycle);
+  // For top-down: less or equal emission cycle.
+  auto HasLessOrEqEmissionCycle = [&](const MachineInstr &MI,
+                                      unsigned EmissionCycle) {
+    SUnit *PosSU = getSUnit(const_cast<MachineInstr *>(&MI));
+    if (!PosSU) // Skip instructions without SUnit
+      return true;
+    auto PosCycleIt = TopEmissionCycles.find(PosSU);
+    assert(PosCycleIt != TopEmissionCycles.end() &&
+           "Some SUs are missing an EmissionCycle");
+    return PosCycleIt->getSecond() <= EmissionCycle;
+  };
+
+  // For top-down: find the first instruction in [begin(), top()) that has a
+  // greater emission cycle.
+  // For bottom-up: find the first instruction in [bottom(), end()) that has a
+  // lower or equal emission cycle.
+  // We want to insert above it.
+  if (IsTopNode)
+    return std::lower_bound(begin(), top(), *OptEmissionCycle,
+                            HasLessOrEqEmissionCycle);
+  else
+    return std::lower_bound(bottom(), end(), *OptEmissionCycle,
+                            HasGreaterEmissionCycle);
 }
 
 void ScheduleDAGMI::movePickedSU(const SUnit &SU, bool IsTopNode,
-                                 std::optional<unsigned> BotEmissionCycle) {
+                                 std::optional<unsigned> EmissionCycle) {
   MachineInstr *MI = SU.getInstr();
   if (IsTopNode) {
     assert(SU.isTopReady() && "node still has unscheduled dependencies");
-    assert(!BotEmissionCycle.has_value());
-    if (&*CurrentTop == MI)
+
+    if (EmissionCycle)
+      TopEmissionCycles[&SU] = *EmissionCycle;
+    MachineBasicBlock::iterator InsertPos =
+        findInsertPosForCycle(EmissionCycle, IsTopNode);
+
+    if (InsertPos != CurrentTop) {
+      // We are inserting MI above CurrentTop because MI has a lower
+      // EmissionCycle.
+      if (&*CurrentTop == MI)
+        CurrentTop = nextIfDebug(++CurrentTop, CurrentBottom);
+      moveInstruction(MI, InsertPos);
+    } else if (&*CurrentTop == MI) {
       CurrentTop = nextIfDebug(++CurrentTop, CurrentBottom);
-    else
+    } else {
       moveInstruction(MI, CurrentTop);
+    }
   } else {
     assert(SU.isBottomReady() && "node still has unscheduled dependencies");
-    if (BotEmissionCycle)
-      BotEmissionCycles[&SU] = *BotEmissionCycle;
+    if (EmissionCycle)
+      BotEmissionCycles[&SU] = *EmissionCycle;
     MachineBasicBlock::iterator PriorII =
         priorNonDebug(CurrentBottom, CurrentTop);
     MachineBasicBlock::iterator InsertPos =
-        findBottomInsertPosForCycle(BotEmissionCycle);
+        findInsertPosForCycle(EmissionCycle, /*IsTopNode*/ IsTopNode);
     if (InsertPos != CurrentBottom) {
       // We are inserting MI below CurrentBottom because MI has a lower
       // EmissionCycle. Do not update CurrentBottom to MI, otherwise this

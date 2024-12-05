@@ -338,6 +338,9 @@ protected:
   /// Instructions for which pickNodeAndCycle() requested an explicit emission
   /// cycle in the Bot zone.
   DenseMap<const SUnit *, unsigned> BotEmissionCycles;
+  /// Instructions for which pickNodeAndCycle() requested an explicit emission
+  /// cycle in the Top zone.
+  DenseMap<const SUnit *, unsigned> TopEmissionCycles;
 
   /// The top of the unscheduled zone.
   MachineBasicBlock::iterator CurrentTop;
@@ -423,7 +426,7 @@ public:
   /// This will figure out the right insertion point in the Top or Bot zone
   /// and eventually call \p moveInstruction.
   void movePickedSU(const SUnit &SU, bool IsTopNode,
-                    std::optional<unsigned> BotEmissionCycle);
+                    std::optional<unsigned> EmissionCycle);
 
   /// Change the position of an instruction within the basic block and update
   /// live ranges and region boundary iterators.
@@ -467,9 +470,11 @@ protected:
 
   /// Find the insertion point for a newly-picked SU in the Bot zone.
   /// If an \p EmissionCycle is provided, this will ensure that the insertion
-  /// point is above any instruction which has been emitted in a lower cycle.
+  /// point is above any instruction which has been emitted in a lower cycle
+  /// (Bot zone), or above any instruction which has been emitted in a greater
+  /// cycle (Top zone).
   MachineBasicBlock::iterator
-  findBottomInsertPosForCycle(std::optional<unsigned> EmissionCycle);
+  findInsertPosForCycle(std::optional<unsigned> EmissionCycle, bool IsTopNode);
 };
 
 /// ScheduleDAGMILive is an implementation of ScheduleDAGInstrs that schedules
