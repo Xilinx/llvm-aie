@@ -427,7 +427,7 @@ static unsigned getMinSchedulableCycle(SchedBoundary &Zone) {
 }
 
 SUnit *AIEPostRASchedStrategy::pickNodeAndCycle(
-    bool &IsTopNode, std::optional<unsigned> &BotEmissionCycle) {
+    bool &IsTopNode, std::optional<unsigned> &EmissionCycle) {
   LLVM_DEBUG(dbgs() << "** AIEPostRASchedStrategy::pickNode TopCycle="
                     << Top.getCurrCycle() << " BotCycle=" << Bot.getCurrCycle()
                     << "\n");
@@ -467,11 +467,16 @@ SUnit *AIEPostRASchedStrategy::pickNodeAndCycle(
     Bot.removeReady(SU);
 
   // For bottom-up scheduling, we might have picked an instruction to be
-  // scheduled in a cycle greater than CurrCycle. See isAvailableNode().
-  // Make sure to set the EmissionCycle right.
-  if (!Zone.isTop()) {
+  // scheduled in a cycle greater than CurrCycle. Alternatively, for top-down
+  // scheduling, we might have picked an instruction to be scheduled in a cycle
+  // lesser than CurrCycle. See isAvailableNode(). Make sure to set the
+  // EmissionCycle right.
+  if (IsTopNode) {
+    assert(SU->TopReadyCycle <= Zone.getCurrCycle());
+    EmissionCycle = SU->TopReadyCycle;
+  } else {
     assert(SU->BotReadyCycle >= Zone.getCurrCycle());
-    BotEmissionCycle = SU->BotReadyCycle;
+    EmissionCycle = SU->BotReadyCycle;
   }
 
   LLVM_DEBUG(dbgs() << "Scheduling SU(" << SU->NodeNum << ") "
@@ -536,13 +541,14 @@ bool AIEPostRASchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
                                              bool /*VerifyReadyCycle*/) {
   // Note we use signed integers to avoid wrap-around behavior.
   const int MinDelta = -getMaxDeltaCycles(Zone);
-  const int ReadyCycle = std::max(Zone.getCurrCycle(), SU.BotReadyCycle);
+  const int BotReadyCycle = std::max(Zone.getCurrCycle(), SU.BotReadyCycle);
+  const int TopReadyCycle = SU.TopReadyCycle;
   const int CurrCycle = Zone.getCurrCycle();
 
   // If the Zone has remaining fixed instructions, only one SU is available.
   if (SUnit *FixedSU = getNextUnscheduledFixedInstr(Zone)) {
     assert(!Zone.isTop() && "Fixed instructions only expected in Bot zone");
-    const int DeltaCycles = CurrCycle - ReadyCycle;
+    const int DeltaCycles = CurrCycle - BotReadyCycle;
     return FixedSU == &SU && DeltaCycles >= MinDelta;
   }
 
@@ -552,11 +558,26 @@ bool AIEPostRASchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
 
   // Whether or not the zone is Top or Bot, verify if SU is ready to be
   // scheduled in terms of cycle.
-  if (Zone.isTop())
-    return MachineSchedStrategy::isAvailableNode(SU, Zone,
-                                                 /*VerifyReadyCycle=*/true);
+  if (Zone.isTop()) {
+    // This SU should be scheduled after CurrCycle.
+    if (TopReadyCycle > CurrCycle)
+      return false;
+    for (int DeltaCycles = TopReadyCycle - CurrCycle; DeltaCycles <= 0;
+         ++DeltaCycles) {
+      // TopReadyCycle is always lesser or equal to the current cycle here,
+      // (if not, we could violate dependencies) so DeltaCycles will
+      // always be less or equal to 0.
+      if (Zone.checkHazard(&SU, DeltaCycles))
+        continue;
+      SU.TopReadyCycle = CurrCycle + DeltaCycles;
+      return true;
+    }
+    // We know that we can't schedule in any cycle <= CurrCycle.
+    SU.TopReadyCycle = CurrCycle + 1;
+    return false;
+  }
 
-  for (int DeltaCycles = CurrCycle - ReadyCycle; DeltaCycles >= MinDelta;
+  for (int DeltaCycles = CurrCycle - BotReadyCycle; DeltaCycles >= MinDelta;
        --DeltaCycles) {
     // ReadyCycle is always greater or equal to the current cycle,
     // so DeltaCycles will always be less or equal to 0.
@@ -568,7 +589,7 @@ bool AIEPostRASchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
 
   // Didn't find a cycle in which to emit SU, move it to the Pending queue.
   // Still, update BotReadyCycle so next calls to isAvailableNode are quicker
-  SU.BotReadyCycle = std::max(ReadyCycle, CurrCycle - MinDelta);
+  SU.BotReadyCycle = std::max(BotReadyCycle, CurrCycle - MinDelta);
   return false;
 }
 
@@ -576,7 +597,9 @@ bool AIEPostRASchedStrategy::isAvailableNode(SUnit &SU, SchedBoundary &Zone,
 /// scheduled/remaining flags in the DAG nodes.
 void AIEPostRASchedStrategy::schedNode(SUnit *SU, bool IsTopNode) {
   if (IsTopNode) {
-    PostGenericScheduler::schedNode(SU, IsTopNode);
+    const int DeltaCycles = int(SU->TopReadyCycle) - int(Top.getCurrCycle());
+    assert(DeltaCycles <= 0);
+    Top.bumpNode(SU, DeltaCycles);
   } else {
     int DeltaCycles = int(Bot.getCurrCycle()) - int(SU->BotReadyCycle);
     assert(DeltaCycles <= 0);
