@@ -150,6 +150,11 @@ protected:
   /// Minimum number of cycles to be scheduled bottom-up in the current region.
   unsigned RegionBottomUpCycles = 0;
 
+  /// The minimum number of cycles that should be scheduled in top-down
+  /// direction in the current region. This is related to the quantity of top
+  /// fixed bundles.
+  unsigned RegionTopDownCycles = 0;
+
   /// Materialize "multi-opcode" instructions into the option that was selected
   /// at schedule time. See AIEHazardRecognizer::getSelectedAltOpcode().
   void materializeMultiOpcodeInstrs();
@@ -169,6 +174,15 @@ protected:
 
   // After scheduling a block, fill in nops, apply bundling, etc.
   void commitBlockSchedule(MachineBasicBlock *BB);
+
+  // This function returns true when it is impossible to continue with top-down
+  // without entering an infinite loop because the only remaining instructions
+  // cannot be scheduled in the top zone.
+  bool mustSwitchToBottomUp();
+
+  // Verify whether a Scheduling Unit (SU) can be scheduled in a particular
+  // zone.
+  bool doesNotProgressInZone(const SchedBoundary &Zone, const SUnit &SU) const;
 
 private:
   /// This flag is set for the first processed region of a basic block. We force
