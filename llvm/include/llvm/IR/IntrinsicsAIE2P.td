@@ -569,11 +569,6 @@ def int_aie2p_vbcst_shuffle16 : ClangBuiltin<"__builtin_aie2p_vbcst_shuffle16">,
 def int_aie2p_vbcst_shuffle32 : ClangBuiltin<"__builtin_aie2p_vbcst_shuffle32">, AIE2PVBcstShfl_I32;
 def int_aie2p_vbcst_shuffle64 : ClangBuiltin<"__builtin_aie2p_vbcst_shuffle64">, AIE2PVBcstShfl_I64;
 
-// Fifo loads
-class AIE2PFIFO_LD_FILL : Intrinsic<[llvm_ptr_ty, llvm_v32i32_ty, llvm_i32_ty],
-     [llvm_ptr_ty, llvm_v32i32_ty, llvm_i32_ty],
-     [IntrReadMem]>;
-def int_aie2p_fifo_ld_fill: AIE2PFIFO_LD_FILL;
 
 // Streams
 class AIE2PV16I32I32I32 : DefaultAttrsIntrinsic<[llvm_v16i32_ty], [llvm_i32_ty], [IntrInaccessibleMemOnly]>;
@@ -669,5 +664,55 @@ class AIE2PFIFO_ST_FLUSH_3D : Intrinsic<[llvm_ptr_ty, llvm_v32i32_ty, llvm_i32_t
      [IntrWriteMem, IntrArgMemOnly]>;
 def int_aie2p_fifo_st_flush_3d: AIE2PFIFO_ST_FLUSH_3D;
 def int_aie2p_fifo_st_flush_3d_conv: AIE2PFIFO_ST_FLUSH_3D;
+
+// FILL
+class AIE2PFIFO_LD_FILL : Intrinsic<[llvm_ptr_ty, llvm_v32i32_ty, llvm_i32_ty],
+     [llvm_ptr_ty, llvm_v32i32_ty, llvm_i32_ty],
+     [IntrReadMem, IntrArgMemOnly]>;
+def int_aie2p_fifo_ld_fill: AIE2PFIFO_LD_FILL;
+
+// POP normal
+class AIE2PFIFO_LD_POPUnaligned : Intrinsic<[llvm_v64i8_ty, llvm_ptr_ty, llvm_v32i32_ty, llvm_i32_ty],
+     [llvm_ptr_ty, llvm_v32i32_ty, llvm_i32_ty],
+     [IntrReadMem, IntrArgMemOnly]>;
+class AIE2PFIFO_LD_POP_576_BFP16 : Intrinsic<[llvm_ptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_v64i8_ty, llvm_v8i8_ty],
+     [llvm_ptr_ty, llvm_v32i32_ty, llvm_i32_ty],
+     [IntrReadMem, IntrArgMemOnly]>;
+def int_aie2p_fifo_ld_pop_unaligned: AIE2PFIFO_LD_POPUnaligned;
+def int_aie2p_fifo_ld_pop_576_bfp16: AIE2PFIFO_LD_POP_576_BFP16;
+def int_aie2p_fifo_ld_pop_544_bfp16: AIE2PFIFO_LD_POP_576_BFP16;
+
+// POP 1D
+class AIE2PFIFO_LD_POPUnaligned1D : Intrinsic<[llvm_v64i8_ty, llvm_ptr_ty, llvm_v32i32_ty, llvm_i32_ty],
+     [llvm_ptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_i20_ty],
+     [IntrReadMem, IntrArgMemOnly]>;
+class AIE2PFIFO_LD_POP_576_BFP161D : Intrinsic<[llvm_ptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_v64i8_ty, llvm_v8i8_ty],
+     [llvm_ptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_i20_ty],
+     [IntrReadMem, IntrArgMemOnly]>;
+def int_aie2p_fifo_ld_pop_1d_unaligned: AIE2PFIFO_LD_POPUnaligned1D;
+def int_aie2p_fifo_ld_pop_576_1d_bfp16: AIE2PFIFO_LD_POP_576_BFP161D;
+def int_aie2p_fifo_ld_pop_544_1d_bfp16: AIE2PFIFO_LD_POP_576_BFP161D;
+
+// POP 2D
+class AIE2PFIFO_LD_POPUnaligned2D : Intrinsic<[llvm_v64i8_ty, llvm_ptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_i20_ty],
+     [llvm_ptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty],
+     [IntrReadMem, IntrArgMemOnly]>;
+class AIE2PFIFO_LD_POP_576_BFP162D : Intrinsic<[llvm_ptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_i20_ty, llvm_v64i8_ty, llvm_v8i8_ty],
+     [llvm_ptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty],
+     [IntrReadMem, IntrArgMemOnly]>;
+def int_aie2p_fifo_ld_pop_2d_unaligned: AIE2PFIFO_LD_POPUnaligned2D;
+def int_aie2p_fifo_ld_pop_576_2d_bfp16: AIE2PFIFO_LD_POP_576_BFP162D;
+def int_aie2p_fifo_ld_pop_544_2d_bfp16: AIE2PFIFO_LD_POP_576_BFP162D;
+
+// POP 3D
+class AIE2PFIFO_LD_POPUnaligned3D : Intrinsic<[llvm_v64i8_ty, llvm_ptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_i20_ty, llvm_i20_ty],
+     [llvm_ptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty],
+     [IntrReadMem, IntrArgMemOnly]>;
+class AIE2PFIFO_LD_POP_576_BFP163D : Intrinsic<[llvm_ptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_i20_ty, llvm_i20_ty, llvm_v64i8_ty, llvm_v8i8_ty],
+     [llvm_ptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty],
+     [IntrReadMem, IntrArgMemOnly]>;
+def int_aie2p_fifo_ld_pop_3d_unaligned: AIE2PFIFO_LD_POPUnaligned3D;
+def int_aie2p_fifo_ld_pop_576_3d_bfp16: AIE2PFIFO_LD_POP_576_BFP163D;
+def int_aie2p_fifo_ld_pop_544_3d_bfp16: AIE2PFIFO_LD_POP_576_BFP163D;
 
 } // TargetPrefix = "aie2p"

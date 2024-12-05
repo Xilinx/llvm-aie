@@ -31,9 +31,9 @@
 #include "aie2p_defines.h"
 // clang-format off
 #include "aie2p_addlog.h"
-#include "aie2p_ldst.h"
 #include "aie2p_locks.h"
 #include "aie2p_undef.h"
+#include "aie2p_ldst.h"
 #include "aie2p_upd_ext.h"
 #include "aie2p_scl2vec.h"
 #include "aie2p_set_mode.h"
