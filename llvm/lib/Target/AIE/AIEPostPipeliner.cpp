@@ -524,6 +524,8 @@ public:
 };
 
 class ConfigStrategy : public PostPipelinerStrategy {
+  bool TopDown = true;
+
 public:
   enum PriorityComponent {
     NodeNum,
@@ -554,22 +556,27 @@ public:
 private:
   std::string Name;
   std::set<int> SuccSiblingScheduled;
+  std::set<int> PredSiblingScheduled;
   std::function<bool(const SUnit &A, const SUnit &B)>
       Discriminators[PriorityComponent::Size] = {
-          [&](const SUnit &A, const SUnit &B) { return A.NodeNum < B.NodeNum; },
           [&](const SUnit &A, const SUnit &B) {
-            auto &IA = Info[A.NodeNum];
-            auto &IB = Info[B.NodeNum];
-            return IA.Latest < IB.Latest;
+            return TopDown ? A.NodeNum < B.NodeNum : A.NodeNum > B.NodeNum;
           },
           [&](const SUnit &A, const SUnit &B) {
             auto &IA = Info[A.NodeNum];
             auto &IB = Info[B.NodeNum];
-            return IA.NumPushedEarliest > IB.NumPushedEarliest;
+            return TopDown ? IA.Latest < IB.Latest : IA.Earliest > IB.Earliest;
           },
           [&](const SUnit &A, const SUnit &B) {
-            return SuccSiblingScheduled.count(A.NodeNum) >
-                   SuccSiblingScheduled.count(B.NodeNum);
+            auto &IA = Info[A.NodeNum];
+            auto &IB = Info[B.NodeNum];
+            return TopDown ? IA.NumPushedEarliest > IB.NumPushedEarliest
+                           : IA.NumPushedLatest > IB.NumPushedLatest;
+          },
+          [&](const SUnit &A, const SUnit &B) {
+            std::set<int> &Sibling =
+                TopDown ? SuccSiblingScheduled : PredSiblingScheduled;
+            return Sibling.count(A.NodeNum) > Sibling.count(B.NodeNum);
           },
           [&](const SUnit &A, const SUnit &B) {
             auto &IA = Info[A.NodeNum];
@@ -578,6 +585,8 @@ private:
           },
       };
   std::vector<PriorityComponent> Priority;
+
+  bool fromTop() override { return TopDown; }
 
   bool better(const SUnit &A, const SUnit &B) override {
     for (auto P : Priority) {
@@ -608,14 +617,26 @@ private:
         SuccSiblingScheduled.insert(PDep.getSUnit()->NodeNum);
       }
     }
+    for (auto &PDep : N.Preds) {
+      if (PDep.getKind() != SDep::Data) {
+        continue;
+      }
+      for (auto &SDep : PDep.getSUnit()->Succs) {
+        if (SDep.getKind() != SDep::Data) {
+          continue;
+        }
+        PredSiblingScheduled.insert(PDep.getSUnit()->NodeNum);
+      }
+    }
   }
 
 public:
   std::string name() override { return Name; }
   ConfigStrategy(ScheduleDAGInstrs &DAG, std::vector<NodeInfo> &Info,
-                 int Length, ArrayRef<PriorityComponent> Components)
-      : PostPipelinerStrategy(DAG, Info, Length) {
-    Name = "Config_" + std::to_string(Length);
+                 int Length, bool TopDown,
+                 ArrayRef<PriorityComponent> Components)
+      : PostPipelinerStrategy(DAG, Info, Length), TopDown(TopDown) {
+    Name = "Config_" + std::to_string(Length) + std::to_string(TopDown);
     for (auto Comp : Components) {
       Name += "_" + getPriorityName(Comp);
       Priority.emplace_back(Comp);
@@ -625,15 +646,21 @@ public:
 
 static const struct {
   int ExtraStages;
+  bool TopDown;
   bool Rerun;
   ConfigStrategy::PriorityComponent Components[3];
 } Strategies[] = {
     // Loosely speaking, a lower value of the first parameter targets
     // a lower stage count, which benefits code size.
-    {1, false, {ConfigStrategy::NodeNum}},
-    {1, false, {ConfigStrategy::Latest}},
-    {1, true, {ConfigStrategy::Critical}},
-    {1, true, {ConfigStrategy::Critical, ConfigStrategy::LCDLatest}},
+    // Rerurn is only useful for heuristics that use it, e.g. Critical
+    {1, true, false, {ConfigStrategy::NodeNum}},
+    {1, true, false, {ConfigStrategy::Latest}},
+    {1, true, true, {ConfigStrategy::Critical}},
+    {1, true, true, {ConfigStrategy::Critical, ConfigStrategy::LCDLatest}},
+    {0, false, true, {ConfigStrategy::Critical, ConfigStrategy::LCDLatest}},
+    {1, false, true, {ConfigStrategy::Critical, ConfigStrategy::LCDLatest}},
+    // This is pure bottom up
+    {1, false, false, {ConfigStrategy::NodeNum}},
 };
 
 bool PostPipeliner::tryHeuristics() {
@@ -642,11 +669,12 @@ bool PostPipeliner::tryHeuristics() {
   DEBUG_SUMMARY(dbgs() << "-- MinLength=" << MinLength << "\n");
 
   int HeuristicIndex = 0;
-  for (auto &[ExtraStages, Rerun, Components] : Strategies) {
+  for (auto &[ExtraStages, TopDown, Rerun, Components] : Strategies) {
     if (Heuristic >= 0 && Heuristic != HeuristicIndex++) {
       continue;
     }
-    ConfigStrategy S(*DAG, Info, MinLength + ExtraStages * II, Components);
+    ConfigStrategy S(*DAG, Info, MinLength + ExtraStages * II, TopDown,
+                     Components);
     resetSchedule(/*FullReset=*/true);
     DEBUG_SUMMARY(dbgs() << "--- Strategy " << S.name());
     if (scheduleFirstIteration(S) && scheduleOtherIterations()) {
