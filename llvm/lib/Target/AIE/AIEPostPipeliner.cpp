@@ -631,6 +631,7 @@ static const struct {
     // Loosely speaking, a lower value of the first parameter targets
     // a lower stage count, which benefits code size.
     {1, false, {ConfigStrategy::Latest}},
+    {1, true, {ConfigStrategy::Critical}},
 };
 
 bool PostPipeliner::tryHeuristics() {
