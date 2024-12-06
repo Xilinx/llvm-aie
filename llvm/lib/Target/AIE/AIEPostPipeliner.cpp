@@ -630,6 +630,7 @@ static const struct {
 } Strategies[] = {
     // Loosely speaking, a lower value of the first parameter targets
     // a lower stage count, which benefits code size.
+    {1, false, {ConfigStrategy::NodeNum}},
     {1, false, {ConfigStrategy::Latest}},
     {1, true, {ConfigStrategy::Critical}},
     {1, true, {ConfigStrategy::Critical, ConfigStrategy::LCDLatest}},
