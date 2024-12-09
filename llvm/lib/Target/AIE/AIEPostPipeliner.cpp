@@ -636,7 +636,7 @@ public:
                  int Length, bool TopDown,
                  ArrayRef<PriorityComponent> Components)
       : PostPipelinerStrategy(DAG, Info, Length), TopDown(TopDown) {
-    Name = "Config_" + std::to_string(Length) + std::to_string(TopDown);
+    Name = "Config_" + std::to_string(Length) + "_" + std::to_string(TopDown);
     for (auto Comp : Components) {
       Name += "_" + getPriorityName(Comp);
       Priority.emplace_back(Comp);
@@ -676,9 +676,10 @@ bool PostPipeliner::tryHeuristics() {
     ConfigStrategy S(*DAG, Info, MinLength + ExtraStages * II, TopDown,
                      Components);
     resetSchedule(/*FullReset=*/true);
-    DEBUG_SUMMARY(dbgs() << "--- Strategy " << S.name());
+    DEBUG_SUMMARY(dbgs() << "--- Strategy " << S.name() << "\n");
     if (scheduleFirstIteration(S) && scheduleOtherIterations()) {
-      DEBUG_SUMMARY(dbgs() << " found II=" << II << "\n");
+      DEBUG_SUMMARY(dbgs() << "    Strategy " << S.name() << " found II=" << II
+                           << "\n");
       return true;
     }
 
