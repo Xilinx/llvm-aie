@@ -74,7 +74,7 @@
   ; CHECK-NEXT:  .L_LEnd0:
   ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; mov p2, p5; vmac.f bmh5, bmh5, x1, x7, r29
   ; CHECK-NEXT:  // %bb.3: // %for.cond.cleanup
-  ; CHECK-NEXT:    nopa ; nopb ; nopxm ; vmac.f bml2, bml2, x3, x7, r29
+  ; CHECK-NEXT:    vmac.f bml2, bml2, x3, x7, r29
   ; CHECK-NEXT:    vmac.f bml4, bml4, x8, x5, r29
   ; CHECK-NEXT:    vmac.f bmh1, bmh1, x8, x9, r29
   ; CHECK-NEXT:    vmac.f bmh0, bmh0, x1, x9, r29
@@ -87,9 +87,6 @@
   ; CHECK-NEXT:    vmac.f bml5, bml5, x10, x5, r29
   ; CHECK-NEXT:    vmac.f bmh4, bmh4, x1, x11, r29
   ; CHECK-NEXT:    vmac.f bml1, bml1, x3, x11, r29
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    nop
