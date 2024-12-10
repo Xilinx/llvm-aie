@@ -90,14 +90,32 @@ public:
   void reset(bool FullReset);
 };
 
+class ScheduleInfo {
+public:
+  std::vector<NodeInfo> Nodes;
+  int NInstr;
+  void init(int NOrig, int NCopies) {
+    NInstr = NOrig;
+    Nodes.clear();
+    Nodes.resize(NInstr * NCopies);
+  }
+  NodeInfo &operator[] (int N) {
+    return Nodes[N];
+  }
+  const NodeInfo &operator[] (int N) const {
+    return Nodes[N];
+  }
+};
+
+
 class PostPipelinerStrategy {
 protected:
   ScheduleDAGInstrs &DAG;
-  std::vector<NodeInfo> &Info;
+  ScheduleInfo &Info;
   int LatestBias = 0;
 
 public:
-  PostPipelinerStrategy(ScheduleDAGInstrs &DAG, std::vector<NodeInfo> &Info,
+  PostPipelinerStrategy(ScheduleDAGInstrs &DAG, ScheduleInfo &Info,
                         int LatestBias)
       : DAG(DAG), Info(Info), LatestBias(LatestBias) {};
   virtual ~PostPipelinerStrategy() {};
@@ -139,9 +157,10 @@ class PostPipeliner {
   int FirstUnscheduled = 0;
   int LastUnscheduled = -1;
 
-  /// Holds the cycle of each SUnit. The following should hold:
+  /// Holds the schuling information for each instruction. The following
+  /// should hold:
   /// Cycle(N) mod II == Cycle(N % NInstr) mod II
-  std::vector<NodeInfo> Info;
+  ScheduleInfo Info;
 
   // The scoreboard and its depth
   ResourceScoreboard<FuncUnitWrapper> Scoreboard;
