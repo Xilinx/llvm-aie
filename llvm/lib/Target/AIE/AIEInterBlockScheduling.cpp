@@ -846,6 +846,15 @@ void InterBlockScheduling::emitInterBlockTop(BlockState &BS) {
   // state is also necessary.
   auto *DedicatedExit = makeDedicatedLoopExit(ParentLoopMBB, EpilogueBB);
   if (DedicatedExit == EpilogueBB) {
+
+    // Trim excedent empty bundles. Empty TopInsert means 1-stage pipeline.
+    if (!BS.TopInsert.empty()) {
+      while (BS.TopInsert.back().empty()) {
+        assert(BS.TopInsert.back().getMetaInstrs().empty());
+        BS.TopInsert.pop_back();
+      }
+    }
+
     // If we are in the same BB, just emit.
     emitBundles(BS.TopInsert, DedicatedExit, DedicatedExit->begin(),
                 /*Move=*/false, /*EmitNops=*/false);
