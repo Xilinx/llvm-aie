@@ -39,3 +39,15 @@
 // RUN: %clang %s -### --target=aie2-none-unknown-elf -ccc-install-dir  %S/../Inputs/basic_aie_tree/bin 2>&1 \
 // RUN:   | FileCheck -check-prefix=C-INCLUDES %s
 // C-INCLUDES: "-internal-externc-isystem" "{{.*}}include{{/|\\\\}}aie2-none-unknown-elf"
+
+// Verify we are not using default page alignment.
+// RUN: %clang %s -### --target=aie2-none-unknown-elf -ccc-install-dir  %S/../Inputs/basic_aie_tree/bin 2>&1 \
+// RUN:   | FileCheck -check-prefix=NMAGIC %s
+// NMAGIC: "{{[^"]*}}ld.lld{{[^"]*}}"
+// NMAGIC-SAME: "--nmagic"
+
+// Verify we can override "not using" the default page alignment.
+// RUN: %clang %s -### --target=aie2-none-unknown-elf -Wl,--no-nmagic -ccc-install-dir %S/../Inputs/basic_aie_tree/bin 2>&1 \
+// RUN:   | FileCheck -check-prefix=NONMAGIC %s
+// NONMAGIC: "{{[^"]*}}ld.lld{{[^"]*}}"
+// NONMAGIC-SAME: "--nmagic{{.*}}--no-nmagic"

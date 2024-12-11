@@ -31,6 +31,8 @@ void aie::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   const ToolChain &ToolChain = getToolChain();
   std::string Linker = ToolChain.GetProgramPath(getShortName());
   ArgStringList CmdArgs;
+  // We should not use the default page alignment.
+  CmdArgs.push_back(Args.MakeArgString("--nmagic"));
   AddLinkerInputs(ToolChain, Inputs, Args, CmdArgs, JA);
   // CmdArgs.push_back("-shared");
   ToolChain.AddFilePathLibArgs(Args, CmdArgs);
