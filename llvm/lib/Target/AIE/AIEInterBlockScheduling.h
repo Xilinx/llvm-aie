@@ -148,6 +148,8 @@ public:
   int ResourceMargin = 0;
   // The II of the modulo schedule we are trying.
   int II = 0;
+  // The number of II steps we've made from the minimum
+  int IITries = 0;
   // Results from the convergence test
   int MaxLatencyExtent = 0;
   int MaxResourceExtent = 0;

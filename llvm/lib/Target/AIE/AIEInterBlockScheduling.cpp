@@ -58,6 +58,10 @@ static cl::opt<int> PostPipelinerMaxII(
     "aie-postpipeliner-maxii", cl::init(40),
     cl::desc("[AIE] Maximum II to be tried in the post-ra pipeliner"));
 
+static cl::opt<int> PostPipelinerMaxTryII(
+    "aie-postpipeliner-maxtry-ii", cl::init(10),
+    cl::desc("[AIE] Maximum II steps to be tried in the post-ra pipeliner"));
+
 namespace llvm::AIE {
 
 void dumpInterBlock(const InterBlockEdges &Edges) {
@@ -600,6 +604,7 @@ SchedulingStage InterBlockScheduling::updateScheduling(BlockState &BS) {
     auto &PostSWP = BS.getPostSWP();
     if (PostSWP.canAccept(*BS.TheBlock)) {
       BS.FixPoint.II = PostSWP.getResMII(*BS.TheBlock);
+      BS.FixPoint.IITries = 1;
       return BS.FixPoint.Stage = SchedulingStage::Pipelining;
     }
   }
@@ -614,7 +619,8 @@ SchedulingStage InterBlockScheduling::updatePipelining(BlockState &BS) {
 
   // Otherwise try a larger II.
   // We cut off at larger IIs to prevent excessive compilation time.
-  if (++BS.FixPoint.II <= PostPipelinerMaxII) {
+  if (++BS.FixPoint.II <= PostPipelinerMaxII &&
+      ++BS.FixPoint.IITries <= PostPipelinerMaxTryII) {
     return BS.FixPoint.Stage = SchedulingStage::Pipelining;
   }
 
