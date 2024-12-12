@@ -731,6 +731,16 @@ def zext_trunc_fold: GICombineRule <
   (apply [{ Helper.replaceSingleDefInstWithReg(*${root}, ${matchinfo}); }])
 >;
 
+// Fold (sext (trunc x)) -> x if the source type is same as the destination type
+// and truncated bits are known to be sign extended.
+def sext_trunc_fold_matchinfo : GIDefMatchData<"Register">;
+def sext_trunc_fold: GICombineRule <
+  (defs root:$root, sext_trunc_fold_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_SEXT):$root,
+         [{ return Helper.matchCombineSextTrunc(*${root}, ${matchinfo}); }]),
+  (apply [{ Helper.replaceSingleDefInstWithReg(*${root}, ${matchinfo}); }])
+>;
+
 // Fold ([asz]ext ([asz]ext x)) -> ([asz]ext x).
 def ext_ext_fold_matchinfo : GIDefMatchData<"std::tuple<Register, unsigned>">;
 def ext_ext_fold: GICombineRule <
@@ -1606,7 +1616,7 @@ def const_combines : GICombineGroup<[constant_fold_fp_ops, const_ptradd_to_i2p,
 
 def known_bits_simplifications : GICombineGroup<[
   redundant_and, redundant_sext_inreg, redundant_or, urem_pow2_to_mask,
-  zext_trunc_fold, icmp_to_true_false_known_bits, icmp_to_lhs_known_bits,
+  zext_trunc_fold, sext_trunc_fold, icmp_to_true_false_known_bits, icmp_to_lhs_known_bits,
   sext_inreg_to_zext_inreg]>;
 
 def width_reduction_combines : GICombineGroup<[reduce_shl_of_extend,

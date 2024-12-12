@@ -387,6 +387,9 @@ public:
   /// Transform zext(trunc(x)) to x.
   bool matchCombineZextTrunc(MachineInstr &MI, Register &Reg);
 
+  /// Transform sext(trunc(x)) to x.
+  bool matchCombineSextTrunc(MachineInstr &MI, Register &Reg);
+
   /// Transform [asz]ext([asz]ext(x)) to [asz]ext x.
   bool matchCombineExtOfExt(MachineInstr &MI,
                             std::tuple<Register, unsigned> &MatchInfo);
