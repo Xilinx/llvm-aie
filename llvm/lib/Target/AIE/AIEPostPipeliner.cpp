@@ -556,6 +556,10 @@ public:
 };
 
 class ConfigStrategy : public PostPipelinerStrategy {
+protected:
+  int II = 0;
+
+private:
   bool TopDown = true;
   bool Alternate = false;
 
@@ -681,10 +685,10 @@ private:
 
 public:
   std::string name() override { return Name; }
-  ConfigStrategy(ScheduleDAGInstrs &DAG, ScheduleInfo &Info, int Length,
+  ConfigStrategy(ScheduleDAGInstrs &DAG, ScheduleInfo &Info, int Length, int II,
                  bool TopDown, bool Alternate,
                  ArrayRef<PriorityComponent> Components)
-      : PostPipelinerStrategy(DAG, Info, Length), TopDown(TopDown),
+      : PostPipelinerStrategy(DAG, Info, Length), II(II), TopDown(TopDown),
         Alternate(Alternate) {
     Name = "Config_" + std::to_string(Length) + "_" + std::to_string(TopDown) +
            "_" + std::to_string(Alternate);
@@ -725,7 +729,7 @@ bool PostPipeliner::tryHeuristics() {
     if (Heuristic >= 0 && Heuristic != HeuristicIndex++) {
       continue;
     }
-    ConfigStrategy S(*DAG, Info, MinLength + Config.ExtraStages * II,
+    ConfigStrategy S(*DAG, Info, MinLength + Config.ExtraStages * II, II,
                      Config.TopDown, Config.Alternate, Config.Components);
     resetSchedule(/*FullReset=*/true);
     for (int Run = 0; Run < Config.Runs; Run++) {
