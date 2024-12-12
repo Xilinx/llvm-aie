@@ -366,7 +366,7 @@ void dumpGraph(const ScheduleInfo &Info, ScheduleDAGInstrs *DAG) {
     for (auto &Dep : SU.Succs) {
       auto *Succ = Dep.getSUnit();
       int S = Succ->NodeNum;
-      if (S % Info.NInstr == K) {
+      if (S % Info.NInstr == K || Succ->isBoundaryNode()) {
         continue;
       }
 
