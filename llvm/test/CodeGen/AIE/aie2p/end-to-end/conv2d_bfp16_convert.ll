@@ -16,45 +16,58 @@ define weak_odr dso_local void @convert_bf16_to_bfp16(ptr noalias %in, ptr noali
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    lda r0, [p2, #0]; nopb ; nops ; nopx ; mov m0, #4; nopv
-; CHECK-NEXT:    padda [p2], m0; nopb ; nopx
-; CHECK-NEXT:    lda dn0, [p2], #4
-; CHECK-NEXT:    lda m1, [p2], #4
+; CHECK-NEXT:    padda [p2], m0
+; CHECK-NEXT:    lda dn0, [p2], #4; movx r24, #0
+; CHECK-NEXT:    lda m1, [p2], #4; mov r26, r24
+; CHECK-NEXT:    vldb.fill.512 [p0, lf0, r24]
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mova dj0, #0
-; CHECK-NEXT:    movx r24, #0; mov dj1, dj0
-; CHECK-NEXT:    mov r26, r24
-; CHECK-NEXT:    vldb.fill.512 [p0, lf0, r24]; mov dc1, dj0
-; CHECK-NEXT:    vldb.pop.512 x0, [p0, lf0, r24]; mov dn1, dn0
-; CHECK-NEXT:    vldb.pop.512.2d x2, [p0, lf0, r24, d1]; movxm ls, #.LBB0_1
+; CHECK-NEXT:    vldb.pop.512 x0, [p0, lf0, r24]; mov dj1, dj0
+; CHECK-NEXT:    mov dc1, dj0
+; CHECK-NEXT:    mov dn1, dn0
+; CHECK-NEXT:    vldb.pop.512.2d x2, [p0, lf0, r24, d1]
+; CHECK-NEXT:    vldb.fill.512 [p0, lf0, r24]
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    lda m0, [p2, #0]
+; CHECK-NEXT:    vldb.pop.512 x0, [p0, lf0, r24]; movxm ls, #.LBB0_1
+; CHECK-NEXT:    vconv.fp32.bf16 cml0, x0
 ; CHECK-NEXT:    movxm le, #.L_LEnd0
-; CHECK-NEXT:    add.nc lc, r0, #-2
-; CHECK-NEXT:    lda m0, [p2, #0]; nopb ; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; vldb.fill.512 [p0, lf0, r24]; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; vldb.pop.512 x0, [p0, lf0, r24]; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; vldb.pop.512.2d x2, [p0, lf0, r24, d1]; nops ; nopx ; mov dc0, dj0; nopv
-; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vconv.fp32.bf16 cml0, x0; nopv
-; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vconv.fp32.bf16 cmh0, x2; nopv
+; CHECK-NEXT:    vldb.pop.512.2d x2, [p0, lf0, r24, d1]; add.nc lc, r0, #-3
+; CHECK-NEXT:    nopa ; vldb.fill.512 [p0, lf0, r24]; nops ; nopx ; vconv.fp32.bf16 cmh0, x2; nopv
 ; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; mov p2, p1; nopv
+; CHECK-NEXT:    nopa ; nopb ; vst.push.576.conv.bfp16ebs8.fp32 dm0, [p2, sf, r26]; nopxm ; nopv
 ; CHECK-NEXT:    // implicit-def: $sf
+; CHECK-NEXT:    nopa ; vldb.pop.512 x0, [p0, lf0, r24]; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vconv.fp32.bf16 cml0, x0; nopv
+; CHECK-NEXT:    nopa ; nopb ; vst.flush.512.conv [p2, sf, r26]; nopxm ; nopv
+; CHECK-NEXT:    nopa ; vldb.pop.512.2d x2, [p0, lf0, r24, d1]; nops ; nopx ; mov dc0, dj0; nopv
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB0_1: // %for.body
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    nopa ; vldb.fill.512 [p0, lf0, r24]; nopx ; vst.push.576.conv.bfp16ebs8.fp32 dm0, [p2, sf, r26]
-; CHECK-NEXT:    vldb.pop.512 x0, [p0, lf0, r24]; vst.flush.512.conv [p2, sf, r26]
-; CHECK-NEXT:    vldb.pop.512.2d x2, [p0, lf0, r24, d1]; vst.flush.512.conv.2d [p2, sf, r26, d0]
-; CHECK-NEXT:    vconv.fp32.bf16 cml0, x0
-; CHECK-NEXT:    vconv.fp32.bf16 cmh0, x2
-; CHECK-NEXT:  .L_LEnd0:
-; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
-; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup
-; CHECK-NEXT:    vst.push.576.conv.bfp16ebs8.fp32 dm0, [p2, sf, r26]
-; CHECK-NEXT:    vst.flush.512.conv [p2, sf, r26]
+; CHECK-NEXT:    nopa ; vldb.fill.512 [p0, lf0, r24]; nopx ; vconv.fp32.bf16 cmh0, x2
 ; CHECK-NEXT:    vst.flush.512.conv.2d [p2, sf, r26, d0]
-; CHECK-NEXT:    vconv.fp32.bf16 cml0, x0
-; CHECK-NEXT:    vconv.fp32.bf16 cmh0, x2
-; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vst.push.576.conv.bfp16ebs8.fp32 dm0, [p2, sf, r26]
+; CHECK-NEXT:    vldb.pop.512 x0, [p0, lf0, r24]
+; CHECK-NEXT:    vconv.fp32.bf16 cml0, x0
 ; CHECK-NEXT:    vst.flush.512.conv [p2, sf, r26]
+; CHECK-NEXT:  .L_LEnd0:
+; CHECK-NEXT:    nopa ; vldb.pop.512.2d x2, [p0, lf0, r24, d1]; nops ; nopxm ; nopv
+; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup
+; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vconv.fp32.bf16 cmh0, x2; nopv
+; CHECK-NEXT:    vst.flush.512.conv.2d [p2, sf, r26, d0]; nopx
+; CHECK-NEXT:    vst.push.576.conv.bfp16ebs8.fp32 dm0, [p2, sf, r26]
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    vconv.fp32.bf16 cml0, x0
+; CHECK-NEXT:    vst.flush.512.conv [p2, sf, r26]
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    vconv.fp32.bf16 cmh0, x2
+; CHECK-NEXT:    vst.flush.512.conv.2d [p2, sf, r26, d0]
+; CHECK-NEXT:    vst.push.576.conv.bfp16ebs8.fp32 dm0, [p2, sf, r26]
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    vst.flush.512.conv [p2, sf, r26]
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vst.flush.512.conv.2d [p2, sf, r26, d0]
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5

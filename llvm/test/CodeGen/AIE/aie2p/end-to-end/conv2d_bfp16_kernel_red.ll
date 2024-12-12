@@ -18,8 +18,8 @@ define dso_local void @conv2d_bfp16.for.body90.i(<32 x i32> %fW.sroa.0.1489.i, i
 ; CHECK-LABEL: conv2d_bfp16.for.body90.i:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %newFuncRoot
-; CHECK-NEXT:    paddxm [sp], #64
-; CHECK-NEXT:    st p6, [sp, #-60]; nopx // 4-byte Folded Spill
+; CHECK-NEXT:    nopa ; paddxm [sp], #64
+; CHECK-NEXT:    st p6, [sp, #-60] // 4-byte Folded Spill
 ; CHECK-NEXT:    mov p6, sp
 ; CHECK-NEXT:    padda [p6], #-320
 ; CHECK-NEXT:    vlda bmll3, [p6, #0]
@@ -48,7 +48,7 @@ define dso_local void @conv2d_bfp16.for.body90.i(<32 x i32> %fW.sroa.0.1489.i, i
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mov p6, sp
 ; CHECK-NEXT:    padda [p7], m0; movxm m0, #-1112
-; CHECK-NEXT:    lda p7, [p7, #0]; paddb [p6], m0; movxm m0, #-1116
+; CHECK-NEXT:    padda [p6], m0; movxm m0, #-1116
 ; CHECK-NEXT:    lda r7, [p6, #0]; mov p6, sp
 ; CHECK-NEXT:    padda [p6], m0; movxm m0, #-1120
 ; CHECK-NEXT:    lda r3, [p6, #0]; mov p6, sp
@@ -56,46 +56,52 @@ define dso_local void @conv2d_bfp16.for.body90.i(<32 x i32> %fW.sroa.0.1489.i, i
 ; CHECK-NEXT:    lda r2, [p6, #0]; mov p6, sp
 ; CHECK-NEXT:    padda [p6], m0
 ; CHECK-NEXT:    vlda bmll0, [p6, #0]
-; CHECK-NEXT:    vlda bmlh0, [p6, #64]
-; CHECK-NEXT:    vlda bmhl0, [p6, #128]
-; CHECK-NEXT:    vlda bmhh0, [p6, #192]; movx r25, #0; mov dn0, p3
-; CHECK-NEXT:    mova dc4, #0; vldb.fill.512 [p1, lf1, r25]; mov dj0, p4
-; CHECK-NEXT:    mova r24, #0; vldb.fill.512 [p1, lf1, r25]; mov dn4, p5
-; CHECK-NEXT:    vldb.fill.512 [p0, lf0, r24]; mov dc0, dc4
-; CHECK-NEXT:    vldb.pop.576 ex0, [p1, lf1, r25]; add r1, r6, #-1; mov m0, p2
-; CHECK-NEXT:    vldb.pop.576.3d ex2, [p1, lf1, r25, d0]; movxm ls, #.LBB0_1
-; CHECK-NEXT:    vldb.pop.576 ex4, [p0, lf0, r24]; movxm le, #.L_LEnd0
-; CHECK-NEXT:    vldb.pop.576 ex6, [p0, lf0, r24, m1]; add.nc lc, r1, #-2
-; CHECK-NEXT:    nopa ; vldb.fill.512 [p1, lf1, r25]; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; vldb.fill.512 [p1, lf1, r25]; nops ; nopxm ; nopv
+; CHECK-NEXT:    vlda bmlh0, [p6, #64]; movx r25, #0
+; CHECK-NEXT:    vldb.fill.512 [p1, lf1, r25]; movx r24, #0
+; CHECK-NEXT:    vldb.fill.512 [p0, lf0, r24]
+; CHECK-NEXT:    vldb.fill.512 [p1, lf1, r25]; movxm ls, #.LBB0_1
+; CHECK-NEXT:    vldb.pop.576 ex4, [p0, lf0, r24]; mov dn0, p3
+; CHECK-NEXT:    vlda bmhl0, [p6, #128]; mov dj0, p4
+; CHECK-NEXT:    mova dc4, #0; vldb.pop.576 ex0, [p1, lf1, r25]; mov dn4, p5
+; CHECK-NEXT:    vldb.pop.576 ex6, [p0, lf0, r24, m1]; mov dc0, dc4
+; CHECK-NEXT:    vlda bmhh0, [p6, #192]; add r1, r6, #-1; mov m0, p2
+; CHECK-NEXT:    vldb.pop.576.3d ex2, [p1, lf1, r25, d0]; movxm le, #.L_LEnd0
+; CHECK-NEXT:    vldb.fill.512 [p1, lf1, r25]; add.nc lc, r1, #-2
 ; CHECK-NEXT:    nopa ; vldb.fill.512 [p0, lf0, r24]; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; vldb.fill.512 [p1, lf1, r25]; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; vldb.pop.576 ex4, [p0, lf0, r24]; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    nopa ; vldb.pop.576 ex0, [p1, lf1, r25]; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; vldb.pop.576.3d ex2, [p1, lf1, r25, d0]; nops ; nopxm ; nopv
-; CHECK-NEXT:    nopa ; vldb.pop.576 ex4, [p0, lf0, r24]; nops ; nopx ; vshuffle ex8, ex0, ex2, r4; nopv
-; CHECK-NEXT:    mova r0, #780; vldb.pop.576 ex6, [p0, lf0, r24, m1]; nops ; nopx ; vshuffle ex10, ex0, ex2, r5; nopv
+; CHECK-NEXT:    nopa ; vldb.pop.576 ex6, [p0, lf0, r24, m1]; nops ; nopxm ; nopv
+; CHECK-NEXT:    lda p7, [p7, #0]; nopb ; nops ; movx r0, #780; vshuffle ex8, ex0, ex2, r4; nopv
 ; CHECK-NEXT:    .p2align 4
 ; CHECK-NEXT:  .LBB0_1: // %for.body90.i
 ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    nopa ; vldb.fill.512 [p1, lf1, r25]; nopxm ; vmac.f dm0, dm0, ex8, ex4, r0
-; CHECK-NEXT:    vldb.fill.512 [p1, lf1, r25]; vmac.f dm1, dm1, ex10, ex4, r0
-; CHECK-NEXT:    vldb.fill.512 [p0, lf0, r24]; vmac.f dm2, dm2, ex8, ex6, r0
-; CHECK-NEXT:    vldb.pop.576 ex0, [p1, lf1, r25]; vmac.f dm3, dm3, ex10, ex6, r0
-; CHECK-NEXT:    vldb.pop.576.3d ex2, [p1, lf1, r25, d0]
-; CHECK-NEXT:    vldb.pop.576 ex4, [p0, lf0, r24]; vshuffle ex8, ex0, ex2, r4
+; CHECK-NEXT:    vldb.pop.576.3d ex2, [p1, lf1, r25, d0]; vshuffle ex10, ex0, ex2, r5
+; CHECK-NEXT:    vldb.fill.512 [p1, lf1, r25]; vmac.f dm0, dm0, ex8, ex4, r0
+; CHECK-NEXT:    vldb.fill.512 [p0, lf0, r24]; vmac.f dm1, dm1, ex10, ex4, r0
+; CHECK-NEXT:    vldb.fill.512 [p1, lf1, r25]; vmac.f dm3, dm3, ex10, ex6, r0
+; CHECK-NEXT:    vldb.pop.576 ex4, [p0, lf0, r24]; vmac.f dm2, dm2, ex8, ex6, r0
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    vldb.pop.576 ex0, [p1, lf1, r25]
+; CHECK-NEXT:    vldb.pop.576 ex6, [p0, lf0, r24, m1]
 ; CHECK-NEXT:  .L_LEnd0:
-; CHECK-NEXT:    nopa ; vldb.pop.576 ex6, [p0, lf0, r24, m1]; nops ; nopx ; vshuffle ex10, ex0, ex2, r5; nopv
+; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vshuffle ex8, ex0, ex2, r4; nopv
 ; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup89.i.exitStub
-; CHECK-NEXT:    lda p6, [sp, #-60]; nopb ; nopx ; mov p0, r7; vmac.f dm0, dm0, ex8, ex4, r0 // 4-byte Folded Reload
+; CHECK-NEXT:    nopa ; vldb.pop.576.3d ex2, [p1, lf1, r25, d0]; nops ; nopx ; vshuffle ex10, ex0, ex2, r5; nopv
+; CHECK-NEXT:    lda p6, [sp, #-60]; mov p0, r7; vmac.f dm0, dm0, ex8, ex4, r0 // 4-byte Folded Reload
 ; CHECK-NEXT:    vmac.f dm1, dm1, ex10, ex4, r0
-; CHECK-NEXT:    vmac.f dm2, dm2, ex8, ex6, r0
 ; CHECK-NEXT:    vmac.f dm3, dm3, ex10, ex6, r0
+; CHECK-NEXT:    vmac.f dm2, dm2, ex8, ex6, r0
+; CHECK-NEXT:    nop
+; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vshuffle ex8, ex0, ex2, r4
 ; CHECK-NEXT:    vshuffle ex10, ex0, ex2, r5
 ; CHECK-NEXT:    vmac.f dm0, dm0, ex8, ex4, r0
 ; CHECK-NEXT:    vmac.f dm1, dm1, ex10, ex4, r0
-; CHECK-NEXT:    vmac.f dm2, dm2, ex8, ex6, r0
 ; CHECK-NEXT:    vmac.f dm3, dm3, ex10, ex6, r0
+; CHECK-NEXT:    vmac.f dm2, dm2, ex8, ex6, r0
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    vst bmll0, [p7, #0]
