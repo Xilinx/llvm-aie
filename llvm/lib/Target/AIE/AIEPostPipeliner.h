@@ -94,6 +94,12 @@ class ScheduleInfo {
 public:
   std::vector<NodeInfo> Nodes;
   int NInstr;
+  int MaxEarliest = 0;
+  int MinLatest = -1;
+  // After propagating Earliest of the second iteration back to the first
+  // iteration, the minimum over Earliest is directly related to the
+  // Recurrence Minimum Initiation Interval.
+  int MinEarliest = 0;
   void init(int NOrig, int NCopies) {
     NInstr = NOrig;
     Nodes.clear();
@@ -105,6 +111,8 @@ public:
   const NodeInfo &operator[] (int N) const {
     return Nodes[N];
   }
+  // Compute some useful derived values
+  void compute();
 };
 
 
