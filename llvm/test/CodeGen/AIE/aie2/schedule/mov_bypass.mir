@@ -149,6 +149,33 @@ body:             |
 ...
 
 ---
+name:            bypass_q_wl
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: bypass_q_wl
+    ; CHECK: $wl1 = VMOV_mv_w killed $wl0
+    ; CHECK-NEXT: $q0 = VMOV_mv_w killed $wl1
+    ; CHECK-NEXT: NOP
+    $wl1 = VMOV_mv_w $wl0
+    $q0 = VMOV_mv_w $wl1
+...
+
+---
+name:            no_bypass_q_wh
+alignment:       16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: no_bypass_q_wh
+    ; CHECK: $wh1 = VMOV_mv_w killed $wl0
+    ; CHECK-NEXT: NOP
+    ; CHECK-NEXT: $q0 = VMOV_mv_w killed $wh1
+    ; CHECK-NEXT: NOP
+    $wh1 = VMOV_mv_w $wl0
+    $q0 = VMOV_mv_w $wh1
+...
+
+---
 name:            bypass_x
 alignment:       16
 body:             |
