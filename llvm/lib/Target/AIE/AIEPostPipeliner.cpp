@@ -342,7 +342,10 @@ bool PostPipeliner::computeLoopCarriedParameters() {
     N.StaticLatest = N.Latest;
   }
   Info.compute();
-  return true;
+
+  // If no node can be scheduled in cycle 0, we must have a circuit that
+  // is longer than II
+  return Info.MinEarliest == 0;
 }
 
 int PostPipeliner::computeMinScheduleLength() const {
@@ -753,7 +756,7 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval) {
   assert(NTotalInstrs % NInstr == 0);
   NCopies = NTotalInstrs / NInstr;
   if (NCopies == 1) {
-    LLVM_DEBUG(dbgs() << "PostPipeliner: Not feasible\n");
+    LLVM_DEBUG(dbgs() << "PostPipeliner: Not feasible - Too few stages\n");
     return false;
   }
   II = InitiationInterval;
@@ -770,7 +773,12 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval) {
                   I++) { dbgs() << I << " " << *DAG->SUnits[I].getInstr(); });
   LLVM_DEBUG(dumpGraph(Info, DAG));
 
-  computeLoopCarriedParameters();
+  bool Feasible = computeLoopCarriedParameters();
+  if (!Feasible) {
+    LLVM_DEBUG(dbgs() << "PostPipeliner: Not feasible - RecMII\n");
+    return false;
+  }
+
   LLVM_DEBUG(dumpIntervals(Info, computeMinScheduleLength()));
   if (!tryHeuristics()) {
     LLVM_DEBUG(dbgs() << "PostPipeliner: No schedule found\n");
