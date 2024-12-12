@@ -560,6 +560,9 @@ class ConfigStrategy : public PostPipelinerStrategy {
   int II = 0;
   bool TopDown = true;
   bool Alternate = false;
+  // Sinks will be pushed to the last stage
+  bool ForceLastStage = false;
+  bool Stretch = true;
 
 public:
   enum PriorityComponent {
@@ -640,7 +643,24 @@ private:
   }
 
   int earliest(const SUnit &N) override {
-    return Info[N.NodeNum].Earliest; 
+    const auto &Me = Info[N.NodeNum];
+
+    if (ForceLastStage && Me.Latest == -1) {
+      const int LastStageEarliest = LatestBias - II;
+      return std::max(Me.Earliest, LastStageEarliest);
+    }
+
+    const int Slack = LatestBias - Info.MaxEarliest;
+    if (Stretch && Slack > 0) {
+      // If we have slack, push earliest proportionally
+      // to stretch the interval [0, MaxEarliest] to [0, LatestBias)
+      const int Scaled = Me.Earliest * LatestBias / Info.MaxEarliest;
+      assert(Scaled >= Me.Earliest);
+      const int Limited = std::min(Scaled, Me.Latest + LatestBias);
+      return Limited;
+    }
+
+    return Me.Earliest;
   }
 
   int latest(const SUnit &N) override {
