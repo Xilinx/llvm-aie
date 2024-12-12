@@ -400,7 +400,10 @@ void dumpIntervals(const ScheduleInfo &Info, int MinLength) {
   for (int K = 0; K < Info.NInstr; K++) {
     std::string Head = "SU" + std::to_string(K);
     dbgs() << Head;
-    for (int I = 6 - Head.length(); I < MinLength; I++) {
+    for (int I = Head.length() - 6; I < MinLength; I++) {
+      if (I == 0) {
+        dbgs() << "|";
+      }
       if (I >= Info[K].Earliest && I <= MinLength + Info[K].Latest) {
         dbgs() << "*";
       } else {
