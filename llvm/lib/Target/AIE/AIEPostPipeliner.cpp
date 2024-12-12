@@ -341,6 +341,7 @@ bool PostPipeliner::computeLoopCarriedParameters() {
     N.StaticEarliest = N.Earliest;
     N.StaticLatest = N.Latest;
   }
+  Info.compute();
   return true;
 }
 
@@ -875,6 +876,17 @@ void NodeInfo::reset(bool FullReset) {
     NumPushedLatest = 0;
     LastEarliestPusher = {};
     LastLatestPusher = {};
+  }
+}
+
+void ScheduleInfo::compute() {
+  MinEarliest = 0;
+  MaxEarliest = 0;
+  MinLatest = -1;
+  for (int K = 0; K < NInstr; K++) {
+    MinEarliest = std::min(MinEarliest, Nodes[K].Earliest);
+    MaxEarliest = std::max(MaxEarliest, Nodes[K].Earliest);
+    MinLatest = std::min(MinLatest, Nodes[K].Latest);
   }
 }
 

@@ -92,15 +92,34 @@ public:
 
 class ScheduleInfo {
 public:
+  // The main adminiostration of the PostPipeliner. Every node represents
+  // an instruction. The array can be indexed with the NodeNum of the
+  // corresponding SUnit
   std::vector<NodeInfo> Nodes;
+
+  // The number of instructions in the original loop body
   int NInstr;
+
+  // Some global statistics over Earliest and Latest of all nodes.
+  // MaxEarliest and MinLatest relate to the length of the schedule.
+  int MaxEarliest = 0;
+  int MinLatest = -1;
+
+  // After propagating Earliest of the second iteration back to the first
+  // iteration, the minimum over Earliest is directly related to the
+  // Recurrence Minimum Initiation Interval.
+  int MinEarliest = 0;
+
   void init(int NOrig, int NCopies) {
     NInstr = NOrig;
     Nodes.clear();
     Nodes.resize(NInstr * NCopies);
   }
+
   NodeInfo &operator[](int N) { return Nodes[N]; }
   const NodeInfo &operator[](int N) const { return Nodes[N]; }
+  // Compute some useful derived values
+  void compute();
 };
 
 class PostPipelinerStrategy {
