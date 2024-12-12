@@ -17,6 +17,8 @@
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
 #include "llvm/Support/MathExtras.h"
+#include <limits>
+#include <string>
 
 #define DEBUG_TYPE "postpipeliner"
 #define DEBUG_SUMMARY(X) DEBUG_WITH_TYPE("postpipeliner-summary", X)
@@ -200,6 +202,11 @@ void PostPipeliner::computeForward() {
   for (int K = 0; K < NInstr; K++) {
     auto &Me = Info[K];
     SUnit &SU = DAG->SUnits[K];
+    Me.Slots = getSlotCounts(*SU.getInstr(), TII);
+    // Accumulate the slots of Me and all data predecessors.
+    SlotCounts Slots(Me.Slots);
+    int PredEarliest = std::numeric_limits<int>::max();
+    int Count = 0;
     for (auto &Dep : SU.Preds) {
       if (Dep.getKind() != SDep::Data) {
         continue;
@@ -208,9 +215,17 @@ void PostPipeliner::computeForward() {
       assert(P < K);
       Me.Ancestors.insert(P);
       auto &Pred = Info[P];
+      Slots += Pred.Slots;
+      Count++;
+      PredEarliest = std::min(PredEarliest, Pred.Earliest);
       for (int Anc : Pred.Ancestors) {
         Me.Ancestors.insert(Anc);
       }
+    }
+    // When we need more slots than we have data predecessors, we have local
+    // resource contention that we can safely account for in Earliest.
+    if (Count > 0 && Slots.max() > Count) {
+      Me.Earliest = std::max(Me.Earliest, PredEarliest + Slots.max() - 1);
     }
     for (auto &Dep : SU.Succs) {
       auto *Succ = Dep.getSUnit();
@@ -221,7 +236,6 @@ void PostPipeliner::computeForward() {
       const int NewEarliest = Me.Earliest + Dep.getSignedLatency();
       SInfo.Earliest = std::max(SInfo.Earliest, NewEarliest);
     }
-    Me.Slots = getSlotCounts(*SU.getInstr(), TII);
   }
 }
 
@@ -378,6 +392,22 @@ void dumpGraph(const ScheduleInfo &Info,
     }
   }
   dbgs() << "}\n";
+}
+
+void dumpIntervals(const ScheduleInfo &Info, int MinLength) {
+  dbgs() << "Intervals:\n";
+  for (int K = 0; K < Info.NInstr; K++) {
+    std::string Head = "SU" + std::to_string(K);
+    dbgs() << Head;
+    for (int I = 6 - Head.length(); I < MinLength; I++) {
+      if (I >= Info[K].Earliest && I <= MinLength + Info[K].Latest) {
+        dbgs() << "*";
+      } else {
+        dbgs() << " ";
+      }
+    }
+    dbgs() << "\n";
+  }
 }
 
 int PostPipeliner::mostUrgent(PostPipelinerStrategy &Strategy) {
@@ -736,7 +766,7 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval) {
   LLVM_DEBUG(dumpGraph(Info, DAG));
 
   computeLoopCarriedParameters();
-
+  LLVM_DEBUG(dumpIntervals(Info, computeMinScheduleLength()));
   if (!tryHeuristics()) {
     LLVM_DEBUG(dbgs() << "PostPipeliner: No schedule found\n");
     return false;
