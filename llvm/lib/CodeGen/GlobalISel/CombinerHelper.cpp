@@ -2465,6 +2465,20 @@ bool CombinerHelper::matchCombineZextTrunc(MachineInstr &MI, Register &Reg) {
   return false;
 }
 
+bool CombinerHelper::matchCombineSextTrunc(MachineInstr &MI, Register &Reg) {
+  assert(MI.getOpcode() == TargetOpcode::G_SEXT && "Expected a G_SEXT");
+  const Register DstReg = MI.getOperand(0).getReg();
+  const Register SrcReg = MI.getOperand(1).getReg();
+  const LLT DstTy = MRI.getType(DstReg);
+  if (mi_match(SrcReg, MRI,
+               m_GTrunc(m_all_of(m_Reg(Reg), m_SpecificType(DstTy))))) {
+    const unsigned DstSize = DstTy.getScalarSizeInBits();
+    const unsigned SrcSize = MRI.getType(SrcReg).getScalarSizeInBits();
+    return KB->computeNumSignBits(Reg) >= (DstSize - SrcSize + 1);
+  }
+  return false;
+}
+
 bool CombinerHelper::matchCombineExtOfExt(
     MachineInstr &MI, std::tuple<Register, unsigned> &MatchInfo) {
   assert((MI.getOpcode() == TargetOpcode::G_ANYEXT ||
