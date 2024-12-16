@@ -39043,4 +39043,15651 @@ INTRINSIC(v16accfloat) neg_conf(v16accfloat acc, int zero_acc1, int sub_acc) {
   return extract_v16accfloat(res, 0);
 }
 
+INTRINSIC(v64acc32) mul_4x16_16x16(v64int8 a, v256int4 b) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0));
+  v128int8 b_hi = unpack(extract_v128int4(b, 1));
+  ;
+  v64acc32 acc = mul_4x8_8x16(set_v64int8(0, a_hi), 1, b_hi, 1);
+  acc = mac_4x8_8x16(set_v64int8(0, a_lo), 1, b_lo, 1, acc);
+  return acc;
+}
+INTRINSIC(v64acc32) negmul_4x16_16x16(v64int8 a, v256int4 b) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0));
+  v128int8 b_hi = unpack(extract_v128int4(b, 1));
+  ;
+  v64acc32 acc = negmul_4x8_8x16(set_v64int8(0, a_hi), 1, b_hi, 1);
+  acc = msc_4x8_8x16(set_v64int8(0, a_lo), 1, b_lo, 1, acc);
+  return acc;
+}
+INTRINSIC(v64acc32) mac_4x16_16x16(v64int8 a, v256int4 b, v64acc32 acc) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0));
+  v128int8 b_hi = unpack(extract_v128int4(b, 1));
+  ;
+  v64acc32 acc1 = mac_4x8_8x16(set_v64int8(0, a_hi), 1, b_hi, 1, acc);
+  acc1 = mac_4x8_8x16(set_v64int8(0, a_lo), 1, b_lo, 1, acc1);
+  return acc1;
+}
+INTRINSIC(v64acc32) msc_4x16_16x16(v64int8 a, v256int4 b, v64acc32 acc) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0));
+  v128int8 b_hi = unpack(extract_v128int4(b, 1));
+  ;
+  v64acc32 acc1 = msc_4x8_8x16(set_v64int8(0, a_hi), 1, b_hi, 1, acc);
+  acc1 = msc_4x8_8x16(set_v64int8(0, a_lo), 1, b_lo, 1, acc1);
+  return acc1;
+}
+INTRINSIC(v64acc32)
+addmac_4x16_16x16(v64int8 a, v256int4 b, v64acc32 acc1, v64acc32 acc2) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0));
+  v128int8 b_hi = unpack(extract_v128int4(b, 1));
+  ;
+  v64acc32 acc = mac_4x8_8x16(set_v64int8(0, a_hi), 1, b_hi, 1, acc1);
+  acc = addmac_4x8_8x16(set_v64int8(0, a_lo), 1, b_lo, 1, acc, acc2);
+  return acc;
+}
+INTRINSIC(v64acc32)
+addmsc_4x16_16x16(v64int8 a, v256int4 b, v64acc32 acc1, v64acc32 acc2) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0));
+  v128int8 b_hi = unpack(extract_v128int4(b, 1));
+  ;
+  v64acc32 acc = msc_4x8_8x16(set_v64int8(0, a_hi), 1, b_hi, 1, acc1);
+  acc = addmsc_4x8_8x16(set_v64int8(0, a_lo), 1, b_lo, 1, acc, acc2);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mul_4x16_16x16(v64int8 a, int sgn_x, v256int4 b, int sgn_y) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0), sgn_y);
+  v128int8 b_hi = unpack(extract_v128int4(b, 1), sgn_y);
+  ;
+  v64acc32 acc = mul_4x8_8x16(set_v64int8(0, a_hi), sgn_x, b_hi, sgn_y);
+  acc = mac_4x8_8x16(set_v64int8(0, a_lo), sgn_x, b_lo, sgn_y, acc);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_4x16_16x16(v64int8 a, int sgn_x, v256int4 b, int sgn_y) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0), sgn_y);
+  v128int8 b_hi = unpack(extract_v128int4(b, 1), sgn_y);
+  ;
+  v64acc32 acc = negmul_4x8_8x16(set_v64int8(0, a_hi), sgn_x, b_hi, sgn_y);
+  acc = msc_4x8_8x16(set_v64int8(0, a_lo), sgn_x, b_lo, sgn_y, acc);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_4x16_16x16(v64int8 a, int sgn_x, v256int4 b, int sgn_y, v64acc32 acc) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0), sgn_y);
+  v128int8 b_hi = unpack(extract_v128int4(b, 1), sgn_y);
+  ;
+  v64acc32 acc1 = mac_4x8_8x16(set_v64int8(0, a_hi), sgn_x, b_hi, sgn_y, acc);
+  acc1 = mac_4x8_8x16(set_v64int8(0, a_lo), sgn_x, b_lo, sgn_y, acc1);
+  return acc1;
+}
+INTRINSIC(v64acc32)
+msc_4x16_16x16(v64int8 a, int sgn_x, v256int4 b, int sgn_y, v64acc32 acc) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0), sgn_y);
+  v128int8 b_hi = unpack(extract_v128int4(b, 1), sgn_y);
+  ;
+  v64acc32 acc1 = msc_4x8_8x16(set_v64int8(0, a_hi), sgn_x, b_hi, sgn_y, acc);
+  acc1 = msc_4x8_8x16(set_v64int8(0, a_lo), sgn_x, b_lo, sgn_y, acc1);
+  return acc1;
+}
+INTRINSIC(v64acc32)
+addmac_4x16_16x16(v64int8 a, int sgn_x, v256int4 b, int sgn_y, v64acc32 acc1,
+                  v64acc32 acc2) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0), sgn_y);
+  v128int8 b_hi = unpack(extract_v128int4(b, 1), sgn_y);
+  ;
+  v64acc32 acc = mac_4x8_8x16(set_v64int8(0, a_hi), sgn_x, b_hi, sgn_y, acc1);
+  acc = addmac_4x8_8x16(set_v64int8(0, a_lo), sgn_x, b_lo, sgn_y, acc, acc2);
+  return acc;
+}
+INTRINSIC(v64acc32)
+addmsc_4x16_16x16(v64int8 a, int sgn_x, v256int4 b, int sgn_y, v64acc32 acc1,
+                  v64acc32 acc2) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0), sgn_y);
+  v128int8 b_hi = unpack(extract_v128int4(b, 1), sgn_y);
+  ;
+  v64acc32 acc = msc_4x8_8x16(set_v64int8(0, a_hi), sgn_x, b_hi, sgn_y, acc1);
+  acc = addmsc_4x8_8x16(set_v64int8(0, a_lo), sgn_x, b_lo, sgn_y, acc, acc2);
+  return acc;
+}
+INTRINSIC(v64acc32) mul_4x16_16x16_conf(v64int8 a, v256int4 b, int sub_mul) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0));
+  v128int8 b_hi = unpack(extract_v128int4(b, 1));
+  ;
+  v64acc32 acc = mul_4x8_8x16(set_v64int8(0, a_hi), 1, b_hi, 1);
+  acc = mac_4x8_8x16_conf(set_v64int8(0, a_lo), 1, b_lo, 1, acc, 0, 0, sub_mul,
+                          0);
+  return acc;
+}
+INTRINSIC(v64acc32) negmul_4x16_16x16_conf(v64int8 a, v256int4 b, int sub_mul) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0));
+  v128int8 b_hi = unpack(extract_v128int4(b, 1));
+  ;
+  v64acc32 acc = negmul_4x8_8x16(set_v64int8(0, a_hi), 1, b_hi, 1);
+  acc = msc_4x8_8x16_conf(set_v64int8(0, a_lo), 1, b_lo, 1, acc, 0, 0, sub_mul,
+                          0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_4x16_16x16_conf(v64int8 a, v256int4 b, v64acc32 acc, int zero_acc,
+                    int shift16, int sub_mul, int sub_acc1) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0));
+  v128int8 b_hi = unpack(extract_v128int4(b, 1));
+  ;
+  v64acc32 acc1 = mac_4x8_8x16_conf(set_v64int8(0, a_hi), b_hi, acc, zero_acc,
+                                    shift16, sub_mul, sub_acc1);
+  acc1 = mac_4x8_8x16_conf(set_v64int8(0, a_lo), b_lo, acc1, 0, 0, 0, 0);
+  return acc1;
+}
+INTRINSIC(v64acc32)
+msc_4x16_16x16_conf(v64int8 a, v256int4 b, v64acc32 acc, int zero_acc,
+                    int shift16, int sub_mul, int sub_acc1) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0));
+  v128int8 b_hi = unpack(extract_v128int4(b, 1));
+  ;
+  v64acc32 acc1 = msc_4x8_8x16_conf(set_v64int8(0, a_hi), 1, b_hi, 1, acc,
+                                    zero_acc, shift16, sub_mul, sub_acc1);
+  acc1 = msc_4x8_8x16_conf(set_v64int8(0, a_lo), 1, b_lo, 1, acc1, 0, 0, 0, 0);
+  return acc1;
+}
+INTRINSIC(v64acc32)
+addmac_4x16_16x16_conf(v64int8 a, v256int4 b, v64acc32 acc1, v64acc32 acc2,
+                       int zero_acc1, int shift16, int sub_mul, int sub_acc1,
+                       int sub_acc2) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0));
+  v128int8 b_hi = unpack(extract_v128int4(b, 1));
+  ;
+  v64acc32 acc = mac_4x8_8x16_conf(set_v64int8(0, a_hi), 1, b_hi, 1, acc1,
+                                   zero_acc1, shift16, sub_mul, sub_acc1);
+  acc = addmac_4x8_8x16_conf(set_v64int8(0, a_lo), 1, b_lo, 1, acc, acc2, 0, 0,
+                             0, 0, sub_acc2);
+  return acc;
+}
+INTRINSIC(v64acc32)
+addmsc_4x16_16x16_conf(v64int8 a, v256int4 b, v64acc32 acc1, v64acc32 acc2,
+                       int zero_acc1, int shift16, int sub_mul, int sub_acc1,
+                       int sub_acc2) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0));
+  v128int8 b_hi = unpack(extract_v128int4(b, 1));
+  ;
+  v64acc32 acc = msc_4x8_8x16_conf(set_v64int8(0, a_hi), 1, b_hi, 1, acc1,
+                                   zero_acc1, shift16, sub_mul, sub_acc1);
+  acc = addmsc_4x8_8x16_conf(set_v64int8(0, a_lo), 1, b_lo, 1, acc, acc2, 0, 0,
+                             0, 0, sub_acc2);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_4x16_16x16_conf(v64int8 a, int sgn_x, v256int4 b, int sgn_y, v64acc32 acc,
+                    int zero_acc, int shift16, int sub_mul, int sub_acc1) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0), sgn_y);
+  v128int8 b_hi = unpack(extract_v128int4(b, 1), sgn_y);
+  ;
+  v64acc32 acc1 = mac_4x8_8x16_conf(set_v64int8(0, a_lo), sgn_x, b_lo, sgn_y,
+                                    acc, zero_acc, shift16, sub_mul, sub_acc1);
+  acc1 = mac_4x8_8x16_conf(set_v64int8(0, a_hi), sgn_x, b_hi, sgn_y, acc1, 0, 0,
+                           0, 0);
+  return acc1;
+}
+INTRINSIC(v64acc32)
+msc_4x16_16x16_conf(v64int8 a, int sgn_x, v256int4 b, int sgn_y, v64acc32 acc,
+                    int zero_acc, int shift16, int sub_mul, int sub_acc1) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0), sgn_y);
+  v128int8 b_hi = unpack(extract_v128int4(b, 1), sgn_y);
+  ;
+  v64acc32 acc1 = msc_4x8_8x16_conf(set_v64int8(0, a_hi), sgn_x, b_hi, sgn_y,
+                                    acc, zero_acc, shift16, sub_mul, sub_acc1);
+  acc1 = msc_4x8_8x16_conf(set_v64int8(0, a_lo), sgn_x, b_lo, sgn_y, acc1, 0, 0,
+                           0, 0);
+  return acc1;
+}
+INTRINSIC(v64acc32)
+addmac_4x16_16x16_conf(v64int8 a, int sgn_x, v256int4 b, int sgn_y,
+                       v64acc32 acc1, v64acc32 acc2, int zero_acc1, int shift16,
+                       int sub_mul, int sub_acc1, int sub_acc2) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0), sgn_y);
+  v128int8 b_hi = unpack(extract_v128int4(b, 1), sgn_y);
+  ;
+  v64acc32 acc = mac_4x8_8x16_conf(set_v64int8(0, a_hi), sgn_x, b_hi, sgn_y,
+                                   acc1, zero_acc1, shift16, sub_mul, sub_acc1);
+  acc = addmac_4x8_8x16_conf(set_v64int8(0, a_lo), sgn_x, b_lo, sgn_y, acc,
+                             acc2, 0, 0, 0, 0, sub_acc2);
+  return acc;
+}
+INTRINSIC(v64acc32)
+addmsc_4x16_16x16_conf(v64int8 a, int sgn_x, v256int4 b, int sgn_y,
+                       v64acc32 acc1, v64acc32 acc2, int zero_acc1, int shift16,
+                       int sub_mul, int sub_acc1, int sub_acc2) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0), sgn_y);
+  v128int8 b_hi = unpack(extract_v128int4(b, 1), sgn_y);
+  ;
+  v64acc32 acc = msc_4x8_8x16_conf(set_v64int8(0, a_hi), sgn_x, b_hi, sgn_y,
+                                   acc1, zero_acc1, shift16, sub_mul, sub_acc1);
+  acc = addmsc_4x8_8x16_conf(set_v64int8(0, a_lo), sgn_x, b_lo, sgn_y, acc,
+                             acc2, 0, 0, 0, 0, sub_acc2);
+  return acc;
+};
+INTRINSIC(v64acc32) mul_4x16_16x16(v64int8 a, v256uint4 b) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0));
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1));
+  ;
+  v64acc32 acc = mul_4x8_8x16(set_v64int8(0, a_hi), 1, b_hi, 0);
+  acc = mac_4x8_8x16(set_v64int8(0, a_lo), 1, b_lo, 0, acc);
+  return acc;
+}
+INTRINSIC(v64acc32) negmul_4x16_16x16(v64int8 a, v256uint4 b) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0));
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1));
+  ;
+  v64acc32 acc = negmul_4x8_8x16(set_v64int8(0, a_hi), 1, b_hi, 0);
+  acc = msc_4x8_8x16(set_v64int8(0, a_lo), 1, b_lo, 0, acc);
+  return acc;
+}
+INTRINSIC(v64acc32) mac_4x16_16x16(v64int8 a, v256uint4 b, v64acc32 acc) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0));
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1));
+  ;
+  v64acc32 acc1 = mac_4x8_8x16(set_v64int8(0, a_hi), 1, b_hi, 0, acc);
+  acc1 = mac_4x8_8x16(set_v64int8(0, a_lo), 1, b_lo, 0, acc1);
+  return acc1;
+}
+INTRINSIC(v64acc32) msc_4x16_16x16(v64int8 a, v256uint4 b, v64acc32 acc) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0));
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1));
+  ;
+  v64acc32 acc1 = msc_4x8_8x16(set_v64int8(0, a_hi), 1, b_hi, 0, acc);
+  acc1 = msc_4x8_8x16(set_v64int8(0, a_lo), 1, b_lo, 0, acc1);
+  return acc1;
+}
+INTRINSIC(v64acc32)
+addmac_4x16_16x16(v64int8 a, v256uint4 b, v64acc32 acc1, v64acc32 acc2) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0));
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1));
+  ;
+  v64acc32 acc = mac_4x8_8x16(set_v64int8(0, a_hi), 1, b_hi, 0, acc1);
+  acc = addmac_4x8_8x16(set_v64int8(0, a_lo), 1, b_lo, 0, acc, acc2);
+  return acc;
+}
+INTRINSIC(v64acc32)
+addmsc_4x16_16x16(v64int8 a, v256uint4 b, v64acc32 acc1, v64acc32 acc2) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0));
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1));
+  ;
+  v64acc32 acc = msc_4x8_8x16(set_v64int8(0, a_hi), 1, b_hi, 0, acc1);
+  acc = addmsc_4x8_8x16(set_v64int8(0, a_lo), 1, b_lo, 0, acc, acc2);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mul_4x16_16x16(v64int8 a, int sgn_x, v256uint4 b, int sgn_y) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0), sgn_y);
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1), sgn_y);
+  ;
+  v64acc32 acc = mul_4x8_8x16(set_v64int8(0, a_hi), sgn_x, b_hi, sgn_y);
+  acc = mac_4x8_8x16(set_v64int8(0, a_lo), sgn_x, b_lo, sgn_y, acc);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_4x16_16x16(v64int8 a, int sgn_x, v256uint4 b, int sgn_y) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0), sgn_y);
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1), sgn_y);
+  ;
+  v64acc32 acc = negmul_4x8_8x16(set_v64int8(0, a_hi), sgn_x, b_hi, sgn_y);
+  acc = msc_4x8_8x16(set_v64int8(0, a_lo), sgn_x, b_lo, sgn_y, acc);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_4x16_16x16(v64int8 a, int sgn_x, v256uint4 b, int sgn_y, v64acc32 acc) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0), sgn_y);
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1), sgn_y);
+  ;
+  v64acc32 acc1 = mac_4x8_8x16(set_v64int8(0, a_hi), sgn_x, b_hi, sgn_y, acc);
+  acc1 = mac_4x8_8x16(set_v64int8(0, a_lo), sgn_x, b_lo, sgn_y, acc1);
+  return acc1;
+}
+INTRINSIC(v64acc32)
+msc_4x16_16x16(v64int8 a, int sgn_x, v256uint4 b, int sgn_y, v64acc32 acc) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0), sgn_y);
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1), sgn_y);
+  ;
+  v64acc32 acc1 = msc_4x8_8x16(set_v64int8(0, a_hi), sgn_x, b_hi, sgn_y, acc);
+  acc1 = msc_4x8_8x16(set_v64int8(0, a_lo), sgn_x, b_lo, sgn_y, acc1);
+  return acc1;
+}
+INTRINSIC(v64acc32)
+addmac_4x16_16x16(v64int8 a, int sgn_x, v256uint4 b, int sgn_y, v64acc32 acc1,
+                  v64acc32 acc2) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0), sgn_y);
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1), sgn_y);
+  ;
+  v64acc32 acc = mac_4x8_8x16(set_v64int8(0, a_hi), sgn_x, b_hi, sgn_y, acc1);
+  acc = addmac_4x8_8x16(set_v64int8(0, a_lo), sgn_x, b_lo, sgn_y, acc, acc2);
+  return acc;
+}
+INTRINSIC(v64acc32)
+addmsc_4x16_16x16(v64int8 a, int sgn_x, v256uint4 b, int sgn_y, v64acc32 acc1,
+                  v64acc32 acc2) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0), sgn_y);
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1), sgn_y);
+  ;
+  v64acc32 acc = msc_4x8_8x16(set_v64int8(0, a_hi), sgn_x, b_hi, sgn_y, acc1);
+  acc = addmsc_4x8_8x16(set_v64int8(0, a_lo), sgn_x, b_lo, sgn_y, acc, acc2);
+  return acc;
+}
+INTRINSIC(v64acc32) mul_4x16_16x16_conf(v64int8 a, v256uint4 b, int sub_mul) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0));
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1));
+  ;
+  v64acc32 acc = mul_4x8_8x16(set_v64int8(0, a_hi), 1, b_hi, 0);
+  acc = mac_4x8_8x16_conf(set_v64int8(0, a_lo), 1, b_lo, 0, acc, 0, 0, sub_mul,
+                          0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_4x16_16x16_conf(v64int8 a, v256uint4 b, int sub_mul) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0));
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1));
+  ;
+  v64acc32 acc = negmul_4x8_8x16(set_v64int8(0, a_hi), 1, b_hi, 0);
+  acc = msc_4x8_8x16_conf(set_v64int8(0, a_lo), 1, b_lo, 0, acc, 0, 0, sub_mul,
+                          0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_4x16_16x16_conf(v64int8 a, v256uint4 b, v64acc32 acc, int zero_acc,
+                    int shift16, int sub_mul, int sub_acc1) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0));
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1));
+  ;
+  v64acc32 acc1 = mac_4x8_8x16_conf(set_v64int8(0, a_hi), b_hi, acc, zero_acc,
+                                    shift16, sub_mul, sub_acc1);
+  acc1 = mac_4x8_8x16_conf(set_v64int8(0, a_lo), b_lo, acc1, 0, 0, 0, 0);
+  return acc1;
+}
+INTRINSIC(v64acc32)
+msc_4x16_16x16_conf(v64int8 a, v256uint4 b, v64acc32 acc, int zero_acc,
+                    int shift16, int sub_mul, int sub_acc1) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0));
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1));
+  ;
+  v64acc32 acc1 = msc_4x8_8x16_conf(set_v64int8(0, a_hi), 1, b_hi, 0, acc,
+                                    zero_acc, shift16, sub_mul, sub_acc1);
+  acc1 = msc_4x8_8x16_conf(set_v64int8(0, a_lo), 1, b_lo, 0, acc1, 0, 0, 0, 0);
+  return acc1;
+}
+INTRINSIC(v64acc32)
+addmac_4x16_16x16_conf(v64int8 a, v256uint4 b, v64acc32 acc1, v64acc32 acc2,
+                       int zero_acc1, int shift16, int sub_mul, int sub_acc1,
+                       int sub_acc2) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0));
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1));
+  ;
+  v64acc32 acc = mac_4x8_8x16_conf(set_v64int8(0, a_hi), 1, b_hi, 0, acc1,
+                                   zero_acc1, shift16, sub_mul, sub_acc1);
+  acc = addmac_4x8_8x16_conf(set_v64int8(0, a_lo), 1, b_lo, 0, acc, acc2, 0, 0,
+                             0, 0, sub_acc2);
+  return acc;
+}
+INTRINSIC(v64acc32)
+addmsc_4x16_16x16_conf(v64int8 a, v256uint4 b, v64acc32 acc1, v64acc32 acc2,
+                       int zero_acc1, int shift16, int sub_mul, int sub_acc1,
+                       int sub_acc2) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0));
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1));
+  ;
+  v64acc32 acc = msc_4x8_8x16_conf(set_v64int8(0, a_hi), 1, b_hi, 0, acc1,
+                                   zero_acc1, shift16, sub_mul, sub_acc1);
+  acc = addmsc_4x8_8x16_conf(set_v64int8(0, a_lo), 1, b_lo, 0, acc, acc2, 0, 0,
+                             0, 0, sub_acc2);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_4x16_16x16_conf(v64int8 a, int sgn_x, v256uint4 b, int sgn_y, v64acc32 acc,
+                    int zero_acc, int shift16, int sub_mul, int sub_acc1) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0), sgn_y);
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1), sgn_y);
+  ;
+  v64acc32 acc1 = mac_4x8_8x16_conf(set_v64int8(0, a_lo), sgn_x, b_lo, sgn_y,
+                                    acc, zero_acc, shift16, sub_mul, sub_acc1);
+  acc1 = mac_4x8_8x16_conf(set_v64int8(0, a_hi), sgn_x, b_hi, sgn_y, acc1, 0, 0,
+                           0, 0);
+  return acc1;
+}
+INTRINSIC(v64acc32)
+msc_4x16_16x16_conf(v64int8 a, int sgn_x, v256uint4 b, int sgn_y, v64acc32 acc,
+                    int zero_acc, int shift16, int sub_mul, int sub_acc1) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0), sgn_y);
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1), sgn_y);
+  ;
+  v64acc32 acc1 = msc_4x8_8x16_conf(set_v64int8(0, a_hi), sgn_x, b_hi, sgn_y,
+                                    acc, zero_acc, shift16, sub_mul, sub_acc1);
+  acc1 = msc_4x8_8x16_conf(set_v64int8(0, a_lo), sgn_x, b_lo, sgn_y, acc1, 0, 0,
+                           0, 0);
+  return acc1;
+}
+INTRINSIC(v64acc32)
+addmac_4x16_16x16_conf(v64int8 a, int sgn_x, v256uint4 b, int sgn_y,
+                       v64acc32 acc1, v64acc32 acc2, int zero_acc1, int shift16,
+                       int sub_mul, int sub_acc1, int sub_acc2) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0), sgn_y);
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1), sgn_y);
+  ;
+  v64acc32 acc = mac_4x8_8x16_conf(set_v64int8(0, a_hi), sgn_x, b_hi, sgn_y,
+                                   acc1, zero_acc1, shift16, sub_mul, sub_acc1);
+  acc = addmac_4x8_8x16_conf(set_v64int8(0, a_lo), sgn_x, b_lo, sgn_y, acc,
+                             acc2, 0, 0, 0, 0, sub_acc2);
+  return acc;
+}
+INTRINSIC(v64acc32)
+addmsc_4x16_16x16_conf(v64int8 a, int sgn_x, v256uint4 b, int sgn_y,
+                       v64acc32 acc1, v64acc32 acc2, int zero_acc1, int shift16,
+                       int sub_mul, int sub_acc1, int sub_acc2) {
+  v64int8 tmp = shuffle(a, 50);
+  v32int8 a_lo = extract_v32int8(tmp, 0);
+  v32int8 a_hi = extract_v32int8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0), sgn_y);
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1), sgn_y);
+  ;
+  v64acc32 acc = msc_4x8_8x16_conf(set_v64int8(0, a_hi), sgn_x, b_hi, sgn_y,
+                                   acc1, zero_acc1, shift16, sub_mul, sub_acc1);
+  acc = addmsc_4x8_8x16_conf(set_v64int8(0, a_lo), sgn_x, b_lo, sgn_y, acc,
+                             acc2, 0, 0, 0, 0, sub_acc2);
+  return acc;
+};
+INTRINSIC(v64acc32) mul_4x16_16x16(v64uint8 a, v256uint4 b) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0));
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1));
+  ;
+  v64acc32 acc = mul_4x8_8x16(set_v64uint8(0, a_hi), 0, b_hi, 0);
+  acc = mac_4x8_8x16(set_v64uint8(0, a_lo), 0, b_lo, 0, acc);
+  return acc;
+}
+INTRINSIC(v64acc32) negmul_4x16_16x16(v64uint8 a, v256uint4 b) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0));
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1));
+  ;
+  v64acc32 acc = negmul_4x8_8x16(set_v64uint8(0, a_hi), 0, b_hi, 0);
+  acc = msc_4x8_8x16(set_v64uint8(0, a_lo), 0, b_lo, 0, acc);
+  return acc;
+}
+INTRINSIC(v64acc32) mac_4x16_16x16(v64uint8 a, v256uint4 b, v64acc32 acc) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0));
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1));
+  ;
+  v64acc32 acc1 = mac_4x8_8x16(set_v64uint8(0, a_hi), 0, b_hi, 0, acc);
+  acc1 = mac_4x8_8x16(set_v64uint8(0, a_lo), 0, b_lo, 0, acc1);
+  return acc1;
+}
+INTRINSIC(v64acc32) msc_4x16_16x16(v64uint8 a, v256uint4 b, v64acc32 acc) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0));
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1));
+  ;
+  v64acc32 acc1 = msc_4x8_8x16(set_v64uint8(0, a_hi), 0, b_hi, 0, acc);
+  acc1 = msc_4x8_8x16(set_v64uint8(0, a_lo), 0, b_lo, 0, acc1);
+  return acc1;
+}
+INTRINSIC(v64acc32)
+addmac_4x16_16x16(v64uint8 a, v256uint4 b, v64acc32 acc1, v64acc32 acc2) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0));
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1));
+  ;
+  v64acc32 acc = mac_4x8_8x16(set_v64uint8(0, a_hi), 0, b_hi, 0, acc1);
+  acc = addmac_4x8_8x16(set_v64uint8(0, a_lo), 0, b_lo, 0, acc, acc2);
+  return acc;
+}
+INTRINSIC(v64acc32)
+addmsc_4x16_16x16(v64uint8 a, v256uint4 b, v64acc32 acc1, v64acc32 acc2) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0));
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1));
+  ;
+  v64acc32 acc = msc_4x8_8x16(set_v64uint8(0, a_hi), 0, b_hi, 0, acc1);
+  acc = addmsc_4x8_8x16(set_v64uint8(0, a_lo), 0, b_lo, 0, acc, acc2);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mul_4x16_16x16(v64uint8 a, int sgn_x, v256uint4 b, int sgn_y) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0), sgn_y);
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1), sgn_y);
+  ;
+  v64acc32 acc = mul_4x8_8x16(set_v64uint8(0, a_hi), sgn_x, b_hi, sgn_y);
+  acc = mac_4x8_8x16(set_v64uint8(0, a_lo), sgn_x, b_lo, sgn_y, acc);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_4x16_16x16(v64uint8 a, int sgn_x, v256uint4 b, int sgn_y) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0), sgn_y);
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1), sgn_y);
+  ;
+  v64acc32 acc = negmul_4x8_8x16(set_v64uint8(0, a_hi), sgn_x, b_hi, sgn_y);
+  acc = msc_4x8_8x16(set_v64uint8(0, a_lo), sgn_x, b_lo, sgn_y, acc);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_4x16_16x16(v64uint8 a, int sgn_x, v256uint4 b, int sgn_y, v64acc32 acc) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0), sgn_y);
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1), sgn_y);
+  ;
+  v64acc32 acc1 = mac_4x8_8x16(set_v64uint8(0, a_hi), sgn_x, b_hi, sgn_y, acc);
+  acc1 = mac_4x8_8x16(set_v64uint8(0, a_lo), sgn_x, b_lo, sgn_y, acc1);
+  return acc1;
+}
+INTRINSIC(v64acc32)
+msc_4x16_16x16(v64uint8 a, int sgn_x, v256uint4 b, int sgn_y, v64acc32 acc) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0), sgn_y);
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1), sgn_y);
+  ;
+  v64acc32 acc1 = msc_4x8_8x16(set_v64uint8(0, a_hi), sgn_x, b_hi, sgn_y, acc);
+  acc1 = msc_4x8_8x16(set_v64uint8(0, a_lo), sgn_x, b_lo, sgn_y, acc1);
+  return acc1;
+}
+INTRINSIC(v64acc32)
+addmac_4x16_16x16(v64uint8 a, int sgn_x, v256uint4 b, int sgn_y, v64acc32 acc1,
+                  v64acc32 acc2) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0), sgn_y);
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1), sgn_y);
+  ;
+  v64acc32 acc = mac_4x8_8x16(set_v64uint8(0, a_hi), sgn_x, b_hi, sgn_y, acc1);
+  acc = addmac_4x8_8x16(set_v64uint8(0, a_lo), sgn_x, b_lo, sgn_y, acc, acc2);
+  return acc;
+}
+INTRINSIC(v64acc32)
+addmsc_4x16_16x16(v64uint8 a, int sgn_x, v256uint4 b, int sgn_y, v64acc32 acc1,
+                  v64acc32 acc2) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0), sgn_y);
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1), sgn_y);
+  ;
+  v64acc32 acc = msc_4x8_8x16(set_v64uint8(0, a_hi), sgn_x, b_hi, sgn_y, acc1);
+  acc = addmsc_4x8_8x16(set_v64uint8(0, a_lo), sgn_x, b_lo, sgn_y, acc, acc2);
+  return acc;
+}
+INTRINSIC(v64acc32) mul_4x16_16x16_conf(v64uint8 a, v256uint4 b, int sub_mul) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0));
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1));
+  ;
+  v64acc32 acc = mul_4x8_8x16(set_v64uint8(0, a_hi), 0, b_hi, 0);
+  acc = mac_4x8_8x16_conf(set_v64uint8(0, a_lo), 0, b_lo, 0, acc, 0, 0, sub_mul,
+                          0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_4x16_16x16_conf(v64uint8 a, v256uint4 b, int sub_mul) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0));
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1));
+  ;
+  v64acc32 acc = negmul_4x8_8x16(set_v64uint8(0, a_hi), 0, b_hi, 0);
+  acc = msc_4x8_8x16_conf(set_v64uint8(0, a_lo), 0, b_lo, 0, acc, 0, 0, sub_mul,
+                          0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_4x16_16x16_conf(v64uint8 a, v256uint4 b, v64acc32 acc, int zero_acc,
+                    int shift16, int sub_mul, int sub_acc1) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0));
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1));
+  ;
+  v64acc32 acc1 = mac_4x8_8x16_conf(set_v64uint8(0, a_hi), b_hi, acc, zero_acc,
+                                    shift16, sub_mul, sub_acc1);
+  acc1 = mac_4x8_8x16_conf(set_v64uint8(0, a_lo), b_lo, acc1, 0, 0, 0, 0);
+  return acc1;
+}
+INTRINSIC(v64acc32)
+msc_4x16_16x16_conf(v64uint8 a, v256uint4 b, v64acc32 acc, int zero_acc,
+                    int shift16, int sub_mul, int sub_acc1) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0));
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1));
+  ;
+  v64acc32 acc1 = msc_4x8_8x16_conf(set_v64uint8(0, a_hi), 0, b_hi, 0, acc,
+                                    zero_acc, shift16, sub_mul, sub_acc1);
+  acc1 = msc_4x8_8x16_conf(set_v64uint8(0, a_lo), 0, b_lo, 0, acc1, 0, 0, 0, 0);
+  return acc1;
+}
+INTRINSIC(v64acc32)
+addmac_4x16_16x16_conf(v64uint8 a, v256uint4 b, v64acc32 acc1, v64acc32 acc2,
+                       int zero_acc1, int shift16, int sub_mul, int sub_acc1,
+                       int sub_acc2) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0));
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1));
+  ;
+  v64acc32 acc = mac_4x8_8x16_conf(set_v64uint8(0, a_hi), 0, b_hi, 0, acc1,
+                                   zero_acc1, shift16, sub_mul, sub_acc1);
+  acc = addmac_4x8_8x16_conf(set_v64uint8(0, a_lo), 0, b_lo, 0, acc, acc2, 0, 0,
+                             0, 0, sub_acc2);
+  return acc;
+}
+INTRINSIC(v64acc32)
+addmsc_4x16_16x16_conf(v64uint8 a, v256uint4 b, v64acc32 acc1, v64acc32 acc2,
+                       int zero_acc1, int shift16, int sub_mul, int sub_acc1,
+                       int sub_acc2) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0));
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1));
+  ;
+  v64acc32 acc = msc_4x8_8x16_conf(set_v64uint8(0, a_hi), 0, b_hi, 0, acc1,
+                                   zero_acc1, shift16, sub_mul, sub_acc1);
+  acc = addmsc_4x8_8x16_conf(set_v64uint8(0, a_lo), 0, b_lo, 0, acc, acc2, 0, 0,
+                             0, 0, sub_acc2);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_4x16_16x16_conf(v64uint8 a, int sgn_x, v256uint4 b, int sgn_y, v64acc32 acc,
+                    int zero_acc, int shift16, int sub_mul, int sub_acc1) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0), sgn_y);
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1), sgn_y);
+  ;
+  v64acc32 acc1 = mac_4x8_8x16_conf(set_v64uint8(0, a_lo), sgn_x, b_lo, sgn_y,
+                                    acc, zero_acc, shift16, sub_mul, sub_acc1);
+  acc1 = mac_4x8_8x16_conf(set_v64uint8(0, a_hi), sgn_x, b_hi, sgn_y, acc1, 0,
+                           0, 0, 0);
+  return acc1;
+}
+INTRINSIC(v64acc32)
+msc_4x16_16x16_conf(v64uint8 a, int sgn_x, v256uint4 b, int sgn_y, v64acc32 acc,
+                    int zero_acc, int shift16, int sub_mul, int sub_acc1) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0), sgn_y);
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1), sgn_y);
+  ;
+  v64acc32 acc1 = msc_4x8_8x16_conf(set_v64uint8(0, a_hi), sgn_x, b_hi, sgn_y,
+                                    acc, zero_acc, shift16, sub_mul, sub_acc1);
+  acc1 = msc_4x8_8x16_conf(set_v64uint8(0, a_lo), sgn_x, b_lo, sgn_y, acc1, 0,
+                           0, 0, 0);
+  return acc1;
+}
+INTRINSIC(v64acc32)
+addmac_4x16_16x16_conf(v64uint8 a, int sgn_x, v256uint4 b, int sgn_y,
+                       v64acc32 acc1, v64acc32 acc2, int zero_acc1, int shift16,
+                       int sub_mul, int sub_acc1, int sub_acc2) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0), sgn_y);
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1), sgn_y);
+  ;
+  v64acc32 acc = mac_4x8_8x16_conf(set_v64uint8(0, a_hi), sgn_x, b_hi, sgn_y,
+                                   acc1, zero_acc1, shift16, sub_mul, sub_acc1);
+  acc = addmac_4x8_8x16_conf(set_v64uint8(0, a_lo), sgn_x, b_lo, sgn_y, acc,
+                             acc2, 0, 0, 0, 0, sub_acc2);
+  return acc;
+}
+INTRINSIC(v64acc32)
+addmsc_4x16_16x16_conf(v64uint8 a, int sgn_x, v256uint4 b, int sgn_y,
+                       v64acc32 acc1, v64acc32 acc2, int zero_acc1, int shift16,
+                       int sub_mul, int sub_acc1, int sub_acc2) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128uint8 b_lo = unpack(extract_v128uint4(b, 0), sgn_y);
+  v128uint8 b_hi = unpack(extract_v128uint4(b, 1), sgn_y);
+  ;
+  v64acc32 acc = msc_4x8_8x16_conf(set_v64uint8(0, a_hi), sgn_x, b_hi, sgn_y,
+                                   acc1, zero_acc1, shift16, sub_mul, sub_acc1);
+  acc = addmsc_4x8_8x16_conf(set_v64uint8(0, a_lo), sgn_x, b_lo, sgn_y, acc,
+                             acc2, 0, 0, 0, 0, sub_acc2);
+  return acc;
+};
+INTRINSIC(v64acc32) mul_4x16_16x16(v64uint8 a, v256int4 b) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0));
+  v128int8 b_hi = unpack(extract_v128int4(b, 1));
+  ;
+  v64acc32 acc = mul_4x8_8x16(set_v64uint8(0, a_hi), 0, b_hi, 1);
+  acc = mac_4x8_8x16(set_v64uint8(0, a_lo), 0, b_lo, 1, acc);
+  return acc;
+}
+INTRINSIC(v64acc32) negmul_4x16_16x16(v64uint8 a, v256int4 b) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0));
+  v128int8 b_hi = unpack(extract_v128int4(b, 1));
+  ;
+  v64acc32 acc = negmul_4x8_8x16(set_v64uint8(0, a_hi), 0, b_hi, 1);
+  acc = msc_4x8_8x16(set_v64uint8(0, a_lo), 0, b_lo, 1, acc);
+  return acc;
+}
+INTRINSIC(v64acc32) mac_4x16_16x16(v64uint8 a, v256int4 b, v64acc32 acc) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0));
+  v128int8 b_hi = unpack(extract_v128int4(b, 1));
+  ;
+  v64acc32 acc1 = mac_4x8_8x16(set_v64uint8(0, a_hi), 0, b_hi, 1, acc);
+  acc1 = mac_4x8_8x16(set_v64uint8(0, a_lo), 0, b_lo, 1, acc1);
+  return acc1;
+}
+INTRINSIC(v64acc32) msc_4x16_16x16(v64uint8 a, v256int4 b, v64acc32 acc) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0));
+  v128int8 b_hi = unpack(extract_v128int4(b, 1));
+  ;
+  v64acc32 acc1 = msc_4x8_8x16(set_v64uint8(0, a_hi), 0, b_hi, 1, acc);
+  acc1 = msc_4x8_8x16(set_v64uint8(0, a_lo), 0, b_lo, 1, acc1);
+  return acc1;
+}
+INTRINSIC(v64acc32)
+addmac_4x16_16x16(v64uint8 a, v256int4 b, v64acc32 acc1, v64acc32 acc2) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0));
+  v128int8 b_hi = unpack(extract_v128int4(b, 1));
+  ;
+  v64acc32 acc = mac_4x8_8x16(set_v64uint8(0, a_hi), 0, b_hi, 1, acc1);
+  acc = addmac_4x8_8x16(set_v64uint8(0, a_lo), 0, b_lo, 1, acc, acc2);
+  return acc;
+}
+INTRINSIC(v64acc32)
+addmsc_4x16_16x16(v64uint8 a, v256int4 b, v64acc32 acc1, v64acc32 acc2) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0));
+  v128int8 b_hi = unpack(extract_v128int4(b, 1));
+  ;
+  v64acc32 acc = msc_4x8_8x16(set_v64uint8(0, a_hi), 0, b_hi, 1, acc1);
+  acc = addmsc_4x8_8x16(set_v64uint8(0, a_lo), 0, b_lo, 1, acc, acc2);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mul_4x16_16x16(v64uint8 a, int sgn_x, v256int4 b, int sgn_y) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0), sgn_y);
+  v128int8 b_hi = unpack(extract_v128int4(b, 1), sgn_y);
+  ;
+  v64acc32 acc = mul_4x8_8x16(set_v64uint8(0, a_hi), sgn_x, b_hi, sgn_y);
+  acc = mac_4x8_8x16(set_v64uint8(0, a_lo), sgn_x, b_lo, sgn_y, acc);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_4x16_16x16(v64uint8 a, int sgn_x, v256int4 b, int sgn_y) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0), sgn_y);
+  v128int8 b_hi = unpack(extract_v128int4(b, 1), sgn_y);
+  ;
+  v64acc32 acc = negmul_4x8_8x16(set_v64uint8(0, a_hi), sgn_x, b_hi, sgn_y);
+  acc = msc_4x8_8x16(set_v64uint8(0, a_lo), sgn_x, b_lo, sgn_y, acc);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_4x16_16x16(v64uint8 a, int sgn_x, v256int4 b, int sgn_y, v64acc32 acc) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0), sgn_y);
+  v128int8 b_hi = unpack(extract_v128int4(b, 1), sgn_y);
+  ;
+  v64acc32 acc1 = mac_4x8_8x16(set_v64uint8(0, a_hi), sgn_x, b_hi, sgn_y, acc);
+  acc1 = mac_4x8_8x16(set_v64uint8(0, a_lo), sgn_x, b_lo, sgn_y, acc1);
+  return acc1;
+}
+INTRINSIC(v64acc32)
+msc_4x16_16x16(v64uint8 a, int sgn_x, v256int4 b, int sgn_y, v64acc32 acc) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0), sgn_y);
+  v128int8 b_hi = unpack(extract_v128int4(b, 1), sgn_y);
+  ;
+  v64acc32 acc1 = msc_4x8_8x16(set_v64uint8(0, a_hi), sgn_x, b_hi, sgn_y, acc);
+  acc1 = msc_4x8_8x16(set_v64uint8(0, a_lo), sgn_x, b_lo, sgn_y, acc1);
+  return acc1;
+}
+INTRINSIC(v64acc32)
+addmac_4x16_16x16(v64uint8 a, int sgn_x, v256int4 b, int sgn_y, v64acc32 acc1,
+                  v64acc32 acc2) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0), sgn_y);
+  v128int8 b_hi = unpack(extract_v128int4(b, 1), sgn_y);
+  ;
+  v64acc32 acc = mac_4x8_8x16(set_v64uint8(0, a_hi), sgn_x, b_hi, sgn_y, acc1);
+  acc = addmac_4x8_8x16(set_v64uint8(0, a_lo), sgn_x, b_lo, sgn_y, acc, acc2);
+  return acc;
+}
+INTRINSIC(v64acc32)
+addmsc_4x16_16x16(v64uint8 a, int sgn_x, v256int4 b, int sgn_y, v64acc32 acc1,
+                  v64acc32 acc2) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0), sgn_y);
+  v128int8 b_hi = unpack(extract_v128int4(b, 1), sgn_y);
+  ;
+  v64acc32 acc = msc_4x8_8x16(set_v64uint8(0, a_hi), sgn_x, b_hi, sgn_y, acc1);
+  acc = addmsc_4x8_8x16(set_v64uint8(0, a_lo), sgn_x, b_lo, sgn_y, acc, acc2);
+  return acc;
+}
+INTRINSIC(v64acc32) mul_4x16_16x16_conf(v64uint8 a, v256int4 b, int sub_mul) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0));
+  v128int8 b_hi = unpack(extract_v128int4(b, 1));
+  ;
+  v64acc32 acc = mul_4x8_8x16(set_v64uint8(0, a_hi), 0, b_hi, 1);
+  acc = mac_4x8_8x16_conf(set_v64uint8(0, a_lo), 0, b_lo, 1, acc, 0, 0, sub_mul,
+                          0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_4x16_16x16_conf(v64uint8 a, v256int4 b, int sub_mul) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0));
+  v128int8 b_hi = unpack(extract_v128int4(b, 1));
+  ;
+  v64acc32 acc = negmul_4x8_8x16(set_v64uint8(0, a_hi), 0, b_hi, 1);
+  acc = msc_4x8_8x16_conf(set_v64uint8(0, a_lo), 0, b_lo, 1, acc, 0, 0, sub_mul,
+                          0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_4x16_16x16_conf(v64uint8 a, v256int4 b, v64acc32 acc, int zero_acc,
+                    int shift16, int sub_mul, int sub_acc1) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0));
+  v128int8 b_hi = unpack(extract_v128int4(b, 1));
+  ;
+  v64acc32 acc1 = mac_4x8_8x16_conf(set_v64uint8(0, a_hi), b_hi, acc, zero_acc,
+                                    shift16, sub_mul, sub_acc1);
+  acc1 = mac_4x8_8x16_conf(set_v64uint8(0, a_lo), b_lo, acc1, 0, 0, 0, 0);
+  return acc1;
+}
+INTRINSIC(v64acc32)
+msc_4x16_16x16_conf(v64uint8 a, v256int4 b, v64acc32 acc, int zero_acc,
+                    int shift16, int sub_mul, int sub_acc1) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0));
+  v128int8 b_hi = unpack(extract_v128int4(b, 1));
+  ;
+  v64acc32 acc1 = msc_4x8_8x16_conf(set_v64uint8(0, a_hi), 0, b_hi, 1, acc,
+                                    zero_acc, shift16, sub_mul, sub_acc1);
+  acc1 = msc_4x8_8x16_conf(set_v64uint8(0, a_lo), 0, b_lo, 1, acc1, 0, 0, 0, 0);
+  return acc1;
+}
+INTRINSIC(v64acc32)
+addmac_4x16_16x16_conf(v64uint8 a, v256int4 b, v64acc32 acc1, v64acc32 acc2,
+                       int zero_acc1, int shift16, int sub_mul, int sub_acc1,
+                       int sub_acc2) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0));
+  v128int8 b_hi = unpack(extract_v128int4(b, 1));
+  ;
+  v64acc32 acc = mac_4x8_8x16_conf(set_v64uint8(0, a_hi), 0, b_hi, 1, acc1,
+                                   zero_acc1, shift16, sub_mul, sub_acc1);
+  acc = addmac_4x8_8x16_conf(set_v64uint8(0, a_lo), 0, b_lo, 1, acc, acc2, 0, 0,
+                             0, 0, sub_acc2);
+  return acc;
+}
+INTRINSIC(v64acc32)
+addmsc_4x16_16x16_conf(v64uint8 a, v256int4 b, v64acc32 acc1, v64acc32 acc2,
+                       int zero_acc1, int shift16, int sub_mul, int sub_acc1,
+                       int sub_acc2) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0));
+  v128int8 b_hi = unpack(extract_v128int4(b, 1));
+  ;
+  v64acc32 acc = msc_4x8_8x16_conf(set_v64uint8(0, a_hi), 0, b_hi, 1, acc1,
+                                   zero_acc1, shift16, sub_mul, sub_acc1);
+  acc = addmsc_4x8_8x16_conf(set_v64uint8(0, a_lo), 0, b_lo, 1, acc, acc2, 0, 0,
+                             0, 0, sub_acc2);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_4x16_16x16_conf(v64uint8 a, int sgn_x, v256int4 b, int sgn_y, v64acc32 acc,
+                    int zero_acc, int shift16, int sub_mul, int sub_acc1) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0), sgn_y);
+  v128int8 b_hi = unpack(extract_v128int4(b, 1), sgn_y);
+  ;
+  v64acc32 acc1 = mac_4x8_8x16_conf(set_v64uint8(0, a_lo), sgn_x, b_lo, sgn_y,
+                                    acc, zero_acc, shift16, sub_mul, sub_acc1);
+  acc1 = mac_4x8_8x16_conf(set_v64uint8(0, a_hi), sgn_x, b_hi, sgn_y, acc1, 0,
+                           0, 0, 0);
+  return acc1;
+}
+INTRINSIC(v64acc32)
+msc_4x16_16x16_conf(v64uint8 a, int sgn_x, v256int4 b, int sgn_y, v64acc32 acc,
+                    int zero_acc, int shift16, int sub_mul, int sub_acc1) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0), sgn_y);
+  v128int8 b_hi = unpack(extract_v128int4(b, 1), sgn_y);
+  ;
+  v64acc32 acc1 = msc_4x8_8x16_conf(set_v64uint8(0, a_hi), sgn_x, b_hi, sgn_y,
+                                    acc, zero_acc, shift16, sub_mul, sub_acc1);
+  acc1 = msc_4x8_8x16_conf(set_v64uint8(0, a_lo), sgn_x, b_lo, sgn_y, acc1, 0,
+                           0, 0, 0);
+  return acc1;
+}
+INTRINSIC(v64acc32)
+addmac_4x16_16x16_conf(v64uint8 a, int sgn_x, v256int4 b, int sgn_y,
+                       v64acc32 acc1, v64acc32 acc2, int zero_acc1, int shift16,
+                       int sub_mul, int sub_acc1, int sub_acc2) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0), sgn_y);
+  v128int8 b_hi = unpack(extract_v128int4(b, 1), sgn_y);
+  ;
+  v64acc32 acc = mac_4x8_8x16_conf(set_v64uint8(0, a_hi), sgn_x, b_hi, sgn_y,
+                                   acc1, zero_acc1, shift16, sub_mul, sub_acc1);
+  acc = addmac_4x8_8x16_conf(set_v64uint8(0, a_lo), sgn_x, b_lo, sgn_y, acc,
+                             acc2, 0, 0, 0, 0, sub_acc2);
+  return acc;
+}
+INTRINSIC(v64acc32)
+addmsc_4x16_16x16_conf(v64uint8 a, int sgn_x, v256int4 b, int sgn_y,
+                       v64acc32 acc1, v64acc32 acc2, int zero_acc1, int shift16,
+                       int sub_mul, int sub_acc1, int sub_acc2) {
+  v64uint8 tmp = shuffle(a, 50);
+  v32uint8 a_lo = extract_v32uint8(tmp, 0);
+  v32uint8 a_hi = extract_v32uint8(tmp, 1);
+  v128int8 b_lo = unpack(extract_v128int4(b, 0), sgn_y);
+  v128int8 b_hi = unpack(extract_v128int4(b, 1), sgn_y);
+  ;
+  v64acc32 acc = msc_4x8_8x16_conf(set_v64uint8(0, a_hi), sgn_x, b_hi, sgn_y,
+                                   acc1, zero_acc1, shift16, sub_mul, sub_acc1);
+  acc = addmsc_4x8_8x16_conf(set_v64uint8(0, a_lo), sgn_x, b_lo, sgn_y, acc,
+                             acc2, 0, 0, 0, 0, sub_acc2);
+  return acc;
+};
+
+INTRINSIC(v64acc32) mul_8x2_2x8(v16uint32 a0, v32uint16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8(hi, b);
+  acc = mac_8x2_2x8_conf(lo, false, b, 0, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) negmul_8x2_2x8(v16uint32 a0, v32uint16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8(hi, b);
+  acc = msc_8x2_2x8_conf(lo, false, b, 0, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) mac_8x2_2x8(v16uint32 a0, v32uint16 b, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8(hi, b);
+  acc = addmac_8x2_2x8_conf(lo, false, b, 0, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) msc_8x2_2x8(v16uint32 a0, v32uint16 b, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8(hi, b);
+  acc = addmsc_8x2_2x8_conf(lo, false, b, 0, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mul_8x2_2x8(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8(hi, sgn_x, b, sgn_y);
+  acc = mac_8x2_2x8_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_8x2_2x8(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8(hi, sgn_x, b, sgn_y);
+  acc = msc_8x2_2x8_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8(hi, sgn_x, b, sgn_y);
+  acc = addmac_8x2_2x8_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8(hi, sgn_x, b, sgn_y);
+  acc = addmsc_8x2_2x8_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) mul_8x2_2x8_conf(v16uint32 a0, v32uint16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(hi, b, sub_mul);
+  acc = mac_8x2_2x8_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_8x2_2x8_conf(v16uint32 a0, v32uint16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(hi, b, sub_mul);
+  acc = msc_8x2_2x8_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8_conf(v16uint32 a0, v32uint16 b, v64acc32 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(hi, b, sub_mul);
+  acc = addmac_8x2_2x8_conf(lo, false, b, 0, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8_conf(v16uint32 a0, v32uint16 b, v64acc32 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(hi, b, sub_mul);
+  acc = addmsc_8x2_2x8_conf(lo, false, b, 0, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mul_8x2_2x8_conf(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = mac_8x2_2x8_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_8x2_2x8_conf(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y,
+                    int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = msc_8x2_2x8_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8_conf(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y, v64acc32 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmac_8x2_2x8_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8_conf(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y, v64acc32 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmsc_8x2_2x8_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8_conf(v16uint32 a0, v32uint16 b, v64acc32 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_8x2_2x8_conf(a0, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(hi, b, sub_mul);
+  acc = ::mac_8x2_2x8_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8_conf(v16uint32 a0, v32uint16 b, v64acc32 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_8x2_2x8_conf(a0, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(hi, b, sub_mul);
+  acc = ::mac_8x2_2x8_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8_conf(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y, v64acc32 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_8x2_2x8_conf(a0, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_8x2_2x8_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8_conf(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y, v64acc32 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_8x2_2x8_conf(a0, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_8x2_2x8_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v64acc32) mul_8x2_2x8(v16uint32 a0, v32int16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8(hi, b);
+  acc = mac_8x2_2x8_conf(lo, false, b, 1, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) negmul_8x2_2x8(v16uint32 a0, v32int16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8(hi, b);
+  acc = msc_8x2_2x8_conf(lo, false, b, 1, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) mac_8x2_2x8(v16uint32 a0, v32int16 b, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8(hi, b);
+  acc = addmac_8x2_2x8_conf(lo, false, b, 1, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) msc_8x2_2x8(v16uint32 a0, v32int16 b, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8(hi, b);
+  acc = addmsc_8x2_2x8_conf(lo, false, b, 1, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mul_8x2_2x8(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8(hi, sgn_x, b, sgn_y);
+  acc = mac_8x2_2x8_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_8x2_2x8(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8(hi, sgn_x, b, sgn_y);
+  acc = msc_8x2_2x8_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8(hi, sgn_x, b, sgn_y);
+  acc = addmac_8x2_2x8_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8(hi, sgn_x, b, sgn_y);
+  acc = addmsc_8x2_2x8_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) mul_8x2_2x8_conf(v16uint32 a0, v32int16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(hi, b, sub_mul);
+  acc = mac_8x2_2x8_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) negmul_8x2_2x8_conf(v16uint32 a0, v32int16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(hi, b, sub_mul);
+  acc = msc_8x2_2x8_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8_conf(v16uint32 a0, v32int16 b, v64acc32 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(hi, b, sub_mul);
+  acc = addmac_8x2_2x8_conf(lo, false, b, 1, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8_conf(v16uint32 a0, v32int16 b, v64acc32 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(hi, b, sub_mul);
+  acc = addmsc_8x2_2x8_conf(lo, false, b, 1, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mul_8x2_2x8_conf(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = mac_8x2_2x8_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_8x2_2x8_conf(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y,
+                    int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = msc_8x2_2x8_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8_conf(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y, v64acc32 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmac_8x2_2x8_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8_conf(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y, v64acc32 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmsc_8x2_2x8_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8_conf(v16uint32 a0, v32int16 b, v64acc32 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_8x2_2x8_conf(a0, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(hi, b, sub_mul);
+  acc = ::mac_8x2_2x8_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8_conf(v16uint32 a0, v32int16 b, v64acc32 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_8x2_2x8_conf(a0, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(hi, b, sub_mul);
+  acc = ::mac_8x2_2x8_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8_conf(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y, v64acc32 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_8x2_2x8_conf(a0, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_8x2_2x8_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8_conf(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y, v64acc32 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_8x2_2x8_conf(a0, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_8x2_2x8_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v64acc32) mul_8x2_2x8(v16int32 a0, v32uint16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8(hi, b);
+  acc = mac_8x2_2x8_conf(lo, false, b, 0, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) negmul_8x2_2x8(v16int32 a0, v32uint16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8(hi, b);
+  acc = msc_8x2_2x8_conf(lo, false, b, 0, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) mac_8x2_2x8(v16int32 a0, v32uint16 b, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8(hi, b);
+  acc = addmac_8x2_2x8_conf(lo, false, b, 0, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) msc_8x2_2x8(v16int32 a0, v32uint16 b, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8(hi, b);
+  acc = addmsc_8x2_2x8_conf(lo, false, b, 0, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mul_8x2_2x8(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8(hi, sgn_x, b, sgn_y);
+  acc = mac_8x2_2x8_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_8x2_2x8(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8(hi, sgn_x, b, sgn_y);
+  acc = msc_8x2_2x8_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8(hi, sgn_x, b, sgn_y);
+  acc = addmac_8x2_2x8_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8(hi, sgn_x, b, sgn_y);
+  acc = addmsc_8x2_2x8_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) mul_8x2_2x8_conf(v16int32 a0, v32uint16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(hi, b, sub_mul);
+  acc = mac_8x2_2x8_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) negmul_8x2_2x8_conf(v16int32 a0, v32uint16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(hi, b, sub_mul);
+  acc = msc_8x2_2x8_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8_conf(v16int32 a0, v32uint16 b, v64acc32 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(hi, b, sub_mul);
+  acc = addmac_8x2_2x8_conf(lo, false, b, 0, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8_conf(v16int32 a0, v32uint16 b, v64acc32 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(hi, b, sub_mul);
+  acc = addmsc_8x2_2x8_conf(lo, false, b, 0, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mul_8x2_2x8_conf(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = mac_8x2_2x8_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_8x2_2x8_conf(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y,
+                    int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = msc_8x2_2x8_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8_conf(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y, v64acc32 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmac_8x2_2x8_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8_conf(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y, v64acc32 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmsc_8x2_2x8_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8_conf(v16int32 a0, v32uint16 b, v64acc32 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_8x2_2x8_conf(a0, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(hi, b, sub_mul);
+  acc = ::mac_8x2_2x8_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8_conf(v16int32 a0, v32uint16 b, v64acc32 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_8x2_2x8_conf(a0, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(hi, b, sub_mul);
+  acc = ::mac_8x2_2x8_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8_conf(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y, v64acc32 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_8x2_2x8_conf(a0, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_8x2_2x8_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8_conf(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y, v64acc32 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_8x2_2x8_conf(a0, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_8x2_2x8_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v64acc32) mul_8x2_2x8(v16int32 a0, v32int16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8(hi, b);
+  acc = mac_8x2_2x8_conf(lo, false, b, 1, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) negmul_8x2_2x8(v16int32 a0, v32int16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8(hi, b);
+  acc = msc_8x2_2x8_conf(lo, false, b, 1, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) mac_8x2_2x8(v16int32 a0, v32int16 b, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8(hi, b);
+  acc = addmac_8x2_2x8_conf(lo, false, b, 1, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) msc_8x2_2x8(v16int32 a0, v32int16 b, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8(hi, b);
+  acc = addmsc_8x2_2x8_conf(lo, false, b, 1, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) mul_8x2_2x8(v16int32 a0, int sgn_x, v32int16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8(hi, sgn_x, b, sgn_y);
+  acc = mac_8x2_2x8_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_8x2_2x8(v16int32 a0, int sgn_x, v32int16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8(hi, sgn_x, b, sgn_y);
+  acc = msc_8x2_2x8_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8(v16int32 a0, int sgn_x, v32int16 b, int sgn_y, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8(hi, sgn_x, b, sgn_y);
+  acc = addmac_8x2_2x8_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8(v16int32 a0, int sgn_x, v32int16 b, int sgn_y, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8(hi, sgn_x, b, sgn_y);
+  acc = addmsc_8x2_2x8_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) mul_8x2_2x8_conf(v16int32 a0, v32int16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(hi, b, sub_mul);
+  acc = mac_8x2_2x8_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) negmul_8x2_2x8_conf(v16int32 a0, v32int16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(hi, b, sub_mul);
+  acc = msc_8x2_2x8_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8_conf(v16int32 a0, v32int16 b, v64acc32 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(hi, b, sub_mul);
+  acc = addmac_8x2_2x8_conf(lo, false, b, 1, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8_conf(v16int32 a0, v32int16 b, v64acc32 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(hi, b, sub_mul);
+  acc = addmsc_8x2_2x8_conf(lo, false, b, 1, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mul_8x2_2x8_conf(v16int32 a0, int sgn_x, v32int16 b, int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = mac_8x2_2x8_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_8x2_2x8_conf(v16int32 a0, int sgn_x, v32int16 b, int sgn_y,
+                    int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = msc_8x2_2x8_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8_conf(v16int32 a0, int sgn_x, v32int16 b, int sgn_y, v64acc32 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmac_8x2_2x8_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8_conf(v16int32 a0, int sgn_x, v32int16 b, int sgn_y, v64acc32 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmsc_8x2_2x8_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8_conf(v16int32 a0, v32int16 b, v64acc32 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_8x2_2x8_conf(a0, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(hi, b, sub_mul);
+  acc = ::mac_8x2_2x8_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8_conf(v16int32 a0, v32int16 b, v64acc32 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_8x2_2x8_conf(a0, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(hi, b, sub_mul);
+  acc = ::mac_8x2_2x8_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8_conf(v16int32 a0, int sgn_x, v32int16 b, int sgn_y, v64acc32 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_8x2_2x8_conf(a0, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_8x2_2x8_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8_conf(v16int32 a0, int sgn_x, v32int16 b, int sgn_y, v64acc32 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_8x2_2x8_conf(a0, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_8x2_2x8_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+
+INTRINSIC(v64acc32) mul_elem_64(v16uint32 a0, v16uint32 a1, v32uint16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64(hi, b);
+  acc = mac_elem_64_conf(lo, false, b, 0, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) negmul_elem_64(v16uint32 a0, v16uint32 a1, v32uint16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64(hi, b);
+  acc = msc_elem_64_conf(lo, false, b, 0, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_elem_64(v16uint32 a0, v16uint32 a1, v32uint16 b, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64(hi, b);
+  acc = addmac_elem_64_conf(lo, false, b, 0, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_elem_64(v16uint32 a0, v16uint32 a1, v32uint16 b, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64(hi, b);
+  acc = addmsc_elem_64_conf(lo, false, b, 0, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mul_elem_64(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64(hi, sgn_x, b, sgn_y);
+  acc = mac_elem_64_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_elem_64(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64(hi, sgn_x, b, sgn_y);
+  acc = msc_elem_64_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_elem_64(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b, int sgn_y,
+            v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64(hi, sgn_x, b, sgn_y);
+  acc = addmac_elem_64_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_elem_64(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b, int sgn_y,
+            v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64(hi, sgn_x, b, sgn_y);
+  acc = addmsc_elem_64_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mul_elem_64_conf(v16uint32 a0, v16uint32 a1, v32uint16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64_conf(hi, b, sub_mul);
+  acc = mac_elem_64_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_elem_64_conf(v16uint32 a0, v16uint32 a1, v32uint16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64_conf(hi, b, sub_mul);
+  acc = msc_elem_64_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_elem_64_conf(v16uint32 a0, v16uint32 a1, v32uint16 b, v64acc32 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64_conf(hi, b, sub_mul);
+  acc = addmac_elem_64_conf(lo, false, b, 0, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_elem_64_conf(v16uint32 a0, v16uint32 a1, v32uint16 b, v64acc32 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64_conf(hi, b, sub_mul);
+  acc = addmsc_elem_64_conf(lo, false, b, 0, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mul_elem_64_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b, int sgn_y,
+                 int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = mac_elem_64_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_elem_64_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b,
+                    int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = msc_elem_64_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_elem_64_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b, int sgn_y,
+                 v64acc32 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmac_elem_64_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_elem_64_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b, int sgn_y,
+                 v64acc32 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmsc_elem_64_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_elem_64_conf(v16uint32 a0, v16uint32 a1, v32uint16 b, v64acc32 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_64_conf(a0, a1, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64_conf(hi, b, sub_mul);
+  acc = ::mac_elem_64_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_elem_64_conf(v16uint32 a0, v16uint32 a1, v32uint16 b, v64acc32 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_64_conf(a0, a1, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64_conf(hi, b, sub_mul);
+  acc = ::mac_elem_64_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_elem_64_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b, int sgn_y,
+                 v64acc32 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_64_conf(a0, a1, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_elem_64_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_elem_64_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b, int sgn_y,
+                 v64acc32 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_64_conf(a0, a1, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_elem_64_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v64acc32) mul_elem_64(v16uint32 a0, v16uint32 a1, v32int16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64(hi, b);
+  acc = mac_elem_64_conf(lo, false, b, 1, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) negmul_elem_64(v16uint32 a0, v16uint32 a1, v32int16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64(hi, b);
+  acc = msc_elem_64_conf(lo, false, b, 1, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_elem_64(v16uint32 a0, v16uint32 a1, v32int16 b, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64(hi, b);
+  acc = addmac_elem_64_conf(lo, false, b, 1, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_elem_64(v16uint32 a0, v16uint32 a1, v32int16 b, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64(hi, b);
+  acc = addmsc_elem_64_conf(lo, false, b, 1, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mul_elem_64(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64(hi, sgn_x, b, sgn_y);
+  acc = mac_elem_64_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_elem_64(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64(hi, sgn_x, b, sgn_y);
+  acc = msc_elem_64_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_elem_64(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b, int sgn_y,
+            v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64(hi, sgn_x, b, sgn_y);
+  acc = addmac_elem_64_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_elem_64(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b, int sgn_y,
+            v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64(hi, sgn_x, b, sgn_y);
+  acc = addmsc_elem_64_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mul_elem_64_conf(v16uint32 a0, v16uint32 a1, v32int16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64_conf(hi, b, sub_mul);
+  acc = mac_elem_64_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_elem_64_conf(v16uint32 a0, v16uint32 a1, v32int16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64_conf(hi, b, sub_mul);
+  acc = msc_elem_64_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_elem_64_conf(v16uint32 a0, v16uint32 a1, v32int16 b, v64acc32 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64_conf(hi, b, sub_mul);
+  acc = addmac_elem_64_conf(lo, false, b, 1, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_elem_64_conf(v16uint32 a0, v16uint32 a1, v32int16 b, v64acc32 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64_conf(hi, b, sub_mul);
+  acc = addmsc_elem_64_conf(lo, false, b, 1, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mul_elem_64_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b, int sgn_y,
+                 int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = mac_elem_64_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_elem_64_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b,
+                    int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = msc_elem_64_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_elem_64_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b, int sgn_y,
+                 v64acc32 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmac_elem_64_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_elem_64_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b, int sgn_y,
+                 v64acc32 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmsc_elem_64_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_elem_64_conf(v16uint32 a0, v16uint32 a1, v32int16 b, v64acc32 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_64_conf(a0, a1, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64_conf(hi, b, sub_mul);
+  acc = ::mac_elem_64_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_elem_64_conf(v16uint32 a0, v16uint32 a1, v32int16 b, v64acc32 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_64_conf(a0, a1, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64_conf(hi, b, sub_mul);
+  acc = ::mac_elem_64_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_elem_64_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b, int sgn_y,
+                 v64acc32 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_64_conf(a0, a1, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_elem_64_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_elem_64_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b, int sgn_y,
+                 v64acc32 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_64_conf(a0, a1, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_elem_64_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v64acc32) mul_elem_64(v16int32 a0, v16int32 a1, v32uint16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64(hi, b);
+  acc = mac_elem_64_conf(lo, false, b, 0, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) negmul_elem_64(v16int32 a0, v16int32 a1, v32uint16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64(hi, b);
+  acc = msc_elem_64_conf(lo, false, b, 0, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_elem_64(v16int32 a0, v16int32 a1, v32uint16 b, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64(hi, b);
+  acc = addmac_elem_64_conf(lo, false, b, 0, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_elem_64(v16int32 a0, v16int32 a1, v32uint16 b, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64(hi, b);
+  acc = addmsc_elem_64_conf(lo, false, b, 0, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mul_elem_64(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64(hi, sgn_x, b, sgn_y);
+  acc = mac_elem_64_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_elem_64(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64(hi, sgn_x, b, sgn_y);
+  acc = msc_elem_64_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_elem_64(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y,
+            v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64(hi, sgn_x, b, sgn_y);
+  acc = addmac_elem_64_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_elem_64(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y,
+            v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64(hi, sgn_x, b, sgn_y);
+  acc = addmsc_elem_64_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mul_elem_64_conf(v16int32 a0, v16int32 a1, v32uint16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64_conf(hi, b, sub_mul);
+  acc = mac_elem_64_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_elem_64_conf(v16int32 a0, v16int32 a1, v32uint16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64_conf(hi, b, sub_mul);
+  acc = msc_elem_64_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_elem_64_conf(v16int32 a0, v16int32 a1, v32uint16 b, v64acc32 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64_conf(hi, b, sub_mul);
+  acc = addmac_elem_64_conf(lo, false, b, 0, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_elem_64_conf(v16int32 a0, v16int32 a1, v32uint16 b, v64acc32 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64_conf(hi, b, sub_mul);
+  acc = addmsc_elem_64_conf(lo, false, b, 0, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mul_elem_64_conf(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y,
+                 int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = mac_elem_64_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_elem_64_conf(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y,
+                    int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = msc_elem_64_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_elem_64_conf(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y,
+                 v64acc32 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmac_elem_64_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_elem_64_conf(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y,
+                 v64acc32 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmsc_elem_64_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_elem_64_conf(v16int32 a0, v16int32 a1, v32uint16 b, v64acc32 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_64_conf(a0, a1, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64_conf(hi, b, sub_mul);
+  acc = ::mac_elem_64_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_elem_64_conf(v16int32 a0, v16int32 a1, v32uint16 b, v64acc32 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_64_conf(a0, a1, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64_conf(hi, b, sub_mul);
+  acc = ::mac_elem_64_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_elem_64_conf(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y,
+                 v64acc32 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_64_conf(a0, a1, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_elem_64_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_elem_64_conf(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y,
+                 v64acc32 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_64_conf(a0, a1, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_elem_64_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v64acc32) mul_elem_64(v16int32 a0, v16int32 a1, v32int16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64(hi, b);
+  acc = mac_elem_64_conf(lo, false, b, 1, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) negmul_elem_64(v16int32 a0, v16int32 a1, v32int16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64(hi, b);
+  acc = msc_elem_64_conf(lo, false, b, 1, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_elem_64(v16int32 a0, v16int32 a1, v32int16 b, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64(hi, b);
+  acc = addmac_elem_64_conf(lo, false, b, 1, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_elem_64(v16int32 a0, v16int32 a1, v32int16 b, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64(hi, b);
+  acc = addmsc_elem_64_conf(lo, false, b, 1, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mul_elem_64(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64(hi, sgn_x, b, sgn_y);
+  acc = mac_elem_64_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_elem_64(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64(hi, sgn_x, b, sgn_y);
+  acc = msc_elem_64_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_elem_64(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y,
+            v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64(hi, sgn_x, b, sgn_y);
+  acc = addmac_elem_64_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_elem_64(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y,
+            v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64(hi, sgn_x, b, sgn_y);
+  acc = addmsc_elem_64_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mul_elem_64_conf(v16int32 a0, v16int32 a1, v32int16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64_conf(hi, b, sub_mul);
+  acc = mac_elem_64_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_elem_64_conf(v16int32 a0, v16int32 a1, v32int16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64_conf(hi, b, sub_mul);
+  acc = msc_elem_64_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_elem_64_conf(v16int32 a0, v16int32 a1, v32int16 b, v64acc32 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64_conf(hi, b, sub_mul);
+  acc = addmac_elem_64_conf(lo, false, b, 1, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_elem_64_conf(v16int32 a0, v16int32 a1, v32int16 b, v64acc32 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64_conf(hi, b, sub_mul);
+  acc = addmsc_elem_64_conf(lo, false, b, 1, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mul_elem_64_conf(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y,
+                 int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = mac_elem_64_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_elem_64_conf(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y,
+                    int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = msc_elem_64_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_elem_64_conf(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y,
+                 v64acc32 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmac_elem_64_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_elem_64_conf(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y,
+                 v64acc32 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmsc_elem_64_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_elem_64_conf(v16int32 a0, v16int32 a1, v32int16 b, v64acc32 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_64_conf(a0, a1, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64_conf(hi, b, sub_mul);
+  acc = ::mac_elem_64_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_elem_64_conf(v16int32 a0, v16int32 a1, v32int16 b, v64acc32 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_64_conf(a0, a1, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64_conf(hi, b, sub_mul);
+  acc = ::mac_elem_64_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_elem_64_conf(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y,
+                 v64acc32 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_64_conf(a0, a1, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::mul_elem_64_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_elem_64_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_elem_64_conf(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y,
+                 v64acc32 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_64_conf(a0, a1, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v64acc32 acc = ::negmul_elem_64_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_elem_64_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+
+INTRINSIC(v32acc64) mul_4x4_4x8(v16uint32 a0, v32uint16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8(hi, b);
+  acc = mac_4x4_4x8_conf(lo, false, b, 0, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_4x4_4x8(v16uint32 a0, v32uint16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8(hi, b);
+  acc = msc_4x4_4x8_conf(lo, false, b, 0, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) mac_4x4_4x8(v16uint32 a0, v32uint16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8(hi, b);
+  acc = addmac_4x4_4x8_conf(lo, false, b, 0, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) msc_4x4_4x8(v16uint32 a0, v32uint16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8(hi, b);
+  acc = addmsc_4x4_4x8_conf(lo, false, b, 0, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_4x4_4x8(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8(hi, sgn_x, b, sgn_y);
+  acc = mac_4x4_4x8_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_4x4_4x8(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8(hi, sgn_x, b, sgn_y);
+  acc = msc_4x4_4x8_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x4_4x8(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8(hi, sgn_x, b, sgn_y);
+  acc = addmac_4x4_4x8_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x4_4x8(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8(hi, sgn_x, b, sgn_y);
+  acc = addmsc_4x4_4x8_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) mul_4x4_4x8_conf(v16uint32 a0, v32uint16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8_conf(hi, b, sub_mul);
+  acc = mac_4x4_4x8_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_4x4_4x8_conf(v16uint32 a0, v32uint16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8_conf(hi, b, sub_mul);
+  acc = msc_4x4_4x8_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x4_4x8_conf(v16uint32 a0, v32uint16 b, v32acc64 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8_conf(hi, b, sub_mul);
+  acc = addmac_4x4_4x8_conf(lo, false, b, 0, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x4_4x8_conf(v16uint32 a0, v32uint16 b, v32acc64 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8_conf(hi, b, sub_mul);
+  acc = addmsc_4x4_4x8_conf(lo, false, b, 0, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_4x4_4x8_conf(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = mac_4x4_4x8_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_4x4_4x8_conf(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y,
+                    int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = msc_4x4_4x8_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x4_4x8_conf(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y, v32acc64 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmac_4x4_4x8_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x4_4x8_conf(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y, v32acc64 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmsc_4x4_4x8_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x4_4x8_conf(v16uint32 a0, v32uint16 b, v32acc64 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_4x4_4x8_conf(a0, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8_conf(hi, b, sub_mul);
+  acc = ::mac_4x4_4x8_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x4_4x8_conf(v16uint32 a0, v32uint16 b, v32acc64 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_4x4_4x8_conf(a0, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8_conf(hi, b, sub_mul);
+  acc = ::mac_4x4_4x8_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x4_4x8_conf(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y, v32acc64 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_4x4_4x8_conf(a0, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_4x4_4x8_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x4_4x8_conf(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y, v32acc64 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_4x4_4x8_conf(a0, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_4x4_4x8_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v32acc64) mul_4x4_4x8(v16uint32 a0, v32int16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8(hi, b);
+  acc = mac_4x4_4x8_conf(lo, false, b, 1, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_4x4_4x8(v16uint32 a0, v32int16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8(hi, b);
+  acc = msc_4x4_4x8_conf(lo, false, b, 1, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) mac_4x4_4x8(v16uint32 a0, v32int16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8(hi, b);
+  acc = addmac_4x4_4x8_conf(lo, false, b, 1, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) msc_4x4_4x8(v16uint32 a0, v32int16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8(hi, b);
+  acc = addmsc_4x4_4x8_conf(lo, false, b, 1, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_4x4_4x8(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8(hi, sgn_x, b, sgn_y);
+  acc = mac_4x4_4x8_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_4x4_4x8(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8(hi, sgn_x, b, sgn_y);
+  acc = msc_4x4_4x8_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x4_4x8(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8(hi, sgn_x, b, sgn_y);
+  acc = addmac_4x4_4x8_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x4_4x8(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8(hi, sgn_x, b, sgn_y);
+  acc = addmsc_4x4_4x8_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) mul_4x4_4x8_conf(v16uint32 a0, v32int16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8_conf(hi, b, sub_mul);
+  acc = mac_4x4_4x8_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_4x4_4x8_conf(v16uint32 a0, v32int16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8_conf(hi, b, sub_mul);
+  acc = msc_4x4_4x8_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x4_4x8_conf(v16uint32 a0, v32int16 b, v32acc64 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8_conf(hi, b, sub_mul);
+  acc = addmac_4x4_4x8_conf(lo, false, b, 1, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x4_4x8_conf(v16uint32 a0, v32int16 b, v32acc64 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8_conf(hi, b, sub_mul);
+  acc = addmsc_4x4_4x8_conf(lo, false, b, 1, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_4x4_4x8_conf(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = mac_4x4_4x8_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_4x4_4x8_conf(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y,
+                    int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = msc_4x4_4x8_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x4_4x8_conf(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y, v32acc64 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmac_4x4_4x8_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x4_4x8_conf(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y, v32acc64 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmsc_4x4_4x8_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x4_4x8_conf(v16uint32 a0, v32int16 b, v32acc64 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_4x4_4x8_conf(a0, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8_conf(hi, b, sub_mul);
+  acc = ::mac_4x4_4x8_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x4_4x8_conf(v16uint32 a0, v32int16 b, v32acc64 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_4x4_4x8_conf(a0, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8_conf(hi, b, sub_mul);
+  acc = ::mac_4x4_4x8_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x4_4x8_conf(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y, v32acc64 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_4x4_4x8_conf(a0, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_4x4_4x8_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x4_4x8_conf(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y, v32acc64 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_4x4_4x8_conf(a0, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_4x4_4x8_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v32acc64) mul_4x4_4x8(v16int32 a0, v32uint16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8(hi, b);
+  acc = mac_4x4_4x8_conf(lo, false, b, 0, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_4x4_4x8(v16int32 a0, v32uint16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8(hi, b);
+  acc = msc_4x4_4x8_conf(lo, false, b, 0, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) mac_4x4_4x8(v16int32 a0, v32uint16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8(hi, b);
+  acc = addmac_4x4_4x8_conf(lo, false, b, 0, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) msc_4x4_4x8(v16int32 a0, v32uint16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8(hi, b);
+  acc = addmsc_4x4_4x8_conf(lo, false, b, 0, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_4x4_4x8(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8(hi, sgn_x, b, sgn_y);
+  acc = mac_4x4_4x8_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_4x4_4x8(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8(hi, sgn_x, b, sgn_y);
+  acc = msc_4x4_4x8_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x4_4x8(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8(hi, sgn_x, b, sgn_y);
+  acc = addmac_4x4_4x8_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x4_4x8(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8(hi, sgn_x, b, sgn_y);
+  acc = addmsc_4x4_4x8_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) mul_4x4_4x8_conf(v16int32 a0, v32uint16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8_conf(hi, b, sub_mul);
+  acc = mac_4x4_4x8_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_4x4_4x8_conf(v16int32 a0, v32uint16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8_conf(hi, b, sub_mul);
+  acc = msc_4x4_4x8_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x4_4x8_conf(v16int32 a0, v32uint16 b, v32acc64 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8_conf(hi, b, sub_mul);
+  acc = addmac_4x4_4x8_conf(lo, false, b, 0, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x4_4x8_conf(v16int32 a0, v32uint16 b, v32acc64 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8_conf(hi, b, sub_mul);
+  acc = addmsc_4x4_4x8_conf(lo, false, b, 0, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_4x4_4x8_conf(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = mac_4x4_4x8_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_4x4_4x8_conf(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y,
+                    int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = msc_4x4_4x8_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x4_4x8_conf(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y, v32acc64 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmac_4x4_4x8_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x4_4x8_conf(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y, v32acc64 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmsc_4x4_4x8_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x4_4x8_conf(v16int32 a0, v32uint16 b, v32acc64 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_4x4_4x8_conf(a0, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8_conf(hi, b, sub_mul);
+  acc = ::mac_4x4_4x8_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x4_4x8_conf(v16int32 a0, v32uint16 b, v32acc64 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_4x4_4x8_conf(a0, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8_conf(hi, b, sub_mul);
+  acc = ::mac_4x4_4x8_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x4_4x8_conf(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y, v32acc64 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_4x4_4x8_conf(a0, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_4x4_4x8_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x4_4x8_conf(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y, v32acc64 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_4x4_4x8_conf(a0, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_4x4_4x8_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v32acc64) mul_4x4_4x8(v16int32 a0, v32int16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8(hi, b);
+  acc = mac_4x4_4x8_conf(lo, false, b, 1, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_4x4_4x8(v16int32 a0, v32int16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8(hi, b);
+  acc = msc_4x4_4x8_conf(lo, false, b, 1, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) mac_4x4_4x8(v16int32 a0, v32int16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8(hi, b);
+  acc = addmac_4x4_4x8_conf(lo, false, b, 1, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) msc_4x4_4x8(v16int32 a0, v32int16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8(hi, b);
+  acc = addmsc_4x4_4x8_conf(lo, false, b, 1, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) mul_4x4_4x8(v16int32 a0, int sgn_x, v32int16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8(hi, sgn_x, b, sgn_y);
+  acc = mac_4x4_4x8_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_4x4_4x8(v16int32 a0, int sgn_x, v32int16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8(hi, sgn_x, b, sgn_y);
+  acc = msc_4x4_4x8_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x4_4x8(v16int32 a0, int sgn_x, v32int16 b, int sgn_y, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8(hi, sgn_x, b, sgn_y);
+  acc = addmac_4x4_4x8_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x4_4x8(v16int32 a0, int sgn_x, v32int16 b, int sgn_y, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8(hi, sgn_x, b, sgn_y);
+  acc = addmsc_4x4_4x8_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) mul_4x4_4x8_conf(v16int32 a0, v32int16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8_conf(hi, b, sub_mul);
+  acc = mac_4x4_4x8_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_4x4_4x8_conf(v16int32 a0, v32int16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8_conf(hi, b, sub_mul);
+  acc = msc_4x4_4x8_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x4_4x8_conf(v16int32 a0, v32int16 b, v32acc64 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8_conf(hi, b, sub_mul);
+  acc = addmac_4x4_4x8_conf(lo, false, b, 1, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x4_4x8_conf(v16int32 a0, v32int16 b, v32acc64 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8_conf(hi, b, sub_mul);
+  acc = addmsc_4x4_4x8_conf(lo, false, b, 1, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_4x4_4x8_conf(v16int32 a0, int sgn_x, v32int16 b, int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = mac_4x4_4x8_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_4x4_4x8_conf(v16int32 a0, int sgn_x, v32int16 b, int sgn_y,
+                    int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = msc_4x4_4x8_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x4_4x8_conf(v16int32 a0, int sgn_x, v32int16 b, int sgn_y, v32acc64 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmac_4x4_4x8_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x4_4x8_conf(v16int32 a0, int sgn_x, v32int16 b, int sgn_y, v32acc64 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmsc_4x4_4x8_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x4_4x8_conf(v16int32 a0, v32int16 b, v32acc64 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_4x4_4x8_conf(a0, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8_conf(hi, b, sub_mul);
+  acc = ::mac_4x4_4x8_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x4_4x8_conf(v16int32 a0, v32int16 b, v32acc64 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_4x4_4x8_conf(a0, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8_conf(hi, b, sub_mul);
+  acc = ::mac_4x4_4x8_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x4_4x8_conf(v16int32 a0, int sgn_x, v32int16 b, int sgn_y, v32acc64 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_4x4_4x8_conf(a0, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x4_4x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_4x4_4x8_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x4_4x8_conf(v16int32 a0, int sgn_x, v32int16 b, int sgn_y, v32acc64 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_4x4_4x8_conf(a0, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x4_4x8_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_4x4_4x8_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+
+INTRINSIC(v32acc64) mul_elem_32(v16uint32 a0, v16uint32 a1, v32uint16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32(hi, b);
+  acc = mac_elem_32_conf(lo, false, b, 0, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_elem_32(v16uint32 a0, v16uint32 a1, v32uint16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32(hi, b);
+  acc = msc_elem_32_conf(lo, false, b, 0, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32(v16uint32 a0, v16uint32 a1, v32uint16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32(hi, b);
+  acc = addmac_elem_32_conf(lo, false, b, 0, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32(v16uint32 a0, v16uint32 a1, v32uint16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32(hi, b);
+  acc = addmsc_elem_32_conf(lo, false, b, 0, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32(hi, sgn_x, b, sgn_y);
+  acc = mac_elem_32_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32(hi, sgn_x, b, sgn_y);
+  acc = msc_elem_32_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b, int sgn_y,
+            v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32(hi, sgn_x, b, sgn_y);
+  acc = addmac_elem_32_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b, int sgn_y,
+            v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32(hi, sgn_x, b, sgn_y);
+  acc = addmsc_elem_32_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_conf(v16uint32 a0, v16uint32 a1, v32uint16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(hi, b, sub_mul);
+  acc = mac_elem_32_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_conf(v16uint32 a0, v16uint32 a1, v32uint16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(hi, b, sub_mul);
+  acc = msc_elem_32_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v16uint32 a0, v16uint32 a1, v32uint16 b, v32acc64 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(hi, b, sub_mul);
+  acc = addmac_elem_32_conf(lo, false, b, 0, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v16uint32 a0, v16uint32 a1, v32uint16 b, v32acc64 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(hi, b, sub_mul);
+  acc = addmsc_elem_32_conf(lo, false, b, 0, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b, int sgn_y,
+                 int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = mac_elem_32_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b,
+                    int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = msc_elem_32_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b, int sgn_y,
+                 v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmac_elem_32_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b, int sgn_y,
+                 v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmsc_elem_32_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v16uint32 a0, v16uint32 a1, v32uint16 b, v32acc64 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_conf(a0, a1, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(hi, b, sub_mul);
+  acc = ::mac_elem_32_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v16uint32 a0, v16uint32 a1, v32uint16 b, v32acc64 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_conf(a0, a1, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(hi, b, sub_mul);
+  acc = ::mac_elem_32_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b, int sgn_y,
+                 v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_conf(a0, a1, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_elem_32_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b, int sgn_y,
+                 v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_conf(a0, a1, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_elem_32_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v32acc64) mul_elem_32(v16uint32 a0, v16uint32 a1, v32int16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32(hi, b);
+  acc = mac_elem_32_conf(lo, false, b, 1, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_elem_32(v16uint32 a0, v16uint32 a1, v32int16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32(hi, b);
+  acc = msc_elem_32_conf(lo, false, b, 1, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32(v16uint32 a0, v16uint32 a1, v32int16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32(hi, b);
+  acc = addmac_elem_32_conf(lo, false, b, 1, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32(v16uint32 a0, v16uint32 a1, v32int16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32(hi, b);
+  acc = addmsc_elem_32_conf(lo, false, b, 1, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32(hi, sgn_x, b, sgn_y);
+  acc = mac_elem_32_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32(hi, sgn_x, b, sgn_y);
+  acc = msc_elem_32_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b, int sgn_y,
+            v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32(hi, sgn_x, b, sgn_y);
+  acc = addmac_elem_32_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b, int sgn_y,
+            v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32(hi, sgn_x, b, sgn_y);
+  acc = addmsc_elem_32_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_conf(v16uint32 a0, v16uint32 a1, v32int16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(hi, b, sub_mul);
+  acc = mac_elem_32_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_conf(v16uint32 a0, v16uint32 a1, v32int16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(hi, b, sub_mul);
+  acc = msc_elem_32_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v16uint32 a0, v16uint32 a1, v32int16 b, v32acc64 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(hi, b, sub_mul);
+  acc = addmac_elem_32_conf(lo, false, b, 1, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v16uint32 a0, v16uint32 a1, v32int16 b, v32acc64 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(hi, b, sub_mul);
+  acc = addmsc_elem_32_conf(lo, false, b, 1, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b, int sgn_y,
+                 int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = mac_elem_32_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b,
+                    int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = msc_elem_32_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b, int sgn_y,
+                 v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmac_elem_32_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b, int sgn_y,
+                 v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmsc_elem_32_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v16uint32 a0, v16uint32 a1, v32int16 b, v32acc64 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_conf(a0, a1, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(hi, b, sub_mul);
+  acc = ::mac_elem_32_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v16uint32 a0, v16uint32 a1, v32int16 b, v32acc64 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_conf(a0, a1, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(hi, b, sub_mul);
+  acc = ::mac_elem_32_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b, int sgn_y,
+                 v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_conf(a0, a1, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_elem_32_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b, int sgn_y,
+                 v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_conf(a0, a1, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_elem_32_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v32acc64) mul_elem_32(v16int32 a0, v16int32 a1, v32uint16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32(hi, b);
+  acc = mac_elem_32_conf(lo, false, b, 0, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_elem_32(v16int32 a0, v16int32 a1, v32uint16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32(hi, b);
+  acc = msc_elem_32_conf(lo, false, b, 0, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32(v16int32 a0, v16int32 a1, v32uint16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32(hi, b);
+  acc = addmac_elem_32_conf(lo, false, b, 0, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32(v16int32 a0, v16int32 a1, v32uint16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32(hi, b);
+  acc = addmsc_elem_32_conf(lo, false, b, 0, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32(hi, sgn_x, b, sgn_y);
+  acc = mac_elem_32_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32(hi, sgn_x, b, sgn_y);
+  acc = msc_elem_32_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y,
+            v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32(hi, sgn_x, b, sgn_y);
+  acc = addmac_elem_32_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y,
+            v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32(hi, sgn_x, b, sgn_y);
+  acc = addmsc_elem_32_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_conf(v16int32 a0, v16int32 a1, v32uint16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(hi, b, sub_mul);
+  acc = mac_elem_32_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_conf(v16int32 a0, v16int32 a1, v32uint16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(hi, b, sub_mul);
+  acc = msc_elem_32_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v16int32 a0, v16int32 a1, v32uint16 b, v32acc64 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(hi, b, sub_mul);
+  acc = addmac_elem_32_conf(lo, false, b, 0, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v16int32 a0, v16int32 a1, v32uint16 b, v32acc64 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(hi, b, sub_mul);
+  acc = addmsc_elem_32_conf(lo, false, b, 0, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_conf(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y,
+                 int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = mac_elem_32_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_conf(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y,
+                    int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = msc_elem_32_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y,
+                 v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmac_elem_32_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y,
+                 v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmsc_elem_32_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v16int32 a0, v16int32 a1, v32uint16 b, v32acc64 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_conf(a0, a1, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(hi, b, sub_mul);
+  acc = ::mac_elem_32_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v16int32 a0, v16int32 a1, v32uint16 b, v32acc64 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_conf(a0, a1, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(hi, b, sub_mul);
+  acc = ::mac_elem_32_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y,
+                 v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_conf(a0, a1, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_elem_32_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y,
+                 v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_conf(a0, a1, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_elem_32_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v32acc64) mul_elem_32(v16int32 a0, v16int32 a1, v32int16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32(hi, b);
+  acc = mac_elem_32_conf(lo, false, b, 1, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_elem_32(v16int32 a0, v16int32 a1, v32int16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32(hi, b);
+  acc = msc_elem_32_conf(lo, false, b, 1, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32(v16int32 a0, v16int32 a1, v32int16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32(hi, b);
+  acc = addmac_elem_32_conf(lo, false, b, 1, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32(v16int32 a0, v16int32 a1, v32int16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32(hi, b);
+  acc = addmsc_elem_32_conf(lo, false, b, 1, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32(hi, sgn_x, b, sgn_y);
+  acc = mac_elem_32_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32(hi, sgn_x, b, sgn_y);
+  acc = msc_elem_32_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y,
+            v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32(hi, sgn_x, b, sgn_y);
+  acc = addmac_elem_32_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y,
+            v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32(hi, sgn_x, b, sgn_y);
+  acc = addmsc_elem_32_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_conf(v16int32 a0, v16int32 a1, v32int16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(hi, b, sub_mul);
+  acc = mac_elem_32_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_conf(v16int32 a0, v16int32 a1, v32int16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(hi, b, sub_mul);
+  acc = msc_elem_32_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v16int32 a0, v16int32 a1, v32int16 b, v32acc64 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(hi, b, sub_mul);
+  acc = addmac_elem_32_conf(lo, false, b, 1, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v16int32 a0, v16int32 a1, v32int16 b, v32acc64 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(hi, b, sub_mul);
+  acc = addmsc_elem_32_conf(lo, false, b, 1, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_conf(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y,
+                 int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = mac_elem_32_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_conf(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y,
+                    int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = msc_elem_32_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y,
+                 v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmac_elem_32_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y,
+                 v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmsc_elem_32_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v16int32 a0, v16int32 a1, v32int16 b, v32acc64 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_conf(a0, a1, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(hi, b, sub_mul);
+  acc = ::mac_elem_32_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v16int32 a0, v16int32 a1, v32int16 b, v32acc64 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_conf(a0, a1, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(hi, b, sub_mul);
+  acc = ::mac_elem_32_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y,
+                 v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_conf(a0, a1, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_elem_32_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y,
+                 v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_conf(a0, a1, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_elem_32_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+
+INTRINSIC(v32acc64) mul_elem_32_2(v16uint32 a0, v16uint32 a1, v32uint16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2(hi, b);
+  acc = mac_elem_32_2_conf(lo, false, b, 0, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_elem_32_2(v16uint32 a0, v16uint32 a1, v32uint16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(hi, b);
+  acc = msc_elem_32_2_conf(lo, false, b, 0, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2(v16uint32 a0, v16uint32 a1, v32uint16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2(hi, b);
+  acc = addmac_elem_32_2_conf(lo, false, b, 0, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2(v16uint32 a0, v16uint32 a1, v32uint16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(hi, b);
+  acc = addmsc_elem_32_2_conf(lo, false, b, 0, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_2(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2(hi, sgn_x, b, sgn_y);
+  acc = mac_elem_32_2_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b,
+                 int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(hi, sgn_x, b, sgn_y);
+  acc = msc_elem_32_2_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b, int sgn_y,
+              v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2(hi, sgn_x, b, sgn_y);
+  acc = addmac_elem_32_2_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b, int sgn_y,
+              v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(hi, sgn_x, b, sgn_y);
+  acc = addmsc_elem_32_2_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_2_conf(v16uint32 a0, v16uint32 a1, v32uint16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(hi, b, sub_mul);
+  acc = mac_elem_32_2_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2_conf(v16uint32 a0, v16uint32 a1, v32uint16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(hi, b, sub_mul);
+  acc = msc_elem_32_2_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v16uint32 a0, v16uint32 a1, v32uint16 b, v32acc64 acc1,
+                   int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(hi, b, sub_mul);
+  acc = addmac_elem_32_2_conf(lo, false, b, 0, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v16uint32 a0, v16uint32 a1, v32uint16 b, v32acc64 acc1,
+                   int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(hi, b, sub_mul);
+  acc = addmsc_elem_32_2_conf(lo, false, b, 0, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b,
+                   int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = mac_elem_32_2_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b,
+                      int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = msc_elem_32_2_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b,
+                   int sgn_y, v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmac_elem_32_2_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b,
+                   int sgn_y, v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmsc_elem_32_2_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v16uint32 a0, v16uint32 a1, v32uint16 b, v32acc64 acc1,
+                   int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_2_conf(a0, a1, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(hi, b, sub_mul);
+  acc = ::mac_elem_32_2_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v16uint32 a0, v16uint32 a1, v32uint16 b, v32acc64 acc1,
+                   int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_2_conf(a0, a1, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(hi, b, sub_mul);
+  acc = ::mac_elem_32_2_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b,
+                   int sgn_y, v32acc64 acc1, int zero_acc1, int sub_mul,
+                   int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_2_conf(a0, a1, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_elem_32_2_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b,
+                   int sgn_y, v32acc64 acc1, int zero_acc1, int sub_mul,
+                   int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_2_conf(a0, a1, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_elem_32_2_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v32acc64) mul_elem_32_2(v16uint32 a0, v16uint32 a1, v32int16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2(hi, b);
+  acc = mac_elem_32_2_conf(lo, false, b, 1, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_elem_32_2(v16uint32 a0, v16uint32 a1, v32int16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(hi, b);
+  acc = msc_elem_32_2_conf(lo, false, b, 1, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2(v16uint32 a0, v16uint32 a1, v32int16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2(hi, b);
+  acc = addmac_elem_32_2_conf(lo, false, b, 1, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2(v16uint32 a0, v16uint32 a1, v32int16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(hi, b);
+  acc = addmsc_elem_32_2_conf(lo, false, b, 1, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_2(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2(hi, sgn_x, b, sgn_y);
+  acc = mac_elem_32_2_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(hi, sgn_x, b, sgn_y);
+  acc = msc_elem_32_2_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b, int sgn_y,
+              v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2(hi, sgn_x, b, sgn_y);
+  acc = addmac_elem_32_2_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b, int sgn_y,
+              v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(hi, sgn_x, b, sgn_y);
+  acc = addmsc_elem_32_2_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_2_conf(v16uint32 a0, v16uint32 a1, v32int16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(hi, b, sub_mul);
+  acc = mac_elem_32_2_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2_conf(v16uint32 a0, v16uint32 a1, v32int16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(hi, b, sub_mul);
+  acc = msc_elem_32_2_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v16uint32 a0, v16uint32 a1, v32int16 b, v32acc64 acc1,
+                   int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(hi, b, sub_mul);
+  acc = addmac_elem_32_2_conf(lo, false, b, 1, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v16uint32 a0, v16uint32 a1, v32int16 b, v32acc64 acc1,
+                   int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(hi, b, sub_mul);
+  acc = addmsc_elem_32_2_conf(lo, false, b, 1, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b, int sgn_y,
+                   int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = mac_elem_32_2_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b,
+                      int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = msc_elem_32_2_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b, int sgn_y,
+                   v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmac_elem_32_2_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b, int sgn_y,
+                   v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmsc_elem_32_2_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v16uint32 a0, v16uint32 a1, v32int16 b, v32acc64 acc1,
+                   int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_2_conf(a0, a1, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(hi, b, sub_mul);
+  acc = ::mac_elem_32_2_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v16uint32 a0, v16uint32 a1, v32int16 b, v32acc64 acc1,
+                   int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_2_conf(a0, a1, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(hi, b, sub_mul);
+  acc = ::mac_elem_32_2_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b, int sgn_y,
+                   v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_2_conf(a0, a1, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_elem_32_2_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b, int sgn_y,
+                   v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_2_conf(a0, a1, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_elem_32_2_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v32acc64) mul_elem_32_2(v16int32 a0, v16int32 a1, v32uint16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2(hi, b);
+  acc = mac_elem_32_2_conf(lo, false, b, 0, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_elem_32_2(v16int32 a0, v16int32 a1, v32uint16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(hi, b);
+  acc = msc_elem_32_2_conf(lo, false, b, 0, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2(v16int32 a0, v16int32 a1, v32uint16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2(hi, b);
+  acc = addmac_elem_32_2_conf(lo, false, b, 0, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2(v16int32 a0, v16int32 a1, v32uint16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(hi, b);
+  acc = addmsc_elem_32_2_conf(lo, false, b, 0, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_2(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2(hi, sgn_x, b, sgn_y);
+  acc = mac_elem_32_2_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(hi, sgn_x, b, sgn_y);
+  acc = msc_elem_32_2_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y,
+              v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2(hi, sgn_x, b, sgn_y);
+  acc = addmac_elem_32_2_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y,
+              v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(hi, sgn_x, b, sgn_y);
+  acc = addmsc_elem_32_2_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_2_conf(v16int32 a0, v16int32 a1, v32uint16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(hi, b, sub_mul);
+  acc = mac_elem_32_2_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2_conf(v16int32 a0, v16int32 a1, v32uint16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(hi, b, sub_mul);
+  acc = msc_elem_32_2_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v16int32 a0, v16int32 a1, v32uint16 b, v32acc64 acc1,
+                   int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(hi, b, sub_mul);
+  acc = addmac_elem_32_2_conf(lo, false, b, 0, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v16int32 a0, v16int32 a1, v32uint16 b, v32acc64 acc1,
+                   int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(hi, b, sub_mul);
+  acc = addmsc_elem_32_2_conf(lo, false, b, 0, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y,
+                   int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = mac_elem_32_2_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b,
+                      int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = msc_elem_32_2_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y,
+                   v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmac_elem_32_2_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y,
+                   v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmsc_elem_32_2_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v16int32 a0, v16int32 a1, v32uint16 b, v32acc64 acc1,
+                   int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_2_conf(a0, a1, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(hi, b, sub_mul);
+  acc = ::mac_elem_32_2_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v16int32 a0, v16int32 a1, v32uint16 b, v32acc64 acc1,
+                   int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_2_conf(a0, a1, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(hi, b, sub_mul);
+  acc = ::mac_elem_32_2_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y,
+                   v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_2_conf(a0, a1, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_elem_32_2_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y,
+                   v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_2_conf(a0, a1, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_elem_32_2_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v32acc64) mul_elem_32_2(v16int32 a0, v16int32 a1, v32int16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2(hi, b);
+  acc = mac_elem_32_2_conf(lo, false, b, 1, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_elem_32_2(v16int32 a0, v16int32 a1, v32int16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(hi, b);
+  acc = msc_elem_32_2_conf(lo, false, b, 1, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2(v16int32 a0, v16int32 a1, v32int16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2(hi, b);
+  acc = addmac_elem_32_2_conf(lo, false, b, 1, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2(v16int32 a0, v16int32 a1, v32int16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(hi, b);
+  acc = addmsc_elem_32_2_conf(lo, false, b, 1, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_2(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2(hi, sgn_x, b, sgn_y);
+  acc = mac_elem_32_2_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(hi, sgn_x, b, sgn_y);
+  acc = msc_elem_32_2_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y,
+              v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2(hi, sgn_x, b, sgn_y);
+  acc = addmac_elem_32_2_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y,
+              v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(hi, sgn_x, b, sgn_y);
+  acc = addmsc_elem_32_2_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_2_conf(v16int32 a0, v16int32 a1, v32int16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(hi, b, sub_mul);
+  acc = mac_elem_32_2_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2_conf(v16int32 a0, v16int32 a1, v32int16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(hi, b, sub_mul);
+  acc = msc_elem_32_2_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v16int32 a0, v16int32 a1, v32int16 b, v32acc64 acc1,
+                   int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(hi, b, sub_mul);
+  acc = addmac_elem_32_2_conf(lo, false, b, 1, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v16int32 a0, v16int32 a1, v32int16 b, v32acc64 acc1,
+                   int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(hi, b, sub_mul);
+  acc = addmsc_elem_32_2_conf(lo, false, b, 1, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y,
+                   int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = mac_elem_32_2_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b,
+                      int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = msc_elem_32_2_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y,
+                   v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmac_elem_32_2_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y,
+                   v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmsc_elem_32_2_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v16int32 a0, v16int32 a1, v32int16 b, v32acc64 acc1,
+                   int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_2_conf(a0, a1, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(hi, b, sub_mul);
+  acc = ::mac_elem_32_2_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v16int32 a0, v16int32 a1, v32int16 b, v32acc64 acc1,
+                   int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_2_conf(a0, a1, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(hi, b, sub_mul);
+  acc = ::mac_elem_32_2_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y,
+                   v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_2_conf(a0, a1, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_elem_32_2_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y,
+                   v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_2_conf(a0, a1, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_elem_32_2_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+
+INTRINSIC(v32acc64) mul_conv_32x4(v16uint32 a0, v32uint16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_32x4(hi, b);
+  acc = mac_conv_32x4_conf(lo, false, b, 0, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_conv_32x4(v16uint32 a0, v32uint16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4(hi, b);
+  acc = msc_conv_32x4_conf(lo, false, b, 0, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) mac_conv_32x4(v16uint32 a0, v32uint16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_32x4(hi, b);
+  acc = addmac_conv_32x4_conf(lo, false, b, 0, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) msc_conv_32x4(v16uint32 a0, v32uint16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4(hi, b);
+  acc = addmsc_conv_32x4_conf(lo, false, b, 0, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_conv_32x4(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_32x4(hi, sgn_x, b, sgn_y);
+  acc = mac_conv_32x4_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_conv_32x4(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4(hi, sgn_x, b, sgn_y);
+  acc = msc_conv_32x4_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_32x4(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_32x4(hi, sgn_x, b, sgn_y);
+  acc = addmac_conv_32x4_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_32x4(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4(hi, sgn_x, b, sgn_y);
+  acc = addmsc_conv_32x4_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) mul_conv_32x4_conf(v16uint32 a0, v32uint16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_32x4_conf(hi, b, sub_mul);
+  acc = mac_conv_32x4_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_conv_32x4_conf(v16uint32 a0, v32uint16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4_conf(hi, b, sub_mul);
+  acc = msc_conv_32x4_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_32x4_conf(v16uint32 a0, v32uint16 b, v32acc64 acc1, int sub_mul,
+                   int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_32x4_conf(hi, b, sub_mul);
+  acc = addmac_conv_32x4_conf(lo, false, b, 0, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_32x4_conf(v16uint32 a0, v32uint16 b, v32acc64 acc1, int sub_mul,
+                   int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4_conf(hi, b, sub_mul);
+  acc = addmsc_conv_32x4_conf(lo, false, b, 0, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_conv_32x4_conf(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y,
+                   int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_32x4_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = mac_conv_32x4_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_conv_32x4_conf(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y,
+                      int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = msc_conv_32x4_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_32x4_conf(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y,
+                   v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_32x4_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmac_conv_32x4_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_32x4_conf(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y,
+                   v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmsc_conv_32x4_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_32x4_conf(v16uint32 a0, v32uint16 b, v32acc64 acc1, int zero_acc1,
+                   int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_conv_32x4_conf(a0, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_32x4_conf(hi, b, sub_mul);
+  acc = ::mac_conv_32x4_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_32x4_conf(v16uint32 a0, v32uint16 b, v32acc64 acc1, int zero_acc1,
+                   int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_conv_32x4_conf(a0, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4_conf(hi, b, sub_mul);
+  acc = ::mac_conv_32x4_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_32x4_conf(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y,
+                   v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_conv_32x4_conf(a0, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_32x4_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_conv_32x4_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_32x4_conf(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y,
+                   v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_conv_32x4_conf(a0, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_conv_32x4_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v32acc64) mul_conv_32x4(v16uint32 a0, v32int16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_32x4(hi, b);
+  acc = mac_conv_32x4_conf(lo, false, b, 1, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_conv_32x4(v16uint32 a0, v32int16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4(hi, b);
+  acc = msc_conv_32x4_conf(lo, false, b, 1, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) mac_conv_32x4(v16uint32 a0, v32int16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_32x4(hi, b);
+  acc = addmac_conv_32x4_conf(lo, false, b, 1, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) msc_conv_32x4(v16uint32 a0, v32int16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4(hi, b);
+  acc = addmsc_conv_32x4_conf(lo, false, b, 1, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_conv_32x4(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_32x4(hi, sgn_x, b, sgn_y);
+  acc = mac_conv_32x4_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_conv_32x4(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4(hi, sgn_x, b, sgn_y);
+  acc = msc_conv_32x4_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_32x4(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_32x4(hi, sgn_x, b, sgn_y);
+  acc = addmac_conv_32x4_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_32x4(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4(hi, sgn_x, b, sgn_y);
+  acc = addmsc_conv_32x4_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) mul_conv_32x4_conf(v16uint32 a0, v32int16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_32x4_conf(hi, b, sub_mul);
+  acc = mac_conv_32x4_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_conv_32x4_conf(v16uint32 a0, v32int16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4_conf(hi, b, sub_mul);
+  acc = msc_conv_32x4_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_32x4_conf(v16uint32 a0, v32int16 b, v32acc64 acc1, int sub_mul,
+                   int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_32x4_conf(hi, b, sub_mul);
+  acc = addmac_conv_32x4_conf(lo, false, b, 1, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_32x4_conf(v16uint32 a0, v32int16 b, v32acc64 acc1, int sub_mul,
+                   int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4_conf(hi, b, sub_mul);
+  acc = addmsc_conv_32x4_conf(lo, false, b, 1, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_conv_32x4_conf(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y,
+                   int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_32x4_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = mac_conv_32x4_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_conv_32x4_conf(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y,
+                      int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = msc_conv_32x4_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_32x4_conf(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y,
+                   v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_32x4_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmac_conv_32x4_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_32x4_conf(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y,
+                   v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmsc_conv_32x4_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_32x4_conf(v16uint32 a0, v32int16 b, v32acc64 acc1, int zero_acc1,
+                   int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_conv_32x4_conf(a0, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_32x4_conf(hi, b, sub_mul);
+  acc = ::mac_conv_32x4_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_32x4_conf(v16uint32 a0, v32int16 b, v32acc64 acc1, int zero_acc1,
+                   int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_conv_32x4_conf(a0, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4_conf(hi, b, sub_mul);
+  acc = ::mac_conv_32x4_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_32x4_conf(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y,
+                   v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_conv_32x4_conf(a0, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_32x4_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_conv_32x4_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_32x4_conf(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y,
+                   v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_conv_32x4_conf(a0, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_conv_32x4_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v32acc64) mul_conv_32x4(v16int32 a0, v32uint16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_32x4(hi, b);
+  acc = mac_conv_32x4_conf(lo, false, b, 0, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_conv_32x4(v16int32 a0, v32uint16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4(hi, b);
+  acc = msc_conv_32x4_conf(lo, false, b, 0, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) mac_conv_32x4(v16int32 a0, v32uint16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_32x4(hi, b);
+  acc = addmac_conv_32x4_conf(lo, false, b, 0, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) msc_conv_32x4(v16int32 a0, v32uint16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4(hi, b);
+  acc = addmsc_conv_32x4_conf(lo, false, b, 0, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_conv_32x4(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_32x4(hi, sgn_x, b, sgn_y);
+  acc = mac_conv_32x4_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_conv_32x4(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4(hi, sgn_x, b, sgn_y);
+  acc = msc_conv_32x4_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_32x4(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_32x4(hi, sgn_x, b, sgn_y);
+  acc = addmac_conv_32x4_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_32x4(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4(hi, sgn_x, b, sgn_y);
+  acc = addmsc_conv_32x4_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) mul_conv_32x4_conf(v16int32 a0, v32uint16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_32x4_conf(hi, b, sub_mul);
+  acc = mac_conv_32x4_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_conv_32x4_conf(v16int32 a0, v32uint16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4_conf(hi, b, sub_mul);
+  acc = msc_conv_32x4_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_32x4_conf(v16int32 a0, v32uint16 b, v32acc64 acc1, int sub_mul,
+                   int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_32x4_conf(hi, b, sub_mul);
+  acc = addmac_conv_32x4_conf(lo, false, b, 0, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_32x4_conf(v16int32 a0, v32uint16 b, v32acc64 acc1, int sub_mul,
+                   int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4_conf(hi, b, sub_mul);
+  acc = addmsc_conv_32x4_conf(lo, false, b, 0, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_conv_32x4_conf(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y,
+                   int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_32x4_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = mac_conv_32x4_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_conv_32x4_conf(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y,
+                      int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = msc_conv_32x4_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_32x4_conf(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y,
+                   v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_32x4_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmac_conv_32x4_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_32x4_conf(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y,
+                   v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmsc_conv_32x4_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_32x4_conf(v16int32 a0, v32uint16 b, v32acc64 acc1, int zero_acc1,
+                   int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_conv_32x4_conf(a0, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_32x4_conf(hi, b, sub_mul);
+  acc = ::mac_conv_32x4_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_32x4_conf(v16int32 a0, v32uint16 b, v32acc64 acc1, int zero_acc1,
+                   int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_conv_32x4_conf(a0, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4_conf(hi, b, sub_mul);
+  acc = ::mac_conv_32x4_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_32x4_conf(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y,
+                   v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_conv_32x4_conf(a0, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_32x4_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_conv_32x4_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_32x4_conf(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y,
+                   v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_conv_32x4_conf(a0, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_conv_32x4_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v32acc64) mul_conv_32x4(v16int32 a0, v32int16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_32x4(hi, b);
+  acc = mac_conv_32x4_conf(lo, false, b, 1, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_conv_32x4(v16int32 a0, v32int16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4(hi, b);
+  acc = msc_conv_32x4_conf(lo, false, b, 1, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) mac_conv_32x4(v16int32 a0, v32int16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_32x4(hi, b);
+  acc = addmac_conv_32x4_conf(lo, false, b, 1, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) msc_conv_32x4(v16int32 a0, v32int16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4(hi, b);
+  acc = addmsc_conv_32x4_conf(lo, false, b, 1, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_conv_32x4(v16int32 a0, int sgn_x, v32int16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_32x4(hi, sgn_x, b, sgn_y);
+  acc = mac_conv_32x4_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_conv_32x4(v16int32 a0, int sgn_x, v32int16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4(hi, sgn_x, b, sgn_y);
+  acc = msc_conv_32x4_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_32x4(v16int32 a0, int sgn_x, v32int16 b, int sgn_y, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_32x4(hi, sgn_x, b, sgn_y);
+  acc = addmac_conv_32x4_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_32x4(v16int32 a0, int sgn_x, v32int16 b, int sgn_y, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4(hi, sgn_x, b, sgn_y);
+  acc = addmsc_conv_32x4_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) mul_conv_32x4_conf(v16int32 a0, v32int16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_32x4_conf(hi, b, sub_mul);
+  acc = mac_conv_32x4_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_conv_32x4_conf(v16int32 a0, v32int16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4_conf(hi, b, sub_mul);
+  acc = msc_conv_32x4_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_32x4_conf(v16int32 a0, v32int16 b, v32acc64 acc1, int sub_mul,
+                   int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_32x4_conf(hi, b, sub_mul);
+  acc = addmac_conv_32x4_conf(lo, false, b, 1, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_32x4_conf(v16int32 a0, v32int16 b, v32acc64 acc1, int sub_mul,
+                   int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4_conf(hi, b, sub_mul);
+  acc = addmsc_conv_32x4_conf(lo, false, b, 1, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_conv_32x4_conf(v16int32 a0, int sgn_x, v32int16 b, int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_32x4_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = mac_conv_32x4_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_conv_32x4_conf(v16int32 a0, int sgn_x, v32int16 b, int sgn_y,
+                      int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = msc_conv_32x4_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_32x4_conf(v16int32 a0, int sgn_x, v32int16 b, int sgn_y, v32acc64 acc1,
+                   int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_32x4_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmac_conv_32x4_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_32x4_conf(v16int32 a0, int sgn_x, v32int16 b, int sgn_y, v32acc64 acc1,
+                   int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmsc_conv_32x4_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_32x4_conf(v16int32 a0, v32int16 b, v32acc64 acc1, int zero_acc1,
+                   int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_conv_32x4_conf(a0, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_32x4_conf(hi, b, sub_mul);
+  acc = ::mac_conv_32x4_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_32x4_conf(v16int32 a0, v32int16 b, v32acc64 acc1, int zero_acc1,
+                   int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_conv_32x4_conf(a0, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4_conf(hi, b, sub_mul);
+  acc = ::mac_conv_32x4_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_32x4_conf(v16int32 a0, int sgn_x, v32int16 b, int sgn_y, v32acc64 acc1,
+                   int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_conv_32x4_conf(a0, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_32x4_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_conv_32x4_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_32x4_conf(v16int32 a0, int sgn_x, v32int16 b, int sgn_y, v32acc64 acc1,
+                   int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_conv_32x4_conf(a0, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_32x4_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_conv_32x4_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+
+INTRINSIC(v32acc64) mul_conv_4x4_8ch(v16uint32 a0, v32uint16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch(hi, b);
+  acc = mac_conv_4x4_8ch_conf(lo, false, b, 0, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_conv_4x4_8ch(v16uint32 a0, v32uint16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch(hi, b);
+  acc = msc_conv_4x4_8ch_conf(lo, false, b, 0, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) mac_conv_4x4_8ch(v16uint32 a0, v32uint16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch(hi, b);
+  acc = addmac_conv_4x4_8ch_conf(lo, false, b, 0, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) msc_conv_4x4_8ch(v16uint32 a0, v32uint16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch(hi, b);
+  acc = addmsc_conv_4x4_8ch_conf(lo, false, b, 0, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_conv_4x4_8ch(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch(hi, sgn_x, b, sgn_y);
+  acc = mac_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_conv_4x4_8ch(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch(hi, sgn_x, b, sgn_y);
+  acc = msc_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_4x4_8ch(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y,
+                 v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch(hi, sgn_x, b, sgn_y);
+  acc = addmac_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_4x4_8ch(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y,
+                 v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch(hi, sgn_x, b, sgn_y);
+  acc = addmsc_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_conv_4x4_8ch_conf(v16uint32 a0, v32uint16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch_conf(hi, b, sub_mul);
+  acc = mac_conv_4x4_8ch_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_conv_4x4_8ch_conf(v16uint32 a0, v32uint16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch_conf(hi, b, sub_mul);
+  acc = msc_conv_4x4_8ch_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_4x4_8ch_conf(v16uint32 a0, v32uint16 b, v32acc64 acc1, int sub_mul,
+                      int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch_conf(hi, b, sub_mul);
+  acc = addmac_conv_4x4_8ch_conf(lo, false, b, 0, acc, acc1, 0, 1, sub_mul, 0,
+                                 sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_4x4_8ch_conf(v16uint32 a0, v32uint16 b, v32acc64 acc1, int sub_mul,
+                      int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch_conf(hi, b, sub_mul);
+  acc = addmsc_conv_4x4_8ch_conf(lo, false, b, 0, acc, acc1, 0, 1, sub_mul, 0,
+                                 sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_conv_4x4_8ch_conf(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y,
+                      int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = mac_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_conv_4x4_8ch_conf(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y,
+                         int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = msc_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_4x4_8ch_conf(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y,
+                      v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmac_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul,
+                                 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_4x4_8ch_conf(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y,
+                      v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmsc_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul,
+                                 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_4x4_8ch_conf(v16uint32 a0, v32uint16 b, v32acc64 acc1, int zero_acc1,
+                      int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_conv_4x4_8ch_conf(a0, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch_conf(hi, b, sub_mul);
+  acc = ::mac_conv_4x4_8ch_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_4x4_8ch_conf(v16uint32 a0, v32uint16 b, v32acc64 acc1, int zero_acc1,
+                      int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_conv_4x4_8ch_conf(a0, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch_conf(hi, b, sub_mul);
+  acc = ::mac_conv_4x4_8ch_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_4x4_8ch_conf(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y,
+                      v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_conv_4x4_8ch_conf(a0, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_4x4_8ch_conf(v16uint32 a0, int sgn_x, v32uint16 b, int sgn_y,
+                      v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_conv_4x4_8ch_conf(a0, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v32acc64) mul_conv_4x4_8ch(v16uint32 a0, v32int16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch(hi, b);
+  acc = mac_conv_4x4_8ch_conf(lo, false, b, 1, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_conv_4x4_8ch(v16uint32 a0, v32int16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch(hi, b);
+  acc = msc_conv_4x4_8ch_conf(lo, false, b, 1, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) mac_conv_4x4_8ch(v16uint32 a0, v32int16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch(hi, b);
+  acc = addmac_conv_4x4_8ch_conf(lo, false, b, 1, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) msc_conv_4x4_8ch(v16uint32 a0, v32int16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch(hi, b);
+  acc = addmsc_conv_4x4_8ch_conf(lo, false, b, 1, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_conv_4x4_8ch(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch(hi, sgn_x, b, sgn_y);
+  acc = mac_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_conv_4x4_8ch(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch(hi, sgn_x, b, sgn_y);
+  acc = msc_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_4x4_8ch(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y,
+                 v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch(hi, sgn_x, b, sgn_y);
+  acc = addmac_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_4x4_8ch(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y,
+                 v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch(hi, sgn_x, b, sgn_y);
+  acc = addmsc_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_conv_4x4_8ch_conf(v16uint32 a0, v32int16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch_conf(hi, b, sub_mul);
+  acc = mac_conv_4x4_8ch_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_conv_4x4_8ch_conf(v16uint32 a0, v32int16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch_conf(hi, b, sub_mul);
+  acc = msc_conv_4x4_8ch_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_4x4_8ch_conf(v16uint32 a0, v32int16 b, v32acc64 acc1, int sub_mul,
+                      int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch_conf(hi, b, sub_mul);
+  acc = addmac_conv_4x4_8ch_conf(lo, false, b, 1, acc, acc1, 0, 1, sub_mul, 0,
+                                 sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_4x4_8ch_conf(v16uint32 a0, v32int16 b, v32acc64 acc1, int sub_mul,
+                      int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch_conf(hi, b, sub_mul);
+  acc = addmsc_conv_4x4_8ch_conf(lo, false, b, 1, acc, acc1, 0, 1, sub_mul, 0,
+                                 sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_conv_4x4_8ch_conf(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y,
+                      int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = mac_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_conv_4x4_8ch_conf(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y,
+                         int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = msc_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_4x4_8ch_conf(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y,
+                      v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmac_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul,
+                                 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_4x4_8ch_conf(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y,
+                      v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmsc_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul,
+                                 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_4x4_8ch_conf(v16uint32 a0, v32int16 b, v32acc64 acc1, int zero_acc1,
+                      int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_conv_4x4_8ch_conf(a0, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch_conf(hi, b, sub_mul);
+  acc = ::mac_conv_4x4_8ch_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_4x4_8ch_conf(v16uint32 a0, v32int16 b, v32acc64 acc1, int zero_acc1,
+                      int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_conv_4x4_8ch_conf(a0, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch_conf(hi, b, sub_mul);
+  acc = ::mac_conv_4x4_8ch_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_4x4_8ch_conf(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y,
+                      v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_conv_4x4_8ch_conf(a0, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_4x4_8ch_conf(v16uint32 a0, int sgn_x, v32int16 b, int sgn_y,
+                      v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_conv_4x4_8ch_conf(a0, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v32acc64) mul_conv_4x4_8ch(v16int32 a0, v32uint16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch(hi, b);
+  acc = mac_conv_4x4_8ch_conf(lo, false, b, 0, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_conv_4x4_8ch(v16int32 a0, v32uint16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch(hi, b);
+  acc = msc_conv_4x4_8ch_conf(lo, false, b, 0, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) mac_conv_4x4_8ch(v16int32 a0, v32uint16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch(hi, b);
+  acc = addmac_conv_4x4_8ch_conf(lo, false, b, 0, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) msc_conv_4x4_8ch(v16int32 a0, v32uint16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch(hi, b);
+  acc = addmsc_conv_4x4_8ch_conf(lo, false, b, 0, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_conv_4x4_8ch(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch(hi, sgn_x, b, sgn_y);
+  acc = mac_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_conv_4x4_8ch(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch(hi, sgn_x, b, sgn_y);
+  acc = msc_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_4x4_8ch(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y,
+                 v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch(hi, sgn_x, b, sgn_y);
+  acc = addmac_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_4x4_8ch(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y,
+                 v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch(hi, sgn_x, b, sgn_y);
+  acc = addmsc_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_conv_4x4_8ch_conf(v16int32 a0, v32uint16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch_conf(hi, b, sub_mul);
+  acc = mac_conv_4x4_8ch_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_conv_4x4_8ch_conf(v16int32 a0, v32uint16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch_conf(hi, b, sub_mul);
+  acc = msc_conv_4x4_8ch_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_4x4_8ch_conf(v16int32 a0, v32uint16 b, v32acc64 acc1, int sub_mul,
+                      int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch_conf(hi, b, sub_mul);
+  acc = addmac_conv_4x4_8ch_conf(lo, false, b, 0, acc, acc1, 0, 1, sub_mul, 0,
+                                 sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_4x4_8ch_conf(v16int32 a0, v32uint16 b, v32acc64 acc1, int sub_mul,
+                      int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch_conf(hi, b, sub_mul);
+  acc = addmsc_conv_4x4_8ch_conf(lo, false, b, 0, acc, acc1, 0, 1, sub_mul, 0,
+                                 sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_conv_4x4_8ch_conf(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y,
+                      int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = mac_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_conv_4x4_8ch_conf(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y,
+                         int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = msc_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_4x4_8ch_conf(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y,
+                      v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmac_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul,
+                                 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_4x4_8ch_conf(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y,
+                      v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmsc_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul,
+                                 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_4x4_8ch_conf(v16int32 a0, v32uint16 b, v32acc64 acc1, int zero_acc1,
+                      int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_conv_4x4_8ch_conf(a0, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch_conf(hi, b, sub_mul);
+  acc = ::mac_conv_4x4_8ch_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_4x4_8ch_conf(v16int32 a0, v32uint16 b, v32acc64 acc1, int zero_acc1,
+                      int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_conv_4x4_8ch_conf(a0, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch_conf(hi, b, sub_mul);
+  acc = ::mac_conv_4x4_8ch_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_4x4_8ch_conf(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y,
+                      v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_conv_4x4_8ch_conf(a0, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_4x4_8ch_conf(v16int32 a0, int sgn_x, v32uint16 b, int sgn_y,
+                      v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_conv_4x4_8ch_conf(a0, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v32acc64) mul_conv_4x4_8ch(v16int32 a0, v32int16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch(hi, b);
+  acc = mac_conv_4x4_8ch_conf(lo, false, b, 1, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_conv_4x4_8ch(v16int32 a0, v32int16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch(hi, b);
+  acc = msc_conv_4x4_8ch_conf(lo, false, b, 1, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) mac_conv_4x4_8ch(v16int32 a0, v32int16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch(hi, b);
+  acc = addmac_conv_4x4_8ch_conf(lo, false, b, 1, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) msc_conv_4x4_8ch(v16int32 a0, v32int16 b, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch(hi, b);
+  acc = addmsc_conv_4x4_8ch_conf(lo, false, b, 1, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_conv_4x4_8ch(v16int32 a0, int sgn_x, v32int16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch(hi, sgn_x, b, sgn_y);
+  acc = mac_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_conv_4x4_8ch(v16int32 a0, int sgn_x, v32int16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch(hi, sgn_x, b, sgn_y);
+  acc = msc_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_4x4_8ch(v16int32 a0, int sgn_x, v32int16 b, int sgn_y, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch(hi, sgn_x, b, sgn_y);
+  acc = addmac_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_4x4_8ch(v16int32 a0, int sgn_x, v32int16 b, int sgn_y, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch(hi, sgn_x, b, sgn_y);
+  acc = addmsc_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_conv_4x4_8ch_conf(v16int32 a0, v32int16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch_conf(hi, b, sub_mul);
+  acc = mac_conv_4x4_8ch_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_conv_4x4_8ch_conf(v16int32 a0, v32int16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch_conf(hi, b, sub_mul);
+  acc = msc_conv_4x4_8ch_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_4x4_8ch_conf(v16int32 a0, v32int16 b, v32acc64 acc1, int sub_mul,
+                      int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch_conf(hi, b, sub_mul);
+  acc = addmac_conv_4x4_8ch_conf(lo, false, b, 1, acc, acc1, 0, 1, sub_mul, 0,
+                                 sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_4x4_8ch_conf(v16int32 a0, v32int16 b, v32acc64 acc1, int sub_mul,
+                      int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch_conf(hi, b, sub_mul);
+  acc = addmsc_conv_4x4_8ch_conf(lo, false, b, 1, acc, acc1, 0, 1, sub_mul, 0,
+                                 sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_conv_4x4_8ch_conf(v16int32 a0, int sgn_x, v32int16 b, int sgn_y,
+                      int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = mac_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_conv_4x4_8ch_conf(v16int32 a0, int sgn_x, v32int16 b, int sgn_y,
+                         int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = msc_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_4x4_8ch_conf(v16int32 a0, int sgn_x, v32int16 b, int sgn_y,
+                      v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmac_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul,
+                                 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_4x4_8ch_conf(v16int32 a0, int sgn_x, v32int16 b, int sgn_y,
+                      v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmsc_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul,
+                                 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_4x4_8ch_conf(v16int32 a0, v32int16 b, v32acc64 acc1, int zero_acc1,
+                      int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_conv_4x4_8ch_conf(a0, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch_conf(hi, b, sub_mul);
+  acc = ::mac_conv_4x4_8ch_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_4x4_8ch_conf(v16int32 a0, v32int16 b, v32acc64 acc1, int zero_acc1,
+                      int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_conv_4x4_8ch_conf(a0, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch_conf(hi, b, sub_mul);
+  acc = ::mac_conv_4x4_8ch_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_conv_4x4_8ch_conf(v16int32 a0, int sgn_x, v32int16 b, int sgn_y,
+                      v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_conv_4x4_8ch_conf(a0, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_conv_4x4_8ch_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_conv_4x4_8ch_conf(v16int32 a0, int sgn_x, v32int16 b, int sgn_y,
+                      v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_conv_4x4_8ch_conf(a0, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(a0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_conv_4x4_8ch_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_conv_4x4_8ch_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+
+INTRINSIC(v16acc64) mul_elem_16_2(v16uint32 a0, v16uint32 a1, v32uint16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2(hi, b);
+  acc = mac_elem_16_2_conf(lo, false, b, 0, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64) negmul_elem_16_2(v16uint32 a0, v16uint32 a1, v32uint16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(hi, b);
+  acc = msc_elem_16_2_conf(lo, false, b, 0, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2(v16uint32 a0, v16uint32 a1, v32uint16 b, v16acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2(hi, b);
+  acc = addmac_elem_16_2_conf(lo, false, b, 0, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2(v16uint32 a0, v16uint32 a1, v32uint16 b, v16acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(hi, b);
+  acc = addmsc_elem_16_2_conf(lo, false, b, 0, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mul_elem_16_2(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2(hi, sgn_x, b, sgn_y);
+  acc = mac_elem_16_2_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b,
+                 int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(hi, sgn_x, b, sgn_y);
+  acc = msc_elem_16_2_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b, int sgn_y,
+              v16acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2(hi, sgn_x, b, sgn_y);
+  acc = addmac_elem_16_2_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b, int sgn_y,
+              v16acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(hi, sgn_x, b, sgn_y);
+  acc = addmsc_elem_16_2_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mul_elem_16_2_conf(v16uint32 a0, v16uint32 a1, v32uint16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(hi, b, sub_mul);
+  acc = mac_elem_16_2_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2_conf(v16uint32 a0, v16uint32 a1, v32uint16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(hi, b, sub_mul);
+  acc = msc_elem_16_2_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v16uint32 a0, v16uint32 a1, v32uint16 b, v16acc64 acc1,
+                   int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(hi, b, sub_mul);
+  acc = addmac_elem_16_2_conf(lo, false, b, 0, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v16uint32 a0, v16uint32 a1, v32uint16 b, v16acc64 acc1,
+                   int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(hi, b, sub_mul);
+  acc = addmsc_elem_16_2_conf(lo, false, b, 0, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mul_elem_16_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b,
+                   int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = mac_elem_16_2_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b,
+                      int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = msc_elem_16_2_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b,
+                   int sgn_y, v16acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmac_elem_16_2_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b,
+                   int sgn_y, v16acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmsc_elem_16_2_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v16uint32 a0, v16uint32 a1, v32uint16 b, v16acc64 acc1,
+                   int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_16_2_conf(a0, a1, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(hi, b, sub_mul);
+  acc = ::mac_elem_16_2_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v16uint32 a0, v16uint32 a1, v32uint16 b, v16acc64 acc1,
+                   int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_16_2_conf(a0, a1, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(hi, b, sub_mul);
+  acc = ::mac_elem_16_2_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b,
+                   int sgn_y, v16acc64 acc1, int zero_acc1, int sub_mul,
+                   int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_16_2_conf(a0, a1, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_elem_16_2_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32uint16 b,
+                   int sgn_y, v16acc64 acc1, int zero_acc1, int sub_mul,
+                   int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_16_2_conf(a0, a1, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_elem_16_2_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v16acc64) mul_elem_16_2(v16uint32 a0, v16uint32 a1, v32int16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2(hi, b);
+  acc = mac_elem_16_2_conf(lo, false, b, 1, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64) negmul_elem_16_2(v16uint32 a0, v16uint32 a1, v32int16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(hi, b);
+  acc = msc_elem_16_2_conf(lo, false, b, 1, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2(v16uint32 a0, v16uint32 a1, v32int16 b, v16acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2(hi, b);
+  acc = addmac_elem_16_2_conf(lo, false, b, 1, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2(v16uint32 a0, v16uint32 a1, v32int16 b, v16acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(hi, b);
+  acc = addmsc_elem_16_2_conf(lo, false, b, 1, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mul_elem_16_2(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2(hi, sgn_x, b, sgn_y);
+  acc = mac_elem_16_2_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(hi, sgn_x, b, sgn_y);
+  acc = msc_elem_16_2_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b, int sgn_y,
+              v16acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2(hi, sgn_x, b, sgn_y);
+  acc = addmac_elem_16_2_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b, int sgn_y,
+              v16acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(hi, sgn_x, b, sgn_y);
+  acc = addmsc_elem_16_2_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mul_elem_16_2_conf(v16uint32 a0, v16uint32 a1, v32int16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(hi, b, sub_mul);
+  acc = mac_elem_16_2_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2_conf(v16uint32 a0, v16uint32 a1, v32int16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(hi, b, sub_mul);
+  acc = msc_elem_16_2_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v16uint32 a0, v16uint32 a1, v32int16 b, v16acc64 acc1,
+                   int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(hi, b, sub_mul);
+  acc = addmac_elem_16_2_conf(lo, false, b, 1, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v16uint32 a0, v16uint32 a1, v32int16 b, v16acc64 acc1,
+                   int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(hi, b, sub_mul);
+  acc = addmsc_elem_16_2_conf(lo, false, b, 1, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mul_elem_16_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b, int sgn_y,
+                   int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = mac_elem_16_2_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b,
+                      int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = msc_elem_16_2_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b, int sgn_y,
+                   v16acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmac_elem_16_2_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b, int sgn_y,
+                   v16acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmsc_elem_16_2_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v16uint32 a0, v16uint32 a1, v32int16 b, v16acc64 acc1,
+                   int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_16_2_conf(a0, a1, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(hi, b, sub_mul);
+  acc = ::mac_elem_16_2_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v16uint32 a0, v16uint32 a1, v32int16 b, v16acc64 acc1,
+                   int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_16_2_conf(a0, a1, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(hi, b, sub_mul);
+  acc = ::mac_elem_16_2_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b, int sgn_y,
+                   v16acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_16_2_conf(a0, a1, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_elem_16_2_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v32int16 b, int sgn_y,
+                   v16acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_16_2_conf(a0, a1, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 hi = (v32uint16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_elem_16_2_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v16acc64) mul_elem_16_2(v16int32 a0, v16int32 a1, v32uint16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2(hi, b);
+  acc = mac_elem_16_2_conf(lo, false, b, 0, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64) negmul_elem_16_2(v16int32 a0, v16int32 a1, v32uint16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(hi, b);
+  acc = msc_elem_16_2_conf(lo, false, b, 0, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2(v16int32 a0, v16int32 a1, v32uint16 b, v16acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2(hi, b);
+  acc = addmac_elem_16_2_conf(lo, false, b, 0, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2(v16int32 a0, v16int32 a1, v32uint16 b, v16acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(hi, b);
+  acc = addmsc_elem_16_2_conf(lo, false, b, 0, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mul_elem_16_2(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2(hi, sgn_x, b, sgn_y);
+  acc = mac_elem_16_2_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(hi, sgn_x, b, sgn_y);
+  acc = msc_elem_16_2_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y,
+              v16acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2(hi, sgn_x, b, sgn_y);
+  acc = addmac_elem_16_2_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y,
+              v16acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(hi, sgn_x, b, sgn_y);
+  acc = addmsc_elem_16_2_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mul_elem_16_2_conf(v16int32 a0, v16int32 a1, v32uint16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(hi, b, sub_mul);
+  acc = mac_elem_16_2_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2_conf(v16int32 a0, v16int32 a1, v32uint16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(hi, b, sub_mul);
+  acc = msc_elem_16_2_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v16int32 a0, v16int32 a1, v32uint16 b, v16acc64 acc1,
+                   int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(hi, b, sub_mul);
+  acc = addmac_elem_16_2_conf(lo, false, b, 0, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v16int32 a0, v16int32 a1, v32uint16 b, v16acc64 acc1,
+                   int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(hi, b, sub_mul);
+  acc = addmsc_elem_16_2_conf(lo, false, b, 0, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mul_elem_16_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y,
+                   int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = mac_elem_16_2_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b,
+                      int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = msc_elem_16_2_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y,
+                   v16acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmac_elem_16_2_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y,
+                   v16acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmsc_elem_16_2_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v16int32 a0, v16int32 a1, v32uint16 b, v16acc64 acc1,
+                   int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_16_2_conf(a0, a1, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(hi, b, sub_mul);
+  acc = ::mac_elem_16_2_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v16int32 a0, v16int32 a1, v32uint16 b, v16acc64 acc1,
+                   int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_16_2_conf(a0, a1, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(hi, b, sub_mul);
+  acc = ::mac_elem_16_2_conf(lo, false, b, 0, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y,
+                   v16acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_16_2_conf(a0, a1, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_elem_16_2_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v32uint16 b, int sgn_y,
+                   v16acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_16_2_conf(a0, a1, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_elem_16_2_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v16acc64) mul_elem_16_2(v16int32 a0, v16int32 a1, v32int16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2(hi, b);
+  acc = mac_elem_16_2_conf(lo, false, b, 1, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64) negmul_elem_16_2(v16int32 a0, v16int32 a1, v32int16 b) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(hi, b);
+  acc = msc_elem_16_2_conf(lo, false, b, 1, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2(v16int32 a0, v16int32 a1, v32int16 b, v16acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2(hi, b);
+  acc = addmac_elem_16_2_conf(lo, false, b, 1, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2(v16int32 a0, v16int32 a1, v32int16 b, v16acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(hi, b);
+  acc = addmsc_elem_16_2_conf(lo, false, b, 1, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mul_elem_16_2(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2(hi, sgn_x, b, sgn_y);
+  acc = mac_elem_16_2_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(hi, sgn_x, b, sgn_y);
+  acc = msc_elem_16_2_conf(lo, false, b, sgn_y, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y,
+              v16acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2(hi, sgn_x, b, sgn_y);
+  acc = addmac_elem_16_2_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y,
+              v16acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(hi, sgn_x, b, sgn_y);
+  acc = addmsc_elem_16_2_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mul_elem_16_2_conf(v16int32 a0, v16int32 a1, v32int16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(hi, b, sub_mul);
+  acc = mac_elem_16_2_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2_conf(v16int32 a0, v16int32 a1, v32int16 b, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(hi, b, sub_mul);
+  acc = msc_elem_16_2_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v16int32 a0, v16int32 a1, v32int16 b, v16acc64 acc1,
+                   int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(hi, b, sub_mul);
+  acc = addmac_elem_16_2_conf(lo, false, b, 1, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v16int32 a0, v16int32 a1, v32int16 b, v16acc64 acc1,
+                   int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(hi, b, sub_mul);
+  acc = addmsc_elem_16_2_conf(lo, false, b, 1, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mul_elem_16_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y,
+                   int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = mac_elem_16_2_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b,
+                      int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = msc_elem_16_2_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y,
+                   v16acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmac_elem_16_2_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y,
+                   v16acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = addmsc_elem_16_2_conf(lo, false, b, sgn_y, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v16int32 a0, v16int32 a1, v32int16 b, v16acc64 acc1,
+                   int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_16_2_conf(a0, a1, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(hi, b, sub_mul);
+  acc = ::mac_elem_16_2_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v16int32 a0, v16int32 a1, v32int16 b, v16acc64 acc1,
+                   int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_16_2_conf(a0, a1, b, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(hi, b, sub_mul);
+  acc = ::mac_elem_16_2_conf(lo, false, b, 1, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y,
+                   v16acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_16_2_conf(a0, a1, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_elem_16_2_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v32int16 b, int sgn_y,
+                   v16acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_16_2_conf(a0, a1, sgn_x, b, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 hi = (v32int16)shuffle(a0, a1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(hi, sgn_x, b, sgn_y, sub_mul);
+  acc = ::mac_elem_16_2_conf(lo, false, b, sgn_y, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+
+INTRINSIC(v32acc64) mul_4x2_2x8(v32uint32 a, v16uint32 b0) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8(a, hi);
+  acc = mac_4x2_2x8_conf(a, 0, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_4x2_2x8(v32uint32 a, v16uint32 b0) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8(a, hi);
+  acc = msc_4x2_2x8_conf(a, 0, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) mac_4x2_2x8(v32uint32 a, v16uint32 b0, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8(a, hi);
+  acc = addmac_4x2_2x8_conf(a, 0, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) msc_4x2_2x8(v32uint32 a, v16uint32 b0, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8(a, hi);
+  acc = addmsc_4x2_2x8_conf(a, 0, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_4x2_2x8(v32uint32 a, int sgn_x, v16uint32 b0, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8(a, sgn_x, hi, sgn_y);
+  acc = mac_4x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_4x2_2x8(v32uint32 a, int sgn_x, v16uint32 b0, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8(a, sgn_x, hi, sgn_y);
+  acc = msc_4x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x2_2x8(v32uint32 a, int sgn_x, v16uint32 b0, int sgn_y, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8(a, sgn_x, hi, sgn_y);
+  acc = addmac_4x2_2x8_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x2_2x8(v32uint32 a, int sgn_x, v16uint32 b0, int sgn_y, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8(a, sgn_x, hi, sgn_y);
+  acc = addmsc_4x2_2x8_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) mul_4x2_2x8_conf(v32uint32 a, v16uint32 b0, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8_conf(a, hi, sub_mul);
+  acc = mac_4x2_2x8_conf(a, 0, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_4x2_2x8_conf(v32uint32 a, v16uint32 b0, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8_conf(a, hi, sub_mul);
+  acc = msc_4x2_2x8_conf(a, 0, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x2_2x8_conf(v32uint32 a, v16uint32 b0, v32acc64 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8_conf(a, hi, sub_mul);
+  acc = addmac_4x2_2x8_conf(a, 0, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x2_2x8_conf(v32uint32 a, v16uint32 b0, v32acc64 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8_conf(a, hi, sub_mul);
+  acc = addmsc_4x2_2x8_conf(a, 0, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_4x2_2x8_conf(v32uint32 a, int sgn_x, v16uint32 b0, int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = mac_4x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_4x2_2x8_conf(v32uint32 a, int sgn_x, v16uint32 b0, int sgn_y,
+                    int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = msc_4x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x2_2x8_conf(v32uint32 a, int sgn_x, v16uint32 b0, int sgn_y, v32acc64 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmac_4x2_2x8_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x2_2x8_conf(v32uint32 a, int sgn_x, v16uint32 b0, int sgn_y, v32acc64 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmsc_4x2_2x8_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x2_2x8_conf(v32uint32 a, v16uint32 b0, v32acc64 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_4x2_2x8_conf(a, b0, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8_conf(a, hi, sub_mul);
+  acc = ::mac_4x2_2x8_conf(a, 0, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x2_2x8_conf(v32uint32 a, v16uint32 b0, v32acc64 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_4x2_2x8_conf(a, b0, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8_conf(a, hi, sub_mul);
+  acc = ::mac_4x2_2x8_conf(a, 0, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x2_2x8_conf(v32uint32 a, int sgn_x, v16uint32 b0, int sgn_y, v32acc64 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_4x2_2x8_conf(a, sgn_x, b0, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_4x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x2_2x8_conf(v32uint32 a, int sgn_x, v16uint32 b0, int sgn_y, v32acc64 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_4x2_2x8_conf(a, sgn_x, b0, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_4x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v32acc64) mul_4x2_2x8(v32uint32 a, v16int32 b0) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8(a, hi);
+  acc = mac_4x2_2x8_conf(a, 0, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_4x2_2x8(v32uint32 a, v16int32 b0) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8(a, hi);
+  acc = msc_4x2_2x8_conf(a, 0, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) mac_4x2_2x8(v32uint32 a, v16int32 b0, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8(a, hi);
+  acc = addmac_4x2_2x8_conf(a, 0, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) msc_4x2_2x8(v32uint32 a, v16int32 b0, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8(a, hi);
+  acc = addmsc_4x2_2x8_conf(a, 0, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_4x2_2x8(v32uint32 a, int sgn_x, v16int32 b0, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8(a, sgn_x, hi, sgn_y);
+  acc = mac_4x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_4x2_2x8(v32uint32 a, int sgn_x, v16int32 b0, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8(a, sgn_x, hi, sgn_y);
+  acc = msc_4x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x2_2x8(v32uint32 a, int sgn_x, v16int32 b0, int sgn_y, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8(a, sgn_x, hi, sgn_y);
+  acc = addmac_4x2_2x8_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x2_2x8(v32uint32 a, int sgn_x, v16int32 b0, int sgn_y, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8(a, sgn_x, hi, sgn_y);
+  acc = addmsc_4x2_2x8_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) mul_4x2_2x8_conf(v32uint32 a, v16int32 b0, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8_conf(a, hi, sub_mul);
+  acc = mac_4x2_2x8_conf(a, 0, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_4x2_2x8_conf(v32uint32 a, v16int32 b0, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8_conf(a, hi, sub_mul);
+  acc = msc_4x2_2x8_conf(a, 0, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x2_2x8_conf(v32uint32 a, v16int32 b0, v32acc64 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8_conf(a, hi, sub_mul);
+  acc = addmac_4x2_2x8_conf(a, 0, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x2_2x8_conf(v32uint32 a, v16int32 b0, v32acc64 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8_conf(a, hi, sub_mul);
+  acc = addmsc_4x2_2x8_conf(a, 0, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_4x2_2x8_conf(v32uint32 a, int sgn_x, v16int32 b0, int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = mac_4x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_4x2_2x8_conf(v32uint32 a, int sgn_x, v16int32 b0, int sgn_y,
+                    int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = msc_4x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x2_2x8_conf(v32uint32 a, int sgn_x, v16int32 b0, int sgn_y, v32acc64 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmac_4x2_2x8_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x2_2x8_conf(v32uint32 a, int sgn_x, v16int32 b0, int sgn_y, v32acc64 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmsc_4x2_2x8_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x2_2x8_conf(v32uint32 a, v16int32 b0, v32acc64 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_4x2_2x8_conf(a, b0, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8_conf(a, hi, sub_mul);
+  acc = ::mac_4x2_2x8_conf(a, 0, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x2_2x8_conf(v32uint32 a, v16int32 b0, v32acc64 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_4x2_2x8_conf(a, b0, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8_conf(a, hi, sub_mul);
+  acc = ::mac_4x2_2x8_conf(a, 0, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x2_2x8_conf(v32uint32 a, int sgn_x, v16int32 b0, int sgn_y, v32acc64 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_4x2_2x8_conf(a, sgn_x, b0, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_4x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x2_2x8_conf(v32uint32 a, int sgn_x, v16int32 b0, int sgn_y, v32acc64 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_4x2_2x8_conf(a, sgn_x, b0, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_4x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v32acc64) mul_4x2_2x8(v32int32 a, v16uint32 b0) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8(a, hi);
+  acc = mac_4x2_2x8_conf(a, 1, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_4x2_2x8(v32int32 a, v16uint32 b0) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8(a, hi);
+  acc = msc_4x2_2x8_conf(a, 1, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) mac_4x2_2x8(v32int32 a, v16uint32 b0, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8(a, hi);
+  acc = addmac_4x2_2x8_conf(a, 1, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) msc_4x2_2x8(v32int32 a, v16uint32 b0, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8(a, hi);
+  acc = addmsc_4x2_2x8_conf(a, 1, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_4x2_2x8(v32int32 a, int sgn_x, v16uint32 b0, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8(a, sgn_x, hi, sgn_y);
+  acc = mac_4x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_4x2_2x8(v32int32 a, int sgn_x, v16uint32 b0, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8(a, sgn_x, hi, sgn_y);
+  acc = msc_4x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x2_2x8(v32int32 a, int sgn_x, v16uint32 b0, int sgn_y, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8(a, sgn_x, hi, sgn_y);
+  acc = addmac_4x2_2x8_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x2_2x8(v32int32 a, int sgn_x, v16uint32 b0, int sgn_y, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8(a, sgn_x, hi, sgn_y);
+  acc = addmsc_4x2_2x8_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) mul_4x2_2x8_conf(v32int32 a, v16uint32 b0, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8_conf(a, hi, sub_mul);
+  acc = mac_4x2_2x8_conf(a, 1, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_4x2_2x8_conf(v32int32 a, v16uint32 b0, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8_conf(a, hi, sub_mul);
+  acc = msc_4x2_2x8_conf(a, 1, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x2_2x8_conf(v32int32 a, v16uint32 b0, v32acc64 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8_conf(a, hi, sub_mul);
+  acc = addmac_4x2_2x8_conf(a, 1, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x2_2x8_conf(v32int32 a, v16uint32 b0, v32acc64 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8_conf(a, hi, sub_mul);
+  acc = addmsc_4x2_2x8_conf(a, 1, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_4x2_2x8_conf(v32int32 a, int sgn_x, v16uint32 b0, int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = mac_4x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_4x2_2x8_conf(v32int32 a, int sgn_x, v16uint32 b0, int sgn_y,
+                    int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = msc_4x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x2_2x8_conf(v32int32 a, int sgn_x, v16uint32 b0, int sgn_y, v32acc64 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmac_4x2_2x8_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x2_2x8_conf(v32int32 a, int sgn_x, v16uint32 b0, int sgn_y, v32acc64 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmsc_4x2_2x8_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x2_2x8_conf(v32int32 a, v16uint32 b0, v32acc64 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_4x2_2x8_conf(a, b0, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8_conf(a, hi, sub_mul);
+  acc = ::mac_4x2_2x8_conf(a, 1, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x2_2x8_conf(v32int32 a, v16uint32 b0, v32acc64 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_4x2_2x8_conf(a, b0, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8_conf(a, hi, sub_mul);
+  acc = ::mac_4x2_2x8_conf(a, 1, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x2_2x8_conf(v32int32 a, int sgn_x, v16uint32 b0, int sgn_y, v32acc64 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_4x2_2x8_conf(a, sgn_x, b0, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_4x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x2_2x8_conf(v32int32 a, int sgn_x, v16uint32 b0, int sgn_y, v32acc64 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_4x2_2x8_conf(a, sgn_x, b0, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_4x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v32acc64) mul_4x2_2x8(v32int32 a, v16int32 b0) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8(a, hi);
+  acc = mac_4x2_2x8_conf(a, 1, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_4x2_2x8(v32int32 a, v16int32 b0) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8(a, hi);
+  acc = msc_4x2_2x8_conf(a, 1, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) mac_4x2_2x8(v32int32 a, v16int32 b0, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8(a, hi);
+  acc = addmac_4x2_2x8_conf(a, 1, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) msc_4x2_2x8(v32int32 a, v16int32 b0, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8(a, hi);
+  acc = addmsc_4x2_2x8_conf(a, 1, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) mul_4x2_2x8(v32int32 a, int sgn_x, v16int32 b0, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8(a, sgn_x, hi, sgn_y);
+  acc = mac_4x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_4x2_2x8(v32int32 a, int sgn_x, v16int32 b0, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8(a, sgn_x, hi, sgn_y);
+  acc = msc_4x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x2_2x8(v32int32 a, int sgn_x, v16int32 b0, int sgn_y, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8(a, sgn_x, hi, sgn_y);
+  acc = addmac_4x2_2x8_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x2_2x8(v32int32 a, int sgn_x, v16int32 b0, int sgn_y, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8(a, sgn_x, hi, sgn_y);
+  acc = addmsc_4x2_2x8_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) mul_4x2_2x8_conf(v32int32 a, v16int32 b0, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8_conf(a, hi, sub_mul);
+  acc = mac_4x2_2x8_conf(a, 1, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_4x2_2x8_conf(v32int32 a, v16int32 b0, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8_conf(a, hi, sub_mul);
+  acc = msc_4x2_2x8_conf(a, 1, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x2_2x8_conf(v32int32 a, v16int32 b0, v32acc64 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8_conf(a, hi, sub_mul);
+  acc = addmac_4x2_2x8_conf(a, 1, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x2_2x8_conf(v32int32 a, v16int32 b0, v32acc64 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8_conf(a, hi, sub_mul);
+  acc = addmsc_4x2_2x8_conf(a, 1, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_4x2_2x8_conf(v32int32 a, int sgn_x, v16int32 b0, int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = mac_4x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_4x2_2x8_conf(v32int32 a, int sgn_x, v16int32 b0, int sgn_y,
+                    int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = msc_4x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x2_2x8_conf(v32int32 a, int sgn_x, v16int32 b0, int sgn_y, v32acc64 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmac_4x2_2x8_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x2_2x8_conf(v32int32 a, int sgn_x, v16int32 b0, int sgn_y, v32acc64 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmsc_4x2_2x8_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x2_2x8_conf(v32int32 a, v16int32 b0, v32acc64 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_4x2_2x8_conf(a, b0, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8_conf(a, hi, sub_mul);
+  acc = ::mac_4x2_2x8_conf(a, 1, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x2_2x8_conf(v32int32 a, v16int32 b0, v32acc64 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_4x2_2x8_conf(a, b0, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8_conf(a, hi, sub_mul);
+  acc = ::mac_4x2_2x8_conf(a, 1, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_4x2_2x8_conf(v32int32 a, int sgn_x, v16int32 b0, int sgn_y, v32acc64 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_4x2_2x8_conf(a, sgn_x, b0, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::mul_4x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_4x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_4x2_2x8_conf(v32int32 a, int sgn_x, v16int32 b0, int sgn_y, v32acc64 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_4x2_2x8_conf(a, sgn_x, b0, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v32acc64 acc = ::negmul_4x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_4x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+
+INTRINSIC(v16acc64)
+mul_elem_16_2(v16uint32 a0, v16uint32 a1, v16uint32 b0, v16uint32 b1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2(a_hi, b_hi);
+  acc = mac_elem_16_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, 0, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2(v16uint32 a0, v16uint32 a1, v16uint32 b0, v16uint32 b1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(a_hi, b_hi);
+  acc = msc_elem_16_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, 0, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2(v16uint32 a0, v16uint32 a1, v16uint32 b0, v16uint32 b1,
+              v16acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2(a_hi, b_hi);
+  acc = mac_elem_16_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, 0, 0);
+  acc =
+      addmac_elem_16_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2(v16uint32 a0, v16uint32 a1, v16uint32 b0, v16uint32 b1,
+              v16acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(a_hi, b_hi);
+  acc = msc_elem_16_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, 0, 0);
+  acc =
+      addmsc_elem_16_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mul_elem_16_2(v16uint32 a0, v16uint32 a1, int sgn_x, v16uint32 b0, v16uint32 b1,
+              int sgn_y) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2(a_hi, sgn_x, b_hi, sgn_y);
+  acc = mac_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2(v16uint32 a0, v16uint32 a1, int sgn_x, v16uint32 b0,
+                 v16uint32 b1, int sgn_y) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(a_hi, sgn_x, b_hi, sgn_y);
+  acc = msc_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2(v16uint32 a0, v16uint32 a1, int sgn_x, v16uint32 b0, v16uint32 b1,
+              int sgn_y, v16acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2(a_hi, sgn_x, b_hi, sgn_y);
+  acc = mac_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc =
+      addmac_elem_16_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2(v16uint32 a0, v16uint32 a1, int sgn_x, v16uint32 b0, v16uint32 b1,
+              int sgn_y, v16acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(a_hi, sgn_x, b_hi, sgn_y);
+  acc = msc_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc =
+      addmsc_elem_16_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mul_elem_16_2_conf(v16uint32 a0, v16uint32 a1, v16uint32 b0, v16uint32 b1,
+                   int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a_hi, b_hi, sub_mul);
+  acc = mac_elem_16_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2_conf(v16uint32 a0, v16uint32 a1, v16uint32 b0, v16uint32 b1,
+                      int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a_hi, b_hi, sub_mul);
+  acc = msc_elem_16_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v16uint32 a0, v16uint32 a1, v16uint32 b0, v16uint32 b1,
+                   v16acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a_hi, b_hi, sub_mul);
+  acc = mac_elem_16_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, sub_mul, 0);
+  acc = addmac_elem_16_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1,
+                              sub_mul, 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v16uint32 a0, v16uint32 a1, v16uint32 b0, v16uint32 b1,
+                   v16acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a_hi, b_hi, sub_mul);
+  acc = msc_elem_16_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, sub_mul, 0);
+  acc = addmsc_elem_16_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1,
+                              sub_mul, 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mul_elem_16_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v16uint32 b0,
+                   v16uint32 b1, int sgn_y, int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = mac_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v16uint32 b0,
+                      v16uint32 b1, int sgn_y, int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = msc_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v16uint32 b0,
+                   v16uint32 b1, int sgn_y, v16acc64 acc1, int sub_mul,
+                   int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = mac_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = addmac_elem_16_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1,
+                              sub_mul, 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v16uint32 b0,
+                   v16uint32 b1, int sgn_y, v16acc64 acc1, int sub_mul,
+                   int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = msc_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = addmsc_elem_16_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1,
+                              sub_mul, 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v16uint32 a0, v16uint32 a1, v16uint32 b0, v16uint32 b1,
+                   v16acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_16_2_conf(a0, a1, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a_hi, b_hi, sub_mul);
+  acc = mac_elem_16_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v16uint32 a0, v16uint32 a1, v16uint32 b0, v16uint32 b1,
+                   v16acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_16_2_conf(a0, a1, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a_hi, b_hi, sub_mul);
+  acc = msc_elem_16_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v16uint32 b0,
+                   v16uint32 b1, int sgn_y, v16acc64 acc1, int zero_acc1,
+                   int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_16_2_conf(a0, a1, sgn_x, b0, b1, sgn_y, acc1, sub_mul,
+                              sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = mac_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v16uint32 b0,
+                   v16uint32 b1, int sgn_y, v16acc64 acc1, int zero_acc1,
+                   int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_16_2_conf(a0, a1, sgn_x, b0, b1, sgn_y, acc1, sub_mul,
+                              sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = msc_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v16acc64)
+mul_elem_16_2(v16uint32 a0, v16uint32 a1, v16int32 b0, v16int32 b1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2(a_hi, b_hi);
+  acc = mac_elem_16_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, 0, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2(v16uint32 a0, v16uint32 a1, v16int32 b0, v16int32 b1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(a_hi, b_hi);
+  acc = msc_elem_16_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, 0, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2(v16uint32 a0, v16uint32 a1, v16int32 b0, v16int32 b1,
+              v16acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2(a_hi, b_hi);
+  acc = mac_elem_16_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, 0, 0);
+  acc =
+      addmac_elem_16_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2(v16uint32 a0, v16uint32 a1, v16int32 b0, v16int32 b1,
+              v16acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(a_hi, b_hi);
+  acc = msc_elem_16_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, 0, 0);
+  acc =
+      addmsc_elem_16_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mul_elem_16_2(v16uint32 a0, v16uint32 a1, int sgn_x, v16int32 b0, v16int32 b1,
+              int sgn_y) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2(a_hi, sgn_x, b_hi, sgn_y);
+  acc = mac_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2(v16uint32 a0, v16uint32 a1, int sgn_x, v16int32 b0,
+                 v16int32 b1, int sgn_y) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(a_hi, sgn_x, b_hi, sgn_y);
+  acc = msc_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2(v16uint32 a0, v16uint32 a1, int sgn_x, v16int32 b0, v16int32 b1,
+              int sgn_y, v16acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2(a_hi, sgn_x, b_hi, sgn_y);
+  acc = mac_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc =
+      addmac_elem_16_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2(v16uint32 a0, v16uint32 a1, int sgn_x, v16int32 b0, v16int32 b1,
+              int sgn_y, v16acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(a_hi, sgn_x, b_hi, sgn_y);
+  acc = msc_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc =
+      addmsc_elem_16_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mul_elem_16_2_conf(v16uint32 a0, v16uint32 a1, v16int32 b0, v16int32 b1,
+                   int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a_hi, b_hi, sub_mul);
+  acc = mac_elem_16_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2_conf(v16uint32 a0, v16uint32 a1, v16int32 b0, v16int32 b1,
+                      int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a_hi, b_hi, sub_mul);
+  acc = msc_elem_16_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v16uint32 a0, v16uint32 a1, v16int32 b0, v16int32 b1,
+                   v16acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a_hi, b_hi, sub_mul);
+  acc = mac_elem_16_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, sub_mul, 0);
+  acc = addmac_elem_16_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1,
+                              sub_mul, 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v16uint32 a0, v16uint32 a1, v16int32 b0, v16int32 b1,
+                   v16acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a_hi, b_hi, sub_mul);
+  acc = msc_elem_16_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, sub_mul, 0);
+  acc = addmsc_elem_16_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1,
+                              sub_mul, 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mul_elem_16_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v16int32 b0,
+                   v16int32 b1, int sgn_y, int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = mac_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v16int32 b0,
+                      v16int32 b1, int sgn_y, int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = msc_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v16int32 b0,
+                   v16int32 b1, int sgn_y, v16acc64 acc1, int sub_mul,
+                   int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = mac_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = addmac_elem_16_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1,
+                              sub_mul, 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v16int32 b0,
+                   v16int32 b1, int sgn_y, v16acc64 acc1, int sub_mul,
+                   int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = msc_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = addmsc_elem_16_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1,
+                              sub_mul, 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v16uint32 a0, v16uint32 a1, v16int32 b0, v16int32 b1,
+                   v16acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_16_2_conf(a0, a1, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a_hi, b_hi, sub_mul);
+  acc = mac_elem_16_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v16uint32 a0, v16uint32 a1, v16int32 b0, v16int32 b1,
+                   v16acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_16_2_conf(a0, a1, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a_hi, b_hi, sub_mul);
+  acc = msc_elem_16_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v16int32 b0,
+                   v16int32 b1, int sgn_y, v16acc64 acc1, int zero_acc1,
+                   int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_16_2_conf(a0, a1, sgn_x, b0, b1, sgn_y, acc1, sub_mul,
+                              sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = mac_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v16int32 b0,
+                   v16int32 b1, int sgn_y, v16acc64 acc1, int zero_acc1,
+                   int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_16_2_conf(a0, a1, sgn_x, b0, b1, sgn_y, acc1, sub_mul,
+                              sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = msc_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v16acc64)
+mul_elem_16_2(v16int32 a0, v16int32 a1, v16uint32 b0, v16uint32 b1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2(a_hi, b_hi);
+  acc = mac_elem_16_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, 0, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2(v16int32 a0, v16int32 a1, v16uint32 b0, v16uint32 b1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(a_hi, b_hi);
+  acc = msc_elem_16_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, 0, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2(v16int32 a0, v16int32 a1, v16uint32 b0, v16uint32 b1,
+              v16acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2(a_hi, b_hi);
+  acc = mac_elem_16_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, 0, 0);
+  acc =
+      addmac_elem_16_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2(v16int32 a0, v16int32 a1, v16uint32 b0, v16uint32 b1,
+              v16acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(a_hi, b_hi);
+  acc = msc_elem_16_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, 0, 0);
+  acc =
+      addmsc_elem_16_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mul_elem_16_2(v16int32 a0, v16int32 a1, int sgn_x, v16uint32 b0, v16uint32 b1,
+              int sgn_y) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2(a_hi, sgn_x, b_hi, sgn_y);
+  acc = mac_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2(v16int32 a0, v16int32 a1, int sgn_x, v16uint32 b0,
+                 v16uint32 b1, int sgn_y) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(a_hi, sgn_x, b_hi, sgn_y);
+  acc = msc_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2(v16int32 a0, v16int32 a1, int sgn_x, v16uint32 b0, v16uint32 b1,
+              int sgn_y, v16acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2(a_hi, sgn_x, b_hi, sgn_y);
+  acc = mac_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc =
+      addmac_elem_16_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2(v16int32 a0, v16int32 a1, int sgn_x, v16uint32 b0, v16uint32 b1,
+              int sgn_y, v16acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(a_hi, sgn_x, b_hi, sgn_y);
+  acc = msc_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc =
+      addmsc_elem_16_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mul_elem_16_2_conf(v16int32 a0, v16int32 a1, v16uint32 b0, v16uint32 b1,
+                   int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a_hi, b_hi, sub_mul);
+  acc = mac_elem_16_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2_conf(v16int32 a0, v16int32 a1, v16uint32 b0, v16uint32 b1,
+                      int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a_hi, b_hi, sub_mul);
+  acc = msc_elem_16_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v16int32 a0, v16int32 a1, v16uint32 b0, v16uint32 b1,
+                   v16acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a_hi, b_hi, sub_mul);
+  acc = mac_elem_16_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, sub_mul, 0);
+  acc = addmac_elem_16_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1,
+                              sub_mul, 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v16int32 a0, v16int32 a1, v16uint32 b0, v16uint32 b1,
+                   v16acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a_hi, b_hi, sub_mul);
+  acc = msc_elem_16_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, sub_mul, 0);
+  acc = addmsc_elem_16_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1,
+                              sub_mul, 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mul_elem_16_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v16uint32 b0,
+                   v16uint32 b1, int sgn_y, int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = mac_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v16uint32 b0,
+                      v16uint32 b1, int sgn_y, int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = msc_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v16uint32 b0,
+                   v16uint32 b1, int sgn_y, v16acc64 acc1, int sub_mul,
+                   int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = mac_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = addmac_elem_16_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1,
+                              sub_mul, 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v16uint32 b0,
+                   v16uint32 b1, int sgn_y, v16acc64 acc1, int sub_mul,
+                   int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = msc_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = addmsc_elem_16_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1,
+                              sub_mul, 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v16int32 a0, v16int32 a1, v16uint32 b0, v16uint32 b1,
+                   v16acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_16_2_conf(a0, a1, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a_hi, b_hi, sub_mul);
+  acc = mac_elem_16_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v16int32 a0, v16int32 a1, v16uint32 b0, v16uint32 b1,
+                   v16acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_16_2_conf(a0, a1, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a_hi, b_hi, sub_mul);
+  acc = msc_elem_16_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v16uint32 b0,
+                   v16uint32 b1, int sgn_y, v16acc64 acc1, int zero_acc1,
+                   int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_16_2_conf(a0, a1, sgn_x, b0, b1, sgn_y, acc1, sub_mul,
+                              sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = mac_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v16uint32 b0,
+                   v16uint32 b1, int sgn_y, v16acc64 acc1, int zero_acc1,
+                   int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_16_2_conf(a0, a1, sgn_x, b0, b1, sgn_y, acc1, sub_mul,
+                              sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = msc_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v16acc64)
+mul_elem_16_2(v16int32 a0, v16int32 a1, v16int32 b0, v16int32 b1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2(a_hi, b_hi);
+  acc = mac_elem_16_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, 0, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2(v16int32 a0, v16int32 a1, v16int32 b0, v16int32 b1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(a_hi, b_hi);
+  acc = msc_elem_16_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, 0, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2(v16int32 a0, v16int32 a1, v16int32 b0, v16int32 b1,
+              v16acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2(a_hi, b_hi);
+  acc = mac_elem_16_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, 0, 0);
+  acc =
+      addmac_elem_16_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2(v16int32 a0, v16int32 a1, v16int32 b0, v16int32 b1,
+              v16acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(a_hi, b_hi);
+  acc = msc_elem_16_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, 0, 0);
+  acc =
+      addmsc_elem_16_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mul_elem_16_2(v16int32 a0, v16int32 a1, int sgn_x, v16int32 b0, v16int32 b1,
+              int sgn_y) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2(a_hi, sgn_x, b_hi, sgn_y);
+  acc = mac_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2(v16int32 a0, v16int32 a1, int sgn_x, v16int32 b0, v16int32 b1,
+                 int sgn_y) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(a_hi, sgn_x, b_hi, sgn_y);
+  acc = msc_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2(v16int32 a0, v16int32 a1, int sgn_x, v16int32 b0, v16int32 b1,
+              int sgn_y, v16acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2(a_hi, sgn_x, b_hi, sgn_y);
+  acc = mac_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc =
+      addmac_elem_16_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2(v16int32 a0, v16int32 a1, int sgn_x, v16int32 b0, v16int32 b1,
+              int sgn_y, v16acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(a_hi, sgn_x, b_hi, sgn_y);
+  acc = msc_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc =
+      addmsc_elem_16_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mul_elem_16_2_conf(v16int32 a0, v16int32 a1, v16int32 b0, v16int32 b1,
+                   int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a_hi, b_hi, sub_mul);
+  acc = mac_elem_16_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2_conf(v16int32 a0, v16int32 a1, v16int32 b0, v16int32 b1,
+                      int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a_hi, b_hi, sub_mul);
+  acc = msc_elem_16_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v16int32 a0, v16int32 a1, v16int32 b0, v16int32 b1,
+                   v16acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a_hi, b_hi, sub_mul);
+  acc = mac_elem_16_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, sub_mul, 0);
+  acc = addmac_elem_16_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1,
+                              sub_mul, 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v16int32 a0, v16int32 a1, v16int32 b0, v16int32 b1,
+                   v16acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a_hi, b_hi, sub_mul);
+  acc = msc_elem_16_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, sub_mul, 0);
+  acc = addmsc_elem_16_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1,
+                              sub_mul, 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mul_elem_16_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v16int32 b0,
+                   v16int32 b1, int sgn_y, int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = mac_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v16int32 b0,
+                      v16int32 b1, int sgn_y, int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = msc_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v16int32 b0,
+                   v16int32 b1, int sgn_y, v16acc64 acc1, int sub_mul,
+                   int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = mac_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = addmac_elem_16_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1,
+                              sub_mul, 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v16int32 b0,
+                   v16int32 b1, int sgn_y, v16acc64 acc1, int sub_mul,
+                   int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = msc_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = addmsc_elem_16_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1,
+                              sub_mul, 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v16int32 a0, v16int32 a1, v16int32 b0, v16int32 b1,
+                   v16acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_16_2_conf(a0, a1, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a_hi, b_hi, sub_mul);
+  acc = mac_elem_16_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v16int32 a0, v16int32 a1, v16int32 b0, v16int32 b1,
+                   v16acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_16_2_conf(a0, a1, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a_hi, b_hi, sub_mul);
+  acc = msc_elem_16_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v16int32 b0,
+                   v16int32 b1, int sgn_y, v16acc64 acc1, int zero_acc1,
+                   int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_16_2_conf(a0, a1, sgn_x, b0, b1, sgn_y, acc1, sub_mul,
+                              sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = mac_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v16int32 b0,
+                   v16int32 b1, int sgn_y, v16acc64 acc1, int zero_acc1,
+                   int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_16_2_conf(a0, a1, sgn_x, b0, b1, sgn_y, acc1, sub_mul,
+                              sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = msc_elem_16_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_16_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+
+INTRINSIC(v32acc64)
+mul_elem_32(v16uint32 a0, v16uint32 a1, v16uint32 b0, v16uint32 b1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32(a_hi, b_hi);
+  acc = mac_elem_32_conf(a_hi, 0, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, 0, acc, 0, 0, 0, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32(v16uint32 a0, v16uint32 a1, v16uint32 b0, v16uint32 b1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32(a_hi, b_hi);
+  acc = msc_elem_32_conf(a_hi, 0, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, 0, acc, 0, 0, 0, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32(v16uint32 a0, v16uint32 a1, v16uint32 b0, v16uint32 b1,
+            v32acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32(a_hi, b_hi);
+  acc = mac_elem_32_conf(a_hi, 0, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, 0, acc, 0, 0, 0, 0);
+  acc = addmac_elem_32_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32(v16uint32 a0, v16uint32 a1, v16uint32 b0, v16uint32 b1,
+            v32acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32(a_hi, b_hi);
+  acc = msc_elem_32_conf(a_hi, 0, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, 0, acc, 0, 0, 0, 0);
+  acc = addmsc_elem_32_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32(v16uint32 a0, v16uint32 a1, int sgn_x, v16uint32 b0, v16uint32 b1,
+            int sgn_y) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32(a_hi, sgn_x, b_hi, sgn_y);
+  acc = mac_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32(v16uint32 a0, v16uint32 a1, int sgn_x, v16uint32 b0,
+               v16uint32 b1, int sgn_y) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32(a_hi, sgn_x, b_hi, sgn_y);
+  acc = msc_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32(v16uint32 a0, v16uint32 a1, int sgn_x, v16uint32 b0, v16uint32 b1,
+            int sgn_y, v32acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32(a_hi, sgn_x, b_hi, sgn_y);
+  acc = mac_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc = addmac_elem_32_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32(v16uint32 a0, v16uint32 a1, int sgn_x, v16uint32 b0, v16uint32 b1,
+            int sgn_y, v32acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32(a_hi, sgn_x, b_hi, sgn_y);
+  acc = msc_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc = addmsc_elem_32_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_conf(v16uint32 a0, v16uint32 a1, v16uint32 b0, v16uint32 b1,
+                 int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a_hi, b_hi, sub_mul);
+  acc = mac_elem_32_conf(a_hi, 0, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, 0, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_conf(v16uint32 a0, v16uint32 a1, v16uint32 b0, v16uint32 b1,
+                    int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a_hi, b_hi, sub_mul);
+  acc = msc_elem_32_conf(a_hi, 0, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, 0, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v16uint32 a0, v16uint32 a1, v16uint32 b0, v16uint32 b1,
+                 v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a_hi, b_hi, sub_mul);
+  acc = mac_elem_32_conf(a_hi, 0, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, 0, acc, 0, 0, sub_mul, 0);
+  acc = addmac_elem_32_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, sub_mul,
+                            0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v16uint32 a0, v16uint32 a1, v16uint32 b0, v16uint32 b1,
+                 v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a_hi, b_hi, sub_mul);
+  acc = msc_elem_32_conf(a_hi, 0, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, 0, acc, 0, 0, sub_mul, 0);
+  acc = addmsc_elem_32_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, sub_mul,
+                            0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v16uint32 b0,
+                 v16uint32 b1, int sgn_y, int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = mac_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v16uint32 b0,
+                    v16uint32 b1, int sgn_y, int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = msc_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v16uint32 b0,
+                 v16uint32 b1, int sgn_y, v32acc64 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = mac_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = addmac_elem_32_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, sub_mul,
+                            0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v16uint32 b0,
+                 v16uint32 b1, int sgn_y, v32acc64 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = msc_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = addmsc_elem_32_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, sub_mul,
+                            0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v16uint32 a0, v16uint32 a1, v16uint32 b0, v16uint32 b1,
+                 v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_conf(a0, a1, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a_hi, b_hi, sub_mul);
+  acc = mac_elem_32_conf(a_hi, 0, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, 0, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v16uint32 a0, v16uint32 a1, v16uint32 b0, v16uint32 b1,
+                 v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_conf(a0, a1, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a_hi, b_hi, sub_mul);
+  acc = msc_elem_32_conf(a_hi, 0, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, 0, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v16uint32 b0,
+                 v16uint32 b1, int sgn_y, v32acc64 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_conf(a0, a1, sgn_x, b0, b1, sgn_y, acc1, sub_mul,
+                            sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = mac_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v16uint32 b0,
+                 v16uint32 b1, int sgn_y, v32acc64 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_conf(a0, a1, sgn_x, b0, b1, sgn_y, acc1, sub_mul,
+                            sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = msc_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v32acc64)
+mul_elem_32(v16uint32 a0, v16uint32 a1, v16int32 b0, v16int32 b1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32(a_hi, b_hi);
+  acc = mac_elem_32_conf(a_hi, 0, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, 1, acc, 0, 0, 0, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32(v16uint32 a0, v16uint32 a1, v16int32 b0, v16int32 b1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32(a_hi, b_hi);
+  acc = msc_elem_32_conf(a_hi, 0, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, 1, acc, 0, 0, 0, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32(v16uint32 a0, v16uint32 a1, v16int32 b0, v16int32 b1,
+            v32acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32(a_hi, b_hi);
+  acc = mac_elem_32_conf(a_hi, 0, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, 1, acc, 0, 0, 0, 0);
+  acc = addmac_elem_32_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32(v16uint32 a0, v16uint32 a1, v16int32 b0, v16int32 b1,
+            v32acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32(a_hi, b_hi);
+  acc = msc_elem_32_conf(a_hi, 0, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, 1, acc, 0, 0, 0, 0);
+  acc = addmsc_elem_32_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32(v16uint32 a0, v16uint32 a1, int sgn_x, v16int32 b0, v16int32 b1,
+            int sgn_y) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32(a_hi, sgn_x, b_hi, sgn_y);
+  acc = mac_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32(v16uint32 a0, v16uint32 a1, int sgn_x, v16int32 b0, v16int32 b1,
+               int sgn_y) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32(a_hi, sgn_x, b_hi, sgn_y);
+  acc = msc_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32(v16uint32 a0, v16uint32 a1, int sgn_x, v16int32 b0, v16int32 b1,
+            int sgn_y, v32acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32(a_hi, sgn_x, b_hi, sgn_y);
+  acc = mac_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc = addmac_elem_32_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32(v16uint32 a0, v16uint32 a1, int sgn_x, v16int32 b0, v16int32 b1,
+            int sgn_y, v32acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32(a_hi, sgn_x, b_hi, sgn_y);
+  acc = msc_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc = addmsc_elem_32_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_conf(v16uint32 a0, v16uint32 a1, v16int32 b0, v16int32 b1,
+                 int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a_hi, b_hi, sub_mul);
+  acc = mac_elem_32_conf(a_hi, 0, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, 1, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_conf(v16uint32 a0, v16uint32 a1, v16int32 b0, v16int32 b1,
+                    int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a_hi, b_hi, sub_mul);
+  acc = msc_elem_32_conf(a_hi, 0, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, 1, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v16uint32 a0, v16uint32 a1, v16int32 b0, v16int32 b1,
+                 v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a_hi, b_hi, sub_mul);
+  acc = mac_elem_32_conf(a_hi, 0, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, 1, acc, 0, 0, sub_mul, 0);
+  acc = addmac_elem_32_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, sub_mul,
+                            0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v16uint32 a0, v16uint32 a1, v16int32 b0, v16int32 b1,
+                 v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a_hi, b_hi, sub_mul);
+  acc = msc_elem_32_conf(a_hi, 0, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, 1, acc, 0, 0, sub_mul, 0);
+  acc = addmsc_elem_32_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, sub_mul,
+                            0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v16int32 b0,
+                 v16int32 b1, int sgn_y, int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = mac_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v16int32 b0,
+                    v16int32 b1, int sgn_y, int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = msc_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v16int32 b0,
+                 v16int32 b1, int sgn_y, v32acc64 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = mac_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = addmac_elem_32_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, sub_mul,
+                            0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v16int32 b0,
+                 v16int32 b1, int sgn_y, v32acc64 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = msc_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = addmsc_elem_32_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, sub_mul,
+                            0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v16uint32 a0, v16uint32 a1, v16int32 b0, v16int32 b1,
+                 v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_conf(a0, a1, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a_hi, b_hi, sub_mul);
+  acc = mac_elem_32_conf(a_hi, 0, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, 1, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v16uint32 a0, v16uint32 a1, v16int32 b0, v16int32 b1,
+                 v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_conf(a0, a1, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a_hi, b_hi, sub_mul);
+  acc = msc_elem_32_conf(a_hi, 0, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, 1, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v16int32 b0,
+                 v16int32 b1, int sgn_y, v32acc64 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_conf(a0, a1, sgn_x, b0, b1, sgn_y, acc1, sub_mul,
+                            sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = mac_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v16int32 b0,
+                 v16int32 b1, int sgn_y, v32acc64 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_conf(a0, a1, sgn_x, b0, b1, sgn_y, acc1, sub_mul,
+                            sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = msc_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v32acc64)
+mul_elem_32(v16int32 a0, v16int32 a1, v16uint32 b0, v16uint32 b1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32(a_hi, b_hi);
+  acc = mac_elem_32_conf(a_hi, 1, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, 0, acc, 0, 0, 0, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32(v16int32 a0, v16int32 a1, v16uint32 b0, v16uint32 b1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32(a_hi, b_hi);
+  acc = msc_elem_32_conf(a_hi, 1, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, 0, acc, 0, 0, 0, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32(v16int32 a0, v16int32 a1, v16uint32 b0, v16uint32 b1,
+            v32acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32(a_hi, b_hi);
+  acc = mac_elem_32_conf(a_hi, 1, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, 0, acc, 0, 0, 0, 0);
+  acc = addmac_elem_32_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32(v16int32 a0, v16int32 a1, v16uint32 b0, v16uint32 b1,
+            v32acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32(a_hi, b_hi);
+  acc = msc_elem_32_conf(a_hi, 1, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, 0, acc, 0, 0, 0, 0);
+  acc = addmsc_elem_32_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32(v16int32 a0, v16int32 a1, int sgn_x, v16uint32 b0, v16uint32 b1,
+            int sgn_y) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32(a_hi, sgn_x, b_hi, sgn_y);
+  acc = mac_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32(v16int32 a0, v16int32 a1, int sgn_x, v16uint32 b0, v16uint32 b1,
+               int sgn_y) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32(a_hi, sgn_x, b_hi, sgn_y);
+  acc = msc_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32(v16int32 a0, v16int32 a1, int sgn_x, v16uint32 b0, v16uint32 b1,
+            int sgn_y, v32acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32(a_hi, sgn_x, b_hi, sgn_y);
+  acc = mac_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc = addmac_elem_32_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32(v16int32 a0, v16int32 a1, int sgn_x, v16uint32 b0, v16uint32 b1,
+            int sgn_y, v32acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32(a_hi, sgn_x, b_hi, sgn_y);
+  acc = msc_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc = addmsc_elem_32_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_conf(v16int32 a0, v16int32 a1, v16uint32 b0, v16uint32 b1,
+                 int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a_hi, b_hi, sub_mul);
+  acc = mac_elem_32_conf(a_hi, 1, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, 0, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_conf(v16int32 a0, v16int32 a1, v16uint32 b0, v16uint32 b1,
+                    int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a_hi, b_hi, sub_mul);
+  acc = msc_elem_32_conf(a_hi, 1, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, 0, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v16int32 a0, v16int32 a1, v16uint32 b0, v16uint32 b1,
+                 v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a_hi, b_hi, sub_mul);
+  acc = mac_elem_32_conf(a_hi, 1, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, 0, acc, 0, 0, sub_mul, 0);
+  acc = addmac_elem_32_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, sub_mul,
+                            0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v16int32 a0, v16int32 a1, v16uint32 b0, v16uint32 b1,
+                 v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a_hi, b_hi, sub_mul);
+  acc = msc_elem_32_conf(a_hi, 1, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, 0, acc, 0, 0, sub_mul, 0);
+  acc = addmsc_elem_32_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, sub_mul,
+                            0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_conf(v16int32 a0, v16int32 a1, int sgn_x, v16uint32 b0,
+                 v16uint32 b1, int sgn_y, int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = mac_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_conf(v16int32 a0, v16int32 a1, int sgn_x, v16uint32 b0,
+                    v16uint32 b1, int sgn_y, int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = msc_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v16int32 a0, v16int32 a1, int sgn_x, v16uint32 b0,
+                 v16uint32 b1, int sgn_y, v32acc64 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = mac_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = addmac_elem_32_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, sub_mul,
+                            0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v16int32 a0, v16int32 a1, int sgn_x, v16uint32 b0,
+                 v16uint32 b1, int sgn_y, v32acc64 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = msc_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = addmsc_elem_32_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, sub_mul,
+                            0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v16int32 a0, v16int32 a1, v16uint32 b0, v16uint32 b1,
+                 v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_conf(a0, a1, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a_hi, b_hi, sub_mul);
+  acc = mac_elem_32_conf(a_hi, 1, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, 0, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v16int32 a0, v16int32 a1, v16uint32 b0, v16uint32 b1,
+                 v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_conf(a0, a1, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a_hi, b_hi, sub_mul);
+  acc = msc_elem_32_conf(a_hi, 1, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, 0, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v16int32 a0, v16int32 a1, int sgn_x, v16uint32 b0,
+                 v16uint32 b1, int sgn_y, v32acc64 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_conf(a0, a1, sgn_x, b0, b1, sgn_y, acc1, sub_mul,
+                            sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = mac_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v16int32 a0, v16int32 a1, int sgn_x, v16uint32 b0,
+                 v16uint32 b1, int sgn_y, v32acc64 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_conf(a0, a1, sgn_x, b0, b1, sgn_y, acc1, sub_mul,
+                            sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = msc_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v32acc64)
+mul_elem_32(v16int32 a0, v16int32 a1, v16int32 b0, v16int32 b1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32(a_hi, b_hi);
+  acc = mac_elem_32_conf(a_hi, 1, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, 1, acc, 0, 0, 0, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32(v16int32 a0, v16int32 a1, v16int32 b0, v16int32 b1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32(a_hi, b_hi);
+  acc = msc_elem_32_conf(a_hi, 1, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, 1, acc, 0, 0, 0, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32(v16int32 a0, v16int32 a1, v16int32 b0, v16int32 b1, v32acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32(a_hi, b_hi);
+  acc = mac_elem_32_conf(a_hi, 1, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, 1, acc, 0, 0, 0, 0);
+  acc = addmac_elem_32_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32(v16int32 a0, v16int32 a1, v16int32 b0, v16int32 b1, v32acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32(a_hi, b_hi);
+  acc = msc_elem_32_conf(a_hi, 1, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, 1, acc, 0, 0, 0, 0);
+  acc = addmsc_elem_32_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32(v16int32 a0, v16int32 a1, int sgn_x, v16int32 b0, v16int32 b1,
+            int sgn_y) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32(a_hi, sgn_x, b_hi, sgn_y);
+  acc = mac_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32(v16int32 a0, v16int32 a1, int sgn_x, v16int32 b0, v16int32 b1,
+               int sgn_y) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32(a_hi, sgn_x, b_hi, sgn_y);
+  acc = msc_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32(v16int32 a0, v16int32 a1, int sgn_x, v16int32 b0, v16int32 b1,
+            int sgn_y, v32acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32(a_hi, sgn_x, b_hi, sgn_y);
+  acc = mac_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc = addmac_elem_32_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32(v16int32 a0, v16int32 a1, int sgn_x, v16int32 b0, v16int32 b1,
+            int sgn_y, v32acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32(a_hi, sgn_x, b_hi, sgn_y);
+  acc = msc_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc = addmsc_elem_32_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_conf(v16int32 a0, v16int32 a1, v16int32 b0, v16int32 b1,
+                 int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a_hi, b_hi, sub_mul);
+  acc = mac_elem_32_conf(a_hi, 1, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, 1, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_conf(v16int32 a0, v16int32 a1, v16int32 b0, v16int32 b1,
+                    int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a_hi, b_hi, sub_mul);
+  acc = msc_elem_32_conf(a_hi, 1, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, 1, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v16int32 a0, v16int32 a1, v16int32 b0, v16int32 b1,
+                 v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a_hi, b_hi, sub_mul);
+  acc = mac_elem_32_conf(a_hi, 1, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, 1, acc, 0, 0, sub_mul, 0);
+  acc = addmac_elem_32_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, sub_mul,
+                            0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v16int32 a0, v16int32 a1, v16int32 b0, v16int32 b1,
+                 v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a_hi, b_hi, sub_mul);
+  acc = msc_elem_32_conf(a_hi, 1, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, 1, acc, 0, 0, sub_mul, 0);
+  acc = addmsc_elem_32_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, sub_mul,
+                            0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_conf(v16int32 a0, v16int32 a1, int sgn_x, v16int32 b0, v16int32 b1,
+                 int sgn_y, int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = mac_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_conf(v16int32 a0, v16int32 a1, int sgn_x, v16int32 b0,
+                    v16int32 b1, int sgn_y, int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = msc_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v16int32 a0, v16int32 a1, int sgn_x, v16int32 b0, v16int32 b1,
+                 int sgn_y, v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = mac_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = addmac_elem_32_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, sub_mul,
+                            0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v16int32 a0, v16int32 a1, int sgn_x, v16int32 b0, v16int32 b1,
+                 int sgn_y, v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = msc_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = addmsc_elem_32_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, sub_mul,
+                            0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v16int32 a0, v16int32 a1, v16int32 b0, v16int32 b1,
+                 v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_conf(a0, a1, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a_hi, b_hi, sub_mul);
+  acc = mac_elem_32_conf(a_hi, 1, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, 1, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v16int32 a0, v16int32 a1, v16int32 b0, v16int32 b1,
+                 v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_conf(a0, a1, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a_hi, b_hi, sub_mul);
+  acc = msc_elem_32_conf(a_hi, 1, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, 1, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v16int32 a0, v16int32 a1, int sgn_x, v16int32 b0, v16int32 b1,
+                 int sgn_y, v32acc64 acc1, int zero_acc1, int sub_mul,
+                 int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_conf(a0, a1, sgn_x, b0, b1, sgn_y, acc1, sub_mul,
+                            sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = mac_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v16int32 a0, v16int32 a1, int sgn_x, v16int32 b0, v16int32 b1,
+                 int sgn_y, v32acc64 acc1, int zero_acc1, int sub_mul,
+                 int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_conf(a0, a1, sgn_x, b0, b1, sgn_y, acc1, sub_mul,
+                            sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = msc_elem_32_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_32_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+
+INTRINSIC(v32acc64)
+mul_elem_32_2(v16uint32 a0, v16uint32 a1, v16uint32 b0, v16uint32 b1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2(a_hi, b_hi);
+  acc = mac_elem_32_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, 0, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2(v16uint32 a0, v16uint32 a1, v16uint32 b0, v16uint32 b1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(a_hi, b_hi);
+  acc = msc_elem_32_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, 0, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2(v16uint32 a0, v16uint32 a1, v16uint32 b0, v16uint32 b1,
+              v32acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2(a_hi, b_hi);
+  acc = mac_elem_32_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, 0, 0);
+  acc =
+      addmac_elem_32_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2(v16uint32 a0, v16uint32 a1, v16uint32 b0, v16uint32 b1,
+              v32acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(a_hi, b_hi);
+  acc = msc_elem_32_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, 0, 0);
+  acc =
+      addmsc_elem_32_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_2(v16uint32 a0, v16uint32 a1, int sgn_x, v16uint32 b0, v16uint32 b1,
+              int sgn_y) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2(a_hi, sgn_x, b_hi, sgn_y);
+  acc = mac_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2(v16uint32 a0, v16uint32 a1, int sgn_x, v16uint32 b0,
+                 v16uint32 b1, int sgn_y) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(a_hi, sgn_x, b_hi, sgn_y);
+  acc = msc_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2(v16uint32 a0, v16uint32 a1, int sgn_x, v16uint32 b0, v16uint32 b1,
+              int sgn_y, v32acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2(a_hi, sgn_x, b_hi, sgn_y);
+  acc = mac_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc =
+      addmac_elem_32_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2(v16uint32 a0, v16uint32 a1, int sgn_x, v16uint32 b0, v16uint32 b1,
+              int sgn_y, v32acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(a_hi, sgn_x, b_hi, sgn_y);
+  acc = msc_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc =
+      addmsc_elem_32_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_2_conf(v16uint32 a0, v16uint32 a1, v16uint32 b0, v16uint32 b1,
+                   int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a_hi, b_hi, sub_mul);
+  acc = mac_elem_32_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2_conf(v16uint32 a0, v16uint32 a1, v16uint32 b0, v16uint32 b1,
+                      int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a_hi, b_hi, sub_mul);
+  acc = msc_elem_32_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v16uint32 a0, v16uint32 a1, v16uint32 b0, v16uint32 b1,
+                   v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a_hi, b_hi, sub_mul);
+  acc = mac_elem_32_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, sub_mul, 0);
+  acc = addmac_elem_32_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1,
+                              sub_mul, 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v16uint32 a0, v16uint32 a1, v16uint32 b0, v16uint32 b1,
+                   v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a_hi, b_hi, sub_mul);
+  acc = msc_elem_32_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, sub_mul, 0);
+  acc = addmsc_elem_32_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1,
+                              sub_mul, 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v16uint32 b0,
+                   v16uint32 b1, int sgn_y, int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = mac_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v16uint32 b0,
+                      v16uint32 b1, int sgn_y, int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = msc_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v16uint32 b0,
+                   v16uint32 b1, int sgn_y, v32acc64 acc1, int sub_mul,
+                   int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = mac_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = addmac_elem_32_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1,
+                              sub_mul, 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v16uint32 b0,
+                   v16uint32 b1, int sgn_y, v32acc64 acc1, int sub_mul,
+                   int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = msc_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = addmsc_elem_32_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1,
+                              sub_mul, 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v16uint32 a0, v16uint32 a1, v16uint32 b0, v16uint32 b1,
+                   v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_2_conf(a0, a1, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a_hi, b_hi, sub_mul);
+  acc = mac_elem_32_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v16uint32 a0, v16uint32 a1, v16uint32 b0, v16uint32 b1,
+                   v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_2_conf(a0, a1, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a_hi, b_hi, sub_mul);
+  acc = msc_elem_32_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v16uint32 b0,
+                   v16uint32 b1, int sgn_y, v32acc64 acc1, int zero_acc1,
+                   int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_2_conf(a0, a1, sgn_x, b0, b1, sgn_y, acc1, sub_mul,
+                              sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = mac_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v16uint32 b0,
+                   v16uint32 b1, int sgn_y, v32acc64 acc1, int zero_acc1,
+                   int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_2_conf(a0, a1, sgn_x, b0, b1, sgn_y, acc1, sub_mul,
+                              sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = msc_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v32acc64)
+mul_elem_32_2(v16uint32 a0, v16uint32 a1, v16int32 b0, v16int32 b1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2(a_hi, b_hi);
+  acc = mac_elem_32_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, 0, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2(v16uint32 a0, v16uint32 a1, v16int32 b0, v16int32 b1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(a_hi, b_hi);
+  acc = msc_elem_32_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, 0, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2(v16uint32 a0, v16uint32 a1, v16int32 b0, v16int32 b1,
+              v32acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2(a_hi, b_hi);
+  acc = mac_elem_32_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, 0, 0);
+  acc =
+      addmac_elem_32_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2(v16uint32 a0, v16uint32 a1, v16int32 b0, v16int32 b1,
+              v32acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(a_hi, b_hi);
+  acc = msc_elem_32_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, 0, 0);
+  acc =
+      addmsc_elem_32_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_2(v16uint32 a0, v16uint32 a1, int sgn_x, v16int32 b0, v16int32 b1,
+              int sgn_y) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2(a_hi, sgn_x, b_hi, sgn_y);
+  acc = mac_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2(v16uint32 a0, v16uint32 a1, int sgn_x, v16int32 b0,
+                 v16int32 b1, int sgn_y) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(a_hi, sgn_x, b_hi, sgn_y);
+  acc = msc_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2(v16uint32 a0, v16uint32 a1, int sgn_x, v16int32 b0, v16int32 b1,
+              int sgn_y, v32acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2(a_hi, sgn_x, b_hi, sgn_y);
+  acc = mac_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc =
+      addmac_elem_32_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2(v16uint32 a0, v16uint32 a1, int sgn_x, v16int32 b0, v16int32 b1,
+              int sgn_y, v32acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(a_hi, sgn_x, b_hi, sgn_y);
+  acc = msc_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc =
+      addmsc_elem_32_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_2_conf(v16uint32 a0, v16uint32 a1, v16int32 b0, v16int32 b1,
+                   int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a_hi, b_hi, sub_mul);
+  acc = mac_elem_32_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2_conf(v16uint32 a0, v16uint32 a1, v16int32 b0, v16int32 b1,
+                      int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a_hi, b_hi, sub_mul);
+  acc = msc_elem_32_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v16uint32 a0, v16uint32 a1, v16int32 b0, v16int32 b1,
+                   v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a_hi, b_hi, sub_mul);
+  acc = mac_elem_32_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, sub_mul, 0);
+  acc = addmac_elem_32_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1,
+                              sub_mul, 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v16uint32 a0, v16uint32 a1, v16int32 b0, v16int32 b1,
+                   v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a_hi, b_hi, sub_mul);
+  acc = msc_elem_32_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, sub_mul, 0);
+  acc = addmsc_elem_32_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1,
+                              sub_mul, 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v16int32 b0,
+                   v16int32 b1, int sgn_y, int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = mac_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v16int32 b0,
+                      v16int32 b1, int sgn_y, int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = msc_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v16int32 b0,
+                   v16int32 b1, int sgn_y, v32acc64 acc1, int sub_mul,
+                   int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = mac_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = addmac_elem_32_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1,
+                              sub_mul, 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v16int32 b0,
+                   v16int32 b1, int sgn_y, v32acc64 acc1, int sub_mul,
+                   int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = msc_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = addmsc_elem_32_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1,
+                              sub_mul, 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v16uint32 a0, v16uint32 a1, v16int32 b0, v16int32 b1,
+                   v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_2_conf(a0, a1, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a_hi, b_hi, sub_mul);
+  acc = mac_elem_32_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v16uint32 a0, v16uint32 a1, v16int32 b0, v16int32 b1,
+                   v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_2_conf(a0, a1, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a_hi, b_hi, sub_mul);
+  acc = msc_elem_32_2_conf(a_hi, 0, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v16int32 b0,
+                   v16int32 b1, int sgn_y, v32acc64 acc1, int zero_acc1,
+                   int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_2_conf(a0, a1, sgn_x, b0, b1, sgn_y, acc1, sub_mul,
+                              sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = mac_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v16uint32 a0, v16uint32 a1, int sgn_x, v16int32 b0,
+                   v16int32 b1, int sgn_y, v32acc64 acc1, int zero_acc1,
+                   int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_2_conf(a0, a1, sgn_x, b0, b1, sgn_y, acc1, sub_mul,
+                              sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32uint16 a_hi = (v32uint16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = msc_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v32acc64)
+mul_elem_32_2(v16int32 a0, v16int32 a1, v16uint32 b0, v16uint32 b1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2(a_hi, b_hi);
+  acc = mac_elem_32_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, 0, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2(v16int32 a0, v16int32 a1, v16uint32 b0, v16uint32 b1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(a_hi, b_hi);
+  acc = msc_elem_32_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, 0, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2(v16int32 a0, v16int32 a1, v16uint32 b0, v16uint32 b1,
+              v32acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2(a_hi, b_hi);
+  acc = mac_elem_32_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, 0, 0);
+  acc =
+      addmac_elem_32_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2(v16int32 a0, v16int32 a1, v16uint32 b0, v16uint32 b1,
+              v32acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(a_hi, b_hi);
+  acc = msc_elem_32_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, 0, 0);
+  acc =
+      addmsc_elem_32_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_2(v16int32 a0, v16int32 a1, int sgn_x, v16uint32 b0, v16uint32 b1,
+              int sgn_y) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2(a_hi, sgn_x, b_hi, sgn_y);
+  acc = mac_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2(v16int32 a0, v16int32 a1, int sgn_x, v16uint32 b0,
+                 v16uint32 b1, int sgn_y) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(a_hi, sgn_x, b_hi, sgn_y);
+  acc = msc_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2(v16int32 a0, v16int32 a1, int sgn_x, v16uint32 b0, v16uint32 b1,
+              int sgn_y, v32acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2(a_hi, sgn_x, b_hi, sgn_y);
+  acc = mac_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc =
+      addmac_elem_32_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2(v16int32 a0, v16int32 a1, int sgn_x, v16uint32 b0, v16uint32 b1,
+              int sgn_y, v32acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(a_hi, sgn_x, b_hi, sgn_y);
+  acc = msc_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc =
+      addmsc_elem_32_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_2_conf(v16int32 a0, v16int32 a1, v16uint32 b0, v16uint32 b1,
+                   int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a_hi, b_hi, sub_mul);
+  acc = mac_elem_32_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2_conf(v16int32 a0, v16int32 a1, v16uint32 b0, v16uint32 b1,
+                      int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a_hi, b_hi, sub_mul);
+  acc = msc_elem_32_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v16int32 a0, v16int32 a1, v16uint32 b0, v16uint32 b1,
+                   v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a_hi, b_hi, sub_mul);
+  acc = mac_elem_32_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, sub_mul, 0);
+  acc = addmac_elem_32_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1,
+                              sub_mul, 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v16int32 a0, v16int32 a1, v16uint32 b0, v16uint32 b1,
+                   v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a_hi, b_hi, sub_mul);
+  acc = msc_elem_32_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, sub_mul, 0);
+  acc = addmsc_elem_32_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1,
+                              sub_mul, 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v16uint32 b0,
+                   v16uint32 b1, int sgn_y, int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = mac_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v16uint32 b0,
+                      v16uint32 b1, int sgn_y, int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = msc_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v16uint32 b0,
+                   v16uint32 b1, int sgn_y, v32acc64 acc1, int sub_mul,
+                   int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = mac_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = addmac_elem_32_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1,
+                              sub_mul, 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v16uint32 b0,
+                   v16uint32 b1, int sgn_y, v32acc64 acc1, int sub_mul,
+                   int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = msc_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = addmsc_elem_32_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1,
+                              sub_mul, 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v16int32 a0, v16int32 a1, v16uint32 b0, v16uint32 b1,
+                   v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_2_conf(a0, a1, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a_hi, b_hi, sub_mul);
+  acc = mac_elem_32_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v16int32 a0, v16int32 a1, v16uint32 b0, v16uint32 b1,
+                   v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_2_conf(a0, a1, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a_hi, b_hi, sub_mul);
+  acc = msc_elem_32_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, 0, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v16uint32 b0,
+                   v16uint32 b1, int sgn_y, v32acc64 acc1, int zero_acc1,
+                   int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_2_conf(a0, a1, sgn_x, b0, b1, sgn_y, acc1, sub_mul,
+                              sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = mac_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v16uint32 b0,
+                   v16uint32 b1, int sgn_y, v32acc64 acc1, int zero_acc1,
+                   int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_2_conf(a0, a1, sgn_x, b0, b1, sgn_y, acc1, sub_mul,
+                              sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 b_hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = msc_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v32acc64)
+mul_elem_32_2(v16int32 a0, v16int32 a1, v16int32 b0, v16int32 b1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2(a_hi, b_hi);
+  acc = mac_elem_32_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, 0, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2(v16int32 a0, v16int32 a1, v16int32 b0, v16int32 b1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(a_hi, b_hi);
+  acc = msc_elem_32_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, 0, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2(v16int32 a0, v16int32 a1, v16int32 b0, v16int32 b1,
+              v32acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2(a_hi, b_hi);
+  acc = mac_elem_32_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, 0, 0);
+  acc =
+      addmac_elem_32_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2(v16int32 a0, v16int32 a1, v16int32 b0, v16int32 b1,
+              v32acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(a_hi, b_hi);
+  acc = msc_elem_32_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, 0, 0);
+  acc =
+      addmsc_elem_32_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_2(v16int32 a0, v16int32 a1, int sgn_x, v16int32 b0, v16int32 b1,
+              int sgn_y) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2(a_hi, sgn_x, b_hi, sgn_y);
+  acc = mac_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2(v16int32 a0, v16int32 a1, int sgn_x, v16int32 b0, v16int32 b1,
+                 int sgn_y) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(a_hi, sgn_x, b_hi, sgn_y);
+  acc = msc_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2(v16int32 a0, v16int32 a1, int sgn_x, v16int32 b0, v16int32 b1,
+              int sgn_y, v32acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2(a_hi, sgn_x, b_hi, sgn_y);
+  acc = mac_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc =
+      addmac_elem_32_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2(v16int32 a0, v16int32 a1, int sgn_x, v16int32 b0, v16int32 b1,
+              int sgn_y, v32acc64 acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(a_hi, sgn_x, b_hi, sgn_y);
+  acc = msc_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, 0, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, 0, 0);
+  acc =
+      addmsc_elem_32_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_2_conf(v16int32 a0, v16int32 a1, v16int32 b0, v16int32 b1,
+                   int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a_hi, b_hi, sub_mul);
+  acc = mac_elem_32_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2_conf(v16int32 a0, v16int32 a1, v16int32 b0, v16int32 b1,
+                      int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a_hi, b_hi, sub_mul);
+  acc = msc_elem_32_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v16int32 a0, v16int32 a1, v16int32 b0, v16int32 b1,
+                   v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a_hi, b_hi, sub_mul);
+  acc = mac_elem_32_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, sub_mul, 0);
+  acc = addmac_elem_32_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1,
+                              sub_mul, 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v16int32 a0, v16int32 a1, v16int32 b0, v16int32 b1,
+                   v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a_hi, b_hi, sub_mul);
+  acc = msc_elem_32_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, sub_mul, 0);
+  acc = addmsc_elem_32_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1,
+                              sub_mul, 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v16int32 b0,
+                   v16int32 b1, int sgn_y, int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = mac_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v16int32 b0,
+                      v16int32 b1, int sgn_y, int sub_mul) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = msc_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v16int32 b0,
+                   v16int32 b1, int sgn_y, v32acc64 acc1, int sub_mul,
+                   int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = mac_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = addmac_elem_32_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1,
+                              sub_mul, 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v16int32 b0,
+                   v16int32 b1, int sgn_y, v32acc64 acc1, int sub_mul,
+                   int sub_acc1) {
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = msc_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = addmsc_elem_32_2_conf(a_lo, false, b_lo, false, acc, acc1, 0, 1,
+                              sub_mul, 0, sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v16int32 a0, v16int32 a1, v16int32 b0, v16int32 b1,
+                   v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_2_conf(a0, a1, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a_hi, b_hi, sub_mul);
+  acc = mac_elem_32_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v16int32 a0, v16int32 a1, v16int32 b0, v16int32 b1,
+                   v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_2_conf(a0, a1, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a_hi, b_hi, sub_mul);
+  acc = msc_elem_32_2_conf(a_hi, 1, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, 1, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v16int32 b0,
+                   v16int32 b1, int sgn_y, v32acc64 acc1, int zero_acc1,
+                   int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_2_conf(a0, a1, sgn_x, b0, b1, sgn_y, acc1, sub_mul,
+                              sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = mac_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = mac_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v16int32 a0, v16int32 a1, int sgn_x, v16int32 b0,
+                   v16int32 b1, int sgn_y, v32acc64 acc1, int zero_acc1,
+                   int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_2_conf(a0, a1, sgn_x, b0, b1, sgn_y, acc1, sub_mul,
+                              sub_acc1);
+  }
+  v32uint16 a_lo = (v32uint16)shuffle(a0, a1, 2);
+  v32int16 a_hi = (v32int16)shuffle(a0, a1, 3);
+  v32uint16 b_lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 b_hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a_hi, sgn_x, b_hi, sgn_y, sub_mul);
+  acc = msc_elem_32_2_conf(a_hi, sgn_x, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_hi, sgn_y, acc, 0, 0, sub_mul, 0);
+  acc = msc_elem_32_2_conf(a_lo, false, b_lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+
+INTRINSIC(v64acc32) mul_8x2_2x8(v32uint16 a, v16uint32 b0) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8(a, hi);
+  acc = mac_8x2_2x8_conf(a, 0, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) negmul_8x2_2x8(v32uint16 a, v16uint32 b0) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8(a, hi);
+  acc = msc_8x2_2x8_conf(a, 0, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) mac_8x2_2x8(v32uint16 a, v16uint32 b0, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8(a, hi);
+  acc = addmac_8x2_2x8_conf(a, 0, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) msc_8x2_2x8(v32uint16 a, v16uint32 b0, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8(a, hi);
+  acc = addmsc_8x2_2x8_conf(a, 0, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mul_8x2_2x8(v32uint16 a, int sgn_x, v16uint32 b0, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8(a, sgn_x, hi, sgn_y);
+  acc = mac_8x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_8x2_2x8(v32uint16 a, int sgn_x, v16uint32 b0, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8(a, sgn_x, hi, sgn_y);
+  acc = msc_8x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8(v32uint16 a, int sgn_x, v16uint32 b0, int sgn_y, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8(a, sgn_x, hi, sgn_y);
+  acc = addmac_8x2_2x8_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8(v32uint16 a, int sgn_x, v16uint32 b0, int sgn_y, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8(a, sgn_x, hi, sgn_y);
+  acc = addmsc_8x2_2x8_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) mul_8x2_2x8_conf(v32uint16 a, v16uint32 b0, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(a, hi, sub_mul);
+  acc = mac_8x2_2x8_conf(a, 0, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_8x2_2x8_conf(v32uint16 a, v16uint32 b0, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(a, hi, sub_mul);
+  acc = msc_8x2_2x8_conf(a, 0, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8_conf(v32uint16 a, v16uint32 b0, v64acc32 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(a, hi, sub_mul);
+  acc = addmac_8x2_2x8_conf(a, 0, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8_conf(v32uint16 a, v16uint32 b0, v64acc32 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(a, hi, sub_mul);
+  acc = addmsc_8x2_2x8_conf(a, 0, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mul_8x2_2x8_conf(v32uint16 a, int sgn_x, v16uint32 b0, int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = mac_8x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_8x2_2x8_conf(v32uint16 a, int sgn_x, v16uint32 b0, int sgn_y,
+                    int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = msc_8x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8_conf(v32uint16 a, int sgn_x, v16uint32 b0, int sgn_y, v64acc32 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmac_8x2_2x8_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8_conf(v32uint16 a, int sgn_x, v16uint32 b0, int sgn_y, v64acc32 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmsc_8x2_2x8_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8_conf(v32uint16 a, v16uint32 b0, v64acc32 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_8x2_2x8_conf(a, b0, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(a, hi, sub_mul);
+  acc = ::mac_8x2_2x8_conf(a, 0, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8_conf(v32uint16 a, v16uint32 b0, v64acc32 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_8x2_2x8_conf(a, b0, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(a, hi, sub_mul);
+  acc = ::mac_8x2_2x8_conf(a, 0, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8_conf(v32uint16 a, int sgn_x, v16uint32 b0, int sgn_y, v64acc32 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_8x2_2x8_conf(a, sgn_x, b0, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_8x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8_conf(v32uint16 a, int sgn_x, v16uint32 b0, int sgn_y, v64acc32 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_8x2_2x8_conf(a, sgn_x, b0, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_8x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v64acc32) mul_8x2_2x8(v32uint16 a, v16int32 b0) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8(a, hi);
+  acc = mac_8x2_2x8_conf(a, 0, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) negmul_8x2_2x8(v32uint16 a, v16int32 b0) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8(a, hi);
+  acc = msc_8x2_2x8_conf(a, 0, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) mac_8x2_2x8(v32uint16 a, v16int32 b0, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8(a, hi);
+  acc = addmac_8x2_2x8_conf(a, 0, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) msc_8x2_2x8(v32uint16 a, v16int32 b0, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8(a, hi);
+  acc = addmsc_8x2_2x8_conf(a, 0, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mul_8x2_2x8(v32uint16 a, int sgn_x, v16int32 b0, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8(a, sgn_x, hi, sgn_y);
+  acc = mac_8x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_8x2_2x8(v32uint16 a, int sgn_x, v16int32 b0, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8(a, sgn_x, hi, sgn_y);
+  acc = msc_8x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8(v32uint16 a, int sgn_x, v16int32 b0, int sgn_y, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8(a, sgn_x, hi, sgn_y);
+  acc = addmac_8x2_2x8_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8(v32uint16 a, int sgn_x, v16int32 b0, int sgn_y, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8(a, sgn_x, hi, sgn_y);
+  acc = addmsc_8x2_2x8_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) mul_8x2_2x8_conf(v32uint16 a, v16int32 b0, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(a, hi, sub_mul);
+  acc = mac_8x2_2x8_conf(a, 0, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) negmul_8x2_2x8_conf(v32uint16 a, v16int32 b0, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(a, hi, sub_mul);
+  acc = msc_8x2_2x8_conf(a, 0, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8_conf(v32uint16 a, v16int32 b0, v64acc32 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(a, hi, sub_mul);
+  acc = addmac_8x2_2x8_conf(a, 0, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8_conf(v32uint16 a, v16int32 b0, v64acc32 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(a, hi, sub_mul);
+  acc = addmsc_8x2_2x8_conf(a, 0, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mul_8x2_2x8_conf(v32uint16 a, int sgn_x, v16int32 b0, int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = mac_8x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_8x2_2x8_conf(v32uint16 a, int sgn_x, v16int32 b0, int sgn_y,
+                    int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = msc_8x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8_conf(v32uint16 a, int sgn_x, v16int32 b0, int sgn_y, v64acc32 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmac_8x2_2x8_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8_conf(v32uint16 a, int sgn_x, v16int32 b0, int sgn_y, v64acc32 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmsc_8x2_2x8_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8_conf(v32uint16 a, v16int32 b0, v64acc32 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_8x2_2x8_conf(a, b0, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(a, hi, sub_mul);
+  acc = ::mac_8x2_2x8_conf(a, 0, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8_conf(v32uint16 a, v16int32 b0, v64acc32 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_8x2_2x8_conf(a, b0, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(a, hi, sub_mul);
+  acc = ::mac_8x2_2x8_conf(a, 0, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8_conf(v32uint16 a, int sgn_x, v16int32 b0, int sgn_y, v64acc32 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_8x2_2x8_conf(a, sgn_x, b0, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_8x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8_conf(v32uint16 a, int sgn_x, v16int32 b0, int sgn_y, v64acc32 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_8x2_2x8_conf(a, sgn_x, b0, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_8x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v64acc32) mul_8x2_2x8(v32int16 a, v16uint32 b0) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8(a, hi);
+  acc = mac_8x2_2x8_conf(a, 1, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) negmul_8x2_2x8(v32int16 a, v16uint32 b0) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8(a, hi);
+  acc = msc_8x2_2x8_conf(a, 1, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) mac_8x2_2x8(v32int16 a, v16uint32 b0, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8(a, hi);
+  acc = addmac_8x2_2x8_conf(a, 1, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) msc_8x2_2x8(v32int16 a, v16uint32 b0, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8(a, hi);
+  acc = addmsc_8x2_2x8_conf(a, 1, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mul_8x2_2x8(v32int16 a, int sgn_x, v16uint32 b0, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8(a, sgn_x, hi, sgn_y);
+  acc = mac_8x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_8x2_2x8(v32int16 a, int sgn_x, v16uint32 b0, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8(a, sgn_x, hi, sgn_y);
+  acc = msc_8x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8(v32int16 a, int sgn_x, v16uint32 b0, int sgn_y, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8(a, sgn_x, hi, sgn_y);
+  acc = addmac_8x2_2x8_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8(v32int16 a, int sgn_x, v16uint32 b0, int sgn_y, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8(a, sgn_x, hi, sgn_y);
+  acc = addmsc_8x2_2x8_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) mul_8x2_2x8_conf(v32int16 a, v16uint32 b0, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(a, hi, sub_mul);
+  acc = mac_8x2_2x8_conf(a, 1, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) negmul_8x2_2x8_conf(v32int16 a, v16uint32 b0, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(a, hi, sub_mul);
+  acc = msc_8x2_2x8_conf(a, 1, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8_conf(v32int16 a, v16uint32 b0, v64acc32 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(a, hi, sub_mul);
+  acc = addmac_8x2_2x8_conf(a, 1, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8_conf(v32int16 a, v16uint32 b0, v64acc32 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(a, hi, sub_mul);
+  acc = addmsc_8x2_2x8_conf(a, 1, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mul_8x2_2x8_conf(v32int16 a, int sgn_x, v16uint32 b0, int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = mac_8x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_8x2_2x8_conf(v32int16 a, int sgn_x, v16uint32 b0, int sgn_y,
+                    int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = msc_8x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8_conf(v32int16 a, int sgn_x, v16uint32 b0, int sgn_y, v64acc32 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmac_8x2_2x8_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8_conf(v32int16 a, int sgn_x, v16uint32 b0, int sgn_y, v64acc32 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmsc_8x2_2x8_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8_conf(v32int16 a, v16uint32 b0, v64acc32 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_8x2_2x8_conf(a, b0, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(a, hi, sub_mul);
+  acc = ::mac_8x2_2x8_conf(a, 1, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8_conf(v32int16 a, v16uint32 b0, v64acc32 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_8x2_2x8_conf(a, b0, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(a, hi, sub_mul);
+  acc = ::mac_8x2_2x8_conf(a, 1, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8_conf(v32int16 a, int sgn_x, v16uint32 b0, int sgn_y, v64acc32 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_8x2_2x8_conf(a, sgn_x, b0, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_8x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8_conf(v32int16 a, int sgn_x, v16uint32 b0, int sgn_y, v64acc32 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_8x2_2x8_conf(a, sgn_x, b0, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16uint32(), 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, undef_v16uint32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_8x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v64acc32) mul_8x2_2x8(v32int16 a, v16int32 b0) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8(a, hi);
+  acc = mac_8x2_2x8_conf(a, 1, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) negmul_8x2_2x8(v32int16 a, v16int32 b0) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8(a, hi);
+  acc = msc_8x2_2x8_conf(a, 1, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) mac_8x2_2x8(v32int16 a, v16int32 b0, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8(a, hi);
+  acc = addmac_8x2_2x8_conf(a, 1, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) msc_8x2_2x8(v32int16 a, v16int32 b0, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8(a, hi);
+  acc = addmsc_8x2_2x8_conf(a, 1, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) mul_8x2_2x8(v32int16 a, int sgn_x, v16int32 b0, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8(a, sgn_x, hi, sgn_y);
+  acc = mac_8x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_8x2_2x8(v32int16 a, int sgn_x, v16int32 b0, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8(a, sgn_x, hi, sgn_y);
+  acc = msc_8x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8(v32int16 a, int sgn_x, v16int32 b0, int sgn_y, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8(a, sgn_x, hi, sgn_y);
+  acc = addmac_8x2_2x8_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8(v32int16 a, int sgn_x, v16int32 b0, int sgn_y, v64acc32 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8(a, sgn_x, hi, sgn_y);
+  acc = addmsc_8x2_2x8_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) mul_8x2_2x8_conf(v32int16 a, v16int32 b0, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(a, hi, sub_mul);
+  acc = mac_8x2_2x8_conf(a, 1, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32) negmul_8x2_2x8_conf(v32int16 a, v16int32 b0, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(a, hi, sub_mul);
+  acc = msc_8x2_2x8_conf(a, 1, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8_conf(v32int16 a, v16int32 b0, v64acc32 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(a, hi, sub_mul);
+  acc = addmac_8x2_2x8_conf(a, 1, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8_conf(v32int16 a, v16int32 b0, v64acc32 acc1, int sub_mul,
+                 int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(a, hi, sub_mul);
+  acc = addmsc_8x2_2x8_conf(a, 1, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mul_8x2_2x8_conf(v32int16 a, int sgn_x, v16int32 b0, int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = mac_8x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+negmul_8x2_2x8_conf(v32int16 a, int sgn_x, v16int32 b0, int sgn_y,
+                    int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = msc_8x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8_conf(v32int16 a, int sgn_x, v16int32 b0, int sgn_y, v64acc32 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmac_8x2_2x8_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8_conf(v32int16 a, int sgn_x, v16int32 b0, int sgn_y, v64acc32 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmsc_8x2_2x8_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8_conf(v32int16 a, v16int32 b0, v64acc32 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_8x2_2x8_conf(a, b0, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(a, hi, sub_mul);
+  acc = ::mac_8x2_2x8_conf(a, 1, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8_conf(v32int16 a, v16int32 b0, v64acc32 acc1, int zero_acc1,
+                 int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_8x2_2x8_conf(a, b0, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(a, hi, sub_mul);
+  acc = ::mac_8x2_2x8_conf(a, 1, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+mac_8x2_2x8_conf(v32int16 a, int sgn_x, v16int32 b0, int sgn_y, v64acc32 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_8x2_2x8_conf(a, sgn_x, b0, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::mul_8x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_8x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v64acc32)
+msc_8x2_2x8_conf(v32int16 a, int sgn_x, v16int32 b0, int sgn_y, v64acc32 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_8x2_2x8_conf(a, sgn_x, b0, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, undef_v16int32(), 2);
+  v32int16 hi = (v32int16)shuffle(b0, undef_v16int32(), 3);
+  v64acc32 acc = ::negmul_8x2_2x8_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_8x2_2x8_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+
+INTRINSIC(v32acc64) mul_elem_32(v32uint16 a, v16uint32 b0, v16uint32 b1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32(a, hi);
+  acc = mac_elem_32_conf(a, 0, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_elem_32(v32uint16 a, v16uint32 b0, v16uint32 b1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32(a, hi);
+  acc = msc_elem_32_conf(a, 0, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32(v32uint16 a, v16uint32 b0, v16uint32 b1, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32(a, hi);
+  acc = addmac_elem_32_conf(a, 0, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32(v32uint16 a, v16uint32 b0, v16uint32 b1, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32(a, hi);
+  acc = addmsc_elem_32_conf(a, 0, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32(v32uint16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32(a, sgn_x, hi, sgn_y);
+  acc = mac_elem_32_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32(v32uint16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32(a, sgn_x, hi, sgn_y);
+  acc = msc_elem_32_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32(v32uint16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y,
+            v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32(a, sgn_x, hi, sgn_y);
+  acc = addmac_elem_32_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32(v32uint16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y,
+            v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32(a, sgn_x, hi, sgn_y);
+  acc = addmsc_elem_32_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_conf(v32uint16 a, v16uint32 b0, v16uint32 b1, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a, hi, sub_mul);
+  acc = mac_elem_32_conf(a, 0, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_conf(v32uint16 a, v16uint32 b0, v16uint32 b1, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a, hi, sub_mul);
+  acc = msc_elem_32_conf(a, 0, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v32uint16 a, v16uint32 b0, v16uint32 b1, v32acc64 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a, hi, sub_mul);
+  acc = addmac_elem_32_conf(a, 0, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v32uint16 a, v16uint32 b0, v16uint32 b1, v32acc64 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a, hi, sub_mul);
+  acc = addmsc_elem_32_conf(a, 0, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_conf(v32uint16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y,
+                 int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = mac_elem_32_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_conf(v32uint16 a, int sgn_x, v16uint32 b0, v16uint32 b1,
+                    int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = msc_elem_32_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v32uint16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y,
+                 v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmac_elem_32_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v32uint16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y,
+                 v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmsc_elem_32_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v32uint16 a, v16uint32 b0, v16uint32 b1, v32acc64 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_conf(a, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a, hi, sub_mul);
+  acc = ::mac_elem_32_conf(a, 0, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v32uint16 a, v16uint32 b0, v16uint32 b1, v32acc64 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_conf(a, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a, hi, sub_mul);
+  acc = ::mac_elem_32_conf(a, 0, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v32uint16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y,
+                 v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_conf(a, sgn_x, b0, b1, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_elem_32_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v32uint16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y,
+                 v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_conf(a, sgn_x, b0, b1, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_elem_32_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v32acc64) mul_elem_32(v32uint16 a, v16int32 b0, v16int32 b1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32(a, hi);
+  acc = mac_elem_32_conf(a, 0, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_elem_32(v32uint16 a, v16int32 b0, v16int32 b1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32(a, hi);
+  acc = msc_elem_32_conf(a, 0, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32(v32uint16 a, v16int32 b0, v16int32 b1, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32(a, hi);
+  acc = addmac_elem_32_conf(a, 0, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32(v32uint16 a, v16int32 b0, v16int32 b1, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32(a, hi);
+  acc = addmsc_elem_32_conf(a, 0, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32(v32uint16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32(a, sgn_x, hi, sgn_y);
+  acc = mac_elem_32_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32(v32uint16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32(a, sgn_x, hi, sgn_y);
+  acc = msc_elem_32_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32(v32uint16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+            v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32(a, sgn_x, hi, sgn_y);
+  acc = addmac_elem_32_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32(v32uint16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+            v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32(a, sgn_x, hi, sgn_y);
+  acc = addmsc_elem_32_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_conf(v32uint16 a, v16int32 b0, v16int32 b1, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a, hi, sub_mul);
+  acc = mac_elem_32_conf(a, 0, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_conf(v32uint16 a, v16int32 b0, v16int32 b1, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a, hi, sub_mul);
+  acc = msc_elem_32_conf(a, 0, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v32uint16 a, v16int32 b0, v16int32 b1, v32acc64 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a, hi, sub_mul);
+  acc = addmac_elem_32_conf(a, 0, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v32uint16 a, v16int32 b0, v16int32 b1, v32acc64 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a, hi, sub_mul);
+  acc = addmsc_elem_32_conf(a, 0, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_conf(v32uint16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+                 int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = mac_elem_32_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_conf(v32uint16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+                    int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = msc_elem_32_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v32uint16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+                 v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmac_elem_32_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v32uint16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+                 v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmsc_elem_32_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v32uint16 a, v16int32 b0, v16int32 b1, v32acc64 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_conf(a, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a, hi, sub_mul);
+  acc = ::mac_elem_32_conf(a, 0, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v32uint16 a, v16int32 b0, v16int32 b1, v32acc64 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_conf(a, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a, hi, sub_mul);
+  acc = ::mac_elem_32_conf(a, 0, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v32uint16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+                 v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_conf(a, sgn_x, b0, b1, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_elem_32_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v32uint16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+                 v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_conf(a, sgn_x, b0, b1, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_elem_32_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v32acc64) mul_elem_32(v32int16 a, v16uint32 b0, v16uint32 b1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32(a, hi);
+  acc = mac_elem_32_conf(a, 1, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_elem_32(v32int16 a, v16uint32 b0, v16uint32 b1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32(a, hi);
+  acc = msc_elem_32_conf(a, 1, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32(v32int16 a, v16uint32 b0, v16uint32 b1, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32(a, hi);
+  acc = addmac_elem_32_conf(a, 1, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32(v32int16 a, v16uint32 b0, v16uint32 b1, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32(a, hi);
+  acc = addmsc_elem_32_conf(a, 1, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32(v32int16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32(a, sgn_x, hi, sgn_y);
+  acc = mac_elem_32_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32(v32int16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32(a, sgn_x, hi, sgn_y);
+  acc = msc_elem_32_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32(v32int16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y,
+            v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32(a, sgn_x, hi, sgn_y);
+  acc = addmac_elem_32_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32(v32int16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y,
+            v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32(a, sgn_x, hi, sgn_y);
+  acc = addmsc_elem_32_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_conf(v32int16 a, v16uint32 b0, v16uint32 b1, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a, hi, sub_mul);
+  acc = mac_elem_32_conf(a, 1, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_conf(v32int16 a, v16uint32 b0, v16uint32 b1, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a, hi, sub_mul);
+  acc = msc_elem_32_conf(a, 1, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v32int16 a, v16uint32 b0, v16uint32 b1, v32acc64 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a, hi, sub_mul);
+  acc = addmac_elem_32_conf(a, 1, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v32int16 a, v16uint32 b0, v16uint32 b1, v32acc64 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a, hi, sub_mul);
+  acc = addmsc_elem_32_conf(a, 1, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_conf(v32int16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y,
+                 int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = mac_elem_32_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_conf(v32int16 a, int sgn_x, v16uint32 b0, v16uint32 b1,
+                    int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = msc_elem_32_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v32int16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y,
+                 v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmac_elem_32_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v32int16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y,
+                 v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmsc_elem_32_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v32int16 a, v16uint32 b0, v16uint32 b1, v32acc64 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_conf(a, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a, hi, sub_mul);
+  acc = ::mac_elem_32_conf(a, 1, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v32int16 a, v16uint32 b0, v16uint32 b1, v32acc64 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_conf(a, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a, hi, sub_mul);
+  acc = ::mac_elem_32_conf(a, 1, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v32int16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y,
+                 v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_conf(a, sgn_x, b0, b1, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_elem_32_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v32int16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y,
+                 v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_conf(a, sgn_x, b0, b1, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_elem_32_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v32acc64) mul_elem_32(v32int16 a, v16int32 b0, v16int32 b1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32(a, hi);
+  acc = mac_elem_32_conf(a, 1, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_elem_32(v32int16 a, v16int32 b0, v16int32 b1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32(a, hi);
+  acc = msc_elem_32_conf(a, 1, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32(v32int16 a, v16int32 b0, v16int32 b1, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32(a, hi);
+  acc = addmac_elem_32_conf(a, 1, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32(v32int16 a, v16int32 b0, v16int32 b1, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32(a, hi);
+  acc = addmsc_elem_32_conf(a, 1, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32(v32int16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32(a, sgn_x, hi, sgn_y);
+  acc = mac_elem_32_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32(v32int16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32(a, sgn_x, hi, sgn_y);
+  acc = msc_elem_32_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32(v32int16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+            v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32(a, sgn_x, hi, sgn_y);
+  acc = addmac_elem_32_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32(v32int16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+            v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32(a, sgn_x, hi, sgn_y);
+  acc = addmsc_elem_32_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_conf(v32int16 a, v16int32 b0, v16int32 b1, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a, hi, sub_mul);
+  acc = mac_elem_32_conf(a, 1, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_conf(v32int16 a, v16int32 b0, v16int32 b1, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a, hi, sub_mul);
+  acc = msc_elem_32_conf(a, 1, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v32int16 a, v16int32 b0, v16int32 b1, v32acc64 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a, hi, sub_mul);
+  acc = addmac_elem_32_conf(a, 1, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v32int16 a, v16int32 b0, v16int32 b1, v32acc64 acc1,
+                 int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a, hi, sub_mul);
+  acc = addmsc_elem_32_conf(a, 1, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_conf(v32int16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+                 int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = mac_elem_32_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_conf(v32int16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+                    int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = msc_elem_32_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v32int16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+                 v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmac_elem_32_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v32int16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+                 v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmsc_elem_32_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                            sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v32int16 a, v16int32 b0, v16int32 b1, v32acc64 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_conf(a, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a, hi, sub_mul);
+  acc = ::mac_elem_32_conf(a, 1, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v32int16 a, v16int32 b0, v16int32 b1, v32acc64 acc1,
+                 int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_conf(a, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a, hi, sub_mul);
+  acc = ::mac_elem_32_conf(a, 1, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_conf(v32int16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+                 v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_conf(a, sgn_x, b0, b1, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_elem_32_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_conf(v32int16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+                 v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_conf(a, sgn_x, b0, b1, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_elem_32_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+
+INTRINSIC(v32acc64) mul_elem_32_2(v32uint16 a, v16uint32 b0, v16uint32 b1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2(a, hi);
+  acc = mac_elem_32_2_conf(a, 0, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_elem_32_2(v32uint16 a, v16uint32 b0, v16uint32 b1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(a, hi);
+  acc = msc_elem_32_2_conf(a, 0, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2(v32uint16 a, v16uint32 b0, v16uint32 b1, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2(a, hi);
+  acc = addmac_elem_32_2_conf(a, 0, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2(v32uint16 a, v16uint32 b0, v16uint32 b1, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(a, hi);
+  acc = addmsc_elem_32_2_conf(a, 0, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_2(v32uint16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2(a, sgn_x, hi, sgn_y);
+  acc = mac_elem_32_2_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2(v32uint16 a, int sgn_x, v16uint32 b0, v16uint32 b1,
+                 int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(a, sgn_x, hi, sgn_y);
+  acc = msc_elem_32_2_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2(v32uint16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y,
+              v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2(a, sgn_x, hi, sgn_y);
+  acc = addmac_elem_32_2_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2(v32uint16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y,
+              v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(a, sgn_x, hi, sgn_y);
+  acc = addmsc_elem_32_2_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_2_conf(v32uint16 a, v16uint32 b0, v16uint32 b1, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a, hi, sub_mul);
+  acc = mac_elem_32_2_conf(a, 0, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2_conf(v32uint16 a, v16uint32 b0, v16uint32 b1, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a, hi, sub_mul);
+  acc = msc_elem_32_2_conf(a, 0, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v32uint16 a, v16uint32 b0, v16uint32 b1, v32acc64 acc1,
+                   int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a, hi, sub_mul);
+  acc = addmac_elem_32_2_conf(a, 0, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v32uint16 a, v16uint32 b0, v16uint32 b1, v32acc64 acc1,
+                   int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a, hi, sub_mul);
+  acc = addmsc_elem_32_2_conf(a, 0, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_2_conf(v32uint16 a, int sgn_x, v16uint32 b0, v16uint32 b1,
+                   int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = mac_elem_32_2_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2_conf(v32uint16 a, int sgn_x, v16uint32 b0, v16uint32 b1,
+                      int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = msc_elem_32_2_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v32uint16 a, int sgn_x, v16uint32 b0, v16uint32 b1,
+                   int sgn_y, v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmac_elem_32_2_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v32uint16 a, int sgn_x, v16uint32 b0, v16uint32 b1,
+                   int sgn_y, v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmsc_elem_32_2_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v32uint16 a, v16uint32 b0, v16uint32 b1, v32acc64 acc1,
+                   int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_2_conf(a, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a, hi, sub_mul);
+  acc = ::mac_elem_32_2_conf(a, 0, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v32uint16 a, v16uint32 b0, v16uint32 b1, v32acc64 acc1,
+                   int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_2_conf(a, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a, hi, sub_mul);
+  acc = ::mac_elem_32_2_conf(a, 0, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v32uint16 a, int sgn_x, v16uint32 b0, v16uint32 b1,
+                   int sgn_y, v32acc64 acc1, int zero_acc1, int sub_mul,
+                   int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_2_conf(a, sgn_x, b0, b1, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_elem_32_2_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v32uint16 a, int sgn_x, v16uint32 b0, v16uint32 b1,
+                   int sgn_y, v32acc64 acc1, int zero_acc1, int sub_mul,
+                   int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_2_conf(a, sgn_x, b0, b1, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_elem_32_2_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v32acc64) mul_elem_32_2(v32uint16 a, v16int32 b0, v16int32 b1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2(a, hi);
+  acc = mac_elem_32_2_conf(a, 0, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_elem_32_2(v32uint16 a, v16int32 b0, v16int32 b1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(a, hi);
+  acc = msc_elem_32_2_conf(a, 0, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2(v32uint16 a, v16int32 b0, v16int32 b1, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2(a, hi);
+  acc = addmac_elem_32_2_conf(a, 0, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2(v32uint16 a, v16int32 b0, v16int32 b1, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(a, hi);
+  acc = addmsc_elem_32_2_conf(a, 0, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_2(v32uint16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2(a, sgn_x, hi, sgn_y);
+  acc = mac_elem_32_2_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2(v32uint16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(a, sgn_x, hi, sgn_y);
+  acc = msc_elem_32_2_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2(v32uint16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+              v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2(a, sgn_x, hi, sgn_y);
+  acc = addmac_elem_32_2_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2(v32uint16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+              v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(a, sgn_x, hi, sgn_y);
+  acc = addmsc_elem_32_2_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_2_conf(v32uint16 a, v16int32 b0, v16int32 b1, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a, hi, sub_mul);
+  acc = mac_elem_32_2_conf(a, 0, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2_conf(v32uint16 a, v16int32 b0, v16int32 b1, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a, hi, sub_mul);
+  acc = msc_elem_32_2_conf(a, 0, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v32uint16 a, v16int32 b0, v16int32 b1, v32acc64 acc1,
+                   int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a, hi, sub_mul);
+  acc = addmac_elem_32_2_conf(a, 0, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v32uint16 a, v16int32 b0, v16int32 b1, v32acc64 acc1,
+                   int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a, hi, sub_mul);
+  acc = addmsc_elem_32_2_conf(a, 0, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_2_conf(v32uint16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+                   int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = mac_elem_32_2_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2_conf(v32uint16 a, int sgn_x, v16int32 b0, v16int32 b1,
+                      int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = msc_elem_32_2_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v32uint16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+                   v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmac_elem_32_2_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v32uint16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+                   v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmsc_elem_32_2_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v32uint16 a, v16int32 b0, v16int32 b1, v32acc64 acc1,
+                   int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_2_conf(a, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a, hi, sub_mul);
+  acc = ::mac_elem_32_2_conf(a, 0, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v32uint16 a, v16int32 b0, v16int32 b1, v32acc64 acc1,
+                   int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_2_conf(a, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a, hi, sub_mul);
+  acc = ::mac_elem_32_2_conf(a, 0, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v32uint16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+                   v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_2_conf(a, sgn_x, b0, b1, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_elem_32_2_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v32uint16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+                   v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_2_conf(a, sgn_x, b0, b1, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_elem_32_2_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v32acc64) mul_elem_32_2(v32int16 a, v16uint32 b0, v16uint32 b1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2(a, hi);
+  acc = mac_elem_32_2_conf(a, 1, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_elem_32_2(v32int16 a, v16uint32 b0, v16uint32 b1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(a, hi);
+  acc = msc_elem_32_2_conf(a, 1, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2(v32int16 a, v16uint32 b0, v16uint32 b1, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2(a, hi);
+  acc = addmac_elem_32_2_conf(a, 1, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2(v32int16 a, v16uint32 b0, v16uint32 b1, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(a, hi);
+  acc = addmsc_elem_32_2_conf(a, 1, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_2(v32int16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2(a, sgn_x, hi, sgn_y);
+  acc = mac_elem_32_2_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2(v32int16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(a, sgn_x, hi, sgn_y);
+  acc = msc_elem_32_2_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2(v32int16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y,
+              v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2(a, sgn_x, hi, sgn_y);
+  acc = addmac_elem_32_2_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2(v32int16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y,
+              v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(a, sgn_x, hi, sgn_y);
+  acc = addmsc_elem_32_2_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_2_conf(v32int16 a, v16uint32 b0, v16uint32 b1, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a, hi, sub_mul);
+  acc = mac_elem_32_2_conf(a, 1, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2_conf(v32int16 a, v16uint32 b0, v16uint32 b1, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a, hi, sub_mul);
+  acc = msc_elem_32_2_conf(a, 1, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v32int16 a, v16uint32 b0, v16uint32 b1, v32acc64 acc1,
+                   int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a, hi, sub_mul);
+  acc = addmac_elem_32_2_conf(a, 1, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v32int16 a, v16uint32 b0, v16uint32 b1, v32acc64 acc1,
+                   int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a, hi, sub_mul);
+  acc = addmsc_elem_32_2_conf(a, 1, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_2_conf(v32int16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y,
+                   int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = mac_elem_32_2_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2_conf(v32int16 a, int sgn_x, v16uint32 b0, v16uint32 b1,
+                      int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = msc_elem_32_2_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v32int16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y,
+                   v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmac_elem_32_2_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v32int16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y,
+                   v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmsc_elem_32_2_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v32int16 a, v16uint32 b0, v16uint32 b1, v32acc64 acc1,
+                   int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_2_conf(a, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a, hi, sub_mul);
+  acc = ::mac_elem_32_2_conf(a, 1, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v32int16 a, v16uint32 b0, v16uint32 b1, v32acc64 acc1,
+                   int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_2_conf(a, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a, hi, sub_mul);
+  acc = ::mac_elem_32_2_conf(a, 1, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v32int16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y,
+                   v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_2_conf(a, sgn_x, b0, b1, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_elem_32_2_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v32int16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y,
+                   v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_2_conf(a, sgn_x, b0, b1, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_elem_32_2_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v32acc64) mul_elem_32_2(v32int16 a, v16int32 b0, v16int32 b1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2(a, hi);
+  acc = mac_elem_32_2_conf(a, 1, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64) negmul_elem_32_2(v32int16 a, v16int32 b0, v16int32 b1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(a, hi);
+  acc = msc_elem_32_2_conf(a, 1, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2(v32int16 a, v16int32 b0, v16int32 b1, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2(a, hi);
+  acc = addmac_elem_32_2_conf(a, 1, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2(v32int16 a, v16int32 b0, v16int32 b1, v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(a, hi);
+  acc = addmsc_elem_32_2_conf(a, 1, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_2(v32int16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2(a, sgn_x, hi, sgn_y);
+  acc = mac_elem_32_2_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2(v32int16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(a, sgn_x, hi, sgn_y);
+  acc = msc_elem_32_2_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2(v32int16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+              v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2(a, sgn_x, hi, sgn_y);
+  acc = addmac_elem_32_2_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2(v32int16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+              v32acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2(a, sgn_x, hi, sgn_y);
+  acc = addmsc_elem_32_2_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_2_conf(v32int16 a, v16int32 b0, v16int32 b1, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a, hi, sub_mul);
+  acc = mac_elem_32_2_conf(a, 1, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2_conf(v32int16 a, v16int32 b0, v16int32 b1, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a, hi, sub_mul);
+  acc = msc_elem_32_2_conf(a, 1, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v32int16 a, v16int32 b0, v16int32 b1, v32acc64 acc1,
+                   int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a, hi, sub_mul);
+  acc = addmac_elem_32_2_conf(a, 1, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v32int16 a, v16int32 b0, v16int32 b1, v32acc64 acc1,
+                   int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a, hi, sub_mul);
+  acc = addmsc_elem_32_2_conf(a, 1, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mul_elem_32_2_conf(v32int16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+                   int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = mac_elem_32_2_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+negmul_elem_32_2_conf(v32int16 a, int sgn_x, v16int32 b0, v16int32 b1,
+                      int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = msc_elem_32_2_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v32int16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+                   v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmac_elem_32_2_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v32int16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+                   v32acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmsc_elem_32_2_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v32int16 a, v16int32 b0, v16int32 b1, v32acc64 acc1,
+                   int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_2_conf(a, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a, hi, sub_mul);
+  acc = ::mac_elem_32_2_conf(a, 1, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v32int16 a, v16int32 b0, v16int32 b1, v32acc64 acc1,
+                   int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_2_conf(a, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a, hi, sub_mul);
+  acc = ::mac_elem_32_2_conf(a, 1, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+mac_elem_32_2_conf(v32int16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+                   v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_32_2_conf(a, sgn_x, b0, b1, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::mul_elem_32_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_elem_32_2_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v32acc64)
+msc_elem_32_2_conf(v32int16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+                   v32acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_32_2_conf(a, sgn_x, b0, b1, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v32acc64 acc = ::negmul_elem_32_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_elem_32_2_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+
+INTRINSIC(v16acc64) mul_elem_16_2(v32uint16 a, v16uint32 b0, v16uint32 b1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2(a, hi);
+  acc = mac_elem_16_2_conf(a, 0, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64) negmul_elem_16_2(v32uint16 a, v16uint32 b0, v16uint32 b1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(a, hi);
+  acc = msc_elem_16_2_conf(a, 0, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2(v32uint16 a, v16uint32 b0, v16uint32 b1, v16acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2(a, hi);
+  acc = addmac_elem_16_2_conf(a, 0, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2(v32uint16 a, v16uint32 b0, v16uint32 b1, v16acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(a, hi);
+  acc = addmsc_elem_16_2_conf(a, 0, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mul_elem_16_2(v32uint16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2(a, sgn_x, hi, sgn_y);
+  acc = mac_elem_16_2_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2(v32uint16 a, int sgn_x, v16uint32 b0, v16uint32 b1,
+                 int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(a, sgn_x, hi, sgn_y);
+  acc = msc_elem_16_2_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2(v32uint16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y,
+              v16acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2(a, sgn_x, hi, sgn_y);
+  acc = addmac_elem_16_2_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2(v32uint16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y,
+              v16acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(a, sgn_x, hi, sgn_y);
+  acc = addmsc_elem_16_2_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mul_elem_16_2_conf(v32uint16 a, v16uint32 b0, v16uint32 b1, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a, hi, sub_mul);
+  acc = mac_elem_16_2_conf(a, 0, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2_conf(v32uint16 a, v16uint32 b0, v16uint32 b1, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a, hi, sub_mul);
+  acc = msc_elem_16_2_conf(a, 0, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v32uint16 a, v16uint32 b0, v16uint32 b1, v16acc64 acc1,
+                   int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a, hi, sub_mul);
+  acc = addmac_elem_16_2_conf(a, 0, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v32uint16 a, v16uint32 b0, v16uint32 b1, v16acc64 acc1,
+                   int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a, hi, sub_mul);
+  acc = addmsc_elem_16_2_conf(a, 0, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mul_elem_16_2_conf(v32uint16 a, int sgn_x, v16uint32 b0, v16uint32 b1,
+                   int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = mac_elem_16_2_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2_conf(v32uint16 a, int sgn_x, v16uint32 b0, v16uint32 b1,
+                      int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = msc_elem_16_2_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v32uint16 a, int sgn_x, v16uint32 b0, v16uint32 b1,
+                   int sgn_y, v16acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmac_elem_16_2_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v32uint16 a, int sgn_x, v16uint32 b0, v16uint32 b1,
+                   int sgn_y, v16acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmsc_elem_16_2_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v32uint16 a, v16uint32 b0, v16uint32 b1, v16acc64 acc1,
+                   int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_16_2_conf(a, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a, hi, sub_mul);
+  acc = ::mac_elem_16_2_conf(a, 0, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v32uint16 a, v16uint32 b0, v16uint32 b1, v16acc64 acc1,
+                   int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_16_2_conf(a, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a, hi, sub_mul);
+  acc = ::mac_elem_16_2_conf(a, 0, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v32uint16 a, int sgn_x, v16uint32 b0, v16uint32 b1,
+                   int sgn_y, v16acc64 acc1, int zero_acc1, int sub_mul,
+                   int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_16_2_conf(a, sgn_x, b0, b1, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_elem_16_2_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v32uint16 a, int sgn_x, v16uint32 b0, v16uint32 b1,
+                   int sgn_y, v16acc64 acc1, int zero_acc1, int sub_mul,
+                   int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_16_2_conf(a, sgn_x, b0, b1, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_elem_16_2_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v16acc64) mul_elem_16_2(v32uint16 a, v16int32 b0, v16int32 b1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2(a, hi);
+  acc = mac_elem_16_2_conf(a, 0, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64) negmul_elem_16_2(v32uint16 a, v16int32 b0, v16int32 b1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(a, hi);
+  acc = msc_elem_16_2_conf(a, 0, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2(v32uint16 a, v16int32 b0, v16int32 b1, v16acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2(a, hi);
+  acc = addmac_elem_16_2_conf(a, 0, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2(v32uint16 a, v16int32 b0, v16int32 b1, v16acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(a, hi);
+  acc = addmsc_elem_16_2_conf(a, 0, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mul_elem_16_2(v32uint16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2(a, sgn_x, hi, sgn_y);
+  acc = mac_elem_16_2_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2(v32uint16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(a, sgn_x, hi, sgn_y);
+  acc = msc_elem_16_2_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2(v32uint16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+              v16acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2(a, sgn_x, hi, sgn_y);
+  acc = addmac_elem_16_2_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2(v32uint16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+              v16acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(a, sgn_x, hi, sgn_y);
+  acc = addmsc_elem_16_2_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mul_elem_16_2_conf(v32uint16 a, v16int32 b0, v16int32 b1, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a, hi, sub_mul);
+  acc = mac_elem_16_2_conf(a, 0, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2_conf(v32uint16 a, v16int32 b0, v16int32 b1, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a, hi, sub_mul);
+  acc = msc_elem_16_2_conf(a, 0, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v32uint16 a, v16int32 b0, v16int32 b1, v16acc64 acc1,
+                   int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a, hi, sub_mul);
+  acc = addmac_elem_16_2_conf(a, 0, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v32uint16 a, v16int32 b0, v16int32 b1, v16acc64 acc1,
+                   int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a, hi, sub_mul);
+  acc = addmsc_elem_16_2_conf(a, 0, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mul_elem_16_2_conf(v32uint16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+                   int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = mac_elem_16_2_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2_conf(v32uint16 a, int sgn_x, v16int32 b0, v16int32 b1,
+                      int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = msc_elem_16_2_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v32uint16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+                   v16acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmac_elem_16_2_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v32uint16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+                   v16acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmsc_elem_16_2_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v32uint16 a, v16int32 b0, v16int32 b1, v16acc64 acc1,
+                   int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_16_2_conf(a, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a, hi, sub_mul);
+  acc = ::mac_elem_16_2_conf(a, 0, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v32uint16 a, v16int32 b0, v16int32 b1, v16acc64 acc1,
+                   int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_16_2_conf(a, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a, hi, sub_mul);
+  acc = ::mac_elem_16_2_conf(a, 0, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v32uint16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+                   v16acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_16_2_conf(a, sgn_x, b0, b1, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_elem_16_2_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v32uint16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+                   v16acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_16_2_conf(a, sgn_x, b0, b1, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_elem_16_2_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v16acc64) mul_elem_16_2(v32int16 a, v16uint32 b0, v16uint32 b1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2(a, hi);
+  acc = mac_elem_16_2_conf(a, 1, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64) negmul_elem_16_2(v32int16 a, v16uint32 b0, v16uint32 b1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(a, hi);
+  acc = msc_elem_16_2_conf(a, 1, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2(v32int16 a, v16uint32 b0, v16uint32 b1, v16acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2(a, hi);
+  acc = addmac_elem_16_2_conf(a, 1, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2(v32int16 a, v16uint32 b0, v16uint32 b1, v16acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(a, hi);
+  acc = addmsc_elem_16_2_conf(a, 1, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mul_elem_16_2(v32int16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2(a, sgn_x, hi, sgn_y);
+  acc = mac_elem_16_2_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2(v32int16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(a, sgn_x, hi, sgn_y);
+  acc = msc_elem_16_2_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2(v32int16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y,
+              v16acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2(a, sgn_x, hi, sgn_y);
+  acc = addmac_elem_16_2_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2(v32int16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y,
+              v16acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(a, sgn_x, hi, sgn_y);
+  acc = addmsc_elem_16_2_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mul_elem_16_2_conf(v32int16 a, v16uint32 b0, v16uint32 b1, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a, hi, sub_mul);
+  acc = mac_elem_16_2_conf(a, 1, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2_conf(v32int16 a, v16uint32 b0, v16uint32 b1, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a, hi, sub_mul);
+  acc = msc_elem_16_2_conf(a, 1, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v32int16 a, v16uint32 b0, v16uint32 b1, v16acc64 acc1,
+                   int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a, hi, sub_mul);
+  acc = addmac_elem_16_2_conf(a, 1, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v32int16 a, v16uint32 b0, v16uint32 b1, v16acc64 acc1,
+                   int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a, hi, sub_mul);
+  acc = addmsc_elem_16_2_conf(a, 1, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mul_elem_16_2_conf(v32int16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y,
+                   int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = mac_elem_16_2_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2_conf(v32int16 a, int sgn_x, v16uint32 b0, v16uint32 b1,
+                      int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = msc_elem_16_2_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v32int16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y,
+                   v16acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmac_elem_16_2_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v32int16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y,
+                   v16acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmsc_elem_16_2_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v32int16 a, v16uint32 b0, v16uint32 b1, v16acc64 acc1,
+                   int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_16_2_conf(a, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a, hi, sub_mul);
+  acc = ::mac_elem_16_2_conf(a, 1, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v32int16 a, v16uint32 b0, v16uint32 b1, v16acc64 acc1,
+                   int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_16_2_conf(a, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a, hi, sub_mul);
+  acc = ::mac_elem_16_2_conf(a, 1, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v32int16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y,
+                   v16acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_16_2_conf(a, sgn_x, b0, b1, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_elem_16_2_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v32int16 a, int sgn_x, v16uint32 b0, v16uint32 b1, int sgn_y,
+                   v16acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_16_2_conf(a, sgn_x, b0, b1, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32uint16 hi = (v32uint16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_elem_16_2_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+INTRINSIC(v16acc64) mul_elem_16_2(v32int16 a, v16int32 b0, v16int32 b1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2(a, hi);
+  acc = mac_elem_16_2_conf(a, 1, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64) negmul_elem_16_2(v32int16 a, v16int32 b0, v16int32 b1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(a, hi);
+  acc = msc_elem_16_2_conf(a, 1, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2(v32int16 a, v16int32 b0, v16int32 b1, v16acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2(a, hi);
+  acc = addmac_elem_16_2_conf(a, 1, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2(v32int16 a, v16int32 b0, v16int32 b1, v16acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(a, hi);
+  acc = addmsc_elem_16_2_conf(a, 1, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mul_elem_16_2(v32int16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2(a, sgn_x, hi, sgn_y);
+  acc = mac_elem_16_2_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2(v32int16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(a, sgn_x, hi, sgn_y);
+  acc = msc_elem_16_2_conf(a, sgn_x, lo, false, acc, 0, 1, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2(v32int16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+              v16acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2(a, sgn_x, hi, sgn_y);
+  acc = addmac_elem_16_2_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2(v32int16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+              v16acc64 acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2(a, sgn_x, hi, sgn_y);
+  acc = addmsc_elem_16_2_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, 0, 0, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mul_elem_16_2_conf(v32int16 a, v16int32 b0, v16int32 b1, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a, hi, sub_mul);
+  acc = mac_elem_16_2_conf(a, 1, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2_conf(v32int16 a, v16int32 b0, v16int32 b1, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a, hi, sub_mul);
+  acc = msc_elem_16_2_conf(a, 1, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v32int16 a, v16int32 b0, v16int32 b1, v16acc64 acc1,
+                   int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a, hi, sub_mul);
+  acc = addmac_elem_16_2_conf(a, 1, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v32int16 a, v16int32 b0, v16int32 b1, v16acc64 acc1,
+                   int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a, hi, sub_mul);
+  acc = addmsc_elem_16_2_conf(a, 1, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mul_elem_16_2_conf(v32int16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+                   int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = mac_elem_16_2_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+negmul_elem_16_2_conf(v32int16 a, int sgn_x, v16int32 b0, v16int32 b1,
+                      int sgn_y, int sub_mul) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = msc_elem_16_2_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v32int16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+                   v16acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmac_elem_16_2_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v32int16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+                   v16acc64 acc1, int sub_mul, int sub_acc1) {
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = addmsc_elem_16_2_conf(a, sgn_x, lo, false, acc, acc1, 0, 1, sub_mul, 0,
+                              sub_acc1);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v32int16 a, v16int32 b0, v16int32 b1, v16acc64 acc1,
+                   int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_16_2_conf(a, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a, hi, sub_mul);
+  acc = ::mac_elem_16_2_conf(a, 1, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v32int16 a, v16int32 b0, v16int32 b1, v16acc64 acc1,
+                   int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_16_2_conf(a, b0, b1, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a, hi, sub_mul);
+  acc = ::mac_elem_16_2_conf(a, 1, lo, false, acc, 0, 0x01, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+mac_elem_16_2_conf(v32int16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+                   v16acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return mac_elem_16_2_conf(a, sgn_x, b0, b1, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::mul_elem_16_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_elem_16_2_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::add_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+}
+INTRINSIC(v16acc64)
+msc_elem_16_2_conf(v32int16 a, int sgn_x, v16int32 b0, v16int32 b1, int sgn_y,
+                   v16acc64 acc1, int zero_acc1, int sub_mul, int sub_acc1) {
+  if (__builtin_constant_p(zero_acc1) && (zero_acc1 == 0)) {
+    return msc_elem_16_2_conf(a, sgn_x, b0, b1, sgn_y, acc1, sub_mul, sub_acc1);
+  }
+  v32uint16 lo = (v32uint16)shuffle(b0, b1, 2);
+  v32int16 hi = (v32int16)shuffle(b0, b1, 3);
+  v16acc64 acc = ::negmul_elem_16_2_conf(a, sgn_x, hi, sgn_y, sub_mul);
+  acc = ::mac_elem_16_2_conf(a, sgn_x, lo, false, acc, 0, 1, sub_mul, 0);
+  acc = ::sub_conf(acc1, acc, zero_acc1, 0, sub_acc1, 0);
+  return acc;
+};
+
+namespace aie2p_detail {
+
+INTRINSIC(v16accfloat)
+mul_elem_16_accuracy_low_inner(v16float v1, v16float v2, int sub_mul) {
+  v32bfloat16 a = broadcast_zero_to_v32bfloat16();
+
+  v32bfloat16 b = broadcast_zero_to_v32bfloat16();
+
+  v32bfloat16 c = broadcast_zero_to_v32bfloat16();
+
+  v32bfloat16 d = broadcast_zero_to_v32bfloat16();
+
+  v32bfloat16 dummy0 = broadcast_one_to_v32bfloat16();
+
+  a = insert(a, 0, to_v16bfloat16((v16accfloat)v1));
+
+  b = insert(b, 0, to_v16bfloat16(msc_elem_16(a, dummy0, (v16accfloat)v1)));
+
+  c = insert(c, 0, to_v16bfloat16((v16accfloat)v2));
+
+  d = insert(d, 0, to_v16bfloat16(msc_elem_16(c, dummy0, (v16accfloat)v2)));
+
+  return mac_elem_16_conf(
+      a, c,
+      mac_elem_16_conf(a, d, mul_elem_16_conf(b, c, sub_mul), 0, sub_mul, 0), 0,
+      sub_mul, 0);
+}
+INTRINSIC(v16accfloat)
+mul_elem_16_accuracy_fast_inner(v16float v1, v16float v2, int sub_mul) {
+  v32bfloat16 a = broadcast_zero_to_v32bfloat16();
+
+  v32bfloat16 b = broadcast_zero_to_v32bfloat16();
+
+  v32bfloat16 c = broadcast_zero_to_v32bfloat16();
+
+  v32bfloat16 d = broadcast_zero_to_v32bfloat16();
+
+  v32bfloat16 e = broadcast_zero_to_v32bfloat16();
+
+  v32bfloat16 f = broadcast_zero_to_v32bfloat16();
+
+  v32bfloat16 dummy0 = broadcast_one_to_v32bfloat16();
+
+  a = insert(a, 0, to_v16bfloat16((v16accfloat)v1));
+
+  v16accfloat acc0 = msc_elem_16(a, dummy0, (v16accfloat)v1);
+
+  b = insert(b, 0, to_v16bfloat16(acc0));
+
+  c = insert(c, 0, to_v16bfloat16(msc_elem_16(b, dummy0, acc0)));
+
+  d = insert(d, 0, to_v16bfloat16((v16accfloat)v2));
+
+  v16accfloat acc1 = msc_elem_16(d, dummy0, (v16accfloat)v2);
+
+  e = insert(e, 0, to_v16bfloat16(acc1));
+
+  f = insert(f, 0, to_v16bfloat16(msc_elem_16(e, dummy0, acc1)));
+
+  return mac_elem_16_conf(
+      a, d,
+      mac_elem_16_conf(
+          a, e,
+          mac_elem_16_conf(
+              b, d,
+              mac_elem_16_conf(d, c,
+                               mac_elem_16_conf(b, e,
+                                                mul_elem_16_conf(a, f, sub_mul),
+                                                0, sub_mul, 0),
+                               0, sub_mul, 0),
+              0, sub_mul, 0),
+          0, sub_mul, 0),
+      0, sub_mul, 0);
+}
+INTRINSIC(v16accfloat)
+mul_elem_16_accuracy_safe_inner(v16float v1, v16float v2, int sub_mul) {
+  v32bfloat16 a = broadcast_zero_to_v32bfloat16();
+
+  v32bfloat16 b = broadcast_zero_to_v32bfloat16();
+
+  v32bfloat16 c = broadcast_zero_to_v32bfloat16();
+
+  v32bfloat16 d = broadcast_zero_to_v32bfloat16();
+
+  v32bfloat16 e = broadcast_zero_to_v32bfloat16();
+
+  v32bfloat16 f = broadcast_zero_to_v32bfloat16();
+
+  v32bfloat16 dummy0 = broadcast_one_to_v32bfloat16();
+
+  a = insert(a, 0, to_v16bfloat16((v16accfloat)v1));
+
+  v16accfloat acc0 = msc_elem_16(a, dummy0, (v16accfloat)v1);
+
+  b = insert(b, 0, to_v16bfloat16(acc0));
+
+  c = insert(c, 0, to_v16bfloat16(msc_elem_16(b, dummy0, acc0)));
+
+  d = insert(d, 0, to_v16bfloat16((v16accfloat)v2));
+
+  v16accfloat acc1 = msc_elem_16(d, dummy0, (v16accfloat)v2);
+
+  e = insert(e, 0, to_v16bfloat16(acc1));
+
+  f = insert(f, 0, to_v16bfloat16(msc_elem_16(e, dummy0, acc1)));
+
+  v16accfloat tmp = mul_elem_16_conf(c, f, sub_mul);
+
+  tmp = add(tmp, mul_elem_16_conf(c, e, sub_mul));
+
+  tmp = add(tmp, mul_elem_16_conf(b, f, sub_mul));
+
+  tmp = add(tmp, mul_elem_16_conf(a, f, sub_mul));
+
+  tmp = add(tmp, mul_elem_16_conf(b, e, sub_mul));
+
+  tmp = add(tmp, mul_elem_16_conf(d, c, sub_mul));
+
+  tmp = add(tmp, mul_elem_16_conf(b, d, sub_mul));
+
+  tmp = add(tmp, mul_elem_16_conf(a, e, sub_mul));
+
+  tmp = add(tmp, mul_elem_16_conf(a, d, sub_mul));
+
+  return tmp;
+}
+
+INTRINSIC(v32accfloat)
+mul_elem_32_accuracy_low_inner(v32float v1, v32float v2, int sub_mul) {
+  v32bfloat16 dummy0 = broadcast_one_to_v32bfloat16();
+
+  v32bfloat16 a = to_v32bfloat16((v32accfloat)v1);
+
+  v32bfloat16 b = to_v32bfloat16(msc_elem_32(a, dummy0, (v32accfloat)v1));
+
+  v32bfloat16 c = to_v32bfloat16((v32accfloat)v2);
+
+  v32bfloat16 d = to_v32bfloat16(msc_elem_32(c, dummy0, (v32accfloat)v2));
+
+  return mac_elem_32_conf(
+      a, c,
+      mac_elem_32_conf(a, d, mul_elem_32_conf(b, c, sub_mul), 0, sub_mul, 0), 0,
+      sub_mul, 0);
+}
+INTRINSIC(v32accfloat)
+mul_elem_32_accuracy_fast_inner(v32float v1, v32float v2, int sub_mul) {
+
+  v32bfloat16 dummy0 = broadcast_one_to_v32bfloat16();
+
+  v32bfloat16 a = to_v32bfloat16((v32accfloat)v1);
+
+  v32accfloat acc0 = msc_elem_32(a, dummy0, (v32accfloat)v1);
+
+  v32bfloat16 b = to_v32bfloat16(acc0);
+
+  v32bfloat16 c = to_v32bfloat16(msc_elem_32(b, dummy0, acc0));
+
+  v32bfloat16 d = to_v32bfloat16((v32accfloat)v2);
+
+  v32accfloat acc1 = msc_elem_32(d, dummy0, (v32accfloat)v2);
+
+  v32bfloat16 e = to_v32bfloat16(acc1);
+
+  v32bfloat16 f = to_v32bfloat16(msc_elem_32(e, dummy0, acc1));
+
+  return mac_elem_32_conf(
+      a, d,
+      mac_elem_32_conf(
+          a, e,
+          mac_elem_32_conf(
+              b, d,
+              mac_elem_32_conf(d, c,
+                               mac_elem_32_conf(b, e,
+                                                mul_elem_32_conf(a, f, sub_mul),
+                                                0, sub_mul, 0),
+                               0, sub_mul, 0),
+              0, sub_mul, 0),
+          0, sub_mul, 0),
+      0, sub_mul, 0);
+}
+INTRINSIC(v32accfloat)
+mul_elem_32_accuracy_safe_inner(v32float v1, v32float v2, int sub_mul) {
+  v32bfloat16 dummy0 = broadcast_one_to_v32bfloat16();
+
+  v32bfloat16 a = to_v32bfloat16((v32accfloat)v1);
+
+  v32accfloat acc0 = msc_elem_32(a, dummy0, (v32accfloat)v1);
+
+  v32bfloat16 b = to_v32bfloat16(acc0);
+
+  v32bfloat16 c = to_v32bfloat16(msc_elem_32(b, dummy0, acc0));
+
+  v32bfloat16 d = to_v32bfloat16((v32accfloat)v2);
+
+  v32accfloat acc1 = msc_elem_32(d, dummy0, (v32accfloat)v2);
+
+  v32bfloat16 e = to_v32bfloat16(acc1);
+
+  v32bfloat16 f = to_v32bfloat16(msc_elem_32(e, dummy0, acc1));
+
+  v32accfloat tmp = mul_elem_32_conf(c, f, sub_mul);
+
+  tmp = add(tmp, mul_elem_32_conf(c, e, sub_mul));
+
+  tmp = add(tmp, mul_elem_32_conf(b, f, sub_mul));
+
+  tmp = add(tmp, mul_elem_32_conf(a, f, sub_mul));
+
+  tmp = add(tmp, mul_elem_32_conf(b, e, sub_mul));
+
+  tmp = add(tmp, mul_elem_32_conf(d, c, sub_mul));
+
+  tmp = add(tmp, mul_elem_32_conf(b, d, sub_mul));
+
+  tmp = add(tmp, mul_elem_32_conf(a, e, sub_mul));
+
+  tmp = add(tmp, mul_elem_32_conf(a, d, sub_mul));
+
+  return tmp;
+}
+
+INTRINSIC(v64accfloat)
+mul_elem_64_accuracy_low_inner(v64float v1, v64float v2, int sub_mul) {
+  v64bfloat16 a = undef_v64bfloat16();
+
+  v64bfloat16 b = undef_v64bfloat16();
+
+  v64bfloat16 c = undef_v64bfloat16();
+
+  v64bfloat16 d = undef_v64bfloat16();
+
+  v64bfloat16 dummy0 = undef_v64bfloat16();
+
+  dummy0 = insert(dummy0, 0, broadcast_one_to_v32bfloat16());
+
+  dummy0 = insert(dummy0, 1, broadcast_one_to_v32bfloat16());
+
+  a = insert(a, 0, to_v32bfloat16(extract_v32accfloat((v64accfloat)v1, 0)));
+
+  a = insert(a, 1, to_v32bfloat16(extract_v32accfloat((v64accfloat)v1, 1)));
+
+  b = insert(b, 0,
+             to_v32bfloat16(extract_v32accfloat(
+                 msc_elem_64(a, dummy0, (v64accfloat)v1), 0)));
+
+  b = insert(b, 1,
+             to_v32bfloat16(extract_v32accfloat(
+                 msc_elem_64(a, dummy0, (v64accfloat)v1), 1)));
+
+  c = insert(c, 0, to_v32bfloat16(extract_v32accfloat((v64accfloat)v2, 0)));
+
+  c = insert(c, 1, to_v32bfloat16(extract_v32accfloat((v64accfloat)v2, 1)));
+
+  d = insert(d, 0,
+             to_v32bfloat16(extract_v32accfloat(
+                 msc_elem_64(c, dummy0, (v64accfloat)v2), 0)));
+
+  d = insert(d, 1,
+             to_v32bfloat16(extract_v32accfloat(
+                 msc_elem_64(c, dummy0, (v64accfloat)v2), 1)));
+
+  return mac_elem_64_conf(
+      a, c,
+      mac_elem_64_conf(a, d, mul_elem_64_conf(b, c, sub_mul), 0, sub_mul, 0), 0,
+      sub_mul, 0);
+}
+INTRINSIC(v64accfloat)
+mul_elem_64_accuracy_fast_inner(v64float v1, v64float v2, int sub_mul) {
+  v64bfloat16 a = undef_v64bfloat16();
+
+  v64bfloat16 b = undef_v64bfloat16();
+
+  v64bfloat16 c = undef_v64bfloat16();
+
+  v64bfloat16 d = undef_v64bfloat16();
+
+  v64bfloat16 e = undef_v64bfloat16();
+
+  v64bfloat16 f = undef_v64bfloat16();
+
+  v64bfloat16 dummy0 = undef_v64bfloat16();
+
+  dummy0 = insert(dummy0, 0, broadcast_one_to_v32bfloat16());
+
+  dummy0 = insert(dummy0, 1, broadcast_one_to_v32bfloat16());
+
+  a = insert(a, 0, to_v32bfloat16(extract_v32accfloat((v64accfloat)v1, 0)));
+
+  a = insert(a, 1, to_v32bfloat16(extract_v32accfloat((v64accfloat)v1, 1)));
+
+  v64accfloat acc0 = msc_elem_64(a, dummy0, (v64accfloat)v1);
+
+  b = insert(b, 0, to_v32bfloat16(extract_v32accfloat(acc0, 0)));
+
+  b = insert(b, 1, to_v32bfloat16(extract_v32accfloat(acc0, 1)));
+
+  c = insert(
+      c, 0,
+      to_v32bfloat16(extract_v32accfloat(msc_elem_64(b, dummy0, acc0), 0)));
+
+  c = insert(
+      c, 1,
+      to_v32bfloat16(extract_v32accfloat(msc_elem_64(b, dummy0, acc0), 1)));
+
+  d = insert(d, 0, to_v32bfloat16(extract_v32accfloat((v64accfloat)v2, 0)));
+
+  d = insert(d, 1, to_v32bfloat16(extract_v32accfloat((v64accfloat)v2, 1)));
+
+  v64accfloat acc1 = msc_elem_64(d, dummy0, (v64accfloat)v2);
+
+  e = insert(e, 0, to_v32bfloat16(extract_v32accfloat(acc1, 0)));
+
+  e = insert(e, 1, to_v32bfloat16(extract_v32accfloat(acc1, 1)));
+
+  f = insert(
+      f, 0,
+      to_v32bfloat16(extract_v32accfloat(msc_elem_64(e, dummy0, acc1), 0)));
+
+  f = insert(
+      f, 1,
+      to_v32bfloat16(extract_v32accfloat(msc_elem_64(e, dummy0, acc1), 1)));
+
+  return mac_elem_64_conf(
+      a, d,
+      mac_elem_64_conf(
+          a, e,
+          mac_elem_64_conf(
+              b, d,
+              mac_elem_64_conf(d, c,
+                               mac_elem_64_conf(b, e,
+                                                mul_elem_64_conf(a, f, sub_mul),
+                                                0, sub_mul, 0),
+                               0, sub_mul, 0),
+              0, sub_mul, 0),
+          0, sub_mul, 0),
+      0, sub_mul, 0);
+}
+INTRINSIC(v64accfloat)
+mul_elem_64_accuracy_safe_inner(v64float v1, v64float v2, int sub_mul) {
+  v64bfloat16 a = undef_v64bfloat16();
+
+  v64bfloat16 b = undef_v64bfloat16();
+
+  v64bfloat16 c = undef_v64bfloat16();
+
+  v64bfloat16 d = undef_v64bfloat16();
+
+  v64bfloat16 e = undef_v64bfloat16();
+
+  v64bfloat16 f = undef_v64bfloat16();
+
+  v64bfloat16 dummy0 = undef_v64bfloat16();
+
+  dummy0 = insert(dummy0, 0, broadcast_one_to_v32bfloat16());
+
+  dummy0 = insert(dummy0, 1, broadcast_one_to_v32bfloat16());
+
+  a = insert(a, 0, to_v32bfloat16(extract_v32accfloat((v64accfloat)v1, 0)));
+
+  a = insert(a, 1, to_v32bfloat16(extract_v32accfloat((v64accfloat)v1, 1)));
+
+  v64accfloat acc0 = msc_elem_64(a, dummy0, (v64accfloat)v1);
+
+  b = insert(b, 0, to_v32bfloat16(extract_v32accfloat(acc0, 0)));
+
+  b = insert(b, 1, to_v32bfloat16(extract_v32accfloat(acc0, 1)));
+
+  c = insert(
+      c, 0,
+      to_v32bfloat16(extract_v32accfloat(msc_elem_64(b, dummy0, acc0), 0)));
+
+  c = insert(
+      c, 1,
+      to_v32bfloat16(extract_v32accfloat(msc_elem_64(b, dummy0, acc0), 1)));
+
+  d = insert(d, 0, to_v32bfloat16(extract_v32accfloat((v64accfloat)v2, 0)));
+
+  d = insert(d, 1, to_v32bfloat16(extract_v32accfloat((v64accfloat)v2, 1)));
+
+  v64accfloat acc1 = msc_elem_64(d, dummy0, (v64accfloat)v2);
+
+  e = insert(e, 0, to_v32bfloat16(extract_v32accfloat(acc1, 0)));
+
+  e = insert(e, 1, to_v32bfloat16(extract_v32accfloat(acc1, 1)));
+
+  f = insert(
+      f, 0,
+      to_v32bfloat16(extract_v32accfloat(msc_elem_64(e, dummy0, acc1), 0)));
+
+  f = insert(
+      f, 1,
+      to_v32bfloat16(extract_v32accfloat(msc_elem_64(e, dummy0, acc1), 1)));
+
+  v64accfloat tmp = mul_elem_64_conf(c, f, sub_mul);
+
+  tmp = add(tmp, mul_elem_64_conf(c, e, sub_mul));
+
+  tmp = add(tmp, mul_elem_64_conf(b, f, sub_mul));
+
+  tmp = add(tmp, mul_elem_64_conf(a, f, sub_mul));
+
+  tmp = add(tmp, mul_elem_64_conf(b, e, sub_mul));
+
+  tmp = add(tmp, mul_elem_64_conf(d, c, sub_mul));
+
+  tmp = add(tmp, mul_elem_64_conf(b, d, sub_mul));
+
+  tmp = add(tmp, mul_elem_64_conf(a, e, sub_mul));
+
+  tmp = add(tmp, mul_elem_64_conf(a, d, sub_mul));
+
+  return tmp;
+}
+INTRINSIC(v16accfloat)
+mac_elem_16_accuracy_low_inner(v16float v1, v16float v2, v16accfloat acc,
+                               int zero_acc, int sub_mul, int sub_acc1) {
+  v32bfloat16 a = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 b = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 c = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 d = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 dummy0 = broadcast_one_to_v32bfloat16();
+  a = insert(a, 0, to_v16bfloat16((v16accfloat)v1));
+  b = insert(b, 0, to_v16bfloat16(msc_elem_16(a, dummy0, (v16accfloat)v1)));
+  c = insert(c, 0, to_v16bfloat16((v16accfloat)v2));
+  d = insert(d, 0, to_v16bfloat16(msc_elem_16(c, dummy0, (v16accfloat)v2)));
+  return addmac_elem_16_conf(
+      a, c, acc,
+      mac_elem_16_conf(a, d, mul_elem_16_conf(b, c, sub_mul), 0, sub_mul, 0),
+      zero_acc, sub_mul, sub_acc1, 0);
+}
+INTRINSIC(v16accfloat)
+mac_elem_16_accuracy_fast_inner(v16float v1, v16float v2, v16accfloat acc,
+                                int zero_acc, int sub_mul, int sub_acc1) {
+  v32bfloat16 a = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 b = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 c = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 d = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 e = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 f = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 dummy0 = broadcast_one_to_v32bfloat16();
+  a = insert(a, 0, to_v16bfloat16((v16accfloat)v1));
+  v16accfloat acc0 = msc_elem_16(a, dummy0, (v16accfloat)v1);
+  b = insert(b, 0, to_v16bfloat16(acc0));
+  c = insert(c, 0, to_v16bfloat16(msc_elem_16(b, dummy0, acc0)));
+  d = insert(d, 0, to_v16bfloat16((v16accfloat)v2));
+  v16accfloat acc1 = msc_elem_16(d, dummy0, (v16accfloat)v2);
+  e = insert(e, 0, to_v16bfloat16(acc1));
+  f = insert(f, 0, to_v16bfloat16(msc_elem_16(e, dummy0, acc1)));
+  return addmac_elem_16_conf(
+      a, d, acc,
+      mac_elem_16_conf(
+          a, e,
+          mac_elem_16_conf(
+              b, d,
+              mac_elem_16_conf(d, c,
+                               mac_elem_16_conf(b, e,
+                                                mul_elem_16_conf(a, f, sub_mul),
+                                                0, sub_mul, 0),
+                               0, sub_mul, 0),
+              0, sub_mul, 0),
+          0, sub_mul, 0),
+      zero_acc, sub_mul, sub_acc1, 0);
+}
+INTRINSIC(v16accfloat)
+mac_elem_16_accuracy_safe_inner(v16float v1, v16float v2, v16accfloat acc,
+                                int zero_acc, int sub_mul, int sub_acc1) {
+  v32bfloat16 a = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 b = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 c = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 d = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 e = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 f = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 dummy0 = broadcast_one_to_v32bfloat16();
+  a = insert(a, 0, to_v16bfloat16((v16accfloat)v1));
+  v16accfloat acc0 = msc_elem_16(a, dummy0, (v16accfloat)v1);
+  b = insert(b, 0, to_v16bfloat16(acc0));
+  c = insert(c, 0, to_v16bfloat16(msc_elem_16(b, dummy0, acc0)));
+  d = insert(d, 0, to_v16bfloat16((v16accfloat)v2));
+  v16accfloat acc1 = msc_elem_16(d, dummy0, (v16accfloat)v2);
+  e = insert(e, 0, to_v16bfloat16(acc1));
+  f = insert(f, 0, to_v16bfloat16(msc_elem_16(e, dummy0, acc1)));
+  v16accfloat tmp = mul_elem_16_conf(c, f, sub_mul);
+  tmp = add(tmp, mul_elem_16_conf(c, e, sub_mul));
+  tmp = add(tmp, mul_elem_16_conf(b, f, sub_mul));
+  tmp = add(tmp, mul_elem_16_conf(a, f, sub_mul));
+  tmp = add(tmp, mul_elem_16_conf(b, e, sub_mul));
+  tmp = add(tmp, mul_elem_16_conf(d, c, sub_mul));
+  tmp = add(tmp, mul_elem_16_conf(b, d, sub_mul));
+  tmp = add(tmp, mul_elem_16_conf(a, e, sub_mul));
+  tmp = add(tmp, mul_elem_16_conf(a, d, sub_mul));
+  return add_conf(acc, tmp, zero_acc, sub_acc1, 0);
+}
+INTRINSIC(v32accfloat)
+mac_elem_32_accuracy_low_inner(v32float v1, v32float v2, v32accfloat acc,
+                               int zero_acc, int sub_mul, int sub_acc1) {
+  v32bfloat16 dummy0 = broadcast_one_to_v32bfloat16();
+  v32bfloat16 a = to_v32bfloat16((v32accfloat)v1);
+  v32bfloat16 b = to_v32bfloat16(msc_elem_32(a, dummy0, (v32accfloat)v1));
+  v32bfloat16 c = to_v32bfloat16((v32accfloat)v2);
+  v32bfloat16 d = to_v32bfloat16(msc_elem_32(c, dummy0, (v32accfloat)v2));
+  return addmac_elem_32_conf(
+      a, c, acc,
+      mac_elem_32_conf(a, d, mul_elem_32_conf(b, c, sub_mul), 0, sub_mul, 0),
+      zero_acc, sub_mul, sub_acc1, 0);
+}
+INTRINSIC(v32accfloat)
+mac_elem_32_accuracy_fast_inner(v32float v1, v32float v2, v32accfloat acc,
+                                int zero_acc, int sub_mul, int sub_acc1) {
+  v32bfloat16 dummy0 = broadcast_one_to_v32bfloat16();
+  v32bfloat16 a = to_v32bfloat16((v32accfloat)v1);
+  v32accfloat acc0 = msc_elem_32(a, dummy0, (v32accfloat)v1);
+  v32bfloat16 b = to_v32bfloat16(acc0);
+  v32bfloat16 c = to_v32bfloat16(msc_elem_32(b, dummy0, acc0));
+  v32bfloat16 d = to_v32bfloat16((v32accfloat)v2);
+  v32accfloat acc1 = msc_elem_32(d, dummy0, (v32accfloat)v2);
+  v32bfloat16 e = to_v32bfloat16(acc1);
+  v32bfloat16 f = to_v32bfloat16(msc_elem_32(e, dummy0, acc1));
+  return addmac_elem_32_conf(
+      a, d, acc,
+      mac_elem_32_conf(
+          a, e,
+          mac_elem_32_conf(
+              b, d,
+              mac_elem_32_conf(
+                  d, c,
+                  mac_elem_32_conf(
+                      b, e,
+                      mac_elem_32_conf(
+                          a, f,
+                          mac_elem_32_conf(
+                              b, f,
+                              mac_elem_32_conf(c, e,
+                                               mul_elem_32_conf(c, f, sub_mul),
+                                               0, sub_mul, 0),
+                              0, sub_mul, 0),
+                          0, sub_mul, 0),
+                      0, sub_mul, 0),
+                  0, sub_mul, 0),
+              0, sub_mul, 0),
+          0, sub_mul, 0),
+      zero_acc, sub_mul, sub_acc1, 0);
+}
+INTRINSIC(v32accfloat)
+mac_elem_32_accuracy_safe_inner(v32float v1, v32float v2, v32accfloat acc,
+                                int zero_acc, int sub_mul, int sub_acc1) {
+  v32bfloat16 dummy0 = broadcast_one_to_v32bfloat16();
+  v32bfloat16 a = to_v32bfloat16((v32accfloat)v1);
+  v32accfloat acc0 = msc_elem_32(a, dummy0, (v32accfloat)v1);
+  v32bfloat16 b = to_v32bfloat16(acc0);
+  v32bfloat16 c = to_v32bfloat16(msc_elem_32(b, dummy0, acc0));
+  v32bfloat16 d = to_v32bfloat16((v32accfloat)v2);
+  v32accfloat acc1 = msc_elem_32(d, dummy0, (v32accfloat)v2);
+  v32bfloat16 e = to_v32bfloat16(acc1);
+  v32bfloat16 f = to_v32bfloat16(msc_elem_32(e, dummy0, acc1));
+  v32accfloat tmp = mul_elem_32_conf(c, f, sub_mul);
+  tmp = add(tmp, mul_elem_32_conf(c, e, sub_mul));
+  tmp = add(tmp, mul_elem_32_conf(b, f, sub_mul));
+  tmp = add(tmp, mul_elem_32_conf(a, f, sub_mul));
+  tmp = add(tmp, mul_elem_32_conf(b, e, sub_mul));
+  tmp = add(tmp, mul_elem_32_conf(d, c, sub_mul));
+  tmp = add(tmp, mul_elem_32_conf(b, d, sub_mul));
+  tmp = add(tmp, mul_elem_32_conf(a, e, sub_mul));
+  tmp = add(tmp, mul_elem_32_conf(a, d, sub_mul));
+  return add_conf(acc, tmp, zero_acc, sub_acc1, 0);
+}
+INTRINSIC(v64accfloat)
+mac_elem_64_accuracy_low_inner(v64float v1, v64float v2, v64accfloat acc,
+                               int zero_acc, int sub_mul, int sub_acc1) {
+  v64bfloat16 a = undef_v64bfloat16();
+  v64bfloat16 b = undef_v64bfloat16();
+  v64bfloat16 c = undef_v64bfloat16();
+  v64bfloat16 d = undef_v64bfloat16();
+  v64bfloat16 dummy0 = undef_v64bfloat16();
+  dummy0 = insert(dummy0, 0, broadcast_one_to_v32bfloat16());
+  dummy0 = insert(dummy0, 1, broadcast_one_to_v32bfloat16());
+  a = insert(a, 0, to_v32bfloat16(extract_v32accfloat((v64accfloat)v1, 0)));
+  a = insert(a, 1, to_v32bfloat16(extract_v32accfloat((v64accfloat)v1, 1)));
+  b = insert(b, 0,
+             to_v32bfloat16(extract_v32accfloat(
+                 msc_elem_64(a, dummy0, (v64accfloat)v1), 0)));
+  b = insert(b, 1,
+             to_v32bfloat16(extract_v32accfloat(
+                 msc_elem_64(a, dummy0, (v64accfloat)v1), 1)));
+  c = insert(c, 0, to_v32bfloat16(extract_v32accfloat((v64accfloat)v2, 0)));
+  c = insert(c, 1, to_v32bfloat16(extract_v32accfloat((v64accfloat)v2, 1)));
+  d = insert(d, 0,
+             to_v32bfloat16(extract_v32accfloat(
+                 msc_elem_64(c, dummy0, (v64accfloat)v2), 0)));
+  d = insert(d, 1,
+             to_v32bfloat16(extract_v32accfloat(
+                 msc_elem_64(c, dummy0, (v64accfloat)v2), 1)));
+  return addmac_elem_64_conf(
+      a, c, acc,
+      mac_elem_64_conf(a, d, mul_elem_64_conf(b, c, sub_mul), 0, sub_mul, 0),
+      zero_acc, sub_mul, sub_acc1, 0);
+}
+INTRINSIC(v64accfloat)
+mac_elem_64_accuracy_fast_inner(v64float v1, v64float v2, v64accfloat acc,
+                                int zero_acc, int sub_mul, int sub_acc1) {
+  v64bfloat16 a = undef_v64bfloat16();
+  v64bfloat16 b = undef_v64bfloat16();
+  v64bfloat16 c = undef_v64bfloat16();
+  v64bfloat16 d = undef_v64bfloat16();
+  v64bfloat16 e = undef_v64bfloat16();
+  v64bfloat16 f = undef_v64bfloat16();
+  v64bfloat16 dummy0 = undef_v64bfloat16();
+  dummy0 = insert(dummy0, 0, broadcast_one_to_v32bfloat16());
+  dummy0 = insert(dummy0, 1, broadcast_one_to_v32bfloat16());
+  a = insert(a, 0, to_v32bfloat16(extract_v32accfloat((v64accfloat)v1, 0)));
+  a = insert(a, 1, to_v32bfloat16(extract_v32accfloat((v64accfloat)v1, 1)));
+  v64accfloat acc0 = msc_elem_64(a, dummy0, (v64accfloat)v1);
+  b = insert(b, 0, to_v32bfloat16(extract_v32accfloat(acc0, 0)));
+  b = insert(b, 1, to_v32bfloat16(extract_v32accfloat(acc0, 1)));
+  c = insert(
+      c, 0,
+      to_v32bfloat16(extract_v32accfloat(msc_elem_64(b, dummy0, acc0), 0)));
+  c = insert(
+      c, 1,
+      to_v32bfloat16(extract_v32accfloat(msc_elem_64(b, dummy0, acc0), 1)));
+  d = insert(d, 0, to_v32bfloat16(extract_v32accfloat((v64accfloat)v2, 0)));
+  d = insert(d, 1, to_v32bfloat16(extract_v32accfloat((v64accfloat)v2, 1)));
+  v64accfloat acc1 = msc_elem_64(d, dummy0, (v64accfloat)v2);
+  e = insert(e, 0, to_v32bfloat16(extract_v32accfloat(acc1, 0)));
+  e = insert(e, 1, to_v32bfloat16(extract_v32accfloat(acc1, 1)));
+  f = insert(
+      f, 0,
+      to_v32bfloat16(extract_v32accfloat(msc_elem_64(e, dummy0, acc1), 0)));
+  f = insert(
+      f, 1,
+      to_v32bfloat16(extract_v32accfloat(msc_elem_64(e, dummy0, acc1), 1)));
+  return addmac_elem_64_conf(
+      a, d, acc,
+      mac_elem_64_conf(
+          a, e,
+          mac_elem_64_conf(
+              b, d,
+              mac_elem_64_conf(d, c,
+                               mac_elem_64_conf(b, e,
+                                                mul_elem_64_conf(a, f, sub_mul),
+                                                0, sub_mul, 0),
+                               0, sub_mul, 0),
+              0, sub_mul, 0),
+          0, sub_mul, 0),
+      zero_acc, sub_mul, sub_acc1, 0);
+}
+INTRINSIC(v64accfloat)
+mac_elem_64_accuracy_safe_inner(v64float v1, v64float v2, v64accfloat acc,
+                                int zero_acc, int sub_mul, int sub_acc1) {
+  v64bfloat16 a = undef_v64bfloat16();
+  v64bfloat16 b = undef_v64bfloat16();
+  v64bfloat16 c = undef_v64bfloat16();
+  v64bfloat16 d = undef_v64bfloat16();
+  v64bfloat16 e = undef_v64bfloat16();
+  v64bfloat16 f = undef_v64bfloat16();
+  v64bfloat16 dummy0 = undef_v64bfloat16();
+  dummy0 = insert(dummy0, 0, broadcast_one_to_v32bfloat16());
+  dummy0 = insert(dummy0, 1, broadcast_one_to_v32bfloat16());
+  a = insert(a, 0, to_v32bfloat16(extract_v32accfloat((v64accfloat)v1, 0)));
+  a = insert(a, 1, to_v32bfloat16(extract_v32accfloat((v64accfloat)v1, 1)));
+  v64accfloat acc0 = msc_elem_64(a, dummy0, (v64accfloat)v1);
+  b = insert(b, 0, to_v32bfloat16(extract_v32accfloat(acc0, 0)));
+  b = insert(b, 1, to_v32bfloat16(extract_v32accfloat(acc0, 1)));
+  c = insert(
+      c, 0,
+      to_v32bfloat16(extract_v32accfloat(msc_elem_64(b, dummy0, acc0), 0)));
+  c = insert(
+      c, 1,
+      to_v32bfloat16(extract_v32accfloat(msc_elem_64(b, dummy0, acc0), 1)));
+  d = insert(d, 0, to_v32bfloat16(extract_v32accfloat((v64accfloat)v2, 0)));
+  d = insert(d, 1, to_v32bfloat16(extract_v32accfloat((v64accfloat)v2, 1)));
+  v64accfloat acc1 = msc_elem_64(d, dummy0, (v64accfloat)v2);
+  e = insert(e, 0, to_v32bfloat16(extract_v32accfloat(acc1, 0)));
+  e = insert(e, 1, to_v32bfloat16(extract_v32accfloat(acc1, 1)));
+  f = insert(
+      f, 0,
+      to_v32bfloat16(extract_v32accfloat(msc_elem_64(e, dummy0, acc1), 0)));
+  f = insert(
+      f, 1,
+      to_v32bfloat16(extract_v32accfloat(msc_elem_64(e, dummy0, acc1), 1)));
+  v64accfloat tmp = mul_elem_64_conf(c, f, sub_mul);
+  tmp = add(tmp, mul_elem_64_conf(c, e, sub_mul));
+  tmp = add(tmp, mul_elem_64_conf(b, f, sub_mul));
+  tmp = add(tmp, mul_elem_64_conf(a, f, sub_mul));
+  tmp = add(tmp, mul_elem_64_conf(b, e, sub_mul));
+  tmp = add(tmp, mul_elem_64_conf(d, c, sub_mul));
+  tmp = add(tmp, mul_elem_64_conf(b, d, sub_mul));
+  tmp = add(tmp, mul_elem_64_conf(a, e, sub_mul));
+  tmp = add(tmp, mul_elem_64_conf(a, d, sub_mul));
+  return add_conf(acc, tmp, zero_acc, sub_acc1, 0);
+}
+INTRINSIC(v16accfloat)
+msc_elem_16_accuracy_low_inner(v16float v1, v16float v2, v16accfloat acc,
+                               int zero_acc, int sub_mul, int sub_acc1) {
+  v32bfloat16 a = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 b = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 c = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 d = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 dummy0 = broadcast_one_to_v32bfloat16();
+  a = insert(a, 0, to_v16bfloat16((v16accfloat)v1));
+  b = insert(b, 0, to_v16bfloat16(msc_elem_16(a, dummy0, (v16accfloat)v1)));
+  c = insert(c, 0, to_v16bfloat16((v16accfloat)v2));
+  d = insert(d, 0, to_v16bfloat16(msc_elem_16(c, dummy0, (v16accfloat)v2)));
+  return addmsc_elem_16_conf(
+      a, c, acc,
+      mac_elem_16_conf(a, d, mul_elem_16_conf(b, c, sub_mul), 0, sub_mul, 0),
+      zero_acc, sub_mul, sub_acc1, 1);
+}
+INTRINSIC(v16accfloat)
+msc_elem_16_accuracy_fast_inner(v16float v1, v16float v2, v16accfloat acc,
+                                int zero_acc, int sub_mul, int sub_acc1) {
+  v32bfloat16 a = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 b = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 c = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 d = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 e = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 f = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 dummy0 = broadcast_one_to_v32bfloat16();
+  a = insert(a, 0, to_v16bfloat16((v16accfloat)v1));
+  v16accfloat acc0 = msc_elem_16(a, dummy0, (v16accfloat)v1);
+  b = insert(b, 0, to_v16bfloat16(acc0));
+  c = insert(c, 0, to_v16bfloat16(msc_elem_16(b, dummy0, acc0)));
+  d = insert(d, 0, to_v16bfloat16((v16accfloat)v2));
+  v16accfloat acc1 = msc_elem_16(d, dummy0, (v16accfloat)v2);
+  e = insert(e, 0, to_v16bfloat16(acc1));
+  f = insert(f, 0, to_v16bfloat16(msc_elem_16(e, dummy0, acc1)));
+  return addmsc_elem_16_conf(
+      a, d, acc,
+      mac_elem_16_conf(
+          a, e,
+          mac_elem_16_conf(
+              b, d,
+              mac_elem_16_conf(d, c,
+                               mac_elem_16_conf(b, e,
+                                                mul_elem_16_conf(a, f, sub_mul),
+                                                0, sub_mul, 0),
+                               0, sub_mul, 0),
+              0, sub_mul, 0),
+          0, sub_mul, 0),
+      zero_acc, sub_mul, sub_acc1, 1);
+}
+INTRINSIC(v16accfloat)
+msc_elem_16_accuracy_safe_inner(v16float v1, v16float v2, v16accfloat acc,
+                                int zero_acc, int sub_mul, int sub_acc1) {
+  v32bfloat16 a = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 b = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 c = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 d = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 e = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 f = broadcast_zero_to_v32bfloat16();
+  v32bfloat16 dummy0 = broadcast_one_to_v32bfloat16();
+  a = insert(a, 0, to_v16bfloat16((v16accfloat)v1));
+  v16accfloat acc0 = msc_elem_16(a, dummy0, (v16accfloat)v1);
+  b = insert(b, 0, to_v16bfloat16(acc0));
+  c = insert(c, 0, to_v16bfloat16(msc_elem_16(b, dummy0, acc0)));
+  d = insert(d, 0, to_v16bfloat16((v16accfloat)v2));
+  v16accfloat acc1 = msc_elem_16(d, dummy0, (v16accfloat)v2);
+  e = insert(e, 0, to_v16bfloat16(acc1));
+  f = insert(f, 0, to_v16bfloat16(msc_elem_16(e, dummy0, acc1)));
+  v16accfloat tmp = mul_elem_16_conf(c, f, sub_mul);
+  tmp = add(tmp, mul_elem_16_conf(c, e, sub_mul));
+  tmp = add(tmp, mul_elem_16_conf(b, f, sub_mul));
+  tmp = add(tmp, mul_elem_16_conf(a, f, sub_mul));
+  tmp = add(tmp, mul_elem_16_conf(b, e, sub_mul));
+  tmp = add(tmp, mul_elem_16_conf(d, c, sub_mul));
+  tmp = add(tmp, mul_elem_16_conf(b, d, sub_mul));
+  tmp = add(tmp, mul_elem_16_conf(a, e, sub_mul));
+  tmp = add(tmp, mul_elem_16_conf(a, d, sub_mul));
+  return sub_conf(acc, tmp, zero_acc, sub_acc1, 0);
+}
+INTRINSIC(v32accfloat)
+msc_elem_32_accuracy_low_inner(v32float v1, v32float v2, v32accfloat acc,
+                               int zero_acc, int sub_mul, int sub_acc1) {
+  v32bfloat16 dummy0 = broadcast_one_to_v32bfloat16();
+  v32bfloat16 a = to_v32bfloat16((v32accfloat)v1);
+  v32bfloat16 b = to_v32bfloat16(msc_elem_32(a, dummy0, (v32accfloat)v1));
+  v32bfloat16 c = to_v32bfloat16((v32accfloat)v2);
+  v32bfloat16 d = to_v32bfloat16(msc_elem_32(c, dummy0, (v32accfloat)v2));
+  return addmsc_elem_32_conf(
+      a, c, acc,
+      mac_elem_32_conf(a, d, mul_elem_32_conf(b, c, sub_mul), 0, sub_mul, 0),
+      zero_acc, sub_mul, sub_acc1, 1);
+}
+INTRINSIC(v32accfloat)
+msc_elem_32_accuracy_fast_inner(v32float v1, v32float v2, v32accfloat acc,
+                                int zero_acc, int sub_mul, int sub_acc1) {
+  v32bfloat16 dummy0 = broadcast_one_to_v32bfloat16();
+  v32bfloat16 a = to_v32bfloat16((v32accfloat)v1);
+  v32accfloat acc0 = msc_elem_32(a, dummy0, (v32accfloat)v1);
+  v32bfloat16 b = to_v32bfloat16(acc0);
+  v32bfloat16 c = to_v32bfloat16(msc_elem_32(b, dummy0, acc0));
+  v32bfloat16 d = to_v32bfloat16((v32accfloat)v2);
+  v32accfloat acc1 = msc_elem_32(d, dummy0, (v32accfloat)v2);
+  v32bfloat16 e = to_v32bfloat16(acc1);
+  v32bfloat16 f = to_v32bfloat16(msc_elem_32(e, dummy0, acc1));
+  return addmsc_elem_32_conf(
+      a, d, acc,
+      mac_elem_32_conf(
+          a, e,
+          mac_elem_32_conf(
+              b, d,
+              mac_elem_32_conf(
+                  d, c,
+                  mac_elem_32_conf(
+                      b, e,
+                      mac_elem_32_conf(
+                          a, f,
+                          mac_elem_32_conf(
+                              b, f,
+                              mac_elem_32_conf(c, e,
+                                               mul_elem_32_conf(c, f, sub_mul),
+                                               0, sub_mul, 0),
+                              0, sub_mul, 0),
+                          0, sub_mul, 0),
+                      0, sub_mul, 0),
+                  0, sub_mul, 0),
+              0, sub_mul, 0),
+          0, sub_mul, 0),
+      zero_acc, sub_mul, sub_acc1, 1);
+}
+INTRINSIC(v32accfloat)
+msc_elem_32_accuracy_safe_inner(v32float v1, v32float v2, v32accfloat acc,
+                                int zero_acc, int sub_mul, int sub_acc1) {
+  v32bfloat16 dummy0 = broadcast_one_to_v32bfloat16();
+  v32bfloat16 a = to_v32bfloat16((v32accfloat)v1);
+  v32accfloat acc0 = msc_elem_32(a, dummy0, (v32accfloat)v1);
+  v32bfloat16 b = to_v32bfloat16(acc0);
+  v32bfloat16 c = to_v32bfloat16(msc_elem_32(b, dummy0, acc0));
+  v32bfloat16 d = to_v32bfloat16((v32accfloat)v2);
+  v32accfloat acc1 = msc_elem_32(d, dummy0, (v32accfloat)v2);
+  v32bfloat16 e = to_v32bfloat16(acc1);
+  v32bfloat16 f = to_v32bfloat16(msc_elem_32(e, dummy0, acc1));
+  v32accfloat tmp = mul_elem_32_conf(c, f, sub_mul);
+  tmp = add(tmp, mul_elem_32_conf(c, e, sub_mul));
+  tmp = add(tmp, mul_elem_32_conf(b, f, sub_mul));
+  tmp = add(tmp, mul_elem_32_conf(a, f, sub_mul));
+  tmp = add(tmp, mul_elem_32_conf(b, e, sub_mul));
+  tmp = add(tmp, mul_elem_32_conf(d, c, sub_mul));
+  tmp = add(tmp, mul_elem_32_conf(b, d, sub_mul));
+  tmp = add(tmp, mul_elem_32_conf(a, e, sub_mul));
+  tmp = add(tmp, mul_elem_32_conf(a, d, sub_mul));
+  return sub_conf(acc, tmp, zero_acc, sub_acc1, 0);
+}
+INTRINSIC(v64accfloat)
+msc_elem_64_accuracy_low_inner(v64float v1, v64float v2, v64accfloat acc,
+                               int zero_acc, int sub_mul, int sub_acc1) {
+  v64bfloat16 a = undef_v64bfloat16();
+  v64bfloat16 b = undef_v64bfloat16();
+  v64bfloat16 c = undef_v64bfloat16();
+  v64bfloat16 d = undef_v64bfloat16();
+  v64bfloat16 dummy0 = undef_v64bfloat16();
+  dummy0 = insert(dummy0, 0, broadcast_one_to_v32bfloat16());
+  dummy0 = insert(dummy0, 1, broadcast_one_to_v32bfloat16());
+  a = insert(a, 0, to_v32bfloat16(extract_v32accfloat((v64accfloat)v1, 0)));
+  a = insert(a, 1, to_v32bfloat16(extract_v32accfloat((v64accfloat)v1, 1)));
+  b = insert(b, 0,
+             to_v32bfloat16(extract_v32accfloat(
+                 msc_elem_64(a, dummy0, (v64accfloat)v1), 0)));
+  b = insert(b, 1,
+             to_v32bfloat16(extract_v32accfloat(
+                 msc_elem_64(a, dummy0, (v64accfloat)v1), 1)));
+  c = insert(c, 0, to_v32bfloat16(extract_v32accfloat((v64accfloat)v2, 0)));
+  c = insert(c, 1, to_v32bfloat16(extract_v32accfloat((v64accfloat)v2, 1)));
+  d = insert(d, 0,
+             to_v32bfloat16(extract_v32accfloat(
+                 msc_elem_64(c, dummy0, (v64accfloat)v2), 0)));
+  d = insert(d, 1,
+             to_v32bfloat16(extract_v32accfloat(
+                 msc_elem_64(c, dummy0, (v64accfloat)v2), 1)));
+  return addmsc_elem_64_conf(
+      a, c, acc,
+      mac_elem_64_conf(a, d, mul_elem_64_conf(b, c, sub_mul), 0, sub_mul, 0),
+      zero_acc, sub_mul, sub_acc1, 1);
+}
+INTRINSIC(v64accfloat)
+msc_elem_64_accuracy_fast_inner(v64float v1, v64float v2, v64accfloat acc,
+                                int zero_acc, int sub_mul, int sub_acc1) {
+  v64bfloat16 a = undef_v64bfloat16();
+  v64bfloat16 b = undef_v64bfloat16();
+  v64bfloat16 c = undef_v64bfloat16();
+  v64bfloat16 d = undef_v64bfloat16();
+  v64bfloat16 e = undef_v64bfloat16();
+  v64bfloat16 f = undef_v64bfloat16();
+  v64bfloat16 dummy0 = undef_v64bfloat16();
+  dummy0 = insert(dummy0, 0, broadcast_one_to_v32bfloat16());
+  dummy0 = insert(dummy0, 1, broadcast_one_to_v32bfloat16());
+  a = insert(a, 0, to_v32bfloat16(extract_v32accfloat((v64accfloat)v1, 0)));
+  a = insert(a, 1, to_v32bfloat16(extract_v32accfloat((v64accfloat)v1, 1)));
+  v64accfloat acc0 = msc_elem_64(a, dummy0, (v64accfloat)v1);
+  b = insert(b, 0, to_v32bfloat16(extract_v32accfloat(acc0, 0)));
+  b = insert(b, 1, to_v32bfloat16(extract_v32accfloat(acc0, 1)));
+  c = insert(
+      c, 0,
+      to_v32bfloat16(extract_v32accfloat(msc_elem_64(b, dummy0, acc0), 0)));
+  c = insert(
+      c, 1,
+      to_v32bfloat16(extract_v32accfloat(msc_elem_64(b, dummy0, acc0), 1)));
+  d = insert(d, 0, to_v32bfloat16(extract_v32accfloat((v64accfloat)v2, 0)));
+  d = insert(d, 1, to_v32bfloat16(extract_v32accfloat((v64accfloat)v2, 1)));
+  v64accfloat acc1 = msc_elem_64(d, dummy0, (v64accfloat)v2);
+  e = insert(e, 0, to_v32bfloat16(extract_v32accfloat(acc1, 0)));
+  e = insert(e, 1, to_v32bfloat16(extract_v32accfloat(acc1, 1)));
+  f = insert(
+      f, 0,
+      to_v32bfloat16(extract_v32accfloat(msc_elem_64(e, dummy0, acc1), 0)));
+  f = insert(
+      f, 1,
+      to_v32bfloat16(extract_v32accfloat(msc_elem_64(e, dummy0, acc1), 1)));
+  return addmsc_elem_64_conf(
+      a, d, acc,
+      mac_elem_64_conf(
+          a, e,
+          mac_elem_64_conf(
+              b, d,
+              mac_elem_64_conf(d, c,
+                               mac_elem_64_conf(b, e,
+                                                mul_elem_64_conf(a, f, sub_mul),
+                                                0, sub_mul, 0),
+                               0, sub_mul, 0),
+              0, sub_mul, 0),
+          0, sub_mul, 0),
+      zero_acc, sub_mul, sub_acc1, 1);
+}
+INTRINSIC(v64accfloat)
+msc_elem_64_accuracy_safe_inner(v64float v1, v64float v2, v64accfloat acc,
+                                int zero_acc, int sub_mul, int sub_acc1) {
+  v64bfloat16 a = undef_v64bfloat16();
+  v64bfloat16 b = undef_v64bfloat16();
+  v64bfloat16 c = undef_v64bfloat16();
+  v64bfloat16 d = undef_v64bfloat16();
+  v64bfloat16 e = undef_v64bfloat16();
+  v64bfloat16 f = undef_v64bfloat16();
+  v64bfloat16 dummy0 = undef_v64bfloat16();
+  dummy0 = insert(dummy0, 0, broadcast_one_to_v32bfloat16());
+  dummy0 = insert(dummy0, 1, broadcast_one_to_v32bfloat16());
+  a = insert(a, 0, to_v32bfloat16(extract_v32accfloat((v64accfloat)v1, 0)));
+  a = insert(a, 1, to_v32bfloat16(extract_v32accfloat((v64accfloat)v1, 1)));
+  v64accfloat acc0 = msc_elem_64(a, dummy0, (v64accfloat)v1);
+  b = insert(b, 0, to_v32bfloat16(extract_v32accfloat(acc0, 0)));
+  b = insert(b, 1, to_v32bfloat16(extract_v32accfloat(acc0, 1)));
+  c = insert(
+      c, 0,
+      to_v32bfloat16(extract_v32accfloat(msc_elem_64(b, dummy0, acc0), 0)));
+  c = insert(
+      c, 1,
+      to_v32bfloat16(extract_v32accfloat(msc_elem_64(b, dummy0, acc0), 1)));
+  d = insert(d, 0, to_v32bfloat16(extract_v32accfloat((v64accfloat)v2, 0)));
+  d = insert(d, 1, to_v32bfloat16(extract_v32accfloat((v64accfloat)v2, 1)));
+  v64accfloat acc1 = msc_elem_64(d, dummy0, (v64accfloat)v2);
+  e = insert(e, 0, to_v32bfloat16(extract_v32accfloat(acc1, 0)));
+  e = insert(e, 1, to_v32bfloat16(extract_v32accfloat(acc1, 1)));
+  f = insert(
+      f, 0,
+      to_v32bfloat16(extract_v32accfloat(msc_elem_64(e, dummy0, acc1), 0)));
+  f = insert(
+      f, 1,
+      to_v32bfloat16(extract_v32accfloat(msc_elem_64(e, dummy0, acc1), 1)));
+  v64accfloat tmp = mul_elem_64_conf(c, f, sub_mul);
+  tmp = add(tmp, mul_elem_64_conf(c, e, sub_mul));
+  tmp = add(tmp, mul_elem_64_conf(b, f, sub_mul));
+  tmp = add(tmp, mul_elem_64_conf(a, f, sub_mul));
+  tmp = add(tmp, mul_elem_64_conf(b, e, sub_mul));
+  tmp = add(tmp, mul_elem_64_conf(d, c, sub_mul));
+  tmp = add(tmp, mul_elem_64_conf(b, d, sub_mul));
+  tmp = add(tmp, mul_elem_64_conf(a, e, sub_mul));
+  tmp = add(tmp, mul_elem_64_conf(a, d, sub_mul));
+  return sub_conf(acc, tmp, zero_acc, sub_acc1, 0);
+}
+
+} // namespace aie2p_detail
+INTRINSIC(v16accfloat) mul_elem_16_accuracy_low(v16float v1, v16float v2) {
+  return aie2p_detail::mul_elem_16_accuracy_low_inner(v1, v2, 0);
+}
+INTRINSIC(v16accfloat)
+mul_elem_16_accuracy_low(v16float v1, v16float v2, int sub_mul) {
+  return aie2p_detail::mul_elem_16_accuracy_low_inner(v1, v2, sub_mul);
+}
+INTRINSIC(v16accfloat)
+mac_elem_16_accuracy_low(v16float v1, v16float v2, v16accfloat acc,
+                         int zero_acc, int sub_mul, int sub_acc1) {
+  return aie2p_detail::mac_elem_16_accuracy_low_inner(v1, v2, acc, zero_acc,
+                                                      sub_mul, sub_acc1);
+}
+INTRINSIC(v16accfloat)
+msc_elem_16_accuracy_low(v16float v1, v16float v2, v16accfloat acc,
+                         int zero_acc, int sub_mul, int sub_acc1) {
+  return aie2p_detail::msc_elem_16_accuracy_low_inner(v1, v2, acc, zero_acc,
+                                                      sub_mul, sub_acc1);
+}
+INTRINSIC(v32accfloat) mul_elem_32_accuracy_low(v32float v1, v32float v2) {
+  return aie2p_detail::mul_elem_32_accuracy_low_inner(v1, v2, 0);
+}
+INTRINSIC(v32accfloat)
+mul_elem_32_accuracy_low(v32float v1, v32float v2, int sub_mul) {
+  return aie2p_detail::mul_elem_32_accuracy_low_inner(v1, v2, sub_mul);
+}
+INTRINSIC(v32accfloat)
+mac_elem_32_accuracy_low(v32float v1, v32float v2, v32accfloat acc,
+                         int zero_acc, int sub_mul, int sub_acc1) {
+  return aie2p_detail::mac_elem_32_accuracy_low_inner(v1, v2, acc, zero_acc,
+                                                      sub_mul, sub_acc1);
+}
+INTRINSIC(v32accfloat)
+msc_elem_32_accuracy_low(v32float v1, v32float v2, v32accfloat acc,
+                         int zero_acc, int sub_mul, int sub_acc1) {
+  return aie2p_detail::msc_elem_32_accuracy_low_inner(v1, v2, acc, zero_acc,
+                                                      sub_mul, sub_acc1);
+}
+INTRINSIC(v64accfloat) mul_elem_64_accuracy_low(v64float v1, v64float v2) {
+  return aie2p_detail::mul_elem_64_accuracy_low_inner(v1, v2, 0);
+}
+INTRINSIC(v64accfloat)
+mul_elem_64_accuracy_low(v64float v1, v64float v2, int sub_mul) {
+  return aie2p_detail::mul_elem_64_accuracy_low_inner(v1, v2, sub_mul);
+}
+INTRINSIC(v64accfloat)
+mac_elem_64_accuracy_low(v64float v1, v64float v2, v64accfloat acc,
+                         int zero_acc, int sub_mul, int sub_acc1) {
+  return aie2p_detail::mac_elem_64_accuracy_low_inner(v1, v2, acc, zero_acc,
+                                                      sub_mul, sub_acc1);
+}
+INTRINSIC(v64accfloat)
+msc_elem_64_accuracy_low(v64float v1, v64float v2, v64accfloat acc,
+                         int zero_acc, int sub_mul, int sub_acc1) {
+  return aie2p_detail::msc_elem_64_accuracy_low_inner(v1, v2, acc, zero_acc,
+                                                      sub_mul, sub_acc1);
+}
+
+INTRINSIC(v16accfloat) mul_elem_16_accuracy_safe(v16float v1, v16float v2) {
+  return aie2p_detail::mul_elem_16_accuracy_safe_inner(v1, v2, 0);
+}
+INTRINSIC(v16accfloat)
+mul_elem_16_accuracy_safe(v16float v1, v16float v2, int sub_mul) {
+  return aie2p_detail::mul_elem_16_accuracy_safe_inner(v1, v2, sub_mul);
+}
+INTRINSIC(v16accfloat)
+mac_elem_16_accuracy_safe(v16float v1, v16float v2, v16accfloat acc,
+                          int zero_acc, int sub_mul, int sub_acc1) {
+  return aie2p_detail::mac_elem_16_accuracy_safe_inner(v1, v2, acc, zero_acc,
+                                                       sub_mul, sub_acc1);
+}
+INTRINSIC(v16accfloat)
+msc_elem_16_accuracy_safe(v16float v1, v16float v2, v16accfloat acc,
+                          int zero_acc, int sub_mul, int sub_acc1) {
+  return aie2p_detail::msc_elem_16_accuracy_safe_inner(v1, v2, acc, zero_acc,
+                                                       sub_mul, sub_acc1);
+}
+INTRINSIC(v32accfloat) mul_elem_32_accuracy_safe(v32float v1, v32float v2) {
+  return aie2p_detail::mul_elem_32_accuracy_safe_inner(v1, v2, 0);
+}
+INTRINSIC(v32accfloat)
+mul_elem_32_accuracy_safe(v32float v1, v32float v2, int sub_mul) {
+  return aie2p_detail::mul_elem_32_accuracy_safe_inner(v1, v2, sub_mul);
+}
+INTRINSIC(v32accfloat)
+mac_elem_32_accuracy_safe(v32float v1, v32float v2, v32accfloat acc,
+                          int zero_acc, int sub_mul, int sub_acc1) {
+  return aie2p_detail::mac_elem_32_accuracy_safe_inner(v1, v2, acc, zero_acc,
+                                                       sub_mul, sub_acc1);
+}
+INTRINSIC(v32accfloat)
+msc_elem_32_accuracy_safe(v32float v1, v32float v2, v32accfloat acc,
+                          int zero_acc, int sub_mul, int sub_acc1) {
+  return aie2p_detail::msc_elem_32_accuracy_safe_inner(v1, v2, acc, zero_acc,
+                                                       sub_mul, sub_acc1);
+}
+INTRINSIC(v64accfloat) mul_elem_64_accuracy_safe(v64float v1, v64float v2) {
+  return aie2p_detail::mul_elem_64_accuracy_safe_inner(v1, v2, 0);
+}
+INTRINSIC(v64accfloat)
+mul_elem_64_accuracy_safe(v64float v1, v64float v2, int sub_mul) {
+  return aie2p_detail::mul_elem_64_accuracy_safe_inner(v1, v2, sub_mul);
+}
+INTRINSIC(v64accfloat)
+mac_elem_64_accuracy_safe(v64float v1, v64float v2, v64accfloat acc,
+                          int zero_acc, int sub_mul, int sub_acc1) {
+  return aie2p_detail::mac_elem_64_accuracy_safe_inner(v1, v2, acc, zero_acc,
+                                                       sub_mul, sub_acc1);
+}
+INTRINSIC(v64accfloat)
+msc_elem_64_accuracy_safe(v64float v1, v64float v2, v64accfloat acc,
+                          int zero_acc, int sub_mul, int sub_acc1) {
+  return aie2p_detail::msc_elem_64_accuracy_safe_inner(v1, v2, acc, zero_acc,
+                                                       sub_mul, sub_acc1);
+}
+
+INTRINSIC(v16accfloat) mul_elem_16_accuracy_fast(v16float v1, v16float v2) {
+  return aie2p_detail::mul_elem_16_accuracy_fast_inner(v1, v2, 0);
+}
+INTRINSIC(v16accfloat)
+mul_elem_16_accuracy_fast(v16float v1, v16float v2, int sub_mul) {
+  return aie2p_detail::mul_elem_16_accuracy_fast_inner(v1, v2, sub_mul);
+}
+INTRINSIC(v16accfloat)
+mac_elem_16_accuracy_fast(v16float v1, v16float v2, v16accfloat acc,
+                          int zero_acc, int sub_mul, int sub_acc1) {
+  return aie2p_detail::mac_elem_16_accuracy_fast_inner(v1, v2, acc, zero_acc,
+                                                       sub_mul, sub_acc1);
+}
+INTRINSIC(v16accfloat)
+msc_elem_16_accuracy_fast(v16float v1, v16float v2, v16accfloat acc,
+                          int zero_acc, int sub_mul, int sub_acc1) {
+  return aie2p_detail::msc_elem_16_accuracy_fast_inner(v1, v2, acc, zero_acc,
+                                                       sub_mul, sub_acc1);
+}
+INTRINSIC(v32accfloat) mul_elem_32_accuracy_fast(v32float v1, v32float v2) {
+  return aie2p_detail::mul_elem_32_accuracy_fast_inner(v1, v2, 0);
+}
+INTRINSIC(v32accfloat)
+mul_elem_32_accuracy_fast(v32float v1, v32float v2, int sub_mul) {
+  return aie2p_detail::mul_elem_32_accuracy_fast_inner(v1, v2, sub_mul);
+}
+INTRINSIC(v32accfloat)
+mac_elem_32_accuracy_fast(v32float v1, v32float v2, v32accfloat acc,
+                          int zero_acc, int sub_mul, int sub_acc1) {
+  return aie2p_detail::mac_elem_32_accuracy_fast_inner(v1, v2, acc, zero_acc,
+                                                       sub_mul, sub_acc1);
+}
+INTRINSIC(v32accfloat)
+msc_elem_32_accuracy_fast(v32float v1, v32float v2, v32accfloat acc,
+                          int zero_acc, int sub_mul, int sub_acc1) {
+  return aie2p_detail::msc_elem_32_accuracy_fast_inner(v1, v2, acc, zero_acc,
+                                                       sub_mul, sub_acc1);
+}
+INTRINSIC(v64accfloat) mul_elem_64_accuracy_fast(v64float v1, v64float v2) {
+  return aie2p_detail::mul_elem_64_accuracy_fast_inner(v1, v2, 0);
+}
+INTRINSIC(v64accfloat)
+mul_elem_64_accuracy_fast(v64float v1, v64float v2, int sub_mul) {
+  return aie2p_detail::mul_elem_64_accuracy_fast_inner(v1, v2, sub_mul);
+}
+INTRINSIC(v64accfloat)
+mac_elem_64_accuracy_fast(v64float v1, v64float v2, v64accfloat acc,
+                          int zero_acc, int sub_mul, int sub_acc1) {
+  return aie2p_detail::mac_elem_64_accuracy_fast_inner(v1, v2, acc, zero_acc,
+                                                       sub_mul, sub_acc1);
+}
+INTRINSIC(v64accfloat)
+msc_elem_64_accuracy_fast(v64float v1, v64float v2, v64accfloat acc,
+                          int zero_acc, int sub_mul, int sub_acc1) {
+  return aie2p_detail::msc_elem_64_accuracy_fast_inner(v1, v2, acc, zero_acc,
+                                                       sub_mul, sub_acc1);
+}
+INTRINSIC(v16accfloat) mul_elem_16(v16float v1, v16float v2) {
+  return mul_elem_16_accuracy_safe(v1, v2, 0);
+}
+INTRINSIC(v16accfloat) negmul_elem_16(v16float v1, v16float v2) {
+  return neg(mul_elem_16_accuracy_safe(v1, v2, 0));
+}
+INTRINSIC(v16accfloat) mac_elem_16(v16float v1, v16float v2, v16accfloat acc) {
+  return mac_elem_16_accuracy_safe(v1, v2, acc, 0, 0, 0);
+}
+INTRINSIC(v16accfloat) msc_elem_16(v16float v1, v16float v2, v16accfloat acc) {
+  return msc_elem_16_accuracy_safe(v1, v2, acc, 0, 0, 0);
+}
+INTRINSIC(v16accfloat)
+addmac_elem_16(v16float v1, v16float v2, v16accfloat acc1, v16accfloat acc2) {
+  return add(mac_elem_16_accuracy_safe(v1, v2, acc1, 0, 0, 0), acc2);
+}
+INTRINSIC(v16accfloat)
+addmsc_elem_16(v16float v1, v16float v2, v16accfloat acc1, v16accfloat acc2) {
+  return sub(msc_elem_16_accuracy_safe(v1, v2, acc1, 0, 0, 0), acc2);
+}
+INTRINSIC(v32accfloat) mul_elem_32(v32float v1, v32float v2) {
+  return mul_elem_32_accuracy_safe(v1, v2, 0);
+}
+INTRINSIC(v32accfloat) negmul_elem_32(v32float v1, v32float v2) {
+  return neg(mul_elem_32_accuracy_safe(v1, v2, 0));
+}
+INTRINSIC(v32accfloat) mac_elem_32(v32float v1, v32float v2, v32accfloat acc) {
+  return mac_elem_32_accuracy_safe(v1, v2, acc, 0, 0, 0);
+}
+INTRINSIC(v32accfloat) msc_elem_32(v32float v1, v32float v2, v32accfloat acc) {
+  return msc_elem_32_accuracy_safe(v1, v2, acc, 0, 0, 0);
+}
+INTRINSIC(v32accfloat)
+addmac_elem_32(v32float v1, v32float v2, v32accfloat acc1, v32accfloat acc2) {
+  return add(mac_elem_32_accuracy_safe(v1, v2, acc1, 0, 0, 0), acc2);
+}
+INTRINSIC(v32accfloat)
+addmsc_elem_32(v32float v1, v32float v2, v32accfloat acc1, v32accfloat acc2) {
+  return sub(msc_elem_32_accuracy_safe(v1, v2, acc1, 0, 0, 0), acc2);
+}
+INTRINSIC(v64accfloat) mul_elem_64(v64float v1, v64float v2) {
+  return mul_elem_64_accuracy_safe(v1, v2, 0);
+}
+INTRINSIC(v64accfloat) negmul_elem_64(v64float v1, v64float v2) {
+  return neg(mul_elem_64_accuracy_safe(v1, v2, 0));
+}
+INTRINSIC(v64accfloat) mac_elem_64(v64float v1, v64float v2, v64accfloat acc) {
+  return mac_elem_64_accuracy_safe(v1, v2, acc, 0, 0, 0);
+}
+INTRINSIC(v64accfloat) msc_elem_64(v64float v1, v64float v2, v64accfloat acc) {
+  return msc_elem_64_accuracy_safe(v1, v2, acc, 0, 0, 0);
+}
+INTRINSIC(v64accfloat)
+addmac_elem_64(v64float v1, v64float v2, v64accfloat acc1, v64accfloat acc2) {
+  return add(mac_elem_64_accuracy_safe(v1, v2, acc1, 0, 0, 0), acc2);
+}
+INTRINSIC(v64accfloat)
+addmsc_elem_64(v64float v1, v64float v2, v64accfloat acc1, v64accfloat acc2) {
+  return sub(msc_elem_64_accuracy_safe(v1, v2, acc1, 0, 0, 0), acc2);
+}
+INTRINSIC(v16accfloat) mul_elem_16_conf(v16float v1, v16float v2, int sub_mul) {
+  return mul_elem_16_accuracy_safe(v1, v2, sub_mul);
+}
+INTRINSIC(v16accfloat)
+mac_elem_16_conf(v16float v1, v16float v2, v16accfloat acc, int zero_acc,
+                 int sub_mul, int sub_acc1) {
+  return mac_elem_16_accuracy_safe(v1, v2, acc, zero_acc, sub_mul, sub_acc1);
+}
+INTRINSIC(v16accfloat)
+msc_elem_16_conf(v16float v1, v16float v2, v16accfloat acc, int zero_acc,
+                 int sub_mul, int sub_acc1) {
+  return msc_elem_16_accuracy_safe(v1, v2, acc, zero_acc, sub_mul, sub_acc1);
+}
+INTRINSIC(v16accfloat)
+addmac_elem_16_conf(v16float v1, v16float v2, v16accfloat acc1,
+                    v16accfloat acc2, int zero_acc, int sub_mul, int sub_acc1,
+                    int sub_acc2) {
+  return add(
+      mac_elem_16_accuracy_safe(v1, v2, acc1, zero_acc, sub_mul, sub_acc1),
+      acc2);
+}
+INTRINSIC(v16accfloat)
+addmsc_elem_16_conf(v16float v1, v16float v2, v16accfloat acc1,
+                    v16accfloat acc2, int zero_acc, int sub_mul, int sub_acc1,
+                    int sub_acc2) {
+  return sub(
+      msc_elem_16_accuracy_safe(v1, v2, acc1, zero_acc, sub_mul, sub_acc1),
+      acc2);
+}
+INTRINSIC(v32accfloat) mul_elem_32_conf(v32float v1, v32float v2, int sub_mul) {
+  return mul_elem_32_accuracy_safe(v1, v2, sub_mul);
+}
+INTRINSIC(v32accfloat)
+mac_elem_32_conf(v32float v1, v32float v2, v32accfloat acc, int zero_acc,
+                 int sub_mul, int sub_acc1) {
+  return mac_elem_32_accuracy_safe(v1, v2, acc, zero_acc, sub_mul, sub_acc1);
+}
+INTRINSIC(v32accfloat)
+msc_elem_32_conf(v32float v1, v32float v2, v32accfloat acc, int zero_acc,
+                 int sub_mul, int sub_acc1) {
+  return msc_elem_32_accuracy_safe(v1, v2, acc, zero_acc, sub_mul, sub_acc1);
+}
+INTRINSIC(v32accfloat)
+addmac_elem_32_conf(v32float v1, v32float v2, v32accfloat acc1,
+                    v32accfloat acc2, int zero_acc, int sub_mul, int sub_acc1,
+                    int sub_acc2) {
+  return add(
+      mac_elem_32_accuracy_safe(v1, v2, acc1, zero_acc, sub_mul, sub_acc1),
+      acc2);
+}
+INTRINSIC(v32accfloat)
+addmsc_elem_32_conf(v32float v1, v32float v2, v32accfloat acc1,
+                    v32accfloat acc2, int zero_acc, int sub_mul, int sub_acc1,
+                    int sub_acc2) {
+  return sub(
+      msc_elem_32_accuracy_safe(v1, v2, acc1, zero_acc, sub_mul, sub_acc1),
+      acc2);
+}
+INTRINSIC(v64accfloat) mul_elem_64_conf(v64float v1, v64float v2, int sub_mul) {
+  return mul_elem_64_accuracy_safe(v1, v2, sub_mul);
+}
+INTRINSIC(v64accfloat)
+mac_elem_64_conf(v64float v1, v64float v2, v64accfloat acc, int zero_acc,
+                 int sub_mul, int sub_acc1) {
+  return mac_elem_64_accuracy_safe(v1, v2, acc, zero_acc, sub_mul, sub_acc1);
+}
+INTRINSIC(v64accfloat)
+msc_elem_64_conf(v64float v1, v64float v2, v64accfloat acc, int zero_acc,
+                 int sub_mul, int sub_acc1) {
+  return msc_elem_64_accuracy_safe(v1, v2, acc, zero_acc, sub_mul, sub_acc1);
+}
+INTRINSIC(v64accfloat)
+addmac_elem_64_conf(v64float v1, v64float v2, v64accfloat acc1,
+                    v64accfloat acc2, int zero_acc, int sub_mul, int sub_acc1,
+                    int sub_acc2) {
+  return add(
+      mac_elem_64_accuracy_safe(v1, v2, acc1, zero_acc, sub_mul, sub_acc1),
+      acc2);
+}
+INTRINSIC(v64accfloat)
+addmsc_elem_64_conf(v64float v1, v64float v2, v64accfloat acc1,
+                    v64accfloat acc2, int zero_acc, int sub_mul, int sub_acc1,
+                    int sub_acc2) {
+  return sub(
+      msc_elem_64_accuracy_safe(v1, v2, acc1, zero_acc, sub_mul, sub_acc1),
+      acc2);
+}
+
 #endif // AIE2P_VMULT_H
