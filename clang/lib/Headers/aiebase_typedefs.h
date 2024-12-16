@@ -429,6 +429,8 @@ typedef acc64 v32acc64 __attribute__((__vector_size__(256)))
 __attribute__((aligned(__MIN_ALIGNMENT)));
 typedef accfloat v64accfloat __attribute__((__vector_size__(256)))
 __attribute__((aligned(__MIN_ALIGNMENT)));
+typedef int32_t v64int32 __attribute__((__vector_size__(256)))
+__attribute__((aligned(__MIN_ALIGNMENT)));
 
 /* Block floating-point(bpf16) */
 // v64bfp16ebs16: The data is four blocks in bfp16ebs16 format and is written to
