@@ -40,6 +40,11 @@ using namespace llvm;
 
 #define DEBUG_TYPE "aie-waw-reg-rewrite"
 
+static cl::opt<bool> AggressiveReAlloc(
+    "aie-aggressive-realloc", cl::Hidden, cl::init(false),
+    cl::desc("Aggressively de-allocate live-through registers to favor "
+             "loop-local registers"));
+
 namespace {
 
 using RoundRobin = std::list<MCPhysReg>;
@@ -248,7 +253,12 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
         continue;
 
       if (isWorthRenaming(Reg, VRegWithCopies)) {
-        Candidates.emplace_back(&MO, VRM->getPhys(Reg));
+        assert(VRM->hasPhys(Reg));
+        MCRegister AssignedPhysReg = VRM->getPhys(Reg);
+        Candidates.emplace_back(&MO, AssignedPhysReg);
+        LLVM_DEBUG(dbgs() << "Candidate " << printReg(Reg, TRI, 0, MRI) << ":"
+                          << TRI->getRegClassName(MRI->getRegClass(Reg)) << " ("
+                          << TRI->getName(AssignedPhysReg) << ")\n");
       }
     }
   }
@@ -257,14 +267,26 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
   std::set<const TargetRegisterClass *> RegClasses;
   for (auto &[MO, Org] : Candidates) {
     auto VReg = MO->getReg();
-    unassignReg(VReg);
+    if (VRM->hasPhys(VReg))
+      unassignReg(VReg);
     auto *RC = MRI->getRegClass(VReg);
     RegClasses.insert(RC);
-    LLVM_DEBUG(dbgs() << "Candidate " << printReg(VReg, TRI, 0, MRI) << " ("
-                      << TRI->getName(Org) << ")\n");
   }
   LLVM_DEBUG(dbgs() << "Renaming " << Candidates.size() << " candidates in "
                     << RegClasses.size() << " classes\n");
+
+  // If requested, unassign MBB's liveins as well to get even more freedom
+  if (AggressiveReAlloc) {
+    for (unsigned I = 0, E = MRI->getNumVirtRegs(); I != E; ++I) {
+      Register Reg = Register::index2VirtReg(I);
+      if (!LIS->hasInterval(Reg) || !RegClasses.count(MRI->getRegClass(Reg)))
+        continue;
+      LiveInterval &LI = LIS->getInterval(Reg);
+      if (LIS->isLiveInToMBB(LI, MBB) && VRM->hasPhys(Reg)) {
+        unassignReg(Reg);
+      }
+    }
+  }
 
   // Reallocate all virtual registers in Candidates.
   // Return true if successful.
@@ -310,7 +332,7 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
 
     LLVM_DEBUG(dbgs() << "Allowed registers in RC=" << TRI->getRegClassName(RC)
                       << ":");
-    for (auto PhysReg : RC->getRegisters()) {
+    for (MCPhysReg PhysReg : RC->getRegisters()) {
       if (!ExcludedPhysRegs[PhysReg]) {
         LLVM_DEBUG(dbgs() << " " << printReg(PhysReg, TRI));
         LRURegisters.push_back(PhysReg);
@@ -330,6 +352,10 @@ bool AIEWawRegRewriter::renameMBBPhysRegs(const MachineBasicBlock *MBB) {
 bool AIEWawRegRewriter::isWorthRenaming(const Register &Reg,
                                         const BitVector &VRegWithCopies) const {
   assert(Reg.isVirtual());
+
+  // The register might have been de-allocated when processing another loop.
+  if (!VRM->hasPhys(Reg))
+    return false;
 
   if (!TRI->isVecOrAccRegClass(*(MRI->getRegClass(Reg))))
     return false;
@@ -362,6 +388,7 @@ bool AIEWawRegRewriter::replaceReg(const Register VReg,
 
   LLVM_DEBUG(dbgs() << "     replace: " << printReg(VReg, TRI) << " with "
                     << TRI->getName(ReplacementPhysReg) << '\n');
+  assert(Register::isPhysicalRegister(ReplacementPhysReg));
 
   assignReg(VReg, ReplacementPhysReg);
   return true;
