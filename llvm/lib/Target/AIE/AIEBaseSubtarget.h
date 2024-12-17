@@ -85,6 +85,10 @@ public:
   /// Required DAG mutations during software pipelining.
   static std::vector<std::unique_ptr<ScheduleDAGMutation>>
   getSMSMutationsImpl(const Triple &TT);
+
+  /// Whether to enable the pre-RA MachinePipeliner. This can be disabled to let
+  /// the post-RA pipeliner handle the scheduling.
+  bool enableMachinePipeliner() const;
 };
 } // namespace llvm
 

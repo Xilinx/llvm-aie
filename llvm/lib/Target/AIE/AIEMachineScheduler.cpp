@@ -1079,9 +1079,13 @@ MachineBasicBlock *AIEPreRASchedStrategy::nextBlock() {
   // The prescheduler also clutters the view of the postpipeliner, so we skip
   // such blocks here.
   auto Skip = [](MachineBasicBlock *Block) {
-    return PreSchedFollowsSkipPipeliner && Block &&
-           AIELoopUtils::isSingleMBBLoop(Block) &&
-           AIELoopUtils::getPipelinerDisabled(*Block);
+    if (!Block)
+      return false;
+    bool PrePipelinerDisabled =
+        AIELoopUtils::getPipelinerDisabled(*Block) ||
+        !Block->getParent()->getSubtarget().enableMachinePipeliner();
+    return PreSchedFollowsSkipPipeliner &&
+           AIELoopUtils::isSingleMBBLoop(Block) && PrePipelinerDisabled;
   };
 
   do {

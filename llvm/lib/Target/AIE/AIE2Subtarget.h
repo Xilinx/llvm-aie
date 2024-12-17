@@ -59,6 +59,9 @@ public:
                 StringRef FS, StringRef ABIName, const TargetMachine &TM);
 
   bool enableMachineScheduler() const override { return true; }
+  bool enableMachinePipeliner() const override {
+    return AIEBaseSubtarget::enableMachinePipeliner();
+  }
   bool enablePostRAScheduler() const override { return true; }
   bool enablePostRAMachineScheduler() const override { return true; }
   bool forcePostRAScheduling() const override { return true; }
