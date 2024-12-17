@@ -58,6 +58,11 @@ static cl::opt<unsigned> WAWStickyRegistersMemOpsThreshold(
     cl::desc("Number of memory instructions to enable the register exclusion "
              "heuristic in WAW sticky registers dep. removal"));
 
+static cl::opt<bool> ForcePostPipeliner(
+    "aie-force-postpipeliner",
+    cl::desc(
+        "Force using AIE's post-pipeliner instead of the MachinePipeliner"),
+    cl::init(false), cl::Hidden);
 // These are debugging/testing options.
 
 // aie-latency-margin defines the latency that will be given to ExitSU edges.
@@ -847,4 +852,8 @@ AIEBaseSubtarget::getSMSMutationsImpl(const Triple &TT) {
       Mutations.emplace_back(std::make_unique<PropagateIncomingLatencies>());
   }
   return Mutations;
+}
+
+bool AIEBaseSubtarget::enableMachinePipeliner() const {
+  return !ForcePostPipeliner;
 }
