@@ -201,6 +201,9 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   // Returns the cycle in which the streaming operation reads or writes
   virtual std::optional<int> getStreamingEndCycle(unsigned Opode) const;
 
+  // Returns the number of cycles a lock can stall
+  virtual std::optional<int> getLockStallCycles(unsigned Opode) const;
+
   /// Check whether Opc represents a JNZ instruction. This is mainly for
   /// detecting a downcounting loop branch.
   virtual bool isJNZ(unsigned Opc) const { return false; }

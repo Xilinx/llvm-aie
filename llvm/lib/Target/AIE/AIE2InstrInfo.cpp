@@ -1246,6 +1246,13 @@ std::optional<int> AIE2InstrInfo::getStreamingEndCycle(unsigned Opode) const {
   }
 }
 
+std::optional<int> AIE2InstrInfo::getLockStallCycles(unsigned Opcode) const {
+  if (isLock(Opcode)) {
+    return 5;
+  }
+  return {};
+}
+
 SmallVector<TiedRegOperands, 4>
 AIE2InstrInfo::getTiedRegInfo(unsigned Opcode) const {
   const SmallVector<SubRegSplit, 8> Split2DReg = {

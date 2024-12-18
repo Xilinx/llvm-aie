@@ -74,6 +74,10 @@ AIEBaseInstrInfo::getStreamingEndCycle(unsigned Opode) const {
   return {};
 }
 
+std::optional<int> AIEBaseInstrInfo::getLockStallCycles(unsigned Opode) const {
+  return {};
+}
+
 std::optional<AIEBaseInstrInfo::PseudoBranchExpandInfo>
 AIEBaseInstrInfo::getPseudoBranchExpandInfo(const MachineInstr &MI) const {
   return {};

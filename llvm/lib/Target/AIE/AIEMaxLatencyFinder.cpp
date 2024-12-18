@@ -27,8 +27,8 @@ static cl::opt<bool>
                       cl::desc("Use interblock latencies on ExitSU edges"));
 
 // Compute the latency of this instruction. We take the maximum of the
-// operand, the memory latency and the streaming latency. Include the stage
-// latency if requested.
+// operand, the memory latency, the streaming latency and the lock latency.
+// Include the stage latency if requested.
 int maxLatency(const MachineInstr *MI, const AIEBaseInstrInfo &InstrInfo,
                const InstrItineraryData &Itineraries, bool IncludeStages) {
   int Latency = 0;
@@ -43,6 +43,9 @@ int maxLatency(const MachineInstr *MI, const AIEBaseInstrInfo &InstrInfo,
   }
   Latency = std::max(Latency, InstrInfo.getConservativeMemoryLatency(SrcClass));
   if (auto Cycle = InstrInfo.getStreamingEndCycle(MI->getOpcode())) {
+    Latency = std::max(Latency, *Cycle);
+  }
+  if (auto Cycle = InstrInfo.getLockStallCycles(MI->getOpcode())) {
     Latency = std::max(Latency, *Cycle);
   }
   if (IncludeStages) {

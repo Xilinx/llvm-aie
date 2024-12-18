@@ -245,6 +245,36 @@ class LockDelays : public ScheduleDAGMutation {
   };
 };
 
+// Set the latency of ordering edges between locks.
+// The initial graph will have ordering edges induced by hasSideEffects of the
+// locks
+class InterLockDelays : public ScheduleDAGMutation {
+  void apply(ScheduleDAGInstrs *DAG) override {
+    // FIXME: Delays for locks to reach the core aren't completely described in
+    // the ISA. The numbers are therefore conservative.
+    const int InterLockCycle = 4;
+    const auto *TII = static_cast<const AIEBaseInstrInfo *>(DAG->TII);
+
+    // Iterate over all the successors of Lock instructions to increase the edge
+    // latency.
+    for (auto &SU : DAG->SUnits) {
+      MachineInstr *Lock = SU.getInstr();
+      if (!Lock || !TII->isLock(Lock->getOpcode())) {
+        continue;
+      }
+      for (auto &SuccEdge : SU.Succs) {
+        MachineInstr *SuccLock = SuccEdge.getSUnit()->getInstr();
+        if (SuccEdge.getKind() != SDep::Order) {
+          continue;
+        }
+        if (!SuccLock || !TII->isLock(SuccLock->getOpcode()))
+          continue;
+        updateSuccLatency(SuccEdge, SU, InterLockCycle);
+      }
+    }
+  };
+};
+
 #undef DEBUG_TYPE
 #define DEBUG_TYPE "machine-scheduler"
 
@@ -728,6 +758,7 @@ std::vector<std::unique_ptr<ScheduleDAGMutation>>
 AIEBaseSubtarget::getPostRAMutationsImpl(const Triple &TT) {
   std::vector<std::unique_ptr<ScheduleDAGMutation>> Mutations;
   Mutations.emplace_back(std::make_unique<LockDelays>());
+  Mutations.emplace_back(std::make_unique<InterLockDelays>());
   if (!TT.isAIE1()) {
     if (EnableWAWStickyRegisters)
       Mutations.emplace_back(std::make_unique<WAWStickyRegistersEdges>());
@@ -745,6 +776,7 @@ std::vector<std::unique_ptr<ScheduleDAGMutation>>
 AIEBaseSubtarget::getInterBlockMutationsImpl(const Triple &TT) {
   std::vector<std::unique_ptr<ScheduleDAGMutation>> Mutations;
   Mutations.emplace_back(std::make_unique<LockDelays>());
+  Mutations.emplace_back(std::make_unique<InterLockDelays>());
   if (!TT.isAIE1()) {
     Mutations.emplace_back(std::make_unique<RegionEndEdges>());
     Mutations.emplace_back(std::make_unique<MemoryEdges>());

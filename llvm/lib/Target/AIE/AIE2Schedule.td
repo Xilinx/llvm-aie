@@ -54,9 +54,6 @@ def STORE_UNIT : FuncUnit;
 // that touches this resource, and all instruction that touch it do so in E2
 def LOAD_UNIT_A : FuncUnit;
 
-// The Semaphore interface
-def SEMAPHORE : FuncUnit;
-
 // DONE interface
 // Doesn't look likely to cause a conflict, just for completeness
 def DONE_UNIT : FuncUnit;
@@ -428,14 +425,14 @@ def AIE2Itineraries : ProcessorItineraries<
  M_WM_PORT, DC_WM_PORT, DJ_WM_PORT, DN_WM_PORT,
  W_RS_PORT, W_WA_PORT, W_WM_PORT,
  CM_RM_PORT, CM_WA_PORT, CM_WM_PORT, PROC_BUS, PART_WORD_STORE,
- UPPER_SRS, STORE_UNIT, LOAD_UNIT_A, SEMAPHORE, UPS_UNIT, DONE_UNIT],
+ UPPER_SRS, STORE_UNIT, LOAD_UNIT_A, UPS_UNIT, DONE_UNIT],
 [MOV_Bypass,VEC_Bypass], [
 InstrItinData<II_ABS, [InstrStage<1,  [R_WX_PORT]>], [1,1,/*def:srCarry*/1]>,
 
 // Note that ACQ operations are not completely modeled here.  Some aspects of their
 // scheduling dependencies are implemented as ScheduleDAGMutations.
-InstrItinData<II_ACQ, [EmptyCycles<1>, InstrStage<4, [SEMAPHORE]>], [1, 1]>,
-InstrItinData<II_ACQ_COND, [EmptyCycles<1>, InstrStage<4, [SEMAPHORE]>], [1, 1, 1]>,
+InstrItinData<II_ACQ, [], [1, 1]>,
+InstrItinData<II_ACQ_COND, [], [1, 1, 1]>,
 
 InstrItinData<II_ADC, [InstrStage<1,  [R_WX_PORT]>],
               [1,1,1,/*def:srCarry*/1,/*use:srCarry*/1]>,
@@ -646,8 +643,8 @@ InstrItinData<II_MOV_CNTR, [], [1,/*CNTR*/1]>,
 
 // Note that REL operations are not completely modeled here.  Some aspects of their
 // scheduling dependencies are implemented as ScheduleDAGMutations.
-InstrItinData<II_REL,[EmptyCycles<1>, InstrStage<4, [SEMAPHORE]>], [1,1]>,
-InstrItinData<II_REL_COND, [EmptyCycles<1>, InstrStage<4, [SEMAPHORE]>], [1,1,1]>,
+InstrItinData<II_REL,[], [1,1]>,
+InstrItinData<II_REL_COND, [], [1,1,1]>,
 
 InstrItinData<II_RET, [], [1,1]>,
 InstrItinData<II_SBC, [InstrStage<1,  [R_WX_PORT]>],
@@ -1015,9 +1012,6 @@ InstrItinData<II_VMOV_X_XM_XM, [EmptyCycles<1>, SimpleCycle<W_WM_PORT>],
               [2,1], [MOV_Bypass, MOV_Bypass]>,
 InstrItinData<II_VMOV_CM, [InstrStage<1, [CM_RM_PORT]>, InstrStage<1,  [CM_WM_PORT]>], [2,1]>,
 
-// Note: We reserve the semaphore interface at the same cycles as ACQ/REL to
-// steer cascade streams sufficiently away from them. This is very conservative,
-// and will cause at least three cycles between stream operations and locks.
 InstrItinData<II_VMOV_CASCADE_READ, [EmptyCycles<6>, PrefixCycle<W_WA_PORT>, SimpleCycle<CM_WM_PORT>],
               [7,/*crSCDEn*/5]>,
 InstrItinData<II_VMOV_CASCADE_WRITE,[SimpleCycle<W_RS_PORT>],
