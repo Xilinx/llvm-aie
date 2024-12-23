@@ -222,25 +222,27 @@ bool llvm::canAdvanceOp(MachineInstr &MemI, MachineInstr &Dest,
 
 /// Find the def instruction for \p Reg, folding away any trivial copies and
 /// bitcasts. May return nullptr if \p Reg is not a generic virtual register.
+/// The \p AllowMultiUse flag permits folding even if the def instruction for \p
+/// Reg, has multiple uses.
 MachineInstr *
-llvm::getDefIgnoringCopiesAndBitcasts(Register Reg,
+llvm::getDefIgnoringCopiesAndBitcasts(Register Reg, bool AllowMultiUse,
                                       const MachineRegisterInfo &MRI) {
 
   MachineInstr *DefInstr = MRI.getVRegDef(Reg);
-
-  auto IsSingleUseCopyOrBitcast = [&](const MachineInstr *MI) {
-    return (MI->isCopy() ||
-            (DefInstr->getOpcode() == TargetOpcode::G_BITCAST)) &&
-           MRI.hasOneNonDBGUse(MI->getOperand(0).getReg());
+  // Checks if MI is a copy or bitcast and valid if multiple uses are allowed,
+  // otherwise requires a single use.
+  auto IsValidCopyOrBitcast = [&](const MachineInstr *MI) {
+    return (MI->isCopy() || (MI->getOpcode() == TargetOpcode::G_BITCAST)) &&
+           (AllowMultiUse ||
+            MRI.hasOneNonDBGUse(DefInstr->getOperand(0).getReg()));
   };
 
   auto UseVirtReg = [&](const MachineInstr *MI) {
     return MI->getOperand(1).getReg().isVirtual();
   };
 
-  // No other use for this copy/bitcast.
   // Stop if we reach an use of a physical register.
-  while (DefInstr && IsSingleUseCopyOrBitcast(DefInstr) && UseVirtReg(DefInstr))
+  while (DefInstr && IsValidCopyOrBitcast(DefInstr) && UseVirtReg(DefInstr))
     DefInstr = MRI.getVRegDef(DefInstr->getOperand(1).getReg());
 
   return DefInstr;
@@ -1395,7 +1397,8 @@ bool llvm::matchExtractConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
   const unsigned ExtractSize =
       MRI.getType(MI.getOperand(0).getReg()).getSizeInBits();
 
-  MachineInstr &SrcMI = *MRI.getVRegDef(MI.getOperand(ExtractOp->Src).getReg());
+  MachineInstr &SrcMI = *getDefIgnoringCopiesAndBitcasts(
+      MI.getOperand(ExtractOp->Src).getReg(), true, MRI);
 
   Register SrcReg;
   unsigned ConcatSize = 0;
@@ -1415,8 +1418,9 @@ void llvm::applyExtractConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
   B.setInstrAndDebugLoc(MI);
   Register DstReg = MI.getOperand(0).getReg();
   Register SrcReg = MatchInfo;
-
-  B.buildCopy(DstReg, SrcReg);
+  // Build a copy if types match, otherwise build a bitcast.
+  MRI.getType(DstReg) == MRI.getType(SrcReg) ? B.buildCopy(DstReg, SrcReg)
+                                             : B.buildBitcast(DstReg, SrcReg);
   MI.eraseFromParent();
 }
 
@@ -1582,7 +1586,8 @@ bool llvm::matchLoadStoreSplit(GLoadStore &MI, MachineRegisterInfo &MRI,
         return false;
     }
   } else {
-    MachineInstr &ConvInstr = *getDefIgnoringCopiesAndBitcasts(ValReg, MRI);
+    MachineInstr &ConvInstr =
+        *getDefIgnoringCopiesAndBitcasts(ValReg, false, MRI);
     if (TII.canCombineWithLoadStore(ConvInstr))
       return false;
   }
