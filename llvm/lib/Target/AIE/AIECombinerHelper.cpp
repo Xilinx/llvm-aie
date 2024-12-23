@@ -170,8 +170,8 @@ bool isNonCoalesceableUseOf(const MachineInstr &MemI,
       MRI.hasOneNonDBGUse(InBetweenMI.getOperand(0).getReg())) {
     const MachineInstr *CopyOrignMI =
         MRI.getVRegDef(InBetweenMI.getOperand(1).getReg());
-    const MachineInstr *CopyDestMI =
-        &*MRI.use_instr_nodbg_begin(InBetweenMI.getOperand(0).getReg());
+    const MachineInstr *CopyDestMI = getUserIgnoringCopiesAndBitcasts(
+        InBetweenMI.getOperand(0).getReg(), MRI);
     if (CopyOrignMI == &MemI && CopyDestMI == &Dest)
       return false;
   }
@@ -246,6 +246,29 @@ llvm::getDefIgnoringCopiesAndBitcasts(Register Reg, bool AllowMultiUse,
     DefInstr = MRI.getVRegDef(DefInstr->getOperand(1).getReg());
 
   return DefInstr;
+}
+
+/// Find the use instruction for \p Reg, folding away any trivial copies and
+/// bitcasts. May return nullptr if \p Reg is not a generic virtual register.
+MachineInstr *
+llvm::getUserIgnoringCopiesAndBitcasts(Register Reg,
+                                       const MachineRegisterInfo &MRI) {
+  MachineInstr *User = &*MRI.use_instr_nodbg_begin(Reg);
+
+  auto IsSingleUseCopyOrBitcast = [&](const MachineInstr *MI) {
+    return (MI->isCopy() || (MI->getOpcode() == TargetOpcode::G_BITCAST)) &&
+           MRI.hasOneNonDBGUse(MI->getOperand(0).getReg());
+  };
+
+  auto UseVirtReg = [&](const MachineInstr *MI) {
+    return MI->getOperand(1).getReg().isVirtual();
+  };
+
+  // Stop if we reach an use of a physical register.
+  while (User && IsSingleUseCopyOrBitcast(User) && UseVirtReg(User))
+    User = &*MRI.use_instr_nodbg_begin(User->getOperand(0).getReg());
+
+  return User;
 }
 
 MachineInstr *findLastRegUseInBB(Register Reg, MachineInstr &IgnoreUser,

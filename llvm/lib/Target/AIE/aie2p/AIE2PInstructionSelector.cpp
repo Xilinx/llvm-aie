@@ -1304,7 +1304,8 @@ bool AIE2PInstructionSelector::selectG_AIE_LOAD_UPS(MachineInstr &UPSI,
 
   // First use is the G_INTRINSIC_W_SIDE_EFFECTS ID
   Register LoadResult = (std::next(UPSI.uses().begin()))->getReg();
-  MachineInstr *LoadOp = getDefIgnoringCopiesAndBitcasts(LoadResult, MRI);
+  MachineInstr *LoadOp =
+      getDefIgnoringCopiesAndBitcasts(LoadResult, false, MRI);
 
   assert(LoadOp && "Expected SSA.");
 
@@ -3371,7 +3372,8 @@ bool AIE2PInstructionSelector::selectG_AIE_STORE_PACK(
     MachineInstr &StoreI, MachineRegisterInfo &MRI) {
 
   Register PackResult = (StoreI.uses().begin())->getReg();
-  MachineInstr *PackOp = getDefIgnoringCopiesAndBitcasts(PackResult, MRI);
+  MachineInstr *PackOp =
+      getDefIgnoringCopiesAndBitcasts(PackResult, false, MRI);
 
   if (!canCombinePACK(StoreI, *PackOp, MRI))
     return false;
@@ -3451,7 +3453,7 @@ bool AIE2PInstructionSelector::selectG_AIE_STORE_SRS(MachineInstr &StoreI,
                                                      MachineRegisterInfo &MRI) {
 
   Register SrsResult = (StoreI.uses().begin())->getReg();
-  MachineInstr *SrsOp = getDefIgnoringCopiesAndBitcasts(SrsResult, MRI);
+  MachineInstr *SrsOp = getDefIgnoringCopiesAndBitcasts(SrsResult, false, MRI);
 
   assert(SrsOp && "Expected SSA.");
 
@@ -3735,7 +3737,8 @@ bool AIE2PInstructionSelector::selectG_AIE_STORE_CONV(
   // differ.
 
   Register ConvResult = (StoreI.uses().begin())->getReg();
-  MachineInstr *ConvOp = getDefIgnoringCopiesAndBitcasts(ConvResult, MRI);
+  MachineInstr *ConvOp =
+      getDefIgnoringCopiesAndBitcasts(ConvResult, false, MRI);
 
   assert(ConvOp && "Expected SSA.");
 
@@ -3981,7 +3984,8 @@ bool AIE2PInstructionSelector::canCombineUNPACKLoad(MachineInstr &MemOp,
 bool AIE2PInstructionSelector::selectG_AIE_LOAD_UNPACK(
     MachineInstr &UNPACKI, MachineRegisterInfo &MRI) {
   Register LoadResult = (std::next(UNPACKI.uses().begin()))->getReg();
-  MachineInstr *LoadOp = getDefIgnoringCopiesAndBitcasts(LoadResult, MRI);
+  MachineInstr *LoadOp =
+      getDefIgnoringCopiesAndBitcasts(LoadResult, false, MRI);
   // Should we build the instruction at load's position?
   bool ShouldAdvanceOp = false;
 
@@ -4936,7 +4940,8 @@ unsigned int getStoreFifoOpcode(MachineInstr &I) {
 bool AIE2PInstructionSelector::selectVST_FIFO_CONV(MachineInstr &StoreI,
                                                    MachineRegisterInfo &MRI) {
   Register ConvResult = StoreI.getOperand(5).getReg();
-  MachineInstr *ConvOp = getDefIgnoringCopiesAndBitcasts(ConvResult, MRI);
+  MachineInstr *ConvOp =
+      getDefIgnoringCopiesAndBitcasts(ConvResult, false, MRI);
   assert(ConvOp && "Expected SSA.");
 
   if (!canCombineCONV(StoreI, *ConvOp) ||

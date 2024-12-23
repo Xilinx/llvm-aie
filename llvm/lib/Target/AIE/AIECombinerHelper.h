@@ -115,6 +115,10 @@ bool canAdvanceOp(MachineInstr &MemI, MachineInstr &Dest,
 /// Reg, has multiple uses.
 MachineInstr *getDefIgnoringCopiesAndBitcasts(Register Reg, bool AllowMultiUse,
                                               const MachineRegisterInfo &MRI);
+/// Find the use instruction for \p Reg, folding away any trivial copies and
+/// bitcasts. May return nullptr if \p Reg is not a generic virtual register.
+MachineInstr *getUserIgnoringCopiesAndBitcasts(Register Reg,
+                                               const MachineRegisterInfo &MRI);
 
 class InstrNode {
   MachineInstr *BaseNode;
