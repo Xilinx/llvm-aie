@@ -29,8 +29,8 @@ define dso_local noundef i64 @_Z14return_v2int32v() local_unnamed_addr #0 {
 ; CHECK-NEXT:    nopx // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
-; CHECK-NEXT:    mova r0, #100 // Delay Slot 2
-; CHECK-NEXT:    mova r1, #0 // Delay Slot 1
+; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    mova r0, #100; movx r1, #0 // Delay Slot 1
 entry:
   ret i64 100
 }

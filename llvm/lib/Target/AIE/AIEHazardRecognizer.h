@@ -29,6 +29,7 @@
 namespace llvm {
 
 class MachineInstr;
+using ConflictTypeBits = std::uint32_t;
 
 void applyFormatOrdering(AIE::MachineBundle &Bundle, const VLIWFormat &Format,
                          MachineInstr *BundleRoot,
@@ -97,6 +98,7 @@ public:
   void dump() const;
 
   FuncUnitWrapper &operator|=(const FuncUnitWrapper &Other);
+  FuncUnitWrapper &operator^=(const FuncUnitWrapper &Other);
   bool conflict(const FuncUnitWrapper &Other) const;
 };
 
@@ -111,6 +113,13 @@ class AIEHazardRecognizer : public ScheduleHazardRecognizer {
   void computeMaxLatency();
 
 public:
+  enum class ConflictType : std::uint32_t {
+    NoConflict = 0b000,
+    Format = 0b001,
+    MemoryBank = 0b010,
+    FuncUnit = 0b100,
+  };
+
   /// ScoreboardDepth can be used to speficy a fixed depth without querying the
   /// scheduling model. This is mostly used for testing, for other cases we
   /// should trust the instruction itineraries.
@@ -161,6 +170,18 @@ public:
                         iterator_range<const MachineOperand *> MIOperands,
                         const MachineRegisterInfo &MRI, int DeltaCycles);
 
+  void releaseFromScoreboard(ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+                             const MCInstrDesc &Desc,
+                             MemoryBankBits MemoryBanks,
+                             iterator_range<const MachineOperand *> MIOperands,
+                             const MachineRegisterInfo &MRI,
+                             int DeltaCycles) const;
+  // Apply the above function to the local scoreboard.
+  void releaseFromScoreboard(const MCInstrDesc &Desc,
+                             MemoryBankBits MemoryBanks,
+                             iterator_range<const MachineOperand *> MIOperands,
+                             const MachineRegisterInfo &MRI, int DeltaCycles);
+
   /// Block all scoreboard resources at DeltaCycles
   void blockCycleInScoreboard(int DeltaCycle);
 
@@ -201,18 +222,47 @@ public:
                 const MCInstrDesc &Desc, MemoryBankBits MemoryBanks,
                 iterator_range<const MachineOperand *> MIOperands,
                 const MachineRegisterInfo &MRI, int DeltaCycles) const;
-  bool checkConflict(const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
-                     MachineInstr &MI, int DeltaCycles) const;
+  ScheduleHazardRecognizer::HazardType
+  getHazardType(const MCInstrDesc &Desc, MemoryBankBits MemoryBanks,
+                iterator_range<const MachineOperand *> MIOperands,
+                const MachineRegisterInfo &MRI, int DeltaCycles);
+
+  ConflictTypeBits
+  checkConflict(const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+                MachineInstr &MI, const MCInstrDesc &Desc,
+                int DeltaCycles) const;
+  ConflictTypeBits checkConflict(MachineInstr &MI, const MCInstrDesc &Desc,
+                                 int DeltaCycles);
+
+  ConflictTypeBits
+  checkConflict(const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+                MachineInstr &MI, int DeltaCycles) const;
+  ConflictTypeBits checkConflict(MachineInstr &MI, int DeltaCycles);
 
 protected:
   ScheduleHazardRecognizer::HazardType getHazardType(const MCInstrDesc &Desc,
                                                      int DeltaCycles);
-  static bool
+  static ConflictTypeBits
   checkConflict(const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
                 const InstrItineraryData *ItinData, unsigned SchedClass,
                 SlotBits SlotSet, MemoryBankBits MemoryBanks,
                 SmallVector<int, 2> MemoryAccessCycles, int DeltaCycles,
                 std::optional<int> FUDepthLimit);
+
+  static ConflictTypeBits
+  checkFormatConflict(const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+                      int DeltaCycles, unsigned SlotSet);
+
+  static ConflictTypeBits
+  checkMemoryBankConflict(const SmallVector<int, 2> &MemoryAccessCycles,
+                          const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+                          int DeltaCycles, unsigned MemoryBanks);
+
+  static ConflictTypeBits
+  checkFUConflict(const InstrItineraryData *ItinData, unsigned SchedClass,
+                  int DeltaCycles,
+                  const ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+                  const std::optional<int> &FUDepthLimit);
 
   static void enterResources(ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
                              const InstrItineraryData *ItinData,
@@ -220,6 +270,14 @@ protected:
                              MemoryBankBits MemoryBanks,
                              SmallVector<int, 2> MemoryAccessCycles,
                              int DeltaCycles, std::optional<int> FUDepthLimit);
+
+  static void releaseResources(ResourceScoreboard<FuncUnitWrapper> &Scoreboard,
+                               const InstrItineraryData *ItinData,
+                               unsigned SchedClass, SlotBits SlotSet,
+                               MemoryBankBits MemoryBanks,
+                               SmallVector<int, 2> MemoryAccessCycles,
+                               int DeltaCycles,
+                               std::optional<int> FUDepthLimit);
 
 private:
   ResourceScoreboard<FuncUnitWrapper> Scoreboard;

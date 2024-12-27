@@ -983,6 +983,15 @@ bool AIE2InstrInfo::isSchedBarrier(const MachineInstr &MI) const {
           MI.getOpcode() == AIE2::MOV_CNTR || isDelayedSchedBarrier(MI));
 }
 
+bool AIE2InstrInfo::isScalarMove(unsigned OpCode) const {
+  switch (OpCode) {
+  case AIE2::MOV_mv_scl:
+    return true;
+  default:
+    return false;
+  }
+}
+
 unsigned AIE2InstrInfo::getNumReservedDelaySlots(const MachineInstr &MI) const {
   return 0;
 }
@@ -1418,6 +1427,11 @@ AIE2InstrInfo::getVExtractOpInfo(const MachineInstr &MI) const {
 }
 
 unsigned AIE2InstrInfo::getMaxLoadStoreSize() const { return 256; }
+
+std::vector<unsigned> AIE2InstrInfo::getDelayedScalarMoveOpcode() const {
+  return {AIE2::MOV_D1, AIE2::MOV_D2, AIE2::MOV_D3,
+          AIE2::MOV_D4, AIE2::MOV_D5, AIE2::MOV_D6};
+}
 
 bool AIE2InstrInfo::canCombineWithLoadStore(const MachineInstr &MI) const {
 

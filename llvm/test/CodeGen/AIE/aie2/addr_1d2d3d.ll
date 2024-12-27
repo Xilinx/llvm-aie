@@ -170,9 +170,8 @@ define dso_local ptr @test_add_2d_ptr_backTOback_call(ptr %a, i32 noundef %off, 
 ; CHECK-LABEL: test_add_2d_ptr_backTOback_call:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopx ; mov p0, p1
-; CHECK-NEXT:    mova r3, #6
-; CHECK-NEXT:    mova dc0, #0
+; CHECK-NEXT:    nopa ; nopx ; mov p0, p1
+; CHECK-NEXT:    mova r3, #6; mov dc0, #0
 ; CHECK-NEXT:    mov dn0, r1
 ; CHECK-NEXT:    lshl r0, r0, r3
 ; CHECK-NEXT:    ret lr
@@ -200,9 +199,8 @@ define dso_local ptr @test_add_3d_ptr_backTOback_call(ptr %a, i32 noundef %off, 
 ; CHECK-LABEL: test_add_3d_ptr_backTOback_call:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopx ; mov p0, p1
-; CHECK-NEXT:    mova r5, #6
-; CHECK-NEXT:    mova dc0, #0
+; CHECK-NEXT:    nopa ; nopx ; mov p0, p1
+; CHECK-NEXT:    mova r5, #6; mov dc0, #0
 ; CHECK-NEXT:    mov dn0, r1
 ; CHECK-NEXT:    mov dn4, r3
 ; CHECK-NEXT:    lshl r0, r0, r5

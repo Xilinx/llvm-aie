@@ -26,15 +26,13 @@ define dso_local noundef <16 x i32> @_Z17test_max_v16int32Dv16_iS_b(<16 x i32> n
 ; CHECK-LABEL: _Z17test_max_v16int32Dv16_iS_b:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mov r1, r16
-; CHECK-NEXT:    mov crVaddSign, r0
-; CHECK-NEXT:    vmax_lt.d32 x0, r16, x2, x4
+; CHECK-NEXT:    nopa ; mov r1, r16
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    mov crVaddSign, #0 // Delay Slot 4
+; CHECK-NEXT:    mov crVaddSign, r0 // Delay Slot 5
+; CHECK-NEXT:    vmax_lt.d32 x0, r16, x2, x4 // Delay Slot 4
 ; CHECK-NEXT:    vmax_lt.s32 x0, r16, x0, x4 // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
-; CHECK-NEXT:    mov r16, r1 // Delay Slot 1
+; CHECK-NEXT:    or r16, r1, r1; mov crVaddSign, #0 // Delay Slot 1
 entry:
   %conv.i.i = zext i1 %sgn to i32
   %0 = tail call { <16 x i32>, i32 } @llvm.aie2.vmax.lt32(<16 x i32> %a, <16 x i32> %b, i32 %conv.i.i)

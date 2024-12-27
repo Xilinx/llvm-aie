@@ -58,6 +58,10 @@ struct AIEBaseRegisterInfo : public TargetRegisterInfo {
   virtual bool isReservedStickyReg(MCRegister PhysReg) const {
     llvm_unreachable("Target didn't implement isReservedStickyReg!");
   }
+
+  /// Check if Reg is part of the R-type register file
+  virtual bool isRTypeReg(Register Reg) const { return false; }
+
 #if 0
   /// Returns a BitVector of the intersection of GPR RegClass
   /// and CalleeSaved Registers

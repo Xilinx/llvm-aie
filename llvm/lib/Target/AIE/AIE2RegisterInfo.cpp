@@ -141,6 +141,10 @@ bool AIE2RegisterInfo::isReservedStickyReg(MCRegister PhysReg) const {
   }
 }
 
+bool AIE2RegisterInfo::isRTypeReg(Register Reg) const {
+  return Reg.isPhysical() && AIE2::eRRegClass.contains(Reg);
+}
+
 const uint32_t *AIE2RegisterInfo::getNoPreservedMask() const {
   return CSR_NoRegs_RegMask;
 }

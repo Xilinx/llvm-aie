@@ -72,15 +72,14 @@ define dso_local noundef <128 x i8> @_Z27test_set_v256uint4_1024_256iDv32_DU8_(i
 ; CHECK-LABEL: _Z27test_set_v256uint4_1024_256iDv32_DU8_:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; paddb [sp], #160; nopxm ; nops
-; CHECK-NEXT:    mova r2, #4
+; CHECK-NEXT:    paddb [sp], #160; nopa ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    mov r1, r0
 ; CHECK-NEXT:    jl #__modsi3
 ; CHECK-NEXT:    vmov wh5, wl0 // Delay Slot 5
 ; CHECK-NEXT:    st r16, [sp, #-160] // 4-byte Folded Spill Delay Slot 4
 ; CHECK-NEXT:    st lr, [sp, #-156] // 4-byte Folded Spill Delay Slot 3
 ; CHECK-NEXT:    vst wh5, [sp, #-32] // 32-byte Folded Spill Delay Slot 2
-; CHECK-NEXT:    mova r16, #2 // Delay Slot 1
+; CHECK-NEXT:    mova r2, #4; movx r16, #2 // Delay Slot 1
 ; CHECK-NEXT:    nopb ; nopa ; nops ; eq r1, r0, r16; nopm ; nopv
 ; CHECK-NEXT:    jnz r1, #.LBB2_5
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -378,15 +377,14 @@ define dso_local noundef <16 x i64> @_Z17test_set_v32acc32iDv8_u7__acc32(i32 nou
 ; CHECK-LABEL: _Z17test_set_v32acc32iDv8_u7__acc32:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; paddb [sp], #160; nopxm ; nops
-; CHECK-NEXT:    mova r2, #4
+; CHECK-NEXT:    paddb [sp], #160; nopa ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    mov r1, r0
 ; CHECK-NEXT:    jl #__modsi3
 ; CHECK-NEXT:    vmov amhl0, amll1 // Delay Slot 5
 ; CHECK-NEXT:    st r16, [sp, #-160] // 4-byte Folded Spill Delay Slot 4
 ; CHECK-NEXT:    st lr, [sp, #-156] // 4-byte Folded Spill Delay Slot 3
 ; CHECK-NEXT:    vst amhl0, [sp, #-64] // 32-byte Folded Spill Delay Slot 2
-; CHECK-NEXT:    mova r16, #2 // Delay Slot 1
+; CHECK-NEXT:    mova r2, #4; movx r16, #2 // Delay Slot 1
 ; CHECK-NEXT:    nopb ; nopa ; nops ; eq r1, r0, r16; nopm ; nopv
 ; CHECK-NEXT:    jnz r1, #.LBB10_5
 ; CHECK-NEXT:    nop // Delay Slot 5
@@ -561,15 +559,14 @@ define dso_local noundef <16 x i64> @_Z17test_set_v16acc64iDv4_u7__acc64(i32 nou
 ; CHECK-LABEL: _Z17test_set_v16acc64iDv4_u7__acc64:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; paddb [sp], #160; nopxm ; nops
-; CHECK-NEXT:    mova r2, #4
+; CHECK-NEXT:    paddb [sp], #160; nopa ; nops ; nopxm ; nopv
 ; CHECK-NEXT:    mov r1, r0
 ; CHECK-NEXT:    jl #__modsi3
 ; CHECK-NEXT:    vmov amhl0, amll1 // Delay Slot 5
 ; CHECK-NEXT:    st r16, [sp, #-160] // 4-byte Folded Spill Delay Slot 4
 ; CHECK-NEXT:    st lr, [sp, #-156] // 4-byte Folded Spill Delay Slot 3
 ; CHECK-NEXT:    vst amhl0, [sp, #-64] // 32-byte Folded Spill Delay Slot 2
-; CHECK-NEXT:    mova r16, #2 // Delay Slot 1
+; CHECK-NEXT:    mova r2, #4; movx r16, #2 // Delay Slot 1
 ; CHECK-NEXT:    nopb ; nopa ; nops ; eq r1, r0, r16; nopm ; nopv
 ; CHECK-NEXT:    jnz r1, #.LBB14_5
 ; CHECK-NEXT:    nop // Delay Slot 5
