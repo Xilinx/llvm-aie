@@ -30,4 +30,4 @@ jobs:
       projects: clang;lld
       cache-key: amd-aie
       extra_cmake_args: '-DLLVM_USE_LINKER=gold -C clang/cmake/caches/Peano-AIE.cmake'
-      os_list: '["ubuntu-latest"]'
+      os_list: '["amd8700g"]'
