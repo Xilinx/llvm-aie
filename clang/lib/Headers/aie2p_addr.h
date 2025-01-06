@@ -33,6 +33,8 @@ struct dims_2d_t {
       : num1(size1), inc1(inc1), inc2(inc2), count1(0) {};
   dims_2d_t(unsigned int size1, int inc1, int inc2, addr_t count1)
       : num1(size1), inc1(inc1), inc2(inc2), count1(count1) {};
+  // Default constructor
+  dims_2d_t() : num1(0), inc1(0), inc2(0), count1(0) {};
 };
 
 INTRINSIC(dims_2d_t)
@@ -114,6 +116,9 @@ struct dims_3d_t {
             int inc3, addr_t count1, addr_t count2)
       : num1(size1), inc1(inc1), num2(size2), inc2(inc2), inc3(inc3),
         count1(count1), count2(count2) {};
+  // Default constructor
+  dims_3d_t()
+      : num1(0), inc1(0), num2(0), inc2(0), inc3(0), count1(0), count2(0) {};
 };
 
 INTRINSIC(dims_3d_t)
@@ -130,6 +135,17 @@ dims_3d_from_steps(unsigned int size1, int step1, unsigned int size2, int step2,
                    -(((size2 - 1) * step2) + ((size1 - 1) * step1)) + step3,
                    count1, count2);
 };
+
+template <typename T> INTRINSIC(T *) add_2d_byte(T *a, dims_2d_t &params) {
+  return add_2d_byte(a, params.inc2, params.num1, (addr_t &)params.count1,
+                     params.inc1);
+}
+
+template <typename T> INTRINSIC(T *) add_3d_byte(T *a, dims_3d_t &params) {
+  return add_3d_byte(a, params.inc3, params.num1, (addr_t &)params.count1,
+                     params.inc1, params.num2, (addr_t &)params.count2,
+                     params.inc2);
+}
 
 INTRINSIC(v8int32) load_4x16_lo(v8int32 addr) {
   return __builtin_aie2p_load_4x16_lo(addr);

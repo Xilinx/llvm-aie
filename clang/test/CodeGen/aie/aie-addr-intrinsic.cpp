@@ -23,7 +23,6 @@ dims_2d_t test_dims_2d_t (unsigned int size1, int inc1, int inc2) {
   return dims_2d_t(size1,inc1, inc2);
 }
 
-//
 // CHECK-COMMON-LABEL: @_Z15test2_dims_2d_tjiii(
 // CHECK-COMMON-NEXT:  entry:
 // CHECK-COMMON-NEXT:    [[DOTFCA_0_INSERT:%.*]] = insertvalue [[STRUCT_DIMS_2D_T:%.*]] poison, i32 [[SIZE1:%.*]], 0
@@ -224,6 +223,119 @@ v16int32* test_add_2d_byte(v16int32* a, int off, int size1, addr_t& count1, int 
 const v16int32* test_add_2d_byte(const v16int32* a, int off, int size1, addr_t& count1, int inc1){
     return add_2d_byte(a,off,size1,count1,inc1);
 }
+
+// AIE2-LABEL: @_Z16test_add_2d_bytePDv16_iR9dims_2d_t(
+// AIE2-NEXT:  entry:
+// AIE2-NEXT:    [[INC2_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS:%.*]], i20 8
+// AIE2-NEXT:    [[TMP0:%.*]] = load i32, ptr [[INC2_I]], align 4, !tbaa [[TBAA14:![0-9]+]]
+// AIE2-NEXT:    [[TMP1:%.*]] = load i32, ptr [[PARAMS]], align 4, !tbaa [[TBAA16:![0-9]+]]
+// AIE2-NEXT:    [[COUNT1_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 12
+// AIE2-NEXT:    [[INC1_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 4
+// AIE2-NEXT:    [[TMP2:%.*]] = load i32, ptr [[INC1_I]], align 4, !tbaa [[TBAA17:![0-9]+]]
+// AIE2-NEXT:    [[TMP3:%.*]] = trunc i32 [[TMP0]] to i20
+// AIE2-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP2]] to i20
+// AIE2-NEXT:    [[TMP5:%.*]] = trunc i32 [[TMP1]] to i20
+// AIE2-NEXT:    [[TMP6:%.*]] = load i32, ptr [[COUNT1_I]], align 4, !tbaa [[TBAA13]]
+// AIE2-NEXT:    [[TMP7:%.*]] = trunc i32 [[TMP6]] to i20
+// AIE2-NEXT:    [[TMP8:%.*]] = tail call { ptr, i20 } @llvm.aie2.add.2d(ptr [[A:%.*]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP5]], i20 [[TMP7]])
+// AIE2-NEXT:    [[TMP9:%.*]] = extractvalue { ptr, i20 } [[TMP8]], 1
+// AIE2-NEXT:    [[TMP10:%.*]] = zext i20 [[TMP9]] to i32
+// AIE2-NEXT:    store i32 [[TMP10]], ptr [[COUNT1_I]], align 4
+// AIE2-NEXT:    [[TMP11:%.*]] = extractvalue { ptr, i20 } [[TMP8]], 0
+// AIE2-NEXT:    ret ptr [[TMP11]]
+//
+// AIE2P-LABEL: @_Z16test_add_2d_bytePDv16_iR9dims_2d_t(
+// AIE2P-NEXT:  entry:
+// AIE2P-NEXT:    [[INC2_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS:%.*]], i20 8
+// AIE2P-NEXT:    [[TMP0:%.*]] = load i32, ptr [[INC2_I]], align 4, !tbaa [[TBAA14:![0-9]+]]
+// AIE2P-NEXT:    [[TMP1:%.*]] = load i32, ptr [[PARAMS]], align 4, !tbaa [[TBAA16:![0-9]+]]
+// AIE2P-NEXT:    [[COUNT1_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 12
+// AIE2P-NEXT:    [[INC1_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 4
+// AIE2P-NEXT:    [[TMP2:%.*]] = load i32, ptr [[INC1_I]], align 4, !tbaa [[TBAA17:![0-9]+]]
+// AIE2P-NEXT:    [[TMP3:%.*]] = trunc i32 [[TMP0]] to i20
+// AIE2P-NEXT:    [[TMP4:%.*]] = trunc i32 [[TMP2]] to i20
+// AIE2P-NEXT:    [[TMP5:%.*]] = trunc i32 [[TMP1]] to i20
+// AIE2P-NEXT:    [[TMP6:%.*]] = load i32, ptr [[COUNT1_I]], align 4, !tbaa [[TBAA13]]
+// AIE2P-NEXT:    [[TMP7:%.*]] = trunc i32 [[TMP6]] to i20
+// AIE2P-NEXT:    [[TMP8:%.*]] = tail call { ptr, i20 } @llvm.aie2p.add.2d(ptr [[A:%.*]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP5]], i20 [[TMP7]])
+// AIE2P-NEXT:    [[TMP9:%.*]] = extractvalue { ptr, i20 } [[TMP8]], 1
+// AIE2P-NEXT:    [[TMP10:%.*]] = zext i20 [[TMP9]] to i32
+// AIE2P-NEXT:    store i32 [[TMP10]], ptr [[COUNT1_I]], align 4
+// AIE2P-NEXT:    [[TMP11:%.*]] = extractvalue { ptr, i20 } [[TMP8]], 0
+// AIE2P-NEXT:    ret ptr [[TMP11]]
+//
+v16int32* test_add_2d_byte(v16int32* a, dims_2d_t &params){
+    return add_2d_byte(a,params);
+}
+
+// AIE2-LABEL: @_Z16test_add_3d_bytePDv16_iR9dims_3d_t(
+// AIE2-NEXT:  entry:
+// AIE2-NEXT:    [[INC3_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS:%.*]], i20 16
+// AIE2-NEXT:    [[TMP0:%.*]] = load i32, ptr [[INC3_I]], align 4, !tbaa [[TBAA10]]
+// AIE2-NEXT:    [[TMP1:%.*]] = load i32, ptr [[PARAMS]], align 4, !tbaa [[TBAA2]]
+// AIE2-NEXT:    [[COUNT1_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 20
+// AIE2-NEXT:    [[INC1_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 4
+// AIE2-NEXT:    [[TMP2:%.*]] = load i32, ptr [[INC1_I]], align 4, !tbaa [[TBAA7]]
+// AIE2-NEXT:    [[NUM2_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 8
+// AIE2-NEXT:    [[TMP3:%.*]] = load i32, ptr [[NUM2_I]], align 4, !tbaa [[TBAA8]]
+// AIE2-NEXT:    [[COUNT2_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 24
+// AIE2-NEXT:    [[INC2_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 12
+// AIE2-NEXT:    [[TMP4:%.*]] = load i32, ptr [[INC2_I]], align 4, !tbaa [[TBAA9]]
+// AIE2-NEXT:    [[TMP5:%.*]] = trunc i32 [[TMP0]] to i20
+// AIE2-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP2]] to i20
+// AIE2-NEXT:    [[TMP7:%.*]] = trunc i32 [[TMP4]] to i20
+// AIE2-NEXT:    [[TMP8:%.*]] = trunc i32 [[TMP1]] to i20
+// AIE2-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT1_I]], align 4, !tbaa [[TBAA13]]
+// AIE2-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
+// AIE2-NEXT:    [[TMP11:%.*]] = trunc i32 [[TMP3]] to i20
+// AIE2-NEXT:    [[TMP12:%.*]] = load i32, ptr [[COUNT2_I]], align 4, !tbaa [[TBAA13]]
+// AIE2-NEXT:    [[TMP13:%.*]] = trunc i32 [[TMP12]] to i20
+// AIE2-NEXT:    [[TMP14:%.*]] = tail call { ptr, i20, i20 } @llvm.aie2.add.3d(ptr [[A:%.*]], i20 [[TMP5]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]], i20 [[TMP13]])
+// AIE2-NEXT:    [[TMP15:%.*]] = extractvalue { ptr, i20, i20 } [[TMP14]], 1
+// AIE2-NEXT:    [[TMP16:%.*]] = zext i20 [[TMP15]] to i32
+// AIE2-NEXT:    [[TMP17:%.*]] = extractvalue { ptr, i20, i20 } [[TMP14]], 2
+// AIE2-NEXT:    [[TMP18:%.*]] = zext i20 [[TMP17]] to i32
+// AIE2-NEXT:    store i32 [[TMP16]], ptr [[COUNT1_I]], align 4
+// AIE2-NEXT:    store i32 [[TMP18]], ptr [[COUNT2_I]], align 4
+// AIE2-NEXT:    [[TMP19:%.*]] = extractvalue { ptr, i20, i20 } [[TMP14]], 0
+// AIE2-NEXT:    ret ptr [[TMP19]]
+//
+// AIE2P-LABEL: @_Z16test_add_3d_bytePDv16_iR9dims_3d_t(
+// AIE2P-NEXT:  entry:
+// AIE2P-NEXT:    [[INC3_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS:%.*]], i20 16
+// AIE2P-NEXT:    [[TMP0:%.*]] = load i32, ptr [[INC3_I]], align 4, !tbaa [[TBAA10]]
+// AIE2P-NEXT:    [[TMP1:%.*]] = load i32, ptr [[PARAMS]], align 4, !tbaa [[TBAA2]]
+// AIE2P-NEXT:    [[COUNT1_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 20
+// AIE2P-NEXT:    [[INC1_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 4
+// AIE2P-NEXT:    [[TMP2:%.*]] = load i32, ptr [[INC1_I]], align 4, !tbaa [[TBAA7]]
+// AIE2P-NEXT:    [[NUM2_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 8
+// AIE2P-NEXT:    [[TMP3:%.*]] = load i32, ptr [[NUM2_I]], align 4, !tbaa [[TBAA8]]
+// AIE2P-NEXT:    [[COUNT2_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 24
+// AIE2P-NEXT:    [[INC2_I:%.*]] = getelementptr inbounds i8, ptr [[PARAMS]], i20 12
+// AIE2P-NEXT:    [[TMP4:%.*]] = load i32, ptr [[INC2_I]], align 4, !tbaa [[TBAA9]]
+// AIE2P-NEXT:    [[TMP5:%.*]] = trunc i32 [[TMP0]] to i20
+// AIE2P-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP2]] to i20
+// AIE2P-NEXT:    [[TMP7:%.*]] = trunc i32 [[TMP4]] to i20
+// AIE2P-NEXT:    [[TMP8:%.*]] = trunc i32 [[TMP1]] to i20
+// AIE2P-NEXT:    [[TMP9:%.*]] = load i32, ptr [[COUNT1_I]], align 4, !tbaa [[TBAA13]]
+// AIE2P-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
+// AIE2P-NEXT:    [[TMP11:%.*]] = trunc i32 [[TMP3]] to i20
+// AIE2P-NEXT:    [[TMP12:%.*]] = load i32, ptr [[COUNT2_I]], align 4, !tbaa [[TBAA13]]
+// AIE2P-NEXT:    [[TMP13:%.*]] = trunc i32 [[TMP12]] to i20
+// AIE2P-NEXT:    [[TMP14:%.*]] = tail call { ptr, i20, i20 } @llvm.aie2p.add.3d(ptr [[A:%.*]], i20 [[TMP5]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]], i20 [[TMP13]])
+// AIE2P-NEXT:    [[TMP15:%.*]] = extractvalue { ptr, i20, i20 } [[TMP14]], 1
+// AIE2P-NEXT:    [[TMP16:%.*]] = zext i20 [[TMP15]] to i32
+// AIE2P-NEXT:    [[TMP17:%.*]] = extractvalue { ptr, i20, i20 } [[TMP14]], 2
+// AIE2P-NEXT:    [[TMP18:%.*]] = zext i20 [[TMP17]] to i32
+// AIE2P-NEXT:    store i32 [[TMP16]], ptr [[COUNT1_I]], align 4
+// AIE2P-NEXT:    store i32 [[TMP18]], ptr [[COUNT2_I]], align 4
+// AIE2P-NEXT:    [[TMP19:%.*]] = extractvalue { ptr, i20, i20 } [[TMP14]], 0
+// AIE2P-NEXT:    ret ptr [[TMP19]]
+//
+v16int32* test_add_3d_byte(v16int32* a, dims_3d_t &params){
+    return add_3d_byte(a,params);
+}
+
 
 // AIE2-LABEL: @_Z15test_add_3d_ptrPDv16_iiiRiiiS1_i(
 // AIE2-NEXT:  entry:

@@ -264,4 +264,15 @@ load_lut_2x_float(const void *lut1, const void *lut2, v16uint32 offset,
       (v32bfloat16)insert(v2, 1, (v16bfloat16)read_lut64_3(lut1, lut2, offset));
 }
 
+template <typename T> INTRINSIC(T *) add_2d_byte(T *a, dims_2d_t &params) {
+  return add_2d_byte(a, params.inc2, params.num1, (addr_t &)params.count1,
+                     params.inc1);
+}
+
+template <typename T> INTRINSIC(T *) add_3d_byte(T *a, dims_3d_t &params) {
+  return add_3d_byte(a, params.inc3, params.num1, (addr_t &)params.count1,
+                     params.inc1, params.num2, (addr_t &)params.count2,
+                     params.inc2);
+}
+
 #endif /*__AIEV2_ADDR_H__*/
