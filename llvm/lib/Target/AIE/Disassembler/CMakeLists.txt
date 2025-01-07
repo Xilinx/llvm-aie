@@ -7,6 +7,7 @@
 add_llvm_component_library(LLVMAIEDisassembler
   AIEDisassembler.cpp
   AIE2Disassembler.cpp
+  AIE2PDisassembler.cpp
   InitializeDisassemblers.cpp
 
   LINK_COMPONENTS

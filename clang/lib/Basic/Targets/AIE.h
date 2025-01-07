@@ -31,6 +31,10 @@ static const char *const DataLayoutStringAIE2 =
     "e-m:e-p:20:32-i1:8:32-i8:8:32-i16:16:32-"
     "i32:32:32-f32:32:32-i64:32-f64:32-a:0:32-n32";
 
+static const char *const DataLayoutStringAIE2P =
+    "e-m:e-p:20:32-i1:8:32-i8:8:32-i16:16:32-"
+    "i32:32:32-f32:32:32-i64:32-f64:32-a:0:32-n32";
+
 class LLVM_LIBRARY_VISIBILITY AIETargetInfo : public TargetInfo {
 
   // TODO aie1 is currently named as aie, perhaps we should change the
@@ -40,6 +44,9 @@ class LLVM_LIBRARY_VISIBILITY AIETargetInfo : public TargetInfo {
   }
   static bool isAIE2(const llvm::Triple &TT) {
     return TT.getArch() == llvm::Triple::aie2;
+  }
+  static bool isAIE2P(const llvm::Triple &TT) {
+    return TT.getArch() == llvm::Triple::aie2p;
   }
 
 public:
@@ -56,9 +63,16 @@ public:
 
     // Vector types on AIE have maximum 32-byte alignment
     MaxVectorAlign = 256;
+    std::string DataLayout;
 
-    resetDataLayout(isAIE2(getTriple()) ? DataLayoutStringAIE2
-                                        : DataLayoutStringAIE);
+    if (isAIE1(getTriple()))
+      DataLayout = DataLayoutStringAIE;
+    else if (isAIE2(getTriple()))
+      DataLayout = DataLayoutStringAIE2;
+    else if (isAIE2P(getTriple()))
+      DataLayout = DataLayoutStringAIE2P;
+    resetDataLayout(DataLayout);
+
     if (hasBFloat16Type()) {
       BFloat16Width = BFloat16Align = 16;
       BFloat16Format = &llvm::APFloat::BFloat();
@@ -93,10 +107,12 @@ public:
     return false;
   }
   bool hasBitIntType() const override { return true; }
-  bool hasBFloat16Type() const override { return isAIE2(getTriple()); }
+  bool hasBFloat16Type() const override {
+    return isAIE2(getTriple()) || isAIE2P(getTriple());
+  }
   bool hasInt128Type() const override { return isAIE2(getTriple()); }
   bool isCLZForZeroUndef() const override {
-    if (isAIE2(getTriple()))
+    if (isAIE2(getTriple()) || isAIE2P(getTriple()))
       return false;
     return true;
   }

@@ -1,0 +1,88 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; NEZ
+    $r10 = NEZ $r15
+    $r23 = NEZ $r14
+    $r21 = NEZ $r30
+    $r18 = NEZ $r13
+    $r17 = NEZ $r28
+    $r3 = NEZ $r20
+    $r11 = NEZ $r25
+    $r31 = NEZ $r4
+    $r19 = NEZ $r0
+    $r22 = NEZ $r31
+    $r9 = NEZ $r19
+    $r25 = NEZ $r11
+    $r13 = NEZ $r9
+    $r7 = NEZ $r27
+    $r16 = NEZ $r2
+    $r1 = NEZ $r6
+    $r8 = NEZ $r10
+    $r29 = NEZ $r5
+    $r2 = NEZ $r22
+    $r0 = NEZ $r3
+    $r5 = NEZ $r1
+    $r27 = NEZ $r26
+    $r20 = NEZ $r17
+    $r6 = NEZ $r8
+    $r26 = NEZ $r7
+    $r15 = NEZ $r21
+    $r4 = NEZ $r16
+    $r30 = NEZ $r23
+    $r12 = NEZ $r18
+    $r14 = NEZ $r24
+    $r28 = NEZ $r29
+    $r24 = NEZ $r12
+...
+
+# CHECK: 0: 18 f0 d4 13 nez r10, r15
+# CHECK: 4: 18 f0 ae 13 nez r23, r14
+# CHECK: 8: 18 f0 aa 17 nez r21, r30
+# CHECK: c: 18 f0 64 13 nez r18, r13
+# CHECK: 10: 18 f0 22 17 nez r17, r28
+# CHECK: 14: 18 f0 06 15 nez r3, r20
+# CHECK: 18: 18 f0 56 16 nez r11, r25
+# CHECK: 1c: 18 f0 3e 11 nez r31, r4
+# CHECK: 20: 18 f0 26 10 nez r19, r0
+# CHECK: 24: 18 f0 ec 17 nez r22, r31
+# CHECK: 28: 18 f0 d2 14 nez r9, r19
+# CHECK: 2c: 18 f0 f2 12 nez r25, r11
+# CHECK: 30: 18 f0 5a 12 nez r13, r9
+# CHECK: 34: 18 f0 ce 16 nez r7, r27
+# CHECK: 38: 18 f0 a0 10 nez r16, r2
+# CHECK: 3c: 18 f0 82 11 nez r1, r6
+# CHECK: 40: 18 f0 90 12 nez r8, r10
+# CHECK: 44: 18 f0 7a 11 nez r29, r5
+# CHECK: 48: 18 f0 84 15 nez r2, r22
+# CHECK: 4c: 18 f0 c0 10 nez r0, r3
+# CHECK: 50: 18 f0 4a 10 nez r5, r1
+# CHECK: 54: 18 f0 b6 16 nez r27, r26
+# CHECK: 58: 18 f0 68 14 nez r20, r17
+# CHECK: 5c: 18 f0 0c 12 nez r6, r8
+# CHECK: 60: 18 f0 f4 11 nez r26, r7
+# CHECK: 64: 18 f0 5e 15 nez r15, r21
+# CHECK: 68: 18 f0 08 14 nez r4, r16
+# CHECK: 6c: 18 f0 fc 15 nez r30, r23
+# CHECK: 70: 18 f0 98 14 nez r12, r18
+# CHECK: 74: 18 f0 1c 16 nez r14, r24
+# CHECK: 78: 18 f0 78 17 nez r28, r29
+# CHECK: 7c: 18 f0 30 13 nez r24, r12

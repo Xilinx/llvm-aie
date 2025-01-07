@@ -70,12 +70,16 @@ bool AIESubRegConstrainer::runOnMachineFunction(MachineFunction &MF) {
 void AIESubRegConstrainer::replaceRegOperands(Register OldReg, Register NewReg,
                                               unsigned NewSubReg,
                                               MachineRegisterInfo &MRI) {
+  const TargetRegisterInfo &TRI = *MRI.getTargetRegisterInfo();
   for (MachineOperand &Op : make_early_inc_range(MRI.reg_operands(OldReg))) {
     Op.setReg(NewReg);
-    // TODO: We could compose sub-registers, but that's not needed at this point
-    // because AIE2's DC registers have no sub-registers.
-    assert(!Op.getSubReg() && "Cannot rewrite operand with existing subreg.");
-    Op.setSubReg(NewSubReg);
+
+    // Compose the sub-register index if the dst operand already has
+    // subregisters
+    if (Op.getSubReg())
+      Op.setSubReg(TRI.composeSubRegIndices(NewSubReg, Op.getSubReg()));
+    else
+      Op.setSubReg(NewSubReg);
 
     // We are changing OldReg operands into NewReg.NewSubReg. This changes the
     // semantics of kill and dead flags, because they would now apply to the

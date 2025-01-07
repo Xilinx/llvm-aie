@@ -14,6 +14,7 @@
 
 #include "AIE2RegisterInfo.h"
 #include "AIEBaseDisassembler.h"
+#include "AIEDisassemblerPP.h"
 #include "MCTargetDesc/AIE2MCTargetDesc.h"
 #include "llvm/MC/MCDecoderOps.h"
 #include "llvm/MC/MCDisassembler/MCDisassembler.h"
@@ -167,29 +168,6 @@ static const unsigned mQXHLbDecoderTable[] = {
     qwh0, qwl0, qwh1, qwl1, qwh2, qwl2, qwh3, qwl3,
 };
 
-#define TABLEBASEDDECODER2(ClassName, TableClassName)                          \
-  static DecodeStatus Decode##ClassName##RegisterClass(                        \
-      MCInst &Inst, uint64_t RegNo, uint64_t Address,                          \
-      const MCDisassembler *Decoder) {                                         \
-    if (RegNo >= std::size(TableClassName##DecoderTable))                      \
-      return MCDisassembler::Fail;                                             \
-    unsigned Reg = TableClassName##DecoderTable[RegNo];                        \
-    LLVM_DEBUG(dbgs() << "RegEnc=" << RegNo << " Reg=" << Reg << "\n");        \
-    assert(Reg && "Register not found!");                                      \
-    Inst.addOperand(MCOperand::createReg(Reg));                                \
-    return MCDisassembler::Success;                                            \
-  }
-
-#define TABLEBASEDDECODER(ClassName) TABLEBASEDDECODER2(ClassName, ClassName)
-
-#define FIXEDREGDECODER(ClassName)                                             \
-  template <typename InsnType>                                                 \
-  static DecodeStatus Decode##ClassName##RegisterClass(                        \
-      MCInst &Inst, InsnType Insn, uint64_t Address,                           \
-      const MCDisassembler *Decoder) {                                         \
-    return Decoder->decodeSingletonRegClass(Inst, ClassName##RegClass);        \
-  }
-
 TABLEBASEDDECODER(eR)
 TABLEBASEDDECODER(eRS4)
 TABLEBASEDDECODER(eRS8)
@@ -325,12 +303,6 @@ static DecodeStatus DecodemShflDstRegisterClass(MCInst &Inst, uint64_t RegNo,
     return DecodeStatus::Success;
   return MCDisassembler::Fail;
 }
-
-#define SLOTDECODERDecl(ClassName)                                             \
-  template <typename InsnType>                                                 \
-  static DecodeStatus decode##ClassName##Slot(MCInst &MI, InsnType &Insn,      \
-                                              int64_t Address,                 \
-                                              const MCDisassembler *Decoder)
 
 SLOTDECODERDecl(Lda);
 SLOTDECODERDecl(Ldb);

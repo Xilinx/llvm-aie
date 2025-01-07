@@ -52,6 +52,8 @@ set(_llvm_distribution_components
   clang-resource-headers
   builtins-aie2-none-unknown-elf
   runtimes-aie2-none-unknown-elf
+  builtins-aie2p-none-unknown-elf
+  runtimes-aie2p-none-unknown-elf
   ${LLVM_TOOLCHAIN_TOOLS})
 
 option(LLVM_BUILD_LLVM_DYLIB "" OFF)

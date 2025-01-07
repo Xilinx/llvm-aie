@@ -1,0 +1,88 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; GEU
+    $r1 = GEU $r18, $r23
+    $r4 = GEU $r6, $r24
+    $r9 = GEU $r15, $r20
+    $r26 = GEU $r3, $r22
+    $r24 = GEU $r24, $r30
+    $r10 = GEU $r20, $r17
+    $r19 = GEU $r11, $r9
+    $r28 = GEU $r17, $r8
+    $r5 = GEU $r22, $r1
+    $r22 = GEU $r5, $r25
+    $r27 = GEU $r14, $r26
+    $r25 = GEU $r4, $r3
+    $r23 = GEU $r19, $r19
+    $r3 = GEU $r8, $r11
+    $r14 = GEU $r2, $r7
+    $r16 = GEU $r16, $r18
+    $r8 = GEU $r7, $r29
+    $r15 = GEU $r26, $r5
+    $r17 = GEU $r28, $r0
+    $r18 = GEU $r1, $r16
+    $r0 = GEU $r9, $r28
+    $r11 = GEU $r25, $r6
+    $r7 = GEU $r10, $r10
+    $r6 = GEU $r13, $r14
+    $r13 = GEU $r0, $r13
+    $r30 = GEU $r31, $r21
+    $r29 = GEU $r12, $r4
+    $r12 = GEU $r27, $r12
+    $r31 = GEU $r30, $r2
+    $r20 = GEU $r21, $r31
+    $r2 = GEU $r23, $r27
+    $r21 = GEU $r29, $r15
+...
+
+# CHECK: 0: 98 7b 83 14 geu r1, r18, r23
+# CHECK: 4: 98 8b 89 11 geu r4, r6, r24
+# CHECK: 8: 98 4b d3 13 geu r9, r15, r20
+# CHECK: c: 98 6b f5 10 geu r26, r3, r22
+# CHECK: 10: 98 eb 31 16 geu r24, r24, r30
+# CHECK: 14: 98 1b 15 15 geu r10, r20, r17
+# CHECK: 18: 98 9b e6 12 geu r19, r11, r9
+# CHECK: 1c: 98 8b 78 14 geu r28, r17, r8
+# CHECK: 20: 98 1b 8a 15 geu r5, r22, r1
+# CHECK: 24: 98 9b 6d 11 geu r22, r5, r25
+# CHECK: 28: 98 ab b7 13 geu r27, r14, r26
+# CHECK: 2c: 98 3b 32 11 geu r25, r4, r3
+# CHECK: 30: 98 3b ef 14 geu r23, r19, r19
+# CHECK: 34: 98 bb 06 12 geu r3, r8, r11
+# CHECK: 38: 98 7b 9c 10 geu r14, r2, r7
+# CHECK: 3c: 98 2b 21 14 geu r16, r16, r18
+# CHECK: 40: 98 db d1 11 geu r8, r7, r29
+# CHECK: 44: 98 5b 9e 16 geu r15, r26, r5
+# CHECK: 48: 98 0b 22 17 geu r17, r28, r0
+# CHECK: 4c: 98 0b 65 10 geu r18, r1, r16
+# CHECK: 50: 98 cb 41 12 geu r0, r9, r28
+# CHECK: 54: 98 6b 56 16 geu r11, r25, r6
+# CHECK: 58: 98 ab 8e 12 geu r7, r10, r10
+# CHECK: 5c: 98 eb 4c 13 geu r6, r13, r14
+# CHECK: 60: 98 db 1a 10 geu r13, r0, r13
+# CHECK: 64: 98 5b fd 17 geu r30, r31, r21
+# CHECK: 68: 98 4b 3a 13 geu r29, r12, r4
+# CHECK: 6c: 98 cb d8 16 geu r12, r27, r12
+# CHECK: 70: 98 2b be 17 geu r31, r30, r2
+# CHECK: 74: 98 fb 69 15 geu r20, r21, r31
+# CHECK: 78: 98 bb c5 15 geu r2, r23, r27
+# CHECK: 7c: 98 fb 6a 17 geu r21, r29, r15

@@ -1,0 +1,88 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; POPCOUNT
+    $r30 = POPCOUNT $r1
+    $r17 = POPCOUNT $r17
+    $r12 = POPCOUNT $r4
+    $r19 = POPCOUNT $r9
+    $r29 = POPCOUNT $r26
+    $r2 = POPCOUNT $r11
+    $r31 = POPCOUNT $r12
+    $r23 = POPCOUNT $r13
+    $r0 = POPCOUNT $r0
+    $r8 = POPCOUNT $r10
+    $r18 = POPCOUNT $r16
+    $r11 = POPCOUNT $r6
+    $r7 = POPCOUNT $r23
+    $r10 = POPCOUNT $r18
+    $r24 = POPCOUNT $r29
+    $r16 = POPCOUNT $r15
+    $r20 = POPCOUNT $r24
+    $r6 = POPCOUNT $r30
+    $r1 = POPCOUNT $r8
+    $r4 = POPCOUNT $r19
+    $r22 = POPCOUNT $r14
+    $r3 = POPCOUNT $r3
+    $r5 = POPCOUNT $r5
+    $r14 = POPCOUNT $r2
+    $r15 = POPCOUNT $r27
+    $r27 = POPCOUNT $r28
+    $r28 = POPCOUNT $r21
+    $r13 = POPCOUNT $r22
+    $r25 = POPCOUNT $r31
+    $r9 = POPCOUNT $r20
+    $r26 = POPCOUNT $r25
+    $r21 = POPCOUNT $r7
+...
+
+# CHECK: 0: 18 30 7d 10 popcount r30, r1
+# CHECK: 4: 18 30 63 14 popcount r17, r17
+# CHECK: 8: 18 30 19 11 popcount r12, r4
+# CHECK: c: 18 30 67 12 popcount r19, r9
+# CHECK: 10: 18 30 bb 16 popcount r29, r26
+# CHECK: 14: 18 30 c5 12 popcount r2, r11
+# CHECK: 18: 18 30 3f 13 popcount r31, r12
+# CHECK: 1c: 18 30 6f 13 popcount r23, r13
+# CHECK: 20: 18 30 01 10 popcount r0, r0
+# CHECK: 24: 18 30 91 12 popcount r8, r10
+# CHECK: 28: 18 30 25 14 popcount r18, r16
+# CHECK: 2c: 18 30 97 11 popcount r11, r6
+# CHECK: 30: 18 30 cf 15 popcount r7, r23
+# CHECK: 34: 18 30 95 14 popcount r10, r18
+# CHECK: 38: 18 30 71 17 popcount r24, r29
+# CHECK: 3c: 18 30 e1 13 popcount r16, r15
+# CHECK: 40: 18 30 29 16 popcount r20, r24
+# CHECK: 44: 18 30 8d 17 popcount r6, r30
+# CHECK: 48: 18 30 03 12 popcount r1, r8
+# CHECK: 4c: 18 30 c9 14 popcount r4, r19
+# CHECK: 50: 18 30 ad 13 popcount r22, r14
+# CHECK: 54: 18 30 c7 10 popcount r3, r3
+# CHECK: 58: 18 30 4b 11 popcount r5, r5
+# CHECK: 5c: 18 30 9d 10 popcount r14, r2
+# CHECK: 60: 18 30 df 16 popcount r15, r27
+# CHECK: 64: 18 30 37 17 popcount r27, r28
+# CHECK: 68: 18 30 79 15 popcount r28, r21
+# CHECK: 6c: 18 30 9b 15 popcount r13, r22
+# CHECK: 70: 18 30 f3 17 popcount r25, r31
+# CHECK: 74: 18 30 13 15 popcount r9, r20
+# CHECK: 78: 18 30 75 16 popcount r26, r25
+# CHECK: 7c: 18 30 eb 11 popcount r21, r7

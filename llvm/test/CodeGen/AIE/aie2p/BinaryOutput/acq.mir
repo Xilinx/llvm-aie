@@ -1,0 +1,286 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; ACQ_COND_mLockId_imm
+    ACQ_COND_mLockId_imm 0, $r16, $r26
+    ACQ_COND_mLockId_imm 62, $r15, $r26
+    ACQ_COND_mLockId_imm 63, $r7, $r26
+    ACQ_COND_mLockId_imm 1, $r1, $r26
+    ACQ_COND_mLockId_imm 0, $r12, $r26
+    ACQ_COND_mLockId_imm 62, $r0, $r26
+    ACQ_COND_mLockId_imm 63, $r4, $r26
+    ACQ_COND_mLockId_imm 1, $r21, $r26
+    ACQ_COND_mLockId_imm 0, $r29, $r26
+    ACQ_COND_mLockId_imm 62, $r28, $r26
+    ACQ_COND_mLockId_imm 63, $r11, $r26
+    ACQ_COND_mLockId_imm 1, $r27, $r26
+    ACQ_COND_mLockId_imm 0, $r9, $r26
+    ACQ_COND_mLockId_imm 62, $r10, $r26
+    ACQ_COND_mLockId_imm 63, $r8, $r26
+    ACQ_COND_mLockId_imm 1, $r19, $r26
+    ACQ_COND_mLockId_imm 0, $r31, $r26
+    ACQ_COND_mLockId_imm 62, $r3, $r26
+    ACQ_COND_mLockId_imm 63, $r6, $r26
+    ACQ_COND_mLockId_imm 1, $r2, $r26
+    ACQ_COND_mLockId_imm 0, $r5, $r26
+    ACQ_COND_mLockId_imm 62, $r22, $r26
+    ACQ_COND_mLockId_imm 63, $r26, $r26
+    ACQ_COND_mLockId_imm 1, $r13, $r26
+    ACQ_COND_mLockId_imm 0, $r20, $r26
+    ACQ_COND_mLockId_imm 62, $r14, $r26
+    ACQ_COND_mLockId_imm 63, $r17, $r26
+    ACQ_COND_mLockId_imm 1, $r18, $r26
+    ACQ_COND_mLockId_imm 0, $r24, $r26
+    ACQ_COND_mLockId_imm 62, $r25, $r26
+    ACQ_COND_mLockId_imm 63, $r23, $r26
+    ACQ_COND_mLockId_imm 1, $r30, $r26
+
+    ; ACQ_COND_mLockId_reg
+    ACQ_COND_mLockId_reg $r31, $r13, $r26
+    ACQ_COND_mLockId_reg $r26, $r2, $r26
+    ACQ_COND_mLockId_reg $r4, $r9, $r26
+    ACQ_COND_mLockId_reg $r16, $r15, $r26
+    ACQ_COND_mLockId_reg $r20, $r25, $r26
+    ACQ_COND_mLockId_reg $r30, $r31, $r26
+    ACQ_COND_mLockId_reg $r22, $r0, $r26
+    ACQ_COND_mLockId_reg $r10, $r29, $r26
+    ACQ_COND_mLockId_reg $r15, $r26, $r26
+    ACQ_COND_mLockId_reg $r5, $r16, $r26
+    ACQ_COND_mLockId_reg $r2, $r30, $r26
+    ACQ_COND_mLockId_reg $r11, $r3, $r26
+    ACQ_COND_mLockId_reg $r21, $r21, $r26
+    ACQ_COND_mLockId_reg $r23, $r17, $r26
+    ACQ_COND_mLockId_reg $r27, $r24, $r26
+    ACQ_COND_mLockId_reg $r12, $r6, $r26
+    ACQ_COND_mLockId_reg $r28, $r18, $r26
+    ACQ_COND_mLockId_reg $r3, $r20, $r26
+    ACQ_COND_mLockId_reg $r7, $r4, $r26
+    ACQ_COND_mLockId_reg $r25, $r10, $r26
+    ACQ_COND_mLockId_reg $r13, $r5, $r26
+    ACQ_COND_mLockId_reg $r29, $r27, $r26
+    ACQ_COND_mLockId_reg $r17, $r22, $r26
+    ACQ_COND_mLockId_reg $r6, $r1, $r26
+    ACQ_COND_mLockId_reg $r1, $r7, $r26
+    ACQ_COND_mLockId_reg $r18, $r19, $r26
+    ACQ_COND_mLockId_reg $r19, $r12, $r26
+    ACQ_COND_mLockId_reg $r9, $r8, $r26
+    ACQ_COND_mLockId_reg $r14, $r28, $r26
+    ACQ_COND_mLockId_reg $r0, $r14, $r26
+    ACQ_COND_mLockId_reg $r24, $r11, $r26
+    ACQ_COND_mLockId_reg $r8, $r23, $r26
+
+    ; ACQ_mLockId_imm
+    ACQ_mLockId_imm 1, $r31
+    ACQ_mLockId_imm 62, $r9
+    ACQ_mLockId_imm 0, $r15
+    ACQ_mLockId_imm 63, $r13
+    ACQ_mLockId_imm 1, $r29
+    ACQ_mLockId_imm 62, $r0
+    ACQ_mLockId_imm 0, $r2
+    ACQ_mLockId_imm 63, $r16
+    ACQ_mLockId_imm 1, $r19
+    ACQ_mLockId_imm 62, $r14
+    ACQ_mLockId_imm 0, $r7
+    ACQ_mLockId_imm 63, $r1
+    ACQ_mLockId_imm 1, $r6
+    ACQ_mLockId_imm 62, $r18
+    ACQ_mLockId_imm 0, $r4
+    ACQ_mLockId_imm 63, $r21
+    ACQ_mLockId_imm 1, $r10
+    ACQ_mLockId_imm 62, $r25
+    ACQ_mLockId_imm 0, $r23
+    ACQ_mLockId_imm 63, $r28
+    ACQ_mLockId_imm 1, $r8
+    ACQ_mLockId_imm 62, $r12
+    ACQ_mLockId_imm 0, $r30
+    ACQ_mLockId_imm 63, $r22
+    ACQ_mLockId_imm 1, $r26
+    ACQ_mLockId_imm 62, $r11
+    ACQ_mLockId_imm 0, $r27
+    ACQ_mLockId_imm 63, $r17
+    ACQ_mLockId_imm 1, $r5
+    ACQ_mLockId_imm 62, $r20
+    ACQ_mLockId_imm 0, $r3
+    ACQ_mLockId_imm 63, $r24
+
+    ; ACQ_mLockId_reg
+    ACQ_mLockId_reg $r13, $r22
+    ACQ_mLockId_reg $r15, $r28
+    ACQ_mLockId_reg $r19, $r9
+    ACQ_mLockId_reg $r30, $r11
+    ACQ_mLockId_reg $r29, $r19
+    ACQ_mLockId_reg $r16, $r29
+    ACQ_mLockId_reg $r26, $r20
+    ACQ_mLockId_reg $r3, $r12
+    ACQ_mLockId_reg $r20, $r1
+    ACQ_mLockId_reg $r12, $r30
+    ACQ_mLockId_reg $r7, $r23
+    ACQ_mLockId_reg $r4, $r2
+    ACQ_mLockId_reg $r0, $r7
+    ACQ_mLockId_reg $r2, $r24
+    ACQ_mLockId_reg $r11, $r3
+    ACQ_mLockId_reg $r14, $r15
+    ACQ_mLockId_reg $r1, $r17
+    ACQ_mLockId_reg $r23, $r31
+    ACQ_mLockId_reg $r5, $r18
+    ACQ_mLockId_reg $r24, $r4
+    ACQ_mLockId_reg $r31, $r6
+    ACQ_mLockId_reg $r18, $r10
+    ACQ_mLockId_reg $r10, $r14
+    ACQ_mLockId_reg $r6, $r25
+    ACQ_mLockId_reg $r21, $r13
+    ACQ_mLockId_reg $r9, $r5
+    ACQ_mLockId_reg $r27, $r16
+    ACQ_mLockId_reg $r28, $r26
+    ACQ_mLockId_reg $r25, $r27
+    ACQ_mLockId_reg $r17, $r0
+    ACQ_mLockId_reg $r22, $r8
+    ACQ_mLockId_reg $r8, $r21
+...
+
+# CHECK: 0: 18 08 07 10 acq.cond #0, r16, r26
+# CHECK: 4: 18 f8 c6 17 acq.cond #62, r15, r26
+# CHECK: 8: 18 78 e6 17 acq.cond #63, r7, r26
+# CHECK: c: 18 18 26 10 acq.cond #1, r1, r26
+# CHECK: 10: 18 c8 06 10 acq.cond #0, r12, r26
+# CHECK: 14: 18 08 c6 17 acq.cond #62, r0, r26
+# CHECK: 18: 18 48 e6 17 acq.cond #63, r4, r26
+# CHECK: 1c: 18 58 27 10 acq.cond #1, r21, r26
+# CHECK: 20: 18 d8 07 10 acq.cond #0, r29, r26
+# CHECK: 24: 18 c8 c7 17 acq.cond #62, r28, r26
+# CHECK: 28: 18 b8 e6 17 acq.cond #63, r11, r26
+# CHECK: 2c: 18 b8 27 10 acq.cond #1, r27, r26
+# CHECK: 30: 18 98 06 10 acq.cond #0, r9, r26
+# CHECK: 34: 18 a8 c6 17 acq.cond #62, r10, r26
+# CHECK: 38: 18 88 e6 17 acq.cond #63, r8, r26
+# CHECK: 3c: 18 38 27 10 acq.cond #1, r19, r26
+# CHECK: 40: 18 f8 07 10 acq.cond #0, r31, r26
+# CHECK: 44: 18 38 c6 17 acq.cond #62, r3, r26
+# CHECK: 48: 18 68 e6 17 acq.cond #63, r6, r26
+# CHECK: 4c: 18 28 26 10 acq.cond #1, r2, r26
+# CHECK: 50: 18 58 06 10 acq.cond #0, r5, r26
+# CHECK: 54: 18 68 c7 17 acq.cond #62, r22, r26
+# CHECK: 58: 18 a8 e7 17 acq.cond #63, r26, r26
+# CHECK: 5c: 18 d8 26 10 acq.cond #1, r13, r26
+# CHECK: 60: 18 48 07 10 acq.cond #0, r20, r26
+# CHECK: 64: 18 e8 c6 17 acq.cond #62, r14, r26
+# CHECK: 68: 18 18 e7 17 acq.cond #63, r17, r26
+# CHECK: 6c: 18 28 27 10 acq.cond #1, r18, r26
+# CHECK: 70: 18 88 07 10 acq.cond #0, r24, r26
+# CHECK: 74: 18 98 c7 17 acq.cond #62, r25, r26
+# CHECK: 78: 18 78 e7 17 acq.cond #63, r23, r26
+# CHECK: 7c: 18 e8 27 10 acq.cond #1, r30, r26
+# CHECK: 80: 18 d8 d6 17 acq.cond r31, r13, r26
+# CHECK: 84: 18 28 96 16 acq.cond r26, r2, r26
+# CHECK: 88: 18 98 16 11 acq.cond r4, r9, r26
+# CHECK: 8c: 18 f8 16 14 acq.cond r16, r15, r26
+# CHECK: 90: 18 98 17 15 acq.cond r20, r25, r26
+# CHECK: 94: 18 f8 97 17 acq.cond r30, r31, r26
+# CHECK: 98: 18 08 96 15 acq.cond r22, r0, r26
+# CHECK: 9c: 18 d8 97 12 acq.cond r10, r29, r26
+# CHECK: a0: 18 a8 d7 13 acq.cond r15, r26, r26
+# CHECK: a4: 18 08 57 11 acq.cond r5, r16, r26
+# CHECK: a8: 18 e8 97 10 acq.cond r2, r30, r26
+# CHECK: ac: 18 38 d6 12 acq.cond r11, r3, r26
+# CHECK: b0: 18 58 57 15 acq.cond r21, r21, r26
+# CHECK: b4: 18 18 d7 15 acq.cond r23, r17, r26
+# CHECK: b8: 18 88 d7 16 acq.cond r27, r24, r26
+# CHECK: bc: 18 68 16 13 acq.cond r12, r6, r26
+# CHECK: c0: 18 28 17 17 acq.cond r28, r18, r26
+# CHECK: c4: 18 48 d7 10 acq.cond r3, r20, r26
+# CHECK: c8: 18 48 d6 11 acq.cond r7, r4, r26
+# CHECK: cc: 18 a8 56 16 acq.cond r25, r10, r26
+# CHECK: d0: 18 58 56 13 acq.cond r13, r5, r26
+# CHECK: d4: 18 b8 57 17 acq.cond r29, r27, r26
+# CHECK: d8: 18 68 57 14 acq.cond r17, r22, r26
+# CHECK: dc: 18 18 96 11 acq.cond r6, r1, r26
+# CHECK: e0: 18 78 56 10 acq.cond r1, r7, r26
+# CHECK: e4: 18 38 97 14 acq.cond r18, r19, r26
+# CHECK: e8: 18 c8 d6 14 acq.cond r19, r12, r26
+# CHECK: ec: 18 88 56 12 acq.cond r9, r8, r26
+# CHECK: f0: 18 c8 97 13 acq.cond r14, r28, r26
+# CHECK: f4: 18 e8 16 10 acq.cond r0, r14, r26
+# CHECK: f8: 18 b8 16 16 acq.cond r24, r11, r26
+# CHECK: fc: 18 78 17 12 acq.cond r8, r23, r26
+# CHECK: 100: 18 f8 23 10 acq #1, r31
+# CHECK: 104: 18 98 c2 17 acq #62, r9
+# CHECK: 108: 18 f8 02 10 acq #0, r15
+# CHECK: 10c: 18 d8 e2 17 acq #63, r13
+# CHECK: 110: 18 d8 23 10 acq #1, r29
+# CHECK: 114: 18 08 c2 17 acq #62, r0
+# CHECK: 118: 18 28 02 10 acq #0, r2
+# CHECK: 11c: 18 08 e3 17 acq #63, r16
+# CHECK: 120: 18 38 23 10 acq #1, r19
+# CHECK: 124: 18 e8 c2 17 acq #62, r14
+# CHECK: 128: 18 78 02 10 acq #0, r7
+# CHECK: 12c: 18 18 e2 17 acq #63, r1
+# CHECK: 130: 18 68 22 10 acq #1, r6
+# CHECK: 134: 18 28 c3 17 acq #62, r18
+# CHECK: 138: 18 48 02 10 acq #0, r4
+# CHECK: 13c: 18 58 e3 17 acq #63, r21
+# CHECK: 140: 18 a8 22 10 acq #1, r10
+# CHECK: 144: 18 98 c3 17 acq #62, r25
+# CHECK: 148: 18 78 03 10 acq #0, r23
+# CHECK: 14c: 18 c8 e3 17 acq #63, r28
+# CHECK: 150: 18 88 22 10 acq #1, r8
+# CHECK: 154: 18 c8 c2 17 acq #62, r12
+# CHECK: 158: 18 e8 03 10 acq #0, r30
+# CHECK: 15c: 18 68 e3 17 acq #63, r22
+# CHECK: 160: 18 a8 23 10 acq #1, r26
+# CHECK: 164: 18 b8 c2 17 acq #62, r11
+# CHECK: 168: 18 b8 03 10 acq #0, r27
+# CHECK: 16c: 18 18 e3 17 acq #63, r17
+# CHECK: 170: 18 58 22 10 acq #1, r5
+# CHECK: 174: 18 48 c3 17 acq #62, r20
+# CHECK: 178: 18 38 02 10 acq #0, r3
+# CHECK: 17c: 18 88 e3 17 acq #63, r24
+# CHECK: 180: 18 68 53 13 acq r13, r22
+# CHECK: 184: 18 c8 d3 13 acq r15, r28
+# CHECK: 188: 18 98 d2 14 acq r19, r9
+# CHECK: 18c: 18 b8 92 17 acq r30, r11
+# CHECK: 190: 18 38 53 17 acq r29, r19
+# CHECK: 194: 18 d8 13 14 acq r16, r29
+# CHECK: 198: 18 48 93 16 acq r26, r20
+# CHECK: 19c: 18 c8 d2 10 acq r3, r12
+# CHECK: 1a0: 18 18 12 15 acq r20, r1
+# CHECK: 1a4: 18 e8 13 13 acq r12, r30
+# CHECK: 1a8: 18 78 d3 11 acq r7, r23
+# CHECK: 1ac: 18 28 12 11 acq r4, r2
+# CHECK: 1b0: 18 78 12 10 acq r0, r7
+# CHECK: 1b4: 18 88 93 10 acq r2, r24
+# CHECK: 1b8: 18 38 d2 12 acq r11, r3
+# CHECK: 1bc: 18 f8 92 13 acq r14, r15
+# CHECK: 1c0: 18 18 53 10 acq r1, r17
+# CHECK: 1c4: 18 f8 d3 15 acq r23, r31
+# CHECK: 1c8: 18 28 53 11 acq r5, r18
+# CHECK: 1cc: 18 48 12 16 acq r24, r4
+# CHECK: 1d0: 18 68 d2 17 acq r31, r6
+# CHECK: 1d4: 18 a8 92 14 acq r18, r10
+# CHECK: 1d8: 18 e8 92 12 acq r10, r14
+# CHECK: 1dc: 18 98 93 11 acq r6, r25
+# CHECK: 1e0: 18 d8 52 15 acq r21, r13
+# CHECK: 1e4: 18 58 52 12 acq r9, r5
+# CHECK: 1e8: 18 08 d3 16 acq r27, r16
+# CHECK: 1ec: 18 a8 13 17 acq r28, r26
+# CHECK: 1f0: 18 b8 53 16 acq r25, r27
+# CHECK: 1f4: 18 08 52 14 acq r17, r0
+# CHECK: 1f8: 18 88 92 15 acq r22, r8
+# CHECK: 1fc: 18 58 13 12 acq r8, r21

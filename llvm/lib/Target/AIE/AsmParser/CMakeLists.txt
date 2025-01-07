@@ -7,6 +7,7 @@
 add_llvm_component_library(LLVMAIEAsmParser
   AIE1AsmParser.cpp
   AIE2AsmParser.cpp
+  AIE2PAsmParser.cpp
   AIEBaseOperand.cpp
 
   LINK_COMPONENTS

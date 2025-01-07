@@ -6,8 +6,8 @@
 #
 # (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
 
-# RUN: llc -mtriple aie2 -run-pass=legalizer %s -verify-machineinstrs -o - \
-# RUN:   | FileCheck %s
+# RUN: llc -mtriple aie2 -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple aie2p -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s
 
 # This test checks legalization of the saturated operations for ADD and SUB
 # in signed and unsigned variants

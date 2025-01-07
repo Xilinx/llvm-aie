@@ -5,7 +5,8 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple aie2 -run-pass=instruction-select -o - -verify-machineinstrs %s | FileCheck %s
+# RUN: llc -mtriple aie2 -run-pass=instruction-select -o - -verify-machineinstrs %s | FileCheck --check-prefix=AIE2 %s
+# RUN: llc -mtriple aie2p -run-pass=instruction-select -o - -verify-machineinstrs %s | FileCheck --check-prefix=AIE2P %s
 
 
 
@@ -17,40 +18,75 @@ tracksRegLiveness: true
 body: |
   bb.0:
     liveins: $p0, $r0, $m0, $p1, $dc0, $dj0, $dn0
-    ; CHECK-LABEL: name: post-inc-2d-store
-    ; CHECK: liveins: $p0, $r0, $m0, $p1, $dc0, $dj0, $dn0
-    ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
-    ; CHECK-NEXT: [[MOV_PD_imm10_pseudo:%[0-9]+]]:em = MOV_PD_imm10_pseudo 1
-    ; CHECK-NEXT: [[MOV_PD_imm10_pseudo1:%[0-9]+]]:edj = MOV_PD_imm10_pseudo 2
-    ; CHECK-NEXT: [[MOV_PD_imm10_pseudo2:%[0-9]+]]:edn = MOV_PD_imm10_pseudo 3
-    ; CHECK-NEXT: [[MOV_PD_imm10_pseudo3:%[0-9]+]]:edc = MOV_PD_imm10_pseudo 4
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r0
-    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm10_pseudo]], %subreg.sub_mod, [[MOV_PD_imm10_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm10_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm10_pseudo3]], %subreg.sub_dim_count
-    ; CHECK-NEXT: [[ST_2D_dms_sts:%[0-9]+]]:ep, [[ST_2D_dms_sts1:%[0-9]+]]:edc = ST_2D_dms_sts [[COPY1]], [[COPY]], [[REG_SEQUENCE]] :: (store (s32))
-    ; CHECK-NEXT: [[REG_SEQUENCE1:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm10_pseudo]], %subreg.sub_mod, [[MOV_PD_imm10_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm10_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm10_pseudo3]], %subreg.sub_dim_count
-    ; CHECK-NEXT: [[ST_2D_S16_:%[0-9]+]]:ep, [[ST_2D_S16_1:%[0-9]+]]:edc = ST_2D_S16 [[COPY1]], [[COPY]], [[REG_SEQUENCE1]] :: (store (s16))
-    ; CHECK-NEXT: [[REG_SEQUENCE2:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm10_pseudo]], %subreg.sub_mod, [[MOV_PD_imm10_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm10_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm10_pseudo3]], %subreg.sub_dim_count
-    ; CHECK-NEXT: [[ST_2D_S8_:%[0-9]+]]:ep, [[ST_2D_S8_1:%[0-9]+]]:edc = ST_2D_S8 [[COPY1]], [[COPY]], [[REG_SEQUENCE2]] :: (store (s8))
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:ep_as_32bit = COPY $p1
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:mdm_as_32bit = COPY $m0
-    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:em_as_32bit = COPY $m0
-    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:edc_as_32bit = COPY $dc0
-    ; CHECK-NEXT: [[COPY6:%[0-9]+]]:edj_as_32bit = COPY $dj0
-    ; CHECK-NEXT: [[COPY7:%[0-9]+]]:edn_as_32bit = COPY $dn0
-    ; CHECK-NEXT: [[REG_SEQUENCE3:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm10_pseudo]], %subreg.sub_mod, [[MOV_PD_imm10_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm10_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm10_pseudo3]], %subreg.sub_dim_count
-    ; CHECK-NEXT: [[ST_2D_dms_sts2:%[0-9]+]]:ep, [[ST_2D_dms_sts3:%[0-9]+]]:edc = ST_2D_dms_sts [[COPY2]], [[COPY]], [[REG_SEQUENCE3]] :: (store (s20), align 4)
-    ; CHECK-NEXT: [[REG_SEQUENCE4:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm10_pseudo]], %subreg.sub_mod, [[MOV_PD_imm10_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm10_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm10_pseudo3]], %subreg.sub_dim_count
-    ; CHECK-NEXT: [[ST_2D_dms_sts4:%[0-9]+]]:ep, [[ST_2D_dms_sts5:%[0-9]+]]:edc = ST_2D_dms_sts [[COPY3]], [[COPY]], [[REG_SEQUENCE4]] :: (store (s20), align 4)
-    ; CHECK-NEXT: [[REG_SEQUENCE5:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm10_pseudo]], %subreg.sub_mod, [[MOV_PD_imm10_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm10_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm10_pseudo3]], %subreg.sub_dim_count
-    ; CHECK-NEXT: [[ST_2D_dms_sts6:%[0-9]+]]:ep, [[ST_2D_dms_sts7:%[0-9]+]]:edc = ST_2D_dms_sts [[COPY4]], [[COPY]], [[REG_SEQUENCE5]] :: (store (s20), align 4)
-    ; CHECK-NEXT: [[REG_SEQUENCE6:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm10_pseudo]], %subreg.sub_mod, [[MOV_PD_imm10_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm10_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm10_pseudo3]], %subreg.sub_dim_count
-    ; CHECK-NEXT: [[ST_2D_dms_sts8:%[0-9]+]]:ep, [[ST_2D_dms_sts9:%[0-9]+]]:edc = ST_2D_dms_sts [[COPY5]], [[COPY]], [[REG_SEQUENCE6]] :: (store (s20), align 4)
-    ; CHECK-NEXT: [[REG_SEQUENCE7:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm10_pseudo]], %subreg.sub_mod, [[MOV_PD_imm10_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm10_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm10_pseudo3]], %subreg.sub_dim_count
-    ; CHECK-NEXT: [[ST_2D_dms_sts10:%[0-9]+]]:ep, [[ST_2D_dms_sts11:%[0-9]+]]:edc = ST_2D_dms_sts [[COPY6]], [[COPY]], [[REG_SEQUENCE7]] :: (store (s20), align 4)
-    ; CHECK-NEXT: [[REG_SEQUENCE8:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm10_pseudo]], %subreg.sub_mod, [[MOV_PD_imm10_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm10_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm10_pseudo3]], %subreg.sub_dim_count
-    ; CHECK-NEXT: [[ST_2D_dms_sts12:%[0-9]+]]:ep, [[ST_2D_dms_sts13:%[0-9]+]]:edc = ST_2D_dms_sts [[COPY7]], [[COPY]], [[REG_SEQUENCE8]] :: (store (s20), align 4)
-    ; CHECK-NEXT: PseudoRET implicit $lr
+    ; AIE2-LABEL: name: post-inc-2d-store
+    ; AIE2: liveins: $p0, $r0, $m0, $p1, $dc0, $dj0, $dn0
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; AIE2-NEXT: [[MOV_PD_imm10_pseudo:%[0-9]+]]:em = MOV_PD_imm10_pseudo 1
+    ; AIE2-NEXT: [[MOV_PD_imm10_pseudo1:%[0-9]+]]:edj = MOV_PD_imm10_pseudo 2
+    ; AIE2-NEXT: [[MOV_PD_imm10_pseudo2:%[0-9]+]]:edn = MOV_PD_imm10_pseudo 3
+    ; AIE2-NEXT: [[MOV_PD_imm10_pseudo3:%[0-9]+]]:edc = MOV_PD_imm10_pseudo 4
+    ; AIE2-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r0
+    ; AIE2-NEXT: [[REG_SEQUENCE:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm10_pseudo]], %subreg.sub_mod, [[MOV_PD_imm10_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm10_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm10_pseudo3]], %subreg.sub_dim_count
+    ; AIE2-NEXT: [[ST_2D_dms_sts:%[0-9]+]]:ep, [[ST_2D_dms_sts1:%[0-9]+]]:edc = ST_2D_dms_sts [[COPY1]], [[COPY]], [[REG_SEQUENCE]] :: (store (s32))
+    ; AIE2-NEXT: [[REG_SEQUENCE1:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm10_pseudo]], %subreg.sub_mod, [[MOV_PD_imm10_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm10_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm10_pseudo3]], %subreg.sub_dim_count
+    ; AIE2-NEXT: [[ST_2D_S16_:%[0-9]+]]:ep, [[ST_2D_S16_1:%[0-9]+]]:edc = ST_2D_S16 [[COPY1]], [[COPY]], [[REG_SEQUENCE1]] :: (store (s16))
+    ; AIE2-NEXT: [[REG_SEQUENCE2:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm10_pseudo]], %subreg.sub_mod, [[MOV_PD_imm10_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm10_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm10_pseudo3]], %subreg.sub_dim_count
+    ; AIE2-NEXT: [[ST_2D_S8_:%[0-9]+]]:ep, [[ST_2D_S8_1:%[0-9]+]]:edc = ST_2D_S8 [[COPY1]], [[COPY]], [[REG_SEQUENCE2]] :: (store (s8))
+    ; AIE2-NEXT: [[COPY2:%[0-9]+]]:ep_as_32bit = COPY $p1
+    ; AIE2-NEXT: [[COPY3:%[0-9]+]]:mdm_as_32bit = COPY $m0
+    ; AIE2-NEXT: [[COPY4:%[0-9]+]]:em_as_32bit = COPY $m0
+    ; AIE2-NEXT: [[COPY5:%[0-9]+]]:edc_as_32bit = COPY $dc0
+    ; AIE2-NEXT: [[COPY6:%[0-9]+]]:edj_as_32bit = COPY $dj0
+    ; AIE2-NEXT: [[COPY7:%[0-9]+]]:edn_as_32bit = COPY $dn0
+    ; AIE2-NEXT: [[REG_SEQUENCE3:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm10_pseudo]], %subreg.sub_mod, [[MOV_PD_imm10_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm10_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm10_pseudo3]], %subreg.sub_dim_count
+    ; AIE2-NEXT: [[ST_2D_dms_sts2:%[0-9]+]]:ep, [[ST_2D_dms_sts3:%[0-9]+]]:edc = ST_2D_dms_sts [[COPY2]], [[COPY]], [[REG_SEQUENCE3]] :: (store (s20), align 4)
+    ; AIE2-NEXT: [[REG_SEQUENCE4:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm10_pseudo]], %subreg.sub_mod, [[MOV_PD_imm10_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm10_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm10_pseudo3]], %subreg.sub_dim_count
+    ; AIE2-NEXT: [[ST_2D_dms_sts4:%[0-9]+]]:ep, [[ST_2D_dms_sts5:%[0-9]+]]:edc = ST_2D_dms_sts [[COPY3]], [[COPY]], [[REG_SEQUENCE4]] :: (store (s20), align 4)
+    ; AIE2-NEXT: [[REG_SEQUENCE5:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm10_pseudo]], %subreg.sub_mod, [[MOV_PD_imm10_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm10_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm10_pseudo3]], %subreg.sub_dim_count
+    ; AIE2-NEXT: [[ST_2D_dms_sts6:%[0-9]+]]:ep, [[ST_2D_dms_sts7:%[0-9]+]]:edc = ST_2D_dms_sts [[COPY4]], [[COPY]], [[REG_SEQUENCE5]] :: (store (s20), align 4)
+    ; AIE2-NEXT: [[REG_SEQUENCE6:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm10_pseudo]], %subreg.sub_mod, [[MOV_PD_imm10_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm10_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm10_pseudo3]], %subreg.sub_dim_count
+    ; AIE2-NEXT: [[ST_2D_dms_sts8:%[0-9]+]]:ep, [[ST_2D_dms_sts9:%[0-9]+]]:edc = ST_2D_dms_sts [[COPY5]], [[COPY]], [[REG_SEQUENCE6]] :: (store (s20), align 4)
+    ; AIE2-NEXT: [[REG_SEQUENCE7:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm10_pseudo]], %subreg.sub_mod, [[MOV_PD_imm10_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm10_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm10_pseudo3]], %subreg.sub_dim_count
+    ; AIE2-NEXT: [[ST_2D_dms_sts10:%[0-9]+]]:ep, [[ST_2D_dms_sts11:%[0-9]+]]:edc = ST_2D_dms_sts [[COPY6]], [[COPY]], [[REG_SEQUENCE7]] :: (store (s20), align 4)
+    ; AIE2-NEXT: [[REG_SEQUENCE8:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm10_pseudo]], %subreg.sub_mod, [[MOV_PD_imm10_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm10_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm10_pseudo3]], %subreg.sub_dim_count
+    ; AIE2-NEXT: [[ST_2D_dms_sts12:%[0-9]+]]:ep, [[ST_2D_dms_sts13:%[0-9]+]]:edc = ST_2D_dms_sts [[COPY7]], [[COPY]], [[REG_SEQUENCE8]] :: (store (s20), align 4)
+    ; AIE2-NEXT: PseudoRET implicit $lr
+    ;
+    ; AIE2P-LABEL: name: post-inc-2d-store
+    ; AIE2P: liveins: $p0, $r0, $m0, $p1, $dc0, $dj0, $dn0
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; AIE2P-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:em = MOV_PD_imm11_pseudo 1
+    ; AIE2P-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 2
+    ; AIE2P-NEXT: [[MOV_PD_imm11_pseudo2:%[0-9]+]]:edn = MOV_PD_imm11_pseudo 3
+    ; AIE2P-NEXT: [[MOV_PD_imm11_pseudo3:%[0-9]+]]:edc = MOV_PD_imm11_pseudo 4
+    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r0
+    ; AIE2P-NEXT: [[REG_SEQUENCE:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm11_pseudo]], %subreg.sub_mod, [[MOV_PD_imm11_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm11_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm11_pseudo3]], %subreg.sub_dim_count
+    ; AIE2P-NEXT: [[ST_2D_dms_sts:%[0-9]+]]:ep, [[ST_2D_dms_sts1:%[0-9]+]]:edc = ST_2D_dms_sts [[COPY1]], [[COPY]], [[REG_SEQUENCE]] :: (store (s32))
+    ; AIE2P-NEXT: [[REG_SEQUENCE1:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm11_pseudo]], %subreg.sub_mod, [[MOV_PD_imm11_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm11_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm11_pseudo3]], %subreg.sub_dim_count
+    ; AIE2P-NEXT: [[ST_2D_s16_:%[0-9]+]]:ep, [[ST_2D_s16_1:%[0-9]+]]:edc = ST_2D_s16 [[COPY1]], [[COPY]], [[REG_SEQUENCE1]], implicit-def $pe2_ads, implicit $pe2_ads :: (store (s16))
+    ; AIE2P-NEXT: [[REG_SEQUENCE2:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm11_pseudo]], %subreg.sub_mod, [[MOV_PD_imm11_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm11_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm11_pseudo3]], %subreg.sub_dim_count
+    ; AIE2P-NEXT: [[ST_2D_s8_:%[0-9]+]]:ep, [[ST_2D_s8_1:%[0-9]+]]:edc = ST_2D_s8 [[COPY1]], [[COPY]], [[REG_SEQUENCE2]], implicit-def $pe2_ads, implicit $pe2_ads :: (store (s8))
+    ; AIE2P-NEXT: [[COPY2:%[0-9]+]]:ep_as_32bit = COPY $p1
+    ; AIE2P-NEXT: [[COPY3:%[0-9]+]]:magusrc_and_mdm = COPY $m0
+    ; AIE2P-NEXT: [[COPY4:%[0-9]+]]:em_as_32bit = COPY $m0
+    ; AIE2P-NEXT: [[COPY5:%[0-9]+]]:edc_as_32bit = COPY $dc0
+    ; AIE2P-NEXT: [[COPY6:%[0-9]+]]:edj_as_32bit = COPY $dj0
+    ; AIE2P-NEXT: [[COPY7:%[0-9]+]]:edn_as_32bit = COPY $dn0
+    ; AIE2P-NEXT: [[REG_SEQUENCE3:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm11_pseudo]], %subreg.sub_mod, [[MOV_PD_imm11_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm11_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm11_pseudo3]], %subreg.sub_dim_count
+    ; AIE2P-NEXT: [[ST_2D_dms_sts2:%[0-9]+]]:ep, [[ST_2D_dms_sts3:%[0-9]+]]:edc = ST_2D_dms_sts [[COPY2]], [[COPY]], [[REG_SEQUENCE3]] :: (store (s20), align 4)
+    ; AIE2P-NEXT: [[REG_SEQUENCE4:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm11_pseudo]], %subreg.sub_mod, [[MOV_PD_imm11_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm11_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm11_pseudo3]], %subreg.sub_dim_count
+    ; AIE2P-NEXT: [[ST_2D_dms_sts4:%[0-9]+]]:ep, [[ST_2D_dms_sts5:%[0-9]+]]:edc = ST_2D_dms_sts [[COPY3]], [[COPY]], [[REG_SEQUENCE4]] :: (store (s20), align 4)
+    ; AIE2P-NEXT: [[REG_SEQUENCE5:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm11_pseudo]], %subreg.sub_mod, [[MOV_PD_imm11_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm11_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm11_pseudo3]], %subreg.sub_dim_count
+    ; AIE2P-NEXT: [[ST_2D_dms_sts6:%[0-9]+]]:ep, [[ST_2D_dms_sts7:%[0-9]+]]:edc = ST_2D_dms_sts [[COPY4]], [[COPY]], [[REG_SEQUENCE5]] :: (store (s20), align 4)
+    ; AIE2P-NEXT: [[REG_SEQUENCE6:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm11_pseudo]], %subreg.sub_mod, [[MOV_PD_imm11_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm11_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm11_pseudo3]], %subreg.sub_dim_count
+    ; AIE2P-NEXT: [[ST_2D_dms_sts8:%[0-9]+]]:ep, [[ST_2D_dms_sts9:%[0-9]+]]:edc = ST_2D_dms_sts [[COPY5]], [[COPY]], [[REG_SEQUENCE6]] :: (store (s20), align 4)
+    ; AIE2P-NEXT: [[REG_SEQUENCE7:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm11_pseudo]], %subreg.sub_mod, [[MOV_PD_imm11_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm11_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm11_pseudo3]], %subreg.sub_dim_count
+    ; AIE2P-NEXT: [[ST_2D_dms_sts10:%[0-9]+]]:ep, [[ST_2D_dms_sts11:%[0-9]+]]:edc = ST_2D_dms_sts [[COPY6]], [[COPY]], [[REG_SEQUENCE7]] :: (store (s20), align 4)
+    ; AIE2P-NEXT: [[REG_SEQUENCE8:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm11_pseudo]], %subreg.sub_mod, [[MOV_PD_imm11_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm11_pseudo1]], %subreg.sub_dim_stride, [[MOV_PD_imm11_pseudo3]], %subreg.sub_dim_count
+    ; AIE2P-NEXT: [[ST_2D_dms_sts12:%[0-9]+]]:ep, [[ST_2D_dms_sts13:%[0-9]+]]:edc = ST_2D_dms_sts [[COPY7]], [[COPY]], [[REG_SEQUENCE8]] :: (store (s20), align 4)
+    ; AIE2P-NEXT: PseudoRET implicit $lr
     %0:ptrregbank(p0) = COPY $p0
     %1:em(s20) = G_CONSTANT i20 1
     %2:edj(s20) = G_CONSTANT i20 2

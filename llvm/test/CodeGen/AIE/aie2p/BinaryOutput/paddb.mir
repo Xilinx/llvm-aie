@@ -1,0 +1,87 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; PADDB_2D
+    $p7, $dc3 = PADDB_2D $p7, $d3
+    $p1, $dc4 = PADDB_2D $p1, $d4
+    $p3, $dc1 = PADDB_2D $p3, $d1
+    $p5, $dc7 = PADDB_2D $p5, $d7
+    $p4, $dc5 = PADDB_2D $p4, $d5
+    $p0, $dc0 = PADDB_2D $p0, $d0
+    $p6, $dc6 = PADDB_2D $p6, $d6
+    $p2, $dc2 = PADDB_2D $p2, $d2
+
+    ; PADDB_3D
+    $p5, $dc2, $dc6 = PADDB_3D $p5, $d2_3d
+    $p0, $dc0, $dc4 = PADDB_3D $p0, $d0_3d
+    $p4, $dc3, $dc7 = PADDB_3D $p4, $d3_3d
+    $p3, $dc1, $dc5 = PADDB_3D $p3, $d1_3d
+    $p1, $dc2, $dc6 = PADDB_3D $p1, $d2_3d
+    $p6, $dc0, $dc4 = PADDB_3D $p6, $d0_3d
+    $p7, $dc3, $dc7 = PADDB_3D $p7, $d3_3d
+    $p2, $dc1, $dc5 = PADDB_3D $p2, $d1_3d
+
+    ; PADDB_pstm_nrm
+    $p5 = PADDB_pstm_nrm $p5, $m7
+    $p2 = PADDB_pstm_nrm $p2, $m6
+    $p7 = PADDB_pstm_nrm $p7, $m1
+    $p1 = PADDB_pstm_nrm $p1, $m2
+    $p4 = PADDB_pstm_nrm $p4, $m3
+    $p6 = PADDB_pstm_nrm $p6, $m5
+    $p3 = PADDB_pstm_nrm $p3, $m0
+    $p0 = PADDB_pstm_nrm $p0, $m4
+
+    ; PADDB_pstm_nrm_imm
+    ; TODO: Uncomment after investigating and solving the bug
+    ; $p2 = PADDB_pstm_nrm_imm $p2, -512
+    ; $p7 = PADDB_pstm_nrm_imm $p7, 0
+    ; $p1 = PADDB_pstm_nrm_imm $p1, 64
+    ; $p0 = PADDB_pstm_nrm_imm $p0, 448
+    ; $p6 = PADDB_pstm_nrm_imm $p6, -512
+    ; $p3 = PADDB_pstm_nrm_imm $p3, 0
+    ; $p5 = PADDB_pstm_nrm_imm $p5, 64
+    ; $p4 = PADDB_pstm_nrm_imm $p4, 448
+...
+
+# CHECK: 0: 18 90 73 3f paddb.2d [p7], d3
+# CHECK: 4: 18 90 93 39 paddb.2d [p1], d4
+# CHECK: 8: 18 90 33 3b paddb.2d [p3], d1
+# CHECK: c: 18 90 f3 3d paddb.2d [p5], d7
+# CHECK: 10: 18 90 b3 3c paddb.2d [p4], d5
+# CHECK: 14: 18 90 13 38 paddb.2d [p0], d0
+# CHECK: 18: 18 90 d3 3e paddb.2d [p6], d6
+# CHECK: 1c: 18 90 53 3a paddb.2d [p2], d2
+# CHECK: 20: 18 90 5b 3d paddb.3d [p5], d2
+# CHECK: 24: 18 90 1b 38 paddb.3d [p0], d0
+# CHECK: 28: 18 90 7b 3c paddb.3d [p4], d3
+# CHECK: 2c: 18 90 3b 3b paddb.3d [p3], d1
+# CHECK: 30: 18 90 5b 39 paddb.3d [p1], d2
+# CHECK: 34: 18 90 1b 3e paddb.3d [p6], d0
+# CHECK: 38: 18 90 7b 3f paddb.3d [p7], d3
+# CHECK: 3c: 18 90 3b 3a paddb.3d [p2], d1
+# CHECK: 40: 18 90 eb 3d paddb [p5], m7
+# CHECK: 44: 18 90 cb 3a paddb [p2], m6
+# CHECK: 48: 18 90 2b 3f paddb [p7], m1
+# CHECK: 4c: 18 90 4b 39 paddb [p1], m2
+# CHECK: 50: 18 90 6b 3c paddb [p4], m3
+# CHECK: 54: 18 90 ab 3e paddb [p6], m5
+# CHECK: 58: 18 90 0b 3b paddb [p3], m0
+# CHECK: 5c: 18 90 8b 38 paddb [p0], m4

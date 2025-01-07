@@ -1,0 +1,50 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; PADDXM_pstm_sp
+    PADDXM_pstm_sp $m3, implicit-def $sp, implicit $sp
+    PADDXM_pstm_sp $m6, implicit-def $sp, implicit $sp
+    PADDXM_pstm_sp $m1, implicit-def $sp, implicit $sp
+    PADDXM_pstm_sp $m7, implicit-def $sp, implicit $sp
+    PADDXM_pstm_sp $m2, implicit-def $sp, implicit $sp
+    PADDXM_pstm_sp $m4, implicit-def $sp, implicit $sp
+    PADDXM_pstm_sp $m0, implicit-def $sp, implicit $sp
+    PADDXM_pstm_sp $m5, implicit-def $sp, implicit $sp
+
+    ; PADDXM_pstm_sp_imm
+    PADDXM_pstm_sp_imm -262144, implicit-def $sp, implicit $sp
+    PADDXM_pstm_sp_imm 0, implicit-def $sp, implicit $sp
+    PADDXM_pstm_sp_imm 64, implicit-def $sp, implicit $sp
+    PADDXM_pstm_sp_imm 262080, implicit-def $sp, implicit $sp
+...
+
+# CHECK: 0: c4 01 00 00 04 60 paddxm [sp], m3
+# CHECK: 6: c4 01 00 00 04 c0 paddxm [sp], m6
+# CHECK: c: c4 01 00 00 04 20 paddxm [sp], m1
+# CHECK: 12: c4 01 00 00 04 e0 paddxm [sp], m7
+# CHECK: 18: c4 01 00 00 04 40 paddxm [sp], m2
+# CHECK: 1e: c4 01 00 00 04 80 paddxm [sp], m4
+# CHECK: 24: c4 01 00 00 04 00 paddxm [sp], m0
+# CHECK: 2a: c4 01 00 00 04 a0 paddxm [sp], m5
+# CHECK: 30: c4 01 00 00 00 80 paddxm [sp], #-262144
+# CHECK: 36: c4 01 00 00 00 00 paddxm [sp], #0
+# CHECK: 3c: c4 01 00 00 08 00 paddxm [sp], #64
+# CHECK: 42: c4 01 00 00 f8 7f paddxm [sp], #262080

@@ -283,6 +283,7 @@ createTargetCodeGenInfo(CodeGenModule &CGM) {
     return createLanaiTargetCodeGenInfo(CGM);
   case llvm::Triple::aie:
   case llvm::Triple::aie2:
+  case llvm::Triple::aie2p:
     return createAIETargetCodeGenInfo(CGM);
   case llvm::Triple::r600:
     return createAMDGPUTargetCodeGenInfo(CGM);

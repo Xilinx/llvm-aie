@@ -8,6 +8,8 @@
 ; RUN:   llvm-objdump -t --triple=aie  - | FileCheck %s --check-prefixes=AIE
 ; RUN: llc -mtriple=aie2 %s --filetype=obj -o - | \
 ; RUN:   llvm-objdump -t --triple=aie2 - | FileCheck %s --check-prefixes=AIE
+; RUN: llc -mtriple=aie2p %s --filetype=obj -o - | \
+; RUN:   llvm-objdump -t --triple=aie2p - | FileCheck %s --check-prefixes=AIE
 
 ; Make sure symbols of different alignments go into different .data or .bss
 ; sections.

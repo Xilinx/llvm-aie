@@ -1,0 +1,178 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; VABS_GTZ_16_vaddSign0
+    $x0, $r16 = VABS_GTZ_16_vaddSign0 $x6, implicit $vaddsign0
+    $x11, $r16 = VABS_GTZ_16_vaddSign0 $x11, implicit $vaddsign0
+    $x5, $r16 = VABS_GTZ_16_vaddSign0 $x5, implicit $vaddsign0
+    $x9, $r16 = VABS_GTZ_16_vaddSign0 $x4, implicit $vaddsign0
+    $x8, $r16 = VABS_GTZ_16_vaddSign0 $x9, implicit $vaddsign0
+    $x7, $r16 = VABS_GTZ_16_vaddSign0 $x3, implicit $vaddsign0
+    $x1, $r16 = VABS_GTZ_16_vaddSign0 $x8, implicit $vaddsign0
+    $x10, $r16 = VABS_GTZ_16_vaddSign0 $x2, implicit $vaddsign0
+    $x2, $r16 = VABS_GTZ_16_vaddSign0 $x1, implicit $vaddsign0
+    $x3, $r16 = VABS_GTZ_16_vaddSign0 $x10, implicit $vaddsign0
+    $x6, $r16 = VABS_GTZ_16_vaddSign0 $x7, implicit $vaddsign0
+    $x4, $r16 = VABS_GTZ_16_vaddSign0 $x0, implicit $vaddsign0
+
+    ; VABS_GTZ_16_vaddSign1
+    $x7, $r16 = VABS_GTZ_16_vaddSign1 $x2, implicit $vaddsign1
+    $x1, $r16 = VABS_GTZ_16_vaddSign1 $x5, implicit $vaddsign1
+    $x2, $r16 = VABS_GTZ_16_vaddSign1 $x0, implicit $vaddsign1
+    $x4, $r16 = VABS_GTZ_16_vaddSign1 $x4, implicit $vaddsign1
+    $x11, $r16 = VABS_GTZ_16_vaddSign1 $x10, implicit $vaddsign1
+    $x10, $r16 = VABS_GTZ_16_vaddSign1 $x11, implicit $vaddsign1
+    $x9, $r16 = VABS_GTZ_16_vaddSign1 $x6, implicit $vaddsign1
+    $x0, $r16 = VABS_GTZ_16_vaddSign1 $x7, implicit $vaddsign1
+    $x8, $r16 = VABS_GTZ_16_vaddSign1 $x3, implicit $vaddsign1
+    $x6, $r16 = VABS_GTZ_16_vaddSign1 $x1, implicit $vaddsign1
+    $x5, $r16 = VABS_GTZ_16_vaddSign1 $x8, implicit $vaddsign1
+    $x3, $r16 = VABS_GTZ_16_vaddSign1 $x9, implicit $vaddsign1
+
+    ; VABS_GTZ_32_vaddSign0
+    $x7, $r16 = VABS_GTZ_32_vaddSign0 $x8, implicit $vaddsign0
+    $x2, $r16 = VABS_GTZ_32_vaddSign0 $x10, implicit $vaddsign0
+    $x1, $r16 = VABS_GTZ_32_vaddSign0 $x9, implicit $vaddsign0
+    $x4, $r16 = VABS_GTZ_32_vaddSign0 $x5, implicit $vaddsign0
+    $x0, $r16 = VABS_GTZ_32_vaddSign0 $x11, implicit $vaddsign0
+    $x8, $r16 = VABS_GTZ_32_vaddSign0 $x4, implicit $vaddsign0
+    $x5, $r16 = VABS_GTZ_32_vaddSign0 $x1, implicit $vaddsign0
+    $x9, $r16 = VABS_GTZ_32_vaddSign0 $x6, implicit $vaddsign0
+    $x6, $r16 = VABS_GTZ_32_vaddSign0 $x2, implicit $vaddsign0
+    $x10, $r16 = VABS_GTZ_32_vaddSign0 $x0, implicit $vaddsign0
+    $x11, $r16 = VABS_GTZ_32_vaddSign0 $x3, implicit $vaddsign0
+    $x3, $r16 = VABS_GTZ_32_vaddSign0 $x7, implicit $vaddsign0
+
+    ; VABS_GTZ_32_vaddSign1
+    $x9, $r16 = VABS_GTZ_32_vaddSign1 $x1, implicit $vaddsign1
+    $x6, $r16 = VABS_GTZ_32_vaddSign1 $x6, implicit $vaddsign1
+    $x11, $r16 = VABS_GTZ_32_vaddSign1 $x8, implicit $vaddsign1
+    $x5, $r16 = VABS_GTZ_32_vaddSign1 $x11, implicit $vaddsign1
+    $x1, $r16 = VABS_GTZ_32_vaddSign1 $x0, implicit $vaddsign1
+    $x7, $r16 = VABS_GTZ_32_vaddSign1 $x10, implicit $vaddsign1
+    $x4, $r16 = VABS_GTZ_32_vaddSign1 $x3, implicit $vaddsign1
+    $x3, $r16 = VABS_GTZ_32_vaddSign1 $x2, implicit $vaddsign1
+    $x0, $r16 = VABS_GTZ_32_vaddSign1 $x4, implicit $vaddsign1
+    $x2, $r16 = VABS_GTZ_32_vaddSign1 $x7, implicit $vaddsign1
+    $x8, $r16 = VABS_GTZ_32_vaddSign1 $x5, implicit $vaddsign1
+    $x10, $r16 = VABS_GTZ_32_vaddSign1 $x9, implicit $vaddsign1
+
+    ; VABS_GTZ_8_vaddSign0
+    $x2, $l8 = VABS_GTZ_8_vaddSign0 $x10, implicit $vaddsign0
+    $x4, $l8 = VABS_GTZ_8_vaddSign0 $x2, implicit $vaddsign0
+    $x6, $l8 = VABS_GTZ_8_vaddSign0 $x4, implicit $vaddsign0
+    $x5, $l8 = VABS_GTZ_8_vaddSign0 $x11, implicit $vaddsign0
+    $x3, $l8 = VABS_GTZ_8_vaddSign0 $x8, implicit $vaddsign0
+    $x0, $l8 = VABS_GTZ_8_vaddSign0 $x6, implicit $vaddsign0
+    $x8, $l8 = VABS_GTZ_8_vaddSign0 $x0, implicit $vaddsign0
+    $x1, $l8 = VABS_GTZ_8_vaddSign0 $x7, implicit $vaddsign0
+    $x7, $l8 = VABS_GTZ_8_vaddSign0 $x9, implicit $vaddsign0
+    $x11, $l8 = VABS_GTZ_8_vaddSign0 $x5, implicit $vaddsign0
+    $x10, $l8 = VABS_GTZ_8_vaddSign0 $x1, implicit $vaddsign0
+    $x9, $l8 = VABS_GTZ_8_vaddSign0 $x3, implicit $vaddsign0
+
+    ; VABS_GTZ_8_vaddSign1
+    $x7, $l8 = VABS_GTZ_8_vaddSign1 $x11, implicit $vaddsign1
+    $x10, $l8 = VABS_GTZ_8_vaddSign1 $x6, implicit $vaddsign1
+    $x5, $l8 = VABS_GTZ_8_vaddSign1 $x10, implicit $vaddsign1
+    $x11, $l8 = VABS_GTZ_8_vaddSign1 $x3, implicit $vaddsign1
+    $x4, $l8 = VABS_GTZ_8_vaddSign1 $x9, implicit $vaddsign1
+    $x0, $l8 = VABS_GTZ_8_vaddSign1 $x7, implicit $vaddsign1
+    $x3, $l8 = VABS_GTZ_8_vaddSign1 $x8, implicit $vaddsign1
+    $x6, $l8 = VABS_GTZ_8_vaddSign1 $x5, implicit $vaddsign1
+    $x8, $l8 = VABS_GTZ_8_vaddSign1 $x2, implicit $vaddsign1
+    $x1, $l8 = VABS_GTZ_8_vaddSign1 $x1, implicit $vaddsign1
+    $x9, $l8 = VABS_GTZ_8_vaddSign1 $x0, implicit $vaddsign1
+    $x2, $l8 = VABS_GTZ_8_vaddSign1 $x4, implicit $vaddsign1
+...
+
+# CHECK: 0: f8 b2 32 18 vabs_gtz.16 x0, r16, x6, vaddsign0
+# CHECK: 4: f8 b2 da 1d vabs_gtz.16 x11, r16, x11, vaddsign0
+# CHECK: 8: f8 b2 aa 1a vabs_gtz.16 x5, r16, x5, vaddsign0
+# CHECK: c: f8 b2 a2 1c vabs_gtz.16 x9, r16, x4, vaddsign0
+# CHECK: 10: f8 b2 4a 1c vabs_gtz.16 x8, r16, x9, vaddsign0
+# CHECK: 14: f8 b2 9a 1b vabs_gtz.16 x7, r16, x3, vaddsign0
+# CHECK: 18: f8 b2 c2 18 vabs_gtz.16 x1, r16, x8, vaddsign0
+# CHECK: 1c: f8 b2 12 1d vabs_gtz.16 x10, r16, x2, vaddsign0
+# CHECK: 20: f8 b2 0a 19 vabs_gtz.16 x2, r16, x1, vaddsign0
+# CHECK: 24: f8 b2 d2 19 vabs_gtz.16 x3, r16, x10, vaddsign0
+# CHECK: 28: f8 b2 3a 1b vabs_gtz.16 x6, r16, x7, vaddsign0
+# CHECK: 2c: f8 b2 02 1a vabs_gtz.16 x4, r16, x0, vaddsign0
+# CHECK: 30: f8 b2 93 1b vabs_gtz.16 x7, r16, x2, vaddsign1
+# CHECK: 34: f8 b2 ab 18 vabs_gtz.16 x1, r16, x5, vaddsign1
+# CHECK: 38: f8 b2 03 19 vabs_gtz.16 x2, r16, x0, vaddsign1
+# CHECK: 3c: f8 b2 23 1a vabs_gtz.16 x4, r16, x4, vaddsign1
+# CHECK: 40: f8 b2 d3 1d vabs_gtz.16 x11, r16, x10, vaddsign1
+# CHECK: 44: f8 b2 5b 1d vabs_gtz.16 x10, r16, x11, vaddsign1
+# CHECK: 48: f8 b2 b3 1c vabs_gtz.16 x9, r16, x6, vaddsign1
+# CHECK: 4c: f8 b2 3b 18 vabs_gtz.16 x0, r16, x7, vaddsign1
+# CHECK: 50: f8 b2 1b 1c vabs_gtz.16 x8, r16, x3, vaddsign1
+# CHECK: 54: f8 b2 0b 1b vabs_gtz.16 x6, r16, x1, vaddsign1
+# CHECK: 58: f8 b2 c3 1a vabs_gtz.16 x5, r16, x8, vaddsign1
+# CHECK: 5c: f8 b2 cb 19 vabs_gtz.16 x3, r16, x9, vaddsign1
+# CHECK: 60: f8 b2 c0 1b vabs_gtz.32 x7, r16, x8, vaddsign0
+# CHECK: 64: f8 b2 50 19 vabs_gtz.32 x2, r16, x10, vaddsign0
+# CHECK: 68: f8 b2 c8 18 vabs_gtz.32 x1, r16, x9, vaddsign0
+# CHECK: 6c: f8 b2 28 1a vabs_gtz.32 x4, r16, x5, vaddsign0
+# CHECK: 70: f8 b2 58 18 vabs_gtz.32 x0, r16, x11, vaddsign0
+# CHECK: 74: f8 b2 20 1c vabs_gtz.32 x8, r16, x4, vaddsign0
+# CHECK: 78: f8 b2 88 1a vabs_gtz.32 x5, r16, x1, vaddsign0
+# CHECK: 7c: f8 b2 b0 1c vabs_gtz.32 x9, r16, x6, vaddsign0
+# CHECK: 80: f8 b2 10 1b vabs_gtz.32 x6, r16, x2, vaddsign0
+# CHECK: 84: f8 b2 00 1d vabs_gtz.32 x10, r16, x0, vaddsign0
+# CHECK: 88: f8 b2 98 1d vabs_gtz.32 x11, r16, x3, vaddsign0
+# CHECK: 8c: f8 b2 b8 19 vabs_gtz.32 x3, r16, x7, vaddsign0
+# CHECK: 90: f8 b2 89 1c vabs_gtz.32 x9, r16, x1, vaddsign1
+# CHECK: 94: f8 b2 31 1b vabs_gtz.32 x6, r16, x6, vaddsign1
+# CHECK: 98: f8 b2 c1 1d vabs_gtz.32 x11, r16, x8, vaddsign1
+# CHECK: 9c: f8 b2 d9 1a vabs_gtz.32 x5, r16, x11, vaddsign1
+# CHECK: a0: f8 b2 81 18 vabs_gtz.32 x1, r16, x0, vaddsign1
+# CHECK: a4: f8 b2 d1 1b vabs_gtz.32 x7, r16, x10, vaddsign1
+# CHECK: a8: f8 b2 19 1a vabs_gtz.32 x4, r16, x3, vaddsign1
+# CHECK: ac: f8 b2 91 19 vabs_gtz.32 x3, r16, x2, vaddsign1
+# CHECK: b0: f8 b2 21 18 vabs_gtz.32 x0, r16, x4, vaddsign1
+# CHECK: b4: f8 b2 39 19 vabs_gtz.32 x2, r16, x7, vaddsign1
+# CHECK: b8: f8 b2 29 1c vabs_gtz.32 x8, r16, x5, vaddsign1
+# CHECK: bc: f8 b2 49 1d vabs_gtz.32 x10, r16, x9, vaddsign1
+# CHECK: c0: f8 b2 54 19 vabs_gtz.8 x2, r17:r16, x10, vaddsign0
+# CHECK: c4: f8 b2 14 1a vabs_gtz.8 x4, r17:r16, x2, vaddsign0
+# CHECK: c8: f8 b2 24 1b vabs_gtz.8 x6, r17:r16, x4, vaddsign0
+# CHECK: cc: f8 b2 dc 1a vabs_gtz.8 x5, r17:r16, x11, vaddsign0
+# CHECK: d0: f8 b2 c4 19 vabs_gtz.8 x3, r17:r16, x8, vaddsign0
+# CHECK: d4: f8 b2 34 18 vabs_gtz.8 x0, r17:r16, x6, vaddsign0
+# CHECK: d8: f8 b2 04 1c vabs_gtz.8 x8, r17:r16, x0, vaddsign0
+# CHECK: dc: f8 b2 bc 18 vabs_gtz.8 x1, r17:r16, x7, vaddsign0
+# CHECK: e0: f8 b2 cc 1b vabs_gtz.8 x7, r17:r16, x9, vaddsign0
+# CHECK: e4: f8 b2 ac 1d vabs_gtz.8 x11, r17:r16, x5, vaddsign0
+# CHECK: e8: f8 b2 0c 1d vabs_gtz.8 x10, r17:r16, x1, vaddsign0
+# CHECK: ec: f8 b2 9c 1c vabs_gtz.8 x9, r17:r16, x3, vaddsign0
+# CHECK: f0: f8 b2 dd 1b vabs_gtz.8 x7, r17:r16, x11, vaddsign1
+# CHECK: f4: f8 b2 35 1d vabs_gtz.8 x10, r17:r16, x6, vaddsign1
+# CHECK: f8: f8 b2 d5 1a vabs_gtz.8 x5, r17:r16, x10, vaddsign1
+# CHECK: fc: f8 b2 9d 1d vabs_gtz.8 x11, r17:r16, x3, vaddsign1
+# CHECK: 100: f8 b2 4d 1a vabs_gtz.8 x4, r17:r16, x9, vaddsign1
+# CHECK: 104: f8 b2 3d 18 vabs_gtz.8 x0, r17:r16, x7, vaddsign1
+# CHECK: 108: f8 b2 c5 19 vabs_gtz.8 x3, r17:r16, x8, vaddsign1
+# CHECK: 10c: f8 b2 2d 1b vabs_gtz.8 x6, r17:r16, x5, vaddsign1
+# CHECK: 110: f8 b2 15 1c vabs_gtz.8 x8, r17:r16, x2, vaddsign1
+# CHECK: 114: f8 b2 8d 18 vabs_gtz.8 x1, r17:r16, x1, vaddsign1
+# CHECK: 118: f8 b2 85 1c vabs_gtz.8 x9, r17:r16, x0, vaddsign1
+# CHECK: 11c: f8 b2 25 19 vabs_gtz.8 x2, r17:r16, x4, vaddsign1

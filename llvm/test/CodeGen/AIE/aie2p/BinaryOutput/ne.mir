@@ -1,0 +1,88 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; NE
+    $r30 = NE $r14, $r19
+    $r22 = NE $r7, $r27
+    $r2 = NE $r21, $r30
+    $r27 = NE $r18, $r9
+    $r5 = NE $r9, $r16
+    $r10 = NE $r5, $r26
+    $r12 = NE $r0, $r11
+    $r19 = NE $r2, $r15
+    $r13 = NE $r30, $r25
+    $r17 = NE $r27, $r8
+    $r18 = NE $r19, $r17
+    $r4 = NE $r31, $r6
+    $r9 = NE $r1, $r2
+    $r11 = NE $r26, $r23
+    $r7 = NE $r12, $r4
+    $r21 = NE $r4, $r29
+    $r24 = NE $r11, $r28
+    $r31 = NE $r20, $r3
+    $r14 = NE $r15, $r14
+    $r23 = NE $r6, $r13
+    $r0 = NE $r23, $r22
+    $r29 = NE $r17, $r21
+    $r28 = NE $r16, $r0
+    $r8 = NE $r28, $r10
+    $r25 = NE $r22, $r1
+    $r3 = NE $r3, $r31
+    $r26 = NE $r25, $r7
+    $r15 = NE $r13, $r18
+    $r16 = NE $r10, $r5
+    $r20 = NE $r29, $r12
+    $r6 = NE $r8, $r20
+    $r1 = NE $r24, $r24
+...
+
+# CHECK: 0: 98 38 bd 13 ne r30, r14, r19
+# CHECK: 4: 98 b8 ed 11 ne r22, r7, r27
+# CHECK: 8: 98 e8 45 15 ne r2, r21, r30
+# CHECK: c: 98 98 b6 14 ne r27, r18, r9
+# CHECK: 10: 98 08 4b 12 ne r5, r9, r16
+# CHECK: 14: 98 a8 55 11 ne r10, r5, r26
+# CHECK: 18: 98 b8 18 10 ne r12, r0, r11
+# CHECK: 1c: 98 f8 a6 10 ne r19, r2, r15
+# CHECK: 20: 98 98 9b 17 ne r13, r30, r25
+# CHECK: 24: 98 88 e2 16 ne r17, r27, r8
+# CHECK: 28: 98 18 e5 14 ne r18, r19, r17
+# CHECK: 2c: 98 68 c8 17 ne r4, r31, r6
+# CHECK: 30: 98 28 52 10 ne r9, r1, r2
+# CHECK: 34: 98 78 97 16 ne r11, r26, r23
+# CHECK: 38: 98 48 0e 13 ne r7, r12, r4
+# CHECK: 3c: 98 d8 2b 11 ne r21, r4, r29
+# CHECK: 40: 98 c8 f1 12 ne r24, r11, r28
+# CHECK: 44: 98 38 3e 15 ne r31, r20, r3
+# CHECK: 48: 98 e8 dc 13 ne r14, r15, r14
+# CHECK: 4c: 98 d8 ae 11 ne r23, r6, r13
+# CHECK: 50: 98 68 c1 15 ne r0, r23, r22
+# CHECK: 54: 98 58 7b 14 ne r29, r17, r21
+# CHECK: 58: 98 08 38 14 ne r28, r16, r0
+# CHECK: 5c: 98 a8 10 17 ne r8, r28, r10
+# CHECK: 60: 98 18 b2 15 ne r25, r22, r1
+# CHECK: 64: 98 f8 c7 10 ne r3, r3, r31
+# CHECK: 68: 98 78 74 16 ne r26, r25, r7
+# CHECK: 6c: 98 28 5f 13 ne r15, r13, r18
+# CHECK: 70: 98 58 a0 12 ne r16, r10, r5
+# CHECK: 74: 98 c8 68 17 ne r20, r29, r12
+# CHECK: 78: 98 48 0d 12 ne r6, r8, r20
+# CHECK: 7c: 98 88 03 16 ne r1, r24, r24

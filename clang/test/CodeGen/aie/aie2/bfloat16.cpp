@@ -9,6 +9,8 @@
 //
 //===----------------------------------------------------------------------===//
 // RUN: %clang --target=aie2 -nostdlibinc -S -emit-llvm %s -O2 -o - | FileCheck %s
+// RUN: %clang --target=aie2p -nostdlibinc -S -emit-llvm %s -O2 -o - | FileCheck %s
+
 // CHECK-LABEL: @_Z13test_bfloat16u6__bf16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    ret bfloat [[ARG:%.*]]
@@ -56,6 +58,7 @@ bfloat16 test3_bfloat16(short arg0) {
 bfloat16 test4_bfloat16(char arg0) {
   return (bfloat16)arg0;
 }
+
 // CHECK-LABEL: @_Z14test5_bfloat16u6__bf16(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[CONV:%.*]] = fptosi bfloat [[ARG0:%.*]] to i32
@@ -112,6 +115,7 @@ signed char test10_bfloat16(bfloat16 arg0) {
 unsigned char test11_bfloat16(bfloat16 arg0) {
   return (unsigned char)arg0;
 }
+
 // CHECK-LABEL: @_Z15bfloat16_assignv(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    ret bfloat 0xR3F80

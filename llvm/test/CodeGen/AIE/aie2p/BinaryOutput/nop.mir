@@ -1,0 +1,70 @@
+# CHECK lines automatically generated using update_encodings.py
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+
+# CHECK: 0: 00 00 nop
+# CHECK: 2: 98 67 01 00 nopa
+# CHECK: 6: 18 10 00 38 nopb
+# CHECK: a: 18 00 00 10 nopx
+# CHECK: e: f8 4a 03 18 nopm
+# CHECK: 12: 18 5b 01 08 nops
+# CHECK: 16: 08 1c 00 00 nopv
+# CHECK: 1a: 04 00 00 00 00 00 nopxm
+# CHECK: 20: ba 00 00 00 00 00 00 f0 2c 00 nopa{{.*}}nopxm
+# CHECK: 2a: 26 1c 00 00 8e ad 00 20 00 f0 2c 00 nopa{{.*}}nopb{{.*}}nops{{.*}}nopv
+# CHECK: 36: 7e 60 2b 00 af 34 00 00 00 20 00 f0 2c 00 nopa{{.*}}nopb{{.*}}nopx{{.*}}nopm{{.*}}nops
+# CHECK: 44: e1 00 00 78 a5 01 00 00 00 5b 01 20 00 f0 2c 00 nopa{{.*}}nopb{{.*}}nops{{.*}}nopx{{.*}}nopm{{.*}}nopv
+# CHECK: 54: 26 1c 00 00 e2 4a 03 20 00 f0 2c 00 nopa{{.*}}nopb{{.*}}nopm{{.*}}nopv
+
+---
+name:            test_call
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    NOP
+    NOPA
+    NOPB
+    NOPX
+    NOPM
+    NOPS
+    NOPV
+    NOPXM
+    BUNDLE {
+      NOPA
+      NOPXM
+    }
+    BUNDLE {
+      NOPA
+      NOPB
+      NOPS
+      NOPV
+    }
+    BUNDLE {
+      NOPX
+      NOPM
+      NOPS
+      NOPB
+      NOPA
+    }
+    BUNDLE {
+      NOPV
+      NOPA
+      NOPB
+      NOPS
+      NOPX
+      NOPM
+    }
+    BUNDLE {
+      NOPA
+      NOPB
+      NOPM
+      NOPV
+    }
+...

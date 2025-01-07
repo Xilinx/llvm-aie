@@ -46,7 +46,8 @@ void applyLdStInc(MachineInstr &MI, MachineRegisterInfo &MRI,
                   GISelChangeObserver &Observer);
 /// Look for  with G_IMPLICIT_DEF source operands
 /// \return true if such an instruction is found
-bool matchAddVecEltUndef(MachineInstr &MI, MachineRegisterInfo &MRI);
+bool matchAddVecEltUndef(MachineInstr &MI, MachineRegisterInfo &MRI,
+                         const TargetInstrInfo &TII);
 /// Combine G_AIE_ADD_VECTOR_ELT_HI with COPY
 void applyAddVecEltUndef(MachineInstr &MI, MachineRegisterInfo &MRI,
                          MachineIRBuilder &B);
@@ -57,6 +58,12 @@ void applyGlobalValOffset(MachineInstr &MI, MachineRegisterInfo &MRI,
                           uint64_t &MatchInfo);
 bool matchGlobalValOffset(MachineInstr &MI, MachineRegisterInfo &MRI,
                           uint64_t &MatchInfo);
+/// Combine G_SHUFFLE_VECTOR(G_BUILD_VECTOR (VAL, UNDEF, ...), mask<0,0,...>)
+/// idiom into G_AIE_BROADCAST
+bool matchBroadcastElement(MachineInstr &MI, MachineRegisterInfo &MRI,
+                           std::pair<Register, Register> &MatchInfo);
+bool matchShuffleToBroadcast(MachineInstr &MI, MachineRegisterInfo &MRI,
+                             std::pair<Register, Register> &MatchInfo);
 /// \return true if \a MemI can be moved just before \a Dest in order to allow
 /// post-increment combining
 bool canDelayMemOp(MachineInstr &MemI, MachineInstr &Dest,
@@ -144,8 +151,12 @@ void applyUnpadVector(MachineInstr &MI, MachineRegisterInfo &MRI,
 
 bool matchPadVector(MachineInstr &MI, MachineRegisterInfo &MRI,
                     const AIEBaseInstrInfo &TII, Register &MatchedInputVector);
+bool matchConcatPadVector(MachineInstr &MI, MachineRegisterInfo &MRI,
+                          const AIEBaseInstrInfo &TII,
+                          Register &MatchedInputVector);
 void applyPadVector(MachineInstr &MI, MachineRegisterInfo &MRI,
                     MachineIRBuilder &B, Register MatchedInputVector);
+bool tryToCombineVectorShiftsByZero(MachineInstr &MI, MachineRegisterInfo &MRI);
 
 bool matchExtractConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
                         const AIEBaseInstrInfo &TII, Register &MatchInfo);

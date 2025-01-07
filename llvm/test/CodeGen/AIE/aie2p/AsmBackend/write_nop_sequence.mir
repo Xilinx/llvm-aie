@@ -1,0 +1,95 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+
+# RUN: llc -mtriple aie2p --start-after=postmisched --skip-machine-alignment %s --filetype=obj -o - | \
+# RUN: llvm-objdump --triple=aie2p -d - | FileCheck %s
+
+#CHECK:0: 0e 1c 00 00 00 00 00 00 00 20 00 f0 2c 00    	nopa{{.*}}nopb{{.*}}nopxm{{.*}}nopv	
+#CHECK:e: 00 00        	nop
+
+---
+name:            test_write_nop_seq_2bytes
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    BUNDLE {
+      NOPA
+      NOPB
+      NOPXM
+      NOPV
+    }
+...
+
+#CHECK:0: b6 00 00 00 00 00 00 20 00 f0 2c 00  	nopa{{.*}}nopb{{.*}}nopxm	
+#CHECK:c: 18 00 00 10  	nopx
+---
+name:            test_write_nop_seq_4bytes
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    BUNDLE {
+      NOPA
+      NOPB
+      NOPXM
+    }
+...
+#CHECK: 0: ba 00 00 00 00 00 00 f0 2c 00	nopa{{.*}}nopxm
+#CHECK: a: 04 00 00 00 00 00    	nopxm
+
+---
+name:            test_write_nop_seq_6bytes
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    BUNDLE {
+      NOPA
+      NOPXM
+    }
+...
+
+#CHECK: 0: 22 1c 00 00 04 f0 2c 00      nopa{{.*}}nopv
+#CHECK: 8: 22 1c 00 00 04 f0 2c 00      nopa{{.*}}nopv
+
+---
+name:            test_write_nop_seq_8bytes
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    BUNDLE {
+      NOPA
+      NOPV
+    }
+...
+#CHECK: 0: 04 00 00 00 00 00    	nopxm	
+#CHECK: 6: ba 72 a5 01 00 5b 01 f0 2c 00 nopa{{.*}}nops{{.*}}nopm
+---
+name:            test_write_nop_seq_10bytes
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    NOPXM
+...
+
+#CHECK:0: 98 67 01 00  	nopa	
+#CHECK:4: 26 1c 00 00 e2 4a 03 20 00 f0 2c 00  	nopa{{.*}}nopb{{.*}}nopm{{.*}}nopv
+---
+
+name:            test_write_nop_seq_12bytes
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    NOPA
+...
+#CHECK: 0: 00 00        	nop	
+#CHECK: 2: 2e 1c 00 00 57 1a 40 00 00 b6 02 f0 2c 00    nopa{{.*}}nops{{.*}}nopm{{.*}}	nopv
+
+---
+name:            test_write_nop_seq_14bytes
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    NOP
+...

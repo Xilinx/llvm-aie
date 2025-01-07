@@ -20,7 +20,10 @@
 #include "AIETargetAsmStreamer.h"
 #include "AIETargetELFStreamer.h"
 #include "InstPrinter/AIE2InstPrinter.h"
+#include "InstPrinter/AIE2PInstPrinter.h"
 #include "InstPrinter/AIEInstPrinter.h"
+#include "aie2p/AIE2PAsmBackend.h"
+#include "aie2p/AIE2PMCTargetDesc.h"
 #include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCELFObjectWriter.h"
 #include "llvm/MC/MCInstrInfo.h"
@@ -42,6 +45,12 @@ using namespace llvm;
 #define GET_SUBTARGETINFO_MC_DESC
 #include "AIE2GenSubtargetInfo.inc"
 #undef NoSchedModelAIE2
+#undef NoSchedModel
+
+#define NoSchedModel NoSchedModelAIE2P
+#define GET_SUBTARGETINFO_MC_DESC
+#include "AIE2PGenSubtargetInfo.inc"
+#undef NoSchedModelAIE2P
 
 #define GET_REGINFO_MC_DESC
 #include "AIEGenRegisterInfo.inc"
@@ -68,6 +77,8 @@ static MCRegisterInfo *createAIEMCRegisterInfo(const Triple &TT) {
     return createAIE1MCRegisterInfo(TT);
   case Triple::aie2:
     return createAIE2MCRegisterInfo(TT);
+  case Triple::aie2p:
+    return createAIE2PMCRegisterInfo(TT);
   default:
     llvm_unreachable("Unknown AIE target");
   }
@@ -76,16 +87,17 @@ static MCRegisterInfo *createAIEMCRegisterInfo(const Triple &TT) {
 }
 
 static MCSubtargetInfo *createAIEMCSubtargetInfo(const Triple &TT,
-                                                 StringRef CPU,
-                                                 StringRef FS) {
+                                                 StringRef CPU, StringRef FS) {
   if (TT.getArch() == Triple::aie2)
     return createAIE2MCSubtargetInfoImpl(TT, CPU, CPU, FS);
+  else if (TT.getArch() == Triple::aie2p)
+    return createAIE2PMCSubtargetInfoImpl(TT, CPU, CPU, FS);
   return createAIEMCSubtargetInfoImpl(TT, CPU, CPU, FS);
 }
 
 static MCAsmInfo *createAIEMCAsmInfo(const MCRegisterInfo &MRI,
                                      const Triple &TT,
-                                       const MCTargetOptions &Options) {
+                                     const MCTargetOptions &Options) {
   MCAsmInfo *MAI = new AIEMCAsmInfo(TT);
 
   // Initial state of the frame pointer is SP.
@@ -102,24 +114,21 @@ static MCInstPrinter *createAIEMCInstPrinter(const Triple &TT,
                                              const MCRegisterInfo &MRI) {
   if (TT.getArch() == Triple::aie2)
     return new AIE2InstPrinter(MAI, MII, MRI);
+  else if (TT.getArch() == Triple::aie2p)
+    return new AIE2PInstPrinter(MAI, MII, MRI);
   return new AIEInstPrinter(MAI, MII, MRI);
 }
 
-//AIETargetStreamer::AIETargetStreamer(MCStreamer &S) : MCTargetStreamer(S) {}
-//AIETargetStreamer::~AIETargetStreamer() = default;
 static MCTargetStreamer *
 createAIEObjectTargetStreamer(MCStreamer &S, const MCSubtargetInfo &STI) {
-    //  const Triple &TT = STI.getTargetTriple();
-    // if (TT.isOSBinFormatELF())
-    return new AIETargetELFStreamer(S, STI);
-    // return nullptr;
+  return new AIETargetELFStreamer(S, STI);
 }
 
 static MCTargetStreamer *createTargetAsmStreamer(MCStreamer &S,
                                                  formatted_raw_ostream &OS,
                                                  MCInstPrinter *InstPrint,
                                                  bool isVerboseAsm) {
-    return new AIETargetAsmStreamer(S, OS);
+  return new AIETargetAsmStreamer(S, OS);
 }
 
 static MCAsmBackend *createAIEAsmBackend(const Target &T,
@@ -133,6 +142,8 @@ static MCAsmBackend *createAIEAsmBackend(const Target &T,
     return new AIE1AsmBackend(STI, OSABI, Options);
   case Triple::aie2:
     return new AIE2AsmBackend(STI, OSABI, Options);
+  case Triple::aie2p:
+    return new AIE2PAsmBackend(STI, OSABI, Options);
   default:
     llvm_unreachable("Unsupported AIE target");
   }
@@ -140,7 +151,8 @@ static MCAsmBackend *createAIEAsmBackend(const Target &T,
 
 // Force static initialization.
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIETargetMC() {
-  for (Target *T : {&getTheAIETarget(), &getTheAIE2Target()}) {
+  for (Target *T :
+       {&getTheAIETarget(), &getTheAIE2Target(), &getTheAIE2PTarget()}) {
     // Register the MC asm info.
     RegisterMCAsmInfoFn X(*T, createAIEMCAsmInfo);
 
@@ -148,8 +160,7 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIETargetMC() {
     TargetRegistry::RegisterMCRegInfo(*T, createAIEMCRegisterInfo);
 
     // Register the MC subtarget info.
-    TargetRegistry::RegisterMCSubtargetInfo(*T,
-                                            createAIEMCSubtargetInfo);
+    TargetRegistry::RegisterMCSubtargetInfo(*T, createAIEMCSubtargetInfo);
 
     // Register the MCInstPrinter
     TargetRegistry::RegisterMCInstPrinter(*T, createAIEMCInstPrinter);
@@ -159,17 +170,19 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIETargetMC() {
     TargetRegistry::RegisterObjectTargetStreamer(*T,
                                                  createAIEObjectTargetStreamer);
     // Support for ASM output files
-    TargetRegistry::RegisterAsmTargetStreamer(*T,
-                                               createTargetAsmStreamer);
-
+    TargetRegistry::RegisterAsmTargetStreamer(*T, createTargetAsmStreamer);
   }
   // Register the MC instruction info.
   TargetRegistry::RegisterMCInstrInfo(getTheAIETarget(), createAIEMCInstrInfo);
   TargetRegistry::RegisterMCInstrInfo(getTheAIE2Target(),
                                       createAIE2MCInstrInfo);
+  TargetRegistry::RegisterMCInstrInfo(getTheAIE2PTarget(),
+                                      createAIE2PMCInstrInfo);
 
   TargetRegistry::RegisterMCCodeEmitter(getTheAIETarget(),
                                         createAIEMCCodeEmitter);
   TargetRegistry::RegisterMCCodeEmitter(getTheAIE2Target(),
                                         createAIE2MCCodeEmitter);
+  TargetRegistry::RegisterMCCodeEmitter(getTheAIE2PTarget(),
+                                        createAIE2PMCCodeEmitter);
 }

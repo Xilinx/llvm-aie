@@ -8,6 +8,7 @@
 //
 //===----------------------------------------------------------------------===//
 // RUN: %clang --target=aie2 -nostdlibinc -S -emit-llvm %s -O2 -o - | FileCheck %s
+// RUN: %clang --target=aie2p -nostdlibinc -S -emit-llvm %s -O2 -o - | FileCheck %s
 
 constexpr bfloat16 Cst = -0.3761263890318252f;
 

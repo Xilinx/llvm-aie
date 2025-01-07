@@ -1,0 +1,154 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; SEL_EQZ
+    $r19 = SEL_EQZ $r7, $r30, $r27
+    $r5 = SEL_EQZ $r31, $r22, $r27
+    $r20 = SEL_EQZ $r5, $r9, $r27
+    $r24 = SEL_EQZ $r20, $r24, $r27
+    $r21 = SEL_EQZ $r10, $r12, $r27
+    $r3 = SEL_EQZ $r18, $r7, $r27
+    $r12 = SEL_EQZ $r6, $r13, $r27
+    $r8 = SEL_EQZ $r3, $r18, $r27
+    $r22 = SEL_EQZ $r29, $r17, $r27
+    $r14 = SEL_EQZ $r21, $r20, $r27
+    $r9 = SEL_EQZ $r19, $r10, $r27
+    $r13 = SEL_EQZ $r16, $r19, $r27
+    $r27 = SEL_EQZ $r1, $r4, $r27
+    $r17 = SEL_EQZ $r28, $r28, $r27
+    $r0 = SEL_EQZ $r2, $r31, $r27
+    $r30 = SEL_EQZ $r25, $r1, $r27
+    $r25 = SEL_EQZ $r26, $r3, $r27
+    $r10 = SEL_EQZ $r15, $r6, $r27
+    $r2 = SEL_EQZ $r24, $r11, $r27
+    $r15 = SEL_EQZ $r27, $r15, $r27
+    $r4 = SEL_EQZ $r8, $r5, $r27
+    $r16 = SEL_EQZ $r14, $r26, $r27
+    $r18 = SEL_EQZ $r17, $r2, $r27
+    $r31 = SEL_EQZ $r22, $r27, $r27
+    $r7 = SEL_EQZ $r9, $r14, $r27
+    $r29 = SEL_EQZ $r30, $r16, $r27
+    $r1 = SEL_EQZ $r4, $r21, $r27
+    $r23 = SEL_EQZ $r11, $r29, $r27
+    $r28 = SEL_EQZ $r13, $r8, $r27
+    $r26 = SEL_EQZ $r12, $r25, $r27
+    $r6 = SEL_EQZ $r23, $r23, $r27
+    $r11 = SEL_EQZ $r0, $r0, $r27
+
+    ; SEL_NEZ
+    $r10 = SEL_NEZ $r0, $r5, $r27
+    $r30 = SEL_NEZ $r11, $r15, $r27
+    $r14 = SEL_NEZ $r19, $r20, $r27
+    $r21 = SEL_NEZ $r30, $r21, $r27
+    $r3 = SEL_NEZ $r26, $r9, $r27
+    $r2 = SEL_NEZ $r9, $r19, $r27
+    $r22 = SEL_NEZ $r8, $r23, $r27
+    $r19 = SEL_NEZ $r24, $r27, $r27
+    $r0 = SEL_NEZ $r27, $r10, $r27
+    $r6 = SEL_NEZ $r2, $r1, $r27
+    $r29 = SEL_NEZ $r16, $r22, $r27
+    $r20 = SEL_NEZ $r23, $r2, $r27
+    $r13 = SEL_NEZ $r15, $r31, $r27
+    $r7 = SEL_NEZ $r21, $r4, $r27
+    $r5 = SEL_NEZ $r14, $r18, $r27
+    $r26 = SEL_NEZ $r12, $r7, $r27
+    $r28 = SEL_NEZ $r1, $r29, $r27
+    $r18 = SEL_NEZ $r17, $r14, $r27
+    $r25 = SEL_NEZ $r10, $r24, $r27
+    $r15 = SEL_NEZ $r18, $r0, $r27
+    $r16 = SEL_NEZ $r28, $r16, $r27
+    $r27 = SEL_NEZ $r3, $r17, $r27
+    $r23 = SEL_NEZ $r25, $r13, $r27
+    $r8 = SEL_NEZ $r31, $r12, $r27
+    $r12 = SEL_NEZ $r6, $r8, $r27
+    $r31 = SEL_NEZ $r13, $r11, $r27
+    $r17 = SEL_NEZ $r29, $r6, $r27
+    $r9 = SEL_NEZ $r5, $r30, $r27
+    $r24 = SEL_NEZ $r20, $r26, $r27
+    $r4 = SEL_NEZ $r22, $r28, $r27
+    $r11 = SEL_NEZ $r7, $r3, $r27
+    $r1 = SEL_NEZ $r4, $r25, $r27
+...
+
+# CHECK: 0: 18 e2 e7 11 sel.eqz r19, r7, r30, r27
+# CHECK: 4: 18 62 cb 17 sel.eqz r5, r31, r22, r27
+# CHECK: 8: 18 92 68 11 sel.eqz r20, r5, r9, r27
+# CHECK: c: 18 82 31 15 sel.eqz r24, r20, r24, r27
+# CHECK: 10: 18 c2 aa 12 sel.eqz r21, r10, r12, r27
+# CHECK: 14: 18 72 86 14 sel.eqz r3, r18, r7, r27
+# CHECK: 18: 18 d2 98 11 sel.eqz r12, r6, r13, r27
+# CHECK: 1c: 18 22 d1 10 sel.eqz r8, r3, r18, r27
+# CHECK: 20: 18 12 6d 17 sel.eqz r22, r29, r17, r27
+# CHECK: 24: 18 42 5d 15 sel.eqz r14, r21, r20, r27
+# CHECK: 28: 18 a2 d2 14 sel.eqz r9, r19, r10, r27
+# CHECK: 2c: 18 32 1b 14 sel.eqz r13, r16, r19, r27
+# CHECK: 30: 18 42 76 10 sel.eqz r27, r1, r4, r27
+# CHECK: 34: 18 c2 23 17 sel.eqz r17, r28, r28, r27
+# CHECK: 38: 18 f2 81 10 sel.eqz r0, r2, r31, r27
+# CHECK: 3c: 18 12 7c 16 sel.eqz r30, r25, r1, r27
+# CHECK: 40: 18 32 b2 16 sel.eqz r25, r26, r3, r27
+# CHECK: 44: 18 62 d4 13 sel.eqz r10, r15, r6, r27
+# CHECK: 48: 18 b2 04 16 sel.eqz r2, r24, r11, r27
+# CHECK: 4c: 18 f2 de 16 sel.eqz r15, r27, r15, r27
+# CHECK: 50: 18 52 08 12 sel.eqz r4, r8, r5, r27
+# CHECK: 54: 18 a2 a1 13 sel.eqz r16, r14, r26, r27
+# CHECK: 58: 18 22 64 14 sel.eqz r18, r17, r2, r27
+# CHECK: 5c: 18 b2 bf 15 sel.eqz r31, r22, r27, r27
+# CHECK: 60: 18 e2 4e 12 sel.eqz r7, r9, r14, r27
+# CHECK: 64: 18 02 bb 17 sel.eqz r29, r30, r16, r27
+# CHECK: 68: 18 52 03 11 sel.eqz r1, r4, r21, r27
+# CHECK: 6c: 18 d2 ef 12 sel.eqz r23, r11, r29, r27
+# CHECK: 70: 18 82 78 13 sel.eqz r28, r13, r8, r27
+# CHECK: 74: 18 92 35 13 sel.eqz r26, r12, r25, r27
+# CHECK: 78: 18 72 cd 15 sel.eqz r6, r23, r23, r27
+# CHECK: 7c: 18 02 16 10 sel.eqz r11, r0, r0, r27
+# CHECK: 80: 18 5a 14 10 sel.nez r10, r0, r5, r27
+# CHECK: 84: 18 fa fc 12 sel.nez r30, r11, r15, r27
+# CHECK: 88: 18 4a dd 14 sel.nez r14, r19, r20, r27
+# CHECK: 8c: 18 5a ab 17 sel.nez r21, r30, r21, r27
+# CHECK: 90: 18 9a 86 16 sel.nez r3, r26, r9, r27
+# CHECK: 94: 18 3a 45 12 sel.nez r2, r9, r19, r27
+# CHECK: 98: 18 7a 2d 12 sel.nez r22, r8, r23, r27
+# CHECK: 9c: 18 ba 27 16 sel.nez r19, r24, r27, r27
+# CHECK: a0: 18 aa c0 16 sel.nez r0, r27, r10, r27
+# CHECK: a4: 18 1a 8c 10 sel.nez r6, r2, r1, r27
+# CHECK: a8: 18 6a 3b 14 sel.nez r29, r16, r22, r27
+# CHECK: ac: 18 2a e8 15 sel.nez r20, r23, r2, r27
+# CHECK: b0: 18 fa db 13 sel.nez r13, r15, r31, r27
+# CHECK: b4: 18 4a 4e 15 sel.nez r7, r21, r4, r27
+# CHECK: b8: 18 2a 8b 13 sel.nez r5, r14, r18, r27
+# CHECK: bc: 18 7a 34 13 sel.nez r26, r12, r7, r27
+# CHECK: c0: 18 da 79 10 sel.nez r28, r1, r29, r27
+# CHECK: c4: 18 ea 64 14 sel.nez r18, r17, r14, r27
+# CHECK: c8: 18 8a b3 12 sel.nez r25, r10, r24, r27
+# CHECK: cc: 18 0a 9e 14 sel.nez r15, r18, r0, r27
+# CHECK: d0: 18 0a 21 17 sel.nez r16, r28, r16, r27
+# CHECK: d4: 18 1a f7 10 sel.nez r27, r3, r17, r27
+# CHECK: d8: 18 da 6e 16 sel.nez r23, r25, r13, r27
+# CHECK: dc: 18 ca d0 17 sel.nez r8, r31, r12, r27
+# CHECK: e0: 18 8a 98 11 sel.nez r12, r6, r8, r27
+# CHECK: e4: 18 ba 7e 13 sel.nez r31, r13, r11, r27
+# CHECK: e8: 18 6a 62 17 sel.nez r17, r29, r6, r27
+# CHECK: ec: 18 ea 53 11 sel.nez r9, r5, r30, r27
+# CHECK: f0: 18 aa 31 15 sel.nez r24, r20, r26, r27
+# CHECK: f4: 18 ca 89 15 sel.nez r4, r22, r28, r27
+# CHECK: f8: 18 3a d6 11 sel.nez r11, r7, r3, r27
+# CHECK: fc: 18 9a 03 11 sel.nez r1, r4, r25, r27

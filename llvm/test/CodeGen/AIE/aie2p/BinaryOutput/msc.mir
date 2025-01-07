@@ -1,0 +1,88 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; MSC
+    $r20 = MSC $r20, $r4, $r8
+    $r24 = MSC $r24, $r26, $r5
+    $r4 = MSC $r4, $r21, $r29
+    $r15 = MSC $r15, $r15, $r26
+    $r28 = MSC $r28, $r8, $r23
+    $r22 = MSC $r22, $r19, $r24
+    $r1 = MSC $r1, $r30, $r15
+    $r23 = MSC $r23, $r10, $r19
+    $r6 = MSC $r6, $r24, $r3
+    $r18 = MSC $r18, $r17, $r28
+    $r9 = MSC $r9, $r28, $r6
+    $r21 = MSC $r21, $r29, $r20
+    $r13 = MSC $r13, $r5, $r27
+    $r5 = MSC $r5, $r3, $r18
+    $r27 = MSC $r27, $r25, $r9
+    $r2 = MSC $r2, $r6, $r14
+    $r31 = MSC $r31, $r22, $r2
+    $r12 = MSC $r12, $r11, $r4
+    $r29 = MSC $r29, $r27, $r7
+    $r17 = MSC $r17, $r18, $r22
+    $r14 = MSC $r14, $r7, $r12
+    $r16 = MSC $r16, $r2, $r21
+    $r26 = MSC $r26, $r23, $r0
+    $r30 = MSC $r30, $r14, $r1
+    $r10 = MSC $r10, $r1, $r10
+    $r8 = MSC $r8, $r13, $r17
+    $r3 = MSC $r3, $r9, $r30
+    $r19 = MSC $r19, $r0, $r13
+    $r25 = MSC $r25, $r12, $r11
+    $r7 = MSC $r7, $r31, $r31
+    $r0 = MSC $r0, $r16, $r16
+    $r11 = MSC $r11, $r20, $r25
+...
+
+# CHECK: 0: 18 8e 28 11 msc r20, r20, r4, r8
+# CHECK: 4: 18 5e b0 16 msc r24, r24, r26, r5
+# CHECK: 8: 18 de 49 15 msc r4, r4, r21, r29
+# CHECK: c: 18 ae df 13 msc r15, r15, r15, r26
+# CHECK: 10: 18 7e 39 12 msc r28, r28, r8, r23
+# CHECK: 14: 18 8e ed 14 msc r22, r22, r19, r24
+# CHECK: 18: 18 fe 82 17 msc r1, r1, r30, r15
+# CHECK: 1c: 18 3e af 12 msc r23, r23, r10, r19
+# CHECK: 20: 18 3e 0c 16 msc r6, r6, r24, r3
+# CHECK: 24: 18 ce 65 14 msc r18, r18, r17, r28
+# CHECK: 28: 18 6e 12 17 msc r9, r9, r28, r6
+# CHECK: 2c: 18 4e 6b 17 msc r21, r21, r29, r20
+# CHECK: 30: 18 be 5b 11 msc r13, r13, r5, r27
+# CHECK: 34: 18 2e cb 10 msc r5, r5, r3, r18
+# CHECK: 38: 18 9e 76 16 msc r27, r27, r25, r9
+# CHECK: 3c: 18 ee 84 11 msc r2, r2, r6, r14
+# CHECK: 40: 18 2e be 15 msc r31, r31, r22, r2
+# CHECK: 44: 18 4e d8 12 msc r12, r12, r11, r4
+# CHECK: 48: 18 7e fa 16 msc r29, r29, r27, r7
+# CHECK: 4c: 18 6e a3 14 msc r17, r17, r18, r22
+# CHECK: 50: 18 ce dc 11 msc r14, r14, r7, r12
+# CHECK: 54: 18 5e a1 10 msc r16, r16, r2, r21
+# CHECK: 58: 18 0e f4 15 msc r26, r26, r23, r0
+# CHECK: 5c: 18 1e bc 13 msc r30, r30, r14, r1
+# CHECK: 60: 18 ae 54 10 msc r10, r10, r1, r10
+# CHECK: 64: 18 1e 51 13 msc r8, r8, r13, r17
+# CHECK: 68: 18 ee 47 12 msc r3, r3, r9, r30
+# CHECK: 6c: 18 de 26 10 msc r19, r19, r0, r13
+# CHECK: 70: 18 be 32 13 msc r25, r25, r12, r11
+# CHECK: 74: 18 fe cf 17 msc r7, r7, r31, r31
+# CHECK: 78: 18 0e 01 14 msc r0, r0, r16, r16
+# CHECK: 7c: 18 9e 17 15 msc r11, r11, r20, r25

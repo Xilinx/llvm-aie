@@ -1,0 +1,5906 @@
+//===-AIE2PGroupedResourcesGenSchedule.td -----------------------------*- tablegen -*-===//
+//
+// This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+//
+//===----------------------------------------------------------------------===//
+//* Automatically generated file, do not edit! *
+
+// Dummy resource to code empty cycles.
+// Preferably used through the EmptyCycles class below.
+def EMPTY_FU : FuncUnit;
+// Insert n empty cycles. Note that we use EMPTY_FU for zero cycles
+class EmptyCycles<int n> : InstrStage<0, [EMPTY_FU], n>;
+
+// Convenience class coding one cycle with one resource
+class SimpleCycle<FuncUnit FU> : InstrStage<1, [FU]>;
+
+// Used for non-tail resources of a multi-resource cycle
+class PrefixCycle<FuncUnit FU> : InstrStage<1, [FU], 0>;
+
+// Partword stores have complicated dependences due to their read-modify-write nature.
+// We use this resource to keep other memory ops at a distance.
+def PART_WORD_STORE : FuncUnit;
+// This resource use is telling there's a partword store in progress.
+def IsPartWordStore : InstrStage<7, [PART_WORD_STORE], 0>;
+// This is telling other memory ops to stay clear of a part word store.
+// A reserved resource is weak, so it blocks only if a part word store is holding it.
+def AvoidPartWordStore : InstrStage<1, [PART_WORD_STORE], 0, Reserved>;
+
+ // Resources
+def AGUA__AGI_I : FuncUnit;
+def AGUA__AGU_C1 : FuncUnit;
+def AGUA__AGU_M_CG20S : FuncUnit;
+def AGUA__AG_P : FuncUnit;
+def AGUA__DM_AD_DEAD : FuncUnit;
+def AGU_RM_PORT : FuncUnit;
+def BM_WM_1 : FuncUnit;
+def CNVOSTAT1 : FuncUnit;
+def COL : FuncUnit;
+def CRPACKSIGN_WM_PORT : FuncUnit;
+def CRRND_RS : FuncUnit;
+def CRSAT_RA : FuncUnit;
+def CRSRSSIGN_WM_PORT : FuncUnit;
+def CRUNPACKSIGN_WM_PORT : FuncUnit;
+def CRUPSMODE_RA : FuncUnit;
+def CRUPSSIGN_WM_PORT : FuncUnit;
+def CRVADDSIGN_WM_PORT : FuncUnit;
+def DC_WM_PORT : FuncUnit;
+def DJ_WM_PORT : FuncUnit;
+def DMS_WM : FuncUnit;
+def DMW_WRS : FuncUnit;
+def DMX_STS_FIFO : FuncUnit;
+def DMX_WRS : FuncUnit;
+def DM_ADA : FuncUnit;
+def DM_ADS : FuncUnit;
+def DM_RM_PORT : FuncUnit;
+def DM_WM_PORT : FuncUnit;
+def DN_WM_PORT : FuncUnit;
+def DONE_FU : FuncUnit;
+def EVENT_UPS_OF : FuncUnit;
+def FIFO_HL_RA_PORT : FuncUnit;
+def FIFO_HL_WA_PORT : FuncUnit;
+def FIFO_STS__ADVANCE_FIFO_R : FuncUnit;
+def LCKREQ : FuncUnit;
+def LXC : FuncUnit;
+def L_RM_PORT : FuncUnit;
+def L_WM_PORT : FuncUnit;
+def M_RA_PORT : FuncUnit;
+def M_WM_PORT : FuncUnit;
+def P_WM_PORT : FuncUnit;
+def QEY_RS_PORT : FuncUnit;
+def QEY_WA_PORT : FuncUnit;
+def QEY_WB_PORT : FuncUnit;
+def RSRC_EXECUTION_TRACE : FuncUnit;
+def R_RS_PORT : FuncUnit;
+def R_WA_PORT : FuncUnit;
+def SCD : FuncUnit;
+def SCD_CTL : FuncUnit;
+def SCD_EXPAND__EN : FuncUnit;
+def SCD_INCR__O_POS : FuncUnit;
+def TM_AD : FuncUnit;
+def UPS__H__A : FuncUnit;
+def UPS__H__K : FuncUnit;
+def UPS__H__OMUXL : FuncUnit;
+def UPS__K : FuncUnit;
+def UPS__L__KL : FuncUnit;
+def UPS__L__OMUXL : FuncUnit;
+def UPS__OMUX : FuncUnit;
+
+// Bypasses
+def MV_Bypass : Bypass;
+def VEC_Bypass : Bypass;
+
+// Itineraries
+def II_ABS : InstrItinClass;
+def II_ACQ_COND_mLockId_imm : InstrItinClass;
+def II_ACQ_COND_mLockId_reg : InstrItinClass;
+def II_ACQ_mLockId_imm : InstrItinClass;
+def II_ACQ_mLockId_reg : InstrItinClass;
+def II_ADC : InstrItinClass;
+// instruction: ADD_NC_mv_add_ri
+def II_ADD_NC_mv_add_ri : InstrItinClass;
+def II_ADD_NC_mv_add_ri_mCRSCDEn : InstrItinClass;
+def II_ADD_NC_mv_add_ri_eDJ : InstrItinClass;
+def II_ADD_NC_mv_add_ri_mCRRnd : InstrItinClass;
+def II_ADD_NC_mv_add_ri_mCRSat : InstrItinClass;
+def II_ADD_NC_mv_add_ri_eDC : InstrItinClass;
+def II_ADD_NC_mv_add_ri_mSRCarry : InstrItinClass;
+def II_ADD_NC_mv_add_ri_mCRPackSize : InstrItinClass;
+def II_ADD_NC_mv_add_ri_eP : InstrItinClass;
+def II_ADD_NC_mv_add_ri_eUnpackSign : InstrItinClass;
+def II_ADD_NC_mv_add_ri_eVaddSign : InstrItinClass;
+def II_ADD_NC_mv_add_ri_eSRSSign : InstrItinClass;
+def II_ADD_NC_mv_add_ri_eUPSSign : InstrItinClass;
+def II_ADD_NC_mv_add_ri_eS : InstrItinClass;
+def II_ADD_NC_mv_add_ri_mCRUPSMode : InstrItinClass;
+def II_ADD_NC_mv_add_ri_mCRUnpackSize : InstrItinClass;
+def II_ADD_NC_mv_add_ri_eR : InstrItinClass;
+def II_ADD_NC_mv_add_ri_ePackSign : InstrItinClass;
+def II_ADD_NC_mv_add_ri_mCRMCDEn : InstrItinClass;
+def II_ADD_NC_mv_add_ri_eDN : InstrItinClass;
+def II_ADD_NC_mv_add_ri_mSRSS0 : InstrItinClass;
+def II_ADD_NC_mv_add_ri_mSRMS0 : InstrItinClass;
+def II_ADD_NC_mv_add_ri_eM : InstrItinClass;
+def II_ADD_NC_mv_add_ri_mCRSRSMode : InstrItinClass;
+
+// instruction: ADD_NC_mv_add_rr
+def II_ADD_NC_mv_add_rr : InstrItinClass;
+def II_ADD_NC_mv_add_rr_mCRSCDEn : InstrItinClass;
+def II_ADD_NC_mv_add_rr_eDJ : InstrItinClass;
+def II_ADD_NC_mv_add_rr_mCRRnd : InstrItinClass;
+def II_ADD_NC_mv_add_rr_mCRSat : InstrItinClass;
+def II_ADD_NC_mv_add_rr_eDC : InstrItinClass;
+def II_ADD_NC_mv_add_rr_mSRCarry : InstrItinClass;
+def II_ADD_NC_mv_add_rr_mCRPackSize : InstrItinClass;
+def II_ADD_NC_mv_add_rr_eP : InstrItinClass;
+def II_ADD_NC_mv_add_rr_eUnpackSign : InstrItinClass;
+def II_ADD_NC_mv_add_rr_eVaddSign : InstrItinClass;
+def II_ADD_NC_mv_add_rr_eSRSSign : InstrItinClass;
+def II_ADD_NC_mv_add_rr_eUPSSign : InstrItinClass;
+def II_ADD_NC_mv_add_rr_eS : InstrItinClass;
+def II_ADD_NC_mv_add_rr_mCRUPSMode : InstrItinClass;
+def II_ADD_NC_mv_add_rr_mCRUnpackSize : InstrItinClass;
+def II_ADD_NC_mv_add_rr_eR : InstrItinClass;
+def II_ADD_NC_mv_add_rr_ePackSign : InstrItinClass;
+def II_ADD_NC_mv_add_rr_mCRMCDEn : InstrItinClass;
+def II_ADD_NC_mv_add_rr_eDN : InstrItinClass;
+def II_ADD_NC_mv_add_rr_mSRSS0 : InstrItinClass;
+def II_ADD_NC_mv_add_rr_mSRMS0 : InstrItinClass;
+def II_ADD_NC_mv_add_rr_eM : InstrItinClass;
+def II_ADD_NC_mv_add_rr_mCRSRSMode : InstrItinClass;
+
+def II_ADD_add_r_ri : InstrItinClass;
+def II_ADD_alu_r_rr : InstrItinClass;
+def II_AND : InstrItinClass;
+def II_ASHL : InstrItinClass;
+def II_CLB : InstrItinClass;
+def II_CLZ : InstrItinClass;
+def II_DIVS : InstrItinClass;
+def II_DONE : InstrItinClass;
+def II_EQZ : InstrItinClass;
+def II_EQ : InstrItinClass;
+def II_EVENT_ERROR : InstrItinClass;
+def II_EVENT_WARNING : InstrItinClass;
+def II_EVENT_event0 : InstrItinClass;
+def II_EVENT_event1 : InstrItinClass;
+def II_EXTEND_s16 : InstrItinClass;
+def II_EXTEND_s8 : InstrItinClass;
+def II_EXTEND_u16 : InstrItinClass;
+def II_EXTEND_u8 : InstrItinClass;
+def II_GEU : InstrItinClass;
+def II_GE : InstrItinClass;
+def II_INVSQRT_mOptConvDel_mRx : InstrItinClass;
+def II_INVSQRT_mOptConvDel_mRx_mOptConv : InstrItinClass;
+def II_INVSQRT_mRx : InstrItinClass;
+def II_INVSQRT_mRx_mOptConv : InstrItinClass;
+def II_INV_mOptConvDel_mRx : InstrItinClass;
+def II_INV_mOptConvDel_mRx_mOptConv : InstrItinClass;
+def II_INV_mRx : InstrItinClass;
+def II_INV_mRx_mOptConv : InstrItinClass;
+def II_JL_alumv_or : InstrItinClass;
+def II_JL_lng : InstrItinClass;
+def II_JNZD : InstrItinClass;
+def II_JNZ : InstrItinClass;
+def II_JZ : InstrItinClass;
+def II_J_alumv_or : InstrItinClass;
+def II_J_lng : InstrItinClass;
+// instruction: LDA_2D_dms_lda
+def II_LDA_2D_dms_lda : InstrItinClass;
+def II_LDA_2D_dms_lda_mLRa : InstrItinClass;
+def II_LDA_2D_dms_lda_eEle : InstrItinClass;
+def II_LDA_2D_dms_lda_eElo : InstrItinClass;
+def II_LDA_2D_dms_lda_eDJ : InstrItinClass;
+def II_LDA_2D_dms_lda_eR : InstrItinClass;
+def II_LDA_2D_dms_lda_eDC : InstrItinClass;
+def II_LDA_2D_dms_lda_eDN : InstrItinClass;
+def II_LDA_2D_dms_lda_eEhe : InstrItinClass;
+def II_LDA_2D_dms_lda_eP : InstrItinClass;
+def II_LDA_2D_dms_lda_eM : InstrItinClass;
+def II_LDA_2D_dms_lda_eEho : InstrItinClass;
+
+def II_LDA_2D_dmv_lda_q : InstrItinClass;
+def II_LDA_2D_s16 : InstrItinClass;
+def II_LDA_2D_s8 : InstrItinClass;
+def II_LDA_2D_u16 : InstrItinClass;
+def II_LDA_2D_u8 : InstrItinClass;
+// instruction: LDA_3D_dms_lda
+def II_LDA_3D_dms_lda : InstrItinClass;
+def II_LDA_3D_dms_lda_mLRa : InstrItinClass;
+def II_LDA_3D_dms_lda_eEle : InstrItinClass;
+def II_LDA_3D_dms_lda_eElo : InstrItinClass;
+def II_LDA_3D_dms_lda_eDJ : InstrItinClass;
+def II_LDA_3D_dms_lda_eR : InstrItinClass;
+def II_LDA_3D_dms_lda_eDC : InstrItinClass;
+def II_LDA_3D_dms_lda_eDN : InstrItinClass;
+def II_LDA_3D_dms_lda_eEhe : InstrItinClass;
+def II_LDA_3D_dms_lda_eP : InstrItinClass;
+def II_LDA_3D_dms_lda_eM : InstrItinClass;
+def II_LDA_3D_dms_lda_eEho : InstrItinClass;
+
+def II_LDA_3D_dmv_lda_q : InstrItinClass;
+def II_LDA_3D_s16 : InstrItinClass;
+def II_LDA_3D_s8 : InstrItinClass;
+def II_LDA_3D_u16 : InstrItinClass;
+def II_LDA_3D_u8 : InstrItinClass;
+def II_LDA_TM_2D : InstrItinClass;
+def II_LDA_TM_3D : InstrItinClass;
+def II_LDA_TM_idx : InstrItinClass;
+def II_LDA_TM_idx_imm : InstrItinClass;
+def II_LDA_TM_pstm_nrm : InstrItinClass;
+def II_LDA_TM_pstm_nrm_imm : InstrItinClass;
+// instruction: LDA_dms_lda_idx
+def II_LDA_dms_lda_idx : InstrItinClass;
+def II_LDA_dms_lda_idx_mLRa : InstrItinClass;
+def II_LDA_dms_lda_idx_eEle : InstrItinClass;
+def II_LDA_dms_lda_idx_eElo : InstrItinClass;
+def II_LDA_dms_lda_idx_eDJ : InstrItinClass;
+def II_LDA_dms_lda_idx_eR : InstrItinClass;
+def II_LDA_dms_lda_idx_eDC : InstrItinClass;
+def II_LDA_dms_lda_idx_eDN : InstrItinClass;
+def II_LDA_dms_lda_idx_eEhe : InstrItinClass;
+def II_LDA_dms_lda_idx_eP : InstrItinClass;
+def II_LDA_dms_lda_idx_eM : InstrItinClass;
+def II_LDA_dms_lda_idx_eEho : InstrItinClass;
+
+// instruction: LDA_dms_lda_idx_imm
+def II_LDA_dms_lda_idx_imm : InstrItinClass;
+def II_LDA_dms_lda_idx_imm_mLRa : InstrItinClass;
+def II_LDA_dms_lda_idx_imm_eEle : InstrItinClass;
+def II_LDA_dms_lda_idx_imm_eElo : InstrItinClass;
+def II_LDA_dms_lda_idx_imm_eDJ : InstrItinClass;
+def II_LDA_dms_lda_idx_imm_eR : InstrItinClass;
+def II_LDA_dms_lda_idx_imm_eDC : InstrItinClass;
+def II_LDA_dms_lda_idx_imm_eDN : InstrItinClass;
+def II_LDA_dms_lda_idx_imm_eEhe : InstrItinClass;
+def II_LDA_dms_lda_idx_imm_eP : InstrItinClass;
+def II_LDA_dms_lda_idx_imm_eM : InstrItinClass;
+def II_LDA_dms_lda_idx_imm_eEho : InstrItinClass;
+
+// instruction: LDA_dms_lda_pstm_nrm
+def II_LDA_dms_lda_pstm_nrm : InstrItinClass;
+def II_LDA_dms_lda_pstm_nrm_mLRa : InstrItinClass;
+def II_LDA_dms_lda_pstm_nrm_eEle : InstrItinClass;
+def II_LDA_dms_lda_pstm_nrm_eElo : InstrItinClass;
+def II_LDA_dms_lda_pstm_nrm_eDJ : InstrItinClass;
+def II_LDA_dms_lda_pstm_nrm_eR : InstrItinClass;
+def II_LDA_dms_lda_pstm_nrm_eDC : InstrItinClass;
+def II_LDA_dms_lda_pstm_nrm_eDN : InstrItinClass;
+def II_LDA_dms_lda_pstm_nrm_eEhe : InstrItinClass;
+def II_LDA_dms_lda_pstm_nrm_eP : InstrItinClass;
+def II_LDA_dms_lda_pstm_nrm_eM : InstrItinClass;
+def II_LDA_dms_lda_pstm_nrm_eEho : InstrItinClass;
+
+// instruction: LDA_dms_lda_pstm_nrm_imm
+def II_LDA_dms_lda_pstm_nrm_imm : InstrItinClass;
+def II_LDA_dms_lda_pstm_nrm_imm_mLRa : InstrItinClass;
+def II_LDA_dms_lda_pstm_nrm_imm_eEle : InstrItinClass;
+def II_LDA_dms_lda_pstm_nrm_imm_eElo : InstrItinClass;
+def II_LDA_dms_lda_pstm_nrm_imm_eDJ : InstrItinClass;
+def II_LDA_dms_lda_pstm_nrm_imm_eR : InstrItinClass;
+def II_LDA_dms_lda_pstm_nrm_imm_eDC : InstrItinClass;
+def II_LDA_dms_lda_pstm_nrm_imm_eDN : InstrItinClass;
+def II_LDA_dms_lda_pstm_nrm_imm_eEhe : InstrItinClass;
+def II_LDA_dms_lda_pstm_nrm_imm_eP : InstrItinClass;
+def II_LDA_dms_lda_pstm_nrm_imm_eM : InstrItinClass;
+def II_LDA_dms_lda_pstm_nrm_imm_eEho : InstrItinClass;
+
+// instruction: LDA_dms_lda_spill
+def II_LDA_dms_lda_spill : InstrItinClass;
+def II_LDA_dms_lda_spill_mLRa : InstrItinClass;
+def II_LDA_dms_lda_spill_eEle : InstrItinClass;
+def II_LDA_dms_lda_spill_eElo : InstrItinClass;
+def II_LDA_dms_lda_spill_eDJ : InstrItinClass;
+def II_LDA_dms_lda_spill_eR : InstrItinClass;
+def II_LDA_dms_lda_spill_eDC : InstrItinClass;
+def II_LDA_dms_lda_spill_eDN : InstrItinClass;
+def II_LDA_dms_lda_spill_eEhe : InstrItinClass;
+def II_LDA_dms_lda_spill_eP : InstrItinClass;
+def II_LDA_dms_lda_spill_eM : InstrItinClass;
+def II_LDA_dms_lda_spill_eEho : InstrItinClass;
+
+def II_LDA_dmv_lda_q_idx : InstrItinClass;
+def II_LDA_dmv_lda_q_idx_imm : InstrItinClass;
+def II_LDA_dmv_lda_q_pstm_nrm : InstrItinClass;
+def II_LDA_dmv_lda_q_pstm_nrm_imm : InstrItinClass;
+def II_LDA_dmv_lda_q_spill : InstrItinClass;
+def II_LDA_s16_idx : InstrItinClass;
+def II_LDA_s16_idx_imm : InstrItinClass;
+def II_LDA_s16_pstm_nrm : InstrItinClass;
+def II_LDA_s16_pstm_nrm_imm : InstrItinClass;
+def II_LDA_s8_idx : InstrItinClass;
+def II_LDA_s8_idx_imm : InstrItinClass;
+def II_LDA_s8_pstm_nrm : InstrItinClass;
+def II_LDA_s8_pstm_nrm_imm : InstrItinClass;
+def II_LDA_u16_idx : InstrItinClass;
+def II_LDA_u16_idx_imm : InstrItinClass;
+def II_LDA_u16_pstm_nrm : InstrItinClass;
+def II_LDA_u16_pstm_nrm_imm : InstrItinClass;
+def II_LDA_u8_idx : InstrItinClass;
+def II_LDA_u8_idx_imm : InstrItinClass;
+def II_LDA_u8_pstm_nrm : InstrItinClass;
+def II_LDA_u8_pstm_nrm_imm : InstrItinClass;
+def II_LSHL : InstrItinClass;
+def II_LTU : InstrItinClass;
+def II_LT : InstrItinClass;
+def II_MAC : InstrItinClass;
+// instruction: MOVA
+def II_MOVA : InstrItinClass;
+def II_MOVA_eDJ : InstrItinClass;
+def II_MOVA_eR : InstrItinClass;
+def II_MOVA_eDC : InstrItinClass;
+def II_MOVA_eDN : InstrItinClass;
+def II_MOVA_eP : InstrItinClass;
+def II_MOVA_eM : InstrItinClass;
+
+// instruction: MOVS
+def II_MOVS : InstrItinClass;
+def II_MOVS_eDJ_eDJ : InstrItinClass;
+def II_MOVS_eDC_eDJ : InstrItinClass;
+def II_MOVS_eDN_eDJ : InstrItinClass;
+def II_MOVS_eP_eDJ : InstrItinClass;
+def II_MOVS_eM_eDJ : InstrItinClass;
+def II_MOVS_eDJ_eR : InstrItinClass;
+def II_MOVS_eDJ_eDC : InstrItinClass;
+def II_MOVS_eDJ_eDN : InstrItinClass;
+def II_MOVS_eDJ_eP : InstrItinClass;
+def II_MOVS_eDJ_eM : InstrItinClass;
+def II_MOVS_eDC_eR : InstrItinClass;
+def II_MOVS_eDC_eDC : InstrItinClass;
+def II_MOVS_eDC_eDN : InstrItinClass;
+def II_MOVS_eDC_eP : InstrItinClass;
+def II_MOVS_eDC_eM : InstrItinClass;
+def II_MOVS_eDN_eR : InstrItinClass;
+def II_MOVS_eDN_eDC : InstrItinClass;
+def II_MOVS_eDN_eDN : InstrItinClass;
+def II_MOVS_eDN_eP : InstrItinClass;
+def II_MOVS_eDN_eM : InstrItinClass;
+def II_MOVS_eP_eR : InstrItinClass;
+def II_MOVS_eP_eDC : InstrItinClass;
+def II_MOVS_eP_eDN : InstrItinClass;
+def II_MOVS_eP_eP : InstrItinClass;
+def II_MOVS_eP_eM : InstrItinClass;
+def II_MOVS_eM_eR : InstrItinClass;
+def II_MOVS_eM_eDC : InstrItinClass;
+def II_MOVS_eM_eDN : InstrItinClass;
+def II_MOVS_eM_eP : InstrItinClass;
+def II_MOVS_eM_eM : InstrItinClass;
+
+// instruction: MOVXM
+def II_MOVXM : InstrItinClass;
+def II_MOVXM_mCRSCDEn : InstrItinClass;
+def II_MOVXM_eDJ : InstrItinClass;
+def II_MOVXM_mCRRnd : InstrItinClass;
+def II_MOVXM_mCRSat : InstrItinClass;
+def II_MOVXM_eDC : InstrItinClass;
+def II_MOVXM_mSRCarry : InstrItinClass;
+def II_MOVXM_mCRPackSize : InstrItinClass;
+def II_MOVXM_eP : InstrItinClass;
+def II_MOVXM_eUnpackSign : InstrItinClass;
+def II_MOVXM_eVaddSign : InstrItinClass;
+def II_MOVXM_eSRSSign : InstrItinClass;
+def II_MOVXM_eUPSSign : InstrItinClass;
+def II_MOVXM_eS : InstrItinClass;
+def II_MOVXM_mCRUPSMode : InstrItinClass;
+def II_MOVXM_mCRUnpackSize : InstrItinClass;
+def II_MOVXM_eR : InstrItinClass;
+def II_MOVXM_ePackSign : InstrItinClass;
+def II_MOVXM_mCRMCDEn : InstrItinClass;
+def II_MOVXM_eDN : InstrItinClass;
+def II_MOVXM_mSRSS0 : InstrItinClass;
+def II_MOVXM_mSRMS0 : InstrItinClass;
+def II_MOVXM_eM : InstrItinClass;
+def II_MOVXM_mCRSRSMode : InstrItinClass;
+
+def II_MOVX_alu_cg : InstrItinClass;
+// instruction: MOVX_mvx_cr_imm
+def II_MOVX_mvx_cr_imm : InstrItinClass;
+def II_MOVX_mvx_cr_imm_mCRSCDEn : InstrItinClass;
+def II_MOVX_mvx_cr_imm_mCRPackSize : InstrItinClass;
+def II_MOVX_mvx_cr_imm_mCRRnd : InstrItinClass;
+def II_MOVX_mvx_cr_imm_mCRSat : InstrItinClass;
+def II_MOVX_mvx_cr_imm_eVaddSign : InstrItinClass;
+def II_MOVX_mvx_cr_imm_eUnpackSign : InstrItinClass;
+def II_MOVX_mvx_cr_imm_eSRSSign : InstrItinClass;
+def II_MOVX_mvx_cr_imm_eUPSSign : InstrItinClass;
+def II_MOVX_mvx_cr_imm_mCRUPSMode : InstrItinClass;
+def II_MOVX_mvx_cr_imm_mCRUnpackSize : InstrItinClass;
+def II_MOVX_mvx_cr_imm_ePackSign : InstrItinClass;
+def II_MOVX_mvx_cr_imm_mCRMCDEn : InstrItinClass;
+def II_MOVX_mvx_cr_imm_mCRSRSMode : InstrItinClass;
+
+// instruction: MOVX_mvx_cr_r
+def II_MOVX_mvx_cr_r : InstrItinClass;
+def II_MOVX_mvx_cr_r_mCRSCDEn : InstrItinClass;
+def II_MOVX_mvx_cr_r_mCRPackSize : InstrItinClass;
+def II_MOVX_mvx_cr_r_mCRRnd : InstrItinClass;
+def II_MOVX_mvx_cr_r_mCRSat : InstrItinClass;
+def II_MOVX_mvx_cr_r_eVaddSign : InstrItinClass;
+def II_MOVX_mvx_cr_r_eUnpackSign : InstrItinClass;
+def II_MOVX_mvx_cr_r_eSRSSign : InstrItinClass;
+def II_MOVX_mvx_cr_r_eUPSSign : InstrItinClass;
+def II_MOVX_mvx_cr_r_mCRUPSMode : InstrItinClass;
+def II_MOVX_mvx_cr_r_mCRUnpackSize : InstrItinClass;
+def II_MOVX_mvx_cr_r_ePackSign : InstrItinClass;
+def II_MOVX_mvx_cr_r_mCRMCDEn : InstrItinClass;
+def II_MOVX_mvx_cr_r_mCRSRSMode : InstrItinClass;
+
+def II_MOV_CPH_mMStream_tlast_imm : InstrItinClass;
+def II_MOV_CPH_mMStream_tlast_reg : InstrItinClass;
+def II_MOV_CPH_nb_mMStream_tlast_imm : InstrItinClass;
+def II_MOV_CPH_nb_mMStream_tlast_reg : InstrItinClass;
+def II_MOV_CPH_nb_tlast : InstrItinClass;
+def II_MOV_CPH_tlast : InstrItinClass;
+def II_MOV_PH_mMStream_tlast_imm : InstrItinClass;
+def II_MOV_PH_mMStream_tlast_reg : InstrItinClass;
+def II_MOV_PH_nb_mMStream_tlast_imm : InstrItinClass;
+def II_MOV_PH_nb_mMStream_tlast_reg : InstrItinClass;
+def II_MOV_PH_nb_tlast : InstrItinClass;
+def II_MOV_PH_tlast : InstrItinClass;
+def II_MOV_alu_mv_alu_flt2fx : InstrItinClass;
+def II_MOV_alu_mv_alu_fx2flt : InstrItinClass;
+// instruction: MOV_alu_mv_mv_mv_cg
+def II_MOV_alu_mv_mv_mv_cg : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_cg_mCRSCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_cg_eDJ : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_cg_mCRRnd : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_cg_mCRSat : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_cg_eDC : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_cg_mSRCarry : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_cg_mCRPackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_cg_eP : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_cg_eUnpackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_cg_eVaddSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_cg_eSRSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_cg_eUPSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_cg_eS : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_cg_mCRUPSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_cg_mCRUnpackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_cg_eR : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_cg_ePackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_cg_mCRMCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_cg_eDN : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_cg_mSRSS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_cg_mSRMS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_cg_eM : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_cg_mCRSRSMode : InstrItinClass;
+
+def II_MOV_alu_mv_mv_mv_cntr2l : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_e_mv_eh_to_eh : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_e_mv_eh_to_el : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_e_mv_eh_to_r : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_e_mv_el_to_eh : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_e_mv_el_to_el : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_e_mv_el_to_r : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_e_mv_r_to_eh : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_e_mv_r_to_el : InstrItinClass;
+// instruction: MOV_alu_mv_mv_mv_scl
+def II_MOV_alu_mv_mv_mv_scl : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_mCRSCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDJ_mCRSCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRRnd_mCRSCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSat_mCRSCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDC_mCRSCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRCarry_mCRSCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRPackSize_mCRSCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eP_mCRSCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUnpackSign_mCRSCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eVaddSign_mCRSCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eSRSSign_mCRSCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUPSSign_mCRSCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eS_mCRSCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_mCRSCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_mCRSCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eR_mCRSCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_ePackSign_mCRSCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_mCRSCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDN_mCRSCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRSS0_mCRSCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRMS0_mCRSCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eM_mCRSCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_mCRSCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_eDJ : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_mCRRnd : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_mCRSat : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_eDC : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_mSRCarry : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_mCRPackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_eP : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_eUnpackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_eVaddSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_eSRSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_eUPSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_eS : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_mCRUPSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_mCRUnpackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_eR : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_ePackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_mCRMCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_eDN : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_mSRSS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_mSRMS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_eM : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_mCRSRSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDJ_eDJ : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDJ_mCRRnd : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDJ_mCRSat : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDJ_eDC : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDJ_mSRCarry : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDJ_mCRPackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDJ_eP : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDJ_eUnpackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDJ_eVaddSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDJ_eSRSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDJ_eUPSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDJ_eS : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDJ_mCRUPSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDJ_mCRUnpackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDJ_eR : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDJ_ePackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDJ_mCRMCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDJ_eDN : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDJ_mSRSS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDJ_mSRMS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDJ_eM : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDJ_mCRSRSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRRnd_eDJ : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRRnd_mCRRnd : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRRnd_mCRSat : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRRnd_eDC : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRRnd_mSRCarry : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRRnd_mCRPackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRRnd_eP : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRRnd_eUnpackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRRnd_eVaddSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRRnd_eSRSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRRnd_eUPSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRRnd_eS : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRRnd_mCRUPSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRRnd_mCRUnpackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRRnd_eR : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRRnd_ePackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRRnd_mCRMCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRRnd_eDN : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRRnd_mSRSS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRRnd_mSRMS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRRnd_eM : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRRnd_mCRSRSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSat_eDJ : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSat_mCRRnd : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSat_mCRSat : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSat_eDC : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSat_mSRCarry : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSat_mCRPackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSat_eP : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSat_eUnpackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSat_eVaddSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSat_eSRSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSat_eUPSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSat_eS : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSat_mCRUPSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSat_mCRUnpackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSat_eR : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSat_ePackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSat_mCRMCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSat_eDN : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSat_mSRSS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSat_mSRMS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSat_eM : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSat_mCRSRSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDC_eDJ : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDC_mCRRnd : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDC_mCRSat : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDC_eDC : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDC_mSRCarry : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDC_mCRPackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDC_eP : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDC_eUnpackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDC_eVaddSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDC_eSRSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDC_eUPSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDC_eS : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDC_mCRUPSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDC_mCRUnpackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDC_eR : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDC_ePackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDC_mCRMCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDC_eDN : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDC_mSRSS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDC_mSRMS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDC_eM : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDC_mCRSRSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRCarry_eDJ : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRCarry_mCRRnd : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRCarry_mCRSat : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRCarry_eDC : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRCarry_mSRCarry : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRCarry_mCRPackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRCarry_eP : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRCarry_eUnpackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRCarry_eVaddSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRCarry_eSRSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRCarry_eUPSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRCarry_eS : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRCarry_mCRUPSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRCarry_mCRUnpackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRCarry_eR : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRCarry_ePackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRCarry_mCRMCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRCarry_eDN : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRCarry_mSRSS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRCarry_mSRMS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRCarry_eM : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRCarry_mCRSRSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRPackSize_eDJ : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRPackSize_mCRRnd : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRPackSize_mCRSat : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRPackSize_eDC : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRPackSize_mSRCarry : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRPackSize_mCRPackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRPackSize_eP : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRPackSize_eUnpackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRPackSize_eVaddSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRPackSize_eSRSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRPackSize_eUPSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRPackSize_eS : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRPackSize_mCRUPSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRPackSize_mCRUnpackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRPackSize_eR : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRPackSize_ePackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRPackSize_mCRMCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRPackSize_eDN : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRPackSize_mSRSS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRPackSize_mSRMS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRPackSize_eM : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRPackSize_mCRSRSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eP_eDJ : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eP_mCRRnd : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eP_mCRSat : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eP_eDC : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eP_mSRCarry : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eP_mCRPackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eP_eP : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eP_eUnpackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eP_eVaddSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eP_eSRSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eP_eUPSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eP_eS : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eP_mCRUPSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eP_mCRUnpackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eP_eR : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eP_ePackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eP_mCRMCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eP_eDN : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eP_mSRSS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eP_mSRMS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eP_eM : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eP_mCRSRSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUnpackSign_eDJ : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUnpackSign_mCRRnd : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUnpackSign_mCRSat : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUnpackSign_eDC : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUnpackSign_mSRCarry : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUnpackSign_mCRPackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUnpackSign_eP : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUnpackSign_eUnpackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUnpackSign_eVaddSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUnpackSign_eSRSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUnpackSign_eUPSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUnpackSign_eS : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUnpackSign_mCRUPSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUnpackSign_mCRUnpackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUnpackSign_eR : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUnpackSign_ePackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUnpackSign_mCRMCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUnpackSign_eDN : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUnpackSign_mSRSS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUnpackSign_mSRMS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUnpackSign_eM : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUnpackSign_mCRSRSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eVaddSign_eDJ : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eVaddSign_mCRRnd : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eVaddSign_mCRSat : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eVaddSign_eDC : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eVaddSign_mSRCarry : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eVaddSign_mCRPackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eVaddSign_eP : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eVaddSign_eUnpackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eVaddSign_eVaddSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eVaddSign_eSRSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eVaddSign_eUPSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eVaddSign_eS : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eVaddSign_mCRUPSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eVaddSign_mCRUnpackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eVaddSign_eR : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eVaddSign_ePackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eVaddSign_mCRMCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eVaddSign_eDN : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eVaddSign_mSRSS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eVaddSign_mSRMS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eVaddSign_eM : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eVaddSign_mCRSRSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eSRSSign_eDJ : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eSRSSign_mCRRnd : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eSRSSign_mCRSat : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eSRSSign_eDC : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eSRSSign_mSRCarry : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eSRSSign_mCRPackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eSRSSign_eP : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eSRSSign_eUnpackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eSRSSign_eVaddSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eSRSSign_eSRSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eSRSSign_eUPSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eSRSSign_eS : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eSRSSign_mCRUPSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eSRSSign_mCRUnpackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eSRSSign_eR : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eSRSSign_ePackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eSRSSign_mCRMCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eSRSSign_eDN : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eSRSSign_mSRSS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eSRSSign_mSRMS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eSRSSign_eM : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eSRSSign_mCRSRSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUPSSign_eDJ : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUPSSign_mCRRnd : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUPSSign_mCRSat : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUPSSign_eDC : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUPSSign_mSRCarry : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUPSSign_mCRPackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUPSSign_eP : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUPSSign_eUnpackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUPSSign_eVaddSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUPSSign_eSRSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUPSSign_eUPSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUPSSign_eS : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUPSSign_mCRUPSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUPSSign_mCRUnpackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUPSSign_eR : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUPSSign_ePackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUPSSign_mCRMCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUPSSign_eDN : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUPSSign_mSRSS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUPSSign_mSRMS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUPSSign_eM : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eUPSSign_mCRSRSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eS_eDJ : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eS_mCRRnd : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eS_mCRSat : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eS_eDC : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eS_mSRCarry : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eS_mCRPackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eS_eP : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eS_eUnpackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eS_eVaddSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eS_eSRSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eS_eUPSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eS_eS : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eS_mCRUPSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eS_mCRUnpackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eS_eR : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eS_ePackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eS_mCRMCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eS_eDN : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eS_mSRSS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eS_mSRMS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eS_eM : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eS_mCRSRSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_eDJ : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_mCRRnd : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_mCRSat : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_eDC : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_mSRCarry : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_mCRPackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_eP : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_eUnpackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_eVaddSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_eSRSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_eUPSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_eS : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_mCRUPSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_mCRUnpackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_eR : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_ePackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_mCRMCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_eDN : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_mSRSS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_mSRMS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_eM : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_mCRSRSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_eDJ : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_mCRRnd : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_mCRSat : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_eDC : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_mSRCarry : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_mCRPackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_eP : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_eUnpackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_eVaddSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_eSRSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_eUPSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_eS : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_mCRUPSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_mCRUnpackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_eR : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_ePackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_mCRMCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_eDN : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_mSRSS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_mSRMS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_eM : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_mCRSRSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eR_eDJ : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eR_mCRRnd : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eR_mCRSat : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eR_eDC : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eR_mSRCarry : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eR_mCRPackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eR_eP : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eR_eUnpackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eR_eVaddSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eR_eSRSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eR_eUPSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eR_eS : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eR_mCRUPSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eR_mCRUnpackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eR_eR : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eR_ePackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eR_mCRMCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eR_eDN : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eR_mSRSS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eR_mSRMS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eR_eM : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eR_mCRSRSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_ePackSign_eDJ : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_ePackSign_mCRRnd : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_ePackSign_mCRSat : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_ePackSign_eDC : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_ePackSign_mSRCarry : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_ePackSign_mCRPackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_ePackSign_eP : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_ePackSign_eUnpackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_ePackSign_eVaddSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_ePackSign_eSRSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_ePackSign_eUPSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_ePackSign_eS : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_ePackSign_mCRUPSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_ePackSign_mCRUnpackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_ePackSign_eR : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_ePackSign_ePackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_ePackSign_mCRMCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_ePackSign_eDN : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_ePackSign_mSRSS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_ePackSign_mSRMS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_ePackSign_eM : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_ePackSign_mCRSRSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_eDJ : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_mCRRnd : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_mCRSat : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_eDC : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_mSRCarry : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_mCRPackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_eP : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_eUnpackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_eVaddSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_eSRSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_eUPSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_eS : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_mCRUPSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_mCRUnpackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_eR : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_ePackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_mCRMCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_eDN : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_mSRSS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_mSRMS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_eM : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_mCRSRSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDN_eDJ : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDN_mCRRnd : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDN_mCRSat : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDN_eDC : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDN_mSRCarry : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDN_mCRPackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDN_eP : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDN_eUnpackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDN_eVaddSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDN_eSRSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDN_eUPSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDN_eS : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDN_mCRUPSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDN_mCRUnpackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDN_eR : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDN_ePackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDN_mCRMCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDN_eDN : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDN_mSRSS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDN_mSRMS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDN_eM : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eDN_mCRSRSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRSS0_eDJ : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRSS0_mCRRnd : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRSS0_mCRSat : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRSS0_eDC : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRSS0_mSRCarry : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRSS0_mCRPackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRSS0_eP : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRSS0_eUnpackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRSS0_eVaddSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRSS0_eSRSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRSS0_eUPSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRSS0_eS : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRSS0_mCRUPSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRSS0_mCRUnpackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRSS0_eR : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRSS0_ePackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRSS0_mCRMCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRSS0_eDN : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRSS0_mSRSS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRSS0_mSRMS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRSS0_eM : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRSS0_mCRSRSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRMS0_eDJ : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRMS0_mCRRnd : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRMS0_mCRSat : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRMS0_eDC : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRMS0_mSRCarry : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRMS0_mCRPackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRMS0_eP : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRMS0_eUnpackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRMS0_eVaddSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRMS0_eSRSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRMS0_eUPSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRMS0_eS : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRMS0_mCRUPSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRMS0_mCRUnpackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRMS0_eR : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRMS0_ePackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRMS0_mCRMCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRMS0_eDN : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRMS0_mSRSS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRMS0_mSRMS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRMS0_eM : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mSRMS0_mCRSRSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eM_eDJ : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eM_mCRRnd : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eM_mCRSat : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eM_eDC : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eM_mSRCarry : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eM_mCRPackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eM_eP : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eM_eUnpackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eM_eVaddSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eM_eSRSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eM_eUPSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eM_eS : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eM_mCRUPSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eM_mCRUnpackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eM_eR : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eM_ePackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eM_mCRMCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eM_eDN : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eM_mSRSS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eM_mSRMS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eM_eM : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_eM_mCRSRSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_eDJ : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_mCRRnd : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_mCRSat : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_eDC : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_mSRCarry : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_mCRPackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_eP : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_eUnpackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_eVaddSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_eSRSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_eUPSSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_eS : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_mCRUPSMode : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_mCRUnpackSize : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_eR : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_ePackSign : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_mCRMCDEn : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_eDN : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_mSRSS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_mSRMS0 : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_eM : InstrItinClass;
+def II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_mCRSRSMode : InstrItinClass;
+
+def II_MOV_lda : InstrItinClass;
+// instruction: MOV_st_mMStream_tlast_imm
+def II_MOV_st_mMStream_tlast_imm : InstrItinClass;
+def II_MOV_st_mMStream_tlast_imm_eDJ : InstrItinClass;
+def II_MOV_st_mMStream_tlast_imm_eR : InstrItinClass;
+def II_MOV_st_mMStream_tlast_imm_eDC : InstrItinClass;
+def II_MOV_st_mMStream_tlast_imm_eDN : InstrItinClass;
+def II_MOV_st_mMStream_tlast_imm_eP : InstrItinClass;
+def II_MOV_st_mMStream_tlast_imm_eM : InstrItinClass;
+
+// instruction: MOV_st_mMStream_tlast_reg
+def II_MOV_st_mMStream_tlast_reg : InstrItinClass;
+def II_MOV_st_mMStream_tlast_reg_eDJ : InstrItinClass;
+def II_MOV_st_mMStream_tlast_reg_eR : InstrItinClass;
+def II_MOV_st_mMStream_tlast_reg_eDC : InstrItinClass;
+def II_MOV_st_mMStream_tlast_reg_eDN : InstrItinClass;
+def II_MOV_st_mMStream_tlast_reg_eP : InstrItinClass;
+def II_MOV_st_mMStream_tlast_reg_eM : InstrItinClass;
+
+// instruction: MOV_d1
+def II_MOV_d1 : InstrItinClass;
+def II_MOV_d1_mCRSCDEn : InstrItinClass;
+def II_MOV_d1_eDJ : InstrItinClass;
+def II_MOV_d1_mCRRnd : InstrItinClass;
+def II_MOV_d1_mCRSat : InstrItinClass;
+def II_MOV_d1_eDC : InstrItinClass;
+def II_MOV_d1_mSRCarry : InstrItinClass;
+def II_MOV_d1_mCRPackSize : InstrItinClass;
+def II_MOV_d1_eP : InstrItinClass;
+def II_MOV_d1_eUnpackSign : InstrItinClass;
+def II_MOV_d1_eVaddSign : InstrItinClass;
+def II_MOV_d1_eSRSSign : InstrItinClass;
+def II_MOV_d1_eUPSSign : InstrItinClass;
+def II_MOV_d1_eS : InstrItinClass;
+def II_MOV_d1_mCRUPSMode : InstrItinClass;
+def II_MOV_d1_mCRUnpackSize : InstrItinClass;
+def II_MOV_d1_eR : InstrItinClass;
+def II_MOV_d1_ePackSign : InstrItinClass;
+def II_MOV_d1_mCRMCDEn : InstrItinClass;
+def II_MOV_d1_eDN : InstrItinClass;
+def II_MOV_d1_mSRSS0 : InstrItinClass;
+def II_MOV_d1_mSRMS0 : InstrItinClass;
+def II_MOV_d1_eM : InstrItinClass;
+def II_MOV_d1_mCRSRSMode : InstrItinClass;
+
+// instruction: MOV_d2
+def II_MOV_d2 : InstrItinClass;
+def II_MOV_d2_mCRSCDEn : InstrItinClass;
+def II_MOV_d2_eDJ : InstrItinClass;
+def II_MOV_d2_mCRRnd : InstrItinClass;
+def II_MOV_d2_mCRSat : InstrItinClass;
+def II_MOV_d2_eDC : InstrItinClass;
+def II_MOV_d2_mSRCarry : InstrItinClass;
+def II_MOV_d2_mCRPackSize : InstrItinClass;
+def II_MOV_d2_eP : InstrItinClass;
+def II_MOV_d2_eUnpackSign : InstrItinClass;
+def II_MOV_d2_eVaddSign : InstrItinClass;
+def II_MOV_d2_eSRSSign : InstrItinClass;
+def II_MOV_d2_eUPSSign : InstrItinClass;
+def II_MOV_d2_eS : InstrItinClass;
+def II_MOV_d2_mCRUPSMode : InstrItinClass;
+def II_MOV_d2_mCRUnpackSize : InstrItinClass;
+def II_MOV_d2_eR : InstrItinClass;
+def II_MOV_d2_ePackSign : InstrItinClass;
+def II_MOV_d2_mCRMCDEn : InstrItinClass;
+def II_MOV_d2_eDN : InstrItinClass;
+def II_MOV_d2_mSRSS0 : InstrItinClass;
+def II_MOV_d2_mSRMS0 : InstrItinClass;
+def II_MOV_d2_eM : InstrItinClass;
+def II_MOV_d2_mCRSRSMode : InstrItinClass;
+
+// instruction: MOV_d3
+def II_MOV_d3 : InstrItinClass;
+def II_MOV_d3_mCRSCDEn : InstrItinClass;
+def II_MOV_d3_eDJ : InstrItinClass;
+def II_MOV_d3_mCRRnd : InstrItinClass;
+def II_MOV_d3_mCRSat : InstrItinClass;
+def II_MOV_d3_eDC : InstrItinClass;
+def II_MOV_d3_mSRCarry : InstrItinClass;
+def II_MOV_d3_mCRPackSize : InstrItinClass;
+def II_MOV_d3_eP : InstrItinClass;
+def II_MOV_d3_eUnpackSign : InstrItinClass;
+def II_MOV_d3_eVaddSign : InstrItinClass;
+def II_MOV_d3_eSRSSign : InstrItinClass;
+def II_MOV_d3_eUPSSign : InstrItinClass;
+def II_MOV_d3_eS : InstrItinClass;
+def II_MOV_d3_mCRUPSMode : InstrItinClass;
+def II_MOV_d3_mCRUnpackSize : InstrItinClass;
+def II_MOV_d3_eR : InstrItinClass;
+def II_MOV_d3_ePackSign : InstrItinClass;
+def II_MOV_d3_mCRMCDEn : InstrItinClass;
+def II_MOV_d3_eDN : InstrItinClass;
+def II_MOV_d3_mSRSS0 : InstrItinClass;
+def II_MOV_d3_mSRMS0 : InstrItinClass;
+def II_MOV_d3_eM : InstrItinClass;
+def II_MOV_d3_mCRSRSMode : InstrItinClass;
+
+// instruction: MOV_d4
+def II_MOV_d4 : InstrItinClass;
+def II_MOV_d4_mCRSCDEn : InstrItinClass;
+def II_MOV_d4_eDJ : InstrItinClass;
+def II_MOV_d4_mCRRnd : InstrItinClass;
+def II_MOV_d4_mCRSat : InstrItinClass;
+def II_MOV_d4_eDC : InstrItinClass;
+def II_MOV_d4_mSRCarry : InstrItinClass;
+def II_MOV_d4_mCRPackSize : InstrItinClass;
+def II_MOV_d4_eP : InstrItinClass;
+def II_MOV_d4_eUnpackSign : InstrItinClass;
+def II_MOV_d4_eVaddSign : InstrItinClass;
+def II_MOV_d4_eSRSSign : InstrItinClass;
+def II_MOV_d4_eUPSSign : InstrItinClass;
+def II_MOV_d4_eS : InstrItinClass;
+def II_MOV_d4_mCRUPSMode : InstrItinClass;
+def II_MOV_d4_mCRUnpackSize : InstrItinClass;
+def II_MOV_d4_eR : InstrItinClass;
+def II_MOV_d4_ePackSign : InstrItinClass;
+def II_MOV_d4_mCRMCDEn : InstrItinClass;
+def II_MOV_d4_eDN : InstrItinClass;
+def II_MOV_d4_mSRSS0 : InstrItinClass;
+def II_MOV_d4_mSRMS0 : InstrItinClass;
+def II_MOV_d4_eM : InstrItinClass;
+def II_MOV_d4_mCRSRSMode : InstrItinClass;
+
+// instruction: MOV_d5
+def II_MOV_d5 : InstrItinClass;
+def II_MOV_d5_mCRSCDEn : InstrItinClass;
+def II_MOV_d5_eDJ : InstrItinClass;
+def II_MOV_d5_mCRRnd : InstrItinClass;
+def II_MOV_d5_mCRSat : InstrItinClass;
+def II_MOV_d5_eDC : InstrItinClass;
+def II_MOV_d5_mSRCarry : InstrItinClass;
+def II_MOV_d5_mCRPackSize : InstrItinClass;
+def II_MOV_d5_eP : InstrItinClass;
+def II_MOV_d5_eUnpackSign : InstrItinClass;
+def II_MOV_d5_eVaddSign : InstrItinClass;
+def II_MOV_d5_eSRSSign : InstrItinClass;
+def II_MOV_d5_eUPSSign : InstrItinClass;
+def II_MOV_d5_eS : InstrItinClass;
+def II_MOV_d5_mCRUPSMode : InstrItinClass;
+def II_MOV_d5_mCRUnpackSize : InstrItinClass;
+def II_MOV_d5_eR : InstrItinClass;
+def II_MOV_d5_ePackSign : InstrItinClass;
+def II_MOV_d5_mCRMCDEn : InstrItinClass;
+def II_MOV_d5_eDN : InstrItinClass;
+def II_MOV_d5_mSRSS0 : InstrItinClass;
+def II_MOV_d5_mSRMS0 : InstrItinClass;
+def II_MOV_d5_eM : InstrItinClass;
+def II_MOV_d5_mCRSRSMode : InstrItinClass;
+
+// instruction: MOV_d6
+def II_MOV_d6 : InstrItinClass;
+def II_MOV_d6_mCRSCDEn : InstrItinClass;
+def II_MOV_d6_eDJ : InstrItinClass;
+def II_MOV_d6_mCRRnd : InstrItinClass;
+def II_MOV_d6_mCRSat : InstrItinClass;
+def II_MOV_d6_eDC : InstrItinClass;
+def II_MOV_d6_mSRCarry : InstrItinClass;
+def II_MOV_d6_mCRPackSize : InstrItinClass;
+def II_MOV_d6_eP : InstrItinClass;
+def II_MOV_d6_eUnpackSign : InstrItinClass;
+def II_MOV_d6_eVaddSign : InstrItinClass;
+def II_MOV_d6_eSRSSign : InstrItinClass;
+def II_MOV_d6_eUPSSign : InstrItinClass;
+def II_MOV_d6_eS : InstrItinClass;
+def II_MOV_d6_mCRUPSMode : InstrItinClass;
+def II_MOV_d6_mCRUnpackSize : InstrItinClass;
+def II_MOV_d6_eR : InstrItinClass;
+def II_MOV_d6_ePackSign : InstrItinClass;
+def II_MOV_d6_mCRMCDEn : InstrItinClass;
+def II_MOV_d6_eDN : InstrItinClass;
+def II_MOV_d6_mSRSS0 : InstrItinClass;
+def II_MOV_d6_mSRMS0 : InstrItinClass;
+def II_MOV_d6_eM : InstrItinClass;
+def II_MOV_d6_mCRSRSMode : InstrItinClass;
+
+def II_MOV_nb_lda : InstrItinClass;
+// instruction: MOV_nb_st_mMStream_tlast_imm
+def II_MOV_nb_st_mMStream_tlast_imm : InstrItinClass;
+def II_MOV_nb_st_mMStream_tlast_imm_eDJ : InstrItinClass;
+def II_MOV_nb_st_mMStream_tlast_imm_eR : InstrItinClass;
+def II_MOV_nb_st_mMStream_tlast_imm_eDC : InstrItinClass;
+def II_MOV_nb_st_mMStream_tlast_imm_eDN : InstrItinClass;
+def II_MOV_nb_st_mMStream_tlast_imm_eP : InstrItinClass;
+def II_MOV_nb_st_mMStream_tlast_imm_eM : InstrItinClass;
+
+// instruction: MOV_nb_st_mMStream_tlast_reg
+def II_MOV_nb_st_mMStream_tlast_reg : InstrItinClass;
+def II_MOV_nb_st_mMStream_tlast_reg_eDJ : InstrItinClass;
+def II_MOV_nb_st_mMStream_tlast_reg_eR : InstrItinClass;
+def II_MOV_nb_st_mMStream_tlast_reg_eDC : InstrItinClass;
+def II_MOV_nb_st_mMStream_tlast_reg_eDN : InstrItinClass;
+def II_MOV_nb_st_mMStream_tlast_reg_eP : InstrItinClass;
+def II_MOV_nb_st_mMStream_tlast_reg_eM : InstrItinClass;
+
+// instruction: MOV_nb_tlast
+def II_MOV_nb_tlast : InstrItinClass;
+def II_MOV_nb_tlast_eDJ : InstrItinClass;
+def II_MOV_nb_tlast_eR : InstrItinClass;
+def II_MOV_nb_tlast_eDC : InstrItinClass;
+def II_MOV_nb_tlast_eDN : InstrItinClass;
+def II_MOV_nb_tlast_eP : InstrItinClass;
+def II_MOV_nb_tlast_eM : InstrItinClass;
+
+// instruction: MOV_tlast
+def II_MOV_tlast : InstrItinClass;
+def II_MOV_tlast_eDJ : InstrItinClass;
+def II_MOV_tlast_eR : InstrItinClass;
+def II_MOV_tlast_eDC : InstrItinClass;
+def II_MOV_tlast_eDN : InstrItinClass;
+def II_MOV_tlast_eP : InstrItinClass;
+def II_MOV_tlast_eM : InstrItinClass;
+
+def II_MSC : InstrItinClass;
+def II_MUL : InstrItinClass;
+def II_NEZ : InstrItinClass;
+def II_NE : InstrItinClass;
+def II_NOPA : InstrItinClass;
+def II_NOPB : InstrItinClass;
+def II_NOPM : InstrItinClass;
+def II_NOPS : InstrItinClass;
+def II_NOPV : InstrItinClass;
+def II_NOPXM : InstrItinClass;
+def II_NOPX : InstrItinClass;
+def II_OR : InstrItinClass;
+def II_PADDA_2D : InstrItinClass;
+def II_PADDA_3D : InstrItinClass;
+def II_PADDA_pstm_nrm : InstrItinClass;
+def II_PADDA_pstm_nrm_imm : InstrItinClass;
+def II_PADDB_2D : InstrItinClass;
+def II_PADDB_3D : InstrItinClass;
+def II_PADDB_pstm_nrm : InstrItinClass;
+def II_PADDB_pstm_nrm_imm : InstrItinClass;
+def II_PADDS_2D : InstrItinClass;
+def II_PADDS_3D : InstrItinClass;
+def II_PADDS_pstm_nrm : InstrItinClass;
+def II_PADDS_pstm_nrm_imm : InstrItinClass;
+def II_PADDXM_pstm_sp : InstrItinClass;
+def II_PADDXM_pstm_sp_imm : InstrItinClass;
+def II_POPCOUNT : InstrItinClass;
+def II_REL_COND_mLockId_imm : InstrItinClass;
+def II_REL_COND_mLockId_reg : InstrItinClass;
+def II_REL_mLockId_imm : InstrItinClass;
+def II_REL_mLockId_reg : InstrItinClass;
+def II_RET : InstrItinClass;
+def II_SBC : InstrItinClass;
+def II_SEL_EQZ : InstrItinClass;
+def II_SEL_NEZ : InstrItinClass;
+def II_SQRT_mOptConvDel_mRx : InstrItinClass;
+def II_SQRT_mOptConvDel_mRx_mOptConv : InstrItinClass;
+def II_SQRT_mRx : InstrItinClass;
+def II_SQRT_mRx_mOptConv : InstrItinClass;
+// instruction: ST_2D_dms_sts
+def II_ST_2D_dms_sts : InstrItinClass;
+def II_ST_2D_dms_sts_eEle : InstrItinClass;
+def II_ST_2D_dms_sts_eElo : InstrItinClass;
+def II_ST_2D_dms_sts_eDJ : InstrItinClass;
+def II_ST_2D_dms_sts_eR : InstrItinClass;
+def II_ST_2D_dms_sts_mLRs : InstrItinClass;
+def II_ST_2D_dms_sts_eDC : InstrItinClass;
+def II_ST_2D_dms_sts_eDN : InstrItinClass;
+def II_ST_2D_dms_sts_eEhe : InstrItinClass;
+def II_ST_2D_dms_sts_eP : InstrItinClass;
+def II_ST_2D_dms_sts_eM : InstrItinClass;
+def II_ST_2D_dms_sts_eEho : InstrItinClass;
+
+def II_ST_2D_dmv_sts_q : InstrItinClass;
+def II_ST_2D_s16 : InstrItinClass;
+def II_ST_2D_s8 : InstrItinClass;
+// instruction: ST_3D_dms_sts
+def II_ST_3D_dms_sts : InstrItinClass;
+def II_ST_3D_dms_sts_eEle : InstrItinClass;
+def II_ST_3D_dms_sts_eElo : InstrItinClass;
+def II_ST_3D_dms_sts_eDJ : InstrItinClass;
+def II_ST_3D_dms_sts_eR : InstrItinClass;
+def II_ST_3D_dms_sts_mLRs : InstrItinClass;
+def II_ST_3D_dms_sts_eDC : InstrItinClass;
+def II_ST_3D_dms_sts_eDN : InstrItinClass;
+def II_ST_3D_dms_sts_eEhe : InstrItinClass;
+def II_ST_3D_dms_sts_eP : InstrItinClass;
+def II_ST_3D_dms_sts_eM : InstrItinClass;
+def II_ST_3D_dms_sts_eEho : InstrItinClass;
+
+def II_ST_3D_dmv_sts_q : InstrItinClass;
+def II_ST_3D_s16 : InstrItinClass;
+def II_ST_3D_s8 : InstrItinClass;
+def II_ST_TM_2D : InstrItinClass;
+def II_ST_TM_3D : InstrItinClass;
+def II_ST_TM_idx : InstrItinClass;
+def II_ST_TM_idx_imm : InstrItinClass;
+def II_ST_TM_pstm_nrm : InstrItinClass;
+def II_ST_TM_pstm_nrm_imm : InstrItinClass;
+// instruction: ST_dms_sts_idx
+def II_ST_dms_sts_idx : InstrItinClass;
+def II_ST_dms_sts_idx_eEle : InstrItinClass;
+def II_ST_dms_sts_idx_eElo : InstrItinClass;
+def II_ST_dms_sts_idx_eDJ : InstrItinClass;
+def II_ST_dms_sts_idx_eR : InstrItinClass;
+def II_ST_dms_sts_idx_mLRs : InstrItinClass;
+def II_ST_dms_sts_idx_eDC : InstrItinClass;
+def II_ST_dms_sts_idx_eDN : InstrItinClass;
+def II_ST_dms_sts_idx_eEhe : InstrItinClass;
+def II_ST_dms_sts_idx_eP : InstrItinClass;
+def II_ST_dms_sts_idx_eM : InstrItinClass;
+def II_ST_dms_sts_idx_eEho : InstrItinClass;
+
+// instruction: ST_dms_sts_idx_imm
+def II_ST_dms_sts_idx_imm : InstrItinClass;
+def II_ST_dms_sts_idx_imm_eEle : InstrItinClass;
+def II_ST_dms_sts_idx_imm_eElo : InstrItinClass;
+def II_ST_dms_sts_idx_imm_eDJ : InstrItinClass;
+def II_ST_dms_sts_idx_imm_eR : InstrItinClass;
+def II_ST_dms_sts_idx_imm_mLRs : InstrItinClass;
+def II_ST_dms_sts_idx_imm_eDC : InstrItinClass;
+def II_ST_dms_sts_idx_imm_eDN : InstrItinClass;
+def II_ST_dms_sts_idx_imm_eEhe : InstrItinClass;
+def II_ST_dms_sts_idx_imm_eP : InstrItinClass;
+def II_ST_dms_sts_idx_imm_eM : InstrItinClass;
+def II_ST_dms_sts_idx_imm_eEho : InstrItinClass;
+
+// instruction: ST_dms_sts_pstm_nrm
+def II_ST_dms_sts_pstm_nrm : InstrItinClass;
+def II_ST_dms_sts_pstm_nrm_eEle : InstrItinClass;
+def II_ST_dms_sts_pstm_nrm_eElo : InstrItinClass;
+def II_ST_dms_sts_pstm_nrm_eDJ : InstrItinClass;
+def II_ST_dms_sts_pstm_nrm_eR : InstrItinClass;
+def II_ST_dms_sts_pstm_nrm_mLRs : InstrItinClass;
+def II_ST_dms_sts_pstm_nrm_eDC : InstrItinClass;
+def II_ST_dms_sts_pstm_nrm_eDN : InstrItinClass;
+def II_ST_dms_sts_pstm_nrm_eEhe : InstrItinClass;
+def II_ST_dms_sts_pstm_nrm_eP : InstrItinClass;
+def II_ST_dms_sts_pstm_nrm_eM : InstrItinClass;
+def II_ST_dms_sts_pstm_nrm_eEho : InstrItinClass;
+
+// instruction: ST_dms_sts_pstm_nrm_imm
+def II_ST_dms_sts_pstm_nrm_imm : InstrItinClass;
+def II_ST_dms_sts_pstm_nrm_imm_eEle : InstrItinClass;
+def II_ST_dms_sts_pstm_nrm_imm_eElo : InstrItinClass;
+def II_ST_dms_sts_pstm_nrm_imm_eDJ : InstrItinClass;
+def II_ST_dms_sts_pstm_nrm_imm_eR : InstrItinClass;
+def II_ST_dms_sts_pstm_nrm_imm_mLRs : InstrItinClass;
+def II_ST_dms_sts_pstm_nrm_imm_eDC : InstrItinClass;
+def II_ST_dms_sts_pstm_nrm_imm_eDN : InstrItinClass;
+def II_ST_dms_sts_pstm_nrm_imm_eEhe : InstrItinClass;
+def II_ST_dms_sts_pstm_nrm_imm_eP : InstrItinClass;
+def II_ST_dms_sts_pstm_nrm_imm_eM : InstrItinClass;
+def II_ST_dms_sts_pstm_nrm_imm_eEho : InstrItinClass;
+
+// instruction: ST_dms_sts_spill
+def II_ST_dms_sts_spill : InstrItinClass;
+def II_ST_dms_sts_spill_eEle : InstrItinClass;
+def II_ST_dms_sts_spill_eElo : InstrItinClass;
+def II_ST_dms_sts_spill_eDJ : InstrItinClass;
+def II_ST_dms_sts_spill_eR : InstrItinClass;
+def II_ST_dms_sts_spill_mLRs : InstrItinClass;
+def II_ST_dms_sts_spill_eDC : InstrItinClass;
+def II_ST_dms_sts_spill_eDN : InstrItinClass;
+def II_ST_dms_sts_spill_eEhe : InstrItinClass;
+def II_ST_dms_sts_spill_eP : InstrItinClass;
+def II_ST_dms_sts_spill_eM : InstrItinClass;
+def II_ST_dms_sts_spill_eEho : InstrItinClass;
+
+def II_ST_dmv_sts_q_idx : InstrItinClass;
+def II_ST_dmv_sts_q_idx_imm : InstrItinClass;
+def II_ST_dmv_sts_q_pstm_nrm : InstrItinClass;
+def II_ST_dmv_sts_q_pstm_nrm_imm : InstrItinClass;
+def II_ST_dmv_sts_q_spill : InstrItinClass;
+def II_ST_s16_idx : InstrItinClass;
+def II_ST_s16_idx_imm : InstrItinClass;
+def II_ST_s16_pstm_nrm : InstrItinClass;
+def II_ST_s16_pstm_nrm_imm : InstrItinClass;
+def II_ST_s8_idx : InstrItinClass;
+def II_ST_s8_idx_imm : InstrItinClass;
+def II_ST_s8_pstm_nrm : InstrItinClass;
+def II_ST_s8_pstm_nrm_imm : InstrItinClass;
+def II_SUB : InstrItinClass;
+def II_VABS_GTZ_16_vaddSign0 : InstrItinClass;
+def II_VABS_GTZ_16_vaddSign1 : InstrItinClass;
+def II_VABS_GTZ_32_vaddSign0 : InstrItinClass;
+def II_VABS_GTZ_32_vaddSign1 : InstrItinClass;
+def II_VABS_GTZ_8_vaddSign0 : InstrItinClass;
+def II_VABS_GTZ_8_vaddSign1 : InstrItinClass;
+def II_VADDMAC_vmac_cm2_add_reg_vmul_cm_core_X_QX : InstrItinClass;
+def II_VADDMAC_vmac_cm2_add_reg_vmul_cm_core_X_QY : InstrItinClass;
+def II_VADDMAC_vmac_cm2_add_reg_vmul_cm_core_X_X : InstrItinClass;
+def II_VADDMAC_vmac_cm2_add_reg_vmul_cm_core_X_Y : InstrItinClass;
+def II_VADDMAC_vmac_cm2_add_reg_vmul_cm_core_Y_QX : InstrItinClass;
+def II_VADDMAC_vmac_cm2_add_reg_vmul_cm_core_Y_QY : InstrItinClass;
+def II_VADDMAC_vmac_cm2_add_reg_vmul_cm_core_Y_X : InstrItinClass;
+def II_VADDMAC_vmac_cm2_add_reg_vmul_cm_core_Y_Y : InstrItinClass;
+def II_VADDMAC_vmac_cm2_add_scd_vmul_cm_core_X_QX : InstrItinClass;
+def II_VADDMAC_vmac_cm2_add_scd_vmul_cm_core_X_QY : InstrItinClass;
+def II_VADDMAC_vmac_cm2_add_scd_vmul_cm_core_X_X : InstrItinClass;
+def II_VADDMAC_vmac_cm2_add_scd_vmul_cm_core_X_Y : InstrItinClass;
+def II_VADDMAC_vmac_cm2_add_scd_vmul_cm_core_Y_QX : InstrItinClass;
+def II_VADDMAC_vmac_cm2_add_scd_vmul_cm_core_Y_QY : InstrItinClass;
+def II_VADDMAC_vmac_cm2_add_scd_vmul_cm_core_Y_X : InstrItinClass;
+def II_VADDMAC_vmac_cm2_add_scd_vmul_cm_core_Y_Y : InstrItinClass;
+def II_VADDMAC_vmac_cm2_add_scd_incr_vmul_cm_core_X_QX : InstrItinClass;
+def II_VADDMAC_vmac_cm2_add_scd_incr_vmul_cm_core_X_QY : InstrItinClass;
+def II_VADDMAC_vmac_cm2_add_scd_incr_vmul_cm_core_X_X : InstrItinClass;
+def II_VADDMAC_vmac_cm2_add_scd_incr_vmul_cm_core_X_Y : InstrItinClass;
+def II_VADDMAC_vmac_cm2_add_scd_incr_vmul_cm_core_Y_QX : InstrItinClass;
+def II_VADDMAC_vmac_cm2_add_scd_incr_vmul_cm_core_Y_QY : InstrItinClass;
+def II_VADDMAC_vmac_cm2_add_scd_incr_vmul_cm_core_Y_X : InstrItinClass;
+def II_VADDMAC_vmac_cm2_add_scd_incr_vmul_cm_core_Y_Y : InstrItinClass;
+def II_VADDMAC_f_vaddmac_bf_vmac_cm2_add_reg_vmul_bf_core_X_X : InstrItinClass;
+def II_VADDMAC_f_vaddmac_bf_vmac_cm2_add_reg_vmul_bf_core_Y_Y : InstrItinClass;
+def II_VADDMAC_f_vaddmac_bf_vmac_cm2_add_scd_vmul_bf_core_X_X : InstrItinClass;
+def II_VADDMAC_f_vaddmac_bf_vmac_cm2_add_scd_vmul_bf_core_Y_Y : InstrItinClass;
+def II_VADDMAC_f_vaddmac_bf_vmac_cm2_add_scd_incr_vmul_bf_core_X_X : InstrItinClass;
+def II_VADDMAC_f_vaddmac_bf_vmac_cm2_add_scd_incr_vmul_bf_core_Y_Y : InstrItinClass;
+def II_VADDMAC_f_vaddmac_bfp_vmac_cm2_add_reg_vmul_bfp_core_EX_EX : InstrItinClass;
+def II_VADDMAC_f_vaddmac_bfp_vmac_cm2_add_reg_vmul_bfp_core_EX_EY : InstrItinClass;
+def II_VADDMAC_f_vaddmac_bfp_vmac_cm2_add_reg_vmul_bfp_core_EX_QEY : InstrItinClass;
+def II_VADDMAC_f_vaddmac_bfp_vmac_cm2_add_reg_vmul_bfp_core_EY_QEX : InstrItinClass;
+def II_VADDMAC_f_vaddmac_bfp_vmac_cm2_add_scd_vmul_bfp_core_EX_EX : InstrItinClass;
+def II_VADDMAC_f_vaddmac_bfp_vmac_cm2_add_scd_vmul_bfp_core_EX_EY : InstrItinClass;
+def II_VADDMAC_f_vaddmac_bfp_vmac_cm2_add_scd_vmul_bfp_core_EX_QEY : InstrItinClass;
+def II_VADDMAC_f_vaddmac_bfp_vmac_cm2_add_scd_vmul_bfp_core_EY_QEX : InstrItinClass;
+def II_VADDMAC_f_vaddmac_bfp_vmac_cm2_add_scd_incr_vmul_bfp_core_EX_EX : InstrItinClass;
+def II_VADDMAC_f_vaddmac_bfp_vmac_cm2_add_scd_incr_vmul_bfp_core_EX_EY : InstrItinClass;
+def II_VADDMAC_f_vaddmac_bfp_vmac_cm2_add_scd_incr_vmul_bfp_core_EX_QEY : InstrItinClass;
+def II_VADDMAC_f_vaddmac_bfp_vmac_cm2_add_scd_incr_vmul_bfp_core_EY_QEX : InstrItinClass;
+def II_VADDMSC_vmac_cm2_add_reg_vmul_cm_core_X_QX : InstrItinClass;
+def II_VADDMSC_vmac_cm2_add_reg_vmul_cm_core_X_QY : InstrItinClass;
+def II_VADDMSC_vmac_cm2_add_reg_vmul_cm_core_X_X : InstrItinClass;
+def II_VADDMSC_vmac_cm2_add_reg_vmul_cm_core_X_Y : InstrItinClass;
+def II_VADDMSC_vmac_cm2_add_reg_vmul_cm_core_Y_QX : InstrItinClass;
+def II_VADDMSC_vmac_cm2_add_reg_vmul_cm_core_Y_QY : InstrItinClass;
+def II_VADDMSC_vmac_cm2_add_reg_vmul_cm_core_Y_X : InstrItinClass;
+def II_VADDMSC_vmac_cm2_add_reg_vmul_cm_core_Y_Y : InstrItinClass;
+def II_VADDMSC_vmac_cm2_add_scd_vmul_cm_core_X_QX : InstrItinClass;
+def II_VADDMSC_vmac_cm2_add_scd_vmul_cm_core_X_QY : InstrItinClass;
+def II_VADDMSC_vmac_cm2_add_scd_vmul_cm_core_X_X : InstrItinClass;
+def II_VADDMSC_vmac_cm2_add_scd_vmul_cm_core_X_Y : InstrItinClass;
+def II_VADDMSC_vmac_cm2_add_scd_vmul_cm_core_Y_QX : InstrItinClass;
+def II_VADDMSC_vmac_cm2_add_scd_vmul_cm_core_Y_QY : InstrItinClass;
+def II_VADDMSC_vmac_cm2_add_scd_vmul_cm_core_Y_X : InstrItinClass;
+def II_VADDMSC_vmac_cm2_add_scd_vmul_cm_core_Y_Y : InstrItinClass;
+def II_VADDMSC_vmac_cm2_add_scd_incr_vmul_cm_core_X_QX : InstrItinClass;
+def II_VADDMSC_vmac_cm2_add_scd_incr_vmul_cm_core_X_QY : InstrItinClass;
+def II_VADDMSC_vmac_cm2_add_scd_incr_vmul_cm_core_X_X : InstrItinClass;
+def II_VADDMSC_vmac_cm2_add_scd_incr_vmul_cm_core_X_Y : InstrItinClass;
+def II_VADDMSC_vmac_cm2_add_scd_incr_vmul_cm_core_Y_QX : InstrItinClass;
+def II_VADDMSC_vmac_cm2_add_scd_incr_vmul_cm_core_Y_QY : InstrItinClass;
+def II_VADDMSC_vmac_cm2_add_scd_incr_vmul_cm_core_Y_X : InstrItinClass;
+def II_VADDMSC_vmac_cm2_add_scd_incr_vmul_cm_core_Y_Y : InstrItinClass;
+def II_VADDMSC_f_vaddmac_bf_vmac_cm2_add_reg_vmul_bf_core_X_X : InstrItinClass;
+def II_VADDMSC_f_vaddmac_bf_vmac_cm2_add_reg_vmul_bf_core_Y_Y : InstrItinClass;
+def II_VADDMSC_f_vaddmac_bf_vmac_cm2_add_scd_vmul_bf_core_X_X : InstrItinClass;
+def II_VADDMSC_f_vaddmac_bf_vmac_cm2_add_scd_vmul_bf_core_Y_Y : InstrItinClass;
+def II_VADDMSC_f_vaddmac_bf_vmac_cm2_add_scd_incr_vmul_bf_core_X_X : InstrItinClass;
+def II_VADDMSC_f_vaddmac_bf_vmac_cm2_add_scd_incr_vmul_bf_core_Y_Y : InstrItinClass;
+def II_VADDMSC_f_vaddmac_bfp_vmac_cm2_add_reg_vmul_bfp_core_EX_EX : InstrItinClass;
+def II_VADDMSC_f_vaddmac_bfp_vmac_cm2_add_reg_vmul_bfp_core_EX_EY : InstrItinClass;
+def II_VADDMSC_f_vaddmac_bfp_vmac_cm2_add_reg_vmul_bfp_core_EX_QEY : InstrItinClass;
+def II_VADDMSC_f_vaddmac_bfp_vmac_cm2_add_reg_vmul_bfp_core_EY_QEX : InstrItinClass;
+def II_VADDMSC_f_vaddmac_bfp_vmac_cm2_add_scd_vmul_bfp_core_EX_EX : InstrItinClass;
+def II_VADDMSC_f_vaddmac_bfp_vmac_cm2_add_scd_vmul_bfp_core_EX_EY : InstrItinClass;
+def II_VADDMSC_f_vaddmac_bfp_vmac_cm2_add_scd_vmul_bfp_core_EX_QEY : InstrItinClass;
+def II_VADDMSC_f_vaddmac_bfp_vmac_cm2_add_scd_vmul_bfp_core_EY_QEX : InstrItinClass;
+def II_VADDMSC_f_vaddmac_bfp_vmac_cm2_add_scd_incr_vmul_bfp_core_EX_EX : InstrItinClass;
+def II_VADDMSC_f_vaddmac_bfp_vmac_cm2_add_scd_incr_vmul_bfp_core_EX_EY : InstrItinClass;
+def II_VADDMSC_f_vaddmac_bfp_vmac_cm2_add_scd_incr_vmul_bfp_core_EX_QEY : InstrItinClass;
+def II_VADDMSC_f_vaddmac_bfp_vmac_cm2_add_scd_incr_vmul_bfp_core_EY_QEX : InstrItinClass;
+def II_VADDSUB_16 : InstrItinClass;
+def II_VADDSUB_32 : InstrItinClass;
+def II_VADDSUB_8 : InstrItinClass;
+def II_VADD_16 : InstrItinClass;
+def II_VADD_32 : InstrItinClass;
+def II_VADD_8 : InstrItinClass;
+def II_VADD_vmac_cm2_add_reg : InstrItinClass;
+def II_VADD_vmac_cm2_add_scd : InstrItinClass;
+def II_VADD_vmac_cm2_add_scd_incr : InstrItinClass;
+def II_VADD_f_vmac_cm2_add_reg : InstrItinClass;
+def II_VADD_f_vmac_cm2_add_scd : InstrItinClass;
+def II_VADD_f_vmac_cm2_add_scd_incr : InstrItinClass;
+def II_VBAND : InstrItinClass;
+def II_VBCSTSHFL_16_vec_broadcast_shuffle_bm : InstrItinClass;
+def II_VBCSTSHFL_16_vec_broadcast_shuffle_x : InstrItinClass;
+def II_VBCSTSHFL_32_vec_broadcast_shuffle_bm : InstrItinClass;
+def II_VBCSTSHFL_32_vec_broadcast_shuffle_x : InstrItinClass;
+def II_VBCSTSHFL_64_vec_broadcast_shuffle_bm : InstrItinClass;
+def II_VBCSTSHFL_64_vec_broadcast_shuffle_x : InstrItinClass;
+def II_VBCSTSHFL_8_vec_broadcast_shuffle_bm : InstrItinClass;
+def II_VBCSTSHFL_8_vec_broadcast_shuffle_x : InstrItinClass;
+def II_VBCST_16 : InstrItinClass;
+def II_VBCST_32 : InstrItinClass;
+def II_VBCST_64 : InstrItinClass;
+def II_VBCST_8 : InstrItinClass;
+def II_VBNEG_LTZ_s16 : InstrItinClass;
+def II_VBNEG_LTZ_s32 : InstrItinClass;
+def II_VBNEG_LTZ_s8 : InstrItinClass;
+def II_VBOR : InstrItinClass;
+def II_VCLR : InstrItinClass;
+def II_VCONV_bf16_fp32_mv_w_srs_bf : InstrItinClass;
+def II_VCONV_bf16_fp32_mv_x_srs_bf : InstrItinClass;
+def II_VCONV_bfp16ebs16_ebs8 : InstrItinClass;
+def II_VCONV_bfp16ebs16_fp32 : InstrItinClass;
+def II_VCONV_bfp16ebs8_fp32 : InstrItinClass;
+def II_VCONV_fp32_bf16_mv_ups_wbf : InstrItinClass;
+def II_VCONV_fp32_bf16_mv_ups_xbf : InstrItinClass;
+def II_VEQZ_16 : InstrItinClass;
+def II_VEQZ_32 : InstrItinClass;
+def II_VEQZ_8 : InstrItinClass;
+def II_VEXP2 : InstrItinClass;
+def II_VEXTBCSTSHFL_128 : InstrItinClass;
+def II_VEXTBCSTSHFL_16 : InstrItinClass;
+def II_VEXTBCSTSHFL_32 : InstrItinClass;
+def II_VEXTBCSTSHFL_64 : InstrItinClass;
+def II_VEXTBCST_128_vec_extract_broadcast_imm : InstrItinClass;
+def II_VEXTBCST_128_vec_extract_broadcast_r : InstrItinClass;
+def II_VEXTBCST_16_vec_extract_broadcast_imm : InstrItinClass;
+def II_VEXTBCST_16_vec_extract_broadcast_r : InstrItinClass;
+def II_VEXTBCST_32_vec_extract_broadcast_imm : InstrItinClass;
+def II_VEXTBCST_32_vec_extract_broadcast_r : InstrItinClass;
+def II_VEXTBCST_64_vec_extract_broadcast_imm : InstrItinClass;
+def II_VEXTBCST_64_vec_extract_broadcast_r : InstrItinClass;
+def II_VEXTBCST_8_vec_extract_broadcast_imm : InstrItinClass;
+def II_VEXTBCST_8_vec_extract_broadcast_r : InstrItinClass;
+def II_VEXTRACT_16_vec_extract_imm_vaddSign0 : InstrItinClass;
+def II_VEXTRACT_16_vec_extract_imm_vaddSign1 : InstrItinClass;
+def II_VEXTRACT_16_vec_extract_r_vaddSign0 : InstrItinClass;
+def II_VEXTRACT_16_vec_extract_r_vaddSign1 : InstrItinClass;
+def II_VEXTRACT_32_vec_extract_imm_vaddSign0 : InstrItinClass;
+def II_VEXTRACT_32_vec_extract_imm_vaddSign1 : InstrItinClass;
+def II_VEXTRACT_32_vec_extract_r_vaddSign0 : InstrItinClass;
+def II_VEXTRACT_32_vec_extract_r_vaddSign1 : InstrItinClass;
+def II_VEXTRACT_64_vec_extract_imm_vaddSign0 : InstrItinClass;
+def II_VEXTRACT_64_vec_extract_imm_vaddSign1 : InstrItinClass;
+def II_VEXTRACT_64_vec_extract_r_vaddSign0 : InstrItinClass;
+def II_VEXTRACT_64_vec_extract_r_vaddSign1 : InstrItinClass;
+def II_VEXTRACT_8_vec_extract_imm_vaddSign0 : InstrItinClass;
+def II_VEXTRACT_8_vec_extract_imm_vaddSign1 : InstrItinClass;
+def II_VEXTRACT_8_vec_extract_r_vaddSign0 : InstrItinClass;
+def II_VEXTRACT_8_vec_extract_r_vaddSign1 : InstrItinClass;
+def II_VFLOOR_s32_bf16_mv_float_to_int_bm : InstrItinClass;
+def II_VFLOOR_s32_bf16_mv_float_to_int_w : InstrItinClass;
+def II_VGE_16_vaddSign0 : InstrItinClass;
+def II_VGE_16_vaddSign1 : InstrItinClass;
+def II_VGE_32_vaddSign0 : InstrItinClass;
+def II_VGE_32_vaddSign1 : InstrItinClass;
+def II_VGE_8_vaddSign0 : InstrItinClass;
+def II_VGE_8_vaddSign1 : InstrItinClass;
+def II_VGE_bf16 : InstrItinClass;
+def II_VINSERT_16_mIdxImm0 : InstrItinClass;
+def II_VINSERT_16_mR29_insert : InstrItinClass;
+def II_VINSERT_32_mIdxImm0 : InstrItinClass;
+def II_VINSERT_32_mR29_insert : InstrItinClass;
+def II_VINSERT_64_mIdxImm0 : InstrItinClass;
+def II_VINSERT_64_mR29_insert : InstrItinClass;
+def II_VINSERT_8_mIdxImm0 : InstrItinClass;
+def II_VINSERT_8_mR29_insert : InstrItinClass;
+def II_VLDA_128_dmv_lda_w_idx : InstrItinClass;
+def II_VLDA_128_dmv_lda_w_idx_imm : InstrItinClass;
+def II_VLDA_128_dmv_lda_w_pstm_nrm : InstrItinClass;
+def II_VLDA_128_dmv_lda_w_pstm_nrm_imm : InstrItinClass;
+def II_VLDA_128_dmv_lda_w_spill : InstrItinClass;
+def II_VLDA_2D_128 : InstrItinClass;
+def II_VLDA_2D_CONV_fp32_bf16_dmw_lda_ups_bf : InstrItinClass;
+def II_VLDA_2D_CONV_fp32_bf16_dmx_lda_ups_bf : InstrItinClass;
+def II_VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 : InstrItinClass;
+def II_VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign1 : InstrItinClass;
+def II_VLDA_2D_UPS_2x_dmx_lda_ups_x2c_upsSign0 : InstrItinClass;
+def II_VLDA_2D_UPS_2x_dmx_lda_ups_x2c_upsSign1 : InstrItinClass;
+def II_VLDA_2D_UPS_4x_dmw_lda_ups_w2c_upsSign0 : InstrItinClass;
+def II_VLDA_2D_UPS_4x_dmw_lda_ups_w2c_upsSign1 : InstrItinClass;
+def II_VLDA_2D_UPS_4x_dmx_lda_ups_x2d_upsSign0 : InstrItinClass;
+def II_VLDA_2D_UPS_4x_dmx_lda_ups_x2d_upsSign1 : InstrItinClass;
+def II_VLDA_2D_dmw_lda_w : InstrItinClass;
+def II_VLDA_2D_dmx_lda_bm : InstrItinClass;
+def II_VLDA_2D_dmx_lda_fifohl : InstrItinClass;
+def II_VLDA_2D_dmx_lda_x : InstrItinClass;
+def II_VLDA_3D_128 : InstrItinClass;
+def II_VLDA_3D_CONV_fp32_bf16_dmw_lda_ups_bf : InstrItinClass;
+def II_VLDA_3D_CONV_fp32_bf16_dmx_lda_ups_bf : InstrItinClass;
+def II_VLDA_3D_UPS_2x_dmw_lda_ups_w2b_upsSign0 : InstrItinClass;
+def II_VLDA_3D_UPS_2x_dmw_lda_ups_w2b_upsSign1 : InstrItinClass;
+def II_VLDA_3D_UPS_2x_dmx_lda_ups_x2c_upsSign0 : InstrItinClass;
+def II_VLDA_3D_UPS_2x_dmx_lda_ups_x2c_upsSign1 : InstrItinClass;
+def II_VLDA_3D_UPS_4x_dmw_lda_ups_w2c_upsSign0 : InstrItinClass;
+def II_VLDA_3D_UPS_4x_dmw_lda_ups_w2c_upsSign1 : InstrItinClass;
+def II_VLDA_3D_UPS_4x_dmx_lda_ups_x2d_upsSign0 : InstrItinClass;
+def II_VLDA_3D_UPS_4x_dmx_lda_ups_x2d_upsSign1 : InstrItinClass;
+def II_VLDA_3D_dmw_lda_w : InstrItinClass;
+def II_VLDA_3D_dmx_lda_bm : InstrItinClass;
+def II_VLDA_3D_dmx_lda_fifohl : InstrItinClass;
+def II_VLDA_3D_dmx_lda_x : InstrItinClass;
+def II_VLDA_CONV_fp32_bf16_dmw_lda_ups_bf_idx : InstrItinClass;
+def II_VLDA_CONV_fp32_bf16_dmw_lda_ups_bf_idx_imm : InstrItinClass;
+def II_VLDA_CONV_fp32_bf16_dmw_lda_ups_bf_pstm_nrm : InstrItinClass;
+def II_VLDA_CONV_fp32_bf16_dmw_lda_ups_bf_pstm_nrm_imm : InstrItinClass;
+def II_VLDA_CONV_fp32_bf16_dmx_lda_ups_bf_idx : InstrItinClass;
+def II_VLDA_CONV_fp32_bf16_dmx_lda_ups_bf_idx_imm : InstrItinClass;
+def II_VLDA_CONV_fp32_bf16_dmx_lda_ups_bf_pstm_nrm : InstrItinClass;
+def II_VLDA_CONV_fp32_bf16_dmx_lda_ups_bf_pstm_nrm_imm : InstrItinClass;
+def II_VLDA_FILL_512 : InstrItinClass;
+def II_VLDA_POP_512_2D : InstrItinClass;
+def II_VLDA_POP_512_3D : InstrItinClass;
+def II_VLDA_POP_512_fifo_1d_pop : InstrItinClass;
+def II_VLDA_POP_512_normal_pop : InstrItinClass;
+def II_VLDA_POP_544_2D : InstrItinClass;
+def II_VLDA_POP_544_3D : InstrItinClass;
+def II_VLDA_POP_544_fifo_1d_pop : InstrItinClass;
+def II_VLDA_POP_544_normal_pop : InstrItinClass;
+def II_VLDA_POP_576_2D : InstrItinClass;
+def II_VLDA_POP_576_3D : InstrItinClass;
+def II_VLDA_POP_576_fifo_1d_pop : InstrItinClass;
+def II_VLDA_POP_576_normal_pop : InstrItinClass;
+def II_VLDA_POP_640_2D : InstrItinClass;
+def II_VLDA_POP_640_3D : InstrItinClass;
+def II_VLDA_POP_640_fifo_1d_pop : InstrItinClass;
+def II_VLDA_POP_640_normal_pop : InstrItinClass;
+def II_VLDA_POP_704_2D : InstrItinClass;
+def II_VLDA_POP_704_3D : InstrItinClass;
+def II_VLDA_POP_704_fifo_1d_pop : InstrItinClass;
+def II_VLDA_POP_704_normal_pop : InstrItinClass;
+def II_VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign0 : InstrItinClass;
+def II_VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign1 : InstrItinClass;
+def II_VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0 : InstrItinClass;
+def II_VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1 : InstrItinClass;
+def II_VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 : InstrItinClass;
+def II_VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 : InstrItinClass;
+def II_VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_imm_upsSign0 : InstrItinClass;
+def II_VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_imm_upsSign1 : InstrItinClass;
+def II_VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0 : InstrItinClass;
+def II_VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign1 : InstrItinClass;
+def II_VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0 : InstrItinClass;
+def II_VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign1 : InstrItinClass;
+def II_VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign0 : InstrItinClass;
+def II_VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign1 : InstrItinClass;
+def II_VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign0 : InstrItinClass;
+def II_VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1 : InstrItinClass;
+def II_VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign0 : InstrItinClass;
+def II_VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign1 : InstrItinClass;
+def II_VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0 : InstrItinClass;
+def II_VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1 : InstrItinClass;
+def II_VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign0 : InstrItinClass;
+def II_VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign1 : InstrItinClass;
+def II_VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_imm_upsSign0 : InstrItinClass;
+def II_VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_imm_upsSign1 : InstrItinClass;
+def II_VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0 : InstrItinClass;
+def II_VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign1 : InstrItinClass;
+def II_VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 : InstrItinClass;
+def II_VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1 : InstrItinClass;
+def II_VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign0 : InstrItinClass;
+def II_VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign1 : InstrItinClass;
+def II_VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_imm_upsSign0 : InstrItinClass;
+def II_VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_imm_upsSign1 : InstrItinClass;
+def II_VLDA_dmw_lda_w_idx : InstrItinClass;
+def II_VLDA_dmw_lda_w_idx_imm : InstrItinClass;
+def II_VLDA_dmw_lda_w_pstm_nrm : InstrItinClass;
+def II_VLDA_dmw_lda_w_pstm_nrm_imm : InstrItinClass;
+def II_VLDA_dmw_lda_w_spill : InstrItinClass;
+def II_VLDA_dmx_lda_bm_idx : InstrItinClass;
+def II_VLDA_dmx_lda_bm_idx_imm : InstrItinClass;
+def II_VLDA_dmx_lda_bm_pstm_nrm : InstrItinClass;
+def II_VLDA_dmx_lda_bm_pstm_nrm_imm : InstrItinClass;
+def II_VLDA_dmx_lda_bm_spill : InstrItinClass;
+def II_VLDA_dmx_lda_fifohl_idx : InstrItinClass;
+def II_VLDA_dmx_lda_fifohl_idx_imm : InstrItinClass;
+def II_VLDA_dmx_lda_fifohl_pstm_nrm : InstrItinClass;
+def II_VLDA_dmx_lda_fifohl_pstm_nrm_imm : InstrItinClass;
+def II_VLDA_dmx_lda_fifohl_spill : InstrItinClass;
+def II_VLDA_dmx_lda_x_idx : InstrItinClass;
+def II_VLDA_dmx_lda_x_idx_imm : InstrItinClass;
+def II_VLDA_dmx_lda_x_pstm_nrm : InstrItinClass;
+def II_VLDA_dmx_lda_x_pstm_nrm_imm : InstrItinClass;
+def II_VLDA_dmx_lda_x_spill : InstrItinClass;
+def II_VLDB_128_idx : InstrItinClass;
+def II_VLDB_128_idx_imm : InstrItinClass;
+def II_VLDB_128_pstm_nrm : InstrItinClass;
+def II_VLDB_128_pstm_nrm_imm : InstrItinClass;
+def II_VLDB_2D_128 : InstrItinClass;
+def II_VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign0 : InstrItinClass;
+def II_VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign1 : InstrItinClass;
+def II_VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign0 : InstrItinClass;
+def II_VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign1 : InstrItinClass;
+def II_VLDB_2D_dmw_ldb : InstrItinClass;
+def II_VLDB_2D_dmx_ldb_x : InstrItinClass;
+def II_VLDB_3D_128 : InstrItinClass;
+def II_VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign0 : InstrItinClass;
+def II_VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign1 : InstrItinClass;
+def II_VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign0 : InstrItinClass;
+def II_VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign1 : InstrItinClass;
+def II_VLDB_3D_dmw_ldb : InstrItinClass;
+def II_VLDB_3D_dmx_ldb_x : InstrItinClass;
+def II_VLDB_4x16_hi : InstrItinClass;
+def II_VLDB_4x16_lo : InstrItinClass;
+def II_VLDB_4x32_hi : InstrItinClass;
+def II_VLDB_4x32_lo : InstrItinClass;
+def II_VLDB_4x64_hi : InstrItinClass;
+def II_VLDB_4x64_lo : InstrItinClass;
+def II_VLDB_FILLX_512 : InstrItinClass;
+def II_VLDB_FILL_512 : InstrItinClass;
+def II_VLDB_POPX_512 : InstrItinClass;
+def II_VLDB_POP_512_2D : InstrItinClass;
+def II_VLDB_POP_512_3D : InstrItinClass;
+def II_VLDB_POP_512_fifo_1d_pop : InstrItinClass;
+def II_VLDB_POP_512_normal_pop : InstrItinClass;
+def II_VLDB_POP_544_2D : InstrItinClass;
+def II_VLDB_POP_544_3D : InstrItinClass;
+def II_VLDB_POP_544_fifo_1d_pop : InstrItinClass;
+def II_VLDB_POP_544_normal_pop : InstrItinClass;
+def II_VLDB_POP_576_2D : InstrItinClass;
+def II_VLDB_POP_576_3D : InstrItinClass;
+def II_VLDB_POP_576_fifo_1d_pop : InstrItinClass;
+def II_VLDB_POP_576_normal_pop : InstrItinClass;
+def II_VLDB_POP_640_2D : InstrItinClass;
+def II_VLDB_POP_640_3D : InstrItinClass;
+def II_VLDB_POP_640_fifo_1d_pop : InstrItinClass;
+def II_VLDB_POP_640_normal_pop : InstrItinClass;
+def II_VLDB_POP_704_2D : InstrItinClass;
+def II_VLDB_POP_704_3D : InstrItinClass;
+def II_VLDB_POP_704_fifo_1d_pop : InstrItinClass;
+def II_VLDB_POP_704_normal_pop : InstrItinClass;
+def II_VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign0 : InstrItinClass;
+def II_VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign1 : InstrItinClass;
+def II_VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign0 : InstrItinClass;
+def II_VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign1 : InstrItinClass;
+def II_VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign0 : InstrItinClass;
+def II_VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign1 : InstrItinClass;
+def II_VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign0 : InstrItinClass;
+def II_VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign1 : InstrItinClass;
+def II_VLDB_UNPACK_dmx_ldb_unpack_idx_unpackSign0 : InstrItinClass;
+def II_VLDB_UNPACK_dmx_ldb_unpack_idx_unpackSign1 : InstrItinClass;
+def II_VLDB_UNPACK_dmx_ldb_unpack_idx_imm_unpackSign0 : InstrItinClass;
+def II_VLDB_UNPACK_dmx_ldb_unpack_idx_imm_unpackSign1 : InstrItinClass;
+def II_VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_unpackSign0 : InstrItinClass;
+def II_VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_unpackSign1 : InstrItinClass;
+def II_VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_imm_unpackSign0 : InstrItinClass;
+def II_VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_imm_unpackSign1 : InstrItinClass;
+def II_VLDB_dmw_ldb_idx : InstrItinClass;
+def II_VLDB_dmw_ldb_idx_imm : InstrItinClass;
+def II_VLDB_dmw_ldb_pstm_nrm : InstrItinClass;
+def II_VLDB_dmw_ldb_pstm_nrm_imm : InstrItinClass;
+def II_VLDB_dmx_ldb_x_idx : InstrItinClass;
+def II_VLDB_dmx_ldb_x_idx_imm : InstrItinClass;
+def II_VLDB_dmx_ldb_x_pstm_nrm : InstrItinClass;
+def II_VLDB_dmx_ldb_x_pstm_nrm_imm : InstrItinClass;
+def II_VLT_16_vaddSign0 : InstrItinClass;
+def II_VLT_16_vaddSign1 : InstrItinClass;
+def II_VLT_32_vaddSign0 : InstrItinClass;
+def II_VLT_32_vaddSign1 : InstrItinClass;
+def II_VLT_8_vaddSign0 : InstrItinClass;
+def II_VLT_8_vaddSign1 : InstrItinClass;
+def II_VLT_bf16 : InstrItinClass;
+def II_VMAC_vmul_cm_core_X_QX : InstrItinClass;
+def II_VMAC_vmul_cm_core_X_QY : InstrItinClass;
+def II_VMAC_vmul_cm_core_X_X : InstrItinClass;
+def II_VMAC_vmul_cm_core_X_Y : InstrItinClass;
+def II_VMAC_vmul_cm_core_Y_QX : InstrItinClass;
+def II_VMAC_vmul_cm_core_Y_QY : InstrItinClass;
+def II_VMAC_vmul_cm_core_Y_X : InstrItinClass;
+def II_VMAC_vmul_cm_core_Y_Y : InstrItinClass;
+def II_VMAC_f_vmac_bf_vmul_bf_core_X_X : InstrItinClass;
+def II_VMAC_f_vmac_bf_vmul_bf_core_Y_Y : InstrItinClass;
+def II_VMAC_f_vmac_bfp_vmul_bfp_core_EX_EX : InstrItinClass;
+def II_VMAC_f_vmac_bfp_vmul_bfp_core_EX_EY : InstrItinClass;
+def II_VMAC_f_vmac_bfp_vmul_bfp_core_EX_QEY : InstrItinClass;
+def II_VMAC_f_vmac_bfp_vmul_bfp_core_EY_QEX : InstrItinClass;
+def II_VMAXDIFF_LT_16_vaddSign0 : InstrItinClass;
+def II_VMAXDIFF_LT_16_vaddSign1 : InstrItinClass;
+def II_VMAXDIFF_LT_32_vaddSign0 : InstrItinClass;
+def II_VMAXDIFF_LT_32_vaddSign1 : InstrItinClass;
+def II_VMAXDIFF_LT_8_vaddSign0 : InstrItinClass;
+def II_VMAXDIFF_LT_8_vaddSign1 : InstrItinClass;
+def II_VMAX_LT_16_vaddSign0 : InstrItinClass;
+def II_VMAX_LT_16_vaddSign1 : InstrItinClass;
+def II_VMAX_LT_32_vaddSign0 : InstrItinClass;
+def II_VMAX_LT_32_vaddSign1 : InstrItinClass;
+def II_VMAX_LT_8_vaddSign0 : InstrItinClass;
+def II_VMAX_LT_8_vaddSign1 : InstrItinClass;
+def II_VMAX_LT_bf16 : InstrItinClass;
+def II_VMIN_GE_16_vaddSign0 : InstrItinClass;
+def II_VMIN_GE_16_vaddSign1 : InstrItinClass;
+def II_VMIN_GE_32_vaddSign0 : InstrItinClass;
+def II_VMIN_GE_32_vaddSign1 : InstrItinClass;
+def II_VMIN_GE_8_vaddSign0 : InstrItinClass;
+def II_VMIN_GE_8_vaddSign1 : InstrItinClass;
+def II_VMIN_GE_bf16 : InstrItinClass;
+def II_VMOV_0_mv_scd_cm : InstrItinClass;
+def II_VMOV_0_mv_scd_dm_imm : InstrItinClass;
+def II_VMOV_1_mv_scd_cm : InstrItinClass;
+def II_VMOV_1_mv_scd_dm_imm : InstrItinClass;
+def II_VMOV_2 : InstrItinClass;
+def II_VMOV_3 : InstrItinClass;
+def II_VMOV_D : InstrItinClass;
+def II_VMOV_alu_mv_mv_cm : InstrItinClass;
+def II_VMOV_alu_mv_mv_ex : InstrItinClass;
+def II_VMOV_alu_mv_mv_q : InstrItinClass;
+def II_VMOV_alu_mv_mv_q_to_w : InstrItinClass;
+def II_VMOV_alu_mv_mv_qex : InstrItinClass;
+def II_VMOV_alu_mv_mv_qx : InstrItinClass;
+def II_VMOV_alu_mv_mv_w : InstrItinClass;
+def II_VMOV_alu_mv_mv_w_to_q : InstrItinClass;
+// instruction: VMOV_alu_mv_mv_x
+def II_VMOV_alu_mv_mv_x : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eXe_eXe : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eLdFifoLReg_eXe : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eBMHH_eXe : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eBMHL_eXe : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eLdFifoHReg_eXe : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eBMLL_eXe : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eBMLH_eXe : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eXo_eXe : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eXe_eLdFifoLReg : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eXe_eBMHH : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eXe_eBMHL : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eXe_eLdFifoHReg : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eXe_eBMLL : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eXe_eBMLH : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eXe_eXo : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eLdFifoLReg_eLdFifoLReg : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eLdFifoLReg_eBMHH : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eLdFifoLReg_eBMHL : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eLdFifoLReg_eLdFifoHReg : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eLdFifoLReg_eBMLL : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eLdFifoLReg_eBMLH : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eLdFifoLReg_eXo : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eBMHH_eLdFifoLReg : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eBMHH_eBMHH : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eBMHH_eBMHL : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eBMHH_eLdFifoHReg : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eBMHH_eBMLL : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eBMHH_eBMLH : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eBMHH_eXo : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eBMHL_eLdFifoLReg : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eBMHL_eBMHH : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eBMHL_eBMHL : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eBMHL_eLdFifoHReg : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eBMHL_eBMLL : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eBMHL_eBMLH : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eBMHL_eXo : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eLdFifoHReg_eLdFifoLReg : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eLdFifoHReg_eBMHH : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eLdFifoHReg_eBMHL : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eLdFifoHReg_eLdFifoHReg : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eLdFifoHReg_eBMLL : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eLdFifoHReg_eBMLH : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eLdFifoHReg_eXo : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eBMLL_eLdFifoLReg : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eBMLL_eBMHH : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eBMLL_eBMHL : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eBMLL_eLdFifoHReg : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eBMLL_eBMLL : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eBMLL_eBMLH : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eBMLL_eXo : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eBMLH_eLdFifoLReg : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eBMLH_eBMHH : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eBMLH_eBMHL : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eBMLH_eLdFifoHReg : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eBMLH_eBMLL : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eBMLH_eBMLH : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eBMLH_eXo : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eXo_eLdFifoLReg : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eXo_eBMHH : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eXo_eBMHL : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eXo_eLdFifoHReg : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eXo_eBMLL : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eXo_eBMLH : InstrItinClass;
+def II_VMOV_alu_mv_mv_x_eXo_eXo : InstrItinClass;
+
+def II_VMOV_lda_mv_scd_bm : InstrItinClass;
+def II_VMOV_lda_mv_scd_dm_dyn : InstrItinClass;
+def II_VMOV_lda_mv_scd_dm_reg : InstrItinClass;
+def II_VMOV_lda_mv_scd_x : InstrItinClass;
+def II_VMOV_st_mv_mcd_bm : InstrItinClass;
+def II_VMOV_st_mv_mcd_x : InstrItinClass;
+def II_VMSC_vmul_cm_core_X_QX : InstrItinClass;
+def II_VMSC_vmul_cm_core_X_QY : InstrItinClass;
+def II_VMSC_vmul_cm_core_X_X : InstrItinClass;
+def II_VMSC_vmul_cm_core_X_Y : InstrItinClass;
+def II_VMSC_vmul_cm_core_Y_QX : InstrItinClass;
+def II_VMSC_vmul_cm_core_Y_QY : InstrItinClass;
+def II_VMSC_vmul_cm_core_Y_X : InstrItinClass;
+def II_VMSC_vmul_cm_core_Y_Y : InstrItinClass;
+def II_VMSC_f_vmac_bf_vmul_bf_core_X_X : InstrItinClass;
+def II_VMSC_f_vmac_bf_vmul_bf_core_Y_Y : InstrItinClass;
+def II_VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX : InstrItinClass;
+def II_VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY : InstrItinClass;
+def II_VMSC_f_vmac_bfp_vmul_bfp_core_EX_QEY : InstrItinClass;
+def II_VMSC_f_vmac_bfp_vmul_bfp_core_EY_QEX : InstrItinClass;
+def II_VMUL_vmul_cm_core_X_QX : InstrItinClass;
+def II_VMUL_vmul_cm_core_X_QY : InstrItinClass;
+def II_VMUL_vmul_cm_core_X_X : InstrItinClass;
+def II_VMUL_vmul_cm_core_X_Y : InstrItinClass;
+def II_VMUL_vmul_cm_core_Y_QX : InstrItinClass;
+def II_VMUL_vmul_cm_core_Y_QY : InstrItinClass;
+def II_VMUL_vmul_cm_core_Y_X : InstrItinClass;
+def II_VMUL_vmul_cm_core_Y_Y : InstrItinClass;
+def II_VMUL_f_vmul_bf_vmul_bf_core_X_X : InstrItinClass;
+def II_VMUL_f_vmul_bf_vmul_bf_core_Y_Y : InstrItinClass;
+def II_VMUL_f_vmul_bfp_vmul_bfp_core_EX_EX : InstrItinClass;
+def II_VMUL_f_vmul_bfp_vmul_bfp_core_EX_EY : InstrItinClass;
+def II_VMUL_f_vmul_bfp_vmul_bfp_core_EX_QEY : InstrItinClass;
+def II_VMUL_f_vmul_bfp_vmul_bfp_core_EY_QEX : InstrItinClass;
+def II_VNEGMUL_vmul_cm_core_X_QX : InstrItinClass;
+def II_VNEGMUL_vmul_cm_core_X_QY : InstrItinClass;
+def II_VNEGMUL_vmul_cm_core_X_X : InstrItinClass;
+def II_VNEGMUL_vmul_cm_core_X_Y : InstrItinClass;
+def II_VNEGMUL_vmul_cm_core_Y_QX : InstrItinClass;
+def II_VNEGMUL_vmul_cm_core_Y_QY : InstrItinClass;
+def II_VNEGMUL_vmul_cm_core_Y_X : InstrItinClass;
+def II_VNEGMUL_vmul_cm_core_Y_Y : InstrItinClass;
+def II_VNEGMUL_f_vmul_bf_vmul_bf_core_X_X : InstrItinClass;
+def II_VNEGMUL_f_vmul_bf_vmul_bf_core_Y_Y : InstrItinClass;
+def II_VNEGMUL_f_vmul_bfp_vmul_bfp_core_EX_EX : InstrItinClass;
+def II_VNEGMUL_f_vmul_bfp_vmul_bfp_core_EX_EY : InstrItinClass;
+def II_VNEGMUL_f_vmul_bfp_vmul_bfp_core_EX_QEY : InstrItinClass;
+def II_VNEGMUL_f_vmul_bfp_vmul_bfp_core_EY_QEX : InstrItinClass;
+def II_VNEG_GTZ_16 : InstrItinClass;
+def II_VNEG_GTZ_32 : InstrItinClass;
+def II_VNEG_GTZ_8 : InstrItinClass;
+def II_VNEG : InstrItinClass;
+def II_VNEG_f : InstrItinClass;
+def II_VPACK_mv_pack_w_packSign0 : InstrItinClass;
+def II_VPACK_mv_pack_w_packSign1 : InstrItinClass;
+def II_VPACK_mv_pack_x_packSign0 : InstrItinClass;
+def II_VPACK_mv_pack_x_packSign1 : InstrItinClass;
+def II_VPUSH_hi_16 : InstrItinClass;
+def II_VPUSH_hi_32 : InstrItinClass;
+def II_VPUSH_hi_64 : InstrItinClass;
+def II_VPUSH_hi_8 : InstrItinClass;
+def II_VPUSH_lo_16 : InstrItinClass;
+def II_VPUSH_lo_32 : InstrItinClass;
+def II_VPUSH_lo_64 : InstrItinClass;
+def II_VPUSH_lo_8 : InstrItinClass;
+def II_VSEL_16 : InstrItinClass;
+def II_VSEL_32 : InstrItinClass;
+def II_VSEL_8 : InstrItinClass;
+def II_VSHIFT_ALIGN : InstrItinClass;
+def II_VSHIFT : InstrItinClass;
+def II_VSHUFFLE_vec_shuffle_bm : InstrItinClass;
+def II_VSHUFFLE_vec_shuffle_ex : InstrItinClass;
+def II_VSHUFFLE_vec_shuffle_x : InstrItinClass;
+def II_VSRS_2x_mv_w_srs_bm_srsSign0 : InstrItinClass;
+def II_VSRS_2x_mv_w_srs_bm_srsSign1 : InstrItinClass;
+def II_VSRS_2x_mv_x_srs_cm_srsSign0 : InstrItinClass;
+def II_VSRS_2x_mv_x_srs_cm_srsSign1 : InstrItinClass;
+def II_VSRS_4x_mv_w_srs_cm_srsSign0 : InstrItinClass;
+def II_VSRS_4x_mv_w_srs_cm_srsSign1 : InstrItinClass;
+def II_VSRS_4x_mv_x_srs_dm_srsSign0 : InstrItinClass;
+def II_VSRS_4x_mv_x_srs_dm_srsSign1 : InstrItinClass;
+def II_VST_128_dmv_sts_w_idx : InstrItinClass;
+def II_VST_128_dmv_sts_w_idx_imm : InstrItinClass;
+def II_VST_128_dmv_sts_w_pstm_nrm : InstrItinClass;
+def II_VST_128_dmv_sts_w_pstm_nrm_imm : InstrItinClass;
+def II_VST_128_dmv_sts_w_spill : InstrItinClass;
+def II_VST_2D_128 : InstrItinClass;
+def II_VST_2D_CONV_bf16_fp32_dmw_sts_srs_bf : InstrItinClass;
+def II_VST_2D_CONV_bf16_fp32_dmx_sts_srs_bf : InstrItinClass;
+def II_VST_2D_PACK_dmw_sts_pack_packSign0 : InstrItinClass;
+def II_VST_2D_PACK_dmw_sts_pack_packSign1 : InstrItinClass;
+def II_VST_2D_PACK_dmx_sts_pack_packSign0 : InstrItinClass;
+def II_VST_2D_PACK_dmx_sts_pack_packSign1 : InstrItinClass;
+def II_VST_2D_SRS_2x_dm_sts_srs_cm_srsSign0 : InstrItinClass;
+def II_VST_2D_SRS_2x_dm_sts_srs_cm_srsSign1 : InstrItinClass;
+def II_VST_2D_SRS_2x_dmw_sts_srs_bm_srsSign0 : InstrItinClass;
+def II_VST_2D_SRS_2x_dmw_sts_srs_bm_srsSign1 : InstrItinClass;
+def II_VST_2D_SRS_4x_dm_sts_srs_cm_srsSign0 : InstrItinClass;
+def II_VST_2D_SRS_4x_dm_sts_srs_cm_srsSign1 : InstrItinClass;
+def II_VST_2D_SRS_4x_dmx_sts_srs_dm_srsSign0 : InstrItinClass;
+def II_VST_2D_SRS_4x_dmx_sts_srs_dm_srsSign1 : InstrItinClass;
+def II_VST_2D_dmw_sts_w : InstrItinClass;
+def II_VST_2D_dmx_sts_bm : InstrItinClass;
+def II_VST_2D_dmx_sts_fifohl : InstrItinClass;
+def II_VST_2D_dmx_sts_x : InstrItinClass;
+def II_VST_3D_128 : InstrItinClass;
+def II_VST_3D_CONV_bf16_fp32_dmw_sts_srs_bf : InstrItinClass;
+def II_VST_3D_CONV_bf16_fp32_dmx_sts_srs_bf : InstrItinClass;
+def II_VST_3D_PACK_dmw_sts_pack_packSign0 : InstrItinClass;
+def II_VST_3D_PACK_dmw_sts_pack_packSign1 : InstrItinClass;
+def II_VST_3D_PACK_dmx_sts_pack_packSign0 : InstrItinClass;
+def II_VST_3D_PACK_dmx_sts_pack_packSign1 : InstrItinClass;
+def II_VST_3D_SRS_2x_dm_sts_srs_cm_srsSign0 : InstrItinClass;
+def II_VST_3D_SRS_2x_dm_sts_srs_cm_srsSign1 : InstrItinClass;
+def II_VST_3D_SRS_2x_dmw_sts_srs_bm_srsSign0 : InstrItinClass;
+def II_VST_3D_SRS_2x_dmw_sts_srs_bm_srsSign1 : InstrItinClass;
+def II_VST_3D_SRS_4x_dm_sts_srs_cm_srsSign0 : InstrItinClass;
+def II_VST_3D_SRS_4x_dm_sts_srs_cm_srsSign1 : InstrItinClass;
+def II_VST_3D_SRS_4x_dmx_sts_srs_dm_srsSign0 : InstrItinClass;
+def II_VST_3D_SRS_4x_dmx_sts_srs_dm_srsSign1 : InstrItinClass;
+def II_VST_3D_dmw_sts_w : InstrItinClass;
+def II_VST_3D_dmx_sts_bm : InstrItinClass;
+def II_VST_3D_dmx_sts_fifohl : InstrItinClass;
+def II_VST_3D_dmx_sts_x : InstrItinClass;
+def II_VST_CONV_bf16_fp32_dmw_sts_srs_bf_idx : InstrItinClass;
+def II_VST_CONV_bf16_fp32_dmw_sts_srs_bf_idx_imm : InstrItinClass;
+def II_VST_CONV_bf16_fp32_dmw_sts_srs_bf_pstm_nrm : InstrItinClass;
+def II_VST_CONV_bf16_fp32_dmw_sts_srs_bf_pstm_nrm_imm : InstrItinClass;
+def II_VST_CONV_bf16_fp32_dmx_sts_srs_bf_idx : InstrItinClass;
+def II_VST_CONV_bf16_fp32_dmx_sts_srs_bf_idx_imm : InstrItinClass;
+def II_VST_CONV_bf16_fp32_dmx_sts_srs_bf_pstm_nrm : InstrItinClass;
+def II_VST_CONV_bf16_fp32_dmx_sts_srs_bf_pstm_nrm_imm : InstrItinClass;
+def II_VST_FLUSH_512_2D : InstrItinClass;
+def II_VST_FLUSH_512_3D : InstrItinClass;
+def II_VST_FLUSH_512_CONV_2D : InstrItinClass;
+def II_VST_FLUSH_512_CONV_3D : InstrItinClass;
+def II_VST_FLUSH_512_CONV_fifo_1d_flush : InstrItinClass;
+def II_VST_FLUSH_512_CONV_normal_flush : InstrItinClass;
+def II_VST_FLUSH_512_fifo_1d_flush : InstrItinClass;
+def II_VST_FLUSH_512_normal_flush : InstrItinClass;
+def II_VST_PACK_dmw_sts_pack_idx_packSign0 : InstrItinClass;
+def II_VST_PACK_dmw_sts_pack_idx_packSign1 : InstrItinClass;
+def II_VST_PACK_dmw_sts_pack_idx_imm_packSign0 : InstrItinClass;
+def II_VST_PACK_dmw_sts_pack_idx_imm_packSign1 : InstrItinClass;
+def II_VST_PACK_dmw_sts_pack_pstm_nrm_packSign0 : InstrItinClass;
+def II_VST_PACK_dmw_sts_pack_pstm_nrm_packSign1 : InstrItinClass;
+def II_VST_PACK_dmw_sts_pack_pstm_nrm_imm_packSign0 : InstrItinClass;
+def II_VST_PACK_dmw_sts_pack_pstm_nrm_imm_packSign1 : InstrItinClass;
+def II_VST_PACK_dmx_sts_pack_idx_packSign0 : InstrItinClass;
+def II_VST_PACK_dmx_sts_pack_idx_packSign1 : InstrItinClass;
+def II_VST_PACK_dmx_sts_pack_idx_imm_packSign0 : InstrItinClass;
+def II_VST_PACK_dmx_sts_pack_idx_imm_packSign1 : InstrItinClass;
+def II_VST_PACK_dmx_sts_pack_pstm_nrm_packSign0 : InstrItinClass;
+def II_VST_PACK_dmx_sts_pack_pstm_nrm_packSign1 : InstrItinClass;
+def II_VST_PACK_dmx_sts_pack_pstm_nrm_imm_packSign0 : InstrItinClass;
+def II_VST_PACK_dmx_sts_pack_pstm_nrm_imm_packSign1 : InstrItinClass;
+def II_VST_PUSH_512 : InstrItinClass;
+def II_VST_PUSH_544_CONV_bfp16ebs16_ebs8 : InstrItinClass;
+def II_VST_PUSH_544_CONV_bfp16ebs16_fp32 : InstrItinClass;
+def II_VST_PUSH_544 : InstrItinClass;
+def II_VST_PUSH_576_CONV_bfp16ebs8_fp32 : InstrItinClass;
+def II_VST_PUSH_576 : InstrItinClass;
+def II_VST_SRS_2x_dm_sts_srs_cm_idx_srsSign0 : InstrItinClass;
+def II_VST_SRS_2x_dm_sts_srs_cm_idx_srsSign1 : InstrItinClass;
+def II_VST_SRS_2x_dm_sts_srs_cm_idx_imm_srsSign0 : InstrItinClass;
+def II_VST_SRS_2x_dm_sts_srs_cm_idx_imm_srsSign1 : InstrItinClass;
+def II_VST_SRS_2x_dm_sts_srs_cm_pstm_nrm_srsSign0 : InstrItinClass;
+def II_VST_SRS_2x_dm_sts_srs_cm_pstm_nrm_srsSign1 : InstrItinClass;
+def II_VST_SRS_2x_dm_sts_srs_cm_pstm_nrm_imm_srsSign0 : InstrItinClass;
+def II_VST_SRS_2x_dm_sts_srs_cm_pstm_nrm_imm_srsSign1 : InstrItinClass;
+def II_VST_SRS_2x_dmw_sts_srs_bm_idx_srsSign0 : InstrItinClass;
+def II_VST_SRS_2x_dmw_sts_srs_bm_idx_srsSign1 : InstrItinClass;
+def II_VST_SRS_2x_dmw_sts_srs_bm_idx_imm_srsSign0 : InstrItinClass;
+def II_VST_SRS_2x_dmw_sts_srs_bm_idx_imm_srsSign1 : InstrItinClass;
+def II_VST_SRS_2x_dmw_sts_srs_bm_pstm_nrm_srsSign0 : InstrItinClass;
+def II_VST_SRS_2x_dmw_sts_srs_bm_pstm_nrm_srsSign1 : InstrItinClass;
+def II_VST_SRS_2x_dmw_sts_srs_bm_pstm_nrm_imm_srsSign0 : InstrItinClass;
+def II_VST_SRS_2x_dmw_sts_srs_bm_pstm_nrm_imm_srsSign1 : InstrItinClass;
+def II_VST_SRS_4x_dm_sts_srs_cm_idx_srsSign0 : InstrItinClass;
+def II_VST_SRS_4x_dm_sts_srs_cm_idx_srsSign1 : InstrItinClass;
+def II_VST_SRS_4x_dm_sts_srs_cm_idx_imm_srsSign0 : InstrItinClass;
+def II_VST_SRS_4x_dm_sts_srs_cm_idx_imm_srsSign1 : InstrItinClass;
+def II_VST_SRS_4x_dm_sts_srs_cm_pstm_nrm_srsSign0 : InstrItinClass;
+def II_VST_SRS_4x_dm_sts_srs_cm_pstm_nrm_srsSign1 : InstrItinClass;
+def II_VST_SRS_4x_dm_sts_srs_cm_pstm_nrm_imm_srsSign0 : InstrItinClass;
+def II_VST_SRS_4x_dm_sts_srs_cm_pstm_nrm_imm_srsSign1 : InstrItinClass;
+def II_VST_SRS_4x_dmx_sts_srs_dm_idx_srsSign0 : InstrItinClass;
+def II_VST_SRS_4x_dmx_sts_srs_dm_idx_srsSign1 : InstrItinClass;
+def II_VST_SRS_4x_dmx_sts_srs_dm_idx_imm_srsSign0 : InstrItinClass;
+def II_VST_SRS_4x_dmx_sts_srs_dm_idx_imm_srsSign1 : InstrItinClass;
+def II_VST_SRS_4x_dmx_sts_srs_dm_pstm_nrm_srsSign0 : InstrItinClass;
+def II_VST_SRS_4x_dmx_sts_srs_dm_pstm_nrm_srsSign1 : InstrItinClass;
+def II_VST_SRS_4x_dmx_sts_srs_dm_pstm_nrm_imm_srsSign0 : InstrItinClass;
+def II_VST_SRS_4x_dmx_sts_srs_dm_pstm_nrm_imm_srsSign1 : InstrItinClass;
+def II_VST_dmw_sts_w_idx : InstrItinClass;
+def II_VST_dmw_sts_w_idx_imm : InstrItinClass;
+def II_VST_dmw_sts_w_pstm_nrm : InstrItinClass;
+def II_VST_dmw_sts_w_pstm_nrm_imm : InstrItinClass;
+def II_VST_dmw_sts_w_spill : InstrItinClass;
+def II_VST_dmx_sts_bm_idx : InstrItinClass;
+def II_VST_dmx_sts_bm_idx_imm : InstrItinClass;
+def II_VST_dmx_sts_bm_pstm_nrm : InstrItinClass;
+def II_VST_dmx_sts_bm_pstm_nrm_imm : InstrItinClass;
+def II_VST_dmx_sts_bm_spill : InstrItinClass;
+def II_VST_dmx_sts_fifohl_idx : InstrItinClass;
+def II_VST_dmx_sts_fifohl_idx_imm : InstrItinClass;
+def II_VST_dmx_sts_fifohl_pstm_nrm : InstrItinClass;
+def II_VST_dmx_sts_fifohl_pstm_nrm_imm : InstrItinClass;
+def II_VST_dmx_sts_fifohl_spill : InstrItinClass;
+def II_VST_dmx_sts_x_idx : InstrItinClass;
+def II_VST_dmx_sts_x_idx_imm : InstrItinClass;
+def II_VST_dmx_sts_x_pstm_nrm : InstrItinClass;
+def II_VST_dmx_sts_x_pstm_nrm_imm : InstrItinClass;
+def II_VST_dmx_sts_x_spill : InstrItinClass;
+def II_VSUB_16 : InstrItinClass;
+def II_VSUB_32 : InstrItinClass;
+def II_VSUB_8 : InstrItinClass;
+def II_VSUB_GE_16_vaddSign0 : InstrItinClass;
+def II_VSUB_GE_16_vaddSign1 : InstrItinClass;
+def II_VSUB_GE_32_vaddSign0 : InstrItinClass;
+def II_VSUB_GE_32_vaddSign1 : InstrItinClass;
+def II_VSUB_GE_8_vaddSign0 : InstrItinClass;
+def II_VSUB_GE_8_vaddSign1 : InstrItinClass;
+def II_VSUB_LT_16_vaddSign0 : InstrItinClass;
+def II_VSUB_LT_16_vaddSign1 : InstrItinClass;
+def II_VSUB_LT_32_vaddSign0 : InstrItinClass;
+def II_VSUB_LT_32_vaddSign1 : InstrItinClass;
+def II_VSUB_LT_8_vaddSign0 : InstrItinClass;
+def II_VSUB_LT_8_vaddSign1 : InstrItinClass;
+def II_VSUB_vmac_cm2_add_reg : InstrItinClass;
+def II_VSUB_vmac_cm2_add_scd : InstrItinClass;
+def II_VSUB_vmac_cm2_add_scd_incr : InstrItinClass;
+def II_VSUB_f_vmac_cm2_add_reg : InstrItinClass;
+def II_VSUB_f_vmac_cm2_add_scd : InstrItinClass;
+def II_VSUB_f_vmac_cm2_add_scd_incr : InstrItinClass;
+def II_VTANH : InstrItinClass;
+def II_VUNPACK_mv_unpack_w_unpackSign0 : InstrItinClass;
+def II_VUNPACK_mv_unpack_w_unpackSign1 : InstrItinClass;
+def II_VUNPACK_mv_unpack_x_unpackSign0 : InstrItinClass;
+def II_VUNPACK_mv_unpack_x_unpackSign1 : InstrItinClass;
+def II_VUPS_2x_mv_ups_w2b_upsSign0 : InstrItinClass;
+def II_VUPS_2x_mv_ups_w2b_upsSign1 : InstrItinClass;
+def II_VUPS_2x_mv_ups_x2c_upsSign0 : InstrItinClass;
+def II_VUPS_2x_mv_ups_x2c_upsSign1 : InstrItinClass;
+def II_VUPS_4x_mv_ups_w2c_upsSign0 : InstrItinClass;
+def II_VUPS_4x_mv_ups_w2c_upsSign1 : InstrItinClass;
+def II_VUPS_4x_mv_ups_x2d_upsSign0 : InstrItinClass;
+def II_VUPS_4x_mv_ups_x2d_upsSign1 : InstrItinClass;
+def II_XOR : InstrItinClass;
+
+def AIE2PItineraries : ProcessorItineraries<
+[
+// Resources
+EMPTY_FU,
+PART_WORD_STORE,
+AGUA__AGI_I,
+AGUA__AGU_C1,
+AGUA__AGU_M_CG20S,
+AGUA__AG_P,
+AGUA__DM_AD_DEAD,
+AGU_RM_PORT,
+BM_WM_1,
+CNVOSTAT1,
+COL,
+CRPACKSIGN_WM_PORT,
+CRRND_RS,
+CRSAT_RA,
+CRSRSSIGN_WM_PORT,
+CRUNPACKSIGN_WM_PORT,
+CRUPSMODE_RA,
+CRUPSSIGN_WM_PORT,
+CRVADDSIGN_WM_PORT,
+DC_WM_PORT,
+DJ_WM_PORT,
+DMS_WM,
+DMW_WRS,
+DMX_STS_FIFO,
+DMX_WRS,
+DM_ADA,
+DM_ADS,
+DM_RM_PORT,
+DM_WM_PORT,
+DN_WM_PORT,
+DONE_FU,
+EVENT_UPS_OF,
+FIFO_HL_RA_PORT,
+FIFO_HL_WA_PORT,
+FIFO_STS__ADVANCE_FIFO_R,
+LCKREQ,
+LXC,
+L_RM_PORT,
+L_WM_PORT,
+M_RA_PORT,
+M_WM_PORT,
+P_WM_PORT,
+QEY_RS_PORT,
+QEY_WA_PORT,
+QEY_WB_PORT,
+RSRC_EXECUTION_TRACE,
+R_RS_PORT,
+R_WA_PORT,
+SCD,
+SCD_CTL,
+SCD_EXPAND__EN,
+SCD_INCR__O_POS,
+TM_AD,
+UPS__H__A,
+UPS__H__K,
+UPS__H__OMUXL,
+UPS__K,
+UPS__L__KL,
+UPS__L__OMUXL,
+UPS__OMUX,
+],[
+// Bypasses
+MV_Bypass,
+VEC_Bypass,
+],[
+// Itineraries
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__alu_r_r__abs__mRx
+InstrItinData<II_ABS, [], [/*d0*/1, /*s0*/1, /*srCarry*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__acquire_cond__mLockId__mLockId_imm__mRy__mR26_lock
+InstrItinData<II_ACQ_COND_mLockId_imm, [PrefixCycle<L_RM_PORT>, InstrStage<4, [LCKREQ]>], [/*id*/1, /*s1*/1, /*s2*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__acquire_cond__mLockId__mLockId_reg__mRx__mRy__mR26_lock
+InstrItinData<II_ACQ_COND_mLockId_reg, [PrefixCycle<L_RM_PORT>, InstrStage<4, [LCKREQ]>], [/*id*/1, /*s1*/1, /*s2*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__acquire__mLockId__mLockId_imm__mRy
+InstrItinData<II_ACQ_mLockId_imm, [InstrStage<4, [LCKREQ]>], [/*id*/1, /*s1*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__acquire__mLockId__mLockId_reg__mRx__mRy
+InstrItinData<II_ACQ_mLockId_reg, [InstrStage<4, [LCKREQ]>], [/*id*/1, /*s1*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__alu_r_rr__addx__mRx__mRy
+InstrItinData<II_ADC, [], [/*d0*/1, /*s0*/1, /*s1*/1, /*srCarry*/1, /*srCarry*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_add_ri__mRm
+InstrItinData<II_ADD_NC_mv_add_ri, [PrefixCycle<CRPACKSIGN_WM_PORT>, PrefixCycle<CRSRSSIGN_WM_PORT>, PrefixCycle<CRUNPACKSIGN_WM_PORT>, PrefixCycle<CRUPSSIGN_WM_PORT>, PrefixCycle<CRVADDSIGN_WM_PORT>, PrefixCycle<DC_WM_PORT>, PrefixCycle<DJ_WM_PORT>, PrefixCycle<DN_WM_PORT>, PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, PrefixCycle<M_WM_PORT>, PrefixCycle<P_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*s0*/1, /*imm*/1]>,
+InstrItinData<II_ADD_NC_mv_add_ri_mCRSCDEn, [PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*s0*/1, /*imm*/1]>,
+InstrItinData<II_ADD_NC_mv_add_ri_eDJ, [PrefixCycle<DJ_WM_PORT>, PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*s0*/1, /*imm*/1]>,
+InstrItinData<II_ADD_NC_mv_add_ri_mCRRnd, [PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*s0*/1, /*imm*/1]>,
+InstrItinData<II_ADD_NC_mv_add_ri_mCRSat, [PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*s0*/1, /*imm*/1]>,
+InstrItinData<II_ADD_NC_mv_add_ri_eDC, [PrefixCycle<DC_WM_PORT>, PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*s0*/1, /*imm*/1]>,
+InstrItinData<II_ADD_NC_mv_add_ri_mSRCarry, [PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*s0*/1, /*imm*/1]>,
+InstrItinData<II_ADD_NC_mv_add_ri_mCRPackSize, [PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*s0*/1, /*imm*/1]>,
+InstrItinData<II_ADD_NC_mv_add_ri_eP, [PrefixCycle<L_RM_PORT>, PrefixCycle<P_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*s0*/1, /*imm*/1]>,
+InstrItinData<II_ADD_NC_mv_add_ri_eUnpackSign, [PrefixCycle<CRUNPACKSIGN_WM_PORT>, PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*s0*/1, /*imm*/1]>,
+InstrItinData<II_ADD_NC_mv_add_ri_eVaddSign, [PrefixCycle<CRVADDSIGN_WM_PORT>, PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*s0*/1, /*imm*/1]>,
+InstrItinData<II_ADD_NC_mv_add_ri_eSRSSign, [PrefixCycle<CRSRSSIGN_WM_PORT>, PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*s0*/1, /*imm*/1]>,
+InstrItinData<II_ADD_NC_mv_add_ri_eUPSSign, [PrefixCycle<CRUPSSIGN_WM_PORT>, PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*s0*/1, /*imm*/1]>,
+InstrItinData<II_ADD_NC_mv_add_ri_eS, [PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*s0*/1, /*imm*/1]>,
+InstrItinData<II_ADD_NC_mv_add_ri_mCRUPSMode, [PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*s0*/1, /*imm*/1]>,
+InstrItinData<II_ADD_NC_mv_add_ri_mCRUnpackSize, [PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*s0*/1, /*imm*/1]>,
+InstrItinData<II_ADD_NC_mv_add_ri_eR, [PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*s0*/1, /*imm*/1]>,
+InstrItinData<II_ADD_NC_mv_add_ri_ePackSign, [PrefixCycle<CRPACKSIGN_WM_PORT>, PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*s0*/1, /*imm*/1]>,
+InstrItinData<II_ADD_NC_mv_add_ri_mCRMCDEn, [PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*s0*/1, /*imm*/1]>,
+InstrItinData<II_ADD_NC_mv_add_ri_eDN, [PrefixCycle<DN_WM_PORT>, PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*s0*/1, /*imm*/1]>,
+InstrItinData<II_ADD_NC_mv_add_ri_mSRSS0, [PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*s0*/1, /*imm*/1]>,
+InstrItinData<II_ADD_NC_mv_add_ri_mSRMS0, [PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*s0*/1, /*imm*/1]>,
+InstrItinData<II_ADD_NC_mv_add_ri_eM, [PrefixCycle<L_RM_PORT>, PrefixCycle<M_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*s0*/1, /*imm*/1]>,
+InstrItinData<II_ADD_NC_mv_add_ri_mCRSRSMode, [PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*s0*/1, /*imm*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_add_rr__mRm__mRs
+InstrItinData<II_ADD_NC_mv_add_rr, [PrefixCycle<CRPACKSIGN_WM_PORT>, PrefixCycle<CRSRSSIGN_WM_PORT>, PrefixCycle<CRUNPACKSIGN_WM_PORT>, PrefixCycle<CRUPSSIGN_WM_PORT>, PrefixCycle<CRVADDSIGN_WM_PORT>, PrefixCycle<DC_WM_PORT>, PrefixCycle<DJ_WM_PORT>, PrefixCycle<DN_WM_PORT>, PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, PrefixCycle<M_WM_PORT>, PrefixCycle<P_WM_PORT>, PrefixCycle<RSRC_EXECUTION_TRACE>, SimpleCycle<R_RS_PORT>], [/*dst*/1, /*s0*/1, /*s1*/1]>,
+InstrItinData<II_ADD_NC_mv_add_rr_mCRSCDEn, [PrefixCycle<L_RM_PORT>, PrefixCycle<RSRC_EXECUTION_TRACE>, SimpleCycle<R_RS_PORT>], [/*dst*/1, /*s0*/1, /*s1*/1]>,
+InstrItinData<II_ADD_NC_mv_add_rr_eDJ, [PrefixCycle<DJ_WM_PORT>, PrefixCycle<L_RM_PORT>, PrefixCycle<RSRC_EXECUTION_TRACE>, SimpleCycle<R_RS_PORT>], [/*dst*/1, /*s0*/1, /*s1*/1]>,
+InstrItinData<II_ADD_NC_mv_add_rr_mCRRnd, [PrefixCycle<L_RM_PORT>, PrefixCycle<RSRC_EXECUTION_TRACE>, SimpleCycle<R_RS_PORT>], [/*dst*/1, /*s0*/1, /*s1*/1]>,
+InstrItinData<II_ADD_NC_mv_add_rr_mCRSat, [PrefixCycle<L_RM_PORT>, PrefixCycle<RSRC_EXECUTION_TRACE>, SimpleCycle<R_RS_PORT>], [/*dst*/1, /*s0*/1, /*s1*/1]>,
+InstrItinData<II_ADD_NC_mv_add_rr_eDC, [PrefixCycle<DC_WM_PORT>, PrefixCycle<L_RM_PORT>, PrefixCycle<RSRC_EXECUTION_TRACE>, SimpleCycle<R_RS_PORT>], [/*dst*/1, /*s0*/1, /*s1*/1]>,
+InstrItinData<II_ADD_NC_mv_add_rr_mSRCarry, [PrefixCycle<L_RM_PORT>, PrefixCycle<RSRC_EXECUTION_TRACE>, SimpleCycle<R_RS_PORT>], [/*dst*/1, /*s0*/1, /*s1*/1]>,
+InstrItinData<II_ADD_NC_mv_add_rr_mCRPackSize, [PrefixCycle<L_RM_PORT>, PrefixCycle<RSRC_EXECUTION_TRACE>, SimpleCycle<R_RS_PORT>], [/*dst*/1, /*s0*/1, /*s1*/1]>,
+InstrItinData<II_ADD_NC_mv_add_rr_eP, [PrefixCycle<L_RM_PORT>, PrefixCycle<P_WM_PORT>, PrefixCycle<RSRC_EXECUTION_TRACE>, SimpleCycle<R_RS_PORT>], [/*dst*/1, /*s0*/1, /*s1*/1]>,
+InstrItinData<II_ADD_NC_mv_add_rr_eUnpackSign, [PrefixCycle<CRUNPACKSIGN_WM_PORT>, PrefixCycle<L_RM_PORT>, PrefixCycle<RSRC_EXECUTION_TRACE>, SimpleCycle<R_RS_PORT>], [/*dst*/1, /*s0*/1, /*s1*/1]>,
+InstrItinData<II_ADD_NC_mv_add_rr_eVaddSign, [PrefixCycle<CRVADDSIGN_WM_PORT>, PrefixCycle<L_RM_PORT>, PrefixCycle<RSRC_EXECUTION_TRACE>, SimpleCycle<R_RS_PORT>], [/*dst*/1, /*s0*/1, /*s1*/1]>,
+InstrItinData<II_ADD_NC_mv_add_rr_eSRSSign, [PrefixCycle<CRSRSSIGN_WM_PORT>, PrefixCycle<L_RM_PORT>, PrefixCycle<RSRC_EXECUTION_TRACE>, SimpleCycle<R_RS_PORT>], [/*dst*/1, /*s0*/1, /*s1*/1]>,
+InstrItinData<II_ADD_NC_mv_add_rr_eUPSSign, [PrefixCycle<CRUPSSIGN_WM_PORT>, PrefixCycle<L_RM_PORT>, PrefixCycle<RSRC_EXECUTION_TRACE>, SimpleCycle<R_RS_PORT>], [/*dst*/1, /*s0*/1, /*s1*/1]>,
+InstrItinData<II_ADD_NC_mv_add_rr_eS, [PrefixCycle<L_RM_PORT>, PrefixCycle<RSRC_EXECUTION_TRACE>, SimpleCycle<R_RS_PORT>], [/*dst*/1, /*s0*/1, /*s1*/1]>,
+InstrItinData<II_ADD_NC_mv_add_rr_mCRUPSMode, [PrefixCycle<L_RM_PORT>, PrefixCycle<RSRC_EXECUTION_TRACE>, SimpleCycle<R_RS_PORT>], [/*dst*/1, /*s0*/1, /*s1*/1]>,
+InstrItinData<II_ADD_NC_mv_add_rr_mCRUnpackSize, [PrefixCycle<L_RM_PORT>, PrefixCycle<RSRC_EXECUTION_TRACE>, SimpleCycle<R_RS_PORT>], [/*dst*/1, /*s0*/1, /*s1*/1]>,
+InstrItinData<II_ADD_NC_mv_add_rr_eR, [PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, PrefixCycle<RSRC_EXECUTION_TRACE>, SimpleCycle<R_RS_PORT>], [/*dst*/1, /*s0*/1, /*s1*/1]>,
+InstrItinData<II_ADD_NC_mv_add_rr_ePackSign, [PrefixCycle<CRPACKSIGN_WM_PORT>, PrefixCycle<L_RM_PORT>, PrefixCycle<RSRC_EXECUTION_TRACE>, SimpleCycle<R_RS_PORT>], [/*dst*/1, /*s0*/1, /*s1*/1]>,
+InstrItinData<II_ADD_NC_mv_add_rr_mCRMCDEn, [PrefixCycle<L_RM_PORT>, PrefixCycle<RSRC_EXECUTION_TRACE>, SimpleCycle<R_RS_PORT>], [/*dst*/1, /*s0*/1, /*s1*/1]>,
+InstrItinData<II_ADD_NC_mv_add_rr_eDN, [PrefixCycle<DN_WM_PORT>, PrefixCycle<L_RM_PORT>, PrefixCycle<RSRC_EXECUTION_TRACE>, SimpleCycle<R_RS_PORT>], [/*dst*/1, /*s0*/1, /*s1*/1]>,
+InstrItinData<II_ADD_NC_mv_add_rr_mSRSS0, [PrefixCycle<L_RM_PORT>, PrefixCycle<RSRC_EXECUTION_TRACE>, SimpleCycle<R_RS_PORT>], [/*dst*/1, /*s0*/1, /*s1*/1]>,
+InstrItinData<II_ADD_NC_mv_add_rr_mSRMS0, [PrefixCycle<L_RM_PORT>, PrefixCycle<RSRC_EXECUTION_TRACE>, SimpleCycle<R_RS_PORT>], [/*dst*/1, /*s0*/1, /*s1*/1]>,
+InstrItinData<II_ADD_NC_mv_add_rr_eM, [PrefixCycle<L_RM_PORT>, PrefixCycle<M_WM_PORT>, PrefixCycle<RSRC_EXECUTION_TRACE>, SimpleCycle<R_RS_PORT>], [/*dst*/1, /*s0*/1, /*s1*/1]>,
+InstrItinData<II_ADD_NC_mv_add_rr_mCRSRSMode, [PrefixCycle<L_RM_PORT>, PrefixCycle<RSRC_EXECUTION_TRACE>, SimpleCycle<R_RS_PORT>], [/*dst*/1, /*s0*/1, /*s1*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__add_r_ri__mRx
+InstrItinData<II_ADD_add_r_ri, [], [/*d0*/1, /*s0*/1, /*imm*/1, /*srCarry*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__alu_r_rr__add__mRx__mRy
+InstrItinData<II_ADD_alu_r_rr, [], [/*d0*/1, /*s0*/1, /*s1*/1, /*srCarry*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__alu_r_rr__and__mRx__mRy
+InstrItinData<II_AND, [], [/*d0*/1, /*s0*/1, /*s1*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__alu_r_rr__sgn__mRx__mRy
+InstrItinData<II_ASHL, [], [/*d0*/1, /*s0*/1, /*s1*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__alu_r_r__clb__mRx
+InstrItinData<II_CLB, [], [/*d0*/1, /*s0*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__alu_r_r__clbu__mRx
+InstrItinData<II_CLZ, [], [/*d0*/1, /*s0*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__alu_dstep__mRx__mR31_divs__mRy
+InstrItinData<II_DIVS, [SimpleCycle<L_RM_PORT>], [/*d0*/1, /*sd_out*/1, /*sd*/1, /*s0*/1, /*s1*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__done
+InstrItinData<II_DONE, [EmptyCycles<3>, InstrStage<3, [DONE_FU]>], []>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__alu_r_r__seq0__mRx
+InstrItinData<II_EQZ, [], [/*d0*/1, /*s0*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__alu_r_rr__seq__mRx__mRy
+InstrItinData<II_EQ, [], [/*d0*/1, /*s0*/1, /*s1*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__event__event3
+InstrItinData<II_EVENT_ERROR, [], []>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__event__event2
+InstrItinData<II_EVENT_WARNING, [], []>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__event__event0
+InstrItinData<II_EVENT_event0, [], []>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__event__event1
+InstrItinData<II_EVENT_event1, [], []>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__alu_r_r__se16__mRx
+InstrItinData<II_EXTEND_s16, [], [/*d0*/1, /*s0*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__alu_r_r__se8__mRx
+InstrItinData<II_EXTEND_s8, [], [/*d0*/1, /*s0*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__alu_r_r__ze16__mRx
+InstrItinData<II_EXTEND_u16, [], [/*d0*/1, /*s0*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__alu_r_r__ze8__mRx
+InstrItinData<II_EXTEND_u8, [], [/*d0*/1, /*s0*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__alu_r_rr__sgeu__mRx__mRy
+InstrItinData<II_GEU, [], [/*d0*/1, /*s0*/1, /*s1*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__alu_r_rr__sge__mRx__mRy
+InstrItinData<II_GE, [], [/*d0*/1, /*s0*/1, /*s1*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__nlf_combo__nlf_invsqrt__mRa__mOptConvDel__mNlfFlt2fx__mFlt2fx_delayed__mS3__mRx
+InstrItinData<II_INVSQRT_mOptConvDel_mRx, [EmptyCycles<3>, PrefixCycle<CNVOSTAT1>, SimpleCycle<R_WA_PORT>], [/*d0*/4, /*m*/4, /*s0*/1, /*srFPCnvFl2Fx*/4, /*srFPNlf*/4, /*crFPCnvFl2FxMask*/4, /*crFPNlfMask*/4]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__nlf_combo__nlf_invsqrt__mRa__mOptConvDel__mNlfFlt2fx__mFlt2fx_delayed__mS3__mRx__mOptConv__mNlfFx2flt__mFx2flt__mS2
+InstrItinData<II_INVSQRT_mOptConvDel_mRx_mOptConv, [EmptyCycles<3>, PrefixCycle<CNVOSTAT1>, SimpleCycle<R_WA_PORT>], [/*d0*/4, /*m*/4, /*s0*/1, /*m_1*/1, /*srFPCnvFl2Fx*/4, /*srFPCnvFx2Fl*/1, /*srFPNlf*/4, /*crFPCnvFl2FxMask*/4, /*crFPCnvFx2FlMask*/1, /*crFPNlfMask*/4]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__nlf_combo__nlf_invsqrt__mRa__mRx
+InstrItinData<II_INVSQRT_mRx, [EmptyCycles<3>, SimpleCycle<R_WA_PORT>], [/*d0*/4, /*s0*/1, /*srFPNlf*/4, /*crFPNlfMask*/4]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__nlf_combo__nlf_invsqrt__mRa__mRx__mOptConv__mNlfFx2flt__mFx2flt__mS2
+InstrItinData<II_INVSQRT_mRx_mOptConv, [EmptyCycles<3>, SimpleCycle<R_WA_PORT>], [/*d0*/4, /*s0*/1, /*m*/1, /*srFPCnvFx2Fl*/1, /*srFPNlf*/4, /*crFPCnvFx2FlMask*/1, /*crFPNlfMask*/4]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__nlf_combo__nlf_inv__mRa__mOptConvDel__mNlfFlt2fx__mFlt2fx_delayed__mS3__mRx
+InstrItinData<II_INV_mOptConvDel_mRx, [EmptyCycles<3>, PrefixCycle<CNVOSTAT1>, SimpleCycle<R_WA_PORT>], [/*d0*/4, /*m*/4, /*s0*/1, /*srFPCnvFl2Fx*/4, /*srFPNlf*/4, /*crFPCnvFl2FxMask*/4, /*crFPNlfMask*/4]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__nlf_combo__nlf_inv__mRa__mOptConvDel__mNlfFlt2fx__mFlt2fx_delayed__mS3__mRx__mOptConv__mNlfFx2flt__mFx2flt__mS2
+InstrItinData<II_INV_mOptConvDel_mRx_mOptConv, [EmptyCycles<3>, PrefixCycle<CNVOSTAT1>, SimpleCycle<R_WA_PORT>], [/*d0*/4, /*m*/4, /*s0*/1, /*m_1*/1, /*srFPCnvFl2Fx*/4, /*srFPCnvFx2Fl*/1, /*srFPNlf*/4, /*crFPCnvFl2FxMask*/4, /*crFPCnvFx2FlMask*/1, /*crFPNlfMask*/4]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__nlf_combo__nlf_inv__mRa__mRx
+InstrItinData<II_INV_mRx, [EmptyCycles<3>, SimpleCycle<R_WA_PORT>], [/*d0*/4, /*s0*/1, /*srFPNlf*/4, /*crFPNlfMask*/4]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__nlf_combo__nlf_inv__mRa__mRx__mOptConv__mNlfFx2flt__mFx2flt__mS2
+InstrItinData<II_INV_mRx_mOptConv, [EmptyCycles<3>, SimpleCycle<R_WA_PORT>], [/*d0*/4, /*s0*/1, /*m*/1, /*srFPCnvFx2Fl*/1, /*srFPNlf*/4, /*crFPCnvFx2FlMask*/1, /*crFPNlfMask*/4]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__jump_link_ind__mPm__mLRx
+InstrItinData<II_JL_alumv_or, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*a*/1, /*lr*/4]>,
+
+// id: me__instr128_or__alu_mv__lng__jump_link_imm__mLRx
+InstrItinData<II_JL_lng, [], [/*i*/1, /*lr*/4]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__jumpc_decr_ind__mRx__mPm
+InstrItinData<II_JNZD, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*d0*/1, /*s0*/1, /*a*/1, /*srCarry*/1]>,
+
+// id: me__instr128_or__alu_mv__lng__jumpc_imm__bnez__mRx
+InstrItinData<II_JNZ, [SimpleCycle<RSRC_EXECUTION_TRACE>], [/*s0*/1, /*i*/1]>,
+
+// id: me__instr128_or__alu_mv__lng__jumpc_imm__beqz__mRx
+InstrItinData<II_JZ, [SimpleCycle<RSRC_EXECUTION_TRACE>], [/*s0*/1, /*i*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__jump_ind__mPm
+InstrItinData<II_J_alumv_or, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*a*/1]>,
+
+// id: me__instr128_or__alu_mv__lng__jump_imm
+InstrItinData<II_J_lng, [], [/*i*/1]>,
+
+// id: me__instr128_or__lda__dms_lda__agua_dms__nrm__agua_dms__normal__agua_dms__pstm_2d__mPa__mDa
+MemInstrItinData<II_LDA_2D_dms_lda, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<DC_WM_PORT>, PrefixCycle<DJ_WM_PORT>, PrefixCycle<DN_WM_PORT>, PrefixCycle<M_WM_PORT>, PrefixCycle<P_WM_PORT>, PrefixCycle<QEY_WA_PORT>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*dc*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_2D_dms_lda_mLRa, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>], [/*dst*/7, /*ptr_out*/1, /*dc*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_2D_dms_lda_eEle, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*dc*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_2D_dms_lda_eElo, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*dc*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_2D_dms_lda_eDJ, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DJ_WM_PORT>], [/*dst*/7, /*ptr_out*/1, /*dc*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_2D_dms_lda_eR, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*dc*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_2D_dms_lda_eDC, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DC_WM_PORT>], [/*dst*/7, /*ptr_out*/1, /*dc*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_2D_dms_lda_eDN, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DN_WM_PORT>], [/*dst*/7, /*ptr_out*/1, /*dc*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_2D_dms_lda_eEhe, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*dc*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_2D_dms_lda_eP, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<P_WM_PORT>], [/*dst*/7, /*ptr_out*/1, /*dc*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_2D_dms_lda_eM, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<M_WM_PORT>], [/*dst*/7, /*ptr_out*/1, /*dc*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_2D_dms_lda_eEho, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*dc*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmv_lda_q__agua_dmv__nrm__agua_dmv__normal__agua_dmv__pstm_2d__mPa__mDa
+MemInstrItinData<II_LDA_2D_dmv_lda_q, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*dc*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmhb_lda__dmh_lda__agua_dmh__nrm__agua_dmh__normal__agua_dmh__pstm_2d__mPa__mDa__lh__mRa
+MemInstrItinData<II_LDA_2D_s16, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<LXC>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*dc*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmhb_lda__dmb_lda__agua_dmb__nrm__agua_dmb__normal__agua_dmb__pstm_2d__mPa__mDa__lb__mRa
+MemInstrItinData<II_LDA_2D_s8, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<LXC>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*dc*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmhb_lda__dmh_lda__agua_dmh__nrm__agua_dmh__normal__agua_dmh__pstm_2d__mPa__mDa__lhu__mRa
+MemInstrItinData<II_LDA_2D_u16, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<LXC>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*dc*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmhb_lda__dmb_lda__agua_dmb__nrm__agua_dmb__normal__agua_dmb__pstm_2d__mPa__mDa__lbu__mRa
+MemInstrItinData<II_LDA_2D_u8, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<LXC>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*dc*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dms_lda__agua_dms__nrm__agua_dms__normal__agua_dms__pstm_3d__mPa__mDSa
+MemInstrItinData<II_LDA_3D_dms_lda, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<DC_WM_PORT>, PrefixCycle<DJ_WM_PORT>, PrefixCycle<DN_WM_PORT>, PrefixCycle<M_WM_PORT>, PrefixCycle<P_WM_PORT>, PrefixCycle<QEY_WA_PORT>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_3D_dms_lda_mLRa, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>], [/*dst*/7, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_3D_dms_lda_eEle, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_3D_dms_lda_eElo, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_3D_dms_lda_eDJ, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DJ_WM_PORT>], [/*dst*/7, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_3D_dms_lda_eR, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_3D_dms_lda_eDC, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DC_WM_PORT>], [/*dst*/7, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_3D_dms_lda_eDN, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DN_WM_PORT>], [/*dst*/7, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_3D_dms_lda_eEhe, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_3D_dms_lda_eP, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<P_WM_PORT>], [/*dst*/7, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_3D_dms_lda_eM, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<M_WM_PORT>], [/*dst*/7, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_3D_dms_lda_eEho, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmv_lda_q__agua_dmv__nrm__agua_dmv__normal__agua_dmv__pstm_3d__mPa__mDSa
+MemInstrItinData<II_LDA_3D_dmv_lda_q, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmhb_lda__dmh_lda__agua_dmh__nrm__agua_dmh__normal__agua_dmh__pstm_3d__mPa__mDSa__lh__mRa
+MemInstrItinData<II_LDA_3D_s16, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<LXC>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmhb_lda__dmb_lda__agua_dmb__nrm__agua_dmb__normal__agua_dmb__pstm_3d__mPa__mDSa__lb__mRa
+MemInstrItinData<II_LDA_3D_s8, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<LXC>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmhb_lda__dmh_lda__agua_dmh__nrm__agua_dmh__normal__agua_dmh__pstm_3d__mPa__mDSa__lhu__mRa
+MemInstrItinData<II_LDA_3D_u16, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<LXC>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmhb_lda__dmb_lda__agua_dmb__nrm__agua_dmb__normal__agua_dmb__pstm_3d__mPa__mDSa__lbu__mRa
+MemInstrItinData<II_LDA_3D_u8, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<LXC>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__tm_lda__agua_dms__nrm__agua_dms__normal__agua_dms__pstm_2d__mPa__mDa__mRa
+MemInstrItinData<II_LDA_TM_2D, [PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, PrefixCycle<DM_ADA>, SimpleCycle<TM_AD>, EmptyCycles<4>, PrefixCycle<LXC>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*dc*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[4]>>,
+
+// id: me__instr128_or__lda__tm_lda__agua_dms__nrm__agua_dms__normal__agua_dms__pstm_3d__mPa__mDSa__mRa
+MemInstrItinData<II_LDA_TM_3D, [PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, PrefixCycle<DM_ADA>, SimpleCycle<TM_AD>, EmptyCycles<4>, PrefixCycle<LXC>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[4]>>,
+
+// id: me__instr128_or__lda__tm_lda__agua_dms__nrm__agua_dms__normal__agua_dms__idx__mPa__mDJa__mRa
+MemInstrItinData<II_LDA_TM_idx, [SimpleCycle<AGUA__AGI_I>, PrefixCycle<DM_ADA>, SimpleCycle<TM_AD>, EmptyCycles<4>, PrefixCycle<LXC>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr*/1, /*dj*/1], MemoryCycles<[4]>>,
+
+// id: me__instr128_or__lda__tm_lda__agua_dms__nrm__agua_dms__normal__agua_dms__idx_imm__mPa__m_c06s_step4__mRa
+MemInstrItinData<II_LDA_TM_idx_imm, [SimpleCycle<AGUA__AGI_I>, PrefixCycle<DM_ADA>, SimpleCycle<TM_AD>, EmptyCycles<4>, PrefixCycle<LXC>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr*/1, /*imm*/1], MemoryCycles<[4]>>,
+
+// id: me__instr128_or__lda__tm_lda__agua_dms__nrm__agua_dms__normal__agua_dms__pstm_nrm__mPa__mMa__mRa
+MemInstrItinData<II_LDA_TM_pstm_nrm, [PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, PrefixCycle<DM_ADA>, SimpleCycle<TM_AD>, EmptyCycles<4>, PrefixCycle<LXC>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[4]>>,
+
+// id: me__instr128_or__lda__tm_lda__agua_dms__nrm__agua_dms__normal__agua_dms__pstm_nrm_imm__mPa__m_c06s_step4__mRa
+MemInstrItinData<II_LDA_TM_pstm_nrm_imm, [PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, PrefixCycle<DM_ADA>, SimpleCycle<TM_AD>, EmptyCycles<4>, PrefixCycle<LXC>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[4]>>,
+
+// id: me__instr128_or__lda__dms_lda__agua_dms__nrm__agua_dms__normal__agua_dms__idx__mPa__mDJa
+MemInstrItinData<II_LDA_dms_lda_idx, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<DC_WM_PORT>, PrefixCycle<DJ_WM_PORT>, PrefixCycle<DN_WM_PORT>, PrefixCycle<M_WM_PORT>, PrefixCycle<P_WM_PORT>, PrefixCycle<QEY_WA_PORT>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_idx_mLRa, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>], [/*dst*/7, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_idx_eEle, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_idx_eElo, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_idx_eDJ, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DJ_WM_PORT>], [/*dst*/7, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_idx_eR, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_idx_eDC, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DC_WM_PORT>], [/*dst*/7, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_idx_eDN, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DN_WM_PORT>], [/*dst*/7, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_idx_eEhe, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_idx_eP, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<P_WM_PORT>], [/*dst*/7, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_idx_eM, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<M_WM_PORT>], [/*dst*/7, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_idx_eEho, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dms_lda__agua_dms__nrm__agua_dms__normal__agua_dms__idx_imm__mPa__m_c06s_step4
+MemInstrItinData<II_LDA_dms_lda_idx_imm, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<DC_WM_PORT>, PrefixCycle<DJ_WM_PORT>, PrefixCycle<DN_WM_PORT>, PrefixCycle<M_WM_PORT>, PrefixCycle<P_WM_PORT>, PrefixCycle<QEY_WA_PORT>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_idx_imm_mLRa, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>], [/*dst*/7, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_idx_imm_eEle, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_idx_imm_eElo, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_idx_imm_eDJ, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DJ_WM_PORT>], [/*dst*/7, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_idx_imm_eR, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_idx_imm_eDC, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DC_WM_PORT>], [/*dst*/7, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_idx_imm_eDN, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DN_WM_PORT>], [/*dst*/7, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_idx_imm_eEhe, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_idx_imm_eP, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<P_WM_PORT>], [/*dst*/7, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_idx_imm_eM, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<M_WM_PORT>], [/*dst*/7, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_idx_imm_eEho, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dms_lda__agua_dms__nrm__agua_dms__normal__agua_dms__pstm_nrm__mPa__mMa
+MemInstrItinData<II_LDA_dms_lda_pstm_nrm, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<DC_WM_PORT>, PrefixCycle<DJ_WM_PORT>, PrefixCycle<DN_WM_PORT>, PrefixCycle<M_WM_PORT>, PrefixCycle<P_WM_PORT>, PrefixCycle<QEY_WA_PORT>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_pstm_nrm_mLRa, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_pstm_nrm_eEle, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_pstm_nrm_eElo, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_pstm_nrm_eDJ, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DJ_WM_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_pstm_nrm_eR, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_pstm_nrm_eDC, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DC_WM_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_pstm_nrm_eDN, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DN_WM_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_pstm_nrm_eEhe, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_pstm_nrm_eP, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<P_WM_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_pstm_nrm_eM, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<M_WM_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_pstm_nrm_eEho, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dms_lda__agua_dms__nrm__agua_dms__normal__agua_dms__pstm_nrm_imm__mPa__m_c06s_step4
+MemInstrItinData<II_LDA_dms_lda_pstm_nrm_imm, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<DC_WM_PORT>, PrefixCycle<DJ_WM_PORT>, PrefixCycle<DN_WM_PORT>, PrefixCycle<M_WM_PORT>, PrefixCycle<P_WM_PORT>, PrefixCycle<QEY_WA_PORT>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_pstm_nrm_imm_mLRa, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<DM_ADA>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_pstm_nrm_imm_eEle, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_pstm_nrm_imm_eElo, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_pstm_nrm_imm_eDJ, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DJ_WM_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_pstm_nrm_imm_eR, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_pstm_nrm_imm_eDC, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DC_WM_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_pstm_nrm_imm_eDN, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DN_WM_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_pstm_nrm_imm_eEhe, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_pstm_nrm_imm_eP, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<P_WM_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_pstm_nrm_imm_eM, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<M_WM_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_pstm_nrm_imm_eEho, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dms_lda_spill__agua_dms__nrm_spill__agua_dms__spill__mSPa__m_c12n_step4
+MemInstrItinData<II_LDA_dms_lda_spill, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<DC_WM_PORT>, PrefixCycle<DJ_WM_PORT>, PrefixCycle<DN_WM_PORT>, PrefixCycle<M_WM_PORT>, PrefixCycle<P_WM_PORT>, PrefixCycle<QEY_WA_PORT>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*imm*/1, /*sp*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_spill_mLRa, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>], [/*dst*/7, /*imm*/1, /*sp*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_spill_eEle, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*imm*/1, /*sp*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_spill_eElo, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*imm*/1, /*sp*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_spill_eDJ, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DJ_WM_PORT>], [/*dst*/7, /*imm*/1, /*sp*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_spill_eR, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*imm*/1, /*sp*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_spill_eDC, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DC_WM_PORT>], [/*dst*/7, /*imm*/1, /*sp*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_spill_eDN, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DN_WM_PORT>], [/*dst*/7, /*imm*/1, /*sp*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_spill_eEhe, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*imm*/1, /*sp*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_spill_eP, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<P_WM_PORT>], [/*dst*/7, /*imm*/1, /*sp*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_spill_eM, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<M_WM_PORT>], [/*dst*/7, /*imm*/1, /*sp*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_LDA_dms_lda_spill_eEho, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*imm*/1, /*sp*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmv_lda_q__agua_dmv__nrm__agua_dmv__normal__agua_dmv__idx__mPa__mDJa
+MemInstrItinData<II_LDA_dmv_lda_q_idx, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmv_lda_q__agua_dmv__nrm__agua_dmv__normal__agua_dmv__idx_imm__mPa__m_c08s_step16
+MemInstrItinData<II_LDA_dmv_lda_q_idx_imm, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmv_lda_q__agua_dmv__nrm__agua_dmv__normal__agua_dmv__pstm_nrm__mPa__mMa
+MemInstrItinData<II_LDA_dmv_lda_q_pstm_nrm, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmv_lda_q__agua_dmv__nrm__agua_dmv__normal__agua_dmv__pstm_nrm_imm__mPa__m_c08s_step16
+MemInstrItinData<II_LDA_dmv_lda_q_pstm_nrm_imm, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmv_lda_q_spill__agua_dmv__nrm_spill__agua_dmv__spill__mSPa__m_c14n_step16
+MemInstrItinData<II_LDA_dmv_lda_q_spill, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*imm*/1, /*sp*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmhb_lda__dmh_lda__agua_dmh__nrm__agua_dmh__normal__agua_dmh__idx__mPa__mDJa__lh__mRa
+MemInstrItinData<II_LDA_s16_idx, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<LXC>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmhb_lda__dmh_lda__agua_dmh__nrm__agua_dmh__normal__agua_dmh__idx_imm__mPa__m_c05s_step2__lh__mRa
+MemInstrItinData<II_LDA_s16_idx_imm, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<LXC>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmhb_lda__dmh_lda__agua_dmh__nrm__agua_dmh__normal__agua_dmh__pstm_nrm__mPa__mMa__lh__mRa
+MemInstrItinData<II_LDA_s16_pstm_nrm, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<LXC>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmhb_lda__dmh_lda__agua_dmh__nrm__agua_dmh__normal__agua_dmh__pstm_nrm_imm__mPa__m_c05s_step2__lh__mRa
+MemInstrItinData<II_LDA_s16_pstm_nrm_imm, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<LXC>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmhb_lda__dmb_lda__agua_dmb__nrm__agua_dmb__normal__agua_dmb__idx__mPa__mDJa__lb__mRa
+MemInstrItinData<II_LDA_s8_idx, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<LXC>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmhb_lda__dmb_lda__agua_dmb__nrm__agua_dmb__normal__agua_dmb__idx_imm__mPa__m_c04s__lb__mRa
+MemInstrItinData<II_LDA_s8_idx_imm, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<LXC>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmhb_lda__dmb_lda__agua_dmb__nrm__agua_dmb__normal__agua_dmb__pstm_nrm__mPa__mMa__lb__mRa
+MemInstrItinData<II_LDA_s8_pstm_nrm, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<LXC>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmhb_lda__dmb_lda__agua_dmb__nrm__agua_dmb__normal__agua_dmb__pstm_nrm_imm__mPa__m_c04s__lb__mRa
+MemInstrItinData<II_LDA_s8_pstm_nrm_imm, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<LXC>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmhb_lda__dmh_lda__agua_dmh__nrm__agua_dmh__normal__agua_dmh__idx__mPa__mDJa__lhu__mRa
+MemInstrItinData<II_LDA_u16_idx, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<LXC>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmhb_lda__dmh_lda__agua_dmh__nrm__agua_dmh__normal__agua_dmh__idx_imm__mPa__m_c05s_step2__lhu__mRa
+MemInstrItinData<II_LDA_u16_idx_imm, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<LXC>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmhb_lda__dmh_lda__agua_dmh__nrm__agua_dmh__normal__agua_dmh__pstm_nrm__mPa__mMa__lhu__mRa
+MemInstrItinData<II_LDA_u16_pstm_nrm, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<LXC>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmhb_lda__dmh_lda__agua_dmh__nrm__agua_dmh__normal__agua_dmh__pstm_nrm_imm__mPa__m_c05s_step2__lhu__mRa
+MemInstrItinData<II_LDA_u16_pstm_nrm_imm, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<LXC>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmhb_lda__dmb_lda__agua_dmb__nrm__agua_dmb__normal__agua_dmb__idx__mPa__mDJa__lbu__mRa
+MemInstrItinData<II_LDA_u8_idx, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<LXC>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmhb_lda__dmb_lda__agua_dmb__nrm__agua_dmb__normal__agua_dmb__idx_imm__mPa__m_c04s__lbu__mRa
+MemInstrItinData<II_LDA_u8_idx_imm, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<LXC>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmhb_lda__dmb_lda__agua_dmb__nrm__agua_dmb__normal__agua_dmb__pstm_nrm__mPa__mMa__lbu__mRa
+MemInstrItinData<II_LDA_u8_pstm_nrm, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<LXC>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmhb_lda__dmb_lda__agua_dmb__nrm__agua_dmb__normal__agua_dmb__pstm_nrm_imm__mPa__m_c04s__lbu__mRa
+MemInstrItinData<II_LDA_u8_pstm_nrm_imm, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<LXC>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__alu_r_rr__uns__mRx__mRy
+InstrItinData<II_LSHL, [], [/*d0*/1, /*s0*/1, /*s1*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__alu_r_rr__sltu__mRx__mRy
+InstrItinData<II_LTU, [], [/*d0*/1, /*s0*/1, /*s1*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__alu_r_rr__slt__mRx__mRy
+InstrItinData<II_LT, [], [/*d0*/1, /*s0*/1, /*s1*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__mac_r_rrr__mRa__mRz__mRx__mRy
+InstrItinData<II_MAC, [EmptyCycles<1>, SimpleCycle<R_WA_PORT>], [/*d0*/2, /*a0*/2, /*s0*/1, /*s1*/1]>,
+
+// id: me__instr128_or__lda__lda_cg
+InstrItinData<II_MOVA, [PrefixCycle<DC_WM_PORT>, PrefixCycle<DJ_WM_PORT>, PrefixCycle<DN_WM_PORT>, PrefixCycle<M_WM_PORT>, PrefixCycle<P_WM_PORT>, SimpleCycle<R_WA_PORT>], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOVA_eDJ, [SimpleCycle<DJ_WM_PORT>], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOVA_eR, [SimpleCycle<R_WA_PORT>], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOVA_eDC, [SimpleCycle<DC_WM_PORT>], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOVA_eDN, [SimpleCycle<DN_WM_PORT>], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOVA_eP, [SimpleCycle<P_WM_PORT>], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOVA_eM, [SimpleCycle<M_WM_PORT>], [/*dst*/1, /*i*/1]>,
+
+// id: me__instr128_or__st__mvs_agu__agus__mv
+InstrItinData<II_MOVS, [PrefixCycle<DJ_WM_PORT>, PrefixCycle<DN_WM_PORT>, PrefixCycle<M_WM_PORT>, SimpleCycle<R_RS_PORT>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVS_eDJ_eDJ, [SimpleCycle<DJ_WM_PORT>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVS_eDC_eDJ, [], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVS_eDN_eDJ, [SimpleCycle<DN_WM_PORT>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVS_eP_eDJ, [], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVS_eM_eDJ, [SimpleCycle<M_WM_PORT>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVS_eDJ_eR, [PrefixCycle<DJ_WM_PORT>, SimpleCycle<R_RS_PORT>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVS_eDJ_eDC, [SimpleCycle<DJ_WM_PORT>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVS_eDJ_eDN, [SimpleCycle<DJ_WM_PORT>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVS_eDJ_eP, [SimpleCycle<DJ_WM_PORT>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVS_eDJ_eM, [SimpleCycle<DJ_WM_PORT>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVS_eDC_eR, [SimpleCycle<R_RS_PORT>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVS_eDC_eDC, [], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVS_eDC_eDN, [], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVS_eDC_eP, [], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVS_eDC_eM, [], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVS_eDN_eR, [PrefixCycle<DN_WM_PORT>, SimpleCycle<R_RS_PORT>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVS_eDN_eDC, [SimpleCycle<DN_WM_PORT>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVS_eDN_eDN, [SimpleCycle<DN_WM_PORT>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVS_eDN_eP, [SimpleCycle<DN_WM_PORT>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVS_eDN_eM, [SimpleCycle<DN_WM_PORT>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVS_eP_eR, [SimpleCycle<R_RS_PORT>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVS_eP_eDC, [], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVS_eP_eDN, [], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVS_eP_eP, [], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVS_eP_eM, [], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVS_eM_eR, [PrefixCycle<M_WM_PORT>, SimpleCycle<R_RS_PORT>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVS_eM_eDC, [SimpleCycle<M_WM_PORT>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVS_eM_eDN, [SimpleCycle<M_WM_PORT>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVS_eM_eP, [SimpleCycle<M_WM_PORT>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVS_eM_eM, [SimpleCycle<M_WM_PORT>], [/*dst*/1, /*src*/1]>,
+
+// id: me__instr128_or__alu_mv__lng__lng_cg
+InstrItinData<II_MOVXM, [PrefixCycle<CRPACKSIGN_WM_PORT>, PrefixCycle<CRSRSSIGN_WM_PORT>, PrefixCycle<CRUNPACKSIGN_WM_PORT>, PrefixCycle<CRUPSSIGN_WM_PORT>, PrefixCycle<CRVADDSIGN_WM_PORT>, PrefixCycle<DC_WM_PORT>, PrefixCycle<DJ_WM_PORT>, PrefixCycle<DN_WM_PORT>, PrefixCycle<L_WM_PORT>, PrefixCycle<M_WM_PORT>, SimpleCycle<P_WM_PORT>], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOVXM_mCRSCDEn, [], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOVXM_eDJ, [SimpleCycle<DJ_WM_PORT>], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOVXM_mCRRnd, [], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOVXM_mCRSat, [], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOVXM_eDC, [SimpleCycle<DC_WM_PORT>], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOVXM_mSRCarry, [], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOVXM_mCRPackSize, [], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOVXM_eP, [SimpleCycle<P_WM_PORT>], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOVXM_eUnpackSign, [SimpleCycle<CRUNPACKSIGN_WM_PORT>], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOVXM_eVaddSign, [SimpleCycle<CRVADDSIGN_WM_PORT>], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOVXM_eSRSSign, [SimpleCycle<CRSRSSIGN_WM_PORT>], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOVXM_eUPSSign, [SimpleCycle<CRUPSSIGN_WM_PORT>], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOVXM_eS, [], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOVXM_mCRUPSMode, [], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOVXM_mCRUnpackSize, [], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOVXM_eR, [SimpleCycle<L_WM_PORT>], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOVXM_ePackSign, [SimpleCycle<CRPACKSIGN_WM_PORT>], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOVXM_mCRMCDEn, [], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOVXM_eDN, [SimpleCycle<DN_WM_PORT>], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOVXM_mSRSS0, [], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOVXM_mSRMS0, [], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOVXM_eM, [SimpleCycle<M_WM_PORT>], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOVXM_mCRSRSMode, [], [/*dst*/1, /*i*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__alu_cg
+InstrItinData<II_MOVX_alu_cg, [], [/*dst*/1, /*i*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__mvx_cr_imm
+InstrItinData<II_MOVX_mvx_cr_imm, [PrefixCycle<CRPACKSIGN_WM_PORT>, PrefixCycle<CRSRSSIGN_WM_PORT>, PrefixCycle<CRUNPACKSIGN_WM_PORT>, PrefixCycle<CRUPSSIGN_WM_PORT>, SimpleCycle<CRVADDSIGN_WM_PORT>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVX_mvx_cr_imm_mCRSCDEn, [], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVX_mvx_cr_imm_mCRPackSize, [], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVX_mvx_cr_imm_mCRRnd, [], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVX_mvx_cr_imm_mCRSat, [], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVX_mvx_cr_imm_eVaddSign, [SimpleCycle<CRVADDSIGN_WM_PORT>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVX_mvx_cr_imm_eUnpackSign, [SimpleCycle<CRUNPACKSIGN_WM_PORT>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVX_mvx_cr_imm_eSRSSign, [SimpleCycle<CRSRSSIGN_WM_PORT>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVX_mvx_cr_imm_eUPSSign, [SimpleCycle<CRUPSSIGN_WM_PORT>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVX_mvx_cr_imm_mCRUPSMode, [], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVX_mvx_cr_imm_mCRUnpackSize, [], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVX_mvx_cr_imm_ePackSign, [SimpleCycle<CRPACKSIGN_WM_PORT>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVX_mvx_cr_imm_mCRMCDEn, [], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVX_mvx_cr_imm_mCRSRSMode, [], [/*dst*/1, /*src*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__mvx_cr_r__mRx
+InstrItinData<II_MOVX_mvx_cr_r, [PrefixCycle<CRPACKSIGN_WM_PORT>, PrefixCycle<CRSRSSIGN_WM_PORT>, PrefixCycle<CRUNPACKSIGN_WM_PORT>, PrefixCycle<CRUPSSIGN_WM_PORT>, SimpleCycle<CRVADDSIGN_WM_PORT>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVX_mvx_cr_r_mCRSCDEn, [], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVX_mvx_cr_r_mCRPackSize, [], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVX_mvx_cr_r_mCRRnd, [], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVX_mvx_cr_r_mCRSat, [], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVX_mvx_cr_r_eVaddSign, [SimpleCycle<CRVADDSIGN_WM_PORT>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVX_mvx_cr_r_eUnpackSign, [SimpleCycle<CRUNPACKSIGN_WM_PORT>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVX_mvx_cr_r_eSRSSign, [SimpleCycle<CRSRSSIGN_WM_PORT>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVX_mvx_cr_r_eUPSSign, [SimpleCycle<CRUPSSIGN_WM_PORT>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVX_mvx_cr_r_mCRUPSMode, [], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVX_mvx_cr_r_mCRUnpackSize, [], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVX_mvx_cr_r_ePackSign, [SimpleCycle<CRPACKSIGN_WM_PORT>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVX_mvx_cr_r_mCRMCDEn, [], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOVX_mvx_cr_r_mCRSRSMode, [], [/*dst*/1, /*src*/1]>,
+
+// id: me__instr128_or__st__st_streams__mv_cph2ms__mMStream__mMStream_b__mMStream_tlast__mMStream_tlast_imm__noTlast__mMs__mRs
+InstrItinData<II_MOV_CPH_mMStream_tlast_imm, [SimpleCycle<R_RS_PORT>], [/*addr*/1, /*nw*/1, /*op*/1, /*id*/1, /*srMS0*/3]>,
+
+// id: me__instr128_or__st__st_streams__mv_cph2ms__mMStream__mMStream_b__mMStream_tlast__mMStream_tlast_reg__mR28_tlast__mMs__mRs
+InstrItinData<II_MOV_CPH_mMStream_tlast_reg, [PrefixCycle<L_RM_PORT>, SimpleCycle<R_RS_PORT>], [/*addr*/1, /*nw*/1, /*op*/1, /*id*/1, /*dst*/1, /*srMS0*/3]>,
+
+// id: me__instr128_or__st__st_streams__mv_cph2ms__mMStream__mMStream_nb__mMStream_tlast__mMStream_tlast_imm__noTlast__mMs__mRs
+InstrItinData<II_MOV_CPH_nb_mMStream_tlast_imm, [SimpleCycle<R_RS_PORT>], [/*addr*/1, /*nw*/1, /*op*/1, /*id*/1, /*srMS0*/3]>,
+
+// id: me__instr128_or__st__st_streams__mv_cph2ms__mMStream__mMStream_nb__mMStream_tlast__mMStream_tlast_reg__mR28_tlast__mMs__mRs
+InstrItinData<II_MOV_CPH_nb_mMStream_tlast_reg, [PrefixCycle<L_RM_PORT>, SimpleCycle<R_RS_PORT>], [/*addr*/1, /*nw*/1, /*op*/1, /*id*/1, /*dst*/1, /*srMS0*/3]>,
+
+// id: me__instr128_or__st__st_streams__mv_cph2ms__mMStream__mMStream_nb__mMStream_tlast__mMStream_tlast_imm__doTlast__mMs__mRs
+InstrItinData<II_MOV_CPH_nb_tlast, [SimpleCycle<R_RS_PORT>], [/*addr*/1, /*nw*/1, /*op*/1, /*id*/1, /*srMS0*/3]>,
+
+// id: me__instr128_or__st__st_streams__mv_cph2ms__mMStream__mMStream_b__mMStream_tlast__mMStream_tlast_imm__doTlast__mMs__mRs
+InstrItinData<II_MOV_CPH_tlast, [SimpleCycle<R_RS_PORT>], [/*addr*/1, /*nw*/1, /*op*/1, /*id*/1, /*srMS0*/3]>,
+
+// id: me__instr128_or__st__st_streams__mv_ph2ms__mMStream__mMStream_b__mMStream_tlast__mMStream_tlast_imm__noTlast__mRs
+InstrItinData<II_MOV_PH_mMStream_tlast_imm, [PrefixCycle<COL>, SimpleCycle<R_RS_PORT>], [/*id*/1, /*pcktType*/1, /*srMS0*/3]>,
+
+// id: me__instr128_or__st__st_streams__mv_ph2ms__mMStream__mMStream_b__mMStream_tlast__mMStream_tlast_reg__mR28_tlast__mRs
+InstrItinData<II_MOV_PH_mMStream_tlast_reg, [PrefixCycle<COL>, PrefixCycle<L_RM_PORT>, SimpleCycle<R_RS_PORT>], [/*id*/1, /*pcktType*/1, /*dst*/1, /*srMS0*/3]>,
+
+// id: me__instr128_or__st__st_streams__mv_ph2ms__mMStream__mMStream_nb__mMStream_tlast__mMStream_tlast_imm__noTlast__mRs
+InstrItinData<II_MOV_PH_nb_mMStream_tlast_imm, [PrefixCycle<COL>, SimpleCycle<R_RS_PORT>], [/*id*/1, /*pcktType*/1, /*srMS0*/3]>,
+
+// id: me__instr128_or__st__st_streams__mv_ph2ms__mMStream__mMStream_nb__mMStream_tlast__mMStream_tlast_reg__mR28_tlast__mRs
+InstrItinData<II_MOV_PH_nb_mMStream_tlast_reg, [PrefixCycle<COL>, PrefixCycle<L_RM_PORT>, SimpleCycle<R_RS_PORT>], [/*id*/1, /*pcktType*/1, /*dst*/1, /*srMS0*/3]>,
+
+// id: me__instr128_or__st__st_streams__mv_ph2ms__mMStream__mMStream_nb__mMStream_tlast__mMStream_tlast_imm__doTlast__mRs
+InstrItinData<II_MOV_PH_nb_tlast, [PrefixCycle<COL>, SimpleCycle<R_RS_PORT>], [/*id*/1, /*pcktType*/1, /*srMS0*/3]>,
+
+// id: me__instr128_or__st__st_streams__mv_ph2ms__mMStream__mMStream_b__mMStream_tlast__mMStream_tlast_imm__doTlast__mRs
+InstrItinData<II_MOV_PH_tlast, [PrefixCycle<COL>, SimpleCycle<R_RS_PORT>], [/*id*/1, /*pcktType*/1, /*srMS0*/3]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__flt2fx__mRa__mRx__mFlt2fx__mS3
+InstrItinData<II_MOV_alu_mv_alu_flt2fx, [SimpleCycle<CNVOSTAT1>, SimpleCycle<R_WA_PORT>], [/*d0*/2, /*s0*/1, /*m*/1, /*srFPCnvFl2Fx*/1, /*crFPCnvFl2FxMask*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__fx2flt__mRa__mRx__mFx2flt__mS2
+InstrItinData<II_MOV_alu_mv_alu_fx2flt, [EmptyCycles<1>, SimpleCycle<R_WA_PORT>], [/*d0*/2, /*s0*/1, /*m*/1, /*srFPCnvFx2Fl*/1, /*crFPCnvFx2FlMask*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_cg
+InstrItinData<II_MOV_alu_mv_mv_mv_cg, [PrefixCycle<CRPACKSIGN_WM_PORT>, PrefixCycle<CRSRSSIGN_WM_PORT>, PrefixCycle<CRUNPACKSIGN_WM_PORT>, PrefixCycle<CRUPSSIGN_WM_PORT>, PrefixCycle<CRVADDSIGN_WM_PORT>, PrefixCycle<DC_WM_PORT>, PrefixCycle<DJ_WM_PORT>, PrefixCycle<DN_WM_PORT>, PrefixCycle<L_WM_PORT>, PrefixCycle<M_WM_PORT>, SimpleCycle<P_WM_PORT>], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_cg_mCRSCDEn, [], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_cg_eDJ, [SimpleCycle<DJ_WM_PORT>], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_cg_mCRRnd, [], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_cg_mCRSat, [], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_cg_eDC, [SimpleCycle<DC_WM_PORT>], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_cg_mSRCarry, [], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_cg_mCRPackSize, [], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_cg_eP, [SimpleCycle<P_WM_PORT>], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_cg_eUnpackSign, [SimpleCycle<CRUNPACKSIGN_WM_PORT>], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_cg_eVaddSign, [SimpleCycle<CRVADDSIGN_WM_PORT>], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_cg_eSRSSign, [SimpleCycle<CRSRSSIGN_WM_PORT>], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_cg_eUPSSign, [SimpleCycle<CRUPSSIGN_WM_PORT>], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_cg_eS, [], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_cg_mCRUPSMode, [], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_cg_mCRUnpackSize, [], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_cg_eR, [SimpleCycle<L_WM_PORT>], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_cg_ePackSign, [SimpleCycle<CRPACKSIGN_WM_PORT>], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_cg_mCRMCDEn, [], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_cg_eDN, [SimpleCycle<DN_WM_PORT>], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_cg_mSRSS0, [], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_cg_mSRMS0, [], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_cg_eM, [SimpleCycle<M_WM_PORT>], [/*dst*/1, /*i*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_cg_mCRSRSMode, [], [/*dst*/1, /*i*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_cntr2l__mLm
+InstrItinData<II_MOV_alu_mv_mv_mv_cntr2l, [SimpleCycle<L_WM_PORT>], [/*dst*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_e__mv_eh_to_eh
+InstrItinData<II_MOV_alu_mv_mv_mv_e_mv_eh_to_eh, [], [/*dst*/2, /*src*/1], [/*dst*/MV_Bypass, /*src*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_e__mv_eh_to_el
+InstrItinData<II_MOV_alu_mv_mv_mv_e_mv_eh_to_el, [], [/*dst*/2, /*src*/1], [/*dst*/MV_Bypass, /*src*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_e__mv_eh_to_r__mRm
+InstrItinData<II_MOV_alu_mv_mv_mv_e_mv_eh_to_r, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_e__mv_el_to_eh
+InstrItinData<II_MOV_alu_mv_mv_mv_e_mv_el_to_eh, [], [/*dst*/2, /*src*/1], [/*dst*/MV_Bypass, /*src*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_e__mv_el_to_el
+InstrItinData<II_MOV_alu_mv_mv_mv_e_mv_el_to_el, [], [/*dst*/2, /*src*/1], [/*dst*/MV_Bypass, /*src*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_e__mv_el_to_r__mRm
+InstrItinData<II_MOV_alu_mv_mv_mv_e_mv_el_to_r, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_e__mv_r_to_eh__mRm
+InstrItinData<II_MOV_alu_mv_mv_mv_e_mv_r_to_eh, [SimpleCycle<L_RM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/MV_Bypass, /*src*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_e__mv_r_to_el__mRm
+InstrItinData<II_MOV_alu_mv_mv_mv_e_mv_r_to_el, [SimpleCycle<L_RM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/MV_Bypass, /*src*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_scl
+InstrItinData<II_MOV_alu_mv_mv_mv_scl, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<CRPACKSIGN_WM_PORT>, PrefixCycle<CRSRSSIGN_WM_PORT>, PrefixCycle<CRUNPACKSIGN_WM_PORT>, PrefixCycle<CRUPSSIGN_WM_PORT>, PrefixCycle<CRVADDSIGN_WM_PORT>, PrefixCycle<DC_WM_PORT>, PrefixCycle<DJ_WM_PORT>, PrefixCycle<DN_WM_PORT>, PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, PrefixCycle<M_WM_PORT>, PrefixCycle<P_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_mCRSCDEn, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDJ_mCRSCDEn, [PrefixCycle<COL>, PrefixCycle<DJ_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRRnd_mCRSCDEn, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSat_mCRSCDEn, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDC_mCRSCDEn, [PrefixCycle<COL>, PrefixCycle<DC_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRCarry_mCRSCDEn, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRPackSize_mCRSCDEn, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eP_mCRSCDEn, [PrefixCycle<COL>, PrefixCycle<P_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUnpackSign_mCRSCDEn, [PrefixCycle<COL>, PrefixCycle<CRUNPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eVaddSign_mCRSCDEn, [PrefixCycle<COL>, PrefixCycle<CRVADDSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eSRSSign_mCRSCDEn, [PrefixCycle<COL>, PrefixCycle<CRSRSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUPSSign_mCRSCDEn, [PrefixCycle<COL>, PrefixCycle<CRUPSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eS_mCRSCDEn, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_mCRSCDEn, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_mCRSCDEn, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eR_mCRSCDEn, [PrefixCycle<COL>, PrefixCycle<L_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_ePackSign_mCRSCDEn, [PrefixCycle<COL>, PrefixCycle<CRPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_mCRSCDEn, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDN_mCRSCDEn, [PrefixCycle<COL>, PrefixCycle<DN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRSS0_mCRSCDEn, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRMS0_mCRSCDEn, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eM_mCRSCDEn, [PrefixCycle<COL>, PrefixCycle<M_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_mCRSCDEn, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_eDJ, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_mCRRnd, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_mCRSat, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_eDC, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_mSRCarry, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_mCRPackSize, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_eP, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_eUnpackSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_eVaddSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_eSRSSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_eUPSSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_eS, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_mCRUPSMode, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_mCRUnpackSize, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_eR, [PrefixCycle<COL>, PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_ePackSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_mCRMCDEn, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_eDN, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_mSRSS0, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_mSRMS0, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_eM, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSCDEn_mCRSRSMode, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDJ_eDJ, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<DJ_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDJ_mCRRnd, [PrefixCycle<COL>, PrefixCycle<DJ_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDJ_mCRSat, [PrefixCycle<COL>, PrefixCycle<DJ_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDJ_eDC, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<DJ_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDJ_mSRCarry, [PrefixCycle<COL>, PrefixCycle<DJ_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDJ_mCRPackSize, [PrefixCycle<COL>, PrefixCycle<DJ_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDJ_eP, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<DJ_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDJ_eUnpackSign, [PrefixCycle<COL>, PrefixCycle<DJ_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDJ_eVaddSign, [PrefixCycle<COL>, PrefixCycle<DJ_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDJ_eSRSSign, [PrefixCycle<COL>, PrefixCycle<DJ_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDJ_eUPSSign, [PrefixCycle<COL>, PrefixCycle<DJ_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDJ_eS, [PrefixCycle<COL>, PrefixCycle<DJ_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDJ_mCRUPSMode, [PrefixCycle<COL>, PrefixCycle<DJ_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDJ_mCRUnpackSize, [PrefixCycle<COL>, PrefixCycle<DJ_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDJ_eR, [PrefixCycle<COL>, PrefixCycle<DJ_WM_PORT>, PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDJ_ePackSign, [PrefixCycle<COL>, PrefixCycle<DJ_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDJ_mCRMCDEn, [PrefixCycle<COL>, PrefixCycle<DJ_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDJ_eDN, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<DJ_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDJ_mSRSS0, [PrefixCycle<COL>, PrefixCycle<DJ_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDJ_mSRMS0, [PrefixCycle<COL>, PrefixCycle<DJ_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDJ_eM, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<DJ_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDJ_mCRSRSMode, [PrefixCycle<COL>, PrefixCycle<DJ_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRRnd_eDJ, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRRnd_mCRRnd, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRRnd_mCRSat, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRRnd_eDC, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRRnd_mSRCarry, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRRnd_mCRPackSize, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRRnd_eP, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRRnd_eUnpackSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRRnd_eVaddSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRRnd_eSRSSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRRnd_eUPSSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRRnd_eS, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRRnd_mCRUPSMode, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRRnd_mCRUnpackSize, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRRnd_eR, [PrefixCycle<COL>, PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRRnd_ePackSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRRnd_mCRMCDEn, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRRnd_eDN, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRRnd_mSRSS0, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRRnd_mSRMS0, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRRnd_eM, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRRnd_mCRSRSMode, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSat_eDJ, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSat_mCRRnd, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSat_mCRSat, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSat_eDC, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSat_mSRCarry, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSat_mCRPackSize, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSat_eP, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSat_eUnpackSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSat_eVaddSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSat_eSRSSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSat_eUPSSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSat_eS, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSat_mCRUPSMode, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSat_mCRUnpackSize, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSat_eR, [PrefixCycle<COL>, PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSat_ePackSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSat_mCRMCDEn, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSat_eDN, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSat_mSRSS0, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSat_mSRMS0, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSat_eM, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSat_mCRSRSMode, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDC_eDJ, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<DC_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDC_mCRRnd, [PrefixCycle<COL>, PrefixCycle<DC_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDC_mCRSat, [PrefixCycle<COL>, PrefixCycle<DC_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDC_eDC, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<DC_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDC_mSRCarry, [PrefixCycle<COL>, PrefixCycle<DC_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDC_mCRPackSize, [PrefixCycle<COL>, PrefixCycle<DC_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDC_eP, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<DC_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDC_eUnpackSign, [PrefixCycle<COL>, PrefixCycle<DC_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDC_eVaddSign, [PrefixCycle<COL>, PrefixCycle<DC_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDC_eSRSSign, [PrefixCycle<COL>, PrefixCycle<DC_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDC_eUPSSign, [PrefixCycle<COL>, PrefixCycle<DC_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDC_eS, [PrefixCycle<COL>, PrefixCycle<DC_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDC_mCRUPSMode, [PrefixCycle<COL>, PrefixCycle<DC_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDC_mCRUnpackSize, [PrefixCycle<COL>, PrefixCycle<DC_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDC_eR, [PrefixCycle<COL>, PrefixCycle<DC_WM_PORT>, PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDC_ePackSign, [PrefixCycle<COL>, PrefixCycle<DC_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDC_mCRMCDEn, [PrefixCycle<COL>, PrefixCycle<DC_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDC_eDN, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<DC_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDC_mSRSS0, [PrefixCycle<COL>, PrefixCycle<DC_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDC_mSRMS0, [PrefixCycle<COL>, PrefixCycle<DC_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDC_eM, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<DC_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDC_mCRSRSMode, [PrefixCycle<COL>, PrefixCycle<DC_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRCarry_eDJ, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRCarry_mCRRnd, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRCarry_mCRSat, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRCarry_eDC, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRCarry_mSRCarry, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRCarry_mCRPackSize, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRCarry_eP, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRCarry_eUnpackSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRCarry_eVaddSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRCarry_eSRSSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRCarry_eUPSSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRCarry_eS, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRCarry_mCRUPSMode, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRCarry_mCRUnpackSize, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRCarry_eR, [PrefixCycle<COL>, PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRCarry_ePackSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRCarry_mCRMCDEn, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRCarry_eDN, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRCarry_mSRSS0, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRCarry_mSRMS0, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRCarry_eM, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRCarry_mCRSRSMode, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRPackSize_eDJ, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRPackSize_mCRRnd, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRPackSize_mCRSat, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRPackSize_eDC, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRPackSize_mSRCarry, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRPackSize_mCRPackSize, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRPackSize_eP, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRPackSize_eUnpackSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRPackSize_eVaddSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRPackSize_eSRSSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRPackSize_eUPSSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRPackSize_eS, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRPackSize_mCRUPSMode, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRPackSize_mCRUnpackSize, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRPackSize_eR, [PrefixCycle<COL>, PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRPackSize_ePackSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRPackSize_mCRMCDEn, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRPackSize_eDN, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRPackSize_mSRSS0, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRPackSize_mSRMS0, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRPackSize_eM, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRPackSize_mCRSRSMode, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eP_eDJ, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<P_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eP_mCRRnd, [PrefixCycle<COL>, PrefixCycle<P_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eP_mCRSat, [PrefixCycle<COL>, PrefixCycle<P_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eP_eDC, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<P_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eP_mSRCarry, [PrefixCycle<COL>, PrefixCycle<P_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eP_mCRPackSize, [PrefixCycle<COL>, PrefixCycle<P_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eP_eP, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<P_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eP_eUnpackSign, [PrefixCycle<COL>, PrefixCycle<P_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eP_eVaddSign, [PrefixCycle<COL>, PrefixCycle<P_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eP_eSRSSign, [PrefixCycle<COL>, PrefixCycle<P_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eP_eUPSSign, [PrefixCycle<COL>, PrefixCycle<P_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eP_eS, [PrefixCycle<COL>, PrefixCycle<P_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eP_mCRUPSMode, [PrefixCycle<COL>, PrefixCycle<P_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eP_mCRUnpackSize, [PrefixCycle<COL>, PrefixCycle<P_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eP_eR, [PrefixCycle<COL>, PrefixCycle<L_RM_PORT>, PrefixCycle<P_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eP_ePackSign, [PrefixCycle<COL>, PrefixCycle<P_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eP_mCRMCDEn, [PrefixCycle<COL>, PrefixCycle<P_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eP_eDN, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<P_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eP_mSRSS0, [PrefixCycle<COL>, PrefixCycle<P_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eP_mSRMS0, [PrefixCycle<COL>, PrefixCycle<P_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eP_eM, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<P_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eP_mCRSRSMode, [PrefixCycle<COL>, PrefixCycle<P_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUnpackSign_eDJ, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<CRUNPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUnpackSign_mCRRnd, [PrefixCycle<COL>, PrefixCycle<CRUNPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUnpackSign_mCRSat, [PrefixCycle<COL>, PrefixCycle<CRUNPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUnpackSign_eDC, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<CRUNPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUnpackSign_mSRCarry, [PrefixCycle<COL>, PrefixCycle<CRUNPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUnpackSign_mCRPackSize, [PrefixCycle<COL>, PrefixCycle<CRUNPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUnpackSign_eP, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<CRUNPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUnpackSign_eUnpackSign, [PrefixCycle<COL>, PrefixCycle<CRUNPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUnpackSign_eVaddSign, [PrefixCycle<COL>, PrefixCycle<CRUNPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUnpackSign_eSRSSign, [PrefixCycle<COL>, PrefixCycle<CRUNPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUnpackSign_eUPSSign, [PrefixCycle<COL>, PrefixCycle<CRUNPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUnpackSign_eS, [PrefixCycle<COL>, PrefixCycle<CRUNPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUnpackSign_mCRUPSMode, [PrefixCycle<COL>, PrefixCycle<CRUNPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUnpackSign_mCRUnpackSize, [PrefixCycle<COL>, PrefixCycle<CRUNPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUnpackSign_eR, [PrefixCycle<COL>, PrefixCycle<CRUNPACKSIGN_WM_PORT>, PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUnpackSign_ePackSign, [PrefixCycle<COL>, PrefixCycle<CRUNPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUnpackSign_mCRMCDEn, [PrefixCycle<COL>, PrefixCycle<CRUNPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUnpackSign_eDN, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<CRUNPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUnpackSign_mSRSS0, [PrefixCycle<COL>, PrefixCycle<CRUNPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUnpackSign_mSRMS0, [PrefixCycle<COL>, PrefixCycle<CRUNPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUnpackSign_eM, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<CRUNPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUnpackSign_mCRSRSMode, [PrefixCycle<COL>, PrefixCycle<CRUNPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eVaddSign_eDJ, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<CRVADDSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eVaddSign_mCRRnd, [PrefixCycle<COL>, PrefixCycle<CRVADDSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eVaddSign_mCRSat, [PrefixCycle<COL>, PrefixCycle<CRVADDSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eVaddSign_eDC, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<CRVADDSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eVaddSign_mSRCarry, [PrefixCycle<COL>, PrefixCycle<CRVADDSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eVaddSign_mCRPackSize, [PrefixCycle<COL>, PrefixCycle<CRVADDSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eVaddSign_eP, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<CRVADDSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eVaddSign_eUnpackSign, [PrefixCycle<COL>, PrefixCycle<CRVADDSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eVaddSign_eVaddSign, [PrefixCycle<COL>, PrefixCycle<CRVADDSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eVaddSign_eSRSSign, [PrefixCycle<COL>, PrefixCycle<CRVADDSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eVaddSign_eUPSSign, [PrefixCycle<COL>, PrefixCycle<CRVADDSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eVaddSign_eS, [PrefixCycle<COL>, PrefixCycle<CRVADDSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eVaddSign_mCRUPSMode, [PrefixCycle<COL>, PrefixCycle<CRVADDSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eVaddSign_mCRUnpackSize, [PrefixCycle<COL>, PrefixCycle<CRVADDSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eVaddSign_eR, [PrefixCycle<COL>, PrefixCycle<CRVADDSIGN_WM_PORT>, PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eVaddSign_ePackSign, [PrefixCycle<COL>, PrefixCycle<CRVADDSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eVaddSign_mCRMCDEn, [PrefixCycle<COL>, PrefixCycle<CRVADDSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eVaddSign_eDN, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<CRVADDSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eVaddSign_mSRSS0, [PrefixCycle<COL>, PrefixCycle<CRVADDSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eVaddSign_mSRMS0, [PrefixCycle<COL>, PrefixCycle<CRVADDSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eVaddSign_eM, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<CRVADDSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eVaddSign_mCRSRSMode, [PrefixCycle<COL>, PrefixCycle<CRVADDSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eSRSSign_eDJ, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<CRSRSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eSRSSign_mCRRnd, [PrefixCycle<COL>, PrefixCycle<CRSRSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eSRSSign_mCRSat, [PrefixCycle<COL>, PrefixCycle<CRSRSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eSRSSign_eDC, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<CRSRSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eSRSSign_mSRCarry, [PrefixCycle<COL>, PrefixCycle<CRSRSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eSRSSign_mCRPackSize, [PrefixCycle<COL>, PrefixCycle<CRSRSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eSRSSign_eP, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<CRSRSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eSRSSign_eUnpackSign, [PrefixCycle<COL>, PrefixCycle<CRSRSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eSRSSign_eVaddSign, [PrefixCycle<COL>, PrefixCycle<CRSRSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eSRSSign_eSRSSign, [PrefixCycle<COL>, PrefixCycle<CRSRSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eSRSSign_eUPSSign, [PrefixCycle<COL>, PrefixCycle<CRSRSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eSRSSign_eS, [PrefixCycle<COL>, PrefixCycle<CRSRSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eSRSSign_mCRUPSMode, [PrefixCycle<COL>, PrefixCycle<CRSRSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eSRSSign_mCRUnpackSize, [PrefixCycle<COL>, PrefixCycle<CRSRSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eSRSSign_eR, [PrefixCycle<COL>, PrefixCycle<CRSRSSIGN_WM_PORT>, PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eSRSSign_ePackSign, [PrefixCycle<COL>, PrefixCycle<CRSRSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eSRSSign_mCRMCDEn, [PrefixCycle<COL>, PrefixCycle<CRSRSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eSRSSign_eDN, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<CRSRSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eSRSSign_mSRSS0, [PrefixCycle<COL>, PrefixCycle<CRSRSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eSRSSign_mSRMS0, [PrefixCycle<COL>, PrefixCycle<CRSRSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eSRSSign_eM, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<CRSRSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eSRSSign_mCRSRSMode, [PrefixCycle<COL>, PrefixCycle<CRSRSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUPSSign_eDJ, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<CRUPSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUPSSign_mCRRnd, [PrefixCycle<COL>, PrefixCycle<CRUPSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUPSSign_mCRSat, [PrefixCycle<COL>, PrefixCycle<CRUPSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUPSSign_eDC, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<CRUPSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUPSSign_mSRCarry, [PrefixCycle<COL>, PrefixCycle<CRUPSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUPSSign_mCRPackSize, [PrefixCycle<COL>, PrefixCycle<CRUPSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUPSSign_eP, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<CRUPSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUPSSign_eUnpackSign, [PrefixCycle<COL>, PrefixCycle<CRUPSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUPSSign_eVaddSign, [PrefixCycle<COL>, PrefixCycle<CRUPSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUPSSign_eSRSSign, [PrefixCycle<COL>, PrefixCycle<CRUPSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUPSSign_eUPSSign, [PrefixCycle<COL>, PrefixCycle<CRUPSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUPSSign_eS, [PrefixCycle<COL>, PrefixCycle<CRUPSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUPSSign_mCRUPSMode, [PrefixCycle<COL>, PrefixCycle<CRUPSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUPSSign_mCRUnpackSize, [PrefixCycle<COL>, PrefixCycle<CRUPSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUPSSign_eR, [PrefixCycle<COL>, PrefixCycle<CRUPSSIGN_WM_PORT>, PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUPSSign_ePackSign, [PrefixCycle<COL>, PrefixCycle<CRUPSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUPSSign_mCRMCDEn, [PrefixCycle<COL>, PrefixCycle<CRUPSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUPSSign_eDN, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<CRUPSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUPSSign_mSRSS0, [PrefixCycle<COL>, PrefixCycle<CRUPSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUPSSign_mSRMS0, [PrefixCycle<COL>, PrefixCycle<CRUPSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUPSSign_eM, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<CRUPSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eUPSSign_mCRSRSMode, [PrefixCycle<COL>, PrefixCycle<CRUPSSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eS_eDJ, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eS_mCRRnd, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eS_mCRSat, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eS_eDC, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eS_mSRCarry, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eS_mCRPackSize, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eS_eP, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eS_eUnpackSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eS_eVaddSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eS_eSRSSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eS_eUPSSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eS_eS, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eS_mCRUPSMode, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eS_mCRUnpackSize, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eS_eR, [PrefixCycle<COL>, PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eS_ePackSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eS_mCRMCDEn, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eS_eDN, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eS_mSRSS0, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eS_mSRMS0, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eS_eM, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eS_mCRSRSMode, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_eDJ, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_mCRRnd, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_mCRSat, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_eDC, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_mSRCarry, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_mCRPackSize, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_eP, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_eUnpackSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_eVaddSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_eSRSSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_eUPSSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_eS, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_mCRUPSMode, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_mCRUnpackSize, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_eR, [PrefixCycle<COL>, PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_ePackSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_mCRMCDEn, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_eDN, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_mSRSS0, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_mSRMS0, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_eM, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUPSMode_mCRSRSMode, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_eDJ, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_mCRRnd, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_mCRSat, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_eDC, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_mSRCarry, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_mCRPackSize, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_eP, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_eUnpackSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_eVaddSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_eSRSSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_eUPSSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_eS, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_mCRUPSMode, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_mCRUnpackSize, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_eR, [PrefixCycle<COL>, PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_ePackSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_mCRMCDEn, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_eDN, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_mSRSS0, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_mSRMS0, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_eM, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRUnpackSize_mCRSRSMode, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eR_eDJ, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<L_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eR_mCRRnd, [PrefixCycle<COL>, PrefixCycle<L_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eR_mCRSat, [PrefixCycle<COL>, PrefixCycle<L_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eR_eDC, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<L_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eR_mSRCarry, [PrefixCycle<COL>, PrefixCycle<L_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eR_mCRPackSize, [PrefixCycle<COL>, PrefixCycle<L_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eR_eP, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<L_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eR_eUnpackSign, [PrefixCycle<COL>, PrefixCycle<L_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eR_eVaddSign, [PrefixCycle<COL>, PrefixCycle<L_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eR_eSRSSign, [PrefixCycle<COL>, PrefixCycle<L_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eR_eUPSSign, [PrefixCycle<COL>, PrefixCycle<L_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eR_eS, [PrefixCycle<COL>, PrefixCycle<L_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eR_mCRUPSMode, [PrefixCycle<COL>, PrefixCycle<L_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eR_mCRUnpackSize, [PrefixCycle<COL>, PrefixCycle<L_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eR_eR, [PrefixCycle<COL>, PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eR_ePackSign, [PrefixCycle<COL>, PrefixCycle<L_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eR_mCRMCDEn, [PrefixCycle<COL>, PrefixCycle<L_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eR_eDN, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<L_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eR_mSRSS0, [PrefixCycle<COL>, PrefixCycle<L_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eR_mSRMS0, [PrefixCycle<COL>, PrefixCycle<L_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eR_eM, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<L_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eR_mCRSRSMode, [PrefixCycle<COL>, PrefixCycle<L_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_ePackSign_eDJ, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<CRPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_ePackSign_mCRRnd, [PrefixCycle<COL>, PrefixCycle<CRPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_ePackSign_mCRSat, [PrefixCycle<COL>, PrefixCycle<CRPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_ePackSign_eDC, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<CRPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_ePackSign_mSRCarry, [PrefixCycle<COL>, PrefixCycle<CRPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_ePackSign_mCRPackSize, [PrefixCycle<COL>, PrefixCycle<CRPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_ePackSign_eP, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<CRPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_ePackSign_eUnpackSign, [PrefixCycle<COL>, PrefixCycle<CRPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_ePackSign_eVaddSign, [PrefixCycle<COL>, PrefixCycle<CRPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_ePackSign_eSRSSign, [PrefixCycle<COL>, PrefixCycle<CRPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_ePackSign_eUPSSign, [PrefixCycle<COL>, PrefixCycle<CRPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_ePackSign_eS, [PrefixCycle<COL>, PrefixCycle<CRPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_ePackSign_mCRUPSMode, [PrefixCycle<COL>, PrefixCycle<CRPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_ePackSign_mCRUnpackSize, [PrefixCycle<COL>, PrefixCycle<CRPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_ePackSign_eR, [PrefixCycle<COL>, PrefixCycle<CRPACKSIGN_WM_PORT>, PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_ePackSign_ePackSign, [PrefixCycle<COL>, PrefixCycle<CRPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_ePackSign_mCRMCDEn, [PrefixCycle<COL>, PrefixCycle<CRPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_ePackSign_eDN, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<CRPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_ePackSign_mSRSS0, [PrefixCycle<COL>, PrefixCycle<CRPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_ePackSign_mSRMS0, [PrefixCycle<COL>, PrefixCycle<CRPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_ePackSign_eM, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<CRPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_ePackSign_mCRSRSMode, [PrefixCycle<COL>, PrefixCycle<CRPACKSIGN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_eDJ, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_mCRRnd, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_mCRSat, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_eDC, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_mSRCarry, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_mCRPackSize, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_eP, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_eUnpackSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_eVaddSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_eSRSSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_eUPSSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_eS, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_mCRUPSMode, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_mCRUnpackSize, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_eR, [PrefixCycle<COL>, PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_ePackSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_mCRMCDEn, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_eDN, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_mSRSS0, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_mSRMS0, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_eM, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRMCDEn_mCRSRSMode, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDN_eDJ, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<DN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDN_mCRRnd, [PrefixCycle<COL>, PrefixCycle<DN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDN_mCRSat, [PrefixCycle<COL>, PrefixCycle<DN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDN_eDC, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<DN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDN_mSRCarry, [PrefixCycle<COL>, PrefixCycle<DN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDN_mCRPackSize, [PrefixCycle<COL>, PrefixCycle<DN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDN_eP, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<DN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDN_eUnpackSign, [PrefixCycle<COL>, PrefixCycle<DN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDN_eVaddSign, [PrefixCycle<COL>, PrefixCycle<DN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDN_eSRSSign, [PrefixCycle<COL>, PrefixCycle<DN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDN_eUPSSign, [PrefixCycle<COL>, PrefixCycle<DN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDN_eS, [PrefixCycle<COL>, PrefixCycle<DN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDN_mCRUPSMode, [PrefixCycle<COL>, PrefixCycle<DN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDN_mCRUnpackSize, [PrefixCycle<COL>, PrefixCycle<DN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDN_eR, [PrefixCycle<COL>, PrefixCycle<DN_WM_PORT>, PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDN_ePackSign, [PrefixCycle<COL>, PrefixCycle<DN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDN_mCRMCDEn, [PrefixCycle<COL>, PrefixCycle<DN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDN_eDN, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<DN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDN_mSRSS0, [PrefixCycle<COL>, PrefixCycle<DN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDN_mSRMS0, [PrefixCycle<COL>, PrefixCycle<DN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDN_eM, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<DN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eDN_mCRSRSMode, [PrefixCycle<COL>, PrefixCycle<DN_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRSS0_eDJ, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRSS0_mCRRnd, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRSS0_mCRSat, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRSS0_eDC, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRSS0_mSRCarry, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRSS0_mCRPackSize, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRSS0_eP, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRSS0_eUnpackSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRSS0_eVaddSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRSS0_eSRSSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRSS0_eUPSSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRSS0_eS, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRSS0_mCRUPSMode, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRSS0_mCRUnpackSize, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRSS0_eR, [PrefixCycle<COL>, PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRSS0_ePackSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRSS0_mCRMCDEn, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRSS0_eDN, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRSS0_mSRSS0, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRSS0_mSRMS0, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRSS0_eM, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRSS0_mCRSRSMode, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRMS0_eDJ, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRMS0_mCRRnd, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRMS0_mCRSat, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRMS0_eDC, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRMS0_mSRCarry, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRMS0_mCRPackSize, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRMS0_eP, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRMS0_eUnpackSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRMS0_eVaddSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRMS0_eSRSSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRMS0_eUPSSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRMS0_eS, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRMS0_mCRUPSMode, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRMS0_mCRUnpackSize, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRMS0_eR, [PrefixCycle<COL>, PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRMS0_ePackSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRMS0_mCRMCDEn, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRMS0_eDN, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRMS0_mSRSS0, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRMS0_mSRMS0, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRMS0_eM, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mSRMS0_mCRSRSMode, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eM_eDJ, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<M_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eM_mCRRnd, [PrefixCycle<COL>, PrefixCycle<M_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eM_mCRSat, [PrefixCycle<COL>, PrefixCycle<M_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eM_eDC, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<M_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eM_mSRCarry, [PrefixCycle<COL>, PrefixCycle<M_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eM_mCRPackSize, [PrefixCycle<COL>, PrefixCycle<M_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eM_eP, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<M_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eM_eUnpackSign, [PrefixCycle<COL>, PrefixCycle<M_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eM_eVaddSign, [PrefixCycle<COL>, PrefixCycle<M_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eM_eSRSSign, [PrefixCycle<COL>, PrefixCycle<M_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eM_eUPSSign, [PrefixCycle<COL>, PrefixCycle<M_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eM_eS, [PrefixCycle<COL>, PrefixCycle<M_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eM_mCRUPSMode, [PrefixCycle<COL>, PrefixCycle<M_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eM_mCRUnpackSize, [PrefixCycle<COL>, PrefixCycle<M_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eM_eR, [PrefixCycle<COL>, PrefixCycle<L_RM_PORT>, PrefixCycle<M_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eM_ePackSign, [PrefixCycle<COL>, PrefixCycle<M_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eM_mCRMCDEn, [PrefixCycle<COL>, PrefixCycle<M_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eM_eDN, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<M_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eM_mSRSS0, [PrefixCycle<COL>, PrefixCycle<M_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eM_mSRMS0, [PrefixCycle<COL>, PrefixCycle<M_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eM_eM, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, PrefixCycle<M_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_eM_mCRSRSMode, [PrefixCycle<COL>, PrefixCycle<M_WM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_eDJ, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_mCRRnd, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_mCRSat, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_eDC, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_mSRCarry, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_mCRPackSize, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_eP, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_eUnpackSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_eVaddSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_eSRSSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_eUPSSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_eS, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_mCRUPSMode, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_mCRUnpackSize, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_eR, [PrefixCycle<COL>, PrefixCycle<L_RM_PORT>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_ePackSign, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_mCRMCDEn, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_eDN, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_mSRSS0, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_mSRMS0, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_eM, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+InstrItinData<II_MOV_alu_mv_mv_mv_scl_mCRSRSMode_mCRSRSMode, [PrefixCycle<COL>, SimpleCycle<RSRC_EXECUTION_TRACE>], [/*dst*/1, /*src*/1]>,
+
+// id: me__instr128_or__lda__mv_ss2scl__mSStream__mSStream_b__mRa
+InstrItinData<II_MOV_lda, [EmptyCycles<5>, SimpleCycle<LXC>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*srSS0*/8]>,
+
+// id: me__instr128_or__st__st_streams__mv_scl2ms__mMStream__mMStream_b__mMStream_tlast__mMStream_tlast_imm__noTlast
+InstrItinData<II_MOV_st_mMStream_tlast_imm, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<R_RS_PORT>], [/*src*/1, /*srMS0*/3]>,
+InstrItinData<II_MOV_st_mMStream_tlast_imm_eDJ, [SimpleCycle<AGU_RM_PORT>], [/*src*/1, /*srMS0*/3]>,
+InstrItinData<II_MOV_st_mMStream_tlast_imm_eR, [SimpleCycle<R_RS_PORT>], [/*src*/1, /*srMS0*/3]>,
+InstrItinData<II_MOV_st_mMStream_tlast_imm_eDC, [SimpleCycle<AGU_RM_PORT>], [/*src*/1, /*srMS0*/3]>,
+InstrItinData<II_MOV_st_mMStream_tlast_imm_eDN, [SimpleCycle<AGU_RM_PORT>], [/*src*/1, /*srMS0*/3]>,
+InstrItinData<II_MOV_st_mMStream_tlast_imm_eP, [SimpleCycle<AGU_RM_PORT>], [/*src*/1, /*srMS0*/3]>,
+InstrItinData<II_MOV_st_mMStream_tlast_imm_eM, [SimpleCycle<AGU_RM_PORT>], [/*src*/1, /*srMS0*/3]>,
+
+// id: me__instr128_or__st__st_streams__mv_scl2ms__mMStream__mMStream_b__mMStream_tlast__mMStream_tlast_reg__mR28_tlast
+InstrItinData<II_MOV_st_mMStream_tlast_reg, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<L_RM_PORT>, SimpleCycle<R_RS_PORT>], [/*src*/1, /*dst*/1, /*srMS0*/3]>,
+InstrItinData<II_MOV_st_mMStream_tlast_reg_eDJ, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<L_RM_PORT>], [/*src*/1, /*dst*/1, /*srMS0*/3]>,
+InstrItinData<II_MOV_st_mMStream_tlast_reg_eR, [PrefixCycle<L_RM_PORT>, SimpleCycle<R_RS_PORT>], [/*src*/1, /*dst*/1, /*srMS0*/3]>,
+InstrItinData<II_MOV_st_mMStream_tlast_reg_eDC, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<L_RM_PORT>], [/*src*/1, /*dst*/1, /*srMS0*/3]>,
+InstrItinData<II_MOV_st_mMStream_tlast_reg_eDN, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<L_RM_PORT>], [/*src*/1, /*dst*/1, /*srMS0*/3]>,
+InstrItinData<II_MOV_st_mMStream_tlast_reg_eP, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<L_RM_PORT>], [/*src*/1, /*dst*/1, /*srMS0*/3]>,
+InstrItinData<II_MOV_st_mMStream_tlast_reg_eM, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<L_RM_PORT>], [/*src*/1, /*dst*/1, /*srMS0*/3]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_delay__Delay1__mRm
+InstrItinData<II_MOV_d1, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<L_RM_PORT>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*src*/1]>,
+InstrItinData<II_MOV_d1_mCRSCDEn, [SimpleCycle<COL>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*src*/1]>,
+InstrItinData<II_MOV_d1_eDJ, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<COL>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*src*/1]>,
+InstrItinData<II_MOV_d1_mCRRnd, [SimpleCycle<COL>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*src*/1]>,
+InstrItinData<II_MOV_d1_mCRSat, [SimpleCycle<COL>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*src*/1]>,
+InstrItinData<II_MOV_d1_eDC, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<COL>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*src*/1]>,
+InstrItinData<II_MOV_d1_mSRCarry, [SimpleCycle<COL>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*src*/1]>,
+InstrItinData<II_MOV_d1_mCRPackSize, [SimpleCycle<COL>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*src*/1]>,
+InstrItinData<II_MOV_d1_eP, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<COL>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*src*/1]>,
+InstrItinData<II_MOV_d1_eUnpackSign, [SimpleCycle<COL>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*src*/1]>,
+InstrItinData<II_MOV_d1_eVaddSign, [SimpleCycle<COL>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*src*/1]>,
+InstrItinData<II_MOV_d1_eSRSSign, [SimpleCycle<COL>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*src*/1]>,
+InstrItinData<II_MOV_d1_eUPSSign, [SimpleCycle<COL>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*src*/1]>,
+InstrItinData<II_MOV_d1_eS, [SimpleCycle<COL>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*src*/1]>,
+InstrItinData<II_MOV_d1_mCRUPSMode, [SimpleCycle<COL>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*src*/1]>,
+InstrItinData<II_MOV_d1_mCRUnpackSize, [SimpleCycle<COL>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*src*/1]>,
+InstrItinData<II_MOV_d1_eR, [PrefixCycle<COL>, SimpleCycle<L_RM_PORT>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*src*/1]>,
+InstrItinData<II_MOV_d1_ePackSign, [SimpleCycle<COL>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*src*/1]>,
+InstrItinData<II_MOV_d1_mCRMCDEn, [SimpleCycle<COL>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*src*/1]>,
+InstrItinData<II_MOV_d1_eDN, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<COL>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*src*/1]>,
+InstrItinData<II_MOV_d1_mSRSS0, [SimpleCycle<COL>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*src*/1]>,
+InstrItinData<II_MOV_d1_mSRMS0, [SimpleCycle<COL>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*src*/1]>,
+InstrItinData<II_MOV_d1_eM, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<COL>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*src*/1]>,
+InstrItinData<II_MOV_d1_mCRSRSMode, [SimpleCycle<COL>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*src*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_delay__Delay2__mRm
+InstrItinData<II_MOV_d2, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<L_RM_PORT>, EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*dst*/3, /*src*/1]>,
+InstrItinData<II_MOV_d2_mCRSCDEn, [SimpleCycle<COL>, EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*dst*/3, /*src*/1]>,
+InstrItinData<II_MOV_d2_eDJ, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<COL>, EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*dst*/3, /*src*/1]>,
+InstrItinData<II_MOV_d2_mCRRnd, [SimpleCycle<COL>, EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*dst*/3, /*src*/1]>,
+InstrItinData<II_MOV_d2_mCRSat, [SimpleCycle<COL>, EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*dst*/3, /*src*/1]>,
+InstrItinData<II_MOV_d2_eDC, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<COL>, EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*dst*/3, /*src*/1]>,
+InstrItinData<II_MOV_d2_mSRCarry, [SimpleCycle<COL>, EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*dst*/3, /*src*/1]>,
+InstrItinData<II_MOV_d2_mCRPackSize, [SimpleCycle<COL>, EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*dst*/3, /*src*/1]>,
+InstrItinData<II_MOV_d2_eP, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<COL>, EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*dst*/3, /*src*/1]>,
+InstrItinData<II_MOV_d2_eUnpackSign, [SimpleCycle<COL>, EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*dst*/3, /*src*/1]>,
+InstrItinData<II_MOV_d2_eVaddSign, [SimpleCycle<COL>, EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*dst*/3, /*src*/1]>,
+InstrItinData<II_MOV_d2_eSRSSign, [SimpleCycle<COL>, EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*dst*/3, /*src*/1]>,
+InstrItinData<II_MOV_d2_eUPSSign, [SimpleCycle<COL>, EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*dst*/3, /*src*/1]>,
+InstrItinData<II_MOV_d2_eS, [SimpleCycle<COL>, EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*dst*/3, /*src*/1]>,
+InstrItinData<II_MOV_d2_mCRUPSMode, [SimpleCycle<COL>, EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*dst*/3, /*src*/1]>,
+InstrItinData<II_MOV_d2_mCRUnpackSize, [SimpleCycle<COL>, EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*dst*/3, /*src*/1]>,
+InstrItinData<II_MOV_d2_eR, [PrefixCycle<COL>, SimpleCycle<L_RM_PORT>, EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*dst*/3, /*src*/1]>,
+InstrItinData<II_MOV_d2_ePackSign, [SimpleCycle<COL>, EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*dst*/3, /*src*/1]>,
+InstrItinData<II_MOV_d2_mCRMCDEn, [SimpleCycle<COL>, EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*dst*/3, /*src*/1]>,
+InstrItinData<II_MOV_d2_eDN, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<COL>, EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*dst*/3, /*src*/1]>,
+InstrItinData<II_MOV_d2_mSRSS0, [SimpleCycle<COL>, EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*dst*/3, /*src*/1]>,
+InstrItinData<II_MOV_d2_mSRMS0, [SimpleCycle<COL>, EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*dst*/3, /*src*/1]>,
+InstrItinData<II_MOV_d2_eM, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<COL>, EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*dst*/3, /*src*/1]>,
+InstrItinData<II_MOV_d2_mCRSRSMode, [SimpleCycle<COL>, EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*dst*/3, /*src*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_delay__Delay3__mRm
+InstrItinData<II_MOV_d3, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<L_RM_PORT>, EmptyCycles<2>, SimpleCycle<L_WM_PORT>], [/*dst*/4, /*src*/1]>,
+InstrItinData<II_MOV_d3_mCRSCDEn, [SimpleCycle<COL>, EmptyCycles<2>, SimpleCycle<L_WM_PORT>], [/*dst*/4, /*src*/1]>,
+InstrItinData<II_MOV_d3_eDJ, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<COL>, EmptyCycles<2>, SimpleCycle<L_WM_PORT>], [/*dst*/4, /*src*/1]>,
+InstrItinData<II_MOV_d3_mCRRnd, [SimpleCycle<COL>, EmptyCycles<2>, SimpleCycle<L_WM_PORT>], [/*dst*/4, /*src*/1]>,
+InstrItinData<II_MOV_d3_mCRSat, [SimpleCycle<COL>, EmptyCycles<2>, SimpleCycle<L_WM_PORT>], [/*dst*/4, /*src*/1]>,
+InstrItinData<II_MOV_d3_eDC, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<COL>, EmptyCycles<2>, SimpleCycle<L_WM_PORT>], [/*dst*/4, /*src*/1]>,
+InstrItinData<II_MOV_d3_mSRCarry, [SimpleCycle<COL>, EmptyCycles<2>, SimpleCycle<L_WM_PORT>], [/*dst*/4, /*src*/1]>,
+InstrItinData<II_MOV_d3_mCRPackSize, [SimpleCycle<COL>, EmptyCycles<2>, SimpleCycle<L_WM_PORT>], [/*dst*/4, /*src*/1]>,
+InstrItinData<II_MOV_d3_eP, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<COL>, EmptyCycles<2>, SimpleCycle<L_WM_PORT>], [/*dst*/4, /*src*/1]>,
+InstrItinData<II_MOV_d3_eUnpackSign, [SimpleCycle<COL>, EmptyCycles<2>, SimpleCycle<L_WM_PORT>], [/*dst*/4, /*src*/1]>,
+InstrItinData<II_MOV_d3_eVaddSign, [SimpleCycle<COL>, EmptyCycles<2>, SimpleCycle<L_WM_PORT>], [/*dst*/4, /*src*/1]>,
+InstrItinData<II_MOV_d3_eSRSSign, [SimpleCycle<COL>, EmptyCycles<2>, SimpleCycle<L_WM_PORT>], [/*dst*/4, /*src*/1]>,
+InstrItinData<II_MOV_d3_eUPSSign, [SimpleCycle<COL>, EmptyCycles<2>, SimpleCycle<L_WM_PORT>], [/*dst*/4, /*src*/1]>,
+InstrItinData<II_MOV_d3_eS, [SimpleCycle<COL>, EmptyCycles<2>, SimpleCycle<L_WM_PORT>], [/*dst*/4, /*src*/1]>,
+InstrItinData<II_MOV_d3_mCRUPSMode, [SimpleCycle<COL>, EmptyCycles<2>, SimpleCycle<L_WM_PORT>], [/*dst*/4, /*src*/1]>,
+InstrItinData<II_MOV_d3_mCRUnpackSize, [SimpleCycle<COL>, EmptyCycles<2>, SimpleCycle<L_WM_PORT>], [/*dst*/4, /*src*/1]>,
+InstrItinData<II_MOV_d3_eR, [PrefixCycle<COL>, SimpleCycle<L_RM_PORT>, EmptyCycles<2>, SimpleCycle<L_WM_PORT>], [/*dst*/4, /*src*/1]>,
+InstrItinData<II_MOV_d3_ePackSign, [SimpleCycle<COL>, EmptyCycles<2>, SimpleCycle<L_WM_PORT>], [/*dst*/4, /*src*/1]>,
+InstrItinData<II_MOV_d3_mCRMCDEn, [SimpleCycle<COL>, EmptyCycles<2>, SimpleCycle<L_WM_PORT>], [/*dst*/4, /*src*/1]>,
+InstrItinData<II_MOV_d3_eDN, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<COL>, EmptyCycles<2>, SimpleCycle<L_WM_PORT>], [/*dst*/4, /*src*/1]>,
+InstrItinData<II_MOV_d3_mSRSS0, [SimpleCycle<COL>, EmptyCycles<2>, SimpleCycle<L_WM_PORT>], [/*dst*/4, /*src*/1]>,
+InstrItinData<II_MOV_d3_mSRMS0, [SimpleCycle<COL>, EmptyCycles<2>, SimpleCycle<L_WM_PORT>], [/*dst*/4, /*src*/1]>,
+InstrItinData<II_MOV_d3_eM, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<COL>, EmptyCycles<2>, SimpleCycle<L_WM_PORT>], [/*dst*/4, /*src*/1]>,
+InstrItinData<II_MOV_d3_mCRSRSMode, [SimpleCycle<COL>, EmptyCycles<2>, SimpleCycle<L_WM_PORT>], [/*dst*/4, /*src*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_delay__Delay4__mRm
+InstrItinData<II_MOV_d4, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<L_RM_PORT>, EmptyCycles<3>, SimpleCycle<L_WM_PORT>], [/*dst*/5, /*src*/1]>,
+InstrItinData<II_MOV_d4_mCRSCDEn, [SimpleCycle<COL>, EmptyCycles<3>, SimpleCycle<L_WM_PORT>], [/*dst*/5, /*src*/1]>,
+InstrItinData<II_MOV_d4_eDJ, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<COL>, EmptyCycles<3>, SimpleCycle<L_WM_PORT>], [/*dst*/5, /*src*/1]>,
+InstrItinData<II_MOV_d4_mCRRnd, [SimpleCycle<COL>, EmptyCycles<3>, SimpleCycle<L_WM_PORT>], [/*dst*/5, /*src*/1]>,
+InstrItinData<II_MOV_d4_mCRSat, [SimpleCycle<COL>, EmptyCycles<3>, SimpleCycle<L_WM_PORT>], [/*dst*/5, /*src*/1]>,
+InstrItinData<II_MOV_d4_eDC, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<COL>, EmptyCycles<3>, SimpleCycle<L_WM_PORT>], [/*dst*/5, /*src*/1]>,
+InstrItinData<II_MOV_d4_mSRCarry, [SimpleCycle<COL>, EmptyCycles<3>, SimpleCycle<L_WM_PORT>], [/*dst*/5, /*src*/1]>,
+InstrItinData<II_MOV_d4_mCRPackSize, [SimpleCycle<COL>, EmptyCycles<3>, SimpleCycle<L_WM_PORT>], [/*dst*/5, /*src*/1]>,
+InstrItinData<II_MOV_d4_eP, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<COL>, EmptyCycles<3>, SimpleCycle<L_WM_PORT>], [/*dst*/5, /*src*/1]>,
+InstrItinData<II_MOV_d4_eUnpackSign, [SimpleCycle<COL>, EmptyCycles<3>, SimpleCycle<L_WM_PORT>], [/*dst*/5, /*src*/1]>,
+InstrItinData<II_MOV_d4_eVaddSign, [SimpleCycle<COL>, EmptyCycles<3>, SimpleCycle<L_WM_PORT>], [/*dst*/5, /*src*/1]>,
+InstrItinData<II_MOV_d4_eSRSSign, [SimpleCycle<COL>, EmptyCycles<3>, SimpleCycle<L_WM_PORT>], [/*dst*/5, /*src*/1]>,
+InstrItinData<II_MOV_d4_eUPSSign, [SimpleCycle<COL>, EmptyCycles<3>, SimpleCycle<L_WM_PORT>], [/*dst*/5, /*src*/1]>,
+InstrItinData<II_MOV_d4_eS, [SimpleCycle<COL>, EmptyCycles<3>, SimpleCycle<L_WM_PORT>], [/*dst*/5, /*src*/1]>,
+InstrItinData<II_MOV_d4_mCRUPSMode, [SimpleCycle<COL>, EmptyCycles<3>, SimpleCycle<L_WM_PORT>], [/*dst*/5, /*src*/1]>,
+InstrItinData<II_MOV_d4_mCRUnpackSize, [SimpleCycle<COL>, EmptyCycles<3>, SimpleCycle<L_WM_PORT>], [/*dst*/5, /*src*/1]>,
+InstrItinData<II_MOV_d4_eR, [PrefixCycle<COL>, SimpleCycle<L_RM_PORT>, EmptyCycles<3>, SimpleCycle<L_WM_PORT>], [/*dst*/5, /*src*/1]>,
+InstrItinData<II_MOV_d4_ePackSign, [SimpleCycle<COL>, EmptyCycles<3>, SimpleCycle<L_WM_PORT>], [/*dst*/5, /*src*/1]>,
+InstrItinData<II_MOV_d4_mCRMCDEn, [SimpleCycle<COL>, EmptyCycles<3>, SimpleCycle<L_WM_PORT>], [/*dst*/5, /*src*/1]>,
+InstrItinData<II_MOV_d4_eDN, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<COL>, EmptyCycles<3>, SimpleCycle<L_WM_PORT>], [/*dst*/5, /*src*/1]>,
+InstrItinData<II_MOV_d4_mSRSS0, [SimpleCycle<COL>, EmptyCycles<3>, SimpleCycle<L_WM_PORT>], [/*dst*/5, /*src*/1]>,
+InstrItinData<II_MOV_d4_mSRMS0, [SimpleCycle<COL>, EmptyCycles<3>, SimpleCycle<L_WM_PORT>], [/*dst*/5, /*src*/1]>,
+InstrItinData<II_MOV_d4_eM, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<COL>, EmptyCycles<3>, SimpleCycle<L_WM_PORT>], [/*dst*/5, /*src*/1]>,
+InstrItinData<II_MOV_d4_mCRSRSMode, [SimpleCycle<COL>, EmptyCycles<3>, SimpleCycle<L_WM_PORT>], [/*dst*/5, /*src*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_delay__Delay5__mRm
+InstrItinData<II_MOV_d5, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<L_RM_PORT>, EmptyCycles<4>, SimpleCycle<L_WM_PORT>], [/*dst*/6, /*src*/1]>,
+InstrItinData<II_MOV_d5_mCRSCDEn, [SimpleCycle<COL>, EmptyCycles<4>, SimpleCycle<L_WM_PORT>], [/*dst*/6, /*src*/1]>,
+InstrItinData<II_MOV_d5_eDJ, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<COL>, EmptyCycles<4>, SimpleCycle<L_WM_PORT>], [/*dst*/6, /*src*/1]>,
+InstrItinData<II_MOV_d5_mCRRnd, [SimpleCycle<COL>, EmptyCycles<4>, SimpleCycle<L_WM_PORT>], [/*dst*/6, /*src*/1]>,
+InstrItinData<II_MOV_d5_mCRSat, [SimpleCycle<COL>, EmptyCycles<4>, SimpleCycle<L_WM_PORT>], [/*dst*/6, /*src*/1]>,
+InstrItinData<II_MOV_d5_eDC, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<COL>, EmptyCycles<4>, SimpleCycle<L_WM_PORT>], [/*dst*/6, /*src*/1]>,
+InstrItinData<II_MOV_d5_mSRCarry, [SimpleCycle<COL>, EmptyCycles<4>, SimpleCycle<L_WM_PORT>], [/*dst*/6, /*src*/1]>,
+InstrItinData<II_MOV_d5_mCRPackSize, [SimpleCycle<COL>, EmptyCycles<4>, SimpleCycle<L_WM_PORT>], [/*dst*/6, /*src*/1]>,
+InstrItinData<II_MOV_d5_eP, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<COL>, EmptyCycles<4>, SimpleCycle<L_WM_PORT>], [/*dst*/6, /*src*/1]>,
+InstrItinData<II_MOV_d5_eUnpackSign, [SimpleCycle<COL>, EmptyCycles<4>, SimpleCycle<L_WM_PORT>], [/*dst*/6, /*src*/1]>,
+InstrItinData<II_MOV_d5_eVaddSign, [SimpleCycle<COL>, EmptyCycles<4>, SimpleCycle<L_WM_PORT>], [/*dst*/6, /*src*/1]>,
+InstrItinData<II_MOV_d5_eSRSSign, [SimpleCycle<COL>, EmptyCycles<4>, SimpleCycle<L_WM_PORT>], [/*dst*/6, /*src*/1]>,
+InstrItinData<II_MOV_d5_eUPSSign, [SimpleCycle<COL>, EmptyCycles<4>, SimpleCycle<L_WM_PORT>], [/*dst*/6, /*src*/1]>,
+InstrItinData<II_MOV_d5_eS, [SimpleCycle<COL>, EmptyCycles<4>, SimpleCycle<L_WM_PORT>], [/*dst*/6, /*src*/1]>,
+InstrItinData<II_MOV_d5_mCRUPSMode, [SimpleCycle<COL>, EmptyCycles<4>, SimpleCycle<L_WM_PORT>], [/*dst*/6, /*src*/1]>,
+InstrItinData<II_MOV_d5_mCRUnpackSize, [SimpleCycle<COL>, EmptyCycles<4>, SimpleCycle<L_WM_PORT>], [/*dst*/6, /*src*/1]>,
+InstrItinData<II_MOV_d5_eR, [PrefixCycle<COL>, SimpleCycle<L_RM_PORT>, EmptyCycles<4>, SimpleCycle<L_WM_PORT>], [/*dst*/6, /*src*/1]>,
+InstrItinData<II_MOV_d5_ePackSign, [SimpleCycle<COL>, EmptyCycles<4>, SimpleCycle<L_WM_PORT>], [/*dst*/6, /*src*/1]>,
+InstrItinData<II_MOV_d5_mCRMCDEn, [SimpleCycle<COL>, EmptyCycles<4>, SimpleCycle<L_WM_PORT>], [/*dst*/6, /*src*/1]>,
+InstrItinData<II_MOV_d5_eDN, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<COL>, EmptyCycles<4>, SimpleCycle<L_WM_PORT>], [/*dst*/6, /*src*/1]>,
+InstrItinData<II_MOV_d5_mSRSS0, [SimpleCycle<COL>, EmptyCycles<4>, SimpleCycle<L_WM_PORT>], [/*dst*/6, /*src*/1]>,
+InstrItinData<II_MOV_d5_mSRMS0, [SimpleCycle<COL>, EmptyCycles<4>, SimpleCycle<L_WM_PORT>], [/*dst*/6, /*src*/1]>,
+InstrItinData<II_MOV_d5_eM, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<COL>, EmptyCycles<4>, SimpleCycle<L_WM_PORT>], [/*dst*/6, /*src*/1]>,
+InstrItinData<II_MOV_d5_mCRSRSMode, [SimpleCycle<COL>, EmptyCycles<4>, SimpleCycle<L_WM_PORT>], [/*dst*/6, /*src*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_delay__Delay6__mRm
+InstrItinData<II_MOV_d6, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<COL>, SimpleCycle<L_RM_PORT>, EmptyCycles<5>, SimpleCycle<L_WM_PORT>], [/*dst*/7, /*src*/1]>,
+InstrItinData<II_MOV_d6_mCRSCDEn, [SimpleCycle<COL>, EmptyCycles<5>, SimpleCycle<L_WM_PORT>], [/*dst*/7, /*src*/1]>,
+InstrItinData<II_MOV_d6_eDJ, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<COL>, EmptyCycles<5>, SimpleCycle<L_WM_PORT>], [/*dst*/7, /*src*/1]>,
+InstrItinData<II_MOV_d6_mCRRnd, [SimpleCycle<COL>, EmptyCycles<5>, SimpleCycle<L_WM_PORT>], [/*dst*/7, /*src*/1]>,
+InstrItinData<II_MOV_d6_mCRSat, [SimpleCycle<COL>, EmptyCycles<5>, SimpleCycle<L_WM_PORT>], [/*dst*/7, /*src*/1]>,
+InstrItinData<II_MOV_d6_eDC, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<COL>, EmptyCycles<5>, SimpleCycle<L_WM_PORT>], [/*dst*/7, /*src*/1]>,
+InstrItinData<II_MOV_d6_mSRCarry, [SimpleCycle<COL>, EmptyCycles<5>, SimpleCycle<L_WM_PORT>], [/*dst*/7, /*src*/1]>,
+InstrItinData<II_MOV_d6_mCRPackSize, [SimpleCycle<COL>, EmptyCycles<5>, SimpleCycle<L_WM_PORT>], [/*dst*/7, /*src*/1]>,
+InstrItinData<II_MOV_d6_eP, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<COL>, EmptyCycles<5>, SimpleCycle<L_WM_PORT>], [/*dst*/7, /*src*/1]>,
+InstrItinData<II_MOV_d6_eUnpackSign, [SimpleCycle<COL>, EmptyCycles<5>, SimpleCycle<L_WM_PORT>], [/*dst*/7, /*src*/1]>,
+InstrItinData<II_MOV_d6_eVaddSign, [SimpleCycle<COL>, EmptyCycles<5>, SimpleCycle<L_WM_PORT>], [/*dst*/7, /*src*/1]>,
+InstrItinData<II_MOV_d6_eSRSSign, [SimpleCycle<COL>, EmptyCycles<5>, SimpleCycle<L_WM_PORT>], [/*dst*/7, /*src*/1]>,
+InstrItinData<II_MOV_d6_eUPSSign, [SimpleCycle<COL>, EmptyCycles<5>, SimpleCycle<L_WM_PORT>], [/*dst*/7, /*src*/1]>,
+InstrItinData<II_MOV_d6_eS, [SimpleCycle<COL>, EmptyCycles<5>, SimpleCycle<L_WM_PORT>], [/*dst*/7, /*src*/1]>,
+InstrItinData<II_MOV_d6_mCRUPSMode, [SimpleCycle<COL>, EmptyCycles<5>, SimpleCycle<L_WM_PORT>], [/*dst*/7, /*src*/1]>,
+InstrItinData<II_MOV_d6_mCRUnpackSize, [SimpleCycle<COL>, EmptyCycles<5>, SimpleCycle<L_WM_PORT>], [/*dst*/7, /*src*/1]>,
+InstrItinData<II_MOV_d6_eR, [PrefixCycle<COL>, SimpleCycle<L_RM_PORT>, EmptyCycles<5>, SimpleCycle<L_WM_PORT>], [/*dst*/7, /*src*/1]>,
+InstrItinData<II_MOV_d6_ePackSign, [SimpleCycle<COL>, EmptyCycles<5>, SimpleCycle<L_WM_PORT>], [/*dst*/7, /*src*/1]>,
+InstrItinData<II_MOV_d6_mCRMCDEn, [SimpleCycle<COL>, EmptyCycles<5>, SimpleCycle<L_WM_PORT>], [/*dst*/7, /*src*/1]>,
+InstrItinData<II_MOV_d6_eDN, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<COL>, EmptyCycles<5>, SimpleCycle<L_WM_PORT>], [/*dst*/7, /*src*/1]>,
+InstrItinData<II_MOV_d6_mSRSS0, [SimpleCycle<COL>, EmptyCycles<5>, SimpleCycle<L_WM_PORT>], [/*dst*/7, /*src*/1]>,
+InstrItinData<II_MOV_d6_mSRMS0, [SimpleCycle<COL>, EmptyCycles<5>, SimpleCycle<L_WM_PORT>], [/*dst*/7, /*src*/1]>,
+InstrItinData<II_MOV_d6_eM, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<COL>, EmptyCycles<5>, SimpleCycle<L_WM_PORT>], [/*dst*/7, /*src*/1]>,
+InstrItinData<II_MOV_d6_mCRSRSMode, [SimpleCycle<COL>, EmptyCycles<5>, SimpleCycle<L_WM_PORT>], [/*dst*/7, /*src*/1]>,
+
+// id: me__instr128_or__lda__mv_ss2scl__mSStream__mSStream_nb__mRa
+InstrItinData<II_MOV_nb_lda, [EmptyCycles<5>, SimpleCycle<LXC>, SimpleCycle<R_WA_PORT>], [/*dst*/7, /*srSS0*/8]>,
+
+// id: me__instr128_or__st__st_streams__mv_scl2ms__mMStream__mMStream_nb__mMStream_tlast__mMStream_tlast_imm__noTlast
+InstrItinData<II_MOV_nb_st_mMStream_tlast_imm, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<R_RS_PORT>], [/*src*/1, /*srMS0*/3]>,
+InstrItinData<II_MOV_nb_st_mMStream_tlast_imm_eDJ, [SimpleCycle<AGU_RM_PORT>], [/*src*/1, /*srMS0*/3]>,
+InstrItinData<II_MOV_nb_st_mMStream_tlast_imm_eR, [SimpleCycle<R_RS_PORT>], [/*src*/1, /*srMS0*/3]>,
+InstrItinData<II_MOV_nb_st_mMStream_tlast_imm_eDC, [SimpleCycle<AGU_RM_PORT>], [/*src*/1, /*srMS0*/3]>,
+InstrItinData<II_MOV_nb_st_mMStream_tlast_imm_eDN, [SimpleCycle<AGU_RM_PORT>], [/*src*/1, /*srMS0*/3]>,
+InstrItinData<II_MOV_nb_st_mMStream_tlast_imm_eP, [SimpleCycle<AGU_RM_PORT>], [/*src*/1, /*srMS0*/3]>,
+InstrItinData<II_MOV_nb_st_mMStream_tlast_imm_eM, [SimpleCycle<AGU_RM_PORT>], [/*src*/1, /*srMS0*/3]>,
+
+// id: me__instr128_or__st__st_streams__mv_scl2ms__mMStream__mMStream_nb__mMStream_tlast__mMStream_tlast_reg__mR28_tlast
+InstrItinData<II_MOV_nb_st_mMStream_tlast_reg, [PrefixCycle<AGU_RM_PORT>, PrefixCycle<L_RM_PORT>, SimpleCycle<R_RS_PORT>], [/*src*/1, /*dst*/1, /*srMS0*/3]>,
+InstrItinData<II_MOV_nb_st_mMStream_tlast_reg_eDJ, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<L_RM_PORT>], [/*src*/1, /*dst*/1, /*srMS0*/3]>,
+InstrItinData<II_MOV_nb_st_mMStream_tlast_reg_eR, [PrefixCycle<L_RM_PORT>, SimpleCycle<R_RS_PORT>], [/*src*/1, /*dst*/1, /*srMS0*/3]>,
+InstrItinData<II_MOV_nb_st_mMStream_tlast_reg_eDC, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<L_RM_PORT>], [/*src*/1, /*dst*/1, /*srMS0*/3]>,
+InstrItinData<II_MOV_nb_st_mMStream_tlast_reg_eDN, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<L_RM_PORT>], [/*src*/1, /*dst*/1, /*srMS0*/3]>,
+InstrItinData<II_MOV_nb_st_mMStream_tlast_reg_eP, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<L_RM_PORT>], [/*src*/1, /*dst*/1, /*srMS0*/3]>,
+InstrItinData<II_MOV_nb_st_mMStream_tlast_reg_eM, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<L_RM_PORT>], [/*src*/1, /*dst*/1, /*srMS0*/3]>,
+
+// id: me__instr128_or__st__st_streams__mv_scl2ms__mMStream__mMStream_nb__mMStream_tlast__mMStream_tlast_imm__doTlast
+InstrItinData<II_MOV_nb_tlast, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<R_RS_PORT>], [/*src*/1, /*srMS0*/3]>,
+InstrItinData<II_MOV_nb_tlast_eDJ, [SimpleCycle<AGU_RM_PORT>], [/*src*/1, /*srMS0*/3]>,
+InstrItinData<II_MOV_nb_tlast_eR, [SimpleCycle<R_RS_PORT>], [/*src*/1, /*srMS0*/3]>,
+InstrItinData<II_MOV_nb_tlast_eDC, [SimpleCycle<AGU_RM_PORT>], [/*src*/1, /*srMS0*/3]>,
+InstrItinData<II_MOV_nb_tlast_eDN, [SimpleCycle<AGU_RM_PORT>], [/*src*/1, /*srMS0*/3]>,
+InstrItinData<II_MOV_nb_tlast_eP, [SimpleCycle<AGU_RM_PORT>], [/*src*/1, /*srMS0*/3]>,
+InstrItinData<II_MOV_nb_tlast_eM, [SimpleCycle<AGU_RM_PORT>], [/*src*/1, /*srMS0*/3]>,
+
+// id: me__instr128_or__st__st_streams__mv_scl2ms__mMStream__mMStream_b__mMStream_tlast__mMStream_tlast_imm__doTlast
+InstrItinData<II_MOV_tlast, [PrefixCycle<AGU_RM_PORT>, SimpleCycle<R_RS_PORT>], [/*src*/1, /*srMS0*/3]>,
+InstrItinData<II_MOV_tlast_eDJ, [SimpleCycle<AGU_RM_PORT>], [/*src*/1, /*srMS0*/3]>,
+InstrItinData<II_MOV_tlast_eR, [SimpleCycle<R_RS_PORT>], [/*src*/1, /*srMS0*/3]>,
+InstrItinData<II_MOV_tlast_eDC, [SimpleCycle<AGU_RM_PORT>], [/*src*/1, /*srMS0*/3]>,
+InstrItinData<II_MOV_tlast_eDN, [SimpleCycle<AGU_RM_PORT>], [/*src*/1, /*srMS0*/3]>,
+InstrItinData<II_MOV_tlast_eP, [SimpleCycle<AGU_RM_PORT>], [/*src*/1, /*srMS0*/3]>,
+InstrItinData<II_MOV_tlast_eM, [SimpleCycle<AGU_RM_PORT>], [/*src*/1, /*srMS0*/3]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__mac_r_rrr__mRa__mRz__mRx__mRy
+InstrItinData<II_MSC, [EmptyCycles<1>, SimpleCycle<R_WA_PORT>], [/*d0*/2, /*a0*/2, /*s0*/1, /*s1*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__mul_r_rr__mRa__mRx__mRy
+InstrItinData<II_MUL, [EmptyCycles<1>, SimpleCycle<R_WA_PORT>], [/*d0*/2, /*s0*/1, /*s1*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__alu_r_r__sne0__mRx
+InstrItinData<II_NEZ, [], [/*d0*/1, /*s0*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__alu_r_rr__sne__mRx__mRy
+InstrItinData<II_NE, [], [/*d0*/1, /*s0*/1, /*s1*/1]>,
+
+// id: me__instr128_or__lda__nop_lda
+InstrItinData<II_NOPA, [], []>,
+
+// id: me__instr128_or__ldb__ldb_or1__nop_ldb
+InstrItinData<II_NOPB, [], []>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__nop_mv
+InstrItinData<II_NOPM, [], []>,
+
+// id: me__instr128_or__st__nop_sts
+InstrItinData<II_NOPS, [], []>,
+
+// id: me__instr128_or__vec__nop_vec
+InstrItinData<II_NOPV, [], []>,
+
+// id: me__instr128_or__alu_mv__lng__nop_lng
+InstrItinData<II_NOPXM, [], []>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__nop_alu
+InstrItinData<II_NOPX, [], []>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__alu_r_rr__or__mRx__mRy
+InstrItinData<II_OR, [], [/*d0*/1, /*s0*/1, /*s1*/1]>,
+
+// id: me__instr128_or__lda__lda_ptr_inc__agua_sa__standalone__agua_sa__sa_modes__agua_sa__pstm_2d__mPa__mDa
+InstrItinData<II_PADDA_2D, [PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<AGUA__DM_AD_DEAD>], [/*ptr_out*/1, /*dc*/1, /*ptr*/1, /*mod*/1]>,
+
+// id: me__instr128_or__lda__lda_ptr_inc__agua_sa__standalone__agua_sa__sa_modes__agua_sa__pstm_3d__mPa__mDSa
+InstrItinData<II_PADDA_3D, [PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<AGUA__DM_AD_DEAD>], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*mod*/1]>,
+
+// id: me__instr128_or__lda__lda_ptr_inc__agua_sa__standalone__agua_sa__sa_modes__agua_sa__pstm_nrm__mPa__mMa
+InstrItinData<II_PADDA_pstm_nrm, [PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<AGUA__DM_AD_DEAD>], [/*ptr_out*/1, /*ptr*/1, /*mod*/1]>,
+
+// id: me__instr128_or__lda__lda_ptr_inc__agua_sa__standalone__agua_sa__sa_modes__agua_sa__pstm_nrm_imm__mPa__m_c10s_step64
+InstrItinData<II_PADDA_pstm_nrm_imm, [PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<AGUA__DM_AD_DEAD>], [/*ptr_out*/1, /*ptr*/1, /*imm*/1]>,
+
+// id: me__instr128_or__ldb__ldb_or1__ldb_ptr_inc__agub_sa__standalone__agub_sa__sa_modes__agub_sa__pstm_2d__mPb__mDb
+InstrItinData<II_PADDB_2D, [], [/*ptr_out*/1, /*dc*/1, /*ptr*/1, /*mod*/1]>,
+
+// id: me__instr128_or__ldb__ldb_or1__ldb_ptr_inc__agub_sa__standalone__agub_sa__sa_modes__agub_sa__pstm_3d__mPb__mDSb
+InstrItinData<II_PADDB_3D, [], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*mod*/1]>,
+
+// id: me__instr128_or__ldb__ldb_or1__ldb_ptr_inc__agub_sa__standalone__agub_sa__sa_modes__agub_sa__pstm_nrm__mPb__mMb
+InstrItinData<II_PADDB_pstm_nrm, [], [/*ptr_out*/1, /*ptr*/1, /*mod*/1]>,
+
+// id: me__instr128_or__ldb__ldb_or1__ldb_ptr_inc__agub_sa__standalone__agub_sa__sa_modes__agub_sa__pstm_nrm_imm__mPb__m_c10s_step64
+InstrItinData<II_PADDB_pstm_nrm_imm, [], [/*ptr_out*/1, /*ptr*/1, /*imm*/1]>,
+
+// id: me__instr128_or__st__st_ptr_inc__agus_sa__standalone__agus_sa__sa_modes__agus_sa__pstm_2d__mPs__mDs
+InstrItinData<II_PADDS_2D, [], [/*ptr_out*/1, /*dc*/1, /*ptr*/1, /*mod*/1]>,
+
+// id: me__instr128_or__st__st_ptr_inc__agus_sa__standalone__agus_sa__sa_modes__agus_sa__pstm_3d__mPs__mDSs
+InstrItinData<II_PADDS_3D, [], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*mod*/1]>,
+
+// id: me__instr128_or__st__st_ptr_inc__agus_sa__standalone__agus_sa__sa_modes__agus_sa__pstm_nrm__mPs__mMs
+InstrItinData<II_PADDS_pstm_nrm, [], [/*ptr_out*/1, /*ptr*/1, /*mod*/1]>,
+
+// id: me__instr128_or__st__st_ptr_inc__agus_sa__standalone__agus_sa__sa_modes__agus_sa__pstm_nrm_imm__mPs__m_c10s_step64
+InstrItinData<II_PADDS_pstm_nrm_imm, [], [/*ptr_out*/1, /*ptr*/1, /*imm*/1]>,
+
+// id: me__instr128_or__alu_mv__lng__lda_ptr_inc_long__agua_sa_lng__standalone_long__agua_sa_lng__standalone_lng__agua_sa_lng__pstm_sp__mSPa__mMa
+InstrItinData<II_PADDXM_pstm_sp, [PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<AGUA__DM_AD_DEAD>], [/*mod*/1, /*sp*/1, /*sp*/1]>,
+
+// id: me__instr128_or__alu_mv__lng__lda_ptr_inc_long__agua_sa_lng__standalone_long__agua_sa_lng__standalone_lng__agua_sa_lng__pstm_sp_imm__mSPa__m_c19s_step64
+InstrItinData<II_PADDXM_pstm_sp_imm, [PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<AGUA__DM_AD_DEAD>], [/*imm*/1, /*sp*/1, /*sp*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__alu_r_r__popcnt__mRx
+InstrItinData<II_POPCOUNT, [], [/*d0*/1, /*s0*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__release_cond__mLockId__mLockId_imm__mRy__mR26_lock
+InstrItinData<II_REL_COND_mLockId_imm, [PrefixCycle<L_RM_PORT>, InstrStage<4, [LCKREQ]>], [/*id*/1, /*s1*/1, /*s2*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__release_cond__mLockId__mLockId_reg__mRx__mRy__mR26_lock
+InstrItinData<II_REL_COND_mLockId_reg, [PrefixCycle<L_RM_PORT>, InstrStage<4, [LCKREQ]>], [/*id*/1, /*s1*/1, /*s2*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__release__mLockId__mLockId_imm__mRy
+InstrItinData<II_REL_mLockId_imm, [InstrStage<4, [LCKREQ]>], [/*id*/1, /*s1*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__release__mLockId__mLockId_reg__mRx__mRy
+InstrItinData<II_REL_mLockId_reg, [InstrStage<4, [LCKREQ]>], [/*id*/1, /*s1*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__jump_return__mLRx
+InstrItinData<II_RET, [SimpleCycle<RSRC_EXECUTION_TRACE>], [/*lr*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__alu_r_rr__subx__mRx__mRy
+InstrItinData<II_SBC, [], [/*d0*/1, /*s0*/1, /*s1*/1, /*srCarry*/1, /*srCarry*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__select_r_rr__IF_FALSE__mRx__mRy__mR27_select
+InstrItinData<II_SEL_EQZ, [SimpleCycle<L_RM_PORT>], [/*d0*/1, /*s0*/1, /*s1*/1, /*s2*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__select_r_rr__IF_TRUE__mRx__mRy__mR27_select
+InstrItinData<II_SEL_NEZ, [SimpleCycle<L_RM_PORT>], [/*d0*/1, /*s0*/1, /*s1*/1, /*s2*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__nlf_combo__nlf_sqrt__mRa__mOptConvDel__mNlfFlt2fx__mFlt2fx_delayed__mS3__mRx
+InstrItinData<II_SQRT_mOptConvDel_mRx, [EmptyCycles<3>, PrefixCycle<CNVOSTAT1>, SimpleCycle<R_WA_PORT>], [/*d0*/4, /*m*/4, /*s0*/1, /*srFPCnvFl2Fx*/4, /*srFPNlf*/4, /*crFPCnvFl2FxMask*/4, /*crFPNlfMask*/4]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__nlf_combo__nlf_sqrt__mRa__mOptConvDel__mNlfFlt2fx__mFlt2fx_delayed__mS3__mRx__mOptConv__mNlfFx2flt__mFx2flt__mS2
+InstrItinData<II_SQRT_mOptConvDel_mRx_mOptConv, [EmptyCycles<3>, PrefixCycle<CNVOSTAT1>, SimpleCycle<R_WA_PORT>], [/*d0*/4, /*m*/4, /*s0*/1, /*m_1*/1, /*srFPCnvFl2Fx*/4, /*srFPCnvFx2Fl*/1, /*srFPNlf*/4, /*crFPCnvFl2FxMask*/4, /*crFPCnvFx2FlMask*/1, /*crFPNlfMask*/4]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__nlf_combo__nlf_sqrt__mRa__mRx
+InstrItinData<II_SQRT_mRx, [EmptyCycles<3>, SimpleCycle<R_WA_PORT>], [/*d0*/4, /*s0*/1, /*srFPNlf*/4, /*crFPNlfMask*/4]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__nlf_combo__nlf_sqrt__mRa__mRx__mOptConv__mNlfFx2flt__mFx2flt__mS2
+InstrItinData<II_SQRT_mRx_mOptConv, [EmptyCycles<3>, SimpleCycle<R_WA_PORT>], [/*d0*/4, /*s0*/1, /*m*/1, /*srFPCnvFx2Fl*/1, /*srFPNlf*/4, /*crFPCnvFx2FlMask*/1, /*crFPNlfMask*/4]>,
+
+// id: me__instr128_or__st__dms_sts__agus_dms__nrm__agus_dms__normal__agus_dms__pstm_2d__mPs__mDs
+MemInstrItinData<II_ST_2D_dms_sts, [AvoidPartWordStore, PrefixCycle<AGU_RM_PORT>, PrefixCycle<QEY_RS_PORT>, SimpleCycle<R_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dc*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_2D_dms_sts_eEle, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dc*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_2D_dms_sts_eElo, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dc*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_2D_dms_sts_eDJ, [AvoidPartWordStore, SimpleCycle<AGU_RM_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dc*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_2D_dms_sts_eR, [AvoidPartWordStore, SimpleCycle<R_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dc*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_2D_dms_sts_mLRs, [AvoidPartWordStore, EmptyCycles<1>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dc*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_2D_dms_sts_eDC, [AvoidPartWordStore, SimpleCycle<AGU_RM_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dc*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_2D_dms_sts_eDN, [AvoidPartWordStore, SimpleCycle<AGU_RM_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dc*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_2D_dms_sts_eEhe, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dc*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_2D_dms_sts_eP, [AvoidPartWordStore, SimpleCycle<AGU_RM_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dc*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_2D_dms_sts_eM, [AvoidPartWordStore, SimpleCycle<AGU_RM_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dc*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_2D_dms_sts_eEho, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dc*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmv_sts_q__agus_dmv__nrm__agus_dmv__normal__agus_dmv__pstm_2d__mPs__mDs
+MemInstrItinData<II_ST_2D_dmv_sts_q, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dc*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmhb_sts__dmh_sts__agua_dmh__normal__agua_dmh__pstm_2d__mPa__mDa__mRs
+MemInstrItinData<II_ST_2D_s16, [IsPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<DMS_WM>, SimpleCycle<R_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dc*/1, /*src*/7, /*ptr*/1, /*mod*/1, /*pe2_ads*/6, /*pe2_ads*/6], MemoryCycles<[5, 11]>>,
+
+// id: me__instr128_or__lda__dmhb_sts__dmb_sts__agua_dmb__normal__agua_dmb__pstm_2d__mPa__mDa__mRs
+MemInstrItinData<II_ST_2D_s8, [IsPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<DMS_WM>, SimpleCycle<R_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dc*/1, /*src*/7, /*ptr*/1, /*mod*/1, /*pe2_ads*/6, /*pe2_ads*/6], MemoryCycles<[5, 11]>>,
+
+// id: me__instr128_or__st__dms_sts__agus_dms__nrm__agus_dms__normal__agus_dms__pstm_3d__mPs__mDSs
+MemInstrItinData<II_ST_3D_dms_sts, [AvoidPartWordStore, PrefixCycle<AGU_RM_PORT>, PrefixCycle<QEY_RS_PORT>, SimpleCycle<R_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_3D_dms_sts_eEle, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_3D_dms_sts_eElo, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_3D_dms_sts_eDJ, [AvoidPartWordStore, SimpleCycle<AGU_RM_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_3D_dms_sts_eR, [AvoidPartWordStore, SimpleCycle<R_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_3D_dms_sts_mLRs, [AvoidPartWordStore, EmptyCycles<1>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_3D_dms_sts_eDC, [AvoidPartWordStore, SimpleCycle<AGU_RM_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_3D_dms_sts_eDN, [AvoidPartWordStore, SimpleCycle<AGU_RM_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_3D_dms_sts_eEhe, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_3D_dms_sts_eP, [AvoidPartWordStore, SimpleCycle<AGU_RM_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_3D_dms_sts_eM, [AvoidPartWordStore, SimpleCycle<AGU_RM_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_3D_dms_sts_eEho, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmv_sts_q__agus_dmv__nrm__agus_dmv__normal__agus_dmv__pstm_3d__mPs__mDSs
+MemInstrItinData<II_ST_3D_dmv_sts_q, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmhb_sts__dmh_sts__agua_dmh__normal__agua_dmh__pstm_3d__mPa__mDSa__mRs
+MemInstrItinData<II_ST_3D_s16, [IsPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<DMS_WM>, SimpleCycle<R_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*src*/7, /*ptr*/1, /*mod*/1, /*pe2_ads*/6, /*pe2_ads*/6], MemoryCycles<[5, 11]>>,
+
+// id: me__instr128_or__lda__dmhb_sts__dmb_sts__agua_dmb__normal__agua_dmb__pstm_3d__mPa__mDSa__mRs
+MemInstrItinData<II_ST_3D_s8, [IsPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<DMS_WM>, SimpleCycle<R_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*src*/7, /*ptr*/1, /*mod*/1, /*pe2_ads*/6, /*pe2_ads*/6], MemoryCycles<[5, 11]>>,
+
+// id: me__instr128_or__st__tm_sts__agus_dms__nrm__agus_dms__normal__agus_dms__pstm_2d__mPs__mDs__mRs
+MemInstrItinData<II_ST_TM_2D, [PrefixCycle<DMS_WM>, SimpleCycle<R_RS_PORT>, PrefixCycle<DM_ADS>, SimpleCycle<TM_AD>], [/*ptr_out*/1, /*dc*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[4]>>,
+
+// id: me__instr128_or__st__tm_sts__agus_dms__nrm__agus_dms__normal__agus_dms__pstm_3d__mPs__mDSs__mRs
+MemInstrItinData<II_ST_TM_3D, [PrefixCycle<DMS_WM>, SimpleCycle<R_RS_PORT>, PrefixCycle<DM_ADS>, SimpleCycle<TM_AD>], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[4]>>,
+
+// id: me__instr128_or__st__tm_sts__agus_dms__nrm__agus_dms__normal__agus_dms__idx__mPs__mDJs__mRs
+MemInstrItinData<II_ST_TM_idx, [PrefixCycle<DMS_WM>, SimpleCycle<R_RS_PORT>, PrefixCycle<DM_ADS>, SimpleCycle<TM_AD>], [/*src*/1, /*ptr*/1, /*dj*/1], MemoryCycles<[4]>>,
+
+// id: me__instr128_or__st__tm_sts__agus_dms__nrm__agus_dms__normal__agus_dms__idx_imm__mPs__m_c06s_step4__mRs
+MemInstrItinData<II_ST_TM_idx_imm, [PrefixCycle<DMS_WM>, SimpleCycle<R_RS_PORT>, PrefixCycle<DM_ADS>, SimpleCycle<TM_AD>], [/*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[4]>>,
+
+// id: me__instr128_or__st__tm_sts__agus_dms__nrm__agus_dms__normal__agus_dms__pstm_nrm__mPs__mMs__mRs
+MemInstrItinData<II_ST_TM_pstm_nrm, [PrefixCycle<DMS_WM>, SimpleCycle<R_RS_PORT>, PrefixCycle<DM_ADS>, SimpleCycle<TM_AD>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[4]>>,
+
+// id: me__instr128_or__st__tm_sts__agus_dms__nrm__agus_dms__normal__agus_dms__pstm_nrm_imm__mPs__m_c06s_step4__mRs
+MemInstrItinData<II_ST_TM_pstm_nrm_imm, [PrefixCycle<DMS_WM>, SimpleCycle<R_RS_PORT>, PrefixCycle<DM_ADS>, SimpleCycle<TM_AD>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[4]>>,
+
+// id: me__instr128_or__st__dms_sts__agus_dms__nrm__agus_dms__normal__agus_dms__idx__mPs__mDJs
+MemInstrItinData<II_ST_dms_sts_idx, [AvoidPartWordStore, PrefixCycle<AGU_RM_PORT>, PrefixCycle<QEY_RS_PORT>, SimpleCycle<R_RS_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_idx_eEle, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_idx_eElo, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_idx_eDJ, [AvoidPartWordStore, SimpleCycle<AGU_RM_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_idx_eR, [AvoidPartWordStore, SimpleCycle<R_RS_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_idx_mLRs, [AvoidPartWordStore, EmptyCycles<1>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_idx_eDC, [AvoidPartWordStore, SimpleCycle<AGU_RM_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_idx_eDN, [AvoidPartWordStore, SimpleCycle<AGU_RM_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_idx_eEhe, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_idx_eP, [AvoidPartWordStore, SimpleCycle<AGU_RM_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_idx_eM, [AvoidPartWordStore, SimpleCycle<AGU_RM_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_idx_eEho, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dms_sts__agus_dms__nrm__agus_dms__normal__agus_dms__idx_imm__mPs__m_c06s_step4
+MemInstrItinData<II_ST_dms_sts_idx_imm, [AvoidPartWordStore, PrefixCycle<AGU_RM_PORT>, PrefixCycle<QEY_RS_PORT>, SimpleCycle<R_RS_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_idx_imm_eEle, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_idx_imm_eElo, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_idx_imm_eDJ, [AvoidPartWordStore, SimpleCycle<AGU_RM_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_idx_imm_eR, [AvoidPartWordStore, SimpleCycle<R_RS_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_idx_imm_mLRs, [AvoidPartWordStore, EmptyCycles<1>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_idx_imm_eDC, [AvoidPartWordStore, SimpleCycle<AGU_RM_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_idx_imm_eDN, [AvoidPartWordStore, SimpleCycle<AGU_RM_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_idx_imm_eEhe, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_idx_imm_eP, [AvoidPartWordStore, SimpleCycle<AGU_RM_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_idx_imm_eM, [AvoidPartWordStore, SimpleCycle<AGU_RM_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_idx_imm_eEho, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dms_sts__agus_dms__nrm__agus_dms__normal__agus_dms__pstm_nrm__mPs__mMs
+MemInstrItinData<II_ST_dms_sts_pstm_nrm, [AvoidPartWordStore, PrefixCycle<AGU_RM_PORT>, PrefixCycle<QEY_RS_PORT>, SimpleCycle<R_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_pstm_nrm_eEle, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_pstm_nrm_eElo, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_pstm_nrm_eDJ, [AvoidPartWordStore, SimpleCycle<AGU_RM_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_pstm_nrm_eR, [AvoidPartWordStore, SimpleCycle<R_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_pstm_nrm_mLRs, [AvoidPartWordStore, EmptyCycles<1>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_pstm_nrm_eDC, [AvoidPartWordStore, SimpleCycle<AGU_RM_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_pstm_nrm_eDN, [AvoidPartWordStore, SimpleCycle<AGU_RM_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_pstm_nrm_eEhe, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_pstm_nrm_eP, [AvoidPartWordStore, SimpleCycle<AGU_RM_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_pstm_nrm_eM, [AvoidPartWordStore, SimpleCycle<AGU_RM_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_pstm_nrm_eEho, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dms_sts__agus_dms__nrm__agus_dms__normal__agus_dms__pstm_nrm_imm__mPs__m_c06s_step4
+MemInstrItinData<II_ST_dms_sts_pstm_nrm_imm, [AvoidPartWordStore, PrefixCycle<AGU_RM_PORT>, PrefixCycle<QEY_RS_PORT>, SimpleCycle<R_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_pstm_nrm_imm_eEle, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_pstm_nrm_imm_eElo, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_pstm_nrm_imm_eDJ, [AvoidPartWordStore, SimpleCycle<AGU_RM_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_pstm_nrm_imm_eR, [AvoidPartWordStore, SimpleCycle<R_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_pstm_nrm_imm_mLRs, [AvoidPartWordStore, EmptyCycles<1>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_pstm_nrm_imm_eDC, [AvoidPartWordStore, SimpleCycle<AGU_RM_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_pstm_nrm_imm_eDN, [AvoidPartWordStore, SimpleCycle<AGU_RM_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_pstm_nrm_imm_eEhe, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_pstm_nrm_imm_eP, [AvoidPartWordStore, SimpleCycle<AGU_RM_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_pstm_nrm_imm_eM, [AvoidPartWordStore, SimpleCycle<AGU_RM_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_pstm_nrm_imm_eEho, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dms_sts_spill__agus_dms__nrm_spill__agus_dms__spill__mSPs__m_c12n_step4
+MemInstrItinData<II_ST_dms_sts_spill, [AvoidPartWordStore, PrefixCycle<AGU_RM_PORT>, PrefixCycle<QEY_RS_PORT>, SimpleCycle<R_RS_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*imm*/1, /*sp*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_spill_eEle, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*imm*/1, /*sp*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_spill_eElo, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*imm*/1, /*sp*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_spill_eDJ, [AvoidPartWordStore, SimpleCycle<AGU_RM_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*imm*/1, /*sp*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_spill_eR, [AvoidPartWordStore, SimpleCycle<R_RS_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*imm*/1, /*sp*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_spill_mLRs, [AvoidPartWordStore, EmptyCycles<1>, SimpleCycle<DM_ADS>], [/*src*/1, /*imm*/1, /*sp*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_spill_eDC, [AvoidPartWordStore, SimpleCycle<AGU_RM_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*imm*/1, /*sp*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_spill_eDN, [AvoidPartWordStore, SimpleCycle<AGU_RM_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*imm*/1, /*sp*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_spill_eEhe, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*imm*/1, /*sp*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_spill_eP, [AvoidPartWordStore, SimpleCycle<AGU_RM_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*imm*/1, /*sp*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_spill_eM, [AvoidPartWordStore, SimpleCycle<AGU_RM_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*imm*/1, /*sp*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_ST_dms_sts_spill_eEho, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*imm*/1, /*sp*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmv_sts_q__agus_dmv__nrm__agus_dmv__normal__agus_dmv__idx__mPs__mDJs
+MemInstrItinData<II_ST_dmv_sts_q_idx, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmv_sts_q__agus_dmv__nrm__agus_dmv__normal__agus_dmv__idx_imm__mPs__m_c08s_step16
+MemInstrItinData<II_ST_dmv_sts_q_idx_imm, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmv_sts_q__agus_dmv__nrm__agus_dmv__normal__agus_dmv__pstm_nrm__mPs__mMs
+MemInstrItinData<II_ST_dmv_sts_q_pstm_nrm, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmv_sts_q__agus_dmv__nrm__agus_dmv__normal__agus_dmv__pstm_nrm_imm__mPs__m_c08s_step16
+MemInstrItinData<II_ST_dmv_sts_q_pstm_nrm_imm, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmv_sts_q_spill__agus_dmv__nrm_spill__agus_dmv__spill__mSPs__m_c14n_step16
+MemInstrItinData<II_ST_dmv_sts_q_spill, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*imm*/1, /*sp*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmhb_sts__dmh_sts__agua_dmh__normal__agua_dmh__idx__mPa__mDJa__mRs
+MemInstrItinData<II_ST_s16_idx, [IsPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<DMS_WM>, SimpleCycle<R_RS_PORT>, SimpleCycle<DM_ADS>], [/*src*/7, /*ptr*/1, /*dj*/1, /*pe2_ads*/6, /*pe2_ads*/6], MemoryCycles<[5, 11]>>,
+
+// id: me__instr128_or__lda__dmhb_sts__dmh_sts__agua_dmh__normal__agua_dmh__idx_imm__mPa__m_c05s_step2__mRs
+MemInstrItinData<II_ST_s16_idx_imm, [IsPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<DMS_WM>, SimpleCycle<R_RS_PORT>, SimpleCycle<DM_ADS>], [/*src*/7, /*ptr*/1, /*imm*/1, /*pe2_ads*/6, /*pe2_ads*/6], MemoryCycles<[5, 11]>>,
+
+// id: me__instr128_or__lda__dmhb_sts__dmh_sts__agua_dmh__normal__agua_dmh__pstm_nrm__mPa__mMa__mRs
+MemInstrItinData<II_ST_s16_pstm_nrm, [IsPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<DMS_WM>, SimpleCycle<R_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/7, /*ptr*/1, /*mod*/1, /*pe2_ads*/6, /*pe2_ads*/6], MemoryCycles<[5, 11]>>,
+
+// id: me__instr128_or__lda__dmhb_sts__dmh_sts__agua_dmh__normal__agua_dmh__pstm_nrm_imm__mPa__m_c05s_step2__mRs
+MemInstrItinData<II_ST_s16_pstm_nrm_imm, [IsPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<DMS_WM>, SimpleCycle<R_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/7, /*ptr*/1, /*imm*/1, /*pe2_ads*/6, /*pe2_ads*/6], MemoryCycles<[5, 11]>>,
+
+// id: me__instr128_or__lda__dmhb_sts__dmb_sts__agua_dmb__normal__agua_dmb__idx__mPa__mDJa__mRs
+MemInstrItinData<II_ST_s8_idx, [IsPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<DMS_WM>, SimpleCycle<R_RS_PORT>, SimpleCycle<DM_ADS>], [/*src*/7, /*ptr*/1, /*dj*/1, /*pe2_ads*/6, /*pe2_ads*/6], MemoryCycles<[5, 11]>>,
+
+// id: me__instr128_or__lda__dmhb_sts__dmb_sts__agua_dmb__normal__agua_dmb__idx_imm__mPa__m_c04s__mRs
+MemInstrItinData<II_ST_s8_idx_imm, [IsPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<DMS_WM>, SimpleCycle<R_RS_PORT>, SimpleCycle<DM_ADS>], [/*src*/7, /*ptr*/1, /*imm*/1, /*pe2_ads*/6, /*pe2_ads*/6], MemoryCycles<[5, 11]>>,
+
+// id: me__instr128_or__lda__dmhb_sts__dmb_sts__agua_dmb__normal__agua_dmb__pstm_nrm__mPa__mMa__mRs
+MemInstrItinData<II_ST_s8_pstm_nrm, [IsPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<DMS_WM>, SimpleCycle<R_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/7, /*ptr*/1, /*mod*/1, /*pe2_ads*/6, /*pe2_ads*/6], MemoryCycles<[5, 11]>>,
+
+// id: me__instr128_or__lda__dmhb_sts__dmb_sts__agua_dmb__normal__agua_dmb__pstm_nrm_imm__mPa__m_c04s__mRs
+MemInstrItinData<II_ST_s8_pstm_nrm_imm, [IsPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<DM_ADA>, EmptyCycles<4>, PrefixCycle<DMS_WM>, SimpleCycle<R_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/7, /*ptr*/1, /*imm*/1, /*pe2_ads*/6, /*pe2_ads*/6], MemoryCycles<[5, 11]>>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__alu_r_rr__sub__mRx__mRy
+InstrItinData<II_SUB, [], [/*d0*/1, /*s0*/1, /*s1*/1, /*srCarry*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_abs__vec_cmp_out_single__vec_cmp_out_single32__mR16_vcompare__vec_add_nX__vaddSign0
+InstrItinData<II_VABS_GTZ_16_vaddSign0, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s2*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_abs__vec_cmp_out_single__vec_cmp_out_single32__mR16_vcompare__vec_add_nX__vaddSign1
+InstrItinData<II_VABS_GTZ_16_vaddSign1, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s2*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_abs__vec_cmp_out_single__vec_cmp_out_single16__mR16_vcompare__vec_add_nX__vaddSign0
+InstrItinData<II_VABS_GTZ_32_vaddSign0, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s2*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_abs__vec_cmp_out_single__vec_cmp_out_single16__mR16_vcompare__vec_add_nX__vaddSign1
+InstrItinData<II_VABS_GTZ_32_vaddSign1, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s2*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_abs__vec_cmp_out_single__vec_cmp_out_single64__mL8m__vec_add_nX__vaddSign0
+InstrItinData<II_VABS_GTZ_8_vaddSign0, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s2*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_abs__vec_cmp_out_single__vec_cmp_out_single64__mL8m__vec_add_nX__vaddSign1
+InstrItinData<II_VABS_GTZ_8_vaddSign1, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s2*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_reg__mDMm__vmul_cm_core__vmul_cm_core_X_QX__vacc_cm_core__mRv
+InstrItinData<II_VADDMAC_vmac_cm2_add_reg_vmul_cm_core_X_QX, [EmptyCycles<3>, SimpleCycle<DM_RM_PORT>], [/*dst*/6, /*acc1*/4, /*acc2*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*acc2*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_reg__mDMm__vmul_cm_core__vmul_cm_core_X_QY__mQYsw__vacc_cm_core__mRv
+InstrItinData<II_VADDMAC_vmac_cm2_add_reg_vmul_cm_core_X_QY, [EmptyCycles<3>, SimpleCycle<DM_RM_PORT>], [/*dst*/6, /*acc1*/4, /*acc2*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*acc2*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_reg__mDMm__vmul_cm_core__vmul_cm_core_X_X__vacc_cm_core__mRv
+InstrItinData<II_VADDMAC_vmac_cm2_add_reg_vmul_cm_core_X_X, [EmptyCycles<3>, SimpleCycle<DM_RM_PORT>], [/*dst*/6, /*acc1*/4, /*acc2*/4, /*s1*/1, /*s2*/1, /*acc*/1], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*acc2*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_reg__mDMm__vmul_cm_core__vmul_cm_core_X_Y__mYw__vacc_cm_core__mRv
+InstrItinData<II_VADDMAC_vmac_cm2_add_reg_vmul_cm_core_X_Y, [EmptyCycles<3>, SimpleCycle<DM_RM_PORT>], [/*dst*/6, /*acc1*/4, /*acc2*/4, /*s1*/1, /*s2*/1, /*acc*/1], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*acc2*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_reg__mDMm__vmul_cm_core__vmul_cm_core_Y_QX__mYv__vacc_cm_core__mRv
+InstrItinData<II_VADDMAC_vmac_cm2_add_reg_vmul_cm_core_Y_QX, [EmptyCycles<3>, SimpleCycle<DM_RM_PORT>], [/*dst*/6, /*acc1*/4, /*acc2*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*acc2*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_reg__mDMm__vmul_cm_core__vmul_cm_core_Y_QY__mYv__mQYsw__vacc_cm_core__mRv
+InstrItinData<II_VADDMAC_vmac_cm2_add_reg_vmul_cm_core_Y_QY, [EmptyCycles<3>, SimpleCycle<DM_RM_PORT>], [/*dst*/6, /*acc1*/4, /*acc2*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*acc2*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_reg__mDMm__vmul_cm_core__vmul_cm_core_Y_X__mYv__vacc_cm_core__mRv
+InstrItinData<II_VADDMAC_vmac_cm2_add_reg_vmul_cm_core_Y_X, [EmptyCycles<3>, SimpleCycle<DM_RM_PORT>], [/*dst*/6, /*acc1*/4, /*acc2*/4, /*s1*/1, /*s2*/1, /*acc*/1], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*acc2*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_reg__mDMm__vmul_cm_core__vmul_cm_core_Y_Y__mYv__mYw__vacc_cm_core__mRv
+InstrItinData<II_VADDMAC_vmac_cm2_add_reg_vmul_cm_core_Y_Y, [EmptyCycles<3>, SimpleCycle<DM_RM_PORT>], [/*dst*/6, /*acc1*/4, /*acc2*/4, /*s1*/1, /*s2*/1, /*acc*/1], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*acc2*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd__vmac_scd_dm_reg__vmac_scd_dm_core__mSCD_E4__mSCD_r__mR31_scd__vmul_cm_core__vmul_cm_core_X_QX__vacc_cm_core__mRv
+InstrItinData<II_VADDMAC_vmac_cm2_add_scd_vmul_cm_core_X_QX, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*acc1*/4, /*c*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2, /*crSCDEn*/2], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*c*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd__vmac_scd_dm_reg__vmac_scd_dm_core__mSCD_E4__mSCD_r__mR31_scd__vmul_cm_core__vmul_cm_core_X_QY__mQYsw__vacc_cm_core__mRv
+InstrItinData<II_VADDMAC_vmac_cm2_add_scd_vmul_cm_core_X_QY, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*acc1*/4, /*c*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2, /*crSCDEn*/2], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*c*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd__vmac_scd_dm_reg__vmac_scd_dm_core__mSCD_E4__mSCD_r__mR31_scd__vmul_cm_core__vmul_cm_core_X_X__vacc_cm_core__mRv
+InstrItinData<II_VADDMAC_vmac_cm2_add_scd_vmul_cm_core_X_X, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*acc1*/4, /*c*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*crSCDEn*/2], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*c*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd__vmac_scd_dm_reg__vmac_scd_dm_core__mSCD_E4__mSCD_r__mR31_scd__vmul_cm_core__vmul_cm_core_X_Y__mYw__vacc_cm_core__mRv
+InstrItinData<II_VADDMAC_vmac_cm2_add_scd_vmul_cm_core_X_Y, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*acc1*/4, /*c*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*crSCDEn*/2], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*c*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd__vmac_scd_dm_reg__vmac_scd_dm_core__mSCD_E4__mSCD_r__mR31_scd__vmul_cm_core__vmul_cm_core_Y_QX__mYv__vacc_cm_core__mRv
+InstrItinData<II_VADDMAC_vmac_cm2_add_scd_vmul_cm_core_Y_QX, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*acc1*/4, /*c*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2, /*crSCDEn*/2], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*c*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd__vmac_scd_dm_reg__vmac_scd_dm_core__mSCD_E4__mSCD_r__mR31_scd__vmul_cm_core__vmul_cm_core_Y_QY__mYv__mQYsw__vacc_cm_core__mRv
+InstrItinData<II_VADDMAC_vmac_cm2_add_scd_vmul_cm_core_Y_QY, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*acc1*/4, /*c*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2, /*crSCDEn*/2], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*c*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd__vmac_scd_dm_reg__vmac_scd_dm_core__mSCD_E4__mSCD_r__mR31_scd__vmul_cm_core__vmul_cm_core_Y_X__mYv__vacc_cm_core__mRv
+InstrItinData<II_VADDMAC_vmac_cm2_add_scd_vmul_cm_core_Y_X, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*acc1*/4, /*c*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*crSCDEn*/2], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*c*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd__vmac_scd_dm_reg__vmac_scd_dm_core__mSCD_E4__mSCD_r__mR31_scd__vmul_cm_core__vmul_cm_core_Y_Y__mYv__mYw__vacc_cm_core__mRv
+InstrItinData<II_VADDMAC_vmac_cm2_add_scd_vmul_cm_core_Y_Y, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*acc1*/4, /*c*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*crSCDEn*/2], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*c*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd_incr__vmac_scd_dm_dyn__vmac_scd_dm_core__mSCD_E4__mSCD_r_incr__mR31_scd__vmul_cm_core__vmul_cm_core_X_QX__vacc_cm_core__mRv
+InstrItinData<II_VADDMAC_vmac_cm2_add_scd_incr_vmul_cm_core_X_QX, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*r_out*/2, /*acc1*/4, /*r*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2, /*crSCDEn*/2], [/*dst*/VEC_Bypass, /*r_out*/NoBypass, /*acc1*/VEC_Bypass, /*r*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd_incr__vmac_scd_dm_dyn__vmac_scd_dm_core__mSCD_E4__mSCD_r_incr__mR31_scd__vmul_cm_core__vmul_cm_core_X_QY__mQYsw__vacc_cm_core__mRv
+InstrItinData<II_VADDMAC_vmac_cm2_add_scd_incr_vmul_cm_core_X_QY, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*r_out*/2, /*acc1*/4, /*r*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2, /*crSCDEn*/2], [/*dst*/VEC_Bypass, /*r_out*/NoBypass, /*acc1*/VEC_Bypass, /*r*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd_incr__vmac_scd_dm_dyn__vmac_scd_dm_core__mSCD_E4__mSCD_r_incr__mR31_scd__vmul_cm_core__vmul_cm_core_X_X__vacc_cm_core__mRv
+InstrItinData<II_VADDMAC_vmac_cm2_add_scd_incr_vmul_cm_core_X_X, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*r_out*/2, /*acc1*/4, /*r*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*crSCDEn*/2], [/*dst*/VEC_Bypass, /*r_out*/NoBypass, /*acc1*/VEC_Bypass, /*r*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd_incr__vmac_scd_dm_dyn__vmac_scd_dm_core__mSCD_E4__mSCD_r_incr__mR31_scd__vmul_cm_core__vmul_cm_core_X_Y__mYw__vacc_cm_core__mRv
+InstrItinData<II_VADDMAC_vmac_cm2_add_scd_incr_vmul_cm_core_X_Y, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*r_out*/2, /*acc1*/4, /*r*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*crSCDEn*/2], [/*dst*/VEC_Bypass, /*r_out*/NoBypass, /*acc1*/VEC_Bypass, /*r*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd_incr__vmac_scd_dm_dyn__vmac_scd_dm_core__mSCD_E4__mSCD_r_incr__mR31_scd__vmul_cm_core__vmul_cm_core_Y_QX__mYv__vacc_cm_core__mRv
+InstrItinData<II_VADDMAC_vmac_cm2_add_scd_incr_vmul_cm_core_Y_QX, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*r_out*/2, /*acc1*/4, /*r*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2, /*crSCDEn*/2], [/*dst*/VEC_Bypass, /*r_out*/NoBypass, /*acc1*/VEC_Bypass, /*r*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd_incr__vmac_scd_dm_dyn__vmac_scd_dm_core__mSCD_E4__mSCD_r_incr__mR31_scd__vmul_cm_core__vmul_cm_core_Y_QY__mYv__mQYsw__vacc_cm_core__mRv
+InstrItinData<II_VADDMAC_vmac_cm2_add_scd_incr_vmul_cm_core_Y_QY, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*r_out*/2, /*acc1*/4, /*r*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2, /*crSCDEn*/2], [/*dst*/VEC_Bypass, /*r_out*/NoBypass, /*acc1*/VEC_Bypass, /*r*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd_incr__vmac_scd_dm_dyn__vmac_scd_dm_core__mSCD_E4__mSCD_r_incr__mR31_scd__vmul_cm_core__vmul_cm_core_Y_X__mYv__vacc_cm_core__mRv
+InstrItinData<II_VADDMAC_vmac_cm2_add_scd_incr_vmul_cm_core_Y_X, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*r_out*/2, /*acc1*/4, /*r*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*crSCDEn*/2], [/*dst*/VEC_Bypass, /*r_out*/NoBypass, /*acc1*/VEC_Bypass, /*r*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd_incr__vmac_scd_dm_dyn__vmac_scd_dm_core__mSCD_E4__mSCD_r_incr__mR31_scd__vmul_cm_core__vmul_cm_core_Y_Y__mYv__mYw__vacc_cm_core__mRv
+InstrItinData<II_VADDMAC_vmac_cm2_add_scd_incr_vmul_cm_core_Y_Y, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*r_out*/2, /*acc1*/4, /*r*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*crSCDEn*/2], [/*dst*/VEC_Bypass, /*r_out*/NoBypass, /*acc1*/VEC_Bypass, /*r*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac_bf__mDMa__vmac_bf1_add__mDMa__vmac_cm2_add__vmac_cm2_add_reg__mDMm__vmul_bf_core__vmul_bf_core_X_X__vacc_bf_core__mRv
+InstrItinData<II_VADDMAC_f_vaddmac_bf_vmac_cm2_add_reg_vmul_bf_core_X_X, [EmptyCycles<3>, SimpleCycle<DM_RM_PORT>], [/*dst*/6, /*acc1*/4, /*acc2*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*acc2*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac_bf__mDMa__vmac_bf1_add__mDMa__vmac_cm2_add__vmac_cm2_add_reg__mDMm__vmul_bf_core__vmul_bf_core_Y_Y__mYv__mYw__vacc_bf_core__mRv
+InstrItinData<II_VADDMAC_f_vaddmac_bf_vmac_cm2_add_reg_vmul_bf_core_Y_Y, [EmptyCycles<3>, SimpleCycle<DM_RM_PORT>], [/*dst*/6, /*acc1*/4, /*acc2*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*acc2*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac_bf__mDMa__vmac_bf1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd__vmac_scd_dm_reg__vmac_scd_dm_core__mSCD_E4__mSCD_r__mR31_scd__vmul_bf_core__vmul_bf_core_X_X__vacc_bf_core__mRv
+InstrItinData<II_VADDMAC_f_vaddmac_bf_vmac_cm2_add_scd_vmul_bf_core_X_X, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*acc1*/4, /*c*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7, /*crSCDEn*/2], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*c*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac_bf__mDMa__vmac_bf1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd__vmac_scd_dm_reg__vmac_scd_dm_core__mSCD_E4__mSCD_r__mR31_scd__vmul_bf_core__vmul_bf_core_Y_Y__mYv__mYw__vacc_bf_core__mRv
+InstrItinData<II_VADDMAC_f_vaddmac_bf_vmac_cm2_add_scd_vmul_bf_core_Y_Y, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*acc1*/4, /*c*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7, /*crSCDEn*/2], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*c*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac_bf__mDMa__vmac_bf1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd_incr__vmac_scd_dm_dyn__vmac_scd_dm_core__mSCD_E4__mSCD_r_incr__mR31_scd__vmul_bf_core__vmul_bf_core_X_X__vacc_bf_core__mRv
+InstrItinData<II_VADDMAC_f_vaddmac_bf_vmac_cm2_add_scd_incr_vmul_bf_core_X_X, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*r_out*/2, /*acc1*/4, /*r*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7, /*crSCDEn*/2], [/*dst*/NoBypass, /*r_out*/NoBypass, /*acc1*/VEC_Bypass, /*r*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac_bf__mDMa__vmac_bf1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd_incr__vmac_scd_dm_dyn__vmac_scd_dm_core__mSCD_E4__mSCD_r_incr__mR31_scd__vmul_bf_core__vmul_bf_core_Y_Y__mYv__mYw__vacc_bf_core__mRv
+InstrItinData<II_VADDMAC_f_vaddmac_bf_vmac_cm2_add_scd_incr_vmul_bf_core_Y_Y, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*r_out*/2, /*acc1*/4, /*r*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7, /*crSCDEn*/2], [/*dst*/NoBypass, /*r_out*/NoBypass, /*acc1*/VEC_Bypass, /*r*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac_bfp__mDMa__vmac_bfp1_add__mDMa__vmac_cm2_add__vmac_cm2_add_reg__mDMm__vmul_bfp_core__vmul_bfp_core_EX_EX__vacc_bfp_core__mRv
+InstrItinData<II_VADDMAC_f_vaddmac_bfp_vmac_cm2_add_reg_vmul_bfp_core_EX_EX, [EmptyCycles<3>, SimpleCycle<DM_RM_PORT>], [/*dst*/6, /*acc1*/4, /*acc2*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*acc2*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac_bfp__mDMa__vmac_bfp1_add__mDMa__vmac_cm2_add__vmac_cm2_add_reg__mDMm__vmul_bfp_core__vmul_bfp_core_EX_EY__mEYw__vacc_bfp_core__mRv
+InstrItinData<II_VADDMAC_f_vaddmac_bfp_vmac_cm2_add_reg_vmul_bfp_core_EX_EY, [EmptyCycles<3>, SimpleCycle<DM_RM_PORT>], [/*dst*/6, /*acc1*/4, /*acc2*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*acc2*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac_bfp__mDMa__vmac_bfp1_add__mDMa__vmac_cm2_add__vmac_cm2_add_reg__mDMm__vmul_bfp_core__vmul_bfp_core_EX_QEY__mQEYsw__vacc_bfp_core__mRv
+InstrItinData<II_VADDMAC_f_vaddmac_bfp_vmac_cm2_add_reg_vmul_bfp_core_EX_QEY, [EmptyCycles<3>, SimpleCycle<DM_RM_PORT>], [/*dst*/6, /*acc1*/4, /*acc2*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*srSparse_of*/2, /*crFPMask*/7], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*acc2*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac_bfp__mDMa__vmac_bfp1_add__mDMa__vmac_cm2_add__vmac_cm2_add_reg__mDMm__vmul_bfp_core__vmul_bfp_core_EY_QEX__mEYv__vacc_bfp_core__mRv
+InstrItinData<II_VADDMAC_f_vaddmac_bfp_vmac_cm2_add_reg_vmul_bfp_core_EY_QEX, [EmptyCycles<3>, SimpleCycle<DM_RM_PORT>], [/*dst*/6, /*acc1*/4, /*acc2*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*srSparse_of*/2, /*crFPMask*/7], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*acc2*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac_bfp__mDMa__vmac_bfp1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd__vmac_scd_dm_reg__vmac_scd_dm_core__mSCD_E4__mSCD_r__mR31_scd__vmul_bfp_core__vmul_bfp_core_EX_EX__vacc_bfp_core__mRv
+InstrItinData<II_VADDMAC_f_vaddmac_bfp_vmac_cm2_add_scd_vmul_bfp_core_EX_EX, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*acc1*/4, /*c*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7, /*crSCDEn*/2], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*c*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac_bfp__mDMa__vmac_bfp1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd__vmac_scd_dm_reg__vmac_scd_dm_core__mSCD_E4__mSCD_r__mR31_scd__vmul_bfp_core__vmul_bfp_core_EX_EY__mEYw__vacc_bfp_core__mRv
+InstrItinData<II_VADDMAC_f_vaddmac_bfp_vmac_cm2_add_scd_vmul_bfp_core_EX_EY, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*acc1*/4, /*c*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7, /*crSCDEn*/2], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*c*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac_bfp__mDMa__vmac_bfp1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd__vmac_scd_dm_reg__vmac_scd_dm_core__mSCD_E4__mSCD_r__mR31_scd__vmul_bfp_core__vmul_bfp_core_EX_QEY__mQEYsw__vacc_bfp_core__mRv
+InstrItinData<II_VADDMAC_f_vaddmac_bfp_vmac_cm2_add_scd_vmul_bfp_core_EX_QEY, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*acc1*/4, /*c*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*srSparse_of*/2, /*crFPMask*/7, /*crSCDEn*/2], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*c*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac_bfp__mDMa__vmac_bfp1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd__vmac_scd_dm_reg__vmac_scd_dm_core__mSCD_E4__mSCD_r__mR31_scd__vmul_bfp_core__vmul_bfp_core_EY_QEX__mEYv__vacc_bfp_core__mRv
+InstrItinData<II_VADDMAC_f_vaddmac_bfp_vmac_cm2_add_scd_vmul_bfp_core_EY_QEX, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*acc1*/4, /*c*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*srSparse_of*/2, /*crFPMask*/7, /*crSCDEn*/2], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*c*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac_bfp__mDMa__vmac_bfp1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd_incr__vmac_scd_dm_dyn__vmac_scd_dm_core__mSCD_E4__mSCD_r_incr__mR31_scd__vmul_bfp_core__vmul_bfp_core_EX_EX__vacc_bfp_core__mRv
+InstrItinData<II_VADDMAC_f_vaddmac_bfp_vmac_cm2_add_scd_incr_vmul_bfp_core_EX_EX, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*r_out*/2, /*acc1*/4, /*r*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7, /*crSCDEn*/2], [/*dst*/NoBypass, /*r_out*/NoBypass, /*acc1*/VEC_Bypass, /*r*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac_bfp__mDMa__vmac_bfp1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd_incr__vmac_scd_dm_dyn__vmac_scd_dm_core__mSCD_E4__mSCD_r_incr__mR31_scd__vmul_bfp_core__vmul_bfp_core_EX_EY__mEYw__vacc_bfp_core__mRv
+InstrItinData<II_VADDMAC_f_vaddmac_bfp_vmac_cm2_add_scd_incr_vmul_bfp_core_EX_EY, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*r_out*/2, /*acc1*/4, /*r*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7, /*crSCDEn*/2], [/*dst*/NoBypass, /*r_out*/NoBypass, /*acc1*/VEC_Bypass, /*r*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac_bfp__mDMa__vmac_bfp1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd_incr__vmac_scd_dm_dyn__vmac_scd_dm_core__mSCD_E4__mSCD_r_incr__mR31_scd__vmul_bfp_core__vmul_bfp_core_EX_QEY__mQEYsw__vacc_bfp_core__mRv
+InstrItinData<II_VADDMAC_f_vaddmac_bfp_vmac_cm2_add_scd_incr_vmul_bfp_core_EX_QEY, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*r_out*/2, /*acc1*/4, /*r*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*srSparse_of*/2, /*crFPMask*/7, /*crSCDEn*/2], [/*dst*/NoBypass, /*r_out*/NoBypass, /*acc1*/VEC_Bypass, /*r*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac_bfp__mDMa__vmac_bfp1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd_incr__vmac_scd_dm_dyn__vmac_scd_dm_core__mSCD_E4__mSCD_r_incr__mR31_scd__vmul_bfp_core__vmul_bfp_core_EY_QEX__mEYv__vacc_bfp_core__mRv
+InstrItinData<II_VADDMAC_f_vaddmac_bfp_vmac_cm2_add_scd_incr_vmul_bfp_core_EY_QEX, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*r_out*/2, /*acc1*/4, /*r*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*srSparse_of*/2, /*crFPMask*/7, /*crSCDEn*/2], [/*dst*/NoBypass, /*r_out*/NoBypass, /*acc1*/VEC_Bypass, /*r*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_reg__mDMm__vmul_cm_core__vmul_cm_core_X_QX__vacc_cm_core__mRv
+InstrItinData<II_VADDMSC_vmac_cm2_add_reg_vmul_cm_core_X_QX, [EmptyCycles<3>, SimpleCycle<DM_RM_PORT>], [/*dst*/6, /*acc1*/4, /*acc2*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*acc2*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_reg__mDMm__vmul_cm_core__vmul_cm_core_X_QY__mQYsw__vacc_cm_core__mRv
+InstrItinData<II_VADDMSC_vmac_cm2_add_reg_vmul_cm_core_X_QY, [EmptyCycles<3>, SimpleCycle<DM_RM_PORT>], [/*dst*/6, /*acc1*/4, /*acc2*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*acc2*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_reg__mDMm__vmul_cm_core__vmul_cm_core_X_X__vacc_cm_core__mRv
+InstrItinData<II_VADDMSC_vmac_cm2_add_reg_vmul_cm_core_X_X, [EmptyCycles<3>, SimpleCycle<DM_RM_PORT>], [/*dst*/6, /*acc1*/4, /*acc2*/4, /*s1*/1, /*s2*/1, /*acc*/1], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*acc2*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_reg__mDMm__vmul_cm_core__vmul_cm_core_X_Y__mYw__vacc_cm_core__mRv
+InstrItinData<II_VADDMSC_vmac_cm2_add_reg_vmul_cm_core_X_Y, [EmptyCycles<3>, SimpleCycle<DM_RM_PORT>], [/*dst*/6, /*acc1*/4, /*acc2*/4, /*s1*/1, /*s2*/1, /*acc*/1], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*acc2*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_reg__mDMm__vmul_cm_core__vmul_cm_core_Y_QX__mYv__vacc_cm_core__mRv
+InstrItinData<II_VADDMSC_vmac_cm2_add_reg_vmul_cm_core_Y_QX, [EmptyCycles<3>, SimpleCycle<DM_RM_PORT>], [/*dst*/6, /*acc1*/4, /*acc2*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*acc2*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_reg__mDMm__vmul_cm_core__vmul_cm_core_Y_QY__mYv__mQYsw__vacc_cm_core__mRv
+InstrItinData<II_VADDMSC_vmac_cm2_add_reg_vmul_cm_core_Y_QY, [EmptyCycles<3>, SimpleCycle<DM_RM_PORT>], [/*dst*/6, /*acc1*/4, /*acc2*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*acc2*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_reg__mDMm__vmul_cm_core__vmul_cm_core_Y_X__mYv__vacc_cm_core__mRv
+InstrItinData<II_VADDMSC_vmac_cm2_add_reg_vmul_cm_core_Y_X, [EmptyCycles<3>, SimpleCycle<DM_RM_PORT>], [/*dst*/6, /*acc1*/4, /*acc2*/4, /*s1*/1, /*s2*/1, /*acc*/1], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*acc2*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_reg__mDMm__vmul_cm_core__vmul_cm_core_Y_Y__mYv__mYw__vacc_cm_core__mRv
+InstrItinData<II_VADDMSC_vmac_cm2_add_reg_vmul_cm_core_Y_Y, [EmptyCycles<3>, SimpleCycle<DM_RM_PORT>], [/*dst*/6, /*acc1*/4, /*acc2*/4, /*s1*/1, /*s2*/1, /*acc*/1], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*acc2*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd__vmac_scd_dm_reg__vmac_scd_dm_core__mSCD_E4__mSCD_r__mR31_scd__vmul_cm_core__vmul_cm_core_X_QX__vacc_cm_core__mRv
+InstrItinData<II_VADDMSC_vmac_cm2_add_scd_vmul_cm_core_X_QX, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*acc1*/4, /*c*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2, /*crSCDEn*/2], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*c*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd__vmac_scd_dm_reg__vmac_scd_dm_core__mSCD_E4__mSCD_r__mR31_scd__vmul_cm_core__vmul_cm_core_X_QY__mQYsw__vacc_cm_core__mRv
+InstrItinData<II_VADDMSC_vmac_cm2_add_scd_vmul_cm_core_X_QY, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*acc1*/4, /*c*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2, /*crSCDEn*/2], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*c*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd__vmac_scd_dm_reg__vmac_scd_dm_core__mSCD_E4__mSCD_r__mR31_scd__vmul_cm_core__vmul_cm_core_X_X__vacc_cm_core__mRv
+InstrItinData<II_VADDMSC_vmac_cm2_add_scd_vmul_cm_core_X_X, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*acc1*/4, /*c*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*crSCDEn*/2], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*c*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd__vmac_scd_dm_reg__vmac_scd_dm_core__mSCD_E4__mSCD_r__mR31_scd__vmul_cm_core__vmul_cm_core_X_Y__mYw__vacc_cm_core__mRv
+InstrItinData<II_VADDMSC_vmac_cm2_add_scd_vmul_cm_core_X_Y, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*acc1*/4, /*c*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*crSCDEn*/2], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*c*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd__vmac_scd_dm_reg__vmac_scd_dm_core__mSCD_E4__mSCD_r__mR31_scd__vmul_cm_core__vmul_cm_core_Y_QX__mYv__vacc_cm_core__mRv
+InstrItinData<II_VADDMSC_vmac_cm2_add_scd_vmul_cm_core_Y_QX, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*acc1*/4, /*c*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2, /*crSCDEn*/2], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*c*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd__vmac_scd_dm_reg__vmac_scd_dm_core__mSCD_E4__mSCD_r__mR31_scd__vmul_cm_core__vmul_cm_core_Y_QY__mYv__mQYsw__vacc_cm_core__mRv
+InstrItinData<II_VADDMSC_vmac_cm2_add_scd_vmul_cm_core_Y_QY, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*acc1*/4, /*c*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2, /*crSCDEn*/2], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*c*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd__vmac_scd_dm_reg__vmac_scd_dm_core__mSCD_E4__mSCD_r__mR31_scd__vmul_cm_core__vmul_cm_core_Y_X__mYv__vacc_cm_core__mRv
+InstrItinData<II_VADDMSC_vmac_cm2_add_scd_vmul_cm_core_Y_X, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*acc1*/4, /*c*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*crSCDEn*/2], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*c*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd__vmac_scd_dm_reg__vmac_scd_dm_core__mSCD_E4__mSCD_r__mR31_scd__vmul_cm_core__vmul_cm_core_Y_Y__mYv__mYw__vacc_cm_core__mRv
+InstrItinData<II_VADDMSC_vmac_cm2_add_scd_vmul_cm_core_Y_Y, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*acc1*/4, /*c*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*crSCDEn*/2], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*c*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd_incr__vmac_scd_dm_dyn__vmac_scd_dm_core__mSCD_E4__mSCD_r_incr__mR31_scd__vmul_cm_core__vmul_cm_core_X_QX__vacc_cm_core__mRv
+InstrItinData<II_VADDMSC_vmac_cm2_add_scd_incr_vmul_cm_core_X_QX, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*r_out*/2, /*acc1*/4, /*r*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2, /*crSCDEn*/2], [/*dst*/VEC_Bypass, /*r_out*/NoBypass, /*acc1*/VEC_Bypass, /*r*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd_incr__vmac_scd_dm_dyn__vmac_scd_dm_core__mSCD_E4__mSCD_r_incr__mR31_scd__vmul_cm_core__vmul_cm_core_X_QY__mQYsw__vacc_cm_core__mRv
+InstrItinData<II_VADDMSC_vmac_cm2_add_scd_incr_vmul_cm_core_X_QY, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*r_out*/2, /*acc1*/4, /*r*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2, /*crSCDEn*/2], [/*dst*/VEC_Bypass, /*r_out*/NoBypass, /*acc1*/VEC_Bypass, /*r*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd_incr__vmac_scd_dm_dyn__vmac_scd_dm_core__mSCD_E4__mSCD_r_incr__mR31_scd__vmul_cm_core__vmul_cm_core_X_X__vacc_cm_core__mRv
+InstrItinData<II_VADDMSC_vmac_cm2_add_scd_incr_vmul_cm_core_X_X, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*r_out*/2, /*acc1*/4, /*r*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*crSCDEn*/2], [/*dst*/VEC_Bypass, /*r_out*/NoBypass, /*acc1*/VEC_Bypass, /*r*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd_incr__vmac_scd_dm_dyn__vmac_scd_dm_core__mSCD_E4__mSCD_r_incr__mR31_scd__vmul_cm_core__vmul_cm_core_X_Y__mYw__vacc_cm_core__mRv
+InstrItinData<II_VADDMSC_vmac_cm2_add_scd_incr_vmul_cm_core_X_Y, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*r_out*/2, /*acc1*/4, /*r*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*crSCDEn*/2], [/*dst*/VEC_Bypass, /*r_out*/NoBypass, /*acc1*/VEC_Bypass, /*r*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd_incr__vmac_scd_dm_dyn__vmac_scd_dm_core__mSCD_E4__mSCD_r_incr__mR31_scd__vmul_cm_core__vmul_cm_core_Y_QX__mYv__vacc_cm_core__mRv
+InstrItinData<II_VADDMSC_vmac_cm2_add_scd_incr_vmul_cm_core_Y_QX, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*r_out*/2, /*acc1*/4, /*r*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2, /*crSCDEn*/2], [/*dst*/VEC_Bypass, /*r_out*/NoBypass, /*acc1*/VEC_Bypass, /*r*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd_incr__vmac_scd_dm_dyn__vmac_scd_dm_core__mSCD_E4__mSCD_r_incr__mR31_scd__vmul_cm_core__vmul_cm_core_Y_QY__mYv__mQYsw__vacc_cm_core__mRv
+InstrItinData<II_VADDMSC_vmac_cm2_add_scd_incr_vmul_cm_core_Y_QY, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*r_out*/2, /*acc1*/4, /*r*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2, /*crSCDEn*/2], [/*dst*/VEC_Bypass, /*r_out*/NoBypass, /*acc1*/VEC_Bypass, /*r*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd_incr__vmac_scd_dm_dyn__vmac_scd_dm_core__mSCD_E4__mSCD_r_incr__mR31_scd__vmul_cm_core__vmul_cm_core_Y_X__mYv__vacc_cm_core__mRv
+InstrItinData<II_VADDMSC_vmac_cm2_add_scd_incr_vmul_cm_core_Y_X, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*r_out*/2, /*acc1*/4, /*r*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*crSCDEn*/2], [/*dst*/VEC_Bypass, /*r_out*/NoBypass, /*acc1*/VEC_Bypass, /*r*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd_incr__vmac_scd_dm_dyn__vmac_scd_dm_core__mSCD_E4__mSCD_r_incr__mR31_scd__vmul_cm_core__vmul_cm_core_Y_Y__mYv__mYw__vacc_cm_core__mRv
+InstrItinData<II_VADDMSC_vmac_cm2_add_scd_incr_vmul_cm_core_Y_Y, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*r_out*/2, /*acc1*/4, /*r*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*crSCDEn*/2], [/*dst*/VEC_Bypass, /*r_out*/NoBypass, /*acc1*/VEC_Bypass, /*r*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac_bf__mDMa__vmac_bf1_add__mDMa__vmac_cm2_add__vmac_cm2_add_reg__mDMm__vmul_bf_core__vmul_bf_core_X_X__vacc_bf_core__mRv
+InstrItinData<II_VADDMSC_f_vaddmac_bf_vmac_cm2_add_reg_vmul_bf_core_X_X, [EmptyCycles<3>, SimpleCycle<DM_RM_PORT>], [/*dst*/6, /*acc1*/4, /*acc2*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*acc2*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac_bf__mDMa__vmac_bf1_add__mDMa__vmac_cm2_add__vmac_cm2_add_reg__mDMm__vmul_bf_core__vmul_bf_core_Y_Y__mYv__mYw__vacc_bf_core__mRv
+InstrItinData<II_VADDMSC_f_vaddmac_bf_vmac_cm2_add_reg_vmul_bf_core_Y_Y, [EmptyCycles<3>, SimpleCycle<DM_RM_PORT>], [/*dst*/6, /*acc1*/4, /*acc2*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*acc2*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac_bf__mDMa__vmac_bf1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd__vmac_scd_dm_reg__vmac_scd_dm_core__mSCD_E4__mSCD_r__mR31_scd__vmul_bf_core__vmul_bf_core_X_X__vacc_bf_core__mRv
+InstrItinData<II_VADDMSC_f_vaddmac_bf_vmac_cm2_add_scd_vmul_bf_core_X_X, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*acc1*/4, /*c*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7, /*crSCDEn*/2], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*c*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac_bf__mDMa__vmac_bf1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd__vmac_scd_dm_reg__vmac_scd_dm_core__mSCD_E4__mSCD_r__mR31_scd__vmul_bf_core__vmul_bf_core_Y_Y__mYv__mYw__vacc_bf_core__mRv
+InstrItinData<II_VADDMSC_f_vaddmac_bf_vmac_cm2_add_scd_vmul_bf_core_Y_Y, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*acc1*/4, /*c*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7, /*crSCDEn*/2], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*c*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac_bf__mDMa__vmac_bf1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd_incr__vmac_scd_dm_dyn__vmac_scd_dm_core__mSCD_E4__mSCD_r_incr__mR31_scd__vmul_bf_core__vmul_bf_core_X_X__vacc_bf_core__mRv
+InstrItinData<II_VADDMSC_f_vaddmac_bf_vmac_cm2_add_scd_incr_vmul_bf_core_X_X, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*r_out*/2, /*acc1*/4, /*r*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7, /*crSCDEn*/2], [/*dst*/NoBypass, /*r_out*/NoBypass, /*acc1*/VEC_Bypass, /*r*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac_bf__mDMa__vmac_bf1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd_incr__vmac_scd_dm_dyn__vmac_scd_dm_core__mSCD_E4__mSCD_r_incr__mR31_scd__vmul_bf_core__vmul_bf_core_Y_Y__mYv__mYw__vacc_bf_core__mRv
+InstrItinData<II_VADDMSC_f_vaddmac_bf_vmac_cm2_add_scd_incr_vmul_bf_core_Y_Y, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*r_out*/2, /*acc1*/4, /*r*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7, /*crSCDEn*/2], [/*dst*/NoBypass, /*r_out*/NoBypass, /*acc1*/VEC_Bypass, /*r*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac_bfp__mDMa__vmac_bfp1_add__mDMa__vmac_cm2_add__vmac_cm2_add_reg__mDMm__vmul_bfp_core__vmul_bfp_core_EX_EX__vacc_bfp_core__mRv
+InstrItinData<II_VADDMSC_f_vaddmac_bfp_vmac_cm2_add_reg_vmul_bfp_core_EX_EX, [EmptyCycles<3>, SimpleCycle<DM_RM_PORT>], [/*dst*/6, /*acc1*/4, /*acc2*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*acc2*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac_bfp__mDMa__vmac_bfp1_add__mDMa__vmac_cm2_add__vmac_cm2_add_reg__mDMm__vmul_bfp_core__vmul_bfp_core_EX_EY__mEYw__vacc_bfp_core__mRv
+InstrItinData<II_VADDMSC_f_vaddmac_bfp_vmac_cm2_add_reg_vmul_bfp_core_EX_EY, [EmptyCycles<3>, SimpleCycle<DM_RM_PORT>], [/*dst*/6, /*acc1*/4, /*acc2*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*acc2*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac_bfp__mDMa__vmac_bfp1_add__mDMa__vmac_cm2_add__vmac_cm2_add_reg__mDMm__vmul_bfp_core__vmul_bfp_core_EX_QEY__mQEYsw__vacc_bfp_core__mRv
+InstrItinData<II_VADDMSC_f_vaddmac_bfp_vmac_cm2_add_reg_vmul_bfp_core_EX_QEY, [EmptyCycles<3>, SimpleCycle<DM_RM_PORT>], [/*dst*/6, /*acc1*/4, /*acc2*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*srSparse_of*/2, /*crFPMask*/7], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*acc2*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac_bfp__mDMa__vmac_bfp1_add__mDMa__vmac_cm2_add__vmac_cm2_add_reg__mDMm__vmul_bfp_core__vmul_bfp_core_EY_QEX__mEYv__vacc_bfp_core__mRv
+InstrItinData<II_VADDMSC_f_vaddmac_bfp_vmac_cm2_add_reg_vmul_bfp_core_EY_QEX, [EmptyCycles<3>, SimpleCycle<DM_RM_PORT>], [/*dst*/6, /*acc1*/4, /*acc2*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*srSparse_of*/2, /*crFPMask*/7], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*acc2*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac_bfp__mDMa__vmac_bfp1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd__vmac_scd_dm_reg__vmac_scd_dm_core__mSCD_E4__mSCD_r__mR31_scd__vmul_bfp_core__vmul_bfp_core_EX_EX__vacc_bfp_core__mRv
+InstrItinData<II_VADDMSC_f_vaddmac_bfp_vmac_cm2_add_scd_vmul_bfp_core_EX_EX, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*acc1*/4, /*c*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7, /*crSCDEn*/2], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*c*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac_bfp__mDMa__vmac_bfp1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd__vmac_scd_dm_reg__vmac_scd_dm_core__mSCD_E4__mSCD_r__mR31_scd__vmul_bfp_core__vmul_bfp_core_EX_EY__mEYw__vacc_bfp_core__mRv
+InstrItinData<II_VADDMSC_f_vaddmac_bfp_vmac_cm2_add_scd_vmul_bfp_core_EX_EY, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*acc1*/4, /*c*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7, /*crSCDEn*/2], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*c*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac_bfp__mDMa__vmac_bfp1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd__vmac_scd_dm_reg__vmac_scd_dm_core__mSCD_E4__mSCD_r__mR31_scd__vmul_bfp_core__vmul_bfp_core_EX_QEY__mQEYsw__vacc_bfp_core__mRv
+InstrItinData<II_VADDMSC_f_vaddmac_bfp_vmac_cm2_add_scd_vmul_bfp_core_EX_QEY, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*acc1*/4, /*c*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*srSparse_of*/2, /*crFPMask*/7, /*crSCDEn*/2], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*c*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac_bfp__mDMa__vmac_bfp1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd__vmac_scd_dm_reg__vmac_scd_dm_core__mSCD_E4__mSCD_r__mR31_scd__vmul_bfp_core__vmul_bfp_core_EY_QEX__mEYv__vacc_bfp_core__mRv
+InstrItinData<II_VADDMSC_f_vaddmac_bfp_vmac_cm2_add_scd_vmul_bfp_core_EY_QEX, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*acc1*/4, /*c*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*srSparse_of*/2, /*crFPMask*/7, /*crSCDEn*/2], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*c*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac_bfp__mDMa__vmac_bfp1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd_incr__vmac_scd_dm_dyn__vmac_scd_dm_core__mSCD_E4__mSCD_r_incr__mR31_scd__vmul_bfp_core__vmul_bfp_core_EX_EX__vacc_bfp_core__mRv
+InstrItinData<II_VADDMSC_f_vaddmac_bfp_vmac_cm2_add_scd_incr_vmul_bfp_core_EX_EX, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*r_out*/2, /*acc1*/4, /*r*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7, /*crSCDEn*/2], [/*dst*/NoBypass, /*r_out*/NoBypass, /*acc1*/VEC_Bypass, /*r*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac_bfp__mDMa__vmac_bfp1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd_incr__vmac_scd_dm_dyn__vmac_scd_dm_core__mSCD_E4__mSCD_r_incr__mR31_scd__vmul_bfp_core__vmul_bfp_core_EX_EY__mEYw__vacc_bfp_core__mRv
+InstrItinData<II_VADDMSC_f_vaddmac_bfp_vmac_cm2_add_scd_incr_vmul_bfp_core_EX_EY, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*r_out*/2, /*acc1*/4, /*r*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7, /*crSCDEn*/2], [/*dst*/NoBypass, /*r_out*/NoBypass, /*acc1*/VEC_Bypass, /*r*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac_bfp__mDMa__vmac_bfp1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd_incr__vmac_scd_dm_dyn__vmac_scd_dm_core__mSCD_E4__mSCD_r_incr__mR31_scd__vmul_bfp_core__vmul_bfp_core_EX_QEY__mQEYsw__vacc_bfp_core__mRv
+InstrItinData<II_VADDMSC_f_vaddmac_bfp_vmac_cm2_add_scd_incr_vmul_bfp_core_EX_QEY, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*r_out*/2, /*acc1*/4, /*r*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*srSparse_of*/2, /*crFPMask*/7, /*crSCDEn*/2], [/*dst*/NoBypass, /*r_out*/NoBypass, /*acc1*/VEC_Bypass, /*r*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vaddmac_bfp__mDMa__vmac_bfp1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd_incr__vmac_scd_dm_dyn__vmac_scd_dm_core__mSCD_E4__mSCD_r_incr__mR31_scd__vmul_bfp_core__vmul_bfp_core_EY_QEX__mEYv__vacc_bfp_core__mRv
+InstrItinData<II_VADDMSC_f_vaddmac_bfp_vmac_cm2_add_scd_incr_vmul_bfp_core_EY_QEX, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*r_out*/2, /*acc1*/4, /*r*/2, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*srSparse_of*/2, /*crFPMask*/7, /*crSCDEn*/2], [/*dst*/NoBypass, /*r_out*/NoBypass, /*acc1*/VEC_Bypass, /*r*/NoBypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_add_select__vaddsub__vec_mask_in__vec_mask_in32__mRS16m__vec_add_mX__vec_add_nX
+InstrItinData<II_VADDSUB_16, [SimpleCycle<L_RM_PORT>], [/*d*/2, /*s1*/1, /*s2*/1, /*sel*/1], [/*d*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass, /*sel*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_add_select__vaddsub__vec_mask_in__vec_mask_in16__mRS16m__vec_add_mX__vec_add_nX
+InstrItinData<II_VADDSUB_32, [SimpleCycle<L_RM_PORT>], [/*d*/2, /*s1*/1, /*s2*/1, /*sel*/1], [/*d*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass, /*sel*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_add_select__vaddsub__vec_mask_in__vec_mask_in64__mLm__vec_add_mX__vec_add_nX
+InstrItinData<II_VADDSUB_8, [SimpleCycle<L_RM_PORT>], [/*d*/2, /*s1*/1, /*s2*/1, /*sel*/1], [/*d*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass, /*sel*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_add__vadd__vec_size__vec_size32__vec_add_mX__vec_add_nX
+InstrItinData<II_VADD_16, [], [/*d*/2, /*s1*/1, /*s2*/1], [/*d*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_add__vadd__vec_size__vec_size16__vec_add_mX__vec_add_nX
+InstrItinData<II_VADD_32, [], [/*d*/2, /*s1*/1, /*s2*/1], [/*d*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_add__vadd__vec_size__vec_size64__vec_add_mX__vec_add_nX
+InstrItinData<II_VADD_8, [], [/*d*/2, /*s1*/1, /*s2*/1], [/*d*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__vec__vacc__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_reg__mDMm__vacc_cm_core__mRv
+InstrItinData<II_VADD_vmac_cm2_add_reg, [EmptyCycles<3>, SimpleCycle<DM_RM_PORT>], [/*dst*/6, /*acc1*/4, /*acc2*/4, /*acc*/1], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*acc2*/VEC_Bypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vacc__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd__vmac_scd_dm_reg__vmac_scd_dm_core__mSCD_E4__mSCD_r__mR31_scd__vacc_cm_core__mRv
+InstrItinData<II_VADD_vmac_cm2_add_scd, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*acc1*/4, /*c*/2, /*acc*/1, /*crSCDEn*/2], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*c*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vacc__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd_incr__vmac_scd_dm_dyn__vmac_scd_dm_core__mSCD_E4__mSCD_r_incr__mR31_scd__vacc_cm_core__mRv
+InstrItinData<II_VADD_vmac_cm2_add_scd_incr, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*r_out*/2, /*acc1*/4, /*r*/2, /*acc*/1, /*crSCDEn*/2], [/*dst*/VEC_Bypass, /*r_out*/NoBypass, /*acc1*/VEC_Bypass, /*r*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vacc_fp__mDMa__vmac_bf1_add__mDMa__vmac_cm2_add__vmac_cm2_add_reg__mDMm__vacc_bf_core__mRv
+InstrItinData<II_VADD_f_vmac_cm2_add_reg, [EmptyCycles<3>, SimpleCycle<DM_RM_PORT>], [/*dst*/6, /*acc1*/4, /*acc2*/4, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*acc2*/VEC_Bypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vacc_fp__mDMa__vmac_bf1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd__vmac_scd_dm_reg__vmac_scd_dm_core__mSCD_E4__mSCD_r__mR31_scd__vacc_bf_core__mRv
+InstrItinData<II_VADD_f_vmac_cm2_add_scd, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*acc1*/4, /*c*/2, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7, /*crSCDEn*/2], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*c*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vacc_fp__mDMa__vmac_bf1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd_incr__vmac_scd_dm_dyn__vmac_scd_dm_core__mSCD_E4__mSCD_r_incr__mR31_scd__vacc_bf_core__mRv
+InstrItinData<II_VADD_f_vmac_cm2_add_scd_incr, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*r_out*/2, /*acc1*/4, /*r*/2, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7, /*crSCDEn*/2], [/*dst*/NoBypass, /*r_out*/NoBypass, /*acc1*/VEC_Bypass, /*r*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_log__vband__vec_add_mX__vec_add_nX__vec_size16
+InstrItinData<II_VBAND, [], [/*d*/2, /*s1*/1, /*s2*/1], [/*d*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_broadcast_shuffle__vec_broadcast_shuffle_bm__vec_broadcast_shuffle_core__vec_insert_src__vec_insert_src_R__s2v_wide_16__mRm__mR29_insert
+InstrItinData<II_VBCSTSHFL_16_vec_broadcast_shuffle_bm, [SimpleCycle<L_RM_PORT>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1, /*mod*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_broadcast_shuffle__vec_broadcast_shuffle_x__vec_broadcast_shuffle_core__vec_insert_src__vec_insert_src_R__s2v_wide_16__mRm__mR29_insert
+InstrItinData<II_VBCSTSHFL_16_vec_broadcast_shuffle_x, [SimpleCycle<L_RM_PORT>], [/*dst*/2, /*src*/1, /*mod*/1], [/*dst*/MV_Bypass, /*src*/NoBypass, /*mod*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_broadcast_shuffle__vec_broadcast_shuffle_bm__vec_broadcast_shuffle_core__vec_insert_src__vec_insert_src_R__s2v_wide_32__mRm__mR29_insert
+InstrItinData<II_VBCSTSHFL_32_vec_broadcast_shuffle_bm, [SimpleCycle<L_RM_PORT>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1, /*mod*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_broadcast_shuffle__vec_broadcast_shuffle_x__vec_broadcast_shuffle_core__vec_insert_src__vec_insert_src_R__s2v_wide_32__mRm__mR29_insert
+InstrItinData<II_VBCSTSHFL_32_vec_broadcast_shuffle_x, [SimpleCycle<L_RM_PORT>], [/*dst*/2, /*src*/1, /*mod*/1], [/*dst*/MV_Bypass, /*src*/NoBypass, /*mod*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_broadcast_shuffle__vec_broadcast_shuffle_bm__vec_broadcast_shuffle_core__vec_insert_src__vec_insert_src_L__s2v_wide_64__mLm__mR29_insert
+InstrItinData<II_VBCSTSHFL_64_vec_broadcast_shuffle_bm, [SimpleCycle<L_RM_PORT>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1, /*mod*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_broadcast_shuffle__vec_broadcast_shuffle_x__vec_broadcast_shuffle_core__vec_insert_src__vec_insert_src_L__s2v_wide_64__mLm__mR29_insert
+InstrItinData<II_VBCSTSHFL_64_vec_broadcast_shuffle_x, [SimpleCycle<L_RM_PORT>], [/*dst*/2, /*src*/1, /*mod*/1], [/*dst*/MV_Bypass, /*src*/NoBypass, /*mod*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_broadcast_shuffle__vec_broadcast_shuffle_bm__vec_broadcast_shuffle_core__vec_insert_src__vec_insert_src_R__s2v_wide_8__mRm__mR29_insert
+InstrItinData<II_VBCSTSHFL_8_vec_broadcast_shuffle_bm, [SimpleCycle<L_RM_PORT>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1, /*mod*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_broadcast_shuffle__vec_broadcast_shuffle_x__vec_broadcast_shuffle_core__vec_insert_src__vec_insert_src_R__s2v_wide_8__mRm__mR29_insert
+InstrItinData<II_VBCSTSHFL_8_vec_broadcast_shuffle_x, [SimpleCycle<L_RM_PORT>], [/*dst*/2, /*src*/1, /*mod*/1], [/*dst*/MV_Bypass, /*src*/NoBypass, /*mod*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_broadcast__vec_insert_src__vec_insert_src_R__s2v_wide_16__mRm__mMvXDst
+InstrItinData<II_VBCST_16, [SimpleCycle<L_RM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/MV_Bypass, /*src*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_broadcast__vec_insert_src__vec_insert_src_R__s2v_wide_32__mRm__mMvXDst
+InstrItinData<II_VBCST_32, [SimpleCycle<L_RM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/MV_Bypass, /*src*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_broadcast__vec_insert_src__vec_insert_src_L__s2v_wide_64__mLm__mMvXDst
+InstrItinData<II_VBCST_64, [SimpleCycle<L_RM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/MV_Bypass, /*src*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_broadcast__vec_insert_src__vec_insert_src_R__s2v_wide_8__mRm__mMvXDst
+InstrItinData<II_VBCST_8, [SimpleCycle<L_RM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/MV_Bypass, /*src*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_not__vbneg_ltz__vec_cmp_out_single__vec_cmp_out_single32__mR16_vcompare__vec_add_nX
+InstrItinData<II_VBNEG_LTZ_s16, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s2*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_not__vbneg_ltz__vec_cmp_out_single__vec_cmp_out_single16__mR16_vcompare__vec_add_nX
+InstrItinData<II_VBNEG_LTZ_s32, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s2*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_not__vbneg_ltz__vec_cmp_out_single__vec_cmp_out_single64__mL8m__vec_add_nX
+InstrItinData<II_VBNEG_LTZ_s8, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s2*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_log__vbor__vec_add_mX__vec_add_nX__vec_size16
+InstrItinData<II_VBOR, [], [/*d*/2, /*s1*/1, /*s2*/1], [/*d*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__vec__vclr__mDMa
+InstrItinData<II_VCLR, [], [/*dst*/6], [/*dst*/VEC_Bypass]>,
+
+// id: me__instr128_or__st__mv_conv__mv_w_srs_bf__mWbfsrs
+InstrItinData<II_VCONV_bf16_fp32_mv_w_srs_bf, [SimpleCycle<CRRND_RS>, SimpleCycle<QEY_WA_PORT>], [/*dst*/2, /*src*/1, /*srF2FFlags*/2, /*crF2FMask*/1, /*crRnd*/1]>,
+
+// id: me__instr128_or__st__mv_conv__mv_x_srs_bf__mXbfsrs
+InstrItinData<II_VCONV_bf16_fp32_mv_x_srs_bf, [SimpleCycle<CRRND_RS>, SimpleCycle<QEY_WA_PORT>], [/*dst*/2, /*src*/1, /*srF2FFlags*/2, /*crF2FMask*/1, /*crRnd*/1]>,
+
+// id: me__instr128_or__st__mv_conv__mv_fp_to_bfp__mFp2Bp__mBp2Bp
+InstrItinData<II_VCONV_bfp16ebs16_ebs8, [SimpleCycle<QEY_RS_PORT>, SimpleCycle<CRRND_RS>, EmptyCycles<1>, SimpleCycle<QEY_WA_PORT>], [/*dst*/4, /*src*/1, /*srF2BFlags*/3, /*crF2BMask*/3, /*crRnd*/2]>,
+
+// id: me__instr128_or__st__mv_conv__mv_fp_to_bfp__mFp2Bp__mFp2B1__mDMs
+InstrItinData<II_VCONV_bfp16ebs16_fp32, [EmptyCycles<1>, SimpleCycle<CRRND_RS>, EmptyCycles<1>, SimpleCycle<QEY_WA_PORT>], [/*dst*/4, /*src*/1, /*srF2BFlags*/3, /*crF2BMask*/3, /*crRnd*/2]>,
+
+// id: me__instr128_or__st__mv_conv__mv_fp_to_bfp__mFp2Bp__mFp2B0__mDMs
+InstrItinData<II_VCONV_bfp16ebs8_fp32, [EmptyCycles<1>, SimpleCycle<CRRND_RS>, EmptyCycles<1>, SimpleCycle<QEY_WA_PORT>], [/*dst*/4, /*src*/1, /*srF2BFlags*/3, /*crF2BMask*/3, /*crRnd*/2]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_ups_wbf
+InstrItinData<II_VCONV_fp32_bf16_mv_ups_wbf, [EmptyCycles<1>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_ups_xbf
+InstrItinData<II_VCONV_fp32_bf16_mv_ups_xbf, [EmptyCycles<1>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_eqz__vec_cmp_out__vec_cmp_out32__mRS16m__vec_add_nX
+InstrItinData<II_VEQZ_16, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*cmp*/2, /*s2*/1], [/*cmp*/NoBypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_eqz__vec_cmp_out__vec_cmp_out16__mRS16m__vec_add_nX
+InstrItinData<II_VEQZ_32, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*cmp*/2, /*s2*/1], [/*cmp*/NoBypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_eqz__vec_cmp_out__vec_cmp_out64__mLm__vec_add_nX
+InstrItinData<II_VEQZ_8, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*cmp*/2, /*s2*/1], [/*cmp*/NoBypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_nlf__vexp2_subn
+InstrItinData<II_VEXP2, [SimpleCycle<DM_RM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/MV_Bypass, /*src*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_extract_broadcast_shuffle__mRm__mR29_insert
+InstrItinData<II_VEXTBCSTSHFL_128, [SimpleCycle<L_RM_PORT>], [/*dst*/2, /*s1*/1, /*idx*/1, /*mod*/1], [/*dst*/MV_Bypass, /*s1*/NoBypass, /*idx*/NoBypass, /*mod*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_extract_broadcast_shuffle__s2v_wide2_16__mRm__mR29_insert
+InstrItinData<II_VEXTBCSTSHFL_16, [SimpleCycle<L_RM_PORT>], [/*dst*/2, /*s1*/1, /*idx*/1, /*mod*/1], [/*dst*/MV_Bypass, /*s1*/NoBypass, /*idx*/NoBypass, /*mod*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_extract_broadcast_shuffle__s2v_wide2_32__mRm__mR29_insert
+InstrItinData<II_VEXTBCSTSHFL_32, [SimpleCycle<L_RM_PORT>], [/*dst*/2, /*s1*/1, /*idx*/1, /*mod*/1], [/*dst*/MV_Bypass, /*s1*/NoBypass, /*idx*/NoBypass, /*mod*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_extract_broadcast_shuffle__s2v_wide2_64__mRm__mR29_insert
+InstrItinData<II_VEXTBCSTSHFL_64, [SimpleCycle<L_RM_PORT>], [/*dst*/2, /*s1*/1, /*idx*/1, /*mod*/1], [/*dst*/MV_Bypass, /*s1*/NoBypass, /*idx*/NoBypass, /*mod*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_extract_broadcast_imm__vec_extract_broadcast_core__s2v_wide1_128
+InstrItinData<II_VEXTBCST_128_vec_extract_broadcast_imm, [], [/*dst*/2, /*s1*/1, /*idx*/1], [/*dst*/MV_Bypass, /*s1*/MV_Bypass, /*idx*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_extract_broadcast_r__vec_extract_broadcast_core__s2v_wide1_128__mRm
+InstrItinData<II_VEXTBCST_128_vec_extract_broadcast_r, [SimpleCycle<L_RM_PORT>], [/*dst*/2, /*s1*/1, /*idx*/1], [/*dst*/MV_Bypass, /*s1*/MV_Bypass, /*idx*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_extract_broadcast_imm__vec_extract_broadcast_core__s2v_wide1_16
+InstrItinData<II_VEXTBCST_16_vec_extract_broadcast_imm, [], [/*dst*/2, /*s1*/1, /*idx*/1], [/*dst*/MV_Bypass, /*s1*/MV_Bypass, /*idx*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_extract_broadcast_r__vec_extract_broadcast_core__s2v_wide1_16__mRm
+InstrItinData<II_VEXTBCST_16_vec_extract_broadcast_r, [SimpleCycle<L_RM_PORT>], [/*dst*/2, /*s1*/1, /*idx*/1], [/*dst*/MV_Bypass, /*s1*/MV_Bypass, /*idx*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_extract_broadcast_imm__vec_extract_broadcast_core__s2v_wide1_32
+InstrItinData<II_VEXTBCST_32_vec_extract_broadcast_imm, [], [/*dst*/2, /*s1*/1, /*idx*/1], [/*dst*/MV_Bypass, /*s1*/MV_Bypass, /*idx*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_extract_broadcast_r__vec_extract_broadcast_core__s2v_wide1_32__mRm
+InstrItinData<II_VEXTBCST_32_vec_extract_broadcast_r, [SimpleCycle<L_RM_PORT>], [/*dst*/2, /*s1*/1, /*idx*/1], [/*dst*/MV_Bypass, /*s1*/MV_Bypass, /*idx*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_extract_broadcast_imm__vec_extract_broadcast_core__s2v_wide1_64
+InstrItinData<II_VEXTBCST_64_vec_extract_broadcast_imm, [], [/*dst*/2, /*s1*/1, /*idx*/1], [/*dst*/MV_Bypass, /*s1*/MV_Bypass, /*idx*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_extract_broadcast_r__vec_extract_broadcast_core__s2v_wide1_64__mRm
+InstrItinData<II_VEXTBCST_64_vec_extract_broadcast_r, [SimpleCycle<L_RM_PORT>], [/*dst*/2, /*s1*/1, /*idx*/1], [/*dst*/MV_Bypass, /*s1*/MV_Bypass, /*idx*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_extract_broadcast_imm__vec_extract_broadcast_core__s2v_wide1_8
+InstrItinData<II_VEXTBCST_8_vec_extract_broadcast_imm, [], [/*dst*/2, /*s1*/1, /*idx*/1], [/*dst*/MV_Bypass, /*s1*/MV_Bypass, /*idx*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_extract_broadcast_r__vec_extract_broadcast_core__s2v_wide1_8__mRm
+InstrItinData<II_VEXTBCST_8_vec_extract_broadcast_r, [SimpleCycle<L_RM_PORT>], [/*dst*/2, /*s1*/1, /*idx*/1], [/*dst*/MV_Bypass, /*s1*/MV_Bypass, /*idx*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_extract_imm__vec_extract_core__vec_extract_dest__vec_extract_dest_R__s2v_wide_16__mRm__vaddSign0__mIdxImm
+InstrItinData<II_VEXTRACT_16_vec_extract_imm_vaddSign0, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*s1*/1, /*idx*/1, /*vaddSign0*/1], [/*dst*/NoBypass, /*s1*/MV_Bypass, /*idx*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_extract_imm__vec_extract_core__vec_extract_dest__vec_extract_dest_R__s2v_wide_16__mRm__vaddSign1__mIdxImm
+InstrItinData<II_VEXTRACT_16_vec_extract_imm_vaddSign1, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*s1*/1, /*idx*/1, /*vaddSign1*/1], [/*dst*/NoBypass, /*s1*/MV_Bypass, /*idx*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_extract_r__vec_extract_core__vec_extract_dest__vec_extract_dest_R__s2v_wide_16__mRm__vaddSign0
+InstrItinData<II_VEXTRACT_16_vec_extract_r_vaddSign0, [SimpleCycle<L_RM_PORT>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*s1*/1, /*idx*/1, /*vaddSign0*/1], [/*dst*/NoBypass, /*s1*/MV_Bypass, /*idx*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_extract_r__vec_extract_core__vec_extract_dest__vec_extract_dest_R__s2v_wide_16__mRm__vaddSign1
+InstrItinData<II_VEXTRACT_16_vec_extract_r_vaddSign1, [SimpleCycle<L_RM_PORT>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*s1*/1, /*idx*/1, /*vaddSign1*/1], [/*dst*/NoBypass, /*s1*/MV_Bypass, /*idx*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_extract_imm__vec_extract_core__vec_extract_dest__vec_extract_dest_R__s2v_wide_32__mRm__vaddSign0__mIdxImm
+InstrItinData<II_VEXTRACT_32_vec_extract_imm_vaddSign0, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*s1*/1, /*idx*/1, /*vaddSign0*/1], [/*dst*/NoBypass, /*s1*/MV_Bypass, /*idx*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_extract_imm__vec_extract_core__vec_extract_dest__vec_extract_dest_R__s2v_wide_32__mRm__vaddSign1__mIdxImm
+InstrItinData<II_VEXTRACT_32_vec_extract_imm_vaddSign1, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*s1*/1, /*idx*/1, /*vaddSign1*/1], [/*dst*/NoBypass, /*s1*/MV_Bypass, /*idx*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_extract_r__vec_extract_core__vec_extract_dest__vec_extract_dest_R__s2v_wide_32__mRm__vaddSign0
+InstrItinData<II_VEXTRACT_32_vec_extract_r_vaddSign0, [SimpleCycle<L_RM_PORT>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*s1*/1, /*idx*/1, /*vaddSign0*/1], [/*dst*/NoBypass, /*s1*/MV_Bypass, /*idx*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_extract_r__vec_extract_core__vec_extract_dest__vec_extract_dest_R__s2v_wide_32__mRm__vaddSign1
+InstrItinData<II_VEXTRACT_32_vec_extract_r_vaddSign1, [SimpleCycle<L_RM_PORT>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*s1*/1, /*idx*/1, /*vaddSign1*/1], [/*dst*/NoBypass, /*s1*/MV_Bypass, /*idx*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_extract_imm__vec_extract_core__vec_extract_dest__vec_extract_dest_L__s2v_wide_64__mLm__vaddSign0__mIdxImm
+InstrItinData<II_VEXTRACT_64_vec_extract_imm_vaddSign0, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*s1*/1, /*idx*/1, /*vaddSign0*/1], [/*dst*/NoBypass, /*s1*/MV_Bypass, /*idx*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_extract_imm__vec_extract_core__vec_extract_dest__vec_extract_dest_L__s2v_wide_64__mLm__vaddSign1__mIdxImm
+InstrItinData<II_VEXTRACT_64_vec_extract_imm_vaddSign1, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*s1*/1, /*idx*/1, /*vaddSign1*/1], [/*dst*/NoBypass, /*s1*/MV_Bypass, /*idx*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_extract_r__vec_extract_core__vec_extract_dest__vec_extract_dest_L__s2v_wide_64__mLm__vaddSign0__mRm
+InstrItinData<II_VEXTRACT_64_vec_extract_r_vaddSign0, [SimpleCycle<L_RM_PORT>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*s1*/1, /*idx*/1, /*vaddSign0*/1], [/*dst*/NoBypass, /*s1*/MV_Bypass, /*idx*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_extract_r__vec_extract_core__vec_extract_dest__vec_extract_dest_L__s2v_wide_64__mLm__vaddSign1__mRm
+InstrItinData<II_VEXTRACT_64_vec_extract_r_vaddSign1, [SimpleCycle<L_RM_PORT>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*s1*/1, /*idx*/1, /*vaddSign1*/1], [/*dst*/NoBypass, /*s1*/MV_Bypass, /*idx*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_extract_imm__vec_extract_core__vec_extract_dest__vec_extract_dest_R__s2v_wide_8__mRm__vaddSign0__mIdxImm
+InstrItinData<II_VEXTRACT_8_vec_extract_imm_vaddSign0, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*s1*/1, /*idx*/1, /*vaddSign0*/1], [/*dst*/NoBypass, /*s1*/MV_Bypass, /*idx*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_extract_imm__vec_extract_core__vec_extract_dest__vec_extract_dest_R__s2v_wide_8__mRm__vaddSign1__mIdxImm
+InstrItinData<II_VEXTRACT_8_vec_extract_imm_vaddSign1, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*s1*/1, /*idx*/1, /*vaddSign1*/1], [/*dst*/NoBypass, /*s1*/MV_Bypass, /*idx*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_extract_r__vec_extract_core__vec_extract_dest__vec_extract_dest_R__s2v_wide_8__mRm__vaddSign0
+InstrItinData<II_VEXTRACT_8_vec_extract_r_vaddSign0, [SimpleCycle<L_RM_PORT>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*s1*/1, /*idx*/1, /*vaddSign0*/1], [/*dst*/NoBypass, /*s1*/MV_Bypass, /*idx*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_extract_r__vec_extract_core__vec_extract_dest__vec_extract_dest_R__s2v_wide_8__mRm__vaddSign1
+InstrItinData<II_VEXTRACT_8_vec_extract_r_vaddSign1, [SimpleCycle<L_RM_PORT>, SimpleCycle<L_WM_PORT>], [/*dst*/2, /*s1*/1, /*idx*/1, /*vaddSign1*/1], [/*dst*/NoBypass, /*s1*/MV_Bypass, /*idx*/NoBypass]>,
+
+// id: me__instr128_or__st__mv_conv__mv_float_to_int_bm__mv_float_to_int__mSs__mFl2FxSrc_BM
+InstrItinData<II_VFLOOR_s32_bf16_mv_float_to_int_bm, [EmptyCycles<1>, SimpleCycle<QEY_WA_PORT>], [/*dst*/2, /*src*/1, /*imm*/1, /*shft*/1, /*srF2IFlags*/3, /*crF2IMask*/2]>,
+
+// id: me__instr128_or__st__mv_conv__mv_float_to_int_w__mv_float_to_int__mSs
+InstrItinData<II_VFLOOR_s32_bf16_mv_float_to_int_w, [SimpleCycle<QEY_RS_PORT>, SimpleCycle<QEY_WA_PORT>], [/*dst*/2, /*src*/1, /*shft*/1, /*srF2IFlags*/3, /*crF2IMask*/2]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_compare__vge__vec_cmp_out__vec_cmp_out32__mRS16m__vec_add_mX__vec_add_nX__vaddSign0
+InstrItinData<II_VGE_16_vaddSign0, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign0*/1], [/*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_compare__vge__vec_cmp_out__vec_cmp_out32__mRS16m__vec_add_mX__vec_add_nX__vaddSign1
+InstrItinData<II_VGE_16_vaddSign1, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign1*/1], [/*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_compare__vge__vec_cmp_out__vec_cmp_out16__mRS16m__vec_add_mX__vec_add_nX__vaddSign0
+InstrItinData<II_VGE_32_vaddSign0, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign0*/1], [/*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_compare__vge__vec_cmp_out__vec_cmp_out16__mRS16m__vec_add_mX__vec_add_nX__vaddSign1
+InstrItinData<II_VGE_32_vaddSign1, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign1*/1], [/*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_compare__vge__vec_cmp_out__vec_cmp_out64__mLm__vec_add_mX__vec_add_nX__vaddSign0
+InstrItinData<II_VGE_8_vaddSign0, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign0*/1], [/*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_compare__vge__vec_cmp_out__vec_cmp_out64__mLm__vec_add_mX__vec_add_nX__vaddSign1
+InstrItinData<II_VGE_8_vaddSign1, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign1*/1], [/*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_bf_compare__vge_bf__vec_cmp_out32__mRS16m__vec_add_mX__vec_add_nX
+InstrItinData<II_VGE_bf16, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*cmp*/2, /*s1*/1, /*s2*/1], [/*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_insert__vec_insert_src__vec_insert_src_R__s2v_wide_16__mRm__mInsertIdxRed__mIdxImm0
+InstrItinData<II_VINSERT_16_mIdxImm0, [SimpleCycle<L_RM_PORT>], [/*dst*/2, /*s1*/1, /*src*/1], [/*dst*/MV_Bypass, /*s1*/MV_Bypass, /*src*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_insert__vec_insert_src__vec_insert_src_R__s2v_wide_16__mRm__mInsertIdxRed__mR29_insert
+InstrItinData<II_VINSERT_16_mR29_insert, [SimpleCycle<L_RM_PORT>], [/*dst*/2, /*s1*/1, /*idx*/1, /*src*/1], [/*dst*/MV_Bypass, /*s1*/MV_Bypass, /*idx*/NoBypass, /*src*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_insert__vec_insert_src__vec_insert_src_R__s2v_wide_32__mRm__mInsertIdxRed__mIdxImm0
+InstrItinData<II_VINSERT_32_mIdxImm0, [SimpleCycle<L_RM_PORT>], [/*dst*/2, /*s1*/1, /*src*/1], [/*dst*/MV_Bypass, /*s1*/MV_Bypass, /*src*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_insert__vec_insert_src__vec_insert_src_R__s2v_wide_32__mRm__mInsertIdxRed__mR29_insert
+InstrItinData<II_VINSERT_32_mR29_insert, [SimpleCycle<L_RM_PORT>], [/*dst*/2, /*s1*/1, /*idx*/1, /*src*/1], [/*dst*/MV_Bypass, /*s1*/MV_Bypass, /*idx*/NoBypass, /*src*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_insert__vec_insert_src__vec_insert_src_L__s2v_wide_64__mLm__mInsertIdxRed__mIdxImm0
+InstrItinData<II_VINSERT_64_mIdxImm0, [SimpleCycle<L_RM_PORT>], [/*dst*/2, /*s1*/1, /*src*/1], [/*dst*/MV_Bypass, /*s1*/MV_Bypass, /*src*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_insert__vec_insert_src__vec_insert_src_L__s2v_wide_64__mLm__mInsertIdxRed__mR29_insert
+InstrItinData<II_VINSERT_64_mR29_insert, [SimpleCycle<L_RM_PORT>], [/*dst*/2, /*s1*/1, /*idx*/1, /*src*/1], [/*dst*/MV_Bypass, /*s1*/MV_Bypass, /*idx*/NoBypass, /*src*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_insert__vec_insert_src__vec_insert_src_R__s2v_wide_8__mRm__mInsertIdxRed__mIdxImm0
+InstrItinData<II_VINSERT_8_mIdxImm0, [SimpleCycle<L_RM_PORT>], [/*dst*/2, /*s1*/1, /*src*/1], [/*dst*/MV_Bypass, /*s1*/MV_Bypass, /*src*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_insert__vec_insert_src__vec_insert_src_R__s2v_wide_8__mRm__mInsertIdxRed__mR29_insert
+InstrItinData<II_VINSERT_8_mR29_insert, [SimpleCycle<L_RM_PORT>], [/*dst*/2, /*s1*/1, /*idx*/1, /*src*/1], [/*dst*/MV_Bypass, /*s1*/MV_Bypass, /*idx*/NoBypass, /*src*/NoBypass]>,
+
+// id: me__instr128_or__lda__dmv_lda_w__agua_dmv__nrm__agua_dmv__normal__agua_dmv__idx__mPa__mDJa
+MemInstrItinData<II_VLDA_128_dmv_lda_w_idx, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmv_lda_w__agua_dmv__nrm__agua_dmv__normal__agua_dmv__idx_imm__mPa__m_c08s_step16
+MemInstrItinData<II_VLDA_128_dmv_lda_w_idx_imm, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmv_lda_w__agua_dmv__nrm__agua_dmv__normal__agua_dmv__pstm_nrm__mPa__mMa
+MemInstrItinData<II_VLDA_128_dmv_lda_w_pstm_nrm, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmv_lda_w__agua_dmv__nrm__agua_dmv__normal__agua_dmv__pstm_nrm_imm__mPa__m_c08s_step16
+MemInstrItinData<II_VLDA_128_dmv_lda_w_pstm_nrm_imm, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmv_lda_w_spill__agua_dmv__nrm_spill__agua_dmv__spill__mSPa__m_c14n_step16
+MemInstrItinData<II_VLDA_128_dmv_lda_w_spill, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*imm*/1, /*sp*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmv_lda_w__agua_dmv__nrm__agua_dmv__normal__agua_dmv__pstm_2d__mPa__mDa
+MemInstrItinData<II_VLDA_2D_128, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*dc*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_ups_bf__agua_dmw__nrm__agua_dmw__normal__agua_dmw__pstm_2d__mPa__mDa__dmw_lda_ups_bf_core
+MemInstrItinData<II_VLDA_2D_CONV_fp32_bf16_dmw_lda_ups_bf, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DM_WM_PORT>], [/*op*/7, /*ptr_out*/1, /*dc*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_ups_bf__agua_dmx__nrm__agua_dmx__normal__agua_dmx__pstm_2d__mPa__mDa__dmx_lda_ups_bf_core
+MemInstrItinData<II_VLDA_2D_CONV_fp32_bf16_dmx_lda_ups_bf, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DM_WM_PORT>], [/*op*/7, /*ptr_out*/1, /*dc*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_ups_w2b__agua_dmw__nrm__agua_dmw__normal__agua_dmw__pstm_2d__mPa__mDa__dmw_lda_ups_w2b_core__ups_lda__w2b__ups_lda__base__mSa__upsSign0
+MemInstrItinData<II_VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, SimpleCycle<UPS__L__OMUXL>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, SimpleCycle<UPS__L__KL>], [/*dst*/9, /*ptr_out*/1, /*dc*/1, /*su*/7, /*ptr*/1, /*mod*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign0*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_ups_w2b__agua_dmw__nrm__agua_dmw__normal__agua_dmw__pstm_2d__mPa__mDa__dmw_lda_ups_w2b_core__ups_lda__w2b__ups_lda__base__mSa__upsSign1
+MemInstrItinData<II_VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign1, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, SimpleCycle<UPS__L__OMUXL>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, SimpleCycle<UPS__L__KL>], [/*dst*/9, /*ptr_out*/1, /*dc*/1, /*su*/7, /*ptr*/1, /*mod*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign1*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_ups_x2c__agua_dmx__nrm__agua_dmx__normal__agua_dmx__pstm_2d__mPa__mDa__dmx_lda_ups_x2c_core__ups_lda__x2c__ups_lda__base__mSa__upsSign0
+MemInstrItinData<II_VLDA_2D_UPS_2x_dmx_lda_ups_x2c_upsSign0, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, PrefixCycle<UPS__H__A>, PrefixCycle<UPS__H__OMUXL>, SimpleCycle<UPS__L__OMUXL>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, SimpleCycle<UPS__H__K>], [/*dst*/9, /*ptr_out*/1, /*dc*/1, /*su*/7, /*ptr*/1, /*mod*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign0*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_ups_x2c__agua_dmx__nrm__agua_dmx__normal__agua_dmx__pstm_2d__mPa__mDa__dmx_lda_ups_x2c_core__ups_lda__x2c__ups_lda__base__mSa__upsSign1
+MemInstrItinData<II_VLDA_2D_UPS_2x_dmx_lda_ups_x2c_upsSign1, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, PrefixCycle<UPS__H__A>, PrefixCycle<UPS__H__OMUXL>, SimpleCycle<UPS__L__OMUXL>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, SimpleCycle<UPS__H__K>], [/*dst*/9, /*ptr_out*/1, /*dc*/1, /*su*/7, /*ptr*/1, /*mod*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign1*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_ups_w2c__agua_dmw__nrm__agua_dmw__normal__agua_dmw__pstm_2d__mPa__mDa__dmw_lda_ups_w2c_core__ups_lda__w2c__ups_lda__base__mSa__upsSign0
+MemInstrItinData<II_VLDA_2D_UPS_4x_dmw_lda_ups_w2c_upsSign0, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, SimpleCycle<CRUPSMODE_RA>, PrefixCycle<DM_WM_PORT>, SimpleCycle<EVENT_UPS_OF>], [/*dst*/9, /*ptr_out*/1, /*dc*/1, /*su*/7, /*ptr*/1, /*mod*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign0*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_ups_w2c__agua_dmw__nrm__agua_dmw__normal__agua_dmw__pstm_2d__mPa__mDa__dmw_lda_ups_w2c_core__ups_lda__w2c__ups_lda__base__mSa__upsSign1
+MemInstrItinData<II_VLDA_2D_UPS_4x_dmw_lda_ups_w2c_upsSign1, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, SimpleCycle<CRUPSMODE_RA>, PrefixCycle<DM_WM_PORT>, SimpleCycle<EVENT_UPS_OF>], [/*dst*/9, /*ptr_out*/1, /*dc*/1, /*su*/7, /*ptr*/1, /*mod*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign1*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_ups_x2d__agua_dmx__nrm__agua_dmx__normal__agua_dmx__pstm_2d__mPa__mDa__dmx_lda_ups_x2d_core__ups_lda__x2d__mDMm__ups_lda__base__mSa__upsSign0
+MemInstrItinData<II_VLDA_2D_UPS_4x_dmx_lda_ups_x2d_upsSign0, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, PrefixCycle<UPS__H__A>, SimpleCycle<UPS__OMUX>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, PrefixCycle<UPS__H__K>, SimpleCycle<UPS__K>], [/*dst*/9, /*ptr_out*/1, /*dc*/1, /*su*/7, /*ptr*/1, /*mod*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign0*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_ups_x2d__agua_dmx__nrm__agua_dmx__normal__agua_dmx__pstm_2d__mPa__mDa__dmx_lda_ups_x2d_core__ups_lda__x2d__mDMm__ups_lda__base__mSa__upsSign1
+MemInstrItinData<II_VLDA_2D_UPS_4x_dmx_lda_ups_x2d_upsSign1, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, PrefixCycle<UPS__H__A>, SimpleCycle<UPS__OMUX>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, PrefixCycle<UPS__H__K>, SimpleCycle<UPS__K>], [/*dst*/9, /*ptr_out*/1, /*dc*/1, /*su*/7, /*ptr*/1, /*mod*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign1*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_w__agua_dmw__nrm__agua_dmw__normal__agua_dmw__pstm_2d__mPa__mDa
+MemInstrItinData<II_VLDA_2D_dmw_lda_w, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*dc*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_bm__agua_dmx__nrm__agua_dmx__normal__agua_dmx__pstm_2d__mPa__mDa
+MemInstrItinData<II_VLDA_2D_dmx_lda_bm, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DM_WM_PORT>], [/*dst*/7, /*ptr_out*/1, /*dc*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_fifohl__agua_dmx__nrm__agua_dmx__normal__agua_dmx__pstm_2d__mPa__mDa
+MemInstrItinData<II_VLDA_2D_dmx_lda_fifohl, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<FIFO_HL_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*dc*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_x__agua_dmx__nrm__agua_dmx__normal__agua_dmx__pstm_2d__mPa__mDa
+MemInstrItinData<II_VLDA_2D_dmx_lda_x, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*dc*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmv_lda_w__agua_dmv__nrm__agua_dmv__normal__agua_dmv__pstm_3d__mPa__mDSa
+MemInstrItinData<II_VLDA_3D_128, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_ups_bf__agua_dmw__nrm__agua_dmw__normal__agua_dmw__pstm_3d__mPa__mDSa__dmw_lda_ups_bf_core
+MemInstrItinData<II_VLDA_3D_CONV_fp32_bf16_dmw_lda_ups_bf, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DM_WM_PORT>], [/*op*/7, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_ups_bf__agua_dmx__nrm__agua_dmx__normal__agua_dmx__pstm_3d__mPa__mDSa__dmx_lda_ups_bf_core
+MemInstrItinData<II_VLDA_3D_CONV_fp32_bf16_dmx_lda_ups_bf, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DM_WM_PORT>], [/*op*/7, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_ups_w2b__agua_dmw__nrm__agua_dmw__normal__agua_dmw__pstm_3d__mPa__mDSa__dmw_lda_ups_w2b_core__ups_lda__w2b__ups_lda__base__mSa__upsSign0
+MemInstrItinData<II_VLDA_3D_UPS_2x_dmw_lda_ups_w2b_upsSign0, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, SimpleCycle<UPS__L__OMUXL>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, SimpleCycle<UPS__L__KL>], [/*dst*/9, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*su*/7, /*ptr*/1, /*mod*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign0*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_ups_w2b__agua_dmw__nrm__agua_dmw__normal__agua_dmw__pstm_3d__mPa__mDSa__dmw_lda_ups_w2b_core__ups_lda__w2b__ups_lda__base__mSa__upsSign1
+MemInstrItinData<II_VLDA_3D_UPS_2x_dmw_lda_ups_w2b_upsSign1, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, SimpleCycle<UPS__L__OMUXL>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, SimpleCycle<UPS__L__KL>], [/*dst*/9, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*su*/7, /*ptr*/1, /*mod*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign1*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_ups_x2c__agua_dmx__nrm__agua_dmx__normal__agua_dmx__pstm_3d__mPa__mDSa__dmx_lda_ups_x2c_core__ups_lda__x2c__ups_lda__base__mSa__upsSign0
+MemInstrItinData<II_VLDA_3D_UPS_2x_dmx_lda_ups_x2c_upsSign0, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, PrefixCycle<UPS__H__A>, PrefixCycle<UPS__H__OMUXL>, SimpleCycle<UPS__L__OMUXL>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, SimpleCycle<UPS__H__K>], [/*dst*/9, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*su*/7, /*ptr*/1, /*mod*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign0*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_ups_x2c__agua_dmx__nrm__agua_dmx__normal__agua_dmx__pstm_3d__mPa__mDSa__dmx_lda_ups_x2c_core__ups_lda__x2c__ups_lda__base__mSa__upsSign1
+MemInstrItinData<II_VLDA_3D_UPS_2x_dmx_lda_ups_x2c_upsSign1, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, PrefixCycle<UPS__H__A>, PrefixCycle<UPS__H__OMUXL>, SimpleCycle<UPS__L__OMUXL>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, SimpleCycle<UPS__H__K>], [/*dst*/9, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*su*/7, /*ptr*/1, /*mod*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign1*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_ups_w2c__agua_dmw__nrm__agua_dmw__normal__agua_dmw__pstm_3d__mPa__mDSa__dmw_lda_ups_w2c_core__ups_lda__w2c__ups_lda__base__mSa__upsSign0
+MemInstrItinData<II_VLDA_3D_UPS_4x_dmw_lda_ups_w2c_upsSign0, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, SimpleCycle<CRUPSMODE_RA>, PrefixCycle<DM_WM_PORT>, SimpleCycle<EVENT_UPS_OF>], [/*dst*/9, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*su*/7, /*ptr*/1, /*mod*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign0*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_ups_w2c__agua_dmw__nrm__agua_dmw__normal__agua_dmw__pstm_3d__mPa__mDSa__dmw_lda_ups_w2c_core__ups_lda__w2c__ups_lda__base__mSa__upsSign1
+MemInstrItinData<II_VLDA_3D_UPS_4x_dmw_lda_ups_w2c_upsSign1, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, SimpleCycle<CRUPSMODE_RA>, PrefixCycle<DM_WM_PORT>, SimpleCycle<EVENT_UPS_OF>], [/*dst*/9, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*su*/7, /*ptr*/1, /*mod*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign1*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_ups_x2d__agua_dmx__nrm__agua_dmx__normal__agua_dmx__pstm_3d__mPa__mDSa__dmx_lda_ups_x2d_core__ups_lda__x2d__mDMm__ups_lda__base__mSa__upsSign0
+MemInstrItinData<II_VLDA_3D_UPS_4x_dmx_lda_ups_x2d_upsSign0, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, PrefixCycle<UPS__H__A>, SimpleCycle<UPS__OMUX>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, PrefixCycle<UPS__H__K>, SimpleCycle<UPS__K>], [/*dst*/9, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*su*/7, /*ptr*/1, /*mod*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign0*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_ups_x2d__agua_dmx__nrm__agua_dmx__normal__agua_dmx__pstm_3d__mPa__mDSa__dmx_lda_ups_x2d_core__ups_lda__x2d__mDMm__ups_lda__base__mSa__upsSign1
+MemInstrItinData<II_VLDA_3D_UPS_4x_dmx_lda_ups_x2d_upsSign1, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, PrefixCycle<UPS__H__A>, SimpleCycle<UPS__OMUX>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, PrefixCycle<UPS__H__K>, SimpleCycle<UPS__K>], [/*dst*/9, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*su*/7, /*ptr*/1, /*mod*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign1*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_w__agua_dmw__nrm__agua_dmw__normal__agua_dmw__pstm_3d__mPa__mDSa
+MemInstrItinData<II_VLDA_3D_dmw_lda_w, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_bm__agua_dmx__nrm__agua_dmx__normal__agua_dmx__pstm_3d__mPa__mDSa
+MemInstrItinData<II_VLDA_3D_dmx_lda_bm, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DM_WM_PORT>], [/*dst*/7, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_fifohl__agua_dmx__nrm__agua_dmx__normal__agua_dmx__pstm_3d__mPa__mDSa
+MemInstrItinData<II_VLDA_3D_dmx_lda_fifohl, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<FIFO_HL_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_x__agua_dmx__nrm__agua_dmx__normal__agua_dmx__pstm_3d__mPa__mDSa
+MemInstrItinData<II_VLDA_3D_dmx_lda_x, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_ups_bf__agua_dmw__nrm__agua_dmw__normal__agua_dmw__idx__mPa__mDJa__dmw_lda_ups_bf_core
+MemInstrItinData<II_VLDA_CONV_fp32_bf16_dmw_lda_ups_bf_idx, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DM_WM_PORT>], [/*op*/7, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_ups_bf__agua_dmw__nrm__agua_dmw__normal__agua_dmw__idx_imm__mPa__m_c09s_step32__dmw_lda_ups_bf_core
+MemInstrItinData<II_VLDA_CONV_fp32_bf16_dmw_lda_ups_bf_idx_imm, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DM_WM_PORT>], [/*op*/7, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_ups_bf__agua_dmw__nrm__agua_dmw__normal__agua_dmw__pstm_nrm__mPa__mMa__dmw_lda_ups_bf_core
+MemInstrItinData<II_VLDA_CONV_fp32_bf16_dmw_lda_ups_bf_pstm_nrm, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DM_WM_PORT>], [/*op*/7, /*ptr_out*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_ups_bf__agua_dmw__nrm__agua_dmw__normal__agua_dmw__pstm_nrm_imm__mPa__m_c09s_step32__dmw_lda_ups_bf_core
+MemInstrItinData<II_VLDA_CONV_fp32_bf16_dmw_lda_ups_bf_pstm_nrm_imm, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DM_WM_PORT>], [/*op*/7, /*ptr_out*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_ups_bf__agua_dmx__nrm__agua_dmx__normal__agua_dmx__idx__mPa__mDJa__dmx_lda_ups_bf_core
+MemInstrItinData<II_VLDA_CONV_fp32_bf16_dmx_lda_ups_bf_idx, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DM_WM_PORT>], [/*op*/7, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_ups_bf__agua_dmx__nrm__agua_dmx__normal__agua_dmx__idx_imm__mPa__m_c10s_step64__dmx_lda_ups_bf_core
+MemInstrItinData<II_VLDA_CONV_fp32_bf16_dmx_lda_ups_bf_idx_imm, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DM_WM_PORT>], [/*op*/7, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_ups_bf__agua_dmx__nrm__agua_dmx__normal__agua_dmx__pstm_nrm__mPa__mMa__dmx_lda_ups_bf_core
+MemInstrItinData<II_VLDA_CONV_fp32_bf16_dmx_lda_ups_bf_pstm_nrm, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DM_WM_PORT>], [/*op*/7, /*ptr_out*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_ups_bf__agua_dmx__nrm__agua_dmx__normal__agua_dmx__pstm_nrm_imm__mPa__m_c10s_step64__dmx_lda_ups_bf_core
+MemInstrItinData<II_VLDA_CONV_fp32_bf16_dmx_lda_ups_bf_pstm_nrm_imm, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DM_WM_PORT>], [/*op*/7, /*ptr_out*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_x__normal_fill__dmx_lda_fifo_x__core_fill__dmx_lda_fifo_x__normal__mPfa__mLdFifo_a__mRF2a
+MemInstrItinData<II_VLDA_FILL_512, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>], [/*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_x__fifo_2d_pop__dmx_lda_fifo_x__core_pop__dmx_lda_fifo_x__fifo_2d__mPfa__mLdFifo_a__mRF2a__mDa
+MemInstrItinData<II_VLDA_POP_512_2D, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dc*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_x__fifo_3d_pop__dmx_lda_fifo_x__core_pop__dmx_lda_fifo_x__fifo_3d__mPfa__mLdFifo_a__mRF2a__mDSa
+MemInstrItinData<II_VLDA_POP_512_3D, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dcl*/1, /*dch*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_x__fifo_1d_pop__dmx_lda_fifo_x__core_pop__dmx_lda_fifo_x__fifo_1d__mPfa__mLdFifo_a__mRF2a__mMa
+MemInstrItinData<II_VLDA_POP_512_fifo_1d_pop, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_x__normal_pop__dmx_lda_fifo_x__core_pop__dmx_lda_fifo_x__normal__mPfa__mLdFifo_a__mRF2a
+MemInstrItinData<II_VLDA_POP_512_normal_pop, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_ex_ebs16__fifo_2d_pop__dmx_lda_fifo_ex_ebs16__core_pop__dmx_lda_fifo_ex_ebs16__fifo_2d__mPfa__mLdFifo_a__mRF2a__mDa
+MemInstrItinData<II_VLDA_POP_544_2D, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dc*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_ex_ebs16__fifo_3d_pop__dmx_lda_fifo_ex_ebs16__core_pop__dmx_lda_fifo_ex_ebs16__fifo_3d__mPfa__mLdFifo_a__mRF2a__mDSa
+MemInstrItinData<II_VLDA_POP_544_3D, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dcl*/1, /*dch*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_ex_ebs16__fifo_1d_pop__dmx_lda_fifo_ex_ebs16__core_pop__dmx_lda_fifo_ex_ebs16__fifo_1d__mPfa__mLdFifo_a__mRF2a__mMa
+MemInstrItinData<II_VLDA_POP_544_fifo_1d_pop, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_ex_ebs16__normal_pop__dmx_lda_fifo_ex_ebs16__core_pop__dmx_lda_fifo_ex_ebs16__normal__mPfa__mLdFifo_a__mRF2a
+MemInstrItinData<II_VLDA_POP_544_normal_pop, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_ex_ebs8__fifo_2d_pop__dmx_lda_fifo_ex_ebs8__core_pop__dmx_lda_fifo_ex_ebs8__fifo_2d__mPfa__mLdFifo_a__mRF2a__mDa
+MemInstrItinData<II_VLDA_POP_576_2D, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dc*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_ex_ebs8__fifo_3d_pop__dmx_lda_fifo_ex_ebs8__core_pop__dmx_lda_fifo_ex_ebs8__fifo_3d__mPfa__mLdFifo_a__mRF2a__mDSa
+MemInstrItinData<II_VLDA_POP_576_3D, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dcl*/1, /*dch*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_ex_ebs8__fifo_1d_pop__dmx_lda_fifo_ex_ebs8__core_pop__dmx_lda_fifo_ex_ebs8__fifo_1d__mPfa__mLdFifo_a__mRF2a__mMa
+MemInstrItinData<II_VLDA_POP_576_fifo_1d_pop, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_ex_ebs8__normal_pop__dmx_lda_fifo_ex_ebs8__core_pop__dmx_lda_fifo_ex_ebs8__normal__mPfa__mLdFifo_a__mRF2a
+MemInstrItinData<II_VLDA_POP_576_normal_pop, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_qx__fifo_2d_pop__dmx_lda_fifo_qx__core_pop__dmx_lda_fifo_qx__fifo_2d__mPfa__mLdFifo_a__mRF2a__mDa
+MemInstrItinData<II_VLDA_POP_640_2D, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dc*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_qx__fifo_3d_pop__dmx_lda_fifo_qx__core_pop__dmx_lda_fifo_qx__fifo_3d__mPfa__mLdFifo_a__mRF2a__mDSa
+MemInstrItinData<II_VLDA_POP_640_3D, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dcl*/1, /*dch*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_qx__fifo_1d_pop__dmx_lda_fifo_qx__core_pop__dmx_lda_fifo_qx__fifo_1d__mPfa__mLdFifo_a__mRF2a__mMa
+MemInstrItinData<II_VLDA_POP_640_fifo_1d_pop, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_qx__normal_pop__dmx_lda_fifo_qx__core_pop__dmx_lda_fifo_qx__normal__mPfa__mLdFifo_a__mRF2a
+MemInstrItinData<II_VLDA_POP_640_normal_pop, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_qex_ebs16__fifo_2d_pop__dmx_lda_fifo_qex_ebs16__core_pop__dmx_lda_fifo_qex_ebs16__fifo_2d__mPfa__mLdFifo_a__mRF2a__mDa
+MemInstrItinData<II_VLDA_POP_704_2D, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dc*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_qex_ebs16__fifo_3d_pop__dmx_lda_fifo_qex_ebs16__core_pop__dmx_lda_fifo_qex_ebs16__fifo_3d__mPfa__mLdFifo_a__mRF2a__mDSa
+MemInstrItinData<II_VLDA_POP_704_3D, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dcl*/1, /*dch*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_qex_ebs16__fifo_1d_pop__dmx_lda_fifo_qex_ebs16__core_pop__dmx_lda_fifo_qex_ebs16__fifo_1d__mPfa__mLdFifo_a__mRF2a__mMa
+MemInstrItinData<II_VLDA_POP_704_fifo_1d_pop, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_qex_ebs16__normal_pop__dmx_lda_fifo_qex_ebs16__core_pop__dmx_lda_fifo_qex_ebs16__normal__mPfa__mLdFifo_a__mRF2a
+MemInstrItinData<II_VLDA_POP_704_normal_pop, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_ups_w2b__agua_dmw__nrm__agua_dmw__normal__agua_dmw__idx__mPa__mDJa__dmw_lda_ups_w2b_core__ups_lda__w2b__ups_lda__base__mSa__upsSign0
+MemInstrItinData<II_VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign0, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, SimpleCycle<UPS__L__OMUXL>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, SimpleCycle<UPS__L__KL>], [/*dst*/9, /*su*/7, /*ptr*/1, /*dj*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign0*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_ups_w2b__agua_dmw__nrm__agua_dmw__normal__agua_dmw__idx__mPa__mDJa__dmw_lda_ups_w2b_core__ups_lda__w2b__ups_lda__base__mSa__upsSign1
+MemInstrItinData<II_VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign1, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, SimpleCycle<UPS__L__OMUXL>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, SimpleCycle<UPS__L__KL>], [/*dst*/9, /*su*/7, /*ptr*/1, /*dj*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign1*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_ups_w2b__agua_dmw__nrm__agua_dmw__normal__agua_dmw__idx_imm__mPa__m_c09s_step32__dmw_lda_ups_w2b_core__ups_lda__w2b__ups_lda__base__mSa__upsSign0
+MemInstrItinData<II_VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, SimpleCycle<UPS__L__OMUXL>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, SimpleCycle<UPS__L__KL>], [/*dst*/9, /*su*/7, /*ptr*/1, /*imm*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign0*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_ups_w2b__agua_dmw__nrm__agua_dmw__normal__agua_dmw__idx_imm__mPa__m_c09s_step32__dmw_lda_ups_w2b_core__ups_lda__w2b__ups_lda__base__mSa__upsSign1
+MemInstrItinData<II_VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, SimpleCycle<UPS__L__OMUXL>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, SimpleCycle<UPS__L__KL>], [/*dst*/9, /*su*/7, /*ptr*/1, /*imm*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign1*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_ups_w2b__agua_dmw__nrm__agua_dmw__normal__agua_dmw__pstm_nrm__mPa__mMa__dmw_lda_ups_w2b_core__ups_lda__w2b__ups_lda__base__mSa__upsSign0
+MemInstrItinData<II_VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, SimpleCycle<UPS__L__OMUXL>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, SimpleCycle<UPS__L__KL>], [/*dst*/9, /*ptr_out*/1, /*su*/7, /*ptr*/1, /*mod*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign0*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_ups_w2b__agua_dmw__nrm__agua_dmw__normal__agua_dmw__pstm_nrm__mPa__mMa__dmw_lda_ups_w2b_core__ups_lda__w2b__ups_lda__base__mSa__upsSign1
+MemInstrItinData<II_VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, SimpleCycle<UPS__L__OMUXL>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, SimpleCycle<UPS__L__KL>], [/*dst*/9, /*ptr_out*/1, /*su*/7, /*ptr*/1, /*mod*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign1*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_ups_w2b__agua_dmw__nrm__agua_dmw__normal__agua_dmw__pstm_nrm_imm__mPa__m_c09s_step32__dmw_lda_ups_w2b_core__ups_lda__w2b__ups_lda__base__mSa__upsSign0
+MemInstrItinData<II_VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_imm_upsSign0, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, SimpleCycle<UPS__L__OMUXL>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, SimpleCycle<UPS__L__KL>], [/*dst*/9, /*ptr_out*/1, /*su*/7, /*ptr*/1, /*imm*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign0*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_ups_w2b__agua_dmw__nrm__agua_dmw__normal__agua_dmw__pstm_nrm_imm__mPa__m_c09s_step32__dmw_lda_ups_w2b_core__ups_lda__w2b__ups_lda__base__mSa__upsSign1
+MemInstrItinData<II_VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_imm_upsSign1, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, SimpleCycle<UPS__L__OMUXL>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, SimpleCycle<UPS__L__KL>], [/*dst*/9, /*ptr_out*/1, /*su*/7, /*ptr*/1, /*imm*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign1*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_ups_x2c__agua_dmx__nrm__agua_dmx__normal__agua_dmx__idx__mPa__mDJa__dmx_lda_ups_x2c_core__ups_lda__x2c__ups_lda__base__mSa__upsSign0
+MemInstrItinData<II_VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, PrefixCycle<UPS__H__A>, PrefixCycle<UPS__H__OMUXL>, SimpleCycle<UPS__L__OMUXL>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, SimpleCycle<UPS__H__K>], [/*dst*/9, /*su*/7, /*ptr*/1, /*dj*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign0*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_ups_x2c__agua_dmx__nrm__agua_dmx__normal__agua_dmx__idx__mPa__mDJa__dmx_lda_ups_x2c_core__ups_lda__x2c__ups_lda__base__mSa__upsSign1
+MemInstrItinData<II_VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign1, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, PrefixCycle<UPS__H__A>, PrefixCycle<UPS__H__OMUXL>, SimpleCycle<UPS__L__OMUXL>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, SimpleCycle<UPS__H__K>], [/*dst*/9, /*su*/7, /*ptr*/1, /*dj*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign1*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_ups_x2c__agua_dmx__nrm__agua_dmx__normal__agua_dmx__idx_imm__mPa__m_c10s_step64__dmx_lda_ups_x2c_core__ups_lda__x2c__ups_lda__base__mSa__upsSign0
+MemInstrItinData<II_VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, PrefixCycle<UPS__H__A>, PrefixCycle<UPS__H__OMUXL>, SimpleCycle<UPS__L__OMUXL>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, SimpleCycle<UPS__H__K>], [/*dst*/9, /*su*/7, /*ptr*/1, /*imm*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign0*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_ups_x2c__agua_dmx__nrm__agua_dmx__normal__agua_dmx__idx_imm__mPa__m_c10s_step64__dmx_lda_ups_x2c_core__ups_lda__x2c__ups_lda__base__mSa__upsSign1
+MemInstrItinData<II_VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign1, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, PrefixCycle<UPS__H__A>, PrefixCycle<UPS__H__OMUXL>, SimpleCycle<UPS__L__OMUXL>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, SimpleCycle<UPS__H__K>], [/*dst*/9, /*su*/7, /*ptr*/1, /*imm*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign1*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_ups_x2c__agua_dmx__nrm__agua_dmx__normal__agua_dmx__pstm_nrm__mPa__mMa__dmx_lda_ups_x2c_core__ups_lda__x2c__ups_lda__base__mSa__upsSign0
+MemInstrItinData<II_VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign0, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, PrefixCycle<UPS__H__A>, PrefixCycle<UPS__H__OMUXL>, SimpleCycle<UPS__L__OMUXL>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, SimpleCycle<UPS__H__K>], [/*dst*/9, /*ptr_out*/1, /*su*/7, /*ptr*/1, /*mod*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign0*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_ups_x2c__agua_dmx__nrm__agua_dmx__normal__agua_dmx__pstm_nrm__mPa__mMa__dmx_lda_ups_x2c_core__ups_lda__x2c__ups_lda__base__mSa__upsSign1
+MemInstrItinData<II_VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign1, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, PrefixCycle<UPS__H__A>, PrefixCycle<UPS__H__OMUXL>, SimpleCycle<UPS__L__OMUXL>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, SimpleCycle<UPS__H__K>], [/*dst*/9, /*ptr_out*/1, /*su*/7, /*ptr*/1, /*mod*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign1*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_ups_x2c__agua_dmx__nrm__agua_dmx__normal__agua_dmx__pstm_nrm_imm__mPa__m_c10s_step64__dmx_lda_ups_x2c_core__ups_lda__x2c__ups_lda__base__mSa__upsSign0
+MemInstrItinData<II_VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign0, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, PrefixCycle<UPS__H__A>, PrefixCycle<UPS__H__OMUXL>, SimpleCycle<UPS__L__OMUXL>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, SimpleCycle<UPS__H__K>], [/*dst*/9, /*ptr_out*/1, /*su*/7, /*ptr*/1, /*imm*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign0*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_ups_x2c__agua_dmx__nrm__agua_dmx__normal__agua_dmx__pstm_nrm_imm__mPa__m_c10s_step64__dmx_lda_ups_x2c_core__ups_lda__x2c__ups_lda__base__mSa__upsSign1
+MemInstrItinData<II_VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign1, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, PrefixCycle<UPS__H__A>, PrefixCycle<UPS__H__OMUXL>, SimpleCycle<UPS__L__OMUXL>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, SimpleCycle<UPS__H__K>], [/*dst*/9, /*ptr_out*/1, /*su*/7, /*ptr*/1, /*imm*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign1*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_ups_w2c__agua_dmw__nrm__agua_dmw__normal__agua_dmw__idx__mPa__mDJa__dmw_lda_ups_w2c_core__ups_lda__w2c__ups_lda__base__mSa__upsSign0
+MemInstrItinData<II_VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign0, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, SimpleCycle<CRUPSMODE_RA>, PrefixCycle<DM_WM_PORT>, SimpleCycle<EVENT_UPS_OF>], [/*dst*/9, /*su*/7, /*ptr*/1, /*dj*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign0*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_ups_w2c__agua_dmw__nrm__agua_dmw__normal__agua_dmw__idx__mPa__mDJa__dmw_lda_ups_w2c_core__ups_lda__w2c__ups_lda__base__mSa__upsSign1
+MemInstrItinData<II_VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign1, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, SimpleCycle<CRUPSMODE_RA>, PrefixCycle<DM_WM_PORT>, SimpleCycle<EVENT_UPS_OF>], [/*dst*/9, /*su*/7, /*ptr*/1, /*dj*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign1*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_ups_w2c__agua_dmw__nrm__agua_dmw__normal__agua_dmw__idx_imm__mPa__m_c09s_step32__dmw_lda_ups_w2c_core__ups_lda__w2c__ups_lda__base__mSa__upsSign0
+MemInstrItinData<II_VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, SimpleCycle<CRUPSMODE_RA>, PrefixCycle<DM_WM_PORT>, SimpleCycle<EVENT_UPS_OF>], [/*dst*/9, /*su*/7, /*ptr*/1, /*imm*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign0*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_ups_w2c__agua_dmw__nrm__agua_dmw__normal__agua_dmw__idx_imm__mPa__m_c09s_step32__dmw_lda_ups_w2c_core__ups_lda__w2c__ups_lda__base__mSa__upsSign1
+MemInstrItinData<II_VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, SimpleCycle<CRUPSMODE_RA>, PrefixCycle<DM_WM_PORT>, SimpleCycle<EVENT_UPS_OF>], [/*dst*/9, /*su*/7, /*ptr*/1, /*imm*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign1*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_ups_w2c__agua_dmw__nrm__agua_dmw__normal__agua_dmw__pstm_nrm__mPa__mMa__dmw_lda_ups_w2c_core__ups_lda__w2c__ups_lda__base__mSa__upsSign0
+MemInstrItinData<II_VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign0, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, SimpleCycle<CRUPSMODE_RA>, PrefixCycle<DM_WM_PORT>, SimpleCycle<EVENT_UPS_OF>], [/*dst*/9, /*ptr_out*/1, /*su*/7, /*ptr*/1, /*mod*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign0*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_ups_w2c__agua_dmw__nrm__agua_dmw__normal__agua_dmw__pstm_nrm__mPa__mMa__dmw_lda_ups_w2c_core__ups_lda__w2c__ups_lda__base__mSa__upsSign1
+MemInstrItinData<II_VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign1, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, SimpleCycle<CRUPSMODE_RA>, PrefixCycle<DM_WM_PORT>, SimpleCycle<EVENT_UPS_OF>], [/*dst*/9, /*ptr_out*/1, /*su*/7, /*ptr*/1, /*mod*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign1*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_ups_w2c__agua_dmw__nrm__agua_dmw__normal__agua_dmw__pstm_nrm_imm__mPa__m_c09s_step32__dmw_lda_ups_w2c_core__ups_lda__w2c__ups_lda__base__mSa__upsSign0
+MemInstrItinData<II_VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_imm_upsSign0, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, SimpleCycle<CRUPSMODE_RA>, PrefixCycle<DM_WM_PORT>, SimpleCycle<EVENT_UPS_OF>], [/*dst*/9, /*ptr_out*/1, /*su*/7, /*ptr*/1, /*imm*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign0*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_ups_w2c__agua_dmw__nrm__agua_dmw__normal__agua_dmw__pstm_nrm_imm__mPa__m_c09s_step32__dmw_lda_ups_w2c_core__ups_lda__w2c__ups_lda__base__mSa__upsSign1
+MemInstrItinData<II_VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_imm_upsSign1, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, SimpleCycle<CRUPSMODE_RA>, PrefixCycle<DM_WM_PORT>, SimpleCycle<EVENT_UPS_OF>], [/*dst*/9, /*ptr_out*/1, /*su*/7, /*ptr*/1, /*imm*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign1*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_ups_x2d__agua_dmx__nrm__agua_dmx__normal__agua_dmx__idx__mPa__mDJa__dmx_lda_ups_x2d_core__ups_lda__x2d__mDMm__ups_lda__base__mSa__upsSign0
+MemInstrItinData<II_VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, PrefixCycle<UPS__H__A>, SimpleCycle<UPS__OMUX>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, PrefixCycle<UPS__H__K>, SimpleCycle<UPS__K>], [/*dst*/9, /*su*/7, /*ptr*/1, /*dj*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign0*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_ups_x2d__agua_dmx__nrm__agua_dmx__normal__agua_dmx__idx__mPa__mDJa__dmx_lda_ups_x2d_core__ups_lda__x2d__mDMm__ups_lda__base__mSa__upsSign1
+MemInstrItinData<II_VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign1, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, PrefixCycle<UPS__H__A>, SimpleCycle<UPS__OMUX>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, PrefixCycle<UPS__H__K>, SimpleCycle<UPS__K>], [/*dst*/9, /*su*/7, /*ptr*/1, /*dj*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign1*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_ups_x2d__agua_dmx__nrm__agua_dmx__normal__agua_dmx__idx_imm__mPa__m_c10s_step64__dmx_lda_ups_x2d_core__ups_lda__x2d__mDMm__ups_lda__base__mSa__upsSign0
+MemInstrItinData<II_VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, PrefixCycle<UPS__H__A>, SimpleCycle<UPS__OMUX>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, PrefixCycle<UPS__H__K>, SimpleCycle<UPS__K>], [/*dst*/9, /*su*/7, /*ptr*/1, /*imm*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign0*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_ups_x2d__agua_dmx__nrm__agua_dmx__normal__agua_dmx__idx_imm__mPa__m_c10s_step64__dmx_lda_ups_x2d_core__ups_lda__x2d__mDMm__ups_lda__base__mSa__upsSign1
+MemInstrItinData<II_VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, PrefixCycle<UPS__H__A>, SimpleCycle<UPS__OMUX>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, PrefixCycle<UPS__H__K>, SimpleCycle<UPS__K>], [/*dst*/9, /*su*/7, /*ptr*/1, /*imm*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign1*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_ups_x2d__agua_dmx__nrm__agua_dmx__normal__agua_dmx__pstm_nrm__mPa__mMa__dmx_lda_ups_x2d_core__ups_lda__x2d__mDMm__ups_lda__base__mSa__upsSign0
+MemInstrItinData<II_VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign0, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, PrefixCycle<UPS__H__A>, SimpleCycle<UPS__OMUX>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, PrefixCycle<UPS__H__K>, SimpleCycle<UPS__K>], [/*dst*/9, /*ptr_out*/1, /*su*/7, /*ptr*/1, /*mod*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign0*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_ups_x2d__agua_dmx__nrm__agua_dmx__normal__agua_dmx__pstm_nrm__mPa__mMa__dmx_lda_ups_x2d_core__ups_lda__x2d__mDMm__ups_lda__base__mSa__upsSign1
+MemInstrItinData<II_VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign1, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, PrefixCycle<UPS__H__A>, SimpleCycle<UPS__OMUX>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, PrefixCycle<UPS__H__K>, SimpleCycle<UPS__K>], [/*dst*/9, /*ptr_out*/1, /*su*/7, /*ptr*/1, /*mod*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign1*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_ups_x2d__agua_dmx__nrm__agua_dmx__normal__agua_dmx__pstm_nrm_imm__mPa__m_c10s_step64__dmx_lda_ups_x2d_core__ups_lda__x2d__mDMm__ups_lda__base__mSa__upsSign0
+MemInstrItinData<II_VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_imm_upsSign0, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, PrefixCycle<UPS__H__A>, SimpleCycle<UPS__OMUX>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, PrefixCycle<UPS__H__K>, SimpleCycle<UPS__K>], [/*dst*/9, /*ptr_out*/1, /*su*/7, /*ptr*/1, /*imm*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign0*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_ups_x2d__agua_dmx__nrm__agua_dmx__normal__agua_dmx__pstm_nrm_imm__mPa__m_c10s_step64__dmx_lda_ups_x2d_core__ups_lda__x2d__mDMm__ups_lda__base__mSa__upsSign1
+MemInstrItinData<II_VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_imm_upsSign1, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, PrefixCycle<UPS__H__A>, SimpleCycle<UPS__OMUX>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, PrefixCycle<UPS__H__K>, SimpleCycle<UPS__K>], [/*dst*/9, /*ptr_out*/1, /*su*/7, /*ptr*/1, /*imm*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign1*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_w__agua_dmw__nrm__agua_dmw__normal__agua_dmw__idx__mPa__mDJa
+MemInstrItinData<II_VLDA_dmw_lda_w_idx, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_w__agua_dmw__nrm__agua_dmw__normal__agua_dmw__idx_imm__mPa__m_c09s_step32
+MemInstrItinData<II_VLDA_dmw_lda_w_idx_imm, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_w__agua_dmw__nrm__agua_dmw__normal__agua_dmw__pstm_nrm__mPa__mMa
+MemInstrItinData<II_VLDA_dmw_lda_w_pstm_nrm, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_w__agua_dmw__nrm__agua_dmw__normal__agua_dmw__pstm_nrm_imm__mPa__m_c09s_step32
+MemInstrItinData<II_VLDA_dmw_lda_w_pstm_nrm_imm, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmw_lda_w_spill__agua_dmw__nrm_spill__agua_dmw__spill__mSPa__m_c15n_step32
+MemInstrItinData<II_VLDA_dmw_lda_w_spill, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*imm*/1, /*sp*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_bm__agua_dmx__nrm__agua_dmx__normal__agua_dmx__idx__mPa__mDJa
+MemInstrItinData<II_VLDA_dmx_lda_bm_idx, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DM_WM_PORT>], [/*dst*/7, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_bm__agua_dmx__nrm__agua_dmx__normal__agua_dmx__idx_imm__mPa__m_c10s_step64
+MemInstrItinData<II_VLDA_dmx_lda_bm_idx_imm, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DM_WM_PORT>], [/*dst*/7, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_bm__agua_dmx__nrm__agua_dmx__normal__agua_dmx__pstm_nrm__mPa__mMa
+MemInstrItinData<II_VLDA_dmx_lda_bm_pstm_nrm, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DM_WM_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_bm__agua_dmx__nrm__agua_dmx__normal__agua_dmx__pstm_nrm_imm__mPa__m_c10s_step64
+MemInstrItinData<II_VLDA_dmx_lda_bm_pstm_nrm_imm, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DM_WM_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_bm_spill__agua_dmx__nrm_spill__agua_dmx__spill__mSPa__m_c16n_step64
+MemInstrItinData<II_VLDA_dmx_lda_bm_spill, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DM_WM_PORT>], [/*dst*/7, /*imm*/1, /*sp*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_fifohl__agua_dmx__nrm__agua_dmx__normal__agua_dmx__idx__mPa__mDJa
+MemInstrItinData<II_VLDA_dmx_lda_fifohl_idx, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<FIFO_HL_WA_PORT>], [/*dst*/7, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_fifohl__agua_dmx__nrm__agua_dmx__normal__agua_dmx__idx_imm__mPa__m_c10s_step64
+MemInstrItinData<II_VLDA_dmx_lda_fifohl_idx_imm, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<FIFO_HL_WA_PORT>], [/*dst*/7, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_fifohl__agua_dmx__nrm__agua_dmx__normal__agua_dmx__pstm_nrm__mPa__mMa
+MemInstrItinData<II_VLDA_dmx_lda_fifohl_pstm_nrm, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<FIFO_HL_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_fifohl__agua_dmx__nrm__agua_dmx__normal__agua_dmx__pstm_nrm_imm__mPa__m_c10s_step64
+MemInstrItinData<II_VLDA_dmx_lda_fifohl_pstm_nrm_imm, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<FIFO_HL_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_fifohl_spill__agua_dmx__nrm_spill__agua_dmx__spill__mSPa__m_c16n_step64
+MemInstrItinData<II_VLDA_dmx_lda_fifohl_spill, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<FIFO_HL_WA_PORT>], [/*dst*/7, /*imm*/1, /*sp*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_x__agua_dmx__nrm__agua_dmx__normal__agua_dmx__idx__mPa__mDJa
+MemInstrItinData<II_VLDA_dmx_lda_x_idx, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_x__agua_dmx__nrm__agua_dmx__normal__agua_dmx__idx_imm__mPa__m_c10s_step64
+MemInstrItinData<II_VLDA_dmx_lda_x_idx_imm, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_x__agua_dmx__nrm__agua_dmx__normal__agua_dmx__pstm_nrm__mPa__mMa
+MemInstrItinData<II_VLDA_dmx_lda_x_pstm_nrm, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AG_P>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_x__agua_dmx__nrm__agua_dmx__normal__agua_dmx__pstm_nrm_imm__mPa__m_c10s_step64
+MemInstrItinData<II_VLDA_dmx_lda_x_pstm_nrm_imm, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__lda__dmx_lda_x_spill__agua_dmx__nrm_spill__agua_dmx__spill__mSPa__m_c16n_step64
+MemInstrItinData<II_VLDA_dmx_lda_x_spill, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WA_PORT>], [/*dst*/7, /*imm*/1, /*sp*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmv_ldb__agub_dmv__nrm__agub_dmv__normal__agub_dmv__idx__mPb__mDJb
+MemInstrItinData<II_VLDB_128_idx, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmv_ldb__agub_dmv__nrm__agub_dmv__normal__agub_dmv__idx_imm__mPb__m_c08s_step16
+MemInstrItinData<II_VLDB_128_idx_imm, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmv_ldb__agub_dmv__nrm__agub_dmv__normal__agub_dmv__pstm_nrm__mPb__mMb
+MemInstrItinData<II_VLDB_128_pstm_nrm, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmv_ldb__agub_dmv__nrm__agub_dmv__normal__agub_dmv__pstm_nrm_imm__mPb__m_c08s_step16
+MemInstrItinData<II_VLDB_128_pstm_nrm_imm, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmv_ldb__agub_dmv__nrm__agub_dmv__normal__agub_dmv__pstm_2d__mPb__mDb
+MemInstrItinData<II_VLDB_2D_128, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr_out*/1, /*dc*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmw_ldb_unpack__agub_dmw__nrm__agub_dmw__normal__agub_dmw__pstm_2d__mPb__mDb__unpackSign0
+MemInstrItinData<II_VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign0, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr_out*/1, /*dc*/1, /*ptr*/1, /*mod*/1, /*crUnpackSize*/7, /*unpackSign0*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmw_ldb_unpack__agub_dmw__nrm__agub_dmw__normal__agub_dmw__pstm_2d__mPb__mDb__unpackSign1
+MemInstrItinData<II_VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign1, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr_out*/1, /*dc*/1, /*ptr*/1, /*mod*/1, /*crUnpackSize*/7, /*unpackSign1*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_unpack__agub_dmx__nrm__agub_dmx__normal__agub_dmx__pstm_2d__mPb__mDb__mYb__unpackSign0
+MemInstrItinData<II_VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign0, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr_out*/1, /*dc*/1, /*ptr*/1, /*mod*/1, /*crUnpackSize*/7, /*unpackSign0*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_unpack__agub_dmx__nrm__agub_dmx__normal__agub_dmx__pstm_2d__mPb__mDb__mYb__unpackSign1
+MemInstrItinData<II_VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign1, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr_out*/1, /*dc*/1, /*ptr*/1, /*mod*/1, /*crUnpackSize*/7, /*unpackSign1*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmw_ldb__agub_dmw__nrm__agub_dmw__normal__agub_dmw__pstm_2d__mPb__mDb
+MemInstrItinData<II_VLDB_2D_dmw_ldb, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr_out*/1, /*dc*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_x__agub_dmx__nrm__agub_dmx__normal__agub_dmx__pstm_2d__mPb__mDb
+MemInstrItinData<II_VLDB_2D_dmx_ldb_x, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr_out*/1, /*dc*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmv_ldb__agub_dmv__nrm__agub_dmv__normal__agub_dmv__pstm_3d__mPb__mDSb
+MemInstrItinData<II_VLDB_3D_128, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmw_ldb_unpack__agub_dmw__nrm__agub_dmw__normal__agub_dmw__pstm_3d__mPb__mDSb__unpackSign0
+MemInstrItinData<II_VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign0, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*mod*/1, /*crUnpackSize*/7, /*unpackSign0*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmw_ldb_unpack__agub_dmw__nrm__agub_dmw__normal__agub_dmw__pstm_3d__mPb__mDSb__unpackSign1
+MemInstrItinData<II_VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign1, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*mod*/1, /*crUnpackSize*/7, /*unpackSign1*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_unpack__agub_dmx__nrm__agub_dmx__normal__agub_dmx__pstm_3d__mPb__mDSb__mYb__unpackSign0
+MemInstrItinData<II_VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign0, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*mod*/1, /*crUnpackSize*/7, /*unpackSign0*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_unpack__agub_dmx__nrm__agub_dmx__normal__agub_dmx__pstm_3d__mPb__mDSb__mYb__unpackSign1
+MemInstrItinData<II_VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign1, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*mod*/1, /*crUnpackSize*/7, /*unpackSign1*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmw_ldb__agub_dmw__nrm__agub_dmw__normal__agub_dmw__pstm_3d__mPb__mDSb
+MemInstrItinData<II_VLDB_3D_dmw_ldb, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_x__agub_dmx__nrm__agub_dmx__normal__agub_dmx__pstm_3d__mPb__mDSb
+MemInstrItinData<II_VLDB_3D_dmx_ldb_x, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr_out*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__ldb_or1__dmv_ldb_4x__load_4x16__load_4x_pointer_hi
+MemInstrItinData<II_VLDB_4x16_hi, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*src*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__ldb_or1__dmv_ldb_4x__load_4x16__load_4x_pointer_lo
+MemInstrItinData<II_VLDB_4x16_lo, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*src*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__ldb_or1__dmv_ldb_4x__load_4x32__load_4x_pointer_hi
+MemInstrItinData<II_VLDB_4x32_hi, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*src*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__ldb_or1__dmv_ldb_4x__load_4x32__load_4x_pointer_lo
+MemInstrItinData<II_VLDB_4x32_lo, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*src*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__ldb_or1__dmv_ldb_4x__load_4x64__load_4x_pointer_hi
+MemInstrItinData<II_VLDB_4x64_hi, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*src*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__ldb_or1__dmv_ldb_4x__load_4x64__load_4x_pointer_lo
+MemInstrItinData<II_VLDB_4x64_lo, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*src*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_x__normal_fillx__dmx_ldb_fifo_x__core_fillx__mR30_fifo_step_e1__mR30_fifo_step_e7__dmx_ldb_fifo_x__normalx__mPfb__mLdFifo_b__mRF2b
+MemInstrItinData<II_VLDB_FILLX_512, [AvoidPartWordStore, SimpleCycle<L_RM_PORT>, EmptyCycles<5>, SimpleCycle<L_RM_PORT>], [/*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*conf_e1*/1, /*conf_e7*/7, /*ptr_superreg*/1, /*lfe*/7, /*lfe*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_x__normal_fill__dmx_ldb_fifo_x__core_fill__dmx_ldb_fifo_x__normal__mPfb__mLdFifo_b__mRF2b
+MemInstrItinData<II_VLDB_FILL_512, [AvoidPartWordStore], [/*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_x__normal_popx__dmx_ldb_fifo_x__core_popx__mR30_fifo_step_e1__mR30_fifo_step_e7__dmx_ldb_fifo_x__normalx__mPfb__mLdFifo_b__mRF2b
+MemInstrItinData<II_VLDB_POPX_512, [AvoidPartWordStore, SimpleCycle<L_RM_PORT>, EmptyCycles<5>, SimpleCycle<L_RM_PORT>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*conf_e1*/1, /*conf_e7*/7, /*ptr_superreg*/1, /*lfe*/7, /*srFifo_uf*/3, /*lfe*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_x__fifo_2d_pop__dmx_ldb_fifo_x__core_pop__dmx_ldb_fifo_x__fifo_2d__mPfb__mLdFifo_b__mRF2b__mDb
+MemInstrItinData<II_VLDB_POP_512_2D, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dc*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_x__fifo_3d_pop__dmx_ldb_fifo_x__core_pop__dmx_ldb_fifo_x__fifo_3d__mPfb__mLdFifo_b__mRF2b__mDSb
+MemInstrItinData<II_VLDB_POP_512_3D, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dcl*/1, /*dch*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_x__fifo_1d_pop__dmx_ldb_fifo_x__core_pop__dmx_ldb_fifo_x__fifo_1d__mPfb__mLdFifo_b__mRF2b__mMb
+MemInstrItinData<II_VLDB_POP_512_fifo_1d_pop, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_x__normal_pop__dmx_ldb_fifo_x__core_pop__dmx_ldb_fifo_x__normal__mPfb__mLdFifo_b__mRF2b
+MemInstrItinData<II_VLDB_POP_512_normal_pop, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_ex_ebs16__fifo_2d_pop__dmx_ldb_fifo_ex_ebs16__core_pop__dmx_ldb_fifo_ex_ebs16__fifo_2d__mPfb__mLdFifo_b__mRF2b__mDb
+MemInstrItinData<II_VLDB_POP_544_2D, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dc*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_ex_ebs16__fifo_3d_pop__dmx_ldb_fifo_ex_ebs16__core_pop__dmx_ldb_fifo_ex_ebs16__fifo_3d__mPfb__mLdFifo_b__mRF2b__mDSb
+MemInstrItinData<II_VLDB_POP_544_3D, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dcl*/1, /*dch*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_ex_ebs16__fifo_1d_pop__dmx_ldb_fifo_ex_ebs16__core_pop__dmx_ldb_fifo_ex_ebs16__fifo_1d__mPfb__mLdFifo_b__mRF2b__mMb
+MemInstrItinData<II_VLDB_POP_544_fifo_1d_pop, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_ex_ebs16__normal_pop__dmx_ldb_fifo_ex_ebs16__core_pop__dmx_ldb_fifo_ex_ebs16__normal__mPfb__mLdFifo_b__mRF2b
+MemInstrItinData<II_VLDB_POP_544_normal_pop, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_ex_ebs8__fifo_2d_pop__dmx_ldb_fifo_ex_ebs8__core_pop__dmx_ldb_fifo_ex_ebs8__fifo_2d__mPfb__mLdFifo_b__mRF2b__mDb
+MemInstrItinData<II_VLDB_POP_576_2D, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dc*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_ex_ebs8__fifo_3d_pop__dmx_ldb_fifo_ex_ebs8__core_pop__dmx_ldb_fifo_ex_ebs8__fifo_3d__mPfb__mLdFifo_b__mRF2b__mDSb
+MemInstrItinData<II_VLDB_POP_576_3D, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dcl*/1, /*dch*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_ex_ebs8__fifo_1d_pop__dmx_ldb_fifo_ex_ebs8__core_pop__dmx_ldb_fifo_ex_ebs8__fifo_1d__mPfb__mLdFifo_b__mRF2b__mMb
+MemInstrItinData<II_VLDB_POP_576_fifo_1d_pop, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_ex_ebs8__normal_pop__dmx_ldb_fifo_ex_ebs8__core_pop__dmx_ldb_fifo_ex_ebs8__normal__mPfb__mLdFifo_b__mRF2b
+MemInstrItinData<II_VLDB_POP_576_normal_pop, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_qx__fifo_2d_pop__dmx_ldb_fifo_qx__core_pop__dmx_ldb_fifo_qx__fifo_2d__mPfb__mLdFifo_b__mRF2b__mDb
+MemInstrItinData<II_VLDB_POP_640_2D, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dc*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_qx__fifo_3d_pop__dmx_ldb_fifo_qx__core_pop__dmx_ldb_fifo_qx__fifo_3d__mPfb__mLdFifo_b__mRF2b__mDSb
+MemInstrItinData<II_VLDB_POP_640_3D, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dcl*/1, /*dch*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_qx__fifo_1d_pop__dmx_ldb_fifo_qx__core_pop__dmx_ldb_fifo_qx__fifo_1d__mPfb__mLdFifo_b__mRF2b__mMb
+MemInstrItinData<II_VLDB_POP_640_fifo_1d_pop, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_qx__normal_pop__dmx_ldb_fifo_qx__core_pop__dmx_ldb_fifo_qx__normal__mPfb__mLdFifo_b__mRF2b
+MemInstrItinData<II_VLDB_POP_640_normal_pop, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_qex_ebs16__fifo_2d_pop__dmx_ldb_fifo_qex_ebs16__core_pop__dmx_ldb_fifo_qex_ebs16__fifo_2d__mPfb__mLdFifo_b__mRF2b__mDb
+MemInstrItinData<II_VLDB_POP_704_2D, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dc*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_qex_ebs16__fifo_3d_pop__dmx_ldb_fifo_qex_ebs16__core_pop__dmx_ldb_fifo_qex_ebs16__fifo_3d__mPfb__mLdFifo_b__mRF2b__mDSb
+MemInstrItinData<II_VLDB_POP_704_3D, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dcl*/1, /*dch*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_qex_ebs16__fifo_1d_pop__dmx_ldb_fifo_qex_ebs16__core_pop__dmx_ldb_fifo_qex_ebs16__fifo_1d__mPfb__mLdFifo_b__mRF2b__mMb
+MemInstrItinData<II_VLDB_POP_704_fifo_1d_pop, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_qex_ebs16__normal_pop__dmx_ldb_fifo_qex_ebs16__core_pop__dmx_ldb_fifo_qex_ebs16__normal__mPfb__mLdFifo_b__mRF2b
+MemInstrItinData<II_VLDB_POP_704_normal_pop, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmw_ldb_unpack__agub_dmw__nrm__agub_dmw__normal__agub_dmw__idx__mPb__mDJb__unpackSign0
+MemInstrItinData<II_VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign0, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr*/1, /*dj*/1, /*crUnpackSize*/7, /*unpackSign0*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmw_ldb_unpack__agub_dmw__nrm__agub_dmw__normal__agub_dmw__idx__mPb__mDJb__unpackSign1
+MemInstrItinData<II_VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign1, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr*/1, /*dj*/1, /*crUnpackSize*/7, /*unpackSign1*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmw_ldb_unpack__agub_dmw__nrm__agub_dmw__normal__agub_dmw__idx_imm__mPb__m_c09s_step32__unpackSign0
+MemInstrItinData<II_VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign0, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr*/1, /*imm*/1, /*crUnpackSize*/7, /*unpackSign0*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmw_ldb_unpack__agub_dmw__nrm__agub_dmw__normal__agub_dmw__idx_imm__mPb__m_c09s_step32__unpackSign1
+MemInstrItinData<II_VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign1, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr*/1, /*imm*/1, /*crUnpackSize*/7, /*unpackSign1*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmw_ldb_unpack__agub_dmw__nrm__agub_dmw__normal__agub_dmw__pstm_nrm__mPb__mMb__unpackSign0
+MemInstrItinData<II_VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign0, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*mod*/1, /*crUnpackSize*/7, /*unpackSign0*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmw_ldb_unpack__agub_dmw__nrm__agub_dmw__normal__agub_dmw__pstm_nrm__mPb__mMb__unpackSign1
+MemInstrItinData<II_VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign1, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*mod*/1, /*crUnpackSize*/7, /*unpackSign1*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmw_ldb_unpack__agub_dmw__nrm__agub_dmw__normal__agub_dmw__pstm_nrm_imm__mPb__m_c09s_step32__unpackSign0
+MemInstrItinData<II_VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign0, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*imm*/1, /*crUnpackSize*/7, /*unpackSign0*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmw_ldb_unpack__agub_dmw__nrm__agub_dmw__normal__agub_dmw__pstm_nrm_imm__mPb__m_c09s_step32__unpackSign1
+MemInstrItinData<II_VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign1, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*imm*/1, /*crUnpackSize*/7, /*unpackSign1*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_unpack__agub_dmx__nrm__agub_dmx__normal__agub_dmx__idx__mPb__mDJb__mYb__unpackSign0
+MemInstrItinData<II_VLDB_UNPACK_dmx_ldb_unpack_idx_unpackSign0, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr*/1, /*dj*/1, /*crUnpackSize*/7, /*unpackSign0*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_unpack__agub_dmx__nrm__agub_dmx__normal__agub_dmx__idx__mPb__mDJb__mYb__unpackSign1
+MemInstrItinData<II_VLDB_UNPACK_dmx_ldb_unpack_idx_unpackSign1, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr*/1, /*dj*/1, /*crUnpackSize*/7, /*unpackSign1*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_unpack__agub_dmx__nrm__agub_dmx__normal__agub_dmx__idx_imm__mPb__m_c10s_step64__mYb__unpackSign0
+MemInstrItinData<II_VLDB_UNPACK_dmx_ldb_unpack_idx_imm_unpackSign0, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr*/1, /*imm*/1, /*crUnpackSize*/7, /*unpackSign0*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_unpack__agub_dmx__nrm__agub_dmx__normal__agub_dmx__idx_imm__mPb__m_c10s_step64__mYb__unpackSign1
+MemInstrItinData<II_VLDB_UNPACK_dmx_ldb_unpack_idx_imm_unpackSign1, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr*/1, /*imm*/1, /*crUnpackSize*/7, /*unpackSign1*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_unpack__agub_dmx__nrm__agub_dmx__normal__agub_dmx__pstm_nrm__mPb__mMb__mYb__unpackSign0
+MemInstrItinData<II_VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_unpackSign0, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*mod*/1, /*crUnpackSize*/7, /*unpackSign0*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_unpack__agub_dmx__nrm__agub_dmx__normal__agub_dmx__pstm_nrm__mPb__mMb__mYb__unpackSign1
+MemInstrItinData<II_VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_unpackSign1, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*mod*/1, /*crUnpackSize*/7, /*unpackSign1*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_unpack__agub_dmx__nrm__agub_dmx__normal__agub_dmx__pstm_nrm_imm__mPb__m_c10s_step64__mYb__unpackSign0
+MemInstrItinData<II_VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_imm_unpackSign0, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*imm*/1, /*crUnpackSize*/7, /*unpackSign0*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_unpack__agub_dmx__nrm__agub_dmx__normal__agub_dmx__pstm_nrm_imm__mPb__m_c10s_step64__mYb__unpackSign1
+MemInstrItinData<II_VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_imm_unpackSign1, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*imm*/1, /*crUnpackSize*/7, /*unpackSign1*/7], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmw_ldb__agub_dmw__nrm__agub_dmw__normal__agub_dmw__idx__mPb__mDJb
+MemInstrItinData<II_VLDB_dmw_ldb_idx, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmw_ldb__agub_dmw__nrm__agub_dmw__normal__agub_dmw__idx_imm__mPb__m_c09s_step32
+MemInstrItinData<II_VLDB_dmw_ldb_idx_imm, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmw_ldb__agub_dmw__nrm__agub_dmw__normal__agub_dmw__pstm_nrm__mPb__mMb
+MemInstrItinData<II_VLDB_dmw_ldb_pstm_nrm, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmw_ldb__agub_dmw__nrm__agub_dmw__normal__agub_dmw__pstm_nrm_imm__mPb__m_c09s_step32
+MemInstrItinData<II_VLDB_dmw_ldb_pstm_nrm_imm, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_x__agub_dmx__nrm__agub_dmx__normal__agub_dmx__idx__mPb__mDJb
+MemInstrItinData<II_VLDB_dmx_ldb_x_idx, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_x__agub_dmx__nrm__agub_dmx__normal__agub_dmx__idx_imm__mPb__m_c10s_step64
+MemInstrItinData<II_VLDB_dmx_ldb_x_idx_imm, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_x__agub_dmx__nrm__agub_dmx__normal__agub_dmx__pstm_nrm__mPb__mMb
+MemInstrItinData<II_VLDB_dmx_ldb_x_pstm_nrm, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__ldb__dmx_ldb_x__agub_dmx__nrm__agub_dmx__normal__agub_dmx__pstm_nrm_imm__mPb__m_c10s_step64
+MemInstrItinData<II_VLDB_dmx_ldb_x_pstm_nrm_imm, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr_out*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_compare__vlt__vec_cmp_out__vec_cmp_out32__mRS16m__vec_add_mX__vec_add_nX__vaddSign0
+InstrItinData<II_VLT_16_vaddSign0, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign0*/1], [/*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_compare__vlt__vec_cmp_out__vec_cmp_out32__mRS16m__vec_add_mX__vec_add_nX__vaddSign1
+InstrItinData<II_VLT_16_vaddSign1, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign1*/1], [/*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_compare__vlt__vec_cmp_out__vec_cmp_out16__mRS16m__vec_add_mX__vec_add_nX__vaddSign0
+InstrItinData<II_VLT_32_vaddSign0, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign0*/1], [/*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_compare__vlt__vec_cmp_out__vec_cmp_out16__mRS16m__vec_add_mX__vec_add_nX__vaddSign1
+InstrItinData<II_VLT_32_vaddSign1, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign1*/1], [/*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_compare__vlt__vec_cmp_out__vec_cmp_out64__mLm__vec_add_mX__vec_add_nX__vaddSign0
+InstrItinData<II_VLT_8_vaddSign0, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign0*/1], [/*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_compare__vlt__vec_cmp_out__vec_cmp_out64__mLm__vec_add_mX__vec_add_nX__vaddSign1
+InstrItinData<II_VLT_8_vaddSign1, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign1*/1], [/*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_bf_compare__vlt_bf__vec_cmp_out32__mRS16m__vec_add_mX__vec_add_nX
+InstrItinData<II_VLT_bf16, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*cmp*/2, /*s1*/1, /*s2*/1], [/*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__vec__vmac__mDMa__vmac_cm1_add__mDMa__vmul_cm_core__vmul_cm_core_X_QX__vacc_cm_core__mRv
+InstrItinData<II_VMAC_vmul_cm_core_X_QX, [], [/*dst*/6, /*acc1*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmac__mDMa__vmac_cm1_add__mDMa__vmul_cm_core__vmul_cm_core_X_QY__mQYsw__vacc_cm_core__mRv
+InstrItinData<II_VMAC_vmul_cm_core_X_QY, [], [/*dst*/6, /*acc1*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmac__mDMa__vmac_cm1_add__mDMa__vmul_cm_core__vmul_cm_core_X_X__vacc_cm_core__mRv
+InstrItinData<II_VMAC_vmul_cm_core_X_X, [], [/*dst*/6, /*acc1*/4, /*s1*/1, /*s2*/1, /*acc*/1], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmac__mDMa__vmac_cm1_add__mDMa__vmul_cm_core__vmul_cm_core_X_Y__mYw__vacc_cm_core__mRv
+InstrItinData<II_VMAC_vmul_cm_core_X_Y, [], [/*dst*/6, /*acc1*/4, /*s1*/1, /*s2*/1, /*acc*/1], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmac__mDMa__vmac_cm1_add__mDMa__vmul_cm_core__vmul_cm_core_Y_QX__mYv__vacc_cm_core__mRv
+InstrItinData<II_VMAC_vmul_cm_core_Y_QX, [], [/*dst*/6, /*acc1*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmac__mDMa__vmac_cm1_add__mDMa__vmul_cm_core__vmul_cm_core_Y_QY__mYv__mQYsw__vacc_cm_core__mRv
+InstrItinData<II_VMAC_vmul_cm_core_Y_QY, [], [/*dst*/6, /*acc1*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmac__mDMa__vmac_cm1_add__mDMa__vmul_cm_core__vmul_cm_core_Y_X__mYv__vacc_cm_core__mRv
+InstrItinData<II_VMAC_vmul_cm_core_Y_X, [], [/*dst*/6, /*acc1*/4, /*s1*/1, /*s2*/1, /*acc*/1], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmac__mDMa__vmac_cm1_add__mDMa__vmul_cm_core__vmul_cm_core_Y_Y__mYv__mYw__vacc_cm_core__mRv
+InstrItinData<II_VMAC_vmul_cm_core_Y_Y, [], [/*dst*/6, /*acc1*/4, /*s1*/1, /*s2*/1, /*acc*/1], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmac_bf__mDMa__vmac_bf1_add__mDMa__vmul_bf_core__vmul_bf_core_X_X__vacc_bf_core__mRv
+InstrItinData<II_VMAC_f_vmac_bf_vmul_bf_core_X_X, [], [/*dst*/6, /*acc1*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmac_bf__mDMa__vmac_bf1_add__mDMa__vmul_bf_core__vmul_bf_core_Y_Y__mYv__mYw__vacc_bf_core__mRv
+InstrItinData<II_VMAC_f_vmac_bf_vmul_bf_core_Y_Y, [], [/*dst*/6, /*acc1*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmac_bfp__mDMa__vmac_bfp1_add__mDMa__vmul_bfp_core__vmul_bfp_core_EX_EX__vacc_bfp_core__mRv
+InstrItinData<II_VMAC_f_vmac_bfp_vmul_bfp_core_EX_EX, [], [/*dst*/6, /*acc1*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmac_bfp__mDMa__vmac_bfp1_add__mDMa__vmul_bfp_core__vmul_bfp_core_EX_EY__mEYw__vacc_bfp_core__mRv
+InstrItinData<II_VMAC_f_vmac_bfp_vmul_bfp_core_EX_EY, [], [/*dst*/6, /*acc1*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmac_bfp__mDMa__vmac_bfp1_add__mDMa__vmul_bfp_core__vmul_bfp_core_EX_QEY__mQEYsw__vacc_bfp_core__mRv
+InstrItinData<II_VMAC_f_vmac_bfp_vmul_bfp_core_EX_QEY, [], [/*dst*/6, /*acc1*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*srSparse_of*/2, /*crFPMask*/7], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmac_bfp__mDMa__vmac_bfp1_add__mDMa__vmul_bfp_core__vmul_bfp_core_EY_QEX__mEYv__vacc_bfp_core__mRv
+InstrItinData<II_VMAC_f_vmac_bfp_vmul_bfp_core_EY_QEX, [], [/*dst*/6, /*acc1*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*srSparse_of*/2, /*crFPMask*/7], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vmaxdiff_lt__vec_cmp_out_single__vec_cmp_out_single32__mR16_vcompare__vec_add_mX__vec_add_nX__vaddSign0
+InstrItinData<II_VMAXDIFF_LT_16_vaddSign0, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vmaxdiff_lt__vec_cmp_out_single__vec_cmp_out_single32__mR16_vcompare__vec_add_mX__vec_add_nX__vaddSign1
+InstrItinData<II_VMAXDIFF_LT_16_vaddSign1, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vmaxdiff_lt__vec_cmp_out_single__vec_cmp_out_single16__mR16_vcompare__vec_add_mX__vec_add_nX__vaddSign0
+InstrItinData<II_VMAXDIFF_LT_32_vaddSign0, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vmaxdiff_lt__vec_cmp_out_single__vec_cmp_out_single16__mR16_vcompare__vec_add_mX__vec_add_nX__vaddSign1
+InstrItinData<II_VMAXDIFF_LT_32_vaddSign1, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vmaxdiff_lt__vec_cmp_out_single__vec_cmp_out_single64__mL8m__vec_add_mX__vec_add_nX__vaddSign0
+InstrItinData<II_VMAXDIFF_LT_8_vaddSign0, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vmaxdiff_lt__vec_cmp_out_single__vec_cmp_out_single64__mL8m__vec_add_mX__vec_add_nX__vaddSign1
+InstrItinData<II_VMAXDIFF_LT_8_vaddSign1, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vmax_lt__vec_cmp_out_single__vec_cmp_out_single32__mR16_vcompare__vec_add_mX__vec_add_nX__vaddSign0
+InstrItinData<II_VMAX_LT_16_vaddSign0, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vmax_lt__vec_cmp_out_single__vec_cmp_out_single32__mR16_vcompare__vec_add_mX__vec_add_nX__vaddSign1
+InstrItinData<II_VMAX_LT_16_vaddSign1, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vmax_lt__vec_cmp_out_single__vec_cmp_out_single16__mR16_vcompare__vec_add_mX__vec_add_nX__vaddSign0
+InstrItinData<II_VMAX_LT_32_vaddSign0, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vmax_lt__vec_cmp_out_single__vec_cmp_out_single16__mR16_vcompare__vec_add_mX__vec_add_nX__vaddSign1
+InstrItinData<II_VMAX_LT_32_vaddSign1, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vmax_lt__vec_cmp_out_single__vec_cmp_out_single64__mL8m__vec_add_mX__vec_add_nX__vaddSign0
+InstrItinData<II_VMAX_LT_8_vaddSign0, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vmax_lt__vec_cmp_out_single__vec_cmp_out_single64__mL8m__vec_add_mX__vec_add_nX__vaddSign1
+InstrItinData<II_VMAX_LT_8_vaddSign1, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_bf_min_max__vmax_lt_bf__vec_cmp_out_single32__mR16_vcompare__vec_add_mX__vec_add_nX
+InstrItinData<II_VMAX_LT_bf16, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s1*/1, /*s2*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vmin_ge__vec_cmp_out_single__vec_cmp_out_single32__mR16_vcompare__vec_add_mX__vec_add_nX__vaddSign0
+InstrItinData<II_VMIN_GE_16_vaddSign0, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vmin_ge__vec_cmp_out_single__vec_cmp_out_single32__mR16_vcompare__vec_add_mX__vec_add_nX__vaddSign1
+InstrItinData<II_VMIN_GE_16_vaddSign1, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vmin_ge__vec_cmp_out_single__vec_cmp_out_single16__mR16_vcompare__vec_add_mX__vec_add_nX__vaddSign0
+InstrItinData<II_VMIN_GE_32_vaddSign0, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vmin_ge__vec_cmp_out_single__vec_cmp_out_single16__mR16_vcompare__vec_add_mX__vec_add_nX__vaddSign1
+InstrItinData<II_VMIN_GE_32_vaddSign1, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vmin_ge__vec_cmp_out_single__vec_cmp_out_single64__mL8m__vec_add_mX__vec_add_nX__vaddSign0
+InstrItinData<II_VMIN_GE_8_vaddSign0, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vmin_ge__vec_cmp_out_single__vec_cmp_out_single64__mL8m__vec_add_mX__vec_add_nX__vaddSign1
+InstrItinData<II_VMIN_GE_8_vaddSign1, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_bf_min_max__vmin_ge_bf__vec_cmp_out_single32__mR16_vcompare__vec_add_mX__vec_add_nX
+InstrItinData<II_VMIN_GE_bf16, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s1*/1, /*s2*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__lda__mv_scd__mv_scd_cm__scd_cm_0__mSCD_E7
+InstrItinData<II_VMOV_0_mv_scd_cm, [EmptyCycles<5>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, PrefixCycle<BM_WM_1>, PrefixCycle<DM_WM_PORT>, SimpleCycle<SCD>], [/*dst*/7, /*crSCDEn*/5]>,
+
+// id: me__instr128_or__lda__mv_scd__mv_scd_dm_imm__scd_dm_0__mv_scd_dm_core__mDMm__mSCD_E7
+InstrItinData<II_VMOV_0_mv_scd_dm_imm, [EmptyCycles<5>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, PrefixCycle<BM_WM_1>, PrefixCycle<DM_WM_PORT>, SimpleCycle<SCD>], [/*dst*/7, /*crSCDEn*/5]>,
+
+// id: me__instr128_or__lda__mv_scd__mv_scd_cm__scd_cm_1__mSCD_E7
+InstrItinData<II_VMOV_1_mv_scd_cm, [EmptyCycles<5>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, PrefixCycle<BM_WM_1>, PrefixCycle<DM_WM_PORT>, SimpleCycle<SCD>], [/*dst*/7, /*crSCDEn*/5]>,
+
+// id: me__instr128_or__lda__mv_scd__mv_scd_dm_imm__scd_dm_1__mv_scd_dm_core__mDMm__mSCD_E7
+InstrItinData<II_VMOV_1_mv_scd_dm_imm, [EmptyCycles<5>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, PrefixCycle<BM_WM_1>, PrefixCycle<DM_WM_PORT>, SimpleCycle<SCD>], [/*dst*/7, /*crSCDEn*/5]>,
+
+// id: me__instr128_or__lda__mv_scd__mv_scd_dm_imm__scd_dm_2__mv_scd_dm_core__mDMm__mSCD_E7
+InstrItinData<II_VMOV_2, [EmptyCycles<5>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, PrefixCycle<BM_WM_1>, PrefixCycle<DM_WM_PORT>, SimpleCycle<SCD>], [/*dst*/7, /*crSCDEn*/5]>,
+
+// id: me__instr128_or__lda__mv_scd__mv_scd_dm_imm__scd_dm_3__mv_scd_dm_core__mDMm__mSCD_E7
+InstrItinData<II_VMOV_3, [EmptyCycles<5>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, PrefixCycle<BM_WM_1>, PrefixCycle<DM_WM_PORT>, SimpleCycle<SCD>], [/*dst*/7, /*crSCDEn*/5]>,
+
+// id: me__instr128_or__vec__vmov__mDMa__vmac_cm1_add__mDMa
+InstrItinData<II_VMOV_D, [], [/*dst*/6, /*acc1*/4], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_cm
+InstrItinData<II_VMOV_alu_mv_mv_cm, [SimpleCycle<DM_RM_PORT>, PrefixCycle<BM_WM_1>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_ex
+InstrItinData<II_VMOV_alu_mv_mv_ex, [], [/*dst*/2, /*src*/1], [/*dst*/MV_Bypass, /*src*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_q
+InstrItinData<II_VMOV_alu_mv_mv_q, [], [/*dst*/2, /*src*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_q_to_w
+InstrItinData<II_VMOV_alu_mv_mv_q_to_w, [], [/*dst*/2, /*src*/1], [/*dst*/MV_Bypass, /*src*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_qex
+InstrItinData<II_VMOV_alu_mv_mv_qex, [], [/*dst*/2, /*src*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_qx
+InstrItinData<II_VMOV_alu_mv_mv_qx, [], [/*dst*/2, /*src*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_w
+InstrItinData<II_VMOV_alu_mv_mv_w, [], [/*dst*/2, /*src*/1], [/*dst*/MV_Bypass, /*src*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_w_to_q
+InstrItinData<II_VMOV_alu_mv_mv_w_to_q, [], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_x
+InstrItinData<II_VMOV_alu_mv_mv_x, [PrefixCycle<DM_RM_PORT>, SimpleCycle<FIFO_HL_RA_PORT>, PrefixCycle<DM_WM_PORT>, SimpleCycle<FIFO_HL_WA_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eXe_eXe, [], [/*dst*/2, /*src*/1], [/*dst*/MV_Bypass, /*src*/MV_Bypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eLdFifoLReg_eXe, [EmptyCycles<1>, SimpleCycle<FIFO_HL_WA_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/MV_Bypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eBMHH_eXe, [EmptyCycles<1>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/MV_Bypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eBMHL_eXe, [EmptyCycles<1>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/MV_Bypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eLdFifoHReg_eXe, [EmptyCycles<1>, SimpleCycle<FIFO_HL_WA_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/MV_Bypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eBMLL_eXe, [EmptyCycles<1>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/MV_Bypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eBMLH_eXe, [EmptyCycles<1>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/MV_Bypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eXo_eXe, [], [/*dst*/2, /*src*/1], [/*dst*/MV_Bypass, /*src*/MV_Bypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eXe_eLdFifoLReg, [SimpleCycle<FIFO_HL_RA_PORT>], [/*dst*/2, /*src*/1], [/*dst*/MV_Bypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eXe_eBMHH, [SimpleCycle<DM_RM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/MV_Bypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eXe_eBMHL, [SimpleCycle<DM_RM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/MV_Bypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eXe_eLdFifoHReg, [SimpleCycle<FIFO_HL_RA_PORT>], [/*dst*/2, /*src*/1], [/*dst*/MV_Bypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eXe_eBMLL, [SimpleCycle<DM_RM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/MV_Bypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eXe_eBMLH, [SimpleCycle<DM_RM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/MV_Bypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eXe_eXo, [], [/*dst*/2, /*src*/1], [/*dst*/MV_Bypass, /*src*/MV_Bypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eLdFifoLReg_eLdFifoLReg, [SimpleCycle<FIFO_HL_RA_PORT>, SimpleCycle<FIFO_HL_WA_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eLdFifoLReg_eBMHH, [SimpleCycle<DM_RM_PORT>, SimpleCycle<FIFO_HL_WA_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eLdFifoLReg_eBMHL, [SimpleCycle<DM_RM_PORT>, SimpleCycle<FIFO_HL_WA_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eLdFifoLReg_eLdFifoHReg, [SimpleCycle<FIFO_HL_RA_PORT>, SimpleCycle<FIFO_HL_WA_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eLdFifoLReg_eBMLL, [SimpleCycle<DM_RM_PORT>, SimpleCycle<FIFO_HL_WA_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eLdFifoLReg_eBMLH, [SimpleCycle<DM_RM_PORT>, SimpleCycle<FIFO_HL_WA_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eLdFifoLReg_eXo, [EmptyCycles<1>, SimpleCycle<FIFO_HL_WA_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/MV_Bypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eBMHH_eLdFifoLReg, [SimpleCycle<FIFO_HL_RA_PORT>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eBMHH_eBMHH, [SimpleCycle<DM_RM_PORT>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eBMHH_eBMHL, [SimpleCycle<DM_RM_PORT>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eBMHH_eLdFifoHReg, [SimpleCycle<FIFO_HL_RA_PORT>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eBMHH_eBMLL, [SimpleCycle<DM_RM_PORT>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eBMHH_eBMLH, [SimpleCycle<DM_RM_PORT>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eBMHH_eXo, [EmptyCycles<1>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/MV_Bypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eBMHL_eLdFifoLReg, [SimpleCycle<FIFO_HL_RA_PORT>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eBMHL_eBMHH, [SimpleCycle<DM_RM_PORT>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eBMHL_eBMHL, [SimpleCycle<DM_RM_PORT>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eBMHL_eLdFifoHReg, [SimpleCycle<FIFO_HL_RA_PORT>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eBMHL_eBMLL, [SimpleCycle<DM_RM_PORT>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eBMHL_eBMLH, [SimpleCycle<DM_RM_PORT>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eBMHL_eXo, [EmptyCycles<1>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/MV_Bypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eLdFifoHReg_eLdFifoLReg, [SimpleCycle<FIFO_HL_RA_PORT>, SimpleCycle<FIFO_HL_WA_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eLdFifoHReg_eBMHH, [SimpleCycle<DM_RM_PORT>, SimpleCycle<FIFO_HL_WA_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eLdFifoHReg_eBMHL, [SimpleCycle<DM_RM_PORT>, SimpleCycle<FIFO_HL_WA_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eLdFifoHReg_eLdFifoHReg, [SimpleCycle<FIFO_HL_RA_PORT>, SimpleCycle<FIFO_HL_WA_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eLdFifoHReg_eBMLL, [SimpleCycle<DM_RM_PORT>, SimpleCycle<FIFO_HL_WA_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eLdFifoHReg_eBMLH, [SimpleCycle<DM_RM_PORT>, SimpleCycle<FIFO_HL_WA_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eLdFifoHReg_eXo, [EmptyCycles<1>, SimpleCycle<FIFO_HL_WA_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/MV_Bypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eBMLL_eLdFifoLReg, [SimpleCycle<FIFO_HL_RA_PORT>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eBMLL_eBMHH, [SimpleCycle<DM_RM_PORT>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eBMLL_eBMHL, [SimpleCycle<DM_RM_PORT>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eBMLL_eLdFifoHReg, [SimpleCycle<FIFO_HL_RA_PORT>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eBMLL_eBMLL, [SimpleCycle<DM_RM_PORT>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eBMLL_eBMLH, [SimpleCycle<DM_RM_PORT>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eBMLL_eXo, [EmptyCycles<1>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/MV_Bypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eBMLH_eLdFifoLReg, [SimpleCycle<FIFO_HL_RA_PORT>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eBMLH_eBMHH, [SimpleCycle<DM_RM_PORT>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eBMLH_eBMHL, [SimpleCycle<DM_RM_PORT>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eBMLH_eLdFifoHReg, [SimpleCycle<FIFO_HL_RA_PORT>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eBMLH_eBMLL, [SimpleCycle<DM_RM_PORT>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eBMLH_eBMLH, [SimpleCycle<DM_RM_PORT>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eBMLH_eXo, [EmptyCycles<1>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/NoBypass, /*src*/MV_Bypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eXo_eLdFifoLReg, [SimpleCycle<FIFO_HL_RA_PORT>], [/*dst*/2, /*src*/1], [/*dst*/MV_Bypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eXo_eBMHH, [SimpleCycle<DM_RM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/MV_Bypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eXo_eBMHL, [SimpleCycle<DM_RM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/MV_Bypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eXo_eLdFifoHReg, [SimpleCycle<FIFO_HL_RA_PORT>], [/*dst*/2, /*src*/1], [/*dst*/MV_Bypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eXo_eBMLL, [SimpleCycle<DM_RM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/MV_Bypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eXo_eBMLH, [SimpleCycle<DM_RM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/MV_Bypass, /*src*/NoBypass]>,
+InstrItinData<II_VMOV_alu_mv_mv_x_eXo_eXo, [], [/*dst*/2, /*src*/1], [/*dst*/MV_Bypass, /*src*/MV_Bypass]>,
+
+// id: me__instr128_or__lda__mv_scd__mv_scd_bm__mScdBMDst__mSCD_E7
+InstrItinData<II_VMOV_lda_mv_scd_bm, [EmptyCycles<5>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, PrefixCycle<DM_WM_PORT>, SimpleCycle<SCD>], [/*dst*/7, /*crSCDEn*/5]>,
+
+// id: me__instr128_or__lda__mv_scd__mv_scd_dm_dyn__mv_scd_dm_core__mDMm__mSCD_E7__mSCD_r_incr__mR31_scd
+InstrItinData<II_VMOV_lda_mv_scd_dm_dyn, [EmptyCycles<4>, PrefixCycle<L_RM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, PrefixCycle<BM_WM_1>, PrefixCycle<DM_WM_PORT>, SimpleCycle<SCD>], [/*dst*/7, /*r_out*/5, /*r*/5, /*crSCDEn*/5]>,
+
+// id: me__instr128_or__lda__mv_scd__mv_scd_dm_reg__mv_scd_dm_core__mDMm__mSCD_E7__mSCD_r__mR31_scd
+InstrItinData<II_VMOV_lda_mv_scd_dm_reg, [EmptyCycles<4>, PrefixCycle<L_RM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, PrefixCycle<BM_WM_1>, PrefixCycle<DM_WM_PORT>, SimpleCycle<SCD>], [/*dst*/7, /*c*/5, /*crSCDEn*/5]>,
+
+// id: me__instr128_or__lda__mv_scd__mv_scd_x__mScdXDst__mSCD_E7
+InstrItinData<II_VMOV_lda_mv_scd_x, [EmptyCycles<5>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, PrefixCycle<QEY_WA_PORT>, SimpleCycle<SCD>], [/*dst*/7, /*crSCDEn*/5]>,
+
+// id: me__instr128_or__st__st_streams__mv_mcd_bm__mMCD__mMcdBMSrc
+InstrItinData<II_VMOV_st_mv_mcd_bm, [], [/*src*/1, /*crMCDEn*/1]>,
+
+// id: me__instr128_or__st__st_streams__mv_mcd_x__mMCD__mMcdXSrc
+InstrItinData<II_VMOV_st_mv_mcd_x, [SimpleCycle<QEY_RS_PORT>], [/*src*/1, /*crMCDEn*/1]>,
+
+// id: me__instr128_or__vec__vmac__mDMa__vmac_cm1_add__mDMa__vmul_cm_core__vmul_cm_core_X_QX__vacc_cm_core__mRv
+InstrItinData<II_VMSC_vmul_cm_core_X_QX, [], [/*dst*/6, /*acc1*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmac__mDMa__vmac_cm1_add__mDMa__vmul_cm_core__vmul_cm_core_X_QY__mQYsw__vacc_cm_core__mRv
+InstrItinData<II_VMSC_vmul_cm_core_X_QY, [], [/*dst*/6, /*acc1*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmac__mDMa__vmac_cm1_add__mDMa__vmul_cm_core__vmul_cm_core_X_X__vacc_cm_core__mRv
+InstrItinData<II_VMSC_vmul_cm_core_X_X, [], [/*dst*/6, /*acc1*/4, /*s1*/1, /*s2*/1, /*acc*/1], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmac__mDMa__vmac_cm1_add__mDMa__vmul_cm_core__vmul_cm_core_X_Y__mYw__vacc_cm_core__mRv
+InstrItinData<II_VMSC_vmul_cm_core_X_Y, [], [/*dst*/6, /*acc1*/4, /*s1*/1, /*s2*/1, /*acc*/1], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmac__mDMa__vmac_cm1_add__mDMa__vmul_cm_core__vmul_cm_core_Y_QX__mYv__vacc_cm_core__mRv
+InstrItinData<II_VMSC_vmul_cm_core_Y_QX, [], [/*dst*/6, /*acc1*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmac__mDMa__vmac_cm1_add__mDMa__vmul_cm_core__vmul_cm_core_Y_QY__mYv__mQYsw__vacc_cm_core__mRv
+InstrItinData<II_VMSC_vmul_cm_core_Y_QY, [], [/*dst*/6, /*acc1*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmac__mDMa__vmac_cm1_add__mDMa__vmul_cm_core__vmul_cm_core_Y_X__mYv__vacc_cm_core__mRv
+InstrItinData<II_VMSC_vmul_cm_core_Y_X, [], [/*dst*/6, /*acc1*/4, /*s1*/1, /*s2*/1, /*acc*/1], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmac__mDMa__vmac_cm1_add__mDMa__vmul_cm_core__vmul_cm_core_Y_Y__mYv__mYw__vacc_cm_core__mRv
+InstrItinData<II_VMSC_vmul_cm_core_Y_Y, [], [/*dst*/6, /*acc1*/4, /*s1*/1, /*s2*/1, /*acc*/1], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmac_bf__mDMa__vmac_bf1_add__mDMa__vmul_bf_core__vmul_bf_core_X_X__vacc_bf_core__mRv
+InstrItinData<II_VMSC_f_vmac_bf_vmul_bf_core_X_X, [], [/*dst*/6, /*acc1*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmac_bf__mDMa__vmac_bf1_add__mDMa__vmul_bf_core__vmul_bf_core_Y_Y__mYv__mYw__vacc_bf_core__mRv
+InstrItinData<II_VMSC_f_vmac_bf_vmul_bf_core_Y_Y, [], [/*dst*/6, /*acc1*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmac_bfp__mDMa__vmac_bfp1_add__mDMa__vmul_bfp_core__vmul_bfp_core_EX_EX__vacc_bfp_core__mRv
+InstrItinData<II_VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX, [], [/*dst*/6, /*acc1*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmac_bfp__mDMa__vmac_bfp1_add__mDMa__vmul_bfp_core__vmul_bfp_core_EX_EY__mEYw__vacc_bfp_core__mRv
+InstrItinData<II_VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY, [], [/*dst*/6, /*acc1*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmac_bfp__mDMa__vmac_bfp1_add__mDMa__vmul_bfp_core__vmul_bfp_core_EX_QEY__mQEYsw__vacc_bfp_core__mRv
+InstrItinData<II_VMSC_f_vmac_bfp_vmul_bfp_core_EX_QEY, [], [/*dst*/6, /*acc1*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*srSparse_of*/2, /*crFPMask*/7], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmac_bfp__mDMa__vmac_bfp1_add__mDMa__vmul_bfp_core__vmul_bfp_core_EY_QEX__mEYv__vacc_bfp_core__mRv
+InstrItinData<II_VMSC_f_vmac_bfp_vmul_bfp_core_EY_QEX, [], [/*dst*/6, /*acc1*/4, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*srSparse_of*/2, /*crFPMask*/7], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmul__mDMa__vmul_cm_core__vmul_cm_core_X_QX__vacc_cm_core__mRv
+InstrItinData<II_VMUL_vmul_cm_core_X_QX, [], [/*dst*/6, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2], [/*dst*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmul__mDMa__vmul_cm_core__vmul_cm_core_X_QY__mQYsw__vacc_cm_core__mRv
+InstrItinData<II_VMUL_vmul_cm_core_X_QY, [], [/*dst*/6, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2], [/*dst*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmul__mDMa__vmul_cm_core__vmul_cm_core_X_X__vacc_cm_core__mRv
+InstrItinData<II_VMUL_vmul_cm_core_X_X, [], [/*dst*/6, /*s1*/1, /*s2*/1, /*acc*/1], [/*dst*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmul__mDMa__vmul_cm_core__vmul_cm_core_X_Y__mYw__vacc_cm_core__mRv
+InstrItinData<II_VMUL_vmul_cm_core_X_Y, [], [/*dst*/6, /*s1*/1, /*s2*/1, /*acc*/1], [/*dst*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmul__mDMa__vmul_cm_core__vmul_cm_core_Y_QX__mYv__vacc_cm_core__mRv
+InstrItinData<II_VMUL_vmul_cm_core_Y_QX, [], [/*dst*/6, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2], [/*dst*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmul__mDMa__vmul_cm_core__vmul_cm_core_Y_QY__mYv__mQYsw__vacc_cm_core__mRv
+InstrItinData<II_VMUL_vmul_cm_core_Y_QY, [], [/*dst*/6, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2], [/*dst*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmul__mDMa__vmul_cm_core__vmul_cm_core_Y_X__mYv__vacc_cm_core__mRv
+InstrItinData<II_VMUL_vmul_cm_core_Y_X, [], [/*dst*/6, /*s1*/1, /*s2*/1, /*acc*/1], [/*dst*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmul__mDMa__vmul_cm_core__vmul_cm_core_Y_Y__mYv__mYw__vacc_cm_core__mRv
+InstrItinData<II_VMUL_vmul_cm_core_Y_Y, [], [/*dst*/6, /*s1*/1, /*s2*/1, /*acc*/1], [/*dst*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmul_bf__mDMa__vmul_bf_core__vmul_bf_core_X_X__vacc_bf_core__mRv
+InstrItinData<II_VMUL_f_vmul_bf_vmul_bf_core_X_X, [], [/*dst*/6, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7]>,
+
+// id: me__instr128_or__vec__vmul_bf__mDMa__vmul_bf_core__vmul_bf_core_Y_Y__mYv__mYw__vacc_bf_core__mRv
+InstrItinData<II_VMUL_f_vmul_bf_vmul_bf_core_Y_Y, [], [/*dst*/6, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7]>,
+
+// id: me__instr128_or__vec__vmul_bfp__mDMa__vmul_bfp_core__vmul_bfp_core_EX_EX__vacc_bfp_core__mRv
+InstrItinData<II_VMUL_f_vmul_bfp_vmul_bfp_core_EX_EX, [], [/*dst*/6, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7]>,
+
+// id: me__instr128_or__vec__vmul_bfp__mDMa__vmul_bfp_core__vmul_bfp_core_EX_EY__mEYw__vacc_bfp_core__mRv
+InstrItinData<II_VMUL_f_vmul_bfp_vmul_bfp_core_EX_EY, [], [/*dst*/6, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7]>,
+
+// id: me__instr128_or__vec__vmul_bfp__mDMa__vmul_bfp_core__vmul_bfp_core_EX_QEY__mQEYsw__vacc_bfp_core__mRv
+InstrItinData<II_VMUL_f_vmul_bfp_vmul_bfp_core_EX_QEY, [], [/*dst*/6, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*srSparse_of*/2, /*crFPMask*/7]>,
+
+// id: me__instr128_or__vec__vmul_bfp__mDMa__vmul_bfp_core__vmul_bfp_core_EY_QEX__mEYv__vacc_bfp_core__mRv
+InstrItinData<II_VMUL_f_vmul_bfp_vmul_bfp_core_EY_QEX, [], [/*dst*/6, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*srSparse_of*/2, /*crFPMask*/7]>,
+
+// id: me__instr128_or__vec__vmul__mDMa__vmul_cm_core__vmul_cm_core_X_QX__vacc_cm_core__mRv
+InstrItinData<II_VNEGMUL_vmul_cm_core_X_QX, [], [/*dst*/6, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2], [/*dst*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmul__mDMa__vmul_cm_core__vmul_cm_core_X_QY__mQYsw__vacc_cm_core__mRv
+InstrItinData<II_VNEGMUL_vmul_cm_core_X_QY, [], [/*dst*/6, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2], [/*dst*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmul__mDMa__vmul_cm_core__vmul_cm_core_X_X__vacc_cm_core__mRv
+InstrItinData<II_VNEGMUL_vmul_cm_core_X_X, [], [/*dst*/6, /*s1*/1, /*s2*/1, /*acc*/1], [/*dst*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmul__mDMa__vmul_cm_core__vmul_cm_core_X_Y__mYw__vacc_cm_core__mRv
+InstrItinData<II_VNEGMUL_vmul_cm_core_X_Y, [], [/*dst*/6, /*s1*/1, /*s2*/1, /*acc*/1], [/*dst*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmul__mDMa__vmul_cm_core__vmul_cm_core_Y_QX__mYv__vacc_cm_core__mRv
+InstrItinData<II_VNEGMUL_vmul_cm_core_Y_QX, [], [/*dst*/6, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2], [/*dst*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmul__mDMa__vmul_cm_core__vmul_cm_core_Y_QY__mYv__mQYsw__vacc_cm_core__mRv
+InstrItinData<II_VNEGMUL_vmul_cm_core_Y_QY, [], [/*dst*/6, /*s1*/1, /*s2*/1, /*acc*/1, /*srSparse_of*/2], [/*dst*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmul__mDMa__vmul_cm_core__vmul_cm_core_Y_X__mYv__vacc_cm_core__mRv
+InstrItinData<II_VNEGMUL_vmul_cm_core_Y_X, [], [/*dst*/6, /*s1*/1, /*s2*/1, /*acc*/1], [/*dst*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmul__mDMa__vmul_cm_core__vmul_cm_core_Y_Y__mYv__mYw__vacc_cm_core__mRv
+InstrItinData<II_VNEGMUL_vmul_cm_core_Y_Y, [], [/*dst*/6, /*s1*/1, /*s2*/1, /*acc*/1], [/*dst*/VEC_Bypass, /*s1*/NoBypass, /*s2*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vmul_bf__mDMa__vmul_bf_core__vmul_bf_core_X_X__vacc_bf_core__mRv
+InstrItinData<II_VNEGMUL_f_vmul_bf_vmul_bf_core_X_X, [], [/*dst*/6, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7]>,
+
+// id: me__instr128_or__vec__vmul_bf__mDMa__vmul_bf_core__vmul_bf_core_Y_Y__mYv__mYw__vacc_bf_core__mRv
+InstrItinData<II_VNEGMUL_f_vmul_bf_vmul_bf_core_Y_Y, [], [/*dst*/6, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7]>,
+
+// id: me__instr128_or__vec__vmul_bfp__mDMa__vmul_bfp_core__vmul_bfp_core_EX_EX__vacc_bfp_core__mRv
+InstrItinData<II_VNEGMUL_f_vmul_bfp_vmul_bfp_core_EX_EX, [], [/*dst*/6, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7]>,
+
+// id: me__instr128_or__vec__vmul_bfp__mDMa__vmul_bfp_core__vmul_bfp_core_EX_EY__mEYw__vacc_bfp_core__mRv
+InstrItinData<II_VNEGMUL_f_vmul_bfp_vmul_bfp_core_EX_EY, [], [/*dst*/6, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7]>,
+
+// id: me__instr128_or__vec__vmul_bfp__mDMa__vmul_bfp_core__vmul_bfp_core_EX_QEY__mQEYsw__vacc_bfp_core__mRv
+InstrItinData<II_VNEGMUL_f_vmul_bfp_vmul_bfp_core_EX_QEY, [], [/*dst*/6, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*srSparse_of*/2, /*crFPMask*/7]>,
+
+// id: me__instr128_or__vec__vmul_bfp__mDMa__vmul_bfp_core__vmul_bfp_core_EY_QEX__mEYv__vacc_bfp_core__mRv
+InstrItinData<II_VNEGMUL_f_vmul_bfp_vmul_bfp_core_EY_QEX, [], [/*dst*/6, /*s1*/1, /*s2*/1, /*acc*/1, /*srFPFlags*/7, /*srSparse_of*/2, /*crFPMask*/7]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_not__vneg_gtz__vec_cmp_out_single__vec_cmp_out_single32__mR16_vcompare__vec_add_nX
+InstrItinData<II_VNEG_GTZ_16, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s2*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_not__vneg_gtz__vec_cmp_out_single__vec_cmp_out_single16__mR16_vcompare__vec_add_nX
+InstrItinData<II_VNEG_GTZ_32, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s2*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_not__vneg_gtz__vec_cmp_out_single__vec_cmp_out_single64__mL8m__vec_add_nX
+InstrItinData<II_VNEG_GTZ_8, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s2*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__vec__vneg__mDMa__vmac_cm1_add__mDMa__vacc_cm_core__mRv
+InstrItinData<II_VNEG, [], [/*dst*/6, /*acc1*/4, /*acc*/1], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vneg_fp__mDMa__vmac_bf1_add__mDMa__vacc_bf_core__mRv
+InstrItinData<II_VNEG_f, [], [/*dst*/6, /*acc1*/4, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__st__mv_conv__mv_pack_w__packSign0
+InstrItinData<II_VPACK_mv_pack_w_packSign0, [SimpleCycle<QEY_RS_PORT>, SimpleCycle<QEY_WA_PORT>], [/*dst*/2, /*src*/1, /*crPackSize*/1, /*crSat*/1, /*packSign0*/1]>,
+
+// id: me__instr128_or__st__mv_conv__mv_pack_w__packSign1
+InstrItinData<II_VPACK_mv_pack_w_packSign1, [SimpleCycle<QEY_RS_PORT>, SimpleCycle<QEY_WA_PORT>], [/*dst*/2, /*src*/1, /*crPackSize*/1, /*crSat*/1, /*packSign1*/1]>,
+
+// id: me__instr128_or__st__mv_conv__mv_pack_x__mYs__packSign0
+InstrItinData<II_VPACK_mv_pack_x_packSign0, [SimpleCycle<QEY_RS_PORT>, SimpleCycle<QEY_WA_PORT>], [/*dst*/2, /*src*/1, /*crPackSize*/1, /*crSat*/1, /*packSign0*/1]>,
+
+// id: me__instr128_or__st__mv_conv__mv_pack_x__mYs__packSign1
+InstrItinData<II_VPACK_mv_pack_x_packSign1, [SimpleCycle<QEY_RS_PORT>, SimpleCycle<QEY_WA_PORT>], [/*dst*/2, /*src*/1, /*crPackSize*/1, /*crSat*/1, /*packSign1*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_push_hi__vec_push_hi_R__s2v_wide_16__mRm
+InstrItinData<II_VPUSH_hi_16, [SimpleCycle<L_RM_PORT>], [/*d*/2, /*s1*/1, /*s2*/1], [/*d*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_push_hi__vec_push_hi_R__s2v_wide_32__mRm
+InstrItinData<II_VPUSH_hi_32, [SimpleCycle<L_RM_PORT>], [/*d*/2, /*s1*/1, /*s2*/1], [/*d*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_push_hi__vec_push_hi_L__s2v_wide_64__mLm
+InstrItinData<II_VPUSH_hi_64, [SimpleCycle<L_RM_PORT>], [/*d*/2, /*s1*/1, /*s2*/1], [/*d*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_push_hi__vec_push_hi_R__s2v_wide_8__mRm
+InstrItinData<II_VPUSH_hi_8, [SimpleCycle<L_RM_PORT>], [/*d*/2, /*s1*/1, /*s2*/1], [/*d*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_push_lo__vec_push_lo_R__s2v_wide_16__mRm
+InstrItinData<II_VPUSH_lo_16, [SimpleCycle<L_RM_PORT>], [/*d*/2, /*s1*/1, /*s2*/1], [/*d*/MV_Bypass, /*s1*/NoBypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_push_lo__vec_push_lo_R__s2v_wide_32__mRm
+InstrItinData<II_VPUSH_lo_32, [SimpleCycle<L_RM_PORT>], [/*d*/2, /*s1*/1, /*s2*/1], [/*d*/MV_Bypass, /*s1*/NoBypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_push_lo__vec_push_lo_L__s2v_wide_64__mLm
+InstrItinData<II_VPUSH_lo_64, [SimpleCycle<L_RM_PORT>], [/*d*/2, /*s1*/1, /*s2*/1], [/*d*/MV_Bypass, /*s1*/NoBypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_push_lo__vec_push_lo_R__s2v_wide_8__mRm
+InstrItinData<II_VPUSH_lo_8, [SimpleCycle<L_RM_PORT>], [/*d*/2, /*s1*/1, /*s2*/1], [/*d*/MV_Bypass, /*s1*/NoBypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_add_select__vsel__vec_mask_in__vec_mask_in32__mRS16m__vec_add_mX__vec_add_nX
+InstrItinData<II_VSEL_16, [SimpleCycle<L_RM_PORT>], [/*d*/2, /*s1*/1, /*s2*/1, /*sel*/1], [/*d*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass, /*sel*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_add_select__vsel__vec_mask_in__vec_mask_in16__mRS16m__vec_add_mX__vec_add_nX
+InstrItinData<II_VSEL_32, [SimpleCycle<L_RM_PORT>], [/*d*/2, /*s1*/1, /*s2*/1, /*sel*/1], [/*d*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass, /*sel*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_add_select__vsel__vec_mask_in__vec_mask_in64__mLm__vec_add_mX__vec_add_nX
+InstrItinData<II_VSEL_8, [SimpleCycle<L_RM_PORT>], [/*d*/2, /*s1*/1, /*s2*/1, /*sel*/1], [/*d*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass, /*sel*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_shift_align__mSm__mR30_shiftx
+InstrItinData<II_VSHIFT_ALIGN, [SimpleCycle<L_RM_PORT>], [/*d*/2, /*s1*/1, /*pre*/1, /*s2*/1, /*shift*/1], [/*d*/MV_Bypass, /*s1*/MV_Bypass, /*pre*/NoBypass, /*s2*/MV_Bypass, /*shift*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_shift__mRm
+InstrItinData<II_VSHIFT, [SimpleCycle<L_RM_PORT>], [/*d*/2, /*s1*/1, /*s2*/1, /*shift*/1], [/*d*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass, /*shift*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_shuffle_bm__mRm
+InstrItinData<II_VSHUFFLE_vec_shuffle_bm, [SimpleCycle<L_RM_PORT>, SimpleCycle<DM_WM_PORT>], [/*dst*/2, /*s1*/1, /*s2*/1, /*mod*/1], [/*dst*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass, /*mod*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_shuffle_ex__mRm
+InstrItinData<II_VSHUFFLE_vec_shuffle_ex, [SimpleCycle<L_RM_PORT>], [/*dst*/2, /*s1*/1, /*s2*/1, /*mod*/1], [/*dst*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass, /*mod*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_shuffle_x__mRm
+InstrItinData<II_VSHUFFLE_vec_shuffle_x, [SimpleCycle<L_RM_PORT>], [/*dst*/2, /*s1*/1, /*s2*/1, /*mod*/1], [/*dst*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass, /*mod*/NoBypass]>,
+
+// id: me__instr128_or__st__mv_conv__mv_w_srs_bm__srs__mWlsrsl__srs__baseSrs__mSs__srsSign0
+InstrItinData<II_VSRS_2x_mv_w_srs_bm_srsSign0, [SimpleCycle<CRRND_RS>, EmptyCycles<2>, SimpleCycle<QEY_WA_PORT>], [/*dst*/4, /*src*/1, /*su*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign0*/1]>,
+
+// id: me__instr128_or__st__mv_conv__mv_w_srs_bm__srs__mWlsrsl__srs__baseSrs__mSs__srsSign1
+InstrItinData<II_VSRS_2x_mv_w_srs_bm_srsSign1, [SimpleCycle<CRRND_RS>, EmptyCycles<2>, SimpleCycle<QEY_WA_PORT>], [/*dst*/4, /*src*/1, /*su*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign1*/1]>,
+
+// id: me__instr128_or__st__mv_conv__mv_x_srs_cm__srs__mXdlsrs__srs__baseSrs__mSs__srsSign0
+InstrItinData<II_VSRS_2x_mv_x_srs_cm_srsSign0, [SimpleCycle<CRRND_RS>, EmptyCycles<2>, SimpleCycle<QEY_WA_PORT>], [/*dst*/4, /*src*/1, /*su*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign0*/1]>,
+
+// id: me__instr128_or__st__mv_conv__mv_x_srs_cm__srs__mXdlsrs__srs__baseSrs__mSs__srsSign1
+InstrItinData<II_VSRS_2x_mv_x_srs_cm_srsSign1, [SimpleCycle<CRRND_RS>, EmptyCycles<2>, SimpleCycle<QEY_WA_PORT>], [/*dst*/4, /*src*/1, /*su*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign1*/1]>,
+
+// id: me__instr128_or__st__mv_conv__mv_w_srs_cm__srs__mWssrs__srs__baseSrs__mSs__srsSign0
+InstrItinData<II_VSRS_4x_mv_w_srs_cm_srsSign0, [SimpleCycle<CRRND_RS>, EmptyCycles<2>, SimpleCycle<QEY_WA_PORT>], [/*dst*/4, /*src*/1, /*su*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign0*/1]>,
+
+// id: me__instr128_or__st__mv_conv__mv_w_srs_cm__srs__mWssrs__srs__baseSrs__mSs__srsSign1
+InstrItinData<II_VSRS_4x_mv_w_srs_cm_srsSign1, [SimpleCycle<CRRND_RS>, EmptyCycles<2>, SimpleCycle<QEY_WA_PORT>], [/*dst*/4, /*src*/1, /*su*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign1*/1]>,
+
+// id: me__instr128_or__st__mv_conv__mv_x_srs_dm__srs__mDdssrs__mDMs__srs__baseSrs__mSs__srsSign0
+InstrItinData<II_VSRS_4x_mv_x_srs_dm_srsSign0, [SimpleCycle<CRRND_RS>, EmptyCycles<2>, SimpleCycle<QEY_WA_PORT>], [/*dst*/4, /*src*/1, /*su*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign0*/1]>,
+
+// id: me__instr128_or__st__mv_conv__mv_x_srs_dm__srs__mDdssrs__mDMs__srs__baseSrs__mSs__srsSign1
+InstrItinData<II_VSRS_4x_mv_x_srs_dm_srsSign1, [SimpleCycle<CRRND_RS>, EmptyCycles<2>, SimpleCycle<QEY_WA_PORT>], [/*dst*/4, /*src*/1, /*su*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign1*/1]>,
+
+// id: me__instr128_or__st__dmv_sts_w__agus_dmv__nrm__agus_dmv__normal__agus_dmv__idx__mPs__mDJs
+MemInstrItinData<II_VST_128_dmv_sts_w_idx, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmv_sts_w__agus_dmv__nrm__agus_dmv__normal__agus_dmv__idx_imm__mPs__m_c08s_step16
+MemInstrItinData<II_VST_128_dmv_sts_w_idx_imm, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmv_sts_w__agus_dmv__nrm__agus_dmv__normal__agus_dmv__pstm_nrm__mPs__mMs
+MemInstrItinData<II_VST_128_dmv_sts_w_pstm_nrm, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmv_sts_w__agus_dmv__nrm__agus_dmv__normal__agus_dmv__pstm_nrm_imm__mPs__m_c08s_step16
+MemInstrItinData<II_VST_128_dmv_sts_w_pstm_nrm_imm, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmv_sts_w_spill__agus_dmv__nrm_spill__agus_dmv__spill__mSPs__m_c14n_step16
+MemInstrItinData<II_VST_128_dmv_sts_w_spill, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*src*/1, /*imm*/1, /*sp*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmv_sts_w__agus_dmv__nrm__agus_dmv__normal__agus_dmv__pstm_2d__mPs__mDs
+MemInstrItinData<II_VST_2D_128, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dc*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmw_sts_srs_bf__agus_dmw__nrm__agus_dmw__normal__agus_dmw__pstm_2d__mPs__mDs__mWbfsrs
+MemInstrItinData<II_VST_2D_CONV_bf16_fp32_dmw_sts_srs_bf, [AvoidPartWordStore, SimpleCycle<CRRND_RS>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dc*/1, /*src*/1, /*ptr*/1, /*mod*/1, /*srF2FFlags*/2, /*crF2FMask*/1, /*crRnd*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_srs_bf__agus_dmx__nrm__agus_dmx__normal__agus_dmx__pstm_2d__mPs__mDs__mXbfsrs
+MemInstrItinData<II_VST_2D_CONV_bf16_fp32_dmx_sts_srs_bf, [AvoidPartWordStore, SimpleCycle<CRRND_RS>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dc*/1, /*src*/1, /*ptr*/1, /*mod*/1, /*srF2FFlags*/2, /*crF2FMask*/1, /*crRnd*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmw_sts_pack__agus_dmw__nrm__agus_dmw__normal__agus_dmw__pstm_2d__mPs__mDs__dmw_sts_pack_core__packSign0
+MemInstrItinData<II_VST_2D_PACK_dmw_sts_pack_packSign0, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dc*/1, /*src*/1, /*ptr*/1, /*mod*/1, /*crPackSize*/1, /*crSat*/1, /*packSign0*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmw_sts_pack__agus_dmw__nrm__agus_dmw__normal__agus_dmw__pstm_2d__mPs__mDs__dmw_sts_pack_core__packSign1
+MemInstrItinData<II_VST_2D_PACK_dmw_sts_pack_packSign1, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dc*/1, /*src*/1, /*ptr*/1, /*mod*/1, /*crPackSize*/1, /*crSat*/1, /*packSign1*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_pack__agus_dmx__nrm__agus_dmx__normal__agus_dmx__pstm_2d__mPs__mDs__dmx_sts_pack_core__mYs__packSign0
+MemInstrItinData<II_VST_2D_PACK_dmx_sts_pack_packSign0, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dc*/1, /*src*/1, /*ptr*/1, /*mod*/1, /*crPackSize*/1, /*crSat*/1, /*packSign0*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_pack__agus_dmx__nrm__agus_dmx__normal__agus_dmx__pstm_2d__mPs__mDs__dmx_sts_pack_core__mYs__packSign1
+MemInstrItinData<II_VST_2D_PACK_dmx_sts_pack_packSign1, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dc*/1, /*src*/1, /*ptr*/1, /*mod*/1, /*crPackSize*/1, /*crSat*/1, /*packSign1*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dm_sts_srs_cm__dmx_sts_srs_cm__agus_dmx__srs__agus_dmx__normal__agus_dmx__pstm_2d__mPs__mDs__srs__mXdlsrs__srs__baseSrs__mSs__srsSign0
+MemInstrItinData<II_VST_2D_SRS_2x_dm_sts_srs_cm_srsSign0, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dc*/1, /*src*/1, /*su*/1, /*ptr*/1, /*mod*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign0*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dm_sts_srs_cm__dmx_sts_srs_cm__agus_dmx__srs__agus_dmx__normal__agus_dmx__pstm_2d__mPs__mDs__srs__mXdlsrs__srs__baseSrs__mSs__srsSign1
+MemInstrItinData<II_VST_2D_SRS_2x_dm_sts_srs_cm_srsSign1, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dc*/1, /*src*/1, /*su*/1, /*ptr*/1, /*mod*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign1*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dmw_sts_srs_bm__agus_dmw__srs__agus_dmw__normal__agus_dmw__pstm_2d__mPs__mDs__srs__mWlsrsl__srs__baseSrs__mSs__srsSign0
+MemInstrItinData<II_VST_2D_SRS_2x_dmw_sts_srs_bm_srsSign0, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dc*/1, /*src*/1, /*su*/1, /*ptr*/1, /*mod*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign0*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dmw_sts_srs_bm__agus_dmw__srs__agus_dmw__normal__agus_dmw__pstm_2d__mPs__mDs__srs__mWlsrsl__srs__baseSrs__mSs__srsSign1
+MemInstrItinData<II_VST_2D_SRS_2x_dmw_sts_srs_bm_srsSign1, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dc*/1, /*src*/1, /*su*/1, /*ptr*/1, /*mod*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign1*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dm_sts_srs_cm__dmw_sts_srs_cm__agus_dmw__srs__agus_dmw__normal__agus_dmw__pstm_2d__mPs__mDs__srs__mWssrs__srs__baseSrs__mSs__srsSign0
+MemInstrItinData<II_VST_2D_SRS_4x_dm_sts_srs_cm_srsSign0, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dc*/1, /*src*/1, /*su*/1, /*ptr*/1, /*mod*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign0*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dm_sts_srs_cm__dmw_sts_srs_cm__agus_dmw__srs__agus_dmw__normal__agus_dmw__pstm_2d__mPs__mDs__srs__mWssrs__srs__baseSrs__mSs__srsSign1
+MemInstrItinData<II_VST_2D_SRS_4x_dm_sts_srs_cm_srsSign1, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dc*/1, /*src*/1, /*su*/1, /*ptr*/1, /*mod*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign1*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dmx_sts_srs_dm__agus_dmx__srs__agus_dmx__normal__agus_dmx__pstm_2d__mPs__mDs__srs__mDdssrs__mDMs__srs__baseSrs__mSs__srsSign0
+MemInstrItinData<II_VST_2D_SRS_4x_dmx_sts_srs_dm_srsSign0, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dc*/1, /*src*/1, /*su*/1, /*ptr*/1, /*mod*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign0*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dmx_sts_srs_dm__agus_dmx__srs__agus_dmx__normal__agus_dmx__pstm_2d__mPs__mDs__srs__mDdssrs__mDMs__srs__baseSrs__mSs__srsSign1
+MemInstrItinData<II_VST_2D_SRS_4x_dmx_sts_srs_dm_srsSign1, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dc*/1, /*src*/1, /*su*/1, /*ptr*/1, /*mod*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign1*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dmw_sts_w__agus_dmw__nrm__agus_dmw__normal__agus_dmw__pstm_2d__mPs__mDs
+MemInstrItinData<II_VST_2D_dmw_sts_w, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dc*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_bm__agus_dmx__nrm__agus_dmx__normal__agus_dmx__pstm_2d__mPs__mDs
+MemInstrItinData<II_VST_2D_dmx_sts_bm, [AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dc*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_fifohl__agus_dmx__nrm__agus_dmx__normal__agus_dmx__pstm_2d__mPs__mDs
+MemInstrItinData<II_VST_2D_dmx_sts_fifohl, [AvoidPartWordStore, SimpleCycle<FIFO_HL_RA_PORT>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dc*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_x__agus_dmx__nrm__agus_dmx__normal__agus_dmx__pstm_2d__mPs__mDs
+MemInstrItinData<II_VST_2D_dmx_sts_x, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dc*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmv_sts_w__agus_dmv__nrm__agus_dmv__normal__agus_dmv__pstm_3d__mPs__mDSs
+MemInstrItinData<II_VST_3D_128, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmw_sts_srs_bf__agus_dmw__nrm__agus_dmw__normal__agus_dmw__pstm_3d__mPs__mDSs__mWbfsrs
+MemInstrItinData<II_VST_3D_CONV_bf16_fp32_dmw_sts_srs_bf, [AvoidPartWordStore, SimpleCycle<CRRND_RS>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*src*/1, /*ptr*/1, /*mod*/1, /*srF2FFlags*/2, /*crF2FMask*/1, /*crRnd*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_srs_bf__agus_dmx__nrm__agus_dmx__normal__agus_dmx__pstm_3d__mPs__mDSs__mXbfsrs
+MemInstrItinData<II_VST_3D_CONV_bf16_fp32_dmx_sts_srs_bf, [AvoidPartWordStore, SimpleCycle<CRRND_RS>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*src*/1, /*ptr*/1, /*mod*/1, /*srF2FFlags*/2, /*crF2FMask*/1, /*crRnd*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmw_sts_pack__agus_dmw__nrm__agus_dmw__normal__agus_dmw__pstm_3d__mPs__mDSs__dmw_sts_pack_core__packSign0
+MemInstrItinData<II_VST_3D_PACK_dmw_sts_pack_packSign0, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*src*/1, /*ptr*/1, /*mod*/1, /*crPackSize*/1, /*crSat*/1, /*packSign0*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmw_sts_pack__agus_dmw__nrm__agus_dmw__normal__agus_dmw__pstm_3d__mPs__mDSs__dmw_sts_pack_core__packSign1
+MemInstrItinData<II_VST_3D_PACK_dmw_sts_pack_packSign1, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*src*/1, /*ptr*/1, /*mod*/1, /*crPackSize*/1, /*crSat*/1, /*packSign1*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_pack__agus_dmx__nrm__agus_dmx__normal__agus_dmx__pstm_3d__mPs__mDSs__dmx_sts_pack_core__mYs__packSign0
+MemInstrItinData<II_VST_3D_PACK_dmx_sts_pack_packSign0, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*src*/1, /*ptr*/1, /*mod*/1, /*crPackSize*/1, /*crSat*/1, /*packSign0*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_pack__agus_dmx__nrm__agus_dmx__normal__agus_dmx__pstm_3d__mPs__mDSs__dmx_sts_pack_core__mYs__packSign1
+MemInstrItinData<II_VST_3D_PACK_dmx_sts_pack_packSign1, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*src*/1, /*ptr*/1, /*mod*/1, /*crPackSize*/1, /*crSat*/1, /*packSign1*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dm_sts_srs_cm__dmx_sts_srs_cm__agus_dmx__srs__agus_dmx__normal__agus_dmx__pstm_3d__mPs__mDSs__srs__mXdlsrs__srs__baseSrs__mSs__srsSign0
+MemInstrItinData<II_VST_3D_SRS_2x_dm_sts_srs_cm_srsSign0, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*src*/1, /*su*/1, /*ptr*/1, /*mod*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign0*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dm_sts_srs_cm__dmx_sts_srs_cm__agus_dmx__srs__agus_dmx__normal__agus_dmx__pstm_3d__mPs__mDSs__srs__mXdlsrs__srs__baseSrs__mSs__srsSign1
+MemInstrItinData<II_VST_3D_SRS_2x_dm_sts_srs_cm_srsSign1, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*src*/1, /*su*/1, /*ptr*/1, /*mod*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign1*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dmw_sts_srs_bm__agus_dmw__srs__agus_dmw__normal__agus_dmw__pstm_3d__mPs__mDSs__srs__mWlsrsl__srs__baseSrs__mSs__srsSign0
+MemInstrItinData<II_VST_3D_SRS_2x_dmw_sts_srs_bm_srsSign0, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*src*/1, /*su*/1, /*ptr*/1, /*mod*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign0*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dmw_sts_srs_bm__agus_dmw__srs__agus_dmw__normal__agus_dmw__pstm_3d__mPs__mDSs__srs__mWlsrsl__srs__baseSrs__mSs__srsSign1
+MemInstrItinData<II_VST_3D_SRS_2x_dmw_sts_srs_bm_srsSign1, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*src*/1, /*su*/1, /*ptr*/1, /*mod*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign1*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dm_sts_srs_cm__dmw_sts_srs_cm__agus_dmw__srs__agus_dmw__normal__agus_dmw__pstm_3d__mPs__mDSs__srs__mWssrs__srs__baseSrs__mSs__srsSign0
+MemInstrItinData<II_VST_3D_SRS_4x_dm_sts_srs_cm_srsSign0, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*src*/1, /*su*/1, /*ptr*/1, /*mod*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign0*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dm_sts_srs_cm__dmw_sts_srs_cm__agus_dmw__srs__agus_dmw__normal__agus_dmw__pstm_3d__mPs__mDSs__srs__mWssrs__srs__baseSrs__mSs__srsSign1
+MemInstrItinData<II_VST_3D_SRS_4x_dm_sts_srs_cm_srsSign1, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*src*/1, /*su*/1, /*ptr*/1, /*mod*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign1*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dmx_sts_srs_dm__agus_dmx__srs__agus_dmx__normal__agus_dmx__pstm_3d__mPs__mDSs__srs__mDdssrs__mDMs__srs__baseSrs__mSs__srsSign0
+MemInstrItinData<II_VST_3D_SRS_4x_dmx_sts_srs_dm_srsSign0, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*src*/1, /*su*/1, /*ptr*/1, /*mod*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign0*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dmx_sts_srs_dm__agus_dmx__srs__agus_dmx__normal__agus_dmx__pstm_3d__mPs__mDSs__srs__mDdssrs__mDMs__srs__baseSrs__mSs__srsSign1
+MemInstrItinData<II_VST_3D_SRS_4x_dmx_sts_srs_dm_srsSign1, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*src*/1, /*su*/1, /*ptr*/1, /*mod*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign1*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dmw_sts_w__agus_dmw__nrm__agus_dmw__normal__agus_dmw__pstm_3d__mPs__mDSs
+MemInstrItinData<II_VST_3D_dmw_sts_w, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_bm__agus_dmx__nrm__agus_dmx__normal__agus_dmx__pstm_3d__mPs__mDSs
+MemInstrItinData<II_VST_3D_dmx_sts_bm, [AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_fifohl__agus_dmx__nrm__agus_dmx__normal__agus_dmx__pstm_3d__mPs__mDSs
+MemInstrItinData<II_VST_3D_dmx_sts_fifohl, [AvoidPartWordStore, SimpleCycle<FIFO_HL_RA_PORT>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_x__agus_dmx__nrm__agus_dmx__normal__agus_dmx__pstm_3d__mPs__mDSs
+MemInstrItinData<II_VST_3D_dmx_sts_x, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*dcl*/1, /*dch*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmw_sts_srs_bf__agus_dmw__nrm__agus_dmw__normal__agus_dmw__idx__mPs__mDJs__mWbfsrs
+MemInstrItinData<II_VST_CONV_bf16_fp32_dmw_sts_srs_bf_idx, [AvoidPartWordStore, SimpleCycle<CRRND_RS>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*dj*/1, /*srF2FFlags*/2, /*crF2FMask*/1, /*crRnd*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmw_sts_srs_bf__agus_dmw__nrm__agus_dmw__normal__agus_dmw__idx_imm__mPs__m_c09s_step32__mWbfsrs
+MemInstrItinData<II_VST_CONV_bf16_fp32_dmw_sts_srs_bf_idx_imm, [AvoidPartWordStore, SimpleCycle<CRRND_RS>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*imm*/1, /*srF2FFlags*/2, /*crF2FMask*/1, /*crRnd*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmw_sts_srs_bf__agus_dmw__nrm__agus_dmw__normal__agus_dmw__pstm_nrm__mPs__mMs__mWbfsrs
+MemInstrItinData<II_VST_CONV_bf16_fp32_dmw_sts_srs_bf_pstm_nrm, [AvoidPartWordStore, SimpleCycle<CRRND_RS>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*mod*/1, /*srF2FFlags*/2, /*crF2FMask*/1, /*crRnd*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmw_sts_srs_bf__agus_dmw__nrm__agus_dmw__normal__agus_dmw__pstm_nrm_imm__mPs__m_c09s_step32__mWbfsrs
+MemInstrItinData<II_VST_CONV_bf16_fp32_dmw_sts_srs_bf_pstm_nrm_imm, [AvoidPartWordStore, SimpleCycle<CRRND_RS>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*imm*/1, /*srF2FFlags*/2, /*crF2FMask*/1, /*crRnd*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_srs_bf__agus_dmx__nrm__agus_dmx__normal__agus_dmx__idx__mPs__mDJs__mXbfsrs
+MemInstrItinData<II_VST_CONV_bf16_fp32_dmx_sts_srs_bf_idx, [AvoidPartWordStore, SimpleCycle<CRRND_RS>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*dj*/1, /*srF2FFlags*/2, /*crF2FMask*/1, /*crRnd*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_srs_bf__agus_dmx__nrm__agus_dmx__normal__agus_dmx__idx_imm__mPs__m_c10s_step64__mXbfsrs
+MemInstrItinData<II_VST_CONV_bf16_fp32_dmx_sts_srs_bf_idx_imm, [AvoidPartWordStore, SimpleCycle<CRRND_RS>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*imm*/1, /*srF2FFlags*/2, /*crF2FMask*/1, /*crRnd*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_srs_bf__agus_dmx__nrm__agus_dmx__normal__agus_dmx__pstm_nrm__mPs__mMs__mXbfsrs
+MemInstrItinData<II_VST_CONV_bf16_fp32_dmx_sts_srs_bf_pstm_nrm, [AvoidPartWordStore, SimpleCycle<CRRND_RS>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*mod*/1, /*srF2FFlags*/2, /*crF2FMask*/1, /*crRnd*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_srs_bf__agus_dmx__nrm__agus_dmx__normal__agus_dmx__pstm_nrm_imm__mPs__m_c10s_step64__mXbfsrs
+MemInstrItinData<II_VST_CONV_bf16_fp32_dmx_sts_srs_bf_pstm_nrm_imm, [AvoidPartWordStore, SimpleCycle<CRRND_RS>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*imm*/1, /*srF2FFlags*/2, /*crF2FMask*/1, /*crRnd*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_fifo__dmx_sts_fifo_bare_x__fifo_2d_flush__dmx_sts_fifo_bare_x__core_flush__mStFifo__dmx_sts_fifo_bare_x__fifo_2d__mPfs__mR26_fifo_st__mDs
+MemInstrItinData<II_VST_FLUSH_512_2D, [SimpleCycle<L_RM_PORT>, AvoidPartWordStore, SimpleCycle<FIFO_STS__ADVANCE_FIFO_R>, PrefixCycle<DMX_STS_FIFO>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*fifo_reg_out*/2, /*ptr_out*/1, /*avail_out*/1, /*dc*/1, /*fifo_reg*/2, /*ptr*/1, /*avail*/1, /*mod*/1, /*srFifo_of*/2], MemoryCycles<[6]>>,
+
+// id: me__instr128_or__st__dmx_sts_fifo__dmx_sts_fifo_bare_x__fifo_3d_flush__dmx_sts_fifo_bare_x__core_flush__mStFifo__dmx_sts_fifo_bare_x__fifo_3d__mPfs__mR26_fifo_st__mDSs
+MemInstrItinData<II_VST_FLUSH_512_3D, [SimpleCycle<L_RM_PORT>, AvoidPartWordStore, SimpleCycle<FIFO_STS__ADVANCE_FIFO_R>, PrefixCycle<DMX_STS_FIFO>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*fifo_reg_out*/2, /*ptr_out*/1, /*avail_out*/1, /*dcl*/1, /*dch*/1, /*fifo_reg*/2, /*ptr*/1, /*avail*/1, /*mod*/1, /*srFifo_of*/2], MemoryCycles<[6]>>,
+
+// id: me__instr128_or__st__dmx_sts_fifo__dmx_sts_fifo_conv_x__fifo_2d_flush__dmx_sts_fifo_conv_x__core_flush__mStFifo__dmx_sts_fifo_conv_x__fifo_2d__mPfs__mR26_fifo_st__mDs
+MemInstrItinData<II_VST_FLUSH_512_CONV_2D, [SimpleCycle<L_RM_PORT>, EmptyCycles<2>, AvoidPartWordStore, SimpleCycle<FIFO_STS__ADVANCE_FIFO_R>, PrefixCycle<DMX_STS_FIFO>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*fifo_reg_out*/4, /*ptr_out*/1, /*avail_out*/1, /*dc*/1, /*fifo_reg*/4, /*ptr*/1, /*avail*/1, /*mod*/1, /*srFifo_of*/2], MemoryCycles<[8]>>,
+
+// id: me__instr128_or__st__dmx_sts_fifo__dmx_sts_fifo_conv_x__fifo_3d_flush__dmx_sts_fifo_conv_x__core_flush__mStFifo__dmx_sts_fifo_conv_x__fifo_3d__mPfs__mR26_fifo_st__mDSs
+MemInstrItinData<II_VST_FLUSH_512_CONV_3D, [SimpleCycle<L_RM_PORT>, EmptyCycles<2>, AvoidPartWordStore, SimpleCycle<FIFO_STS__ADVANCE_FIFO_R>, PrefixCycle<DMX_STS_FIFO>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*fifo_reg_out*/4, /*ptr_out*/1, /*avail_out*/1, /*dcl*/1, /*dch*/1, /*fifo_reg*/4, /*ptr*/1, /*avail*/1, /*mod*/1, /*srFifo_of*/2], MemoryCycles<[8]>>,
+
+// id: me__instr128_or__st__dmx_sts_fifo__dmx_sts_fifo_conv_x__fifo_1d_flush__dmx_sts_fifo_conv_x__core_flush__mStFifo__dmx_sts_fifo_conv_x__fifo_1d__mPfs__mR26_fifo_st__mMs
+MemInstrItinData<II_VST_FLUSH_512_CONV_fifo_1d_flush, [SimpleCycle<L_RM_PORT>, EmptyCycles<2>, AvoidPartWordStore, SimpleCycle<FIFO_STS__ADVANCE_FIFO_R>, PrefixCycle<DMX_STS_FIFO>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*fifo_reg_out*/4, /*ptr_out*/1, /*avail_out*/1, /*fifo_reg*/4, /*ptr*/1, /*avail*/1, /*mod*/1, /*srFifo_of*/2], MemoryCycles<[8]>>,
+
+// id: me__instr128_or__st__dmx_sts_fifo__dmx_sts_fifo_conv_x__normal_flush__dmx_sts_fifo_conv_x__core_flush__mStFifo__dmx_sts_fifo_conv_x__normal__mPfs__mR26_fifo_st
+MemInstrItinData<II_VST_FLUSH_512_CONV_normal_flush, [SimpleCycle<L_RM_PORT>, EmptyCycles<2>, AvoidPartWordStore, SimpleCycle<FIFO_STS__ADVANCE_FIFO_R>, PrefixCycle<DMX_STS_FIFO>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*fifo_reg_out*/4, /*ptr_out*/1, /*avail_out*/1, /*fifo_reg*/4, /*ptr*/1, /*avail*/1, /*srFifo_of*/2], MemoryCycles<[8]>>,
+
+// id: me__instr128_or__st__dmx_sts_fifo__dmx_sts_fifo_bare_x__fifo_1d_flush__dmx_sts_fifo_bare_x__core_flush__mStFifo__dmx_sts_fifo_bare_x__fifo_1d__mPfs__mR26_fifo_st__mMs
+MemInstrItinData<II_VST_FLUSH_512_fifo_1d_flush, [SimpleCycle<L_RM_PORT>, AvoidPartWordStore, SimpleCycle<FIFO_STS__ADVANCE_FIFO_R>, PrefixCycle<DMX_STS_FIFO>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*fifo_reg_out*/2, /*ptr_out*/1, /*avail_out*/1, /*fifo_reg*/2, /*ptr*/1, /*avail*/1, /*mod*/1, /*srFifo_of*/2], MemoryCycles<[6]>>,
+
+// id: me__instr128_or__st__dmx_sts_fifo__dmx_sts_fifo_bare_x__normal_flush__dmx_sts_fifo_bare_x__core_flush__mStFifo__dmx_sts_fifo_bare_x__normal__mPfs__mR26_fifo_st
+MemInstrItinData<II_VST_FLUSH_512_normal_flush, [SimpleCycle<L_RM_PORT>, AvoidPartWordStore, SimpleCycle<FIFO_STS__ADVANCE_FIFO_R>, PrefixCycle<DMX_STS_FIFO>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*fifo_reg_out*/2, /*ptr_out*/1, /*avail_out*/1, /*fifo_reg*/2, /*ptr*/1, /*avail*/1, /*srFifo_of*/2], MemoryCycles<[6]>>,
+
+// id: me__instr128_or__st__dmw_sts_pack__agus_dmw__nrm__agus_dmw__normal__agus_dmw__idx__mPs__mDJs__dmw_sts_pack_core__packSign0
+MemInstrItinData<II_VST_PACK_dmw_sts_pack_idx_packSign0, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*dj*/1, /*crPackSize*/1, /*crSat*/1, /*packSign0*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmw_sts_pack__agus_dmw__nrm__agus_dmw__normal__agus_dmw__idx__mPs__mDJs__dmw_sts_pack_core__packSign1
+MemInstrItinData<II_VST_PACK_dmw_sts_pack_idx_packSign1, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*dj*/1, /*crPackSize*/1, /*crSat*/1, /*packSign1*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmw_sts_pack__agus_dmw__nrm__agus_dmw__normal__agus_dmw__idx_imm__mPs__m_c09s_step32__dmw_sts_pack_core__packSign0
+MemInstrItinData<II_VST_PACK_dmw_sts_pack_idx_imm_packSign0, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*imm*/1, /*crPackSize*/1, /*crSat*/1, /*packSign0*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmw_sts_pack__agus_dmw__nrm__agus_dmw__normal__agus_dmw__idx_imm__mPs__m_c09s_step32__dmw_sts_pack_core__packSign1
+MemInstrItinData<II_VST_PACK_dmw_sts_pack_idx_imm_packSign1, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*imm*/1, /*crPackSize*/1, /*crSat*/1, /*packSign1*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmw_sts_pack__agus_dmw__nrm__agus_dmw__normal__agus_dmw__pstm_nrm__mPs__mMs__dmw_sts_pack_core__packSign0
+MemInstrItinData<II_VST_PACK_dmw_sts_pack_pstm_nrm_packSign0, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*mod*/1, /*crPackSize*/1, /*crSat*/1, /*packSign0*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmw_sts_pack__agus_dmw__nrm__agus_dmw__normal__agus_dmw__pstm_nrm__mPs__mMs__dmw_sts_pack_core__packSign1
+MemInstrItinData<II_VST_PACK_dmw_sts_pack_pstm_nrm_packSign1, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*mod*/1, /*crPackSize*/1, /*crSat*/1, /*packSign1*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmw_sts_pack__agus_dmw__nrm__agus_dmw__normal__agus_dmw__pstm_nrm_imm__mPs__m_c09s_step32__dmw_sts_pack_core__packSign0
+MemInstrItinData<II_VST_PACK_dmw_sts_pack_pstm_nrm_imm_packSign0, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*imm*/1, /*crPackSize*/1, /*crSat*/1, /*packSign0*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmw_sts_pack__agus_dmw__nrm__agus_dmw__normal__agus_dmw__pstm_nrm_imm__mPs__m_c09s_step32__dmw_sts_pack_core__packSign1
+MemInstrItinData<II_VST_PACK_dmw_sts_pack_pstm_nrm_imm_packSign1, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*imm*/1, /*crPackSize*/1, /*crSat*/1, /*packSign1*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_pack__agus_dmx__nrm__agus_dmx__normal__agus_dmx__idx__mPs__mDJs__dmx_sts_pack_core__mYs__packSign0
+MemInstrItinData<II_VST_PACK_dmx_sts_pack_idx_packSign0, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*dj*/1, /*crPackSize*/1, /*crSat*/1, /*packSign0*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_pack__agus_dmx__nrm__agus_dmx__normal__agus_dmx__idx__mPs__mDJs__dmx_sts_pack_core__mYs__packSign1
+MemInstrItinData<II_VST_PACK_dmx_sts_pack_idx_packSign1, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*dj*/1, /*crPackSize*/1, /*crSat*/1, /*packSign1*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_pack__agus_dmx__nrm__agus_dmx__normal__agus_dmx__idx_imm__mPs__m_c10s_step64__dmx_sts_pack_core__mYs__packSign0
+MemInstrItinData<II_VST_PACK_dmx_sts_pack_idx_imm_packSign0, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*imm*/1, /*crPackSize*/1, /*crSat*/1, /*packSign0*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_pack__agus_dmx__nrm__agus_dmx__normal__agus_dmx__idx_imm__mPs__m_c10s_step64__dmx_sts_pack_core__mYs__packSign1
+MemInstrItinData<II_VST_PACK_dmx_sts_pack_idx_imm_packSign1, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*imm*/1, /*crPackSize*/1, /*crSat*/1, /*packSign1*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_pack__agus_dmx__nrm__agus_dmx__normal__agus_dmx__pstm_nrm__mPs__mMs__dmx_sts_pack_core__mYs__packSign0
+MemInstrItinData<II_VST_PACK_dmx_sts_pack_pstm_nrm_packSign0, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*mod*/1, /*crPackSize*/1, /*crSat*/1, /*packSign0*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_pack__agus_dmx__nrm__agus_dmx__normal__agus_dmx__pstm_nrm__mPs__mMs__dmx_sts_pack_core__mYs__packSign1
+MemInstrItinData<II_VST_PACK_dmx_sts_pack_pstm_nrm_packSign1, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*mod*/1, /*crPackSize*/1, /*crSat*/1, /*packSign1*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_pack__agus_dmx__nrm__agus_dmx__normal__agus_dmx__pstm_nrm_imm__mPs__m_c10s_step64__dmx_sts_pack_core__mYs__packSign0
+MemInstrItinData<II_VST_PACK_dmx_sts_pack_pstm_nrm_imm_packSign0, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*imm*/1, /*crPackSize*/1, /*crSat*/1, /*packSign0*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_pack__agus_dmx__nrm__agus_dmx__normal__agus_dmx__pstm_nrm_imm__mPs__m_c10s_step64__dmx_sts_pack_core__mYs__packSign1
+MemInstrItinData<II_VST_PACK_dmx_sts_pack_pstm_nrm_imm_packSign1, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*imm*/1, /*crPackSize*/1, /*crSat*/1, /*packSign1*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_fifo__dmx_sts_fifo_bare_x__normal_push__dmx_sts_fifo_bare_x__core_push__mStFifo__dmx_sts_fifo_bare_x__normal__mPfs__mR26_fifo_st
+MemInstrItinData<II_VST_PUSH_512, [PrefixCycle<L_RM_PORT>, AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, AvoidPartWordStore, SimpleCycle<FIFO_STS__ADVANCE_FIFO_R>, PrefixCycle<DMX_STS_FIFO>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*fifo_reg_out*/2, /*ptr_out*/1, /*avail_out*/1, /*fifo_reg*/2, /*src*/1, /*ptr*/1, /*avail*/1, /*srFifo_of*/2], MemoryCycles<[6]>>,
+
+// id: me__instr128_or__st__dmx_sts_fifo__dmx_sts_fifo_conv_ex_ebs8_ebs16__normal_push__dmx_sts_fifo_conv_ex_ebs8_ebs16__core_push__mBp2Bp__mStFifo__dmx_sts_fifo_conv_ex_ebs8_ebs16__normal__mPfs__mR26_fifo_st
+MemInstrItinData<II_VST_PUSH_544_CONV_bfp16ebs16_ebs8, [PrefixCycle<L_RM_PORT>, SimpleCycle<QEY_RS_PORT>, SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, SimpleCycle<FIFO_STS__ADVANCE_FIFO_R>, PrefixCycle<DMX_STS_FIFO>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*fifo_reg_out*/4, /*ptr_out*/1, /*avail_out*/1, /*fifo_reg*/4, /*src*/1, /*ptr*/1, /*avail*/1, /*srF2BFlags*/3, /*srFifo_of*/2, /*crF2BMask*/3, /*crRnd*/2], MemoryCycles<[8]>>,
+
+// id: me__instr128_or__st__dmx_sts_fifo__dmx_sts_fifo_conv_ex_fp32_ebs16__normal_push__dmx_sts_fifo_conv_ex_fp32_ebs16__core_push__mFp2B1__mDMs__mStFifo__dmx_sts_fifo_conv_ex_fp32_ebs16__normal__mPfs__mR26_fifo_st
+MemInstrItinData<II_VST_PUSH_544_CONV_bfp16ebs16_fp32, [SimpleCycle<L_RM_PORT>, SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, SimpleCycle<FIFO_STS__ADVANCE_FIFO_R>, PrefixCycle<DMX_STS_FIFO>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*fifo_reg_out*/4, /*ptr_out*/1, /*avail_out*/1, /*fifo_reg*/4, /*src*/1, /*ptr*/1, /*avail*/1, /*srF2BFlags*/3, /*srFifo_of*/2, /*crF2BMask*/3, /*crRnd*/2], MemoryCycles<[8]>>,
+
+// id: me__instr128_or__st__dmx_sts_fifo__dmx_sts_fifo_bare_ex_ebs16__normal_push__dmx_sts_fifo_bare_ex_ebs16__core_push__mStFifo__dmx_sts_fifo_bare_ex_ebs16__normal__mPfs__mR26_fifo_st
+MemInstrItinData<II_VST_PUSH_544, [PrefixCycle<L_RM_PORT>, AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, AvoidPartWordStore, SimpleCycle<FIFO_STS__ADVANCE_FIFO_R>, PrefixCycle<DMX_STS_FIFO>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*fifo_reg_out*/2, /*ptr_out*/1, /*avail_out*/1, /*fifo_reg*/2, /*src*/1, /*ptr*/1, /*avail*/1, /*srFifo_of*/2], MemoryCycles<[6]>>,
+
+// id: me__instr128_or__st__dmx_sts_fifo__dmx_sts_fifo_conv_ex_fp32_ebs8__normal_push__dmx_sts_fifo_conv_ex_fp32_ebs8__core_push__mFp2B0__mDMs__mStFifo__dmx_sts_fifo_conv_ex_fp32_ebs8__normal__mPfs__mR26_fifo_st
+MemInstrItinData<II_VST_PUSH_576_CONV_bfp16ebs8_fp32, [SimpleCycle<L_RM_PORT>, SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, SimpleCycle<FIFO_STS__ADVANCE_FIFO_R>, PrefixCycle<DMX_STS_FIFO>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*fifo_reg_out*/4, /*ptr_out*/1, /*avail_out*/1, /*fifo_reg*/4, /*src*/1, /*ptr*/1, /*avail*/1, /*srF2BFlags*/3, /*srFifo_of*/2, /*crF2BMask*/3, /*crRnd*/2], MemoryCycles<[8]>>,
+
+// id: me__instr128_or__st__dmx_sts_fifo__dmx_sts_fifo_bare_ex_ebs8__normal_push__dmx_sts_fifo_bare_ex_ebs8__core_push__mStFifo__dmx_sts_fifo_bare_ex_ebs8__normal__mPfs__mR26_fifo_st
+MemInstrItinData<II_VST_PUSH_576, [PrefixCycle<L_RM_PORT>, AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, AvoidPartWordStore, SimpleCycle<FIFO_STS__ADVANCE_FIFO_R>, PrefixCycle<DMX_STS_FIFO>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*fifo_reg_out*/2, /*ptr_out*/1, /*avail_out*/1, /*fifo_reg*/2, /*src*/1, /*ptr*/1, /*avail*/1, /*srFifo_of*/2], MemoryCycles<[6]>>,
+
+// id: me__instr128_or__st__dm_sts_srs_cm__dmx_sts_srs_cm__agus_dmx__srs__agus_dmx__normal__agus_dmx__idx__mPs__mDJs__srs__mXdlsrs__srs__baseSrs__mSs__srsSign0
+MemInstrItinData<II_VST_SRS_2x_dm_sts_srs_cm_idx_srsSign0, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*su*/1, /*ptr*/1, /*dj*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign0*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dm_sts_srs_cm__dmx_sts_srs_cm__agus_dmx__srs__agus_dmx__normal__agus_dmx__idx__mPs__mDJs__srs__mXdlsrs__srs__baseSrs__mSs__srsSign1
+MemInstrItinData<II_VST_SRS_2x_dm_sts_srs_cm_idx_srsSign1, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*su*/1, /*ptr*/1, /*dj*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign1*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dm_sts_srs_cm__dmx_sts_srs_cm__agus_dmx__srs__agus_dmx__normal__agus_dmx__idx_imm__mPs__m_c10s_step64__srs__mXdlsrs__srs__baseSrs__mSs__srsSign0
+MemInstrItinData<II_VST_SRS_2x_dm_sts_srs_cm_idx_imm_srsSign0, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*su*/1, /*ptr*/1, /*imm*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign0*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dm_sts_srs_cm__dmx_sts_srs_cm__agus_dmx__srs__agus_dmx__normal__agus_dmx__idx_imm__mPs__m_c10s_step64__srs__mXdlsrs__srs__baseSrs__mSs__srsSign1
+MemInstrItinData<II_VST_SRS_2x_dm_sts_srs_cm_idx_imm_srsSign1, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*su*/1, /*ptr*/1, /*imm*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign1*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dm_sts_srs_cm__dmx_sts_srs_cm__agus_dmx__srs__agus_dmx__normal__agus_dmx__pstm_nrm__mPs__mMs__srs__mXdlsrs__srs__baseSrs__mSs__srsSign0
+MemInstrItinData<II_VST_SRS_2x_dm_sts_srs_cm_pstm_nrm_srsSign0, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*su*/1, /*ptr*/1, /*mod*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign0*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dm_sts_srs_cm__dmx_sts_srs_cm__agus_dmx__srs__agus_dmx__normal__agus_dmx__pstm_nrm__mPs__mMs__srs__mXdlsrs__srs__baseSrs__mSs__srsSign1
+MemInstrItinData<II_VST_SRS_2x_dm_sts_srs_cm_pstm_nrm_srsSign1, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*su*/1, /*ptr*/1, /*mod*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign1*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dm_sts_srs_cm__dmx_sts_srs_cm__agus_dmx__srs__agus_dmx__normal__agus_dmx__pstm_nrm_imm__mPs__m_c10s_step64__srs__mXdlsrs__srs__baseSrs__mSs__srsSign0
+MemInstrItinData<II_VST_SRS_2x_dm_sts_srs_cm_pstm_nrm_imm_srsSign0, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*su*/1, /*ptr*/1, /*imm*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign0*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dm_sts_srs_cm__dmx_sts_srs_cm__agus_dmx__srs__agus_dmx__normal__agus_dmx__pstm_nrm_imm__mPs__m_c10s_step64__srs__mXdlsrs__srs__baseSrs__mSs__srsSign1
+MemInstrItinData<II_VST_SRS_2x_dm_sts_srs_cm_pstm_nrm_imm_srsSign1, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*su*/1, /*ptr*/1, /*imm*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign1*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dmw_sts_srs_bm__agus_dmw__srs__agus_dmw__normal__agus_dmw__idx__mPs__mDJs__srs__mWlsrsl__srs__baseSrs__mSs__srsSign0
+MemInstrItinData<II_VST_SRS_2x_dmw_sts_srs_bm_idx_srsSign0, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*su*/1, /*ptr*/1, /*dj*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign0*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dmw_sts_srs_bm__agus_dmw__srs__agus_dmw__normal__agus_dmw__idx__mPs__mDJs__srs__mWlsrsl__srs__baseSrs__mSs__srsSign1
+MemInstrItinData<II_VST_SRS_2x_dmw_sts_srs_bm_idx_srsSign1, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*su*/1, /*ptr*/1, /*dj*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign1*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dmw_sts_srs_bm__agus_dmw__srs__agus_dmw__normal__agus_dmw__idx_imm__mPs__m_c09s_step32__srs__mWlsrsl__srs__baseSrs__mSs__srsSign0
+MemInstrItinData<II_VST_SRS_2x_dmw_sts_srs_bm_idx_imm_srsSign0, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*su*/1, /*ptr*/1, /*imm*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign0*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dmw_sts_srs_bm__agus_dmw__srs__agus_dmw__normal__agus_dmw__idx_imm__mPs__m_c09s_step32__srs__mWlsrsl__srs__baseSrs__mSs__srsSign1
+MemInstrItinData<II_VST_SRS_2x_dmw_sts_srs_bm_idx_imm_srsSign1, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*su*/1, /*ptr*/1, /*imm*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign1*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dmw_sts_srs_bm__agus_dmw__srs__agus_dmw__normal__agus_dmw__pstm_nrm__mPs__mMs__srs__mWlsrsl__srs__baseSrs__mSs__srsSign0
+MemInstrItinData<II_VST_SRS_2x_dmw_sts_srs_bm_pstm_nrm_srsSign0, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*su*/1, /*ptr*/1, /*mod*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign0*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dmw_sts_srs_bm__agus_dmw__srs__agus_dmw__normal__agus_dmw__pstm_nrm__mPs__mMs__srs__mWlsrsl__srs__baseSrs__mSs__srsSign1
+MemInstrItinData<II_VST_SRS_2x_dmw_sts_srs_bm_pstm_nrm_srsSign1, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*su*/1, /*ptr*/1, /*mod*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign1*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dmw_sts_srs_bm__agus_dmw__srs__agus_dmw__normal__agus_dmw__pstm_nrm_imm__mPs__m_c09s_step32__srs__mWlsrsl__srs__baseSrs__mSs__srsSign0
+MemInstrItinData<II_VST_SRS_2x_dmw_sts_srs_bm_pstm_nrm_imm_srsSign0, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*su*/1, /*ptr*/1, /*imm*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign0*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dmw_sts_srs_bm__agus_dmw__srs__agus_dmw__normal__agus_dmw__pstm_nrm_imm__mPs__m_c09s_step32__srs__mWlsrsl__srs__baseSrs__mSs__srsSign1
+MemInstrItinData<II_VST_SRS_2x_dmw_sts_srs_bm_pstm_nrm_imm_srsSign1, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*su*/1, /*ptr*/1, /*imm*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign1*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dm_sts_srs_cm__dmw_sts_srs_cm__agus_dmw__srs__agus_dmw__normal__agus_dmw__idx__mPs__mDJs__srs__mWssrs__srs__baseSrs__mSs__srsSign0
+MemInstrItinData<II_VST_SRS_4x_dm_sts_srs_cm_idx_srsSign0, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*su*/1, /*ptr*/1, /*dj*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign0*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dm_sts_srs_cm__dmw_sts_srs_cm__agus_dmw__srs__agus_dmw__normal__agus_dmw__idx__mPs__mDJs__srs__mWssrs__srs__baseSrs__mSs__srsSign1
+MemInstrItinData<II_VST_SRS_4x_dm_sts_srs_cm_idx_srsSign1, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*su*/1, /*ptr*/1, /*dj*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign1*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dm_sts_srs_cm__dmw_sts_srs_cm__agus_dmw__srs__agus_dmw__normal__agus_dmw__idx_imm__mPs__m_c09s_step32__srs__mWssrs__srs__baseSrs__mSs__srsSign0
+MemInstrItinData<II_VST_SRS_4x_dm_sts_srs_cm_idx_imm_srsSign0, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*su*/1, /*ptr*/1, /*imm*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign0*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dm_sts_srs_cm__dmw_sts_srs_cm__agus_dmw__srs__agus_dmw__normal__agus_dmw__idx_imm__mPs__m_c09s_step32__srs__mWssrs__srs__baseSrs__mSs__srsSign1
+MemInstrItinData<II_VST_SRS_4x_dm_sts_srs_cm_idx_imm_srsSign1, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*su*/1, /*ptr*/1, /*imm*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign1*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dm_sts_srs_cm__dmw_sts_srs_cm__agus_dmw__srs__agus_dmw__normal__agus_dmw__pstm_nrm__mPs__mMs__srs__mWssrs__srs__baseSrs__mSs__srsSign0
+MemInstrItinData<II_VST_SRS_4x_dm_sts_srs_cm_pstm_nrm_srsSign0, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*su*/1, /*ptr*/1, /*mod*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign0*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dm_sts_srs_cm__dmw_sts_srs_cm__agus_dmw__srs__agus_dmw__normal__agus_dmw__pstm_nrm__mPs__mMs__srs__mWssrs__srs__baseSrs__mSs__srsSign1
+MemInstrItinData<II_VST_SRS_4x_dm_sts_srs_cm_pstm_nrm_srsSign1, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*su*/1, /*ptr*/1, /*mod*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign1*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dm_sts_srs_cm__dmw_sts_srs_cm__agus_dmw__srs__agus_dmw__normal__agus_dmw__pstm_nrm_imm__mPs__m_c09s_step32__srs__mWssrs__srs__baseSrs__mSs__srsSign0
+MemInstrItinData<II_VST_SRS_4x_dm_sts_srs_cm_pstm_nrm_imm_srsSign0, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*su*/1, /*ptr*/1, /*imm*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign0*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dm_sts_srs_cm__dmw_sts_srs_cm__agus_dmw__srs__agus_dmw__normal__agus_dmw__pstm_nrm_imm__mPs__m_c09s_step32__srs__mWssrs__srs__baseSrs__mSs__srsSign1
+MemInstrItinData<II_VST_SRS_4x_dm_sts_srs_cm_pstm_nrm_imm_srsSign1, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*su*/1, /*ptr*/1, /*imm*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign1*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dmx_sts_srs_dm__agus_dmx__srs__agus_dmx__normal__agus_dmx__idx__mPs__mDJs__srs__mDdssrs__mDMs__srs__baseSrs__mSs__srsSign0
+MemInstrItinData<II_VST_SRS_4x_dmx_sts_srs_dm_idx_srsSign0, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*su*/1, /*ptr*/1, /*dj*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign0*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dmx_sts_srs_dm__agus_dmx__srs__agus_dmx__normal__agus_dmx__idx__mPs__mDJs__srs__mDdssrs__mDMs__srs__baseSrs__mSs__srsSign1
+MemInstrItinData<II_VST_SRS_4x_dmx_sts_srs_dm_idx_srsSign1, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*su*/1, /*ptr*/1, /*dj*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign1*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dmx_sts_srs_dm__agus_dmx__srs__agus_dmx__normal__agus_dmx__idx_imm__mPs__m_c10s_step64__srs__mDdssrs__mDMs__srs__baseSrs__mSs__srsSign0
+MemInstrItinData<II_VST_SRS_4x_dmx_sts_srs_dm_idx_imm_srsSign0, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*su*/1, /*ptr*/1, /*imm*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign0*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dmx_sts_srs_dm__agus_dmx__srs__agus_dmx__normal__agus_dmx__idx_imm__mPs__m_c10s_step64__srs__mDdssrs__mDMs__srs__baseSrs__mSs__srsSign1
+MemInstrItinData<II_VST_SRS_4x_dmx_sts_srs_dm_idx_imm_srsSign1, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*su*/1, /*ptr*/1, /*imm*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign1*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dmx_sts_srs_dm__agus_dmx__srs__agus_dmx__normal__agus_dmx__pstm_nrm__mPs__mMs__srs__mDdssrs__mDMs__srs__baseSrs__mSs__srsSign0
+MemInstrItinData<II_VST_SRS_4x_dmx_sts_srs_dm_pstm_nrm_srsSign0, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*su*/1, /*ptr*/1, /*mod*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign0*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dmx_sts_srs_dm__agus_dmx__srs__agus_dmx__normal__agus_dmx__pstm_nrm__mPs__mMs__srs__mDdssrs__mDMs__srs__baseSrs__mSs__srsSign1
+MemInstrItinData<II_VST_SRS_4x_dmx_sts_srs_dm_pstm_nrm_srsSign1, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*su*/1, /*ptr*/1, /*mod*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign1*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dmx_sts_srs_dm__agus_dmx__srs__agus_dmx__normal__agus_dmx__pstm_nrm_imm__mPs__m_c10s_step64__srs__mDdssrs__mDMs__srs__baseSrs__mSs__srsSign0
+MemInstrItinData<II_VST_SRS_4x_dmx_sts_srs_dm_pstm_nrm_imm_srsSign0, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*su*/1, /*ptr*/1, /*imm*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign0*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dmx_sts_srs_dm__agus_dmx__srs__agus_dmx__normal__agus_dmx__pstm_nrm_imm__mPs__m_c10s_step64__srs__mDdssrs__mDMs__srs__baseSrs__mSs__srsSign1
+MemInstrItinData<II_VST_SRS_4x_dmx_sts_srs_dm_pstm_nrm_imm_srsSign1, [SimpleCycle<CRRND_RS>, EmptyCycles<1>, AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*su*/1, /*ptr*/1, /*imm*/1, /*srSRS_of*/4, /*crRnd*/1, /*crSRSMode*/1, /*crSat*/1, /*srsSign1*/1], MemoryCycles<[7]>>,
+
+// id: me__instr128_or__st__dmw_sts_w__agus_dmw__nrm__agus_dmw__normal__agus_dmw__idx__mPs__mDJs
+MemInstrItinData<II_VST_dmw_sts_w_idx, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmw_sts_w__agus_dmw__nrm__agus_dmw__normal__agus_dmw__idx_imm__mPs__m_c09s_step32
+MemInstrItinData<II_VST_dmw_sts_w_idx_imm, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmw_sts_w__agus_dmw__nrm__agus_dmw__normal__agus_dmw__pstm_nrm__mPs__mMs
+MemInstrItinData<II_VST_dmw_sts_w_pstm_nrm, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmw_sts_w__agus_dmw__nrm__agus_dmw__normal__agus_dmw__pstm_nrm_imm__mPs__m_c09s_step32
+MemInstrItinData<II_VST_dmw_sts_w_pstm_nrm_imm, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmw_sts_w_spill__agus_dmw__nrm_spill__agus_dmw__spill__mSPs__m_c15n_step32
+MemInstrItinData<II_VST_dmw_sts_w_spill, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMW_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*imm*/1, /*sp*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_bm__agus_dmx__nrm__agus_dmx__normal__agus_dmx__idx__mPs__mDJs
+MemInstrItinData<II_VST_dmx_sts_bm_idx, [AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_bm__agus_dmx__nrm__agus_dmx__normal__agus_dmx__idx_imm__mPs__m_c10s_step64
+MemInstrItinData<II_VST_dmx_sts_bm_idx_imm, [AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_bm__agus_dmx__nrm__agus_dmx__normal__agus_dmx__pstm_nrm__mPs__mMs
+MemInstrItinData<II_VST_dmx_sts_bm_pstm_nrm, [AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_bm__agus_dmx__nrm__agus_dmx__normal__agus_dmx__pstm_nrm_imm__mPs__m_c10s_step64
+MemInstrItinData<II_VST_dmx_sts_bm_pstm_nrm_imm, [AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_bm_spill__agus_dmx__nrm_spill__agus_dmx__spill__mSPs__m_c16n_step64
+MemInstrItinData<II_VST_dmx_sts_bm_spill, [AvoidPartWordStore, EmptyCycles<1>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*imm*/1, /*sp*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_fifohl__agus_dmx__nrm__agus_dmx__normal__agus_dmx__idx__mPs__mDJs
+MemInstrItinData<II_VST_dmx_sts_fifohl_idx, [AvoidPartWordStore, SimpleCycle<FIFO_HL_RA_PORT>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_fifohl__agus_dmx__nrm__agus_dmx__normal__agus_dmx__idx_imm__mPs__m_c10s_step64
+MemInstrItinData<II_VST_dmx_sts_fifohl_idx_imm, [AvoidPartWordStore, SimpleCycle<FIFO_HL_RA_PORT>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_fifohl__agus_dmx__nrm__agus_dmx__normal__agus_dmx__pstm_nrm__mPs__mMs
+MemInstrItinData<II_VST_dmx_sts_fifohl_pstm_nrm, [AvoidPartWordStore, SimpleCycle<FIFO_HL_RA_PORT>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_fifohl__agus_dmx__nrm__agus_dmx__normal__agus_dmx__pstm_nrm_imm__mPs__m_c10s_step64
+MemInstrItinData<II_VST_dmx_sts_fifohl_pstm_nrm_imm, [AvoidPartWordStore, SimpleCycle<FIFO_HL_RA_PORT>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_fifohl_spill__agus_dmx__nrm_spill__agus_dmx__spill__mSPs__m_c16n_step64
+MemInstrItinData<II_VST_dmx_sts_fifohl_spill, [AvoidPartWordStore, SimpleCycle<FIFO_HL_RA_PORT>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*imm*/1, /*sp*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_x__agus_dmx__nrm__agus_dmx__normal__agus_dmx__idx__mPs__mDJs
+MemInstrItinData<II_VST_dmx_sts_x_idx, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*dj*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_x__agus_dmx__nrm__agus_dmx__normal__agus_dmx__idx_imm__mPs__m_c10s_step64
+MemInstrItinData<II_VST_dmx_sts_x_idx_imm, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_x__agus_dmx__nrm__agus_dmx__normal__agus_dmx__pstm_nrm__mPs__mMs
+MemInstrItinData<II_VST_dmx_sts_x_pstm_nrm, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*mod*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_x__agus_dmx__nrm__agus_dmx__normal__agus_dmx__pstm_nrm_imm__mPs__m_c10s_step64
+MemInstrItinData<II_VST_dmx_sts_x_pstm_nrm_imm, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*ptr_out*/1, /*src*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__st__dmx_sts_x_spill__agus_dmx__nrm_spill__agus_dmx__spill__mSPs__m_c16n_step64
+MemInstrItinData<II_VST_dmx_sts_x_spill, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, PrefixCycle<DMX_WRS>, SimpleCycle<DM_ADS>], [/*src*/1, /*imm*/1, /*sp*/1], MemoryCycles<[5]>>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_add__vsub__vec_size__vec_size32__vec_add_mX__vec_add_nX
+InstrItinData<II_VSUB_16, [], [/*d*/2, /*s1*/1, /*s2*/1], [/*d*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_add__vsub__vec_size__vec_size16__vec_add_mX__vec_add_nX
+InstrItinData<II_VSUB_32, [], [/*d*/2, /*s1*/1, /*s2*/1], [/*d*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_add__vsub__vec_size__vec_size64__vec_add_mX__vec_add_nX
+InstrItinData<II_VSUB_8, [], [/*d*/2, /*s1*/1, /*s2*/1], [/*d*/MV_Bypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vsub_ge__vec_cmp_out_single__vec_cmp_out_single32__mR16_vcompare__vec_add_mX__vec_add_nX__vaddSign0
+InstrItinData<II_VSUB_GE_16_vaddSign0, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vsub_ge__vec_cmp_out_single__vec_cmp_out_single32__mR16_vcompare__vec_add_mX__vec_add_nX__vaddSign1
+InstrItinData<II_VSUB_GE_16_vaddSign1, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vsub_ge__vec_cmp_out_single__vec_cmp_out_single16__mR16_vcompare__vec_add_mX__vec_add_nX__vaddSign0
+InstrItinData<II_VSUB_GE_32_vaddSign0, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vsub_ge__vec_cmp_out_single__vec_cmp_out_single16__mR16_vcompare__vec_add_mX__vec_add_nX__vaddSign1
+InstrItinData<II_VSUB_GE_32_vaddSign1, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vsub_ge__vec_cmp_out_single__vec_cmp_out_single64__mL8m__vec_add_mX__vec_add_nX__vaddSign0
+InstrItinData<II_VSUB_GE_8_vaddSign0, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vsub_ge__vec_cmp_out_single__vec_cmp_out_single64__mL8m__vec_add_mX__vec_add_nX__vaddSign1
+InstrItinData<II_VSUB_GE_8_vaddSign1, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vsub_lt__vec_cmp_out_single__vec_cmp_out_single32__mR16_vcompare__vec_add_mX__vec_add_nX__vaddSign0
+InstrItinData<II_VSUB_LT_16_vaddSign0, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vsub_lt__vec_cmp_out_single__vec_cmp_out_single32__mR16_vcompare__vec_add_mX__vec_add_nX__vaddSign1
+InstrItinData<II_VSUB_LT_16_vaddSign1, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vsub_lt__vec_cmp_out_single__vec_cmp_out_single16__mR16_vcompare__vec_add_mX__vec_add_nX__vaddSign0
+InstrItinData<II_VSUB_LT_32_vaddSign0, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vsub_lt__vec_cmp_out_single__vec_cmp_out_single16__mR16_vcompare__vec_add_mX__vec_add_nX__vaddSign1
+InstrItinData<II_VSUB_LT_32_vaddSign1, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vsub_lt__vec_cmp_out_single__vec_cmp_out_single64__mL8m__vec_add_mX__vec_add_nX__vaddSign0
+InstrItinData<II_VSUB_LT_8_vaddSign0, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign0*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_sub_min_max__vsub_lt__vec_cmp_out_single__vec_cmp_out_single64__mL8m__vec_add_mX__vec_add_nX__vaddSign1
+InstrItinData<II_VSUB_LT_8_vaddSign1, [EmptyCycles<1>, SimpleCycle<L_WM_PORT>], [/*d*/2, /*cmp*/2, /*s1*/1, /*s2*/1, /*vaddSign1*/1], [/*d*/MV_Bypass, /*cmp*/NoBypass, /*s1*/MV_Bypass, /*s2*/MV_Bypass]>,
+
+// id: me__instr128_or__vec__vacc__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_reg__mDMm__vacc_cm_core__mRv
+InstrItinData<II_VSUB_vmac_cm2_add_reg, [EmptyCycles<3>, SimpleCycle<DM_RM_PORT>], [/*dst*/6, /*acc1*/4, /*acc2*/4, /*acc*/1], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*acc2*/VEC_Bypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vacc__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd__vmac_scd_dm_reg__vmac_scd_dm_core__mSCD_E4__mSCD_r__mR31_scd__vacc_cm_core__mRv
+InstrItinData<II_VSUB_vmac_cm2_add_scd, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*acc1*/4, /*c*/2, /*acc*/1, /*crSCDEn*/2], [/*dst*/VEC_Bypass, /*acc1*/VEC_Bypass, /*c*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vacc__mDMa__vmac_cm1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd_incr__vmac_scd_dm_dyn__vmac_scd_dm_core__mSCD_E4__mSCD_r_incr__mR31_scd__vacc_cm_core__mRv
+InstrItinData<II_VSUB_vmac_cm2_add_scd_incr, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*r_out*/2, /*acc1*/4, /*r*/2, /*acc*/1, /*crSCDEn*/2], [/*dst*/VEC_Bypass, /*r_out*/NoBypass, /*acc1*/VEC_Bypass, /*r*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vacc_fp__mDMa__vmac_bf1_add__mDMa__vmac_cm2_add__vmac_cm2_add_reg__mDMm__vacc_bf_core__mRv
+InstrItinData<II_VSUB_f_vmac_cm2_add_reg, [EmptyCycles<3>, SimpleCycle<DM_RM_PORT>], [/*dst*/6, /*acc1*/4, /*acc2*/4, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*acc2*/VEC_Bypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vacc_fp__mDMa__vmac_bf1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd__vmac_scd_dm_reg__vmac_scd_dm_core__mSCD_E4__mSCD_r__mR31_scd__vacc_bf_core__mRv
+InstrItinData<II_VSUB_f_vmac_cm2_add_scd, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*acc1*/4, /*c*/2, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7, /*crSCDEn*/2], [/*dst*/NoBypass, /*acc1*/VEC_Bypass, /*c*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__vec__vacc_fp__mDMa__vmac_bf1_add__mDMa__vmac_cm2_add__vmac_cm2_add_scd_incr__vmac_scd_dm_dyn__vmac_scd_dm_core__mSCD_E4__mSCD_r_incr__mR31_scd__vacc_bf_core__mRv
+InstrItinData<II_VSUB_f_vmac_cm2_add_scd_incr, [EmptyCycles<1>, PrefixCycle<L_RM_PORT>, PrefixCycle<L_WM_PORT>, SimpleCycle<SCD_INCR__O_POS>, PrefixCycle<SCD_CTL>, SimpleCycle<SCD_EXPAND__EN>, SimpleCycle<SCD>], [/*dst*/6, /*r_out*/2, /*acc1*/4, /*r*/2, /*acc*/1, /*srFPFlags*/7, /*crFPMask*/7, /*crSCDEn*/2], [/*dst*/NoBypass, /*r_out*/NoBypass, /*acc1*/VEC_Bypass, /*r*/NoBypass, /*acc*/NoBypass]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__vec_nlf__vtanh
+InstrItinData<II_VTANH, [SimpleCycle<DM_RM_PORT>], [/*dst*/2, /*src*/1], [/*dst*/MV_Bypass, /*src*/NoBypass]>,
+
+// id: me__instr128_or__ldb__ldb_or1__mv_unpack_w__unpackSign0
+InstrItinData<II_VUNPACK_mv_unpack_w_unpackSign0, [EmptyCycles<6>, PrefixCycle<QEY_RS_PORT>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*src*/7, /*crUnpackSize*/7, /*unpackSign0*/7]>,
+
+// id: me__instr128_or__ldb__ldb_or1__mv_unpack_w__unpackSign1
+InstrItinData<II_VUNPACK_mv_unpack_w_unpackSign1, [EmptyCycles<6>, PrefixCycle<QEY_RS_PORT>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*src*/7, /*crUnpackSize*/7, /*unpackSign1*/7]>,
+
+// id: me__instr128_or__ldb__ldb_or1__mv_unpack_x__mYb__unpackSign0
+InstrItinData<II_VUNPACK_mv_unpack_x_unpackSign0, [EmptyCycles<6>, PrefixCycle<QEY_RS_PORT>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*src*/7, /*crUnpackSize*/7, /*unpackSign0*/7]>,
+
+// id: me__instr128_or__ldb__ldb_or1__mv_unpack_x__mYb__unpackSign1
+InstrItinData<II_VUNPACK_mv_unpack_x_unpackSign1, [EmptyCycles<6>, PrefixCycle<QEY_RS_PORT>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*src*/7, /*crUnpackSize*/7, /*unpackSign1*/7]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_ups_w2b__ups_mov__w2b__ups_mov__base__mSm__upsSign0
+InstrItinData<II_VUPS_2x_mv_ups_w2b_upsSign0, [SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, SimpleCycle<UPS__L__OMUXL>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, SimpleCycle<UPS__L__KL>], [/*dst*/3, /*src*/1, /*su*/1, /*srUPS_of*/3, /*crSat*/1, /*crUPSMode*/2, /*upsSign0*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_ups_w2b__ups_mov__w2b__ups_mov__base__mSm__upsSign1
+InstrItinData<II_VUPS_2x_mv_ups_w2b_upsSign1, [SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, SimpleCycle<UPS__L__OMUXL>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, SimpleCycle<UPS__L__KL>], [/*dst*/3, /*src*/1, /*su*/1, /*srUPS_of*/3, /*crSat*/1, /*crUPSMode*/2, /*upsSign1*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_ups_x2c__ups_mov__x2c__ups_mov__base__mSm__upsSign0
+InstrItinData<II_VUPS_2x_mv_ups_x2c_upsSign0, [SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, PrefixCycle<UPS__H__A>, PrefixCycle<UPS__H__OMUXL>, SimpleCycle<UPS__L__OMUXL>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, SimpleCycle<UPS__H__K>], [/*dst*/3, /*src*/1, /*su*/1, /*srUPS_of*/3, /*crSat*/1, /*crUPSMode*/2, /*upsSign0*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_ups_x2c__ups_mov__x2c__ups_mov__base__mSm__upsSign1
+InstrItinData<II_VUPS_2x_mv_ups_x2c_upsSign1, [SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, PrefixCycle<UPS__H__A>, PrefixCycle<UPS__H__OMUXL>, SimpleCycle<UPS__L__OMUXL>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, SimpleCycle<UPS__H__K>], [/*dst*/3, /*src*/1, /*su*/1, /*srUPS_of*/3, /*crSat*/1, /*crUPSMode*/2, /*upsSign1*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_ups_w2c__ups_mov__w2c__ups_mov__base__mSm__upsSign0
+InstrItinData<II_VUPS_4x_mv_ups_w2c_upsSign0, [SimpleCycle<CRSAT_RA>, SimpleCycle<CRUPSMODE_RA>, PrefixCycle<DM_WM_PORT>, SimpleCycle<EVENT_UPS_OF>], [/*dst*/3, /*src*/1, /*su*/1, /*srUPS_of*/3, /*crSat*/1, /*crUPSMode*/2, /*upsSign0*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_ups_w2c__ups_mov__w2c__ups_mov__base__mSm__upsSign1
+InstrItinData<II_VUPS_4x_mv_ups_w2c_upsSign1, [SimpleCycle<CRSAT_RA>, SimpleCycle<CRUPSMODE_RA>, PrefixCycle<DM_WM_PORT>, SimpleCycle<EVENT_UPS_OF>], [/*dst*/3, /*src*/1, /*su*/1, /*srUPS_of*/3, /*crSat*/1, /*crUPSMode*/2, /*upsSign1*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_ups_x2d__ups_mov__x2d__mDMm__ups_mov__base__mSm__upsSign0
+InstrItinData<II_VUPS_4x_mv_ups_x2d_upsSign0, [SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, PrefixCycle<UPS__H__A>, SimpleCycle<UPS__OMUX>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, PrefixCycle<UPS__H__K>, SimpleCycle<UPS__K>], [/*dst*/3, /*src*/1, /*su*/1, /*srUPS_of*/3, /*crSat*/1, /*crUPSMode*/2, /*upsSign0*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__mv__mv_ups_x2d__ups_mov__x2d__mDMm__ups_mov__base__mSm__upsSign1
+InstrItinData<II_VUPS_4x_mv_ups_x2d_upsSign1, [SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, PrefixCycle<UPS__H__A>, SimpleCycle<UPS__OMUX>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, PrefixCycle<UPS__H__K>, SimpleCycle<UPS__K>], [/*dst*/3, /*src*/1, /*su*/1, /*srUPS_of*/3, /*crSat*/1, /*crUPSMode*/2, /*upsSign1*/1]>,
+
+// id: me__instr128_or__alu_mv__alumv_or__alu__alu_r_rr__xor__mRx__mRy
+InstrItinData<II_XOR, [], [/*d0*/1, /*s0*/1, /*s1*/1]>,
+]>;

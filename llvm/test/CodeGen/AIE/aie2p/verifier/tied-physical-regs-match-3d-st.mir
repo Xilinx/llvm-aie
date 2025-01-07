@@ -1,0 +1,79 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: not --crash llc -mtriple=aie2p -run-pass machineverifier -o /dev/null %s 2>&1 | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+# This test ensures that the Machine Verifier detects tied physical registers
+# that don't match.
+
+---
+name:      tied_ok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+
+    $p6, $dc1, $dc5 = ST_3D_dms_sts $eh0, $p6, $d1_3d
+    $p2, $dc0, $dc4 = ST_3D_dmv_sts_q $q2, $p2, $d0_3d
+    $p2, $dc2, $dc6 = ST_3D_s16 $r17, $p2, $d2_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p2, $dc1, $dc5 = ST_3D_s8 $r28, $p2, $d1_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p1, $dc1, $dc5 = ST_TM_3D $r13, $p1, $d1_3d :: (store (s32) into custom "TileMemory")
+
+    ; Below instructions have hasExtraSrcRegAllocReq and hasExtraDefRegAllocReq attributes
+    ; which essentially bypass the register flags. The renamable attributes
+    ; below should trigger no verification error.
+    ; CHECK-NOT: Bad machine code
+    renamable $p6, renamable $dc1, renamable $dc5 = ST_3D_dms_sts renamable $eh0, renamable $p6, renamable $d1_3d
+    renamable $p2, renamable $dc0, renamable $dc4 = ST_3D_dmv_sts_q renamable $q2, renamable $p2, renamable $d0_3d
+    renamable $p2, renamable $dc2, renamable $dc6 = ST_3D_s16 renamable $r17, renamable $p2, renamable $d2_3d, implicit-def renamable $pe2_ads, implicit renamable $pe2_ads
+    renamable $p2, renamable $dc1, renamable $dc5 = ST_3D_s8 renamable $r28, renamable $p2, renamable $d1_3d, implicit-def renamable $pe2_ads, implicit renamable $pe2_ads
+    renamable $p1, renamable $dc1, renamable $dc5 = ST_TM_3D renamable $r13, renamable $p1, renamable $d1_3d :: (store (s32) into custom "TileMemory")
+
+...
+
+---
+name:      virtual_ok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    %0:ep = COPY $p0
+    %10:eds = COPY $d0_3d
+    %70:ep, %71:edcl, %72:edch = ST_3D_dms_sts $eh0, %0, %10
+    %80:ep, %81:edcl, %82:edch = ST_3D_dmv_sts_q $q2, %0, %10
+    %90:ep, %91:edcl, %92:edch = ST_3D_s16 $r17, %0, %10, implicit-def $pe2_ads, implicit $pe2_ads
+    %100:ep, %101:edcl, %102:edch = ST_3D_s8 $r28, %0, %10, implicit-def $pe2_ads, implicit $pe2_ads
+    %120:ep, %121:edcl, %122:edch = ST_TM_3D $r13, %0, %10 :: (store (s32) into custom "TileMemory")
+
+...
+
+---
+name:      tied_nok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    ; CHECK-COUNT-15: Bad machine code:
+
+    $p6, $dc3, $dc5 = ST_3D_dms_sts $eh0, $p6, $d1_3d
+    $p6, $dc3, $dc6 = ST_3D_dms_sts $eh0, $p6, $d1_3d
+    $p6, $dc0, $dc5 = ST_3D_dms_sts $eh0, $p6, $d1_3d
+    $p2, $dc2, $dc5 = ST_3D_dmv_sts_q $q2, $p2, $d0_3d
+    $p2, $dc1, $dc7 = ST_3D_dmv_sts_q $q2, $p2, $d0_3d
+    $p2, $dc3, $dc4 = ST_3D_dmv_sts_q $q2, $p2, $d0_3d
+    $p2, $dc2, $dc5 = ST_3D_s16 $r17, $p2, $d2_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p2, $dc1, $dc4 = ST_3D_s16 $r17, $p2, $d2_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p2, $dc3, $dc6 = ST_3D_s16 $r17, $p2, $d2_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p2, $dc3, $dc6 = ST_3D_s8 $r28, $p2, $d1_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p2, $dc2, $dc4 = ST_3D_s8 $r28, $p2, $d1_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p2, $dc2, $dc5 = ST_3D_s8 $r28, $p2, $d1_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p1, $dc2, $dc7 = ST_TM_3D $r13, $p1, $d1_3d :: (store (s32) into custom "TileMemory")
+    $p1, $dc3, $dc5 = ST_TM_3D $r13, $p1, $d1_3d :: (store (s32) into custom "TileMemory")
+    $p1, $dc0, $dc6 = ST_TM_3D $r13, $p1, $d1_3d :: (store (s32) into custom "TileMemory")
+
+...
+

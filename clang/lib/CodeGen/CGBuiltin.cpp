@@ -47,6 +47,7 @@
 #include "llvm/IR/IntrinsicsAArch64.h"
 #include "llvm/IR/IntrinsicsAIE.h"
 #include "llvm/IR/IntrinsicsAIE2.h"
+#include "llvm/IR/IntrinsicsAIE2P.h"
 #include "llvm/IR/IntrinsicsAMDGPU.h"
 #include "llvm/IR/IntrinsicsARM.h"
 #include "llvm/IR/IntrinsicsBPF.h"
@@ -6262,7 +6263,9 @@ static Value *EmitTargetArchBuiltinExpr(CodeGenFunction *CGF,
   case llvm::Triple::aie:
     return CGF->EmitAIE1BuiltinExpr(BuiltinID, E);
   case llvm::Triple::aie2:
-    return CGF->EmitAIE2BuiltinExpr(BuiltinID, E);
+    return CGF->EmitAIE2BuiltinExpr(BuiltinID, E, Arch);
+  case llvm::Triple::aie2p:
+    return CGF->EmitAIE2PBuiltinExpr(BuiltinID, E, Arch);
   default:
     return nullptr;
   }
@@ -21827,33 +21830,6 @@ static llvm::Intrinsic::ID getAIE1IntrinsicFunction(unsigned BuiltinID) {
   return Intrinsic::not_intrinsic;
 }
 
-Value *CodeGenFunction::EmitAIE1BuiltinExpr(unsigned BuiltinID,
-                                            const CallExpr *E) {
-
-  switch (BuiltinID) {
-  // Custom lowering is required for following intrinsics to introduce
-  // truncation from i32 to i20 for "addr" paramter
-  case AIE::BI__builtin_aie_ctrl_packet_header: {
-    SmallVector<Value *, 4> Ops;
-
-    Ops.push_back(
-        Builder.CreateTrunc(EmitScalarExpr(E->getArg(0)),
-                            llvm::Type::getInt20Ty(getLLVMContext())));
-    for (unsigned I = 1; I < E->getNumArgs(); I++) {
-      Ops.push_back(EmitScalarExpr(E->getArg(I)));
-    }
-    llvm::Intrinsic::ID IntrinsicID = getAIE1IntrinsicFunction(BuiltinID);
-    assert(IntrinsicID != Intrinsic::not_intrinsic);
-    Function *F = CGM.getIntrinsic(IntrinsicID);
-    Value *Val = Builder.CreateCall(F, Ops);
-    return Val;
-  }
-  default:
-    break;
-  }
-  return nullptr;
-}
-
 static llvm::Intrinsic::ID getAIE2IntrinsicFunction(unsigned BuiltinID) {
   switch (BuiltinID) {
   case AIE::BI__builtin_aiev2_vabs_gtz8:
@@ -22002,8 +21978,311 @@ static llvm::Intrinsic::ID getAIE2IntrinsicFunction(unsigned BuiltinID) {
   return Intrinsic::not_intrinsic;
 }
 
-Value *CodeGenFunction::EmitAIE2BuiltinExpr(unsigned BuiltinID,
+static llvm::Intrinsic::ID getAIE2PIntrinsicFunction(unsigned BuiltinID) {
+  switch (BuiltinID) {
+  case AIE::BI__builtin_aie2p_add_2d:
+    return Intrinsic::aie2p_add_2d;
+  case AIE::BI__builtin_aie2p_add_3d:
+    return Intrinsic::aie2p_add_3d;
+  case AIE::BI__builtin_aie2p_get_ss:
+    return Intrinsic::aie2p_get_ss;
+  case AIE::BI__builtin_aie2p_get_ss_nb:
+    return Intrinsic::aie2p_get_ss_nb;
+  case AIE::BI__builtin_aie2p_put_ms_nb:
+    return Intrinsic::aie2p_put_ms_nb;
+  case AIE::BI__builtin_aie2p_scd_expand_ACC1024_incr:
+    return Intrinsic::aie2p_scd_expand_ACC1024_incr;
+  case AIE::BI__builtin_aie2p_scd_expand_ACC2048_incr:
+    return Intrinsic::aie2p_scd_expand_ACC2048_incr;
+  case AIE::BI__builtin_aie2p_vabs_gtz8:
+    return Intrinsic::aie2p_vabs_gtz8;
+  case AIE::BI__builtin_aie2p_vabs_gtz16:
+    return Intrinsic::aie2p_vabs_gtz16;
+  case AIE::BI__builtin_aie2p_vabs_gtz32:
+    return Intrinsic::aie2p_vabs_gtz32;
+  case AIE::BI__builtin_aie2p_vbneg_ltz8:
+    return Intrinsic::aie2p_vbneg_ltz8;
+  case AIE::BI__builtin_aie2p_vbneg_ltz16:
+    return Intrinsic::aie2p_vbneg_ltz16;
+  case AIE::BI__builtin_aie2p_vbneg_ltz32:
+    return Intrinsic::aie2p_vbneg_ltz32;
+  case AIE::BI__builtin_aie2p_vmaxdiff_lt8:
+    return Intrinsic::aie2p_vmaxdiff_lt8;
+  case AIE::BI__builtin_aie2p_vmaxdiff_lt16:
+    return Intrinsic::aie2p_vmaxdiff_lt16;
+  case AIE::BI__builtin_aie2p_vmaxdiff_lt32:
+    return Intrinsic::aie2p_vmaxdiff_lt32;
+  case AIE::BI__builtin_aie2p_vmax_lt8:
+    return Intrinsic::aie2p_vmax_lt8;
+  case AIE::BI__builtin_aie2p_vmax_lt16:
+    return Intrinsic::aie2p_vmax_lt16;
+  case AIE::BI__builtin_aie2p_vmax_lt32:
+    return Intrinsic::aie2p_vmax_lt32;
+  case AIE::BI__builtin_aie2p_vmax_ltbf16:
+    return Intrinsic::aie2p_vmax_ltbf16;
+  case AIE::BI__builtin_aie2p_vmin_ge8:
+    return Intrinsic::aie2p_vmin_ge8;
+  case AIE::BI__builtin_aie2p_vmin_ge16:
+    return Intrinsic::aie2p_vmin_ge16;
+  case AIE::BI__builtin_aie2p_vmin_ge32:
+    return Intrinsic::aie2p_vmin_ge32;
+  case AIE::BI__builtin_aie2p_vmin_gebf16:
+    return Intrinsic::aie2p_vmin_gebf16;
+  case AIE::BI__builtin_aie2p_vneg_gtz8:
+    return Intrinsic::aie2p_vneg_gtz8;
+  case AIE::BI__builtin_aie2p_vneg_gtz16:
+    return Intrinsic::aie2p_vneg_gtz16;
+  case AIE::BI__builtin_aie2p_vneg_gtz32:
+    return Intrinsic::aie2p_vneg_gtz32;
+  case AIE::BI__builtin_aie2p_vsub_ge8:
+    return Intrinsic::aie2p_vsub_ge8;
+  case AIE::BI__builtin_aie2p_vsub_ge16:
+    return Intrinsic::aie2p_vsub_ge16;
+  case AIE::BI__builtin_aie2p_vsub_ge32:
+    return Intrinsic::aie2p_vsub_ge32;
+  case AIE::BI__builtin_aie2p_vsub_lt8:
+    return Intrinsic::aie2p_vsub_lt8;
+  case AIE::BI__builtin_aie2p_vsub_lt16:
+    return Intrinsic::aie2p_vsub_lt16;
+  case AIE::BI__builtin_aie2p_vsub_lt32:
+    return Intrinsic::aie2p_vsub_lt32;
+  case AIE::BI__builtin_aie2p_divstep:
+    return Intrinsic::aie2p_divs;
+  default:
+    break;
+  }
+  return Intrinsic::not_intrinsic;
+}
+
+static llvm::Intrinsic::ID
+getAIEIntrinsicFunction(unsigned BuiltinID, llvm::Triple::ArchType Arch) {
+  switch (Arch) {
+  case llvm::Triple::aie:
+    return getAIE1IntrinsicFunction(BuiltinID);
+  case llvm::Triple::aie2:
+    return getAIE2IntrinsicFunction(BuiltinID);
+  case llvm::Triple::aie2p:
+    return getAIE2PIntrinsicFunction(BuiltinID);
+  default:
+    break;
+  }
+  return Intrinsic::not_intrinsic;
+}
+
+Value *CodeGenFunction::EmitAIE1BuiltinExpr(unsigned BuiltinID,
                                             const CallExpr *E) {
+
+  switch (BuiltinID) {
+  // Custom lowering is required for following intrinsics to introduce
+  // truncation from i32 to i20 for "addr" paramter
+  case AIE::BI__builtin_aie_ctrl_packet_header: {
+    SmallVector<Value *, 4> Ops;
+
+    Ops.push_back(
+        Builder.CreateTrunc(EmitScalarExpr(E->getArg(0)),
+                            llvm::Type::getInt20Ty(getLLVMContext())));
+    for (unsigned I = 1; I < E->getNumArgs(); I++) {
+      Ops.push_back(EmitScalarExpr(E->getArg(I)));
+    }
+    llvm::Intrinsic::ID IntrinsicID = getAIE1IntrinsicFunction(BuiltinID);
+    assert(IntrinsicID != Intrinsic::not_intrinsic);
+    Function *F = CGM.getIntrinsic(IntrinsicID);
+    Value *Val = Builder.CreateCall(F, Ops);
+    return Val;
+  }
+  default:
+    break;
+  }
+  return nullptr;
+}
+
+Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
+                                           const CallExpr *E,
+                                           llvm::Triple::ArchType Arch) {
+
+  switch (BuiltinID) {
+  case AIE::BI__builtin_aiev2_add_2d:
+  case AIE::BI__builtin_aie2p_add_2d: {
+    // Custom lowering is used for addr intrinsics to introduce truncation
+    // from i32 to i20 and to handle multiple outputs returned by these
+    // intrinsics and Zext from i20 back to i32 for count parameter
+    SmallVector<Value *, 5> Ops;
+    Ops.push_back(EmitScalarExpr(E->getArg(0)));
+    for (unsigned i = 1, e = E->getNumArgs(); i != e; i++) {
+      Ops.push_back(
+          Builder.CreateTrunc(EmitScalarExpr(E->getArg(i)),
+                              llvm::Type::getInt20Ty(getLLVMContext())));
+    }
+
+    llvm::Intrinsic::ID IntrinsicID = getAIEIntrinsicFunction(BuiltinID, Arch);
+    assert(IntrinsicID != Intrinsic::not_intrinsic);
+    Function *F = CGM.getIntrinsic(IntrinsicID);
+    Value *Val = Builder.CreateCall(F, Ops);
+
+    Value *Count1 =
+        Builder.CreateZExt(Builder.CreateExtractValue(Val, 1),
+                           llvm::Type::getInt32Ty(getLLVMContext()));
+    Value *Count1Addr = EmitLValue(E->getArg(4)).getPointer(*this);
+    Builder.CreateDefaultAlignedStore(Count1, Count1Addr);
+
+    return Builder.CreateExtractValue(Val, 0);
+  }
+  case AIE::BI__builtin_aiev2_add_3d:
+  case AIE::BI__builtin_aie2p_add_3d: {
+    SmallVector<Value *, 8> Ops;
+    Ops.push_back(EmitScalarExpr(E->getArg(0)));
+    for (unsigned i = 1, e = E->getNumArgs(); i != e; i++) {
+      Ops.push_back(
+          Builder.CreateTrunc(EmitScalarExpr(E->getArg(i)),
+                              llvm::Type::getInt20Ty(getLLVMContext())));
+    }
+
+    llvm::Intrinsic::ID IntrinsicID = getAIEIntrinsicFunction(BuiltinID, Arch);
+    assert(IntrinsicID != Intrinsic::not_intrinsic);
+    Function *F = CGM.getIntrinsic(IntrinsicID);
+    Value *Val = Builder.CreateCall(F, Ops);
+
+    Value *Count1 =
+        Builder.CreateZExt(Builder.CreateExtractValue(Val, 1),
+                           llvm::Type::getInt32Ty(getLLVMContext()));
+    Value *Count1Addr = EmitLValue(E->getArg(5)).getPointer(*this);
+    Value *Count2 =
+        Builder.CreateZExt(Builder.CreateExtractValue(Val, 2),
+                           llvm::Type::getInt32Ty(getLLVMContext()));
+    Value *Count2Addr = EmitLValue(E->getArg(7)).getPointer(*this);
+
+    Builder.CreateDefaultAlignedStore(Count1, Count1Addr);
+    Builder.CreateDefaultAlignedStore(Count2, Count2Addr);
+
+    return Builder.CreateExtractValue(Val, 0);
+  }
+  case AIE::BI__builtin_aiev2_put_ms_nb:
+  case AIE::BI__builtin_aie2p_put_ms_nb:
+  case AIE::BI__builtin_aiev2_put_ms_nb_packet_header:
+  case AIE::BI__builtin_aiev2_put_ms_nb_ctrl_packet_header: {
+    SmallVector<Value *, 2> Ops;
+    for (unsigned I = 0; I < E->getNumArgs() - 1; I++)
+      Ops.push_back(EmitScalarExpr(E->getArg(I)));
+
+    llvm::Intrinsic::ID IntrinsicID = getAIEIntrinsicFunction(BuiltinID, Arch);
+    assert(IntrinsicID != Intrinsic::not_intrinsic);
+    Function *F = CGM.getIntrinsic(IntrinsicID);
+    Value *Val = Builder.CreateCall(F, Ops);
+
+    Value *SuccAddr =
+        EmitLValue(E->getArg(E->getNumArgs() - 1)).getPointer(*this);
+    return Builder.CreateDefaultAlignedStore(Val, SuccAddr);
+  }
+  case AIE::BI__builtin_aiev2_vabs_gtz8:
+  case AIE::BI__builtin_aiev2_vabs_gtz16:
+  case AIE::BI__builtin_aiev2_vabs_gtz32:
+  case AIE::BI__builtin_aiev2_vbneg_ltz8:
+  case AIE::BI__builtin_aiev2_vbneg_ltz16:
+  case AIE::BI__builtin_aiev2_vbneg_ltz32:
+  case AIE::BI__builtin_aiev2_vmaxdiff_lt8:
+  case AIE::BI__builtin_aiev2_vmaxdiff_lt16:
+  case AIE::BI__builtin_aiev2_vmaxdiff_lt32:
+  case AIE::BI__builtin_aiev2_vmax_lt8:
+  case AIE::BI__builtin_aiev2_vmax_lt16:
+  case AIE::BI__builtin_aiev2_vmax_lt32:
+  case AIE::BI__builtin_aiev2_vmax_ltbf16:
+  case AIE::BI__builtin_aiev2_vmin_ge8:
+  case AIE::BI__builtin_aiev2_vmin_ge16:
+  case AIE::BI__builtin_aiev2_vmin_ge32:
+  case AIE::BI__builtin_aiev2_vmin_gebf16:
+  case AIE::BI__builtin_aiev2_vneg_gtz8:
+  case AIE::BI__builtin_aiev2_vneg_gtz16:
+  case AIE::BI__builtin_aiev2_vneg_gtz32:
+  case AIE::BI__builtin_aiev2_vsub_ge8:
+  case AIE::BI__builtin_aiev2_vsub_ge16:
+  case AIE::BI__builtin_aiev2_vsub_ge32:
+  case AIE::BI__builtin_aiev2_vsub_lt8:
+  case AIE::BI__builtin_aiev2_vsub_lt16:
+  case AIE::BI__builtin_aiev2_vsub_lt32:
+  case AIE::BI__builtin_aiev2_get_ss:
+  case AIE::BI__builtin_aiev2_get_ss_nb:
+  case AIE::BI__builtin_aie2p_vabs_gtz8:
+  case AIE::BI__builtin_aie2p_vabs_gtz16:
+  case AIE::BI__builtin_aie2p_vabs_gtz32:
+  case AIE::BI__builtin_aie2p_vbneg_ltz8:
+  case AIE::BI__builtin_aie2p_vbneg_ltz16:
+  case AIE::BI__builtin_aie2p_vbneg_ltz32:
+  case AIE::BI__builtin_aie2p_vmaxdiff_lt8:
+  case AIE::BI__builtin_aie2p_vmaxdiff_lt16:
+  case AIE::BI__builtin_aie2p_vmaxdiff_lt32:
+  case AIE::BI__builtin_aie2p_vmax_lt8:
+  case AIE::BI__builtin_aie2p_vmax_lt16:
+  case AIE::BI__builtin_aie2p_vmax_lt32:
+  case AIE::BI__builtin_aie2p_vmax_ltbf16:
+  case AIE::BI__builtin_aie2p_vmin_ge8:
+  case AIE::BI__builtin_aie2p_vmin_ge16:
+  case AIE::BI__builtin_aie2p_vmin_ge32:
+  case AIE::BI__builtin_aie2p_vmin_gebf16:
+  case AIE::BI__builtin_aie2p_vneg_gtz8:
+  case AIE::BI__builtin_aie2p_vneg_gtz16:
+  case AIE::BI__builtin_aie2p_vneg_gtz32:
+  case AIE::BI__builtin_aie2p_vsub_ge8:
+  case AIE::BI__builtin_aie2p_vsub_ge16:
+  case AIE::BI__builtin_aie2p_vsub_ge32:
+  case AIE::BI__builtin_aie2p_vsub_lt8:
+  case AIE::BI__builtin_aie2p_vsub_lt16:
+  case AIE::BI__builtin_aie2p_vsub_lt32:
+  case AIE::BI__builtin_aie2p_get_ss:
+  case AIE::BI__builtin_aie2p_get_ss_nb:
+  case AIE::BI__builtin_aie2p_scd_expand_ACC1024_incr:
+  case AIE::BI__builtin_aie2p_scd_expand_ACC2048_incr: {
+    SmallVector<Value *, 3> Ops;
+    // Skip the last argument, it's actually an output
+    for (unsigned I = 0; I < E->getNumArgs() - 1; I++)
+      Ops.push_back(EmitScalarExpr(E->getArg(I)));
+
+    llvm::Intrinsic::ID IntrinsicID = getAIEIntrinsicFunction(BuiltinID, Arch);
+    assert(IntrinsicID != Intrinsic::not_intrinsic);
+    Function *F = CGM.getIntrinsic(IntrinsicID);
+    Value *Val = Builder.CreateCall(F, Ops);
+
+    // The second member of the returned struct is the compare result,
+    // store it to the input reference
+    Value *Cmp = Builder.CreateExtractValue(Val, 1);
+    Value *CmpAddr =
+        EmitLValue(E->getArg(E->getNumArgs() - 1)).getPointer(*this);
+    Builder.CreateDefaultAlignedStore(Cmp, CmpAddr);
+
+    return Builder.CreateExtractValue(Val, 0);
+  }
+  case AIE::BI__builtin_aiev2_divstep:
+  case AIE::BI__builtin_aie2p_divstep: {
+
+    SmallVector<Value *, 3> Ops;
+    for (unsigned I = 0; I < E->getNumArgs(); I++)
+      Ops.push_back(EmitScalarExpr(E->getArg(I)));
+
+    llvm::Intrinsic::ID IntrinsicID = getAIEIntrinsicFunction(BuiltinID, Arch);
+    assert(IntrinsicID != Intrinsic::not_intrinsic);
+    Function *F = CGM.getIntrinsic(IntrinsicID);
+    Value *Val = Builder.CreateCall(F, Ops);
+
+    // The second member of the returned struct is the division result,
+    // store it to the first input reference
+    Value *Rem = Builder.CreateExtractValue(Val, 1);
+    Value *RemAddr = EmitLValue(E->getArg(0)).getPointer(*this);
+    Builder.CreateDefaultAlignedStore(Rem, RemAddr);
+
+    // The first member of the returned struct is the remainder result,
+    // store it to the second input reference
+    Value *Div = Builder.CreateExtractValue(Val, 0);
+    Value *DivAddr = EmitLValue(E->getArg(1)).getPointer(*this);
+    return Builder.CreateDefaultAlignedStore(Div, DivAddr);
+  }
+  default:
+    break;
+  }
+  return nullptr;
+}
+
+Value *CodeGenFunction::EmitAIE2BuiltinExpr(unsigned BuiltinID,
+                                            const CallExpr *E,
+                                            llvm::Triple::ArchType Arch) {
 
   switch (BuiltinID) {
   case AIE::BI__builtin_aiev2_vabs_gtz8:
@@ -22033,118 +22312,14 @@ Value *CodeGenFunction::EmitAIE2BuiltinExpr(unsigned BuiltinID,
   case AIE::BI__builtin_aiev2_vsub_lt16:
   case AIE::BI__builtin_aiev2_vsub_lt32:
   case AIE::BI__builtin_aiev2_get_ss:
-  case AIE::BI__builtin_aiev2_get_ss_nb: {
-
-    SmallVector<Value *, 3> Ops;
-    // Skip the last argument, it's actually an output
-    for (unsigned I = 0; I < E->getNumArgs() - 1; I++)
-      Ops.push_back(EmitScalarExpr(E->getArg(I)));
-
-    llvm::Intrinsic::ID IntrinsicID = getAIE2IntrinsicFunction(BuiltinID);
-    assert(IntrinsicID != Intrinsic::not_intrinsic);
-    Function *F = CGM.getIntrinsic(IntrinsicID);
-    Value *Val = Builder.CreateCall(F, Ops);
-
-    // The second member of the returned struct is the compare result,
-    // store it to the input reference
-    Value *Cmp = Builder.CreateExtractValue(Val, 1);
-    Value *CmpAddr =
-        EmitLValue(E->getArg(E->getNumArgs() - 1)).getPointer(*this);
-    Builder.CreateDefaultAlignedStore(Cmp, CmpAddr);
-
-    return Builder.CreateExtractValue(Val, 0);
-  }
-  case AIE::BI__builtin_aiev2_divstep: {
-
-    SmallVector<Value *, 3> Ops;
-    for (unsigned I = 0; I < E->getNumArgs(); I++)
-      Ops.push_back(EmitScalarExpr(E->getArg(I)));
-
-    llvm::Intrinsic::ID IntrinsicID = getAIE2IntrinsicFunction(BuiltinID);
-    assert(IntrinsicID != Intrinsic::not_intrinsic);
-    Function *F = CGM.getIntrinsic(IntrinsicID);
-    Value *Val = Builder.CreateCall(F, Ops);
-
-    // The second member of the returned struct is the division result,
-    // store it to the first input reference
-    Value *Rem = Builder.CreateExtractValue(Val, 1);
-    Value *RemAddr = EmitLValue(E->getArg(0)).getPointer(*this);
-    Builder.CreateDefaultAlignedStore(Rem, RemAddr);
-
-    // The first member of the returned struct is the remainder result,
-    // store it to the second input reference
-    Value *Div = Builder.CreateExtractValue(Val, 0);
-    Value *DivAddr = EmitLValue(E->getArg(1)).getPointer(*this);
-    return Builder.CreateDefaultAlignedStore(Div, DivAddr);
-  }
-  case AIE::BI__builtin_aiev2_add_2d: {
-    // Custom lowering is used for addr intrinsics to introduce truncation
-    // from i32 to i20 and to handle multiple outputs returned by these
-    // intrinsics and Zext from i20 back to i32 for count parameter
-    SmallVector<Value *, 5> Ops;
-    Ops.push_back(EmitScalarExpr(E->getArg(0)));
-    for (unsigned i = 1, e = E->getNumArgs(); i != e; i++) {
-      Ops.push_back(
-          Builder.CreateTrunc(EmitScalarExpr(E->getArg(i)),
-                              llvm::Type::getInt20Ty(getLLVMContext())));
-    }
-
-    llvm::Intrinsic::ID IntrinsicID = getAIE2IntrinsicFunction(BuiltinID);
-    assert(IntrinsicID != Intrinsic::not_intrinsic);
-    Function *F = CGM.getIntrinsic(IntrinsicID);
-    Value *Val = Builder.CreateCall(F, Ops);
-
-    Value *Count1 =
-        Builder.CreateZExt(Builder.CreateExtractValue(Val, 1),
-                           llvm::Type::getInt32Ty(getLLVMContext()));
-    Value *Count1Addr = EmitLValue(E->getArg(4)).getPointer(*this);
-    Builder.CreateDefaultAlignedStore(Count1, Count1Addr);
-
-    return Builder.CreateExtractValue(Val, 0);
-  }
-  case AIE::BI__builtin_aiev2_add_3d: {
-    SmallVector<Value *, 8> Ops;
-    Ops.push_back(EmitScalarExpr(E->getArg(0)));
-    for (unsigned i = 1, e = E->getNumArgs(); i != e; i++) {
-      Ops.push_back(
-          Builder.CreateTrunc(EmitScalarExpr(E->getArg(i)),
-                              llvm::Type::getInt20Ty(getLLVMContext())));
-    }
-
-    llvm::Intrinsic::ID IntrinsicID = getAIE2IntrinsicFunction(BuiltinID);
-    assert(IntrinsicID != Intrinsic::not_intrinsic);
-    Function *F = CGM.getIntrinsic(IntrinsicID);
-    Value *Val = Builder.CreateCall(F, Ops);
-
-    Value *Count1 =
-        Builder.CreateZExt(Builder.CreateExtractValue(Val, 1),
-                           llvm::Type::getInt32Ty(getLLVMContext()));
-    Value *Count1Addr = EmitLValue(E->getArg(5)).getPointer(*this);
-    Value *Count2 =
-        Builder.CreateZExt(Builder.CreateExtractValue(Val, 2),
-                           llvm::Type::getInt32Ty(getLLVMContext()));
-    Value *Count2Addr = EmitLValue(E->getArg(7)).getPointer(*this);
-
-    Builder.CreateDefaultAlignedStore(Count1, Count1Addr);
-    Builder.CreateDefaultAlignedStore(Count2, Count2Addr);
-
-    return Builder.CreateExtractValue(Val, 0);
-  }
+  case AIE::BI__builtin_aiev2_get_ss_nb:
+  case AIE::BI__builtin_aiev2_add_2d:
+  case AIE::BI__builtin_aiev2_add_3d:
   case AIE::BI__builtin_aiev2_put_ms_nb:
   case AIE::BI__builtin_aiev2_put_ms_nb_packet_header:
-  case AIE::BI__builtin_aiev2_put_ms_nb_ctrl_packet_header: {
-    SmallVector<Value *, 2> Ops;
-    for (unsigned I = 0; I < E->getNumArgs() - 1; I++)
-      Ops.push_back(EmitScalarExpr(E->getArg(I)));
-
-    llvm::Intrinsic::ID IntrinsicID = getAIE2IntrinsicFunction(BuiltinID);
-    assert(IntrinsicID != Intrinsic::not_intrinsic);
-    Function *F = CGM.getIntrinsic(IntrinsicID);
-    Value *Val = Builder.CreateCall(F, Ops);
-
-    Value *SuccAddr =
-        EmitLValue(E->getArg(E->getNumArgs() - 1)).getPointer(*this);
-    return Builder.CreateDefaultAlignedStore(Val, SuccAddr);
+  case AIE::BI__builtin_aiev2_put_ms_nb_ctrl_packet_header:
+  case AIE::BI__builtin_aiev2_divstep: {
+    return this->EmitAIEBuiltinExpr(BuiltinID, E, Arch);
   }
   case AIE::BI__builtin_aiev2_sparse_peek_4_and_get_pointer:
   case AIE::BI__builtin_aiev2_sparse_peek_4_set_lo:
@@ -22237,5 +22412,52 @@ Value *CodeGenFunction::EmitAIE2BuiltinExpr(unsigned BuiltinID,
   default:
     break;
   }
+  return nullptr;
+}
+
+Value *CodeGenFunction::EmitAIE2PBuiltinExpr(unsigned BuiltinID,
+                                             const CallExpr *E,
+                                             llvm::Triple::ArchType Arch) {
+  switch (BuiltinID) {
+  case AIE::BI__builtin_aie2p_add_2d:
+  case AIE::BI__builtin_aie2p_add_3d:
+  case AIE::BI__builtin_aie2p_put_ms_nb:
+  case AIE::BI__builtin_aie2p_scd_expand_ACC1024_incr:
+  case AIE::BI__builtin_aie2p_scd_expand_ACC2048_incr:
+  case AIE::BI__builtin_aie2p_get_ss:
+  case AIE::BI__builtin_aie2p_get_ss_nb:
+  case AIE::BI__builtin_aie2p_vabs_gtz8:
+  case AIE::BI__builtin_aie2p_vabs_gtz16:
+  case AIE::BI__builtin_aie2p_vabs_gtz32:
+  case AIE::BI__builtin_aie2p_vbneg_ltz8:
+  case AIE::BI__builtin_aie2p_vbneg_ltz16:
+  case AIE::BI__builtin_aie2p_vbneg_ltz32:
+  case AIE::BI__builtin_aie2p_vmaxdiff_lt8:
+  case AIE::BI__builtin_aie2p_vmaxdiff_lt16:
+  case AIE::BI__builtin_aie2p_vmaxdiff_lt32:
+  case AIE::BI__builtin_aie2p_vmax_lt8:
+  case AIE::BI__builtin_aie2p_vmax_lt16:
+  case AIE::BI__builtin_aie2p_vmax_lt32:
+  case AIE::BI__builtin_aie2p_vmax_ltbf16:
+  case AIE::BI__builtin_aie2p_vmin_ge8:
+  case AIE::BI__builtin_aie2p_vmin_ge16:
+  case AIE::BI__builtin_aie2p_vmin_ge32:
+  case AIE::BI__builtin_aie2p_vmin_gebf16:
+  case AIE::BI__builtin_aie2p_vneg_gtz8:
+  case AIE::BI__builtin_aie2p_vneg_gtz16:
+  case AIE::BI__builtin_aie2p_vneg_gtz32:
+  case AIE::BI__builtin_aie2p_vsub_ge8:
+  case AIE::BI__builtin_aie2p_vsub_ge16:
+  case AIE::BI__builtin_aie2p_vsub_ge32:
+  case AIE::BI__builtin_aie2p_vsub_lt8:
+  case AIE::BI__builtin_aie2p_vsub_lt16:
+  case AIE::BI__builtin_aie2p_vsub_lt32:
+  case AIE::BI__builtin_aie2p_divstep: {
+    return this->EmitAIEBuiltinExpr(BuiltinID, E, Arch);
+  }
+  default:
+    break;
+  }
+
   return nullptr;
 }

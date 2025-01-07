@@ -16,11 +16,14 @@
 #include "AIEBaseInstrInfo.h"
 #include "AIEBaseSubtarget.h"
 #include "AIEMachineFunctionInfo.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
 #include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
 #include "llvm/CodeGen/RuntimeLibcalls.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/IR/IntrinsicsAIE2.h"
+#include "llvm/IR/IntrinsicsAIE2P.h"
+#include "llvm/Support/ErrorHandling.h"
 
 namespace llvm {
 
@@ -129,7 +132,8 @@ bool AIELegalizerHelper::unpack32BitVector(LegalizerHelper &Helper,
 static unsigned getVShiftIntrID(const AIEBaseSubtarget &ST) {
   if (ST.isAIE2())
     return Intrinsic::aie2_vshift_I512_I512;
-
+  if (ST.isAIE2P())
+    return Intrinsic::aie2p_vshift_I512_I512;
   llvm_unreachable("Called with unknown target triple!");
 }
 
@@ -144,7 +148,11 @@ bool AIELegalizerHelper::legalizeG_BUILD_VECTOR(LegalizerHelper &Helper,
   unsigned DstVecSize = DstVecTy.getSizeInBits();
   const LLT DstVecEltTy = DstVecTy.getElementType();
   const unsigned EltSize = DstVecEltTy.getScalarSizeInBits();
-  assert((EltSize == 8 || EltSize == 16 || EltSize == 32) &&
+  if (!ST.isAIE2P()) {
+    assert(EltSize != 64 && "Not expected 64-bit elmt type vector!");
+  }
+
+  assert((EltSize == 8 || EltSize == 16 || EltSize == 32 || EltSize == 64) &&
          "non-existent integer size");
   assert(DstVecSize == 32 || (DstVecSize > 64 && DstVecSize <= 1024 &&
                               "non-native vectors are not supported"));
@@ -171,9 +179,9 @@ bool AIELegalizerHelper::legalizeG_BUILD_VECTOR(LegalizerHelper &Helper,
       Dst = DstReg;
     }
 
-    // vpush takes 32-bit operands so we sign extend the input variable. This is
-    // required here since we don't have 16 or 32-bit registers.
-    if (DstVecEltTy.getSizeInBits() != 32 && EltRegTy.getSizeInBits() != 32) {
+    // vpush takes 32/64-bit operands so we sign extend the input variable. This
+    // is required here since we don't have 8 or 16-bit registers.
+    if (DstVecEltTy.getSizeInBits() < 32 && EltRegTy.getSizeInBits() != 32) {
       const Register EltReg32 =
           MRI.createGenericVirtualRegister(LLT::scalar(32));
       MIRBuilder.buildAnyExt({EltReg32}, {EltReg});
@@ -473,6 +481,36 @@ bool AIELegalizerHelper::legalizeG_DYN_STACKALLOC(LegalizerHelper &Helper,
   return true;
 }
 
+static bool
+legalizeG_EXTRACT_VECTOR_ELT_TO_UNMERGE_VALUES(LegalizerHelper &Helper,
+                                               MachineInstr &MI) {
+  MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
+  MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
+  const LLT DstTy = MRI.getType(MI.getOperand(0).getReg());
+  auto Unmerge = MIRBuilder.buildUnmerge(DstTy, MI.getOperand(1));
+  SmallVector<Register, 4> VectorParts;
+  const LLT SrcTy = MRI.getType(MI.getOperand(1).getReg());
+  const unsigned NumParts = SrcTy.getNumElements();
+  const LLT S32 = LLT::scalar(32);
+
+  Register PrevRes = MIRBuilder.buildUndef(SrcTy.getElementType()).getReg(0);
+  for (int I = NumParts - 1; I >= 0; I--) {
+    auto Cst = MIRBuilder.buildConstant(S32, I);
+    auto Cmp = MIRBuilder.buildICmp(CmpInst::ICMP_EQ, LLT::scalar(1), Cst,
+                                    MI.getOperand(2));
+    Register NewDst;
+    if (I == 0)
+      NewDst = MI.getOperand(0).getReg();
+    else
+      NewDst = MRI.createGenericVirtualRegister(DstTy);
+    auto Sel = MIRBuilder.buildSelect(NewDst, Cmp, Unmerge.getReg(I), PrevRes);
+    PrevRes = Sel.getReg(0);
+  }
+
+  MI.removeFromParent();
+  return true;
+}
+
 //%2:_(s8) = G_EXTRACT_VECTOR_ELT %0, %1
 //==>
 //%3:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %0, %1
@@ -489,6 +527,10 @@ bool AIELegalizerHelper::legalizeG_EXTRACT_VECTOR_ELT(LegalizerHelper &Helper,
   const unsigned SrcVecSize = SrcVecTy.getSizeInBits();
   const LLT SrcVecEltTy = SrcVecTy.getElementType();
   assert(SrcVecEltTy == MRI.getType(DstReg));
+
+  if (SrcVecTy.getElementType().getSizeInBits() >= 256) {
+    return legalizeG_EXTRACT_VECTOR_ELT_TO_UNMERGE_VALUES(Helper, MI);
+  }
 
   const LLT S32 = LLT::scalar(32);
   switch (SrcVecSize) {
@@ -512,14 +554,20 @@ bool AIELegalizerHelper::legalizeG_EXTRACT_VECTOR_ELT(LegalizerHelper &Helper,
   }
   case 256:
   case 512:
-  case 1024: {
+  case 1024:
+  case 2048: {
     const LLT S8 = LLT::scalar(8);
     const LLT S16 = LLT::scalar(16);
+    const LLT S64 = LLT::scalar(64);
+    if (!ST.isAIE2P()) {
+      assert(SrcVecSize != 2048 && "Not expected 2048 vector type!");
+      assert(SrcVecEltTy != S64 && "Not expected 64-bit elmt type vector!");
+    }
     const AIEBaseInstrInfo *II = ST.getInstrInfo();
-    bool IsS32 = SrcVecEltTy == S32;
-    assert((SrcVecEltTy == S8 || SrcVecEltTy == S16 || IsS32) &&
+    assert((SrcVecEltTy == S8 || SrcVecEltTy == S16 || SrcVecEltTy == S64 ||
+            SrcVecEltTy == S32) &&
            "Unexpected vector element type for extract vector elt!");
-    if (!IsS32) {
+    if (SrcVecEltTy == S8 || SrcVecEltTy == S16) {
       const Register ExtEltDstReg = MRI.createGenericVirtualRegister(S32);
       const Register ExtDstReg = MRI.createGenericVirtualRegister(S32);
       MIRBuilder.buildInstr(
@@ -719,9 +767,8 @@ bool AIELegalizerHelper::legalizeG_FCMP_FP32(
   return true;
 }
 
-/// @brief Get the AIE2 intrinsic corresponding to the fcmp predicate.
-unsigned getFCmpIntrID(CmpInst::Predicate Predicate, bool &SwapOperands,
-                       bool &PromoteToFP32) {
+static unsigned getAIE2FCmpIntrID(CmpInst::Predicate Predicate,
+                                  bool &SwapOperands, bool &PromoteToFP32) {
   switch (Predicate) {
   default:
     PromoteToFP32 = true;
@@ -739,6 +786,39 @@ unsigned getFCmpIntrID(CmpInst::Predicate Predicate, bool &SwapOperands,
     SwapOperands = true;
     return Intrinsic::aie2_vgebf16;
   }
+}
+
+static unsigned getAIE2PFCmpIntrID(CmpInst::Predicate Predicate,
+                                   bool &SwapOperands, bool &PromoteToFP32) {
+  switch (Predicate) {
+  default:
+    PromoteToFP32 = true;
+    return 0;
+  case CmpInst::FCMP_OGE:
+  case CmpInst::FCMP_OEQ:
+    return Intrinsic::aie2p_vgebf16;
+  case CmpInst::FCMP_OLT:
+  case CmpInst::FCMP_ONE:
+    return Intrinsic::aie2p_vltbf16;
+  case CmpInst::FCMP_OGT:
+    SwapOperands = true;
+    return Intrinsic::aie2p_vltbf16;
+  case CmpInst::FCMP_OLE:
+    SwapOperands = true;
+    return Intrinsic::aie2p_vgebf16;
+  }
+}
+
+/// @brief Get the AIE intrinsic corresponding to the fcmp predicate.
+static unsigned getFCmpIntrID(const AIEBaseSubtarget &ST,
+                              CmpInst::Predicate Predicate, bool &SwapOperands,
+                              bool &PromoteToFP32) {
+  if (ST.isAIE2())
+    return getAIE2FCmpIntrID(Predicate, SwapOperands, PromoteToFP32);
+  if (ST.isAIE2P())
+    return getAIE2PFCmpIntrID(Predicate, SwapOperands, PromoteToFP32);
+
+  llvm_unreachable("Called with unknown target triple!");
 }
 
 /// Legalize FCMP operations.
@@ -781,7 +861,8 @@ bool AIELegalizerHelper::legalizeG_FCMP(
   const LLT S32 = LLT::scalar(32);
 
   bool SwapOperands = false, PromoteToFP32 = false;
-  const unsigned FCmpIntrID = getFCmpIntrID(FPred, SwapOperands, PromoteToFP32);
+  const unsigned FCmpIntrID =
+      getFCmpIntrID(ST, FPred, SwapOperands, PromoteToFP32);
   if (PromoteToFP32) {
     const Register FPExtDst1 = MRI.createGenericVirtualRegister(S32);
     const Register FPExtDst2 = MRI.createGenericVirtualRegister(S32);
@@ -842,6 +923,15 @@ bool AIELegalizerHelper::legalizeG_FCMP(
   return true;
 }
 
+static unsigned getFpTrunc32ToBF16IntrID(const AIEBaseSubtarget &ST) {
+  if (ST.isAIE2())
+    return Intrinsic::aie2_v16accfloat_to_v16bf16;
+  if (ST.isAIE2P())
+    return Intrinsic::aie2p_v16accfloat_to_v16bf16;
+
+  llvm_unreachable("Called with unknown target triple!");
+}
+
 bool AIELegalizerHelper::legalizeG_FPTRUNC(LegalizerHelper &Helper,
                                            MachineInstr &MI) const {
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
@@ -867,13 +957,20 @@ bool AIELegalizerHelper::legalizeG_FPTRUNC(LegalizerHelper &Helper,
   MIRBuilder.buildInstr(TargetOpcode::G_INSERT_VECTOR_ELT, {Vec512Reg},
                         {Vec512Undef, SrcReg, IdxReg});
 
-  Register Acc512Reg = MRI.createGenericVirtualRegister(ACC512);
-  MIRBuilder.buildBitcast(Acc512Reg, Vec512Reg);
+  Register Acc512Reg;
+  if (ST.isAIE2()) {
+    // Accumulator registers in AIE2 must have an element type of s64
+    Acc512Reg = MRI.createGenericVirtualRegister(ACC512);
+    MIRBuilder.buildBitcast(Acc512Reg, Vec512Reg);
+  } else {
+    // For all other architectures the virtual vector register can directly be
+    // used as the accumulator register
+    Acc512Reg = Vec512Reg;
+  }
 
   Register Vec256Reg = MRI.createGenericVirtualRegister(V16S16);
   MIRBuilder
-      .buildIntrinsic(Intrinsic::aie2_v16accfloat_to_v16bf16, Vec256Reg, true,
-                      false)
+      .buildIntrinsic(getFpTrunc32ToBF16IntrID(ST), Vec256Reg, true, false)
       .addUse(Acc512Reg);
 
   MIRBuilder.buildInstr(TargetOpcode::G_EXTRACT_VECTOR_ELT, {DstReg},
@@ -981,12 +1078,18 @@ bool AIELegalizerHelper::legalizeG_FADDSUB(LegalizerHelper &Helper,
   else
     FPOp = MIRBuilder.buildFSub(V16FP32, NewSrc1, NewSrc2).getReg(0);
 
-  Register FPRes = MIRBuilder.buildBitcast(ACC512, FPOp).getReg(0);
-  Register Conv = MIRBuilder
-                      .buildIntrinsic(Intrinsic::aie2_v16accfloat_to_v16bf16,
-                                      {V16BF16}, true, false)
-                      .addUse(FPRes)
-                      .getReg(0);
+  Register FPRes;
+  if (ST.isAIE2()) {
+    FPRes = MIRBuilder.buildBitcast(ACC512, FPOp).getReg(0);
+  } else {
+    FPRes = FPOp;
+  }
+
+  Register Conv =
+      MIRBuilder
+          .buildIntrinsic(getFpTrunc32ToBF16IntrID(ST), {V16BF16}, true, false)
+          .addUse(FPRes)
+          .getReg(0);
 
   const Register ExtEltDstReg = MRI.createGenericVirtualRegister(S32);
   const Register ExtDstReg = MRI.createGenericVirtualRegister(S32);
@@ -1018,6 +1121,177 @@ bool AIELegalizerHelper::legalizeLoopDecrement(LegalizerHelper &Helper,
   Register ZExtValueReg =
       MIRBuilder.buildAssertZExt(LLT::scalar(32), NewDst, 1).getReg(0);
   MIRBuilder.buildTrunc(OrigDst, ZExtValueReg);
+  return true;
+}
+
+// Legalize 2048-bit G_SELECT
+bool AIELegalizerHelper::legalizeG_SELECT(LegalizerHelper &Helper,
+                                          MachineInstr &MI) const {
+  MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
+  MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
+
+  const Register DstReg = MI.getOperand(0).getReg();
+  const Register SrcReg0 = MI.getOperand(1).getReg(); // Scalar
+  const Register SrcReg1 = MI.getOperand(2).getReg();
+  const Register SrcReg2 = MI.getOperand(3).getReg();
+  const LLT DstTy = MRI.getType(DstReg);
+  assert(DstTy.isVector() && DstTy.getSizeInBits() == 2048 &&
+         "Expected to legalize 2048-bit vector G_SELECT");
+  const LLT DstVecEltTy = DstTy.getElementType();
+  const unsigned ElTySize = DstVecEltTy.getSizeInBits();
+  const LLT ACC1024 = LLT::fixed_vector(1024 / ElTySize, ElTySize);
+
+  const Register Dst0LoReg = MRI.createGenericVirtualRegister(ACC1024);
+  const Register Dst0HiReg = MRI.createGenericVirtualRegister(ACC1024);
+  const Register Dst1LoReg = MRI.createGenericVirtualRegister(ACC1024);
+  const Register Dst1HiReg = MRI.createGenericVirtualRegister(ACC1024);
+
+  MIRBuilder.buildUnmerge({Dst0LoReg, Dst0HiReg}, SrcReg1);
+  MIRBuilder.buildUnmerge({Dst1LoReg, Dst1HiReg}, SrcReg2);
+
+  const Register DstRegLoSelect = MRI.createGenericVirtualRegister(ACC1024);
+  const Register DstRegHiSelect = MRI.createGenericVirtualRegister(ACC1024);
+
+  MIRBuilder.buildSelect(DstRegLoSelect, SrcReg0, Dst0LoReg, Dst1LoReg);
+  MIRBuilder.buildSelect(DstRegHiSelect, SrcReg0, Dst0HiReg, Dst1HiReg);
+
+  MIRBuilder.buildConcatVectors({DstReg}, {DstRegLoSelect, DstRegHiSelect});
+
+  MI.eraseFromParent();
+  return true;
+}
+
+// We legalize concat vector of 2 inputs. So, anything above we need to split
+// it. So far expect only 4 input. 1024bit vector from 4 256bit register and
+// 2048 accumulator register from 4 512bit registers.
+bool AIELegalizerHelper::legalizeG_CONCAT_VECTORS(LegalizerHelper &Helper,
+                                                  MachineInstr &MI) const {
+  MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
+  MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
+
+  const Register DstReg = MI.getOperand(0).getReg();
+  const Register SrcReg = MI.getOperand(1).getReg();
+  const LLT DstTy = MRI.getType(DstReg);
+  const LLT SrcTy = MRI.getType(SrcReg);
+  assert(DstTy.isVector() && SrcTy.isVector() && "Expected vector types");
+  assert(SrcTy.getSizeInBits() >= 256 && "Input vector size does not match!");
+  assert(MI.getNumOperands() == 5 && "Expected 4 inputs!");
+
+  const LLT DstVecEltTy = DstTy.getElementType();
+  const unsigned ElTySize = DstVecEltTy.getSizeInBits();
+  const LLT SplitTy = LLT::fixed_vector(DstTy.getNumElements() / 2, ElTySize);
+  const Register DstRegLo = MRI.createGenericVirtualRegister(SplitTy);
+  const Register DstRegHi = MRI.createGenericVirtualRegister(SplitTy);
+  MIRBuilder.buildConcatVectors(
+      {DstRegLo}, {MI.getOperand(1).getReg(), MI.getOperand(2).getReg()});
+  MIRBuilder.buildConcatVectors(
+      {DstRegHi}, {MI.getOperand(3).getReg(), MI.getOperand(4).getReg()});
+  MIRBuilder.buildConcatVectors({DstReg}, {DstRegLo, DstRegHi});
+  MI.eraseFromParent();
+  return true;
+}
+
+bool AIELegalizerHelper::legalizeG_BITCAST(LegalizerHelper &Helper,
+                                           MachineInstr &MI) const {
+  MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
+  MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
+
+  const Register DstReg = MI.getOperand(0).getReg();
+  const Register SrcReg = MI.getOperand(1).getReg();
+
+  const LLT DstTy = MRI.getType(DstReg);
+  const LLT SrcTy = MRI.getType(SrcReg);
+  assert(DstTy.getSizeInBits() == 16 && SrcTy.getSizeInBits() == 16 &&
+         "Expected to legalize 16-bit G_BITCAST");
+  const LLT VEC32 = LLT::fixed_vector(2, 16);
+  if (DstTy.isVector()) {
+    const Register TmpReg32A =
+        MRI.createGenericVirtualRegister(LLT::scalar(32));
+    MIRBuilder.buildAnyExt({TmpReg32A}, {SrcReg});
+    const Register TmpReg32B =
+        MRI.createGenericVirtualRegister(LLT::scalar(32));
+    MIRBuilder.buildShl(TmpReg32B, TmpReg32A,
+                        MIRBuilder.buildConstant(LLT::scalar(32), 8));
+    const Register TmpReg32C =
+        MRI.createGenericVirtualRegister(LLT::scalar(32));
+    MIRBuilder.buildAnd(TmpReg32C, TmpReg32B,
+                        MIRBuilder.buildConstant(LLT::scalar(32), 0xFF0000));
+    const Register TmpReg32D =
+        MRI.createGenericVirtualRegister(LLT::scalar(32));
+    MIRBuilder.buildAnd(TmpReg32D, TmpReg32A,
+                        MIRBuilder.buildConstant(LLT::scalar(32), 0xFF));
+    const Register TmpReg32E =
+        MRI.createGenericVirtualRegister(LLT::scalar(32));
+    MIRBuilder.buildOr(TmpReg32E, TmpReg32D, TmpReg32C);
+
+    const Register TmpReg2x16 = MRI.createGenericVirtualRegister(VEC32);
+    MIRBuilder.buildBitcast({TmpReg2x16}, {TmpReg32E});
+    MIRBuilder.buildTrunc(DstReg, TmpReg2x16);
+
+  } else {
+    const Register TmpReg2x16 = MRI.createGenericVirtualRegister(VEC32);
+    MIRBuilder.buildAnyExt({TmpReg2x16}, {SrcReg});
+    const Register TmpReg32 = MRI.createGenericVirtualRegister(LLT::scalar(32));
+    MIRBuilder.buildBitcast({TmpReg32}, {TmpReg2x16});
+    MIRBuilder.buildTrunc(DstReg, TmpReg32);
+  }
+
+  MI.eraseFromParent();
+  return true;
+}
+
+bool AIELegalizerHelper::legalizeBinOp(LegalizerHelper &Helper,
+                                       MachineInstr &MI) const {
+  assert(MI.getOpcode() == TargetOpcode::G_ADD ||
+         MI.getOpcode() == TargetOpcode::G_SUB ||
+         MI.getOpcode() == TargetOpcode::G_XOR);
+
+  MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
+  MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
+
+  const Register DstReg = MI.getOperand(0).getReg();
+  const LLT DstTy = MRI.getType(DstReg);
+  const auto VectorSize = DstTy.getSizeInBits();
+  assert(DstTy.isVector() && VectorSize < 512 &&
+         "Expected vector size less than 512-bits");
+  assert(!(512 % VectorSize) && "Vector size should be a multiple of 512");
+
+  const Register Src1Reg = MI.getOperand(1).getReg();
+  const Register Src2Reg = MI.getOperand(2).getReg();
+  assert(DstTy == MRI.getType(Src1Reg));
+  Register UndefReg = MRI.createGenericVirtualRegister(DstTy);
+  MIRBuilder.buildUndef(UndefReg);
+
+  auto NewVecTy = LLT::fixed_vector(
+      512 / DstTy.getElementType().getSizeInBits(), DstTy.getElementType());
+  Register NewDstReg = MRI.createGenericVirtualRegister(NewVecTy);
+  Register NewSrc1Reg = MRI.createGenericVirtualRegister(NewVecTy);
+  Register NewSrc2Reg = MRI.createGenericVirtualRegister(NewVecTy);
+
+  unsigned NumberOfPadElts = (512 / VectorSize) - 1;
+  SmallVector<Register, 8> Regs;
+
+  Regs.push_back(Src1Reg);
+  for (unsigned i = 0; i < NumberOfPadElts; ++i)
+    Regs.push_back(UndefReg);
+  MIRBuilder.buildMergeLikeInstr(NewSrc1Reg, Regs);
+
+  Regs.clear();
+  Regs.push_back(Src2Reg);
+  for (unsigned i = 0; i < NumberOfPadElts; ++i)
+    Regs.push_back(UndefReg);
+  MIRBuilder.buildMergeLikeInstr(NewSrc2Reg, Regs);
+
+  MIRBuilder.buildInstr(MI.getOpcode(), {NewDstReg}, {NewSrc1Reg, NewSrc2Reg},
+                        MI.getFlags());
+
+  Regs.clear();
+  Regs.push_back(DstReg);
+  for (unsigned i = 0; i < NumberOfPadElts; ++i)
+    Regs.push_back(MRI.createGenericVirtualRegister(DstTy));
+  MIRBuilder.buildUnmerge(Regs, NewDstReg);
+
+  MI.eraseFromParent();
   return true;
 }
 

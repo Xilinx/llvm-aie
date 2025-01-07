@@ -1,0 +1,63 @@
+# CHECK lines automatically generated using update_encodings.py
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+
+
+---
+name:            vst_conv
+alignment:       16
+body:             |
+  bb.0 (align 16):
+
+    VST_CONV_bf16_fp32_dmw_sts_srs_bf_idx_imm $bmll0, $p0, -128, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd
+    VST_CONV_bf16_fp32_dmw_sts_srs_bf_idx_imm $bmhl2, $p6, 96, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd
+
+    VST_CONV_bf16_fp32_dmw_sts_srs_bf_idx $bmll1, $p0, $dj0, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd
+
+    $p5 = VST_CONV_bf16_fp32_dmw_sts_srs_bf_pstm_nrm_imm $bmll2, $p5, -256, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd
+    $p1 = VST_CONV_bf16_fp32_dmw_sts_srs_bf_pstm_nrm_imm $bmhl3, $p1, 224, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd
+
+    $p2 = VST_CONV_bf16_fp32_dmw_sts_srs_bf_pstm_nrm $bmhl1, $p2, $m7, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd
+
+    $p0, $dc7 = VST_2D_CONV_bf16_fp32_dmw_sts_srs_bf $bmll0, $p0, $d7, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd
+    $p0, $dc3, $dc7 = VST_3D_CONV_bf16_fp32_dmw_sts_srs_bf $bmhl0, $p0, $d3_3d, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd
+
+    VST_CONV_bf16_fp32_dmx_sts_srs_bf_idx_imm $cml0, $p0, -256, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd
+    VST_CONV_bf16_fp32_dmx_sts_srs_bf_idx_imm $cml2, $p6, 192, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd
+
+    VST_CONV_bf16_fp32_dmx_sts_srs_bf_idx $cml1, $p0, $dj0, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd
+
+    $p5 = VST_CONV_bf16_fp32_dmx_sts_srs_bf_pstm_nrm_imm $cmh2, $p5, -512, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd
+    $p1 = VST_CONV_bf16_fp32_dmx_sts_srs_bf_pstm_nrm_imm $cmh3, $p1, 448, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd
+
+    $p2 = VST_CONV_bf16_fp32_dmx_sts_srs_bf_pstm_nrm $cmh1, $p2, $m7, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd
+
+    $p0, $dc7 = VST_2D_CONV_bf16_fp32_dmx_sts_srs_bf $cmh0, $p0, $d7, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd
+    $p0, $dc3, $dc7 = VST_3D_CONV_bf16_fp32_dmx_sts_srs_bf $cml3, $p0, $d3_3d, implicit-def $srf2fflags, implicit $crf2fmask, implicit $crrnd
+...
+
+# CHECK: 0: 98 12 c4 08 vst.conv.bf16.fp32 bmll0, [p0, #-128]
+# CHECK: 4: 98 52 35 0e vst.conv.bf16.fp32 bmhl2, [p6, #96]
+# CHECK: 8: 98 92 00 08 vst.conv.bf16.fp32 bmll1, [p0, dj0]
+# CHECK: c: 98 12 8d 0d vst.conv.bf16.fp32 bmll2, [p5], #-256
+# CHECK: 10: 98 d2 7d 09 vst.conv.bf16.fp32 bmhl3, [p1], #224
+# CHECK: 14: 98 d2 e8 0a vst.conv.bf16.fp32 bmhl1, [p2], m7
+# CHECK: 18: 98 12 f0 08 vst.2d.conv.bf16.fp32 bmll0, [p0], d7
+# CHECK: 1c: 98 52 78 08 vst.3d.conv.bf16.fp32 bmhl0, [p0], d3
+# CHECK: 20: 18 23 c4 08 vst.conv.bf16.fp32 cml0, [p0, #-256]
+# CHECK: 24: 18 23 35 0e vst.conv.bf16.fp32 cml2, [p6, #192]
+# CHECK: 28: 18 a3 00 08 vst.conv.bf16.fp32 cml1, [p0, dj0]
+# CHECK: 2c: 18 63 8d 0d vst.conv.bf16.fp32 cmh2, [p5], #-512
+# CHECK: 30: 18 e3 7d 09 vst.conv.bf16.fp32 cmh3, [p1], #448
+# CHECK: 34: 18 e3 e8 0a vst.conv.bf16.fp32 cmh1, [p2], m7
+# CHECK: 38: 18 63 f0 08 vst.2d.conv.bf16.fp32 cmh0, [p0], d7
+# CHECK: 3c: 18 a3 79 08 vst.3d.conv.bf16.fp32 cml3, [p0], d3

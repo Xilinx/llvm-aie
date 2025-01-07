@@ -1,0 +1,202 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; MOVX_alu_cg
+    $r28 = MOVX_alu_cg 1
+    $r25 = MOVX_alu_cg 0
+    $r2 = MOVX_alu_cg 1023
+    $r21 = MOVX_alu_cg -1024
+    $r22 = MOVX_alu_cg 1
+    $r26 = MOVX_alu_cg 0
+    $r20 = MOVX_alu_cg 1023
+    $r30 = MOVX_alu_cg -1024
+    $r17 = MOVX_alu_cg 1
+    $r5 = MOVX_alu_cg 0
+    $r8 = MOVX_alu_cg 1023
+    $r27 = MOVX_alu_cg -1024
+    $r15 = MOVX_alu_cg 1
+    $r6 = MOVX_alu_cg 0
+    $r19 = MOVX_alu_cg 1023
+    $r12 = MOVX_alu_cg -1024
+    $r23 = MOVX_alu_cg 1
+    $r3 = MOVX_alu_cg 0
+    $r18 = MOVX_alu_cg 1023
+    $r0 = MOVX_alu_cg -1024
+    $r13 = MOVX_alu_cg 1
+    $r4 = MOVX_alu_cg 0
+    $r7 = MOVX_alu_cg 1023
+    $r14 = MOVX_alu_cg -1024
+    $r11 = MOVX_alu_cg 1
+    $r1 = MOVX_alu_cg 0
+    $r16 = MOVX_alu_cg 1023
+    $r24 = MOVX_alu_cg -1024
+    $r10 = MOVX_alu_cg 1
+    $r29 = MOVX_alu_cg 0
+    $lc = MOVX_alu_cg 1023
+    $r9 = MOVX_alu_cg -1024
+    $r31 = MOVX_alu_cg 1
+
+    ; MOVX_mvx_cr_imm
+    $crf2imask = MOVX_mvx_cr_imm 1
+    $packsign0 = MOVX_mvx_cr_imm 0
+    $packsign1 = MOVX_mvx_cr_imm 30
+    $crscden = MOVX_mvx_cr_imm 31
+    $crmcden = MOVX_mvx_cr_imm 1
+    $upssign1 = MOVX_mvx_cr_imm 0
+    $upssign0 = MOVX_mvx_cr_imm 30
+    $vaddsign0 = MOVX_mvx_cr_imm 31
+    $vaddsign1 = MOVX_mvx_cr_imm 1
+    $crrnd = MOVX_mvx_cr_imm 0
+    $crpacksize = MOVX_mvx_cr_imm 30
+    $crf2bmask = MOVX_mvx_cr_imm 31
+    $crunpacksize = MOVX_mvx_cr_imm 1
+    $crf2fmask = MOVX_mvx_cr_imm 0
+    $crsat = MOVX_mvx_cr_imm 30
+    $crupsmode = MOVX_mvx_cr_imm 31
+    $unpacksign0 = MOVX_mvx_cr_imm 1
+    $crsrsmode = MOVX_mvx_cr_imm 0
+    $crfpmask = MOVX_mvx_cr_imm 30
+    $srssign0 = MOVX_mvx_cr_imm 31
+    $srssign1 = MOVX_mvx_cr_imm 1
+    $unpacksign1 = MOVX_mvx_cr_imm 0
+
+    ; MOVX_mvx_cr_r
+    $srssign0 = MOVX_mvx_cr_r $r1
+    $upssign1 = MOVX_mvx_cr_r $r6
+    $crfpmask = MOVX_mvx_cr_r $r23
+    $vaddsign1 = MOVX_mvx_cr_r $r21
+    $crf2fmask = MOVX_mvx_cr_r $r29
+    $crf2bmask = MOVX_mvx_cr_r $r26
+    $crpacksize = MOVX_mvx_cr_r $r10
+    $crrnd = MOVX_mvx_cr_r $r28
+    $crsrsmode = MOVX_mvx_cr_r $r19
+    $unpacksign1 = MOVX_mvx_cr_r $r18
+    $upssign0 = MOVX_mvx_cr_r $r7
+    $crf2imask = MOVX_mvx_cr_r $r12
+    $crmcden = MOVX_mvx_cr_r $r9
+    $packsign1 = MOVX_mvx_cr_r $r3
+    $crunpacksize = MOVX_mvx_cr_r $r20
+    $crupsmode = MOVX_mvx_cr_r $r17
+    $packsign0 = MOVX_mvx_cr_r $r15
+    $vaddsign0 = MOVX_mvx_cr_r $r11
+    $srssign1 = MOVX_mvx_cr_r $r13
+    $crsat = MOVX_mvx_cr_r $r30
+    $crscden = MOVX_mvx_cr_r $r16
+    $unpacksign0 = MOVX_mvx_cr_r $r4
+    $srssign0 = MOVX_mvx_cr_r $r8
+    $upssign1 = MOVX_mvx_cr_r $r22
+    $crfpmask = MOVX_mvx_cr_r $r24
+    $vaddsign1 = MOVX_mvx_cr_r $r25
+    $crf2fmask = MOVX_mvx_cr_r $r5
+    $crf2bmask = MOVX_mvx_cr_r $r0
+    $crpacksize = MOVX_mvx_cr_r $r27
+    $crrnd = MOVX_mvx_cr_r $r14
+    $crsrsmode = MOVX_mvx_cr_r $r2
+    $unpacksign1 = MOVX_mvx_cr_r $r31
+...
+
+# CHECK: 0: 18 05 38 10 movx r28, #1
+# CHECK: 4: 18 01 32 10 movx r25, #0
+# CHECK: 8: 18 fd c4 13 movx r2, #1023
+# CHECK: c: 18 01 2a 14 movx r21, #-1024
+# CHECK: 10: 18 05 2c 10 movx r22, #1
+# CHECK: 14: 18 01 34 10 movx r26, #0
+# CHECK: 18: 18 fd e8 13 movx r20, #1023
+# CHECK: 1c: 18 01 3c 14 movx r30, #-1024
+# CHECK: 20: 18 05 22 10 movx r17, #1
+# CHECK: 24: 18 01 0a 10 movx r5, #0
+# CHECK: 28: 18 fd d0 13 movx r8, #1023
+# CHECK: 2c: 18 01 36 14 movx r27, #-1024
+# CHECK: 30: 18 05 1e 10 movx r15, #1
+# CHECK: 34: 18 01 0c 10 movx r6, #0
+# CHECK: 38: 18 fd e6 13 movx r19, #1023
+# CHECK: 3c: 18 01 18 14 movx r12, #-1024
+# CHECK: 40: 18 05 2e 10 movx r23, #1
+# CHECK: 44: 18 01 06 10 movx r3, #0
+# CHECK: 48: 18 fd e4 13 movx r18, #1023
+# CHECK: 4c: 18 01 00 14 movx r0, #-1024
+# CHECK: 50: 18 05 1a 10 movx r13, #1
+# CHECK: 54: 18 01 08 10 movx r4, #0
+# CHECK: 58: 18 fd ce 13 movx r7, #1023
+# CHECK: 5c: 18 01 1c 14 movx r14, #-1024
+# CHECK: 60: 18 05 16 10 movx r11, #1
+# CHECK: 64: 18 01 02 10 movx r1, #0
+# CHECK: 68: 18 fd e0 13 movx r16, #1023
+# CHECK: 6c: 18 01 30 14 movx r24, #-1024
+# CHECK: 70: 18 05 14 10 movx r10, #1
+# CHECK: 74: 18 01 3a 10 movx r29, #0
+# CHECK: 78: 18 fd c1 13 movx lc, #1023
+# CHECK: 7c: 18 01 12 14 movx r9, #-1024
+# CHECK: 80: 18 05 3e 10 movx r31, #1
+# CHECK: 84: 18 00 59 10 movx crf2imask, #1
+# CHECK: 88: 18 40 18 10 movx packsign0, #0
+# CHECK: 8c: 18 40 9c 17 movx packsign1, #30
+# CHECK: 90: 18 c0 de 17 movx crscden, #31
+# CHECK: 94: 18 c0 5a 10 movx crmcden, #1
+# CHECK: 98: 18 40 1d 10 movx upssign1, #0
+# CHECK: 9c: 18 40 99 17 movx upssign0, #30
+# CHECK: a0: 18 40 da 17 movx vaddsign0, #31
+# CHECK: a4: 18 40 5e 10 movx vaddsign1, #1
+# CHECK: a8: 18 80 1a 10 movx crrnd, #0
+# CHECK: ac: 18 00 9a 17 movx crpacksize, #30
+# CHECK: b0: 18 00 d8 17 movx crf2bmask, #31
+# CHECK: b4: 18 80 5c 10 movx crunpacksize, #1
+# CHECK: b8: 18 80 18 10 movx crf2fmask, #0
+# CHECK: bc: 18 80 9b 17 movx crsat, #30
+# CHECK: c0: 18 00 dc 17 movx crupsmode, #31
+# CHECK: c4: 18 c0 59 10 movx unpacksign0, #1
+# CHECK: c8: 18 00 1b 10 movx crsrsmode, #0
+# CHECK: cc: 18 80 99 17 movx crfpmask, #30
+# CHECK: d0: 18 c0 d8 17 movx srssign0, #31
+# CHECK: d4: 18 c0 5c 10 movx srssign1, #1
+# CHECK: d8: 18 c0 1d 10 movx unpacksign1, #0
+# CHECK: dc: 18 c0 78 10 movx srssign0, r1
+# CHECK: e0: 18 40 bd 11 movx upssign1, r6
+# CHECK: e4: 18 80 f9 15 movx crfpmask, r23
+# CHECK: e8: 18 40 7e 15 movx vaddsign1, r21
+# CHECK: ec: 18 80 78 17 movx crf2fmask, r29
+# CHECK: f0: 18 00 b8 16 movx crf2bmask, r26
+# CHECK: f4: 18 00 ba 12 movx crpacksize, r10
+# CHECK: f8: 18 80 3a 17 movx crrnd, r28
+# CHECK: fc: 18 00 fb 14 movx crsrsmode, r19
+# CHECK: 100: 18 c0 bd 14 movx unpacksign1, r18
+# CHECK: 104: 18 40 f9 11 movx upssign0, r7
+# CHECK: 108: 18 00 39 13 movx crf2imask, r12
+# CHECK: 10c: 18 c0 7a 12 movx crmcden, r9
+# CHECK: 110: 18 40 fc 10 movx packsign1, r3
+# CHECK: 114: 18 80 3c 15 movx crunpacksize, r20
+# CHECK: 118: 18 00 7c 14 movx crupsmode, r17
+# CHECK: 11c: 18 40 f8 13 movx packsign0, r15
+# CHECK: 120: 18 40 fa 12 movx vaddsign0, r11
+# CHECK: 124: 18 c0 7c 13 movx srssign1, r13
+# CHECK: 128: 18 80 bb 17 movx crsat, r30
+# CHECK: 12c: 18 c0 3e 14 movx crscden, r16
+# CHECK: 130: 18 c0 39 11 movx unpacksign0, r4
+# CHECK: 134: 18 c0 38 12 movx srssign0, r8
+# CHECK: 138: 18 40 bd 15 movx upssign1, r22
+# CHECK: 13c: 18 80 39 16 movx crfpmask, r24
+# CHECK: 140: 18 40 7e 16 movx vaddsign1, r25
+# CHECK: 144: 18 80 78 11 movx crf2fmask, r5
+# CHECK: 148: 18 00 38 10 movx crf2bmask, r0
+# CHECK: 14c: 18 00 fa 16 movx crpacksize, r27
+# CHECK: 150: 18 80 ba 13 movx crrnd, r14
+# CHECK: 154: 18 00 bb 10 movx crsrsmode, r2
+# CHECK: 158: 18 c0 fd 17 movx unpacksign1, r31

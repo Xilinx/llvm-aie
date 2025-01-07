@@ -275,16 +275,161 @@ std::optional<unsigned> AIE2InstrInfo::getCombinedPostIncOpcode(
   return {};
 }
 
-MCSlotKind AIE2InstrInfo::getSlotKind(unsigned Opcode) const {
-  return FormatInterface->getSlotKind(Opcode);
+unsigned AIE2InstrInfo::getOpCode(MachineInstr &I) const {
+  const MachineRegisterInfo &MRI = I.getMF()->getRegInfo();
+  unsigned IntrinsicID = cast<GIntrinsic>(I).getIntrinsicID();
+  switch (IntrinsicID) {
+  /* To derive instruction from UPS intrinsic follow
+   the e.g. Intrinsic : aie2_acc32_v16_I256_ups
+    1. I256_v16 : Using following two things
+    -> a. Element size (256/16) = 16 = D16
+    -> b. Move src type { I256 = _w2*, I512 = _x2* }
+    2. acc32 / acc64 : maps to S32 or S64
+   Instruction : VUPS_S32_D16_mv_ups_w2b
+  */
+  case Intrinsic::aie2_acc32_v16_I256_ups:
+    return AIE2::VUPS_S32_D16_mv_ups_w2b;
+  case Intrinsic::aie2_acc32_v32_I256_ups:
+    return AIE2::VUPS_S32_D8_mv_ups_w2c;
+  case Intrinsic::aie2_acc32_v32_I512_ups:
+    return AIE2::VUPS_S32_D16_mv_ups_x2c;
+  case Intrinsic::aie2_acc64_v16_I256_ups:
+    return AIE2::VUPS_S64_D16_mv_ups_w2c;
+  case Intrinsic::aie2_acc64_v16_I512_ups:
+    return AIE2::VUPS_S64_D32_mv_ups_x2c;
+  case Intrinsic::aie2_acc64_v8_I256_ups:
+    return AIE2::VUPS_S64_D32_mv_ups_w2b;
+  /* To derive instruction from SRS intrinsic follow
+   the e.g. Intrinsic : aie2_I256_v16_acc32_srs
+    1. I256_v16 : Using following two things
+    -> a. Element size (256/16) = 16 = D16
+    -> b. Move Instr type { I256 = mv_w , I512 = mv_x }
+    2. acc32 / acc64 : maps to S32 or S64
+   Instruction : VSRS_D16_S32_mv_w_srs
+  */
+  case Intrinsic::aie2_I256_v16_acc32_srs:
+    return AIE2::VSRS_D16_S32_mv_w_srs;
+  case Intrinsic::aie2_I256_v16_acc64_srs:
+    return AIE2::VSRS_D16_S64_mv_w_srs;
+  case Intrinsic::aie2_I256_v32_acc32_srs:
+    return AIE2::VSRS_D8_S32_mv_w_srs;
+  case Intrinsic::aie2_I256_v8_acc64_srs:
+    return AIE2::VSRS_D32_S64_mv_w_srs;
+  case Intrinsic::aie2_I512_v16_acc64_srs:
+    return AIE2::VSRS_D32_S64_mv_x_srs;
+  case Intrinsic::aie2_I512_v32_acc32_srs:
+    return AIE2::VSRS_D16_S32_mv_x_srs;
+  // Extract Intrinsic
+  case Intrinsic::aie2_vextract_elem8_I512:
+    return AIE2::VEXTRACT_D8;
+  case Intrinsic::aie2_vextract_elem16_I512:
+    return AIE2::VEXTRACT_D16;
+  case Intrinsic::aie2_vextract_elem32_I512:
+    return AIE2::VEXTRACT_D32;
+  case Intrinsic::aie2_vextract_elem64_I512:
+    return AIE2::VEXTRACT_D64;
+  // Vmax Intrinsic
+  case Intrinsic::aie2_vmax_lt8:
+    return AIE2::VMAX_LT_D8;
+  case Intrinsic::aie2_vmax_lt16:
+    return AIE2::VMAX_LT_D16;
+  case Intrinsic::aie2_vmax_lt32:
+    return AIE2::VMAX_LT_D32;
+  // Vmin Intrinsic
+  case Intrinsic::aie2_vmin_ge8:
+    return AIE2::VMIN_GE_D8;
+  case Intrinsic::aie2_vmin_ge16:
+    return AIE2::VMIN_GE_D16;
+  case Intrinsic::aie2_vmin_ge32:
+    return AIE2::VMIN_GE_D32;
+  // VGE / VLT
+  case Intrinsic::aie2_vlt8:
+    return AIE2::VLT_D8;
+  case Intrinsic::aie2_vlt16:
+    return AIE2::VLT_D16;
+  case Intrinsic::aie2_vlt32:
+    return AIE2::VLT_D32;
+  case Intrinsic::aie2_vge8:
+    return AIE2::VGE_D8;
+  case Intrinsic::aie2_vge16:
+    return AIE2::VGE_D16;
+  case Intrinsic::aie2_vge32:
+    return AIE2::VGE_D32;
+  // VMOV - Cascade stream read access
+  case Intrinsic::aie2_scd_read_vec:
+  case Intrinsic::aie2_scd_read_acc32:
+    return AIE2::VMOV_mv_scd;
+  case Intrinsic::aie2_scd_expand_lo:
+    return AIE2::VMOV_LO;
+  case Intrinsic::aie2_scd_expand_hi:
+    return AIE2::VMOV_HI;
+  // VMOV - Cascade stream write access
+  case Intrinsic::aie2_mcd_write_vec:
+  case Intrinsic::aie2_mcd_write_acc32:
+    return AIE2::VMOV_mv_mcd;
+  // VMAXDIFF_LT
+  case Intrinsic::aie2_vmaxdiff_lt8:
+    return AIE2::VMAXDIFF_LT_D8;
+  case Intrinsic::aie2_vmaxdiff_lt16:
+    return AIE2::VMAXDIFF_LT_D16;
+  case Intrinsic::aie2_vmaxdiff_lt32:
+    return AIE2::VMAXDIFF_LT_D32;
+  // VABS_GTZ
+  case Intrinsic::aie2_vabs_gtz8:
+    return AIE2::VABS_GTZ_D8;
+  case Intrinsic::aie2_vabs_gtz16:
+    return AIE2::VABS_GTZ_D16;
+  case Intrinsic::aie2_vabs_gtz32:
+    return AIE2::VABS_GTZ_D32;
+  // VSUB_LT/VSUB_GE
+  case Intrinsic::aie2_vsub_lt8:
+    return AIE2::VSUB_LT_D8;
+  case Intrinsic::aie2_vsub_lt16:
+    return AIE2::VSUB_LT_D16;
+  case Intrinsic::aie2_vsub_lt32:
+    return AIE2::VSUB_LT_D32;
+  case Intrinsic::aie2_vsub_ge8:
+    return AIE2::VSUB_GE_D8;
+  case Intrinsic::aie2_vsub_ge16:
+    return AIE2::VSUB_GE_D16;
+  case Intrinsic::aie2_vsub_ge32:
+    return AIE2::VSUB_GE_D32;
+  // Streams
+  case Intrinsic::aie2_get_ss:
+    return AIE2::MOV_mv_ss2scl;
+  case Intrinsic::aie2_get_ss_nb:
+    return AIE2::MOV_NB_mv_ss2scl;
+  // Pack
+  case Intrinsic::aie2_pack_I4_I8:
+  case Intrinsic::aie2_pack_I8_I16: {
+    Register SignReg = I.getOperand(3).getReg();
+    auto Sign = getIConstantVRegValWithLookThrough(SignReg, MRI);
+    bool isSigned = Sign && Sign->Value.getZExtValue();
+
+    if (IntrinsicID == Intrinsic::aie2_pack_I4_I8)
+      return isSigned ? AIE2::VPACK_S4_S8 : AIE2::VPACK_D4_D8;
+    else
+      return isSigned ? AIE2::VPACK_S8_S16 : AIE2::VPACK_D8_D16;
+  }
+  // Unpack
+  case Intrinsic::aie2_unpack_I8_I4:
+  case Intrinsic::aie2_unpack_I16_I8: {
+    Register SignReg = I.getOperand(3).getReg();
+    auto Sign = getIConstantVRegValWithLookThrough(SignReg, MRI);
+    bool isSigned = Sign && Sign->Value.getZExtValue();
+
+    if (IntrinsicID == Intrinsic::aie2_unpack_I8_I4)
+      return isSigned ? AIE2::VUNPACK_S8_S4 : AIE2::VUNPACK_D8_D4;
+    else
+      return isSigned ? AIE2::VUNPACK_S16_S8 : AIE2::VUNPACK_D16_D8;
+  }
+  default:
+    llvm_unreachable("Unexpected Intrinsic ID");
+  }
 }
 
-const MCSlotInfo *AIE2InstrInfo::getSlotInfo(const MCSlotKind Kind) const {
-  return FormatInterface->getSlotInfo(Kind);
-}
-
-const PacketFormats &AIE2InstrInfo::getPacketFormats() const {
-  return FormatInterface->getPacketFormats();
+Register AIE2InstrInfo::getVaddSignControlRegister() const {
+  return AIE2::crVaddSign;
 }
 
 // Implement CopyToReg/CopyFromReg
@@ -741,6 +886,42 @@ unsigned AIE2InstrInfo::getScalarMovOpcode(Register DstReg,
              : AIE2::MOV_mv_scl;
 }
 
+unsigned AIE2InstrInfo::getMvSclOpcode() const { return AIE2::MOV_mv_scl; }
+
+unsigned AIE2InstrInfo::getAddrIntrinsic2D() const {
+  return Intrinsic::aie2_add_2d;
+}
+
+unsigned AIE2InstrInfo::getAddrIntrinsic3D() const {
+  return Intrinsic::aie2_add_3d;
+}
+
+unsigned AIE2InstrInfo::getPtrAdd2DOpcode() const { return AIE2::PADDA_2D; }
+unsigned AIE2InstrInfo::getPtrAdd3DOpcode() const { return AIE2::PADDA_3D; }
+
+unsigned AIE2InstrInfo::getMvSclMultiSlotPseudoOpcode() const {
+  return AIE2::MOV_scalar_imm10_pseudo;
+}
+
+unsigned AIE2InstrInfo::getAddSclOpcode() const { return AIE2::ADD; }
+
+unsigned AIE2InstrInfo::getMvScl2MSTlastRegOpcode() const {
+  return AIE2::MOV_mv_scl2ms_doTlast_reg;
+}
+
+unsigned AIE2InstrInfo::getMvNBScl2MSTlastRegOpcode() const {
+  return AIE2::MOV_NB_mv_scl2ms_doTlast_reg;
+}
+
+unsigned AIE2InstrInfo::getMvScl2MS(unsigned ConstTLastVal) const {
+  return (ConstTLastVal == 0 ? AIE2::MOV_mv_scl2ms : AIE2::MOV_TLAST_mv_scl2ms);
+}
+
+unsigned AIE2InstrInfo::getMvNBScl2MS(unsigned ConstTLastVal) const {
+  return (ConstTLastVal == 0 ? AIE2::MOV_NB_mv_scl2ms
+                             : AIE2::MOV_NB_TLAST_mv_scl2ms);
+}
+
 unsigned AIE2InstrInfo::getCycleSeparatorOpcode() const {
   return AIE2::CYCLE_SEPARATOR;
 }
@@ -764,6 +945,10 @@ unsigned AIE2InstrInfo::getGenericPadVectorOpcode() const {
 
 unsigned AIE2InstrInfo::getGenericUnpadVectorOpcode() const {
   return AIE2::G_AIE_UNPAD_VECTOR;
+}
+
+unsigned AIE2InstrInfo::getGenericBroadcastVectorOpcode() const {
+  return AIE2::G_AIE_BROADCAST_VECTOR;
 }
 
 unsigned int getVLDSparseOpcode(unsigned int PseudoOpc) {
@@ -1229,64 +1414,6 @@ bool AIE2InstrInfo::isZeroOverheadLoopSetupInstr(const MachineInstr &MI) const {
                                     MI.getOperand(0).getReg() == AIE2::LE));
 }
 
-std::vector<MachineBasicBlock::iterator>
-AIE2InstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
-  std::vector<MachineBasicBlock::iterator> AlgnCandidates;
-  unsigned DelaySlot = 0;
-
-  // LoopSetupDistance will be set to number of instructions (7). In
-  // PostRAScheduler, this is enforced by setting the exit latency in the
-  // schduler dag mutator
-  unsigned LoopSetupDistance = 0;
-  bool IsCall = false;
-  for (auto MI = MBB.begin(), End = MBB.end(); MI != End; ++MI) {
-    if (MI->isBundle()) {
-      // Return Address Candidate
-      IsCall = isCallBundle(MI);
-      if (IsCall && DelaySlot > 0)
-        llvm_unreachable("Cannot have branch in branch delay slot!\n");
-
-      if (DelaySlot > 0) {
-        DelaySlot--;
-        if (DelaySlot == 0)
-          /* Region + 1 => RegionEnd */
-          AlgnCandidates.emplace_back(std::next(MI));
-      }
-
-      // create regions of singleton bundle for schedule margin bundles,
-      // alignment algorithm will force fill each bundle to 128-bit due
-      // to the alignment requirement of 16-byte for the alignment region.
-      if (LoopSetupDistance > 0) {
-        AlgnCandidates.emplace_back(MI);
-        LoopSetupDistance--;
-      }
-
-      if (IsCall)
-        DelaySlot = getNumDelaySlots(*MI);
-
-      // Distance of 112 bytes in terms of PM addresses corresponds to
-      // 7 fully-expanded 128-bit instructions.
-      if (isZOLSetupBundle(MI) && isLastZOLSetupBundleInMBB(MI))
-        LoopSetupDistance = 7;
-    } else if (isHardwareLoopEnd(MI->getOpcode())) {
-      if (DelaySlot > 0)
-        llvm_unreachable("Cannot have HWLoopEnd in branch delay slot!\n");
-      // The previous instruction is the last bundle of the hardware loop
-      // and should be aligned.
-      AlgnCandidates.emplace_back(std::prev(MI));
-    } else if (!MI->isMetaInstruction()) {
-      // single instruction, there should not be any
-      // after Bundle Finalization Pass
-      llvm_unreachable("Found an un-expected standalone instruction !");
-    }
-  }
-  if (LoopSetupDistance > 0)
-    llvm_unreachable(
-        "LoopStart Region must have a length of at-least 7 bundles!\n");
-
-  return AlgnCandidates;
-}
-
 unsigned AIE2InstrInfo::getPseudoJNZDOpcode() const { return AIE2::PseudoJNZD; }
 
 unsigned AIE2InstrInfo::getNumBypassedCycles(const InstrItineraryData *ItinData,
@@ -1486,3 +1613,10 @@ AIE2InstrInfo::parseAbstractOp(const MachineInstr &MI) const {
   }
   return std::nullopt;
 }
+Register AIE2InstrInfo::getSSStatusReg() const { return AIE2::srSS0; }
+
+Register AIE2InstrInfo::getMSStatusReg() const { return AIE2::srMS0; }
+
+Register AIE2InstrInfo::getPackSignCReg() const { return AIE2::crPackSign; }
+
+Register AIE2InstrInfo::getUnpackSignCReg() const { return AIE2::crUnpackSign; }

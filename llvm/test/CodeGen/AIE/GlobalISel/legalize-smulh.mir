@@ -4,8 +4,9 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple aie -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s
-# RUN: llc -mtriple aie2 -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple aie -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck -DVER=1 %s
+# RUN: llc -mtriple aie2 -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck -DVER=2 %s
+# RUN: llc -mtriple aie2p -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck -DVER=2p %s
 
 ---
 name: smulh_s32
@@ -23,7 +24,7 @@ body: |
     ; CHECK-NEXT: [[ARG1:\$r[0-9]+]] = COPY [[ASHR]](s32)
     ; CHECK-NEXT: [[ARG2:\$r[0-9]+]] = COPY [[COPY1]](s32)
     ; CHECK-NEXT: [[ARG3:\$r[0-9]+]] = COPY [[ASHR1]](s32)
-    ; CHECK-NEXT: {{JA?L}} &__muldi3, {{csr_aie.?}}, implicit-def $lr, implicit [[ARG0]], implicit [[ARG1]], implicit [[ARG2]], implicit [[ARG3]], implicit-def $r0, implicit-def $r1
+    ; CHECK-NEXT: {{JA?L}} &__muldi3, csr_aie[[VER]], implicit-def $lr, implicit [[ARG0]], implicit [[ARG1]], implicit [[ARG2]], implicit [[ARG3]], implicit-def $r0, implicit-def $r1
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r1
     ; CHECK-NEXT: ADJCALLSTACKDOWN 0, 0
     ; CHECK-NEXT: $r0 = COPY [[COPY2]](s32)
@@ -101,7 +102,7 @@ body: |
     ; CHECK-NEXT: [[ARG1:\$r[0-9]+]] = COPY [[ASHR1]](s32)
     ; CHECK-NEXT: [[ARG2:\$r[0-9]+]] = COPY [[ASHR2]](s32)
     ; CHECK-NEXT: [[ARG3:\$r[0-9]+]] = COPY [[ASHR3]](s32)
-    ; CHECK-NEXT: {{JA?L}} &__muldi3, {{csr_aie.?}}, implicit-def $lr, implicit [[ARG0]], implicit [[ARG1]], implicit [[ARG2]], implicit [[ARG3]], implicit-def $r0, implicit-def $r1
+    ; CHECK-NEXT: {{JA?L}} &__muldi3, csr_aie[[VER]], implicit-def $lr, implicit [[ARG0]], implicit [[ARG1]], implicit [[ARG2]], implicit [[ARG3]], implicit-def $r0, implicit-def $r1
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r0
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:_(s32) = COPY $r1
     ; CHECK-NEXT: ADJCALLSTACKDOWN 0, 0

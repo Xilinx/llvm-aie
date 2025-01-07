@@ -554,7 +554,7 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
       } else if (cast<BuiltinType>(Ty)->getKind() == BuiltinType::ACC64) {
         ResultType = llvm::IntegerType::get(getLLVMContext(), 64);
       } else if (cast<BuiltinType>(Ty)->getKind() == BuiltinType::ACCFLOAT) {
-        ResultType = llvm::IntegerType::get(getLLVMContext(), 32);
+        ResultType = llvm::Type::getFloatTy(getLLVMContext());
       }
       break;
     }
@@ -640,8 +640,19 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     if (EltTy->isSpecificBuiltinType(BuiltinType::ACC32) ||
         EltTy->isSpecificBuiltinType(BuiltinType::ACCFLOAT)) {
       uint64_t Size = getContext().getTypeSize(Ty);
-      ResultType = llvm::FixedVectorType::get(
-          llvm::Type::getInt64Ty(getLLVMContext()), Size / 64);
+      const llvm::Triple &TT = getTarget().getTriple();
+      if (TT.getArch() == llvm::Triple::aie2p) {
+        if (EltTy->isSpecificBuiltinType(BuiltinType::ACCFLOAT)) {
+          ResultType = llvm::FixedVectorType::get(
+              llvm::Type::getFloatTy(getLLVMContext()), Size / 32);
+        } else {
+          ResultType = llvm::FixedVectorType::get(
+              llvm::Type::getInt32Ty(getLLVMContext()), Size / 32);
+        }
+      } else {
+        ResultType = llvm::FixedVectorType::get(
+            llvm::Type::getInt64Ty(getLLVMContext()), Size / 64);
+      }
     } else {
       ResultType = llvm::FixedVectorType::get(IRElemTy, VT->getNumElements());
     }

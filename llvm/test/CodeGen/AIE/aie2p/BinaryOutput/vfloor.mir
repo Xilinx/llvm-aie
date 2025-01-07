@@ -1,0 +1,115 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# TODO: llc %llcflags --filetype=asm -o %t2
+# TODO: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# TODO: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# Change TODOs to RUN once there is AsmParser support
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; VFLOOR_s32_bf16_mv_float_to_int_bm
+    $x10 = VFLOOR_s32_bf16_mv_float_to_int_bm $bmhl4, 1, $s0, implicit-def $srf2iflags, implicit $crf2imask
+    $x1 = VFLOOR_s32_bf16_mv_float_to_int_bm $bmll2, 1, $s3, implicit-def $srf2iflags, implicit $crf2imask
+    $x4 = VFLOOR_s32_bf16_mv_float_to_int_bm $bmhl3, 0, $s1, implicit-def $srf2iflags, implicit $crf2imask
+    $x6 = VFLOOR_s32_bf16_mv_float_to_int_bm $bmhh4, 0, $s2, implicit-def $srf2iflags, implicit $crf2imask
+    $x3 = VFLOOR_s32_bf16_mv_float_to_int_bm $bmhl1, 1, $s0, implicit-def $srf2iflags, implicit $crf2imask
+    $x9 = VFLOOR_s32_bf16_mv_float_to_int_bm $bmhh2, 1, $s3, implicit-def $srf2iflags, implicit $crf2imask
+    $x0 = VFLOOR_s32_bf16_mv_float_to_int_bm $bmhl0, 0, $s1, implicit-def $srf2iflags, implicit $crf2imask
+    $x5 = VFLOOR_s32_bf16_mv_float_to_int_bm $bmlh2, 0, $s2, implicit-def $srf2iflags, implicit $crf2imask
+    $x2 = VFLOOR_s32_bf16_mv_float_to_int_bm $bmlh1, 1, $s0, implicit-def $srf2iflags, implicit $crf2imask
+    $x11 = VFLOOR_s32_bf16_mv_float_to_int_bm $bmlh3, 1, $s3, implicit-def $srf2iflags, implicit $crf2imask
+    $x7 = VFLOOR_s32_bf16_mv_float_to_int_bm $bmhh0, 0, $s1, implicit-def $srf2iflags, implicit $crf2imask
+    $x8 = VFLOOR_s32_bf16_mv_float_to_int_bm $bmhh3, 0, $s2, implicit-def $srf2iflags, implicit $crf2imask
+    $x10 = VFLOOR_s32_bf16_mv_float_to_int_bm $bmlh4, 1, $s0, implicit-def $srf2iflags, implicit $crf2imask
+    $x1 = VFLOOR_s32_bf16_mv_float_to_int_bm $bmll0, 1, $s3, implicit-def $srf2iflags, implicit $crf2imask
+    $x4 = VFLOOR_s32_bf16_mv_float_to_int_bm $bmll3, 0, $s1, implicit-def $srf2iflags, implicit $crf2imask
+    $x6 = VFLOOR_s32_bf16_mv_float_to_int_bm $bmll1, 0, $s2, implicit-def $srf2iflags, implicit $crf2imask
+    $x3 = VFLOOR_s32_bf16_mv_float_to_int_bm $bmlh0, 1, $s0, implicit-def $srf2iflags, implicit $crf2imask
+    $x9 = VFLOOR_s32_bf16_mv_float_to_int_bm $bmll4, 1, $s3, implicit-def $srf2iflags, implicit $crf2imask
+    $x0 = VFLOOR_s32_bf16_mv_float_to_int_bm $bmhh1, 0, $s1, implicit-def $srf2iflags, implicit $crf2imask
+    $x5 = VFLOOR_s32_bf16_mv_float_to_int_bm $bmhl2, 0, $s2, implicit-def $srf2iflags, implicit $crf2imask
+
+    ; VFLOOR_s32_bf16_mv_float_to_int_w
+    $x2 = VFLOOR_s32_bf16_mv_float_to_int_w $wl4, $s1, implicit-def $srf2iflags, implicit $crf2imask
+    $x8 = VFLOOR_s32_bf16_mv_float_to_int_w $wl9, $s2, implicit-def $srf2iflags, implicit $crf2imask
+    $x3 = VFLOOR_s32_bf16_mv_float_to_int_w $wl7, $s0, implicit-def $srf2iflags, implicit $crf2imask
+    $x6 = VFLOOR_s32_bf16_mv_float_to_int_w $wl2, $s3, implicit-def $srf2iflags, implicit $crf2imask
+    $x5 = VFLOOR_s32_bf16_mv_float_to_int_w $wh4, $s1, implicit-def $srf2iflags, implicit $crf2imask
+    $x10 = VFLOOR_s32_bf16_mv_float_to_int_w $wh9, $s2, implicit-def $srf2iflags, implicit $crf2imask
+    $x1 = VFLOOR_s32_bf16_mv_float_to_int_w $wh5, $s0, implicit-def $srf2iflags, implicit $crf2imask
+    $x0 = VFLOOR_s32_bf16_mv_float_to_int_w $wh1, $s3, implicit-def $srf2iflags, implicit $crf2imask
+    $x9 = VFLOOR_s32_bf16_mv_float_to_int_w $wl8, $s1, implicit-def $srf2iflags, implicit $crf2imask
+    $x11 = VFLOOR_s32_bf16_mv_float_to_int_w $wh6, $s2, implicit-def $srf2iflags, implicit $crf2imask
+    $x4 = VFLOOR_s32_bf16_mv_float_to_int_w $wl1, $s0, implicit-def $srf2iflags, implicit $crf2imask
+    $x7 = VFLOOR_s32_bf16_mv_float_to_int_w $wh10, $s3, implicit-def $srf2iflags, implicit $crf2imask
+    $x2 = VFLOOR_s32_bf16_mv_float_to_int_w $wl0, $s1, implicit-def $srf2iflags, implicit $crf2imask
+    $x8 = VFLOOR_s32_bf16_mv_float_to_int_w $wh0, $s2, implicit-def $srf2iflags, implicit $crf2imask
+    $x3 = VFLOOR_s32_bf16_mv_float_to_int_w $wl5, $s0, implicit-def $srf2iflags, implicit $crf2imask
+    $x6 = VFLOOR_s32_bf16_mv_float_to_int_w $wh8, $s3, implicit-def $srf2iflags, implicit $crf2imask
+    $x5 = VFLOOR_s32_bf16_mv_float_to_int_w $wl11, $s1, implicit-def $srf2iflags, implicit $crf2imask
+    $x10 = VFLOOR_s32_bf16_mv_float_to_int_w $wh7, $s2, implicit-def $srf2iflags, implicit $crf2imask
+    $x1 = VFLOOR_s32_bf16_mv_float_to_int_w $wh3, $s0, implicit-def $srf2iflags, implicit $crf2imask
+    $x0 = VFLOOR_s32_bf16_mv_float_to_int_w $wl10, $s3, implicit-def $srf2iflags, implicit $crf2imask
+    $x9 = VFLOOR_s32_bf16_mv_float_to_int_w $wh11, $s1, implicit-def $srf2iflags, implicit $crf2imask
+    $x11 = VFLOOR_s32_bf16_mv_float_to_int_w $wl3, $s2, implicit-def $srf2iflags, implicit $crf2imask
+    $x4 = VFLOOR_s32_bf16_mv_float_to_int_w $wl6, $s0, implicit-def $srf2iflags, implicit $crf2imask
+    $x7 = VFLOOR_s32_bf16_mv_float_to_int_w $wh2, $s3, implicit-def $srf2iflags, implicit $crf2imask
+...
+
+# CHECK: 0: 18 56 66 0d vfloor.s32.bf16 x10, bmhl4[1], s0
+# CHECK: 4: 18 16 fd 08 vfloor.s32.bf16 x1, bmll2[1], s3
+# CHECK: 8: 18 d6 69 0a vfloor.s32.bf16 x4, bmhl3[0], s1
+# CHECK: c: 18 76 72 0b vfloor.s32.bf16 x6, bmhh4[0], s2
+# CHECK: 10: 18 d6 e4 09 vfloor.s32.bf16 x3, bmhl1[1], s0
+# CHECK: 14: 18 76 fd 0c vfloor.s32.bf16 x9, bmhh2[1], s3
+# CHECK: 18: 18 56 68 08 vfloor.s32.bf16 x0, bmhl0[0], s1
+# CHECK: 1c: 18 36 f1 0a vfloor.s32.bf16 x5, bmlh2[0], s2
+# CHECK: 20: 18 b6 64 09 vfloor.s32.bf16 x2, bmlh1[1], s0
+# CHECK: 24: 18 b6 fd 0d vfloor.s32.bf16 x11, bmlh3[1], s3
+# CHECK: 28: 18 76 e8 0b vfloor.s32.bf16 x7, bmhh0[0], s1
+# CHECK: 2c: 18 f6 71 0c vfloor.s32.bf16 x8, bmhh3[0], s2
+# CHECK: 30: 18 36 66 0d vfloor.s32.bf16 x10, bmlh4[1], s0
+# CHECK: 34: 18 16 fc 08 vfloor.s32.bf16 x1, bmll0[1], s3
+# CHECK: 38: 18 96 69 0a vfloor.s32.bf16 x4, bmll3[0], s1
+# CHECK: 3c: 18 96 70 0b vfloor.s32.bf16 x6, bmll1[0], s2
+# CHECK: 40: 18 36 e4 09 vfloor.s32.bf16 x3, bmlh0[1], s0
+# CHECK: 44: 18 16 fe 0c vfloor.s32.bf16 x9, bmll4[1], s3
+# CHECK: 48: 18 f6 68 08 vfloor.s32.bf16 x0, bmhh1[0], s1
+# CHECK: 4c: 18 56 f1 0a vfloor.s32.bf16 x5, bmhl2[0], s2
+# CHECK: 50: 18 36 29 09 vfloor.s32.bf16 x2, wl4, s1
+# CHECK: 54: 18 76 32 0c vfloor.s32.bf16 x8, wl9, s2
+# CHECK: 58: 18 f6 a1 09 vfloor.s32.bf16 x3, wl7, s0
+# CHECK: 5c: 18 b6 38 0b vfloor.s32.bf16 x6, wl2, s3
+# CHECK: 60: 18 16 a9 0a vfloor.s32.bf16 x5, wh4, s1
+# CHECK: 64: 18 56 32 0d vfloor.s32.bf16 x10, wh9, s2
+# CHECK: 68: 18 56 a1 08 vfloor.s32.bf16 x1, wh5, s0
+# CHECK: 6c: 18 56 38 08 vfloor.s32.bf16 x0, wh1, s3
+# CHECK: 70: 18 36 aa 0c vfloor.s32.bf16 x9, wl8, s1
+# CHECK: 74: 18 96 b1 0d vfloor.s32.bf16 x11, wh6, s2
+# CHECK: 78: 18 76 20 0a vfloor.s32.bf16 x4, wl1, s0
+# CHECK: 7c: 18 96 ba 0b vfloor.s32.bf16 x7, wh10, s3
+# CHECK: 80: 18 36 28 09 vfloor.s32.bf16 x2, wl0, s1
+# CHECK: 84: 18 16 30 0c vfloor.s32.bf16 x8, wh0, s2
+# CHECK: 88: 18 76 a1 09 vfloor.s32.bf16 x3, wl5, s0
+# CHECK: 8c: 18 16 3a 0b vfloor.s32.bf16 x6, wh8, s3
+# CHECK: 90: 18 f6 aa 0a vfloor.s32.bf16 x5, wl11, s1
+# CHECK: 94: 18 d6 31 0d vfloor.s32.bf16 x10, wh7, s2
+# CHECK: 98: 18 d6 a0 08 vfloor.s32.bf16 x1, wh3, s0
+# CHECK: 9c: 18 b6 3a 08 vfloor.s32.bf16 x0, wl10, s3
+# CHECK: a0: 18 d6 aa 0c vfloor.s32.bf16 x9, wh11, s1
+# CHECK: a4: 18 f6 b0 0d vfloor.s32.bf16 x11, wl3, s2
+# CHECK: a8: 18 b6 21 0a vfloor.s32.bf16 x4, wl6, s0
+# CHECK: ac: 18 96 b8 0b vfloor.s32.bf16 x7, wh2, s3

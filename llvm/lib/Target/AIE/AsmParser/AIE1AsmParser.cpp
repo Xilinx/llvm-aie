@@ -153,9 +153,11 @@ void LLVMInitializeAIE1AsmParser() {
 }
 
 void LLVMInitializeAIE2AsmParser();
+void LLVMInitializeAIE2PAsmParser();
 
 // Register hook for all the AIE AsmParsers
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIEAsmParser() {
   LLVMInitializeAIE1AsmParser();
   LLVMInitializeAIE2AsmParser();
+  LLVMInitializeAIE2PAsmParser();
 }

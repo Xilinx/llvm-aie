@@ -55,7 +55,7 @@ protected:
   ///   ::= "#" Identifier
   /// F = "#"
   /// Parse an immediate, emits an error if it fails.
-  bool parseImmediate(OperandVector &Operands);
+  virtual bool parseImmediate(OperandVector &Operands);
 
   /// parseIndirectOrIndexedMode
   ///   ::= "[" <ptr> "]"

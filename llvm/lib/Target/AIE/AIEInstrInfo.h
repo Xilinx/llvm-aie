@@ -30,11 +30,6 @@ class AIEInstrInfo : public AIEGenInstrInfo {
 public:
   AIEInstrInfo();
 
-  virtual MCSlotKind getSlotKind(unsigned Opcode) const override;
-  virtual const MCSlotInfo *getSlotInfo(const MCSlotKind Kind) const override;
-
-  virtual const PacketFormats &getPacketFormats() const override;
-
   /// Allocate and return a hazard recognizer to use for this target when
   /// scheduling the machine instructions after register allocation.
   ScheduleHazardRecognizer*
@@ -90,6 +85,7 @@ public:
                          bool IsTailCall) const override;
   bool isCall(unsigned Opc) const override;
   unsigned getNopOpcode(size_t Size = 0) const override;
+  unsigned getMvSclOpcode() const override;
 
   bool canHoistCheapInst(const MachineInstr &MI) const override;
 

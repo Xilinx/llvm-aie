@@ -23,11 +23,18 @@ Target &getTheAIE2Target() {
   return TheAIE2Target;
 }
 
+Target &getTheAIE2PTarget() {
+  static Target TheAIE2PTarget;
+  return TheAIE2PTarget;
+}
+
 } // namespace llvm
 
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIETargetInfo() {
-  RegisterTarget<Triple::aie> X(getTheAIETarget(), "aie",
-                                    "Xilinx AI Engine", "AIE");
+  RegisterTarget<Triple::aie> X(getTheAIETarget(), "aie", "Xilinx AI Engine",
+                                "AIE");
   RegisterTarget<Triple::aie2> Y(getTheAIE2Target(), "aie2",
-                                    "Xilinx AIML Engine", "AIE");
+                                 "Xilinx AIML Engine", "AIE");
+  RegisterTarget<Triple::aie2p> A(getTheAIE2PTarget(), "aie2p",
+                                  "AMD AIE2p Engine", "AIE");
 }

@@ -50,16 +50,10 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   /// NOTE: If this is called on a Composite Instruction (i.e. an instruction
   /// defining a Packet format, owning possibly multiples slots), the returned
   /// slot will be the default one (unknown).
-  virtual MCSlotKind getSlotKind(unsigned Opcode) const {
-    llvm_unreachable("Target didn't implement getSlotKind");
-  }
-  virtual const MCSlotInfo *getSlotInfo(const MCSlotKind Kind) const {
-    llvm_unreachable("Target didn't implement getSlotInfo");
-  }
+  MCSlotKind getSlotKind(unsigned Opcode) const;
+  virtual const MCSlotInfo *getSlotInfo(const MCSlotKind Kind) const;
   /// Return the Packet formats for this target
-  virtual const PacketFormats &getPacketFormats() const {
-    llvm_unreachable("Target didn't implement getPacketFormats");
-  }
+  virtual const PacketFormats &getPacketFormats() const;
   /// Return a nop of the given byte size, or the smallest if zero.
   virtual unsigned getNopOpcode(size_t Size = 0) const {
     llvm_unreachable("Target didn't implement getNopOpcode");
@@ -84,6 +78,30 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   virtual unsigned getScalarMovOpcode(Register DstReg, Register SrcReg) const {
     llvm_unreachable("Target didn't implement getScalarMovOpcode");
   }
+  /// Return the MOV opcode
+  virtual unsigned getMvSclOpcode() const {
+    llvm_unreachable("Target didn't implement getMvSclOpcode");
+  }
+  virtual unsigned getAddrIntrinsic2D() const {
+    llvm_unreachable("Target didn't implement getAddrIntrinsic2D");
+  }
+  virtual unsigned getAddrIntrinsic3D() const {
+    llvm_unreachable("Target didn't implement getAddrIntrinsic3D");
+  }
+  virtual unsigned getPtrAdd2DOpcode() const {
+    llvm_unreachable("Target didn't implement getPtrAdd2DOpcode");
+  }
+  virtual unsigned getPtrAdd3DOpcode() const {
+    llvm_unreachable("Target didn't implement getPtrAdd3DOpcode");
+  }
+  /// Return the MultiSlotPseudo MOV opcode
+  virtual unsigned getMvSclMultiSlotPseudoOpcode() const {
+    llvm_unreachable("Target didn't implement getMvSclOpcode");
+  }
+  /// Return the 3-address integer ADD opcode
+  virtual unsigned getAddSclOpcode() const {
+    llvm_unreachable("Target didn't implement getAddSclOpcode");
+  }
   /// Returns the opcode for CYCLE_SEPARATOR meta instruction.
   /// Used for debugging purposes
   virtual unsigned getCycleSeparatorOpcode() const {
@@ -104,7 +122,6 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   virtual unsigned getGenericExtractVectorEltOpcode(bool SignExt) const {
     llvm_unreachable(
         "Target didn't implement getGenericExtractVectorEltOpcode");
-    ;
   }
   /// Return the opcode to be used for padding undefined values in the high bits
   /// of a vector
@@ -115,6 +132,10 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   /// the high bits
   virtual unsigned getGenericUnpadVectorOpcode() const {
     llvm_unreachable("Target didn't implement getGenericUnpadVectorOpcode");
+  }
+  virtual unsigned getGenericBroadcastVectorOpcode() const {
+    llvm_unreachable(
+        "Target didn't implement getGenericBroadcastVectorOpcode!");
   }
   /// Check whether Opc represents a lock instruction
   virtual bool isLock(unsigned Opc) const { return false; }
@@ -183,7 +204,13 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
                            TypeSize Size) const {
     llvm_unreachable("Target didn't implement getCombinedPostIncOpcode");
   }
-
+  /// \return AIE2p OpCode based on \a IntrinsicID
+  virtual unsigned getOpCode(MachineInstr &MI) const {
+    llvm_unreachable("Target didn't implement getOpCode");
+  }
+  virtual Register getVaddSignControlRegister() const {
+    llvm_unreachable("Target didn't implement vaddSign control register");
+  }
   // Opcodes related to hardware loop handling
   virtual bool isHardwareLoopDec(unsigned Opcode) const { return false; }
   virtual bool isHardwareLoopJNZ(unsigned Opcode) const { return false; }
@@ -210,11 +237,16 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
     return false;
   }
 
+  // Return number of fully-expanded 128-bit instructions, the distance
+  // which needs to be maintained between writing zero-overhead
+  // registers(lc, le, ls, etc.) and the end of the loop,
+  virtual unsigned getLoopSetupDistance() const {
+    llvm_unreachable("Implement this Function for Zero-Overhead Loops.");
+  }
   // Return the vector of Alignment Region Boundaries.
   virtual std::vector<MachineBasicBlock::iterator>
-  getAlignmentBoundaries(MachineBasicBlock &MBB) const {
-    llvm_unreachable("Target didn't implement getAlignmentBoundaries!");
-  }
+  getAlignmentBoundaries(MachineBasicBlock &MBB) const;
+
   virtual unsigned getPseudoJNZDOpcode() const {
     llvm_unreachable("Need to implement this hook for hardware loop support.");
   }
@@ -222,6 +254,39 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   /// Return the opcode of a scalar move
   virtual unsigned getPseudoMoveOpcode() const {
     llvm_unreachable("Target didn't implement getPseudoMoveOpcode!");
+  }
+
+  /// get stream read status register
+  virtual Register getSSStatusReg() const {
+    llvm_unreachable("Target didn't implement getSSStatusReg");
+  }
+
+  /// get stream write status register
+  virtual Register getMSStatusReg() const {
+    llvm_unreachable("Target didn't implement getMSStatusReg");
+  }
+  virtual unsigned getMvScl2MS(unsigned ConstTLastVal) const {
+    llvm_unreachable("Target didn't implement getMvScl2MS");
+  }
+
+  virtual unsigned getMvNBScl2MS(unsigned ConstTLastVal) const {
+    llvm_unreachable("Target didn't implement getMvNBScl2MS");
+  }
+
+  virtual unsigned getMvScl2MSTlastRegOpcode() const {
+    llvm_unreachable("Target didn't implement getMvScl2MSTlastRegOpcode");
+  }
+
+  virtual unsigned getMvNBScl2MSTlastRegOpcode() const {
+    llvm_unreachable("Target didn't implement getMvNBScl2MSTlastRegOpcode");
+  }
+
+  virtual Register getPackSignCReg() const {
+    llvm_unreachable("Target didn't implement getPackSignCReg");
+  }
+
+  virtual Register getUnpackSignCReg() const {
+    llvm_unreachable("Target didn't implement getUnpackSignCReg");
   }
 
   /// Information about tied operands which cannot be modeled using TableGen

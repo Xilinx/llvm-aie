@@ -1,0 +1,114 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; VSHIFT_ALIGN
+    $x1 = VSHIFT_ALIGN $x2, $s1, $x9, $r30
+    $x0 = VSHIFT_ALIGN $x7, $s2, $x10, $r30
+    $x9 = VSHIFT_ALIGN $x9, $s0, $x4, $r30
+    $x7 = VSHIFT_ALIGN $x11, $s3, $x7, $r30
+    $x2 = VSHIFT_ALIGN $x1, $s1, $x2, $r30
+    $x10 = VSHIFT_ALIGN $x0, $s2, $x3, $r30
+    $x5 = VSHIFT_ALIGN $x4, $s0, $x1, $r30
+    $x3 = VSHIFT_ALIGN $x5, $s3, $x11, $r30
+    $x4 = VSHIFT_ALIGN $x10, $s1, $x6, $r30
+    $x6 = VSHIFT_ALIGN $x8, $s2, $x8, $r30
+    $x11 = VSHIFT_ALIGN $x3, $s0, $x5, $r30
+    $x8 = VSHIFT_ALIGN $x6, $s3, $x0, $r30
+
+    ; VSHIFT
+    $x3 = VSHIFT $x3, $x6, $r22
+    $x4 = VSHIFT $x7, $x4, $r24
+    $x7 = VSHIFT $x4, $x3, $r21
+    $x10 = VSHIFT $x1, $x5, $r2
+    $x5 = VSHIFT $x5, $x8, $r31
+    $x11 = VSHIFT $x6, $x1, $r12
+    $x2 = VSHIFT $x10, $x7, $r28
+    $x0 = VSHIFT $x8, $x11, $r3
+    $x8 = VSHIFT $x11, $x10, $r29
+    $x1 = VSHIFT $x2, $x9, $r23
+    $x9 = VSHIFT $x9, $x2, $r13
+    $x6 = VSHIFT $x0, $x0, $r0
+    $x3 = VSHIFT $x3, $x6, $r20
+    $x4 = VSHIFT $x7, $x4, $r5
+    $x7 = VSHIFT $x4, $x3, $r30
+    $x10 = VSHIFT $x1, $x5, $r8
+    $x5 = VSHIFT $x5, $x8, $r19
+    $x11 = VSHIFT $x6, $x1, $r16
+    $x2 = VSHIFT $x10, $x7, $r9
+    $x0 = VSHIFT $x8, $x11, $r15
+    $x8 = VSHIFT $x11, $x10, $r4
+    $x1 = VSHIFT $x2, $x9, $r18
+    $x9 = VSHIFT $x9, $x2, $r1
+    $x6 = VSHIFT $x0, $x0, $r14
+    $x3 = VSHIFT $x3, $x6, $r26
+    $x4 = VSHIFT $x7, $x4, $r27
+    $x7 = VSHIFT $x4, $x3, $r25
+    $x10 = VSHIFT $x1, $x5, $r10
+    $x5 = VSHIFT $x5, $x8, $r7
+    $x11 = VSHIFT $x6, $x1, $r6
+    $x2 = VSHIFT $x10, $x7, $r17
+    $x0 = VSHIFT $x8, $x11, $r11
+...
+
+# CHECK: 0: f8 b4 94 18 vshift.align x1, x2, s1, x9, r30
+# CHECK: 4: f8 54 3d 18 vshift.align x0, x7, s2, x10, r30
+# CHECK: 8: f8 14 ca 1c vshift.align x9, x9, s0, x4, r30
+# CHECK: c: f8 f4 db 1b vshift.align x7, x11, s3, x7, r30
+# CHECK: 10: f8 34 09 19 vshift.align x2, x1, s1, x2, r30
+# CHECK: 14: f8 d4 01 1d vshift.align x10, x0, s2, x3, r30
+# CHECK: 18: f8 94 a0 1a vshift.align x5, x4, s0, x1, r30
+# CHECK: 1c: f8 f4 ad 19 vshift.align x3, x5, s3, x11, r30
+# CHECK: 20: f8 34 53 1a vshift.align x4, x10, s1, x6, r30
+# CHECK: 24: f8 54 44 1b vshift.align x6, x8, s2, x8, r30
+# CHECK: 28: f8 94 9a 1d vshift.align x11, x3, s0, x5, r30
+# CHECK: 2c: f8 74 30 1c vshift.align x8, x6, s3, x0, r30
+# CHECK: 30: d8 5a 9b 19 vshift x3, x3, x6, r22
+# CHECK: 34: d8 62 3a 1a vshift x4, x7, x4, r24
+# CHECK: 38: d8 d6 a1 1b vshift x7, x4, x3, r21
+# CHECK: 3c: d8 8a 0a 1d vshift x10, x1, x5, r2
+# CHECK: 40: d8 7e ac 1a vshift x5, x5, x8, r31
+# CHECK: 44: d8 b2 b0 1d vshift x11, x6, x1, r12
+# CHECK: 48: d8 f2 53 19 vshift x2, x10, x7, r28
+# CHECK: 4c: d8 8e 45 18 vshift x0, x8, x11, r3
+# CHECK: 50: d8 76 5d 1c vshift x8, x11, x10, r29
+# CHECK: 54: d8 de 94 18 vshift x1, x2, x9, r23
+# CHECK: 58: d8 36 c9 1c vshift x9, x9, x2, r13
+# CHECK: 5c: d8 02 00 1b vshift x6, x0, x0, r0
+# CHECK: 60: d8 52 9b 19 vshift x3, x3, x6, r20
+# CHECK: 64: d8 16 3a 1a vshift x4, x7, x4, r5
+# CHECK: 68: d8 fa a1 1b vshift x7, x4, x3, r30
+# CHECK: 6c: d8 a2 0a 1d vshift x10, x1, x5, r8
+# CHECK: 70: d8 4e ac 1a vshift x5, x5, x8, r19
+# CHECK: 74: d8 c2 b0 1d vshift x11, x6, x1, r16
+# CHECK: 78: d8 a6 53 19 vshift x2, x10, x7, r9
+# CHECK: 7c: d8 be 45 18 vshift x0, x8, x11, r15
+# CHECK: 80: d8 12 5d 1c vshift x8, x11, x10, r4
+# CHECK: 84: d8 ca 94 18 vshift x1, x2, x9, r18
+# CHECK: 88: d8 06 c9 1c vshift x9, x9, x2, r1
+# CHECK: 8c: d8 3a 00 1b vshift x6, x0, x0, r14
+# CHECK: 90: d8 6a 9b 19 vshift x3, x3, x6, r26
+# CHECK: 94: d8 6e 3a 1a vshift x4, x7, x4, r27
+# CHECK: 98: d8 e6 a1 1b vshift x7, x4, x3, r25
+# CHECK: 9c: d8 aa 0a 1d vshift x10, x1, x5, r10
+# CHECK: a0: d8 1e ac 1a vshift x5, x5, x8, r7
+# CHECK: a4: d8 9a b0 1d vshift x11, x6, x1, r6
+# CHECK: a8: d8 c6 53 19 vshift x2, x10, x7, r17
+# CHECK: ac: d8 ae 45 18 vshift x0, x8, x11, r11

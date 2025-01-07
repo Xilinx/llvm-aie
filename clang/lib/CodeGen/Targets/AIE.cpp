@@ -29,6 +29,16 @@ public:
     for (auto &I : FI.arguments())
       I.info = classifyArgumentType(I.type);
   }
+  bool isAccumulatorType(const VectorType *VT) const {
+    const BuiltinType *BT = VT->getElementType()->getAs<BuiltinType>();
+    llvm::Triple Triple = getTarget().getTriple();
+    if (Triple.getArch() == llvm::Triple::aie2p && BT &&
+        (BT->getKind() == BuiltinType::ACC32 ||
+         BT->getKind() == BuiltinType::ACCFLOAT ||
+         BT->getKind() == BuiltinType::ACC64))
+      return true;
+    return false;
+  }
 
   ABIArgInfo classifyArgumentType(QualType RetTy) const;
   ABIArgInfo classifyReturnType(QualType RetTy) const;
@@ -57,8 +67,16 @@ ABIArgInfo AIEABIInfo::classifyReturnType(QualType RetTy) const {
     if (EIT->getNumBits() > MaxAggregateReturnSize)
       return getNaturalAlignIndirect(RetTy);
 
+  auto ArgInfo = ABIArgInfo::getDirect();
+  const auto *VT = RetTy->getAs<VectorType>();
+  if (VT) {
+    // When the Inreg attribute is set, VectorType is treated
+    // as an Accumulator type.
+    if (isAccumulatorType(VT))
+      ArgInfo.setInReg(true);
+  }
   return (isPromotableIntegerTypeForABI(RetTy) ? ABIArgInfo::getExtend(RetTy)
-                                               : ABIArgInfo::getDirect());
+                                               : ArgInfo);
 }
 
 ABIArgInfo AIEABIInfo::classifyArgumentType(QualType Ty) const {
@@ -90,17 +108,25 @@ ABIArgInfo AIEABIInfo::classifyArgumentType(QualType Ty) const {
   // Setting CanBeFlattened=false is needed to keep compound types as is instead
   // of splitting then in their different members.
   llvm::Type *LTy = CGT.ConvertType(Ty);
-  return ABIArgInfo::getDirect(
+  ABIArgInfo ArgInfo = ABIArgInfo::getDirect(
       LTy, /*Offset=*/0, /*Padding=*/nullptr, /*CanBeFlattened=*/false);
+  const auto *VT = Ty->getAs<VectorType>();
+  if (VT) {
+    // When the Inreg attribute is set, VectorType is treated
+    // as an Accumulator type.
+    if (isAccumulatorType(VT))
+      ArgInfo.setInReg(true);
+  }
+  return ArgInfo;
 }
 
 namespace {
 class AIETargetCodeGenInfo : public TargetCodeGenInfo {
 public:
   AIETargetCodeGenInfo(CodeGen::CodeGenTypes &CGT)
-    : TargetCodeGenInfo(std::make_unique<AIEABIInfo>(CGT)) {}
+      : TargetCodeGenInfo(std::make_unique<AIEABIInfo>(CGT)) {}
 };
-}
+} // namespace
 
 std::unique_ptr<TargetCodeGenInfo>
 CodeGen::createAIETargetCodeGenInfo(CodeGenModule &CGM) {

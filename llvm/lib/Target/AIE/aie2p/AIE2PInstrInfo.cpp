@@ -1,0 +1,1565 @@
+//===- AIE2PInstrInfo.cpp -AIE2p Instruction Information -*------- C++ -*-===//
+//
+// This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+//
+//===----------------------------------------------------------------------===//
+//
+// This file contains the AIE2p implementation of the TargetInstrInfo
+// class.
+//
+//===----------------------------------------------------------------------===//
+
+#include "AIE2PInstrInfo.h"
+#include "AIE2PRegisterInfo.h"
+#include "AIE2PSubtarget.h"
+#include "AIE2PTargetMachine.h"
+#include "AIEHazardRecognizer.h"
+#include "AIEMachineFunctionInfo.h"
+#include "AIEMachineScheduler.h"
+#include "MCTargetDesc/AIEMCFormats.h"
+#include "MCTargetDesc/aie2p/AIE2PMCTargetDesc.h"
+#include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/MachineScheduler.h"
+#include "llvm/IR/IntrinsicsAIE2.h"
+#include "llvm/IR/IntrinsicsAIE2P.h"
+
+#define DEBUG_TYPE "aie-codegen"
+
+using namespace llvm;
+
+#define GET_INSTRINFO_CTOR_DTOR
+#include "AIE2PGenInstrInfo.inc"
+
+#include "AIE2PGenMemoryCycles.inc"
+#include "AIE2PGenPreSchedLowering.inc"
+#include "AIE2PGenSplitInstrTables.inc"
+#include "AIE2PGenVarInstructionItin.inc"
+
+namespace {
+const AIE2PMCFormats AIE2PFormats;
+} // namespace
+
+AIE2PInstrInfo::AIE2PInstrInfo()
+    : AIE2PGenInstrInfo(AIE2P::ADJCALLSTACKUP, AIE2P::ADJCALLSTACKDOWN) {
+  FormatInterface = &AIE2PFormats;
+  FuncUnitWrapper::setFormatInterface(FormatInterface);
+}
+
+unsigned AIE2PInstrInfo::getReturnOpcode() const { return AIE2P::PseudoRET; }
+
+unsigned AIE2PInstrInfo::getCallOpcode(const MachineFunction &CallerF,
+                                       bool IsIndirect, bool IsTailCall) const {
+  if (IsTailCall)
+    llvm_unreachable("Tail calls not supported yet.\n");
+  return IsIndirect ? AIE2P::PseudoJL_IND : AIE2P::PseudoJL;
+}
+
+unsigned AIE2PInstrInfo::getNopOpcode(size_t Size) const {
+  assert(Size == 0);
+  return AIE2P::NOP;
+}
+
+unsigned AIE2PInstrInfo::getMvSclOpcode() const {
+  return AIE2P::MOV_alu_mv_mv_mv_scl;
+}
+
+unsigned AIE2PInstrInfo::getAddrIntrinsic2D() const {
+  return Intrinsic::aie2p_add_2d;
+}
+
+unsigned AIE2PInstrInfo::getAddrIntrinsic3D() const {
+  return Intrinsic::aie2p_add_3d;
+}
+
+unsigned AIE2PInstrInfo::getPtrAdd2DOpcode() const { return AIE2P::PADDA_2D; }
+
+unsigned AIE2PInstrInfo::getPtrAdd3DOpcode() const { return AIE2P::PADDA_3D; }
+
+unsigned AIE2PInstrInfo::getMvSclMultiSlotPseudoOpcode() const {
+  return AIE2P::MOV_scalar_imm11_pseudo;
+}
+
+unsigned AIE2PInstrInfo::getAddSclOpcode() const { return AIE2P::ADD_alu_r_rr; }
+
+unsigned AIE2PInstrInfo::getOppositeBranchOpcode(unsigned Opc) const {
+  switch (Opc) {
+  default:
+    llvm_unreachable("Unrecognized conditional branch");
+  case AIE2P::PseudoJNZ:
+    return AIE2P::PseudoJZ;
+  case AIE2P::PseudoJZ:
+    return AIE2P::PseudoJNZ;
+  }
+  return 0;
+}
+
+bool AIE2PInstrInfo::isJNZ(unsigned Opc) const {
+  return Opc == AIE2P::PseudoJNZ;
+}
+
+bool AIE2PInstrInfo::isJZ(unsigned Opc) const { return Opc == AIE2P::PseudoJZ; }
+
+bool AIE2PInstrInfo::jumpsToUnknown(unsigned Opc) const {
+  // The use-case of this function is to check whether all our successor blocks
+  // are known after pseudo expansion.
+  // This relies on having correct successor information to start with, and
+  // since our actual branch instructions aren't interpreted after pseudo
+  // expansion, the successor information should be carried explicitly from
+  // earlier stages.
+  // The only cases where we transfer control to an unknown block are calls
+  // and returns. We may see calls in bottom regions with a fallthrough.
+  // All other branches that are not fully static are created from static
+  // branch constructs, which should have supplied and maintained successor
+  // information
+  return Opc == AIE2P::RET || Opc == AIE2P::JL_lng || Opc == AIE2P::JL_alumv_or;
+}
+
+bool AIE2PInstrInfo::isCall(unsigned Opc) const {
+  return Opc == AIE2P::JL_alumv_or || Opc == AIE2P::JL_lng;
+}
+
+bool AIE2PInstrInfo::isIConst(unsigned Opc) const {
+  switch (Opc) {
+  case AIE2P::MOVA:
+  case AIE2P::MOV_alu_mv_mv_mv_cg:
+  case AIE2P::MOVXM:
+  case AIE2P::MOVX_alu_cg:
+  case AIE2P::MOVX_mvx_cr_imm:
+  case AIE2P::MOV_RLC_imm11_pseudo:
+  case AIE2P::MOV_PD_imm11_pseudo:
+  case AIE2P::MOV_S_imm11_pseudo:
+  case AIE2P::MOV_scalar_imm11_pseudo:
+    return true;
+  default:
+    return false;
+  }
+}
+
+bool AIE2PInstrInfo::isBooleanNoOp(unsigned Opc) const {
+  return Opc == AIE2P::NEZ || AIEBaseInstrInfo::isBooleanNoOp(Opc);
+}
+
+bool AIE2PInstrInfo::isBooleanNot(unsigned Opc) const {
+  return Opc == AIE2P::EQZ;
+}
+
+bool AIE2PInstrInfo::isConstStep(const MachineInstr &MI, int64_t &Step) const {
+  unsigned Opcode = MI.getOpcode();
+  if (Opcode == AIE2P::ADD_add_r_ri) {
+    Step = MI.getOperand(2).getImm();
+    return true;
+  }
+  return false;
+}
+
+bool AIE2PInstrInfo::verifyGenericInstruction(const MachineInstr &MI,
+                                              StringRef &ErrInfo) const {
+  const MachineRegisterInfo &MRI = MI.getMF()->getRegInfo();
+  switch (MI.getOpcode()) {
+  case AIE2P::G_AIE_ZEXT_EXTRACT_VECTOR_ELT:
+  case AIE2P::G_AIE_SEXT_EXTRACT_VECTOR_ELT:
+    ErrInfo = "Expected 32/64bit scalar destination";
+    return MRI.getType(MI.getOperand(0).getReg()) == LLT::scalar(32) ||
+           MRI.getType(MI.getOperand(0).getReg()) == LLT::scalar(64);
+  case AIE2P::G_AIE_PAD_VECTOR_UNDEF:
+    return verifySameLaneTypes(MI, ErrInfo) &&
+           isLegalTypeToUnpad(MRI.getType(MI.getOperand(0).getReg()),
+                              &ErrInfo) &&
+           isLegalTypeToPad(MRI.getType(MI.getOperand(1).getReg()), &ErrInfo);
+  case AIE2P::G_AIE_UNPAD_VECTOR:
+    return verifySameLaneTypes(MI, ErrInfo) &&
+           isLegalTypeToPad(MRI.getType(MI.getOperand(0).getReg()), &ErrInfo) &&
+           isLegalTypeToUnpad(MRI.getType(MI.getOperand(1).getReg()), &ErrInfo);
+  default:
+    return true;
+  }
+}
+
+// If we lose memory operands on accesses to some of our special
+// memory regions, we may be applying unsafe memory disambiguation.
+// Hence, we check these accesses in the machine verifier.
+bool AIE2PInstrInfo::verifyMemOperand(const MachineInstr &MI,
+                                      StringRef &ErrInfo) const {
+  auto CheckMemOp = [&](MachineMemOperand::Flags Flag, AIETargetPSV PSVKind) {
+    for (auto &MMO : MI.memoperands()) {
+      if (!(MMO->getFlags() & Flag)) {
+        continue;
+      }
+      auto *PSV = MMO->getPseudoValue();
+      if (PSV && PSV->kind() == PSVKind) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  switch (MI.getOpcode()) {
+  case AIE2P::LDA_TM_idx:
+  case AIE2P::LDA_TM_idx_imm:
+  case AIE2P::LDA_TM_pstm_nrm:
+  case AIE2P::LDA_TM_pstm_nrm_imm:
+  case AIE2P::LDA_TM_2D:
+  case AIE2P::LDA_TM_3D:
+    if (!CheckMemOp(MachineMemOperand::Flags::MOLoad, AIETileMem)) {
+      ErrInfo = "Required Load TileMemory MemOperand not found";
+      return false;
+    }
+    break;
+  case AIE2P::ST_TM_idx:
+  case AIE2P::ST_TM_idx_imm:
+  case AIE2P::ST_TM_pstm_nrm:
+  case AIE2P::ST_TM_pstm_nrm_imm:
+  case AIE2P::ST_TM_2D:
+  case AIE2P::ST_TM_3D:
+    if (!CheckMemOp(MachineMemOperand::Flags::MOStore, AIETileMem)) {
+      ErrInfo = "Required Store TileMemory MemOperand not found";
+      return false;
+    }
+    break;
+  default:
+    break;
+  }
+  return true;
+}
+
+unsigned AIE2PInstrInfo::getJumpOpcode() const {
+  return AIE2P::PseudoJ_jump_imm;
+}
+
+unsigned AIE2PInstrInfo::getPseudoMoveOpcode() const {
+  return AIE2P::PseudoMove;
+}
+
+unsigned AIE2PInstrInfo::getOffsetMemOpcode(unsigned BaseMemOpcode) const {
+  switch (BaseMemOpcode) {
+  case TargetOpcode::G_STORE:
+    return AIE2P::G_AIE_OFFSET_STORE;
+  case TargetOpcode::G_LOAD:
+    return AIE2P::G_AIE_OFFSET_LOAD;
+  case TargetOpcode::G_SEXTLOAD:
+    return AIE2P::G_AIE_OFFSET_SEXTLOAD;
+  case TargetOpcode::G_ZEXTLOAD:
+    return AIE2P::G_AIE_OFFSET_ZEXTLOAD;
+  }
+  llvm_unreachable("not a generic load/store");
+}
+
+std::optional<unsigned> AIE2PInstrInfo::getCombinedPostIncOpcode(
+    MachineInstr &BaseMemI, MachineInstr &PostIncI, TypeSize Size) const {
+  switch (PostIncI.getOpcode()) {
+  case TargetOpcode::G_PTR_ADD:
+    if (Size >= 2048)
+      return {};
+    switch (BaseMemI.getOpcode()) {
+    case TargetOpcode::G_STORE:
+      return AIE2P::G_AIE_POSTINC_STORE;
+    case TargetOpcode::G_LOAD:
+      return AIE2P::G_AIE_POSTINC_LOAD;
+    case TargetOpcode::G_SEXTLOAD:
+      return AIE2P::G_AIE_POSTINC_SEXTLOAD;
+    case TargetOpcode::G_ZEXTLOAD:
+      return AIE2P::G_AIE_POSTINC_ZEXTLOAD;
+    }
+    break;
+  case TargetOpcode::G_INTRINSIC:
+    switch (cast<GIntrinsic>(PostIncI).getIntrinsicID()) {
+    case Intrinsic::aie2p_add_2d:
+      if (Size >= 1024)
+        return {};
+      switch (BaseMemI.getOpcode()) {
+      case TargetOpcode::G_STORE:
+        return AIE2P::G_AIE_POSTINC_2D_STORE;
+      case TargetOpcode::G_LOAD:
+        return AIE2P::G_AIE_POSTINC_2D_LOAD;
+      case TargetOpcode::G_SEXTLOAD:
+        return AIE2P::G_AIE_POSTINC_2D_SEXTLOAD;
+      case TargetOpcode::G_ZEXTLOAD:
+        return AIE2P::G_AIE_POSTINC_2D_ZEXTLOAD;
+      }
+      break;
+    case Intrinsic::aie2p_add_3d:
+      if (Size >= 1024)
+        return {};
+      switch (BaseMemI.getOpcode()) {
+      case TargetOpcode::G_STORE:
+        return AIE2P::G_AIE_POSTINC_3D_STORE;
+      case TargetOpcode::G_LOAD:
+        return AIE2P::G_AIE_POSTINC_3D_LOAD;
+      case TargetOpcode::G_SEXTLOAD:
+        return AIE2P::G_AIE_POSTINC_3D_SEXTLOAD;
+      case TargetOpcode::G_ZEXTLOAD:
+        return AIE2P::G_AIE_POSTINC_3D_ZEXTLOAD;
+      }
+      break;
+    }
+    break;
+  }
+  return {};
+}
+
+unsigned AIE2PInstrInfo::getOpCode(MachineInstr &I) const {
+  const MachineRegisterInfo &MRI = I.getMF()->getRegInfo();
+  unsigned IntrinsicID = cast<GIntrinsic>(I).getIntrinsicID();
+  switch (IntrinsicID) {
+  // vsrs
+  case Intrinsic::aie2p_I256_v16_acc32_srs:
+  case Intrinsic::aie2p_I256_v8_acc64_srs:
+    return AIE2P::VSRS_2x_mv_w_srs_bm_srsSign0;
+  case Intrinsic::aie2p_I512_v32_acc32_srs:
+  case Intrinsic::aie2p_I512_v16_acc64_srs:
+    return AIE2P::VSRS_2x_mv_x_srs_cm_srsSign0;
+  case Intrinsic::aie2p_I512_v64_acc32_srs:
+  case Intrinsic::aie2p_I512_v32_acc64_srs:
+    return AIE2P::VSRS_4x_mv_x_srs_dm_srsSign0;
+  case Intrinsic::aie2p_I256_v32_acc32_srs:
+  case Intrinsic::aie2p_I256_v16_acc64_srs:
+    return AIE2P::VSRS_4x_mv_w_srs_cm_srsSign0;
+  // vups
+  case Intrinsic::aie2p_acc32_v16_I256_ups:
+  case Intrinsic::aie2p_acc64_v8_I256_ups:
+    return AIE2P::VUPS_2x_mv_ups_w2b_upsSign0;
+  case Intrinsic::aie2p_acc32_v32_I256_ups:
+  case Intrinsic::aie2p_acc64_v16_I256_ups:
+    return AIE2P::VUPS_4x_mv_ups_w2c_upsSign0;
+  case Intrinsic::aie2p_acc32_v32_I512_ups:
+  case Intrinsic::aie2p_acc64_v16_I512_ups:
+    return AIE2P::VUPS_2x_mv_ups_x2c_upsSign0;
+  case Intrinsic::aie2p_acc32_v64_I512_ups:
+  case Intrinsic::aie2p_acc64_v32_I512_ups:
+    return AIE2P::VUPS_4x_mv_ups_x2d_upsSign0;
+  // VMOV - Cascade stream read access
+  case Intrinsic::aie2p_scd_read_vec:
+    return AIE2P::VMOV_lda_mv_scd_x;
+  case Intrinsic::aie2p_scd_read_acc32:
+    return AIE2P::VMOV_lda_mv_scd_bm;
+  case Intrinsic::aie2p_scd_expand_lo:
+    return AIE2P::VMOV_0_mv_scd_cm;
+  case Intrinsic::aie2p_scd_expand_hi:
+    return AIE2P::VMOV_1_mv_scd_cm;
+  case Intrinsic::aie2p_scd_ACC2048: {
+    Register SrcReg = I.getOperand(3).getReg();
+    if (auto Src = getIConstantVRegValWithLookThrough(SrcReg, MRI)) {
+      unsigned SrcConstVal = Src->Value.getZExtValue();
+      switch (SrcConstVal) {
+      case 0:
+        return AIE2P::VMOV_0_mv_scd_dm_imm;
+      case 1:
+        return AIE2P::VMOV_1_mv_scd_dm_imm;
+      case 2:
+        return AIE2P::VMOV_2;
+      case 3:
+        return AIE2P::VMOV_3;
+      default:
+        llvm_unreachable("Unexpected SrcConstVal for SCD");
+      }
+    }
+    llvm_unreachable("Unexpected Reached Here");
+  }
+  case Intrinsic::aie2p_scd_expand_ACC1024:
+  case Intrinsic::aie2p_scd_expand_ACC2048:
+    return AIE2P::VMOV_lda_mv_scd_dm_reg;
+  case Intrinsic::aie2p_scd_expand_ACC1024_incr:
+  case Intrinsic::aie2p_scd_expand_ACC2048_incr:
+    return AIE2P::VMOV_lda_mv_scd_dm_dyn;
+  case Intrinsic::aie2p_get_ss:
+    return AIE2P::MOV_lda;
+  case Intrinsic::aie2p_get_ss_nb:
+    return AIE2P::MOV_nb_lda;
+  // VMOV - Cascade stream write access
+  case Intrinsic::aie2p_mcd_write_vec:
+    return AIE2P::VMOV_st_mv_mcd_x;
+  case Intrinsic::aie2p_mcd_write_acc32:
+    return AIE2P::VMOV_st_mv_mcd_bm;
+  // Vmax Intrinsic
+  case Intrinsic::aie2p_vmax_lt8:
+    return AIE2P::VMAX_LT_8_vaddSign0;
+  case Intrinsic::aie2p_vmax_lt16:
+    return AIE2P::VMAX_LT_16_vaddSign0;
+  case Intrinsic::aie2p_vmax_lt32:
+    return AIE2P::VMAX_LT_32_vaddSign0;
+  // Vmin Intrinsic
+  case Intrinsic::aie2p_vmin_ge8:
+    return AIE2P::VMIN_GE_8_vaddSign0;
+  case Intrinsic::aie2p_vmin_ge16:
+    return AIE2P::VMIN_GE_16_vaddSign0;
+  case Intrinsic::aie2p_vmin_ge32:
+    return AIE2P::VMIN_GE_32_vaddSign0;
+  // VGE / VLT
+  case Intrinsic::aie2p_vlt8:
+    return AIE2P::VLT_8_vaddSign0;
+  case Intrinsic::aie2p_vlt16:
+    return AIE2P::VLT_16_vaddSign0;
+  case Intrinsic::aie2p_vlt32:
+    return AIE2P::VLT_32_vaddSign0;
+  case Intrinsic::aie2p_vge8:
+    return AIE2P::VGE_8_vaddSign0;
+  case Intrinsic::aie2p_vge16:
+    return AIE2P::VGE_16_vaddSign0;
+  case Intrinsic::aie2p_vge32:
+    return AIE2P::VGE_32_vaddSign0;
+    // VMAXDIFF_LT
+  case Intrinsic::aie2p_vmaxdiff_lt8:
+    return AIE2P::VMAXDIFF_LT_8_vaddSign0;
+  case Intrinsic::aie2p_vmaxdiff_lt16:
+    return AIE2P::VMAXDIFF_LT_16_vaddSign0;
+  case Intrinsic::aie2p_vmaxdiff_lt32:
+    return AIE2P::VMAXDIFF_LT_32_vaddSign0;
+  // VABS_GTZ
+  case Intrinsic::aie2p_vabs_gtz8:
+    return AIE2P::VABS_GTZ_8_vaddSign0;
+  case Intrinsic::aie2p_vabs_gtz16:
+    return AIE2P::VABS_GTZ_16_vaddSign0;
+  case Intrinsic::aie2p_vabs_gtz32:
+    return AIE2P::VABS_GTZ_32_vaddSign0;
+  // VSUB_LT/VSUB_GE
+  case Intrinsic::aie2p_vsub_lt8:
+    return AIE2P::VSUB_LT_8_vaddSign0;
+  case Intrinsic::aie2p_vsub_lt16:
+    return AIE2P::VSUB_LT_16_vaddSign0;
+  case Intrinsic::aie2p_vsub_lt32:
+    return AIE2P::VSUB_LT_32_vaddSign0;
+  case Intrinsic::aie2p_vsub_ge8:
+    return AIE2P::VSUB_GE_8_vaddSign0;
+  case Intrinsic::aie2p_vsub_ge16:
+    return AIE2P::VSUB_GE_16_vaddSign0;
+  case Intrinsic::aie2p_vsub_ge32:
+    return AIE2P::VSUB_GE_32_vaddSign0;
+  // Pack
+  case Intrinsic::aie2p_pack_I1024_I8_I16:
+  case Intrinsic::aie2p_pack_I1024_I4_I8:
+  case Intrinsic::aie2p_pack_I512_I8_I16:
+  case Intrinsic::aie2p_pack_I512_I4_I8: {
+    Register SignReg = I.getOperand(3).getReg();
+    auto Sign = getIConstantVRegValWithLookThrough(SignReg, MRI);
+    bool isSigned = Sign && Sign->Value.getZExtValue();
+
+    if (IntrinsicID == Intrinsic::aie2p_pack_I512_I8_I16 ||
+        IntrinsicID == Intrinsic::aie2p_pack_I512_I4_I8)
+      return isSigned ? AIE2P::VPACK_mv_pack_w_packSign1
+                      : AIE2P::VPACK_mv_pack_w_packSign0;
+    else
+      return isSigned ? AIE2P::VPACK_mv_pack_x_packSign1
+                      : AIE2P::VPACK_mv_pack_x_packSign0;
+  }
+  // Unpack
+  case Intrinsic::aie2p_unpack_I1024_I16_I8:
+  case Intrinsic::aie2p_unpack_I1024_I8_I4:
+  case Intrinsic::aie2p_unpack_I512_I16_I8:
+  case Intrinsic::aie2p_unpack_I512_I8_I4: {
+    Register SignReg = I.getOperand(3).getReg();
+    auto Sign = getIConstantVRegValWithLookThrough(SignReg, MRI);
+    bool isSigned = Sign && Sign->Value.getZExtValue();
+    if (IntrinsicID == Intrinsic::aie2p_unpack_I512_I16_I8 ||
+        IntrinsicID == Intrinsic::aie2p_unpack_I512_I8_I4)
+      return isSigned ? AIE2P::VUNPACK_mv_unpack_w_unpackSign1
+                      : AIE2P::VUNPACK_mv_unpack_w_unpackSign0;
+    else
+      return isSigned ? AIE2P::VUNPACK_mv_unpack_x_unpackSign1
+                      : AIE2P::VUNPACK_mv_unpack_x_unpackSign0;
+  }
+  default:
+    llvm_unreachable("Unexpected Intrinsic ID");
+  }
+}
+
+Register AIE2PInstrInfo::getVaddSignControlRegister() const {
+  return AIE2P::vaddSign0;
+}
+
+// Implement CopyToReg/CopyFromReg
+void AIE2PInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
+                                 MachineBasicBlock::iterator MBBI,
+                                 const DebugLoc &DL, MCRegister DstReg,
+                                 MCRegister SrcReg, bool KillSrc) const {
+  MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
+  const TargetRegisterInfo &TRI = *MRI.getTargetRegisterInfo();
+
+  if (AIE2P::mMvSclSrcRegClass.contains(SrcReg) &&
+      AIE2P::mMvSclDstRegClass.contains(DstReg)) {
+    BuildMI(MBB, MBBI, DL, get(AIE2P::MOV_alu_mv_mv_mv_scl), DstReg)
+        .addReg(SrcReg, getKillRegState(KillSrc));
+  } else if ((AIE2P::eLRegClass.contains(SrcReg)) &&
+             (AIE2P::eLRegClass.contains(DstReg))) {
+    BuildMI(MBB, MBBI, DL, get(AIE2P::MOV_alu_mv_mv_mv_scl),
+            TRI.getSubReg(DstReg, AIE2P::sub_l_even))
+        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_l_even),
+                getKillRegState(KillSrc));
+    BuildMI(MBB, MBBI, DL, get(AIE2P::MOV_alu_mv_mv_mv_scl),
+            TRI.getSubReg(DstReg, AIE2P::sub_l_odd))
+        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_l_odd),
+                getKillRegState(KillSrc));
+  } else if ((AIE2P::eDRegClass.contains(SrcReg)) &&
+             (AIE2P::eDRegClass.contains(DstReg))) {
+    copyThroughSubRegs(MBB, MBBI, DL, DstReg, SrcReg, KillSrc);
+  } else if ((AIE2P::eDSRegClass.contains(SrcReg)) &&
+             (AIE2P::eDSRegClass.contains(DstReg))) {
+    copyThroughSubRegs(MBB, MBBI, DL, DstReg, SrcReg, KillSrc);
+  } else if ((AIE2P::mQQsaRegClass.contains(SrcReg)) &&
+             (AIE2P::mQQsaRegClass.contains(DstReg))) {
+    BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_q), DstReg)
+        .addReg(SrcReg, getKillRegState(KillSrc));
+  } else if ((AIE2P::mWmRegClass.contains(SrcReg)) &&
+             (AIE2P::mQQsmRegClass.contains(DstReg))) {
+    BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_w_to_q), DstReg)
+        .addReg(SrcReg, getKillRegState(KillSrc));
+  } else if ((AIE2P::mQQsmRegClass.contains(SrcReg)) &&
+             (AIE2P::mWmRegClass.contains(DstReg))) {
+    BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_q_to_w), DstReg)
+        .addReg(SrcReg, getKillRegState(KillSrc));
+  } else if ((AIE2P::mWmRegClass.contains(SrcReg)) &&
+             (AIE2P::mWmRegClass.contains(DstReg))) {
+    BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_w), DstReg)
+        .addReg(SrcReg, getKillRegState(KillSrc));
+  } else if ((AIE2P::VEC512RegClass.contains(SrcReg) ||
+              AIE2P::ACC512RegClass.contains(SrcReg) ||
+              AIE2P::eLdFifoHRegRegClass.contains(SrcReg) ||
+              AIE2P::eLdFifoLRegRegClass.contains(SrcReg)) &&
+             (AIE2P::VEC512RegClass.contains(DstReg) ||
+              AIE2P::ACC512RegClass.contains(DstReg) ||
+              AIE2P::eLdFifoHRegRegClass.contains(DstReg) ||
+              AIE2P::eLdFifoLRegRegClass.contains(DstReg))) {
+    BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_x), DstReg)
+        .addReg(SrcReg, getKillRegState(KillSrc));
+  } else if ((AIE2P::VEC1024RegClass.contains(SrcReg)) &&
+             (AIE2P::VEC1024RegClass.contains(DstReg))) {
+    BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_x),
+            TRI.getSubReg(DstReg, AIE2P::sub_512_lo))
+        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_512_lo),
+                getKillRegState(KillSrc));
+    BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_x),
+            TRI.getSubReg(DstReg, AIE2P::sub_512_hi))
+        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_512_hi),
+                getKillRegState(KillSrc));
+  } else if ((AIE2P::ACC1024RegClass.contains(SrcReg)) &&
+             (AIE2P::ACC1024RegClass.contains(DstReg))) {
+    BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_cm), DstReg)
+        .addReg(SrcReg, getKillRegState(KillSrc));
+  } else if (AIE2P::VEC1024RegClass.contains(SrcReg) &&
+             AIE2P::ACC1024RegClass.contains(DstReg)) {
+    BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_x),
+            TRI.getSubReg(DstReg, AIE2P::sub_512_acc_lo))
+        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_512_lo),
+                getKillRegState(KillSrc));
+    BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_x),
+            TRI.getSubReg(DstReg, AIE2P::sub_512_acc_hi))
+        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_512_hi),
+                getKillRegState(KillSrc));
+  } else if (AIE2P::ACC1024RegClass.contains(SrcReg) &&
+             AIE2P::VEC1024RegClass.contains(DstReg)) {
+    BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_x),
+            TRI.getSubReg(DstReg, AIE2P::sub_512_lo))
+        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_512_acc_lo),
+                getKillRegState(KillSrc));
+    BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_x),
+            TRI.getSubReg(DstReg, AIE2P::sub_512_hi))
+        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_512_acc_hi),
+                getKillRegState(KillSrc));
+  } else if ((AIE2P::ACC2048RegClass.contains(SrcReg)) &&
+             (AIE2P::ACC2048RegClass.contains(DstReg))) {
+    BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_D), DstReg)
+        .addReg(SrcReg, getKillRegState(KillSrc));
+  } else if ((AIE2P::mEXmRegClass.contains(SrcReg)) &&
+             (AIE2P::mEXmRegClass.contains(DstReg))) {
+    BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_ex), DstReg)
+        .addReg(SrcReg, getKillRegState(KillSrc));
+  } else if ((AIE2P::eEYRegClass.contains(SrcReg)) &&
+             (AIE2P::eEYRegClass.contains(DstReg))) {
+    BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_ex),
+            TRI.getSubReg(DstReg, AIE2P::sub_bfp576_lo))
+        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_bfp576_lo),
+                getKillRegState(KillSrc));
+    BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_ex),
+            TRI.getSubReg(DstReg, AIE2P::sub_bfp576_hi))
+        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_bfp576_hi),
+                getKillRegState(KillSrc));
+  } else if ((AIE2P::SPARSEVEC640RegClass.contains(SrcReg)) &&
+             (AIE2P::SPARSEVEC640RegClass.contains(DstReg))) {
+    BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_qx), DstReg)
+        .addReg(SrcReg, getKillRegState(KillSrc));
+  } else if ((AIE2P::SPARSEVEC1280RegClass.contains(SrcReg)) &&
+             (AIE2P::SPARSEVEC1280RegClass.contains(DstReg))) {
+    BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_qx),
+            TRI.getSubReg(DstReg, AIE2P::sub_even_vecmask_640))
+        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_even_vecmask_640),
+                getKillRegState(KillSrc));
+    BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_qx),
+            TRI.getSubReg(DstReg, AIE2P::sub_odd_vecmask_640))
+        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_odd_vecmask_640),
+                getKillRegState(KillSrc));
+  } else if ((AIE2P::mQEXsmRegClass.contains(SrcReg)) &&
+             (AIE2P::mQEXsmRegClass.contains(DstReg))) {
+    BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_qex), DstReg)
+        .addReg(SrcReg, getKillRegState(KillSrc));
+  } else if ((AIE2P::eQEYsRegClass.contains(SrcReg)) &&
+             (AIE2P::eQEYsRegClass.contains(DstReg))) {
+    BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_qex),
+            TRI.getSubReg(DstReg, AIE2P::sub_even_vecmaskexp_704))
+        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_even_vecmaskexp_704),
+                getKillRegState(KillSrc));
+    BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_qex),
+            TRI.getSubReg(DstReg, AIE2P::sub_odd_vecmaskexp_704))
+        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_odd_vecmaskexp_704),
+                getKillRegState(KillSrc));
+  } else if ((AIE2P::eLdFifoRegRegClass.contains(SrcReg)) &&
+             (AIE2P::eLdFifoRegRegClass.contains(DstReg))) {
+    BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_x),
+            TRI.getSubReg(DstReg, AIE2P::sub_lo_lf))
+        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_lo_lf),
+                getKillRegState(KillSrc));
+    BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_x),
+            TRI.getSubReg(DstReg, AIE2P::sub_hi_lf))
+        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_hi_lf),
+                getKillRegState(KillSrc));
+  } else if ((AIE2P::VEC1024RegClass.contains(SrcReg)) &&
+             (AIE2P::eLdFifoRegRegClass.contains(DstReg))) {
+    BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_x),
+            TRI.getSubReg(DstReg, AIE2P::sub_lo_lf))
+        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_512_lo),
+                getKillRegState(KillSrc));
+    BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_x),
+            TRI.getSubReg(DstReg, AIE2P::sub_hi_lf))
+        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_512_hi),
+                getKillRegState(KillSrc));
+  } else if ((AIE2P::eLdFifoRegRegClass.contains(SrcReg)) &&
+             (AIE2P::VEC1024RegClass.contains(DstReg))) {
+    BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_x),
+            TRI.getSubReg(DstReg, AIE2P::sub_512_lo))
+        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_lo_lf),
+                getKillRegState(KillSrc));
+    BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_x),
+            TRI.getSubReg(DstReg, AIE2P::sub_512_hi))
+        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_hi_lf),
+                getKillRegState(KillSrc));
+  } else if ((AIE2P::ACC1024RegClass.contains(SrcReg)) &&
+             (AIE2P::eLdFifoRegRegClass.contains(DstReg))) {
+    BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_x),
+            TRI.getSubReg(DstReg, AIE2P::sub_lo_lf))
+        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_512_acc_lo),
+                getKillRegState(KillSrc));
+    BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_x),
+            TRI.getSubReg(DstReg, AIE2P::sub_hi_lf))
+        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_512_acc_hi),
+                getKillRegState(KillSrc));
+  } else if ((AIE2P::eLdFifoRegRegClass.contains(SrcReg)) &&
+             (AIE2P::ACC1024RegClass.contains(DstReg))) {
+    BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_x),
+            TRI.getSubReg(DstReg, AIE2P::sub_512_acc_lo))
+        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_lo_lf),
+                getKillRegState(KillSrc));
+    BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_x),
+            TRI.getSubReg(DstReg, AIE2P::sub_512_acc_hi))
+        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_hi_lf),
+                getKillRegState(KillSrc));
+  } else if ((AIE2P::ePSRFLdFRegClass.contains(SrcReg)) &&
+             (AIE2P::ePSRFLdFRegClass.contains(DstReg))) {
+    copyThroughSubRegs(MBB, MBBI, DL, DstReg, SrcReg, KillSrc);
+  } else {
+    llvm_unreachable("unhandled case in copyPhysReg");
+  }
+}
+
+// Some AIE instructions like Load/Stores take compound register classes
+// which can contain registers of different sizes. We need to use the right
+// classes to avoid the MachineVerifier complaining about mismatching sizes.
+// This was handled differently in AIE1, where _PTR and _GPR variants were
+// introduced.
+static const TargetRegisterClass *
+constrainRegClass(MachineRegisterInfo &MRI, const TargetRegisterClass *RC,
+                  unsigned Reg) {
+  if (RC == nullptr || Register::isPhysicalRegister(Reg))
+    return RC;
+
+  if (auto *NewRC = MRI.constrainRegClass(Reg, &AIE2P::eP_as_32BitRegClass))
+    return NewRC;
+  if (auto *NewRC = MRI.constrainRegClass(Reg, &AIE2P::eM_as_32BitRegClass))
+    return NewRC;
+  if (auto *NewRC = MRI.constrainRegClass(Reg, &AIE2P::eDC_as_32BitRegClass))
+    return NewRC;
+  if (auto *NewRC = MRI.constrainRegClass(Reg, &AIE2P::eDJ_as_32BitRegClass))
+    return NewRC;
+  if (auto *NewRC = MRI.constrainRegClass(Reg, &AIE2P::eDN_as_32BitRegClass))
+    return NewRC;
+  return RC;
+}
+
+Register AIE2PInstrInfo::isLoadFromStackSlot(const MachineInstr &MI,
+                                             int &FrameIndex) const {
+  switch (MI.getOpcode()) {
+  default:
+    return 0;
+  case AIE2P::LDA_dms_lda_spill:
+  case AIE2P::LDA_dmv_lda_q_spill:
+  case AIE2P::VLDA_128_dmv_lda_w_spill:
+  case AIE2P::VLDA_dmw_lda_w_spill:
+  case AIE2P::VLDA_dmx_lda_bm_spill:
+  case AIE2P::VLDA_dmx_lda_fifohl_spill:
+  case AIE2P::VLDA_dmx_lda_x_spill:
+  case AIE2P::VLDA_DM_SPILL:
+  case AIE2P::VLDA_L_SPILL:
+  case AIE2P::VLDA_Y_SPILL:
+  case AIE2P::VLDA_CM_SPILL:
+  case AIE2P::LDA_D_SPILL:
+  case AIE2P::LDA_DS_SPILL:
+    break;
+  }
+
+  if (MI.getOperand(1).isFI()) {
+    FrameIndex = MI.getOperand(1).getIndex();
+    return MI.getOperand(0).getReg();
+  }
+
+  return 0;
+}
+
+Register AIE2PInstrInfo::isStoreToStackSlot(const MachineInstr &MI,
+                                            int &FrameIndex) const {
+  switch (MI.getOpcode()) {
+  default:
+    return 0;
+  case AIE2P::ST_dms_sts_spill:
+  case AIE2P::ST_dmv_sts_q_spill:
+  case AIE2P::VST_128_dmv_sts_w_spill:
+  case AIE2P::VST_dmw_sts_w_spill:
+  case AIE2P::VST_dmx_sts_bm_spill:
+  case AIE2P::VST_dmx_sts_fifohl_spill:
+  case AIE2P::VST_dmx_sts_x_spill:
+  case AIE2P::ST_D_SPILL:
+  case AIE2P::ST_DS_SPILL:
+  case AIE2P::VST_CM_SPILL:
+  case AIE2P::VST_DM_SPILL:
+  case AIE2P::VST_L_SPILL:
+  case AIE2P::VST_Y_SPILL:
+    break;
+  }
+
+  if (MI.getOperand(1).isFI()) {
+    FrameIndex = MI.getOperand(1).getIndex();
+    return MI.getOperand(0).getReg();
+  }
+
+  return 0;
+}
+
+// Store a register to a stack slot.  Used in eliminating FrameIndex pseduo-ops.
+void AIE2PInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
+                                         MachineBasicBlock::iterator I,
+                                         Register SrcReg, bool IsKill, int FI,
+                                         const TargetRegisterClass *RC,
+                                         const TargetRegisterInfo *TRI,
+                                         Register VReg) const {
+  DebugLoc DL;
+  if (I != MBB.end())
+    DL = I->getDebugLoc();
+
+  // Provide a store memory operand for a register store, resolving it
+  // from other memory refs during scheduler dag generation
+  auto CreateMMO = [&MF = *MBB.getParent()](int FI) {
+    MachineFrameInfo &MFI = MF.getFrameInfo();
+    MachinePointerInfo PtrInfo = MachinePointerInfo::getFixedStack(MF, FI);
+    MachineMemOperand *MMO =
+        MF.getMachineMemOperand(PtrInfo, MachineMemOperand::MOStore,
+                                MFI.getObjectSize(FI), MFI.getObjectAlign(FI));
+    return MMO;
+  };
+  RC = constrainRegClass(MBB.getParent()->getRegInfo(), RC, SrcReg);
+  unsigned Opcode;
+  LLVM_DEBUG(dbgs() << "Attempting to Store: " << SrcReg << " To " << FI
+                    << "\n");
+  if (regClassMatches(AIE2P::mSclStRegClass, RC, SrcReg)) {
+    Opcode = AIE2P::ST_dms_sts_spill;
+  } else if (regClassMatches(AIE2P::mQQssRegClass, RC, SrcReg)) {
+    Opcode = AIE2P::ST_dmv_sts_q_spill;
+  } else if (regClassMatches(AIE2P::mWsRegClass, RC, SrcReg)) {
+    // TODO: VST_128_dmv_sts_w_spill has imm of type c14n_step16 and
+    // VST_dmw_sts_w_spill has c15n_step32. This is wrong, FI is not the imm
+    // value, it will be generated by AIERegisterInfo::eliminateFrameIndex(), we
+    // might introduce some pseudo and expand it later?
+    Opcode = isInt<10 + 4>(FI) ? AIE2P::VST_128_dmv_sts_w_spill
+                               : AIE2P::VST_dmw_sts_w_spill;
+  } else if (regClassMatches(AIE2P::mBMsRegClass, RC, SrcReg)) {
+    Opcode = AIE2P::VST_dmx_sts_bm_spill;
+  } else if (regClassMatches(AIE2P::mFifoHLRegRegClass, RC, SrcReg)) {
+    Opcode = AIE2P::VST_dmx_sts_fifohl_spill;
+  } else if (regClassMatches(AIE2P::VEC256RegClass, RC, SrcReg)) {
+    Opcode = AIE2P::VST_dmw_sts_w_spill;
+  } else if (regClassMatches(AIE2P::mXsRegClass, RC, SrcReg)) {
+    Opcode = AIE2P::VST_dmx_sts_x_spill;
+  } else if (regClassMatches(AIE2P::eLRegClass, RC, SrcReg)) {
+    Opcode = AIE2P::VST_L_SPILL;
+  } else if (regClassMatches(AIE2P::VEC1024RegClass, RC, SrcReg)) {
+    Opcode = AIE2P::VST_Y_SPILL;
+  } else if (regClassMatches(AIE2P::ACC1024RegClass, RC, SrcReg)) {
+    Opcode = AIE2P::VST_CM_SPILL;
+  } else if (regClassMatches(AIE2P::ACC2048RegClass, RC, SrcReg)) {
+    Opcode = AIE2P::VST_DM_SPILL;
+  } else if (regClassMatches(AIE2P::eDRegClass, RC, SrcReg)) {
+    Opcode = AIE2P::ST_D_SPILL;
+  } else if (regClassMatches(AIE2P::eDSRegClass, RC, SrcReg)) {
+    Opcode = AIE2P::ST_DS_SPILL;
+  } else if (regClassMatches(AIE2P::eSRegClass, RC, SrcReg) ||
+             regClassMatches(AIE2P::spill_eS_to_eRRegClass, RC, SrcReg)) {
+    // Can't spill these directly.  Need to bounce through a GPR.
+    MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
+    Register ScratchReg = MRI.createVirtualRegister(&AIE2P::eRRegClass);
+    BuildMI(MBB, I, DL, get(AIE2P::MOV_alu_mv_mv_mv_scl), ScratchReg)
+        .addReg(SrcReg, getKillRegState(IsKill));
+    Opcode = AIE2P::ST_dms_sts_spill;
+    SrcReg = ScratchReg;
+    IsKill = true;
+  } else {
+    LLVM_DEBUG(I->dump());
+    llvm_unreachable("Can't store this register to stack slot: is it virtual?");
+  }
+
+  // To store a stack slot we generate a store indirect via the stack
+  // pointer.  The actual offset will be an immediate, but for right
+  // now stuff in a virtual "FrameIndex" argument to represent the
+  // offset that will be figured out later.  The offset is generated
+  // by AIERegisterInfo::eliminateFrameIndex().
+  BuildMI(MBB, I, DL, get(Opcode))
+      .addReg(SrcReg, getKillRegState(IsKill))
+      .addFrameIndex(FI)
+      .addMemOperand(CreateMMO(FI));
+}
+
+// Load a register to a stack slot.  Used in eliminating FrameIndex pseduo-ops.
+void AIE2PInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
+                                          MachineBasicBlock::iterator I,
+                                          Register DstReg, int FI,
+                                          const TargetRegisterClass *RC,
+                                          const TargetRegisterInfo *TRI,
+                                          Register VReg) const {
+  DebugLoc DL;
+  if (I != MBB.end())
+    DL = I->getDebugLoc();
+  unsigned Opcode;
+
+  // Provide a load memory operand for a register load, resolving it
+  // from other memory refs during scheduler dag generation
+  auto CreateMMO = [&MF = *MBB.getParent()](int FI) {
+    MachineFrameInfo &MFI = MF.getFrameInfo();
+    MachinePointerInfo PtrInfo = MachinePointerInfo::getFixedStack(MF, FI);
+    MachineMemOperand *MMO =
+        MF.getMachineMemOperand(PtrInfo, MachineMemOperand::MOLoad,
+                                MFI.getObjectSize(FI), MFI.getObjectAlign(FI));
+    return MMO;
+  };
+  RC = constrainRegClass(MBB.getParent()->getRegInfo(), RC, DstReg);
+  if (regClassMatches(AIE2P::mLdaSclRegClass, RC, DstReg)) {
+    Opcode = AIE2P::LDA_dms_lda_spill;
+  } else if (regClassMatches(AIE2P::mQQssRegClass, RC, DstReg)) {
+    Opcode = AIE2P::LDA_dmv_lda_q_spill;
+  } else if (regClassMatches(AIE2P::mWsRegClass, RC, DstReg)) {
+    // VLDA_128_dmv_lda_w_spill has imm of type c14n_step16 and
+    // VLDA_dmw_lda_w_spill has c15n_step32
+    Opcode = isInt<10 + 4>(FI) ? AIE2P::VLDA_128_dmv_lda_w_spill
+                               : AIE2P::VLDA_dmw_lda_w_spill;
+  } else if (regClassMatches(AIE2P::VEC256RegClass, RC, DstReg)) {
+    Opcode = AIE2P::VLDA_dmw_lda_w_spill;
+  } else if (regClassMatches(AIE2P::mBMsRegClass, RC, DstReg)) {
+    Opcode = AIE2P::VLDA_dmx_lda_bm_spill;
+  } else if (regClassMatches(AIE2P::mFifoHLRegRegClass, RC, DstReg)) {
+    Opcode = AIE2P::VLDA_dmx_lda_fifohl_spill;
+  } else if (regClassMatches(AIE2P::mXsRegClass, RC, DstReg)) {
+    Opcode = AIE2P::VLDA_dmx_lda_x_spill;
+  } else if (regClassMatches(AIE2P::ACC2048RegClass, RC, DstReg)) {
+    Opcode = AIE2P::VLDA_DM_SPILL;
+  } else if (regClassMatches(AIE2P::ACC1024RegClass, RC, DstReg)) {
+    Opcode = AIE2P::VLDA_CM_SPILL;
+  } else if (regClassMatches(AIE2P::VEC1024RegClass, RC, DstReg)) {
+    Opcode = AIE2P::VLDA_Y_SPILL;
+  } else if (regClassMatches(AIE2P::eLRegClass, RC, DstReg)) {
+    Opcode = AIE2P::VLDA_L_SPILL;
+  } else if (regClassMatches(AIE2P::eDRegClass, RC, DstReg)) {
+    Opcode = AIE2P::LDA_D_SPILL;
+  } else if (regClassMatches(AIE2P::eDSRegClass, RC, DstReg)) {
+    Opcode = AIE2P::LDA_DS_SPILL;
+  } else if (regClassMatches(AIE2P::eSRegClass, RC, DstReg) ||
+             regClassMatches(AIE2P::spill_eS_to_eRRegClass, RC, DstReg)) {
+    // Can't spill these directly.  Need to bounce through a GPR.
+    MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
+    Register Reg = MRI.createVirtualRegister(&AIE2P::eRRegClass);
+    BuildMI(MBB, I, DL, get(AIE2P::LDA_dms_lda_spill), Reg)
+        .addFrameIndex(FI)
+        .addMemOperand(CreateMMO(FI));
+    BuildMI(MBB, I, DL, get(AIE2P::MOV_alu_mv_mv_mv_scl), DstReg)
+        .addReg(Reg, getKillRegState(true));
+    return;
+  } else {
+    llvm_unreachable(
+        "Can't load this register from stack slot: is it virtual?");
+  }
+
+  // To load from a stack slot we generate a load indirect via the
+  // stack pointer.  The actual offset will be an immediate, but for
+  // right now stuff in a virtual "FrameIndex" argument to represent
+  // the offset that will be figured out later.  The offset is
+  // generated by AIERegisterInfo::eliminateFrameIndex().
+  BuildMI(MBB, I, DL, get(Opcode), DstReg)
+      .addFrameIndex(FI)
+      .addMemOperand(CreateMMO(FI));
+}
+
+SmallVector<AIEBaseInstrInfo::AIEPseudoExpandInfo, 4>
+AIE2PInstrInfo::getSpillPseudoExpandInfo(const MachineInstr &MI) const {
+  if (!MI.isPseudo())
+    return {};
+
+  switch (MI.getOpcode()) {
+  case AIE2P::VST_L_SPILL:
+    return {{AIE2P::ST_dms_sts_spill, AIE2P::sub_l_even},
+            {AIE2P::ST_dms_sts_spill, AIE2P::sub_l_odd}};
+  case AIE2P::VST_CM_SPILL:
+    return {{AIE2P::VST_dmx_sts_bm_spill, AIE2P::sub_512_acc_lo},
+            {AIE2P::VST_dmx_sts_bm_spill, AIE2P::sub_512_acc_hi}};
+  case AIE2P::VST_DM_SPILL:
+    return {{AIE2P::VST_CM_SPILL, AIE2P::sub_1024_acc_lo},
+            {AIE2P::VST_CM_SPILL, AIE2P::sub_1024_acc_hi}};
+  case AIE2P::VST_Y_SPILL:
+    return {{AIE2P::VST_dmx_sts_x_spill, AIE2P::sub_512_lo},
+            {AIE2P::VST_dmx_sts_x_spill, AIE2P::sub_512_hi}};
+  case AIE2P::ST_D_SPILL:
+    return {{AIE2P::ST_dms_sts_spill, AIE2P::sub_mod},
+            {AIE2P::ST_dms_sts_spill, AIE2P::sub_dim_size},
+            {AIE2P::ST_dms_sts_spill, AIE2P::sub_dim_stride},
+            {AIE2P::ST_dms_sts_spill, AIE2P::sub_dim_count}};
+  case AIE2P::ST_DS_SPILL:
+    return {{AIE2P::ST_dms_sts_spill, AIE2P::sub_mod},
+            {AIE2P::ST_dms_sts_spill, AIE2P::sub_dim_size},
+            {AIE2P::ST_dms_sts_spill, AIE2P::sub_dim_stride},
+            {AIE2P::ST_dms_sts_spill, AIE2P::sub_dim_count},
+            {AIE2P::ST_dms_sts_spill, AIE2P::sub_hi_dim_then_sub_mod},
+            {AIE2P::ST_dms_sts_spill, AIE2P::sub_hi_dim_then_sub_dim_size},
+            {AIE2P::ST_dms_sts_spill, AIE2P::sub_hi_dim_then_sub_dim_stride},
+            {AIE2P::ST_dms_sts_spill, AIE2P::sub_hi_dim_then_sub_dim_count}};
+
+  case AIE2P::VLDA_L_SPILL:
+    return {{AIE2P::LDA_dms_lda_spill, AIE2P::sub_l_even},
+            {AIE2P::LDA_dms_lda_spill, AIE2P::sub_l_odd}};
+  case AIE2P::VLDA_CM_SPILL:
+    return {{AIE2P::VLDA_dmx_lda_bm_spill, AIE2P::sub_512_acc_lo},
+            {AIE2P::VLDA_dmx_lda_bm_spill, AIE2P::sub_512_acc_hi}};
+  case AIE2P::VLDA_DM_SPILL:
+    return {{AIE2P::VLDA_CM_SPILL, AIE2P::sub_1024_acc_lo},
+            {AIE2P::VLDA_CM_SPILL, AIE2P::sub_1024_acc_hi}};
+  case AIE2P::VLDA_Y_SPILL:
+    return {{AIE2P::VLDA_dmx_lda_x_spill, AIE2P::sub_512_lo},
+            {AIE2P::VLDA_dmx_lda_x_spill, AIE2P::sub_512_hi}};
+  case AIE2P::LDA_D_SPILL:
+    return {{AIE2P::LDA_dms_lda_spill, AIE2P::sub_mod},
+            {AIE2P::LDA_dms_lda_spill, AIE2P::sub_dim_size},
+            {AIE2P::LDA_dms_lda_spill, AIE2P::sub_dim_stride},
+            {AIE2P::LDA_dms_lda_spill, AIE2P::sub_dim_count}};
+  case AIE2P::LDA_DS_SPILL:
+    return {{AIE2P::LDA_dms_lda_spill, AIE2P::sub_mod},
+            {AIE2P::LDA_dms_lda_spill, AIE2P::sub_dim_size},
+            {AIE2P::LDA_dms_lda_spill, AIE2P::sub_dim_stride},
+            {AIE2P::LDA_dms_lda_spill, AIE2P::sub_dim_count},
+            {AIE2P::LDA_dms_lda_spill, AIE2P::sub_hi_dim_then_sub_mod},
+            {AIE2P::LDA_dms_lda_spill, AIE2P::sub_hi_dim_then_sub_dim_size},
+            {AIE2P::LDA_dms_lda_spill, AIE2P::sub_hi_dim_then_sub_dim_stride},
+            {AIE2P::LDA_dms_lda_spill, AIE2P::sub_hi_dim_then_sub_dim_count}};
+  }
+  llvm_unreachable("Un-implemented");
+}
+
+unsigned AIE2PInstrInfo::getConstantMovOpcode(MachineRegisterInfo &MRI,
+                                              unsigned int Reg,
+                                              APInt &Val) const {
+  const auto &TRI =
+      static_cast<const AIE2PRegisterInfo *>(MRI.getTargetRegisterInfo());
+  unsigned int ImmSize = Val.getSignificantBits();
+
+  const TargetRegisterClass *DstRegClass = nullptr;
+  const RegClassOrRegBank &RCB = MRI.getRegClassOrRegBank(Reg);
+  if (const RegisterBank *RB = RCB.dyn_cast<const RegisterBank *>())
+    DstRegClass = &TRI->getMinClassForRegBank(*RB, MRI.getType(Reg));
+  if (auto *TRC = RCB.dyn_cast<const TargetRegisterClass *>())
+    DstRegClass = TRC;
+  assert(DstRegClass != nullptr && "RC cannot be null");
+  if (ImmSize <= 11) {
+    if (regClassMatches(AIE2P::mAluCgRegClass, DstRegClass, Reg))
+      return AIE2P::MOV_RLC_imm11_pseudo;
+    if (regClassMatches(AIE2P::mAguDstRegClass, DstRegClass, Reg) ||
+        regClassMatches(AIE2P::ePRegClass, DstRegClass, Reg) ||
+        regClassMatches(AIE2P::mDmRegClass, DstRegClass, Reg) ||
+        regClassMatches(AIE2P::eRRegClass, DstRegClass, Reg))
+      return AIE2P::MOV_PD_imm11_pseudo;
+    if (regClassMatches(AIE2P::eSRegClass, DstRegClass, Reg))
+      return AIE2P::MOV_S_imm11_pseudo;
+    if (regClassMatches(AIE2P::mMvSclDstRegClass, DstRegClass, Reg))
+      return AIE2P::MOV_scalar_imm11_pseudo;
+  }
+  if (ImmSize <= 32) {
+    return AIE2P::MOVXM;
+  }
+  dbgs() << "Imm. Size: " << ImmSize << "\n"
+         << "DstRegClass ID: " << DstRegClass->getID() << "\n";
+  llvm_unreachable("Expected imm. size <= 32 bits");
+}
+
+unsigned AIE2PInstrInfo::getCycleSeparatorOpcode() const {
+  return AIE2P::CYCLE_SEPARATOR;
+}
+
+bool AIE2PInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
+  auto DL = MI.getDebugLoc();
+  MachineBasicBlock &MBB = *MI.getParent();
+  MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
+  const TargetRegisterInfo &TRI = *MRI.getTargetRegisterInfo();
+  switch (MI.getOpcode()) {
+  case AIE2P::PseudoMove: {
+    Register Dst = MI.getOperand(0).getReg();
+    Register Src = MI.getOperand(1).getReg();
+    BuildMI(MBB, MI, DL, get(AIE2P::MOV_alu_mv_mv_mv_scl), Dst)
+        .addReg(Src, getKillRegState(true));
+    MI.eraseFromParent();
+    return true;
+  }
+  case AIE2P::VST_DM_SPILL:
+  case AIE2P::ST_D_SPILL:
+  case AIE2P::ST_DS_SPILL:
+  case AIE2P::VST_CM_SPILL:
+  case AIE2P::VST_L_SPILL:
+  case AIE2P::VST_Y_SPILL:
+  case AIE2P::VLDA_DM_SPILL:
+  case AIE2P::LDA_D_SPILL:
+  case AIE2P::LDA_DS_SPILL:
+  case AIE2P::VLDA_CM_SPILL:
+  case AIE2P::VLDA_L_SPILL:
+  case AIE2P::VLDA_Y_SPILL:
+    expandSpillPseudo(MI, TRI, /*SubRegOffsetAlign=*/Align(4));
+    return true;
+  }
+  return false;
+}
+
+ScheduleHazardRecognizer *AIE2PInstrInfo::CreateTargetPostRAHazardRecognizer(
+    const InstrItineraryData *II, const ScheduleDAG *DAG) const {
+  llvm_unreachable("AIE2P is not meant to use the post-RA list scheduler. "
+                   "Please use the MI scheduler instead: postmisched");
+}
+
+static AIEAlternateDescriptors &getSelectedAltDescs(const ScheduleDAGMI *DAG) {
+  if (DAG->hasVRegLiveness())
+    return static_cast<const AIEScheduleDAGMILive *>(DAG)
+        ->getSchedImpl()
+        ->getSelectedAltDescs();
+  return static_cast<const AIEScheduleDAGMI *>(DAG)
+      ->getSchedImpl()
+      ->getSelectedAltDescs();
+}
+
+ScheduleHazardRecognizer *
+AIE2PInstrInfo::CreateTargetMIHazardRecognizer(const InstrItineraryData *II,
+                                               const ScheduleDAGMI *DAG) const {
+  // AIE has a fully exposed pipeline, resource and format conflicts must be
+  // exactly modelled.
+  return new AIEHazardRecognizer(this, II, getSelectedAltDescs(DAG),
+                                 /*IsPreRA=*/DAG->hasVRegLiveness());
+}
+
+// Check whether Opc is a lock operation
+// This is used to adjust the latency of barrier edges into them
+bool AIE2PInstrInfo::isLock(unsigned Opc) const {
+  switch (Opc) {
+  default:
+    break;
+  case AIE2P::ACQ_mLockId_imm:
+  case AIE2P::ACQ_mLockId_reg:
+  case AIE2P::ACQ_COND_mLockId_imm:
+  case AIE2P::ACQ_COND_mLockId_reg:
+  case AIE2P::REL_mLockId_imm:
+  case AIE2P::REL_mLockId_reg:
+  case AIE2P::REL_COND_mLockId_imm:
+  case AIE2P::REL_COND_mLockId_reg:
+    return true;
+  }
+  return false;
+}
+
+bool AIE2PInstrInfo::isDelayedSchedBarrier(const MachineInstr &MI) const {
+  return MI.getOpcode() == AIE2P::DelayedSchedBarrier;
+}
+
+bool AIE2PInstrInfo::isSchedBarrier(const MachineInstr &MI) const {
+  return (MI.getOpcode() == AIE2P::SCHED_BARRIER ||
+          MI.getOpcode() == AIE2P::PseudoLoopEnd ||
+          MI.getOpcode() == AIE2P::MOV_alu_mv_mv_mv_cntr2l ||
+          isDelayedSchedBarrier(MI));
+}
+
+unsigned
+AIE2PInstrInfo::getNumReservedDelaySlots(const MachineInstr &MI) const {
+  return 0;
+}
+
+SmallVector<TiedRegOperands, 4>
+AIE2PInstrInfo::getTiedRegInfo(unsigned Opcode) const {
+  const SmallVector<SubRegSplit, 8> Split2DReg = {
+      SubRegSplit(AIE2P::sub_mod), SubRegSplit(AIE2P::sub_dim_size),
+      SubRegSplit(AIE2P::sub_dim_stride), SubRegSplit(AIE2P::sub_dim_count)};
+  const SmallVector<SubRegSplit, 8> Split3DReg = {
+      SubRegSplit(AIE2P::sub_mod),
+      SubRegSplit(AIE2P::sub_dim_size),
+      SubRegSplit(AIE2P::sub_dim_stride),
+      SubRegSplit(AIE2P::sub_dim_count),
+      SubRegSplit(AIE2P::sub_hi_dim_then_sub_mod, /*IsUndef=*/true),
+      SubRegSplit(AIE2P::sub_hi_dim_then_sub_dim_size),
+      SubRegSplit(AIE2P::sub_hi_dim_then_sub_dim_stride),
+      SubRegSplit(AIE2P::sub_hi_dim_then_sub_dim_count)};
+  const SmallVector<SubRegSplit, 8> SplitPLFRReg = {
+      SubRegSplit(AIE2P::sub_ptr), SubRegSplit(AIE2P::sub_fifo),
+      SubRegSplit(AIE2P::sub_avail)};
+  // TODO: This should be generated
+  switch (Opcode) {
+  case AIE2P::LDA_2D_dms_lda:
+  case AIE2P::LDA_2D_dmv_lda_q:
+  case AIE2P::LDA_2D_s16:
+  case AIE2P::LDA_2D_s8:
+  case AIE2P::LDA_2D_u16:
+  case AIE2P::LDA_2D_u8:
+  case AIE2P::VLDA_2D_dmw_lda_w:
+  case AIE2P::VLDA_2D_128:
+  case AIE2P::VLDA_2D_CONV_fp32_bf16_dmw_lda_ups_bf:
+  case AIE2P::VLDA_2D_CONV_fp32_bf16_dmx_lda_ups_bf:
+  case AIE2P::VLDA_2D_dmx_lda_bm:
+  case AIE2P::VLDA_2D_dmx_lda_fifohl:
+  case AIE2P::VLDA_2D_dmx_lda_x:
+  case AIE2P::VLDB_2D_128:
+  case AIE2P::VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign0:
+  case AIE2P::VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign1:
+  case AIE2P::VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign0:
+  case AIE2P::VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign1:
+  case AIE2P::VLDB_2D_dmw_ldb:
+  case AIE2P::VLDB_2D_dmx_ldb_x:
+  case AIE2P::LDA_TM_2D:
+    // Constraints = "$count_out=$mod.sub_dim_count"
+    return {TiedRegOperands{
+        /*DstOps=*/{{/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_dim_count}},
+        /*SrcOp=*/{/*OpIdx=*/4, /*SubRegIdx=*/AIE2P::NoSubRegister,
+                   /*SubRegsSplit=*/Split2DReg}}};
+  case AIE2P::VST_FLUSH_512_2D:
+  case AIE2P::VST_FLUSH_512_CONV_2D:
+    return {TiedRegOperands{
+        /*DstOps=*/{{/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::sub_dim_count}},
+        /*SrcOp=*/{/*OpIdx=*/7, /*SubRegIdx=*/AIE2P::NoSubRegister,
+                   /*SubRegsSplit=*/Split2DReg}}};
+  case AIE2P::LDA_3D_dms_lda:
+  case AIE2P::LDA_3D_dmv_lda_q:
+  case AIE2P::LDA_3D_s16:
+  case AIE2P::LDA_3D_s8:
+  case AIE2P::LDA_3D_u16:
+  case AIE2P::LDA_3D_u8:
+  case AIE2P::VLDA_3D_dmw_lda_w:
+  case AIE2P::VLDA_3D_128:
+  case AIE2P::VLDA_3D_CONV_fp32_bf16_dmw_lda_ups_bf:
+  case AIE2P::VLDA_3D_CONV_fp32_bf16_dmx_lda_ups_bf:
+  case AIE2P::VLDB_3D_128:
+  case AIE2P::VLDA_3D_dmx_lda_bm:
+  case AIE2P::VLDA_3D_dmx_lda_fifohl:
+  case AIE2P::VLDA_3D_dmx_lda_x:
+  case AIE2P::VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign0:
+  case AIE2P::VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign1:
+  case AIE2P::VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign0:
+  case AIE2P::VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign1:
+  case AIE2P::VLDB_3D_dmw_ldb:
+  case AIE2P::VLDB_3D_dmx_ldb_x:
+  case AIE2P::LDA_TM_3D:
+    // Constraints = "$count_lo_out=$mod.sub_dim_count,
+    //                $count_hi_out=$mod.sub_hi_dim_then_sub_dim_count"
+    return {TiedRegOperands{
+        /*DstOps=*/{
+            {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_dim_count},
+            {/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::sub_hi_dim_then_sub_dim_count}},
+        /*SrcOp=*/{/*OpIdx=*/5, /*SubRegIdx=*/AIE2P::NoSubRegister,
+                   /*SubRegsSplit=*/Split3DReg}}};
+  case AIE2P::VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0:
+  case AIE2P::VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign1:
+  case AIE2P::VLDA_2D_UPS_2x_dmx_lda_ups_x2c_upsSign0:
+  case AIE2P::VLDA_2D_UPS_2x_dmx_lda_ups_x2c_upsSign1:
+  case AIE2P::VLDA_2D_UPS_4x_dmw_lda_ups_w2c_upsSign0:
+  case AIE2P::VLDA_2D_UPS_4x_dmw_lda_ups_w2c_upsSign1:
+  case AIE2P::VLDA_2D_UPS_4x_dmx_lda_ups_x2d_upsSign0:
+  case AIE2P::VLDA_2D_UPS_4x_dmx_lda_ups_x2d_upsSign1:
+    // Constraints = "$count_out=$mod.sub_dim_count"
+    return {TiedRegOperands{
+        /*DstOps=*/{{/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_dim_count}},
+        /*SrcOp=*/{/*OpIdx=*/5, /*SubRegIdx=*/AIE2P::NoSubRegister,
+                   /*SubRegsSplit=*/Split2DReg}}};
+  case AIE2P::VLDA_3D_UPS_2x_dmw_lda_ups_w2b_upsSign0:
+  case AIE2P::VLDA_3D_UPS_2x_dmw_lda_ups_w2b_upsSign1:
+  case AIE2P::VLDA_3D_UPS_2x_dmx_lda_ups_x2c_upsSign0:
+  case AIE2P::VLDA_3D_UPS_2x_dmx_lda_ups_x2c_upsSign1:
+  case AIE2P::VLDA_3D_UPS_4x_dmw_lda_ups_w2c_upsSign0:
+  case AIE2P::VLDA_3D_UPS_4x_dmw_lda_ups_w2c_upsSign1:
+  case AIE2P::VLDA_3D_UPS_4x_dmx_lda_ups_x2d_upsSign0:
+  case AIE2P::VLDA_3D_UPS_4x_dmx_lda_ups_x2d_upsSign1:
+    // Constraints = "$count_lo_out=$mod.sub_dim_count,
+    //                $count_hi_out=$mod.sub_hi_dim_then_sub_dim_count"
+    return {TiedRegOperands{
+        /*DstOps=*/{
+            {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_dim_count},
+            {/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::sub_hi_dim_then_sub_dim_count}},
+        /*SrcOp=*/{/*OpIdx=*/6, /*SubRegIdx=*/AIE2P::NoSubRegister,
+                   /*SubRegsSplit=*/Split3DReg}}};
+  case AIE2P::VST_FLUSH_512_3D:
+  case AIE2P::VST_FLUSH_512_CONV_3D:
+    return {TiedRegOperands{
+        /*DstOps=*/{
+            {/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::sub_dim_count},
+            {/*OpIdx=*/4, /*SubRegIdx=*/AIE2P::sub_hi_dim_then_sub_dim_count}},
+        /*SrcOp=*/{/*OpIdx=*/8, /*SubRegIdx=*/AIE2P::NoSubRegister,
+                   /*SubRegsSplit=*/Split3DReg}}};
+  case AIE2P::ST_2D_dms_sts:
+  case AIE2P::ST_2D_dmv_sts_q:
+  case AIE2P::ST_2D_s16:
+  case AIE2P::ST_2D_s8:
+  case AIE2P::VST_2D_128:
+  case AIE2P::VST_2D_dmw_sts_w:
+  case AIE2P::VST_2D_dmx_sts_x:
+  case AIE2P::VST_2D_dmx_sts_fifohl:
+  case AIE2P::VST_2D_dmx_sts_bm:
+  case AIE2P::ST_TM_2D:
+    // Constraints = "$count_out=$mod.sub_dim_count"
+    return {TiedRegOperands{
+        /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_dim_count}},
+        /*SrcOp=*/{/*OpIdx=*/4, /*SubRegIdx=*/AIE2P::NoSubRegister,
+                   /*SubRegsSplit=*/Split2DReg}}};
+  case AIE2P::VST_2D_PACK_dmw_sts_pack_packSign0:
+  case AIE2P::VST_2D_PACK_dmw_sts_pack_packSign1:
+  case AIE2P::VST_2D_PACK_dmx_sts_pack_packSign0:
+  case AIE2P::VST_2D_PACK_dmx_sts_pack_packSign1:
+  case AIE2P::VST_2D_CONV_bf16_fp32_dmw_sts_srs_bf:
+  case AIE2P::VST_2D_CONV_bf16_fp32_dmx_sts_srs_bf:
+    // Constraints = "$count_out=$mod.sub_dim_count"
+    return {TiedRegOperands{
+        /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_dim_count}},
+        /*SrcOp=*/{/*OpIdx=*/4, /*SubRegIdx=*/AIE2P::NoSubRegister,
+                   /*SubRegsSplit=*/Split2DReg}}};
+  case AIE2P::ST_3D_dms_sts:
+  case AIE2P::ST_3D_dmv_sts_q:
+  case AIE2P::ST_3D_s16:
+  case AIE2P::ST_3D_s8:
+  case AIE2P::VST_3D_128:
+  case AIE2P::VST_3D_dmw_sts_w:
+  case AIE2P::VST_3D_dmx_sts_x:
+  case AIE2P::VST_3D_dmx_sts_fifohl:
+  case AIE2P::VST_3D_dmx_sts_bm:
+  case AIE2P::ST_TM_3D:
+    // Constraints = "$count_lo_out=$mod.sub_dim_count,
+    //                $count_hi_out=$mod.sub_hi_dim_then_sub_dim_count"
+    return {TiedRegOperands{
+        /*DstOps=*/{
+            {/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_dim_count},
+            {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_hi_dim_then_sub_dim_count}},
+        /*SrcOp=*/{/*OpIdx=*/5, /*SubRegIdx=*/AIE2P::NoSubRegister,
+                   /*SubRegsSplit=*/Split3DReg}}};
+  case AIE2P::VST_3D_PACK_dmw_sts_pack_packSign0:
+  case AIE2P::VST_3D_PACK_dmw_sts_pack_packSign1:
+  case AIE2P::VST_3D_PACK_dmx_sts_pack_packSign0:
+  case AIE2P::VST_3D_PACK_dmx_sts_pack_packSign1:
+  case AIE2P::VST_3D_CONV_bf16_fp32_dmw_sts_srs_bf:
+  case AIE2P::VST_3D_CONV_bf16_fp32_dmx_sts_srs_bf:
+    // Constraints = "$count_lo_out=$mod.sub_dim_count,
+    //                $count_hi_out=$mod.sub_hi_dim_then_sub_dim_count"
+    return {TiedRegOperands{
+        /*DstOps=*/{
+            {/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_dim_count},
+            {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_hi_dim_then_sub_dim_count}},
+        /*SrcOp=*/{/*OpIdx=*/5, /*SubRegIdx=*/AIE2P::NoSubRegister,
+                   /*SubRegsSplit=*/Split3DReg}}};
+  case AIE2P::VST_2D_SRS_2x_dm_sts_srs_cm_srsSign0:
+  case AIE2P::VST_2D_SRS_2x_dm_sts_srs_cm_srsSign1:
+  case AIE2P::VST_2D_SRS_4x_dm_sts_srs_cm_srsSign0:
+  case AIE2P::VST_2D_SRS_4x_dm_sts_srs_cm_srsSign1:
+  case AIE2P::VST_2D_SRS_4x_dmx_sts_srs_dm_srsSign0:
+  case AIE2P::VST_2D_SRS_4x_dmx_sts_srs_dm_srsSign1:
+  case AIE2P::VST_2D_SRS_2x_dmw_sts_srs_bm_srsSign0:
+  case AIE2P::VST_2D_SRS_2x_dmw_sts_srs_bm_srsSign1:
+    // Constraints = "$count_out=$mod.sub_dim_count"
+    return {TiedRegOperands{
+        /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_dim_count}},
+        /*SrcOp=*/{/*OpIdx=*/5, /*SubRegIdx=*/AIE2P::NoSubRegister,
+                   /*SubRegsSplit=*/Split2DReg}}};
+  case AIE2P::VST_3D_SRS_2x_dm_sts_srs_cm_srsSign0:
+  case AIE2P::VST_3D_SRS_2x_dm_sts_srs_cm_srsSign1:
+  case AIE2P::VST_3D_SRS_4x_dm_sts_srs_cm_srsSign0:
+  case AIE2P::VST_3D_SRS_4x_dm_sts_srs_cm_srsSign1:
+  case AIE2P::VST_3D_SRS_4x_dmx_sts_srs_dm_srsSign0:
+  case AIE2P::VST_3D_SRS_4x_dmx_sts_srs_dm_srsSign1:
+  case AIE2P::VST_3D_SRS_2x_dmw_sts_srs_bm_srsSign0:
+  case AIE2P::VST_3D_SRS_2x_dmw_sts_srs_bm_srsSign1:
+    // Constraints = "$count_lo_out=$mod.sub_dim_count,
+    //                $count_hi_out=$mod.sub_hi_dim_then_sub_dim_count"
+    return {TiedRegOperands{
+        /*DstOps=*/{
+            {/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_dim_count},
+            {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_hi_dim_then_sub_dim_count}},
+        /*SrcOp=*/{/*OpIdx=*/6, /*SubRegIdx=*/AIE2P::NoSubRegister,
+                   /*SubRegsSplit=*/Split3DReg}}};
+  case AIE2P::PADDA_2D:
+  case AIE2P::PADDB_2D:
+  case AIE2P::PADDS_2D:
+    // Constraints = "$count_out=$mod.sub_dim_count"
+    return {TiedRegOperands{
+        /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_dim_count}},
+        /*SrcOp=*/
+        {/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::NoSubRegister,
+         /*SubRegsSplit=*/Split2DReg}}};
+  case AIE2P::PADDA_3D:
+  case AIE2P::PADDB_3D:
+  case AIE2P::PADDS_3D:
+    // Constraints = "$count_lo_out=$mod.sub_dim_count,
+    //                $count_hi_out=$mod.sub_hi_dim_then_sub_dim_count"
+    return {TiedRegOperands{
+        /*DstOps=*/{
+            {/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_dim_count},
+            {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_hi_dim_then_sub_dim_count}},
+        /*SrcOp=*/
+        {/*OpIdx=*/4, /*SubRegIdx=*/AIE2P::NoSubRegister,
+         /*SubRegsSplit=*/Split3DReg}}};
+  case AIE2P::VLDB_FILLX_512:
+    return {TiedRegOperands{
+        /*DstOps=*/{{/*OpIdx=*/0, /*SubRegIdx=*/AIE2P::sub_ptr},
+                    {/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_fifo},
+                    {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_avail}},
+        /*SrcOp=*/
+        {/*OpIdx=*/5, /*SubRegIdx=*/AIE2P::NoSubRegister,
+         /*SubRegsSplit=*/SplitPLFRReg}}};
+  case AIE2P::VLDA_FILL_512:
+  case AIE2P::VLDB_FILL_512:
+    return {TiedRegOperands{
+        /*DstOps=*/{{/*OpIdx=*/0, /*SubRegIdx=*/AIE2P::sub_ptr},
+                    {/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_fifo},
+                    {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_avail}},
+        /*SrcOp=*/
+        {/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::NoSubRegister,
+         /*SubRegsSplit=*/SplitPLFRReg}}};
+
+  case AIE2P::VLDB_POPX_512:
+    return {TiedRegOperands{
+        /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_ptr},
+                    {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_fifo},
+                    {/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::sub_avail}},
+        /*SrcOp=*/
+        {/*OpIdx=*/6, /*SubRegIdx=*/AIE2P::NoSubRegister,
+         /*SubRegsSplit=*/SplitPLFRReg}}};
+  case AIE2P::VLDA_POP_512_normal_pop:
+  case AIE2P::VLDA_POP_544_normal_pop:
+  case AIE2P::VLDA_POP_576_normal_pop:
+  case AIE2P::VLDA_POP_640_normal_pop:
+  case AIE2P::VLDA_POP_704_normal_pop:
+  case AIE2P::VLDB_POP_512_normal_pop:
+  case AIE2P::VLDB_POP_544_normal_pop:
+  case AIE2P::VLDB_POP_576_normal_pop:
+  case AIE2P::VLDB_POP_640_normal_pop:
+  case AIE2P::VLDB_POP_704_normal_pop:
+  case AIE2P::VLDA_POP_512_fifo_1d_pop:
+  case AIE2P::VLDA_POP_544_fifo_1d_pop:
+  case AIE2P::VLDA_POP_576_fifo_1d_pop:
+  case AIE2P::VLDA_POP_640_fifo_1d_pop:
+  case AIE2P::VLDA_POP_704_fifo_1d_pop:
+  case AIE2P::VLDB_POP_512_fifo_1d_pop:
+  case AIE2P::VLDB_POP_544_fifo_1d_pop:
+  case AIE2P::VLDB_POP_576_fifo_1d_pop:
+  case AIE2P::VLDB_POP_640_fifo_1d_pop:
+  case AIE2P::VLDB_POP_704_fifo_1d_pop:
+    return {TiedRegOperands{
+        /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_ptr},
+                    {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_fifo},
+                    {/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::sub_avail}},
+        /*SrcOp=*/
+        {/*OpIdx=*/4, /*SubRegIdx=*/AIE2P::NoSubRegister,
+         /*SubRegsSplit=*/SplitPLFRReg}}};
+  case AIE2P::VLDA_POP_512_2D:
+  case AIE2P::VLDA_POP_544_2D:
+  case AIE2P::VLDA_POP_576_2D:
+  case AIE2P::VLDA_POP_640_2D:
+  case AIE2P::VLDA_POP_704_2D:
+  case AIE2P::VLDB_POP_512_2D:
+  case AIE2P::VLDB_POP_544_2D:
+  case AIE2P::VLDB_POP_576_2D:
+  case AIE2P::VLDB_POP_640_2D:
+  case AIE2P::VLDB_POP_704_2D:
+    return {TiedRegOperands{
+                /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_ptr},
+                            {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_fifo},
+                            {/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::sub_avail}},
+                /*SrcOp=*/
+                {/*OpIdx=*/5, /*SubRegIdx=*/AIE2P::NoSubRegister,
+                 /*SubRegsSplit=*/SplitPLFRReg}},
+            TiedRegOperands{
+                /*DstOps=*/{{/*OpIdx=*/4, /*SubRegIdx=*/AIE2P::sub_dim_count}},
+                /*SrcOp=*/
+                {/*OpIdx=*/6, /*SubRegIdx=*/AIE2P::NoSubRegister,
+                 /*SubRegsSplit=*/Split2DReg}}};
+  case AIE2P::VLDA_POP_512_3D:
+  case AIE2P::VLDA_POP_544_3D:
+  case AIE2P::VLDA_POP_576_3D:
+  case AIE2P::VLDA_POP_640_3D:
+  case AIE2P::VLDA_POP_704_3D:
+  case AIE2P::VLDB_POP_512_3D:
+  case AIE2P::VLDB_POP_544_3D:
+  case AIE2P::VLDB_POP_576_3D:
+  case AIE2P::VLDB_POP_640_3D:
+  case AIE2P::VLDB_POP_704_3D:
+    return {
+        TiedRegOperands{
+            /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_ptr},
+                        {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_fifo},
+                        {/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::sub_avail}},
+            /*SrcOp=*/
+            {/*OpIdx=*/6, /*SubRegIdx=*/AIE2P::NoSubRegister,
+             /*SubRegsSplit=*/SplitPLFRReg}},
+        TiedRegOperands{
+            /*DstOps=*/{{/*OpIdx=*/4, /*SubRegIdx=*/AIE2P::sub_dim_count},
+                        {/*OpIdx=*/5,
+                         /*SubRegIdx=*/AIE2P::sub_hi_dim_then_sub_dim_count}},
+            /*SrcOp=*/
+            {/*OpIdx=*/7, /*SubRegIdx=*/AIE2P::NoSubRegister,
+             /*SubRegsSplit=*/Split3DReg}}};
+  default:
+    return {};
+  }
+}
+
+unsigned AIE2PInstrInfo::getNumBypassedCycles(
+    const InstrItineraryData *ItinData, const MachineInstr &DefMI,
+    unsigned DefIdx, const MachineInstr &UseMI, unsigned UseIdx) const {
+  // TODO: This should be tablegen-erated. This way we also wouldn't need
+  // trickery to find the class of the MOV_Bypass
+  const unsigned MovSlotBypassClass = ItinData->getForwardingClass(
+      get(AIE2P::VMOV_alu_mv_mv_w).getSchedClass(), 0);
+  assert(MovSlotBypassClass != 0);
+
+  auto GetForwardingClass = [&](const MachineInstr &MI, unsigned OpIdx) {
+    Register Reg = MI.getOperand(OpIdx).getReg();
+    switch (MI.getOpcode()) {
+    // This instruction uses the Move slot bypass for vector inputs only.
+    // It only works for WL registers. It does not work for WH registers
+    case AIE2P::VCONV_fp32_bf16_mv_ups_wbf:
+    case AIE2P::VEXP2:
+    case AIE2P::VTANH:
+      assert(OpIdx < 2);
+      return Reg.isPhysical() && AIE2P::eWLRegClass.contains(Reg)
+                 ? MovSlotBypassClass
+                 : 0U;
+    default:
+      const MachineRegisterInfo &MRI = MI.getMF()->getRegInfo();
+      return ItinData->getForwardingClass(
+          getSchedClass(MI.getDesc(), MI.operands(), MRI), OpIdx);
+    }
+  };
+
+  // FIXME: This assumes one cycle benefit for every pipeline forwarding.
+  unsigned DefForwarding = GetForwardingClass(DefMI, DefIdx);
+  unsigned UseForwarding = GetForwardingClass(UseMI, UseIdx);
+  return (DefForwarding && DefForwarding == UseForwarding) ? 1 : 0;
+}
+
+std::pair<unsigned, unsigned>
+AIE2PInstrInfo::decomposeMachineOperandsTargetFlags(unsigned TF) const {
+  const unsigned Mask = AIEII::MO_DIRECT_FLAG_MASK;
+  return std::make_pair(TF & Mask, TF & ~Mask);
+}
+
+ArrayRef<std::pair<unsigned, const char *>>
+AIE2PInstrInfo::getSerializableDirectMachineOperandTargetFlags() const {
+  using namespace AIEII;
+  static const std::pair<unsigned, const char *> TargetFlags[] = {
+      {MO_GLOBAL, "aie2p-global"}};
+  return ArrayRef(TargetFlags);
+}
+
+bool AIE2PInstrInfo::canHoistCheapInst(const MachineInstr &MI) const {
+  if (!AIEBaseInstrInfo::canHoistCheapInst(MI))
+    return false;
+  return false;
+}
+
+bool AIE2PInstrInfo::isHardwareLoopDec(unsigned Opcode) const {
+  return Opcode == AIE2P::LoopDec;
+}
+
+bool AIE2PInstrInfo::isHardwareLoopJNZ(unsigned Opcode) const {
+  return Opcode == AIE2P::LoopJNZ;
+}
+
+bool AIE2PInstrInfo::isHardwareLoopStart(unsigned Opcode) const {
+  return Opcode == AIE2P::LoopStart;
+}
+
+bool AIE2PInstrInfo::isHardwareLoopEnd(unsigned Opcode) const {
+  return Opcode == AIE2P::PseudoLoopEnd;
+}
+
+bool AIE2PInstrInfo::isZeroOverheadLoopSetupInstr(
+    const MachineInstr &MI) const {
+  return (MI.getOpcode() == AIE2P::MOV_alu_mv_mv_mv_scl ||
+          MI.getOpcode() == AIE2P::MOVXM) &&
+         (MI.getOperand(0).getReg() == AIE2P::lc ||
+          MI.getOperand(0).getReg() == AIE2P::ls ||
+          MI.getOperand(0).getReg() == AIE2P::le);
+}
+
+unsigned AIE2PInstrInfo::getGenericAddVectorEltOpcode() const {
+  return AIE2P::G_AIE_ADD_VECTOR_ELT_HI;
+}
+
+unsigned AIE2PInstrInfo::getGenericInsertVectorEltOpcode() const {
+  return AIE2P::G_AIE_INSERT_VECTOR_ELT;
+}
+
+unsigned AIE2PInstrInfo::getGenericExtractVectorEltOpcode(bool SignExt) const {
+  return SignExt ? AIE2P::G_AIE_SEXT_EXTRACT_VECTOR_ELT
+                 : AIE2P::G_AIE_ZEXT_EXTRACT_VECTOR_ELT;
+}
+
+unsigned AIE2PInstrInfo::getGenericPadVectorOpcode() const {
+  return AIE2P::G_AIE_PAD_VECTOR_UNDEF;
+}
+
+unsigned AIE2PInstrInfo::getGenericUnpadVectorOpcode() const {
+  return AIE2P::G_AIE_UNPAD_VECTOR;
+}
+
+unsigned AIE2PInstrInfo::getGenericBroadcastVectorOpcode() const {
+  return AIE2P::G_AIE_BROADCAST_VECTOR;
+}
+
+Register AIE2PInstrInfo::getSSStatusReg() const { return AIE2P::srSS0; }
+
+Register AIE2PInstrInfo::getMSStatusReg() const { return AIE2P::srMS0; }
+
+unsigned AIE2PInstrInfo::getMvScl2MSTlastRegOpcode() const {
+  return AIE2P::MOV_st_mMStream_tlast_reg;
+}
+
+unsigned AIE2PInstrInfo::getMvNBScl2MSTlastRegOpcode() const {
+  return AIE2P::MOV_nb_st_mMStream_tlast_reg;
+}
+
+unsigned AIE2PInstrInfo::getMvScl2MS(unsigned ConstTLastVal) const {
+  return (ConstTLastVal == 0) ? AIE2P::MOV_st_mMStream_tlast_imm
+                              : AIE2P::MOV_tlast;
+}
+
+unsigned AIE2PInstrInfo::getMvNBScl2MS(unsigned ConstTLastVal) const {
+  return (ConstTLastVal == 0) ? AIE2P::MOV_nb_st_mMStream_tlast_imm
+                              : AIE2P::MOV_nb_tlast;
+}
+
+Register AIE2PInstrInfo::getPackSignCReg() const { return AIE2P::packSign0; }
+
+Register AIE2PInstrInfo::getUnpackSignCReg() const {
+  return AIE2P::unpackSign0;
+}

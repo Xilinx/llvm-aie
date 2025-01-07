@@ -5,7 +5,8 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple aie -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple aie2 -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=CHECK --check-prefix=AIE2
+# RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s --check-prefix=CHECK --check-prefix=AIE2P
 
 ---
 name: ptr_add
@@ -15,12 +16,23 @@ regBankSelected: true
 body: |
   bb.0:
     liveins: $p0, $r6
-    ; CHECK-LABEL: name: ptr_add
-    ; CHECK: [[COPY:%[0-9]+]]:ptr = COPY $p0
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:gpr = COPY $r6
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:gpr = COPY [[COPY]]
-    ; CHECK-NEXT: [[ADD:%[0-9]+]]:gpr = ADD [[COPY2]], [[COPY1]]
-    ; CHECK-NEXT: $p0 = COPY [[ADD]]
+    ; AIE2-LABEL: name: ptr_add
+    ; AIE2: liveins: $p0, $r6
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; AIE2-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r6
+    ; AIE2-NEXT: [[COPY2:%[0-9]+]]:er = COPY [[COPY]]
+    ; AIE2-NEXT: [[ADD:%[0-9]+]]:er = ADD [[COPY2]], [[COPY1]], implicit-def $srcarry
+    ; AIE2-NEXT: $p0 = COPY [[ADD]]
+    ;
+    ; AIE2P-LABEL: name: ptr_add
+    ; AIE2P: liveins: $p0, $r6
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r6
+    ; AIE2P-NEXT: [[COPY2:%[0-9]+]]:er = COPY [[COPY]]
+    ; AIE2P-NEXT: [[ADD_alu_r_rr:%[0-9]+]]:er = ADD_alu_r_rr [[COPY2]], [[COPY1]], implicit-def $srcarry
+    ; AIE2P-NEXT: $p0 = COPY [[ADD_alu_r_rr]]
     %0:ptrregbank(p0) = COPY $p0
     %1:gprregbank(s32) = COPY $r6
     %2:gprregbank(s20) = G_TRUNC %1
@@ -38,16 +50,123 @@ body: |
   bb.0:
     liveins: $p0, $p1
     ; CHECK-LABEL: name: ptr_add_s20_on_ptr
-    ; CHECK: [[COPY:%[0-9]+]]:ptr = COPY $p0
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ptr = COPY $p1
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:mod = COPY [[COPY1]]
-    ; CHECK-NEXT: [[PADDA_nrm:%[0-9]+]]:ptr = PADDA_nrm [[COPY]], [[COPY2]]
-    ; CHECK-NEXT: $p0 = COPY [[PADDA_nrm]]
+    ; CHECK: liveins: $p0, $p1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p1
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:em = COPY [[COPY1]]
+    ; CHECK-NEXT: [[PADD_mod_pseudo:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY]], [[COPY2]]
+    ; CHECK-NEXT: $p0 = COPY [[PADD_mod_pseudo]]
     %0:ptrregbank(p0) = COPY $p0
     %1:ptrregbank(s20) = COPY $p1
     %2:modregbank(s20) = COPY %1
     %3:ptrregbank(p0) = G_PTR_ADD %0, %2
     $p0 = COPY %3
+...
+
+---
+name: ptr_add_s20_on_ptr_valid_imm
+legalized: true
+regBankSelected: true
+
+body: |
+  bb.0:
+    liveins: $p0
+    ; AIE2-LABEL: name: ptr_add_s20_on_ptr_valid_imm
+    ; AIE2: liveins: $p0
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; AIE2-NEXT: [[MOVXM_lng_cg:%[0-9]+]]:em_as_32bit = MOVXM_lng_cg -2052
+    ; AIE2-NEXT: [[MOVXM_lng_cg1:%[0-9]+]]:em_as_32bit = MOVXM_lng_cg 2048
+    ; AIE2-NEXT: [[PADD_imm9_pseudo:%[0-9]+]]:ep = PADD_imm9_pseudo [[COPY]], 1020
+    ; AIE2-NEXT: [[PADD_imm10_pseudo:%[0-9]+]]:ep = PADD_imm10_pseudo [[COPY]], -2048
+    ; AIE2-NEXT: [[PADD_imm9_pseudo1:%[0-9]+]]:ep = PADD_imm9_pseudo [[COPY]], -1024
+    ; AIE2-NEXT: [[PADD_mod_pseudo:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY]], [[MOVXM_lng_cg]]
+    ; AIE2-NEXT: [[PADD_mod_pseudo1:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY]], [[MOVXM_lng_cg1]]
+    ; AIE2-NEXT: [[PADD_imm9_pseudo2:%[0-9]+]]:ep = PADD_imm9_pseudo [[COPY]], -512
+    ; AIE2-NEXT: [[PADD_imm9_pseudo3:%[0-9]+]]:ep = PADD_imm9_pseudo [[COPY]], 448
+    ; AIE2-NEXT: $p0 = COPY [[PADD_imm9_pseudo]]
+    ; AIE2-NEXT: $p0 = COPY [[PADD_imm10_pseudo]]
+    ; AIE2-NEXT: $p0 = COPY [[PADD_imm9_pseudo1]]
+    ; AIE2-NEXT: $p0 = COPY [[PADD_mod_pseudo]]
+    ; AIE2-NEXT: $p0 = COPY [[PADD_mod_pseudo1]]
+    ; AIE2-NEXT: $p0 = COPY [[PADD_imm9_pseudo2]]
+    ; AIE2-NEXT: $p0 = COPY [[PADD_imm9_pseudo3]]
+    ;
+    ; AIE2P-LABEL: name: ptr_add_s20_on_ptr_valid_imm
+    ; AIE2P: liveins: $p0
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; AIE2P-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:em = MOV_PD_imm11_pseudo 1020
+    ; AIE2P-NEXT: [[MOVXM:%[0-9]+]]:em_as_32bit = MOVXM -2048
+    ; AIE2P-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:em = MOV_PD_imm11_pseudo -1024
+    ; AIE2P-NEXT: [[MOVXM1:%[0-9]+]]:em_as_32bit = MOVXM -2052
+    ; AIE2P-NEXT: [[MOVXM2:%[0-9]+]]:em_as_32bit = MOVXM 2048
+    ; AIE2P-NEXT: [[PADD_mod_pseudo:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY]], [[MOV_PD_imm11_pseudo]]
+    ; AIE2P-NEXT: [[PADD_mod_pseudo1:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY]], [[MOVXM]]
+    ; AIE2P-NEXT: [[PADD_mod_pseudo2:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY]], [[MOV_PD_imm11_pseudo1]]
+    ; AIE2P-NEXT: [[PADD_mod_pseudo3:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY]], [[MOVXM1]]
+    ; AIE2P-NEXT: [[PADD_mod_pseudo4:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY]], [[MOVXM2]]
+    ; AIE2P-NEXT: [[PADD_imm_pseudo:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], -512
+    ; AIE2P-NEXT: [[PADD_imm_pseudo1:%[0-9]+]]:ep = PADD_imm_pseudo [[COPY]], 448
+    ; AIE2P-NEXT: $p0 = COPY [[PADD_mod_pseudo]]
+    ; AIE2P-NEXT: $p0 = COPY [[PADD_mod_pseudo1]]
+    ; AIE2P-NEXT: $p0 = COPY [[PADD_mod_pseudo2]]
+    ; AIE2P-NEXT: $p0 = COPY [[PADD_mod_pseudo3]]
+    ; AIE2P-NEXT: $p0 = COPY [[PADD_mod_pseudo4]]
+    ; AIE2P-NEXT: $p0 = COPY [[PADD_imm_pseudo]]
+    ; AIE2P-NEXT: $p0 = COPY [[PADD_imm_pseudo1]]
+    %0:ptrregbank(p0) = COPY $p0
+    %1:modregbank(s20) = G_CONSTANT i20 1020
+    %2:modregbank(s20) = G_CONSTANT i20 -2048
+    %3:modregbank(s20) = G_CONSTANT i20 -1024
+    %4:modregbank(s20) = G_CONSTANT i20 -2052
+    %5:modregbank(s20) = G_CONSTANT i20 2048
+    %6:modregbank(s20) = G_CONSTANT i20 -512
+    %7:modregbank(s20) = G_CONSTANT i20 448
+    %8:ptrregbank(p0) = G_PTR_ADD %0, %1
+    %9:ptrregbank(p0) = G_PTR_ADD %0, %2
+    %10:ptrregbank(p0) = G_PTR_ADD %0, %3
+    %11:ptrregbank(p0) = G_PTR_ADD %0, %4
+    %12:ptrregbank(p0) = G_PTR_ADD %0, %5
+    %13:ptrregbank(p0) = G_PTR_ADD %0, %6
+    %14:ptrregbank(p0) = G_PTR_ADD %0, %7
+    $p0 = COPY %8
+    $p0 = COPY %9
+    $p0 = COPY %10
+    $p0 = COPY %11
+    $p0 = COPY %12
+    $p0 = COPY %13
+    $p0 = COPY %14
+...
+
+---
+name: ptr_add_s20_on_ptr_invalid_imm
+legalized: true
+regBankSelected: true
+
+body: |
+  bb.0:
+    liveins: $p0, $p1
+    ; AIE2-LABEL: name: ptr_add_s20_on_ptr_invalid_imm
+    ; AIE2: liveins: $p0, $p1
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; AIE2-NEXT: [[MOV_PD_imm10_pseudo:%[0-9]+]]:em = MOV_PD_imm10_pseudo 93
+    ; AIE2-NEXT: [[PADD_mod_pseudo:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY]], [[MOV_PD_imm10_pseudo]]
+    ; AIE2-NEXT: $p0 = COPY [[PADD_mod_pseudo]]
+    ;
+    ; AIE2P-LABEL: name: ptr_add_s20_on_ptr_invalid_imm
+    ; AIE2P: liveins: $p0, $p1
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; AIE2P-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:em = MOV_PD_imm11_pseudo 93
+    ; AIE2P-NEXT: [[PADD_mod_pseudo:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY]], [[MOV_PD_imm11_pseudo]]
+    ; AIE2P-NEXT: $p0 = COPY [[PADD_mod_pseudo]]
+    %0:ptrregbank(p0) = COPY $p0
+    %1:modregbank(s20) = G_CONSTANT i20 93
+    %2:ptrregbank(p0) = G_PTR_ADD %0, %1
+    $p0 = COPY %2
 ...
 
 ---
@@ -61,12 +180,12 @@ body: |
     ; CHECK-LABEL: name: ptr_add_s20_on_ptr_as_32bit
     ; CHECK: liveins: $p0, $p1
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:gprptrmod_and_ptr = COPY $p0
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ptr = COPY $p1
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:mod = COPY [[COPY1]]
-    ; CHECK-NEXT: [[PADDA_nrm:%[0-9]+]]:ptr = PADDA_nrm [[COPY]], [[COPY2]]
-    ; CHECK-NEXT: $p0 = COPY [[PADDA_nrm]]
-    %0:gprptrmod_and_ptr(p0) = COPY $p0
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep_as_32bit = COPY $p0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p1
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:em = COPY [[COPY1]]
+    ; CHECK-NEXT: [[PADD_mod_pseudo:%[0-9]+]]:ep = PADD_mod_pseudo [[COPY]], [[COPY2]]
+    ; CHECK-NEXT: $p0 = COPY [[PADD_mod_pseudo]]
+    %0:ep_as_32bit(p0) = COPY $p0
     %1:ptrregbank(s20) = COPY $p1
     %2:modregbank(s20) = COPY %1
     %3:ptrregbank(p0) = G_PTR_ADD %0, %2

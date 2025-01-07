@@ -20,6 +20,7 @@
 #include "AIEMachineBlockPlacement.h"
 #include "AIETargetTransformInfo.h"
 #include "TargetInfo/AIETargetInfo.h"
+#include "aie2p/AIE2PTargetMachine.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/CSEConfigBase.h"
 #include "llvm/CodeGen/GlobalISel/CSEInfo.h"
@@ -50,6 +51,7 @@ extern bool AIEDumpArtifacts;
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIETarget() {
   RegisterTargetMachine<AIETargetMachine> X(getTheAIETarget());
   RegisterTargetMachine<AIE2TargetMachine> Y(getTheAIE2Target());
+  RegisterTargetMachine<AIE2PTargetMachine> A(getTheAIE2PTarget());
   //  auto PR = PassRegistry::getPassRegistry();
   //  initializeAIEExpandPseudoPass(*PR);
   auto *PR = PassRegistry::getPassRegistry();
@@ -58,8 +60,11 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIETarget() {
   initializeAIEEliminateDuplicatePHIPass(*PR);
   initializeAIEClusterBaseAddressPass(*PR);
   initializeAIE2PreLegalizerCombinerPass(*PR);
+  initializeAIE2PPreLegalizerCombinerPass(*PR);
   initializeAIE2PostLegalizerGenericCombinerPass(*PR);
+  initializeAIE2PPostLegalizerGenericCombinerPass(*PR);
   initializeAIE2PostLegalizerCustomCombinerPass(*PR);
+  initializeAIE2PPostLegalizerCustomCombinerPass(*PR);
   initializeAIEPostSelectOptimizePass(*PR);
   initializeAIEPseudoBranchExpansionPass(*PR);
   initializeAIESubRegConstrainerPass(*PR);

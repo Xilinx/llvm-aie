@@ -662,6 +662,7 @@ void ScalarBitSetTraits<ELFYAML::ELF_EF>::bitset(IO &IO,
   case ELF::EM_AIE:
     BCase(EF_AIE_AIE1);
     BCase(EF_AIE_AIE2);
+    BCase(EF_AIE_AIE2P);
     break;
   default:
     BCase(EF_NONE_FLAG0);

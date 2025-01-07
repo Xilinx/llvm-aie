@@ -6,6 +6,7 @@
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2 -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple aie2p -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s
 
 ---
 name:            test_cmp_true
@@ -61,7 +62,7 @@ body:             |
     ; CHECK-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: $r1 = COPY [[COPY]](s32)
     ; CHECK-NEXT: $r2 = COPY [[COPY1]](s32)
-    ; CHECK-NEXT: PseudoJL &__eqsf2, {{csr_aie.?}}, implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
+    ; CHECK-NEXT: PseudoJL &__eqsf2, {{csr_aie[0-9a-z]*}}, implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r0
     ; CHECK-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
@@ -88,7 +89,7 @@ body:             |
     ; CHECK-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: $r1 = COPY [[COPY]](s32)
     ; CHECK-NEXT: $r2 = COPY [[COPY1]](s32)
-    ; CHECK-NEXT: PseudoJL &__gesf2, {{csr_aie.?}}, implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
+    ; CHECK-NEXT: PseudoJL &__gesf2, {{csr_aie[0-9a-z]*}}, implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r0
     ; CHECK-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
@@ -115,7 +116,7 @@ body:             |
     ; CHECK-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: $r1 = COPY [[COPY]](s32)
     ; CHECK-NEXT: $r2 = COPY [[COPY1]](s32)
-    ; CHECK-NEXT: PseudoJL &__gtsf2, {{csr_aie.?}}, implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
+    ; CHECK-NEXT: PseudoJL &__gtsf2, {{csr_aie[0-9a-z]*}}, implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r0
     ; CHECK-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
@@ -142,7 +143,7 @@ body:             |
     ; CHECK-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: $r1 = COPY [[COPY]](s32)
     ; CHECK-NEXT: $r2 = COPY [[COPY1]](s32)
-    ; CHECK-NEXT: PseudoJL &__lesf2, {{csr_aie.?}}, implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
+    ; CHECK-NEXT: PseudoJL &__lesf2, {{csr_aie[0-9a-z]*}}, implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r0
     ; CHECK-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
@@ -169,7 +170,7 @@ body:             |
     ; CHECK-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: $r1 = COPY [[COPY]](s32)
     ; CHECK-NEXT: $r2 = COPY [[COPY1]](s32)
-    ; CHECK-NEXT: PseudoJL &__ltsf2, {{csr_aie.?}}, implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
+    ; CHECK-NEXT: PseudoJL &__ltsf2, {{csr_aie[0-9a-z]*}}, implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r0
     ; CHECK-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
@@ -196,7 +197,7 @@ body:             |
     ; CHECK-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: $r1 = COPY [[COPY]](s32)
     ; CHECK-NEXT: $r2 = COPY [[COPY1]](s32)
-    ; CHECK-NEXT: PseudoJL &__unordsf2, {{csr_aie.?}}, implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
+    ; CHECK-NEXT: PseudoJL &__unordsf2, {{csr_aie[0-9a-z]*}}, implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r0
     ; CHECK-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
@@ -223,7 +224,7 @@ body:             |
     ; CHECK-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: $r1 = COPY [[COPY]](s32)
     ; CHECK-NEXT: $r2 = COPY [[COPY1]](s32)
-    ; CHECK-NEXT: PseudoJL &__ltsf2, {{csr_aie.?}}, implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
+    ; CHECK-NEXT: PseudoJL &__ltsf2, {{csr_aie[0-9a-z]*}}, implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r0
     ; CHECK-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
@@ -250,7 +251,7 @@ body:             |
     ; CHECK-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: $r1 = COPY [[COPY]](s32)
     ; CHECK-NEXT: $r2 = COPY [[COPY1]](s32)
-    ; CHECK-NEXT: PseudoJL &__lesf2, {{csr_aie.?}}, implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
+    ; CHECK-NEXT: PseudoJL &__lesf2, {{csr_aie[0-9a-z]*}}, implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r0
     ; CHECK-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
@@ -277,7 +278,7 @@ body:             |
     ; CHECK-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: $r1 = COPY [[COPY]](s32)
     ; CHECK-NEXT: $r2 = COPY [[COPY1]](s32)
-    ; CHECK-NEXT: PseudoJL &__gtsf2, {{csr_aie.?}}, implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
+    ; CHECK-NEXT: PseudoJL &__gtsf2, {{csr_aie[0-9a-z]*}}, implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r0
     ; CHECK-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
@@ -304,7 +305,7 @@ body:             |
     ; CHECK-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: $r1 = COPY [[COPY]](s32)
     ; CHECK-NEXT: $r2 = COPY [[COPY1]](s32)
-    ; CHECK-NEXT: PseudoJL &__gesf2, {{csr_aie.?}}, implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
+    ; CHECK-NEXT: PseudoJL &__gesf2, {{csr_aie[0-9a-z]*}}, implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r0
     ; CHECK-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
@@ -331,7 +332,7 @@ body:             |
     ; CHECK-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: $r1 = COPY [[COPY]](s32)
     ; CHECK-NEXT: $r2 = COPY [[COPY1]](s32)
-    ; CHECK-NEXT: PseudoJL &__nesf2, {{csr_aie.?}}, implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
+    ; CHECK-NEXT: PseudoJL &__nesf2, {{csr_aie[0-9a-z]*}}, implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r0
     ; CHECK-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
@@ -358,7 +359,7 @@ body:             |
     ; CHECK-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: $r1 = COPY [[COPY]](s32)
     ; CHECK-NEXT: $r2 = COPY [[COPY1]](s32)
-    ; CHECK-NEXT: PseudoJL &__unordsf2, {{csr_aie.?}}, implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
+    ; CHECK-NEXT: PseudoJL &__unordsf2, {{csr_aie[0-9a-z]*}}, implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r0
     ; CHECK-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
@@ -385,7 +386,7 @@ body:             |
     ; CHECK-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: $r1 = COPY [[COPY]](s32)
     ; CHECK-NEXT: $r2 = COPY [[C]](s32)
-    ; CHECK-NEXT: PseudoJL &__gtsf2, {{csr_aie.?}}, implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
+    ; CHECK-NEXT: PseudoJL &__gtsf2, {{csr_aie[0-9a-z]*}}, implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r0
     ; CHECK-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
@@ -393,7 +394,7 @@ body:             |
     ; CHECK-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: $r1 = COPY [[COPY]](s32)
     ; CHECK-NEXT: $r2 = COPY [[C]](s32)
-    ; CHECK-NEXT: PseudoJL &__ltsf2, {{csr_aie.?}}, implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
+    ; CHECK-NEXT: PseudoJL &__ltsf2, {{csr_aie[0-9a-z]*}}, implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r0
     ; CHECK-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: [[ICMP1:%[0-9]+]]:_(s32) = G_ICMP intpred(slt), [[COPY2]](s32), [[C1]]
@@ -420,7 +421,7 @@ body:             |
     ; CHECK-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: $r1 = COPY [[COPY]](s32)
     ; CHECK-NEXT: $r2 = COPY [[C]](s32)
-    ; CHECK-NEXT: PseudoJL &__eqsf2, {{csr_aie.?}}, implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
+    ; CHECK-NEXT: PseudoJL &__eqsf2, {{csr_aie[0-9a-z]*}}, implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r0
     ; CHECK-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
@@ -428,7 +429,7 @@ body:             |
     ; CHECK-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: $r1 = COPY [[COPY]](s32)
     ; CHECK-NEXT: $r2 = COPY [[C]](s32)
-    ; CHECK-NEXT: PseudoJL &__unordsf2, {{csr_aie.?}}, implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
+    ; CHECK-NEXT: PseudoJL &__unordsf2, {{csr_aie[0-9a-z]*}}, implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r0
     ; CHECK-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: [[ICMP1:%[0-9]+]]:_(s32) = G_ICMP intpred(ne), [[COPY2]](s32), [[C1]]

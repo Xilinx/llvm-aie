@@ -1,0 +1,204 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; VMAX_LT_16_vaddSign0
+    $x4, $r16 = VMAX_LT_16_vaddSign0 $x3, $x4, implicit $vaddsign0
+    $x3, $r16 = VMAX_LT_16_vaddSign0 $x1, $x11, implicit $vaddsign0
+    $x10, $r16 = VMAX_LT_16_vaddSign0 $x5, $x0, implicit $vaddsign0
+    $x11, $r16 = VMAX_LT_16_vaddSign0 $x4, $x3, implicit $vaddsign0
+    $x0, $r16 = VMAX_LT_16_vaddSign0 $x0, $x6, implicit $vaddsign0
+    $x7, $r16 = VMAX_LT_16_vaddSign0 $x9, $x8, implicit $vaddsign0
+    $x2, $r16 = VMAX_LT_16_vaddSign0 $x11, $x9, implicit $vaddsign0
+    $x6, $r16 = VMAX_LT_16_vaddSign0 $x6, $x10, implicit $vaddsign0
+    $x1, $r16 = VMAX_LT_16_vaddSign0 $x8, $x5, implicit $vaddsign0
+    $x5, $r16 = VMAX_LT_16_vaddSign0 $x2, $x2, implicit $vaddsign0
+    $x9, $r16 = VMAX_LT_16_vaddSign0 $x7, $x7, implicit $vaddsign0
+    $x8, $r16 = VMAX_LT_16_vaddSign0 $x10, $x1, implicit $vaddsign0
+
+    ; VMAX_LT_16_vaddSign1
+    $x5, $r16 = VMAX_LT_16_vaddSign1 $x2, $x6, implicit $vaddsign1
+    $x8, $r16 = VMAX_LT_16_vaddSign1 $x5, $x1, implicit $vaddsign1
+    $x4, $r16 = VMAX_LT_16_vaddSign1 $x6, $x10, implicit $vaddsign1
+    $x1, $r16 = VMAX_LT_16_vaddSign1 $x10, $x8, implicit $vaddsign1
+    $x10, $r16 = VMAX_LT_16_vaddSign1 $x7, $x7, implicit $vaddsign1
+    $x0, $r16 = VMAX_LT_16_vaddSign1 $x1, $x2, implicit $vaddsign1
+    $x6, $r16 = VMAX_LT_16_vaddSign1 $x8, $x11, implicit $vaddsign1
+    $x2, $r16 = VMAX_LT_16_vaddSign1 $x0, $x5, implicit $vaddsign1
+    $x7, $r16 = VMAX_LT_16_vaddSign1 $x11, $x3, implicit $vaddsign1
+    $x3, $r16 = VMAX_LT_16_vaddSign1 $x3, $x0, implicit $vaddsign1
+    $x9, $r16 = VMAX_LT_16_vaddSign1 $x9, $x9, implicit $vaddsign1
+    $x11, $r16 = VMAX_LT_16_vaddSign1 $x4, $x4, implicit $vaddsign1
+
+    ; VMAX_LT_32_vaddSign0
+    $x9, $r16 = VMAX_LT_32_vaddSign0 $x1, $x9, implicit $vaddsign0
+    $x1, $r16 = VMAX_LT_32_vaddSign0 $x9, $x10, implicit $vaddsign0
+    $x5, $r16 = VMAX_LT_32_vaddSign0 $x10, $x1, implicit $vaddsign0
+    $x0, $r16 = VMAX_LT_32_vaddSign0 $x4, $x7, implicit $vaddsign0
+    $x2, $r16 = VMAX_LT_32_vaddSign0 $x6, $x6, implicit $vaddsign0
+    $x6, $r16 = VMAX_LT_32_vaddSign0 $x5, $x4, implicit $vaddsign0
+    $x8, $r16 = VMAX_LT_32_vaddSign0 $x0, $x0, implicit $vaddsign0
+    $x7, $r16 = VMAX_LT_32_vaddSign0 $x8, $x3, implicit $vaddsign0
+    $x10, $r16 = VMAX_LT_32_vaddSign0 $x11, $x11, implicit $vaddsign0
+    $x3, $r16 = VMAX_LT_32_vaddSign0 $x2, $x2, implicit $vaddsign0
+    $x4, $r16 = VMAX_LT_32_vaddSign0 $x7, $x5, implicit $vaddsign0
+    $x11, $r16 = VMAX_LT_32_vaddSign0 $x3, $x8, implicit $vaddsign0
+
+    ; VMAX_LT_32_vaddSign1
+    $x6, $r16 = VMAX_LT_32_vaddSign1 $x1, $x9, implicit $vaddsign1
+    $x8, $r16 = VMAX_LT_32_vaddSign1 $x0, $x5, implicit $vaddsign1
+    $x5, $r16 = VMAX_LT_32_vaddSign1 $x3, $x6, implicit $vaddsign1
+    $x2, $r16 = VMAX_LT_32_vaddSign1 $x11, $x10, implicit $vaddsign1
+    $x4, $r16 = VMAX_LT_32_vaddSign1 $x9, $x8, implicit $vaddsign1
+    $x0, $r16 = VMAX_LT_32_vaddSign1 $x5, $x0, implicit $vaddsign1
+    $x9, $r16 = VMAX_LT_32_vaddSign1 $x6, $x7, implicit $vaddsign1
+    $x7, $r16 = VMAX_LT_32_vaddSign1 $x10, $x1, implicit $vaddsign1
+    $x1, $r16 = VMAX_LT_32_vaddSign1 $x2, $x11, implicit $vaddsign1
+    $x11, $r16 = VMAX_LT_32_vaddSign1 $x7, $x4, implicit $vaddsign1
+    $x10, $r16 = VMAX_LT_32_vaddSign1 $x8, $x2, implicit $vaddsign1
+    $x3, $r16 = VMAX_LT_32_vaddSign1 $x4, $x3, implicit $vaddsign1
+
+    ; VMAX_LT_8_vaddSign0
+    $x11, $l8 = VMAX_LT_8_vaddSign0 $x3, $x10, implicit $vaddsign0
+    $x1, $l8 = VMAX_LT_8_vaddSign0 $x0, $x11, implicit $vaddsign0
+    $x0, $l8 = VMAX_LT_8_vaddSign0 $x9, $x8, implicit $vaddsign0
+    $x5, $l8 = VMAX_LT_8_vaddSign0 $x8, $x0, implicit $vaddsign0
+    $x2, $l8 = VMAX_LT_8_vaddSign0 $x4, $x2, implicit $vaddsign0
+    $x4, $l8 = VMAX_LT_8_vaddSign0 $x6, $x9, implicit $vaddsign0
+    $x10, $l8 = VMAX_LT_8_vaddSign0 $x7, $x6, implicit $vaddsign0
+    $x8, $l8 = VMAX_LT_8_vaddSign0 $x5, $x3, implicit $vaddsign0
+    $x9, $l8 = VMAX_LT_8_vaddSign0 $x10, $x7, implicit $vaddsign0
+    $x7, $l8 = VMAX_LT_8_vaddSign0 $x1, $x5, implicit $vaddsign0
+    $x6, $l8 = VMAX_LT_8_vaddSign0 $x11, $x1, implicit $vaddsign0
+    $x3, $l8 = VMAX_LT_8_vaddSign0 $x2, $x4, implicit $vaddsign0
+
+    ; VMAX_LT_8_vaddSign1
+    $x11, $l8 = VMAX_LT_8_vaddSign1 $x2, $x11, implicit $vaddsign1
+    $x10, $l8 = VMAX_LT_8_vaddSign1 $x6, $x8, implicit $vaddsign1
+    $x2, $l8 = VMAX_LT_8_vaddSign1 $x5, $x0, implicit $vaddsign1
+    $x4, $l8 = VMAX_LT_8_vaddSign1 $x3, $x6, implicit $vaddsign1
+    $x3, $l8 = VMAX_LT_8_vaddSign1 $x0, $x9, implicit $vaddsign1
+    $x1, $l8 = VMAX_LT_8_vaddSign1 $x11, $x10, implicit $vaddsign1
+    $x7, $l8 = VMAX_LT_8_vaddSign1 $x8, $x7, implicit $vaddsign1
+    $x8, $l8 = VMAX_LT_8_vaddSign1 $x10, $x5, implicit $vaddsign1
+    $x6, $l8 = VMAX_LT_8_vaddSign1 $x1, $x4, implicit $vaddsign1
+    $x5, $l8 = VMAX_LT_8_vaddSign1 $x4, $x1, implicit $vaddsign1
+    $x0, $l8 = VMAX_LT_8_vaddSign1 $x9, $x3, implicit $vaddsign1
+    $x9, $l8 = VMAX_LT_8_vaddSign1 $x7, $x2, implicit $vaddsign1
+
+    ; VMAX_LT_bf16
+    $x0, $r16 = VMAX_LT_bf16 $x7, $x5
+    $x1, $r16 = VMAX_LT_bf16 $x11, $x6
+    $x11, $r16 = VMAX_LT_bf16 $x1, $x2
+    $x7, $r16 = VMAX_LT_bf16 $x9, $x4
+    $x5, $r16 = VMAX_LT_bf16 $x6, $x1
+    $x3, $r16 = VMAX_LT_bf16 $x5, $x0
+    $x4, $r16 = VMAX_LT_bf16 $x0, $x9
+    $x9, $r16 = VMAX_LT_bf16 $x4, $x7
+    $x8, $r16 = VMAX_LT_bf16 $x3, $x3
+    $x10, $r16 = VMAX_LT_bf16 $x2, $x8
+    $x2, $r16 = VMAX_LT_bf16 $x10, $x11
+    $x6, $r16 = VMAX_LT_bf16 $x8, $x10
+...
+
+# CHECK: 0: 58 30 1a 1a vmax_lt.16 x4, r16, x3, x4, vaddsign0
+# CHECK: 4: 58 b0 8d 19 vmax_lt.16 x3, r16, x1, x11, vaddsign0
+# CHECK: 8: 58 30 28 1d vmax_lt.16 x10, r16, x5, x0, vaddsign0
+# CHECK: c: 58 b0 a1 1d vmax_lt.16 x11, r16, x4, x3, vaddsign0
+# CHECK: 10: 58 30 03 18 vmax_lt.16 x0, r16, x0, x6, vaddsign0
+# CHECK: 14: 58 30 cc 1b vmax_lt.16 x7, r16, x9, x8, vaddsign0
+# CHECK: 18: 58 b0 5c 19 vmax_lt.16 x2, r16, x11, x9, vaddsign0
+# CHECK: 1c: 58 30 35 1b vmax_lt.16 x6, r16, x6, x10, vaddsign0
+# CHECK: 20: 58 b0 c2 18 vmax_lt.16 x1, r16, x8, x5, vaddsign0
+# CHECK: 24: 58 30 91 1a vmax_lt.16 x5, r16, x2, x2, vaddsign0
+# CHECK: 28: 58 b0 bb 1c vmax_lt.16 x9, r16, x7, x7, vaddsign0
+# CHECK: 2c: 58 b0 50 1c vmax_lt.16 x8, r16, x10, x1, vaddsign0
+# CHECK: 30: 58 32 93 1a vmax_lt.16 x5, r16, x2, x6, vaddsign1
+# CHECK: 34: 58 b2 28 1c vmax_lt.16 x8, r16, x5, x1, vaddsign1
+# CHECK: 38: 58 32 35 1a vmax_lt.16 x4, r16, x6, x10, vaddsign1
+# CHECK: 3c: 58 32 d4 18 vmax_lt.16 x1, r16, x10, x8, vaddsign1
+# CHECK: 40: 58 b2 3b 1d vmax_lt.16 x10, r16, x7, x7, vaddsign1
+# CHECK: 44: 58 32 09 18 vmax_lt.16 x0, r16, x1, x2, vaddsign1
+# CHECK: 48: 58 b2 45 1b vmax_lt.16 x6, r16, x8, x11, vaddsign1
+# CHECK: 4c: 58 b2 02 19 vmax_lt.16 x2, r16, x0, x5, vaddsign1
+# CHECK: 50: 58 b2 d9 1b vmax_lt.16 x7, r16, x11, x3, vaddsign1
+# CHECK: 54: 58 32 98 19 vmax_lt.16 x3, r16, x3, x0, vaddsign1
+# CHECK: 58: 58 b2 cc 1c vmax_lt.16 x9, r16, x9, x9, vaddsign1
+# CHECK: 5c: 58 32 a2 1d vmax_lt.16 x11, r16, x4, x4, vaddsign1
+# CHECK: 60: 58 90 8c 1c vmax_lt.32 x9, r16, x1, x9, vaddsign0
+# CHECK: 64: 58 10 cd 18 vmax_lt.32 x1, r16, x9, x10, vaddsign0
+# CHECK: 68: 58 90 d0 1a vmax_lt.32 x5, r16, x10, x1, vaddsign0
+# CHECK: 6c: 58 90 23 18 vmax_lt.32 x0, r16, x4, x7, vaddsign0
+# CHECK: 70: 58 10 33 19 vmax_lt.32 x2, r16, x6, x6, vaddsign0
+# CHECK: 74: 58 10 2a 1b vmax_lt.32 x6, r16, x5, x4, vaddsign0
+# CHECK: 78: 58 10 00 1c vmax_lt.32 x8, r16, x0, x0, vaddsign0
+# CHECK: 7c: 58 90 c1 1b vmax_lt.32 x7, r16, x8, x3, vaddsign0
+# CHECK: 80: 58 90 5d 1d vmax_lt.32 x10, r16, x11, x11, vaddsign0
+# CHECK: 84: 58 10 91 19 vmax_lt.32 x3, r16, x2, x2, vaddsign0
+# CHECK: 88: 58 90 3a 1a vmax_lt.32 x4, r16, x7, x5, vaddsign0
+# CHECK: 8c: 58 10 9c 1d vmax_lt.32 x11, r16, x3, x8, vaddsign0
+# CHECK: 90: 58 92 0c 1b vmax_lt.32 x6, r16, x1, x9, vaddsign1
+# CHECK: 94: 58 92 02 1c vmax_lt.32 x8, r16, x0, x5, vaddsign1
+# CHECK: 98: 58 12 9b 1a vmax_lt.32 x5, r16, x3, x6, vaddsign1
+# CHECK: 9c: 58 12 5d 19 vmax_lt.32 x2, r16, x11, x10, vaddsign1
+# CHECK: a0: 58 12 4c 1a vmax_lt.32 x4, r16, x9, x8, vaddsign1
+# CHECK: a4: 58 12 28 18 vmax_lt.32 x0, r16, x5, x0, vaddsign1
+# CHECK: a8: 58 92 b3 1c vmax_lt.32 x9, r16, x6, x7, vaddsign1
+# CHECK: ac: 58 92 d0 1b vmax_lt.32 x7, r16, x10, x1, vaddsign1
+# CHECK: b0: 58 92 95 18 vmax_lt.32 x1, r16, x2, x11, vaddsign1
+# CHECK: b4: 58 12 ba 1d vmax_lt.32 x11, r16, x7, x4, vaddsign1
+# CHECK: b8: 58 12 41 1d vmax_lt.32 x10, r16, x8, x2, vaddsign1
+# CHECK: bc: 58 92 a1 19 vmax_lt.32 x3, r16, x4, x3, vaddsign1
+# CHECK: c0: 58 50 9d 1d vmax_lt.8 x11, r17:r16, x3, x10, vaddsign0
+# CHECK: c4: 58 d0 85 18 vmax_lt.8 x1, r17:r16, x0, x11, vaddsign0
+# CHECK: c8: 58 50 4c 18 vmax_lt.8 x0, r17:r16, x9, x8, vaddsign0
+# CHECK: cc: 58 50 c0 1a vmax_lt.8 x5, r17:r16, x8, x0, vaddsign0
+# CHECK: d0: 58 50 21 19 vmax_lt.8 x2, r17:r16, x4, x2, vaddsign0
+# CHECK: d4: 58 d0 34 1a vmax_lt.8 x4, r17:r16, x6, x9, vaddsign0
+# CHECK: d8: 58 50 3b 1d vmax_lt.8 x10, r17:r16, x7, x6, vaddsign0
+# CHECK: dc: 58 d0 29 1c vmax_lt.8 x8, r17:r16, x5, x3, vaddsign0
+# CHECK: e0: 58 d0 d3 1c vmax_lt.8 x9, r17:r16, x10, x7, vaddsign0
+# CHECK: e4: 58 d0 8a 1b vmax_lt.8 x7, r17:r16, x1, x5, vaddsign0
+# CHECK: e8: 58 d0 58 1b vmax_lt.8 x6, r17:r16, x11, x1, vaddsign0
+# CHECK: ec: 58 50 92 19 vmax_lt.8 x3, r17:r16, x2, x4, vaddsign0
+# CHECK: f0: 58 d2 95 1d vmax_lt.8 x11, r17:r16, x2, x11, vaddsign1
+# CHECK: f4: 58 52 34 1d vmax_lt.8 x10, r17:r16, x6, x8, vaddsign1
+# CHECK: f8: 58 52 28 19 vmax_lt.8 x2, r17:r16, x5, x0, vaddsign1
+# CHECK: fc: 58 52 1b 1a vmax_lt.8 x4, r17:r16, x3, x6, vaddsign1
+# CHECK: 100: 58 d2 84 19 vmax_lt.8 x3, r17:r16, x0, x9, vaddsign1
+# CHECK: 104: 58 52 dd 18 vmax_lt.8 x1, r17:r16, x11, x10, vaddsign1
+# CHECK: 108: 58 d2 c3 1b vmax_lt.8 x7, r17:r16, x8, x7, vaddsign1
+# CHECK: 10c: 58 d2 52 1c vmax_lt.8 x8, r17:r16, x10, x5, vaddsign1
+# CHECK: 110: 58 52 0a 1b vmax_lt.8 x6, r17:r16, x1, x4, vaddsign1
+# CHECK: 114: 58 d2 a0 1a vmax_lt.8 x5, r17:r16, x4, x1, vaddsign1
+# CHECK: 118: 58 d2 49 18 vmax_lt.8 x0, r17:r16, x9, x3, vaddsign1
+# CHECK: 11c: 58 52 b9 1c vmax_lt.8 x9, r17:r16, x7, x2, vaddsign1
+# CHECK: 120: f8 ec 3a 18 vmax_lt.bf16 x0, r16, x7, x5
+# CHECK: 124: f8 6c db 18 vmax_lt.bf16 x1, r16, x11, x6
+# CHECK: 128: f8 6c 89 1d vmax_lt.bf16 x11, r16, x1, x2
+# CHECK: 12c: f8 6c ca 1b vmax_lt.bf16 x7, r16, x9, x4
+# CHECK: 130: f8 ec b0 1a vmax_lt.bf16 x5, r16, x6, x1
+# CHECK: 134: f8 6c a8 19 vmax_lt.bf16 x3, r16, x5, x0
+# CHECK: 138: f8 ec 04 1a vmax_lt.bf16 x4, r16, x0, x9
+# CHECK: 13c: f8 ec a3 1c vmax_lt.bf16 x9, r16, x4, x7
+# CHECK: 140: f8 ec 19 1c vmax_lt.bf16 x8, r16, x3, x3
+# CHECK: 144: f8 6c 14 1d vmax_lt.bf16 x10, r16, x2, x8
+# CHECK: 148: f8 ec 55 19 vmax_lt.bf16 x2, r16, x10, x11
+# CHECK: 14c: f8 6c 45 1b vmax_lt.bf16 x6, r16, x8, x10

@@ -104,4 +104,6 @@ bool AIEAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeAIEAsmPrinter() {
   RegisterAsmPrinter<AIEAsmPrinter> X(getTheAIETarget());
   RegisterAsmPrinter<AIE2AsmPrinter> Y(getTheAIE2Target());
+  // FIXME using AIE2AsmPrinter for AIE2P target
+  RegisterAsmPrinter<AIE2AsmPrinter> A(getTheAIE2PTarget());
 }

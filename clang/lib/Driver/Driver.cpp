@@ -6431,6 +6431,7 @@ const ToolChain &Driver::getToolChain(const ArgList &Args,
       switch (Target.getArch()) {
       case llvm::Triple::aie:
       case llvm::Triple::aie2:
+      case llvm::Triple::aie2p:
         TC = std::make_unique<toolchains::AIEToolChain>(*this, Target, Args);
         break;
       case llvm::Triple::tce:

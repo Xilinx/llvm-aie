@@ -1,0 +1,124 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; VADDSUB_16
+    $x9 = VADDSUB_16 $x0, $x3, $r21
+    $x6 = VADDSUB_16 $x7, $x9, $r28
+    $x5 = VADDSUB_16 $x4, $x4, $r25
+    $x0 = VADDSUB_16 $x10, $x11, $r17
+    $x7 = VADDSUB_16 $x1, $x1, $r19
+    $x1 = VADDSUB_16 $x2, $x0, $r30
+    $x10 = VADDSUB_16 $x8, $x8, $r16
+    $x2 = VADDSUB_16 $x6, $x5, $r20
+    $x8 = VADDSUB_16 $x11, $x6, $r26
+    $x11 = VADDSUB_16 $x3, $x2, $r23
+    $x3 = VADDSUB_16 $x5, $x10, $r22
+    $x4 = VADDSUB_16 $x9, $x7, $r29
+    $x9 = VADDSUB_16 $x0, $x3, $r24
+    $x6 = VADDSUB_16 $x7, $x9, $r27
+    $x5 = VADDSUB_16 $x4, $x4, $r18
+    $x0 = VADDSUB_16 $x10, $x11, $r31
+
+    ; VADDSUB_32
+    $x4 = VADDSUB_32 $x8, $x9, $r26
+    $x10 = VADDSUB_32 $x11, $x10, $r27
+    $x3 = VADDSUB_32 $x2, $x11, $r23
+    $x6 = VADDSUB_32 $x9, $x7, $r30
+    $x7 = VADDSUB_32 $x10, $x3, $r25
+    $x9 = VADDSUB_32 $x0, $x2, $r16
+    $x5 = VADDSUB_32 $x4, $x4, $r22
+    $x1 = VADDSUB_32 $x7, $x6, $r31
+    $x11 = VADDSUB_32 $x5, $x8, $r17
+    $x8 = VADDSUB_32 $x6, $x0, $r28
+    $x2 = VADDSUB_32 $x3, $x1, $r20
+    $x0 = VADDSUB_32 $x1, $x5, $r21
+    $x4 = VADDSUB_32 $x8, $x9, $r19
+    $x10 = VADDSUB_32 $x11, $x10, $r24
+    $x3 = VADDSUB_32 $x2, $x11, $r18
+    $x6 = VADDSUB_32 $x9, $x7, $r29
+
+    ; VADDSUB_8
+    $x3 = VADDSUB_8 $x6, $x10, $l14
+    $x11 = VADDSUB_8 $x4, $x6, $l11
+    $x0 = VADDSUB_8 $x9, $x11, $l13
+    $x6 = VADDSUB_8 $x1, $x1, $l7
+    $x1 = VADDSUB_8 $x10, $x9, $l8
+    $x7 = VADDSUB_8 $x8, $x2, $l15
+    $x4 = VADDSUB_8 $x3, $x7, $l6
+    $x9 = VADDSUB_8 $x2, $x8, $l3
+    $x2 = VADDSUB_8 $x7, $x5, $l1
+    $x8 = VADDSUB_8 $x0, $x4, $l0
+    $x5 = VADDSUB_8 $x11, $x0, $l5
+    $x10 = VADDSUB_8 $x5, $x3, $l9
+    $x3 = VADDSUB_8 $x6, $x10, $l10
+    $x11 = VADDSUB_8 $x4, $x6, $l2
+    $x0 = VADDSUB_8 $x9, $x11, $l4
+    $x6 = VADDSUB_8 $x1, $x1, $l12
+...
+
+# CHECK: 0: 38 ab 81 1c vaddsub.16 x9, x0, x3, r21
+# CHECK: 4: 38 e3 3c 1b vaddsub.16 x6, x7, x9, r28
+# CHECK: 8: 38 4b a2 1a vaddsub.16 x5, x4, x4, r25
+# CHECK: c: 38 8b 55 18 vaddsub.16 x0, x10, x11, r17
+# CHECK: 10: 38 9b 88 1b vaddsub.16 x7, x1, x1, r19
+# CHECK: 14: 38 73 90 18 vaddsub.16 x1, x2, x0, r30
+# CHECK: 18: 38 03 44 1d vaddsub.16 x10, x8, x8, r16
+# CHECK: 1c: 38 a3 32 19 vaddsub.16 x2, x6, x5, r20
+# CHECK: 20: 38 53 5b 1c vaddsub.16 x8, x11, x6, r26
+# CHECK: 24: 38 3b 99 1d vaddsub.16 x11, x3, x2, r23
+# CHECK: 28: 38 33 ad 19 vaddsub.16 x3, x5, x10, r22
+# CHECK: 2c: 38 eb 4b 1a vaddsub.16 x4, x9, x7, r29
+# CHECK: 30: 38 c3 81 1c vaddsub.16 x9, x0, x3, r24
+# CHECK: 34: 38 db 3c 1b vaddsub.16 x6, x7, x9, r27
+# CHECK: 38: 38 13 a2 1a vaddsub.16 x5, x4, x4, r18
+# CHECK: 3c: 38 fb 55 18 vaddsub.16 x0, x10, x11, r31
+# CHECK: 40: 38 d1 44 1a vaddsub.32 x4, x8, x9, r26
+# CHECK: 44: 38 59 5d 1d vaddsub.32 x10, x11, x10, r27
+# CHECK: 48: 38 b9 95 19 vaddsub.32 x3, x2, x11, r23
+# CHECK: 4c: 38 f1 4b 1b vaddsub.32 x6, x9, x7, r30
+# CHECK: 50: 38 c9 d1 1b vaddsub.32 x7, x10, x3, r25
+# CHECK: 54: 38 01 81 1c vaddsub.32 x9, x0, x2, r16
+# CHECK: 58: 38 31 a2 1a vaddsub.32 x5, x4, x4, r22
+# CHECK: 5c: 38 79 bb 18 vaddsub.32 x1, x7, x6, r31
+# CHECK: 60: 38 09 ac 1d vaddsub.32 x11, x5, x8, r17
+# CHECK: 64: 38 61 30 1c vaddsub.32 x8, x6, x0, r28
+# CHECK: 68: 38 a1 18 19 vaddsub.32 x2, x3, x1, r20
+# CHECK: 6c: 38 a9 0a 18 vaddsub.32 x0, x1, x5, r21
+# CHECK: 70: 38 99 44 1a vaddsub.32 x4, x8, x9, r19
+# CHECK: 74: 38 41 5d 1d vaddsub.32 x10, x11, x10, r24
+# CHECK: 78: 38 91 95 19 vaddsub.32 x3, x2, x11, r18
+# CHECK: 7c: 38 e9 4b 1b vaddsub.32 x6, x9, x7, r29
+# CHECK: 80: 38 75 b5 19 vaddsub.8 x3, x6, x10, r29:r28
+# CHECK: 84: 38 5d a3 1d vaddsub.8 x11, x4, x6, r23:r22
+# CHECK: 88: 38 ed 4d 18 vaddsub.8 x0, x9, x11, r27:r26
+# CHECK: 8c: 38 bd 08 1b vaddsub.8 x6, x1, x1, r15:r14
+# CHECK: 90: 38 c5 d4 18 vaddsub.8 x1, x10, x9, r17:r16
+# CHECK: 94: 38 7d c1 1b vaddsub.8 x7, x8, x2, r31:r30
+# CHECK: 98: 38 b5 1b 1a vaddsub.8 x4, x3, x7, r13:r12
+# CHECK: 9c: 38 1d 94 1c vaddsub.8 x9, x2, x8, r7:r6
+# CHECK: a0: 38 8d 3a 19 vaddsub.8 x2, x7, x5, r3:r2
+# CHECK: a4: 38 05 02 1c vaddsub.8 x8, x0, x4, r1:r0
+# CHECK: a8: 38 2d d8 1a vaddsub.8 x5, x11, x0, r11:r10
+# CHECK: ac: 38 cd 29 1d vaddsub.8 x10, x5, x3, r19:r18
+# CHECK: b0: 38 55 b5 19 vaddsub.8 x3, x6, x10, r21:r20
+# CHECK: b4: 38 15 a3 1d vaddsub.8 x11, x4, x6, r5:r4
+# CHECK: b8: 38 a5 4d 18 vaddsub.8 x0, x9, x11, r9:r8
+# CHECK: bc: 38 e5 08 1b vaddsub.8 x6, x1, x1, r25:r24

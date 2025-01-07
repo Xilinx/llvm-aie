@@ -1,0 +1,23 @@
+# CHECK lines automatically generated using update_encodings.py
+
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc -O2 --mtriple aie2p %s --start-after=postmisched --skip-machine-alignment --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc -O2 --mtriple aie2p %s --start-after=postmisched --skip-machine-alignment --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+
+
+---
+name:            test_ABS
+alignment:       16
+body:             |
+  bb.0 (align 16):
+    $r28 = ABS $r19, implicit-def $srcarry
+...
+
+# CHECK: 0: 18 10 f9 14 abs r28, r19 

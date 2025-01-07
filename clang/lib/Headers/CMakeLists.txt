@@ -46,6 +46,7 @@ set(core_files
 set(aie_files
   aiebase_chess.h
   aiebase_typedefs.h
+  aie_addlog.h
   aiev1_undef.h
   aiev1_upd_ext.h
   aiev1_vfloat.h
@@ -75,6 +76,27 @@ set(aie_files
   aiev2_ldst.h
   aiev2intrin.h
   aiev2_aie_api_compat.h
+  aie2pintrin.h
+  aie2p_upd_ext.h
+  aie2p_ldst.h
+  aie2p_undef.h
+  aie2p_vmult.h
+  aie2p_enums.h
+  aie2p_defines.h
+  aie2p_set_mode.h
+  aie2p_ups.h
+  aie2p_srs.h
+  aie2p_addlog.h
+  aie2p_scalar.h
+  aie2p_locks.h
+  aie2p_vadd.h
+  aie2p_scl2vec.h
+  aie2p_addr.h
+  aie2p_streams.h
+  aie2p_cnvf2f.h
+  aie2p_nlf.h
+  aie2p_nlf_vector.h
+  aie2p_aie_api_compat.h
 )
 
 set(arm_common_files

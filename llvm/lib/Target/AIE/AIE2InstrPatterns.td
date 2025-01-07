@@ -13,14 +13,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-// Defining a custom renderer seems to be the easiest way to negate immediates.
-// Using a !sub "bang operantor" is overly complicated, requiring dag<->int
-// conversions and some black magic.
-def NegateImm : SDNodeXForm<imm, [{
-  return CurDAG->getConstant(-N->getSExtValue(), SDLoc(N), MVT::i32);
-}]>;
-def gi_NegateImm : GICustomOperandRenderer<"renderNegateImm">,
-  GISDNodeXFormEquiv<NegateImm>;
+include "AIEBaseInstrPatterns.td"
+
+// Placeholder for a bare frameindex. This pseudo represents the
+// pointer register to be allocated, initialized with the address
+// represented by the frameindex in its only operand.
+let Uses = [SP] in
+def PseudoFI : Pseudo<(outs eP:$dst), (ins i32imm:$imm)>;
+
+// A bare frameindex. Placeholder until eliminateFrameIndex.
+def : Pat<(ptr0 frameindex:$fi), (PseudoFI(frameindex_to_targetframeindex $fi))>;
 
 class VecConf {
   int AMODE_I32  = 0;
@@ -204,22 +206,6 @@ def : Pat<(srl (i32 eR:$rs1), (i32 simm32:$amount)),
           (LSHL eR:$rs1, (MOV_RLC_imm10_pseudo (i32 (NegateImm simm32:$amount))))>;
 def : Pat<(sra (i32 eR:$rs1), (i32 simm32:$amount)),
           (ASHL eR:$rs1, (MOV_RLC_imm10_pseudo (i32 (NegateImm simm32:$amount))))>;
-
-// This converts a generic FrameIndex into a TargetFrameIndex, frameindex
-// cannot be used in an output pattern.
-def frameindex_to_targetframeindex : SDNodeXForm<frameindex, [{
-  auto FI = cast<FrameIndexSDNode>(N);
-  return CurDAG->getTargetFrameIndex(FI->getIndex(), MVT::i32);
-}]>;
-
-// Contrary to SelectionDAG which adds the FrameIndex to the selected instruction
-// automatically (in SelectionDAG/InstrEmitter.cpp), GlobalIsel does not.
-// This is done in a manually written renderFrameIndex function instead.
-def gi_frameindex_to_targetframeindex : GICustomOperandRenderer<"renderFrameIndex">,
-  GISDNodeXFormEquiv<frameindex_to_targetframeindex>;
-
-// A bare frameindex. Placeholder until eliminateFrameIndex.
-def : Pat<(ptr0 frameindex:$fi), (PseudoFI(frameindex_to_targetframeindex $fi))>;
 
 // 3.16 ST – Scalar Word Store
 // 3.17 ST.s8 / ST.s16 – Scalar Sub-Word Store
@@ -1029,41 +1015,6 @@ def : Pat<(int_aie2_ext_256_1024_acc ACC1024:$src, 0x2),
             (v4i64 (EXTRACT_SUBREG ACC1024:$src, sub_512_hi_256_lo))>;
 def : Pat<(int_aie2_ext_256_1024_acc ACC1024:$src, 0x3),
             (v4i64 (EXTRACT_SUBREG ACC1024:$src, sub_512_hi_256_hi))>;
-
-// VBOR / VBAND
-foreach vec256Ty = [v32i8, v16i16, v8i32] in {
-  def : Pat<(vec256Ty (or VEC256:$src1, VEC256:$src2)),
-            (vec256Ty (EXTRACT_SUBREG (VBOR
-                        (v32i16 (REG_SEQUENCE VEC512, VEC256:$src1, sub_256_lo)),
-                        (v32i16 (REG_SEQUENCE VEC512, VEC256:$src2, sub_256_lo))),
-                       sub_256_lo))>;
-  def : Pat<(vec256Ty (and VEC256:$src1, VEC256:$src2)),
-            (vec256Ty (EXTRACT_SUBREG (VBAND
-                        (v32i16 (REG_SEQUENCE VEC512, VEC256:$src1, sub_256_lo)),
-                        (v32i16 (REG_SEQUENCE VEC512, VEC256:$src2, sub_256_lo))),
-                       sub_256_lo))>;
-}
-foreach vec512Ty = [v64i8, v32i16, v16i32] in {
-  def : Pat<(vec512Ty (or VEC512:$src1, VEC512:$src2)), (VBOR VEC512:$src1, VEC512:$src2)>;
-  def : Pat<(vec512Ty (and VEC512:$src1, VEC512:$src2)), (VBAND VEC512:$src1, VEC512:$src2)>;
-}
-foreach vec1024Ty = [v128i8, v64i16, v32i32] in {
-def : Pat<(vec1024Ty (or VEC1024:$src1, VEC1024:$src2)),
-          (REG_SEQUENCE VEC1024,
-                 (VBOR (v16i32 (EXTRACT_SUBREG VEC1024:$src1, sub_512_lo)),
-                       (v16i32 (EXTRACT_SUBREG VEC1024:$src2, sub_512_lo))), sub_512_lo,
-                 (VBOR (v16i32 (EXTRACT_SUBREG VEC1024:$src1, sub_512_hi)),
-                       (v16i32 (EXTRACT_SUBREG VEC1024:$src2, sub_512_hi))), sub_512_hi
-          )>;
-def : Pat<(vec1024Ty (and VEC1024:$src1, VEC1024:$src2)),
-          (REG_SEQUENCE VEC1024,
-                 (VBAND (v16i32 (EXTRACT_SUBREG VEC1024:$src1, sub_512_lo)),
-                        (v16i32 (EXTRACT_SUBREG VEC1024:$src2, sub_512_lo))), sub_512_lo,
-                 (VBAND (v16i32 (EXTRACT_SUBREG VEC1024:$src1, sub_512_hi)),
-                        (v16i32 (EXTRACT_SUBREG VEC1024:$src2, sub_512_hi))), sub_512_hi
-          )>;
-}
-
 
 // VBNEG_LTZ
 def : Pat<(int_aie2_vbneg_ltz8  VEC512:$s1), (VBNEG_LTZ_S8  VEC512:$s1)>;

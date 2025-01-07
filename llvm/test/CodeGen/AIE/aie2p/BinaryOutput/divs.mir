@@ -1,0 +1,88 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; DIVS
+    $r11, $r31 = DIVS $r31, $r7, $r22
+    $r6, $r31 = DIVS $r31, $r29, $r16
+    $r3, $r31 = DIVS $r31, $r19, $r27
+    $r29, $r31 = DIVS $r31, $r5, $r24
+    $r10, $r31 = DIVS $r31, $r0, $r2
+    $r18, $r31 = DIVS $r31, $r11, $r25
+    $r5, $r31 = DIVS $r31, $r24, $r4
+    $r20, $r31 = DIVS $r31, $r4, $r10
+    $r2, $r31 = DIVS $r31, $r14, $r29
+    $r27, $r31 = DIVS $r31, $r18, $r30
+    $r0, $r31 = DIVS $r31, $r9, $r31
+    $r26, $r31 = DIVS $r31, $r27, $r13
+    $r23, $r31 = DIVS $r31, $r13, $r11
+    $r12, $r31 = DIVS $r31, $r6, $r21
+    $r17, $r31 = DIVS $r31, $r16, $r20
+    $r16, $r31 = DIVS $r31, $r21, $r9
+    $r7, $r31 = DIVS $r31, $r2, $r6
+    $r25, $r31 = DIVS $r31, $r23, $r28
+    $r4, $r31 = DIVS $r31, $r25, $r3
+    $r28, $r31 = DIVS $r31, $r10, $r17
+    $r8, $r31 = DIVS $r31, $r8, $r0
+    $r13, $r31 = DIVS $r31, $r3, $r14
+    $r19, $r31 = DIVS $r31, $r22, $r12
+    $r21, $r31 = DIVS $r31, $r15, $r26
+    $r14, $r31 = DIVS $r31, $r20, $r15
+    $r31, $r31 = DIVS $r31, $r12, $r8
+    $r15, $r31 = DIVS $r31, $r28, $r1
+    $r30, $r31 = DIVS $r31, $r1, $r18
+    $r9, $r31 = DIVS $r31, $r17, $r7
+    $r22, $r31 = DIVS $r31, $r31, $r23
+    $r24, $r31 = DIVS $r31, $r26, $r5
+    $r1, $r31 = DIVS $r31, $r30, $r19
+...
+
+# CHECK: 0: 18 6c d7 11 divs r11, r31, r7, r22
+# CHECK: 4: 18 0c 4d 17 divs r6, r31, r29, r16
+# CHECK: 8: 18 bc c7 14 divs r3, r31, r19, r27
+# CHECK: c: 18 8c 7b 11 divs r29, r31, r5, r24
+# CHECK: 10: 18 2c 14 10 divs r10, r31, r0, r2
+# CHECK: 14: 18 9c e5 12 divs r18, r31, r11, r25
+# CHECK: 18: 18 4c 0a 16 divs r5, r31, r24, r4
+# CHECK: 1c: 18 ac 28 11 divs r20, r31, r4, r10
+# CHECK: 20: 18 dc 85 13 divs r2, r31, r14, r29
+# CHECK: 24: 18 ec b7 14 divs r27, r31, r18, r30
+# CHECK: 28: 18 fc 41 12 divs r0, r31, r9, r31
+# CHECK: 2c: 18 dc f4 16 divs r26, r31, r27, r13
+# CHECK: 30: 18 bc 6e 13 divs r23, r31, r13, r11
+# CHECK: 34: 18 5c 99 11 divs r12, r31, r6, r21
+# CHECK: 38: 18 4c 23 14 divs r17, r31, r16, r20
+# CHECK: 3c: 18 9c 60 15 divs r16, r31, r21, r9
+# CHECK: 40: 18 6c 8e 10 divs r7, r31, r2, r6
+# CHECK: 44: 18 cc f3 15 divs r25, r31, r23, r28
+# CHECK: 48: 18 3c 48 16 divs r4, r31, r25, r3
+# CHECK: 4c: 18 1c b9 12 divs r28, r31, r10, r17
+# CHECK: 50: 18 0c 10 12 divs r8, r31, r8, r0
+# CHECK: 54: 18 ec da 10 divs r13, r31, r3, r14
+# CHECK: 58: 18 cc a6 15 divs r19, r31, r22, r12
+# CHECK: 5c: 18 ac eb 13 divs r21, r31, r15, r26
+# CHECK: 60: 18 fc 1c 15 divs r14, r31, r20, r15
+# CHECK: 64: 18 8c 3e 13 divs r31, r31, r12, r8
+# CHECK: 68: 18 1c 1e 17 divs r15, r31, r28, r1
+# CHECK: 6c: 18 2c 7d 10 divs r30, r31, r1, r18
+# CHECK: 70: 18 7c 52 14 divs r9, r31, r17, r7
+# CHECK: 74: 18 7c ed 17 divs r22, r31, r31, r23
+# CHECK: 78: 18 5c b0 16 divs r24, r31, r26, r5
+# CHECK: 7c: 18 3c 83 17 divs r1, r31, r30, r19

@@ -50,6 +50,13 @@ def combine_pad_vector : GICombineRule<
   (apply [{ applyPadVector(*${root}, MRI, B, ${matchinfo}); }])
 >;
 
+def combine_concat_to_pad_vector : GICombineRule<
+  (defs root:$root, combine_pad_vector_matchdata:$matchinfo),
+  (match (wip_match_opcode G_CONCAT_VECTORS): $root,
+  [{ return matchConcatPadVector(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ applyPadVector(*${root}, MRI, B, ${matchinfo}); }])
+>;
+
 def combine_unpad_vector : GICombineRule<
   (defs root:$root),
   (match (wip_match_opcode G_UNMERGE_VALUES): $root,
@@ -57,17 +64,44 @@ def combine_unpad_vector : GICombineRule<
   (apply [{ applyUnpadVector(*${root}, MRI, B); }])
 >;
 
+def combine_vector_broadcast : GICombineRule<
+  (defs root:$root, combine_splat_vector_matchdata:$matchinfo),
+  (match (wip_match_opcode G_SHUFFLE_VECTOR): $root,
+         [{ return matchBroadcastElement(*${root}, MRI, ${matchinfo}); }]),
+  (apply [{ applySplatVector(*${root}, MRI, B, ${matchinfo}); }])>;
+
+def combine_vector_shuffle_broadcast : GICombineRule<
+  (defs root:$root, combine_splat_vector_matchdata:$matchinfo),
+  (match (wip_match_opcode G_SHUFFLE_VECTOR): $root,
+         [{ return matchShuffleToBroadcast(*${root}, MRI, ${matchinfo}); }]),
+  (apply [{ applySplatVector(*${root}, MRI, B, ${matchinfo}); }])>;
+
 def AIE2PreLegalizerCombiner
     : GICombiner<"AIE2PreLegalizerCombinerImpl", [ combine_unpad_vector, combine_pad_vector,
                                                                  all_combines, combine_S20NarrowingOpt,
                                                                  combine_globalval_offset,
                                                                  combine_extract_vector_elt_and_zsa_ext,
-                                                                 combine_splat_vector ]> {
+                                                                 combine_splat_vector, combine_concat_to_pad_vector]> {
+  let CombineAllMethodName = "tryCombineAllImpl";
+}
+
+def AIE2PPreLegalizerCombiner
+    : GICombiner<"AIE2PPreLegalizerCombinerImpl", [ combine_unpad_vector, combine_pad_vector,
+                                                                 all_combines, combine_S20NarrowingOpt,
+                                                                 combine_globalval_offset,
+                                                                 combine_extract_vector_elt_and_zsa_ext,
+                                                                 combine_splat_vector, combine_vector_broadcast,
+                                                                 combine_concat_to_pad_vector, 
+                                                                 combine_vector_shuffle_broadcast]> {
   let CombineAllMethodName = "tryCombineAllImpl";
 }
 
 def AIE2PostLegalizerGenericCombiner
     : GICombiner<"AIE2PostLegalizerGenericCombinerImpl", [ all_combines ]> {
+}
+
+def AIE2PPostLegalizerGenericCombiner
+    : GICombiner<"AIE2PPostLegalizerGenericCombinerImpl", [ all_combines ]> {
 }
 
 def combine_extract_concat_matchdata: GIDefMatchData<"Register">;
@@ -105,7 +139,7 @@ def combine_load_store_increment : GICombineRule <
 def combine_add_vector_elt_undef : GICombineRule <
   (defs root:$root),
   (match (wip_match_opcode G_AIE_ADD_VECTOR_ELT_HI):$root,
-          [{ return matchAddVecEltUndef(*${root}, MRI); }]),
+          [{ return matchAddVecEltUndef(*${root}, MRI, B.getTII()); }]),
   (apply [{ applyAddVecEltUndef(*${root}, MRI, B); }] )
 >;
 
@@ -144,4 +178,9 @@ def AIE2PostLegalizerCustomCombiner
                                                           combine_unmerge_concat,
                                                           combine_upd_to_concat 
                                                           ]> {
+}
+
+def AIE2PPostLegalizerCustomCombiner
+    : GICombiner<"AIE2PPostLegalizerCustomCombinerImpl", [ combine_load_store_increment,
+                                                          combine_add_vector_elt_undef ]> {
 }

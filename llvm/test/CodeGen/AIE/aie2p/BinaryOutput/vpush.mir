@@ -1,0 +1,486 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; VPUSH_hi_16
+    $x4 = VPUSH_hi_16 $x8, $r31
+    $x10 = VPUSH_hi_16 $x7, $r2
+    $x1 = VPUSH_hi_16 $x0, $r29
+    $x6 = VPUSH_hi_16 $x10, $r16
+    $x11 = VPUSH_hi_16 $x1, $r10
+    $x0 = VPUSH_hi_16 $x9, $r30
+    $x7 = VPUSH_hi_16 $x5, $r23
+    $x2 = VPUSH_hi_16 $x4, $r1
+    $x5 = VPUSH_hi_16 $x2, $r17
+    $x3 = VPUSH_hi_16 $x11, $r15
+    $x9 = VPUSH_hi_16 $x6, $r22
+    $x8 = VPUSH_hi_16 $x3, $r28
+    $x4 = VPUSH_hi_16 $x8, $r4
+    $x10 = VPUSH_hi_16 $x7, $r6
+    $x1 = VPUSH_hi_16 $x0, $r19
+    $x6 = VPUSH_hi_16 $x10, $r21
+    $x11 = VPUSH_hi_16 $x1, $r26
+    $x0 = VPUSH_hi_16 $x9, $r11
+    $x7 = VPUSH_hi_16 $x5, $r18
+    $x2 = VPUSH_hi_16 $x4, $r27
+    $x5 = VPUSH_hi_16 $x2, $r7
+    $x3 = VPUSH_hi_16 $x11, $r3
+    $x9 = VPUSH_hi_16 $x6, $r14
+    $x8 = VPUSH_hi_16 $x3, $r9
+    $x4 = VPUSH_hi_16 $x8, $r5
+    $x10 = VPUSH_hi_16 $x7, $r12
+    $x1 = VPUSH_hi_16 $x0, $r8
+    $x6 = VPUSH_hi_16 $x10, $r20
+    $x11 = VPUSH_hi_16 $x1, $r13
+    $x0 = VPUSH_hi_16 $x9, $r0
+    $x7 = VPUSH_hi_16 $x5, $r24
+    $x2 = VPUSH_hi_16 $x4, $r25
+
+    ; VPUSH_hi_32
+    $x5 = VPUSH_hi_32 $x7, $r20
+    $x0 = VPUSH_hi_32 $x4, $r6
+    $x7 = VPUSH_hi_32 $x3, $r7
+    $x10 = VPUSH_hi_32 $x10, $r18
+    $x8 = VPUSH_hi_32 $x6, $r8
+    $x3 = VPUSH_hi_32 $x0, $r14
+    $x9 = VPUSH_hi_32 $x5, $r1
+    $x2 = VPUSH_hi_32 $x9, $r31
+    $x6 = VPUSH_hi_32 $x8, $r19
+    $x4 = VPUSH_hi_32 $x11, $r28
+    $x1 = VPUSH_hi_32 $x1, $r5
+    $x11 = VPUSH_hi_32 $x2, $r15
+    $x5 = VPUSH_hi_32 $x7, $r4
+    $x0 = VPUSH_hi_32 $x4, $r16
+    $x7 = VPUSH_hi_32 $x3, $r30
+    $x10 = VPUSH_hi_32 $x10, $r11
+    $x8 = VPUSH_hi_32 $x6, $r0
+    $x3 = VPUSH_hi_32 $x0, $r22
+    $x9 = VPUSH_hi_32 $x5, $r21
+    $x2 = VPUSH_hi_32 $x9, $r13
+    $x6 = VPUSH_hi_32 $x8, $r3
+    $x4 = VPUSH_hi_32 $x11, $r17
+    $x1 = VPUSH_hi_32 $x1, $r27
+    $x11 = VPUSH_hi_32 $x2, $r24
+    $x5 = VPUSH_hi_32 $x7, $r25
+    $x0 = VPUSH_hi_32 $x4, $r26
+    $x7 = VPUSH_hi_32 $x3, $r23
+    $x10 = VPUSH_hi_32 $x10, $r29
+    $x8 = VPUSH_hi_32 $x6, $r9
+    $x3 = VPUSH_hi_32 $x0, $r2
+    $x9 = VPUSH_hi_32 $x5, $r10
+    $x2 = VPUSH_hi_32 $x9, $r12
+
+    ; VPUSH_hi_64
+    $x5 = VPUSH_hi_64 $x10, $l7
+    $x7 = VPUSH_hi_64 $x6, $l0
+    $x8 = VPUSH_hi_64 $x3, $l8
+    $x3 = VPUSH_hi_64 $x4, $l1
+    $x11 = VPUSH_hi_64 $x9, $l3
+    $x1 = VPUSH_hi_64 $x7, $l14
+    $x6 = VPUSH_hi_64 $x2, $l11
+    $x0 = VPUSH_hi_64 $x5, $l15
+    $x4 = VPUSH_hi_64 $x1, $l10
+    $x10 = VPUSH_hi_64 $x0, $l13
+    $x2 = VPUSH_hi_64 $x8, $l9
+    $x9 = VPUSH_hi_64 $x11, $l4
+    $x5 = VPUSH_hi_64 $x10, $l6
+    $x7 = VPUSH_hi_64 $x6, $l5
+    $x8 = VPUSH_hi_64 $x3, $l2
+    $x3 = VPUSH_hi_64 $x4, $l12
+
+    ; VPUSH_hi_8
+    $x1 = VPUSH_hi_8 $x1, $r15
+    $x5 = VPUSH_hi_8 $x2, $r7
+    $x6 = VPUSH_hi_8 $x9, $r23
+    $x11 = VPUSH_hi_8 $x8, $r25
+    $x3 = VPUSH_hi_8 $x7, $r12
+    $x7 = VPUSH_hi_8 $x3, $r5
+    $x2 = VPUSH_hi_8 $x4, $r9
+    $x10 = VPUSH_hi_8 $x0, $r14
+    $x8 = VPUSH_hi_8 $x5, $r29
+    $x4 = VPUSH_hi_8 $x10, $r11
+    $x9 = VPUSH_hi_8 $x6, $r1
+    $x0 = VPUSH_hi_8 $x11, $r27
+    $x1 = VPUSH_hi_8 $x1, $r18
+    $x5 = VPUSH_hi_8 $x2, $r8
+    $x6 = VPUSH_hi_8 $x9, $r17
+    $x11 = VPUSH_hi_8 $x8, $r16
+    $x3 = VPUSH_hi_8 $x7, $r19
+    $x7 = VPUSH_hi_8 $x3, $r21
+    $x2 = VPUSH_hi_8 $x4, $r31
+    $x10 = VPUSH_hi_8 $x0, $r13
+    $x8 = VPUSH_hi_8 $x5, $r0
+    $x4 = VPUSH_hi_8 $x10, $r30
+    $x9 = VPUSH_hi_8 $x6, $r24
+    $x0 = VPUSH_hi_8 $x11, $r3
+    $x1 = VPUSH_hi_8 $x1, $r4
+    $x5 = VPUSH_hi_8 $x2, $r26
+    $x6 = VPUSH_hi_8 $x9, $r10
+    $x11 = VPUSH_hi_8 $x8, $r28
+    $x3 = VPUSH_hi_8 $x7, $r6
+    $x7 = VPUSH_hi_8 $x3, $r2
+    $x2 = VPUSH_hi_8 $x4, $r22
+    $x10 = VPUSH_hi_8 $x0, $r20
+
+    ; VPUSH_lo_16
+    $x10 = VPUSH_lo_16 $r13, $x1
+    $x7 = VPUSH_lo_16 $r9, $x4
+    $x2 = VPUSH_lo_16 $r31, $x0
+    $x11 = VPUSH_lo_16 $r0, $x2
+    $x1 = VPUSH_lo_16 $r23, $x5
+    $x9 = VPUSH_lo_16 $r2, $x10
+    $x4 = VPUSH_lo_16 $r22, $x6
+    $x8 = VPUSH_lo_16 $r24, $x3
+    $x6 = VPUSH_lo_16 $r27, $x8
+    $x0 = VPUSH_lo_16 $r8, $x11
+    $x3 = VPUSH_lo_16 $r26, $x9
+    $x5 = VPUSH_lo_16 $r20, $x7
+    $x10 = VPUSH_lo_16 $r18, $x1
+    $x7 = VPUSH_lo_16 $r7, $x4
+    $x2 = VPUSH_lo_16 $r1, $x0
+    $x11 = VPUSH_lo_16 $r12, $x2
+    $x1 = VPUSH_lo_16 $r17, $x5
+    $x9 = VPUSH_lo_16 $r4, $x10
+    $x4 = VPUSH_lo_16 $r19, $x6
+    $x8 = VPUSH_lo_16 $r28, $x3
+    $x6 = VPUSH_lo_16 $r10, $x8
+    $x0 = VPUSH_lo_16 $r3, $x11
+    $x3 = VPUSH_lo_16 $r15, $x9
+    $x5 = VPUSH_lo_16 $r25, $x7
+    $x10 = VPUSH_lo_16 $r14, $x1
+    $x7 = VPUSH_lo_16 $r16, $x4
+    $x2 = VPUSH_lo_16 $r6, $x0
+    $x11 = VPUSH_lo_16 $r11, $x2
+    $x1 = VPUSH_lo_16 $r29, $x5
+    $x9 = VPUSH_lo_16 $r5, $x10
+    $x4 = VPUSH_lo_16 $r21, $x6
+    $x8 = VPUSH_lo_16 $r30, $x3
+
+    ; VPUSH_lo_32
+    $x3 = VPUSH_lo_32 $r30, $x5
+    $x2 = VPUSH_lo_32 $r31, $x3
+    $x7 = VPUSH_lo_32 $r16, $x4
+    $x0 = VPUSH_lo_32 $r17, $x0
+    $x8 = VPUSH_lo_32 $r1, $x6
+    $x1 = VPUSH_lo_32 $r2, $x10
+    $x5 = VPUSH_lo_32 $r18, $x8
+    $x6 = VPUSH_lo_32 $r6, $x11
+    $x4 = VPUSH_lo_32 $r5, $x1
+    $x10 = VPUSH_lo_32 $r12, $x2
+    $x9 = VPUSH_lo_32 $r8, $x9
+    $x11 = VPUSH_lo_32 $r15, $x7
+    $x3 = VPUSH_lo_32 $r7, $x5
+    $x2 = VPUSH_lo_32 $r0, $x3
+    $x7 = VPUSH_lo_32 $r21, $x4
+    $x0 = VPUSH_lo_32 $r29, $x0
+    $x8 = VPUSH_lo_32 $r9, $x6
+    $x1 = VPUSH_lo_32 $r14, $x10
+    $x5 = VPUSH_lo_32 $r10, $x8
+    $x6 = VPUSH_lo_32 $r22, $x11
+    $x4 = VPUSH_lo_32 $r3, $x1
+    $x10 = VPUSH_lo_32 $r11, $x2
+    $x9 = VPUSH_lo_32 $r28, $x9
+    $x11 = VPUSH_lo_32 $r23, $x7
+    $x3 = VPUSH_lo_32 $r20, $x5
+    $x2 = VPUSH_lo_32 $r13, $x3
+    $x7 = VPUSH_lo_32 $r4, $x4
+    $x0 = VPUSH_lo_32 $r24, $x0
+    $x8 = VPUSH_lo_32 $r19, $x6
+    $x1 = VPUSH_lo_32 $r25, $x10
+    $x5 = VPUSH_lo_32 $r27, $x8
+    $x6 = VPUSH_lo_32 $r26, $x11
+
+    ; VPUSH_lo_64
+    $x6 = VPUSH_lo_64 $l5, $x1
+    $x0 = VPUSH_lo_64 $l14, $x7
+    $x2 = VPUSH_lo_64 $l7, $x10
+    $x4 = VPUSH_lo_64 $l1, $x2
+    $x5 = VPUSH_lo_64 $l9, $x8
+    $x9 = VPUSH_lo_64 $l6, $x4
+    $x10 = VPUSH_lo_64 $l8, $x5
+    $x8 = VPUSH_lo_64 $l15, $x11
+    $x7 = VPUSH_lo_64 $l3, $x0
+    $x11 = VPUSH_lo_64 $l13, $x9
+    $x1 = VPUSH_lo_64 $l0, $x6
+    $x3 = VPUSH_lo_64 $l4, $x3
+    $x6 = VPUSH_lo_64 $l10, $x1
+    $x0 = VPUSH_lo_64 $l2, $x7
+    $x2 = VPUSH_lo_64 $l12, $x10
+    $x4 = VPUSH_lo_64 $l11, $x2
+
+    ; VPUSH_lo_8
+    $x1 = VPUSH_lo_8 $r14, $x7
+    $x0 = VPUSH_lo_8 $r23, $x9
+    $x10 = VPUSH_lo_8 $r18, $x5
+    $x5 = VPUSH_lo_8 $r6, $x10
+    $x9 = VPUSH_lo_8 $r10, $x4
+    $x3 = VPUSH_lo_8 $r16, $x6
+    $x7 = VPUSH_lo_8 $r27, $x11
+    $x11 = VPUSH_lo_8 $r21, $x8
+    $x8 = VPUSH_lo_8 $r29, $x2
+    $x6 = VPUSH_lo_8 $r28, $x0
+    $x2 = VPUSH_lo_8 $r22, $x3
+    $x4 = VPUSH_lo_8 $r1, $x1
+    $x1 = VPUSH_lo_8 $r0, $x7
+    $x0 = VPUSH_lo_8 $r19, $x9
+    $x10 = VPUSH_lo_8 $r26, $x5
+    $x5 = VPUSH_lo_8 $r5, $x10
+    $x9 = VPUSH_lo_8 $r12, $x4
+    $x3 = VPUSH_lo_8 $r15, $x6
+    $x7 = VPUSH_lo_8 $r24, $x11
+    $x11 = VPUSH_lo_8 $r30, $x8
+    $x8 = VPUSH_lo_8 $r7, $x2
+    $x6 = VPUSH_lo_8 $r13, $x0
+    $x2 = VPUSH_lo_8 $r3, $x3
+    $x4 = VPUSH_lo_8 $r4, $x1
+    $x1 = VPUSH_lo_8 $r25, $x7
+    $x0 = VPUSH_lo_8 $r8, $x9
+    $x10 = VPUSH_lo_8 $r17, $x5
+    $x5 = VPUSH_lo_8 $r20, $x10
+    $x9 = VPUSH_lo_8 $r9, $x4
+    $x3 = VPUSH_lo_8 $r11, $x6
+    $x7 = VPUSH_lo_8 $r2, $x11
+    $x11 = VPUSH_lo_8 $r31, $x8
+...
+
+# CHECK: 0: 78 d7 47 1a vpush.hi.16 x4, x8, r31
+# CHECK: 4: 78 97 38 1d vpush.hi.16 x10, x7, r2
+# CHECK: 8: 78 57 87 18 vpush.hi.16 x1, x0, r29
+# CHECK: c: 78 17 54 1b vpush.hi.16 x6, x10, r16
+# CHECK: 10: 78 97 8a 1d vpush.hi.16 x11, x1, r10
+# CHECK: 14: 78 97 4f 18 vpush.hi.16 x0, x9, r30
+# CHECK: 18: 78 d7 ad 1b vpush.hi.16 x7, x5, r23
+# CHECK: 1c: 78 57 20 19 vpush.hi.16 x2, x4, r1
+# CHECK: 20: 78 57 94 1a vpush.hi.16 x5, x2, r17
+# CHECK: 24: 78 d7 db 19 vpush.hi.16 x3, x11, r15
+# CHECK: 28: 78 97 b5 1c vpush.hi.16 x9, x6, r22
+# CHECK: 2c: 78 17 1f 1c vpush.hi.16 x8, x3, r28
+# CHECK: 30: 78 17 41 1a vpush.hi.16 x4, x8, r4
+# CHECK: 34: 78 97 39 1d vpush.hi.16 x10, x7, r6
+# CHECK: 38: 78 d7 84 18 vpush.hi.16 x1, x0, r19
+# CHECK: 3c: 78 57 55 1b vpush.hi.16 x6, x10, r21
+# CHECK: 40: 78 97 8e 1d vpush.hi.16 x11, x1, r26
+# CHECK: 44: 78 d7 4a 18 vpush.hi.16 x0, x9, r11
+# CHECK: 48: 78 97 ac 1b vpush.hi.16 x7, x5, r18
+# CHECK: 4c: 78 d7 26 19 vpush.hi.16 x2, x4, r27
+# CHECK: 50: 78 d7 91 1a vpush.hi.16 x5, x2, r7
+# CHECK: 54: 78 d7 d8 19 vpush.hi.16 x3, x11, r3
+# CHECK: 58: 78 97 b3 1c vpush.hi.16 x9, x6, r14
+# CHECK: 5c: 78 57 1a 1c vpush.hi.16 x8, x3, r9
+# CHECK: 60: 78 57 41 1a vpush.hi.16 x4, x8, r5
+# CHECK: 64: 78 17 3b 1d vpush.hi.16 x10, x7, r12
+# CHECK: 68: 78 17 82 18 vpush.hi.16 x1, x0, r8
+# CHECK: 6c: 78 17 55 1b vpush.hi.16 x6, x10, r20
+# CHECK: 70: 78 57 8b 1d vpush.hi.16 x11, x1, r13
+# CHECK: 74: 78 17 48 18 vpush.hi.16 x0, x9, r0
+# CHECK: 78: 78 17 ae 1b vpush.hi.16 x7, x5, r24
+# CHECK: 7c: 78 57 26 19 vpush.hi.16 x2, x4, r25
+# CHECK: 80: 78 27 bd 1a vpush.hi.32 x5, x7, r20
+# CHECK: 84: 78 a7 21 18 vpush.hi.32 x0, x4, r6
+# CHECK: 88: 78 e7 99 1b vpush.hi.32 x7, x3, r7
+# CHECK: 8c: 78 a7 54 1d vpush.hi.32 x10, x10, r18
+# CHECK: 90: 78 27 32 1c vpush.hi.32 x8, x6, r8
+# CHECK: 94: 78 a7 83 19 vpush.hi.32 x3, x0, r14
+# CHECK: 98: 78 67 a8 1c vpush.hi.32 x9, x5, r1
+# CHECK: 9c: 78 e7 4f 19 vpush.hi.32 x2, x9, r31
+# CHECK: a0: 78 e7 44 1b vpush.hi.32 x6, x8, r19
+# CHECK: a4: 78 27 5f 1a vpush.hi.32 x4, x11, r28
+# CHECK: a8: 78 67 89 18 vpush.hi.32 x1, x1, r5
+# CHECK: ac: 78 e7 93 1d vpush.hi.32 x11, x2, r15
+# CHECK: b0: 78 27 b9 1a vpush.hi.32 x5, x7, r4
+# CHECK: b4: 78 27 24 18 vpush.hi.32 x0, x4, r16
+# CHECK: b8: 78 a7 9f 1b vpush.hi.32 x7, x3, r30
+# CHECK: bc: 78 e7 52 1d vpush.hi.32 x10, x10, r11
+# CHECK: c0: 78 27 30 1c vpush.hi.32 x8, x6, r0
+# CHECK: c4: 78 a7 85 19 vpush.hi.32 x3, x0, r22
+# CHECK: c8: 78 67 ad 1c vpush.hi.32 x9, x5, r21
+# CHECK: cc: 78 67 4b 19 vpush.hi.32 x2, x9, r13
+# CHECK: d0: 78 e7 40 1b vpush.hi.32 x6, x8, r3
+# CHECK: d4: 78 67 5c 1a vpush.hi.32 x4, x11, r17
+# CHECK: d8: 78 e7 8e 18 vpush.hi.32 x1, x1, r27
+# CHECK: dc: 78 27 96 1d vpush.hi.32 x11, x2, r24
+# CHECK: e0: 78 67 be 1a vpush.hi.32 x5, x7, r25
+# CHECK: e4: 78 a7 26 18 vpush.hi.32 x0, x4, r26
+# CHECK: e8: 78 e7 9d 1b vpush.hi.32 x7, x3, r23
+# CHECK: ec: 78 67 57 1d vpush.hi.32 x10, x10, r29
+# CHECK: f0: 78 67 32 1c vpush.hi.32 x8, x6, r9
+# CHECK: f4: 78 a7 80 19 vpush.hi.32 x3, x0, r2
+# CHECK: f8: 78 a7 aa 1c vpush.hi.32 x9, x5, r10
+# CHECK: fc: 78 27 4b 19 vpush.hi.32 x2, x9, r12
+# CHECK: 100: 78 b7 d3 1a vpush.hi.64 x5, x10, r15:r14
+# CHECK: 104: 78 37 b0 1b vpush.hi.64 x7, x6, r1:r0
+# CHECK: 108: 78 37 1c 1c vpush.hi.64 x8, x3, r17:r16
+# CHECK: 10c: 78 b7 a0 19 vpush.hi.64 x3, x4, r3:r2
+# CHECK: 110: 78 b7 c9 1d vpush.hi.64 x11, x9, r7:r6
+# CHECK: 114: 78 37 bf 18 vpush.hi.64 x1, x7, r29:r28
+# CHECK: 118: 78 b7 15 1b vpush.hi.64 x6, x2, r23:r22
+# CHECK: 11c: 78 b7 2f 18 vpush.hi.64 x0, x5, r31:r30
+# CHECK: 120: 78 37 0d 1a vpush.hi.64 x4, x1, r21:r20
+# CHECK: 124: 78 b7 06 1d vpush.hi.64 x10, x0, r27:r26
+# CHECK: 128: 78 b7 44 19 vpush.hi.64 x2, x8, r19:r18
+# CHECK: 12c: 78 37 da 1c vpush.hi.64 x9, x11, r9:r8
+# CHECK: 130: 78 37 d3 1a vpush.hi.64 x5, x10, r13:r12
+# CHECK: 134: 78 b7 b2 1b vpush.hi.64 x7, x6, r11:r10
+# CHECK: 138: 78 37 19 1c vpush.hi.64 x8, x3, r5:r4
+# CHECK: 13c: 78 37 a6 19 vpush.hi.64 x3, x4, r25:r24
+# CHECK: 140: 78 c7 8b 18 vpush.hi.8 x1, x1, r15
+# CHECK: 144: 78 c7 91 1a vpush.hi.8 x5, x2, r7
+# CHECK: 148: 78 c7 4d 1b vpush.hi.8 x6, x9, r23
+# CHECK: 14c: 78 47 c6 1d vpush.hi.8 x11, x8, r25
+# CHECK: 150: 78 07 bb 19 vpush.hi.8 x3, x7, r12
+# CHECK: 154: 78 47 99 1b vpush.hi.8 x7, x3, r5
+# CHECK: 158: 78 47 22 19 vpush.hi.8 x2, x4, r9
+# CHECK: 15c: 78 87 03 1d vpush.hi.8 x10, x0, r14
+# CHECK: 160: 78 47 2f 1c vpush.hi.8 x8, x5, r29
+# CHECK: 164: 78 c7 52 1a vpush.hi.8 x4, x10, r11
+# CHECK: 168: 78 47 b0 1c vpush.hi.8 x9, x6, r1
+# CHECK: 16c: 78 c7 5e 18 vpush.hi.8 x0, x11, r27
+# CHECK: 170: 78 87 8c 18 vpush.hi.8 x1, x1, r18
+# CHECK: 174: 78 07 92 1a vpush.hi.8 x5, x2, r8
+# CHECK: 178: 78 47 4c 1b vpush.hi.8 x6, x9, r17
+# CHECK: 17c: 78 07 c4 1d vpush.hi.8 x11, x8, r16
+# CHECK: 180: 78 c7 bc 19 vpush.hi.8 x3, x7, r19
+# CHECK: 184: 78 47 9d 1b vpush.hi.8 x7, x3, r21
+# CHECK: 188: 78 c7 27 19 vpush.hi.8 x2, x4, r31
+# CHECK: 18c: 78 47 03 1d vpush.hi.8 x10, x0, r13
+# CHECK: 190: 78 07 28 1c vpush.hi.8 x8, x5, r0
+# CHECK: 194: 78 87 57 1a vpush.hi.8 x4, x10, r30
+# CHECK: 198: 78 07 b6 1c vpush.hi.8 x9, x6, r24
+# CHECK: 19c: 78 c7 58 18 vpush.hi.8 x0, x11, r3
+# CHECK: 1a0: 78 07 89 18 vpush.hi.8 x1, x1, r4
+# CHECK: 1a4: 78 87 96 1a vpush.hi.8 x5, x2, r26
+# CHECK: 1a8: 78 87 4a 1b vpush.hi.8 x6, x9, r10
+# CHECK: 1ac: 78 07 c7 1d vpush.hi.8 x11, x8, r28
+# CHECK: 1b0: 78 87 b9 19 vpush.hi.8 x3, x7, r6
+# CHECK: 1b4: 78 87 98 1b vpush.hi.8 x7, x3, r2
+# CHECK: 1b8: 78 87 25 19 vpush.hi.8 x2, x4, r22
+# CHECK: 1bc: 78 07 05 1d vpush.hi.8 x10, x0, r20
+# CHECK: 1c0: 78 5f 34 1d vpush.lo.16 x10, r13, x1
+# CHECK: 1c4: 78 1f a5 1b vpush.lo.16 x7, r9, x4
+# CHECK: 1c8: 78 1f 7c 19 vpush.lo.16 x2, r31, x0
+# CHECK: 1cc: 78 9f 80 1d vpush.lo.16 x11, r0, x2
+# CHECK: 1d0: 78 5f dd 18 vpush.lo.16 x1, r23, x5
+# CHECK: 1d4: 78 9f 8a 1c vpush.lo.16 x9, r2, x10
+# CHECK: 1d8: 78 9f 59 1a vpush.lo.16 x4, r22, x6
+# CHECK: 1dc: 78 df 60 1c vpush.lo.16 x8, r24, x3
+# CHECK: 1e0: 78 1f 6e 1b vpush.lo.16 x6, r27, x8
+# CHECK: 1e4: 78 df 22 18 vpush.lo.16 x0, r8, x11
+# CHECK: 1e8: 78 5f ea 19 vpush.lo.16 x3, r26, x9
+# CHECK: 1ec: 78 df d1 1a vpush.lo.16 x5, r20, x7
+# CHECK: 1f0: 78 5f 48 1d vpush.lo.16 x10, r18, x1
+# CHECK: 1f4: 78 1f 9d 1b vpush.lo.16 x7, r7, x4
+# CHECK: 1f8: 78 1f 04 19 vpush.lo.16 x2, r1, x0
+# CHECK: 1fc: 78 9f b0 1d vpush.lo.16 x11, r12, x2
+# CHECK: 200: 78 5f c5 18 vpush.lo.16 x1, r17, x5
+# CHECK: 204: 78 9f 92 1c vpush.lo.16 x9, r4, x10
+# CHECK: 208: 78 9f 4d 1a vpush.lo.16 x4, r19, x6
+# CHECK: 20c: 78 df 70 1c vpush.lo.16 x8, r28, x3
+# CHECK: 210: 78 1f 2a 1b vpush.lo.16 x6, r10, x8
+# CHECK: 214: 78 df 0e 18 vpush.lo.16 x0, r3, x11
+# CHECK: 218: 78 5f be 19 vpush.lo.16 x3, r15, x9
+# CHECK: 21c: 78 df e5 1a vpush.lo.16 x5, r25, x7
+# CHECK: 220: 78 5f 38 1d vpush.lo.16 x10, r14, x1
+# CHECK: 224: 78 1f c1 1b vpush.lo.16 x7, r16, x4
+# CHECK: 228: 78 1f 18 19 vpush.lo.16 x2, r6, x0
+# CHECK: 22c: 78 9f ac 1d vpush.lo.16 x11, r11, x2
+# CHECK: 230: 78 5f f5 18 vpush.lo.16 x1, r29, x5
+# CHECK: 234: 78 9f 96 1c vpush.lo.16 x9, r5, x10
+# CHECK: 238: 78 9f 55 1a vpush.lo.16 x4, r21, x6
+# CHECK: 23c: 78 df 78 1c vpush.lo.16 x8, r30, x3
+# CHECK: 240: 78 6f f9 19 vpush.lo.32 x3, r30, x5
+# CHECK: 244: 78 ef 7c 19 vpush.lo.32 x2, r31, x3
+# CHECK: 248: 78 2f c1 1b vpush.lo.32 x7, r16, x4
+# CHECK: 24c: 78 2f 44 18 vpush.lo.32 x0, r17, x0
+# CHECK: 250: 78 af 05 1c vpush.lo.32 x8, r1, x6
+# CHECK: 254: 78 af 8a 18 vpush.lo.32 x1, r2, x10
+# CHECK: 258: 78 2f ca 1a vpush.lo.32 x5, r18, x8
+# CHECK: 25c: 78 ef 1a 1b vpush.lo.32 x6, r6, x11
+# CHECK: 260: 78 6f 14 1a vpush.lo.32 x4, r5, x1
+# CHECK: 264: 78 af 30 1d vpush.lo.32 x10, r12, x2
+# CHECK: 268: 78 6f a2 1c vpush.lo.32 x9, r8, x9
+# CHECK: 26c: 78 ef bd 1d vpush.lo.32 x11, r15, x7
+# CHECK: 270: 78 6f 9d 19 vpush.lo.32 x3, r7, x5
+# CHECK: 274: 78 ef 00 19 vpush.lo.32 x2, r0, x3
+# CHECK: 278: 78 2f d5 1b vpush.lo.32 x7, r21, x4
+# CHECK: 27c: 78 2f 74 18 vpush.lo.32 x0, r29, x0
+# CHECK: 280: 78 af 25 1c vpush.lo.32 x8, r9, x6
+# CHECK: 284: 78 af ba 18 vpush.lo.32 x1, r14, x10
+# CHECK: 288: 78 2f aa 1a vpush.lo.32 x5, r10, x8
+# CHECK: 28c: 78 ef 5a 1b vpush.lo.32 x6, r22, x11
+# CHECK: 290: 78 6f 0c 1a vpush.lo.32 x4, r3, x1
+# CHECK: 294: 78 af 2c 1d vpush.lo.32 x10, r11, x2
+# CHECK: 298: 78 6f f2 1c vpush.lo.32 x9, r28, x9
+# CHECK: 29c: 78 ef dd 1d vpush.lo.32 x11, r23, x7
+# CHECK: 2a0: 78 6f d1 19 vpush.lo.32 x3, r20, x5
+# CHECK: 2a4: 78 ef 34 19 vpush.lo.32 x2, r13, x3
+# CHECK: 2a8: 78 2f 91 1b vpush.lo.32 x7, r4, x4
+# CHECK: 2ac: 78 2f 60 18 vpush.lo.32 x0, r24, x0
+# CHECK: 2b0: 78 af 4d 1c vpush.lo.32 x8, r19, x6
+# CHECK: 2b4: 78 af e6 18 vpush.lo.32 x1, r25, x10
+# CHECK: 2b8: 78 2f ee 1a vpush.lo.32 x5, r27, x8
+# CHECK: 2bc: 78 ef 6a 1b vpush.lo.32 x6, r26, x11
+# CHECK: 2c0: 78 7f 28 1b vpush.lo.64 x6, r11:r10, x1
+# CHECK: 2c4: 78 ff 71 18 vpush.lo.64 x0, r29:r28, x7
+# CHECK: 2c8: 78 bf 3a 19 vpush.lo.64 x2, r15:r14, x10
+# CHECK: 2cc: 78 bf 08 1a vpush.lo.64 x4, r3:r2, x2
+# CHECK: 2d0: 78 3f ca 1a vpush.lo.64 x5, r19:r18, x8
+# CHECK: 2d4: 78 3f b1 1c vpush.lo.64 x9, r13:r12, x4
+# CHECK: 2d8: 78 7f 41 1d vpush.lo.64 x10, r17:r16, x5
+# CHECK: 2dc: 78 ff 7a 1c vpush.lo.64 x8, r31:r30, x11
+# CHECK: 2e0: 78 3f 98 1b vpush.lo.64 x7, r7:r6, x0
+# CHECK: 2e4: 78 7f ea 1d vpush.lo.64 x11, r27:r26, x9
+# CHECK: 2e8: 78 bf 81 18 vpush.lo.64 x1, r1:r0, x6
+# CHECK: 2ec: 78 ff a0 19 vpush.lo.64 x3, r9:r8, x3
+# CHECK: 2f0: 78 7f 50 1b vpush.lo.64 x6, r21:r20, x1
+# CHECK: 2f4: 78 ff 11 18 vpush.lo.64 x0, r5:r4, x7
+# CHECK: 2f8: 78 bf 62 19 vpush.lo.64 x2, r25:r24, x10
+# CHECK: 2fc: 78 bf 58 1a vpush.lo.64 x4, r23:r22, x2
+# CHECK: 300: 78 cf b9 18 vpush.lo.8 x1, r14, x7
+# CHECK: 304: 78 4f 5e 18 vpush.lo.8 x0, r23, x9
+# CHECK: 308: 78 4f 49 1d vpush.lo.8 x10, r18, x5
+# CHECK: 30c: 78 8f 9a 1a vpush.lo.8 x5, r6, x10
+# CHECK: 310: 78 0f a9 1c vpush.lo.8 x9, r10, x4
+# CHECK: 314: 78 8f c1 19 vpush.lo.8 x3, r16, x6
+# CHECK: 318: 78 cf ee 1b vpush.lo.8 x7, r27, x11
+# CHECK: 31c: 78 0f d6 1d vpush.lo.8 x11, r21, x8
+# CHECK: 320: 78 8f 74 1c vpush.lo.8 x8, r29, x2
+# CHECK: 324: 78 0f 70 1b vpush.lo.8 x6, r28, x0
+# CHECK: 328: 78 cf 58 19 vpush.lo.8 x2, r22, x3
+# CHECK: 32c: 78 4f 04 1a vpush.lo.8 x4, r1, x1
+# CHECK: 330: 78 cf 81 18 vpush.lo.8 x1, r0, x7
+# CHECK: 334: 78 4f 4e 18 vpush.lo.8 x0, r19, x9
+# CHECK: 338: 78 4f 69 1d vpush.lo.8 x10, r26, x5
+# CHECK: 33c: 78 8f 96 1a vpush.lo.8 x5, r5, x10
+# CHECK: 340: 78 0f b1 1c vpush.lo.8 x9, r12, x4
+# CHECK: 344: 78 8f bd 19 vpush.lo.8 x3, r15, x6
+# CHECK: 348: 78 cf e2 1b vpush.lo.8 x7, r24, x11
+# CHECK: 34c: 78 0f fa 1d vpush.lo.8 x11, r30, x8
+# CHECK: 350: 78 8f 1c 1c vpush.lo.8 x8, r7, x2
+# CHECK: 354: 78 0f 34 1b vpush.lo.8 x6, r13, x0
+# CHECK: 358: 78 cf 0c 19 vpush.lo.8 x2, r3, x3
+# CHECK: 35c: 78 4f 10 1a vpush.lo.8 x4, r4, x1
+# CHECK: 360: 78 cf e5 18 vpush.lo.8 x1, r25, x7
+# CHECK: 364: 78 4f 22 18 vpush.lo.8 x0, r8, x9
+# CHECK: 368: 78 4f 45 1d vpush.lo.8 x10, r17, x5
+# CHECK: 36c: 78 8f d2 1a vpush.lo.8 x5, r20, x10
+# CHECK: 370: 78 0f a5 1c vpush.lo.8 x9, r9, x4
+# CHECK: 374: 78 8f ad 19 vpush.lo.8 x3, r11, x6
+# CHECK: 378: 78 cf 8a 1b vpush.lo.8 x7, r2, x11
+# CHECK: 37c: 78 0f fe 1d vpush.lo.8 x11, r31, x8

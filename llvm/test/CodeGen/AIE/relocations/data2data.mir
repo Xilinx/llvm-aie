@@ -8,11 +8,15 @@
 # RUN: llvm-objdump -r --triple=aie %t.aie1.o | FileCheck --check-prefix=AIE1 %s
 # RUN: llc %s -mtriple=aie2 --start-after=postmisched --filetype=obj -o %t.aie2.o
 # RUN: llvm-objdump -r --triple=aie2 %t.aie2.o | FileCheck --check-prefix=AIE2 %s
+# RUN: llc %s -mtriple=aie2p --start-after=postmisched --filetype=obj -o %t.aie2p.o
+# RUN: llvm-objdump -r --triple=aie2p %t.aie2p.o | FileCheck --check-prefix=AIE2P %s
 
 # AIE1: RELOCATION RECORDS FOR [.data.align.4]:
 # AIE1: 00000000 R_AIE_72                 X
 # AIE2: RELOCATION RECORDS FOR [.data.align.4]:
 # AIE2: 00000000 R_AIE_50                 X
+# AIE2P: RELOCATION RECORDS FOR [.data.align.4]:
+# AIE2P: 00000000 R_AIE_62                 X
 
 # Check that we insert the correct relocation type for
 # data relocations in data

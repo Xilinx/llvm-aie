@@ -1,0 +1,24 @@
+#
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+set(TARGET_PUBLIC_HEADERS
+    libc.include.assert
+    libc.include.ctype
+    libc.include.fenv
+    libc.include.errno
+    libc.include.float
+    libc.include.stdint
+    libc.include.inttypes
+    libc.include.math
+    libc.include.stdfix
+    libc.include.stdio
+    libc.include.stdlib
+    libc.include.string
+    libc.include.strings
+    libc.include.sys_queue
+    libc.include.time
+    libc.include.uchar
+)

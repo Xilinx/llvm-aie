@@ -9,6 +9,8 @@
 # RUN: llc -mtriple aie -run-pass=regbankselect -regbankselect-greedy %s -verify-machineinstrs -o - | FileCheck %s
 # RUN: llc -mtriple aie2 -run-pass=regbankselect -regbankselect-fast %s -verify-machineinstrs -o - | FileCheck %s
 # RUN: llc -mtriple aie2 -run-pass=regbankselect -regbankselect-greedy %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple aie2p -run-pass=regbankselect -regbankselect-fast %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple aie2p -run-pass=regbankselect -regbankselect-greedy %s -verify-machineinstrs -o - | FileCheck %s
 
 ---
 name: constant_s32

@@ -1,0 +1,400 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc -mtriple aie2 -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck -DVER=2 --check-prefix=COMMON --check-prefix=AIE2 %s
+# RUN: llc -mtriple aie2p -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck -DVER=2p --check-prefix=COMMON --check-prefix=AIE2P %s
+
+---
+name: test_uitofp_s32_to_s32
+body: |
+  bb.0:
+    liveins: $r1
+
+    ; COMMON-LABEL: name: test_uitofp_s32_to_s32
+    ; COMMON: liveins: $r1
+    ; COMMON-NEXT: {{  $}}
+    ; COMMON-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r1
+    ; COMMON-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    ; COMMON-NEXT: $r1 = COPY [[COPY]](s32)
+    ; COMMON-NEXT: PseudoJL &__floatunsisf, csr_aie[[VER]], implicit-def $lr, implicit $r1, implicit-def $r0
+    ; COMMON-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r0
+    ; COMMON-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    ; COMMON-NEXT: $r0 = COPY [[COPY1]](s32)
+    %0:_(s32) = COPY $r1
+    %1:_(s32) = G_UITOFP %0
+    $r0 = COPY %1
+...
+
+---
+name: test_uitofp_s32_to_s64
+body: |
+  bb.0:
+    liveins: $r1
+
+    ; COMMON-LABEL: name: test_uitofp_s32_to_s64
+    ; COMMON: liveins: $r1
+    ; COMMON-NEXT: {{  $}}
+    ; COMMON-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r1
+    ; COMMON-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    ; COMMON-NEXT: $r2 = COPY [[COPY]](s32)
+    ; COMMON-NEXT: PseudoJL &__floatunsidf, csr_aie[[VER]], implicit-def $lr, implicit $r2, implicit-def $r0, implicit-def $r1
+    ; COMMON-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r0
+    ; COMMON-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r1
+    ; COMMON-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    ; COMMON-NEXT: $r0 = COPY [[COPY1]](s32)
+    ; COMMON-NEXT: $r1 = COPY [[COPY2]](s32)
+    %0:_(s32) = COPY $r1
+    %1:_(s64) = G_UITOFP %0
+    %2:_(s32), %3:_(s32) = G_UNMERGE_VALUES %1(s64)
+    $r0 = COPY %2(s32)
+    $r1 = COPY %3(s32)
+...
+
+---
+name: test_uitofp_s64_to_s64
+body: |
+  bb.0:
+    liveins: $r2, $r3
+
+    ; COMMON-LABEL: name: test_uitofp_s64_to_s64
+    ; COMMON: liveins: $r2, $r3
+    ; COMMON-NEXT: {{  $}}
+    ; COMMON-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r2
+    ; COMMON-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r3
+    ; COMMON-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    ; COMMON-NEXT: $r2 = COPY [[COPY]](s32)
+    ; COMMON-NEXT: $r3 = COPY [[COPY1]](s32)
+    ; COMMON-NEXT: PseudoJL &__floatundidf, csr_aie[[VER]], implicit-def $lr, implicit $r2, implicit $r3, implicit-def $r0, implicit-def $r1
+    ; COMMON-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r0
+    ; COMMON-NEXT: [[COPY3:%[0-9]+]]:_(s32) = COPY $r1
+    ; COMMON-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    ; COMMON-NEXT: $r0 = COPY [[COPY2]](s32)
+    ; COMMON-NEXT: $r1 = COPY [[COPY3]](s32)
+    %0:_(s32) = COPY $r2
+    %1:_(s32) = COPY $r3
+    %2:_(s64) = G_MERGE_VALUES %0(s32), %1(s32)
+    %3:_(s64) = G_UITOFP %2(s64)
+    %4:_(s32), %5:_(s32) = G_UNMERGE_VALUES %3(s64)
+    $r0 = COPY %4(s32)
+    $r1 = COPY %5(s32)
+...
+
+---
+name: test_uitofp_s16_to_s16
+body: |
+  bb.0:
+    liveins: $r1
+
+    ; COMMON-LABEL: name: test_uitofp_s16_to_s16
+    ; COMMON: liveins: $r1
+    ; COMMON-NEXT: {{  $}}
+    ; COMMON-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r1
+    ; COMMON-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 65535
+    ; COMMON-NEXT: [[AND:%[0-9]+]]:_(s32) = G_AND [[COPY]], [[C]]
+    ; COMMON-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    ; COMMON-NEXT: $r1 = COPY [[AND]](s32)
+    ; COMMON-NEXT: PseudoJL &__floatunsisf, csr_aie[[VER]], implicit-def $lr, implicit $r1, implicit-def $r0
+    ; COMMON-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r0
+    ; COMMON-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    ; COMMON-NEXT: [[DEF:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
+    ; COMMON-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; COMMON-NEXT: [[AIE_INSERT_VECTOR_ELT:%[0-9]+]]:_(<16 x s32>) = G_AIE_INSERT_VECTOR_ELT [[DEF]], [[COPY1]](s32), [[C1]](s32)
+    ; AIE2-NEXT: [[BITCAST:%[0-9]+]]:_(<8 x s64>) = G_BITCAST [[AIE_INSERT_VECTOR_ELT]](<16 x s32>)
+    ; AIE2-NEXT: [[INT:%[0-9]+]]:_(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), [[BITCAST]](<8 x s64>)
+    ; AIE2P-NEXT: [[INT:%[0-9]+]]:_(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.v16accfloat.to.v16bf16), [[AIE_INSERT_VECTOR_ELT]](<16 x s32>)
+    ; COMMON-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[INT]](<16 x s16>), [[C1]](s32)
+    ; COMMON-NEXT: [[ASSERT_SEXT:%[0-9]+]]:_(s32) = G_ASSERT_SEXT [[AIE_SEXT_EXTRACT_VECTOR_ELT]], 16
+    ; COMMON-NEXT: $r0 = COPY [[ASSERT_SEXT]](s32)
+    %0:_(s32) = COPY $r1
+    %1:_(s16) = G_TRUNC %0
+    %2:_(s16) = G_UITOFP %1
+    %3:_(s32) = G_ANYEXT %2
+    $r0 = COPY %3
+...
+
+---
+name: test_uitofp_s16_to_s32
+body: |
+  bb.0:
+    liveins: $r1
+
+    ; COMMON-LABEL: name: test_uitofp_s16_to_s32
+    ; COMMON: liveins: $r1
+    ; COMMON-NEXT: {{  $}}
+    ; COMMON-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r1
+    ; COMMON-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 65535
+    ; COMMON-NEXT: [[AND:%[0-9]+]]:_(s32) = G_AND [[COPY]], [[C]]
+    ; COMMON-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    ; COMMON-NEXT: $r1 = COPY [[AND]](s32)
+    ; COMMON-NEXT: PseudoJL &__floatunsisf, csr_aie[[VER]], implicit-def $lr, implicit $r1, implicit-def $r0
+    ; COMMON-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r0
+    ; COMMON-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    ; COMMON-NEXT: $r0 = COPY [[COPY1]](s32)
+    %0:_(s32) = COPY $r1
+    %1:_(s16) = G_TRUNC %0
+    %2:_(s32) = G_UITOFP %1
+    $r0 = COPY %2
+...
+
+---
+name: test_uitofp_s16_to_s64
+body: |
+  bb.0:
+    liveins: $r1
+
+    ; COMMON-LABEL: name: test_uitofp_s16_to_s64
+    ; COMMON: liveins: $r1
+    ; COMMON-NEXT: {{  $}}
+    ; COMMON-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r1
+    ; COMMON-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 65535
+    ; COMMON-NEXT: [[AND:%[0-9]+]]:_(s32) = G_AND [[COPY]], [[C]]
+    ; COMMON-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    ; COMMON-NEXT: $r2 = COPY [[AND]](s32)
+    ; COMMON-NEXT: PseudoJL &__floatunsidf, csr_aie[[VER]], implicit-def $lr, implicit $r2, implicit-def $r0, implicit-def $r1
+    ; COMMON-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r0
+    ; COMMON-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r1
+    ; COMMON-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    ; COMMON-NEXT: $r0 = COPY [[COPY1]](s32)
+    ; COMMON-NEXT: $r1 = COPY [[COPY2]](s32)
+    %0:_(s32) = COPY $r1
+    %1:_(s16) = G_TRUNC %0
+    %2:_(s64) = G_UITOFP %1
+    %3:_(s32), %4:_(s32) = G_UNMERGE_VALUES %2(s64)
+    $r0 = COPY %3(s32)
+    $r1 = COPY %4(s32)
+...
+
+---
+name: test_uitofp_s8_to_s16
+body: |
+  bb.0:
+    liveins: $r1
+
+    ; COMMON-LABEL: name: test_uitofp_s8_to_s16
+    ; COMMON: liveins: $r1
+    ; COMMON-NEXT: {{  $}}
+    ; COMMON-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r1
+    ; COMMON-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 255
+    ; COMMON-NEXT: [[AND:%[0-9]+]]:_(s32) = G_AND [[COPY]], [[C]]
+    ; COMMON-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    ; COMMON-NEXT: $r1 = COPY [[AND]](s32)
+    ; COMMON-NEXT: PseudoJL &__floatunsisf, csr_aie[[VER]], implicit-def $lr, implicit $r1, implicit-def $r0
+    ; COMMON-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r0
+    ; COMMON-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    ; COMMON-NEXT: [[DEF:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
+    ; COMMON-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; COMMON-NEXT: [[AIE_INSERT_VECTOR_ELT:%[0-9]+]]:_(<16 x s32>) = G_AIE_INSERT_VECTOR_ELT [[DEF]], [[COPY1]](s32), [[C1]](s32)
+    ; AIE2-NEXT: [[BITCAST:%[0-9]+]]:_(<8 x s64>) = G_BITCAST [[AIE_INSERT_VECTOR_ELT]](<16 x s32>)
+    ; AIE2-NEXT: [[INT:%[0-9]+]]:_(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), [[BITCAST]](<8 x s64>)
+    ; AIE2P-NEXT: [[INT:%[0-9]+]]:_(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.v16accfloat.to.v16bf16), [[AIE_INSERT_VECTOR_ELT]](<16 x s32>)
+    ; COMMON-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[INT]](<16 x s16>), [[C1]](s32)
+    ; COMMON-NEXT: [[ASSERT_SEXT:%[0-9]+]]:_(s32) = G_ASSERT_SEXT [[AIE_SEXT_EXTRACT_VECTOR_ELT]], 16
+    ; COMMON-NEXT: $r0 = COPY [[ASSERT_SEXT]](s32)
+    %0:_(s32) = COPY $r1
+    %1:_(s8) = G_TRUNC %0
+    %2:_(s16) = G_UITOFP %1
+    %3:_(s32) = G_ANYEXT %2
+    $r0 = COPY %3
+...
+
+---
+name: test_uitofp_s8_to_s32
+body: |
+  bb.0:
+    liveins: $r1
+
+    ; COMMON-LABEL: name: test_uitofp_s8_to_s32
+    ; COMMON: liveins: $r1
+    ; COMMON-NEXT: {{  $}}
+    ; COMMON-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r1
+    ; COMMON-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 255
+    ; COMMON-NEXT: [[AND:%[0-9]+]]:_(s32) = G_AND [[COPY]], [[C]]
+    ; COMMON-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    ; COMMON-NEXT: $r1 = COPY [[AND]](s32)
+    ; COMMON-NEXT: PseudoJL &__floatunsisf, csr_aie[[VER]], implicit-def $lr, implicit $r1, implicit-def $r0
+    ; COMMON-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r0
+    ; COMMON-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    ; COMMON-NEXT: $r0 = COPY [[COPY1]](s32)
+    %0:_(s32) = COPY $r1
+    %1:_(s8) = G_TRUNC %0
+    %2:_(s32) = G_UITOFP %1
+    $r0 = COPY %2
+...
+
+---
+name: test_uitofp_s8_to_s64
+body: |
+  bb.0:
+    liveins: $r1
+
+    ; COMMON-LABEL: name: test_uitofp_s8_to_s64
+    ; COMMON: liveins: $r1
+    ; COMMON-NEXT: {{  $}}
+    ; COMMON-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r1
+    ; COMMON-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 255
+    ; COMMON-NEXT: [[AND:%[0-9]+]]:_(s32) = G_AND [[COPY]], [[C]]
+    ; COMMON-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    ; COMMON-NEXT: $r2 = COPY [[AND]](s32)
+    ; COMMON-NEXT: PseudoJL &__floatunsidf, csr_aie[[VER]], implicit-def $lr, implicit $r2, implicit-def $r0, implicit-def $r1
+    ; COMMON-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r0
+    ; COMMON-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r1
+    ; COMMON-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    ; COMMON-NEXT: $r0 = COPY [[COPY1]](s32)
+    ; COMMON-NEXT: $r1 = COPY [[COPY2]](s32)
+    %0:_(s32) = COPY $r1
+    %1:_(s8) = G_TRUNC %0
+    %2:_(s64) = G_UITOFP %1
+    %3:_(s32), %4:_(s32) = G_UNMERGE_VALUES %2(s64)
+    $r0 = COPY %3(s32)
+    $r1 = COPY %4(s32)
+...
+
+---
+name: test_uitofp_s1_to_s16
+body: |
+  bb.0:
+    liveins: $r1
+
+    ; COMMON-LABEL: name: test_uitofp_s1_to_s16
+    ; COMMON: liveins: $r1
+    ; COMMON-NEXT: {{  $}}
+    ; COMMON-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r1
+    ; COMMON-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; COMMON-NEXT: [[AND:%[0-9]+]]:_(s32) = G_AND [[COPY]], [[C]]
+    ; COMMON-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    ; COMMON-NEXT: $r1 = COPY [[AND]](s32)
+    ; COMMON-NEXT: PseudoJL &__floatunsisf, csr_aie[[VER]], implicit-def $lr, implicit $r1, implicit-def $r0
+    ; COMMON-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r0
+    ; COMMON-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    ; COMMON-NEXT: [[DEF:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
+    ; COMMON-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; COMMON-NEXT: [[AIE_INSERT_VECTOR_ELT:%[0-9]+]]:_(<16 x s32>) = G_AIE_INSERT_VECTOR_ELT [[DEF]], [[COPY1]](s32), [[C1]](s32)
+    ; AIE2-NEXT: [[BITCAST:%[0-9]+]]:_(<8 x s64>) = G_BITCAST [[AIE_INSERT_VECTOR_ELT]](<16 x s32>)
+    ; AIE2-NEXT: [[INT:%[0-9]+]]:_(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), [[BITCAST]](<8 x s64>)
+    ; AIE2P-NEXT: [[INT:%[0-9]+]]:_(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.v16accfloat.to.v16bf16), [[AIE_INSERT_VECTOR_ELT]](<16 x s32>)
+    ; COMMON-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[INT]](<16 x s16>), [[C1]](s32)
+    ; COMMON-NEXT: [[ASSERT_SEXT:%[0-9]+]]:_(s32) = G_ASSERT_SEXT [[AIE_SEXT_EXTRACT_VECTOR_ELT]], 16
+    ; COMMON-NEXT: $r0 = COPY [[ASSERT_SEXT]](s32)
+    %0:_(s32) = COPY $r1
+    %1:_(s1) = G_TRUNC %0
+    %2:_(s16) = G_UITOFP %1
+    %3:_(s32) = G_ANYEXT %2
+    $r0 = COPY %3
+...
+
+---
+name: test_uitofp_s1_to_s32
+body: |
+  bb.0:
+    liveins: $r1
+
+    ; COMMON-LABEL: name: test_uitofp_s1_to_s32
+    ; COMMON: liveins: $r1
+    ; COMMON-NEXT: {{  $}}
+    ; COMMON-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r1
+    ; COMMON-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; COMMON-NEXT: [[AND:%[0-9]+]]:_(s32) = G_AND [[COPY]], [[C]]
+    ; COMMON-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    ; COMMON-NEXT: $r1 = COPY [[AND]](s32)
+    ; COMMON-NEXT: PseudoJL &__floatunsisf, csr_aie[[VER]], implicit-def $lr, implicit $r1, implicit-def $r0
+    ; COMMON-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r0
+    ; COMMON-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    ; COMMON-NEXT: $r0 = COPY [[COPY1]](s32)
+    %0:_(s32) = COPY $r1
+    %1:_(s1) = G_TRUNC %0
+    %2:_(s32) = G_UITOFP %1
+    $r0 = COPY %2
+...
+
+---
+name: test_uitofp_s1_to_s64
+body: |
+  bb.0:
+    liveins: $r1
+
+    ; COMMON-LABEL: name: test_uitofp_s1_to_s64
+    ; COMMON: liveins: $r1
+    ; COMMON-NEXT: {{  $}}
+    ; COMMON-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r1
+    ; COMMON-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; COMMON-NEXT: [[AND:%[0-9]+]]:_(s32) = G_AND [[COPY]], [[C]]
+    ; COMMON-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    ; COMMON-NEXT: $r2 = COPY [[AND]](s32)
+    ; COMMON-NEXT: PseudoJL &__floatunsidf, csr_aie[[VER]], implicit-def $lr, implicit $r2, implicit-def $r0, implicit-def $r1
+    ; COMMON-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r0
+    ; COMMON-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r1
+    ; COMMON-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    ; COMMON-NEXT: $r0 = COPY [[COPY1]](s32)
+    ; COMMON-NEXT: $r1 = COPY [[COPY2]](s32)
+    %0:_(s32) = COPY $r1
+    %1:_(s1) = G_TRUNC %0
+    %2:_(s64) = G_UITOFP %1
+    %3:_(s32), %4:_(s32) = G_UNMERGE_VALUES %2(s64)
+    $r0 = COPY %3(s32)
+    $r1 = COPY %4(s32)
+...
+
+---
+name: test_uitofp_s33_to_s32
+body: |
+  bb.0:
+    liveins: $r2, $r3
+
+    ; COMMON-LABEL: name: test_uitofp_s33_to_s32
+    ; COMMON: liveins: $r2, $r3
+    ; COMMON-NEXT: {{  $}}
+    ; COMMON-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r2
+    ; COMMON-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r3
+    ; COMMON-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 -1
+    ; COMMON-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; COMMON-NEXT: [[AND:%[0-9]+]]:_(s32) = G_AND [[COPY]], [[C]]
+    ; COMMON-NEXT: [[AND1:%[0-9]+]]:_(s32) = G_AND [[COPY1]], [[C1]]
+    ; COMMON-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    ; COMMON-NEXT: $r1 = COPY [[AND]](s32)
+    ; COMMON-NEXT: $r2 = COPY [[AND1]](s32)
+    ; COMMON-NEXT: PseudoJL &__floatundisf, csr_aie[[VER]], implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
+    ; COMMON-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r0
+    ; COMMON-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    ; COMMON-NEXT: $r0 = COPY [[COPY2]](s32)
+    %0:_(s32) = COPY $r2
+    %1:_(s32) = COPY $r3
+    %2:_(s64) = G_MERGE_VALUES %0(s32), %1(s32)
+    %3:_(s33) = G_TRUNC %2
+    %4:_(s32) = G_UITOFP %3
+    $r0 = COPY %4
+...
+
+---
+name: test_uitofp_s64_to_s16
+body: |
+  bb.0:
+    liveins: $r2, $r3
+    ; COMMON-LABEL: name: test_uitofp_s64_to_s16
+    ; COMMON: liveins: $r2, $r3
+    ; COMMON-NEXT: {{  $}}
+    ; COMMON-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r2
+    ; COMMON-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r3
+    ; COMMON-NEXT: ADJCALLSTACKUP 0, 0, implicit-def $sp, implicit $sp
+    ; COMMON-NEXT: $r1 = COPY [[COPY]](s32)
+    ; COMMON-NEXT: $r2 = COPY [[COPY1]](s32)
+    ; COMMON-NEXT: PseudoJL &__floatundisf, csr_aie[[VER]], implicit-def $lr, implicit $r1, implicit $r2, implicit-def $r0
+    ; COMMON-NEXT: [[COPY2:%[0-9]+]]:_(s32) = COPY $r0
+    ; COMMON-NEXT: ADJCALLSTACKDOWN 0, 0, implicit-def $sp, implicit $sp
+    ; COMMON-NEXT: [[DEF:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
+    ; COMMON-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; COMMON-NEXT: [[AIE_INSERT_VECTOR_ELT:%[0-9]+]]:_(<16 x s32>) = G_AIE_INSERT_VECTOR_ELT [[DEF]], [[COPY2]](s32), [[C]](s32)
+    ; AIE2-NEXT: [[BITCAST:%[0-9]+]]:_(<8 x s64>) = G_BITCAST [[AIE_INSERT_VECTOR_ELT]](<16 x s32>)
+    ; AIE2-NEXT: [[INT:%[0-9]+]]:_(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), [[BITCAST]](<8 x s64>)
+    ; AIE2P-NEXT: [[INT:%[0-9]+]]:_(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.v16accfloat.to.v16bf16), [[AIE_INSERT_VECTOR_ELT]](<16 x s32>)
+    ; COMMON-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[INT]](<16 x s16>), [[C]](s32)
+    ; COMMON-NEXT: [[ASSERT_SEXT:%[0-9]+]]:_(s32) = G_ASSERT_SEXT [[AIE_SEXT_EXTRACT_VECTOR_ELT]], 16
+    ; COMMON-NEXT: $r0 = COPY [[ASSERT_SEXT]](s32)
+    %0:_(s32) = COPY $r2
+    %1:_(s32) = COPY $r3
+    %2:_(s64) = G_MERGE_VALUES %0(s32), %1(s32)
+    %3:_(s16) = G_UITOFP %2
+    %4:_(s32) = G_ANYEXT %3
+    $r0 = COPY %4
+...

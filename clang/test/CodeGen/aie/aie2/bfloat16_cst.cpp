@@ -9,6 +9,7 @@
 //
 //===----------------------------------------------------------------------===//
 // RUN: %clang --target=aie2 -nostdlibinc -S -emit-llvm %s -O2 -o - | FileCheck %s
+// RUN: %clang --target=aie2p -nostdlibinc -S -emit-llvm %s -O2 -o - | FileCheck %s
 
 // CHECK: @_ZL5inits{{.*}}0xR0000{{.*}}0xR3F80{{.*}}0xRBF80{{.*}}0xR3FDA{{.*}}0xRBFDA{{.*}}0xR4124{{.*}}0xRC124{{.*}}
 

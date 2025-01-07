@@ -114,7 +114,7 @@ public:
   const MCSlotInfo *getSlotInfo(const MCSlotKind Kind) const override {
     return &SlotInfos[Kind];
   }
-  MCSlotKind getSlotKind(unsigned Opcode) const override {
+  MCSlotKind getSlotKind(unsigned Opcode) const {
     for (unsigned s = 0; s < 10; s++) {
       if (Opcode == MyInstrs[s].getOpcode()) {
         return s;

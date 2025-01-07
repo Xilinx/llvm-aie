@@ -11,6 +11,10 @@
 #ifndef __AIEBASE_CHESS_H
 #define __AIEBASE_CHESS_H
 
+#define __aie_copy(x) x
+#define __aie_register(x)
+#define __aie_register_keep()
+
 #define chess_assert(x) (void)x
 #define chess_const(x) __builtin_constant_p(x)
 #define chess_copy(x) x
@@ -48,5 +52,6 @@
 #define clobbers(...)
 #define clobbers_not(...)
 #define property(x)
+#define chess_dont_care(x)
 
 #endif // __AIEBASE_CHESS_H

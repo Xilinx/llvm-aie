@@ -1,0 +1,946 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; VMSC_vmul_cm_core_X_QX
+    $dm2 = VMSC_vmul_cm_core_X_QX $dm4, $x0, $qx0, $r13, implicit-def $srsparse_of
+    $dm0 = VMSC_vmul_cm_core_X_QX $dm3, $x11, $qx2, $r22, implicit-def $srsparse_of
+    $dm3 = VMSC_vmul_cm_core_X_QX $dm2, $x8, $qx1, $r30, implicit-def $srsparse_of
+    $dm4 = VMSC_vmul_cm_core_X_QX $dm1, $x9, $qx3, $r27, implicit-def $srsparse_of
+    $dm1 = VMSC_vmul_cm_core_X_QX $dm0, $x5, $qx0, $r4, implicit-def $srsparse_of
+    $dm2 = VMSC_vmul_cm_core_X_QX $dm4, $x3, $qx2, $r8, implicit-def $srsparse_of
+    $dm0 = VMSC_vmul_cm_core_X_QX $dm3, $x4, $qx1, $r21, implicit-def $srsparse_of
+    $dm3 = VMSC_vmul_cm_core_X_QX $dm2, $x6, $qx3, $r19, implicit-def $srsparse_of
+    $dm4 = VMSC_vmul_cm_core_X_QX $dm1, $x1, $qx0, $r2, implicit-def $srsparse_of
+    $dm1 = VMSC_vmul_cm_core_X_QX $dm0, $x2, $qx2, $r15, implicit-def $srsparse_of
+    $dm2 = VMSC_vmul_cm_core_X_QX $dm4, $x7, $qx1, $r12, implicit-def $srsparse_of
+    $dm0 = VMSC_vmul_cm_core_X_QX $dm3, $x10, $qx3, $r3, implicit-def $srsparse_of
+    $dm3 = VMSC_vmul_cm_core_X_QX $dm2, $x0, $qx0, $r11, implicit-def $srsparse_of
+    $dm4 = VMSC_vmul_cm_core_X_QX $dm1, $x11, $qx2, $r26, implicit-def $srsparse_of
+    $dm1 = VMSC_vmul_cm_core_X_QX $dm0, $x8, $qx1, $r10, implicit-def $srsparse_of
+    $dm2 = VMSC_vmul_cm_core_X_QX $dm4, $x9, $qx3, $r29, implicit-def $srsparse_of
+    $dm0 = VMSC_vmul_cm_core_X_QX $dm3, $x5, $qx0, $r14, implicit-def $srsparse_of
+    $dm3 = VMSC_vmul_cm_core_X_QX $dm2, $x3, $qx2, $r16, implicit-def $srsparse_of
+    $dm4 = VMSC_vmul_cm_core_X_QX $dm1, $x4, $qx1, $r1, implicit-def $srsparse_of
+    $dm1 = VMSC_vmul_cm_core_X_QX $dm0, $x6, $qx3, $r0, implicit-def $srsparse_of
+    $dm2 = VMSC_vmul_cm_core_X_QX $dm4, $x1, $qx0, $r20, implicit-def $srsparse_of
+    $dm0 = VMSC_vmul_cm_core_X_QX $dm3, $x2, $qx2, $r24, implicit-def $srsparse_of
+    $dm3 = VMSC_vmul_cm_core_X_QX $dm2, $x7, $qx1, $r9, implicit-def $srsparse_of
+    $dm4 = VMSC_vmul_cm_core_X_QX $dm1, $x10, $qx3, $r18, implicit-def $srsparse_of
+    $dm1 = VMSC_vmul_cm_core_X_QX $dm0, $x0, $qx0, $r23, implicit-def $srsparse_of
+    $dm2 = VMSC_vmul_cm_core_X_QX $dm4, $x11, $qx2, $r6, implicit-def $srsparse_of
+    $dm0 = VMSC_vmul_cm_core_X_QX $dm3, $x8, $qx1, $r31, implicit-def $srsparse_of
+    $dm3 = VMSC_vmul_cm_core_X_QX $dm2, $x9, $qx3, $r28, implicit-def $srsparse_of
+    $dm4 = VMSC_vmul_cm_core_X_QX $dm1, $x5, $qx0, $r5, implicit-def $srsparse_of
+    $dm1 = VMSC_vmul_cm_core_X_QX $dm0, $x3, $qx2, $r25, implicit-def $srsparse_of
+    $dm2 = VMSC_vmul_cm_core_X_QX $dm4, $x4, $qx1, $r7, implicit-def $srsparse_of
+    $dm0 = VMSC_vmul_cm_core_X_QX $dm3, $x6, $qx3, $r17, implicit-def $srsparse_of
+
+    ; VMSC_vmul_cm_core_X_QY
+    $dm2 = VMSC_vmul_cm_core_X_QY $dm4, $x9, $qy1, $r11, implicit-def $srsparse_of
+    $dm3 = VMSC_vmul_cm_core_X_QY $dm1, $x4, $qy0, $r8, implicit-def $srsparse_of
+    $dm4 = VMSC_vmul_cm_core_X_QY $dm0, $x3, $qy1, $r14, implicit-def $srsparse_of
+    $dm0 = VMSC_vmul_cm_core_X_QY $dm2, $x8, $qy0, $r25, implicit-def $srsparse_of
+    $dm1 = VMSC_vmul_cm_core_X_QY $dm3, $x7, $qy1, $r23, implicit-def $srsparse_of
+    $dm2 = VMSC_vmul_cm_core_X_QY $dm4, $x2, $qy0, $r7, implicit-def $srsparse_of
+    $dm3 = VMSC_vmul_cm_core_X_QY $dm1, $x10, $qy1, $r10, implicit-def $srsparse_of
+    $dm4 = VMSC_vmul_cm_core_X_QY $dm0, $x11, $qy0, $r21, implicit-def $srsparse_of
+    $dm0 = VMSC_vmul_cm_core_X_QY $dm2, $x1, $qy1, $r0, implicit-def $srsparse_of
+    $dm1 = VMSC_vmul_cm_core_X_QY $dm3, $x6, $qy0, $r28, implicit-def $srsparse_of
+    $dm2 = VMSC_vmul_cm_core_X_QY $dm4, $x5, $qy1, $r16, implicit-def $srsparse_of
+    $dm3 = VMSC_vmul_cm_core_X_QY $dm1, $x0, $qy0, $r18, implicit-def $srsparse_of
+    $dm4 = VMSC_vmul_cm_core_X_QY $dm0, $x9, $qy1, $r9, implicit-def $srsparse_of
+    $dm0 = VMSC_vmul_cm_core_X_QY $dm2, $x4, $qy0, $r30, implicit-def $srsparse_of
+    $dm1 = VMSC_vmul_cm_core_X_QY $dm3, $x3, $qy1, $r19, implicit-def $srsparse_of
+    $dm2 = VMSC_vmul_cm_core_X_QY $dm4, $x8, $qy0, $r3, implicit-def $srsparse_of
+    $dm3 = VMSC_vmul_cm_core_X_QY $dm1, $x7, $qy1, $r6, implicit-def $srsparse_of
+    $dm4 = VMSC_vmul_cm_core_X_QY $dm0, $x2, $qy0, $r12, implicit-def $srsparse_of
+    $dm0 = VMSC_vmul_cm_core_X_QY $dm2, $x10, $qy1, $r15, implicit-def $srsparse_of
+    $dm1 = VMSC_vmul_cm_core_X_QY $dm3, $x11, $qy0, $r4, implicit-def $srsparse_of
+    $dm2 = VMSC_vmul_cm_core_X_QY $dm4, $x1, $qy1, $r17, implicit-def $srsparse_of
+    $dm3 = VMSC_vmul_cm_core_X_QY $dm1, $x6, $qy0, $r20, implicit-def $srsparse_of
+    $dm4 = VMSC_vmul_cm_core_X_QY $dm0, $x5, $qy1, $r24, implicit-def $srsparse_of
+    $dm0 = VMSC_vmul_cm_core_X_QY $dm2, $x0, $qy0, $r27, implicit-def $srsparse_of
+    $dm1 = VMSC_vmul_cm_core_X_QY $dm3, $x9, $qy1, $r2, implicit-def $srsparse_of
+    $dm2 = VMSC_vmul_cm_core_X_QY $dm4, $x4, $qy0, $r13, implicit-def $srsparse_of
+    $dm3 = VMSC_vmul_cm_core_X_QY $dm1, $x3, $qy1, $r29, implicit-def $srsparse_of
+    $dm4 = VMSC_vmul_cm_core_X_QY $dm0, $x8, $qy0, $r26, implicit-def $srsparse_of
+    $dm0 = VMSC_vmul_cm_core_X_QY $dm2, $x7, $qy1, $r31, implicit-def $srsparse_of
+    $dm1 = VMSC_vmul_cm_core_X_QY $dm3, $x2, $qy0, $r5, implicit-def $srsparse_of
+    $dm2 = VMSC_vmul_cm_core_X_QY $dm4, $x10, $qy1, $r22, implicit-def $srsparse_of
+    $dm3 = VMSC_vmul_cm_core_X_QY $dm1, $x11, $qy0, $r1, implicit-def $srsparse_of
+
+    ; VMSC_vmul_cm_core_X_X
+    $dm0 = VMSC_vmul_cm_core_X_X $dm1, $x5, $x2, $r24
+    $dm1 = VMSC_vmul_cm_core_X_X $dm4, $x0, $x3, $r29
+    $dm4 = VMSC_vmul_cm_core_X_X $dm2, $x4, $x7, $r13
+    $dm2 = VMSC_vmul_cm_core_X_X $dm3, $x3, $x9, $r10
+    $dm3 = VMSC_vmul_cm_core_X_X $dm0, $x10, $x5, $r11
+    $dm0 = VMSC_vmul_cm_core_X_X $dm1, $x11, $x11, $r20
+    $dm1 = VMSC_vmul_cm_core_X_X $dm4, $x2, $x10, $r4
+    $dm4 = VMSC_vmul_cm_core_X_X $dm2, $x7, $x0, $r14
+    $dm2 = VMSC_vmul_cm_core_X_X $dm3, $x1, $x1, $r18
+    $dm3 = VMSC_vmul_cm_core_X_X $dm0, $x6, $x6, $r26
+    $dm0 = VMSC_vmul_cm_core_X_X $dm1, $x8, $x8, $r5
+    $dm1 = VMSC_vmul_cm_core_X_X $dm4, $x9, $x4, $r9
+    $dm4 = VMSC_vmul_cm_core_X_X $dm2, $x5, $x2, $r0
+    $dm2 = VMSC_vmul_cm_core_X_X $dm3, $x0, $x3, $r3
+    $dm3 = VMSC_vmul_cm_core_X_X $dm0, $x4, $x7, $r6
+    $dm0 = VMSC_vmul_cm_core_X_X $dm1, $x3, $x9, $r22
+    $dm1 = VMSC_vmul_cm_core_X_X $dm4, $x10, $x5, $r1
+    $dm4 = VMSC_vmul_cm_core_X_X $dm2, $x11, $x11, $r8
+    $dm2 = VMSC_vmul_cm_core_X_X $dm3, $x2, $x10, $r27
+    $dm3 = VMSC_vmul_cm_core_X_X $dm0, $x7, $x0, $r2
+    $dm0 = VMSC_vmul_cm_core_X_X $dm1, $x1, $x1, $r28
+    $dm1 = VMSC_vmul_cm_core_X_X $dm4, $x6, $x6, $r7
+    $dm4 = VMSC_vmul_cm_core_X_X $dm2, $x8, $x8, $r17
+    $dm2 = VMSC_vmul_cm_core_X_X $dm3, $x9, $x4, $r12
+    $dm3 = VMSC_vmul_cm_core_X_X $dm0, $x5, $x2, $r25
+    $dm0 = VMSC_vmul_cm_core_X_X $dm1, $x0, $x3, $r31
+    $dm1 = VMSC_vmul_cm_core_X_X $dm4, $x4, $x7, $r19
+    $dm4 = VMSC_vmul_cm_core_X_X $dm2, $x3, $x9, $r30
+    $dm2 = VMSC_vmul_cm_core_X_X $dm3, $x10, $x5, $r16
+    $dm3 = VMSC_vmul_cm_core_X_X $dm0, $x11, $x11, $r23
+    $dm0 = VMSC_vmul_cm_core_X_X $dm1, $x2, $x10, $r21
+    $dm1 = VMSC_vmul_cm_core_X_X $dm4, $x7, $x0, $r15
+
+    ; VMSC_vmul_cm_core_X_Y
+    $dm1 = VMSC_vmul_cm_core_X_Y $dm2, $x5, $y0, $r20
+    $dm2 = VMSC_vmul_cm_core_X_Y $dm0, $x6, $y2, $r1
+    $dm4 = VMSC_vmul_cm_core_X_Y $dm1, $x3, $y1, $r29
+    $dm0 = VMSC_vmul_cm_core_X_Y $dm3, $x1, $y5, $r14
+    $dm3 = VMSC_vmul_cm_core_X_Y $dm4, $x7, $y4, $r31
+    $dm1 = VMSC_vmul_cm_core_X_Y $dm2, $x2, $y3, $r5
+    $dm2 = VMSC_vmul_cm_core_X_Y $dm0, $x8, $y0, $r26
+    $dm4 = VMSC_vmul_cm_core_X_Y $dm1, $x4, $y2, $r17
+    $dm0 = VMSC_vmul_cm_core_X_Y $dm3, $x11, $y1, $r23
+    $dm3 = VMSC_vmul_cm_core_X_Y $dm4, $x10, $y5, $r27
+    $dm1 = VMSC_vmul_cm_core_X_Y $dm2, $x0, $y4, $r9
+    $dm2 = VMSC_vmul_cm_core_X_Y $dm0, $x9, $y3, $r22
+    $dm4 = VMSC_vmul_cm_core_X_Y $dm1, $x5, $y0, $r18
+    $dm0 = VMSC_vmul_cm_core_X_Y $dm3, $x6, $y2, $r25
+    $dm3 = VMSC_vmul_cm_core_X_Y $dm4, $x3, $y1, $r24
+    $dm1 = VMSC_vmul_cm_core_X_Y $dm2, $x1, $y5, $r30
+    $dm2 = VMSC_vmul_cm_core_X_Y $dm0, $x7, $y4, $r11
+    $dm4 = VMSC_vmul_cm_core_X_Y $dm1, $x2, $y3, $r19
+    $dm0 = VMSC_vmul_cm_core_X_Y $dm3, $x8, $y0, $r16
+    $dm3 = VMSC_vmul_cm_core_X_Y $dm4, $x4, $y2, $r2
+    $dm1 = VMSC_vmul_cm_core_X_Y $dm2, $x11, $y1, $r4
+    $dm2 = VMSC_vmul_cm_core_X_Y $dm0, $x10, $y5, $r10
+    $dm4 = VMSC_vmul_cm_core_X_Y $dm1, $x0, $y4, $r12
+    $dm0 = VMSC_vmul_cm_core_X_Y $dm3, $x9, $y3, $r0
+    $dm3 = VMSC_vmul_cm_core_X_Y $dm4, $x5, $y0, $r21
+    $dm1 = VMSC_vmul_cm_core_X_Y $dm2, $x6, $y2, $r13
+    $dm2 = VMSC_vmul_cm_core_X_Y $dm0, $x3, $y1, $r7
+    $dm4 = VMSC_vmul_cm_core_X_Y $dm1, $x1, $y5, $r8
+    $dm0 = VMSC_vmul_cm_core_X_Y $dm3, $x7, $y4, $r6
+    $dm3 = VMSC_vmul_cm_core_X_Y $dm4, $x2, $y3, $r15
+    $dm1 = VMSC_vmul_cm_core_X_Y $dm2, $x8, $y0, $r28
+    $dm2 = VMSC_vmul_cm_core_X_Y $dm0, $x4, $y2, $r3
+
+    ; VMSC_vmul_cm_core_Y_QX
+    $dm0 = VMSC_vmul_cm_core_Y_QX $dm0, $y4, $qx1, $r17, implicit-def $srsparse_of
+    $dm4 = VMSC_vmul_cm_core_Y_QX $dm4, $y5, $qx0, $r13, implicit-def $srsparse_of
+    $dm3 = VMSC_vmul_cm_core_Y_QX $dm3, $y2, $qx3, $r31, implicit-def $srsparse_of
+    $dm1 = VMSC_vmul_cm_core_Y_QX $dm2, $y0, $qx2, $r4, implicit-def $srsparse_of
+    $dm2 = VMSC_vmul_cm_core_Y_QX $dm1, $y3, $qx1, $r14, implicit-def $srsparse_of
+    $dm0 = VMSC_vmul_cm_core_Y_QX $dm0, $y1, $qx0, $r3, implicit-def $srsparse_of
+    $dm4 = VMSC_vmul_cm_core_Y_QX $dm4, $y4, $qx3, $r20, implicit-def $srsparse_of
+    $dm3 = VMSC_vmul_cm_core_Y_QX $dm3, $y5, $qx2, $r28, implicit-def $srsparse_of
+    $dm1 = VMSC_vmul_cm_core_Y_QX $dm2, $y2, $qx1, $r5, implicit-def $srsparse_of
+    $dm2 = VMSC_vmul_cm_core_Y_QX $dm1, $y0, $qx0, $r6, implicit-def $srsparse_of
+    $dm0 = VMSC_vmul_cm_core_Y_QX $dm0, $y3, $qx3, $r22, implicit-def $srsparse_of
+    $dm4 = VMSC_vmul_cm_core_Y_QX $dm4, $y1, $qx2, $r26, implicit-def $srsparse_of
+    $dm3 = VMSC_vmul_cm_core_Y_QX $dm3, $y4, $qx1, $r27, implicit-def $srsparse_of
+    $dm1 = VMSC_vmul_cm_core_Y_QX $dm2, $y5, $qx0, $r25, implicit-def $srsparse_of
+    $dm2 = VMSC_vmul_cm_core_Y_QX $dm1, $y2, $qx3, $r16, implicit-def $srsparse_of
+    $dm0 = VMSC_vmul_cm_core_Y_QX $dm0, $y0, $qx2, $r10, implicit-def $srsparse_of
+    $dm4 = VMSC_vmul_cm_core_Y_QX $dm4, $y3, $qx1, $r21, implicit-def $srsparse_of
+    $dm3 = VMSC_vmul_cm_core_Y_QX $dm3, $y1, $qx0, $r24, implicit-def $srsparse_of
+    $dm1 = VMSC_vmul_cm_core_Y_QX $dm2, $y4, $qx3, $r23, implicit-def $srsparse_of
+    $dm2 = VMSC_vmul_cm_core_Y_QX $dm1, $y5, $qx2, $r30, implicit-def $srsparse_of
+    $dm0 = VMSC_vmul_cm_core_Y_QX $dm0, $y2, $qx1, $r9, implicit-def $srsparse_of
+    $dm4 = VMSC_vmul_cm_core_Y_QX $dm4, $y0, $qx0, $r11, implicit-def $srsparse_of
+    $dm3 = VMSC_vmul_cm_core_Y_QX $dm3, $y3, $qx3, $r19, implicit-def $srsparse_of
+    $dm1 = VMSC_vmul_cm_core_Y_QX $dm2, $y1, $qx2, $r18, implicit-def $srsparse_of
+    $dm2 = VMSC_vmul_cm_core_Y_QX $dm1, $y4, $qx1, $r2, implicit-def $srsparse_of
+    $dm0 = VMSC_vmul_cm_core_Y_QX $dm0, $y5, $qx0, $r8, implicit-def $srsparse_of
+    $dm4 = VMSC_vmul_cm_core_Y_QX $dm4, $y2, $qx3, $r7, implicit-def $srsparse_of
+    $dm3 = VMSC_vmul_cm_core_Y_QX $dm3, $y0, $qx2, $r12, implicit-def $srsparse_of
+    $dm1 = VMSC_vmul_cm_core_Y_QX $dm2, $y3, $qx1, $r0, implicit-def $srsparse_of
+    $dm2 = VMSC_vmul_cm_core_Y_QX $dm1, $y1, $qx0, $r29, implicit-def $srsparse_of
+    $dm0 = VMSC_vmul_cm_core_Y_QX $dm0, $y4, $qx3, $r1, implicit-def $srsparse_of
+    $dm4 = VMSC_vmul_cm_core_Y_QX $dm4, $y5, $qx2, $r15, implicit-def $srsparse_of
+
+    ; VMSC_vmul_cm_core_Y_QY
+    $dm0 = VMSC_vmul_cm_core_Y_QY $dm3, $y3, $qy1, $r23, implicit-def $srsparse_of
+    $dm4 = VMSC_vmul_cm_core_Y_QY $dm2, $y4, $qy0, $r7, implicit-def $srsparse_of
+    $dm2 = VMSC_vmul_cm_core_Y_QY $dm1, $y0, $qy1, $r9, implicit-def $srsparse_of
+    $dm1 = VMSC_vmul_cm_core_Y_QY $dm4, $y2, $qy0, $r25, implicit-def $srsparse_of
+    $dm3 = VMSC_vmul_cm_core_Y_QY $dm0, $y1, $qy1, $r2, implicit-def $srsparse_of
+    $dm0 = VMSC_vmul_cm_core_Y_QY $dm3, $y5, $qy0, $r14, implicit-def $srsparse_of
+    $dm4 = VMSC_vmul_cm_core_Y_QY $dm2, $y3, $qy1, $r22, implicit-def $srsparse_of
+    $dm2 = VMSC_vmul_cm_core_Y_QY $dm1, $y4, $qy0, $r24, implicit-def $srsparse_of
+    $dm1 = VMSC_vmul_cm_core_Y_QY $dm4, $y0, $qy1, $r0, implicit-def $srsparse_of
+    $dm3 = VMSC_vmul_cm_core_Y_QY $dm0, $y2, $qy0, $r12, implicit-def $srsparse_of
+    $dm0 = VMSC_vmul_cm_core_Y_QY $dm3, $y1, $qy1, $r26, implicit-def $srsparse_of
+    $dm4 = VMSC_vmul_cm_core_Y_QY $dm2, $y5, $qy0, $r1, implicit-def $srsparse_of
+    $dm2 = VMSC_vmul_cm_core_Y_QY $dm1, $y3, $qy1, $r18, implicit-def $srsparse_of
+    $dm1 = VMSC_vmul_cm_core_Y_QY $dm4, $y4, $qy0, $r27, implicit-def $srsparse_of
+    $dm3 = VMSC_vmul_cm_core_Y_QY $dm0, $y0, $qy1, $r30, implicit-def $srsparse_of
+    $dm0 = VMSC_vmul_cm_core_Y_QY $dm3, $y2, $qy0, $r16, implicit-def $srsparse_of
+    $dm4 = VMSC_vmul_cm_core_Y_QY $dm2, $y1, $qy1, $r15, implicit-def $srsparse_of
+    $dm2 = VMSC_vmul_cm_core_Y_QY $dm1, $y5, $qy0, $r19, implicit-def $srsparse_of
+    $dm1 = VMSC_vmul_cm_core_Y_QY $dm4, $y3, $qy1, $r8, implicit-def $srsparse_of
+    $dm3 = VMSC_vmul_cm_core_Y_QY $dm0, $y4, $qy0, $r31, implicit-def $srsparse_of
+    $dm0 = VMSC_vmul_cm_core_Y_QY $dm3, $y0, $qy1, $r21, implicit-def $srsparse_of
+    $dm4 = VMSC_vmul_cm_core_Y_QY $dm2, $y2, $qy0, $r10, implicit-def $srsparse_of
+    $dm2 = VMSC_vmul_cm_core_Y_QY $dm1, $y1, $qy1, $r13, implicit-def $srsparse_of
+    $dm1 = VMSC_vmul_cm_core_Y_QY $dm4, $y5, $qy0, $r20, implicit-def $srsparse_of
+    $dm3 = VMSC_vmul_cm_core_Y_QY $dm0, $y3, $qy1, $r5, implicit-def $srsparse_of
+    $dm0 = VMSC_vmul_cm_core_Y_QY $dm3, $y4, $qy0, $r29, implicit-def $srsparse_of
+    $dm4 = VMSC_vmul_cm_core_Y_QY $dm2, $y0, $qy1, $r28, implicit-def $srsparse_of
+    $dm2 = VMSC_vmul_cm_core_Y_QY $dm1, $y2, $qy0, $r11, implicit-def $srsparse_of
+    $dm1 = VMSC_vmul_cm_core_Y_QY $dm4, $y1, $qy1, $r17, implicit-def $srsparse_of
+    $dm3 = VMSC_vmul_cm_core_Y_QY $dm0, $y5, $qy0, $r6, implicit-def $srsparse_of
+    $dm0 = VMSC_vmul_cm_core_Y_QY $dm3, $y3, $qy1, $r3, implicit-def $srsparse_of
+    $dm4 = VMSC_vmul_cm_core_Y_QY $dm2, $y4, $qy0, $r4, implicit-def $srsparse_of
+
+    ; VMSC_vmul_cm_core_Y_X
+    $dm2 = VMSC_vmul_cm_core_Y_X $dm4, $y4, $x2, $r28
+    $dm4 = VMSC_vmul_cm_core_Y_X $dm0, $y5, $x10, $r30
+    $dm3 = VMSC_vmul_cm_core_Y_X $dm1, $y1, $x3, $r11
+    $dm1 = VMSC_vmul_cm_core_Y_X $dm2, $y0, $x0, $r26
+    $dm0 = VMSC_vmul_cm_core_Y_X $dm3, $y3, $x11, $r19
+    $dm2 = VMSC_vmul_cm_core_Y_X $dm4, $y2, $x7, $r16
+    $dm4 = VMSC_vmul_cm_core_Y_X $dm0, $y4, $x9, $r23
+    $dm3 = VMSC_vmul_cm_core_Y_X $dm1, $y5, $x4, $r3
+    $dm1 = VMSC_vmul_cm_core_Y_X $dm2, $y1, $x1, $r0
+    $dm0 = VMSC_vmul_cm_core_Y_X $dm3, $y0, $x8, $r13
+    $dm2 = VMSC_vmul_cm_core_Y_X $dm4, $y3, $x5, $r8
+    $dm4 = VMSC_vmul_cm_core_Y_X $dm0, $y2, $x6, $r15
+    $dm3 = VMSC_vmul_cm_core_Y_X $dm1, $y4, $x2, $r7
+    $dm1 = VMSC_vmul_cm_core_Y_X $dm2, $y5, $x10, $r24
+    $dm0 = VMSC_vmul_cm_core_Y_X $dm3, $y1, $x3, $r21
+    $dm2 = VMSC_vmul_cm_core_Y_X $dm4, $y0, $x0, $r10
+    $dm4 = VMSC_vmul_cm_core_Y_X $dm0, $y3, $x11, $r2
+    $dm3 = VMSC_vmul_cm_core_Y_X $dm1, $y2, $x7, $r14
+    $dm1 = VMSC_vmul_cm_core_Y_X $dm2, $y4, $x9, $r4
+    $dm0 = VMSC_vmul_cm_core_Y_X $dm3, $y5, $x4, $r31
+    $dm2 = VMSC_vmul_cm_core_Y_X $dm4, $y1, $x1, $r17
+    $dm4 = VMSC_vmul_cm_core_Y_X $dm0, $y0, $x8, $r6
+    $dm3 = VMSC_vmul_cm_core_Y_X $dm1, $y3, $x5, $r29
+    $dm1 = VMSC_vmul_cm_core_Y_X $dm2, $y2, $x6, $r12
+    $dm0 = VMSC_vmul_cm_core_Y_X $dm3, $y4, $x2, $r9
+    $dm2 = VMSC_vmul_cm_core_Y_X $dm4, $y5, $x10, $r22
+    $dm4 = VMSC_vmul_cm_core_Y_X $dm0, $y1, $x3, $r27
+    $dm3 = VMSC_vmul_cm_core_Y_X $dm1, $y0, $x0, $r20
+    $dm1 = VMSC_vmul_cm_core_Y_X $dm2, $y3, $x11, $r18
+    $dm0 = VMSC_vmul_cm_core_Y_X $dm3, $y2, $x7, $r5
+    $dm2 = VMSC_vmul_cm_core_Y_X $dm4, $y4, $x9, $r1
+    $dm4 = VMSC_vmul_cm_core_Y_X $dm0, $y5, $x4, $r25
+
+    ; VMSC_vmul_cm_core_Y_Y
+    $dm2 = VMSC_vmul_cm_core_Y_Y $dm4, $y0, $y1, $r9
+    $dm1 = VMSC_vmul_cm_core_Y_Y $dm0, $y2, $y4, $r30
+    $dm0 = VMSC_vmul_cm_core_Y_Y $dm1, $y1, $y5, $r13
+    $dm4 = VMSC_vmul_cm_core_Y_Y $dm2, $y5, $y3, $r20
+    $dm3 = VMSC_vmul_cm_core_Y_Y $dm3, $y4, $y2, $r4
+    $dm2 = VMSC_vmul_cm_core_Y_Y $dm4, $y3, $y0, $r14
+    $dm1 = VMSC_vmul_cm_core_Y_Y $dm0, $y0, $y1, $r19
+    $dm0 = VMSC_vmul_cm_core_Y_Y $dm1, $y2, $y4, $r6
+    $dm4 = VMSC_vmul_cm_core_Y_Y $dm2, $y1, $y5, $r17
+    $dm3 = VMSC_vmul_cm_core_Y_Y $dm3, $y5, $y3, $r3
+    $dm2 = VMSC_vmul_cm_core_Y_Y $dm4, $y4, $y2, $r22
+    $dm1 = VMSC_vmul_cm_core_Y_Y $dm0, $y3, $y0, $r1
+    $dm0 = VMSC_vmul_cm_core_Y_Y $dm1, $y0, $y1, $r0
+    $dm4 = VMSC_vmul_cm_core_Y_Y $dm2, $y2, $y4, $r5
+    $dm3 = VMSC_vmul_cm_core_Y_Y $dm3, $y1, $y5, $r23
+    $dm2 = VMSC_vmul_cm_core_Y_Y $dm4, $y5, $y3, $r25
+    $dm1 = VMSC_vmul_cm_core_Y_Y $dm0, $y4, $y2, $r29
+    $dm0 = VMSC_vmul_cm_core_Y_Y $dm1, $y3, $y0, $r26
+    $dm4 = VMSC_vmul_cm_core_Y_Y $dm2, $y0, $y1, $r2
+    $dm3 = VMSC_vmul_cm_core_Y_Y $dm3, $y2, $y4, $r12
+    $dm2 = VMSC_vmul_cm_core_Y_Y $dm4, $y1, $y5, $r21
+    $dm1 = VMSC_vmul_cm_core_Y_Y $dm0, $y5, $y3, $r27
+    $dm0 = VMSC_vmul_cm_core_Y_Y $dm1, $y4, $y2, $r16
+    $dm4 = VMSC_vmul_cm_core_Y_Y $dm2, $y3, $y0, $r31
+    $dm3 = VMSC_vmul_cm_core_Y_Y $dm3, $y0, $y1, $r8
+    $dm2 = VMSC_vmul_cm_core_Y_Y $dm4, $y2, $y4, $r18
+    $dm1 = VMSC_vmul_cm_core_Y_Y $dm0, $y1, $y5, $r10
+    $dm0 = VMSC_vmul_cm_core_Y_Y $dm1, $y5, $y3, $r7
+    $dm4 = VMSC_vmul_cm_core_Y_Y $dm2, $y4, $y2, $r28
+    $dm3 = VMSC_vmul_cm_core_Y_Y $dm3, $y3, $y0, $r24
+    $dm2 = VMSC_vmul_cm_core_Y_Y $dm4, $y0, $y1, $r11
+    $dm1 = VMSC_vmul_cm_core_Y_Y $dm0, $y2, $y4, $r15
+
+    ; VMSC_f_vmac_bf_vmul_bf_core_X_X
+    $dm0 = VMSC_f_vmac_bf_vmul_bf_core_X_X $dm1, $x1, $x7, $r31, implicit-def $srfpflags, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bf_vmul_bf_core_X_X $dm2, $x4, $x8, $r5, implicit-def $srfpflags, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bf_vmul_bf_core_X_X $dm3, $x9, $x5, $r26, implicit-def $srfpflags, implicit $crfpmask
+    $dm1 = VMSC_f_vmac_bf_vmul_bf_core_X_X $dm0, $x0, $x4, $r25, implicit-def $srfpflags, implicit $crfpmask
+    $dm4 = VMSC_f_vmac_bf_vmul_bf_core_X_X $dm4, $x6, $x10, $r30, implicit-def $srfpflags, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bf_vmul_bf_core_X_X $dm1, $x3, $x6, $r11, implicit-def $srfpflags, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bf_vmul_bf_core_X_X $dm2, $x5, $x9, $r3, implicit-def $srfpflags, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bf_vmul_bf_core_X_X $dm3, $x11, $x1, $r18, implicit-def $srfpflags, implicit $crfpmask
+    $dm1 = VMSC_f_vmac_bf_vmul_bf_core_X_X $dm0, $x7, $x0, $r20, implicit-def $srfpflags, implicit $crfpmask
+    $dm4 = VMSC_f_vmac_bf_vmul_bf_core_X_X $dm4, $x10, $x11, $r21, implicit-def $srfpflags, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bf_vmul_bf_core_X_X $dm1, $x8, $x3, $r8, implicit-def $srfpflags, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bf_vmul_bf_core_X_X $dm2, $x2, $x2, $r4, implicit-def $srfpflags, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bf_vmul_bf_core_X_X $dm3, $x1, $x7, $r2, implicit-def $srfpflags, implicit $crfpmask
+    $dm1 = VMSC_f_vmac_bf_vmul_bf_core_X_X $dm0, $x4, $x8, $r28, implicit-def $srfpflags, implicit $crfpmask
+    $dm4 = VMSC_f_vmac_bf_vmul_bf_core_X_X $dm4, $x9, $x5, $r17, implicit-def $srfpflags, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bf_vmul_bf_core_X_X $dm1, $x0, $x4, $r14, implicit-def $srfpflags, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bf_vmul_bf_core_X_X $dm2, $x6, $x10, $r10, implicit-def $srfpflags, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bf_vmul_bf_core_X_X $dm3, $x3, $x6, $r22, implicit-def $srfpflags, implicit $crfpmask
+    $dm1 = VMSC_f_vmac_bf_vmul_bf_core_X_X $dm0, $x5, $x9, $r1, implicit-def $srfpflags, implicit $crfpmask
+    $dm4 = VMSC_f_vmac_bf_vmul_bf_core_X_X $dm4, $x11, $x1, $r0, implicit-def $srfpflags, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bf_vmul_bf_core_X_X $dm1, $x7, $x0, $r29, implicit-def $srfpflags, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bf_vmul_bf_core_X_X $dm2, $x10, $x11, $r23, implicit-def $srfpflags, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bf_vmul_bf_core_X_X $dm3, $x8, $x3, $r13, implicit-def $srfpflags, implicit $crfpmask
+    $dm1 = VMSC_f_vmac_bf_vmul_bf_core_X_X $dm0, $x2, $x2, $r12, implicit-def $srfpflags, implicit $crfpmask
+    $dm4 = VMSC_f_vmac_bf_vmul_bf_core_X_X $dm4, $x1, $x7, $r9, implicit-def $srfpflags, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bf_vmul_bf_core_X_X $dm1, $x4, $x8, $r16, implicit-def $srfpflags, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bf_vmul_bf_core_X_X $dm2, $x9, $x5, $r19, implicit-def $srfpflags, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bf_vmul_bf_core_X_X $dm3, $x0, $x4, $r7, implicit-def $srfpflags, implicit $crfpmask
+    $dm1 = VMSC_f_vmac_bf_vmul_bf_core_X_X $dm0, $x6, $x10, $r15, implicit-def $srfpflags, implicit $crfpmask
+    $dm4 = VMSC_f_vmac_bf_vmul_bf_core_X_X $dm4, $x3, $x6, $r6, implicit-def $srfpflags, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bf_vmul_bf_core_X_X $dm1, $x5, $x9, $r27, implicit-def $srfpflags, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bf_vmul_bf_core_X_X $dm2, $x11, $x1, $r24, implicit-def $srfpflags, implicit $crfpmask
+
+    ; VMSC_f_vmac_bf_vmul_bf_core_Y_Y
+    $dm2 = VMSC_f_vmac_bf_vmul_bf_core_Y_Y $dm0, $y4, $y1, $r12, implicit-def $srfpflags, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bf_vmul_bf_core_Y_Y $dm4, $y2, $y3, $r16, implicit-def $srfpflags, implicit $crfpmask
+    $dm1 = VMSC_f_vmac_bf_vmul_bf_core_Y_Y $dm3, $y0, $y4, $r1, implicit-def $srfpflags, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bf_vmul_bf_core_Y_Y $dm2, $y3, $y5, $r2, implicit-def $srfpflags, implicit $crfpmask
+    $dm4 = VMSC_f_vmac_bf_vmul_bf_core_Y_Y $dm1, $y5, $y2, $r6, implicit-def $srfpflags, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bf_vmul_bf_core_Y_Y $dm0, $y1, $y0, $r7, implicit-def $srfpflags, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bf_vmul_bf_core_Y_Y $dm4, $y4, $y1, $r20, implicit-def $srfpflags, implicit $crfpmask
+    $dm1 = VMSC_f_vmac_bf_vmul_bf_core_Y_Y $dm3, $y2, $y3, $r19, implicit-def $srfpflags, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bf_vmul_bf_core_Y_Y $dm2, $y0, $y4, $r24, implicit-def $srfpflags, implicit $crfpmask
+    $dm4 = VMSC_f_vmac_bf_vmul_bf_core_Y_Y $dm1, $y3, $y5, $r27, implicit-def $srfpflags, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bf_vmul_bf_core_Y_Y $dm0, $y5, $y2, $r3, implicit-def $srfpflags, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bf_vmul_bf_core_Y_Y $dm4, $y1, $y0, $r21, implicit-def $srfpflags, implicit $crfpmask
+    $dm1 = VMSC_f_vmac_bf_vmul_bf_core_Y_Y $dm3, $y4, $y1, $r17, implicit-def $srfpflags, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bf_vmul_bf_core_Y_Y $dm2, $y2, $y3, $r29, implicit-def $srfpflags, implicit $crfpmask
+    $dm4 = VMSC_f_vmac_bf_vmul_bf_core_Y_Y $dm1, $y0, $y4, $r28, implicit-def $srfpflags, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bf_vmul_bf_core_Y_Y $dm0, $y3, $y5, $r11, implicit-def $srfpflags, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bf_vmul_bf_core_Y_Y $dm4, $y5, $y2, $r14, implicit-def $srfpflags, implicit $crfpmask
+    $dm1 = VMSC_f_vmac_bf_vmul_bf_core_Y_Y $dm3, $y1, $y0, $r10, implicit-def $srfpflags, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bf_vmul_bf_core_Y_Y $dm2, $y4, $y1, $r26, implicit-def $srfpflags, implicit $crfpmask
+    $dm4 = VMSC_f_vmac_bf_vmul_bf_core_Y_Y $dm1, $y2, $y3, $r9, implicit-def $srfpflags, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bf_vmul_bf_core_Y_Y $dm0, $y0, $y4, $r31, implicit-def $srfpflags, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bf_vmul_bf_core_Y_Y $dm4, $y3, $y5, $r23, implicit-def $srfpflags, implicit $crfpmask
+    $dm1 = VMSC_f_vmac_bf_vmul_bf_core_Y_Y $dm3, $y5, $y2, $r0, implicit-def $srfpflags, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bf_vmul_bf_core_Y_Y $dm2, $y1, $y0, $r13, implicit-def $srfpflags, implicit $crfpmask
+    $dm4 = VMSC_f_vmac_bf_vmul_bf_core_Y_Y $dm1, $y4, $y1, $r30, implicit-def $srfpflags, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bf_vmul_bf_core_Y_Y $dm0, $y2, $y3, $r22, implicit-def $srfpflags, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bf_vmul_bf_core_Y_Y $dm4, $y0, $y4, $r4, implicit-def $srfpflags, implicit $crfpmask
+    $dm1 = VMSC_f_vmac_bf_vmul_bf_core_Y_Y $dm3, $y3, $y5, $r25, implicit-def $srfpflags, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bf_vmul_bf_core_Y_Y $dm2, $y5, $y2, $r8, implicit-def $srfpflags, implicit $crfpmask
+    $dm4 = VMSC_f_vmac_bf_vmul_bf_core_Y_Y $dm1, $y1, $y0, $r18, implicit-def $srfpflags, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bf_vmul_bf_core_Y_Y $dm0, $y4, $y1, $r5, implicit-def $srfpflags, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bf_vmul_bf_core_Y_Y $dm4, $y2, $y3, $r15, implicit-def $srfpflags, implicit $crfpmask
+
+    ; VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX
+    $dm1 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm0, $ex10, $ex8, $r23, implicit-def $srfpflags, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm1, $ex0, $ex0, $r27, implicit-def $srfpflags, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm4, $ex5, $ex1, $r17, implicit-def $srfpflags, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm3, $ex2, $ex3, $r22, implicit-def $srfpflags, implicit $crfpmask
+    $dm4 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm2, $ex1, $ex10, $r13, implicit-def $srfpflags, implicit $crfpmask
+    $dm1 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm0, $ex3, $ex6, $r1, implicit-def $srfpflags, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm1, $ex9, $ex2, $r28, implicit-def $srfpflags, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm4, $ex11, $ex7, $r25, implicit-def $srfpflags, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm3, $ex4, $ex9, $r15, implicit-def $srfpflags, implicit $crfpmask
+    $dm4 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm2, $ex8, $ex5, $r2, implicit-def $srfpflags, implicit $crfpmask
+    $dm1 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm0, $ex6, $ex4, $r30, implicit-def $srfpflags, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm1, $ex7, $ex11, $r20, implicit-def $srfpflags, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm4, $ex10, $ex8, $r31, implicit-def $srfpflags, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm3, $ex0, $ex0, $r4, implicit-def $srfpflags, implicit $crfpmask
+    $dm4 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm2, $ex5, $ex1, $r24, implicit-def $srfpflags, implicit $crfpmask
+    $dm1 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm0, $ex2, $ex3, $r3, implicit-def $srfpflags, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm1, $ex1, $ex10, $r18, implicit-def $srfpflags, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm4, $ex3, $ex6, $r8, implicit-def $srfpflags, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm3, $ex9, $ex2, $r7, implicit-def $srfpflags, implicit $crfpmask
+    $dm4 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm2, $ex11, $ex7, $r26, implicit-def $srfpflags, implicit $crfpmask
+    $dm1 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm0, $ex4, $ex9, $r9, implicit-def $srfpflags, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm1, $ex8, $ex5, $r29, implicit-def $srfpflags, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm4, $ex6, $ex4, $r16, implicit-def $srfpflags, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm3, $ex7, $ex11, $r19, implicit-def $srfpflags, implicit $crfpmask
+    $dm4 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm2, $ex10, $ex8, $r5, implicit-def $srfpflags, implicit $crfpmask
+    $dm1 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm0, $ex0, $ex0, $r14, implicit-def $srfpflags, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm1, $ex5, $ex1, $r6, implicit-def $srfpflags, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm4, $ex2, $ex3, $r10, implicit-def $srfpflags, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm3, $ex1, $ex10, $r0, implicit-def $srfpflags, implicit $crfpmask
+    $dm4 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm2, $ex3, $ex6, $r12, implicit-def $srfpflags, implicit $crfpmask
+    $dm1 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm0, $ex9, $ex2, $r21, implicit-def $srfpflags, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX $dm1, $ex11, $ex7, $r11, implicit-def $srfpflags, implicit $crfpmask
+
+    ; VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY
+    $dm2 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY $dm4, $ex2, $ey1, $r1, implicit-def $srfpflags, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY $dm0, $ex10, $ey0, $r28, implicit-def $srfpflags, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY $dm3, $ex3, $ey3, $r6, implicit-def $srfpflags, implicit $crfpmask
+    $dm1 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY $dm1, $ex8, $ey4, $r15, implicit-def $srfpflags, implicit $crfpmask
+    $dm4 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY $dm2, $ex11, $ey2, $r14, implicit-def $srfpflags, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY $dm4, $ex9, $ey5, $r12, implicit-def $srfpflags, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY $dm0, $ex5, $ey1, $r4, implicit-def $srfpflags, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY $dm3, $ex6, $ey0, $r22, implicit-def $srfpflags, implicit $crfpmask
+    $dm1 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY $dm1, $ex4, $ey3, $r23, implicit-def $srfpflags, implicit $crfpmask
+    $dm4 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY $dm2, $ex0, $ey4, $r8, implicit-def $srfpflags, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY $dm4, $ex7, $ey2, $r10, implicit-def $srfpflags, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY $dm0, $ex1, $ey5, $r13, implicit-def $srfpflags, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY $dm3, $ex2, $ey1, $r2, implicit-def $srfpflags, implicit $crfpmask
+    $dm1 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY $dm1, $ex10, $ey0, $r26, implicit-def $srfpflags, implicit $crfpmask
+    $dm4 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY $dm2, $ex3, $ey3, $r11, implicit-def $srfpflags, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY $dm4, $ex8, $ey4, $r21, implicit-def $srfpflags, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY $dm0, $ex11, $ey2, $r20, implicit-def $srfpflags, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY $dm3, $ex9, $ey5, $r9, implicit-def $srfpflags, implicit $crfpmask
+    $dm1 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY $dm1, $ex5, $ey1, $r29, implicit-def $srfpflags, implicit $crfpmask
+    $dm4 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY $dm2, $ex6, $ey0, $r30, implicit-def $srfpflags, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY $dm4, $ex4, $ey3, $r27, implicit-def $srfpflags, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY $dm0, $ex0, $ey4, $r7, implicit-def $srfpflags, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY $dm3, $ex7, $ey2, $r5, implicit-def $srfpflags, implicit $crfpmask
+    $dm1 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY $dm1, $ex1, $ey5, $r31, implicit-def $srfpflags, implicit $crfpmask
+    $dm4 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY $dm2, $ex2, $ey1, $r18, implicit-def $srfpflags, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY $dm4, $ex10, $ey0, $r25, implicit-def $srfpflags, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY $dm0, $ex3, $ey3, $r0, implicit-def $srfpflags, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY $dm3, $ex8, $ey4, $r16, implicit-def $srfpflags, implicit $crfpmask
+    $dm1 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY $dm1, $ex11, $ey2, $r17, implicit-def $srfpflags, implicit $crfpmask
+    $dm4 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY $dm2, $ex9, $ey5, $r24, implicit-def $srfpflags, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY $dm4, $ex5, $ey1, $r3, implicit-def $srfpflags, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY $dm0, $ex6, $ey0, $r19, implicit-def $srfpflags, implicit $crfpmask
+
+    ; VMSC_f_vmac_bfp_vmul_bfp_core_EX_QEY
+    $dm0 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_QEY $dm1, $ex4, $qey0, $r16, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_QEY $dm2, $ex0, $qey1, $r12, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm4 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_QEY $dm4, $ex1, $qey0, $r24, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_QEY $dm0, $ex6, $qey1, $r4, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm1 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_QEY $dm3, $ex8, $qey0, $r14, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_QEY $dm1, $ex2, $qey1, $r3, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_QEY $dm2, $ex11, $qey0, $r5, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm4 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_QEY $dm4, $ex9, $qey1, $r11, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_QEY $dm0, $ex5, $qey0, $r15, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm1 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_QEY $dm3, $ex3, $qey1, $r25, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_QEY $dm1, $ex7, $qey0, $r13, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_QEY $dm2, $ex10, $qey1, $r8, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm4 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_QEY $dm4, $ex4, $qey0, $r10, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_QEY $dm0, $ex0, $qey1, $r28, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm1 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_QEY $dm3, $ex1, $qey0, $r7, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_QEY $dm1, $ex6, $qey1, $r2, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_QEY $dm2, $ex8, $qey0, $r1, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm4 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_QEY $dm4, $ex2, $qey1, $r29, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_QEY $dm0, $ex11, $qey0, $r23, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm1 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_QEY $dm3, $ex9, $qey1, $r9, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_QEY $dm1, $ex5, $qey0, $r26, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_QEY $dm2, $ex3, $qey1, $r6, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm4 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_QEY $dm4, $ex7, $qey0, $r18, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_QEY $dm0, $ex10, $qey1, $r17, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm1 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_QEY $dm3, $ex4, $qey0, $r30, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_QEY $dm1, $ex0, $qey1, $r27, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_QEY $dm2, $ex1, $qey0, $r31, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm4 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_QEY $dm4, $ex6, $qey1, $r19, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_QEY $dm0, $ex8, $qey0, $r21, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm1 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_QEY $dm3, $ex2, $qey1, $r22, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_QEY $dm1, $ex11, $qey0, $r20, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bfp_vmul_bfp_core_EX_QEY $dm2, $ex9, $qey1, $r0, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+
+    ; VMSC_f_vmac_bfp_vmul_bfp_core_EY_QEX
+    $dm3 = VMSC_f_vmac_bfp_vmul_bfp_core_EY_QEX $dm4, $ey1, $qex2, $r2, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bfp_vmul_bfp_core_EY_QEX $dm2, $ey3, $qex1, $r13, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm4 = VMSC_f_vmac_bfp_vmul_bfp_core_EY_QEX $dm1, $ey0, $qex3, $r22, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm1 = VMSC_f_vmac_bfp_vmul_bfp_core_EY_QEX $dm0, $ey4, $qex0, $r12, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bfp_vmul_bfp_core_EY_QEX $dm3, $ey2, $qex2, $r26, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bfp_vmul_bfp_core_EY_QEX $dm4, $ey5, $qex1, $r8, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bfp_vmul_bfp_core_EY_QEX $dm2, $ey1, $qex3, $r5, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm4 = VMSC_f_vmac_bfp_vmul_bfp_core_EY_QEX $dm1, $ey3, $qex0, $r0, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm1 = VMSC_f_vmac_bfp_vmul_bfp_core_EY_QEX $dm0, $ey0, $qex2, $r3, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bfp_vmul_bfp_core_EY_QEX $dm3, $ey4, $qex1, $r15, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bfp_vmul_bfp_core_EY_QEX $dm4, $ey2, $qex3, $r24, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bfp_vmul_bfp_core_EY_QEX $dm2, $ey5, $qex0, $r16, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm4 = VMSC_f_vmac_bfp_vmul_bfp_core_EY_QEX $dm1, $ey1, $qex2, $r23, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm1 = VMSC_f_vmac_bfp_vmul_bfp_core_EY_QEX $dm0, $ey3, $qex1, $r21, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bfp_vmul_bfp_core_EY_QEX $dm3, $ey0, $qex3, $r1, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bfp_vmul_bfp_core_EY_QEX $dm4, $ey4, $qex0, $r19, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bfp_vmul_bfp_core_EY_QEX $dm2, $ey2, $qex2, $r30, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm4 = VMSC_f_vmac_bfp_vmul_bfp_core_EY_QEX $dm1, $ey5, $qex1, $r20, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm1 = VMSC_f_vmac_bfp_vmul_bfp_core_EY_QEX $dm0, $ey1, $qex3, $r27, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bfp_vmul_bfp_core_EY_QEX $dm3, $ey3, $qex0, $r31, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bfp_vmul_bfp_core_EY_QEX $dm4, $ey0, $qex2, $r11, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bfp_vmul_bfp_core_EY_QEX $dm2, $ey4, $qex1, $r14, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm4 = VMSC_f_vmac_bfp_vmul_bfp_core_EY_QEX $dm1, $ey2, $qex3, $r9, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm1 = VMSC_f_vmac_bfp_vmul_bfp_core_EY_QEX $dm0, $ey5, $qex0, $r6, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bfp_vmul_bfp_core_EY_QEX $dm3, $ey1, $qex2, $r29, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bfp_vmul_bfp_core_EY_QEX $dm4, $ey3, $qex1, $r7, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bfp_vmul_bfp_core_EY_QEX $dm2, $ey0, $qex3, $r17, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm4 = VMSC_f_vmac_bfp_vmul_bfp_core_EY_QEX $dm1, $ey4, $qex0, $r28, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm1 = VMSC_f_vmac_bfp_vmul_bfp_core_EY_QEX $dm0, $ey2, $qex2, $r25, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm2 = VMSC_f_vmac_bfp_vmul_bfp_core_EY_QEX $dm3, $ey5, $qex1, $r18, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm3 = VMSC_f_vmac_bfp_vmul_bfp_core_EY_QEX $dm4, $ey1, $qex3, $r4, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+    $dm0 = VMSC_f_vmac_bfp_vmul_bfp_core_EY_QEX $dm2, $ey3, $qex0, $r10, implicit-def $srfpflags, implicit-def $srsparse_of, implicit $crfpmask
+...
+
+# CHECK: 0: 08 13 80 6a vmsc dm2, dm4, x0, qx0,r13
+# CHECK: 4: 08 13 77 b0 vmsc dm0, dm3, x11, qx2,r22
+# CHECK: 8: 08 93 50 f3 vmsc dm3, dm2, x8, qx1,r30
+# CHECK: c: 08 93 33 dc vmsc dm4, dm1, x9, qx3,r27
+# CHECK: 10: 08 13 0a 21 vmsc dm1, dm0, x5, qx0,r4
+# CHECK: 14: 08 13 87 42 vmsc dm2, dm4, x3, qx2,r8
+# CHECK: 18: 08 93 68 a8 vmsc dm0, dm3, x4, qx1,r21
+# CHECK: 1c: 08 93 4d 9b vmsc dm3, dm2, x6, qx3,r19
+# CHECK: 20: 08 13 22 14 vmsc dm4, dm1, x1, qx0,r2
+# CHECK: 24: 08 13 05 79 vmsc dm1, dm0, x2, qx2,r15
+# CHECK: 28: 08 93 8e 62 vmsc dm2, dm4, x7, qx1,r12
+# CHECK: 2c: 08 93 75 18 vmsc dm0, dm3, x10, qx3,r3
+# CHECK: 30: 08 13 40 5b vmsc dm3, dm2, x0, qx0,r11
+# CHECK: 34: 08 13 37 d4 vmsc dm4, dm1, x11, qx2,r26
+# CHECK: 38: 08 93 10 51 vmsc dm1, dm0, x8, qx1,r10
+# CHECK: 3c: 08 93 93 ea vmsc dm2, dm4, x9, qx3,r29
+# CHECK: 40: 08 13 6a 70 vmsc dm0, dm3, x5, qx0,r14
+# CHECK: 44: 08 13 47 83 vmsc dm3, dm2, x3, qx2,r16
+# CHECK: 48: 08 93 28 0c vmsc dm4, dm1, x4, qx1,r1
+# CHECK: 4c: 08 93 0d 01 vmsc dm1, dm0, x6, qx3,r0
+# CHECK: 50: 08 13 82 a2 vmsc dm2, dm4, x1, qx0,r20
+# CHECK: 54: 08 13 65 c0 vmsc dm0, dm3, x2, qx2,r24
+# CHECK: 58: 08 93 4e 4b vmsc dm3, dm2, x7, qx1,r9
+# CHECK: 5c: 08 93 35 94 vmsc dm4, dm1, x10, qx3,r18
+# CHECK: 60: 08 13 00 b9 vmsc dm1, dm0, x0, qx0,r23
+# CHECK: 64: 08 13 97 32 vmsc dm2, dm4, x11, qx2,r6
+# CHECK: 68: 08 93 70 f8 vmsc dm0, dm3, x8, qx1,r31
+# CHECK: 6c: 08 93 53 e3 vmsc dm3, dm2, x9, qx3,r28
+# CHECK: 70: 08 13 2a 2c vmsc dm4, dm1, x5, qx0,r5
+# CHECK: 74: 08 13 07 c9 vmsc dm1, dm0, x3, qx2,r25
+# CHECK: 78: 08 93 88 3a vmsc dm2, dm4, x4, qx1,r7
+# CHECK: 7c: 08 93 6d 88 vmsc dm0, dm3, x6, qx3,r17
+# CHECK: 80: 08 2b 93 5a vmsc dm2, dm4, x9, qy1,r11
+# CHECK: 84: 08 2b 28 43 vmsc dm3, dm1, x4, qy0,r8
+# CHECK: 88: 08 2b 07 74 vmsc dm4, dm0, x3, qy1,r14
+# CHECK: 8c: 08 2b 50 c8 vmsc dm0, dm2, x8, qy0,r25
+# CHECK: 90: 08 2b 6f b9 vmsc dm1, dm3, x7, qy1,r23
+# CHECK: 94: 08 2b 84 3a vmsc dm2, dm4, x2, qy0,r7
+# CHECK: 98: 08 2b 35 53 vmsc dm3, dm1, x10, qy1,r10
+# CHECK: 9c: 08 2b 16 ac vmsc dm4, dm0, x11, qy0,r21
+# CHECK: a0: 08 2b 43 00 vmsc dm0, dm2, x1, qy1,r0
+# CHECK: a4: 08 2b 6c e1 vmsc dm1, dm3, x6, qy0,r28
+# CHECK: a8: 08 2b 8b 82 vmsc dm2, dm4, x5, qy1,r16
+# CHECK: ac: 08 2b 20 93 vmsc dm3, dm1, x0, qy0,r18
+# CHECK: b0: 08 2b 13 4c vmsc dm4, dm0, x9, qy1,r9
+# CHECK: b4: 08 2b 48 f0 vmsc dm0, dm2, x4, qy0,r30
+# CHECK: b8: 08 2b 67 99 vmsc dm1, dm3, x3, qy1,r19
+# CHECK: bc: 08 2b 90 1a vmsc dm2, dm4, x8, qy0,r3
+# CHECK: c0: 08 2b 2f 33 vmsc dm3, dm1, x7, qy1,r6
+# CHECK: c4: 08 2b 04 64 vmsc dm4, dm0, x2, qy0,r12
+# CHECK: c8: 08 2b 55 78 vmsc dm0, dm2, x10, qy1,r15
+# CHECK: cc: 08 2b 76 21 vmsc dm1, dm3, x11, qy0,r4
+# CHECK: d0: 08 2b 83 8a vmsc dm2, dm4, x1, qy1,r17
+# CHECK: d4: 08 2b 2c a3 vmsc dm3, dm1, x6, qy0,r20
+# CHECK: d8: 08 2b 0b c4 vmsc dm4, dm0, x5, qy1,r24
+# CHECK: dc: 08 2b 40 d8 vmsc dm0, dm2, x0, qy0,r27
+# CHECK: e0: 08 2b 73 11 vmsc dm1, dm3, x9, qy1,r2
+# CHECK: e4: 08 2b 88 6a vmsc dm2, dm4, x4, qy0,r13
+# CHECK: e8: 08 2b 27 eb vmsc dm3, dm1, x3, qy1,r29
+# CHECK: ec: 08 2b 10 d4 vmsc dm4, dm0, x8, qy0,r26
+# CHECK: f0: 08 2b 4f f8 vmsc dm0, dm2, x7, qy1,r31
+# CHECK: f4: 08 2b 64 29 vmsc dm1, dm3, x2, qy0,r5
+# CHECK: f8: 08 2b 95 b2 vmsc dm2, dm4, x10, qy1,r22
+# CHECK: fc: 08 2b 36 0b vmsc dm3, dm1, x11, qy0,r1
+# CHECK: 100: 08 43 2a c0 vmsc dm0, dm1, x5, x2,r24
+# CHECK: 104: 08 63 80 e9 vmsc dm1, dm4, x0, x3,r29
+# CHECK: 108: 08 e3 48 6c vmsc dm4, dm2, x4, x7,r13
+# CHECK: 10c: 08 23 67 52 vmsc dm2, dm3, x3, x9,r10
+# CHECK: 110: 08 a3 14 5b vmsc dm3, dm0, x10, x5,r11
+# CHECK: 114: 08 63 37 a0 vmsc dm0, dm1, x11, x11,r20
+# CHECK: 118: 08 43 85 21 vmsc dm1, dm4, x2, x10,r4
+# CHECK: 11c: 08 03 4e 74 vmsc dm4, dm2, x7, x0,r14
+# CHECK: 120: 08 23 62 92 vmsc dm2, dm3, x1, x1,r18
+# CHECK: 124: 08 c3 0c d3 vmsc dm3, dm0, x6, x6,r26
+# CHECK: 128: 08 03 31 28 vmsc dm0, dm1, x8, x8,r5
+# CHECK: 12c: 08 83 92 49 vmsc dm1, dm4, x9, x4,r9
+# CHECK: 130: 08 43 4a 04 vmsc dm4, dm2, x5, x2,r0
+# CHECK: 134: 08 63 60 1a vmsc dm2, dm3, x0, x3,r3
+# CHECK: 138: 08 e3 08 33 vmsc dm3, dm0, x4, x7,r6
+# CHECK: 13c: 08 23 27 b0 vmsc dm0, dm1, x3, x9,r22
+# CHECK: 140: 08 a3 94 09 vmsc dm1, dm4, x10, x5,r1
+# CHECK: 144: 08 63 57 44 vmsc dm4, dm2, x11, x11,r8
+# CHECK: 148: 08 43 65 da vmsc dm2, dm3, x2, x10,r27
+# CHECK: 14c: 08 03 0e 13 vmsc dm3, dm0, x7, x0,r2
+# CHECK: 150: 08 23 22 e0 vmsc dm0, dm1, x1, x1,r28
+# CHECK: 154: 08 c3 8c 39 vmsc dm1, dm4, x6, x6,r7
+# CHECK: 158: 08 03 51 8c vmsc dm4, dm2, x8, x8,r17
+# CHECK: 15c: 08 83 72 62 vmsc dm2, dm3, x9, x4,r12
+# CHECK: 160: 08 43 0a cb vmsc dm3, dm0, x5, x2,r25
+# CHECK: 164: 08 63 20 f8 vmsc dm0, dm1, x0, x3,r31
+# CHECK: 168: 08 e3 88 99 vmsc dm1, dm4, x4, x7,r19
+# CHECK: 16c: 08 23 47 f4 vmsc dm4, dm2, x3, x9,r30
+# CHECK: 170: 08 a3 74 82 vmsc dm2, dm3, x10, x5,r16
+# CHECK: 174: 08 63 17 bb vmsc dm3, dm0, x11, x11,r23
+# CHECK: 178: 08 43 25 a8 vmsc dm0, dm1, x2, x10,r21
+# CHECK: 17c: 08 03 8e 79 vmsc dm1, dm4, x7, x0,r15
+# CHECK: 180: 08 0b 4a a1 vmsc dm1, dm2, x5, y0,r20
+# CHECK: 184: 08 8b 0c 0a vmsc dm2, dm0, x6, y2,r1
+# CHECK: 188: 08 4b 26 ec vmsc dm4, dm1, x3, y1,r29
+# CHECK: 18c: 08 4b 63 70 vmsc dm0, dm3, x1, y5,r14
+# CHECK: 190: 08 0b 8f fb vmsc dm3, dm4, x7, y4,r31
+# CHECK: 194: 08 cb 44 29 vmsc dm1, dm2, x2, y3,r5
+# CHECK: 198: 08 0b 10 d2 vmsc dm2, dm0, x8, y0,r26
+# CHECK: 19c: 08 8b 28 8c vmsc dm4, dm1, x4, y2,r17
+# CHECK: 1a0: 08 4b 76 b8 vmsc dm0, dm3, x11, y1,r23
+# CHECK: 1a4: 08 4b 95 db vmsc dm3, dm4, x10, y5,r27
+# CHECK: 1a8: 08 0b 41 49 vmsc dm1, dm2, x0, y4,r9
+# CHECK: 1ac: 08 cb 12 b2 vmsc dm2, dm0, x9, y3,r22
+# CHECK: 1b0: 08 0b 2a 94 vmsc dm4, dm1, x5, y0,r18
+# CHECK: 1b4: 08 8b 6c c8 vmsc dm0, dm3, x6, y2,r25
+# CHECK: 1b8: 08 4b 86 c3 vmsc dm3, dm4, x3, y1,r24
+# CHECK: 1bc: 08 4b 43 f1 vmsc dm1, dm2, x1, y5,r30
+# CHECK: 1c0: 08 0b 0f 5a vmsc dm2, dm0, x7, y4,r11
+# CHECK: 1c4: 08 cb 24 9c vmsc dm4, dm1, x2, y3,r19
+# CHECK: 1c8: 08 0b 70 80 vmsc dm0, dm3, x8, y0,r16
+# CHECK: 1cc: 08 8b 88 13 vmsc dm3, dm4, x4, y2,r2
+# CHECK: 1d0: 08 4b 56 21 vmsc dm1, dm2, x11, y1,r4
+# CHECK: 1d4: 08 4b 15 52 vmsc dm2, dm0, x10, y5,r10
+# CHECK: 1d8: 08 0b 21 64 vmsc dm4, dm1, x0, y4,r12
+# CHECK: 1dc: 08 cb 72 00 vmsc dm0, dm3, x9, y3,r0
+# CHECK: 1e0: 08 0b 8a ab vmsc dm3, dm4, x5, y0,r21
+# CHECK: 1e4: 08 8b 4c 69 vmsc dm1, dm2, x6, y2,r13
+# CHECK: 1e8: 08 4b 06 3a vmsc dm2, dm0, x3, y1,r7
+# CHECK: 1ec: 08 4b 23 44 vmsc dm4, dm1, x1, y5,r8
+# CHECK: 1f0: 08 0b 6f 30 vmsc dm0, dm3, x7, y4,r6
+# CHECK: 1f4: 08 cb 84 7b vmsc dm3, dm4, x2, y3,r15
+# CHECK: 1f8: 08 0b 50 e1 vmsc dm1, dm2, x8, y0,r28
+# CHECK: 1fc: 08 8b 08 1a vmsc dm2, dm0, x4, y2,r3
+# CHECK: 200: 08 9b 12 88 vmsc dm0, dm0, y4, qx1,r17
+# CHECK: 204: 08 1b 96 6c vmsc dm4, dm4, y5, qx0,r13
+# CHECK: 208: 08 9b 6b fb vmsc dm3, dm3, y2, qx3,r31
+# CHECK: 20c: 08 1b 43 21 vmsc dm1, dm2, y0, qx2,r4
+# CHECK: 210: 08 9b 2e 72 vmsc dm2, dm1, y3, qx1,r14
+# CHECK: 214: 08 1b 06 18 vmsc dm0, dm0, y1, qx0,r3
+# CHECK: 218: 08 9b 93 a4 vmsc dm4, dm4, y4, qx3,r20
+# CHECK: 21c: 08 1b 77 e3 vmsc dm3, dm3, y5, qx2,r28
+# CHECK: 220: 08 9b 4a 29 vmsc dm1, dm2, y2, qx1,r5
+# CHECK: 224: 08 1b 22 32 vmsc dm2, dm1, y0, qx0,r6
+# CHECK: 228: 08 9b 0f b0 vmsc dm0, dm0, y3, qx3,r22
+# CHECK: 22c: 08 1b 87 d4 vmsc dm4, dm4, y1, qx2,r26
+# CHECK: 230: 08 9b 72 db vmsc dm3, dm3, y4, qx1,r27
+# CHECK: 234: 08 1b 56 c9 vmsc dm1, dm2, y5, qx0,r25
+# CHECK: 238: 08 9b 2b 82 vmsc dm2, dm1, y2, qx3,r16
+# CHECK: 23c: 08 1b 03 50 vmsc dm0, dm0, y0, qx2,r10
+# CHECK: 240: 08 9b 8e ac vmsc dm4, dm4, y3, qx1,r21
+# CHECK: 244: 08 1b 66 c3 vmsc dm3, dm3, y1, qx0,r24
+# CHECK: 248: 08 9b 53 b9 vmsc dm1, dm2, y4, qx3,r23
+# CHECK: 24c: 08 1b 37 f2 vmsc dm2, dm1, y5, qx2,r30
+# CHECK: 250: 08 9b 0a 48 vmsc dm0, dm0, y2, qx1,r9
+# CHECK: 254: 08 1b 82 5c vmsc dm4, dm4, y0, qx0,r11
+# CHECK: 258: 08 9b 6f 9b vmsc dm3, dm3, y3, qx3,r19
+# CHECK: 25c: 08 1b 47 91 vmsc dm1, dm2, y1, qx2,r18
+# CHECK: 260: 08 9b 32 12 vmsc dm2, dm1, y4, qx1,r2
+# CHECK: 264: 08 1b 16 40 vmsc dm0, dm0, y5, qx0,r8
+# CHECK: 268: 08 9b 8b 3c vmsc dm4, dm4, y2, qx3,r7
+# CHECK: 26c: 08 1b 63 63 vmsc dm3, dm3, y0, qx2,r12
+# CHECK: 270: 08 9b 4e 01 vmsc dm1, dm2, y3, qx1,r0
+# CHECK: 274: 08 1b 26 ea vmsc dm2, dm1, y1, qx0,r29
+# CHECK: 278: 08 9b 13 08 vmsc dm0, dm0, y4, qx3,r1
+# CHECK: 27c: 08 1b 97 7c vmsc dm4, dm4, y5, qx2,r15
+# CHECK: 280: 08 37 6d b8 vmsc dm0, dm3, y3, qy1,r23
+# CHECK: 284: 08 37 50 3c vmsc dm4, dm2, y4, qy0,r7
+# CHECK: 288: 08 37 21 4a vmsc dm2, dm1, y0, qy1,r9
+# CHECK: 28c: 08 37 88 c9 vmsc dm1, dm4, y2, qy0,r25
+# CHECK: 290: 08 37 05 13 vmsc dm3, dm0, y1, qy1,r2
+# CHECK: 294: 08 37 74 70 vmsc dm0, dm3, y5, qy0,r14
+# CHECK: 298: 08 37 4d b4 vmsc dm4, dm2, y3, qy1,r22
+# CHECK: 29c: 08 37 30 c2 vmsc dm2, dm1, y4, qy0,r24
+# CHECK: 2a0: 08 37 81 01 vmsc dm1, dm4, y0, qy1,r0
+# CHECK: 2a4: 08 37 08 63 vmsc dm3, dm0, y2, qy0,r12
+# CHECK: 2a8: 08 37 65 d0 vmsc dm0, dm3, y1, qy1,r26
+# CHECK: 2ac: 08 37 54 0c vmsc dm4, dm2, y5, qy0,r1
+# CHECK: 2b0: 08 37 2d 92 vmsc dm2, dm1, y3, qy1,r18
+# CHECK: 2b4: 08 37 90 d9 vmsc dm1, dm4, y4, qy0,r27
+# CHECK: 2b8: 08 37 01 f3 vmsc dm3, dm0, y0, qy1,r30
+# CHECK: 2bc: 08 37 68 80 vmsc dm0, dm3, y2, qy0,r16
+# CHECK: 2c0: 08 37 45 7c vmsc dm4, dm2, y1, qy1,r15
+# CHECK: 2c4: 08 37 34 9a vmsc dm2, dm1, y5, qy0,r19
+# CHECK: 2c8: 08 37 8d 41 vmsc dm1, dm4, y3, qy1,r8
+# CHECK: 2cc: 08 37 10 fb vmsc dm3, dm0, y4, qy0,r31
+# CHECK: 2d0: 08 37 61 a8 vmsc dm0, dm3, y0, qy1,r21
+# CHECK: 2d4: 08 37 48 54 vmsc dm4, dm2, y2, qy0,r10
+# CHECK: 2d8: 08 37 25 6a vmsc dm2, dm1, y1, qy1,r13
+# CHECK: 2dc: 08 37 94 a1 vmsc dm1, dm4, y5, qy0,r20
+# CHECK: 2e0: 08 37 0d 2b vmsc dm3, dm0, y3, qy1,r5
+# CHECK: 2e4: 08 37 70 e8 vmsc dm0, dm3, y4, qy0,r29
+# CHECK: 2e8: 08 37 41 e4 vmsc dm4, dm2, y0, qy1,r28
+# CHECK: 2ec: 08 37 28 5a vmsc dm2, dm1, y2, qy0,r11
+# CHECK: 2f0: 08 37 85 89 vmsc dm1, dm4, y1, qy1,r17
+# CHECK: 2f4: 08 37 14 33 vmsc dm3, dm0, y5, qy0,r6
+# CHECK: 2f8: 08 37 6d 18 vmsc dm0, dm3, y3, qy1,r3
+# CHECK: 2fc: 08 37 50 24 vmsc dm4, dm2, y4, qy0,r4
+# CHECK: 300: 08 5b 90 e2 vmsc dm2, dm4, y4, x2,r28
+# CHECK: 304: 08 5b 15 f4 vmsc dm4, dm0, y5, x10,r30
+# CHECK: 308: 08 7b 24 5b vmsc dm3, dm1, y1, x3,r11
+# CHECK: 30c: 08 1b 40 d1 vmsc dm1, dm2, y0, x0,r26
+# CHECK: 310: 08 7b 6d 98 vmsc dm0, dm3, y3, x11,r19
+# CHECK: 314: 08 fb 88 82 vmsc dm2, dm4, y2, x7,r16
+# CHECK: 318: 08 3b 11 bc vmsc dm4, dm0, y4, x9,r23
+# CHECK: 31c: 08 9b 34 1b vmsc dm3, dm1, y5, x4,r3
+# CHECK: 320: 08 3b 44 01 vmsc dm1, dm2, y1, x1,r0
+# CHECK: 324: 08 1b 61 68 vmsc dm0, dm3, y0, x8,r13
+# CHECK: 328: 08 bb 8c 42 vmsc dm2, dm4, y3, x5,r8
+# CHECK: 32c: 08 db 08 7c vmsc dm4, dm0, y2, x6,r15
+# CHECK: 330: 08 5b 30 3b vmsc dm3, dm1, y4, x2,r7
+# CHECK: 334: 08 5b 55 c1 vmsc dm1, dm2, y5, x10,r24
+# CHECK: 338: 08 7b 64 a8 vmsc dm0, dm3, y1, x3,r21
+# CHECK: 33c: 08 1b 80 52 vmsc dm2, dm4, y0, x0,r10
+# CHECK: 340: 08 7b 0d 14 vmsc dm4, dm0, y3, x11,r2
+# CHECK: 344: 08 fb 28 73 vmsc dm3, dm1, y2, x7,r14
+# CHECK: 348: 08 3b 51 21 vmsc dm1, dm2, y4, x9,r4
+# CHECK: 34c: 08 9b 74 f8 vmsc dm0, dm3, y5, x4,r31
+# CHECK: 350: 08 3b 84 8a vmsc dm2, dm4, y1, x1,r17
+# CHECK: 354: 08 1b 01 34 vmsc dm4, dm0, y0, x8,r6
+# CHECK: 358: 08 bb 2c eb vmsc dm3, dm1, y3, x5,r29
+# CHECK: 35c: 08 db 48 61 vmsc dm1, dm2, y2, x6,r12
+# CHECK: 360: 08 5b 70 48 vmsc dm0, dm3, y4, x2,r9
+# CHECK: 364: 08 5b 95 b2 vmsc dm2, dm4, y5, x10,r22
+# CHECK: 368: 08 7b 04 dc vmsc dm4, dm0, y1, x3,r27
+# CHECK: 36c: 08 1b 20 a3 vmsc dm3, dm1, y0, x0,r20
+# CHECK: 370: 08 7b 4d 91 vmsc dm1, dm2, y3, x11,r18
+# CHECK: 374: 08 fb 68 28 vmsc dm0, dm3, y2, x7,r5
+# CHECK: 378: 08 3b 91 0a vmsc dm2, dm4, y4, x9,r1
+# CHECK: 37c: 08 9b 14 cc vmsc dm4, dm0, y5, x4,r25
+# CHECK: 380: 08 57 80 4a vmsc dm2, dm4, y0, y1,r9
+# CHECK: 384: 08 17 09 f1 vmsc dm1, dm0, y2, y4,r30
+# CHECK: 388: 08 57 25 68 vmsc dm0, dm1, y1, y5,r13
+# CHECK: 38c: 08 d7 54 a4 vmsc dm4, dm2, y5, y3,r20
+# CHECK: 390: 08 97 70 23 vmsc dm3, dm3, y4, y2,r4
+# CHECK: 394: 08 17 8c 72 vmsc dm2, dm4, y3, y0,r14
+# CHECK: 398: 08 57 00 99 vmsc dm1, dm0, y0, y1,r19
+# CHECK: 39c: 08 17 29 30 vmsc dm0, dm1, y2, y4,r6
+# CHECK: 3a0: 08 57 45 8c vmsc dm4, dm2, y1, y5,r17
+# CHECK: 3a4: 08 d7 74 1b vmsc dm3, dm3, y5, y3,r3
+# CHECK: 3a8: 08 97 90 b2 vmsc dm2, dm4, y4, y2,r22
+# CHECK: 3ac: 08 17 0c 09 vmsc dm1, dm0, y3, y0,r1
+# CHECK: 3b0: 08 57 20 00 vmsc dm0, dm1, y0, y1,r0
+# CHECK: 3b4: 08 17 49 2c vmsc dm4, dm2, y2, y4,r5
+# CHECK: 3b8: 08 57 65 bb vmsc dm3, dm3, y1, y5,r23
+# CHECK: 3bc: 08 d7 94 ca vmsc dm2, dm4, y5, y3,r25
+# CHECK: 3c0: 08 97 10 e9 vmsc dm1, dm0, y4, y2,r29
+# CHECK: 3c4: 08 17 2c d0 vmsc dm0, dm1, y3, y0,r26
+# CHECK: 3c8: 08 57 40 14 vmsc dm4, dm2, y0, y1,r2
+# CHECK: 3cc: 08 17 69 63 vmsc dm3, dm3, y2, y4,r12
+# CHECK: 3d0: 08 57 85 aa vmsc dm2, dm4, y1, y5,r21
+# CHECK: 3d4: 08 d7 14 d9 vmsc dm1, dm0, y5, y3,r27
+# CHECK: 3d8: 08 97 30 80 vmsc dm0, dm1, y4, y2,r16
+# CHECK: 3dc: 08 17 4c fc vmsc dm4, dm2, y3, y0,r31
+# CHECK: 3e0: 08 57 60 43 vmsc dm3, dm3, y0, y1,r8
+# CHECK: 3e4: 08 17 89 92 vmsc dm2, dm4, y2, y4,r18
+# CHECK: 3e8: 08 57 05 51 vmsc dm1, dm0, y1, y5,r10
+# CHECK: 3ec: 08 d7 34 38 vmsc dm0, dm1, y5, y3,r7
+# CHECK: 3f0: 08 97 50 e4 vmsc dm4, dm2, y4, y2,r28
+# CHECK: 3f4: 08 17 6c c3 vmsc dm3, dm3, y3, y0,r24
+# CHECK: 3f8: 08 57 80 5a vmsc dm2, dm4, y0, y1,r11
+# CHECK: 3fc: 08 17 09 79 vmsc dm1, dm0, y2, y4,r15
+# CHECK: 400: 48 e3 22 f8 vmsc.f dm0, dm1, x1, x7, r31
+# CHECK: 404: 48 03 49 2a vmsc.f dm2, dm2, x4, x8, r5
+# CHECK: 408: 48 a3 72 d3 vmsc.f dm3, dm3, x9, x5, r26
+# CHECK: 40c: 48 83 00 c9 vmsc.f dm1, dm0, x0, x4, r25
+# CHECK: 410: 48 43 8d f4 vmsc.f dm4, dm4, x6, x10, r30
+# CHECK: 414: 48 c3 26 58 vmsc.f dm0, dm1, x3, x6, r11
+# CHECK: 418: 48 23 4b 1a vmsc.f dm2, dm2, x5, x9, r3
+# CHECK: 41c: 48 23 76 93 vmsc.f dm3, dm3, x11, x1, r18
+# CHECK: 420: 48 03 0e a1 vmsc.f dm1, dm0, x7, x0, r20
+# CHECK: 424: 48 63 95 ac vmsc.f dm4, dm4, x10, x11, r21
+# CHECK: 428: 48 63 30 40 vmsc.f dm0, dm1, x8, x3, r8
+# CHECK: 42c: 48 43 44 22 vmsc.f dm2, dm2, x2, x2, r4
+# CHECK: 430: 48 e3 62 13 vmsc.f dm3, dm3, x1, x7, r2
+# CHECK: 434: 48 03 09 e1 vmsc.f dm1, dm0, x4, x8, r28
+# CHECK: 438: 48 a3 92 8c vmsc.f dm4, dm4, x9, x5, r17
+# CHECK: 43c: 48 83 20 70 vmsc.f dm0, dm1, x0, x4, r14
+# CHECK: 440: 48 43 4d 52 vmsc.f dm2, dm2, x6, x10, r10
+# CHECK: 444: 48 c3 66 b3 vmsc.f dm3, dm3, x3, x6, r22
+# CHECK: 448: 48 23 0b 09 vmsc.f dm1, dm0, x5, x9, r1
+# CHECK: 44c: 48 23 96 04 vmsc.f dm4, dm4, x11, x1, r0
+# CHECK: 450: 48 03 2e e8 vmsc.f dm0, dm1, x7, x0, r29
+# CHECK: 454: 48 63 55 ba vmsc.f dm2, dm2, x10, x11, r23
+# CHECK: 458: 48 63 70 6b vmsc.f dm3, dm3, x8, x3, r13
+# CHECK: 45c: 48 43 04 61 vmsc.f dm1, dm0, x2, x2, r12
+# CHECK: 460: 48 e3 82 4c vmsc.f dm4, dm4, x1, x7, r9
+# CHECK: 464: 48 03 29 80 vmsc.f dm0, dm1, x4, x8, r16
+# CHECK: 468: 48 a3 52 9a vmsc.f dm2, dm2, x9, x5, r19
+# CHECK: 46c: 48 83 60 3b vmsc.f dm3, dm3, x0, x4, r7
+# CHECK: 470: 48 43 0d 79 vmsc.f dm1, dm0, x6, x10, r15
+# CHECK: 474: 48 c3 86 34 vmsc.f dm4, dm4, x3, x6, r6
+# CHECK: 478: 48 23 2b d8 vmsc.f dm0, dm1, x5, x9, r27
+# CHECK: 47c: 48 23 56 c2 vmsc.f dm2, dm2, x11, x1, r24
+# CHECK: 480: 48 53 10 62 vmsc.f dm2, dm0, y4, y1, r12
+# CHECK: 484: 48 d3 88 83 vmsc.f dm3, dm4, y2, y3, r16
+# CHECK: 488: 48 13 61 09 vmsc.f dm1, dm3, y0, y4, r1
+# CHECK: 48c: 48 53 4d 10 vmsc.f dm0, dm2, y3, y5, r2
+# CHECK: 490: 48 93 34 34 vmsc.f dm4, dm1, y5, y2, r6
+# CHECK: 494: 48 13 04 3a vmsc.f dm2, dm0, y1, y0, r7
+# CHECK: 498: 48 53 90 a3 vmsc.f dm3, dm4, y4, y1, r20
+# CHECK: 49c: 48 d3 68 99 vmsc.f dm1, dm3, y2, y3, r19
+# CHECK: 4a0: 48 13 41 c0 vmsc.f dm0, dm2, y0, y4, r24
+# CHECK: 4a4: 48 53 2d dc vmsc.f dm4, dm1, y3, y5, r27
+# CHECK: 4a8: 48 93 14 1a vmsc.f dm2, dm0, y5, y2, r3
+# CHECK: 4ac: 48 13 84 ab vmsc.f dm3, dm4, y1, y0, r21
+# CHECK: 4b0: 48 53 70 89 vmsc.f dm1, dm3, y4, y1, r17
+# CHECK: 4b4: 48 d3 48 e8 vmsc.f dm0, dm2, y2, y3, r29
+# CHECK: 4b8: 48 13 21 e4 vmsc.f dm4, dm1, y0, y4, r28
+# CHECK: 4bc: 48 53 0d 5a vmsc.f dm2, dm0, y3, y5, r11
+# CHECK: 4c0: 48 93 94 73 vmsc.f dm3, dm4, y5, y2, r14
+# CHECK: 4c4: 48 13 64 51 vmsc.f dm1, dm3, y1, y0, r10
+# CHECK: 4c8: 48 53 50 d0 vmsc.f dm0, dm2, y4, y1, r26
+# CHECK: 4cc: 48 d3 28 4c vmsc.f dm4, dm1, y2, y3, r9
+# CHECK: 4d0: 48 13 01 fa vmsc.f dm2, dm0, y0, y4, r31
+# CHECK: 4d4: 48 53 8d bb vmsc.f dm3, dm4, y3, y5, r23
+# CHECK: 4d8: 48 93 74 01 vmsc.f dm1, dm3, y5, y2, r0
+# CHECK: 4dc: 48 13 44 68 vmsc.f dm0, dm2, y1, y0, r13
+# CHECK: 4e0: 48 53 30 f4 vmsc.f dm4, dm1, y4, y1, r30
+# CHECK: 4e4: 48 d3 08 b2 vmsc.f dm2, dm0, y2, y3, r22
+# CHECK: 4e8: 48 13 81 23 vmsc.f dm3, dm4, y0, y4, r4
+# CHECK: 4ec: 48 53 6d c9 vmsc.f dm1, dm3, y3, y5, r25
+# CHECK: 4f0: 48 93 54 40 vmsc.f dm0, dm2, y5, y2, r8
+# CHECK: 4f4: 48 13 24 94 vmsc.f dm4, dm1, y1, y0, r18
+# CHECK: 4f8: 48 53 10 2a vmsc.f dm2, dm0, y4, y1, r5
+# CHECK: 4fc: 48 d3 88 7b vmsc.f dm3, dm4, y2, y3, r15
+# CHECK: 500: 48 0b 15 b9 vmsc.f dm1, dm0, ex10, ex8, r23
+# CHECK: 504: 48 0b 20 d8 vmsc.f dm0, dm1, ex0, ex0, r27
+# CHECK: 508: 48 2b 8a 8b vmsc.f dm3, dm4, ex5, ex1, r17
+# CHECK: 50c: 48 6b 64 b2 vmsc.f dm2, dm3, ex2, ex3, r22
+# CHECK: 510: 48 4b 43 6c vmsc.f dm4, dm2, ex1, ex10, r13
+# CHECK: 514: 48 cb 06 09 vmsc.f dm1, dm0, ex3, ex6, r1
+# CHECK: 518: 48 4b 32 e0 vmsc.f dm0, dm1, ex9, ex2, r28
+# CHECK: 51c: 48 eb 96 cb vmsc.f dm3, dm4, ex11, ex7, r25
+# CHECK: 520: 48 2b 69 7a vmsc.f dm2, dm3, ex4, ex9, r15
+# CHECK: 524: 48 ab 50 14 vmsc.f dm4, dm2, ex8, ex5, r2
+# CHECK: 528: 48 8b 0c f1 vmsc.f dm1, dm0, ex6, ex4, r30
+# CHECK: 52c: 48 6b 2f a0 vmsc.f dm0, dm1, ex7, ex11, r20
+# CHECK: 530: 48 0b 95 fb vmsc.f dm3, dm4, ex10, ex8, r31
+# CHECK: 534: 48 0b 60 22 vmsc.f dm2, dm3, ex0, ex0, r4
+# CHECK: 538: 48 2b 4a c4 vmsc.f dm4, dm2, ex5, ex1, r24
+# CHECK: 53c: 48 6b 04 19 vmsc.f dm1, dm0, ex2, ex3, r3
+# CHECK: 540: 48 4b 23 90 vmsc.f dm0, dm1, ex1, ex10, r18
+# CHECK: 544: 48 cb 86 43 vmsc.f dm3, dm4, ex3, ex6, r8
+# CHECK: 548: 48 4b 72 3a vmsc.f dm2, dm3, ex9, ex2, r7
+# CHECK: 54c: 48 eb 56 d4 vmsc.f dm4, dm2, ex11, ex7, r26
+# CHECK: 550: 48 2b 09 49 vmsc.f dm1, dm0, ex4, ex9, r9
+# CHECK: 554: 48 ab 30 e8 vmsc.f dm0, dm1, ex8, ex5, r29
+# CHECK: 558: 48 8b 8c 83 vmsc.f dm3, dm4, ex6, ex4, r16
+# CHECK: 55c: 48 6b 6f 9a vmsc.f dm2, dm3, ex7, ex11, r19
+# CHECK: 560: 48 0b 55 2c vmsc.f dm4, dm2, ex10, ex8, r5
+# CHECK: 564: 48 0b 00 71 vmsc.f dm1, dm0, ex0, ex0, r14
+# CHECK: 568: 48 2b 2a 30 vmsc.f dm0, dm1, ex5, ex1, r6
+# CHECK: 56c: 48 6b 84 53 vmsc.f dm3, dm4, ex2, ex3, r10
+# CHECK: 570: 48 4b 63 02 vmsc.f dm2, dm3, ex1, ex10, r0
+# CHECK: 574: 48 cb 46 64 vmsc.f dm4, dm2, ex3, ex6, r12
+# CHECK: 578: 48 4b 12 a9 vmsc.f dm1, dm0, ex9, ex2, r21
+# CHECK: 57c: 48 eb 36 58 vmsc.f dm0, dm1, ex11, ex7, r11
+# CHECK: 580: 48 47 84 0a vmsc.f dm2, dm4, ex2, ey1, r1
+# CHECK: 584: 48 07 14 e0 vmsc.f dm0, dm0, ex10, ey0, r28
+# CHECK: 588: 48 c7 66 33 vmsc.f dm3, dm3, ex3, ey3, r6
+# CHECK: 58c: 48 07 31 79 vmsc.f dm1, dm1, ex8, ey4, r15
+# CHECK: 590: 48 87 56 74 vmsc.f dm4, dm2, ex11, ey2, r14
+# CHECK: 594: 48 47 93 62 vmsc.f dm2, dm4, ex9, ey5, r12
+# CHECK: 598: 48 47 0a 20 vmsc.f dm0, dm0, ex5, ey1, r4
+# CHECK: 59c: 48 07 6c b3 vmsc.f dm3, dm3, ex6, ey0, r22
+# CHECK: 5a0: 48 c7 28 b9 vmsc.f dm1, dm1, ex4, ey3, r23
+# CHECK: 5a4: 48 07 41 44 vmsc.f dm4, dm2, ex0, ey4, r8
+# CHECK: 5a8: 48 87 8e 52 vmsc.f dm2, dm4, ex7, ey2, r10
+# CHECK: 5ac: 48 47 03 68 vmsc.f dm0, dm0, ex1, ey5, r13
+# CHECK: 5b0: 48 47 64 13 vmsc.f dm3, dm3, ex2, ey1, r2
+# CHECK: 5b4: 48 07 34 d1 vmsc.f dm1, dm1, ex10, ey0, r26
+# CHECK: 5b8: 48 c7 46 5c vmsc.f dm4, dm2, ex3, ey3, r11
+# CHECK: 5bc: 48 07 91 aa vmsc.f dm2, dm4, ex8, ey4, r21
+# CHECK: 5c0: 48 87 16 a0 vmsc.f dm0, dm0, ex11, ey2, r20
+# CHECK: 5c4: 48 47 73 4b vmsc.f dm3, dm3, ex9, ey5, r9
+# CHECK: 5c8: 48 47 2a e9 vmsc.f dm1, dm1, ex5, ey1, r29
+# CHECK: 5cc: 48 07 4c f4 vmsc.f dm4, dm2, ex6, ey0, r30
+# CHECK: 5d0: 48 c7 88 da vmsc.f dm2, dm4, ex4, ey3, r27
+# CHECK: 5d4: 48 07 01 38 vmsc.f dm0, dm0, ex0, ey4, r7
+# CHECK: 5d8: 48 87 6e 2b vmsc.f dm3, dm3, ex7, ey2, r5
+# CHECK: 5dc: 48 47 23 f9 vmsc.f dm1, dm1, ex1, ey5, r31
+# CHECK: 5e0: 48 47 44 94 vmsc.f dm4, dm2, ex2, ey1, r18
+# CHECK: 5e4: 48 07 94 ca vmsc.f dm2, dm4, ex10, ey0, r25
+# CHECK: 5e8: 48 c7 06 00 vmsc.f dm0, dm0, ex3, ey3, r0
+# CHECK: 5ec: 48 07 71 83 vmsc.f dm3, dm3, ex8, ey4, r16
+# CHECK: 5f0: 48 87 36 89 vmsc.f dm1, dm1, ex11, ey2, r17
+# CHECK: 5f4: 48 47 53 c4 vmsc.f dm4, dm2, ex9, ey5, r24
+# CHECK: 5f8: 48 47 8a 1a vmsc.f dm2, dm4, ex5, ey1, r3
+# CHECK: 5fc: 48 07 0c 98 vmsc.f dm0, dm0, ex6, ey0, r19
+# CHECK: 600: 48 17 28 80 vmsc.f dm0, dm1, ex4, qey0, r16
+# CHECK: 604: 48 17 41 62 vmsc.f dm2, dm2, ex0, qey1, r12
+# CHECK: 608: 48 17 82 c4 vmsc.f dm4, dm4, ex1, qey0, r24
+# CHECK: 60c: 48 17 0d 23 vmsc.f dm3, dm0, ex6, qey1, r4
+# CHECK: 610: 48 17 70 71 vmsc.f dm1, dm3, ex8, qey0, r14
+# CHECK: 614: 48 17 25 18 vmsc.f dm0, dm1, ex2, qey1, r3
+# CHECK: 618: 48 17 56 2a vmsc.f dm2, dm2, ex11, qey0, r5
+# CHECK: 61c: 48 17 93 5c vmsc.f dm4, dm4, ex9, qey1, r11
+# CHECK: 620: 48 17 0a 7b vmsc.f dm3, dm0, ex5, qey0, r15
+# CHECK: 624: 48 17 67 c9 vmsc.f dm1, dm3, ex3, qey1, r25
+# CHECK: 628: 48 17 2e 68 vmsc.f dm0, dm1, ex7, qey0, r13
+# CHECK: 62c: 48 17 55 42 vmsc.f dm2, dm2, ex10, qey1, r8
+# CHECK: 630: 48 17 88 54 vmsc.f dm4, dm4, ex4, qey0, r10
+# CHECK: 634: 48 17 01 e3 vmsc.f dm3, dm0, ex0, qey1, r28
+# CHECK: 638: 48 17 62 39 vmsc.f dm1, dm3, ex1, qey0, r7
+# CHECK: 63c: 48 17 2d 10 vmsc.f dm0, dm1, ex6, qey1, r2
+# CHECK: 640: 48 17 50 0a vmsc.f dm2, dm2, ex8, qey0, r1
+# CHECK: 644: 48 17 85 ec vmsc.f dm4, dm4, ex2, qey1, r29
+# CHECK: 648: 48 17 16 bb vmsc.f dm3, dm0, ex11, qey0, r23
+# CHECK: 64c: 48 17 73 49 vmsc.f dm1, dm3, ex9, qey1, r9
+# CHECK: 650: 48 17 2a d0 vmsc.f dm0, dm1, ex5, qey0, r26
+# CHECK: 654: 48 17 47 32 vmsc.f dm2, dm2, ex3, qey1, r6
+# CHECK: 658: 48 17 8e 94 vmsc.f dm4, dm4, ex7, qey0, r18
+# CHECK: 65c: 48 17 15 8b vmsc.f dm3, dm0, ex10, qey1, r17
+# CHECK: 660: 48 17 68 f1 vmsc.f dm1, dm3, ex4, qey0, r30
+# CHECK: 664: 48 17 21 d8 vmsc.f dm0, dm1, ex0, qey1, r27
+# CHECK: 668: 48 17 42 fa vmsc.f dm2, dm2, ex1, qey0, r31
+# CHECK: 66c: 48 17 8d 9c vmsc.f dm4, dm4, ex6, qey1, r19
+# CHECK: 670: 48 17 10 ab vmsc.f dm3, dm0, ex8, qey0, r21
+# CHECK: 674: 48 17 65 b1 vmsc.f dm1, dm3, ex2, qey1, r22
+# CHECK: 678: 48 17 36 a0 vmsc.f dm0, dm1, ex11, qey0, r20
+# CHECK: 67c: 48 17 53 02 vmsc.f dm2, dm2, ex9, qey1, r0
+# CHECK: 680: 48 1b 85 13 vmsc.f dm3, dm4, ey1, qex2, r2
+# CHECK: 684: 48 9b 4c 68 vmsc.f dm0, dm2, ey3, qex1, r13
+# CHECK: 688: 48 9b 21 b4 vmsc.f dm4, dm1, ey0, qex3, r22
+# CHECK: 68c: 48 1b 10 61 vmsc.f dm1, dm0, ey4, qex0, r12
+# CHECK: 690: 48 1b 69 d2 vmsc.f dm2, dm3, ey2, qex2, r26
+# CHECK: 694: 48 9b 94 43 vmsc.f dm3, dm4, ey5, qex1, r8
+# CHECK: 698: 48 9b 45 28 vmsc.f dm0, dm2, ey1, qex3, r5
+# CHECK: 69c: 48 1b 2c 04 vmsc.f dm4, dm1, ey3, qex0, r0
+# CHECK: 6a0: 48 1b 01 19 vmsc.f dm1, dm0, ey0, qex2, r3
+# CHECK: 6a4: 48 9b 70 7a vmsc.f dm2, dm3, ey4, qex1, r15
+# CHECK: 6a8: 48 9b 89 c3 vmsc.f dm3, dm4, ey2, qex3, r24
+# CHECK: 6ac: 48 1b 54 80 vmsc.f dm0, dm2, ey5, qex0, r16
+# CHECK: 6b0: 48 1b 25 bc vmsc.f dm4, dm1, ey1, qex2, r23
+# CHECK: 6b4: 48 9b 0c a9 vmsc.f dm1, dm0, ey3, qex1, r21
+# CHECK: 6b8: 48 9b 61 0a vmsc.f dm2, dm3, ey0, qex3, r1
+# CHECK: 6bc: 48 1b 90 9b vmsc.f dm3, dm4, ey4, qex0, r19
+# CHECK: 6c0: 48 1b 49 f0 vmsc.f dm0, dm2, ey2, qex2, r30
+# CHECK: 6c4: 48 9b 34 a4 vmsc.f dm4, dm1, ey5, qex1, r20
+# CHECK: 6c8: 48 9b 05 d9 vmsc.f dm1, dm0, ey1, qex3, r27
+# CHECK: 6cc: 48 1b 6c fa vmsc.f dm2, dm3, ey3, qex0, r31
+# CHECK: 6d0: 48 1b 81 5b vmsc.f dm3, dm4, ey0, qex2, r11
+# CHECK: 6d4: 48 9b 50 70 vmsc.f dm0, dm2, ey4, qex1, r14
+# CHECK: 6d8: 48 9b 29 4c vmsc.f dm4, dm1, ey2, qex3, r9
+# CHECK: 6dc: 48 1b 14 31 vmsc.f dm1, dm0, ey5, qex0, r6
+# CHECK: 6e0: 48 1b 65 ea vmsc.f dm2, dm3, ey1, qex2, r29
+# CHECK: 6e4: 48 9b 8c 3b vmsc.f dm3, dm4, ey3, qex1, r7
+# CHECK: 6e8: 48 9b 41 88 vmsc.f dm0, dm2, ey0, qex3, r17
+# CHECK: 6ec: 48 1b 30 e4 vmsc.f dm4, dm1, ey4, qex0, r28
+# CHECK: 6f0: 48 1b 09 c9 vmsc.f dm1, dm0, ey2, qex2, r25
+# CHECK: 6f4: 48 9b 74 92 vmsc.f dm2, dm3, ey5, qex1, r18
+# CHECK: 6f8: 48 9b 85 23 vmsc.f dm3, dm4, ey1, qex3, r4
+# CHECK: 6fc: 48 1b 4c 50 vmsc.f dm0, dm2, ey3, qex0, r10

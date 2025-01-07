@@ -5,7 +5,8 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple aie -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple aie -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE %s
+# RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2P %s
 
 ---
 name: xor_s32
@@ -15,11 +16,21 @@ regBankSelected: true
 body: |
   bb.0:
     liveins: $r6, $r7
-    ; CHECK-LABEL: name: xor_s32
-    ; CHECK: [[COPY:%[0-9]+]]:gpr = COPY $r6
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:gpr = COPY $r7
-    ; CHECK-NEXT: [[XOR:%[0-9]+]]:gpr = XOR [[COPY]], [[COPY1]]
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[XOR]]
+    ; AIE-LABEL: name: xor_s32
+    ; AIE: liveins: $r6, $r7
+    ; AIE-NEXT: {{  $}}
+    ; AIE-NEXT: [[COPY:%[0-9]+]]:gpr = COPY $r6
+    ; AIE-NEXT: [[COPY1:%[0-9]+]]:gpr = COPY $r7
+    ; AIE-NEXT: [[XOR:%[0-9]+]]:gpr = XOR [[COPY]], [[COPY1]]
+    ; AIE-NEXT: PseudoRET implicit $lr, implicit [[XOR]]
+    ;
+    ; AIE2P-LABEL: name: xor_s32
+    ; AIE2P: liveins: $r6, $r7
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
+    ; AIE2P-NEXT: [[XOR:%[0-9]+]]:er = XOR [[COPY]], [[COPY1]]
+    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[XOR]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = COPY $r7
     %2:gprregbank(s32) = G_XOR %0, %1

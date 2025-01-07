@@ -1,0 +1,2700 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; ST_2D_dms_sts
+    $p1, $dc6 = ST_2D_dms_sts $r12, $p1, $d6
+    $p0, $dc0 = ST_2D_dms_sts $r2, $p0, $d0
+    $p5, $dc5 = ST_2D_dms_sts $r13, $p5, $d5
+    $p7, $dc1 = ST_2D_dms_sts $r7, $p7, $d1
+    $p6, $dc4 = ST_2D_dms_sts $r5, $p6, $d4
+    $p4, $dc2 = ST_2D_dms_sts $eh8, $p4, $d2
+    $p2, $dc3 = ST_2D_dms_sts $el7, $p2, $d3
+    $p3, $dc7 = ST_2D_dms_sts $el10, $p3, $d7
+    $p1, $dc6 = ST_2D_dms_sts $r22, $p1, $d6
+    $p0, $dc0 = ST_2D_dms_sts $r23, $p0, $d0
+    $p5, $dc5 = ST_2D_dms_sts $el3, $p5, $d5
+    $p7, $dc1 = ST_2D_dms_sts $dj0, $p7, $d1
+    $p6, $dc4 = ST_2D_dms_sts $r1, $p6, $d4
+    $p4, $dc2 = ST_2D_dms_sts $dc5, $p4, $d2
+    $p2, $dc3 = ST_2D_dms_sts $dn4, $p2, $d3
+    $p3, $dc7 = ST_2D_dms_sts $dc0, $p3, $d7
+    $p1, $dc6 = ST_2D_dms_sts $m3, $p1, $d6
+    $p0, $dc0 = ST_2D_dms_sts $r29, $p0, $d0
+    $p5, $dc5 = ST_2D_dms_sts $eh10, $p5, $d5
+    $p7, $dc1 = ST_2D_dms_sts $r0, $p7, $d1
+    $p6, $dc4 = ST_2D_dms_sts $r9, $p6, $d4
+    $p4, $dc2 = ST_2D_dms_sts $eh11, $p4, $d2
+    $p2, $dc3 = ST_2D_dms_sts $el8, $p2, $d3
+    $p3, $dc7 = ST_2D_dms_sts $eh9, $p3, $d7
+    $p1, $dc6 = ST_2D_dms_sts $dj7, $p1, $d6
+    $p0, $dc0 = ST_2D_dms_sts $el6, $p0, $d0
+    $p5, $dc5 = ST_2D_dms_sts $r18, $p5, $d5
+    $p7, $dc1 = ST_2D_dms_sts $r14, $p7, $d1
+    $p6, $dc4 = ST_2D_dms_sts $r4, $p6, $d4
+    $p4, $dc2 = ST_2D_dms_sts $r8, $p4, $d2
+    $p2, $dc3 = ST_2D_dms_sts $m2, $p2, $d3
+    $p3, $dc7 = ST_2D_dms_sts $r24, $p3, $d7
+    $p1, $dc6 = ST_2D_dms_sts $dj3, $p1, $d6
+    $p0, $dc0 = ST_2D_dms_sts $eh6, $p0, $d0
+    $p5, $dc5 = ST_2D_dms_sts $r26, $p5, $d5
+    $p7, $dc1 = ST_2D_dms_sts $dc7, $p7, $d1
+    $p6, $dc4 = ST_2D_dms_sts $p5, $p6, $d4
+    $p4, $dc2 = ST_2D_dms_sts $dn0, $p4, $d2
+    $p2, $dc3 = ST_2D_dms_sts $eh2, $p2, $d3
+    $p3, $dc7 = ST_2D_dms_sts $r11, $p3, $d7
+    $p1, $dc6 = ST_2D_dms_sts $r10, $p1, $d6
+    $p0, $dc0 = ST_2D_dms_sts $dc4, $p0, $d0
+    $p5, $dc5 = ST_2D_dms_sts $r28, $p5, $d5
+    $p7, $dc1 = ST_2D_dms_sts $eh0, $p7, $d1
+    $p6, $dc4 = ST_2D_dms_sts $eh5, $p6, $d4
+    $p4, $dc2 = ST_2D_dms_sts $r3, $p4, $d2
+    $p2, $dc3 = ST_2D_dms_sts $p6, $p2, $d3
+    $p3, $dc7 = ST_2D_dms_sts $dn1, $p3, $d7
+    $p1, $dc6 = ST_2D_dms_sts $dc3, $p1, $d6
+    $p0, $dc0 = ST_2D_dms_sts $el5, $p0, $d0
+    $p5, $dc5 = ST_2D_dms_sts $dj5, $p5, $d5
+    $p7, $dc1 = ST_2D_dms_sts $dj4, $p7, $d1
+    $p6, $dc4 = ST_2D_dms_sts $eh3, $p6, $d4
+    $p4, $dc2 = ST_2D_dms_sts $dn5, $p4, $d2
+    $p2, $dc3 = ST_2D_dms_sts $r25, $p2, $d3
+    $p3, $dc7 = ST_2D_dms_sts $m6, $p3, $d7
+    $p1, $dc6 = ST_2D_dms_sts $el4, $p1, $d6
+    $p0, $dc0 = ST_2D_dms_sts $p3, $p0, $d0
+    $p5, $dc5 = ST_2D_dms_sts $r21, $p5, $d5
+    $p7, $dc1 = ST_2D_dms_sts $dj1, $p7, $d1
+    $p6, $dc4 = ST_2D_dms_sts $dc1, $p6, $d4
+    $p4, $dc2 = ST_2D_dms_sts $r30, $p4, $d2
+    $p2, $dc3 = ST_2D_dms_sts $r6, $p2, $d3
+    $p3, $dc7 = ST_2D_dms_sts $dj2, $p3, $d7
+    $p1, $dc6 = ST_2D_dms_sts $dn2, $p1, $d6
+    $p0, $dc0 = ST_2D_dms_sts $eh7, $p0, $d0
+    $p5, $dc5 = ST_2D_dms_sts $p4, $p5, $d5
+    $p7, $dc1 = ST_2D_dms_sts $m7, $p7, $d1
+    $p6, $dc4 = ST_2D_dms_sts $r19, $p6, $d4
+    $p4, $dc2 = ST_2D_dms_sts $r31, $p4, $d2
+    $p2, $dc3 = ST_2D_dms_sts $dn6, $p2, $d3
+    $p3, $dc7 = ST_2D_dms_sts $el1, $p3, $d7
+    $p1, $dc6 = ST_2D_dms_sts $p0, $p1, $d6
+    $p0, $dc0 = ST_2D_dms_sts $eh4, $p0, $d0
+    $p5, $dc5 = ST_2D_dms_sts $el9, $p5, $d5
+    $p7, $dc1 = ST_2D_dms_sts $m0, $p7, $d1
+    $p6, $dc4 = ST_2D_dms_sts $dn7, $p6, $d4
+    $p4, $dc2 = ST_2D_dms_sts $el11, $p4, $d2
+    $p2, $dc3 = ST_2D_dms_sts $p1, $p2, $d3
+    $p3, $dc7 = ST_2D_dms_sts $el0, $p3, $d7
+    $p1, $dc6 = ST_2D_dms_sts $p2, $p1, $d6
+    $p0, $dc0 = ST_2D_dms_sts $m5, $p0, $d0
+    $p5, $dc5 = ST_2D_dms_sts $r16, $p5, $d5
+    $p7, $dc1 = ST_2D_dms_sts $dc2, $p7, $d1
+    $p6, $dc4 = ST_2D_dms_sts $r15, $p6, $d4
+    $p4, $dc2 = ST_2D_dms_sts $r20, $p4, $d2
+    $p2, $dc3 = ST_2D_dms_sts $r27, $p2, $d3
+    $p3, $dc7 = ST_2D_dms_sts $eh1, $p3, $d7
+    $p1, $dc6 = ST_2D_dms_sts $el2, $p1, $d6
+    $p0, $dc0 = ST_2D_dms_sts $m1, $p0, $d0
+    $p5, $dc5 = ST_2D_dms_sts $m4, $p5, $d5
+    $p7, $dc1 = ST_2D_dms_sts $dc6, $p7, $d1
+    $p6, $dc4 = ST_2D_dms_sts $dj6, $p6, $d4
+    $p4, $dc2 = ST_2D_dms_sts $r17, $p4, $d2
+    $p2, $dc3 = ST_2D_dms_sts $p7, $p2, $d3
+    $p3, $dc7 = ST_2D_dms_sts $dn3, $p3, $d7
+    $p1, $dc6 = ST_2D_dms_sts $lr, $p1, $d6
+
+    ; ST_2D_dmv_sts_q
+    $p7, $dc4 = ST_2D_dmv_sts_q $q2, $p7, $d4
+    $p5, $dc5 = ST_2D_dmv_sts_q $q0, $p5, $d5
+    $p0, $dc1 = ST_2D_dmv_sts_q $q3, $p0, $d1
+    $p3, $dc2 = ST_2D_dmv_sts_q $q1, $p3, $d2
+    $p1, $dc0 = ST_2D_dmv_sts_q $q2, $p1, $d0
+    $p6, $dc6 = ST_2D_dmv_sts_q $q0, $p6, $d6
+    $p2, $dc3 = ST_2D_dmv_sts_q $q3, $p2, $d3
+    $p4, $dc7 = ST_2D_dmv_sts_q $q1, $p4, $d7
+
+    ; ST_2D_s16
+    $p7, $dc7 = ST_2D_s16 $r26, $p7, $d7, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3, $dc5 = ST_2D_s16 $r19, $p3, $d5, implicit-def $pe2_ads, implicit $pe2_ads
+    $p2, $dc0 = ST_2D_s16 $r16, $p2, $d0, implicit-def $pe2_ads, implicit $pe2_ads
+    $p1, $dc6 = ST_2D_s16 $r31, $p1, $d6, implicit-def $pe2_ads, implicit $pe2_ads
+    $p4, $dc1 = ST_2D_s16 $r10, $p4, $d1, implicit-def $pe2_ads, implicit $pe2_ads
+    $p0, $dc4 = ST_2D_s16 $r15, $p0, $d4, implicit-def $pe2_ads, implicit $pe2_ads
+    $p5, $dc3 = ST_2D_s16 $r28, $p5, $d3, implicit-def $pe2_ads, implicit $pe2_ads
+    $p6, $dc2 = ST_2D_s16 $r4, $p6, $d2, implicit-def $pe2_ads, implicit $pe2_ads
+    $p7, $dc7 = ST_2D_s16 $r25, $p7, $d7, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3, $dc5 = ST_2D_s16 $r23, $p3, $d5, implicit-def $pe2_ads, implicit $pe2_ads
+    $p2, $dc0 = ST_2D_s16 $r7, $p2, $d0, implicit-def $pe2_ads, implicit $pe2_ads
+    $p1, $dc6 = ST_2D_s16 $r27, $p1, $d6, implicit-def $pe2_ads, implicit $pe2_ads
+    $p4, $dc1 = ST_2D_s16 $r1, $p4, $d1, implicit-def $pe2_ads, implicit $pe2_ads
+    $p0, $dc4 = ST_2D_s16 $r6, $p0, $d4, implicit-def $pe2_ads, implicit $pe2_ads
+    $p5, $dc3 = ST_2D_s16 $r3, $p5, $d3, implicit-def $pe2_ads, implicit $pe2_ads
+    $p6, $dc2 = ST_2D_s16 $r5, $p6, $d2, implicit-def $pe2_ads, implicit $pe2_ads
+    $p7, $dc7 = ST_2D_s16 $r0, $p7, $d7, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3, $dc5 = ST_2D_s16 $r13, $p3, $d5, implicit-def $pe2_ads, implicit $pe2_ads
+    $p2, $dc0 = ST_2D_s16 $r14, $p2, $d0, implicit-def $pe2_ads, implicit $pe2_ads
+    $p1, $dc6 = ST_2D_s16 $r12, $p1, $d6, implicit-def $pe2_ads, implicit $pe2_ads
+    $p4, $dc1 = ST_2D_s16 $r11, $p4, $d1, implicit-def $pe2_ads, implicit $pe2_ads
+    $p0, $dc4 = ST_2D_s16 $r18, $p0, $d4, implicit-def $pe2_ads, implicit $pe2_ads
+    $p5, $dc3 = ST_2D_s16 $r17, $p5, $d3, implicit-def $pe2_ads, implicit $pe2_ads
+    $p6, $dc2 = ST_2D_s16 $r30, $p6, $d2, implicit-def $pe2_ads, implicit $pe2_ads
+    $p7, $dc7 = ST_2D_s16 $r21, $p7, $d7, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3, $dc5 = ST_2D_s16 $r29, $p3, $d5, implicit-def $pe2_ads, implicit $pe2_ads
+    $p2, $dc0 = ST_2D_s16 $r20, $p2, $d0, implicit-def $pe2_ads, implicit $pe2_ads
+    $p1, $dc6 = ST_2D_s16 $r24, $p1, $d6, implicit-def $pe2_ads, implicit $pe2_ads
+    $p4, $dc1 = ST_2D_s16 $r8, $p4, $d1, implicit-def $pe2_ads, implicit $pe2_ads
+    $p0, $dc4 = ST_2D_s16 $r2, $p0, $d4, implicit-def $pe2_ads, implicit $pe2_ads
+    $p5, $dc3 = ST_2D_s16 $r22, $p5, $d3, implicit-def $pe2_ads, implicit $pe2_ads
+    $p6, $dc2 = ST_2D_s16 $r9, $p6, $d2, implicit-def $pe2_ads, implicit $pe2_ads
+
+    ; ST_2D_s8
+    $p5, $dc0 = ST_2D_s8 $r8, $p5, $d0, implicit-def $pe2_ads, implicit $pe2_ads
+    $p4, $dc6 = ST_2D_s8 $r10, $p4, $d6, implicit-def $pe2_ads, implicit $pe2_ads
+    $p2, $dc4 = ST_2D_s8 $r0, $p2, $d4, implicit-def $pe2_ads, implicit $pe2_ads
+    $p6, $dc3 = ST_2D_s8 $r23, $p6, $d3, implicit-def $pe2_ads, implicit $pe2_ads
+    $p1, $dc2 = ST_2D_s8 $r26, $p1, $d2, implicit-def $pe2_ads, implicit $pe2_ads
+    $p0, $dc5 = ST_2D_s8 $r6, $p0, $d5, implicit-def $pe2_ads, implicit $pe2_ads
+    $p7, $dc1 = ST_2D_s8 $r5, $p7, $d1, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3, $dc7 = ST_2D_s8 $r27, $p3, $d7, implicit-def $pe2_ads, implicit $pe2_ads
+    $p5, $dc0 = ST_2D_s8 $r13, $p5, $d0, implicit-def $pe2_ads, implicit $pe2_ads
+    $p4, $dc6 = ST_2D_s8 $r29, $p4, $d6, implicit-def $pe2_ads, implicit $pe2_ads
+    $p2, $dc4 = ST_2D_s8 $r20, $p2, $d4, implicit-def $pe2_ads, implicit $pe2_ads
+    $p6, $dc3 = ST_2D_s8 $r18, $p6, $d3, implicit-def $pe2_ads, implicit $pe2_ads
+    $p1, $dc2 = ST_2D_s8 $r11, $p1, $d2, implicit-def $pe2_ads, implicit $pe2_ads
+    $p0, $dc5 = ST_2D_s8 $r2, $p0, $d5, implicit-def $pe2_ads, implicit $pe2_ads
+    $p7, $dc1 = ST_2D_s8 $r12, $p7, $d1, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3, $dc7 = ST_2D_s8 $r25, $p3, $d7, implicit-def $pe2_ads, implicit $pe2_ads
+    $p5, $dc0 = ST_2D_s8 $r4, $p5, $d0, implicit-def $pe2_ads, implicit $pe2_ads
+    $p4, $dc6 = ST_2D_s8 $r7, $p4, $d6, implicit-def $pe2_ads, implicit $pe2_ads
+    $p2, $dc4 = ST_2D_s8 $r1, $p2, $d4, implicit-def $pe2_ads, implicit $pe2_ads
+    $p6, $dc3 = ST_2D_s8 $r3, $p6, $d3, implicit-def $pe2_ads, implicit $pe2_ads
+    $p1, $dc2 = ST_2D_s8 $r19, $p1, $d2, implicit-def $pe2_ads, implicit $pe2_ads
+    $p0, $dc5 = ST_2D_s8 $r21, $p0, $d5, implicit-def $pe2_ads, implicit $pe2_ads
+    $p7, $dc1 = ST_2D_s8 $r14, $p7, $d1, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3, $dc7 = ST_2D_s8 $r17, $p3, $d7, implicit-def $pe2_ads, implicit $pe2_ads
+    $p5, $dc0 = ST_2D_s8 $r30, $p5, $d0, implicit-def $pe2_ads, implicit $pe2_ads
+    $p4, $dc6 = ST_2D_s8 $r9, $p4, $d6, implicit-def $pe2_ads, implicit $pe2_ads
+    $p2, $dc4 = ST_2D_s8 $r16, $p2, $d4, implicit-def $pe2_ads, implicit $pe2_ads
+    $p6, $dc3 = ST_2D_s8 $r24, $p6, $d3, implicit-def $pe2_ads, implicit $pe2_ads
+    $p1, $dc2 = ST_2D_s8 $r15, $p1, $d2, implicit-def $pe2_ads, implicit $pe2_ads
+    $p0, $dc5 = ST_2D_s8 $r22, $p0, $d5, implicit-def $pe2_ads, implicit $pe2_ads
+    $p7, $dc1 = ST_2D_s8 $r31, $p7, $d1, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3, $dc7 = ST_2D_s8 $r28, $p3, $d7, implicit-def $pe2_ads, implicit $pe2_ads
+
+    ; ST_3D_dms_sts
+    $p6, $dc1, $dc5 = ST_3D_dms_sts $eh0, $p6, $d1_3d
+    $p2, $dc2, $dc6 = ST_3D_dms_sts $eh4, $p2, $d2_3d
+    $p5, $dc0, $dc4 = ST_3D_dms_sts $p0, $p5, $d0_3d
+    $p3, $dc3, $dc7 = ST_3D_dms_sts $r20, $p3, $d3_3d
+    $p0, $dc1, $dc5 = ST_3D_dms_sts $el10, $p0, $d1_3d
+    $p7, $dc2, $dc6 = ST_3D_dms_sts $m7, $p7, $d2_3d
+    $p4, $dc0, $dc4 = ST_3D_dms_sts $r25, $p4, $d0_3d
+    $p1, $dc3, $dc7 = ST_3D_dms_sts $el9, $p1, $d3_3d
+    $p6, $dc1, $dc5 = ST_3D_dms_sts $r23, $p6, $d1_3d
+    $p2, $dc2, $dc6 = ST_3D_dms_sts $p3, $p2, $d2_3d
+    $p5, $dc0, $dc4 = ST_3D_dms_sts $dj3, $p5, $d0_3d
+    $p3, $dc3, $dc7 = ST_3D_dms_sts $dc2, $p3, $d3_3d
+    $p0, $dc1, $dc5 = ST_3D_dms_sts $r6, $p0, $d1_3d
+    $p7, $dc2, $dc6 = ST_3D_dms_sts $r16, $p7, $d2_3d
+    $p4, $dc0, $dc4 = ST_3D_dms_sts $eh9, $p4, $d0_3d
+    $p1, $dc3, $dc7 = ST_3D_dms_sts $dj1, $p1, $d3_3d
+    $p6, $dc1, $dc5 = ST_3D_dms_sts $eh11, $p6, $d1_3d
+    $p2, $dc2, $dc6 = ST_3D_dms_sts $dn7, $p2, $d2_3d
+    $p5, $dc0, $dc4 = ST_3D_dms_sts $el4, $p5, $d0_3d
+    $p3, $dc3, $dc7 = ST_3D_dms_sts $r14, $p3, $d3_3d
+    $p0, $dc1, $dc5 = ST_3D_dms_sts $r8, $p0, $d1_3d
+    $p7, $dc2, $dc6 = ST_3D_dms_sts $el1, $p7, $d2_3d
+    $p4, $dc0, $dc4 = ST_3D_dms_sts $r5, $p4, $d0_3d
+    $p1, $dc3, $dc7 = ST_3D_dms_sts $r13, $p1, $d3_3d
+    $p6, $dc1, $dc5 = ST_3D_dms_sts $r0, $p6, $d1_3d
+    $p2, $dc2, $dc6 = ST_3D_dms_sts $dn1, $p2, $d2_3d
+    $p5, $dc0, $dc4 = ST_3D_dms_sts $dj0, $p5, $d0_3d
+    $p3, $dc3, $dc7 = ST_3D_dms_sts $r4, $p3, $d3_3d
+    $p0, $dc1, $dc5 = ST_3D_dms_sts $m2, $p0, $d1_3d
+    $p7, $dc2, $dc6 = ST_3D_dms_sts $eh2, $p7, $d2_3d
+    $p4, $dc0, $dc4 = ST_3D_dms_sts $dc4, $p4, $d0_3d
+    $p1, $dc3, $dc7 = ST_3D_dms_sts $dn0, $p1, $d3_3d
+    $p6, $dc1, $dc5 = ST_3D_dms_sts $r19, $p6, $d1_3d
+    $p2, $dc2, $dc6 = ST_3D_dms_sts $r18, $p2, $d2_3d
+    $p5, $dc0, $dc4 = ST_3D_dms_sts $dn3, $p5, $d0_3d
+    $p3, $dc3, $dc7 = ST_3D_dms_sts $m1, $p3, $d3_3d
+    $p0, $dc1, $dc5 = ST_3D_dms_sts $el3, $p0, $d1_3d
+    $p7, $dc2, $dc6 = ST_3D_dms_sts $dj4, $p7, $d2_3d
+    $p4, $dc0, $dc4 = ST_3D_dms_sts $dn4, $p4, $d0_3d
+    $p1, $dc3, $dc7 = ST_3D_dms_sts $dc3, $p1, $d3_3d
+    $p6, $dc1, $dc5 = ST_3D_dms_sts $m5, $p6, $d1_3d
+    $p2, $dc2, $dc6 = ST_3D_dms_sts $r29, $p2, $d2_3d
+    $p5, $dc0, $dc4 = ST_3D_dms_sts $el0, $p5, $d0_3d
+    $p3, $dc3, $dc7 = ST_3D_dms_sts $dc7, $p3, $d3_3d
+    $p0, $dc1, $dc5 = ST_3D_dms_sts $m3, $p0, $d1_3d
+    $p7, $dc2, $dc6 = ST_3D_dms_sts $r28, $p7, $d2_3d
+    $p4, $dc0, $dc4 = ST_3D_dms_sts $p6, $p4, $d0_3d
+    $p1, $dc3, $dc7 = ST_3D_dms_sts $dj7, $p1, $d3_3d
+    $p6, $dc1, $dc5 = ST_3D_dms_sts $p4, $p6, $d1_3d
+    $p2, $dc2, $dc6 = ST_3D_dms_sts $r26, $p2, $d2_3d
+    $p5, $dc0, $dc4 = ST_3D_dms_sts $eh5, $p5, $d0_3d
+    $p3, $dc3, $dc7 = ST_3D_dms_sts $dc6, $p3, $d3_3d
+    $p0, $dc1, $dc5 = ST_3D_dms_sts $r24, $p0, $d1_3d
+    $p7, $dc2, $dc6 = ST_3D_dms_sts $el7, $p7, $d2_3d
+    $p4, $dc0, $dc4 = ST_3D_dms_sts $r22, $p4, $d0_3d
+    $p1, $dc3, $dc7 = ST_3D_dms_sts $dc0, $p1, $d3_3d
+    $p6, $dc1, $dc5 = ST_3D_dms_sts $el5, $p6, $d1_3d
+    $p2, $dc2, $dc6 = ST_3D_dms_sts $dn2, $p2, $d2_3d
+    $p5, $dc0, $dc4 = ST_3D_dms_sts $eh8, $p5, $d0_3d
+    $p3, $dc3, $dc7 = ST_3D_dms_sts $eh3, $p3, $d3_3d
+    $p0, $dc1, $dc5 = ST_3D_dms_sts $dn6, $p0, $d1_3d
+    $p7, $dc2, $dc6 = ST_3D_dms_sts $eh7, $p7, $d2_3d
+    $p4, $dc0, $dc4 = ST_3D_dms_sts $r17, $p4, $d0_3d
+    $p1, $dc3, $dc7 = ST_3D_dms_sts $dc1, $p1, $d3_3d
+    $p6, $dc1, $dc5 = ST_3D_dms_sts $m4, $p6, $d1_3d
+    $p2, $dc2, $dc6 = ST_3D_dms_sts $eh10, $p2, $d2_3d
+    $p5, $dc0, $dc4 = ST_3D_dms_sts $r2, $p5, $d0_3d
+    $p3, $dc3, $dc7 = ST_3D_dms_sts $dc5, $p3, $d3_3d
+    $p0, $dc1, $dc5 = ST_3D_dms_sts $r11, $p0, $d1_3d
+    $p7, $dc2, $dc6 = ST_3D_dms_sts $p2, $p7, $d2_3d
+    $p4, $dc0, $dc4 = ST_3D_dms_sts $r12, $p4, $d0_3d
+    $p1, $dc3, $dc7 = ST_3D_dms_sts $eh1, $p1, $d3_3d
+    $p6, $dc1, $dc5 = ST_3D_dms_sts $r15, $p6, $d1_3d
+    $p2, $dc2, $dc6 = ST_3D_dms_sts $lr, $p2, $d2_3d
+    $p5, $dc0, $dc4 = ST_3D_dms_sts $el8, $p5, $d0_3d
+    $p3, $dc3, $dc7 = ST_3D_dms_sts $r10, $p3, $d3_3d
+    $p0, $dc1, $dc5 = ST_3D_dms_sts $r7, $p0, $d1_3d
+    $p7, $dc2, $dc6 = ST_3D_dms_sts $dn5, $p7, $d2_3d
+    $p4, $dc0, $dc4 = ST_3D_dms_sts $p5, $p4, $d0_3d
+    $p1, $dc3, $dc7 = ST_3D_dms_sts $m0, $p1, $d3_3d
+    $p6, $dc1, $dc5 = ST_3D_dms_sts $r3, $p6, $d1_3d
+    $p2, $dc2, $dc6 = ST_3D_dms_sts $r21, $p2, $d2_3d
+    $p5, $dc0, $dc4 = ST_3D_dms_sts $eh6, $p5, $d0_3d
+    $p3, $dc3, $dc7 = ST_3D_dms_sts $r27, $p3, $d3_3d
+    $p0, $dc1, $dc5 = ST_3D_dms_sts $dj6, $p0, $d1_3d
+    $p7, $dc2, $dc6 = ST_3D_dms_sts $el6, $p7, $d2_3d
+    $p4, $dc0, $dc4 = ST_3D_dms_sts $m6, $p4, $d0_3d
+    $p1, $dc3, $dc7 = ST_3D_dms_sts $r30, $p1, $d3_3d
+    $p6, $dc1, $dc5 = ST_3D_dms_sts $dj5, $p6, $d1_3d
+    $p2, $dc2, $dc6 = ST_3D_dms_sts $p7, $p2, $d2_3d
+    $p5, $dc0, $dc4 = ST_3D_dms_sts $dj2, $p5, $d0_3d
+    $p3, $dc3, $dc7 = ST_3D_dms_sts $el2, $p3, $d3_3d
+    $p0, $dc1, $dc5 = ST_3D_dms_sts $p1, $p0, $d1_3d
+    $p7, $dc2, $dc6 = ST_3D_dms_sts $r9, $p7, $d2_3d
+    $p4, $dc0, $dc4 = ST_3D_dms_sts $el11, $p4, $d0_3d
+    $p1, $dc3, $dc7 = ST_3D_dms_sts $r31, $p1, $d3_3d
+    $p6, $dc1, $dc5 = ST_3D_dms_sts $r1, $p6, $d1_3d
+
+    ; ST_3D_dmv_sts_q
+    $p2, $dc0, $dc4 = ST_3D_dmv_sts_q $q2, $p2, $d0_3d
+    $p7, $dc2, $dc6 = ST_3D_dmv_sts_q $q3, $p7, $d2_3d
+    $p4, $dc1, $dc5 = ST_3D_dmv_sts_q $q1, $p4, $d1_3d
+    $p0, $dc3, $dc7 = ST_3D_dmv_sts_q $q0, $p0, $d3_3d
+    $p6, $dc0, $dc4 = ST_3D_dmv_sts_q $q2, $p6, $d0_3d
+    $p3, $dc2, $dc6 = ST_3D_dmv_sts_q $q3, $p3, $d2_3d
+    $p1, $dc1, $dc5 = ST_3D_dmv_sts_q $q1, $p1, $d1_3d
+    $p5, $dc3, $dc7 = ST_3D_dmv_sts_q $q0, $p5, $d3_3d
+
+    ; ST_3D_s16
+    $p2, $dc2, $dc6 = ST_3D_s16 $r8, $p2, $d2_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p6, $dc0, $dc4 = ST_3D_s16 $r11, $p6, $d0_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p5, $dc3, $dc7 = ST_3D_s16 $r0, $p5, $d3_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3, $dc1, $dc5 = ST_3D_s16 $r13, $p3, $d1_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p7, $dc2, $dc6 = ST_3D_s16 $r7, $p7, $d2_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p0, $dc0, $dc4 = ST_3D_s16 $r15, $p0, $d0_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p1, $dc3, $dc7 = ST_3D_s16 $r27, $p1, $d3_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p4, $dc1, $dc5 = ST_3D_s16 $r18, $p4, $d1_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p2, $dc2, $dc6 = ST_3D_s16 $r3, $p2, $d2_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p6, $dc0, $dc4 = ST_3D_s16 $r12, $p6, $d0_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p5, $dc3, $dc7 = ST_3D_s16 $r19, $p5, $d3_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3, $dc1, $dc5 = ST_3D_s16 $r22, $p3, $d1_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p7, $dc2, $dc6 = ST_3D_s16 $r4, $p7, $d2_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p0, $dc0, $dc4 = ST_3D_s16 $r25, $p0, $d0_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p1, $dc3, $dc7 = ST_3D_s16 $r16, $p1, $d3_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p4, $dc1, $dc5 = ST_3D_s16 $r9, $p4, $d1_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p2, $dc2, $dc6 = ST_3D_s16 $r2, $p2, $d2_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p6, $dc0, $dc4 = ST_3D_s16 $r29, $p6, $d0_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p5, $dc3, $dc7 = ST_3D_s16 $r21, $p5, $d3_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3, $dc1, $dc5 = ST_3D_s16 $r5, $p3, $d1_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p7, $dc2, $dc6 = ST_3D_s16 $r17, $p7, $d2_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p0, $dc0, $dc4 = ST_3D_s16 $r23, $p0, $d0_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p1, $dc3, $dc7 = ST_3D_s16 $r31, $p1, $d3_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p4, $dc1, $dc5 = ST_3D_s16 $r6, $p4, $d1_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p2, $dc2, $dc6 = ST_3D_s16 $r28, $p2, $d2_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p6, $dc0, $dc4 = ST_3D_s16 $r30, $p6, $d0_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p5, $dc3, $dc7 = ST_3D_s16 $r26, $p5, $d3_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3, $dc1, $dc5 = ST_3D_s16 $r1, $p3, $d1_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p7, $dc2, $dc6 = ST_3D_s16 $r10, $p7, $d2_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p0, $dc0, $dc4 = ST_3D_s16 $r20, $p0, $d0_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p1, $dc3, $dc7 = ST_3D_s16 $r14, $p1, $d3_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p4, $dc1, $dc5 = ST_3D_s16 $r24, $p4, $d1_3d, implicit-def $pe2_ads, implicit $pe2_ads
+
+    ; ST_3D_s8
+    $p2, $dc1, $dc5 = ST_3D_s8 $r18, $p2, $d1_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p4, $dc2, $dc6 = ST_3D_s8 $r19, $p4, $d2_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3, $dc0, $dc4 = ST_3D_s8 $r9, $p3, $d0_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p0, $dc3, $dc7 = ST_3D_s8 $r27, $p0, $d3_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p5, $dc1, $dc5 = ST_3D_s8 $r5, $p5, $d1_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p1, $dc2, $dc6 = ST_3D_s8 $r17, $p1, $d2_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p7, $dc0, $dc4 = ST_3D_s8 $r3, $p7, $d0_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p6, $dc3, $dc7 = ST_3D_s8 $r11, $p6, $d3_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p2, $dc1, $dc5 = ST_3D_s8 $r1, $p2, $d1_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p4, $dc2, $dc6 = ST_3D_s8 $r6, $p4, $d2_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3, $dc0, $dc4 = ST_3D_s8 $r2, $p3, $d0_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p0, $dc3, $dc7 = ST_3D_s8 $r16, $p0, $d3_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p5, $dc1, $dc5 = ST_3D_s8 $r12, $p5, $d1_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p1, $dc2, $dc6 = ST_3D_s8 $r20, $p1, $d2_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p7, $dc0, $dc4 = ST_3D_s8 $r14, $p7, $d0_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p6, $dc3, $dc7 = ST_3D_s8 $r0, $p6, $d3_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p2, $dc1, $dc5 = ST_3D_s8 $r31, $p2, $d1_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p4, $dc2, $dc6 = ST_3D_s8 $r24, $p4, $d2_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3, $dc0, $dc4 = ST_3D_s8 $r4, $p3, $d0_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p0, $dc3, $dc7 = ST_3D_s8 $r28, $p0, $d3_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p5, $dc1, $dc5 = ST_3D_s8 $r26, $p5, $d1_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p1, $dc2, $dc6 = ST_3D_s8 $r7, $p1, $d2_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p7, $dc0, $dc4 = ST_3D_s8 $r25, $p7, $d0_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p6, $dc3, $dc7 = ST_3D_s8 $r15, $p6, $d3_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p2, $dc1, $dc5 = ST_3D_s8 $r30, $p2, $d1_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p4, $dc2, $dc6 = ST_3D_s8 $r23, $p4, $d2_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3, $dc0, $dc4 = ST_3D_s8 $r21, $p3, $d0_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p0, $dc3, $dc7 = ST_3D_s8 $r13, $p0, $d3_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p5, $dc1, $dc5 = ST_3D_s8 $r29, $p5, $d1_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p1, $dc2, $dc6 = ST_3D_s8 $r22, $p1, $d2_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p7, $dc0, $dc4 = ST_3D_s8 $r10, $p7, $d0_3d, implicit-def $pe2_ads, implicit $pe2_ads
+    $p6, $dc3, $dc7 = ST_3D_s8 $r8, $p6, $d3_3d, implicit-def $pe2_ads, implicit $pe2_ads
+
+    ; ST_TM_2D :: (store (s32) into custom "TileMemory")
+    $p4, $dc7 = ST_TM_2D $r19, $p4, $d7 :: (store (s32) into custom "TileMemory")
+    $p7, $dc6 = ST_TM_2D $r25, $p7, $d6 :: (store (s32) into custom "TileMemory")
+    $p6, $dc4 = ST_TM_2D $r16, $p6, $d4 :: (store (s32) into custom "TileMemory")
+    $p2, $dc5 = ST_TM_2D $r11, $p2, $d5 :: (store (s32) into custom "TileMemory")
+    $p1, $dc0 = ST_TM_2D $r8, $p1, $d0 :: (store (s32) into custom "TileMemory")
+    $p5, $dc1 = ST_TM_2D $r14, $p5, $d1 :: (store (s32) into custom "TileMemory")
+    $p3, $dc3 = ST_TM_2D $r31, $p3, $d3 :: (store (s32) into custom "TileMemory")
+    $p0, $dc2 = ST_TM_2D $r27, $p0, $d2 :: (store (s32) into custom "TileMemory")
+    $p4, $dc7 = ST_TM_2D $r23, $p4, $d7 :: (store (s32) into custom "TileMemory")
+    $p7, $dc6 = ST_TM_2D $r28, $p7, $d6 :: (store (s32) into custom "TileMemory")
+    $p6, $dc4 = ST_TM_2D $r3, $p6, $d4 :: (store (s32) into custom "TileMemory")
+    $p2, $dc5 = ST_TM_2D $r29, $p2, $d5 :: (store (s32) into custom "TileMemory")
+    $p1, $dc0 = ST_TM_2D $r12, $p1, $d0 :: (store (s32) into custom "TileMemory")
+    $p5, $dc1 = ST_TM_2D $r17, $p5, $d1 :: (store (s32) into custom "TileMemory")
+    $p3, $dc3 = ST_TM_2D $r6, $p3, $d3 :: (store (s32) into custom "TileMemory")
+    $p0, $dc2 = ST_TM_2D $r30, $p0, $d2 :: (store (s32) into custom "TileMemory")
+    $p4, $dc7 = ST_TM_2D $r4, $p4, $d7 :: (store (s32) into custom "TileMemory")
+    $p7, $dc6 = ST_TM_2D $r18, $p7, $d6 :: (store (s32) into custom "TileMemory")
+    $p6, $dc4 = ST_TM_2D $r21, $p6, $d4 :: (store (s32) into custom "TileMemory")
+    $p2, $dc5 = ST_TM_2D $r10, $p2, $d5 :: (store (s32) into custom "TileMemory")
+    $p1, $dc0 = ST_TM_2D $r1, $p1, $d0 :: (store (s32) into custom "TileMemory")
+    $p5, $dc1 = ST_TM_2D $r20, $p5, $d1 :: (store (s32) into custom "TileMemory")
+    $p3, $dc3 = ST_TM_2D $r5, $p3, $d3 :: (store (s32) into custom "TileMemory")
+    $p0, $dc2 = ST_TM_2D $r2, $p0, $d2 :: (store (s32) into custom "TileMemory")
+    $p4, $dc7 = ST_TM_2D $r22, $p4, $d7 :: (store (s32) into custom "TileMemory")
+    $p7, $dc6 = ST_TM_2D $r24, $p7, $d6 :: (store (s32) into custom "TileMemory")
+    $p6, $dc4 = ST_TM_2D $r26, $p6, $d4 :: (store (s32) into custom "TileMemory")
+    $p2, $dc5 = ST_TM_2D $r9, $p2, $d5 :: (store (s32) into custom "TileMemory")
+    $p1, $dc0 = ST_TM_2D $r13, $p1, $d0 :: (store (s32) into custom "TileMemory")
+    $p5, $dc1 = ST_TM_2D $r7, $p5, $d1 :: (store (s32) into custom "TileMemory")
+    $p3, $dc3 = ST_TM_2D $r15, $p3, $d3 :: (store (s32) into custom "TileMemory")
+    $p0, $dc2 = ST_TM_2D $r0, $p0, $d2 :: (store (s32) into custom "TileMemory")
+
+    ; ST_TM_3D :: (store (s32) into custom "TileMemory")
+    $p7, $dc1, $dc5 = ST_TM_3D $r3, $p7, $d1_3d :: (store (s32) into custom "TileMemory")
+    $p2, $dc2, $dc6 = ST_TM_3D $r13, $p2, $d2_3d :: (store (s32) into custom "TileMemory")
+    $p3, $dc3, $dc7 = ST_TM_3D $r27, $p3, $d3_3d :: (store (s32) into custom "TileMemory")
+    $p5, $dc0, $dc4 = ST_TM_3D $r31, $p5, $d0_3d :: (store (s32) into custom "TileMemory")
+    $p1, $dc1, $dc5 = ST_TM_3D $r17, $p1, $d1_3d :: (store (s32) into custom "TileMemory")
+    $p0, $dc2, $dc6 = ST_TM_3D $r2, $p0, $d2_3d :: (store (s32) into custom "TileMemory")
+    $p4, $dc3, $dc7 = ST_TM_3D $r26, $p4, $d3_3d :: (store (s32) into custom "TileMemory")
+    $p6, $dc0, $dc4 = ST_TM_3D $r18, $p6, $d0_3d :: (store (s32) into custom "TileMemory")
+    $p7, $dc1, $dc5 = ST_TM_3D $r20, $p7, $d1_3d :: (store (s32) into custom "TileMemory")
+    $p2, $dc2, $dc6 = ST_TM_3D $r19, $p2, $d2_3d :: (store (s32) into custom "TileMemory")
+    $p3, $dc3, $dc7 = ST_TM_3D $r4, $p3, $d3_3d :: (store (s32) into custom "TileMemory")
+    $p5, $dc0, $dc4 = ST_TM_3D $r28, $p5, $d0_3d :: (store (s32) into custom "TileMemory")
+    $p1, $dc1, $dc5 = ST_TM_3D $r14, $p1, $d1_3d :: (store (s32) into custom "TileMemory")
+    $p0, $dc2, $dc6 = ST_TM_3D $r0, $p0, $d2_3d :: (store (s32) into custom "TileMemory")
+    $p4, $dc3, $dc7 = ST_TM_3D $r7, $p4, $d3_3d :: (store (s32) into custom "TileMemory")
+    $p6, $dc0, $dc4 = ST_TM_3D $r23, $p6, $d0_3d :: (store (s32) into custom "TileMemory")
+    $p7, $dc1, $dc5 = ST_TM_3D $r11, $p7, $d1_3d :: (store (s32) into custom "TileMemory")
+    $p2, $dc2, $dc6 = ST_TM_3D $r8, $p2, $d2_3d :: (store (s32) into custom "TileMemory")
+    $p3, $dc3, $dc7 = ST_TM_3D $r21, $p3, $d3_3d :: (store (s32) into custom "TileMemory")
+    $p5, $dc0, $dc4 = ST_TM_3D $r5, $p5, $d0_3d :: (store (s32) into custom "TileMemory")
+    $p1, $dc1, $dc5 = ST_TM_3D $r30, $p1, $d1_3d :: (store (s32) into custom "TileMemory")
+    $p0, $dc2, $dc6 = ST_TM_3D $r9, $p0, $d2_3d :: (store (s32) into custom "TileMemory")
+    $p4, $dc3, $dc7 = ST_TM_3D $r15, $p4, $d3_3d :: (store (s32) into custom "TileMemory")
+    $p6, $dc0, $dc4 = ST_TM_3D $r1, $p6, $d0_3d :: (store (s32) into custom "TileMemory")
+    $p7, $dc1, $dc5 = ST_TM_3D $r16, $p7, $d1_3d :: (store (s32) into custom "TileMemory")
+    $p2, $dc2, $dc6 = ST_TM_3D $r6, $p2, $d2_3d :: (store (s32) into custom "TileMemory")
+    $p3, $dc3, $dc7 = ST_TM_3D $r25, $p3, $d3_3d :: (store (s32) into custom "TileMemory")
+    $p5, $dc0, $dc4 = ST_TM_3D $r29, $p5, $d0_3d :: (store (s32) into custom "TileMemory")
+    $p1, $dc1, $dc5 = ST_TM_3D $r22, $p1, $d1_3d :: (store (s32) into custom "TileMemory")
+    $p0, $dc2, $dc6 = ST_TM_3D $r12, $p0, $d2_3d :: (store (s32) into custom "TileMemory")
+    $p4, $dc3, $dc7 = ST_TM_3D $r24, $p4, $d3_3d :: (store (s32) into custom "TileMemory")
+    $p6, $dc0, $dc4 = ST_TM_3D $r10, $p6, $d0_3d :: (store (s32) into custom "TileMemory")
+
+    ; ST_TM_idx :: (store (s32) into custom "TileMemory")
+    ST_TM_idx $r4, $p1, $dj4 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx $r26, $p4, $dj5 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx $r3, $p0, $dj6 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx $r5, $p7, $dj3 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx $r27, $p3, $dj2 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx $r13, $p2, $dj7 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx $r2, $p6, $dj0 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx $r24, $p5, $dj1 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx $r12, $p1, $dj4 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx $r9, $p4, $dj5 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx $r18, $p0, $dj6 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx $r21, $p7, $dj3 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx $r6, $p3, $dj2 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx $r15, $p2, $dj7 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx $r20, $p6, $dj0 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx $r17, $p5, $dj1 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx $r31, $p1, $dj4 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx $r16, $p4, $dj5 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx $r30, $p0, $dj6 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx $r28, $p7, $dj3 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx $r23, $p3, $dj2 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx $r22, $p2, $dj7 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx $r25, $p6, $dj0 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx $r19, $p5, $dj1 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx $r0, $p1, $dj4 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx $r7, $p4, $dj5 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx $r8, $p0, $dj6 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx $r1, $p7, $dj3 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx $r29, $p3, $dj2 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx $r10, $p2, $dj7 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx $r11, $p6, $dj0 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx $r14, $p5, $dj1 :: (store (s32) into custom "TileMemory")
+
+    ; ST_TM_idx_imm :: (store (s32) into custom "TileMemory")
+    ST_TM_idx_imm $r7, $p3, 28 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx_imm $r8, $p1, 4 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx_imm $r1, $p7, 0 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx_imm $r28, $p0, -32 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx_imm $r24, $p4, 28 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx_imm $r15, $p2, 4 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx_imm $r21, $p6, 0 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx_imm $r0, $p5, -32 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx_imm $r18, $p3, 28 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx_imm $r26, $p1, 4 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx_imm $r16, $p7, 0 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx_imm $r31, $p0, -32 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx_imm $r27, $p4, 28 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx_imm $r13, $p2, 4 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx_imm $r19, $p6, 0 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx_imm $r29, $p5, -32 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx_imm $r22, $p3, 28 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx_imm $r23, $p1, 4 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx_imm $r20, $p7, 0 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx_imm $r30, $p0, -32 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx_imm $r25, $p4, 28 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx_imm $r9, $p2, 4 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx_imm $r17, $p6, 0 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx_imm $r10, $p5, -32 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx_imm $r12, $p3, 28 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx_imm $r4, $p1, 4 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx_imm $r6, $p7, 0 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx_imm $r2, $p0, -32 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx_imm $r3, $p4, 28 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx_imm $r14, $p2, 4 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx_imm $r11, $p6, 0 :: (store (s32) into custom "TileMemory")
+    ST_TM_idx_imm $r5, $p5, -32 :: (store (s32) into custom "TileMemory")
+
+    ; ST_TM_pstm_nrm :: (store (s32) into custom "TileMemory")
+    $p7 = ST_TM_pstm_nrm $r5, $p7, $m1 :: (store (s32) into custom "TileMemory")
+    $p3 = ST_TM_pstm_nrm $r12, $p3, $m4 :: (store (s32) into custom "TileMemory")
+    $p6 = ST_TM_pstm_nrm $r30, $p6, $m5 :: (store (s32) into custom "TileMemory")
+    $p2 = ST_TM_pstm_nrm $r27, $p2, $m7 :: (store (s32) into custom "TileMemory")
+    $p0 = ST_TM_pstm_nrm $r8, $p0, $m3 :: (store (s32) into custom "TileMemory")
+    $p1 = ST_TM_pstm_nrm $r4, $p1, $m6 :: (store (s32) into custom "TileMemory")
+    $p4 = ST_TM_pstm_nrm $r3, $p4, $m0 :: (store (s32) into custom "TileMemory")
+    $p5 = ST_TM_pstm_nrm $r10, $p5, $m2 :: (store (s32) into custom "TileMemory")
+    $p7 = ST_TM_pstm_nrm $r13, $p7, $m1 :: (store (s32) into custom "TileMemory")
+    $p3 = ST_TM_pstm_nrm $r11, $p3, $m4 :: (store (s32) into custom "TileMemory")
+    $p6 = ST_TM_pstm_nrm $r24, $p6, $m5 :: (store (s32) into custom "TileMemory")
+    $p2 = ST_TM_pstm_nrm $r29, $p2, $m7 :: (store (s32) into custom "TileMemory")
+    $p0 = ST_TM_pstm_nrm $r16, $p0, $m3 :: (store (s32) into custom "TileMemory")
+    $p1 = ST_TM_pstm_nrm $r6, $p1, $m6 :: (store (s32) into custom "TileMemory")
+    $p4 = ST_TM_pstm_nrm $r31, $p4, $m0 :: (store (s32) into custom "TileMemory")
+    $p5 = ST_TM_pstm_nrm $r20, $p5, $m2 :: (store (s32) into custom "TileMemory")
+    $p7 = ST_TM_pstm_nrm $r28, $p7, $m1 :: (store (s32) into custom "TileMemory")
+    $p3 = ST_TM_pstm_nrm $r15, $p3, $m4 :: (store (s32) into custom "TileMemory")
+    $p6 = ST_TM_pstm_nrm $r25, $p6, $m5 :: (store (s32) into custom "TileMemory")
+    $p2 = ST_TM_pstm_nrm $r18, $p2, $m7 :: (store (s32) into custom "TileMemory")
+    $p0 = ST_TM_pstm_nrm $r1, $p0, $m3 :: (store (s32) into custom "TileMemory")
+    $p1 = ST_TM_pstm_nrm $r21, $p1, $m6 :: (store (s32) into custom "TileMemory")
+    $p4 = ST_TM_pstm_nrm $r19, $p4, $m0 :: (store (s32) into custom "TileMemory")
+    $p5 = ST_TM_pstm_nrm $r17, $p5, $m2 :: (store (s32) into custom "TileMemory")
+    $p7 = ST_TM_pstm_nrm $r9, $p7, $m1 :: (store (s32) into custom "TileMemory")
+    $p3 = ST_TM_pstm_nrm $r0, $p3, $m4 :: (store (s32) into custom "TileMemory")
+    $p6 = ST_TM_pstm_nrm $r26, $p6, $m5 :: (store (s32) into custom "TileMemory")
+    $p2 = ST_TM_pstm_nrm $r23, $p2, $m7 :: (store (s32) into custom "TileMemory")
+    $p0 = ST_TM_pstm_nrm $r22, $p0, $m3 :: (store (s32) into custom "TileMemory")
+    $p1 = ST_TM_pstm_nrm $r2, $p1, $m6 :: (store (s32) into custom "TileMemory")
+    $p4 = ST_TM_pstm_nrm $r14, $p4, $m0 :: (store (s32) into custom "TileMemory")
+    $p5 = ST_TM_pstm_nrm $r7, $p5, $m2 :: (store (s32) into custom "TileMemory")
+
+    ; ST_TM_pstm_nrm_imm :: (store (s32) into custom "TileMemory")
+    $p6 = ST_TM_pstm_nrm_imm $r24, $p6, 28 :: (store (s32) into custom "TileMemory")
+    $p0 = ST_TM_pstm_nrm_imm $r7, $p0, 4 :: (store (s32) into custom "TileMemory")
+    $p1 = ST_TM_pstm_nrm_imm $r6, $p1, 0 :: (store (s32) into custom "TileMemory")
+    $p3 = ST_TM_pstm_nrm_imm $r9, $p3, -32 :: (store (s32) into custom "TileMemory")
+    $p7 = ST_TM_pstm_nrm_imm $r17, $p7, 28 :: (store (s32) into custom "TileMemory")
+    $p4 = ST_TM_pstm_nrm_imm $r14, $p4, 4 :: (store (s32) into custom "TileMemory")
+    $p2 = ST_TM_pstm_nrm_imm $r20, $p2, 0 :: (store (s32) into custom "TileMemory")
+    $p5 = ST_TM_pstm_nrm_imm $r1, $p5, -32 :: (store (s32) into custom "TileMemory")
+    $p6 = ST_TM_pstm_nrm_imm $r4, $p6, 28 :: (store (s32) into custom "TileMemory")
+    $p0 = ST_TM_pstm_nrm_imm $r22, $p0, 4 :: (store (s32) into custom "TileMemory")
+    $p1 = ST_TM_pstm_nrm_imm $r21, $p1, 0 :: (store (s32) into custom "TileMemory")
+    $p3 = ST_TM_pstm_nrm_imm $r16, $p3, -32 :: (store (s32) into custom "TileMemory")
+    $p7 = ST_TM_pstm_nrm_imm $r31, $p7, 28 :: (store (s32) into custom "TileMemory")
+    $p4 = ST_TM_pstm_nrm_imm $r28, $p4, 4 :: (store (s32) into custom "TileMemory")
+    $p2 = ST_TM_pstm_nrm_imm $r2, $p2, 0 :: (store (s32) into custom "TileMemory")
+    $p5 = ST_TM_pstm_nrm_imm $r27, $p5, -32 :: (store (s32) into custom "TileMemory")
+    $p6 = ST_TM_pstm_nrm_imm $r13, $p6, 28 :: (store (s32) into custom "TileMemory")
+    $p0 = ST_TM_pstm_nrm_imm $r5, $p0, 4 :: (store (s32) into custom "TileMemory")
+    $p1 = ST_TM_pstm_nrm_imm $r15, $p1, 0 :: (store (s32) into custom "TileMemory")
+    $p3 = ST_TM_pstm_nrm_imm $r30, $p3, -32 :: (store (s32) into custom "TileMemory")
+    $p7 = ST_TM_pstm_nrm_imm $r0, $p7, 28 :: (store (s32) into custom "TileMemory")
+    $p4 = ST_TM_pstm_nrm_imm $r25, $p4, 4 :: (store (s32) into custom "TileMemory")
+    $p2 = ST_TM_pstm_nrm_imm $r3, $p2, 0 :: (store (s32) into custom "TileMemory")
+    $p5 = ST_TM_pstm_nrm_imm $r11, $p5, -32 :: (store (s32) into custom "TileMemory")
+    $p6 = ST_TM_pstm_nrm_imm $r10, $p6, 28 :: (store (s32) into custom "TileMemory")
+    $p0 = ST_TM_pstm_nrm_imm $r19, $p0, 4 :: (store (s32) into custom "TileMemory")
+    $p1 = ST_TM_pstm_nrm_imm $r23, $p1, 0 :: (store (s32) into custom "TileMemory")
+    $p3 = ST_TM_pstm_nrm_imm $r12, $p3, -32 :: (store (s32) into custom "TileMemory")
+    $p7 = ST_TM_pstm_nrm_imm $r8, $p7, 28 :: (store (s32) into custom "TileMemory")
+    $p4 = ST_TM_pstm_nrm_imm $r18, $p4, 4 :: (store (s32) into custom "TileMemory")
+    $p2 = ST_TM_pstm_nrm_imm $r29, $p2, 0 :: (store (s32) into custom "TileMemory")
+    $p5 = ST_TM_pstm_nrm_imm $r26, $p5, -32 :: (store (s32) into custom "TileMemory")
+
+    ; ST_dms_sts_idx
+    ST_dms_sts_idx $eh8, $p5, $dj3
+    ST_dms_sts_idx $dj6, $p7, $dj0
+    ST_dms_sts_idx $r30, $p4, $dj2
+    ST_dms_sts_idx $r3, $p1, $dj4
+    ST_dms_sts_idx $dc3, $p2, $dj1
+    ST_dms_sts_idx $m6, $p6, $dj6
+    ST_dms_sts_idx $r22, $p3, $dj5
+    ST_dms_sts_idx $r15, $p0, $dj7
+    ST_dms_sts_idx $m0, $p5, $dj3
+    ST_dms_sts_idx $r29, $p7, $dj0
+    ST_dms_sts_idx $r13, $p4, $dj2
+    ST_dms_sts_idx $r17, $p1, $dj4
+    ST_dms_sts_idx $r19, $p2, $dj1
+    ST_dms_sts_idx $dn5, $p6, $dj6
+    ST_dms_sts_idx $dj0, $p3, $dj5
+    ST_dms_sts_idx $r21, $p0, $dj7
+    ST_dms_sts_idx $r7, $p5, $dj3
+    ST_dms_sts_idx $dc2, $p7, $dj0
+    ST_dms_sts_idx $r12, $p4, $dj2
+    ST_dms_sts_idx $el6, $p1, $dj4
+    ST_dms_sts_idx $eh7, $p2, $dj1
+    ST_dms_sts_idx $p5, $p6, $dj6
+    ST_dms_sts_idx $eh6, $p3, $dj5
+    ST_dms_sts_idx $el9, $p0, $dj7
+    ST_dms_sts_idx $r23, $p5, $dj3
+    ST_dms_sts_idx $el1, $p7, $dj0
+    ST_dms_sts_idx $el11, $p4, $dj2
+    ST_dms_sts_idx $r11, $p1, $dj4
+    ST_dms_sts_idx $dc5, $p2, $dj1
+    ST_dms_sts_idx $dj4, $p6, $dj6
+    ST_dms_sts_idx $dj7, $p3, $dj5
+    ST_dms_sts_idx $dn1, $p0, $dj7
+    ST_dms_sts_idx $m5, $p5, $dj3
+    ST_dms_sts_idx $p2, $p7, $dj0
+    ST_dms_sts_idx $dn7, $p4, $dj2
+    ST_dms_sts_idx $eh0, $p1, $dj4
+    ST_dms_sts_idx $r20, $p2, $dj1
+    ST_dms_sts_idx $r6, $p6, $dj6
+    ST_dms_sts_idx $r2, $p3, $dj5
+    ST_dms_sts_idx $dn2, $p0, $dj7
+    ST_dms_sts_idx $r31, $p5, $dj3
+    ST_dms_sts_idx $el7, $p7, $dj0
+    ST_dms_sts_idx $r5, $p4, $dj2
+    ST_dms_sts_idx $dn4, $p1, $dj4
+    ST_dms_sts_idx $dn6, $p2, $dj1
+    ST_dms_sts_idx $el8, $p6, $dj6
+    ST_dms_sts_idx $lr, $p3, $dj5
+    ST_dms_sts_idx $dn3, $p0, $dj7
+    ST_dms_sts_idx $r26, $p5, $dj3
+    ST_dms_sts_idx $r18, $p7, $dj0
+    ST_dms_sts_idx $eh5, $p4, $dj2
+    ST_dms_sts_idx $dc1, $p1, $dj4
+    ST_dms_sts_idx $dn0, $p2, $dj1
+    ST_dms_sts_idx $r25, $p6, $dj6
+    ST_dms_sts_idx $p0, $p3, $dj5
+    ST_dms_sts_idx $r28, $p0, $dj7
+    ST_dms_sts_idx $r8, $p5, $dj3
+    ST_dms_sts_idx $m7, $p7, $dj0
+    ST_dms_sts_idx $m3, $p4, $dj2
+    ST_dms_sts_idx $p7, $p1, $dj4
+    ST_dms_sts_idx $dj5, $p2, $dj1
+    ST_dms_sts_idx $p6, $p6, $dj6
+    ST_dms_sts_idx $el5, $p3, $dj5
+    ST_dms_sts_idx $dc6, $p0, $dj7
+    ST_dms_sts_idx $dc4, $p5, $dj3
+    ST_dms_sts_idx $r0, $p7, $dj0
+    ST_dms_sts_idx $dj3, $p4, $dj2
+    ST_dms_sts_idx $eh2, $p1, $dj4
+    ST_dms_sts_idx $r9, $p2, $dj1
+    ST_dms_sts_idx $eh3, $p6, $dj6
+    ST_dms_sts_idx $r14, $p3, $dj5
+    ST_dms_sts_idx $el2, $p0, $dj7
+    ST_dms_sts_idx $m4, $p5, $dj3
+    ST_dms_sts_idx $r16, $p7, $dj0
+    ST_dms_sts_idx $eh1, $p4, $dj2
+    ST_dms_sts_idx $eh11, $p1, $dj4
+    ST_dms_sts_idx $r27, $p2, $dj1
+    ST_dms_sts_idx $el4, $p6, $dj6
+    ST_dms_sts_idx $p3, $p3, $dj5
+    ST_dms_sts_idx $p1, $p0, $dj7
+    ST_dms_sts_idx $p4, $p5, $dj3
+    ST_dms_sts_idx $r24, $p7, $dj0
+    ST_dms_sts_idx $r10, $p4, $dj2
+    ST_dms_sts_idx $m1, $p1, $dj4
+    ST_dms_sts_idx $el3, $p2, $dj1
+    ST_dms_sts_idx $eh9, $p6, $dj6
+    ST_dms_sts_idx $m2, $p3, $dj5
+    ST_dms_sts_idx $r4, $p0, $dj7
+    ST_dms_sts_idx $el10, $p5, $dj3
+    ST_dms_sts_idx $el0, $p7, $dj0
+    ST_dms_sts_idx $eh10, $p4, $dj2
+    ST_dms_sts_idx $dj1, $p1, $dj4
+    ST_dms_sts_idx $dc7, $p2, $dj1
+    ST_dms_sts_idx $dj2, $p6, $dj6
+    ST_dms_sts_idx $eh4, $p3, $dj5
+    ST_dms_sts_idx $r1, $p0, $dj7
+    ST_dms_sts_idx $dc0, $p5, $dj3
+
+    ; ST_dms_sts_idx_imm
+    ST_dms_sts_idx_imm $dj1, $p5, -32
+    ST_dms_sts_idx_imm $p0, $p1, 28
+    ST_dms_sts_idx_imm $r29, $p2, 0
+    ST_dms_sts_idx_imm $eh8, $p6, 4
+    ST_dms_sts_idx_imm $dn6, $p0, -32
+    ST_dms_sts_idx_imm $r11, $p7, 28
+    ST_dms_sts_idx_imm $dc7, $p4, 0
+    ST_dms_sts_idx_imm $lr, $p3, 4
+    ST_dms_sts_idx_imm $r3, $p5, -32
+    ST_dms_sts_idx_imm $p2, $p1, 28
+    ST_dms_sts_idx_imm $eh4, $p2, 0
+    ST_dms_sts_idx_imm $dc6, $p6, 4
+    ST_dms_sts_idx_imm $m4, $p0, -32
+    ST_dms_sts_idx_imm $p7, $p7, 28
+    ST_dms_sts_idx_imm $eh0, $p4, 0
+    ST_dms_sts_idx_imm $el0, $p3, 4
+    ST_dms_sts_idx_imm $r19, $p5, -32
+    ST_dms_sts_idx_imm $r20, $p1, 28
+    ST_dms_sts_idx_imm $p5, $p2, 0
+    ST_dms_sts_idx_imm $dn4, $p6, 4
+    ST_dms_sts_idx_imm $dj0, $p0, -32
+    ST_dms_sts_idx_imm $r27, $p7, 28
+    ST_dms_sts_idx_imm $el3, $p4, 0
+    ST_dms_sts_idx_imm $eh7, $p3, 4
+    ST_dms_sts_idx_imm $eh10, $p5, -32
+    ST_dms_sts_idx_imm $dc0, $p1, 28
+    ST_dms_sts_idx_imm $r5, $p2, 0
+    ST_dms_sts_idx_imm $eh2, $p6, 4
+    ST_dms_sts_idx_imm $m0, $p0, -32
+    ST_dms_sts_idx_imm $r24, $p7, 28
+    ST_dms_sts_idx_imm $dc1, $p4, 0
+    ST_dms_sts_idx_imm $r0, $p3, 4
+    ST_dms_sts_idx_imm $dn1, $p5, -32
+    ST_dms_sts_idx_imm $r18, $p1, 28
+    ST_dms_sts_idx_imm $p1, $p2, 0
+    ST_dms_sts_idx_imm $r30, $p6, 4
+    ST_dms_sts_idx_imm $el10, $p0, -32
+    ST_dms_sts_idx_imm $dc4, $p7, 28
+    ST_dms_sts_idx_imm $el2, $p4, 0
+    ST_dms_sts_idx_imm $dn0, $p3, 4
+    ST_dms_sts_idx_imm $p6, $p5, -32
+    ST_dms_sts_idx_imm $dc3, $p1, 28
+    ST_dms_sts_idx_imm $r12, $p2, 0
+    ST_dms_sts_idx_imm $el5, $p6, 4
+    ST_dms_sts_idx_imm $el6, $p0, -32
+    ST_dms_sts_idx_imm $r16, $p7, 28
+    ST_dms_sts_idx_imm $r23, $p4, 0
+    ST_dms_sts_idx_imm $r1, $p3, 4
+    ST_dms_sts_idx_imm $eh9, $p5, -32
+    ST_dms_sts_idx_imm $dn5, $p1, 28
+    ST_dms_sts_idx_imm $r15, $p2, 0
+    ST_dms_sts_idx_imm $r10, $p6, 4
+    ST_dms_sts_idx_imm $eh3, $p0, -32
+    ST_dms_sts_idx_imm $m6, $p7, 28
+    ST_dms_sts_idx_imm $r7, $p4, 0
+    ST_dms_sts_idx_imm $r4, $p3, 4
+    ST_dms_sts_idx_imm $r2, $p5, -32
+    ST_dms_sts_idx_imm $el1, $p1, 28
+    ST_dms_sts_idx_imm $eh5, $p2, 0
+    ST_dms_sts_idx_imm $dc5, $p6, 4
+    ST_dms_sts_idx_imm $el7, $p0, -32
+    ST_dms_sts_idx_imm $dj2, $p7, 28
+    ST_dms_sts_idx_imm $eh11, $p4, 0
+    ST_dms_sts_idx_imm $dj5, $p3, 4
+    ST_dms_sts_idx_imm $dn7, $p5, -32
+    ST_dms_sts_idx_imm $p4, $p1, 28
+    ST_dms_sts_idx_imm $m7, $p2, 0
+    ST_dms_sts_idx_imm $r28, $p6, 4
+    ST_dms_sts_idx_imm $dc2, $p0, -32
+    ST_dms_sts_idx_imm $r6, $p7, 28
+    ST_dms_sts_idx_imm $m5, $p4, 0
+    ST_dms_sts_idx_imm $el4, $p3, 4
+    ST_dms_sts_idx_imm $p3, $p5, -32
+    ST_dms_sts_idx_imm $dj6, $p1, 28
+    ST_dms_sts_idx_imm $el8, $p2, 0
+    ST_dms_sts_idx_imm $dn3, $p6, 4
+    ST_dms_sts_idx_imm $r9, $p0, -32
+    ST_dms_sts_idx_imm $r26, $p7, 28
+    ST_dms_sts_idx_imm $m3, $p4, 0
+    ST_dms_sts_idx_imm $eh6, $p3, 4
+    ST_dms_sts_idx_imm $dn2, $p5, -32
+    ST_dms_sts_idx_imm $m2, $p1, 28
+    ST_dms_sts_idx_imm $r25, $p2, 0
+    ST_dms_sts_idx_imm $r17, $p6, 4
+    ST_dms_sts_idx_imm $m1, $p0, -32
+    ST_dms_sts_idx_imm $r14, $p7, 28
+    ST_dms_sts_idx_imm $el11, $p4, 0
+    ST_dms_sts_idx_imm $r13, $p3, 4
+    ST_dms_sts_idx_imm $dj4, $p5, -32
+    ST_dms_sts_idx_imm $dj7, $p1, 28
+    ST_dms_sts_idx_imm $r8, $p2, 0
+    ST_dms_sts_idx_imm $eh1, $p6, 4
+    ST_dms_sts_idx_imm $r22, $p0, -32
+    ST_dms_sts_idx_imm $r21, $p7, 28
+    ST_dms_sts_idx_imm $r31, $p4, 0
+    ST_dms_sts_idx_imm $el9, $p3, 4
+    ST_dms_sts_idx_imm $dj3, $p5, -32
+
+    ; ST_dms_sts_pstm_nrm
+    $p0 = ST_dms_sts_pstm_nrm $r28, $p0, $m7
+    $p3 = ST_dms_sts_pstm_nrm $r20, $p3, $m5
+    $p7 = ST_dms_sts_pstm_nrm $p2, $p7, $m6
+    $p5 = ST_dms_sts_pstm_nrm $m6, $p5, $m4
+    $p6 = ST_dms_sts_pstm_nrm $p0, $p6, $m2
+    $p4 = ST_dms_sts_pstm_nrm $el0, $p4, $m3
+    $p1 = ST_dms_sts_pstm_nrm $m4, $p1, $m0
+    $p2 = ST_dms_sts_pstm_nrm $m5, $p2, $m1
+    $p0 = ST_dms_sts_pstm_nrm $dj6, $p0, $m7
+    $p3 = ST_dms_sts_pstm_nrm $m3, $p3, $m5
+    $p7 = ST_dms_sts_pstm_nrm $r29, $p7, $m6
+    $p5 = ST_dms_sts_pstm_nrm $eh7, $p5, $m4
+    $p6 = ST_dms_sts_pstm_nrm $r0, $p6, $m2
+    $p4 = ST_dms_sts_pstm_nrm $r19, $p4, $m3
+    $p1 = ST_dms_sts_pstm_nrm $m0, $p1, $m0
+    $p2 = ST_dms_sts_pstm_nrm $eh6, $p2, $m1
+    $p0 = ST_dms_sts_pstm_nrm $r25, $p0, $m7
+    $p3 = ST_dms_sts_pstm_nrm $el8, $p3, $m5
+    $p7 = ST_dms_sts_pstm_nrm $dj1, $p7, $m6
+    $p5 = ST_dms_sts_pstm_nrm $r16, $p5, $m4
+    $p6 = ST_dms_sts_pstm_nrm $p5, $p6, $m2
+    $p4 = ST_dms_sts_pstm_nrm $m7, $p4, $m3
+    $p1 = ST_dms_sts_pstm_nrm $p1, $p1, $m0
+    $p2 = ST_dms_sts_pstm_nrm $r27, $p2, $m1
+    $p0 = ST_dms_sts_pstm_nrm $el2, $p0, $m7
+    $p3 = ST_dms_sts_pstm_nrm $r18, $p3, $m5
+    $p7 = ST_dms_sts_pstm_nrm $p7, $p7, $m6
+    $p5 = ST_dms_sts_pstm_nrm $eh5, $p5, $m4
+    $p6 = ST_dms_sts_pstm_nrm $eh0, $p6, $m2
+    $p4 = ST_dms_sts_pstm_nrm $dn0, $p4, $m3
+    $p1 = ST_dms_sts_pstm_nrm $eh9, $p1, $m0
+    $p2 = ST_dms_sts_pstm_nrm $r31, $p2, $m1
+    $p0 = ST_dms_sts_pstm_nrm $dc5, $p0, $m7
+    $p3 = ST_dms_sts_pstm_nrm $el3, $p3, $m5
+    $p7 = ST_dms_sts_pstm_nrm $p4, $p7, $m6
+    $p5 = ST_dms_sts_pstm_nrm $r7, $p5, $m4
+    $p6 = ST_dms_sts_pstm_nrm $r1, $p6, $m2
+    $p4 = ST_dms_sts_pstm_nrm $r23, $p4, $m3
+    $p1 = ST_dms_sts_pstm_nrm $m1, $p1, $m0
+    $p2 = ST_dms_sts_pstm_nrm $dn1, $p2, $m1
+    $p0 = ST_dms_sts_pstm_nrm $dj3, $p0, $m7
+    $p3 = ST_dms_sts_pstm_nrm $dc6, $p3, $m5
+    $p7 = ST_dms_sts_pstm_nrm $dn5, $p7, $m6
+    $p5 = ST_dms_sts_pstm_nrm $r22, $p5, $m4
+    $p6 = ST_dms_sts_pstm_nrm $r6, $p6, $m2
+    $p4 = ST_dms_sts_pstm_nrm $eh2, $p4, $m3
+    $p1 = ST_dms_sts_pstm_nrm $r30, $p1, $m0
+    $p2 = ST_dms_sts_pstm_nrm $dc0, $p2, $m1
+    $p0 = ST_dms_sts_pstm_nrm $p6, $p0, $m7
+    $p3 = ST_dms_sts_pstm_nrm $dc7, $p3, $m5
+    $p7 = ST_dms_sts_pstm_nrm $el5, $p7, $m6
+    $p5 = ST_dms_sts_pstm_nrm $dc1, $p5, $m4
+    $p6 = ST_dms_sts_pstm_nrm $eh8, $p6, $m2
+    $p4 = ST_dms_sts_pstm_nrm $el7, $p4, $m3
+    $p1 = ST_dms_sts_pstm_nrm $dn3, $p1, $m0
+    $p2 = ST_dms_sts_pstm_nrm $m2, $p2, $m1
+    $p0 = ST_dms_sts_pstm_nrm $lr, $p0, $m7
+    $p3 = ST_dms_sts_pstm_nrm $eh10, $p3, $m5
+    $p7 = ST_dms_sts_pstm_nrm $p3, $p7, $m6
+    $p5 = ST_dms_sts_pstm_nrm $dj2, $p5, $m4
+    $p6 = ST_dms_sts_pstm_nrm $r17, $p6, $m2
+    $p4 = ST_dms_sts_pstm_nrm $r10, $p4, $m3
+    $p1 = ST_dms_sts_pstm_nrm $dn6, $p1, $m0
+    $p2 = ST_dms_sts_pstm_nrm $eh11, $p2, $m1
+    $p0 = ST_dms_sts_pstm_nrm $eh1, $p0, $m7
+    $p3 = ST_dms_sts_pstm_nrm $dn7, $p3, $m5
+    $p7 = ST_dms_sts_pstm_nrm $el6, $p7, $m6
+    $p5 = ST_dms_sts_pstm_nrm $dj0, $p5, $m4
+    $p6 = ST_dms_sts_pstm_nrm $dn2, $p6, $m2
+    $p4 = ST_dms_sts_pstm_nrm $r4, $p4, $m3
+    $p1 = ST_dms_sts_pstm_nrm $r2, $p1, $m0
+    $p2 = ST_dms_sts_pstm_nrm $r12, $p2, $m1
+    $p0 = ST_dms_sts_pstm_nrm $dc4, $p0, $m7
+    $p3 = ST_dms_sts_pstm_nrm $eh3, $p3, $m5
+    $p7 = ST_dms_sts_pstm_nrm $dc2, $p7, $m6
+    $p5 = ST_dms_sts_pstm_nrm $r21, $p5, $m4
+    $p6 = ST_dms_sts_pstm_nrm $r24, $p6, $m2
+    $p4 = ST_dms_sts_pstm_nrm $r3, $p4, $m3
+    $p1 = ST_dms_sts_pstm_nrm $eh4, $p1, $m0
+    $p2 = ST_dms_sts_pstm_nrm $dc3, $p2, $m1
+    $p0 = ST_dms_sts_pstm_nrm $dj5, $p0, $m7
+    $p3 = ST_dms_sts_pstm_nrm $el1, $p3, $m5
+    $p7 = ST_dms_sts_pstm_nrm $dn4, $p7, $m6
+    $p5 = ST_dms_sts_pstm_nrm $r5, $p5, $m4
+    $p6 = ST_dms_sts_pstm_nrm $el4, $p6, $m2
+    $p4 = ST_dms_sts_pstm_nrm $r11, $p4, $m3
+    $p1 = ST_dms_sts_pstm_nrm $r9, $p1, $m0
+    $p2 = ST_dms_sts_pstm_nrm $dj4, $p2, $m1
+    $p0 = ST_dms_sts_pstm_nrm $r26, $p0, $m7
+    $p3 = ST_dms_sts_pstm_nrm $el9, $p3, $m5
+    $p7 = ST_dms_sts_pstm_nrm $r13, $p7, $m6
+    $p5 = ST_dms_sts_pstm_nrm $dj7, $p5, $m4
+    $p6 = ST_dms_sts_pstm_nrm $r8, $p6, $m2
+    $p4 = ST_dms_sts_pstm_nrm $r14, $p4, $m3
+    $p1 = ST_dms_sts_pstm_nrm $el11, $p1, $m0
+    $p2 = ST_dms_sts_pstm_nrm $el10, $p2, $m1
+    $p0 = ST_dms_sts_pstm_nrm $r15, $p0, $m7
+
+    ; ST_dms_sts_pstm_nrm_imm
+    $p2 = ST_dms_sts_pstm_nrm_imm $r21, $p2, 4
+    $p3 = ST_dms_sts_pstm_nrm_imm $r22, $p3, 0
+    $p1 = ST_dms_sts_pstm_nrm_imm $eh0, $p1, 28
+    $p4 = ST_dms_sts_pstm_nrm_imm $eh6, $p4, -32
+    $p5 = ST_dms_sts_pstm_nrm_imm $el11, $p5, 4
+    $p0 = ST_dms_sts_pstm_nrm_imm $r20, $p0, 0
+    $p7 = ST_dms_sts_pstm_nrm_imm $dc4, $p7, 28
+    $p6 = ST_dms_sts_pstm_nrm_imm $dn3, $p6, -32
+    $p2 = ST_dms_sts_pstm_nrm_imm $dn1, $p2, 4
+    $p3 = ST_dms_sts_pstm_nrm_imm $eh9, $p3, 0
+    $p1 = ST_dms_sts_pstm_nrm_imm $r19, $p1, 28
+    $p4 = ST_dms_sts_pstm_nrm_imm $p4, $p4, -32
+    $p5 = ST_dms_sts_pstm_nrm_imm $el8, $p5, 4
+    $p0 = ST_dms_sts_pstm_nrm_imm $r4, $p0, 0
+    $p7 = ST_dms_sts_pstm_nrm_imm $p6, $p7, 28
+    $p6 = ST_dms_sts_pstm_nrm_imm $p0, $p6, -32
+    $p2 = ST_dms_sts_pstm_nrm_imm $r5, $p2, 4
+    $p3 = ST_dms_sts_pstm_nrm_imm $el7, $p3, 0
+    $p1 = ST_dms_sts_pstm_nrm_imm $r16, $p1, 28
+    $p4 = ST_dms_sts_pstm_nrm_imm $r18, $p4, -32
+    $p5 = ST_dms_sts_pstm_nrm_imm $r9, $p5, 4
+    $p0 = ST_dms_sts_pstm_nrm_imm $el4, $p0, 0
+    $p7 = ST_dms_sts_pstm_nrm_imm $r15, $p7, 28
+    $p6 = ST_dms_sts_pstm_nrm_imm $r7, $p6, -32
+    $p2 = ST_dms_sts_pstm_nrm_imm $el2, $p2, 4
+    $p3 = ST_dms_sts_pstm_nrm_imm $dj7, $p3, 0
+    $p1 = ST_dms_sts_pstm_nrm_imm $p7, $p1, 28
+    $p4 = ST_dms_sts_pstm_nrm_imm $r2, $p4, -32
+    $p5 = ST_dms_sts_pstm_nrm_imm $dj5, $p5, 4
+    $p0 = ST_dms_sts_pstm_nrm_imm $el1, $p0, 0
+    $p7 = ST_dms_sts_pstm_nrm_imm $r26, $p7, 28
+    $p6 = ST_dms_sts_pstm_nrm_imm $dc7, $p6, -32
+    $p2 = ST_dms_sts_pstm_nrm_imm $dc0, $p2, 4
+    $p3 = ST_dms_sts_pstm_nrm_imm $r8, $p3, 0
+    $p1 = ST_dms_sts_pstm_nrm_imm $eh5, $p1, 28
+    $p4 = ST_dms_sts_pstm_nrm_imm $el9, $p4, -32
+    $p5 = ST_dms_sts_pstm_nrm_imm $r28, $p5, 4
+    $p0 = ST_dms_sts_pstm_nrm_imm $dc1, $p0, 0
+    $p7 = ST_dms_sts_pstm_nrm_imm $dn0, $p7, 28
+    $p6 = ST_dms_sts_pstm_nrm_imm $m3, $p6, -32
+    $p2 = ST_dms_sts_pstm_nrm_imm $r31, $p2, 4
+    $p3 = ST_dms_sts_pstm_nrm_imm $dj6, $p3, 0
+    $p1 = ST_dms_sts_pstm_nrm_imm $r13, $p1, 28
+    $p4 = ST_dms_sts_pstm_nrm_imm $eh10, $p4, -32
+    $p5 = ST_dms_sts_pstm_nrm_imm $p2, $p5, 4
+    $p0 = ST_dms_sts_pstm_nrm_imm $dc5, $p0, 0
+    $p7 = ST_dms_sts_pstm_nrm_imm $dn5, $p7, 28
+    $p6 = ST_dms_sts_pstm_nrm_imm $m7, $p6, -32
+    $p2 = ST_dms_sts_pstm_nrm_imm $r11, $p2, 4
+    $p3 = ST_dms_sts_pstm_nrm_imm $m0, $p3, 0
+    $p1 = ST_dms_sts_pstm_nrm_imm $m4, $p1, 28
+    $p4 = ST_dms_sts_pstm_nrm_imm $dj4, $p4, -32
+    $p5 = ST_dms_sts_pstm_nrm_imm $r12, $p5, 4
+    $p0 = ST_dms_sts_pstm_nrm_imm $dn4, $p0, 0
+    $p7 = ST_dms_sts_pstm_nrm_imm $r29, $p7, 28
+    $p6 = ST_dms_sts_pstm_nrm_imm $r27, $p6, -32
+    $p2 = ST_dms_sts_pstm_nrm_imm $r10, $p2, 4
+    $p3 = ST_dms_sts_pstm_nrm_imm $el5, $p3, 0
+    $p1 = ST_dms_sts_pstm_nrm_imm $r3, $p1, 28
+    $p4 = ST_dms_sts_pstm_nrm_imm $dc3, $p4, -32
+    $p5 = ST_dms_sts_pstm_nrm_imm $r14, $p5, 4
+    $p0 = ST_dms_sts_pstm_nrm_imm $r23, $p0, 0
+    $p7 = ST_dms_sts_pstm_nrm_imm $el10, $p7, 28
+    $p6 = ST_dms_sts_pstm_nrm_imm $p5, $p6, -32
+    $p2 = ST_dms_sts_pstm_nrm_imm $eh2, $p2, 4
+    $p3 = ST_dms_sts_pstm_nrm_imm $r25, $p3, 0
+    $p1 = ST_dms_sts_pstm_nrm_imm $dn6, $p1, 28
+    $p4 = ST_dms_sts_pstm_nrm_imm $dj3, $p4, -32
+    $p5 = ST_dms_sts_pstm_nrm_imm $p1, $p5, 4
+    $p0 = ST_dms_sts_pstm_nrm_imm $dc2, $p0, 0
+    $p7 = ST_dms_sts_pstm_nrm_imm $m1, $p7, 28
+    $p6 = ST_dms_sts_pstm_nrm_imm $eh1, $p6, -32
+    $p2 = ST_dms_sts_pstm_nrm_imm $m6, $p2, 4
+    $p3 = ST_dms_sts_pstm_nrm_imm $r6, $p3, 0
+    $p1 = ST_dms_sts_pstm_nrm_imm $dn7, $p1, 28
+    $p4 = ST_dms_sts_pstm_nrm_imm $m2, $p4, -32
+    $p5 = ST_dms_sts_pstm_nrm_imm $p3, $p5, 4
+    $p0 = ST_dms_sts_pstm_nrm_imm $eh7, $p0, 0
+    $p7 = ST_dms_sts_pstm_nrm_imm $eh3, $p7, 28
+    $p6 = ST_dms_sts_pstm_nrm_imm $dn2, $p6, -32
+    $p2 = ST_dms_sts_pstm_nrm_imm $eh11, $p2, 4
+    $p3 = ST_dms_sts_pstm_nrm_imm $eh4, $p3, 0
+    $p1 = ST_dms_sts_pstm_nrm_imm $el6, $p1, 28
+    $p4 = ST_dms_sts_pstm_nrm_imm $r1, $p4, -32
+    $p5 = ST_dms_sts_pstm_nrm_imm $dc6, $p5, 4
+    $p0 = ST_dms_sts_pstm_nrm_imm $dj0, $p0, 0
+    $p7 = ST_dms_sts_pstm_nrm_imm $r0, $p7, 28
+    $p6 = ST_dms_sts_pstm_nrm_imm $el0, $p6, -32
+    $p2 = ST_dms_sts_pstm_nrm_imm $r30, $p2, 4
+    $p3 = ST_dms_sts_pstm_nrm_imm $r17, $p3, 0
+    $p1 = ST_dms_sts_pstm_nrm_imm $eh8, $p1, 28
+    $p4 = ST_dms_sts_pstm_nrm_imm $el3, $p4, -32
+    $p5 = ST_dms_sts_pstm_nrm_imm $dj2, $p5, 4
+    $p0 = ST_dms_sts_pstm_nrm_imm $r24, $p0, 0
+    $p7 = ST_dms_sts_pstm_nrm_imm $m5, $p7, 28
+    $p6 = ST_dms_sts_pstm_nrm_imm $lr, $p6, -32
+    $p2 = ST_dms_sts_pstm_nrm_imm $dj1, $p2, 4
+
+    ; ST_dms_sts_spill, implicit $sp
+    ST_dms_sts_spill $m0, -8, implicit $sp
+    ST_dms_sts_spill $dj6, -2044, implicit $sp
+    ST_dms_sts_spill $r5, -4, implicit $sp
+    ST_dms_sts_spill $r31, -2048, implicit $sp
+    ST_dms_sts_spill $dc4, -8, implicit $sp
+    ST_dms_sts_spill $r8, -2044, implicit $sp
+    ST_dms_sts_spill $dj2, -4, implicit $sp
+    ST_dms_sts_spill $eh2, -2048, implicit $sp
+    ST_dms_sts_spill $dn0, -8, implicit $sp
+    ST_dms_sts_spill $dn2, -2044, implicit $sp
+    ST_dms_sts_spill $el2, -4, implicit $sp
+    ST_dms_sts_spill $dc1, -2048, implicit $sp
+    ST_dms_sts_spill $p6, -8, implicit $sp
+    ST_dms_sts_spill $dc6, -2044, implicit $sp
+    ST_dms_sts_spill $r16, -4, implicit $sp
+    ST_dms_sts_spill $r23, -2048, implicit $sp
+    ST_dms_sts_spill $el0, -8, implicit $sp
+    ST_dms_sts_spill $el1, -2044, implicit $sp
+    ST_dms_sts_spill $el11, -4, implicit $sp
+    ST_dms_sts_spill $eh4, -2048, implicit $sp
+    ST_dms_sts_spill $r15, -8, implicit $sp
+    ST_dms_sts_spill $r13, -2044, implicit $sp
+    ST_dms_sts_spill $dj1, -4, implicit $sp
+    ST_dms_sts_spill $el9, -2048, implicit $sp
+    ST_dms_sts_spill $el4, -8, implicit $sp
+    ST_dms_sts_spill $r1, -2044, implicit $sp
+    ST_dms_sts_spill $m6, -4, implicit $sp
+    ST_dms_sts_spill $dj0, -2048, implicit $sp
+    ST_dms_sts_spill $r18, -8, implicit $sp
+    ST_dms_sts_spill $m5, -2044, implicit $sp
+    ST_dms_sts_spill $dn5, -4, implicit $sp
+    ST_dms_sts_spill $m1, -2048, implicit $sp
+    ST_dms_sts_spill $r4, -8, implicit $sp
+    ST_dms_sts_spill $p3, -2044, implicit $sp
+    ST_dms_sts_spill $dn6, -4, implicit $sp
+    ST_dms_sts_spill $dn7, -2048, implicit $sp
+    ST_dms_sts_spill $m2, -8, implicit $sp
+    ST_dms_sts_spill $p7, -2044, implicit $sp
+    ST_dms_sts_spill $p5, -4, implicit $sp
+    ST_dms_sts_spill $dn3, -2048, implicit $sp
+    ST_dms_sts_spill $eh5, -8, implicit $sp
+    ST_dms_sts_spill $dj4, -2044, implicit $sp
+    ST_dms_sts_spill $r2, -4, implicit $sp
+    ST_dms_sts_spill $r28, -2048, implicit $sp
+    ST_dms_sts_spill $r0, -8, implicit $sp
+    ST_dms_sts_spill $eh6, -2044, implicit $sp
+    ST_dms_sts_spill $p1, -4, implicit $sp
+    ST_dms_sts_spill $m7, -2048, implicit $sp
+    ST_dms_sts_spill $dj7, -8, implicit $sp
+    ST_dms_sts_spill $r12, -2044, implicit $sp
+    ST_dms_sts_spill $eh3, -4, implicit $sp
+    ST_dms_sts_spill $r30, -2048, implicit $sp
+    ST_dms_sts_spill $dn4, -8, implicit $sp
+    ST_dms_sts_spill $p0, -2044, implicit $sp
+    ST_dms_sts_spill $el8, -4, implicit $sp
+    ST_dms_sts_spill $p2, -2048, implicit $sp
+    ST_dms_sts_spill $r9, -8, implicit $sp
+    ST_dms_sts_spill $dn1, -2044, implicit $sp
+    ST_dms_sts_spill $dc5, -4, implicit $sp
+    ST_dms_sts_spill $r19, -2048, implicit $sp
+    ST_dms_sts_spill $eh8, -8, implicit $sp
+    ST_dms_sts_spill $lr, -2044, implicit $sp
+    ST_dms_sts_spill $eh0, -4, implicit $sp
+    ST_dms_sts_spill $r17, -2048, implicit $sp
+    ST_dms_sts_spill $m4, -8, implicit $sp
+    ST_dms_sts_spill $m3, -2044, implicit $sp
+    ST_dms_sts_spill $eh1, -4, implicit $sp
+    ST_dms_sts_spill $el3, -2048, implicit $sp
+    ST_dms_sts_spill $r3, -8, implicit $sp
+    ST_dms_sts_spill $eh11, -2044, implicit $sp
+    ST_dms_sts_spill $el10, -4, implicit $sp
+    ST_dms_sts_spill $r29, -2048, implicit $sp
+    ST_dms_sts_spill $r11, -8, implicit $sp
+    ST_dms_sts_spill $dc0, -2044, implicit $sp
+    ST_dms_sts_spill $dc3, -4, implicit $sp
+    ST_dms_sts_spill $dc2, -2048, implicit $sp
+    ST_dms_sts_spill $dj5, -8, implicit $sp
+    ST_dms_sts_spill $el7, -2044, implicit $sp
+    ST_dms_sts_spill $dc7, -4, implicit $sp
+    ST_dms_sts_spill $r27, -2048, implicit $sp
+    ST_dms_sts_spill $r20, -8, implicit $sp
+    ST_dms_sts_spill $el6, -2044, implicit $sp
+    ST_dms_sts_spill $p4, -4, implicit $sp
+    ST_dms_sts_spill $eh9, -2048, implicit $sp
+    ST_dms_sts_spill $r25, -8, implicit $sp
+    ST_dms_sts_spill $eh10, -2044, implicit $sp
+    ST_dms_sts_spill $r24, -4, implicit $sp
+    ST_dms_sts_spill $r21, -2048, implicit $sp
+    ST_dms_sts_spill $eh7, -8, implicit $sp
+    ST_dms_sts_spill $r26, -2044, implicit $sp
+    ST_dms_sts_spill $r10, -4, implicit $sp
+    ST_dms_sts_spill $el5, -2048, implicit $sp
+    ST_dms_sts_spill $r14, -8, implicit $sp
+    ST_dms_sts_spill $r22, -2044, implicit $sp
+    ST_dms_sts_spill $r7, -4, implicit $sp
+    ST_dms_sts_spill $dj3, -2048, implicit $sp
+    ST_dms_sts_spill $r6, -8, implicit $sp
+
+    ; ST_dmv_sts_q_idx
+    ST_dmv_sts_q_idx $q1, $p7, $dj2
+    ST_dmv_sts_q_idx $q0, $p4, $dj5
+    ST_dmv_sts_q_idx $q2, $p0, $dj4
+    ST_dmv_sts_q_idx $q3, $p5, $dj3
+    ST_dmv_sts_q_idx $q1, $p3, $dj6
+    ST_dmv_sts_q_idx $q0, $p6, $dj1
+    ST_dmv_sts_q_idx $q2, $p2, $dj0
+    ST_dmv_sts_q_idx $q3, $p1, $dj7
+
+    ; ST_dmv_sts_q_idx_imm
+    ST_dmv_sts_q_idx_imm $q1, $p0, 0
+    ST_dmv_sts_q_idx_imm $q0, $p5, 112
+    ST_dmv_sts_q_idx_imm $q3, $p1, 16
+    ST_dmv_sts_q_idx_imm $q2, $p2, -128
+    ST_dmv_sts_q_idx_imm $q1, $p3, 0
+    ST_dmv_sts_q_idx_imm $q0, $p7, 112
+    ST_dmv_sts_q_idx_imm $q3, $p6, 16
+    ST_dmv_sts_q_idx_imm $q2, $p4, -128
+
+    ; ST_dmv_sts_q_pstm_nrm
+    $p5 = ST_dmv_sts_q_pstm_nrm $q3, $p5, $m5
+    $p7 = ST_dmv_sts_q_pstm_nrm $q2, $p7, $m1
+    $p6 = ST_dmv_sts_q_pstm_nrm $q0, $p6, $m6
+    $p3 = ST_dmv_sts_q_pstm_nrm $q1, $p3, $m7
+    $p0 = ST_dmv_sts_q_pstm_nrm $q3, $p0, $m4
+    $p2 = ST_dmv_sts_q_pstm_nrm $q2, $p2, $m3
+    $p4 = ST_dmv_sts_q_pstm_nrm $q0, $p4, $m2
+    $p1 = ST_dmv_sts_q_pstm_nrm $q1, $p1, $m0
+
+    ; ST_dmv_sts_q_pstm_nrm_imm
+    $p6 = ST_dmv_sts_q_pstm_nrm_imm $q0, $p6, 0
+    $p1 = ST_dmv_sts_q_pstm_nrm_imm $q1, $p1, 16
+    $p3 = ST_dmv_sts_q_pstm_nrm_imm $q3, $p3, -128
+    $p4 = ST_dmv_sts_q_pstm_nrm_imm $q2, $p4, 112
+    $p2 = ST_dmv_sts_q_pstm_nrm_imm $q0, $p2, 0
+    $p5 = ST_dmv_sts_q_pstm_nrm_imm $q1, $p5, 16
+    $p7 = ST_dmv_sts_q_pstm_nrm_imm $q3, $p7, -128
+    $p0 = ST_dmv_sts_q_pstm_nrm_imm $q2, $p0, 112
+
+    ; ST_dmv_sts_q_spill, implicit $sp
+    ST_dmv_sts_q_spill $q3, -8192, implicit $sp
+    ST_dmv_sts_q_spill $q0, -16, implicit $sp
+    ST_dmv_sts_q_spill $q1, -32, implicit $sp
+    ST_dmv_sts_q_spill $q2, -8176, implicit $sp
+
+    ; ST_s16_idx
+    ST_s16_idx $r21, $p5, $dj5, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx $r18, $p1, $dj1, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx $r27, $p4, $dj2, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx $r9, $p0, $dj6, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx $r26, $p7, $dj4, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx $r1, $p6, $dj0, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx $r8, $p3, $dj7, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx $r3, $p2, $dj3, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx $r20, $p5, $dj5, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx $r22, $p1, $dj1, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx $r12, $p4, $dj2, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx $r5, $p0, $dj6, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx $r25, $p7, $dj4, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx $r30, $p6, $dj0, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx $r7, $p3, $dj7, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx $r15, $p2, $dj3, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx $r2, $p5, $dj5, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx $r24, $p1, $dj1, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx $r29, $p4, $dj2, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx $r14, $p0, $dj6, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx $r28, $p7, $dj4, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx $r11, $p6, $dj0, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx $r10, $p3, $dj7, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx $r19, $p2, $dj3, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx $r31, $p5, $dj5, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx $r13, $p1, $dj1, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx $r23, $p4, $dj2, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx $r6, $p0, $dj6, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx $r17, $p7, $dj4, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx $r16, $p6, $dj0, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx $r4, $p3, $dj7, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx $r0, $p2, $dj3, implicit-def $pe2_ads, implicit $pe2_ads
+
+    ; ST_s16_idx_imm
+    ST_s16_idx_imm $r20, $p5, 14, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx_imm $r19, $p7, -16, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx_imm $r22, $p0, 0, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx_imm $r25, $p2, 2, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx_imm $r16, $p6, 14, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx_imm $r27, $p1, -16, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx_imm $r30, $p4, 0, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx_imm $r10, $p3, 2, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx_imm $r0, $p5, 14, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx_imm $r26, $p7, -16, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx_imm $r24, $p0, 0, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx_imm $r8, $p2, 2, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx_imm $r23, $p6, 14, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx_imm $r15, $p1, -16, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx_imm $r17, $p4, 0, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx_imm $r4, $p3, 2, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx_imm $r21, $p5, 14, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx_imm $r14, $p7, -16, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx_imm $r1, $p0, 0, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx_imm $r13, $p2, 2, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx_imm $r3, $p6, 14, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx_imm $r29, $p1, -16, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx_imm $r12, $p4, 0, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx_imm $r28, $p3, 2, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx_imm $r6, $p5, 14, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx_imm $r2, $p7, -16, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx_imm $r5, $p0, 0, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx_imm $r31, $p2, 2, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx_imm $r18, $p6, 14, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx_imm $r7, $p1, -16, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx_imm $r9, $p4, 0, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s16_idx_imm $r11, $p3, 2, implicit-def $pe2_ads, implicit $pe2_ads
+
+    ; ST_s16_pstm_nrm
+    $p0 = ST_s16_pstm_nrm $r14, $p0, $m2, implicit-def $pe2_ads, implicit $pe2_ads
+    $p1 = ST_s16_pstm_nrm $r2, $p1, $m7, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3 = ST_s16_pstm_nrm $r31, $p3, $m4, implicit-def $pe2_ads, implicit $pe2_ads
+    $p5 = ST_s16_pstm_nrm $r22, $p5, $m1, implicit-def $pe2_ads, implicit $pe2_ads
+    $p2 = ST_s16_pstm_nrm $r29, $p2, $m3, implicit-def $pe2_ads, implicit $pe2_ads
+    $p6 = ST_s16_pstm_nrm $r23, $p6, $m5, implicit-def $pe2_ads, implicit $pe2_ads
+    $p7 = ST_s16_pstm_nrm $r1, $p7, $m6, implicit-def $pe2_ads, implicit $pe2_ads
+    $p4 = ST_s16_pstm_nrm $r24, $p4, $m0, implicit-def $pe2_ads, implicit $pe2_ads
+    $p0 = ST_s16_pstm_nrm $r8, $p0, $m2, implicit-def $pe2_ads, implicit $pe2_ads
+    $p1 = ST_s16_pstm_nrm $r25, $p1, $m7, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3 = ST_s16_pstm_nrm $r3, $p3, $m4, implicit-def $pe2_ads, implicit $pe2_ads
+    $p5 = ST_s16_pstm_nrm $r17, $p5, $m1, implicit-def $pe2_ads, implicit $pe2_ads
+    $p2 = ST_s16_pstm_nrm $r28, $p2, $m3, implicit-def $pe2_ads, implicit $pe2_ads
+    $p6 = ST_s16_pstm_nrm $r10, $p6, $m5, implicit-def $pe2_ads, implicit $pe2_ads
+    $p7 = ST_s16_pstm_nrm $r13, $p7, $m6, implicit-def $pe2_ads, implicit $pe2_ads
+    $p4 = ST_s16_pstm_nrm $r30, $p4, $m0, implicit-def $pe2_ads, implicit $pe2_ads
+    $p0 = ST_s16_pstm_nrm $r19, $p0, $m2, implicit-def $pe2_ads, implicit $pe2_ads
+    $p1 = ST_s16_pstm_nrm $r16, $p1, $m7, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3 = ST_s16_pstm_nrm $r26, $p3, $m4, implicit-def $pe2_ads, implicit $pe2_ads
+    $p5 = ST_s16_pstm_nrm $r11, $p5, $m1, implicit-def $pe2_ads, implicit $pe2_ads
+    $p2 = ST_s16_pstm_nrm $r5, $p2, $m3, implicit-def $pe2_ads, implicit $pe2_ads
+    $p6 = ST_s16_pstm_nrm $r21, $p6, $m5, implicit-def $pe2_ads, implicit $pe2_ads
+    $p7 = ST_s16_pstm_nrm $r18, $p7, $m6, implicit-def $pe2_ads, implicit $pe2_ads
+    $p4 = ST_s16_pstm_nrm $r4, $p4, $m0, implicit-def $pe2_ads, implicit $pe2_ads
+    $p0 = ST_s16_pstm_nrm $r15, $p0, $m2, implicit-def $pe2_ads, implicit $pe2_ads
+    $p1 = ST_s16_pstm_nrm $r0, $p1, $m7, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3 = ST_s16_pstm_nrm $r12, $p3, $m4, implicit-def $pe2_ads, implicit $pe2_ads
+    $p5 = ST_s16_pstm_nrm $r27, $p5, $m1, implicit-def $pe2_ads, implicit $pe2_ads
+    $p2 = ST_s16_pstm_nrm $r7, $p2, $m3, implicit-def $pe2_ads, implicit $pe2_ads
+    $p6 = ST_s16_pstm_nrm $r6, $p6, $m5, implicit-def $pe2_ads, implicit $pe2_ads
+    $p7 = ST_s16_pstm_nrm $r9, $p7, $m6, implicit-def $pe2_ads, implicit $pe2_ads
+    $p4 = ST_s16_pstm_nrm $r20, $p4, $m0, implicit-def $pe2_ads, implicit $pe2_ads
+
+    ; ST_s16_pstm_nrm_imm
+    $p7 = ST_s16_pstm_nrm_imm $r27, $p7, 2, implicit-def $pe2_ads, implicit $pe2_ads
+    $p4 = ST_s16_pstm_nrm_imm $r29, $p4, 14, implicit-def $pe2_ads, implicit $pe2_ads
+    $p6 = ST_s16_pstm_nrm_imm $r30, $p6, 0, implicit-def $pe2_ads, implicit $pe2_ads
+    $p1 = ST_s16_pstm_nrm_imm $r4, $p1, -16, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3 = ST_s16_pstm_nrm_imm $r6, $p3, 2, implicit-def $pe2_ads, implicit $pe2_ads
+    $p2 = ST_s16_pstm_nrm_imm $r25, $p2, 14, implicit-def $pe2_ads, implicit $pe2_ads
+    $p5 = ST_s16_pstm_nrm_imm $r18, $p5, 0, implicit-def $pe2_ads, implicit $pe2_ads
+    $p0 = ST_s16_pstm_nrm_imm $r5, $p0, -16, implicit-def $pe2_ads, implicit $pe2_ads
+    $p7 = ST_s16_pstm_nrm_imm $r13, $p7, 2, implicit-def $pe2_ads, implicit $pe2_ads
+    $p4 = ST_s16_pstm_nrm_imm $r10, $p4, 14, implicit-def $pe2_ads, implicit $pe2_ads
+    $p6 = ST_s16_pstm_nrm_imm $r22, $p6, 0, implicit-def $pe2_ads, implicit $pe2_ads
+    $p1 = ST_s16_pstm_nrm_imm $r1, $p1, -16, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3 = ST_s16_pstm_nrm_imm $r3, $p3, 2, implicit-def $pe2_ads, implicit $pe2_ads
+    $p2 = ST_s16_pstm_nrm_imm $r11, $p2, 14, implicit-def $pe2_ads, implicit $pe2_ads
+    $p5 = ST_s16_pstm_nrm_imm $r14, $p5, 0, implicit-def $pe2_ads, implicit $pe2_ads
+    $p0 = ST_s16_pstm_nrm_imm $r28, $p0, -16, implicit-def $pe2_ads, implicit $pe2_ads
+    $p7 = ST_s16_pstm_nrm_imm $r12, $p7, 2, implicit-def $pe2_ads, implicit $pe2_ads
+    $p4 = ST_s16_pstm_nrm_imm $r19, $p4, 14, implicit-def $pe2_ads, implicit $pe2_ads
+    $p6 = ST_s16_pstm_nrm_imm $r23, $p6, 0, implicit-def $pe2_ads, implicit $pe2_ads
+    $p1 = ST_s16_pstm_nrm_imm $r20, $p1, -16, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3 = ST_s16_pstm_nrm_imm $r21, $p3, 2, implicit-def $pe2_ads, implicit $pe2_ads
+    $p2 = ST_s16_pstm_nrm_imm $r16, $p2, 14, implicit-def $pe2_ads, implicit $pe2_ads
+    $p5 = ST_s16_pstm_nrm_imm $r0, $p5, 0, implicit-def $pe2_ads, implicit $pe2_ads
+    $p0 = ST_s16_pstm_nrm_imm $r7, $p0, -16, implicit-def $pe2_ads, implicit $pe2_ads
+    $p7 = ST_s16_pstm_nrm_imm $r15, $p7, 2, implicit-def $pe2_ads, implicit $pe2_ads
+    $p4 = ST_s16_pstm_nrm_imm $r8, $p4, 14, implicit-def $pe2_ads, implicit $pe2_ads
+    $p6 = ST_s16_pstm_nrm_imm $r24, $p6, 0, implicit-def $pe2_ads, implicit $pe2_ads
+    $p1 = ST_s16_pstm_nrm_imm $r2, $p1, -16, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3 = ST_s16_pstm_nrm_imm $r26, $p3, 2, implicit-def $pe2_ads, implicit $pe2_ads
+    $p2 = ST_s16_pstm_nrm_imm $r31, $p2, 14, implicit-def $pe2_ads, implicit $pe2_ads
+    $p5 = ST_s16_pstm_nrm_imm $r9, $p5, 0, implicit-def $pe2_ads, implicit $pe2_ads
+    $p0 = ST_s16_pstm_nrm_imm $r17, $p0, -16, implicit-def $pe2_ads, implicit $pe2_ads
+
+    ; ST_s8_idx
+    ST_s8_idx $r10, $p0, $dj0, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx $r7, $p6, $dj1, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx $r29, $p5, $dj4, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx $r30, $p2, $dj5, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx $r13, $p7, $dj7, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx $r12, $p3, $dj6, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx $r26, $p4, $dj3, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx $r19, $p1, $dj2, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx $r16, $p0, $dj0, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx $r18, $p6, $dj1, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx $r3, $p5, $dj4, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx $r25, $p2, $dj5, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx $r27, $p7, $dj7, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx $r15, $p3, $dj6, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx $r20, $p4, $dj3, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx $r17, $p1, $dj2, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx $r22, $p0, $dj0, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx $r5, $p6, $dj1, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx $r0, $p5, $dj4, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx $r6, $p2, $dj5, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx $r21, $p7, $dj7, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx $r11, $p3, $dj6, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx $r24, $p4, $dj3, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx $r14, $p1, $dj2, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx $r2, $p0, $dj0, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx $r1, $p6, $dj1, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx $r31, $p5, $dj4, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx $r8, $p2, $dj5, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx $r23, $p7, $dj7, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx $r9, $p3, $dj6, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx $r4, $p4, $dj3, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx $r28, $p1, $dj2, implicit-def $pe2_ads, implicit $pe2_ads
+
+    ; ST_s8_idx_imm
+    ST_s8_idx_imm $r28, $p1, 1, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx_imm $r10, $p6, 7, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx_imm $r27, $p7, 0, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx_imm $r16, $p2, -8, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx_imm $r4, $p4, 1, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx_imm $r30, $p0, 7, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx_imm $r21, $p3, 0, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx_imm $r24, $p5, -8, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx_imm $r22, $p1, 1, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx_imm $r18, $p6, 7, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx_imm $r26, $p7, 0, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx_imm $r23, $p2, -8, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx_imm $r25, $p4, 1, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx_imm $r7, $p0, 7, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx_imm $r14, $p3, 0, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx_imm $r29, $p5, -8, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx_imm $r20, $p1, 1, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx_imm $r2, $p6, 7, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx_imm $r13, $p7, 0, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx_imm $r11, $p2, -8, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx_imm $r6, $p4, 1, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx_imm $r12, $p0, 7, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx_imm $r31, $p3, 0, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx_imm $r1, $p5, -8, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx_imm $r3, $p1, 1, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx_imm $r17, $p6, 7, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx_imm $r15, $p7, 0, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx_imm $r8, $p2, -8, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx_imm $r9, $p4, 1, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx_imm $r19, $p0, 7, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx_imm $r0, $p3, 0, implicit-def $pe2_ads, implicit $pe2_ads
+    ST_s8_idx_imm $r5, $p5, -8, implicit-def $pe2_ads, implicit $pe2_ads
+
+    ; ST_s8_pstm_nrm
+    $p6 = ST_s8_pstm_nrm $r18, $p6, $m3, implicit-def $pe2_ads, implicit $pe2_ads
+    $p5 = ST_s8_pstm_nrm $r20, $p5, $m4, implicit-def $pe2_ads, implicit $pe2_ads
+    $p2 = ST_s8_pstm_nrm $r10, $p2, $m6, implicit-def $pe2_ads, implicit $pe2_ads
+    $p7 = ST_s8_pstm_nrm $r9, $p7, $m5, implicit-def $pe2_ads, implicit $pe2_ads
+    $p4 = ST_s8_pstm_nrm $r19, $p4, $m2, implicit-def $pe2_ads, implicit $pe2_ads
+    $p0 = ST_s8_pstm_nrm $r16, $p0, $m0, implicit-def $pe2_ads, implicit $pe2_ads
+    $p1 = ST_s8_pstm_nrm $r22, $p1, $m1, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3 = ST_s8_pstm_nrm $r24, $p3, $m7, implicit-def $pe2_ads, implicit $pe2_ads
+    $p6 = ST_s8_pstm_nrm $r4, $p6, $m3, implicit-def $pe2_ads, implicit $pe2_ads
+    $p5 = ST_s8_pstm_nrm $r17, $p5, $m4, implicit-def $pe2_ads, implicit $pe2_ads
+    $p2 = ST_s8_pstm_nrm $r28, $p2, $m6, implicit-def $pe2_ads, implicit $pe2_ads
+    $p7 = ST_s8_pstm_nrm $r1, $p7, $m5, implicit-def $pe2_ads, implicit $pe2_ads
+    $p4 = ST_s8_pstm_nrm $r23, $p4, $m2, implicit-def $pe2_ads, implicit $pe2_ads
+    $p0 = ST_s8_pstm_nrm $r26, $p0, $m0, implicit-def $pe2_ads, implicit $pe2_ads
+    $p1 = ST_s8_pstm_nrm $r6, $p1, $m1, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3 = ST_s8_pstm_nrm $r0, $p3, $m7, implicit-def $pe2_ads, implicit $pe2_ads
+    $p6 = ST_s8_pstm_nrm $r8, $p6, $m3, implicit-def $pe2_ads, implicit $pe2_ads
+    $p5 = ST_s8_pstm_nrm $r7, $p5, $m4, implicit-def $pe2_ads, implicit $pe2_ads
+    $p2 = ST_s8_pstm_nrm $r11, $p2, $m6, implicit-def $pe2_ads, implicit $pe2_ads
+    $p7 = ST_s8_pstm_nrm $r29, $p7, $m5, implicit-def $pe2_ads, implicit $pe2_ads
+    $p4 = ST_s8_pstm_nrm $r21, $p4, $m2, implicit-def $pe2_ads, implicit $pe2_ads
+    $p0 = ST_s8_pstm_nrm $r13, $p0, $m0, implicit-def $pe2_ads, implicit $pe2_ads
+    $p1 = ST_s8_pstm_nrm $r25, $p1, $m1, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3 = ST_s8_pstm_nrm $r31, $p3, $m7, implicit-def $pe2_ads, implicit $pe2_ads
+    $p6 = ST_s8_pstm_nrm $r27, $p6, $m3, implicit-def $pe2_ads, implicit $pe2_ads
+    $p5 = ST_s8_pstm_nrm $r3, $p5, $m4, implicit-def $pe2_ads, implicit $pe2_ads
+    $p2 = ST_s8_pstm_nrm $r14, $p2, $m6, implicit-def $pe2_ads, implicit $pe2_ads
+    $p7 = ST_s8_pstm_nrm $r2, $p7, $m5, implicit-def $pe2_ads, implicit $pe2_ads
+    $p4 = ST_s8_pstm_nrm $r30, $p4, $m2, implicit-def $pe2_ads, implicit $pe2_ads
+    $p0 = ST_s8_pstm_nrm $r12, $p0, $m0, implicit-def $pe2_ads, implicit $pe2_ads
+    $p1 = ST_s8_pstm_nrm $r5, $p1, $m1, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3 = ST_s8_pstm_nrm $r15, $p3, $m7, implicit-def $pe2_ads, implicit $pe2_ads
+
+    ; ST_s8_pstm_nrm_imm
+    $p0 = ST_s8_pstm_nrm_imm $r9, $p0, -8, implicit-def $pe2_ads, implicit $pe2_ads
+    $p7 = ST_s8_pstm_nrm_imm $r19, $p7, 1, implicit-def $pe2_ads, implicit $pe2_ads
+    $p4 = ST_s8_pstm_nrm_imm $r27, $p4, 7, implicit-def $pe2_ads, implicit $pe2_ads
+    $p1 = ST_s8_pstm_nrm_imm $r25, $p1, 0, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3 = ST_s8_pstm_nrm_imm $r30, $p3, -8, implicit-def $pe2_ads, implicit $pe2_ads
+    $p6 = ST_s8_pstm_nrm_imm $r17, $p6, 1, implicit-def $pe2_ads, implicit $pe2_ads
+    $p5 = ST_s8_pstm_nrm_imm $r24, $p5, 7, implicit-def $pe2_ads, implicit $pe2_ads
+    $p2 = ST_s8_pstm_nrm_imm $r0, $p2, 0, implicit-def $pe2_ads, implicit $pe2_ads
+    $p0 = ST_s8_pstm_nrm_imm $r7, $p0, -8, implicit-def $pe2_ads, implicit $pe2_ads
+    $p7 = ST_s8_pstm_nrm_imm $r4, $p7, 1, implicit-def $pe2_ads, implicit $pe2_ads
+    $p4 = ST_s8_pstm_nrm_imm $r10, $p4, 7, implicit-def $pe2_ads, implicit $pe2_ads
+    $p1 = ST_s8_pstm_nrm_imm $r21, $p1, 0, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3 = ST_s8_pstm_nrm_imm $r28, $p3, -8, implicit-def $pe2_ads, implicit $pe2_ads
+    $p6 = ST_s8_pstm_nrm_imm $r26, $p6, 1, implicit-def $pe2_ads, implicit $pe2_ads
+    $p5 = ST_s8_pstm_nrm_imm $r12, $p5, 7, implicit-def $pe2_ads, implicit $pe2_ads
+    $p2 = ST_s8_pstm_nrm_imm $r14, $p2, 0, implicit-def $pe2_ads, implicit $pe2_ads
+    $p0 = ST_s8_pstm_nrm_imm $r23, $p0, -8, implicit-def $pe2_ads, implicit $pe2_ads
+    $p7 = ST_s8_pstm_nrm_imm $r20, $p7, 1, implicit-def $pe2_ads, implicit $pe2_ads
+    $p4 = ST_s8_pstm_nrm_imm $r18, $p4, 7, implicit-def $pe2_ads, implicit $pe2_ads
+    $p1 = ST_s8_pstm_nrm_imm $r11, $p1, 0, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3 = ST_s8_pstm_nrm_imm $r15, $p3, -8, implicit-def $pe2_ads, implicit $pe2_ads
+    $p6 = ST_s8_pstm_nrm_imm $r31, $p6, 1, implicit-def $pe2_ads, implicit $pe2_ads
+    $p5 = ST_s8_pstm_nrm_imm $r13, $p5, 7, implicit-def $pe2_ads, implicit $pe2_ads
+    $p2 = ST_s8_pstm_nrm_imm $r22, $p2, 0, implicit-def $pe2_ads, implicit $pe2_ads
+    $p0 = ST_s8_pstm_nrm_imm $r29, $p0, -8, implicit-def $pe2_ads, implicit $pe2_ads
+    $p7 = ST_s8_pstm_nrm_imm $r3, $p7, 1, implicit-def $pe2_ads, implicit $pe2_ads
+    $p4 = ST_s8_pstm_nrm_imm $r1, $p4, 7, implicit-def $pe2_ads, implicit $pe2_ads
+    $p1 = ST_s8_pstm_nrm_imm $r2, $p1, 0, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3 = ST_s8_pstm_nrm_imm $r6, $p3, -8, implicit-def $pe2_ads, implicit $pe2_ads
+    $p6 = ST_s8_pstm_nrm_imm $r5, $p6, 1, implicit-def $pe2_ads, implicit $pe2_ads
+    $p5 = ST_s8_pstm_nrm_imm $r16, $p5, 7, implicit-def $pe2_ads, implicit $pe2_ads
+    $p2 = ST_s8_pstm_nrm_imm $r8, $p2, 0, implicit-def $pe2_ads, implicit $pe2_ads
+...
+
+# CHECK: 0: 98 91 d1 09 st.2d r12, [p1], d6
+# CHECK: 4: 98 51 10 08 st.2d r2, [p0], d0
+# CHECK: 8: 98 b1 b1 0d st.2d r13, [p5], d5
+# CHECK: c: 98 f1 30 0f st.2d r7, [p7], d1
+# CHECK: 10: 98 b1 90 0e st.2d r5, [p6], d4
+# CHECK: 14: 98 09 52 0c st.2d eh8, [p4], d2
+# CHECK: 18: 98 e9 71 0a st.2d el7, [p2], d3
+# CHECK: 1c: 98 a9 f2 0b st.2d el10, [p3], d7
+# CHECK: 20: 98 d1 d2 09 st.2d r22, [p1], d6
+# CHECK: 24: 98 f1 12 08 st.2d r23, [p0], d0
+# CHECK: 28: 98 e9 b0 0d st.2d el3, [p5], d5
+# CHECK: 2c: 98 41 30 0f st.2d dj0, [p7], d1
+# CHECK: 30: 98 31 90 0e st.2d r1, [p6], d4
+# CHECK: 34: 98 e1 52 0c st.2d dc5, [p4], d2
+# CHECK: 38: 98 21 72 0a st.2d dn4, [p2], d3
+# CHECK: 3c: 98 61 f0 0b st.2d dc0, [p3], d7
+# CHECK: 40: 98 81 d1 09 st.2d m3, [p1], d6
+# CHECK: 44: 98 b1 13 08 st.2d r29, [p0], d0
+# CHECK: 48: 98 89 b2 0d st.2d eh10, [p5], d5
+# CHECK: 4c: 98 11 30 0f st.2d r0, [p7], d1
+# CHECK: 50: 98 31 91 0e st.2d r9, [p6], d4
+# CHECK: 54: 98 c9 52 0c st.2d eh11, [p4], d2
+# CHECK: 58: 98 29 72 0a st.2d el8, [p2], d3
+# CHECK: 5c: 98 49 f2 0b st.2d eh9, [p3], d7
+# CHECK: 60: 98 c1 d3 09 st.2d dj7, [p1], d6
+# CHECK: 64: 98 a9 11 08 st.2d el6, [p0], d0
+# CHECK: 68: 98 51 b2 0d st.2d r18, [p5], d5
+# CHECK: 6c: 98 d1 31 0f st.2d r14, [p7], d1
+# CHECK: 70: 98 91 90 0e st.2d r4, [p6], d4
+# CHECK: 74: 98 11 51 0c st.2d r8, [p4], d2
+# CHECK: 78: 98 01 71 0a st.2d m2, [p2], d3
+# CHECK: 7c: 98 11 f3 0b st.2d r24, [p3], d7
+# CHECK: 80: 98 c1 d1 09 st.2d dj3, [p1], d6
+# CHECK: 84: 98 89 11 08 st.2d eh6, [p0], d0
+# CHECK: 88: 98 51 b3 0d st.2d r26, [p5], d5
+# CHECK: 8c: 98 e1 33 0f st.2d dc7, [p7], d1
+# CHECK: 90: 98 99 92 0e st.2d p5, [p6], d4
+# CHECK: 94: 98 21 50 0c st.2d dn0, [p4], d2
+# CHECK: 98: 98 89 70 0a st.2d eh2, [p2], d3
+# CHECK: 9c: 98 71 f1 0b st.2d r11, [p3], d7
+# CHECK: a0: 98 51 d1 09 st.2d r10, [p1], d6
+# CHECK: a4: 98 61 12 08 st.2d dc4, [p0], d0
+# CHECK: a8: 98 91 b3 0d st.2d r28, [p5], d5
+# CHECK: ac: 98 09 30 0f st.2d eh0, [p7], d1
+# CHECK: b0: 98 49 91 0e st.2d eh5, [p6], d4
+# CHECK: b4: 98 71 50 0c st.2d r3, [p4], d2
+# CHECK: b8: 98 19 73 0a st.2d p6, [p2], d3
+# CHECK: bc: 98 a1 f0 0b st.2d dn1, [p3], d7
+# CHECK: c0: 98 e1 d1 09 st.2d dc3, [p1], d6
+# CHECK: c4: 98 69 11 08 st.2d el5, [p0], d0
+# CHECK: c8: 98 c1 b2 0d st.2d dj5, [p5], d5
+# CHECK: cc: 98 41 32 0f st.2d dj4, [p7], d1
+# CHECK: d0: 98 c9 90 0e st.2d eh3, [p6], d4
+# CHECK: d4: 98 a1 52 0c st.2d dn5, [p4], d2
+# CHECK: d8: 98 31 73 0a st.2d r25, [p2], d3
+# CHECK: dc: 98 01 f3 0b st.2d m6, [p3], d7
+# CHECK: e0: 98 29 d1 09 st.2d el4, [p1], d6
+# CHECK: e4: 98 99 11 08 st.2d p3, [p0], d0
+# CHECK: e8: 98 b1 b2 0d st.2d r21, [p5], d5
+# CHECK: ec: 98 c1 30 0f st.2d dj1, [p7], d1
+# CHECK: f0: 98 e1 90 0e st.2d dc1, [p6], d4
+# CHECK: f4: 98 d1 53 0c st.2d r30, [p4], d2
+# CHECK: f8: 98 d1 70 0a st.2d r6, [p2], d3
+# CHECK: fc: 98 41 f1 0b st.2d dj2, [p3], d7
+# CHECK: 100: 98 21 d1 09 st.2d dn2, [p1], d6
+# CHECK: 104: 98 c9 11 08 st.2d eh7, [p0], d0
+# CHECK: 108: 98 19 b2 0d st.2d p4, [p5], d5
+# CHECK: 10c: 98 81 33 0f st.2d m7, [p7], d1
+# CHECK: 110: 98 71 92 0e st.2d r19, [p6], d4
+# CHECK: 114: 98 f1 53 0c st.2d r31, [p4], d2
+# CHECK: 118: 98 21 73 0a st.2d dn6, [p2], d3
+# CHECK: 11c: 98 69 f0 0b st.2d el1, [p3], d7
+# CHECK: 120: 98 19 d0 09 st.2d p0, [p1], d6
+# CHECK: 124: 98 09 11 08 st.2d eh4, [p0], d0
+# CHECK: 128: 98 69 b2 0d st.2d el9, [p5], d5
+# CHECK: 12c: 98 01 30 0f st.2d m0, [p7], d1
+# CHECK: 130: 98 a1 93 0e st.2d dn7, [p6], d4
+# CHECK: 134: 98 e9 52 0c st.2d el11, [p4], d2
+# CHECK: 138: 98 99 70 0a st.2d p1, [p2], d3
+# CHECK: 13c: 98 29 f0 0b st.2d el0, [p3], d7
+# CHECK: 140: 98 19 d1 09 st.2d p2, [p1], d6
+# CHECK: 144: 98 81 12 08 st.2d m5, [p0], d0
+# CHECK: 148: 98 11 b2 0d st.2d r16, [p5], d5
+# CHECK: 14c: 98 61 31 0f st.2d dc2, [p7], d1
+# CHECK: 150: 98 f1 91 0e st.2d r15, [p6], d4
+# CHECK: 154: 98 91 52 0c st.2d r20, [p4], d2
+# CHECK: 158: 98 71 73 0a st.2d r27, [p2], d3
+# CHECK: 15c: 98 49 f0 0b st.2d eh1, [p3], d7
+# CHECK: 160: 98 a9 d0 09 st.2d el2, [p1], d6
+# CHECK: 164: 98 81 10 08 st.2d m1, [p0], d0
+# CHECK: 168: 98 01 b2 0d st.2d m4, [p5], d5
+# CHECK: 16c: 98 61 33 0f st.2d dc6, [p7], d1
+# CHECK: 170: 98 41 93 0e st.2d dj6, [p6], d4
+# CHECK: 174: 98 31 52 0c st.2d r17, [p4], d2
+# CHECK: 178: 98 99 73 0a st.2d p7, [p2], d3
+# CHECK: 17c: 98 a1 f1 0b st.2d dn3, [p3], d7
+# CHECK: 180: 98 39 d0 09 st.2d lr, [p1], d6
+# CHECK: 184: 18 1b 90 0f st.2d q0, [p7], d4
+# CHECK: 188: 18 1b b0 0d st.2d q0, [p5], d5
+# CHECK: 18c: 18 1b 33 08 st.2d q3, [p0], d1
+# CHECK: 190: 18 1b 53 0b st.2d q3, [p3], d2
+# CHECK: 194: 18 1b 10 09 st.2d q0, [p1], d0
+# CHECK: 198: 18 1b d0 0e st.2d q0, [p6], d6
+# CHECK: 19c: 18 1b 73 0a st.2d q3, [p2], d3
+# CHECK: 1a0: 18 1b f3 0c st.2d q3, [p4], d7
+# CHECK: 1a4: 18 57 f3 07 st.2d.s16 r26, [p7], d7
+# CHECK: 1a8: 18 77 b2 03 st.2d.s16 r19, [p3], d5
+# CHECK: 1ac: 18 17 12 02 st.2d.s16 r16, [p2], d0
+# CHECK: 1b0: 18 f7 d3 01 st.2d.s16 r31, [p1], d6
+# CHECK: 1b4: 18 57 31 04 st.2d.s16 r10, [p4], d1
+# CHECK: 1b8: 18 f7 91 00 st.2d.s16 r15, [p0], d4
+# CHECK: 1bc: 18 97 73 05 st.2d.s16 r28, [p5], d3
+# CHECK: 1c0: 18 97 50 06 st.2d.s16 r4, [p6], d2
+# CHECK: 1c4: 18 37 f3 07 st.2d.s16 r25, [p7], d7
+# CHECK: 1c8: 18 f7 b2 03 st.2d.s16 r23, [p3], d5
+# CHECK: 1cc: 18 f7 10 02 st.2d.s16 r7, [p2], d0
+# CHECK: 1d0: 18 77 d3 01 st.2d.s16 r27, [p1], d6
+# CHECK: 1d4: 18 37 30 04 st.2d.s16 r1, [p4], d1
+# CHECK: 1d8: 18 d7 90 00 st.2d.s16 r6, [p0], d4
+# CHECK: 1dc: 18 77 70 05 st.2d.s16 r3, [p5], d3
+# CHECK: 1e0: 18 b7 50 06 st.2d.s16 r5, [p6], d2
+# CHECK: 1e4: 18 17 f0 07 st.2d.s16 r0, [p7], d7
+# CHECK: 1e8: 18 b7 b1 03 st.2d.s16 r13, [p3], d5
+# CHECK: 1ec: 18 d7 11 02 st.2d.s16 r14, [p2], d0
+# CHECK: 1f0: 18 97 d1 01 st.2d.s16 r12, [p1], d6
+# CHECK: 1f4: 18 77 31 04 st.2d.s16 r11, [p4], d1
+# CHECK: 1f8: 18 57 92 00 st.2d.s16 r18, [p0], d4
+# CHECK: 1fc: 18 37 72 05 st.2d.s16 r17, [p5], d3
+# CHECK: 200: 18 d7 53 06 st.2d.s16 r30, [p6], d2
+# CHECK: 204: 18 b7 f2 07 st.2d.s16 r21, [p7], d7
+# CHECK: 208: 18 b7 b3 03 st.2d.s16 r29, [p3], d5
+# CHECK: 20c: 18 97 12 02 st.2d.s16 r20, [p2], d0
+# CHECK: 210: 18 17 d3 01 st.2d.s16 r24, [p1], d6
+# CHECK: 214: 18 17 31 04 st.2d.s16 r8, [p4], d1
+# CHECK: 218: 18 57 90 00 st.2d.s16 r2, [p0], d4
+# CHECK: 21c: 18 d7 72 05 st.2d.s16 r22, [p5], d3
+# CHECK: 220: 18 37 51 06 st.2d.s16 r9, [p6], d2
+# CHECK: 224: 18 07 11 05 st.2d.s8 r8, [p5], d0
+# CHECK: 228: 18 47 d1 04 st.2d.s8 r10, [p4], d6
+# CHECK: 22c: 18 07 90 02 st.2d.s8 r0, [p2], d4
+# CHECK: 230: 18 e7 72 06 st.2d.s8 r23, [p6], d3
+# CHECK: 234: 18 47 53 01 st.2d.s8 r26, [p1], d2
+# CHECK: 238: 18 c7 b0 00 st.2d.s8 r6, [p0], d5
+# CHECK: 23c: 18 a7 30 07 st.2d.s8 r5, [p7], d1
+# CHECK: 240: 18 67 f3 03 st.2d.s8 r27, [p3], d7
+# CHECK: 244: 18 a7 11 05 st.2d.s8 r13, [p5], d0
+# CHECK: 248: 18 a7 d3 04 st.2d.s8 r29, [p4], d6
+# CHECK: 24c: 18 87 92 02 st.2d.s8 r20, [p2], d4
+# CHECK: 250: 18 47 72 06 st.2d.s8 r18, [p6], d3
+# CHECK: 254: 18 67 51 01 st.2d.s8 r11, [p1], d2
+# CHECK: 258: 18 47 b0 00 st.2d.s8 r2, [p0], d5
+# CHECK: 25c: 18 87 31 07 st.2d.s8 r12, [p7], d1
+# CHECK: 260: 18 27 f3 03 st.2d.s8 r25, [p3], d7
+# CHECK: 264: 18 87 10 05 st.2d.s8 r4, [p5], d0
+# CHECK: 268: 18 e7 d0 04 st.2d.s8 r7, [p4], d6
+# CHECK: 26c: 18 27 90 02 st.2d.s8 r1, [p2], d4
+# CHECK: 270: 18 67 70 06 st.2d.s8 r3, [p6], d3
+# CHECK: 274: 18 67 52 01 st.2d.s8 r19, [p1], d2
+# CHECK: 278: 18 a7 b2 00 st.2d.s8 r21, [p0], d5
+# CHECK: 27c: 18 c7 31 07 st.2d.s8 r14, [p7], d1
+# CHECK: 280: 18 27 f2 03 st.2d.s8 r17, [p3], d7
+# CHECK: 284: 18 c7 13 05 st.2d.s8 r30, [p5], d0
+# CHECK: 288: 18 27 d1 04 st.2d.s8 r9, [p4], d6
+# CHECK: 28c: 18 07 92 02 st.2d.s8 r16, [p2], d4
+# CHECK: 290: 18 07 73 06 st.2d.s8 r24, [p6], d3
+# CHECK: 294: 18 e7 51 01 st.2d.s8 r15, [p1], d2
+# CHECK: 298: 18 c7 b2 00 st.2d.s8 r22, [p0], d5
+# CHECK: 29c: 18 e7 33 07 st.2d.s8 r31, [p7], d1
+# CHECK: 2a0: 18 87 f3 03 st.2d.s8 r28, [p3], d7
+# CHECK: 2a4: 98 09 38 0e st.3d eh0, [p6], d1
+# CHECK: 2a8: 98 09 59 0a st.3d eh4, [p2], d2
+# CHECK: 2ac: 98 19 18 0d st.3d p0, [p5], d0
+# CHECK: 2b0: 98 91 7a 0b st.3d r20, [p3], d3
+# CHECK: 2b4: 98 a9 3a 08 st.3d el10, [p0], d1
+# CHECK: 2b8: 98 81 5b 0f st.3d m7, [p7], d2
+# CHECK: 2bc: 98 31 1b 0c st.3d r25, [p4], d0
+# CHECK: 2c0: 98 69 7a 09 st.3d el9, [p1], d3
+# CHECK: 2c4: 98 f1 3a 0e st.3d r23, [p6], d1
+# CHECK: 2c8: 98 99 59 0a st.3d p3, [p2], d2
+# CHECK: 2cc: 98 c1 19 0d st.3d dj3, [p5], d0
+# CHECK: 2d0: 98 61 79 0b st.3d dc2, [p3], d3
+# CHECK: 2d4: 98 d1 38 08 st.3d r6, [p0], d1
+# CHECK: 2d8: 98 11 5a 0f st.3d r16, [p7], d2
+# CHECK: 2dc: 98 49 1a 0c st.3d eh9, [p4], d0
+# CHECK: 2e0: 98 c1 78 09 st.3d dj1, [p1], d3
+# CHECK: 2e4: 98 c9 3a 0e st.3d eh11, [p6], d1
+# CHECK: 2e8: 98 a1 5b 0a st.3d dn7, [p2], d2
+# CHECK: 2ec: 98 29 19 0d st.3d el4, [p5], d0
+# CHECK: 2f0: 98 d1 79 0b st.3d r14, [p3], d3
+# CHECK: 2f4: 98 11 39 08 st.3d r8, [p0], d1
+# CHECK: 2f8: 98 69 58 0f st.3d el1, [p7], d2
+# CHECK: 2fc: 98 b1 18 0c st.3d r5, [p4], d0
+# CHECK: 300: 98 b1 79 09 st.3d r13, [p1], d3
+# CHECK: 304: 98 11 38 0e st.3d r0, [p6], d1
+# CHECK: 308: 98 a1 58 0a st.3d dn1, [p2], d2
+# CHECK: 30c: 98 41 18 0d st.3d dj0, [p5], d0
+# CHECK: 310: 98 91 78 0b st.3d r4, [p3], d3
+# CHECK: 314: 98 01 39 08 st.3d m2, [p0], d1
+# CHECK: 318: 98 89 58 0f st.3d eh2, [p7], d2
+# CHECK: 31c: 98 61 1a 0c st.3d dc4, [p4], d0
+# CHECK: 320: 98 21 78 09 st.3d dn0, [p1], d3
+# CHECK: 324: 98 71 3a 0e st.3d r19, [p6], d1
+# CHECK: 328: 98 51 5a 0a st.3d r18, [p2], d2
+# CHECK: 32c: 98 a1 19 0d st.3d dn3, [p5], d0
+# CHECK: 330: 98 81 78 0b st.3d m1, [p3], d3
+# CHECK: 334: 98 e9 38 08 st.3d el3, [p0], d1
+# CHECK: 338: 98 41 5a 0f st.3d dj4, [p7], d2
+# CHECK: 33c: 98 21 1a 0c st.3d dn4, [p4], d0
+# CHECK: 340: 98 e1 79 09 st.3d dc3, [p1], d3
+# CHECK: 344: 98 81 3a 0e st.3d m5, [p6], d1
+# CHECK: 348: 98 b1 5b 0a st.3d r29, [p2], d2
+# CHECK: 34c: 98 29 18 0d st.3d el0, [p5], d0
+# CHECK: 350: 98 e1 7b 0b st.3d dc7, [p3], d3
+# CHECK: 354: 98 81 39 08 st.3d m3, [p0], d1
+# CHECK: 358: 98 91 5b 0f st.3d r28, [p7], d2
+# CHECK: 35c: 98 19 1b 0c st.3d p6, [p4], d0
+# CHECK: 360: 98 c1 7b 09 st.3d dj7, [p1], d3
+# CHECK: 364: 98 19 3a 0e st.3d p4, [p6], d1
+# CHECK: 368: 98 51 5b 0a st.3d r26, [p2], d2
+# CHECK: 36c: 98 49 19 0d st.3d eh5, [p5], d0
+# CHECK: 370: 98 61 7b 0b st.3d dc6, [p3], d3
+# CHECK: 374: 98 11 3b 08 st.3d r24, [p0], d1
+# CHECK: 378: 98 e9 59 0f st.3d el7, [p7], d2
+# CHECK: 37c: 98 d1 1a 0c st.3d r22, [p4], d0
+# CHECK: 380: 98 61 78 09 st.3d dc0, [p1], d3
+# CHECK: 384: 98 69 39 0e st.3d el5, [p6], d1
+# CHECK: 388: 98 21 59 0a st.3d dn2, [p2], d2
+# CHECK: 38c: 98 09 1a 0d st.3d eh8, [p5], d0
+# CHECK: 390: 98 c9 78 0b st.3d eh3, [p3], d3
+# CHECK: 394: 98 21 3b 08 st.3d dn6, [p0], d1
+# CHECK: 398: 98 c9 59 0f st.3d eh7, [p7], d2
+# CHECK: 39c: 98 31 1a 0c st.3d r17, [p4], d0
+# CHECK: 3a0: 98 e1 78 09 st.3d dc1, [p1], d3
+# CHECK: 3a4: 98 01 3a 0e st.3d m4, [p6], d1
+# CHECK: 3a8: 98 89 5a 0a st.3d eh10, [p2], d2
+# CHECK: 3ac: 98 51 18 0d st.3d r2, [p5], d0
+# CHECK: 3b0: 98 e1 7a 0b st.3d dc5, [p3], d3
+# CHECK: 3b4: 98 71 39 08 st.3d r11, [p0], d1
+# CHECK: 3b8: 98 19 59 0f st.3d p2, [p7], d2
+# CHECK: 3bc: 98 91 19 0c st.3d r12, [p4], d0
+# CHECK: 3c0: 98 49 78 09 st.3d eh1, [p1], d3
+# CHECK: 3c4: 98 f1 39 0e st.3d r15, [p6], d1
+# CHECK: 3c8: 98 39 58 0a st.3d lr, [p2], d2
+# CHECK: 3cc: 98 29 1a 0d st.3d el8, [p5], d0
+# CHECK: 3d0: 98 51 79 0b st.3d r10, [p3], d3
+# CHECK: 3d4: 98 f1 38 08 st.3d r7, [p0], d1
+# CHECK: 3d8: 98 a1 5a 0f st.3d dn5, [p7], d2
+# CHECK: 3dc: 98 99 1a 0c st.3d p5, [p4], d0
+# CHECK: 3e0: 98 01 78 09 st.3d m0, [p1], d3
+# CHECK: 3e4: 98 71 38 0e st.3d r3, [p6], d1
+# CHECK: 3e8: 98 b1 5a 0a st.3d r21, [p2], d2
+# CHECK: 3ec: 98 89 19 0d st.3d eh6, [p5], d0
+# CHECK: 3f0: 98 71 7b 0b st.3d r27, [p3], d3
+# CHECK: 3f4: 98 41 3b 08 st.3d dj6, [p0], d1
+# CHECK: 3f8: 98 a9 59 0f st.3d el6, [p7], d2
+# CHECK: 3fc: 98 01 1b 0c st.3d m6, [p4], d0
+# CHECK: 400: 98 d1 7b 09 st.3d r30, [p1], d3
+# CHECK: 404: 98 c1 3a 0e st.3d dj5, [p6], d1
+# CHECK: 408: 98 99 5b 0a st.3d p7, [p2], d2
+# CHECK: 40c: 98 41 19 0d st.3d dj2, [p5], d0
+# CHECK: 410: 98 a9 78 0b st.3d el2, [p3], d3
+# CHECK: 414: 98 99 38 08 st.3d p1, [p0], d1
+# CHECK: 418: 98 31 59 0f st.3d r9, [p7], d2
+# CHECK: 41c: 98 e9 1a 0c st.3d el11, [p4], d0
+# CHECK: 420: 98 f1 7b 09 st.3d r31, [p1], d3
+# CHECK: 424: 98 31 38 0e st.3d r1, [p6], d1
+# CHECK: 428: 18 1b 18 0a st.3d q0, [p2], d0
+# CHECK: 42c: 18 1b 5b 0f st.3d q3, [p7], d2
+# CHECK: 430: 18 1b 3b 0c st.3d q3, [p4], d1
+# CHECK: 434: 18 1b 78 08 st.3d q0, [p0], d3
+# CHECK: 438: 18 1b 18 0e st.3d q0, [p6], d0
+# CHECK: 43c: 18 1b 5b 0b st.3d q3, [p3], d2
+# CHECK: 440: 18 1b 3b 09 st.3d q3, [p1], d1
+# CHECK: 444: 18 1b 78 0d st.3d q0, [p5], d3
+# CHECK: 448: 18 17 59 02 st.3d.s16 r8, [p2], d2
+# CHECK: 44c: 18 77 19 06 st.3d.s16 r11, [p6], d0
+# CHECK: 450: 18 17 78 05 st.3d.s16 r0, [p5], d3
+# CHECK: 454: 18 b7 39 03 st.3d.s16 r13, [p3], d1
+# CHECK: 458: 18 f7 58 07 st.3d.s16 r7, [p7], d2
+# CHECK: 45c: 18 f7 19 00 st.3d.s16 r15, [p0], d0
+# CHECK: 460: 18 77 7b 01 st.3d.s16 r27, [p1], d3
+# CHECK: 464: 18 57 3a 04 st.3d.s16 r18, [p4], d1
+# CHECK: 468: 18 77 58 02 st.3d.s16 r3, [p2], d2
+# CHECK: 46c: 18 97 19 06 st.3d.s16 r12, [p6], d0
+# CHECK: 470: 18 77 7a 05 st.3d.s16 r19, [p5], d3
+# CHECK: 474: 18 d7 3a 03 st.3d.s16 r22, [p3], d1
+# CHECK: 478: 18 97 58 07 st.3d.s16 r4, [p7], d2
+# CHECK: 47c: 18 37 1b 00 st.3d.s16 r25, [p0], d0
+# CHECK: 480: 18 17 7a 01 st.3d.s16 r16, [p1], d3
+# CHECK: 484: 18 37 39 04 st.3d.s16 r9, [p4], d1
+# CHECK: 488: 18 57 58 02 st.3d.s16 r2, [p2], d2
+# CHECK: 48c: 18 b7 1b 06 st.3d.s16 r29, [p6], d0
+# CHECK: 490: 18 b7 7a 05 st.3d.s16 r21, [p5], d3
+# CHECK: 494: 18 b7 38 03 st.3d.s16 r5, [p3], d1
+# CHECK: 498: 18 37 5a 07 st.3d.s16 r17, [p7], d2
+# CHECK: 49c: 18 f7 1a 00 st.3d.s16 r23, [p0], d0
+# CHECK: 4a0: 18 f7 7b 01 st.3d.s16 r31, [p1], d3
+# CHECK: 4a4: 18 d7 38 04 st.3d.s16 r6, [p4], d1
+# CHECK: 4a8: 18 97 5b 02 st.3d.s16 r28, [p2], d2
+# CHECK: 4ac: 18 d7 1b 06 st.3d.s16 r30, [p6], d0
+# CHECK: 4b0: 18 57 7b 05 st.3d.s16 r26, [p5], d3
+# CHECK: 4b4: 18 37 38 03 st.3d.s16 r1, [p3], d1
+# CHECK: 4b8: 18 57 59 07 st.3d.s16 r10, [p7], d2
+# CHECK: 4bc: 18 97 1a 00 st.3d.s16 r20, [p0], d0
+# CHECK: 4c0: 18 d7 79 01 st.3d.s16 r14, [p1], d3
+# CHECK: 4c4: 18 17 3b 04 st.3d.s16 r24, [p4], d1
+# CHECK: 4c8: 18 47 3a 02 st.3d.s8 r18, [p2], d1
+# CHECK: 4cc: 18 67 5a 04 st.3d.s8 r19, [p4], d2
+# CHECK: 4d0: 18 27 19 03 st.3d.s8 r9, [p3], d0
+# CHECK: 4d4: 18 67 7b 00 st.3d.s8 r27, [p0], d3
+# CHECK: 4d8: 18 a7 38 05 st.3d.s8 r5, [p5], d1
+# CHECK: 4dc: 18 27 5a 01 st.3d.s8 r17, [p1], d2
+# CHECK: 4e0: 18 67 18 07 st.3d.s8 r3, [p7], d0
+# CHECK: 4e4: 18 67 79 06 st.3d.s8 r11, [p6], d3
+# CHECK: 4e8: 18 27 38 02 st.3d.s8 r1, [p2], d1
+# CHECK: 4ec: 18 c7 58 04 st.3d.s8 r6, [p4], d2
+# CHECK: 4f0: 18 47 18 03 st.3d.s8 r2, [p3], d0
+# CHECK: 4f4: 18 07 7a 00 st.3d.s8 r16, [p0], d3
+# CHECK: 4f8: 18 87 39 05 st.3d.s8 r12, [p5], d1
+# CHECK: 4fc: 18 87 5a 01 st.3d.s8 r20, [p1], d2
+# CHECK: 500: 18 c7 19 07 st.3d.s8 r14, [p7], d0
+# CHECK: 504: 18 07 78 06 st.3d.s8 r0, [p6], d3
+# CHECK: 508: 18 e7 3b 02 st.3d.s8 r31, [p2], d1
+# CHECK: 50c: 18 07 5b 04 st.3d.s8 r24, [p4], d2
+# CHECK: 510: 18 87 18 03 st.3d.s8 r4, [p3], d0
+# CHECK: 514: 18 87 7b 00 st.3d.s8 r28, [p0], d3
+# CHECK: 518: 18 47 3b 05 st.3d.s8 r26, [p5], d1
+# CHECK: 51c: 18 e7 58 01 st.3d.s8 r7, [p1], d2
+# CHECK: 520: 18 27 1b 07 st.3d.s8 r25, [p7], d0
+# CHECK: 524: 18 e7 79 06 st.3d.s8 r15, [p6], d3
+# CHECK: 528: 18 c7 3b 02 st.3d.s8 r30, [p2], d1
+# CHECK: 52c: 18 e7 5a 04 st.3d.s8 r23, [p4], d2
+# CHECK: 530: 18 a7 1a 03 st.3d.s8 r21, [p3], d0
+# CHECK: 534: 18 a7 79 00 st.3d.s8 r13, [p0], d3
+# CHECK: 538: 18 a7 3b 05 st.3d.s8 r29, [p5], d1
+# CHECK: 53c: 18 c7 5a 01 st.3d.s8 r22, [p1], d2
+# CHECK: 540: 18 47 19 07 st.3d.s8 r10, [p7], d0
+# CHECK: 544: 18 07 79 06 st.3d.s8 r8, [p6], d3
+# CHECK: 548: 98 7e f2 0c st.tm.2d r19, [p4], d7
+# CHECK: 54c: 98 3e d3 0f st.tm.2d r25, [p7], d6
+# CHECK: 550: 98 1e 92 0e st.tm.2d r16, [p6], d4
+# CHECK: 554: 98 7e b1 0a st.tm.2d r11, [p2], d5
+# CHECK: 558: 98 1e 11 09 st.tm.2d r8, [p1], d0
+# CHECK: 55c: 98 de 31 0d st.tm.2d r14, [p5], d1
+# CHECK: 560: 98 fe 73 0b st.tm.2d r31, [p3], d3
+# CHECK: 564: 98 7e 53 08 st.tm.2d r27, [p0], d2
+# CHECK: 568: 98 fe f2 0c st.tm.2d r23, [p4], d7
+# CHECK: 56c: 98 9e d3 0f st.tm.2d r28, [p7], d6
+# CHECK: 570: 98 7e 90 0e st.tm.2d r3, [p6], d4
+# CHECK: 574: 98 be b3 0a st.tm.2d r29, [p2], d5
+# CHECK: 578: 98 9e 11 09 st.tm.2d r12, [p1], d0
+# CHECK: 57c: 98 3e 32 0d st.tm.2d r17, [p5], d1
+# CHECK: 580: 98 de 70 0b st.tm.2d r6, [p3], d3
+# CHECK: 584: 98 de 53 08 st.tm.2d r30, [p0], d2
+# CHECK: 588: 98 9e f0 0c st.tm.2d r4, [p4], d7
+# CHECK: 58c: 98 5e d2 0f st.tm.2d r18, [p7], d6
+# CHECK: 590: 98 be 92 0e st.tm.2d r21, [p6], d4
+# CHECK: 594: 98 5e b1 0a st.tm.2d r10, [p2], d5
+# CHECK: 598: 98 3e 10 09 st.tm.2d r1, [p1], d0
+# CHECK: 59c: 98 9e 32 0d st.tm.2d r20, [p5], d1
+# CHECK: 5a0: 98 be 70 0b st.tm.2d r5, [p3], d3
+# CHECK: 5a4: 98 5e 50 08 st.tm.2d r2, [p0], d2
+# CHECK: 5a8: 98 de f2 0c st.tm.2d r22, [p4], d7
+# CHECK: 5ac: 98 1e d3 0f st.tm.2d r24, [p7], d6
+# CHECK: 5b0: 98 5e 93 0e st.tm.2d r26, [p6], d4
+# CHECK: 5b4: 98 3e b1 0a st.tm.2d r9, [p2], d5
+# CHECK: 5b8: 98 be 11 09 st.tm.2d r13, [p1], d0
+# CHECK: 5bc: 98 fe 30 0d st.tm.2d r7, [p5], d1
+# CHECK: 5c0: 98 fe 71 0b st.tm.2d r15, [p3], d3
+# CHECK: 5c4: 98 1e 50 08 st.tm.2d r0, [p0], d2
+# CHECK: 5c8: 98 7e 38 0f st.tm.3d r3, [p7], d1
+# CHECK: 5cc: 98 be 59 0a st.tm.3d r13, [p2], d2
+# CHECK: 5d0: 98 7e 7b 0b st.tm.3d r27, [p3], d3
+# CHECK: 5d4: 98 fe 1b 0d st.tm.3d r31, [p5], d0
+# CHECK: 5d8: 98 3e 3a 09 st.tm.3d r17, [p1], d1
+# CHECK: 5dc: 98 5e 58 08 st.tm.3d r2, [p0], d2
+# CHECK: 5e0: 98 5e 7b 0c st.tm.3d r26, [p4], d3
+# CHECK: 5e4: 98 5e 1a 0e st.tm.3d r18, [p6], d0
+# CHECK: 5e8: 98 9e 3a 0f st.tm.3d r20, [p7], d1
+# CHECK: 5ec: 98 7e 5a 0a st.tm.3d r19, [p2], d2
+# CHECK: 5f0: 98 9e 78 0b st.tm.3d r4, [p3], d3
+# CHECK: 5f4: 98 9e 1b 0d st.tm.3d r28, [p5], d0
+# CHECK: 5f8: 98 de 39 09 st.tm.3d r14, [p1], d1
+# CHECK: 5fc: 98 1e 58 08 st.tm.3d r0, [p0], d2
+# CHECK: 600: 98 fe 78 0c st.tm.3d r7, [p4], d3
+# CHECK: 604: 98 fe 1a 0e st.tm.3d r23, [p6], d0
+# CHECK: 608: 98 7e 39 0f st.tm.3d r11, [p7], d1
+# CHECK: 60c: 98 1e 59 0a st.tm.3d r8, [p2], d2
+# CHECK: 610: 98 be 7a 0b st.tm.3d r21, [p3], d3
+# CHECK: 614: 98 be 18 0d st.tm.3d r5, [p5], d0
+# CHECK: 618: 98 de 3b 09 st.tm.3d r30, [p1], d1
+# CHECK: 61c: 98 3e 59 08 st.tm.3d r9, [p0], d2
+# CHECK: 620: 98 fe 79 0c st.tm.3d r15, [p4], d3
+# CHECK: 624: 98 3e 18 0e st.tm.3d r1, [p6], d0
+# CHECK: 628: 98 1e 3a 0f st.tm.3d r16, [p7], d1
+# CHECK: 62c: 98 de 58 0a st.tm.3d r6, [p2], d2
+# CHECK: 630: 98 3e 7b 0b st.tm.3d r25, [p3], d3
+# CHECK: 634: 98 be 1b 0d st.tm.3d r29, [p5], d0
+# CHECK: 638: 98 de 3a 09 st.tm.3d r22, [p1], d1
+# CHECK: 63c: 98 9e 59 08 st.tm.3d r12, [p0], d2
+# CHECK: 640: 98 1e 7b 0c st.tm.3d r24, [p4], d3
+# CHECK: 644: 98 5e 19 0e st.tm.3d r10, [p6], d0
+# CHECK: 648: 98 9e 80 09 st.tm r4, [p1, dj4]
+# CHECK: 64c: 98 5e a3 0c st.tm r26, [p4, dj5]
+# CHECK: 650: 98 7e c0 08 st.tm r3, [p0, dj6]
+# CHECK: 654: 98 be 60 0f st.tm r5, [p7, dj3]
+# CHECK: 658: 98 7e 43 0b st.tm r27, [p3, dj2]
+# CHECK: 65c: 98 be e1 0a st.tm r13, [p2, dj7]
+# CHECK: 660: 98 5e 00 0e st.tm r2, [p6, dj0]
+# CHECK: 664: 98 1e 23 0d st.tm r24, [p5, dj1]
+# CHECK: 668: 98 9e 81 09 st.tm r12, [p1, dj4]
+# CHECK: 66c: 98 3e a1 0c st.tm r9, [p4, dj5]
+# CHECK: 670: 98 5e c2 08 st.tm r18, [p0, dj6]
+# CHECK: 674: 98 be 62 0f st.tm r21, [p7, dj3]
+# CHECK: 678: 98 de 40 0b st.tm r6, [p3, dj2]
+# CHECK: 67c: 98 fe e1 0a st.tm r15, [p2, dj7]
+# CHECK: 680: 98 9e 02 0e st.tm r20, [p6, dj0]
+# CHECK: 684: 98 3e 22 0d st.tm r17, [p5, dj1]
+# CHECK: 688: 98 fe 83 09 st.tm r31, [p1, dj4]
+# CHECK: 68c: 98 1e a2 0c st.tm r16, [p4, dj5]
+# CHECK: 690: 98 de c3 08 st.tm r30, [p0, dj6]
+# CHECK: 694: 98 9e 63 0f st.tm r28, [p7, dj3]
+# CHECK: 698: 98 fe 42 0b st.tm r23, [p3, dj2]
+# CHECK: 69c: 98 de e2 0a st.tm r22, [p2, dj7]
+# CHECK: 6a0: 98 3e 03 0e st.tm r25, [p6, dj0]
+# CHECK: 6a4: 98 7e 22 0d st.tm r19, [p5, dj1]
+# CHECK: 6a8: 98 1e 80 09 st.tm r0, [p1, dj4]
+# CHECK: 6ac: 98 fe a0 0c st.tm r7, [p4, dj5]
+# CHECK: 6b0: 98 1e c1 08 st.tm r8, [p0, dj6]
+# CHECK: 6b4: 98 3e 60 0f st.tm r1, [p7, dj3]
+# CHECK: 6b8: 98 be 43 0b st.tm r29, [p3, dj2]
+# CHECK: 6bc: 98 5e e1 0a st.tm r10, [p2, dj7]
+# CHECK: 6c0: 98 7e 01 0e st.tm r11, [p6, dj0]
+# CHECK: 6c4: 98 de 21 0d st.tm r14, [p5, dj1]
+# CHECK: 6c8: 98 fe 74 0b st.tm r7, [p3, #28]
+# CHECK: 6cc: 98 1e 15 09 st.tm r8, [p1, #4]
+# CHECK: 6d0: 98 3e 04 0f st.tm r1, [p7, #0]
+# CHECK: 6d4: 98 9e 87 08 st.tm r28, [p0, #-32]
+# CHECK: 6d8: 98 1e 77 0c st.tm r24, [p4, #28]
+# CHECK: 6dc: 98 fe 15 0a st.tm r15, [p2, #4]
+# CHECK: 6e0: 98 be 06 0e st.tm r21, [p6, #0]
+# CHECK: 6e4: 98 1e 84 0d st.tm r0, [p5, #-32]
+# CHECK: 6e8: 98 5e 76 0b st.tm r18, [p3, #28]
+# CHECK: 6ec: 98 5e 17 09 st.tm r26, [p1, #4]
+# CHECK: 6f0: 98 1e 06 0f st.tm r16, [p7, #0]
+# CHECK: 6f4: 98 fe 87 08 st.tm r31, [p0, #-32]
+# CHECK: 6f8: 98 7e 77 0c st.tm r27, [p4, #28]
+# CHECK: 6fc: 98 be 15 0a st.tm r13, [p2, #4]
+# CHECK: 700: 98 7e 06 0e st.tm r19, [p6, #0]
+# CHECK: 704: 98 be 87 0d st.tm r29, [p5, #-32]
+# CHECK: 708: 98 de 76 0b st.tm r22, [p3, #28]
+# CHECK: 70c: 98 fe 16 09 st.tm r23, [p1, #4]
+# CHECK: 710: 98 9e 06 0f st.tm r20, [p7, #0]
+# CHECK: 714: 98 de 87 08 st.tm r30, [p0, #-32]
+# CHECK: 718: 98 3e 77 0c st.tm r25, [p4, #28]
+# CHECK: 71c: 98 3e 15 0a st.tm r9, [p2, #4]
+# CHECK: 720: 98 3e 06 0e st.tm r17, [p6, #0]
+# CHECK: 724: 98 5e 85 0d st.tm r10, [p5, #-32]
+# CHECK: 728: 98 9e 75 0b st.tm r12, [p3, #28]
+# CHECK: 72c: 98 9e 14 09 st.tm r4, [p1, #4]
+# CHECK: 730: 98 de 04 0f st.tm r6, [p7, #0]
+# CHECK: 734: 98 5e 84 08 st.tm r2, [p0, #-32]
+# CHECK: 738: 98 7e 74 0c st.tm r3, [p4, #28]
+# CHECK: 73c: 98 de 15 0a st.tm r14, [p2, #4]
+# CHECK: 740: 98 7e 05 0e st.tm r11, [p6, #0]
+# CHECK: 744: 98 be 84 0d st.tm r5, [p5, #-32]
+# CHECK: 748: 98 be 28 0f st.tm r5, [p7], m1
+# CHECK: 74c: 98 9e 89 0b st.tm r12, [p3], m4
+# CHECK: 750: 98 de ab 0e st.tm r30, [p6], m5
+# CHECK: 754: 98 7e eb 0a st.tm r27, [p2], m7
+# CHECK: 758: 98 1e 69 08 st.tm r8, [p0], m3
+# CHECK: 75c: 98 9e c8 09 st.tm r4, [p1], m6
+# CHECK: 760: 98 7e 08 0c st.tm r3, [p4], m0
+# CHECK: 764: 98 5e 49 0d st.tm r10, [p5], m2
+# CHECK: 768: 98 be 29 0f st.tm r13, [p7], m1
+# CHECK: 76c: 98 7e 89 0b st.tm r11, [p3], m4
+# CHECK: 770: 98 1e ab 0e st.tm r24, [p6], m5
+# CHECK: 774: 98 be eb 0a st.tm r29, [p2], m7
+# CHECK: 778: 98 1e 6a 08 st.tm r16, [p0], m3
+# CHECK: 77c: 98 de c8 09 st.tm r6, [p1], m6
+# CHECK: 780: 98 fe 0b 0c st.tm r31, [p4], m0
+# CHECK: 784: 98 9e 4a 0d st.tm r20, [p5], m2
+# CHECK: 788: 98 9e 2b 0f st.tm r28, [p7], m1
+# CHECK: 78c: 98 fe 89 0b st.tm r15, [p3], m4
+# CHECK: 790: 98 3e ab 0e st.tm r25, [p6], m5
+# CHECK: 794: 98 5e ea 0a st.tm r18, [p2], m7
+# CHECK: 798: 98 3e 68 08 st.tm r1, [p0], m3
+# CHECK: 79c: 98 be ca 09 st.tm r21, [p1], m6
+# CHECK: 7a0: 98 7e 0a 0c st.tm r19, [p4], m0
+# CHECK: 7a4: 98 3e 4a 0d st.tm r17, [p5], m2
+# CHECK: 7a8: 98 3e 29 0f st.tm r9, [p7], m1
+# CHECK: 7ac: 98 1e 88 0b st.tm r0, [p3], m4
+# CHECK: 7b0: 98 5e ab 0e st.tm r26, [p6], m5
+# CHECK: 7b4: 98 fe ea 0a st.tm r23, [p2], m7
+# CHECK: 7b8: 98 de 6a 08 st.tm r22, [p0], m3
+# CHECK: 7bc: 98 5e c8 09 st.tm r2, [p1], m6
+# CHECK: 7c0: 98 de 09 0c st.tm r14, [p4], m0
+# CHECK: 7c4: 98 fe 48 0d st.tm r7, [p5], m2
+# CHECK: 7c8: 98 1e 7f 0e st.tm r24, [p6], #28
+# CHECK: 7cc: 98 fe 1c 08 st.tm r7, [p0], #4
+# CHECK: 7d0: 98 de 0c 09 st.tm r6, [p1], #0
+# CHECK: 7d4: 98 3e 8d 0b st.tm r9, [p3], #-32
+# CHECK: 7d8: 98 3e 7e 0f st.tm r17, [p7], #28
+# CHECK: 7dc: 98 de 1d 0c st.tm r14, [p4], #4
+# CHECK: 7e0: 98 9e 0e 0a st.tm r20, [p2], #0
+# CHECK: 7e4: 98 3e 8c 0d st.tm r1, [p5], #-32
+# CHECK: 7e8: 98 9e 7c 0e st.tm r4, [p6], #28
+# CHECK: 7ec: 98 de 1e 08 st.tm r22, [p0], #4
+# CHECK: 7f0: 98 be 0e 09 st.tm r21, [p1], #0
+# CHECK: 7f4: 98 1e 8e 0b st.tm r16, [p3], #-32
+# CHECK: 7f8: 98 fe 7f 0f st.tm r31, [p7], #28
+# CHECK: 7fc: 98 9e 1f 0c st.tm r28, [p4], #4
+# CHECK: 800: 98 5e 0c 0a st.tm r2, [p2], #0
+# CHECK: 804: 98 7e 8f 0d st.tm r27, [p5], #-32
+# CHECK: 808: 98 be 7d 0e st.tm r13, [p6], #28
+# CHECK: 80c: 98 be 1c 08 st.tm r5, [p0], #4
+# CHECK: 810: 98 fe 0d 09 st.tm r15, [p1], #0
+# CHECK: 814: 98 de 8f 0b st.tm r30, [p3], #-32
+# CHECK: 818: 98 1e 7c 0f st.tm r0, [p7], #28
+# CHECK: 81c: 98 3e 1f 0c st.tm r25, [p4], #4
+# CHECK: 820: 98 7e 0c 0a st.tm r3, [p2], #0
+# CHECK: 824: 98 7e 8d 0d st.tm r11, [p5], #-32
+# CHECK: 828: 98 5e 7d 0e st.tm r10, [p6], #28
+# CHECK: 82c: 98 7e 1e 08 st.tm r19, [p0], #4
+# CHECK: 830: 98 fe 0e 09 st.tm r23, [p1], #0
+# CHECK: 834: 98 9e 8d 0b st.tm r12, [p3], #-32
+# CHECK: 838: 98 1e 7d 0f st.tm r8, [p7], #28
+# CHECK: 83c: 98 5e 1e 0c st.tm r18, [p4], #4
+# CHECK: 840: 98 be 0f 0a st.tm r29, [p2], #0
+# CHECK: 844: 98 5e 8f 0d st.tm r26, [p5], #-32
+# CHECK: 848: 98 09 62 0d st eh8, [p5, dj3]
+# CHECK: 84c: 98 41 03 0f st dj6, [p7, dj0]
+# CHECK: 850: 98 d1 43 0c st r30, [p4, dj2]
+# CHECK: 854: 98 71 80 09 st r3, [p1, dj4]
+# CHECK: 858: 98 e1 21 0a st dc3, [p2, dj1]
+# CHECK: 85c: 98 01 c3 0e st m6, [p6, dj6]
+# CHECK: 860: 98 d1 a2 0b st r22, [p3, dj5]
+# CHECK: 864: 98 f1 e1 08 st r15, [p0, dj7]
+# CHECK: 868: 98 01 60 0d st m0, [p5, dj3]
+# CHECK: 86c: 98 b1 03 0f st r29, [p7, dj0]
+# CHECK: 870: 98 b1 41 0c st r13, [p4, dj2]
+# CHECK: 874: 98 31 82 09 st r17, [p1, dj4]
+# CHECK: 878: 98 71 22 0a st r19, [p2, dj1]
+# CHECK: 87c: 98 a1 c2 0e st dn5, [p6, dj6]
+# CHECK: 880: 98 41 a0 0b st dj0, [p3, dj5]
+# CHECK: 884: 98 b1 e2 08 st r21, [p0, dj7]
+# CHECK: 888: 98 f1 60 0d st r7, [p5, dj3]
+# CHECK: 88c: 98 61 01 0f st dc2, [p7, dj0]
+# CHECK: 890: 98 91 41 0c st r12, [p4, dj2]
+# CHECK: 894: 98 a9 81 09 st el6, [p1, dj4]
+# CHECK: 898: 98 c9 21 0a st eh7, [p2, dj1]
+# CHECK: 89c: 98 99 c2 0e st p5, [p6, dj6]
+# CHECK: 8a0: 98 89 a1 0b st eh6, [p3, dj5]
+# CHECK: 8a4: 98 69 e2 08 st el9, [p0, dj7]
+# CHECK: 8a8: 98 f1 62 0d st r23, [p5, dj3]
+# CHECK: 8ac: 98 69 00 0f st el1, [p7, dj0]
+# CHECK: 8b0: 98 e9 42 0c st el11, [p4, dj2]
+# CHECK: 8b4: 98 71 81 09 st r11, [p1, dj4]
+# CHECK: 8b8: 98 e1 22 0a st dc5, [p2, dj1]
+# CHECK: 8bc: 98 41 c2 0e st dj4, [p6, dj6]
+# CHECK: 8c0: 98 c1 a3 0b st dj7, [p3, dj5]
+# CHECK: 8c4: 98 a1 e0 08 st dn1, [p0, dj7]
+# CHECK: 8c8: 98 81 62 0d st m5, [p5, dj3]
+# CHECK: 8cc: 98 19 01 0f st p2, [p7, dj0]
+# CHECK: 8d0: 98 a1 43 0c st dn7, [p4, dj2]
+# CHECK: 8d4: 98 09 80 09 st eh0, [p1, dj4]
+# CHECK: 8d8: 98 91 22 0a st r20, [p2, dj1]
+# CHECK: 8dc: 98 d1 c0 0e st r6, [p6, dj6]
+# CHECK: 8e0: 98 51 a0 0b st r2, [p3, dj5]
+# CHECK: 8e4: 98 21 e1 08 st dn2, [p0, dj7]
+# CHECK: 8e8: 98 f1 63 0d st r31, [p5, dj3]
+# CHECK: 8ec: 98 e9 01 0f st el7, [p7, dj0]
+# CHECK: 8f0: 98 b1 40 0c st r5, [p4, dj2]
+# CHECK: 8f4: 98 21 82 09 st dn4, [p1, dj4]
+# CHECK: 8f8: 98 21 23 0a st dn6, [p2, dj1]
+# CHECK: 8fc: 98 29 c2 0e st el8, [p6, dj6]
+# CHECK: 900: 98 39 a0 0b st lr, [p3, dj5]
+# CHECK: 904: 98 a1 e1 08 st dn3, [p0, dj7]
+# CHECK: 908: 98 51 63 0d st r26, [p5, dj3]
+# CHECK: 90c: 98 51 02 0f st r18, [p7, dj0]
+# CHECK: 910: 98 49 41 0c st eh5, [p4, dj2]
+# CHECK: 914: 98 e1 80 09 st dc1, [p1, dj4]
+# CHECK: 918: 98 21 20 0a st dn0, [p2, dj1]
+# CHECK: 91c: 98 31 c3 0e st r25, [p6, dj6]
+# CHECK: 920: 98 19 a0 0b st p0, [p3, dj5]
+# CHECK: 924: 98 91 e3 08 st r28, [p0, dj7]
+# CHECK: 928: 98 11 61 0d st r8, [p5, dj3]
+# CHECK: 92c: 98 81 03 0f st m7, [p7, dj0]
+# CHECK: 930: 98 81 41 0c st m3, [p4, dj2]
+# CHECK: 934: 98 99 83 09 st p7, [p1, dj4]
+# CHECK: 938: 98 c1 22 0a st dj5, [p2, dj1]
+# CHECK: 93c: 98 19 c3 0e st p6, [p6, dj6]
+# CHECK: 940: 98 69 a1 0b st el5, [p3, dj5]
+# CHECK: 944: 98 61 e3 08 st dc6, [p0, dj7]
+# CHECK: 948: 98 61 62 0d st dc4, [p5, dj3]
+# CHECK: 94c: 98 11 00 0f st r0, [p7, dj0]
+# CHECK: 950: 98 c1 41 0c st dj3, [p4, dj2]
+# CHECK: 954: 98 89 80 09 st eh2, [p1, dj4]
+# CHECK: 958: 98 31 21 0a st r9, [p2, dj1]
+# CHECK: 95c: 98 c9 c0 0e st eh3, [p6, dj6]
+# CHECK: 960: 98 d1 a1 0b st r14, [p3, dj5]
+# CHECK: 964: 98 a9 e0 08 st el2, [p0, dj7]
+# CHECK: 968: 98 01 62 0d st m4, [p5, dj3]
+# CHECK: 96c: 98 11 02 0f st r16, [p7, dj0]
+# CHECK: 970: 98 49 40 0c st eh1, [p4, dj2]
+# CHECK: 974: 98 c9 82 09 st eh11, [p1, dj4]
+# CHECK: 978: 98 71 23 0a st r27, [p2, dj1]
+# CHECK: 97c: 98 29 c1 0e st el4, [p6, dj6]
+# CHECK: 980: 98 99 a1 0b st p3, [p3, dj5]
+# CHECK: 984: 98 99 e0 08 st p1, [p0, dj7]
+# CHECK: 988: 98 19 62 0d st p4, [p5, dj3]
+# CHECK: 98c: 98 11 03 0f st r24, [p7, dj0]
+# CHECK: 990: 98 51 41 0c st r10, [p4, dj2]
+# CHECK: 994: 98 81 80 09 st m1, [p1, dj4]
+# CHECK: 998: 98 e9 20 0a st el3, [p2, dj1]
+# CHECK: 99c: 98 49 c2 0e st eh9, [p6, dj6]
+# CHECK: 9a0: 98 01 a1 0b st m2, [p3, dj5]
+# CHECK: 9a4: 98 91 e0 08 st r4, [p0, dj7]
+# CHECK: 9a8: 98 a9 62 0d st el10, [p5, dj3]
+# CHECK: 9ac: 98 29 00 0f st el0, [p7, dj0]
+# CHECK: 9b0: 98 89 42 0c st eh10, [p4, dj2]
+# CHECK: 9b4: 98 c1 80 09 st dj1, [p1, dj4]
+# CHECK: 9b8: 98 e1 23 0a st dc7, [p2, dj1]
+# CHECK: 9bc: 98 41 c1 0e st dj2, [p6, dj6]
+# CHECK: 9c0: 98 09 a1 0b st eh4, [p3, dj5]
+# CHECK: 9c4: 98 31 e0 08 st r1, [p0, dj7]
+# CHECK: 9c8: 98 61 60 0d st dc0, [p5, dj3]
+# CHECK: 9cc: 98 c1 84 0d st dj1, [p5, #-32]
+# CHECK: 9d0: 98 19 74 09 st p0, [p1, #28]
+# CHECK: 9d4: 98 b1 07 0a st r29, [p2, #0]
+# CHECK: 9d8: 98 09 16 0e st eh8, [p6, #4]
+# CHECK: 9dc: 98 21 87 08 st dn6, [p0, #-32]
+# CHECK: 9e0: 98 71 75 0f st r11, [p7, #28]
+# CHECK: 9e4: 98 e1 07 0c st dc7, [p4, #0]
+# CHECK: 9e8: 98 39 14 0b st lr, [p3, #4]
+# CHECK: 9ec: 98 71 84 0d st r3, [p5, #-32]
+# CHECK: 9f0: 98 19 75 09 st p2, [p1, #28]
+# CHECK: 9f4: 98 09 05 0a st eh4, [p2, #0]
+# CHECK: 9f8: 98 61 17 0e st dc6, [p6, #4]
+# CHECK: 9fc: 98 01 86 08 st m4, [p0, #-32]
+# CHECK: a00: 98 99 77 0f st p7, [p7, #28]
+# CHECK: a04: 98 09 04 0c st eh0, [p4, #0]
+# CHECK: a08: 98 29 14 0b st el0, [p3, #4]
+# CHECK: a0c: 98 71 86 0d st r19, [p5, #-32]
+# CHECK: a10: 98 91 76 09 st r20, [p1, #28]
+# CHECK: a14: 98 99 06 0a st p5, [p2, #0]
+# CHECK: a18: 98 21 16 0e st dn4, [p6, #4]
+# CHECK: a1c: 98 41 84 08 st dj0, [p0, #-32]
+# CHECK: a20: 98 71 77 0f st r27, [p7, #28]
+# CHECK: a24: 98 e9 04 0c st el3, [p4, #0]
+# CHECK: a28: 98 c9 15 0b st eh7, [p3, #4]
+# CHECK: a2c: 98 89 86 0d st eh10, [p5, #-32]
+# CHECK: a30: 98 61 74 09 st dc0, [p1, #28]
+# CHECK: a34: 98 b1 04 0a st r5, [p2, #0]
+# CHECK: a38: 98 89 14 0e st eh2, [p6, #4]
+# CHECK: a3c: 98 01 84 08 st m0, [p0, #-32]
+# CHECK: a40: 98 11 77 0f st r24, [p7, #28]
+# CHECK: a44: 98 e1 04 0c st dc1, [p4, #0]
+# CHECK: a48: 98 11 14 0b st r0, [p3, #4]
+# CHECK: a4c: 98 a1 84 0d st dn1, [p5, #-32]
+# CHECK: a50: 98 51 76 09 st r18, [p1, #28]
+# CHECK: a54: 98 99 04 0a st p1, [p2, #0]
+# CHECK: a58: 98 d1 17 0e st r30, [p6, #4]
+# CHECK: a5c: 98 a9 86 08 st el10, [p0, #-32]
+# CHECK: a60: 98 61 76 0f st dc4, [p7, #28]
+# CHECK: a64: 98 a9 04 0c st el2, [p4, #0]
+# CHECK: a68: 98 21 14 0b st dn0, [p3, #4]
+# CHECK: a6c: 98 19 87 0d st p6, [p5, #-32]
+# CHECK: a70: 98 e1 75 09 st dc3, [p1, #28]
+# CHECK: a74: 98 91 05 0a st r12, [p2, #0]
+# CHECK: a78: 98 69 15 0e st el5, [p6, #4]
+# CHECK: a7c: 98 a9 85 08 st el6, [p0, #-32]
+# CHECK: a80: 98 11 76 0f st r16, [p7, #28]
+# CHECK: a84: 98 f1 06 0c st r23, [p4, #0]
+# CHECK: a88: 98 31 14 0b st r1, [p3, #4]
+# CHECK: a8c: 98 49 86 0d st eh9, [p5, #-32]
+# CHECK: a90: 98 a1 76 09 st dn5, [p1, #28]
+# CHECK: a94: 98 f1 05 0a st r15, [p2, #0]
+# CHECK: a98: 98 51 15 0e st r10, [p6, #4]
+# CHECK: a9c: 98 c9 84 08 st eh3, [p0, #-32]
+# CHECK: aa0: 98 01 77 0f st m6, [p7, #28]
+# CHECK: aa4: 98 f1 04 0c st r7, [p4, #0]
+# CHECK: aa8: 98 91 14 0b st r4, [p3, #4]
+# CHECK: aac: 98 51 84 0d st r2, [p5, #-32]
+# CHECK: ab0: 98 69 74 09 st el1, [p1, #28]
+# CHECK: ab4: 98 49 05 0a st eh5, [p2, #0]
+# CHECK: ab8: 98 e1 16 0e st dc5, [p6, #4]
+# CHECK: abc: 98 e9 85 08 st el7, [p0, #-32]
+# CHECK: ac0: 98 41 75 0f st dj2, [p7, #28]
+# CHECK: ac4: 98 c9 06 0c st eh11, [p4, #0]
+# CHECK: ac8: 98 c1 16 0b st dj5, [p3, #4]
+# CHECK: acc: 98 a1 87 0d st dn7, [p5, #-32]
+# CHECK: ad0: 98 19 76 09 st p4, [p1, #28]
+# CHECK: ad4: 98 81 07 0a st m7, [p2, #0]
+# CHECK: ad8: 98 91 17 0e st r28, [p6, #4]
+# CHECK: adc: 98 61 85 08 st dc2, [p0, #-32]
+# CHECK: ae0: 98 d1 74 0f st r6, [p7, #28]
+# CHECK: ae4: 98 81 06 0c st m5, [p4, #0]
+# CHECK: ae8: 98 29 15 0b st el4, [p3, #4]
+# CHECK: aec: 98 99 85 0d st p3, [p5, #-32]
+# CHECK: af0: 98 41 77 09 st dj6, [p1, #28]
+# CHECK: af4: 98 29 06 0a st el8, [p2, #0]
+# CHECK: af8: 98 a1 15 0e st dn3, [p6, #4]
+# CHECK: afc: 98 31 85 08 st r9, [p0, #-32]
+# CHECK: b00: 98 51 77 0f st r26, [p7, #28]
+# CHECK: b04: 98 81 05 0c st m3, [p4, #0]
+# CHECK: b08: 98 89 15 0b st eh6, [p3, #4]
+# CHECK: b0c: 98 21 85 0d st dn2, [p5, #-32]
+# CHECK: b10: 98 01 75 09 st m2, [p1, #28]
+# CHECK: b14: 98 31 07 0a st r25, [p2, #0]
+# CHECK: b18: 98 31 16 0e st r17, [p6, #4]
+# CHECK: b1c: 98 81 84 08 st m1, [p0, #-32]
+# CHECK: b20: 98 d1 75 0f st r14, [p7, #28]
+# CHECK: b24: 98 e9 06 0c st el11, [p4, #0]
+# CHECK: b28: 98 b1 15 0b st r13, [p3, #4]
+# CHECK: b2c: 98 41 86 0d st dj4, [p5, #-32]
+# CHECK: b30: 98 c1 77 09 st dj7, [p1, #28]
+# CHECK: b34: 98 11 05 0a st r8, [p2, #0]
+# CHECK: b38: 98 49 14 0e st eh1, [p6, #4]
+# CHECK: b3c: 98 d1 86 08 st r22, [p0, #-32]
+# CHECK: b40: 98 b1 76 0f st r21, [p7, #28]
+# CHECK: b44: 98 f1 07 0c st r31, [p4, #0]
+# CHECK: b48: 98 69 16 0b st el9, [p3, #4]
+# CHECK: b4c: 98 c1 85 0d st dj3, [p5, #-32]
+# CHECK: b50: 98 91 eb 08 st r28, [p0], m7
+# CHECK: b54: 98 91 aa 0b st r20, [p3], m5
+# CHECK: b58: 98 19 c9 0f st p2, [p7], m6
+# CHECK: b5c: 98 01 8b 0d st m6, [p5], m4
+# CHECK: b60: 98 19 48 0e st p0, [p6], m2
+# CHECK: b64: 98 29 68 0c st el0, [p4], m3
+# CHECK: b68: 98 01 0a 09 st m4, [p1], m0
+# CHECK: b6c: 98 81 2a 0a st m5, [p2], m1
+# CHECK: b70: 98 41 eb 08 st dj6, [p0], m7
+# CHECK: b74: 98 81 a9 0b st m3, [p3], m5
+# CHECK: b78: 98 b1 cb 0f st r29, [p7], m6
+# CHECK: b7c: 98 c9 89 0d st eh7, [p5], m4
+# CHECK: b80: 98 11 48 0e st r0, [p6], m2
+# CHECK: b84: 98 71 6a 0c st r19, [p4], m3
+# CHECK: b88: 98 01 08 09 st m0, [p1], m0
+# CHECK: b8c: 98 89 29 0a st eh6, [p2], m1
+# CHECK: b90: 98 31 eb 08 st r25, [p0], m7
+# CHECK: b94: 98 29 aa 0b st el8, [p3], m5
+# CHECK: b98: 98 c1 c8 0f st dj1, [p7], m6
+# CHECK: b9c: 98 11 8a 0d st r16, [p5], m4
+# CHECK: ba0: 98 99 4a 0e st p5, [p6], m2
+# CHECK: ba4: 98 81 6b 0c st m7, [p4], m3
+# CHECK: ba8: 98 99 08 09 st p1, [p1], m0
+# CHECK: bac: 98 71 2b 0a st r27, [p2], m1
+# CHECK: bb0: 98 a9 e8 08 st el2, [p0], m7
+# CHECK: bb4: 98 51 aa 0b st r18, [p3], m5
+# CHECK: bb8: 98 99 cb 0f st p7, [p7], m6
+# CHECK: bbc: 98 49 89 0d st eh5, [p5], m4
+# CHECK: bc0: 98 09 48 0e st eh0, [p6], m2
+# CHECK: bc4: 98 21 68 0c st dn0, [p4], m3
+# CHECK: bc8: 98 49 0a 09 st eh9, [p1], m0
+# CHECK: bcc: 98 f1 2b 0a st r31, [p2], m1
+# CHECK: bd0: 98 e1 ea 08 st dc5, [p0], m7
+# CHECK: bd4: 98 e9 a8 0b st el3, [p3], m5
+# CHECK: bd8: 98 19 ca 0f st p4, [p7], m6
+# CHECK: bdc: 98 f1 88 0d st r7, [p5], m4
+# CHECK: be0: 98 31 48 0e st r1, [p6], m2
+# CHECK: be4: 98 f1 6a 0c st r23, [p4], m3
+# CHECK: be8: 98 81 08 09 st m1, [p1], m0
+# CHECK: bec: 98 a1 28 0a st dn1, [p2], m1
+# CHECK: bf0: 98 c1 e9 08 st dj3, [p0], m7
+# CHECK: bf4: 98 61 ab 0b st dc6, [p3], m5
+# CHECK: bf8: 98 a1 ca 0f st dn5, [p7], m6
+# CHECK: bfc: 98 d1 8a 0d st r22, [p5], m4
+# CHECK: c00: 98 d1 48 0e st r6, [p6], m2
+# CHECK: c04: 98 89 68 0c st eh2, [p4], m3
+# CHECK: c08: 98 d1 0b 09 st r30, [p1], m0
+# CHECK: c0c: 98 61 28 0a st dc0, [p2], m1
+# CHECK: c10: 98 19 eb 08 st p6, [p0], m7
+# CHECK: c14: 98 e1 ab 0b st dc7, [p3], m5
+# CHECK: c18: 98 69 c9 0f st el5, [p7], m6
+# CHECK: c1c: 98 e1 88 0d st dc1, [p5], m4
+# CHECK: c20: 98 09 4a 0e st eh8, [p6], m2
+# CHECK: c24: 98 e9 69 0c st el7, [p4], m3
+# CHECK: c28: 98 a1 09 09 st dn3, [p1], m0
+# CHECK: c2c: 98 01 29 0a st m2, [p2], m1
+# CHECK: c30: 98 39 e8 08 st lr, [p0], m7
+# CHECK: c34: 98 89 aa 0b st eh10, [p3], m5
+# CHECK: c38: 98 99 c9 0f st p3, [p7], m6
+# CHECK: c3c: 98 41 89 0d st dj2, [p5], m4
+# CHECK: c40: 98 31 4a 0e st r17, [p6], m2
+# CHECK: c44: 98 51 69 0c st r10, [p4], m3
+# CHECK: c48: 98 21 0b 09 st dn6, [p1], m0
+# CHECK: c4c: 98 c9 2a 0a st eh11, [p2], m1
+# CHECK: c50: 98 49 e8 08 st eh1, [p0], m7
+# CHECK: c54: 98 a1 ab 0b st dn7, [p3], m5
+# CHECK: c58: 98 a9 c9 0f st el6, [p7], m6
+# CHECK: c5c: 98 41 88 0d st dj0, [p5], m4
+# CHECK: c60: 98 21 49 0e st dn2, [p6], m2
+# CHECK: c64: 98 91 68 0c st r4, [p4], m3
+# CHECK: c68: 98 51 08 09 st r2, [p1], m0
+# CHECK: c6c: 98 91 29 0a st r12, [p2], m1
+# CHECK: c70: 98 61 ea 08 st dc4, [p0], m7
+# CHECK: c74: 98 c9 a8 0b st eh3, [p3], m5
+# CHECK: c78: 98 61 c9 0f st dc2, [p7], m6
+# CHECK: c7c: 98 b1 8a 0d st r21, [p5], m4
+# CHECK: c80: 98 11 4b 0e st r24, [p6], m2
+# CHECK: c84: 98 71 68 0c st r3, [p4], m3
+# CHECK: c88: 98 09 09 09 st eh4, [p1], m0
+# CHECK: c8c: 98 e1 29 0a st dc3, [p2], m1
+# CHECK: c90: 98 c1 ea 08 st dj5, [p0], m7
+# CHECK: c94: 98 69 a8 0b st el1, [p3], m5
+# CHECK: c98: 98 21 ca 0f st dn4, [p7], m6
+# CHECK: c9c: 98 b1 88 0d st r5, [p5], m4
+# CHECK: ca0: 98 29 49 0e st el4, [p6], m2
+# CHECK: ca4: 98 71 69 0c st r11, [p4], m3
+# CHECK: ca8: 98 31 09 09 st r9, [p1], m0
+# CHECK: cac: 98 41 2a 0a st dj4, [p2], m1
+# CHECK: cb0: 98 51 eb 08 st r26, [p0], m7
+# CHECK: cb4: 98 69 aa 0b st el9, [p3], m5
+# CHECK: cb8: 98 b1 c9 0f st r13, [p7], m6
+# CHECK: cbc: 98 c1 8b 0d st dj7, [p5], m4
+# CHECK: cc0: 98 11 49 0e st r8, [p6], m2
+# CHECK: cc4: 98 d1 69 0c st r14, [p4], m3
+# CHECK: cc8: 98 e9 0a 09 st el11, [p1], m0
+# CHECK: ccc: 98 a9 2a 0a st el10, [p2], m1
+# CHECK: cd0: 98 f1 e9 08 st r15, [p0], m7
+# CHECK: cd4: 98 b1 1e 0a st r21, [p2], #4
+# CHECK: cd8: 98 d1 0e 0b st r22, [p3], #0
+# CHECK: cdc: 98 09 7c 09 st eh0, [p1], #28
+# CHECK: ce0: 98 89 8d 0c st eh6, [p4], #-32
+# CHECK: ce4: 98 e9 1e 0d st el11, [p5], #4
+# CHECK: ce8: 98 91 0e 08 st r20, [p0], #0
+# CHECK: cec: 98 61 7e 0f st dc4, [p7], #28
+# CHECK: cf0: 98 a1 8d 0e st dn3, [p6], #-32
+# CHECK: cf4: 98 a1 1c 0a st dn1, [p2], #4
+# CHECK: cf8: 98 49 0e 0b st eh9, [p3], #0
+# CHECK: cfc: 98 71 7e 09 st r19, [p1], #28
+# CHECK: d00: 98 19 8e 0c st p4, [p4], #-32
+# CHECK: d04: 98 29 1e 0d st el8, [p5], #4
+# CHECK: d08: 98 91 0c 08 st r4, [p0], #0
+# CHECK: d0c: 98 19 7f 0f st p6, [p7], #28
+# CHECK: d10: 98 19 8c 0e st p0, [p6], #-32
+# CHECK: d14: 98 b1 1c 0a st r5, [p2], #4
+# CHECK: d18: 98 e9 0d 0b st el7, [p3], #0
+# CHECK: d1c: 98 11 7e 09 st r16, [p1], #28
+# CHECK: d20: 98 51 8e 0c st r18, [p4], #-32
+# CHECK: d24: 98 31 1d 0d st r9, [p5], #4
+# CHECK: d28: 98 29 0d 08 st el4, [p0], #0
+# CHECK: d2c: 98 f1 7d 0f st r15, [p7], #28
+# CHECK: d30: 98 f1 8c 0e st r7, [p6], #-32
+# CHECK: d34: 98 a9 1c 0a st el2, [p2], #4
+# CHECK: d38: 98 c1 0f 0b st dj7, [p3], #0
+# CHECK: d3c: 98 99 7f 09 st p7, [p1], #28
+# CHECK: d40: 98 51 8c 0c st r2, [p4], #-32
+# CHECK: d44: 98 c1 1e 0d st dj5, [p5], #4
+# CHECK: d48: 98 69 0c 08 st el1, [p0], #0
+# CHECK: d4c: 98 51 7f 0f st r26, [p7], #28
+# CHECK: d50: 98 e1 8f 0e st dc7, [p6], #-32
+# CHECK: d54: 98 61 1c 0a st dc0, [p2], #4
+# CHECK: d58: 98 11 0d 0b st r8, [p3], #0
+# CHECK: d5c: 98 49 7d 09 st eh5, [p1], #28
+# CHECK: d60: 98 69 8e 0c st el9, [p4], #-32
+# CHECK: d64: 98 91 1f 0d st r28, [p5], #4
+# CHECK: d68: 98 e1 0c 08 st dc1, [p0], #0
+# CHECK: d6c: 98 21 7c 0f st dn0, [p7], #28
+# CHECK: d70: 98 81 8d 0e st m3, [p6], #-32
+# CHECK: d74: 98 f1 1f 0a st r31, [p2], #4
+# CHECK: d78: 98 41 0f 0b st dj6, [p3], #0
+# CHECK: d7c: 98 b1 7d 09 st r13, [p1], #28
+# CHECK: d80: 98 89 8e 0c st eh10, [p4], #-32
+# CHECK: d84: 98 19 1d 0d st p2, [p5], #4
+# CHECK: d88: 98 e1 0e 08 st dc5, [p0], #0
+# CHECK: d8c: 98 a1 7e 0f st dn5, [p7], #28
+# CHECK: d90: 98 81 8f 0e st m7, [p6], #-32
+# CHECK: d94: 98 71 1d 0a st r11, [p2], #4
+# CHECK: d98: 98 01 0c 0b st m0, [p3], #0
+# CHECK: d9c: 98 01 7e 09 st m4, [p1], #28
+# CHECK: da0: 98 41 8e 0c st dj4, [p4], #-32
+# CHECK: da4: 98 91 1d 0d st r12, [p5], #4
+# CHECK: da8: 98 21 0e 08 st dn4, [p0], #0
+# CHECK: dac: 98 b1 7f 0f st r29, [p7], #28
+# CHECK: db0: 98 71 8f 0e st r27, [p6], #-32
+# CHECK: db4: 98 51 1d 0a st r10, [p2], #4
+# CHECK: db8: 98 69 0d 0b st el5, [p3], #0
+# CHECK: dbc: 98 71 7c 09 st r3, [p1], #28
+# CHECK: dc0: 98 e1 8d 0c st dc3, [p4], #-32
+# CHECK: dc4: 98 d1 1d 0d st r14, [p5], #4
+# CHECK: dc8: 98 f1 0e 08 st r23, [p0], #0
+# CHECK: dcc: 98 a9 7e 0f st el10, [p7], #28
+# CHECK: dd0: 98 99 8e 0e st p5, [p6], #-32
+# CHECK: dd4: 98 89 1c 0a st eh2, [p2], #4
+# CHECK: dd8: 98 31 0f 0b st r25, [p3], #0
+# CHECK: ddc: 98 21 7f 09 st dn6, [p1], #28
+# CHECK: de0: 98 c1 8d 0c st dj3, [p4], #-32
+# CHECK: de4: 98 99 1c 0d st p1, [p5], #4
+# CHECK: de8: 98 61 0d 08 st dc2, [p0], #0
+# CHECK: dec: 98 81 7c 0f st m1, [p7], #28
+# CHECK: df0: 98 49 8c 0e st eh1, [p6], #-32
+# CHECK: df4: 98 01 1f 0a st m6, [p2], #4
+# CHECK: df8: 98 d1 0c 0b st r6, [p3], #0
+# CHECK: dfc: 98 a1 7f 09 st dn7, [p1], #28
+# CHECK: e00: 98 01 8d 0c st m2, [p4], #-32
+# CHECK: e04: 98 99 1d 0d st p3, [p5], #4
+# CHECK: e08: 98 c9 0d 08 st eh7, [p0], #0
+# CHECK: e0c: 98 c9 7c 0f st eh3, [p7], #28
+# CHECK: e10: 98 21 8d 0e st dn2, [p6], #-32
+# CHECK: e14: 98 c9 1e 0a st eh11, [p2], #4
+# CHECK: e18: 98 09 0d 0b st eh4, [p3], #0
+# CHECK: e1c: 98 a9 7d 09 st el6, [p1], #28
+# CHECK: e20: 98 31 8c 0c st r1, [p4], #-32
+# CHECK: e24: 98 61 1f 0d st dc6, [p5], #4
+# CHECK: e28: 98 41 0c 08 st dj0, [p0], #0
+# CHECK: e2c: 98 11 7c 0f st r0, [p7], #28
+# CHECK: e30: 98 29 8c 0e st el0, [p6], #-32
+# CHECK: e34: 98 d1 1f 0a st r30, [p2], #4
+# CHECK: e38: 98 31 0e 0b st r17, [p3], #0
+# CHECK: e3c: 98 09 7e 09 st eh8, [p1], #28
+# CHECK: e40: 98 e9 8c 0c st el3, [p4], #-32
+# CHECK: e44: 98 41 1d 0d st dj2, [p5], #4
+# CHECK: e48: 98 11 0f 08 st r24, [p0], #0
+# CHECK: e4c: 98 81 7e 0f st m5, [p7], #28
+# CHECK: e50: 98 39 8c 0e st lr, [p6], #-32
+# CHECK: e54: 98 c1 1c 0a st dj1, [p2], #4
+# CHECK: e58: 98 05 f8 0f st m0, [sp, #-8]
+# CHECK: e5c: 98 45 07 08 st dj6, [sp, #-2044]
+# CHECK: e60: 98 b5 fc 0f st r5, [sp, #-4]
+# CHECK: e64: 98 f5 03 08 st r31, [sp, #-2048]
+# CHECK: e68: 98 65 fa 0f st dc4, [sp, #-8]
+# CHECK: e6c: 98 15 05 08 st r8, [sp, #-2044]
+# CHECK: e70: 98 45 fd 0f st dj2, [sp, #-4]
+# CHECK: e74: 98 8d 00 08 st eh2, [sp, #-2048]
+# CHECK: e78: 98 25 f8 0f st dn0, [sp, #-8]
+# CHECK: e7c: 98 25 05 08 st dn2, [sp, #-2044]
+# CHECK: e80: 98 ad fc 0f st el2, [sp, #-4]
+# CHECK: e84: 98 e5 00 08 st dc1, [sp, #-2048]
+# CHECK: e88: 98 1d fb 0f st p6, [sp, #-8]
+# CHECK: e8c: 98 65 07 08 st dc6, [sp, #-2044]
+# CHECK: e90: 98 15 fe 0f st r16, [sp, #-4]
+# CHECK: e94: 98 f5 02 08 st r23, [sp, #-2048]
+# CHECK: e98: 98 2d f8 0f st el0, [sp, #-8]
+# CHECK: e9c: 98 6d 04 08 st el1, [sp, #-2044]
+# CHECK: ea0: 98 ed fe 0f st el11, [sp, #-4]
+# CHECK: ea4: 98 0d 01 08 st eh4, [sp, #-2048]
+# CHECK: ea8: 98 f5 f9 0f st r15, [sp, #-8]
+# CHECK: eac: 98 b5 05 08 st r13, [sp, #-2044]
+# CHECK: eb0: 98 c5 fc 0f st dj1, [sp, #-4]
+# CHECK: eb4: 98 6d 02 08 st el9, [sp, #-2048]
+# CHECK: eb8: 98 2d f9 0f st el4, [sp, #-8]
+# CHECK: ebc: 98 35 04 08 st r1, [sp, #-2044]
+# CHECK: ec0: 98 05 ff 0f st m6, [sp, #-4]
+# CHECK: ec4: 98 45 00 08 st dj0, [sp, #-2048]
+# CHECK: ec8: 98 55 fa 0f st r18, [sp, #-8]
+# CHECK: ecc: 98 85 06 08 st m5, [sp, #-2044]
+# CHECK: ed0: 98 a5 fe 0f st dn5, [sp, #-4]
+# CHECK: ed4: 98 85 00 08 st m1, [sp, #-2048]
+# CHECK: ed8: 98 95 f8 0f st r4, [sp, #-8]
+# CHECK: edc: 98 9d 05 08 st p3, [sp, #-2044]
+# CHECK: ee0: 98 25 ff 0f st dn6, [sp, #-4]
+# CHECK: ee4: 98 a5 03 08 st dn7, [sp, #-2048]
+# CHECK: ee8: 98 05 f9 0f st m2, [sp, #-8]
+# CHECK: eec: 98 9d 07 08 st p7, [sp, #-2044]
+# CHECK: ef0: 98 9d fe 0f st p5, [sp, #-4]
+# CHECK: ef4: 98 a5 01 08 st dn3, [sp, #-2048]
+# CHECK: ef8: 98 4d f9 0f st eh5, [sp, #-8]
+# CHECK: efc: 98 45 06 08 st dj4, [sp, #-2044]
+# CHECK: f00: 98 55 fc 0f st r2, [sp, #-4]
+# CHECK: f04: 98 95 03 08 st r28, [sp, #-2048]
+# CHECK: f08: 98 15 f8 0f st r0, [sp, #-8]
+# CHECK: f0c: 98 8d 05 08 st eh6, [sp, #-2044]
+# CHECK: f10: 98 9d fc 0f st p1, [sp, #-4]
+# CHECK: f14: 98 85 03 08 st m7, [sp, #-2048]
+# CHECK: f18: 98 c5 fb 0f st dj7, [sp, #-8]
+# CHECK: f1c: 98 95 05 08 st r12, [sp, #-2044]
+# CHECK: f20: 98 cd fc 0f st eh3, [sp, #-4]
+# CHECK: f24: 98 d5 03 08 st r30, [sp, #-2048]
+# CHECK: f28: 98 25 fa 0f st dn4, [sp, #-8]
+# CHECK: f2c: 98 1d 04 08 st p0, [sp, #-2044]
+# CHECK: f30: 98 2d fe 0f st el8, [sp, #-4]
+# CHECK: f34: 98 1d 01 08 st p2, [sp, #-2048]
+# CHECK: f38: 98 35 f9 0f st r9, [sp, #-8]
+# CHECK: f3c: 98 a5 04 08 st dn1, [sp, #-2044]
+# CHECK: f40: 98 e5 fe 0f st dc5, [sp, #-4]
+# CHECK: f44: 98 75 02 08 st r19, [sp, #-2048]
+# CHECK: f48: 98 0d fa 0f st eh8, [sp, #-8]
+# CHECK: f4c: 98 3d 04 08 st lr, [sp, #-2044]
+# CHECK: f50: 98 0d fc 0f st eh0, [sp, #-4]
+# CHECK: f54: 98 35 02 08 st r17, [sp, #-2048]
+# CHECK: f58: 98 05 fa 0f st m4, [sp, #-8]
+# CHECK: f5c: 98 85 05 08 st m3, [sp, #-2044]
+# CHECK: f60: 98 4d fc 0f st eh1, [sp, #-4]
+# CHECK: f64: 98 ed 00 08 st el3, [sp, #-2048]
+# CHECK: f68: 98 75 f8 0f st r3, [sp, #-8]
+# CHECK: f6c: 98 cd 06 08 st eh11, [sp, #-2044]
+# CHECK: f70: 98 ad fe 0f st el10, [sp, #-4]
+# CHECK: f74: 98 b5 03 08 st r29, [sp, #-2048]
+# CHECK: f78: 98 75 f9 0f st r11, [sp, #-8]
+# CHECK: f7c: 98 65 04 08 st dc0, [sp, #-2044]
+# CHECK: f80: 98 e5 fd 0f st dc3, [sp, #-4]
+# CHECK: f84: 98 65 01 08 st dc2, [sp, #-2048]
+# CHECK: f88: 98 c5 fa 0f st dj5, [sp, #-8]
+# CHECK: f8c: 98 ed 05 08 st el7, [sp, #-2044]
+# CHECK: f90: 98 e5 ff 0f st dc7, [sp, #-4]
+# CHECK: f94: 98 75 03 08 st r27, [sp, #-2048]
+# CHECK: f98: 98 95 fa 0f st r20, [sp, #-8]
+# CHECK: f9c: 98 ad 05 08 st el6, [sp, #-2044]
+# CHECK: fa0: 98 1d fe 0f st p4, [sp, #-4]
+# CHECK: fa4: 98 4d 02 08 st eh9, [sp, #-2048]
+# CHECK: fa8: 98 35 fb 0f st r25, [sp, #-8]
+# CHECK: fac: 98 8d 06 08 st eh10, [sp, #-2044]
+# CHECK: fb0: 98 15 ff 0f st r24, [sp, #-4]
+# CHECK: fb4: 98 b5 02 08 st r21, [sp, #-2048]
+# CHECK: fb8: 98 cd f9 0f st eh7, [sp, #-8]
+# CHECK: fbc: 98 55 07 08 st r26, [sp, #-2044]
+# CHECK: fc0: 98 55 fd 0f st r10, [sp, #-4]
+# CHECK: fc4: 98 6d 01 08 st el5, [sp, #-2048]
+# CHECK: fc8: 98 d5 f9 0f st r14, [sp, #-8]
+# CHECK: fcc: 98 d5 06 08 st r22, [sp, #-2044]
+# CHECK: fd0: 98 f5 fc 0f st r7, [sp, #-4]
+# CHECK: fd4: 98 c5 01 08 st dj3, [sp, #-2048]
+# CHECK: fd8: 98 d5 f8 0f st r6, [sp, #-8]
+# CHECK: fdc: 18 1b 43 0f st q3, [p7, dj2]
+# CHECK: fe0: 18 1b a0 0c st q0, [p4, dj5]
+# CHECK: fe4: 18 1b 80 08 st q0, [p0, dj4]
+# CHECK: fe8: 18 1b 63 0d st q3, [p5, dj3]
+# CHECK: fec: 18 1b c3 0b st q3, [p3, dj6]
+# CHECK: ff0: 18 1b 20 0e st q0, [p6, dj1]
+# CHECK: ff4: 18 1b 00 0a st q0, [p2, dj0]
+# CHECK: ff8: 18 1b e3 09 st q3, [p1, dj7]
+# CHECK: ffc: 18 1b 07 08 st q3, [p0, #0]
+# CHECK: 1000: 18 1b 74 0d st q0, [p5, #112]
+# CHECK: 1004: 18 1b 17 09 st q3, [p1, #16]
+# CHECK: 1008: 18 1b 84 0a st q0, [p2, #-128]
+# CHECK: 100c: 18 1b 07 0b st q3, [p3, #0]
+# CHECK: 1010: 18 1b 74 0f st q0, [p7, #112]
+# CHECK: 1014: 18 1b 17 0e st q3, [p6, #16]
+# CHECK: 1018: 18 1b 84 0c st q0, [p4, #-128]
+# CHECK: 101c: 18 1b ab 0d st q3, [p5], m5
+# CHECK: 1020: 18 1b 28 0f st q0, [p7], m1
+# CHECK: 1024: 18 1b c8 0e st q0, [p6], m6
+# CHECK: 1028: 18 1b eb 0b st q3, [p3], m7
+# CHECK: 102c: 18 1b 8b 08 st q3, [p0], m4
+# CHECK: 1030: 18 1b 68 0a st q0, [p2], m3
+# CHECK: 1034: 18 1b 48 0c st q0, [p4], m2
+# CHECK: 1038: 18 1b 0b 09 st q3, [p1], m0
+# CHECK: 103c: 18 1b 0c 0e st q0, [p6], #0
+# CHECK: 1040: 18 1b 1f 09 st q3, [p1], #16
+# CHECK: 1044: 18 1b 8f 0b st q3, [p3], #-128
+# CHECK: 1048: 18 1b 7c 0c st q0, [p4], #112
+# CHECK: 104c: 18 1b 0c 0a st q0, [p2], #0
+# CHECK: 1050: 18 1b 1f 0d st q3, [p5], #16
+# CHECK: 1054: 18 1b 8f 0f st q3, [p7], #-128
+# CHECK: 1058: 18 1b 7c 08 st q0, [p0], #112
+# CHECK: 105c: 18 9b 03 08 st q3, [sp, #-8192]
+# CHECK: 1060: 18 9b fc 0f st q0, [sp, #-16]
+# CHECK: 1064: 18 9b fb 0f st q3, [sp, #-32]
+# CHECK: 1068: 18 9b 04 08 st q0, [sp, #-8176]
+# CHECK: 106c: 18 b7 a2 05 st.s16 r21, [p5, dj5]
+# CHECK: 1070: 18 57 22 01 st.s16 r18, [p1, dj1]
+# CHECK: 1074: 18 77 43 04 st.s16 r27, [p4, dj2]
+# CHECK: 1078: 18 37 c1 00 st.s16 r9, [p0, dj6]
+# CHECK: 107c: 18 57 83 07 st.s16 r26, [p7, dj4]
+# CHECK: 1080: 18 37 00 06 st.s16 r1, [p6, dj0]
+# CHECK: 1084: 18 17 e1 03 st.s16 r8, [p3, dj7]
+# CHECK: 1088: 18 77 60 02 st.s16 r3, [p2, dj3]
+# CHECK: 108c: 18 97 a2 05 st.s16 r20, [p5, dj5]
+# CHECK: 1090: 18 d7 22 01 st.s16 r22, [p1, dj1]
+# CHECK: 1094: 18 97 41 04 st.s16 r12, [p4, dj2]
+# CHECK: 1098: 18 b7 c0 00 st.s16 r5, [p0, dj6]
+# CHECK: 109c: 18 37 83 07 st.s16 r25, [p7, dj4]
+# CHECK: 10a0: 18 d7 03 06 st.s16 r30, [p6, dj0]
+# CHECK: 10a4: 18 f7 e0 03 st.s16 r7, [p3, dj7]
+# CHECK: 10a8: 18 f7 61 02 st.s16 r15, [p2, dj3]
+# CHECK: 10ac: 18 57 a0 05 st.s16 r2, [p5, dj5]
+# CHECK: 10b0: 18 17 23 01 st.s16 r24, [p1, dj1]
+# CHECK: 10b4: 18 b7 43 04 st.s16 r29, [p4, dj2]
+# CHECK: 10b8: 18 d7 c1 00 st.s16 r14, [p0, dj6]
+# CHECK: 10bc: 18 97 83 07 st.s16 r28, [p7, dj4]
+# CHECK: 10c0: 18 77 01 06 st.s16 r11, [p6, dj0]
+# CHECK: 10c4: 18 57 e1 03 st.s16 r10, [p3, dj7]
+# CHECK: 10c8: 18 77 62 02 st.s16 r19, [p2, dj3]
+# CHECK: 10cc: 18 f7 a3 05 st.s16 r31, [p5, dj5]
+# CHECK: 10d0: 18 b7 21 01 st.s16 r13, [p1, dj1]
+# CHECK: 10d4: 18 f7 42 04 st.s16 r23, [p4, dj2]
+# CHECK: 10d8: 18 d7 c0 00 st.s16 r6, [p0, dj6]
+# CHECK: 10dc: 18 37 82 07 st.s16 r17, [p7, dj4]
+# CHECK: 10e0: 18 17 02 06 st.s16 r16, [p6, dj0]
+# CHECK: 10e4: 18 97 e0 03 st.s16 r4, [p3, dj7]
+# CHECK: 10e8: 18 17 60 02 st.s16 r0, [p2, dj3]
+# CHECK: 10ec: 18 97 76 05 st.s16 r20, [p5, #14]
+# CHECK: 10f0: 18 77 86 07 st.s16 r19, [p7, #-16]
+# CHECK: 10f4: 18 d7 06 00 st.s16 r22, [p0, #0]
+# CHECK: 10f8: 18 37 17 02 st.s16 r25, [p2, #2]
+# CHECK: 10fc: 18 17 76 06 st.s16 r16, [p6, #14]
+# CHECK: 1100: 18 77 87 01 st.s16 r27, [p1, #-16]
+# CHECK: 1104: 18 d7 07 04 st.s16 r30, [p4, #0]
+# CHECK: 1108: 18 57 15 03 st.s16 r10, [p3, #2]
+# CHECK: 110c: 18 17 74 05 st.s16 r0, [p5, #14]
+# CHECK: 1110: 18 57 87 07 st.s16 r26, [p7, #-16]
+# CHECK: 1114: 18 17 07 00 st.s16 r24, [p0, #0]
+# CHECK: 1118: 18 17 15 02 st.s16 r8, [p2, #2]
+# CHECK: 111c: 18 f7 76 06 st.s16 r23, [p6, #14]
+# CHECK: 1120: 18 f7 85 01 st.s16 r15, [p1, #-16]
+# CHECK: 1124: 18 37 06 04 st.s16 r17, [p4, #0]
+# CHECK: 1128: 18 97 14 03 st.s16 r4, [p3, #2]
+# CHECK: 112c: 18 b7 76 05 st.s16 r21, [p5, #14]
+# CHECK: 1130: 18 d7 85 07 st.s16 r14, [p7, #-16]
+# CHECK: 1134: 18 37 04 00 st.s16 r1, [p0, #0]
+# CHECK: 1138: 18 b7 15 02 st.s16 r13, [p2, #2]
+# CHECK: 113c: 18 77 74 06 st.s16 r3, [p6, #14]
+# CHECK: 1140: 18 b7 87 01 st.s16 r29, [p1, #-16]
+# CHECK: 1144: 18 97 05 04 st.s16 r12, [p4, #0]
+# CHECK: 1148: 18 97 17 03 st.s16 r28, [p3, #2]
+# CHECK: 114c: 18 d7 74 05 st.s16 r6, [p5, #14]
+# CHECK: 1150: 18 57 84 07 st.s16 r2, [p7, #-16]
+# CHECK: 1154: 18 b7 04 00 st.s16 r5, [p0, #0]
+# CHECK: 1158: 18 f7 17 02 st.s16 r31, [p2, #2]
+# CHECK: 115c: 18 57 76 06 st.s16 r18, [p6, #14]
+# CHECK: 1160: 18 f7 84 01 st.s16 r7, [p1, #-16]
+# CHECK: 1164: 18 37 05 04 st.s16 r9, [p4, #0]
+# CHECK: 1168: 18 77 15 03 st.s16 r11, [p3, #2]
+# CHECK: 116c: 18 d7 49 00 st.s16 r14, [p0], m2
+# CHECK: 1170: 18 57 e8 01 st.s16 r2, [p1], m7
+# CHECK: 1174: 18 f7 8b 03 st.s16 r31, [p3], m4
+# CHECK: 1178: 18 d7 2a 05 st.s16 r22, [p5], m1
+# CHECK: 117c: 18 b7 6b 02 st.s16 r29, [p2], m3
+# CHECK: 1180: 18 f7 aa 06 st.s16 r23, [p6], m5
+# CHECK: 1184: 18 37 c8 07 st.s16 r1, [p7], m6
+# CHECK: 1188: 18 17 0b 04 st.s16 r24, [p4], m0
+# CHECK: 118c: 18 17 49 00 st.s16 r8, [p0], m2
+# CHECK: 1190: 18 37 eb 01 st.s16 r25, [p1], m7
+# CHECK: 1194: 18 77 88 03 st.s16 r3, [p3], m4
+# CHECK: 1198: 18 37 2a 05 st.s16 r17, [p5], m1
+# CHECK: 119c: 18 97 6b 02 st.s16 r28, [p2], m3
+# CHECK: 11a0: 18 57 a9 06 st.s16 r10, [p6], m5
+# CHECK: 11a4: 18 b7 c9 07 st.s16 r13, [p7], m6
+# CHECK: 11a8: 18 d7 0b 04 st.s16 r30, [p4], m0
+# CHECK: 11ac: 18 77 4a 00 st.s16 r19, [p0], m2
+# CHECK: 11b0: 18 17 ea 01 st.s16 r16, [p1], m7
+# CHECK: 11b4: 18 57 8b 03 st.s16 r26, [p3], m4
+# CHECK: 11b8: 18 77 29 05 st.s16 r11, [p5], m1
+# CHECK: 11bc: 18 b7 68 02 st.s16 r5, [p2], m3
+# CHECK: 11c0: 18 b7 aa 06 st.s16 r21, [p6], m5
+# CHECK: 11c4: 18 57 ca 07 st.s16 r18, [p7], m6
+# CHECK: 11c8: 18 97 08 04 st.s16 r4, [p4], m0
+# CHECK: 11cc: 18 f7 49 00 st.s16 r15, [p0], m2
+# CHECK: 11d0: 18 17 e8 01 st.s16 r0, [p1], m7
+# CHECK: 11d4: 18 97 89 03 st.s16 r12, [p3], m4
+# CHECK: 11d8: 18 77 2b 05 st.s16 r27, [p5], m1
+# CHECK: 11dc: 18 f7 68 02 st.s16 r7, [p2], m3
+# CHECK: 11e0: 18 d7 a8 06 st.s16 r6, [p6], m5
+# CHECK: 11e4: 18 37 c9 07 st.s16 r9, [p7], m6
+# CHECK: 11e8: 18 97 0a 04 st.s16 r20, [p4], m0
+# CHECK: 11ec: 18 77 1f 07 st.s16 r27, [p7], #2
+# CHECK: 11f0: 18 b7 7f 04 st.s16 r29, [p4], #14
+# CHECK: 11f4: 18 d7 0f 06 st.s16 r30, [p6], #0
+# CHECK: 11f8: 18 97 8c 01 st.s16 r4, [p1], #-16
+# CHECK: 11fc: 18 d7 1c 03 st.s16 r6, [p3], #2
+# CHECK: 1200: 18 37 7f 02 st.s16 r25, [p2], #14
+# CHECK: 1204: 18 57 0e 05 st.s16 r18, [p5], #0
+# CHECK: 1208: 18 b7 8c 00 st.s16 r5, [p0], #-16
+# CHECK: 120c: 18 b7 1d 07 st.s16 r13, [p7], #2
+# CHECK: 1210: 18 57 7d 04 st.s16 r10, [p4], #14
+# CHECK: 1214: 18 d7 0e 06 st.s16 r22, [p6], #0
+# CHECK: 1218: 18 37 8c 01 st.s16 r1, [p1], #-16
+# CHECK: 121c: 18 77 1c 03 st.s16 r3, [p3], #2
+# CHECK: 1220: 18 77 7d 02 st.s16 r11, [p2], #14
+# CHECK: 1224: 18 d7 0d 05 st.s16 r14, [p5], #0
+# CHECK: 1228: 18 97 8f 00 st.s16 r28, [p0], #-16
+# CHECK: 122c: 18 97 1d 07 st.s16 r12, [p7], #2
+# CHECK: 1230: 18 77 7e 04 st.s16 r19, [p4], #14
+# CHECK: 1234: 18 f7 0e 06 st.s16 r23, [p6], #0
+# CHECK: 1238: 18 97 8e 01 st.s16 r20, [p1], #-16
+# CHECK: 123c: 18 b7 1e 03 st.s16 r21, [p3], #2
+# CHECK: 1240: 18 17 7e 02 st.s16 r16, [p2], #14
+# CHECK: 1244: 18 17 0c 05 st.s16 r0, [p5], #0
+# CHECK: 1248: 18 f7 8c 00 st.s16 r7, [p0], #-16
+# CHECK: 124c: 18 f7 1d 07 st.s16 r15, [p7], #2
+# CHECK: 1250: 18 17 7d 04 st.s16 r8, [p4], #14
+# CHECK: 1254: 18 17 0f 06 st.s16 r24, [p6], #0
+# CHECK: 1258: 18 57 8c 01 st.s16 r2, [p1], #-16
+# CHECK: 125c: 18 57 1f 03 st.s16 r26, [p3], #2
+# CHECK: 1260: 18 f7 7f 02 st.s16 r31, [p2], #14
+# CHECK: 1264: 18 37 0d 05 st.s16 r9, [p5], #0
+# CHECK: 1268: 18 37 8e 00 st.s16 r17, [p0], #-16
+# CHECK: 126c: 18 47 01 00 st.s8 r10, [p0, dj0]
+# CHECK: 1270: 18 e7 20 06 st.s8 r7, [p6, dj1]
+# CHECK: 1274: 18 a7 83 05 st.s8 r29, [p5, dj4]
+# CHECK: 1278: 18 c7 a3 02 st.s8 r30, [p2, dj5]
+# CHECK: 127c: 18 a7 e1 07 st.s8 r13, [p7, dj7]
+# CHECK: 1280: 18 87 c1 03 st.s8 r12, [p3, dj6]
+# CHECK: 1284: 18 47 63 04 st.s8 r26, [p4, dj3]
+# CHECK: 1288: 18 67 42 01 st.s8 r19, [p1, dj2]
+# CHECK: 128c: 18 07 02 00 st.s8 r16, [p0, dj0]
+# CHECK: 1290: 18 47 22 06 st.s8 r18, [p6, dj1]
+# CHECK: 1294: 18 67 80 05 st.s8 r3, [p5, dj4]
+# CHECK: 1298: 18 27 a3 02 st.s8 r25, [p2, dj5]
+# CHECK: 129c: 18 67 e3 07 st.s8 r27, [p7, dj7]
+# CHECK: 12a0: 18 e7 c1 03 st.s8 r15, [p3, dj6]
+# CHECK: 12a4: 18 87 62 04 st.s8 r20, [p4, dj3]
+# CHECK: 12a8: 18 27 42 01 st.s8 r17, [p1, dj2]
+# CHECK: 12ac: 18 c7 02 00 st.s8 r22, [p0, dj0]
+# CHECK: 12b0: 18 a7 20 06 st.s8 r5, [p6, dj1]
+# CHECK: 12b4: 18 07 80 05 st.s8 r0, [p5, dj4]
+# CHECK: 12b8: 18 c7 a0 02 st.s8 r6, [p2, dj5]
+# CHECK: 12bc: 18 a7 e2 07 st.s8 r21, [p7, dj7]
+# CHECK: 12c0: 18 67 c1 03 st.s8 r11, [p3, dj6]
+# CHECK: 12c4: 18 07 63 04 st.s8 r24, [p4, dj3]
+# CHECK: 12c8: 18 c7 41 01 st.s8 r14, [p1, dj2]
+# CHECK: 12cc: 18 47 00 00 st.s8 r2, [p0, dj0]
+# CHECK: 12d0: 18 27 20 06 st.s8 r1, [p6, dj1]
+# CHECK: 12d4: 18 e7 83 05 st.s8 r31, [p5, dj4]
+# CHECK: 12d8: 18 07 a1 02 st.s8 r8, [p2, dj5]
+# CHECK: 12dc: 18 e7 e2 07 st.s8 r23, [p7, dj7]
+# CHECK: 12e0: 18 27 c1 03 st.s8 r9, [p3, dj6]
+# CHECK: 12e4: 18 87 60 04 st.s8 r4, [p4, dj3]
+# CHECK: 12e8: 18 87 43 01 st.s8 r28, [p1, dj2]
+# CHECK: 12ec: 18 87 17 01 st.s8 r28, [p1, #1]
+# CHECK: 12f0: 18 47 75 06 st.s8 r10, [p6, #7]
+# CHECK: 12f4: 18 67 07 07 st.s8 r27, [p7, #0]
+# CHECK: 12f8: 18 07 86 02 st.s8 r16, [p2, #-8]
+# CHECK: 12fc: 18 87 14 04 st.s8 r4, [p4, #1]
+# CHECK: 1300: 18 c7 77 00 st.s8 r30, [p0, #7]
+# CHECK: 1304: 18 a7 06 03 st.s8 r21, [p3, #0]
+# CHECK: 1308: 18 07 87 05 st.s8 r24, [p5, #-8]
+# CHECK: 130c: 18 c7 16 01 st.s8 r22, [p1, #1]
+# CHECK: 1310: 18 47 76 06 st.s8 r18, [p6, #7]
+# CHECK: 1314: 18 47 07 07 st.s8 r26, [p7, #0]
+# CHECK: 1318: 18 e7 86 02 st.s8 r23, [p2, #-8]
+# CHECK: 131c: 18 27 17 04 st.s8 r25, [p4, #1]
+# CHECK: 1320: 18 e7 74 00 st.s8 r7, [p0, #7]
+# CHECK: 1324: 18 c7 05 03 st.s8 r14, [p3, #0]
+# CHECK: 1328: 18 a7 87 05 st.s8 r29, [p5, #-8]
+# CHECK: 132c: 18 87 16 01 st.s8 r20, [p1, #1]
+# CHECK: 1330: 18 47 74 06 st.s8 r2, [p6, #7]
+# CHECK: 1334: 18 a7 05 07 st.s8 r13, [p7, #0]
+# CHECK: 1338: 18 67 85 02 st.s8 r11, [p2, #-8]
+# CHECK: 133c: 18 c7 14 04 st.s8 r6, [p4, #1]
+# CHECK: 1340: 18 87 75 00 st.s8 r12, [p0, #7]
+# CHECK: 1344: 18 e7 07 03 st.s8 r31, [p3, #0]
+# CHECK: 1348: 18 27 84 05 st.s8 r1, [p5, #-8]
+# CHECK: 134c: 18 67 14 01 st.s8 r3, [p1, #1]
+# CHECK: 1350: 18 27 76 06 st.s8 r17, [p6, #7]
+# CHECK: 1354: 18 e7 05 07 st.s8 r15, [p7, #0]
+# CHECK: 1358: 18 07 85 02 st.s8 r8, [p2, #-8]
+# CHECK: 135c: 18 27 15 04 st.s8 r9, [p4, #1]
+# CHECK: 1360: 18 67 76 00 st.s8 r19, [p0, #7]
+# CHECK: 1364: 18 07 04 03 st.s8 r0, [p3, #0]
+# CHECK: 1368: 18 a7 84 05 st.s8 r5, [p5, #-8]
+# CHECK: 136c: 18 47 6a 06 st.s8 r18, [p6], m3
+# CHECK: 1370: 18 87 8a 05 st.s8 r20, [p5], m4
+# CHECK: 1374: 18 47 c9 02 st.s8 r10, [p2], m6
+# CHECK: 1378: 18 27 a9 07 st.s8 r9, [p7], m5
+# CHECK: 137c: 18 67 4a 04 st.s8 r19, [p4], m2
+# CHECK: 1380: 18 07 0a 00 st.s8 r16, [p0], m0
+# CHECK: 1384: 18 c7 2a 01 st.s8 r22, [p1], m1
+# CHECK: 1388: 18 07 eb 03 st.s8 r24, [p3], m7
+# CHECK: 138c: 18 87 68 06 st.s8 r4, [p6], m3
+# CHECK: 1390: 18 27 8a 05 st.s8 r17, [p5], m4
+# CHECK: 1394: 18 87 cb 02 st.s8 r28, [p2], m6
+# CHECK: 1398: 18 27 a8 07 st.s8 r1, [p7], m5
+# CHECK: 139c: 18 e7 4a 04 st.s8 r23, [p4], m2
+# CHECK: 13a0: 18 47 0b 00 st.s8 r26, [p0], m0
+# CHECK: 13a4: 18 c7 28 01 st.s8 r6, [p1], m1
+# CHECK: 13a8: 18 07 e8 03 st.s8 r0, [p3], m7
+# CHECK: 13ac: 18 07 69 06 st.s8 r8, [p6], m3
+# CHECK: 13b0: 18 e7 88 05 st.s8 r7, [p5], m4
+# CHECK: 13b4: 18 67 c9 02 st.s8 r11, [p2], m6
+# CHECK: 13b8: 18 a7 ab 07 st.s8 r29, [p7], m5
+# CHECK: 13bc: 18 a7 4a 04 st.s8 r21, [p4], m2
+# CHECK: 13c0: 18 a7 09 00 st.s8 r13, [p0], m0
+# CHECK: 13c4: 18 27 2b 01 st.s8 r25, [p1], m1
+# CHECK: 13c8: 18 e7 eb 03 st.s8 r31, [p3], m7
+# CHECK: 13cc: 18 67 6b 06 st.s8 r27, [p6], m3
+# CHECK: 13d0: 18 67 88 05 st.s8 r3, [p5], m4
+# CHECK: 13d4: 18 c7 c9 02 st.s8 r14, [p2], m6
+# CHECK: 13d8: 18 47 a8 07 st.s8 r2, [p7], m5
+# CHECK: 13dc: 18 c7 4b 04 st.s8 r30, [p4], m2
+# CHECK: 13e0: 18 87 09 00 st.s8 r12, [p0], m0
+# CHECK: 13e4: 18 a7 28 01 st.s8 r5, [p1], m1
+# CHECK: 13e8: 18 e7 e9 03 st.s8 r15, [p3], m7
+# CHECK: 13ec: 18 27 8d 00 st.s8 r9, [p0], #-8
+# CHECK: 13f0: 18 67 1e 07 st.s8 r19, [p7], #1
+# CHECK: 13f4: 18 67 7f 04 st.s8 r27, [p4], #7
+# CHECK: 13f8: 18 27 0f 01 st.s8 r25, [p1], #0
+# CHECK: 13fc: 18 c7 8f 03 st.s8 r30, [p3], #-8
+# CHECK: 1400: 18 27 1e 06 st.s8 r17, [p6], #1
+# CHECK: 1404: 18 07 7f 05 st.s8 r24, [p5], #7
+# CHECK: 1408: 18 07 0c 02 st.s8 r0, [p2], #0
+# CHECK: 140c: 18 e7 8c 00 st.s8 r7, [p0], #-8
+# CHECK: 1410: 18 87 1c 07 st.s8 r4, [p7], #1
+# CHECK: 1414: 18 47 7d 04 st.s8 r10, [p4], #7
+# CHECK: 1418: 18 a7 0e 01 st.s8 r21, [p1], #0
+# CHECK: 141c: 18 87 8f 03 st.s8 r28, [p3], #-8
+# CHECK: 1420: 18 47 1f 06 st.s8 r26, [p6], #1
+# CHECK: 1424: 18 87 7d 05 st.s8 r12, [p5], #7
+# CHECK: 1428: 18 c7 0d 02 st.s8 r14, [p2], #0
+# CHECK: 142c: 18 e7 8e 00 st.s8 r23, [p0], #-8
+# CHECK: 1430: 18 87 1e 07 st.s8 r20, [p7], #1
+# CHECK: 1434: 18 47 7e 04 st.s8 r18, [p4], #7
+# CHECK: 1438: 18 67 0d 01 st.s8 r11, [p1], #0
+# CHECK: 143c: 18 e7 8d 03 st.s8 r15, [p3], #-8
+# CHECK: 1440: 18 e7 1f 06 st.s8 r31, [p6], #1
+# CHECK: 1444: 18 a7 7d 05 st.s8 r13, [p5], #7
+# CHECK: 1448: 18 c7 0e 02 st.s8 r22, [p2], #0
+# CHECK: 144c: 18 a7 8f 00 st.s8 r29, [p0], #-8
+# CHECK: 1450: 18 67 1c 07 st.s8 r3, [p7], #1
+# CHECK: 1454: 18 27 7c 04 st.s8 r1, [p4], #7
+# CHECK: 1458: 18 47 0c 01 st.s8 r2, [p1], #0
+# CHECK: 145c: 18 c7 8c 03 st.s8 r6, [p3], #-8
+# CHECK: 1460: 18 a7 1c 06 st.s8 r5, [p6], #1
+# CHECK: 1464: 18 07 7e 05 st.s8 r16, [p5], #7
+# CHECK: 1468: 18 07 0d 02 st.s8 r8, [p2], #0

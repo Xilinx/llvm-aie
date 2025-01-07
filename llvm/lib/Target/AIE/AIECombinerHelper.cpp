@@ -14,6 +14,7 @@
 #include "AIETargetMachine.h"
 #include "MCTargetDesc/AIE2MCTargetDesc.h"
 #include "llvm/ADT/SetVector.h"
+#include "llvm/Analysis/VectorUtils.h"
 #include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
 #include "llvm/CodeGen/GlobalISel/Utils.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
@@ -22,6 +23,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/IR/IntrinsicsAIE2.h"
+#include "llvm/IR/IntrinsicsAIE2P.h"
 #include <optional>
 
 #define DEBUG_TYPE "aie-combine"
@@ -41,6 +43,13 @@ static cl::opt<bool> EnableGreedyAddressCombine(
 static cl::opt<bool>
     EnableS20Narrowing("aie-s20-narrowing", cl::Hidden, cl::init(true),
                        cl::desc("Enable s20 operand narrowing optimization"));
+
+cl::opt<bool> InlineMemCalls("aie-inline-mem-calls", cl::init(true), cl::Hidden,
+                             cl::desc("Inline mem calls when profitable."));
+
+cl::opt<bool> CombineVecShiftByZero(
+    "aie-combine-vec-shift-by-zero", cl::init(true), cl::Hidden,
+    cl::desc("Combine vectors shift by zero into copies."));
 
 MachineInstr *findPreIncMatch(MachineInstr &MemI, MachineRegisterInfo &MRI,
                               CombinerHelper &Helper,
@@ -423,9 +432,10 @@ void llvm::applyLdStInc(MachineInstr &MI, MachineRegisterInfo &MRI,
 // Combine into:
 // %0:_(<16 x s32>) = G_IMPLICIT_DEF
 // %2:_(<16 x s32>) = COPY %0
-bool llvm::matchAddVecEltUndef(MachineInstr &MI, MachineRegisterInfo &MRI) {
-
-  assert(MI.getOpcode() == AIE2::G_AIE_ADD_VECTOR_ELT_HI &&
+bool llvm::matchAddVecEltUndef(MachineInstr &MI, MachineRegisterInfo &MRI,
+                               const TargetInstrInfo &TII) {
+  const AIEBaseInstrInfo &AIETII = (const AIEBaseInstrInfo &)TII;
+  assert(MI.getOpcode() == AIETII.getGenericAddVectorEltOpcode() &&
          "Expected a G_AIE_ADD_VECTOR_ELT_HI");
   const MachineInstr *SrcVecDef =
       getDefIgnoringCopies(MI.getOperand(1).getReg(), MRI);
@@ -663,6 +673,8 @@ bool canNarrowUserTreeToS20(MachineRegisterInfo &MRI, InstrNode Start,
       switch (cast<GIntrinsic>(Use).getIntrinsicID()) {
       case Intrinsic::aie2_add_2d:
       case Intrinsic::aie2_add_3d:
+      case Intrinsic::aie2p_add_2d:
+      case Intrinsic::aie2p_add_3d:
         continue;
       default:
         LLVM_DEBUG(dbgs() << "    User cannot consume S20: " << Use);
@@ -803,6 +815,8 @@ static bool isNativeS20Consumer(const MachineInstr &MI) {
     switch (cast<GIntrinsic>(MI).getIntrinsicID()) {
     case Intrinsic::aie2_add_2d:
     case Intrinsic::aie2_add_3d:
+    case Intrinsic::aie2p_add_2d:
+    case Intrinsic::aie2p_add_3d:
       return true;
     default:
       return false;
@@ -1012,9 +1026,10 @@ void llvm::applyExtractVecEltAndExt(
   const Register SrcReg0 = MI.getOperand(1).getReg();
   const Register SrcReg1 = MI.getOperand(2).getReg();
   const LLT S32 = LLT::scalar(32);
-
-  const unsigned Opcode = IsSignedExt ? AIE2::G_AIE_SEXT_EXTRACT_VECTOR_ELT
-                                      : AIE2::G_AIE_ZEXT_EXTRACT_VECTOR_ELT;
+  const AIEBaseInstrInfo &AIETII = (const AIEBaseInstrInfo &)B.getTII();
+  const unsigned Opcode =
+      IsSignedExt ? AIETII.getGenericExtractVectorEltOpcode(/*sign ext*/ true)
+                  : AIETII.getGenericExtractVectorEltOpcode(/*sign ext*/ false);
   const Register ExtractElt32BitDst = MRI.createGenericVirtualRegister(S32);
   B.buildInstr(Opcode, {ExtractElt32BitDst}, {SrcReg0, SrcReg1});
 
@@ -1053,6 +1068,7 @@ bool llvm::matchSplatVector(MachineInstr &MI, MachineRegisterInfo &MRI,
   case 256:
   case 512:
   case 1024:
+  case 2048:
     break;
   default:
     // unimplemented
@@ -1074,32 +1090,49 @@ bool llvm::applySplatVector(MachineInstr &MI, MachineRegisterInfo &MRI,
                             MachineIRBuilder &B,
                             std::pair<Register, Register> &MatchInfo) {
   B.setInstrAndDebugLoc(MI);
+  const AIEBaseInstrInfo &AIETII = (const AIEBaseInstrInfo &)B.getTII();
   auto [DstVecReg, SrcReg] = MatchInfo;
   const LLT SrcTy = MRI.getType(SrcReg);
   const LLT DstVecTy = MRI.getType(DstVecReg);
   const unsigned DstVecSize = DstVecTy.getSizeInBits();
 
+  auto IsConstantZeroReg = [&](const Register Reg) {
+    auto Cst = getAnyConstantVRegValWithLookThrough(Reg, MRI);
+    return Cst && Cst->Value.isZero();
+  };
+  // Check if the source is constant zero and build a 2048-bit
+  // vector destination
+  auto isConstantZero = IsConstantZeroReg(SrcReg) && DstVecSize == 2048;
   if (SrcTy == LLT::scalar(8) || SrcTy == LLT::scalar(16)) {
     const LLT S32 = LLT::scalar(32);
     Register Src32BitReg = MRI.createGenericVirtualRegister(S32);
     B.buildAnyExt(Src32BitReg, SrcReg);
     SrcReg = Src32BitReg;
   }
-  // Check if the destination vector size is 512 bits.
-  if (DstVecSize == 512) {
+  if (SrcTy == LLT::scalar(64)) {
+    const LLT V2S32 = LLT::fixed_vector(2, 32);
+    Register Src64BitReg = MRI.createGenericVirtualRegister(V2S32);
+    B.buildBitcast(Src64BitReg, SrcReg);
+    SrcReg = Src64BitReg;
+  }
+  // Check if the destination vector size is 512 bits or if the destination
+  // vector size is 2048 bits and the sources are constant zero.
+  if (DstVecSize == 512 || isConstantZero) {
     // Build the G_AIE_BROADCAST_VECTOR instruction for a 512-bit vector.
-    B.buildInstr(AIE2::G_AIE_BROADCAST_VECTOR, {DstVecReg}, {SrcReg});
+    B.buildInstr(AIETII.getGenericBroadcastVectorOpcode(), {DstVecReg},
+                 {SrcReg});
   } else {
-    const unsigned SrcSize = SrcTy.getSizeInBits();
-    const unsigned DstVec512BitLen = 512 / SrcSize;
+    const unsigned DstElmtSize = DstVecTy.getElementType().getSizeInBits();
+    const unsigned DstVec512BitLen = 512 / DstElmtSize;
 
     // Create a 512-bit generic virtual register for the destination vector
     // as 256-bit and 1024-bit broadcast support is not available.
     Register DstVec512BitReg = MRI.createGenericVirtualRegister(
-        LLT::fixed_vector(DstVec512BitLen, SrcSize));
+        LLT::fixed_vector(DstVec512BitLen, DstElmtSize));
 
     // Build the G_AIE_BROADCAST_VECTOR instruction for the 512-bit vector.
-    B.buildInstr(AIE2::G_AIE_BROADCAST_VECTOR, {DstVec512BitReg}, {SrcReg});
+    B.buildInstr(AIETII.getGenericBroadcastVectorOpcode(), {DstVec512BitReg},
+                 {SrcReg});
     if (DstVecSize == 256) {
       const Register UnusedSubReg = MRI.createGenericVirtualRegister(DstVecTy);
       // Unmerge the 512-bit vector into the 256-bit destination vector.
@@ -1107,6 +1140,10 @@ bool llvm::applySplatVector(MachineInstr &MI, MachineRegisterInfo &MRI,
     } else if (DstVecSize == 1024) {
       // Concatenate two 512-bit vectors to form a 1024-bit destination vector.
       B.buildConcatVectors({DstVecReg}, {DstVec512BitReg, DstVec512BitReg});
+    } else if (DstVecSize == 2048) {
+      // Concatenate 4 512-bit vectors to form a 2048-bit destination vector.
+      B.buildConcatVectors({DstVecReg}, {DstVec512BitReg, DstVec512BitReg,
+                                         DstVec512BitReg, DstVec512BitReg});
     }
   }
   MI.eraseFromParent();
@@ -1140,9 +1177,10 @@ bool llvm::matchUnpadVector(MachineInstr &MI, MachineRegisterInfo &MRI,
 void llvm::applyUnpadVector(MachineInstr &MI, MachineRegisterInfo &MRI,
                             MachineIRBuilder &B) {
   B.setInstrAndDebugLoc(MI);
+  const AIEBaseInstrInfo &AIETII = (const AIEBaseInstrInfo &)B.getTII();
   Register DstReg = MI.getOperand(0).getReg();
   Register SrcReg = MI.getOperand(MI.getNumDefs()).getReg();
-  B.buildInstr(AIE2::G_AIE_UNPAD_VECTOR, {DstReg}, {SrcReg});
+  B.buildInstr(AIETII.getGenericUnpadVectorOpcode(), {DstReg}, {SrcReg});
   MI.eraseFromParent();
 }
 
@@ -1189,11 +1227,37 @@ bool llvm::matchPadVector(MachineInstr &MI, MachineRegisterInfo &MRI,
   return true;
 }
 
+bool llvm::matchConcatPadVector(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                const AIEBaseInstrInfo &TII,
+                                Register &MatchedInputVector) {
+  assert(MI.getOpcode() == TargetOpcode::G_CONCAT_VECTORS &&
+         "Expected concat vector");
+
+  auto DstReg = MI.getOperand(0).getReg();
+  LLT DstVectorTy = MRI.getType(DstReg);
+  auto SrcReg1 = MI.getOperand(1).getReg();
+  LLT SrcVector1Ty = MRI.getType(SrcReg1);
+  if (!TII.isLegalTypeToPad(SrcVector1Ty) ||
+      !TII.isLegalTypeToUnpad(DstVectorTy))
+    return false;
+
+  for (unsigned Index = 2; Index < MI.getNumOperands(); Index++) {
+    if (!getOpcodeDef(TargetOpcode::G_IMPLICIT_DEF,
+                      MI.getOperand(Index).getReg(), MRI))
+      return false;
+  }
+
+  MatchedInputVector = SrcReg1;
+  return true;
+}
+
 void llvm::applyPadVector(MachineInstr &MI, MachineRegisterInfo &MRI,
                           MachineIRBuilder &B, Register MatchedInputVector) {
   B.setInstrAndDebugLoc(MI);
+  const AIEBaseInstrInfo &AIETII = (const AIEBaseInstrInfo &)B.getTII();
   Register DstReg = MI.getOperand(0).getReg();
-  B.buildInstr(AIE2::G_AIE_PAD_VECTOR_UNDEF, {DstReg}, {MatchedInputVector});
+  B.buildInstr(AIETII.getGenericPadVectorOpcode(), {DstReg},
+               {MatchedInputVector});
   MI.eraseFromParent();
 }
 
@@ -1587,4 +1651,120 @@ void llvm::applyOffsetLoadStoreSharePtrAdd(MachineInstr &MI,
 
   MI.getOperand(1).setReg(PtrAddReg);
   MI.getOperand(2).setReg(NewOffsetReg);
+}
+/// \returns true if it is possible to combine the below sequence of MIRs
+/// into a COPY.
+/// From : %1:_(<64 x s8>) = G_IMPLICIT_DEF
+///        %2:_(<16 x s32>) = G_BITCAST %1:_(<64 x s8>)
+///        %3:_(s32) = G_CONSTANT i32 0
+///        %4:_(<16 x s32>) = G_INTRINSIC
+///        intrinsic(@llvm.aie[2/2p].vshift.I512.I512), %X:_(<16 x s32>),
+///        %2:_(<16 x s32>), %3:_(s32), %3:_(s32)
+/// To :   4%:_(<16 x s32>) = COPY %X
+/// Or even:
+/// From : %1:_(<64 x s8>) = G_IMPLICIT_DEF
+///        %2:_(s32) = G_CONSTANT i32 0
+///        %3:_(<16 x s32>) = G_INTRINSIC
+///        intrinsic(@llvm.aie[2/2p].vshift.I512.I512), %X:_(<16 x s32>),
+///        %1:_(<16 x s32>), %2:_(s32), %2:_(s32)
+/// To :   3%:_(<16 x s32>) = COPY %X
+bool llvm::tryToCombineVectorShiftsByZero(MachineInstr &MI,
+                                          MachineRegisterInfo &MRI) {
+
+  const Register DstReg = MI.getOperand(0).getReg();
+  const Register SrcReg = MI.getOperand(2).getReg();
+  const Register ThirdSrcReg = MI.getOperand(4).getReg();
+  const Register ShiftAmtSrcReg = MI.getOperand(5).getReg();
+
+  auto IsConstantZeroReg = [&](const Register Reg) {
+    auto Cst = getIConstantVRegValWithLookThrough(Reg, MRI);
+    return Cst && Cst->Value.isZero();
+  };
+
+  if (!IsConstantZeroReg(ThirdSrcReg) || !IsConstantZeroReg(ShiftAmtSrcReg))
+    return false;
+
+  MachineIRBuilder MIRBuilder(MI);
+  MIRBuilder.buildCopy(DstReg, SrcReg);
+  MI.eraseFromParent();
+
+  return true;
+}
+
+bool llvm::matchBroadcastElement(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                 std::pair<Register, Register> &MatchInfo) {
+  assert(MI.getOpcode() == TargetOpcode::G_SHUFFLE_VECTOR);
+  const auto MaybeSplatIndex = getSplatIndex(MI);
+
+  if (!MaybeSplatIndex.has_value())
+    return false;
+
+  const unsigned SrcNumElems =
+      MRI.getType(MI.getOperand(1).getReg()).getNumElements();
+
+  unsigned Idx;
+  unsigned AdjustSrcElemIdx = 0;
+  if (MaybeSplatIndex.value() < (int)SrcNumElems) {
+    Idx = 1;
+  } else {
+    Idx = 2;
+    AdjustSrcElemIdx = SrcNumElems;
+  }
+
+  const Register SrcVecReg = MI.getOperand(Idx).getReg();
+  MachineInstr *SrcVec = MRI.getUniqueVRegDef(SrcVecReg);
+
+  if (!SrcVec || SrcVec->getOpcode() != TargetOpcode::G_BUILD_VECTOR) {
+    return false;
+  }
+
+  const Register DstReg = MI.getOperand(0).getReg();
+  const unsigned SrcElemIdx = MaybeSplatIndex.value() + 1;
+  const Register ElemReg =
+      SrcVec->getOperand(SrcElemIdx - AdjustSrcElemIdx).getReg();
+  MatchInfo = std::make_pair(DstReg, ElemReg);
+  return true;
+}
+/// This function creates shuffle mask whose elements are duplicated \p pattern
+/// for \p Num of times. For example, the mask for pattern = <0, 1>, Num = 2
+/// is:<0, 1, 0, 1>
+static llvm::SmallVector<int, 16>
+createDuplicatePatternMask(llvm::SmallVector<int, 16> Pattern, unsigned Num) {
+  SmallVector<int, 16> Mask;
+  for (unsigned i = 0; i < Num; i++)
+    for (unsigned Index = 0; Index < Pattern.size(); Index++)
+      Mask.push_back(Pattern[Index]);
+
+  return Mask;
+}
+
+bool llvm::matchShuffleToBroadcast(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                   std::pair<Register, Register> &MatchInfo) {
+  assert(MI.getOpcode() == TargetOpcode::G_SHUFFLE_VECTOR);
+  const Register DstReg = MI.getOperand(0).getReg();
+  const Register Src1Reg = MI.getOperand(1).getReg();
+  ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
+
+  const LLT DstTy = MRI.getType(DstReg);
+  const LLT Src1Ty = MRI.getType(Src1Reg);
+  if (Src1Ty.getSizeInBits() != 64 && Src1Ty.getSizeInBits() != 32) {
+    return false;
+  }
+  const unsigned NumDstElems = DstTy.getNumElements();
+  const unsigned NumSrcElems = Src1Ty.getNumElements();
+  // Create the mask that covers all elements of Src1
+  auto Src1Mask = llvm::createSequentialMask(0, NumSrcElems, 0);
+
+  // Replicate the Src1Mask to cover the entire dst register
+  auto SplatMask =
+      createDuplicatePatternMask(Src1Mask, NumDstElems / NumSrcElems);
+  for (unsigned I = 0; I < NumDstElems - 1; I++) {
+    if (Mask[I] == -1)
+      continue;
+
+    if (Mask[I] != SplatMask[I])
+      return false;
+  }
+  MatchInfo = std::make_pair(DstReg, Src1Reg);
+  return true;
 }

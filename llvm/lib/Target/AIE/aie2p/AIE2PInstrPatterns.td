@@ -1,0 +1,962 @@
+//===--AIE2PInstrPatterns.td -ISel patterns for AIE2P -----*- tablegen -*-===//
+//
+// This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+//
+//===----------------------------------------------------------------------===//
+//
+// This file describes instruction selection patterns for the AIE2P
+// instructions in TableGen format.
+//
+//===----------------------------------------------------------------------===//
+
+include "AIEBaseInstrPatterns.td"
+
+// Placeholder for a bare frameindex. This pseudo represents the
+// pointer register to be allocated, initialized with the address
+// represented by the frameindex in its only operand.
+let Uses = [sp] in
+def PseudoFI : Pseudo<(outs eP:$dst), (ins i32imm:$imm)>;
+
+// SCHED_BARRIER
+def : Pat<(int_aie2p_sched_barrier), (SCHED_BARRIER)>;
+
+// A bare frameindex. Placeholder until eliminateFrameIndex.
+def : Pat<(ptr0 frameindex:$fi), (PseudoFI(frameindex_to_targetframeindex $fi))>;
+
+/// Generic pattern classes
+class PatGpr<SDPatternOperator OpNode, AIE2PInst Inst, ValueType type>
+    : Pat<(type (OpNode (type eR:$rs))), (Inst eR:$rs)>;
+
+class PatGprGpr<SDPatternOperator OpNode, AIE2PInst Inst, ValueType type>
+    : Pat<(type (OpNode (type eR:$rs1), (type eR:$rs2))), (Inst eR:$rs1, eR:$rs2)>;
+
+// 3.28 PADD – Pointer increments
+// All PADD immediate ranges are the same on AIE2P, always select to
+// the multi-slot pseudo
+def : Pat< (ptradd eP:$ptr, (i20 c10s_step64:$imm)),
+           (PADD_imm_pseudo eP:$ptr, c10s_step64:$imm)>;
+def : Pat< (ptradd eP:$ptr, eM:$mod),
+           (PADD_mod_pseudo eP:$ptr, eM:$mod)>;
+
+// 4.1.2 CLB/CLZ – Count leading bits/zeros
+// CLZ is a standard llvm intrinsic
+def : PatGpr<int_aie2p_clb, CLB, i32>;
+def : PatGpr<ctlz, CLZ, i32>;
+def : PatGpr<ctlz_zero_undef, CLZ, i32>;
+
+// 4.1.4 EXTEND – Sign extend / Zero Extend
+// Note: Sign extensions are handled in AIE2PInstructionSelector.cpp.
+def : Pat<(i32 (and eR:$rs1, (i32 255))), (EXTEND_u8 eR:$rs1)>;
+def : Pat<(i32 (and eR:$rs1, (i32 65535))), (EXTEND_u16 eR:$rs1)>;
+
+multiclass ALUPatterns<ValueType type> {
+// 4.1.6 ABS - Absolute Value
+def : PatGpr<abs, ABS, type>;
+// 4.1.7 ADD – Add Immediate
+def : Pat<(type (add (type eR:$s0), c7s:$imm)), (ADD_add_r_ri eR:$s0, c7s:$imm)>;
+def : Pat<(type (sub (type eR:$s0), c7s_negated:$imm)),
+          (ADD_add_r_ri eR:$s0, (NegateImm c7s_negated:$imm))>;
+
+// 4.1.9 ADD/SUB/ADC/SBC – Addition/subtraction
+def : PatGprGpr<add, ADD_alu_r_rr, type>;
+def : PatGprGpr<sub, SUB, type>;
+// 4.1.10 AND / OR / XOR – Bitwise Operations
+def : PatGprGpr<and, AND, type>;
+def : PatGprGpr<or, OR, type>;
+def : PatGprGpr<xor, XOR, type>;
+// 4.1.13 MUL – Scalar multiplication
+def : PatGprGpr<mul, MUL, type>;
+}
+defm : ALUPatterns<i32>;
+
+// 4.1.8 SELECT
+class SelectPat<ValueType type> :
+         Pat<(type (select (i32 eR27:$rs1), (type eR:$rs2), (type eR:$rs3))),
+          (SEL_NEZ eR:$rs2, eR:$rs3, eR27:$rs1)>;
+def : SelectPat<ptr0>;
+def : SelectPat<i32>;
+
+
+class SelectNezPat<ValueType type> :
+         Pat<(type (select (i32 (setne eR27:$rs1, (i32 0))), (type eR:$rs2), (type eR:$rs3))),
+          (SEL_NEZ eR:$rs2, eR:$rs3, eR27:$rs1)>;
+
+def : SelectNezPat<ptr0>;
+def : SelectNezPat<i32>;
+
+class SelectNotPat<ValueType type> :
+         Pat<(type (select (i32 (seteq eR27:$rs1, (i32 0))), (type eR:$rs2), (type eR:$rs3))),
+          (SEL_EQZ eR:$rs2, eR:$rs3, eR27:$rs1)>;
+
+def : SelectNotPat<ptr0>;
+def : SelectNotPat<i32>;
+
+// Compare operations with corresponding instructions
+class CmpPat<PatFrag CondOp, AIE2PInst Inst, ValueType type>
+    : Pat<(i32 (CondOp (type eR:$rs1), (type eR:$rs2))),
+	       (Inst eR:$rs1, eR:$rs2)>;
+multiclass CmpZeroPat<PatFrag CondOp, AIE2PInst Inst, ValueType type> {
+  def : Pat<(i32 (CondOp (type eR:$rs1), (type 0))),
+	       (Inst eR:$rs1)>;
+  def : Pat<(i32 (CondOp (type 0), (type eR:$rs1))),
+	       (Inst eR:$rs1)>;
+}
+
+// Compare operations without corresponding instructions, but which
+// are trivially supported by swapping the two input operands
+class CmpSwapPat<PatFrag CondOp, AIE2PInst Inst, ValueType type>
+    : Pat<(i32 (CondOp (type eR:$rs1), (type eR:$rs2))),
+          (Inst eR:$rs2, eR:$rs1)>;
+
+multiclass CmpPatternsUnsigned<ValueType type> {
+def : CmpPat<seteq, EQ, type>;
+defm : CmpZeroPat<seteq, EQZ, type>;
+def : CmpPat<setne, NE, type>;
+defm : CmpZeroPat<setne, NEZ, type>;
+def : CmpPat<setult, LTU, type>;
+def : CmpPat<setuge, GEU, type>;
+def : CmpSwapPat<setugt, LTU, type>;
+def : CmpSwapPat<setule, GEU, type>;
+}
+multiclass CmpPatternsSigned<ValueType type> {
+def : CmpPat<setlt, LT, type>;
+def : CmpPat<setge, GE, type>;
+def : CmpSwapPat<setgt, LT, type>;
+def : CmpSwapPat<setle, GE, type>;
+}
+
+// 4.1.5 EQZ / NEZ – Compare to zero
+// 4.1.11 EQ / NE / GE / GEU / LT / LTU – Compare registers
+defm : CmpPatternsUnsigned<i32>;
+defm : CmpPatternsUnsigned<ptr0>;
+defm : CmpPatternsSigned<i32>;
+
+// 4.1.12 LSHL / ASHL – Shift register
+// TODO: Could we always lower right shifts to left shifts to help simplify constants?
+def : Pat<(srl (i32 eR:$rs1), (i32 eR:$rs2)), (LSHL eR:$rs1, (SUB (MOV_RLC_imm11_pseudo (i32 0)), eR:$rs2))>;
+def : Pat<(sra (i32 eR:$rs1), (i32 eR:$rs2)), (ASHL eR:$rs1, (SUB (MOV_RLC_imm11_pseudo (i32 0)), eR:$rs2))>;
+def : Pat<(shl (i32 eR:$rs1), (i32 eR:$rs2)), (LSHL eR:$rs1, eR:$rs2)>;
+def : Pat<(srl (i32 eR:$rs1), (i32 c32s:$amount)),
+          (LSHL eR:$rs1, (MOV_RLC_imm11_pseudo (i32 (NegateImm c32s:$amount))))>;
+def : Pat<(sra (i32 eR:$rs1), (i32 c32s:$amount)),
+          (ASHL eR:$rs1, (MOV_RLC_imm11_pseudo (i32 (NegateImm c32s:$amount))))>;
+
+// ACQ – Acquire semaphore
+def : Pat<(int_aie2p_acquire eR:$mRx, eR:$mRy), (ACQ_mLockId_reg eR:$mRx, eR:$mRy)>;
+def : Pat<(int_aie2p_acquire_cond eR:$mRx, eR:$mRy, eR26:$s2), (ACQ_COND_mLockId_reg eR:$mRx, eR:$mRy, eR26:$s2)>;
+def : Pat<(int_aie2p_acquire c6u:$id, eR:$mRy), (ACQ_mLockId_imm c6u:$id, eR:$mRy)>;
+def : Pat<(int_aie2p_acquire_cond c6u:$id, eR:$mRy, eR26:$s2), (ACQ_COND_mLockId_imm c6u:$id, eR:$mRy, eR26:$s2)>;
+
+// REL – Release semaphore
+def : Pat<(int_aie2p_release eR:$mRx, eR:$mRy), (REL_mLockId_reg eR:$mRx, eR:$mRy)>;
+def : Pat<(int_aie2p_release_cond eR:$mRx, eR:$mRy, eR26:$s2), (REL_COND_mLockId_reg eR:$mRx, eR:$mRy, eR26:$s2)>;
+def : Pat<(int_aie2p_release c6u:$id, eR:$mRy), (REL_mLockId_imm c6u:$id, eR:$mRy)>;
+def : Pat<(int_aie2p_release_cond c6u:$id, eR:$mRy, eR26:$s2), (REL_COND_mLockId_imm c6u:$id, eR:$mRy, eR26:$s2)>;
+
+
+// 4.4.2 DONE
+def : Pat<(int_aie2p_done), (DONE)>;
+
+// J – Absolute Jump
+// Note we cannot use addr20 in the output pattern, as it isn't a valid MVT.
+def : Pat<(br bb:$addr), (PseudoJ_jump_imm bb:$addr)>;
+
+// JZ/JNZ
+// Base pattern
+def : Pat <(brcond (i32 eR:$mRx), bb:$addr), (PseudoJNZ eR:$mRx, bb:$addr)>;
+// Absorb conversion to 0/1
+def : Pat <(brcond (i32 (setne eR:$mRx, (i32 0))), bb:$addr), (PseudoJNZ eR:$mRx, bb:$addr)>;
+// Absorb logical negation by reversing branch condition
+def : Pat <(brcond (i32 (seteq eR:$mRx, (i32 0))), bb:$addr), (PseudoJZ eR:$mRx, bb:$addr)>;
+
+
+// ACC ADD
+def : Pat<(int_aie2p_ACC2048_add_conf ACC2048:$acc1, ACC2048:$acc2, eR:$acc),
+           (VADD_vmac_cm2_add_reg ACC2048:$acc1, ACC2048:$acc2, eR:$acc)>;
+def : PatInaccessibleMem<(int_aie2p_ACC2048_accfloat_add_conf ACC2048:$acc1, ACC2048:$acc2, eR:$acc),
+           (VADD_f_vmac_cm2_add_reg ACC2048:$acc1, ACC2048:$acc2, eR:$acc)>;
+def : Pat<(int_aie2p_ACC2048_sub_conf ACC2048:$acc1, ACC2048:$acc2, eR:$acc),
+           (VSUB_vmac_cm2_add_reg ACC2048:$acc1, ACC2048:$acc2, eR:$acc)>;
+def : PatInaccessibleMem<(int_aie2p_ACC2048_accfloat_sub_conf ACC2048:$acc1, ACC2048:$acc2, eR:$acc),
+           (VSUB_f_vmac_cm2_add_reg ACC2048:$acc1, ACC2048:$acc2, eR:$acc)>;
+
+// VMUL/VMAC Intrinsics
+
+def : Pat<(int_aie2p_I1024_I1024_ACC2048_addmac_conf VEC1024:$s1, VEC1024:$s2, ACC2048:$acc1, ACC2048:$acc2, eR:$acc),
+           (VADDMAC_vmac_cm2_add_reg_vmul_cm_core_Y_Y 
+            ACC2048:$acc1, ACC2048:$acc2, VEC1024:$s1, VEC1024:$s2, eR:$acc)>;
+
+def : PatInaccessibleMem<(int_aie2p_I1024_I1024_ACC2048_bf_addmac_conf 
+        VEC1024:$s1, VEC1024:$s2, ACC2048:$acc1, ACC2048:$acc2, eR:$acc),
+      (VADDMAC_f_vaddmac_bf_vmac_cm2_add_reg_vmul_bf_core_Y_Y 
+        ACC2048:$acc1, ACC2048:$acc2, VEC1024:$s1, VEC1024:$s2, eR:$acc)>;
+
+def : PatInaccessibleMem<(int_aie2p_I1024_I1024_ACC2048_bf_mac_conf VEC1024:$s1, VEC1024:$s2, ACC2048:$acc1, eR:$acc),
+           (VMAC_f_vmac_bf_vmul_bf_core_Y_Y ACC2048:$acc1, VEC1024:$s1, VEC1024:$s2, eR:$acc)>;
+
+def : PatInaccessibleMem<(int_aie2p_I1024_I1024_ACC2048_bf_mul_conf VEC1024:$s1, VEC1024:$s2, eR:$acc),
+           (VMUL_f_vmul_bf_vmul_bf_core_Y_Y VEC1024:$s1, VEC1024:$s2, eR:$acc)>;
+
+def : Pat<(int_aie2p_I1024_I1024_ACC2048_mac_conf VEC1024:$s1, VEC1024:$s2, ACC2048:$acc1, eR:$acc),
+           (VMAC_vmul_cm_core_Y_Y ACC2048:$acc1, VEC1024:$s1, VEC1024:$s2, eR:$acc)>;
+
+def : Pat<(int_aie2p_I1024_I1024_ACC2048_mul_conf VEC1024:$s1, VEC1024:$s2, eR:$acc),
+           (VMUL_vmul_cm_core_Y_Y VEC1024:$s1, VEC1024:$s2, eR:$acc)>;
+
+def : Pat<(int_aie2p_I1024_I512_ACC2048_addmac_conf 
+           VEC1024:$s1, VEC512:$s2, ACC2048:$acc1, ACC2048:$acc2, eR:$acc),
+           (VADDMAC_vmac_cm2_add_reg_vmul_cm_core_Y_X 
+            ACC2048:$acc1, ACC2048:$acc2, VEC1024:$s1, VEC512:$s2, eR:$acc)>;
+
+def : Pat<(int_aie2p_I1024_I512_ACC2048_mac_conf VEC1024:$s1, VEC512:$s2, ACC2048:$acc1, eR:$acc),
+           (VMAC_vmul_cm_core_Y_X ACC2048:$acc1, VEC1024:$s1, VEC512:$s2, eR:$acc)>;
+
+def : Pat<(int_aie2p_I1024_I512_ACC2048_mul_conf VEC1024:$s1, VEC512:$s2, eR:$acc),
+           (VMUL_vmul_cm_core_Y_X VEC1024:$s1, VEC512:$s2, eR:$acc)>;
+
+def : Pat<(int_aie2p_I512_I1024_ACC2048_addmac_conf VEC512:$s1, VEC1024:$s2, ACC2048:$acc1, ACC2048:$acc2, eR:$acc),
+           (VADDMAC_vmac_cm2_add_reg_vmul_cm_core_X_Y ACC2048:$acc1, ACC2048:$acc2, VEC512:$s1, VEC1024:$s2, eR:$acc)>;
+
+def : Pat<(int_aie2p_I512_I1024_ACC2048_mac_conf VEC512:$s1, VEC1024:$s2, ACC2048:$acc1, eR:$acc),
+           (VMAC_vmul_cm_core_X_Y ACC2048:$acc1, VEC512:$s1, VEC1024:$s2, eR:$acc)>;
+
+def : Pat<(int_aie2p_I512_I1024_ACC2048_mul_conf VEC512:$s1, VEC1024:$s2, eR:$acc),
+           (VMUL_vmul_cm_core_X_Y VEC512:$s1, VEC1024:$s2, eR:$acc)>;
+
+def : Pat<(int_aie2p_I512_I512_ACC1024_addmac_conf VEC512:$s1, VEC512:$s2, ACC1024:$acc1, ACC1024:$acc2, eR:$acc),
+           (EXTRACT_SUBREG 
+            (VADDMAC_vmac_cm2_add_reg_vmul_cm_core_X_X 
+             (REG_SEQUENCE ACC2048, ACC1024:$acc1, sub_1024_acc_lo),
+             (REG_SEQUENCE ACC2048, ACC1024:$acc2, sub_1024_acc_lo),
+             VEC512:$s1, VEC512:$s2, eR:$acc),
+           sub_1024_acc_lo)>;
+
+def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC1024_bf_addmac_conf VEC512:$s1, VEC512:$s2, ACC1024:$acc1, ACC1024:$acc2, eR:$acc),
+           (EXTRACT_SUBREG
+            (VADDMAC_f_vaddmac_bf_vmac_cm2_add_reg_vmul_bf_core_X_X 
+             (REG_SEQUENCE ACC2048, ACC1024:$acc1, sub_1024_acc_lo),
+             (REG_SEQUENCE ACC2048, ACC1024:$acc2, sub_1024_acc_lo),
+             VEC512:$s1, VEC512:$s2, eR:$acc), 
+           sub_1024_acc_lo)>;
+
+def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC1024_bf_mac_conf VEC512:$s1, VEC512:$s2, ACC1024:$acc1, eR:$acc),
+           (EXTRACT_SUBREG 
+            (VMAC_f_vmac_bf_vmul_bf_core_X_X 
+             (REG_SEQUENCE ACC2048, ACC1024:$acc1, sub_1024_acc_lo),
+             VEC512:$s1, VEC512:$s2, eR:$acc),
+           sub_1024_acc_lo)>;
+
+def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC1024_bf_mul_conf VEC512:$s1, VEC512:$s2, eR:$acc),
+           (EXTRACT_SUBREG 
+            (VMUL_f_vmul_bf_vmul_bf_core_X_X VEC512:$s1, VEC512:$s2, eR:$acc),
+           sub_1024_acc_lo)>;
+
+def : Pat<(int_aie2p_I512_I512_ACC1024_mac_conf VEC512:$s1, VEC512:$s2, ACC1024:$acc1, eR:$acc),
+           (EXTRACT_SUBREG
+            (VMAC_vmul_cm_core_X_X 
+             (REG_SEQUENCE ACC2048, ACC1024:$acc1, sub_1024_acc_lo),
+             VEC512:$s1, VEC512:$s2, eR:$acc),
+           sub_1024_acc_lo)>;
+
+def : Pat<(int_aie2p_I512_I512_ACC1024_mul_conf VEC512:$s1, VEC512:$s2, eR:$acc),
+           (EXTRACT_SUBREG (VMUL_vmul_cm_core_X_X VEC512:$s1, VEC512:$s2, eR:$acc), sub_1024_acc_lo)>;
+
+
+def : Pat<(int_aie2p_I512_I512_ACC2048_addmac_conf VEC512:$s1, VEC512:$s2, ACC2048:$acc1, ACC2048:$acc2, eR:$acc),
+           (VADDMAC_vmac_cm2_add_reg_vmul_cm_core_X_X ACC2048:$acc1, ACC2048:$acc2,
+            VEC512:$s1, VEC512:$s2, eR:$acc)>;
+
+def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC2048_bf_addmac_conf VEC512:$s1, VEC512:$s2, ACC2048:$acc1, ACC2048:$acc2, eR:$acc),
+           (VADDMAC_f_vaddmac_bf_vmac_cm2_add_reg_vmul_bf_core_X_X ACC2048:$acc1, ACC2048:$acc2,
+            VEC512:$s1, VEC512:$s2, eR:$acc)>;
+
+def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC2048_bf_mac_conf VEC512:$s1, VEC512:$s2, ACC2048:$acc1, eR:$acc),
+           (VMAC_f_vmac_bf_vmul_bf_core_X_X ACC2048:$acc1, VEC512:$s1, VEC512:$s2, eR:$acc)>;
+
+def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC2048_bf_mul_conf VEC512:$s1, VEC512:$s2, eR:$acc),
+           (VMUL_f_vmul_bf_vmul_bf_core_X_X VEC512:$s1, VEC512:$s2, eR:$acc)>;
+
+def : Pat<(int_aie2p_I512_I512_ACC2048_mac_conf VEC512:$s1, VEC512:$s2, ACC2048:$acc1, eR:$acc),
+           (VMAC_vmul_cm_core_X_X ACC2048:$acc1, VEC512:$s1, VEC512:$s2, eR:$acc)>;
+
+def : Pat<(int_aie2p_I512_I512_ACC2048_mul_conf VEC512:$s1, VEC512:$s2, eR:$acc),
+           (VMUL_vmul_cm_core_X_X VEC512:$s1, VEC512:$s2, eR:$acc)>;
+
+def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC512_bf_addmac_conf VEC512:$s1, VEC512:$s2, ACC512:$acc1, ACC512:$acc2, eR:$acc),
+           (EXTRACT_SUBREG (VADDMAC_f_vaddmac_bf_vmac_cm2_add_reg_vmul_bf_core_X_X 
+            (REG_SEQUENCE ACC2048, ACC512:$acc1, sub_512_acc_lo),
+            (REG_SEQUENCE ACC2048, ACC512:$acc2, sub_512_acc_lo),
+             VEC512:$s1, VEC512:$s2, eR:$acc), sub_512_acc_lo)>;
+
+def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC512_bf_mac_conf VEC512:$s1, VEC512:$s2, ACC512:$acc1, eR:$acc),
+           (EXTRACT_SUBREG
+            (VMAC_f_vmac_bf_vmul_bf_core_X_X 
+              (REG_SEQUENCE ACC2048, ACC512:$acc1, sub_512_acc_lo),
+              VEC512:$s1, VEC512:$s2, eR:$acc), sub_512_acc_lo)>;
+
+def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC512_bf_mul_conf VEC512:$s1, VEC512:$s2, eR:$acc),
+           (EXTRACT_SUBREG (VMUL_f_vmul_bf_vmul_bf_core_X_X VEC512:$s1, VEC512:$s2, eR:$acc), sub_512_acc_lo)>;
+
+// NEG/SUB Intrinsics
+
+def : PatInaccessibleMem<(int_aie2p_ACC2048_accfloat_neg_conf ACC2048:$acc1, eR:$acc),
+           (VNEG_f ACC2048:$acc1, eR:$acc)>;
+def : Pat<(int_aie2p_ACC2048_neg_conf ACC2048:$acc1, eR:$acc),
+           (VNEG ACC2048:$acc1, eR:$acc)>;
+
+// MSC/NEGMUL Intrinsics
+def : Pat<(int_aie2p_I1024_I1024_ACC2048_addmsc_conf 
+           VEC1024:$s1, 
+           VEC1024:$s2,
+           ACC2048:$acc1,
+           ACC2048:$acc2,
+           eR:$acc),
+          (VADDMSC_vmac_cm2_add_reg_vmul_cm_core_Y_Y 
+           ACC2048:$acc1,
+           ACC2048:$acc2, 
+           VEC1024:$s1,
+           VEC1024:$s2,
+           eR:$acc)>;
+def : PatInaccessibleMem<(int_aie2p_I1024_I1024_ACC2048_bf_addmsc_conf 
+           VEC1024:$s1, 
+           VEC1024:$s2,
+           ACC2048:$acc1,
+           ACC2048:$acc2,
+           eR: $acc),
+          (VADDMSC_f_vaddmac_bf_vmac_cm2_add_reg_vmul_bf_core_Y_Y 
+           ACC2048:$acc1, 
+           ACC2048:$acc2, 
+           VEC1024:$s1, 
+           VEC1024:$s2, 
+           eR:$acc)>;
+def : PatInaccessibleMem<(int_aie2p_I1024_I1024_ACC2048_bf_msc_conf 
+           VEC1024:$s1, 
+           VEC1024:$s2, 
+           ACC2048:$acc1, 
+           eR:$acc),
+          (VMSC_f_vmac_bf_vmul_bf_core_Y_Y 
+           ACC2048:$acc1,
+           VEC1024:$s1,
+           VEC1024:$s2,
+           eR:$acc)>;
+def : PatInaccessibleMem<(int_aie2p_I1024_I1024_ACC2048_bf_negmul_conf 
+           VEC1024:$s1, 
+           VEC1024:$s2, 
+           eR:$acc),
+          (VNEGMUL_f_vmul_bf_vmul_bf_core_Y_Y
+           VEC1024:$s1,
+           VEC1024:$s2,
+           eR:$acc)>;
+def : Pat<(int_aie2p_I1024_I1024_ACC2048_msc_conf
+           VEC1024:$s1, 
+           VEC1024:$s2, 
+           ACC2048:$acc1, 
+           eR:$acc),
+          (VMSC_vmul_cm_core_Y_Y 
+           ACC2048:$acc1,
+           VEC1024:$s1,
+           VEC1024:$s2,
+           eR:$acc)>;
+def : Pat<(int_aie2p_I1024_I1024_ACC2048_negmul_conf 
+           VEC1024:$s1, 
+           VEC1024:$s2, 
+           eR:$acc),
+          (VNEGMUL_vmul_cm_core_Y_Y
+           VEC1024:$s1,
+           VEC1024:$s2,
+           eR:$acc)>;
+def : Pat<(int_aie2p_I1024_I512_ACC2048_addmsc_conf
+           VEC1024:$s1, 
+           VEC512:$s2,
+           ACC2048:$acc1,
+           ACC2048:$acc2,
+           eR: $acc),
+          (VADDMSC_vmac_cm2_add_reg_vmul_cm_core_Y_X 
+           ACC2048:$acc1, 
+           ACC2048:$acc2, 
+           VEC1024:$s1, 
+           VEC512:$s2, 
+           eR:$acc)>;
+def : Pat<(int_aie2p_I1024_I512_ACC2048_msc_conf
+           VEC1024:$s1, 
+           VEC512:$s2,
+           ACC2048:$acc1,
+           eR: $acc),
+          (VMSC_vmul_cm_core_Y_X 
+           ACC2048:$acc1, 
+           VEC1024:$s1, 
+           VEC512:$s2, 
+           eR:$acc)>;
+def : Pat<(int_aie2p_I1024_I512_ACC2048_negmul_conf
+           VEC1024:$s1, 
+           VEC512:$s2,
+           eR: $acc),
+          (VNEGMUL_vmul_cm_core_Y_X 
+           VEC1024:$s1, 
+           VEC512:$s2, 
+           eR:$acc)>;
+def : Pat<(int_aie2p_I512_I1024_ACC2048_addmsc_conf
+           VEC512:$s1, 
+           VEC1024:$s2,
+           ACC2048:$acc1,
+           ACC2048:$acc2,
+           eR: $acc),
+          (VADDMSC_vmac_cm2_add_reg_vmul_cm_core_X_Y 
+           ACC2048:$acc1, 
+           ACC2048:$acc2, 
+           VEC512:$s1, 
+           VEC1024:$s2, 
+           eR:$acc)>;
+def : Pat<(int_aie2p_I512_I1024_ACC2048_msc_conf
+           VEC512:$s1, 
+           VEC1024:$s2,
+           ACC2048:$acc1,
+           eR: $acc),
+          (VMSC_vmul_cm_core_X_Y 
+           ACC2048:$acc1, 
+           VEC512:$s1, 
+           VEC1024:$s2, 
+           eR:$acc)>;
+def : Pat<(int_aie2p_I512_I1024_ACC2048_negmul_conf
+           VEC512:$s1, 
+           VEC1024:$s2,
+           eR:$acc),
+          (VNEGMUL_vmul_cm_core_X_Y 
+           VEC512:$s1, 
+           VEC1024:$s2, 
+           eR:$acc)>;
+def : Pat<(int_aie2p_I512_I512_ACC1024_addmsc_conf
+           VEC512:$s1, 
+           VEC512:$s2,
+           ACC1024:$acc1,
+           ACC1024:$acc2,
+           eR:$acc),
+          (EXTRACT_SUBREG (VADDMSC_vmac_cm2_add_reg_vmul_cm_core_X_X 
+           (REG_SEQUENCE ACC2048, ACC1024:$acc1, sub_1024_acc_lo),
+           (REG_SEQUENCE ACC2048, ACC1024:$acc2, sub_1024_acc_lo),
+           VEC512:$s1, 
+           VEC512:$s2, 
+           eR:$acc), sub_1024_acc_lo)>;
+def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC1024_bf_addmsc_conf
+           VEC512:$s1, 
+           VEC512:$s2,
+           ACC1024:$acc1,
+           ACC1024:$acc2,
+           eR:$acc),
+          (EXTRACT_SUBREG (VADDMSC_f_vaddmac_bf_vmac_cm2_add_reg_vmul_bf_core_X_X
+           (REG_SEQUENCE ACC2048, ACC1024:$acc1, sub_1024_acc_lo),
+           (REG_SEQUENCE ACC2048, ACC1024:$acc2, sub_1024_acc_lo),
+           VEC512:$s1, 
+           VEC512:$s2, 
+           eR:$acc), sub_1024_acc_lo)>;
+def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC1024_bf_msc_conf
+           VEC512:$s1, 
+           VEC512:$s2,
+           ACC1024:$acc1,
+           eR:$acc),
+          (EXTRACT_SUBREG (VMSC_f_vmac_bf_vmul_bf_core_X_X
+           (REG_SEQUENCE ACC2048, ACC1024:$acc1, sub_1024_acc_lo),
+           VEC512:$s1, 
+           VEC512:$s2, 
+           eR:$acc), sub_1024_acc_lo)>;
+def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC1024_bf_negmul_conf
+           VEC512:$s1, 
+           VEC512:$s2,
+           eR:$acc),
+          (EXTRACT_SUBREG (VNEGMUL_f_vmul_bf_vmul_bf_core_X_X
+           VEC512:$s1, 
+           VEC512:$s2, 
+           eR:$acc), sub_1024_acc_lo)>;
+def : Pat<(int_aie2p_I512_I512_ACC1024_msc_conf
+           VEC512:$s1, 
+           VEC512:$s2,
+           ACC1024:$acc1,
+           eR:$acc),
+          (EXTRACT_SUBREG (VMSC_vmul_cm_core_X_X
+           (REG_SEQUENCE ACC2048, ACC1024:$acc1, sub_1024_acc_lo),
+           VEC512:$s1, 
+           VEC512:$s2, 
+           eR:$acc), sub_1024_acc_lo)>;
+def : Pat<(int_aie2p_I512_I512_ACC1024_negmul_conf
+           VEC512:$s1, 
+           VEC512:$s2,
+           eR:$acc),
+          (EXTRACT_SUBREG (VNEGMUL_vmul_cm_core_X_X
+           VEC512:$s1, 
+           VEC512:$s2, 
+           eR:$acc), sub_1024_acc_lo)>;
+def : Pat<(int_aie2p_I512_I512_ACC2048_addmsc_conf 
+           VEC512:$s1,
+           VEC512:$s2,
+           ACC2048:$acc1,
+           ACC2048:$acc2,
+           eR:$acc),
+           (VADDMSC_vmac_cm2_add_reg_vmul_cm_core_X_X 
+            ACC2048:$acc1,
+            ACC2048:$acc2,
+            VEC512:$s1,
+            VEC512:$s2, 
+            eR:$acc)>;
+def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC2048_bf_addmsc_conf 
+           VEC512:$s1,
+           VEC512:$s2,
+           ACC2048:$acc1,
+           ACC2048:$acc2,
+           eR:$acc),
+           (VADDMSC_f_vaddmac_bf_vmac_cm2_add_reg_vmul_bf_core_X_X 
+            ACC2048:$acc1,
+            ACC2048:$acc2,
+            VEC512:$s1,
+            VEC512:$s2, 
+            eR:$acc)>;
+def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC2048_bf_msc_conf
+           VEC512:$s1, 
+           VEC512:$s2,
+           ACC2048:$acc1,
+           eR:$acc),
+          (VMSC_f_vmac_bf_vmul_bf_core_X_X
+           ACC2048:$acc1,
+           VEC512:$s1, 
+           VEC512:$s2, 
+           eR:$acc)>;
+def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC2048_bf_negmul_conf
+           VEC512:$s1, 
+           VEC512:$s2,
+           eR:$acc),
+          (VNEGMUL_f_vmul_bf_vmul_bf_core_X_X
+           VEC512:$s1, 
+           VEC512:$s2, 
+           eR:$acc)>;
+def : Pat<(int_aie2p_I512_I512_ACC2048_msc_conf
+           VEC512:$s1, 
+           VEC512:$s2,
+           ACC2048:$acc1,
+           eR:$acc),
+          (VMSC_vmul_cm_core_X_X
+           ACC2048:$acc1,
+           VEC512:$s1, 
+           VEC512:$s2, 
+           eR:$acc)>;
+def : Pat<(int_aie2p_I512_I512_ACC2048_negmul_conf
+           VEC512:$s1, 
+           VEC512:$s2,
+           eR:$acc),
+          (VNEGMUL_vmul_cm_core_X_X
+           VEC512:$s1, 
+           VEC512:$s2, 
+           eR:$acc)>;
+def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC512_bf_addmsc_conf
+           VEC512:$s1, 
+           VEC512:$s2,
+           ACC512:$acc1,
+           ACC512:$acc2,
+           eR:$acc),
+          (EXTRACT_SUBREG (VADDMSC_f_vaddmac_bf_vmac_cm2_add_reg_vmul_bf_core_X_X
+           (REG_SEQUENCE ACC2048, ACC512:$acc1, sub_512_acc_lo),
+           (REG_SEQUENCE ACC2048, ACC512:$acc2, sub_512_acc_lo),
+           VEC512:$s1, 
+           VEC512:$s2, 
+           eR:$acc), sub_512_acc_lo)>;
+def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC512_bf_msc_conf
+           VEC512:$s1, 
+           VEC512:$s2,
+           ACC512:$acc1,
+           eR:$acc),
+          (EXTRACT_SUBREG (VMSC_f_vmac_bf_vmul_bf_core_X_X
+           (REG_SEQUENCE ACC2048, ACC512:$acc1, sub_512_acc_lo),
+           VEC512:$s1, 
+           VEC512:$s2, 
+           eR:$acc), sub_512_acc_lo)>;
+def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC512_bf_negmul_conf
+           VEC512:$s1, 
+           VEC512:$s2,
+           eR:$acc),
+          (EXTRACT_SUBREG (VNEGMUL_f_vmul_bf_vmul_bf_core_X_X
+           VEC512:$s1, 
+           VEC512:$s2, 
+           eR:$acc), sub_512_acc_lo)>;
+
+// SRS Intrinsic
+// Note : Non-constant sign is handled in .cpp
+foreach intr = [int_aie2p_I256_v16_acc32_srs, int_aie2p_I256_v8_acc64_srs] in {
+  def : PatInaccessibleMem<(intr ACC512:$src,  eS:$shft, 0x0),
+             (VSRS_2x_mv_w_srs_bm_srsSign0 ACC512:$src,  eS:$shft)>;
+  def : PatInaccessibleMem<(intr ACC512:$src,  eS:$shft, 0x1),
+             (VSRS_2x_mv_w_srs_bm_srsSign1 ACC512:$src,  eS:$shft)>;
+}
+foreach intr = [int_aie2p_I256_v32_acc32_srs, int_aie2p_I256_v16_acc64_srs] in {
+  def : PatInaccessibleMem<(intr ACC1024:$src,  eS:$shft, 0x0),
+             (VSRS_4x_mv_w_srs_cm_srsSign0 ACC1024:$src,  eS:$shft)>;
+  def : PatInaccessibleMem<(intr ACC1024:$src,  eS:$shft, 0x1),
+             (VSRS_4x_mv_w_srs_cm_srsSign1 ACC1024:$src,  eS:$shft)>;
+}
+foreach intr = [int_aie2p_I512_v32_acc32_srs, int_aie2p_I512_v16_acc64_srs] in {
+  def : PatInaccessibleMem<(intr ACC1024:$src,  eS:$shft, 0x0),
+             (VSRS_2x_mv_x_srs_cm_srsSign0 ACC1024:$src,  eS:$shft)>;
+  def : PatInaccessibleMem<(intr ACC1024:$src,  eS:$shft, 0x1),
+             (VSRS_2x_mv_x_srs_cm_srsSign1 ACC1024:$src,  eS:$shft)>;
+}
+foreach intr = [int_aie2p_I512_v64_acc32_srs, int_aie2p_I512_v32_acc64_srs] in {
+  def : PatInaccessibleMem<(intr ACC2048:$src,  eS:$shft, 0x0),
+             (VSRS_4x_mv_x_srs_dm_srsSign0 ACC2048:$src,  eS:$shft)>;
+  def : PatInaccessibleMem<(intr ACC2048:$src,  eS:$shft, 0x1),
+             (VSRS_4x_mv_x_srs_dm_srsSign1 ACC2048:$src,  eS:$shft)>;
+}
+// UPS Intrinsic
+// Note : Non-constant sign is handled in .cpp
+foreach intr = [int_aie2p_acc32_v16_I256_ups, int_aie2p_acc64_v8_I256_ups] in {
+  def : PatInaccessibleMem<(intr VEC256:$src,  eS:$shft, 0x0),
+             (VUPS_2x_mv_ups_w2b_upsSign0 VEC256:$src,  eS:$shft)>;
+  def : PatInaccessibleMem<(intr VEC256:$src,  eS:$shft, 0x1),
+             (VUPS_2x_mv_ups_w2b_upsSign1 VEC256:$src,  eS:$shft)>;
+}
+foreach intr = [int_aie2p_acc32_v32_I256_ups, int_aie2p_acc64_v16_I256_ups] in {
+  def : PatInaccessibleMem<(intr VEC256:$src,  eS:$shft, 0x0),
+             (VUPS_4x_mv_ups_w2c_upsSign0 VEC256:$src,  eS:$shft)>;
+  def : PatInaccessibleMem<(intr VEC256:$src,  eS:$shft, 0x1),
+             (VUPS_4x_mv_ups_w2c_upsSign1 VEC256:$src,  eS:$shft)>;
+}
+foreach intr = [int_aie2p_acc32_v32_I512_ups, int_aie2p_acc64_v16_I512_ups] in {
+  def : PatInaccessibleMem<(intr VEC512:$src,  eS:$shft, 0x0),
+             (VUPS_2x_mv_ups_x2c_upsSign0 VEC512:$src,  eS:$shft)>;
+  def : PatInaccessibleMem<(intr VEC512:$src,  eS:$shft, 0x1),
+             (VUPS_2x_mv_ups_x2c_upsSign1 VEC512:$src,  eS:$shft)>;
+}
+foreach intr = [int_aie2p_acc32_v64_I512_ups, int_aie2p_acc64_v32_I512_ups] in {
+  def : PatInaccessibleMem<(intr VEC512:$src,  eS:$shft, 0x0),
+             (VUPS_4x_mv_ups_x2d_upsSign0 VEC512:$src,  eS:$shft)>;
+  def : PatInaccessibleMem<(intr VEC512:$src,  eS:$shft, 0x1),
+             (VUPS_4x_mv_ups_x2d_upsSign1 VEC512:$src,  eS:$shft)>;
+}
+
+// LD – Scalar Load 
+class LdPat<PatFrag LoadOp, AIE2PInst Inst, ValueType ResType>
+    : Pat<(ResType (LoadOp eP:$rs1)), (Inst eP:$rs1, (i20 0))>;
+foreach Ty = [i20, i32, ptr0] in {
+  def : LdPat<load, LDA_dms_lda_idx_imm, Ty>;
+}
+// Note: Loads to PTR are handled in AIE2PInstructionSelector.cpp.
+class PartWordLdPat<PatFrag LoadOp, AIE2PInst Inst, ValueType ResType>
+    : Pat<(ResType (LoadOp eP:$rs1)), (Inst eP:$rs1, (i20 0 ))>;
+def : PartWordLdPat<sextloadi16, LDA_s16_idx_imm, i32>;
+def : PartWordLdPat<extloadi16, LDA_s16_idx_imm, i32>;
+def : PartWordLdPat<zextloadi16, LDA_u16_idx_imm, i32>;
+def : PartWordLdPat<sextloadi8, LDA_s8_idx_imm, i32>;
+def : PartWordLdPat<extloadi8, LDA_s8_idx_imm, i32>;
+def : PartWordLdPat<zextloadi8, LDA_u8_idx_imm, i32>;
+
+
+// ST – Scalar Word Store
+class StPat<PatFrag StoreOp, AIE2PInst InstInd, ValueType type, RegisterClass RegClass>
+    : Pat<(StoreOp (type RegClass:$rs2), eP:$rs1), (InstInd RegClass:$rs2, eP:$rs1, (i20 0))>;
+foreach Ty = [i20, i32, ptr0] in {
+	def : StPat<store, ST_dms_sts_idx_imm, Ty, eR>;
+}
+def : StPat<store, ST_dms_sts_idx_imm, ptr0, eP>; // Handle stores from PTR
+def : StPat<store, ST_dms_sts_idx_imm, i20, eM>; // Handle stores from MOD
+
+// ST.s8 / ST.s16 – Scalar Sub-Word Store
+class PartWordStPat<PatFrag StoreOp, AIE2PInst InstInd, ValueType type, RegisterClass RegClass>
+    : Pat<(StoreOp (type RegClass:$rs2), eP:$rs1), (InstInd RegClass:$rs2, eP:$rs1, (i20 0))>;
+def : PartWordStPat<truncstorei8, ST_s8_idx_imm, i32, eR>;
+def : PartWordStPat<truncstorei16, ST_s16_idx_imm, i32, eR>;
+
+// VADD/VSUB
+def : Pat<(add v64i8:$src1, v64i8:$src2),   (VADD_8  VEC512:$src1, VEC512:$src2)>;
+def : Pat<(add v32i16:$src1, v32i16:$src2), (VADD_16 VEC512:$src1, VEC512:$src2)>;
+def : Pat<(add v16i32:$src1, v16i32:$src2), (VADD_32 VEC512:$src1, VEC512:$src2)>;
+
+def : Pat<(sub v64i8:$src1, v64i8:$src2),   (VSUB_8  VEC512:$src1, VEC512:$src2)>;
+def : Pat<(sub v32i16:$src1, v32i16:$src2), (VSUB_16 VEC512:$src1, VEC512:$src2)>;
+def : Pat<(sub v16i32:$src1, v16i32:$src2), (VSUB_32 VEC512:$src1, VEC512:$src2)>;
+           
+def bcst_vector_node : SDNode<"AIE2P::G_AIE_BROADCAST_VECTOR",
+                              SDTypeProfile<1, 1, []>>;
+def : GINodeEquiv<G_AIE_BROADCAST_VECTOR, bcst_vector_node>;
+
+// Scalar i32 src operands select the VBCST instruction according to the dst
+// vector element type
+def : Pat<(v64i8(bcst_vector_node(i32 eR : $s0))), (VBCST_8 eR : $s0)>;
+def : Pat<(v32i16(bcst_vector_node(i32 eR : $s0))), (VBCST_16 eR : $s0)>;
+def : Pat<(v16i32(bcst_vector_node(i32 eR : $s0))), (VBCST_32 eR : $s0)>;
+
+// 32-bit src vector types are expected to supply defined values for each lane,
+// thus select the 32-bit VBCST
+def : Pat<(v64i8(bcst_vector_node(v4i8 eR : $s0))), (VBCST_32 eR : $s0)>;
+def : Pat<(v32i16(bcst_vector_node(v2i16 eR : $s0))), (VBCST_32 eR : $s0)>;
+
+// 64-bit src vector types are expected to supply defined values for each lane,
+// thus select the 64-bit VBCST
+def : Pat<(v64i8(bcst_vector_node(v8i8 eL : $s0))), (VBCST_64 eL : $s0)>;
+def : Pat<(v32i16(bcst_vector_node(v4i16 eL : $s0))), (VBCST_64 eL : $s0)>;
+def : Pat<(v16i32(bcst_vector_node(v2i32 eL : $s0))), (VBCST_64 eL : $s0)>;
+// FIXME: Broadcast of v8i64 is supported through v2i32, which is the only case
+// where the src vector element type does not match the dst vector element type.
+def : Pat<(v8i64(bcst_vector_node(v2i32 eL : $s0))), (VBCST_64 eL : $s0)>;
+
+// VSHUFFLE
+foreach intr = [VSHUFFLE_vec_shuffle_x, VSHUFFLE_vec_shuffle_bm] in {
+  def : Pat<(int_aie2p_vshuffle VEC512:$s1, VEC512:$s2, eR:$mod),
+             (intr VEC512:$s1, VEC512:$s2, eR:$mod)>;
+}
+// VSHIFT Intrinsic (shift/shiftx/shift_bytes)
+def : Pat<(int_aie2p_vshift_I512_I512 VEC512:$s1, VEC512:$s2, 0x0, eR:$shift),
+           (VSHIFT VEC512:$s1, VEC512:$s2, eR:$shift)>;
+def : Pat<(int_aie2p_vshift_I512_I512 VEC512:$s1, VEC512:$s2, mSs:$pre ,eR:$shift),
+           (VSHIFT_ALIGN VEC512:$s1, mSs:$pre, VEC512:$s2, eR:$shift)>;
+def : Pat<(int_aie2p_vshift_bf512_bf512 VEC512:$s1, VEC512:$s2, mSs:$pre ,eR:$shift),
+           (VSHIFT_ALIGN VEC512:$s1, mSs:$pre, VEC512:$s2, eR:$shift)>;
+
+// VINSERT
+def : Pat<(int_aie2p_vinsert32_bf512 VEC512:$s1, eR29:$idx, eR:$s0),
+           (VINSERT_32_mR29_insert VEC512:$s1, eR29:$idx, eR:$s0)>;
+def : Pat<(int_aie2p_vinsert64_bf512 VEC512:$s1, eR29:$idx, eL:$s0),
+           (VINSERT_64_mR29_insert VEC512:$s1, eR29:$idx, eL:$s0)>;
+def : Pat<(int_aie2p_vinsert32_accfloat ACC512:$s1, eR29:$idx, eR:$s0),
+           (COPY_TO_REGCLASS (VINSERT_32_mR29_insert (COPY_TO_REGCLASS ACC512:$s1, VEC512), eR29:$idx, eR:$s0), ACC512)>;
+
+// VBCST
+def : Pat<(int_aie2p_vbroadcast32_bf512 eR:$s0), (VBCST_32 eR:$s0)>;
+def : Pat<(int_aie2p_vbroadcast64_bf512 eL:$s0), (VBCST_64 eL:$s0)>;
+
+// VEXTBCST
+def : Pat<(int_aie2p_vextract_broadcast32_bf512 VEC512:$src, eR:$idx),
+           (VEXTBCST_32_vec_extract_broadcast_r  VEC512:$src, eR:$idx)>;
+def : Pat<(int_aie2p_vextract_broadcast32_bf512 VEC512:$src, c6u:$idx),
+           (VEXTBCST_32_vec_extract_broadcast_imm  VEC512:$src, c6u:$idx)>;
+
+def : Pat<(int_aie2p_vextract_broadcast128_I512 VEC512:$src, eR:$idx),
+           (VEXTBCST_128_vec_extract_broadcast_r  VEC512:$src, eR:$idx)>;
+def : Pat<(int_aie2p_vextract_broadcast128_I512 VEC512:$src, c6u:$idx),
+           (VEXTBCST_128_vec_extract_broadcast_imm  VEC512:$src, c6u:$idx)>;
+
+// VBCSTSHFL
+// Note: There are VBCSTSHFL instructions, which return accumulator types, but it seems no Intrinsics of that type.
+def : Pat<(int_aie2p_vbcst_shuffle8 eR:$s0, eR29:$idx),
+           (VBCSTSHFL_8_vec_broadcast_shuffle_x eR:$s0, eR29:$idx)>;
+def : Pat<(int_aie2p_vbcst_shuffle16 eR:$s0, eR29:$idx),
+           (VBCSTSHFL_16_vec_broadcast_shuffle_x eR:$s0, eR29:$idx)>;
+def : Pat<(int_aie2p_vbcst_shuffle32 eR:$s0, eR29:$idx),
+           (VBCSTSHFL_32_vec_broadcast_shuffle_x eR:$s0, eR29:$idx)>;
+def : Pat<(int_aie2p_vbcst_shuffle64 eL:$s0, eR29:$idx),
+           (VBCSTSHFL_64_vec_broadcast_shuffle_x eL:$s0, eR29:$idx)>;
+
+// concat_vector - vector bank
+def : Pat<(v16i32 (concat_vectors (v8i32 VEC256:$src0), (v8i32 VEC256:$src1))),
+  (v16i32 (REG_SEQUENCE VEC512, VEC256:$src0, sub_256_lo, VEC256:$src1, sub_256_hi))>;
+def : Pat<(v32i32 (concat_vectors (v16i32 VEC512:$src0), (v16i32 VEC512:$src1))),
+  (v32i32 (REG_SEQUENCE VEC1024, VEC512:$src0, sub_512_lo, VEC512:$src1, sub_512_hi))>;
+
+def : Pat<(v32i16 (concat_vectors (v16i16 VEC256:$src0), (v16i16 VEC256:$src1))),
+  (v32i16 (REG_SEQUENCE VEC512, VEC256:$src0, sub_256_lo, VEC256:$src1, sub_256_hi))>;
+def : Pat<(v64i16 (concat_vectors (v32i16 VEC512:$src0), (v32i16 VEC512:$src1))),
+  (v64i16 (REG_SEQUENCE VEC1024, VEC512:$src0, sub_512_lo, VEC512:$src1, sub_512_hi))>;
+
+def : Pat<(v64i8 (concat_vectors (v32i8 VEC256:$src0), (v32i8 VEC256:$src1))),
+  (v64i8 (REG_SEQUENCE VEC512, VEC256:$src0, sub_256_lo, VEC256:$src1, sub_256_hi))>;
+def : Pat<(v128i8 (concat_vectors (v64i8 VEC512:$src0), (v64i8 VEC512:$src1))),
+  (v128i8 (REG_SEQUENCE VEC1024, VEC512:$src0, sub_512_lo, VEC512:$src1, sub_512_hi))>;
+
+// concat_vector - accumulator bank
+def : Pat<(v16i64 (concat_vectors (v8i64 ACC512:$src0), (v8i64 ACC512:$src1))),
+  (v16i64 (REG_SEQUENCE ACC1024, ACC512:$src0, sub_512_acc_lo, ACC512:$src1, sub_512_acc_hi))>;
+
+def : Pat<(v32i32 (concat_vectors (v16i32 ACC512:$src0), (v16i32 ACC512:$src1))),
+  (v32i32 (REG_SEQUENCE ACC1024, ACC512:$src0, sub_512_acc_lo, ACC512:$src1, sub_512_acc_hi))>;
+
+def : Pat<(v32i64 (concat_vectors (v16i64 ACC1024:$src0), (v16i64 ACC1024:$src1))),
+  (v32i64 (REG_SEQUENCE ACC2048, ACC1024:$src0, sub_1024_acc_lo, ACC1024:$src1, sub_1024_acc_hi))>;
+
+def : Pat<(v64i32 (concat_vectors (v32i32 ACC1024:$src0), (v32i32 ACC1024:$src1))),
+  (v64i32 (REG_SEQUENCE ACC2048, ACC1024:$src0, sub_1024_acc_lo, ACC1024:$src1, sub_1024_acc_hi))>;
+// VCONV_BF16_FP32
+def : PatInaccessibleMem<(int_aie2p_v16accfloat_to_v16bf16 ACC512:$src),
+          (VCONV_bf16_fp32_mv_w_srs_bf ACC512:$src)>;
+def : PatInaccessibleMem<(int_aie2p_v32accfloat_to_v32bf16 ACC1024:$src),
+          (VCONV_bf16_fp32_mv_x_srs_bf ACC1024:$src)>;
+// VCONV_FP32_BF16
+def : Pat<(int_aie2p_v16bf16_to_v16accfloat VEC256:$src),
+          (VCONV_fp32_bf16_mv_ups_wbf VEC256:$src)>;
+def : Pat<(int_aie2p_v32bf16_to_v32accfloat VEC512:$src),
+          (VCONV_fp32_bf16_mv_ups_xbf VEC512:$src)>;
+
+// VABS_GTZ
+// Note : Non-constant sign is handled in .cpp
+def : Pat<(int_aie2p_vabs_gtz8  VEC512:$s1, 0x0), (VABS_GTZ_8_vaddSign0  VEC512:$s1)>;
+def : Pat<(int_aie2p_vabs_gtz16 VEC512:$s1, 0x0), (VABS_GTZ_16_vaddSign0 VEC512:$s1)>;
+def : Pat<(int_aie2p_vabs_gtz32 VEC512:$s1, 0x0), (VABS_GTZ_32_vaddSign0 VEC512:$s1)>;
+def : Pat<(int_aie2p_vabs_gtz8  VEC512:$s1, 0x1), (VABS_GTZ_8_vaddSign1  VEC512:$s1)>;
+def : Pat<(int_aie2p_vabs_gtz16 VEC512:$s1, 0x1), (VABS_GTZ_16_vaddSign1 VEC512:$s1)>;
+def : Pat<(int_aie2p_vabs_gtz32 VEC512:$s1, 0x1), (VABS_GTZ_32_vaddSign1 VEC512:$s1)>;
+
+// VADDSUB
+def : Pat<(int_aie2p_vaddsub8 VEC512:$src1, VEC512:$src2, eL:$lsel),
+           (VADDSUB_8 VEC512:$src1, VEC512:$src2, eL:$lsel)>;
+
+def : Pat<(int_aie2p_vaddsub16 VEC512:$src1, VEC512:$src2, eRS16:$rsel),
+           (VADDSUB_16 VEC512:$src1, VEC512:$src2, eRS16:$rsel)>;
+
+def : Pat<(int_aie2p_vaddsub32 VEC512:$src1, VEC512:$src2, eRS16:$rsel),
+           (VADDSUB_32 VEC512:$src1, VEC512:$src2, eRS16:$rsel)>;
+
+// VBNEG_LTZ
+def : Pat<(int_aie2p_vbneg_ltz8  VEC512:$s1), (VBNEG_LTZ_s8  VEC512:$s1)>;
+def : Pat<(int_aie2p_vbneg_ltz16 VEC512:$s1), (VBNEG_LTZ_s16 VEC512:$s1)>;
+def : Pat<(int_aie2p_vbneg_ltz32 VEC512:$s1), (VBNEG_LTZ_s32 VEC512:$s1)>;
+
+// VEQZ
+class VEQZ_INSTR<SDPatternOperator OpNode, AIE2PInst Inst>:
+    Pat<(OpNode VEC512:$s2), (Inst VEC512:$s2)>;
+
+def : VEQZ_INSTR<int_aie2p_veqz8, VEQZ_8>;
+def : VEQZ_INSTR<int_aie2p_veqz16, VEQZ_16>;
+def : VEQZ_INSTR<int_aie2p_veqz32, VEQZ_32>;
+
+// VLT/VGE
+// Note : Non-constant sign is handled in .cpp
+class VLT_VGE_INSTR<SDPatternOperator OpNode, AIE2PInst Inst, bits<1> sgn>:
+    Pat<(OpNode VEC512:$s1, VEC512:$s2, sgn), (Inst VEC512:$s1, VEC512:$s2)>;
+
+def : VLT_VGE_INSTR<int_aie2p_vlt8, VLT_8_vaddSign0, 0x0>;
+def : VLT_VGE_INSTR<int_aie2p_vlt16, VLT_16_vaddSign0, 0x0>;
+def : VLT_VGE_INSTR<int_aie2p_vlt32, VLT_32_vaddSign0, 0x0>;
+
+def : VLT_VGE_INSTR<int_aie2p_vge8, VGE_8_vaddSign0, 0x0>;
+def : VLT_VGE_INSTR<int_aie2p_vge16, VGE_16_vaddSign0, 0x0>;
+def : VLT_VGE_INSTR<int_aie2p_vge32, VGE_32_vaddSign0, 0x0>;
+
+def : VLT_VGE_INSTR<int_aie2p_vlt8, VLT_8_vaddSign1, 0x1>;
+def : VLT_VGE_INSTR<int_aie2p_vlt16, VLT_16_vaddSign1, 0x1>;
+def : VLT_VGE_INSTR<int_aie2p_vlt32, VLT_32_vaddSign1, 0x1>;
+
+def : VLT_VGE_INSTR<int_aie2p_vge8, VGE_8_vaddSign1, 0x1>;
+def : VLT_VGE_INSTR<int_aie2p_vge16, VGE_16_vaddSign1, 0x1>;
+def : VLT_VGE_INSTR<int_aie2p_vge32, VGE_32_vaddSign1, 0x1>;
+
+// VGE/VLT BF16
+def : Pat<(int_aie2p_vltbf16 VEC512:$s1, VEC512:$s2),
+            (VLT_bf16 VEC512:$s1, VEC512:$s2)>;
+def : Pat<(int_aie2p_vgebf16 VEC512:$s1, VEC512:$s2),
+            (VGE_bf16 VEC512:$s1, VEC512:$s2)>;
+
+// VMAXDIFF_LT
+def : Pat<(int_aie2p_vmaxdiff_lt8 VEC512:$src1, VEC512:$src2, 0x0),
+           (VMAX_LT_8_vaddSign0 VEC512:$src1, VEC512:$src2)>;
+def : Pat<(int_aie2p_vmaxdiff_lt16 VEC512:$src1, VEC512:$src2, 0x0),
+           (VMAX_LT_16_vaddSign0 VEC512:$src1, VEC512:$src2)>;
+def : Pat<(int_aie2p_vmaxdiff_lt32 VEC512:$src1, VEC512:$src2, 0x0),
+           (VMAX_LT_32_vaddSign0 VEC512:$src1, VEC512:$src2)>;
+def : Pat<(int_aie2p_vmaxdiff_lt8 VEC512:$src1, VEC512:$src2, 0x1),
+           (VMAX_LT_8_vaddSign1 VEC512:$src1, VEC512:$src2)>;
+def : Pat<(int_aie2p_vmaxdiff_lt16 VEC512:$src1, VEC512:$src2, 0x1),
+           (VMAX_LT_16_vaddSign1 VEC512:$src1, VEC512:$src2)>;
+def : Pat<(int_aie2p_vmaxdiff_lt32 VEC512:$src1, VEC512:$src2, 0x1),
+           (VMAX_LT_32_vaddSign1 VEC512:$src1, VEC512:$src2)>;
+
+// VMAX_LT
+// Note : Non-constant sign is handled in .cpp
+def : Pat<(int_aie2p_vmax_lt8 VEC512:$s1, VEC512:$s2, 0x0),
+           (VMAX_LT_8_vaddSign0 VEC512:$s1, VEC512:$s2)>;
+def : Pat<(int_aie2p_vmax_lt16 VEC512:$s1, VEC512:$s2, 0x0),
+           (VMAX_LT_16_vaddSign0 VEC512:$s1, VEC512:$s2)>;
+def : Pat<(int_aie2p_vmax_lt32 VEC512:$s1, VEC512:$s2, 0x0),
+           (VMAX_LT_32_vaddSign0 VEC512:$s1, VEC512:$s2)>;
+def : Pat<(int_aie2p_vmax_lt8 VEC512:$s1, VEC512:$s2, 0x1),
+           (VMAX_LT_8_vaddSign1 VEC512:$s1, VEC512:$s2)>;
+def : Pat<(int_aie2p_vmax_lt16 VEC512:$s1, VEC512:$s2, 0x1),
+           (VMAX_LT_16_vaddSign1 VEC512:$s1, VEC512:$s2)>;
+def : Pat<(int_aie2p_vmax_lt32 VEC512:$s1, VEC512:$s2, 0x1),
+           (VMAX_LT_32_vaddSign1 VEC512:$s1, VEC512:$s2)>;
+// bf16 is always signed
+def : Pat<(int_aie2p_vmax_ltbf16 VEC512:$s1, VEC512:$s2),
+           (VMAX_LT_bf16 VEC512:$s1, VEC512:$s2)>;
+
+// VMIN_GE
+// Note : Non-constant sign is handled in .cpp
+def : Pat<(int_aie2p_vmin_ge8 VEC512:$s1, VEC512:$s2, 0x0),
+           (VMIN_GE_8_vaddSign0 VEC512:$s1, VEC512:$s2)>;
+def : Pat<(int_aie2p_vmin_ge16 VEC512:$s1, VEC512:$s2, 0x0),
+           (VMIN_GE_16_vaddSign0 VEC512:$s1, VEC512:$s2)>;
+def : Pat<(int_aie2p_vmin_ge32 VEC512:$s1, VEC512:$s2, 0x0),
+           (VMIN_GE_32_vaddSign0 VEC512:$s1, VEC512:$s2)>;
+def : Pat<(int_aie2p_vmin_ge8 VEC512:$s1, VEC512:$s2, 0x1),
+           (VMIN_GE_8_vaddSign1 VEC512:$s1, VEC512:$s2)>;
+def : Pat<(int_aie2p_vmin_ge16 VEC512:$s1, VEC512:$s2, 0x1),
+           (VMIN_GE_16_vaddSign1 VEC512:$s1, VEC512:$s2)>;
+def : Pat<(int_aie2p_vmin_ge32 VEC512:$s1, VEC512:$s2, 0x1),
+           (VMIN_GE_32_vaddSign1 VEC512:$s1, VEC512:$s2)>;
+// bf16 is always signed
+def : Pat<(int_aie2p_vmin_gebf16 VEC512:$s1, VEC512:$s2),
+           (VMIN_GE_bf16 VEC512:$s1, VEC512:$s2)>;
+
+// VNEG_GTZ
+def : Pat<(int_aie2p_vneg_gtz8  VEC512:$s1), (VNEG_GTZ_8  VEC512:$s1)>;
+def : Pat<(int_aie2p_vneg_gtz16 VEC512:$s1), (VNEG_GTZ_16 VEC512:$s1)>;
+def : Pat<(int_aie2p_vneg_gtz32 VEC512:$s1), (VNEG_GTZ_32 VEC512:$s1)>;
+
+// VSEL
+def : Pat<(int_aie2p_vsel8 VEC512:$src1, VEC512:$src2, eL:$lsel),
+           (VSEL_8 VEC512:$src1, VEC512:$src2, eL:$lsel)>;
+
+def : Pat<(int_aie2p_vsel16 VEC512:$src1, VEC512:$src2, eRS16:$rsel),
+           (VSEL_16 VEC512:$src1, VEC512:$src2, eRS16:$rsel)>;
+
+def : Pat<(int_aie2p_vsel32 VEC512:$src1, VEC512:$src2, eRS16:$rsel),
+           (VSEL_32 VEC512:$src1, VEC512:$src2, eRS16:$rsel)>;
+
+// VSUB_LT/VSUB_GE
+// Note : Non-constant sign is handled in .cpp
+class VSUB_LT_GE_INSTR<SDPatternOperator OpNode, AIE2PInst Inst, bits<1> sgn>:
+    Pat<(OpNode VEC512:$src1, VEC512:$src2, sgn), (Inst VEC512:$src1, VEC512:$src2)>;
+
+def : VSUB_LT_GE_INSTR<int_aie2p_vsub_lt8, VSUB_LT_8_vaddSign0, 0x0>;
+def : VSUB_LT_GE_INSTR<int_aie2p_vsub_lt16, VSUB_LT_16_vaddSign0, 0x0>;
+def : VSUB_LT_GE_INSTR<int_aie2p_vsub_lt32, VSUB_LT_32_vaddSign0, 0x0>;
+
+def : VSUB_LT_GE_INSTR<int_aie2p_vsub_ge8, VSUB_GE_8_vaddSign0, 0x0>;
+def : VSUB_LT_GE_INSTR<int_aie2p_vsub_ge16, VSUB_GE_16_vaddSign0, 0x0>;
+def : VSUB_LT_GE_INSTR<int_aie2p_vsub_ge32, VSUB_GE_32_vaddSign0, 0x0>;
+
+def : VSUB_LT_GE_INSTR<int_aie2p_vsub_lt8, VSUB_LT_8_vaddSign1, 0x1>;
+def : VSUB_LT_GE_INSTR<int_aie2p_vsub_lt16, VSUB_LT_16_vaddSign1, 0x1>;
+def : VSUB_LT_GE_INSTR<int_aie2p_vsub_lt32, VSUB_LT_32_vaddSign1, 0x1>;
+
+def : VSUB_LT_GE_INSTR<int_aie2p_vsub_ge8, VSUB_GE_8_vaddSign1, 0x1>;
+def : VSUB_LT_GE_INSTR<int_aie2p_vsub_ge16, VSUB_GE_32_vaddSign1, 0x1>;
+def : VSUB_LT_GE_INSTR<int_aie2p_vsub_ge32, VSUB_GE_32_vaddSign1, 0x1>;
+// addr intrinsics 
+def : Pat<(int_aie2p_load_4x16_lo VEC256:$ptr), (VLDB_4x16_lo VEC256:$ptr)>;
+def : Pat<(int_aie2p_load_4x16_hi VEC256:$ptr), (VLDB_4x16_hi VEC256:$ptr)>;
+def : Pat<(int_aie2p_load_4x32_lo VEC256:$ptr), (VLDB_4x32_lo VEC256:$ptr)>;
+def : Pat<(int_aie2p_load_4x32_hi VEC256:$ptr), (VLDB_4x32_hi VEC256:$ptr)>;
+def : Pat<(int_aie2p_load_4x64_lo VEC256:$ptr), (VLDB_4x64_lo VEC256:$ptr)>;
+def : Pat<(int_aie2p_load_4x64_hi VEC256:$ptr), (VLDB_4x64_hi VEC256:$ptr)>;
+// vector of bfloat16 to vector of int
+def : PatInaccessibleMem<(int_aie2p_v16bf16_to_v16i32 VEC256:$src, mSs:$shft),
+          (VFLOOR_s32_bf16_mv_float_to_int_w VEC256:$src, mSs:$shft)>;
+// fx2flt and flt2fx
+def : Pat<(int_aie2p_fx2flt eR:$s0, mS2:$m),
+          (MOV_alu_mv_alu_fx2flt eR:$s0, mS2:$m)>;
+def : Pat<(int_aie2p_flt2fx eR:$s0, mS3:$m),
+          (MOV_alu_mv_alu_flt2fx eR:$s0, mS3:$m)>;
+def : Pat<(int_aie2p_exp2 ACC512:$src), (VEXP2 ACC512:$src)>;
+def : Pat<(int_aie2p_tanh ACC512:$src), (VTANH ACC512:$src)>;
+def : Pat<(int_aie2p_inv eR:$src), (INV_mRx eR:$src)>;
+def : Pat<(int_aie2p_invsqrt eR:$src), (INVSQRT_mRx eR:$src)>;
+def : Pat<(int_aie2p_sqrtf eR:$src), (SQRT_mRx eR:$src)>;
+// AIE does not have a native xor instruction for vector operands.
+// Res = A xor B --> Res = AB' || A'B
+foreach Ty = [v64i8, v32i16, v16i32] in {
+def : Pat<(xor Ty:$src1, Ty:$src2),
+          (VBOR
+            (VBAND (VBNEG_LTZ_s32 Ty:$src1), Ty:$src2),
+            (VBAND (VBNEG_LTZ_s32 Ty:$src2), Ty:$src1))>;
+}
+
+// DIVS
+def : Pat<(int_aie2p_divs eR31:$sd_in, eR:$src0, eR:$src1),
+          (DIVS eR31:$sd_in, eR:$src0, eR:$src1)>;
