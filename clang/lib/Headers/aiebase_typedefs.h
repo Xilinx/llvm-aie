@@ -88,6 +88,12 @@ inline int as_int(cuint16_t v) { return *(int *)&v; }
 #endif // __COMPLEXINT_H__
 
 #include <stdint.h>
+// type alignment in bytes
+#if __AIEARCH__ == 21
+#define __MIN_ALIGNMENT 64
+#else
+#define __MIN_ALIGNMENT 32
+#endif
 
 // Scalar types
 typedef bool uint1_t;
@@ -102,6 +108,8 @@ typedef signed _BitInt(2) int2_t;
 typedef unsigned _BitInt(2) uint2_t;
 typedef signed _BitInt(4) int4_t;
 typedef unsigned _BitInt(4) uint4_t;
+typedef signed _BitInt(5) int5_t;
+typedef unsigned _BitInt(5) uint5_t;
 typedef signed _BitInt(6) int6_t;
 typedef unsigned _BitInt(6) uint6_t;
 typedef signed _BitInt(8) bint8_t;
@@ -127,65 +135,67 @@ typedef signed _BitInt(64) v16cint32 __attribute__((__vector_size__(128)));
 typedef unsigned _BitInt(64) v16cuint32 __attribute__((__vector_size__(128)));
 
 // Vector types
+typedef float v64float __attribute__((__vector_size__(256)))
+__attribute__((aligned(__MIN_ALIGNMENT)));
 typedef float v32float __attribute__((__vector_size__(128)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 typedef float v16float __attribute__((__vector_size__(64)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 typedef float v8float __attribute__((__vector_size__(32)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 typedef float v4float __attribute__((__vector_size__(16)))
 __attribute__((aligned(16)));
 
 typedef int32_t v16int64 __attribute__((__vector_size__(128)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 typedef int32_t v32int32 __attribute__((__vector_size__(128)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 typedef int16_t v64int16 __attribute__((__vector_size__(128)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 typedef int8_t v128int8 __attribute__((__vector_size__(128)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 typedef uint32_t v16uint64 __attribute__((__vector_size__(128)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 typedef uint32_t v32uint32 __attribute__((__vector_size__(128)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 typedef uint16_t v64uint16 __attribute__((__vector_size__(128)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 typedef uint8_t v128uint8 __attribute__((__vector_size__(128)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 
 typedef int32_t v8int64 __attribute__((__vector_size__(64)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 typedef int32_t v16int32 __attribute__((__vector_size__(64)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 typedef int16_t v32int16 __attribute__((__vector_size__(64)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 typedef int8_t v64int8 __attribute__((__vector_size__(64)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 typedef uint32_t v8uint64 __attribute__((__vector_size__(64)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 typedef uint32_t v16uint32 __attribute__((__vector_size__(64)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 typedef uint16_t v32uint16 __attribute__((__vector_size__(64)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 typedef uint8_t v64uint8 __attribute__((__vector_size__(64)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 
 typedef int32_t v4int64 __attribute__((__vector_size__(32)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 typedef int32_t v8int32 __attribute__((__vector_size__(32)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 typedef int16_t v16int16 __attribute__((__vector_size__(32)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 typedef int8_t v32int8 __attribute__((__vector_size__(32)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 typedef uint32_t v4uint64 __attribute__((__vector_size__(32)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 typedef uint32_t v8uint32 __attribute__((__vector_size__(32)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 typedef uint16_t v16uint16 __attribute__((__vector_size__(32)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 typedef uint8_t v32uint8 __attribute__((__vector_size__(32)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 
 typedef int32_t v4int32 __attribute__((__vector_size__(16)))
 __attribute__((aligned(16)));
@@ -210,7 +220,7 @@ typedef __acc48 v8acc80 __attribute__((__vector_size__(96)));
 /*64-bit type is handled as v2int32 */
 typedef int32_t v2int32 __attribute__((__vector_size__(8)));
 
-#if __AIEARCH__ == 20
+#if (__AIEARCH__ == 20) || (__AIEARCH__ == 21)
 typedef int32_t addr_t;
 /* bfloat16 type */
 typedef __bf16 bfloat16;
@@ -251,35 +261,35 @@ typedef bint8_t v256int4 __attribute__((__vector_size__(128)));
 typedef __acc32 acc32;
 typedef __acc64 acc64;
 typedef acc32 v8acc32 __attribute__((__vector_size__(32)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 typedef acc32 v16acc32 __attribute__((__vector_size__(64)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 typedef acc32 v32acc32 __attribute__((__vector_size__(128)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 typedef acc64 v4acc64 __attribute__((__vector_size__(32)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 typedef acc64 v8acc64 __attribute__((__vector_size__(64)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 typedef acc64 v16acc64 __attribute__((__vector_size__(128)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 /* accumulator float types in aiev2 */
 typedef __accfloat accfloat;
 typedef accfloat v8accfloat __attribute__((__vector_size__(32)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 typedef accfloat v16accfloat __attribute__((__vector_size__(64)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 typedef accfloat v32accfloat __attribute__((__vector_size__(128)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 /* vector bfloat16 types in aiev2 */
 typedef __bf16 v2bfloat16 __attribute__((__vector_size__(4)));
 typedef __bf16 v4bfloat16 __attribute__((__vector_size__(8)));
 typedef __bf16 v8bfloat16 __attribute__((__vector_size__(16)));
 typedef __bf16 v16bfloat16 __attribute__((__vector_size__(32)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 typedef __bf16 v32bfloat16 __attribute__((__vector_size__(64)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 typedef __bf16 v64bfloat16 __attribute__((__vector_size__(128)))
-__attribute__((aligned(32)));
+__attribute__((aligned(__MIN_ALIGNMENT)));
 /*Sparse vector types*/
 typedef unsigned _BitInt(128) sparsity_t __attribute__((aligned(16)));
 /* sparse vector types in aiev2*/
@@ -409,6 +419,84 @@ struct v64bfloat16_sparse_compress {
   int x;
 };
 
-#endif //__AIEARCH__ == 20
+#endif //(__AIEARCH__ == 20) || (__AIEARCH__ == 21)
+
+#if __AIEARCH__ == 21
+typedef float v2float __attribute__((__vector_size__(8)));
+typedef acc32 v64acc32 __attribute__((__vector_size__(256)))
+__attribute__((aligned(__MIN_ALIGNMENT)));
+typedef acc64 v32acc64 __attribute__((__vector_size__(256)))
+__attribute__((aligned(__MIN_ALIGNMENT)));
+typedef accfloat v64accfloat __attribute__((__vector_size__(256)))
+__attribute__((aligned(__MIN_ALIGNMENT)));
+
+/* Block floating-point(bpf16) */
+// v64bfp16ebs16: The data is four blocks in bfp16ebs16 format and is written to
+// an EX register. The mantissas of the four blocks are written to the X part of
+// the register. The exponents are written to the E part of the register. As the
+// size of the E register (64 bits) is twice of the size of the exponents (32
+// bits), the exponent for each block is stored twice in the E register:
+// exp0::exp0::exp1::exp1::exp2::exp2::exp3::exp3
+struct v64bfp16ebs16 {
+  v64int8 mantissa;
+  v8int8 exponent;
+} __attribute__((packed)) __attribute__((return_in_regs))
+__attribute__((aligned(8)));
+struct v64bfp16ebs8 {
+  v64int8 mantissa;
+  v8int8 exponent;
+} __attribute__((packed)) __attribute__((return_in_regs))
+__attribute__((aligned(8)));
+struct v128bfp16ebs16 {
+  v64int8 mantissaX0;
+  v64int8 mantissaX1;
+  v8int8 exponentE0;
+  v8int8 exponentE1;
+} __attribute__((packed)) __attribute__((return_in_regs))
+__attribute__((aligned(8)));
+struct v128bfp16ebs8 {
+  v64int8 mantissaX0;
+  v64int8 mantissaX1;
+  v8int8 exponentE0;
+  v8int8 exponentE1;
+} __attribute__((packed)) __attribute__((return_in_regs))
+__attribute__((aligned(8)));
+
+/*
+Unaligned vector types are defined as an empty struct.
+These types are used to overload the unaligned load intrinsics and
+represent pointers to the memory location where the unaligned vector is
+to be loaded from (e.g. v256bfp16ebs16_sparse_unaligned *& is used instead of
+v256bfp16ebs16_sparse_unaligned).
+*/
+struct v512uint4_sparse_unaligned {};
+struct v256uint4_sparse_unaligned {};
+struct v256uint8_sparse_unaligned {};
+struct v128uint8_sparse_unaligned {};
+struct v128uint16_sparse_unaligned {};
+struct v64uint16_sparse_unaligned {};
+struct v512int4_sparse_unaligned {};
+struct v256int4_sparse_unaligned {};
+struct v256int8_sparse_unaligned {};
+struct v128int8_sparse_unaligned {};
+struct v128int16_sparse_unaligned {};
+struct v64int16_sparse_unaligned {};
+struct v256bfp16ebs16_sparse_unaligned {};
+struct v256bfp16ebs8_sparse_unaligned {};
+struct v128bfp16ebs16_sparse_unaligned {};
+struct v128bfp16ebs8_sparse_unaligned {};
+struct v128bfp16ebs16_unaligned {};
+struct v128bfp16ebs8_unaligned {};
+struct v64bfp16ebs16_unaligned {};
+struct v64bfp16ebs8_unaligned {};
+
+typedef v32int32 sparse_fifo_t;
+struct fifo_state_t {
+  sparse_fifo_t fifo;
+  int pos;
+  v16int32 extra;
+} __attribute__((return_in_regs));
+
+#endif
 
 #endif /*  __AIEBASE_TYPEDEFS_H */

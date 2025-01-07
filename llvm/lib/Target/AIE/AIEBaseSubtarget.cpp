@@ -20,6 +20,7 @@
 #include "AIEMachineScheduler.h"
 #include "AIEMaxLatencyFinder.h"
 #include "AIESubtarget.h"
+#include "aie2p/AIE2PSubtarget.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
@@ -152,6 +153,9 @@ const AIEBaseSubtarget &AIEBaseSubtarget::get(const MachineFunction &MF) {
   else if (MF.getTarget().getTargetTriple().isAIE2())
     return static_cast<const AIEBaseSubtarget &>(
         MF.getSubtarget<AIE2Subtarget>());
+  else if (MF.getTarget().getTargetTriple().isAIE2P())
+    return static_cast<const AIEBaseSubtarget &>(
+        MF.getSubtarget<AIE2PSubtarget>());
   else
     llvm_unreachable("Unknown subtarget");
 }

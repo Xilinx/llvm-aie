@@ -1,0 +1,91 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: not --crash llc -mtriple=aie2p -run-pass machineverifier -o /dev/null %s 2>&1 | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+# This test ensures that the Machine Verifier detects tied physical registers
+# that don't match.
+
+---
+name:      tied_ok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+
+    $dn6, $p7, $dc1 = LDA_2D_dms_lda $p7, $d1
+    $q3, $p5, $dc4 = LDA_2D_dmv_lda_q $p5, $d4
+    $r1, $p2, $dc6 = LDA_2D_s16 $p2, $d6
+    $r25, $p6, $dc2 = LDA_2D_s8 $p6, $d2
+    $r31, $p7, $dc3 = LDA_2D_u16 $p7, $d3
+    $r8, $p4, $dc5 = LDA_2D_u8 $p4, $d5
+    $r0, $p0, $dc1 = LDA_TM_2D $p0, $d1 :: (load (s32) from custom "TileMemory")
+
+    ; Below instructions have hasExtraSrcRegAllocReq and hasExtraDefRegAllocReq attributes
+    ; which essentially bypass the register flags. The renamable attributes
+    ; below should trigger no verification error.
+    ; CHECK-NOT: Bad machine code
+    renamable $dn6, renamable $p7, renamable $dc1 = LDA_2D_dms_lda renamable $p7, renamable $d1
+    renamable $q3, renamable $p5, renamable $dc4 = LDA_2D_dmv_lda_q renamable $p5, renamable $d4
+    renamable $r1, renamable $p2, renamable $dc6 = LDA_2D_s16 renamable $p2, renamable $d6
+    renamable $r25, renamable $p6, renamable $dc2 = LDA_2D_s8 renamable $p6, renamable $d2
+    renamable $r31, renamable $p7, renamable $dc3 = LDA_2D_u16 renamable $p7, renamable $d3
+    renamable $r8, renamable $p4, renamable $dc5 = LDA_2D_u8 renamable $p4, renamable $d5
+    renamable $r0, renamable $p0, renamable $dc1 = LDA_TM_2D renamable $p0, renamable $d1 :: (load (s32) from custom "TileMemory")
+
+...
+
+---
+name:      virtual_ok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    %0:ep = COPY $p0
+    %10:ed = COPY $d0
+    %30:mldascl, %31:ep, %32:edc = LDA_2D_dms_lda %0, %10
+    %40:mqqsa, %41:ep, %42:edc = LDA_2D_dmv_lda_q %0, %10
+    %50:er, %51:ep, %52:edc = LDA_2D_s16 %0, %10
+    %60:er, %61:ep, %62:edc = LDA_2D_s8 %0, %10
+    %70:er, %71:ep, %72:edc = LDA_2D_u16 %0, %10
+    %80:er, %81:ep, %82:edc = LDA_2D_u8 %0, %10
+    %150:er, %151:ep, %152:edc = LDA_TM_2D %0, %10 :: (load (s32) from custom "TileMemory")
+
+...
+
+---
+name:      tied_nok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    ; CHECK-COUNT-21: Bad machine code:
+
+    $dn6, $p7, $dc5 = LDA_2D_dms_lda $p7, $d1
+    $dn6, $p7, $dc7 = LDA_2D_dms_lda $p7, $d1
+    $dn6, $p7, $dc2 = LDA_2D_dms_lda $p7, $d1
+    $q3, $p5, $dc5 = LDA_2D_dmv_lda_q $p5, $d4
+    $q3, $p5, $dc1 = LDA_2D_dmv_lda_q $p5, $d4
+    $q3, $p5, $dc6 = LDA_2D_dmv_lda_q $p5, $d4
+    $r1, $p2, $dc3 = LDA_2D_s16 $p2, $d6
+    $r1, $p2, $dc1 = LDA_2D_s16 $p2, $d6
+    $r1, $p2, $dc5 = LDA_2D_s16 $p2, $d6
+    $r25, $p6, $dc0 = LDA_2D_s8 $p6, $d2
+    $r25, $p6, $dc6 = LDA_2D_s8 $p6, $d2
+    $r25, $p6, $dc5 = LDA_2D_s8 $p6, $d2
+    $r31, $p7, $dc2 = LDA_2D_u16 $p7, $d3
+    $r31, $p7, $dc4 = LDA_2D_u16 $p7, $d3
+    $r31, $p7, $dc6 = LDA_2D_u16 $p7, $d3
+    $r8, $p4, $dc7 = LDA_2D_u8 $p4, $d5
+    $r8, $p4, $dc6 = LDA_2D_u8 $p4, $d5
+    $r8, $p4, $dc2 = LDA_2D_u8 $p4, $d5
+    $r0, $p0, $dc6 = LDA_TM_2D $p0, $d1 :: (load (s32) from custom "TileMemory")
+    $r0, $p0, $dc7 = LDA_TM_2D $p0, $d1 :: (load (s32) from custom "TileMemory")
+    $r0, $p0, $dc3 = LDA_TM_2D $p0, $d1 :: (load (s32) from custom "TileMemory")
+
+...
+

@@ -1,0 +1,55 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: not --crash llc -mtriple=aie2p -run-pass machineverifier -o /dev/null %s 2>&1 | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+# This test ensures that the Machine Verifier detects tied physical registers
+# that don't match.
+
+---
+name:      tied_ok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+
+    $p2, $dc1 = PADDA_2D $p2, $d1
+
+    ; Below instructions have hasExtraSrcRegAllocReq and hasExtraDefRegAllocReq attributes
+    ; which essentially bypass the register flags. The renamable attributes
+    ; below should trigger no verification error.
+    ; CHECK-NOT: Bad machine code
+    renamable $p2, renamable $dc1 = PADDA_2D renamable $p2, renamable $d1
+
+...
+
+---
+name:      virtual_ok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    %0:ep = COPY $p0
+    %10:ed = COPY $d0
+    %30:ep, %31:edc = PADDA_2D %0, %10
+
+...
+
+---
+name:      tied_nok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    ; CHECK-COUNT-3: Bad machine code:
+
+    $p2, $dc7 = PADDA_2D $p2, $d1
+    $p2, $dc0 = PADDA_2D $p2, $d1
+    $p2, $dc3 = PADDA_2D $p2, $d1
+
+...
+

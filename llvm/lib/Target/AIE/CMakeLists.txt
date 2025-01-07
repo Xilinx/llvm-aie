@@ -48,6 +48,29 @@ tablegen(LLVM AIE2GenRegisterInfo.inc -gen-register-info -base-registerinfo-clas
 tablegen(LLVM AIE2GenSubtargetInfo.inc -gen-subtarget)
 tablegen(LLVM AIE2GenGlobalISel.inc -gen-global-isel --warn-on-skipped-patterns)
 
+set(LLVM_TARGET_DEFINITIONS AIE2P.td)
+tablegen(LLVM AIE2PGenInstrInfo.inc -gen-instr-info -base-instrinfo-class AIEBaseInstrInfo)
+tablegen(LLVM AIE2PGenRegisterInfo.inc -gen-register-info -base-registerinfo-class AIEBaseRegisterInfo)
+tablegen(LLVM AIE2PGenCallingConv.inc -gen-callingconv)
+tablegen(LLVM AIE2PGenSubtargetInfo.inc -gen-subtarget)
+tablegen(LLVM AIE2PGenMemoryCycles.inc -gen-aie-memory-cycles)
+tablegen(LLVM AIE2PGenPreSchedLowering.inc -gen-aie-presched-lowering)
+tablegen(LLVM AIE2PGenSplitInstrTables.inc -gen-aie-split-instr-tables)
+tablegen(LLVM AIE2PGenRegisterBank.inc -gen-register-bank -base-register-bank-class AIEBaseRegisterBankInfo)
+tablegen(LLVM AIE2PGenGlobalISel.inc -gen-global-isel --warn-on-skipped-patterns)
+tablegen(LLVM AIE2PGenAsmWriter.inc -gen-asm-writer)
+tablegen(LLVM AIE2PGenFormats.inc -gen-instr-format)
+tablegen(LLVM AIE2PGenMCCodeEmitter.inc -gen-emitter)
+tablegen(LLVM AIE2PGenDisassemblerTables.inc -gen-disassembler)
+tablegen(LLVM AIE2PGenPreLegalizerGICombiner.inc -gen-global-isel-combiner
+              -combiners="AIE2PPreLegalizerCombiner")
+tablegen(LLVM AIE2PGenPostLegalizerGIGenericCombiner.inc -gen-global-isel-combiner
+              -combiners="AIE2PPostLegalizerGenericCombiner")
+tablegen(LLVM AIE2PGenPostLegalizerGICustomCombiner.inc -gen-global-isel-combiner
+              -combiners="AIE2PPostLegalizerCustomCombiner")
+tablegen(LLVM AIE2PGenAsmMatcher.inc -gen-asm-matcher)
+tablegen(LLVM AIE2PGenVarInstructionItin.inc -gen-aie-alternate-itinerary-emitter)
+
 add_public_tablegen_target(AIECommonTableGen)
 
 add_llvm_target(AIECodeGen
@@ -62,6 +85,7 @@ add_llvm_target(AIECodeGen
    AIEBaseISelLowering.cpp
    AIEBaseInstrInfo.cpp
    AIEBasePipelinerLoopInfo.cpp
+   AIEBaseInstructionSelector.cpp
    AIEClusterBaseAddress.cpp
    AIECombinerHelper.cpp
    AIEBaseRegisterBankInfo.cpp
@@ -119,6 +143,18 @@ add_llvm_target(AIECodeGen
    AIETiedRegOperands.cpp
    ReservedRegsLICM.cpp
    AIEWawRegRewriter.cpp
+   aie2p/AIE2PSubtarget.cpp
+   aie2p/AIE2PTargetMachine.cpp
+   aie2p/AIE2PRegisterInfo.cpp
+   aie2p/AIE2PLegalizerInfo.cpp
+   aie2p/AIE2PInstrInfo.cpp
+   aie2p/AIE2PFrameLowering.cpp
+   aie2p/AIE2PRegisterBankInfo.cpp
+   aie2p/AIE2PISelLowering.cpp
+   aie2p/AIE2PInstructionSelector.cpp
+   aie2p/AIE2PPostLegalizerCustomCombiner.cpp
+   aie2p/AIE2PPostLegalizerGenericCombiner.cpp
+   aie2p/AIE2PPreLegalizerCombiner.cpp
 
    LINK_COMPONENTS
    Analysis

@@ -1,0 +1,88 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; ASHL
+    $r27 = ASHL $r26, $r16
+    $r6 = ASHL $r27, $r11
+    $r16 = ASHL $r8, $r8
+    $r0 = ASHL $r22, $r24
+    $r1 = ASHL $r24, $r2
+    $r3 = ASHL $r19, $r27
+    $r17 = ASHL $r20, $r20
+    $r31 = ASHL $r4, $r14
+    $r26 = ASHL $r29, $r10
+    $r4 = ASHL $r13, $r18
+    $r21 = ASHL $r23, $r15
+    $r22 = ASHL $r14, $r23
+    $r7 = ASHL $r1, $r21
+    $r20 = ASHL $r6, $r5
+    $r24 = ASHL $r3, $r4
+    $r5 = ASHL $r28, $r0
+    $r19 = ASHL $r21, $r12
+    $r10 = ASHL $r11, $r1
+    $r28 = ASHL $r31, $r29
+    $r29 = ASHL $r17, $r26
+    $r8 = ASHL $r2, $r19
+    $r14 = ASHL $r7, $r3
+    $r15 = ASHL $r16, $r6
+    $r13 = ASHL $r12, $r7
+    $r12 = ASHL $r9, $r31
+    $r30 = ASHL $r10, $r28
+    $r2 = ASHL $r5, $r22
+    $r25 = ASHL $r15, $r13
+    $r23 = ASHL $r30, $r25
+    $r9 = ASHL $r18, $r9
+    $r11 = ASHL $r25, $r17
+    $r18 = ASHL $r0, $r30
+...
+
+# CHECK: 0: 98 0e b7 16 ashl r27, r26, r16
+# CHECK: 4: 98 be cc 16 ashl r6, r27, r11
+# CHECK: 8: 98 8e 20 12 ashl r16, r8, r8
+# CHECK: c: 98 8e 81 15 ashl r0, r22, r24
+# CHECK: 10: 98 2e 02 16 ashl r1, r24, r2
+# CHECK: 14: 98 be c7 14 ashl r3, r19, r27
+# CHECK: 18: 98 4e 23 15 ashl r17, r20, r20
+# CHECK: 1c: 98 ee 3e 11 ashl r31, r4, r14
+# CHECK: 20: 98 ae 74 17 ashl r26, r29, r10
+# CHECK: 24: 98 2e 49 13 ashl r4, r13, r18
+# CHECK: 28: 98 fe ea 15 ashl r21, r23, r15
+# CHECK: 2c: 98 7e ad 13 ashl r22, r14, r23
+# CHECK: 30: 98 5e 4f 10 ashl r7, r1, r21
+# CHECK: 34: 98 5e a8 11 ashl r20, r6, r5
+# CHECK: 38: 98 4e f0 10 ashl r24, r3, r4
+# CHECK: 3c: 98 0e 0a 17 ashl r5, r28, r0
+# CHECK: 40: 98 ce 66 15 ashl r19, r21, r12
+# CHECK: 44: 98 1e d4 12 ashl r10, r11, r1
+# CHECK: 48: 98 de f9 17 ashl r28, r31, r29
+# CHECK: 4c: 98 ae 7b 14 ashl r29, r17, r26
+# CHECK: 50: 98 3e 91 10 ashl r8, r2, r19
+# CHECK: 54: 98 3e dc 11 ashl r14, r7, r3
+# CHECK: 58: 98 6e 1e 14 ashl r15, r16, r6
+# CHECK: 5c: 98 7e 1a 13 ashl r13, r12, r7
+# CHECK: 60: 98 fe 59 12 ashl r12, r9, r31
+# CHECK: 64: 98 ce bd 12 ashl r30, r10, r28
+# CHECK: 68: 98 6e 45 11 ashl r2, r5, r22
+# CHECK: 6c: 98 de f2 13 ashl r25, r15, r13
+# CHECK: 70: 98 9e af 17 ashl r23, r30, r25
+# CHECK: 74: 98 9e 92 14 ashl r9, r18, r9
+# CHECK: 78: 98 1e 57 16 ashl r11, r25, r17
+# CHECK: 7c: 98 ee 25 10 ashl r18, r0, r30

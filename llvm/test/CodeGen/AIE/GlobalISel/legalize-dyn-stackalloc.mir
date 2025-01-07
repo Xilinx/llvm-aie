@@ -7,6 +7,7 @@
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie -run-pass=legalizer %s -o - -verify-machineinstrs | FileCheck %s
 # RUN: llc -mtriple aie2 -run-pass=legalizer %s -o - -verify-machineinstrs | FileCheck %s
+# RUN: llc -mtriple aie2p -run-pass=legalizer %s -o - -verify-machineinstrs | FileCheck %s
 
 ---
 name: test_dyn_alloca_size_in_reg

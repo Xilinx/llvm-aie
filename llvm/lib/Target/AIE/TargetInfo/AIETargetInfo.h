@@ -23,6 +23,8 @@ Target &getTheAIETarget();
 
 Target &getTheAIE2Target();
 
+Target &getTheAIE2PTarget();
+
 } // namespace llvm
 
 #endif // LLVM_LIB_TARGET_AIE_TARGETINFO_AIETARGETINFO_H

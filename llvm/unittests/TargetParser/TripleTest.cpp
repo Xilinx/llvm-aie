@@ -1662,6 +1662,10 @@ TEST(TripleTest, BitWidthArchVariants) {
   EXPECT_EQ(Triple::aie2, T.get32BitArchVariant().getArch());
   EXPECT_EQ(Triple::UnknownArch, T.get64BitArchVariant().getArch());
 
+  T.setArch(Triple::aie2p);
+  EXPECT_EQ(Triple::aie2p, T.get32BitArchVariant().getArch());
+  EXPECT_EQ(Triple::UnknownArch, T.get64BitArchVariant().getArch());
+
   T.setArch(Triple::renderscript32);
   EXPECT_EQ(Triple::renderscript32, T.get32BitArchVariant().getArch());
   EXPECT_EQ(Triple::renderscript64, T.get64BitArchVariant().getArch());
@@ -1719,6 +1723,10 @@ TEST(TripleTest, EndianArchVariants) {
   T.setArch(Triple::aie2);
   EXPECT_EQ(Triple::UnknownArch, T.getBigEndianArchVariant().getArch());
   EXPECT_EQ(Triple::aie2, T.getLittleEndianArchVariant().getArch());
+
+  T.setArch(Triple::aie2p);
+  EXPECT_EQ(Triple::UnknownArch, T.getBigEndianArchVariant().getArch());
+  EXPECT_EQ(Triple::aie2p, T.getLittleEndianArchVariant().getArch());
 
   T.setArch(Triple::armeb);
   EXPECT_EQ(Triple::armeb, T.getBigEndianArchVariant().getArch());

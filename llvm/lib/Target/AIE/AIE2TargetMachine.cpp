@@ -41,16 +41,9 @@
 
 using namespace llvm;
 
-static cl::opt<bool>
-    EnableStagedRA("aie-staged-ra", cl::Hidden, cl::init(true),
-                   cl::desc("Enable multi-stage register allocation"));
-static cl::opt<bool>
+cl::opt<bool>
     EnableSubregRenaming("aie-subreg-renaming", cl::Hidden, cl::init(false),
                          cl::desc("Enable RenameIndependentSubregs pass"));
-static cl::opt<bool>
-    EnableSuperRegSplitting("aie-split-superregs", cl::Hidden, cl::init(true),
-                            cl::desc("Enable splitting super-regs into their "
-                                     "smaller components to facilitate RA"));
 
 static cl::opt<bool>
     EnableWAWRegRewrite("aie-wawreg-rewrite",
@@ -59,12 +52,6 @@ static cl::opt<bool>
 static cl::opt<bool>
     EnableReservedRegsLICM("aie-reserved-regs-licm", cl::Hidden, cl::init(true),
                            cl::desc("Enable LICM for some reserved registers"));
-static cl::opt<bool>
-    AllocateMRegsFirst("aie-mod-ra-first", cl::Hidden, cl::init(false),
-                       cl::desc("Allocate M registers first in staged RA."));
-static cl::opt<bool> EnablePreMISchedCoalescer(
-    "aie-premisched-coalescer", cl::Hidden, cl::init(true),
-    cl::desc("Run the coalescer again after the pre-RA scheduler"));
 
 static cl::opt<unsigned> StackAddrSpace(
     "aie-stack-addrspace", cl::init(0),
@@ -74,6 +61,11 @@ static cl::opt<unsigned> StackAddrSpace(
 static cl::opt<bool> EnableAddressChaining("aie-address-chaining", cl::Hidden,
                                            cl::init(true),
                                            cl::desc("Enable ptradd chaining."));
+
+extern cl::opt<bool> EnableStagedRA;
+extern cl::opt<bool> EnableSuperRegSplitting;
+extern cl::opt<bool> AllocateMRegsFirst;
+extern cl::opt<bool> EnablePreMISchedCoalescer;
 
 extern bool AIEDumpArtifacts;
 
@@ -92,33 +84,6 @@ AIE2TargetMachine::AIE2TargetMachine(const Target &T, const Triple &TT,
   setFastISel(false);
   setGlobalISelAbort(GlobalISelAbortMode::Enable);
 }
-
-// AIE2 Pass Setup
-class AIE2PassConfig final : public AIEBasePassConfig {
-public:
-  AIE2PassConfig(LLVMTargetMachine &TM, PassManagerBase &PM)
-      : AIEBasePassConfig(TM, PM) {
-    if (!EnableSubregRenaming)
-      disablePass(&RenameIndependentSubregsID);
-  }
-
-  AIE2TargetMachine &getAIETargetMachine() const {
-    return getTM<AIE2TargetMachine>();
-  }
-
-  bool addPreISel() override;
-  void addPreEmitPass() override;
-  bool addInstSelector() override;
-  bool addGlobalInstructionSelect() override;
-  void addPreRegAlloc() override;
-  bool addRegAssignAndRewriteOptimized() override;
-  void addPostRewrite() override;
-  void addMachineLateOptimization() override;
-  void addPreSched2() override;
-  void addBlockPlacement() override;
-  void addPreLegalizeMachineIR() override;
-  void addPreRegBankSelect() override;
-};
 
 TargetPassConfig *AIE2TargetMachine::createPassConfig(PassManagerBase &PM) {
   return new AIE2PassConfig(*this, PM);

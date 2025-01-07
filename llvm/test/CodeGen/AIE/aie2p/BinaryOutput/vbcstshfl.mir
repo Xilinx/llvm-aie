@@ -1,0 +1,486 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; VBCSTSHFL_16_vec_broadcast_shuffle_bm
+    $bmll0 = VBCSTSHFL_16_vec_broadcast_shuffle_bm $r11, $r29
+    $bmll2 = VBCSTSHFL_16_vec_broadcast_shuffle_bm $r0, $r29
+    $bmhh0 = VBCSTSHFL_16_vec_broadcast_shuffle_bm $r7, $r29
+    $bmhh2 = VBCSTSHFL_16_vec_broadcast_shuffle_bm $r28, $r29
+    $bmhl2 = VBCSTSHFL_16_vec_broadcast_shuffle_bm $r6, $r29
+    $bmlh0 = VBCSTSHFL_16_vec_broadcast_shuffle_bm $r15, $r29
+    $bmhh1 = VBCSTSHFL_16_vec_broadcast_shuffle_bm $r1, $r29
+    $bmlh2 = VBCSTSHFL_16_vec_broadcast_shuffle_bm $r30, $r29
+    $bmhl3 = VBCSTSHFL_16_vec_broadcast_shuffle_bm $r14, $r29
+    $bmll1 = VBCSTSHFL_16_vec_broadcast_shuffle_bm $r18, $r29
+    $bmhl0 = VBCSTSHFL_16_vec_broadcast_shuffle_bm $r2, $r29
+    $bmhl1 = VBCSTSHFL_16_vec_broadcast_shuffle_bm $r27, $r29
+    $bmhh3 = VBCSTSHFL_16_vec_broadcast_shuffle_bm $r23, $r29
+    $bmlh3 = VBCSTSHFL_16_vec_broadcast_shuffle_bm $r31, $r29
+    $bmll3 = VBCSTSHFL_16_vec_broadcast_shuffle_bm $r24, $r29
+    $bmlh1 = VBCSTSHFL_16_vec_broadcast_shuffle_bm $r26, $r29
+    $bmll0 = VBCSTSHFL_16_vec_broadcast_shuffle_bm $r13, $r29
+    $bmll2 = VBCSTSHFL_16_vec_broadcast_shuffle_bm $r5, $r29
+    $bmhh0 = VBCSTSHFL_16_vec_broadcast_shuffle_bm $r3, $r29
+    $bmhh2 = VBCSTSHFL_16_vec_broadcast_shuffle_bm $r25, $r29
+    $bmhl2 = VBCSTSHFL_16_vec_broadcast_shuffle_bm $r29, $r29
+    $bmlh0 = VBCSTSHFL_16_vec_broadcast_shuffle_bm $r4, $r29
+    $bmhh1 = VBCSTSHFL_16_vec_broadcast_shuffle_bm $r17, $r29
+    $bmlh2 = VBCSTSHFL_16_vec_broadcast_shuffle_bm $r19, $r29
+    $bmhl3 = VBCSTSHFL_16_vec_broadcast_shuffle_bm $r16, $r29
+    $bmll1 = VBCSTSHFL_16_vec_broadcast_shuffle_bm $r21, $r29
+    $bmhl0 = VBCSTSHFL_16_vec_broadcast_shuffle_bm $r22, $r29
+    $bmhl1 = VBCSTSHFL_16_vec_broadcast_shuffle_bm $r20, $r29
+    $bmhh3 = VBCSTSHFL_16_vec_broadcast_shuffle_bm $r12, $r29
+    $bmlh3 = VBCSTSHFL_16_vec_broadcast_shuffle_bm $r8, $r29
+    $bmll3 = VBCSTSHFL_16_vec_broadcast_shuffle_bm $r9, $r29
+    $bmlh1 = VBCSTSHFL_16_vec_broadcast_shuffle_bm $r10, $r29
+
+    ; VBCSTSHFL_16_vec_broadcast_shuffle_x
+    $x3 = VBCSTSHFL_16_vec_broadcast_shuffle_x $r11, $r29
+    $x0 = VBCSTSHFL_16_vec_broadcast_shuffle_x $r29, $r29
+    $x6 = VBCSTSHFL_16_vec_broadcast_shuffle_x $r9, $r29
+    $x5 = VBCSTSHFL_16_vec_broadcast_shuffle_x $r8, $r29
+    $x9 = VBCSTSHFL_16_vec_broadcast_shuffle_x $r14, $r29
+    $x7 = VBCSTSHFL_16_vec_broadcast_shuffle_x $r23, $r29
+    $x1 = VBCSTSHFL_16_vec_broadcast_shuffle_x $r10, $r29
+    $x11 = VBCSTSHFL_16_vec_broadcast_shuffle_x $r13, $r29
+    $x2 = VBCSTSHFL_16_vec_broadcast_shuffle_x $r3, $r29
+    $x10 = VBCSTSHFL_16_vec_broadcast_shuffle_x $r6, $r29
+    $x4 = VBCSTSHFL_16_vec_broadcast_shuffle_x $r1, $r29
+    $x8 = VBCSTSHFL_16_vec_broadcast_shuffle_x $r26, $r29
+    $x3 = VBCSTSHFL_16_vec_broadcast_shuffle_x $r7, $r29
+    $x0 = VBCSTSHFL_16_vec_broadcast_shuffle_x $r27, $r29
+    $x6 = VBCSTSHFL_16_vec_broadcast_shuffle_x $r0, $r29
+    $x5 = VBCSTSHFL_16_vec_broadcast_shuffle_x $r2, $r29
+    $x9 = VBCSTSHFL_16_vec_broadcast_shuffle_x $r31, $r29
+    $x7 = VBCSTSHFL_16_vec_broadcast_shuffle_x $r18, $r29
+    $x1 = VBCSTSHFL_16_vec_broadcast_shuffle_x $r16, $r29
+    $x11 = VBCSTSHFL_16_vec_broadcast_shuffle_x $r5, $r29
+    $x2 = VBCSTSHFL_16_vec_broadcast_shuffle_x $r20, $r29
+    $x10 = VBCSTSHFL_16_vec_broadcast_shuffle_x $r21, $r29
+    $x4 = VBCSTSHFL_16_vec_broadcast_shuffle_x $r4, $r29
+    $x8 = VBCSTSHFL_16_vec_broadcast_shuffle_x $r30, $r29
+    $x3 = VBCSTSHFL_16_vec_broadcast_shuffle_x $r15, $r29
+    $x0 = VBCSTSHFL_16_vec_broadcast_shuffle_x $r24, $r29
+    $x6 = VBCSTSHFL_16_vec_broadcast_shuffle_x $r28, $r29
+    $x5 = VBCSTSHFL_16_vec_broadcast_shuffle_x $r22, $r29
+    $x9 = VBCSTSHFL_16_vec_broadcast_shuffle_x $r19, $r29
+    $x7 = VBCSTSHFL_16_vec_broadcast_shuffle_x $r12, $r29
+    $x1 = VBCSTSHFL_16_vec_broadcast_shuffle_x $r25, $r29
+    $x11 = VBCSTSHFL_16_vec_broadcast_shuffle_x $r17, $r29
+
+    ; VBCSTSHFL_32_vec_broadcast_shuffle_bm
+    $bmlh3 = VBCSTSHFL_32_vec_broadcast_shuffle_bm $r28, $r29
+    $bmhh0 = VBCSTSHFL_32_vec_broadcast_shuffle_bm $r11, $r29
+    $bmll3 = VBCSTSHFL_32_vec_broadcast_shuffle_bm $r10, $r29
+    $bmlh2 = VBCSTSHFL_32_vec_broadcast_shuffle_bm $r14, $r29
+    $bmhh2 = VBCSTSHFL_32_vec_broadcast_shuffle_bm $r26, $r29
+    $bmhh3 = VBCSTSHFL_32_vec_broadcast_shuffle_bm $r8, $r29
+    $bmlh0 = VBCSTSHFL_32_vec_broadcast_shuffle_bm $r13, $r29
+    $bmll2 = VBCSTSHFL_32_vec_broadcast_shuffle_bm $r17, $r29
+    $bmhh1 = VBCSTSHFL_32_vec_broadcast_shuffle_bm $r31, $r29
+    $bmll0 = VBCSTSHFL_32_vec_broadcast_shuffle_bm $r30, $r29
+    $bmhl3 = VBCSTSHFL_32_vec_broadcast_shuffle_bm $r27, $r29
+    $bmhl0 = VBCSTSHFL_32_vec_broadcast_shuffle_bm $r5, $r29
+    $bmlh1 = VBCSTSHFL_32_vec_broadcast_shuffle_bm $r7, $r29
+    $bmhl1 = VBCSTSHFL_32_vec_broadcast_shuffle_bm $r2, $r29
+    $bmhl2 = VBCSTSHFL_32_vec_broadcast_shuffle_bm $r22, $r29
+    $bmll1 = VBCSTSHFL_32_vec_broadcast_shuffle_bm $r15, $r29
+    $bmlh3 = VBCSTSHFL_32_vec_broadcast_shuffle_bm $r0, $r29
+    $bmhh0 = VBCSTSHFL_32_vec_broadcast_shuffle_bm $r23, $r29
+    $bmll3 = VBCSTSHFL_32_vec_broadcast_shuffle_bm $r9, $r29
+    $bmlh2 = VBCSTSHFL_32_vec_broadcast_shuffle_bm $r20, $r29
+    $bmhh2 = VBCSTSHFL_32_vec_broadcast_shuffle_bm $r24, $r29
+    $bmhh3 = VBCSTSHFL_32_vec_broadcast_shuffle_bm $r21, $r29
+    $bmlh0 = VBCSTSHFL_32_vec_broadcast_shuffle_bm $r6, $r29
+    $bmll2 = VBCSTSHFL_32_vec_broadcast_shuffle_bm $r25, $r29
+    $bmhh1 = VBCSTSHFL_32_vec_broadcast_shuffle_bm $r18, $r29
+    $bmll0 = VBCSTSHFL_32_vec_broadcast_shuffle_bm $r3, $r29
+    $bmhl3 = VBCSTSHFL_32_vec_broadcast_shuffle_bm $r29, $r29
+    $bmhl0 = VBCSTSHFL_32_vec_broadcast_shuffle_bm $r4, $r29
+    $bmlh1 = VBCSTSHFL_32_vec_broadcast_shuffle_bm $r12, $r29
+    $bmhl1 = VBCSTSHFL_32_vec_broadcast_shuffle_bm $r1, $r29
+    $bmhl2 = VBCSTSHFL_32_vec_broadcast_shuffle_bm $r16, $r29
+    $bmll1 = VBCSTSHFL_32_vec_broadcast_shuffle_bm $r19, $r29
+
+    ; VBCSTSHFL_32_vec_broadcast_shuffle_x
+    $x6 = VBCSTSHFL_32_vec_broadcast_shuffle_x $r1, $r29
+    $x7 = VBCSTSHFL_32_vec_broadcast_shuffle_x $r28, $r29
+    $x11 = VBCSTSHFL_32_vec_broadcast_shuffle_x $r15, $r29
+    $x10 = VBCSTSHFL_32_vec_broadcast_shuffle_x $r19, $r29
+    $x0 = VBCSTSHFL_32_vec_broadcast_shuffle_x $r11, $r29
+    $x4 = VBCSTSHFL_32_vec_broadcast_shuffle_x $r5, $r29
+    $x2 = VBCSTSHFL_32_vec_broadcast_shuffle_x $r29, $r29
+    $x9 = VBCSTSHFL_32_vec_broadcast_shuffle_x $r18, $r29
+    $x1 = VBCSTSHFL_32_vec_broadcast_shuffle_x $r16, $r29
+    $x8 = VBCSTSHFL_32_vec_broadcast_shuffle_x $r8, $r29
+    $x3 = VBCSTSHFL_32_vec_broadcast_shuffle_x $r0, $r29
+    $x5 = VBCSTSHFL_32_vec_broadcast_shuffle_x $r3, $r29
+    $x6 = VBCSTSHFL_32_vec_broadcast_shuffle_x $r17, $r29
+    $x7 = VBCSTSHFL_32_vec_broadcast_shuffle_x $r24, $r29
+    $x11 = VBCSTSHFL_32_vec_broadcast_shuffle_x $r7, $r29
+    $x10 = VBCSTSHFL_32_vec_broadcast_shuffle_x $r14, $r29
+    $x0 = VBCSTSHFL_32_vec_broadcast_shuffle_x $r6, $r29
+    $x4 = VBCSTSHFL_32_vec_broadcast_shuffle_x $r9, $r29
+    $x2 = VBCSTSHFL_32_vec_broadcast_shuffle_x $r13, $r29
+    $x9 = VBCSTSHFL_32_vec_broadcast_shuffle_x $r4, $r29
+    $x1 = VBCSTSHFL_32_vec_broadcast_shuffle_x $r27, $r29
+    $x8 = VBCSTSHFL_32_vec_broadcast_shuffle_x $r22, $r29
+    $x3 = VBCSTSHFL_32_vec_broadcast_shuffle_x $r26, $r29
+    $x5 = VBCSTSHFL_32_vec_broadcast_shuffle_x $r30, $r29
+    $x6 = VBCSTSHFL_32_vec_broadcast_shuffle_x $r23, $r29
+    $x7 = VBCSTSHFL_32_vec_broadcast_shuffle_x $r12, $r29
+    $x11 = VBCSTSHFL_32_vec_broadcast_shuffle_x $r20, $r29
+    $x10 = VBCSTSHFL_32_vec_broadcast_shuffle_x $r25, $r29
+    $x0 = VBCSTSHFL_32_vec_broadcast_shuffle_x $r31, $r29
+    $x4 = VBCSTSHFL_32_vec_broadcast_shuffle_x $r2, $r29
+    $x2 = VBCSTSHFL_32_vec_broadcast_shuffle_x $r21, $r29
+    $x9 = VBCSTSHFL_32_vec_broadcast_shuffle_x $r10, $r29
+
+    ; VBCSTSHFL_64_vec_broadcast_shuffle_bm
+    $bmlh3 = VBCSTSHFL_64_vec_broadcast_shuffle_bm $l8, $r29
+    $bmhl2 = VBCSTSHFL_64_vec_broadcast_shuffle_bm $l13, $r29
+    $bmhl3 = VBCSTSHFL_64_vec_broadcast_shuffle_bm $l0, $r29
+    $bmhh1 = VBCSTSHFL_64_vec_broadcast_shuffle_bm $l4, $r29
+    $bmhh0 = VBCSTSHFL_64_vec_broadcast_shuffle_bm $l9, $r29
+    $bmll1 = VBCSTSHFL_64_vec_broadcast_shuffle_bm $l5, $r29
+    $bmlh0 = VBCSTSHFL_64_vec_broadcast_shuffle_bm $l2, $r29
+    $bmhl0 = VBCSTSHFL_64_vec_broadcast_shuffle_bm $l1, $r29
+    $bmlh2 = VBCSTSHFL_64_vec_broadcast_shuffle_bm $l3, $r29
+    $bmhh2 = VBCSTSHFL_64_vec_broadcast_shuffle_bm $l15, $r29
+    $bmll3 = VBCSTSHFL_64_vec_broadcast_shuffle_bm $l10, $r29
+    $bmhh3 = VBCSTSHFL_64_vec_broadcast_shuffle_bm $l14, $r29
+    $bmlh1 = VBCSTSHFL_64_vec_broadcast_shuffle_bm $l6, $r29
+    $bmll2 = VBCSTSHFL_64_vec_broadcast_shuffle_bm $l11, $r29
+    $bmll0 = VBCSTSHFL_64_vec_broadcast_shuffle_bm $l7, $r29
+    $bmhl1 = VBCSTSHFL_64_vec_broadcast_shuffle_bm $l12, $r29
+
+    ; VBCSTSHFL_64_vec_broadcast_shuffle_x
+    $x2 = VBCSTSHFL_64_vec_broadcast_shuffle_x $l1, $r29
+    $x3 = VBCSTSHFL_64_vec_broadcast_shuffle_x $l10, $r29
+    $x7 = VBCSTSHFL_64_vec_broadcast_shuffle_x $l7, $r29
+    $x9 = VBCSTSHFL_64_vec_broadcast_shuffle_x $l2, $r29
+    $x6 = VBCSTSHFL_64_vec_broadcast_shuffle_x $l0, $r29
+    $x0 = VBCSTSHFL_64_vec_broadcast_shuffle_x $l12, $r29
+    $x5 = VBCSTSHFL_64_vec_broadcast_shuffle_x $l11, $r29
+    $x10 = VBCSTSHFL_64_vec_broadcast_shuffle_x $l6, $r29
+    $x4 = VBCSTSHFL_64_vec_broadcast_shuffle_x $l8, $r29
+    $x11 = VBCSTSHFL_64_vec_broadcast_shuffle_x $l14, $r29
+    $x1 = VBCSTSHFL_64_vec_broadcast_shuffle_x $l5, $r29
+    $x8 = VBCSTSHFL_64_vec_broadcast_shuffle_x $l15, $r29
+    $x2 = VBCSTSHFL_64_vec_broadcast_shuffle_x $l4, $r29
+    $x3 = VBCSTSHFL_64_vec_broadcast_shuffle_x $l13, $r29
+    $x7 = VBCSTSHFL_64_vec_broadcast_shuffle_x $l9, $r29
+    $x9 = VBCSTSHFL_64_vec_broadcast_shuffle_x $l3, $r29
+
+    ; VBCSTSHFL_8_vec_broadcast_shuffle_bm
+    $bmlh1 = VBCSTSHFL_8_vec_broadcast_shuffle_bm $r28, $r29
+    $bmhh3 = VBCSTSHFL_8_vec_broadcast_shuffle_bm $r3, $r29
+    $bmhh0 = VBCSTSHFL_8_vec_broadcast_shuffle_bm $r27, $r29
+    $bmlh3 = VBCSTSHFL_8_vec_broadcast_shuffle_bm $r31, $r29
+    $bmhh2 = VBCSTSHFL_8_vec_broadcast_shuffle_bm $r11, $r29
+    $bmhl0 = VBCSTSHFL_8_vec_broadcast_shuffle_bm $r5, $r29
+    $bmlh2 = VBCSTSHFL_8_vec_broadcast_shuffle_bm $r29, $r29
+    $bmll3 = VBCSTSHFL_8_vec_broadcast_shuffle_bm $r24, $r29
+    $bmhl2 = VBCSTSHFL_8_vec_broadcast_shuffle_bm $r26, $r29
+    $bmll1 = VBCSTSHFL_8_vec_broadcast_shuffle_bm $r19, $r29
+    $bmhl3 = VBCSTSHFL_8_vec_broadcast_shuffle_bm $r14, $r29
+    $bmhl1 = VBCSTSHFL_8_vec_broadcast_shuffle_bm $r15, $r29
+    $bmll2 = VBCSTSHFL_8_vec_broadcast_shuffle_bm $r18, $r29
+    $bmhh1 = VBCSTSHFL_8_vec_broadcast_shuffle_bm $r7, $r29
+    $bmlh0 = VBCSTSHFL_8_vec_broadcast_shuffle_bm $r30, $r29
+    $bmll0 = VBCSTSHFL_8_vec_broadcast_shuffle_bm $r21, $r29
+    $bmlh1 = VBCSTSHFL_8_vec_broadcast_shuffle_bm $r23, $r29
+    $bmhh3 = VBCSTSHFL_8_vec_broadcast_shuffle_bm $r25, $r29
+    $bmhh0 = VBCSTSHFL_8_vec_broadcast_shuffle_bm $r4, $r29
+    $bmlh3 = VBCSTSHFL_8_vec_broadcast_shuffle_bm $r1, $r29
+    $bmhh2 = VBCSTSHFL_8_vec_broadcast_shuffle_bm $r22, $r29
+    $bmhl0 = VBCSTSHFL_8_vec_broadcast_shuffle_bm $r0, $r29
+    $bmlh2 = VBCSTSHFL_8_vec_broadcast_shuffle_bm $r13, $r29
+    $bmll3 = VBCSTSHFL_8_vec_broadcast_shuffle_bm $r10, $r29
+    $bmhl2 = VBCSTSHFL_8_vec_broadcast_shuffle_bm $r12, $r29
+    $bmll1 = VBCSTSHFL_8_vec_broadcast_shuffle_bm $r2, $r29
+    $bmhl3 = VBCSTSHFL_8_vec_broadcast_shuffle_bm $r16, $r29
+    $bmhl1 = VBCSTSHFL_8_vec_broadcast_shuffle_bm $r9, $r29
+    $bmll2 = VBCSTSHFL_8_vec_broadcast_shuffle_bm $r6, $r29
+    $bmhh1 = VBCSTSHFL_8_vec_broadcast_shuffle_bm $r8, $r29
+    $bmlh0 = VBCSTSHFL_8_vec_broadcast_shuffle_bm $r17, $r29
+    $bmll0 = VBCSTSHFL_8_vec_broadcast_shuffle_bm $r20, $r29
+
+    ; VBCSTSHFL_8_vec_broadcast_shuffle_x
+    $x2 = VBCSTSHFL_8_vec_broadcast_shuffle_x $r12, $r29
+    $x3 = VBCSTSHFL_8_vec_broadcast_shuffle_x $r4, $r29
+    $x7 = VBCSTSHFL_8_vec_broadcast_shuffle_x $r22, $r29
+    $x9 = VBCSTSHFL_8_vec_broadcast_shuffle_x $r21, $r29
+    $x8 = VBCSTSHFL_8_vec_broadcast_shuffle_x $r30, $r29
+    $x4 = VBCSTSHFL_8_vec_broadcast_shuffle_x $r29, $r29
+    $x5 = VBCSTSHFL_8_vec_broadcast_shuffle_x $r2, $r29
+    $x11 = VBCSTSHFL_8_vec_broadcast_shuffle_x $r13, $r29
+    $x1 = VBCSTSHFL_8_vec_broadcast_shuffle_x $r8, $r29
+    $x0 = VBCSTSHFL_8_vec_broadcast_shuffle_x $r14, $r29
+    $x6 = VBCSTSHFL_8_vec_broadcast_shuffle_x $r11, $r29
+    $x10 = VBCSTSHFL_8_vec_broadcast_shuffle_x $r28, $r29
+    $x2 = VBCSTSHFL_8_vec_broadcast_shuffle_x $r3, $r29
+    $x3 = VBCSTSHFL_8_vec_broadcast_shuffle_x $r16, $r29
+    $x7 = VBCSTSHFL_8_vec_broadcast_shuffle_x $r1, $r29
+    $x9 = VBCSTSHFL_8_vec_broadcast_shuffle_x $r24, $r29
+    $x8 = VBCSTSHFL_8_vec_broadcast_shuffle_x $r31, $r29
+    $x4 = VBCSTSHFL_8_vec_broadcast_shuffle_x $r7, $r29
+    $x5 = VBCSTSHFL_8_vec_broadcast_shuffle_x $r18, $r29
+    $x11 = VBCSTSHFL_8_vec_broadcast_shuffle_x $r23, $r29
+    $x1 = VBCSTSHFL_8_vec_broadcast_shuffle_x $r25, $r29
+    $x0 = VBCSTSHFL_8_vec_broadcast_shuffle_x $r15, $r29
+    $x6 = VBCSTSHFL_8_vec_broadcast_shuffle_x $r5, $r29
+    $x10 = VBCSTSHFL_8_vec_broadcast_shuffle_x $r20, $r29
+    $x2 = VBCSTSHFL_8_vec_broadcast_shuffle_x $r17, $r29
+    $x3 = VBCSTSHFL_8_vec_broadcast_shuffle_x $r26, $r29
+    $x7 = VBCSTSHFL_8_vec_broadcast_shuffle_x $r27, $r29
+    $x9 = VBCSTSHFL_8_vec_broadcast_shuffle_x $r6, $r29
+    $x8 = VBCSTSHFL_8_vec_broadcast_shuffle_x $r19, $r29
+    $x4 = VBCSTSHFL_8_vec_broadcast_shuffle_x $r10, $r29
+    $x5 = VBCSTSHFL_8_vec_broadcast_shuffle_x $r0, $r29
+    $x11 = VBCSTSHFL_8_vec_broadcast_shuffle_x $r9, $r29
+...
+
+# CHECK: 0: f8 52 2d 18 vbcstshfl.16 bmll0, r11, r29
+# CHECK: 4: f8 52 01 1c vbcstshfl.16 bmll2, r0, r29
+# CHECK: 8: f8 52 9d 19 vbcstshfl.16 bmhh0, r7, r29
+# CHECK: c: f8 52 f1 1d vbcstshfl.16 bmhh2, r28, r29
+# CHECK: 10: f8 52 19 1d vbcstshfl.16 bmhl2, r6, r29
+# CHECK: 14: f8 52 bd 18 vbcstshfl.16 bmlh0, r15, r29
+# CHECK: 18: f8 52 85 1b vbcstshfl.16 bmhh1, r1, r29
+# CHECK: 1c: f8 52 f9 1c vbcstshfl.16 bmlh2, r30, r29
+# CHECK: 20: f8 52 39 1f vbcstshfl.16 bmhl3, r14, r29
+# CHECK: 24: f8 52 49 1a vbcstshfl.16 bmll1, r18, r29
+# CHECK: 28: f8 52 09 19 vbcstshfl.16 bmhl0, r2, r29
+# CHECK: 2c: f8 52 6d 1b vbcstshfl.16 bmhl1, r27, r29
+# CHECK: 30: f8 52 dd 1f vbcstshfl.16 bmhh3, r23, r29
+# CHECK: 34: f8 52 fd 1e vbcstshfl.16 bmlh3, r31, r29
+# CHECK: 38: f8 52 61 1e vbcstshfl.16 bmll3, r24, r29
+# CHECK: 3c: f8 52 e9 1a vbcstshfl.16 bmlh1, r26, r29
+# CHECK: 40: f8 52 35 18 vbcstshfl.16 bmll0, r13, r29
+# CHECK: 44: f8 52 15 1c vbcstshfl.16 bmll2, r5, r29
+# CHECK: 48: f8 52 8d 19 vbcstshfl.16 bmhh0, r3, r29
+# CHECK: 4c: f8 52 e5 1d vbcstshfl.16 bmhh2, r25, r29
+# CHECK: 50: f8 52 75 1d vbcstshfl.16 bmhl2, r29, r29
+# CHECK: 54: f8 52 91 18 vbcstshfl.16 bmlh0, r4, r29
+# CHECK: 58: f8 52 c5 1b vbcstshfl.16 bmhh1, r17, r29
+# CHECK: 5c: f8 52 cd 1c vbcstshfl.16 bmlh2, r19, r29
+# CHECK: 60: f8 52 41 1f vbcstshfl.16 bmhl3, r16, r29
+# CHECK: 64: f8 52 55 1a vbcstshfl.16 bmll1, r21, r29
+# CHECK: 68: f8 52 59 19 vbcstshfl.16 bmhl0, r22, r29
+# CHECK: 6c: f8 52 51 1b vbcstshfl.16 bmhl1, r20, r29
+# CHECK: 70: f8 52 b1 1f vbcstshfl.16 bmhh3, r12, r29
+# CHECK: 74: f8 52 a1 1e vbcstshfl.16 bmlh3, r8, r29
+# CHECK: 78: f8 52 25 1e vbcstshfl.16 bmll3, r9, r29
+# CHECK: 7c: f8 52 a9 1a vbcstshfl.16 bmlh1, r10, r29
+# CHECK: 80: f8 d2 ad 19 vbcstshfl.16 x3, r11, r29
+# CHECK: 84: f8 d2 75 18 vbcstshfl.16 x0, r29, r29
+# CHECK: 88: f8 d2 25 1b vbcstshfl.16 x6, r9, r29
+# CHECK: 8c: f8 d2 a1 1a vbcstshfl.16 x5, r8, r29
+# CHECK: 90: f8 d2 b9 1c vbcstshfl.16 x9, r14, r29
+# CHECK: 94: f8 d2 dd 1b vbcstshfl.16 x7, r23, r29
+# CHECK: 98: f8 d2 a9 18 vbcstshfl.16 x1, r10, r29
+# CHECK: 9c: f8 d2 b5 1d vbcstshfl.16 x11, r13, r29
+# CHECK: a0: f8 d2 0d 19 vbcstshfl.16 x2, r3, r29
+# CHECK: a4: f8 d2 19 1d vbcstshfl.16 x10, r6, r29
+# CHECK: a8: f8 d2 05 1a vbcstshfl.16 x4, r1, r29
+# CHECK: ac: f8 d2 69 1c vbcstshfl.16 x8, r26, r29
+# CHECK: b0: f8 d2 9d 19 vbcstshfl.16 x3, r7, r29
+# CHECK: b4: f8 d2 6d 18 vbcstshfl.16 x0, r27, r29
+# CHECK: b8: f8 d2 01 1b vbcstshfl.16 x6, r0, r29
+# CHECK: bc: f8 d2 89 1a vbcstshfl.16 x5, r2, r29
+# CHECK: c0: f8 d2 fd 1c vbcstshfl.16 x9, r31, r29
+# CHECK: c4: f8 d2 c9 1b vbcstshfl.16 x7, r18, r29
+# CHECK: c8: f8 d2 c1 18 vbcstshfl.16 x1, r16, r29
+# CHECK: cc: f8 d2 95 1d vbcstshfl.16 x11, r5, r29
+# CHECK: d0: f8 d2 51 19 vbcstshfl.16 x2, r20, r29
+# CHECK: d4: f8 d2 55 1d vbcstshfl.16 x10, r21, r29
+# CHECK: d8: f8 d2 11 1a vbcstshfl.16 x4, r4, r29
+# CHECK: dc: f8 d2 79 1c vbcstshfl.16 x8, r30, r29
+# CHECK: e0: f8 d2 bd 19 vbcstshfl.16 x3, r15, r29
+# CHECK: e4: f8 d2 61 18 vbcstshfl.16 x0, r24, r29
+# CHECK: e8: f8 d2 71 1b vbcstshfl.16 x6, r28, r29
+# CHECK: ec: f8 d2 d9 1a vbcstshfl.16 x5, r22, r29
+# CHECK: f0: f8 d2 cd 1c vbcstshfl.16 x9, r19, r29
+# CHECK: f4: f8 d2 b1 1b vbcstshfl.16 x7, r12, r29
+# CHECK: f8: f8 d2 e5 18 vbcstshfl.16 x1, r25, r29
+# CHECK: fc: f8 d2 c5 1d vbcstshfl.16 x11, r17, r29
+# CHECK: 100: f8 52 f2 1e vbcstshfl.32 bmlh3, r28, r29
+# CHECK: 104: f8 52 ae 19 vbcstshfl.32 bmhh0, r11, r29
+# CHECK: 108: f8 52 2a 1e vbcstshfl.32 bmll3, r10, r29
+# CHECK: 10c: f8 52 ba 1c vbcstshfl.32 bmlh2, r14, r29
+# CHECK: 110: f8 52 ea 1d vbcstshfl.32 bmhh2, r26, r29
+# CHECK: 114: f8 52 a2 1f vbcstshfl.32 bmhh3, r8, r29
+# CHECK: 118: f8 52 b6 18 vbcstshfl.32 bmlh0, r13, r29
+# CHECK: 11c: f8 52 46 1c vbcstshfl.32 bmll2, r17, r29
+# CHECK: 120: f8 52 fe 1b vbcstshfl.32 bmhh1, r31, r29
+# CHECK: 124: f8 52 7a 18 vbcstshfl.32 bmll0, r30, r29
+# CHECK: 128: f8 52 6e 1f vbcstshfl.32 bmhl3, r27, r29
+# CHECK: 12c: f8 52 16 19 vbcstshfl.32 bmhl0, r5, r29
+# CHECK: 130: f8 52 9e 1a vbcstshfl.32 bmlh1, r7, r29
+# CHECK: 134: f8 52 0a 1b vbcstshfl.32 bmhl1, r2, r29
+# CHECK: 138: f8 52 5a 1d vbcstshfl.32 bmhl2, r22, r29
+# CHECK: 13c: f8 52 3e 1a vbcstshfl.32 bmll1, r15, r29
+# CHECK: 140: f8 52 82 1e vbcstshfl.32 bmlh3, r0, r29
+# CHECK: 144: f8 52 de 19 vbcstshfl.32 bmhh0, r23, r29
+# CHECK: 148: f8 52 26 1e vbcstshfl.32 bmll3, r9, r29
+# CHECK: 14c: f8 52 d2 1c vbcstshfl.32 bmlh2, r20, r29
+# CHECK: 150: f8 52 e2 1d vbcstshfl.32 bmhh2, r24, r29
+# CHECK: 154: f8 52 d6 1f vbcstshfl.32 bmhh3, r21, r29
+# CHECK: 158: f8 52 9a 18 vbcstshfl.32 bmlh0, r6, r29
+# CHECK: 15c: f8 52 66 1c vbcstshfl.32 bmll2, r25, r29
+# CHECK: 160: f8 52 ca 1b vbcstshfl.32 bmhh1, r18, r29
+# CHECK: 164: f8 52 0e 18 vbcstshfl.32 bmll0, r3, r29
+# CHECK: 168: f8 52 76 1f vbcstshfl.32 bmhl3, r29, r29
+# CHECK: 16c: f8 52 12 19 vbcstshfl.32 bmhl0, r4, r29
+# CHECK: 170: f8 52 b2 1a vbcstshfl.32 bmlh1, r12, r29
+# CHECK: 174: f8 52 06 1b vbcstshfl.32 bmhl1, r1, r29
+# CHECK: 178: f8 52 42 1d vbcstshfl.32 bmhl2, r16, r29
+# CHECK: 17c: f8 52 4e 1a vbcstshfl.32 bmll1, r19, r29
+# CHECK: 180: f8 d2 06 1b vbcstshfl.32 x6, r1, r29
+# CHECK: 184: f8 d2 f2 1b vbcstshfl.32 x7, r28, r29
+# CHECK: 188: f8 d2 be 1d vbcstshfl.32 x11, r15, r29
+# CHECK: 18c: f8 d2 4e 1d vbcstshfl.32 x10, r19, r29
+# CHECK: 190: f8 d2 2e 18 vbcstshfl.32 x0, r11, r29
+# CHECK: 194: f8 d2 16 1a vbcstshfl.32 x4, r5, r29
+# CHECK: 198: f8 d2 76 19 vbcstshfl.32 x2, r29, r29
+# CHECK: 19c: f8 d2 ca 1c vbcstshfl.32 x9, r18, r29
+# CHECK: 1a0: f8 d2 c2 18 vbcstshfl.32 x1, r16, r29
+# CHECK: 1a4: f8 d2 22 1c vbcstshfl.32 x8, r8, r29
+# CHECK: 1a8: f8 d2 82 19 vbcstshfl.32 x3, r0, r29
+# CHECK: 1ac: f8 d2 8e 1a vbcstshfl.32 x5, r3, r29
+# CHECK: 1b0: f8 d2 46 1b vbcstshfl.32 x6, r17, r29
+# CHECK: 1b4: f8 d2 e2 1b vbcstshfl.32 x7, r24, r29
+# CHECK: 1b8: f8 d2 9e 1d vbcstshfl.32 x11, r7, r29
+# CHECK: 1bc: f8 d2 3a 1d vbcstshfl.32 x10, r14, r29
+# CHECK: 1c0: f8 d2 1a 18 vbcstshfl.32 x0, r6, r29
+# CHECK: 1c4: f8 d2 26 1a vbcstshfl.32 x4, r9, r29
+# CHECK: 1c8: f8 d2 36 19 vbcstshfl.32 x2, r13, r29
+# CHECK: 1cc: f8 d2 92 1c vbcstshfl.32 x9, r4, r29
+# CHECK: 1d0: f8 d2 ee 18 vbcstshfl.32 x1, r27, r29
+# CHECK: 1d4: f8 d2 5a 1c vbcstshfl.32 x8, r22, r29
+# CHECK: 1d8: f8 d2 ea 19 vbcstshfl.32 x3, r26, r29
+# CHECK: 1dc: f8 d2 fa 1a vbcstshfl.32 x5, r30, r29
+# CHECK: 1e0: f8 d2 5e 1b vbcstshfl.32 x6, r23, r29
+# CHECK: 1e4: f8 d2 b2 1b vbcstshfl.32 x7, r12, r29
+# CHECK: 1e8: f8 d2 d2 1d vbcstshfl.32 x11, r20, r29
+# CHECK: 1ec: f8 d2 66 1d vbcstshfl.32 x10, r25, r29
+# CHECK: 1f0: f8 d2 7e 18 vbcstshfl.32 x0, r31, r29
+# CHECK: 1f4: f8 d2 0a 1a vbcstshfl.32 x4, r2, r29
+# CHECK: 1f8: f8 d2 56 19 vbcstshfl.32 x2, r21, r29
+# CHECK: 1fc: f8 d2 aa 1c vbcstshfl.32 x9, r10, r29
+# CHECK: 200: f8 52 c3 1e vbcstshfl.64 bmlh3, r17:r16, r29
+# CHECK: 204: f8 52 6b 1d vbcstshfl.64 bmhl2, r27:r26, r29
+# CHECK: 208: f8 52 03 1f vbcstshfl.64 bmhl3, r1:r0, r29
+# CHECK: 20c: f8 52 a3 1b vbcstshfl.64 bmhh1, r9:r8, r29
+# CHECK: 210: f8 52 cb 19 vbcstshfl.64 bmhh0, r19:r18, r29
+# CHECK: 214: f8 52 2b 1a vbcstshfl.64 bmll1, r11:r10, r29
+# CHECK: 218: f8 52 93 18 vbcstshfl.64 bmlh0, r5:r4, r29
+# CHECK: 21c: f8 52 0b 19 vbcstshfl.64 bmhl0, r3:r2, r29
+# CHECK: 220: f8 52 9b 1c vbcstshfl.64 bmlh2, r7:r6, r29
+# CHECK: 224: f8 52 fb 1d vbcstshfl.64 bmhh2, r31:r30, r29
+# CHECK: 228: f8 52 53 1e vbcstshfl.64 bmll3, r21:r20, r29
+# CHECK: 22c: f8 52 f3 1f vbcstshfl.64 bmhh3, r29:r28, r29
+# CHECK: 230: f8 52 b3 1a vbcstshfl.64 bmlh1, r13:r12, r29
+# CHECK: 234: f8 52 5b 1c vbcstshfl.64 bmll2, r23:r22, r29
+# CHECK: 238: f8 52 3b 18 vbcstshfl.64 bmll0, r15:r14, r29
+# CHECK: 23c: f8 52 63 1b vbcstshfl.64 bmhl1, r25:r24, r29
+# CHECK: 240: f8 d2 0b 19 vbcstshfl.64 x2, r3:r2, r29
+# CHECK: 244: f8 d2 d3 19 vbcstshfl.64 x3, r21:r20, r29
+# CHECK: 248: f8 d2 bb 1b vbcstshfl.64 x7, r15:r14, r29
+# CHECK: 24c: f8 d2 93 1c vbcstshfl.64 x9, r5:r4, r29
+# CHECK: 250: f8 d2 03 1b vbcstshfl.64 x6, r1:r0, r29
+# CHECK: 254: f8 d2 63 18 vbcstshfl.64 x0, r25:r24, r29
+# CHECK: 258: f8 d2 db 1a vbcstshfl.64 x5, r23:r22, r29
+# CHECK: 25c: f8 d2 33 1d vbcstshfl.64 x10, r13:r12, r29
+# CHECK: 260: f8 d2 43 1a vbcstshfl.64 x4, r17:r16, r29
+# CHECK: 264: f8 d2 f3 1d vbcstshfl.64 x11, r29:r28, r29
+# CHECK: 268: f8 d2 ab 18 vbcstshfl.64 x1, r11:r10, r29
+# CHECK: 26c: f8 d2 7b 1c vbcstshfl.64 x8, r31:r30, r29
+# CHECK: 270: f8 d2 23 19 vbcstshfl.64 x2, r9:r8, r29
+# CHECK: 274: f8 d2 eb 19 vbcstshfl.64 x3, r27:r26, r29
+# CHECK: 278: f8 d2 cb 1b vbcstshfl.64 x7, r19:r18, r29
+# CHECK: 27c: f8 d2 9b 1c vbcstshfl.64 x9, r7:r6, r29
+# CHECK: 280: f8 52 f0 1a vbcstshfl.8 bmlh1, r28, r29
+# CHECK: 284: f8 52 8c 1f vbcstshfl.8 bmhh3, r3, r29
+# CHECK: 288: f8 52 ec 19 vbcstshfl.8 bmhh0, r27, r29
+# CHECK: 28c: f8 52 fc 1e vbcstshfl.8 bmlh3, r31, r29
+# CHECK: 290: f8 52 ac 1d vbcstshfl.8 bmhh2, r11, r29
+# CHECK: 294: f8 52 14 19 vbcstshfl.8 bmhl0, r5, r29
+# CHECK: 298: f8 52 f4 1c vbcstshfl.8 bmlh2, r29, r29
+# CHECK: 29c: f8 52 60 1e vbcstshfl.8 bmll3, r24, r29
+# CHECK: 2a0: f8 52 68 1d vbcstshfl.8 bmhl2, r26, r29
+# CHECK: 2a4: f8 52 4c 1a vbcstshfl.8 bmll1, r19, r29
+# CHECK: 2a8: f8 52 38 1f vbcstshfl.8 bmhl3, r14, r29
+# CHECK: 2ac: f8 52 3c 1b vbcstshfl.8 bmhl1, r15, r29
+# CHECK: 2b0: f8 52 48 1c vbcstshfl.8 bmll2, r18, r29
+# CHECK: 2b4: f8 52 9c 1b vbcstshfl.8 bmhh1, r7, r29
+# CHECK: 2b8: f8 52 f8 18 vbcstshfl.8 bmlh0, r30, r29
+# CHECK: 2bc: f8 52 54 18 vbcstshfl.8 bmll0, r21, r29
+# CHECK: 2c0: f8 52 dc 1a vbcstshfl.8 bmlh1, r23, r29
+# CHECK: 2c4: f8 52 e4 1f vbcstshfl.8 bmhh3, r25, r29
+# CHECK: 2c8: f8 52 90 19 vbcstshfl.8 bmhh0, r4, r29
+# CHECK: 2cc: f8 52 84 1e vbcstshfl.8 bmlh3, r1, r29
+# CHECK: 2d0: f8 52 d8 1d vbcstshfl.8 bmhh2, r22, r29
+# CHECK: 2d4: f8 52 00 19 vbcstshfl.8 bmhl0, r0, r29
+# CHECK: 2d8: f8 52 b4 1c vbcstshfl.8 bmlh2, r13, r29
+# CHECK: 2dc: f8 52 28 1e vbcstshfl.8 bmll3, r10, r29
+# CHECK: 2e0: f8 52 30 1d vbcstshfl.8 bmhl2, r12, r29
+# CHECK: 2e4: f8 52 08 1a vbcstshfl.8 bmll1, r2, r29
+# CHECK: 2e8: f8 52 40 1f vbcstshfl.8 bmhl3, r16, r29
+# CHECK: 2ec: f8 52 24 1b vbcstshfl.8 bmhl1, r9, r29
+# CHECK: 2f0: f8 52 18 1c vbcstshfl.8 bmll2, r6, r29
+# CHECK: 2f4: f8 52 a0 1b vbcstshfl.8 bmhh1, r8, r29
+# CHECK: 2f8: f8 52 c4 18 vbcstshfl.8 bmlh0, r17, r29
+# CHECK: 2fc: f8 52 50 18 vbcstshfl.8 bmll0, r20, r29
+# CHECK: 300: f8 d2 30 19 vbcstshfl.8 x2, r12, r29
+# CHECK: 304: f8 d2 90 19 vbcstshfl.8 x3, r4, r29
+# CHECK: 308: f8 d2 d8 1b vbcstshfl.8 x7, r22, r29
+# CHECK: 30c: f8 d2 d4 1c vbcstshfl.8 x9, r21, r29
+# CHECK: 310: f8 d2 78 1c vbcstshfl.8 x8, r30, r29
+# CHECK: 314: f8 d2 74 1a vbcstshfl.8 x4, r29, r29
+# CHECK: 318: f8 d2 88 1a vbcstshfl.8 x5, r2, r29
+# CHECK: 31c: f8 d2 b4 1d vbcstshfl.8 x11, r13, r29
+# CHECK: 320: f8 d2 a0 18 vbcstshfl.8 x1, r8, r29
+# CHECK: 324: f8 d2 38 18 vbcstshfl.8 x0, r14, r29
+# CHECK: 328: f8 d2 2c 1b vbcstshfl.8 x6, r11, r29
+# CHECK: 32c: f8 d2 70 1d vbcstshfl.8 x10, r28, r29
+# CHECK: 330: f8 d2 0c 19 vbcstshfl.8 x2, r3, r29
+# CHECK: 334: f8 d2 c0 19 vbcstshfl.8 x3, r16, r29
+# CHECK: 338: f8 d2 84 1b vbcstshfl.8 x7, r1, r29
+# CHECK: 33c: f8 d2 e0 1c vbcstshfl.8 x9, r24, r29
+# CHECK: 340: f8 d2 7c 1c vbcstshfl.8 x8, r31, r29
+# CHECK: 344: f8 d2 1c 1a vbcstshfl.8 x4, r7, r29
+# CHECK: 348: f8 d2 c8 1a vbcstshfl.8 x5, r18, r29
+# CHECK: 34c: f8 d2 dc 1d vbcstshfl.8 x11, r23, r29
+# CHECK: 350: f8 d2 e4 18 vbcstshfl.8 x1, r25, r29
+# CHECK: 354: f8 d2 3c 18 vbcstshfl.8 x0, r15, r29
+# CHECK: 358: f8 d2 14 1b vbcstshfl.8 x6, r5, r29
+# CHECK: 35c: f8 d2 50 1d vbcstshfl.8 x10, r20, r29
+# CHECK: 360: f8 d2 44 19 vbcstshfl.8 x2, r17, r29
+# CHECK: 364: f8 d2 e8 19 vbcstshfl.8 x3, r26, r29
+# CHECK: 368: f8 d2 ec 1b vbcstshfl.8 x7, r27, r29
+# CHECK: 36c: f8 d2 98 1c vbcstshfl.8 x9, r6, r29
+# CHECK: 370: f8 d2 4c 1c vbcstshfl.8 x8, r19, r29
+# CHECK: 374: f8 d2 28 1a vbcstshfl.8 x4, r10, r29
+# CHECK: 378: f8 d2 80 1a vbcstshfl.8 x5, r0, r29
+# CHECK: 37c: f8 d2 a4 1d vbcstshfl.8 x11, r9, r29

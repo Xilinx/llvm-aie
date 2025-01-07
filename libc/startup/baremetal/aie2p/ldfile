@@ -1,0 +1,59 @@
+/*
+ * This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+ * See https://llvm.org/LICENSE.txt for license information.
+ * SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+ *
+ * (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+ */
+
+/* This is an example linker script that defines a simple memory layout for
+ * a binary running on aie2. It can be passed as a source file on clang's
+ * command line; it will pass it on to ld.lld, which interprets it as a
+ * linker script.
+ */
+
+/*
+ * The extent of program and data memory
+ */
+MEMORY
+{
+   program (RX) : ORIGIN = 0, LENGTH = 0x0020000
+   data (!RX) : ORIGIN = 0x20000, LENGTH = 0x0020000
+}
+
+/*
+ * We allow more than one text, data, etc section, provided that they
+ * have the right prefix '.text' etc.
+ * We force the start of the text section to address 0x0.
+ * The standard clang compiler driver supplies crt0.o and crt1.o which together
+ * define the C/C++ startup.
+ * crt0.o defines __start, the low-level entry point of execution.
+ * It initializes the stack pointer from the symbol _sp_start_value_DM_stack
+ * defined here and calls _main_init.
+ * crt1.o defines _main_init, which calls _Exit(main(0, nullptr));
+ * _Exit should not return
+ */
+ENTRY(__start)
+SECTIONS
+{
+  . = 0x0;
+  .text : { 
+    *crt0.o(.text*)
+    *(.text*)
+  } > program
+
+  .stack : {
+    . = 0x20000;
+    _sp_start_value_DM_stack = .;
+    . += 0x800;
+  } > data
+  .rodata : {
+    *(.rodata*)
+  } > data
+  .data : {
+    *(.data*)
+  } > data
+  .bss : {
+    *(.bss*)
+  } > data
+}

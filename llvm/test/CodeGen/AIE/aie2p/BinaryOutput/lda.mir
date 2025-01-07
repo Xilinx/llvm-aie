@@ -1,0 +1,3492 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; LDA_2D_dms_lda
+    $dn6, $p6, $dc1 = LDA_2D_dms_lda $p6, $d1
+    $el9, $p4, $dc6 = LDA_2D_dms_lda $p4, $d6
+    $el0, $p7, $dc5 = LDA_2D_dms_lda $p7, $d5
+    $p4, $p3, $dc4 = LDA_2D_dms_lda $p3, $d4
+    $r19, $p2, $dc7 = LDA_2D_dms_lda $p2, $d7
+    $eh9, $p0, $dc3 = LDA_2D_dms_lda $p0, $d3
+    $r10, $p1, $dc0 = LDA_2D_dms_lda $p1, $d0
+    $dc0, $p5, $dc2 = LDA_2D_dms_lda $p5, $d2
+    $dj6, $p6, $dc1 = LDA_2D_dms_lda $p6, $d1
+    $eh1, $p4, $dc6 = LDA_2D_dms_lda $p4, $d6
+    $dn7, $p7, $dc5 = LDA_2D_dms_lda $p7, $d5
+    $dc2, $p3, $dc4 = LDA_2D_dms_lda $p3, $d4
+    $r13, $p2, $dc7 = LDA_2D_dms_lda $p2, $d7
+    $r17, $p0, $dc3 = LDA_2D_dms_lda $p0, $d3
+    $dc7, $p1, $dc0 = LDA_2D_dms_lda $p1, $d0
+    $m4, $p5, $dc2 = LDA_2D_dms_lda $p5, $d2
+    $eh2, $p6, $dc1 = LDA_2D_dms_lda $p6, $d1
+    $r20, $p4, $dc6 = LDA_2D_dms_lda $p4, $d6
+    $dn4, $p7, $dc5 = LDA_2D_dms_lda $p7, $d5
+    $r29, $p3, $dc4 = LDA_2D_dms_lda $p3, $d4
+    $r23, $p2, $dc7 = LDA_2D_dms_lda $p2, $d7
+    $r26, $p0, $dc3 = LDA_2D_dms_lda $p0, $d3
+    $dc4, $p1, $dc0 = LDA_2D_dms_lda $p1, $d0
+    $r1, $p5, $dc2 = LDA_2D_dms_lda $p5, $d2
+    $dn2, $p6, $dc1 = LDA_2D_dms_lda $p6, $d1
+    $dn3, $p4, $dc6 = LDA_2D_dms_lda $p4, $d6
+    $r30, $p7, $dc5 = LDA_2D_dms_lda $p7, $d5
+    $el8, $p3, $dc4 = LDA_2D_dms_lda $p3, $d4
+    $dn5, $p2, $dc7 = LDA_2D_dms_lda $p2, $d7
+    $eh0, $p0, $dc3 = LDA_2D_dms_lda $p0, $d3
+    $r3, $p1, $dc0 = LDA_2D_dms_lda $p1, $d0
+    $el3, $p5, $dc2 = LDA_2D_dms_lda $p5, $d2
+    $eh7, $p6, $dc1 = LDA_2D_dms_lda $p6, $d1
+    $eh10, $p4, $dc6 = LDA_2D_dms_lda $p4, $d6
+    $el6, $p7, $dc5 = LDA_2D_dms_lda $p7, $d5
+    $eh3, $p3, $dc4 = LDA_2D_dms_lda $p3, $d4
+    $el5, $p2, $dc7 = LDA_2D_dms_lda $p2, $d7
+    $el1, $p0, $dc3 = LDA_2D_dms_lda $p0, $d3
+    $dj0, $p1, $dc0 = LDA_2D_dms_lda $p1, $d0
+    $el11, $p5, $dc2 = LDA_2D_dms_lda $p5, $d2
+    $dc3, $p6, $dc1 = LDA_2D_dms_lda $p6, $d1
+    $dj3, $p4, $dc6 = LDA_2D_dms_lda $p4, $d6
+    $r14, $p7, $dc5 = LDA_2D_dms_lda $p7, $d5
+    $lr, $p3, $dc4 = LDA_2D_dms_lda $p3, $d4
+    $r24, $p2, $dc7 = LDA_2D_dms_lda $p2, $d7
+    $r4, $p0, $dc3 = LDA_2D_dms_lda $p0, $d3
+    $dc5, $p1, $dc0 = LDA_2D_dms_lda $p1, $d0
+    $p7, $p5, $dc2 = LDA_2D_dms_lda $p5, $d2
+    $m5, $p6, $dc1 = LDA_2D_dms_lda $p6, $d1
+    $dc1, $p4, $dc6 = LDA_2D_dms_lda $p4, $d6
+    $p1, $p7, $dc5 = LDA_2D_dms_lda $p7, $d5
+    $r0, $p3, $dc4 = LDA_2D_dms_lda $p3, $d4
+    $dj7, $p2, $dc7 = LDA_2D_dms_lda $p2, $d7
+    $r22, $p0, $dc3 = LDA_2D_dms_lda $p0, $d3
+    $r2, $p1, $dc0 = LDA_2D_dms_lda $p1, $d0
+    $p3, $p5, $dc2 = LDA_2D_dms_lda $p5, $d2
+    $dj1, $p6, $dc1 = LDA_2D_dms_lda $p6, $d1
+    $r9, $p4, $dc6 = LDA_2D_dms_lda $p4, $d6
+    $dn1, $p7, $dc5 = LDA_2D_dms_lda $p7, $d5
+    $el10, $p3, $dc4 = LDA_2D_dms_lda $p3, $d4
+    $r28, $p2, $dc7 = LDA_2D_dms_lda $p2, $d7
+    $r11, $p0, $dc3 = LDA_2D_dms_lda $p0, $d3
+    $eh5, $p1, $dc0 = LDA_2D_dms_lda $p1, $d0
+    $r18, $p5, $dc2 = LDA_2D_dms_lda $p5, $d2
+    $dc6, $p6, $dc1 = LDA_2D_dms_lda $p6, $d1
+    $m0, $p4, $dc6 = LDA_2D_dms_lda $p4, $d6
+    $r7, $p7, $dc5 = LDA_2D_dms_lda $p7, $d5
+    $el2, $p3, $dc4 = LDA_2D_dms_lda $p3, $d4
+    $dj5, $p2, $dc7 = LDA_2D_dms_lda $p2, $d7
+    $m3, $p0, $dc3 = LDA_2D_dms_lda $p0, $d3
+    $el7, $p1, $dc0 = LDA_2D_dms_lda $p1, $d0
+    $dj4, $p5, $dc2 = LDA_2D_dms_lda $p5, $d2
+    $r15, $p6, $dc1 = LDA_2D_dms_lda $p6, $d1
+    $eh4, $p4, $dc6 = LDA_2D_dms_lda $p4, $d6
+    $p0, $p7, $dc5 = LDA_2D_dms_lda $p7, $d5
+    $m6, $p3, $dc4 = LDA_2D_dms_lda $p3, $d4
+    $r31, $p2, $dc7 = LDA_2D_dms_lda $p2, $d7
+    $r27, $p0, $dc3 = LDA_2D_dms_lda $p0, $d3
+    $r21, $p1, $dc0 = LDA_2D_dms_lda $p1, $d0
+    $p6, $p5, $dc2 = LDA_2D_dms_lda $p5, $d2
+    $r8, $p6, $dc1 = LDA_2D_dms_lda $p6, $d1
+    $r25, $p4, $dc6 = LDA_2D_dms_lda $p4, $d6
+    $r12, $p7, $dc5 = LDA_2D_dms_lda $p7, $d5
+    $m1, $p3, $dc4 = LDA_2D_dms_lda $p3, $d4
+    $r16, $p2, $dc7 = LDA_2D_dms_lda $p2, $d7
+    $dn0, $p0, $dc3 = LDA_2D_dms_lda $p0, $d3
+    $m7, $p1, $dc0 = LDA_2D_dms_lda $p1, $d0
+    $p5, $p5, $dc2 = LDA_2D_dms_lda $p5, $d2
+    $dj2, $p6, $dc1 = LDA_2D_dms_lda $p6, $d1
+    $r6, $p4, $dc6 = LDA_2D_dms_lda $p4, $d6
+    $r5, $p7, $dc5 = LDA_2D_dms_lda $p7, $d5
+    $eh11, $p3, $dc4 = LDA_2D_dms_lda $p3, $d4
+    $eh8, $p2, $dc7 = LDA_2D_dms_lda $p2, $d7
+    $eh6, $p0, $dc3 = LDA_2D_dms_lda $p0, $d3
+    $el4, $p1, $dc0 = LDA_2D_dms_lda $p1, $d0
+    $p2, $p5, $dc2 = LDA_2D_dms_lda $p5, $d2
+    $m2, $p6, $dc1 = LDA_2D_dms_lda $p6, $d1
+
+    ; LDA_2D_dmv_lda_q
+    $q3, $p1, $dc4 = LDA_2D_dmv_lda_q $p1, $d4
+    $q1, $p2, $dc6 = LDA_2D_dmv_lda_q $p2, $d6
+    $q0, $p0, $dc5 = LDA_2D_dmv_lda_q $p0, $d5
+    $q2, $p4, $dc7 = LDA_2D_dmv_lda_q $p4, $d7
+    $q3, $p7, $dc3 = LDA_2D_dmv_lda_q $p7, $d3
+    $q1, $p3, $dc1 = LDA_2D_dmv_lda_q $p3, $d1
+    $q0, $p6, $dc2 = LDA_2D_dmv_lda_q $p6, $d2
+    $q2, $p5, $dc0 = LDA_2D_dmv_lda_q $p5, $d0
+
+    ; LDA_2D_s16
+    $r7, $p2, $dc6 = LDA_2D_s16 $p2, $d6
+    $r21, $p4, $dc1 = LDA_2D_s16 $p4, $d1
+    $r18, $p3, $dc4 = LDA_2D_s16 $p3, $d4
+    $r12, $p0, $dc3 = LDA_2D_s16 $p0, $d3
+    $r26, $p1, $dc2 = LDA_2D_s16 $p1, $d2
+    $r15, $p5, $dc7 = LDA_2D_s16 $p5, $d7
+    $r24, $p6, $dc5 = LDA_2D_s16 $p6, $d5
+    $r3, $p7, $dc0 = LDA_2D_s16 $p7, $d0
+    $r25, $p2, $dc6 = LDA_2D_s16 $p2, $d6
+    $r28, $p4, $dc1 = LDA_2D_s16 $p4, $d1
+    $r14, $p3, $dc4 = LDA_2D_s16 $p3, $d4
+    $r30, $p0, $dc3 = LDA_2D_s16 $p0, $d3
+    $r29, $p1, $dc2 = LDA_2D_s16 $p1, $d2
+    $r23, $p5, $dc7 = LDA_2D_s16 $p5, $d7
+    $r5, $p6, $dc5 = LDA_2D_s16 $p6, $d5
+    $r0, $p7, $dc0 = LDA_2D_s16 $p7, $d0
+    $r9, $p2, $dc6 = LDA_2D_s16 $p2, $d6
+    $r13, $p4, $dc1 = LDA_2D_s16 $p4, $d1
+    $r20, $p3, $dc4 = LDA_2D_s16 $p3, $d4
+    $r17, $p0, $dc3 = LDA_2D_s16 $p0, $d3
+    $r2, $p1, $dc2 = LDA_2D_s16 $p1, $d2
+    $r16, $p5, $dc7 = LDA_2D_s16 $p5, $d7
+    $r6, $p6, $dc5 = LDA_2D_s16 $p6, $d5
+    $r11, $p7, $dc0 = LDA_2D_s16 $p7, $d0
+    $r19, $p2, $dc6 = LDA_2D_s16 $p2, $d6
+    $r8, $p4, $dc1 = LDA_2D_s16 $p4, $d1
+    $r1, $p3, $dc4 = LDA_2D_s16 $p3, $d4
+    $r4, $p0, $dc3 = LDA_2D_s16 $p0, $d3
+    $r10, $p1, $dc2 = LDA_2D_s16 $p1, $d2
+    $r22, $p5, $dc7 = LDA_2D_s16 $p5, $d7
+    $r31, $p6, $dc5 = LDA_2D_s16 $p6, $d5
+    $r27, $p7, $dc0 = LDA_2D_s16 $p7, $d0
+
+    ; LDA_2D_s8
+    $r24, $p5, $dc2 = LDA_2D_s8 $p5, $d2
+    $r22, $p7, $dc6 = LDA_2D_s8 $p7, $d6
+    $r4, $p2, $dc0 = LDA_2D_s8 $p2, $d0
+    $r26, $p6, $dc1 = LDA_2D_s8 $p6, $d1
+    $r13, $p3, $dc3 = LDA_2D_s8 $p3, $d3
+    $r3, $p4, $dc7 = LDA_2D_s8 $p4, $d7
+    $r19, $p0, $dc4 = LDA_2D_s8 $p0, $d4
+    $r23, $p1, $dc5 = LDA_2D_s8 $p1, $d5
+    $r20, $p5, $dc2 = LDA_2D_s8 $p5, $d2
+    $r21, $p7, $dc6 = LDA_2D_s8 $p7, $d6
+    $r2, $p2, $dc0 = LDA_2D_s8 $p2, $d0
+    $r29, $p6, $dc1 = LDA_2D_s8 $p6, $d1
+    $r5, $p3, $dc3 = LDA_2D_s8 $p3, $d3
+    $r27, $p4, $dc7 = LDA_2D_s8 $p4, $d7
+    $r6, $p0, $dc4 = LDA_2D_s8 $p0, $d4
+    $r16, $p1, $dc5 = LDA_2D_s8 $p1, $d5
+    $r14, $p5, $dc2 = LDA_2D_s8 $p5, $d2
+    $r30, $p7, $dc6 = LDA_2D_s8 $p7, $d6
+    $r1, $p2, $dc0 = LDA_2D_s8 $p2, $d0
+    $r25, $p6, $dc1 = LDA_2D_s8 $p6, $d1
+    $r12, $p3, $dc3 = LDA_2D_s8 $p3, $d3
+    $r8, $p4, $dc7 = LDA_2D_s8 $p4, $d7
+    $r15, $p0, $dc4 = LDA_2D_s8 $p0, $d4
+    $r11, $p1, $dc5 = LDA_2D_s8 $p1, $d5
+    $r17, $p5, $dc2 = LDA_2D_s8 $p5, $d2
+    $r10, $p7, $dc6 = LDA_2D_s8 $p7, $d6
+    $r9, $p2, $dc0 = LDA_2D_s8 $p2, $d0
+    $r31, $p6, $dc1 = LDA_2D_s8 $p6, $d1
+    $r18, $p3, $dc3 = LDA_2D_s8 $p3, $d3
+    $r28, $p4, $dc7 = LDA_2D_s8 $p4, $d7
+    $r0, $p0, $dc4 = LDA_2D_s8 $p0, $d4
+    $r7, $p1, $dc5 = LDA_2D_s8 $p1, $d5
+
+    ; LDA_2D_u16
+    $r21, $p6, $dc3 = LDA_2D_u16 $p6, $d3
+    $r5, $p2, $dc0 = LDA_2D_u16 $p2, $d0
+    $r0, $p4, $dc6 = LDA_2D_u16 $p4, $d6
+    $r20, $p1, $dc1 = LDA_2D_u16 $p1, $d1
+    $r15, $p0, $dc5 = LDA_2D_u16 $p0, $d5
+    $r13, $p3, $dc7 = LDA_2D_u16 $p3, $d7
+    $r31, $p7, $dc2 = LDA_2D_u16 $p7, $d2
+    $r2, $p5, $dc4 = LDA_2D_u16 $p5, $d4
+    $r6, $p6, $dc3 = LDA_2D_u16 $p6, $d3
+    $r16, $p2, $dc0 = LDA_2D_u16 $p2, $d0
+    $r17, $p4, $dc6 = LDA_2D_u16 $p4, $d6
+    $r22, $p1, $dc1 = LDA_2D_u16 $p1, $d1
+    $r12, $p0, $dc5 = LDA_2D_u16 $p0, $d5
+    $r14, $p3, $dc7 = LDA_2D_u16 $p3, $d7
+    $r7, $p7, $dc2 = LDA_2D_u16 $p7, $d2
+    $r27, $p5, $dc4 = LDA_2D_u16 $p5, $d4
+    $r19, $p6, $dc3 = LDA_2D_u16 $p6, $d3
+    $r24, $p2, $dc0 = LDA_2D_u16 $p2, $d0
+    $r18, $p4, $dc6 = LDA_2D_u16 $p4, $d6
+    $r26, $p1, $dc1 = LDA_2D_u16 $p1, $d1
+    $r8, $p0, $dc5 = LDA_2D_u16 $p0, $d5
+    $r11, $p3, $dc7 = LDA_2D_u16 $p3, $d7
+    $r23, $p7, $dc2 = LDA_2D_u16 $p7, $d2
+    $r30, $p5, $dc4 = LDA_2D_u16 $p5, $d4
+    $r3, $p6, $dc3 = LDA_2D_u16 $p6, $d3
+    $r10, $p2, $dc0 = LDA_2D_u16 $p2, $d0
+    $r29, $p4, $dc6 = LDA_2D_u16 $p4, $d6
+    $r28, $p1, $dc1 = LDA_2D_u16 $p1, $d1
+    $r1, $p0, $dc5 = LDA_2D_u16 $p0, $d5
+    $r9, $p3, $dc7 = LDA_2D_u16 $p3, $d7
+    $r25, $p7, $dc2 = LDA_2D_u16 $p7, $d2
+    $r4, $p5, $dc4 = LDA_2D_u16 $p5, $d4
+
+    ; LDA_2D_u8
+    $r30, $p3, $dc5 = LDA_2D_u8 $p3, $d5
+    $r0, $p5, $dc2 = LDA_2D_u8 $p5, $d2
+    $r11, $p4, $dc7 = LDA_2D_u8 $p4, $d7
+    $r13, $p7, $dc1 = LDA_2D_u8 $p7, $d1
+    $r6, $p1, $dc3 = LDA_2D_u8 $p1, $d3
+    $r23, $p2, $dc0 = LDA_2D_u8 $p2, $d0
+    $r28, $p0, $dc4 = LDA_2D_u8 $p0, $d4
+    $r31, $p6, $dc6 = LDA_2D_u8 $p6, $d6
+    $r24, $p3, $dc5 = LDA_2D_u8 $p3, $d5
+    $r15, $p5, $dc2 = LDA_2D_u8 $p5, $d2
+    $r21, $p4, $dc7 = LDA_2D_u8 $p4, $d7
+    $r26, $p7, $dc1 = LDA_2D_u8 $p7, $d1
+    $r8, $p1, $dc3 = LDA_2D_u8 $p1, $d3
+    $r9, $p2, $dc0 = LDA_2D_u8 $p2, $d0
+    $r14, $p0, $dc4 = LDA_2D_u8 $p0, $d4
+    $r3, $p6, $dc6 = LDA_2D_u8 $p6, $d6
+    $r18, $p3, $dc5 = LDA_2D_u8 $p3, $d5
+    $r5, $p5, $dc2 = LDA_2D_u8 $p5, $d2
+    $r22, $p4, $dc7 = LDA_2D_u8 $p4, $d7
+    $r12, $p7, $dc1 = LDA_2D_u8 $p7, $d1
+    $r16, $p1, $dc3 = LDA_2D_u8 $p1, $d3
+    $r1, $p2, $dc0 = LDA_2D_u8 $p2, $d0
+    $r19, $p0, $dc4 = LDA_2D_u8 $p0, $d4
+    $r17, $p6, $dc6 = LDA_2D_u8 $p6, $d6
+    $r4, $p3, $dc5 = LDA_2D_u8 $p3, $d5
+    $r20, $p5, $dc2 = LDA_2D_u8 $p5, $d2
+    $r2, $p4, $dc7 = LDA_2D_u8 $p4, $d7
+    $r29, $p7, $dc1 = LDA_2D_u8 $p7, $d1
+    $r27, $p1, $dc3 = LDA_2D_u8 $p1, $d3
+    $r25, $p2, $dc0 = LDA_2D_u8 $p2, $d0
+    $r10, $p0, $dc4 = LDA_2D_u8 $p0, $d4
+    $r7, $p6, $dc6 = LDA_2D_u8 $p6, $d6
+
+    ; LDA_3D_dms_lda
+    $m6, $p0, $dc2, $dc6 = LDA_3D_dms_lda $p0, $d2_3d
+    $m7, $p1, $dc0, $dc4 = LDA_3D_dms_lda $p1, $d0_3d
+    $el1, $p4, $dc3, $dc7 = LDA_3D_dms_lda $p4, $d3_3d
+    $dc4, $p5, $dc1, $dc5 = LDA_3D_dms_lda $p5, $d1_3d
+    $el5, $p6, $dc2, $dc6 = LDA_3D_dms_lda $p6, $d2_3d
+    $r6, $p7, $dc0, $dc4 = LDA_3D_dms_lda $p7, $d0_3d
+    $dj4, $p2, $dc3, $dc7 = LDA_3D_dms_lda $p2, $d3_3d
+    $r8, $p3, $dc1, $dc5 = LDA_3D_dms_lda $p3, $d1_3d
+    $r10, $p0, $dc2, $dc6 = LDA_3D_dms_lda $p0, $d2_3d
+    $r12, $p1, $dc0, $dc4 = LDA_3D_dms_lda $p1, $d0_3d
+    $r27, $p4, $dc3, $dc7 = LDA_3D_dms_lda $p4, $d3_3d
+    $r2, $p5, $dc1, $dc5 = LDA_3D_dms_lda $p5, $d1_3d
+    $r14, $p6, $dc2, $dc6 = LDA_3D_dms_lda $p6, $d2_3d
+    $m0, $p7, $dc0, $dc4 = LDA_3D_dms_lda $p7, $d0_3d
+    $r15, $p2, $dc3, $dc7 = LDA_3D_dms_lda $p2, $d3_3d
+    $r16, $p3, $dc1, $dc5 = LDA_3D_dms_lda $p3, $d1_3d
+    $r28, $p0, $dc2, $dc6 = LDA_3D_dms_lda $p0, $d2_3d
+    $r7, $p1, $dc0, $dc4 = LDA_3D_dms_lda $p1, $d0_3d
+    $r23, $p4, $dc3, $dc7 = LDA_3D_dms_lda $p4, $d3_3d
+    $el10, $p5, $dc1, $dc5 = LDA_3D_dms_lda $p5, $d1_3d
+    $r22, $p6, $dc2, $dc6 = LDA_3D_dms_lda $p6, $d2_3d
+    $el0, $p7, $dc0, $dc4 = LDA_3D_dms_lda $p7, $d0_3d
+    $r1, $p2, $dc3, $dc7 = LDA_3D_dms_lda $p2, $d3_3d
+    $eh1, $p3, $dc1, $dc5 = LDA_3D_dms_lda $p3, $d1_3d
+    $r18, $p0, $dc2, $dc6 = LDA_3D_dms_lda $p0, $d2_3d
+    $dn5, $p1, $dc0, $dc4 = LDA_3D_dms_lda $p1, $d0_3d
+    $dn4, $p4, $dc3, $dc7 = LDA_3D_dms_lda $p4, $d3_3d
+    $r3, $p5, $dc1, $dc5 = LDA_3D_dms_lda $p5, $d1_3d
+    $dc6, $p6, $dc2, $dc6 = LDA_3D_dms_lda $p6, $d2_3d
+    $eh10, $p7, $dc0, $dc4 = LDA_3D_dms_lda $p7, $d0_3d
+    $p3, $p2, $dc3, $dc7 = LDA_3D_dms_lda $p2, $d3_3d
+    $dj1, $p3, $dc1, $dc5 = LDA_3D_dms_lda $p3, $d1_3d
+    $dc7, $p0, $dc2, $dc6 = LDA_3D_dms_lda $p0, $d2_3d
+    $dc3, $p1, $dc0, $dc4 = LDA_3D_dms_lda $p1, $d0_3d
+    $el6, $p4, $dc3, $dc7 = LDA_3D_dms_lda $p4, $d3_3d
+    $eh0, $p5, $dc1, $dc5 = LDA_3D_dms_lda $p5, $d1_3d
+    $m3, $p6, $dc2, $dc6 = LDA_3D_dms_lda $p6, $d2_3d
+    $eh7, $p7, $dc0, $dc4 = LDA_3D_dms_lda $p7, $d0_3d
+    $dn3, $p2, $dc3, $dc7 = LDA_3D_dms_lda $p2, $d3_3d
+    $dj0, $p3, $dc1, $dc5 = LDA_3D_dms_lda $p3, $d1_3d
+    $dc1, $p0, $dc2, $dc6 = LDA_3D_dms_lda $p0, $d2_3d
+    $p1, $p1, $dc0, $dc4 = LDA_3D_dms_lda $p1, $d0_3d
+    $p0, $p4, $dc3, $dc7 = LDA_3D_dms_lda $p4, $d3_3d
+    $eh11, $p5, $dc1, $dc5 = LDA_3D_dms_lda $p5, $d1_3d
+    $dj5, $p6, $dc2, $dc6 = LDA_3D_dms_lda $p6, $d2_3d
+    $r0, $p7, $dc0, $dc4 = LDA_3D_dms_lda $p7, $d0_3d
+    $r26, $p2, $dc3, $dc7 = LDA_3D_dms_lda $p2, $d3_3d
+    $dj3, $p3, $dc1, $dc5 = LDA_3D_dms_lda $p3, $d1_3d
+    $eh3, $p0, $dc2, $dc6 = LDA_3D_dms_lda $p0, $d2_3d
+    $m4, $p1, $dc0, $dc4 = LDA_3D_dms_lda $p1, $d0_3d
+    $el9, $p4, $dc3, $dc7 = LDA_3D_dms_lda $p4, $d3_3d
+    $r30, $p5, $dc1, $dc5 = LDA_3D_dms_lda $p5, $d1_3d
+    $m2, $p6, $dc2, $dc6 = LDA_3D_dms_lda $p6, $d2_3d
+    $dj2, $p7, $dc0, $dc4 = LDA_3D_dms_lda $p7, $d0_3d
+    $r17, $p2, $dc3, $dc7 = LDA_3D_dms_lda $p2, $d3_3d
+    $eh6, $p3, $dc1, $dc5 = LDA_3D_dms_lda $p3, $d1_3d
+    $r19, $p0, $dc2, $dc6 = LDA_3D_dms_lda $p0, $d2_3d
+    $eh4, $p1, $dc0, $dc4 = LDA_3D_dms_lda $p1, $d0_3d
+    $dj7, $p4, $dc3, $dc7 = LDA_3D_dms_lda $p4, $d3_3d
+    $dn0, $p5, $dc1, $dc5 = LDA_3D_dms_lda $p5, $d1_3d
+    $p6, $p6, $dc2, $dc6 = LDA_3D_dms_lda $p6, $d2_3d
+    $r13, $p7, $dc0, $dc4 = LDA_3D_dms_lda $p7, $d0_3d
+    $p5, $p2, $dc3, $dc7 = LDA_3D_dms_lda $p2, $d3_3d
+    $m1, $p3, $dc1, $dc5 = LDA_3D_dms_lda $p3, $d1_3d
+    $dc0, $p0, $dc2, $dc6 = LDA_3D_dms_lda $p0, $d2_3d
+    $r24, $p1, $dc0, $dc4 = LDA_3D_dms_lda $p1, $d0_3d
+    $el2, $p4, $dc3, $dc7 = LDA_3D_dms_lda $p4, $d3_3d
+    $el7, $p5, $dc1, $dc5 = LDA_3D_dms_lda $p5, $d1_3d
+    $r5, $p6, $dc2, $dc6 = LDA_3D_dms_lda $p6, $d2_3d
+    $r9, $p7, $dc0, $dc4 = LDA_3D_dms_lda $p7, $d0_3d
+    $el11, $p2, $dc3, $dc7 = LDA_3D_dms_lda $p2, $d3_3d
+    $r31, $p3, $dc1, $dc5 = LDA_3D_dms_lda $p3, $d1_3d
+    $dn1, $p0, $dc2, $dc6 = LDA_3D_dms_lda $p0, $d2_3d
+    $lr, $p1, $dc0, $dc4 = LDA_3D_dms_lda $p1, $d0_3d
+    $p7, $p4, $dc3, $dc7 = LDA_3D_dms_lda $p4, $d3_3d
+    $dj6, $p5, $dc1, $dc5 = LDA_3D_dms_lda $p5, $d1_3d
+    $eh8, $p6, $dc2, $dc6 = LDA_3D_dms_lda $p6, $d2_3d
+    $el8, $p7, $dc0, $dc4 = LDA_3D_dms_lda $p7, $d0_3d
+    $dn2, $p2, $dc3, $dc7 = LDA_3D_dms_lda $p2, $d3_3d
+    $el4, $p3, $dc1, $dc5 = LDA_3D_dms_lda $p3, $d1_3d
+    $dn6, $p0, $dc2, $dc6 = LDA_3D_dms_lda $p0, $d2_3d
+    $dc2, $p1, $dc0, $dc4 = LDA_3D_dms_lda $p1, $d0_3d
+    $r4, $p4, $dc3, $dc7 = LDA_3D_dms_lda $p4, $d3_3d
+    $r21, $p5, $dc1, $dc5 = LDA_3D_dms_lda $p5, $d1_3d
+    $r20, $p6, $dc2, $dc6 = LDA_3D_dms_lda $p6, $d2_3d
+    $el3, $p7, $dc0, $dc4 = LDA_3D_dms_lda $p7, $d0_3d
+    $p2, $p2, $dc3, $dc7 = LDA_3D_dms_lda $p2, $d3_3d
+    $eh2, $p3, $dc1, $dc5 = LDA_3D_dms_lda $p3, $d1_3d
+    $eh9, $p0, $dc2, $dc6 = LDA_3D_dms_lda $p0, $d2_3d
+    $dn7, $p1, $dc0, $dc4 = LDA_3D_dms_lda $p1, $d0_3d
+    $m5, $p4, $dc3, $dc7 = LDA_3D_dms_lda $p4, $d3_3d
+    $eh5, $p5, $dc1, $dc5 = LDA_3D_dms_lda $p5, $d1_3d
+    $p4, $p6, $dc2, $dc6 = LDA_3D_dms_lda $p6, $d2_3d
+    $r11, $p7, $dc0, $dc4 = LDA_3D_dms_lda $p7, $d0_3d
+    $dc5, $p2, $dc3, $dc7 = LDA_3D_dms_lda $p2, $d3_3d
+    $r29, $p3, $dc1, $dc5 = LDA_3D_dms_lda $p3, $d1_3d
+    $r25, $p0, $dc2, $dc6 = LDA_3D_dms_lda $p0, $d2_3d
+
+    ; LDA_3D_dmv_lda_q
+    $q1, $p4, $dc3, $dc7 = LDA_3D_dmv_lda_q $p4, $d3_3d
+    $q3, $p5, $dc1, $dc5 = LDA_3D_dmv_lda_q $p5, $d1_3d
+    $q0, $p7, $dc2, $dc6 = LDA_3D_dmv_lda_q $p7, $d2_3d
+    $q2, $p0, $dc0, $dc4 = LDA_3D_dmv_lda_q $p0, $d0_3d
+    $q1, $p3, $dc3, $dc7 = LDA_3D_dmv_lda_q $p3, $d3_3d
+    $q3, $p6, $dc1, $dc5 = LDA_3D_dmv_lda_q $p6, $d1_3d
+    $q0, $p1, $dc2, $dc6 = LDA_3D_dmv_lda_q $p1, $d2_3d
+    $q2, $p2, $dc0, $dc4 = LDA_3D_dmv_lda_q $p2, $d0_3d
+
+    ; LDA_3D_s16
+    $r26, $p3, $dc0, $dc4 = LDA_3D_s16 $p3, $d0_3d
+    $r17, $p1, $dc3, $dc7 = LDA_3D_s16 $p1, $d3_3d
+    $r1, $p0, $dc2, $dc6 = LDA_3D_s16 $p0, $d2_3d
+    $r28, $p4, $dc1, $dc5 = LDA_3D_s16 $p4, $d1_3d
+    $r21, $p5, $dc0, $dc4 = LDA_3D_s16 $p5, $d0_3d
+    $r16, $p7, $dc3, $dc7 = LDA_3D_s16 $p7, $d3_3d
+    $r3, $p6, $dc2, $dc6 = LDA_3D_s16 $p6, $d2_3d
+    $r0, $p2, $dc1, $dc5 = LDA_3D_s16 $p2, $d1_3d
+    $r7, $p3, $dc0, $dc4 = LDA_3D_s16 $p3, $d0_3d
+    $r30, $p1, $dc3, $dc7 = LDA_3D_s16 $p1, $d3_3d
+    $r2, $p0, $dc2, $dc6 = LDA_3D_s16 $p0, $d2_3d
+    $r15, $p4, $dc1, $dc5 = LDA_3D_s16 $p4, $d1_3d
+    $r12, $p5, $dc0, $dc4 = LDA_3D_s16 $p5, $d0_3d
+    $r5, $p7, $dc3, $dc7 = LDA_3D_s16 $p7, $d3_3d
+    $r13, $p6, $dc2, $dc6 = LDA_3D_s16 $p6, $d2_3d
+    $r25, $p2, $dc1, $dc5 = LDA_3D_s16 $p2, $d1_3d
+    $r29, $p3, $dc0, $dc4 = LDA_3D_s16 $p3, $d0_3d
+    $r11, $p1, $dc3, $dc7 = LDA_3D_s16 $p1, $d3_3d
+    $r23, $p0, $dc2, $dc6 = LDA_3D_s16 $p0, $d2_3d
+    $r20, $p4, $dc1, $dc5 = LDA_3D_s16 $p4, $d1_3d
+    $r10, $p5, $dc0, $dc4 = LDA_3D_s16 $p5, $d0_3d
+    $r4, $p7, $dc3, $dc7 = LDA_3D_s16 $p7, $d3_3d
+    $r31, $p6, $dc2, $dc6 = LDA_3D_s16 $p6, $d2_3d
+    $r6, $p2, $dc1, $dc5 = LDA_3D_s16 $p2, $d1_3d
+    $r27, $p3, $dc0, $dc4 = LDA_3D_s16 $p3, $d0_3d
+    $r18, $p1, $dc3, $dc7 = LDA_3D_s16 $p1, $d3_3d
+    $r22, $p0, $dc2, $dc6 = LDA_3D_s16 $p0, $d2_3d
+    $r9, $p4, $dc1, $dc5 = LDA_3D_s16 $p4, $d1_3d
+    $r8, $p5, $dc0, $dc4 = LDA_3D_s16 $p5, $d0_3d
+    $r24, $p7, $dc3, $dc7 = LDA_3D_s16 $p7, $d3_3d
+    $r14, $p6, $dc2, $dc6 = LDA_3D_s16 $p6, $d2_3d
+    $r19, $p2, $dc1, $dc5 = LDA_3D_s16 $p2, $d1_3d
+
+    ; LDA_3D_s8
+    $r20, $p0, $dc2, $dc6 = LDA_3D_s8 $p0, $d2_3d
+    $r4, $p3, $dc1, $dc5 = LDA_3D_s8 $p3, $d1_3d
+    $r18, $p2, $dc3, $dc7 = LDA_3D_s8 $p2, $d3_3d
+    $r6, $p4, $dc0, $dc4 = LDA_3D_s8 $p4, $d0_3d
+    $r30, $p1, $dc2, $dc6 = LDA_3D_s8 $p1, $d2_3d
+    $r11, $p5, $dc1, $dc5 = LDA_3D_s8 $p5, $d1_3d
+    $r12, $p6, $dc3, $dc7 = LDA_3D_s8 $p6, $d3_3d
+    $r5, $p7, $dc0, $dc4 = LDA_3D_s8 $p7, $d0_3d
+    $r1, $p0, $dc2, $dc6 = LDA_3D_s8 $p0, $d2_3d
+    $r19, $p3, $dc1, $dc5 = LDA_3D_s8 $p3, $d1_3d
+    $r21, $p2, $dc3, $dc7 = LDA_3D_s8 $p2, $d3_3d
+    $r26, $p4, $dc0, $dc4 = LDA_3D_s8 $p4, $d0_3d
+    $r8, $p1, $dc2, $dc6 = LDA_3D_s8 $p1, $d2_3d
+    $r28, $p5, $dc1, $dc5 = LDA_3D_s8 $p5, $d1_3d
+    $r27, $p6, $dc3, $dc7 = LDA_3D_s8 $p6, $d3_3d
+    $r15, $p7, $dc0, $dc4 = LDA_3D_s8 $p7, $d0_3d
+    $r7, $p0, $dc2, $dc6 = LDA_3D_s8 $p0, $d2_3d
+    $r31, $p3, $dc1, $dc5 = LDA_3D_s8 $p3, $d1_3d
+    $r25, $p2, $dc3, $dc7 = LDA_3D_s8 $p2, $d3_3d
+    $r22, $p4, $dc0, $dc4 = LDA_3D_s8 $p4, $d0_3d
+    $r10, $p1, $dc2, $dc6 = LDA_3D_s8 $p1, $d2_3d
+    $r24, $p5, $dc1, $dc5 = LDA_3D_s8 $p5, $d1_3d
+    $r3, $p6, $dc3, $dc7 = LDA_3D_s8 $p6, $d3_3d
+    $r14, $p7, $dc0, $dc4 = LDA_3D_s8 $p7, $d0_3d
+    $r0, $p0, $dc2, $dc6 = LDA_3D_s8 $p0, $d2_3d
+    $r13, $p3, $dc1, $dc5 = LDA_3D_s8 $p3, $d1_3d
+    $r9, $p2, $dc3, $dc7 = LDA_3D_s8 $p2, $d3_3d
+    $r16, $p4, $dc0, $dc4 = LDA_3D_s8 $p4, $d0_3d
+    $r29, $p1, $dc2, $dc6 = LDA_3D_s8 $p1, $d2_3d
+    $r17, $p5, $dc1, $dc5 = LDA_3D_s8 $p5, $d1_3d
+    $r23, $p6, $dc3, $dc7 = LDA_3D_s8 $p6, $d3_3d
+    $r2, $p7, $dc0, $dc4 = LDA_3D_s8 $p7, $d0_3d
+
+    ; LDA_3D_u16
+    $r14, $p4, $dc3, $dc7 = LDA_3D_u16 $p4, $d3_3d
+    $r9, $p5, $dc1, $dc5 = LDA_3D_u16 $p5, $d1_3d
+    $r16, $p0, $dc0, $dc4 = LDA_3D_u16 $p0, $d0_3d
+    $r15, $p1, $dc2, $dc6 = LDA_3D_u16 $p1, $d2_3d
+    $r10, $p6, $dc3, $dc7 = LDA_3D_u16 $p6, $d3_3d
+    $r0, $p7, $dc1, $dc5 = LDA_3D_u16 $p7, $d1_3d
+    $r18, $p2, $dc0, $dc4 = LDA_3D_u16 $p2, $d0_3d
+    $r7, $p3, $dc2, $dc6 = LDA_3D_u16 $p3, $d2_3d
+    $r28, $p4, $dc3, $dc7 = LDA_3D_u16 $p4, $d3_3d
+    $r25, $p5, $dc1, $dc5 = LDA_3D_u16 $p5, $d1_3d
+    $r11, $p0, $dc0, $dc4 = LDA_3D_u16 $p0, $d0_3d
+    $r17, $p1, $dc2, $dc6 = LDA_3D_u16 $p1, $d2_3d
+    $r2, $p6, $dc3, $dc7 = LDA_3D_u16 $p6, $d3_3d
+    $r4, $p7, $dc1, $dc5 = LDA_3D_u16 $p7, $d1_3d
+    $r6, $p2, $dc0, $dc4 = LDA_3D_u16 $p2, $d0_3d
+    $r19, $p3, $dc2, $dc6 = LDA_3D_u16 $p3, $d2_3d
+    $r13, $p4, $dc3, $dc7 = LDA_3D_u16 $p4, $d3_3d
+    $r31, $p5, $dc1, $dc5 = LDA_3D_u16 $p5, $d1_3d
+    $r12, $p0, $dc0, $dc4 = LDA_3D_u16 $p0, $d0_3d
+    $r20, $p1, $dc2, $dc6 = LDA_3D_u16 $p1, $d2_3d
+    $r29, $p6, $dc3, $dc7 = LDA_3D_u16 $p6, $d3_3d
+    $r3, $p7, $dc1, $dc5 = LDA_3D_u16 $p7, $d1_3d
+    $r30, $p2, $dc0, $dc4 = LDA_3D_u16 $p2, $d0_3d
+    $r27, $p3, $dc2, $dc6 = LDA_3D_u16 $p3, $d2_3d
+    $r24, $p4, $dc3, $dc7 = LDA_3D_u16 $p4, $d3_3d
+    $r23, $p5, $dc1, $dc5 = LDA_3D_u16 $p5, $d1_3d
+    $r8, $p0, $dc0, $dc4 = LDA_3D_u16 $p0, $d0_3d
+    $r5, $p1, $dc2, $dc6 = LDA_3D_u16 $p1, $d2_3d
+    $r22, $p6, $dc3, $dc7 = LDA_3D_u16 $p6, $d3_3d
+    $r21, $p7, $dc1, $dc5 = LDA_3D_u16 $p7, $d1_3d
+    $r26, $p2, $dc0, $dc4 = LDA_3D_u16 $p2, $d0_3d
+    $r1, $p3, $dc2, $dc6 = LDA_3D_u16 $p3, $d2_3d
+
+    ; LDA_3D_u8
+    $r19, $p5, $dc2, $dc6 = LDA_3D_u8 $p5, $d2_3d
+    $r21, $p1, $dc3, $dc7 = LDA_3D_u8 $p1, $d3_3d
+    $r14, $p0, $dc1, $dc5 = LDA_3D_u8 $p0, $d1_3d
+    $r25, $p7, $dc0, $dc4 = LDA_3D_u8 $p7, $d0_3d
+    $r29, $p3, $dc2, $dc6 = LDA_3D_u8 $p3, $d2_3d
+    $r0, $p2, $dc3, $dc7 = LDA_3D_u8 $p2, $d3_3d
+    $r26, $p6, $dc1, $dc5 = LDA_3D_u8 $p6, $d1_3d
+    $r8, $p4, $dc0, $dc4 = LDA_3D_u8 $p4, $d0_3d
+    $r10, $p5, $dc2, $dc6 = LDA_3D_u8 $p5, $d2_3d
+    $r4, $p1, $dc3, $dc7 = LDA_3D_u8 $p1, $d3_3d
+    $r9, $p0, $dc1, $dc5 = LDA_3D_u8 $p0, $d1_3d
+    $r17, $p7, $dc0, $dc4 = LDA_3D_u8 $p7, $d0_3d
+    $r13, $p3, $dc2, $dc6 = LDA_3D_u8 $p3, $d2_3d
+    $r23, $p2, $dc3, $dc7 = LDA_3D_u8 $p2, $d3_3d
+    $r15, $p6, $dc1, $dc5 = LDA_3D_u8 $p6, $d1_3d
+    $r24, $p4, $dc0, $dc4 = LDA_3D_u8 $p4, $d0_3d
+    $r6, $p5, $dc2, $dc6 = LDA_3D_u8 $p5, $d2_3d
+    $r22, $p1, $dc3, $dc7 = LDA_3D_u8 $p1, $d3_3d
+    $r11, $p0, $dc1, $dc5 = LDA_3D_u8 $p0, $d1_3d
+    $r28, $p7, $dc0, $dc4 = LDA_3D_u8 $p7, $d0_3d
+    $r18, $p3, $dc2, $dc6 = LDA_3D_u8 $p3, $d2_3d
+    $r12, $p2, $dc3, $dc7 = LDA_3D_u8 $p2, $d3_3d
+    $r2, $p6, $dc1, $dc5 = LDA_3D_u8 $p6, $d1_3d
+    $r20, $p4, $dc0, $dc4 = LDA_3D_u8 $p4, $d0_3d
+    $r5, $p5, $dc2, $dc6 = LDA_3D_u8 $p5, $d2_3d
+    $r16, $p1, $dc3, $dc7 = LDA_3D_u8 $p1, $d3_3d
+    $r27, $p0, $dc1, $dc5 = LDA_3D_u8 $p0, $d1_3d
+    $r1, $p7, $dc0, $dc4 = LDA_3D_u8 $p7, $d0_3d
+    $r31, $p3, $dc2, $dc6 = LDA_3D_u8 $p3, $d2_3d
+    $r7, $p2, $dc3, $dc7 = LDA_3D_u8 $p2, $d3_3d
+    $r3, $p6, $dc1, $dc5 = LDA_3D_u8 $p6, $d1_3d
+    $r30, $p4, $dc0, $dc4 = LDA_3D_u8 $p4, $d0_3d
+
+    ; LDA_TM_2D :: (load (s32) from custom "TileMemory")
+    $r0, $p0, $dc1 = LDA_TM_2D $p0, $d1 :: (load (s32) from custom "TileMemory")
+    $r23, $p3, $dc4 = LDA_TM_2D $p3, $d4 :: (load (s32) from custom "TileMemory")
+    $r5, $p6, $dc6 = LDA_TM_2D $p6, $d6 :: (load (s32) from custom "TileMemory")
+    $r10, $p4, $dc5 = LDA_TM_2D $p4, $d5 :: (load (s32) from custom "TileMemory")
+    $r26, $p2, $dc7 = LDA_TM_2D $p2, $d7 :: (load (s32) from custom "TileMemory")
+    $r29, $p1, $dc0 = LDA_TM_2D $p1, $d0 :: (load (s32) from custom "TileMemory")
+    $r27, $p7, $dc2 = LDA_TM_2D $p7, $d2 :: (load (s32) from custom "TileMemory")
+    $r11, $p5, $dc3 = LDA_TM_2D $p5, $d3 :: (load (s32) from custom "TileMemory")
+    $r28, $p0, $dc1 = LDA_TM_2D $p0, $d1 :: (load (s32) from custom "TileMemory")
+    $r22, $p3, $dc4 = LDA_TM_2D $p3, $d4 :: (load (s32) from custom "TileMemory")
+    $r12, $p6, $dc6 = LDA_TM_2D $p6, $d6 :: (load (s32) from custom "TileMemory")
+    $r30, $p4, $dc5 = LDA_TM_2D $p4, $d5 :: (load (s32) from custom "TileMemory")
+    $r24, $p2, $dc7 = LDA_TM_2D $p2, $d7 :: (load (s32) from custom "TileMemory")
+    $r6, $p1, $dc0 = LDA_TM_2D $p1, $d0 :: (load (s32) from custom "TileMemory")
+    $r15, $p7, $dc2 = LDA_TM_2D $p7, $d2 :: (load (s32) from custom "TileMemory")
+    $r20, $p5, $dc3 = LDA_TM_2D $p5, $d3 :: (load (s32) from custom "TileMemory")
+    $r25, $p0, $dc1 = LDA_TM_2D $p0, $d1 :: (load (s32) from custom "TileMemory")
+    $r3, $p3, $dc4 = LDA_TM_2D $p3, $d4 :: (load (s32) from custom "TileMemory")
+    $r31, $p6, $dc6 = LDA_TM_2D $p6, $d6 :: (load (s32) from custom "TileMemory")
+    $r19, $p4, $dc5 = LDA_TM_2D $p4, $d5 :: (load (s32) from custom "TileMemory")
+    $r14, $p2, $dc7 = LDA_TM_2D $p2, $d7 :: (load (s32) from custom "TileMemory")
+    $r21, $p1, $dc0 = LDA_TM_2D $p1, $d0 :: (load (s32) from custom "TileMemory")
+    $r13, $p7, $dc2 = LDA_TM_2D $p7, $d2 :: (load (s32) from custom "TileMemory")
+    $r9, $p5, $dc3 = LDA_TM_2D $p5, $d3 :: (load (s32) from custom "TileMemory")
+    $r7, $p0, $dc1 = LDA_TM_2D $p0, $d1 :: (load (s32) from custom "TileMemory")
+    $r4, $p3, $dc4 = LDA_TM_2D $p3, $d4 :: (load (s32) from custom "TileMemory")
+    $r2, $p6, $dc6 = LDA_TM_2D $p6, $d6 :: (load (s32) from custom "TileMemory")
+    $r1, $p4, $dc5 = LDA_TM_2D $p4, $d5 :: (load (s32) from custom "TileMemory")
+    $r8, $p2, $dc7 = LDA_TM_2D $p2, $d7 :: (load (s32) from custom "TileMemory")
+    $r18, $p1, $dc0 = LDA_TM_2D $p1, $d0 :: (load (s32) from custom "TileMemory")
+    $r17, $p7, $dc2 = LDA_TM_2D $p7, $d2 :: (load (s32) from custom "TileMemory")
+    $r16, $p5, $dc3 = LDA_TM_2D $p5, $d3 :: (load (s32) from custom "TileMemory")
+
+    ; LDA_TM_3D :: (load (s32) from custom "TileMemory")
+    $r14, $p5, $dc3, $dc7 = LDA_TM_3D $p5, $d3_3d :: (load (s32) from custom "TileMemory")
+    $r26, $p7, $dc1, $dc5 = LDA_TM_3D $p7, $d1_3d :: (load (s32) from custom "TileMemory")
+    $r10, $p4, $dc2, $dc6 = LDA_TM_3D $p4, $d2_3d :: (load (s32) from custom "TileMemory")
+    $r22, $p2, $dc0, $dc4 = LDA_TM_3D $p2, $d0_3d :: (load (s32) from custom "TileMemory")
+    $r16, $p6, $dc3, $dc7 = LDA_TM_3D $p6, $d3_3d :: (load (s32) from custom "TileMemory")
+    $r20, $p0, $dc1, $dc5 = LDA_TM_3D $p0, $d1_3d :: (load (s32) from custom "TileMemory")
+    $r28, $p3, $dc2, $dc6 = LDA_TM_3D $p3, $d2_3d :: (load (s32) from custom "TileMemory")
+    $r17, $p1, $dc0, $dc4 = LDA_TM_3D $p1, $d0_3d :: (load (s32) from custom "TileMemory")
+    $r24, $p5, $dc3, $dc7 = LDA_TM_3D $p5, $d3_3d :: (load (s32) from custom "TileMemory")
+    $r5, $p7, $dc1, $dc5 = LDA_TM_3D $p7, $d1_3d :: (load (s32) from custom "TileMemory")
+    $r27, $p4, $dc2, $dc6 = LDA_TM_3D $p4, $d2_3d :: (load (s32) from custom "TileMemory")
+    $r3, $p2, $dc0, $dc4 = LDA_TM_3D $p2, $d0_3d :: (load (s32) from custom "TileMemory")
+    $r15, $p6, $dc3, $dc7 = LDA_TM_3D $p6, $d3_3d :: (load (s32) from custom "TileMemory")
+    $r31, $p0, $dc1, $dc5 = LDA_TM_3D $p0, $d1_3d :: (load (s32) from custom "TileMemory")
+    $r9, $p3, $dc2, $dc6 = LDA_TM_3D $p3, $d2_3d :: (load (s32) from custom "TileMemory")
+    $r11, $p1, $dc0, $dc4 = LDA_TM_3D $p1, $d0_3d :: (load (s32) from custom "TileMemory")
+    $r6, $p5, $dc3, $dc7 = LDA_TM_3D $p5, $d3_3d :: (load (s32) from custom "TileMemory")
+    $r30, $p7, $dc1, $dc5 = LDA_TM_3D $p7, $d1_3d :: (load (s32) from custom "TileMemory")
+    $r12, $p4, $dc2, $dc6 = LDA_TM_3D $p4, $d2_3d :: (load (s32) from custom "TileMemory")
+    $r4, $p2, $dc0, $dc4 = LDA_TM_3D $p2, $d0_3d :: (load (s32) from custom "TileMemory")
+    $r29, $p6, $dc3, $dc7 = LDA_TM_3D $p6, $d3_3d :: (load (s32) from custom "TileMemory")
+    $r7, $p0, $dc1, $dc5 = LDA_TM_3D $p0, $d1_3d :: (load (s32) from custom "TileMemory")
+    $r21, $p3, $dc2, $dc6 = LDA_TM_3D $p3, $d2_3d :: (load (s32) from custom "TileMemory")
+    $r25, $p1, $dc0, $dc4 = LDA_TM_3D $p1, $d0_3d :: (load (s32) from custom "TileMemory")
+    $r0, $p5, $dc3, $dc7 = LDA_TM_3D $p5, $d3_3d :: (load (s32) from custom "TileMemory")
+    $r13, $p7, $dc1, $dc5 = LDA_TM_3D $p7, $d1_3d :: (load (s32) from custom "TileMemory")
+    $r8, $p4, $dc2, $dc6 = LDA_TM_3D $p4, $d2_3d :: (load (s32) from custom "TileMemory")
+    $r23, $p2, $dc0, $dc4 = LDA_TM_3D $p2, $d0_3d :: (load (s32) from custom "TileMemory")
+    $r2, $p6, $dc3, $dc7 = LDA_TM_3D $p6, $d3_3d :: (load (s32) from custom "TileMemory")
+    $r1, $p0, $dc1, $dc5 = LDA_TM_3D $p0, $d1_3d :: (load (s32) from custom "TileMemory")
+    $r18, $p3, $dc2, $dc6 = LDA_TM_3D $p3, $d2_3d :: (load (s32) from custom "TileMemory")
+    $r19, $p1, $dc0, $dc4 = LDA_TM_3D $p1, $d0_3d :: (load (s32) from custom "TileMemory")
+
+    ; LDA_TM_idx :: (load (s32) from custom "TileMemory")
+    $r7 = LDA_TM_idx $p0, $dj1 :: (load (s32) from custom "TileMemory")
+    $r22 = LDA_TM_idx $p1, $dj2 :: (load (s32) from custom "TileMemory")
+    $r6 = LDA_TM_idx $p6, $dj6 :: (load (s32) from custom "TileMemory")
+    $r27 = LDA_TM_idx $p3, $dj5 :: (load (s32) from custom "TileMemory")
+    $r15 = LDA_TM_idx $p2, $dj0 :: (load (s32) from custom "TileMemory")
+    $r2 = LDA_TM_idx $p7, $dj3 :: (load (s32) from custom "TileMemory")
+    $r3 = LDA_TM_idx $p4, $dj4 :: (load (s32) from custom "TileMemory")
+    $r5 = LDA_TM_idx $p5, $dj7 :: (load (s32) from custom "TileMemory")
+    $r1 = LDA_TM_idx $p0, $dj1 :: (load (s32) from custom "TileMemory")
+    $r10 = LDA_TM_idx $p1, $dj2 :: (load (s32) from custom "TileMemory")
+    $r23 = LDA_TM_idx $p6, $dj6 :: (load (s32) from custom "TileMemory")
+    $r13 = LDA_TM_idx $p3, $dj5 :: (load (s32) from custom "TileMemory")
+    $r30 = LDA_TM_idx $p2, $dj0 :: (load (s32) from custom "TileMemory")
+    $r4 = LDA_TM_idx $p7, $dj3 :: (load (s32) from custom "TileMemory")
+    $r26 = LDA_TM_idx $p4, $dj4 :: (load (s32) from custom "TileMemory")
+    $r24 = LDA_TM_idx $p5, $dj7 :: (load (s32) from custom "TileMemory")
+    $r14 = LDA_TM_idx $p0, $dj1 :: (load (s32) from custom "TileMemory")
+    $r18 = LDA_TM_idx $p1, $dj2 :: (load (s32) from custom "TileMemory")
+    $r20 = LDA_TM_idx $p6, $dj6 :: (load (s32) from custom "TileMemory")
+    $r8 = LDA_TM_idx $p3, $dj5 :: (load (s32) from custom "TileMemory")
+    $r29 = LDA_TM_idx $p2, $dj0 :: (load (s32) from custom "TileMemory")
+    $r17 = LDA_TM_idx $p7, $dj3 :: (load (s32) from custom "TileMemory")
+    $r11 = LDA_TM_idx $p4, $dj4 :: (load (s32) from custom "TileMemory")
+    $r28 = LDA_TM_idx $p5, $dj7 :: (load (s32) from custom "TileMemory")
+    $r31 = LDA_TM_idx $p0, $dj1 :: (load (s32) from custom "TileMemory")
+    $r16 = LDA_TM_idx $p1, $dj2 :: (load (s32) from custom "TileMemory")
+    $r9 = LDA_TM_idx $p6, $dj6 :: (load (s32) from custom "TileMemory")
+    $r0 = LDA_TM_idx $p3, $dj5 :: (load (s32) from custom "TileMemory")
+    $r25 = LDA_TM_idx $p2, $dj0 :: (load (s32) from custom "TileMemory")
+    $r19 = LDA_TM_idx $p7, $dj3 :: (load (s32) from custom "TileMemory")
+    $r12 = LDA_TM_idx $p4, $dj4 :: (load (s32) from custom "TileMemory")
+    $r21 = LDA_TM_idx $p5, $dj7 :: (load (s32) from custom "TileMemory")
+
+    ; LDA_TM_idx_imm :: (load (s32) from custom "TileMemory")
+    $r21 = LDA_TM_idx_imm $p1, 28 :: (load (s32) from custom "TileMemory")
+    $r28 = LDA_TM_idx_imm $p2, 4 :: (load (s32) from custom "TileMemory")
+    $r7 = LDA_TM_idx_imm $p5, -32 :: (load (s32) from custom "TileMemory")
+    $r6 = LDA_TM_idx_imm $p4, 0 :: (load (s32) from custom "TileMemory")
+    $r13 = LDA_TM_idx_imm $p3, 28 :: (load (s32) from custom "TileMemory")
+    $r17 = LDA_TM_idx_imm $p7, 4 :: (load (s32) from custom "TileMemory")
+    $r5 = LDA_TM_idx_imm $p6, -32 :: (load (s32) from custom "TileMemory")
+    $r15 = LDA_TM_idx_imm $p0, 0 :: (load (s32) from custom "TileMemory")
+    $r22 = LDA_TM_idx_imm $p1, 28 :: (load (s32) from custom "TileMemory")
+    $r3 = LDA_TM_idx_imm $p2, 4 :: (load (s32) from custom "TileMemory")
+    $r4 = LDA_TM_idx_imm $p5, -32 :: (load (s32) from custom "TileMemory")
+    $r29 = LDA_TM_idx_imm $p4, 0 :: (load (s32) from custom "TileMemory")
+    $r18 = LDA_TM_idx_imm $p3, 28 :: (load (s32) from custom "TileMemory")
+    $r16 = LDA_TM_idx_imm $p7, 4 :: (load (s32) from custom "TileMemory")
+    $r10 = LDA_TM_idx_imm $p6, -32 :: (load (s32) from custom "TileMemory")
+    $r30 = LDA_TM_idx_imm $p0, 0 :: (load (s32) from custom "TileMemory")
+    $r24 = LDA_TM_idx_imm $p1, 28 :: (load (s32) from custom "TileMemory")
+    $r14 = LDA_TM_idx_imm $p2, 4 :: (load (s32) from custom "TileMemory")
+    $r27 = LDA_TM_idx_imm $p5, -32 :: (load (s32) from custom "TileMemory")
+    $r12 = LDA_TM_idx_imm $p4, 0 :: (load (s32) from custom "TileMemory")
+    $r0 = LDA_TM_idx_imm $p3, 28 :: (load (s32) from custom "TileMemory")
+    $r1 = LDA_TM_idx_imm $p7, 4 :: (load (s32) from custom "TileMemory")
+    $r31 = LDA_TM_idx_imm $p6, -32 :: (load (s32) from custom "TileMemory")
+    $r19 = LDA_TM_idx_imm $p0, 0 :: (load (s32) from custom "TileMemory")
+    $r2 = LDA_TM_idx_imm $p1, 28 :: (load (s32) from custom "TileMemory")
+    $r26 = LDA_TM_idx_imm $p2, 4 :: (load (s32) from custom "TileMemory")
+    $r23 = LDA_TM_idx_imm $p5, -32 :: (load (s32) from custom "TileMemory")
+    $r11 = LDA_TM_idx_imm $p4, 0 :: (load (s32) from custom "TileMemory")
+    $r20 = LDA_TM_idx_imm $p3, 28 :: (load (s32) from custom "TileMemory")
+    $r8 = LDA_TM_idx_imm $p7, 4 :: (load (s32) from custom "TileMemory")
+    $r9 = LDA_TM_idx_imm $p6, -32 :: (load (s32) from custom "TileMemory")
+    $r25 = LDA_TM_idx_imm $p0, 0 :: (load (s32) from custom "TileMemory")
+
+    ; LDA_TM_pstm_nrm :: (load (s32) from custom "TileMemory")
+    $r25, $p3 = LDA_TM_pstm_nrm $p3, $m6 :: (load (s32) from custom "TileMemory")
+    $r26, $p2 = LDA_TM_pstm_nrm $p2, $m3 :: (load (s32) from custom "TileMemory")
+    $r13, $p0 = LDA_TM_pstm_nrm $p0, $m1 :: (load (s32) from custom "TileMemory")
+    $r23, $p5 = LDA_TM_pstm_nrm $p5, $m0 :: (load (s32) from custom "TileMemory")
+    $r21, $p7 = LDA_TM_pstm_nrm $p7, $m2 :: (load (s32) from custom "TileMemory")
+    $r12, $p1 = LDA_TM_pstm_nrm $p1, $m4 :: (load (s32) from custom "TileMemory")
+    $r6, $p6 = LDA_TM_pstm_nrm $p6, $m5 :: (load (s32) from custom "TileMemory")
+    $r17, $p4 = LDA_TM_pstm_nrm $p4, $m7 :: (load (s32) from custom "TileMemory")
+    $r28, $p3 = LDA_TM_pstm_nrm $p3, $m6 :: (load (s32) from custom "TileMemory")
+    $r3, $p2 = LDA_TM_pstm_nrm $p2, $m3 :: (load (s32) from custom "TileMemory")
+    $r18, $p0 = LDA_TM_pstm_nrm $p0, $m1 :: (load (s32) from custom "TileMemory")
+    $r2, $p5 = LDA_TM_pstm_nrm $p5, $m0 :: (load (s32) from custom "TileMemory")
+    $r1, $p7 = LDA_TM_pstm_nrm $p7, $m2 :: (load (s32) from custom "TileMemory")
+    $r9, $p1 = LDA_TM_pstm_nrm $p1, $m4 :: (load (s32) from custom "TileMemory")
+    $r24, $p6 = LDA_TM_pstm_nrm $p6, $m5 :: (load (s32) from custom "TileMemory")
+    $r5, $p4 = LDA_TM_pstm_nrm $p4, $m7 :: (load (s32) from custom "TileMemory")
+    $r19, $p3 = LDA_TM_pstm_nrm $p3, $m6 :: (load (s32) from custom "TileMemory")
+    $r8, $p2 = LDA_TM_pstm_nrm $p2, $m3 :: (load (s32) from custom "TileMemory")
+    $r11, $p0 = LDA_TM_pstm_nrm $p0, $m1 :: (load (s32) from custom "TileMemory")
+    $r0, $p5 = LDA_TM_pstm_nrm $p5, $m0 :: (load (s32) from custom "TileMemory")
+    $r22, $p7 = LDA_TM_pstm_nrm $p7, $m2 :: (load (s32) from custom "TileMemory")
+    $r29, $p1 = LDA_TM_pstm_nrm $p1, $m4 :: (load (s32) from custom "TileMemory")
+    $r14, $p6 = LDA_TM_pstm_nrm $p6, $m5 :: (load (s32) from custom "TileMemory")
+    $r31, $p4 = LDA_TM_pstm_nrm $p4, $m7 :: (load (s32) from custom "TileMemory")
+    $r20, $p3 = LDA_TM_pstm_nrm $p3, $m6 :: (load (s32) from custom "TileMemory")
+    $r7, $p2 = LDA_TM_pstm_nrm $p2, $m3 :: (load (s32) from custom "TileMemory")
+    $r16, $p0 = LDA_TM_pstm_nrm $p0, $m1 :: (load (s32) from custom "TileMemory")
+    $r27, $p5 = LDA_TM_pstm_nrm $p5, $m0 :: (load (s32) from custom "TileMemory")
+    $r15, $p7 = LDA_TM_pstm_nrm $p7, $m2 :: (load (s32) from custom "TileMemory")
+    $r10, $p1 = LDA_TM_pstm_nrm $p1, $m4 :: (load (s32) from custom "TileMemory")
+    $r30, $p6 = LDA_TM_pstm_nrm $p6, $m5 :: (load (s32) from custom "TileMemory")
+    $r4, $p4 = LDA_TM_pstm_nrm $p4, $m7 :: (load (s32) from custom "TileMemory")
+
+    ; LDA_TM_pstm_nrm_imm :: (load (s32) from custom "TileMemory")
+    $r24, $p2 = LDA_TM_pstm_nrm_imm $p2, 0 :: (load (s32) from custom "TileMemory")
+    $r13, $p6 = LDA_TM_pstm_nrm_imm $p6, -32 :: (load (s32) from custom "TileMemory")
+    $r1, $p4 = LDA_TM_pstm_nrm_imm $p4, 28 :: (load (s32) from custom "TileMemory")
+    $r6, $p3 = LDA_TM_pstm_nrm_imm $p3, 4 :: (load (s32) from custom "TileMemory")
+    $r2, $p7 = LDA_TM_pstm_nrm_imm $p7, 0 :: (load (s32) from custom "TileMemory")
+    $r25, $p5 = LDA_TM_pstm_nrm_imm $p5, -32 :: (load (s32) from custom "TileMemory")
+    $r26, $p0 = LDA_TM_pstm_nrm_imm $p0, 28 :: (load (s32) from custom "TileMemory")
+    $r8, $p1 = LDA_TM_pstm_nrm_imm $p1, 4 :: (load (s32) from custom "TileMemory")
+    $r0, $p2 = LDA_TM_pstm_nrm_imm $p2, 0 :: (load (s32) from custom "TileMemory")
+    $r19, $p6 = LDA_TM_pstm_nrm_imm $p6, -32 :: (load (s32) from custom "TileMemory")
+    $r5, $p4 = LDA_TM_pstm_nrm_imm $p4, 28 :: (load (s32) from custom "TileMemory")
+    $r31, $p3 = LDA_TM_pstm_nrm_imm $p3, 4 :: (load (s32) from custom "TileMemory")
+    $r4, $p7 = LDA_TM_pstm_nrm_imm $p7, 0 :: (load (s32) from custom "TileMemory")
+    $r11, $p5 = LDA_TM_pstm_nrm_imm $p5, -32 :: (load (s32) from custom "TileMemory")
+    $r10, $p0 = LDA_TM_pstm_nrm_imm $p0, 28 :: (load (s32) from custom "TileMemory")
+    $r29, $p1 = LDA_TM_pstm_nrm_imm $p1, 4 :: (load (s32) from custom "TileMemory")
+    $r3, $p2 = LDA_TM_pstm_nrm_imm $p2, 0 :: (load (s32) from custom "TileMemory")
+    $r16, $p6 = LDA_TM_pstm_nrm_imm $p6, -32 :: (load (s32) from custom "TileMemory")
+    $r14, $p4 = LDA_TM_pstm_nrm_imm $p4, 28 :: (load (s32) from custom "TileMemory")
+    $r20, $p3 = LDA_TM_pstm_nrm_imm $p3, 4 :: (load (s32) from custom "TileMemory")
+    $r21, $p7 = LDA_TM_pstm_nrm_imm $p7, 0 :: (load (s32) from custom "TileMemory")
+    $r22, $p5 = LDA_TM_pstm_nrm_imm $p5, -32 :: (load (s32) from custom "TileMemory")
+    $r30, $p0 = LDA_TM_pstm_nrm_imm $p0, 28 :: (load (s32) from custom "TileMemory")
+    $r27, $p1 = LDA_TM_pstm_nrm_imm $p1, 4 :: (load (s32) from custom "TileMemory")
+    $r7, $p2 = LDA_TM_pstm_nrm_imm $p2, 0 :: (load (s32) from custom "TileMemory")
+    $r15, $p6 = LDA_TM_pstm_nrm_imm $p6, -32 :: (load (s32) from custom "TileMemory")
+    $r9, $p4 = LDA_TM_pstm_nrm_imm $p4, 28 :: (load (s32) from custom "TileMemory")
+    $r18, $p3 = LDA_TM_pstm_nrm_imm $p3, 4 :: (load (s32) from custom "TileMemory")
+    $r28, $p7 = LDA_TM_pstm_nrm_imm $p7, 0 :: (load (s32) from custom "TileMemory")
+    $r23, $p5 = LDA_TM_pstm_nrm_imm $p5, -32 :: (load (s32) from custom "TileMemory")
+    $r17, $p0 = LDA_TM_pstm_nrm_imm $p0, 28 :: (load (s32) from custom "TileMemory")
+    $r12, $p1 = LDA_TM_pstm_nrm_imm $p1, 4 :: (load (s32) from custom "TileMemory")
+
+    ; LDA_dms_lda_idx
+    $m0 = LDA_dms_lda_idx $p4, $dj6
+    $r19 = LDA_dms_lda_idx $p5, $dj0
+    $r13 = LDA_dms_lda_idx $p7, $dj5
+    $r14 = LDA_dms_lda_idx $p2, $dj4
+    $dj2 = LDA_dms_lda_idx $p6, $dj3
+    $r8 = LDA_dms_lda_idx $p3, $dj7
+    $el7 = LDA_dms_lda_idx $p0, $dj1
+    $dc7 = LDA_dms_lda_idx $p1, $dj2
+    $m6 = LDA_dms_lda_idx $p4, $dj6
+    $eh4 = LDA_dms_lda_idx $p5, $dj0
+    $r20 = LDA_dms_lda_idx $p7, $dj5
+    $eh9 = LDA_dms_lda_idx $p2, $dj4
+    $dn7 = LDA_dms_lda_idx $p6, $dj3
+    $r21 = LDA_dms_lda_idx $p3, $dj7
+    $el3 = LDA_dms_lda_idx $p0, $dj1
+    $r2 = LDA_dms_lda_idx $p1, $dj2
+    $r5 = LDA_dms_lda_idx $p4, $dj6
+    $dn4 = LDA_dms_lda_idx $p5, $dj0
+    $r4 = LDA_dms_lda_idx $p7, $dj5
+    $p0 = LDA_dms_lda_idx $p2, $dj4
+    $r3 = LDA_dms_lda_idx $p6, $dj3
+    $r10 = LDA_dms_lda_idx $p3, $dj7
+    $r12 = LDA_dms_lda_idx $p0, $dj1
+    $dn6 = LDA_dms_lda_idx $p1, $dj2
+    $eh10 = LDA_dms_lda_idx $p4, $dj6
+    $r17 = LDA_dms_lda_idx $p5, $dj0
+    $dc1 = LDA_dms_lda_idx $p7, $dj5
+    $eh2 = LDA_dms_lda_idx $p2, $dj4
+    $r16 = LDA_dms_lda_idx $p6, $dj3
+    $eh6 = LDA_dms_lda_idx $p3, $dj7
+    $dj3 = LDA_dms_lda_idx $p0, $dj1
+    $dj4 = LDA_dms_lda_idx $p1, $dj2
+    $r27 = LDA_dms_lda_idx $p4, $dj6
+    $r26 = LDA_dms_lda_idx $p5, $dj0
+    $m1 = LDA_dms_lda_idx $p7, $dj5
+    $dn0 = LDA_dms_lda_idx $p2, $dj4
+    $el2 = LDA_dms_lda_idx $p6, $dj3
+    $eh5 = LDA_dms_lda_idx $p3, $dj7
+    $p1 = LDA_dms_lda_idx $p0, $dj1
+    $eh0 = LDA_dms_lda_idx $p1, $dj2
+    $r25 = LDA_dms_lda_idx $p4, $dj6
+    $dj1 = LDA_dms_lda_idx $p5, $dj0
+    $el11 = LDA_dms_lda_idx $p7, $dj5
+    $eh3 = LDA_dms_lda_idx $p2, $dj4
+    $r18 = LDA_dms_lda_idx $p6, $dj3
+    $el5 = LDA_dms_lda_idx $p3, $dj7
+    $dc6 = LDA_dms_lda_idx $p0, $dj1
+    $r0 = LDA_dms_lda_idx $p1, $dj2
+    $dj0 = LDA_dms_lda_idx $p4, $dj6
+    $r15 = LDA_dms_lda_idx $p5, $dj0
+    $dn2 = LDA_dms_lda_idx $p7, $dj5
+    $p7 = LDA_dms_lda_idx $p2, $dj4
+    $el9 = LDA_dms_lda_idx $p6, $dj3
+    $dc3 = LDA_dms_lda_idx $p3, $dj7
+    $r31 = LDA_dms_lda_idx $p0, $dj1
+    $r28 = LDA_dms_lda_idx $p1, $dj2
+    $dc4 = LDA_dms_lda_idx $p4, $dj6
+    $m5 = LDA_dms_lda_idx $p5, $dj0
+    $r7 = LDA_dms_lda_idx $p7, $dj5
+    $r11 = LDA_dms_lda_idx $p2, $dj4
+    $p3 = LDA_dms_lda_idx $p6, $dj3
+    $eh8 = LDA_dms_lda_idx $p3, $dj7
+    $el4 = LDA_dms_lda_idx $p0, $dj1
+    $p4 = LDA_dms_lda_idx $p1, $dj2
+    $p5 = LDA_dms_lda_idx $p4, $dj6
+    $eh7 = LDA_dms_lda_idx $p5, $dj0
+    $el10 = LDA_dms_lda_idx $p7, $dj5
+    $dn3 = LDA_dms_lda_idx $p2, $dj4
+    $r30 = LDA_dms_lda_idx $p6, $dj3
+    $m7 = LDA_dms_lda_idx $p3, $dj7
+    $dc2 = LDA_dms_lda_idx $p0, $dj1
+    $r22 = LDA_dms_lda_idx $p1, $dj2
+    $m3 = LDA_dms_lda_idx $p4, $dj6
+    $dn1 = LDA_dms_lda_idx $p5, $dj0
+    $r24 = LDA_dms_lda_idx $p7, $dj5
+    $r9 = LDA_dms_lda_idx $p2, $dj4
+    $el1 = LDA_dms_lda_idx $p6, $dj3
+    $dj7 = LDA_dms_lda_idx $p3, $dj7
+    $dj5 = LDA_dms_lda_idx $p0, $dj1
+    $el0 = LDA_dms_lda_idx $p1, $dj2
+    $p2 = LDA_dms_lda_idx $p4, $dj6
+    $el6 = LDA_dms_lda_idx $p5, $dj0
+    $m4 = LDA_dms_lda_idx $p7, $dj5
+    $r6 = LDA_dms_lda_idx $p2, $dj4
+    $r1 = LDA_dms_lda_idx $p6, $dj3
+    $dc5 = LDA_dms_lda_idx $p3, $dj7
+    $p6 = LDA_dms_lda_idx $p0, $dj1
+    $r23 = LDA_dms_lda_idx $p1, $dj2
+    $eh11 = LDA_dms_lda_idx $p4, $dj6
+    $m2 = LDA_dms_lda_idx $p5, $dj0
+    $dn5 = LDA_dms_lda_idx $p7, $dj5
+    $eh1 = LDA_dms_lda_idx $p2, $dj4
+    $r29 = LDA_dms_lda_idx $p6, $dj3
+    $dj6 = LDA_dms_lda_idx $p3, $dj7
+    $el8 = LDA_dms_lda_idx $p0, $dj1
+    $dc0 = LDA_dms_lda_idx $p1, $dj2
+    $lr = LDA_dms_lda_idx $p4, $dj6
+
+    ; LDA_dms_lda_idx_imm
+    $p1 = LDA_dms_lda_idx_imm $p3, 28
+    $m6 = LDA_dms_lda_idx_imm $p2, 4
+    $el4 = LDA_dms_lda_idx_imm $p4, -32
+    $r11 = LDA_dms_lda_idx_imm $p6, 0
+    $el0 = LDA_dms_lda_idx_imm $p1, 28
+    $r16 = LDA_dms_lda_idx_imm $p7, 4
+    $r3 = LDA_dms_lda_idx_imm $p0, -32
+    $r6 = LDA_dms_lda_idx_imm $p5, 0
+    $dn0 = LDA_dms_lda_idx_imm $p3, 28
+    $p7 = LDA_dms_lda_idx_imm $p2, 4
+    $dc4 = LDA_dms_lda_idx_imm $p4, -32
+    $el7 = LDA_dms_lda_idx_imm $p6, 0
+    $r27 = LDA_dms_lda_idx_imm $p1, 28
+    $r25 = LDA_dms_lda_idx_imm $p7, 4
+    $p4 = LDA_dms_lda_idx_imm $p0, -32
+    $r10 = LDA_dms_lda_idx_imm $p5, 0
+    $r13 = LDA_dms_lda_idx_imm $p3, 28
+    $dj7 = LDA_dms_lda_idx_imm $p2, 4
+    $m2 = LDA_dms_lda_idx_imm $p4, -32
+    $r15 = LDA_dms_lda_idx_imm $p6, 0
+    $eh8 = LDA_dms_lda_idx_imm $p1, 28
+    $dj0 = LDA_dms_lda_idx_imm $p7, 4
+    $r21 = LDA_dms_lda_idx_imm $p0, -32
+    $eh1 = LDA_dms_lda_idx_imm $p5, 0
+    $r28 = LDA_dms_lda_idx_imm $p3, 28
+    $dc1 = LDA_dms_lda_idx_imm $p2, 4
+    $el1 = LDA_dms_lda_idx_imm $p4, -32
+    $p5 = LDA_dms_lda_idx_imm $p6, 0
+    $r22 = LDA_dms_lda_idx_imm $p1, 28
+    $el11 = LDA_dms_lda_idx_imm $p7, 4
+    $el10 = LDA_dms_lda_idx_imm $p0, -32
+    $dc3 = LDA_dms_lda_idx_imm $p5, 0
+    $el6 = LDA_dms_lda_idx_imm $p3, 28
+    $p0 = LDA_dms_lda_idx_imm $p2, 4
+    $r7 = LDA_dms_lda_idx_imm $p4, -32
+    $el2 = LDA_dms_lda_idx_imm $p6, 0
+    $el9 = LDA_dms_lda_idx_imm $p1, 28
+    $r26 = LDA_dms_lda_idx_imm $p7, 4
+    $dn5 = LDA_dms_lda_idx_imm $p0, -32
+    $dn6 = LDA_dms_lda_idx_imm $p5, 0
+    $eh6 = LDA_dms_lda_idx_imm $p3, 28
+    $m1 = LDA_dms_lda_idx_imm $p2, 4
+    $r4 = LDA_dms_lda_idx_imm $p4, -32
+    $r2 = LDA_dms_lda_idx_imm $p6, 0
+    $eh11 = LDA_dms_lda_idx_imm $p1, 28
+    $p2 = LDA_dms_lda_idx_imm $p7, 4
+    $m0 = LDA_dms_lda_idx_imm $p0, -32
+    $dn1 = LDA_dms_lda_idx_imm $p5, 0
+    $m4 = LDA_dms_lda_idx_imm $p3, 28
+    $dn4 = LDA_dms_lda_idx_imm $p2, 4
+    $eh9 = LDA_dms_lda_idx_imm $p4, -32
+    $dj2 = LDA_dms_lda_idx_imm $p6, 0
+    $p3 = LDA_dms_lda_idx_imm $p1, 28
+    $r19 = LDA_dms_lda_idx_imm $p7, 4
+    $dc2 = LDA_dms_lda_idx_imm $p0, -32
+    $eh7 = LDA_dms_lda_idx_imm $p5, 0
+    $el3 = LDA_dms_lda_idx_imm $p3, 28
+    $eh3 = LDA_dms_lda_idx_imm $p2, 4
+    $dj1 = LDA_dms_lda_idx_imm $p4, -32
+    $eh2 = LDA_dms_lda_idx_imm $p6, 0
+    $dc0 = LDA_dms_lda_idx_imm $p1, 28
+    $eh5 = LDA_dms_lda_idx_imm $p7, 4
+    $r8 = LDA_dms_lda_idx_imm $p0, -32
+    $eh10 = LDA_dms_lda_idx_imm $p5, 0
+    $r1 = LDA_dms_lda_idx_imm $p3, 28
+    $dn3 = LDA_dms_lda_idx_imm $p2, 4
+    $r12 = LDA_dms_lda_idx_imm $p4, -32
+    $dn2 = LDA_dms_lda_idx_imm $p6, 0
+    $r29 = LDA_dms_lda_idx_imm $p1, 28
+    $r17 = LDA_dms_lda_idx_imm $p7, 4
+    $r0 = LDA_dms_lda_idx_imm $p0, -32
+    $r20 = LDA_dms_lda_idx_imm $p5, 0
+    $dn7 = LDA_dms_lda_idx_imm $p3, 28
+    $dc7 = LDA_dms_lda_idx_imm $p2, 4
+    $m7 = LDA_dms_lda_idx_imm $p4, -32
+    $p6 = LDA_dms_lda_idx_imm $p6, 0
+    $r5 = LDA_dms_lda_idx_imm $p1, 28
+    $r23 = LDA_dms_lda_idx_imm $p7, 4
+    $r9 = LDA_dms_lda_idx_imm $p0, -32
+    $dj4 = LDA_dms_lda_idx_imm $p5, 0
+    $dc6 = LDA_dms_lda_idx_imm $p3, 28
+    $el8 = LDA_dms_lda_idx_imm $p2, 4
+    $dj5 = LDA_dms_lda_idx_imm $p4, -32
+    $r24 = LDA_dms_lda_idx_imm $p6, 0
+    $dc5 = LDA_dms_lda_idx_imm $p1, 28
+    $lr = LDA_dms_lda_idx_imm $p7, 4
+    $r31 = LDA_dms_lda_idx_imm $p0, -32
+    $m5 = LDA_dms_lda_idx_imm $p5, 0
+    $r18 = LDA_dms_lda_idx_imm $p3, 28
+    $dj3 = LDA_dms_lda_idx_imm $p2, 4
+    $el5 = LDA_dms_lda_idx_imm $p4, -32
+    $eh0 = LDA_dms_lda_idx_imm $p6, 0
+    $r30 = LDA_dms_lda_idx_imm $p1, 28
+    $dj6 = LDA_dms_lda_idx_imm $p7, 4
+    $r14 = LDA_dms_lda_idx_imm $p0, -32
+    $eh4 = LDA_dms_lda_idx_imm $p5, 0
+    $m3 = LDA_dms_lda_idx_imm $p3, 28
+
+    ; LDA_dms_lda_pstm_nrm
+    $dj7, $p4 = LDA_dms_lda_pstm_nrm $p4, $m5
+    $p2, $p6 = LDA_dms_lda_pstm_nrm $p6, $m1
+    $el6, $p2 = LDA_dms_lda_pstm_nrm $p2, $m7
+    $r10, $p7 = LDA_dms_lda_pstm_nrm $p7, $m3
+    $m6, $p3 = LDA_dms_lda_pstm_nrm $p3, $m6
+    $el7, $p0 = LDA_dms_lda_pstm_nrm $p0, $m2
+    $r14, $p1 = LDA_dms_lda_pstm_nrm $p1, $m0
+    $eh3, $p5 = LDA_dms_lda_pstm_nrm $p5, $m4
+    $p5, $p4 = LDA_dms_lda_pstm_nrm $p4, $m5
+    $r13, $p6 = LDA_dms_lda_pstm_nrm $p6, $m1
+    $m2, $p2 = LDA_dms_lda_pstm_nrm $p2, $m7
+    $dj1, $p7 = LDA_dms_lda_pstm_nrm $p7, $m3
+    $p1, $p3 = LDA_dms_lda_pstm_nrm $p3, $m6
+    $eh1, $p0 = LDA_dms_lda_pstm_nrm $p0, $m2
+    $r7, $p1 = LDA_dms_lda_pstm_nrm $p1, $m0
+    $m5, $p5 = LDA_dms_lda_pstm_nrm $p5, $m4
+    $dj4, $p4 = LDA_dms_lda_pstm_nrm $p4, $m5
+    $el2, $p6 = LDA_dms_lda_pstm_nrm $p6, $m1
+    $eh8, $p2 = LDA_dms_lda_pstm_nrm $p2, $m7
+    $r15, $p7 = LDA_dms_lda_pstm_nrm $p7, $m3
+    $dc3, $p3 = LDA_dms_lda_pstm_nrm $p3, $m6
+    $m1, $p0 = LDA_dms_lda_pstm_nrm $p0, $m2
+    $dj2, $p1 = LDA_dms_lda_pstm_nrm $p1, $m0
+    $r23, $p5 = LDA_dms_lda_pstm_nrm $p5, $m4
+    $r31, $p4 = LDA_dms_lda_pstm_nrm $p4, $m5
+    $r3, $p6 = LDA_dms_lda_pstm_nrm $p6, $m1
+    $r5, $p2 = LDA_dms_lda_pstm_nrm $p2, $m7
+    $p3, $p7 = LDA_dms_lda_pstm_nrm $p7, $m3
+    $dn7, $p3 = LDA_dms_lda_pstm_nrm $p3, $m6
+    $eh2, $p0 = LDA_dms_lda_pstm_nrm $p0, $m2
+    $m0, $p1 = LDA_dms_lda_pstm_nrm $p1, $m0
+    $p6, $p5 = LDA_dms_lda_pstm_nrm $p5, $m4
+    $r26, $p4 = LDA_dms_lda_pstm_nrm $p4, $m5
+    $eh11, $p6 = LDA_dms_lda_pstm_nrm $p6, $m1
+    $r17, $p2 = LDA_dms_lda_pstm_nrm $p2, $m7
+    $r18, $p7 = LDA_dms_lda_pstm_nrm $p7, $m3
+    $m3, $p3 = LDA_dms_lda_pstm_nrm $p3, $m6
+    $r12, $p0 = LDA_dms_lda_pstm_nrm $p0, $m2
+    $eh7, $p1 = LDA_dms_lda_pstm_nrm $p1, $m0
+    $dc6, $p5 = LDA_dms_lda_pstm_nrm $p5, $m4
+    $dj5, $p4 = LDA_dms_lda_pstm_nrm $p4, $m5
+    $r21, $p6 = LDA_dms_lda_pstm_nrm $p6, $m1
+    $eh6, $p2 = LDA_dms_lda_pstm_nrm $p2, $m7
+    $eh9, $p7 = LDA_dms_lda_pstm_nrm $p7, $m3
+    $dn6, $p3 = LDA_dms_lda_pstm_nrm $p3, $m6
+    $el10, $p0 = LDA_dms_lda_pstm_nrm $p0, $m2
+    $dc2, $p1 = LDA_dms_lda_pstm_nrm $p1, $m0
+    $el4, $p5 = LDA_dms_lda_pstm_nrm $p5, $m4
+    $r0, $p4 = LDA_dms_lda_pstm_nrm $p4, $m5
+    $r2, $p6 = LDA_dms_lda_pstm_nrm $p6, $m1
+    $r8, $p2 = LDA_dms_lda_pstm_nrm $p2, $m7
+    $r20, $p7 = LDA_dms_lda_pstm_nrm $p7, $m3
+    $dc1, $p3 = LDA_dms_lda_pstm_nrm $p3, $m6
+    $dn0, $p0 = LDA_dms_lda_pstm_nrm $p0, $m2
+    $dn2, $p1 = LDA_dms_lda_pstm_nrm $p1, $m0
+    $r16, $p5 = LDA_dms_lda_pstm_nrm $p5, $m4
+    $r22, $p4 = LDA_dms_lda_pstm_nrm $p4, $m5
+    $dc7, $p6 = LDA_dms_lda_pstm_nrm $p6, $m1
+    $r29, $p2 = LDA_dms_lda_pstm_nrm $p2, $m7
+    $r9, $p7 = LDA_dms_lda_pstm_nrm $p7, $m3
+    $eh0, $p3 = LDA_dms_lda_pstm_nrm $p3, $m6
+    $eh10, $p0 = LDA_dms_lda_pstm_nrm $p0, $m2
+    $m4, $p1 = LDA_dms_lda_pstm_nrm $p1, $m0
+    $dj6, $p5 = LDA_dms_lda_pstm_nrm $p5, $m4
+    $r11, $p4 = LDA_dms_lda_pstm_nrm $p4, $m5
+    $el0, $p6 = LDA_dms_lda_pstm_nrm $p6, $m1
+    $r25, $p2 = LDA_dms_lda_pstm_nrm $p2, $m7
+    $eh5, $p7 = LDA_dms_lda_pstm_nrm $p7, $m3
+    $dn1, $p3 = LDA_dms_lda_pstm_nrm $p3, $m6
+    $dn5, $p0 = LDA_dms_lda_pstm_nrm $p0, $m2
+    $dn3, $p1 = LDA_dms_lda_pstm_nrm $p1, $m0
+    $el8, $p5 = LDA_dms_lda_pstm_nrm $p5, $m4
+    $dc5, $p4 = LDA_dms_lda_pstm_nrm $p4, $m5
+    $eh4, $p6 = LDA_dms_lda_pstm_nrm $p6, $m1
+    $dc4, $p2 = LDA_dms_lda_pstm_nrm $p2, $m7
+    $r6, $p7 = LDA_dms_lda_pstm_nrm $p7, $m3
+    $r27, $p3 = LDA_dms_lda_pstm_nrm $p3, $m6
+    $dn4, $p0 = LDA_dms_lda_pstm_nrm $p0, $m2
+    $lr, $p1 = LDA_dms_lda_pstm_nrm $p1, $m0
+    $r24, $p5 = LDA_dms_lda_pstm_nrm $p5, $m4
+    $el1, $p4 = LDA_dms_lda_pstm_nrm $p4, $m5
+    $el11, $p6 = LDA_dms_lda_pstm_nrm $p6, $m1
+    $r1, $p2 = LDA_dms_lda_pstm_nrm $p2, $m7
+    $p0, $p7 = LDA_dms_lda_pstm_nrm $p7, $m3
+    $r30, $p3 = LDA_dms_lda_pstm_nrm $p3, $m6
+    $p7, $p0 = LDA_dms_lda_pstm_nrm $p0, $m2
+    $m7, $p1 = LDA_dms_lda_pstm_nrm $p1, $m0
+    $p4, $p5 = LDA_dms_lda_pstm_nrm $p5, $m4
+    $dj3, $p4 = LDA_dms_lda_pstm_nrm $p4, $m5
+    $el3, $p6 = LDA_dms_lda_pstm_nrm $p6, $m1
+    $r19, $p2 = LDA_dms_lda_pstm_nrm $p2, $m7
+    $dc0, $p7 = LDA_dms_lda_pstm_nrm $p7, $m3
+    $dj0, $p3 = LDA_dms_lda_pstm_nrm $p3, $m6
+    $el5, $p0 = LDA_dms_lda_pstm_nrm $p0, $m2
+    $r28, $p1 = LDA_dms_lda_pstm_nrm $p1, $m0
+    $r4, $p5 = LDA_dms_lda_pstm_nrm $p5, $m4
+    $el9, $p4 = LDA_dms_lda_pstm_nrm $p4, $m5
+
+    ; LDA_dms_lda_pstm_nrm_imm
+    $dc6, $p4 = LDA_dms_lda_pstm_nrm_imm $p4, 4
+    $r6, $p1 = LDA_dms_lda_pstm_nrm_imm $p1, 0
+    $p1, $p5 = LDA_dms_lda_pstm_nrm_imm $p5, -32
+    $r29, $p7 = LDA_dms_lda_pstm_nrm_imm $p7, 28
+    $el8, $p2 = LDA_dms_lda_pstm_nrm_imm $p2, 4
+    $r9, $p3 = LDA_dms_lda_pstm_nrm_imm $p3, 0
+    $p0, $p0 = LDA_dms_lda_pstm_nrm_imm $p0, -32
+    $eh8, $p6 = LDA_dms_lda_pstm_nrm_imm $p6, 28
+    $p5, $p4 = LDA_dms_lda_pstm_nrm_imm $p4, 4
+    $m3, $p1 = LDA_dms_lda_pstm_nrm_imm $p1, 0
+    $dn1, $p5 = LDA_dms_lda_pstm_nrm_imm $p5, -32
+    $m2, $p7 = LDA_dms_lda_pstm_nrm_imm $p7, 28
+    $dj7, $p2 = LDA_dms_lda_pstm_nrm_imm $p2, 4
+    $m6, $p3 = LDA_dms_lda_pstm_nrm_imm $p3, 0
+    $r11, $p0 = LDA_dms_lda_pstm_nrm_imm $p0, -32
+    $eh9, $p6 = LDA_dms_lda_pstm_nrm_imm $p6, 28
+    $r26, $p4 = LDA_dms_lda_pstm_nrm_imm $p4, 4
+    $r24, $p1 = LDA_dms_lda_pstm_nrm_imm $p1, 0
+    $dj0, $p5 = LDA_dms_lda_pstm_nrm_imm $p5, -32
+    $dn3, $p7 = LDA_dms_lda_pstm_nrm_imm $p7, 28
+    $dj5, $p2 = LDA_dms_lda_pstm_nrm_imm $p2, 4
+    $el4, $p3 = LDA_dms_lda_pstm_nrm_imm $p3, 0
+    $r13, $p0 = LDA_dms_lda_pstm_nrm_imm $p0, -32
+    $el2, $p6 = LDA_dms_lda_pstm_nrm_imm $p6, 28
+    $eh5, $p4 = LDA_dms_lda_pstm_nrm_imm $p4, 4
+    $r5, $p1 = LDA_dms_lda_pstm_nrm_imm $p1, 0
+    $r31, $p5 = LDA_dms_lda_pstm_nrm_imm $p5, -32
+    $r15, $p7 = LDA_dms_lda_pstm_nrm_imm $p7, 28
+    $r3, $p2 = LDA_dms_lda_pstm_nrm_imm $p2, 4
+    $el9, $p3 = LDA_dms_lda_pstm_nrm_imm $p3, 0
+    $p2, $p0 = LDA_dms_lda_pstm_nrm_imm $p0, -32
+    $m1, $p6 = LDA_dms_lda_pstm_nrm_imm $p6, 28
+    $dc4, $p4 = LDA_dms_lda_pstm_nrm_imm $p4, 4
+    $m4, $p1 = LDA_dms_lda_pstm_nrm_imm $p1, 0
+    $dn2, $p5 = LDA_dms_lda_pstm_nrm_imm $p5, -32
+    $el11, $p7 = LDA_dms_lda_pstm_nrm_imm $p7, 28
+    $r18, $p2 = LDA_dms_lda_pstm_nrm_imm $p2, 4
+    $r14, $p3 = LDA_dms_lda_pstm_nrm_imm $p3, 0
+    $dc2, $p0 = LDA_dms_lda_pstm_nrm_imm $p0, -32
+    $eh6, $p6 = LDA_dms_lda_pstm_nrm_imm $p6, 28
+    $m5, $p4 = LDA_dms_lda_pstm_nrm_imm $p4, 4
+    $dc3, $p1 = LDA_dms_lda_pstm_nrm_imm $p1, 0
+    $eh1, $p5 = LDA_dms_lda_pstm_nrm_imm $p5, -32
+    $p4, $p7 = LDA_dms_lda_pstm_nrm_imm $p7, 28
+    $dn0, $p2 = LDA_dms_lda_pstm_nrm_imm $p2, 4
+    $eh2, $p3 = LDA_dms_lda_pstm_nrm_imm $p3, 0
+    $el0, $p0 = LDA_dms_lda_pstm_nrm_imm $p0, -32
+    $el6, $p6 = LDA_dms_lda_pstm_nrm_imm $p6, 28
+    $r12, $p4 = LDA_dms_lda_pstm_nrm_imm $p4, 4
+    $dc0, $p1 = LDA_dms_lda_pstm_nrm_imm $p1, 0
+    $r20, $p5 = LDA_dms_lda_pstm_nrm_imm $p5, -32
+    $r2, $p7 = LDA_dms_lda_pstm_nrm_imm $p7, 28
+    $r25, $p2 = LDA_dms_lda_pstm_nrm_imm $p2, 4
+    $eh4, $p3 = LDA_dms_lda_pstm_nrm_imm $p3, 0
+    $r30, $p0 = LDA_dms_lda_pstm_nrm_imm $p0, -32
+    $r23, $p6 = LDA_dms_lda_pstm_nrm_imm $p6, 28
+    $r21, $p4 = LDA_dms_lda_pstm_nrm_imm $p4, 4
+    $dc5, $p1 = LDA_dms_lda_pstm_nrm_imm $p1, 0
+    $m7, $p5 = LDA_dms_lda_pstm_nrm_imm $p5, -32
+    $r7, $p7 = LDA_dms_lda_pstm_nrm_imm $p7, 28
+    $el5, $p2 = LDA_dms_lda_pstm_nrm_imm $p2, 4
+    $r1, $p3 = LDA_dms_lda_pstm_nrm_imm $p3, 0
+    $r28, $p0 = LDA_dms_lda_pstm_nrm_imm $p0, -32
+    $dn6, $p6 = LDA_dms_lda_pstm_nrm_imm $p6, 28
+    $dj4, $p4 = LDA_dms_lda_pstm_nrm_imm $p4, 4
+    $r8, $p1 = LDA_dms_lda_pstm_nrm_imm $p1, 0
+    $m0, $p5 = LDA_dms_lda_pstm_nrm_imm $p5, -32
+    $r4, $p7 = LDA_dms_lda_pstm_nrm_imm $p7, 28
+    $eh10, $p2 = LDA_dms_lda_pstm_nrm_imm $p2, 4
+    $el1, $p3 = LDA_dms_lda_pstm_nrm_imm $p3, 0
+    $eh11, $p0 = LDA_dms_lda_pstm_nrm_imm $p0, -32
+    $dc1, $p6 = LDA_dms_lda_pstm_nrm_imm $p6, 28
+    $dj2, $p4 = LDA_dms_lda_pstm_nrm_imm $p4, 4
+    $p7, $p1 = LDA_dms_lda_pstm_nrm_imm $p1, 0
+    $el3, $p5 = LDA_dms_lda_pstm_nrm_imm $p5, -32
+    $r19, $p7 = LDA_dms_lda_pstm_nrm_imm $p7, 28
+    $dj3, $p2 = LDA_dms_lda_pstm_nrm_imm $p2, 4
+    $r17, $p3 = LDA_dms_lda_pstm_nrm_imm $p3, 0
+    $dn5, $p0 = LDA_dms_lda_pstm_nrm_imm $p0, -32
+    $p3, $p6 = LDA_dms_lda_pstm_nrm_imm $p6, 28
+    $dn7, $p4 = LDA_dms_lda_pstm_nrm_imm $p4, 4
+    $dc7, $p1 = LDA_dms_lda_pstm_nrm_imm $p1, 0
+    $dj1, $p5 = LDA_dms_lda_pstm_nrm_imm $p5, -32
+    $el10, $p7 = LDA_dms_lda_pstm_nrm_imm $p7, 28
+    $p6, $p2 = LDA_dms_lda_pstm_nrm_imm $p2, 4
+    $r27, $p3 = LDA_dms_lda_pstm_nrm_imm $p3, 0
+    $r16, $p0 = LDA_dms_lda_pstm_nrm_imm $p0, -32
+    $el7, $p6 = LDA_dms_lda_pstm_nrm_imm $p6, 28
+    $r22, $p4 = LDA_dms_lda_pstm_nrm_imm $p4, 4
+    $eh3, $p1 = LDA_dms_lda_pstm_nrm_imm $p1, 0
+    $dn4, $p5 = LDA_dms_lda_pstm_nrm_imm $p5, -32
+    $eh0, $p7 = LDA_dms_lda_pstm_nrm_imm $p7, 28
+    $r0, $p2 = LDA_dms_lda_pstm_nrm_imm $p2, 4
+    $dj6, $p3 = LDA_dms_lda_pstm_nrm_imm $p3, 0
+    $r10, $p0 = LDA_dms_lda_pstm_nrm_imm $p0, -32
+    $lr, $p6 = LDA_dms_lda_pstm_nrm_imm $p6, 28
+    $eh7, $p4 = LDA_dms_lda_pstm_nrm_imm $p4, 4
+
+    ; LDA_dms_lda_spill, implicit $sp
+    $m1 = LDA_dms_lda_spill -2044, implicit $sp
+    $r12 = LDA_dms_lda_spill -2048, implicit $sp
+    $el3 = LDA_dms_lda_spill -4, implicit $sp
+    $r4 = LDA_dms_lda_spill -8, implicit $sp
+    $el11 = LDA_dms_lda_spill -2044, implicit $sp
+    $eh10 = LDA_dms_lda_spill -2048, implicit $sp
+    $m4 = LDA_dms_lda_spill -4, implicit $sp
+    $r5 = LDA_dms_lda_spill -8, implicit $sp
+    $p7 = LDA_dms_lda_spill -2044, implicit $sp
+    $el8 = LDA_dms_lda_spill -2048, implicit $sp
+    $dj6 = LDA_dms_lda_spill -4, implicit $sp
+    $r2 = LDA_dms_lda_spill -8, implicit $sp
+    $r21 = LDA_dms_lda_spill -2044, implicit $sp
+    $dc4 = LDA_dms_lda_spill -2048, implicit $sp
+    $el7 = LDA_dms_lda_spill -4, implicit $sp
+    $r3 = LDA_dms_lda_spill -8, implicit $sp
+    $p5 = LDA_dms_lda_spill -2044, implicit $sp
+    $el0 = LDA_dms_lda_spill -2048, implicit $sp
+    $el6 = LDA_dms_lda_spill -4, implicit $sp
+    $el4 = LDA_dms_lda_spill -8, implicit $sp
+    $dc2 = LDA_dms_lda_spill -2044, implicit $sp
+    $m2 = LDA_dms_lda_spill -2048, implicit $sp
+    $p3 = LDA_dms_lda_spill -4, implicit $sp
+    $m6 = LDA_dms_lda_spill -8, implicit $sp
+    $r29 = LDA_dms_lda_spill -2044, implicit $sp
+    $r0 = LDA_dms_lda_spill -2048, implicit $sp
+    $lr = LDA_dms_lda_spill -4, implicit $sp
+    $dc7 = LDA_dms_lda_spill -8, implicit $sp
+    $eh1 = LDA_dms_lda_spill -2044, implicit $sp
+    $r24 = LDA_dms_lda_spill -2048, implicit $sp
+    $dc6 = LDA_dms_lda_spill -4, implicit $sp
+    $r28 = LDA_dms_lda_spill -8, implicit $sp
+    $r27 = LDA_dms_lda_spill -2044, implicit $sp
+    $dn7 = LDA_dms_lda_spill -2048, implicit $sp
+    $eh3 = LDA_dms_lda_spill -4, implicit $sp
+    $m7 = LDA_dms_lda_spill -8, implicit $sp
+    $eh0 = LDA_dms_lda_spill -2044, implicit $sp
+    $el5 = LDA_dms_lda_spill -2048, implicit $sp
+    $dn6 = LDA_dms_lda_spill -4, implicit $sp
+    $r6 = LDA_dms_lda_spill -8, implicit $sp
+    $r9 = LDA_dms_lda_spill -2044, implicit $sp
+    $r15 = LDA_dms_lda_spill -2048, implicit $sp
+    $dj2 = LDA_dms_lda_spill -4, implicit $sp
+    $dn0 = LDA_dms_lda_spill -8, implicit $sp
+    $p1 = LDA_dms_lda_spill -2044, implicit $sp
+    $r1 = LDA_dms_lda_spill -2048, implicit $sp
+    $eh8 = LDA_dms_lda_spill -4, implicit $sp
+    $r14 = LDA_dms_lda_spill -8, implicit $sp
+    $dj7 = LDA_dms_lda_spill -2044, implicit $sp
+    $m3 = LDA_dms_lda_spill -2048, implicit $sp
+    $m5 = LDA_dms_lda_spill -4, implicit $sp
+    $r16 = LDA_dms_lda_spill -8, implicit $sp
+    $el9 = LDA_dms_lda_spill -2044, implicit $sp
+    $eh9 = LDA_dms_lda_spill -2048, implicit $sp
+    $r13 = LDA_dms_lda_spill -4, implicit $sp
+    $dc5 = LDA_dms_lda_spill -8, implicit $sp
+    $r7 = LDA_dms_lda_spill -2044, implicit $sp
+    $r30 = LDA_dms_lda_spill -2048, implicit $sp
+    $dj5 = LDA_dms_lda_spill -4, implicit $sp
+    $eh2 = LDA_dms_lda_spill -8, implicit $sp
+    $r19 = LDA_dms_lda_spill -2044, implicit $sp
+    $r18 = LDA_dms_lda_spill -2048, implicit $sp
+    $dj1 = LDA_dms_lda_spill -4, implicit $sp
+    $dn2 = LDA_dms_lda_spill -8, implicit $sp
+    $eh5 = LDA_dms_lda_spill -2044, implicit $sp
+    $dc3 = LDA_dms_lda_spill -2048, implicit $sp
+    $eh11 = LDA_dms_lda_spill -4, implicit $sp
+    $dn5 = LDA_dms_lda_spill -8, implicit $sp
+    $r8 = LDA_dms_lda_spill -2044, implicit $sp
+    $r17 = LDA_dms_lda_spill -2048, implicit $sp
+    $r20 = LDA_dms_lda_spill -4, implicit $sp
+    $p2 = LDA_dms_lda_spill -8, implicit $sp
+    $dj4 = LDA_dms_lda_spill -2044, implicit $sp
+    $p6 = LDA_dms_lda_spill -2048, implicit $sp
+    $el10 = LDA_dms_lda_spill -4, implicit $sp
+    $p4 = LDA_dms_lda_spill -8, implicit $sp
+    $eh7 = LDA_dms_lda_spill -2044, implicit $sp
+    $r23 = LDA_dms_lda_spill -2048, implicit $sp
+    $dn3 = LDA_dms_lda_spill -4, implicit $sp
+    $dn1 = LDA_dms_lda_spill -8, implicit $sp
+    $dc1 = LDA_dms_lda_spill -2044, implicit $sp
+    $r26 = LDA_dms_lda_spill -2048, implicit $sp
+    $el1 = LDA_dms_lda_spill -4, implicit $sp
+    $eh4 = LDA_dms_lda_spill -8, implicit $sp
+    $dj0 = LDA_dms_lda_spill -2044, implicit $sp
+    $el2 = LDA_dms_lda_spill -2048, implicit $sp
+    $r22 = LDA_dms_lda_spill -4, implicit $sp
+    $r10 = LDA_dms_lda_spill -8, implicit $sp
+    $r25 = LDA_dms_lda_spill -2044, implicit $sp
+    $r31 = LDA_dms_lda_spill -2048, implicit $sp
+    $eh6 = LDA_dms_lda_spill -4, implicit $sp
+    $m0 = LDA_dms_lda_spill -8, implicit $sp
+    $dn4 = LDA_dms_lda_spill -2044, implicit $sp
+    $dc0 = LDA_dms_lda_spill -2048, implicit $sp
+    $dj3 = LDA_dms_lda_spill -4, implicit $sp
+    $p0 = LDA_dms_lda_spill -8, implicit $sp
+    $r11 = LDA_dms_lda_spill -2044, implicit $sp
+
+    ; LDA_dmv_lda_q_idx
+    $q3 = LDA_dmv_lda_q_idx $p2, $dj5
+    $q1 = LDA_dmv_lda_q_idx $p5, $dj7
+    $q0 = LDA_dmv_lda_q_idx $p6, $dj4
+    $q2 = LDA_dmv_lda_q_idx $p0, $dj6
+    $q3 = LDA_dmv_lda_q_idx $p4, $dj2
+    $q1 = LDA_dmv_lda_q_idx $p3, $dj3
+    $q0 = LDA_dmv_lda_q_idx $p7, $dj1
+    $q2 = LDA_dmv_lda_q_idx $p1, $dj0
+
+    ; LDA_dmv_lda_q_idx_imm
+    $q1 = LDA_dmv_lda_q_idx_imm $p1, -128
+    $q3 = LDA_dmv_lda_q_idx_imm $p4, 0
+    $q2 = LDA_dmv_lda_q_idx_imm $p2, 112
+    $q0 = LDA_dmv_lda_q_idx_imm $p3, 16
+    $q1 = LDA_dmv_lda_q_idx_imm $p6, -128
+    $q3 = LDA_dmv_lda_q_idx_imm $p0, 0
+    $q2 = LDA_dmv_lda_q_idx_imm $p5, 112
+    $q0 = LDA_dmv_lda_q_idx_imm $p7, 16
+
+    ; LDA_dmv_lda_q_pstm_nrm
+    $q1, $p4 = LDA_dmv_lda_q_pstm_nrm $p4, $m1
+    $q0, $p6 = LDA_dmv_lda_q_pstm_nrm $p6, $m7
+    $q2, $p5 = LDA_dmv_lda_q_pstm_nrm $p5, $m3
+    $q3, $p0 = LDA_dmv_lda_q_pstm_nrm $p0, $m2
+    $q1, $p3 = LDA_dmv_lda_q_pstm_nrm $p3, $m4
+    $q0, $p2 = LDA_dmv_lda_q_pstm_nrm $p2, $m0
+    $q2, $p1 = LDA_dmv_lda_q_pstm_nrm $p1, $m5
+    $q3, $p7 = LDA_dmv_lda_q_pstm_nrm $p7, $m6
+
+    ; LDA_dmv_lda_q_pstm_nrm_imm
+    $q3, $p5 = LDA_dmv_lda_q_pstm_nrm_imm $p5, 112
+    $q1, $p0 = LDA_dmv_lda_q_pstm_nrm_imm $p0, -128
+    $q2, $p6 = LDA_dmv_lda_q_pstm_nrm_imm $p6, 16
+    $q0, $p3 = LDA_dmv_lda_q_pstm_nrm_imm $p3, 0
+    $q3, $p1 = LDA_dmv_lda_q_pstm_nrm_imm $p1, 112
+    $q1, $p4 = LDA_dmv_lda_q_pstm_nrm_imm $p4, -128
+    $q2, $p7 = LDA_dmv_lda_q_pstm_nrm_imm $p7, 16
+    $q0, $p2 = LDA_dmv_lda_q_pstm_nrm_imm $p2, 0
+
+    ; LDA_dmv_lda_q_spill, implicit $sp
+    $q0 = LDA_dmv_lda_q_spill -8192, implicit $sp
+    $q3 = LDA_dmv_lda_q_spill -32, implicit $sp
+    $q1 = LDA_dmv_lda_q_spill -8176, implicit $sp
+    $q2 = LDA_dmv_lda_q_spill -16, implicit $sp
+
+    ; LDA_s16_idx
+    $r16 = LDA_s16_idx $p6, $dj5
+    $r14 = LDA_s16_idx $p2, $dj7
+    $r18 = LDA_s16_idx $p7, $dj2
+    $r23 = LDA_s16_idx $p3, $dj6
+    $r12 = LDA_s16_idx $p5, $dj1
+    $r17 = LDA_s16_idx $p0, $dj4
+    $r24 = LDA_s16_idx $p1, $dj3
+    $r8 = LDA_s16_idx $p4, $dj0
+    $r21 = LDA_s16_idx $p6, $dj5
+    $r2 = LDA_s16_idx $p2, $dj7
+    $r20 = LDA_s16_idx $p7, $dj2
+    $r5 = LDA_s16_idx $p3, $dj6
+    $r7 = LDA_s16_idx $p5, $dj1
+    $r1 = LDA_s16_idx $p0, $dj4
+    $r28 = LDA_s16_idx $p1, $dj3
+    $r4 = LDA_s16_idx $p4, $dj0
+    $r27 = LDA_s16_idx $p6, $dj5
+    $r6 = LDA_s16_idx $p2, $dj7
+    $r0 = LDA_s16_idx $p7, $dj2
+    $r22 = LDA_s16_idx $p3, $dj6
+    $r31 = LDA_s16_idx $p5, $dj1
+    $r9 = LDA_s16_idx $p0, $dj4
+    $r30 = LDA_s16_idx $p1, $dj3
+    $r3 = LDA_s16_idx $p4, $dj0
+    $r10 = LDA_s16_idx $p6, $dj5
+    $r11 = LDA_s16_idx $p2, $dj7
+    $r13 = LDA_s16_idx $p7, $dj2
+    $r25 = LDA_s16_idx $p3, $dj6
+    $r29 = LDA_s16_idx $p5, $dj1
+    $r26 = LDA_s16_idx $p0, $dj4
+    $r15 = LDA_s16_idx $p1, $dj3
+    $r19 = LDA_s16_idx $p4, $dj0
+
+    ; LDA_s16_idx_imm
+    $r12 = LDA_s16_idx_imm $p7, 0
+    $r15 = LDA_s16_idx_imm $p5, 14
+    $r21 = LDA_s16_idx_imm $p6, 2
+    $r13 = LDA_s16_idx_imm $p1, -16
+    $r7 = LDA_s16_idx_imm $p3, 0
+    $r11 = LDA_s16_idx_imm $p2, 14
+    $r10 = LDA_s16_idx_imm $p4, 2
+    $r20 = LDA_s16_idx_imm $p0, -16
+    $r17 = LDA_s16_idx_imm $p7, 0
+    $r25 = LDA_s16_idx_imm $p5, 14
+    $r6 = LDA_s16_idx_imm $p6, 2
+    $r24 = LDA_s16_idx_imm $p1, -16
+    $r4 = LDA_s16_idx_imm $p3, 0
+    $r23 = LDA_s16_idx_imm $p2, 14
+    $r14 = LDA_s16_idx_imm $p4, 2
+    $r31 = LDA_s16_idx_imm $p0, -16
+    $r30 = LDA_s16_idx_imm $p7, 0
+    $r8 = LDA_s16_idx_imm $p5, 14
+    $r2 = LDA_s16_idx_imm $p6, 2
+    $r16 = LDA_s16_idx_imm $p1, -16
+    $r28 = LDA_s16_idx_imm $p3, 0
+    $r19 = LDA_s16_idx_imm $p2, 14
+    $r18 = LDA_s16_idx_imm $p4, 2
+    $r26 = LDA_s16_idx_imm $p0, -16
+    $r29 = LDA_s16_idx_imm $p7, 0
+    $r22 = LDA_s16_idx_imm $p5, 14
+    $r9 = LDA_s16_idx_imm $p6, 2
+    $r27 = LDA_s16_idx_imm $p1, -16
+    $r5 = LDA_s16_idx_imm $p3, 0
+    $r3 = LDA_s16_idx_imm $p2, 14
+    $r1 = LDA_s16_idx_imm $p4, 2
+    $r0 = LDA_s16_idx_imm $p0, -16
+
+    ; LDA_s16_pstm_nrm
+    $r12, $p4 = LDA_s16_pstm_nrm $p4, $m5
+    $r16, $p1 = LDA_s16_pstm_nrm $p1, $m6
+    $r27, $p3 = LDA_s16_pstm_nrm $p3, $m4
+    $r7, $p2 = LDA_s16_pstm_nrm $p2, $m0
+    $r6, $p6 = LDA_s16_pstm_nrm $p6, $m2
+    $r18, $p5 = LDA_s16_pstm_nrm $p5, $m7
+    $r22, $p7 = LDA_s16_pstm_nrm $p7, $m3
+    $r24, $p0 = LDA_s16_pstm_nrm $p0, $m1
+    $r25, $p4 = LDA_s16_pstm_nrm $p4, $m5
+    $r20, $p1 = LDA_s16_pstm_nrm $p1, $m6
+    $r10, $p3 = LDA_s16_pstm_nrm $p3, $m4
+    $r19, $p2 = LDA_s16_pstm_nrm $p2, $m0
+    $r31, $p6 = LDA_s16_pstm_nrm $p6, $m2
+    $r23, $p5 = LDA_s16_pstm_nrm $p5, $m7
+    $r9, $p7 = LDA_s16_pstm_nrm $p7, $m3
+    $r1, $p0 = LDA_s16_pstm_nrm $p0, $m1
+    $r4, $p4 = LDA_s16_pstm_nrm $p4, $m5
+    $r13, $p1 = LDA_s16_pstm_nrm $p1, $m6
+    $r11, $p3 = LDA_s16_pstm_nrm $p3, $m4
+    $r29, $p2 = LDA_s16_pstm_nrm $p2, $m0
+    $r15, $p6 = LDA_s16_pstm_nrm $p6, $m2
+    $r26, $p5 = LDA_s16_pstm_nrm $p5, $m7
+    $r21, $p7 = LDA_s16_pstm_nrm $p7, $m3
+    $r3, $p0 = LDA_s16_pstm_nrm $p0, $m1
+    $r0, $p4 = LDA_s16_pstm_nrm $p4, $m5
+    $r5, $p1 = LDA_s16_pstm_nrm $p1, $m6
+    $r14, $p3 = LDA_s16_pstm_nrm $p3, $m4
+    $r8, $p2 = LDA_s16_pstm_nrm $p2, $m0
+    $r30, $p6 = LDA_s16_pstm_nrm $p6, $m2
+    $r28, $p5 = LDA_s16_pstm_nrm $p5, $m7
+    $r17, $p7 = LDA_s16_pstm_nrm $p7, $m3
+    $r2, $p0 = LDA_s16_pstm_nrm $p0, $m1
+
+    ; LDA_s16_pstm_nrm_imm
+    $r26, $p2 = LDA_s16_pstm_nrm_imm $p2, 0
+    $r0, $p5 = LDA_s16_pstm_nrm_imm $p5, 14
+    $r30, $p6 = LDA_s16_pstm_nrm_imm $p6, 2
+    $r16, $p7 = LDA_s16_pstm_nrm_imm $p7, -16
+    $r11, $p1 = LDA_s16_pstm_nrm_imm $p1, 0
+    $r8, $p3 = LDA_s16_pstm_nrm_imm $p3, 14
+    $r4, $p4 = LDA_s16_pstm_nrm_imm $p4, 2
+    $r9, $p0 = LDA_s16_pstm_nrm_imm $p0, -16
+    $r6, $p2 = LDA_s16_pstm_nrm_imm $p2, 0
+    $r18, $p5 = LDA_s16_pstm_nrm_imm $p5, 14
+    $r10, $p6 = LDA_s16_pstm_nrm_imm $p6, 2
+    $r2, $p7 = LDA_s16_pstm_nrm_imm $p7, -16
+    $r21, $p1 = LDA_s16_pstm_nrm_imm $p1, 0
+    $r15, $p3 = LDA_s16_pstm_nrm_imm $p3, 14
+    $r19, $p4 = LDA_s16_pstm_nrm_imm $p4, 2
+    $r14, $p0 = LDA_s16_pstm_nrm_imm $p0, -16
+    $r23, $p2 = LDA_s16_pstm_nrm_imm $p2, 0
+    $r29, $p5 = LDA_s16_pstm_nrm_imm $p5, 14
+    $r7, $p6 = LDA_s16_pstm_nrm_imm $p6, 2
+    $r27, $p7 = LDA_s16_pstm_nrm_imm $p7, -16
+    $r24, $p1 = LDA_s16_pstm_nrm_imm $p1, 0
+    $r22, $p3 = LDA_s16_pstm_nrm_imm $p3, 14
+    $r12, $p4 = LDA_s16_pstm_nrm_imm $p4, 2
+    $r3, $p0 = LDA_s16_pstm_nrm_imm $p0, -16
+    $r31, $p2 = LDA_s16_pstm_nrm_imm $p2, 0
+    $r20, $p5 = LDA_s16_pstm_nrm_imm $p5, 14
+    $r25, $p6 = LDA_s16_pstm_nrm_imm $p6, 2
+    $r1, $p7 = LDA_s16_pstm_nrm_imm $p7, -16
+    $r13, $p1 = LDA_s16_pstm_nrm_imm $p1, 0
+    $r5, $p3 = LDA_s16_pstm_nrm_imm $p3, 14
+    $r17, $p4 = LDA_s16_pstm_nrm_imm $p4, 2
+    $r28, $p0 = LDA_s16_pstm_nrm_imm $p0, -16
+
+    ; LDA_s8_idx
+    $r15 = LDA_s8_idx $p0, $dj2
+    $r23 = LDA_s8_idx $p4, $dj6
+    $r8 = LDA_s8_idx $p7, $dj4
+    $r9 = LDA_s8_idx $p5, $dj3
+    $r0 = LDA_s8_idx $p6, $dj5
+    $r30 = LDA_s8_idx $p2, $dj1
+    $r10 = LDA_s8_idx $p3, $dj7
+    $r7 = LDA_s8_idx $p1, $dj0
+    $r28 = LDA_s8_idx $p0, $dj2
+    $r18 = LDA_s8_idx $p4, $dj6
+    $r12 = LDA_s8_idx $p7, $dj4
+    $r6 = LDA_s8_idx $p5, $dj3
+    $r20 = LDA_s8_idx $p6, $dj5
+    $r3 = LDA_s8_idx $p2, $dj1
+    $r21 = LDA_s8_idx $p3, $dj7
+    $r27 = LDA_s8_idx $p1, $dj0
+    $r4 = LDA_s8_idx $p0, $dj2
+    $r22 = LDA_s8_idx $p4, $dj6
+    $r5 = LDA_s8_idx $p7, $dj4
+    $r2 = LDA_s8_idx $p5, $dj3
+    $r29 = LDA_s8_idx $p6, $dj5
+    $r13 = LDA_s8_idx $p2, $dj1
+    $r16 = LDA_s8_idx $p3, $dj7
+    $r19 = LDA_s8_idx $p1, $dj0
+    $r31 = LDA_s8_idx $p0, $dj2
+    $r25 = LDA_s8_idx $p4, $dj6
+    $r26 = LDA_s8_idx $p7, $dj4
+    $r24 = LDA_s8_idx $p5, $dj3
+    $r11 = LDA_s8_idx $p6, $dj5
+    $r14 = LDA_s8_idx $p2, $dj1
+    $r17 = LDA_s8_idx $p3, $dj7
+    $r1 = LDA_s8_idx $p1, $dj0
+
+    ; LDA_s8_idx_imm
+    $r2 = LDA_s8_idx_imm $p4, 1
+    $r14 = LDA_s8_idx_imm $p2, -8
+    $r12 = LDA_s8_idx_imm $p3, 7
+    $r8 = LDA_s8_idx_imm $p6, 0
+    $r31 = LDA_s8_idx_imm $p5, 1
+    $r13 = LDA_s8_idx_imm $p0, -8
+    $r18 = LDA_s8_idx_imm $p1, 7
+    $r29 = LDA_s8_idx_imm $p7, 0
+    $r28 = LDA_s8_idx_imm $p4, 1
+    $r9 = LDA_s8_idx_imm $p2, -8
+    $r7 = LDA_s8_idx_imm $p3, 7
+    $r0 = LDA_s8_idx_imm $p6, 0
+    $r16 = LDA_s8_idx_imm $p5, 1
+    $r25 = LDA_s8_idx_imm $p0, -8
+    $r17 = LDA_s8_idx_imm $p1, 7
+    $r6 = LDA_s8_idx_imm $p7, 0
+    $r22 = LDA_s8_idx_imm $p4, 1
+    $r19 = LDA_s8_idx_imm $p2, -8
+    $r20 = LDA_s8_idx_imm $p3, 7
+    $r24 = LDA_s8_idx_imm $p6, 0
+    $r27 = LDA_s8_idx_imm $p5, 1
+    $r10 = LDA_s8_idx_imm $p0, -8
+    $r30 = LDA_s8_idx_imm $p1, 7
+    $r5 = LDA_s8_idx_imm $p7, 0
+    $r1 = LDA_s8_idx_imm $p4, 1
+    $r21 = LDA_s8_idx_imm $p2, -8
+    $r15 = LDA_s8_idx_imm $p3, 7
+    $r23 = LDA_s8_idx_imm $p6, 0
+    $r4 = LDA_s8_idx_imm $p5, 1
+    $r3 = LDA_s8_idx_imm $p0, -8
+    $r26 = LDA_s8_idx_imm $p1, 7
+    $r11 = LDA_s8_idx_imm $p7, 0
+
+    ; LDA_s8_pstm_nrm
+    $r13, $p6 = LDA_s8_pstm_nrm $p6, $m3
+    $r21, $p4 = LDA_s8_pstm_nrm $p4, $m6
+    $r14, $p7 = LDA_s8_pstm_nrm $p7, $m2
+    $r3, $p1 = LDA_s8_pstm_nrm $p1, $m7
+    $r15, $p3 = LDA_s8_pstm_nrm $p3, $m4
+    $r6, $p2 = LDA_s8_pstm_nrm $p2, $m0
+    $r9, $p5 = LDA_s8_pstm_nrm $p5, $m5
+    $r29, $p0 = LDA_s8_pstm_nrm $p0, $m1
+    $r1, $p6 = LDA_s8_pstm_nrm $p6, $m3
+    $r4, $p4 = LDA_s8_pstm_nrm $p4, $m6
+    $r24, $p7 = LDA_s8_pstm_nrm $p7, $m2
+    $r23, $p1 = LDA_s8_pstm_nrm $p1, $m7
+    $r7, $p3 = LDA_s8_pstm_nrm $p3, $m4
+    $r20, $p2 = LDA_s8_pstm_nrm $p2, $m0
+    $r8, $p5 = LDA_s8_pstm_nrm $p5, $m5
+    $r31, $p0 = LDA_s8_pstm_nrm $p0, $m1
+    $r12, $p6 = LDA_s8_pstm_nrm $p6, $m3
+    $r5, $p4 = LDA_s8_pstm_nrm $p4, $m6
+    $r0, $p7 = LDA_s8_pstm_nrm $p7, $m2
+    $r28, $p1 = LDA_s8_pstm_nrm $p1, $m7
+    $r26, $p3 = LDA_s8_pstm_nrm $p3, $m4
+    $r10, $p2 = LDA_s8_pstm_nrm $p2, $m0
+    $r25, $p5 = LDA_s8_pstm_nrm $p5, $m5
+    $r27, $p0 = LDA_s8_pstm_nrm $p0, $m1
+    $r19, $p6 = LDA_s8_pstm_nrm $p6, $m3
+    $r2, $p4 = LDA_s8_pstm_nrm $p4, $m6
+    $r16, $p7 = LDA_s8_pstm_nrm $p7, $m2
+    $r11, $p1 = LDA_s8_pstm_nrm $p1, $m7
+    $r18, $p3 = LDA_s8_pstm_nrm $p3, $m4
+    $r17, $p2 = LDA_s8_pstm_nrm $p2, $m0
+    $r30, $p5 = LDA_s8_pstm_nrm $p5, $m5
+    $r22, $p0 = LDA_s8_pstm_nrm $p0, $m1
+
+    ; LDA_s8_pstm_nrm_imm
+    $r16, $p2 = LDA_s8_pstm_nrm_imm $p2, 7
+    $r21, $p6 = LDA_s8_pstm_nrm_imm $p6, 0
+    $r24, $p7 = LDA_s8_pstm_nrm_imm $p7, 1
+    $r17, $p5 = LDA_s8_pstm_nrm_imm $p5, -8
+    $r22, $p0 = LDA_s8_pstm_nrm_imm $p0, 7
+    $r10, $p1 = LDA_s8_pstm_nrm_imm $p1, 0
+    $r27, $p4 = LDA_s8_pstm_nrm_imm $p4, 1
+    $r15, $p3 = LDA_s8_pstm_nrm_imm $p3, -8
+    $r3, $p2 = LDA_s8_pstm_nrm_imm $p2, 7
+    $r9, $p6 = LDA_s8_pstm_nrm_imm $p6, 0
+    $r26, $p7 = LDA_s8_pstm_nrm_imm $p7, 1
+    $r8, $p5 = LDA_s8_pstm_nrm_imm $p5, -8
+    $r6, $p0 = LDA_s8_pstm_nrm_imm $p0, 7
+    $r2, $p1 = LDA_s8_pstm_nrm_imm $p1, 0
+    $r7, $p4 = LDA_s8_pstm_nrm_imm $p4, 1
+    $r13, $p3 = LDA_s8_pstm_nrm_imm $p3, -8
+    $r29, $p2 = LDA_s8_pstm_nrm_imm $p2, 7
+    $r30, $p6 = LDA_s8_pstm_nrm_imm $p6, 0
+    $r20, $p7 = LDA_s8_pstm_nrm_imm $p7, 1
+    $r28, $p5 = LDA_s8_pstm_nrm_imm $p5, -8
+    $r1, $p0 = LDA_s8_pstm_nrm_imm $p0, 7
+    $r31, $p1 = LDA_s8_pstm_nrm_imm $p1, 0
+    $r25, $p4 = LDA_s8_pstm_nrm_imm $p4, 1
+    $r0, $p3 = LDA_s8_pstm_nrm_imm $p3, -8
+    $r14, $p2 = LDA_s8_pstm_nrm_imm $p2, 7
+    $r12, $p6 = LDA_s8_pstm_nrm_imm $p6, 0
+    $r5, $p7 = LDA_s8_pstm_nrm_imm $p7, 1
+    $r19, $p5 = LDA_s8_pstm_nrm_imm $p5, -8
+    $r23, $p0 = LDA_s8_pstm_nrm_imm $p0, 7
+    $r4, $p1 = LDA_s8_pstm_nrm_imm $p1, 0
+    $r11, $p4 = LDA_s8_pstm_nrm_imm $p4, 1
+    $r18, $p3 = LDA_s8_pstm_nrm_imm $p3, -8
+
+    ; LDA_u16_idx
+    $r6 = LDA_u16_idx $p5, $dj0
+    $r3 = LDA_u16_idx $p7, $dj6
+    $r25 = LDA_u16_idx $p3, $dj4
+    $r10 = LDA_u16_idx $p1, $dj1
+    $r14 = LDA_u16_idx $p4, $dj5
+    $r19 = LDA_u16_idx $p0, $dj7
+    $r2 = LDA_u16_idx $p6, $dj3
+    $r1 = LDA_u16_idx $p2, $dj2
+    $r4 = LDA_u16_idx $p5, $dj0
+    $r12 = LDA_u16_idx $p7, $dj6
+    $r28 = LDA_u16_idx $p3, $dj4
+    $r27 = LDA_u16_idx $p1, $dj1
+    $r24 = LDA_u16_idx $p4, $dj5
+    $r5 = LDA_u16_idx $p0, $dj7
+    $r17 = LDA_u16_idx $p6, $dj3
+    $r16 = LDA_u16_idx $p2, $dj2
+    $r21 = LDA_u16_idx $p5, $dj0
+    $r0 = LDA_u16_idx $p7, $dj6
+    $r23 = LDA_u16_idx $p3, $dj4
+    $r7 = LDA_u16_idx $p1, $dj1
+    $r15 = LDA_u16_idx $p4, $dj5
+    $r26 = LDA_u16_idx $p0, $dj7
+    $r13 = LDA_u16_idx $p6, $dj3
+    $r22 = LDA_u16_idx $p2, $dj2
+    $r11 = LDA_u16_idx $p5, $dj0
+    $r8 = LDA_u16_idx $p7, $dj6
+    $r30 = LDA_u16_idx $p3, $dj4
+    $r31 = LDA_u16_idx $p1, $dj1
+    $r29 = LDA_u16_idx $p4, $dj5
+    $r18 = LDA_u16_idx $p0, $dj7
+    $r20 = LDA_u16_idx $p6, $dj3
+    $r9 = LDA_u16_idx $p2, $dj2
+
+    ; LDA_u16_idx_imm
+    $r18 = LDA_u16_idx_imm $p1, -16
+    $r27 = LDA_u16_idx_imm $p5, 0
+    $r11 = LDA_u16_idx_imm $p6, 14
+    $r16 = LDA_u16_idx_imm $p2, 2
+    $r23 = LDA_u16_idx_imm $p7, -16
+    $r0 = LDA_u16_idx_imm $p4, 0
+    $r26 = LDA_u16_idx_imm $p0, 14
+    $r5 = LDA_u16_idx_imm $p3, 2
+    $r25 = LDA_u16_idx_imm $p1, -16
+    $r13 = LDA_u16_idx_imm $p5, 0
+    $r4 = LDA_u16_idx_imm $p6, 14
+    $r8 = LDA_u16_idx_imm $p2, 2
+    $r31 = LDA_u16_idx_imm $p7, -16
+    $r7 = LDA_u16_idx_imm $p4, 0
+    $r10 = LDA_u16_idx_imm $p0, 14
+    $r20 = LDA_u16_idx_imm $p3, 2
+    $r6 = LDA_u16_idx_imm $p1, -16
+    $r24 = LDA_u16_idx_imm $p5, 0
+    $r29 = LDA_u16_idx_imm $p6, 14
+    $r21 = LDA_u16_idx_imm $p2, 2
+    $r12 = LDA_u16_idx_imm $p7, -16
+    $r15 = LDA_u16_idx_imm $p4, 0
+    $r9 = LDA_u16_idx_imm $p0, 14
+    $r22 = LDA_u16_idx_imm $p3, 2
+    $r17 = LDA_u16_idx_imm $p1, -16
+    $r14 = LDA_u16_idx_imm $p5, 0
+    $r2 = LDA_u16_idx_imm $p6, 14
+    $r1 = LDA_u16_idx_imm $p2, 2
+    $r28 = LDA_u16_idx_imm $p7, -16
+    $r19 = LDA_u16_idx_imm $p4, 0
+    $r30 = LDA_u16_idx_imm $p0, 14
+    $r3 = LDA_u16_idx_imm $p3, 2
+
+    ; LDA_u16_pstm_nrm
+    $r21, $p5 = LDA_u16_pstm_nrm $p5, $m6
+    $r3, $p4 = LDA_u16_pstm_nrm $p4, $m5
+    $r25, $p1 = LDA_u16_pstm_nrm $p1, $m3
+    $r14, $p3 = LDA_u16_pstm_nrm $p3, $m7
+    $r31, $p6 = LDA_u16_pstm_nrm $p6, $m1
+    $r10, $p2 = LDA_u16_pstm_nrm $p2, $m0
+    $r15, $p7 = LDA_u16_pstm_nrm $p7, $m2
+    $r11, $p0 = LDA_u16_pstm_nrm $p0, $m4
+    $r27, $p5 = LDA_u16_pstm_nrm $p5, $m6
+    $r12, $p4 = LDA_u16_pstm_nrm $p4, $m5
+    $r18, $p1 = LDA_u16_pstm_nrm $p1, $m3
+    $r8, $p3 = LDA_u16_pstm_nrm $p3, $m7
+    $r4, $p6 = LDA_u16_pstm_nrm $p6, $m1
+    $r28, $p2 = LDA_u16_pstm_nrm $p2, $m0
+    $r1, $p7 = LDA_u16_pstm_nrm $p7, $m2
+    $r24, $p0 = LDA_u16_pstm_nrm $p0, $m4
+    $r16, $p5 = LDA_u16_pstm_nrm $p5, $m6
+    $r5, $p4 = LDA_u16_pstm_nrm $p4, $m5
+    $r7, $p1 = LDA_u16_pstm_nrm $p1, $m3
+    $r22, $p3 = LDA_u16_pstm_nrm $p3, $m7
+    $r6, $p6 = LDA_u16_pstm_nrm $p6, $m1
+    $r2, $p2 = LDA_u16_pstm_nrm $p2, $m0
+    $r20, $p7 = LDA_u16_pstm_nrm $p7, $m2
+    $r9, $p0 = LDA_u16_pstm_nrm $p0, $m4
+    $r29, $p5 = LDA_u16_pstm_nrm $p5, $m6
+    $r19, $p4 = LDA_u16_pstm_nrm $p4, $m5
+    $r13, $p1 = LDA_u16_pstm_nrm $p1, $m3
+    $r30, $p3 = LDA_u16_pstm_nrm $p3, $m7
+    $r0, $p6 = LDA_u16_pstm_nrm $p6, $m1
+    $r23, $p2 = LDA_u16_pstm_nrm $p2, $m0
+    $r26, $p7 = LDA_u16_pstm_nrm $p7, $m2
+    $r17, $p0 = LDA_u16_pstm_nrm $p0, $m4
+
+    ; LDA_u16_pstm_nrm_imm
+    $r8, $p6 = LDA_u16_pstm_nrm_imm $p6, -16
+    $r7, $p4 = LDA_u16_pstm_nrm_imm $p4, 14
+    $r25, $p1 = LDA_u16_pstm_nrm_imm $p1, 0
+    $r16, $p0 = LDA_u16_pstm_nrm_imm $p0, 2
+    $r13, $p7 = LDA_u16_pstm_nrm_imm $p7, -16
+    $r26, $p2 = LDA_u16_pstm_nrm_imm $p2, 14
+    $r18, $p5 = LDA_u16_pstm_nrm_imm $p5, 0
+    $r12, $p3 = LDA_u16_pstm_nrm_imm $p3, 2
+    $r27, $p6 = LDA_u16_pstm_nrm_imm $p6, -16
+    $r11, $p4 = LDA_u16_pstm_nrm_imm $p4, 14
+    $r29, $p1 = LDA_u16_pstm_nrm_imm $p1, 0
+    $r10, $p0 = LDA_u16_pstm_nrm_imm $p0, 2
+    $r14, $p7 = LDA_u16_pstm_nrm_imm $p7, -16
+    $r2, $p2 = LDA_u16_pstm_nrm_imm $p2, 14
+    $r15, $p5 = LDA_u16_pstm_nrm_imm $p5, 0
+    $r20, $p3 = LDA_u16_pstm_nrm_imm $p3, 2
+    $r23, $p6 = LDA_u16_pstm_nrm_imm $p6, -16
+    $r1, $p4 = LDA_u16_pstm_nrm_imm $p4, 14
+    $r0, $p1 = LDA_u16_pstm_nrm_imm $p1, 0
+    $r30, $p0 = LDA_u16_pstm_nrm_imm $p0, 2
+    $r6, $p7 = LDA_u16_pstm_nrm_imm $p7, -16
+    $r4, $p2 = LDA_u16_pstm_nrm_imm $p2, 14
+    $r21, $p5 = LDA_u16_pstm_nrm_imm $p5, 0
+    $r22, $p3 = LDA_u16_pstm_nrm_imm $p3, 2
+    $r19, $p6 = LDA_u16_pstm_nrm_imm $p6, -16
+    $r17, $p4 = LDA_u16_pstm_nrm_imm $p4, 14
+    $r5, $p1 = LDA_u16_pstm_nrm_imm $p1, 0
+    $r31, $p0 = LDA_u16_pstm_nrm_imm $p0, 2
+    $r28, $p7 = LDA_u16_pstm_nrm_imm $p7, -16
+    $r3, $p2 = LDA_u16_pstm_nrm_imm $p2, 14
+    $r24, $p5 = LDA_u16_pstm_nrm_imm $p5, 0
+    $r9, $p3 = LDA_u16_pstm_nrm_imm $p3, 2
+
+    ; LDA_u8_idx
+    $r25 = LDA_u8_idx $p1, $dj2
+    $r20 = LDA_u8_idx $p3, $dj7
+    $r11 = LDA_u8_idx $p4, $dj0
+    $r30 = LDA_u8_idx $p6, $dj6
+    $r13 = LDA_u8_idx $p2, $dj5
+    $r8 = LDA_u8_idx $p7, $dj3
+    $r18 = LDA_u8_idx $p5, $dj1
+    $r14 = LDA_u8_idx $p0, $dj4
+    $r16 = LDA_u8_idx $p1, $dj2
+    $r4 = LDA_u8_idx $p3, $dj7
+    $r0 = LDA_u8_idx $p4, $dj0
+    $r2 = LDA_u8_idx $p6, $dj6
+    $r12 = LDA_u8_idx $p2, $dj5
+    $r26 = LDA_u8_idx $p7, $dj3
+    $r3 = LDA_u8_idx $p5, $dj1
+    $r15 = LDA_u8_idx $p0, $dj4
+    $r23 = LDA_u8_idx $p1, $dj2
+    $r27 = LDA_u8_idx $p3, $dj7
+    $r24 = LDA_u8_idx $p4, $dj0
+    $r1 = LDA_u8_idx $p6, $dj6
+    $r22 = LDA_u8_idx $p2, $dj5
+    $r10 = LDA_u8_idx $p7, $dj3
+    $r28 = LDA_u8_idx $p5, $dj1
+    $r31 = LDA_u8_idx $p0, $dj4
+    $r19 = LDA_u8_idx $p1, $dj2
+    $r9 = LDA_u8_idx $p3, $dj7
+    $r6 = LDA_u8_idx $p4, $dj0
+    $r5 = LDA_u8_idx $p6, $dj6
+    $r7 = LDA_u8_idx $p2, $dj5
+    $r29 = LDA_u8_idx $p7, $dj3
+    $r21 = LDA_u8_idx $p5, $dj1
+    $r17 = LDA_u8_idx $p0, $dj4
+
+    ; LDA_u8_idx_imm
+    $r20 = LDA_u8_idx_imm $p6, 1
+    $r7 = LDA_u8_idx_imm $p7, 0
+    $r9 = LDA_u8_idx_imm $p1, 7
+    $r30 = LDA_u8_idx_imm $p0, -8
+    $r2 = LDA_u8_idx_imm $p2, 1
+    $r22 = LDA_u8_idx_imm $p4, 0
+    $r11 = LDA_u8_idx_imm $p3, 7
+    $r27 = LDA_u8_idx_imm $p5, -8
+    $r14 = LDA_u8_idx_imm $p6, 1
+    $r12 = LDA_u8_idx_imm $p7, 0
+    $r8 = LDA_u8_idx_imm $p1, 7
+    $r10 = LDA_u8_idx_imm $p0, -8
+    $r0 = LDA_u8_idx_imm $p2, 1
+    $r6 = LDA_u8_idx_imm $p4, 0
+    $r24 = LDA_u8_idx_imm $p3, 7
+    $r17 = LDA_u8_idx_imm $p5, -8
+    $r18 = LDA_u8_idx_imm $p6, 1
+    $r1 = LDA_u8_idx_imm $p7, 0
+    $r3 = LDA_u8_idx_imm $p1, 7
+    $r28 = LDA_u8_idx_imm $p0, -8
+    $r25 = LDA_u8_idx_imm $p2, 1
+    $r15 = LDA_u8_idx_imm $p4, 0
+    $r21 = LDA_u8_idx_imm $p3, 7
+    $r19 = LDA_u8_idx_imm $p5, -8
+    $r4 = LDA_u8_idx_imm $p6, 1
+    $r29 = LDA_u8_idx_imm $p7, 0
+    $r16 = LDA_u8_idx_imm $p1, 7
+    $r23 = LDA_u8_idx_imm $p0, -8
+    $r13 = LDA_u8_idx_imm $p2, 1
+    $r26 = LDA_u8_idx_imm $p4, 0
+    $r5 = LDA_u8_idx_imm $p3, 7
+    $r31 = LDA_u8_idx_imm $p5, -8
+
+    ; LDA_u8_pstm_nrm
+    $r3, $p6 = LDA_u8_pstm_nrm $p6, $m6
+    $r26, $p1 = LDA_u8_pstm_nrm $p1, $m4
+    $r17, $p5 = LDA_u8_pstm_nrm $p5, $m7
+    $r29, $p7 = LDA_u8_pstm_nrm $p7, $m1
+    $r2, $p4 = LDA_u8_pstm_nrm $p4, $m5
+    $r24, $p3 = LDA_u8_pstm_nrm $p3, $m0
+    $r16, $p0 = LDA_u8_pstm_nrm $p0, $m3
+    $r22, $p2 = LDA_u8_pstm_nrm $p2, $m2
+    $r25, $p6 = LDA_u8_pstm_nrm $p6, $m6
+    $r5, $p1 = LDA_u8_pstm_nrm $p1, $m4
+    $r7, $p5 = LDA_u8_pstm_nrm $p5, $m7
+    $r9, $p7 = LDA_u8_pstm_nrm $p7, $m1
+    $r6, $p4 = LDA_u8_pstm_nrm $p4, $m5
+    $r18, $p3 = LDA_u8_pstm_nrm $p3, $m0
+    $r28, $p0 = LDA_u8_pstm_nrm $p0, $m3
+    $r10, $p2 = LDA_u8_pstm_nrm $p2, $m2
+    $r15, $p6 = LDA_u8_pstm_nrm $p6, $m6
+    $r13, $p1 = LDA_u8_pstm_nrm $p1, $m4
+    $r27, $p5 = LDA_u8_pstm_nrm $p5, $m7
+    $r23, $p7 = LDA_u8_pstm_nrm $p7, $m1
+    $r0, $p4 = LDA_u8_pstm_nrm $p4, $m5
+    $r14, $p3 = LDA_u8_pstm_nrm $p3, $m0
+    $r12, $p0 = LDA_u8_pstm_nrm $p0, $m3
+    $r21, $p2 = LDA_u8_pstm_nrm $p2, $m2
+    $r30, $p6 = LDA_u8_pstm_nrm $p6, $m6
+    $r20, $p1 = LDA_u8_pstm_nrm $p1, $m4
+    $r19, $p5 = LDA_u8_pstm_nrm $p5, $m7
+    $r1, $p7 = LDA_u8_pstm_nrm $p7, $m1
+    $r31, $p4 = LDA_u8_pstm_nrm $p4, $m5
+    $r11, $p3 = LDA_u8_pstm_nrm $p3, $m0
+    $r4, $p0 = LDA_u8_pstm_nrm $p0, $m3
+    $r8, $p2 = LDA_u8_pstm_nrm $p2, $m2
+
+    ; LDA_u8_pstm_nrm_imm
+    $r16, $p2 = LDA_u8_pstm_nrm_imm $p2, 1
+    $r19, $p6 = LDA_u8_pstm_nrm_imm $p6, 7
+    $r12, $p5 = LDA_u8_pstm_nrm_imm $p5, 0
+    $r24, $p7 = LDA_u8_pstm_nrm_imm $p7, -8
+    $r4, $p3 = LDA_u8_pstm_nrm_imm $p3, 1
+    $r5, $p4 = LDA_u8_pstm_nrm_imm $p4, 7
+    $r21, $p1 = LDA_u8_pstm_nrm_imm $p1, 0
+    $r18, $p0 = LDA_u8_pstm_nrm_imm $p0, -8
+    $r25, $p2 = LDA_u8_pstm_nrm_imm $p2, 1
+    $r26, $p6 = LDA_u8_pstm_nrm_imm $p6, 7
+    $r22, $p5 = LDA_u8_pstm_nrm_imm $p5, 0
+    $r14, $p7 = LDA_u8_pstm_nrm_imm $p7, -8
+    $r1, $p3 = LDA_u8_pstm_nrm_imm $p3, 1
+    $r15, $p4 = LDA_u8_pstm_nrm_imm $p4, 7
+    $r27, $p1 = LDA_u8_pstm_nrm_imm $p1, 0
+    $r13, $p0 = LDA_u8_pstm_nrm_imm $p0, -8
+    $r7, $p2 = LDA_u8_pstm_nrm_imm $p2, 1
+    $r3, $p6 = LDA_u8_pstm_nrm_imm $p6, 7
+    $r29, $p5 = LDA_u8_pstm_nrm_imm $p5, 0
+    $r8, $p7 = LDA_u8_pstm_nrm_imm $p7, -8
+    $r0, $p3 = LDA_u8_pstm_nrm_imm $p3, 1
+    $r20, $p4 = LDA_u8_pstm_nrm_imm $p4, 7
+    $r31, $p1 = LDA_u8_pstm_nrm_imm $p1, 0
+    $r17, $p0 = LDA_u8_pstm_nrm_imm $p0, -8
+    $r23, $p2 = LDA_u8_pstm_nrm_imm $p2, 1
+    $r28, $p6 = LDA_u8_pstm_nrm_imm $p6, 7
+    $r30, $p5 = LDA_u8_pstm_nrm_imm $p5, 0
+    $r11, $p7 = LDA_u8_pstm_nrm_imm $p7, -8
+    $r9, $p3 = LDA_u8_pstm_nrm_imm $p3, 1
+    $r6, $p4 = LDA_u8_pstm_nrm_imm $p4, 7
+    $r2, $p1 = LDA_u8_pstm_nrm_imm $p1, 0
+    $r10, $p0 = LDA_u8_pstm_nrm_imm $p0, -8
+...
+
+# CHECK: 0: 98 26 33 06 lda.2d dn6, [p6], d1
+# CHECK: 4: 98 6e d2 04 lda.2d el9, [p4], d6
+# CHECK: 8: 98 2e b0 07 lda.2d el0, [p7], d5
+# CHECK: c: 98 1e 92 03 lda.2d p4, [p3], d4
+# CHECK: 10: 98 76 f2 02 lda.2d r19, [p2], d7
+# CHECK: 14: 98 4e 72 00 lda.2d eh9, [p0], d3
+# CHECK: 18: 98 56 11 01 lda.2d r10, [p1], d0
+# CHECK: 1c: 98 66 50 05 lda.2d dc0, [p5], d2
+# CHECK: 20: 98 46 33 06 lda.2d dj6, [p6], d1
+# CHECK: 24: 98 4e d0 04 lda.2d eh1, [p4], d6
+# CHECK: 28: 98 a6 b3 07 lda.2d dn7, [p7], d5
+# CHECK: 2c: 98 66 91 03 lda.2d dc2, [p3], d4
+# CHECK: 30: 98 b6 f1 02 lda.2d r13, [p2], d7
+# CHECK: 34: 98 36 72 00 lda.2d r17, [p0], d3
+# CHECK: 38: 98 e6 13 01 lda.2d dc7, [p1], d0
+# CHECK: 3c: 98 06 52 05 lda.2d m4, [p5], d2
+# CHECK: 40: 98 8e 30 06 lda.2d eh2, [p6], d1
+# CHECK: 44: 98 96 d2 04 lda.2d r20, [p4], d6
+# CHECK: 48: 98 26 b2 07 lda.2d dn4, [p7], d5
+# CHECK: 4c: 98 b6 93 03 lda.2d r29, [p3], d4
+# CHECK: 50: 98 f6 f2 02 lda.2d r23, [p2], d7
+# CHECK: 54: 98 56 73 00 lda.2d r26, [p0], d3
+# CHECK: 58: 98 66 12 01 lda.2d dc4, [p1], d0
+# CHECK: 5c: 98 36 50 05 lda.2d r1, [p5], d2
+# CHECK: 60: 98 26 31 06 lda.2d dn2, [p6], d1
+# CHECK: 64: 98 a6 d1 04 lda.2d dn3, [p4], d6
+# CHECK: 68: 98 d6 b3 07 lda.2d r30, [p7], d5
+# CHECK: 6c: 98 2e 92 03 lda.2d el8, [p3], d4
+# CHECK: 70: 98 a6 f2 02 lda.2d dn5, [p2], d7
+# CHECK: 74: 98 0e 70 00 lda.2d eh0, [p0], d3
+# CHECK: 78: 98 76 10 01 lda.2d r3, [p1], d0
+# CHECK: 7c: 98 ee 50 05 lda.2d el3, [p5], d2
+# CHECK: 80: 98 ce 31 06 lda.2d eh7, [p6], d1
+# CHECK: 84: 98 8e d2 04 lda.2d eh10, [p4], d6
+# CHECK: 88: 98 ae b1 07 lda.2d el6, [p7], d5
+# CHECK: 8c: 98 ce 90 03 lda.2d eh3, [p3], d4
+# CHECK: 90: 98 6e f1 02 lda.2d el5, [p2], d7
+# CHECK: 94: 98 6e 70 00 lda.2d el1, [p0], d3
+# CHECK: 98: 98 46 10 01 lda.2d dj0, [p1], d0
+# CHECK: 9c: 98 ee 52 05 lda.2d el11, [p5], d2
+# CHECK: a0: 98 e6 31 06 lda.2d dc3, [p6], d1
+# CHECK: a4: 98 c6 d1 04 lda.2d dj3, [p4], d6
+# CHECK: a8: 98 d6 b1 07 lda.2d r14, [p7], d5
+# CHECK: ac: 98 3e 90 03 lda.2d lr, [p3], d4
+# CHECK: b0: 98 16 f3 02 lda.2d r24, [p2], d7
+# CHECK: b4: 98 96 70 00 lda.2d r4, [p0], d3
+# CHECK: b8: 98 e6 12 01 lda.2d dc5, [p1], d0
+# CHECK: bc: 98 9e 53 05 lda.2d p7, [p5], d2
+# CHECK: c0: 98 86 32 06 lda.2d m5, [p6], d1
+# CHECK: c4: 98 e6 d0 04 lda.2d dc1, [p4], d6
+# CHECK: c8: 98 9e b0 07 lda.2d p1, [p7], d5
+# CHECK: cc: 98 16 90 03 lda.2d r0, [p3], d4
+# CHECK: d0: 98 c6 f3 02 lda.2d dj7, [p2], d7
+# CHECK: d4: 98 d6 72 00 lda.2d r22, [p0], d3
+# CHECK: d8: 98 56 10 01 lda.2d r2, [p1], d0
+# CHECK: dc: 98 9e 51 05 lda.2d p3, [p5], d2
+# CHECK: e0: 98 c6 30 06 lda.2d dj1, [p6], d1
+# CHECK: e4: 98 36 d1 04 lda.2d r9, [p4], d6
+# CHECK: e8: 98 a6 b0 07 lda.2d dn1, [p7], d5
+# CHECK: ec: 98 ae 92 03 lda.2d el10, [p3], d4
+# CHECK: f0: 98 96 f3 02 lda.2d r28, [p2], d7
+# CHECK: f4: 98 76 71 00 lda.2d r11, [p0], d3
+# CHECK: f8: 98 4e 11 01 lda.2d eh5, [p1], d0
+# CHECK: fc: 98 56 52 05 lda.2d r18, [p5], d2
+# CHECK: 100: 98 66 33 06 lda.2d dc6, [p6], d1
+# CHECK: 104: 98 06 d0 04 lda.2d m0, [p4], d6
+# CHECK: 108: 98 f6 b0 07 lda.2d r7, [p7], d5
+# CHECK: 10c: 98 ae 90 03 lda.2d el2, [p3], d4
+# CHECK: 110: 98 c6 f2 02 lda.2d dj5, [p2], d7
+# CHECK: 114: 98 86 71 00 lda.2d m3, [p0], d3
+# CHECK: 118: 98 ee 11 01 lda.2d el7, [p1], d0
+# CHECK: 11c: 98 46 52 05 lda.2d dj4, [p5], d2
+# CHECK: 120: 98 f6 31 06 lda.2d r15, [p6], d1
+# CHECK: 124: 98 0e d1 04 lda.2d eh4, [p4], d6
+# CHECK: 128: 98 1e b0 07 lda.2d p0, [p7], d5
+# CHECK: 12c: 98 06 93 03 lda.2d m6, [p3], d4
+# CHECK: 130: 98 f6 f3 02 lda.2d r31, [p2], d7
+# CHECK: 134: 98 76 73 00 lda.2d r27, [p0], d3
+# CHECK: 138: 98 b6 12 01 lda.2d r21, [p1], d0
+# CHECK: 13c: 98 1e 53 05 lda.2d p6, [p5], d2
+# CHECK: 140: 98 16 31 06 lda.2d r8, [p6], d1
+# CHECK: 144: 98 36 d3 04 lda.2d r25, [p4], d6
+# CHECK: 148: 98 96 b1 07 lda.2d r12, [p7], d5
+# CHECK: 14c: 98 86 90 03 lda.2d m1, [p3], d4
+# CHECK: 150: 98 16 f2 02 lda.2d r16, [p2], d7
+# CHECK: 154: 98 26 70 00 lda.2d dn0, [p0], d3
+# CHECK: 158: 98 86 13 01 lda.2d m7, [p1], d0
+# CHECK: 15c: 98 9e 52 05 lda.2d p5, [p5], d2
+# CHECK: 160: 98 46 31 06 lda.2d dj2, [p6], d1
+# CHECK: 164: 98 d6 d0 04 lda.2d r6, [p4], d6
+# CHECK: 168: 98 b6 b0 07 lda.2d r5, [p7], d5
+# CHECK: 16c: 98 ce 92 03 lda.2d eh11, [p3], d4
+# CHECK: 170: 98 0e f2 02 lda.2d eh8, [p2], d7
+# CHECK: 174: 98 8e 71 00 lda.2d eh6, [p0], d3
+# CHECK: 178: 98 2e 11 01 lda.2d el4, [p1], d0
+# CHECK: 17c: 98 1e 51 05 lda.2d p2, [p5], d2
+# CHECK: 180: 98 06 31 06 lda.2d m2, [p6], d1
+# CHECK: 184: 98 27 93 01 lda.2d q3, [p1], d4
+# CHECK: 188: 98 27 d3 02 lda.2d q3, [p2], d6
+# CHECK: 18c: 98 27 b0 00 lda.2d q0, [p0], d5
+# CHECK: 190: 98 27 f0 04 lda.2d q0, [p4], d7
+# CHECK: 194: 98 27 73 07 lda.2d q3, [p7], d3
+# CHECK: 198: 98 27 33 03 lda.2d q3, [p3], d1
+# CHECK: 19c: 98 27 50 06 lda.2d q0, [p6], d2
+# CHECK: 1a0: 98 27 10 05 lda.2d q0, [p5], d0
+# CHECK: 1a4: 98 f2 d0 02 lda.2d.s16 r7, [p2], d6
+# CHECK: 1a8: 98 b2 32 04 lda.2d.s16 r21, [p4], d1
+# CHECK: 1ac: 98 52 92 03 lda.2d.s16 r18, [p3], d4
+# CHECK: 1b0: 98 92 71 00 lda.2d.s16 r12, [p0], d3
+# CHECK: 1b4: 98 52 53 01 lda.2d.s16 r26, [p1], d2
+# CHECK: 1b8: 98 f2 f1 05 lda.2d.s16 r15, [p5], d7
+# CHECK: 1bc: 98 12 b3 06 lda.2d.s16 r24, [p6], d5
+# CHECK: 1c0: 98 72 10 07 lda.2d.s16 r3, [p7], d0
+# CHECK: 1c4: 98 32 d3 02 lda.2d.s16 r25, [p2], d6
+# CHECK: 1c8: 98 92 33 04 lda.2d.s16 r28, [p4], d1
+# CHECK: 1cc: 98 d2 91 03 lda.2d.s16 r14, [p3], d4
+# CHECK: 1d0: 98 d2 73 00 lda.2d.s16 r30, [p0], d3
+# CHECK: 1d4: 98 b2 53 01 lda.2d.s16 r29, [p1], d2
+# CHECK: 1d8: 98 f2 f2 05 lda.2d.s16 r23, [p5], d7
+# CHECK: 1dc: 98 b2 b0 06 lda.2d.s16 r5, [p6], d5
+# CHECK: 1e0: 98 12 10 07 lda.2d.s16 r0, [p7], d0
+# CHECK: 1e4: 98 32 d1 02 lda.2d.s16 r9, [p2], d6
+# CHECK: 1e8: 98 b2 31 04 lda.2d.s16 r13, [p4], d1
+# CHECK: 1ec: 98 92 92 03 lda.2d.s16 r20, [p3], d4
+# CHECK: 1f0: 98 32 72 00 lda.2d.s16 r17, [p0], d3
+# CHECK: 1f4: 98 52 50 01 lda.2d.s16 r2, [p1], d2
+# CHECK: 1f8: 98 12 f2 05 lda.2d.s16 r16, [p5], d7
+# CHECK: 1fc: 98 d2 b0 06 lda.2d.s16 r6, [p6], d5
+# CHECK: 200: 98 72 11 07 lda.2d.s16 r11, [p7], d0
+# CHECK: 204: 98 72 d2 02 lda.2d.s16 r19, [p2], d6
+# CHECK: 208: 98 12 31 04 lda.2d.s16 r8, [p4], d1
+# CHECK: 20c: 98 32 90 03 lda.2d.s16 r1, [p3], d4
+# CHECK: 210: 98 92 70 00 lda.2d.s16 r4, [p0], d3
+# CHECK: 214: 98 52 51 01 lda.2d.s16 r10, [p1], d2
+# CHECK: 218: 98 d2 f2 05 lda.2d.s16 r22, [p5], d7
+# CHECK: 21c: 98 f2 b3 06 lda.2d.s16 r31, [p6], d5
+# CHECK: 220: 98 72 13 07 lda.2d.s16 r27, [p7], d0
+# CHECK: 224: 98 02 53 05 lda.2d.s8 r24, [p5], d2
+# CHECK: 228: 98 c2 d2 07 lda.2d.s8 r22, [p7], d6
+# CHECK: 22c: 98 82 10 02 lda.2d.s8 r4, [p2], d0
+# CHECK: 230: 98 42 33 06 lda.2d.s8 r26, [p6], d1
+# CHECK: 234: 98 a2 71 03 lda.2d.s8 r13, [p3], d3
+# CHECK: 238: 98 62 f0 04 lda.2d.s8 r3, [p4], d7
+# CHECK: 23c: 98 62 92 00 lda.2d.s8 r19, [p0], d4
+# CHECK: 240: 98 e2 b2 01 lda.2d.s8 r23, [p1], d5
+# CHECK: 244: 98 82 52 05 lda.2d.s8 r20, [p5], d2
+# CHECK: 248: 98 a2 d2 07 lda.2d.s8 r21, [p7], d6
+# CHECK: 24c: 98 42 10 02 lda.2d.s8 r2, [p2], d0
+# CHECK: 250: 98 a2 33 06 lda.2d.s8 r29, [p6], d1
+# CHECK: 254: 98 a2 70 03 lda.2d.s8 r5, [p3], d3
+# CHECK: 258: 98 62 f3 04 lda.2d.s8 r27, [p4], d7
+# CHECK: 25c: 98 c2 90 00 lda.2d.s8 r6, [p0], d4
+# CHECK: 260: 98 02 b2 01 lda.2d.s8 r16, [p1], d5
+# CHECK: 264: 98 c2 51 05 lda.2d.s8 r14, [p5], d2
+# CHECK: 268: 98 c2 d3 07 lda.2d.s8 r30, [p7], d6
+# CHECK: 26c: 98 22 10 02 lda.2d.s8 r1, [p2], d0
+# CHECK: 270: 98 22 33 06 lda.2d.s8 r25, [p6], d1
+# CHECK: 274: 98 82 71 03 lda.2d.s8 r12, [p3], d3
+# CHECK: 278: 98 02 f1 04 lda.2d.s8 r8, [p4], d7
+# CHECK: 27c: 98 e2 91 00 lda.2d.s8 r15, [p0], d4
+# CHECK: 280: 98 62 b1 01 lda.2d.s8 r11, [p1], d5
+# CHECK: 284: 98 22 52 05 lda.2d.s8 r17, [p5], d2
+# CHECK: 288: 98 42 d1 07 lda.2d.s8 r10, [p7], d6
+# CHECK: 28c: 98 22 11 02 lda.2d.s8 r9, [p2], d0
+# CHECK: 290: 98 e2 33 06 lda.2d.s8 r31, [p6], d1
+# CHECK: 294: 98 42 72 03 lda.2d.s8 r18, [p3], d3
+# CHECK: 298: 98 82 f3 04 lda.2d.s8 r28, [p4], d7
+# CHECK: 29c: 98 02 90 00 lda.2d.s8 r0, [p0], d4
+# CHECK: 2a0: 98 e2 b0 01 lda.2d.s8 r7, [p1], d5
+# CHECK: 2a4: 98 ba 72 06 lda.2d.u16 r21, [p6], d3
+# CHECK: 2a8: 98 ba 10 02 lda.2d.u16 r5, [p2], d0
+# CHECK: 2ac: 98 1a d0 04 lda.2d.u16 r0, [p4], d6
+# CHECK: 2b0: 98 9a 32 01 lda.2d.u16 r20, [p1], d1
+# CHECK: 2b4: 98 fa b1 00 lda.2d.u16 r15, [p0], d5
+# CHECK: 2b8: 98 ba f1 03 lda.2d.u16 r13, [p3], d7
+# CHECK: 2bc: 98 fa 53 07 lda.2d.u16 r31, [p7], d2
+# CHECK: 2c0: 98 5a 90 05 lda.2d.u16 r2, [p5], d4
+# CHECK: 2c4: 98 da 70 06 lda.2d.u16 r6, [p6], d3
+# CHECK: 2c8: 98 1a 12 02 lda.2d.u16 r16, [p2], d0
+# CHECK: 2cc: 98 3a d2 04 lda.2d.u16 r17, [p4], d6
+# CHECK: 2d0: 98 da 32 01 lda.2d.u16 r22, [p1], d1
+# CHECK: 2d4: 98 9a b1 00 lda.2d.u16 r12, [p0], d5
+# CHECK: 2d8: 98 da f1 03 lda.2d.u16 r14, [p3], d7
+# CHECK: 2dc: 98 fa 50 07 lda.2d.u16 r7, [p7], d2
+# CHECK: 2e0: 98 7a 93 05 lda.2d.u16 r27, [p5], d4
+# CHECK: 2e4: 98 7a 72 06 lda.2d.u16 r19, [p6], d3
+# CHECK: 2e8: 98 1a 13 02 lda.2d.u16 r24, [p2], d0
+# CHECK: 2ec: 98 5a d2 04 lda.2d.u16 r18, [p4], d6
+# CHECK: 2f0: 98 5a 33 01 lda.2d.u16 r26, [p1], d1
+# CHECK: 2f4: 98 1a b1 00 lda.2d.u16 r8, [p0], d5
+# CHECK: 2f8: 98 7a f1 03 lda.2d.u16 r11, [p3], d7
+# CHECK: 2fc: 98 fa 52 07 lda.2d.u16 r23, [p7], d2
+# CHECK: 300: 98 da 93 05 lda.2d.u16 r30, [p5], d4
+# CHECK: 304: 98 7a 70 06 lda.2d.u16 r3, [p6], d3
+# CHECK: 308: 98 5a 11 02 lda.2d.u16 r10, [p2], d0
+# CHECK: 30c: 98 ba d3 04 lda.2d.u16 r29, [p4], d6
+# CHECK: 310: 98 9a 33 01 lda.2d.u16 r28, [p1], d1
+# CHECK: 314: 98 3a b0 00 lda.2d.u16 r1, [p0], d5
+# CHECK: 318: 98 3a f1 03 lda.2d.u16 r9, [p3], d7
+# CHECK: 31c: 98 3a 53 07 lda.2d.u16 r25, [p7], d2
+# CHECK: 320: 98 9a 90 05 lda.2d.u16 r4, [p5], d4
+# CHECK: 324: 98 ca b3 03 lda.2d.u8 r30, [p3], d5
+# CHECK: 328: 98 0a 50 05 lda.2d.u8 r0, [p5], d2
+# CHECK: 32c: 98 6a f1 04 lda.2d.u8 r11, [p4], d7
+# CHECK: 330: 98 aa 31 07 lda.2d.u8 r13, [p7], d1
+# CHECK: 334: 98 ca 70 01 lda.2d.u8 r6, [p1], d3
+# CHECK: 338: 98 ea 12 02 lda.2d.u8 r23, [p2], d0
+# CHECK: 33c: 98 8a 93 00 lda.2d.u8 r28, [p0], d4
+# CHECK: 340: 98 ea d3 06 lda.2d.u8 r31, [p6], d6
+# CHECK: 344: 98 0a b3 03 lda.2d.u8 r24, [p3], d5
+# CHECK: 348: 98 ea 51 05 lda.2d.u8 r15, [p5], d2
+# CHECK: 34c: 98 aa f2 04 lda.2d.u8 r21, [p4], d7
+# CHECK: 350: 98 4a 33 07 lda.2d.u8 r26, [p7], d1
+# CHECK: 354: 98 0a 71 01 lda.2d.u8 r8, [p1], d3
+# CHECK: 358: 98 2a 11 02 lda.2d.u8 r9, [p2], d0
+# CHECK: 35c: 98 ca 91 00 lda.2d.u8 r14, [p0], d4
+# CHECK: 360: 98 6a d0 06 lda.2d.u8 r3, [p6], d6
+# CHECK: 364: 98 4a b2 03 lda.2d.u8 r18, [p3], d5
+# CHECK: 368: 98 aa 50 05 lda.2d.u8 r5, [p5], d2
+# CHECK: 36c: 98 ca f2 04 lda.2d.u8 r22, [p4], d7
+# CHECK: 370: 98 8a 31 07 lda.2d.u8 r12, [p7], d1
+# CHECK: 374: 98 0a 72 01 lda.2d.u8 r16, [p1], d3
+# CHECK: 378: 98 2a 10 02 lda.2d.u8 r1, [p2], d0
+# CHECK: 37c: 98 6a 92 00 lda.2d.u8 r19, [p0], d4
+# CHECK: 380: 98 2a d2 06 lda.2d.u8 r17, [p6], d6
+# CHECK: 384: 98 8a b0 03 lda.2d.u8 r4, [p3], d5
+# CHECK: 388: 98 8a 52 05 lda.2d.u8 r20, [p5], d2
+# CHECK: 38c: 98 4a f0 04 lda.2d.u8 r2, [p4], d7
+# CHECK: 390: 98 aa 33 07 lda.2d.u8 r29, [p7], d1
+# CHECK: 394: 98 6a 73 01 lda.2d.u8 r27, [p1], d3
+# CHECK: 398: 98 2a 13 02 lda.2d.u8 r25, [p2], d0
+# CHECK: 39c: 98 4a 91 00 lda.2d.u8 r10, [p0], d4
+# CHECK: 3a0: 98 ea d0 06 lda.2d.u8 r7, [p6], d6
+# CHECK: 3a4: 98 06 5b 00 lda.3d m6, [p0], d2
+# CHECK: 3a8: 98 86 1b 01 lda.3d m7, [p1], d0
+# CHECK: 3ac: 98 6e 78 04 lda.3d el1, [p4], d3
+# CHECK: 3b0: 98 66 3a 05 lda.3d dc4, [p5], d1
+# CHECK: 3b4: 98 6e 59 06 lda.3d el5, [p6], d2
+# CHECK: 3b8: 98 d6 18 07 lda.3d r6, [p7], d0
+# CHECK: 3bc: 98 46 7a 02 lda.3d dj4, [p2], d3
+# CHECK: 3c0: 98 16 39 03 lda.3d r8, [p3], d1
+# CHECK: 3c4: 98 56 59 00 lda.3d r10, [p0], d2
+# CHECK: 3c8: 98 96 19 01 lda.3d r12, [p1], d0
+# CHECK: 3cc: 98 76 7b 04 lda.3d r27, [p4], d3
+# CHECK: 3d0: 98 56 38 05 lda.3d r2, [p5], d1
+# CHECK: 3d4: 98 d6 59 06 lda.3d r14, [p6], d2
+# CHECK: 3d8: 98 06 18 07 lda.3d m0, [p7], d0
+# CHECK: 3dc: 98 f6 79 02 lda.3d r15, [p2], d3
+# CHECK: 3e0: 98 16 3a 03 lda.3d r16, [p3], d1
+# CHECK: 3e4: 98 96 5b 00 lda.3d r28, [p0], d2
+# CHECK: 3e8: 98 f6 18 01 lda.3d r7, [p1], d0
+# CHECK: 3ec: 98 f6 7a 04 lda.3d r23, [p4], d3
+# CHECK: 3f0: 98 ae 3a 05 lda.3d el10, [p5], d1
+# CHECK: 3f4: 98 d6 5a 06 lda.3d r22, [p6], d2
+# CHECK: 3f8: 98 2e 18 07 lda.3d el0, [p7], d0
+# CHECK: 3fc: 98 36 78 02 lda.3d r1, [p2], d3
+# CHECK: 400: 98 4e 38 03 lda.3d eh1, [p3], d1
+# CHECK: 404: 98 56 5a 00 lda.3d r18, [p0], d2
+# CHECK: 408: 98 a6 1a 01 lda.3d dn5, [p1], d0
+# CHECK: 40c: 98 26 7a 04 lda.3d dn4, [p4], d3
+# CHECK: 410: 98 76 38 05 lda.3d r3, [p5], d1
+# CHECK: 414: 98 66 5b 06 lda.3d dc6, [p6], d2
+# CHECK: 418: 98 8e 1a 07 lda.3d eh10, [p7], d0
+# CHECK: 41c: 98 9e 79 02 lda.3d p3, [p2], d3
+# CHECK: 420: 98 c6 38 03 lda.3d dj1, [p3], d1
+# CHECK: 424: 98 e6 5b 00 lda.3d dc7, [p0], d2
+# CHECK: 428: 98 e6 19 01 lda.3d dc3, [p1], d0
+# CHECK: 42c: 98 ae 79 04 lda.3d el6, [p4], d3
+# CHECK: 430: 98 0e 38 05 lda.3d eh0, [p5], d1
+# CHECK: 434: 98 86 59 06 lda.3d m3, [p6], d2
+# CHECK: 438: 98 ce 19 07 lda.3d eh7, [p7], d0
+# CHECK: 43c: 98 a6 79 02 lda.3d dn3, [p2], d3
+# CHECK: 440: 98 46 38 03 lda.3d dj0, [p3], d1
+# CHECK: 444: 98 e6 58 00 lda.3d dc1, [p0], d2
+# CHECK: 448: 98 9e 18 01 lda.3d p1, [p1], d0
+# CHECK: 44c: 98 1e 78 04 lda.3d p0, [p4], d3
+# CHECK: 450: 98 ce 3a 05 lda.3d eh11, [p5], d1
+# CHECK: 454: 98 c6 5a 06 lda.3d dj5, [p6], d2
+# CHECK: 458: 98 16 18 07 lda.3d r0, [p7], d0
+# CHECK: 45c: 98 56 7b 02 lda.3d r26, [p2], d3
+# CHECK: 460: 98 c6 39 03 lda.3d dj3, [p3], d1
+# CHECK: 464: 98 ce 58 00 lda.3d eh3, [p0], d2
+# CHECK: 468: 98 06 1a 01 lda.3d m4, [p1], d0
+# CHECK: 46c: 98 6e 7a 04 lda.3d el9, [p4], d3
+# CHECK: 470: 98 d6 3b 05 lda.3d r30, [p5], d1
+# CHECK: 474: 98 06 59 06 lda.3d m2, [p6], d2
+# CHECK: 478: 98 46 19 07 lda.3d dj2, [p7], d0
+# CHECK: 47c: 98 36 7a 02 lda.3d r17, [p2], d3
+# CHECK: 480: 98 8e 39 03 lda.3d eh6, [p3], d1
+# CHECK: 484: 98 76 5a 00 lda.3d r19, [p0], d2
+# CHECK: 488: 98 0e 19 01 lda.3d eh4, [p1], d0
+# CHECK: 48c: 98 c6 7b 04 lda.3d dj7, [p4], d3
+# CHECK: 490: 98 26 38 05 lda.3d dn0, [p5], d1
+# CHECK: 494: 98 1e 5b 06 lda.3d p6, [p6], d2
+# CHECK: 498: 98 b6 19 07 lda.3d r13, [p7], d0
+# CHECK: 49c: 98 9e 7a 02 lda.3d p5, [p2], d3
+# CHECK: 4a0: 98 86 38 03 lda.3d m1, [p3], d1
+# CHECK: 4a4: 98 66 58 00 lda.3d dc0, [p0], d2
+# CHECK: 4a8: 98 16 1b 01 lda.3d r24, [p1], d0
+# CHECK: 4ac: 98 ae 78 04 lda.3d el2, [p4], d3
+# CHECK: 4b0: 98 ee 39 05 lda.3d el7, [p5], d1
+# CHECK: 4b4: 98 b6 58 06 lda.3d r5, [p6], d2
+# CHECK: 4b8: 98 36 19 07 lda.3d r9, [p7], d0
+# CHECK: 4bc: 98 ee 7a 02 lda.3d el11, [p2], d3
+# CHECK: 4c0: 98 f6 3b 03 lda.3d r31, [p3], d1
+# CHECK: 4c4: 98 a6 58 00 lda.3d dn1, [p0], d2
+# CHECK: 4c8: 98 3e 18 01 lda.3d lr, [p1], d0
+# CHECK: 4cc: 98 9e 7b 04 lda.3d p7, [p4], d3
+# CHECK: 4d0: 98 46 3b 05 lda.3d dj6, [p5], d1
+# CHECK: 4d4: 98 0e 5a 06 lda.3d eh8, [p6], d2
+# CHECK: 4d8: 98 2e 1a 07 lda.3d el8, [p7], d0
+# CHECK: 4dc: 98 26 79 02 lda.3d dn2, [p2], d3
+# CHECK: 4e0: 98 2e 39 03 lda.3d el4, [p3], d1
+# CHECK: 4e4: 98 26 5b 00 lda.3d dn6, [p0], d2
+# CHECK: 4e8: 98 66 19 01 lda.3d dc2, [p1], d0
+# CHECK: 4ec: 98 96 78 04 lda.3d r4, [p4], d3
+# CHECK: 4f0: 98 b6 3a 05 lda.3d r21, [p5], d1
+# CHECK: 4f4: 98 96 5a 06 lda.3d r20, [p6], d2
+# CHECK: 4f8: 98 ee 18 07 lda.3d el3, [p7], d0
+# CHECK: 4fc: 98 1e 79 02 lda.3d p2, [p2], d3
+# CHECK: 500: 98 8e 38 03 lda.3d eh2, [p3], d1
+# CHECK: 504: 98 4e 5a 00 lda.3d eh9, [p0], d2
+# CHECK: 508: 98 a6 1b 01 lda.3d dn7, [p1], d0
+# CHECK: 50c: 98 86 7a 04 lda.3d m5, [p4], d3
+# CHECK: 510: 98 4e 39 05 lda.3d eh5, [p5], d1
+# CHECK: 514: 98 1e 5a 06 lda.3d p4, [p6], d2
+# CHECK: 518: 98 76 19 07 lda.3d r11, [p7], d0
+# CHECK: 51c: 98 e6 7a 02 lda.3d dc5, [p2], d3
+# CHECK: 520: 98 b6 3b 03 lda.3d r29, [p3], d1
+# CHECK: 524: 98 36 5b 00 lda.3d r25, [p0], d2
+# CHECK: 528: 98 27 7b 04 lda.3d q3, [p4], d3
+# CHECK: 52c: 98 27 3b 05 lda.3d q3, [p5], d1
+# CHECK: 530: 98 27 58 07 lda.3d q0, [p7], d2
+# CHECK: 534: 98 27 18 00 lda.3d q0, [p0], d0
+# CHECK: 538: 98 27 7b 03 lda.3d q3, [p3], d3
+# CHECK: 53c: 98 27 3b 06 lda.3d q3, [p6], d1
+# CHECK: 540: 98 27 58 01 lda.3d q0, [p1], d2
+# CHECK: 544: 98 27 18 02 lda.3d q0, [p2], d0
+# CHECK: 548: 98 52 1b 03 lda.3d.s16 r26, [p3], d0
+# CHECK: 54c: 98 32 7a 01 lda.3d.s16 r17, [p1], d3
+# CHECK: 550: 98 32 58 00 lda.3d.s16 r1, [p0], d2
+# CHECK: 554: 98 92 3b 04 lda.3d.s16 r28, [p4], d1
+# CHECK: 558: 98 b2 1a 05 lda.3d.s16 r21, [p5], d0
+# CHECK: 55c: 98 12 7a 07 lda.3d.s16 r16, [p7], d3
+# CHECK: 560: 98 72 58 06 lda.3d.s16 r3, [p6], d2
+# CHECK: 564: 98 12 38 02 lda.3d.s16 r0, [p2], d1
+# CHECK: 568: 98 f2 18 03 lda.3d.s16 r7, [p3], d0
+# CHECK: 56c: 98 d2 7b 01 lda.3d.s16 r30, [p1], d3
+# CHECK: 570: 98 52 58 00 lda.3d.s16 r2, [p0], d2
+# CHECK: 574: 98 f2 39 04 lda.3d.s16 r15, [p4], d1
+# CHECK: 578: 98 92 19 05 lda.3d.s16 r12, [p5], d0
+# CHECK: 57c: 98 b2 78 07 lda.3d.s16 r5, [p7], d3
+# CHECK: 580: 98 b2 59 06 lda.3d.s16 r13, [p6], d2
+# CHECK: 584: 98 32 3b 02 lda.3d.s16 r25, [p2], d1
+# CHECK: 588: 98 b2 1b 03 lda.3d.s16 r29, [p3], d0
+# CHECK: 58c: 98 72 79 01 lda.3d.s16 r11, [p1], d3
+# CHECK: 590: 98 f2 5a 00 lda.3d.s16 r23, [p0], d2
+# CHECK: 594: 98 92 3a 04 lda.3d.s16 r20, [p4], d1
+# CHECK: 598: 98 52 19 05 lda.3d.s16 r10, [p5], d0
+# CHECK: 59c: 98 92 78 07 lda.3d.s16 r4, [p7], d3
+# CHECK: 5a0: 98 f2 5b 06 lda.3d.s16 r31, [p6], d2
+# CHECK: 5a4: 98 d2 38 02 lda.3d.s16 r6, [p2], d1
+# CHECK: 5a8: 98 72 1b 03 lda.3d.s16 r27, [p3], d0
+# CHECK: 5ac: 98 52 7a 01 lda.3d.s16 r18, [p1], d3
+# CHECK: 5b0: 98 d2 5a 00 lda.3d.s16 r22, [p0], d2
+# CHECK: 5b4: 98 32 39 04 lda.3d.s16 r9, [p4], d1
+# CHECK: 5b8: 98 12 19 05 lda.3d.s16 r8, [p5], d0
+# CHECK: 5bc: 98 12 7b 07 lda.3d.s16 r24, [p7], d3
+# CHECK: 5c0: 98 d2 59 06 lda.3d.s16 r14, [p6], d2
+# CHECK: 5c4: 98 72 3a 02 lda.3d.s16 r19, [p2], d1
+# CHECK: 5c8: 98 82 5a 00 lda.3d.s8 r20, [p0], d2
+# CHECK: 5cc: 98 82 38 03 lda.3d.s8 r4, [p3], d1
+# CHECK: 5d0: 98 42 7a 02 lda.3d.s8 r18, [p2], d3
+# CHECK: 5d4: 98 c2 18 04 lda.3d.s8 r6, [p4], d0
+# CHECK: 5d8: 98 c2 5b 01 lda.3d.s8 r30, [p1], d2
+# CHECK: 5dc: 98 62 39 05 lda.3d.s8 r11, [p5], d1
+# CHECK: 5e0: 98 82 79 06 lda.3d.s8 r12, [p6], d3
+# CHECK: 5e4: 98 a2 18 07 lda.3d.s8 r5, [p7], d0
+# CHECK: 5e8: 98 22 58 00 lda.3d.s8 r1, [p0], d2
+# CHECK: 5ec: 98 62 3a 03 lda.3d.s8 r19, [p3], d1
+# CHECK: 5f0: 98 a2 7a 02 lda.3d.s8 r21, [p2], d3
+# CHECK: 5f4: 98 42 1b 04 lda.3d.s8 r26, [p4], d0
+# CHECK: 5f8: 98 02 59 01 lda.3d.s8 r8, [p1], d2
+# CHECK: 5fc: 98 82 3b 05 lda.3d.s8 r28, [p5], d1
+# CHECK: 600: 98 62 7b 06 lda.3d.s8 r27, [p6], d3
+# CHECK: 604: 98 e2 19 07 lda.3d.s8 r15, [p7], d0
+# CHECK: 608: 98 e2 58 00 lda.3d.s8 r7, [p0], d2
+# CHECK: 60c: 98 e2 3b 03 lda.3d.s8 r31, [p3], d1
+# CHECK: 610: 98 22 7b 02 lda.3d.s8 r25, [p2], d3
+# CHECK: 614: 98 c2 1a 04 lda.3d.s8 r22, [p4], d0
+# CHECK: 618: 98 42 59 01 lda.3d.s8 r10, [p1], d2
+# CHECK: 61c: 98 02 3b 05 lda.3d.s8 r24, [p5], d1
+# CHECK: 620: 98 62 78 06 lda.3d.s8 r3, [p6], d3
+# CHECK: 624: 98 c2 19 07 lda.3d.s8 r14, [p7], d0
+# CHECK: 628: 98 02 58 00 lda.3d.s8 r0, [p0], d2
+# CHECK: 62c: 98 a2 39 03 lda.3d.s8 r13, [p3], d1
+# CHECK: 630: 98 22 79 02 lda.3d.s8 r9, [p2], d3
+# CHECK: 634: 98 02 1a 04 lda.3d.s8 r16, [p4], d0
+# CHECK: 638: 98 a2 5b 01 lda.3d.s8 r29, [p1], d2
+# CHECK: 63c: 98 22 3a 05 lda.3d.s8 r17, [p5], d1
+# CHECK: 640: 98 e2 7a 06 lda.3d.s8 r23, [p6], d3
+# CHECK: 644: 98 42 18 07 lda.3d.s8 r2, [p7], d0
+# CHECK: 648: 98 da 79 04 lda.3d.u16 r14, [p4], d3
+# CHECK: 64c: 98 3a 39 05 lda.3d.u16 r9, [p5], d1
+# CHECK: 650: 98 1a 1a 00 lda.3d.u16 r16, [p0], d0
+# CHECK: 654: 98 fa 59 01 lda.3d.u16 r15, [p1], d2
+# CHECK: 658: 98 5a 79 06 lda.3d.u16 r10, [p6], d3
+# CHECK: 65c: 98 1a 38 07 lda.3d.u16 r0, [p7], d1
+# CHECK: 660: 98 5a 1a 02 lda.3d.u16 r18, [p2], d0
+# CHECK: 664: 98 fa 58 03 lda.3d.u16 r7, [p3], d2
+# CHECK: 668: 98 9a 7b 04 lda.3d.u16 r28, [p4], d3
+# CHECK: 66c: 98 3a 3b 05 lda.3d.u16 r25, [p5], d1
+# CHECK: 670: 98 7a 19 00 lda.3d.u16 r11, [p0], d0
+# CHECK: 674: 98 3a 5a 01 lda.3d.u16 r17, [p1], d2
+# CHECK: 678: 98 5a 78 06 lda.3d.u16 r2, [p6], d3
+# CHECK: 67c: 98 9a 38 07 lda.3d.u16 r4, [p7], d1
+# CHECK: 680: 98 da 18 02 lda.3d.u16 r6, [p2], d0
+# CHECK: 684: 98 7a 5a 03 lda.3d.u16 r19, [p3], d2
+# CHECK: 688: 98 ba 79 04 lda.3d.u16 r13, [p4], d3
+# CHECK: 68c: 98 fa 3b 05 lda.3d.u16 r31, [p5], d1
+# CHECK: 690: 98 9a 19 00 lda.3d.u16 r12, [p0], d0
+# CHECK: 694: 98 9a 5a 01 lda.3d.u16 r20, [p1], d2
+# CHECK: 698: 98 ba 7b 06 lda.3d.u16 r29, [p6], d3
+# CHECK: 69c: 98 7a 38 07 lda.3d.u16 r3, [p7], d1
+# CHECK: 6a0: 98 da 1b 02 lda.3d.u16 r30, [p2], d0
+# CHECK: 6a4: 98 7a 5b 03 lda.3d.u16 r27, [p3], d2
+# CHECK: 6a8: 98 1a 7b 04 lda.3d.u16 r24, [p4], d3
+# CHECK: 6ac: 98 fa 3a 05 lda.3d.u16 r23, [p5], d1
+# CHECK: 6b0: 98 1a 19 00 lda.3d.u16 r8, [p0], d0
+# CHECK: 6b4: 98 ba 58 01 lda.3d.u16 r5, [p1], d2
+# CHECK: 6b8: 98 da 7a 06 lda.3d.u16 r22, [p6], d3
+# CHECK: 6bc: 98 ba 3a 07 lda.3d.u16 r21, [p7], d1
+# CHECK: 6c0: 98 5a 1b 02 lda.3d.u16 r26, [p2], d0
+# CHECK: 6c4: 98 3a 58 03 lda.3d.u16 r1, [p3], d2
+# CHECK: 6c8: 98 6a 5a 05 lda.3d.u8 r19, [p5], d2
+# CHECK: 6cc: 98 aa 7a 01 lda.3d.u8 r21, [p1], d3
+# CHECK: 6d0: 98 ca 39 00 lda.3d.u8 r14, [p0], d1
+# CHECK: 6d4: 98 2a 1b 07 lda.3d.u8 r25, [p7], d0
+# CHECK: 6d8: 98 aa 5b 03 lda.3d.u8 r29, [p3], d2
+# CHECK: 6dc: 98 0a 78 02 lda.3d.u8 r0, [p2], d3
+# CHECK: 6e0: 98 4a 3b 06 lda.3d.u8 r26, [p6], d1
+# CHECK: 6e4: 98 0a 19 04 lda.3d.u8 r8, [p4], d0
+# CHECK: 6e8: 98 4a 59 05 lda.3d.u8 r10, [p5], d2
+# CHECK: 6ec: 98 8a 78 01 lda.3d.u8 r4, [p1], d3
+# CHECK: 6f0: 98 2a 39 00 lda.3d.u8 r9, [p0], d1
+# CHECK: 6f4: 98 2a 1a 07 lda.3d.u8 r17, [p7], d0
+# CHECK: 6f8: 98 aa 59 03 lda.3d.u8 r13, [p3], d2
+# CHECK: 6fc: 98 ea 7a 02 lda.3d.u8 r23, [p2], d3
+# CHECK: 700: 98 ea 39 06 lda.3d.u8 r15, [p6], d1
+# CHECK: 704: 98 0a 1b 04 lda.3d.u8 r24, [p4], d0
+# CHECK: 708: 98 ca 58 05 lda.3d.u8 r6, [p5], d2
+# CHECK: 70c: 98 ca 7a 01 lda.3d.u8 r22, [p1], d3
+# CHECK: 710: 98 6a 39 00 lda.3d.u8 r11, [p0], d1
+# CHECK: 714: 98 8a 1b 07 lda.3d.u8 r28, [p7], d0
+# CHECK: 718: 98 4a 5a 03 lda.3d.u8 r18, [p3], d2
+# CHECK: 71c: 98 8a 79 02 lda.3d.u8 r12, [p2], d3
+# CHECK: 720: 98 4a 38 06 lda.3d.u8 r2, [p6], d1
+# CHECK: 724: 98 8a 1a 04 lda.3d.u8 r20, [p4], d0
+# CHECK: 728: 98 aa 58 05 lda.3d.u8 r5, [p5], d2
+# CHECK: 72c: 98 0a 7a 01 lda.3d.u8 r16, [p1], d3
+# CHECK: 730: 98 6a 3b 00 lda.3d.u8 r27, [p0], d1
+# CHECK: 734: 98 2a 18 07 lda.3d.u8 r1, [p7], d0
+# CHECK: 738: 98 ea 5b 03 lda.3d.u8 r31, [p3], d2
+# CHECK: 73c: 98 ea 78 02 lda.3d.u8 r7, [p2], d3
+# CHECK: 740: 98 6a 38 06 lda.3d.u8 r3, [p6], d1
+# CHECK: 744: 98 ca 1b 04 lda.3d.u8 r30, [p4], d0
+# CHECK: 748: 98 13 30 00 lda.tm.2d r0, [p0], d1
+# CHECK: 74c: 98 f3 92 03 lda.tm.2d r23, [p3], d4
+# CHECK: 750: 98 b3 d0 06 lda.tm.2d r5, [p6], d6
+# CHECK: 754: 98 53 b1 04 lda.tm.2d r10, [p4], d5
+# CHECK: 758: 98 53 f3 02 lda.tm.2d r26, [p2], d7
+# CHECK: 75c: 98 b3 13 01 lda.tm.2d r29, [p1], d0
+# CHECK: 760: 98 73 53 07 lda.tm.2d r27, [p7], d2
+# CHECK: 764: 98 73 71 05 lda.tm.2d r11, [p5], d3
+# CHECK: 768: 98 93 33 00 lda.tm.2d r28, [p0], d1
+# CHECK: 76c: 98 d3 92 03 lda.tm.2d r22, [p3], d4
+# CHECK: 770: 98 93 d1 06 lda.tm.2d r12, [p6], d6
+# CHECK: 774: 98 d3 b3 04 lda.tm.2d r30, [p4], d5
+# CHECK: 778: 98 13 f3 02 lda.tm.2d r24, [p2], d7
+# CHECK: 77c: 98 d3 10 01 lda.tm.2d r6, [p1], d0
+# CHECK: 780: 98 f3 51 07 lda.tm.2d r15, [p7], d2
+# CHECK: 784: 98 93 72 05 lda.tm.2d r20, [p5], d3
+# CHECK: 788: 98 33 33 00 lda.tm.2d r25, [p0], d1
+# CHECK: 78c: 98 73 90 03 lda.tm.2d r3, [p3], d4
+# CHECK: 790: 98 f3 d3 06 lda.tm.2d r31, [p6], d6
+# CHECK: 794: 98 73 b2 04 lda.tm.2d r19, [p4], d5
+# CHECK: 798: 98 d3 f1 02 lda.tm.2d r14, [p2], d7
+# CHECK: 79c: 98 b3 12 01 lda.tm.2d r21, [p1], d0
+# CHECK: 7a0: 98 b3 51 07 lda.tm.2d r13, [p7], d2
+# CHECK: 7a4: 98 33 71 05 lda.tm.2d r9, [p5], d3
+# CHECK: 7a8: 98 f3 30 00 lda.tm.2d r7, [p0], d1
+# CHECK: 7ac: 98 93 90 03 lda.tm.2d r4, [p3], d4
+# CHECK: 7b0: 98 53 d0 06 lda.tm.2d r2, [p6], d6
+# CHECK: 7b4: 98 33 b0 04 lda.tm.2d r1, [p4], d5
+# CHECK: 7b8: 98 13 f1 02 lda.tm.2d r8, [p2], d7
+# CHECK: 7bc: 98 53 12 01 lda.tm.2d r18, [p1], d0
+# CHECK: 7c0: 98 33 52 07 lda.tm.2d r17, [p7], d2
+# CHECK: 7c4: 98 13 72 05 lda.tm.2d r16, [p5], d3
+# CHECK: 7c8: 98 d3 79 05 lda.tm.3d r14, [p5], d3
+# CHECK: 7cc: 98 53 3b 07 lda.tm.3d r26, [p7], d1
+# CHECK: 7d0: 98 53 59 04 lda.tm.3d r10, [p4], d2
+# CHECK: 7d4: 98 d3 1a 02 lda.tm.3d r22, [p2], d0
+# CHECK: 7d8: 98 13 7a 06 lda.tm.3d r16, [p6], d3
+# CHECK: 7dc: 98 93 3a 00 lda.tm.3d r20, [p0], d1
+# CHECK: 7e0: 98 93 5b 03 lda.tm.3d r28, [p3], d2
+# CHECK: 7e4: 98 33 1a 01 lda.tm.3d r17, [p1], d0
+# CHECK: 7e8: 98 13 7b 05 lda.tm.3d r24, [p5], d3
+# CHECK: 7ec: 98 b3 38 07 lda.tm.3d r5, [p7], d1
+# CHECK: 7f0: 98 73 5b 04 lda.tm.3d r27, [p4], d2
+# CHECK: 7f4: 98 73 18 02 lda.tm.3d r3, [p2], d0
+# CHECK: 7f8: 98 f3 79 06 lda.tm.3d r15, [p6], d3
+# CHECK: 7fc: 98 f3 3b 00 lda.tm.3d r31, [p0], d1
+# CHECK: 800: 98 33 59 03 lda.tm.3d r9, [p3], d2
+# CHECK: 804: 98 73 19 01 lda.tm.3d r11, [p1], d0
+# CHECK: 808: 98 d3 78 05 lda.tm.3d r6, [p5], d3
+# CHECK: 80c: 98 d3 3b 07 lda.tm.3d r30, [p7], d1
+# CHECK: 810: 98 93 59 04 lda.tm.3d r12, [p4], d2
+# CHECK: 814: 98 93 18 02 lda.tm.3d r4, [p2], d0
+# CHECK: 818: 98 b3 7b 06 lda.tm.3d r29, [p6], d3
+# CHECK: 81c: 98 f3 38 00 lda.tm.3d r7, [p0], d1
+# CHECK: 820: 98 b3 5a 03 lda.tm.3d r21, [p3], d2
+# CHECK: 824: 98 33 1b 01 lda.tm.3d r25, [p1], d0
+# CHECK: 828: 98 13 78 05 lda.tm.3d r0, [p5], d3
+# CHECK: 82c: 98 b3 39 07 lda.tm.3d r13, [p7], d1
+# CHECK: 830: 98 13 59 04 lda.tm.3d r8, [p4], d2
+# CHECK: 834: 98 f3 1a 02 lda.tm.3d r23, [p2], d0
+# CHECK: 838: 98 53 78 06 lda.tm.3d r2, [p6], d3
+# CHECK: 83c: 98 33 38 00 lda.tm.3d r1, [p0], d1
+# CHECK: 840: 98 53 5a 03 lda.tm.3d r18, [p3], d2
+# CHECK: 844: 98 73 1a 01 lda.tm.3d r19, [p1], d0
+# CHECK: 848: 98 f3 20 00 lda.tm r7, [p0, dj1]
+# CHECK: 84c: 98 d3 42 01 lda.tm r22, [p1, dj2]
+# CHECK: 850: 98 d3 c0 06 lda.tm r6, [p6, dj6]
+# CHECK: 854: 98 73 a3 03 lda.tm r27, [p3, dj5]
+# CHECK: 858: 98 f3 01 02 lda.tm r15, [p2, dj0]
+# CHECK: 85c: 98 53 60 07 lda.tm r2, [p7, dj3]
+# CHECK: 860: 98 73 80 04 lda.tm r3, [p4, dj4]
+# CHECK: 864: 98 b3 e0 05 lda.tm r5, [p5, dj7]
+# CHECK: 868: 98 33 20 00 lda.tm r1, [p0, dj1]
+# CHECK: 86c: 98 53 41 01 lda.tm r10, [p1, dj2]
+# CHECK: 870: 98 f3 c2 06 lda.tm r23, [p6, dj6]
+# CHECK: 874: 98 b3 a1 03 lda.tm r13, [p3, dj5]
+# CHECK: 878: 98 d3 03 02 lda.tm r30, [p2, dj0]
+# CHECK: 87c: 98 93 60 07 lda.tm r4, [p7, dj3]
+# CHECK: 880: 98 53 83 04 lda.tm r26, [p4, dj4]
+# CHECK: 884: 98 13 e3 05 lda.tm r24, [p5, dj7]
+# CHECK: 888: 98 d3 21 00 lda.tm r14, [p0, dj1]
+# CHECK: 88c: 98 53 42 01 lda.tm r18, [p1, dj2]
+# CHECK: 890: 98 93 c2 06 lda.tm r20, [p6, dj6]
+# CHECK: 894: 98 13 a1 03 lda.tm r8, [p3, dj5]
+# CHECK: 898: 98 b3 03 02 lda.tm r29, [p2, dj0]
+# CHECK: 89c: 98 33 62 07 lda.tm r17, [p7, dj3]
+# CHECK: 8a0: 98 73 81 04 lda.tm r11, [p4, dj4]
+# CHECK: 8a4: 98 93 e3 05 lda.tm r28, [p5, dj7]
+# CHECK: 8a8: 98 f3 23 00 lda.tm r31, [p0, dj1]
+# CHECK: 8ac: 98 13 42 01 lda.tm r16, [p1, dj2]
+# CHECK: 8b0: 98 33 c1 06 lda.tm r9, [p6, dj6]
+# CHECK: 8b4: 98 13 a0 03 lda.tm r0, [p3, dj5]
+# CHECK: 8b8: 98 33 03 02 lda.tm r25, [p2, dj0]
+# CHECK: 8bc: 98 73 62 07 lda.tm r19, [p7, dj3]
+# CHECK: 8c0: 98 93 81 04 lda.tm r12, [p4, dj4]
+# CHECK: 8c4: 98 b3 e2 05 lda.tm r21, [p5, dj7]
+# CHECK: 8c8: 98 b3 76 01 lda.tm r21, [p1, #28]
+# CHECK: 8cc: 98 93 17 02 lda.tm r28, [p2, #4]
+# CHECK: 8d0: 98 f3 84 05 lda.tm r7, [p5, #-32]
+# CHECK: 8d4: 98 d3 04 04 lda.tm r6, [p4, #0]
+# CHECK: 8d8: 98 b3 75 03 lda.tm r13, [p3, #28]
+# CHECK: 8dc: 98 33 16 07 lda.tm r17, [p7, #4]
+# CHECK: 8e0: 98 b3 84 06 lda.tm r5, [p6, #-32]
+# CHECK: 8e4: 98 f3 05 00 lda.tm r15, [p0, #0]
+# CHECK: 8e8: 98 d3 76 01 lda.tm r22, [p1, #28]
+# CHECK: 8ec: 98 73 14 02 lda.tm r3, [p2, #4]
+# CHECK: 8f0: 98 93 84 05 lda.tm r4, [p5, #-32]
+# CHECK: 8f4: 98 b3 07 04 lda.tm r29, [p4, #0]
+# CHECK: 8f8: 98 53 76 03 lda.tm r18, [p3, #28]
+# CHECK: 8fc: 98 13 16 07 lda.tm r16, [p7, #4]
+# CHECK: 900: 98 53 85 06 lda.tm r10, [p6, #-32]
+# CHECK: 904: 98 d3 07 00 lda.tm r30, [p0, #0]
+# CHECK: 908: 98 13 77 01 lda.tm r24, [p1, #28]
+# CHECK: 90c: 98 d3 15 02 lda.tm r14, [p2, #4]
+# CHECK: 910: 98 73 87 05 lda.tm r27, [p5, #-32]
+# CHECK: 914: 98 93 05 04 lda.tm r12, [p4, #0]
+# CHECK: 918: 98 13 74 03 lda.tm r0, [p3, #28]
+# CHECK: 91c: 98 33 14 07 lda.tm r1, [p7, #4]
+# CHECK: 920: 98 f3 87 06 lda.tm r31, [p6, #-32]
+# CHECK: 924: 98 73 06 00 lda.tm r19, [p0, #0]
+# CHECK: 928: 98 53 74 01 lda.tm r2, [p1, #28]
+# CHECK: 92c: 98 53 17 02 lda.tm r26, [p2, #4]
+# CHECK: 930: 98 f3 86 05 lda.tm r23, [p5, #-32]
+# CHECK: 934: 98 73 05 04 lda.tm r11, [p4, #0]
+# CHECK: 938: 98 93 76 03 lda.tm r20, [p3, #28]
+# CHECK: 93c: 98 13 15 07 lda.tm r8, [p7, #4]
+# CHECK: 940: 98 33 85 06 lda.tm r9, [p6, #-32]
+# CHECK: 944: 98 33 07 00 lda.tm r25, [p0, #0]
+# CHECK: 948: 98 33 cb 03 lda.tm r25, [p3], m6
+# CHECK: 94c: 98 53 6b 02 lda.tm r26, [p2], m3
+# CHECK: 950: 98 b3 29 00 lda.tm r13, [p0], m1
+# CHECK: 954: 98 f3 0a 05 lda.tm r23, [p5], m0
+# CHECK: 958: 98 b3 4a 07 lda.tm r21, [p7], m2
+# CHECK: 95c: 98 93 89 01 lda.tm r12, [p1], m4
+# CHECK: 960: 98 d3 a8 06 lda.tm r6, [p6], m5
+# CHECK: 964: 98 33 ea 04 lda.tm r17, [p4], m7
+# CHECK: 968: 98 93 cb 03 lda.tm r28, [p3], m6
+# CHECK: 96c: 98 73 68 02 lda.tm r3, [p2], m3
+# CHECK: 970: 98 53 2a 00 lda.tm r18, [p0], m1
+# CHECK: 974: 98 53 08 05 lda.tm r2, [p5], m0
+# CHECK: 978: 98 33 48 07 lda.tm r1, [p7], m2
+# CHECK: 97c: 98 33 89 01 lda.tm r9, [p1], m4
+# CHECK: 980: 98 13 ab 06 lda.tm r24, [p6], m5
+# CHECK: 984: 98 b3 e8 04 lda.tm r5, [p4], m7
+# CHECK: 988: 98 73 ca 03 lda.tm r19, [p3], m6
+# CHECK: 98c: 98 13 69 02 lda.tm r8, [p2], m3
+# CHECK: 990: 98 73 29 00 lda.tm r11, [p0], m1
+# CHECK: 994: 98 13 08 05 lda.tm r0, [p5], m0
+# CHECK: 998: 98 d3 4a 07 lda.tm r22, [p7], m2
+# CHECK: 99c: 98 b3 8b 01 lda.tm r29, [p1], m4
+# CHECK: 9a0: 98 d3 a9 06 lda.tm r14, [p6], m5
+# CHECK: 9a4: 98 f3 eb 04 lda.tm r31, [p4], m7
+# CHECK: 9a8: 98 93 ca 03 lda.tm r20, [p3], m6
+# CHECK: 9ac: 98 f3 68 02 lda.tm r7, [p2], m3
+# CHECK: 9b0: 98 13 2a 00 lda.tm r16, [p0], m1
+# CHECK: 9b4: 98 73 0b 05 lda.tm r27, [p5], m0
+# CHECK: 9b8: 98 f3 49 07 lda.tm r15, [p7], m2
+# CHECK: 9bc: 98 53 89 01 lda.tm r10, [p1], m4
+# CHECK: 9c0: 98 d3 ab 06 lda.tm r30, [p6], m5
+# CHECK: 9c4: 98 93 e8 04 lda.tm r4, [p4], m7
+# CHECK: 9c8: 98 13 0f 02 lda.tm r24, [p2], #0
+# CHECK: 9cc: 98 b3 8d 06 lda.tm r13, [p6], #-32
+# CHECK: 9d0: 98 33 7c 04 lda.tm r1, [p4], #28
+# CHECK: 9d4: 98 d3 1c 03 lda.tm r6, [p3], #4
+# CHECK: 9d8: 98 53 0c 07 lda.tm r2, [p7], #0
+# CHECK: 9dc: 98 33 8f 05 lda.tm r25, [p5], #-32
+# CHECK: 9e0: 98 53 7f 00 lda.tm r26, [p0], #28
+# CHECK: 9e4: 98 13 1d 01 lda.tm r8, [p1], #4
+# CHECK: 9e8: 98 13 0c 02 lda.tm r0, [p2], #0
+# CHECK: 9ec: 98 73 8e 06 lda.tm r19, [p6], #-32
+# CHECK: 9f0: 98 b3 7c 04 lda.tm r5, [p4], #28
+# CHECK: 9f4: 98 f3 1f 03 lda.tm r31, [p3], #4
+# CHECK: 9f8: 98 93 0c 07 lda.tm r4, [p7], #0
+# CHECK: 9fc: 98 73 8d 05 lda.tm r11, [p5], #-32
+# CHECK: a00: 98 53 7d 00 lda.tm r10, [p0], #28
+# CHECK: a04: 98 b3 1f 01 lda.tm r29, [p1], #4
+# CHECK: a08: 98 73 0c 02 lda.tm r3, [p2], #0
+# CHECK: a0c: 98 13 8e 06 lda.tm r16, [p6], #-32
+# CHECK: a10: 98 d3 7d 04 lda.tm r14, [p4], #28
+# CHECK: a14: 98 93 1e 03 lda.tm r20, [p3], #4
+# CHECK: a18: 98 b3 0e 07 lda.tm r21, [p7], #0
+# CHECK: a1c: 98 d3 8e 05 lda.tm r22, [p5], #-32
+# CHECK: a20: 98 d3 7f 00 lda.tm r30, [p0], #28
+# CHECK: a24: 98 73 1f 01 lda.tm r27, [p1], #4
+# CHECK: a28: 98 f3 0c 02 lda.tm r7, [p2], #0
+# CHECK: a2c: 98 f3 8d 06 lda.tm r15, [p6], #-32
+# CHECK: a30: 98 33 7d 04 lda.tm r9, [p4], #28
+# CHECK: a34: 98 53 1e 03 lda.tm r18, [p3], #4
+# CHECK: a38: 98 93 0f 07 lda.tm r28, [p7], #0
+# CHECK: a3c: 98 f3 8e 05 lda.tm r23, [p5], #-32
+# CHECK: a40: 98 33 7e 00 lda.tm r17, [p0], #28
+# CHECK: a44: 98 93 1d 01 lda.tm r12, [p1], #4
+# CHECK: a48: 98 06 c0 04 lda m0, [p4, dj6]
+# CHECK: a4c: 98 76 02 05 lda r19, [p5, dj0]
+# CHECK: a50: 98 b6 a1 07 lda r13, [p7, dj5]
+# CHECK: a54: 98 d6 81 02 lda r14, [p2, dj4]
+# CHECK: a58: 98 46 61 06 lda dj2, [p6, dj3]
+# CHECK: a5c: 98 16 e1 03 lda r8, [p3, dj7]
+# CHECK: a60: 98 ee 21 00 lda el7, [p0, dj1]
+# CHECK: a64: 98 e6 43 01 lda dc7, [p1, dj2]
+# CHECK: a68: 98 06 c3 04 lda m6, [p4, dj6]
+# CHECK: a6c: 98 0e 01 05 lda eh4, [p5, dj0]
+# CHECK: a70: 98 96 a2 07 lda r20, [p7, dj5]
+# CHECK: a74: 98 4e 82 02 lda eh9, [p2, dj4]
+# CHECK: a78: 98 a6 63 06 lda dn7, [p6, dj3]
+# CHECK: a7c: 98 b6 e2 03 lda r21, [p3, dj7]
+# CHECK: a80: 98 ee 20 00 lda el3, [p0, dj1]
+# CHECK: a84: 98 56 40 01 lda r2, [p1, dj2]
+# CHECK: a88: 98 b6 c0 04 lda r5, [p4, dj6]
+# CHECK: a8c: 98 26 02 05 lda dn4, [p5, dj0]
+# CHECK: a90: 98 96 a0 07 lda r4, [p7, dj5]
+# CHECK: a94: 98 1e 80 02 lda p0, [p2, dj4]
+# CHECK: a98: 98 76 60 06 lda r3, [p6, dj3]
+# CHECK: a9c: 98 56 e1 03 lda r10, [p3, dj7]
+# CHECK: aa0: 98 96 21 00 lda r12, [p0, dj1]
+# CHECK: aa4: 98 26 43 01 lda dn6, [p1, dj2]
+# CHECK: aa8: 98 8e c2 04 lda eh10, [p4, dj6]
+# CHECK: aac: 98 36 02 05 lda r17, [p5, dj0]
+# CHECK: ab0: 98 e6 a0 07 lda dc1, [p7, dj5]
+# CHECK: ab4: 98 8e 80 02 lda eh2, [p2, dj4]
+# CHECK: ab8: 98 16 62 06 lda r16, [p6, dj3]
+# CHECK: abc: 98 8e e1 03 lda eh6, [p3, dj7]
+# CHECK: ac0: 98 c6 21 00 lda dj3, [p0, dj1]
+# CHECK: ac4: 98 46 42 01 lda dj4, [p1, dj2]
+# CHECK: ac8: 98 76 c3 04 lda r27, [p4, dj6]
+# CHECK: acc: 98 56 03 05 lda r26, [p5, dj0]
+# CHECK: ad0: 98 86 a0 07 lda m1, [p7, dj5]
+# CHECK: ad4: 98 26 80 02 lda dn0, [p2, dj4]
+# CHECK: ad8: 98 ae 60 06 lda el2, [p6, dj3]
+# CHECK: adc: 98 4e e1 03 lda eh5, [p3, dj7]
+# CHECK: ae0: 98 9e 20 00 lda p1, [p0, dj1]
+# CHECK: ae4: 98 0e 40 01 lda eh0, [p1, dj2]
+# CHECK: ae8: 98 36 c3 04 lda r25, [p4, dj6]
+# CHECK: aec: 98 c6 00 05 lda dj1, [p5, dj0]
+# CHECK: af0: 98 ee a2 07 lda el11, [p7, dj5]
+# CHECK: af4: 98 ce 80 02 lda eh3, [p2, dj4]
+# CHECK: af8: 98 56 62 06 lda r18, [p6, dj3]
+# CHECK: afc: 98 6e e1 03 lda el5, [p3, dj7]
+# CHECK: b00: 98 66 23 00 lda dc6, [p0, dj1]
+# CHECK: b04: 98 16 40 01 lda r0, [p1, dj2]
+# CHECK: b08: 98 46 c0 04 lda dj0, [p4, dj6]
+# CHECK: b0c: 98 f6 01 05 lda r15, [p5, dj0]
+# CHECK: b10: 98 26 a1 07 lda dn2, [p7, dj5]
+# CHECK: b14: 98 9e 83 02 lda p7, [p2, dj4]
+# CHECK: b18: 98 6e 62 06 lda el9, [p6, dj3]
+# CHECK: b1c: 98 e6 e1 03 lda dc3, [p3, dj7]
+# CHECK: b20: 98 f6 23 00 lda r31, [p0, dj1]
+# CHECK: b24: 98 96 43 01 lda r28, [p1, dj2]
+# CHECK: b28: 98 66 c2 04 lda dc4, [p4, dj6]
+# CHECK: b2c: 98 86 02 05 lda m5, [p5, dj0]
+# CHECK: b30: 98 f6 a0 07 lda r7, [p7, dj5]
+# CHECK: b34: 98 76 81 02 lda r11, [p2, dj4]
+# CHECK: b38: 98 9e 61 06 lda p3, [p6, dj3]
+# CHECK: b3c: 98 0e e2 03 lda eh8, [p3, dj7]
+# CHECK: b40: 98 2e 21 00 lda el4, [p0, dj1]
+# CHECK: b44: 98 1e 42 01 lda p4, [p1, dj2]
+# CHECK: b48: 98 9e c2 04 lda p5, [p4, dj6]
+# CHECK: b4c: 98 ce 01 05 lda eh7, [p5, dj0]
+# CHECK: b50: 98 ae a2 07 lda el10, [p7, dj5]
+# CHECK: b54: 98 a6 81 02 lda dn3, [p2, dj4]
+# CHECK: b58: 98 d6 63 06 lda r30, [p6, dj3]
+# CHECK: b5c: 98 86 e3 03 lda m7, [p3, dj7]
+# CHECK: b60: 98 66 21 00 lda dc2, [p0, dj1]
+# CHECK: b64: 98 d6 42 01 lda r22, [p1, dj2]
+# CHECK: b68: 98 86 c1 04 lda m3, [p4, dj6]
+# CHECK: b6c: 98 a6 00 05 lda dn1, [p5, dj0]
+# CHECK: b70: 98 16 a3 07 lda r24, [p7, dj5]
+# CHECK: b74: 98 36 81 02 lda r9, [p2, dj4]
+# CHECK: b78: 98 6e 60 06 lda el1, [p6, dj3]
+# CHECK: b7c: 98 c6 e3 03 lda dj7, [p3, dj7]
+# CHECK: b80: 98 c6 22 00 lda dj5, [p0, dj1]
+# CHECK: b84: 98 2e 40 01 lda el0, [p1, dj2]
+# CHECK: b88: 98 1e c1 04 lda p2, [p4, dj6]
+# CHECK: b8c: 98 ae 01 05 lda el6, [p5, dj0]
+# CHECK: b90: 98 06 a2 07 lda m4, [p7, dj5]
+# CHECK: b94: 98 d6 80 02 lda r6, [p2, dj4]
+# CHECK: b98: 98 36 60 06 lda r1, [p6, dj3]
+# CHECK: b9c: 98 e6 e2 03 lda dc5, [p3, dj7]
+# CHECK: ba0: 98 1e 23 00 lda p6, [p0, dj1]
+# CHECK: ba4: 98 f6 42 01 lda r23, [p1, dj2]
+# CHECK: ba8: 98 ce c2 04 lda eh11, [p4, dj6]
+# CHECK: bac: 98 06 01 05 lda m2, [p5, dj0]
+# CHECK: bb0: 98 a6 a2 07 lda dn5, [p7, dj5]
+# CHECK: bb4: 98 4e 80 02 lda eh1, [p2, dj4]
+# CHECK: bb8: 98 b6 63 06 lda r29, [p6, dj3]
+# CHECK: bbc: 98 46 e3 03 lda dj6, [p3, dj7]
+# CHECK: bc0: 98 2e 22 00 lda el8, [p0, dj1]
+# CHECK: bc4: 98 66 40 01 lda dc0, [p1, dj2]
+# CHECK: bc8: 98 3e c0 04 lda lr, [p4, dj6]
+# CHECK: bcc: 98 9e 74 03 lda p1, [p3, #28]
+# CHECK: bd0: 98 06 17 02 lda m6, [p2, #4]
+# CHECK: bd4: 98 2e 85 04 lda el4, [p4, #-32]
+# CHECK: bd8: 98 76 05 06 lda r11, [p6, #0]
+# CHECK: bdc: 98 2e 74 01 lda el0, [p1, #28]
+# CHECK: be0: 98 16 16 07 lda r16, [p7, #4]
+# CHECK: be4: 98 76 84 00 lda r3, [p0, #-32]
+# CHECK: be8: 98 d6 04 05 lda r6, [p5, #0]
+# CHECK: bec: 98 26 74 03 lda dn0, [p3, #28]
+# CHECK: bf0: 98 9e 17 02 lda p7, [p2, #4]
+# CHECK: bf4: 98 66 86 04 lda dc4, [p4, #-32]
+# CHECK: bf8: 98 ee 05 06 lda el7, [p6, #0]
+# CHECK: bfc: 98 76 77 01 lda r27, [p1, #28]
+# CHECK: c00: 98 36 17 07 lda r25, [p7, #4]
+# CHECK: c04: 98 1e 86 00 lda p4, [p0, #-32]
+# CHECK: c08: 98 56 05 05 lda r10, [p5, #0]
+# CHECK: c0c: 98 b6 75 03 lda r13, [p3, #28]
+# CHECK: c10: 98 c6 17 02 lda dj7, [p2, #4]
+# CHECK: c14: 98 06 85 04 lda m2, [p4, #-32]
+# CHECK: c18: 98 f6 05 06 lda r15, [p6, #0]
+# CHECK: c1c: 98 0e 76 01 lda eh8, [p1, #28]
+# CHECK: c20: 98 46 14 07 lda dj0, [p7, #4]
+# CHECK: c24: 98 b6 86 00 lda r21, [p0, #-32]
+# CHECK: c28: 98 4e 04 05 lda eh1, [p5, #0]
+# CHECK: c2c: 98 96 77 03 lda r28, [p3, #28]
+# CHECK: c30: 98 e6 14 02 lda dc1, [p2, #4]
+# CHECK: c34: 98 6e 84 04 lda el1, [p4, #-32]
+# CHECK: c38: 98 9e 06 06 lda p5, [p6, #0]
+# CHECK: c3c: 98 d6 76 01 lda r22, [p1, #28]
+# CHECK: c40: 98 ee 16 07 lda el11, [p7, #4]
+# CHECK: c44: 98 ae 86 00 lda el10, [p0, #-32]
+# CHECK: c48: 98 e6 05 05 lda dc3, [p5, #0]
+# CHECK: c4c: 98 ae 75 03 lda el6, [p3, #28]
+# CHECK: c50: 98 1e 14 02 lda p0, [p2, #4]
+# CHECK: c54: 98 f6 84 04 lda r7, [p4, #-32]
+# CHECK: c58: 98 ae 04 06 lda el2, [p6, #0]
+# CHECK: c5c: 98 6e 76 01 lda el9, [p1, #28]
+# CHECK: c60: 98 56 17 07 lda r26, [p7, #4]
+# CHECK: c64: 98 a6 86 00 lda dn5, [p0, #-32]
+# CHECK: c68: 98 26 07 05 lda dn6, [p5, #0]
+# CHECK: c6c: 98 8e 75 03 lda eh6, [p3, #28]
+# CHECK: c70: 98 86 14 02 lda m1, [p2, #4]
+# CHECK: c74: 98 96 84 04 lda r4, [p4, #-32]
+# CHECK: c78: 98 56 04 06 lda r2, [p6, #0]
+# CHECK: c7c: 98 ce 76 01 lda eh11, [p1, #28]
+# CHECK: c80: 98 1e 15 07 lda p2, [p7, #4]
+# CHECK: c84: 98 06 84 00 lda m0, [p0, #-32]
+# CHECK: c88: 98 a6 04 05 lda dn1, [p5, #0]
+# CHECK: c8c: 98 06 76 03 lda m4, [p3, #28]
+# CHECK: c90: 98 26 16 02 lda dn4, [p2, #4]
+# CHECK: c94: 98 4e 86 04 lda eh9, [p4, #-32]
+# CHECK: c98: 98 46 05 06 lda dj2, [p6, #0]
+# CHECK: c9c: 98 9e 75 01 lda p3, [p1, #28]
+# CHECK: ca0: 98 76 16 07 lda r19, [p7, #4]
+# CHECK: ca4: 98 66 85 00 lda dc2, [p0, #-32]
+# CHECK: ca8: 98 ce 05 05 lda eh7, [p5, #0]
+# CHECK: cac: 98 ee 74 03 lda el3, [p3, #28]
+# CHECK: cb0: 98 ce 14 02 lda eh3, [p2, #4]
+# CHECK: cb4: 98 c6 84 04 lda dj1, [p4, #-32]
+# CHECK: cb8: 98 8e 04 06 lda eh2, [p6, #0]
+# CHECK: cbc: 98 66 74 01 lda dc0, [p1, #28]
+# CHECK: cc0: 98 4e 15 07 lda eh5, [p7, #4]
+# CHECK: cc4: 98 16 85 00 lda r8, [p0, #-32]
+# CHECK: cc8: 98 8e 06 05 lda eh10, [p5, #0]
+# CHECK: ccc: 98 36 74 03 lda r1, [p3, #28]
+# CHECK: cd0: 98 a6 15 02 lda dn3, [p2, #4]
+# CHECK: cd4: 98 96 85 04 lda r12, [p4, #-32]
+# CHECK: cd8: 98 26 05 06 lda dn2, [p6, #0]
+# CHECK: cdc: 98 b6 77 01 lda r29, [p1, #28]
+# CHECK: ce0: 98 36 16 07 lda r17, [p7, #4]
+# CHECK: ce4: 98 16 84 00 lda r0, [p0, #-32]
+# CHECK: ce8: 98 96 06 05 lda r20, [p5, #0]
+# CHECK: cec: 98 a6 77 03 lda dn7, [p3, #28]
+# CHECK: cf0: 98 e6 17 02 lda dc7, [p2, #4]
+# CHECK: cf4: 98 86 87 04 lda m7, [p4, #-32]
+# CHECK: cf8: 98 1e 07 06 lda p6, [p6, #0]
+# CHECK: cfc: 98 b6 74 01 lda r5, [p1, #28]
+# CHECK: d00: 98 f6 16 07 lda r23, [p7, #4]
+# CHECK: d04: 98 36 85 00 lda r9, [p0, #-32]
+# CHECK: d08: 98 46 06 05 lda dj4, [p5, #0]
+# CHECK: d0c: 98 66 77 03 lda dc6, [p3, #28]
+# CHECK: d10: 98 2e 16 02 lda el8, [p2, #4]
+# CHECK: d14: 98 c6 86 04 lda dj5, [p4, #-32]
+# CHECK: d18: 98 16 07 06 lda r24, [p6, #0]
+# CHECK: d1c: 98 e6 76 01 lda dc5, [p1, #28]
+# CHECK: d20: 98 3e 14 07 lda lr, [p7, #4]
+# CHECK: d24: 98 f6 87 00 lda r31, [p0, #-32]
+# CHECK: d28: 98 86 06 05 lda m5, [p5, #0]
+# CHECK: d2c: 98 56 76 03 lda r18, [p3, #28]
+# CHECK: d30: 98 c6 15 02 lda dj3, [p2, #4]
+# CHECK: d34: 98 6e 85 04 lda el5, [p4, #-32]
+# CHECK: d38: 98 0e 04 06 lda eh0, [p6, #0]
+# CHECK: d3c: 98 d6 77 01 lda r30, [p1, #28]
+# CHECK: d40: 98 46 17 07 lda dj6, [p7, #4]
+# CHECK: d44: 98 d6 85 00 lda r14, [p0, #-32]
+# CHECK: d48: 98 0e 05 05 lda eh4, [p5, #0]
+# CHECK: d4c: 98 86 75 03 lda m3, [p3, #28]
+# CHECK: d50: 98 c6 ab 04 lda dj7, [p4], m5
+# CHECK: d54: 98 1e 29 06 lda p2, [p6], m1
+# CHECK: d58: 98 ae e9 02 lda el6, [p2], m7
+# CHECK: d5c: 98 56 69 07 lda r10, [p7], m3
+# CHECK: d60: 98 06 cb 03 lda m6, [p3], m6
+# CHECK: d64: 98 ee 49 00 lda el7, [p0], m2
+# CHECK: d68: 98 d6 09 01 lda r14, [p1], m0
+# CHECK: d6c: 98 ce 88 05 lda eh3, [p5], m4
+# CHECK: d70: 98 9e aa 04 lda p5, [p4], m5
+# CHECK: d74: 98 b6 29 06 lda r13, [p6], m1
+# CHECK: d78: 98 06 e9 02 lda m2, [p2], m7
+# CHECK: d7c: 98 c6 68 07 lda dj1, [p7], m3
+# CHECK: d80: 98 9e c8 03 lda p1, [p3], m6
+# CHECK: d84: 98 4e 48 00 lda eh1, [p0], m2
+# CHECK: d88: 98 f6 08 01 lda r7, [p1], m0
+# CHECK: d8c: 98 86 8a 05 lda m5, [p5], m4
+# CHECK: d90: 98 46 aa 04 lda dj4, [p4], m5
+# CHECK: d94: 98 ae 28 06 lda el2, [p6], m1
+# CHECK: d98: 98 0e ea 02 lda eh8, [p2], m7
+# CHECK: d9c: 98 f6 69 07 lda r15, [p7], m3
+# CHECK: da0: 98 e6 c9 03 lda dc3, [p3], m6
+# CHECK: da4: 98 86 48 00 lda m1, [p0], m2
+# CHECK: da8: 98 46 09 01 lda dj2, [p1], m0
+# CHECK: dac: 98 f6 8a 05 lda r23, [p5], m4
+# CHECK: db0: 98 f6 ab 04 lda r31, [p4], m5
+# CHECK: db4: 98 76 28 06 lda r3, [p6], m1
+# CHECK: db8: 98 b6 e8 02 lda r5, [p2], m7
+# CHECK: dbc: 98 9e 69 07 lda p3, [p7], m3
+# CHECK: dc0: 98 a6 cb 03 lda dn7, [p3], m6
+# CHECK: dc4: 98 8e 48 00 lda eh2, [p0], m2
+# CHECK: dc8: 98 06 08 01 lda m0, [p1], m0
+# CHECK: dcc: 98 1e 8b 05 lda p6, [p5], m4
+# CHECK: dd0: 98 56 ab 04 lda r26, [p4], m5
+# CHECK: dd4: 98 ce 2a 06 lda eh11, [p6], m1
+# CHECK: dd8: 98 36 ea 02 lda r17, [p2], m7
+# CHECK: ddc: 98 56 6a 07 lda r18, [p7], m3
+# CHECK: de0: 98 86 c9 03 lda m3, [p3], m6
+# CHECK: de4: 98 96 49 00 lda r12, [p0], m2
+# CHECK: de8: 98 ce 09 01 lda eh7, [p1], m0
+# CHECK: dec: 98 66 8b 05 lda dc6, [p5], m4
+# CHECK: df0: 98 c6 aa 04 lda dj5, [p4], m5
+# CHECK: df4: 98 b6 2a 06 lda r21, [p6], m1
+# CHECK: df8: 98 8e e9 02 lda eh6, [p2], m7
+# CHECK: dfc: 98 4e 6a 07 lda eh9, [p7], m3
+# CHECK: e00: 98 26 cb 03 lda dn6, [p3], m6
+# CHECK: e04: 98 ae 4a 00 lda el10, [p0], m2
+# CHECK: e08: 98 66 09 01 lda dc2, [p1], m0
+# CHECK: e0c: 98 2e 89 05 lda el4, [p5], m4
+# CHECK: e10: 98 16 a8 04 lda r0, [p4], m5
+# CHECK: e14: 98 56 28 06 lda r2, [p6], m1
+# CHECK: e18: 98 16 e9 02 lda r8, [p2], m7
+# CHECK: e1c: 98 96 6a 07 lda r20, [p7], m3
+# CHECK: e20: 98 e6 c8 03 lda dc1, [p3], m6
+# CHECK: e24: 98 26 48 00 lda dn0, [p0], m2
+# CHECK: e28: 98 26 09 01 lda dn2, [p1], m0
+# CHECK: e2c: 98 16 8a 05 lda r16, [p5], m4
+# CHECK: e30: 98 d6 aa 04 lda r22, [p4], m5
+# CHECK: e34: 98 e6 2b 06 lda dc7, [p6], m1
+# CHECK: e38: 98 b6 eb 02 lda r29, [p2], m7
+# CHECK: e3c: 98 36 69 07 lda r9, [p7], m3
+# CHECK: e40: 98 0e c8 03 lda eh0, [p3], m6
+# CHECK: e44: 98 8e 4a 00 lda eh10, [p0], m2
+# CHECK: e48: 98 06 0a 01 lda m4, [p1], m0
+# CHECK: e4c: 98 46 8b 05 lda dj6, [p5], m4
+# CHECK: e50: 98 76 a9 04 lda r11, [p4], m5
+# CHECK: e54: 98 2e 28 06 lda el0, [p6], m1
+# CHECK: e58: 98 36 eb 02 lda r25, [p2], m7
+# CHECK: e5c: 98 4e 69 07 lda eh5, [p7], m3
+# CHECK: e60: 98 a6 c8 03 lda dn1, [p3], m6
+# CHECK: e64: 98 a6 4a 00 lda dn5, [p0], m2
+# CHECK: e68: 98 a6 09 01 lda dn3, [p1], m0
+# CHECK: e6c: 98 2e 8a 05 lda el8, [p5], m4
+# CHECK: e70: 98 e6 aa 04 lda dc5, [p4], m5
+# CHECK: e74: 98 0e 29 06 lda eh4, [p6], m1
+# CHECK: e78: 98 66 ea 02 lda dc4, [p2], m7
+# CHECK: e7c: 98 d6 68 07 lda r6, [p7], m3
+# CHECK: e80: 98 76 cb 03 lda r27, [p3], m6
+# CHECK: e84: 98 26 4a 00 lda dn4, [p0], m2
+# CHECK: e88: 98 3e 08 01 lda lr, [p1], m0
+# CHECK: e8c: 98 16 8b 05 lda r24, [p5], m4
+# CHECK: e90: 98 6e a8 04 lda el1, [p4], m5
+# CHECK: e94: 98 ee 2a 06 lda el11, [p6], m1
+# CHECK: e98: 98 36 e8 02 lda r1, [p2], m7
+# CHECK: e9c: 98 1e 68 07 lda p0, [p7], m3
+# CHECK: ea0: 98 d6 cb 03 lda r30, [p3], m6
+# CHECK: ea4: 98 9e 4b 00 lda p7, [p0], m2
+# CHECK: ea8: 98 86 0b 01 lda m7, [p1], m0
+# CHECK: eac: 98 1e 8a 05 lda p4, [p5], m4
+# CHECK: eb0: 98 c6 a9 04 lda dj3, [p4], m5
+# CHECK: eb4: 98 ee 28 06 lda el3, [p6], m1
+# CHECK: eb8: 98 76 ea 02 lda r19, [p2], m7
+# CHECK: ebc: 98 66 68 07 lda dc0, [p7], m3
+# CHECK: ec0: 98 46 c8 03 lda dj0, [p3], m6
+# CHECK: ec4: 98 6e 49 00 lda el5, [p0], m2
+# CHECK: ec8: 98 96 0b 01 lda r28, [p1], m0
+# CHECK: ecc: 98 96 88 05 lda r4, [p5], m4
+# CHECK: ed0: 98 6e aa 04 lda el9, [p4], m5
+# CHECK: ed4: 98 66 1f 04 lda dc6, [p4], #4
+# CHECK: ed8: 98 d6 0c 01 lda r6, [p1], #0
+# CHECK: edc: 98 9e 8c 05 lda p1, [p5], #-32
+# CHECK: ee0: 98 b6 7f 07 lda r29, [p7], #28
+# CHECK: ee4: 98 2e 1e 02 lda el8, [p2], #4
+# CHECK: ee8: 98 36 0d 03 lda r9, [p3], #0
+# CHECK: eec: 98 1e 8c 00 lda p0, [p0], #-32
+# CHECK: ef0: 98 0e 7e 06 lda eh8, [p6], #28
+# CHECK: ef4: 98 9e 1e 04 lda p5, [p4], #4
+# CHECK: ef8: 98 86 0d 01 lda m3, [p1], #0
+# CHECK: efc: 98 a6 8c 05 lda dn1, [p5], #-32
+# CHECK: f00: 98 06 7d 07 lda m2, [p7], #28
+# CHECK: f04: 98 c6 1f 02 lda dj7, [p2], #4
+# CHECK: f08: 98 06 0f 03 lda m6, [p3], #0
+# CHECK: f0c: 98 76 8d 00 lda r11, [p0], #-32
+# CHECK: f10: 98 4e 7e 06 lda eh9, [p6], #28
+# CHECK: f14: 98 56 1f 04 lda r26, [p4], #4
+# CHECK: f18: 98 16 0f 01 lda r24, [p1], #0
+# CHECK: f1c: 98 46 8c 05 lda dj0, [p5], #-32
+# CHECK: f20: 98 a6 7d 07 lda dn3, [p7], #28
+# CHECK: f24: 98 c6 1e 02 lda dj5, [p2], #4
+# CHECK: f28: 98 2e 0d 03 lda el4, [p3], #0
+# CHECK: f2c: 98 b6 8d 00 lda r13, [p0], #-32
+# CHECK: f30: 98 ae 7c 06 lda el2, [p6], #28
+# CHECK: f34: 98 4e 1d 04 lda eh5, [p4], #4
+# CHECK: f38: 98 b6 0c 01 lda r5, [p1], #0
+# CHECK: f3c: 98 f6 8f 05 lda r31, [p5], #-32
+# CHECK: f40: 98 f6 7d 07 lda r15, [p7], #28
+# CHECK: f44: 98 76 1c 02 lda r3, [p2], #4
+# CHECK: f48: 98 6e 0e 03 lda el9, [p3], #0
+# CHECK: f4c: 98 1e 8d 00 lda p2, [p0], #-32
+# CHECK: f50: 98 86 7c 06 lda m1, [p6], #28
+# CHECK: f54: 98 66 1e 04 lda dc4, [p4], #4
+# CHECK: f58: 98 06 0e 01 lda m4, [p1], #0
+# CHECK: f5c: 98 26 8d 05 lda dn2, [p5], #-32
+# CHECK: f60: 98 ee 7e 07 lda el11, [p7], #28
+# CHECK: f64: 98 56 1e 02 lda r18, [p2], #4
+# CHECK: f68: 98 d6 0d 03 lda r14, [p3], #0
+# CHECK: f6c: 98 66 8d 00 lda dc2, [p0], #-32
+# CHECK: f70: 98 8e 7d 06 lda eh6, [p6], #28
+# CHECK: f74: 98 86 1e 04 lda m5, [p4], #4
+# CHECK: f78: 98 e6 0d 01 lda dc3, [p1], #0
+# CHECK: f7c: 98 4e 8c 05 lda eh1, [p5], #-32
+# CHECK: f80: 98 1e 7e 07 lda p4, [p7], #28
+# CHECK: f84: 98 26 1c 02 lda dn0, [p2], #4
+# CHECK: f88: 98 8e 0c 03 lda eh2, [p3], #0
+# CHECK: f8c: 98 2e 8c 00 lda el0, [p0], #-32
+# CHECK: f90: 98 ae 7d 06 lda el6, [p6], #28
+# CHECK: f94: 98 96 1d 04 lda r12, [p4], #4
+# CHECK: f98: 98 66 0c 01 lda dc0, [p1], #0
+# CHECK: f9c: 98 96 8e 05 lda r20, [p5], #-32
+# CHECK: fa0: 98 56 7c 07 lda r2, [p7], #28
+# CHECK: fa4: 98 36 1f 02 lda r25, [p2], #4
+# CHECK: fa8: 98 0e 0d 03 lda eh4, [p3], #0
+# CHECK: fac: 98 d6 8f 00 lda r30, [p0], #-32
+# CHECK: fb0: 98 f6 7e 06 lda r23, [p6], #28
+# CHECK: fb4: 98 b6 1e 04 lda r21, [p4], #4
+# CHECK: fb8: 98 e6 0e 01 lda dc5, [p1], #0
+# CHECK: fbc: 98 86 8f 05 lda m7, [p5], #-32
+# CHECK: fc0: 98 f6 7c 07 lda r7, [p7], #28
+# CHECK: fc4: 98 6e 1d 02 lda el5, [p2], #4
+# CHECK: fc8: 98 36 0c 03 lda r1, [p3], #0
+# CHECK: fcc: 98 96 8f 00 lda r28, [p0], #-32
+# CHECK: fd0: 98 26 7f 06 lda dn6, [p6], #28
+# CHECK: fd4: 98 46 1e 04 lda dj4, [p4], #4
+# CHECK: fd8: 98 16 0d 01 lda r8, [p1], #0
+# CHECK: fdc: 98 06 8c 05 lda m0, [p5], #-32
+# CHECK: fe0: 98 96 7c 07 lda r4, [p7], #28
+# CHECK: fe4: 98 8e 1e 02 lda eh10, [p2], #4
+# CHECK: fe8: 98 6e 0c 03 lda el1, [p3], #0
+# CHECK: fec: 98 ce 8e 00 lda eh11, [p0], #-32
+# CHECK: ff0: 98 e6 7c 06 lda dc1, [p6], #28
+# CHECK: ff4: 98 46 1d 04 lda dj2, [p4], #4
+# CHECK: ff8: 98 9e 0f 01 lda p7, [p1], #0
+# CHECK: ffc: 98 ee 8c 05 lda el3, [p5], #-32
+# CHECK: 1000: 98 76 7e 07 lda r19, [p7], #28
+# CHECK: 1004: 98 c6 1d 02 lda dj3, [p2], #4
+# CHECK: 1008: 98 36 0e 03 lda r17, [p3], #0
+# CHECK: 100c: 98 a6 8e 00 lda dn5, [p0], #-32
+# CHECK: 1010: 98 9e 7d 06 lda p3, [p6], #28
+# CHECK: 1014: 98 a6 1f 04 lda dn7, [p4], #4
+# CHECK: 1018: 98 e6 0f 01 lda dc7, [p1], #0
+# CHECK: 101c: 98 c6 8c 05 lda dj1, [p5], #-32
+# CHECK: 1020: 98 ae 7e 07 lda el10, [p7], #28
+# CHECK: 1024: 98 1e 1f 02 lda p6, [p2], #4
+# CHECK: 1028: 98 76 0f 03 lda r27, [p3], #0
+# CHECK: 102c: 98 16 8e 00 lda r16, [p0], #-32
+# CHECK: 1030: 98 ee 7d 06 lda el7, [p6], #28
+# CHECK: 1034: 98 d6 1e 04 lda r22, [p4], #4
+# CHECK: 1038: 98 ce 0c 01 lda eh3, [p1], #0
+# CHECK: 103c: 98 26 8e 05 lda dn4, [p5], #-32
+# CHECK: 1040: 98 0e 7c 07 lda eh0, [p7], #28
+# CHECK: 1044: 98 16 1c 02 lda r0, [p2], #4
+# CHECK: 1048: 98 46 0f 03 lda dj6, [p3], #0
+# CHECK: 104c: 98 56 8d 00 lda r10, [p0], #-32
+# CHECK: 1050: 98 3e 7c 06 lda lr, [p6], #28
+# CHECK: 1054: 98 ce 1d 04 lda eh7, [p4], #4
+# CHECK: 1058: 18 81 04 00 lda m1, [sp, #-2044]
+# CHECK: 105c: 18 91 01 00 lda r12, [sp, #-2048]
+# CHECK: 1060: 18 e9 fc 07 lda el3, [sp, #-4]
+# CHECK: 1064: 18 91 f8 07 lda r4, [sp, #-8]
+# CHECK: 1068: 18 e9 06 00 lda el11, [sp, #-2044]
+# CHECK: 106c: 18 89 02 00 lda eh10, [sp, #-2048]
+# CHECK: 1070: 18 01 fe 07 lda m4, [sp, #-4]
+# CHECK: 1074: 18 b1 f8 07 lda r5, [sp, #-8]
+# CHECK: 1078: 18 99 07 00 lda p7, [sp, #-2044]
+# CHECK: 107c: 18 29 02 00 lda el8, [sp, #-2048]
+# CHECK: 1080: 18 41 ff 07 lda dj6, [sp, #-4]
+# CHECK: 1084: 18 51 f8 07 lda r2, [sp, #-8]
+# CHECK: 1088: 18 b1 06 00 lda r21, [sp, #-2044]
+# CHECK: 108c: 18 61 02 00 lda dc4, [sp, #-2048]
+# CHECK: 1090: 18 e9 fd 07 lda el7, [sp, #-4]
+# CHECK: 1094: 18 71 f8 07 lda r3, [sp, #-8]
+# CHECK: 1098: 18 99 06 00 lda p5, [sp, #-2044]
+# CHECK: 109c: 18 29 00 00 lda el0, [sp, #-2048]
+# CHECK: 10a0: 18 a9 fd 07 lda el6, [sp, #-4]
+# CHECK: 10a4: 18 29 f9 07 lda el4, [sp, #-8]
+# CHECK: 10a8: 18 61 05 00 lda dc2, [sp, #-2044]
+# CHECK: 10ac: 18 01 01 00 lda m2, [sp, #-2048]
+# CHECK: 10b0: 18 99 fd 07 lda p3, [sp, #-4]
+# CHECK: 10b4: 18 01 fb 07 lda m6, [sp, #-8]
+# CHECK: 10b8: 18 b1 07 00 lda r29, [sp, #-2044]
+# CHECK: 10bc: 18 11 00 00 lda r0, [sp, #-2048]
+# CHECK: 10c0: 18 39 fc 07 lda lr, [sp, #-4]
+# CHECK: 10c4: 18 e1 fb 07 lda dc7, [sp, #-8]
+# CHECK: 10c8: 18 49 04 00 lda eh1, [sp, #-2044]
+# CHECK: 10cc: 18 11 03 00 lda r24, [sp, #-2048]
+# CHECK: 10d0: 18 61 ff 07 lda dc6, [sp, #-4]
+# CHECK: 10d4: 18 91 fb 07 lda r28, [sp, #-8]
+# CHECK: 10d8: 18 71 07 00 lda r27, [sp, #-2044]
+# CHECK: 10dc: 18 a1 03 00 lda dn7, [sp, #-2048]
+# CHECK: 10e0: 18 c9 fc 07 lda eh3, [sp, #-4]
+# CHECK: 10e4: 18 81 fb 07 lda m7, [sp, #-8]
+# CHECK: 10e8: 18 09 04 00 lda eh0, [sp, #-2044]
+# CHECK: 10ec: 18 69 01 00 lda el5, [sp, #-2048]
+# CHECK: 10f0: 18 21 ff 07 lda dn6, [sp, #-4]
+# CHECK: 10f4: 18 d1 f8 07 lda r6, [sp, #-8]
+# CHECK: 10f8: 18 31 05 00 lda r9, [sp, #-2044]
+# CHECK: 10fc: 18 f1 01 00 lda r15, [sp, #-2048]
+# CHECK: 1100: 18 41 fd 07 lda dj2, [sp, #-4]
+# CHECK: 1104: 18 21 f8 07 lda dn0, [sp, #-8]
+# CHECK: 1108: 18 99 04 00 lda p1, [sp, #-2044]
+# CHECK: 110c: 18 31 00 00 lda r1, [sp, #-2048]
+# CHECK: 1110: 18 09 fe 07 lda eh8, [sp, #-4]
+# CHECK: 1114: 18 d1 f9 07 lda r14, [sp, #-8]
+# CHECK: 1118: 18 c1 07 00 lda dj7, [sp, #-2044]
+# CHECK: 111c: 18 81 01 00 lda m3, [sp, #-2048]
+# CHECK: 1120: 18 81 fe 07 lda m5, [sp, #-4]
+# CHECK: 1124: 18 11 fa 07 lda r16, [sp, #-8]
+# CHECK: 1128: 18 69 06 00 lda el9, [sp, #-2044]
+# CHECK: 112c: 18 49 02 00 lda eh9, [sp, #-2048]
+# CHECK: 1130: 18 b1 fd 07 lda r13, [sp, #-4]
+# CHECK: 1134: 18 e1 fa 07 lda dc5, [sp, #-8]
+# CHECK: 1138: 18 f1 04 00 lda r7, [sp, #-2044]
+# CHECK: 113c: 18 d1 03 00 lda r30, [sp, #-2048]
+# CHECK: 1140: 18 c1 fe 07 lda dj5, [sp, #-4]
+# CHECK: 1144: 18 89 f8 07 lda eh2, [sp, #-8]
+# CHECK: 1148: 18 71 06 00 lda r19, [sp, #-2044]
+# CHECK: 114c: 18 51 02 00 lda r18, [sp, #-2048]
+# CHECK: 1150: 18 c1 fc 07 lda dj1, [sp, #-4]
+# CHECK: 1154: 18 21 f9 07 lda dn2, [sp, #-8]
+# CHECK: 1158: 18 49 05 00 lda eh5, [sp, #-2044]
+# CHECK: 115c: 18 e1 01 00 lda dc3, [sp, #-2048]
+# CHECK: 1160: 18 c9 fe 07 lda eh11, [sp, #-4]
+# CHECK: 1164: 18 a1 fa 07 lda dn5, [sp, #-8]
+# CHECK: 1168: 18 11 05 00 lda r8, [sp, #-2044]
+# CHECK: 116c: 18 31 02 00 lda r17, [sp, #-2048]
+# CHECK: 1170: 18 91 fe 07 lda r20, [sp, #-4]
+# CHECK: 1174: 18 19 f9 07 lda p2, [sp, #-8]
+# CHECK: 1178: 18 41 06 00 lda dj4, [sp, #-2044]
+# CHECK: 117c: 18 19 03 00 lda p6, [sp, #-2048]
+# CHECK: 1180: 18 a9 fe 07 lda el10, [sp, #-4]
+# CHECK: 1184: 18 19 fa 07 lda p4, [sp, #-8]
+# CHECK: 1188: 18 c9 05 00 lda eh7, [sp, #-2044]
+# CHECK: 118c: 18 f1 02 00 lda r23, [sp, #-2048]
+# CHECK: 1190: 18 a1 fd 07 lda dn3, [sp, #-4]
+# CHECK: 1194: 18 a1 f8 07 lda dn1, [sp, #-8]
+# CHECK: 1198: 18 e1 04 00 lda dc1, [sp, #-2044]
+# CHECK: 119c: 18 51 03 00 lda r26, [sp, #-2048]
+# CHECK: 11a0: 18 69 fc 07 lda el1, [sp, #-4]
+# CHECK: 11a4: 18 09 f9 07 lda eh4, [sp, #-8]
+# CHECK: 11a8: 18 41 04 00 lda dj0, [sp, #-2044]
+# CHECK: 11ac: 18 a9 00 00 lda el2, [sp, #-2048]
+# CHECK: 11b0: 18 d1 fe 07 lda r22, [sp, #-4]
+# CHECK: 11b4: 18 51 f9 07 lda r10, [sp, #-8]
+# CHECK: 11b8: 18 31 07 00 lda r25, [sp, #-2044]
+# CHECK: 11bc: 18 f1 03 00 lda r31, [sp, #-2048]
+# CHECK: 11c0: 18 89 fd 07 lda eh6, [sp, #-4]
+# CHECK: 11c4: 18 01 f8 07 lda m0, [sp, #-8]
+# CHECK: 11c8: 18 21 06 00 lda dn4, [sp, #-2044]
+# CHECK: 11cc: 18 61 00 00 lda dc0, [sp, #-2048]
+# CHECK: 11d0: 18 c1 fd 07 lda dj3, [sp, #-4]
+# CHECK: 11d4: 18 19 f8 07 lda p0, [sp, #-8]
+# CHECK: 11d8: 18 71 05 00 lda r11, [sp, #-2044]
+# CHECK: 11dc: 98 27 a3 02 lda q3, [p2, dj5]
+# CHECK: 11e0: 98 27 e3 05 lda q3, [p5, dj7]
+# CHECK: 11e4: 98 27 80 06 lda q0, [p6, dj4]
+# CHECK: 11e8: 98 27 c0 00 lda q0, [p0, dj6]
+# CHECK: 11ec: 98 27 43 04 lda q3, [p4, dj2]
+# CHECK: 11f0: 98 27 63 03 lda q3, [p3, dj3]
+# CHECK: 11f4: 98 27 20 07 lda q0, [p7, dj1]
+# CHECK: 11f8: 98 27 00 01 lda q0, [p1, dj0]
+# CHECK: 11fc: 98 27 87 01 lda q3, [p1, #-128]
+# CHECK: 1200: 98 27 07 04 lda q3, [p4, #0]
+# CHECK: 1204: 98 27 74 02 lda q0, [p2, #112]
+# CHECK: 1208: 98 27 14 03 lda q0, [p3, #16]
+# CHECK: 120c: 98 27 87 06 lda q3, [p6, #-128]
+# CHECK: 1210: 98 27 07 00 lda q3, [p0, #0]
+# CHECK: 1214: 98 27 74 05 lda q0, [p5, #112]
+# CHECK: 1218: 98 27 14 07 lda q0, [p7, #16]
+# CHECK: 121c: 98 27 2b 04 lda q3, [p4], m1
+# CHECK: 1220: 98 27 e8 06 lda q0, [p6], m7
+# CHECK: 1224: 98 27 68 05 lda q0, [p5], m3
+# CHECK: 1228: 98 27 4b 00 lda q3, [p0], m2
+# CHECK: 122c: 98 27 8b 03 lda q3, [p3], m4
+# CHECK: 1230: 98 27 08 02 lda q0, [p2], m0
+# CHECK: 1234: 98 27 a8 01 lda q0, [p1], m5
+# CHECK: 1238: 98 27 cb 07 lda q3, [p7], m6
+# CHECK: 123c: 98 27 7f 05 lda q3, [p5], #112
+# CHECK: 1240: 98 27 8f 00 lda q3, [p0], #-128
+# CHECK: 1244: 98 27 1c 06 lda q0, [p6], #16
+# CHECK: 1248: 98 27 0c 03 lda q0, [p3], #0
+# CHECK: 124c: 98 27 7f 01 lda q3, [p1], #112
+# CHECK: 1250: 98 27 8f 04 lda q3, [p4], #-128
+# CHECK: 1254: 98 27 1c 07 lda q0, [p7], #16
+# CHECK: 1258: 98 27 0c 02 lda q0, [p2], #0
+# CHECK: 125c: 98 a7 00 00 lda q0, [sp, #-8192]
+# CHECK: 1260: 98 a7 fb 07 lda q3, [sp, #-32]
+# CHECK: 1264: 98 a7 07 00 lda q3, [sp, #-8176]
+# CHECK: 1268: 98 a7 fc 07 lda q0, [sp, #-16]
+# CHECK: 126c: 98 12 a2 06 lda.s16 r16, [p6, dj5]
+# CHECK: 1270: 98 d2 e1 02 lda.s16 r14, [p2, dj7]
+# CHECK: 1274: 98 52 42 07 lda.s16 r18, [p7, dj2]
+# CHECK: 1278: 98 f2 c2 03 lda.s16 r23, [p3, dj6]
+# CHECK: 127c: 98 92 21 05 lda.s16 r12, [p5, dj1]
+# CHECK: 1280: 98 32 82 00 lda.s16 r17, [p0, dj4]
+# CHECK: 1284: 98 12 63 01 lda.s16 r24, [p1, dj3]
+# CHECK: 1288: 98 12 01 04 lda.s16 r8, [p4, dj0]
+# CHECK: 128c: 98 b2 a2 06 lda.s16 r21, [p6, dj5]
+# CHECK: 1290: 98 52 e0 02 lda.s16 r2, [p2, dj7]
+# CHECK: 1294: 98 92 42 07 lda.s16 r20, [p7, dj2]
+# CHECK: 1298: 98 b2 c0 03 lda.s16 r5, [p3, dj6]
+# CHECK: 129c: 98 f2 20 05 lda.s16 r7, [p5, dj1]
+# CHECK: 12a0: 98 32 80 00 lda.s16 r1, [p0, dj4]
+# CHECK: 12a4: 98 92 63 01 lda.s16 r28, [p1, dj3]
+# CHECK: 12a8: 98 92 00 04 lda.s16 r4, [p4, dj0]
+# CHECK: 12ac: 98 72 a3 06 lda.s16 r27, [p6, dj5]
+# CHECK: 12b0: 98 d2 e0 02 lda.s16 r6, [p2, dj7]
+# CHECK: 12b4: 98 12 40 07 lda.s16 r0, [p7, dj2]
+# CHECK: 12b8: 98 d2 c2 03 lda.s16 r22, [p3, dj6]
+# CHECK: 12bc: 98 f2 23 05 lda.s16 r31, [p5, dj1]
+# CHECK: 12c0: 98 32 81 00 lda.s16 r9, [p0, dj4]
+# CHECK: 12c4: 98 d2 63 01 lda.s16 r30, [p1, dj3]
+# CHECK: 12c8: 98 72 00 04 lda.s16 r3, [p4, dj0]
+# CHECK: 12cc: 98 52 a1 06 lda.s16 r10, [p6, dj5]
+# CHECK: 12d0: 98 72 e1 02 lda.s16 r11, [p2, dj7]
+# CHECK: 12d4: 98 b2 41 07 lda.s16 r13, [p7, dj2]
+# CHECK: 12d8: 98 32 c3 03 lda.s16 r25, [p3, dj6]
+# CHECK: 12dc: 98 b2 23 05 lda.s16 r29, [p5, dj1]
+# CHECK: 12e0: 98 52 83 00 lda.s16 r26, [p0, dj4]
+# CHECK: 12e4: 98 f2 61 01 lda.s16 r15, [p1, dj3]
+# CHECK: 12e8: 98 72 02 04 lda.s16 r19, [p4, dj0]
+# CHECK: 12ec: 98 92 05 07 lda.s16 r12, [p7, #0]
+# CHECK: 12f0: 98 f2 75 05 lda.s16 r15, [p5, #14]
+# CHECK: 12f4: 98 b2 16 06 lda.s16 r21, [p6, #2]
+# CHECK: 12f8: 98 b2 85 01 lda.s16 r13, [p1, #-16]
+# CHECK: 12fc: 98 f2 04 03 lda.s16 r7, [p3, #0]
+# CHECK: 1300: 98 72 75 02 lda.s16 r11, [p2, #14]
+# CHECK: 1304: 98 52 15 04 lda.s16 r10, [p4, #2]
+# CHECK: 1308: 98 92 86 00 lda.s16 r20, [p0, #-16]
+# CHECK: 130c: 98 32 06 07 lda.s16 r17, [p7, #0]
+# CHECK: 1310: 98 32 77 05 lda.s16 r25, [p5, #14]
+# CHECK: 1314: 98 d2 14 06 lda.s16 r6, [p6, #2]
+# CHECK: 1318: 98 12 87 01 lda.s16 r24, [p1, #-16]
+# CHECK: 131c: 98 92 04 03 lda.s16 r4, [p3, #0]
+# CHECK: 1320: 98 f2 76 02 lda.s16 r23, [p2, #14]
+# CHECK: 1324: 98 d2 15 04 lda.s16 r14, [p4, #2]
+# CHECK: 1328: 98 f2 87 00 lda.s16 r31, [p0, #-16]
+# CHECK: 132c: 98 d2 07 07 lda.s16 r30, [p7, #0]
+# CHECK: 1330: 98 12 75 05 lda.s16 r8, [p5, #14]
+# CHECK: 1334: 98 52 14 06 lda.s16 r2, [p6, #2]
+# CHECK: 1338: 98 12 86 01 lda.s16 r16, [p1, #-16]
+# CHECK: 133c: 98 92 07 03 lda.s16 r28, [p3, #0]
+# CHECK: 1340: 98 72 76 02 lda.s16 r19, [p2, #14]
+# CHECK: 1344: 98 52 16 04 lda.s16 r18, [p4, #2]
+# CHECK: 1348: 98 52 87 00 lda.s16 r26, [p0, #-16]
+# CHECK: 134c: 98 b2 07 07 lda.s16 r29, [p7, #0]
+# CHECK: 1350: 98 d2 76 05 lda.s16 r22, [p5, #14]
+# CHECK: 1354: 98 32 15 06 lda.s16 r9, [p6, #2]
+# CHECK: 1358: 98 72 87 01 lda.s16 r27, [p1, #-16]
+# CHECK: 135c: 98 b2 04 03 lda.s16 r5, [p3, #0]
+# CHECK: 1360: 98 72 74 02 lda.s16 r3, [p2, #14]
+# CHECK: 1364: 98 32 14 04 lda.s16 r1, [p4, #2]
+# CHECK: 1368: 98 12 84 00 lda.s16 r0, [p0, #-16]
+# CHECK: 136c: 98 92 a9 04 lda.s16 r12, [p4], m5
+# CHECK: 1370: 98 12 ca 01 lda.s16 r16, [p1], m6
+# CHECK: 1374: 98 72 8b 03 lda.s16 r27, [p3], m4
+# CHECK: 1378: 98 f2 08 02 lda.s16 r7, [p2], m0
+# CHECK: 137c: 98 d2 48 06 lda.s16 r6, [p6], m2
+# CHECK: 1380: 98 52 ea 05 lda.s16 r18, [p5], m7
+# CHECK: 1384: 98 d2 6a 07 lda.s16 r22, [p7], m3
+# CHECK: 1388: 98 12 2b 00 lda.s16 r24, [p0], m1
+# CHECK: 138c: 98 32 ab 04 lda.s16 r25, [p4], m5
+# CHECK: 1390: 98 92 ca 01 lda.s16 r20, [p1], m6
+# CHECK: 1394: 98 52 89 03 lda.s16 r10, [p3], m4
+# CHECK: 1398: 98 72 0a 02 lda.s16 r19, [p2], m0
+# CHECK: 139c: 98 f2 4b 06 lda.s16 r31, [p6], m2
+# CHECK: 13a0: 98 f2 ea 05 lda.s16 r23, [p5], m7
+# CHECK: 13a4: 98 32 69 07 lda.s16 r9, [p7], m3
+# CHECK: 13a8: 98 32 28 00 lda.s16 r1, [p0], m1
+# CHECK: 13ac: 98 92 a8 04 lda.s16 r4, [p4], m5
+# CHECK: 13b0: 98 b2 c9 01 lda.s16 r13, [p1], m6
+# CHECK: 13b4: 98 72 89 03 lda.s16 r11, [p3], m4
+# CHECK: 13b8: 98 b2 0b 02 lda.s16 r29, [p2], m0
+# CHECK: 13bc: 98 f2 49 06 lda.s16 r15, [p6], m2
+# CHECK: 13c0: 98 52 eb 05 lda.s16 r26, [p5], m7
+# CHECK: 13c4: 98 b2 6a 07 lda.s16 r21, [p7], m3
+# CHECK: 13c8: 98 72 28 00 lda.s16 r3, [p0], m1
+# CHECK: 13cc: 98 12 a8 04 lda.s16 r0, [p4], m5
+# CHECK: 13d0: 98 b2 c8 01 lda.s16 r5, [p1], m6
+# CHECK: 13d4: 98 d2 89 03 lda.s16 r14, [p3], m4
+# CHECK: 13d8: 98 12 09 02 lda.s16 r8, [p2], m0
+# CHECK: 13dc: 98 d2 4b 06 lda.s16 r30, [p6], m2
+# CHECK: 13e0: 98 92 eb 05 lda.s16 r28, [p5], m7
+# CHECK: 13e4: 98 32 6a 07 lda.s16 r17, [p7], m3
+# CHECK: 13e8: 98 52 28 00 lda.s16 r2, [p0], m1
+# CHECK: 13ec: 98 52 0f 02 lda.s16 r26, [p2], #0
+# CHECK: 13f0: 98 12 7c 05 lda.s16 r0, [p5], #14
+# CHECK: 13f4: 98 d2 1f 06 lda.s16 r30, [p6], #2
+# CHECK: 13f8: 98 12 8e 07 lda.s16 r16, [p7], #-16
+# CHECK: 13fc: 98 72 0d 01 lda.s16 r11, [p1], #0
+# CHECK: 1400: 98 12 7d 03 lda.s16 r8, [p3], #14
+# CHECK: 1404: 98 92 1c 04 lda.s16 r4, [p4], #2
+# CHECK: 1408: 98 32 8d 00 lda.s16 r9, [p0], #-16
+# CHECK: 140c: 98 d2 0c 02 lda.s16 r6, [p2], #0
+# CHECK: 1410: 98 52 7e 05 lda.s16 r18, [p5], #14
+# CHECK: 1414: 98 52 1d 06 lda.s16 r10, [p6], #2
+# CHECK: 1418: 98 52 8c 07 lda.s16 r2, [p7], #-16
+# CHECK: 141c: 98 b2 0e 01 lda.s16 r21, [p1], #0
+# CHECK: 1420: 98 f2 7d 03 lda.s16 r15, [p3], #14
+# CHECK: 1424: 98 72 1e 04 lda.s16 r19, [p4], #2
+# CHECK: 1428: 98 d2 8d 00 lda.s16 r14, [p0], #-16
+# CHECK: 142c: 98 f2 0e 02 lda.s16 r23, [p2], #0
+# CHECK: 1430: 98 b2 7f 05 lda.s16 r29, [p5], #14
+# CHECK: 1434: 98 f2 1c 06 lda.s16 r7, [p6], #2
+# CHECK: 1438: 98 72 8f 07 lda.s16 r27, [p7], #-16
+# CHECK: 143c: 98 12 0f 01 lda.s16 r24, [p1], #0
+# CHECK: 1440: 98 d2 7e 03 lda.s16 r22, [p3], #14
+# CHECK: 1444: 98 92 1d 04 lda.s16 r12, [p4], #2
+# CHECK: 1448: 98 72 8c 00 lda.s16 r3, [p0], #-16
+# CHECK: 144c: 98 f2 0f 02 lda.s16 r31, [p2], #0
+# CHECK: 1450: 98 92 7e 05 lda.s16 r20, [p5], #14
+# CHECK: 1454: 98 32 1f 06 lda.s16 r25, [p6], #2
+# CHECK: 1458: 98 32 8c 07 lda.s16 r1, [p7], #-16
+# CHECK: 145c: 98 b2 0d 01 lda.s16 r13, [p1], #0
+# CHECK: 1460: 98 b2 7c 03 lda.s16 r5, [p3], #14
+# CHECK: 1464: 98 32 1e 04 lda.s16 r17, [p4], #2
+# CHECK: 1468: 98 92 8f 00 lda.s16 r28, [p0], #-16
+# CHECK: 146c: 98 e2 41 00 lda.s8 r15, [p0, dj2]
+# CHECK: 1470: 98 e2 c2 04 lda.s8 r23, [p4, dj6]
+# CHECK: 1474: 98 02 81 07 lda.s8 r8, [p7, dj4]
+# CHECK: 1478: 98 22 61 05 lda.s8 r9, [p5, dj3]
+# CHECK: 147c: 98 02 a0 06 lda.s8 r0, [p6, dj5]
+# CHECK: 1480: 98 c2 23 02 lda.s8 r30, [p2, dj1]
+# CHECK: 1484: 98 42 e1 03 lda.s8 r10, [p3, dj7]
+# CHECK: 1488: 98 e2 00 01 lda.s8 r7, [p1, dj0]
+# CHECK: 148c: 98 82 43 00 lda.s8 r28, [p0, dj2]
+# CHECK: 1490: 98 42 c2 04 lda.s8 r18, [p4, dj6]
+# CHECK: 1494: 98 82 81 07 lda.s8 r12, [p7, dj4]
+# CHECK: 1498: 98 c2 60 05 lda.s8 r6, [p5, dj3]
+# CHECK: 149c: 98 82 a2 06 lda.s8 r20, [p6, dj5]
+# CHECK: 14a0: 98 62 20 02 lda.s8 r3, [p2, dj1]
+# CHECK: 14a4: 98 a2 e2 03 lda.s8 r21, [p3, dj7]
+# CHECK: 14a8: 98 62 03 01 lda.s8 r27, [p1, dj0]
+# CHECK: 14ac: 98 82 40 00 lda.s8 r4, [p0, dj2]
+# CHECK: 14b0: 98 c2 c2 04 lda.s8 r22, [p4, dj6]
+# CHECK: 14b4: 98 a2 80 07 lda.s8 r5, [p7, dj4]
+# CHECK: 14b8: 98 42 60 05 lda.s8 r2, [p5, dj3]
+# CHECK: 14bc: 98 a2 a3 06 lda.s8 r29, [p6, dj5]
+# CHECK: 14c0: 98 a2 21 02 lda.s8 r13, [p2, dj1]
+# CHECK: 14c4: 98 02 e2 03 lda.s8 r16, [p3, dj7]
+# CHECK: 14c8: 98 62 02 01 lda.s8 r19, [p1, dj0]
+# CHECK: 14cc: 98 e2 43 00 lda.s8 r31, [p0, dj2]
+# CHECK: 14d0: 98 22 c3 04 lda.s8 r25, [p4, dj6]
+# CHECK: 14d4: 98 42 83 07 lda.s8 r26, [p7, dj4]
+# CHECK: 14d8: 98 02 63 05 lda.s8 r24, [p5, dj3]
+# CHECK: 14dc: 98 62 a1 06 lda.s8 r11, [p6, dj5]
+# CHECK: 14e0: 98 c2 21 02 lda.s8 r14, [p2, dj1]
+# CHECK: 14e4: 98 22 e2 03 lda.s8 r17, [p3, dj7]
+# CHECK: 14e8: 98 22 00 01 lda.s8 r1, [p1, dj0]
+# CHECK: 14ec: 98 42 14 04 lda.s8 r2, [p4, #1]
+# CHECK: 14f0: 98 c2 85 02 lda.s8 r14, [p2, #-8]
+# CHECK: 14f4: 98 82 75 03 lda.s8 r12, [p3, #7]
+# CHECK: 14f8: 98 02 05 06 lda.s8 r8, [p6, #0]
+# CHECK: 14fc: 98 e2 17 05 lda.s8 r31, [p5, #1]
+# CHECK: 1500: 98 a2 85 00 lda.s8 r13, [p0, #-8]
+# CHECK: 1504: 98 42 76 01 lda.s8 r18, [p1, #7]
+# CHECK: 1508: 98 a2 07 07 lda.s8 r29, [p7, #0]
+# CHECK: 150c: 98 82 17 04 lda.s8 r28, [p4, #1]
+# CHECK: 1510: 98 22 85 02 lda.s8 r9, [p2, #-8]
+# CHECK: 1514: 98 e2 74 03 lda.s8 r7, [p3, #7]
+# CHECK: 1518: 98 02 04 06 lda.s8 r0, [p6, #0]
+# CHECK: 151c: 98 02 16 05 lda.s8 r16, [p5, #1]
+# CHECK: 1520: 98 22 87 00 lda.s8 r25, [p0, #-8]
+# CHECK: 1524: 98 22 76 01 lda.s8 r17, [p1, #7]
+# CHECK: 1528: 98 c2 04 07 lda.s8 r6, [p7, #0]
+# CHECK: 152c: 98 c2 16 04 lda.s8 r22, [p4, #1]
+# CHECK: 1530: 98 62 86 02 lda.s8 r19, [p2, #-8]
+# CHECK: 1534: 98 82 76 03 lda.s8 r20, [p3, #7]
+# CHECK: 1538: 98 02 07 06 lda.s8 r24, [p6, #0]
+# CHECK: 153c: 98 62 17 05 lda.s8 r27, [p5, #1]
+# CHECK: 1540: 98 42 85 00 lda.s8 r10, [p0, #-8]
+# CHECK: 1544: 98 c2 77 01 lda.s8 r30, [p1, #7]
+# CHECK: 1548: 98 a2 04 07 lda.s8 r5, [p7, #0]
+# CHECK: 154c: 98 22 14 04 lda.s8 r1, [p4, #1]
+# CHECK: 1550: 98 a2 86 02 lda.s8 r21, [p2, #-8]
+# CHECK: 1554: 98 e2 75 03 lda.s8 r15, [p3, #7]
+# CHECK: 1558: 98 e2 06 06 lda.s8 r23, [p6, #0]
+# CHECK: 155c: 98 82 14 05 lda.s8 r4, [p5, #1]
+# CHECK: 1560: 98 62 84 00 lda.s8 r3, [p0, #-8]
+# CHECK: 1564: 98 42 77 01 lda.s8 r26, [p1, #7]
+# CHECK: 1568: 98 62 05 07 lda.s8 r11, [p7, #0]
+# CHECK: 156c: 98 a2 69 06 lda.s8 r13, [p6], m3
+# CHECK: 1570: 98 a2 ca 04 lda.s8 r21, [p4], m6
+# CHECK: 1574: 98 c2 49 07 lda.s8 r14, [p7], m2
+# CHECK: 1578: 98 62 e8 01 lda.s8 r3, [p1], m7
+# CHECK: 157c: 98 e2 89 03 lda.s8 r15, [p3], m4
+# CHECK: 1580: 98 c2 08 02 lda.s8 r6, [p2], m0
+# CHECK: 1584: 98 22 a9 05 lda.s8 r9, [p5], m5
+# CHECK: 1588: 98 a2 2b 00 lda.s8 r29, [p0], m1
+# CHECK: 158c: 98 22 68 06 lda.s8 r1, [p6], m3
+# CHECK: 1590: 98 82 c8 04 lda.s8 r4, [p4], m6
+# CHECK: 1594: 98 02 4b 07 lda.s8 r24, [p7], m2
+# CHECK: 1598: 98 e2 ea 01 lda.s8 r23, [p1], m7
+# CHECK: 159c: 98 e2 88 03 lda.s8 r7, [p3], m4
+# CHECK: 15a0: 98 82 0a 02 lda.s8 r20, [p2], m0
+# CHECK: 15a4: 98 02 a9 05 lda.s8 r8, [p5], m5
+# CHECK: 15a8: 98 e2 2b 00 lda.s8 r31, [p0], m1
+# CHECK: 15ac: 98 82 69 06 lda.s8 r12, [p6], m3
+# CHECK: 15b0: 98 a2 c8 04 lda.s8 r5, [p4], m6
+# CHECK: 15b4: 98 02 48 07 lda.s8 r0, [p7], m2
+# CHECK: 15b8: 98 82 eb 01 lda.s8 r28, [p1], m7
+# CHECK: 15bc: 98 42 8b 03 lda.s8 r26, [p3], m4
+# CHECK: 15c0: 98 42 09 02 lda.s8 r10, [p2], m0
+# CHECK: 15c4: 98 22 ab 05 lda.s8 r25, [p5], m5
+# CHECK: 15c8: 98 62 2b 00 lda.s8 r27, [p0], m1
+# CHECK: 15cc: 98 62 6a 06 lda.s8 r19, [p6], m3
+# CHECK: 15d0: 98 42 c8 04 lda.s8 r2, [p4], m6
+# CHECK: 15d4: 98 02 4a 07 lda.s8 r16, [p7], m2
+# CHECK: 15d8: 98 62 e9 01 lda.s8 r11, [p1], m7
+# CHECK: 15dc: 98 42 8a 03 lda.s8 r18, [p3], m4
+# CHECK: 15e0: 98 22 0a 02 lda.s8 r17, [p2], m0
+# CHECK: 15e4: 98 c2 ab 05 lda.s8 r30, [p5], m5
+# CHECK: 15e8: 98 c2 2a 00 lda.s8 r22, [p0], m1
+# CHECK: 15ec: 98 02 7e 02 lda.s8 r16, [p2], #7
+# CHECK: 15f0: 98 a2 0e 06 lda.s8 r21, [p6], #0
+# CHECK: 15f4: 98 02 1f 07 lda.s8 r24, [p7], #1
+# CHECK: 15f8: 98 22 8e 05 lda.s8 r17, [p5], #-8
+# CHECK: 15fc: 98 c2 7e 00 lda.s8 r22, [p0], #7
+# CHECK: 1600: 98 42 0d 01 lda.s8 r10, [p1], #0
+# CHECK: 1604: 98 62 1f 04 lda.s8 r27, [p4], #1
+# CHECK: 1608: 98 e2 8d 03 lda.s8 r15, [p3], #-8
+# CHECK: 160c: 98 62 7c 02 lda.s8 r3, [p2], #7
+# CHECK: 1610: 98 22 0d 06 lda.s8 r9, [p6], #0
+# CHECK: 1614: 98 42 1f 07 lda.s8 r26, [p7], #1
+# CHECK: 1618: 98 02 8d 05 lda.s8 r8, [p5], #-8
+# CHECK: 161c: 98 c2 7c 00 lda.s8 r6, [p0], #7
+# CHECK: 1620: 98 42 0c 01 lda.s8 r2, [p1], #0
+# CHECK: 1624: 98 e2 1c 04 lda.s8 r7, [p4], #1
+# CHECK: 1628: 98 a2 8d 03 lda.s8 r13, [p3], #-8
+# CHECK: 162c: 98 a2 7f 02 lda.s8 r29, [p2], #7
+# CHECK: 1630: 98 c2 0f 06 lda.s8 r30, [p6], #0
+# CHECK: 1634: 98 82 1e 07 lda.s8 r20, [p7], #1
+# CHECK: 1638: 98 82 8f 05 lda.s8 r28, [p5], #-8
+# CHECK: 163c: 98 22 7c 00 lda.s8 r1, [p0], #7
+# CHECK: 1640: 98 e2 0f 01 lda.s8 r31, [p1], #0
+# CHECK: 1644: 98 22 1f 04 lda.s8 r25, [p4], #1
+# CHECK: 1648: 98 02 8c 03 lda.s8 r0, [p3], #-8
+# CHECK: 164c: 98 c2 7d 02 lda.s8 r14, [p2], #7
+# CHECK: 1650: 98 82 0d 06 lda.s8 r12, [p6], #0
+# CHECK: 1654: 98 a2 1c 07 lda.s8 r5, [p7], #1
+# CHECK: 1658: 98 62 8e 05 lda.s8 r19, [p5], #-8
+# CHECK: 165c: 98 e2 7e 00 lda.s8 r23, [p0], #7
+# CHECK: 1660: 98 82 0c 01 lda.s8 r4, [p1], #0
+# CHECK: 1664: 98 62 1d 04 lda.s8 r11, [p4], #1
+# CHECK: 1668: 98 42 8e 03 lda.s8 r18, [p3], #-8
+# CHECK: 166c: 98 da 00 05 lda.u16 r6, [p5, dj0]
+# CHECK: 1670: 98 7a c0 07 lda.u16 r3, [p7, dj6]
+# CHECK: 1674: 98 3a 83 03 lda.u16 r25, [p3, dj4]
+# CHECK: 1678: 98 5a 21 01 lda.u16 r10, [p1, dj1]
+# CHECK: 167c: 98 da a1 04 lda.u16 r14, [p4, dj5]
+# CHECK: 1680: 98 7a e2 00 lda.u16 r19, [p0, dj7]
+# CHECK: 1684: 98 5a 60 06 lda.u16 r2, [p6, dj3]
+# CHECK: 1688: 98 3a 40 02 lda.u16 r1, [p2, dj2]
+# CHECK: 168c: 98 9a 00 05 lda.u16 r4, [p5, dj0]
+# CHECK: 1690: 98 9a c1 07 lda.u16 r12, [p7, dj6]
+# CHECK: 1694: 98 9a 83 03 lda.u16 r28, [p3, dj4]
+# CHECK: 1698: 98 7a 23 01 lda.u16 r27, [p1, dj1]
+# CHECK: 169c: 98 1a a3 04 lda.u16 r24, [p4, dj5]
+# CHECK: 16a0: 98 ba e0 00 lda.u16 r5, [p0, dj7]
+# CHECK: 16a4: 98 3a 62 06 lda.u16 r17, [p6, dj3]
+# CHECK: 16a8: 98 1a 42 02 lda.u16 r16, [p2, dj2]
+# CHECK: 16ac: 98 ba 02 05 lda.u16 r21, [p5, dj0]
+# CHECK: 16b0: 98 1a c0 07 lda.u16 r0, [p7, dj6]
+# CHECK: 16b4: 98 fa 82 03 lda.u16 r23, [p3, dj4]
+# CHECK: 16b8: 98 fa 20 01 lda.u16 r7, [p1, dj1]
+# CHECK: 16bc: 98 fa a1 04 lda.u16 r15, [p4, dj5]
+# CHECK: 16c0: 98 5a e3 00 lda.u16 r26, [p0, dj7]
+# CHECK: 16c4: 98 ba 61 06 lda.u16 r13, [p6, dj3]
+# CHECK: 16c8: 98 da 42 02 lda.u16 r22, [p2, dj2]
+# CHECK: 16cc: 98 7a 01 05 lda.u16 r11, [p5, dj0]
+# CHECK: 16d0: 98 1a c1 07 lda.u16 r8, [p7, dj6]
+# CHECK: 16d4: 98 da 83 03 lda.u16 r30, [p3, dj4]
+# CHECK: 16d8: 98 fa 23 01 lda.u16 r31, [p1, dj1]
+# CHECK: 16dc: 98 ba a3 04 lda.u16 r29, [p4, dj5]
+# CHECK: 16e0: 98 5a e2 00 lda.u16 r18, [p0, dj7]
+# CHECK: 16e4: 98 9a 62 06 lda.u16 r20, [p6, dj3]
+# CHECK: 16e8: 98 3a 41 02 lda.u16 r9, [p2, dj2]
+# CHECK: 16ec: 98 5a 86 01 lda.u16 r18, [p1, #-16]
+# CHECK: 16f0: 98 7a 07 05 lda.u16 r27, [p5, #0]
+# CHECK: 16f4: 98 7a 75 06 lda.u16 r11, [p6, #14]
+# CHECK: 16f8: 98 1a 16 02 lda.u16 r16, [p2, #2]
+# CHECK: 16fc: 98 fa 86 07 lda.u16 r23, [p7, #-16]
+# CHECK: 1700: 98 1a 04 04 lda.u16 r0, [p4, #0]
+# CHECK: 1704: 98 5a 77 00 lda.u16 r26, [p0, #14]
+# CHECK: 1708: 98 ba 14 03 lda.u16 r5, [p3, #2]
+# CHECK: 170c: 98 3a 87 01 lda.u16 r25, [p1, #-16]
+# CHECK: 1710: 98 ba 05 05 lda.u16 r13, [p5, #0]
+# CHECK: 1714: 98 9a 74 06 lda.u16 r4, [p6, #14]
+# CHECK: 1718: 98 1a 15 02 lda.u16 r8, [p2, #2]
+# CHECK: 171c: 98 fa 87 07 lda.u16 r31, [p7, #-16]
+# CHECK: 1720: 98 fa 04 04 lda.u16 r7, [p4, #0]
+# CHECK: 1724: 98 5a 75 00 lda.u16 r10, [p0, #14]
+# CHECK: 1728: 98 9a 16 03 lda.u16 r20, [p3, #2]
+# CHECK: 172c: 98 da 84 01 lda.u16 r6, [p1, #-16]
+# CHECK: 1730: 98 1a 07 05 lda.u16 r24, [p5, #0]
+# CHECK: 1734: 98 ba 77 06 lda.u16 r29, [p6, #14]
+# CHECK: 1738: 98 ba 16 02 lda.u16 r21, [p2, #2]
+# CHECK: 173c: 98 9a 85 07 lda.u16 r12, [p7, #-16]
+# CHECK: 1740: 98 fa 05 04 lda.u16 r15, [p4, #0]
+# CHECK: 1744: 98 3a 75 00 lda.u16 r9, [p0, #14]
+# CHECK: 1748: 98 da 16 03 lda.u16 r22, [p3, #2]
+# CHECK: 174c: 98 3a 86 01 lda.u16 r17, [p1, #-16]
+# CHECK: 1750: 98 da 05 05 lda.u16 r14, [p5, #0]
+# CHECK: 1754: 98 5a 74 06 lda.u16 r2, [p6, #14]
+# CHECK: 1758: 98 3a 14 02 lda.u16 r1, [p2, #2]
+# CHECK: 175c: 98 9a 87 07 lda.u16 r28, [p7, #-16]
+# CHECK: 1760: 98 7a 06 04 lda.u16 r19, [p4, #0]
+# CHECK: 1764: 98 da 77 00 lda.u16 r30, [p0, #14]
+# CHECK: 1768: 98 7a 14 03 lda.u16 r3, [p3, #2]
+# CHECK: 176c: 98 ba ca 05 lda.u16 r21, [p5], m6
+# CHECK: 1770: 98 7a a8 04 lda.u16 r3, [p4], m5
+# CHECK: 1774: 98 3a 6b 01 lda.u16 r25, [p1], m3
+# CHECK: 1778: 98 da e9 03 lda.u16 r14, [p3], m7
+# CHECK: 177c: 98 fa 2b 06 lda.u16 r31, [p6], m1
+# CHECK: 1780: 98 5a 09 02 lda.u16 r10, [p2], m0
+# CHECK: 1784: 98 fa 49 07 lda.u16 r15, [p7], m2
+# CHECK: 1788: 98 7a 89 00 lda.u16 r11, [p0], m4
+# CHECK: 178c: 98 7a cb 05 lda.u16 r27, [p5], m6
+# CHECK: 1790: 98 9a a9 04 lda.u16 r12, [p4], m5
+# CHECK: 1794: 98 5a 6a 01 lda.u16 r18, [p1], m3
+# CHECK: 1798: 98 1a e9 03 lda.u16 r8, [p3], m7
+# CHECK: 179c: 98 9a 28 06 lda.u16 r4, [p6], m1
+# CHECK: 17a0: 98 9a 0b 02 lda.u16 r28, [p2], m0
+# CHECK: 17a4: 98 3a 48 07 lda.u16 r1, [p7], m2
+# CHECK: 17a8: 98 1a 8b 00 lda.u16 r24, [p0], m4
+# CHECK: 17ac: 98 1a ca 05 lda.u16 r16, [p5], m6
+# CHECK: 17b0: 98 ba a8 04 lda.u16 r5, [p4], m5
+# CHECK: 17b4: 98 fa 68 01 lda.u16 r7, [p1], m3
+# CHECK: 17b8: 98 da ea 03 lda.u16 r22, [p3], m7
+# CHECK: 17bc: 98 da 28 06 lda.u16 r6, [p6], m1
+# CHECK: 17c0: 98 5a 08 02 lda.u16 r2, [p2], m0
+# CHECK: 17c4: 98 9a 4a 07 lda.u16 r20, [p7], m2
+# CHECK: 17c8: 98 3a 89 00 lda.u16 r9, [p0], m4
+# CHECK: 17cc: 98 ba cb 05 lda.u16 r29, [p5], m6
+# CHECK: 17d0: 98 7a aa 04 lda.u16 r19, [p4], m5
+# CHECK: 17d4: 98 ba 69 01 lda.u16 r13, [p1], m3
+# CHECK: 17d8: 98 da eb 03 lda.u16 r30, [p3], m7
+# CHECK: 17dc: 98 1a 28 06 lda.u16 r0, [p6], m1
+# CHECK: 17e0: 98 fa 0a 02 lda.u16 r23, [p2], m0
+# CHECK: 17e4: 98 5a 4b 07 lda.u16 r26, [p7], m2
+# CHECK: 17e8: 98 3a 8a 00 lda.u16 r17, [p0], m4
+# CHECK: 17ec: 98 1a 8d 06 lda.u16 r8, [p6], #-16
+# CHECK: 17f0: 98 fa 7c 04 lda.u16 r7, [p4], #14
+# CHECK: 17f4: 98 3a 0f 01 lda.u16 r25, [p1], #0
+# CHECK: 17f8: 98 1a 1e 00 lda.u16 r16, [p0], #2
+# CHECK: 17fc: 98 ba 8d 07 lda.u16 r13, [p7], #-16
+# CHECK: 1800: 98 5a 7f 02 lda.u16 r26, [p2], #14
+# CHECK: 1804: 98 5a 0e 05 lda.u16 r18, [p5], #0
+# CHECK: 1808: 98 9a 1d 03 lda.u16 r12, [p3], #2
+# CHECK: 180c: 98 7a 8f 06 lda.u16 r27, [p6], #-16
+# CHECK: 1810: 98 7a 7d 04 lda.u16 r11, [p4], #14
+# CHECK: 1814: 98 ba 0f 01 lda.u16 r29, [p1], #0
+# CHECK: 1818: 98 5a 1d 00 lda.u16 r10, [p0], #2
+# CHECK: 181c: 98 da 8d 07 lda.u16 r14, [p7], #-16
+# CHECK: 1820: 98 5a 7c 02 lda.u16 r2, [p2], #14
+# CHECK: 1824: 98 fa 0d 05 lda.u16 r15, [p5], #0
+# CHECK: 1828: 98 9a 1e 03 lda.u16 r20, [p3], #2
+# CHECK: 182c: 98 fa 8e 06 lda.u16 r23, [p6], #-16
+# CHECK: 1830: 98 3a 7c 04 lda.u16 r1, [p4], #14
+# CHECK: 1834: 98 1a 0c 01 lda.u16 r0, [p1], #0
+# CHECK: 1838: 98 da 1f 00 lda.u16 r30, [p0], #2
+# CHECK: 183c: 98 da 8c 07 lda.u16 r6, [p7], #-16
+# CHECK: 1840: 98 9a 7c 02 lda.u16 r4, [p2], #14
+# CHECK: 1844: 98 ba 0e 05 lda.u16 r21, [p5], #0
+# CHECK: 1848: 98 da 1e 03 lda.u16 r22, [p3], #2
+# CHECK: 184c: 98 7a 8e 06 lda.u16 r19, [p6], #-16
+# CHECK: 1850: 98 3a 7e 04 lda.u16 r17, [p4], #14
+# CHECK: 1854: 98 ba 0c 01 lda.u16 r5, [p1], #0
+# CHECK: 1858: 98 fa 1f 00 lda.u16 r31, [p0], #2
+# CHECK: 185c: 98 9a 8f 07 lda.u16 r28, [p7], #-16
+# CHECK: 1860: 98 7a 7c 02 lda.u16 r3, [p2], #14
+# CHECK: 1864: 98 1a 0f 05 lda.u16 r24, [p5], #0
+# CHECK: 1868: 98 3a 1d 03 lda.u16 r9, [p3], #2
+# CHECK: 186c: 98 2a 43 01 lda.u8 r25, [p1, dj2]
+# CHECK: 1870: 98 8a e2 03 lda.u8 r20, [p3, dj7]
+# CHECK: 1874: 98 6a 01 04 lda.u8 r11, [p4, dj0]
+# CHECK: 1878: 98 ca c3 06 lda.u8 r30, [p6, dj6]
+# CHECK: 187c: 98 aa a1 02 lda.u8 r13, [p2, dj5]
+# CHECK: 1880: 98 0a 61 07 lda.u8 r8, [p7, dj3]
+# CHECK: 1884: 98 4a 22 05 lda.u8 r18, [p5, dj1]
+# CHECK: 1888: 98 ca 81 00 lda.u8 r14, [p0, dj4]
+# CHECK: 188c: 98 0a 42 01 lda.u8 r16, [p1, dj2]
+# CHECK: 1890: 98 8a e0 03 lda.u8 r4, [p3, dj7]
+# CHECK: 1894: 98 0a 00 04 lda.u8 r0, [p4, dj0]
+# CHECK: 1898: 98 4a c0 06 lda.u8 r2, [p6, dj6]
+# CHECK: 189c: 98 8a a1 02 lda.u8 r12, [p2, dj5]
+# CHECK: 18a0: 98 4a 63 07 lda.u8 r26, [p7, dj3]
+# CHECK: 18a4: 98 6a 20 05 lda.u8 r3, [p5, dj1]
+# CHECK: 18a8: 98 ea 81 00 lda.u8 r15, [p0, dj4]
+# CHECK: 18ac: 98 ea 42 01 lda.u8 r23, [p1, dj2]
+# CHECK: 18b0: 98 6a e3 03 lda.u8 r27, [p3, dj7]
+# CHECK: 18b4: 98 0a 03 04 lda.u8 r24, [p4, dj0]
+# CHECK: 18b8: 98 2a c0 06 lda.u8 r1, [p6, dj6]
+# CHECK: 18bc: 98 ca a2 02 lda.u8 r22, [p2, dj5]
+# CHECK: 18c0: 98 4a 61 07 lda.u8 r10, [p7, dj3]
+# CHECK: 18c4: 98 8a 23 05 lda.u8 r28, [p5, dj1]
+# CHECK: 18c8: 98 ea 83 00 lda.u8 r31, [p0, dj4]
+# CHECK: 18cc: 98 6a 42 01 lda.u8 r19, [p1, dj2]
+# CHECK: 18d0: 98 2a e1 03 lda.u8 r9, [p3, dj7]
+# CHECK: 18d4: 98 ca 00 04 lda.u8 r6, [p4, dj0]
+# CHECK: 18d8: 98 aa c0 06 lda.u8 r5, [p6, dj6]
+# CHECK: 18dc: 98 ea a0 02 lda.u8 r7, [p2, dj5]
+# CHECK: 18e0: 98 aa 63 07 lda.u8 r29, [p7, dj3]
+# CHECK: 18e4: 98 aa 22 05 lda.u8 r21, [p5, dj1]
+# CHECK: 18e8: 98 2a 82 00 lda.u8 r17, [p0, dj4]
+# CHECK: 18ec: 98 8a 16 06 lda.u8 r20, [p6, #1]
+# CHECK: 18f0: 98 ea 04 07 lda.u8 r7, [p7, #0]
+# CHECK: 18f4: 98 2a 75 01 lda.u8 r9, [p1, #7]
+# CHECK: 18f8: 98 ca 87 00 lda.u8 r30, [p0, #-8]
+# CHECK: 18fc: 98 4a 14 02 lda.u8 r2, [p2, #1]
+# CHECK: 1900: 98 ca 06 04 lda.u8 r22, [p4, #0]
+# CHECK: 1904: 98 6a 75 03 lda.u8 r11, [p3, #7]
+# CHECK: 1908: 98 6a 87 05 lda.u8 r27, [p5, #-8]
+# CHECK: 190c: 98 ca 15 06 lda.u8 r14, [p6, #1]
+# CHECK: 1910: 98 8a 05 07 lda.u8 r12, [p7, #0]
+# CHECK: 1914: 98 0a 75 01 lda.u8 r8, [p1, #7]
+# CHECK: 1918: 98 4a 85 00 lda.u8 r10, [p0, #-8]
+# CHECK: 191c: 98 0a 14 02 lda.u8 r0, [p2, #1]
+# CHECK: 1920: 98 ca 04 04 lda.u8 r6, [p4, #0]
+# CHECK: 1924: 98 0a 77 03 lda.u8 r24, [p3, #7]
+# CHECK: 1928: 98 2a 86 05 lda.u8 r17, [p5, #-8]
+# CHECK: 192c: 98 4a 16 06 lda.u8 r18, [p6, #1]
+# CHECK: 1930: 98 2a 04 07 lda.u8 r1, [p7, #0]
+# CHECK: 1934: 98 6a 74 01 lda.u8 r3, [p1, #7]
+# CHECK: 1938: 98 8a 87 00 lda.u8 r28, [p0, #-8]
+# CHECK: 193c: 98 2a 17 02 lda.u8 r25, [p2, #1]
+# CHECK: 1940: 98 ea 05 04 lda.u8 r15, [p4, #0]
+# CHECK: 1944: 98 aa 76 03 lda.u8 r21, [p3, #7]
+# CHECK: 1948: 98 6a 86 05 lda.u8 r19, [p5, #-8]
+# CHECK: 194c: 98 8a 14 06 lda.u8 r4, [p6, #1]
+# CHECK: 1950: 98 aa 07 07 lda.u8 r29, [p7, #0]
+# CHECK: 1954: 98 0a 76 01 lda.u8 r16, [p1, #7]
+# CHECK: 1958: 98 ea 86 00 lda.u8 r23, [p0, #-8]
+# CHECK: 195c: 98 aa 15 02 lda.u8 r13, [p2, #1]
+# CHECK: 1960: 98 4a 07 04 lda.u8 r26, [p4, #0]
+# CHECK: 1964: 98 aa 74 03 lda.u8 r5, [p3, #7]
+# CHECK: 1968: 98 ea 87 05 lda.u8 r31, [p5, #-8]
+# CHECK: 196c: 98 6a c8 06 lda.u8 r3, [p6], m6
+# CHECK: 1970: 98 4a 8b 01 lda.u8 r26, [p1], m4
+# CHECK: 1974: 98 2a ea 05 lda.u8 r17, [p5], m7
+# CHECK: 1978: 98 aa 2b 07 lda.u8 r29, [p7], m1
+# CHECK: 197c: 98 4a a8 04 lda.u8 r2, [p4], m5
+# CHECK: 1980: 98 0a 0b 03 lda.u8 r24, [p3], m0
+# CHECK: 1984: 98 0a 6a 00 lda.u8 r16, [p0], m3
+# CHECK: 1988: 98 ca 4a 02 lda.u8 r22, [p2], m2
+# CHECK: 198c: 98 2a cb 06 lda.u8 r25, [p6], m6
+# CHECK: 1990: 98 aa 88 01 lda.u8 r5, [p1], m4
+# CHECK: 1994: 98 ea e8 05 lda.u8 r7, [p5], m7
+# CHECK: 1998: 98 2a 29 07 lda.u8 r9, [p7], m1
+# CHECK: 199c: 98 ca a8 04 lda.u8 r6, [p4], m5
+# CHECK: 19a0: 98 4a 0a 03 lda.u8 r18, [p3], m0
+# CHECK: 19a4: 98 8a 6b 00 lda.u8 r28, [p0], m3
+# CHECK: 19a8: 98 4a 49 02 lda.u8 r10, [p2], m2
+# CHECK: 19ac: 98 ea c9 06 lda.u8 r15, [p6], m6
+# CHECK: 19b0: 98 aa 89 01 lda.u8 r13, [p1], m4
+# CHECK: 19b4: 98 6a eb 05 lda.u8 r27, [p5], m7
+# CHECK: 19b8: 98 ea 2a 07 lda.u8 r23, [p7], m1
+# CHECK: 19bc: 98 0a a8 04 lda.u8 r0, [p4], m5
+# CHECK: 19c0: 98 ca 09 03 lda.u8 r14, [p3], m0
+# CHECK: 19c4: 98 8a 69 00 lda.u8 r12, [p0], m3
+# CHECK: 19c8: 98 aa 4a 02 lda.u8 r21, [p2], m2
+# CHECK: 19cc: 98 ca cb 06 lda.u8 r30, [p6], m6
+# CHECK: 19d0: 98 8a 8a 01 lda.u8 r20, [p1], m4
+# CHECK: 19d4: 98 6a ea 05 lda.u8 r19, [p5], m7
+# CHECK: 19d8: 98 2a 28 07 lda.u8 r1, [p7], m1
+# CHECK: 19dc: 98 ea ab 04 lda.u8 r31, [p4], m5
+# CHECK: 19e0: 98 6a 09 03 lda.u8 r11, [p3], m0
+# CHECK: 19e4: 98 8a 68 00 lda.u8 r4, [p0], m3
+# CHECK: 19e8: 98 0a 49 02 lda.u8 r8, [p2], m2
+# CHECK: 19ec: 98 0a 1e 02 lda.u8 r16, [p2], #1
+# CHECK: 19f0: 98 6a 7e 06 lda.u8 r19, [p6], #7
+# CHECK: 19f4: 98 8a 0d 05 lda.u8 r12, [p5], #0
+# CHECK: 19f8: 98 0a 8f 07 lda.u8 r24, [p7], #-8
+# CHECK: 19fc: 98 8a 1c 03 lda.u8 r4, [p3], #1
+# CHECK: 1a00: 98 aa 7c 04 lda.u8 r5, [p4], #7
+# CHECK: 1a04: 98 aa 0e 01 lda.u8 r21, [p1], #0
+# CHECK: 1a08: 98 4a 8e 00 lda.u8 r18, [p0], #-8
+# CHECK: 1a0c: 98 2a 1f 02 lda.u8 r25, [p2], #1
+# CHECK: 1a10: 98 4a 7f 06 lda.u8 r26, [p6], #7
+# CHECK: 1a14: 98 ca 0e 05 lda.u8 r22, [p5], #0
+# CHECK: 1a18: 98 ca 8d 07 lda.u8 r14, [p7], #-8
+# CHECK: 1a1c: 98 2a 1c 03 lda.u8 r1, [p3], #1
+# CHECK: 1a20: 98 ea 7d 04 lda.u8 r15, [p4], #7
+# CHECK: 1a24: 98 6a 0f 01 lda.u8 r27, [p1], #0
+# CHECK: 1a28: 98 aa 8d 00 lda.u8 r13, [p0], #-8
+# CHECK: 1a2c: 98 ea 1c 02 lda.u8 r7, [p2], #1
+# CHECK: 1a30: 98 6a 7c 06 lda.u8 r3, [p6], #7
+# CHECK: 1a34: 98 aa 0f 05 lda.u8 r29, [p5], #0
+# CHECK: 1a38: 98 0a 8d 07 lda.u8 r8, [p7], #-8
+# CHECK: 1a3c: 98 0a 1c 03 lda.u8 r0, [p3], #1
+# CHECK: 1a40: 98 8a 7e 04 lda.u8 r20, [p4], #7
+# CHECK: 1a44: 98 ea 0f 01 lda.u8 r31, [p1], #0
+# CHECK: 1a48: 98 2a 8e 00 lda.u8 r17, [p0], #-8
+# CHECK: 1a4c: 98 ea 1e 02 lda.u8 r23, [p2], #1
+# CHECK: 1a50: 98 8a 7f 06 lda.u8 r28, [p6], #7
+# CHECK: 1a54: 98 ca 0f 05 lda.u8 r30, [p5], #0
+# CHECK: 1a58: 98 6a 8d 07 lda.u8 r11, [p7], #-8
+# CHECK: 1a5c: 98 2a 1d 03 lda.u8 r9, [p3], #1
+# CHECK: 1a60: 98 ca 7c 04 lda.u8 r6, [p4], #7
+# CHECK: 1a64: 98 4a 0c 01 lda.u8 r2, [p1], #0
+# CHECK: 1a68: 98 4a 8d 00 lda.u8 r10, [p0], #-8

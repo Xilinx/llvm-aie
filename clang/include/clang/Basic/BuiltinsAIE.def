@@ -539,5 +539,7 @@ BUILTIN(__builtin_aiev2_sparse_pop_16_bfloat_insert_hi, "vV32y&LLLi&V32y&LLLi&i*
 BUILTIN(__builtin_aiev2_sparse_peek_16_bfloat_and_get_pointer, "vV32y&LLLi&i*", "nc")
 BUILTIN(__builtin_aiev2_sparse_peek_16_bfloat_set_lo, "vV32y&LLLi&i*", "nc")
 BUILTIN(__builtin_aiev2_sparse_peek_16_bfloat_insert_hi, "vV32y&LLLi&V32y&LLLi&i*", "nc")
+// aie2p
+#include "BuiltinsAIE2P.def"
 
 #undef BUILTIN

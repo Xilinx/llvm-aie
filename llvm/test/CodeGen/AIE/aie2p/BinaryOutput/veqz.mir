@@ -1,0 +1,124 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; VEQZ_16
+    $r27 = VEQZ_16 $x2
+    $r31 = VEQZ_16 $x8
+    $r28 = VEQZ_16 $x9
+    $r20 = VEQZ_16 $x4
+    $r29 = VEQZ_16 $x7
+    $r25 = VEQZ_16 $x1
+    $r19 = VEQZ_16 $x10
+    $r26 = VEQZ_16 $x0
+    $r24 = VEQZ_16 $x3
+    $r16 = VEQZ_16 $x5
+    $r22 = VEQZ_16 $x11
+    $r21 = VEQZ_16 $x6
+    $r30 = VEQZ_16 $x2
+    $r23 = VEQZ_16 $x8
+    $r18 = VEQZ_16 $x9
+    $r17 = VEQZ_16 $x4
+
+    ; VEQZ_32
+    $r20 = VEQZ_32 $x2
+    $r29 = VEQZ_32 $x10
+    $r18 = VEQZ_32 $x0
+    $r31 = VEQZ_32 $x11
+    $r25 = VEQZ_32 $x7
+    $r17 = VEQZ_32 $x5
+    $r23 = VEQZ_32 $x9
+    $r22 = VEQZ_32 $x8
+    $r16 = VEQZ_32 $x3
+    $r28 = VEQZ_32 $x6
+    $r21 = VEQZ_32 $x4
+    $r24 = VEQZ_32 $x1
+    $r26 = VEQZ_32 $x2
+    $r19 = VEQZ_32 $x10
+    $r30 = VEQZ_32 $x0
+    $r27 = VEQZ_32 $x11
+
+    ; VEQZ_8
+    $l8 = VEQZ_8 $x7
+    $l1 = VEQZ_8 $x1
+    $l11 = VEQZ_8 $x3
+    $l0 = VEQZ_8 $x0
+    $l6 = VEQZ_8 $x8
+    $l13 = VEQZ_8 $x6
+    $l15 = VEQZ_8 $x9
+    $l7 = VEQZ_8 $x11
+    $l10 = VEQZ_8 $x10
+    $l9 = VEQZ_8 $x4
+    $l12 = VEQZ_8 $x5
+    $l2 = VEQZ_8 $x2
+    $l3 = VEQZ_8 $x7
+    $l14 = VEQZ_8 $x1
+    $l4 = VEQZ_8 $x3
+    $l5 = VEQZ_8 $x0
+...
+
+# CHECK: 0: f8 4a 92 1d veqz.16 r27, x2
+# CHECK: 4: f8 4a c2 1f veqz.16 r31, x8
+# CHECK: 8: f8 4a 4a 1e veqz.16 r28, x9
+# CHECK: c: f8 4a 22 1a veqz.16 r20, x4
+# CHECK: 10: f8 4a ba 1e veqz.16 r29, x7
+# CHECK: 14: f8 4a 8a 1c veqz.16 r25, x1
+# CHECK: 18: f8 4a d2 19 veqz.16 r19, x10
+# CHECK: 1c: f8 4a 02 1d veqz.16 r26, x0
+# CHECK: 20: f8 4a 1a 1c veqz.16 r24, x3
+# CHECK: 24: f8 4a 2a 18 veqz.16 r16, x5
+# CHECK: 28: f8 4a 5a 1b veqz.16 r22, x11
+# CHECK: 2c: f8 4a b2 1a veqz.16 r21, x6
+# CHECK: 30: f8 4a 12 1f veqz.16 r30, x2
+# CHECK: 34: f8 4a c2 1b veqz.16 r23, x8
+# CHECK: 38: f8 4a 4a 19 veqz.16 r18, x9
+# CHECK: 3c: f8 4a a2 18 veqz.16 r17, x4
+# CHECK: 40: f8 4a 14 1a veqz.32 r20, x2
+# CHECK: 44: f8 4a d4 1e veqz.32 r29, x10
+# CHECK: 48: f8 4a 04 19 veqz.32 r18, x0
+# CHECK: 4c: f8 4a dc 1f veqz.32 r31, x11
+# CHECK: 50: f8 4a bc 1c veqz.32 r25, x7
+# CHECK: 54: f8 4a ac 18 veqz.32 r17, x5
+# CHECK: 58: f8 4a cc 1b veqz.32 r23, x9
+# CHECK: 5c: f8 4a 44 1b veqz.32 r22, x8
+# CHECK: 60: f8 4a 1c 18 veqz.32 r16, x3
+# CHECK: 64: f8 4a 34 1e veqz.32 r28, x6
+# CHECK: 68: f8 4a a4 1a veqz.32 r21, x4
+# CHECK: 6c: f8 4a 0c 1c veqz.32 r24, x1
+# CHECK: 70: f8 4a 14 1d veqz.32 r26, x2
+# CHECK: 74: f8 4a d4 19 veqz.32 r19, x10
+# CHECK: 78: f8 4a 04 1f veqz.32 r30, x0
+# CHECK: 7c: f8 4a dc 1d veqz.32 r27, x11
+# CHECK: 80: f8 4a 38 1c veqz.8 r17:r16, x7
+# CHECK: 84: f8 4a 88 18 veqz.8 r3:r2, x1
+# CHECK: 88: f8 4a 98 1d veqz.8 r23:r22, x3
+# CHECK: 8c: f8 4a 00 18 veqz.8 r1:r0, x0
+# CHECK: 90: f8 4a 40 1b veqz.8 r13:r12, x8
+# CHECK: 94: f8 4a b0 1e veqz.8 r27:r26, x6
+# CHECK: 98: f8 4a c8 1f veqz.8 r31:r30, x9
+# CHECK: 9c: f8 4a d8 1b veqz.8 r15:r14, x11
+# CHECK: a0: f8 4a 50 1d veqz.8 r21:r20, x10
+# CHECK: a4: f8 4a a0 1c veqz.8 r19:r18, x4
+# CHECK: a8: f8 4a 28 1e veqz.8 r25:r24, x5
+# CHECK: ac: f8 4a 10 19 veqz.8 r5:r4, x2
+# CHECK: b0: f8 4a b8 19 veqz.8 r7:r6, x7
+# CHECK: b4: f8 4a 08 1f veqz.8 r29:r28, x1
+# CHECK: b8: f8 4a 18 1a veqz.8 r9:r8, x3
+# CHECK: bc: f8 4a 80 1a veqz.8 r11:r10, x0

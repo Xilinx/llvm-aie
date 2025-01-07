@@ -64,7 +64,7 @@ struct AIE2RegisterInfo : public AIE2GenRegisterInfo {
   /// Given a register bank and operand type, return the smallest register class
   /// that can hold a value on that bank.
   const TargetRegisterClass &getMinClassForRegBank(const RegisterBank &RB,
-                                                   LLT Ty) const;
+                                                   LLT Ty) const override;
 
   const TargetRegisterClass *getConstrainedRegClassForOperand(
       const MachineOperand &MO, const MachineRegisterInfo &MRI) const override;
@@ -77,6 +77,8 @@ struct AIE2RegisterInfo : public AIE2GenRegisterInfo {
                             const MachineFunction &MF) const override;
   const TargetRegisterClass *
   getGPRRegClass(const MachineFunction &MF) const override;
+  unsigned getVectorRegBankID() const override;
+  unsigned getGPRRegBankID() const override;
   const std::set<int> &getSubRegSplit(int RegClassId) const override;
   SmallSet<int, 8>
   getCoveringSubRegs(const TargetRegisterClass &RC) const override;
@@ -91,6 +93,12 @@ struct AIE2RegisterInfo : public AIE2GenRegisterInfo {
     return &AIE2::eDSRegClass;
   }
   bool isVecOrAccRegClass(const TargetRegisterClass &RC) const override;
+  void getTargetSubRegs(std::vector<unsigned> &, unsigned Size,
+                        const RegisterBank &RB) const override;
+
+  const TargetRegisterClass *getAddrCountRegClass() const override {
+    return &AIE2::eDCRegClass;
+  }
 };
 } // namespace llvm
 

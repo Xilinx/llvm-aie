@@ -1,0 +1,51 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# TODO: llc %llcflags --filetype=asm -o %t2
+# TODO: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# TODO: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# Change TODOs to RUN once there is AsmParser support
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; J_alumv_or
+    J_alumv_or $p0
+    J_alumv_or $p4
+    J_alumv_or $p2
+    J_alumv_or $p7
+    J_alumv_or $p3
+    J_alumv_or $p1
+    J_alumv_or $p5
+    J_alumv_or $p6
+
+    ; J_lng
+    J_lng 0
+    J_lng 1048575
+    J_lng 1
+    J_lng 1048574
+...
+
+# CHECK: 0: 18 00 20 10 j p0
+# CHECK: 4: 18 00 21 10 j p4
+# CHECK: 8: 18 80 20 10 j p2
+# CHECK: c: 18 c0 21 10 j p7
+# CHECK: 10: 18 c0 20 10 j p3
+# CHECK: 14: 18 40 20 10 j p1
+# CHECK: 18: 18 40 21 10 j p5
+# CHECK: 1c: 18 80 21 10 j p6
+# CHECK: 20: 84 00 00 00 00 00 j #0
+# CHECK: 26: 84 00 80 ff ff 07 j #1048575
+# CHECK: 2c: 84 00 80 00 00 00 j #1
+# CHECK: 32: 84 00 00 ff ff 07 j #1048574

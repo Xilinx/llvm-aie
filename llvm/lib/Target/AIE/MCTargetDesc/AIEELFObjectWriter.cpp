@@ -11,13 +11,14 @@
 #include "MCTargetDesc/AIE1MCFixupKinds.h"
 #include "MCTargetDesc/AIE2MCFixupKinds.h"
 #include "MCTargetDesc/AIEMCTargetDesc.h"
-#include "llvm/TargetParser/Triple.h"
+#include "MCTargetDesc/aie2p/AIE2PMCFixupKinds.h"
 #include "llvm/MC/MCELFObjectWriter.h"
 #include "llvm/MC/MCFixup.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCValue.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/TargetParser/Triple.h"
 
 using namespace llvm;
 
@@ -91,6 +92,25 @@ static unsigned getRelocTypeAIE2(const MCFixup &Fixup) {
   }
 }
 
+static unsigned getRelocTypeAIE2P(const MCFixup &Fixup) {
+  MCFixupKind Kind = Fixup.getKind();
+
+  // One-to-one mapping between the fixups and the relocations as the
+  // enumerations are dense (fixup_aie2p_i maps to R_AIE_i for all i).
+  if (AIEMCFixupKinds::isTargetFixup(Kind))
+    return Kind - AIE2P::fixup_aie2p_0 + ELF::R_AIE_0;
+
+  // Conversely, the other fixups (targeting data memory words) must be handled
+  // manually below:
+  switch (unsigned(Kind)) {
+  default:
+    dbgs() << "Fixup Kind: " << Kind << "\n";
+    llvm_unreachable("invalid fixup kind!");
+  case llvm::FK_Data_4:
+    return ELF::R_AIE_62;
+  }
+}
+
 unsigned AIEELFObjectWriter::getRelocType(MCContext &Ctx, const MCValue &Target,
                                           const MCFixup &Fixup,
                                           bool IsPCRel) const {
@@ -100,6 +120,8 @@ unsigned AIEELFObjectWriter::getRelocType(MCContext &Ctx, const MCValue &Target,
     return getRelocTypeAIE1(Fixup);
   if (TargetTriple.getArch() == Triple::aie2)
     return getRelocTypeAIE2(Fixup);
+  if (TargetTriple.getArch() == Triple::aie2p)
+    return getRelocTypeAIE2P(Fixup);
   llvm_unreachable("Unsupported Relocations for other AIE version");
 }
 

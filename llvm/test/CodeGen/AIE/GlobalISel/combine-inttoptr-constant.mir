@@ -6,6 +6,7 @@
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2 -run-pass=aie2-prelegalizer-combiner -verify-machineinstrs %s -o - | FileCheck %s
+# RUN: llc -mtriple aie2p -run-pass=aie2p-prelegalizer-combiner -verify-machineinstrs %s -o - | FileCheck %s
 
 ---
 name: inttoptr_constant_p0_s20

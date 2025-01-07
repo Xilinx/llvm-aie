@@ -1,0 +1,286 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; REL_COND_mLockId_imm
+    REL_COND_mLockId_imm 1, $r25, $r26
+    REL_COND_mLockId_imm 63, $r17, $r26
+    REL_COND_mLockId_imm 62, $r0, $r26
+    REL_COND_mLockId_imm 0, $r31, $r26
+    REL_COND_mLockId_imm 1, $r21, $r26
+    REL_COND_mLockId_imm 63, $r3, $r26
+    REL_COND_mLockId_imm 62, $r1, $r26
+    REL_COND_mLockId_imm 0, $r4, $r26
+    REL_COND_mLockId_imm 1, $r11, $r26
+    REL_COND_mLockId_imm 63, $r8, $r26
+    REL_COND_mLockId_imm 62, $r22, $r26
+    REL_COND_mLockId_imm 0, $r14, $r26
+    REL_COND_mLockId_imm 1, $r10, $r26
+    REL_COND_mLockId_imm 63, $r19, $r26
+    REL_COND_mLockId_imm 62, $r23, $r26
+    REL_COND_mLockId_imm 0, $r5, $r26
+    REL_COND_mLockId_imm 1, $r26, $r26
+    REL_COND_mLockId_imm 63, $r18, $r26
+    REL_COND_mLockId_imm 62, $r27, $r26
+    REL_COND_mLockId_imm 0, $r30, $r26
+    REL_COND_mLockId_imm 1, $r13, $r26
+    REL_COND_mLockId_imm 63, $r29, $r26
+    REL_COND_mLockId_imm 62, $r2, $r26
+    REL_COND_mLockId_imm 0, $r6, $r26
+    REL_COND_mLockId_imm 1, $r24, $r26
+    REL_COND_mLockId_imm 63, $r15, $r26
+    REL_COND_mLockId_imm 62, $r12, $r26
+    REL_COND_mLockId_imm 0, $r20, $r26
+    REL_COND_mLockId_imm 1, $r28, $r26
+    REL_COND_mLockId_imm 63, $r9, $r26
+    REL_COND_mLockId_imm 62, $r7, $r26
+    REL_COND_mLockId_imm 0, $r16, $r26
+
+    ; REL_COND_mLockId_reg
+    REL_COND_mLockId_reg $r9, $r0, $r26
+    REL_COND_mLockId_reg $r22, $r21, $r26
+    REL_COND_mLockId_reg $r5, $r30, $r26
+    REL_COND_mLockId_reg $r26, $r20, $r26
+    REL_COND_mLockId_reg $r20, $r8, $r26
+    REL_COND_mLockId_reg $r29, $r5, $r26
+    REL_COND_mLockId_reg $r8, $r18, $r26
+    REL_COND_mLockId_reg $r14, $r25, $r26
+    REL_COND_mLockId_reg $r6, $r13, $r26
+    REL_COND_mLockId_reg $r0, $r19, $r26
+    REL_COND_mLockId_reg $r2, $r17, $r26
+    REL_COND_mLockId_reg $r12, $r9, $r26
+    REL_COND_mLockId_reg $r13, $r27, $r26
+    REL_COND_mLockId_reg $r23, $r15, $r26
+    REL_COND_mLockId_reg $r17, $r14, $r26
+    REL_COND_mLockId_reg $r3, $r12, $r26
+    REL_COND_mLockId_reg $r15, $r2, $r26
+    REL_COND_mLockId_reg $r21, $r4, $r26
+    REL_COND_mLockId_reg $r24, $r24, $r26
+    REL_COND_mLockId_reg $r7, $r29, $r26
+    REL_COND_mLockId_reg $r30, $r31, $r26
+    REL_COND_mLockId_reg $r1, $r26, $r26
+    REL_COND_mLockId_reg $r11, $r22, $r26
+    REL_COND_mLockId_reg $r19, $r3, $r26
+    REL_COND_mLockId_reg $r31, $r7, $r26
+    REL_COND_mLockId_reg $r16, $r28, $r26
+    REL_COND_mLockId_reg $r10, $r11, $r26
+    REL_COND_mLockId_reg $r18, $r1, $r26
+    REL_COND_mLockId_reg $r25, $r23, $r26
+    REL_COND_mLockId_reg $r28, $r6, $r26
+    REL_COND_mLockId_reg $r27, $r10, $r26
+    REL_COND_mLockId_reg $r4, $r16, $r26
+
+    ; REL_mLockId_imm
+    REL_mLockId_imm 63, $r10
+    REL_mLockId_imm 62, $r16
+    REL_mLockId_imm 1, $r14
+    REL_mLockId_imm 0, $r8
+    REL_mLockId_imm 63, $r17
+    REL_mLockId_imm 62, $r11
+    REL_mLockId_imm 1, $r26
+    REL_mLockId_imm 0, $r27
+    REL_mLockId_imm 63, $r12
+    REL_mLockId_imm 62, $r7
+    REL_mLockId_imm 1, $r5
+    REL_mLockId_imm 0, $r9
+    REL_mLockId_imm 63, $r19
+    REL_mLockId_imm 62, $r1
+    REL_mLockId_imm 1, $r23
+    REL_mLockId_imm 0, $r18
+    REL_mLockId_imm 63, $r22
+    REL_mLockId_imm 62, $r15
+    REL_mLockId_imm 1, $r4
+    REL_mLockId_imm 0, $r2
+    REL_mLockId_imm 63, $r20
+    REL_mLockId_imm 62, $r13
+    REL_mLockId_imm 1, $r30
+    REL_mLockId_imm 0, $r31
+    REL_mLockId_imm 63, $r0
+    REL_mLockId_imm 62, $r6
+    REL_mLockId_imm 1, $r21
+    REL_mLockId_imm 0, $r24
+    REL_mLockId_imm 63, $r29
+    REL_mLockId_imm 62, $r25
+    REL_mLockId_imm 1, $r3
+    REL_mLockId_imm 0, $r28
+
+    ; REL_mLockId_reg
+    REL_mLockId_reg $r24, $r5
+    REL_mLockId_reg $r8, $r1
+    REL_mLockId_reg $r9, $r18
+    REL_mLockId_reg $r10, $r29
+    REL_mLockId_reg $r4, $r11
+    REL_mLockId_reg $r26, $r25
+    REL_mLockId_reg $r3, $r14
+    REL_mLockId_reg $r28, $r8
+    REL_mLockId_reg $r30, $r27
+    REL_mLockId_reg $r2, $r7
+    REL_mLockId_reg $r20, $r22
+    REL_mLockId_reg $r17, $r31
+    REL_mLockId_reg $r11, $r19
+    REL_mLockId_reg $r16, $r4
+    REL_mLockId_reg $r5, $r21
+    REL_mLockId_reg $r25, $r20
+    REL_mLockId_reg $r14, $r17
+    REL_mLockId_reg $r27, $r2
+    REL_mLockId_reg $r29, $r12
+    REL_mLockId_reg $r21, $r10
+    REL_mLockId_reg $r23, $r26
+    REL_mLockId_reg $r1, $r6
+    REL_mLockId_reg $r22, $r15
+    REL_mLockId_reg $r13, $r28
+    REL_mLockId_reg $r18, $r30
+    REL_mLockId_reg $r6, $r16
+    REL_mLockId_reg $r31, $r0
+    REL_mLockId_reg $r0, $r9
+    REL_mLockId_reg $r7, $r24
+    REL_mLockId_reg $r12, $r13
+    REL_mLockId_reg $r15, $r3
+    REL_mLockId_reg $r19, $r23
+...
+
+# CHECK: 0: 18 98 25 10 rel.cond #1, r25, r26
+# CHECK: 4: 18 18 e5 17 rel.cond #63, r17, r26
+# CHECK: 8: 18 08 c4 17 rel.cond #62, r0, r26
+# CHECK: c: 18 f8 05 10 rel.cond #0, r31, r26
+# CHECK: 10: 18 58 25 10 rel.cond #1, r21, r26
+# CHECK: 14: 18 38 e4 17 rel.cond #63, r3, r26
+# CHECK: 18: 18 18 c4 17 rel.cond #62, r1, r26
+# CHECK: 1c: 18 48 04 10 rel.cond #0, r4, r26
+# CHECK: 20: 18 b8 24 10 rel.cond #1, r11, r26
+# CHECK: 24: 18 88 e4 17 rel.cond #63, r8, r26
+# CHECK: 28: 18 68 c5 17 rel.cond #62, r22, r26
+# CHECK: 2c: 18 e8 04 10 rel.cond #0, r14, r26
+# CHECK: 30: 18 a8 24 10 rel.cond #1, r10, r26
+# CHECK: 34: 18 38 e5 17 rel.cond #63, r19, r26
+# CHECK: 38: 18 78 c5 17 rel.cond #62, r23, r26
+# CHECK: 3c: 18 58 04 10 rel.cond #0, r5, r26
+# CHECK: 40: 18 a8 25 10 rel.cond #1, r26, r26
+# CHECK: 44: 18 28 e5 17 rel.cond #63, r18, r26
+# CHECK: 48: 18 b8 c5 17 rel.cond #62, r27, r26
+# CHECK: 4c: 18 e8 05 10 rel.cond #0, r30, r26
+# CHECK: 50: 18 d8 24 10 rel.cond #1, r13, r26
+# CHECK: 54: 18 d8 e5 17 rel.cond #63, r29, r26
+# CHECK: 58: 18 28 c4 17 rel.cond #62, r2, r26
+# CHECK: 5c: 18 68 04 10 rel.cond #0, r6, r26
+# CHECK: 60: 18 88 25 10 rel.cond #1, r24, r26
+# CHECK: 64: 18 f8 e4 17 rel.cond #63, r15, r26
+# CHECK: 68: 18 c8 c4 17 rel.cond #62, r12, r26
+# CHECK: 6c: 18 48 05 10 rel.cond #0, r20, r26
+# CHECK: 70: 18 c8 25 10 rel.cond #1, r28, r26
+# CHECK: 74: 18 98 e4 17 rel.cond #63, r9, r26
+# CHECK: 78: 18 78 c4 17 rel.cond #62, r7, r26
+# CHECK: 7c: 18 08 05 10 rel.cond #0, r16, r26
+# CHECK: 80: 18 08 54 12 rel.cond r9, r0, r26
+# CHECK: 84: 18 58 95 15 rel.cond r22, r21, r26
+# CHECK: 88: 18 e8 55 11 rel.cond r5, r30, r26
+# CHECK: 8c: 18 48 95 16 rel.cond r26, r20, r26
+# CHECK: 90: 18 88 14 15 rel.cond r20, r8, r26
+# CHECK: 94: 18 58 54 17 rel.cond r29, r5, r26
+# CHECK: 98: 18 28 15 12 rel.cond r8, r18, r26
+# CHECK: 9c: 18 98 95 13 rel.cond r14, r25, r26
+# CHECK: a0: 18 d8 94 11 rel.cond r6, r13, r26
+# CHECK: a4: 18 38 15 10 rel.cond r0, r19, r26
+# CHECK: a8: 18 18 95 10 rel.cond r2, r17, r26
+# CHECK: ac: 18 98 14 13 rel.cond r12, r9, r26
+# CHECK: b0: 18 b8 55 13 rel.cond r13, r27, r26
+# CHECK: b4: 18 f8 d4 15 rel.cond r23, r15, r26
+# CHECK: b8: 18 e8 54 14 rel.cond r17, r14, r26
+# CHECK: bc: 18 c8 d4 10 rel.cond r3, r12, r26
+# CHECK: c0: 18 28 d4 13 rel.cond r15, r2, r26
+# CHECK: c4: 18 48 54 15 rel.cond r21, r4, r26
+# CHECK: c8: 18 88 15 16 rel.cond r24, r24, r26
+# CHECK: cc: 18 d8 d5 11 rel.cond r7, r29, r26
+# CHECK: d0: 18 f8 95 17 rel.cond r30, r31, r26
+# CHECK: d4: 18 a8 55 10 rel.cond r1, r26, r26
+# CHECK: d8: 18 68 d5 12 rel.cond r11, r22, r26
+# CHECK: dc: 18 38 d4 14 rel.cond r19, r3, r26
+# CHECK: e0: 18 78 d4 17 rel.cond r31, r7, r26
+# CHECK: e4: 18 c8 15 14 rel.cond r16, r28, r26
+# CHECK: e8: 18 b8 94 12 rel.cond r10, r11, r26
+# CHECK: ec: 18 18 94 14 rel.cond r18, r1, r26
+# CHECK: f0: 18 78 55 16 rel.cond r25, r23, r26
+# CHECK: f4: 18 68 14 17 rel.cond r28, r6, r26
+# CHECK: f8: 18 a8 d4 16 rel.cond r27, r10, r26
+# CHECK: fc: 18 08 15 11 rel.cond r4, r16, r26
+# CHECK: 100: 18 a8 e0 17 rel #63, r10
+# CHECK: 104: 18 08 c1 17 rel #62, r16
+# CHECK: 108: 18 e8 20 10 rel #1, r14
+# CHECK: 10c: 18 88 00 10 rel #0, r8
+# CHECK: 110: 18 18 e1 17 rel #63, r17
+# CHECK: 114: 18 b8 c0 17 rel #62, r11
+# CHECK: 118: 18 a8 21 10 rel #1, r26
+# CHECK: 11c: 18 b8 01 10 rel #0, r27
+# CHECK: 120: 18 c8 e0 17 rel #63, r12
+# CHECK: 124: 18 78 c0 17 rel #62, r7
+# CHECK: 128: 18 58 20 10 rel #1, r5
+# CHECK: 12c: 18 98 00 10 rel #0, r9
+# CHECK: 130: 18 38 e1 17 rel #63, r19
+# CHECK: 134: 18 18 c0 17 rel #62, r1
+# CHECK: 138: 18 78 21 10 rel #1, r23
+# CHECK: 13c: 18 28 01 10 rel #0, r18
+# CHECK: 140: 18 68 e1 17 rel #63, r22
+# CHECK: 144: 18 f8 c0 17 rel #62, r15
+# CHECK: 148: 18 48 20 10 rel #1, r4
+# CHECK: 14c: 18 28 00 10 rel #0, r2
+# CHECK: 150: 18 48 e1 17 rel #63, r20
+# CHECK: 154: 18 d8 c0 17 rel #62, r13
+# CHECK: 158: 18 e8 21 10 rel #1, r30
+# CHECK: 15c: 18 f8 01 10 rel #0, r31
+# CHECK: 160: 18 08 e0 17 rel #63, r0
+# CHECK: 164: 18 68 c0 17 rel #62, r6
+# CHECK: 168: 18 58 21 10 rel #1, r21
+# CHECK: 16c: 18 88 01 10 rel #0, r24
+# CHECK: 170: 18 d8 e1 17 rel #63, r29
+# CHECK: 174: 18 98 c1 17 rel #62, r25
+# CHECK: 178: 18 38 20 10 rel #1, r3
+# CHECK: 17c: 18 c8 01 10 rel #0, r28
+# CHECK: 180: 18 58 10 16 rel r24, r5
+# CHECK: 184: 18 18 10 12 rel r8, r1
+# CHECK: 188: 18 28 51 12 rel r9, r18
+# CHECK: 18c: 18 d8 91 12 rel r10, r29
+# CHECK: 190: 18 b8 10 11 rel r4, r11
+# CHECK: 194: 18 98 91 16 rel r26, r25
+# CHECK: 198: 18 e8 d0 10 rel r3, r14
+# CHECK: 19c: 18 88 10 17 rel r28, r8
+# CHECK: 1a0: 18 b8 91 17 rel r30, r27
+# CHECK: 1a4: 18 78 90 10 rel r2, r7
+# CHECK: 1a8: 18 68 11 15 rel r20, r22
+# CHECK: 1ac: 18 f8 51 14 rel r17, r31
+# CHECK: 1b0: 18 38 d1 12 rel r11, r19
+# CHECK: 1b4: 18 48 10 14 rel r16, r4
+# CHECK: 1b8: 18 58 51 11 rel r5, r21
+# CHECK: 1bc: 18 48 51 16 rel r25, r20
+# CHECK: 1c0: 18 18 91 13 rel r14, r17
+# CHECK: 1c4: 18 28 d0 16 rel r27, r2
+# CHECK: 1c8: 18 c8 50 17 rel r29, r12
+# CHECK: 1cc: 18 a8 50 15 rel r21, r10
+# CHECK: 1d0: 18 a8 d1 15 rel r23, r26
+# CHECK: 1d4: 18 68 50 10 rel r1, r6
+# CHECK: 1d8: 18 f8 90 15 rel r22, r15
+# CHECK: 1dc: 18 c8 51 13 rel r13, r28
+# CHECK: 1e0: 18 e8 91 14 rel r18, r30
+# CHECK: 1e4: 18 08 91 11 rel r6, r16
+# CHECK: 1e8: 18 08 d0 17 rel r31, r0
+# CHECK: 1ec: 18 98 10 10 rel r0, r9
+# CHECK: 1f0: 18 88 d1 11 rel r7, r24
+# CHECK: 1f4: 18 d8 10 13 rel r12, r13
+# CHECK: 1f8: 18 38 d0 13 rel r15, r3
+# CHECK: 1fc: 18 78 d1 14 rel r19, r23

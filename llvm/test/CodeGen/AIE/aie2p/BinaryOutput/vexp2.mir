@@ -1,0 +1,72 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; VEXP2
+    $wl6 = VEXP2 $bmll2
+    $wl3 = VEXP2 $bmll0
+    $wh11 = VEXP2 $bmlh2
+    $wl0 = VEXP2 $bmlh0
+    $wh9 = VEXP2 $bmhh0
+    $wh1 = VEXP2 $bmhl2
+    $wl2 = VEXP2 $bmll3
+    $wh7 = VEXP2 $bmlh3
+    $wh8 = VEXP2 $bmhl1
+    $wl7 = VEXP2 $bmhl0
+    $wl9 = VEXP2 $bmhh3
+    $wh6 = VEXP2 $bmll4
+    $wh0 = VEXP2 $bmlh4
+    $wl5 = VEXP2 $bmlh1
+    $wl1 = VEXP2 $bmhl3
+    $wh5 = VEXP2 $bmhh4
+    $wl8 = VEXP2 $bmhh2
+    $wh10 = VEXP2 $bmhl4
+    $wl4 = VEXP2 $bmll1
+    $wl11 = VEXP2 $bmhh1
+    $wh2 = VEXP2 $bmll2
+    $wh4 = VEXP2 $bmll0
+    $wl10 = VEXP2 $bmlh2
+    $wh3 = VEXP2 $bmlh0
+...
+
+# CHECK: 0: f8 f2 50 1b vexp2 wl6, bmll2
+# CHECK: 4: f8 f2 c0 19 vexp2 wl3, bmll0
+# CHECK: 8: f8 f2 92 1d vexp2 wh11, bmlh2
+# CHECK: c: f8 f2 42 18 vexp2 wl0, bmlh0
+# CHECK: 10: f8 f2 86 1c vexp2 wh9, bmhh0
+# CHECK: 14: f8 f2 94 18 vexp2 wh1, bmhl2
+# CHECK: 18: f8 f2 58 19 vexp2 wl2, bmll3
+# CHECK: 1c: f8 f2 9a 1b vexp2 wh7, bmlh3
+# CHECK: 20: f8 f2 0c 1c vexp2 wh8, bmhl1
+# CHECK: 24: f8 f2 c4 1b vexp2 wl7, bmhl0
+# CHECK: 28: f8 f2 de 1c vexp2 wl9, bmhh3
+# CHECK: 2c: f8 f2 20 1b vexp2 wh6, bmll4
+# CHECK: 30: f8 f2 22 18 vexp2 wh0, bmlh4
+# CHECK: 34: f8 f2 ca 1a vexp2 wl5, bmlh1
+# CHECK: 38: f8 f2 dc 18 vexp2 wl1, bmhl3
+# CHECK: 3c: f8 f2 a6 1a vexp2 wh5, bmhh4
+# CHECK: 40: f8 f2 56 1c vexp2 wl8, bmhh2
+# CHECK: 44: f8 f2 24 1d vexp2 wh10, bmhl4
+# CHECK: 48: f8 f2 48 1a vexp2 wl4, bmll1
+# CHECK: 4c: f8 f2 ce 1d vexp2 wl11, bmhh1
+# CHECK: 50: f8 f2 10 19 vexp2 wh2, bmll2
+# CHECK: 54: f8 f2 00 1a vexp2 wh4, bmll0
+# CHECK: 58: f8 f2 52 1d vexp2 wl10, bmlh2
+# CHECK: 5c: f8 f2 82 19 vexp2 wh3, bmlh0

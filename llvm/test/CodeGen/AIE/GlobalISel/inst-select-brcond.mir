@@ -5,7 +5,9 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple aie -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple aie -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE %s
+# RUN: llc -mtriple aie2 -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2 %s
+# RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2 %s
 
 ---
 name:            brcond
@@ -13,14 +15,23 @@ legalized:       true
 regBankSelected: true
 
 body: |
-  ; CHECK-LABEL: name: brcond
-  ; CHECK: bb.0:
-  ; CHECK-NEXT:   successors: %bb.1(0x80000000)
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:gpr = COPY $r6
-  ; CHECK-NEXT:   BNEZ [[COPY]], %bb.1
-  ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT: bb.1:
+  ; AIE-LABEL: name: brcond
+  ; AIE: bb.0:
+  ; AIE-NEXT:   successors: %bb.1(0x80000000)
+  ; AIE-NEXT: {{  $}}
+  ; AIE-NEXT:   [[COPY:%[0-9]+]]:gpr = COPY $r6
+  ; AIE-NEXT:   BNEZ [[COPY]], %bb.1
+  ; AIE-NEXT: {{  $}}
+  ; AIE-NEXT: bb.1:
+  ;
+  ; AIE2-LABEL: name: brcond
+  ; AIE2: bb.0:
+  ; AIE2-NEXT:   successors: %bb.1(0x80000000)
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT:   [[COPY:%[0-9]+]]:er = COPY $r6
+  ; AIE2-NEXT:   PseudoJNZ [[COPY]], %bb.1
+  ; AIE2-NEXT: {{  $}}
+  ; AIE2-NEXT: bb.1:
   bb.0:
     %0:gprregbank(s32) = COPY $r6
     G_BRCOND %0, %bb.1

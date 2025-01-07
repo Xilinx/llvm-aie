@@ -1,0 +1,88 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; ADC
+    $r30 = ADC $r15, $r16, implicit-def $srcarry, implicit $srcarry
+    $r27 = ADC $r12, $r7, implicit-def $srcarry, implicit $srcarry
+    $r29 = ADC $r29, $r13, implicit-def $srcarry, implicit $srcarry
+    $r25 = ADC $r18, $r21, implicit-def $srcarry, implicit $srcarry
+    $r28 = ADC $r30, $r18, implicit-def $srcarry, implicit $srcarry
+    $r11 = ADC $r21, $r28, implicit-def $srcarry, implicit $srcarry
+    $r13 = ADC $r20, $r8, implicit-def $srcarry, implicit $srcarry
+    $r31 = ADC $r2, $r22, implicit-def $srcarry, implicit $srcarry
+    $r19 = ADC $r24, $r27, implicit-def $srcarry, implicit $srcarry
+    $r24 = ADC $r23, $r3, implicit-def $srcarry, implicit $srcarry
+    $r21 = ADC $r3, $r2, implicit-def $srcarry, implicit $srcarry
+    $r20 = ADC $r16, $r23, implicit-def $srcarry, implicit $srcarry
+    $r26 = ADC $r5, $r5, implicit-def $srcarry, implicit $srcarry
+    $r14 = ADC $r4, $r1, implicit-def $srcarry, implicit $srcarry
+    $r12 = ADC $r9, $r26, implicit-def $srcarry, implicit $srcarry
+    $r2 = ADC $r10, $r31, implicit-def $srcarry, implicit $srcarry
+    $r16 = ADC $r31, $r29, implicit-def $srcarry, implicit $srcarry
+    $r6 = ADC $r8, $r24, implicit-def $srcarry, implicit $srcarry
+    $r18 = ADC $r7, $r11, implicit-def $srcarry, implicit $srcarry
+    $r10 = ADC $r22, $r0, implicit-def $srcarry, implicit $srcarry
+    $r1 = ADC $r13, $r4, implicit-def $srcarry, implicit $srcarry
+    $r5 = ADC $r19, $r25, implicit-def $srcarry, implicit $srcarry
+    $r0 = ADC $r27, $r12, implicit-def $srcarry, implicit $srcarry
+    $r4 = ADC $r26, $r6, implicit-def $srcarry, implicit $srcarry
+    $r3 = ADC $r17, $r20, implicit-def $srcarry, implicit $srcarry
+    $r9 = ADC $r28, $r15, implicit-def $srcarry, implicit $srcarry
+    $r17 = ADC $r1, $r9, implicit-def $srcarry, implicit $srcarry
+    $r15 = ADC $r0, $r17, implicit-def $srcarry, implicit $srcarry
+    $r7 = ADC $r25, $r30, implicit-def $srcarry, implicit $srcarry
+    $r22 = ADC $r14, $r19, implicit-def $srcarry, implicit $srcarry
+    $r8 = ADC $r6, $r14, implicit-def $srcarry, implicit $srcarry
+    $r23 = ADC $r11, $r10, implicit-def $srcarry, implicit $srcarry
+...
+
+# CHECK: 0: 98 02 fd 13 adc r30, r15, r16
+# CHECK: 4: 98 72 36 13 adc r27, r12, r7
+# CHECK: 8: 98 d2 7a 17 adc r29, r29, r13
+# CHECK: c: 98 52 b3 14 adc r25, r18, r21
+# CHECK: 10: 98 22 b9 17 adc r28, r30, r18
+# CHECK: 14: 98 c2 57 15 adc r11, r21, r28
+# CHECK: 18: 98 82 1a 15 adc r13, r20, r8
+# CHECK: 1c: 98 62 bf 10 adc r31, r2, r22
+# CHECK: 20: 98 b2 27 16 adc r19, r24, r27
+# CHECK: 24: 98 32 f0 15 adc r24, r23, r3
+# CHECK: 28: 98 22 ea 10 adc r21, r3, r2
+# CHECK: 2c: 98 72 29 14 adc r20, r16, r23
+# CHECK: 30: 98 52 74 11 adc r26, r5, r5
+# CHECK: 34: 98 12 1c 11 adc r14, r4, r1
+# CHECK: 38: 98 a2 59 12 adc r12, r9, r26
+# CHECK: 3c: 98 f2 85 12 adc r2, r10, r31
+# CHECK: 40: 98 d2 e1 17 adc r16, r31, r29
+# CHECK: 44: 98 82 0d 12 adc r6, r8, r24
+# CHECK: 48: 98 b2 e4 11 adc r18, r7, r11
+# CHECK: 4c: 98 02 94 15 adc r10, r22, r0
+# CHECK: 50: 98 42 42 13 adc r1, r13, r4
+# CHECK: 54: 98 92 cb 14 adc r5, r19, r25
+# CHECK: 58: 98 c2 c0 16 adc r0, r27, r12
+# CHECK: 5c: 98 62 88 16 adc r4, r26, r6
+# CHECK: 60: 98 42 47 14 adc r3, r17, r20
+# CHECK: 64: 98 f2 12 17 adc r9, r28, r15
+# CHECK: 68: 98 92 62 10 adc r17, r1, r9
+# CHECK: 6c: 98 12 1f 10 adc r15, r0, r17
+# CHECK: 70: 98 e2 4f 16 adc r7, r25, r30
+# CHECK: 74: 98 32 ad 13 adc r22, r14, r19
+# CHECK: 78: 98 e2 90 11 adc r8, r6, r14
+# CHECK: 7c: 98 a2 ee 12 adc r23, r11, r10

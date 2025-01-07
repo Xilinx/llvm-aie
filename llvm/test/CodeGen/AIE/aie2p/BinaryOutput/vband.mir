@@ -1,0 +1,48 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; VBAND
+    $x6 = VBAND $x6, $x4
+    $x4 = VBAND $x8, $x10
+    $x10 = VBAND $x3, $x1
+    $x8 = VBAND $x4, $x3
+    $x0 = VBAND $x5, $x7
+    $x9 = VBAND $x7, $x6
+    $x2 = VBAND $x11, $x9
+    $x7 = VBAND $x0, $x5
+    $x11 = VBAND $x9, $x0
+    $x1 = VBAND $x2, $x2
+    $x3 = VBAND $x1, $x11
+    $x5 = VBAND $x10, $x8
+...
+
+# CHECK: 0: 78 2b 32 1b vband x6, x6, x4
+# CHECK: 4: 78 2b 45 1a vband x4, x8, x10
+# CHECK: 8: 78 ab 18 1d vband x10, x3, x1
+# CHECK: c: 78 ab 21 1c vband x8, x4, x3
+# CHECK: 10: 78 ab 2b 18 vband x0, x5, x7
+# CHECK: 14: 78 2b bb 1c vband x9, x7, x6
+# CHECK: 18: 78 ab 5c 19 vband x2, x11, x9
+# CHECK: 1c: 78 ab 82 1b vband x7, x0, x5
+# CHECK: 20: 78 2b c8 1d vband x11, x9, x0
+# CHECK: 24: 78 2b 91 18 vband x1, x2, x2
+# CHECK: 28: 78 ab 8d 19 vband x3, x1, x11
+# CHECK: 2c: 78 2b d4 1a vband x5, x10, x8

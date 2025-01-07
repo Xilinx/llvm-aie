@@ -1,0 +1,124 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; VSEL_16
+    $x0 = VSEL_16 $x6, $x1, $r27
+    $x7 = VSEL_16 $x10, $x9, $r25
+    $x6 = VSEL_16 $x4, $x8, $r21
+    $x1 = VSEL_16 $x5, $x7, $r18
+    $x9 = VSEL_16 $x0, $x3, $r30
+    $x5 = VSEL_16 $x11, $x0, $r26
+    $x2 = VSEL_16 $x7, $x4, $r28
+    $x4 = VSEL_16 $x1, $x2, $r20
+    $x3 = VSEL_16 $x3, $x5, $r31
+    $x11 = VSEL_16 $x8, $x10, $r24
+    $x10 = VSEL_16 $x9, $x11, $r29
+    $x8 = VSEL_16 $x2, $x6, $r16
+    $x0 = VSEL_16 $x6, $x1, $r23
+    $x7 = VSEL_16 $x10, $x9, $r17
+    $x6 = VSEL_16 $x4, $x8, $r22
+    $x1 = VSEL_16 $x5, $x7, $r19
+
+    ; VSEL_32
+    $x10 = VSEL_32 $x8, $x9, $r22
+    $x2 = VSEL_32 $x4, $x4, $r31
+    $x9 = VSEL_32 $x1, $x10, $r23
+    $x5 = VSEL_32 $x3, $x8, $r20
+    $x4 = VSEL_32 $x6, $x1, $r21
+    $x1 = VSEL_32 $x9, $x3, $r27
+    $x0 = VSEL_32 $x2, $x6, $r30
+    $x7 = VSEL_32 $x7, $x11, $r24
+    $x3 = VSEL_32 $x11, $x7, $r28
+    $x6 = VSEL_32 $x10, $x5, $r29
+    $x8 = VSEL_32 $x5, $x0, $r25
+    $x11 = VSEL_32 $x0, $x2, $r16
+    $x10 = VSEL_32 $x8, $x9, $r17
+    $x2 = VSEL_32 $x4, $x4, $r26
+    $x9 = VSEL_32 $x1, $x10, $r19
+    $x5 = VSEL_32 $x3, $x8, $r18
+
+    ; VSEL_8
+    $x6 = VSEL_8 $x4, $x4, $l12
+    $x9 = VSEL_8 $x2, $x1, $l11
+    $x5 = VSEL_8 $x8, $x2, $l1
+    $x2 = VSEL_8 $x11, $x0, $l0
+    $x11 = VSEL_8 $x3, $x11, $l9
+    $x3 = VSEL_8 $x6, $x10, $l5
+    $x10 = VSEL_8 $x0, $x6, $l15
+    $x1 = VSEL_8 $x7, $x9, $l8
+    $x0 = VSEL_8 $x1, $x7, $l7
+    $x8 = VSEL_8 $x9, $x8, $l4
+    $x4 = VSEL_8 $x5, $x3, $l13
+    $x7 = VSEL_8 $x10, $x5, $l10
+    $x6 = VSEL_8 $x4, $x4, $l6
+    $x9 = VSEL_8 $x2, $x1, $l3
+    $x5 = VSEL_8 $x8, $x2, $l14
+    $x2 = VSEL_8 $x11, $x0, $l2
+...
+
+# CHECK: 0: 38 da 30 18 vsel.16 x0, x6, x1, r27
+# CHECK: 4: 38 ca d4 1b vsel.16 x7, x10, x9, r25
+# CHECK: 8: 38 2a 24 1b vsel.16 x6, x4, x8, r21
+# CHECK: c: 38 92 ab 18 vsel.16 x1, x5, x7, r18
+# CHECK: 10: 38 f2 81 1c vsel.16 x9, x0, x3, r30
+# CHECK: 14: 38 52 d8 1a vsel.16 x5, x11, x0, r26
+# CHECK: 18: 38 62 3a 19 vsel.16 x2, x7, x4, r28
+# CHECK: 1c: 38 22 09 1a vsel.16 x4, x1, x2, r20
+# CHECK: 20: 38 fa 9a 19 vsel.16 x3, x3, x5, r31
+# CHECK: 24: 38 42 c5 1d vsel.16 x11, x8, x10, r24
+# CHECK: 28: 38 ea 4d 1d vsel.16 x10, x9, x11, r29
+# CHECK: 2c: 38 02 13 1c vsel.16 x8, x2, x6, r16
+# CHECK: 30: 38 ba 30 18 vsel.16 x0, x6, x1, r23
+# CHECK: 34: 38 8a d4 1b vsel.16 x7, x10, x9, r17
+# CHECK: 38: 38 32 24 1b vsel.16 x6, x4, x8, r22
+# CHECK: 3c: 38 9a ab 18 vsel.16 x1, x5, x7, r19
+# CHECK: 40: 38 b0 44 1d vsel.32 x10, x8, x9, r22
+# CHECK: 44: 38 78 22 19 vsel.32 x2, x4, x4, r31
+# CHECK: 48: 38 38 8d 1c vsel.32 x9, x1, x10, r23
+# CHECK: 4c: 38 20 9c 1a vsel.32 x5, x3, x8, r20
+# CHECK: 50: 38 a8 30 1a vsel.32 x4, x6, x1, r21
+# CHECK: 54: 38 d8 c9 18 vsel.32 x1, x9, x3, r27
+# CHECK: 58: 38 70 13 18 vsel.32 x0, x2, x6, r30
+# CHECK: 5c: 38 c0 bd 1b vsel.32 x7, x7, x11, r24
+# CHECK: 60: 38 e0 db 19 vsel.32 x3, x11, x7, r28
+# CHECK: 64: 38 e8 52 1b vsel.32 x6, x10, x5, r29
+# CHECK: 68: 38 48 28 1c vsel.32 x8, x5, x0, r25
+# CHECK: 6c: 38 00 81 1d vsel.32 x11, x0, x2, r16
+# CHECK: 70: 38 88 44 1d vsel.32 x10, x8, x9, r17
+# CHECK: 74: 38 50 22 19 vsel.32 x2, x4, x4, r26
+# CHECK: 78: 38 18 8d 1c vsel.32 x9, x1, x10, r19
+# CHECK: 7c: 38 10 9c 1a vsel.32 x5, x3, x8, r18
+# CHECK: 80: 38 64 22 1b vsel.8 x6, x4, x4, r25:r24
+# CHECK: 84: 38 dc 90 1c vsel.8 x9, x2, x1, r23:r22
+# CHECK: 88: 38 0c c1 1a vsel.8 x5, x8, x2, r3:r2
+# CHECK: 8c: 38 04 58 19 vsel.8 x2, x11, x0, r1:r0
+# CHECK: 90: 38 cc 9d 1d vsel.8 x11, x3, x11, r19:r18
+# CHECK: 94: 38 2c b5 19 vsel.8 x3, x6, x10, r11:r10
+# CHECK: 98: 38 7c 03 1d vsel.8 x10, x0, x6, r31:r30
+# CHECK: 9c: 38 c4 bc 18 vsel.8 x1, x7, x9, r17:r16
+# CHECK: a0: 38 bc 0b 18 vsel.8 x0, x1, x7, r15:r14
+# CHECK: a4: 38 24 4c 1c vsel.8 x8, x9, x8, r9:r8
+# CHECK: a8: 38 ec 29 1a vsel.8 x4, x5, x3, r27:r26
+# CHECK: ac: 38 d4 d2 1b vsel.8 x7, x10, x5, r21:r20
+# CHECK: b0: 38 34 22 1b vsel.8 x6, x4, x4, r13:r12
+# CHECK: b4: 38 9c 90 1c vsel.8 x9, x2, x1, r7:r6
+# CHECK: b8: 38 74 c1 1a vsel.8 x5, x8, x2, r29:r28
+# CHECK: bc: 38 14 58 19 vsel.8 x2, x11, x0, r5:r4

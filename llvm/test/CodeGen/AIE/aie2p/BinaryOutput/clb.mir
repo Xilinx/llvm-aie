@@ -1,0 +1,88 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CLB
+    $r29 = CLB $r18
+    $r12 = CLB $r14
+    $r23 = CLB $r12
+    $r24 = CLB $r15
+    $r28 = CLB $r11
+    $r5 = CLB $r26
+    $r7 = CLB $r16
+    $r19 = CLB $r10
+    $r21 = CLB $r5
+    $r27 = CLB $r2
+    $r18 = CLB $r24
+    $r14 = CLB $r22
+    $r9 = CLB $r13
+    $r4 = CLB $r23
+    $r0 = CLB $r4
+    $r6 = CLB $r21
+    $r11 = CLB $r6
+    $r13 = CLB $r8
+    $r26 = CLB $r31
+    $r22 = CLB $r19
+    $r15 = CLB $r7
+    $r10 = CLB $r0
+    $r20 = CLB $r25
+    $r2 = CLB $r27
+    $r31 = CLB $r28
+    $r1 = CLB $r1
+    $r17 = CLB $r9
+    $r16 = CLB $r29
+    $r25 = CLB $r3
+    $r30 = CLB $r20
+    $r8 = CLB $r17
+    $r3 = CLB $r30
+...
+
+# CHECK: 0: 18 10 ba 14 clb r29, r18
+# CHECK: 4: 18 10 98 13 clb r12, r14
+# CHECK: 8: 18 10 2e 13 clb r23, r12
+# CHECK: c: 18 10 f0 13 clb r24, r15
+# CHECK: 10: 18 10 f8 12 clb r28, r11
+# CHECK: 14: 18 10 8a 16 clb r5, r26
+# CHECK: 18: 18 10 0e 14 clb r7, r16
+# CHECK: 1c: 18 10 a6 12 clb r19, r10
+# CHECK: 20: 18 10 6a 11 clb r21, r5
+# CHECK: 24: 18 10 b6 10 clb r27, r2
+# CHECK: 28: 18 10 24 16 clb r18, r24
+# CHECK: 2c: 18 10 9c 15 clb r14, r22
+# CHECK: 30: 18 10 52 13 clb r9, r13
+# CHECK: 34: 18 10 c8 15 clb r4, r23
+# CHECK: 38: 18 10 00 11 clb r0, r4
+# CHECK: 3c: 18 10 4c 15 clb r6, r21
+# CHECK: 40: 18 10 96 11 clb r11, r6
+# CHECK: 44: 18 10 1a 12 clb r13, r8
+# CHECK: 48: 18 10 f4 17 clb r26, r31
+# CHECK: 4c: 18 10 ec 14 clb r22, r19
+# CHECK: 50: 18 10 de 11 clb r15, r7
+# CHECK: 54: 18 10 14 10 clb r10, r0
+# CHECK: 58: 18 10 68 16 clb r20, r25
+# CHECK: 5c: 18 10 c4 16 clb r2, r27
+# CHECK: 60: 18 10 3e 17 clb r31, r28
+# CHECK: 64: 18 10 42 10 clb r1, r1
+# CHECK: 68: 18 10 62 12 clb r17, r9
+# CHECK: 6c: 18 10 60 17 clb r16, r29
+# CHECK: 70: 18 10 f2 10 clb r25, r3
+# CHECK: 74: 18 10 3c 15 clb r30, r20
+# CHECK: 78: 18 10 50 14 clb r8, r17
+# CHECK: 7c: 18 10 86 17 clb r3, r30

@@ -68,6 +68,7 @@ public:
   RuntimeLibType GetDefaultRuntimeLibType() const override {
     return ToolChain::RLT_CompilerRT;
   }
+  std::string getIntrinsicsHeaderPath(llvm::Triple::ArchType &Arch) const;
 };
 
 } // end namespace toolchains

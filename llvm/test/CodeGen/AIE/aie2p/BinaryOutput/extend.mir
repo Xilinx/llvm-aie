@@ -1,0 +1,286 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; EXTEND_s16
+    $r23 = EXTEND_s16 $r15
+    $r2 = EXTEND_s16 $r21
+    $r1 = EXTEND_s16 $r29
+    $r3 = EXTEND_s16 $r4
+    $r20 = EXTEND_s16 $r30
+    $r5 = EXTEND_s16 $r11
+    $r29 = EXTEND_s16 $r0
+    $r8 = EXTEND_s16 $r24
+    $r16 = EXTEND_s16 $r16
+    $r7 = EXTEND_s16 $r14
+    $r28 = EXTEND_s16 $r7
+    $r21 = EXTEND_s16 $r1
+    $r24 = EXTEND_s16 $r3
+    $r22 = EXTEND_s16 $r26
+    $r4 = EXTEND_s16 $r27
+    $r25 = EXTEND_s16 $r20
+    $r27 = EXTEND_s16 $r31
+    $r10 = EXTEND_s16 $r18
+    $r13 = EXTEND_s16 $r5
+    $r0 = EXTEND_s16 $r13
+    $r11 = EXTEND_s16 $r22
+    $r6 = EXTEND_s16 $r2
+    $r18 = EXTEND_s16 $r17
+    $r15 = EXTEND_s16 $r12
+    $r26 = EXTEND_s16 $r25
+    $r9 = EXTEND_s16 $r10
+    $r31 = EXTEND_s16 $r19
+    $r17 = EXTEND_s16 $r8
+    $r12 = EXTEND_s16 $r28
+    $r14 = EXTEND_s16 $r9
+    $r30 = EXTEND_s16 $r23
+    $r19 = EXTEND_s16 $r6
+
+    ; EXTEND_s8
+    $r23 = EXTEND_s8 $r31
+    $r16 = EXTEND_s8 $r2
+    $r17 = EXTEND_s8 $r0
+    $r26 = EXTEND_s8 $r1
+    $r24 = EXTEND_s8 $r17
+    $r4 = EXTEND_s8 $r22
+    $r12 = EXTEND_s8 $r8
+    $r29 = EXTEND_s8 $r16
+    $r31 = EXTEND_s8 $r25
+    $r28 = EXTEND_s8 $r26
+    $r21 = EXTEND_s8 $r3
+    $r22 = EXTEND_s8 $r7
+    $r13 = EXTEND_s8 $r21
+    $r5 = EXTEND_s8 $r27
+    $r18 = EXTEND_s8 $r9
+    $r19 = EXTEND_s8 $r23
+    $r9 = EXTEND_s8 $r24
+    $r1 = EXTEND_s8 $r19
+    $r15 = EXTEND_s8 $r14
+    $r8 = EXTEND_s8 $r10
+    $r2 = EXTEND_s8 $r30
+    $r10 = EXTEND_s8 $r11
+    $r14 = EXTEND_s8 $r15
+    $r7 = EXTEND_s8 $r4
+    $r25 = EXTEND_s8 $r18
+    $r27 = EXTEND_s8 $r29
+    $r30 = EXTEND_s8 $r13
+    $r0 = EXTEND_s8 $r20
+    $r3 = EXTEND_s8 $r6
+    $r20 = EXTEND_s8 $r12
+    $r11 = EXTEND_s8 $r28
+    $r6 = EXTEND_s8 $r5
+
+    ; EXTEND_u16
+    $r13 = EXTEND_u16 $r10
+    $r28 = EXTEND_u16 $r14
+    $r17 = EXTEND_u16 $r17
+    $r9 = EXTEND_u16 $r30
+    $r12 = EXTEND_u16 $r7
+    $r25 = EXTEND_u16 $r25
+    $r29 = EXTEND_u16 $r9
+    $r15 = EXTEND_u16 $r19
+    $r31 = EXTEND_u16 $r26
+    $r27 = EXTEND_u16 $r20
+    $r18 = EXTEND_u16 $r8
+    $r23 = EXTEND_u16 $r3
+    $r14 = EXTEND_u16 $r27
+    $r0 = EXTEND_u16 $r28
+    $r5 = EXTEND_u16 $r4
+    $r30 = EXTEND_u16 $r31
+    $r24 = EXTEND_u16 $r0
+    $r8 = EXTEND_u16 $r21
+    $r3 = EXTEND_u16 $r24
+    $r6 = EXTEND_u16 $r29
+    $r26 = EXTEND_u16 $r2
+    $r19 = EXTEND_u16 $r23
+    $r1 = EXTEND_u16 $r6
+    $r10 = EXTEND_u16 $r11
+    $r22 = EXTEND_u16 $r5
+    $r20 = EXTEND_u16 $r18
+    $r11 = EXTEND_u16 $r12
+    $r21 = EXTEND_u16 $r15
+    $r4 = EXTEND_u16 $r16
+    $r7 = EXTEND_u16 $r22
+    $r2 = EXTEND_u16 $r13
+    $r16 = EXTEND_u16 $r1
+
+    ; EXTEND_u8
+    $r19 = EXTEND_u8 $r30
+    $r5 = EXTEND_u8 $r31
+    $r15 = EXTEND_u8 $r28
+    $r22 = EXTEND_u8 $r18
+    $r9 = EXTEND_u8 $r19
+    $r7 = EXTEND_u8 $r16
+    $r30 = EXTEND_u8 $r29
+    $r23 = EXTEND_u8 $r0
+    $r21 = EXTEND_u8 $r11
+    $r26 = EXTEND_u8 $r1
+    $r29 = EXTEND_u8 $r23
+    $r1 = EXTEND_u8 $r3
+    $r31 = EXTEND_u8 $r13
+    $r16 = EXTEND_u8 $r26
+    $r27 = EXTEND_u8 $r17
+    $r24 = EXTEND_u8 $r5
+    $r14 = EXTEND_u8 $r10
+    $r13 = EXTEND_u8 $r21
+    $r6 = EXTEND_u8 $r14
+    $r25 = EXTEND_u8 $r25
+    $r8 = EXTEND_u8 $r6
+    $r28 = EXTEND_u8 $r24
+    $r4 = EXTEND_u8 $r27
+    $r18 = EXTEND_u8 $r15
+    $r3 = EXTEND_u8 $r22
+    $r0 = EXTEND_u8 $r2
+    $r10 = EXTEND_u8 $r12
+    $r17 = EXTEND_u8 $r4
+    $r20 = EXTEND_u8 $r8
+    $r12 = EXTEND_u8 $r9
+    $r11 = EXTEND_u8 $r7
+    $r2 = EXTEND_u8 $r20
+...
+
+# CHECK: 0: 18 70 ee 13 extend.s16 r23, r15
+# CHECK: 4: 18 70 44 15 extend.s16 r2, r21
+# CHECK: 8: 18 70 42 17 extend.s16 r1, r29
+# CHECK: c: 18 70 06 11 extend.s16 r3, r4
+# CHECK: 10: 18 70 a8 17 extend.s16 r20, r30
+# CHECK: 14: 18 70 ca 12 extend.s16 r5, r11
+# CHECK: 18: 18 70 3a 10 extend.s16 r29, r0
+# CHECK: 1c: 18 70 10 16 extend.s16 r8, r24
+# CHECK: 20: 18 70 20 14 extend.s16 r16, r16
+# CHECK: 24: 18 70 8e 13 extend.s16 r7, r14
+# CHECK: 28: 18 70 f8 11 extend.s16 r28, r7
+# CHECK: 2c: 18 70 6a 10 extend.s16 r21, r1
+# CHECK: 30: 18 70 f0 10 extend.s16 r24, r3
+# CHECK: 34: 18 70 ac 16 extend.s16 r22, r26
+# CHECK: 38: 18 70 c8 16 extend.s16 r4, r27
+# CHECK: 3c: 18 70 32 15 extend.s16 r25, r20
+# CHECK: 40: 18 70 f6 17 extend.s16 r27, r31
+# CHECK: 44: 18 70 94 14 extend.s16 r10, r18
+# CHECK: 48: 18 70 5a 11 extend.s16 r13, r5
+# CHECK: 4c: 18 70 40 13 extend.s16 r0, r13
+# CHECK: 50: 18 70 96 15 extend.s16 r11, r22
+# CHECK: 54: 18 70 8c 10 extend.s16 r6, r2
+# CHECK: 58: 18 70 64 14 extend.s16 r18, r17
+# CHECK: 5c: 18 70 1e 13 extend.s16 r15, r12
+# CHECK: 60: 18 70 74 16 extend.s16 r26, r25
+# CHECK: 64: 18 70 92 12 extend.s16 r9, r10
+# CHECK: 68: 18 70 fe 14 extend.s16 r31, r19
+# CHECK: 6c: 18 70 22 12 extend.s16 r17, r8
+# CHECK: 70: 18 70 18 17 extend.s16 r12, r28
+# CHECK: 74: 18 70 5c 12 extend.s16 r14, r9
+# CHECK: 78: 18 70 fc 15 extend.s16 r30, r23
+# CHECK: 7c: 18 70 a6 11 extend.s16 r19, r6
+# CHECK: 80: 18 50 ee 17 extend.s8 r23, r31
+# CHECK: 84: 18 50 a0 10 extend.s8 r16, r2
+# CHECK: 88: 18 50 22 10 extend.s8 r17, r0
+# CHECK: 8c: 18 50 74 10 extend.s8 r26, r1
+# CHECK: 90: 18 50 70 14 extend.s8 r24, r17
+# CHECK: 94: 18 50 88 15 extend.s8 r4, r22
+# CHECK: 98: 18 50 18 12 extend.s8 r12, r8
+# CHECK: 9c: 18 50 3a 14 extend.s8 r29, r16
+# CHECK: a0: 18 50 7e 16 extend.s8 r31, r25
+# CHECK: a4: 18 50 b8 16 extend.s8 r28, r26
+# CHECK: a8: 18 50 ea 10 extend.s8 r21, r3
+# CHECK: ac: 18 50 ec 11 extend.s8 r22, r7
+# CHECK: b0: 18 50 5a 15 extend.s8 r13, r21
+# CHECK: b4: 18 50 ca 16 extend.s8 r5, r27
+# CHECK: b8: 18 50 64 12 extend.s8 r18, r9
+# CHECK: bc: 18 50 e6 15 extend.s8 r19, r23
+# CHECK: c0: 18 50 12 16 extend.s8 r9, r24
+# CHECK: c4: 18 50 c2 14 extend.s8 r1, r19
+# CHECK: c8: 18 50 9e 13 extend.s8 r15, r14
+# CHECK: cc: 18 50 90 12 extend.s8 r8, r10
+# CHECK: d0: 18 50 84 17 extend.s8 r2, r30
+# CHECK: d4: 18 50 d4 12 extend.s8 r10, r11
+# CHECK: d8: 18 50 dc 13 extend.s8 r14, r15
+# CHECK: dc: 18 50 0e 11 extend.s8 r7, r4
+# CHECK: e0: 18 50 b2 14 extend.s8 r25, r18
+# CHECK: e4: 18 50 76 17 extend.s8 r27, r29
+# CHECK: e8: 18 50 7c 13 extend.s8 r30, r13
+# CHECK: ec: 18 50 00 15 extend.s8 r0, r20
+# CHECK: f0: 18 50 86 11 extend.s8 r3, r6
+# CHECK: f4: 18 50 28 13 extend.s8 r20, r12
+# CHECK: f8: 18 50 16 17 extend.s8 r11, r28
+# CHECK: fc: 18 50 4c 11 extend.s8 r6, r5
+# CHECK: 100: 18 b0 9a 12 extend.u16 r13, r10
+# CHECK: 104: 18 b0 b8 13 extend.u16 r28, r14
+# CHECK: 108: 18 b0 62 14 extend.u16 r17, r17
+# CHECK: 10c: 18 b0 92 17 extend.u16 r9, r30
+# CHECK: 110: 18 b0 d8 11 extend.u16 r12, r7
+# CHECK: 114: 18 b0 72 16 extend.u16 r25, r25
+# CHECK: 118: 18 b0 7a 12 extend.u16 r29, r9
+# CHECK: 11c: 18 b0 de 14 extend.u16 r15, r19
+# CHECK: 120: 18 b0 be 16 extend.u16 r31, r26
+# CHECK: 124: 18 b0 36 15 extend.u16 r27, r20
+# CHECK: 128: 18 b0 24 12 extend.u16 r18, r8
+# CHECK: 12c: 18 b0 ee 10 extend.u16 r23, r3
+# CHECK: 130: 18 b0 dc 16 extend.u16 r14, r27
+# CHECK: 134: 18 b0 00 17 extend.u16 r0, r28
+# CHECK: 138: 18 b0 0a 11 extend.u16 r5, r4
+# CHECK: 13c: 18 b0 fc 17 extend.u16 r30, r31
+# CHECK: 140: 18 b0 30 10 extend.u16 r24, r0
+# CHECK: 144: 18 b0 50 15 extend.u16 r8, r21
+# CHECK: 148: 18 b0 06 16 extend.u16 r3, r24
+# CHECK: 14c: 18 b0 4c 17 extend.u16 r6, r29
+# CHECK: 150: 18 b0 b4 10 extend.u16 r26, r2
+# CHECK: 154: 18 b0 e6 15 extend.u16 r19, r23
+# CHECK: 158: 18 b0 82 11 extend.u16 r1, r6
+# CHECK: 15c: 18 b0 d4 12 extend.u16 r10, r11
+# CHECK: 160: 18 b0 6c 11 extend.u16 r22, r5
+# CHECK: 164: 18 b0 a8 14 extend.u16 r20, r18
+# CHECK: 168: 18 b0 16 13 extend.u16 r11, r12
+# CHECK: 16c: 18 b0 ea 13 extend.u16 r21, r15
+# CHECK: 170: 18 b0 08 14 extend.u16 r4, r16
+# CHECK: 174: 18 b0 8e 15 extend.u16 r7, r22
+# CHECK: 178: 18 b0 44 13 extend.u16 r2, r13
+# CHECK: 17c: 18 b0 60 10 extend.u16 r16, r1
+# CHECK: 180: 18 90 a6 17 extend.u8 r19, r30
+# CHECK: 184: 18 90 ca 17 extend.u8 r5, r31
+# CHECK: 188: 18 90 1e 17 extend.u8 r15, r28
+# CHECK: 18c: 18 90 ac 14 extend.u8 r22, r18
+# CHECK: 190: 18 90 d2 14 extend.u8 r9, r19
+# CHECK: 194: 18 90 0e 14 extend.u8 r7, r16
+# CHECK: 198: 18 90 7c 17 extend.u8 r30, r29
+# CHECK: 19c: 18 90 2e 10 extend.u8 r23, r0
+# CHECK: 1a0: 18 90 ea 12 extend.u8 r21, r11
+# CHECK: 1a4: 18 90 74 10 extend.u8 r26, r1
+# CHECK: 1a8: 18 90 fa 15 extend.u8 r29, r23
+# CHECK: 1ac: 18 90 c2 10 extend.u8 r1, r3
+# CHECK: 1b0: 18 90 7e 13 extend.u8 r31, r13
+# CHECK: 1b4: 18 90 a0 16 extend.u8 r16, r26
+# CHECK: 1b8: 18 90 76 14 extend.u8 r27, r17
+# CHECK: 1bc: 18 90 70 11 extend.u8 r24, r5
+# CHECK: 1c0: 18 90 9c 12 extend.u8 r14, r10
+# CHECK: 1c4: 18 90 5a 15 extend.u8 r13, r21
+# CHECK: 1c8: 18 90 8c 13 extend.u8 r6, r14
+# CHECK: 1cc: 18 90 72 16 extend.u8 r25, r25
+# CHECK: 1d0: 18 90 90 11 extend.u8 r8, r6
+# CHECK: 1d4: 18 90 38 16 extend.u8 r28, r24
+# CHECK: 1d8: 18 90 c8 16 extend.u8 r4, r27
+# CHECK: 1dc: 18 90 e4 13 extend.u8 r18, r15
+# CHECK: 1e0: 18 90 86 15 extend.u8 r3, r22
+# CHECK: 1e4: 18 90 80 10 extend.u8 r0, r2
+# CHECK: 1e8: 18 90 14 13 extend.u8 r10, r12
+# CHECK: 1ec: 18 90 22 11 extend.u8 r17, r4
+# CHECK: 1f0: 18 90 28 12 extend.u8 r20, r8
+# CHECK: 1f4: 18 90 58 12 extend.u8 r12, r9
+# CHECK: 1f8: 18 90 d6 11 extend.u8 r11, r7
+# CHECK: 1fc: 18 90 04 15 extend.u8 r2, r20

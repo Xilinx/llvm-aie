@@ -126,6 +126,7 @@ std::unique_ptr<TargetInfo> AllocateTarget(const llvm::Triple &Triple,
 
   case llvm::Triple::aie:
   case llvm::Triple::aie2:
+  case llvm::Triple::aie2p:
     return std::make_unique<AIETargetInfo>(Triple, Opts);
 
   case llvm::Triple::xcore:

@@ -1,0 +1,88 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; LSHL
+    $r12 = LSHL $r31, $r10
+    $r9 = LSHL $r3, $r7
+    $r16 = LSHL $r12, $r31
+    $r26 = LSHL $r26, $r12
+    $r0 = LSHL $r16, $r20
+    $r8 = LSHL $r1, $r1
+    $r4 = LSHL $r5, $r23
+    $r11 = LSHL $r28, $r14
+    $r27 = LSHL $r25, $r6
+    $r21 = LSHL $r4, $r26
+    $r25 = LSHL $r29, $r0
+    $r23 = LSHL $r22, $r4
+    $r18 = LSHL $r20, $r2
+    $r31 = LSHL $r8, $r22
+    $r14 = LSHL $r11, $r17
+    $r7 = LSHL $r6, $r21
+    $r17 = LSHL $r15, $r5
+    $r28 = LSHL $r17, $r15
+    $r22 = LSHL $r19, $r25
+    $r10 = LSHL $r2, $r8
+    $r13 = LSHL $r14, $r16
+    $r19 = LSHL $r27, $r9
+    $r15 = LSHL $r10, $r11
+    $r2 = LSHL $r7, $r24
+    $r5 = LSHL $r13, $r27
+    $r24 = LSHL $r0, $r28
+    $r30 = LSHL $r18, $r3
+    $r20 = LSHL $r24, $r18
+    $r3 = LSHL $r30, $r29
+    $r1 = LSHL $r21, $r13
+    $r6 = LSHL $r23, $r19
+    $r29 = LSHL $r9, $r30
+...
+
+# CHECK: 0: 98 ad d8 17 lshl r12, r31, r10
+# CHECK: 4: 98 7d d2 10 lshl r9, r3, r7
+# CHECK: 8: 98 fd 21 13 lshl r16, r12, r31
+# CHECK: c: 98 cd b4 16 lshl r26, r26, r12
+# CHECK: 10: 98 4d 01 14 lshl r0, r16, r20
+# CHECK: 14: 98 1d 50 10 lshl r8, r1, r1
+# CHECK: 18: 98 7d 49 11 lshl r4, r5, r23
+# CHECK: 1c: 98 ed 16 17 lshl r11, r28, r14
+# CHECK: 20: 98 6d 76 16 lshl r27, r25, r6
+# CHECK: 24: 98 ad 2b 11 lshl r21, r4, r26
+# CHECK: 28: 98 0d 72 17 lshl r25, r29, r0
+# CHECK: 2c: 98 4d ae 15 lshl r23, r22, r4
+# CHECK: 30: 98 2d 24 15 lshl r18, r20, r2
+# CHECK: 34: 98 6d 3f 12 lshl r31, r8, r22
+# CHECK: 38: 98 1d dd 12 lshl r14, r11, r17
+# CHECK: 3c: 98 5d 8f 11 lshl r7, r6, r21
+# CHECK: 40: 98 5d e2 13 lshl r17, r15, r5
+# CHECK: 44: 98 fd 78 14 lshl r28, r17, r15
+# CHECK: 48: 98 9d ed 14 lshl r22, r19, r25
+# CHECK: 4c: 98 8d 94 10 lshl r10, r2, r8
+# CHECK: 50: 98 0d 9b 13 lshl r13, r14, r16
+# CHECK: 54: 98 9d e6 16 lshl r19, r27, r9
+# CHECK: 58: 98 bd 9e 12 lshl r15, r10, r11
+# CHECK: 5c: 98 8d c5 11 lshl r2, r7, r24
+# CHECK: 60: 98 bd 4b 13 lshl r5, r13, r27
+# CHECK: 64: 98 cd 31 10 lshl r24, r0, r28
+# CHECK: 68: 98 3d bc 14 lshl r30, r18, r3
+# CHECK: 6c: 98 2d 29 16 lshl r20, r24, r18
+# CHECK: 70: 98 dd 87 17 lshl r3, r30, r29
+# CHECK: 74: 98 dd 42 15 lshl r1, r21, r13
+# CHECK: 78: 98 3d cd 15 lshl r6, r23, r19
+# CHECK: 7c: 98 ed 7b 12 lshl r29, r9, r30

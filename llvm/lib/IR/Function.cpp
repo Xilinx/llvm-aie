@@ -38,6 +38,7 @@
 #include "llvm/IR/IntrinsicsAArch64.h"
 #include "llvm/IR/IntrinsicsAIE.h"
 #include "llvm/IR/IntrinsicsAIE2.h"
+#include "llvm/IR/IntrinsicsAIE2P.h"
 #include "llvm/IR/IntrinsicsAMDGPU.h"
 #include "llvm/IR/IntrinsicsARM.h"
 #include "llvm/IR/IntrinsicsBPF.h"

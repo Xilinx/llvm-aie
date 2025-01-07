@@ -1,0 +1,79 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: not --crash llc -mtriple=aie2p -run-pass machineverifier -o /dev/null %s 2>&1 | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+# This test ensures that the Machine Verifier detects tied physical registers
+# that don't match.
+
+---
+name:      tied_ok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+
+    $p5, $dc6 = ST_2D_dms_sts $r12, $p5, $d6
+    $p1, $dc4 = ST_2D_dmv_sts_q $q2, $p1, $d4
+    $p1, $dc7 = ST_2D_s16 $r4, $p1, $d7, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3, $dc0 = ST_2D_s8 $r17, $p3, $d0, implicit-def $pe2_ads, implicit $pe2_ads
+    $p7, $dc7 = ST_TM_2D $r7, $p7, $d7 :: (store (s32) into custom "TileMemory")
+
+    ; Below instructions have hasExtraSrcRegAllocReq and hasExtraDefRegAllocReq attributes
+    ; which essentially bypass the register flags. The renamable attributes
+    ; below should trigger no verification error.
+    ; CHECK-NOT: Bad machine code
+    renamable $p5, renamable $dc6 = ST_2D_dms_sts renamable $r12, renamable $p5, renamable $d6
+    renamable $p1, renamable $dc4 = ST_2D_dmv_sts_q renamable $q2, renamable $p1, renamable $d4
+    renamable $p1, renamable $dc7 = ST_2D_s16 renamable $r4, renamable $p1, renamable $d7, implicit-def renamable $pe2_ads, implicit renamable $pe2_ads
+    renamable $p3, renamable $dc0 = ST_2D_s8 renamable $r17, renamable $p3, renamable $d0, implicit-def renamable $pe2_ads, implicit renamable $pe2_ads
+    renamable $p7, renamable $dc7 = ST_TM_2D renamable $r7, renamable $p7, renamable $d7 :: (store (s32) into custom "TileMemory")
+
+...
+
+---
+name:      virtual_ok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    %0:ep = COPY $p0
+    %10:ed = COPY $d0
+    %30:ep, %31:edc = ST_2D_dms_sts $r12, %0, %10
+    %40:ep, %41:edc = ST_2D_dmv_sts_q $q2, %0, %10
+    %50:ep, %51:edc = ST_2D_s16 $r4, %0, %10, implicit-def $pe2_ads, implicit $pe2_ads
+    %60:ep, %61:edc = ST_2D_s8 $r17, %0, %10, implicit-def $pe2_ads, implicit $pe2_ads
+    %110:ep, %111:edc = ST_TM_2D $r7, %0, %10 :: (store (s32) into custom "TileMemory")
+
+...
+
+---
+name:      tied_nok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    ; CHECK-COUNT-15: Bad machine code:
+
+    $p5, $dc4 = ST_2D_dms_sts $r12, $p5, $d6
+    $p5, $dc2 = ST_2D_dms_sts $r12, $p5, $d6
+    $p5, $dc5 = ST_2D_dms_sts $r12, $p5, $d6
+    $p1, $dc1 = ST_2D_dmv_sts_q $q2, $p1, $d4
+    $p1, $dc5 = ST_2D_dmv_sts_q $q2, $p1, $d4
+    $p1, $dc6 = ST_2D_dmv_sts_q $q2, $p1, $d4
+    $p1, $dc6 = ST_2D_s16 $r4, $p1, $d7, implicit-def $pe2_ads, implicit $pe2_ads
+    $p1, $dc2 = ST_2D_s16 $r4, $p1, $d7, implicit-def $pe2_ads, implicit $pe2_ads
+    $p1, $dc3 = ST_2D_s16 $r4, $p1, $d7, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3, $dc2 = ST_2D_s8 $r17, $p3, $d0, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3, $dc3 = ST_2D_s8 $r17, $p3, $d0, implicit-def $pe2_ads, implicit $pe2_ads
+    $p3, $dc4 = ST_2D_s8 $r17, $p3, $d0, implicit-def $pe2_ads, implicit $pe2_ads
+    $p7, $dc3 = ST_TM_2D $r7, $p7, $d7 :: (store (s32) into custom "TileMemory")
+    $p7, $dc6 = ST_TM_2D $r7, $p7, $d7 :: (store (s32) into custom "TileMemory")
+    $p7, $dc4 = ST_TM_2D $r7, $p7, $d7 :: (store (s32) into custom "TileMemory")
+
+...
+

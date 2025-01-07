@@ -1,0 +1,88 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; MUL
+    $r3 = MUL $r3, $r15
+    $r26 = MUL $r18, $r0
+    $r21 = MUL $r20, $r16
+    $r13 = MUL $r23, $r14
+    $r5 = MUL $r16, $r30
+    $r28 = MUL $r14, $r13
+    $r19 = MUL $r31, $r28
+    $r29 = MUL $r8, $r10
+    $r27 = MUL $r6, $r3
+    $r7 = MUL $r30, $r19
+    $r24 = MUL $r28, $r23
+    $r15 = MUL $r4, $r6
+    $r14 = MUL $r0, $r5
+    $r6 = MUL $r15, $r18
+    $r22 = MUL $r7, $r20
+    $r17 = MUL $r12, $r1
+    $r31 = MUL $r26, $r17
+    $r1 = MUL $r2, $r12
+    $r0 = MUL $r22, $r29
+    $r9 = MUL $r17, $r11
+    $r20 = MUL $r11, $r25
+    $r4 = MUL $r5, $r24
+    $r10 = MUL $r10, $r2
+    $r30 = MUL $r13, $r8
+    $r12 = MUL $r25, $r7
+    $r23 = MUL $r9, $r9
+    $r11 = MUL $r27, $r31
+    $r25 = MUL $r24, $r4
+    $r18 = MUL $r21, $r26
+    $r16 = MUL $r19, $r22
+    $r2 = MUL $r1, $r27
+    $r8 = MUL $r29, $r21
+...
+
+# CHECK: 0: 98 ff c6 10 mul r3, r3, r15
+# CHECK: 4: 98 0f b4 14 mul r26, r18, r0
+# CHECK: 8: 98 0f 2b 15 mul r21, r20, r16
+# CHECK: c: 98 ef da 15 mul r13, r23, r14
+# CHECK: 10: 98 ef 0b 14 mul r5, r16, r30
+# CHECK: 14: 98 df b8 13 mul r28, r14, r13
+# CHECK: 18: 98 cf e7 17 mul r19, r31, r28
+# CHECK: 1c: 98 af 3a 12 mul r29, r8, r10
+# CHECK: 20: 98 3f b6 11 mul r27, r6, r3
+# CHECK: 24: 98 3f 8f 17 mul r7, r30, r19
+# CHECK: 28: 98 7f 31 17 mul r24, r28, r23
+# CHECK: 2c: 98 6f 1e 11 mul r15, r4, r6
+# CHECK: 30: 98 5f 1c 10 mul r14, r0, r5
+# CHECK: 34: 98 2f cd 13 mul r6, r15, r18
+# CHECK: 38: 98 4f ed 11 mul r22, r7, r20
+# CHECK: 3c: 98 1f 22 13 mul r17, r12, r1
+# CHECK: 40: 98 1f bf 16 mul r31, r26, r17
+# CHECK: 44: 98 cf 82 10 mul r1, r2, r12
+# CHECK: 48: 98 df 81 15 mul r0, r22, r29
+# CHECK: 4c: 98 bf 52 14 mul r9, r17, r11
+# CHECK: 50: 98 9f e9 12 mul r20, r11, r25
+# CHECK: 54: 98 8f 49 11 mul r4, r5, r24
+# CHECK: 58: 98 2f 94 12 mul r10, r10, r2
+# CHECK: 5c: 98 8f 7c 13 mul r30, r13, r8
+# CHECK: 60: 98 7f 58 16 mul r12, r25, r7
+# CHECK: 64: 98 9f 6e 12 mul r23, r9, r9
+# CHECK: 68: 98 ff d7 16 mul r11, r27, r31
+# CHECK: 6c: 98 4f 32 16 mul r25, r24, r4
+# CHECK: 70: 98 af 65 15 mul r18, r21, r26
+# CHECK: 74: 98 6f e1 14 mul r16, r19, r22
+# CHECK: 78: 98 bf 45 10 mul r2, r1, r27
+# CHECK: 7c: 98 5f 51 17 mul r8, r29, r21

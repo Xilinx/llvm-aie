@@ -4,8 +4,10 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple aie -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc -mtriple aie -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE1 %s
+# RUN: llc -mtriple aie2 -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2 %s
+# RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2P %s
 
 ---
 name: mul_s32
@@ -15,11 +17,29 @@ regBankSelected: true
 body: |
   bb.0:
     liveins: $r6, $r7
-    ; CHECK-LABEL: name: mul_s32
-    ; CHECK: [[COPY:%[0-9]+]]:gpr = COPY $r6
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:gpr = COPY $r7
-    ; CHECK-NEXT: [[MUL:%[0-9]+]]:gpr = MUL [[COPY]], [[COPY1]]
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[MUL]]
+    ; AIE1-LABEL: name: mul_s32
+    ; AIE1: liveins: $r6, $r7
+    ; AIE1-NEXT: {{  $}}
+    ; AIE1-NEXT: [[COPY:%[0-9]+]]:gpr = COPY $r6
+    ; AIE1-NEXT: [[COPY1:%[0-9]+]]:gpr = COPY $r7
+    ; AIE1-NEXT: [[MUL:%[0-9]+]]:gpr = MUL [[COPY]], [[COPY1]]
+    ; AIE1-NEXT: PseudoRET implicit $lr, implicit [[MUL]]
+    ;
+    ; AIE2-LABEL: name: mul_s32
+    ; AIE2: liveins: $r6, $r7
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
+    ; AIE2-NEXT: [[MUL_mul_r_rr:%[0-9]+]]:er = MUL_mul_r_rr [[COPY]], [[COPY1]]
+    ; AIE2-NEXT: PseudoRET implicit $lr, implicit [[MUL_mul_r_rr]]
+    ;
+    ; AIE2P-LABEL: name: mul_s32
+    ; AIE2P: liveins: $r6, $r7
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
+    ; AIE2P-NEXT: [[MUL:%[0-9]+]]:er = MUL [[COPY]], [[COPY1]]
+    ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[MUL]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = COPY $r7
     %2:gprregbank(s32) = G_MUL %0, %1

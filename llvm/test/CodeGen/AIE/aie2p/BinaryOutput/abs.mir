@@ -1,0 +1,88 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; ABS
+    $r0 = ABS $r27, implicit-def $srcarry
+    $r29 = ABS $r11, implicit-def $srcarry
+    $r25 = ABS $r17, implicit-def $srcarry
+    $r14 = ABS $r23, implicit-def $srcarry
+    $r22 = ABS $r18, implicit-def $srcarry
+    $r9 = ABS $r5, implicit-def $srcarry
+    $r17 = ABS $r16, implicit-def $srcarry
+    $r20 = ABS $r25, implicit-def $srcarry
+    $r12 = ABS $r21, implicit-def $srcarry
+    $r19 = ABS $r13, implicit-def $srcarry
+    $r30 = ABS $r24, implicit-def $srcarry
+    $r2 = ABS $r7, implicit-def $srcarry
+    $r3 = ABS $r22, implicit-def $srcarry
+    $r28 = ABS $r2, implicit-def $srcarry
+    $r26 = ABS $r3, implicit-def $srcarry
+    $r24 = ABS $r20, implicit-def $srcarry
+    $r6 = ABS $r28, implicit-def $srcarry
+    $r1 = ABS $r10, implicit-def $srcarry
+    $r11 = ABS $r0, implicit-def $srcarry
+    $r15 = ABS $r26, implicit-def $srcarry
+    $r21 = ABS $r12, implicit-def $srcarry
+    $r13 = ABS $r8, implicit-def $srcarry
+    $r7 = ABS $r31, implicit-def $srcarry
+    $r8 = ABS $r9, implicit-def $srcarry
+    $r5 = ABS $r1, implicit-def $srcarry
+    $r4 = ABS $r6, implicit-def $srcarry
+    $r27 = ABS $r4, implicit-def $srcarry
+    $r16 = ABS $r29, implicit-def $srcarry
+    $r10 = ABS $r15, implicit-def $srcarry
+    $r31 = ABS $r14, implicit-def $srcarry
+    $r23 = ABS $r30, implicit-def $srcarry
+    $r18 = ABS $r19, implicit-def $srcarry
+...
+
+# CHECK: 0: 18 10 c1 16 abs r0, r27
+# CHECK: 4: 18 10 fb 12 abs r29, r11
+# CHECK: 8: 18 10 73 14 abs r25, r17
+# CHECK: c: 18 10 dd 15 abs r14, r23
+# CHECK: 10: 18 10 ad 14 abs r22, r18
+# CHECK: 14: 18 10 53 11 abs r9, r5
+# CHECK: 18: 18 10 23 14 abs r17, r16
+# CHECK: 1c: 18 10 69 16 abs r20, r25
+# CHECK: 20: 18 10 59 15 abs r12, r21
+# CHECK: 24: 18 10 67 13 abs r19, r13
+# CHECK: 28: 18 10 3d 16 abs r30, r24
+# CHECK: 2c: 18 10 c5 11 abs r2, r7
+# CHECK: 30: 18 10 87 15 abs r3, r22
+# CHECK: 34: 18 10 b9 10 abs r28, r2
+# CHECK: 38: 18 10 f5 10 abs r26, r3
+# CHECK: 3c: 18 10 31 15 abs r24, r20
+# CHECK: 40: 18 10 0d 17 abs r6, r28
+# CHECK: 44: 18 10 83 12 abs r1, r10
+# CHECK: 48: 18 10 17 10 abs r11, r0
+# CHECK: 4c: 18 10 9f 16 abs r15, r26
+# CHECK: 50: 18 10 2b 13 abs r21, r12
+# CHECK: 54: 18 10 1b 12 abs r13, r8
+# CHECK: 58: 18 10 cf 17 abs r7, r31
+# CHECK: 5c: 18 10 51 12 abs r8, r9
+# CHECK: 60: 18 10 4b 10 abs r5, r1
+# CHECK: 64: 18 10 89 11 abs r4, r6
+# CHECK: 68: 18 10 37 11 abs r27, r4
+# CHECK: 6c: 18 10 61 17 abs r16, r29
+# CHECK: 70: 18 10 d5 13 abs r10, r15
+# CHECK: 74: 18 10 bf 13 abs r31, r14
+# CHECK: 78: 18 10 af 17 abs r23, r30
+# CHECK: 7c: 18 10 e5 14 abs r18, r19

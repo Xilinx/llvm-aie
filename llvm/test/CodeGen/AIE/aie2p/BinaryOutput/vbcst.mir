@@ -1,0 +1,254 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; VBCST_16
+    $x1 = VBCST_16 $r29
+    $x7 = VBCST_16 $r22
+    $x2 = VBCST_16 $r21
+    $x8 = VBCST_16 $r9
+    $x10 = VBCST_16 $r20
+    $x11 = VBCST_16 $r16
+    $x6 = VBCST_16 $r0
+    $x0 = VBCST_16 $r12
+    $x4 = VBCST_16 $r5
+    $x5 = VBCST_16 $r23
+    $x3 = VBCST_16 $r24
+    $x9 = VBCST_16 $r13
+    $x1 = VBCST_16 $r30
+    $x7 = VBCST_16 $r14
+    $x2 = VBCST_16 $r1
+    $x8 = VBCST_16 $r26
+    $x10 = VBCST_16 $r3
+    $x11 = VBCST_16 $r28
+    $x6 = VBCST_16 $r15
+    $x0 = VBCST_16 $r2
+    $x4 = VBCST_16 $r25
+    $x5 = VBCST_16 $r27
+    $x3 = VBCST_16 $r8
+    $x9 = VBCST_16 $r31
+    $x1 = VBCST_16 $r4
+    $x7 = VBCST_16 $r18
+    $x2 = VBCST_16 $r17
+    $x8 = VBCST_16 $r19
+    $x10 = VBCST_16 $r10
+    $x11 = VBCST_16 $r11
+    $x6 = VBCST_16 $r6
+    $x0 = VBCST_16 $r7
+
+    ; VBCST_32
+    $x1 = VBCST_32 $r1
+    $x6 = VBCST_32 $r12
+    $x9 = VBCST_32 $r26
+    $x7 = VBCST_32 $r15
+    $x3 = VBCST_32 $r20
+    $x5 = VBCST_32 $r13
+    $x4 = VBCST_32 $r9
+    $x0 = VBCST_32 $r19
+    $x8 = VBCST_32 $r18
+    $x2 = VBCST_32 $r22
+    $x11 = VBCST_32 $r27
+    $x10 = VBCST_32 $r16
+    $x1 = VBCST_32 $r10
+    $x6 = VBCST_32 $r7
+    $x9 = VBCST_32 $r23
+    $x7 = VBCST_32 $r30
+    $x3 = VBCST_32 $r8
+    $x5 = VBCST_32 $r31
+    $x4 = VBCST_32 $r29
+    $x0 = VBCST_32 $r5
+    $x8 = VBCST_32 $r3
+    $x2 = VBCST_32 $r4
+    $x11 = VBCST_32 $r2
+    $x10 = VBCST_32 $r25
+    $x1 = VBCST_32 $r17
+    $x6 = VBCST_32 $r28
+    $x9 = VBCST_32 $r24
+    $x7 = VBCST_32 $r14
+    $x3 = VBCST_32 $r0
+    $x5 = VBCST_32 $r11
+    $x4 = VBCST_32 $r6
+    $x0 = VBCST_32 $r21
+
+    ; VBCST_64
+    $x1 = VBCST_64 $l7
+    $x3 = VBCST_64 $l11
+    $x7 = VBCST_64 $l10
+    $x9 = VBCST_64 $l1
+    $x5 = VBCST_64 $l9
+    $x6 = VBCST_64 $l6
+    $x2 = VBCST_64 $l4
+    $x11 = VBCST_64 $l15
+    $x0 = VBCST_64 $l12
+    $x4 = VBCST_64 $l3
+    $x10 = VBCST_64 $l13
+    $x8 = VBCST_64 $l0
+    $x1 = VBCST_64 $l2
+    $x3 = VBCST_64 $l5
+    $x7 = VBCST_64 $l14
+    $x9 = VBCST_64 $l8
+
+    ; VBCST_8
+    $x4 = VBCST_8 $r5
+    $x8 = VBCST_8 $r25
+    $x10 = VBCST_8 $r23
+    $x1 = VBCST_8 $r20
+    $x7 = VBCST_8 $r18
+    $x5 = VBCST_8 $r27
+    $x2 = VBCST_8 $r8
+    $x3 = VBCST_8 $r2
+    $x0 = VBCST_8 $r11
+    $x11 = VBCST_8 $r14
+    $x9 = VBCST_8 $r7
+    $x6 = VBCST_8 $r31
+    $x4 = VBCST_8 $r30
+    $x8 = VBCST_8 $r1
+    $x10 = VBCST_8 $r10
+    $x1 = VBCST_8 $r9
+    $x7 = VBCST_8 $r29
+    $x5 = VBCST_8 $r0
+    $x2 = VBCST_8 $r26
+    $x3 = VBCST_8 $r19
+    $x0 = VBCST_8 $r28
+    $x11 = VBCST_8 $r21
+    $x9 = VBCST_8 $r4
+    $x6 = VBCST_8 $r12
+    $x4 = VBCST_8 $r15
+    $x8 = VBCST_8 $r3
+    $x10 = VBCST_8 $r17
+    $x1 = VBCST_8 $r24
+    $x7 = VBCST_8 $r13
+    $x5 = VBCST_8 $r16
+    $x2 = VBCST_8 $r6
+    $x3 = VBCST_8 $r22
+...
+
+# CHECK: 0: f8 72 f5 18 vbcst.16 x1, r29
+# CHECK: 4: f8 72 d9 1b vbcst.16 x7, r22
+# CHECK: 8: f8 72 55 19 vbcst.16 x2, r21
+# CHECK: c: f8 72 25 1c vbcst.16 x8, r9
+# CHECK: 10: f8 72 51 1d vbcst.16 x10, r20
+# CHECK: 14: f8 72 c1 1d vbcst.16 x11, r16
+# CHECK: 18: f8 72 01 1b vbcst.16 x6, r0
+# CHECK: 1c: f8 72 31 18 vbcst.16 x0, r12
+# CHECK: 20: f8 72 15 1a vbcst.16 x4, r5
+# CHECK: 24: f8 72 dd 1a vbcst.16 x5, r23
+# CHECK: 28: f8 72 e1 19 vbcst.16 x3, r24
+# CHECK: 2c: f8 72 b5 1c vbcst.16 x9, r13
+# CHECK: 30: f8 72 f9 18 vbcst.16 x1, r30
+# CHECK: 34: f8 72 b9 1b vbcst.16 x7, r14
+# CHECK: 38: f8 72 05 19 vbcst.16 x2, r1
+# CHECK: 3c: f8 72 69 1c vbcst.16 x8, r26
+# CHECK: 40: f8 72 0d 1d vbcst.16 x10, r3
+# CHECK: 44: f8 72 f1 1d vbcst.16 x11, r28
+# CHECK: 48: f8 72 3d 1b vbcst.16 x6, r15
+# CHECK: 4c: f8 72 09 18 vbcst.16 x0, r2
+# CHECK: 50: f8 72 65 1a vbcst.16 x4, r25
+# CHECK: 54: f8 72 ed 1a vbcst.16 x5, r27
+# CHECK: 58: f8 72 a1 19 vbcst.16 x3, r8
+# CHECK: 5c: f8 72 fd 1c vbcst.16 x9, r31
+# CHECK: 60: f8 72 91 18 vbcst.16 x1, r4
+# CHECK: 64: f8 72 c9 1b vbcst.16 x7, r18
+# CHECK: 68: f8 72 45 19 vbcst.16 x2, r17
+# CHECK: 6c: f8 72 4d 1c vbcst.16 x8, r19
+# CHECK: 70: f8 72 29 1d vbcst.16 x10, r10
+# CHECK: 74: f8 72 ad 1d vbcst.16 x11, r11
+# CHECK: 78: f8 72 19 1b vbcst.16 x6, r6
+# CHECK: 7c: f8 72 1d 18 vbcst.16 x0, r7
+# CHECK: 80: f8 72 86 18 vbcst.32 x1, r1
+# CHECK: 84: f8 72 32 1b vbcst.32 x6, r12
+# CHECK: 88: f8 72 ea 1c vbcst.32 x9, r26
+# CHECK: 8c: f8 72 be 1b vbcst.32 x7, r15
+# CHECK: 90: f8 72 d2 19 vbcst.32 x3, r20
+# CHECK: 94: f8 72 b6 1a vbcst.32 x5, r13
+# CHECK: 98: f8 72 26 1a vbcst.32 x4, r9
+# CHECK: 9c: f8 72 4e 18 vbcst.32 x0, r19
+# CHECK: a0: f8 72 4a 1c vbcst.32 x8, r18
+# CHECK: a4: f8 72 5a 19 vbcst.32 x2, r22
+# CHECK: a8: f8 72 ee 1d vbcst.32 x11, r27
+# CHECK: ac: f8 72 42 1d vbcst.32 x10, r16
+# CHECK: b0: f8 72 aa 18 vbcst.32 x1, r10
+# CHECK: b4: f8 72 1e 1b vbcst.32 x6, r7
+# CHECK: b8: f8 72 de 1c vbcst.32 x9, r23
+# CHECK: bc: f8 72 fa 1b vbcst.32 x7, r30
+# CHECK: c0: f8 72 a2 19 vbcst.32 x3, r8
+# CHECK: c4: f8 72 fe 1a vbcst.32 x5, r31
+# CHECK: c8: f8 72 76 1a vbcst.32 x4, r29
+# CHECK: cc: f8 72 16 18 vbcst.32 x0, r5
+# CHECK: d0: f8 72 0e 1c vbcst.32 x8, r3
+# CHECK: d4: f8 72 12 19 vbcst.32 x2, r4
+# CHECK: d8: f8 72 8a 1d vbcst.32 x11, r2
+# CHECK: dc: f8 72 66 1d vbcst.32 x10, r25
+# CHECK: e0: f8 72 c6 18 vbcst.32 x1, r17
+# CHECK: e4: f8 72 72 1b vbcst.32 x6, r28
+# CHECK: e8: f8 72 e2 1c vbcst.32 x9, r24
+# CHECK: ec: f8 72 ba 1b vbcst.32 x7, r14
+# CHECK: f0: f8 72 82 19 vbcst.32 x3, r0
+# CHECK: f4: f8 72 ae 1a vbcst.32 x5, r11
+# CHECK: f8: f8 72 1a 1a vbcst.32 x4, r6
+# CHECK: fc: f8 72 56 18 vbcst.32 x0, r21
+# CHECK: 100: f8 72 bb 18 vbcst.64 x1, r15:r14
+# CHECK: 104: f8 72 db 19 vbcst.64 x3, r23:r22
+# CHECK: 108: f8 72 d3 1b vbcst.64 x7, r21:r20
+# CHECK: 10c: f8 72 8b 1c vbcst.64 x9, r3:r2
+# CHECK: 110: f8 72 cb 1a vbcst.64 x5, r19:r18
+# CHECK: 114: f8 72 33 1b vbcst.64 x6, r13:r12
+# CHECK: 118: f8 72 23 19 vbcst.64 x2, r9:r8
+# CHECK: 11c: f8 72 fb 1d vbcst.64 x11, r31:r30
+# CHECK: 120: f8 72 63 18 vbcst.64 x0, r25:r24
+# CHECK: 124: f8 72 1b 1a vbcst.64 x4, r7:r6
+# CHECK: 128: f8 72 6b 1d vbcst.64 x10, r27:r26
+# CHECK: 12c: f8 72 03 1c vbcst.64 x8, r1:r0
+# CHECK: 130: f8 72 93 18 vbcst.64 x1, r5:r4
+# CHECK: 134: f8 72 ab 19 vbcst.64 x3, r11:r10
+# CHECK: 138: f8 72 f3 1b vbcst.64 x7, r29:r28
+# CHECK: 13c: f8 72 c3 1c vbcst.64 x9, r17:r16
+# CHECK: 140: f8 72 14 1a vbcst.8 x4, r5
+# CHECK: 144: f8 72 64 1c vbcst.8 x8, r25
+# CHECK: 148: f8 72 5c 1d vbcst.8 x10, r23
+# CHECK: 14c: f8 72 d0 18 vbcst.8 x1, r20
+# CHECK: 150: f8 72 c8 1b vbcst.8 x7, r18
+# CHECK: 154: f8 72 ec 1a vbcst.8 x5, r27
+# CHECK: 158: f8 72 20 19 vbcst.8 x2, r8
+# CHECK: 15c: f8 72 88 19 vbcst.8 x3, r2
+# CHECK: 160: f8 72 2c 18 vbcst.8 x0, r11
+# CHECK: 164: f8 72 b8 1d vbcst.8 x11, r14
+# CHECK: 168: f8 72 9c 1c vbcst.8 x9, r7
+# CHECK: 16c: f8 72 7c 1b vbcst.8 x6, r31
+# CHECK: 170: f8 72 78 1a vbcst.8 x4, r30
+# CHECK: 174: f8 72 04 1c vbcst.8 x8, r1
+# CHECK: 178: f8 72 28 1d vbcst.8 x10, r10
+# CHECK: 17c: f8 72 a4 18 vbcst.8 x1, r9
+# CHECK: 180: f8 72 f4 1b vbcst.8 x7, r29
+# CHECK: 184: f8 72 80 1a vbcst.8 x5, r0
+# CHECK: 188: f8 72 68 19 vbcst.8 x2, r26
+# CHECK: 18c: f8 72 cc 19 vbcst.8 x3, r19
+# CHECK: 190: f8 72 70 18 vbcst.8 x0, r28
+# CHECK: 194: f8 72 d4 1d vbcst.8 x11, r21
+# CHECK: 198: f8 72 90 1c vbcst.8 x9, r4
+# CHECK: 19c: f8 72 30 1b vbcst.8 x6, r12
+# CHECK: 1a0: f8 72 3c 1a vbcst.8 x4, r15
+# CHECK: 1a4: f8 72 0c 1c vbcst.8 x8, r3
+# CHECK: 1a8: f8 72 44 1d vbcst.8 x10, r17
+# CHECK: 1ac: f8 72 e0 18 vbcst.8 x1, r24
+# CHECK: 1b0: f8 72 b4 1b vbcst.8 x7, r13
+# CHECK: 1b4: f8 72 c0 1a vbcst.8 x5, r16
+# CHECK: 1b8: f8 72 18 19 vbcst.8 x2, r6
+# CHECK: 1bc: f8 72 d8 19 vbcst.8 x3, r22

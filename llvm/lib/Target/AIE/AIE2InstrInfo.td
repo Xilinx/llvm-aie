@@ -493,12 +493,6 @@ let Defs = [SP], Uses = [SP],
   def ADJCALLSTACKDOWN : Pseudo<(outs), (ins i32imm:$amt1, i32imm:$amt2)>;
 }
 
-// Placeholder for a bare frameindex. This pseudo represents the
-// pointer register to be allocated, initialized with the address
-// represented by the frameindex in its only operand.
-let Uses = [SP] in 
-def PseudoFI : Pseudo<(outs eP:$dst), (ins i32imm:$imm)>;
-
 // NOPs for each VLIW Slot
 let Itinerary = II_NOP, hasSideEffects = 0, mayLoad = 0, mayStore = 0, isSlotNOP = true in {
   def NOP : AIE2_nop_nop_inst_nop<(outs), (ins), "nop">;

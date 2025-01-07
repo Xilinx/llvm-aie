@@ -50,6 +50,7 @@ public:
   AIEABI::ABI getTargetABI() const { return TargetABI; }
   bool isAIE1() const { return (TargetTriple.isAIE1()); }
   bool isAIE2() const { return (TargetTriple.isAIE2()); }
+  bool isAIE2P() const { return (TargetTriple.isAIE2P()); }
   virtual ~AIEBaseSubtarget() = default;
 
   // This is meant as an override of TargetSubtargetInfo::overrideSchedPolicy

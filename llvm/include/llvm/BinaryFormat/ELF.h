@@ -492,6 +492,7 @@ enum : unsigned {
 enum : unsigned {
   EF_AIE_AIE1 = 0x00000001, // AMD-Xilinx AIEngine
   EF_AIE_AIE2 = 0x00000002, // AMD-Xilinx AIE-ML
+  EF_AIE_AIE2P = 0x00000003,
 };
 
 // ELF Relocation types for AIE

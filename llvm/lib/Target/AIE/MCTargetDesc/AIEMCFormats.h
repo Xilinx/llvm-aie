@@ -51,6 +51,11 @@ public:
 #include "AIE2GenFormats.inc"
 #undef GET_FORMATS_SLOTKINDS
   };
+  enum AIE2PSlotKind : int {
+#define GET_FORMATS_SLOTKINDS
+#include "AIE2PGenFormats.inc"
+#undef GET_FORMATS_SLOTKINDS
+  };
 
   /// Ctor with SlotKind initialization.
   constexpr MCSlotKind(int Kind) : Kind(Kind) {}
@@ -419,6 +424,17 @@ public:
 };
 
 class AIE2MCFormats : public AIEBaseMCFormats {
+public:
+  const std::vector<unsigned int> *
+  getAlternateInstsOpcode(unsigned int Opcode) const override;
+  std::optional<unsigned int>
+  getFormatDescIndex(unsigned int Opcode) const override;
+  const MCSlotInfo *getSlotInfo(const MCSlotKind Kind) const override;
+  const MCFormatDesc *getMCFormats() const override;
+  const PacketFormats &getPacketFormats() const override;
+};
+
+class AIE2PMCFormats : public AIEBaseMCFormats {
 public:
   const std::vector<unsigned int> *
   getAlternateInstsOpcode(unsigned int Opcode) const override;

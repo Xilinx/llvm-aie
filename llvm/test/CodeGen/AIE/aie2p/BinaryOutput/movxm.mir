@@ -1,0 +1,266 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; MOVXM
+    $le = MOVXM 2147483647
+    $s3 = MOVXM -2147483648
+    $dj3 = MOVXM 1
+    $r28 = MOVXM 0
+    $r10 = MOVXM 2147483647
+    $srf2bflags = MOVXM -2147483648
+    $s2 = MOVXM 1
+    $srcarry = MOVXM 0
+    $dn1 = MOVXM 2147483647
+    $r11 = MOVXM -2147483648
+    $dn3 = MOVXM 1
+    $r12 = MOVXM 0
+    $r21 = MOVXM 2147483647
+    $p0 = MOVXM -2147483648
+    $dj1 = MOVXM 1
+    $crmcden = MOVXM 0
+    $r4 = MOVXM 2147483647
+    $dn0 = MOVXM -2147483648
+    $crfpnlfmask = MOVXM 1
+    $dc3 = MOVXM 0
+    $r25 = MOVXM 2147483647
+    $s0 = MOVXM -2147483648
+    $dc6 = MOVXM 1
+    $r31 = MOVXM 0
+    $m6 = MOVXM 2147483647
+    $upssign0 = MOVXM -2147483648
+    $lc = MOVXM 1
+    $r1 = MOVXM 0
+    $dj5 = MOVXM 2147483647
+    $p3 = MOVXM -2147483648
+    $m2 = MOVXM 1
+    $r8 = MOVXM 0
+    $crf2bmask = MOVXM 2147483647
+    $dc4 = MOVXM -2147483648
+    $m0 = MOVXM 1
+    $sp = MOVXM 0
+    $crpacksize = MOVXM 2147483647
+    $r16 = MOVXM -2147483648
+    $m7 = MOVXM 1
+    $srssign1 = MOVXM 0
+    $r7 = MOVXM 2147483647
+    $r26 = MOVXM -2147483648
+    $r27 = MOVXM 1
+    $crfpcnvfl2fxmask = MOVXM 0
+    $dj7 = MOVXM 2147483647
+    $unpacksign0 = MOVXM -2147483648
+    $r18 = MOVXM 1
+    $srsparse_of = MOVXM 0
+    $crupsmode = MOVXM 2147483647
+    $r19 = MOVXM -2147483648
+    $r20 = MOVXM 1
+    $ls = MOVXM 0
+    $crsat = MOVXM 2147483647
+    $p1 = MOVXM -2147483648
+    $packsign1 = MOVXM 1
+    $srfifo_of = MOVXM 0
+    $dc5 = MOVXM 2147483647
+    $crf2fmask = MOVXM -2147483648
+    $r29 = MOVXM 1
+    $p6 = MOVXM 0
+    $p2 = MOVXM 2147483647
+    $dj2 = MOVXM -2147483648
+    $r15 = MOVXM 1
+    $r6 = MOVXM 0
+    $r17 = MOVXM 2147483647
+    $upssign1 = MOVXM -2147483648
+    $m5 = MOVXM 1
+    $r22 = MOVXM 0
+    $dn6 = MOVXM 2147483647
+    $r0 = MOVXM -2147483648
+    $srfpcnvfl2fx = MOVXM 1
+    $p4 = MOVXM 0
+    $dj4 = MOVXM 2147483647
+    $dj0 = MOVXM -2147483648
+    $r13 = MOVXM 1
+    $crscden = MOVXM 0
+    $srfpcnvfx2fl = MOVXM 2147483647
+    $dc1 = MOVXM -2147483648
+    $packsign0 = MOVXM 1
+    $crfpcnvfx2flmask = MOVXM 0
+    $srms0 = MOVXM 2147483647
+    $lr = MOVXM -2147483648
+    $srfpflags = MOVXM 1
+    $dn4 = MOVXM 0
+    $srfifo_uf = MOVXM 2147483647
+    $r5 = MOVXM -2147483648
+    $dc2 = MOVXM 1
+    $r23 = MOVXM 0
+    $srssign0 = MOVXM 2147483647
+    $dj6 = MOVXM -2147483648
+    $srfpnlf = MOVXM 1
+    $r9 = MOVXM 0
+    $p7 = MOVXM 2147483647
+    $r24 = MOVXM -2147483648
+    $unpacksign1 = MOVXM 1
+    $crrnd = MOVXM 0
+    $crsrsmode = MOVXM 2147483647
+    $crf2imask = MOVXM -2147483648
+    $dn2 = MOVXM 1
+    $vaddsign1 = MOVXM 0
+    $m1 = MOVXM 2147483647
+    $m4 = MOVXM -2147483648
+    $crfpmask = MOVXM 1
+    $r2 = MOVXM 0
+    $dn7 = MOVXM 2147483647
+    $dn5 = MOVXM -2147483648
+    $dc7 = MOVXM 1
+    $srss0 = MOVXM 0
+    $srf2fflags = MOVXM 2147483647
+    $s1 = MOVXM -2147483648
+    $r14 = MOVXM 1
+    $r3 = MOVXM 0
+    $vaddsign0 = MOVXM 2147483647
+    $m3 = MOVXM -2147483648
+    $srf2iflags = MOVXM 1
+    $p5 = MOVXM 0
+    $dc0 = MOVXM 2147483647
+    $srups_of = MOVXM -2147483648
+    $crunpacksize = MOVXM 1
+    $srsrs_of = MOVXM 0
+    $r30 = MOVXM 2147483647
+...
+
+# CHECK: 0: 44 fe ff f6 ff 7f movxm le, #2147483647
+# CHECK: 6: 44 00 c0 0d 00 80 movxm s3, #-2147483648
+# CHECK: c: 44 02 00 07 00 00 movxm dj3, #1
+# CHECK: 12: 44 00 20 0e 00 00 movxm r28, #0
+# CHECK: 18: 44 fe 3f f5 ff 7f movxm r10, #2147483647
+# CHECK: 1e: 44 00 40 01 00 80 movxm srf2bflags, #-2147483648
+# CHECK: 24: 44 02 c0 09 00 00 movxm s2, #1
+# CHECK: 2a: 44 00 40 00 00 00 movxm srcarry, #0
+# CHECK: 30: 44 fe 9f f2 ff 7f movxm dn1, #2147483647
+# CHECK: 36: 44 00 a0 05 00 80 movxm r11, #-2147483648
+# CHECK: 3c: 44 02 80 06 00 00 movxm dn3, #1
+# CHECK: 42: 44 00 20 06 00 00 movxm r12, #0
+# CHECK: 48: 44 fe bf fa ff 7f movxm r21, #2147483647
+# CHECK: 4e: 44 00 c0 00 00 80 movxm p0, #-2147483648
+# CHECK: 54: 44 02 00 03 00 00 movxm dj1, #1
+# CHECK: 5a: 44 00 60 0b 00 00 movxm crmcden, #0
+# CHECK: 60: 44 fe 3f f2 ff 7f movxm r4, #2147483647
+# CHECK: 66: 44 00 80 00 00 80 movxm dn0, #-2147483648
+# CHECK: 6c: 44 02 60 03 00 00 movxm crfpnlfmask, #1
+# CHECK: 72: 44 00 80 07 00 00 movxm dc3, #0
+# CHECK: 78: 44 fe bf fc ff 7f movxm r25, #2147483647
+# CHECK: 7e: 44 00 c0 01 00 80 movxm s0, #-2147483648
+# CHECK: 84: 44 02 80 0d 00 00 movxm dc6, #1
+# CHECK: 8a: 44 00 a0 0f 00 00 movxm r31, #0
+# CHECK: 90: 44 fe 1f fc ff 7f movxm m6, #2147483647
+# CHECK: 96: 44 00 60 00 00 80 movxm upssign0, #-2147483648
+# CHECK: 9c: 44 02 e0 0a 00 00 movxm lc, #1
+# CHECK: a2: 44 00 a0 00 00 00 movxm r1, #0
+# CHECK: a8: 44 fe 1f fb ff 7f movxm dj5, #2147483647
+# CHECK: ae: 44 00 c0 06 00 80 movxm p3, #-2147483648
+# CHECK: b4: 44 02 00 04 00 00 movxm m2, #1
+# CHECK: ba: 44 00 20 04 00 00 movxm r8, #0
+# CHECK: c0: 44 fe 7f f6 ff 7f movxm crf2bmask, #2147483647
+# CHECK: c6: 44 00 80 09 00 80 movxm dc4, #-2147483648
+# CHECK: cc: 44 02 00 00 00 00 movxm m0, #1
+# CHECK: d2: 44 00 e0 09 00 00 movxm sp, #0
+# CHECK: d8: 44 fe 7f f7 ff 7f movxm crpacksize, #2147483647
+# CHECK: de: 44 00 20 08 00 80 movxm r16, #-2147483648
+# CHECK: e4: 44 02 00 0e 00 00 movxm m7, #1
+# CHECK: ea: 44 00 c0 0f 00 00 movxm srssign1, #0
+# CHECK: f0: 44 fe bf f3 ff 7f movxm r7, #2147483647
+# CHECK: f6: 44 00 20 0d 00 80 movxm r26, #-2147483648
+# CHECK: fc: 44 02 a0 0d 00 00 movxm r27, #1
+# CHECK: 102: 44 00 60 09 00 00 movxm crfpcnvfl2fxmask, #0
+# CHECK: 108: 44 fe 1f ff ff 7f movxm dj7, #2147483647
+# CHECK: 10e: 44 00 60 04 00 80 movxm unpacksign0, #-2147483648
+# CHECK: 114: 44 02 20 09 00 00 movxm r18, #1
+# CHECK: 11a: 44 00 40 0d 00 00 movxm srsparse_of, #0
+# CHECK: 120: 44 fe ff fc ff 7f movxm crupsmode, #2147483647
+# CHECK: 126: 44 00 a0 09 00 80 movxm r19, #-2147483648
+# CHECK: 12c: 44 02 20 0a 00 00 movxm r20, #1
+# CHECK: 132: 44 00 e0 01 00 00 movxm ls, #0
+# CHECK: 138: 44 fe ff f4 ff 7f movxm crsat, #2147483647
+# CHECK: 13e: 44 00 c0 02 00 80 movxm p1, #-2147483648
+# CHECK: 144: 44 02 c0 0b 00 00 movxm packsign1, #1
+# CHECK: 14a: 44 00 40 08 00 00 movxm srfifo_of, #0
+# CHECK: 150: 44 fe 9f fb ff 7f movxm dc5, #2147483647
+# CHECK: 156: 44 00 60 0e 00 80 movxm crf2fmask, #-2147483648
+# CHECK: 15c: 44 02 a0 0e 00 00 movxm r29, #1
+# CHECK: 162: 44 00 c0 0c 00 00 movxm p6, #0
+# CHECK: 168: 44 fe df f4 ff 7f movxm p2, #2147483647
+# CHECK: 16e: 44 00 00 05 00 80 movxm dj2, #-2147483648
+# CHECK: 174: 44 02 a0 07 00 00 movxm r15, #1
+# CHECK: 17a: 44 00 20 03 00 00 movxm r6, #0
+# CHECK: 180: 44 fe bf f8 ff 7f movxm r17, #2147483647
+# CHECK: 186: 44 00 60 08 00 80 movxm upssign1, #-2147483648
+# CHECK: 18c: 44 02 00 0a 00 00 movxm m5, #1
+# CHECK: 192: 44 00 20 0b 00 00 movxm r22, #0
+# CHECK: 198: 44 fe 9f fc ff 7f movxm dn6, #2147483647
+# CHECK: 19e: 44 00 20 00 00 80 movxm r0, #-2147483648
+# CHECK: 1a4: 44 02 40 04 00 00 movxm srfpcnvfl2fx, #1
+# CHECK: 1aa: 44 00 c0 08 00 00 movxm p4, #0
+# CHECK: 1b0: 44 fe 1f f9 ff 7f movxm dj4, #2147483647
+# CHECK: 1b6: 44 00 00 01 00 80 movxm dj0, #-2147483648
+# CHECK: 1bc: 44 02 a0 06 00 00 movxm r13, #1
+# CHECK: 1c2: 44 00 e0 00 00 00 movxm crscden, #0
+# CHECK: 1c8: 44 fe 5f f5 ff 7f movxm srfpcnvfx2fl, #2147483647
+# CHECK: 1ce: 44 00 80 03 00 80 movxm dc1, #-2147483648
+# CHECK: 1d4: 44 02 c0 03 00 00 movxm packsign0, #1
+# CHECK: 1da: 44 00 60 05 00 00 movxm crfpcnvfx2flmask, #0
+# CHECK: 1e0: 44 fe 5f fa ff 7f movxm srms0, #2147483647
+# CHECK: 1e6: 44 00 e0 0e 00 80 movxm lr, #-2147483648
+# CHECK: 1ec: 44 02 40 06 00 00 movxm srfpflags, #1
+# CHECK: 1f2: 44 00 80 08 00 00 movxm dn4, #0
+# CHECK: 1f8: 44 fe 5f f9 ff 7f movxm srfifo_uf, #2147483647
+# CHECK: 1fe: 44 00 a0 02 00 80 movxm r5, #-2147483648
+# CHECK: 204: 44 02 80 05 00 00 movxm dc2, #1
+# CHECK: 20a: 44 00 a0 0b 00 00 movxm r23, #0
+# CHECK: 210: 44 fe df f7 ff 7f movxm srssign0, #2147483647
+# CHECK: 216: 44 00 00 0d 00 80 movxm dj6, #-2147483648
+# CHECK: 21c: 44 02 40 07 00 00 movxm srfpnlf, #1
+# CHECK: 222: 44 00 a0 04 00 00 movxm r9, #0
+# CHECK: 228: 44 fe df fe ff 7f movxm p7, #2147483647
+# CHECK: 22e: 44 00 20 0c 00 80 movxm r24, #-2147483648
+# CHECK: 234: 44 02 60 0c 00 00 movxm unpacksign1, #1
+# CHECK: 23a: 44 00 60 0f 00 00 movxm crrnd, #0
+# CHECK: 240: 44 fe ff f8 ff 7f movxm crsrsmode, #2147483647
+# CHECK: 246: 44 00 60 01 00 80 movxm crf2imask, #-2147483648
+# CHECK: 24c: 44 02 80 04 00 00 movxm dn2, #1
+# CHECK: 252: 44 00 60 0a 00 00 movxm vaddsign1, #0
+# CHECK: 258: 44 fe 1f f2 ff 7f movxm m1, #2147483647
+# CHECK: 25e: 44 00 00 08 00 80 movxm m4, #-2147483648
+# CHECK: 264: 44 02 60 0d 00 00 movxm crfpmask, #1
+# CHECK: 26a: 44 00 20 01 00 00 movxm r2, #0
+# CHECK: 270: 44 fe 9f fe ff 7f movxm dn7, #2147483647
+# CHECK: 276: 44 00 80 0a 00 80 movxm dn5, #-2147483648
+# CHECK: 27c: 44 02 80 0f 00 00 movxm dc7, #1
+# CHECK: 282: 44 00 40 0c 00 00 movxm srss0, #0
+# CHECK: 288: 44 fe 5f f2 ff 7f movxm srf2fflags, #2147483647
+# CHECK: 28e: 44 00 c0 05 00 80 movxm s1, #-2147483648
+# CHECK: 294: 44 02 20 07 00 00 movxm r14, #1
+# CHECK: 29a: 44 00 a0 01 00 00 movxm r3, #0
+# CHECK: 2a0: 44 fe 7f f2 ff 7f movxm vaddsign0, #2147483647
+# CHECK: 2a6: 44 00 00 06 00 80 movxm m3, #-2147483648
+# CHECK: 2ac: 44 02 40 03 00 00 movxm srf2iflags, #1
+# CHECK: 2b2: 44 00 c0 0a 00 00 movxm p5, #0
+# CHECK: 2b8: 44 fe 9f f1 ff 7f movxm dc0, #2147483647
+# CHECK: 2be: 44 00 40 0e 00 80 movxm srups_of, #-2147483648
+# CHECK: 2c4: 44 02 e0 02 00 00 movxm crunpacksize, #1
+# CHECK: 2ca: 44 00 40 0b 00 00 movxm srsrs_of, #0
+# CHECK: 2d0: 44 fe 3f ff ff 7f movxm r30, #2147483647

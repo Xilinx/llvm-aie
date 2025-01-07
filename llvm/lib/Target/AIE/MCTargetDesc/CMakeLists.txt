@@ -26,6 +26,11 @@ add_llvm_component_library(LLVMAIEDesc
   AIE2MCTargetDesc.cpp
   AIE2MCCodeEmitter.cpp
   AIEFormat.cpp
+  aie2p/AIE2PMCTargetDesc.cpp
+  aie2p/AIE2PMCFormats.cpp
+  aie2p/AIE2PAsmBackend.cpp
+  aie2p/AIE2PMCFixupKinds.cpp
+  aie2p/AIE2PMCCodeEmitter.cpp
 
   LINK_COMPONENTS
   MC

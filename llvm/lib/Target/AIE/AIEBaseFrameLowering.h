@@ -56,6 +56,10 @@ public:
                               MachineBasicBlock::iterator MI,
                               MutableArrayRef<CalleeSavedInfo> CSI,
                               const TargetRegisterInfo *TRI) const override;
+  virtual void emitPrologue(MachineFunction &MF,
+                            MachineBasicBlock &MBB) const override;
+  virtual void emitEpilogue(MachineFunction &MF,
+                            MachineBasicBlock &MBB) const override;
 
 protected:
   const AIEBaseSubtarget &STI;
@@ -68,6 +72,13 @@ private:
                            int64_t Val, MachineInstr::MIFlag Flag) const {
     llvm_unreachable("adjustSPReg should be overridden");
   };
+  virtual void adjustReg(MachineBasicBlock &MBB,
+                         MachineBasicBlock::iterator MBBI, const DebugLoc &DL,
+                         unsigned Reg, int64_t Val,
+                         MachineInstr::MIFlag Flag) const {
+    llvm_unreachable("adjustReg should be overridden");
+  };
 };
+
 } // namespace llvm
 #endif // LLVM_LIB_TARGET_AIE_AIEBASEFRAMELOWERING_H

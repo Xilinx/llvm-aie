@@ -8,6 +8,8 @@
 ; RUN:   llvm-objdump -t --triple=aie  - | FileCheck %s --check-prefixes=AIE
 ; RUN: llc -mtriple=aie2 %s --filetype=obj -o - | \
 ; RUN:   llvm-objdump -t --triple=aie2 - | FileCheck %s --check-prefixes=AIE
+; RUN: llc -mtriple=aie2p %s --filetype=obj -o - | \
+; RUN:   llvm-objdump -t --triple=aie2p - | FileCheck %s --check-prefixes=AIE
 
 ; Similar to elf-sections.ll but with section names fixed through a
 ; #pragma clang section

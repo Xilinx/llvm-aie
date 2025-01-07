@@ -19,7 +19,7 @@ set(LLVM_FORCE_BUILD_RUNTIME "libc" CACHE STRING "")
 # deposits libc, libm, crt into lib/aie2-none-unknown-elf instead of lib/
 set(LLVM_ENABLE_PER_TARGET_RUNTIME_DIR ON CACHE BOOL "")
 
-set(LLVM_BUILTIN_TARGETS "aie-none-unknown-elf;aie2-none-unknown-elf" CACHE STRING "")
+set(LLVM_BUILTIN_TARGETS "aie-none-unknown-elf;aie2-none-unknown-elf;aie2p-none-unknown-elf" CACHE STRING "")
 set(LLVM_RUNTIME_TARGETS "${LLVM_BUILTIN_TARGETS}" CACHE STRING "")
 
 foreach(target ${LLVM_BUILTIN_TARGETS})
@@ -60,6 +60,10 @@ foreach(target ${LLVM_BUILTIN_TARGETS})
   set(RUNTIMES_${target}_LIBCXX_EXTRA_SITE_DEFINES "_LIBCPP_REMOVE_TRANSITIVE_INCLUDES" CACHE STRING "")
 
   set(RUNTIMES_${target}_LIBC_ENABLE_USE_BY_CLANG ON CACHE STRING "")
+  # LIBC includes C++ sources which by default trigger inclusion of standard libc++ headers
+  # However these are not available while building libc, thus disable the include explicitly
+  set(RUNTIMES_${target}_LIBC_COMPILE_OPTIONS_DEFAULT "-nostdinc++" CACHE STRING "")
+
   # configure libcxxabi build
   set(RUNTIMES_${target}_LIBCXXABI_ENABLE_SHARED OFF CACHE STRING "")
   set(RUNTIMES_${target}_LIBCXXABI_ENABLE_EXCEPTIONS OFF CACHE STRING "")

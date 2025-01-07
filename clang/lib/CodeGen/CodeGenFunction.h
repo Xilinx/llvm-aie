@@ -4560,8 +4560,13 @@ public:
   llvm::Value *EmitHexagonBuiltinExpr(unsigned BuiltinID, const CallExpr *E);
   llvm::Value *EmitRISCVBuiltinExpr(unsigned BuiltinID, const CallExpr *E,
                                     ReturnValueSlot ReturnValue);
+  llvm::Value *EmitAIEBuiltinExpr(unsigned BuiltinID, const CallExpr *E,
+                                  llvm::Triple::ArchType Arch);
   llvm::Value *EmitAIE1BuiltinExpr(unsigned BuiltinID, const CallExpr *E);
-  llvm::Value *EmitAIE2BuiltinExpr(unsigned BuiltinID, const CallExpr *E);
+  llvm::Value *EmitAIE2BuiltinExpr(unsigned BuiltinID, const CallExpr *E,
+                                   llvm::Triple::ArchType Arch);
+  llvm::Value *EmitAIE2PBuiltinExpr(unsigned BuiltinID, const CallExpr *E,
+                                    llvm::Triple::ArchType Arch);
   void ProcessOrderScopeAMDGCN(llvm::Value *Order, llvm::Value *Scope,
                                llvm::AtomicOrdering &AO,
                                llvm::SyncScope::ID &SSID);

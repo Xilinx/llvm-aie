@@ -87,6 +87,8 @@ AIE2LegalizerInfo::AIE2LegalizerInfo(const AIE2Subtarget &ST) : AIEHelper(ST) {
   const LLT S64 = LLT::scalar(64);
   const LLT P0 = LLT::pointer(0, 20);
 
+  // 16-bit vectors
+  const LLT V2S8 = LLT::fixed_vector(2, 8);
   // 32-bit vectors
   const LLT V4S8 = LLT::fixed_vector(4, 8);
   const LLT V2S16 = LLT::fixed_vector(2, 16);
@@ -428,8 +430,11 @@ AIE2LegalizerInfo::AIE2LegalizerInfo(const AIE2Subtarget &ST) : AIEHelper(ST) {
   const LegalityPredicate IsNotValidDestinationVector =
       negatePredicate(isValidVectorAIE2(0));
 
-  getActionDefinitionsBuilder(G_BITCAST).legalIf(
-      LegalityPredicates::all(isLegalBitCastType(0), isLegalBitCastType(1)));
+  getActionDefinitionsBuilder(G_BITCAST)
+      .legalIf(
+          LegalityPredicates::all(isLegalBitCastType(0), isLegalBitCastType(1)))
+      .customIf(typeInSet(0, {V2S8, S16}));
+  ;
 
   getActionDefinitionsBuilder(G_MERGE_VALUES).legalFor({{S64, S32}});
   getActionDefinitionsBuilder(G_UNMERGE_VALUES)
@@ -539,6 +544,8 @@ bool AIE2LegalizerInfo::legalizeCustom(
     return AIEHelper.legalizeG_UNMERGE_VALUES(Helper, MI);
   case TargetOpcode::G_SEXT_INREG:
     return AIEHelper.legalizeG_SEXT_INREG(Helper, MI);
+  case TargetOpcode::G_BITCAST:
+    return AIEHelper.legalizeG_BITCAST(Helper, MI);
   }
 
   llvm_unreachable("Un-expected custom legalization");

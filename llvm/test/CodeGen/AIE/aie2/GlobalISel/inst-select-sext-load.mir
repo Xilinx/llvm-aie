@@ -5,7 +5,8 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple aie2 -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s
+# RUN: llc -mtriple aie2 -run-pass=instruction-select -o - -verify-machineinstrs %s | FileCheck --check-prefix=AIE2 %s
+# RUN: llc -mtriple aie2p -run-pass=instruction-select -o - -verify-machineinstrs %s | FileCheck --check-prefix=AIE2P %s
 
 ---
 name: zext_load_s32_s8
@@ -15,12 +16,19 @@ regBankSelected: true
 body: |
   bb.0:
     liveins: $p0
-    ; CHECK-LABEL: name: zext_load_s32_s8
-    ; CHECK: liveins: $p0
-    ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
-    ; CHECK-NEXT: [[LDA_S8_ag_idx_imm:%[0-9]+]]:er = LDA_S8_ag_idx_imm [[COPY]], 0 :: (load (s8), align 4)
-    ; CHECK-NEXT: $r0 = COPY [[LDA_S8_ag_idx_imm]]
+    ; AIE2-LABEL: name: zext_load_s32_s8
+    ; AIE2: liveins: $p0
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; AIE2-NEXT: [[LDA_S8_ag_idx_imm:%[0-9]+]]:er = LDA_S8_ag_idx_imm [[COPY]], 0 :: (load (s8), align 4)
+    ; AIE2-NEXT: $r0 = COPY [[LDA_S8_ag_idx_imm]]
+    ;
+    ; AIE2P-LABEL: name: zext_load_s32_s8
+    ; AIE2P: liveins: $p0
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; AIE2P-NEXT: [[LDA_s8_idx_imm:%[0-9]+]]:er = LDA_s8_idx_imm [[COPY]], 0 :: (load (s8), align 4)
+    ; AIE2P-NEXT: $r0 = COPY [[LDA_s8_idx_imm]]
     %0:ptrregbank(p0) = COPY $p0
     %1:gprregbank(s32) = G_SEXTLOAD %0 :: (load (s8), align 4)
     $r0 = COPY %1
@@ -34,12 +42,19 @@ regBankSelected: true
 body: |
   bb.0:
     liveins: $p0
-    ; CHECK-LABEL: name: zext_load_s32_s16
-    ; CHECK: liveins: $p0
-    ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
-    ; CHECK-NEXT: [[LDA_S16_ag_idx_imm:%[0-9]+]]:er = LDA_S16_ag_idx_imm [[COPY]], 0 :: (load (s16), align 4)
-    ; CHECK-NEXT: $r0 = COPY [[LDA_S16_ag_idx_imm]]
+    ; AIE2-LABEL: name: zext_load_s32_s16
+    ; AIE2: liveins: $p0
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; AIE2-NEXT: [[LDA_S16_ag_idx_imm:%[0-9]+]]:er = LDA_S16_ag_idx_imm [[COPY]], 0 :: (load (s16), align 4)
+    ; AIE2-NEXT: $r0 = COPY [[LDA_S16_ag_idx_imm]]
+    ;
+    ; AIE2P-LABEL: name: zext_load_s32_s16
+    ; AIE2P: liveins: $p0
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; AIE2P-NEXT: [[LDA_s16_idx_imm:%[0-9]+]]:er = LDA_s16_idx_imm [[COPY]], 0 :: (load (s16), align 4)
+    ; AIE2P-NEXT: $r0 = COPY [[LDA_s16_idx_imm]]
     %0:ptrregbank(p0) = COPY $p0
     %1:gprregbank(s32) = G_SEXTLOAD %0 :: (load (s16), align 4)
     $r0 = COPY %1

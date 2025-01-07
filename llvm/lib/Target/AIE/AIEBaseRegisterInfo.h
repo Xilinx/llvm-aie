@@ -29,7 +29,16 @@ struct AIEBaseRegisterInfo : public TargetRegisterInfo {
   getGPRRegClass(const MachineFunction &MF) const {
     llvm_unreachable("Target didn't implement getGPRRegClass!");
   }
-
+  virtual void getTargetSubRegs(std::vector<unsigned> &, unsigned Size,
+                                const RegisterBank &RB) const {
+    llvm_unreachable("Target didn't implement getTargetSubRegs!");
+  }
+  virtual unsigned getVectorRegBankID() const {
+    llvm_unreachable("Target didn't implement getVectorRegBankID!");
+  }
+  virtual unsigned getGPRRegBankID() const {
+    llvm_unreachable("Target didn't implement getGPRRegBankID!");
+  }
   /// Returns the SubReg indices that can be used to split a vreg in
   /// \p RegClassId into multiple smaller registers.
   /// Returns {NoSubRegister} if splitting is not possible.
@@ -58,6 +67,14 @@ struct AIEBaseRegisterInfo : public TargetRegisterInfo {
   virtual bool isReservedStickyReg(MCRegister PhysReg) const {
     llvm_unreachable("Target didn't implement isReservedStickyReg!");
   }
+
+  /// Given a register bank and operand type, return the smallest register class
+  /// that can hold a value on that bank.
+  virtual const TargetRegisterClass &
+  getMinClassForRegBank(const RegisterBank &RB, LLT Ty) const {
+    llvm_unreachable("Target didn't implement getMinClassForRegBank!");
+  }
+
 #if 0
   /// Returns a BitVector of the intersection of GPR RegClass
   /// and CalleeSaved Registers
@@ -74,6 +91,9 @@ struct AIEBaseRegisterInfo : public TargetRegisterInfo {
 
   virtual const TargetRegisterClass *get3DIteratorRegClass() const {
     llvm_unreachable("Target didn't implement get3DIteratorRegClass!");
+  }
+  virtual const TargetRegisterClass *getAddrCountRegClass() const {
+    llvm_unreachable("Target didn't implement getAddrCountRegClass!");
   }
 };
 

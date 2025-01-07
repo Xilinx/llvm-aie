@@ -1,0 +1,184 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: not --crash llc -mtriple=aie2p -run-pass machineverifier -o /dev/null %s 2>&1 | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+# This test ensures that the Machine Verifier detects tied physical registers
+# that don't match.
+
+---
+name:      tied_ok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+
+    $wl6, $p6, $dc6 = VLDA_2D_128 $p6, $d6
+    $bmhh2, $p7, $dc6 = VLDA_2D_CONV_fp32_bf16_dmw_lda_ups_bf $p7, $d6
+    $cml4, $p1, $dc1 = VLDA_2D_CONV_fp32_bf16_dmx_lda_ups_bf $p1, $d1
+    $bmlh4, $p1, $dc0 = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s3, $p1, $d0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmhl3, $p2, $dc3 = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign1 $s2, $p2, $d3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cmh0, $p1, $dc5 = VLDA_2D_UPS_2x_dmx_lda_ups_x2c_upsSign0 $s0, $p1, $d5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cmh2, $p6, $dc5 = VLDA_2D_UPS_2x_dmx_lda_ups_x2c_upsSign1 $s1, $p6, $d5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cml1, $p4, $dc3 = VLDA_2D_UPS_4x_dmw_lda_ups_w2c_upsSign0 $s2, $p4, $d3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cmh2, $p4, $dc7 = VLDA_2D_UPS_4x_dmw_lda_ups_w2c_upsSign1 $s0, $p4, $d7, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $dm4, $p7, $dc2 = VLDA_2D_UPS_4x_dmx_lda_ups_x2d_upsSign0 $s0, $p7, $d2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $dm1, $p6, $dc5 = VLDA_2D_UPS_4x_dmx_lda_ups_x2d_upsSign1 $s2, $p6, $d5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $wh6, $p3, $dc4 = VLDA_2D_dmw_lda_w $p3, $d4
+    $bmlh2, $p5, $dc3 = VLDA_2D_dmx_lda_bm $p5, $d3
+    $lfl0, $p5, $dc6 = VLDA_2D_dmx_lda_fifohl $p5, $d6
+    $x9, $p0, $dc3 = VLDA_2D_dmx_lda_x $p0, $d3
+    $x11, $p0, $lf0, $r24, $dc7 = VLDA_POP_512_2D $plfr0, $d7, implicit-def $srfifo_uf
+    $ex8, $p0, $lf0, $r24, $dc0 = VLDA_POP_544_2D $plfr0, $d0, implicit-def $srfifo_uf
+    $ex9, $p0, $lf0, $r24, $dc1 = VLDA_POP_576_2D $plfr0, $d1, implicit-def $srfifo_uf
+    $qx2, $p0, $lf0, $r24, $dc7 = VLDA_POP_640_2D $plfr0, $d7, implicit-def $srfifo_uf
+    $qex3, $p0, $lf0, $r24, $dc0 = VLDA_POP_704_2D $plfr0, $d0, implicit-def $srfifo_uf
+
+    ; Below instructions have hasExtraSrcRegAllocReq and hasExtraDefRegAllocReq attributes
+    ; which essentially bypass the register flags. The renamable attributes
+    ; below should trigger no verification error.
+    ; CHECK-NOT: Bad machine code
+    renamable $wl6, renamable $p6, renamable $dc6 = VLDA_2D_128 renamable $p6, renamable $d6
+    renamable $bmhh2, renamable $p7, renamable $dc6 = VLDA_2D_CONV_fp32_bf16_dmw_lda_ups_bf renamable $p7, renamable $d6
+    renamable $cml4, renamable $p1, renamable $dc1 = VLDA_2D_CONV_fp32_bf16_dmx_lda_ups_bf renamable $p1, renamable $d1
+    renamable $bmlh4, renamable $p1, renamable $dc0 = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 renamable $s3, renamable $p1, renamable $d0, implicit-def renamable $srups_of, implicit renamable $crsat, implicit renamable $crupsmode, implicit renamable $upssign0
+    renamable $bmhl3, renamable $p2, renamable $dc3 = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign1 renamable $s2, renamable $p2, renamable $d3, implicit-def renamable $srups_of, implicit renamable $crsat, implicit renamable $crupsmode, implicit renamable $upssign1
+    renamable $cmh0, renamable $p1, renamable $dc5 = VLDA_2D_UPS_2x_dmx_lda_ups_x2c_upsSign0 renamable $s0, renamable $p1, renamable $d5, implicit-def renamable $srups_of, implicit renamable $crsat, implicit renamable $crupsmode, implicit renamable $upssign0
+    renamable $cmh2, renamable $p6, renamable $dc5 = VLDA_2D_UPS_2x_dmx_lda_ups_x2c_upsSign1 renamable $s1, renamable $p6, renamable $d5, implicit-def renamable $srups_of, implicit renamable $crsat, implicit renamable $crupsmode, implicit renamable $upssign1
+    renamable $cml1, renamable $p4, renamable $dc3 = VLDA_2D_UPS_4x_dmw_lda_ups_w2c_upsSign0 renamable $s2, renamable $p4, renamable $d3, implicit-def renamable $srups_of, implicit renamable $crsat, implicit renamable $crupsmode, implicit renamable $upssign0
+    renamable $cmh2, renamable $p4, renamable $dc7 = VLDA_2D_UPS_4x_dmw_lda_ups_w2c_upsSign1 renamable $s0, renamable $p4, renamable $d7, implicit-def renamable $srups_of, implicit renamable $crsat, implicit renamable $crupsmode, implicit renamable $upssign1
+    renamable $dm4, renamable $p7, renamable $dc2 = VLDA_2D_UPS_4x_dmx_lda_ups_x2d_upsSign0 renamable $s0, renamable $p7, renamable $d2, implicit-def renamable $srups_of, implicit renamable $crsat, implicit renamable $crupsmode, implicit renamable $upssign0
+    renamable $dm1, renamable $p6, renamable $dc5 = VLDA_2D_UPS_4x_dmx_lda_ups_x2d_upsSign1 renamable $s2, renamable $p6, renamable $d5, implicit-def renamable $srups_of, implicit renamable $crsat, implicit renamable $crupsmode, implicit renamable $upssign1
+    renamable $wh6, renamable $p3, renamable $dc4 = VLDA_2D_dmw_lda_w renamable $p3, renamable $d4
+    renamable $bmlh2, renamable $p5, renamable $dc3 = VLDA_2D_dmx_lda_bm renamable $p5, renamable $d3
+    renamable $lfl0, renamable $p5, renamable $dc6 = VLDA_2D_dmx_lda_fifohl renamable $p5, renamable $d6
+    renamable $x9, renamable $p0, renamable $dc3 = VLDA_2D_dmx_lda_x renamable $p0, renamable $d3
+    renamable $x11, renamable $p0, renamable $lf0, renamable $r24, renamable $dc7 = VLDA_POP_512_2D renamable $plfr0, renamable $d7, implicit-def renamable $srfifo_uf
+    renamable $ex8, renamable $p0, renamable $lf0, renamable $r24, renamable $dc0 = VLDA_POP_544_2D renamable $plfr0, renamable $d0, implicit-def renamable $srfifo_uf
+    renamable $ex9, renamable $p0, renamable $lf0, renamable $r24, renamable $dc1 = VLDA_POP_576_2D renamable $plfr0, renamable $d1, implicit-def renamable $srfifo_uf
+    renamable $qx2, renamable $p0, renamable $lf0, renamable $r24, renamable $dc7 = VLDA_POP_640_2D renamable $plfr0, renamable $d7, implicit-def renamable $srfifo_uf
+    renamable $qex3, renamable $p0, renamable $lf0, renamable $r24, renamable $dc0 = VLDA_POP_704_2D renamable $plfr0, renamable $d0, implicit-def renamable $srfifo_uf
+
+...
+
+---
+name:      virtual_ok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    %0:ep = COPY $p0
+    %10:ed = COPY $d0
+    %80:mwa, %81:ep, %82:edc = VLDA_2D_128 %0, %10
+    %90:mbmm, %91:ep, %92:edc = VLDA_2D_CONV_fp32_bf16_dmw_lda_ups_bf %0, %10
+    %100:mcmm, %101:ep, %102:edc = VLDA_2D_CONV_fp32_bf16_dmx_lda_ups_bf %0, %10
+    %110:mbmm, %111:ep, %112:edc = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s3, %0, %10, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    %120:mbmm, %121:ep, %122:edc = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign1 $s2, %0, %10, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    %130:mcmm, %131:ep, %132:edc = VLDA_2D_UPS_2x_dmx_lda_ups_x2c_upsSign0 $s0, %0, %10, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    %140:mcmm, %141:ep, %142:edc = VLDA_2D_UPS_2x_dmx_lda_ups_x2c_upsSign1 $s1, %0, %10, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    %150:mcmm, %151:ep, %152:edc = VLDA_2D_UPS_4x_dmw_lda_ups_w2c_upsSign0 $s2, %0, %10, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    %160:mcmm, %161:ep, %162:edc = VLDA_2D_UPS_4x_dmw_lda_ups_w2c_upsSign1 $s0, %0, %10, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    %170:edm, %171:ep, %172:edc = VLDA_2D_UPS_4x_dmx_lda_ups_x2d_upsSign0 $s0, %0, %10, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    %180:edm, %181:ep, %182:edc = VLDA_2D_UPS_4x_dmx_lda_ups_x2d_upsSign1 $s2, %0, %10, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    %190:mwa, %191:ep, %192:edc = VLDA_2D_dmw_lda_w %0, %10
+    %200:mbmm, %201:ep, %202:edc = VLDA_2D_dmx_lda_bm %0, %10
+    %210:mfifohlreg, %211:ep, %212:edc = VLDA_2D_dmx_lda_fifohl %0, %10
+    %220:mxa, %221:ep, %222:edc = VLDA_2D_dmx_lda_x %0, %10
+    %470:mxa, %471:eps, %472:eldfiforeg, %473:erf2, %474:edc = VLDA_POP_512_2D $plfr0, %10, implicit-def $srfifo_uf
+    %510:mexa, %511:eps, %512:eldfiforeg, %513:erf2, %514:edc = VLDA_POP_544_2D $plfr0, %10, implicit-def $srfifo_uf
+    %550:mexa, %551:eps, %552:eldfiforeg, %553:erf2, %554:edc = VLDA_POP_576_2D $plfr0, %10, implicit-def $srfifo_uf
+    %590:mqxsa, %591:eps, %592:eldfiforeg, %593:erf2, %594:edc = VLDA_POP_640_2D $plfr0, %10, implicit-def $srfifo_uf
+    %630:mqexsa, %631:eps, %632:eldfiforeg, %633:erf2, %634:edc = VLDA_POP_704_2D $plfr0, %10, implicit-def $srfifo_uf
+
+...
+
+---
+name:      tied_nok
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; CHECK-NOT: Bad machine code
+    ; CHECK-COUNT-75: Bad machine code:
+
+    $wl6, $p6, $dc3 = VLDA_2D_128 $p6, $d6
+    $wl6, $p6, $dc5 = VLDA_2D_128 $p6, $d6
+    $wl6, $p6, $dc1 = VLDA_2D_128 $p6, $d6
+    $bmhh2, $p7, $dc2 = VLDA_2D_CONV_fp32_bf16_dmw_lda_ups_bf $p7, $d6
+    $bmhh2, $p7, $dc1 = VLDA_2D_CONV_fp32_bf16_dmw_lda_ups_bf $p7, $d6
+    $bmhh2, $p7, $dc5 = VLDA_2D_CONV_fp32_bf16_dmw_lda_ups_bf $p7, $d6
+    $cml4, $p1, $dc3 = VLDA_2D_CONV_fp32_bf16_dmx_lda_ups_bf $p1, $d1
+    $cml4, $p1, $dc4 = VLDA_2D_CONV_fp32_bf16_dmx_lda_ups_bf $p1, $d1
+    $cml4, $p1, $dc6 = VLDA_2D_CONV_fp32_bf16_dmx_lda_ups_bf $p1, $d1
+    $bmlh4, $p1, $dc5 = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s3, $p1, $d0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmlh4, $p1, $dc6 = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s3, $p1, $d0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmlh4, $p1, $dc1 = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0 $s3, $p1, $d0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmhl3, $p2, $dc7 = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign1 $s2, $p2, $d3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmhl3, $p2, $dc4 = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign1 $s2, $p2, $d3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmhl3, $p2, $dc5 = VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign1 $s2, $p2, $d3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cmh0, $p1, $dc1 = VLDA_2D_UPS_2x_dmx_lda_ups_x2c_upsSign0 $s0, $p1, $d5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cmh0, $p1, $dc6 = VLDA_2D_UPS_2x_dmx_lda_ups_x2c_upsSign0 $s0, $p1, $d5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cmh0, $p1, $dc3 = VLDA_2D_UPS_2x_dmx_lda_ups_x2c_upsSign0 $s0, $p1, $d5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cmh2, $p6, $dc1 = VLDA_2D_UPS_2x_dmx_lda_ups_x2c_upsSign1 $s1, $p6, $d5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cmh2, $p6, $dc7 = VLDA_2D_UPS_2x_dmx_lda_ups_x2c_upsSign1 $s1, $p6, $d5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cmh2, $p6, $dc2 = VLDA_2D_UPS_2x_dmx_lda_ups_x2c_upsSign1 $s1, $p6, $d5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cml1, $p4, $dc5 = VLDA_2D_UPS_4x_dmw_lda_ups_w2c_upsSign0 $s2, $p4, $d3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml1, $p4, $dc7 = VLDA_2D_UPS_4x_dmw_lda_ups_w2c_upsSign0 $s2, $p4, $d3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml1, $p4, $dc4 = VLDA_2D_UPS_4x_dmw_lda_ups_w2c_upsSign0 $s2, $p4, $d3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cmh2, $p4, $dc3 = VLDA_2D_UPS_4x_dmw_lda_ups_w2c_upsSign1 $s0, $p4, $d7, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cmh2, $p4, $dc1 = VLDA_2D_UPS_4x_dmw_lda_ups_w2c_upsSign1 $s0, $p4, $d7, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cmh2, $p4, $dc6 = VLDA_2D_UPS_4x_dmw_lda_ups_w2c_upsSign1 $s0, $p4, $d7, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $dm4, $p7, $dc5 = VLDA_2D_UPS_4x_dmx_lda_ups_x2d_upsSign0 $s0, $p7, $d2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $dm4, $p7, $dc0 = VLDA_2D_UPS_4x_dmx_lda_ups_x2d_upsSign0 $s0, $p7, $d2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $dm4, $p7, $dc4 = VLDA_2D_UPS_4x_dmx_lda_ups_x2d_upsSign0 $s0, $p7, $d2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $dm1, $p6, $dc0 = VLDA_2D_UPS_4x_dmx_lda_ups_x2d_upsSign1 $s2, $p6, $d5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $dm1, $p6, $dc7 = VLDA_2D_UPS_4x_dmx_lda_ups_x2d_upsSign1 $s2, $p6, $d5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $dm1, $p6, $dc6 = VLDA_2D_UPS_4x_dmx_lda_ups_x2d_upsSign1 $s2, $p6, $d5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $wh6, $p3, $dc5 = VLDA_2D_dmw_lda_w $p3, $d4
+    $wh6, $p3, $dc6 = VLDA_2D_dmw_lda_w $p3, $d4
+    $wh6, $p3, $dc0 = VLDA_2D_dmw_lda_w $p3, $d4
+    $bmlh2, $p5, $dc4 = VLDA_2D_dmx_lda_bm $p5, $d3
+    $bmlh2, $p5, $dc0 = VLDA_2D_dmx_lda_bm $p5, $d3
+    $bmlh2, $p5, $dc2 = VLDA_2D_dmx_lda_bm $p5, $d3
+    $lfl0, $p5, $dc0 = VLDA_2D_dmx_lda_fifohl $p5, $d6
+    $lfl0, $p5, $dc2 = VLDA_2D_dmx_lda_fifohl $p5, $d6
+    $lfl0, $p5, $dc5 = VLDA_2D_dmx_lda_fifohl $p5, $d6
+    $x9, $p0, $dc4 = VLDA_2D_dmx_lda_x $p0, $d3
+    $x9, $p0, $dc1 = VLDA_2D_dmx_lda_x $p0, $d3
+    $x9, $p0, $dc7 = VLDA_2D_dmx_lda_x $p0, $d3
+    $x11, $p0, $lf1, $r25, $dc7 = VLDA_POP_512_2D $plfr0, $d7, implicit-def $srfifo_uf
+    $x11, $p0, $lf1, $r24, $dc7 = VLDA_POP_512_2D $plfr0, $d7, implicit-def $srfifo_uf
+    $x11, $p0, $lf0, $r25, $dc7 = VLDA_POP_512_2D $plfr0, $d7, implicit-def $srfifo_uf
+    $x11, $p0, $lf0, $r24, $dc3 = VLDA_POP_512_2D $plfr0, $d7, implicit-def $srfifo_uf
+    $x11, $p0, $lf0, $r24, $dc5 = VLDA_POP_512_2D $plfr0, $d7, implicit-def $srfifo_uf
+    $x11, $p0, $lf0, $r24, $dc4 = VLDA_POP_512_2D $plfr0, $d7, implicit-def $srfifo_uf
+    $ex8, $p0, $lf1, $r25, $dc0 = VLDA_POP_544_2D $plfr0, $d0, implicit-def $srfifo_uf
+    $ex8, $p1, $lf1, $r24, $dc0 = VLDA_POP_544_2D $plfr0, $d0, implicit-def $srfifo_uf
+    $ex8, $p1, $lf0, $r25, $dc0 = VLDA_POP_544_2D $plfr0, $d0, implicit-def $srfifo_uf
+    $ex8, $p0, $lf0, $r24, $dc6 = VLDA_POP_544_2D $plfr0, $d0, implicit-def $srfifo_uf
+    $ex8, $p0, $lf0, $r24, $dc2 = VLDA_POP_544_2D $plfr0, $d0, implicit-def $srfifo_uf
+    $ex8, $p0, $lf0, $r24, $dc7 = VLDA_POP_544_2D $plfr0, $d0, implicit-def $srfifo_uf
+    $ex9, $p1, $lf1, $r24, $dc1 = VLDA_POP_576_2D $plfr0, $d1, implicit-def $srfifo_uf
+    $ex9, $p1, $lf0, $r24, $dc1 = VLDA_POP_576_2D $plfr0, $d1, implicit-def $srfifo_uf
+    $ex9, $p0, $lf0, $r25, $dc1 = VLDA_POP_576_2D $plfr0, $d1, implicit-def $srfifo_uf
+    $ex9, $p0, $lf0, $r24, $dc2 = VLDA_POP_576_2D $plfr0, $d1, implicit-def $srfifo_uf
+    $ex9, $p0, $lf0, $r24, $dc6 = VLDA_POP_576_2D $plfr0, $d1, implicit-def $srfifo_uf
+    $ex9, $p0, $lf0, $r24, $dc7 = VLDA_POP_576_2D $plfr0, $d1, implicit-def $srfifo_uf
+    $qx2, $p0, $lf0, $r25, $dc7 = VLDA_POP_640_2D $plfr0, $d7, implicit-def $srfifo_uf
+    $qx2, $p0, $lf0, $r25, $dc7 = VLDA_POP_640_2D $plfr0, $d7, implicit-def $srfifo_uf
+    $qx2, $p0, $lf1, $r25, $dc7 = VLDA_POP_640_2D $plfr0, $d7, implicit-def $srfifo_uf
+    $qx2, $p0, $lf0, $r24, $dc2 = VLDA_POP_640_2D $plfr0, $d7, implicit-def $srfifo_uf
+    $qx2, $p0, $lf0, $r24, $dc3 = VLDA_POP_640_2D $plfr0, $d7, implicit-def $srfifo_uf
+    $qx2, $p0, $lf0, $r24, $dc1 = VLDA_POP_640_2D $plfr0, $d7, implicit-def $srfifo_uf
+    $qex3, $p0, $lf1, $r24, $dc0 = VLDA_POP_704_2D $plfr0, $d0, implicit-def $srfifo_uf
+    $qex3, $p1, $lf0, $r24, $dc0 = VLDA_POP_704_2D $plfr0, $d0, implicit-def $srfifo_uf
+    $qex3, $p1, $lf1, $r24, $dc0 = VLDA_POP_704_2D $plfr0, $d0, implicit-def $srfifo_uf
+    $qex3, $p0, $lf0, $r24, $dc3 = VLDA_POP_704_2D $plfr0, $d0, implicit-def $srfifo_uf
+    $qex3, $p0, $lf0, $r24, $dc5 = VLDA_POP_704_2D $plfr0, $d0, implicit-def $srfifo_uf
+    $qex3, $p0, $lf0, $r24, $dc1 = VLDA_POP_704_2D $plfr0, $d0, implicit-def $srfifo_uf
+
+...
+

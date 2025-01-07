@@ -4,8 +4,9 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple aie -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc -mtriple aie2 -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2 %s
+# RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2P %s
 
 ---
 name: implicit_def_s20
@@ -14,11 +15,17 @@ regBankSelected: true
 
 body: |
   bb.0:
-    ; CHECK-LABEL: name: implicit_def_s20
-    ; CHECK: [[DEF:%[0-9]+]]:gpr = IMPLICIT_DEF
-    ; CHECK-NEXT: $m0 = COPY [[DEF]]
-    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:mod = IMPLICIT_DEF
-    ; CHECK-NEXT: $m1 = COPY [[DEF1]]
+    ; AIE2-LABEL: name: implicit_def_s20
+    ; AIE2: [[DEF:%[0-9]+]]:er = IMPLICIT_DEF
+    ; AIE2-NEXT: $m0 = COPY [[DEF]]
+    ; AIE2-NEXT: [[DEF1:%[0-9]+]]:mdm = IMPLICIT_DEF
+    ; AIE2-NEXT: $m1 = COPY [[DEF1]]
+    ;
+    ; AIE2P-LABEL: name: implicit_def_s20
+    ; AIE2P: [[DEF:%[0-9]+]]:er = IMPLICIT_DEF
+    ; AIE2P-NEXT: $m0 = COPY [[DEF]]
+    ; AIE2P-NEXT: [[DEF1:%[0-9]+]]:mdm = IMPLICIT_DEF
+    ; AIE2P-NEXT: $m1 = COPY [[DEF1]]
     %0:gprregbank(s20) = G_IMPLICIT_DEF
     $m0 = COPY %0
     %1:modregbank(s20) = G_IMPLICIT_DEF
@@ -32,9 +39,13 @@ regBankSelected: true
 
 body: |
   bb.0:
-    ; CHECK-LABEL: name: implicit_def_s32
-    ; CHECK: [[DEF:%[0-9]+]]:gpr = IMPLICIT_DEF
-    ; CHECK-NEXT: $r0 = COPY [[DEF]]
+    ; AIE2-LABEL: name: implicit_def_s32
+    ; AIE2: [[DEF:%[0-9]+]]:er = IMPLICIT_DEF
+    ; AIE2-NEXT: $r0 = COPY [[DEF]]
+    ;
+    ; AIE2P-LABEL: name: implicit_def_s32
+    ; AIE2P: [[DEF:%[0-9]+]]:er = IMPLICIT_DEF
+    ; AIE2P-NEXT: $r0 = COPY [[DEF]]
     %0:gprregbank(s32) = G_IMPLICIT_DEF
     $r0 = COPY %0
 ...
@@ -46,9 +57,13 @@ regBankSelected: true
 
 body: |
   bb.0:
-    ; CHECK-LABEL: name: implicit_def_p0
-    ; CHECK: [[DEF:%[0-9]+]]:ptr = IMPLICIT_DEF
-    ; CHECK-NEXT: $p0 = COPY [[DEF]]
+    ; AIE2-LABEL: name: implicit_def_p0
+    ; AIE2: [[DEF:%[0-9]+]]:ep = IMPLICIT_DEF
+    ; AIE2-NEXT: $p0 = COPY [[DEF]]
+    ;
+    ; AIE2P-LABEL: name: implicit_def_p0
+    ; AIE2P: [[DEF:%[0-9]+]]:ep = IMPLICIT_DEF
+    ; AIE2P-NEXT: $p0 = COPY [[DEF]]
     %0:ptrregbank(p0) = G_IMPLICIT_DEF
     $p0 = COPY %0
 ...

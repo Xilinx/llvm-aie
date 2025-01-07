@@ -933,3 +933,73 @@ AIEBaseInstrInfo::getVConcatOpInfo(const MachineInstr &MI) const {
     return VConcatOpInfo{1, 0};
   return std::nullopt;
 }
+
+MCSlotKind AIEBaseInstrInfo::getSlotKind(unsigned Opcode) const {
+  return FormatInterface->getSlotKind(Opcode);
+}
+
+const MCSlotInfo *AIEBaseInstrInfo::getSlotInfo(const MCSlotKind Kind) const {
+  return FormatInterface->getSlotInfo(Kind);
+}
+
+const PacketFormats &AIEBaseInstrInfo::getPacketFormats() const {
+  return FormatInterface->getPacketFormats();
+}
+
+std::vector<MachineBasicBlock::iterator>
+AIEBaseInstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
+  std::vector<MachineBasicBlock::iterator> AlgnCandidates;
+  unsigned DelaySlot = 0;
+
+  // LoopSetupDistance will be set to number of instructions (7). In
+  // PostRAScheduler, this is enforced by setting the exit latency in the
+  // schduler dag mutator
+  unsigned LoopSetupDistance = 0;
+  bool IsCall = false;
+  for (auto MI = MBB.begin(), End = MBB.end(); MI != End; ++MI) {
+    if (MI->isBundle()) {
+      // Return Address Candidate
+      IsCall = isCallBundle(MI);
+      if (IsCall && DelaySlot > 0)
+        llvm_unreachable("Cannot have branch in branch delay slot!\n");
+
+      if (DelaySlot > 0) {
+        DelaySlot--;
+        if (DelaySlot == 0)
+          /* Region + 1 => RegionEnd */
+          AlgnCandidates.emplace_back(std::next(MI));
+      }
+
+      // create regions of singleton bundle for schedule margin bundles,
+      // alignment algorithm will force fill each bundle to 128-bit due
+      // to the alignment requirement of 16-byte for the alignment region.
+      if (LoopSetupDistance > 0) {
+        AlgnCandidates.emplace_back(MI);
+        LoopSetupDistance--;
+      }
+
+      if (IsCall)
+        DelaySlot = getNumDelaySlots(*MI);
+
+      // Distance of 112 bytes in terms of PM addresses corresponds to
+      // 7 fully-expanded 128-bit instructions.
+      if (isZOLSetupBundle(MI) && isLastZOLSetupBundleInMBB(MI))
+        LoopSetupDistance = getLoopSetupDistance();
+    } else if (isHardwareLoopEnd(MI->getOpcode())) {
+      if (DelaySlot > 0)
+        llvm_unreachable("Cannot have HWLoopEnd in branch delay slot!\n");
+      // The previous instruction is the last bundle of the hardware loop
+      // and should be aligned.
+      AlgnCandidates.emplace_back(std::prev(MI));
+    } else if (!MI->isMetaInstruction()) {
+      // single instruction, there should not be any
+      // after Bundle Finalization Pass
+      llvm_unreachable("Found an un-expected standalone instruction !");
+    }
+  }
+  if (LoopSetupDistance > 0)
+    llvm_unreachable(
+        "LoopStart Region must have a length of at-least 7 bundles!\n");
+
+  return AlgnCandidates;
+}

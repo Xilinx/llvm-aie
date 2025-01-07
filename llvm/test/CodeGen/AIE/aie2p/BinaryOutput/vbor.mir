@@ -1,0 +1,48 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; VBOR
+    $x4 = VBOR $x5, $x5
+    $x6 = VBOR $x9, $x4
+    $x0 = VBOR $x8, $x0
+    $x8 = VBOR $x3, $x11
+    $x11 = VBOR $x2, $x9
+    $x3 = VBOR $x11, $x2
+    $x5 = VBOR $x6, $x1
+    $x9 = VBOR $x0, $x6
+    $x2 = VBOR $x7, $x7
+    $x10 = VBOR $x4, $x3
+    $x1 = VBOR $x1, $x8
+    $x7 = VBOR $x10, $x10
+...
+
+# CHECK: 0: 78 eb 2a 1a vbor x4, x5, x5
+# CHECK: 4: 78 6b 4a 1b vbor x6, x9, x4
+# CHECK: 8: 78 6b 40 18 vbor x0, x8, x0
+# CHECK: c: 78 eb 1d 1c vbor x8, x3, x11
+# CHECK: 10: 78 eb 94 1d vbor x11, x2, x9
+# CHECK: 14: 78 6b d9 19 vbor x3, x11, x2
+# CHECK: 18: 78 eb b0 1a vbor x5, x6, x1
+# CHECK: 1c: 78 6b 83 1c vbor x9, x0, x6
+# CHECK: 20: 78 eb 3b 19 vbor x2, x7, x7
+# CHECK: 24: 78 eb 21 1d vbor x10, x4, x3
+# CHECK: 28: 78 6b 8c 18 vbor x1, x1, x8
+# CHECK: 2c: 78 6b d5 1b vbor x7, x10, x10

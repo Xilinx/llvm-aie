@@ -8,6 +8,8 @@
 ; RUN:   llvm-objdump -t --triple=aie  - | FileCheck %s --check-prefixes=AIE
 ; RUN: llc -mtriple=aie2 -data-sections %s --filetype=obj -o - | \
 ; RUN:   llvm-objdump -t --triple=aie2 - | FileCheck %s --check-prefixes=AIE
+; RUN: llc -mtriple=aie2p -data-sections %s --filetype=obj -o - | \
+; RUN:   llvm-objdump -t --triple=aie2p - | FileCheck %s --check-prefixes=AIE
 
 ; Similar to elf-sections.ll but when requesting unique section names through
 ; -data-sections. The option should overrule the AIE-default behavior shown

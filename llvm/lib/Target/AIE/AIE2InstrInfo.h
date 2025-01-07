@@ -19,6 +19,7 @@
 #include "AIE2.h"
 #include "AIE2RegisterInfo.h"
 #include "AIEBaseInstrInfo.h"
+#include "llvm/CodeGen/Register.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
 
 #define GET_INSTRINFO_HEADER
@@ -33,9 +34,6 @@ public:
   unsigned getReturnOpcode() const override;
   unsigned getCallOpcode(const MachineFunction &CallerF, bool IsIndirect,
                          bool IsTailCall) const override;
-  MCSlotKind getSlotKind(unsigned Opcode) const override;
-  const MCSlotInfo *getSlotInfo(const MCSlotKind Kind) const override;
-  const PacketFormats &getPacketFormats() const override;
   unsigned getNopOpcode(size_t Size = 0) const override;
   unsigned getOppositeBranchOpcode(unsigned Opc) const override;
   unsigned getJumpOpcode() const override;
@@ -43,11 +41,27 @@ public:
   unsigned getConstantMovOpcode(MachineRegisterInfo &MRI, unsigned int Reg,
                                 APInt &Val) const override;
   unsigned getScalarMovOpcode(Register DstReg, Register SrcReg) const override;
+  unsigned getMvSclOpcode() const override;
+  unsigned getAddrIntrinsic2D() const override;
+  unsigned getAddrIntrinsic3D() const override;
+  unsigned getPtrAdd2DOpcode() const override;
+  unsigned getPtrAdd3DOpcode() const override;
+  unsigned getMvSclMultiSlotPseudoOpcode() const override;
+  unsigned getAddSclOpcode() const override;
+  unsigned getMvScl2MS(unsigned ConstTLastVal) const override;
+  unsigned getMvNBScl2MS(unsigned ConstTLastVal) const override;
+  unsigned getMvScl2MSTlastRegOpcode() const override;
+  unsigned getMvNBScl2MSTlastRegOpcode() const override;
+  Register getSSStatusReg() const override;
+  Register getMSStatusReg() const override;
+  Register getPackSignCReg() const override;
+  Register getUnpackSignCReg() const override;
   unsigned getGenericAddVectorEltOpcode() const override;
   unsigned getGenericInsertVectorEltOpcode() const override;
   unsigned getGenericExtractVectorEltOpcode(bool SignExt) const override;
   unsigned getGenericPadVectorOpcode() const override;
   unsigned getGenericUnpadVectorOpcode() const override;
+  unsigned getGenericBroadcastVectorOpcode() const override;
   unsigned getCycleSeparatorOpcode() const override;
   bool isLock(unsigned Opc) const override;
   bool isDelayedSchedBarrier(const MachineInstr &MI) const override;
@@ -74,6 +88,8 @@ public:
   std::optional<unsigned>
   getCombinedPostIncOpcode(MachineInstr &BaseMemI, MachineInstr &PtrAddI,
                            TypeSize Size) const override;
+  unsigned getOpCode(MachineInstr &MI) const override;
+  Register getVaddSignControlRegister() const override;
 
   virtual bool isHardwareLoopDec(unsigned Opcode) const override;
   virtual bool isHardwareLoopJNZ(unsigned Opcode) const override;
@@ -86,8 +102,11 @@ public:
 
   virtual bool
   isZeroOverheadLoopSetupInstr(const MachineInstr &) const override;
-  virtual std::vector<MachineBasicBlock::iterator>
-  getAlignmentBoundaries(MachineBasicBlock &MBB) const override;
+
+  // Between writing to zero-overhead registers (lc, ls and le) and
+  // the end of the loop, must be a distance of 112 bytes
+  // (7 fully-expanded 128-bit instructions) in terms of PM addresses
+  unsigned getLoopSetupDistance() const override { return 7; }
 
   virtual unsigned getPseudoJNZDOpcode() const override;
 

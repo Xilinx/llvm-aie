@@ -15,6 +15,7 @@
 #define LLVM_LIB_TARGET_AIE_AIEBASEREGISTERBANKINFO_H
 
 #include "llvm/CodeGen/RegisterBankInfo.h"
+#include "llvm/TargetParser/Triple.h"
 
 namespace llvm {
 
@@ -40,7 +41,8 @@ protected:
     PMI_ACC1024 = 13,
     PMI_VREGMin = PMI_VREG256,
     PMI_Min = PMI_GPR,
-    PMI_VREG128 = 14
+    PMI_VREG128 = 14,
+    PMI_ACC2048 = 15
   };
 
   enum ValueMappingIdx {
@@ -76,7 +78,9 @@ protected:
   const InstructionMapping &
   getSameKindOfOperandsMapping(const MachineInstr &MI) const;
 
-  static PartialMappingIdx getPartialMappingIdx(const LLT &Ty);
+  virtual PartialMappingIdx getPartialMappingIdx(const LLT &Ty) const;
+  virtual PartialMappingIdx getAccPartialMappingIdx(const LLT &Ty) const;
+  virtual PartialMappingIdx getVecPartialMappingIdx(const LLT &Ty) const;
 
 public:
   InstructionMappings

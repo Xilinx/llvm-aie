@@ -1,0 +1,260 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; VGE_16_vaddSign0
+    $r17 = VGE_16_vaddSign0 $x7, $x9, implicit $vaddsign0
+    $r23 = VGE_16_vaddSign0 $x10, $x4, implicit $vaddsign0
+    $r30 = VGE_16_vaddSign0 $x4, $x3, implicit $vaddsign0
+    $r21 = VGE_16_vaddSign0 $x6, $x0, implicit $vaddsign0
+    $r20 = VGE_16_vaddSign0 $x9, $x11, implicit $vaddsign0
+    $r25 = VGE_16_vaddSign0 $x3, $x2, implicit $vaddsign0
+    $r27 = VGE_16_vaddSign0 $x2, $x1, implicit $vaddsign0
+    $r16 = VGE_16_vaddSign0 $x5, $x10, implicit $vaddsign0
+    $r31 = VGE_16_vaddSign0 $x0, $x5, implicit $vaddsign0
+    $r24 = VGE_16_vaddSign0 $x11, $x7, implicit $vaddsign0
+    $r26 = VGE_16_vaddSign0 $x8, $x6, implicit $vaddsign0
+    $r18 = VGE_16_vaddSign0 $x1, $x8, implicit $vaddsign0
+    $r22 = VGE_16_vaddSign0 $x7, $x9, implicit $vaddsign0
+    $r28 = VGE_16_vaddSign0 $x10, $x4, implicit $vaddsign0
+    $r29 = VGE_16_vaddSign0 $x4, $x3, implicit $vaddsign0
+    $r19 = VGE_16_vaddSign0 $x6, $x0, implicit $vaddsign0
+
+    ; VGE_16_vaddSign1
+    $r21 = VGE_16_vaddSign1 $x2, $x3, implicit $vaddsign1
+    $r23 = VGE_16_vaddSign1 $x1, $x6, implicit $vaddsign1
+    $r29 = VGE_16_vaddSign1 $x11, $x5, implicit $vaddsign1
+    $r24 = VGE_16_vaddSign1 $x8, $x2, implicit $vaddsign1
+    $r17 = VGE_16_vaddSign1 $x5, $x1, implicit $vaddsign1
+    $r26 = VGE_16_vaddSign1 $x9, $x7, implicit $vaddsign1
+    $r27 = VGE_16_vaddSign1 $x3, $x0, implicit $vaddsign1
+    $r22 = VGE_16_vaddSign1 $x10, $x11, implicit $vaddsign1
+    $r16 = VGE_16_vaddSign1 $x6, $x10, implicit $vaddsign1
+    $r31 = VGE_16_vaddSign1 $x7, $x4, implicit $vaddsign1
+    $r20 = VGE_16_vaddSign1 $x0, $x9, implicit $vaddsign1
+    $r28 = VGE_16_vaddSign1 $x4, $x8, implicit $vaddsign1
+    $r25 = VGE_16_vaddSign1 $x2, $x3, implicit $vaddsign1
+    $r18 = VGE_16_vaddSign1 $x1, $x6, implicit $vaddsign1
+    $r19 = VGE_16_vaddSign1 $x11, $x5, implicit $vaddsign1
+    $r30 = VGE_16_vaddSign1 $x8, $x2, implicit $vaddsign1
+
+    ; VGE_32_vaddSign0
+    $r31 = VGE_32_vaddSign0 $x0, $x4, implicit $vaddsign0
+    $r18 = VGE_32_vaddSign0 $x3, $x10, implicit $vaddsign0
+    $r20 = VGE_32_vaddSign0 $x6, $x3, implicit $vaddsign0
+    $r24 = VGE_32_vaddSign0 $x10, $x8, implicit $vaddsign0
+    $r17 = VGE_32_vaddSign0 $x2, $x9, implicit $vaddsign0
+    $r25 = VGE_32_vaddSign0 $x1, $x7, implicit $vaddsign0
+    $r27 = VGE_32_vaddSign0 $x4, $x2, implicit $vaddsign0
+    $r19 = VGE_32_vaddSign0 $x8, $x0, implicit $vaddsign0
+    $r28 = VGE_32_vaddSign0 $x5, $x6, implicit $vaddsign0
+    $r16 = VGE_32_vaddSign0 $x11, $x1, implicit $vaddsign0
+    $r22 = VGE_32_vaddSign0 $x9, $x5, implicit $vaddsign0
+    $r23 = VGE_32_vaddSign0 $x7, $x11, implicit $vaddsign0
+    $r26 = VGE_32_vaddSign0 $x0, $x4, implicit $vaddsign0
+    $r30 = VGE_32_vaddSign0 $x3, $x10, implicit $vaddsign0
+    $r29 = VGE_32_vaddSign0 $x6, $x3, implicit $vaddsign0
+    $r21 = VGE_32_vaddSign0 $x10, $x8, implicit $vaddsign0
+
+    ; VGE_32_vaddSign1
+    $r18 = VGE_32_vaddSign1 $x4, $x8, implicit $vaddsign1
+    $r17 = VGE_32_vaddSign1 $x2, $x6, implicit $vaddsign1
+    $r25 = VGE_32_vaddSign1 $x11, $x1, implicit $vaddsign1
+    $r30 = VGE_32_vaddSign1 $x10, $x11, implicit $vaddsign1
+    $r23 = VGE_32_vaddSign1 $x3, $x9, implicit $vaddsign1
+    $r21 = VGE_32_vaddSign1 $x7, $x5, implicit $vaddsign1
+    $r28 = VGE_32_vaddSign1 $x0, $x7, implicit $vaddsign1
+    $r22 = VGE_32_vaddSign1 $x8, $x10, implicit $vaddsign1
+    $r20 = VGE_32_vaddSign1 $x6, $x4, implicit $vaddsign1
+    $r19 = VGE_32_vaddSign1 $x5, $x0, implicit $vaddsign1
+    $r31 = VGE_32_vaddSign1 $x1, $x2, implicit $vaddsign1
+    $r16 = VGE_32_vaddSign1 $x9, $x3, implicit $vaddsign1
+    $r24 = VGE_32_vaddSign1 $x4, $x8, implicit $vaddsign1
+    $r27 = VGE_32_vaddSign1 $x2, $x6, implicit $vaddsign1
+    $r26 = VGE_32_vaddSign1 $x11, $x1, implicit $vaddsign1
+    $r29 = VGE_32_vaddSign1 $x10, $x11, implicit $vaddsign1
+
+    ; VGE_8_vaddSign0
+    $l14 = VGE_8_vaddSign0 $x0, $x4, implicit $vaddsign0
+    $l2 = VGE_8_vaddSign0 $x5, $x3, implicit $vaddsign0
+    $l6 = VGE_8_vaddSign0 $x7, $x9, implicit $vaddsign0
+    $l12 = VGE_8_vaddSign0 $x8, $x7, implicit $vaddsign0
+    $l9 = VGE_8_vaddSign0 $x3, $x1, implicit $vaddsign0
+    $l5 = VGE_8_vaddSign0 $x6, $x5, implicit $vaddsign0
+    $l8 = VGE_8_vaddSign0 $x1, $x0, implicit $vaddsign0
+    $l11 = VGE_8_vaddSign0 $x4, $x2, implicit $vaddsign0
+    $l3 = VGE_8_vaddSign0 $x9, $x10, implicit $vaddsign0
+    $l4 = VGE_8_vaddSign0 $x2, $x11, implicit $vaddsign0
+    $l0 = VGE_8_vaddSign0 $x10, $x6, implicit $vaddsign0
+    $l7 = VGE_8_vaddSign0 $x11, $x8, implicit $vaddsign0
+    $l15 = VGE_8_vaddSign0 $x0, $x4, implicit $vaddsign0
+    $l10 = VGE_8_vaddSign0 $x5, $x3, implicit $vaddsign0
+    $l1 = VGE_8_vaddSign0 $x7, $x9, implicit $vaddsign0
+    $l13 = VGE_8_vaddSign0 $x8, $x7, implicit $vaddsign0
+
+    ; VGE_8_vaddSign1
+    $l3 = VGE_8_vaddSign1 $x10, $x5, implicit $vaddsign1
+    $l13 = VGE_8_vaddSign1 $x1, $x4, implicit $vaddsign1
+    $l5 = VGE_8_vaddSign1 $x9, $x11, implicit $vaddsign1
+    $l6 = VGE_8_vaddSign1 $x4, $x7, implicit $vaddsign1
+    $l1 = VGE_8_vaddSign1 $x7, $x6, implicit $vaddsign1
+    $l0 = VGE_8_vaddSign1 $x5, $x1, implicit $vaddsign1
+    $l10 = VGE_8_vaddSign1 $x0, $x0, implicit $vaddsign1
+    $l4 = VGE_8_vaddSign1 $x6, $x2, implicit $vaddsign1
+    $l14 = VGE_8_vaddSign1 $x8, $x10, implicit $vaddsign1
+    $l15 = VGE_8_vaddSign1 $x3, $x9, implicit $vaddsign1
+    $l11 = VGE_8_vaddSign1 $x2, $x3, implicit $vaddsign1
+    $l8 = VGE_8_vaddSign1 $x11, $x8, implicit $vaddsign1
+    $l2 = VGE_8_vaddSign1 $x10, $x5, implicit $vaddsign1
+    $l12 = VGE_8_vaddSign1 $x1, $x4, implicit $vaddsign1
+    $l7 = VGE_8_vaddSign1 $x9, $x11, implicit $vaddsign1
+    $l9 = VGE_8_vaddSign1 $x4, $x7, implicit $vaddsign1
+
+    ; VGE_bf16
+    $r28 = VGE_bf16 $x6, $x7
+    $r31 = VGE_bf16 $x7, $x1
+    $r30 = VGE_bf16 $x8, $x9
+    $r23 = VGE_bf16 $x10, $x5
+    $r27 = VGE_bf16 $x1, $x6
+    $r17 = VGE_bf16 $x11, $x2
+    $r21 = VGE_bf16 $x2, $x0
+    $r25 = VGE_bf16 $x3, $x11
+    $r16 = VGE_bf16 $x9, $x4
+    $r19 = VGE_bf16 $x0, $x8
+    $r24 = VGE_bf16 $x5, $x10
+    $r26 = VGE_bf16 $x4, $x3
+    $r29 = VGE_bf16 $x6, $x7
+    $r18 = VGE_bf16 $x7, $x1
+    $r22 = VGE_bf16 $x8, $x9
+    $r20 = VGE_bf16 $x10, $x5
+...
+
+# CHECK: 0: 78 ca bc 18 vge.16 r17, x7, x9, vaddsign0
+# CHECK: 4: 78 4a d2 1b vge.16 r23, x10, x4, vaddsign0
+# CHECK: 8: 78 ca 21 1f vge.16 r30, x4, x3, vaddsign0
+# CHECK: c: 78 4a b0 1a vge.16 r21, x6, x0, vaddsign0
+# CHECK: 10: 78 ca 4d 1a vge.16 r20, x9, x11, vaddsign0
+# CHECK: 14: 78 4a 99 1c vge.16 r25, x3, x2, vaddsign0
+# CHECK: 18: 78 ca 90 1d vge.16 r27, x2, x1, vaddsign0
+# CHECK: 1c: 78 4a 2d 18 vge.16 r16, x5, x10, vaddsign0
+# CHECK: 20: 78 ca 82 1f vge.16 r31, x0, x5, vaddsign0
+# CHECK: 24: 78 ca 5b 1c vge.16 r24, x11, x7, vaddsign0
+# CHECK: 28: 78 4a 43 1d vge.16 r26, x8, x6, vaddsign0
+# CHECK: 2c: 78 4a 0c 19 vge.16 r18, x1, x8, vaddsign0
+# CHECK: 30: 78 ca 3c 1b vge.16 r22, x7, x9, vaddsign0
+# CHECK: 34: 78 4a 52 1e vge.16 r28, x10, x4, vaddsign0
+# CHECK: 38: 78 ca a1 1e vge.16 r29, x4, x3, vaddsign0
+# CHECK: 3c: 78 4a b0 19 vge.16 r19, x6, x0, vaddsign0
+# CHECK: 40: 78 ea 91 1a vge.16 r21, x2, x3, vaddsign1
+# CHECK: 44: 78 6a 8b 1b vge.16 r23, x1, x6, vaddsign1
+# CHECK: 48: 78 ea da 1e vge.16 r29, x11, x5, vaddsign1
+# CHECK: 4c: 78 6a 41 1c vge.16 r24, x8, x2, vaddsign1
+# CHECK: 50: 78 ea a8 18 vge.16 r17, x5, x1, vaddsign1
+# CHECK: 54: 78 ea 4b 1d vge.16 r26, x9, x7, vaddsign1
+# CHECK: 58: 78 6a 98 1d vge.16 r27, x3, x0, vaddsign1
+# CHECK: 5c: 78 ea 55 1b vge.16 r22, x10, x11, vaddsign1
+# CHECK: 60: 78 6a 35 18 vge.16 r16, x6, x10, vaddsign1
+# CHECK: 64: 78 6a ba 1f vge.16 r31, x7, x4, vaddsign1
+# CHECK: 68: 78 ea 04 1a vge.16 r20, x0, x9, vaddsign1
+# CHECK: 6c: 78 6a 24 1e vge.16 r28, x4, x8, vaddsign1
+# CHECK: 70: 78 ea 91 1c vge.16 r25, x2, x3, vaddsign1
+# CHECK: 74: 78 6a 0b 19 vge.16 r18, x1, x6, vaddsign1
+# CHECK: 78: 78 ea da 19 vge.16 r19, x11, x5, vaddsign1
+# CHECK: 7c: 78 6a 41 1f vge.16 r30, x8, x2, vaddsign1
+# CHECK: 80: 78 52 82 1f vge.32 r31, x0, x4, vaddsign0
+# CHECK: 84: 78 52 1d 19 vge.32 r18, x3, x10, vaddsign0
+# CHECK: 88: 78 d2 31 1a vge.32 r20, x6, x3, vaddsign0
+# CHECK: 8c: 78 52 54 1c vge.32 r24, x10, x8, vaddsign0
+# CHECK: 90: 78 d2 94 18 vge.32 r17, x2, x9, vaddsign0
+# CHECK: 94: 78 d2 8b 1c vge.32 r25, x1, x7, vaddsign0
+# CHECK: 98: 78 52 a1 1d vge.32 r27, x4, x2, vaddsign0
+# CHECK: 9c: 78 52 c0 19 vge.32 r19, x8, x0, vaddsign0
+# CHECK: a0: 78 52 2b 1e vge.32 r28, x5, x6, vaddsign0
+# CHECK: a4: 78 d2 58 18 vge.32 r16, x11, x1, vaddsign0
+# CHECK: a8: 78 d2 4a 1b vge.32 r22, x9, x5, vaddsign0
+# CHECK: ac: 78 d2 bd 1b vge.32 r23, x7, x11, vaddsign0
+# CHECK: b0: 78 52 02 1d vge.32 r26, x0, x4, vaddsign0
+# CHECK: b4: 78 52 1d 1f vge.32 r30, x3, x10, vaddsign0
+# CHECK: b8: 78 d2 b1 1e vge.32 r29, x6, x3, vaddsign0
+# CHECK: bc: 78 52 d4 1a vge.32 r21, x10, x8, vaddsign0
+# CHECK: c0: 78 72 24 19 vge.32 r18, x4, x8, vaddsign1
+# CHECK: c4: 78 72 93 18 vge.32 r17, x2, x6, vaddsign1
+# CHECK: c8: 78 f2 d8 1c vge.32 r25, x11, x1, vaddsign1
+# CHECK: cc: 78 f2 55 1f vge.32 r30, x10, x11, vaddsign1
+# CHECK: d0: 78 f2 9c 1b vge.32 r23, x3, x9, vaddsign1
+# CHECK: d4: 78 f2 ba 1a vge.32 r21, x7, x5, vaddsign1
+# CHECK: d8: 78 f2 03 1e vge.32 r28, x0, x7, vaddsign1
+# CHECK: dc: 78 72 45 1b vge.32 r22, x8, x10, vaddsign1
+# CHECK: e0: 78 72 32 1a vge.32 r20, x6, x4, vaddsign1
+# CHECK: e4: 78 72 a8 19 vge.32 r19, x5, x0, vaddsign1
+# CHECK: e8: 78 72 89 1f vge.32 r31, x1, x2, vaddsign1
+# CHECK: ec: 78 f2 49 18 vge.32 r16, x9, x3, vaddsign1
+# CHECK: f0: 78 72 24 1c vge.32 r24, x4, x8, vaddsign1
+# CHECK: f4: 78 72 93 1d vge.32 r27, x2, x6, vaddsign1
+# CHECK: f8: 78 f2 58 1d vge.32 r26, x11, x1, vaddsign1
+# CHECK: fc: 78 f2 d5 1e vge.32 r29, x10, x11, vaddsign1
+# CHECK: 100: 78 42 02 1f vge.8 r29:r28, x0, x4, vaddsign0
+# CHECK: 104: 78 c2 29 19 vge.8 r5:r4, x5, x3, vaddsign0
+# CHECK: 108: 78 c2 3c 1b vge.8 r13:r12, x7, x9, vaddsign0
+# CHECK: 10c: 78 c2 43 1e vge.8 r25:r24, x8, x7, vaddsign0
+# CHECK: 110: 78 c2 98 1c vge.8 r19:r18, x3, x1, vaddsign0
+# CHECK: 114: 78 c2 b2 1a vge.8 r11:r10, x6, x5, vaddsign0
+# CHECK: 118: 78 42 08 1c vge.8 r17:r16, x1, x0, vaddsign0
+# CHECK: 11c: 78 42 a1 1d vge.8 r23:r22, x4, x2, vaddsign0
+# CHECK: 120: 78 42 cd 19 vge.8 r7:r6, x9, x10, vaddsign0
+# CHECK: 124: 78 c2 15 1a vge.8 r9:r8, x2, x11, vaddsign0
+# CHECK: 128: 78 42 53 18 vge.8 r1:r0, x10, x6, vaddsign0
+# CHECK: 12c: 78 42 dc 1b vge.8 r15:r14, x11, x8, vaddsign0
+# CHECK: 130: 78 42 82 1f vge.8 r31:r30, x0, x4, vaddsign0
+# CHECK: 134: 78 c2 29 1d vge.8 r21:r20, x5, x3, vaddsign0
+# CHECK: 138: 78 c2 bc 18 vge.8 r3:r2, x7, x9, vaddsign0
+# CHECK: 13c: 78 c2 c3 1e vge.8 r27:r26, x8, x7, vaddsign0
+# CHECK: 140: 78 e2 d2 19 vge.8 r7:r6, x10, x5, vaddsign1
+# CHECK: 144: 78 62 8a 1e vge.8 r27:r26, x1, x4, vaddsign1
+# CHECK: 148: 78 e2 cd 1a vge.8 r11:r10, x9, x11, vaddsign1
+# CHECK: 14c: 78 e2 23 1b vge.8 r13:r12, x4, x7, vaddsign1
+# CHECK: 150: 78 62 bb 18 vge.8 r3:r2, x7, x6, vaddsign1
+# CHECK: 154: 78 e2 28 18 vge.8 r1:r0, x5, x1, vaddsign1
+# CHECK: 158: 78 62 00 1d vge.8 r21:r20, x0, x0, vaddsign1
+# CHECK: 15c: 78 62 31 1a vge.8 r9:r8, x6, x2, vaddsign1
+# CHECK: 160: 78 62 45 1f vge.8 r29:r28, x8, x10, vaddsign1
+# CHECK: 164: 78 e2 9c 1f vge.8 r31:r30, x3, x9, vaddsign1
+# CHECK: 168: 78 e2 91 1d vge.8 r23:r22, x2, x3, vaddsign1
+# CHECK: 16c: 78 62 5c 1c vge.8 r17:r16, x11, x8, vaddsign1
+# CHECK: 170: 78 e2 52 19 vge.8 r5:r4, x10, x5, vaddsign1
+# CHECK: 174: 78 62 0a 1e vge.8 r25:r24, x1, x4, vaddsign1
+# CHECK: 178: 78 e2 cd 1b vge.8 r15:r14, x9, x11, vaddsign1
+# CHECK: 17c: 78 e2 a3 1c vge.8 r19:r18, x4, x7, vaddsign1
+# CHECK: 180: f8 cc 33 1e vge.bf16 r28, x6, x7
+# CHECK: 184: f8 cc b8 1f vge.bf16 r31, x7, x1
+# CHECK: 188: f8 cc 44 1f vge.bf16 r30, x8, x9
+# CHECK: 18c: f8 cc d2 1b vge.bf16 r23, x10, x5
+# CHECK: 190: f8 4c 8b 1d vge.bf16 r27, x1, x6
+# CHECK: 194: f8 4c d9 18 vge.bf16 r17, x11, x2
+# CHECK: 198: f8 4c 90 1a vge.bf16 r21, x2, x0
+# CHECK: 19c: f8 cc 9d 1c vge.bf16 r25, x3, x11
+# CHECK: 1a0: f8 4c 4a 18 vge.bf16 r16, x9, x4
+# CHECK: 1a4: f8 4c 84 19 vge.bf16 r19, x0, x8
+# CHECK: 1a8: f8 4c 2d 1c vge.bf16 r24, x5, x10
+# CHECK: 1ac: f8 cc 21 1d vge.bf16 r26, x4, x3
+# CHECK: 1b0: f8 cc b3 1e vge.bf16 r29, x6, x7
+# CHECK: 1b4: f8 cc 38 19 vge.bf16 r18, x7, x1
+# CHECK: 1b8: f8 cc 44 1b vge.bf16 r22, x8, x9
+# CHECK: 1bc: f8 cc 52 1a vge.bf16 r20, x10, x5

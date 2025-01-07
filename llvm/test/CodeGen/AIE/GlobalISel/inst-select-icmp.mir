@@ -4,8 +4,10 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
-# RUN: llc -mtriple aie -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# RUN: llc -mtriple aie -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE1 %s
+# RUN: llc -mtriple aie2 -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2 %s
+# RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck --check-prefix=AIE2P %s
 
 ---
 name: icmp_s32_ne
@@ -15,15 +17,76 @@ regBankSelected: true
 body: |
   bb.0:
     liveins: $r6, $r7
-    ; CHECK-LABEL: name: icmp_s32_ne
-    ; CHECK: [[COPY:%[0-9]+]]:gpr = COPY $r6
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:gpr = COPY $r7
-    ; CHECK-NEXT: [[NE:%[0-9]+]]:gpr = NE [[COPY]], [[COPY1]]
-    ; CHECK-NEXT: $r0 = COPY [[NE]]
+    ; AIE1-LABEL: name: icmp_s32_ne
+    ; AIE1: liveins: $r6, $r7
+    ; AIE1-NEXT: {{  $}}
+    ; AIE1-NEXT: [[COPY:%[0-9]+]]:gpr = COPY $r6
+    ; AIE1-NEXT: [[COPY1:%[0-9]+]]:gpr = COPY $r7
+    ; AIE1-NEXT: [[NE:%[0-9]+]]:gpr = NE [[COPY]], [[COPY1]]
+    ; AIE1-NEXT: $r0 = COPY [[NE]]
+    ;
+    ; AIE2-LABEL: name: icmp_s32_ne
+    ; AIE2: liveins: $r6, $r7
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
+    ; AIE2-NEXT: [[NE:%[0-9]+]]:er = NE [[COPY]], [[COPY1]]
+    ; AIE2-NEXT: $r0 = COPY [[NE]]
+    ;
+    ; AIE2P-LABEL: name: icmp_s32_ne
+    ; AIE2P: liveins: $r6, $r7
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
+    ; AIE2P-NEXT: [[NE:%[0-9]+]]:er = NE [[COPY]], [[COPY1]]
+    ; AIE2P-NEXT: $r0 = COPY [[NE]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = COPY $r7
     %2:gprregbank(s32) = G_ICMP intpred(ne), %0(s32), %1
     $r0 = COPY %2
+...
+
+---
+name: icmp_s32_nez
+legalized: true
+regBankSelected: true
+
+body: |
+  bb.0:
+    liveins: $r6
+    ; AIE1-LABEL: name: icmp_s32_nez
+    ; AIE1: liveins: $r6
+    ; AIE1-NEXT: {{  $}}
+    ; AIE1-NEXT: [[COPY:%[0-9]+]]:gpr = COPY $r6
+    ; AIE1-NEXT: [[MOV_U20_:%[0-9]+]]:gpr = MOV_U20 0
+    ; AIE1-NEXT: [[NE:%[0-9]+]]:gpr = NE [[COPY]], [[MOV_U20_]]
+    ; AIE1-NEXT: [[NE1:%[0-9]+]]:gpr = NE [[MOV_U20_]], [[COPY]]
+    ; AIE1-NEXT: $r0 = COPY [[NE]]
+    ; AIE1-NEXT: $r1 = COPY [[NE1]]
+    ;
+    ; AIE2-LABEL: name: icmp_s32_nez
+    ; AIE2: liveins: $r6
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2-NEXT: [[NEZ:%[0-9]+]]:er = NEZ [[COPY]]
+    ; AIE2-NEXT: [[NEZ1:%[0-9]+]]:er = NEZ [[COPY]]
+    ; AIE2-NEXT: $r0 = COPY [[NEZ]]
+    ; AIE2-NEXT: $r1 = COPY [[NEZ1]]
+    ;
+    ; AIE2P-LABEL: name: icmp_s32_nez
+    ; AIE2P: liveins: $r6
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2P-NEXT: [[NEZ:%[0-9]+]]:er = NEZ [[COPY]]
+    ; AIE2P-NEXT: [[NEZ1:%[0-9]+]]:er = NEZ [[COPY]]
+    ; AIE2P-NEXT: $r0 = COPY [[NEZ]]
+    ; AIE2P-NEXT: $r1 = COPY [[NEZ1]]
+    %0:gprregbank(s32) = COPY $r6
+    %1:gprregbank(s32) = G_CONSTANT i32 0
+    %2:gprregbank(s32) = G_ICMP intpred(ne), %0(s32), %1
+    %3:gprregbank(s32) = G_ICMP intpred(ne), %1(s32), %0
+    $r0 = COPY %2
+    $r1 = COPY %3
 ...
 
 ---
@@ -34,15 +97,76 @@ regBankSelected: true
 body: |
   bb.0:
     liveins: $r6, $r7
-    ; CHECK-LABEL: name: icmp_s32_eq
-    ; CHECK: [[COPY:%[0-9]+]]:gpr = COPY $r6
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:gpr = COPY $r7
-    ; CHECK-NEXT: [[EQ:%[0-9]+]]:gpr = EQ [[COPY]], [[COPY1]]
-    ; CHECK-NEXT: $r0 = COPY [[EQ]]
+    ; AIE1-LABEL: name: icmp_s32_eq
+    ; AIE1: liveins: $r6, $r7
+    ; AIE1-NEXT: {{  $}}
+    ; AIE1-NEXT: [[COPY:%[0-9]+]]:gpr = COPY $r6
+    ; AIE1-NEXT: [[COPY1:%[0-9]+]]:gpr = COPY $r7
+    ; AIE1-NEXT: [[EQ:%[0-9]+]]:gpr = EQ [[COPY]], [[COPY1]]
+    ; AIE1-NEXT: $r0 = COPY [[EQ]]
+    ;
+    ; AIE2-LABEL: name: icmp_s32_eq
+    ; AIE2: liveins: $r6, $r7
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
+    ; AIE2-NEXT: [[EQ:%[0-9]+]]:er = EQ [[COPY]], [[COPY1]]
+    ; AIE2-NEXT: $r0 = COPY [[EQ]]
+    ;
+    ; AIE2P-LABEL: name: icmp_s32_eq
+    ; AIE2P: liveins: $r6, $r7
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
+    ; AIE2P-NEXT: [[EQ:%[0-9]+]]:er = EQ [[COPY]], [[COPY1]]
+    ; AIE2P-NEXT: $r0 = COPY [[EQ]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = COPY $r7
     %2:gprregbank(s32) = G_ICMP intpred(eq), %0(s32), %1
     $r0 = COPY %2
+...
+
+---
+name: icmp_s32_eqz
+legalized: true
+regBankSelected: true
+
+body: |
+  bb.0:
+    liveins: $r6
+    ; AIE1-LABEL: name: icmp_s32_eqz
+    ; AIE1: liveins: $r6
+    ; AIE1-NEXT: {{  $}}
+    ; AIE1-NEXT: [[COPY:%[0-9]+]]:gpr = COPY $r6
+    ; AIE1-NEXT: [[MOV_U20_:%[0-9]+]]:gpr = MOV_U20 0
+    ; AIE1-NEXT: [[EQ:%[0-9]+]]:gpr = EQ [[COPY]], [[MOV_U20_]]
+    ; AIE1-NEXT: [[EQ1:%[0-9]+]]:gpr = EQ [[MOV_U20_]], [[COPY]]
+    ; AIE1-NEXT: $r0 = COPY [[EQ]]
+    ; AIE1-NEXT: $r1 = COPY [[EQ1]]
+    ;
+    ; AIE2-LABEL: name: icmp_s32_eqz
+    ; AIE2: liveins: $r6
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2-NEXT: [[EQZ:%[0-9]+]]:er = EQZ [[COPY]]
+    ; AIE2-NEXT: [[EQZ1:%[0-9]+]]:er = EQZ [[COPY]]
+    ; AIE2-NEXT: $r0 = COPY [[EQZ]]
+    ; AIE2-NEXT: $r1 = COPY [[EQZ1]]
+    ;
+    ; AIE2P-LABEL: name: icmp_s32_eqz
+    ; AIE2P: liveins: $r6
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2P-NEXT: [[EQZ:%[0-9]+]]:er = EQZ [[COPY]]
+    ; AIE2P-NEXT: [[EQZ1:%[0-9]+]]:er = EQZ [[COPY]]
+    ; AIE2P-NEXT: $r0 = COPY [[EQZ]]
+    ; AIE2P-NEXT: $r1 = COPY [[EQZ1]]
+    %0:gprregbank(s32) = COPY $r6
+    %1:gprregbank(s32) = G_CONSTANT i32 0
+    %2:gprregbank(s32) = G_ICMP intpred(eq), %0(s32), %1
+    %3:gprregbank(s32) = G_ICMP intpred(eq), %1(s32), %0
+    $r0 = COPY %2
+    $r1 = COPY %3
 ...
 
 ---
@@ -53,11 +177,29 @@ regBankSelected: true
 body: |
   bb.0:
     liveins: $r6, $r7
-    ; CHECK-LABEL: name: icmp_s32_slt
-    ; CHECK: [[COPY:%[0-9]+]]:gpr = COPY $r6
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:gpr = COPY $r7
-    ; CHECK-NEXT: [[LT:%[0-9]+]]:gpr = LT [[COPY]], [[COPY1]]
-    ; CHECK-NEXT: $r0 = COPY [[LT]]
+    ; AIE1-LABEL: name: icmp_s32_slt
+    ; AIE1: liveins: $r6, $r7
+    ; AIE1-NEXT: {{  $}}
+    ; AIE1-NEXT: [[COPY:%[0-9]+]]:gpr = COPY $r6
+    ; AIE1-NEXT: [[COPY1:%[0-9]+]]:gpr = COPY $r7
+    ; AIE1-NEXT: [[LT:%[0-9]+]]:gpr = LT [[COPY]], [[COPY1]]
+    ; AIE1-NEXT: $r0 = COPY [[LT]]
+    ;
+    ; AIE2-LABEL: name: icmp_s32_slt
+    ; AIE2: liveins: $r6, $r7
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
+    ; AIE2-NEXT: [[LT:%[0-9]+]]:er = LT [[COPY]], [[COPY1]]
+    ; AIE2-NEXT: $r0 = COPY [[LT]]
+    ;
+    ; AIE2P-LABEL: name: icmp_s32_slt
+    ; AIE2P: liveins: $r6, $r7
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
+    ; AIE2P-NEXT: [[LT:%[0-9]+]]:er = LT [[COPY]], [[COPY1]]
+    ; AIE2P-NEXT: $r0 = COPY [[LT]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = COPY $r7
     %2:gprregbank(s32) = G_ICMP intpred(slt), %0(s32), %1
@@ -72,11 +214,29 @@ regBankSelected: true
 body: |
   bb.0:
     liveins: $r6, $r7
-    ; CHECK-LABEL: name: icmp_s32_ult
-    ; CHECK: [[COPY:%[0-9]+]]:gpr = COPY $r6
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:gpr = COPY $r7
-    ; CHECK-NEXT: [[LTU:%[0-9]+]]:gpr = LTU [[COPY]], [[COPY1]]
-    ; CHECK-NEXT: $r0 = COPY [[LTU]]
+    ; AIE1-LABEL: name: icmp_s32_ult
+    ; AIE1: liveins: $r6, $r7
+    ; AIE1-NEXT: {{  $}}
+    ; AIE1-NEXT: [[COPY:%[0-9]+]]:gpr = COPY $r6
+    ; AIE1-NEXT: [[COPY1:%[0-9]+]]:gpr = COPY $r7
+    ; AIE1-NEXT: [[LTU:%[0-9]+]]:gpr = LTU [[COPY]], [[COPY1]]
+    ; AIE1-NEXT: $r0 = COPY [[LTU]]
+    ;
+    ; AIE2-LABEL: name: icmp_s32_ult
+    ; AIE2: liveins: $r6, $r7
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
+    ; AIE2-NEXT: [[LTU:%[0-9]+]]:er = LTU [[COPY]], [[COPY1]]
+    ; AIE2-NEXT: $r0 = COPY [[LTU]]
+    ;
+    ; AIE2P-LABEL: name: icmp_s32_ult
+    ; AIE2P: liveins: $r6, $r7
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
+    ; AIE2P-NEXT: [[LTU:%[0-9]+]]:er = LTU [[COPY]], [[COPY1]]
+    ; AIE2P-NEXT: $r0 = COPY [[LTU]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = COPY $r7
     %2:gprregbank(s32) = G_ICMP intpred(ult), %0(s32), %1
@@ -91,11 +251,29 @@ regBankSelected: true
 body: |
   bb.0:
     liveins: $r6, $r7
-    ; CHECK-LABEL: name: icmp_s32_sle
-    ; CHECK: [[COPY:%[0-9]+]]:gpr = COPY $r6
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:gpr = COPY $r7
-    ; CHECK-NEXT: [[GE:%[0-9]+]]:gpr = GE [[COPY1]], [[COPY]]
-    ; CHECK-NEXT: $r0 = COPY [[GE]]
+    ; AIE1-LABEL: name: icmp_s32_sle
+    ; AIE1: liveins: $r6, $r7
+    ; AIE1-NEXT: {{  $}}
+    ; AIE1-NEXT: [[COPY:%[0-9]+]]:gpr = COPY $r6
+    ; AIE1-NEXT: [[COPY1:%[0-9]+]]:gpr = COPY $r7
+    ; AIE1-NEXT: [[GE:%[0-9]+]]:gpr = GE [[COPY1]], [[COPY]]
+    ; AIE1-NEXT: $r0 = COPY [[GE]]
+    ;
+    ; AIE2-LABEL: name: icmp_s32_sle
+    ; AIE2: liveins: $r6, $r7
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
+    ; AIE2-NEXT: [[GE:%[0-9]+]]:er = GE [[COPY1]], [[COPY]]
+    ; AIE2-NEXT: $r0 = COPY [[GE]]
+    ;
+    ; AIE2P-LABEL: name: icmp_s32_sle
+    ; AIE2P: liveins: $r6, $r7
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
+    ; AIE2P-NEXT: [[GE:%[0-9]+]]:er = GE [[COPY1]], [[COPY]]
+    ; AIE2P-NEXT: $r0 = COPY [[GE]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = COPY $r7
     %2:gprregbank(s32) = G_ICMP intpred(sle), %0(s32), %1
@@ -110,11 +288,29 @@ regBankSelected: true
 body: |
   bb.0:
     liveins: $r6, $r7
-    ; CHECK-LABEL: name: icmp_s32_ule
-    ; CHECK: [[COPY:%[0-9]+]]:gpr = COPY $r6
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:gpr = COPY $r7
-    ; CHECK-NEXT: [[GEU:%[0-9]+]]:gpr = GEU [[COPY1]], [[COPY]]
-    ; CHECK-NEXT: $r0 = COPY [[GEU]]
+    ; AIE1-LABEL: name: icmp_s32_ule
+    ; AIE1: liveins: $r6, $r7
+    ; AIE1-NEXT: {{  $}}
+    ; AIE1-NEXT: [[COPY:%[0-9]+]]:gpr = COPY $r6
+    ; AIE1-NEXT: [[COPY1:%[0-9]+]]:gpr = COPY $r7
+    ; AIE1-NEXT: [[GEU:%[0-9]+]]:gpr = GEU [[COPY1]], [[COPY]]
+    ; AIE1-NEXT: $r0 = COPY [[GEU]]
+    ;
+    ; AIE2-LABEL: name: icmp_s32_ule
+    ; AIE2: liveins: $r6, $r7
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
+    ; AIE2-NEXT: [[GEU:%[0-9]+]]:er = GEU [[COPY1]], [[COPY]]
+    ; AIE2-NEXT: $r0 = COPY [[GEU]]
+    ;
+    ; AIE2P-LABEL: name: icmp_s32_ule
+    ; AIE2P: liveins: $r6, $r7
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
+    ; AIE2P-NEXT: [[GEU:%[0-9]+]]:er = GEU [[COPY1]], [[COPY]]
+    ; AIE2P-NEXT: $r0 = COPY [[GEU]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = COPY $r7
     %2:gprregbank(s32) = G_ICMP intpred(ule), %0(s32), %1
@@ -129,11 +325,29 @@ regBankSelected: true
 body: |
   bb.0:
     liveins: $r6, $r7
-    ; CHECK-LABEL: name: icmp_s32_sgt
-    ; CHECK: [[COPY:%[0-9]+]]:gpr = COPY $r6
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:gpr = COPY $r7
-    ; CHECK-NEXT: [[LT:%[0-9]+]]:gpr = LT [[COPY1]], [[COPY]]
-    ; CHECK-NEXT: $r0 = COPY [[LT]]
+    ; AIE1-LABEL: name: icmp_s32_sgt
+    ; AIE1: liveins: $r6, $r7
+    ; AIE1-NEXT: {{  $}}
+    ; AIE1-NEXT: [[COPY:%[0-9]+]]:gpr = COPY $r6
+    ; AIE1-NEXT: [[COPY1:%[0-9]+]]:gpr = COPY $r7
+    ; AIE1-NEXT: [[LT:%[0-9]+]]:gpr = LT [[COPY1]], [[COPY]]
+    ; AIE1-NEXT: $r0 = COPY [[LT]]
+    ;
+    ; AIE2-LABEL: name: icmp_s32_sgt
+    ; AIE2: liveins: $r6, $r7
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
+    ; AIE2-NEXT: [[LT:%[0-9]+]]:er = LT [[COPY1]], [[COPY]]
+    ; AIE2-NEXT: $r0 = COPY [[LT]]
+    ;
+    ; AIE2P-LABEL: name: icmp_s32_sgt
+    ; AIE2P: liveins: $r6, $r7
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
+    ; AIE2P-NEXT: [[LT:%[0-9]+]]:er = LT [[COPY1]], [[COPY]]
+    ; AIE2P-NEXT: $r0 = COPY [[LT]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = COPY $r7
     %2:gprregbank(s32) = G_ICMP intpred(sgt), %0(s32), %1
@@ -148,11 +362,29 @@ regBankSelected: true
 body: |
   bb.0:
     liveins: $r6, $r7
-    ; CHECK-LABEL: name: icmp_s32_ugt
-    ; CHECK: [[COPY:%[0-9]+]]:gpr = COPY $r6
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:gpr = COPY $r7
-    ; CHECK-NEXT: [[LTU:%[0-9]+]]:gpr = LTU [[COPY1]], [[COPY]]
-    ; CHECK-NEXT: $r0 = COPY [[LTU]]
+    ; AIE1-LABEL: name: icmp_s32_ugt
+    ; AIE1: liveins: $r6, $r7
+    ; AIE1-NEXT: {{  $}}
+    ; AIE1-NEXT: [[COPY:%[0-9]+]]:gpr = COPY $r6
+    ; AIE1-NEXT: [[COPY1:%[0-9]+]]:gpr = COPY $r7
+    ; AIE1-NEXT: [[LTU:%[0-9]+]]:gpr = LTU [[COPY1]], [[COPY]]
+    ; AIE1-NEXT: $r0 = COPY [[LTU]]
+    ;
+    ; AIE2-LABEL: name: icmp_s32_ugt
+    ; AIE2: liveins: $r6, $r7
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
+    ; AIE2-NEXT: [[LTU:%[0-9]+]]:er = LTU [[COPY1]], [[COPY]]
+    ; AIE2-NEXT: $r0 = COPY [[LTU]]
+    ;
+    ; AIE2P-LABEL: name: icmp_s32_ugt
+    ; AIE2P: liveins: $r6, $r7
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
+    ; AIE2P-NEXT: [[LTU:%[0-9]+]]:er = LTU [[COPY1]], [[COPY]]
+    ; AIE2P-NEXT: $r0 = COPY [[LTU]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = COPY $r7
     %2:gprregbank(s32) = G_ICMP intpred(ugt), %0(s32), %1
@@ -167,11 +399,29 @@ regBankSelected: true
 body: |
   bb.0:
     liveins: $r6, $r7
-    ; CHECK-LABEL: name: icmp_s32_sge
-    ; CHECK: [[COPY:%[0-9]+]]:gpr = COPY $r6
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:gpr = COPY $r7
-    ; CHECK-NEXT: [[GE:%[0-9]+]]:gpr = GE [[COPY]], [[COPY1]]
-    ; CHECK-NEXT: $r0 = COPY [[GE]]
+    ; AIE1-LABEL: name: icmp_s32_sge
+    ; AIE1: liveins: $r6, $r7
+    ; AIE1-NEXT: {{  $}}
+    ; AIE1-NEXT: [[COPY:%[0-9]+]]:gpr = COPY $r6
+    ; AIE1-NEXT: [[COPY1:%[0-9]+]]:gpr = COPY $r7
+    ; AIE1-NEXT: [[GE:%[0-9]+]]:gpr = GE [[COPY]], [[COPY1]]
+    ; AIE1-NEXT: $r0 = COPY [[GE]]
+    ;
+    ; AIE2-LABEL: name: icmp_s32_sge
+    ; AIE2: liveins: $r6, $r7
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
+    ; AIE2-NEXT: [[GE:%[0-9]+]]:er = GE [[COPY]], [[COPY1]]
+    ; AIE2-NEXT: $r0 = COPY [[GE]]
+    ;
+    ; AIE2P-LABEL: name: icmp_s32_sge
+    ; AIE2P: liveins: $r6, $r7
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
+    ; AIE2P-NEXT: [[GE:%[0-9]+]]:er = GE [[COPY]], [[COPY1]]
+    ; AIE2P-NEXT: $r0 = COPY [[GE]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = COPY $r7
     %2:gprregbank(s32) = G_ICMP intpred(sge), %0(s32), %1
@@ -186,11 +436,29 @@ regBankSelected: true
 body: |
   bb.0:
     liveins: $r6, $r7
-    ; CHECK-LABEL: name: icmp_s32_uge
-    ; CHECK: [[COPY:%[0-9]+]]:gpr = COPY $r6
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:gpr = COPY $r7
-    ; CHECK-NEXT: [[GEU:%[0-9]+]]:gpr = GEU [[COPY]], [[COPY1]]
-    ; CHECK-NEXT: $r0 = COPY [[GEU]]
+    ; AIE1-LABEL: name: icmp_s32_uge
+    ; AIE1: liveins: $r6, $r7
+    ; AIE1-NEXT: {{  $}}
+    ; AIE1-NEXT: [[COPY:%[0-9]+]]:gpr = COPY $r6
+    ; AIE1-NEXT: [[COPY1:%[0-9]+]]:gpr = COPY $r7
+    ; AIE1-NEXT: [[GEU:%[0-9]+]]:gpr = GEU [[COPY]], [[COPY1]]
+    ; AIE1-NEXT: $r0 = COPY [[GEU]]
+    ;
+    ; AIE2-LABEL: name: icmp_s32_uge
+    ; AIE2: liveins: $r6, $r7
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
+    ; AIE2-NEXT: [[GEU:%[0-9]+]]:er = GEU [[COPY]], [[COPY1]]
+    ; AIE2-NEXT: $r0 = COPY [[GEU]]
+    ;
+    ; AIE2P-LABEL: name: icmp_s32_uge
+    ; AIE2P: liveins: $r6, $r7
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:er = COPY $r6
+    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:er = COPY $r7
+    ; AIE2P-NEXT: [[GEU:%[0-9]+]]:er = GEU [[COPY]], [[COPY1]]
+    ; AIE2P-NEXT: $r0 = COPY [[GEU]]
     %0:gprregbank(s32) = COPY $r6
     %1:gprregbank(s32) = COPY $r7
     %2:gprregbank(s32) = G_ICMP intpred(uge), %0(s32), %1
@@ -205,19 +473,85 @@ regBankSelected: true
 body: |
   bb.0:
     liveins: $p0, $p1
-    ; CHECK-LABEL: name: icmp_p0_ne
-    ; CHECK: [[COPY:%[0-9]+]]:ptr = COPY $p0
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ptr = COPY $p1
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:gpr = COPY [[COPY]]
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:gpr = COPY [[COPY1]]
-    ; CHECK-NEXT: [[NE:%[0-9]+]]:gpr = NE [[COPY2]], [[COPY3]]
-    ; CHECK-NEXT: $r0 = COPY [[NE]]
+    ; AIE1-LABEL: name: icmp_p0_ne
+    ; AIE1: liveins: $p0, $p1
+    ; AIE1-NEXT: {{  $}}
+    ; AIE1-NEXT: [[COPY:%[0-9]+]]:ptr = COPY $p0
+    ; AIE1-NEXT: [[COPY1:%[0-9]+]]:ptr = COPY $p1
+    ; AIE1-NEXT: [[COPY2:%[0-9]+]]:gpr = COPY [[COPY]]
+    ; AIE1-NEXT: [[COPY3:%[0-9]+]]:gpr = COPY [[COPY1]]
+    ; AIE1-NEXT: [[NE:%[0-9]+]]:gpr = NE [[COPY2]], [[COPY3]]
+    ; AIE1-NEXT: $r0 = COPY [[NE]]
+    ;
+    ; AIE2-LABEL: name: icmp_p0_ne
+    ; AIE2: liveins: $p0, $p1
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; AIE2-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p1
+    ; AIE2-NEXT: [[COPY2:%[0-9]+]]:er = COPY [[COPY]]
+    ; AIE2-NEXT: [[COPY3:%[0-9]+]]:er = COPY [[COPY1]]
+    ; AIE2-NEXT: [[NE:%[0-9]+]]:er = NE [[COPY2]], [[COPY3]]
+    ; AIE2-NEXT: $r0 = COPY [[NE]]
+    ;
+    ; AIE2P-LABEL: name: icmp_p0_ne
+    ; AIE2P: liveins: $p0, $p1
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p1
+    ; AIE2P-NEXT: [[COPY2:%[0-9]+]]:er = COPY [[COPY]]
+    ; AIE2P-NEXT: [[COPY3:%[0-9]+]]:er = COPY [[COPY1]]
+    ; AIE2P-NEXT: [[NE:%[0-9]+]]:er = NE [[COPY2]], [[COPY3]]
+    ; AIE2P-NEXT: $r0 = COPY [[NE]]
     %0:ptrregbank(p0) = COPY $p0
     %1:ptrregbank(p0) = COPY $p1
     %2:gprregbank(p0) = COPY %0
     %3:gprregbank(p0) = COPY %1
     %4:gprregbank(s32) = G_ICMP intpred(ne), %2(p0), %3
     $r0 = COPY %4
+...
+
+
+---
+name: icmp_p0_nez
+legalized: true
+regBankSelected: true
+
+body: |
+  bb.0:
+    liveins: $p0
+    ; AIE1-LABEL: name: icmp_p0_nez
+    ; AIE1: liveins: $p0
+    ; AIE1-NEXT: {{  $}}
+    ; AIE1-NEXT: [[COPY:%[0-9]+]]:gpr = COPY $p0
+    ; AIE1-NEXT: [[MOV_U20_:%[0-9]+]]:gpr = MOV_U20 0
+    ; AIE1-NEXT: [[NE:%[0-9]+]]:gpr = NE [[COPY]], [[MOV_U20_]]
+    ; AIE1-NEXT: [[NE1:%[0-9]+]]:gpr = NE [[MOV_U20_]], [[COPY]]
+    ; AIE1-NEXT: $r0 = COPY [[NE]]
+    ; AIE1-NEXT: $r1 = COPY [[NE1]]
+    ;
+    ; AIE2-LABEL: name: icmp_p0_nez
+    ; AIE2: liveins: $p0
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:er = COPY $p0
+    ; AIE2-NEXT: [[NEZ:%[0-9]+]]:er = NEZ [[COPY]]
+    ; AIE2-NEXT: [[NEZ1:%[0-9]+]]:er = NEZ [[COPY]]
+    ; AIE2-NEXT: $r0 = COPY [[NEZ]]
+    ; AIE2-NEXT: $r1 = COPY [[NEZ1]]
+    ;
+    ; AIE2P-LABEL: name: icmp_p0_nez
+    ; AIE2P: liveins: $p0
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:er = COPY $p0
+    ; AIE2P-NEXT: [[NEZ:%[0-9]+]]:er = NEZ [[COPY]]
+    ; AIE2P-NEXT: [[NEZ1:%[0-9]+]]:er = NEZ [[COPY]]
+    ; AIE2P-NEXT: $r0 = COPY [[NEZ]]
+    ; AIE2P-NEXT: $r1 = COPY [[NEZ1]]
+    %0:gprregbank(p0) = COPY $p0
+    %1:gprregbank(p0) = G_CONSTANT i20 0
+    %2:gprregbank(s32) = G_ICMP intpred(ne), %0, %1
+    %3:gprregbank(s32) = G_ICMP intpred(ne), %1, %0
+    $r0 = COPY %2
+    $r1 = COPY %3
 ...
 
 ---
@@ -228,19 +562,84 @@ regBankSelected: true
 body: |
   bb.0:
     liveins: $p0, $p1
-    ; CHECK-LABEL: name: icmp_p0_eq
-    ; CHECK: [[COPY:%[0-9]+]]:ptr = COPY $p0
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ptr = COPY $p1
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:gpr = COPY [[COPY]]
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:gpr = COPY [[COPY1]]
-    ; CHECK-NEXT: [[EQ:%[0-9]+]]:gpr = EQ [[COPY2]], [[COPY3]]
-    ; CHECK-NEXT: $r0 = COPY [[EQ]]
+    ; AIE1-LABEL: name: icmp_p0_eq
+    ; AIE1: liveins: $p0, $p1
+    ; AIE1-NEXT: {{  $}}
+    ; AIE1-NEXT: [[COPY:%[0-9]+]]:ptr = COPY $p0
+    ; AIE1-NEXT: [[COPY1:%[0-9]+]]:ptr = COPY $p1
+    ; AIE1-NEXT: [[COPY2:%[0-9]+]]:gpr = COPY [[COPY]]
+    ; AIE1-NEXT: [[COPY3:%[0-9]+]]:gpr = COPY [[COPY1]]
+    ; AIE1-NEXT: [[EQ:%[0-9]+]]:gpr = EQ [[COPY2]], [[COPY3]]
+    ; AIE1-NEXT: $r0 = COPY [[EQ]]
+    ;
+    ; AIE2-LABEL: name: icmp_p0_eq
+    ; AIE2: liveins: $p0, $p1
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; AIE2-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p1
+    ; AIE2-NEXT: [[COPY2:%[0-9]+]]:er = COPY [[COPY]]
+    ; AIE2-NEXT: [[COPY3:%[0-9]+]]:er = COPY [[COPY1]]
+    ; AIE2-NEXT: [[EQ:%[0-9]+]]:er = EQ [[COPY2]], [[COPY3]]
+    ; AIE2-NEXT: $r0 = COPY [[EQ]]
+    ;
+    ; AIE2P-LABEL: name: icmp_p0_eq
+    ; AIE2P: liveins: $p0, $p1
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p1
+    ; AIE2P-NEXT: [[COPY2:%[0-9]+]]:er = COPY [[COPY]]
+    ; AIE2P-NEXT: [[COPY3:%[0-9]+]]:er = COPY [[COPY1]]
+    ; AIE2P-NEXT: [[EQ:%[0-9]+]]:er = EQ [[COPY2]], [[COPY3]]
+    ; AIE2P-NEXT: $r0 = COPY [[EQ]]
     %0:ptrregbank(p0) = COPY $p0
     %1:ptrregbank(p0) = COPY $p1
     %2:gprregbank(p0) = COPY %0
     %3:gprregbank(p0) = COPY %1
     %4:gprregbank(s32) = G_ICMP intpred(eq), %2(p0), %3
     $r0 = COPY %4
+...
+
+---
+name: icmp_p0_eqz
+legalized: true
+regBankSelected: true
+
+body: |
+  bb.0:
+    liveins: $p0
+    ; AIE1-LABEL: name: icmp_p0_eqz
+    ; AIE1: liveins: $p0
+    ; AIE1-NEXT: {{  $}}
+    ; AIE1-NEXT: [[COPY:%[0-9]+]]:gpr = COPY $p0
+    ; AIE1-NEXT: [[MOV_U20_:%[0-9]+]]:gpr = MOV_U20 0
+    ; AIE1-NEXT: [[EQ:%[0-9]+]]:gpr = EQ [[COPY]], [[MOV_U20_]]
+    ; AIE1-NEXT: [[EQ1:%[0-9]+]]:gpr = EQ [[MOV_U20_]], [[COPY]]
+    ; AIE1-NEXT: $r0 = COPY [[EQ]]
+    ; AIE1-NEXT: $r1 = COPY [[EQ1]]
+    ;
+    ; AIE2-LABEL: name: icmp_p0_eqz
+    ; AIE2: liveins: $p0
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:er = COPY $p0
+    ; AIE2-NEXT: [[EQZ:%[0-9]+]]:er = EQZ [[COPY]]
+    ; AIE2-NEXT: [[EQZ1:%[0-9]+]]:er = EQZ [[COPY]]
+    ; AIE2-NEXT: $r0 = COPY [[EQZ]]
+    ; AIE2-NEXT: $r1 = COPY [[EQZ1]]
+    ;
+    ; AIE2P-LABEL: name: icmp_p0_eqz
+    ; AIE2P: liveins: $p0
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:er = COPY $p0
+    ; AIE2P-NEXT: [[EQZ:%[0-9]+]]:er = EQZ [[COPY]]
+    ; AIE2P-NEXT: [[EQZ1:%[0-9]+]]:er = EQZ [[COPY]]
+    ; AIE2P-NEXT: $r0 = COPY [[EQZ]]
+    ; AIE2P-NEXT: $r1 = COPY [[EQZ1]]
+    %0:gprregbank(p0) = COPY $p0
+    %1:gprregbank(p0) = G_CONSTANT i20 0
+    %2:gprregbank(s32) = G_ICMP intpred(eq), %0, %1
+    %3:gprregbank(s32) = G_ICMP intpred(eq), %1, %0
+    $r0 = COPY %2
+    $r1 = COPY %3
 ...
 
 ---
@@ -251,13 +650,35 @@ regBankSelected: true
 body: |
   bb.0:
     liveins: $p0, $p1
-    ; CHECK-LABEL: name: icmp_p0_ult
-    ; CHECK: [[COPY:%[0-9]+]]:ptr = COPY $p0
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ptr = COPY $p1
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:gpr = COPY [[COPY]]
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:gpr = COPY [[COPY1]]
-    ; CHECK-NEXT: [[LTU:%[0-9]+]]:gpr = LTU [[COPY2]], [[COPY3]]
-    ; CHECK-NEXT: $r0 = COPY [[LTU]]
+    ; AIE1-LABEL: name: icmp_p0_ult
+    ; AIE1: liveins: $p0, $p1
+    ; AIE1-NEXT: {{  $}}
+    ; AIE1-NEXT: [[COPY:%[0-9]+]]:ptr = COPY $p0
+    ; AIE1-NEXT: [[COPY1:%[0-9]+]]:ptr = COPY $p1
+    ; AIE1-NEXT: [[COPY2:%[0-9]+]]:gpr = COPY [[COPY]]
+    ; AIE1-NEXT: [[COPY3:%[0-9]+]]:gpr = COPY [[COPY1]]
+    ; AIE1-NEXT: [[LTU:%[0-9]+]]:gpr = LTU [[COPY2]], [[COPY3]]
+    ; AIE1-NEXT: $r0 = COPY [[LTU]]
+    ;
+    ; AIE2-LABEL: name: icmp_p0_ult
+    ; AIE2: liveins: $p0, $p1
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; AIE2-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p1
+    ; AIE2-NEXT: [[COPY2:%[0-9]+]]:er = COPY [[COPY]]
+    ; AIE2-NEXT: [[COPY3:%[0-9]+]]:er = COPY [[COPY1]]
+    ; AIE2-NEXT: [[LTU:%[0-9]+]]:er = LTU [[COPY2]], [[COPY3]]
+    ; AIE2-NEXT: $r0 = COPY [[LTU]]
+    ;
+    ; AIE2P-LABEL: name: icmp_p0_ult
+    ; AIE2P: liveins: $p0, $p1
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p1
+    ; AIE2P-NEXT: [[COPY2:%[0-9]+]]:er = COPY [[COPY]]
+    ; AIE2P-NEXT: [[COPY3:%[0-9]+]]:er = COPY [[COPY1]]
+    ; AIE2P-NEXT: [[LTU:%[0-9]+]]:er = LTU [[COPY2]], [[COPY3]]
+    ; AIE2P-NEXT: $r0 = COPY [[LTU]]
     %0:ptrregbank(p0) = COPY $p0
     %1:ptrregbank(p0) = COPY $p1
     %2:gprregbank(p0) = COPY %0
@@ -274,13 +695,35 @@ regBankSelected: true
 body: |
   bb.0:
     liveins: $p0, $p1
-    ; CHECK-LABEL: name: icmp_p0_ule
-    ; CHECK: [[COPY:%[0-9]+]]:ptr = COPY $p0
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ptr = COPY $p1
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:gpr = COPY [[COPY]]
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:gpr = COPY [[COPY1]]
-    ; CHECK-NEXT: [[GEU:%[0-9]+]]:gpr = GEU [[COPY3]], [[COPY2]]
-    ; CHECK-NEXT: $r0 = COPY [[GEU]]
+    ; AIE1-LABEL: name: icmp_p0_ule
+    ; AIE1: liveins: $p0, $p1
+    ; AIE1-NEXT: {{  $}}
+    ; AIE1-NEXT: [[COPY:%[0-9]+]]:ptr = COPY $p0
+    ; AIE1-NEXT: [[COPY1:%[0-9]+]]:ptr = COPY $p1
+    ; AIE1-NEXT: [[COPY2:%[0-9]+]]:gpr = COPY [[COPY]]
+    ; AIE1-NEXT: [[COPY3:%[0-9]+]]:gpr = COPY [[COPY1]]
+    ; AIE1-NEXT: [[GEU:%[0-9]+]]:gpr = GEU [[COPY3]], [[COPY2]]
+    ; AIE1-NEXT: $r0 = COPY [[GEU]]
+    ;
+    ; AIE2-LABEL: name: icmp_p0_ule
+    ; AIE2: liveins: $p0, $p1
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; AIE2-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p1
+    ; AIE2-NEXT: [[COPY2:%[0-9]+]]:er = COPY [[COPY]]
+    ; AIE2-NEXT: [[COPY3:%[0-9]+]]:er = COPY [[COPY1]]
+    ; AIE2-NEXT: [[GEU:%[0-9]+]]:er = GEU [[COPY3]], [[COPY2]]
+    ; AIE2-NEXT: $r0 = COPY [[GEU]]
+    ;
+    ; AIE2P-LABEL: name: icmp_p0_ule
+    ; AIE2P: liveins: $p0, $p1
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p1
+    ; AIE2P-NEXT: [[COPY2:%[0-9]+]]:er = COPY [[COPY]]
+    ; AIE2P-NEXT: [[COPY3:%[0-9]+]]:er = COPY [[COPY1]]
+    ; AIE2P-NEXT: [[GEU:%[0-9]+]]:er = GEU [[COPY3]], [[COPY2]]
+    ; AIE2P-NEXT: $r0 = COPY [[GEU]]
     %0:ptrregbank(p0) = COPY $p0
     %1:ptrregbank(p0) = COPY $p1
     %2:gprregbank(p0) = COPY %0
@@ -297,13 +740,35 @@ regBankSelected: true
 body: |
   bb.0:
     liveins: $p0, $p1
-    ; CHECK-LABEL: name: icmp_p0_ugt
-    ; CHECK: [[COPY:%[0-9]+]]:ptr = COPY $p0
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ptr = COPY $p1
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:gpr = COPY [[COPY]]
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:gpr = COPY [[COPY1]]
-    ; CHECK-NEXT: [[LTU:%[0-9]+]]:gpr = LTU [[COPY3]], [[COPY2]]
-    ; CHECK-NEXT: $r0 = COPY [[LTU]]
+    ; AIE1-LABEL: name: icmp_p0_ugt
+    ; AIE1: liveins: $p0, $p1
+    ; AIE1-NEXT: {{  $}}
+    ; AIE1-NEXT: [[COPY:%[0-9]+]]:ptr = COPY $p0
+    ; AIE1-NEXT: [[COPY1:%[0-9]+]]:ptr = COPY $p1
+    ; AIE1-NEXT: [[COPY2:%[0-9]+]]:gpr = COPY [[COPY]]
+    ; AIE1-NEXT: [[COPY3:%[0-9]+]]:gpr = COPY [[COPY1]]
+    ; AIE1-NEXT: [[LTU:%[0-9]+]]:gpr = LTU [[COPY3]], [[COPY2]]
+    ; AIE1-NEXT: $r0 = COPY [[LTU]]
+    ;
+    ; AIE2-LABEL: name: icmp_p0_ugt
+    ; AIE2: liveins: $p0, $p1
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; AIE2-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p1
+    ; AIE2-NEXT: [[COPY2:%[0-9]+]]:er = COPY [[COPY]]
+    ; AIE2-NEXT: [[COPY3:%[0-9]+]]:er = COPY [[COPY1]]
+    ; AIE2-NEXT: [[LTU:%[0-9]+]]:er = LTU [[COPY3]], [[COPY2]]
+    ; AIE2-NEXT: $r0 = COPY [[LTU]]
+    ;
+    ; AIE2P-LABEL: name: icmp_p0_ugt
+    ; AIE2P: liveins: $p0, $p1
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p1
+    ; AIE2P-NEXT: [[COPY2:%[0-9]+]]:er = COPY [[COPY]]
+    ; AIE2P-NEXT: [[COPY3:%[0-9]+]]:er = COPY [[COPY1]]
+    ; AIE2P-NEXT: [[LTU:%[0-9]+]]:er = LTU [[COPY3]], [[COPY2]]
+    ; AIE2P-NEXT: $r0 = COPY [[LTU]]
     %0:ptrregbank(p0) = COPY $p0
     %1:ptrregbank(p0) = COPY $p1
     %2:gprregbank(p0) = COPY %0
@@ -320,13 +785,35 @@ regBankSelected: true
 body: |
   bb.0:
     liveins: $p0, $p1
-    ; CHECK-LABEL: name: icmp_p0_uge
-    ; CHECK: [[COPY:%[0-9]+]]:ptr = COPY $p0
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:ptr = COPY $p1
-    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:gpr = COPY [[COPY]]
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:gpr = COPY [[COPY1]]
-    ; CHECK-NEXT: [[GEU:%[0-9]+]]:gpr = GEU [[COPY2]], [[COPY3]]
-    ; CHECK-NEXT: $r0 = COPY [[GEU]]
+    ; AIE1-LABEL: name: icmp_p0_uge
+    ; AIE1: liveins: $p0, $p1
+    ; AIE1-NEXT: {{  $}}
+    ; AIE1-NEXT: [[COPY:%[0-9]+]]:ptr = COPY $p0
+    ; AIE1-NEXT: [[COPY1:%[0-9]+]]:ptr = COPY $p1
+    ; AIE1-NEXT: [[COPY2:%[0-9]+]]:gpr = COPY [[COPY]]
+    ; AIE1-NEXT: [[COPY3:%[0-9]+]]:gpr = COPY [[COPY1]]
+    ; AIE1-NEXT: [[GEU:%[0-9]+]]:gpr = GEU [[COPY2]], [[COPY3]]
+    ; AIE1-NEXT: $r0 = COPY [[GEU]]
+    ;
+    ; AIE2-LABEL: name: icmp_p0_uge
+    ; AIE2: liveins: $p0, $p1
+    ; AIE2-NEXT: {{  $}}
+    ; AIE2-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; AIE2-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p1
+    ; AIE2-NEXT: [[COPY2:%[0-9]+]]:er = COPY [[COPY]]
+    ; AIE2-NEXT: [[COPY3:%[0-9]+]]:er = COPY [[COPY1]]
+    ; AIE2-NEXT: [[GEU:%[0-9]+]]:er = GEU [[COPY2]], [[COPY3]]
+    ; AIE2-NEXT: $r0 = COPY [[GEU]]
+    ;
+    ; AIE2P-LABEL: name: icmp_p0_uge
+    ; AIE2P: liveins: $p0, $p1
+    ; AIE2P-NEXT: {{  $}}
+    ; AIE2P-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
+    ; AIE2P-NEXT: [[COPY1:%[0-9]+]]:ep = COPY $p1
+    ; AIE2P-NEXT: [[COPY2:%[0-9]+]]:er = COPY [[COPY]]
+    ; AIE2P-NEXT: [[COPY3:%[0-9]+]]:er = COPY [[COPY1]]
+    ; AIE2P-NEXT: [[GEU:%[0-9]+]]:er = GEU [[COPY2]], [[COPY3]]
+    ; AIE2P-NEXT: $r0 = COPY [[GEU]]
     %0:ptrregbank(p0) = COPY $p0
     %1:ptrregbank(p0) = COPY $p1
     %2:gprregbank(p0) = COPY %0

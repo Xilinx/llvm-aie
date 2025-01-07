@@ -1,0 +1,100 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; VBNEG_LTZ_s16
+    $x5, $r16 = VBNEG_LTZ_s16 $x11
+    $x10, $r16 = VBNEG_LTZ_s16 $x7
+    $x2, $r16 = VBNEG_LTZ_s16 $x6
+    $x6, $r16 = VBNEG_LTZ_s16 $x5
+    $x4, $r16 = VBNEG_LTZ_s16 $x10
+    $x1, $r16 = VBNEG_LTZ_s16 $x3
+    $x11, $r16 = VBNEG_LTZ_s16 $x0
+    $x0, $r16 = VBNEG_LTZ_s16 $x8
+    $x9, $r16 = VBNEG_LTZ_s16 $x9
+    $x8, $r16 = VBNEG_LTZ_s16 $x4
+    $x7, $r16 = VBNEG_LTZ_s16 $x2
+    $x3, $r16 = VBNEG_LTZ_s16 $x1
+
+    ; VBNEG_LTZ_s32
+    $x2, $r16 = VBNEG_LTZ_s32 $x0
+    $x1, $r16 = VBNEG_LTZ_s32 $x11
+    $x10, $r16 = VBNEG_LTZ_s32 $x7
+    $x6, $r16 = VBNEG_LTZ_s32 $x1
+    $x5, $r16 = VBNEG_LTZ_s32 $x10
+    $x7, $r16 = VBNEG_LTZ_s32 $x8
+    $x4, $r16 = VBNEG_LTZ_s32 $x4
+    $x3, $r16 = VBNEG_LTZ_s32 $x9
+    $x8, $r16 = VBNEG_LTZ_s32 $x5
+    $x0, $r16 = VBNEG_LTZ_s32 $x2
+    $x9, $r16 = VBNEG_LTZ_s32 $x6
+    $x11, $r16 = VBNEG_LTZ_s32 $x3
+
+    ; VBNEG_LTZ_s8
+    $x3, $l8 = VBNEG_LTZ_s8 $x6
+    $x10, $l8 = VBNEG_LTZ_s8 $x4
+    $x8, $l8 = VBNEG_LTZ_s8 $x0
+    $x4, $l8 = VBNEG_LTZ_s8 $x8
+    $x9, $l8 = VBNEG_LTZ_s8 $x10
+    $x0, $l8 = VBNEG_LTZ_s8 $x11
+    $x1, $l8 = VBNEG_LTZ_s8 $x2
+    $x6, $l8 = VBNEG_LTZ_s8 $x5
+    $x11, $l8 = VBNEG_LTZ_s8 $x7
+    $x2, $l8 = VBNEG_LTZ_s8 $x1
+    $x5, $l8 = VBNEG_LTZ_s8 $x3
+    $x7, $l8 = VBNEG_LTZ_s8 $x9
+...
+
+# CHECK: 0: f8 0a da 1a vbneg_ltz.s16 x5, r16, x11
+# CHECK: 4: f8 0a 3a 1d vbneg_ltz.s16 x10, r16, x7
+# CHECK: 8: f8 0a 32 19 vbneg_ltz.s16 x2, r16, x6
+# CHECK: c: f8 0a 2a 1b vbneg_ltz.s16 x6, r16, x5
+# CHECK: 10: f8 0a 52 1a vbneg_ltz.s16 x4, r16, x10
+# CHECK: 14: f8 0a 9a 18 vbneg_ltz.s16 x1, r16, x3
+# CHECK: 18: f8 0a 82 1d vbneg_ltz.s16 x11, r16, x0
+# CHECK: 1c: f8 0a 42 18 vbneg_ltz.s16 x0, r16, x8
+# CHECK: 20: f8 0a ca 1c vbneg_ltz.s16 x9, r16, x9
+# CHECK: 24: f8 0a 22 1c vbneg_ltz.s16 x8, r16, x4
+# CHECK: 28: f8 0a 92 1b vbneg_ltz.s16 x7, r16, x2
+# CHECK: 2c: f8 0a 8a 19 vbneg_ltz.s16 x3, r16, x1
+# CHECK: 30: f8 0a 00 19 vbneg_ltz.s32 x2, r16, x0
+# CHECK: 34: f8 0a d8 18 vbneg_ltz.s32 x1, r16, x11
+# CHECK: 38: f8 0a 38 1d vbneg_ltz.s32 x10, r16, x7
+# CHECK: 3c: f8 0a 08 1b vbneg_ltz.s32 x6, r16, x1
+# CHECK: 40: f8 0a d0 1a vbneg_ltz.s32 x5, r16, x10
+# CHECK: 44: f8 0a c0 1b vbneg_ltz.s32 x7, r16, x8
+# CHECK: 48: f8 0a 20 1a vbneg_ltz.s32 x4, r16, x4
+# CHECK: 4c: f8 0a c8 19 vbneg_ltz.s32 x3, r16, x9
+# CHECK: 50: f8 0a 28 1c vbneg_ltz.s32 x8, r16, x5
+# CHECK: 54: f8 0a 10 18 vbneg_ltz.s32 x0, r16, x2
+# CHECK: 58: f8 0a b0 1c vbneg_ltz.s32 x9, r16, x6
+# CHECK: 5c: f8 0a 98 1d vbneg_ltz.s32 x11, r16, x3
+# CHECK: 60: f8 0a b4 19 vbneg_ltz.s8 x3, r17:r16, x6
+# CHECK: 64: f8 0a 24 1d vbneg_ltz.s8 x10, r17:r16, x4
+# CHECK: 68: f8 0a 04 1c vbneg_ltz.s8 x8, r17:r16, x0
+# CHECK: 6c: f8 0a 44 1a vbneg_ltz.s8 x4, r17:r16, x8
+# CHECK: 70: f8 0a d4 1c vbneg_ltz.s8 x9, r17:r16, x10
+# CHECK: 74: f8 0a 5c 18 vbneg_ltz.s8 x0, r17:r16, x11
+# CHECK: 78: f8 0a 94 18 vbneg_ltz.s8 x1, r17:r16, x2
+# CHECK: 7c: f8 0a 2c 1b vbneg_ltz.s8 x6, r17:r16, x5
+# CHECK: 80: f8 0a bc 1d vbneg_ltz.s8 x11, r17:r16, x7
+# CHECK: 84: f8 0a 0c 19 vbneg_ltz.s8 x2, r17:r16, x1
+# CHECK: 88: f8 0a 9c 1a vbneg_ltz.s8 x5, r17:r16, x3
+# CHECK: 8c: f8 0a cc 1b vbneg_ltz.s8 x7, r17:r16, x9

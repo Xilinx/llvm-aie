@@ -37,7 +37,7 @@ using namespace llvm;
 #define DEBUG_TYPE "aie2-reg-info"
 
 // TODO: More flexible syntax, e.g. --aie-reserved-regs=er:10
-static llvm::cl::opt<unsigned>
+llvm::cl::opt<unsigned>
     ReservedGPRs("aie-reserved-gprs", cl::Hidden, cl::init(0),
                  cl::desc("Number of artificially reserved GPRs"));
 static llvm::cl::opt<unsigned>
@@ -432,6 +432,40 @@ AIE2RegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC,
 const TargetRegisterClass *
 AIE2RegisterInfo::getGPRRegClass(const MachineFunction &MF) const {
   return &AIE2::eRRegClass;
+}
+
+unsigned AIE2RegisterInfo::getVectorRegBankID() const {
+  return AIE2::VRegBankID;
+}
+
+unsigned AIE2RegisterInfo::getGPRRegBankID() const {
+  return AIE2::GPRRegBankID;
+}
+
+void AIE2RegisterInfo::getTargetSubRegs(std::vector<unsigned> &Subregs,
+                                        unsigned Size,
+                                        const RegisterBank &RB) const {
+  bool IsVec =
+      (RB.getID() == AIE2::VRegBankID || RB.getID() == AIE2::AccRegBankID);
+  if (!IsVec) {
+    // TODO: support other subreg cases
+    assert(Size == 32 && "Unsupported subreg type for scalar!");
+    Subregs.push_back(AIE2::sub_l_even);
+    Subregs.push_back(AIE2::sub_l_odd);
+  } else {
+    switch (Size) {
+    case 256:
+      Subregs.push_back(AIE2::sub_256_lo);
+      Subregs.push_back(AIE2::sub_256_hi);
+      break;
+    case 512:
+      Subregs.push_back(AIE2::sub_512_lo);
+      Subregs.push_back(AIE2::sub_512_hi);
+      break;
+    default:
+      llvm_unreachable("Unsupported subreg type!");
+    }
+  }
 }
 
 const std::set<int> &AIE2RegisterInfo::getSubRegSplit(int RegClassId) const {

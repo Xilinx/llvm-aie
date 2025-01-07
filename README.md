@@ -2,10 +2,28 @@
 
 This repository extends the LLVM framework to generate code for use with AMD/Xilinx AI Engine processors.
 
-| Architecture | clang/LLVM target | Low-level Intrinsic API | High-Level Intrinsic API (AIE_API) | Architecture Manual |
-| --- | --- | --- | --- | --- |
-| XDNA (Phoenix, Hawk Point) | 	--target=aie2-none-unknown-elf	| [Link](https://www.xilinx.com/htmldocs/xilinx2024_1/aiengine_ml_intrinsics/intrinsics/)	| [Link](https://www.xilinx.com/htmldocs/xilinx2024_1/aiengine_api/aie_api/doc/index.html) | [Link](https://docs.amd.com/r/en-US/am020-versal-aie-ml)
-| XDNA2 (Strix Point)        |	coming soon	                    | coming soon	| coming soon | coming soon
+<table>
+    <thead>
+        <tr>
+            <th>Architecture</th>
+            <th>clang/LLVM target</th>
+            <th>High-Level Intrinsic API (AIE_API)</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>XDNA (Phoenix, Hawk Point)</td>
+            <td>--target=aie2-none-unknown-elf</td>
+            <td rowspan=2>
+                <a href="https://www.xilinx.com/htmldocs/xilinx2024_2/aiengine_api/aie_api/doc/index.html">Link</a>
+            </td>
+        </tr>
+        <tr>
+            <td>XDNA2 (Strix Point)</td>
+            <td>--target=aie2p-none-unknown-elf</td>
+        </tr>
+    </tbody>
+</table>
 
 ## Architecture Overview
 

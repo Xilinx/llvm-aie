@@ -16,29 +16,9 @@
 #include "AIE2RegisterBankInfo.h"
 #include "AIE2RegisterInfo.h"
 #include "AIE2TargetMachine.h"
-#include "AIECombinerHelper.h"
-#include "AIEMachineFunctionInfo.h"
+#include "AIEBaseInstructionSelector.h"
 #include "InstPrinter/AIE2InstPrinter.h"
 #include "MCTargetDesc/AIE2MCTargetDesc.h"
-#include "llvm/ADT/APInt.h"
-#include "llvm/CodeGen/GlobalISel/GIMatchTableExecutorImpl.h"
-#include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
-#include "llvm/CodeGen/GlobalISel/InstructionSelector.h"
-#include "llvm/CodeGen/GlobalISel/MIPatternMatch.h"
-#include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
-#include "llvm/CodeGen/GlobalISel/Utils.h"
-#include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/MachineInstrBuilder.h"
-#include "llvm/CodeGen/MachineJumpTableInfo.h"
-#include "llvm/CodeGen/MachineMemOperand.h"
-#include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/CodeGen/Register.h"
-#include "llvm/CodeGen/TargetLowering.h"
-#include "llvm/CodeGen/TargetOpcodes.h"
-#include "llvm/CodeGen/TargetRegisterInfo.h"
-#include "llvm/IR/Intrinsics.h"
-#include "llvm/IR/IntrinsicsAIE.h"
 #include "llvm/IR/IntrinsicsAIE2.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -57,88 +37,26 @@ namespace {
 #include "AIE2GenGlobalISel.inc"
 #undef GET_GLOBALISEL_PREDICATE_BITSET
 
-/// Hold the information needed to instruction select memory operations.
-struct AddressingModeInfo {
-  MachineInstr &MemI;
-  MachineOperand &SrcDstOp;
-  MachineOperand &PtrOp;
-  std::optional<Register> OffsetReg;
-  std::optional<APInt> ImmediateOffset;
-};
-
-/// Hold the information needed to select instructions that deal with multiple
-/// addressing modes and might need to be split
-struct LoadStoreOpcodes {
-  // The main Opcode with the correct addressing mode
-  unsigned ISelOpcode;
-  // Indicates whether the provided immediate offset fits in the immedate range
-  // of the selected instruction
-  bool FitsImmediateRange;
-  // Opcode with an immediate indexed addressing mode to split larger loads and
-  // stores into smaller ones
-  // E.g. Instruction selection for $x0, $p0 = G_AIE_POSTINC_LOAD $p0, #128:
-  // $wh0 = VLDA_dmw_lda_w_ag_idx_imm $p0, #32
-  // $wl0, $p0 = VLDA_dmw_lda_w_ag_pstm_nrm_imm $p0, #128
-  std::optional<unsigned> OffsetOpcode;
-};
-
-/// Create a memory operand representing Tile Memory
-/// \param I Instruction to build it for
-/// \param Mode Store or Load
-/// \return The machine memory operand
-MachineMemOperand *getTileMemOperand(MachineInstr &I,
-                                     MachineMemOperand::Flags Mode) {
-  MachineFunction *MF = I.getMF();
-  const auto *MFI = MF->getInfo<AIEMachineFunctionInfo>();
-  MachinePointerInfo PtrInfo = MachinePointerInfo(MFI->getTileMemory());
-  return MF->getMachineMemOperand(PtrInfo, Mode, 4, Align(4));
-}
-
-class AIE2InstructionSelector : public InstructionSelector {
+class AIE2InstructionSelector : public AIEBaseInstructionSelector {
 public:
   AIE2InstructionSelector(const AIE2TargetMachine &TM, const AIE2Subtarget &STI,
                           const AIE2RegisterBankInfo &RBI);
-  /// Split the memory operand from I by the factor defined in SplitFactor, add
-  /// the Offset and add the new memory operands to Higher and Lower.
-  void addSplitMemOperands(MachineInstr &I, MachineInstrBuilder &Higher,
-                           MachineInstrBuilder &Lower, unsigned Offset,
-                           unsigned SplitFactor);
-  /// Given the AddressingModeInfo, FitsImmediateRange and whether the
-  /// instruction supports frame index rendering add the correct operands to MIB
-  void addAddressingMode(MachineInstrBuilder &MIB, AddressingModeInfo &AMI,
-                         bool FitsImmediateRange, bool RenderFrameIndex,
-                         MachineRegisterInfo &MRI);
 
   Register createDRegSequence(Register ModifierReg, Register IncrReg,
                               Register SizeReg, Register CountReg,
-                              MachineRegisterInfo &MRI);
+                              MachineRegisterInfo &MRI) override;
   Register createDSRegSequence(Register ModifierReg, Register Incr1Reg,
                                Register Incr2Reg, Register Size1Reg,
                                Register Count1Reg, Register Size2Reg,
-                               Register Count2Reg, MachineRegisterInfo &MRI);
+                               Register Count2Reg,
+                               MachineRegisterInfo &MRI) override;
   Register createSparseRegSequence(Register Vec, Register Mask,
                                    MachineRegisterInfo &MRI);
   void insertPtrAddForOffset(MachineRegisterInfo &MRI, MachineInstr &MemI);
-  bool selectCopy(MachineInstr &I, MachineRegisterInfo &MRI);
-  /// set \a CRReg based on \a ValueReg before \a I and set \a CRReg based on \a
-  /// DefaultCRVal after \a I.
-  void setUnsetCtrlRegister(MachineInstr &I, MachineRegisterInfo &MRI,
-                            Register CRReg, Register ValueReg,
-                            unsigned DefaultCRVal = 0);
-  void setUnsetCtrlRegister(MachineInstr &I, MachineInstr &EndI,
-                            MachineRegisterInfo &MRI, Register CRReg,
-                            Register ValueReg, unsigned DefaultCRVal = 0);
   void setCtrlRegister(MachineInstr &I, MachineRegisterInfo &MRI,
                        Register CRReg, Register ValueReg);
-  /// \return AIE2 OpCode based on \a IntrinsicID
-  unsigned getOpCode(Intrinsic::ID IntrinsicID);
-
-  /// Select into a REG_SEQUENCE instruction of two 32-bit R registers to
-  /// one 64-bit L register.
-  bool selectLRegSequence(MachineInstr &I, MachineRegisterInfo &MRI);
 
   bool select(MachineInstr &I) override;
-  bool selectAddrInsn(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectCascadeStreamInsn(MachineInstr &I, MachineRegisterInfo &MRI,
                                bool isWrite);
   bool selectG_AIE_ADD_VECTOR_ELT_HI(MachineInstr &I, MachineRegisterInfo &MRI);
@@ -147,28 +65,20 @@ public:
   bool selectG_JUMP_TABLE(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_CONSTANT(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_GLOBAL_VALUE(MachineInstr &I, MachineRegisterInfo &MRI);
-  bool selectG_IMPLICIT_DEF(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_LOAD(MachineInstr &I, MachineRegisterInfo &MRI);
-  bool selectG_PHI(MachineInstr &I, MachineRegisterInfo &MRI);
-  bool selectG_PTR_ADD(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_SEXT_INREG(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_STORE(MachineInstr &I, MachineRegisterInfo &MRI);
-  bool selectG_UNMERGE_VALUES(MachineInstr &MI, MachineRegisterInfo &MRI);
   bool selectGetControlRegister(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectGetCoreID(MachineInstr &MI, MachineRegisterInfo &MRI);
   bool selectReadTM(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectSetControlRegister(MachineInstr &I, MachineRegisterInfo &MRI);
-  bool selectVMAXDIFF_LT(MachineInstr &I, MachineRegisterInfo &MRI);
-  bool selectVABS_GTZ(MachineInstr &I, MachineRegisterInfo &MRI);
-  bool selectVSUB_LTGE(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVEXTRACT(MachineInstr &I, MachineRegisterInfo &MRI);
-  bool selectVCompare(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVSRS(MachineInstr &I, MachineRegisterInfo &MRI);
-  bool selectVSUB_MIN_MAX(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVUNPACK(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVPACK(MachineInstr &I, MachineRegisterInfo &MRI);
   std::optional<AddressingModeInfo>
-  getOrDefineAddressingRegister(MachineInstr &MemI, MachineRegisterInfo &MRI);
+  getOrDefineAddressingRegister(MachineInstr &MemI,
+                                MachineRegisterInfo &MRI) final;
   bool selectG_AIE_LOAD_UNPACK(MachineInstr &StoreI, MachineRegisterInfo &MRI);
   bool selectG_AIE_LOAD_UPS(MachineInstr &StoreI, MachineRegisterInfo &MRI);
   bool select512BitG_AIE_LOAD_UPS(MachineInstr &UPSI, LoadStoreOpcodes &LSO,
@@ -176,7 +86,6 @@ public:
                                   Register ShftReg, Register SignReg,
                                   bool ConstantSign, MachineRegisterInfo &MRI);
   bool selectVUPS(MachineInstr &I, MachineRegisterInfo &MRI);
-  bool selectVCONV(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectWriteTM(MachineInstr &I, MachineRegisterInfo &MRI);
   LoadStoreOpcodes getLoadStoreOpcode(const MachineInstr &I,
                                       const MachineRegisterInfo &MRI,
@@ -192,7 +101,6 @@ public:
                                    Register ShftReg, Register SignReg,
                                    bool ConstantSign, MachineRegisterInfo &MRI);
   bool selectG_AIE_STORE_CONV(MachineInstr &StoreI, MachineRegisterInfo &MRI);
-  bool selectG_AIE_LOAD_CONV(MachineInstr &StoreI, MachineRegisterInfo &MRI);
   bool selectG_AIE_STORE_PACK(MachineInstr &StoreI, MachineRegisterInfo &MRI);
   bool selectStartLoop(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectG_AIE_EXTRACT_VECTOR_ELT(MachineInstr &I,
@@ -207,9 +115,6 @@ public:
                      MachineOperand &SrcReg, MachineRegisterInfo &MRI);
   bool selectExtractI128(MachineInstr &I, Register DstReg, Register SrcReg,
                          MachineRegisterInfo &MRI);
-  bool selectGetSS(MachineInstr &I, MachineRegisterInfo &MRI);
-  bool selectPutMSB(MachineInstr &I, MachineRegisterInfo &MRI);
-  bool selectPutMSNB(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVLDSparseOP_Pseudo(MachineInstr &I, MachineRegisterInfo &MRI);
   bool selectVLDSparseINIT_Pseudo(MachineInstr &I, MachineRegisterInfo &MRI);
   // Select a packet header stream write instruction from the corresponding
@@ -231,19 +136,24 @@ public:
   }
 
 private:
-  bool selectImpl(MachineInstr &I, CodeGenCoverage &CoverageInfo) const;
-  void makeDeadMI(MachineInstr &MI, MachineRegisterInfo &MRI);
-  void renderFrameIndex(MachineInstrBuilder &MIB, const MachineInstr &MI,
-                        int OpIdx) const;
-  void renderNegateImm(MachineInstrBuilder &MIB, const MachineInstr &MI,
-                       int OpIdx) const;
+  bool selectImpl(MachineInstr &I,
+                  CodeGenCoverage &CoverageInfo) const override;
+  std::optional<LoadStoreOpcodes>
+  getCombinedOpcodeCONV(const MachineInstr &MemOp, const MachineInstr &CombOp,
+                        std::optional<APInt> Immediate) final;
+  std::optional<LoadStoreOpcodes>
+  getCombinedOpcodeCONVLoad(const MachineInstr &MemOp,
+                            const MachineInstr &CombOp,
+                            const std::optional<APInt> Immediate) final;
+  std::optional<LoadStoreOpcodes>
+  getCombinedOpcodeSRSUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
+                          std::optional<APInt> Immediate, bool IsSigned);
+  bool canCombineSRSUPS(MachineInstr &MemOp, MachineInstr &CombOp);
 
   // const AIE2TargetMachine &TM;
   const AIE2InstrInfo &TII;
   const AIE2RegisterInfo &TRI;
   const AIE2RegisterBankInfo &RBI;
-
-  MachineIRBuilder MIB;
 
 #define GET_GLOBALISEL_PREDICATES_DECL
 #include "AIE2GenGlobalISel.inc"
@@ -263,8 +173,9 @@ private:
 AIE2InstructionSelector::AIE2InstructionSelector(
     const AIE2TargetMachine &TM, const AIE2Subtarget &STI,
     const AIE2RegisterBankInfo &RBI)
-    : InstructionSelector(), /*TM(TM),*/ TII(*STI.getInstrInfo()),
-      TRI(*STI.getRegisterInfo()), RBI(RBI),
+    : AIEBaseInstructionSelector(STI, RBI),
+      /*TM(TM),*/ TII(*STI.getInstrInfo()), TRI(*STI.getRegisterInfo()),
+      RBI(RBI),
 
 #define GET_GLOBALISEL_PREDICATES_INIT
 #include "AIE2GenGlobalISel.inc"
@@ -273,225 +184,6 @@ AIE2InstructionSelector::AIE2InstructionSelector(
 #include "AIE2GenGlobalISel.inc"
 #undef GET_GLOBALISEL_TEMPORARIES_INIT
 {
-}
-
-void AIE2InstructionSelector::renderFrameIndex(MachineInstrBuilder &MIB,
-                                               const MachineInstr &MI,
-                                               int OpIdx) const {
-  MIB.addFrameIndex((MI.getOperand(1).getIndex()));
-}
-
-void AIE2InstructionSelector::renderNegateImm(MachineInstrBuilder &MIB,
-                                              const MachineInstr &MI,
-                                              int OpIdx) const {
-  assert(MI.getOpcode() == TargetOpcode::G_CONSTANT && OpIdx == -1 &&
-         "Expected G_CONSTANT");
-  MIB.addImm(-MI.getOperand(1).getCImm()->getSExtValue());
-}
-
-void AIE2InstructionSelector::addSplitMemOperands(MachineInstr &I,
-                                                  MachineInstrBuilder &Higher,
-                                                  MachineInstrBuilder &Lower,
-                                                  unsigned Offset,
-                                                  unsigned SplitFactor) {
-  const MachineMemOperand *MMO =
-      I.memoperands().size() == 1 ? *(I.memoperands().begin()) : nullptr;
-  if (MMO) {
-    llvm::LLT OrgType = MMO->getType();
-    unsigned SplitElemCount = OrgType.getNumElements() / SplitFactor;
-    unsigned ScalarSize = OrgType.getScalarType().getScalarSizeInBits();
-    LLT PartType = LLT::fixed_vector(SplitElemCount, ScalarSize);
-    Higher.addMemOperand(MF->getMachineMemOperand(
-        MMO, Offset + ((SplitElemCount * ScalarSize) / 8), PartType));
-    Lower.addMemOperand(MF->getMachineMemOperand(MMO, Offset + 0, PartType));
-  }
-}
-
-bool AIE2InstructionSelector::selectCopy(MachineInstr &I,
-                                         MachineRegisterInfo &MRI) {
-
-  Register DstReg = I.getOperand(0).getReg();
-  if (DstReg.isPhysical())
-    return true;
-
-  const TargetRegisterClass *RC = nullptr;
-  const RegClassOrRegBank &RCB = MRI.getRegClassOrRegBank(DstReg);
-  if (const RegisterBank *RB = RCB.dyn_cast<const RegisterBank *>())
-    RC = &TRI.getMinClassForRegBank(*RB, MRI.getType(DstReg));
-  if (auto *TRC = RCB.dyn_cast<const TargetRegisterClass *>())
-    RC = TRC;
-  assert(RC != nullptr && "RC cannot be null");
-
-  // No need to constrain SrcReg. It will get constrained when
-  // we hit another of its uses or its defs.
-  // Copies do not have constraints.
-  if (!RBI.constrainGenericRegister(DstReg, *RC, MRI)) {
-    LLVM_DEBUG(dbgs() << "Failed to constrain " << TII.getName(I.getOpcode())
-                      << " operand\n");
-    return false;
-  }
-
-  return true;
-}
-
-void AIE2InstructionSelector::setUnsetCtrlRegister(
-    MachineInstr &I, MachineInstr &EndI, MachineRegisterInfo &MRI,
-    Register CRReg, Register ValueReg, unsigned DefaultCRVal) {
-  // Set the crReg based on ValueReg parameter before I
-  MIB.setInstr(I);
-  if (auto Val = getIConstantVRegValWithLookThrough(ValueReg, MRI)) {
-    unsigned ConstCRVal = Val->Value.getZExtValue();
-    if (ConstCRVal == DefaultCRVal)
-      return;
-    MIB.buildInstr(AIE2::MOV_scalar_imm10_pseudo, {CRReg}, {})
-        .addImm(ConstCRVal);
-  } else {
-    auto CopyInstr =
-        MIB.buildInstr(TargetOpcode::COPY, {CRReg}, {}).addReg(ValueReg);
-    if (!selectCopy(*CopyInstr, MRI)) {
-      dbgs() << "Failed to set and unset control register for: " << I << "\n";
-      llvm_unreachable("Failed to set and unset control register");
-    }
-  }
-  // Set the crReg based on DefaultCRVal after I
-  MIB.setInstr(*EndI.getNextNode());
-  MIB.buildInstr(AIE2::MOV_scalar_imm10_pseudo, {CRReg}, {})
-      .addImm(DefaultCRVal);
-}
-
-void AIE2InstructionSelector::setUnsetCtrlRegister(MachineInstr &I,
-                                                   MachineRegisterInfo &MRI,
-                                                   Register CRReg,
-                                                   Register ValueReg,
-                                                   unsigned DefaultCRVal) {
-  setUnsetCtrlRegister(I, I, MRI, CRReg, ValueReg, DefaultCRVal);
-}
-
-unsigned AIE2InstructionSelector::getOpCode(Intrinsic::ID IntrinsicID) {
-  switch (IntrinsicID) {
-  /* To derive instruction from UPS intrinsic follow
-   the e.g. Intrinsic : aie2_acc32_v16_I256_ups
-    1. I256_v16 : Using following two things
-    -> a. Element size (256/16) = 16 = D16
-    -> b. Move src type { I256 = _w2*, I512 = _x2* }
-    2. acc32 / acc64 : maps to S32 or S64
-   Instruction : VUPS_S32_D16_mv_ups_w2b
-  */
-  case Intrinsic::aie2_acc32_v16_I256_ups:
-    return AIE2::VUPS_S32_D16_mv_ups_w2b;
-  case Intrinsic::aie2_acc32_v32_I256_ups:
-    return AIE2::VUPS_S32_D8_mv_ups_w2c;
-  case Intrinsic::aie2_acc32_v32_I512_ups:
-    return AIE2::VUPS_S32_D16_mv_ups_x2c;
-  case Intrinsic::aie2_acc64_v16_I256_ups:
-    return AIE2::VUPS_S64_D16_mv_ups_w2c;
-  case Intrinsic::aie2_acc64_v16_I512_ups:
-    return AIE2::VUPS_S64_D32_mv_ups_x2c;
-  case Intrinsic::aie2_acc64_v8_I256_ups:
-    return AIE2::VUPS_S64_D32_mv_ups_w2b;
-  /* To derive instruction from SRS intrinsic follow
-   the e.g. Intrinsic : aie2_I256_v16_acc32_srs
-    1. I256_v16 : Using following two things
-    -> a. Element size (256/16) = 16 = D16
-    -> b. Move Instr type { I256 = mv_w , I512 = mv_x }
-    2. acc32 / acc64 : maps to S32 or S64
-   Instruction : VSRS_D16_S32_mv_w_srs
-  */
-  case Intrinsic::aie2_I256_v16_acc32_srs:
-    return AIE2::VSRS_D16_S32_mv_w_srs;
-  case Intrinsic::aie2_I256_v16_acc64_srs:
-    return AIE2::VSRS_D16_S64_mv_w_srs;
-  case Intrinsic::aie2_I256_v32_acc32_srs:
-    return AIE2::VSRS_D8_S32_mv_w_srs;
-  case Intrinsic::aie2_I256_v8_acc64_srs:
-    return AIE2::VSRS_D32_S64_mv_w_srs;
-  case Intrinsic::aie2_I512_v16_acc64_srs:
-    return AIE2::VSRS_D32_S64_mv_x_srs;
-  case Intrinsic::aie2_I512_v32_acc32_srs:
-    return AIE2::VSRS_D16_S32_mv_x_srs;
-  // Extract Intrinsic
-  case Intrinsic::aie2_vextract_elem8_I512:
-    return AIE2::VEXTRACT_D8;
-  case Intrinsic::aie2_vextract_elem16_I512:
-    return AIE2::VEXTRACT_D16;
-  case Intrinsic::aie2_vextract_elem32_I512:
-    return AIE2::VEXTRACT_D32;
-  case Intrinsic::aie2_vextract_elem64_I512:
-    return AIE2::VEXTRACT_D64;
-  // Vmax Intrinsic
-  case Intrinsic::aie2_vmax_lt8:
-    return AIE2::VMAX_LT_D8;
-  case Intrinsic::aie2_vmax_lt16:
-    return AIE2::VMAX_LT_D16;
-  case Intrinsic::aie2_vmax_lt32:
-    return AIE2::VMAX_LT_D32;
-  // Vmin Intrinsic
-  case Intrinsic::aie2_vmin_ge8:
-    return AIE2::VMIN_GE_D8;
-  case Intrinsic::aie2_vmin_ge16:
-    return AIE2::VMIN_GE_D16;
-  case Intrinsic::aie2_vmin_ge32:
-    return AIE2::VMIN_GE_D32;
-  // VGE / VLT
-  case Intrinsic::aie2_vlt8:
-    return AIE2::VLT_D8;
-  case Intrinsic::aie2_vlt16:
-    return AIE2::VLT_D16;
-  case Intrinsic::aie2_vlt32:
-    return AIE2::VLT_D32;
-  case Intrinsic::aie2_vge8:
-    return AIE2::VGE_D8;
-  case Intrinsic::aie2_vge16:
-    return AIE2::VGE_D16;
-  case Intrinsic::aie2_vge32:
-    return AIE2::VGE_D32;
-  // VMOV - Cascade stream read access
-  case Intrinsic::aie2_scd_read_vec:
-  case Intrinsic::aie2_scd_read_acc32:
-    return AIE2::VMOV_mv_scd;
-  case Intrinsic::aie2_scd_expand_lo:
-    return AIE2::VMOV_LO;
-  case Intrinsic::aie2_scd_expand_hi:
-    return AIE2::VMOV_HI;
-  // VMOV - Cascade stream write access
-  case Intrinsic::aie2_mcd_write_vec:
-  case Intrinsic::aie2_mcd_write_acc32:
-    return AIE2::VMOV_mv_mcd;
-  // VMAXDIFF_LT
-  case Intrinsic::aie2_vmaxdiff_lt8:
-    return AIE2::VMAXDIFF_LT_D8;
-  case Intrinsic::aie2_vmaxdiff_lt16:
-    return AIE2::VMAXDIFF_LT_D16;
-  case Intrinsic::aie2_vmaxdiff_lt32:
-    return AIE2::VMAXDIFF_LT_D32;
-  // VABS_GTZ
-  case Intrinsic::aie2_vabs_gtz8:
-    return AIE2::VABS_GTZ_D8;
-  case Intrinsic::aie2_vabs_gtz16:
-    return AIE2::VABS_GTZ_D16;
-  case Intrinsic::aie2_vabs_gtz32:
-    return AIE2::VABS_GTZ_D32;
-  // VSUB_LT/VSUB_GE
-  case Intrinsic::aie2_vsub_lt8:
-    return AIE2::VSUB_LT_D8;
-  case Intrinsic::aie2_vsub_lt16:
-    return AIE2::VSUB_LT_D16;
-  case Intrinsic::aie2_vsub_lt32:
-    return AIE2::VSUB_LT_D32;
-  case Intrinsic::aie2_vsub_ge8:
-    return AIE2::VSUB_GE_D8;
-  case Intrinsic::aie2_vsub_ge16:
-    return AIE2::VSUB_GE_D16;
-  case Intrinsic::aie2_vsub_ge32:
-    return AIE2::VSUB_GE_D32;
-  // Streams
-  case Intrinsic::aie2_get_ss:
-    return AIE2::MOV_mv_ss2scl;
-  case Intrinsic::aie2_get_ss_nb:
-    return AIE2::MOV_NB_mv_ss2scl;
-  default:
-    llvm_unreachable("Unexpected Intrinsic ID");
-  }
 }
 
 bool AIE2InstructionSelector::select(MachineInstr &I) {
@@ -581,18 +273,18 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
     case Intrinsic::aie2_vmaxdiff_lt8:
     case Intrinsic::aie2_vmaxdiff_lt16:
     case Intrinsic::aie2_vmaxdiff_lt32:
-      return selectVMAXDIFF_LT(I, MRI);
+      return selectVMAXDIFF_LT(I, MRI, MIB);
     case Intrinsic::aie2_vabs_gtz8:
     case Intrinsic::aie2_vabs_gtz16:
     case Intrinsic::aie2_vabs_gtz32:
-      return selectVABS_GTZ(I, MRI);
+      return selectVABS_GTZ(I, MRI, MIB);
     case Intrinsic::aie2_vsub_lt8:
     case Intrinsic::aie2_vsub_lt16:
     case Intrinsic::aie2_vsub_lt32:
     case Intrinsic::aie2_vsub_ge8:
     case Intrinsic::aie2_vsub_ge16:
     case Intrinsic::aie2_vsub_ge32:
-      return selectVSUB_LTGE(I, MRI);
+      return selectVSUB_LTGE(I, MRI, MIB);
     case Intrinsic::aie2_unpack_I8_I4:
     case Intrinsic::aie2_unpack_I16_I8:
       return selectVUNPACK(I, MRI);
@@ -609,17 +301,17 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
     case Intrinsic::aie2_vlt8:
     case Intrinsic::aie2_vlt16:
     case Intrinsic::aie2_vlt32:
-      return selectVCompare(I, MRI);
+      return selectVCompare(I, MRI, MIB);
     case Intrinsic::aie2_vmax_lt8:
     case Intrinsic::aie2_vmax_lt16:
     case Intrinsic::aie2_vmax_lt32:
     case Intrinsic::aie2_vmin_ge8:
     case Intrinsic::aie2_vmin_ge16:
     case Intrinsic::aie2_vmin_ge32:
-      return selectVSUB_MIN_MAX(I, MRI);
+      return selectVSUB_MIN_MAX(I, MRI, MIB);
     case Intrinsic::aie2_add_2d:
     case Intrinsic::aie2_add_3d:
-      return selectAddrInsn(I, MRI);
+      return selectAddrInsn(MIB, I, MRI);
     case Intrinsic::aie2_get_coreid:
       return selectGetCoreID(I, MRI);
 
@@ -677,11 +369,11 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
       return selectReadTM(I, MRI);
     case Intrinsic::aie2_get_ss:
     case Intrinsic::aie2_get_ss_nb:
-      return selectGetSS(I, MRI);
+      return selectGetSS(I, MRI, MIB);
     case Intrinsic::aie2_put_ms:
-      return selectPutMSB(I, MRI);
+      return selectPutMSB(I, MRI, MIB);
     case Intrinsic::aie2_put_ms_nb:
-      return selectPutMSNB(I, MRI);
+      return selectPutMSNB(I, MRI, MIB);
     case Intrinsic::aie2_sparse_pop_16_and_get_pointer:
     case Intrinsic::aie2_sparse_pop_16_set_lo:
     case Intrinsic::aie2_sparse_pop_16_insert_hi:
@@ -733,15 +425,15 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
     return selectG_LOAD(I, MRI);
   case G_MERGE_VALUES:
   case G_BUILD_VECTOR:
-    return selectLRegSequence(I, MRI);
+    return selectLRegSequence(MIB, I, MRI);
   case G_PHI:
     return selectG_PHI(I, MRI);
   case G_PTR_ADD:
-    return selectG_PTR_ADD(I, MRI);
+    return selectG_PTR_ADD(MIB, I, MRI);
   case G_STORE:
     return selectG_STORE(I, MRI);
   case G_UNMERGE_VALUES:
-    return selectG_UNMERGE_VALUES(I, MRI);
+    return selectG_UNMERGE_VALUES(MIB, I, MRI);
   case AIE2::G_AIE_ADD_VECTOR_ELT_HI:
     return selectG_AIE_ADD_VECTOR_ELT_HI(I, MRI);
   case AIE2::G_AIE_OFFSET_STORE:
@@ -991,19 +683,6 @@ bool AIE2InstructionSelector::selectG_GLOBAL_VALUE(MachineInstr &I,
   return constrainSelectedInstRegOperands(I, TII, TRI, RBI);
 }
 
-bool AIE2InstructionSelector::selectG_IMPLICIT_DEF(MachineInstr &I,
-                                                   MachineRegisterInfo &MRI) {
-  I.setDesc(TII.get(TargetOpcode::IMPLICIT_DEF));
-  // Make sure no input operands are passed to IMPLICIT_DEF
-  while (I.getNumOperands() > 1)
-    I.removeOperand(1);
-  const MachineOperand &DstOp = I.getOperand(0);
-  const RegisterBank &RB = *RBI.getRegBank(DstOp.getReg(), MRI, TRI);
-  const TargetRegisterClass &RC =
-      TRI.getMinClassForRegBank(RB, MRI.getType(DstOp.getReg()));
-  return RBI.constrainGenericRegister(DstOp.getReg(), RC, MRI);
-}
-
 bool AIE2InstructionSelector::selectG_LOAD(MachineInstr &I,
                                            MachineRegisterInfo &MRI) {
   // TODO: this is awfully close to AIE1, code should probably be shared.
@@ -1045,90 +724,6 @@ bool AIE2InstructionSelector::selectG_LOAD(MachineInstr &I,
     }
   }
 
-  return selectImpl(I, *CoverageInfo);
-}
-
-/// Create a REG_SEQUENCE instruction using the registers in \p Regs.
-static MachineInstr &createTuple(Register DstReg, ArrayRef<Register> SrcRegs,
-                                 ArrayRef<unsigned> SubRegs,
-                                 MachineIRBuilder &MIB) {
-  assert(SrcRegs.size() == SubRegs.size());
-  auto RegSequence = MIB.buildInstr(TargetOpcode::REG_SEQUENCE, {DstReg}, {});
-  for (unsigned I = 0, E = SrcRegs.size(); I < E; ++I) {
-    RegSequence.addUse(SrcRegs[I]);
-    RegSequence.addImm(SubRegs[I]);
-  }
-  return *RegSequence;
-}
-
-bool AIE2InstructionSelector::selectLRegSequence(MachineInstr &I,
-                                                 MachineRegisterInfo &MRI) {
-  assert(I.getNumOperands() == 3);
-  Register DstReg = I.getOperand(0).getReg();
-  Register SrcReg1 = I.getOperand(1).getReg();
-  Register SrcReg2 = I.getOperand(2).getReg();
-  const RegisterBank &DstRB = *RBI.getRegBank(DstReg, MRI, TRI);
-  const RegisterBank &Src1RB = *RBI.getRegBank(SrcReg1, MRI, TRI);
-  const RegisterBank &Src2RB = *RBI.getRegBank(SrcReg2, MRI, TRI);
-
-  if (DstRB.getID() != AIE2::GPRRegBankID ||
-      Src1RB.getID() != AIE2::GPRRegBankID ||
-      Src2RB.getID() != AIE2::GPRRegBankID)
-    return false;
-
-  createTuple(DstReg, {SrcReg1, SrcReg2}, {AIE2::sub_l_even, AIE2::sub_l_odd},
-              MIB);
-
-  const RegisterBank &GPRBank = RBI.getRegBank(AIE2::GPRRegBankID);
-  for (MachineOperand &Op : I.operands()) {
-    LLT Type = MRI.getType(Op.getReg());
-    const TargetRegisterClass &RC = TRI.getMinClassForRegBank(GPRBank, Type);
-    if (!RBI.constrainGenericRegister(Op.getReg(), RC, MRI))
-      return false;
-  }
-  I.eraseFromParent();
-  return true;
-}
-
-bool AIE2InstructionSelector::selectG_PHI(MachineInstr &I,
-                                          MachineRegisterInfo &MRI) {
-  const Register DstReg = I.getOperand(0).getReg();
-  const RegClassOrRegBank &RegClassOrBank = MRI.getRegClassOrRegBank(DstReg);
-  const TargetRegisterClass *DstRC =
-      RegClassOrBank.dyn_cast<const TargetRegisterClass *>();
-  if (!DstRC) {
-    const RegisterBank &RB = *RegClassOrBank.get<const RegisterBank *>();
-    DstRC = &TRI.getMinClassForRegBank(RB, MRI.getType(DstReg));
-  }
-  I.setDesc(TII.get(TargetOpcode::PHI));
-  return RBI.constrainGenericRegister(DstReg, *DstRC, MRI);
-}
-
-bool AIE2InstructionSelector::selectG_PTR_ADD(MachineInstr &I,
-                                              MachineRegisterInfo &MRI) {
-  // TODO: this is awfully close to AIE1, code should probably be shared.
-  Register DstReg = I.getOperand(0).getReg();
-  Register Src1Reg = I.getOperand(1).getReg();
-  Register Src2Reg = I.getOperand(2).getReg();
-
-  const RegisterBank *DstRB = RBI.getRegBank(DstReg, MRI, TRI);
-  const RegisterBank *Src1RB = RBI.getRegBank(Src1Reg, MRI, TRI);
-  const RegisterBank *Src2RB = RBI.getRegBank(Src2Reg, MRI, TRI);
-
-  // Pointer addition on GPRs is a simple ADD, and requires all operands in GPRs
-  if (DstRB->getID() == AIE2::GPRRegBankID) {
-    if (Src1RB->getID() != AIE2::GPRRegBankID ||
-        Src1RB->getID() != Src2RB->getID())
-      return false;
-
-    // FIXME: Constants on the RHS could be folded into the ADD instruction by
-    // relying on the TableGen patterns for G_ADD on GPRRegbank
-    MachineInstr &MI = *MIB.buildInstr(AIE2::ADD, {DstReg}, {Src1Reg, Src2Reg});
-    I.eraseFromParent();
-    return constrainSelectedInstRegOperands(MI, TII, TRI, RBI);
-  }
-
-  // Standard PTR bank case handled through patterns.
   return selectImpl(I, *CoverageInfo);
 }
 
@@ -1230,79 +825,6 @@ bool AIE2InstructionSelector::selectG_STORE(MachineInstr &I,
   return true;
 }
 
-static void createSubRegCopies(ArrayRef<Register> DstRegs, Register SrcReg,
-                               ArrayRef<unsigned> SubRegs,
-                               MachineIRBuilder &MIB) {
-  assert(DstRegs.size() == SubRegs.size());
-  for (size_t Idx = 0; Idx != DstRegs.size(); ++Idx) {
-    Register DstReg = DstRegs[Idx];
-    unsigned SubReg = SubRegs[Idx];
-    MIB.buildInstr(TargetOpcode::COPY, {DstReg}, {})
-        .addReg(SrcReg, /*flags=*/0, SubReg);
-  }
-}
-
-bool AIE2InstructionSelector::selectG_UNMERGE_VALUES(MachineInstr &I,
-                                                     MachineRegisterInfo &MRI) {
-  assert(I.getNumOperands() == 3);
-  const Register DstReg1 = I.getOperand(0).getReg();
-  const Register DstReg2 = I.getOperand(1).getReg();
-  const Register SrcReg = I.getOperand(2).getReg();
-
-  const LLT Dst1VecTy = MRI.getType(DstReg1);
-  const LLT SrcVecTy = MRI.getType(SrcReg);
-
-  const RegisterBank &Dst1RB = *RBI.getRegBank(DstReg1, MRI, TRI);
-  const RegisterBank &Dst2RB = *RBI.getRegBank(DstReg2, MRI, TRI);
-  const RegisterBank &SrcRB = *RBI.getRegBank(SrcReg, MRI, TRI);
-
-  // Copy the subregisters from the larger register, this only makes sense
-  // whenever both sides are vectors.
-  unsigned RegBankID;
-  std::pair<unsigned, unsigned> TargetSubRegs;
-
-  if (Dst1VecTy.isVector() && SrcVecTy.isVector()) {
-    assert(SrcVecTy.getSizeInBits() == 2 * Dst1VecTy.getSizeInBits() &&
-           "target register must be exactly half the size of source register");
-    assert(Dst1VecTy == MRI.getType(DstReg2) &&
-           "destination types must be the same");
-    RegBankID = AIE2::VRegBankID;
-
-    if (Dst1VecTy.getSizeInBits() == 256) {
-      TargetSubRegs.first = AIE2::sub_256_lo;
-      TargetSubRegs.second = AIE2::sub_256_hi;
-    } else if (Dst1VecTy.getSizeInBits() == 512) {
-      TargetSubRegs.first = AIE2::sub_512_lo;
-      TargetSubRegs.second = AIE2::sub_512_hi;
-    }
-  } else if (Dst1VecTy.isScalar()) {
-    RegBankID = AIE2::GPRRegBankID;
-    TargetSubRegs.first = AIE2::sub_l_even;
-    TargetSubRegs.second = AIE2::sub_l_odd;
-  } else {
-    llvm_unreachable(
-        "trying to unmerge a value into a non-vector or scalar value");
-  }
-
-  if (Dst1RB.getID() != RegBankID || Dst2RB.getID() != RegBankID ||
-      SrcRB.getID() != RegBankID)
-    return false;
-
-  createSubRegCopies({DstReg1, DstReg2}, SrcReg,
-                     {TargetSubRegs.first, TargetSubRegs.second}, MIB);
-
-  const RegisterBank &RegBank = RBI.getRegBank(RegBankID);
-  for (MachineOperand &Op : I.operands()) {
-    LLT Type = MRI.getType(Op.getReg());
-    const TargetRegisterClass &RC = TRI.getMinClassForRegBank(RegBank, Type);
-    if (!RBI.constrainGenericRegister(Op.getReg(), RC, MRI))
-      return false;
-  }
-
-  I.eraseFromParent();
-  return true;
-}
-
 bool AIE2InstructionSelector::selectGetCoreID(MachineInstr &I,
                                               MachineRegisterInfo &MRI) {
 
@@ -1318,174 +840,23 @@ bool AIE2InstructionSelector::selectGetCoreID(MachineInstr &I,
   return true;
 }
 
-bool AIE2InstructionSelector::selectVMAXDIFF_LT(MachineInstr &I,
-                                                MachineRegisterInfo &MRI) {
-
-  Register DstReg = I.getOperand(0).getReg();
-  Register CmpReg = I.getOperand(1).getReg();
-  // In this case of G_INTRINSIC operand 2 is target intrinsic
-  Register Src1Reg = I.getOperand(3).getReg();
-  Register Src2Reg = I.getOperand(4).getReg();
-  Register SignReg = I.getOperand(5).getReg();
-
-  if (auto SignVal = getIConstantVRegSExtVal(SignReg, MRI)) {
-    // Handle constant sign through instruction patterns
-    return selectImpl(I, *CoverageInfo);
-  }
-
-  unsigned OpCode = getOpCode(cast<GIntrinsic>(I).getIntrinsicID());
-  MachineInstrBuilder MI = MIB.buildInstr(OpCode, {DstReg, CmpReg}, {})
-                               .addReg(Src1Reg)
-                               .addReg(Src2Reg);
-
-  setUnsetCtrlRegister(*MI, MRI, AIE2::crVaddSign, SignReg);
-
-  I.eraseFromParent();
-  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
-}
-
-bool AIE2InstructionSelector::selectVABS_GTZ(MachineInstr &I,
-                                             MachineRegisterInfo &MRI) {
-
-  Register DstReg = I.getOperand(0).getReg();
-  Register CmpReg = I.getOperand(1).getReg();
-  // In this case of G_INTRINSIC operand 2 is target intrinsic
-  Register SrcReg = I.getOperand(3).getReg();
-  Register SignReg = I.getOperand(4).getReg();
-
-  if (auto SignVal = getIConstantVRegSExtVal(SignReg, MRI)) {
-    // Handle constant sign through instruction patterns
-    return selectImpl(I, *CoverageInfo);
-  }
-
-  unsigned OpCode = getOpCode(cast<GIntrinsic>(I).getIntrinsicID());
-  MachineInstrBuilder MI =
-      MIB.buildInstr(OpCode, {DstReg, CmpReg}, {}).addReg(SrcReg);
-
-  setUnsetCtrlRegister(*MI, MRI, AIE2::crVaddSign, SignReg);
-
-  I.eraseFromParent();
-  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
-}
-
-bool AIE2InstructionSelector::selectVSUB_LTGE(MachineInstr &I,
-                                              MachineRegisterInfo &MRI) {
-
-  Register DstReg = I.getOperand(0).getReg();
-  Register CmpReg = I.getOperand(1).getReg();
-  // In this case of G_INTRINSIC operand 2 is target intrinsic
-  Register Src1Reg = I.getOperand(3).getReg();
-  Register Src2Reg = I.getOperand(4).getReg();
-  Register SignReg = I.getOperand(5).getReg();
-
-  if (auto SignVal = getIConstantVRegSExtVal(SignReg, MRI)) {
-    // Handle constant sign through instruction patterns
-    return selectImpl(I, *CoverageInfo);
-  }
-
-  unsigned OpCode = getOpCode(cast<GIntrinsic>(I).getIntrinsicID());
-  MachineInstrBuilder MI = MIB.buildInstr(OpCode, {DstReg, CmpReg}, {})
-                               .addReg(Src1Reg)
-                               .addReg(Src2Reg);
-
-  setUnsetCtrlRegister(*MI, MRI, AIE2::crVaddSign, SignReg);
-
-  I.eraseFromParent();
-  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
-}
-
 bool AIE2InstructionSelector::selectVUNPACK(MachineInstr &I,
                                             MachineRegisterInfo &MRI) {
   // Try to match UNPACK combine
   if (selectG_AIE_LOAD_UNPACK(I, MRI))
     return true;
-
-  Register DstReg = I.getOperand(0).getReg();
-  // In this case of G_INTRINSIC operand 1 is target intrinsic
-  Register SrcReg = I.getOperand(2).getReg();
-  Register SignReg = I.getOperand(3).getReg();
   MachineInstrBuilder MI;
-
-  if (auto Sign = getIConstantVRegValWithLookThrough(SignReg, MRI)) {
-    unsigned OpCode;
-    unsigned SignVal = Sign->Value.getZExtValue();
-    if (SignVal)
-      OpCode = (cast<GIntrinsic>(I).getIntrinsicID() == Intrinsic::aie2_unpack_I8_I4)
-                   ? AIE2::VUNPACK_S8_S4
-                   : AIE2::VUNPACK_S16_S8;
-    else
-      OpCode = (cast<GIntrinsic>(I).getIntrinsicID() == Intrinsic::aie2_unpack_I8_I4)
-                   ? AIE2::VUNPACK_D8_D4
-                   : AIE2::VUNPACK_D16_D8;
-    MI = MIB.buildInstr(OpCode, {DstReg}, {}).addReg(SrcReg);
-  } else {
-    unsigned OpCode = (cast<GIntrinsic>(I).getIntrinsicID() == Intrinsic::aie2_unpack_I8_I4)
-                          ? AIE2::VUNPACK_D8_D4
-                          : AIE2::VUNPACK_D16_D8;
-    MI = MIB.buildInstr(OpCode, {DstReg}, {}).addReg(SrcReg);
-    setUnsetCtrlRegister(*MI, MRI, AIE2::crUnpackSign, SignReg);
-  }
-
+  buildUnpack(I, MRI, MIB, MI);
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
 }
 
 bool AIE2InstructionSelector::selectVPACK(MachineInstr &I,
                                           MachineRegisterInfo &MRI) {
-
-  Register DstReg = I.getOperand(0).getReg();
-  // In this case of G_INTRINSIC_W_SIDE_EFFECTS, operand 1 is target intrinsic.
-  Register SrcReg = I.getOperand(2).getReg();
-  Register SignReg = I.getOperand(3).getReg();
   MachineInstrBuilder MI;
-
-  if (auto Sign = getIConstantVRegValWithLookThrough(SignReg, MRI)) {
-    unsigned OpCode;
-    unsigned SignVal = Sign->Value.getZExtValue();
-    if (SignVal)
-      OpCode = (cast<GIntrinsic>(I).getIntrinsicID() == Intrinsic::aie2_pack_I4_I8)
-                   ? AIE2::VPACK_S4_S8
-                   : AIE2::VPACK_S8_S16;
-    else
-      OpCode = (cast<GIntrinsic>(I).getIntrinsicID() == Intrinsic::aie2_pack_I4_I8)
-                   ? AIE2::VPACK_D4_D8
-                   : AIE2::VPACK_D8_D16;
-    MI = MIB.buildInstr(OpCode, {DstReg}, {}).addReg(SrcReg);
-  } else {
-    unsigned OpCode = (cast<GIntrinsic>(I).getIntrinsicID() == Intrinsic::aie2_pack_I4_I8)
-                          ? AIE2::VPACK_D4_D8
-                          : AIE2::VPACK_D8_D16;
-    MI = MIB.buildInstr(OpCode, {DstReg}, {}).addReg(SrcReg);
-    setUnsetCtrlRegister(*MI, MRI, AIE2::crPackSign, SignReg);
-  }
-
+  buildPack(I, MRI, MIB, MI);
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
-}
-
-unsigned getLoadStoreSize(const MachineInstr &MI) {
-  // We are guaranteed to have MMOs during Instruction Selection.
-  // We need them to select the correct instruction when they depend on the
-  // size in memory and not on the register size. E.g.: part word stores.
-  return (*MI.memoperands_begin())->getSizeInBits().getValue();
-}
-
-template <unsigned NumEncodingBits, unsigned Step>
-bool checkImmediateRange(std::optional<APInt> Immediate) {
-  unsigned MaxPow2 = NumEncodingBits + llvm::Log2_64(Step);
-  if (Immediate && isIntN(MaxPow2, Immediate->getSExtValue()) &&
-      Immediate->getSExtValue() % Step == 0) {
-    LLVM_DEBUG(dbgs() << "Immediate " << Immediate << " is valid for MaxPow2 "
-                      << MaxPow2 << " and Step " << Step << ".\n");
-    return true;
-  }
-  return false;
-}
-
-template <unsigned NumEncodingBits, unsigned Step, unsigned SplitOffset>
-bool checkImmediateRangeSplitting(std::optional<APInt> Immediate) {
-  return Immediate && checkImmediateRange<NumEncodingBits, Step>(Immediate) &&
-         checkImmediateRange<NumEncodingBits, Step>(*Immediate + SplitOffset);
 }
 
 std::optional<LoadStoreOpcodes> getCombinedOpcodeUNPACKLoad(
@@ -1586,20 +957,6 @@ bool canCombineUNPACKLoad(MachineInstr &MemOp, MachineInstr &CombOp,
       .has_value();
 }
 
-// Make an instruction trivially dead by creating and distributing new virtual
-// registers to its defs
-void AIE2InstructionSelector::makeDeadMI(MachineInstr &MI,
-                                         MachineRegisterInfo &MRI) {
-  if (MI.getOpcode() == AIE2::G_INTRINSIC_W_SIDE_EFFECTS) {
-    MI.setDesc(TII.get(AIE2::G_INTRINSIC));
-  }
-
-  for (auto *Def = MI.defs().begin(); Def != MI.defs().end(); ++Def) {
-    Register NewReg = MRI.cloneVirtualRegister(Def->getReg());
-    Def->setReg(NewReg);
-  }
-}
-
 bool AIE2InstructionSelector::selectG_AIE_LOAD_UNPACK(
     MachineInstr &UNPACKI, MachineRegisterInfo &MRI) {
   Register LoadResult = (std::next(UNPACKI.uses().begin()))->getReg();
@@ -1654,7 +1011,7 @@ bool AIE2InstructionSelector::selectG_AIE_LOAD_UNPACK(
 
   auto ConstantSign = getIConstantVRegValWithLookThrough(SignReg, MRI);
   if (!ConstantSign)
-    setUnsetCtrlRegister(*NewInstr, MRI, AIE2::crUnpackSign, SignReg);
+    setUnsetCtrlRegister(MIB, *NewInstr, MRI, AIE2::crUnpackSign, SignReg);
 
   UNPACKI.eraseFromParent();
 
@@ -1702,8 +1059,10 @@ void AIE2InstructionSelector::insertPtrAddForOffset(MachineRegisterInfo &MRI,
 }
 
 std::optional<LoadStoreOpcodes>
-getCombinedOpcodeSRSUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
-                        std::optional<APInt> Immediate, bool IsSigned) {
+AIE2InstructionSelector::getCombinedOpcodeSRSUPS(const MachineInstr &MemOp,
+                                                 const MachineInstr &CombOp,
+                                                 std::optional<APInt> Immediate,
+                                                 bool IsSigned) {
   const bool AlwaysFitsImmediateRange = true;
   const bool NoImmediate = false;
   if (CombOp.getOpcode() != AIE2::G_INTRINSIC_W_SIDE_EFFECTS)
@@ -2544,29 +1903,14 @@ getCombinedOpcodeSRSUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
   return {};
 }
 
-bool canCombineSRSUPS(MachineInstr &MemOp, MachineInstr &CombOp) {
+bool AIE2InstructionSelector::canCombineSRSUPS(MachineInstr &MemOp,
+                                               MachineInstr &CombOp) {
 
   const std::optional<APInt> NoImmediate = {};
   const bool IsSigned = true;
 
   return getCombinedOpcodeSRSUPS(MemOp, CombOp, NoImmediate, IsSigned)
       .has_value();
-}
-
-AddressingModeInfo createAddressModeInfo(MachineInstr &MemI,
-                                         MachineOperand &SrcDstOp,
-                                         MachineOperand &PtrOp,
-                                         std::optional<Register> OffsetReg,
-                                         MachineRegisterInfo &MRI) {
-  std::optional<ValueAndVReg> OffsetVVReg = {};
-  std::optional<APInt> ImmediateOffset = {};
-  if (OffsetReg && mi_match(*OffsetReg, MRI, m_GCst(OffsetVVReg))) {
-    LLVM_DEBUG(dbgs() << "Found an immediate offset: "
-                      << OffsetVVReg->Value.getSExtValue() << "\n");
-    ImmediateOffset = OffsetVVReg->Value;
-  }
-
-  return {MemI, SrcDstOp, PtrOp, OffsetReg, ImmediateOffset};
 }
 
 std::optional<AddressingModeInfo>
@@ -2647,30 +1991,6 @@ AIE2InstructionSelector::getOrDefineAddressingRegister(
   return {};
 }
 
-void AIE2InstructionSelector::addAddressingMode(MachineInstrBuilder &MIB,
-                                                AddressingModeInfo &AMI,
-                                                bool FitsImmediateRange,
-                                                bool RenderFrameIndex,
-                                                MachineRegisterInfo &MRI) {
-  MachineInstr *PtrDef = MRI.getVRegDef(AMI.PtrOp.getReg());
-  // Only render frame index if we are dealing with an instruction that supports
-  // it (we get that information in RenderFrameIndex from the callee) and if the
-  // AMI does not have an offset or modifier register, which indicates that the
-  // instruction is neither pre-increment nor post-increment
-  if (RenderFrameIndex && !AMI.OffsetReg &&
-      PtrDef->getOpcode() == AIE2::G_FRAME_INDEX) {
-    renderFrameIndex(MIB, *PtrDef, 1);
-  } else if (FitsImmediateRange && AMI.ImmediateOffset) {
-    MIB.addUse(AMI.PtrOp.getReg());
-    MIB.addImm(AMI.ImmediateOffset->getSExtValue());
-  } else if (AMI.OffsetReg) {
-    MIB.addUse(AMI.PtrOp.getReg());
-    MIB.addUse(*AMI.OffsetReg);
-  } else {
-    MIB.addUse(AMI.PtrOp.getReg());
-  }
-}
-
 bool AIE2InstructionSelector::select512BitG_AIE_LOAD_UPS(
     MachineInstr &UPSI, LoadStoreOpcodes &LSO, AddressingModeInfo &AMI,
     Register DstReg, Register ShftReg, Register SignReg, bool ConstantSign,
@@ -2707,7 +2027,7 @@ bool AIE2InstructionSelector::select512BitG_AIE_LOAD_UPS(
     addSplitMemOperands(AMI.MemI, LoadHigher, LoadLower, 0, 2);
 
     if (!ConstantSign)
-      setUnsetCtrlRegister(*LoadHigher, *LoadLower, MRI, AIE2::crUPSSign,
+      setUnsetCtrlRegister(MIB, *LoadHigher, *LoadLower, MRI, AIE2::crUPSSign,
                            SignReg);
 
     MIB.buildInstr(AIE2::REG_SEQUENCE, {DstReg}, {})
@@ -2758,7 +2078,7 @@ bool AIE2InstructionSelector::select512BitG_AIE_LOAD_UPS(
     addSplitMemOperands(AMI.MemI, LoadHigher, LoadLower, 0, 2);
 
     if (!ConstantSign)
-      setUnsetCtrlRegister(*LoadHigher, *LoadLower, MRI, AIE2::crUPSSign,
+      setUnsetCtrlRegister(MIB, *LoadHigher, *LoadLower, MRI, AIE2::crUPSSign,
                            SignReg);
 
     MIB.buildInstr(AIE2::REG_SEQUENCE, {DstReg}, {})
@@ -2842,7 +2162,7 @@ bool AIE2InstructionSelector::selectG_AIE_LOAD_UPS(MachineInstr &UPSI,
   NewInstr.cloneMemRefs(AMI->MemI);
 
   if (!ConstantSign)
-    setUnsetCtrlRegister(*NewInstr, MRI, AIE2::crUPSSign, SignReg);
+    setUnsetCtrlRegister(MIB, *NewInstr, MRI, AIE2::crUPSSign, SignReg);
 
   UPSI.eraseFromParent();
   AMI->MemI.eraseFromParent();
@@ -2866,11 +2186,11 @@ bool AIE2InstructionSelector::selectVUPS(MachineInstr &I,
     return selectImpl(I, *CoverageInfo);
   }
 
-  unsigned OpCode = getOpCode(cast<GIntrinsic>(I).getIntrinsicID());
+  unsigned OpCode = TII.getOpCode(I);
   MachineInstrBuilder MI =
       MIB.buildInstr(OpCode, {DstReg}, {}).addReg(SrcReg).addReg(ShftReg);
 
-  setUnsetCtrlRegister(*MI, MRI, AIE2::crUPSSign, SignReg);
+  setUnsetCtrlRegister(MIB, *MI, MRI, AIE2::crUPSSign, SignReg);
 
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
@@ -2890,11 +2210,11 @@ bool AIE2InstructionSelector::selectVSRS(MachineInstr &I,
     return selectImpl(I, *CoverageInfo);
   }
 
-  unsigned OpCode = getOpCode(cast<GIntrinsic>(I).getIntrinsicID());
+  unsigned OpCode = TII.getOpCode(I);
   MachineInstrBuilder MI =
       MIB.buildInstr(OpCode, {DstReg}, {}).addReg(SrcReg).addReg(ShftReg);
 
-  setUnsetCtrlRegister(*MI, MRI, AIE2::crSRSSign, SignReg);
+  setUnsetCtrlRegister(MIB, *MI, MRI, AIE2::crSRSSign, SignReg);
 
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
@@ -2914,61 +2234,11 @@ bool AIE2InstructionSelector::selectVEXTRACT(MachineInstr &I,
     return selectImpl(I, *CoverageInfo);
   }
 
-  unsigned OpCode = getOpCode(cast<GIntrinsic>(I).getIntrinsicID());
+  unsigned OpCode = TII.getOpCode(I);
   MachineInstrBuilder MI =
       MIB.buildInstr(OpCode, {DstReg}, {}).addReg(SrcReg).addReg(LaneReg);
 
-  setUnsetCtrlRegister(*MI, MRI, AIE2::crVaddSign, SignReg);
-
-  I.eraseFromParent();
-  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
-}
-
-bool AIE2InstructionSelector::selectVCompare(MachineInstr &I,
-                                             MachineRegisterInfo &MRI) {
-
-  Register CmpReg = I.getOperand(0).getReg();
-  // In this case of G_INTRINSIC operand 1 is target intrinsic
-  Register Src1Reg = I.getOperand(2).getReg();
-  Register Src2Reg = I.getOperand(3).getReg();
-  Register SignReg = I.getOperand(4).getReg();
-
-  // Handle constant sign through instruction patterns
-  if (selectImpl(I, *CoverageInfo)) {
-    return true;
-  }
-
-  unsigned OpCode = getOpCode(cast<GIntrinsic>(I).getIntrinsicID());
-  MachineInstrBuilder MI =
-      MIB.buildInstr(OpCode, {CmpReg}, {}).addReg(Src1Reg).addReg(Src2Reg);
-
-  setUnsetCtrlRegister(*MI, MRI, AIE2::crVaddSign, SignReg);
-
-  I.eraseFromParent();
-  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
-}
-
-bool AIE2InstructionSelector::selectVSUB_MIN_MAX(MachineInstr &I,
-                                                 MachineRegisterInfo &MRI) {
-
-  Register DstReg = I.getOperand(0).getReg();
-  Register CmpReg = I.getOperand(1).getReg();
-  // In this case of G_INTRINSIC operand 2 is target intrinsic
-  Register Src1Reg = I.getOperand(3).getReg();
-  Register Src2Reg = I.getOperand(4).getReg();
-  Register SignReg = I.getOperand(5).getReg();
-
-  if (auto SignVal = getIConstantVRegValWithLookThrough(SignReg, MRI)) {
-    // Handle constant sign through instruction patterns
-    return selectImpl(I, *CoverageInfo);
-  }
-
-  unsigned OpCode = getOpCode(cast<GIntrinsic>(I).getIntrinsicID());
-  MachineInstrBuilder MI = MIB.buildInstr(OpCode, {DstReg, CmpReg}, {})
-                               .addReg(Src1Reg)
-                               .addReg(Src2Reg);
-
-  setUnsetCtrlRegister(*MI, MRI, AIE2::crVaddSign, SignReg);
+  setUnsetCtrlRegister(MIB, *MI, MRI, AIE2::crVaddSign, SignReg);
 
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
@@ -2982,13 +2252,13 @@ bool AIE2InstructionSelector::selectCascadeStreamInsn(MachineInstr &I,
   Register EnableReg = I.getOperand(I.getNumOperands() - 1).getReg();
 
   MachineInstrBuilder MI;
-  unsigned OpCode = getOpCode(cast<GIntrinsic>(I).getIntrinsicID());
+  unsigned OpCode = TII.getOpCode(I);
   if (isWrite)
     MI = MIB.buildInstr(OpCode, {}, {}).addReg(CascadeReg);
   else
     MI = MIB.buildInstr(OpCode, {CascadeReg}, {});
 
-  setUnsetCtrlRegister(*MI, MRI, (isWrite ? AIE2::crMCDEn : AIE2::crSCDEn),
+  setUnsetCtrlRegister(MIB, *MI, MRI, (isWrite ? AIE2::crMCDEn : AIE2::crSCDEn),
                        EnableReg, 1);
 
   I.eraseFromParent();
@@ -3082,68 +2352,6 @@ Register AIE2InstructionSelector::createDSRegSequence(
                            MI->getOperand(13));
 
   return MI.getReg(0);
-}
-
-bool AIE2InstructionSelector::selectAddrInsn(MachineInstr &I,
-                                             MachineRegisterInfo &MRI) {
-
-  Register PtrOutReg = I.getOperand(0).getReg();
-  Register CountOut1Reg = I.getOperand(1).getReg();
-
-  switch (cast<GIntrinsic>(I).getIntrinsicID()) {
-  case Intrinsic::aie2_add_2d: {
-
-    Register PtrInReg = I.getOperand(3).getReg();
-    Register OffsetReg = I.getOperand(4).getReg();
-    Register IncrReg = I.getOperand(5).getReg();
-    Register SizeReg = I.getOperand(6).getReg();
-    Register CountIn1Reg = I.getOperand(7).getReg();
-
-    if (!RBI.constrainGenericRegister(CountOut1Reg, AIE2::eDCRegClass, MRI))
-      return false;
-
-    Register DReg =
-        createDRegSequence(OffsetReg, IncrReg, SizeReg, CountIn1Reg, MRI);
-
-    MachineInstrBuilder MI =
-        MIB.buildInstr(AIE2::PADDA_2D, {PtrOutReg, CountOut1Reg}, {})
-            .addReg(PtrInReg)
-            .addReg(DReg);
-
-    I.eraseFromParent();
-    return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
-  }
-  case Intrinsic::aie2_add_3d: {
-
-    Register CountOut2Reg = I.getOperand(2).getReg();
-    Register PtrInReg = I.getOperand(4).getReg();
-    Register OffsetReg = I.getOperand(5).getReg();
-    Register Incr1Reg = I.getOperand(6).getReg();
-    Register Incr2Reg = I.getOperand(7).getReg();
-    Register Size1Reg = I.getOperand(8).getReg();
-    Register CountIn1Reg = I.getOperand(9).getReg();
-    Register Size2Reg = I.getOperand(10).getReg();
-    Register CountIn2Reg = I.getOperand(11).getReg();
-
-    if (!RBI.constrainGenericRegister(CountOut1Reg, AIE2::eDCRegClass, MRI) ||
-        !RBI.constrainGenericRegister(CountOut2Reg, AIE2::eDCRegClass, MRI))
-      return false;
-
-    Register DReg =
-        createDSRegSequence(OffsetReg, Incr1Reg, Incr2Reg, Size1Reg,
-                            CountIn1Reg, Size2Reg, CountIn2Reg, MRI);
-
-    MachineInstrBuilder MI =
-        MIB.buildInstr(AIE2::PADDA_3D, {PtrOutReg, CountOut1Reg, CountOut2Reg},
-                       {})
-            .addReg(PtrInReg)
-            .addReg(DReg);
-    I.eraseFromParent();
-    return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
-  }
-  default:
-    llvm_unreachable("Unexpected addressing intrinsic id");
-  }
 }
 
 // Build Instruction to get control register
@@ -3250,19 +2458,6 @@ bool AIE2InstructionSelector::selectReadTM(MachineInstr &I,
 
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
-}
-
-unsigned deriveRegBankID(Register Reg, const MachineRegisterInfo &MRI,
-                         const RegisterBankInfo &RBI) {
-  const RegisterBank *RB = MRI.getRegBankOrNull(Reg);
-  if (RB) {
-    return RB->getID();
-  }
-  const TargetRegisterClass *RC = MRI.getRegClassOrNull(Reg);
-  if (RC) {
-    return RBI.getRegBankFromRegClass(*RC, MRI.getType(Reg)).getID();
-  }
-  llvm_unreachable("Cannot derive RegBankID from Register");
 }
 
 LoadStoreOpcodes AIE2InstructionSelector::getLoadStoreOpcode(
@@ -3848,8 +3043,10 @@ getCombinedOpcodePACK(const MachineInstr &MemOp, const MachineInstr &CombOp,
   const bool AlwaysFitsImmediateRange = true;
 
   if (CombOp.getOpcode() != AIE2::G_INTRINSIC_W_SIDE_EFFECTS ||
-      (cast<GIntrinsic>(CombOp).getIntrinsicID() != Intrinsic::aie2_pack_I4_I8 &&
-       cast<GIntrinsic>(CombOp).getIntrinsicID() != Intrinsic::aie2_pack_I8_I16))
+      (cast<GIntrinsic>(CombOp).getIntrinsicID() !=
+           Intrinsic::aie2_pack_I4_I8 &&
+       cast<GIntrinsic>(CombOp).getIntrinsicID() !=
+           Intrinsic::aie2_pack_I8_I16))
     return {};
 
   assert(getLoadStoreSize(MemOp) == 256 && "Unexpected VST.PACK size");
@@ -4019,7 +3216,8 @@ bool AIE2InstructionSelector::selectG_AIE_STORE_PACK(MachineInstr &StoreI,
   if (!AMI)
     return false;
 
-  bool Is32Lanes = cast<GIntrinsic>(PackOp)->getIntrinsicID() == Intrinsic::aie2_pack_I8_I16;
+  bool Is32Lanes =
+      cast<GIntrinsic>(PackOp)->getIntrinsicID() == Intrinsic::aie2_pack_I8_I16;
 
   // Note: Operand 1 is the ID of the intrinsic
   Register SrcReg = PackOp->getOperand(2).getReg();
@@ -4051,7 +3249,7 @@ bool AIE2InstructionSelector::selectG_AIE_STORE_PACK(MachineInstr &StoreI,
   NewInstr.cloneMemRefs(StoreI);
 
   if (!ConstantSign)
-    setUnsetCtrlRegister(*NewInstr, MRI, AIE2::crPackSign, SignReg);
+    setUnsetCtrlRegister(MIB, *NewInstr, MRI, AIE2::crPackSign, SignReg);
 
   StoreI.eraseFromParent();
   makeDeadMI(*PackOp, MRI);
@@ -4095,7 +3293,7 @@ bool AIE2InstructionSelector::select512BitG_AIE_STORE_SRS(
     addSplitMemOperands(AMI.MemI, StoreHigher, StoreLower, 0, 2);
 
     if (!ConstantSign)
-      setUnsetCtrlRegister(*StoreHigher, *StoreLower, MRI, AIE2::crSRSSign,
+      setUnsetCtrlRegister(MIB, *StoreHigher, *StoreLower, MRI, AIE2::crSRSSign,
                            SignReg);
 
     AMI.MemI.eraseFromParent();
@@ -4142,7 +3340,7 @@ bool AIE2InstructionSelector::select512BitG_AIE_STORE_SRS(
     addSplitMemOperands(AMI.MemI, StoreHigher, StoreLower, 0, 2);
 
     if (!ConstantSign)
-      setUnsetCtrlRegister(*StoreHigher, *StoreLower, MRI, AIE2::crSRSSign,
+      setUnsetCtrlRegister(MIB, *StoreHigher, *StoreLower, MRI, AIE2::crSRSSign,
                            SignReg);
 
     AMI.MemI.eraseFromParent();
@@ -4208,7 +3406,7 @@ bool AIE2InstructionSelector::selectG_AIE_STORE_SRS(MachineInstr &StoreI,
   NewInstr.cloneMemRefs(StoreI);
 
   if (!ConstantSign)
-    setUnsetCtrlRegister(*NewInstr, MRI, AIE2::crSRSSign, SignReg);
+    setUnsetCtrlRegister(MIB, *NewInstr, MRI, AIE2::crSRSSign, SignReg);
 
   makeDeadMI(*SrsOp, MRI);
   StoreI.eraseFromParent();
@@ -4216,12 +3414,14 @@ bool AIE2InstructionSelector::selectG_AIE_STORE_SRS(MachineInstr &StoreI,
 }
 
 std::optional<LoadStoreOpcodes>
-getCombinedOpcodeCONV(const MachineInstr &MemOp, const MachineInstr &CombOp,
-                      std::optional<APInt> Immediate) {
+AIE2InstructionSelector::getCombinedOpcodeCONV(const MachineInstr &MemOp,
+                                               const MachineInstr &CombOp,
+                                               std::optional<APInt> Immediate) {
   const bool AlwaysFitsImmediateRange = true;
   const bool NoImmediate = false;
   if (CombOp.getOpcode() != AIE2::G_INTRINSIC_W_SIDE_EFFECTS ||
-      cast<GIntrinsic>(CombOp).getIntrinsicID() != Intrinsic::aie2_v16accfloat_to_v16bf16)
+      cast<GIntrinsic>(CombOp).getIntrinsicID() !=
+          Intrinsic::aie2_v16accfloat_to_v16bf16)
     return {};
 
   assert(getLoadStoreSize(MemOp) == 256 && "Unexpected VST.CONV size");
@@ -4254,11 +3454,6 @@ getCombinedOpcodeCONV(const MachineInstr &MemOp, const MachineInstr &CombOp,
                             /*OffsetOpcode=*/{}};
   }
   return {};
-}
-
-bool canCombineCONV(MachineInstr &MemOp, MachineInstr &CombOp) {
-  const std::optional<APInt> NoImmediate = {};
-  return getCombinedOpcodeCONV(MemOp, CombOp, NoImmediate).has_value();
 }
 
 bool AIE2InstructionSelector::selectG_AIE_STORE_CONV(MachineInstr &StoreI,
@@ -4497,8 +3692,9 @@ static bool getVLDA_CONVOpcode(const MachineInstr &MemOp,
 }
 
 std::optional<LoadStoreOpcodes>
-getCombinedOpcodeCONVLoad(const MachineInstr &MemOp, const MachineInstr &CombOp,
-                          const std::optional<APInt> Immediate) {
+AIE2InstructionSelector::getCombinedOpcodeCONVLoad(
+    const MachineInstr &MemOp, const MachineInstr &CombOp,
+    const std::optional<APInt> Immediate) {
 
   if (CombOp.getOpcode() != AIE2::G_INTRINSIC ||
       cast<GIntrinsic>(CombOp).getIntrinsicID() !=
@@ -4514,74 +3710,6 @@ getCombinedOpcodeCONVLoad(const MachineInstr &MemOp, const MachineInstr &CombOp,
   assert(getLoadStoreSize(MemOp) == 256 && "Unexpected VLDA.CONV size");
 
   return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange, /*OffsetOpcode=*/{}};
-}
-
-bool canCombineCONVLoad(MachineInstr &MemOp, MachineInstr &CombOp) {
-  const std::optional<APInt> NoImmediate = {};
-  return getCombinedOpcodeCONVLoad(MemOp, CombOp, NoImmediate).has_value();
-}
-
-bool AIE2InstructionSelector::selectG_AIE_LOAD_CONV(MachineInstr &CONVI,
-                                                    MachineRegisterInfo &MRI) {
-  Register LoadResult = (std::next(CONVI.uses().begin()))->getReg();
-  MachineInstr *LoadOp = getDefIgnoringCopiesAndBitcasts(LoadResult, MRI);
-
-  assert(LoadOp && "Expected SSA.");
-
-  // Do not try to combine if one of the load's defs is used by another
-  // instruction between the load and the VCONV or if there is a store
-  // between the load and the VCONV.
-  if (!canDelayMemOp(*LoadOp, CONVI, MRI))
-    return false;
-
-  if (!canCombineCONVLoad(*LoadOp, CONVI) ||
-      LoadOp->getParent() != CONVI.getParent() || !MRI.hasOneUse(LoadResult))
-    return false;
-
-  std::optional<AddressingModeInfo> AMI =
-      getOrDefineAddressingRegister(*LoadOp, MRI);
-
-  if (!AMI)
-    return false;
-
-  std::optional<LoadStoreOpcodes> LSO =
-      getCombinedOpcodeCONVLoad(AMI->MemI, CONVI, AMI->ImmediateOffset);
-
-  Register DstReg = CONVI.getOperand(0).getReg();
-
-  auto NewInstr = MIB.buildInstr(LSO->ISelOpcode);
-
-  NewInstr.addDef(DstReg);
-
-  for (auto *Def = std::next(AMI->MemI.defs().begin());
-       Def != AMI->MemI.defs().end(); ++Def)
-    NewInstr.addDef(Def->getReg());
-
-  addAddressingMode(NewInstr, *AMI, LSO->FitsImmediateRange, false, MRI);
-
-  NewInstr.cloneMemRefs(AMI->MemI);
-
-  CONVI.eraseFromParent();
-
-  // Erasing the load instruction breaks later on in the selection code. That is
-  // because an iterator is kept on erased instructions. This breaks while
-  // trying to eliminate a trivially dead instruction which requires access to
-  // its memory operands which have been erased, thus leading to a seg fault. To
-  // remedy this, we keep the load to be removed by the trivial dead code
-  // elimination and we make sure to assign new virtual register definitions to
-  // its live operands to respect SSA.
-  makeDeadMI(*LoadOp, MRI);
-
-  return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
-}
-
-bool AIE2InstructionSelector::selectVCONV(MachineInstr &I,
-                                          MachineRegisterInfo &MRI) {
-  // Try to match CONV combine
-  if (selectG_AIE_LOAD_CONV(I, MRI))
-    return true;
-  // Resort to TableGen'ed selection patterns
-  return selectImpl(I, *CoverageInfo);
 }
 
 bool AIE2InstructionSelector::selectG_AIE_LOAD_STORE(MachineInstr &I,
@@ -5074,73 +4202,6 @@ bool AIE2InstructionSelector::selectG_AIE_PAD_VECTOR_UNDEF(
   return true;
 }
 
-bool AIE2InstructionSelector::selectGetSS(MachineInstr &I,
-                                          MachineRegisterInfo &MRI) {
-  Register ValReg = I.getOperand(0).getReg();
-  Register StatusReg = I.getOperand(1).getReg();
-  // In this case of G_INTRINSIC operand 2 is target intrinsic
-
-  unsigned OpCode = getOpCode(cast<GIntrinsic>(I).getIntrinsicID());
-  MachineInstrBuilder MI = MIB.buildInstr(OpCode, {ValReg}, {});
-
-  auto CopyInstr =
-      MIB.buildInstr(TargetOpcode::COPY, {StatusReg}, {Register(AIE2::srSS0)});
-  if (!selectCopy(*CopyInstr, MRI)) {
-    return false;
-  }
-
-  I.eraseFromParent();
-  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
-}
-
-bool AIE2InstructionSelector::selectPutMSB(MachineInstr &I,
-                                           MachineRegisterInfo &MRI) {
-  // In this case of G_INTRINSIC operand 0 is target intrinsic
-  Register ValReg = I.getOperand(1).getReg();
-  Register TLastReg = I.getOperand(2).getReg();
-  auto TLastVal = getIConstantVRegValWithLookThrough(TLastReg, MRI);
-  unsigned OpCode = AIE2::MOV_mv_scl2ms_doTlast_reg;
-  if (TLastVal) {
-    unsigned ConstTLastVal = TLastVal->Value.getZExtValue();
-    OpCode =
-        (ConstTLastVal == 0) ? AIE2::MOV_mv_scl2ms : AIE2::MOV_TLAST_mv_scl2ms;
-  }
-  MachineInstrBuilder MI = MIB.buildInstr(OpCode, {}, {ValReg});
-  if (!TLastVal) {
-    MI.addReg(TLastReg);
-  }
-
-  I.eraseFromParent();
-  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
-}
-
-bool AIE2InstructionSelector::selectPutMSNB(MachineInstr &I,
-                                            MachineRegisterInfo &MRI) {
-  Register StatusReg = I.getOperand(0).getReg();
-  // In this case of G_INTRINSIC operand 1 is target intrinsic
-  Register ValReg = I.getOperand(2).getReg();
-  Register TLastReg = I.getOperand(3).getReg();
-  auto TLastVal = getIConstantVRegValWithLookThrough(TLastReg, MRI);
-  unsigned OpCode = AIE2::MOV_NB_mv_scl2ms_doTlast_reg;
-  if (TLastVal) {
-    unsigned ConstTLastVal = TLastVal->Value.getZExtValue();
-    OpCode = (ConstTLastVal == 0) ? AIE2::MOV_NB_mv_scl2ms
-                                  : AIE2::MOV_NB_TLAST_mv_scl2ms;
-  }
-  MachineInstrBuilder MI = MIB.buildInstr(OpCode, {}, {ValReg});
-  if (!TLastVal) {
-    MI.addReg(TLastReg);
-  }
-
-  auto CopyInstr =
-      MIB.buildInstr(TargetOpcode::COPY, {StatusReg}, {Register(AIE2::srMS0)});
-  if (!selectCopy(*CopyInstr, MRI)) {
-    return false;
-  }
-
-  I.eraseFromParent();
-  return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
-}
 unsigned int getVLDSparseOpcode(MachineInstr &I) {
   switch (cast<GIntrinsic>(I).getIntrinsicID()) {
   case Intrinsic::aie2_sparse_pop_16_and_get_pointer:

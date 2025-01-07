@@ -408,15 +408,11 @@ mulsc3.c # copyPhysReg
 os_version_check.c # No OS
 trampoline_setup.c # Trampoline stuff
 )
-set(aie2_SOURCES
+set(aie2_GENERIC_SOURCES
   ${aie_SOURCES}
-  aie2/divsi3.c
-  aie2/modsi3.c
-  aie2/udivsi3.c
-  aie2/umodsi3.c
 )
 
-list(REMOVE_ITEM aie2_SOURCES
+list(REMOVE_ITEM aie2_GENERIC_SOURCES
   bswapdi2.c    # unsupported instruction : G_BSWAP
   bswapsi2.c    # unsupported instruction : G_BSWAP
   ctzdi2.c      # unsupported instruction : G_CTTZ_ZERO_UNDEF
@@ -462,6 +458,22 @@ list(REMOVE_ITEM aie2_SOURCES
   ucmpti2.c     # unsupported type : __int128_t
   udivmodti4.c  # unsupported type : __int128_t
 
+)
+
+set (aie2_SOURCES
+  ${aie2_GENERIC_SOURCES}
+  aie2/divsi3.c
+  aie2/modsi3.c
+  aie2/udivsi3.c
+  aie2/umodsi3.c
+)
+
+set(aie2p_SOURCES
+  ${aie2_GENERIC_SOURCES}
+  aie2p/divsi3.c
+  aie2p/modsi3.c
+  aie2p/udivsi3.c
+  aie2p/umodsi3.c
 )
 
 # builtin support for Targets that have Arm state or have Thumb2

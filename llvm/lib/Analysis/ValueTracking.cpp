@@ -60,6 +60,7 @@
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/IntrinsicsAArch64.h"
 #include "llvm/IR/IntrinsicsAIE2.h"
+#include "llvm/IR/IntrinsicsAIE2P.h"
 #include "llvm/IR/IntrinsicsAMDGPU.h"
 #include "llvm/IR/IntrinsicsRISCV.h"
 #include "llvm/IR/IntrinsicsX86.h"
@@ -6300,6 +6301,8 @@ static const Value *getUnderlyingObjectAIEIntrinsic(const Value *V) {
       switch (II->getIntrinsicID()) {
       case Intrinsic::aie2_add_2d:
       case Intrinsic::aie2_add_3d:
+      case Intrinsic::aie2p_add_2d:
+      case Intrinsic::aie2p_add_3d:
         return II->getArgOperand(0);
       }
     }

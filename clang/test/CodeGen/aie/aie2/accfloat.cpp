@@ -11,10 +11,10 @@
 // RUN: %clang --target=aie2 -nostdlibinc -S -emit-llvm %s -o - | FileCheck %s
 // CHECK-LABEL: @_Z3foou10__accfloat(
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[ARG_ADDR:%.*]] = alloca i32, align 4
-// CHECK-NEXT:    store i32 [[ARG:%.*]], ptr [[ARG_ADDR]], align 4
-// CHECK-NEXT:    [[TMP0:%.*]] = load i32, ptr [[ARG_ADDR]], align 4
-// CHECK-NEXT:    ret i32 [[TMP0]]
+// CHECK-NEXT:    [[ARG_ADDR:%.*]] = alloca float, align 4
+// CHECK-NEXT:    store float [[ARG:%.*]], ptr [[ARG_ADDR]], align 4
+// CHECK-NEXT:    [[TMP0:%.*]] = load float, ptr [[ARG_ADDR]], align 4
+// CHECK-NEXT:    ret float [[TMP0]]
 //
 __accfloat foo(__accfloat arg)
 {

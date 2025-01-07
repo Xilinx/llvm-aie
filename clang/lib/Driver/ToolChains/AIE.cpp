@@ -60,6 +60,25 @@ AIEToolChain::AIEToolChain(const Driver &D, const llvm::Triple &Triple,
                            const ArgList &Args)
     : Generic_ELF(D, Triple, Args) {}
 
+std::string
+AIEToolChain::getIntrinsicsHeaderPath(llvm::Triple::ArchType &Arch) const {
+  std::string IncPath = "";
+  switch (Arch) {
+  case llvm::Triple::aie:
+    IncPath = GetFilePath("aiev1intrin.h");
+    break;
+  case llvm::Triple::aie2:
+    IncPath = GetFilePath("aiev2intrin.h");
+    break;
+  case llvm::Triple::aie2p:
+    IncPath = GetFilePath("aie2pintrin.h");
+    break;
+  default:
+    break;
+  }
+  return IncPath;
+}
+
 void AIEToolChain::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
                                              ArgStringList &CC1Args) const {
 
@@ -67,9 +86,7 @@ void AIEToolChain::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
 
   // Always include our instrinsics, for compatibility with existing toolchain.
   if (!DriverArgs.hasArg(options::OPT_mno_vitis_headers)) {
-    std::string path = (arch == llvm::Triple::aie2)
-                           ? GetFilePath("aiev2intrin.h")
-                           : GetFilePath("aiev1intrin.h");
+    std::string path = getIntrinsicsHeaderPath(arch);
     CC1Args.append({"-include", DriverArgs.MakeArgString(path)});
   }
 
@@ -78,6 +95,8 @@ void AIEToolChain::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
     CC1Args.push_back("-D__AIEARCH__=10");
   else if (arch == llvm::Triple::aie2)
     CC1Args.push_back("-D__AIEARCH__=20");
+  else if (arch == llvm::Triple::aie2p)
+    CC1Args.push_back("-D__AIEARCH__=21");
 
   // Don't pull in system headers from /usr/include or /usr/local/include.
   // All of the basic headers that we need come from the compiler.

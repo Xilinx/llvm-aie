@@ -5,8 +5,10 @@
 #
 # (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
 add_llvm_component_library(LLVMAIEAsmPrinter
+  AIECommonInstPrinter.cpp
   AIEInstPrinter.cpp
   AIE2InstPrinter.cpp
+  AIE2PInstPrinter.cpp
 
   LINK_COMPONENTS
   MC

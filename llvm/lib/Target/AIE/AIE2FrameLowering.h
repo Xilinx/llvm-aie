@@ -26,16 +26,13 @@ public:
       : AIEBaseFrameLowering(STI,
                              /*StackAlignment=*/Align(32)) {}
 
-  void emitPrologue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
-  void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
-
   void determineCalleeSaves(MachineFunction &MF, BitVector &SavedRegs,
                             RegScavenger *RS = nullptr) const override;
 
 private:
   void adjustReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
                  const DebugLoc &DL, unsigned Reg, int64_t Val,
-                 MachineInstr::MIFlag Flag) const;
+                 MachineInstr::MIFlag Flag) const override;
   void adjustSPReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
                    const DebugLoc &DL, int64_t Val,
                    MachineInstr::MIFlag Flag) const override;

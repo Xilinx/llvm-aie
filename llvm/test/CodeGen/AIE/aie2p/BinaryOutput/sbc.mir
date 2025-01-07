@@ -1,0 +1,88 @@
+# CHECK lines automatically generated using update_encodings.py
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+#
+# RUN: llc %llcflags --filetype=obj -o %t
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+# RUN: llc %llcflags --filetype=asm -o %t2
+# RUN: llvm-mc -triple aie2p -filetype=obj -o %t %t2
+# RUN: llvm-objdump --triple=aie2p -dr --no-print-imm-hex %t | FileCheck %s
+#
+# Test file automatically generated using generate_instr_info_test.py
+# * Automatically generated file, do not edit! *
+
+---
+name:      test
+alignment:    16
+body:      |
+  bb.0 (align 16):
+    ; SBC
+    $r8 = SBC $r16, $r15, implicit-def $srcarry, implicit $srcarry
+    $r31 = SBC $r26, $r5, implicit-def $srcarry, implicit $srcarry
+    $r7 = SBC $r17, $r14, implicit-def $srcarry, implicit $srcarry
+    $r5 = SBC $r2, $r3, implicit-def $srcarry, implicit $srcarry
+    $r17 = SBC $r4, $r21, implicit-def $srcarry, implicit $srcarry
+    $r16 = SBC $r23, $r6, implicit-def $srcarry, implicit $srcarry
+    $r6 = SBC $r31, $r2, implicit-def $srcarry, implicit $srcarry
+    $r19 = SBC $r3, $r7, implicit-def $srcarry, implicit $srcarry
+    $r24 = SBC $r5, $r0, implicit-def $srcarry, implicit $srcarry
+    $r18 = SBC $r19, $r9, implicit-def $srcarry, implicit $srcarry
+    $r15 = SBC $r8, $r28, implicit-def $srcarry, implicit $srcarry
+    $r23 = SBC $r1, $r19, implicit-def $srcarry, implicit $srcarry
+    $r3 = SBC $r18, $r18, implicit-def $srcarry, implicit $srcarry
+    $r11 = SBC $r9, $r31, implicit-def $srcarry, implicit $srcarry
+    $r27 = SBC $r21, $r8, implicit-def $srcarry, implicit $srcarry
+    $r25 = SBC $r25, $r17, implicit-def $srcarry, implicit $srcarry
+    $r30 = SBC $r28, $r10, implicit-def $srcarry, implicit $srcarry
+    $r10 = SBC $r11, $r22, implicit-def $srcarry, implicit $srcarry
+    $r28 = SBC $r22, $r26, implicit-def $srcarry, implicit $srcarry
+    $r9 = SBC $r29, $r12, implicit-def $srcarry, implicit $srcarry
+    $r12 = SBC $r24, $r13, implicit-def $srcarry, implicit $srcarry
+    $r20 = SBC $r6, $r23, implicit-def $srcarry, implicit $srcarry
+    $r26 = SBC $r27, $r1, implicit-def $srcarry, implicit $srcarry
+    $r4 = SBC $r0, $r29, implicit-def $srcarry, implicit $srcarry
+    $r29 = SBC $r7, $r27, implicit-def $srcarry, implicit $srcarry
+    $r21 = SBC $r30, $r30, implicit-def $srcarry, implicit $srcarry
+    $r2 = SBC $r13, $r16, implicit-def $srcarry, implicit $srcarry
+    $r13 = SBC $r20, $r20, implicit-def $srcarry, implicit $srcarry
+    $r14 = SBC $r12, $r11, implicit-def $srcarry, implicit $srcarry
+    $r1 = SBC $r15, $r25, implicit-def $srcarry, implicit $srcarry
+    $r0 = SBC $r10, $r24, implicit-def $srcarry, implicit $srcarry
+    $r22 = SBC $r14, $r4, implicit-def $srcarry, implicit $srcarry
+...
+
+# CHECK: 0: 98 f3 10 14 sbc r8, r16, r15
+# CHECK: 4: 98 53 be 16 sbc r31, r26, r5
+# CHECK: 8: 98 e3 4e 14 sbc r7, r17, r14
+# CHECK: c: 98 33 8a 10 sbc r5, r2, r3
+# CHECK: 10: 98 53 23 11 sbc r17, r4, r21
+# CHECK: 14: 98 63 e0 15 sbc r16, r23, r6
+# CHECK: 18: 98 23 cc 17 sbc r6, r31, r2
+# CHECK: 1c: 98 73 e6 10 sbc r19, r3, r7
+# CHECK: 20: 98 03 70 11 sbc r24, r5, r0
+# CHECK: 24: 98 93 e4 14 sbc r18, r19, r9
+# CHECK: 28: 98 c3 1f 12 sbc r15, r8, r28
+# CHECK: 2c: 98 33 6f 10 sbc r23, r1, r19
+# CHECK: 30: 98 23 87 14 sbc r3, r18, r18
+# CHECK: 34: 98 f3 57 12 sbc r11, r9, r31
+# CHECK: 38: 98 83 76 15 sbc r27, r21, r8
+# CHECK: 3c: 98 13 73 16 sbc r25, r25, r17
+# CHECK: 40: 98 a3 3c 17 sbc r30, r28, r10
+# CHECK: 44: 98 63 d5 12 sbc r10, r11, r22
+# CHECK: 48: 98 a3 b9 15 sbc r28, r22, r26
+# CHECK: 4c: 98 c3 52 17 sbc r9, r29, r12
+# CHECK: 50: 98 d3 18 16 sbc r12, r24, r13
+# CHECK: 54: 98 73 a9 11 sbc r20, r6, r23
+# CHECK: 58: 98 13 f4 16 sbc r26, r27, r1
+# CHECK: 5c: 98 d3 09 10 sbc r4, r0, r29
+# CHECK: 60: 98 b3 fb 11 sbc r29, r7, r27
+# CHECK: 64: 98 e3 ab 17 sbc r21, r30, r30
+# CHECK: 68: 98 03 45 13 sbc r2, r13, r16
+# CHECK: 6c: 98 43 1b 15 sbc r13, r20, r20
+# CHECK: 70: 98 b3 1c 13 sbc r14, r12, r11
+# CHECK: 74: 98 93 c3 13 sbc r1, r15, r25
+# CHECK: 78: 98 83 81 12 sbc r0, r10, r24
+# CHECK: 7c: 98 43 ac 13 sbc r22, r14, r4

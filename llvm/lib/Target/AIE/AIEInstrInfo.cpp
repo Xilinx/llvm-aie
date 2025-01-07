@@ -48,18 +48,6 @@ AIEInstrInfo::AIEInstrInfo()
   FuncUnitWrapper::setFormatInterface(FormatInterface);
 }
 
-MCSlotKind AIEInstrInfo::getSlotKind(unsigned Opcode) const {
-  return FormatInterface->getSlotKind(Opcode);
-}
-
-const MCSlotInfo *AIEInstrInfo::getSlotInfo(const MCSlotKind Kind) const {
-  return FormatInterface->getSlotInfo(Kind);
-}
-
-const PacketFormats &AIEInstrInfo::getPacketFormats() const {
-  return FormatInterface->getPacketFormats();
-}
-
 ScheduleHazardRecognizer*
 AIEInstrInfo::CreateTargetPostRAHazardRecognizer(
       const InstrItineraryData *II, const ScheduleDAG *DAG) const {
@@ -732,6 +720,10 @@ unsigned AIEInstrInfo::getNopOpcode(size_t Size) const {
     llvm_unreachable("Unsupported nop size.\n");
   }
   return AIE::NOP;
+}
+
+unsigned AIEInstrInfo::getMvSclOpcode() const {
+  llvm_unreachable("Un-implemented for this target.\n");
 }
 
 bool AIEInstrInfo::canHoistCheapInst(const MachineInstr &MI) const {

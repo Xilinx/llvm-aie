@@ -17,8 +17,8 @@
 #include "AIESubtarget.h" // For AIEBaseSubTarget
 #include "MCTargetDesc/AIE2MCTargetDesc.h"
 #include "MCTargetDesc/AIEMCTargetDesc.h"
+#include "MCTargetDesc/aie2p/AIE2PMCTargetDesc.h"
 #include "llvm/MC/MCRegister.h"
-
 using namespace llvm;
 
 #define DEBUG_TYPE "aie-lower"
@@ -147,6 +147,44 @@ ArrayRef<MCPhysReg> AllocateSparseRegPair(CCState &State) {
   return ArrayRef<MCPhysReg>();
 }
 
+namespace {
+const std::array<std::array<MCPhysReg, 2>, 12> Bfp16RegPairs576Bit = {
+    {{AIE2P::x0, AIE2P::e0},
+     {AIE2P::x1, AIE2P::e1},
+     {AIE2P::x2, AIE2P::e2},
+     {AIE2P::x3, AIE2P::e3},
+     {AIE2P::x4, AIE2P::e4},
+     {AIE2P::x5, AIE2P::e5},
+     {AIE2P::x6, AIE2P::e6},
+     {AIE2P::x7, AIE2P::e7},
+     {AIE2P::x8, AIE2P::e8},
+     {AIE2P::x9, AIE2P::e9},
+     {AIE2P::x10, AIE2P::e10},
+     {AIE2P::x11, AIE2P::e11}}};
+
+const std::array<std::array<MCPhysReg, 4>, 6> Bfp16RegSet1052Bit = {
+    {{AIE2P::x0, AIE2P::x1, AIE2P::e0, AIE2P::e1},
+     {AIE2P::x2, AIE2P::x3, AIE2P::e2, AIE2P::e3},
+     {AIE2P::x4, AIE2P::x5, AIE2P::e4, AIE2P::e5},
+     {AIE2P::x6, AIE2P::x7, AIE2P::e6, AIE2P::e7},
+     {AIE2P::x8, AIE2P::x9, AIE2P::e8, AIE2P::e9},
+     {AIE2P::x10, AIE2P::x11, AIE2P::e10, AIE2P::e11}}};
+} // namespace
+
+ArrayRef<MCPhysReg> AllocateBfp16RegPair(CCState &State) {
+  for (const std::array<MCPhysReg, 2> &RegPair : Bfp16RegPairs576Bit) {
+    if (unsigned Block = State.AllocateRegBlock(RegPair, 2))
+      return RegPair;
+  }
+  return ArrayRef<MCPhysReg>();
+}
+ArrayRef<MCPhysReg> AllocateBfp16RegSet(CCState &State) {
+  for (const std::array<MCPhysReg, 4> &RegSet : Bfp16RegSet1052Bit) {
+    if (unsigned Block = State.AllocateRegBlock(RegSet, 4))
+      return RegSet;
+  }
+  return ArrayRef<MCPhysReg>();
+}
 static bool CC_AIE2_SPARSE(unsigned ValNo, MVT ValVT, MVT LocVT,
                            CCValAssign::LocInfo LocInfo,
                            ISD::ArgFlagsTy ArgFlags, CCState &State) {
@@ -182,6 +220,106 @@ static bool CC_AIE2_SPARSE(unsigned ValNo, MVT ValVT, MVT LocVT,
   }
 
   return false; // CC didn't match.
+}
+
+static bool CC_AIE2P_BFP16(unsigned ValNo, MVT ValVT, MVT LocVT,
+                           CCValAssign::LocInfo LocInfo,
+                           ISD::ArgFlagsTy ArgFlags, CCState &State) {
+  unsigned NumElts = State.getPendingLocs().size();
+  if (LocVT == MVT::v64i8 || (LocVT == MVT::v8i8 && NumElts == 2)) {
+    // Delay assignments until we get  x and e components of the v64bfp16 and
+    // x1, x2, e1, e2 for v128bfp16 type
+    State.getPendingLocs().push_back(
+        CCValAssign::getPending(ValNo, ValVT, LocVT, LocInfo));
+    return true;
+  }
+
+  if (LocVT == MVT::v8i8 && (NumElts == 1 || NumElts == 3)) {
+
+    CCValAssign MantissaVecLoc0 = State.getPendingLocs().front();
+    if (NumElts == 1) {
+      // Allocate both the pending X register, and the current exponent
+      // register.
+      State.getPendingLocs().clear();
+      auto BFP16RegPair = AllocateBfp16RegPair(State);
+      if (!BFP16RegPair.empty()) {
+        auto VecReg = BFP16RegPair.front();
+        auto ExponentReg = BFP16RegPair.back();
+        MantissaVecLoc0.convertToReg(VecReg);
+        State.addLoc(MantissaVecLoc0);
+        State.addLoc(
+            CCValAssign::getReg(ValNo, ValVT, ExponentReg, LocVT, LocInfo));
+        return true;
+      }
+      unsigned Exponent = State.AllocateStack(8, Align(4)) + 56;
+      // This extra stack allocation is to compatible with ABI
+      State.AllocateStack(8, Align(32));
+      MantissaVecLoc0.convertToMem(State.AllocateStack(64, Align(32)));
+      State.addLoc(MantissaVecLoc0);
+      State.addLoc(CCValAssign::getMem(ValNo, ValVT, Exponent, LocVT, LocInfo));
+      return true;
+
+    } else if (NumElts == 3) {
+      // Allocate the pending x1, x2 and e1 registers,
+      // and the current exponent
+      // register.
+      CCValAssign MantissaVecLoc1 = State.getPendingLocs()[1];
+      CCValAssign ExponentVecLoc1 = State.getPendingLocs()[2];
+      State.getPendingLocs().clear();
+      auto BFP16RegSet = AllocateBfp16RegSet(State);
+      if (!BFP16RegSet.empty()) {
+        auto VecReg1 = BFP16RegSet.front();
+        auto VecReg2 = BFP16RegSet[1];
+        auto ExponentReg1 = BFP16RegSet[2];
+        auto ExponentReg2 = BFP16RegSet[3];
+        MantissaVecLoc0.convertToReg(VecReg1);
+        State.addLoc(MantissaVecLoc0);
+        MantissaVecLoc1.convertToReg(VecReg2);
+        State.addLoc(MantissaVecLoc1);
+        ExponentVecLoc1.convertToReg(ExponentReg1);
+        State.addLoc(ExponentVecLoc1);
+        State.addLoc(
+            CCValAssign::getReg(ValNo, ValVT, ExponentReg2, LocVT, LocInfo));
+        return true;
+      }
+      // To compatible with ABI, exponent must allocate first and then mantissa.
+      // Also, offset of exponent has to be adjusted to have contiguous memory
+      // for bfp16.
+      unsigned Exponent2 = State.AllocateStack(8, Align(4)) + 48;
+      unsigned Exponent1 = State.AllocateStack(8, Align(32)) + 24;
+      unsigned Mantissa2 = State.AllocateStack(64, Align(32));
+      unsigned Mantissa1 = State.AllocateStack(64, Align(32));
+      MantissaVecLoc0.convertToMem(Mantissa1);
+      State.addLoc(MantissaVecLoc0);
+      MantissaVecLoc1.convertToMem(Mantissa2);
+      State.addLoc(MantissaVecLoc1);
+      ExponentVecLoc1.convertToMem(Exponent1);
+      State.addLoc(ExponentVecLoc1);
+      State.addLoc(
+          CCValAssign::getMem(ValNo, ValVT, Exponent2, LocVT, LocInfo));
+      return true;
+    }
+  }
+
+  return false; // CC didn't match.
+}
+static bool CC_AIE2P_Handle_Consecutive_Regs(unsigned ValNo, MVT ValVT,
+                                             MVT LocVT,
+                                             CCValAssign::LocInfo LocInfo,
+                                             ISD::ArgFlagsTy ArgFlags,
+                                             CCState &State) {
+  if (CC_AIE2_SPARSE(ValNo, ValVT, LocVT, LocInfo, ArgFlags, State))
+    return true;
+  return CC_AIE2P_BFP16(ValNo, ValVT, LocVT, LocInfo, ArgFlags, State);
+}
+
+static bool CC_AIE2P_Handle_Split_Arg(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
+                                      CCValAssign::LocInfo &LocInfo,
+                                      ISD::ArgFlagsTy &ArgFlags,
+                                      CCState &State) {
+  return Handle_Split_Arg(ValNo, ValVT, LocVT, LocInfo, ArgFlags, State,
+                          {AIE2P::r0, AIE2P::r1, AIE2P::r2, AIE2P::r3,
+                           AIE2P::r4, AIE2P::r5, AIE2P::r6, AIE2P::r7});
 }
 
 static bool CC_AIE_Handle_Split_Arg_Ret(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
@@ -269,10 +407,13 @@ static bool CC_AIE_Handle_V2I32_Ret(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
 }
 
 #include "AIE2GenCallingConv.inc"
+#include "AIE2PGenCallingConv.inc"
 #include "AIEGenCallingConv.inc"
 CCAssignFn *AIEBaseTargetLowering::CCAssignFnForCall(bool IsVarArg) const {
   if (Subtarget.isAIE2())
     return IsVarArg ? CC_AIE2_Stack : CC_AIE2;
+  else if (Subtarget.isAIE2P())
+    return IsVarArg ? CC_AIE2P_Stack : CC_AIE2P;
   else
     return IsVarArg ? CC_AIE_Stack : CC_AIE;
 }
@@ -280,6 +421,8 @@ CCAssignFn *AIEBaseTargetLowering::CCAssignFnForCall(bool IsVarArg) const {
 CCAssignFn *AIEBaseTargetLowering::CCAssignFnForReturn() const {
   if (Subtarget.isAIE2())
     return RetCC_AIE2;
+  else if (Subtarget.isAIE2P())
+    return RetCC_AIE2P;
   else
     return RetCC_AIE;
 }

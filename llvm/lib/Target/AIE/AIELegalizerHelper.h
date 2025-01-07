@@ -56,7 +56,12 @@ public:
   bool legalizeG_FPEXT(LegalizerHelper &Helper, MachineInstr &MI) const;
   bool legalizeG_FABS(LegalizerHelper &Helper, MachineInstr &MI) const;
   bool legalizeG_FADDSUB(LegalizerHelper &Helper, MachineInstr &MI) const;
+  bool legalizeG_SELECT(LegalizerHelper &Helper, MachineInstr &MI) const;
+  bool legalizeG_BITCAST(LegalizerHelper &Helper, MachineInstr &MI) const;
   bool legalizeLoopDecrement(LegalizerHelper &Helper, MachineInstr &MI) const;
+  bool legalizeG_CONCAT_VECTORS(LegalizerHelper &Helper,
+                                MachineInstr &MI) const;
+  bool legalizeBinOp(LegalizerHelper &Helper, MachineInstr &MI) const;
 
   // Helper functions for legalization
   bool pack32BitVector(LegalizerHelper &Helper, MachineInstr &MI,

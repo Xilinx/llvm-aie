@@ -86,6 +86,11 @@ unsigned AIEBaseRegisterBankInfo::getRegBankBaseIdxOffset(unsigned RBIdx,
       return 0;
     return -1;
   }
+  if (RBIdx == PMI_ACC2048) {
+    if (Size <= 2048)
+      return 0;
+    return -1;
+  }
   return -1;
 }
 
@@ -172,12 +177,14 @@ void AIEBaseRegisterBankInfo::applyMappingImpl(
   case TargetOpcode::G_ANYEXT:
   case TargetOpcode::G_SEXT:
   case TargetOpcode::G_ZEXT:
+  case TargetOpcode::G_UNMERGE_VALUES:
     // Those ID must match getInstrAlternativeMappings.
     assert(OpdMapper.getInstrMapping().getID() == 1 &&
            "Don't know how to handle that ID");
     return applyDefaultMapping(OpdMapper);
   case TargetOpcode::G_TRUNC:
   case TargetOpcode::G_PTR_ADD:
+  case TargetOpcode::G_CONCAT_VECTORS:
     // Those ID must match getInstrAlternativeMappings.
     assert((OpdMapper.getInstrMapping().getID() >= 1 &&
             OpdMapper.getInstrMapping().getID() <= 2) &&
@@ -214,7 +221,7 @@ AIEBaseRegisterBankInfo::getSameKindOfOperandsMapping(
 }
 
 AIEBaseRegisterBankInfo::PartialMappingIdx
-AIEBaseRegisterBankInfo::getPartialMappingIdx(const LLT &Ty) {
+AIEBaseRegisterBankInfo::getPartialMappingIdx(const LLT &Ty) const {
   LLT ElemTy = Ty.getScalarType();
   // As a top-level guess, pointers go in PTRs, 20bit scalar go in MODs
   // and all other integers go in GPRs.
@@ -222,9 +229,29 @@ AIEBaseRegisterBankInfo::getPartialMappingIdx(const LLT &Ty) {
     return PMI_PTR;
   else if (Ty.isScalar()) {
     unsigned short ScalarSize = Ty.getScalarSizeInBits();
+    switch (ScalarSize) {
+    case 20:
+      return PMI_MOD;
+    case 16:
+    case 32:
+      return PMI_GPR;
+    case 64:
+      return PMI_GPR64;
+    case 128:
+      return PMI_VREG128;
+    case 256:
+      return PMI_VREG256;
+    case 512:
+      return PMI_VREG512;
+    case 1024:
+      return PMI_VREG1024;
+    default:
+      llvm_unreachable("Unexpected type size.");
+    }
     return ScalarSize <= 32 ? (ScalarSize == 20 ? PMI_MOD : PMI_GPR)
                             : (ScalarSize <= 64 ? PMI_GPR64 : PMI_VREG128);
   } else {
+    unsigned Size = ElemTy.getSizeInBits();
     switch (Ty.getSizeInBits()) {
     case 32:
       return PMI_GPR;
@@ -232,17 +259,44 @@ AIEBaseRegisterBankInfo::getPartialMappingIdx(const LLT &Ty) {
       return PMI_GPR64;
     case 128:
     case 256:
-      return (ElemTy.getSizeInBits() == 64) ? PMI_ACC256 : PMI_VREG256;
+      return (Size == 64) ? PMI_ACC256 : PMI_VREG256;
     case 512:
-      return (ElemTy.getSizeInBits() == 64) ? PMI_ACC512 : PMI_VREG512;
-    case 1024: {
-      return (ElemTy.getSizeInBits() == 64) ? PMI_ACC1024 : PMI_VREG1024;
-    }
+      return (Size == 64) ? PMI_ACC512 : PMI_VREG512;
+    case 1024:
+      return (Size == 64) ? PMI_ACC1024 : PMI_VREG1024;
     default:
       llvm_unreachable("Unsupported register size.");
     }
   }
   return PMI_None;
+}
+
+AIEBaseRegisterBankInfo::PartialMappingIdx
+AIEBaseRegisterBankInfo::getAccPartialMappingIdx(const LLT &Ty) const {
+  switch (Ty.getSizeInBits()) {
+  case 256:
+    return PMI_ACC256;
+  case 512:
+    return PMI_ACC512;
+  case 1024:
+    return PMI_ACC1024;
+  default:
+    llvm_unreachable("Unsupported register size.");
+  }
+}
+
+AIEBaseRegisterBankInfo::PartialMappingIdx
+AIEBaseRegisterBankInfo::getVecPartialMappingIdx(const LLT &Ty) const {
+  switch (Ty.getSizeInBits()) {
+  case 256:
+    return PMI_VREG256;
+  case 512:
+    return PMI_VREG512;
+  case 1024:
+    return PMI_VREG1024;
+  default:
+    llvm_unreachable("Unsupported register size.");
+  }
 }
 
 bool AIEBaseRegisterBankInfo::requiresGPRRegBank(const MachineInstr &MI,
@@ -281,7 +335,6 @@ bool AIEBaseRegisterBankInfo::requiresPTRRegBank(const MachineInstr &MI,
 const RegisterBankInfo::InstructionMapping &
 AIEBaseRegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
   const unsigned Opc = MI.getOpcode();
-
   // Try the default logic for non-generic instructions that are either copies
   // or already have some operands assigned to banks.
   if (!isPreISelGenericOpcode(Opc) || Opc == TargetOpcode::G_PHI) {
@@ -293,7 +346,6 @@ AIEBaseRegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
 
   const MachineFunction &MF = *MI.getParent()->getParent();
   const MachineRegisterInfo &MRI = MF.getRegInfo();
-
   // Use stating mappings if possible.
   // TODO: Benchmark if this is worth it instead of falling back to a
   // dynamic approach.

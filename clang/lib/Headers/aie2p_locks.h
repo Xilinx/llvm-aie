@@ -1,0 +1,66 @@
+//===- aie2p_locks.h -------------------------------------------*- C++ -*-===//
+//
+// This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+//
+//===---------------------------------------------------------------------===//
+
+#ifndef __AIE2P_LOCKS_H__
+#define __AIE2P_LOCKS_H__
+
+// Acquire and release instructions
+INTRINSIC(void)
+acquire_equal(unsigned id, unsigned val) {
+  return __builtin_aie2p_acquire(id, val);
+}
+INTRINSIC(void)
+acquire_equal(unsigned id, unsigned val, int cond) {
+  return __builtin_aie2p_acquire_cond(id, val, cond);
+}
+INTRINSIC(void)
+acquire_greater_equal(unsigned id, unsigned val) {
+  return __builtin_aie2p_acquire(id, -val);
+}
+INTRINSIC(void)
+acquire_greater_equal(unsigned id, unsigned val, unsigned cond) {
+  return __builtin_aie2p_acquire_cond(id, -val, cond);
+}
+INTRINSIC(void)
+release(unsigned id, int val) { return __builtin_aie2p_release(id, val); }
+INTRINSIC(void)
+release(unsigned id, int val, int cond) {
+  return __builtin_aie2p_release_cond(id, val, cond);
+}
+// Acquire and release instructions considering a memory pointer
+// The below definitions with ptr arg is not officially used anywhere.
+// The ptr arg is intentionally not used.
+INTRINSIC(void)
+acquire_equal(const void *a, unsigned id, unsigned val, int cond) {
+  return acquire_equal(id, val, cond);
+}
+INTRINSIC(void)
+acquire_greater_equal(const void *a, unsigned id, unsigned val) {
+  return acquire_greater_equal(id, val);
+}
+INTRINSIC(void)
+acquire_greater_equal(const void *a, unsigned id, unsigned val, unsigned cond) {
+  return acquire_greater_equal(id, val, cond);
+}
+INTRINSIC(void)
+release(void *a, unsigned id, int val) { return release(id, val); }
+INTRINSIC(void)
+release(void *a, unsigned id, int val, int cond) {
+  return release(id, val, cond);
+}
+// Disable the core
+INTRINSIC(void)
+done(void) {
+  __builtin_aie2p_sched_barrier();
+  __builtin_aie2p_done();
+  __builtin_aie2p_sched_barrier();
+}
+// TODO Acquire and release instructions considering a memory pointer in TM
+#endif // __AIE2P_LOCKS_H__

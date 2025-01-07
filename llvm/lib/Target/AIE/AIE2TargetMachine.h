@@ -19,6 +19,7 @@
 #include "AIEBaseTargetMachine.h"
 #include "MCTargetDesc/AIE2MCTargetDesc.h"
 
+extern llvm::cl::opt<bool> EnableSubregRenaming;
 namespace llvm {
 
 class AIE2TargetMachine : public AIEBaseTargetMachine {
@@ -39,6 +40,33 @@ public:
   /// PostRAScheduling is scheduled as part of PreSched2 passes.
   bool targetSchedulesPostRAScheduling() const override { return true; }
   unsigned getAddressSpaceForPseudoSourceKind(unsigned Kind) const override;
+};
+
+// AIE2 Pass Setup
+class AIE2PassConfig : public AIEBasePassConfig {
+public:
+  AIE2PassConfig(LLVMTargetMachine &TM, PassManagerBase &PM)
+      : AIEBasePassConfig(TM, PM) {
+    if (!EnableSubregRenaming)
+      disablePass(&RenameIndependentSubregsID);
+  }
+
+  AIE2TargetMachine &getAIETargetMachine() const {
+    return getTM<AIE2TargetMachine>();
+  }
+
+  bool addPreISel() override;
+  void addPreEmitPass() override;
+  bool addInstSelector() override;
+  bool addGlobalInstructionSelect() override;
+  void addPreRegAlloc() override;
+  bool addRegAssignAndRewriteOptimized() override;
+  void addPostRewrite() override;
+  void addMachineLateOptimization() override;
+  void addPreSched2() override;
+  void addBlockPlacement() override;
+  void addPreLegalizeMachineIR() override;
+  void addPreRegBankSelect() override;
 };
 
 } // namespace llvm
