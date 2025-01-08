@@ -161,13 +161,13 @@ bool AIELegalizerHelper::legalizeG_BUILD_VECTOR(LegalizerHelper &Helper,
   MIRBuilder.buildUndef(Src);
 
   const AIEBaseInstrInfo *II = ST.getInstrInfo();
-  MachineOperand *OperandBegin = MI.operands_begin() + 1;
+  MachineOperand *OperandEnd = std::prev(MI.operands_end());
   for (auto &Operand : drop_begin(MI.operands(), 1)) {
     Register EltReg = Operand.getReg();
     LLT EltRegTy = MRI.getType(EltReg);
     Register Dst = MRI.createGenericVirtualRegister(VecTy);
 
-    if (DstVecSize == 512 && &Operand == OperandBegin) {
+    if (DstVecSize == 512 && &Operand == OperandEnd) {
       Dst = DstReg;
     }
 
