@@ -195,7 +195,7 @@ body:             |
     ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_HI30:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_HI [[AIE_ADD_VECTOR_ELT_HI29]], [[C3]](s32)
     ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_HI31:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_HI [[AIE_ADD_VECTOR_ELT_HI30]], [[C3]](s32)
     ; CHECK-NEXT: [[FRAME_INDEX:%[0-9]+]]:_(p0) = G_FRAME_INDEX %stack.0
-    ; CHECK-NEXT: G_STORE [[AIE_ADD_VECTOR_ELT_HI]](<32 x s16>), [[FRAME_INDEX]](p0) :: (store (<32 x s16>), align 32)
+    ; CHECK-NEXT: G_STORE [[AIE_ADD_VECTOR_ELT_HI31]](<32 x s16>), [[FRAME_INDEX]](p0) :: (store (<32 x s16>), align 32)
     %2:_(s32) = G_CONSTANT i32 4
     %3:_(s32) = G_CONSTANT i32 12
     %4:_(s32) = G_CONSTANT i32 9

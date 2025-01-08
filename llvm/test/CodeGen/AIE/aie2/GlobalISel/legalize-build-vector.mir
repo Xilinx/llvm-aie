@@ -83,7 +83,7 @@ body:             |
     ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_HI14:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_HI [[AIE_ADD_VECTOR_ELT_HI13]], [[C3]](s32)
     ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_HI15:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_HI [[AIE_ADD_VECTOR_ELT_HI14]], [[C3]](s32)
     ; CHECK-NEXT: [[FRAME_INDEX:%[0-9]+]]:_(p0) = G_FRAME_INDEX %stack.0
-    ; CHECK-NEXT: G_STORE [[AIE_ADD_VECTOR_ELT_HI]](<16 x s32>), [[FRAME_INDEX]](p0) :: (store (<16 x s32>), align 32)
+    ; CHECK-NEXT: G_STORE [[AIE_ADD_VECTOR_ELT_HI15]](<16 x s32>), [[FRAME_INDEX]](p0) :: (store (<16 x s32>), align 32)
     %2:_(s32) = G_CONSTANT i32 4
     %3:_(s32) = G_CONSTANT i32 12
     %4:_(s32) = G_CONSTANT i32 9
@@ -138,7 +138,7 @@ body:             |
     ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_HI29:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_HI [[AIE_ADD_VECTOR_ELT_HI28]], [[C3]](s32)
     ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_HI30:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_HI [[AIE_ADD_VECTOR_ELT_HI29]], [[C3]](s32)
     ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_HI31:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_HI [[AIE_ADD_VECTOR_ELT_HI30]], [[C3]](s32)
-    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[AIE_ADD_VECTOR_ELT_HI]](<16 x s32>), [[AIE_ADD_VECTOR_ELT_HI16]](<16 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[AIE_ADD_VECTOR_ELT_HI15]](<16 x s32>), [[AIE_ADD_VECTOR_ELT_HI31]](<16 x s32>)
     ; CHECK-NEXT: [[FRAME_INDEX:%[0-9]+]]:_(p0) = G_FRAME_INDEX %stack.0
     ; CHECK-NEXT: G_STORE [[CONCAT_VECTORS]](<32 x s32>), [[FRAME_INDEX]](p0) :: (store (<32 x s32>), align 32)
     %2:_(s32) = G_CONSTANT i32 42
@@ -371,7 +371,7 @@ body:             |
     ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_HI62:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_HI [[AIE_ADD_VECTOR_ELT_HI61]], [[COPY59]](s32)
     ; CHECK-NEXT: [[COPY60:%[0-9]+]]:_(s32) = COPY [[C3]](s32)
     ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_HI63:%[0-9]+]]:_(<32 x s16>) = G_AIE_ADD_VECTOR_ELT_HI [[AIE_ADD_VECTOR_ELT_HI62]], [[COPY60]](s32)
-    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<64 x s16>) = G_CONCAT_VECTORS [[AIE_ADD_VECTOR_ELT_HI]](<32 x s16>), [[AIE_ADD_VECTOR_ELT_HI32]](<32 x s16>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<64 x s16>) = G_CONCAT_VECTORS [[AIE_ADD_VECTOR_ELT_HI31]](<32 x s16>), [[AIE_ADD_VECTOR_ELT_HI63]](<32 x s16>)
     ; CHECK-NEXT: [[FRAME_INDEX:%[0-9]+]]:_(p0) = G_FRAME_INDEX %stack.0
     ; CHECK-NEXT: G_STORE [[CONCAT_VECTORS]](<64 x s16>), [[FRAME_INDEX]](p0) :: (store (<64 x s16>), align 32)
     %2:_(s16) = G_CONSTANT i16 19
@@ -421,7 +421,7 @@ body:               |
     ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_HI13:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_HI [[AIE_ADD_VECTOR_ELT_HI12]], [[C13]](s32)
     ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_HI14:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_HI [[AIE_ADD_VECTOR_ELT_HI13]], [[C14]](s32)
     ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_HI15:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_HI [[AIE_ADD_VECTOR_ELT_HI14]], [[C15]](s32)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_ADD_VECTOR_ELT_HI]](<16 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_ADD_VECTOR_ELT_HI15]](<16 x s32>)
     %1:_(s32) = G_CONSTANT i32 1
     %2:_(s32) = G_CONSTANT i32 2
     %3:_(s32) = G_CONSTANT i32 3
