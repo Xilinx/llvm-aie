@@ -1429,7 +1429,7 @@ INTRINSIC(v32int16)
 broadcast_to_v32int16(short b) { return b - v32int16{0}; }
 
 INTRINSIC(v32int16)
-broadcast_to_v32int16(v2int16 b) { return broadcast_u32((int)b); }
+broadcast_to_v32int16(v2int16 b) { return broadcast_s32((int)b); }
 
 INTRINSIC(v32int16)
 broadcast_to_v32int16(v4int16 b) { return vector_broadcast64((v2int32)b); }
@@ -1438,7 +1438,7 @@ INTRINSIC(v16int32)
 broadcast_to_v16int32(int b) { return b - v16int32{0}; }
 
 INTRINSIC(v16int32)
-broadcast_to_v16int32(mask64 b) { return vector_broadcast64((v2uint32)b); }
+broadcast_to_v16int32(mask64 b) { return vector_broadcast64((v2int32)b); }
 
 INTRINSIC(v16int32)
 broadcast_to_v16int32(v2int32 b) { return vector_broadcast64(b); }
