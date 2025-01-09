@@ -119,19 +119,14 @@ bool AIE2TTIImpl::isHardwareLoopProfitable(Loop *L, ScalarEvolution &SE,
     return false;
 
   if (!ForceHLGeneration) {
-    if (const MDNode *LoopID = L->getLoopID()) {
-      std::optional<int64_t> MinTripCount = getMinTripCount(LoopID);
-      if (MinTripCount) {
-        // Reject HL for this case.
-        if (*MinTripCount <= MinIterCountHLReject) {
-          return false;
-        }
-      } else {
-        // We have metadata, but not iteration information.
+    std::optional<int64_t> MinTripCount = getMinTripCount(L, &SE);
+    if (MinTripCount) {
+      // Reject HL for this case.
+      if (*MinTripCount <= MinIterCountHLReject) {
         return false;
       }
     } else {
-      // We don't have metadata.
+      // We have metadata, but not iteration information.
       return false;
     }
   }

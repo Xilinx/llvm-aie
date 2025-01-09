@@ -72,3 +72,45 @@ for.body:                                         ; preds = %entry, %for.body
   %exitcond.not = icmp eq i32 %inc, %n
   br i1 %exitcond.not, label %for.cond.cleanup, label %for.body
 }
+
+define i32 @static_bounded_loop(i32 %num) {
+; CHECK-LABEL: static_bounded_loop:
+; CHECK:         .p2align 4
+; CHECK-NEXT:  // %bb.0: // %entry
+; CHECK-NEXT:    nopb ; nopa ; nops ; movxm ls, #.LBB1_1; nopv
+; CHECK-NEXT:    mova r2, #64; nopb ; movxm le, #.L_LEnd1
+; CHECK-NEXT:    add.nc lc, r2, #0
+; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
+; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; mov r0, r1; nopv
+; CHECK-NEXT:    .p2align 4
+; CHECK-NEXT:  .LBB1_1: // %for.body
+; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
+; CHECK-NEXT:    nopb ; nopa ; nops ; mul r0, r0, r0; nopm ; nopv
+; CHECK-NEXT:  .L_LEnd1:
+; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
+; CHECK-NEXT:  // %bb.2: // %for.cond.cleanup
+; CHECK-NEXT:    nopa ; ret lr
+; CHECK-NEXT:    nop // Delay Slot 5
+; CHECK-NEXT:    nop // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 3
+; CHECK-NEXT:    nop // Delay Slot 2
+; CHECK-NEXT:    nop // Delay Slot 1
+entry:
+  br label %for.body
+
+for.cond.cleanup:                                 ; preds = %for.body
+  ret i32 %mul
+
+for.body:                                         ; preds = %entry, %for.body
+  %i.05 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
+  %x.04 = phi i32 [ %num, %entry ], [ %mul, %for.body ]
+  %mul = mul nsw i32 %x.04, %x.04
+  %inc = add nuw nsw i32 %i.05, 1
+  %exitcond.not = icmp eq i32 %inc, 64
+  br i1 %exitcond.not, label %for.cond.cleanup, label %for.body
+}
