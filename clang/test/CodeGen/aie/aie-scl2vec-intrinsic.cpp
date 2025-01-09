@@ -2102,9 +2102,7 @@ unsigned int test_extract_elem(v16uint32 v, int idx, int sign) {
 // AIE2P-SAME: <16 x float> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[SIGN:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECEXT_I_I:%.*]] = extractelement <16 x float> [[V]], i32 [[IDX]]
-// AIE2P-NEXT:    [[CONV_I:%.*]] = fptosi float [[VECEXT_I_I]] to i32
-// AIE2P-NEXT:    [[TMP0:%.*]] = bitcast i32 [[CONV_I]] to float
-// AIE2P-NEXT:    ret float [[TMP0]]
+// AIE2P-NEXT:    ret float [[VECEXT_I_I]]
 //
 float test_extract_elem_float(v16float v, int idx, int sign) {
   return extract_elem(v, idx, sign);
@@ -2671,9 +2669,7 @@ v4bfloat16 test_extract_v4bfloat16(v32bfloat16 v, int idx, int sign) {
 // AIE2P-LABEL: define dso_local noundef <16 x float> @_Z11test_insertDv16_fif(
 // AIE2P-SAME: <16 x float> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], float noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2P-NEXT:  entry:
-// AIE2P-NEXT:    [[TMP0:%.*]] = bitcast float [[B]] to i32
-// AIE2P-NEXT:    [[CONV_I_I:%.*]] = sitofp i32 [[TMP0]] to float
-// AIE2P-NEXT:    [[VECINS_I_I:%.*]] = insertelement <16 x float> [[V]], float [[CONV_I_I]], i32 [[IDX]]
+// AIE2P-NEXT:    [[VECINS_I_I:%.*]] = insertelement <16 x float> [[V]], float [[B]], i32 [[IDX]]
 // AIE2P-NEXT:    ret <16 x float> [[VECINS_I_I]]
 //
 v16float test_insert(v16float v, int idx, float b) {

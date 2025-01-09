@@ -278,7 +278,7 @@ INTRINSIC(v16uint32) upd_elem(v16uint32 v, int idx, v2uint32 b) {
   }
 #endif
 INTRINSIC(v16float) upd_elem(v16float v, int idx, float b) {
-  return vector_insert(v, idx, __builtin_bit_cast(int, b));
+  return vector_insert(v, idx, b);
 }
 INTRINSIC(v32bfloat16) upd_elem(v32bfloat16 v, int idx, v2bfloat16 b) {
   return __builtin_aie2p_vinsert_bf32_bf512(v, idx, b);
@@ -380,7 +380,7 @@ INTRINSIC(v16float) insert(v16float v, int idx, float b) {
 }
 #endif
 INTRINSIC(v16float) insert(v16float v, int idx, float b) {
-  return vector_insert(v, idx, __builtin_bit_cast(int, b));
+  return vector_insert(v, idx, b);
 }
 INTRINSIC(v32bfloat16) insert(v32bfloat16 v, int idx, bfloat16 b) {
   return vector_insert(v, idx, b);
@@ -796,21 +796,21 @@ ext_mask64(v16uint32 v, int idx, int sign) DIAGNOSE_EXT_IDX {
 INTRINSIC(bfloat16)
 ext_elem(v32bfloat16 v, int idx, int sign) DIAGNOSE_EXT_IDX {
 
-  int elem = vector_extract((v32int16)v, idx, sign);
-  return *reinterpret_cast<bfloat16 *>(&elem);
+  short elem = vector_extract((v32int16)v, idx, sign);
+  return __builtin_bit_cast(bfloat16, elem);
 }
 
 INTRINSIC(float)
 ext_elem(v16float v, int idx, int sign) DIAGNOSE_EXT_IDX {
-  return (float)vector_extract((v16int32)v, idx, sign);
+  return vector_extract(v, idx, sign);
 }
 
 INTRINSIC(v2float)
 ext_v2float(v16float v, int idx, int sign) DIAGNOSE_EXT_IDX {
 
-  int elem1 = vector_extract((v16int32)v, idx, sign);
-  int elem2 = vector_extract((v16int32)v, idx + 1, sign);
-  v2float val{(float)elem1, (float)elem2};
+  float elem1 = vector_extract(v, idx, sign);
+  float elem2 = vector_extract(v, idx + 1, sign);
+  v2float val{elem1, elem2};
   return val;
 }
 
@@ -836,14 +836,14 @@ INTRINSIC(v2bfloat16)
 ext_v2bfloat16(v32bfloat16 v, int idx, int sign) DIAGNOSE_EXT_IDX {
 
   int elem = vector_extract((v16int32)v, idx, sign);
-  return *reinterpret_cast<v2bfloat16 *>(&elem);
+  return __builtin_bit_cast(v2bfloat16, elem);
 }
 
 INTRINSIC(v4bfloat16)
 ext_v4bfloat16(v32bfloat16 v, int idx, int sign) DIAGNOSE_EXT_IDX {
 
   v2int32 elem = vector_extract64((v16int32)v, idx, sign);
-  return *reinterpret_cast<v4bfloat16 *>(&elem);
+  return __builtin_bit_cast(v4bfloat16, elem);
 }
 
 INTRINSIC(v2int4)
@@ -994,8 +994,7 @@ extract_v4bfloat16(v32bfloat16 v, int idx, int sign) DIAGNOSE_EXT_IDX {
 }
 
 INTRINSIC(float) extract_elem(v16float v, int idx, int sign) DIAGNOSE_EXT_IDX {
-  int elem = vector_extract(v, idx, sign);
-  return *reinterpret_cast<float *>(&elem);
+  return vector_extract(v, idx, sign);
 }
 
 #if 0
@@ -1389,8 +1388,8 @@ broadcast_bfloat16(bfloat16 b) { return b - v32bfloat16{0}; }
 
 INTRINSIC(v16float)
 broadcast_float(float b) {
-  int as_int = *reinterpret_cast<int *>(&b);
-  return broadcast_s32(as_int);
+  int as_int = __builtin_bit_cast(int, b);
+  return __builtin_bit_cast(v16float, broadcast_s32(as_int));
 }
 
 #if 0
@@ -1510,7 +1509,7 @@ broadcast_to_v32bfloat16(v4bfloat16 b) {
 INTRINSIC(v16accfloat)
 broadcast_to_v16accfloat(float b) {
   int as_int = __builtin_bit_cast(int, b);
-  return broadcast_s32(as_int);
+  return __builtin_bit_cast(v16accfloat, broadcast_s32(as_int));
 }
 
 INTRINSIC(v16accfloat)
