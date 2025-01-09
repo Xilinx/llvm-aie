@@ -447,7 +447,15 @@ std::optional<int64_t> llvm::getMinTripCount(const MDNode *LoopID) {
   return std::nullopt;
 }
 
-std::optional<int64_t> llvm::getMinTripCount(const Loop *L) {
+std::optional<int64_t> llvm::getMinTripCount(const Loop *L,
+                                             ScalarEvolution *SE) {
+  if (SE && L->isRotatedForm()) {
+    if (SE->hasLoopInvariantBackedgeTakenCount(L)) {
+      const SCEV *BackedgeTakenCount = SE->getBackedgeTakenCount(L);
+      if (const SCEVConstant *CT = dyn_cast<SCEVConstant>(BackedgeTakenCount))
+        return CT->getValue()->getSExtValue() + 1;
+    }
+  }
   return getMinTripCount(L->getLoopID());
 }
 
