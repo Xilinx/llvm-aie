@@ -360,9 +360,7 @@ v16int32 test_broadcast_elem_128(v16int32 a, int b){
 // AIE2P-LABEL: define dso_local noundef <16 x float> @_Z13test_upd_elemDv16_fif(
 // AIE2P-SAME: <16 x float> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], float noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
-// AIE2P-NEXT:    [[TMP0:%.*]] = bitcast float [[B]] to i32
-// AIE2P-NEXT:    [[CONV_I_I:%.*]] = sitofp i32 [[TMP0]] to float
-// AIE2P-NEXT:    [[VECINS_I_I:%.*]] = insertelement <16 x float> [[V]], float [[CONV_I_I]], i32 [[IDX]]
+// AIE2P-NEXT:    [[VECINS_I_I:%.*]] = insertelement <16 x float> [[V]], float [[B]], i32 [[IDX]]
 // AIE2P-NEXT:    ret <16 x float> [[VECINS_I_I]]
 //
   v16float test_upd_elem(v16float v, int idx, float b) {
@@ -440,10 +438,8 @@ v16int32 test_broadcast_elem_128(v16int32 a, int b){
 // AIE2P-LABEL: define dso_local noundef float @_Z13test_ext_elemDv16_fii(
 // AIE2P-SAME: <16 x float> noundef [[A:%.*]], i32 noundef [[B:%.*]], i32 noundef [[C:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
-// AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <16 x float> [[A]] to <16 x i32>
-// AIE2P-NEXT:    [[VECEXT_I_I:%.*]] = extractelement <16 x i32> [[TMP0]], i32 [[B]]
-// AIE2P-NEXT:    [[CONV_I:%.*]] = sitofp i32 [[VECEXT_I_I]] to float
-// AIE2P-NEXT:    ret float [[CONV_I]]
+// AIE2P-NEXT:    [[VECEXT_I_I:%.*]] = extractelement <16 x float> [[A]], i32 [[B]]
+// AIE2P-NEXT:    ret float [[VECEXT_I_I]]
 //
   float test_ext_elem(v16float a, int b, int c){
    return ext_elem(a, b, c);
@@ -452,15 +448,12 @@ v16int32 test_broadcast_elem_128(v16int32 a, int b){
 // AIE2P-LABEL: define dso_local noundef <2 x float> @_Z16test_ext_v2floatDv16_fii(
 // AIE2P-SAME: <16 x float> noundef [[A:%.*]], i32 noundef [[B:%.*]], i32 noundef [[C:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
-// AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <16 x float> [[A]] to <16 x i32>
-// AIE2P-NEXT:    [[VECEXT_I_I:%.*]] = extractelement <16 x i32> [[TMP0]], i32 [[B]]
+// AIE2P-NEXT:    [[VECEXT_I_I:%.*]] = extractelement <16 x float> [[A]], i32 [[B]]
 // AIE2P-NEXT:    [[ADD_I:%.*]] = add nsw i32 [[B]], 1
-// AIE2P-NEXT:    [[VECEXT_I7_I:%.*]] = extractelement <16 x i32> [[TMP0]], i32 [[ADD_I]]
-// AIE2P-NEXT:    [[CONV_I:%.*]] = sitofp i32 [[VECEXT_I_I]] to float
-// AIE2P-NEXT:    [[VECINIT_I:%.*]] = insertelement <2 x float> poison, float [[CONV_I]], i64 0
-// AIE2P-NEXT:    [[CONV2_I:%.*]] = sitofp i32 [[VECEXT_I7_I]] to float
-// AIE2P-NEXT:    [[VECINIT3_I:%.*]] = insertelement <2 x float> [[VECINIT_I]], float [[CONV2_I]], i64 1
-// AIE2P-NEXT:    ret <2 x float> [[VECINIT3_I]]
+// AIE2P-NEXT:    [[VECEXT_I6_I:%.*]] = extractelement <16 x float> [[A]], i32 [[ADD_I]]
+// AIE2P-NEXT:    [[VECINIT_I:%.*]] = insertelement <2 x float> poison, float [[VECEXT_I_I]], i64 0
+// AIE2P-NEXT:    [[VECINIT2_I:%.*]] = insertelement <2 x float> [[VECINIT_I]], float [[VECEXT_I6_I]], i64 1
+// AIE2P-NEXT:    ret <2 x float> [[VECINIT2_I]]
 //
   v2float test_ext_v2float(v16float a, int b, int c){
    return ext_v2float(a, b, c);
@@ -470,9 +463,7 @@ v16int32 test_broadcast_elem_128(v16int32 a, int b){
 // AIE2P-SAME: <16 x float> noundef [[A:%.*]], i32 noundef [[B:%.*]], i32 noundef [[C:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    [[VECEXT_I_I:%.*]] = extractelement <16 x float> [[A]], i32 [[B]]
-// AIE2P-NEXT:    [[CONV_I:%.*]] = fptosi float [[VECEXT_I_I]] to i32
-// AIE2P-NEXT:    [[TMP0:%.*]] = bitcast i32 [[CONV_I]] to float
-// AIE2P-NEXT:    ret float [[TMP0]]
+// AIE2P-NEXT:    ret float [[VECEXT_I_I]]
 //
 float test_extract_elem(v16float a, int b, int c){
    return extract_elem(a, b, c);
@@ -481,15 +472,12 @@ float test_extract_elem(v16float a, int b, int c){
 // AIE2P-LABEL: define dso_local noundef <2 x float> @_Z20test_extract_v2floatDv16_fii(
 // AIE2P-SAME: <16 x float> noundef [[A:%.*]], i32 noundef [[B:%.*]], i32 noundef [[C:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
-// AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <16 x float> [[A]] to <16 x i32>
-// AIE2P-NEXT:    [[VECEXT_I_I_I:%.*]] = extractelement <16 x i32> [[TMP0]], i32 [[B]]
+// AIE2P-NEXT:    [[VECEXT_I_I_I:%.*]] = extractelement <16 x float> [[A]], i32 [[B]]
 // AIE2P-NEXT:    [[ADD_I_I:%.*]] = add nsw i32 [[B]], 1
-// AIE2P-NEXT:    [[VECEXT_I7_I_I:%.*]] = extractelement <16 x i32> [[TMP0]], i32 [[ADD_I_I]]
-// AIE2P-NEXT:    [[CONV_I_I:%.*]] = sitofp i32 [[VECEXT_I_I_I]] to float
-// AIE2P-NEXT:    [[VECINIT_I_I:%.*]] = insertelement <2 x float> poison, float [[CONV_I_I]], i64 0
-// AIE2P-NEXT:    [[CONV2_I_I:%.*]] = sitofp i32 [[VECEXT_I7_I_I]] to float
-// AIE2P-NEXT:    [[VECINIT3_I_I:%.*]] = insertelement <2 x float> [[VECINIT_I_I]], float [[CONV2_I_I]], i64 1
-// AIE2P-NEXT:    ret <2 x float> [[VECINIT3_I_I]]
+// AIE2P-NEXT:    [[VECEXT_I6_I_I:%.*]] = extractelement <16 x float> [[A]], i32 [[ADD_I_I]]
+// AIE2P-NEXT:    [[VECINIT_I_I:%.*]] = insertelement <2 x float> poison, float [[VECEXT_I_I_I]], i64 0
+// AIE2P-NEXT:    [[VECINIT2_I_I:%.*]] = insertelement <2 x float> [[VECINIT_I_I]], float [[VECEXT_I6_I_I]], i64 1
+// AIE2P-NEXT:    ret <2 x float> [[VECINIT2_I_I]]
 //
 v2float test_extract_v2float(v16float a, int b, int c){
  return extract_v2float(a, b, c);
@@ -498,15 +486,12 @@ v2float test_extract_v2float(v16float a, int b, int c){
 // AIE2P-LABEL: define dso_local noundef <2 x float> @_Z20test_extract_v2floatDv16_fi(
 // AIE2P-SAME: <16 x float> noundef [[A:%.*]], i32 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
-// AIE2P-NEXT:    [[TMP0:%.*]] = bitcast <16 x float> [[A]] to <16 x i32>
-// AIE2P-NEXT:    [[VECEXT_I_I_I_I:%.*]] = extractelement <16 x i32> [[TMP0]], i32 [[B]]
+// AIE2P-NEXT:    [[VECEXT_I_I_I_I:%.*]] = extractelement <16 x float> [[A]], i32 [[B]]
 // AIE2P-NEXT:    [[ADD_I_I_I:%.*]] = add nsw i32 [[B]], 1
-// AIE2P-NEXT:    [[VECEXT_I7_I_I_I:%.*]] = extractelement <16 x i32> [[TMP0]], i32 [[ADD_I_I_I]]
-// AIE2P-NEXT:    [[CONV_I_I_I:%.*]] = sitofp i32 [[VECEXT_I_I_I_I]] to float
-// AIE2P-NEXT:    [[VECINIT_I_I_I:%.*]] = insertelement <2 x float> poison, float [[CONV_I_I_I]], i64 0
-// AIE2P-NEXT:    [[CONV2_I_I_I:%.*]] = sitofp i32 [[VECEXT_I7_I_I_I]] to float
-// AIE2P-NEXT:    [[VECINIT3_I_I_I:%.*]] = insertelement <2 x float> [[VECINIT_I_I_I]], float [[CONV2_I_I_I]], i64 1
-// AIE2P-NEXT:    ret <2 x float> [[VECINIT3_I_I_I]]
+// AIE2P-NEXT:    [[VECEXT_I6_I_I_I:%.*]] = extractelement <16 x float> [[A]], i32 [[ADD_I_I_I]]
+// AIE2P-NEXT:    [[VECINIT_I_I_I:%.*]] = insertelement <2 x float> poison, float [[VECEXT_I_I_I_I]], i64 0
+// AIE2P-NEXT:    [[VECINIT2_I_I_I:%.*]] = insertelement <2 x float> [[VECINIT_I_I_I]], float [[VECEXT_I6_I_I_I]], i64 1
+// AIE2P-NEXT:    ret <2 x float> [[VECINIT2_I_I_I]]
 //
 v2float test_extract_v2float(v16float a, int b){
  return extract_v2float(a, b);
