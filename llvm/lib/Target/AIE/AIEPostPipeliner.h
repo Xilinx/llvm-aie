@@ -176,6 +176,8 @@ class PostPipeliner {
   // The instruction defining the tripcount
   MachineInstr *TripCountDef = nullptr;
 
+  bool UseSolver = false;
+
   // Basic modulo scheduling parameters
   int NInstr;
   int NCopies;
@@ -208,6 +210,9 @@ class PostPipeliner {
   // this length will be a multiple of the InitiationInterval
   int computeMinScheduleLength() const;
 
+  // try to find a solution using a solver
+  bool solve(int NS);
+
   /// Try all heuristics, stop at the first that fits the II
   /// If it returns true, a valid schedule is laid down in Info.
   bool tryHeuristics();
@@ -230,6 +235,10 @@ class PostPipeliner {
 
 public:
   PostPipeliner(const AIEHazardRecognizer &HR, int NInstr);
+
+  // Specify whether to use a solver. Maybe for -O3, or pragma driven.
+  // Default is off
+  void setUseSolver(bool Value);
 
   /// Check whether this is a suitable loop for the PostPipeliner. It also
   /// leaves some useful information.

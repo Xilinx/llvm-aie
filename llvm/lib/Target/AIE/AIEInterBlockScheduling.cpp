@@ -592,6 +592,7 @@ SchedulingStage InterBlockScheduling::updateScheduling(BlockState &BS) {
   // But first try SWP
   if (BS.getRegions().size() == 1) {
     auto &PostSWP = BS.getPostSWP();
+    PostSWP.setUseSolver(true);
     if (PostSWP.isPostPipelineCandidate(*BS.TheBlock)) {
       BS.FixPoint.II = PostSWP.getResMII(*BS.TheBlock);
       return BS.FixPoint.Stage = SchedulingStage::Pipelining;

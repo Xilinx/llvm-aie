@@ -61,6 +61,8 @@ if(LLVM_BUILD_LLVM_DYLIB)
   list(APPEND _llvm_distribution_components LLVM clang-cpp)
 endif()
 
+option(LLVM_ENABLE_Z3_SOLVER "" ON)
+
 # there's some bug here where if you list(APPEND ...) to a CACHE variable
 # it doesn't work (neither libLLVM nor clang-cpp were being successfully installed)
 set(LLVM_DISTRIBUTION_COMPONENTS ${_llvm_distribution_components} CACHE STRING "")

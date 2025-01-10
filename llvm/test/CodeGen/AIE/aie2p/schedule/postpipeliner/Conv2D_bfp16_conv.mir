@@ -122,23 +122,24 @@
   ; OPTIMISTIC-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
   ; OPTIMISTIC-NEXT:    nopa ; vldb.fill.512 [p0, lf0, r24]; nops ; nopx ; mov p2, p1; nopv
   ; OPTIMISTIC-NEXT:    nopa ; vldb.pop.512 x0, [p0, lf0, r24]; nops ; nopx ; vconv.fp32.bf16 cml0, x0; nopv
-  ; OPTIMISTIC-NEXT:    nopa ; vldb.pop.512.2d x2, [p0, lf0, r24, d1]; nops ; nopx ; vconv.fp32.bf16 cmh0, x2; nopv
-  ; OPTIMISTIC-NEXT:    nopa ; nopb ; nops ; nopx ; mov dc0, dj0; nopv
+  ; OPTIMISTIC-NEXT:    nopa ; vldb.pop.512.2d x2, [p0, lf0, r24, d1]; nops ; nopx ; mov dc0, dj0; nopv
+  ; OPTIMISTIC-NEXT:    nopa ; nopb ; nops ; nopx ; vconv.fp32.bf16 cmh0, x2; nopv
   ; OPTIMISTIC-NEXT:    // implicit-def: $sf
   ; OPTIMISTIC-NEXT:    .p2align 4
   ; OPTIMISTIC-NEXT:  .LBB0_2: // =>This Inner Loop Header: Depth=1
-  ; OPTIMISTIC-NEXT:    nopa ; vldb.fill.512 [p0, lf0, r24]; nopx ; vst.push.576.conv.bfp16ebs8.fp32 dm0, [p2, sf, r26]
-  ; OPTIMISTIC-NEXT:    vst.flush.512.conv [p2, sf, r26]; vldb.pop.512 x0, [p0, lf0, r24]; vconv.fp32.bf16 cml0, x0
-  ; OPTIMISTIC-NEXT:    vst.flush.512.conv.2d [p2, sf, r26, d0]; vldb.pop.512.2d x2, [p0, lf0, r24, d1]; vconv.fp32.bf16 cmh0, x2
+  ; OPTIMISTIC-NEXT:    nopa ; vldb.fill.512 [p0, lf0, r24]; nops ; nopxm ; nopv
+  ; OPTIMISTIC-NEXT:    vst.push.576.conv.bfp16ebs8.fp32 dm0, [p2, sf, r26]; vldb.pop.512 x0, [p0, lf0, r24]; vconv.fp32.bf16 cml0, x0
+  ; OPTIMISTIC-NEXT:    vldb.pop.512.2d x2, [p0, lf0, r24, d1]; vst.flush.512.conv [p2, sf, r26]
   ; OPTIMISTIC-NEXT:  .L_LEnd0:
-  ; OPTIMISTIC-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
+  ; OPTIMISTIC-NEXT:    nopa ; nopb ; vst.flush.512.conv.2d [p2, sf, r26, d0]; nopx ; vconv.fp32.bf16 cmh0, x2; nopv
   ; OPTIMISTIC-NEXT:  // %bb.3:
-  ; OPTIMISTIC-NEXT:    vst.push.576.conv.bfp16ebs8.fp32 dm0, [p2, sf, r26]
-  ; OPTIMISTIC-NEXT:    vst.flush.512.conv [p2, sf, r26]; vconv.fp32.bf16 cml0, x0
+  ; OPTIMISTIC-NEXT:    nopa ; nopb ; nops ; nopxm ; nopv
+  ; OPTIMISTIC-NEXT:    vst.push.576.conv.bfp16ebs8.fp32 dm0, [p2, sf, r26]; vconv.fp32.bf16 cml0, x0
+  ; OPTIMISTIC-NEXT:    vst.flush.512.conv [p2, sf, r26]
   ; OPTIMISTIC-NEXT:    vst.flush.512.conv.2d [p2, sf, r26, d0]; vconv.fp32.bf16 cmh0, x2
   ; OPTIMISTIC-NEXT:    nop
-  ; OPTIMISTIC-NEXT:    vst.push.576.conv.bfp16ebs8.fp32 dm0, [p2, sf, r26]
-  ; OPTIMISTIC-NEXT:    vst.flush.512.conv [p2, sf, r26]; vconv.fp32.bf16 cml0, x0
+  ; OPTIMISTIC-NEXT:    vst.push.576.conv.bfp16ebs8.fp32 dm0, [p2, sf, r26]; vconv.fp32.bf16 cml0, x0
+  ; OPTIMISTIC-NEXT:    vst.flush.512.conv [p2, sf, r26]
   ; OPTIMISTIC-NEXT:    vst.flush.512.conv.2d [p2, sf, r26, d0]; vconv.fp32.bf16 cmh0, x2
   ; OPTIMISTIC-NEXT:    nop
   ; OPTIMISTIC-NEXT:    vst.push.576.conv.bfp16ebs8.fp32 dm0, [p2, sf, r26]
