@@ -1168,4 +1168,20 @@ void BlockState::initInterBlock(const MachineSchedContext &Context,
   DEBUG_LOOPAWARE(dumpInterBlock(*BoundaryEdges));
 }
 
+std::optional<SWPEpilogueContext>
+InterBlockScheduling::getSWPEpilogueContext(MachineBasicBlock *MBB) {
+
+  BlockState &BS = getBlockState(MBB);
+  if (BS.Kind != BlockType::Epilogue)
+    return std::nullopt;
+
+  BlockState &LoopBS = getBlockState(*MBB->pred_begin());
+
+  if (!LoopBS.isPipelined())
+    return std::nullopt;
+
+  return SWPEpilogueContext{LoopBS.getTop().Bundles,
+                            LoopBS.getPostSWP().getFinalMinTripCount()};
+}
+
 } // namespace llvm::AIE
