@@ -26,29 +26,30 @@
   ; CHECK-NEXT:    nop // Delay Slot 2
   ; CHECK-NEXT:    nop // Delay Slot 1
   ; CHECK-NEXT:  // %bb.1: // %for.body.preheader
-  ; CHECK-NEXT:    add.nc lc, r0, #-1
+  ; CHECK-NEXT:    add.nc lc, r0, #-7
   ; CHECK-NEXT:    movxm ls, #.LBB0_2
   ; CHECK-NEXT:    movxm le, #.L_LEnd0
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
   ; CHECK-NEXT:    vunpack.d16.d8 x3, wh1; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopxm ; nopv
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; movx r1, #0; nopm ; nopv
+  ; CHECK-NEXT:    vunpack.d16.d8 x3, wh1; nopa ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vunpack.d16.d8 x3, wh1; nopa ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vunpack.d16.d8 x3, wh1; nopa ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vunpack.d16.d8 x3, wh1; nopa ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vunpack.d16.d8 x3, wh1; nopa ; nops ; nopxm ; nopv
+  ; CHECK-NEXT:    vunpack.d16.d8 x3, wh1; nopa ; nops ; movx r1, #0; nopm ; nopv
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_2: // %for.body
   ; CHECK-NEXT:    // =>This Inner Loop Header: Depth=1
-  ; CHECK-NEXT:    nopa ; vunpack.d16.d8 x3, wh1; nopxm
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    nop
   ; CHECK-NEXT:  .L_LEnd0:
-  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; vextract.s8 r1, x3, r16; nopv
+  ; CHECK-NEXT:    vunpack.d16.d8 x3, wh1; nopa ; nops ; nopx ; vextract.s8 r1, x3, r16; nopv
   ; CHECK-NEXT:  // %bb.3: // %loop.exit
-  ; CHECK-NEXT:    nopx
-  ; CHECK-NEXT:    nop
-  ; CHECK-NEXT:    nop
+  ; CHECK-NEXT:    nopb ; nopa ; nops ; nopx ; vextract.s8 r1, x3, r16; nopv
+  ; CHECK-NEXT:    nopa ; vextract.s8 r1, x3, r16
   ; CHECK-NEXT:    vextract.s8 r1, x3, r16
+  ; CHECK-NEXT:    vextract.s8 r1, x3, r16
+  ; CHECK-NEXT:    vextract.s8 r1, x3, r16
+  ; CHECK-NEXT:    vextract.s8 r1, x3, r16
+  ; CHECK-NEXT:    vextract.s8 r1, x3, r16
+  ; CHECK-NEXT:    nop
   ; CHECK-NEXT:    vmov wh1, wh2
   ; CHECK-NEXT:    .p2align 4
   ; CHECK-NEXT:  .LBB0_4: // %for.cond.cleanup
@@ -102,7 +103,7 @@
   !5 = !{!"Simple C/C++ TBAA"}
   !6 = distinct !{!6, !7, !8}
   !7 = !{!"llvm.loop.mustprogress"}
-  !8 = !{!"llvm.loop.itercount.range", i64 2}
+  !8 = !{!"llvm.loop.itercount.range", i64 8}
 
 ...
 ---

@@ -237,6 +237,8 @@ public:
   // Modify the tripcount to run StageCount-1 less iterations.
   void updateTripCount() const;
 
+  int getFinalMinTripCount() const;
+
   void dump() const;
 };
 

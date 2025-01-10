@@ -96,6 +96,8 @@ public:
   /// outside of the region, i.e. block all resources.
   void initializeBotScoreBoard(ScoreboardTrust Trust);
 
+  void initializeTopScoreBoard();
+
   MachineBasicBlock *nextBlock() override;
 
   // Return the current block

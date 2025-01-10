@@ -21,6 +21,7 @@
 #include "AIEBundle.h"
 #include "AIEHazardRecognizer.h"
 #include "AIEPostPipeliner.h"
+#include "Utils/AIELoopUtils.h"
 #include "llvm/CodeGen/LivePhysRegs.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineScheduler.h"
@@ -209,6 +210,13 @@ public:
   MachineInstr *getExitInstr() const { return ExitInstr; }
 
   std::vector<MachineBundle> Bundles;
+};
+
+// Struct used do give a preceding execution context to an epilogue
+// of a SWP loop.
+struct SWPEpilogueContext {
+  ArrayRef<MachineBundle> Loop;
+  int LoopCount;
 };
 
 class BlockState {
@@ -434,6 +442,9 @@ public:
   bool tryPipeline(ScheduleDAGMI &DAG, MachineBasicBlock *BB);
 
   AIEAlternateDescriptors &getSelectedAltDescs() { return SelectedAltDescs; }
+
+  std::optional<SWPEpilogueContext>
+  getSWPEpilogueContext(MachineBasicBlock *MBB);
 };
 
 } // end namespace llvm::AIE

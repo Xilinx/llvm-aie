@@ -11,6 +11,7 @@
 #include "AIEMachineScheduler.h"
 #include "AIEBaseAliasAnalysis.h"
 #include "AIEBaseInstrInfo.h"
+#include "AIEBundle.h"
 #include "AIEHazardRecognizer.h"
 #include "AIEInterBlockScheduling.h"
 #include "AIEMaxLatencyFinder.h"
@@ -353,6 +354,62 @@ void AIEPostRASchedStrategy::initializeBotScoreBoard(ScoreboardTrust Trust) {
   DEBUG_BLOCKS(BotHazardRec->dumpScoreboard());
 }
 
+void AIEPostRASchedStrategy::initializeTopScoreBoard() {
+
+  auto EpilogueContextOpt = InterBlock.getSWPEpilogueContext(CurMBB);
+
+  if (!EpilogueContextOpt)
+    return;
+
+  AIEHazardRecognizer *TopHazardRec = getAIEHazardRecognizer(Top);
+  auto EmitInstr = [=](MachineInstr &MI) {
+    TopHazardRec->emitInScoreboard(MI.getDesc(),
+                                   TopHazardRec->getMemoryBanks(&MI),
+                                   MI.operands(), MI.getMF()->getRegInfo(), 0);
+  };
+
+  const unsigned ConflictHorizon = TopHazardRec->getConflictHorizon();
+  ArrayRef<MachineBundle> LoopBundles = EpilogueContextOpt->Loop;
+  const unsigned LoopCount = EpilogueContextOpt->LoopCount;
+  const unsigned LoopSize = LoopBundles.size();
+
+  int BlockedCycles = 0;
+  int LoopReplayTimes = 0;
+
+  // If we can get a full horizon of pipeline conflicts, go for it,
+  // otherwise, stick to the min iteration count and block some cycles.
+  const unsigned LastGuaranteedLoopCycles = LoopCount * LoopSize;
+  if (LastGuaranteedLoopCycles < ConflictHorizon) {
+    BlockedCycles = ConflictHorizon - LastGuaranteedLoopCycles;
+    LoopReplayTimes = LoopCount;
+  } else {
+    LoopReplayTimes = (ConflictHorizon + (LoopSize - 1)) / LoopSize;
+  }
+
+  // Replay SWP loop enough times.
+  for (int I = 0; I < LoopReplayTimes; I++) {
+    for (auto &Bundle : LoopBundles) {
+      for (MachineInstr *MI : Bundle.getInstrs()) {
+        EmitInstr(*MI);
+      }
+      TopHazardRec->AdvanceCycle();
+    }
+  }
+
+  // Block cycles, if needed.
+  for (int I = 0; I < BlockedCycles; ++I) {
+    TopHazardRec->blockCycleInScoreboard(0);
+    TopHazardRec->AdvanceCycle();
+  }
+
+  // Receed to the starting point.
+  for (int I = 0; I < BlockedCycles; ++I) {
+    TopHazardRec->RecedeCycle();
+  }
+
+  DEBUG_BLOCKS(TopHazardRec->dumpScoreboard());
+}
+
 static MachineInstr *getDelaySlotInstr(MachineBasicBlock::iterator RegionBegin,
                                        MachineBasicBlock::iterator RegionEnd) {
   auto HasDelaySlot = [](const MachineInstr &MI) { return MI.hasDelaySlot(); };
@@ -377,6 +434,7 @@ void AIEPostRASchedStrategy::initialize(ScheduleDAGMI *Dag) {
                                               : ScoreboardTrust::Absolute;
   initializeBotScoreBoard(Conservative ? ScoreboardTrust::Conservative
                                        : NonConservative);
+  initializeTopScoreBoard();
 
   // Delay slots are scheduled bottom up to be sure the control-flow instruction
   // is issued exactly TII->getNumDelaySlots() before the end of the region.
@@ -398,10 +456,11 @@ void AIEPostRASchedStrategy::initialize(ScheduleDAGMI *Dag) {
   RegionTopDownCycles = Reg.getTopFixedBundles().size();
   // Start with top-down when we have TopInsert bundles.
   IsTopDown = (RegionBottomUpCycles == 0) || (RegionTopDownCycles > 0);
-  if (!IsTopDown)
+  if (!IsTopDown) {
     LLVM_DEBUG(dbgs() << "*** Using bottom-up scheduling for the region ***\n");
-  else
+  } else {
     LLVM_DEBUG(dbgs() << "*** Using top-down scheduling for the region ***\n");
+  }
 }
 
 /// Compute the minimum cycle for Zone in which one can ever find

@@ -825,6 +825,11 @@ void PostPipeliner::updateTripCount() const {
   TII->adjustTripCount(*TripCountDef, -Delta);
 }
 
+int PostPipeliner::getFinalMinTripCount() const {
+  const int Delta = NStages - 1;
+  return MinTripCount - Delta;
+}
+
 void NodeInfo::reset(bool FullReset) {
   Cycle = 0;
   Scheduled = false;
