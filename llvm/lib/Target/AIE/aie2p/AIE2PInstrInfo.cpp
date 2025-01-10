@@ -439,6 +439,30 @@ unsigned AIE2PInstrInfo::getOpCode(MachineInstr &I) const {
     return AIE2P::VSUB_GE_16_vaddSign0;
   case Intrinsic::aie2p_vsub_ge32:
     return AIE2P::VSUB_GE_32_vaddSign0;
+  case Intrinsic::aie2p_BFP576_BFP576_ACC2048_mul_conf:
+    return AIE2P::VMUL_f_vmul_bfp_vmul_bfp_core_EX_EX;
+  case Intrinsic::aie2p_BFP576_BFP576_ACC2048_negmul_conf:
+    return AIE2P::VNEGMUL_f_vmul_bfp_vmul_bfp_core_EX_EX;
+  case Intrinsic::aie2p_BFP576_BFP576_ACC2048_mac_conf:
+    return AIE2P::VMAC_f_vmac_bfp_vmul_bfp_core_EX_EX;
+  case Intrinsic::aie2p_BFP576_BFP576_ACC2048_msc_conf:
+    return AIE2P::VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX;
+  case Intrinsic::aie2p_BFP576_BFP576_ACC2048_addmac_conf:
+    return AIE2P::VADDMAC_f_vaddmac_bfp_vmac_cm2_add_reg_vmul_bfp_core_EX_EX;
+  case Intrinsic::aie2p_BFP576_BFP576_ACC2048_addmsc_conf:
+    return AIE2P::VADDMSC_f_vaddmac_bfp_vmac_cm2_add_reg_vmul_bfp_core_EX_EX;
+  case Intrinsic::aie2p_BFP576_BFP1152_ACC2048_mul_conf:
+    return AIE2P::VMUL_f_vmul_bfp_vmul_bfp_core_EX_EY;
+  case Intrinsic::aie2p_BFP576_BFP1152_ACC2048_negmul_conf:
+    return AIE2P::VNEGMUL_f_vmul_bfp_vmul_bfp_core_EX_EY;
+  case Intrinsic::aie2p_BFP576_BFP1152_ACC2048_mac_conf:
+    return AIE2P::VMAC_f_vmac_bfp_vmul_bfp_core_EX_EY;
+  case Intrinsic::aie2p_BFP576_BFP1152_ACC2048_msc_conf:
+    return AIE2P::VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY;
+  case Intrinsic::aie2p_BFP576_BFP1152_ACC2048_addmac_conf:
+    return AIE2P::VADDMAC_f_vaddmac_bfp_vmac_cm2_add_reg_vmul_bfp_core_EX_EY;
+  case Intrinsic::aie2p_BFP576_BFP1152_ACC2048_addmsc_conf:
+    return AIE2P::VADDMSC_f_vaddmac_bfp_vmac_cm2_add_reg_vmul_bfp_core_EX_EY;
   // Pack
   case Intrinsic::aie2p_pack_I1024_I8_I16:
   case Intrinsic::aie2p_pack_I1024_I4_I8:
