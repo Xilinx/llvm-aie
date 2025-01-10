@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEPostPipeliner.h"
+#include "AIESWPSolver.h"
 #include "AIESlotCounts.h"
 #include "Utils/AIELoopUtils.h"
 #include "llvm/Analysis/OptimizationRemarkEmitter.h"
@@ -27,6 +28,7 @@
 #define DEBUG_FULL(X) DEBUG_WITH_TYPE("postpipeliner-full", X)
 
 namespace llvm::AIE {
+using namespace Solver;
 
 static cl::opt<int>
     Heuristic("aie-postpipeliner-heuristic",
@@ -66,6 +68,8 @@ public:
 
 PostPipeliner::PostPipeliner(const AIEHazardRecognizer &HR, int NInstr)
     : HR(HR), NInstr(NInstr) {}
+
+void PostPipeliner::setUseSolver(bool Value) { UseSolver = Value; }
 
 bool PostPipeliner::isPostPipelineCandidate(MachineBasicBlock &LoopBlock) {
   // We leave the single-block loop criterion to our caller. It is fulfilled
@@ -123,9 +127,13 @@ bool PostPipeliner::isPostPipelineCandidate(MachineBasicBlock &LoopBlock) {
   return true;
 }
 
-static SlotCounts getSlotCounts(MachineInstr &MI, const AIEBaseInstrInfo *TII) {
+static uint64_t getSlotSet(MachineInstr &MI, const AIEBaseInstrInfo *TII) {
   auto *SlotInfo = TII->getSlotInfo(TII->getSlotKind(MI.getOpcode()));
   return SlotInfo ? SlotInfo->getSlotSet() : 0;
+}
+
+static SlotCounts getSlotCounts(MachineInstr &MI, const AIEBaseInstrInfo *TII) {
+  return SlotCounts{getSlotSet(MI, TII)};
 }
 
 int PostPipeliner::getResMII(MachineBasicBlock &LoopBlock) {
@@ -1013,6 +1021,10 @@ static const ConfigStrategy::Configuration Strategies[] = {
 bool PostPipeliner::tryHeuristics() {
   DEBUG_SUMMARY(dbgs() << "-- MinLength=" << MinLength << "\n");
 
+  if (solve(MinLength / II)) {
+    return true;
+  }
+
   int HeuristicIndex = 0;
   for (const auto &Config : Strategies) {
     if (Heuristic >= 0 && Heuristic != HeuristicIndex++) {
@@ -1039,6 +1051,69 @@ bool PostPipeliner::tryHeuristics() {
     DEBUG_SUMMARY(dbgs() << "    Strategy " << S.name() << " failed\n");
   }
   DEBUG_SUMMARY(dbgs() << "=== II=" << II << " Failed ===\n");
+  return false;
+}
+
+bool PostPipeliner::solve(int NS) {
+#if LLVM_WITH_Z3
+  if (!UseSolver) {
+    return false;
+  }
+
+  Z3BinarySolver Solver;
+  for (int N = 0; N < NInstr; N++) {
+    SUnit &SU = DAG->SUnits[N];
+    auto *MI = SU.getInstr();
+    auto SlotKind = TII->getSlotKind(MI->getOpcode());
+
+    uint64_t MemoryBanks = HR.getMemoryBanks(MI);
+    unsigned Id = Solver.addInsn(SlotKind, MemoryBanks);
+    assert(Id == SU.NodeNum);
+    for (auto Dep : SU.Preds) {
+      int From = Dep.getSUnit()->NodeNum;
+      if (From < NInstr) {
+        Solver.addLatency(From, N, Dep.getSignedLatency());
+      }
+    }
+  }
+
+  // Add loop-carried dependences to future iterations. The iteration
+  // distance is taken into account
+  for (int N = 0; N < NInstr; N++) {
+    SUnit &SU = DAG->SUnits[N];
+    for (auto Dep : SU.Succs) {
+      if (Dep.getKind() != SDep::Data) {
+        // continue;
+      }
+      int To = Dep.getSUnit()->NodeNum;
+      if (To >= NInstr && To % NInstr != N) {
+        Solver.addLatency(N, To % NInstr, Dep.getSignedLatency(), To / NInstr);
+      }
+    }
+  }
+
+  Solver.setScheduleSize(II, NS);
+  Solver.genModel();
+  if (!Solver.solveModel()) {
+    // Note: If we can't solve it, it doesn't mean the II isn't feasible,
+    // so we shouldn't avoid running the heuristics.
+    return false;
+  }
+  auto Schedule = Solver.getCycles();
+  DEBUG_SUMMARY(dbgs() << "Solver found "; for (auto C
+                                                : Schedule) dbgs()
+                                           << C << ", ";
+                dbgs() << "\n";);
+  FixedStrategy S{*DAG, Info, II * 3, Schedule};
+  resetSchedule(/*FullReset=*/true);
+  DEBUG_SUMMARY(dbgs() << "--- Strategy " << S.name() << "\n");
+  if (scheduleFirstIteration(S) && scheduleOtherIterations(S)) {
+    DEBUG_SUMMARY(dbgs() << "    Strategy " << S.name() << " found II=" << II
+                         << "\n");
+    return true;
+  }
+#endif // LLVM_WITH_Z3
+
   return false;
 }
 
