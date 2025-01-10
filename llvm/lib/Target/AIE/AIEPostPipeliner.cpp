@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIEPostPipeliner.h"
+#include "AIESWPSolver.h"
 #include "AIESlotCounts.h"
 #include "Utils/AIELoopUtils.h"
 #include "llvm/ADT/SmallSet.h"
@@ -20,6 +21,7 @@
 #include "llvm/CodeGen/MachineOptimizationRemarkEmitter.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
+#include "llvm/Transforms/Utils/LoopUtils.h"
 #include <limits>
 #include <string>
 
@@ -28,6 +30,7 @@
 #define DEBUG_FULL(X) DEBUG_WITH_TYPE("postpipeliner-full", X)
 
 namespace llvm::AIE {
+using namespace Solver;
 
 static cl::opt<int>
     Heuristic("aie-postpipeliner-heuristic",
@@ -37,6 +40,10 @@ static cl::opt<int>
     HeuristicRuns("aie-postpipeliner-heuristic-runs",
                   cl::desc("Number of runs for heuristics that converge"),
                   cl::init(20), cl::Hidden);
+
+static cl::opt<int> PresetII("aie-postpipeliner-target-ii",
+                             cl::desc("II for which to allow the solver"),
+                             cl::init(0), cl::Hidden);
 
 PipelineScheduleVisitor::~PipelineScheduleVisitor() {}
 
@@ -110,7 +117,8 @@ bool PostPipeliner::isPostPipelineCandidate(MachineBasicBlock &LoopBlock) {
   // 4. We need to peel stages and be left with a positive tripcount.
   // This is just a minimum check to save useless work; the real stage
   // count is checked before accepting the schedule.
-  auto ParsedMinTripCount = AIELoopUtils::getMinTripCount(LoopBlock);
+  using namespace AIELoopUtils;
+  auto ParsedMinTripCount = getMinTripCount(LoopBlock);
   if (!ParsedMinTripCount) {
     LLVM_DEBUG(dbgs() << " PostPipeliner: No min tripcount\n");
     return false;
@@ -119,6 +127,16 @@ bool PostPipeliner::isPostPipelineCandidate(MachineBasicBlock &LoopBlock) {
   if (MinTripCount < 2) {
     LLVM_DEBUG(dbgs() << " PostPipeliner: min tripcount < 2\n");
     return false;
+  }
+
+  if (PresetII) {
+    TargetII = PresetII;
+    return true;
+  }
+  auto ParsedInitiationInterval = getInitiationInterval(getLoopID(LoopBlock));
+  if (ParsedInitiationInterval) {
+    TargetII = *ParsedInitiationInterval;
+    DEBUG_SUMMARY(dbgs() << " PostPipeliner: TargetII=" << TargetII << "\n");
   }
 
   return true;
@@ -1071,7 +1089,7 @@ public:
 };
 
 using Prio = ConfigStrategy::PriorityComponent;
-static const ConfigStrategy::Configuration Strategies[] = {
+static const ConfigStrategy::Configuration Heuristics[] = {
     // Loosely speaking, a lower value of the first parameter targets
     // a lower stage count, which benefits code size.
     // Runs>1 is only useful for heuristics that use it, e.g. Critical
@@ -1090,18 +1108,17 @@ static const ConfigStrategy::Configuration Strategies[] = {
     {1, false, false, 1, {Prio::NodeNum}}, // pure bottom up
 };
 
-bool PostPipeliner::tryHeuristics() {
+bool PostPipeliner::tryApproaches() {
   DEBUG_SUMMARY(dbgs() << "-- MinLength=" << MinLength << "\n");
-
   int HeuristicIndex = 0;
-  for (const auto &Config : Strategies) {
+  for (const auto &Config : Heuristics) {
     if (Heuristic >= 0 && Heuristic != HeuristicIndex++) {
       continue;
     }
     ConfigStrategy S(*DAG, Info, MinLength + Config.ExtraStages * II,
                      Config.TopDown, Config.Alternate, Config.Components);
     resetSchedule(/*FullReset=*/true);
-    for (int Run = 0; Run < Config.Runs; Run++) {
+    for (int Run = 0; Run < Config.Runs && Run < HeuristicRuns; Run++) {
       DEBUG_SUMMARY(dbgs() << "--- Strategy " << S.name() << " run=" << Run
                            << " trying II=" << II << "\n");
       if (scheduleWithStrategy(S)) {
@@ -1123,7 +1140,103 @@ bool PostPipeliner::tryHeuristics() {
   if (scheduleWithStrategy(Relaxed)) {
     return true;
   }
+
+  // TargetII is the OK from the user to spend some time reaching this II.
+  // Therefore, if we haven't found a solution yet, bring in the big guns.
+  if (II == TargetII) {
+    const SolverData Data = createSolverData();
+    int NS = MinLength / II;
+    if (solve(Data, NS, false)) {
+      return true;
+    }
+    if (NS == MinTripCount) {
+      // Only try this at the boundary case
+      if (solve(Data, NS + 1, true)) {
+        return true;
+      }
+    }
+  }
+
   DEBUG_SUMMARY(dbgs() << "=== II=" << II << " Failed ===\n");
+  return false;
+}
+
+bool PostPipeliner::solve(const SolverData &Data, int NS, bool SEFStage) {
+  auto Solvers = getSolvers();
+  for (auto &Solver : Solvers) {
+    if (applySolver(Data, *Solver, NS, SEFStage)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+SolverData PostPipeliner::createSolverData() {
+  SolverData Data;
+  // Add the forward dependence edges within the first iteration
+  for (int N = 0; N < NInstr; N++) {
+    const SUnit &SU = DAG->SUnits[N];
+    MachineInstr *const MI = SU.getInstr();
+    auto SlotKind = TII->getSlotKind(MI->getOpcode());
+
+    const uint64_t MemoryBanks = HR.getMemoryBanks(MI);
+    const int Id =
+        Data.addInstruction(SlotKind, MemoryBanks, !isSideEffectFree(MI));
+    assert(unsigned(Id) == SU.NodeNum);
+    for (auto Dep : SU.Preds) {
+      const int From = Dep.getSUnit()->NodeNum;
+      assert(From < NInstr);
+      Data.addLatency(From, N, Dep.getSignedLatency());
+    }
+  }
+
+  // Add loop-carried dependences to future iterations. The iteration
+  // distance is taken into account
+  for (int N = 0; N < NInstr; N++) {
+    const SUnit &SU = DAG->SUnits[N];
+    for (auto Dep : SU.Succs) {
+      const int To = Dep.getSUnit()->NodeNum;
+      const bool IsLoopCarried = To >= NInstr;
+      const bool IsSelfEdge = To % NInstr == N;
+      if (IsLoopCarried && !IsSelfEdge) {
+        Data.addLatency(N, To % NInstr, Dep.getSignedLatency(), To / NInstr);
+      }
+    }
+  }
+  Data.finalize(II);
+  return Data;
+}
+
+bool PostPipeliner::applySolver(const SolverData &Data, SWPSolver &Solver,
+                                int NS, bool SEFStage) {
+
+  // We don't model the resource hazards. They would be very tedious to express,
+  // since resource uses are offset relative to the instruction cycle. We would
+  // need to interpret raw itinerary data, and the modulo constraints on those
+  // would lead to very awkard expressions.
+  Solver.setScheduleSize(II, NS);
+  Solver.genModel(Data, SEFStage);
+  if (!Solver.solveModel()) {
+    return false;
+  }
+
+  // We have a solution of our model, but this is missing some constraints, in
+  // order to save solver time. We extract the cycles, and make a final check
+  // for all constraints using a dedicated strategy.
+  auto Schedule = Solver.getSUCycles();
+  DEBUG_SUMMARY(dbgs() << "Solver found "; for (auto C
+                                                : Schedule) dbgs()
+                                           << C << ", ";
+                dbgs() << "\n";);
+  CheckFixedSchedule S{*DAG, Info, II * NS, Schedule};
+  resetSchedule(/*FullReset=*/true);
+  DEBUG_SUMMARY(dbgs() << "--- Strategy " << S.name() << "\n");
+  if (scheduleWithStrategy(S)) {
+    DEBUG_SUMMARY(dbgs() << "    Strategy " << S.name() << " found II=" << II
+                         << "\n");
+    return true;
+  }
+
   return false;
 }
 
@@ -1170,7 +1283,7 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval,
     return false;
   }
   LLVM_DEBUG(dumpIntervals(Info, MinLength, II));
-  if (!tryHeuristics()) {
+  if (!tryApproaches()) {
     More.emit([&]() {
       return MachineOptimizationRemarkMissed("postpipeliner", "schedule",
                                              DbgLoc, BB)

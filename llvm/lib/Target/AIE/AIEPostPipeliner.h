@@ -28,6 +28,10 @@ class MachineOptimizationRemarkEmitter;
 } // namespace llvm
 
 namespace llvm::AIE {
+namespace Solver {
+class SolverData;
+class SWPSolver;
+} // namespace Solver
 
 /// This is a dedicated softwarepipeliner. Its schedule method takes an
 /// augmented DAG that represents a number of copies of a loop body.
@@ -216,6 +220,11 @@ class PostPipeliner {
   /// The minimum tripcount, read from the pragma, or from an LC initialization.
   int MinTripCount = 0;
 
+  /// The II requested by a pragma. This will trigger expensive algorithms
+  /// like solvers or exhaustive searches to be run if the heuristic methods
+  /// don't find a solution.
+  int TargetII = 0;
+
   /// The Preheader of the loop.
   MachineBasicBlock *Preheader = nullptr;
 
@@ -269,9 +278,20 @@ class PostPipeliner {
   /// this length will be a multiple of the InitiationInterval.
   int computeMinScheduleLength() const;
 
-  /// Try all heuristics, stop at the first that fits the II
+  // Set up the raw data of the problem, instructions (with their atrributes)
+  // and latencies.
+  Solver::SolverData createSolverData();
+
+  /// Try to find a solution using a solver
+  bool solve(const Solver::SolverData &Data, int NS, bool SEFStage);
+
+  /// Helper of solve, applying one specific solver
+  bool applySolver(const Solver::SolverData &Data, Solver::SWPSolver &Solver,
+                   int NS, bool SEFStage);
+
+  /// Try all approaches to arrive at a SWP schedule for the current II.
   /// If it returns true, a valid schedule is laid down in Info.
-  bool tryHeuristics();
+  bool tryApproaches();
 
   /// Find the first available unscheduled instruction with the highest
   /// priority.
