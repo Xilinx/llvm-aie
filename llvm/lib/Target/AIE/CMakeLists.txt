@@ -116,6 +116,7 @@ add_llvm_target(AIECodeGen
    AIESlotCounts.cpp
    AIESplitInstructionRewriter.cpp
    AIESubRegConstrainer.cpp
+   AIESWPSolver.cpp
    AIESuperRegRewriter.cpp
    AIETargetObjectFile.cpp
    AIE2AsmPrinter.cpp

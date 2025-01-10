@@ -291,6 +291,9 @@ std::optional<int64_t> getMinTripCount(const MDNode *LoopID);
 /// Get Minimum Trip Count of the Loop
 std::optional<int64_t> getMinTripCount(Loop *L, ScalarEvolution *SE = nullptr);
 
+/// Get InitiationInterval for the LoopID
+std::optional<int64_t> getInitiationInterval(const MDNode *LoopID);
+
 /// Look for the loop attribute that disables all transformation heuristic.
 bool hasDisableAllTransformsHint(const Loop *L);
 

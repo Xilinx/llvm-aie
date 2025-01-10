@@ -57,6 +57,8 @@ using namespace llvm::PatternMatch;
 static const char *LLVMLoopDisableNonforced = "llvm.loop.disable_nonforced";
 static const char *LLVMLoopDisableLICM = "llvm.licm.disable";
 static const char *LLVMLoopIterCount = "llvm.loop.itercount.range";
+static const char *LLVMLoopInitiationInterval =
+    "llvm.loop.pipeline.initiationinterval";
 
 bool llvm::formDedicatedExitBlocks(Loop *L, DominatorTree *DT, LoopInfo *LI,
                                    MemorySSAUpdater *MSSAU,
@@ -416,7 +418,8 @@ MDNode *llvm::updateIterCounts(LLVMContext &Context, MDNode *LoopID,
   return NewLoopID;
 }
 
-std::optional<int64_t> llvm::getMinTripCount(const MDNode *LoopID) {
+static std::optional<std::vector<int64_t>>
+getNumericOperands(const MDNode *LoopID, const char *MDName) {
   if (LoopID == nullptr)
     return std::nullopt;
 
@@ -432,19 +435,40 @@ std::optional<int64_t> llvm::getMinTripCount(const MDNode *LoopID) {
       continue;
 
     const MDString *S = dyn_cast<MDString>(MD->getOperand(0));
-    if (S && S->getString() == LLVMLoopIterCount) {
-      assert(dyn_cast<MDString>(MD->getOperand(0))->getString() ==
-             LLVMLoopIterCount);
-      assert((MD->getNumOperands() >= 2 && MD->getNumOperands() <= 3) &&
-             "Iteration count hint should have one or two numeric operands.");
+    if (S && S->getString() == MDName) {
+      std::vector<int64_t> Operands;
+      for (unsigned Op = 1; Op < MD->getNumOperands(); Op++) {
+        int64_t Value =
+            mdconst::extract<ConstantInt>(MD->getOperand(Op))->getSExtValue();
+        Operands.push_back(Value);
+      }
 
-      int64_t MinTripCount =
-          mdconst::extract<ConstantInt>(MD->getOperand(1))->getSExtValue();
-      assert(MinTripCount >= 0 && "Range lwb should not be negative.");
-      return MinTripCount;
+      return Operands;
     }
   }
   return std::nullopt;
+}
+
+std::optional<int64_t> llvm::getMinTripCount(const MDNode *LoopID) {
+  auto Operands = getNumericOperands(LoopID, LLVMLoopIterCount);
+  if (!Operands) {
+    return std::nullopt;
+  }
+
+  const std::vector<int64_t> &Values = *Operands;
+  assert(Values.size() == 1 || Values.size() == 2);
+  return Values[0];
+}
+
+std::optional<int64_t> llvm::getInitiationInterval(const MDNode *LoopID) {
+  auto Operands = getNumericOperands(LoopID, LLVMLoopInitiationInterval);
+  if (!Operands) {
+    return std::nullopt;
+  }
+
+  const std::vector<int64_t> &Values = *Operands;
+  assert(Values.size() == 1);
+  return Values.at(0);
 }
 
 std::optional<int64_t> llvm::getMinTripCount(Loop *L, ScalarEvolution *SE) {
