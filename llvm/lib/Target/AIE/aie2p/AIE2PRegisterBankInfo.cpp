@@ -449,7 +449,11 @@ static bool isAccIntrinsic(const MachineRegisterInfo &MRI,
   case Intrinsic::aie2p_I512_I512_ACC1024_negmul_conf:
   case Intrinsic::aie2p_I512_I512_ACC2048_bf_negmul_conf:
   case Intrinsic::aie2p_I512_I512_ACC2048_negmul_conf:
-  case Intrinsic::aie2p_I512_I512_ACC512_bf_negmul_conf: {
+  case Intrinsic::aie2p_I512_I512_ACC512_bf_negmul_conf:
+  case Intrinsic::aie2p_BFP576_BFP576_ACC2048_mul_conf:
+  case Intrinsic::aie2p_BFP576_BFP576_ACC2048_negmul_conf:
+  case Intrinsic::aie2p_BFP576_BFP1152_ACC2048_mul_conf:
+  case Intrinsic::aie2p_BFP576_BFP1152_ACC2048_negmul_conf: {
     // Operand at Idx 0 is an accumulator operand
     Register DstReg = MI.getOperand(0).getReg();
     if (AccReg == DstReg)
@@ -561,6 +565,44 @@ static bool isAccIntrinsic(const MachineRegisterInfo &MRI,
     // Operand at Index 3 is an accumulator operand
     Register SrcReg = MI.getOperand(3).getReg();
     if (AccReg == SrcReg)
+      return true;
+    break;
+  }
+  case Intrinsic::aie2p_BFP576_BFP576_ACC2048_mac_conf:
+  case Intrinsic::aie2p_BFP576_BFP576_ACC2048_msc_conf: {
+    // Operand at Indices {0, 6} is an accumulator operand
+    Register DstReg = MI.getOperand(0).getReg();
+    Register SrcReg = MI.getOperand(6).getReg();
+    if ((AccReg == DstReg) || (AccReg == SrcReg))
+      return true;
+    break;
+  }
+  case Intrinsic::aie2p_BFP576_BFP576_ACC2048_addmac_conf:
+  case Intrinsic::aie2p_BFP576_BFP576_ACC2048_addmsc_conf: {
+    // Operand at Indices {0, 6, 7} is an accumulator operand
+    Register DstReg = MI.getOperand(0).getReg();
+    Register SrcReg0 = MI.getOperand(6).getReg();
+    Register SrcReg1 = MI.getOperand(7).getReg();
+    if ((AccReg == DstReg) || (AccReg == SrcReg0) || (AccReg == SrcReg1))
+      return true;
+    break;
+  }
+  case Intrinsic::aie2p_BFP576_BFP1152_ACC2048_mac_conf:
+  case Intrinsic::aie2p_BFP576_BFP1152_ACC2048_msc_conf: {
+    // Operand at Indices {0, 8} is an accumulator operand
+    Register DstReg = MI.getOperand(0).getReg();
+    Register SrcReg = MI.getOperand(8).getReg();
+    if ((AccReg == DstReg) || (AccReg == SrcReg))
+      return true;
+    break;
+  }
+  case Intrinsic::aie2p_BFP576_BFP1152_ACC2048_addmac_conf:
+  case Intrinsic::aie2p_BFP576_BFP1152_ACC2048_addmsc_conf: {
+    // Operand at Indices {0, 8, 9} is an accumulator operand
+    Register DstReg = MI.getOperand(0).getReg();
+    Register SrcReg0 = MI.getOperand(8).getReg();
+    Register SrcReg1 = MI.getOperand(9).getReg();
+    if ((AccReg == DstReg) || (AccReg == SrcReg0) || (AccReg == SrcReg1))
       return true;
     break;
   }
@@ -975,6 +1017,9 @@ AIE2PRegisterBankInfo::getRegBankFromRegClass(const TargetRegisterClass &RC,
   case AIE2P::eSRegClassID:
   case AIE2P::mS2RegClassID:
   case AIE2P::mS3RegClassID:
+  case AIE2P::EXPVEC64RegClassID:
+  case AIE2P::EXPVEC64_with_sub_hi_exp_in_eEheRegClassID:
+  case AIE2P::EXPVEC64_with_sub_hi_exp_in_eEhoRegClassID:
     return GPRs;
   case AIE2P::ePRegClassID:
   case AIE2P::eSpecial20RegClassID:

@@ -301,6 +301,88 @@ def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC512_bf_mac_conf VEC512:$s1, VEC
 def : PatInaccessibleMem<(int_aie2p_I512_I512_ACC512_bf_mul_conf VEC512:$s1, VEC512:$s2, eR:$acc),
            (EXTRACT_SUBREG (VMUL_f_vmul_bf_vmul_bf_core_X_X VEC512:$s1, VEC512:$s2, eR:$acc), sub_512_acc_lo)>;
 
+// BFP16 VMUL/VMAC Intrinsics
+
+def : PatInaccessibleMem<(int_aie2p_BFP576_BFP576_ACC2048_mul_conf VEC512:$s1, EXPVEC64:$s2, VEC512:$s3, EXPVEC64:$s4, eR:$acc),
+           (VMUL_f_vmul_bfp_vmul_bfp_core_EX_EX 
+            (REG_SEQUENCE mEXv, VEC512:$s1, sub_bfp16_x, EXPVEC64:$s2, sub_bfp16_e), 
+            (REG_SEQUENCE mEXw, VEC512:$s3, sub_bfp16_x, EXPVEC64:$s4, sub_bfp16_e), 
+            eR:$acc)>;
+def : PatInaccessibleMem<(int_aie2p_BFP576_BFP576_ACC2048_negmul_conf VEC512:$s1, EXPVEC64:$s2, VEC512:$s3, EXPVEC64:$s4, eR:$acc),
+           (VNEGMUL_f_vmul_bfp_vmul_bfp_core_EX_EX 
+            (REG_SEQUENCE mEXv, VEC512:$s1, sub_bfp16_x, EXPVEC64:$s2, sub_bfp16_e), 
+            (REG_SEQUENCE mEXw, VEC512:$s3, sub_bfp16_x, EXPVEC64:$s4, sub_bfp16_e), 
+            eR:$acc)>;
+def : PatInaccessibleMem<(int_aie2p_BFP576_BFP576_ACC2048_mac_conf VEC512:$s1, EXPVEC64:$s2, VEC512:$s3, EXPVEC64:$s4, ACC2048:$acc1, eR:$acc),
+           (VMAC_f_vmac_bfp_vmul_bfp_core_EX_EX 
+            ACC2048:$acc1,
+            (REG_SEQUENCE mEXv, VEC512:$s1, sub_bfp16_x, EXPVEC64:$s2, sub_bfp16_e), 
+            (REG_SEQUENCE mEXw, VEC512:$s3, sub_bfp16_x, EXPVEC64:$s4, sub_bfp16_e), 
+            eR:$acc)>;
+def : PatInaccessibleMem<(int_aie2p_BFP576_BFP576_ACC2048_msc_conf VEC512:$s1, EXPVEC64:$s2, VEC512:$s3, EXPVEC64:$s4, ACC2048:$acc1, eR:$acc),
+           (VMSC_f_vmac_bfp_vmul_bfp_core_EX_EX 
+            ACC2048:$acc1,
+            (REG_SEQUENCE mEXv, VEC512:$s1, sub_bfp16_x, EXPVEC64:$s2, sub_bfp16_e), 
+            (REG_SEQUENCE mEXw, VEC512:$s3, sub_bfp16_x, EXPVEC64:$s4, sub_bfp16_e), 
+            eR:$acc)>;
+def : PatInaccessibleMem<(int_aie2p_BFP576_BFP576_ACC2048_addmac_conf VEC512:$s1, EXPVEC64:$s2, VEC512:$s3, EXPVEC64:$s4, ACC2048:$acc1, ACC2048:$acc2, eR:$acc),
+           (VADDMAC_f_vaddmac_bfp_vmac_cm2_add_reg_vmul_bfp_core_EX_EX 
+            ACC2048:$acc1, 
+            ACC2048:$acc2,
+            (REG_SEQUENCE mEXv, VEC512:$s1, sub_bfp16_x, EXPVEC64:$s2, sub_bfp16_e), 
+            (REG_SEQUENCE mEXw, VEC512:$s3, sub_bfp16_x, EXPVEC64:$s4, sub_bfp16_e), 
+            eR:$acc)>;
+def : PatInaccessibleMem<(int_aie2p_BFP576_BFP576_ACC2048_addmsc_conf VEC512:$s1, EXPVEC64:$s2, VEC512:$s3, EXPVEC64:$s4, ACC2048:$acc1, ACC2048:$acc2, eR:$acc),
+           (VADDMSC_f_vaddmac_bfp_vmac_cm2_add_reg_vmul_bfp_core_EX_EX 
+            ACC2048:$acc1, 
+            ACC2048:$acc2,
+            (REG_SEQUENCE mEXv, VEC512:$s1, sub_bfp16_x, EXPVEC64:$s2, sub_bfp16_e), 
+            (REG_SEQUENCE mEXw, VEC512:$s3, sub_bfp16_x, EXPVEC64:$s4, sub_bfp16_e), 
+            eR:$acc)>;
+
+def : PatInaccessibleMem<(int_aie2p_BFP576_BFP1152_ACC2048_mul_conf VEC512:$s1, EXPVEC64:$s2, VEC512:$s3, VEC512:$s4, EXPVEC64:$s5, EXPVEC64:$s6, eR:$acc),
+           (VMUL_f_vmul_bfp_vmul_bfp_core_EX_EY 
+            (REG_SEQUENCE mEXv, VEC512:$s1, sub_bfp16_x, EXPVEC64:$s2, sub_bfp16_e), 
+            (REG_SEQUENCE eEY, 
+              VEC512:$s3, sub_bfp16_x, EXPVEC64:$s5, sub_bfp16_e, VEC512:$s4, sub_bfp576_hi_bfp16_x, EXPVEC64:$s6, sub_bfp576_hi_bfp16_e), 
+            eR:$acc)>;
+
+def : PatInaccessibleMem<(int_aie2p_BFP576_BFP1152_ACC2048_negmul_conf VEC512:$s1, EXPVEC64:$s2, VEC512:$s3, VEC512:$s4, EXPVEC64:$s5, EXPVEC64:$s6, eR:$acc),
+           (VNEGMUL_f_vmul_bfp_vmul_bfp_core_EX_EY 
+            (REG_SEQUENCE mEXv, VEC512:$s1, sub_bfp16_x, EXPVEC64:$s2, sub_bfp16_e), 
+            (REG_SEQUENCE eEY, 
+              VEC512:$s3, sub_bfp16_x, EXPVEC64:$s5, sub_bfp16_e, VEC512:$s4, sub_bfp576_hi_bfp16_x, EXPVEC64:$s6, sub_bfp576_hi_bfp16_e), 
+            eR:$acc)>;
+def : PatInaccessibleMem<(int_aie2p_BFP576_BFP1152_ACC2048_mac_conf VEC512:$s1, EXPVEC64:$s2, VEC512:$s3, VEC512:$s4, EXPVEC64:$s5, EXPVEC64:$s6, ACC2048:$acc1, eR:$acc),
+           (VMAC_f_vmac_bfp_vmul_bfp_core_EX_EY
+            ACC2048:$acc1,
+            (REG_SEQUENCE mEXv, VEC512:$s1, sub_bfp16_x, EXPVEC64:$s2, sub_bfp16_e), 
+            (REG_SEQUENCE eEY, 
+              VEC512:$s3, sub_bfp16_x, EXPVEC64:$s5, sub_bfp16_e, VEC512:$s4, sub_bfp576_hi_bfp16_x, EXPVEC64:$s6, sub_bfp576_hi_bfp16_e), 
+            eR:$acc)>;
+def : PatInaccessibleMem<(int_aie2p_BFP576_BFP1152_ACC2048_msc_conf VEC512:$s1, EXPVEC64:$s2, VEC512:$s3, VEC512:$s4, EXPVEC64:$s5, EXPVEC64:$s6, ACC2048:$acc1, eR:$acc),
+           (VMSC_f_vmac_bfp_vmul_bfp_core_EX_EY
+            ACC2048:$acc1,
+            (REG_SEQUENCE mEXv, VEC512:$s1, sub_bfp16_x, EXPVEC64:$s2, sub_bfp16_e), 
+            (REG_SEQUENCE eEY, 
+              VEC512:$s3, sub_bfp16_x, EXPVEC64:$s5, sub_bfp16_e, VEC512:$s4, sub_bfp576_hi_bfp16_x, EXPVEC64:$s6, sub_bfp576_hi_bfp16_e), 
+            eR:$acc)>;
+def : PatInaccessibleMem<(int_aie2p_BFP576_BFP1152_ACC2048_addmac_conf VEC512:$s1, EXPVEC64:$s2, VEC512:$s3, VEC512:$s4, EXPVEC64:$s5, EXPVEC64:$s6, ACC2048:$acc1, ACC2048:$acc2, eR:$acc),
+           (VADDMAC_f_vaddmac_bfp_vmac_cm2_add_reg_vmul_bfp_core_EX_EY
+            ACC2048:$acc1,
+            ACC2048:$acc2,
+            (REG_SEQUENCE mEXv, VEC512:$s1, sub_bfp16_x, EXPVEC64:$s2, sub_bfp16_e), 
+            (REG_SEQUENCE eEY, 
+              VEC512:$s3, sub_bfp16_x, EXPVEC64:$s5, sub_bfp16_e, VEC512:$s4, sub_bfp576_hi_bfp16_x, EXPVEC64:$s6, sub_bfp576_hi_bfp16_e), 
+            eR:$acc)>;
+def : PatInaccessibleMem<(int_aie2p_BFP576_BFP1152_ACC2048_addmsc_conf VEC512:$s1, EXPVEC64:$s2, VEC512:$s3, VEC512:$s4, EXPVEC64:$s5, EXPVEC64:$s6, ACC2048:$acc1, ACC2048:$acc2, eR:$acc),
+           (VADDMSC_f_vaddmac_bfp_vmac_cm2_add_reg_vmul_bfp_core_EX_EY
+            ACC2048:$acc1,
+            ACC2048:$acc2,
+            (REG_SEQUENCE mEXv, VEC512:$s1, sub_bfp16_x, EXPVEC64:$s2, sub_bfp16_e), 
+            (REG_SEQUENCE eEY, 
+              VEC512:$s3, sub_bfp16_x, EXPVEC64:$s5, sub_bfp16_e, VEC512:$s4, sub_bfp576_hi_bfp16_x, EXPVEC64:$s6, sub_bfp576_hi_bfp16_e),
+            eR:$acc)>;
 // NEG/SUB Intrinsics
 
 def : PatInaccessibleMem<(int_aie2p_ACC2048_accfloat_neg_conf ACC2048:$acc1, eR:$acc),

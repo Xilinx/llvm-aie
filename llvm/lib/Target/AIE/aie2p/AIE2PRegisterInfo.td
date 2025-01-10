@@ -64,6 +64,9 @@ def sub_bfp16_x : SubRegIndex<512, 0>;
 def sub_bfp576_lo : SubRegIndex<576,   0>;
 def sub_bfp576_hi : SubRegIndex<576, 576>;
 
+def sub_bfp576_hi_bfp16_e : ComposedSubRegIndex<sub_bfp576_hi, sub_bfp16_e>;
+def sub_bfp576_hi_bfp16_x : ComposedSubRegIndex<sub_bfp576_hi, sub_bfp16_x>;
+
 def sub_q_vecmaskexp_352 : SubRegIndex<64,   0>;
 def sub_e_vecmaskexp_352 : SubRegIndex<32,   64>;
 def sub_w_vecmaskexp_352 : SubRegIndex<256,   96>;
