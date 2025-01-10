@@ -367,6 +367,40 @@ def int_aie2p_I512_I512_ACC2048_negmul_conf : ClangBuiltin<"__builtin_aie2p_I512
 def int_aie2p_I512_I512_ACC512_bf_addmsc_conf : ClangBuiltin<"__builtin_aie2p_I512_I512_ACC512_bf_addmsc_conf">, AIE2PI512I512ACC512BFADDMAC;
 def int_aie2p_I512_I512_ACC512_bf_msc_conf : ClangBuiltin<"__builtin_aie2p_I512_I512_ACC512_bf_msc_conf">, AIE2PI512I512ACC512BFMAC;
 def int_aie2p_I512_I512_ACC512_bf_negmul_conf : ClangBuiltin<"__builtin_aie2p_I512_I512_ACC512_bf_negmul_conf">, AIE2PI512I512ACC512BFMUL;
+
+// BFP16 MAC MUL
+class AIE2PMUL_BFP16V64BFP16
+      : Intrinsic<[llvm_v64i32_ty], [llvm_v64i8_ty, llvm_v8i8_ty, llvm_v64i8_ty, llvm_v8i8_ty, llvm_i32_ty],
+					 [IntrReadMem, IntrInaccessibleMemOnly]>;
+class AIE2PMAC_BFP16V64BFP16
+      : Intrinsic<[llvm_v64i32_ty], [llvm_v64i8_ty, llvm_v8i8_ty, llvm_v64i8_ty, llvm_v8i8_ty, llvm_v64i32_ty, llvm_i32_ty],
+					 [IntrReadMem, IntrInaccessibleMemOnly]>;
+class AIE2PADDMAC_BFP16V64BFP16
+      : Intrinsic<[llvm_v64i32_ty], [llvm_v64i8_ty, llvm_v8i8_ty, llvm_v64i8_ty, llvm_v8i8_ty, llvm_v64i32_ty, llvm_v64i32_ty, llvm_i32_ty],
+					 [IntrReadMem, IntrInaccessibleMemOnly]>;
+class AIE2PMUL_BFP16V128BFP16
+      : Intrinsic<[llvm_v64i32_ty], [llvm_v64i8_ty, llvm_v8i8_ty, llvm_v64i8_ty , llvm_v64i8_ty, llvm_v8i8_ty, llvm_v8i8_ty, llvm_i32_ty],
+					 [IntrReadMem, IntrInaccessibleMemOnly]>;
+class AIE2PMAC_BFP16V128BFP16
+      : Intrinsic<[llvm_v64i32_ty], [llvm_v64i8_ty, llvm_v8i8_ty, llvm_v64i8_ty , llvm_v64i8_ty, llvm_v8i8_ty, llvm_v8i8_ty, llvm_v64i32_ty, llvm_i32_ty],
+					 [IntrReadMem, IntrInaccessibleMemOnly]>;
+class AIE2PADDMAC_BFP16V128BFP16
+      : Intrinsic<[llvm_v64i32_ty], [llvm_v64i8_ty, llvm_v8i8_ty, llvm_v64i8_ty , llvm_v64i8_ty, llvm_v8i8_ty, llvm_v8i8_ty, llvm_v64i32_ty, llvm_v64i32_ty, llvm_i32_ty],
+					 [IntrReadMem, IntrInaccessibleMemOnly]>;
+
+def int_aie2p_BFP576_BFP576_ACC2048_mul_conf : ClangBuiltin<"__builtin_aie2p_BFP576_BFP576_ACC2048_mul_conf">, AIE2PMUL_BFP16V64BFP16;
+def int_aie2p_BFP576_BFP576_ACC2048_negmul_conf : ClangBuiltin<"__builtin_aie2p_BFP576_BFP576_ACC2048_negmul_conf">, AIE2PMUL_BFP16V64BFP16;
+def int_aie2p_BFP576_BFP576_ACC2048_mac_conf : ClangBuiltin<"__builtin_aie2p_BFP576_BFP576_ACC2048_mac_conf">, AIE2PMAC_BFP16V64BFP16;
+def int_aie2p_BFP576_BFP576_ACC2048_msc_conf : ClangBuiltin<"__builtin_aie2p_BFP576_BFP576_ACC2048_msc_conf">, AIE2PMAC_BFP16V64BFP16;
+def int_aie2p_BFP576_BFP576_ACC2048_addmac_conf : ClangBuiltin<"__builtin_aie2p_BFP576_BFP576_ACC2048_addmac_conf">, AIE2PADDMAC_BFP16V64BFP16;
+def int_aie2p_BFP576_BFP576_ACC2048_addmsc_conf : ClangBuiltin<"__builtin_aie2p_BFP576_BFP576_ACC2048_addmsc_conf">, AIE2PADDMAC_BFP16V64BFP16;
+def int_aie2p_BFP576_BFP1152_ACC2048_mul_conf : ClangBuiltin<"__builtin_aie2p_BFP576_BFP1152_ACC2048_mul_conf">, AIE2PMUL_BFP16V128BFP16;
+def int_aie2p_BFP576_BFP1152_ACC2048_negmul_conf : ClangBuiltin<"__builtin_aie2p_BFP576_BFP1152_ACC2048_negmul_conf">, AIE2PMUL_BFP16V128BFP16;
+def int_aie2p_BFP576_BFP1152_ACC2048_mac_conf : ClangBuiltin<"__builtin_aie2p_BFP576_BFP1152_ACC2048_mac_conf">, AIE2PMAC_BFP16V128BFP16;
+def int_aie2p_BFP576_BFP1152_ACC2048_msc_conf : ClangBuiltin<"__builtin_aie2p_BFP576_BFP1152_ACC2048_msc_conf">, AIE2PMAC_BFP16V128BFP16;
+def int_aie2p_BFP576_BFP1152_ACC2048_addmac_conf : ClangBuiltin<"__builtin_aie2p_BFP576_BFP1152_ACC2048_addmac_conf">, AIE2PADDMAC_BFP16V128BFP16;
+def int_aie2p_BFP576_BFP1152_ACC2048_addmsc_conf : ClangBuiltin<"__builtin_aie2p_BFP576_BFP1152_ACC2048_addmsc_conf">, AIE2PADDMAC_BFP16V128BFP16;
+
 //srs
 def int_aie2p_I256_v16_acc32_srs : ClangBuiltin<"__builtin_aie2p_I256_v16_acc32_srs">, AIE2PI256V16Acc32I;
 def int_aie2p_I256_v16_acc64_srs : ClangBuiltin<"__builtin_aie2p_I256_v16_acc64_srs">, AIE2PI256V16Acc64I;
