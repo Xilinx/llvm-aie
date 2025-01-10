@@ -3,7 +3,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -38825,6 +38825,376 @@ addmsc_elem_64_conf(v64bfloat16 a, int sgn_x, v64bfloat16 b, int sgn_y,
                                    sub_acc1, sub_acc2, 0);
   return __builtin_aie2p_I1024_I1024_ACC2048_bf_addmsc_conf(a, b, acc1, acc2,
                                                             conf);
+};
+
+INTRINSIC(v64accfloat) mul_8x8_8x8T(v64bfp16ebs8 a, v64bfp16ebs8 b) {
+  int conf = aie2p_compute_control(1, 1, 2, 1, 0, 0, 0, 0, 0, 0, 0);
+  return __builtin_aie2p_BFP576_BFP576_ACC2048_mul_conf(
+      a.mantissa, a.exponent, b.mantissa, b.exponent, conf);
+}
+INTRINSIC(v64accfloat) negmul_8x8_8x8T(v64bfp16ebs8 a, v64bfp16ebs8 b) {
+  int conf = aie2p_compute_control(1, 1, 2, 1, 0, 0, 0, 0, 0, 0, 0);
+  return __builtin_aie2p_BFP576_BFP576_ACC2048_negmul_conf(
+      a.mantissa, a.exponent, b.mantissa, b.exponent, conf);
+}
+INTRINSIC(v64accfloat)
+mac_8x8_8x8T(v64bfp16ebs8 a, v64bfp16ebs8 b, v64accfloat acc) {
+  int conf = aie2p_compute_control(1, 1, 2, 1, 0, 0, 0, 0, 0, 0, 0);
+  return __builtin_aie2p_BFP576_BFP576_ACC2048_mac_conf(
+      a.mantissa, a.exponent, b.mantissa, b.exponent, acc, conf);
+}
+INTRINSIC(v64accfloat)
+msc_8x8_8x8T(v64bfp16ebs8 a, v64bfp16ebs8 b, v64accfloat acc) {
+  int conf = aie2p_compute_control(1, 1, 2, 1, 0, 0, 0, 0, 0, 0, 0);
+  return __builtin_aie2p_BFP576_BFP576_ACC2048_msc_conf(
+      a.mantissa, a.exponent, b.mantissa, b.exponent, acc, conf);
+}
+INTRINSIC(v64accfloat)
+addmac_8x8_8x8T(v64bfp16ebs8 a, v64bfp16ebs8 b, v64accfloat acc1,
+                v64accfloat acc2) {
+  int conf = aie2p_compute_control(1, 1, 2, 1, 0, 0, 0, 0, 0, 0, 0);
+  return __builtin_aie2p_BFP576_BFP576_ACC2048_addmac_conf(
+      a.mantissa, a.exponent, b.mantissa, b.exponent, acc1, acc2, conf);
+}
+INTRINSIC(v64accfloat)
+addmsc_8x8_8x8T(v64bfp16ebs8 a, v64bfp16ebs8 b, v64accfloat acc1,
+                v64accfloat acc2) {
+  int conf = aie2p_compute_control(1, 1, 2, 1, 0, 0, 0, 0, 0, 0, 0);
+  return __builtin_aie2p_BFP576_BFP576_ACC2048_addmsc_conf(
+      a.mantissa, a.exponent, b.mantissa, b.exponent, acc1, acc2, conf);
+}
+INTRINSIC(v64accfloat)
+mul_8x8_8x8T(v64bfp16ebs8 a, int sgn_x, v64bfp16ebs8 b, int sgn_y) {
+  int conf = aie2p_compute_control(sgn_x, sgn_y, 2, 1, 0, 0, 0, 0, 0, 0, 0);
+  return __builtin_aie2p_BFP576_BFP576_ACC2048_mul_conf(
+      a.mantissa, a.exponent, b.mantissa, b.exponent, conf);
+}
+INTRINSIC(v64accfloat)
+negmul_8x8_8x8T(v64bfp16ebs8 a, int sgn_x, v64bfp16ebs8 b, int sgn_y) {
+  int conf = aie2p_compute_control(sgn_x, sgn_y, 2, 1, 0, 0, 0, 0, 0, 0, 0);
+  return __builtin_aie2p_BFP576_BFP576_ACC2048_negmul_conf(
+      a.mantissa, a.exponent, b.mantissa, b.exponent, conf);
+}
+INTRINSIC(v64accfloat)
+mac_8x8_8x8T(v64bfp16ebs8 a, int sgn_x, v64bfp16ebs8 b, int sgn_y,
+             v64accfloat acc) {
+  int conf = aie2p_compute_control(sgn_x, sgn_y, 2, 1, 0, 0, 0, 0, 0, 0, 0);
+  return __builtin_aie2p_BFP576_BFP576_ACC2048_mac_conf(
+      a.mantissa, a.exponent, b.mantissa, b.exponent, acc, conf);
+}
+INTRINSIC(v64accfloat)
+msc_8x8_8x8T(v64bfp16ebs8 a, int sgn_x, v64bfp16ebs8 b, int sgn_y,
+             v64accfloat acc) {
+  int conf = aie2p_compute_control(sgn_x, sgn_y, 2, 1, 0, 0, 0, 0, 0, 0, 0);
+  return __builtin_aie2p_BFP576_BFP576_ACC2048_msc_conf(
+      a.mantissa, a.exponent, b.mantissa, b.exponent, acc, conf);
+}
+INTRINSIC(v64accfloat)
+addmac_8x8_8x8T(v64bfp16ebs8 a, int sgn_x, v64bfp16ebs8 b, int sgn_y,
+                v64accfloat acc1, v64accfloat acc2) {
+  int conf = aie2p_compute_control(sgn_x, sgn_y, 2, 1, 0, 0, 0, 0, 0, 0, 0);
+  return __builtin_aie2p_BFP576_BFP576_ACC2048_addmac_conf(
+      a.mantissa, a.exponent, b.mantissa, b.exponent, acc1, acc2, conf);
+}
+INTRINSIC(v64accfloat)
+addmsc_8x8_8x8T(v64bfp16ebs8 a, int sgn_x, v64bfp16ebs8 b, int sgn_y,
+                v64accfloat acc1, v64accfloat acc2) {
+  int conf = aie2p_compute_control(sgn_x, sgn_y, 2, 1, 0, 0, 0, 0, 0, 0, 0);
+  return __builtin_aie2p_BFP576_BFP576_ACC2048_addmsc_conf(
+      a.mantissa, a.exponent, b.mantissa, b.exponent, acc1, acc2, conf);
+}
+INTRINSIC(v64accfloat)
+mul_8x8_8x8T_conf(v64bfp16ebs8 a, v64bfp16ebs8 b, int sub_mul) {
+  int conf = aie2p_compute_control(1, 1, 2, 1, 0, 0, 0, sub_mul, 0, 0, 0);
+  return __builtin_aie2p_BFP576_BFP576_ACC2048_mul_conf(
+      a.mantissa, a.exponent, b.mantissa, b.exponent, conf);
+}
+INTRINSIC(v64accfloat)
+negmul_8x8_8x8T_conf(v64bfp16ebs8 a, v64bfp16ebs8 b, int sub_mul) {
+  int conf = aie2p_compute_control(1, 1, 2, 1, 0, 0, 0, sub_mul, 0, 0, 0);
+  return __builtin_aie2p_BFP576_BFP576_ACC2048_negmul_conf(
+      a.mantissa, a.exponent, b.mantissa, b.exponent, conf);
+}
+INTRINSIC(v64accfloat)
+mac_8x8_8x8T_conf(v64bfp16ebs8 a, v64bfp16ebs8 b, v64accfloat acc, int zero_acc,
+                  int sub_mul, int sub_acc1) {
+  int conf = aie2p_compute_control(1, 1, 2, 1, 0, zero_acc, 0, sub_mul,
+                                   sub_acc1, 0, 0);
+  return __builtin_aie2p_BFP576_BFP576_ACC2048_mac_conf(
+      a.mantissa, a.exponent, b.mantissa, b.exponent, acc, conf);
+}
+INTRINSIC(v64accfloat)
+msc_8x8_8x8T_conf(v64bfp16ebs8 a, v64bfp16ebs8 b, v64accfloat acc, int zero_acc,
+                  int sub_mul, int sub_acc1) {
+  int conf = aie2p_compute_control(1, 1, 2, 1, 0, zero_acc, 0, sub_mul,
+                                   sub_acc1, 0, 0);
+  return __builtin_aie2p_BFP576_BFP576_ACC2048_msc_conf(
+      a.mantissa, a.exponent, b.mantissa, b.exponent, acc, conf);
+}
+INTRINSIC(v64accfloat)
+addmac_8x8_8x8T_conf(v64bfp16ebs8 a, v64bfp16ebs8 b, v64accfloat acc1,
+                     v64accfloat acc2, int zero_acc1, int sub_mul, int sub_acc1,
+                     int sub_acc2) {
+  int conf = aie2p_compute_control(1, 1, 2, 1, 0, zero_acc1, 0, sub_mul,
+                                   sub_acc1, sub_acc2, 0);
+  return __builtin_aie2p_BFP576_BFP576_ACC2048_addmac_conf(
+      a.mantissa, a.exponent, b.mantissa, b.exponent, acc1, acc2, conf);
+}
+INTRINSIC(v64accfloat)
+addmsc_8x8_8x8T_conf(v64bfp16ebs8 a, v64bfp16ebs8 b, v64accfloat acc1,
+                     v64accfloat acc2, int zero_acc1, int sub_mul, int sub_acc1,
+                     int sub_acc2) {
+  int conf = aie2p_compute_control(1, 1, 2, 1, 0, zero_acc1, 0, sub_mul,
+                                   sub_acc1, sub_acc2, 0);
+  return __builtin_aie2p_BFP576_BFP576_ACC2048_addmsc_conf(
+      a.mantissa, a.exponent, b.mantissa, b.exponent, acc1, acc2, conf);
+}
+INTRINSIC(v64accfloat)
+mul_8x8_8x8T_conf(v64bfp16ebs8 a, int sgn_x, v64bfp16ebs8 b, int sgn_y,
+                  int sub_mul) {
+  int conf =
+      aie2p_compute_control(sgn_x, sgn_y, 2, 1, 0, 0, 0, sub_mul, 0, 0, 0);
+  return __builtin_aie2p_BFP576_BFP576_ACC2048_mul_conf(
+      a.mantissa, a.exponent, b.mantissa, b.exponent, conf);
+}
+INTRINSIC(v64accfloat)
+negmul_8x8_8x8T_conf(v64bfp16ebs8 a, int sgn_x, v64bfp16ebs8 b, int sgn_y,
+                     int sub_mul) {
+  int conf =
+      aie2p_compute_control(sgn_x, sgn_y, 2, 1, 0, 0, 0, sub_mul, 0, 0, 0);
+  return __builtin_aie2p_BFP576_BFP576_ACC2048_negmul_conf(
+      a.mantissa, a.exponent, b.mantissa, b.exponent, conf);
+}
+INTRINSIC(v64accfloat)
+mac_8x8_8x8T_conf(v64bfp16ebs8 a, int sgn_x, v64bfp16ebs8 b, int sgn_y,
+                  v64accfloat acc, int zero_acc, int sub_mul, int sub_acc1) {
+  int conf = aie2p_compute_control(sgn_x, sgn_y, 2, 1, 0, zero_acc, 0, sub_mul,
+                                   sub_acc1, 0, 0);
+  return __builtin_aie2p_BFP576_BFP576_ACC2048_mac_conf(
+      a.mantissa, a.exponent, b.mantissa, b.exponent, acc, conf);
+}
+INTRINSIC(v64accfloat)
+msc_8x8_8x8T_conf(v64bfp16ebs8 a, int sgn_x, v64bfp16ebs8 b, int sgn_y,
+                  v64accfloat acc, int zero_acc, int sub_mul, int sub_acc1) {
+  int conf = aie2p_compute_control(sgn_x, sgn_y, 2, 1, 0, zero_acc, 0, sub_mul,
+                                   sub_acc1, 0, 0);
+  return __builtin_aie2p_BFP576_BFP576_ACC2048_msc_conf(
+      a.mantissa, a.exponent, b.mantissa, b.exponent, acc, conf);
+}
+INTRINSIC(v64accfloat)
+addmac_8x8_8x8T_conf(v64bfp16ebs8 a, int sgn_x, v64bfp16ebs8 b, int sgn_y,
+                     v64accfloat acc1, v64accfloat acc2, int zero_acc1,
+                     int sub_mul, int sub_acc1, int sub_acc2) {
+  int conf = aie2p_compute_control(sgn_x, sgn_y, 2, 1, 0, zero_acc1, 0, sub_mul,
+                                   sub_acc1, sub_acc2, 0);
+  return __builtin_aie2p_BFP576_BFP576_ACC2048_addmac_conf(
+      a.mantissa, a.exponent, b.mantissa, b.exponent, acc1, acc2, conf);
+}
+INTRINSIC(v64accfloat)
+addmsc_8x8_8x8T_conf(v64bfp16ebs8 a, int sgn_x, v64bfp16ebs8 b, int sgn_y,
+                     v64accfloat acc1, v64accfloat acc2, int zero_acc1,
+                     int sub_mul, int sub_acc1, int sub_acc2) {
+  int conf = aie2p_compute_control(sgn_x, sgn_y, 2, 1, 0, zero_acc1, 0, sub_mul,
+                                   sub_acc1, sub_acc2, 0);
+  return __builtin_aie2p_BFP576_BFP576_ACC2048_addmsc_conf(
+      a.mantissa, a.exponent, b.mantissa, b.exponent, acc1, acc2, conf);
+};
+
+INTRINSIC(v64accfloat) mul_4x8_8x16T(v64bfp16ebs8 a, v128bfp16ebs8 b) {
+  int conf = aie2p_compute_control(1, 1, 2, 1, 6, 0, 0, 0, 0, 0, 0);
+  return __builtin_aie2p_BFP576_BFP1152_ACC2048_mul_conf(
+      a.mantissa, a.exponent, b.mantissaX0, b.mantissaX1, b.exponentE0,
+      b.exponentE1, conf);
+}
+INTRINSIC(v64accfloat) negmul_4x8_8x16T(v64bfp16ebs8 a, v128bfp16ebs8 b) {
+  int conf = aie2p_compute_control(1, 1, 2, 1, 6, 0, 0, 0, 0, 0, 0);
+  return __builtin_aie2p_BFP576_BFP1152_ACC2048_negmul_conf(
+      a.mantissa, a.exponent, b.mantissaX0, b.mantissaX1, b.exponentE0,
+      b.exponentE1, conf);
+}
+INTRINSIC(v64accfloat)
+mac_4x8_8x16T(v64bfp16ebs8 a, v128bfp16ebs8 b, v64accfloat acc) {
+  int conf = aie2p_compute_control(1, 1, 2, 1, 6, 0, 0, 0, 0, 0, 0);
+  return __builtin_aie2p_BFP576_BFP1152_ACC2048_mac_conf(
+      a.mantissa, a.exponent, b.mantissaX0, b.mantissaX1, b.exponentE0,
+      b.exponentE1, acc, conf);
+}
+INTRINSIC(v64accfloat)
+msc_4x8_8x16T(v64bfp16ebs8 a, v128bfp16ebs8 b, v64accfloat acc) {
+  int conf = aie2p_compute_control(1, 1, 2, 1, 6, 0, 0, 0, 0, 0, 0);
+  return __builtin_aie2p_BFP576_BFP1152_ACC2048_msc_conf(
+      a.mantissa, a.exponent, b.mantissaX0, b.mantissaX1, b.exponentE0,
+      b.exponentE1, acc, conf);
+}
+INTRINSIC(v64accfloat)
+addmac_4x8_8x16T(v64bfp16ebs8 a, v128bfp16ebs8 b, v64accfloat acc1,
+                 v64accfloat acc2) {
+  int conf = aie2p_compute_control(1, 1, 2, 1, 6, 0, 0, 0, 0, 0, 0);
+  return __builtin_aie2p_BFP576_BFP1152_ACC2048_addmac_conf(
+      a.mantissa, a.exponent, b.mantissaX0, b.mantissaX1, b.exponentE0,
+      b.exponentE1, acc1, acc2, conf);
+}
+INTRINSIC(v64accfloat)
+addmsc_4x8_8x16T(v64bfp16ebs8 a, v128bfp16ebs8 b, v64accfloat acc1,
+                 v64accfloat acc2) {
+  int conf = aie2p_compute_control(1, 1, 2, 1, 6, 0, 0, 0, 0, 0, 0);
+  return __builtin_aie2p_BFP576_BFP1152_ACC2048_addmsc_conf(
+      a.mantissa, a.exponent, b.mantissaX0, b.mantissaX1, b.exponentE0,
+      b.exponentE1, acc1, acc2, conf);
+}
+INTRINSIC(v64accfloat)
+mul_4x8_8x16T(v64bfp16ebs8 a, int sgn_x, v128bfp16ebs8 b, int sgn_y) {
+  int conf = aie2p_compute_control(sgn_x, sgn_y, 2, 1, 6, 0, 0, 0, 0, 0, 0);
+  return __builtin_aie2p_BFP576_BFP1152_ACC2048_mul_conf(
+      a.mantissa, a.exponent, b.mantissaX0, b.mantissaX1, b.exponentE0,
+      b.exponentE1, conf);
+}
+INTRINSIC(v64accfloat)
+negmul_4x8_8x16T(v64bfp16ebs8 a, int sgn_x, v128bfp16ebs8 b, int sgn_y) {
+  int conf = aie2p_compute_control(sgn_x, sgn_y, 2, 1, 6, 0, 0, 0, 0, 0, 0);
+  return __builtin_aie2p_BFP576_BFP1152_ACC2048_negmul_conf(
+      a.mantissa, a.exponent, b.mantissaX0, b.mantissaX1, b.exponentE0,
+      b.exponentE1, conf);
+}
+INTRINSIC(v64accfloat)
+mac_4x8_8x16T(v64bfp16ebs8 a, int sgn_x, v128bfp16ebs8 b, int sgn_y,
+              v64accfloat acc) {
+  int conf = aie2p_compute_control(sgn_x, sgn_y, 2, 1, 6, 0, 0, 0, 0, 0, 0);
+  return __builtin_aie2p_BFP576_BFP1152_ACC2048_mac_conf(
+      a.mantissa, a.exponent, b.mantissaX0, b.mantissaX1, b.exponentE0,
+      b.exponentE1, acc, conf);
+}
+INTRINSIC(v64accfloat)
+msc_4x8_8x16T(v64bfp16ebs8 a, int sgn_x, v128bfp16ebs8 b, int sgn_y,
+              v64accfloat acc) {
+  int conf = aie2p_compute_control(sgn_x, sgn_y, 2, 1, 6, 0, 0, 0, 0, 0, 0);
+  return __builtin_aie2p_BFP576_BFP1152_ACC2048_msc_conf(
+      a.mantissa, a.exponent, b.mantissaX0, b.mantissaX1, b.exponentE0,
+      b.exponentE1, acc, conf);
+}
+INTRINSIC(v64accfloat)
+addmac_4x8_8x16T(v64bfp16ebs8 a, int sgn_x, v128bfp16ebs8 b, int sgn_y,
+                 v64accfloat acc1, v64accfloat acc2) {
+  int conf = aie2p_compute_control(sgn_x, sgn_y, 2, 1, 6, 0, 0, 0, 0, 0, 0);
+  return __builtin_aie2p_BFP576_BFP1152_ACC2048_addmac_conf(
+      a.mantissa, a.exponent, b.mantissaX0, b.mantissaX1, b.exponentE0,
+      b.exponentE1, acc1, acc2, conf);
+}
+INTRINSIC(v64accfloat)
+addmsc_4x8_8x16T(v64bfp16ebs8 a, int sgn_x, v128bfp16ebs8 b, int sgn_y,
+                 v64accfloat acc1, v64accfloat acc2) {
+  int conf = aie2p_compute_control(sgn_x, sgn_y, 2, 1, 6, 0, 0, 0, 0, 0, 0);
+  return __builtin_aie2p_BFP576_BFP1152_ACC2048_addmsc_conf(
+      a.mantissa, a.exponent, b.mantissaX0, b.mantissaX1, b.exponentE0,
+      b.exponentE1, acc1, acc2, conf);
+}
+INTRINSIC(v64accfloat)
+mul_4x8_8x16T_conf(v64bfp16ebs8 a, v128bfp16ebs8 b, int sub_mul) {
+  int conf = aie2p_compute_control(1, 1, 2, 1, 6, 0, 0, sub_mul, 0, 0, 0);
+  return __builtin_aie2p_BFP576_BFP1152_ACC2048_mul_conf(
+      a.mantissa, a.exponent, b.mantissaX0, b.mantissaX1, b.exponentE0,
+      b.exponentE1, conf);
+}
+INTRINSIC(v64accfloat)
+negmul_4x8_8x16T_conf(v64bfp16ebs8 a, v128bfp16ebs8 b, int sub_mul) {
+  int conf = aie2p_compute_control(1, 1, 2, 1, 6, 0, 0, sub_mul, 0, 0, 0);
+  return __builtin_aie2p_BFP576_BFP1152_ACC2048_negmul_conf(
+      a.mantissa, a.exponent, b.mantissaX0, b.mantissaX1, b.exponentE0,
+      b.exponentE1, conf);
+}
+INTRINSIC(v64accfloat)
+mac_4x8_8x16T_conf(v64bfp16ebs8 a, v128bfp16ebs8 b, v64accfloat acc,
+                   int zero_acc, int sub_mul, int sub_acc1) {
+  int conf = aie2p_compute_control(1, 1, 2, 1, 6, zero_acc, 0, sub_mul,
+                                   sub_acc1, 0, 0);
+  return __builtin_aie2p_BFP576_BFP1152_ACC2048_mac_conf(
+      a.mantissa, a.exponent, b.mantissaX0, b.mantissaX1, b.exponentE0,
+      b.exponentE1, acc, conf);
+}
+INTRINSIC(v64accfloat)
+msc_4x8_8x16T_conf(v64bfp16ebs8 a, v128bfp16ebs8 b, v64accfloat acc,
+                   int zero_acc, int sub_mul, int sub_acc1) {
+  int conf = aie2p_compute_control(1, 1, 2, 1, 6, zero_acc, 0, sub_mul,
+                                   sub_acc1, 0, 0);
+  return __builtin_aie2p_BFP576_BFP1152_ACC2048_msc_conf(
+      a.mantissa, a.exponent, b.mantissaX0, b.mantissaX1, b.exponentE0,
+      b.exponentE1, acc, conf);
+}
+INTRINSIC(v64accfloat)
+addmac_4x8_8x16T_conf(v64bfp16ebs8 a, v128bfp16ebs8 b, v64accfloat acc1,
+                      v64accfloat acc2, int zero_acc1, int sub_mul,
+                      int sub_acc1, int sub_acc2) {
+  int conf = aie2p_compute_control(1, 1, 2, 1, 6, zero_acc1, 0, sub_mul,
+                                   sub_acc1, sub_acc2, 0);
+  return __builtin_aie2p_BFP576_BFP1152_ACC2048_addmac_conf(
+      a.mantissa, a.exponent, b.mantissaX0, b.mantissaX1, b.exponentE0,
+      b.exponentE1, acc1, acc2, conf);
+}
+INTRINSIC(v64accfloat)
+addmsc_4x8_8x16T_conf(v64bfp16ebs8 a, v128bfp16ebs8 b, v64accfloat acc1,
+                      v64accfloat acc2, int zero_acc1, int sub_mul,
+                      int sub_acc1, int sub_acc2) {
+  int conf = aie2p_compute_control(1, 1, 2, 1, 6, zero_acc1, 0, sub_mul,
+                                   sub_acc1, sub_acc2, 0);
+  return __builtin_aie2p_BFP576_BFP1152_ACC2048_addmsc_conf(
+      a.mantissa, a.exponent, b.mantissaX0, b.mantissaX1, b.exponentE0,
+      b.exponentE1, acc1, acc2, conf);
+}
+INTRINSIC(v64accfloat)
+mul_4x8_8x16T_conf(v64bfp16ebs8 a, int sgn_x, v128bfp16ebs8 b, int sgn_y,
+                   int sub_mul) {
+  int conf =
+      aie2p_compute_control(sgn_x, sgn_y, 2, 1, 6, 0, 0, sub_mul, 0, 0, 0);
+  return __builtin_aie2p_BFP576_BFP1152_ACC2048_mul_conf(
+      a.mantissa, a.exponent, b.mantissaX0, b.mantissaX1, b.exponentE0,
+      b.exponentE1, conf);
+}
+INTRINSIC(v64accfloat)
+negmul_4x8_8x16T_conf(v64bfp16ebs8 a, int sgn_x, v128bfp16ebs8 b, int sgn_y,
+                      int sub_mul) {
+  int conf =
+      aie2p_compute_control(sgn_x, sgn_y, 2, 1, 6, 0, 0, sub_mul, 0, 0, 0);
+  return __builtin_aie2p_BFP576_BFP1152_ACC2048_negmul_conf(
+      a.mantissa, a.exponent, b.mantissaX0, b.mantissaX1, b.exponentE0,
+      b.exponentE1, conf);
+}
+INTRINSIC(v64accfloat)
+mac_4x8_8x16T_conf(v64bfp16ebs8 a, int sgn_x, v128bfp16ebs8 b, int sgn_y,
+                   v64accfloat acc, int zero_acc, int sub_mul, int sub_acc1) {
+  int conf = aie2p_compute_control(sgn_x, sgn_y, 2, 1, 6, zero_acc, 0, sub_mul,
+                                   sub_acc1, 0, 0);
+  return __builtin_aie2p_BFP576_BFP1152_ACC2048_mac_conf(
+      a.mantissa, a.exponent, b.mantissaX0, b.mantissaX1, b.exponentE0,
+      b.exponentE1, acc, conf);
+}
+INTRINSIC(v64accfloat)
+msc_4x8_8x16T_conf(v64bfp16ebs8 a, int sgn_x, v128bfp16ebs8 b, int sgn_y,
+                   v64accfloat acc, int zero_acc, int sub_mul, int sub_acc1) {
+  int conf = aie2p_compute_control(sgn_x, sgn_y, 2, 1, 6, zero_acc, 0, sub_mul,
+                                   sub_acc1, 0, 0);
+  return __builtin_aie2p_BFP576_BFP1152_ACC2048_msc_conf(
+      a.mantissa, a.exponent, b.mantissaX0, b.mantissaX1, b.exponentE0,
+      b.exponentE1, acc, conf);
+}
+INTRINSIC(v64accfloat)
+addmac_4x8_8x16T_conf(v64bfp16ebs8 a, int sgn_x, v128bfp16ebs8 b, int sgn_y,
+                      v64accfloat acc1, v64accfloat acc2, int zero_acc1,
+                      int sub_mul, int sub_acc1, int sub_acc2) {
+  int conf = aie2p_compute_control(sgn_x, sgn_y, 2, 1, 6, zero_acc1, 0, sub_mul,
+                                   sub_acc1, sub_acc2, 0);
+  return __builtin_aie2p_BFP576_BFP1152_ACC2048_addmac_conf(
+      a.mantissa, a.exponent, b.mantissaX0, b.mantissaX1, b.exponentE0,
+      b.exponentE1, acc1, acc2, conf);
+}
+INTRINSIC(v64accfloat)
+addmsc_4x8_8x16T_conf(v64bfp16ebs8 a, int sgn_x, v128bfp16ebs8 b, int sgn_y,
+                      v64accfloat acc1, v64accfloat acc2, int zero_acc1,
+                      int sub_mul, int sub_acc1, int sub_acc2) {
+  int conf = aie2p_compute_control(sgn_x, sgn_y, 2, 1, 6, zero_acc1, 0, sub_mul,
+                                   sub_acc1, sub_acc2, 0);
+  return __builtin_aie2p_BFP576_BFP1152_ACC2048_addmsc_conf(
+      a.mantissa, a.exponent, b.mantissaX0, b.mantissaX1, b.exponentE0,
+      b.exponentE1, acc1, acc2, conf);
 };
 
 INTRINSIC(v64acc32) add(v64acc32 acc1, v64acc32 acc2) {

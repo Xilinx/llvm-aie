@@ -297,6 +297,20 @@ BUILTIN(__builtin_aie2p_write_tm, "viv*", "nc")
 BUILTIN(__builtin_aie2p_fx2flt, "fii", "nc")
 BUILTIN(__builtin_aie2p_flt2fx, "ifi", "nc")
 
+// BFP16 MAC MUL
+BUILTIN(__builtin_aie2p_BFP576_BFP576_ACC2048_mul_conf, "V64gV64cV8cV64cV8ci", "nc")
+BUILTIN(__builtin_aie2p_BFP576_BFP576_ACC2048_negmul_conf, "V64gV64cV8cV64cV8ci", "nc")
+BUILTIN(__builtin_aie2p_BFP576_BFP576_ACC2048_mac_conf, "V64gV64cV8cV64cV8cV64gi", "nc")
+BUILTIN(__builtin_aie2p_BFP576_BFP576_ACC2048_msc_conf, "V64gV64cV8cV64cV8cV64gi", "nc")
+BUILTIN(__builtin_aie2p_BFP576_BFP576_ACC2048_addmac_conf, "V64gV64cV8cV64cV8cV64gV64gi", "nc")
+BUILTIN(__builtin_aie2p_BFP576_BFP576_ACC2048_addmsc_conf, "V64gV64cV8cV64cV8cV64gV64gi", "nc")
+BUILTIN(__builtin_aie2p_BFP576_BFP1152_ACC2048_mul_conf, "V64gV64cV8cV64cV64cV8cV8ci", "nc")
+BUILTIN(__builtin_aie2p_BFP576_BFP1152_ACC2048_negmul_conf, "V64gV64cV8cV64cV64cV8cV8ci", "nc")
+BUILTIN(__builtin_aie2p_BFP576_BFP1152_ACC2048_mac_conf, "V64gV64cV8cV64cV64cV8cV8cV64gi", "nc")
+BUILTIN(__builtin_aie2p_BFP576_BFP1152_ACC2048_msc_conf, "V64gV64cV8cV64cV64cV8cV8cV64gi", "nc")
+BUILTIN(__builtin_aie2p_BFP576_BFP1152_ACC2048_addmac_conf, "V64gV64cV8cV64cV64cV8cV8cV64gV64gi", "nc")
+BUILTIN(__builtin_aie2p_BFP576_BFP1152_ACC2048_addmsc_conf, "V64gV64cV8cV64cV64cV8cV8cV64gV64gi", "nc")
+
 // non-linear fp ops
 BUILTIN(__builtin_aie2p_sqrtf, "ff", "nc")
 BUILTIN(__builtin_aie2p_inv, "ff", "nc")
