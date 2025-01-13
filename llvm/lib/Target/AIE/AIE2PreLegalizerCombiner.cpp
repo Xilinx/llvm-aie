@@ -75,6 +75,8 @@ public:
 
   bool tryToCombineVectorInserts(MachineInstr &MI, unsigned SclSrcBits) const;
 
+  bool tryToCombineExtBcst(MachineInstr &MI) const;
+
   bool tryToCombineIntrinsic(MachineInstr &MI) const;
 
 private:
@@ -243,6 +245,54 @@ bool AIE2PreLegalizerCombinerImpl::tryToCombineVectorInserts(
   return true;
 }
 
+// Combines vextract and vbroadcast into vextract_broadcast
+bool AIE2PreLegalizerCombinerImpl::tryToCombineExtBcst(MachineInstr &MI) const {
+  // Returns the combined intrinsicID for matching broadcast and extract ops
+  auto getExtBcstIntrinsicID = [](unsigned BcastID,
+                                  unsigned ExtID) -> std::optional<unsigned> {
+    switch (BcastID) {
+    case Intrinsic::aie2_vbroadcast8_I512:
+      if (ExtID == Intrinsic::aie2_vextract_elem8_I512)
+        return Intrinsic::aie2_vextract_broadcast8_I512;
+      break;
+    case Intrinsic::aie2_vbroadcast16_I512:
+      if (ExtID == Intrinsic::aie2_vextract_elem16_I512)
+        return Intrinsic::aie2_vextract_broadcast16_I512;
+      break;
+    case Intrinsic::aie2_vbroadcast32_I512:
+      if (ExtID == Intrinsic::aie2_vextract_elem32_I512)
+        return Intrinsic::aie2_vextract_broadcast32_I512;
+      break;
+    }
+    return std::nullopt;
+  };
+  assert(isa<GIntrinsic>(MI) && "this combine only supports instrinsics");
+  const Register DstReg = MI.getOperand(0).getReg();
+  MachineInstr *ExtMI = getDefIgnoringCopies(MI.getOperand(2).getReg(), MRI);
+  if (!isa<GIntrinsic>(*ExtMI))
+    return false;
+  // Checks for single use of extracted element
+  if (!MRI.hasOneNonDBGUse(ExtMI->getOperand(0).getReg()))
+    return false;
+
+  const unsigned BcstID = cast<GIntrinsic>(MI).getIntrinsicID();
+  const unsigned ExtID = cast<GIntrinsic>(*ExtMI).getIntrinsicID();
+  const std::optional<unsigned> ExtBcstIntrinsicID =
+      getExtBcstIntrinsicID(BcstID, ExtID);
+  if (!ExtBcstIntrinsicID)
+    return false;
+
+  const Register SrcReg = ExtMI->getOperand(2).getReg();
+  const Register IdxReg = ExtMI->getOperand(3).getReg();
+  MachineIRBuilder MIRBuilder(MI);
+  MIRBuilder.buildIntrinsic(*ExtBcstIntrinsicID, DstReg, false, false)
+      .addUse(SrcReg)
+      .addUse(IdxReg);
+  MI.eraseFromParent();
+
+  return true;
+}
+
 bool AIE2PreLegalizerCombinerImpl::tryToCombineIntrinsic(
     MachineInstr &MI) const {
   const unsigned IntrinsicID = cast<GIntrinsic>(MI).getIntrinsicID();
@@ -261,6 +311,12 @@ bool AIE2PreLegalizerCombinerImpl::tryToCombineIntrinsic(
   case Intrinsic::aie2_vinsert16_I512:
   case Intrinsic::aie2_vinsert32_I512: {
     return tryToCombineVectorInserts(MI, getVInsertScalarSize(IntrinsicID));
+  }
+  case Intrinsic::aie2_vbroadcast8_I512:
+  case Intrinsic::aie2_vbroadcast16_I512:
+  case Intrinsic::aie2_vbroadcast32_I512:
+  case Intrinsic::aie2_vbroadcast64_I512: {
+    return tryToCombineExtBcst(MI);
   }
   default:
     break;
