@@ -370,6 +370,7 @@ void AIE::relocate(uint8_t *Loc, const Relocation &rel, uint64_t Val) const {
     relocateAIE1(Loc, rel, Val);
     break;
   case 2:
+  case 3:
     relocateAIE2(Loc, rel, Val);
     break;
   default:
