@@ -788,6 +788,12 @@ bool PostPipeliner::schedule(ScheduleDAGMI &TheDAG, int InitiationInterval) {
   computeStages();
   LLVM_DEBUG(dbgs() << "PostPipeliner: Schedule found, NS=" << NStages
                     << " II=" << II << "\n");
+  // Let's not risk adding prologue and epilogue noise, but note it would
+  // represent a valid 'regular' loop schedule.
+  if (NStages == 1) {
+    LLVM_DEBUG(dbgs() << "PostPipeliner: Degenerate pipeline, NStages=1\n");
+    return false;
+  }
 
   // Check that we don't exceed the number of copies in the DAG. In that case
   // we didn't reach steady state, and we may have missed conflicts.
