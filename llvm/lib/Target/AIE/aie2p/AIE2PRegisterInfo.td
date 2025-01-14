@@ -58,8 +58,8 @@ def sub_hi_exp : SubRegIndex<32, 32>;
 def sub_bfp_exp : SubRegIndex<32,   0>;
 def sub_bfp_vec : SubRegIndex<256, 32>;
 
-def sub_bfp288_lo : SubRegIndex<288,   0>;
-def sub_bfp288_hi : SubRegIndex<576, 288>;
+def sub_bfp16_e : SubRegIndex<576,   512>;
+def sub_bfp16_x : SubRegIndex<512, 0>;
 
 def sub_bfp576_lo : SubRegIndex<576,   0>;
 def sub_bfp576_hi : SubRegIndex<576, 576>;
@@ -823,9 +823,9 @@ class AIE2PDim3DRegisterClass <dag reglist, RegAltNameIndex idx = NoRegAltName> 
   // 576-bit vector-exponent registers
   // These consist of two 288-bit vector-exponent registers
   foreach i = 0 - 5 in {
-    let SubRegIndices = [sub_bfp288_lo, sub_bfp288_hi], CoveredBySubRegs = 1 in {
-      def ex #!mul(i,2) : AIE2P3BitReg<i, "ex" #!mul(i,2), [!cast<Register>("ewl" #!mul(i,2)), !cast<Register>("ewh" #!mul(i,2))]>;
-      def ex #!add(!mul(i,2),1) : AIE2P3BitReg<i, "ex" #!add(!mul(i,2),1), [!cast<Register>("ewl" #!add(!mul(i,2),1)), !cast<Register>("ewh" #!add(!mul(i,2),1))]>;
+    let SubRegIndices = [sub_bfp16_x, sub_bfp16_e], CoveredBySubRegs = 1 in {
+      def ex #!mul(i,2) : AIE2P3BitReg<i, "ex" #!mul(i,2), [!cast<Register>("x" #!mul(i,2)), !cast<Register>("e" #!mul(i,2))]>;
+      def ex #!add(!mul(i,2),1) : AIE2P3BitReg<i, "ex" #!add(!mul(i,2),1), [!cast<Register>("x" #!add(!mul(i,2),1)), !cast<Register>("e" #!add(!mul(i,2),1))]>;
     }
   }
   class AIE2PVector576RegisterClass<dag reglist, RegAltNameIndex idx = NoRegAltName>

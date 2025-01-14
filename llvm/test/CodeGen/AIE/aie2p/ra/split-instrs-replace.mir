@@ -118,7 +118,7 @@ body:             |
   ; CHECK-NEXT:   renamable $dc4 = COPY killed renamable $r2
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT: bb.3:
-  ; CHECK-NEXT:   liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $d0_3d:0x001C000000800E00
+  ; CHECK-NEXT:   liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $d0_3d:0x0007000000800E00
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   $p0, $dc0, $dc4 = PADDA_3D killed $p0, $d0_3d
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit killed renamable $p0, implicit killed renamable $dc0, implicit killed renamable $dc4
@@ -174,7 +174,7 @@ body:             |
   bb.0.entry:
     liveins: $dc4, $dj4, $dn4, $p0, $m0, $dn0, $dj0, $dc0
     ; CHECK-LABEL: name: PADD_3D
-    ; CHECK: liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $d0_3d:0x001C000000800E00
+    ; CHECK: liveins: $dc0, $dc4, $dj0, $dj4, $dn0, $dn4, $m0, $p0, $d0_3d:0x0007000000800E00
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: $p0, $dc0, $dc4 = PADDA_3D killed $p0, $d0_3d
     ; CHECK-NEXT: $p0, $dc0, $dc4 = PADDB_3D killed $p0, $d0_3d
