@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -1262,14 +1262,14 @@ AIE2PInstrInfo::getTiedRegInfo(unsigned Opcode) const {
     // Constraints = "$count_out=$mod.sub_dim_count"
     return {TiedRegOperands{
         /*DstOps=*/{{/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_dim_count}},
-        /*SrcOp=*/{/*OpIdx=*/4, /*SubRegIdx=*/AIE2P::NoSubRegister,
-                   /*SubRegsSplit=*/Split2DReg}}};
+        /*SrcOp=*/{{/*OpIdx=*/4, /*SubRegIdx=*/AIE2P::NoSubRegister,
+                    /*SubRegsSplit=*/Split2DReg}}}};
   case AIE2P::VST_FLUSH_512_2D:
   case AIE2P::VST_FLUSH_512_CONV_2D:
     return {TiedRegOperands{
         /*DstOps=*/{{/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::sub_dim_count}},
-        /*SrcOp=*/{/*OpIdx=*/7, /*SubRegIdx=*/AIE2P::NoSubRegister,
-                   /*SubRegsSplit=*/Split2DReg}}};
+        /*SrcOp=*/{{/*OpIdx=*/7, /*SubRegIdx=*/AIE2P::NoSubRegister,
+                    /*SubRegsSplit=*/Split2DReg}}}};
   case AIE2P::LDA_3D_dms_lda:
   case AIE2P::LDA_3D_dmv_lda_q:
   case AIE2P::LDA_3D_s16:
@@ -1297,8 +1297,8 @@ AIE2PInstrInfo::getTiedRegInfo(unsigned Opcode) const {
         /*DstOps=*/{
             {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_dim_count},
             {/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::sub_hi_dim_then_sub_dim_count}},
-        /*SrcOp=*/{/*OpIdx=*/5, /*SubRegIdx=*/AIE2P::NoSubRegister,
-                   /*SubRegsSplit=*/Split3DReg}}};
+        /*SrcOp=*/{{/*OpIdx=*/5, /*SubRegIdx=*/AIE2P::NoSubRegister,
+                    /*SubRegsSplit=*/Split3DReg}}}};
   case AIE2P::VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign0:
   case AIE2P::VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign1:
   case AIE2P::VLDA_2D_UPS_2x_dmx_lda_ups_x2c_upsSign0:
@@ -1310,8 +1310,8 @@ AIE2PInstrInfo::getTiedRegInfo(unsigned Opcode) const {
     // Constraints = "$count_out=$mod.sub_dim_count"
     return {TiedRegOperands{
         /*DstOps=*/{{/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_dim_count}},
-        /*SrcOp=*/{/*OpIdx=*/5, /*SubRegIdx=*/AIE2P::NoSubRegister,
-                   /*SubRegsSplit=*/Split2DReg}}};
+        /*SrcOp=*/{{/*OpIdx=*/5, /*SubRegIdx=*/AIE2P::NoSubRegister,
+                    /*SubRegsSplit=*/Split2DReg}}}};
   case AIE2P::VLDA_3D_UPS_2x_dmw_lda_ups_w2b_upsSign0:
   case AIE2P::VLDA_3D_UPS_2x_dmw_lda_ups_w2b_upsSign1:
   case AIE2P::VLDA_3D_UPS_2x_dmx_lda_ups_x2c_upsSign0:
@@ -1326,16 +1326,16 @@ AIE2PInstrInfo::getTiedRegInfo(unsigned Opcode) const {
         /*DstOps=*/{
             {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_dim_count},
             {/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::sub_hi_dim_then_sub_dim_count}},
-        /*SrcOp=*/{/*OpIdx=*/6, /*SubRegIdx=*/AIE2P::NoSubRegister,
-                   /*SubRegsSplit=*/Split3DReg}}};
+        /*SrcOp=*/{{/*OpIdx=*/6, /*SubRegIdx=*/AIE2P::NoSubRegister,
+                    /*SubRegsSplit=*/Split3DReg}}}};
   case AIE2P::VST_FLUSH_512_3D:
   case AIE2P::VST_FLUSH_512_CONV_3D:
     return {TiedRegOperands{
         /*DstOps=*/{
             {/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::sub_dim_count},
             {/*OpIdx=*/4, /*SubRegIdx=*/AIE2P::sub_hi_dim_then_sub_dim_count}},
-        /*SrcOp=*/{/*OpIdx=*/8, /*SubRegIdx=*/AIE2P::NoSubRegister,
-                   /*SubRegsSplit=*/Split3DReg}}};
+        /*SrcOp=*/{{/*OpIdx=*/8, /*SubRegIdx=*/AIE2P::NoSubRegister,
+                    /*SubRegsSplit=*/Split3DReg}}}};
   case AIE2P::ST_2D_dms_sts:
   case AIE2P::ST_2D_dmv_sts_q:
   case AIE2P::ST_2D_s16:
@@ -1349,8 +1349,8 @@ AIE2PInstrInfo::getTiedRegInfo(unsigned Opcode) const {
     // Constraints = "$count_out=$mod.sub_dim_count"
     return {TiedRegOperands{
         /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_dim_count}},
-        /*SrcOp=*/{/*OpIdx=*/4, /*SubRegIdx=*/AIE2P::NoSubRegister,
-                   /*SubRegsSplit=*/Split2DReg}}};
+        /*SrcOp=*/{{/*OpIdx=*/4, /*SubRegIdx=*/AIE2P::NoSubRegister,
+                    /*SubRegsSplit=*/Split2DReg}}}};
   case AIE2P::VST_2D_PACK_dmw_sts_pack_packSign0:
   case AIE2P::VST_2D_PACK_dmw_sts_pack_packSign1:
   case AIE2P::VST_2D_PACK_dmx_sts_pack_packSign0:
@@ -1360,8 +1360,8 @@ AIE2PInstrInfo::getTiedRegInfo(unsigned Opcode) const {
     // Constraints = "$count_out=$mod.sub_dim_count"
     return {TiedRegOperands{
         /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_dim_count}},
-        /*SrcOp=*/{/*OpIdx=*/4, /*SubRegIdx=*/AIE2P::NoSubRegister,
-                   /*SubRegsSplit=*/Split2DReg}}};
+        /*SrcOp=*/{{/*OpIdx=*/4, /*SubRegIdx=*/AIE2P::NoSubRegister,
+                    /*SubRegsSplit=*/Split2DReg}}}};
   case AIE2P::ST_3D_dms_sts:
   case AIE2P::ST_3D_dmv_sts_q:
   case AIE2P::ST_3D_s16:
@@ -1378,8 +1378,8 @@ AIE2PInstrInfo::getTiedRegInfo(unsigned Opcode) const {
         /*DstOps=*/{
             {/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_dim_count},
             {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_hi_dim_then_sub_dim_count}},
-        /*SrcOp=*/{/*OpIdx=*/5, /*SubRegIdx=*/AIE2P::NoSubRegister,
-                   /*SubRegsSplit=*/Split3DReg}}};
+        /*SrcOp=*/{{/*OpIdx=*/5, /*SubRegIdx=*/AIE2P::NoSubRegister,
+                    /*SubRegsSplit=*/Split3DReg}}}};
   case AIE2P::VST_3D_PACK_dmw_sts_pack_packSign0:
   case AIE2P::VST_3D_PACK_dmw_sts_pack_packSign1:
   case AIE2P::VST_3D_PACK_dmx_sts_pack_packSign0:
@@ -1392,8 +1392,8 @@ AIE2PInstrInfo::getTiedRegInfo(unsigned Opcode) const {
         /*DstOps=*/{
             {/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_dim_count},
             {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_hi_dim_then_sub_dim_count}},
-        /*SrcOp=*/{/*OpIdx=*/5, /*SubRegIdx=*/AIE2P::NoSubRegister,
-                   /*SubRegsSplit=*/Split3DReg}}};
+        /*SrcOp=*/{{/*OpIdx=*/5, /*SubRegIdx=*/AIE2P::NoSubRegister,
+                    /*SubRegsSplit=*/Split3DReg}}}};
   case AIE2P::VST_2D_SRS_2x_dm_sts_srs_cm_srsSign0:
   case AIE2P::VST_2D_SRS_2x_dm_sts_srs_cm_srsSign1:
   case AIE2P::VST_2D_SRS_4x_dm_sts_srs_cm_srsSign0:
@@ -1405,8 +1405,8 @@ AIE2PInstrInfo::getTiedRegInfo(unsigned Opcode) const {
     // Constraints = "$count_out=$mod.sub_dim_count"
     return {TiedRegOperands{
         /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_dim_count}},
-        /*SrcOp=*/{/*OpIdx=*/5, /*SubRegIdx=*/AIE2P::NoSubRegister,
-                   /*SubRegsSplit=*/Split2DReg}}};
+        /*SrcOp=*/{{/*OpIdx=*/5, /*SubRegIdx=*/AIE2P::NoSubRegister,
+                    /*SubRegsSplit=*/Split2DReg}}}};
   case AIE2P::VST_3D_SRS_2x_dm_sts_srs_cm_srsSign0:
   case AIE2P::VST_3D_SRS_2x_dm_sts_srs_cm_srsSign1:
   case AIE2P::VST_3D_SRS_4x_dm_sts_srs_cm_srsSign0:
@@ -1421,8 +1421,8 @@ AIE2PInstrInfo::getTiedRegInfo(unsigned Opcode) const {
         /*DstOps=*/{
             {/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_dim_count},
             {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_hi_dim_then_sub_dim_count}},
-        /*SrcOp=*/{/*OpIdx=*/6, /*SubRegIdx=*/AIE2P::NoSubRegister,
-                   /*SubRegsSplit=*/Split3DReg}}};
+        /*SrcOp=*/{{/*OpIdx=*/6, /*SubRegIdx=*/AIE2P::NoSubRegister,
+                    /*SubRegsSplit=*/Split3DReg}}}};
   case AIE2P::PADDA_2D:
   case AIE2P::PADDB_2D:
   case AIE2P::PADDS_2D:
@@ -1430,8 +1430,8 @@ AIE2PInstrInfo::getTiedRegInfo(unsigned Opcode) const {
     return {TiedRegOperands{
         /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_dim_count}},
         /*SrcOp=*/
-        {/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::NoSubRegister,
-         /*SubRegsSplit=*/Split2DReg}}};
+        {{/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::NoSubRegister,
+          /*SubRegsSplit=*/Split2DReg}}}};
   case AIE2P::PADDA_3D:
   case AIE2P::PADDB_3D:
   case AIE2P::PADDS_3D:
@@ -1442,109 +1442,129 @@ AIE2PInstrInfo::getTiedRegInfo(unsigned Opcode) const {
             {/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_dim_count},
             {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_hi_dim_then_sub_dim_count}},
         /*SrcOp=*/
-        {/*OpIdx=*/4, /*SubRegIdx=*/AIE2P::NoSubRegister,
-         /*SubRegsSplit=*/Split3DReg}}};
-  // case AIE2P::VLDB_FILLX_512:
-  //   return {TiedRegOperands{
-  //       /*DstOps=*/{{/*OpIdx=*/0, /*SubRegIdx=*/AIE2P::sub_ptr},
-  //                   {/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_fifo},
-  //                   {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_avail}},
-  //       /*SrcOp=*/
-  //       {/*OpIdx=*/5, /*SubRegIdx=*/AIE2P::NoSubRegister,
-  //        /*SubRegsSplit=*/SplitPLFRReg}}};
-  // case AIE2P::VLDA_FILL_512:
-  // case AIE2P::VLDB_FILL_512:
-  //   return {TiedRegOperands{
-  //       /*DstOps=*/{{/*OpIdx=*/0, /*SubRegIdx=*/AIE2P::sub_ptr},
-  //                   {/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_fifo},
-  //                   {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_avail}},
-  //       /*SrcOp=*/
-  //       {/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::NoSubRegister,
-  //        /*SubRegsSplit=*/SplitPLFRReg}}};
+        {{/*OpIdx=*/4, /*SubRegIdx=*/AIE2P::NoSubRegister,
+          /*SubRegsSplit=*/Split3DReg}}}};
+  case AIE2P::VLDB_FILLX_512:
+    return {TiedRegOperands{
+        /*DstOps=*/{{/*OpIdx=*/0, /*SubRegIdx=*/AIE2P::sub_ptr},
+                    {/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_fifo},
+                    {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_avail}},
+        /*SrcOp=*/
+        {{/*OpIdx=*/5, /*SubRegIdx=*/AIE2P::sub_ptr},
+         {/*OpIdx=*/6, /*SubRegIdx=*/AIE2P::sub_fifo},
+         {/*OpIdx=*/7, /*SubRegIdx=*/AIE2P::sub_avail}},
+        /*NewSuperClass=*/&AIE2P::ePSRFLdFRegClass}};
+  case AIE2P::VLDA_FILL_512:
+    return {TiedRegOperands{
+        /*DstOps=*/{{/*OpIdx=*/0, /*SubRegIdx=*/AIE2P::sub_ptr},
+                    {/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_fifo},
+                    {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_avail}},
+        /*SrcOps=*/
+        {{/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::sub_ptr},
+         {/*OpIdx=*/4, /*SubRegIdx=*/AIE2P::sub_fifo},
+         {/*OpIdx=*/5, /*SubRegIdx=*/AIE2P::sub_avail}},
+        /*NewSuperClass=*/&AIE2P::ePSRFLdFRegClass}};
+  case AIE2P::VLDB_FILL_512:
+    return {TiedRegOperands{
+        /*DstOps=*/{{/*OpIdx=*/0, /*SubRegIdx=*/AIE2P::sub_ptr},
+                    {/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_fifo},
+                    {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_avail}},
+        /*SrcOps=*/
+        {{/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::sub_ptr},
+         {/*OpIdx=*/4, /*SubRegIdx=*/AIE2P::sub_fifo},
+         {/*OpIdx=*/5, /*SubRegIdx=*/AIE2P::sub_avail}},
+        /*NewSuperClass=*/&AIE2P::ePSRFLdFRegClass}};
 
-  // case AIE2P::VLDB_POPX_512:
-  //   return {TiedRegOperands{
-  //       /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_ptr},
-  //                   {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_fifo},
-  //                   {/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::sub_avail}},
-  //       /*SrcOp=*/
-  //       {/*OpIdx=*/6, /*SubRegIdx=*/AIE2P::NoSubRegister,
-  //        /*SubRegsSplit=*/SplitPLFRReg}}};
-  // case AIE2P::VLDA_POP_512_normal_pop:
-  // case AIE2P::VLDA_POP_544_normal_pop:
-  // case AIE2P::VLDA_POP_576_normal_pop:
-  // case AIE2P::VLDA_POP_640_normal_pop:
-  // case AIE2P::VLDA_POP_704_normal_pop:
-  // case AIE2P::VLDB_POP_512_normal_pop:
-  // case AIE2P::VLDB_POP_544_normal_pop:
-  // case AIE2P::VLDB_POP_576_normal_pop:
-  // case AIE2P::VLDB_POP_640_normal_pop:
-  // case AIE2P::VLDB_POP_704_normal_pop:
-  // case AIE2P::VLDA_POP_512_fifo_1d_pop:
-  // case AIE2P::VLDA_POP_544_fifo_1d_pop:
-  // case AIE2P::VLDA_POP_576_fifo_1d_pop:
-  // case AIE2P::VLDA_POP_640_fifo_1d_pop:
-  // case AIE2P::VLDA_POP_704_fifo_1d_pop:
-  // case AIE2P::VLDB_POP_512_fifo_1d_pop:
-  // case AIE2P::VLDB_POP_544_fifo_1d_pop:
-  // case AIE2P::VLDB_POP_576_fifo_1d_pop:
-  // case AIE2P::VLDB_POP_640_fifo_1d_pop:
-  // case AIE2P::VLDB_POP_704_fifo_1d_pop:
-  //   return {TiedRegOperands{
-  //       /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_ptr},
-  //                   {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_fifo},
-  //                   {/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::sub_avail}},
-  //       /*SrcOp=*/
-  //       {/*OpIdx=*/4, /*SubRegIdx=*/AIE2P::NoSubRegister,
-  //        /*SubRegsSplit=*/SplitPLFRReg}}};
-  // case AIE2P::VLDA_POP_512_2D:
-  // case AIE2P::VLDA_POP_544_2D:
-  // case AIE2P::VLDA_POP_576_2D:
-  // case AIE2P::VLDA_POP_640_2D:
-  // case AIE2P::VLDA_POP_704_2D:
-  // case AIE2P::VLDB_POP_512_2D:
-  // case AIE2P::VLDB_POP_544_2D:
-  // case AIE2P::VLDB_POP_576_2D:
-  // case AIE2P::VLDB_POP_640_2D:
-  // case AIE2P::VLDB_POP_704_2D:
-  //   return {TiedRegOperands{
-  //               /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_ptr},
-  //                           {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_fifo},
-  //                           {/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::sub_avail}},
-  //               /*SrcOp=*/
-  //               {/*OpIdx=*/5, /*SubRegIdx=*/AIE2P::NoSubRegister,
-  //                /*SubRegsSplit=*/SplitPLFRReg}},
-  //           TiedRegOperands{
-  //               /*DstOps=*/{{/*OpIdx=*/4,
-  //               /*SubRegIdx=*/AIE2P::sub_dim_count}},
-  //               /*SrcOp=*/
-  //               {/*OpIdx=*/6, /*SubRegIdx=*/AIE2P::NoSubRegister,
-  //                /*SubRegsSplit=*/Split2DReg}}};
-  // case AIE2P::VLDA_POP_512_3D:
-  // case AIE2P::VLDA_POP_544_3D:
-  // case AIE2P::VLDA_POP_576_3D:
-  // case AIE2P::VLDA_POP_640_3D:
-  // case AIE2P::VLDA_POP_704_3D:
-  // case AIE2P::VLDB_POP_512_3D:
-  // case AIE2P::VLDB_POP_544_3D:
-  // case AIE2P::VLDB_POP_576_3D:
-  // case AIE2P::VLDB_POP_640_3D:
-  // case AIE2P::VLDB_POP_704_3D:
-  //   return {
-  //       TiedRegOperands{
-  //           /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_ptr},
-  //                       {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_fifo},
-  //                       {/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::sub_avail}},
-  //           /*SrcOp=*/
-  //           {/*OpIdx=*/6, /*SubRegIdx=*/AIE2P::NoSubRegister,
-  //            /*SubRegsSplit=*/SplitPLFRReg}},
-  //       TiedRegOperands{
-  //           /*DstOps=*/{{/*OpIdx=*/4, /*SubRegIdx=*/AIE2P::sub_dim_count},
-  //                       {/*OpIdx=*/5,
-  //                        /*SubRegIdx=*/AIE2P::sub_hi_dim_then_sub_dim_count}},
-  //           /*SrcOp=*/
-  //           {/*OpIdx=*/7, /*SubRegIdx=*/AIE2P::NoSubRegister,
-  //            /*SubRegsSplit=*/Split3DReg}}};
+  case AIE2P::VLDB_POPX_512:
+    return {TiedRegOperands{
+        /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_ptr},
+                    {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_fifo},
+                    {/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::sub_avail}},
+        /*SrcOp=*/
+        {{/*OpIdx=*/6, /*SubRegIdx=*/AIE2P::sub_ptr},
+         {/*OpIdx=*/7, /*SubRegIdx=*/AIE2P::sub_fifo},
+         {/*OpIdx=*/8, /*SubRegIdx=*/AIE2P::sub_avail}},
+        /*NewSuperClass=*/&AIE2P::ePSRFLdFRegClass}};
+  case AIE2P::VLDA_POP_512_normal_pop:
+  case AIE2P::VLDA_POP_544_normal_pop:
+  case AIE2P::VLDA_POP_576_normal_pop:
+  case AIE2P::VLDA_POP_640_normal_pop:
+  case AIE2P::VLDA_POP_704_normal_pop:
+  case AIE2P::VLDB_POP_512_normal_pop:
+  case AIE2P::VLDB_POP_544_normal_pop:
+  case AIE2P::VLDB_POP_576_normal_pop:
+  case AIE2P::VLDB_POP_640_normal_pop:
+  case AIE2P::VLDB_POP_704_normal_pop:
+  case AIE2P::VLDA_POP_512_fifo_1d_pop:
+  case AIE2P::VLDA_POP_544_fifo_1d_pop:
+  case AIE2P::VLDA_POP_576_fifo_1d_pop:
+  case AIE2P::VLDA_POP_640_fifo_1d_pop:
+  case AIE2P::VLDA_POP_704_fifo_1d_pop:
+  case AIE2P::VLDB_POP_512_fifo_1d_pop:
+  case AIE2P::VLDB_POP_544_fifo_1d_pop:
+  case AIE2P::VLDB_POP_576_fifo_1d_pop:
+  case AIE2P::VLDB_POP_640_fifo_1d_pop:
+  case AIE2P::VLDB_POP_704_fifo_1d_pop:
+    return {TiedRegOperands{
+        /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_ptr},
+                    {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_fifo},
+                    {/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::sub_avail}},
+        /*SrcOps=*/
+        {{/*OpIdx=*/4, /*SubRegIdx=*/AIE2P::sub_ptr},
+         {/*OpIdx=*/5, /*SubRegIdx=*/AIE2P::sub_fifo},
+         {/*OpIdx=*/6, /*SubRegIdx=*/AIE2P::sub_avail}},
+        /*NewSuperClass=*/&AIE2P::ePSRFLdFRegClass}};
+  case AIE2P::VLDA_POP_512_2D:
+  case AIE2P::VLDA_POP_544_2D:
+  case AIE2P::VLDA_POP_576_2D:
+  case AIE2P::VLDA_POP_640_2D:
+  case AIE2P::VLDA_POP_704_2D:
+  case AIE2P::VLDB_POP_512_2D:
+  case AIE2P::VLDB_POP_544_2D:
+  case AIE2P::VLDB_POP_576_2D:
+  case AIE2P::VLDB_POP_640_2D:
+  case AIE2P::VLDB_POP_704_2D:
+    return {TiedRegOperands{
+                /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_ptr},
+                            {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_fifo},
+                            {/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::sub_avail}},
+                /*SrcOps=*/
+                {{/*OpIdx=*/5, /*SubRegIdx=*/AIE2P::sub_ptr},
+                 {/*OpIdx=*/6, /*SubRegIdx=*/AIE2P::sub_fifo},
+                 {/*OpIdx=*/7, /*SubRegIdx=*/AIE2P::sub_avail}},
+                /*NewSuperClass=*/&AIE2P::ePSRFLdFRegClass},
+            TiedRegOperands{
+                /*DstOps=*/{{/*OpIdx=*/4, /*SubRegIdx=*/AIE2P::sub_dim_count}},
+                /*SrcOp=*/
+                {{/*OpIdx=*/8, /*SubRegIdx=*/AIE2P::NoSubRegister,
+                  /*SubRegsSplit=*/Split2DReg}}}};
+  case AIE2P::VLDA_POP_512_3D:
+  case AIE2P::VLDA_POP_544_3D:
+  case AIE2P::VLDA_POP_576_3D:
+  case AIE2P::VLDA_POP_640_3D:
+  case AIE2P::VLDA_POP_704_3D:
+  case AIE2P::VLDB_POP_512_3D:
+  case AIE2P::VLDB_POP_544_3D:
+  case AIE2P::VLDB_POP_576_3D:
+  case AIE2P::VLDB_POP_640_3D:
+  case AIE2P::VLDB_POP_704_3D:
+    return {
+        TiedRegOperands{
+            /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_ptr},
+                        {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_fifo},
+                        {/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::sub_avail}},
+            /*SrcOps=*/
+            {{/*OpIdx=*/6, /*SubRegIdx=*/AIE2P::sub_ptr},
+             {/*OpIdx=*/7, /*SubRegIdx=*/AIE2P::sub_fifo},
+             {/*OpIdx=*/8, /*SubRegIdx=*/AIE2P::sub_avail}},
+            /*NewSuperClass=*/&AIE2P::ePSRFLdFRegClass},
+        TiedRegOperands{
+            /*DstOps=*/{{/*OpIdx=*/4, /*SubRegIdx=*/AIE2P::sub_dim_count},
+                        {/*OpIdx=*/5,
+                         /*SubRegIdx=*/AIE2P::sub_hi_dim_then_sub_dim_count}},
+            /*SrcOp=*/
+            {{/*OpIdx=*/9, /*SubRegIdx=*/AIE2P::NoSubRegister,
+              /*SubRegsSplit=*/Split3DReg}}}};
   default:
     return {};
   }

@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -1207,8 +1207,8 @@ AIE2InstrInfo::getTiedRegInfo(unsigned Opcode) const {
     // Constraints = "$count_out=$mod.sub_dim_count"
     return {TiedRegOperands{
         /*DstOps=*/{{/*OpIdx=*/2, /*SubRegIdx=*/AIE2::sub_dim_count}},
-        /*SrcOp=*/{/*OpIdx=*/4, /*SubRegIdx=*/AIE2::NoSubRegister,
-                   /*SubRegsSplit=*/Split2DReg}}};
+        /*SrcOp=*/{{/*OpIdx=*/4, /*SubRegIdx=*/AIE2::NoSubRegister,
+                    /*SubRegsSplit=*/Split2DReg}}}};
   case AIE2::LDA_3D_dmv_lda_q:
   case AIE2::LDA_3D_dms_lda:
   case AIE2::LDA_3D_S8_dmhb_lda:
@@ -1231,8 +1231,8 @@ AIE2InstrInfo::getTiedRegInfo(unsigned Opcode) const {
         /*DstOps=*/{
             {/*OpIdx=*/2, /*SubRegIdx=*/AIE2::sub_dim_count},
             {/*OpIdx=*/3, /*SubRegIdx=*/AIE2::sub_hi_dim_then_sub_dim_count}},
-        /*SrcOp=*/{/*OpIdx=*/5, /*SubRegIdx=*/AIE2::NoSubRegister,
-                   /*SubRegsSplit=*/Split3DReg}}};
+        /*SrcOp=*/{{/*OpIdx=*/5, /*SubRegIdx=*/AIE2::NoSubRegister,
+                    /*SubRegsSplit=*/Split3DReg}}}};
   case AIE2::VLDA_2D_UPS_S32_D16:
   case AIE2::VLDA_2D_UPS_S64_D32:
   case AIE2::VLDA_2D_UPS_S32_D8:
@@ -1244,8 +1244,8 @@ AIE2InstrInfo::getTiedRegInfo(unsigned Opcode) const {
     // Constraints = "$count_out=$mod.sub_dim_count"
     return {TiedRegOperands{
         /*DstOps=*/{{/*OpIdx=*/2, /*SubRegIdx=*/AIE2::sub_dim_count}},
-        /*SrcOp=*/{/*OpIdx=*/5, /*SubRegIdx=*/AIE2::NoSubRegister,
-                   /*SubRegsSplit=*/Split2DReg}}};
+        /*SrcOp=*/{{/*OpIdx=*/5, /*SubRegIdx=*/AIE2::NoSubRegister,
+                    /*SubRegsSplit=*/Split2DReg}}}};
   case AIE2::VLDA_3D_UPS_S32_D16:
   case AIE2::VLDA_3D_UPS_S64_D32:
   case AIE2::VLDA_3D_UPS_S32_D8:
@@ -1260,8 +1260,8 @@ AIE2InstrInfo::getTiedRegInfo(unsigned Opcode) const {
         /*DstOps=*/{
             {/*OpIdx=*/2, /*SubRegIdx=*/AIE2::sub_dim_count},
             {/*OpIdx=*/3, /*SubRegIdx=*/AIE2::sub_hi_dim_then_sub_dim_count}},
-        /*SrcOp=*/{/*OpIdx=*/6, /*SubRegIdx=*/AIE2::NoSubRegister,
-                   /*SubRegsSplit=*/Split3DReg}}};
+        /*SrcOp=*/{{/*OpIdx=*/6, /*SubRegIdx=*/AIE2::NoSubRegister,
+                    /*SubRegsSplit=*/Split3DReg}}}};
   case AIE2::ST_2D_dmv_sts_q:
   case AIE2::VST_2D_dmw_sts_am:
   case AIE2::VST_2D_dmw_sts_w:
@@ -1272,8 +1272,8 @@ AIE2InstrInfo::getTiedRegInfo(unsigned Opcode) const {
     // Constraints = "$count_out=$mod.sub_dim_count"
     return {TiedRegOperands{
         /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2::sub_dim_count}},
-        /*SrcOp=*/{/*OpIdx=*/4, /*SubRegIdx=*/AIE2::NoSubRegister,
-                   /*SubRegsSplit=*/Split2DReg}}};
+        /*SrcOp=*/{{/*OpIdx=*/4, /*SubRegIdx=*/AIE2::NoSubRegister,
+                    /*SubRegsSplit=*/Split2DReg}}}};
   case AIE2::VST_2D_PACK_D4_D8:
   case AIE2::VST_2D_PACK_D8_D16:
   case AIE2::VST_2D_PACK_S4_S8:
@@ -1281,8 +1281,8 @@ AIE2InstrInfo::getTiedRegInfo(unsigned Opcode) const {
     // Constraints = "$count_out=$mod.sub_dim_count"
     return {TiedRegOperands{
         /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2::sub_dim_count}},
-        /*SrcOp=*/{/*OpIdx=*/3, /*SubRegIdx=*/AIE2::NoSubRegister,
-                   /*SubRegsSplit=*/Split2DReg}}};
+        /*SrcOp=*/{{/*OpIdx=*/3, /*SubRegIdx=*/AIE2::NoSubRegister,
+                    /*SubRegsSplit=*/Split2DReg}}}};
   case AIE2::ST_3D_dmv_sts_q:
   case AIE2::VST_3D_dmw_sts_w:
   case AIE2::VST_3D_128:
@@ -1296,8 +1296,8 @@ AIE2InstrInfo::getTiedRegInfo(unsigned Opcode) const {
         /*DstOps=*/{
             {/*OpIdx=*/1, /*SubRegIdx=*/AIE2::sub_dim_count},
             {/*OpIdx=*/2, /*SubRegIdx=*/AIE2::sub_hi_dim_then_sub_dim_count}},
-        /*SrcOp=*/{/*OpIdx=*/5, /*SubRegIdx=*/AIE2::NoSubRegister,
-                   /*SubRegsSplit=*/Split3DReg}}};
+        /*SrcOp=*/{{/*OpIdx=*/5, /*SubRegIdx=*/AIE2::NoSubRegister,
+                    /*SubRegsSplit=*/Split3DReg}}}};
   case AIE2::VST_3D_PACK_D4_D8:
   case AIE2::VST_3D_PACK_D8_D16:
   case AIE2::VST_3D_PACK_S4_S8:
@@ -1308,14 +1308,14 @@ AIE2InstrInfo::getTiedRegInfo(unsigned Opcode) const {
         /*DstOps=*/{
             {/*OpIdx=*/1, /*SubRegIdx=*/AIE2::sub_dim_count},
             {/*OpIdx=*/2, /*SubRegIdx=*/AIE2::sub_hi_dim_then_sub_dim_count}},
-        /*SrcOp=*/{/*OpIdx=*/4, /*SubRegIdx=*/AIE2::NoSubRegister,
-                   /*SubRegsSplit=*/Split3DReg}}};
+        /*SrcOp=*/{{/*OpIdx=*/4, /*SubRegIdx=*/AIE2::NoSubRegister,
+                    /*SubRegsSplit=*/Split3DReg}}}};
   case AIE2::VST_CONV_2D_BF16_FP32:
     // Constraints = "$count_out=$mod.sub_dim_count"
     return {TiedRegOperands{
         /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2::sub_dim_count}},
-        /*SrcOp=*/{/*OpIdx=*/3, /*SubRegIdx=*/AIE2::NoSubRegister,
-                   /*SubRegsSplit=*/Split2DReg}}};
+        /*SrcOp=*/{{/*OpIdx=*/3, /*SubRegIdx=*/AIE2::NoSubRegister,
+                    /*SubRegsSplit=*/Split2DReg}}}};
   case AIE2::VST_CONV_3D_BF16_FP32:
     // Constraints = "$count_lo_out=$mod.sub_dim_count,
     //                $count_hi_out=$mod.sub_hi_dim_then_sub_dim_count"
@@ -1323,8 +1323,8 @@ AIE2InstrInfo::getTiedRegInfo(unsigned Opcode) const {
         /*DstOps=*/{
             {/*OpIdx=*/1, /*SubRegIdx=*/AIE2::sub_dim_count},
             {/*OpIdx=*/2, /*SubRegIdx=*/AIE2::sub_hi_dim_then_sub_dim_count}},
-        /*SrcOp=*/{/*OpIdx=*/4, /*SubRegIdx=*/AIE2::NoSubRegister,
-                   /*SubRegsSplit=*/Split3DReg}}};
+        /*SrcOp=*/{{/*OpIdx=*/4, /*SubRegIdx=*/AIE2::NoSubRegister,
+                    /*SubRegsSplit=*/Split3DReg}}}};
   case AIE2::VST_2D_SRS_D8_S32:
   case AIE2::VST_2D_SRS_D16_S64:
   case AIE2::VST_2D_SRS_D16_S32:
@@ -1336,8 +1336,8 @@ AIE2InstrInfo::getTiedRegInfo(unsigned Opcode) const {
     // Constraints = "$count_out=$mod.sub_dim_count"
     return {TiedRegOperands{
         /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2::sub_dim_count}},
-        /*SrcOp=*/{/*OpIdx=*/3, /*SubRegIdx=*/AIE2::NoSubRegister,
-                   /*SubRegsSplit=*/Split2DReg}}};
+        /*SrcOp=*/{{/*OpIdx=*/3, /*SubRegIdx=*/AIE2::NoSubRegister,
+                    /*SubRegsSplit=*/Split2DReg}}}};
   case AIE2::VST_3D_SRS_D8_S32:
   case AIE2::VST_3D_SRS_D16_S64:
   case AIE2::VST_3D_SRS_D16_S32:
@@ -1352,8 +1352,8 @@ AIE2InstrInfo::getTiedRegInfo(unsigned Opcode) const {
         /*DstOps=*/{
             {/*OpIdx=*/1, /*SubRegIdx=*/AIE2::sub_dim_count},
             {/*OpIdx=*/2, /*SubRegIdx=*/AIE2::sub_hi_dim_then_sub_dim_count}},
-        /*SrcOp=*/{/*OpIdx=*/4, /*SubRegIdx=*/AIE2::NoSubRegister,
-                   /*SubRegsSplit=*/Split3DReg}}};
+        /*SrcOp=*/{{/*OpIdx=*/4, /*SubRegIdx=*/AIE2::NoSubRegister,
+                    /*SubRegsSplit=*/Split3DReg}}}};
   case AIE2::PADDA_2D:
   case AIE2::PADDB_2D:
   case AIE2::PADDS_2D:
@@ -1361,8 +1361,8 @@ AIE2InstrInfo::getTiedRegInfo(unsigned Opcode) const {
     return {TiedRegOperands{
         /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2::sub_dim_count}},
         /*SrcOp=*/
-        {/*OpIdx=*/3, /*SubRegIdx=*/AIE2::NoSubRegister,
-         /*SubRegsSplit=*/Split2DReg}}};
+        {{/*OpIdx=*/3, /*SubRegIdx=*/AIE2::NoSubRegister,
+          /*SubRegsSplit=*/Split2DReg}}}};
   case AIE2::PADDA_3D:
   case AIE2::PADDB_3D:
   case AIE2::PADDS_3D:
@@ -1373,8 +1373,8 @@ AIE2InstrInfo::getTiedRegInfo(unsigned Opcode) const {
             {/*OpIdx=*/1, /*SubRegIdx=*/AIE2::sub_dim_count},
             {/*OpIdx=*/2, /*SubRegIdx=*/AIE2::sub_hi_dim_then_sub_dim_count}},
         /*SrcOp=*/
-        {/*OpIdx=*/4, /*SubRegIdx=*/AIE2::NoSubRegister,
-         /*SubRegsSplit=*/Split3DReg}}};
+        {{/*OpIdx=*/4, /*SubRegIdx=*/AIE2::NoSubRegister,
+          /*SubRegsSplit=*/Split3DReg}}}};
   default:
     return {};
   }
