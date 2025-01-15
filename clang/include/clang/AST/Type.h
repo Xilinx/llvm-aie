@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -2670,8 +2670,11 @@ public:
   /// set of type specifiers.
   bool isSpecifierType() const;
 
-  /// Returns true if this is a AIE ACC48.
+  /// Returns true if this is a AIE accumulator type.
   bool isAIEAccumulatorType() const;
+
+  /// Returns true if this is a AIE integer accumulator type.
+  bool isAIEIntegerAccumulatorType() const;
 
   /// Determine the linkage of this type.
   Linkage getLinkage() const;
@@ -7745,8 +7748,9 @@ bool IsEnumDeclScoped(EnumDecl *);
 
 inline bool Type::isIntegerType() const {
   if (const auto *BT = dyn_cast<BuiltinType>(CanonicalType))
-    return BT->getKind() >= BuiltinType::Bool &&
-           BT->getKind() <= BuiltinType::Int128;
+    return isAIEIntegerAccumulatorType() ||
+           (BT->getKind() >= BuiltinType::Bool &&
+            BT->getKind() <= BuiltinType::Int128);
   if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType)) {
     // Incomplete enum types are not treated as integer types.
     // FIXME: In C++, enum types are never integer types.
@@ -7803,12 +7807,10 @@ inline bool Type::isUnsignedFixedPointType() const {
 }
 
 inline bool Type::isScalarType() const {
-  if (const auto *BT = dyn_cast<BuiltinType>(CanonicalType)) {
-    if (isAIEAccumulatorType())
-      return true;
-    return BT->getKind() > BuiltinType::Void &&
-           BT->getKind() <= BuiltinType::NullPtr;
-  }
+  if (const auto *BT = dyn_cast<BuiltinType>(CanonicalType))
+    return isAIEAccumulatorType() || (BT->getKind() > BuiltinType::Void &&
+                                      BT->getKind() <= BuiltinType::NullPtr);
+
   if (const EnumType *ET = dyn_cast<EnumType>(CanonicalType))
     // Enums are scalar types, but only if they are defined.  Incomplete enums
     // are not treated as scalar types.
@@ -7823,8 +7825,9 @@ inline bool Type::isScalarType() const {
 
 inline bool Type::isIntegralOrEnumerationType() const {
   if (const auto *BT = dyn_cast<BuiltinType>(CanonicalType))
-    return BT->getKind() >= BuiltinType::Bool &&
-           BT->getKind() <= BuiltinType::Int128;
+    return isAIEIntegerAccumulatorType() ||
+           (BT->getKind() >= BuiltinType::Bool &&
+            BT->getKind() <= BuiltinType::Int128);
 
   // Check for a complete enum type; incomplete enum types are not properly an
   // enumeration type in the sense required here.
@@ -7860,10 +7863,14 @@ inline bool Type::isTypedefNameType() const {
   return false;
 }
 
-inline bool Type::isAIEAccumulatorType() const {
+inline bool Type::isAIEIntegerAccumulatorType() const {
   return (isSpecificBuiltinType(BuiltinType::ACC32) ||
           isSpecificBuiltinType(BuiltinType::ACC48) ||
-          isSpecificBuiltinType(BuiltinType::ACC64) ||
+          isSpecificBuiltinType(BuiltinType::ACC64));
+}
+
+inline bool Type::isAIEAccumulatorType() const {
+  return (isAIEIntegerAccumulatorType() ||
           isSpecificBuiltinType(BuiltinType::ACCFLOAT));
 }
 
