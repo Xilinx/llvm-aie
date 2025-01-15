@@ -4491,67 +4491,67 @@ MemInstrItinData<II_VLDA_CONV_fp32_bf16_dmx_lda_ups_bf_pstm_nrm, [AvoidPartWordS
 MemInstrItinData<II_VLDA_CONV_fp32_bf16_dmx_lda_ups_bf_pstm_nrm_imm, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, PrefixCycle<AGUA__AGU_M_CG20S>, SimpleCycle<AGUA__AG_P>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<DM_WM_PORT>], [/*op*/7, /*ptr_out*/1, /*ptr*/1, /*imm*/1], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_x__normal_fill__dmx_lda_fifo_x__core_fill__dmx_lda_fifo_x__normal__mPfa__mLdFifo_a__mRF2a
-MemInstrItinData<II_VLDA_FILL_512, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>], [/*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDA_FILL_512, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>], [/*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_x__fifo_2d_pop__dmx_lda_fifo_x__core_pop__dmx_lda_fifo_x__fifo_2d__mPfa__mLdFifo_a__mRF2a__mDa
-MemInstrItinData<II_VLDA_POP_512_2D, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dc*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDA_POP_512_2D, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dc*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_x__fifo_3d_pop__dmx_lda_fifo_x__core_pop__dmx_lda_fifo_x__fifo_3d__mPfa__mLdFifo_a__mRF2a__mDSa
-MemInstrItinData<II_VLDA_POP_512_3D, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dcl*/1, /*dch*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDA_POP_512_3D, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_x__fifo_1d_pop__dmx_lda_fifo_x__core_pop__dmx_lda_fifo_x__fifo_1d__mPfa__mLdFifo_a__mRF2a__mMa
-MemInstrItinData<II_VLDA_POP_512_fifo_1d_pop, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDA_POP_512_fifo_1d_pop, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_x__normal_pop__dmx_lda_fifo_x__core_pop__dmx_lda_fifo_x__normal__mPfa__mLdFifo_a__mRF2a
-MemInstrItinData<II_VLDA_POP_512_normal_pop, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDA_POP_512_normal_pop, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_ex_ebs16__fifo_2d_pop__dmx_lda_fifo_ex_ebs16__core_pop__dmx_lda_fifo_ex_ebs16__fifo_2d__mPfa__mLdFifo_a__mRF2a__mDa
-MemInstrItinData<II_VLDA_POP_544_2D, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dc*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDA_POP_544_2D, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dc*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_ex_ebs16__fifo_3d_pop__dmx_lda_fifo_ex_ebs16__core_pop__dmx_lda_fifo_ex_ebs16__fifo_3d__mPfa__mLdFifo_a__mRF2a__mDSa
-MemInstrItinData<II_VLDA_POP_544_3D, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dcl*/1, /*dch*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDA_POP_544_3D, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_ex_ebs16__fifo_1d_pop__dmx_lda_fifo_ex_ebs16__core_pop__dmx_lda_fifo_ex_ebs16__fifo_1d__mPfa__mLdFifo_a__mRF2a__mMa
-MemInstrItinData<II_VLDA_POP_544_fifo_1d_pop, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDA_POP_544_fifo_1d_pop, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_ex_ebs16__normal_pop__dmx_lda_fifo_ex_ebs16__core_pop__dmx_lda_fifo_ex_ebs16__normal__mPfa__mLdFifo_a__mRF2a
-MemInstrItinData<II_VLDA_POP_544_normal_pop, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDA_POP_544_normal_pop, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_ex_ebs8__fifo_2d_pop__dmx_lda_fifo_ex_ebs8__core_pop__dmx_lda_fifo_ex_ebs8__fifo_2d__mPfa__mLdFifo_a__mRF2a__mDa
-MemInstrItinData<II_VLDA_POP_576_2D, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dc*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDA_POP_576_2D, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dc*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_ex_ebs8__fifo_3d_pop__dmx_lda_fifo_ex_ebs8__core_pop__dmx_lda_fifo_ex_ebs8__fifo_3d__mPfa__mLdFifo_a__mRF2a__mDSa
-MemInstrItinData<II_VLDA_POP_576_3D, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dcl*/1, /*dch*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDA_POP_576_3D, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_ex_ebs8__fifo_1d_pop__dmx_lda_fifo_ex_ebs8__core_pop__dmx_lda_fifo_ex_ebs8__fifo_1d__mPfa__mLdFifo_a__mRF2a__mMa
-MemInstrItinData<II_VLDA_POP_576_fifo_1d_pop, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDA_POP_576_fifo_1d_pop, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_ex_ebs8__normal_pop__dmx_lda_fifo_ex_ebs8__core_pop__dmx_lda_fifo_ex_ebs8__normal__mPfa__mLdFifo_a__mRF2a
-MemInstrItinData<II_VLDA_POP_576_normal_pop, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDA_POP_576_normal_pop, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_qx__fifo_2d_pop__dmx_lda_fifo_qx__core_pop__dmx_lda_fifo_qx__fifo_2d__mPfa__mLdFifo_a__mRF2a__mDa
-MemInstrItinData<II_VLDA_POP_640_2D, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dc*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDA_POP_640_2D, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dc*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_qx__fifo_3d_pop__dmx_lda_fifo_qx__core_pop__dmx_lda_fifo_qx__fifo_3d__mPfa__mLdFifo_a__mRF2a__mDSa
-MemInstrItinData<II_VLDA_POP_640_3D, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dcl*/1, /*dch*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDA_POP_640_3D, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_qx__fifo_1d_pop__dmx_lda_fifo_qx__core_pop__dmx_lda_fifo_qx__fifo_1d__mPfa__mLdFifo_a__mRF2a__mMa
-MemInstrItinData<II_VLDA_POP_640_fifo_1d_pop, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDA_POP_640_fifo_1d_pop, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_qx__normal_pop__dmx_lda_fifo_qx__core_pop__dmx_lda_fifo_qx__normal__mPfa__mLdFifo_a__mRF2a
-MemInstrItinData<II_VLDA_POP_640_normal_pop, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDA_POP_640_normal_pop, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_qex_ebs16__fifo_2d_pop__dmx_lda_fifo_qex_ebs16__core_pop__dmx_lda_fifo_qex_ebs16__fifo_2d__mPfa__mLdFifo_a__mRF2a__mDa
-MemInstrItinData<II_VLDA_POP_704_2D, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dc*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDA_POP_704_2D, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dc*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_qex_ebs16__fifo_3d_pop__dmx_lda_fifo_qex_ebs16__core_pop__dmx_lda_fifo_qex_ebs16__fifo_3d__mPfa__mLdFifo_a__mRF2a__mDSa
-MemInstrItinData<II_VLDA_POP_704_3D, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dcl*/1, /*dch*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDA_POP_704_3D, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_qex_ebs16__fifo_1d_pop__dmx_lda_fifo_qex_ebs16__core_pop__dmx_lda_fifo_qex_ebs16__fifo_1d__mPfa__mLdFifo_a__mRF2a__mMa
-MemInstrItinData<II_VLDA_POP_704_fifo_1d_pop, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDA_POP_704_fifo_1d_pop, [AvoidPartWordStore, PrefixCycle<AGUA__AGI_I>, PrefixCycle<AGUA__AGU_C1>, SimpleCycle<M_RA_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_qex_ebs16__normal_pop__dmx_lda_fifo_qex_ebs16__core_pop__dmx_lda_fifo_qex_ebs16__normal__mPfa__mLdFifo_a__mRF2a
-MemInstrItinData<II_VLDA_POP_704_normal_pop, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDA_POP_704_normal_pop, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<5>, SimpleCycle<QEY_WA_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__lda__dmw_lda_ups_w2b__agua_dmw__nrm__agua_dmw__normal__agua_dmw__idx__mPa__mDJa__dmw_lda_ups_w2b_core__ups_lda__w2b__ups_lda__base__mSa__upsSign0
 MemInstrItinData<II_VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign0, [AvoidPartWordStore, SimpleCycle<AGUA__AGI_I>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<CRSAT_RA>, PrefixCycle<CRUPSMODE_RA>, SimpleCycle<UPS__L__OMUXL>, PrefixCycle<DM_WM_PORT>, PrefixCycle<EVENT_UPS_OF>, SimpleCycle<UPS__L__KL>], [/*dst*/9, /*su*/7, /*ptr*/1, /*dj*/1, /*srUPS_of*/9, /*crSat*/7, /*crUPSMode*/8, /*upsSign0*/7], MemoryCycles<[5]>>,
@@ -4782,73 +4782,73 @@ MemInstrItinData<II_VLDB_4x64_hi, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>,
 MemInstrItinData<II_VLDB_4x64_lo, [AvoidPartWordStore, SimpleCycle<QEY_RS_PORT>, SimpleCycle<DM_ADA>, EmptyCycles<4>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*src*/1], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_x__normal_fillx__dmx_ldb_fifo_x__core_fillx__mR30_fifo_step_e1__mR30_fifo_step_e7__dmx_ldb_fifo_x__normalx__mPfb__mLdFifo_b__mRF2b
-MemInstrItinData<II_VLDB_FILLX_512, [AvoidPartWordStore, SimpleCycle<L_RM_PORT>, EmptyCycles<5>, SimpleCycle<L_RM_PORT>], [/*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*conf_e1*/1, /*conf_e7*/7, /*ptr_superreg*/1, /*lfe*/7, /*lfe*/7], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDB_FILLX_512, [AvoidPartWordStore, SimpleCycle<L_RM_PORT>, EmptyCycles<5>, SimpleCycle<L_RM_PORT>], [/*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*conf_e1*/1, /*conf_e7*/7, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*lfe*/7, /*lfe*/7], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_x__normal_fill__dmx_ldb_fifo_x__core_fill__dmx_ldb_fifo_x__normal__mPfb__mLdFifo_b__mRF2b
-MemInstrItinData<II_VLDB_FILL_512, [AvoidPartWordStore], [/*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDB_FILL_512, [AvoidPartWordStore], [/*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_x__normal_popx__dmx_ldb_fifo_x__core_popx__mR30_fifo_step_e1__mR30_fifo_step_e7__dmx_ldb_fifo_x__normalx__mPfb__mLdFifo_b__mRF2b
-MemInstrItinData<II_VLDB_POPX_512, [AvoidPartWordStore, SimpleCycle<L_RM_PORT>, EmptyCycles<5>, SimpleCycle<L_RM_PORT>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*conf_e1*/1, /*conf_e7*/7, /*ptr_superreg*/1, /*lfe*/7, /*srFifo_uf*/3, /*lfe*/7], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDB_POPX_512, [AvoidPartWordStore, SimpleCycle<L_RM_PORT>, EmptyCycles<5>, SimpleCycle<L_RM_PORT>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*conf_e1*/1, /*conf_e7*/7, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*lfe*/7, /*srFifo_uf*/3, /*lfe*/7], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_x__fifo_2d_pop__dmx_ldb_fifo_x__core_pop__dmx_ldb_fifo_x__fifo_2d__mPfb__mLdFifo_b__mRF2b__mDb
-MemInstrItinData<II_VLDB_POP_512_2D, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dc*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDB_POP_512_2D, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dc*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_x__fifo_3d_pop__dmx_ldb_fifo_x__core_pop__dmx_ldb_fifo_x__fifo_3d__mPfb__mLdFifo_b__mRF2b__mDSb
-MemInstrItinData<II_VLDB_POP_512_3D, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dcl*/1, /*dch*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDB_POP_512_3D, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_x__fifo_1d_pop__dmx_ldb_fifo_x__core_pop__dmx_ldb_fifo_x__fifo_1d__mPfb__mLdFifo_b__mRF2b__mMb
-MemInstrItinData<II_VLDB_POP_512_fifo_1d_pop, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDB_POP_512_fifo_1d_pop, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_x__normal_pop__dmx_ldb_fifo_x__core_pop__dmx_ldb_fifo_x__normal__mPfb__mLdFifo_b__mRF2b
-MemInstrItinData<II_VLDB_POP_512_normal_pop, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDB_POP_512_normal_pop, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_ex_ebs16__fifo_2d_pop__dmx_ldb_fifo_ex_ebs16__core_pop__dmx_ldb_fifo_ex_ebs16__fifo_2d__mPfb__mLdFifo_b__mRF2b__mDb
-MemInstrItinData<II_VLDB_POP_544_2D, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dc*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDB_POP_544_2D, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dc*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_ex_ebs16__fifo_3d_pop__dmx_ldb_fifo_ex_ebs16__core_pop__dmx_ldb_fifo_ex_ebs16__fifo_3d__mPfb__mLdFifo_b__mRF2b__mDSb
-MemInstrItinData<II_VLDB_POP_544_3D, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dcl*/1, /*dch*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDB_POP_544_3D, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_ex_ebs16__fifo_1d_pop__dmx_ldb_fifo_ex_ebs16__core_pop__dmx_ldb_fifo_ex_ebs16__fifo_1d__mPfb__mLdFifo_b__mRF2b__mMb
-MemInstrItinData<II_VLDB_POP_544_fifo_1d_pop, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDB_POP_544_fifo_1d_pop, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_ex_ebs16__normal_pop__dmx_ldb_fifo_ex_ebs16__core_pop__dmx_ldb_fifo_ex_ebs16__normal__mPfb__mLdFifo_b__mRF2b
-MemInstrItinData<II_VLDB_POP_544_normal_pop, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDB_POP_544_normal_pop, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_ex_ebs8__fifo_2d_pop__dmx_ldb_fifo_ex_ebs8__core_pop__dmx_ldb_fifo_ex_ebs8__fifo_2d__mPfb__mLdFifo_b__mRF2b__mDb
-MemInstrItinData<II_VLDB_POP_576_2D, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dc*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDB_POP_576_2D, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dc*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_ex_ebs8__fifo_3d_pop__dmx_ldb_fifo_ex_ebs8__core_pop__dmx_ldb_fifo_ex_ebs8__fifo_3d__mPfb__mLdFifo_b__mRF2b__mDSb
-MemInstrItinData<II_VLDB_POP_576_3D, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dcl*/1, /*dch*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDB_POP_576_3D, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_ex_ebs8__fifo_1d_pop__dmx_ldb_fifo_ex_ebs8__core_pop__dmx_ldb_fifo_ex_ebs8__fifo_1d__mPfb__mLdFifo_b__mRF2b__mMb
-MemInstrItinData<II_VLDB_POP_576_fifo_1d_pop, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDB_POP_576_fifo_1d_pop, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_ex_ebs8__normal_pop__dmx_ldb_fifo_ex_ebs8__core_pop__dmx_ldb_fifo_ex_ebs8__normal__mPfb__mLdFifo_b__mRF2b
-MemInstrItinData<II_VLDB_POP_576_normal_pop, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDB_POP_576_normal_pop, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_qx__fifo_2d_pop__dmx_ldb_fifo_qx__core_pop__dmx_ldb_fifo_qx__fifo_2d__mPfb__mLdFifo_b__mRF2b__mDb
-MemInstrItinData<II_VLDB_POP_640_2D, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dc*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDB_POP_640_2D, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dc*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_qx__fifo_3d_pop__dmx_ldb_fifo_qx__core_pop__dmx_ldb_fifo_qx__fifo_3d__mPfb__mLdFifo_b__mRF2b__mDSb
-MemInstrItinData<II_VLDB_POP_640_3D, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dcl*/1, /*dch*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDB_POP_640_3D, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_qx__fifo_1d_pop__dmx_ldb_fifo_qx__core_pop__dmx_ldb_fifo_qx__fifo_1d__mPfb__mLdFifo_b__mRF2b__mMb
-MemInstrItinData<II_VLDB_POP_640_fifo_1d_pop, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDB_POP_640_fifo_1d_pop, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_qx__normal_pop__dmx_ldb_fifo_qx__core_pop__dmx_ldb_fifo_qx__normal__mPfb__mLdFifo_b__mRF2b
-MemInstrItinData<II_VLDB_POP_640_normal_pop, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDB_POP_640_normal_pop, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_qex_ebs16__fifo_2d_pop__dmx_ldb_fifo_qex_ebs16__core_pop__dmx_ldb_fifo_qex_ebs16__fifo_2d__mPfb__mLdFifo_b__mRF2b__mDb
-MemInstrItinData<II_VLDB_POP_704_2D, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dc*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDB_POP_704_2D, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dc*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_qex_ebs16__fifo_3d_pop__dmx_ldb_fifo_qex_ebs16__core_pop__dmx_ldb_fifo_qex_ebs16__fifo_3d__mPfb__mLdFifo_b__mRF2b__mDSb
-MemInstrItinData<II_VLDB_POP_704_3D, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dcl*/1, /*dch*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDB_POP_704_3D, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*dcl*/1, /*dch*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_qex_ebs16__fifo_1d_pop__dmx_ldb_fifo_qex_ebs16__core_pop__dmx_ldb_fifo_qex_ebs16__fifo_1d__mPfb__mLdFifo_b__mRF2b__mMb
-MemInstrItinData<II_VLDB_POP_704_fifo_1d_pop, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDB_POP_704_fifo_1d_pop, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*mod*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_qex_ebs16__normal_pop__dmx_ldb_fifo_qex_ebs16__core_pop__dmx_ldb_fifo_qex_ebs16__normal__mPfb__mLdFifo_b__mRF2b
-MemInstrItinData<II_VLDB_POP_704_normal_pop, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr_superreg*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
+MemInstrItinData<II_VLDB_POP_704_normal_pop, [AvoidPartWordStore, EmptyCycles<7>, SimpleCycle<QEY_WB_PORT>], [/*dst*/8, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*ptr*/1, /*fifo_reg*/7, /*pos*/1, /*srFifo_uf*/3], MemoryCycles<[5]>>,
 
 // id: me__instr128_or__ldb__dmw_ldb_unpack__agub_dmw__nrm__agub_dmw__normal__agub_dmw__idx__mPb__mDJb__unpackSign0
 MemInstrItinData<II_VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign0, [AvoidPartWordStore, EmptyCycles<6>, SimpleCycle<QEY_WB_PORT>], [/*dst*/7, /*ptr*/1, /*dj*/1, /*crUnpackSize*/7, /*unpackSign0*/7], MemoryCycles<[5]>>,

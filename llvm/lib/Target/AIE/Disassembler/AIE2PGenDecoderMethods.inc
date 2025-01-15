@@ -2119,6 +2119,28 @@ static DecodeStatus DecodeVLDA_FILL_512(MCInst &MI, InsnType &Insn,
                                         uint64_t Address,
                                         const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -2139,14 +2161,6 @@ static DecodeStatus DecodeVLDA_FILL_512(MCInst &MI, InsnType &Insn,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   return MCDisassembler::Success;
 }
@@ -2163,6 +2177,35 @@ DecodeDmx_lda_fifo_x__fifo_2d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
+  if (dcRegRaw >= std::size(eDCDecoderTable))
+    return MCDisassembler::Fail;
+  Register dcReg = eDCDecoderTable[dcRegRaw];
+  assert(dcReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(dcReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -2183,21 +2226,6 @@ DecodeDmx_lda_fifo_x__fifo_2d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
-  Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(dcReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
   if (modRegRaw >= std::size(eDDecoderTable))
@@ -2221,6 +2249,42 @@ DecodeDmx_lda_fifo_x__fifo_3d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
+  if (dclRegRaw >= std::size(eDCLDecoderTable))
+    return MCDisassembler::Fail;
+  Register dclReg = eDCLDecoderTable[dclRegRaw];
+  assert(dclReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(dclReg));
+
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
+  if (dchRegRaw >= std::size(eDCHDecoderTable))
+    return MCDisassembler::Fail;
+  Register dchReg = eDCHDecoderTable[dchRegRaw];
+  assert(dchReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(dchReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -2241,28 +2305,6 @@ DecodeDmx_lda_fifo_x__fifo_3d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
-  Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(dclReg));
-
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
-  Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(dchReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
   if (modRegRaw >= std::size(eDSDecoderTable))
@@ -2286,6 +2328,28 @@ DecodeVLDA_POP_512_fifo_1d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -2306,14 +2370,6 @@ DecodeVLDA_POP_512_fifo_1d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
   if (modRegRaw >= std::size(eMDecoderTable))
@@ -2337,6 +2393,28 @@ DecodeVLDA_POP_512_normal_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -2357,14 +2435,6 @@ DecodeVLDA_POP_512_normal_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   return MCDisassembler::Success;
 }
@@ -2382,6 +2452,35 @@ DecodeDmx_lda_fifo_ex_ebs16__fifo_2d_pop(MCInst &MI, InsnType &Insn,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
+  if (dcRegRaw >= std::size(eDCDecoderTable))
+    return MCDisassembler::Fail;
+  Register dcReg = eDCDecoderTable[dcRegRaw];
+  assert(dcReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(dcReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -2402,21 +2501,6 @@ DecodeDmx_lda_fifo_ex_ebs16__fifo_2d_pop(MCInst &MI, InsnType &Insn,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
-  Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(dcReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
   if (modRegRaw >= std::size(eDDecoderTable))
@@ -2441,6 +2525,42 @@ DecodeDmx_lda_fifo_ex_ebs16__fifo_3d_pop(MCInst &MI, InsnType &Insn,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
+  if (dclRegRaw >= std::size(eDCLDecoderTable))
+    return MCDisassembler::Fail;
+  Register dclReg = eDCLDecoderTable[dclRegRaw];
+  assert(dclReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(dclReg));
+
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
+  if (dchRegRaw >= std::size(eDCHDecoderTable))
+    return MCDisassembler::Fail;
+  Register dchReg = eDCHDecoderTable[dchRegRaw];
+  assert(dchReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(dchReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -2461,28 +2581,6 @@ DecodeDmx_lda_fifo_ex_ebs16__fifo_3d_pop(MCInst &MI, InsnType &Insn,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
-  Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(dclReg));
-
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
-  Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(dchReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
   if (modRegRaw >= std::size(eDSDecoderTable))
@@ -2506,6 +2604,28 @@ DecodeVLDA_POP_544_fifo_1d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -2526,14 +2646,6 @@ DecodeVLDA_POP_544_fifo_1d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
   if (modRegRaw >= std::size(eMDecoderTable))
@@ -2557,6 +2669,28 @@ DecodeVLDA_POP_544_normal_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -2577,14 +2711,6 @@ DecodeVLDA_POP_544_normal_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   return MCDisassembler::Success;
 }
@@ -2602,6 +2728,35 @@ DecodeDmx_lda_fifo_ex_ebs8__fifo_2d_pop(MCInst &MI, InsnType &Insn,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
+  if (dcRegRaw >= std::size(eDCDecoderTable))
+    return MCDisassembler::Fail;
+  Register dcReg = eDCDecoderTable[dcRegRaw];
+  assert(dcReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(dcReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -2622,21 +2777,6 @@ DecodeDmx_lda_fifo_ex_ebs8__fifo_2d_pop(MCInst &MI, InsnType &Insn,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
-  Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(dcReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
   if (modRegRaw >= std::size(eDDecoderTable))
@@ -2661,6 +2801,42 @@ DecodeDmx_lda_fifo_ex_ebs8__fifo_3d_pop(MCInst &MI, InsnType &Insn,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
+  if (dclRegRaw >= std::size(eDCLDecoderTable))
+    return MCDisassembler::Fail;
+  Register dclReg = eDCLDecoderTable[dclRegRaw];
+  assert(dclReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(dclReg));
+
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
+  if (dchRegRaw >= std::size(eDCHDecoderTable))
+    return MCDisassembler::Fail;
+  Register dchReg = eDCHDecoderTable[dchRegRaw];
+  assert(dchReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(dchReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -2681,28 +2857,6 @@ DecodeDmx_lda_fifo_ex_ebs8__fifo_3d_pop(MCInst &MI, InsnType &Insn,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
-  Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(dclReg));
-
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
-  Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(dchReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
   if (modRegRaw >= std::size(eDSDecoderTable))
@@ -2726,6 +2880,28 @@ DecodeVLDA_POP_576_fifo_1d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -2746,14 +2922,6 @@ DecodeVLDA_POP_576_fifo_1d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
   if (modRegRaw >= std::size(eMDecoderTable))
@@ -2777,6 +2945,28 @@ DecodeVLDA_POP_576_normal_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -2797,14 +2987,6 @@ DecodeVLDA_POP_576_normal_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   return MCDisassembler::Success;
 }
@@ -2821,6 +3003,35 @@ DecodeDmx_lda_fifo_qx__fifo_2d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
+  if (dcRegRaw >= std::size(eDCDecoderTable))
+    return MCDisassembler::Fail;
+  Register dcReg = eDCDecoderTable[dcRegRaw];
+  assert(dcReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(dcReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -2841,21 +3052,6 @@ DecodeDmx_lda_fifo_qx__fifo_2d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
-  Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(dcReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
   if (modRegRaw >= std::size(eDDecoderTable))
@@ -2879,6 +3075,42 @@ DecodeDmx_lda_fifo_qx__fifo_3d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
+  if (dclRegRaw >= std::size(eDCLDecoderTable))
+    return MCDisassembler::Fail;
+  Register dclReg = eDCLDecoderTable[dclRegRaw];
+  assert(dclReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(dclReg));
+
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
+  if (dchRegRaw >= std::size(eDCHDecoderTable))
+    return MCDisassembler::Fail;
+  Register dchReg = eDCHDecoderTable[dchRegRaw];
+  assert(dchReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(dchReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -2899,28 +3131,6 @@ DecodeDmx_lda_fifo_qx__fifo_3d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
-  Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(dclReg));
-
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
-  Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(dchReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
   if (modRegRaw >= std::size(eDSDecoderTable))
@@ -2944,6 +3154,28 @@ DecodeVLDA_POP_640_fifo_1d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -2964,14 +3196,6 @@ DecodeVLDA_POP_640_fifo_1d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
   if (modRegRaw >= std::size(eMDecoderTable))
@@ -2995,6 +3219,28 @@ DecodeVLDA_POP_640_normal_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -3015,14 +3261,6 @@ DecodeVLDA_POP_640_normal_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   return MCDisassembler::Success;
 }
@@ -3040,6 +3278,35 @@ DecodeDmx_lda_fifo_qex_ebs16__fifo_2d_pop(MCInst &MI, InsnType &Insn,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
+  if (dcRegRaw >= std::size(eDCDecoderTable))
+    return MCDisassembler::Fail;
+  Register dcReg = eDCDecoderTable[dcRegRaw];
+  assert(dcReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(dcReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -3060,21 +3327,6 @@ DecodeDmx_lda_fifo_qex_ebs16__fifo_2d_pop(MCInst &MI, InsnType &Insn,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 14, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
-  Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(dcReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
   if (modRegRaw >= std::size(eDDecoderTable))
@@ -3099,6 +3351,42 @@ DecodeDmx_lda_fifo_qex_ebs16__fifo_3d_pop(MCInst &MI, InsnType &Insn,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
+  if (dclRegRaw >= std::size(eDCLDecoderTable))
+    return MCDisassembler::Fail;
+  Register dclReg = eDCLDecoderTable[dclRegRaw];
+  assert(dclReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(dclReg));
+
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
+  if (dchRegRaw >= std::size(eDCHDecoderTable))
+    return MCDisassembler::Fail;
+  Register dchReg = eDCHDecoderTable[dchRegRaw];
+  assert(dchReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(dchReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -3119,28 +3407,6 @@ DecodeDmx_lda_fifo_qex_ebs16__fifo_3d_pop(MCInst &MI, InsnType &Insn,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
-  Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(dclReg));
-
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 14, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
-  Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(dchReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   unsigned modRegRaw = fieldFromInstruction(Insn, 14, 2);
   if (modRegRaw >= std::size(eDSDecoderTable))
@@ -3164,6 +3430,28 @@ DecodeVLDA_POP_704_fifo_1d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -3184,14 +3472,6 @@ DecodeVLDA_POP_704_fifo_1d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   unsigned modRegRaw = fieldFromInstruction(Insn, 14, 3);
   if (modRegRaw >= std::size(eMDecoderTable))
@@ -3215,6 +3495,28 @@ DecodeVLDA_POP_704_normal_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 17, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 17, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -3235,14 +3537,6 @@ DecodeVLDA_POP_704_normal_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 17, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   return MCDisassembler::Success;
 }
@@ -3727,26 +4021,26 @@ static DecodeStatus DecodeVLDB_FILLX_512(MCInst &MI, InsnType &Insn,
                                          uint64_t Address,
                                          const MCDisassembler *Decoder) {
   // ------------------- Outs ------------------------
-  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptrRegRaw >= std::size(ePSDecoderTable))
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
-  Register ptrReg = ePSDecoderTable[ptrRegRaw];
-  assert(ptrReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptrReg));
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
 
-  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
     return MCDisassembler::Fail;
-  Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
-  assert(fifo_regReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(fifo_regReg));
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
 
-  unsigned posRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (posRegRaw >= std::size(eRF2DecoderTable))
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
     return MCDisassembler::Fail;
-  Register posReg = eRF2DecoderTable[posRegRaw];
-  assert(posReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(posReg));
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
 
   // --------------------- Ins ------------------------
   const TargetRegisterClass &conf_e1RC = AIE2P::mR30_fifo_step_e1RegClass;
@@ -3761,21 +4055,6 @@ static DecodeStatus DecodeVLDB_FILLX_512(MCInst &MI, InsnType &Insn,
   unsigned conf_e7Reg = conf_e7RC.getRegister(0);
   MI.addOperand(MCOperand::createReg(conf_e7Reg));
 
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
-
-  return MCDisassembler::Success;
-}
-
-template <typename InsnType>
-static DecodeStatus DecodeVLDB_FILL_512(MCInst &MI, InsnType &Insn,
-                                        uint64_t Address,
-                                        const MCDisassembler *Decoder) {
-  // ------------------- Outs ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -3797,13 +4076,56 @@ static DecodeStatus DecodeVLDB_FILL_512(MCInst &MI, InsnType &Insn,
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
 
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
+  return MCDisassembler::Success;
+}
+
+template <typename InsnType>
+static DecodeStatus DecodeVLDB_FILL_512(MCInst &MI, InsnType &Insn,
+                                        uint64_t Address,
+                                        const MCDisassembler *Decoder) {
+  // ------------------- Outs ------------------------
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  // --------------------- Ins ------------------------
+  unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (ptrRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptrReg = ePSDecoderTable[ptrRegRaw];
+  assert(ptrReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptrReg));
+
+  unsigned fifo_regRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (fifo_regRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_regReg = eLdFifoRegDecoderTable[fifo_regRegRaw];
+  assert(fifo_regReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_regReg));
+
+  unsigned posRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (posRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register posReg = eRF2DecoderTable[posRegRaw];
+  assert(posReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(posReg));
 
   return MCDisassembler::Success;
 }
@@ -3820,6 +4142,40 @@ static DecodeStatus DecodeVLDB_POPX_512(MCInst &MI, InsnType &Insn,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  // --------------------- Ins ------------------------
+  const TargetRegisterClass &conf_e1RC = AIE2P::mR30_fifo_step_e1RegClass;
+  if (conf_e1RC.getNumRegs() != 1)
+    return MCDisassembler::Fail;
+  unsigned conf_e1Reg = conf_e1RC.getRegister(0);
+  MI.addOperand(MCOperand::createReg(conf_e1Reg));
+
+  const TargetRegisterClass &conf_e7RC = AIE2P::mR30_fifo_step_e7RegClass;
+  if (conf_e7RC.getNumRegs() != 1)
+    return MCDisassembler::Fail;
+  unsigned conf_e7Reg = conf_e7RC.getRegister(0);
+  MI.addOperand(MCOperand::createReg(conf_e7Reg));
+
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -3840,26 +4196,6 @@ static DecodeStatus DecodeVLDB_POPX_512(MCInst &MI, InsnType &Insn,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  // --------------------- Ins ------------------------
-  const TargetRegisterClass &conf_e1RC = AIE2P::mR30_fifo_step_e1RegClass;
-  if (conf_e1RC.getNumRegs() != 1)
-    return MCDisassembler::Fail;
-  unsigned conf_e1Reg = conf_e1RC.getRegister(0);
-  MI.addOperand(MCOperand::createReg(conf_e1Reg));
-
-  const TargetRegisterClass &conf_e7RC = AIE2P::mR30_fifo_step_e7RegClass;
-  if (conf_e7RC.getNumRegs() != 1)
-    return MCDisassembler::Fail;
-  unsigned conf_e7Reg = conf_e7RC.getRegister(0);
-  MI.addOperand(MCOperand::createReg(conf_e7Reg));
-
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   return MCDisassembler::Success;
 }
@@ -3876,6 +4212,35 @@ DecodeDmx_ldb_fifo_x__fifo_2d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 11, 3);
+  if (dcRegRaw >= std::size(eDCDecoderTable))
+    return MCDisassembler::Fail;
+  Register dcReg = eDCDecoderTable[dcRegRaw];
+  assert(dcReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(dcReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -3896,21 +4261,6 @@ DecodeDmx_ldb_fifo_x__fifo_2d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 11, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
-  Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(dcReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   unsigned modRegRaw = fieldFromInstruction(Insn, 11, 3);
   if (modRegRaw >= std::size(eDDecoderTable))
@@ -3934,6 +4284,42 @@ DecodeDmx_ldb_fifo_x__fifo_3d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 11, 2);
+  if (dclRegRaw >= std::size(eDCLDecoderTable))
+    return MCDisassembler::Fail;
+  Register dclReg = eDCLDecoderTable[dclRegRaw];
+  assert(dclReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(dclReg));
+
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 11, 2);
+  if (dchRegRaw >= std::size(eDCHDecoderTable))
+    return MCDisassembler::Fail;
+  Register dchReg = eDCHDecoderTable[dchRegRaw];
+  assert(dchReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(dchReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -3954,28 +4340,6 @@ DecodeDmx_ldb_fifo_x__fifo_3d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
-  Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(dclReg));
-
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
-  Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(dchReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   unsigned modRegRaw = fieldFromInstruction(Insn, 11, 2);
   if (modRegRaw >= std::size(eDSDecoderTable))
@@ -3999,6 +4363,28 @@ DecodeVLDB_POP_512_fifo_1d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -4019,14 +4405,6 @@ DecodeVLDB_POP_512_fifo_1d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   unsigned modRegRaw = fieldFromInstruction(Insn, 11, 3);
   if (modRegRaw >= std::size(eMDecoderTable))
@@ -4050,6 +4428,28 @@ DecodeVLDB_POP_512_normal_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -4070,14 +4470,6 @@ DecodeVLDB_POP_512_normal_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   return MCDisassembler::Success;
 }
@@ -4095,6 +4487,35 @@ DecodeDmx_ldb_fifo_ex_ebs16__fifo_2d_pop(MCInst &MI, InsnType &Insn,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 11, 3);
+  if (dcRegRaw >= std::size(eDCDecoderTable))
+    return MCDisassembler::Fail;
+  Register dcReg = eDCDecoderTable[dcRegRaw];
+  assert(dcReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(dcReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -4115,21 +4536,6 @@ DecodeDmx_ldb_fifo_ex_ebs16__fifo_2d_pop(MCInst &MI, InsnType &Insn,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 11, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
-  Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(dcReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   unsigned modRegRaw = fieldFromInstruction(Insn, 11, 3);
   if (modRegRaw >= std::size(eDDecoderTable))
@@ -4154,6 +4560,42 @@ DecodeDmx_ldb_fifo_ex_ebs16__fifo_3d_pop(MCInst &MI, InsnType &Insn,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 11, 2);
+  if (dclRegRaw >= std::size(eDCLDecoderTable))
+    return MCDisassembler::Fail;
+  Register dclReg = eDCLDecoderTable[dclRegRaw];
+  assert(dclReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(dclReg));
+
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 11, 2);
+  if (dchRegRaw >= std::size(eDCHDecoderTable))
+    return MCDisassembler::Fail;
+  Register dchReg = eDCHDecoderTable[dchRegRaw];
+  assert(dchReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(dchReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -4174,28 +4616,6 @@ DecodeDmx_ldb_fifo_ex_ebs16__fifo_3d_pop(MCInst &MI, InsnType &Insn,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
-  Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(dclReg));
-
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
-  Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(dchReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   unsigned modRegRaw = fieldFromInstruction(Insn, 11, 2);
   if (modRegRaw >= std::size(eDSDecoderTable))
@@ -4219,6 +4639,28 @@ DecodeVLDB_POP_544_fifo_1d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -4239,14 +4681,6 @@ DecodeVLDB_POP_544_fifo_1d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   unsigned modRegRaw = fieldFromInstruction(Insn, 11, 3);
   if (modRegRaw >= std::size(eMDecoderTable))
@@ -4270,6 +4704,28 @@ DecodeVLDB_POP_544_normal_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -4290,14 +4746,6 @@ DecodeVLDB_POP_544_normal_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   return MCDisassembler::Success;
 }
@@ -4315,6 +4763,35 @@ DecodeDmx_ldb_fifo_ex_ebs8__fifo_2d_pop(MCInst &MI, InsnType &Insn,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 11, 3);
+  if (dcRegRaw >= std::size(eDCDecoderTable))
+    return MCDisassembler::Fail;
+  Register dcReg = eDCDecoderTable[dcRegRaw];
+  assert(dcReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(dcReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -4335,21 +4812,6 @@ DecodeDmx_ldb_fifo_ex_ebs8__fifo_2d_pop(MCInst &MI, InsnType &Insn,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 11, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
-  Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(dcReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   unsigned modRegRaw = fieldFromInstruction(Insn, 11, 3);
   if (modRegRaw >= std::size(eDDecoderTable))
@@ -4374,6 +4836,42 @@ DecodeDmx_ldb_fifo_ex_ebs8__fifo_3d_pop(MCInst &MI, InsnType &Insn,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 11, 2);
+  if (dclRegRaw >= std::size(eDCLDecoderTable))
+    return MCDisassembler::Fail;
+  Register dclReg = eDCLDecoderTable[dclRegRaw];
+  assert(dclReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(dclReg));
+
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 11, 2);
+  if (dchRegRaw >= std::size(eDCHDecoderTable))
+    return MCDisassembler::Fail;
+  Register dchReg = eDCHDecoderTable[dchRegRaw];
+  assert(dchReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(dchReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -4394,28 +4892,6 @@ DecodeDmx_ldb_fifo_ex_ebs8__fifo_3d_pop(MCInst &MI, InsnType &Insn,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
-  Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(dclReg));
-
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
-  Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(dchReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   unsigned modRegRaw = fieldFromInstruction(Insn, 11, 2);
   if (modRegRaw >= std::size(eDSDecoderTable))
@@ -4439,6 +4915,28 @@ DecodeVLDB_POP_576_fifo_1d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -4459,14 +4957,6 @@ DecodeVLDB_POP_576_fifo_1d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   unsigned modRegRaw = fieldFromInstruction(Insn, 11, 3);
   if (modRegRaw >= std::size(eMDecoderTable))
@@ -4490,6 +4980,28 @@ DecodeVLDB_POP_576_normal_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -4510,14 +5022,6 @@ DecodeVLDB_POP_576_normal_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   return MCDisassembler::Success;
 }
@@ -4534,6 +5038,35 @@ DecodeDmx_ldb_fifo_qx__fifo_2d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 11, 3);
+  if (dcRegRaw >= std::size(eDCDecoderTable))
+    return MCDisassembler::Fail;
+  Register dcReg = eDCDecoderTable[dcRegRaw];
+  assert(dcReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(dcReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -4554,21 +5087,6 @@ DecodeDmx_ldb_fifo_qx__fifo_2d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 11, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
-  Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(dcReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   unsigned modRegRaw = fieldFromInstruction(Insn, 11, 3);
   if (modRegRaw >= std::size(eDDecoderTable))
@@ -4592,6 +5110,42 @@ DecodeDmx_ldb_fifo_qx__fifo_3d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 11, 2);
+  if (dclRegRaw >= std::size(eDCLDecoderTable))
+    return MCDisassembler::Fail;
+  Register dclReg = eDCLDecoderTable[dclRegRaw];
+  assert(dclReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(dclReg));
+
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 11, 2);
+  if (dchRegRaw >= std::size(eDCHDecoderTable))
+    return MCDisassembler::Fail;
+  Register dchReg = eDCHDecoderTable[dchRegRaw];
+  assert(dchReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(dchReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -4612,28 +5166,6 @@ DecodeDmx_ldb_fifo_qx__fifo_3d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
-  Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(dclReg));
-
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
-  Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(dchReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   unsigned modRegRaw = fieldFromInstruction(Insn, 11, 2);
   if (modRegRaw >= std::size(eDSDecoderTable))
@@ -4657,6 +5189,28 @@ DecodeVLDB_POP_640_fifo_1d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -4677,14 +5231,6 @@ DecodeVLDB_POP_640_fifo_1d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   unsigned modRegRaw = fieldFromInstruction(Insn, 11, 3);
   if (modRegRaw >= std::size(eMDecoderTable))
@@ -4708,6 +5254,28 @@ DecodeVLDB_POP_640_normal_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -4728,14 +5296,6 @@ DecodeVLDB_POP_640_normal_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   return MCDisassembler::Success;
 }
@@ -4753,6 +5313,35 @@ DecodeDmx_ldb_fifo_qex_ebs16__fifo_2d_pop(MCInst &MI, InsnType &Insn,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  unsigned dcRegRaw = fieldFromInstruction(Insn, 11, 3);
+  if (dcRegRaw >= std::size(eDCDecoderTable))
+    return MCDisassembler::Fail;
+  Register dcReg = eDCDecoderTable[dcRegRaw];
+  assert(dcReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(dcReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -4773,21 +5362,6 @@ DecodeDmx_ldb_fifo_qex_ebs16__fifo_2d_pop(MCInst &MI, InsnType &Insn,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  unsigned dcRegRaw = fieldFromInstruction(Insn, 11, 3);
-  if (dcRegRaw >= std::size(eDCDecoderTable))
-    return MCDisassembler::Fail;
-  Register dcReg = eDCDecoderTable[dcRegRaw];
-  assert(dcReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(dcReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   unsigned modRegRaw = fieldFromInstruction(Insn, 11, 3);
   if (modRegRaw >= std::size(eDDecoderTable))
@@ -4812,6 +5386,42 @@ DecodeDmx_ldb_fifo_qex_ebs16__fifo_3d_pop(MCInst &MI, InsnType &Insn,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  unsigned dclRegRaw = fieldFromInstruction(Insn, 11, 2);
+  if (dclRegRaw >= std::size(eDCLDecoderTable))
+    return MCDisassembler::Fail;
+  Register dclReg = eDCLDecoderTable[dclRegRaw];
+  assert(dclReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(dclReg));
+
+  unsigned dchRegRaw = fieldFromInstruction(Insn, 11, 2);
+  if (dchRegRaw >= std::size(eDCHDecoderTable))
+    return MCDisassembler::Fail;
+  Register dchReg = eDCHDecoderTable[dchRegRaw];
+  assert(dchReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(dchReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -4832,28 +5442,6 @@ DecodeDmx_ldb_fifo_qex_ebs16__fifo_3d_pop(MCInst &MI, InsnType &Insn,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  unsigned dclRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (dclRegRaw >= std::size(eDCLDecoderTable))
-    return MCDisassembler::Fail;
-  Register dclReg = eDCLDecoderTable[dclRegRaw];
-  assert(dclReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(dclReg));
-
-  unsigned dchRegRaw = fieldFromInstruction(Insn, 11, 2);
-  if (dchRegRaw >= std::size(eDCHDecoderTable))
-    return MCDisassembler::Fail;
-  Register dchReg = eDCHDecoderTable[dchRegRaw];
-  assert(dchReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(dchReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   unsigned modRegRaw = fieldFromInstruction(Insn, 11, 2);
   if (modRegRaw >= std::size(eDSDecoderTable))
@@ -4877,6 +5465,28 @@ DecodeVLDB_POP_704_fifo_1d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -4897,14 +5507,6 @@ DecodeVLDB_POP_704_fifo_1d_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   unsigned modRegRaw = fieldFromInstruction(Insn, 11, 3);
   if (modRegRaw >= std::size(eMDecoderTable))
@@ -4928,6 +5530,28 @@ DecodeVLDB_POP_704_normal_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   assert(dstReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(dstReg));
 
+  unsigned ptr_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (ptr_outRegRaw >= std::size(ePSDecoderTable))
+    return MCDisassembler::Fail;
+  Register ptr_outReg = ePSDecoderTable[ptr_outRegRaw];
+  assert(ptr_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(ptr_outReg));
+
+  unsigned fifo_reg_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (fifo_reg_outRegRaw >= std::size(eLdFifoRegDecoderTable))
+    return MCDisassembler::Fail;
+  Register fifo_reg_outReg = eLdFifoRegDecoderTable[fifo_reg_outRegRaw];
+  assert(fifo_reg_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(fifo_reg_outReg));
+
+  unsigned pos_outRegRaw = fieldFromInstruction(Insn, 14, 1);
+  if (pos_outRegRaw >= std::size(eRF2DecoderTable))
+    return MCDisassembler::Fail;
+  Register pos_outReg = eRF2DecoderTable[pos_outRegRaw];
+  assert(pos_outReg && "Register not found.");
+  MI.addOperand(MCOperand::createReg(pos_outReg));
+
+  // --------------------- Ins ------------------------
   unsigned ptrRegRaw = fieldFromInstruction(Insn, 14, 1);
   if (ptrRegRaw >= std::size(ePSDecoderTable))
     return MCDisassembler::Fail;
@@ -4948,14 +5572,6 @@ DecodeVLDB_POP_704_normal_pop(MCInst &MI, InsnType &Insn, uint64_t Address,
   Register posReg = eRF2DecoderTable[posRegRaw];
   assert(posReg && "Register not found.");
   MI.addOperand(MCOperand::createReg(posReg));
-
-  // --------------------- Ins ------------------------
-  unsigned ptr_superregRegRaw = fieldFromInstruction(Insn, 14, 1);
-  if (ptr_superregRegRaw >= std::size(ePSRFLdFDecoderTable))
-    return MCDisassembler::Fail;
-  Register ptr_superregReg = ePSRFLdFDecoderTable[ptr_superregRegRaw];
-  assert(ptr_superregReg && "Register not found.");
-  MI.addOperand(MCOperand::createReg(ptr_superregReg));
 
   return MCDisassembler::Success;
 }

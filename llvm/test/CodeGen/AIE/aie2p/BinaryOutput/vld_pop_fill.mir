@@ -18,896 +18,896 @@ body:      |
 
 
     ; VLDA_FILL_512
-    $p1, $lf1, $r25 = VLDA_FILL_512 $plfr1
-    $p0, $lf0, $r24 = VLDA_FILL_512 $plfr0
+    $p1, $lf1, $r25 = VLDA_FILL_512 $p1, $lf1, $r25
+    $p0, $lf0, $r24 = VLDA_FILL_512 $p0, $lf0, $r24
 
     ; VLDA_POP_512_2D
-    $x9, $p0, $lf0, $r24, $dc7 = VLDA_POP_512_2D $plfr0, $d7, implicit-def $srfifo_uf
-    $x10, $p1, $lf1, $r25, $dc5 = VLDA_POP_512_2D $plfr1, $d5, implicit-def $srfifo_uf
-    $x0, $p0, $lf0, $r24, $dc1 = VLDA_POP_512_2D $plfr0, $d1, implicit-def $srfifo_uf
-    $x4, $p1, $lf1, $r25, $dc0 = VLDA_POP_512_2D $plfr1, $d0, implicit-def $srfifo_uf
-    $x1, $p0, $lf0, $r24, $dc4 = VLDA_POP_512_2D $plfr0, $d4, implicit-def $srfifo_uf
-    $x6, $p1, $lf1, $r25, $dc3 = VLDA_POP_512_2D $plfr1, $d3, implicit-def $srfifo_uf
-    $x3, $p0, $lf0, $r24, $dc6 = VLDA_POP_512_2D $plfr0, $d6, implicit-def $srfifo_uf
-    $x7, $p1, $lf1, $r25, $dc2 = VLDA_POP_512_2D $plfr1, $d2, implicit-def $srfifo_uf
-    $x5, $p0, $lf0, $r24, $dc7 = VLDA_POP_512_2D $plfr0, $d7, implicit-def $srfifo_uf
-    $x11, $p1, $lf1, $r25, $dc5 = VLDA_POP_512_2D $plfr1, $d5, implicit-def $srfifo_uf
-    $x2, $p0, $lf0, $r24, $dc1 = VLDA_POP_512_2D $plfr0, $d1, implicit-def $srfifo_uf
-    $x8, $p1, $lf1, $r25, $dc0 = VLDA_POP_512_2D $plfr1, $d0, implicit-def $srfifo_uf
+    $x9, $p0, $lf0, $r24, $dc3 = VLDA_POP_512_2D $p0, $lf0, $r24, $d3, implicit-def $srfifo_uf
+    $x10, $p1, $lf1, $r25, $dc7 = VLDA_POP_512_2D $p1, $lf1, $r25, $d7, implicit-def $srfifo_uf
+    $x0, $p0, $lf0, $r24, $dc1 = VLDA_POP_512_2D $p0, $lf0, $r24, $d1, implicit-def $srfifo_uf
+    $x4, $p1, $lf1, $r25, $dc5 = VLDA_POP_512_2D $p1, $lf1, $r25, $d5, implicit-def $srfifo_uf
+    $x1, $p0, $lf0, $r24, $dc0 = VLDA_POP_512_2D $p0, $lf0, $r24, $d0, implicit-def $srfifo_uf
+    $x6, $p1, $lf1, $r25, $dc2 = VLDA_POP_512_2D $p1, $lf1, $r25, $d2, implicit-def $srfifo_uf
+    $x3, $p0, $lf0, $r24, $dc4 = VLDA_POP_512_2D $p0, $lf0, $r24, $d4, implicit-def $srfifo_uf
+    $x7, $p1, $lf1, $r25, $dc6 = VLDA_POP_512_2D $p1, $lf1, $r25, $d6, implicit-def $srfifo_uf
+    $x5, $p0, $lf0, $r24, $dc3 = VLDA_POP_512_2D $p0, $lf0, $r24, $d3, implicit-def $srfifo_uf
+    $x11, $p1, $lf1, $r25, $dc7 = VLDA_POP_512_2D $p1, $lf1, $r25, $d7, implicit-def $srfifo_uf
+    $x2, $p0, $lf0, $r24, $dc1 = VLDA_POP_512_2D $p0, $lf0, $r24, $d1, implicit-def $srfifo_uf
+    $x8, $p1, $lf1, $r25, $dc5 = VLDA_POP_512_2D $p1, $lf1, $r25, $d5, implicit-def $srfifo_uf
 
     ; VLDA_POP_512_3D
-    $x1, $p0, $lf0, $r24, $dc2, $dc6 = VLDA_POP_512_3D $plfr0, $d2_3d, implicit-def $srfifo_uf
-    $x11, $p1, $lf1, $r25, $dc3, $dc7 = VLDA_POP_512_3D $plfr1, $d3_3d, implicit-def $srfifo_uf
-    $x10, $p0, $lf0, $r24, $dc1, $dc5 = VLDA_POP_512_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $x3, $p1, $lf1, $r25, $dc0, $dc4 = VLDA_POP_512_3D $plfr1, $d0_3d, implicit-def $srfifo_uf
-    $x5, $p0, $lf0, $r24, $dc2, $dc6 = VLDA_POP_512_3D $plfr0, $d2_3d, implicit-def $srfifo_uf
-    $x2, $p1, $lf1, $r25, $dc3, $dc7 = VLDA_POP_512_3D $plfr1, $d3_3d, implicit-def $srfifo_uf
-    $x7, $p0, $lf0, $r24, $dc1, $dc5 = VLDA_POP_512_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $x8, $p1, $lf1, $r25, $dc0, $dc4 = VLDA_POP_512_3D $plfr1, $d0_3d, implicit-def $srfifo_uf
-    $x6, $p0, $lf0, $r24, $dc2, $dc6 = VLDA_POP_512_3D $plfr0, $d2_3d, implicit-def $srfifo_uf
-    $x9, $p1, $lf1, $r25, $dc3, $dc7 = VLDA_POP_512_3D $plfr1, $d3_3d, implicit-def $srfifo_uf
-    $x0, $p0, $lf0, $r24, $dc1, $dc5 = VLDA_POP_512_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $x4, $p1, $lf1, $r25, $dc0, $dc4 = VLDA_POP_512_3D $plfr1, $d0_3d, implicit-def $srfifo_uf
+    $x10, $p0, $lf0, $r24, $dc3, $dc7 = VLDA_POP_512_3D $p0, $lf0, $r24, $d3_3d, implicit-def $srfifo_uf
+    $x1, $p1, $lf1, $r25, $dc0, $dc4 = VLDA_POP_512_3D $p1, $lf1, $r25, $d0_3d, implicit-def $srfifo_uf
+    $x8, $p0, $lf0, $r24, $dc1, $dc5 = VLDA_POP_512_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $x5, $p1, $lf1, $r25, $dc2, $dc6 = VLDA_POP_512_3D $p1, $lf1, $r25, $d2_3d, implicit-def $srfifo_uf
+    $x11, $p0, $lf0, $r24, $dc3, $dc7 = VLDA_POP_512_3D $p0, $lf0, $r24, $d3_3d, implicit-def $srfifo_uf
+    $x0, $p1, $lf1, $r25, $dc0, $dc4 = VLDA_POP_512_3D $p1, $lf1, $r25, $d0_3d, implicit-def $srfifo_uf
+    $x7, $p0, $lf0, $r24, $dc1, $dc5 = VLDA_POP_512_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $x2, $p1, $lf1, $r25, $dc2, $dc6 = VLDA_POP_512_3D $p1, $lf1, $r25, $d2_3d, implicit-def $srfifo_uf
+    $x3, $p0, $lf0, $r24, $dc3, $dc7 = VLDA_POP_512_3D $p0, $lf0, $r24, $d3_3d, implicit-def $srfifo_uf
+    $x4, $p1, $lf1, $r25, $dc0, $dc4 = VLDA_POP_512_3D $p1, $lf1, $r25, $d0_3d, implicit-def $srfifo_uf
+    $x6, $p0, $lf0, $r24, $dc1, $dc5 = VLDA_POP_512_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $x9, $p1, $lf1, $r25, $dc2, $dc6 = VLDA_POP_512_3D $p1, $lf1, $r25, $d2_3d, implicit-def $srfifo_uf
 
     ; VLDA_POP_512_fifo_1d_pop
-    $x6, $p0, $lf0, $r24 = VLDA_POP_512_fifo_1d_pop $plfr0, $m3, implicit-def $srfifo_uf
-    $x0, $p1, $lf1, $r25 = VLDA_POP_512_fifo_1d_pop $plfr1, $m4, implicit-def $srfifo_uf
-    $x8, $p0, $lf0, $r24 = VLDA_POP_512_fifo_1d_pop $plfr0, $m5, implicit-def $srfifo_uf
-    $x5, $p1, $lf1, $r25 = VLDA_POP_512_fifo_1d_pop $plfr1, $m2, implicit-def $srfifo_uf
-    $x2, $p0, $lf0, $r24 = VLDA_POP_512_fifo_1d_pop $plfr0, $m7, implicit-def $srfifo_uf
-    $x11, $p1, $lf1, $r25 = VLDA_POP_512_fifo_1d_pop $plfr1, $m0, implicit-def $srfifo_uf
-    $x7, $p0, $lf0, $r24 = VLDA_POP_512_fifo_1d_pop $plfr0, $m6, implicit-def $srfifo_uf
-    $x10, $p1, $lf1, $r25 = VLDA_POP_512_fifo_1d_pop $plfr1, $m1, implicit-def $srfifo_uf
-    $x9, $p0, $lf0, $r24 = VLDA_POP_512_fifo_1d_pop $plfr0, $m3, implicit-def $srfifo_uf
-    $x4, $p1, $lf1, $r25 = VLDA_POP_512_fifo_1d_pop $plfr1, $m4, implicit-def $srfifo_uf
-    $x1, $p0, $lf0, $r24 = VLDA_POP_512_fifo_1d_pop $plfr0, $m5, implicit-def $srfifo_uf
-    $x3, $p1, $lf1, $r25 = VLDA_POP_512_fifo_1d_pop $plfr1, $m2, implicit-def $srfifo_uf
+    $x6, $p0, $lf0, $r24 = VLDA_POP_512_fifo_1d_pop $p0, $lf0, $r24, $m0, implicit-def $srfifo_uf
+    $x2, $p1, $lf1, $r25 = VLDA_POP_512_fifo_1d_pop $p1, $lf1, $r25, $m4, implicit-def $srfifo_uf
+    $x10, $p0, $lf0, $r24 = VLDA_POP_512_fifo_1d_pop $p0, $lf0, $r24, $m5, implicit-def $srfifo_uf
+    $x7, $p1, $lf1, $r25 = VLDA_POP_512_fifo_1d_pop $p1, $lf1, $r25, $m6, implicit-def $srfifo_uf
+    $x0, $p0, $lf0, $r24 = VLDA_POP_512_fifo_1d_pop $p0, $lf0, $r24, $m3, implicit-def $srfifo_uf
+    $x11, $p1, $lf1, $r25 = VLDA_POP_512_fifo_1d_pop $p1, $lf1, $r25, $m7, implicit-def $srfifo_uf
+    $x1, $p0, $lf0, $r24 = VLDA_POP_512_fifo_1d_pop $p0, $lf0, $r24, $m1, implicit-def $srfifo_uf
+    $x3, $p1, $lf1, $r25 = VLDA_POP_512_fifo_1d_pop $p1, $lf1, $r25, $m2, implicit-def $srfifo_uf
+    $x9, $p0, $lf0, $r24 = VLDA_POP_512_fifo_1d_pop $p0, $lf0, $r24, $m0, implicit-def $srfifo_uf
+    $x8, $p1, $lf1, $r25 = VLDA_POP_512_fifo_1d_pop $p1, $lf1, $r25, $m4, implicit-def $srfifo_uf
+    $x5, $p0, $lf0, $r24 = VLDA_POP_512_fifo_1d_pop $p0, $lf0, $r24, $m5, implicit-def $srfifo_uf
+    $x4, $p1, $lf1, $r25 = VLDA_POP_512_fifo_1d_pop $p1, $lf1, $r25, $m6, implicit-def $srfifo_uf
 
     ; VLDA_POP_512_normal_pop
-    $x3, $p0, $lf0, $r24 = VLDA_POP_512_normal_pop $plfr0, implicit-def $srfifo_uf
-    $x7, $p1, $lf1, $r25 = VLDA_POP_512_normal_pop $plfr1, implicit-def $srfifo_uf
-    $x5, $p0, $lf0, $r24 = VLDA_POP_512_normal_pop $plfr0, implicit-def $srfifo_uf
-    $x8, $p1, $lf1, $r25 = VLDA_POP_512_normal_pop $plfr1, implicit-def $srfifo_uf
-    $x10, $p0, $lf0, $r24 = VLDA_POP_512_normal_pop $plfr0, implicit-def $srfifo_uf
-    $x11, $p1, $lf1, $r25 = VLDA_POP_512_normal_pop $plfr1, implicit-def $srfifo_uf
-    $x1, $p0, $lf0, $r24 = VLDA_POP_512_normal_pop $plfr0, implicit-def $srfifo_uf
-    $x2, $p1, $lf1, $r25 = VLDA_POP_512_normal_pop $plfr1, implicit-def $srfifo_uf
-    $x9, $p0, $lf0, $r24 = VLDA_POP_512_normal_pop $plfr0, implicit-def $srfifo_uf
-    $x6, $p1, $lf1, $r25 = VLDA_POP_512_normal_pop $plfr1, implicit-def $srfifo_uf
-    $x4, $p0, $lf0, $r24 = VLDA_POP_512_normal_pop $plfr0, implicit-def $srfifo_uf
-    $x0, $p1, $lf1, $r25 = VLDA_POP_512_normal_pop $plfr1, implicit-def $srfifo_uf
+    $x10, $p0, $lf0, $r24 = VLDA_POP_512_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $x11, $p1, $lf1, $r25 = VLDA_POP_512_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $x7, $p0, $lf0, $r24 = VLDA_POP_512_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $x2, $p1, $lf1, $r25 = VLDA_POP_512_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $x5, $p0, $lf0, $r24 = VLDA_POP_512_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $x3, $p1, $lf1, $r25 = VLDA_POP_512_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $x1, $p0, $lf0, $r24 = VLDA_POP_512_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $x4, $p1, $lf1, $r25 = VLDA_POP_512_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $x6, $p0, $lf0, $r24 = VLDA_POP_512_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $x0, $p1, $lf1, $r25 = VLDA_POP_512_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $x9, $p0, $lf0, $r24 = VLDA_POP_512_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $x8, $p1, $lf1, $r25 = VLDA_POP_512_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
 
     ; VLDA_POP_544_2D
-    $ex11, $p0, $lf0, $r24, $dc0 = VLDA_POP_544_2D $plfr0, $d0, implicit-def $srfifo_uf
-    $ex0, $p1, $lf1, $r25, $dc2 = VLDA_POP_544_2D $plfr1, $d2, implicit-def $srfifo_uf
-    $ex5, $p0, $lf0, $r24, $dc5 = VLDA_POP_544_2D $plfr0, $d5, implicit-def $srfifo_uf
-    $ex6, $p1, $lf1, $r25, $dc1 = VLDA_POP_544_2D $plfr1, $d1, implicit-def $srfifo_uf
-    $ex4, $p0, $lf0, $r24, $dc7 = VLDA_POP_544_2D $plfr0, $d7, implicit-def $srfifo_uf
-    $ex7, $p1, $lf1, $r25, $dc4 = VLDA_POP_544_2D $plfr1, $d4, implicit-def $srfifo_uf
-    $ex9, $p0, $lf0, $r24, $dc3 = VLDA_POP_544_2D $plfr0, $d3, implicit-def $srfifo_uf
-    $ex8, $p1, $lf1, $r25, $dc6 = VLDA_POP_544_2D $plfr1, $d6, implicit-def $srfifo_uf
-    $ex10, $p0, $lf0, $r24, $dc0 = VLDA_POP_544_2D $plfr0, $d0, implicit-def $srfifo_uf
-    $ex1, $p1, $lf1, $r25, $dc2 = VLDA_POP_544_2D $plfr1, $d2, implicit-def $srfifo_uf
-    $ex2, $p0, $lf0, $r24, $dc5 = VLDA_POP_544_2D $plfr0, $d5, implicit-def $srfifo_uf
-    $ex3, $p1, $lf1, $r25, $dc1 = VLDA_POP_544_2D $plfr1, $d1, implicit-def $srfifo_uf
+    $ex11, $p0, $lf0, $r24, $dc5 = VLDA_POP_544_2D $p0, $lf0, $r24, $d5, implicit-def $srfifo_uf
+    $ex0, $p1, $lf1, $r25, $dc6 = VLDA_POP_544_2D $p1, $lf1, $r25, $d6, implicit-def $srfifo_uf
+    $ex2, $p0, $lf0, $r24, $dc2 = VLDA_POP_544_2D $p0, $lf0, $r24, $d2, implicit-def $srfifo_uf
+    $ex10, $p1, $lf1, $r25, $dc4 = VLDA_POP_544_2D $p1, $lf1, $r25, $d4, implicit-def $srfifo_uf
+    $ex5, $p0, $lf0, $r24, $dc3 = VLDA_POP_544_2D $p0, $lf0, $r24, $d3, implicit-def $srfifo_uf
+    $ex1, $p1, $lf1, $r25, $dc7 = VLDA_POP_544_2D $p1, $lf1, $r25, $d7, implicit-def $srfifo_uf
+    $ex8, $p0, $lf0, $r24, $dc1 = VLDA_POP_544_2D $p0, $lf0, $r24, $d1, implicit-def $srfifo_uf
+    $ex7, $p1, $lf1, $r25, $dc0 = VLDA_POP_544_2D $p1, $lf1, $r25, $d0, implicit-def $srfifo_uf
+    $ex4, $p0, $lf0, $r24, $dc5 = VLDA_POP_544_2D $p0, $lf0, $r24, $d5, implicit-def $srfifo_uf
+    $ex6, $p1, $lf1, $r25, $dc6 = VLDA_POP_544_2D $p1, $lf1, $r25, $d6, implicit-def $srfifo_uf
+    $ex9, $p0, $lf0, $r24, $dc2 = VLDA_POP_544_2D $p0, $lf0, $r24, $d2, implicit-def $srfifo_uf
+    $ex3, $p1, $lf1, $r25, $dc4 = VLDA_POP_544_2D $p1, $lf1, $r25, $d4, implicit-def $srfifo_uf
 
     ; VLDA_POP_544_3D
-    $ex6, $p0, $lf0, $r24, $dc2, $dc6 = VLDA_POP_544_3D $plfr0, $d2_3d, implicit-def $srfifo_uf
-    $ex11, $p1, $lf1, $r25, $dc0, $dc4 = VLDA_POP_544_3D $plfr1, $d0_3d, implicit-def $srfifo_uf
-    $ex5, $p0, $lf0, $r24, $dc1, $dc5 = VLDA_POP_544_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $ex1, $p1, $lf1, $r25, $dc3, $dc7 = VLDA_POP_544_3D $plfr1, $d3_3d, implicit-def $srfifo_uf
-    $ex3, $p0, $lf0, $r24, $dc2, $dc6 = VLDA_POP_544_3D $plfr0, $d2_3d, implicit-def $srfifo_uf
-    $ex9, $p1, $lf1, $r25, $dc0, $dc4 = VLDA_POP_544_3D $plfr1, $d0_3d, implicit-def $srfifo_uf
-    $ex7, $p0, $lf0, $r24, $dc1, $dc5 = VLDA_POP_544_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $ex10, $p1, $lf1, $r25, $dc3, $dc7 = VLDA_POP_544_3D $plfr1, $d3_3d, implicit-def $srfifo_uf
-    $ex8, $p0, $lf0, $r24, $dc2, $dc6 = VLDA_POP_544_3D $plfr0, $d2_3d, implicit-def $srfifo_uf
-    $ex2, $p1, $lf1, $r25, $dc0, $dc4 = VLDA_POP_544_3D $plfr1, $d0_3d, implicit-def $srfifo_uf
-    $ex0, $p0, $lf0, $r24, $dc1, $dc5 = VLDA_POP_544_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $ex4, $p1, $lf1, $r25, $dc3, $dc7 = VLDA_POP_544_3D $plfr1, $d3_3d, implicit-def $srfifo_uf
+    $ex6, $p0, $lf0, $r24, $dc0, $dc4 = VLDA_POP_544_3D $p0, $lf0, $r24, $d0_3d, implicit-def $srfifo_uf
+    $ex2, $p1, $lf1, $r25, $dc2, $dc6 = VLDA_POP_544_3D $p1, $lf1, $r25, $d2_3d, implicit-def $srfifo_uf
+    $ex0, $p0, $lf0, $r24, $dc3, $dc7 = VLDA_POP_544_3D $p0, $lf0, $r24, $d3_3d, implicit-def $srfifo_uf
+    $ex1, $p1, $lf1, $r25, $dc1, $dc5 = VLDA_POP_544_3D $p1, $lf1, $r25, $d1_3d, implicit-def $srfifo_uf
+    $ex11, $p0, $lf0, $r24, $dc0, $dc4 = VLDA_POP_544_3D $p0, $lf0, $r24, $d0_3d, implicit-def $srfifo_uf
+    $ex8, $p1, $lf1, $r25, $dc2, $dc6 = VLDA_POP_544_3D $p1, $lf1, $r25, $d2_3d, implicit-def $srfifo_uf
+    $ex5, $p0, $lf0, $r24, $dc3, $dc7 = VLDA_POP_544_3D $p0, $lf0, $r24, $d3_3d, implicit-def $srfifo_uf
+    $ex10, $p1, $lf1, $r25, $dc1, $dc5 = VLDA_POP_544_3D $p1, $lf1, $r25, $d1_3d, implicit-def $srfifo_uf
+    $ex3, $p0, $lf0, $r24, $dc0, $dc4 = VLDA_POP_544_3D $p0, $lf0, $r24, $d0_3d, implicit-def $srfifo_uf
+    $ex4, $p1, $lf1, $r25, $dc2, $dc6 = VLDA_POP_544_3D $p1, $lf1, $r25, $d2_3d, implicit-def $srfifo_uf
+    $ex9, $p0, $lf0, $r24, $dc3, $dc7 = VLDA_POP_544_3D $p0, $lf0, $r24, $d3_3d, implicit-def $srfifo_uf
+    $ex7, $p1, $lf1, $r25, $dc1, $dc5 = VLDA_POP_544_3D $p1, $lf1, $r25, $d1_3d, implicit-def $srfifo_uf
 
     ; VLDA_POP_544_fifo_1d_pop
-    $ex2, $p1, $lf1, $r25 = VLDA_POP_544_fifo_1d_pop $plfr1, $m7, implicit-def $srfifo_uf
-    $ex9, $p0, $lf0, $r24 = VLDA_POP_544_fifo_1d_pop $plfr0, $m3, implicit-def $srfifo_uf
-    $ex4, $p1, $lf1, $r25 = VLDA_POP_544_fifo_1d_pop $plfr1, $m2, implicit-def $srfifo_uf
-    $ex5, $p0, $lf0, $r24 = VLDA_POP_544_fifo_1d_pop $plfr0, $m5, implicit-def $srfifo_uf
-    $ex8, $p1, $lf1, $r25 = VLDA_POP_544_fifo_1d_pop $plfr1, $m6, implicit-def $srfifo_uf
-    $ex3, $p0, $lf0, $r24 = VLDA_POP_544_fifo_1d_pop $plfr0, $m0, implicit-def $srfifo_uf
-    $ex6, $p1, $lf1, $r25 = VLDA_POP_544_fifo_1d_pop $plfr1, $m4, implicit-def $srfifo_uf
-    $ex7, $p0, $lf0, $r24 = VLDA_POP_544_fifo_1d_pop $plfr0, $m1, implicit-def $srfifo_uf
-    $ex0, $p1, $lf1, $r25 = VLDA_POP_544_fifo_1d_pop $plfr1, $m7, implicit-def $srfifo_uf
-    $ex10, $p0, $lf0, $r24 = VLDA_POP_544_fifo_1d_pop $plfr0, $m3, implicit-def $srfifo_uf
-    $ex11, $p1, $lf1, $r25 = VLDA_POP_544_fifo_1d_pop $plfr1, $m2, implicit-def $srfifo_uf
-    $ex1, $p0, $lf0, $r24 = VLDA_POP_544_fifo_1d_pop $plfr0, $m5, implicit-def $srfifo_uf
+    $ex3, $p1, $lf1, $r25 = VLDA_POP_544_fifo_1d_pop $p1, $lf1, $r25, $m1, implicit-def $srfifo_uf
+    $ex8, $p0, $lf0, $r24 = VLDA_POP_544_fifo_1d_pop $p0, $lf0, $r24, $m6, implicit-def $srfifo_uf
+    $ex7, $p1, $lf1, $r25 = VLDA_POP_544_fifo_1d_pop $p1, $lf1, $r25, $m0, implicit-def $srfifo_uf
+    $ex4, $p0, $lf0, $r24 = VLDA_POP_544_fifo_1d_pop $p0, $lf0, $r24, $m3, implicit-def $srfifo_uf
+    $ex9, $p1, $lf1, $r25 = VLDA_POP_544_fifo_1d_pop $p1, $lf1, $r25, $m4, implicit-def $srfifo_uf
+    $ex1, $p0, $lf0, $r24 = VLDA_POP_544_fifo_1d_pop $p0, $lf0, $r24, $m7, implicit-def $srfifo_uf
+    $ex10, $p1, $lf1, $r25 = VLDA_POP_544_fifo_1d_pop $p1, $lf1, $r25, $m2, implicit-def $srfifo_uf
+    $ex11, $p0, $lf0, $r24 = VLDA_POP_544_fifo_1d_pop $p0, $lf0, $r24, $m5, implicit-def $srfifo_uf
+    $ex0, $p1, $lf1, $r25 = VLDA_POP_544_fifo_1d_pop $p1, $lf1, $r25, $m1, implicit-def $srfifo_uf
+    $ex6, $p0, $lf0, $r24 = VLDA_POP_544_fifo_1d_pop $p0, $lf0, $r24, $m6, implicit-def $srfifo_uf
+    $ex5, $p1, $lf1, $r25 = VLDA_POP_544_fifo_1d_pop $p1, $lf1, $r25, $m0, implicit-def $srfifo_uf
+    $ex2, $p0, $lf0, $r24 = VLDA_POP_544_fifo_1d_pop $p0, $lf0, $r24, $m3, implicit-def $srfifo_uf
 
     ; VLDA_POP_544_normal_pop
-    $ex9, $p1, $lf1, $r25 = VLDA_POP_544_normal_pop $plfr1, implicit-def $srfifo_uf
-    $ex0, $p0, $lf0, $r24 = VLDA_POP_544_normal_pop $plfr0, implicit-def $srfifo_uf
-    $ex2, $p1, $lf1, $r25 = VLDA_POP_544_normal_pop $plfr1, implicit-def $srfifo_uf
-    $ex1, $p0, $lf0, $r24 = VLDA_POP_544_normal_pop $plfr0, implicit-def $srfifo_uf
-    $ex4, $p1, $lf1, $r25 = VLDA_POP_544_normal_pop $plfr1, implicit-def $srfifo_uf
-    $ex11, $p0, $lf0, $r24 = VLDA_POP_544_normal_pop $plfr0, implicit-def $srfifo_uf
-    $ex5, $p1, $lf1, $r25 = VLDA_POP_544_normal_pop $plfr1, implicit-def $srfifo_uf
-    $ex7, $p0, $lf0, $r24 = VLDA_POP_544_normal_pop $plfr0, implicit-def $srfifo_uf
-    $ex3, $p1, $lf1, $r25 = VLDA_POP_544_normal_pop $plfr1, implicit-def $srfifo_uf
-    $ex6, $p0, $lf0, $r24 = VLDA_POP_544_normal_pop $plfr0, implicit-def $srfifo_uf
-    $ex8, $p1, $lf1, $r25 = VLDA_POP_544_normal_pop $plfr1, implicit-def $srfifo_uf
-    $ex10, $p0, $lf0, $r24 = VLDA_POP_544_normal_pop $plfr0, implicit-def $srfifo_uf
+    $ex7, $p1, $lf1, $r25 = VLDA_POP_544_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $ex2, $p0, $lf0, $r24 = VLDA_POP_544_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $ex3, $p1, $lf1, $r25 = VLDA_POP_544_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $ex4, $p0, $lf0, $r24 = VLDA_POP_544_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $ex0, $p1, $lf1, $r25 = VLDA_POP_544_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $ex6, $p0, $lf0, $r24 = VLDA_POP_544_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $ex8, $p1, $lf1, $r25 = VLDA_POP_544_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $ex5, $p0, $lf0, $r24 = VLDA_POP_544_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $ex9, $p1, $lf1, $r25 = VLDA_POP_544_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $ex10, $p0, $lf0, $r24 = VLDA_POP_544_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $ex11, $p1, $lf1, $r25 = VLDA_POP_544_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $ex1, $p0, $lf0, $r24 = VLDA_POP_544_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
 
     ; VLDA_POP_576_2D
-    $ex9, $p0, $lf0, $r24, $dc1 = VLDA_POP_576_2D $plfr0, $d1, implicit-def $srfifo_uf
-    $ex11, $p1, $lf1, $r25, $dc0 = VLDA_POP_576_2D $plfr1, $d0, implicit-def $srfifo_uf
-    $ex6, $p0, $lf0, $r24, $dc3 = VLDA_POP_576_2D $plfr0, $d3, implicit-def $srfifo_uf
-    $ex4, $p1, $lf1, $r25, $dc2 = VLDA_POP_576_2D $plfr1, $d2, implicit-def $srfifo_uf
-    $ex10, $p0, $lf0, $r24, $dc4 = VLDA_POP_576_2D $plfr0, $d4, implicit-def $srfifo_uf
-    $ex0, $p1, $lf1, $r25, $dc7 = VLDA_POP_576_2D $plfr1, $d7, implicit-def $srfifo_uf
-    $ex8, $p0, $lf0, $r24, $dc5 = VLDA_POP_576_2D $plfr0, $d5, implicit-def $srfifo_uf
-    $ex3, $p1, $lf1, $r25, $dc6 = VLDA_POP_576_2D $plfr1, $d6, implicit-def $srfifo_uf
-    $ex5, $p0, $lf0, $r24, $dc1 = VLDA_POP_576_2D $plfr0, $d1, implicit-def $srfifo_uf
-    $ex7, $p1, $lf1, $r25, $dc0 = VLDA_POP_576_2D $plfr1, $d0, implicit-def $srfifo_uf
-    $ex1, $p0, $lf0, $r24, $dc3 = VLDA_POP_576_2D $plfr0, $d3, implicit-def $srfifo_uf
-    $ex2, $p1, $lf1, $r25, $dc2 = VLDA_POP_576_2D $plfr1, $d2, implicit-def $srfifo_uf
+    $ex2, $p0, $lf0, $r24, $dc6 = VLDA_POP_576_2D $p0, $lf0, $r24, $d6, implicit-def $srfifo_uf
+    $ex7, $p1, $lf1, $r25, $dc2 = VLDA_POP_576_2D $p1, $lf1, $r25, $d2, implicit-def $srfifo_uf
+    $ex0, $p0, $lf0, $r24, $dc0 = VLDA_POP_576_2D $p0, $lf0, $r24, $d0, implicit-def $srfifo_uf
+    $ex6, $p1, $lf1, $r25, $dc5 = VLDA_POP_576_2D $p1, $lf1, $r25, $d5, implicit-def $srfifo_uf
+    $ex9, $p0, $lf0, $r24, $dc3 = VLDA_POP_576_2D $p0, $lf0, $r24, $d3, implicit-def $srfifo_uf
+    $ex10, $p1, $lf1, $r25, $dc7 = VLDA_POP_576_2D $p1, $lf1, $r25, $d7, implicit-def $srfifo_uf
+    $ex3, $p0, $lf0, $r24, $dc1 = VLDA_POP_576_2D $p0, $lf0, $r24, $d1, implicit-def $srfifo_uf
+    $ex4, $p1, $lf1, $r25, $dc4 = VLDA_POP_576_2D $p1, $lf1, $r25, $d4, implicit-def $srfifo_uf
+    $ex1, $p0, $lf0, $r24, $dc6 = VLDA_POP_576_2D $p0, $lf0, $r24, $d6, implicit-def $srfifo_uf
+    $ex11, $p1, $lf1, $r25, $dc2 = VLDA_POP_576_2D $p1, $lf1, $r25, $d2, implicit-def $srfifo_uf
+    $ex8, $p0, $lf0, $r24, $dc0 = VLDA_POP_576_2D $p0, $lf0, $r24, $d0, implicit-def $srfifo_uf
+    $ex5, $p1, $lf1, $r25, $dc5 = VLDA_POP_576_2D $p1, $lf1, $r25, $d5, implicit-def $srfifo_uf
 
     ; VLDA_POP_576_3D
-    $ex11, $p0, $lf0, $r24, $dc0, $dc4 = VLDA_POP_576_3D $plfr0, $d0_3d, implicit-def $srfifo_uf
-    $ex3, $p1, $lf1, $r25, $dc3, $dc7 = VLDA_POP_576_3D $plfr1, $d3_3d, implicit-def $srfifo_uf
-    $ex2, $p0, $lf0, $r24, $dc1, $dc5 = VLDA_POP_576_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $ex0, $p1, $lf1, $r25, $dc2, $dc6 = VLDA_POP_576_3D $plfr1, $d2_3d, implicit-def $srfifo_uf
-    $ex8, $p0, $lf0, $r24, $dc0, $dc4 = VLDA_POP_576_3D $plfr0, $d0_3d, implicit-def $srfifo_uf
-    $ex1, $p1, $lf1, $r25, $dc3, $dc7 = VLDA_POP_576_3D $plfr1, $d3_3d, implicit-def $srfifo_uf
-    $ex10, $p0, $lf0, $r24, $dc1, $dc5 = VLDA_POP_576_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $ex5, $p1, $lf1, $r25, $dc2, $dc6 = VLDA_POP_576_3D $plfr1, $d2_3d, implicit-def $srfifo_uf
-    $ex6, $p0, $lf0, $r24, $dc0, $dc4 = VLDA_POP_576_3D $plfr0, $d0_3d, implicit-def $srfifo_uf
-    $ex7, $p1, $lf1, $r25, $dc3, $dc7 = VLDA_POP_576_3D $plfr1, $d3_3d, implicit-def $srfifo_uf
-    $ex4, $p0, $lf0, $r24, $dc1, $dc5 = VLDA_POP_576_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $ex9, $p1, $lf1, $r25, $dc2, $dc6 = VLDA_POP_576_3D $plfr1, $d2_3d, implicit-def $srfifo_uf
+    $ex8, $p0, $lf0, $r24, $dc2, $dc6 = VLDA_POP_576_3D $p0, $lf0, $r24, $d2_3d, implicit-def $srfifo_uf
+    $ex6, $p1, $lf1, $r25, $dc3, $dc7 = VLDA_POP_576_3D $p1, $lf1, $r25, $d3_3d, implicit-def $srfifo_uf
+    $ex10, $p0, $lf0, $r24, $dc1, $dc5 = VLDA_POP_576_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $ex7, $p1, $lf1, $r25, $dc0, $dc4 = VLDA_POP_576_3D $p1, $lf1, $r25, $d0_3d, implicit-def $srfifo_uf
+    $ex5, $p0, $lf0, $r24, $dc2, $dc6 = VLDA_POP_576_3D $p0, $lf0, $r24, $d2_3d, implicit-def $srfifo_uf
+    $ex9, $p1, $lf1, $r25, $dc3, $dc7 = VLDA_POP_576_3D $p1, $lf1, $r25, $d3_3d, implicit-def $srfifo_uf
+    $ex11, $p0, $lf0, $r24, $dc1, $dc5 = VLDA_POP_576_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $ex2, $p1, $lf1, $r25, $dc0, $dc4 = VLDA_POP_576_3D $p1, $lf1, $r25, $d0_3d, implicit-def $srfifo_uf
+    $ex3, $p0, $lf0, $r24, $dc2, $dc6 = VLDA_POP_576_3D $p0, $lf0, $r24, $d2_3d, implicit-def $srfifo_uf
+    $ex4, $p1, $lf1, $r25, $dc3, $dc7 = VLDA_POP_576_3D $p1, $lf1, $r25, $d3_3d, implicit-def $srfifo_uf
+    $ex1, $p0, $lf0, $r24, $dc1, $dc5 = VLDA_POP_576_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $ex0, $p1, $lf1, $r25, $dc0, $dc4 = VLDA_POP_576_3D $p1, $lf1, $r25, $d0_3d, implicit-def $srfifo_uf
 
     ; VLDA_POP_576_fifo_1d_pop
-    $ex3, $p0, $lf0, $r24 = VLDA_POP_576_fifo_1d_pop $plfr0, $m5, implicit-def $srfifo_uf
-    $ex11, $p1, $lf1, $r25 = VLDA_POP_576_fifo_1d_pop $plfr1, $m1, implicit-def $srfifo_uf
-    $ex7, $p0, $lf0, $r24 = VLDA_POP_576_fifo_1d_pop $plfr0, $m2, implicit-def $srfifo_uf
-    $ex9, $p1, $lf1, $r25 = VLDA_POP_576_fifo_1d_pop $plfr1, $m7, implicit-def $srfifo_uf
-    $ex2, $p0, $lf0, $r24 = VLDA_POP_576_fifo_1d_pop $plfr0, $m4, implicit-def $srfifo_uf
-    $ex10, $p1, $lf1, $r25 = VLDA_POP_576_fifo_1d_pop $plfr1, $m0, implicit-def $srfifo_uf
-    $ex4, $p0, $lf0, $r24 = VLDA_POP_576_fifo_1d_pop $plfr0, $m3, implicit-def $srfifo_uf
-    $ex1, $p1, $lf1, $r25 = VLDA_POP_576_fifo_1d_pop $plfr1, $m6, implicit-def $srfifo_uf
-    $ex5, $p0, $lf0, $r24 = VLDA_POP_576_fifo_1d_pop $plfr0, $m5, implicit-def $srfifo_uf
-    $ex6, $p1, $lf1, $r25 = VLDA_POP_576_fifo_1d_pop $plfr1, $m1, implicit-def $srfifo_uf
-    $ex0, $p0, $lf0, $r24 = VLDA_POP_576_fifo_1d_pop $plfr0, $m2, implicit-def $srfifo_uf
-    $ex8, $p1, $lf1, $r25 = VLDA_POP_576_fifo_1d_pop $plfr1, $m7, implicit-def $srfifo_uf
+    $ex10, $p0, $lf0, $r24 = VLDA_POP_576_fifo_1d_pop $p0, $lf0, $r24, $m5, implicit-def $srfifo_uf
+    $ex7, $p1, $lf1, $r25 = VLDA_POP_576_fifo_1d_pop $p1, $lf1, $r25, $m6, implicit-def $srfifo_uf
+    $ex4, $p0, $lf0, $r24 = VLDA_POP_576_fifo_1d_pop $p0, $lf0, $r24, $m2, implicit-def $srfifo_uf
+    $ex3, $p1, $lf1, $r25 = VLDA_POP_576_fifo_1d_pop $p1, $lf1, $r25, $m4, implicit-def $srfifo_uf
+    $ex6, $p0, $lf0, $r24 = VLDA_POP_576_fifo_1d_pop $p0, $lf0, $r24, $m0, implicit-def $srfifo_uf
+    $ex8, $p1, $lf1, $r25 = VLDA_POP_576_fifo_1d_pop $p1, $lf1, $r25, $m7, implicit-def $srfifo_uf
+    $ex1, $p0, $lf0, $r24 = VLDA_POP_576_fifo_1d_pop $p0, $lf0, $r24, $m1, implicit-def $srfifo_uf
+    $ex0, $p1, $lf1, $r25 = VLDA_POP_576_fifo_1d_pop $p1, $lf1, $r25, $m3, implicit-def $srfifo_uf
+    $ex5, $p0, $lf0, $r24 = VLDA_POP_576_fifo_1d_pop $p0, $lf0, $r24, $m5, implicit-def $srfifo_uf
+    $ex11, $p1, $lf1, $r25 = VLDA_POP_576_fifo_1d_pop $p1, $lf1, $r25, $m6, implicit-def $srfifo_uf
+    $ex2, $p0, $lf0, $r24 = VLDA_POP_576_fifo_1d_pop $p0, $lf0, $r24, $m2, implicit-def $srfifo_uf
+    $ex9, $p1, $lf1, $r25 = VLDA_POP_576_fifo_1d_pop $p1, $lf1, $r25, $m4, implicit-def $srfifo_uf
 
     ; VLDA_POP_576_normal_pop
-    $ex9, $p1, $lf1, $r25 = VLDA_POP_576_normal_pop $plfr1, implicit-def $srfifo_uf
-    $ex0, $p0, $lf0, $r24 = VLDA_POP_576_normal_pop $plfr0, implicit-def $srfifo_uf
-    $ex4, $p1, $lf1, $r25 = VLDA_POP_576_normal_pop $plfr1, implicit-def $srfifo_uf
-    $ex1, $p0, $lf0, $r24 = VLDA_POP_576_normal_pop $plfr0, implicit-def $srfifo_uf
-    $ex6, $p1, $lf1, $r25 = VLDA_POP_576_normal_pop $plfr1, implicit-def $srfifo_uf
-    $ex2, $p0, $lf0, $r24 = VLDA_POP_576_normal_pop $plfr0, implicit-def $srfifo_uf
-    $ex11, $p1, $lf1, $r25 = VLDA_POP_576_normal_pop $plfr1, implicit-def $srfifo_uf
-    $ex3, $p0, $lf0, $r24 = VLDA_POP_576_normal_pop $plfr0, implicit-def $srfifo_uf
-    $ex10, $p1, $lf1, $r25 = VLDA_POP_576_normal_pop $plfr1, implicit-def $srfifo_uf
-    $ex5, $p0, $lf0, $r24 = VLDA_POP_576_normal_pop $plfr0, implicit-def $srfifo_uf
-    $ex7, $p1, $lf1, $r25 = VLDA_POP_576_normal_pop $plfr1, implicit-def $srfifo_uf
-    $ex8, $p0, $lf0, $r24 = VLDA_POP_576_normal_pop $plfr0, implicit-def $srfifo_uf
+    $ex2, $p1, $lf1, $r25 = VLDA_POP_576_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $ex6, $p0, $lf0, $r24 = VLDA_POP_576_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $ex0, $p1, $lf1, $r25 = VLDA_POP_576_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $ex1, $p0, $lf0, $r24 = VLDA_POP_576_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $ex8, $p1, $lf1, $r25 = VLDA_POP_576_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $ex4, $p0, $lf0, $r24 = VLDA_POP_576_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $ex11, $p1, $lf1, $r25 = VLDA_POP_576_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $ex7, $p0, $lf0, $r24 = VLDA_POP_576_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $ex9, $p1, $lf1, $r25 = VLDA_POP_576_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $ex3, $p0, $lf0, $r24 = VLDA_POP_576_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $ex10, $p1, $lf1, $r25 = VLDA_POP_576_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $ex5, $p0, $lf0, $r24 = VLDA_POP_576_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
 
     ; VLDA_POP_640_2D
-    $qx3, $p0, $lf0, $r24, $dc7 = VLDA_POP_640_2D $plfr0, $d7, implicit-def $srfifo_uf
-    $qx1, $p1, $lf1, $r25, $dc1 = VLDA_POP_640_2D $plfr1, $d1, implicit-def $srfifo_uf
-    $qx0, $p0, $lf0, $r24, $dc2 = VLDA_POP_640_2D $plfr0, $d2, implicit-def $srfifo_uf
-    $qx2, $p1, $lf1, $r25, $dc5 = VLDA_POP_640_2D $plfr1, $d5, implicit-def $srfifo_uf
-    $qx3, $p0, $lf0, $r24, $dc6 = VLDA_POP_640_2D $plfr0, $d6, implicit-def $srfifo_uf
-    $qx1, $p1, $lf1, $r25, $dc4 = VLDA_POP_640_2D $plfr1, $d4, implicit-def $srfifo_uf
-    $qx0, $p0, $lf0, $r24, $dc3 = VLDA_POP_640_2D $plfr0, $d3, implicit-def $srfifo_uf
-    $qx2, $p1, $lf1, $r25, $dc0 = VLDA_POP_640_2D $plfr1, $d0, implicit-def $srfifo_uf
+    $qx0, $p0, $lf0, $r24, $dc1 = VLDA_POP_640_2D $p0, $lf0, $r24, $d1, implicit-def $srfifo_uf
+    $qx1, $p1, $lf1, $r25, $dc2 = VLDA_POP_640_2D $p1, $lf1, $r25, $d2, implicit-def $srfifo_uf
+    $qx2, $p0, $lf0, $r24, $dc3 = VLDA_POP_640_2D $p0, $lf0, $r24, $d3, implicit-def $srfifo_uf
+    $qx3, $p1, $lf1, $r25, $dc4 = VLDA_POP_640_2D $p1, $lf1, $r25, $d4, implicit-def $srfifo_uf
+    $qx0, $p0, $lf0, $r24, $dc6 = VLDA_POP_640_2D $p0, $lf0, $r24, $d6, implicit-def $srfifo_uf
+    $qx1, $p1, $lf1, $r25, $dc7 = VLDA_POP_640_2D $p1, $lf1, $r25, $d7, implicit-def $srfifo_uf
+    $qx2, $p0, $lf0, $r24, $dc0 = VLDA_POP_640_2D $p0, $lf0, $r24, $d0, implicit-def $srfifo_uf
+    $qx3, $p1, $lf1, $r25, $dc5 = VLDA_POP_640_2D $p1, $lf1, $r25, $d5, implicit-def $srfifo_uf
 
     ; VLDA_POP_640_3D
-    $qx0, $p0, $lf0, $r24, $dc3, $dc7 = VLDA_POP_640_3D $plfr0, $d3_3d, implicit-def $srfifo_uf
-    $qx2, $p1, $lf1, $r25, $dc1, $dc5 = VLDA_POP_640_3D $plfr1, $d1_3d, implicit-def $srfifo_uf
-    $qx3, $p0, $lf0, $r24, $dc2, $dc6 = VLDA_POP_640_3D $plfr0, $d2_3d, implicit-def $srfifo_uf
-    $qx1, $p1, $lf1, $r25, $dc0, $dc4 = VLDA_POP_640_3D $plfr1, $d0_3d, implicit-def $srfifo_uf
+    $qx0, $p0, $lf0, $r24, $dc3, $dc7 = VLDA_POP_640_3D $p0, $lf0, $r24, $d3_3d, implicit-def $srfifo_uf
+    $qx3, $p1, $lf1, $r25, $dc0, $dc4 = VLDA_POP_640_3D $p1, $lf1, $r25, $d0_3d, implicit-def $srfifo_uf
+    $qx2, $p0, $lf0, $r24, $dc1, $dc5 = VLDA_POP_640_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $qx1, $p1, $lf1, $r25, $dc2, $dc6 = VLDA_POP_640_3D $p1, $lf1, $r25, $d2_3d, implicit-def $srfifo_uf
 
     ; VLDA_POP_640_fifo_1d_pop
-    $qx3, $p1, $lf1, $r25 = VLDA_POP_640_fifo_1d_pop $plfr1, $m4, implicit-def $srfifo_uf
-    $qx2, $p0, $lf0, $r24 = VLDA_POP_640_fifo_1d_pop $plfr0, $m2, implicit-def $srfifo_uf
-    $qx0, $p1, $lf1, $r25 = VLDA_POP_640_fifo_1d_pop $plfr1, $m5, implicit-def $srfifo_uf
-    $qx1, $p0, $lf0, $r24 = VLDA_POP_640_fifo_1d_pop $plfr0, $m7, implicit-def $srfifo_uf
-    $qx3, $p1, $lf1, $r25 = VLDA_POP_640_fifo_1d_pop $plfr1, $m0, implicit-def $srfifo_uf
-    $qx2, $p0, $lf0, $r24 = VLDA_POP_640_fifo_1d_pop $plfr0, $m1, implicit-def $srfifo_uf
-    $qx0, $p1, $lf1, $r25 = VLDA_POP_640_fifo_1d_pop $plfr1, $m6, implicit-def $srfifo_uf
-    $qx1, $p0, $lf0, $r24 = VLDA_POP_640_fifo_1d_pop $plfr0, $m3, implicit-def $srfifo_uf
+    $qx0, $p1, $lf1, $r25 = VLDA_POP_640_fifo_1d_pop $p1, $lf1, $r25, $m3, implicit-def $srfifo_uf
+    $qx1, $p0, $lf0, $r24 = VLDA_POP_640_fifo_1d_pop $p0, $lf0, $r24, $m6, implicit-def $srfifo_uf
+    $qx2, $p1, $lf1, $r25 = VLDA_POP_640_fifo_1d_pop $p1, $lf1, $r25, $m0, implicit-def $srfifo_uf
+    $qx3, $p0, $lf0, $r24 = VLDA_POP_640_fifo_1d_pop $p0, $lf0, $r24, $m5, implicit-def $srfifo_uf
+    $qx0, $p1, $lf1, $r25 = VLDA_POP_640_fifo_1d_pop $p1, $lf1, $r25, $m4, implicit-def $srfifo_uf
+    $qx1, $p0, $lf0, $r24 = VLDA_POP_640_fifo_1d_pop $p0, $lf0, $r24, $m1, implicit-def $srfifo_uf
+    $qx2, $p1, $lf1, $r25 = VLDA_POP_640_fifo_1d_pop $p1, $lf1, $r25, $m7, implicit-def $srfifo_uf
+    $qx3, $p0, $lf0, $r24 = VLDA_POP_640_fifo_1d_pop $p0, $lf0, $r24, $m2, implicit-def $srfifo_uf
 
     ; VLDA_POP_640_normal_pop
-    $qx3, $p1, $lf1, $r25 = VLDA_POP_640_normal_pop $plfr1, implicit-def $srfifo_uf
-    $qx1, $p0, $lf0, $r24 = VLDA_POP_640_normal_pop $plfr0, implicit-def $srfifo_uf
-    $qx2, $p1, $lf1, $r25 = VLDA_POP_640_normal_pop $plfr1, implicit-def $srfifo_uf
-    $qx0, $p0, $lf0, $r24 = VLDA_POP_640_normal_pop $plfr0, implicit-def $srfifo_uf
+    $qx2, $p1, $lf1, $r25 = VLDA_POP_640_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $qx1, $p0, $lf0, $r24 = VLDA_POP_640_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $qx0, $p1, $lf1, $r25 = VLDA_POP_640_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $qx3, $p0, $lf0, $r24 = VLDA_POP_640_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
 
     ; VLDA_POP_704_2D
-    $qex2, $p0, $lf0, $r24, $dc0 = VLDA_POP_704_2D $plfr0, $d0, implicit-def $srfifo_uf
-    $qex3, $p1, $lf1, $r25, $dc1 = VLDA_POP_704_2D $plfr1, $d1, implicit-def $srfifo_uf
-    $qex0, $p0, $lf0, $r24, $dc7 = VLDA_POP_704_2D $plfr0, $d7, implicit-def $srfifo_uf
-    $qex1, $p1, $lf1, $r25, $dc5 = VLDA_POP_704_2D $plfr1, $d5, implicit-def $srfifo_uf
-    $qex2, $p0, $lf0, $r24, $dc3 = VLDA_POP_704_2D $plfr0, $d3, implicit-def $srfifo_uf
-    $qex3, $p1, $lf1, $r25, $dc4 = VLDA_POP_704_2D $plfr1, $d4, implicit-def $srfifo_uf
-    $qex0, $p0, $lf0, $r24, $dc6 = VLDA_POP_704_2D $plfr0, $d6, implicit-def $srfifo_uf
-    $qex1, $p1, $lf1, $r25, $dc2 = VLDA_POP_704_2D $plfr1, $d2, implicit-def $srfifo_uf
+    $qex3, $p0, $lf0, $r24, $dc6 = VLDA_POP_704_2D $p0, $lf0, $r24, $d6, implicit-def $srfifo_uf
+    $qex0, $p1, $lf1, $r25, $dc0 = VLDA_POP_704_2D $p1, $lf1, $r25, $d0, implicit-def $srfifo_uf
+    $qex1, $p0, $lf0, $r24, $dc2 = VLDA_POP_704_2D $p0, $lf0, $r24, $d2, implicit-def $srfifo_uf
+    $qex2, $p1, $lf1, $r25, $dc5 = VLDA_POP_704_2D $p1, $lf1, $r25, $d5, implicit-def $srfifo_uf
+    $qex3, $p0, $lf0, $r24, $dc1 = VLDA_POP_704_2D $p0, $lf0, $r24, $d1, implicit-def $srfifo_uf
+    $qex0, $p1, $lf1, $r25, $dc4 = VLDA_POP_704_2D $p1, $lf1, $r25, $d4, implicit-def $srfifo_uf
+    $qex1, $p0, $lf0, $r24, $dc7 = VLDA_POP_704_2D $p0, $lf0, $r24, $d7, implicit-def $srfifo_uf
+    $qex2, $p1, $lf1, $r25, $dc3 = VLDA_POP_704_2D $p1, $lf1, $r25, $d3, implicit-def $srfifo_uf
 
     ; VLDA_POP_704_3D
-    $qex2, $p0, $lf0, $r24, $dc0, $dc4 = VLDA_POP_704_3D $plfr0, $d0_3d, implicit-def $srfifo_uf
-    $qex3, $p1, $lf1, $r25, $dc3, $dc7 = VLDA_POP_704_3D $plfr1, $d3_3d, implicit-def $srfifo_uf
-    $qex0, $p0, $lf0, $r24, $dc1, $dc5 = VLDA_POP_704_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $qex1, $p1, $lf1, $r25, $dc2, $dc6 = VLDA_POP_704_3D $plfr1, $d2_3d, implicit-def $srfifo_uf
+    $qex3, $p0, $lf0, $r24, $dc2, $dc6 = VLDA_POP_704_3D $p0, $lf0, $r24, $d2_3d, implicit-def $srfifo_uf
+    $qex2, $p1, $lf1, $r25, $dc1, $dc5 = VLDA_POP_704_3D $p1, $lf1, $r25, $d1_3d, implicit-def $srfifo_uf
+    $qex0, $p0, $lf0, $r24, $dc0, $dc4 = VLDA_POP_704_3D $p0, $lf0, $r24, $d0_3d, implicit-def $srfifo_uf
+    $qex1, $p1, $lf1, $r25, $dc3, $dc7 = VLDA_POP_704_3D $p1, $lf1, $r25, $d3_3d, implicit-def $srfifo_uf
 
     ; VLDA_POP_704_fifo_1d_pop
-    $qex0, $p0, $lf0, $r24 = VLDA_POP_704_fifo_1d_pop $plfr0, $m0, implicit-def $srfifo_uf
-    $qex1, $p1, $lf1, $r25 = VLDA_POP_704_fifo_1d_pop $plfr1, $m5, implicit-def $srfifo_uf
-    $qex2, $p0, $lf0, $r24 = VLDA_POP_704_fifo_1d_pop $plfr0, $m4, implicit-def $srfifo_uf
-    $qex3, $p1, $lf1, $r25 = VLDA_POP_704_fifo_1d_pop $plfr1, $m1, implicit-def $srfifo_uf
-    $qex0, $p0, $lf0, $r24 = VLDA_POP_704_fifo_1d_pop $plfr0, $m3, implicit-def $srfifo_uf
-    $qex1, $p1, $lf1, $r25 = VLDA_POP_704_fifo_1d_pop $plfr1, $m7, implicit-def $srfifo_uf
-    $qex2, $p0, $lf0, $r24 = VLDA_POP_704_fifo_1d_pop $plfr0, $m2, implicit-def $srfifo_uf
-    $qex3, $p1, $lf1, $r25 = VLDA_POP_704_fifo_1d_pop $plfr1, $m6, implicit-def $srfifo_uf
+    $qex0, $p0, $lf0, $r24 = VLDA_POP_704_fifo_1d_pop $p0, $lf0, $r24, $m7, implicit-def $srfifo_uf
+    $qex1, $p1, $lf1, $r25 = VLDA_POP_704_fifo_1d_pop $p1, $lf1, $r25, $m0, implicit-def $srfifo_uf
+    $qex2, $p0, $lf0, $r24 = VLDA_POP_704_fifo_1d_pop $p0, $lf0, $r24, $m4, implicit-def $srfifo_uf
+    $qex3, $p1, $lf1, $r25 = VLDA_POP_704_fifo_1d_pop $p1, $lf1, $r25, $m3, implicit-def $srfifo_uf
+    $qex0, $p0, $lf0, $r24 = VLDA_POP_704_fifo_1d_pop $p0, $lf0, $r24, $m5, implicit-def $srfifo_uf
+    $qex1, $p1, $lf1, $r25 = VLDA_POP_704_fifo_1d_pop $p1, $lf1, $r25, $m1, implicit-def $srfifo_uf
+    $qex2, $p0, $lf0, $r24 = VLDA_POP_704_fifo_1d_pop $p0, $lf0, $r24, $m6, implicit-def $srfifo_uf
+    $qex3, $p1, $lf1, $r25 = VLDA_POP_704_fifo_1d_pop $p1, $lf1, $r25, $m2, implicit-def $srfifo_uf
 
     ; VLDA_POP_704_normal_pop
-    $qex3, $p0, $lf0, $r24 = VLDA_POP_704_normal_pop $plfr0, implicit-def $srfifo_uf
-    $qex1, $p1, $lf1, $r25 = VLDA_POP_704_normal_pop $plfr1, implicit-def $srfifo_uf
-    $qex2, $p0, $lf0, $r24 = VLDA_POP_704_normal_pop $plfr0, implicit-def $srfifo_uf
-    $qex0, $p1, $lf1, $r25 = VLDA_POP_704_normal_pop $plfr1, implicit-def $srfifo_uf
+    $qex0, $p0, $lf0, $r24 = VLDA_POP_704_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $qex3, $p1, $lf1, $r25 = VLDA_POP_704_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $qex2, $p0, $lf0, $r24 = VLDA_POP_704_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $qex1, $p1, $lf1, $r25 = VLDA_POP_704_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
 
     ; VLDB_FILLX_512
-    $p1, $lf1, $r25 = VLDB_FILLX_512 $r30, $r30, $plfr1, implicit-def $lfe, implicit $lfe
-    $p0, $lf0, $r24 = VLDB_FILLX_512 $r30, $r30, $plfr0, implicit-def $lfe, implicit $lfe
+    $p1, $lf1, $r25 = VLDB_FILLX_512 $r30, $r30, $p1, $lf1, $r25, implicit-def $lfe, implicit $lfe
+    $p0, $lf0, $r24 = VLDB_FILLX_512 $r30, $r30, $p0, $lf0, $r24, implicit-def $lfe, implicit $lfe
 
     ; VLDB_FILL_512
-    $p0, $lf0, $r24 = VLDB_FILL_512 $plfr0
-    $p1, $lf1, $r25 = VLDB_FILL_512 $plfr1
+    $p0, $lf0, $r24 = VLDB_FILL_512 $p0, $lf0, $r24
+    $p1, $lf1, $r25 = VLDB_FILL_512 $p1, $lf1, $r25
 
     ; VLDB_POPX_512
-    $x10, $p1, $lf1, $r25 = VLDB_POPX_512 $r30, $r30, $plfr1, implicit-def $lfe, implicit-def $srfifo_uf, implicit $lfe
-    $x5, $p0, $lf0, $r24 = VLDB_POPX_512 $r30, $r30, $plfr0, implicit-def $lfe, implicit-def $srfifo_uf, implicit $lfe
-    $x11, $p1, $lf1, $r25 = VLDB_POPX_512 $r30, $r30, $plfr1, implicit-def $lfe, implicit-def $srfifo_uf, implicit $lfe
-    $x0, $p0, $lf0, $r24 = VLDB_POPX_512 $r30, $r30, $plfr0, implicit-def $lfe, implicit-def $srfifo_uf, implicit $lfe
-    $x4, $p1, $lf1, $r25 = VLDB_POPX_512 $r30, $r30, $plfr1, implicit-def $lfe, implicit-def $srfifo_uf, implicit $lfe
-    $x9, $p0, $lf0, $r24 = VLDB_POPX_512 $r30, $r30, $plfr0, implicit-def $lfe, implicit-def $srfifo_uf, implicit $lfe
-    $x1, $p1, $lf1, $r25 = VLDB_POPX_512 $r30, $r30, $plfr1, implicit-def $lfe, implicit-def $srfifo_uf, implicit $lfe
-    $x6, $p0, $lf0, $r24 = VLDB_POPX_512 $r30, $r30, $plfr0, implicit-def $lfe, implicit-def $srfifo_uf, implicit $lfe
-    $x3, $p1, $lf1, $r25 = VLDB_POPX_512 $r30, $r30, $plfr1, implicit-def $lfe, implicit-def $srfifo_uf, implicit $lfe
-    $x8, $p0, $lf0, $r24 = VLDB_POPX_512 $r30, $r30, $plfr0, implicit-def $lfe, implicit-def $srfifo_uf, implicit $lfe
-    $x2, $p1, $lf1, $r25 = VLDB_POPX_512 $r30, $r30, $plfr1, implicit-def $lfe, implicit-def $srfifo_uf, implicit $lfe
-    $x7, $p0, $lf0, $r24 = VLDB_POPX_512 $r30, $r30, $plfr0, implicit-def $lfe, implicit-def $srfifo_uf, implicit $lfe
+    $x11, $p1, $lf1, $r25 = VLDB_POPX_512 $r30, $r30, $p1, $lf1, $r25, implicit-def $lfe, implicit-def $srfifo_uf, implicit $lfe
+    $x4, $p0, $lf0, $r24 = VLDB_POPX_512 $r30, $r30, $p0, $lf0, $r24, implicit-def $lfe, implicit-def $srfifo_uf, implicit $lfe
+    $x3, $p1, $lf1, $r25 = VLDB_POPX_512 $r30, $r30, $p1, $lf1, $r25, implicit-def $lfe, implicit-def $srfifo_uf, implicit $lfe
+    $x5, $p0, $lf0, $r24 = VLDB_POPX_512 $r30, $r30, $p0, $lf0, $r24, implicit-def $lfe, implicit-def $srfifo_uf, implicit $lfe
+    $x1, $p1, $lf1, $r25 = VLDB_POPX_512 $r30, $r30, $p1, $lf1, $r25, implicit-def $lfe, implicit-def $srfifo_uf, implicit $lfe
+    $x9, $p0, $lf0, $r24 = VLDB_POPX_512 $r30, $r30, $p0, $lf0, $r24, implicit-def $lfe, implicit-def $srfifo_uf, implicit $lfe
+    $x6, $p1, $lf1, $r25 = VLDB_POPX_512 $r30, $r30, $p1, $lf1, $r25, implicit-def $lfe, implicit-def $srfifo_uf, implicit $lfe
+    $x8, $p0, $lf0, $r24 = VLDB_POPX_512 $r30, $r30, $p0, $lf0, $r24, implicit-def $lfe, implicit-def $srfifo_uf, implicit $lfe
+    $x0, $p1, $lf1, $r25 = VLDB_POPX_512 $r30, $r30, $p1, $lf1, $r25, implicit-def $lfe, implicit-def $srfifo_uf, implicit $lfe
+    $x10, $p0, $lf0, $r24 = VLDB_POPX_512 $r30, $r30, $p0, $lf0, $r24, implicit-def $lfe, implicit-def $srfifo_uf, implicit $lfe
+    $x2, $p1, $lf1, $r25 = VLDB_POPX_512 $r30, $r30, $p1, $lf1, $r25, implicit-def $lfe, implicit-def $srfifo_uf, implicit $lfe
+    $x7, $p0, $lf0, $r24 = VLDB_POPX_512 $r30, $r30, $p0, $lf0, $r24, implicit-def $lfe, implicit-def $srfifo_uf, implicit $lfe
 
     ; VLDB_POP_512_2D
-    $x10, $p1, $lf1, $r25, $dc3 = VLDB_POP_512_2D $plfr1, $d3, implicit-def $srfifo_uf
-    $x3, $p0, $lf0, $r24, $dc1 = VLDB_POP_512_2D $plfr0, $d1, implicit-def $srfifo_uf
-    $x9, $p1, $lf1, $r25, $dc7 = VLDB_POP_512_2D $plfr1, $d7, implicit-def $srfifo_uf
-    $x5, $p0, $lf0, $r24, $dc5 = VLDB_POP_512_2D $plfr0, $d5, implicit-def $srfifo_uf
-    $x6, $p1, $lf1, $r25, $dc6 = VLDB_POP_512_2D $plfr1, $d6, implicit-def $srfifo_uf
-    $x2, $p0, $lf0, $r24, $dc0 = VLDB_POP_512_2D $plfr0, $d0, implicit-def $srfifo_uf
-    $x8, $p1, $lf1, $r25, $dc2 = VLDB_POP_512_2D $plfr1, $d2, implicit-def $srfifo_uf
-    $x1, $p0, $lf0, $r24, $dc4 = VLDB_POP_512_2D $plfr0, $d4, implicit-def $srfifo_uf
-    $x4, $p1, $lf1, $r25, $dc3 = VLDB_POP_512_2D $plfr1, $d3, implicit-def $srfifo_uf
-    $x0, $p0, $lf0, $r24, $dc1 = VLDB_POP_512_2D $plfr0, $d1, implicit-def $srfifo_uf
-    $x11, $p1, $lf1, $r25, $dc7 = VLDB_POP_512_2D $plfr1, $d7, implicit-def $srfifo_uf
-    $x7, $p0, $lf0, $r24, $dc5 = VLDB_POP_512_2D $plfr0, $d5, implicit-def $srfifo_uf
+    $x11, $p1, $lf1, $r25, $dc1 = VLDB_POP_512_2D $p1, $lf1, $r25, $d1, implicit-def $srfifo_uf
+    $x10, $p0, $lf0, $r24, $dc6 = VLDB_POP_512_2D $p0, $lf0, $r24, $d6, implicit-def $srfifo_uf
+    $x9, $p1, $lf1, $r25, $dc2 = VLDB_POP_512_2D $p1, $lf1, $r25, $d2, implicit-def $srfifo_uf
+    $x3, $p0, $lf0, $r24, $dc5 = VLDB_POP_512_2D $p0, $lf0, $r24, $d5, implicit-def $srfifo_uf
+    $x0, $p1, $lf1, $r25, $dc3 = VLDB_POP_512_2D $p1, $lf1, $r25, $d3, implicit-def $srfifo_uf
+    $x4, $p0, $lf0, $r24, $dc4 = VLDB_POP_512_2D $p0, $lf0, $r24, $d4, implicit-def $srfifo_uf
+    $x7, $p1, $lf1, $r25, $dc7 = VLDB_POP_512_2D $p1, $lf1, $r25, $d7, implicit-def $srfifo_uf
+    $x2, $p0, $lf0, $r24, $dc0 = VLDB_POP_512_2D $p0, $lf0, $r24, $d0, implicit-def $srfifo_uf
+    $x8, $p1, $lf1, $r25, $dc1 = VLDB_POP_512_2D $p1, $lf1, $r25, $d1, implicit-def $srfifo_uf
+    $x6, $p0, $lf0, $r24, $dc6 = VLDB_POP_512_2D $p0, $lf0, $r24, $d6, implicit-def $srfifo_uf
+    $x1, $p1, $lf1, $r25, $dc2 = VLDB_POP_512_2D $p1, $lf1, $r25, $d2, implicit-def $srfifo_uf
+    $x5, $p0, $lf0, $r24, $dc5 = VLDB_POP_512_2D $p0, $lf0, $r24, $d5, implicit-def $srfifo_uf
 
     ; VLDB_POP_512_3D
-    $x5, $p0, $lf0, $r24, $dc1, $dc5 = VLDB_POP_512_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $x1, $p1, $lf1, $r25, $dc0, $dc4 = VLDB_POP_512_3D $plfr1, $d0_3d, implicit-def $srfifo_uf
-    $x11, $p0, $lf0, $r24, $dc3, $dc7 = VLDB_POP_512_3D $plfr0, $d3_3d, implicit-def $srfifo_uf
-    $x2, $p1, $lf1, $r25, $dc2, $dc6 = VLDB_POP_512_3D $plfr1, $d2_3d, implicit-def $srfifo_uf
-    $x6, $p0, $lf0, $r24, $dc1, $dc5 = VLDB_POP_512_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $x9, $p1, $lf1, $r25, $dc0, $dc4 = VLDB_POP_512_3D $plfr1, $d0_3d, implicit-def $srfifo_uf
-    $x8, $p0, $lf0, $r24, $dc3, $dc7 = VLDB_POP_512_3D $plfr0, $d3_3d, implicit-def $srfifo_uf
-    $x7, $p1, $lf1, $r25, $dc2, $dc6 = VLDB_POP_512_3D $plfr1, $d2_3d, implicit-def $srfifo_uf
-    $x10, $p0, $lf0, $r24, $dc1, $dc5 = VLDB_POP_512_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $x3, $p1, $lf1, $r25, $dc0, $dc4 = VLDB_POP_512_3D $plfr1, $d0_3d, implicit-def $srfifo_uf
-    $x4, $p0, $lf0, $r24, $dc3, $dc7 = VLDB_POP_512_3D $plfr0, $d3_3d, implicit-def $srfifo_uf
-    $x0, $p1, $lf1, $r25, $dc2, $dc6 = VLDB_POP_512_3D $plfr1, $d2_3d, implicit-def $srfifo_uf
+    $x5, $p0, $lf0, $r24, $dc1, $dc5 = VLDB_POP_512_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $x2, $p1, $lf1, $r25, $dc2, $dc6 = VLDB_POP_512_3D $p1, $lf1, $r25, $d2_3d, implicit-def $srfifo_uf
+    $x7, $p0, $lf0, $r24, $dc0, $dc4 = VLDB_POP_512_3D $p0, $lf0, $r24, $d0_3d, implicit-def $srfifo_uf
+    $x1, $p1, $lf1, $r25, $dc3, $dc7 = VLDB_POP_512_3D $p1, $lf1, $r25, $d3_3d, implicit-def $srfifo_uf
+    $x8, $p0, $lf0, $r24, $dc1, $dc5 = VLDB_POP_512_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $x6, $p1, $lf1, $r25, $dc2, $dc6 = VLDB_POP_512_3D $p1, $lf1, $r25, $d2_3d, implicit-def $srfifo_uf
+    $x9, $p0, $lf0, $r24, $dc0, $dc4 = VLDB_POP_512_3D $p0, $lf0, $r24, $d0_3d, implicit-def $srfifo_uf
+    $x3, $p1, $lf1, $r25, $dc3, $dc7 = VLDB_POP_512_3D $p1, $lf1, $r25, $d3_3d, implicit-def $srfifo_uf
+    $x0, $p0, $lf0, $r24, $dc1, $dc5 = VLDB_POP_512_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $x4, $p1, $lf1, $r25, $dc2, $dc6 = VLDB_POP_512_3D $p1, $lf1, $r25, $d2_3d, implicit-def $srfifo_uf
+    $x10, $p0, $lf0, $r24, $dc0, $dc4 = VLDB_POP_512_3D $p0, $lf0, $r24, $d0_3d, implicit-def $srfifo_uf
+    $x11, $p1, $lf1, $r25, $dc3, $dc7 = VLDB_POP_512_3D $p1, $lf1, $r25, $d3_3d, implicit-def $srfifo_uf
 
     ; VLDB_POP_512_fifo_1d_pop
-    $x5, $p0, $lf0, $r24 = VLDB_POP_512_fifo_1d_pop $plfr0, $m4, implicit-def $srfifo_uf
-    $x11, $p1, $lf1, $r25 = VLDB_POP_512_fifo_1d_pop $plfr1, $m5, implicit-def $srfifo_uf
-    $x2, $p0, $lf0, $r24 = VLDB_POP_512_fifo_1d_pop $plfr0, $m3, implicit-def $srfifo_uf
-    $x10, $p1, $lf1, $r25 = VLDB_POP_512_fifo_1d_pop $plfr1, $m2, implicit-def $srfifo_uf
-    $x8, $p0, $lf0, $r24 = VLDB_POP_512_fifo_1d_pop $plfr0, $m6, implicit-def $srfifo_uf
-    $x1, $p1, $lf1, $r25 = VLDB_POP_512_fifo_1d_pop $plfr1, $m0, implicit-def $srfifo_uf
-    $x4, $p0, $lf0, $r24 = VLDB_POP_512_fifo_1d_pop $plfr0, $m7, implicit-def $srfifo_uf
-    $x0, $p1, $lf1, $r25 = VLDB_POP_512_fifo_1d_pop $plfr1, $m1, implicit-def $srfifo_uf
-    $x3, $p0, $lf0, $r24 = VLDB_POP_512_fifo_1d_pop $plfr0, $m4, implicit-def $srfifo_uf
-    $x6, $p1, $lf1, $r25 = VLDB_POP_512_fifo_1d_pop $plfr1, $m5, implicit-def $srfifo_uf
-    $x7, $p0, $lf0, $r24 = VLDB_POP_512_fifo_1d_pop $plfr0, $m3, implicit-def $srfifo_uf
-    $x9, $p1, $lf1, $r25 = VLDB_POP_512_fifo_1d_pop $plfr1, $m2, implicit-def $srfifo_uf
+    $x5, $p0, $lf0, $r24 = VLDB_POP_512_fifo_1d_pop $p0, $lf0, $r24, $m3, implicit-def $srfifo_uf
+    $x2, $p1, $lf1, $r25 = VLDB_POP_512_fifo_1d_pop $p1, $lf1, $r25, $m2, implicit-def $srfifo_uf
+    $x9, $p0, $lf0, $r24 = VLDB_POP_512_fifo_1d_pop $p0, $lf0, $r24, $m6, implicit-def $srfifo_uf
+    $x3, $p1, $lf1, $r25 = VLDB_POP_512_fifo_1d_pop $p1, $lf1, $r25, $m7, implicit-def $srfifo_uf
+    $x11, $p0, $lf0, $r24 = VLDB_POP_512_fifo_1d_pop $p0, $lf0, $r24, $m5, implicit-def $srfifo_uf
+    $x10, $p1, $lf1, $r25 = VLDB_POP_512_fifo_1d_pop $p1, $lf1, $r25, $m4, implicit-def $srfifo_uf
+    $x0, $p0, $lf0, $r24 = VLDB_POP_512_fifo_1d_pop $p0, $lf0, $r24, $m1, implicit-def $srfifo_uf
+    $x1, $p1, $lf1, $r25 = VLDB_POP_512_fifo_1d_pop $p1, $lf1, $r25, $m0, implicit-def $srfifo_uf
+    $x4, $p0, $lf0, $r24 = VLDB_POP_512_fifo_1d_pop $p0, $lf0, $r24, $m3, implicit-def $srfifo_uf
+    $x7, $p1, $lf1, $r25 = VLDB_POP_512_fifo_1d_pop $p1, $lf1, $r25, $m2, implicit-def $srfifo_uf
+    $x6, $p0, $lf0, $r24 = VLDB_POP_512_fifo_1d_pop $p0, $lf0, $r24, $m6, implicit-def $srfifo_uf
+    $x8, $p1, $lf1, $r25 = VLDB_POP_512_fifo_1d_pop $p1, $lf1, $r25, $m7, implicit-def $srfifo_uf
 
     ; VLDB_POP_512_normal_pop
-    $x10, $p0, $lf0, $r24 = VLDB_POP_512_normal_pop $plfr0, implicit-def $srfifo_uf
-    $x5, $p1, $lf1, $r25 = VLDB_POP_512_normal_pop $plfr1, implicit-def $srfifo_uf
-    $x11, $p0, $lf0, $r24 = VLDB_POP_512_normal_pop $plfr0, implicit-def $srfifo_uf
-    $x6, $p1, $lf1, $r25 = VLDB_POP_512_normal_pop $plfr1, implicit-def $srfifo_uf
-    $x8, $p0, $lf0, $r24 = VLDB_POP_512_normal_pop $plfr0, implicit-def $srfifo_uf
-    $x7, $p1, $lf1, $r25 = VLDB_POP_512_normal_pop $plfr1, implicit-def $srfifo_uf
-    $x4, $p0, $lf0, $r24 = VLDB_POP_512_normal_pop $plfr0, implicit-def $srfifo_uf
-    $x2, $p1, $lf1, $r25 = VLDB_POP_512_normal_pop $plfr1, implicit-def $srfifo_uf
-    $x9, $p0, $lf0, $r24 = VLDB_POP_512_normal_pop $plfr0, implicit-def $srfifo_uf
-    $x1, $p1, $lf1, $r25 = VLDB_POP_512_normal_pop $plfr1, implicit-def $srfifo_uf
-    $x3, $p0, $lf0, $r24 = VLDB_POP_512_normal_pop $plfr0, implicit-def $srfifo_uf
-    $x0, $p1, $lf1, $r25 = VLDB_POP_512_normal_pop $plfr1, implicit-def $srfifo_uf
+    $x2, $p0, $lf0, $r24 = VLDB_POP_512_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $x6, $p1, $lf1, $r25 = VLDB_POP_512_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $x7, $p0, $lf0, $r24 = VLDB_POP_512_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $x0, $p1, $lf1, $r25 = VLDB_POP_512_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $x5, $p0, $lf0, $r24 = VLDB_POP_512_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $x8, $p1, $lf1, $r25 = VLDB_POP_512_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $x3, $p0, $lf0, $r24 = VLDB_POP_512_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $x11, $p1, $lf1, $r25 = VLDB_POP_512_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $x4, $p0, $lf0, $r24 = VLDB_POP_512_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $x10, $p1, $lf1, $r25 = VLDB_POP_512_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $x9, $p0, $lf0, $r24 = VLDB_POP_512_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $x1, $p1, $lf1, $r25 = VLDB_POP_512_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
 
     ; VLDB_POP_544_2D
-    $ex0, $p0, $lf0, $r24, $dc6 = VLDB_POP_544_2D $plfr0, $d6, implicit-def $srfifo_uf
-    $ex2, $p1, $lf1, $r25, $dc4 = VLDB_POP_544_2D $plfr1, $d4, implicit-def $srfifo_uf
-    $ex9, $p0, $lf0, $r24, $dc5 = VLDB_POP_544_2D $plfr0, $d5, implicit-def $srfifo_uf
-    $ex3, $p1, $lf1, $r25, $dc3 = VLDB_POP_544_2D $plfr1, $d3, implicit-def $srfifo_uf
-    $ex6, $p0, $lf0, $r24, $dc0 = VLDB_POP_544_2D $plfr0, $d0, implicit-def $srfifo_uf
-    $ex10, $p1, $lf1, $r25, $dc7 = VLDB_POP_544_2D $plfr1, $d7, implicit-def $srfifo_uf
-    $ex4, $p0, $lf0, $r24, $dc1 = VLDB_POP_544_2D $plfr0, $d1, implicit-def $srfifo_uf
-    $ex8, $p1, $lf1, $r25, $dc2 = VLDB_POP_544_2D $plfr1, $d2, implicit-def $srfifo_uf
-    $ex7, $p0, $lf0, $r24, $dc6 = VLDB_POP_544_2D $plfr0, $d6, implicit-def $srfifo_uf
-    $ex11, $p1, $lf1, $r25, $dc4 = VLDB_POP_544_2D $plfr1, $d4, implicit-def $srfifo_uf
-    $ex1, $p0, $lf0, $r24, $dc5 = VLDB_POP_544_2D $plfr0, $d5, implicit-def $srfifo_uf
-    $ex5, $p1, $lf1, $r25, $dc3 = VLDB_POP_544_2D $plfr1, $d3, implicit-def $srfifo_uf
+    $ex9, $p0, $lf0, $r24, $dc7 = VLDB_POP_544_2D $p0, $lf0, $r24, $d7, implicit-def $srfifo_uf
+    $ex2, $p1, $lf1, $r25, $dc0 = VLDB_POP_544_2D $p1, $lf1, $r25, $d0, implicit-def $srfifo_uf
+    $ex10, $p0, $lf0, $r24, $dc5 = VLDB_POP_544_2D $p0, $lf0, $r24, $d5, implicit-def $srfifo_uf
+    $ex7, $p1, $lf1, $r25, $dc6 = VLDB_POP_544_2D $p1, $lf1, $r25, $d6, implicit-def $srfifo_uf
+    $ex6, $p0, $lf0, $r24, $dc1 = VLDB_POP_544_2D $p0, $lf0, $r24, $d1, implicit-def $srfifo_uf
+    $ex0, $p1, $lf1, $r25, $dc3 = VLDB_POP_544_2D $p1, $lf1, $r25, $d3, implicit-def $srfifo_uf
+    $ex8, $p0, $lf0, $r24, $dc2 = VLDB_POP_544_2D $p0, $lf0, $r24, $d2, implicit-def $srfifo_uf
+    $ex3, $p1, $lf1, $r25, $dc4 = VLDB_POP_544_2D $p1, $lf1, $r25, $d4, implicit-def $srfifo_uf
+    $ex4, $p0, $lf0, $r24, $dc7 = VLDB_POP_544_2D $p0, $lf0, $r24, $d7, implicit-def $srfifo_uf
+    $ex5, $p1, $lf1, $r25, $dc0 = VLDB_POP_544_2D $p1, $lf1, $r25, $d0, implicit-def $srfifo_uf
+    $ex1, $p0, $lf0, $r24, $dc5 = VLDB_POP_544_2D $p0, $lf0, $r24, $d5, implicit-def $srfifo_uf
+    $ex11, $p1, $lf1, $r25, $dc6 = VLDB_POP_544_2D $p1, $lf1, $r25, $d6, implicit-def $srfifo_uf
 
     ; VLDB_POP_544_3D
-    $ex10, $p0, $lf0, $r24, $dc1, $dc5 = VLDB_POP_544_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $ex0, $p1, $lf1, $r25, $dc0, $dc4 = VLDB_POP_544_3D $plfr1, $d0_3d, implicit-def $srfifo_uf
-    $ex5, $p0, $lf0, $r24, $dc2, $dc6 = VLDB_POP_544_3D $plfr0, $d2_3d, implicit-def $srfifo_uf
-    $ex3, $p1, $lf1, $r25, $dc3, $dc7 = VLDB_POP_544_3D $plfr1, $d3_3d, implicit-def $srfifo_uf
-    $ex1, $p0, $lf0, $r24, $dc1, $dc5 = VLDB_POP_544_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $ex6, $p1, $lf1, $r25, $dc0, $dc4 = VLDB_POP_544_3D $plfr1, $d0_3d, implicit-def $srfifo_uf
-    $ex11, $p0, $lf0, $r24, $dc2, $dc6 = VLDB_POP_544_3D $plfr0, $d2_3d, implicit-def $srfifo_uf
-    $ex2, $p1, $lf1, $r25, $dc3, $dc7 = VLDB_POP_544_3D $plfr1, $d3_3d, implicit-def $srfifo_uf
-    $ex7, $p0, $lf0, $r24, $dc1, $dc5 = VLDB_POP_544_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $ex4, $p1, $lf1, $r25, $dc0, $dc4 = VLDB_POP_544_3D $plfr1, $d0_3d, implicit-def $srfifo_uf
-    $ex9, $p0, $lf0, $r24, $dc2, $dc6 = VLDB_POP_544_3D $plfr0, $d2_3d, implicit-def $srfifo_uf
-    $ex8, $p1, $lf1, $r25, $dc3, $dc7 = VLDB_POP_544_3D $plfr1, $d3_3d, implicit-def $srfifo_uf
+    $ex10, $p0, $lf0, $r24, $dc0, $dc4 = VLDB_POP_544_3D $p0, $lf0, $r24, $d0_3d, implicit-def $srfifo_uf
+    $ex5, $p1, $lf1, $r25, $dc2, $dc6 = VLDB_POP_544_3D $p1, $lf1, $r25, $d2_3d, implicit-def $srfifo_uf
+    $ex1, $p0, $lf0, $r24, $dc1, $dc5 = VLDB_POP_544_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $ex3, $p1, $lf1, $r25, $dc3, $dc7 = VLDB_POP_544_3D $p1, $lf1, $r25, $d3_3d, implicit-def $srfifo_uf
+    $ex6, $p0, $lf0, $r24, $dc0, $dc4 = VLDB_POP_544_3D $p0, $lf0, $r24, $d0_3d, implicit-def $srfifo_uf
+    $ex9, $p1, $lf1, $r25, $dc2, $dc6 = VLDB_POP_544_3D $p1, $lf1, $r25, $d2_3d, implicit-def $srfifo_uf
+    $ex7, $p0, $lf0, $r24, $dc1, $dc5 = VLDB_POP_544_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $ex8, $p1, $lf1, $r25, $dc3, $dc7 = VLDB_POP_544_3D $p1, $lf1, $r25, $d3_3d, implicit-def $srfifo_uf
+    $ex0, $p0, $lf0, $r24, $dc0, $dc4 = VLDB_POP_544_3D $p0, $lf0, $r24, $d0_3d, implicit-def $srfifo_uf
+    $ex11, $p1, $lf1, $r25, $dc2, $dc6 = VLDB_POP_544_3D $p1, $lf1, $r25, $d2_3d, implicit-def $srfifo_uf
+    $ex2, $p0, $lf0, $r24, $dc1, $dc5 = VLDB_POP_544_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $ex4, $p1, $lf1, $r25, $dc3, $dc7 = VLDB_POP_544_3D $p1, $lf1, $r25, $d3_3d, implicit-def $srfifo_uf
 
     ; VLDB_POP_544_fifo_1d_pop
-    $ex4, $p1, $lf1, $r25 = VLDB_POP_544_fifo_1d_pop $plfr1, $m7, implicit-def $srfifo_uf
-    $ex0, $p0, $lf0, $r24 = VLDB_POP_544_fifo_1d_pop $plfr0, $m0, implicit-def $srfifo_uf
-    $ex11, $p1, $lf1, $r25 = VLDB_POP_544_fifo_1d_pop $plfr1, $m1, implicit-def $srfifo_uf
-    $ex7, $p0, $lf0, $r24 = VLDB_POP_544_fifo_1d_pop $plfr0, $m2, implicit-def $srfifo_uf
-    $ex9, $p1, $lf1, $r25 = VLDB_POP_544_fifo_1d_pop $plfr1, $m3, implicit-def $srfifo_uf
-    $ex5, $p0, $lf0, $r24 = VLDB_POP_544_fifo_1d_pop $plfr0, $m6, implicit-def $srfifo_uf
-    $ex10, $p1, $lf1, $r25 = VLDB_POP_544_fifo_1d_pop $plfr1, $m5, implicit-def $srfifo_uf
-    $ex1, $p0, $lf0, $r24 = VLDB_POP_544_fifo_1d_pop $plfr0, $m4, implicit-def $srfifo_uf
-    $ex6, $p1, $lf1, $r25 = VLDB_POP_544_fifo_1d_pop $plfr1, $m7, implicit-def $srfifo_uf
-    $ex3, $p0, $lf0, $r24 = VLDB_POP_544_fifo_1d_pop $plfr0, $m0, implicit-def $srfifo_uf
-    $ex8, $p1, $lf1, $r25 = VLDB_POP_544_fifo_1d_pop $plfr1, $m1, implicit-def $srfifo_uf
-    $ex2, $p0, $lf0, $r24 = VLDB_POP_544_fifo_1d_pop $plfr0, $m2, implicit-def $srfifo_uf
+    $ex4, $p1, $lf1, $r25 = VLDB_POP_544_fifo_1d_pop $p1, $lf1, $r25, $m4, implicit-def $srfifo_uf
+    $ex0, $p0, $lf0, $r24 = VLDB_POP_544_fifo_1d_pop $p0, $lf0, $r24, $m6, implicit-def $srfifo_uf
+    $ex8, $p1, $lf1, $r25 = VLDB_POP_544_fifo_1d_pop $p1, $lf1, $r25, $m1, implicit-def $srfifo_uf
+    $ex10, $p0, $lf0, $r24 = VLDB_POP_544_fifo_1d_pop $p0, $lf0, $r24, $m3, implicit-def $srfifo_uf
+    $ex1, $p1, $lf1, $r25 = VLDB_POP_544_fifo_1d_pop $p1, $lf1, $r25, $m2, implicit-def $srfifo_uf
+    $ex11, $p0, $lf0, $r24 = VLDB_POP_544_fifo_1d_pop $p0, $lf0, $r24, $m7, implicit-def $srfifo_uf
+    $ex7, $p1, $lf1, $r25 = VLDB_POP_544_fifo_1d_pop $p1, $lf1, $r25, $m0, implicit-def $srfifo_uf
+    $ex2, $p0, $lf0, $r24 = VLDB_POP_544_fifo_1d_pop $p0, $lf0, $r24, $m5, implicit-def $srfifo_uf
+    $ex5, $p1, $lf1, $r25 = VLDB_POP_544_fifo_1d_pop $p1, $lf1, $r25, $m4, implicit-def $srfifo_uf
+    $ex6, $p0, $lf0, $r24 = VLDB_POP_544_fifo_1d_pop $p0, $lf0, $r24, $m6, implicit-def $srfifo_uf
+    $ex9, $p1, $lf1, $r25 = VLDB_POP_544_fifo_1d_pop $p1, $lf1, $r25, $m1, implicit-def $srfifo_uf
+    $ex3, $p0, $lf0, $r24 = VLDB_POP_544_fifo_1d_pop $p0, $lf0, $r24, $m3, implicit-def $srfifo_uf
 
     ; VLDB_POP_544_normal_pop
-    $ex3, $p0, $lf0, $r24 = VLDB_POP_544_normal_pop $plfr0, implicit-def $srfifo_uf
-    $ex5, $p1, $lf1, $r25 = VLDB_POP_544_normal_pop $plfr1, implicit-def $srfifo_uf
-    $ex2, $p0, $lf0, $r24 = VLDB_POP_544_normal_pop $plfr0, implicit-def $srfifo_uf
-    $ex8, $p1, $lf1, $r25 = VLDB_POP_544_normal_pop $plfr1, implicit-def $srfifo_uf
-    $ex0, $p0, $lf0, $r24 = VLDB_POP_544_normal_pop $plfr0, implicit-def $srfifo_uf
-    $ex1, $p1, $lf1, $r25 = VLDB_POP_544_normal_pop $plfr1, implicit-def $srfifo_uf
-    $ex11, $p0, $lf0, $r24 = VLDB_POP_544_normal_pop $plfr0, implicit-def $srfifo_uf
-    $ex7, $p1, $lf1, $r25 = VLDB_POP_544_normal_pop $plfr1, implicit-def $srfifo_uf
-    $ex6, $p0, $lf0, $r24 = VLDB_POP_544_normal_pop $plfr0, implicit-def $srfifo_uf
-    $ex9, $p1, $lf1, $r25 = VLDB_POP_544_normal_pop $plfr1, implicit-def $srfifo_uf
-    $ex10, $p0, $lf0, $r24 = VLDB_POP_544_normal_pop $plfr0, implicit-def $srfifo_uf
-    $ex4, $p1, $lf1, $r25 = VLDB_POP_544_normal_pop $plfr1, implicit-def $srfifo_uf
+    $ex9, $p0, $lf0, $r24 = VLDB_POP_544_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $ex7, $p1, $lf1, $r25 = VLDB_POP_544_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $ex4, $p0, $lf0, $r24 = VLDB_POP_544_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $ex8, $p1, $lf1, $r25 = VLDB_POP_544_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $ex0, $p0, $lf0, $r24 = VLDB_POP_544_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $ex2, $p1, $lf1, $r25 = VLDB_POP_544_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $ex6, $p0, $lf0, $r24 = VLDB_POP_544_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $ex11, $p1, $lf1, $r25 = VLDB_POP_544_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $ex10, $p0, $lf0, $r24 = VLDB_POP_544_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $ex5, $p1, $lf1, $r25 = VLDB_POP_544_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $ex1, $p0, $lf0, $r24 = VLDB_POP_544_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $ex3, $p1, $lf1, $r25 = VLDB_POP_544_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
 
     ; VLDB_POP_576_2D
-    $ex9, $p1, $lf1, $r25, $dc0 = VLDB_POP_576_2D $plfr1, $d0, implicit-def $srfifo_uf
-    $ex8, $p0, $lf0, $r24, $dc5 = VLDB_POP_576_2D $plfr0, $d5, implicit-def $srfifo_uf
-    $ex2, $p1, $lf1, $r25, $dc7 = VLDB_POP_576_2D $plfr1, $d7, implicit-def $srfifo_uf
-    $ex1, $p0, $lf0, $r24, $dc6 = VLDB_POP_576_2D $plfr0, $d6, implicit-def $srfifo_uf
-    $ex6, $p1, $lf1, $r25, $dc2 = VLDB_POP_576_2D $plfr1, $d2, implicit-def $srfifo_uf
-    $ex7, $p0, $lf0, $r24, $dc3 = VLDB_POP_576_2D $plfr0, $d3, implicit-def $srfifo_uf
-    $ex5, $p1, $lf1, $r25, $dc1 = VLDB_POP_576_2D $plfr1, $d1, implicit-def $srfifo_uf
-    $ex3, $p0, $lf0, $r24, $dc4 = VLDB_POP_576_2D $plfr0, $d4, implicit-def $srfifo_uf
-    $ex0, $p1, $lf1, $r25, $dc0 = VLDB_POP_576_2D $plfr1, $d0, implicit-def $srfifo_uf
-    $ex4, $p0, $lf0, $r24, $dc5 = VLDB_POP_576_2D $plfr0, $d5, implicit-def $srfifo_uf
-    $ex11, $p1, $lf1, $r25, $dc7 = VLDB_POP_576_2D $plfr1, $d7, implicit-def $srfifo_uf
-    $ex10, $p0, $lf0, $r24, $dc6 = VLDB_POP_576_2D $plfr0, $d6, implicit-def $srfifo_uf
+    $ex5, $p1, $lf1, $r25, $dc1 = VLDB_POP_576_2D $p1, $lf1, $r25, $d1, implicit-def $srfifo_uf
+    $ex7, $p0, $lf0, $r24, $dc0 = VLDB_POP_576_2D $p0, $lf0, $r24, $d0, implicit-def $srfifo_uf
+    $ex8, $p1, $lf1, $r25, $dc4 = VLDB_POP_576_2D $p1, $lf1, $r25, $d4, implicit-def $srfifo_uf
+    $ex11, $p0, $lf0, $r24, $dc6 = VLDB_POP_576_2D $p0, $lf0, $r24, $d6, implicit-def $srfifo_uf
+    $ex6, $p1, $lf1, $r25, $dc3 = VLDB_POP_576_2D $p1, $lf1, $r25, $d3, implicit-def $srfifo_uf
+    $ex2, $p0, $lf0, $r24, $dc2 = VLDB_POP_576_2D $p0, $lf0, $r24, $d2, implicit-def $srfifo_uf
+    $ex3, $p1, $lf1, $r25, $dc7 = VLDB_POP_576_2D $p1, $lf1, $r25, $d7, implicit-def $srfifo_uf
+    $ex10, $p0, $lf0, $r24, $dc5 = VLDB_POP_576_2D $p0, $lf0, $r24, $d5, implicit-def $srfifo_uf
+    $ex1, $p1, $lf1, $r25, $dc1 = VLDB_POP_576_2D $p1, $lf1, $r25, $d1, implicit-def $srfifo_uf
+    $ex4, $p0, $lf0, $r24, $dc0 = VLDB_POP_576_2D $p0, $lf0, $r24, $d0, implicit-def $srfifo_uf
+    $ex9, $p1, $lf1, $r25, $dc4 = VLDB_POP_576_2D $p1, $lf1, $r25, $d4, implicit-def $srfifo_uf
+    $ex0, $p0, $lf0, $r24, $dc6 = VLDB_POP_576_2D $p0, $lf0, $r24, $d6, implicit-def $srfifo_uf
 
     ; VLDB_POP_576_3D
-    $ex5, $p0, $lf0, $r24, $dc1, $dc5 = VLDB_POP_576_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $ex0, $p1, $lf1, $r25, $dc2, $dc6 = VLDB_POP_576_3D $plfr1, $d2_3d, implicit-def $srfifo_uf
-    $ex7, $p0, $lf0, $r24, $dc0, $dc4 = VLDB_POP_576_3D $plfr0, $d0_3d, implicit-def $srfifo_uf
-    $ex3, $p1, $lf1, $r25, $dc3, $dc7 = VLDB_POP_576_3D $plfr1, $d3_3d, implicit-def $srfifo_uf
-    $ex11, $p0, $lf0, $r24, $dc1, $dc5 = VLDB_POP_576_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $ex8, $p1, $lf1, $r25, $dc2, $dc6 = VLDB_POP_576_3D $plfr1, $d2_3d, implicit-def $srfifo_uf
-    $ex2, $p0, $lf0, $r24, $dc0, $dc4 = VLDB_POP_576_3D $plfr0, $d0_3d, implicit-def $srfifo_uf
-    $ex4, $p1, $lf1, $r25, $dc3, $dc7 = VLDB_POP_576_3D $plfr1, $d3_3d, implicit-def $srfifo_uf
-    $ex10, $p0, $lf0, $r24, $dc1, $dc5 = VLDB_POP_576_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $ex1, $p1, $lf1, $r25, $dc2, $dc6 = VLDB_POP_576_3D $plfr1, $d2_3d, implicit-def $srfifo_uf
-    $ex9, $p0, $lf0, $r24, $dc0, $dc4 = VLDB_POP_576_3D $plfr0, $d0_3d, implicit-def $srfifo_uf
-    $ex6, $p1, $lf1, $r25, $dc3, $dc7 = VLDB_POP_576_3D $plfr1, $d3_3d, implicit-def $srfifo_uf
+    $ex8, $p0, $lf0, $r24, $dc1, $dc5 = VLDB_POP_576_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $ex10, $p1, $lf1, $r25, $dc0, $dc4 = VLDB_POP_576_3D $p1, $lf1, $r25, $d0_3d, implicit-def $srfifo_uf
+    $ex3, $p0, $lf0, $r24, $dc2, $dc6 = VLDB_POP_576_3D $p0, $lf0, $r24, $d2_3d, implicit-def $srfifo_uf
+    $ex4, $p1, $lf1, $r25, $dc3, $dc7 = VLDB_POP_576_3D $p1, $lf1, $r25, $d3_3d, implicit-def $srfifo_uf
+    $ex5, $p0, $lf0, $r24, $dc1, $dc5 = VLDB_POP_576_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $ex2, $p1, $lf1, $r25, $dc0, $dc4 = VLDB_POP_576_3D $p1, $lf1, $r25, $d0_3d, implicit-def $srfifo_uf
+    $ex7, $p0, $lf0, $r24, $dc2, $dc6 = VLDB_POP_576_3D $p0, $lf0, $r24, $d2_3d, implicit-def $srfifo_uf
+    $ex9, $p1, $lf1, $r25, $dc3, $dc7 = VLDB_POP_576_3D $p1, $lf1, $r25, $d3_3d, implicit-def $srfifo_uf
+    $ex0, $p0, $lf0, $r24, $dc1, $dc5 = VLDB_POP_576_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $ex1, $p1, $lf1, $r25, $dc0, $dc4 = VLDB_POP_576_3D $p1, $lf1, $r25, $d0_3d, implicit-def $srfifo_uf
+    $ex6, $p0, $lf0, $r24, $dc2, $dc6 = VLDB_POP_576_3D $p0, $lf0, $r24, $d2_3d, implicit-def $srfifo_uf
+    $ex11, $p1, $lf1, $r25, $dc3, $dc7 = VLDB_POP_576_3D $p1, $lf1, $r25, $d3_3d, implicit-def $srfifo_uf
 
     ; VLDB_POP_576_fifo_1d_pop
-    $ex3, $p1, $lf1, $r25 = VLDB_POP_576_fifo_1d_pop $plfr1, $m4, implicit-def $srfifo_uf
-    $ex2, $p0, $lf0, $r24 = VLDB_POP_576_fifo_1d_pop $plfr0, $m5, implicit-def $srfifo_uf
-    $ex5, $p1, $lf1, $r25 = VLDB_POP_576_fifo_1d_pop $plfr1, $m2, implicit-def $srfifo_uf
-    $ex6, $p0, $lf0, $r24 = VLDB_POP_576_fifo_1d_pop $plfr0, $m3, implicit-def $srfifo_uf
-    $ex1, $p1, $lf1, $r25 = VLDB_POP_576_fifo_1d_pop $plfr1, $m1, implicit-def $srfifo_uf
-    $ex0, $p0, $lf0, $r24 = VLDB_POP_576_fifo_1d_pop $plfr0, $m6, implicit-def $srfifo_uf
-    $ex10, $p1, $lf1, $r25 = VLDB_POP_576_fifo_1d_pop $plfr1, $m0, implicit-def $srfifo_uf
-    $ex8, $p0, $lf0, $r24 = VLDB_POP_576_fifo_1d_pop $plfr0, $m7, implicit-def $srfifo_uf
-    $ex11, $p1, $lf1, $r25 = VLDB_POP_576_fifo_1d_pop $plfr1, $m4, implicit-def $srfifo_uf
-    $ex7, $p0, $lf0, $r24 = VLDB_POP_576_fifo_1d_pop $plfr0, $m5, implicit-def $srfifo_uf
-    $ex4, $p1, $lf1, $r25 = VLDB_POP_576_fifo_1d_pop $plfr1, $m2, implicit-def $srfifo_uf
-    $ex9, $p0, $lf0, $r24 = VLDB_POP_576_fifo_1d_pop $plfr0, $m3, implicit-def $srfifo_uf
+    $ex0, $p1, $lf1, $r25 = VLDB_POP_576_fifo_1d_pop $p1, $lf1, $r25, $m4, implicit-def $srfifo_uf
+    $ex4, $p0, $lf0, $r24 = VLDB_POP_576_fifo_1d_pop $p0, $lf0, $r24, $m6, implicit-def $srfifo_uf
+    $ex8, $p1, $lf1, $r25 = VLDB_POP_576_fifo_1d_pop $p1, $lf1, $r25, $m3, implicit-def $srfifo_uf
+    $ex6, $p0, $lf0, $r24 = VLDB_POP_576_fifo_1d_pop $p0, $lf0, $r24, $m0, implicit-def $srfifo_uf
+    $ex10, $p1, $lf1, $r25 = VLDB_POP_576_fifo_1d_pop $p1, $lf1, $r25, $m2, implicit-def $srfifo_uf
+    $ex9, $p0, $lf0, $r24 = VLDB_POP_576_fifo_1d_pop $p0, $lf0, $r24, $m1, implicit-def $srfifo_uf
+    $ex7, $p1, $lf1, $r25 = VLDB_POP_576_fifo_1d_pop $p1, $lf1, $r25, $m5, implicit-def $srfifo_uf
+    $ex11, $p0, $lf0, $r24 = VLDB_POP_576_fifo_1d_pop $p0, $lf0, $r24, $m7, implicit-def $srfifo_uf
+    $ex2, $p1, $lf1, $r25 = VLDB_POP_576_fifo_1d_pop $p1, $lf1, $r25, $m4, implicit-def $srfifo_uf
+    $ex1, $p0, $lf0, $r24 = VLDB_POP_576_fifo_1d_pop $p0, $lf0, $r24, $m6, implicit-def $srfifo_uf
+    $ex5, $p1, $lf1, $r25 = VLDB_POP_576_fifo_1d_pop $p1, $lf1, $r25, $m3, implicit-def $srfifo_uf
+    $ex3, $p0, $lf0, $r24 = VLDB_POP_576_fifo_1d_pop $p0, $lf0, $r24, $m0, implicit-def $srfifo_uf
 
     ; VLDB_POP_576_normal_pop
-    $ex2, $p1, $lf1, $r25 = VLDB_POP_576_normal_pop $plfr1, implicit-def $srfifo_uf
-    $ex9, $p0, $lf0, $r24 = VLDB_POP_576_normal_pop $plfr0, implicit-def $srfifo_uf
-    $ex5, $p1, $lf1, $r25 = VLDB_POP_576_normal_pop $plfr1, implicit-def $srfifo_uf
-    $ex8, $p0, $lf0, $r24 = VLDB_POP_576_normal_pop $plfr0, implicit-def $srfifo_uf
-    $ex4, $p1, $lf1, $r25 = VLDB_POP_576_normal_pop $plfr1, implicit-def $srfifo_uf
-    $ex10, $p0, $lf0, $r24 = VLDB_POP_576_normal_pop $plfr0, implicit-def $srfifo_uf
-    $ex3, $p1, $lf1, $r25 = VLDB_POP_576_normal_pop $plfr1, implicit-def $srfifo_uf
-    $ex11, $p0, $lf0, $r24 = VLDB_POP_576_normal_pop $plfr0, implicit-def $srfifo_uf
-    $ex0, $p1, $lf1, $r25 = VLDB_POP_576_normal_pop $plfr1, implicit-def $srfifo_uf
-    $ex6, $p0, $lf0, $r24 = VLDB_POP_576_normal_pop $plfr0, implicit-def $srfifo_uf
-    $ex1, $p1, $lf1, $r25 = VLDB_POP_576_normal_pop $plfr1, implicit-def $srfifo_uf
-    $ex7, $p0, $lf0, $r24 = VLDB_POP_576_normal_pop $plfr0, implicit-def $srfifo_uf
+    $ex3, $p1, $lf1, $r25 = VLDB_POP_576_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $ex8, $p0, $lf0, $r24 = VLDB_POP_576_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $ex6, $p1, $lf1, $r25 = VLDB_POP_576_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $ex2, $p0, $lf0, $r24 = VLDB_POP_576_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $ex7, $p1, $lf1, $r25 = VLDB_POP_576_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $ex11, $p0, $lf0, $r24 = VLDB_POP_576_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $ex10, $p1, $lf1, $r25 = VLDB_POP_576_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $ex0, $p0, $lf0, $r24 = VLDB_POP_576_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $ex4, $p1, $lf1, $r25 = VLDB_POP_576_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $ex5, $p0, $lf0, $r24 = VLDB_POP_576_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $ex9, $p1, $lf1, $r25 = VLDB_POP_576_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $ex1, $p0, $lf0, $r24 = VLDB_POP_576_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
 
     ; VLDB_POP_640_2D
-    $qx2, $p0, $lf0, $r24, $dc4 = VLDB_POP_640_2D $plfr0, $d4, implicit-def $srfifo_uf
-    $qx3, $p1, $lf1, $r25, $dc3 = VLDB_POP_640_2D $plfr1, $d3, implicit-def $srfifo_uf
-    $qx0, $p0, $lf0, $r24, $dc5 = VLDB_POP_640_2D $plfr0, $d5, implicit-def $srfifo_uf
-    $qx1, $p1, $lf1, $r25, $dc0 = VLDB_POP_640_2D $plfr1, $d0, implicit-def $srfifo_uf
-    $qx2, $p0, $lf0, $r24, $dc2 = VLDB_POP_640_2D $plfr0, $d2, implicit-def $srfifo_uf
-    $qx3, $p1, $lf1, $r25, $dc7 = VLDB_POP_640_2D $plfr1, $d7, implicit-def $srfifo_uf
-    $qx0, $p0, $lf0, $r24, $dc1 = VLDB_POP_640_2D $plfr0, $d1, implicit-def $srfifo_uf
-    $qx1, $p1, $lf1, $r25, $dc6 = VLDB_POP_640_2D $plfr1, $d6, implicit-def $srfifo_uf
+    $qx2, $p0, $lf0, $r24, $dc6 = VLDB_POP_640_2D $p0, $lf0, $r24, $d6, implicit-def $srfifo_uf
+    $qx3, $p1, $lf1, $r25, $dc0 = VLDB_POP_640_2D $p1, $lf1, $r25, $d0, implicit-def $srfifo_uf
+    $qx0, $p0, $lf0, $r24, $dc5 = VLDB_POP_640_2D $p0, $lf0, $r24, $d5, implicit-def $srfifo_uf
+    $qx1, $p1, $lf1, $r25, $dc7 = VLDB_POP_640_2D $p1, $lf1, $r25, $d7, implicit-def $srfifo_uf
+    $qx2, $p0, $lf0, $r24, $dc3 = VLDB_POP_640_2D $p0, $lf0, $r24, $d3, implicit-def $srfifo_uf
+    $qx3, $p1, $lf1, $r25, $dc2 = VLDB_POP_640_2D $p1, $lf1, $r25, $d2, implicit-def $srfifo_uf
+    $qx0, $p0, $lf0, $r24, $dc4 = VLDB_POP_640_2D $p0, $lf0, $r24, $d4, implicit-def $srfifo_uf
+    $qx1, $p1, $lf1, $r25, $dc1 = VLDB_POP_640_2D $p1, $lf1, $r25, $d1, implicit-def $srfifo_uf
 
     ; VLDB_POP_640_3D
-    $qx0, $p1, $lf1, $r25, $dc1, $dc5 = VLDB_POP_640_3D $plfr1, $d1_3d, implicit-def $srfifo_uf
-    $qx3, $p0, $lf0, $r24, $dc3, $dc7 = VLDB_POP_640_3D $plfr0, $d3_3d, implicit-def $srfifo_uf
-    $qx1, $p1, $lf1, $r25, $dc2, $dc6 = VLDB_POP_640_3D $plfr1, $d2_3d, implicit-def $srfifo_uf
-    $qx2, $p0, $lf0, $r24, $dc0, $dc4 = VLDB_POP_640_3D $plfr0, $d0_3d, implicit-def $srfifo_uf
+    $qx1, $p1, $lf1, $r25, $dc0, $dc4 = VLDB_POP_640_3D $p1, $lf1, $r25, $d0_3d, implicit-def $srfifo_uf
+    $qx2, $p0, $lf0, $r24, $dc3, $dc7 = VLDB_POP_640_3D $p0, $lf0, $r24, $d3_3d, implicit-def $srfifo_uf
+    $qx3, $p1, $lf1, $r25, $dc1, $dc5 = VLDB_POP_640_3D $p1, $lf1, $r25, $d1_3d, implicit-def $srfifo_uf
+    $qx0, $p0, $lf0, $r24, $dc2, $dc6 = VLDB_POP_640_3D $p0, $lf0, $r24, $d2_3d, implicit-def $srfifo_uf
 
     ; VLDB_POP_640_fifo_1d_pop
-    $qx3, $p0, $lf0, $r24 = VLDB_POP_640_fifo_1d_pop $plfr0, $m6, implicit-def $srfifo_uf
-    $qx1, $p1, $lf1, $r25 = VLDB_POP_640_fifo_1d_pop $plfr1, $m0, implicit-def $srfifo_uf
-    $qx2, $p0, $lf0, $r24 = VLDB_POP_640_fifo_1d_pop $plfr0, $m3, implicit-def $srfifo_uf
-    $qx0, $p1, $lf1, $r25 = VLDB_POP_640_fifo_1d_pop $plfr1, $m4, implicit-def $srfifo_uf
-    $qx3, $p0, $lf0, $r24 = VLDB_POP_640_fifo_1d_pop $plfr0, $m1, implicit-def $srfifo_uf
-    $qx1, $p1, $lf1, $r25 = VLDB_POP_640_fifo_1d_pop $plfr1, $m2, implicit-def $srfifo_uf
-    $qx2, $p0, $lf0, $r24 = VLDB_POP_640_fifo_1d_pop $plfr0, $m7, implicit-def $srfifo_uf
-    $qx0, $p1, $lf1, $r25 = VLDB_POP_640_fifo_1d_pop $plfr1, $m5, implicit-def $srfifo_uf
+    $qx2, $p0, $lf0, $r24 = VLDB_POP_640_fifo_1d_pop $p0, $lf0, $r24, $m5, implicit-def $srfifo_uf
+    $qx3, $p1, $lf1, $r25 = VLDB_POP_640_fifo_1d_pop $p1, $lf1, $r25, $m0, implicit-def $srfifo_uf
+    $qx0, $p0, $lf0, $r24 = VLDB_POP_640_fifo_1d_pop $p0, $lf0, $r24, $m3, implicit-def $srfifo_uf
+    $qx1, $p1, $lf1, $r25 = VLDB_POP_640_fifo_1d_pop $p1, $lf1, $r25, $m6, implicit-def $srfifo_uf
+    $qx2, $p0, $lf0, $r24 = VLDB_POP_640_fifo_1d_pop $p0, $lf0, $r24, $m4, implicit-def $srfifo_uf
+    $qx3, $p1, $lf1, $r25 = VLDB_POP_640_fifo_1d_pop $p1, $lf1, $r25, $m7, implicit-def $srfifo_uf
+    $qx0, $p0, $lf0, $r24 = VLDB_POP_640_fifo_1d_pop $p0, $lf0, $r24, $m2, implicit-def $srfifo_uf
+    $qx1, $p1, $lf1, $r25 = VLDB_POP_640_fifo_1d_pop $p1, $lf1, $r25, $m1, implicit-def $srfifo_uf
 
     ; VLDB_POP_640_normal_pop
-    $qx2, $p1, $lf1, $r25 = VLDB_POP_640_normal_pop $plfr1, implicit-def $srfifo_uf
-    $qx1, $p0, $lf0, $r24 = VLDB_POP_640_normal_pop $plfr0, implicit-def $srfifo_uf
-    $qx3, $p1, $lf1, $r25 = VLDB_POP_640_normal_pop $plfr1, implicit-def $srfifo_uf
-    $qx0, $p0, $lf0, $r24 = VLDB_POP_640_normal_pop $plfr0, implicit-def $srfifo_uf
+    $qx0, $p1, $lf1, $r25 = VLDB_POP_640_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $qx3, $p0, $lf0, $r24 = VLDB_POP_640_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $qx2, $p1, $lf1, $r25 = VLDB_POP_640_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $qx1, $p0, $lf0, $r24 = VLDB_POP_640_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
 
     ; VLDB_POP_704_2D
-    $qex0, $p1, $lf1, $r25, $dc2 = VLDB_POP_704_2D $plfr1, $d2, implicit-def $srfifo_uf
-    $qex1, $p0, $lf0, $r24, $dc3 = VLDB_POP_704_2D $plfr0, $d3, implicit-def $srfifo_uf
-    $qex2, $p1, $lf1, $r25, $dc0 = VLDB_POP_704_2D $plfr1, $d0, implicit-def $srfifo_uf
-    $qex3, $p0, $lf0, $r24, $dc6 = VLDB_POP_704_2D $plfr0, $d6, implicit-def $srfifo_uf
-    $qex0, $p1, $lf1, $r25, $dc1 = VLDB_POP_704_2D $plfr1, $d1, implicit-def $srfifo_uf
-    $qex1, $p0, $lf0, $r24, $dc4 = VLDB_POP_704_2D $plfr0, $d4, implicit-def $srfifo_uf
-    $qex2, $p1, $lf1, $r25, $dc5 = VLDB_POP_704_2D $plfr1, $d5, implicit-def $srfifo_uf
-    $qex3, $p0, $lf0, $r24, $dc7 = VLDB_POP_704_2D $plfr0, $d7, implicit-def $srfifo_uf
+    $qex0, $p1, $lf1, $r25, $dc1 = VLDB_POP_704_2D $p1, $lf1, $r25, $d1, implicit-def $srfifo_uf
+    $qex1, $p0, $lf0, $r24, $dc3 = VLDB_POP_704_2D $p0, $lf0, $r24, $d3, implicit-def $srfifo_uf
+    $qex3, $p1, $lf1, $r25, $dc4 = VLDB_POP_704_2D $p1, $lf1, $r25, $d4, implicit-def $srfifo_uf
+    $qex2, $p0, $lf0, $r24, $dc7 = VLDB_POP_704_2D $p0, $lf0, $r24, $d7, implicit-def $srfifo_uf
+    $qex0, $p1, $lf1, $r25, $dc2 = VLDB_POP_704_2D $p1, $lf1, $r25, $d2, implicit-def $srfifo_uf
+    $qex1, $p0, $lf0, $r24, $dc6 = VLDB_POP_704_2D $p0, $lf0, $r24, $d6, implicit-def $srfifo_uf
+    $qex3, $p1, $lf1, $r25, $dc5 = VLDB_POP_704_2D $p1, $lf1, $r25, $d5, implicit-def $srfifo_uf
+    $qex2, $p0, $lf0, $r24, $dc0 = VLDB_POP_704_2D $p0, $lf0, $r24, $d0, implicit-def $srfifo_uf
 
     ; VLDB_POP_704_3D
-    $qex3, $p1, $lf1, $r25, $dc0, $dc4 = VLDB_POP_704_3D $plfr1, $d0_3d, implicit-def $srfifo_uf
-    $qex0, $p0, $lf0, $r24, $dc3, $dc7 = VLDB_POP_704_3D $plfr0, $d3_3d, implicit-def $srfifo_uf
-    $qex2, $p1, $lf1, $r25, $dc2, $dc6 = VLDB_POP_704_3D $plfr1, $d2_3d, implicit-def $srfifo_uf
-    $qex1, $p0, $lf0, $r24, $dc1, $dc5 = VLDB_POP_704_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
+    $qex2, $p1, $lf1, $r25, $dc2, $dc6 = VLDB_POP_704_3D $p1, $lf1, $r25, $d2_3d, implicit-def $srfifo_uf
+    $qex1, $p0, $lf0, $r24, $dc0, $dc4 = VLDB_POP_704_3D $p0, $lf0, $r24, $d0_3d, implicit-def $srfifo_uf
+    $qex0, $p1, $lf1, $r25, $dc1, $dc5 = VLDB_POP_704_3D $p1, $lf1, $r25, $d1_3d, implicit-def $srfifo_uf
+    $qex3, $p0, $lf0, $r24, $dc3, $dc7 = VLDB_POP_704_3D $p0, $lf0, $r24, $d3_3d, implicit-def $srfifo_uf
 
     ; VLDB_POP_704_fifo_1d_pop
-    $qex2, $p1, $lf1, $r25 = VLDB_POP_704_fifo_1d_pop $plfr1, $m2, implicit-def $srfifo_uf
-    $qex0, $p0, $lf0, $r24 = VLDB_POP_704_fifo_1d_pop $plfr0, $m6, implicit-def $srfifo_uf
-    $qex3, $p1, $lf1, $r25 = VLDB_POP_704_fifo_1d_pop $plfr1, $m5, implicit-def $srfifo_uf
-    $qex1, $p0, $lf0, $r24 = VLDB_POP_704_fifo_1d_pop $plfr0, $m4, implicit-def $srfifo_uf
-    $qex2, $p1, $lf1, $r25 = VLDB_POP_704_fifo_1d_pop $plfr1, $m0, implicit-def $srfifo_uf
-    $qex0, $p0, $lf0, $r24 = VLDB_POP_704_fifo_1d_pop $plfr0, $m3, implicit-def $srfifo_uf
-    $qex3, $p1, $lf1, $r25 = VLDB_POP_704_fifo_1d_pop $plfr1, $m1, implicit-def $srfifo_uf
-    $qex1, $p0, $lf0, $r24 = VLDB_POP_704_fifo_1d_pop $plfr0, $m7, implicit-def $srfifo_uf
+    $qex1, $p1, $lf1, $r25 = VLDB_POP_704_fifo_1d_pop $p1, $lf1, $r25, $m1, implicit-def $srfifo_uf
+    $qex3, $p0, $lf0, $r24 = VLDB_POP_704_fifo_1d_pop $p0, $lf0, $r24, $m4, implicit-def $srfifo_uf
+    $qex2, $p1, $lf1, $r25 = VLDB_POP_704_fifo_1d_pop $p1, $lf1, $r25, $m5, implicit-def $srfifo_uf
+    $qex0, $p0, $lf0, $r24 = VLDB_POP_704_fifo_1d_pop $p0, $lf0, $r24, $m7, implicit-def $srfifo_uf
+    $qex1, $p1, $lf1, $r25 = VLDB_POP_704_fifo_1d_pop $p1, $lf1, $r25, $m0, implicit-def $srfifo_uf
+    $qex3, $p0, $lf0, $r24 = VLDB_POP_704_fifo_1d_pop $p0, $lf0, $r24, $m2, implicit-def $srfifo_uf
+    $qex2, $p1, $lf1, $r25 = VLDB_POP_704_fifo_1d_pop $p1, $lf1, $r25, $m6, implicit-def $srfifo_uf
+    $qex0, $p0, $lf0, $r24 = VLDB_POP_704_fifo_1d_pop $p0, $lf0, $r24, $m3, implicit-def $srfifo_uf
 
     ; VLDB_POP_704_normal_pop
-    $qex1, $p1, $lf1, $r25 = VLDB_POP_704_normal_pop $plfr1, implicit-def $srfifo_uf
-    $qex0, $p0, $lf0, $r24 = VLDB_POP_704_normal_pop $plfr0, implicit-def $srfifo_uf
-    $qex3, $p1, $lf1, $r25 = VLDB_POP_704_normal_pop $plfr1, implicit-def $srfifo_uf
-    $qex2, $p0, $lf0, $r24 = VLDB_POP_704_normal_pop $plfr0, implicit-def $srfifo_uf
+    $qex2, $p1, $lf1, $r25 = VLDB_POP_704_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $qex3, $p0, $lf0, $r24 = VLDB_POP_704_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
+    $qex0, $p1, $lf1, $r25 = VLDB_POP_704_normal_pop $p1, $lf1, $r25, implicit-def $srfifo_uf
+    $qex1, $p0, $lf0, $r24 = VLDB_POP_704_normal_pop $p0, $lf0, $r24, implicit-def $srfifo_uf
 
 ...
 
 # CHECK: 0: 98 0b 14 01 vlda.fill.512 [p1, lf1, r25]
 # CHECK: 4: 98 0b 14 00 vlda.fill.512 [p0, lf0, r24]
-# CHECK: 8: 98 4b f2 02 vlda.pop.512.2d x9, [p0, lf0, r24, d7]
-# CHECK: c: 98 8b b2 03 vlda.pop.512.2d x10, [p1, lf1, r25, d5]
+# CHECK: 8: 98 4b 72 02 vlda.pop.512.2d x9, [p0, lf0, r24, d3]
+# CHECK: c: 98 8b f2 03 vlda.pop.512.2d x10, [p1, lf1, r25, d7]
 # CHECK: 10: 98 0b 30 02 vlda.pop.512.2d x0, [p0, lf0, r24, d1]
-# CHECK: 14: 98 0b 11 03 vlda.pop.512.2d x4, [p1, lf1, r25, d0]
-# CHECK: 18: 98 4b 90 02 vlda.pop.512.2d x1, [p0, lf0, r24, d4]
-# CHECK: 1c: 98 8b 71 03 vlda.pop.512.2d x6, [p1, lf1, r25, d3]
-# CHECK: 20: 98 cb d0 02 vlda.pop.512.2d x3, [p0, lf0, r24, d6]
-# CHECK: 24: 98 cb 51 03 vlda.pop.512.2d x7, [p1, lf1, r25, d2]
-# CHECK: 28: 98 4b f1 02 vlda.pop.512.2d x5, [p0, lf0, r24, d7]
-# CHECK: 2c: 98 cb b2 03 vlda.pop.512.2d x11, [p1, lf1, r25, d5]
+# CHECK: 14: 98 0b b1 03 vlda.pop.512.2d x4, [p1, lf1, r25, d5]
+# CHECK: 18: 98 4b 10 02 vlda.pop.512.2d x1, [p0, lf0, r24, d0]
+# CHECK: 1c: 98 8b 51 03 vlda.pop.512.2d x6, [p1, lf1, r25, d2]
+# CHECK: 20: 98 cb 90 02 vlda.pop.512.2d x3, [p0, lf0, r24, d4]
+# CHECK: 24: 98 cb d1 03 vlda.pop.512.2d x7, [p1, lf1, r25, d6]
+# CHECK: 28: 98 4b 71 02 vlda.pop.512.2d x5, [p0, lf0, r24, d3]
+# CHECK: 2c: 98 cb f2 03 vlda.pop.512.2d x11, [p1, lf1, r25, d7]
 # CHECK: 30: 98 8b 30 02 vlda.pop.512.2d x2, [p0, lf0, r24, d1]
-# CHECK: 34: 98 0b 12 03 vlda.pop.512.2d x8, [p1, lf1, r25, d0]
-# CHECK: 38: 98 4b 40 06 vlda.pop.512.3d x1, [p0, lf0, r24, d2]
-# CHECK: 3c: 98 cb 62 07 vlda.pop.512.3d x11, [p1, lf1, r25, d3]
-# CHECK: 40: 98 8b 22 06 vlda.pop.512.3d x10, [p0, lf0, r24, d1]
-# CHECK: 44: 98 cb 00 07 vlda.pop.512.3d x3, [p1, lf1, r25, d0]
-# CHECK: 48: 98 4b 41 06 vlda.pop.512.3d x5, [p0, lf0, r24, d2]
-# CHECK: 4c: 98 8b 60 07 vlda.pop.512.3d x2, [p1, lf1, r25, d3]
+# CHECK: 34: 98 0b b2 03 vlda.pop.512.2d x8, [p1, lf1, r25, d5]
+# CHECK: 38: 98 8b 62 06 vlda.pop.512.3d x10, [p0, lf0, r24, d3]
+# CHECK: 3c: 98 4b 00 07 vlda.pop.512.3d x1, [p1, lf1, r25, d0]
+# CHECK: 40: 98 0b 22 06 vlda.pop.512.3d x8, [p0, lf0, r24, d1]
+# CHECK: 44: 98 4b 41 07 vlda.pop.512.3d x5, [p1, lf1, r25, d2]
+# CHECK: 48: 98 cb 62 06 vlda.pop.512.3d x11, [p0, lf0, r24, d3]
+# CHECK: 4c: 98 0b 00 07 vlda.pop.512.3d x0, [p1, lf1, r25, d0]
 # CHECK: 50: 98 cb 21 06 vlda.pop.512.3d x7, [p0, lf0, r24, d1]
-# CHECK: 54: 98 0b 02 07 vlda.pop.512.3d x8, [p1, lf1, r25, d0]
-# CHECK: 58: 98 8b 41 06 vlda.pop.512.3d x6, [p0, lf0, r24, d2]
-# CHECK: 5c: 98 4b 62 07 vlda.pop.512.3d x9, [p1, lf1, r25, d3]
-# CHECK: 60: 98 0b 20 06 vlda.pop.512.3d x0, [p0, lf0, r24, d1]
-# CHECK: 64: 98 0b 01 07 vlda.pop.512.3d x4, [p1, lf1, r25, d0]
-# CHECK: 68: 98 8b 69 04 vlda.pop.512 x6, [p0, lf0, r24, m3]
-# CHECK: 6c: 98 0b 88 05 vlda.pop.512 x0, [p1, lf1, r25, m4]
-# CHECK: 70: 98 0b aa 04 vlda.pop.512 x8, [p0, lf0, r24, m5]
-# CHECK: 74: 98 4b 49 05 vlda.pop.512 x5, [p1, lf1, r25, m2]
-# CHECK: 78: 98 8b e8 04 vlda.pop.512 x2, [p0, lf0, r24, m7]
-# CHECK: 7c: 98 cb 0a 05 vlda.pop.512 x11, [p1, lf1, r25, m0]
-# CHECK: 80: 98 cb c9 04 vlda.pop.512 x7, [p0, lf0, r24, m6]
-# CHECK: 84: 98 8b 2a 05 vlda.pop.512 x10, [p1, lf1, r25, m1]
-# CHECK: 88: 98 4b 6a 04 vlda.pop.512 x9, [p0, lf0, r24, m3]
-# CHECK: 8c: 98 0b 89 05 vlda.pop.512 x4, [p1, lf1, r25, m4]
-# CHECK: 90: 98 4b a8 04 vlda.pop.512 x1, [p0, lf0, r24, m5]
-# CHECK: 94: 98 cb 48 05 vlda.pop.512 x3, [p1, lf1, r25, m2]
-# CHECK: 98: 98 cb 00 00 vlda.pop.512 x3, [p0, lf0, r24]
-# CHECK: 9c: 98 cb 01 01 vlda.pop.512 x7, [p1, lf1, r25]
-# CHECK: a0: 98 4b 01 00 vlda.pop.512 x5, [p0, lf0, r24]
-# CHECK: a4: 98 0b 02 01 vlda.pop.512 x8, [p1, lf1, r25]
-# CHECK: a8: 98 8b 02 00 vlda.pop.512 x10, [p0, lf0, r24]
-# CHECK: ac: 98 cb 02 01 vlda.pop.512 x11, [p1, lf1, r25]
+# CHECK: 54: 98 8b 40 07 vlda.pop.512.3d x2, [p1, lf1, r25, d2]
+# CHECK: 58: 98 cb 60 06 vlda.pop.512.3d x3, [p0, lf0, r24, d3]
+# CHECK: 5c: 98 0b 01 07 vlda.pop.512.3d x4, [p1, lf1, r25, d0]
+# CHECK: 60: 98 8b 21 06 vlda.pop.512.3d x6, [p0, lf0, r24, d1]
+# CHECK: 64: 98 4b 42 07 vlda.pop.512.3d x9, [p1, lf1, r25, d2]
+# CHECK: 68: 98 8b 09 04 vlda.pop.512 x6, [p0, lf0, r24, m0]
+# CHECK: 6c: 98 8b 88 05 vlda.pop.512 x2, [p1, lf1, r25, m4]
+# CHECK: 70: 98 8b aa 04 vlda.pop.512 x10, [p0, lf0, r24, m5]
+# CHECK: 74: 98 cb c9 05 vlda.pop.512 x7, [p1, lf1, r25, m6]
+# CHECK: 78: 98 0b 68 04 vlda.pop.512 x0, [p0, lf0, r24, m3]
+# CHECK: 7c: 98 cb ea 05 vlda.pop.512 x11, [p1, lf1, r25, m7]
+# CHECK: 80: 98 4b 28 04 vlda.pop.512 x1, [p0, lf0, r24, m1]
+# CHECK: 84: 98 cb 48 05 vlda.pop.512 x3, [p1, lf1, r25, m2]
+# CHECK: 88: 98 4b 0a 04 vlda.pop.512 x9, [p0, lf0, r24, m0]
+# CHECK: 8c: 98 0b 8a 05 vlda.pop.512 x8, [p1, lf1, r25, m4]
+# CHECK: 90: 98 4b a9 04 vlda.pop.512 x5, [p0, lf0, r24, m5]
+# CHECK: 94: 98 0b c9 05 vlda.pop.512 x4, [p1, lf1, r25, m6]
+# CHECK: 98: 98 8b 02 00 vlda.pop.512 x10, [p0, lf0, r24]
+# CHECK: 9c: 98 cb 02 01 vlda.pop.512 x11, [p1, lf1, r25]
+# CHECK: a0: 98 cb 01 00 vlda.pop.512 x7, [p0, lf0, r24]
+# CHECK: a4: 98 8b 00 01 vlda.pop.512 x2, [p1, lf1, r25]
+# CHECK: a8: 98 4b 01 00 vlda.pop.512 x5, [p0, lf0, r24]
+# CHECK: ac: 98 cb 00 01 vlda.pop.512 x3, [p1, lf1, r25]
 # CHECK: b0: 98 4b 00 00 vlda.pop.512 x1, [p0, lf0, r24]
-# CHECK: b4: 98 8b 00 01 vlda.pop.512 x2, [p1, lf1, r25]
-# CHECK: b8: 98 4b 02 00 vlda.pop.512 x9, [p0, lf0, r24]
-# CHECK: bc: 98 8b 01 01 vlda.pop.512 x6, [p1, lf1, r25]
-# CHECK: c0: 98 0b 01 00 vlda.pop.512 x4, [p0, lf0, r24]
-# CHECK: c4: 98 0b 00 01 vlda.pop.512 x0, [p1, lf1, r25]
-# CHECK: c8: 98 cb 0a 00 vlda.pop.544.2d ex11, [p0, lf0, r24, d0]
-# CHECK: cc: 98 0b 48 01 vlda.pop.544.2d ex0, [p1, lf1, r25, d2]
-# CHECK: d0: 98 4b a9 00 vlda.pop.544.2d ex5, [p0, lf0, r24, d5]
-# CHECK: d4: 98 8b 29 01 vlda.pop.544.2d ex6, [p1, lf1, r25, d1]
-# CHECK: d8: 98 0b e9 00 vlda.pop.544.2d ex4, [p0, lf0, r24, d7]
-# CHECK: dc: 98 cb 89 01 vlda.pop.544.2d ex7, [p1, lf1, r25, d4]
-# CHECK: e0: 98 4b 6a 00 vlda.pop.544.2d ex9, [p0, lf0, r24, d3]
-# CHECK: e4: 98 0b ca 01 vlda.pop.544.2d ex8, [p1, lf1, r25, d6]
-# CHECK: e8: 98 8b 0a 00 vlda.pop.544.2d ex10, [p0, lf0, r24, d0]
-# CHECK: ec: 98 4b 48 01 vlda.pop.544.2d ex1, [p1, lf1, r25, d2]
-# CHECK: f0: 98 8b a8 00 vlda.pop.544.2d ex2, [p0, lf0, r24, d5]
-# CHECK: f4: 98 cb 28 01 vlda.pop.544.2d ex3, [p1, lf1, r25, d1]
-# CHECK: f8: 98 8b 51 04 vlda.pop.544.3d ex6, [p0, lf0, r24, d2]
-# CHECK: fc: 98 cb 12 05 vlda.pop.544.3d ex11, [p1, lf1, r25, d0]
-# CHECK: 100: 98 4b 31 04 vlda.pop.544.3d ex5, [p0, lf0, r24, d1]
-# CHECK: 104: 98 4b 70 05 vlda.pop.544.3d ex1, [p1, lf1, r25, d3]
-# CHECK: 108: 98 cb 50 04 vlda.pop.544.3d ex3, [p0, lf0, r24, d2]
-# CHECK: 10c: 98 4b 12 05 vlda.pop.544.3d ex9, [p1, lf1, r25, d0]
-# CHECK: 110: 98 cb 31 04 vlda.pop.544.3d ex7, [p0, lf0, r24, d1]
-# CHECK: 114: 98 8b 72 05 vlda.pop.544.3d ex10, [p1, lf1, r25, d3]
-# CHECK: 118: 98 0b 52 04 vlda.pop.544.3d ex8, [p0, lf0, r24, d2]
-# CHECK: 11c: 98 8b 10 05 vlda.pop.544.3d ex2, [p1, lf1, r25, d0]
-# CHECK: 120: 98 0b 30 04 vlda.pop.544.3d ex0, [p0, lf0, r24, d1]
-# CHECK: 124: 98 0b 71 05 vlda.pop.544.3d ex4, [p1, lf1, r25, d3]
-# CHECK: 128: 98 8b e8 07 vlda.pop.544 ex2, [p1, lf1, r25, m7]
-# CHECK: 12c: 98 4b 6a 06 vlda.pop.544 ex9, [p0, lf0, r24, m3]
-# CHECK: 130: 98 0b 49 07 vlda.pop.544 ex4, [p1, lf1, r25, m2]
-# CHECK: 134: 98 4b a9 06 vlda.pop.544 ex5, [p0, lf0, r24, m5]
-# CHECK: 138: 98 0b ca 07 vlda.pop.544 ex8, [p1, lf1, r25, m6]
-# CHECK: 13c: 98 cb 08 06 vlda.pop.544 ex3, [p0, lf0, r24, m0]
-# CHECK: 140: 98 8b 89 07 vlda.pop.544 ex6, [p1, lf1, r25, m4]
-# CHECK: 144: 98 cb 29 06 vlda.pop.544 ex7, [p0, lf0, r24, m1]
-# CHECK: 148: 98 0b e8 07 vlda.pop.544 ex0, [p1, lf1, r25, m7]
-# CHECK: 14c: 98 8b 6a 06 vlda.pop.544 ex10, [p0, lf0, r24, m3]
-# CHECK: 150: 98 cb 4a 07 vlda.pop.544 ex11, [p1, lf1, r25, m2]
-# CHECK: 154: 98 4b a8 06 vlda.pop.544 ex1, [p0, lf0, r24, m5]
-# CHECK: 158: 98 4b 02 03 vlda.pop.544 ex9, [p1, lf1, r25]
-# CHECK: 15c: 98 0b 00 02 vlda.pop.544 ex0, [p0, lf0, r24]
-# CHECK: 160: 98 8b 00 03 vlda.pop.544 ex2, [p1, lf1, r25]
-# CHECK: 164: 98 4b 00 02 vlda.pop.544 ex1, [p0, lf0, r24]
-# CHECK: 168: 98 0b 01 03 vlda.pop.544 ex4, [p1, lf1, r25]
-# CHECK: 16c: 98 cb 02 02 vlda.pop.544 ex11, [p0, lf0, r24]
-# CHECK: 170: 98 4b 01 03 vlda.pop.544 ex5, [p1, lf1, r25]
-# CHECK: 174: 98 cb 01 02 vlda.pop.544 ex7, [p0, lf0, r24]
-# CHECK: 178: 98 cb 00 03 vlda.pop.544 ex3, [p1, lf1, r25]
-# CHECK: 17c: 98 8b 01 02 vlda.pop.544 ex6, [p0, lf0, r24]
-# CHECK: 180: 98 0b 02 03 vlda.pop.544 ex8, [p1, lf1, r25]
-# CHECK: 184: 98 8b 02 02 vlda.pop.544 ex10, [p0, lf0, r24]
-# CHECK: 188: 98 4b 32 06 vlda.pop.576.2d ex9, [p0, lf0, r24, d1]
-# CHECK: 18c: 98 cb 12 07 vlda.pop.576.2d ex11, [p1, lf1, r25, d0]
-# CHECK: 190: 98 8b 71 06 vlda.pop.576.2d ex6, [p0, lf0, r24, d3]
-# CHECK: 194: 98 0b 51 07 vlda.pop.576.2d ex4, [p1, lf1, r25, d2]
-# CHECK: 198: 98 8b 92 06 vlda.pop.576.2d ex10, [p0, lf0, r24, d4]
-# CHECK: 19c: 98 0b f0 07 vlda.pop.576.2d ex0, [p1, lf1, r25, d7]
-# CHECK: 1a0: 98 0b b2 06 vlda.pop.576.2d ex8, [p0, lf0, r24, d5]
-# CHECK: 1a4: 98 cb d0 07 vlda.pop.576.2d ex3, [p1, lf1, r25, d6]
-# CHECK: 1a8: 98 4b 31 06 vlda.pop.576.2d ex5, [p0, lf0, r24, d1]
-# CHECK: 1ac: 98 cb 11 07 vlda.pop.576.2d ex7, [p1, lf1, r25, d0]
-# CHECK: 1b0: 98 4b 70 06 vlda.pop.576.2d ex1, [p0, lf0, r24, d3]
-# CHECK: 1b4: 98 8b 50 07 vlda.pop.576.2d ex2, [p1, lf1, r25, d2]
-# CHECK: 1b8: 98 cb 12 00 vlda.pop.576.3d ex11, [p0, lf0, r24, d0]
-# CHECK: 1bc: 98 cb 70 01 vlda.pop.576.3d ex3, [p1, lf1, r25, d3]
-# CHECK: 1c0: 98 8b 30 00 vlda.pop.576.3d ex2, [p0, lf0, r24, d1]
-# CHECK: 1c4: 98 0b 50 01 vlda.pop.576.3d ex0, [p1, lf1, r25, d2]
-# CHECK: 1c8: 98 0b 12 00 vlda.pop.576.3d ex8, [p0, lf0, r24, d0]
-# CHECK: 1cc: 98 4b 70 01 vlda.pop.576.3d ex1, [p1, lf1, r25, d3]
-# CHECK: 1d0: 98 8b 32 00 vlda.pop.576.3d ex10, [p0, lf0, r24, d1]
-# CHECK: 1d4: 98 4b 51 01 vlda.pop.576.3d ex5, [p1, lf1, r25, d2]
-# CHECK: 1d8: 98 8b 11 00 vlda.pop.576.3d ex6, [p0, lf0, r24, d0]
-# CHECK: 1dc: 98 cb 71 01 vlda.pop.576.3d ex7, [p1, lf1, r25, d3]
-# CHECK: 1e0: 98 0b 31 00 vlda.pop.576.3d ex4, [p0, lf0, r24, d1]
-# CHECK: 1e4: 98 4b 52 01 vlda.pop.576.3d ex9, [p1, lf1, r25, d2]
-# CHECK: 1e8: 98 cb a8 02 vlda.pop.576 ex3, [p0, lf0, r24, m5]
-# CHECK: 1ec: 98 cb 2a 03 vlda.pop.576 ex11, [p1, lf1, r25, m1]
-# CHECK: 1f0: 98 cb 49 02 vlda.pop.576 ex7, [p0, lf0, r24, m2]
-# CHECK: 1f4: 98 4b ea 03 vlda.pop.576 ex9, [p1, lf1, r25, m7]
-# CHECK: 1f8: 98 8b 88 02 vlda.pop.576 ex2, [p0, lf0, r24, m4]
-# CHECK: 1fc: 98 8b 0a 03 vlda.pop.576 ex10, [p1, lf1, r25, m0]
-# CHECK: 200: 98 0b 69 02 vlda.pop.576 ex4, [p0, lf0, r24, m3]
-# CHECK: 204: 98 4b c8 03 vlda.pop.576 ex1, [p1, lf1, r25, m6]
+# CHECK: b4: 98 0b 01 01 vlda.pop.512 x4, [p1, lf1, r25]
+# CHECK: b8: 98 8b 01 00 vlda.pop.512 x6, [p0, lf0, r24]
+# CHECK: bc: 98 0b 00 01 vlda.pop.512 x0, [p1, lf1, r25]
+# CHECK: c0: 98 4b 02 00 vlda.pop.512 x9, [p0, lf0, r24]
+# CHECK: c4: 98 0b 02 01 vlda.pop.512 x8, [p1, lf1, r25]
+# CHECK: c8: 98 cb aa 00 vlda.pop.544.2d ex11, [p0, lf0, r24, d5]
+# CHECK: cc: 98 0b c8 01 vlda.pop.544.2d ex0, [p1, lf1, r25, d6]
+# CHECK: d0: 98 8b 48 00 vlda.pop.544.2d ex2, [p0, lf0, r24, d2]
+# CHECK: d4: 98 8b 8a 01 vlda.pop.544.2d ex10, [p1, lf1, r25, d4]
+# CHECK: d8: 98 4b 69 00 vlda.pop.544.2d ex5, [p0, lf0, r24, d3]
+# CHECK: dc: 98 4b e8 01 vlda.pop.544.2d ex1, [p1, lf1, r25, d7]
+# CHECK: e0: 98 0b 2a 00 vlda.pop.544.2d ex8, [p0, lf0, r24, d1]
+# CHECK: e4: 98 cb 09 01 vlda.pop.544.2d ex7, [p1, lf1, r25, d0]
+# CHECK: e8: 98 0b a9 00 vlda.pop.544.2d ex4, [p0, lf0, r24, d5]
+# CHECK: ec: 98 8b c9 01 vlda.pop.544.2d ex6, [p1, lf1, r25, d6]
+# CHECK: f0: 98 4b 4a 00 vlda.pop.544.2d ex9, [p0, lf0, r24, d2]
+# CHECK: f4: 98 cb 88 01 vlda.pop.544.2d ex3, [p1, lf1, r25, d4]
+# CHECK: f8: 98 8b 11 04 vlda.pop.544.3d ex6, [p0, lf0, r24, d0]
+# CHECK: fc: 98 8b 50 05 vlda.pop.544.3d ex2, [p1, lf1, r25, d2]
+# CHECK: 100: 98 0b 70 04 vlda.pop.544.3d ex0, [p0, lf0, r24, d3]
+# CHECK: 104: 98 4b 30 05 vlda.pop.544.3d ex1, [p1, lf1, r25, d1]
+# CHECK: 108: 98 cb 12 04 vlda.pop.544.3d ex11, [p0, lf0, r24, d0]
+# CHECK: 10c: 98 0b 52 05 vlda.pop.544.3d ex8, [p1, lf1, r25, d2]
+# CHECK: 110: 98 4b 71 04 vlda.pop.544.3d ex5, [p0, lf0, r24, d3]
+# CHECK: 114: 98 8b 32 05 vlda.pop.544.3d ex10, [p1, lf1, r25, d1]
+# CHECK: 118: 98 cb 10 04 vlda.pop.544.3d ex3, [p0, lf0, r24, d0]
+# CHECK: 11c: 98 0b 51 05 vlda.pop.544.3d ex4, [p1, lf1, r25, d2]
+# CHECK: 120: 98 4b 72 04 vlda.pop.544.3d ex9, [p0, lf0, r24, d3]
+# CHECK: 124: 98 cb 31 05 vlda.pop.544.3d ex7, [p1, lf1, r25, d1]
+# CHECK: 128: 98 cb 28 07 vlda.pop.544 ex3, [p1, lf1, r25, m1]
+# CHECK: 12c: 98 0b ca 06 vlda.pop.544 ex8, [p0, lf0, r24, m6]
+# CHECK: 130: 98 cb 09 07 vlda.pop.544 ex7, [p1, lf1, r25, m0]
+# CHECK: 134: 98 0b 69 06 vlda.pop.544 ex4, [p0, lf0, r24, m3]
+# CHECK: 138: 98 4b 8a 07 vlda.pop.544 ex9, [p1, lf1, r25, m4]
+# CHECK: 13c: 98 4b e8 06 vlda.pop.544 ex1, [p0, lf0, r24, m7]
+# CHECK: 140: 98 8b 4a 07 vlda.pop.544 ex10, [p1, lf1, r25, m2]
+# CHECK: 144: 98 cb aa 06 vlda.pop.544 ex11, [p0, lf0, r24, m5]
+# CHECK: 148: 98 0b 28 07 vlda.pop.544 ex0, [p1, lf1, r25, m1]
+# CHECK: 14c: 98 8b c9 06 vlda.pop.544 ex6, [p0, lf0, r24, m6]
+# CHECK: 150: 98 4b 09 07 vlda.pop.544 ex5, [p1, lf1, r25, m0]
+# CHECK: 154: 98 8b 68 06 vlda.pop.544 ex2, [p0, lf0, r24, m3]
+# CHECK: 158: 98 cb 01 03 vlda.pop.544 ex7, [p1, lf1, r25]
+# CHECK: 15c: 98 8b 00 02 vlda.pop.544 ex2, [p0, lf0, r24]
+# CHECK: 160: 98 cb 00 03 vlda.pop.544 ex3, [p1, lf1, r25]
+# CHECK: 164: 98 0b 01 02 vlda.pop.544 ex4, [p0, lf0, r24]
+# CHECK: 168: 98 0b 00 03 vlda.pop.544 ex0, [p1, lf1, r25]
+# CHECK: 16c: 98 8b 01 02 vlda.pop.544 ex6, [p0, lf0, r24]
+# CHECK: 170: 98 0b 02 03 vlda.pop.544 ex8, [p1, lf1, r25]
+# CHECK: 174: 98 4b 01 02 vlda.pop.544 ex5, [p0, lf0, r24]
+# CHECK: 178: 98 4b 02 03 vlda.pop.544 ex9, [p1, lf1, r25]
+# CHECK: 17c: 98 8b 02 02 vlda.pop.544 ex10, [p0, lf0, r24]
+# CHECK: 180: 98 cb 02 03 vlda.pop.544 ex11, [p1, lf1, r25]
+# CHECK: 184: 98 4b 00 02 vlda.pop.544 ex1, [p0, lf0, r24]
+# CHECK: 188: 98 8b d0 06 vlda.pop.576.2d ex2, [p0, lf0, r24, d6]
+# CHECK: 18c: 98 cb 51 07 vlda.pop.576.2d ex7, [p1, lf1, r25, d2]
+# CHECK: 190: 98 0b 10 06 vlda.pop.576.2d ex0, [p0, lf0, r24, d0]
+# CHECK: 194: 98 8b b1 07 vlda.pop.576.2d ex6, [p1, lf1, r25, d5]
+# CHECK: 198: 98 4b 72 06 vlda.pop.576.2d ex9, [p0, lf0, r24, d3]
+# CHECK: 19c: 98 8b f2 07 vlda.pop.576.2d ex10, [p1, lf1, r25, d7]
+# CHECK: 1a0: 98 cb 30 06 vlda.pop.576.2d ex3, [p0, lf0, r24, d1]
+# CHECK: 1a4: 98 0b 91 07 vlda.pop.576.2d ex4, [p1, lf1, r25, d4]
+# CHECK: 1a8: 98 4b d0 06 vlda.pop.576.2d ex1, [p0, lf0, r24, d6]
+# CHECK: 1ac: 98 cb 52 07 vlda.pop.576.2d ex11, [p1, lf1, r25, d2]
+# CHECK: 1b0: 98 0b 12 06 vlda.pop.576.2d ex8, [p0, lf0, r24, d0]
+# CHECK: 1b4: 98 4b b1 07 vlda.pop.576.2d ex5, [p1, lf1, r25, d5]
+# CHECK: 1b8: 98 0b 52 00 vlda.pop.576.3d ex8, [p0, lf0, r24, d2]
+# CHECK: 1bc: 98 8b 71 01 vlda.pop.576.3d ex6, [p1, lf1, r25, d3]
+# CHECK: 1c0: 98 8b 32 00 vlda.pop.576.3d ex10, [p0, lf0, r24, d1]
+# CHECK: 1c4: 98 cb 11 01 vlda.pop.576.3d ex7, [p1, lf1, r25, d0]
+# CHECK: 1c8: 98 4b 51 00 vlda.pop.576.3d ex5, [p0, lf0, r24, d2]
+# CHECK: 1cc: 98 4b 72 01 vlda.pop.576.3d ex9, [p1, lf1, r25, d3]
+# CHECK: 1d0: 98 cb 32 00 vlda.pop.576.3d ex11, [p0, lf0, r24, d1]
+# CHECK: 1d4: 98 8b 10 01 vlda.pop.576.3d ex2, [p1, lf1, r25, d0]
+# CHECK: 1d8: 98 cb 50 00 vlda.pop.576.3d ex3, [p0, lf0, r24, d2]
+# CHECK: 1dc: 98 0b 71 01 vlda.pop.576.3d ex4, [p1, lf1, r25, d3]
+# CHECK: 1e0: 98 4b 30 00 vlda.pop.576.3d ex1, [p0, lf0, r24, d1]
+# CHECK: 1e4: 98 0b 10 01 vlda.pop.576.3d ex0, [p1, lf1, r25, d0]
+# CHECK: 1e8: 98 8b aa 02 vlda.pop.576 ex10, [p0, lf0, r24, m5]
+# CHECK: 1ec: 98 cb c9 03 vlda.pop.576 ex7, [p1, lf1, r25, m6]
+# CHECK: 1f0: 98 0b 49 02 vlda.pop.576 ex4, [p0, lf0, r24, m2]
+# CHECK: 1f4: 98 cb 88 03 vlda.pop.576 ex3, [p1, lf1, r25, m4]
+# CHECK: 1f8: 98 8b 09 02 vlda.pop.576 ex6, [p0, lf0, r24, m0]
+# CHECK: 1fc: 98 0b ea 03 vlda.pop.576 ex8, [p1, lf1, r25, m7]
+# CHECK: 200: 98 4b 28 02 vlda.pop.576 ex1, [p0, lf0, r24, m1]
+# CHECK: 204: 98 0b 68 03 vlda.pop.576 ex0, [p1, lf1, r25, m3]
 # CHECK: 208: 98 4b a9 02 vlda.pop.576 ex5, [p0, lf0, r24, m5]
-# CHECK: 20c: 98 8b 29 03 vlda.pop.576 ex6, [p1, lf1, r25, m1]
-# CHECK: 210: 98 0b 48 02 vlda.pop.576 ex0, [p0, lf0, r24, m2]
-# CHECK: 214: 98 0b ea 03 vlda.pop.576 ex8, [p1, lf1, r25, m7]
-# CHECK: 218: 98 4b 02 05 vlda.pop.576 ex9, [p1, lf1, r25]
-# CHECK: 21c: 98 0b 00 04 vlda.pop.576 ex0, [p0, lf0, r24]
-# CHECK: 220: 98 0b 01 05 vlda.pop.576 ex4, [p1, lf1, r25]
+# CHECK: 20c: 98 cb ca 03 vlda.pop.576 ex11, [p1, lf1, r25, m6]
+# CHECK: 210: 98 8b 48 02 vlda.pop.576 ex2, [p0, lf0, r24, m2]
+# CHECK: 214: 98 4b 8a 03 vlda.pop.576 ex9, [p1, lf1, r25, m4]
+# CHECK: 218: 98 8b 00 05 vlda.pop.576 ex2, [p1, lf1, r25]
+# CHECK: 21c: 98 8b 01 04 vlda.pop.576 ex6, [p0, lf0, r24]
+# CHECK: 220: 98 0b 00 05 vlda.pop.576 ex0, [p1, lf1, r25]
 # CHECK: 224: 98 4b 00 04 vlda.pop.576 ex1, [p0, lf0, r24]
-# CHECK: 228: 98 8b 01 05 vlda.pop.576 ex6, [p1, lf1, r25]
-# CHECK: 22c: 98 8b 00 04 vlda.pop.576 ex2, [p0, lf0, r24]
+# CHECK: 228: 98 0b 02 05 vlda.pop.576 ex8, [p1, lf1, r25]
+# CHECK: 22c: 98 0b 01 04 vlda.pop.576 ex4, [p0, lf0, r24]
 # CHECK: 230: 98 cb 02 05 vlda.pop.576 ex11, [p1, lf1, r25]
-# CHECK: 234: 98 cb 00 04 vlda.pop.576 ex3, [p0, lf0, r24]
-# CHECK: 238: 98 8b 02 05 vlda.pop.576 ex10, [p1, lf1, r25]
-# CHECK: 23c: 98 4b 01 04 vlda.pop.576 ex5, [p0, lf0, r24]
-# CHECK: 240: 98 cb 01 05 vlda.pop.576 ex7, [p1, lf1, r25]
-# CHECK: 244: 98 0b 02 04 vlda.pop.576 ex8, [p0, lf0, r24]
-# CHECK: 248: 98 0b e7 00 vlda.pop.640.2d qx3, [p0, lf0, r24, d7]
-# CHECK: 24c: 98 0b 25 01 vlda.pop.640.2d qx1, [p1, lf1, r25, d1]
-# CHECK: 250: 98 0b 44 00 vlda.pop.640.2d qx0, [p0, lf0, r24, d2]
-# CHECK: 254: 98 0b a6 01 vlda.pop.640.2d qx2, [p1, lf1, r25, d5]
-# CHECK: 258: 98 0b c7 00 vlda.pop.640.2d qx3, [p0, lf0, r24, d6]
-# CHECK: 25c: 98 0b 85 01 vlda.pop.640.2d qx1, [p1, lf1, r25, d4]
-# CHECK: 260: 98 0b 64 00 vlda.pop.640.2d qx0, [p0, lf0, r24, d3]
-# CHECK: 264: 98 0b 06 01 vlda.pop.640.2d qx2, [p1, lf1, r25, d0]
+# CHECK: 234: 98 cb 01 04 vlda.pop.576 ex7, [p0, lf0, r24]
+# CHECK: 238: 98 4b 02 05 vlda.pop.576 ex9, [p1, lf1, r25]
+# CHECK: 23c: 98 cb 00 04 vlda.pop.576 ex3, [p0, lf0, r24]
+# CHECK: 240: 98 8b 02 05 vlda.pop.576 ex10, [p1, lf1, r25]
+# CHECK: 244: 98 4b 01 04 vlda.pop.576 ex5, [p0, lf0, r24]
+# CHECK: 248: 98 0b 24 00 vlda.pop.640.2d qx0, [p0, lf0, r24, d1]
+# CHECK: 24c: 98 0b 45 01 vlda.pop.640.2d qx1, [p1, lf1, r25, d2]
+# CHECK: 250: 98 0b 66 00 vlda.pop.640.2d qx2, [p0, lf0, r24, d3]
+# CHECK: 254: 98 0b 87 01 vlda.pop.640.2d qx3, [p1, lf1, r25, d4]
+# CHECK: 258: 98 0b c4 00 vlda.pop.640.2d qx0, [p0, lf0, r24, d6]
+# CHECK: 25c: 98 0b e5 01 vlda.pop.640.2d qx1, [p1, lf1, r25, d7]
+# CHECK: 260: 98 0b 06 00 vlda.pop.640.2d qx2, [p0, lf0, r24, d0]
+# CHECK: 264: 98 0b a7 01 vlda.pop.640.2d qx3, [p1, lf1, r25, d5]
 # CHECK: 268: 98 0b 78 02 vlda.pop.640.3d qx0, [p0, lf0, r24, d3]
-# CHECK: 26c: 98 0b 3a 03 vlda.pop.640.3d qx2, [p1, lf1, r25, d1]
-# CHECK: 270: 98 0b 5b 02 vlda.pop.640.3d qx3, [p0, lf0, r24, d2]
-# CHECK: 274: 98 0b 19 03 vlda.pop.640.3d qx1, [p1, lf1, r25, d0]
-# CHECK: 278: 98 0b 87 03 vlda.pop.640 qx3, [p1, lf1, r25, m4]
-# CHECK: 27c: 98 0b 46 02 vlda.pop.640 qx2, [p0, lf0, r24, m2]
-# CHECK: 280: 98 0b a4 03 vlda.pop.640 qx0, [p1, lf1, r25, m5]
-# CHECK: 284: 98 0b e5 02 vlda.pop.640 qx1, [p0, lf0, r24, m7]
-# CHECK: 288: 98 0b 07 03 vlda.pop.640 qx3, [p1, lf1, r25, m0]
-# CHECK: 28c: 98 0b 26 02 vlda.pop.640 qx2, [p0, lf0, r24, m1]
-# CHECK: 290: 98 0b c4 03 vlda.pop.640 qx0, [p1, lf1, r25, m6]
-# CHECK: 294: 98 0b 65 02 vlda.pop.640 qx1, [p0, lf0, r24, m3]
-# CHECK: 298: 98 0b 1b 01 vlda.pop.640 qx3, [p1, lf1, r25]
+# CHECK: 26c: 98 0b 1b 03 vlda.pop.640.3d qx3, [p1, lf1, r25, d0]
+# CHECK: 270: 98 0b 3a 02 vlda.pop.640.3d qx2, [p0, lf0, r24, d1]
+# CHECK: 274: 98 0b 59 03 vlda.pop.640.3d qx1, [p1, lf1, r25, d2]
+# CHECK: 278: 98 0b 64 03 vlda.pop.640 qx0, [p1, lf1, r25, m3]
+# CHECK: 27c: 98 0b c5 02 vlda.pop.640 qx1, [p0, lf0, r24, m6]
+# CHECK: 280: 98 0b 06 03 vlda.pop.640 qx2, [p1, lf1, r25, m0]
+# CHECK: 284: 98 0b a7 02 vlda.pop.640 qx3, [p0, lf0, r24, m5]
+# CHECK: 288: 98 0b 84 03 vlda.pop.640 qx0, [p1, lf1, r25, m4]
+# CHECK: 28c: 98 0b 25 02 vlda.pop.640 qx1, [p0, lf0, r24, m1]
+# CHECK: 290: 98 0b e6 03 vlda.pop.640 qx2, [p1, lf1, r25, m7]
+# CHECK: 294: 98 0b 47 02 vlda.pop.640 qx3, [p0, lf0, r24, m2]
+# CHECK: 298: 98 0b 1a 01 vlda.pop.640 qx2, [p1, lf1, r25]
 # CHECK: 29c: 98 0b 19 00 vlda.pop.640 qx1, [p0, lf0, r24]
-# CHECK: 2a0: 98 0b 1a 01 vlda.pop.640 qx2, [p1, lf1, r25]
-# CHECK: 2a4: 98 0b 18 00 vlda.pop.640 qx0, [p0, lf0, r24]
-# CHECK: 2a8: 98 0b 06 04 vlda.pop.704.2d qex2, [p0, lf0, r24, d0]
-# CHECK: 2ac: 98 0b 27 05 vlda.pop.704.2d qex3, [p1, lf1, r25, d1]
-# CHECK: 2b0: 98 0b e4 04 vlda.pop.704.2d qex0, [p0, lf0, r24, d7]
-# CHECK: 2b4: 98 0b a5 05 vlda.pop.704.2d qex1, [p1, lf1, r25, d5]
-# CHECK: 2b8: 98 0b 66 04 vlda.pop.704.2d qex2, [p0, lf0, r24, d3]
-# CHECK: 2bc: 98 0b 87 05 vlda.pop.704.2d qex3, [p1, lf1, r25, d4]
-# CHECK: 2c0: 98 0b c4 04 vlda.pop.704.2d qex0, [p0, lf0, r24, d6]
-# CHECK: 2c4: 98 0b 45 05 vlda.pop.704.2d qex1, [p1, lf1, r25, d2]
-# CHECK: 2c8: 98 0b 1a 06 vlda.pop.704.3d qex2, [p0, lf0, r24, d0]
-# CHECK: 2cc: 98 0b 7b 07 vlda.pop.704.3d qex3, [p1, lf1, r25, d3]
-# CHECK: 2d0: 98 0b 38 06 vlda.pop.704.3d qex0, [p0, lf0, r24, d1]
-# CHECK: 2d4: 98 0b 59 07 vlda.pop.704.3d qex1, [p1, lf1, r25, d2]
-# CHECK: 2d8: 98 0b 04 06 vlda.pop.704 qex0, [p0, lf0, r24, m0]
-# CHECK: 2dc: 98 0b a5 07 vlda.pop.704 qex1, [p1, lf1, r25, m5]
+# CHECK: 2a0: 98 0b 18 01 vlda.pop.640 qx0, [p1, lf1, r25]
+# CHECK: 2a4: 98 0b 1b 00 vlda.pop.640 qx3, [p0, lf0, r24]
+# CHECK: 2a8: 98 0b c7 04 vlda.pop.704.2d qex3, [p0, lf0, r24, d6]
+# CHECK: 2ac: 98 0b 04 05 vlda.pop.704.2d qex0, [p1, lf1, r25, d0]
+# CHECK: 2b0: 98 0b 45 04 vlda.pop.704.2d qex1, [p0, lf0, r24, d2]
+# CHECK: 2b4: 98 0b a6 05 vlda.pop.704.2d qex2, [p1, lf1, r25, d5]
+# CHECK: 2b8: 98 0b 27 04 vlda.pop.704.2d qex3, [p0, lf0, r24, d1]
+# CHECK: 2bc: 98 0b 84 05 vlda.pop.704.2d qex0, [p1, lf1, r25, d4]
+# CHECK: 2c0: 98 0b e5 04 vlda.pop.704.2d qex1, [p0, lf0, r24, d7]
+# CHECK: 2c4: 98 0b 66 05 vlda.pop.704.2d qex2, [p1, lf1, r25, d3]
+# CHECK: 2c8: 98 0b 5b 06 vlda.pop.704.3d qex3, [p0, lf0, r24, d2]
+# CHECK: 2cc: 98 0b 3a 07 vlda.pop.704.3d qex2, [p1, lf1, r25, d1]
+# CHECK: 2d0: 98 0b 18 06 vlda.pop.704.3d qex0, [p0, lf0, r24, d0]
+# CHECK: 2d4: 98 0b 79 07 vlda.pop.704.3d qex1, [p1, lf1, r25, d3]
+# CHECK: 2d8: 98 0b e4 06 vlda.pop.704 qex0, [p0, lf0, r24, m7]
+# CHECK: 2dc: 98 0b 05 07 vlda.pop.704 qex1, [p1, lf1, r25, m0]
 # CHECK: 2e0: 98 0b 86 06 vlda.pop.704 qex2, [p0, lf0, r24, m4]
-# CHECK: 2e4: 98 0b 27 07 vlda.pop.704 qex3, [p1, lf1, r25, m1]
-# CHECK: 2e8: 98 0b 64 06 vlda.pop.704 qex0, [p0, lf0, r24, m3]
-# CHECK: 2ec: 98 0b e5 07 vlda.pop.704 qex1, [p1, lf1, r25, m7]
-# CHECK: 2f0: 98 0b 46 06 vlda.pop.704 qex2, [p0, lf0, r24, m2]
-# CHECK: 2f4: 98 0b c7 07 vlda.pop.704 qex3, [p1, lf1, r25, m6]
-# CHECK: 2f8: 98 0b 1b 04 vlda.pop.704 qex3, [p0, lf0, r24]
-# CHECK: 2fc: 98 0b 19 05 vlda.pop.704 qex1, [p1, lf1, r25]
+# CHECK: 2e4: 98 0b 67 07 vlda.pop.704 qex3, [p1, lf1, r25, m3]
+# CHECK: 2e8: 98 0b a4 06 vlda.pop.704 qex0, [p0, lf0, r24, m5]
+# CHECK: 2ec: 98 0b 25 07 vlda.pop.704 qex1, [p1, lf1, r25, m1]
+# CHECK: 2f0: 98 0b c6 06 vlda.pop.704 qex2, [p0, lf0, r24, m6]
+# CHECK: 2f4: 98 0b 47 07 vlda.pop.704 qex3, [p1, lf1, r25, m2]
+# CHECK: 2f8: 98 0b 18 04 vlda.pop.704 qex0, [p0, lf0, r24]
+# CHECK: 2fc: 98 0b 1b 05 vlda.pop.704 qex3, [p1, lf1, r25]
 # CHECK: 300: 98 0b 1a 04 vlda.pop.704 qex2, [p0, lf0, r24]
-# CHECK: 304: 98 0b 18 05 vlda.pop.704 qex0, [p1, lf1, r25]
+# CHECK: 304: 98 0b 19 05 vlda.pop.704 qex1, [p1, lf1, r25]
 # CHECK: 308: 18 14 14 3b vldb.fillx.512 [p1, lf1, r25]
 # CHECK: 30c: 18 14 14 3a vldb.fillx.512 [p0, lf0, r24]
 # CHECK: 310: 18 14 14 3c vldb.fill.512 [p0, lf0, r24]
 # CHECK: 314: 18 14 14 3d vldb.fill.512 [p1, lf1, r25]
-# CHECK: 318: 18 94 02 3d vldb.popx.512 x10, [p1, lf1, r25]
-# CHECK: 31c: 18 54 01 3c vldb.popx.512 x5, [p0, lf0, r24]
-# CHECK: 320: 18 d4 02 3d vldb.popx.512 x11, [p1, lf1, r25]
-# CHECK: 324: 18 14 00 3c vldb.popx.512 x0, [p0, lf0, r24]
-# CHECK: 328: 18 14 01 3d vldb.popx.512 x4, [p1, lf1, r25]
+# CHECK: 318: 18 d4 02 3d vldb.popx.512 x11, [p1, lf1, r25]
+# CHECK: 31c: 18 14 01 3c vldb.popx.512 x4, [p0, lf0, r24]
+# CHECK: 320: 18 d4 00 3d vldb.popx.512 x3, [p1, lf1, r25]
+# CHECK: 324: 18 54 01 3c vldb.popx.512 x5, [p0, lf0, r24]
+# CHECK: 328: 18 54 00 3d vldb.popx.512 x1, [p1, lf1, r25]
 # CHECK: 32c: 18 54 02 3c vldb.popx.512 x9, [p0, lf0, r24]
-# CHECK: 330: 18 54 00 3d vldb.popx.512 x1, [p1, lf1, r25]
-# CHECK: 334: 18 94 01 3c vldb.popx.512 x6, [p0, lf0, r24]
-# CHECK: 338: 18 d4 00 3d vldb.popx.512 x3, [p1, lf1, r25]
-# CHECK: 33c: 18 14 02 3c vldb.popx.512 x8, [p0, lf0, r24]
+# CHECK: 330: 18 94 01 3d vldb.popx.512 x6, [p1, lf1, r25]
+# CHECK: 334: 18 14 02 3c vldb.popx.512 x8, [p0, lf0, r24]
+# CHECK: 338: 18 14 00 3d vldb.popx.512 x0, [p1, lf1, r25]
+# CHECK: 33c: 18 94 02 3c vldb.popx.512 x10, [p0, lf0, r24]
 # CHECK: 340: 18 94 00 3d vldb.popx.512 x2, [p1, lf1, r25]
 # CHECK: 344: 18 d4 01 3c vldb.popx.512 x7, [p0, lf0, r24]
-# CHECK: 348: 18 94 72 3f vldb.pop.512.2d x10, [p1, lf1, r25, d3]
-# CHECK: 34c: 18 d4 30 3e vldb.pop.512.2d x3, [p0, lf0, r24, d1]
-# CHECK: 350: 18 54 f2 3f vldb.pop.512.2d x9, [p1, lf1, r25, d7]
-# CHECK: 354: 18 54 b1 3e vldb.pop.512.2d x5, [p0, lf0, r24, d5]
-# CHECK: 358: 18 94 d1 3f vldb.pop.512.2d x6, [p1, lf1, r25, d6]
-# CHECK: 35c: 18 94 10 3e vldb.pop.512.2d x2, [p0, lf0, r24, d0]
-# CHECK: 360: 18 14 52 3f vldb.pop.512.2d x8, [p1, lf1, r25, d2]
-# CHECK: 364: 18 54 90 3e vldb.pop.512.2d x1, [p0, lf0, r24, d4]
-# CHECK: 368: 18 14 71 3f vldb.pop.512.2d x4, [p1, lf1, r25, d3]
-# CHECK: 36c: 18 14 30 3e vldb.pop.512.2d x0, [p0, lf0, r24, d1]
-# CHECK: 370: 18 d4 f2 3f vldb.pop.512.2d x11, [p1, lf1, r25, d7]
-# CHECK: 374: 18 d4 b1 3e vldb.pop.512.2d x7, [p0, lf0, r24, d5]
+# CHECK: 348: 18 d4 32 3f vldb.pop.512.2d x11, [p1, lf1, r25, d1]
+# CHECK: 34c: 18 94 d2 3e vldb.pop.512.2d x10, [p0, lf0, r24, d6]
+# CHECK: 350: 18 54 52 3f vldb.pop.512.2d x9, [p1, lf1, r25, d2]
+# CHECK: 354: 18 d4 b0 3e vldb.pop.512.2d x3, [p0, lf0, r24, d5]
+# CHECK: 358: 18 14 70 3f vldb.pop.512.2d x0, [p1, lf1, r25, d3]
+# CHECK: 35c: 18 14 91 3e vldb.pop.512.2d x4, [p0, lf0, r24, d4]
+# CHECK: 360: 18 d4 f1 3f vldb.pop.512.2d x7, [p1, lf1, r25, d7]
+# CHECK: 364: 18 94 10 3e vldb.pop.512.2d x2, [p0, lf0, r24, d0]
+# CHECK: 368: 18 14 32 3f vldb.pop.512.2d x8, [p1, lf1, r25, d1]
+# CHECK: 36c: 18 94 d1 3e vldb.pop.512.2d x6, [p0, lf0, r24, d6]
+# CHECK: 370: 18 54 50 3f vldb.pop.512.2d x1, [p1, lf1, r25, d2]
+# CHECK: 374: 18 54 b1 3e vldb.pop.512.2d x5, [p0, lf0, r24, d5]
 # CHECK: 378: 18 54 31 38 vldb.pop.512.3d x5, [p0, lf0, r24, d1]
-# CHECK: 37c: 18 54 10 39 vldb.pop.512.3d x1, [p1, lf1, r25, d0]
-# CHECK: 380: 18 d4 72 38 vldb.pop.512.3d x11, [p0, lf0, r24, d3]
-# CHECK: 384: 18 94 50 39 vldb.pop.512.3d x2, [p1, lf1, r25, d2]
-# CHECK: 388: 18 94 31 38 vldb.pop.512.3d x6, [p0, lf0, r24, d1]
-# CHECK: 38c: 18 54 12 39 vldb.pop.512.3d x9, [p1, lf1, r25, d0]
-# CHECK: 390: 18 14 72 38 vldb.pop.512.3d x8, [p0, lf0, r24, d3]
-# CHECK: 394: 18 d4 51 39 vldb.pop.512.3d x7, [p1, lf1, r25, d2]
-# CHECK: 398: 18 94 32 38 vldb.pop.512.3d x10, [p0, lf0, r24, d1]
-# CHECK: 39c: 18 d4 10 39 vldb.pop.512.3d x3, [p1, lf1, r25, d0]
-# CHECK: 3a0: 18 14 71 38 vldb.pop.512.3d x4, [p0, lf0, r24, d3]
-# CHECK: 3a4: 18 14 50 39 vldb.pop.512.3d x0, [p1, lf1, r25, d2]
-# CHECK: 3a8: 18 54 89 3a vldb.pop.512 x5, [p0, lf0, r24, m4]
-# CHECK: 3ac: 18 d4 aa 3b vldb.pop.512 x11, [p1, lf1, r25, m5]
-# CHECK: 3b0: 18 94 68 3a vldb.pop.512 x2, [p0, lf0, r24, m3]
-# CHECK: 3b4: 18 94 4a 3b vldb.pop.512 x10, [p1, lf1, r25, m2]
-# CHECK: 3b8: 18 14 ca 3a vldb.pop.512 x8, [p0, lf0, r24, m6]
-# CHECK: 3bc: 18 54 08 3b vldb.pop.512 x1, [p1, lf1, r25, m0]
-# CHECK: 3c0: 18 14 e9 3a vldb.pop.512 x4, [p0, lf0, r24, m7]
-# CHECK: 3c4: 18 14 28 3b vldb.pop.512 x0, [p1, lf1, r25, m1]
-# CHECK: 3c8: 18 d4 88 3a vldb.pop.512 x3, [p0, lf0, r24, m4]
-# CHECK: 3cc: 18 94 a9 3b vldb.pop.512 x6, [p1, lf1, r25, m5]
-# CHECK: 3d0: 18 d4 69 3a vldb.pop.512 x7, [p0, lf0, r24, m3]
-# CHECK: 3d4: 18 54 4a 3b vldb.pop.512 x9, [p1, lf1, r25, m2]
-# CHECK: 3d8: 18 94 02 38 vldb.pop.512 x10, [p0, lf0, r24]
-# CHECK: 3dc: 18 54 01 39 vldb.pop.512 x5, [p1, lf1, r25]
-# CHECK: 3e0: 18 d4 02 38 vldb.pop.512 x11, [p0, lf0, r24]
-# CHECK: 3e4: 18 94 01 39 vldb.pop.512 x6, [p1, lf1, r25]
-# CHECK: 3e8: 18 14 02 38 vldb.pop.512 x8, [p0, lf0, r24]
-# CHECK: 3ec: 18 d4 01 39 vldb.pop.512 x7, [p1, lf1, r25]
-# CHECK: 3f0: 18 14 01 38 vldb.pop.512 x4, [p0, lf0, r24]
-# CHECK: 3f4: 18 94 00 39 vldb.pop.512 x2, [p1, lf1, r25]
-# CHECK: 3f8: 18 54 02 38 vldb.pop.512 x9, [p0, lf0, r24]
-# CHECK: 3fc: 18 54 00 39 vldb.pop.512 x1, [p1, lf1, r25]
-# CHECK: 400: 18 d4 00 38 vldb.pop.512 x3, [p0, lf0, r24]
-# CHECK: 404: 18 14 00 39 vldb.pop.512 x0, [p1, lf1, r25]
-# CHECK: 408: 18 14 c8 3c vldb.pop.544.2d ex0, [p0, lf0, r24, d6]
-# CHECK: 40c: 18 94 88 3d vldb.pop.544.2d ex2, [p1, lf1, r25, d4]
-# CHECK: 410: 18 54 aa 3c vldb.pop.544.2d ex9, [p0, lf0, r24, d5]
-# CHECK: 414: 18 d4 68 3d vldb.pop.544.2d ex3, [p1, lf1, r25, d3]
-# CHECK: 418: 18 94 09 3c vldb.pop.544.2d ex6, [p0, lf0, r24, d0]
-# CHECK: 41c: 18 94 ea 3d vldb.pop.544.2d ex10, [p1, lf1, r25, d7]
-# CHECK: 420: 18 14 29 3c vldb.pop.544.2d ex4, [p0, lf0, r24, d1]
-# CHECK: 424: 18 14 4a 3d vldb.pop.544.2d ex8, [p1, lf1, r25, d2]
-# CHECK: 428: 18 d4 c9 3c vldb.pop.544.2d ex7, [p0, lf0, r24, d6]
-# CHECK: 42c: 18 d4 8a 3d vldb.pop.544.2d ex11, [p1, lf1, r25, d4]
+# CHECK: 37c: 18 94 50 39 vldb.pop.512.3d x2, [p1, lf1, r25, d2]
+# CHECK: 380: 18 d4 11 38 vldb.pop.512.3d x7, [p0, lf0, r24, d0]
+# CHECK: 384: 18 54 70 39 vldb.pop.512.3d x1, [p1, lf1, r25, d3]
+# CHECK: 388: 18 14 32 38 vldb.pop.512.3d x8, [p0, lf0, r24, d1]
+# CHECK: 38c: 18 94 51 39 vldb.pop.512.3d x6, [p1, lf1, r25, d2]
+# CHECK: 390: 18 54 12 38 vldb.pop.512.3d x9, [p0, lf0, r24, d0]
+# CHECK: 394: 18 d4 70 39 vldb.pop.512.3d x3, [p1, lf1, r25, d3]
+# CHECK: 398: 18 14 30 38 vldb.pop.512.3d x0, [p0, lf0, r24, d1]
+# CHECK: 39c: 18 14 51 39 vldb.pop.512.3d x4, [p1, lf1, r25, d2]
+# CHECK: 3a0: 18 94 12 38 vldb.pop.512.3d x10, [p0, lf0, r24, d0]
+# CHECK: 3a4: 18 d4 72 39 vldb.pop.512.3d x11, [p1, lf1, r25, d3]
+# CHECK: 3a8: 18 54 69 3a vldb.pop.512 x5, [p0, lf0, r24, m3]
+# CHECK: 3ac: 18 94 48 3b vldb.pop.512 x2, [p1, lf1, r25, m2]
+# CHECK: 3b0: 18 54 ca 3a vldb.pop.512 x9, [p0, lf0, r24, m6]
+# CHECK: 3b4: 18 d4 e8 3b vldb.pop.512 x3, [p1, lf1, r25, m7]
+# CHECK: 3b8: 18 d4 aa 3a vldb.pop.512 x11, [p0, lf0, r24, m5]
+# CHECK: 3bc: 18 94 8a 3b vldb.pop.512 x10, [p1, lf1, r25, m4]
+# CHECK: 3c0: 18 14 28 3a vldb.pop.512 x0, [p0, lf0, r24, m1]
+# CHECK: 3c4: 18 54 08 3b vldb.pop.512 x1, [p1, lf1, r25, m0]
+# CHECK: 3c8: 18 14 69 3a vldb.pop.512 x4, [p0, lf0, r24, m3]
+# CHECK: 3cc: 18 d4 49 3b vldb.pop.512 x7, [p1, lf1, r25, m2]
+# CHECK: 3d0: 18 94 c9 3a vldb.pop.512 x6, [p0, lf0, r24, m6]
+# CHECK: 3d4: 18 14 ea 3b vldb.pop.512 x8, [p1, lf1, r25, m7]
+# CHECK: 3d8: 18 94 00 38 vldb.pop.512 x2, [p0, lf0, r24]
+# CHECK: 3dc: 18 94 01 39 vldb.pop.512 x6, [p1, lf1, r25]
+# CHECK: 3e0: 18 d4 01 38 vldb.pop.512 x7, [p0, lf0, r24]
+# CHECK: 3e4: 18 14 00 39 vldb.pop.512 x0, [p1, lf1, r25]
+# CHECK: 3e8: 18 54 01 38 vldb.pop.512 x5, [p0, lf0, r24]
+# CHECK: 3ec: 18 14 02 39 vldb.pop.512 x8, [p1, lf1, r25]
+# CHECK: 3f0: 18 d4 00 38 vldb.pop.512 x3, [p0, lf0, r24]
+# CHECK: 3f4: 18 d4 02 39 vldb.pop.512 x11, [p1, lf1, r25]
+# CHECK: 3f8: 18 14 01 38 vldb.pop.512 x4, [p0, lf0, r24]
+# CHECK: 3fc: 18 94 02 39 vldb.pop.512 x10, [p1, lf1, r25]
+# CHECK: 400: 18 54 02 38 vldb.pop.512 x9, [p0, lf0, r24]
+# CHECK: 404: 18 54 00 39 vldb.pop.512 x1, [p1, lf1, r25]
+# CHECK: 408: 18 54 ea 3c vldb.pop.544.2d ex9, [p0, lf0, r24, d7]
+# CHECK: 40c: 18 94 08 3d vldb.pop.544.2d ex2, [p1, lf1, r25, d0]
+# CHECK: 410: 18 94 aa 3c vldb.pop.544.2d ex10, [p0, lf0, r24, d5]
+# CHECK: 414: 18 d4 c9 3d vldb.pop.544.2d ex7, [p1, lf1, r25, d6]
+# CHECK: 418: 18 94 29 3c vldb.pop.544.2d ex6, [p0, lf0, r24, d1]
+# CHECK: 41c: 18 14 68 3d vldb.pop.544.2d ex0, [p1, lf1, r25, d3]
+# CHECK: 420: 18 14 4a 3c vldb.pop.544.2d ex8, [p0, lf0, r24, d2]
+# CHECK: 424: 18 d4 88 3d vldb.pop.544.2d ex3, [p1, lf1, r25, d4]
+# CHECK: 428: 18 14 e9 3c vldb.pop.544.2d ex4, [p0, lf0, r24, d7]
+# CHECK: 42c: 18 54 09 3d vldb.pop.544.2d ex5, [p1, lf1, r25, d0]
 # CHECK: 430: 18 54 a8 3c vldb.pop.544.2d ex1, [p0, lf0, r24, d5]
-# CHECK: 434: 18 54 69 3d vldb.pop.544.2d ex5, [p1, lf1, r25, d3]
-# CHECK: 438: 18 94 32 3a vldb.pop.544.3d ex10, [p0, lf0, r24, d1]
-# CHECK: 43c: 18 14 10 3b vldb.pop.544.3d ex0, [p1, lf1, r25, d0]
-# CHECK: 440: 18 54 51 3a vldb.pop.544.3d ex5, [p0, lf0, r24, d2]
+# CHECK: 434: 18 d4 ca 3d vldb.pop.544.2d ex11, [p1, lf1, r25, d6]
+# CHECK: 438: 18 94 12 3a vldb.pop.544.3d ex10, [p0, lf0, r24, d0]
+# CHECK: 43c: 18 54 51 3b vldb.pop.544.3d ex5, [p1, lf1, r25, d2]
+# CHECK: 440: 18 54 30 3a vldb.pop.544.3d ex1, [p0, lf0, r24, d1]
 # CHECK: 444: 18 d4 70 3b vldb.pop.544.3d ex3, [p1, lf1, r25, d3]
-# CHECK: 448: 18 54 30 3a vldb.pop.544.3d ex1, [p0, lf0, r24, d1]
-# CHECK: 44c: 18 94 11 3b vldb.pop.544.3d ex6, [p1, lf1, r25, d0]
-# CHECK: 450: 18 d4 52 3a vldb.pop.544.3d ex11, [p0, lf0, r24, d2]
-# CHECK: 454: 18 94 70 3b vldb.pop.544.3d ex2, [p1, lf1, r25, d3]
-# CHECK: 458: 18 d4 31 3a vldb.pop.544.3d ex7, [p0, lf0, r24, d1]
-# CHECK: 45c: 18 14 11 3b vldb.pop.544.3d ex4, [p1, lf1, r25, d0]
-# CHECK: 460: 18 54 52 3a vldb.pop.544.3d ex9, [p0, lf0, r24, d2]
-# CHECK: 464: 18 14 72 3b vldb.pop.544.3d ex8, [p1, lf1, r25, d3]
-# CHECK: 468: 18 14 f9 39 vldb.pop.544 ex4, [p1, lf1, r25, m7]
-# CHECK: 46c: 18 14 18 38 vldb.pop.544 ex0, [p0, lf0, r24, m0]
-# CHECK: 470: 18 d4 3a 39 vldb.pop.544 ex11, [p1, lf1, r25, m1]
-# CHECK: 474: 18 d4 59 38 vldb.pop.544 ex7, [p0, lf0, r24, m2]
-# CHECK: 478: 18 54 7a 39 vldb.pop.544 ex9, [p1, lf1, r25, m3]
-# CHECK: 47c: 18 54 d9 38 vldb.pop.544 ex5, [p0, lf0, r24, m6]
-# CHECK: 480: 18 94 ba 39 vldb.pop.544 ex10, [p1, lf1, r25, m5]
-# CHECK: 484: 18 54 98 38 vldb.pop.544 ex1, [p0, lf0, r24, m4]
-# CHECK: 488: 18 94 f9 39 vldb.pop.544 ex6, [p1, lf1, r25, m7]
-# CHECK: 48c: 18 d4 18 38 vldb.pop.544 ex3, [p0, lf0, r24, m0]
-# CHECK: 490: 18 14 3a 39 vldb.pop.544 ex8, [p1, lf1, r25, m1]
-# CHECK: 494: 18 94 58 38 vldb.pop.544 ex2, [p0, lf0, r24, m2]
-# CHECK: 498: 18 d4 00 3e vldb.pop.544 ex3, [p0, lf0, r24]
-# CHECK: 49c: 18 54 01 3f vldb.pop.544 ex5, [p1, lf1, r25]
-# CHECK: 4a0: 18 94 00 3e vldb.pop.544 ex2, [p0, lf0, r24]
+# CHECK: 448: 18 94 11 3a vldb.pop.544.3d ex6, [p0, lf0, r24, d0]
+# CHECK: 44c: 18 54 52 3b vldb.pop.544.3d ex9, [p1, lf1, r25, d2]
+# CHECK: 450: 18 d4 31 3a vldb.pop.544.3d ex7, [p0, lf0, r24, d1]
+# CHECK: 454: 18 14 72 3b vldb.pop.544.3d ex8, [p1, lf1, r25, d3]
+# CHECK: 458: 18 14 10 3a vldb.pop.544.3d ex0, [p0, lf0, r24, d0]
+# CHECK: 45c: 18 d4 52 3b vldb.pop.544.3d ex11, [p1, lf1, r25, d2]
+# CHECK: 460: 18 94 30 3a vldb.pop.544.3d ex2, [p0, lf0, r24, d1]
+# CHECK: 464: 18 14 71 3b vldb.pop.544.3d ex4, [p1, lf1, r25, d3]
+# CHECK: 468: 18 14 99 39 vldb.pop.544 ex4, [p1, lf1, r25, m4]
+# CHECK: 46c: 18 14 d8 38 vldb.pop.544 ex0, [p0, lf0, r24, m6]
+# CHECK: 470: 18 14 3a 39 vldb.pop.544 ex8, [p1, lf1, r25, m1]
+# CHECK: 474: 18 94 7a 38 vldb.pop.544 ex10, [p0, lf0, r24, m3]
+# CHECK: 478: 18 54 58 39 vldb.pop.544 ex1, [p1, lf1, r25, m2]
+# CHECK: 47c: 18 d4 fa 38 vldb.pop.544 ex11, [p0, lf0, r24, m7]
+# CHECK: 480: 18 d4 19 39 vldb.pop.544 ex7, [p1, lf1, r25, m0]
+# CHECK: 484: 18 94 b8 38 vldb.pop.544 ex2, [p0, lf0, r24, m5]
+# CHECK: 488: 18 54 99 39 vldb.pop.544 ex5, [p1, lf1, r25, m4]
+# CHECK: 48c: 18 94 d9 38 vldb.pop.544 ex6, [p0, lf0, r24, m6]
+# CHECK: 490: 18 54 3a 39 vldb.pop.544 ex9, [p1, lf1, r25, m1]
+# CHECK: 494: 18 d4 78 38 vldb.pop.544 ex3, [p0, lf0, r24, m3]
+# CHECK: 498: 18 54 02 3e vldb.pop.544 ex9, [p0, lf0, r24]
+# CHECK: 49c: 18 d4 01 3f vldb.pop.544 ex7, [p1, lf1, r25]
+# CHECK: 4a0: 18 14 01 3e vldb.pop.544 ex4, [p0, lf0, r24]
 # CHECK: 4a4: 18 14 02 3f vldb.pop.544 ex8, [p1, lf1, r25]
 # CHECK: 4a8: 18 14 00 3e vldb.pop.544 ex0, [p0, lf0, r24]
-# CHECK: 4ac: 18 54 00 3f vldb.pop.544 ex1, [p1, lf1, r25]
-# CHECK: 4b0: 18 d4 02 3e vldb.pop.544 ex11, [p0, lf0, r24]
-# CHECK: 4b4: 18 d4 01 3f vldb.pop.544 ex7, [p1, lf1, r25]
-# CHECK: 4b8: 18 94 01 3e vldb.pop.544 ex6, [p0, lf0, r24]
-# CHECK: 4bc: 18 54 02 3f vldb.pop.544 ex9, [p1, lf1, r25]
-# CHECK: 4c0: 18 94 02 3e vldb.pop.544 ex10, [p0, lf0, r24]
-# CHECK: 4c4: 18 14 01 3f vldb.pop.544 ex4, [p1, lf1, r25]
-# CHECK: 4c8: 18 54 0a 39 vldb.pop.576.2d ex9, [p1, lf1, r25, d0]
-# CHECK: 4cc: 18 14 aa 38 vldb.pop.576.2d ex8, [p0, lf0, r24, d5]
-# CHECK: 4d0: 18 94 e8 39 vldb.pop.576.2d ex2, [p1, lf1, r25, d7]
-# CHECK: 4d4: 18 54 c8 38 vldb.pop.576.2d ex1, [p0, lf0, r24, d6]
-# CHECK: 4d8: 18 94 49 39 vldb.pop.576.2d ex6, [p1, lf1, r25, d2]
-# CHECK: 4dc: 18 d4 69 38 vldb.pop.576.2d ex7, [p0, lf0, r24, d3]
-# CHECK: 4e0: 18 54 29 39 vldb.pop.576.2d ex5, [p1, lf1, r25, d1]
-# CHECK: 4e4: 18 d4 88 38 vldb.pop.576.2d ex3, [p0, lf0, r24, d4]
-# CHECK: 4e8: 18 14 08 39 vldb.pop.576.2d ex0, [p1, lf1, r25, d0]
-# CHECK: 4ec: 18 14 a9 38 vldb.pop.576.2d ex4, [p0, lf0, r24, d5]
-# CHECK: 4f0: 18 d4 ea 39 vldb.pop.576.2d ex11, [p1, lf1, r25, d7]
-# CHECK: 4f4: 18 94 ca 38 vldb.pop.576.2d ex10, [p0, lf0, r24, d6]
-# CHECK: 4f8: 18 54 31 3c vldb.pop.576.3d ex5, [p0, lf0, r24, d1]
-# CHECK: 4fc: 18 14 50 3d vldb.pop.576.3d ex0, [p1, lf1, r25, d2]
-# CHECK: 500: 18 d4 11 3c vldb.pop.576.3d ex7, [p0, lf0, r24, d0]
-# CHECK: 504: 18 d4 70 3d vldb.pop.576.3d ex3, [p1, lf1, r25, d3]
-# CHECK: 508: 18 d4 32 3c vldb.pop.576.3d ex11, [p0, lf0, r24, d1]
-# CHECK: 50c: 18 14 52 3d vldb.pop.576.3d ex8, [p1, lf1, r25, d2]
-# CHECK: 510: 18 94 10 3c vldb.pop.576.3d ex2, [p0, lf0, r24, d0]
-# CHECK: 514: 18 14 71 3d vldb.pop.576.3d ex4, [p1, lf1, r25, d3]
-# CHECK: 518: 18 94 32 3c vldb.pop.576.3d ex10, [p0, lf0, r24, d1]
-# CHECK: 51c: 18 54 50 3d vldb.pop.576.3d ex1, [p1, lf1, r25, d2]
-# CHECK: 520: 18 54 12 3c vldb.pop.576.3d ex9, [p0, lf0, r24, d0]
-# CHECK: 524: 18 94 71 3d vldb.pop.576.3d ex6, [p1, lf1, r25, d3]
-# CHECK: 528: 18 d4 88 3f vldb.pop.576 ex3, [p1, lf1, r25, m4]
-# CHECK: 52c: 18 94 a8 3e vldb.pop.576 ex2, [p0, lf0, r24, m5]
-# CHECK: 530: 18 54 49 3f vldb.pop.576 ex5, [p1, lf1, r25, m2]
-# CHECK: 534: 18 94 69 3e vldb.pop.576 ex6, [p0, lf0, r24, m3]
-# CHECK: 538: 18 54 28 3f vldb.pop.576 ex1, [p1, lf1, r25, m1]
-# CHECK: 53c: 18 14 c8 3e vldb.pop.576 ex0, [p0, lf0, r24, m6]
-# CHECK: 540: 18 94 0a 3f vldb.pop.576 ex10, [p1, lf1, r25, m0]
-# CHECK: 544: 18 14 ea 3e vldb.pop.576 ex8, [p0, lf0, r24, m7]
-# CHECK: 548: 18 d4 8a 3f vldb.pop.576 ex11, [p1, lf1, r25, m4]
-# CHECK: 54c: 18 d4 a9 3e vldb.pop.576 ex7, [p0, lf0, r24, m5]
-# CHECK: 550: 18 14 49 3f vldb.pop.576 ex4, [p1, lf1, r25, m2]
-# CHECK: 554: 18 54 6a 3e vldb.pop.576 ex9, [p0, lf0, r24, m3]
-# CHECK: 558: 18 94 00 3b vldb.pop.576 ex2, [p1, lf1, r25]
-# CHECK: 55c: 18 54 02 3a vldb.pop.576 ex9, [p0, lf0, r24]
-# CHECK: 560: 18 54 01 3b vldb.pop.576 ex5, [p1, lf1, r25]
-# CHECK: 564: 18 14 02 3a vldb.pop.576 ex8, [p0, lf0, r24]
-# CHECK: 568: 18 14 01 3b vldb.pop.576 ex4, [p1, lf1, r25]
-# CHECK: 56c: 18 94 02 3a vldb.pop.576 ex10, [p0, lf0, r24]
-# CHECK: 570: 18 d4 00 3b vldb.pop.576 ex3, [p1, lf1, r25]
-# CHECK: 574: 18 d4 02 3a vldb.pop.576 ex11, [p0, lf0, r24]
-# CHECK: 578: 18 14 00 3b vldb.pop.576 ex0, [p1, lf1, r25]
-# CHECK: 57c: 18 94 01 3a vldb.pop.576 ex6, [p0, lf0, r24]
-# CHECK: 580: 18 54 00 3b vldb.pop.576 ex1, [p1, lf1, r25]
-# CHECK: 584: 18 d4 01 3a vldb.pop.576 ex7, [p0, lf0, r24]
-# CHECK: 588: 18 14 86 3c vldb.pop.640.2d qx2, [p0, lf0, r24, d4]
-# CHECK: 58c: 18 14 67 3d vldb.pop.640.2d qx3, [p1, lf1, r25, d3]
+# CHECK: 4ac: 18 94 00 3f vldb.pop.544 ex2, [p1, lf1, r25]
+# CHECK: 4b0: 18 94 01 3e vldb.pop.544 ex6, [p0, lf0, r24]
+# CHECK: 4b4: 18 d4 02 3f vldb.pop.544 ex11, [p1, lf1, r25]
+# CHECK: 4b8: 18 94 02 3e vldb.pop.544 ex10, [p0, lf0, r24]
+# CHECK: 4bc: 18 54 01 3f vldb.pop.544 ex5, [p1, lf1, r25]
+# CHECK: 4c0: 18 54 00 3e vldb.pop.544 ex1, [p0, lf0, r24]
+# CHECK: 4c4: 18 d4 00 3f vldb.pop.544 ex3, [p1, lf1, r25]
+# CHECK: 4c8: 18 54 29 39 vldb.pop.576.2d ex5, [p1, lf1, r25, d1]
+# CHECK: 4cc: 18 d4 09 38 vldb.pop.576.2d ex7, [p0, lf0, r24, d0]
+# CHECK: 4d0: 18 14 8a 39 vldb.pop.576.2d ex8, [p1, lf1, r25, d4]
+# CHECK: 4d4: 18 d4 ca 38 vldb.pop.576.2d ex11, [p0, lf0, r24, d6]
+# CHECK: 4d8: 18 94 69 39 vldb.pop.576.2d ex6, [p1, lf1, r25, d3]
+# CHECK: 4dc: 18 94 48 38 vldb.pop.576.2d ex2, [p0, lf0, r24, d2]
+# CHECK: 4e0: 18 d4 e8 39 vldb.pop.576.2d ex3, [p1, lf1, r25, d7]
+# CHECK: 4e4: 18 94 aa 38 vldb.pop.576.2d ex10, [p0, lf0, r24, d5]
+# CHECK: 4e8: 18 54 28 39 vldb.pop.576.2d ex1, [p1, lf1, r25, d1]
+# CHECK: 4ec: 18 14 09 38 vldb.pop.576.2d ex4, [p0, lf0, r24, d0]
+# CHECK: 4f0: 18 54 8a 39 vldb.pop.576.2d ex9, [p1, lf1, r25, d4]
+# CHECK: 4f4: 18 14 c8 38 vldb.pop.576.2d ex0, [p0, lf0, r24, d6]
+# CHECK: 4f8: 18 14 32 3c vldb.pop.576.3d ex8, [p0, lf0, r24, d1]
+# CHECK: 4fc: 18 94 12 3d vldb.pop.576.3d ex10, [p1, lf1, r25, d0]
+# CHECK: 500: 18 d4 50 3c vldb.pop.576.3d ex3, [p0, lf0, r24, d2]
+# CHECK: 504: 18 14 71 3d vldb.pop.576.3d ex4, [p1, lf1, r25, d3]
+# CHECK: 508: 18 54 31 3c vldb.pop.576.3d ex5, [p0, lf0, r24, d1]
+# CHECK: 50c: 18 94 10 3d vldb.pop.576.3d ex2, [p1, lf1, r25, d0]
+# CHECK: 510: 18 d4 51 3c vldb.pop.576.3d ex7, [p0, lf0, r24, d2]
+# CHECK: 514: 18 54 72 3d vldb.pop.576.3d ex9, [p1, lf1, r25, d3]
+# CHECK: 518: 18 14 30 3c vldb.pop.576.3d ex0, [p0, lf0, r24, d1]
+# CHECK: 51c: 18 54 10 3d vldb.pop.576.3d ex1, [p1, lf1, r25, d0]
+# CHECK: 520: 18 94 51 3c vldb.pop.576.3d ex6, [p0, lf0, r24, d2]
+# CHECK: 524: 18 d4 72 3d vldb.pop.576.3d ex11, [p1, lf1, r25, d3]
+# CHECK: 528: 18 14 88 3f vldb.pop.576 ex0, [p1, lf1, r25, m4]
+# CHECK: 52c: 18 14 c9 3e vldb.pop.576 ex4, [p0, lf0, r24, m6]
+# CHECK: 530: 18 14 6a 3f vldb.pop.576 ex8, [p1, lf1, r25, m3]
+# CHECK: 534: 18 94 09 3e vldb.pop.576 ex6, [p0, lf0, r24, m0]
+# CHECK: 538: 18 94 4a 3f vldb.pop.576 ex10, [p1, lf1, r25, m2]
+# CHECK: 53c: 18 54 2a 3e vldb.pop.576 ex9, [p0, lf0, r24, m1]
+# CHECK: 540: 18 d4 a9 3f vldb.pop.576 ex7, [p1, lf1, r25, m5]
+# CHECK: 544: 18 d4 ea 3e vldb.pop.576 ex11, [p0, lf0, r24, m7]
+# CHECK: 548: 18 94 88 3f vldb.pop.576 ex2, [p1, lf1, r25, m4]
+# CHECK: 54c: 18 54 c8 3e vldb.pop.576 ex1, [p0, lf0, r24, m6]
+# CHECK: 550: 18 54 69 3f vldb.pop.576 ex5, [p1, lf1, r25, m3]
+# CHECK: 554: 18 d4 08 3e vldb.pop.576 ex3, [p0, lf0, r24, m0]
+# CHECK: 558: 18 d4 00 3b vldb.pop.576 ex3, [p1, lf1, r25]
+# CHECK: 55c: 18 14 02 3a vldb.pop.576 ex8, [p0, lf0, r24]
+# CHECK: 560: 18 94 01 3b vldb.pop.576 ex6, [p1, lf1, r25]
+# CHECK: 564: 18 94 00 3a vldb.pop.576 ex2, [p0, lf0, r24]
+# CHECK: 568: 18 d4 01 3b vldb.pop.576 ex7, [p1, lf1, r25]
+# CHECK: 56c: 18 d4 02 3a vldb.pop.576 ex11, [p0, lf0, r24]
+# CHECK: 570: 18 94 02 3b vldb.pop.576 ex10, [p1, lf1, r25]
+# CHECK: 574: 18 14 00 3a vldb.pop.576 ex0, [p0, lf0, r24]
+# CHECK: 578: 18 14 01 3b vldb.pop.576 ex4, [p1, lf1, r25]
+# CHECK: 57c: 18 54 01 3a vldb.pop.576 ex5, [p0, lf0, r24]
+# CHECK: 580: 18 54 02 3b vldb.pop.576 ex9, [p1, lf1, r25]
+# CHECK: 584: 18 54 00 3a vldb.pop.576 ex1, [p0, lf0, r24]
+# CHECK: 588: 18 14 c6 3c vldb.pop.640.2d qx2, [p0, lf0, r24, d6]
+# CHECK: 58c: 18 14 07 3d vldb.pop.640.2d qx3, [p1, lf1, r25, d0]
 # CHECK: 590: 18 14 a4 3c vldb.pop.640.2d qx0, [p0, lf0, r24, d5]
-# CHECK: 594: 18 14 05 3d vldb.pop.640.2d qx1, [p1, lf1, r25, d0]
-# CHECK: 598: 18 14 46 3c vldb.pop.640.2d qx2, [p0, lf0, r24, d2]
-# CHECK: 59c: 18 14 e7 3d vldb.pop.640.2d qx3, [p1, lf1, r25, d7]
-# CHECK: 5a0: 18 14 24 3c vldb.pop.640.2d qx0, [p0, lf0, r24, d1]
-# CHECK: 5a4: 18 14 c5 3d vldb.pop.640.2d qx1, [p1, lf1, r25, d6]
-# CHECK: 5a8: 18 14 38 3f vldb.pop.640.3d qx0, [p1, lf1, r25, d1]
-# CHECK: 5ac: 18 14 7b 3e vldb.pop.640.3d qx3, [p0, lf0, r24, d3]
-# CHECK: 5b0: 18 14 59 3f vldb.pop.640.3d qx1, [p1, lf1, r25, d2]
-# CHECK: 5b4: 18 14 1a 3e vldb.pop.640.3d qx2, [p0, lf0, r24, d0]
-# CHECK: 5b8: 18 14 c7 3e vldb.pop.640 qx3, [p0, lf0, r24, m6]
-# CHECK: 5bc: 18 14 05 3f vldb.pop.640 qx1, [p1, lf1, r25, m0]
-# CHECK: 5c0: 18 14 66 3e vldb.pop.640 qx2, [p0, lf0, r24, m3]
-# CHECK: 5c4: 18 14 84 3f vldb.pop.640 qx0, [p1, lf1, r25, m4]
-# CHECK: 5c8: 18 14 27 3e vldb.pop.640 qx3, [p0, lf0, r24, m1]
-# CHECK: 5cc: 18 14 45 3f vldb.pop.640 qx1, [p1, lf1, r25, m2]
-# CHECK: 5d0: 18 14 e6 3e vldb.pop.640 qx2, [p0, lf0, r24, m7]
-# CHECK: 5d4: 18 14 a4 3f vldb.pop.640 qx0, [p1, lf1, r25, m5]
-# CHECK: 5d8: 18 14 1a 3d vldb.pop.640 qx2, [p1, lf1, r25]
-# CHECK: 5dc: 18 14 19 3c vldb.pop.640 qx1, [p0, lf0, r24]
-# CHECK: 5e0: 18 14 1b 3d vldb.pop.640 qx3, [p1, lf1, r25]
-# CHECK: 5e4: 18 14 18 3c vldb.pop.640 qx0, [p0, lf0, r24]
-# CHECK: 5e8: 18 14 44 3b vldb.pop.704.2d qex0, [p1, lf1, r25, d2]
+# CHECK: 594: 18 14 e5 3d vldb.pop.640.2d qx1, [p1, lf1, r25, d7]
+# CHECK: 598: 18 14 66 3c vldb.pop.640.2d qx2, [p0, lf0, r24, d3]
+# CHECK: 59c: 18 14 47 3d vldb.pop.640.2d qx3, [p1, lf1, r25, d2]
+# CHECK: 5a0: 18 14 84 3c vldb.pop.640.2d qx0, [p0, lf0, r24, d4]
+# CHECK: 5a4: 18 14 25 3d vldb.pop.640.2d qx1, [p1, lf1, r25, d1]
+# CHECK: 5a8: 18 14 19 3f vldb.pop.640.3d qx1, [p1, lf1, r25, d0]
+# CHECK: 5ac: 18 14 7a 3e vldb.pop.640.3d qx2, [p0, lf0, r24, d3]
+# CHECK: 5b0: 18 14 3b 3f vldb.pop.640.3d qx3, [p1, lf1, r25, d1]
+# CHECK: 5b4: 18 14 58 3e vldb.pop.640.3d qx0, [p0, lf0, r24, d2]
+# CHECK: 5b8: 18 14 a6 3e vldb.pop.640 qx2, [p0, lf0, r24, m5]
+# CHECK: 5bc: 18 14 07 3f vldb.pop.640 qx3, [p1, lf1, r25, m0]
+# CHECK: 5c0: 18 14 64 3e vldb.pop.640 qx0, [p0, lf0, r24, m3]
+# CHECK: 5c4: 18 14 c5 3f vldb.pop.640 qx1, [p1, lf1, r25, m6]
+# CHECK: 5c8: 18 14 86 3e vldb.pop.640 qx2, [p0, lf0, r24, m4]
+# CHECK: 5cc: 18 14 e7 3f vldb.pop.640 qx3, [p1, lf1, r25, m7]
+# CHECK: 5d0: 18 14 44 3e vldb.pop.640 qx0, [p0, lf0, r24, m2]
+# CHECK: 5d4: 18 14 25 3f vldb.pop.640 qx1, [p1, lf1, r25, m1]
+# CHECK: 5d8: 18 14 18 3d vldb.pop.640 qx0, [p1, lf1, r25]
+# CHECK: 5dc: 18 14 1b 3c vldb.pop.640 qx3, [p0, lf0, r24]
+# CHECK: 5e0: 18 14 1a 3d vldb.pop.640 qx2, [p1, lf1, r25]
+# CHECK: 5e4: 18 14 19 3c vldb.pop.640 qx1, [p0, lf0, r24]
+# CHECK: 5e8: 18 14 24 3b vldb.pop.704.2d qex0, [p1, lf1, r25, d1]
 # CHECK: 5ec: 18 14 65 3a vldb.pop.704.2d qex1, [p0, lf0, r24, d3]
-# CHECK: 5f0: 18 14 06 3b vldb.pop.704.2d qex2, [p1, lf1, r25, d0]
-# CHECK: 5f4: 18 14 c7 3a vldb.pop.704.2d qex3, [p0, lf0, r24, d6]
-# CHECK: 5f8: 18 14 24 3b vldb.pop.704.2d qex0, [p1, lf1, r25, d1]
-# CHECK: 5fc: 18 14 85 3a vldb.pop.704.2d qex1, [p0, lf0, r24, d4]
-# CHECK: 600: 18 14 a6 3b vldb.pop.704.2d qex2, [p1, lf1, r25, d5]
-# CHECK: 604: 18 14 e7 3a vldb.pop.704.2d qex3, [p0, lf0, r24, d7]
-# CHECK: 608: 18 14 07 39 vldb.pop.704.3d qex3, [p1, lf1, r25, d0]
-# CHECK: 60c: 18 14 64 38 vldb.pop.704.3d qex0, [p0, lf0, r24, d3]
-# CHECK: 610: 18 14 46 39 vldb.pop.704.3d qex2, [p1, lf1, r25, d2]
-# CHECK: 614: 18 14 25 38 vldb.pop.704.3d qex1, [p0, lf0, r24, d1]
-# CHECK: 618: 18 14 56 39 vldb.pop.704 qex2, [p1, lf1, r25, m2]
-# CHECK: 61c: 18 14 d4 38 vldb.pop.704 qex0, [p0, lf0, r24, m6]
-# CHECK: 620: 18 14 b7 39 vldb.pop.704 qex3, [p1, lf1, r25, m5]
-# CHECK: 624: 18 14 95 38 vldb.pop.704 qex1, [p0, lf0, r24, m4]
-# CHECK: 628: 18 14 16 39 vldb.pop.704 qex2, [p1, lf1, r25, m0]
-# CHECK: 62c: 18 14 74 38 vldb.pop.704 qex0, [p0, lf0, r24, m3]
-# CHECK: 630: 18 14 37 39 vldb.pop.704 qex3, [p1, lf1, r25, m1]
-# CHECK: 634: 18 14 f5 38 vldb.pop.704 qex1, [p0, lf0, r24, m7]
-# CHECK: 638: 18 14 19 3b vldb.pop.704 qex1, [p1, lf1, r25]
-# CHECK: 63c: 18 14 18 3a vldb.pop.704 qex0, [p0, lf0, r24]
-# CHECK: 640: 18 14 1b 3b vldb.pop.704 qex3, [p1, lf1, r25]
-# CHECK: 644: 18 14 1a 3a vldb.pop.704 qex2, [p0, lf0, r24]
+# CHECK: 5f0: 18 14 87 3b vldb.pop.704.2d qex3, [p1, lf1, r25, d4]
+# CHECK: 5f4: 18 14 e6 3a vldb.pop.704.2d qex2, [p0, lf0, r24, d7]
+# CHECK: 5f8: 18 14 44 3b vldb.pop.704.2d qex0, [p1, lf1, r25, d2]
+# CHECK: 5fc: 18 14 c5 3a vldb.pop.704.2d qex1, [p0, lf0, r24, d6]
+# CHECK: 600: 18 14 a7 3b vldb.pop.704.2d qex3, [p1, lf1, r25, d5]
+# CHECK: 604: 18 14 06 3a vldb.pop.704.2d qex2, [p0, lf0, r24, d0]
+# CHECK: 608: 18 14 46 39 vldb.pop.704.3d qex2, [p1, lf1, r25, d2]
+# CHECK: 60c: 18 14 05 38 vldb.pop.704.3d qex1, [p0, lf0, r24, d0]
+# CHECK: 610: 18 14 24 39 vldb.pop.704.3d qex0, [p1, lf1, r25, d1]
+# CHECK: 614: 18 14 67 38 vldb.pop.704.3d qex3, [p0, lf0, r24, d3]
+# CHECK: 618: 18 14 35 39 vldb.pop.704 qex1, [p1, lf1, r25, m1]
+# CHECK: 61c: 18 14 97 38 vldb.pop.704 qex3, [p0, lf0, r24, m4]
+# CHECK: 620: 18 14 b6 39 vldb.pop.704 qex2, [p1, lf1, r25, m5]
+# CHECK: 624: 18 14 f4 38 vldb.pop.704 qex0, [p0, lf0, r24, m7]
+# CHECK: 628: 18 14 15 39 vldb.pop.704 qex1, [p1, lf1, r25, m0]
+# CHECK: 62c: 18 14 57 38 vldb.pop.704 qex3, [p0, lf0, r24, m2]
+# CHECK: 630: 18 14 d6 39 vldb.pop.704 qex2, [p1, lf1, r25, m6]
+# CHECK: 634: 18 14 74 38 vldb.pop.704 qex0, [p0, lf0, r24, m3]
+# CHECK: 638: 18 14 1a 3b vldb.pop.704 qex2, [p1, lf1, r25]
+# CHECK: 63c: 18 14 1b 3a vldb.pop.704 qex3, [p0, lf0, r24]
+# CHECK: 640: 18 14 18 3b vldb.pop.704 qex0, [p1, lf1, r25]
+# CHECK: 644: 18 14 19 3a vldb.pop.704 qex1, [p0, lf0, r24]

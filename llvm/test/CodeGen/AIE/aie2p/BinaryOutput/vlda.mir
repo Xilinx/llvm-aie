@@ -123,7 +123,7 @@ body:      |
     $wh9, $p2 = VLDA_128_dmv_lda_w_pstm_nrm_imm $p2, 16
     $wl8, $p1 = VLDA_128_dmv_lda_w_pstm_nrm_imm $p1, 112
 
-    ; VLDA_128_dmv_lda_w_spill, implicit $sp
+    ; VLDA_128_dmv_lda_w_spill
     $wh6 = VLDA_128_dmv_lda_w_spill -16, implicit $sp
     $wh7 = VLDA_128_dmv_lda_w_spill -8176, implicit $sp
     $wl0 = VLDA_128_dmv_lda_w_spill -32, implicit $sp
@@ -862,48 +862,48 @@ body:      |
     $bmhl4 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1 $s0, $p1, 32, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
 
     ; VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0
-    $bmll3, $p7 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s0, $p7, $m5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $bmhh3, $p6 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s2, $p6, $m3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $bmlh1, $p1 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s3, $p1, $m7, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmll3, $p7 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s0, $p7, $m0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmhh3, $p6 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s2, $p6, $m5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmlh1, $p1 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s3, $p1, $m1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
     $bmhh2, $p5 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s1, $p5, $m4, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $bmll1, $p2 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s0, $p2, $m6, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $bmhl3, $p0 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s2, $p0, $m0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $bmhh4, $p4 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s3, $p4, $m1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $bmhl2, $p3 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s1, $p3, $m2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $bmll0, $p7 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s0, $p7, $m5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $bmhh0, $p6 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s2, $p6, $m3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $bmlh2, $p1 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s3, $p1, $m7, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmll1, $p2 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s0, $p2, $m2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmhl3, $p0 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s2, $p0, $m7, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmhh4, $p4 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s3, $p4, $m3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmhl2, $p3 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s1, $p3, $m6, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmll0, $p7 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s0, $p7, $m0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmhh0, $p6 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s2, $p6, $m5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmlh2, $p1 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s3, $p1, $m1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
     $bmlh0, $p5 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s1, $p5, $m4, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $bmll2, $p2 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s0, $p2, $m6, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $bmhl4, $p0 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s2, $p0, $m0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $bmlh4, $p4 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s3, $p4, $m1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $bmlh3, $p3 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s1, $p3, $m2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $bmhl1, $p7 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s0, $p7, $m5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $bmll4, $p6 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s2, $p6, $m3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $bmhh1, $p1 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s3, $p1, $m7, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmll2, $p2 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s0, $p2, $m2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmhl4, $p0 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s2, $p0, $m7, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmlh4, $p4 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s3, $p4, $m3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmlh3, $p3 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s1, $p3, $m6, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmhl1, $p7 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s0, $p7, $m0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmll4, $p6 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s2, $p6, $m5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $bmhh1, $p1 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s3, $p1, $m1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
     $bmhl0, $p5 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign0 $s1, $p5, $m4, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
 
     ; VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1
     $bmll4, $p0 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s3, $p0, $m4, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $bmhh0, $p4 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s1, $p4, $m7, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $bmlh3, $p2 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s2, $p2, $m6, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $bmlh4, $p3 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s0, $p3, $m5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $bmhl3, $p7 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s3, $p7, $m3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $bmll2, $p5 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s1, $p5, $m1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $bmll0, $p6 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s2, $p6, $m2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $bmhl1, $p1 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s0, $p1, $m0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmhh0, $p4 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s1, $p4, $m1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmlh3, $p2 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s2, $p2, $m2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmlh4, $p3 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s0, $p3, $m0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmhl3, $p7 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s3, $p7, $m5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmll2, $p5 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s1, $p5, $m3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmll0, $p6 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s2, $p6, $m6, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmhl1, $p1 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s0, $p1, $m7, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
     $bmll1, $p0 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s3, $p0, $m4, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $bmhh4, $p4 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s1, $p4, $m7, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $bmhh3, $p2 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s2, $p2, $m6, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $bmhh1, $p3 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s0, $p3, $m5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $bmhh2, $p7 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s3, $p7, $m3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $bmlh2, $p5 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s1, $p5, $m1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $bmlh0, $p6 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s2, $p6, $m2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $bmhl2, $p1 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s0, $p1, $m0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmhh4, $p4 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s1, $p4, $m1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmhh3, $p2 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s2, $p2, $m2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmhh1, $p3 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s0, $p3, $m0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmhh2, $p7 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s3, $p7, $m5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmlh2, $p5 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s1, $p5, $m3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmlh0, $p6 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s2, $p6, $m6, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmhl2, $p1 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s0, $p1, $m7, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
     $bmlh1, $p0 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s3, $p0, $m4, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $bmll3, $p4 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s1, $p4, $m7, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $bmhl0, $p2 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s2, $p2, $m6, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $bmhl4, $p3 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s0, $p3, $m5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmll3, $p4 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s1, $p4, $m1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmhl0, $p2 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s2, $p2, $m2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $bmhl4, $p3 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_upsSign1 $s0, $p3, $m0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
 
     ; VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_imm_upsSign0
     $bmhl0, $p3 = VLDA_UPS_2x_dmw_lda_ups_w2b_pstm_nrm_imm_upsSign0 $s0, $p3, 224, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
@@ -999,27 +999,27 @@ body:      |
 
     ; VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign0
     $cmh4, $p3 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign0 $s2, $p3, $m4, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $cmh3, $p1 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign0 $s0, $p1, $m3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $cml0, $p7 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign0 $s3, $p7, $m5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $cmh1, $p0 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign0 $s1, $p0, $m2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $cml1, $p4 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign0 $s2, $p4, $m0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $cml4, $p6 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign0 $s0, $p6, $m6, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $cml3, $p2 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign0 $s3, $p2, $m1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $cmh0, $p5 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign0 $s1, $p5, $m7, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cmh3, $p1 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign0 $s0, $p1, $m5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml0, $p7 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign0 $s3, $p7, $m0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cmh1, $p0 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign0 $s1, $p0, $m6, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml1, $p4 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign0 $s2, $p4, $m7, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml4, $p6 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign0 $s0, $p6, $m2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml3, $p2 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign0 $s3, $p2, $m3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cmh0, $p5 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign0 $s1, $p5, $m1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
     $cml2, $p3 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign0 $s2, $p3, $m4, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $cmh2, $p1 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign0 $s0, $p1, $m3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cmh2, $p1 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign0 $s0, $p1, $m5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
 
     ; VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign1
     $cmh4, $p6 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign1 $s3, $p6, $m4, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $cml3, $p0 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign1 $s1, $p0, $m3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $cmh1, $p3 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign1 $s2, $p3, $m1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $cmh3, $p7 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign1 $s0, $p7, $m7, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $cml0, $p1 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign1 $s3, $p1, $m2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $cml2, $p5 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign1 $s1, $p5, $m6, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $cml1, $p4 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign1 $s2, $p4, $m0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $cmh0, $p2 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign1 $s0, $p2, $m5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cml3, $p0 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign1 $s1, $p0, $m5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cmh1, $p3 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign1 $s2, $p3, $m3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cmh3, $p7 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign1 $s0, $p7, $m1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cml0, $p1 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign1 $s3, $p1, $m6, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cml2, $p5 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign1 $s1, $p5, $m2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cml1, $p4 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign1 $s2, $p4, $m7, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cmh0, $p2 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign1 $s0, $p2, $m0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
     $cmh2, $p6 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign1 $s3, $p6, $m4, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $cml4, $p0 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign1 $s1, $p0, $m3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cml4, $p0 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_upsSign1 $s1, $p0, $m5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
 
     ; VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign0
     $cmh3, $p3 = VLDA_UPS_2x_dmx_lda_ups_x2c_pstm_nrm_imm_upsSign0 $s0, $p3, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
@@ -1094,28 +1094,28 @@ body:      |
     $cml0 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1 $s3, $p2, -256, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
 
     ; VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign0
-    $cml3, $p2 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign0 $s2, $p2, $m6, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $cml2, $p7 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign0 $s1, $p7, $m7, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $cmh0, $p1 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign0 $s0, $p1, $m5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml3, $p2 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign0 $s2, $p2, $m2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml2, $p7 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign0 $s1, $p7, $m1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cmh0, $p1 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign0 $s0, $p1, $m0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
     $cmh2, $p6 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign0 $s3, $p6, $m4, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $cmh4, $p5 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign0 $s2, $p5, $m0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $cml0, $p0 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign0 $s1, $p0, $m1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $cmh1, $p4 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign0 $s0, $p4, $m2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $cml1, $p3 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign0 $s3, $p3, $m3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $cml4, $p2 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign0 $s2, $p2, $m6, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $cmh3, $p7 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign0 $s1, $p7, $m7, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cmh4, $p5 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign0 $s2, $p5, $m7, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml0, $p0 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign0 $s1, $p0, $m3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cmh1, $p4 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign0 $s0, $p4, $m6, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml1, $p3 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign0 $s3, $p3, $m5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cml4, $p2 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign0 $s2, $p2, $m2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $cmh3, $p7 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign0 $s1, $p7, $m1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
 
     ; VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign1
-    $cml0, $p2 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign1 $s2, $p2, $m3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $cmh1, $p5 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign1 $s1, $p5, $m0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cml0, $p2 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign1 $s2, $p2, $m5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cmh1, $p5 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign1 $s1, $p5, $m7, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
     $cml4, $p4 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign1 $s0, $p4, $m4, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $cml2, $p0 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign1 $s3, $p0, $m2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $cml3, $p3 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign1 $s2, $p3, $m5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $cmh3, $p6 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign1 $s1, $p6, $m1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $cml1, $p1 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign1 $s0, $p1, $m6, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $cmh4, $p7 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign1 $s3, $p7, $m7, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $cmh2, $p2 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign1 $s2, $p2, $m3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $cmh0, $p5 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign1 $s1, $p5, $m0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cml2, $p0 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign1 $s3, $p0, $m6, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cml3, $p3 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign1 $s2, $p3, $m0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cmh3, $p6 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign1 $s1, $p6, $m3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cml1, $p1 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign1 $s0, $p1, $m2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cmh4, $p7 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign1 $s3, $p7, $m1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cmh2, $p2 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign1 $s2, $p2, $m5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $cmh0, $p5 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_upsSign1 $s1, $p5, $m7, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
 
     ; VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_imm_upsSign0
     $cml2, $p5 = VLDA_UPS_4x_dmw_lda_ups_w2c_pstm_nrm_imm_upsSign0 $s0, $p5, -256, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
@@ -1182,24 +1182,24 @@ body:      |
     $dm4 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1 $s0, $p5, 64, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
 
     ; VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign0
-    $dm1, $p4 = VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign0 $s3, $p4, $m5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $dm1, $p4 = VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign0 $s3, $p4, $m0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
     $dm2, $p1 = VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign0 $s0, $p1, $m4, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $dm3, $p3 = VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign0 $s2, $p3, $m2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $dm4, $p5 = VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign0 $s1, $p5, $m6, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $dm0, $p7 = VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign0 $s3, $p7, $m0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $dm1, $p2 = VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign0 $s0, $p2, $m7, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $dm2, $p6 = VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign0 $s2, $p6, $m3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
-    $dm3, $p0 = VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign0 $s1, $p0, $m1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $dm3, $p3 = VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign0 $s2, $p3, $m6, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $dm4, $p5 = VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign0 $s1, $p5, $m2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $dm0, $p7 = VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign0 $s3, $p7, $m7, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $dm1, $p2 = VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign0 $s0, $p2, $m1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $dm2, $p6 = VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign0 $s2, $p6, $m5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
+    $dm3, $p0 = VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign0 $s1, $p0, $m3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
 
     ; VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign1
-    $dm2, $p2 = VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign1 $s0, $p2, $m1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $dm4, $p6 = VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign1 $s2, $p6, $m7, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $dm2, $p2 = VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign1 $s0, $p2, $m3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $dm4, $p6 = VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign1 $s2, $p6, $m1, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
     $dm3, $p5 = VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign1 $s1, $p5, $m4, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $dm0, $p3 = VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign1 $s3, $p3, $m0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $dm1, $p0 = VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign1 $s0, $p0, $m2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $dm2, $p7 = VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign1 $s2, $p7, $m5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $dm4, $p4 = VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign1 $s1, $p4, $m3, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
-    $dm3, $p1 = VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign1 $s3, $p1, $m6, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $dm0, $p3 = VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign1 $s3, $p3, $m7, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $dm1, $p0 = VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign1 $s0, $p0, $m6, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $dm2, $p7 = VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign1 $s2, $p7, $m0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $dm4, $p4 = VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign1 $s1, $p4, $m5, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
+    $dm3, $p1 = VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_upsSign1 $s3, $p1, $m2, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1
 
     ; VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_imm_upsSign0
     $dm3, $p5 = VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_imm_upsSign0 $s2, $p5, 448, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0
@@ -1274,30 +1274,30 @@ body:      |
     $wh8 = VLDA_dmw_lda_w_idx_imm $p4, -256
 
     ; VLDA_dmw_lda_w_pstm_nrm
-    $wl9, $p0 = VLDA_dmw_lda_w_pstm_nrm $p0, $m5
+    $wl9, $p0 = VLDA_dmw_lda_w_pstm_nrm $p0, $m0
     $wh7, $p7 = VLDA_dmw_lda_w_pstm_nrm $p7, $m4
-    $wl1, $p5 = VLDA_dmw_lda_w_pstm_nrm $p5, $m2
-    $wh8, $p2 = VLDA_dmw_lda_w_pstm_nrm $p2, $m7
-    $wl0, $p1 = VLDA_dmw_lda_w_pstm_nrm $p1, $m3
-    $wh3, $p3 = VLDA_dmw_lda_w_pstm_nrm $p3, $m6
-    $wh11, $p4 = VLDA_dmw_lda_w_pstm_nrm $p4, $m0
-    $wh5, $p6 = VLDA_dmw_lda_w_pstm_nrm $p6, $m1
-    $wl6, $p0 = VLDA_dmw_lda_w_pstm_nrm $p0, $m5
+    $wl1, $p5 = VLDA_dmw_lda_w_pstm_nrm $p5, $m6
+    $wh8, $p2 = VLDA_dmw_lda_w_pstm_nrm $p2, $m1
+    $wl0, $p1 = VLDA_dmw_lda_w_pstm_nrm $p1, $m5
+    $wh3, $p3 = VLDA_dmw_lda_w_pstm_nrm $p3, $m2
+    $wh11, $p4 = VLDA_dmw_lda_w_pstm_nrm $p4, $m7
+    $wh5, $p6 = VLDA_dmw_lda_w_pstm_nrm $p6, $m3
+    $wl6, $p0 = VLDA_dmw_lda_w_pstm_nrm $p0, $m0
     $wl2, $p7 = VLDA_dmw_lda_w_pstm_nrm $p7, $m4
-    $wh1, $p5 = VLDA_dmw_lda_w_pstm_nrm $p5, $m2
-    $wl10, $p2 = VLDA_dmw_lda_w_pstm_nrm $p2, $m7
-    $wh4, $p1 = VLDA_dmw_lda_w_pstm_nrm $p1, $m3
-    $wh2, $p3 = VLDA_dmw_lda_w_pstm_nrm $p3, $m6
-    $wh9, $p4 = VLDA_dmw_lda_w_pstm_nrm $p4, $m0
-    $wh10, $p6 = VLDA_dmw_lda_w_pstm_nrm $p6, $m1
-    $wl4, $p0 = VLDA_dmw_lda_w_pstm_nrm $p0, $m5
+    $wh1, $p5 = VLDA_dmw_lda_w_pstm_nrm $p5, $m6
+    $wl10, $p2 = VLDA_dmw_lda_w_pstm_nrm $p2, $m1
+    $wh4, $p1 = VLDA_dmw_lda_w_pstm_nrm $p1, $m5
+    $wh2, $p3 = VLDA_dmw_lda_w_pstm_nrm $p3, $m2
+    $wh9, $p4 = VLDA_dmw_lda_w_pstm_nrm $p4, $m7
+    $wh10, $p6 = VLDA_dmw_lda_w_pstm_nrm $p6, $m3
+    $wl4, $p0 = VLDA_dmw_lda_w_pstm_nrm $p0, $m0
     $wl11, $p7 = VLDA_dmw_lda_w_pstm_nrm $p7, $m4
-    $wl7, $p5 = VLDA_dmw_lda_w_pstm_nrm $p5, $m2
-    $wl8, $p2 = VLDA_dmw_lda_w_pstm_nrm $p2, $m7
-    $wh6, $p1 = VLDA_dmw_lda_w_pstm_nrm $p1, $m3
-    $wl3, $p3 = VLDA_dmw_lda_w_pstm_nrm $p3, $m6
-    $wl5, $p4 = VLDA_dmw_lda_w_pstm_nrm $p4, $m0
-    $wh0, $p6 = VLDA_dmw_lda_w_pstm_nrm $p6, $m1
+    $wl7, $p5 = VLDA_dmw_lda_w_pstm_nrm $p5, $m6
+    $wl8, $p2 = VLDA_dmw_lda_w_pstm_nrm $p2, $m1
+    $wh6, $p1 = VLDA_dmw_lda_w_pstm_nrm $p1, $m5
+    $wl3, $p3 = VLDA_dmw_lda_w_pstm_nrm $p3, $m2
+    $wl5, $p4 = VLDA_dmw_lda_w_pstm_nrm $p4, $m7
+    $wh0, $p6 = VLDA_dmw_lda_w_pstm_nrm $p6, $m3
 
     ; VLDA_dmw_lda_w_pstm_nrm_imm
     $wl10, $p7 = VLDA_dmw_lda_w_pstm_nrm_imm $p7, 0
@@ -1325,7 +1325,7 @@ body:      |
     $wh10, $p1 = VLDA_dmw_lda_w_pstm_nrm_imm $p1, 224
     $wl7, $p2 = VLDA_dmw_lda_w_pstm_nrm_imm $p2, -256
 
-    ; VLDA_dmw_lda_w_spill, implicit $sp
+    ; VLDA_dmw_lda_w_spill
     $wh9 = VLDA_dmw_lda_w_spill -16352, implicit $sp
     $wl1 = VLDA_dmw_lda_w_spill -32, implicit $sp
     $wl9 = VLDA_dmw_lda_w_spill -16384, implicit $sp
@@ -1396,26 +1396,26 @@ body:      |
     $bmll2 = VLDA_dmx_lda_bm_idx_imm $p1, 448
 
     ; VLDA_dmx_lda_bm_pstm_nrm
-    $bmhh0, $p3 = VLDA_dmx_lda_bm_pstm_nrm $p3, $m1
-    $bmhh4, $p7 = VLDA_dmx_lda_bm_pstm_nrm $p7, $m5
-    $bmhh2, $p5 = VLDA_dmx_lda_bm_pstm_nrm $p5, $m6
-    $bmll1, $p1 = VLDA_dmx_lda_bm_pstm_nrm $p1, $m0
-    $bmhl2, $p6 = VLDA_dmx_lda_bm_pstm_nrm $p6, $m2
+    $bmhh0, $p3 = VLDA_dmx_lda_bm_pstm_nrm $p3, $m3
+    $bmhh4, $p7 = VLDA_dmx_lda_bm_pstm_nrm $p7, $m0
+    $bmhh2, $p5 = VLDA_dmx_lda_bm_pstm_nrm $p5, $m2
+    $bmll1, $p1 = VLDA_dmx_lda_bm_pstm_nrm $p1, $m7
+    $bmhl2, $p6 = VLDA_dmx_lda_bm_pstm_nrm $p6, $m6
     $bmlh3, $p0 = VLDA_dmx_lda_bm_pstm_nrm $p0, $m4
-    $bmll0, $p4 = VLDA_dmx_lda_bm_pstm_nrm $p4, $m7
-    $bmlh4, $p2 = VLDA_dmx_lda_bm_pstm_nrm $p2, $m3
-    $bmll4, $p3 = VLDA_dmx_lda_bm_pstm_nrm $p3, $m1
-    $bmhh1, $p7 = VLDA_dmx_lda_bm_pstm_nrm $p7, $m5
-    $bmlh2, $p5 = VLDA_dmx_lda_bm_pstm_nrm $p5, $m6
-    $bmlh1, $p1 = VLDA_dmx_lda_bm_pstm_nrm $p1, $m0
-    $bmhl3, $p6 = VLDA_dmx_lda_bm_pstm_nrm $p6, $m2
+    $bmll0, $p4 = VLDA_dmx_lda_bm_pstm_nrm $p4, $m1
+    $bmlh4, $p2 = VLDA_dmx_lda_bm_pstm_nrm $p2, $m5
+    $bmll4, $p3 = VLDA_dmx_lda_bm_pstm_nrm $p3, $m3
+    $bmhh1, $p7 = VLDA_dmx_lda_bm_pstm_nrm $p7, $m0
+    $bmlh2, $p5 = VLDA_dmx_lda_bm_pstm_nrm $p5, $m2
+    $bmlh1, $p1 = VLDA_dmx_lda_bm_pstm_nrm $p1, $m7
+    $bmhl3, $p6 = VLDA_dmx_lda_bm_pstm_nrm $p6, $m6
     $bmhh3, $p0 = VLDA_dmx_lda_bm_pstm_nrm $p0, $m4
-    $bmll3, $p4 = VLDA_dmx_lda_bm_pstm_nrm $p4, $m7
-    $bmhl0, $p2 = VLDA_dmx_lda_bm_pstm_nrm $p2, $m3
-    $bmhl4, $p3 = VLDA_dmx_lda_bm_pstm_nrm $p3, $m1
-    $bmhl1, $p7 = VLDA_dmx_lda_bm_pstm_nrm $p7, $m5
-    $bmll2, $p5 = VLDA_dmx_lda_bm_pstm_nrm $p5, $m6
-    $bmlh0, $p1 = VLDA_dmx_lda_bm_pstm_nrm $p1, $m0
+    $bmll3, $p4 = VLDA_dmx_lda_bm_pstm_nrm $p4, $m1
+    $bmhl0, $p2 = VLDA_dmx_lda_bm_pstm_nrm $p2, $m5
+    $bmhl4, $p3 = VLDA_dmx_lda_bm_pstm_nrm $p3, $m3
+    $bmhl1, $p7 = VLDA_dmx_lda_bm_pstm_nrm $p7, $m0
+    $bmll2, $p5 = VLDA_dmx_lda_bm_pstm_nrm $p5, $m2
+    $bmlh0, $p1 = VLDA_dmx_lda_bm_pstm_nrm $p1, $m7
 
     ; VLDA_dmx_lda_bm_pstm_nrm_imm
     $bmlh1, $p6 = VLDA_dmx_lda_bm_pstm_nrm_imm $p6, -512
@@ -1439,7 +1439,7 @@ body:      |
     $bmll4, $p2 = VLDA_dmx_lda_bm_pstm_nrm_imm $p2, 448
     $bmhh3, $p5 = VLDA_dmx_lda_bm_pstm_nrm_imm $p5, 64
 
-    ; VLDA_dmx_lda_bm_spill, implicit $sp
+    ; VLDA_dmx_lda_bm_spill
     $bmhl3 = VLDA_dmx_lda_bm_spill -32768, implicit $sp
     $bmhl4 = VLDA_dmx_lda_bm_spill -32704, implicit $sp
     $bmlh4 = VLDA_dmx_lda_bm_spill -64, implicit $sp
@@ -1482,14 +1482,14 @@ body:      |
     $lfl0 = VLDA_dmx_lda_fifohl_idx_imm $p1, 0
 
     ; VLDA_dmx_lda_fifohl_pstm_nrm
-    $lfl1, $p3 = VLDA_dmx_lda_fifohl_pstm_nrm $p3, $m2
-    $lfl0, $p4 = VLDA_dmx_lda_fifohl_pstm_nrm $p4, $m3
-    $lfh0, $p7 = VLDA_dmx_lda_fifohl_pstm_nrm $p7, $m1
-    $lfe, $p5 = VLDA_dmx_lda_fifohl_pstm_nrm $p5, $m0
-    $lfh1, $p2 = VLDA_dmx_lda_fifohl_pstm_nrm $p2, $m5
+    $lfl1, $p3 = VLDA_dmx_lda_fifohl_pstm_nrm $p3, $m6
+    $lfl0, $p4 = VLDA_dmx_lda_fifohl_pstm_nrm $p4, $m5
+    $lfh0, $p7 = VLDA_dmx_lda_fifohl_pstm_nrm $p7, $m3
+    $lfe, $p5 = VLDA_dmx_lda_fifohl_pstm_nrm $p5, $m7
+    $lfh1, $p2 = VLDA_dmx_lda_fifohl_pstm_nrm $p2, $m0
     $sfl, $p6 = VLDA_dmx_lda_fifohl_pstm_nrm $p6, $m4
-    $sfh, $p1 = VLDA_dmx_lda_fifohl_pstm_nrm $p1, $m6
-    $lfl1, $p0 = VLDA_dmx_lda_fifohl_pstm_nrm $p0, $m7
+    $sfh, $p1 = VLDA_dmx_lda_fifohl_pstm_nrm $p1, $m2
+    $lfl1, $p0 = VLDA_dmx_lda_fifohl_pstm_nrm $p0, $m1
 
     ; VLDA_dmx_lda_fifohl_pstm_nrm_imm
     $sfl, $p3 = VLDA_dmx_lda_fifohl_pstm_nrm_imm $p3, 0
@@ -1501,7 +1501,7 @@ body:      |
     $lfl1, $p2 = VLDA_dmx_lda_fifohl_pstm_nrm_imm $p2, 64
     $sfl, $p6 = VLDA_dmx_lda_fifohl_pstm_nrm_imm $p6, 448
 
-    ; VLDA_dmx_lda_fifohl_spill, implicit $sp
+    ; VLDA_dmx_lda_fifohl_spill
     $sfh = VLDA_dmx_lda_fifohl_spill -128, implicit $sp
     $lfl1 = VLDA_dmx_lda_fifohl_spill -64, implicit $sp
     $lfl0 = VLDA_dmx_lda_fifohl_spill -32704, implicit $sp
@@ -1511,74 +1511,74 @@ body:      |
     $lfe = VLDA_dmx_lda_fifohl_spill -32704, implicit $sp
 
     ; VLDA_dmx_lda_x_idx
-    $x5 = VLDA_dmx_lda_x_idx $p2, $dj2
-    $x0 = VLDA_dmx_lda_x_idx $p5, $dj1
-    $x3 = VLDA_dmx_lda_x_idx $p7, $dj4
-    $x11 = VLDA_dmx_lda_x_idx $p6, $dj7
-    $x6 = VLDA_dmx_lda_x_idx $p0, $dj0
-    $x7 = VLDA_dmx_lda_x_idx $p4, $dj5
-    $x10 = VLDA_dmx_lda_x_idx $p3, $dj6
-    $x1 = VLDA_dmx_lda_x_idx $p1, $dj3
-    $x4 = VLDA_dmx_lda_x_idx $p2, $dj2
+    $x7 = VLDA_dmx_lda_x_idx $p2, $dj2
     $x8 = VLDA_dmx_lda_x_idx $p5, $dj1
-    $x2 = VLDA_dmx_lda_x_idx $p7, $dj4
-    $x9 = VLDA_dmx_lda_x_idx $p6, $dj7
+    $x10 = VLDA_dmx_lda_x_idx $p7, $dj4
+    $x3 = VLDA_dmx_lda_x_idx $p6, $dj7
+    $x0 = VLDA_dmx_lda_x_idx $p0, $dj0
+    $x11 = VLDA_dmx_lda_x_idx $p4, $dj5
+    $x5 = VLDA_dmx_lda_x_idx $p3, $dj6
+    $x1 = VLDA_dmx_lda_x_idx $p1, $dj3
+    $x9 = VLDA_dmx_lda_x_idx $p2, $dj2
+    $x2 = VLDA_dmx_lda_x_idx $p5, $dj1
+    $x4 = VLDA_dmx_lda_x_idx $p7, $dj4
+    $x6 = VLDA_dmx_lda_x_idx $p6, $dj7
 
     ; VLDA_dmx_lda_x_idx_imm
-    $x4 = VLDA_dmx_lda_x_idx_imm $p0, 448
-    $x10 = VLDA_dmx_lda_x_idx_imm $p5, -512
-    $x9 = VLDA_dmx_lda_x_idx_imm $p2, 0
+    $x9 = VLDA_dmx_lda_x_idx_imm $p0, 448
+    $x5 = VLDA_dmx_lda_x_idx_imm $p5, -512
+    $x6 = VLDA_dmx_lda_x_idx_imm $p2, 0
     $x1 = VLDA_dmx_lda_x_idx_imm $p7, 64
-    $x3 = VLDA_dmx_lda_x_idx_imm $p3, 448
-    $x11 = VLDA_dmx_lda_x_idx_imm $p1, -512
-    $x5 = VLDA_dmx_lda_x_idx_imm $p4, 0
-    $x6 = VLDA_dmx_lda_x_idx_imm $p6, 64
-    $x0 = VLDA_dmx_lda_x_idx_imm $p0, 448
-    $x8 = VLDA_dmx_lda_x_idx_imm $p5, -512
-    $x7 = VLDA_dmx_lda_x_idx_imm $p2, 0
-    $x2 = VLDA_dmx_lda_x_idx_imm $p7, 64
+    $x10 = VLDA_dmx_lda_x_idx_imm $p3, 448
+    $x3 = VLDA_dmx_lda_x_idx_imm $p1, -512
+    $x7 = VLDA_dmx_lda_x_idx_imm $p4, 0
+    $x0 = VLDA_dmx_lda_x_idx_imm $p6, 64
+    $x8 = VLDA_dmx_lda_x_idx_imm $p0, 448
+    $x2 = VLDA_dmx_lda_x_idx_imm $p5, -512
+    $x11 = VLDA_dmx_lda_x_idx_imm $p2, 0
+    $x4 = VLDA_dmx_lda_x_idx_imm $p7, 64
 
     ; VLDA_dmx_lda_x_pstm_nrm
-    $x3, $p1 = VLDA_dmx_lda_x_pstm_nrm $p1, $m1
-    $x5, $p4 = VLDA_dmx_lda_x_pstm_nrm $p4, $m4
-    $x8, $p3 = VLDA_dmx_lda_x_pstm_nrm $p3, $m6
-    $x0, $p2 = VLDA_dmx_lda_x_pstm_nrm $p2, $m3
-    $x1, $p6 = VLDA_dmx_lda_x_pstm_nrm $p6, $m0
-    $x6, $p5 = VLDA_dmx_lda_x_pstm_nrm $p5, $m5
-    $x7, $p7 = VLDA_dmx_lda_x_pstm_nrm $p7, $m2
-    $x9, $p0 = VLDA_dmx_lda_x_pstm_nrm $p0, $m7
-    $x4, $p1 = VLDA_dmx_lda_x_pstm_nrm $p1, $m1
-    $x11, $p4 = VLDA_dmx_lda_x_pstm_nrm $p4, $m4
-    $x10, $p3 = VLDA_dmx_lda_x_pstm_nrm $p3, $m6
-    $x2, $p2 = VLDA_dmx_lda_x_pstm_nrm $p2, $m3
+    $x10, $p1 = VLDA_dmx_lda_x_pstm_nrm $p1, $m3
+    $x7, $p4 = VLDA_dmx_lda_x_pstm_nrm $p4, $m4
+    $x2, $p3 = VLDA_dmx_lda_x_pstm_nrm $p3, $m2
+    $x8, $p2 = VLDA_dmx_lda_x_pstm_nrm $p2, $m5
+    $x1, $p6 = VLDA_dmx_lda_x_pstm_nrm $p6, $m7
+    $x0, $p5 = VLDA_dmx_lda_x_pstm_nrm $p5, $m0
+    $x11, $p7 = VLDA_dmx_lda_x_pstm_nrm $p7, $m6
+    $x6, $p0 = VLDA_dmx_lda_x_pstm_nrm $p0, $m1
+    $x9, $p1 = VLDA_dmx_lda_x_pstm_nrm $p1, $m3
+    $x3, $p4 = VLDA_dmx_lda_x_pstm_nrm $p4, $m4
+    $x5, $p3 = VLDA_dmx_lda_x_pstm_nrm $p3, $m2
+    $x4, $p2 = VLDA_dmx_lda_x_pstm_nrm $p2, $m5
 
     ; VLDA_dmx_lda_x_pstm_nrm_imm
-    $x6, $p6 = VLDA_dmx_lda_x_pstm_nrm_imm $p6, 64
-    $x2, $p0 = VLDA_dmx_lda_x_pstm_nrm_imm $p0, 0
-    $x0, $p4 = VLDA_dmx_lda_x_pstm_nrm_imm $p4, -512
-    $x10, $p7 = VLDA_dmx_lda_x_pstm_nrm_imm $p7, 448
+    $x0, $p6 = VLDA_dmx_lda_x_pstm_nrm_imm $p6, 64
+    $x4, $p0 = VLDA_dmx_lda_x_pstm_nrm_imm $p0, 0
+    $x8, $p4 = VLDA_dmx_lda_x_pstm_nrm_imm $p4, -512
+    $x5, $p7 = VLDA_dmx_lda_x_pstm_nrm_imm $p7, 448
     $x1, $p2 = VLDA_dmx_lda_x_pstm_nrm_imm $p2, 64
-    $x9, $p5 = VLDA_dmx_lda_x_pstm_nrm_imm $p5, 0
-    $x4, $p3 = VLDA_dmx_lda_x_pstm_nrm_imm $p3, -512
-    $x8, $p1 = VLDA_dmx_lda_x_pstm_nrm_imm $p1, 448
-    $x5, $p6 = VLDA_dmx_lda_x_pstm_nrm_imm $p6, 64
-    $x11, $p0 = VLDA_dmx_lda_x_pstm_nrm_imm $p0, 0
-    $x3, $p4 = VLDA_dmx_lda_x_pstm_nrm_imm $p4, -512
-    $x7, $p7 = VLDA_dmx_lda_x_pstm_nrm_imm $p7, 448
+    $x6, $p5 = VLDA_dmx_lda_x_pstm_nrm_imm $p5, 0
+    $x9, $p3 = VLDA_dmx_lda_x_pstm_nrm_imm $p3, -512
+    $x2, $p1 = VLDA_dmx_lda_x_pstm_nrm_imm $p1, 448
+    $x7, $p6 = VLDA_dmx_lda_x_pstm_nrm_imm $p6, 64
+    $x3, $p0 = VLDA_dmx_lda_x_pstm_nrm_imm $p0, 0
+    $x10, $p4 = VLDA_dmx_lda_x_pstm_nrm_imm $p4, -512
+    $x11, $p7 = VLDA_dmx_lda_x_pstm_nrm_imm $p7, 448
 
-    ; VLDA_dmx_lda_x_spill, implicit $sp
+    ; VLDA_dmx_lda_x_spill
     $x1 = VLDA_dmx_lda_x_spill -32768, implicit $sp
-    $x9 = VLDA_dmx_lda_x_spill -64, implicit $sp
-    $x3 = VLDA_dmx_lda_x_spill -32704, implicit $sp
-    $x5 = VLDA_dmx_lda_x_spill -128, implicit $sp
-    $x4 = VLDA_dmx_lda_x_spill -32768, implicit $sp
-    $x0 = VLDA_dmx_lda_x_spill -64, implicit $sp
-    $x2 = VLDA_dmx_lda_x_spill -32704, implicit $sp
-    $x8 = VLDA_dmx_lda_x_spill -128, implicit $sp
-    $x6 = VLDA_dmx_lda_x_spill -32768, implicit $sp
-    $x10 = VLDA_dmx_lda_x_spill -64, implicit $sp
-    $x7 = VLDA_dmx_lda_x_spill -32704, implicit $sp
-    $x11 = VLDA_dmx_lda_x_spill -128, implicit $sp
+    $x6 = VLDA_dmx_lda_x_spill -64, implicit $sp
+    $x10 = VLDA_dmx_lda_x_spill -32704, implicit $sp
+    $x7 = VLDA_dmx_lda_x_spill -128, implicit $sp
+    $x9 = VLDA_dmx_lda_x_spill -32768, implicit $sp
+    $x8 = VLDA_dmx_lda_x_spill -64, implicit $sp
+    $x4 = VLDA_dmx_lda_x_spill -32704, implicit $sp
+    $x2 = VLDA_dmx_lda_x_spill -128, implicit $sp
+    $x0 = VLDA_dmx_lda_x_spill -32768, implicit $sp
+    $x5 = VLDA_dmx_lda_x_spill -64, implicit $sp
+    $x11 = VLDA_dmx_lda_x_spill -32704, implicit $sp
+    $x3 = VLDA_dmx_lda_x_spill -128, implicit $sp
 ...
 
 # CHECK: 0: 98 61 e1 04 vlda.128 wl5, [p4, dj7]
@@ -2329,46 +2329,46 @@ body:      |
 # CHECK: ba4: 98 3c 75 05 vlda.ups.2x bmlh2, s3, upssign1, [p5, #224]
 # CHECK: ba8: 98 6c 04 07 vlda.ups.2x bmhh0, s1, upssign1, [p7, #0]
 # CHECK: bac: 98 44 16 01 vlda.ups.2x bmhl4, s0, upssign1, [p1, #32]
-# CHECK: bb0: 98 80 a9 07 vlda.ups.2x bmll3, s0, upssign0, [p7], m5
-# CHECK: bb4: 98 f0 69 06 vlda.ups.2x bmhh3, s2, upssign0, [p6], m3
-# CHECK: bb8: 98 b8 e8 01 vlda.ups.2x bmlh1, s3, upssign0, [p1], m7
+# CHECK: bb0: 98 80 09 07 vlda.ups.2x bmll3, s0, upssign0, [p7], m0
+# CHECK: bb4: 98 f0 a9 06 vlda.ups.2x bmhh3, s2, upssign0, [p6], m5
+# CHECK: bb8: 98 b8 28 01 vlda.ups.2x bmlh1, s3, upssign0, [p1], m1
 # CHECK: bbc: 98 68 89 05 vlda.ups.2x bmhh2, s1, upssign0, [p5], m4
-# CHECK: bc0: 98 80 c8 02 vlda.ups.2x bmll1, s0, upssign0, [p2], m6
-# CHECK: bc4: 98 d0 09 00 vlda.ups.2x bmhl3, s2, upssign0, [p0], m0
-# CHECK: bc8: 98 78 2a 04 vlda.ups.2x bmhh4, s3, upssign0, [p4], m1
-# CHECK: bcc: 98 48 49 03 vlda.ups.2x bmhl2, s1, upssign0, [p3], m2
-# CHECK: bd0: 98 00 a8 07 vlda.ups.2x bmll0, s0, upssign0, [p7], m5
-# CHECK: bd4: 98 70 68 06 vlda.ups.2x bmhh0, s2, upssign0, [p6], m3
-# CHECK: bd8: 98 38 e9 01 vlda.ups.2x bmlh2, s3, upssign0, [p1], m7
+# CHECK: bc0: 98 80 48 02 vlda.ups.2x bmll1, s0, upssign0, [p2], m2
+# CHECK: bc4: 98 d0 e9 00 vlda.ups.2x bmhl3, s2, upssign0, [p0], m7
+# CHECK: bc8: 98 78 6a 04 vlda.ups.2x bmhh4, s3, upssign0, [p4], m3
+# CHECK: bcc: 98 48 c9 03 vlda.ups.2x bmhl2, s1, upssign0, [p3], m6
+# CHECK: bd0: 98 00 08 07 vlda.ups.2x bmll0, s0, upssign0, [p7], m0
+# CHECK: bd4: 98 70 a8 06 vlda.ups.2x bmhh0, s2, upssign0, [p6], m5
+# CHECK: bd8: 98 38 29 01 vlda.ups.2x bmlh2, s3, upssign0, [p1], m1
 # CHECK: bdc: 98 28 88 05 vlda.ups.2x bmlh0, s1, upssign0, [p5], m4
-# CHECK: be0: 98 00 c9 02 vlda.ups.2x bmll2, s0, upssign0, [p2], m6
-# CHECK: be4: 98 50 0a 00 vlda.ups.2x bmhl4, s2, upssign0, [p0], m0
-# CHECK: be8: 98 38 2a 04 vlda.ups.2x bmlh4, s3, upssign0, [p4], m1
-# CHECK: bec: 98 a8 49 03 vlda.ups.2x bmlh3, s1, upssign0, [p3], m2
-# CHECK: bf0: 98 c0 a8 07 vlda.ups.2x bmhl1, s0, upssign0, [p7], m5
-# CHECK: bf4: 98 10 6a 06 vlda.ups.2x bmll4, s2, upssign0, [p6], m3
-# CHECK: bf8: 98 f8 e8 01 vlda.ups.2x bmhh1, s3, upssign0, [p1], m7
+# CHECK: be0: 98 00 49 02 vlda.ups.2x bmll2, s0, upssign0, [p2], m2
+# CHECK: be4: 98 50 ea 00 vlda.ups.2x bmhl4, s2, upssign0, [p0], m7
+# CHECK: be8: 98 38 6a 04 vlda.ups.2x bmlh4, s3, upssign0, [p4], m3
+# CHECK: bec: 98 a8 c9 03 vlda.ups.2x bmlh3, s1, upssign0, [p3], m6
+# CHECK: bf0: 98 c0 08 07 vlda.ups.2x bmhl1, s0, upssign0, [p7], m0
+# CHECK: bf4: 98 10 aa 06 vlda.ups.2x bmll4, s2, upssign0, [p6], m5
+# CHECK: bf8: 98 f8 28 01 vlda.ups.2x bmhh1, s3, upssign0, [p1], m1
 # CHECK: bfc: 98 48 88 05 vlda.ups.2x bmhl0, s1, upssign0, [p5], m4
 # CHECK: c00: 98 1c 8a 00 vlda.ups.2x bmll4, s3, upssign1, [p0], m4
-# CHECK: c04: 98 6c e8 04 vlda.ups.2x bmhh0, s1, upssign1, [p4], m7
-# CHECK: c08: 98 b4 c9 02 vlda.ups.2x bmlh3, s2, upssign1, [p2], m6
-# CHECK: c0c: 98 24 aa 03 vlda.ups.2x bmlh4, s0, upssign1, [p3], m5
-# CHECK: c10: 98 dc 69 07 vlda.ups.2x bmhl3, s3, upssign1, [p7], m3
-# CHECK: c14: 98 0c 29 05 vlda.ups.2x bmll2, s1, upssign1, [p5], m1
-# CHECK: c18: 98 14 48 06 vlda.ups.2x bmll0, s2, upssign1, [p6], m2
-# CHECK: c1c: 98 c4 08 01 vlda.ups.2x bmhl1, s0, upssign1, [p1], m0
+# CHECK: c04: 98 6c 28 04 vlda.ups.2x bmhh0, s1, upssign1, [p4], m1
+# CHECK: c08: 98 b4 49 02 vlda.ups.2x bmlh3, s2, upssign1, [p2], m2
+# CHECK: c0c: 98 24 0a 03 vlda.ups.2x bmlh4, s0, upssign1, [p3], m0
+# CHECK: c10: 98 dc a9 07 vlda.ups.2x bmhl3, s3, upssign1, [p7], m5
+# CHECK: c14: 98 0c 69 05 vlda.ups.2x bmll2, s1, upssign1, [p5], m3
+# CHECK: c18: 98 14 c8 06 vlda.ups.2x bmll0, s2, upssign1, [p6], m6
+# CHECK: c1c: 98 c4 e8 01 vlda.ups.2x bmhl1, s0, upssign1, [p1], m7
 # CHECK: c20: 98 9c 88 00 vlda.ups.2x bmll1, s3, upssign1, [p0], m4
-# CHECK: c24: 98 6c ea 04 vlda.ups.2x bmhh4, s1, upssign1, [p4], m7
-# CHECK: c28: 98 f4 c9 02 vlda.ups.2x bmhh3, s2, upssign1, [p2], m6
-# CHECK: c2c: 98 e4 a8 03 vlda.ups.2x bmhh1, s0, upssign1, [p3], m5
-# CHECK: c30: 98 7c 69 07 vlda.ups.2x bmhh2, s3, upssign1, [p7], m3
-# CHECK: c34: 98 2c 29 05 vlda.ups.2x bmlh2, s1, upssign1, [p5], m1
-# CHECK: c38: 98 34 48 06 vlda.ups.2x bmlh0, s2, upssign1, [p6], m2
-# CHECK: c3c: 98 44 09 01 vlda.ups.2x bmhl2, s0, upssign1, [p1], m0
+# CHECK: c24: 98 6c 2a 04 vlda.ups.2x bmhh4, s1, upssign1, [p4], m1
+# CHECK: c28: 98 f4 49 02 vlda.ups.2x bmhh3, s2, upssign1, [p2], m2
+# CHECK: c2c: 98 e4 08 03 vlda.ups.2x bmhh1, s0, upssign1, [p3], m0
+# CHECK: c30: 98 7c a9 07 vlda.ups.2x bmhh2, s3, upssign1, [p7], m5
+# CHECK: c34: 98 2c 69 05 vlda.ups.2x bmlh2, s1, upssign1, [p5], m3
+# CHECK: c38: 98 34 c8 06 vlda.ups.2x bmlh0, s2, upssign1, [p6], m6
+# CHECK: c3c: 98 44 e9 01 vlda.ups.2x bmhl2, s0, upssign1, [p1], m7
 # CHECK: c40: 98 bc 88 00 vlda.ups.2x bmlh1, s3, upssign1, [p0], m4
-# CHECK: c44: 98 8c e9 04 vlda.ups.2x bmll3, s1, upssign1, [p4], m7
-# CHECK: c48: 98 54 c8 02 vlda.ups.2x bmhl0, s2, upssign1, [p2], m6
-# CHECK: c4c: 98 44 aa 03 vlda.ups.2x bmhl4, s0, upssign1, [p3], m5
+# CHECK: c44: 98 8c 29 04 vlda.ups.2x bmll3, s1, upssign1, [p4], m1
+# CHECK: c48: 98 54 48 02 vlda.ups.2x bmhl0, s2, upssign1, [p2], m2
+# CHECK: c4c: 98 44 0a 03 vlda.ups.2x bmhl4, s0, upssign1, [p3], m0
 # CHECK: c50: 98 40 7c 03 vlda.ups.2x bmhl0, s0, upssign0, [p3], #224
 # CHECK: c54: 98 28 0d 00 vlda.ups.2x bmlh2, s1, upssign0, [p0], #0
 # CHECK: c58: 98 50 8e 05 vlda.ups.2x bmhl4, s2, upssign0, [p5], #-256
@@ -2450,25 +2450,25 @@ body:      |
 # CHECK: d88: 18 bb 85 07 vlda.ups.2x cml3, s3, upssign1, [p7, #-512]
 # CHECK: d8c: 18 4b 74 04 vlda.ups.2x cmh0, s0, upssign1, [p4, #448]
 # CHECK: d90: 18 63 8a 03 vlda.ups.2x cmh4, s2, upssign0, [p3], m4
-# CHECK: d94: 18 c3 69 01 vlda.ups.2x cmh3, s0, upssign0, [p1], m3
-# CHECK: d98: 18 33 a8 07 vlda.ups.2x cml0, s3, upssign0, [p7], m5
-# CHECK: d9c: 18 d3 48 00 vlda.ups.2x cmh1, s1, upssign0, [p0], m2
-# CHECK: da0: 18 a3 08 04 vlda.ups.2x cml1, s2, upssign0, [p4], m0
-# CHECK: da4: 18 03 ca 06 vlda.ups.2x cml4, s0, upssign0, [p6], m6
-# CHECK: da8: 18 b3 29 02 vlda.ups.2x cml3, s3, upssign0, [p2], m1
-# CHECK: dac: 18 53 e8 05 vlda.ups.2x cmh0, s1, upssign0, [p5], m7
+# CHECK: d94: 18 c3 a9 01 vlda.ups.2x cmh3, s0, upssign0, [p1], m5
+# CHECK: d98: 18 33 08 07 vlda.ups.2x cml0, s3, upssign0, [p7], m0
+# CHECK: d9c: 18 d3 c8 00 vlda.ups.2x cmh1, s1, upssign0, [p0], m6
+# CHECK: da0: 18 a3 e8 04 vlda.ups.2x cml1, s2, upssign0, [p4], m7
+# CHECK: da4: 18 03 4a 06 vlda.ups.2x cml4, s0, upssign0, [p6], m2
+# CHECK: da8: 18 b3 69 02 vlda.ups.2x cml3, s3, upssign0, [p2], m3
+# CHECK: dac: 18 53 28 05 vlda.ups.2x cmh0, s1, upssign0, [p5], m1
 # CHECK: db0: 18 23 89 03 vlda.ups.2x cml2, s2, upssign0, [p3], m4
-# CHECK: db4: 18 43 69 01 vlda.ups.2x cmh2, s0, upssign0, [p1], m3
+# CHECK: db4: 18 43 a9 01 vlda.ups.2x cmh2, s0, upssign0, [p1], m5
 # CHECK: db8: 18 7b 8a 06 vlda.ups.2x cmh4, s3, upssign1, [p6], m4
-# CHECK: dbc: 18 9b 69 00 vlda.ups.2x cml3, s1, upssign1, [p0], m3
-# CHECK: dc0: 18 eb 28 03 vlda.ups.2x cmh1, s2, upssign1, [p3], m1
-# CHECK: dc4: 18 cb e9 07 vlda.ups.2x cmh3, s0, upssign1, [p7], m7
-# CHECK: dc8: 18 3b 48 01 vlda.ups.2x cml0, s3, upssign1, [p1], m2
-# CHECK: dcc: 18 1b c9 05 vlda.ups.2x cml2, s1, upssign1, [p5], m6
-# CHECK: dd0: 18 ab 08 04 vlda.ups.2x cml1, s2, upssign1, [p4], m0
-# CHECK: dd4: 18 4b a8 02 vlda.ups.2x cmh0, s0, upssign1, [p2], m5
+# CHECK: dbc: 18 9b a9 00 vlda.ups.2x cml3, s1, upssign1, [p0], m5
+# CHECK: dc0: 18 eb 68 03 vlda.ups.2x cmh1, s2, upssign1, [p3], m3
+# CHECK: dc4: 18 cb 29 07 vlda.ups.2x cmh3, s0, upssign1, [p7], m1
+# CHECK: dc8: 18 3b c8 01 vlda.ups.2x cml0, s3, upssign1, [p1], m6
+# CHECK: dcc: 18 1b 49 05 vlda.ups.2x cml2, s1, upssign1, [p5], m2
+# CHECK: dd0: 18 ab e8 04 vlda.ups.2x cml1, s2, upssign1, [p4], m7
+# CHECK: dd4: 18 4b 08 02 vlda.ups.2x cmh0, s0, upssign1, [p2], m0
 # CHECK: dd8: 18 7b 89 06 vlda.ups.2x cmh2, s3, upssign1, [p6], m4
-# CHECK: ddc: 18 1b 6a 00 vlda.ups.2x cml4, s1, upssign1, [p0], m3
+# CHECK: ddc: 18 1b aa 00 vlda.ups.2x cml4, s1, upssign1, [p0], m5
 # CHECK: de0: 18 c3 1d 03 vlda.ups.2x cmh3, s0, upssign0, [p3], #64
 # CHECK: de4: 18 23 8c 06 vlda.ups.2x cml0, s2, upssign0, [p6], #-512
 # CHECK: de8: 18 53 7e 01 vlda.ups.2x cmh4, s1, upssign0, [p1], #448
@@ -2529,26 +2529,26 @@ body:      |
 # CHECK: ec4: 18 5d 14 05 vlda.ups.4x cmh0, s1, upssign1, [p5, #32]
 # CHECK: ec8: 18 8d 04 00 vlda.ups.4x cml1, s0, upssign1, [p0, #0]
 # CHECK: ecc: 18 3d 84 02 vlda.ups.4x cml0, s3, upssign1, [p2, #-256]
-# CHECK: ed0: 18 a5 c9 02 vlda.ups.4x cml3, s2, upssign0, [p2], m6
-# CHECK: ed4: 18 15 e9 07 vlda.ups.4x cml2, s1, upssign0, [p7], m7
-# CHECK: ed8: 18 45 a8 01 vlda.ups.4x cmh0, s0, upssign0, [p1], m5
+# CHECK: ed0: 18 a5 49 02 vlda.ups.4x cml3, s2, upssign0, [p2], m2
+# CHECK: ed4: 18 15 29 07 vlda.ups.4x cml2, s1, upssign0, [p7], m1
+# CHECK: ed8: 18 45 08 01 vlda.ups.4x cmh0, s0, upssign0, [p1], m0
 # CHECK: edc: 18 75 89 06 vlda.ups.4x cmh2, s3, upssign0, [p6], m4
-# CHECK: ee0: 18 65 0a 05 vlda.ups.4x cmh4, s2, upssign0, [p5], m0
-# CHECK: ee4: 18 15 28 00 vlda.ups.4x cml0, s1, upssign0, [p0], m1
-# CHECK: ee8: 18 c5 48 04 vlda.ups.4x cmh1, s0, upssign0, [p4], m2
-# CHECK: eec: 18 b5 68 03 vlda.ups.4x cml1, s3, upssign0, [p3], m3
-# CHECK: ef0: 18 25 ca 02 vlda.ups.4x cml4, s2, upssign0, [p2], m6
-# CHECK: ef4: 18 d5 e9 07 vlda.ups.4x cmh3, s1, upssign0, [p7], m7
-# CHECK: ef8: 18 2d 68 02 vlda.ups.4x cml0, s2, upssign1, [p2], m3
-# CHECK: efc: 18 dd 08 05 vlda.ups.4x cmh1, s1, upssign1, [p5], m0
+# CHECK: ee0: 18 65 ea 05 vlda.ups.4x cmh4, s2, upssign0, [p5], m7
+# CHECK: ee4: 18 15 68 00 vlda.ups.4x cml0, s1, upssign0, [p0], m3
+# CHECK: ee8: 18 c5 c8 04 vlda.ups.4x cmh1, s0, upssign0, [p4], m6
+# CHECK: eec: 18 b5 a8 03 vlda.ups.4x cml1, s3, upssign0, [p3], m5
+# CHECK: ef0: 18 25 4a 02 vlda.ups.4x cml4, s2, upssign0, [p2], m2
+# CHECK: ef4: 18 d5 29 07 vlda.ups.4x cmh3, s1, upssign0, [p7], m1
+# CHECK: ef8: 18 2d a8 02 vlda.ups.4x cml0, s2, upssign1, [p2], m5
+# CHECK: efc: 18 dd e8 05 vlda.ups.4x cmh1, s1, upssign1, [p5], m7
 # CHECK: f00: 18 0d 8a 04 vlda.ups.4x cml4, s0, upssign1, [p4], m4
-# CHECK: f04: 18 3d 49 00 vlda.ups.4x cml2, s3, upssign1, [p0], m2
-# CHECK: f08: 18 ad a9 03 vlda.ups.4x cml3, s2, upssign1, [p3], m5
-# CHECK: f0c: 18 dd 29 06 vlda.ups.4x cmh3, s1, upssign1, [p6], m1
-# CHECK: f10: 18 8d c8 01 vlda.ups.4x cml1, s0, upssign1, [p1], m6
-# CHECK: f14: 18 7d ea 07 vlda.ups.4x cmh4, s3, upssign1, [p7], m7
-# CHECK: f18: 18 6d 69 02 vlda.ups.4x cmh2, s2, upssign1, [p2], m3
-# CHECK: f1c: 18 5d 08 05 vlda.ups.4x cmh0, s1, upssign1, [p5], m0
+# CHECK: f04: 18 3d c9 00 vlda.ups.4x cml2, s3, upssign1, [p0], m6
+# CHECK: f08: 18 ad 09 03 vlda.ups.4x cml3, s2, upssign1, [p3], m0
+# CHECK: f0c: 18 dd 69 06 vlda.ups.4x cmh3, s1, upssign1, [p6], m3
+# CHECK: f10: 18 8d 48 01 vlda.ups.4x cml1, s0, upssign1, [p1], m2
+# CHECK: f14: 18 7d 2a 07 vlda.ups.4x cmh4, s3, upssign1, [p7], m1
+# CHECK: f18: 18 6d a9 02 vlda.ups.4x cmh2, s2, upssign1, [p2], m5
+# CHECK: f1c: 18 5d e8 05 vlda.ups.4x cmh0, s1, upssign1, [p5], m7
 # CHECK: f20: 18 05 8d 05 vlda.ups.4x cml2, s0, upssign0, [p5], #-256
 # CHECK: f24: 18 a5 7c 02 vlda.ups.4x cml1, s2, upssign0, [p2], #224
 # CHECK: f28: 18 f5 0d 06 vlda.ups.4x cmh3, s3, upssign0, [p6], #0
@@ -2601,22 +2601,22 @@ body:      |
 # CHECK: fe4: 18 3f 05 07 vlda.ups.4x dm2, s1, upssign1, [p7, #0]
 # CHECK: fe8: 18 5f 74 04 vlda.ups.4x dm0, s2, upssign1, [p4, #448]
 # CHECK: fec: 18 1f 16 05 vlda.ups.4x dm4, s0, upssign1, [p5, #64]
-# CHECK: ff0: 18 ef a8 04 vlda.ups.4x dm1, s3, upssign0, [p4], m5
+# CHECK: ff0: 18 ef 08 04 vlda.ups.4x dm1, s3, upssign0, [p4], m0
 # CHECK: ff4: 18 0f 89 01 vlda.ups.4x dm2, s0, upssign0, [p1], m4
-# CHECK: ff8: 18 cf 49 03 vlda.ups.4x dm3, s2, upssign0, [p3], m2
-# CHECK: ffc: 18 2f ca 05 vlda.ups.4x dm4, s1, upssign0, [p5], m6
-# CHECK: 1000: 18 6f 08 07 vlda.ups.4x dm0, s3, upssign0, [p7], m0
-# CHECK: 1004: 18 8f e8 02 vlda.ups.4x dm1, s0, upssign0, [p2], m7
-# CHECK: 1008: 18 4f 69 06 vlda.ups.4x dm2, s2, upssign0, [p6], m3
-# CHECK: 100c: 18 af 29 00 vlda.ups.4x dm3, s1, upssign0, [p0], m1
-# CHECK: 1010: 18 1f 29 02 vlda.ups.4x dm2, s0, upssign1, [p2], m1
-# CHECK: 1014: 18 5f ea 06 vlda.ups.4x dm4, s2, upssign1, [p6], m7
+# CHECK: ff8: 18 cf c9 03 vlda.ups.4x dm3, s2, upssign0, [p3], m6
+# CHECK: ffc: 18 2f 4a 05 vlda.ups.4x dm4, s1, upssign0, [p5], m2
+# CHECK: 1000: 18 6f e8 07 vlda.ups.4x dm0, s3, upssign0, [p7], m7
+# CHECK: 1004: 18 8f 28 02 vlda.ups.4x dm1, s0, upssign0, [p2], m1
+# CHECK: 1008: 18 4f a9 06 vlda.ups.4x dm2, s2, upssign0, [p6], m5
+# CHECK: 100c: 18 af 69 00 vlda.ups.4x dm3, s1, upssign0, [p0], m3
+# CHECK: 1010: 18 1f 69 02 vlda.ups.4x dm2, s0, upssign1, [p2], m3
+# CHECK: 1014: 18 5f 2a 06 vlda.ups.4x dm4, s2, upssign1, [p6], m1
 # CHECK: 1018: 18 bf 89 05 vlda.ups.4x dm3, s1, upssign1, [p5], m4
-# CHECK: 101c: 18 7f 08 03 vlda.ups.4x dm0, s3, upssign1, [p3], m0
-# CHECK: 1020: 18 9f 48 00 vlda.ups.4x dm1, s0, upssign1, [p0], m2
-# CHECK: 1024: 18 5f a9 07 vlda.ups.4x dm2, s2, upssign1, [p7], m5
-# CHECK: 1028: 18 3f 6a 04 vlda.ups.4x dm4, s1, upssign1, [p4], m3
-# CHECK: 102c: 18 ff c9 01 vlda.ups.4x dm3, s3, upssign1, [p1], m6
+# CHECK: 101c: 18 7f e8 03 vlda.ups.4x dm0, s3, upssign1, [p3], m7
+# CHECK: 1020: 18 9f c8 00 vlda.ups.4x dm1, s0, upssign1, [p0], m6
+# CHECK: 1024: 18 5f 09 07 vlda.ups.4x dm2, s2, upssign1, [p7], m0
+# CHECK: 1028: 18 3f aa 04 vlda.ups.4x dm4, s1, upssign1, [p4], m5
+# CHECK: 102c: 18 ff 49 01 vlda.ups.4x dm3, s3, upssign1, [p1], m2
 # CHECK: 1030: 18 cf 7d 05 vlda.ups.4x dm3, s2, upssign0, [p5], #448
 # CHECK: 1034: 18 6f 8c 03 vlda.ups.4x dm0, s3, upssign0, [p3], #-512
 # CHECK: 1038: 18 2f 0d 02 vlda.ups.4x dm2, s1, upssign0, [p2], #0
@@ -2681,30 +2681,30 @@ body:      |
 # CHECK: 1124: 98 d9 04 05 vlda wh3, [p5, #0]
 # CHECK: 1128: 98 39 16 03 vlda wl8, [p3, #32]
 # CHECK: 112c: 98 19 86 04 vlda wh8, [p4, #-256]
-# CHECK: 1130: 98 79 aa 00 vlda wl9, [p0], m5
+# CHECK: 1130: 98 79 0a 00 vlda wl9, [p0], m0
 # CHECK: 1134: 98 d9 89 07 vlda wh7, [p7], m4
-# CHECK: 1138: 98 79 48 05 vlda wl1, [p5], m2
-# CHECK: 113c: 98 19 ea 02 vlda wh8, [p2], m7
-# CHECK: 1140: 98 39 68 01 vlda wl0, [p1], m3
-# CHECK: 1144: 98 d9 c8 03 vlda wh3, [p3], m6
-# CHECK: 1148: 98 d9 0a 04 vlda wh11, [p4], m0
-# CHECK: 114c: 98 59 29 06 vlda wh5, [p6], m1
-# CHECK: 1150: 98 b9 a9 00 vlda wl6, [p0], m5
+# CHECK: 1138: 98 79 c8 05 vlda wl1, [p5], m6
+# CHECK: 113c: 98 19 2a 02 vlda wh8, [p2], m1
+# CHECK: 1140: 98 39 a8 01 vlda wl0, [p1], m5
+# CHECK: 1144: 98 d9 48 03 vlda wh3, [p3], m2
+# CHECK: 1148: 98 d9 ea 04 vlda wh11, [p4], m7
+# CHECK: 114c: 98 59 69 06 vlda wh5, [p6], m3
+# CHECK: 1150: 98 b9 09 00 vlda wl6, [p0], m0
 # CHECK: 1154: 98 b9 88 07 vlda wl2, [p7], m4
-# CHECK: 1158: 98 59 48 05 vlda wh1, [p5], m2
-# CHECK: 115c: 98 b9 ea 02 vlda wl10, [p2], m7
-# CHECK: 1160: 98 19 69 01 vlda wh4, [p1], m3
-# CHECK: 1164: 98 99 c8 03 vlda wh2, [p3], m6
-# CHECK: 1168: 98 59 0a 04 vlda wh9, [p4], m0
-# CHECK: 116c: 98 99 2a 06 vlda wh10, [p6], m1
-# CHECK: 1170: 98 39 a9 00 vlda wl4, [p0], m5
+# CHECK: 1158: 98 59 c8 05 vlda wh1, [p5], m6
+# CHECK: 115c: 98 b9 2a 02 vlda wl10, [p2], m1
+# CHECK: 1160: 98 19 a9 01 vlda wh4, [p1], m5
+# CHECK: 1164: 98 99 48 03 vlda wh2, [p3], m2
+# CHECK: 1168: 98 59 ea 04 vlda wh9, [p4], m7
+# CHECK: 116c: 98 99 6a 06 vlda wh10, [p6], m3
+# CHECK: 1170: 98 39 09 00 vlda wl4, [p0], m0
 # CHECK: 1174: 98 f9 8a 07 vlda wl11, [p7], m4
-# CHECK: 1178: 98 f9 49 05 vlda wl7, [p5], m2
-# CHECK: 117c: 98 39 ea 02 vlda wl8, [p2], m7
-# CHECK: 1180: 98 99 69 01 vlda wh6, [p1], m3
-# CHECK: 1184: 98 f9 c8 03 vlda wl3, [p3], m6
-# CHECK: 1188: 98 79 09 04 vlda wl5, [p4], m0
-# CHECK: 118c: 98 19 28 06 vlda wh0, [p6], m1
+# CHECK: 1178: 98 f9 c9 05 vlda wl7, [p5], m6
+# CHECK: 117c: 98 39 2a 02 vlda wl8, [p2], m1
+# CHECK: 1180: 98 99 a9 01 vlda wh6, [p1], m5
+# CHECK: 1184: 98 f9 48 03 vlda wl3, [p3], m2
+# CHECK: 1188: 98 79 e9 04 vlda wl5, [p4], m7
+# CHECK: 118c: 98 19 68 06 vlda wh0, [p6], m3
 # CHECK: 1190: 98 b9 0e 07 vlda wl10, [p7], #0
 # CHECK: 1194: 98 f9 1c 04 vlda wl3, [p4], #32
 # CHECK: 1198: 98 f9 7e 06 vlda wl11, [p6], #224
@@ -2793,26 +2793,26 @@ body:      |
 # CHECK: 12e4: 98 35 86 07 vlda bmlh4, [p7, #-512]
 # CHECK: 12e8: 98 35 15 02 vlda bmlh2, [p2, #64]
 # CHECK: 12ec: 98 15 75 01 vlda bmll2, [p1, #448]
-# CHECK: 12f0: 98 75 28 03 vlda bmhh0, [p3], m1
-# CHECK: 12f4: 98 75 aa 07 vlda bmhh4, [p7], m5
-# CHECK: 12f8: 98 75 c9 05 vlda bmhh2, [p5], m6
-# CHECK: 12fc: 98 95 08 01 vlda bmll1, [p1], m0
-# CHECK: 1300: 98 55 49 06 vlda bmhl2, [p6], m2
+# CHECK: 12f0: 98 75 68 03 vlda bmhh0, [p3], m3
+# CHECK: 12f4: 98 75 0a 07 vlda bmhh4, [p7], m0
+# CHECK: 12f8: 98 75 49 05 vlda bmhh2, [p5], m2
+# CHECK: 12fc: 98 95 e8 01 vlda bmll1, [p1], m7
+# CHECK: 1300: 98 55 c9 06 vlda bmhl2, [p6], m6
 # CHECK: 1304: 98 b5 89 00 vlda bmlh3, [p0], m4
-# CHECK: 1308: 98 15 e8 04 vlda bmll0, [p4], m7
-# CHECK: 130c: 98 35 6a 02 vlda bmlh4, [p2], m3
-# CHECK: 1310: 98 15 2a 03 vlda bmll4, [p3], m1
-# CHECK: 1314: 98 f5 a8 07 vlda bmhh1, [p7], m5
-# CHECK: 1318: 98 35 c9 05 vlda bmlh2, [p5], m6
-# CHECK: 131c: 98 b5 08 01 vlda bmlh1, [p1], m0
-# CHECK: 1320: 98 d5 49 06 vlda bmhl3, [p6], m2
+# CHECK: 1308: 98 15 28 04 vlda bmll0, [p4], m1
+# CHECK: 130c: 98 35 aa 02 vlda bmlh4, [p2], m5
+# CHECK: 1310: 98 15 6a 03 vlda bmll4, [p3], m3
+# CHECK: 1314: 98 f5 08 07 vlda bmhh1, [p7], m0
+# CHECK: 1318: 98 35 49 05 vlda bmlh2, [p5], m2
+# CHECK: 131c: 98 b5 e8 01 vlda bmlh1, [p1], m7
+# CHECK: 1320: 98 d5 c9 06 vlda bmhl3, [p6], m6
 # CHECK: 1324: 98 f5 89 00 vlda bmhh3, [p0], m4
-# CHECK: 1328: 98 95 e9 04 vlda bmll3, [p4], m7
-# CHECK: 132c: 98 55 68 02 vlda bmhl0, [p2], m3
-# CHECK: 1330: 98 55 2a 03 vlda bmhl4, [p3], m1
-# CHECK: 1334: 98 d5 a8 07 vlda bmhl1, [p7], m5
-# CHECK: 1338: 98 15 c9 05 vlda bmll2, [p5], m6
-# CHECK: 133c: 98 35 08 01 vlda bmlh0, [p1], m0
+# CHECK: 1328: 98 95 29 04 vlda bmll3, [p4], m1
+# CHECK: 132c: 98 55 a8 02 vlda bmhl0, [p2], m5
+# CHECK: 1330: 98 55 6a 03 vlda bmhl4, [p3], m3
+# CHECK: 1334: 98 d5 08 07 vlda bmhl1, [p7], m0
+# CHECK: 1338: 98 15 49 05 vlda bmll2, [p5], m2
+# CHECK: 133c: 98 35 e8 01 vlda bmlh0, [p1], m7
 # CHECK: 1340: 98 b5 8c 06 vlda bmlh1, [p6], #-512
 # CHECK: 1344: 98 15 0c 07 vlda bmll0, [p7], #0
 # CHECK: 1348: 98 f5 7c 02 vlda bmhh1, [p2], #448
@@ -2869,14 +2869,14 @@ body:      |
 # CHECK: 1414: 98 07 85 00 vlda lfe, [p0, #-512]
 # CHECK: 1418: 98 07 77 04 vlda sfh, [p4, #448]
 # CHECK: 141c: 98 87 04 01 vlda lfl0, [p1, #0]
-# CHECK: 1420: 98 87 4a 03 vlda lfl1, [p3], m2
-# CHECK: 1424: 98 87 68 04 vlda lfl0, [p4], m3
-# CHECK: 1428: 98 07 28 07 vlda lfh0, [p7], m1
-# CHECK: 142c: 98 07 09 05 vlda lfe, [p5], m0
-# CHECK: 1430: 98 07 aa 02 vlda lfh1, [p2], m5
+# CHECK: 1420: 98 87 ca 03 vlda lfl1, [p3], m6
+# CHECK: 1424: 98 87 a8 04 vlda lfl0, [p4], m5
+# CHECK: 1428: 98 07 68 07 vlda lfh0, [p7], m3
+# CHECK: 142c: 98 07 e9 05 vlda lfe, [p5], m7
+# CHECK: 1430: 98 07 0a 02 vlda lfh1, [p2], m0
 # CHECK: 1434: 98 87 89 06 vlda sfl, [p6], m4
-# CHECK: 1438: 98 07 cb 01 vlda sfh, [p1], m6
-# CHECK: 143c: 98 87 ea 00 vlda lfl1, [p0], m7
+# CHECK: 1438: 98 07 4b 01 vlda sfh, [p1], m2
+# CHECK: 143c: 98 87 2a 00 vlda lfl1, [p0], m1
 # CHECK: 1440: 98 87 0d 03 vlda sfl, [p3], #0
 # CHECK: 1444: 98 07 8c 01 vlda lfh0, [p1], #-512
 # CHECK: 1448: 98 07 1d 07 vlda lfe, [p7], #64
@@ -2892,63 +2892,63 @@ body:      |
 # CHECK: 1470: 98 47 f8 07 vlda lfh0, [sp, #-128]
 # CHECK: 1474: 98 47 fe 07 vlda lfh1, [sp, #-64]
 # CHECK: 1478: 98 47 05 00 vlda lfe, [sp, #-32704]
-# CHECK: 147c: 98 5b 41 02 vlda x5, [p2, dj2]
-# CHECK: 1480: 98 1b 20 05 vlda x0, [p5, dj1]
-# CHECK: 1484: 98 db 80 07 vlda x3, [p7, dj4]
-# CHECK: 1488: 98 db e2 06 vlda x11, [p6, dj7]
-# CHECK: 148c: 98 9b 01 00 vlda x6, [p0, dj0]
-# CHECK: 1490: 98 db a1 04 vlda x7, [p4, dj5]
-# CHECK: 1494: 98 9b c2 03 vlda x10, [p3, dj6]
+# CHECK: 147c: 98 db 41 02 vlda x7, [p2, dj2]
+# CHECK: 1480: 98 1b 22 05 vlda x8, [p5, dj1]
+# CHECK: 1484: 98 9b 82 07 vlda x10, [p7, dj4]
+# CHECK: 1488: 98 db e0 06 vlda x3, [p6, dj7]
+# CHECK: 148c: 98 1b 00 00 vlda x0, [p0, dj0]
+# CHECK: 1490: 98 db a2 04 vlda x11, [p4, dj5]
+# CHECK: 1494: 98 5b c1 03 vlda x5, [p3, dj6]
 # CHECK: 1498: 98 5b 60 01 vlda x1, [p1, dj3]
-# CHECK: 149c: 98 1b 41 02 vlda x4, [p2, dj2]
-# CHECK: 14a0: 98 1b 22 05 vlda x8, [p5, dj1]
-# CHECK: 14a4: 98 9b 80 07 vlda x2, [p7, dj4]
-# CHECK: 14a8: 98 5b e2 06 vlda x9, [p6, dj7]
-# CHECK: 14ac: 98 1b 75 00 vlda x4, [p0, #448]
-# CHECK: 14b0: 98 9b 86 05 vlda x10, [p5, #-512]
-# CHECK: 14b4: 98 5b 06 02 vlda x9, [p2, #0]
+# CHECK: 149c: 98 5b 42 02 vlda x9, [p2, dj2]
+# CHECK: 14a0: 98 9b 20 05 vlda x2, [p5, dj1]
+# CHECK: 14a4: 98 1b 81 07 vlda x4, [p7, dj4]
+# CHECK: 14a8: 98 9b e1 06 vlda x6, [p6, dj7]
+# CHECK: 14ac: 98 5b 76 00 vlda x9, [p0, #448]
+# CHECK: 14b0: 98 5b 85 05 vlda x5, [p5, #-512]
+# CHECK: 14b4: 98 9b 05 02 vlda x6, [p2, #0]
 # CHECK: 14b8: 98 5b 14 07 vlda x1, [p7, #64]
-# CHECK: 14bc: 98 db 74 03 vlda x3, [p3, #448]
-# CHECK: 14c0: 98 db 86 01 vlda x11, [p1, #-512]
-# CHECK: 14c4: 98 5b 05 04 vlda x5, [p4, #0]
-# CHECK: 14c8: 98 9b 15 06 vlda x6, [p6, #64]
-# CHECK: 14cc: 98 1b 74 00 vlda x0, [p0, #448]
-# CHECK: 14d0: 98 1b 86 05 vlda x8, [p5, #-512]
-# CHECK: 14d4: 98 db 05 02 vlda x7, [p2, #0]
-# CHECK: 14d8: 98 9b 14 07 vlda x2, [p7, #64]
-# CHECK: 14dc: 98 db 28 01 vlda x3, [p1], m1
-# CHECK: 14e0: 98 5b 89 04 vlda x5, [p4], m4
-# CHECK: 14e4: 98 1b ca 03 vlda x8, [p3], m6
-# CHECK: 14e8: 98 1b 68 02 vlda x0, [p2], m3
-# CHECK: 14ec: 98 5b 08 06 vlda x1, [p6], m0
-# CHECK: 14f0: 98 9b a9 05 vlda x6, [p5], m5
-# CHECK: 14f4: 98 db 49 07 vlda x7, [p7], m2
-# CHECK: 14f8: 98 5b ea 00 vlda x9, [p0], m7
-# CHECK: 14fc: 98 1b 29 01 vlda x4, [p1], m1
-# CHECK: 1500: 98 db 8a 04 vlda x11, [p4], m4
-# CHECK: 1504: 98 9b ca 03 vlda x10, [p3], m6
-# CHECK: 1508: 98 9b 68 02 vlda x2, [p2], m3
-# CHECK: 150c: 98 9b 1d 06 vlda x6, [p6], #64
-# CHECK: 1510: 98 9b 0c 00 vlda x2, [p0], #0
-# CHECK: 1514: 98 1b 8c 04 vlda x0, [p4], #-512
-# CHECK: 1518: 98 9b 7e 07 vlda x10, [p7], #448
+# CHECK: 14bc: 98 9b 76 03 vlda x10, [p3, #448]
+# CHECK: 14c0: 98 db 84 01 vlda x3, [p1, #-512]
+# CHECK: 14c4: 98 db 05 04 vlda x7, [p4, #0]
+# CHECK: 14c8: 98 1b 14 06 vlda x0, [p6, #64]
+# CHECK: 14cc: 98 1b 76 00 vlda x8, [p0, #448]
+# CHECK: 14d0: 98 9b 84 05 vlda x2, [p5, #-512]
+# CHECK: 14d4: 98 db 06 02 vlda x11, [p2, #0]
+# CHECK: 14d8: 98 1b 15 07 vlda x4, [p7, #64]
+# CHECK: 14dc: 98 9b 6a 01 vlda x10, [p1], m3
+# CHECK: 14e0: 98 db 89 04 vlda x7, [p4], m4
+# CHECK: 14e4: 98 9b 48 03 vlda x2, [p3], m2
+# CHECK: 14e8: 98 1b aa 02 vlda x8, [p2], m5
+# CHECK: 14ec: 98 5b e8 06 vlda x1, [p6], m7
+# CHECK: 14f0: 98 1b 08 05 vlda x0, [p5], m0
+# CHECK: 14f4: 98 db ca 07 vlda x11, [p7], m6
+# CHECK: 14f8: 98 9b 29 00 vlda x6, [p0], m1
+# CHECK: 14fc: 98 5b 6a 01 vlda x9, [p1], m3
+# CHECK: 1500: 98 db 88 04 vlda x3, [p4], m4
+# CHECK: 1504: 98 5b 49 03 vlda x5, [p3], m2
+# CHECK: 1508: 98 1b a9 02 vlda x4, [p2], m5
+# CHECK: 150c: 98 1b 1c 06 vlda x0, [p6], #64
+# CHECK: 1510: 98 1b 0d 00 vlda x4, [p0], #0
+# CHECK: 1514: 98 1b 8e 04 vlda x8, [p4], #-512
+# CHECK: 1518: 98 5b 7d 07 vlda x5, [p7], #448
 # CHECK: 151c: 98 5b 1c 02 vlda x1, [p2], #64
-# CHECK: 1520: 98 5b 0e 05 vlda x9, [p5], #0
-# CHECK: 1524: 98 1b 8d 03 vlda x4, [p3], #-512
-# CHECK: 1528: 98 1b 7e 01 vlda x8, [p1], #448
-# CHECK: 152c: 98 5b 1d 06 vlda x5, [p6], #64
-# CHECK: 1530: 98 db 0e 00 vlda x11, [p0], #0
-# CHECK: 1534: 98 db 8c 04 vlda x3, [p4], #-512
-# CHECK: 1538: 98 db 7d 07 vlda x7, [p7], #448
+# CHECK: 1520: 98 9b 0d 05 vlda x6, [p5], #0
+# CHECK: 1524: 98 5b 8e 03 vlda x9, [p3], #-512
+# CHECK: 1528: 98 9b 7c 01 vlda x2, [p1], #448
+# CHECK: 152c: 98 db 1d 06 vlda x7, [p6], #64
+# CHECK: 1530: 98 db 0c 00 vlda x3, [p0], #0
+# CHECK: 1534: 98 9b 8e 04 vlda x10, [p4], #-512
+# CHECK: 1538: 98 db 7e 07 vlda x11, [p7], #448
 # CHECK: 153c: 98 7b 00 00 vlda x1, [sp, #-32768]
-# CHECK: 1540: 98 7b fe 07 vlda x9, [sp, #-64]
-# CHECK: 1544: 98 fb 04 00 vlda x3, [sp, #-32704]
-# CHECK: 1548: 98 7b f9 07 vlda x5, [sp, #-128]
-# CHECK: 154c: 98 3b 01 00 vlda x4, [sp, #-32768]
-# CHECK: 1550: 98 3b fc 07 vlda x0, [sp, #-64]
-# CHECK: 1554: 98 bb 04 00 vlda x2, [sp, #-32704]
-# CHECK: 1558: 98 3b fa 07 vlda x8, [sp, #-128]
-# CHECK: 155c: 98 bb 01 00 vlda x6, [sp, #-32768]
-# CHECK: 1560: 98 bb fe 07 vlda x10, [sp, #-64]
-# CHECK: 1564: 98 fb 05 00 vlda x7, [sp, #-32704]
-# CHECK: 1568: 98 fb fa 07 vlda x11, [sp, #-128]
+# CHECK: 1540: 98 bb fd 07 vlda x6, [sp, #-64]
+# CHECK: 1544: 98 bb 06 00 vlda x10, [sp, #-32704]
+# CHECK: 1548: 98 fb f9 07 vlda x7, [sp, #-128]
+# CHECK: 154c: 98 7b 02 00 vlda x9, [sp, #-32768]
+# CHECK: 1550: 98 3b fe 07 vlda x8, [sp, #-64]
+# CHECK: 1554: 98 3b 05 00 vlda x4, [sp, #-32704]
+# CHECK: 1558: 98 bb f8 07 vlda x2, [sp, #-128]
+# CHECK: 155c: 98 3b 00 00 vlda x0, [sp, #-32768]
+# CHECK: 1560: 98 7b fd 07 vlda x5, [sp, #-64]
+# CHECK: 1564: 98 fb 06 00 vlda x11, [sp, #-32704]
+# CHECK: 1568: 98 fb f8 07 vlda x3, [sp, #-128]
