@@ -5270,7 +5270,7 @@ let lda = {ptr, imm, 0b11, op, 0b1010111};
 }
 
 let Itinerary = II_VLDA_FILL_512, DecoderMethod = "DecodeVLDA_FILL_512", mayLoad = true in
-def VLDA_FILL_512 : AIE2P_inst_lda_instr32 <(outs ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), (ins ePSRFLdF:$ptr_superreg), "vlda.fill.512", " [$ptr, $fifo_reg, $pos]">, AIE_HasTiedSubregister{
+def VLDA_FILL_512 : AIE2P_inst_lda_instr32 <(outs ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), "vlda.fill.512", " [$ptr, $fifo_reg, $pos]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_x__normal_fill__dmx_lda_fifo_x__core_fill__dmx_lda_fifo_x__normal__mPfa__mLdFifo_a__mRF2a
 bits<1> ptr;
 
@@ -5278,7 +5278,7 @@ let lda = {0b00, ptr, dontcare{3-1}, 0b101, dontcare{4-1}, 0b0010111};
 }
 
 let Itinerary = II_VLDA_POP_512_2D, DecoderMethod = "DecodeDmx_lda_fifo_x__fifo_2d_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDA_POP_512_2D : AIE2P_inst_lda_instr32 <(outs OP_mXa:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eDC:$dc), (ins ePSRFLdF:$ptr_superreg, eD:$mod), "vlda.pop.512.2d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
+def VLDA_POP_512_2D : AIE2P_inst_lda_instr32 <(outs OP_mXa:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out, eDC:$dc), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eD:$mod), "vlda.pop.512.2d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_x__fifo_2d_pop__dmx_lda_fifo_x__core_pop__dmx_lda_fifo_x__fifo_2d__mPfa__mLdFifo_a__mRF2a__mDa
 bits<1> ptr;
 bits<3> mod;
@@ -5288,7 +5288,7 @@ let lda = {0b01, ptr, mod, 0b100, dst, 0b0010111};
 }
 
 let Itinerary = II_VLDA_POP_512_3D, DecoderMethod = "DecodeDmx_lda_fifo_x__fifo_3d_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDA_POP_512_3D : AIE2P_inst_lda_instr32 <(outs OP_mXa:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eDCL:$dcl, eDCH:$dch), (ins ePSRFLdF:$ptr_superreg, eDS:$mod), "vlda.pop.512.3d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
+def VLDA_POP_512_3D : AIE2P_inst_lda_instr32 <(outs OP_mXa:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out, eDCL:$dcl, eDCH:$dch), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eDS:$mod), "vlda.pop.512.3d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_x__fifo_3d_pop__dmx_lda_fifo_x__core_pop__dmx_lda_fifo_x__fifo_3d__mPfa__mLdFifo_a__mRF2a__mDSa
 bits<1> ptr;
 bits<2> mod;
@@ -5298,7 +5298,7 @@ let lda = {0b11, ptr, dontcare{1}, mod, 0b000, dst, 0b0010111};
 }
 
 let Itinerary = II_VLDA_POP_512_fifo_1d_pop, DecoderMethod = "DecodeVLDA_POP_512_fifo_1d_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDA_POP_512_fifo_1d_pop : AIE2P_inst_lda_instr32 <(outs OP_mXa:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), (ins ePSRFLdF:$ptr_superreg, eM:$mod), "vlda.pop.512", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
+def VLDA_POP_512_fifo_1d_pop : AIE2P_inst_lda_instr32 <(outs OP_mXa:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eM:$mod), "vlda.pop.512", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_x__fifo_1d_pop__dmx_lda_fifo_x__core_pop__dmx_lda_fifo_x__fifo_1d__mPfa__mLdFifo_a__mRF2a__mMa
 bits<1> ptr;
 bits<3> mod;
@@ -5308,7 +5308,7 @@ let lda = {0b10, ptr, mod, 0b010, dst, 0b0010111};
 }
 
 let Itinerary = II_VLDA_POP_512_normal_pop, DecoderMethod = "DecodeVLDA_POP_512_normal_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDA_POP_512_normal_pop : AIE2P_inst_lda_instr32 <(outs OP_mXa:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), (ins ePSRFLdF:$ptr_superreg), "vlda.pop.512", " $dst, [$ptr, $fifo_reg, $pos]">, AIE_HasTiedSubregister{
+def VLDA_POP_512_normal_pop : AIE2P_inst_lda_instr32 <(outs OP_mXa:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), "vlda.pop.512", " $dst, [$ptr, $fifo_reg, $pos]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_x__normal_pop__dmx_lda_fifo_x__core_pop__dmx_lda_fifo_x__normal__mPfa__mLdFifo_a__mRF2a
 bits<1> ptr;
 bits<4> dst;
@@ -5317,7 +5317,7 @@ let lda = {0b00, ptr, dontcare{3-1}, 0b000, dst, 0b0010111};
 }
 
 let Itinerary = II_VLDA_POP_544_2D, DecoderMethod = "DecodeDmx_lda_fifo_ex_ebs16__fifo_2d_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDA_POP_544_2D : AIE2P_inst_lda_instr32 <(outs OP_mEXa:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eDC:$dc), (ins ePSRFLdF:$ptr_superreg, eD:$mod), "vlda.pop.544.2d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
+def VLDA_POP_544_2D : AIE2P_inst_lda_instr32 <(outs OP_mEXa:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out, eDC:$dc), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eD:$mod), "vlda.pop.544.2d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_ex_ebs16__fifo_2d_pop__dmx_lda_fifo_ex_ebs16__core_pop__dmx_lda_fifo_ex_ebs16__fifo_2d__mPfa__mLdFifo_a__mRF2a__mDa
 bits<1> ptr;
 bits<3> mod;
@@ -5327,7 +5327,7 @@ let lda = {0b00, ptr, mod, 0b010, dst, 0b0010111};
 }
 
 let Itinerary = II_VLDA_POP_544_3D, DecoderMethod = "DecodeDmx_lda_fifo_ex_ebs16__fifo_3d_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDA_POP_544_3D : AIE2P_inst_lda_instr32 <(outs OP_mEXa:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eDCL:$dcl, eDCH:$dch), (ins ePSRFLdF:$ptr_superreg, eDS:$mod), "vlda.pop.544.3d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
+def VLDA_POP_544_3D : AIE2P_inst_lda_instr32 <(outs OP_mEXa:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out, eDCL:$dcl, eDCH:$dch), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eDS:$mod), "vlda.pop.544.3d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_ex_ebs16__fifo_3d_pop__dmx_lda_fifo_ex_ebs16__core_pop__dmx_lda_fifo_ex_ebs16__fifo_3d__mPfa__mLdFifo_a__mRF2a__mDSa
 bits<1> ptr;
 bits<2> mod;
@@ -5337,7 +5337,7 @@ let lda = {0b10, ptr, dontcare{1}, mod, 0b100, dst, 0b0010111};
 }
 
 let Itinerary = II_VLDA_POP_544_fifo_1d_pop, DecoderMethod = "DecodeVLDA_POP_544_fifo_1d_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDA_POP_544_fifo_1d_pop : AIE2P_inst_lda_instr32 <(outs OP_mEXa:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), (ins ePSRFLdF:$ptr_superreg, eM:$mod), "vlda.pop.544", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
+def VLDA_POP_544_fifo_1d_pop : AIE2P_inst_lda_instr32 <(outs OP_mEXa:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eM:$mod), "vlda.pop.544", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_ex_ebs16__fifo_1d_pop__dmx_lda_fifo_ex_ebs16__core_pop__dmx_lda_fifo_ex_ebs16__fifo_1d__mPfa__mLdFifo_a__mRF2a__mMa
 bits<1> ptr;
 bits<3> mod;
@@ -5347,7 +5347,7 @@ let lda = {0b11, ptr, mod, 0b010, dst, 0b0010111};
 }
 
 let Itinerary = II_VLDA_POP_544_normal_pop, DecoderMethod = "DecodeVLDA_POP_544_normal_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDA_POP_544_normal_pop : AIE2P_inst_lda_instr32 <(outs OP_mEXa:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), (ins ePSRFLdF:$ptr_superreg), "vlda.pop.544", " $dst, [$ptr, $fifo_reg, $pos]">, AIE_HasTiedSubregister{
+def VLDA_POP_544_normal_pop : AIE2P_inst_lda_instr32 <(outs OP_mEXa:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), "vlda.pop.544", " $dst, [$ptr, $fifo_reg, $pos]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_ex_ebs16__normal_pop__dmx_lda_fifo_ex_ebs16__core_pop__dmx_lda_fifo_ex_ebs16__normal__mPfa__mLdFifo_a__mRF2a
 bits<1> ptr;
 bits<4> dst;
@@ -5356,7 +5356,7 @@ let lda = {0b01, ptr, dontcare{3-1}, 0b000, dst, 0b0010111};
 }
 
 let Itinerary = II_VLDA_POP_576_2D, DecoderMethod = "DecodeDmx_lda_fifo_ex_ebs8__fifo_2d_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDA_POP_576_2D : AIE2P_inst_lda_instr32 <(outs OP_mEXa:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eDC:$dc), (ins ePSRFLdF:$ptr_superreg, eD:$mod), "vlda.pop.576.2d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
+def VLDA_POP_576_2D : AIE2P_inst_lda_instr32 <(outs OP_mEXa:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out, eDC:$dc), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eD:$mod), "vlda.pop.576.2d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_ex_ebs8__fifo_2d_pop__dmx_lda_fifo_ex_ebs8__core_pop__dmx_lda_fifo_ex_ebs8__fifo_2d__mPfa__mLdFifo_a__mRF2a__mDa
 bits<1> ptr;
 bits<3> mod;
@@ -5366,7 +5366,7 @@ let lda = {0b11, ptr, mod, 0b100, dst, 0b0010111};
 }
 
 let Itinerary = II_VLDA_POP_576_3D, DecoderMethod = "DecodeDmx_lda_fifo_ex_ebs8__fifo_3d_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDA_POP_576_3D : AIE2P_inst_lda_instr32 <(outs OP_mEXa:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eDCL:$dcl, eDCH:$dch), (ins ePSRFLdF:$ptr_superreg, eDS:$mod), "vlda.pop.576.3d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
+def VLDA_POP_576_3D : AIE2P_inst_lda_instr32 <(outs OP_mEXa:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out, eDCL:$dcl, eDCH:$dch), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eDS:$mod), "vlda.pop.576.3d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_ex_ebs8__fifo_3d_pop__dmx_lda_fifo_ex_ebs8__core_pop__dmx_lda_fifo_ex_ebs8__fifo_3d__mPfa__mLdFifo_a__mRF2a__mDSa
 bits<1> ptr;
 bits<2> mod;
@@ -5376,7 +5376,7 @@ let lda = {0b00, ptr, dontcare{1}, mod, 0b100, dst, 0b0010111};
 }
 
 let Itinerary = II_VLDA_POP_576_fifo_1d_pop, DecoderMethod = "DecodeVLDA_POP_576_fifo_1d_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDA_POP_576_fifo_1d_pop : AIE2P_inst_lda_instr32 <(outs OP_mEXa:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), (ins ePSRFLdF:$ptr_superreg, eM:$mod), "vlda.pop.576", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
+def VLDA_POP_576_fifo_1d_pop : AIE2P_inst_lda_instr32 <(outs OP_mEXa:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eM:$mod), "vlda.pop.576", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_ex_ebs8__fifo_1d_pop__dmx_lda_fifo_ex_ebs8__core_pop__dmx_lda_fifo_ex_ebs8__fifo_1d__mPfa__mLdFifo_a__mRF2a__mMa
 bits<1> ptr;
 bits<3> mod;
@@ -5386,7 +5386,7 @@ let lda = {0b01, ptr, mod, 0b010, dst, 0b0010111};
 }
 
 let Itinerary = II_VLDA_POP_576_normal_pop, DecoderMethod = "DecodeVLDA_POP_576_normal_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDA_POP_576_normal_pop : AIE2P_inst_lda_instr32 <(outs OP_mEXa:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), (ins ePSRFLdF:$ptr_superreg), "vlda.pop.576", " $dst, [$ptr, $fifo_reg, $pos]">, AIE_HasTiedSubregister{
+def VLDA_POP_576_normal_pop : AIE2P_inst_lda_instr32 <(outs OP_mEXa:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), "vlda.pop.576", " $dst, [$ptr, $fifo_reg, $pos]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_ex_ebs8__normal_pop__dmx_lda_fifo_ex_ebs8__core_pop__dmx_lda_fifo_ex_ebs8__normal__mPfa__mLdFifo_a__mRF2a
 bits<1> ptr;
 bits<4> dst;
@@ -5395,7 +5395,7 @@ let lda = {0b10, ptr, dontcare{3-1}, 0b000, dst, 0b0010111};
 }
 
 let Itinerary = II_VLDA_POP_640_2D, DecoderMethod = "DecodeDmx_lda_fifo_qx__fifo_2d_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDA_POP_640_2D : AIE2P_inst_lda_instr32 <(outs OP_mQXsa:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eDC:$dc), (ins ePSRFLdF:$ptr_superreg, eD:$mod), "vlda.pop.640.2d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
+def VLDA_POP_640_2D : AIE2P_inst_lda_instr32 <(outs OP_mQXsa:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out, eDC:$dc), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eD:$mod), "vlda.pop.640.2d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_qx__fifo_2d_pop__dmx_lda_fifo_qx__core_pop__dmx_lda_fifo_qx__fifo_2d__mPfa__mLdFifo_a__mRF2a__mDa
 bits<1> ptr;
 bits<3> mod;
@@ -5405,7 +5405,7 @@ let lda = {0b00, ptr, mod, 0b001, dst, dontcare{2-1}, 0b0010111};
 }
 
 let Itinerary = II_VLDA_POP_640_3D, DecoderMethod = "DecodeDmx_lda_fifo_qx__fifo_3d_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDA_POP_640_3D : AIE2P_inst_lda_instr32 <(outs OP_mQXsa:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eDCL:$dcl, eDCH:$dch), (ins ePSRFLdF:$ptr_superreg, eDS:$mod), "vlda.pop.640.3d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
+def VLDA_POP_640_3D : AIE2P_inst_lda_instr32 <(outs OP_mQXsa:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out, eDCL:$dcl, eDCH:$dch), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eDS:$mod), "vlda.pop.640.3d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_qx__fifo_3d_pop__dmx_lda_fifo_qx__core_pop__dmx_lda_fifo_qx__fifo_3d__mPfa__mLdFifo_a__mRF2a__mDSa
 bits<1> ptr;
 bits<2> mod;
@@ -5415,7 +5415,7 @@ let lda = {0b01, ptr, dontcare{1}, mod, 0b110, dst, dontcare{2-1}, 0b0010111};
 }
 
 let Itinerary = II_VLDA_POP_640_fifo_1d_pop, DecoderMethod = "DecodeVLDA_POP_640_fifo_1d_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDA_POP_640_fifo_1d_pop : AIE2P_inst_lda_instr32 <(outs OP_mQXsa:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), (ins ePSRFLdF:$ptr_superreg, eM:$mod), "vlda.pop.640", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
+def VLDA_POP_640_fifo_1d_pop : AIE2P_inst_lda_instr32 <(outs OP_mQXsa:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eM:$mod), "vlda.pop.640", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_qx__fifo_1d_pop__dmx_lda_fifo_qx__core_pop__dmx_lda_fifo_qx__fifo_1d__mPfa__mLdFifo_a__mRF2a__mMa
 bits<1> ptr;
 bits<3> mod;
@@ -5425,7 +5425,7 @@ let lda = {0b01, ptr, mod, 0b001, dst, dontcare{2-1}, 0b0010111};
 }
 
 let Itinerary = II_VLDA_POP_640_normal_pop, DecoderMethod = "DecodeVLDA_POP_640_normal_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDA_POP_640_normal_pop : AIE2P_inst_lda_instr32 <(outs OP_mQXsa:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), (ins ePSRFLdF:$ptr_superreg), "vlda.pop.640", " $dst, [$ptr, $fifo_reg, $pos]">, AIE_HasTiedSubregister{
+def VLDA_POP_640_normal_pop : AIE2P_inst_lda_instr32 <(outs OP_mQXsa:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), "vlda.pop.640", " $dst, [$ptr, $fifo_reg, $pos]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_qx__normal_pop__dmx_lda_fifo_qx__core_pop__dmx_lda_fifo_qx__normal__mPfa__mLdFifo_a__mRF2a
 bits<1> ptr;
 bits<2> dst;
@@ -5434,7 +5434,7 @@ let lda = {0b00, ptr, dontcare{3-1}, 0b110, dst, dontcare{2-1}, 0b0010111};
 }
 
 let Itinerary = II_VLDA_POP_704_2D, DecoderMethod = "DecodeDmx_lda_fifo_qex_ebs16__fifo_2d_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDA_POP_704_2D : AIE2P_inst_lda_instr32 <(outs OP_mQEXsa:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eDC:$dc), (ins ePSRFLdF:$ptr_superreg, eD:$mod), "vlda.pop.704.2d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
+def VLDA_POP_704_2D : AIE2P_inst_lda_instr32 <(outs OP_mQEXsa:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out, eDC:$dc), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eD:$mod), "vlda.pop.704.2d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_qex_ebs16__fifo_2d_pop__dmx_lda_fifo_qex_ebs16__core_pop__dmx_lda_fifo_qex_ebs16__fifo_2d__mPfa__mLdFifo_a__mRF2a__mDa
 bits<1> ptr;
 bits<3> mod;
@@ -5444,7 +5444,7 @@ let lda = {0b10, ptr, mod, 0b001, dst, dontcare{2-1}, 0b0010111};
 }
 
 let Itinerary = II_VLDA_POP_704_3D, DecoderMethod = "DecodeDmx_lda_fifo_qex_ebs16__fifo_3d_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDA_POP_704_3D : AIE2P_inst_lda_instr32 <(outs OP_mQEXsa:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eDCL:$dcl, eDCH:$dch), (ins ePSRFLdF:$ptr_superreg, eDS:$mod), "vlda.pop.704.3d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
+def VLDA_POP_704_3D : AIE2P_inst_lda_instr32 <(outs OP_mQEXsa:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out, eDCL:$dcl, eDCH:$dch), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eDS:$mod), "vlda.pop.704.3d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_qex_ebs16__fifo_3d_pop__dmx_lda_fifo_qex_ebs16__core_pop__dmx_lda_fifo_qex_ebs16__fifo_3d__mPfa__mLdFifo_a__mRF2a__mDSa
 bits<1> ptr;
 bits<2> mod;
@@ -5454,7 +5454,7 @@ let lda = {0b11, ptr, dontcare{1}, mod, 0b110, dst, dontcare{2-1}, 0b0010111};
 }
 
 let Itinerary = II_VLDA_POP_704_fifo_1d_pop, DecoderMethod = "DecodeVLDA_POP_704_fifo_1d_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDA_POP_704_fifo_1d_pop : AIE2P_inst_lda_instr32 <(outs OP_mQEXsa:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), (ins ePSRFLdF:$ptr_superreg, eM:$mod), "vlda.pop.704", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
+def VLDA_POP_704_fifo_1d_pop : AIE2P_inst_lda_instr32 <(outs OP_mQEXsa:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eM:$mod), "vlda.pop.704", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_qex_ebs16__fifo_1d_pop__dmx_lda_fifo_qex_ebs16__core_pop__dmx_lda_fifo_qex_ebs16__fifo_1d__mPfa__mLdFifo_a__mRF2a__mMa
 bits<1> ptr;
 bits<3> mod;
@@ -5464,7 +5464,7 @@ let lda = {0b11, ptr, mod, 0b001, dst, dontcare{2-1}, 0b0010111};
 }
 
 let Itinerary = II_VLDA_POP_704_normal_pop, DecoderMethod = "DecodeVLDA_POP_704_normal_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDA_POP_704_normal_pop : AIE2P_inst_lda_instr32 <(outs OP_mQEXsa:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), (ins ePSRFLdF:$ptr_superreg), "vlda.pop.704", " $dst, [$ptr, $fifo_reg, $pos]">, AIE_HasTiedSubregister{
+def VLDA_POP_704_normal_pop : AIE2P_inst_lda_instr32 <(outs OP_mQEXsa:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), "vlda.pop.704", " $dst, [$ptr, $fifo_reg, $pos]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__lda__dmx_lda_fifo__dmx_lda_fifo_qex_ebs16__normal_pop__dmx_lda_fifo_qex_ebs16__core_pop__dmx_lda_fifo_qex_ebs16__normal__mPfa__mLdFifo_a__mRF2a
 bits<1> ptr;
 bits<2> dst;
@@ -6255,7 +6255,7 @@ let ldb = {src, 0b0, 0b10, 0b1, dst, 0b100};
 }
 
 let Itinerary = II_VLDB_FILLX_512, DecoderMethod = "DecodeVLDB_FILLX_512", mayLoad = true, Defs = [lfe], Uses = [lfe] in
-def VLDB_FILLX_512 : AIE2P_inst_ldb_instr32 <(outs ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), (ins mR30_fifo_step_e1:$conf_e1, mR30_fifo_step_e7:$conf_e7, ePSRFLdF:$ptr_superreg), "vldb.fillx.512", " [$ptr, $fifo_reg, $pos]">, AIE_HasTiedSubregister{
+def VLDB_FILLX_512 : AIE2P_inst_ldb_instr32 <(outs ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out), (ins mR30_fifo_step_e1:$conf_e1, mR30_fifo_step_e7:$conf_e7, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), "vldb.fillx.512", " [$ptr, $fifo_reg, $pos]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_x__normal_fillx__dmx_ldb_fifo_x__core_fillx__mR30_fifo_step_e1__mR30_fifo_step_e7__dmx_ldb_fifo_x__normalx__mPfb__mLdFifo_b__mRF2b
 bits<1> ptr;
 
@@ -6263,7 +6263,7 @@ let ldb = {0b01, ptr, dontcare{3-1}, 0b101, dontcare{4-1}, 0b0101};
 }
 
 let Itinerary = II_VLDB_FILL_512, DecoderMethod = "DecodeVLDB_FILL_512", mayLoad = true in
-def VLDB_FILL_512 : AIE2P_inst_ldb_instr32 <(outs ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), (ins ePSRFLdF:$ptr_superreg), "vldb.fill.512", " [$ptr, $fifo_reg, $pos]">, AIE_HasTiedSubregister{
+def VLDB_FILL_512 : AIE2P_inst_ldb_instr32 <(outs ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), "vldb.fill.512", " [$ptr, $fifo_reg, $pos]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_x__normal_fill__dmx_ldb_fifo_x__core_fill__dmx_ldb_fifo_x__normal__mPfb__mLdFifo_b__mRF2b
 bits<1> ptr;
 
@@ -6271,7 +6271,7 @@ let ldb = {0b10, ptr, dontcare{3-1}, 0b101, dontcare{4-1}, 0b0101};
 }
 
 let Itinerary = II_VLDB_POPX_512, DecoderMethod = "DecodeVLDB_POPX_512", mayLoad = true, Defs = [lfe, srFifo_uf], Uses = [lfe] in
-def VLDB_POPX_512 : AIE2P_inst_ldb_instr32 <(outs OP_mXb:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), (ins mR30_fifo_step_e1:$conf_e1, mR30_fifo_step_e7:$conf_e7, ePSRFLdF:$ptr_superreg), "vldb.popx.512", " $dst, [$ptr, $fifo_reg, $pos]">, AIE_HasTiedSubregister{
+def VLDB_POPX_512 : AIE2P_inst_ldb_instr32 <(outs OP_mXb:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out), (ins mR30_fifo_step_e1:$conf_e1, mR30_fifo_step_e7:$conf_e7, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), "vldb.popx.512", " $dst, [$ptr, $fifo_reg, $pos]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_x__normal_popx__dmx_ldb_fifo_x__core_popx__mR30_fifo_step_e1__mR30_fifo_step_e7__dmx_ldb_fifo_x__normalx__mPfb__mLdFifo_b__mRF2b
 bits<1> ptr;
 bits<4> dst;
@@ -6280,7 +6280,7 @@ let ldb = {0b10, ptr, dontcare{3-1}, 0b000, dst, 0b0101};
 }
 
 let Itinerary = II_VLDB_POP_512_2D, DecoderMethod = "DecodeDmx_ldb_fifo_x__fifo_2d_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDB_POP_512_2D : AIE2P_inst_ldb_instr32 <(outs OP_mXb:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eDC:$dc), (ins ePSRFLdF:$ptr_superreg, eD:$mod), "vldb.pop.512.2d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
+def VLDB_POP_512_2D : AIE2P_inst_ldb_instr32 <(outs OP_mXb:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out, eDC:$dc), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eD:$mod), "vldb.pop.512.2d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_x__fifo_2d_pop__dmx_ldb_fifo_x__core_pop__dmx_ldb_fifo_x__fifo_2d__mPfb__mLdFifo_b__mRF2b__mDb
 bits<1> ptr;
 bits<3> mod;
@@ -6290,7 +6290,7 @@ let ldb = {0b11, ptr, mod, 0b100, dst, 0b0101};
 }
 
 let Itinerary = II_VLDB_POP_512_3D, DecoderMethod = "DecodeDmx_ldb_fifo_x__fifo_3d_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDB_POP_512_3D : AIE2P_inst_ldb_instr32 <(outs OP_mXb:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eDCL:$dcl, eDCH:$dch), (ins ePSRFLdF:$ptr_superreg, eDS:$mod), "vldb.pop.512.3d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
+def VLDB_POP_512_3D : AIE2P_inst_ldb_instr32 <(outs OP_mXb:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out, eDCL:$dcl, eDCH:$dch), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eDS:$mod), "vldb.pop.512.3d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_x__fifo_3d_pop__dmx_ldb_fifo_x__core_pop__dmx_ldb_fifo_x__fifo_3d__mPfb__mLdFifo_b__mRF2b__mDSb
 bits<1> ptr;
 bits<2> mod;
@@ -6300,7 +6300,7 @@ let ldb = {0b00, ptr, dontcare{1}, mod, 0b100, dst, 0b0101};
 }
 
 let Itinerary = II_VLDB_POP_512_fifo_1d_pop, DecoderMethod = "DecodeVLDB_POP_512_fifo_1d_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDB_POP_512_fifo_1d_pop : AIE2P_inst_ldb_instr32 <(outs OP_mXb:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), (ins ePSRFLdF:$ptr_superreg, eM:$mod), "vldb.pop.512", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
+def VLDB_POP_512_fifo_1d_pop : AIE2P_inst_ldb_instr32 <(outs OP_mXb:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eM:$mod), "vldb.pop.512", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_x__fifo_1d_pop__dmx_ldb_fifo_x__core_pop__dmx_ldb_fifo_x__fifo_1d__mPfb__mLdFifo_b__mRF2b__mMb
 bits<1> ptr;
 bits<3> mod;
@@ -6310,7 +6310,7 @@ let ldb = {0b01, ptr, mod, 0b010, dst, 0b0101};
 }
 
 let Itinerary = II_VLDB_POP_512_normal_pop, DecoderMethod = "DecodeVLDB_POP_512_normal_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDB_POP_512_normal_pop : AIE2P_inst_ldb_instr32 <(outs OP_mXb:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), (ins ePSRFLdF:$ptr_superreg), "vldb.pop.512", " $dst, [$ptr, $fifo_reg, $pos]">, AIE_HasTiedSubregister{
+def VLDB_POP_512_normal_pop : AIE2P_inst_ldb_instr32 <(outs OP_mXb:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), "vldb.pop.512", " $dst, [$ptr, $fifo_reg, $pos]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_x__normal_pop__dmx_ldb_fifo_x__core_pop__dmx_ldb_fifo_x__normal__mPfb__mLdFifo_b__mRF2b
 bits<1> ptr;
 bits<4> dst;
@@ -6319,7 +6319,7 @@ let ldb = {0b00, ptr, dontcare{3-1}, 0b000, dst, 0b0101};
 }
 
 let Itinerary = II_VLDB_POP_544_2D, DecoderMethod = "DecodeDmx_ldb_fifo_ex_ebs16__fifo_2d_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDB_POP_544_2D : AIE2P_inst_ldb_instr32 <(outs OP_mEXb:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eDC:$dc), (ins ePSRFLdF:$ptr_superreg, eD:$mod), "vldb.pop.544.2d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
+def VLDB_POP_544_2D : AIE2P_inst_ldb_instr32 <(outs OP_mEXb:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out, eDC:$dc), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eD:$mod), "vldb.pop.544.2d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_ex_ebs16__fifo_2d_pop__dmx_ldb_fifo_ex_ebs16__core_pop__dmx_ldb_fifo_ex_ebs16__fifo_2d__mPfb__mLdFifo_b__mRF2b__mDb
 bits<1> ptr;
 bits<3> mod;
@@ -6329,7 +6329,7 @@ let ldb = {0b10, ptr, mod, 0b010, dst, 0b0101};
 }
 
 let Itinerary = II_VLDB_POP_544_3D, DecoderMethod = "DecodeDmx_ldb_fifo_ex_ebs16__fifo_3d_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDB_POP_544_3D : AIE2P_inst_ldb_instr32 <(outs OP_mEXb:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eDCL:$dcl, eDCH:$dch), (ins ePSRFLdF:$ptr_superreg, eDS:$mod), "vldb.pop.544.3d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
+def VLDB_POP_544_3D : AIE2P_inst_ldb_instr32 <(outs OP_mEXb:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out, eDCL:$dcl, eDCH:$dch), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eDS:$mod), "vldb.pop.544.3d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_ex_ebs16__fifo_3d_pop__dmx_ldb_fifo_ex_ebs16__core_pop__dmx_ldb_fifo_ex_ebs16__fifo_3d__mPfb__mLdFifo_b__mRF2b__mDSb
 bits<1> ptr;
 bits<2> mod;
@@ -6339,7 +6339,7 @@ let ldb = {0b01, ptr, dontcare{1}, mod, 0b100, dst, 0b0101};
 }
 
 let Itinerary = II_VLDB_POP_544_fifo_1d_pop, DecoderMethod = "DecodeVLDB_POP_544_fifo_1d_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDB_POP_544_fifo_1d_pop : AIE2P_inst_ldb_instr32 <(outs OP_mEXb:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), (ins ePSRFLdF:$ptr_superreg, eM:$mod), "vldb.pop.544", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
+def VLDB_POP_544_fifo_1d_pop : AIE2P_inst_ldb_instr32 <(outs OP_mEXb:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eM:$mod), "vldb.pop.544", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_ex_ebs16__fifo_1d_pop__dmx_ldb_fifo_ex_ebs16__core_pop__dmx_ldb_fifo_ex_ebs16__fifo_1d__mPfb__mLdFifo_b__mRF2b__mMb
 bits<1> ptr;
 bits<3> mod;
@@ -6349,7 +6349,7 @@ let ldb = {0b00, ptr, mod, 0b110, dst, 0b0101};
 }
 
 let Itinerary = II_VLDB_POP_544_normal_pop, DecoderMethod = "DecodeVLDB_POP_544_normal_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDB_POP_544_normal_pop : AIE2P_inst_ldb_instr32 <(outs OP_mEXb:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), (ins ePSRFLdF:$ptr_superreg), "vldb.pop.544", " $dst, [$ptr, $fifo_reg, $pos]">, AIE_HasTiedSubregister{
+def VLDB_POP_544_normal_pop : AIE2P_inst_ldb_instr32 <(outs OP_mEXb:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), "vldb.pop.544", " $dst, [$ptr, $fifo_reg, $pos]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_ex_ebs16__normal_pop__dmx_ldb_fifo_ex_ebs16__core_pop__dmx_ldb_fifo_ex_ebs16__normal__mPfb__mLdFifo_b__mRF2b
 bits<1> ptr;
 bits<4> dst;
@@ -6358,7 +6358,7 @@ let ldb = {0b11, ptr, dontcare{3-1}, 0b000, dst, 0b0101};
 }
 
 let Itinerary = II_VLDB_POP_576_2D, DecoderMethod = "DecodeDmx_ldb_fifo_ex_ebs8__fifo_2d_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDB_POP_576_2D : AIE2P_inst_ldb_instr32 <(outs OP_mEXb:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eDC:$dc), (ins ePSRFLdF:$ptr_superreg, eD:$mod), "vldb.pop.576.2d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
+def VLDB_POP_576_2D : AIE2P_inst_ldb_instr32 <(outs OP_mEXb:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out, eDC:$dc), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eD:$mod), "vldb.pop.576.2d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_ex_ebs8__fifo_2d_pop__dmx_ldb_fifo_ex_ebs8__core_pop__dmx_ldb_fifo_ex_ebs8__fifo_2d__mPfb__mLdFifo_b__mRF2b__mDb
 bits<1> ptr;
 bits<3> mod;
@@ -6368,7 +6368,7 @@ let ldb = {0b00, ptr, mod, 0b010, dst, 0b0101};
 }
 
 let Itinerary = II_VLDB_POP_576_3D, DecoderMethod = "DecodeDmx_ldb_fifo_ex_ebs8__fifo_3d_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDB_POP_576_3D : AIE2P_inst_ldb_instr32 <(outs OP_mEXb:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eDCL:$dcl, eDCH:$dch), (ins ePSRFLdF:$ptr_superreg, eDS:$mod), "vldb.pop.576.3d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
+def VLDB_POP_576_3D : AIE2P_inst_ldb_instr32 <(outs OP_mEXb:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out, eDCL:$dcl, eDCH:$dch), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eDS:$mod), "vldb.pop.576.3d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_ex_ebs8__fifo_3d_pop__dmx_ldb_fifo_ex_ebs8__core_pop__dmx_ldb_fifo_ex_ebs8__fifo_3d__mPfb__mLdFifo_b__mRF2b__mDSb
 bits<1> ptr;
 bits<2> mod;
@@ -6378,7 +6378,7 @@ let ldb = {0b10, ptr, dontcare{1}, mod, 0b100, dst, 0b0101};
 }
 
 let Itinerary = II_VLDB_POP_576_fifo_1d_pop, DecoderMethod = "DecodeVLDB_POP_576_fifo_1d_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDB_POP_576_fifo_1d_pop : AIE2P_inst_ldb_instr32 <(outs OP_mEXb:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), (ins ePSRFLdF:$ptr_superreg, eM:$mod), "vldb.pop.576", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
+def VLDB_POP_576_fifo_1d_pop : AIE2P_inst_ldb_instr32 <(outs OP_mEXb:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eM:$mod), "vldb.pop.576", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_ex_ebs8__fifo_1d_pop__dmx_ldb_fifo_ex_ebs8__core_pop__dmx_ldb_fifo_ex_ebs8__fifo_1d__mPfb__mLdFifo_b__mRF2b__mMb
 bits<1> ptr;
 bits<3> mod;
@@ -6388,7 +6388,7 @@ let ldb = {0b11, ptr, mod, 0b010, dst, 0b0101};
 }
 
 let Itinerary = II_VLDB_POP_576_normal_pop, DecoderMethod = "DecodeVLDB_POP_576_normal_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDB_POP_576_normal_pop : AIE2P_inst_ldb_instr32 <(outs OP_mEXb:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), (ins ePSRFLdF:$ptr_superreg), "vldb.pop.576", " $dst, [$ptr, $fifo_reg, $pos]">, AIE_HasTiedSubregister{
+def VLDB_POP_576_normal_pop : AIE2P_inst_ldb_instr32 <(outs OP_mEXb:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), "vldb.pop.576", " $dst, [$ptr, $fifo_reg, $pos]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_ex_ebs8__normal_pop__dmx_ldb_fifo_ex_ebs8__core_pop__dmx_ldb_fifo_ex_ebs8__normal__mPfb__mLdFifo_b__mRF2b
 bits<1> ptr;
 bits<4> dst;
@@ -6397,7 +6397,7 @@ let ldb = {0b01, ptr, dontcare{3-1}, 0b000, dst, 0b0101};
 }
 
 let Itinerary = II_VLDB_POP_640_2D, DecoderMethod = "DecodeDmx_ldb_fifo_qx__fifo_2d_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDB_POP_640_2D : AIE2P_inst_ldb_instr32 <(outs OP_mQXsb:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eDC:$dc), (ins ePSRFLdF:$ptr_superreg, eD:$mod), "vldb.pop.640.2d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
+def VLDB_POP_640_2D : AIE2P_inst_ldb_instr32 <(outs OP_mQXsb:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out, eDC:$dc), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eD:$mod), "vldb.pop.640.2d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_qx__fifo_2d_pop__dmx_ldb_fifo_qx__core_pop__dmx_ldb_fifo_qx__fifo_2d__mPfb__mLdFifo_b__mRF2b__mDb
 bits<1> ptr;
 bits<3> mod;
@@ -6407,7 +6407,7 @@ let ldb = {0b10, ptr, mod, 0b001, dst, dontcare{2-1}, 0b0101};
 }
 
 let Itinerary = II_VLDB_POP_640_3D, DecoderMethod = "DecodeDmx_ldb_fifo_qx__fifo_3d_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDB_POP_640_3D : AIE2P_inst_ldb_instr32 <(outs OP_mQXsb:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eDCL:$dcl, eDCH:$dch), (ins ePSRFLdF:$ptr_superreg, eDS:$mod), "vldb.pop.640.3d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
+def VLDB_POP_640_3D : AIE2P_inst_ldb_instr32 <(outs OP_mQXsb:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out, eDCL:$dcl, eDCH:$dch), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eDS:$mod), "vldb.pop.640.3d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_qx__fifo_3d_pop__dmx_ldb_fifo_qx__core_pop__dmx_ldb_fifo_qx__fifo_3d__mPfb__mLdFifo_b__mRF2b__mDSb
 bits<1> ptr;
 bits<2> mod;
@@ -6417,7 +6417,7 @@ let ldb = {0b11, ptr, dontcare{1}, mod, 0b110, dst, dontcare{2-1}, 0b0101};
 }
 
 let Itinerary = II_VLDB_POP_640_fifo_1d_pop, DecoderMethod = "DecodeVLDB_POP_640_fifo_1d_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDB_POP_640_fifo_1d_pop : AIE2P_inst_ldb_instr32 <(outs OP_mQXsb:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), (ins ePSRFLdF:$ptr_superreg, eM:$mod), "vldb.pop.640", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
+def VLDB_POP_640_fifo_1d_pop : AIE2P_inst_ldb_instr32 <(outs OP_mQXsb:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eM:$mod), "vldb.pop.640", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_qx__fifo_1d_pop__dmx_ldb_fifo_qx__core_pop__dmx_ldb_fifo_qx__fifo_1d__mPfb__mLdFifo_b__mRF2b__mMb
 bits<1> ptr;
 bits<3> mod;
@@ -6427,7 +6427,7 @@ let ldb = {0b11, ptr, mod, 0b001, dst, dontcare{2-1}, 0b0101};
 }
 
 let Itinerary = II_VLDB_POP_640_normal_pop, DecoderMethod = "DecodeVLDB_POP_640_normal_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDB_POP_640_normal_pop : AIE2P_inst_ldb_instr32 <(outs OP_mQXsb:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), (ins ePSRFLdF:$ptr_superreg), "vldb.pop.640", " $dst, [$ptr, $fifo_reg, $pos]">, AIE_HasTiedSubregister{
+def VLDB_POP_640_normal_pop : AIE2P_inst_ldb_instr32 <(outs OP_mQXsb:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), "vldb.pop.640", " $dst, [$ptr, $fifo_reg, $pos]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_qx__normal_pop__dmx_ldb_fifo_qx__core_pop__dmx_ldb_fifo_qx__normal__mPfb__mLdFifo_b__mRF2b
 bits<1> ptr;
 bits<2> dst;
@@ -6436,7 +6436,7 @@ let ldb = {0b10, ptr, dontcare{3-1}, 0b110, dst, dontcare{2-1}, 0b0101};
 }
 
 let Itinerary = II_VLDB_POP_704_2D, DecoderMethod = "DecodeDmx_ldb_fifo_qex_ebs16__fifo_2d_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDB_POP_704_2D : AIE2P_inst_ldb_instr32 <(outs OP_mQEXsb:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eDC:$dc), (ins ePSRFLdF:$ptr_superreg, eD:$mod), "vldb.pop.704.2d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
+def VLDB_POP_704_2D : AIE2P_inst_ldb_instr32 <(outs OP_mQEXsb:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out, eDC:$dc), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eD:$mod), "vldb.pop.704.2d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_qex_ebs16__fifo_2d_pop__dmx_ldb_fifo_qex_ebs16__core_pop__dmx_ldb_fifo_qex_ebs16__fifo_2d__mPfb__mLdFifo_b__mRF2b__mDb
 bits<1> ptr;
 bits<3> mod;
@@ -6446,7 +6446,7 @@ let ldb = {0b01, ptr, mod, 0b001, dst, dontcare{2-1}, 0b0101};
 }
 
 let Itinerary = II_VLDB_POP_704_3D, DecoderMethod = "DecodeDmx_ldb_fifo_qex_ebs16__fifo_3d_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDB_POP_704_3D : AIE2P_inst_ldb_instr32 <(outs OP_mQEXsb:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eDCL:$dcl, eDCH:$dch), (ins ePSRFLdF:$ptr_superreg, eDS:$mod), "vldb.pop.704.3d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
+def VLDB_POP_704_3D : AIE2P_inst_ldb_instr32 <(outs OP_mQEXsb:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out, eDCL:$dcl, eDCH:$dch), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eDS:$mod), "vldb.pop.704.3d", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_qex_ebs16__fifo_3d_pop__dmx_ldb_fifo_qex_ebs16__core_pop__dmx_ldb_fifo_qex_ebs16__fifo_3d__mPfb__mLdFifo_b__mRF2b__mDSb
 bits<1> ptr;
 bits<2> mod;
@@ -6456,7 +6456,7 @@ let ldb = {0b00, ptr, dontcare{1}, mod, 0b001, dst, dontcare{2-1}, 0b0101};
 }
 
 let Itinerary = II_VLDB_POP_704_fifo_1d_pop, DecoderMethod = "DecodeVLDB_POP_704_fifo_1d_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDB_POP_704_fifo_1d_pop : AIE2P_inst_ldb_instr32 <(outs OP_mQEXsb:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), (ins ePSRFLdF:$ptr_superreg, eM:$mod), "vldb.pop.704", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
+def VLDB_POP_704_fifo_1d_pop : AIE2P_inst_ldb_instr32 <(outs OP_mQEXsb:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos, eM:$mod), "vldb.pop.704", " $dst, [$ptr, $fifo_reg, $pos, $mod]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_qex_ebs16__fifo_1d_pop__dmx_ldb_fifo_qex_ebs16__core_pop__dmx_ldb_fifo_qex_ebs16__fifo_1d__mPfb__mLdFifo_b__mRF2b__mMb
 bits<1> ptr;
 bits<3> mod;
@@ -6466,7 +6466,7 @@ let ldb = {0b00, ptr, mod, 0b101, dst, dontcare{2-1}, 0b0101};
 }
 
 let Itinerary = II_VLDB_POP_704_normal_pop, DecoderMethod = "DecodeVLDB_POP_704_normal_pop", mayLoad = true, Defs = [srFifo_uf] in
-def VLDB_POP_704_normal_pop : AIE2P_inst_ldb_instr32 <(outs OP_mQEXsb:$dst, ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), (ins ePSRFLdF:$ptr_superreg), "vldb.pop.704", " $dst, [$ptr, $fifo_reg, $pos]">, AIE_HasTiedSubregister{
+def VLDB_POP_704_normal_pop : AIE2P_inst_ldb_instr32 <(outs OP_mQEXsb:$dst, ePS:$ptr_out, eLdFifoReg:$fifo_reg_out, eRF2:$pos_out), (ins ePS:$ptr, eLdFifoReg:$fifo_reg, eRF2:$pos), "vldb.pop.704", " $dst, [$ptr, $fifo_reg, $pos]">, AIE_HasTiedSubregister{
 // id: me__instr128_or__ldb__dmx_ldb_fifo__dmx_ldb_fifo_qex_ebs16__normal_pop__dmx_ldb_fifo_qex_ebs16__core_pop__dmx_ldb_fifo_qex_ebs16__normal__mPfb__mLdFifo_b__mRF2b
 bits<1> ptr;
 bits<2> dst;

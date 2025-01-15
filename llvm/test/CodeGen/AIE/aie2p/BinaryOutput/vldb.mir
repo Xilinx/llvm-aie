@@ -72,30 +72,30 @@ body:      |
     $wh7 = VLDB_128_idx_imm $p4, 0
 
     ; VLDB_128_pstm_nrm
-    $wh11, $p2 = VLDB_128_pstm_nrm $p2, $m1
-    $wh2, $p0 = VLDB_128_pstm_nrm $p0, $m5
-    $wl3, $p1 = VLDB_128_pstm_nrm $p1, $m3
+    $wh11, $p2 = VLDB_128_pstm_nrm $p2, $m3
+    $wh2, $p0 = VLDB_128_pstm_nrm $p0, $m0
+    $wl3, $p1 = VLDB_128_pstm_nrm $p1, $m5
     $wh4, $p4 = VLDB_128_pstm_nrm $p4, $m4
-    $wh3, $p7 = VLDB_128_pstm_nrm $p7, $m2
-    $wl1, $p5 = VLDB_128_pstm_nrm $p5, $m7
-    $wl5, $p6 = VLDB_128_pstm_nrm $p6, $m0
-    $wl2, $p3 = VLDB_128_pstm_nrm $p3, $m6
-    $wh1, $p2 = VLDB_128_pstm_nrm $p2, $m1
-    $wh8, $p0 = VLDB_128_pstm_nrm $p0, $m5
-    $wh9, $p1 = VLDB_128_pstm_nrm $p1, $m3
+    $wh3, $p7 = VLDB_128_pstm_nrm $p7, $m6
+    $wl1, $p5 = VLDB_128_pstm_nrm $p5, $m1
+    $wl5, $p6 = VLDB_128_pstm_nrm $p6, $m7
+    $wl2, $p3 = VLDB_128_pstm_nrm $p3, $m2
+    $wh1, $p2 = VLDB_128_pstm_nrm $p2, $m3
+    $wh8, $p0 = VLDB_128_pstm_nrm $p0, $m0
+    $wh9, $p1 = VLDB_128_pstm_nrm $p1, $m5
     $wl9, $p4 = VLDB_128_pstm_nrm $p4, $m4
-    $wh6, $p7 = VLDB_128_pstm_nrm $p7, $m2
-    $wh5, $p5 = VLDB_128_pstm_nrm $p5, $m7
-    $wl7, $p6 = VLDB_128_pstm_nrm $p6, $m0
-    $wl8, $p3 = VLDB_128_pstm_nrm $p3, $m6
-    $wl0, $p2 = VLDB_128_pstm_nrm $p2, $m1
-    $wl4, $p0 = VLDB_128_pstm_nrm $p0, $m5
-    $wh10, $p1 = VLDB_128_pstm_nrm $p1, $m3
+    $wh6, $p7 = VLDB_128_pstm_nrm $p7, $m6
+    $wh5, $p5 = VLDB_128_pstm_nrm $p5, $m1
+    $wl7, $p6 = VLDB_128_pstm_nrm $p6, $m7
+    $wl8, $p3 = VLDB_128_pstm_nrm $p3, $m2
+    $wl0, $p2 = VLDB_128_pstm_nrm $p2, $m3
+    $wl4, $p0 = VLDB_128_pstm_nrm $p0, $m0
+    $wh10, $p1 = VLDB_128_pstm_nrm $p1, $m5
     $wl11, $p4 = VLDB_128_pstm_nrm $p4, $m4
-    $wh7, $p7 = VLDB_128_pstm_nrm $p7, $m2
-    $wl10, $p5 = VLDB_128_pstm_nrm $p5, $m7
-    $wh0, $p6 = VLDB_128_pstm_nrm $p6, $m0
-    $wl6, $p3 = VLDB_128_pstm_nrm $p3, $m6
+    $wh7, $p7 = VLDB_128_pstm_nrm $p7, $m6
+    $wl10, $p5 = VLDB_128_pstm_nrm $p5, $m1
+    $wh0, $p6 = VLDB_128_pstm_nrm $p6, $m7
+    $wl6, $p3 = VLDB_128_pstm_nrm $p3, $m2
 
     ; VLDB_128_pstm_nrm_imm
     $wh2, $p3 = VLDB_128_pstm_nrm_imm $p3, 112
@@ -124,232 +124,232 @@ body:      |
     $wl11, $p0 = VLDB_128_pstm_nrm_imm $p0, 0
 
     ; VLDB_2D_128
-    $wl7, $p4, $dc7 = VLDB_2D_128 $p4, $d7
-    $wl2, $p3, $dc6 = VLDB_2D_128 $p3, $d6
+    $wl7, $p4, $dc2 = VLDB_2D_128 $p4, $d2
+    $wl2, $p3, $dc7 = VLDB_2D_128 $p3, $d7
     $wl4, $p2, $dc5 = VLDB_2D_128 $p2, $d5
     $wl3, $p1, $dc4 = VLDB_2D_128 $p1, $d4
-    $wl11, $p6, $dc3 = VLDB_2D_128 $p6, $d3
-    $wh1, $p7, $dc0 = VLDB_2D_128 $p7, $d0
-    $wh7, $p0, $dc2 = VLDB_2D_128 $p0, $d2
-    $wh5, $p5, $dc1 = VLDB_2D_128 $p5, $d1
-    $wh9, $p4, $dc7 = VLDB_2D_128 $p4, $d7
-    $wl0, $p3, $dc6 = VLDB_2D_128 $p3, $d6
+    $wl11, $p6, $dc1 = VLDB_2D_128 $p6, $d1
+    $wh1, $p7, $dc6 = VLDB_2D_128 $p7, $d6
+    $wh7, $p0, $dc3 = VLDB_2D_128 $p0, $d3
+    $wh5, $p5, $dc0 = VLDB_2D_128 $p5, $d0
+    $wh9, $p4, $dc2 = VLDB_2D_128 $p4, $d2
+    $wl0, $p3, $dc7 = VLDB_2D_128 $p3, $d7
     $wh3, $p2, $dc5 = VLDB_2D_128 $p2, $d5
     $wh10, $p1, $dc4 = VLDB_2D_128 $p1, $d4
-    $wh6, $p6, $dc3 = VLDB_2D_128 $p6, $d3
-    $wl10, $p7, $dc0 = VLDB_2D_128 $p7, $d0
-    $wl8, $p0, $dc2 = VLDB_2D_128 $p0, $d2
-    $wl1, $p5, $dc1 = VLDB_2D_128 $p5, $d1
-    $wh11, $p4, $dc7 = VLDB_2D_128 $p4, $d7
-    $wl5, $p3, $dc6 = VLDB_2D_128 $p3, $d6
+    $wh6, $p6, $dc1 = VLDB_2D_128 $p6, $d1
+    $wl10, $p7, $dc6 = VLDB_2D_128 $p7, $d6
+    $wl8, $p0, $dc3 = VLDB_2D_128 $p0, $d3
+    $wl1, $p5, $dc0 = VLDB_2D_128 $p5, $d0
+    $wh11, $p4, $dc2 = VLDB_2D_128 $p4, $d2
+    $wl5, $p3, $dc7 = VLDB_2D_128 $p3, $d7
     $wh8, $p2, $dc5 = VLDB_2D_128 $p2, $d5
     $wh2, $p1, $dc4 = VLDB_2D_128 $p1, $d4
-    $wh4, $p6, $dc3 = VLDB_2D_128 $p6, $d3
-    $wh0, $p7, $dc0 = VLDB_2D_128 $p7, $d0
-    $wl9, $p0, $dc2 = VLDB_2D_128 $p0, $d2
-    $wl6, $p5, $dc1 = VLDB_2D_128 $p5, $d1
+    $wh4, $p6, $dc1 = VLDB_2D_128 $p6, $d1
+    $wh0, $p7, $dc6 = VLDB_2D_128 $p7, $d6
+    $wl9, $p0, $dc3 = VLDB_2D_128 $p0, $d3
+    $wl6, $p5, $dc0 = VLDB_2D_128 $p5, $d0
 
     ; VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign0
-    $x2, $p6, $dc1 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign0 $p6, $d1, implicit $crunpacksize, implicit $unpacksign0
-    $x7, $p4, $dc2 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign0 $p4, $d2, implicit $crunpacksize, implicit $unpacksign0
+    $x4, $p6, $dc0 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign0 $p6, $d0, implicit $crunpacksize, implicit $unpacksign0
+    $x11, $p4, $dc3 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign0 $p4, $d3, implicit $crunpacksize, implicit $unpacksign0
+    $x0, $p3, $dc4 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign0 $p3, $d4, implicit $crunpacksize, implicit $unpacksign0
+    $x9, $p2, $dc5 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign0 $p2, $d5, implicit $crunpacksize, implicit $unpacksign0
+    $x8, $p1, $dc6 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign0 $p1, $d6, implicit $crunpacksize, implicit $unpacksign0
+    $x1, $p0, $dc7 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign0 $p0, $d7, implicit $crunpacksize, implicit $unpacksign0
+    $x3, $p7, $dc2 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign0 $p7, $d2, implicit $crunpacksize, implicit $unpacksign0
+    $x10, $p5, $dc1 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign0 $p5, $d1, implicit $crunpacksize, implicit $unpacksign0
+    $x7, $p6, $dc0 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign0 $p6, $d0, implicit $crunpacksize, implicit $unpacksign0
+    $x5, $p4, $dc3 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign0 $p4, $d3, implicit $crunpacksize, implicit $unpacksign0
     $x6, $p3, $dc4 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign0 $p3, $d4, implicit $crunpacksize, implicit $unpacksign0
-    $x4, $p2, $dc5 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign0 $p2, $d5, implicit $crunpacksize, implicit $unpacksign0
-    $x0, $p1, $dc0 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign0 $p1, $d0, implicit $crunpacksize, implicit $unpacksign0
-    $x1, $p0, $dc6 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign0 $p0, $d6, implicit $crunpacksize, implicit $unpacksign0
-    $x11, $p7, $dc7 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign0 $p7, $d7, implicit $crunpacksize, implicit $unpacksign0
-    $x3, $p5, $dc3 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign0 $p5, $d3, implicit $crunpacksize, implicit $unpacksign0
-    $x5, $p6, $dc1 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign0 $p6, $d1, implicit $crunpacksize, implicit $unpacksign0
-    $x10, $p4, $dc2 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign0 $p4, $d2, implicit $crunpacksize, implicit $unpacksign0
-    $x9, $p3, $dc4 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign0 $p3, $d4, implicit $crunpacksize, implicit $unpacksign0
-    $x8, $p2, $dc5 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign0 $p2, $d5, implicit $crunpacksize, implicit $unpacksign0
+    $x2, $p2, $dc5 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign0 $p2, $d5, implicit $crunpacksize, implicit $unpacksign0
 
     ; VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign1
-    $x9, $p0, $dc0 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign1 $p0, $d0, implicit $crunpacksize, implicit $unpacksign1
-    $x2, $p1, $dc1 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign1 $p1, $d1, implicit $crunpacksize, implicit $unpacksign1
+    $x6, $p0, $dc6 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign1 $p0, $d6, implicit $crunpacksize, implicit $unpacksign1
+    $x4, $p1, $dc0 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign1 $p1, $d0, implicit $crunpacksize, implicit $unpacksign1
+    $x5, $p4, $dc5 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign1 $p4, $d5, implicit $crunpacksize, implicit $unpacksign1
+    $x3, $p6, $dc3 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign1 $p6, $d3, implicit $crunpacksize, implicit $unpacksign1
+    $x2, $p2, $dc7 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign1 $p2, $d7, implicit $crunpacksize, implicit $unpacksign1
+    $x0, $p7, $dc4 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign1 $p7, $d4, implicit $crunpacksize, implicit $unpacksign1
+    $x1, $p3, $dc1 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign1 $p3, $d1, implicit $crunpacksize, implicit $unpacksign1
+    $x9, $p5, $dc2 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign1 $p5, $d2, implicit $crunpacksize, implicit $unpacksign1
+    $x7, $p0, $dc6 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign1 $p0, $d6, implicit $crunpacksize, implicit $unpacksign1
+    $x11, $p1, $dc0 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign1 $p1, $d0, implicit $crunpacksize, implicit $unpacksign1
     $x10, $p4, $dc5 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign1 $p4, $d5, implicit $crunpacksize, implicit $unpacksign1
-    $x11, $p6, $dc2 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign1 $p6, $d2, implicit $crunpacksize, implicit $unpacksign1
-    $x8, $p2, $dc6 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign1 $p2, $d6, implicit $crunpacksize, implicit $unpacksign1
-    $x6, $p7, $dc4 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign1 $p7, $d4, implicit $crunpacksize, implicit $unpacksign1
-    $x1, $p3, $dc3 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign1 $p3, $d3, implicit $crunpacksize, implicit $unpacksign1
-    $x4, $p5, $dc7 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign1 $p5, $d7, implicit $crunpacksize, implicit $unpacksign1
-    $x5, $p0, $dc0 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign1 $p0, $d0, implicit $crunpacksize, implicit $unpacksign1
-    $x7, $p1, $dc1 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign1 $p1, $d1, implicit $crunpacksize, implicit $unpacksign1
-    $x3, $p4, $dc5 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign1 $p4, $d5, implicit $crunpacksize, implicit $unpacksign1
-    $x0, $p6, $dc2 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign1 $p6, $d2, implicit $crunpacksize, implicit $unpacksign1
+    $x8, $p6, $dc3 = VLDB_2D_UNPACK_dmw_ldb_unpack_unpackSign1 $p6, $d3, implicit $crunpacksize, implicit $unpacksign1
 
     ; VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign0
     $y4, $p7, $dc4 = VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign0 $p7, $d4, implicit $crunpacksize, implicit $unpacksign0
-    $y5, $p5, $dc2 = VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign0 $p5, $d2, implicit $crunpacksize, implicit $unpacksign0
+    $y5, $p5, $dc3 = VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign0 $p5, $d3, implicit $crunpacksize, implicit $unpacksign0
     $y0, $p1, $dc5 = VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign0 $p1, $d5, implicit $crunpacksize, implicit $unpacksign0
-    $y1, $p3, $dc7 = VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign0 $p3, $d7, implicit $crunpacksize, implicit $unpacksign0
-    $y3, $p6, $dc1 = VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign0 $p6, $d1, implicit $crunpacksize, implicit $unpacksign0
-    $y2, $p4, $dc3 = VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign0 $p4, $d3, implicit $crunpacksize, implicit $unpacksign0
-    $y4, $p2, $dc0 = VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign0 $p2, $d0, implicit $crunpacksize, implicit $unpacksign0
-    $y5, $p0, $dc6 = VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign0 $p0, $d6, implicit $crunpacksize, implicit $unpacksign0
+    $y1, $p3, $dc2 = VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign0 $p3, $d2, implicit $crunpacksize, implicit $unpacksign0
+    $y3, $p6, $dc0 = VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign0 $p6, $d0, implicit $crunpacksize, implicit $unpacksign0
+    $y2, $p4, $dc1 = VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign0 $p4, $d1, implicit $crunpacksize, implicit $unpacksign0
+    $y4, $p2, $dc6 = VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign0 $p2, $d6, implicit $crunpacksize, implicit $unpacksign0
+    $y5, $p0, $dc7 = VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign0 $p0, $d7, implicit $crunpacksize, implicit $unpacksign0
 
     ; VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign1
-    $y2, $p3, $dc2 = VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign1 $p3, $d2, implicit $crunpacksize, implicit $unpacksign1
+    $y2, $p3, $dc3 = VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign1 $p3, $d3, implicit $crunpacksize, implicit $unpacksign1
     $y0, $p4, $dc4 = VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign1 $p4, $d4, implicit $crunpacksize, implicit $unpacksign1
-    $y5, $p6, $dc3 = VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign1 $p6, $d3, implicit $crunpacksize, implicit $unpacksign1
-    $y4, $p7, $dc7 = VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign1 $p7, $d7, implicit $crunpacksize, implicit $unpacksign1
+    $y5, $p6, $dc1 = VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign1 $p6, $d1, implicit $crunpacksize, implicit $unpacksign1
+    $y4, $p7, $dc2 = VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign1 $p7, $d2, implicit $crunpacksize, implicit $unpacksign1
     $y1, $p5, $dc5 = VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign1 $p5, $d5, implicit $crunpacksize, implicit $unpacksign1
-    $y3, $p1, $dc0 = VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign1 $p1, $d0, implicit $crunpacksize, implicit $unpacksign1
-    $y2, $p0, $dc1 = VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign1 $p0, $d1, implicit $crunpacksize, implicit $unpacksign1
-    $y0, $p2, $dc6 = VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign1 $p2, $d6, implicit $crunpacksize, implicit $unpacksign1
+    $y3, $p1, $dc6 = VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign1 $p1, $d6, implicit $crunpacksize, implicit $unpacksign1
+    $y2, $p0, $dc0 = VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign1 $p0, $d0, implicit $crunpacksize, implicit $unpacksign1
+    $y0, $p2, $dc7 = VLDB_2D_UNPACK_dmx_ldb_unpack_unpackSign1 $p2, $d7, implicit $crunpacksize, implicit $unpacksign1
 
     ; VLDB_2D_dmw_ldb
     $wl3, $p3, $dc5 = VLDB_2D_dmw_ldb $p3, $d5
-    $wl2, $p4, $dc7 = VLDB_2D_dmw_ldb $p4, $d7
-    $wh1, $p5, $dc3 = VLDB_2D_dmw_ldb $p5, $d3
-    $wh9, $p6, $dc6 = VLDB_2D_dmw_ldb $p6, $d6
-    $wl1, $p1, $dc1 = VLDB_2D_dmw_ldb $p1, $d1
-    $wl11, $p0, $dc2 = VLDB_2D_dmw_ldb $p0, $d2
-    $wh10, $p7, $dc0 = VLDB_2D_dmw_ldb $p7, $d0
+    $wl2, $p4, $dc2 = VLDB_2D_dmw_ldb $p4, $d2
+    $wh1, $p5, $dc1 = VLDB_2D_dmw_ldb $p5, $d1
+    $wh9, $p6, $dc7 = VLDB_2D_dmw_ldb $p6, $d7
+    $wl1, $p1, $dc0 = VLDB_2D_dmw_ldb $p1, $d0
+    $wl11, $p0, $dc3 = VLDB_2D_dmw_ldb $p0, $d3
+    $wh10, $p7, $dc6 = VLDB_2D_dmw_ldb $p7, $d6
     $wl9, $p2, $dc4 = VLDB_2D_dmw_ldb $p2, $d4
     $wh3, $p3, $dc5 = VLDB_2D_dmw_ldb $p3, $d5
-    $wh2, $p4, $dc7 = VLDB_2D_dmw_ldb $p4, $d7
-    $wl8, $p5, $dc3 = VLDB_2D_dmw_ldb $p5, $d3
-    $wh0, $p6, $dc6 = VLDB_2D_dmw_ldb $p6, $d6
-    $wl0, $p1, $dc1 = VLDB_2D_dmw_ldb $p1, $d1
-    $wh8, $p0, $dc2 = VLDB_2D_dmw_ldb $p0, $d2
-    $wl6, $p7, $dc0 = VLDB_2D_dmw_ldb $p7, $d0
+    $wh2, $p4, $dc2 = VLDB_2D_dmw_ldb $p4, $d2
+    $wl8, $p5, $dc1 = VLDB_2D_dmw_ldb $p5, $d1
+    $wh0, $p6, $dc7 = VLDB_2D_dmw_ldb $p6, $d7
+    $wl0, $p1, $dc0 = VLDB_2D_dmw_ldb $p1, $d0
+    $wh8, $p0, $dc3 = VLDB_2D_dmw_ldb $p0, $d3
+    $wl6, $p7, $dc6 = VLDB_2D_dmw_ldb $p7, $d6
     $wh11, $p2, $dc4 = VLDB_2D_dmw_ldb $p2, $d4
     $wl5, $p3, $dc5 = VLDB_2D_dmw_ldb $p3, $d5
-    $wl4, $p4, $dc7 = VLDB_2D_dmw_ldb $p4, $d7
-    $wh6, $p5, $dc3 = VLDB_2D_dmw_ldb $p5, $d3
-    $wh4, $p6, $dc6 = VLDB_2D_dmw_ldb $p6, $d6
-    $wh5, $p1, $dc1 = VLDB_2D_dmw_ldb $p1, $d1
-    $wh7, $p0, $dc2 = VLDB_2D_dmw_ldb $p0, $d2
-    $wl7, $p7, $dc0 = VLDB_2D_dmw_ldb $p7, $d0
+    $wl4, $p4, $dc2 = VLDB_2D_dmw_ldb $p4, $d2
+    $wh6, $p5, $dc1 = VLDB_2D_dmw_ldb $p5, $d1
+    $wh4, $p6, $dc7 = VLDB_2D_dmw_ldb $p6, $d7
+    $wh5, $p1, $dc0 = VLDB_2D_dmw_ldb $p1, $d0
+    $wh7, $p0, $dc3 = VLDB_2D_dmw_ldb $p0, $d3
+    $wl7, $p7, $dc6 = VLDB_2D_dmw_ldb $p7, $d6
     $wl10, $p2, $dc4 = VLDB_2D_dmw_ldb $p2, $d4
 
     ; VLDB_2D_dmx_ldb_x
-    $x5, $p7, $dc4 = VLDB_2D_dmx_ldb_x $p7, $d4
-    $x7, $p2, $dc3 = VLDB_2D_dmx_ldb_x $p2, $d3
-    $x11, $p3, $dc0 = VLDB_2D_dmx_ldb_x $p3, $d0
-    $x10, $p5, $dc7 = VLDB_2D_dmx_ldb_x $p5, $d7
-    $x4, $p0, $dc5 = VLDB_2D_dmx_ldb_x $p0, $d5
-    $x6, $p6, $dc1 = VLDB_2D_dmx_ldb_x $p6, $d1
-    $x2, $p4, $dc6 = VLDB_2D_dmx_ldb_x $p4, $d6
-    $x0, $p1, $dc2 = VLDB_2D_dmx_ldb_x $p1, $d2
-    $x9, $p7, $dc4 = VLDB_2D_dmx_ldb_x $p7, $d4
-    $x1, $p2, $dc3 = VLDB_2D_dmx_ldb_x $p2, $d3
-    $x3, $p3, $dc0 = VLDB_2D_dmx_ldb_x $p3, $d0
-    $x8, $p5, $dc7 = VLDB_2D_dmx_ldb_x $p5, $d7
+    $x7, $p7, $dc4 = VLDB_2D_dmx_ldb_x $p7, $d4
+    $x11, $p2, $dc1 = VLDB_2D_dmx_ldb_x $p2, $d1
+    $x3, $p3, $dc6 = VLDB_2D_dmx_ldb_x $p3, $d6
+    $x5, $p5, $dc2 = VLDB_2D_dmx_ldb_x $p5, $d2
+    $x9, $p0, $dc5 = VLDB_2D_dmx_ldb_x $p0, $d5
+    $x0, $p6, $dc0 = VLDB_2D_dmx_ldb_x $p6, $d0
+    $x4, $p4, $dc7 = VLDB_2D_dmx_ldb_x $p4, $d7
+    $x8, $p1, $dc3 = VLDB_2D_dmx_ldb_x $p1, $d3
+    $x6, $p7, $dc4 = VLDB_2D_dmx_ldb_x $p7, $d4
+    $x1, $p2, $dc1 = VLDB_2D_dmx_ldb_x $p2, $d1
+    $x10, $p3, $dc6 = VLDB_2D_dmx_ldb_x $p3, $d6
+    $x2, $p5, $dc2 = VLDB_2D_dmx_ldb_x $p5, $d2
 
     ; VLDB_3D_128
-    $wh3, $p3, $dc2, $dc6 = VLDB_3D_128 $p3, $d2_3d
-    $wl6, $p1, $dc0, $dc4 = VLDB_3D_128 $p1, $d0_3d
-    $wh10, $p5, $dc3, $dc7 = VLDB_3D_128 $p5, $d3_3d
-    $wh0, $p7, $dc1, $dc5 = VLDB_3D_128 $p7, $d1_3d
-    $wl1, $p2, $dc2, $dc6 = VLDB_3D_128 $p2, $d2_3d
-    $wh1, $p0, $dc0, $dc4 = VLDB_3D_128 $p0, $d0_3d
-    $wl5, $p6, $dc3, $dc7 = VLDB_3D_128 $p6, $d3_3d
-    $wl4, $p4, $dc1, $dc5 = VLDB_3D_128 $p4, $d1_3d
-    $wh7, $p3, $dc2, $dc6 = VLDB_3D_128 $p3, $d2_3d
-    $wh5, $p1, $dc0, $dc4 = VLDB_3D_128 $p1, $d0_3d
-    $wh6, $p5, $dc3, $dc7 = VLDB_3D_128 $p5, $d3_3d
-    $wl7, $p7, $dc1, $dc5 = VLDB_3D_128 $p7, $d1_3d
-    $wh11, $p2, $dc2, $dc6 = VLDB_3D_128 $p2, $d2_3d
-    $wl10, $p0, $dc0, $dc4 = VLDB_3D_128 $p0, $d0_3d
-    $wl3, $p6, $dc3, $dc7 = VLDB_3D_128 $p6, $d3_3d
-    $wh9, $p4, $dc1, $dc5 = VLDB_3D_128 $p4, $d1_3d
-    $wl2, $p3, $dc2, $dc6 = VLDB_3D_128 $p3, $d2_3d
-    $wl9, $p1, $dc0, $dc4 = VLDB_3D_128 $p1, $d0_3d
-    $wh4, $p5, $dc3, $dc7 = VLDB_3D_128 $p5, $d3_3d
-    $wh2, $p7, $dc1, $dc5 = VLDB_3D_128 $p7, $d1_3d
-    $wl0, $p2, $dc2, $dc6 = VLDB_3D_128 $p2, $d2_3d
-    $wl8, $p0, $dc0, $dc4 = VLDB_3D_128 $p0, $d0_3d
-    $wl11, $p6, $dc3, $dc7 = VLDB_3D_128 $p6, $d3_3d
-    $wh8, $p4, $dc1, $dc5 = VLDB_3D_128 $p4, $d1_3d
+    $wh3, $p3, $dc3, $dc7 = VLDB_3D_128 $p3, $d3_3d
+    $wl6, $p1, $dc2, $dc6 = VLDB_3D_128 $p1, $d2_3d
+    $wh10, $p5, $dc1, $dc5 = VLDB_3D_128 $p5, $d1_3d
+    $wh0, $p7, $dc0, $dc4 = VLDB_3D_128 $p7, $d0_3d
+    $wl1, $p2, $dc3, $dc7 = VLDB_3D_128 $p2, $d3_3d
+    $wh1, $p0, $dc2, $dc6 = VLDB_3D_128 $p0, $d2_3d
+    $wl5, $p6, $dc1, $dc5 = VLDB_3D_128 $p6, $d1_3d
+    $wl4, $p4, $dc0, $dc4 = VLDB_3D_128 $p4, $d0_3d
+    $wh7, $p3, $dc3, $dc7 = VLDB_3D_128 $p3, $d3_3d
+    $wh5, $p1, $dc2, $dc6 = VLDB_3D_128 $p1, $d2_3d
+    $wh6, $p5, $dc1, $dc5 = VLDB_3D_128 $p5, $d1_3d
+    $wl7, $p7, $dc0, $dc4 = VLDB_3D_128 $p7, $d0_3d
+    $wh11, $p2, $dc3, $dc7 = VLDB_3D_128 $p2, $d3_3d
+    $wl10, $p0, $dc2, $dc6 = VLDB_3D_128 $p0, $d2_3d
+    $wl3, $p6, $dc1, $dc5 = VLDB_3D_128 $p6, $d1_3d
+    $wh9, $p4, $dc0, $dc4 = VLDB_3D_128 $p4, $d0_3d
+    $wl2, $p3, $dc3, $dc7 = VLDB_3D_128 $p3, $d3_3d
+    $wl9, $p1, $dc2, $dc6 = VLDB_3D_128 $p1, $d2_3d
+    $wh4, $p5, $dc1, $dc5 = VLDB_3D_128 $p5, $d1_3d
+    $wh2, $p7, $dc0, $dc4 = VLDB_3D_128 $p7, $d0_3d
+    $wl0, $p2, $dc3, $dc7 = VLDB_3D_128 $p2, $d3_3d
+    $wl8, $p0, $dc2, $dc6 = VLDB_3D_128 $p0, $d2_3d
+    $wl11, $p6, $dc1, $dc5 = VLDB_3D_128 $p6, $d1_3d
+    $wh8, $p4, $dc0, $dc4 = VLDB_3D_128 $p4, $d0_3d
 
     ; VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign0
-    $x2, $p2, $dc3, $dc7 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign0 $p2, $d3_3d, implicit $crunpacksize, implicit $unpacksign0
-    $x1, $p0, $dc1, $dc5 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign0 $p0, $d1_3d, implicit $crunpacksize, implicit $unpacksign0
-    $x10, $p1, $dc0, $dc4 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign0 $p1, $d0_3d, implicit $crunpacksize, implicit $unpacksign0
-    $x11, $p7, $dc2, $dc6 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign0 $p7, $d2_3d, implicit $crunpacksize, implicit $unpacksign0
-    $x8, $p4, $dc3, $dc7 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign0 $p4, $d3_3d, implicit $crunpacksize, implicit $unpacksign0
-    $x3, $p3, $dc1, $dc5 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign0 $p3, $d1_3d, implicit $crunpacksize, implicit $unpacksign0
-    $x9, $p5, $dc0, $dc4 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign0 $p5, $d0_3d, implicit $crunpacksize, implicit $unpacksign0
-    $x0, $p6, $dc2, $dc6 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign0 $p6, $d2_3d, implicit $crunpacksize, implicit $unpacksign0
-    $x4, $p2, $dc3, $dc7 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign0 $p2, $d3_3d, implicit $crunpacksize, implicit $unpacksign0
-    $x6, $p0, $dc1, $dc5 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign0 $p0, $d1_3d, implicit $crunpacksize, implicit $unpacksign0
-    $x5, $p1, $dc0, $dc4 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign0 $p1, $d0_3d, implicit $crunpacksize, implicit $unpacksign0
-    $x7, $p7, $dc2, $dc6 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign0 $p7, $d2_3d, implicit $crunpacksize, implicit $unpacksign0
+    $x4, $p2, $dc1, $dc5 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign0 $p2, $d1_3d, implicit $crunpacksize, implicit $unpacksign0
+    $x1, $p0, $dc0, $dc4 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign0 $p0, $d0_3d, implicit $crunpacksize, implicit $unpacksign0
+    $x5, $p1, $dc2, $dc6 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign0 $p1, $d2_3d, implicit $crunpacksize, implicit $unpacksign0
+    $x3, $p7, $dc3, $dc7 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign0 $p7, $d3_3d, implicit $crunpacksize, implicit $unpacksign0
+    $x2, $p4, $dc1, $dc5 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign0 $p4, $d1_3d, implicit $crunpacksize, implicit $unpacksign0
+    $x10, $p3, $dc0, $dc4 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign0 $p3, $d0_3d, implicit $crunpacksize, implicit $unpacksign0
+    $x6, $p5, $dc2, $dc6 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign0 $p5, $d2_3d, implicit $crunpacksize, implicit $unpacksign0
+    $x8, $p6, $dc3, $dc7 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign0 $p6, $d3_3d, implicit $crunpacksize, implicit $unpacksign0
+    $x9, $p2, $dc1, $dc5 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign0 $p2, $d1_3d, implicit $crunpacksize, implicit $unpacksign0
+    $x0, $p0, $dc0, $dc4 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign0 $p0, $d0_3d, implicit $crunpacksize, implicit $unpacksign0
+    $x7, $p1, $dc2, $dc6 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign0 $p1, $d2_3d, implicit $crunpacksize, implicit $unpacksign0
+    $x11, $p7, $dc3, $dc7 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign0 $p7, $d3_3d, implicit $crunpacksize, implicit $unpacksign0
 
     ; VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign1
-    $x7, $p7, $dc2, $dc6 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign1 $p7, $d2_3d, implicit $crunpacksize, implicit $unpacksign1
-    $x11, $p0, $dc0, $dc4 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign1 $p0, $d0_3d, implicit $crunpacksize, implicit $unpacksign1
-    $x8, $p6, $dc1, $dc5 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign1 $p6, $d1_3d, implicit $crunpacksize, implicit $unpacksign1
-    $x5, $p4, $dc3, $dc7 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign1 $p4, $d3_3d, implicit $crunpacksize, implicit $unpacksign1
-    $x6, $p3, $dc2, $dc6 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign1 $p3, $d2_3d, implicit $crunpacksize, implicit $unpacksign1
-    $x1, $p1, $dc0, $dc4 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign1 $p1, $d0_3d, implicit $crunpacksize, implicit $unpacksign1
-    $x9, $p2, $dc1, $dc5 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign1 $p2, $d1_3d, implicit $crunpacksize, implicit $unpacksign1
-    $x10, $p5, $dc3, $dc7 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign1 $p5, $d3_3d, implicit $crunpacksize, implicit $unpacksign1
-    $x0, $p7, $dc2, $dc6 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign1 $p7, $d2_3d, implicit $crunpacksize, implicit $unpacksign1
-    $x4, $p0, $dc0, $dc4 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign1 $p0, $d0_3d, implicit $crunpacksize, implicit $unpacksign1
-    $x2, $p6, $dc1, $dc5 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign1 $p6, $d1_3d, implicit $crunpacksize, implicit $unpacksign1
-    $x3, $p4, $dc3, $dc7 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign1 $p4, $d3_3d, implicit $crunpacksize, implicit $unpacksign1
+    $x11, $p7, $dc3, $dc7 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign1 $p7, $d3_3d, implicit $crunpacksize, implicit $unpacksign1
+    $x3, $p0, $dc2, $dc6 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign1 $p0, $d2_3d, implicit $crunpacksize, implicit $unpacksign1
+    $x2, $p6, $dc0, $dc4 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign1 $p6, $d0_3d, implicit $crunpacksize, implicit $unpacksign1
+    $x7, $p4, $dc1, $dc5 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign1 $p4, $d1_3d, implicit $crunpacksize, implicit $unpacksign1
+    $x0, $p3, $dc3, $dc7 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign1 $p3, $d3_3d, implicit $crunpacksize, implicit $unpacksign1
+    $x1, $p1, $dc2, $dc6 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign1 $p1, $d2_3d, implicit $crunpacksize, implicit $unpacksign1
+    $x6, $p2, $dc0, $dc4 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign1 $p2, $d0_3d, implicit $crunpacksize, implicit $unpacksign1
+    $x5, $p5, $dc1, $dc5 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign1 $p5, $d1_3d, implicit $crunpacksize, implicit $unpacksign1
+    $x8, $p7, $dc3, $dc7 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign1 $p7, $d3_3d, implicit $crunpacksize, implicit $unpacksign1
+    $x9, $p0, $dc2, $dc6 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign1 $p0, $d2_3d, implicit $crunpacksize, implicit $unpacksign1
+    $x4, $p6, $dc0, $dc4 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign1 $p6, $d0_3d, implicit $crunpacksize, implicit $unpacksign1
+    $x10, $p4, $dc1, $dc5 = VLDB_3D_UNPACK_dmw_ldb_unpack_unpackSign1 $p4, $d1_3d, implicit $crunpacksize, implicit $unpacksign1
 
     ; VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign0
-    $y4, $p1, $dc1, $dc5 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign0 $p1, $d1_3d, implicit $crunpacksize, implicit $unpacksign0
-    $y2, $p6, $dc0, $dc4 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign0 $p6, $d0_3d, implicit $crunpacksize, implicit $unpacksign0
-    $y1, $p4, $dc2, $dc6 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign0 $p4, $d2_3d, implicit $crunpacksize, implicit $unpacksign0
-    $y0, $p3, $dc3, $dc7 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign0 $p3, $d3_3d, implicit $crunpacksize, implicit $unpacksign0
-    $y5, $p5, $dc1, $dc5 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign0 $p5, $d1_3d, implicit $crunpacksize, implicit $unpacksign0
-    $y3, $p7, $dc0, $dc4 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign0 $p7, $d0_3d, implicit $crunpacksize, implicit $unpacksign0
-    $y4, $p2, $dc2, $dc6 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign0 $p2, $d2_3d, implicit $crunpacksize, implicit $unpacksign0
-    $y2, $p0, $dc3, $dc7 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign0 $p0, $d3_3d, implicit $crunpacksize, implicit $unpacksign0
+    $y4, $p1, $dc0, $dc4 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign0 $p1, $d0_3d, implicit $crunpacksize, implicit $unpacksign0
+    $y2, $p6, $dc2, $dc6 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign0 $p6, $d2_3d, implicit $crunpacksize, implicit $unpacksign0
+    $y1, $p4, $dc3, $dc7 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign0 $p4, $d3_3d, implicit $crunpacksize, implicit $unpacksign0
+    $y0, $p3, $dc1, $dc5 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign0 $p3, $d1_3d, implicit $crunpacksize, implicit $unpacksign0
+    $y5, $p5, $dc0, $dc4 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign0 $p5, $d0_3d, implicit $crunpacksize, implicit $unpacksign0
+    $y3, $p7, $dc2, $dc6 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign0 $p7, $d2_3d, implicit $crunpacksize, implicit $unpacksign0
+    $y4, $p2, $dc3, $dc7 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign0 $p2, $d3_3d, implicit $crunpacksize, implicit $unpacksign0
+    $y2, $p0, $dc1, $dc5 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign0 $p0, $d1_3d, implicit $crunpacksize, implicit $unpacksign0
 
     ; VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign1
-    $y2, $p6, $dc2, $dc6 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign1 $p6, $d2_3d, implicit $crunpacksize, implicit $unpacksign1
-    $y1, $p1, $dc3, $dc7 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign1 $p1, $d3_3d, implicit $crunpacksize, implicit $unpacksign1
-    $y5, $p5, $dc0, $dc4 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign1 $p5, $d0_3d, implicit $crunpacksize, implicit $unpacksign1
-    $y4, $p2, $dc1, $dc5 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign1 $p2, $d1_3d, implicit $crunpacksize, implicit $unpacksign1
-    $y3, $p4, $dc2, $dc6 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign1 $p4, $d2_3d, implicit $crunpacksize, implicit $unpacksign1
-    $y0, $p3, $dc3, $dc7 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign1 $p3, $d3_3d, implicit $crunpacksize, implicit $unpacksign1
-    $y2, $p0, $dc0, $dc4 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign1 $p0, $d0_3d, implicit $crunpacksize, implicit $unpacksign1
-    $y1, $p7, $dc1, $dc5 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign1 $p7, $d1_3d, implicit $crunpacksize, implicit $unpacksign1
+    $y2, $p6, $dc3, $dc7 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign1 $p6, $d3_3d, implicit $crunpacksize, implicit $unpacksign1
+    $y1, $p1, $dc1, $dc5 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign1 $p1, $d1_3d, implicit $crunpacksize, implicit $unpacksign1
+    $y5, $p5, $dc2, $dc6 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign1 $p5, $d2_3d, implicit $crunpacksize, implicit $unpacksign1
+    $y4, $p2, $dc0, $dc4 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign1 $p2, $d0_3d, implicit $crunpacksize, implicit $unpacksign1
+    $y3, $p4, $dc3, $dc7 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign1 $p4, $d3_3d, implicit $crunpacksize, implicit $unpacksign1
+    $y0, $p3, $dc1, $dc5 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign1 $p3, $d1_3d, implicit $crunpacksize, implicit $unpacksign1
+    $y2, $p0, $dc2, $dc6 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign1 $p0, $d2_3d, implicit $crunpacksize, implicit $unpacksign1
+    $y1, $p7, $dc0, $dc4 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign1 $p7, $d0_3d, implicit $crunpacksize, implicit $unpacksign1
 
     ; VLDB_3D_dmw_ldb
-    $wl7, $p2, $dc2, $dc6 = VLDB_3D_dmw_ldb $p2, $d2_3d
-    $wl4, $p1, $dc0, $dc4 = VLDB_3D_dmw_ldb $p1, $d0_3d
-    $wh11, $p7, $dc3, $dc7 = VLDB_3D_dmw_ldb $p7, $d3_3d
-    $wl0, $p4, $dc1, $dc5 = VLDB_3D_dmw_ldb $p4, $d1_3d
-    $wh3, $p5, $dc2, $dc6 = VLDB_3D_dmw_ldb $p5, $d2_3d
-    $wh6, $p6, $dc0, $dc4 = VLDB_3D_dmw_ldb $p6, $d0_3d
-    $wl1, $p0, $dc3, $dc7 = VLDB_3D_dmw_ldb $p0, $d3_3d
-    $wh5, $p3, $dc1, $dc5 = VLDB_3D_dmw_ldb $p3, $d1_3d
-    $wh10, $p2, $dc2, $dc6 = VLDB_3D_dmw_ldb $p2, $d2_3d
-    $wh7, $p1, $dc0, $dc4 = VLDB_3D_dmw_ldb $p1, $d0_3d
-    $wh4, $p7, $dc3, $dc7 = VLDB_3D_dmw_ldb $p7, $d3_3d
-    $wl10, $p4, $dc1, $dc5 = VLDB_3D_dmw_ldb $p4, $d1_3d
-    $wh2, $p5, $dc2, $dc6 = VLDB_3D_dmw_ldb $p5, $d2_3d
-    $wl11, $p6, $dc0, $dc4 = VLDB_3D_dmw_ldb $p6, $d0_3d
-    $wl5, $p0, $dc3, $dc7 = VLDB_3D_dmw_ldb $p0, $d3_3d
-    $wh0, $p3, $dc1, $dc5 = VLDB_3D_dmw_ldb $p3, $d1_3d
-    $wh1, $p2, $dc2, $dc6 = VLDB_3D_dmw_ldb $p2, $d2_3d
-    $wl8, $p1, $dc0, $dc4 = VLDB_3D_dmw_ldb $p1, $d0_3d
-    $wl2, $p7, $dc3, $dc7 = VLDB_3D_dmw_ldb $p7, $d3_3d
-    $wh8, $p4, $dc1, $dc5 = VLDB_3D_dmw_ldb $p4, $d1_3d
-    $wl9, $p5, $dc2, $dc6 = VLDB_3D_dmw_ldb $p5, $d2_3d
-    $wl3, $p6, $dc0, $dc4 = VLDB_3D_dmw_ldb $p6, $d0_3d
-    $wl6, $p0, $dc3, $dc7 = VLDB_3D_dmw_ldb $p0, $d3_3d
-    $wh9, $p3, $dc1, $dc5 = VLDB_3D_dmw_ldb $p3, $d1_3d
+    $wl7, $p2, $dc3, $dc7 = VLDB_3D_dmw_ldb $p2, $d3_3d
+    $wl4, $p1, $dc2, $dc6 = VLDB_3D_dmw_ldb $p1, $d2_3d
+    $wh11, $p7, $dc1, $dc5 = VLDB_3D_dmw_ldb $p7, $d1_3d
+    $wl0, $p4, $dc0, $dc4 = VLDB_3D_dmw_ldb $p4, $d0_3d
+    $wh3, $p5, $dc3, $dc7 = VLDB_3D_dmw_ldb $p5, $d3_3d
+    $wh6, $p6, $dc2, $dc6 = VLDB_3D_dmw_ldb $p6, $d2_3d
+    $wl1, $p0, $dc1, $dc5 = VLDB_3D_dmw_ldb $p0, $d1_3d
+    $wh5, $p3, $dc0, $dc4 = VLDB_3D_dmw_ldb $p3, $d0_3d
+    $wh10, $p2, $dc3, $dc7 = VLDB_3D_dmw_ldb $p2, $d3_3d
+    $wh7, $p1, $dc2, $dc6 = VLDB_3D_dmw_ldb $p1, $d2_3d
+    $wh4, $p7, $dc1, $dc5 = VLDB_3D_dmw_ldb $p7, $d1_3d
+    $wl10, $p4, $dc0, $dc4 = VLDB_3D_dmw_ldb $p4, $d0_3d
+    $wh2, $p5, $dc3, $dc7 = VLDB_3D_dmw_ldb $p5, $d3_3d
+    $wl11, $p6, $dc2, $dc6 = VLDB_3D_dmw_ldb $p6, $d2_3d
+    $wl5, $p0, $dc1, $dc5 = VLDB_3D_dmw_ldb $p0, $d1_3d
+    $wh0, $p3, $dc0, $dc4 = VLDB_3D_dmw_ldb $p3, $d0_3d
+    $wh1, $p2, $dc3, $dc7 = VLDB_3D_dmw_ldb $p2, $d3_3d
+    $wl8, $p1, $dc2, $dc6 = VLDB_3D_dmw_ldb $p1, $d2_3d
+    $wl2, $p7, $dc1, $dc5 = VLDB_3D_dmw_ldb $p7, $d1_3d
+    $wh8, $p4, $dc0, $dc4 = VLDB_3D_dmw_ldb $p4, $d0_3d
+    $wl9, $p5, $dc3, $dc7 = VLDB_3D_dmw_ldb $p5, $d3_3d
+    $wl3, $p6, $dc2, $dc6 = VLDB_3D_dmw_ldb $p6, $d2_3d
+    $wl6, $p0, $dc1, $dc5 = VLDB_3D_dmw_ldb $p0, $d1_3d
+    $wh9, $p3, $dc0, $dc4 = VLDB_3D_dmw_ldb $p3, $d0_3d
 
     ; VLDB_3D_dmx_ldb_x
-    $x7, $p2, $dc0, $dc4 = VLDB_3D_dmx_ldb_x $p2, $d0_3d
-    $x3, $p1, $dc2, $dc6 = VLDB_3D_dmx_ldb_x $p1, $d2_3d
-    $x11, $p7, $dc1, $dc5 = VLDB_3D_dmx_ldb_x $p7, $d1_3d
-    $x8, $p4, $dc3, $dc7 = VLDB_3D_dmx_ldb_x $p4, $d3_3d
-    $x2, $p3, $dc0, $dc4 = VLDB_3D_dmx_ldb_x $p3, $d0_3d
-    $x9, $p6, $dc2, $dc6 = VLDB_3D_dmx_ldb_x $p6, $d2_3d
-    $x0, $p5, $dc1, $dc5 = VLDB_3D_dmx_ldb_x $p5, $d1_3d
-    $x6, $p0, $dc3, $dc7 = VLDB_3D_dmx_ldb_x $p0, $d3_3d
-    $x4, $p2, $dc0, $dc4 = VLDB_3D_dmx_ldb_x $p2, $d0_3d
-    $x1, $p1, $dc2, $dc6 = VLDB_3D_dmx_ldb_x $p1, $d2_3d
-    $x5, $p7, $dc1, $dc5 = VLDB_3D_dmx_ldb_x $p7, $d1_3d
-    $x10, $p4, $dc3, $dc7 = VLDB_3D_dmx_ldb_x $p4, $d3_3d
+    $x11, $p2, $dc2, $dc6 = VLDB_3D_dmx_ldb_x $p2, $d2_3d
+    $x10, $p1, $dc3, $dc7 = VLDB_3D_dmx_ldb_x $p1, $d3_3d
+    $x3, $p7, $dc0, $dc4 = VLDB_3D_dmx_ldb_x $p7, $d0_3d
+    $x2, $p4, $dc1, $dc5 = VLDB_3D_dmx_ldb_x $p4, $d1_3d
+    $x4, $p3, $dc2, $dc6 = VLDB_3D_dmx_ldb_x $p3, $d2_3d
+    $x6, $p6, $dc3, $dc7 = VLDB_3D_dmx_ldb_x $p6, $d3_3d
+    $x8, $p5, $dc0, $dc4 = VLDB_3D_dmx_ldb_x $p5, $d0_3d
+    $x0, $p0, $dc1, $dc5 = VLDB_3D_dmx_ldb_x $p0, $d1_3d
+    $x9, $p2, $dc2, $dc6 = VLDB_3D_dmx_ldb_x $p2, $d2_3d
+    $x1, $p1, $dc3, $dc7 = VLDB_3D_dmx_ldb_x $p1, $d3_3d
+    $x7, $p7, $dc0, $dc4 = VLDB_3D_dmx_ldb_x $p7, $d0_3d
+    $x5, $p4, $dc1, $dc5 = VLDB_3D_dmx_ldb_x $p4, $d1_3d
 
     ; VLDB_4x16_hi
     $wl4 = VLDB_4x16_hi $wl0
@@ -508,116 +508,116 @@ body:      |
     $wh3 = VLDB_4x64_lo $wh4
 
     ; VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign0
-    $x0 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign0 $p2, $dj2, implicit $crunpacksize, implicit $unpacksign0
-    $x7 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign0 $p0, $dj5, implicit $crunpacksize, implicit $unpacksign0
-    $x1 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign0 $p6, $dj0, implicit $crunpacksize, implicit $unpacksign0
-    $x2 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign0 $p5, $dj4, implicit $crunpacksize, implicit $unpacksign0
-    $x6 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign0 $p4, $dj3, implicit $crunpacksize, implicit $unpacksign0
-    $x11 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign0 $p7, $dj7, implicit $crunpacksize, implicit $unpacksign0
-    $x10 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign0 $p1, $dj6, implicit $crunpacksize, implicit $unpacksign0
-    $x9 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign0 $p3, $dj1, implicit $crunpacksize, implicit $unpacksign0
-    $x8 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign0 $p2, $dj2, implicit $crunpacksize, implicit $unpacksign0
-    $x5 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign0 $p0, $dj5, implicit $crunpacksize, implicit $unpacksign0
-    $x4 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign0 $p6, $dj0, implicit $crunpacksize, implicit $unpacksign0
-    $x3 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign0 $p5, $dj4, implicit $crunpacksize, implicit $unpacksign0
+    $x1 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign0 $p2, $dj2, implicit $crunpacksize, implicit $unpacksign0
+    $x8 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign0 $p0, $dj5, implicit $crunpacksize, implicit $unpacksign0
+    $x10 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign0 $p6, $dj0, implicit $crunpacksize, implicit $unpacksign0
+    $x11 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign0 $p5, $dj4, implicit $crunpacksize, implicit $unpacksign0
+    $x0 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign0 $p4, $dj3, implicit $crunpacksize, implicit $unpacksign0
+    $x7 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign0 $p7, $dj7, implicit $crunpacksize, implicit $unpacksign0
+    $x2 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign0 $p1, $dj6, implicit $crunpacksize, implicit $unpacksign0
+    $x4 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign0 $p3, $dj1, implicit $crunpacksize, implicit $unpacksign0
+    $x5 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign0 $p2, $dj2, implicit $crunpacksize, implicit $unpacksign0
+    $x6 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign0 $p0, $dj5, implicit $crunpacksize, implicit $unpacksign0
+    $x3 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign0 $p6, $dj0, implicit $crunpacksize, implicit $unpacksign0
+    $x9 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign0 $p5, $dj4, implicit $crunpacksize, implicit $unpacksign0
 
     ; VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign1
-    $x3 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign1 $p1, $dj7, implicit $crunpacksize, implicit $unpacksign1
-    $x0 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign1 $p7, $dj4, implicit $crunpacksize, implicit $unpacksign1
-    $x1 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign1 $p6, $dj6, implicit $crunpacksize, implicit $unpacksign1
-    $x10 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign1 $p0, $dj2, implicit $crunpacksize, implicit $unpacksign1
-    $x2 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign1 $p4, $dj0, implicit $crunpacksize, implicit $unpacksign1
-    $x11 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign1 $p2, $dj1, implicit $crunpacksize, implicit $unpacksign1
-    $x9 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign1 $p3, $dj5, implicit $crunpacksize, implicit $unpacksign1
-    $x7 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign1 $p5, $dj3, implicit $crunpacksize, implicit $unpacksign1
-    $x6 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign1 $p1, $dj7, implicit $crunpacksize, implicit $unpacksign1
-    $x4 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign1 $p7, $dj4, implicit $crunpacksize, implicit $unpacksign1
-    $x8 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign1 $p6, $dj6, implicit $crunpacksize, implicit $unpacksign1
-    $x5 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign1 $p0, $dj2, implicit $crunpacksize, implicit $unpacksign1
+    $x9 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign1 $p1, $dj7, implicit $crunpacksize, implicit $unpacksign1
+    $x1 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign1 $p7, $dj4, implicit $crunpacksize, implicit $unpacksign1
+    $x10 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign1 $p6, $dj6, implicit $crunpacksize, implicit $unpacksign1
+    $x2 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign1 $p0, $dj2, implicit $crunpacksize, implicit $unpacksign1
+    $x11 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign1 $p4, $dj0, implicit $crunpacksize, implicit $unpacksign1
+    $x7 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign1 $p2, $dj1, implicit $crunpacksize, implicit $unpacksign1
+    $x4 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign1 $p3, $dj5, implicit $crunpacksize, implicit $unpacksign1
+    $x8 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign1 $p5, $dj3, implicit $crunpacksize, implicit $unpacksign1
+    $x0 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign1 $p1, $dj7, implicit $crunpacksize, implicit $unpacksign1
+    $x3 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign1 $p7, $dj4, implicit $crunpacksize, implicit $unpacksign1
+    $x5 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign1 $p6, $dj6, implicit $crunpacksize, implicit $unpacksign1
+    $x6 = VLDB_UNPACK_dmw_ldb_unpack_idx_unpackSign1 $p0, $dj2, implicit $crunpacksize, implicit $unpacksign1
 
     ; VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign0
-    $x11 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign0 $p3, 32, implicit $crunpacksize, implicit $unpacksign0
-    $x7 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign0 $p7, -256, implicit $crunpacksize, implicit $unpacksign0
-    $x9 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign0 $p4, 224, implicit $crunpacksize, implicit $unpacksign0
-    $x1 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign0 $p5, 0, implicit $crunpacksize, implicit $unpacksign0
-    $x0 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign0 $p6, 32, implicit $crunpacksize, implicit $unpacksign0
-    $x10 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign0 $p0, -256, implicit $crunpacksize, implicit $unpacksign0
-    $x2 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign0 $p1, 224, implicit $crunpacksize, implicit $unpacksign0
-    $x6 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign0 $p2, 0, implicit $crunpacksize, implicit $unpacksign0
-    $x3 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign0 $p3, 32, implicit $crunpacksize, implicit $unpacksign0
-    $x5 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign0 $p7, -256, implicit $crunpacksize, implicit $unpacksign0
-    $x8 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign0 $p4, 224, implicit $crunpacksize, implicit $unpacksign0
-    $x4 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign0 $p5, 0, implicit $crunpacksize, implicit $unpacksign0
+    $x7 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign0 $p3, 32, implicit $crunpacksize, implicit $unpacksign0
+    $x8 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign0 $p7, -256, implicit $crunpacksize, implicit $unpacksign0
+    $x4 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign0 $p4, 224, implicit $crunpacksize, implicit $unpacksign0
+    $x10 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign0 $p5, 0, implicit $crunpacksize, implicit $unpacksign0
+    $x1 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign0 $p6, 32, implicit $crunpacksize, implicit $unpacksign0
+    $x2 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign0 $p0, -256, implicit $crunpacksize, implicit $unpacksign0
+    $x11 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign0 $p1, 224, implicit $crunpacksize, implicit $unpacksign0
+    $x0 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign0 $p2, 0, implicit $crunpacksize, implicit $unpacksign0
+    $x9 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign0 $p3, 32, implicit $crunpacksize, implicit $unpacksign0
+    $x6 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign0 $p7, -256, implicit $crunpacksize, implicit $unpacksign0
+    $x5 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign0 $p4, 224, implicit $crunpacksize, implicit $unpacksign0
+    $x3 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign0 $p5, 0, implicit $crunpacksize, implicit $unpacksign0
 
     ; VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign1
-    $x0 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign1 $p3, 32, implicit $crunpacksize, implicit $unpacksign1
-    $x7 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign1 $p6, 0, implicit $crunpacksize, implicit $unpacksign1
-    $x9 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign1 $p2, -256, implicit $crunpacksize, implicit $unpacksign1
-    $x2 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign1 $p5, 224, implicit $crunpacksize, implicit $unpacksign1
-    $x11 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign1 $p4, 32, implicit $crunpacksize, implicit $unpacksign1
-    $x1 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign1 $p1, 0, implicit $crunpacksize, implicit $unpacksign1
-    $x5 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign1 $p7, -256, implicit $crunpacksize, implicit $unpacksign1
-    $x8 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign1 $p0, 224, implicit $crunpacksize, implicit $unpacksign1
-    $x3 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign1 $p3, 32, implicit $crunpacksize, implicit $unpacksign1
-    $x6 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign1 $p6, 0, implicit $crunpacksize, implicit $unpacksign1
+    $x1 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign1 $p3, 32, implicit $crunpacksize, implicit $unpacksign1
+    $x8 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign1 $p6, 0, implicit $crunpacksize, implicit $unpacksign1
     $x4 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign1 $p2, -256, implicit $crunpacksize, implicit $unpacksign1
-    $x10 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign1 $p5, 224, implicit $crunpacksize, implicit $unpacksign1
+    $x11 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign1 $p5, 224, implicit $crunpacksize, implicit $unpacksign1
+    $x7 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign1 $p4, 32, implicit $crunpacksize, implicit $unpacksign1
+    $x10 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign1 $p1, 0, implicit $crunpacksize, implicit $unpacksign1
+    $x6 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign1 $p7, -256, implicit $crunpacksize, implicit $unpacksign1
+    $x5 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign1 $p0, 224, implicit $crunpacksize, implicit $unpacksign1
+    $x9 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign1 $p3, 32, implicit $crunpacksize, implicit $unpacksign1
+    $x0 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign1 $p6, 0, implicit $crunpacksize, implicit $unpacksign1
+    $x3 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign1 $p2, -256, implicit $crunpacksize, implicit $unpacksign1
+    $x2 = VLDB_UNPACK_dmw_ldb_unpack_idx_imm_unpackSign1 $p5, 224, implicit $crunpacksize, implicit $unpacksign1
 
     ; VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign0
-    $x2, $p5 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign0 $p5, $m4, implicit $crunpacksize, implicit $unpacksign0
-    $x11, $p6 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign0 $p6, $m6, implicit $crunpacksize, implicit $unpacksign0
+    $x11, $p5 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign0 $p5, $m7, implicit $crunpacksize, implicit $unpacksign0
+    $x7, $p6 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign0 $p6, $m4, implicit $crunpacksize, implicit $unpacksign0
+    $x3, $p4 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign0 $p4, $m5, implicit $crunpacksize, implicit $unpacksign0
+    $x1, $p2 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign0 $p2, $m0, implicit $crunpacksize, implicit $unpacksign0
+    $x10, $p3 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign0 $p3, $m3, implicit $crunpacksize, implicit $unpacksign0
+    $x5, $p0 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign0 $p0, $m2, implicit $crunpacksize, implicit $unpacksign0
+    $x0, $p1 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign0 $p1, $m6, implicit $crunpacksize, implicit $unpacksign0
+    $x9, $p7 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign0 $p7, $m1, implicit $crunpacksize, implicit $unpacksign0
+    $x6, $p5 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign0 $p5, $m7, implicit $crunpacksize, implicit $unpacksign0
+    $x2, $p6 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign0 $p6, $m4, implicit $crunpacksize, implicit $unpacksign0
     $x4, $p4 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign0 $p4, $m5, implicit $crunpacksize, implicit $unpacksign0
-    $x0, $p2 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign0 $p2, $m0, implicit $crunpacksize, implicit $unpacksign0
-    $x1, $p3 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign0 $p3, $m7, implicit $crunpacksize, implicit $unpacksign0
-    $x8, $p0 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign0 $p0, $m3, implicit $crunpacksize, implicit $unpacksign0
-    $x6, $p1 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign0 $p1, $m1, implicit $crunpacksize, implicit $unpacksign0
-    $x3, $p7 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign0 $p7, $m2, implicit $crunpacksize, implicit $unpacksign0
-    $x5, $p5 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign0 $p5, $m4, implicit $crunpacksize, implicit $unpacksign0
-    $x10, $p6 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign0 $p6, $m6, implicit $crunpacksize, implicit $unpacksign0
-    $x9, $p4 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign0 $p4, $m5, implicit $crunpacksize, implicit $unpacksign0
-    $x7, $p2 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign0 $p2, $m0, implicit $crunpacksize, implicit $unpacksign0
+    $x8, $p2 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign0 $p2, $m0, implicit $crunpacksize, implicit $unpacksign0
 
     ; VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign1
-    $x7, $p1 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign1 $p1, $m3, implicit $crunpacksize, implicit $unpacksign1
-    $x6, $p2 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign1 $p2, $m0, implicit $crunpacksize, implicit $unpacksign1
-    $x10, $p7 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign1 $p7, $m7, implicit $crunpacksize, implicit $unpacksign1
-    $x8, $p5 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign1 $p5, $m1, implicit $crunpacksize, implicit $unpacksign1
-    $x3, $p3 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign1 $p3, $m2, implicit $crunpacksize, implicit $unpacksign1
-    $x2, $p6 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign1 $p6, $m6, implicit $crunpacksize, implicit $unpacksign1
-    $x0, $p4 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign1 $p4, $m4, implicit $crunpacksize, implicit $unpacksign1
-    $x4, $p0 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign1 $p0, $m5, implicit $crunpacksize, implicit $unpacksign1
-    $x9, $p1 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign1 $p1, $m3, implicit $crunpacksize, implicit $unpacksign1
-    $x1, $p2 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign1 $p2, $m0, implicit $crunpacksize, implicit $unpacksign1
-    $x11, $p7 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign1 $p7, $m7, implicit $crunpacksize, implicit $unpacksign1
-    $x5, $p5 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign1 $p5, $m1, implicit $crunpacksize, implicit $unpacksign1
+    $x8, $p1 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign1 $p1, $m2, implicit $crunpacksize, implicit $unpacksign1
+    $x0, $p2 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign1 $p2, $m0, implicit $crunpacksize, implicit $unpacksign1
+    $x2, $p7 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign1 $p7, $m3, implicit $crunpacksize, implicit $unpacksign1
+    $x5, $p5 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign1 $p5, $m6, implicit $crunpacksize, implicit $unpacksign1
+    $x9, $p3 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign1 $p3, $m1, implicit $crunpacksize, implicit $unpacksign1
+    $x11, $p6 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign1 $p6, $m4, implicit $crunpacksize, implicit $unpacksign1
+    $x1, $p4 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign1 $p4, $m7, implicit $crunpacksize, implicit $unpacksign1
+    $x3, $p0 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign1 $p0, $m5, implicit $crunpacksize, implicit $unpacksign1
+    $x4, $p1 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign1 $p1, $m2, implicit $crunpacksize, implicit $unpacksign1
+    $x10, $p2 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign1 $p2, $m0, implicit $crunpacksize, implicit $unpacksign1
+    $x7, $p7 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign1 $p7, $m3, implicit $crunpacksize, implicit $unpacksign1
+    $x6, $p5 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_unpackSign1 $p5, $m6, implicit $crunpacksize, implicit $unpacksign1
 
     ; VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign0
-    $x5, $p0 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign0 $p0, 224, implicit $crunpacksize, implicit $unpacksign0
-    $x4, $p1 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign0 $p1, -256, implicit $crunpacksize, implicit $unpacksign0
-    $x6, $p4 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign0 $p4, 32, implicit $crunpacksize, implicit $unpacksign0
-    $x10, $p6 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign0 $p6, 0, implicit $crunpacksize, implicit $unpacksign0
-    $x11, $p7 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign0 $p7, 224, implicit $crunpacksize, implicit $unpacksign0
-    $x0, $p2 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign0 $p2, -256, implicit $crunpacksize, implicit $unpacksign0
-    $x2, $p3 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign0 $p3, 32, implicit $crunpacksize, implicit $unpacksign0
-    $x3, $p5 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign0 $p5, 0, implicit $crunpacksize, implicit $unpacksign0
-    $x9, $p0 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign0 $p0, 224, implicit $crunpacksize, implicit $unpacksign0
-    $x7, $p1 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign0 $p1, -256, implicit $crunpacksize, implicit $unpacksign0
-    $x1, $p4 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign0 $p4, 32, implicit $crunpacksize, implicit $unpacksign0
-    $x8, $p6 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign0 $p6, 0, implicit $crunpacksize, implicit $unpacksign0
+    $x6, $p0 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign0 $p0, 224, implicit $crunpacksize, implicit $unpacksign0
+    $x3, $p1 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign0 $p1, -256, implicit $crunpacksize, implicit $unpacksign0
+    $x0, $p4 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign0 $p4, 32, implicit $crunpacksize, implicit $unpacksign0
+    $x2, $p6 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign0 $p6, 0, implicit $crunpacksize, implicit $unpacksign0
+    $x7, $p7 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign0 $p7, 224, implicit $crunpacksize, implicit $unpacksign0
+    $x1, $p2 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign0 $p2, -256, implicit $crunpacksize, implicit $unpacksign0
+    $x11, $p3 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign0 $p3, 32, implicit $crunpacksize, implicit $unpacksign0
+    $x9, $p5 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign0 $p5, 0, implicit $crunpacksize, implicit $unpacksign0
+    $x4, $p0 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign0 $p0, 224, implicit $crunpacksize, implicit $unpacksign0
+    $x8, $p1 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign0 $p1, -256, implicit $crunpacksize, implicit $unpacksign0
+    $x10, $p4 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign0 $p4, 32, implicit $crunpacksize, implicit $unpacksign0
+    $x5, $p6 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign0 $p6, 0, implicit $crunpacksize, implicit $unpacksign0
 
     ; VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign1
-    $x0, $p7 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign1 $p7, 32, implicit $crunpacksize, implicit $unpacksign1
-    $x9, $p3 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign1 $p3, 0, implicit $crunpacksize, implicit $unpacksign1
-    $x5, $p5 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign1 $p5, 224, implicit $crunpacksize, implicit $unpacksign1
-    $x1, $p0 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign1 $p0, -256, implicit $crunpacksize, implicit $unpacksign1
-    $x10, $p1 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign1 $p1, 32, implicit $crunpacksize, implicit $unpacksign1
-    $x4, $p6 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign1 $p6, 0, implicit $crunpacksize, implicit $unpacksign1
-    $x2, $p2 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign1 $p2, 224, implicit $crunpacksize, implicit $unpacksign1
-    $x11, $p4 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign1 $p4, -256, implicit $crunpacksize, implicit $unpacksign1
-    $x7, $p7 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign1 $p7, 32, implicit $crunpacksize, implicit $unpacksign1
-    $x8, $p3 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign1 $p3, 0, implicit $crunpacksize, implicit $unpacksign1
+    $x1, $p7 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign1 $p7, 32, implicit $crunpacksize, implicit $unpacksign1
+    $x4, $p3 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign1 $p3, 0, implicit $crunpacksize, implicit $unpacksign1
     $x6, $p5 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign1 $p5, 224, implicit $crunpacksize, implicit $unpacksign1
-    $x3, $p0 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign1 $p0, -256, implicit $crunpacksize, implicit $unpacksign1
+    $x10, $p0 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign1 $p0, -256, implicit $crunpacksize, implicit $unpacksign1
+    $x2, $p1 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign1 $p1, 32, implicit $crunpacksize, implicit $unpacksign1
+    $x3, $p6 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign1 $p6, 0, implicit $crunpacksize, implicit $unpacksign1
+    $x11, $p2 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign1 $p2, 224, implicit $crunpacksize, implicit $unpacksign1
+    $x7, $p4 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign1 $p4, -256, implicit $crunpacksize, implicit $unpacksign1
+    $x8, $p7 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign1 $p7, 32, implicit $crunpacksize, implicit $unpacksign1
+    $x5, $p3 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign1 $p3, 0, implicit $crunpacksize, implicit $unpacksign1
+    $x0, $p5 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign1 $p5, 224, implicit $crunpacksize, implicit $unpacksign1
+    $x9, $p0 = VLDB_UNPACK_dmw_ldb_unpack_pstm_nrm_imm_unpackSign1 $p0, -256, implicit $crunpacksize, implicit $unpacksign1
 
     ; VLDB_UNPACK_dmx_ldb_unpack_idx_unpackSign0
     $y1 = VLDB_UNPACK_dmx_ldb_unpack_idx_unpackSign0 $p1, $dj6, implicit $crunpacksize, implicit $unpacksign0
@@ -660,23 +660,23 @@ body:      |
     $y2 = VLDB_UNPACK_dmx_ldb_unpack_idx_imm_unpackSign1 $p5, 64, implicit $crunpacksize, implicit $unpacksign1
 
     ; VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_unpackSign0
-    $y3, $p6 = VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_unpackSign0 $p6, $m7, implicit $crunpacksize, implicit $unpacksign0
+    $y3, $p6 = VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_unpackSign0 $p6, $m3, implicit $crunpacksize, implicit $unpacksign0
     $y5, $p2 = VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_unpackSign0 $p2, $m0, implicit $crunpacksize, implicit $unpacksign0
-    $y0, $p4 = VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_unpackSign0 $p4, $m3, implicit $crunpacksize, implicit $unpacksign0
-    $y1, $p3 = VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_unpackSign0 $p3, $m6, implicit $crunpacksize, implicit $unpacksign0
+    $y0, $p4 = VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_unpackSign0 $p4, $m2, implicit $crunpacksize, implicit $unpacksign0
+    $y1, $p3 = VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_unpackSign0 $p3, $m4, implicit $crunpacksize, implicit $unpacksign0
     $y2, $p7 = VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_unpackSign0 $p7, $m5, implicit $crunpacksize, implicit $unpacksign0
-    $y4, $p5 = VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_unpackSign0 $p5, $m2, implicit $crunpacksize, implicit $unpacksign0
-    $y3, $p1 = VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_unpackSign0 $p1, $m4, implicit $crunpacksize, implicit $unpacksign0
-    $y5, $p0 = VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_unpackSign0 $p0, $m1, implicit $crunpacksize, implicit $unpacksign0
+    $y4, $p5 = VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_unpackSign0 $p5, $m1, implicit $crunpacksize, implicit $unpacksign0
+    $y3, $p1 = VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_unpackSign0 $p1, $m7, implicit $crunpacksize, implicit $unpacksign0
+    $y5, $p0 = VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_unpackSign0 $p0, $m6, implicit $crunpacksize, implicit $unpacksign0
 
     ; VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_unpackSign1
-    $y4, $p7 = VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_unpackSign1 $p7, $m6, implicit $crunpacksize, implicit $unpacksign1
-    $y5, $p5 = VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_unpackSign1 $p5, $m4, implicit $crunpacksize, implicit $unpacksign1
-    $y0, $p0 = VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_unpackSign1 $p0, $m7, implicit $crunpacksize, implicit $unpacksign1
+    $y4, $p7 = VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_unpackSign1 $p7, $m4, implicit $crunpacksize, implicit $unpacksign1
+    $y5, $p5 = VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_unpackSign1 $p5, $m7, implicit $crunpacksize, implicit $unpacksign1
+    $y0, $p0 = VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_unpackSign1 $p0, $m3, implicit $crunpacksize, implicit $unpacksign1
     $y3, $p4 = VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_unpackSign1 $p4, $m5, implicit $crunpacksize, implicit $unpacksign1
-    $y1, $p6 = VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_unpackSign1 $p6, $m1, implicit $crunpacksize, implicit $unpacksign1
-    $y2, $p2 = VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_unpackSign1 $p2, $m2, implicit $crunpacksize, implicit $unpacksign1
-    $y4, $p1 = VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_unpackSign1 $p1, $m3, implicit $crunpacksize, implicit $unpacksign1
+    $y1, $p6 = VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_unpackSign1 $p6, $m6, implicit $crunpacksize, implicit $unpacksign1
+    $y2, $p2 = VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_unpackSign1 $p2, $m1, implicit $crunpacksize, implicit $unpacksign1
+    $y4, $p1 = VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_unpackSign1 $p1, $m2, implicit $crunpacksize, implicit $unpacksign1
     $y5, $p3 = VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_unpackSign1 $p3, $m0, implicit $crunpacksize, implicit $unpacksign1
 
     ; VLDB_UNPACK_dmx_ldb_unpack_pstm_nrm_imm_unpackSign0
@@ -752,29 +752,29 @@ body:      |
     $wl11 = VLDB_dmw_ldb_idx_imm $p7, -256
 
     ; VLDB_dmw_ldb_pstm_nrm
-    $wh4, $p3 = VLDB_dmw_ldb_pstm_nrm $p3, $m3
+    $wh4, $p3 = VLDB_dmw_ldb_pstm_nrm $p3, $m2
     $wl1, $p0 = VLDB_dmw_ldb_pstm_nrm $p0, $m5
-    $wh7, $p1 = VLDB_dmw_ldb_pstm_nrm $p1, $m4
-    $wl0, $p6 = VLDB_dmw_ldb_pstm_nrm $p6, $m2
-    $wl6, $p7 = VLDB_dmw_ldb_pstm_nrm $p7, $m1
-    $wl2, $p2 = VLDB_dmw_ldb_pstm_nrm $p2, $m7
-    $wh6, $p4 = VLDB_dmw_ldb_pstm_nrm $p4, $m6
+    $wh7, $p1 = VLDB_dmw_ldb_pstm_nrm $p1, $m7
+    $wl0, $p6 = VLDB_dmw_ldb_pstm_nrm $p6, $m1
+    $wl6, $p7 = VLDB_dmw_ldb_pstm_nrm $p7, $m6
+    $wl2, $p2 = VLDB_dmw_ldb_pstm_nrm $p2, $m3
+    $wh6, $p4 = VLDB_dmw_ldb_pstm_nrm $p4, $m4
     $wl10, $p5 = VLDB_dmw_ldb_pstm_nrm $p5, $m0
-    $wh9, $p3 = VLDB_dmw_ldb_pstm_nrm $p3, $m3
+    $wh9, $p3 = VLDB_dmw_ldb_pstm_nrm $p3, $m2
     $wh8, $p0 = VLDB_dmw_ldb_pstm_nrm $p0, $m5
-    $wl8, $p1 = VLDB_dmw_ldb_pstm_nrm $p1, $m4
-    $wh11, $p6 = VLDB_dmw_ldb_pstm_nrm $p6, $m2
-    $wh3, $p7 = VLDB_dmw_ldb_pstm_nrm $p7, $m1
-    $wh5, $p2 = VLDB_dmw_ldb_pstm_nrm $p2, $m7
-    $wh1, $p4 = VLDB_dmw_ldb_pstm_nrm $p4, $m6
+    $wl8, $p1 = VLDB_dmw_ldb_pstm_nrm $p1, $m7
+    $wh11, $p6 = VLDB_dmw_ldb_pstm_nrm $p6, $m1
+    $wh3, $p7 = VLDB_dmw_ldb_pstm_nrm $p7, $m6
+    $wh5, $p2 = VLDB_dmw_ldb_pstm_nrm $p2, $m3
+    $wh1, $p4 = VLDB_dmw_ldb_pstm_nrm $p4, $m4
     $wh10, $p5 = VLDB_dmw_ldb_pstm_nrm $p5, $m0
-    $wl3, $p3 = VLDB_dmw_ldb_pstm_nrm $p3, $m3
+    $wl3, $p3 = VLDB_dmw_ldb_pstm_nrm $p3, $m2
     $wl5, $p0 = VLDB_dmw_ldb_pstm_nrm $p0, $m5
-    $wl11, $p1 = VLDB_dmw_ldb_pstm_nrm $p1, $m4
-    $wl4, $p6 = VLDB_dmw_ldb_pstm_nrm $p6, $m2
-    $wl7, $p7 = VLDB_dmw_ldb_pstm_nrm $p7, $m1
-    $wh0, $p2 = VLDB_dmw_ldb_pstm_nrm $p2, $m7
-    $wl9, $p4 = VLDB_dmw_ldb_pstm_nrm $p4, $m6
+    $wl11, $p1 = VLDB_dmw_ldb_pstm_nrm $p1, $m7
+    $wl4, $p6 = VLDB_dmw_ldb_pstm_nrm $p6, $m1
+    $wl7, $p7 = VLDB_dmw_ldb_pstm_nrm $p7, $m6
+    $wh0, $p2 = VLDB_dmw_ldb_pstm_nrm $p2, $m3
+    $wl9, $p4 = VLDB_dmw_ldb_pstm_nrm $p4, $m4
     $wh2, $p5 = VLDB_dmw_ldb_pstm_nrm $p5, $m0
 
     ; VLDB_dmw_ldb_pstm_nrm_imm
@@ -804,60 +804,60 @@ body:      |
     $wl8, $p2 = VLDB_dmw_ldb_pstm_nrm_imm $p2, 32
 
     ; VLDB_dmx_ldb_x_idx
-    $x1 = VLDB_dmx_ldb_x_idx $p4, $dj6
-    $x2 = VLDB_dmx_ldb_x_idx $p5, $dj2
-    $x8 = VLDB_dmx_ldb_x_idx $p3, $dj3
-    $x6 = VLDB_dmx_ldb_x_idx $p7, $dj1
-    $x10 = VLDB_dmx_ldb_x_idx $p6, $dj0
-    $x7 = VLDB_dmx_ldb_x_idx $p1, $dj4
-    $x0 = VLDB_dmx_ldb_x_idx $p0, $dj5
-    $x9 = VLDB_dmx_ldb_x_idx $p2, $dj7
-    $x5 = VLDB_dmx_ldb_x_idx $p4, $dj6
-    $x4 = VLDB_dmx_ldb_x_idx $p5, $dj2
-    $x3 = VLDB_dmx_ldb_x_idx $p3, $dj3
-    $x11 = VLDB_dmx_ldb_x_idx $p7, $dj1
+    $x10 = VLDB_dmx_ldb_x_idx $p4, $dj6
+    $x11 = VLDB_dmx_ldb_x_idx $p5, $dj2
+    $x5 = VLDB_dmx_ldb_x_idx $p3, $dj3
+    $x0 = VLDB_dmx_ldb_x_idx $p7, $dj1
+    $x2 = VLDB_dmx_ldb_x_idx $p6, $dj0
+    $x8 = VLDB_dmx_ldb_x_idx $p1, $dj4
+    $x1 = VLDB_dmx_ldb_x_idx $p0, $dj5
+    $x4 = VLDB_dmx_ldb_x_idx $p2, $dj7
+    $x6 = VLDB_dmx_ldb_x_idx $p4, $dj6
+    $x3 = VLDB_dmx_ldb_x_idx $p5, $dj2
+    $x9 = VLDB_dmx_ldb_x_idx $p3, $dj3
+    $x7 = VLDB_dmx_ldb_x_idx $p7, $dj1
 
     ; VLDB_dmx_ldb_x_idx_imm
-    $x10 = VLDB_dmx_ldb_x_idx_imm $p5, 64
-    $x3 = VLDB_dmx_ldb_x_idx_imm $p2, -512
-    $x5 = VLDB_dmx_ldb_x_idx_imm $p0, 0
-    $x11 = VLDB_dmx_ldb_x_idx_imm $p3, 448
-    $x7 = VLDB_dmx_ldb_x_idx_imm $p7, 64
-    $x4 = VLDB_dmx_ldb_x_idx_imm $p4, -512
-    $x0 = VLDB_dmx_ldb_x_idx_imm $p1, 0
-    $x1 = VLDB_dmx_ldb_x_idx_imm $p6, 448
-    $x9 = VLDB_dmx_ldb_x_idx_imm $p5, 64
-    $x8 = VLDB_dmx_ldb_x_idx_imm $p2, -512
-    $x2 = VLDB_dmx_ldb_x_idx_imm $p0, 0
-    $x6 = VLDB_dmx_ldb_x_idx_imm $p3, 448
+    $x2 = VLDB_dmx_ldb_x_idx_imm $p5, 64
+    $x9 = VLDB_dmx_ldb_x_idx_imm $p2, -512
+    $x6 = VLDB_dmx_ldb_x_idx_imm $p0, 0
+    $x7 = VLDB_dmx_ldb_x_idx_imm $p3, 448
+    $x8 = VLDB_dmx_ldb_x_idx_imm $p7, 64
+    $x3 = VLDB_dmx_ldb_x_idx_imm $p4, -512
+    $x1 = VLDB_dmx_ldb_x_idx_imm $p1, 0
+    $x10 = VLDB_dmx_ldb_x_idx_imm $p6, 448
+    $x4 = VLDB_dmx_ldb_x_idx_imm $p5, 64
+    $x5 = VLDB_dmx_ldb_x_idx_imm $p2, -512
+    $x11 = VLDB_dmx_ldb_x_idx_imm $p0, 0
+    $x0 = VLDB_dmx_ldb_x_idx_imm $p3, 448
 
     ; VLDB_dmx_ldb_x_pstm_nrm
-    $x11, $p0 = VLDB_dmx_ldb_x_pstm_nrm $p0, $m4
-    $x3, $p6 = VLDB_dmx_ldb_x_pstm_nrm $p6, $m3
-    $x8, $p3 = VLDB_dmx_ldb_x_pstm_nrm $p3, $m6
-    $x5, $p5 = VLDB_dmx_ldb_x_pstm_nrm $p5, $m2
-    $x0, $p1 = VLDB_dmx_ldb_x_pstm_nrm $p1, $m7
-    $x7, $p7 = VLDB_dmx_ldb_x_pstm_nrm $p7, $m1
-    $x1, $p2 = VLDB_dmx_ldb_x_pstm_nrm $p2, $m5
-    $x6, $p4 = VLDB_dmx_ldb_x_pstm_nrm $p4, $m0
-    $x4, $p0 = VLDB_dmx_ldb_x_pstm_nrm $p0, $m4
-    $x10, $p6 = VLDB_dmx_ldb_x_pstm_nrm $p6, $m3
-    $x2, $p3 = VLDB_dmx_ldb_x_pstm_nrm $p3, $m6
-    $x9, $p5 = VLDB_dmx_ldb_x_pstm_nrm $p5, $m2
+    $x7, $p0 = VLDB_dmx_ldb_x_pstm_nrm $p0, $m7
+    $x9, $p6 = VLDB_dmx_ldb_x_pstm_nrm $p6, $m2
+    $x5, $p3 = VLDB_dmx_ldb_x_pstm_nrm $p3, $m4
+    $x6, $p5 = VLDB_dmx_ldb_x_pstm_nrm $p5, $m1
+    $x1, $p1 = VLDB_dmx_ldb_x_pstm_nrm $p1, $m3
+    $x8, $p7 = VLDB_dmx_ldb_x_pstm_nrm $p7, $m6
+    $x10, $p2 = VLDB_dmx_ldb_x_pstm_nrm $p2, $m5
+    $x0, $p4 = VLDB_dmx_ldb_x_pstm_nrm $p4, $m0
+    $x3, $p0 = VLDB_dmx_ldb_x_pstm_nrm $p0, $m7
+    $x2, $p6 = VLDB_dmx_ldb_x_pstm_nrm $p6, $m2
+    $x11, $p3 = VLDB_dmx_ldb_x_pstm_nrm $p3, $m4
+    $x4, $p5 = VLDB_dmx_ldb_x_pstm_nrm $p5, $m1
 
     ; VLDB_dmx_ldb_x_pstm_nrm_imm
-    $x9, $p6 = VLDB_dmx_ldb_x_pstm_nrm_imm $p6, -512
-    $x2, $p5 = VLDB_dmx_ldb_x_pstm_nrm_imm $p5, 64
-    $x8, $p4 = VLDB_dmx_ldb_x_pstm_nrm_imm $p4, 0
-    $x0, $p3 = VLDB_dmx_ldb_x_pstm_nrm_imm $p3, 448
-    $x5, $p1 = VLDB_dmx_ldb_x_pstm_nrm_imm $p1, -512
-    $x7, $p2 = VLDB_dmx_ldb_x_pstm_nrm_imm $p2, 64
-    $x11, $p7 = VLDB_dmx_ldb_x_pstm_nrm_imm $p7, 0
-    $x1, $p0 = VLDB_dmx_ldb_x_pstm_nrm_imm $p0, 448
-    $x10, $p6 = VLDB_dmx_ldb_x_pstm_nrm_imm $p6, -512
-    $x6, $p5 = VLDB_dmx_ldb_x_pstm_nrm_imm $p5, 64
-    $x4, $p4 = VLDB_dmx_ldb_x_pstm_nrm_imm $p4, 0
-    $x3, $p3 = VLDB_dmx_ldb_x_pstm_nrm_imm $p3, 448
+    $x4, $p6 = VLDB_dmx_ldb_x_pstm_nrm_imm $p6, -512
+    $x11, $p5 = VLDB_dmx_ldb_x_pstm_nrm_imm $p5, 64
+    $x5, $p4 = VLDB_dmx_ldb_x_pstm_nrm_imm $p4, 0
+    $x1, $p3 = VLDB_dmx_ldb_x_pstm_nrm_imm $p3, 448
+    $x6, $p1 = VLDB_dmx_ldb_x_pstm_nrm_imm $p1, -512
+    $x8, $p2 = VLDB_dmx_ldb_x_pstm_nrm_imm $p2, 64
+    $x7, $p7 = VLDB_dmx_ldb_x_pstm_nrm_imm $p7, 0
+    $x10, $p0 = VLDB_dmx_ldb_x_pstm_nrm_imm $p0, 448
+    $x2, $p6 = VLDB_dmx_ldb_x_pstm_nrm_imm $p6, -512
+    $x0, $p5 = VLDB_dmx_ldb_x_pstm_nrm_imm $p5, 64
+    $x3, $p4 = VLDB_dmx_ldb_x_pstm_nrm_imm $p4, 0
+    $x9, $p3 = VLDB_dmx_ldb_x_pstm_nrm_imm $p3, 448
 ...
 
 # CHECK: 0: 18 40 a1 3f vldb.128 wh5, [p7, dj5]
@@ -908,30 +908,30 @@ body:      |
 # CHECK: b4: 18 40 15 38 vldb.128 wh5, [p0, #16]
 # CHECK: b8: 18 a0 85 3e vldb.128 wl6, [p6, #-128]
 # CHECK: bc: 18 c0 05 3c vldb.128 wh7, [p4, #0]
-# CHECK: c0: 18 c0 2a 3a vldb.128 wh11, [p2], m1
-# CHECK: c4: 18 80 a8 38 vldb.128 wh2, [p0], m5
-# CHECK: c8: 18 e0 68 39 vldb.128 wl3, [p1], m3
+# CHECK: c0: 18 c0 6a 3a vldb.128 wh11, [p2], m3
+# CHECK: c4: 18 80 08 38 vldb.128 wh2, [p0], m0
+# CHECK: c8: 18 e0 a8 39 vldb.128 wl3, [p1], m5
 # CHECK: cc: 18 00 89 3c vldb.128 wh4, [p4], m4
-# CHECK: d0: 18 c0 48 3f vldb.128 wh3, [p7], m2
-# CHECK: d4: 18 60 e8 3d vldb.128 wl1, [p5], m7
-# CHECK: d8: 18 60 09 3e vldb.128 wl5, [p6], m0
-# CHECK: dc: 18 a0 c8 3b vldb.128 wl2, [p3], m6
-# CHECK: e0: 18 40 28 3a vldb.128 wh1, [p2], m1
-# CHECK: e4: 18 00 aa 38 vldb.128 wh8, [p0], m5
-# CHECK: e8: 18 40 6a 39 vldb.128 wh9, [p1], m3
+# CHECK: d0: 18 c0 c8 3f vldb.128 wh3, [p7], m6
+# CHECK: d4: 18 60 28 3d vldb.128 wl1, [p5], m1
+# CHECK: d8: 18 60 e9 3e vldb.128 wl5, [p6], m7
+# CHECK: dc: 18 a0 48 3b vldb.128 wl2, [p3], m2
+# CHECK: e0: 18 40 68 3a vldb.128 wh1, [p2], m3
+# CHECK: e4: 18 00 0a 38 vldb.128 wh8, [p0], m0
+# CHECK: e8: 18 40 aa 39 vldb.128 wh9, [p1], m5
 # CHECK: ec: 18 60 8a 3c vldb.128 wl9, [p4], m4
-# CHECK: f0: 18 80 49 3f vldb.128 wh6, [p7], m2
-# CHECK: f4: 18 40 e9 3d vldb.128 wh5, [p5], m7
-# CHECK: f8: 18 e0 09 3e vldb.128 wl7, [p6], m0
-# CHECK: fc: 18 20 ca 3b vldb.128 wl8, [p3], m6
-# CHECK: 100: 18 20 28 3a vldb.128 wl0, [p2], m1
-# CHECK: 104: 18 20 a9 38 vldb.128 wl4, [p0], m5
-# CHECK: 108: 18 80 6a 39 vldb.128 wh10, [p1], m3
+# CHECK: f0: 18 80 c9 3f vldb.128 wh6, [p7], m6
+# CHECK: f4: 18 40 29 3d vldb.128 wh5, [p5], m1
+# CHECK: f8: 18 e0 e9 3e vldb.128 wl7, [p6], m7
+# CHECK: fc: 18 20 4a 3b vldb.128 wl8, [p3], m2
+# CHECK: 100: 18 20 68 3a vldb.128 wl0, [p2], m3
+# CHECK: 104: 18 20 09 38 vldb.128 wl4, [p0], m0
+# CHECK: 108: 18 80 aa 39 vldb.128 wh10, [p1], m5
 # CHECK: 10c: 18 e0 8a 3c vldb.128 wl11, [p4], m4
-# CHECK: 110: 18 c0 49 3f vldb.128 wh7, [p7], m2
-# CHECK: 114: 18 a0 ea 3d vldb.128 wl10, [p5], m7
-# CHECK: 118: 18 00 08 3e vldb.128 wh0, [p6], m0
-# CHECK: 11c: 18 a0 c9 3b vldb.128 wl6, [p3], m6
+# CHECK: 110: 18 c0 c9 3f vldb.128 wh7, [p7], m6
+# CHECK: 114: 18 a0 2a 3d vldb.128 wl10, [p5], m1
+# CHECK: 118: 18 00 e8 3e vldb.128 wh0, [p6], m7
+# CHECK: 11c: 18 a0 49 3b vldb.128 wl6, [p3], m2
 # CHECK: 120: 18 80 7c 3b vldb.128 wh2, [p3], #112
 # CHECK: 124: 18 80 8e 3a vldb.128 wh10, [p2], #-128
 # CHECK: 128: 18 80 1d 39 vldb.128 wh6, [p1], #16
@@ -956,206 +956,206 @@ body:      |
 # CHECK: 174: 18 60 8c 3e vldb.128 wl1, [p6], #-128
 # CHECK: 178: 18 00 1d 3d vldb.128 wh4, [p5], #16
 # CHECK: 17c: 18 e0 0e 38 vldb.128 wl11, [p0], #0
-# CHECK: 180: 18 e0 f1 3c vldb.2d.128 wl7, [p4], d7
-# CHECK: 184: 18 a0 d0 3b vldb.2d.128 wl2, [p3], d6
+# CHECK: 180: 18 e0 51 3c vldb.2d.128 wl7, [p4], d2
+# CHECK: 184: 18 a0 f0 3b vldb.2d.128 wl2, [p3], d7
 # CHECK: 188: 18 20 b1 3a vldb.2d.128 wl4, [p2], d5
 # CHECK: 18c: 18 e0 90 39 vldb.2d.128 wl3, [p1], d4
-# CHECK: 190: 18 e0 72 3e vldb.2d.128 wl11, [p6], d3
-# CHECK: 194: 18 40 10 3f vldb.2d.128 wh1, [p7], d0
-# CHECK: 198: 18 c0 51 38 vldb.2d.128 wh7, [p0], d2
-# CHECK: 19c: 18 40 31 3d vldb.2d.128 wh5, [p5], d1
-# CHECK: 1a0: 18 40 f2 3c vldb.2d.128 wh9, [p4], d7
-# CHECK: 1a4: 18 20 d0 3b vldb.2d.128 wl0, [p3], d6
+# CHECK: 190: 18 e0 32 3e vldb.2d.128 wl11, [p6], d1
+# CHECK: 194: 18 40 d0 3f vldb.2d.128 wh1, [p7], d6
+# CHECK: 198: 18 c0 71 38 vldb.2d.128 wh7, [p0], d3
+# CHECK: 19c: 18 40 11 3d vldb.2d.128 wh5, [p5], d0
+# CHECK: 1a0: 18 40 52 3c vldb.2d.128 wh9, [p4], d2
+# CHECK: 1a4: 18 20 f0 3b vldb.2d.128 wl0, [p3], d7
 # CHECK: 1a8: 18 c0 b0 3a vldb.2d.128 wh3, [p2], d5
 # CHECK: 1ac: 18 80 92 39 vldb.2d.128 wh10, [p1], d4
-# CHECK: 1b0: 18 80 71 3e vldb.2d.128 wh6, [p6], d3
-# CHECK: 1b4: 18 a0 12 3f vldb.2d.128 wl10, [p7], d0
-# CHECK: 1b8: 18 20 52 38 vldb.2d.128 wl8, [p0], d2
-# CHECK: 1bc: 18 60 30 3d vldb.2d.128 wl1, [p5], d1
-# CHECK: 1c0: 18 c0 f2 3c vldb.2d.128 wh11, [p4], d7
-# CHECK: 1c4: 18 60 d1 3b vldb.2d.128 wl5, [p3], d6
+# CHECK: 1b0: 18 80 31 3e vldb.2d.128 wh6, [p6], d1
+# CHECK: 1b4: 18 a0 d2 3f vldb.2d.128 wl10, [p7], d6
+# CHECK: 1b8: 18 20 72 38 vldb.2d.128 wl8, [p0], d3
+# CHECK: 1bc: 18 60 10 3d vldb.2d.128 wl1, [p5], d0
+# CHECK: 1c0: 18 c0 52 3c vldb.2d.128 wh11, [p4], d2
+# CHECK: 1c4: 18 60 f1 3b vldb.2d.128 wl5, [p3], d7
 # CHECK: 1c8: 18 00 b2 3a vldb.2d.128 wh8, [p2], d5
 # CHECK: 1cc: 18 80 90 39 vldb.2d.128 wh2, [p1], d4
-# CHECK: 1d0: 18 00 71 3e vldb.2d.128 wh4, [p6], d3
-# CHECK: 1d4: 18 00 10 3f vldb.2d.128 wh0, [p7], d0
-# CHECK: 1d8: 18 60 52 38 vldb.2d.128 wl9, [p0], d2
-# CHECK: 1dc: 18 a0 31 3d vldb.2d.128 wl6, [p5], d1
-# CHECK: 1e0: 18 88 30 3e vldb.2d.unpack x2, unpacksign0, [p6], d1
-# CHECK: 1e4: 18 c8 51 3c vldb.2d.unpack x7, unpacksign0, [p4], d2
-# CHECK: 1e8: 18 88 91 3b vldb.2d.unpack x6, unpacksign0, [p3], d4
-# CHECK: 1ec: 18 08 b1 3a vldb.2d.unpack x4, unpacksign0, [p2], d5
-# CHECK: 1f0: 18 08 10 39 vldb.2d.unpack x0, unpacksign0, [p1], d0
-# CHECK: 1f4: 18 48 d0 38 vldb.2d.unpack x1, unpacksign0, [p0], d6
-# CHECK: 1f8: 18 c8 f2 3f vldb.2d.unpack x11, unpacksign0, [p7], d7
-# CHECK: 1fc: 18 c8 70 3d vldb.2d.unpack x3, unpacksign0, [p5], d3
-# CHECK: 200: 18 48 31 3e vldb.2d.unpack x5, unpacksign0, [p6], d1
-# CHECK: 204: 18 88 52 3c vldb.2d.unpack x10, unpacksign0, [p4], d2
-# CHECK: 208: 18 48 92 3b vldb.2d.unpack x9, unpacksign0, [p3], d4
-# CHECK: 20c: 18 08 b2 3a vldb.2d.unpack x8, unpacksign0, [p2], d5
-# CHECK: 210: 18 68 12 38 vldb.2d.unpack x9, unpacksign1, [p0], d0
-# CHECK: 214: 18 a8 30 39 vldb.2d.unpack x2, unpacksign1, [p1], d1
-# CHECK: 218: 18 a8 b2 3c vldb.2d.unpack x10, unpacksign1, [p4], d5
-# CHECK: 21c: 18 e8 52 3e vldb.2d.unpack x11, unpacksign1, [p6], d2
-# CHECK: 220: 18 28 d2 3a vldb.2d.unpack x8, unpacksign1, [p2], d6
-# CHECK: 224: 18 a8 91 3f vldb.2d.unpack x6, unpacksign1, [p7], d4
-# CHECK: 228: 18 68 70 3b vldb.2d.unpack x1, unpacksign1, [p3], d3
-# CHECK: 22c: 18 28 f1 3d vldb.2d.unpack x4, unpacksign1, [p5], d7
-# CHECK: 230: 18 68 11 38 vldb.2d.unpack x5, unpacksign1, [p0], d0
-# CHECK: 234: 18 e8 31 39 vldb.2d.unpack x7, unpacksign1, [p1], d1
-# CHECK: 238: 18 e8 b0 3c vldb.2d.unpack x3, unpacksign1, [p4], d5
-# CHECK: 23c: 18 28 50 3e vldb.2d.unpack x0, unpacksign1, [p6], d2
+# CHECK: 1d0: 18 00 31 3e vldb.2d.128 wh4, [p6], d1
+# CHECK: 1d4: 18 00 d0 3f vldb.2d.128 wh0, [p7], d6
+# CHECK: 1d8: 18 60 72 38 vldb.2d.128 wl9, [p0], d3
+# CHECK: 1dc: 18 a0 11 3d vldb.2d.128 wl6, [p5], d0
+# CHECK: 1e0: 18 08 11 3e vldb.2d.unpack x4, unpacksign0, [p6], d0
+# CHECK: 1e4: 18 c8 72 3c vldb.2d.unpack x11, unpacksign0, [p4], d3
+# CHECK: 1e8: 18 08 90 3b vldb.2d.unpack x0, unpacksign0, [p3], d4
+# CHECK: 1ec: 18 48 b2 3a vldb.2d.unpack x9, unpacksign0, [p2], d5
+# CHECK: 1f0: 18 08 d2 39 vldb.2d.unpack x8, unpacksign0, [p1], d6
+# CHECK: 1f4: 18 48 f0 38 vldb.2d.unpack x1, unpacksign0, [p0], d7
+# CHECK: 1f8: 18 c8 50 3f vldb.2d.unpack x3, unpacksign0, [p7], d2
+# CHECK: 1fc: 18 88 32 3d vldb.2d.unpack x10, unpacksign0, [p5], d1
+# CHECK: 200: 18 c8 11 3e vldb.2d.unpack x7, unpacksign0, [p6], d0
+# CHECK: 204: 18 48 71 3c vldb.2d.unpack x5, unpacksign0, [p4], d3
+# CHECK: 208: 18 88 91 3b vldb.2d.unpack x6, unpacksign0, [p3], d4
+# CHECK: 20c: 18 88 b0 3a vldb.2d.unpack x2, unpacksign0, [p2], d5
+# CHECK: 210: 18 a8 d1 38 vldb.2d.unpack x6, unpacksign1, [p0], d6
+# CHECK: 214: 18 28 11 39 vldb.2d.unpack x4, unpacksign1, [p1], d0
+# CHECK: 218: 18 68 b1 3c vldb.2d.unpack x5, unpacksign1, [p4], d5
+# CHECK: 21c: 18 e8 70 3e vldb.2d.unpack x3, unpacksign1, [p6], d3
+# CHECK: 220: 18 a8 f0 3a vldb.2d.unpack x2, unpacksign1, [p2], d7
+# CHECK: 224: 18 28 90 3f vldb.2d.unpack x0, unpacksign1, [p7], d4
+# CHECK: 228: 18 68 30 3b vldb.2d.unpack x1, unpacksign1, [p3], d1
+# CHECK: 22c: 18 68 52 3d vldb.2d.unpack x9, unpacksign1, [p5], d2
+# CHECK: 230: 18 e8 d1 38 vldb.2d.unpack x7, unpacksign1, [p0], d6
+# CHECK: 234: 18 e8 12 39 vldb.2d.unpack x11, unpacksign1, [p1], d0
+# CHECK: 238: 18 a8 b2 3c vldb.2d.unpack x10, unpacksign1, [p4], d5
+# CHECK: 23c: 18 28 72 3e vldb.2d.unpack x8, unpacksign1, [p6], d3
 # CHECK: 240: 18 0c 92 3f vldb.2d.unpack y4, unpacksign0, [p7], d4
-# CHECK: 244: 18 8c 52 3d vldb.2d.unpack y5, unpacksign0, [p5], d2
+# CHECK: 244: 18 8c 72 3d vldb.2d.unpack y5, unpacksign0, [p5], d3
 # CHECK: 248: 18 0c b0 39 vldb.2d.unpack y0, unpacksign0, [p1], d5
-# CHECK: 24c: 18 8c f0 3b vldb.2d.unpack y1, unpacksign0, [p3], d7
-# CHECK: 250: 18 8c 31 3e vldb.2d.unpack y3, unpacksign0, [p6], d1
-# CHECK: 254: 18 0c 71 3c vldb.2d.unpack y2, unpacksign0, [p4], d3
-# CHECK: 258: 18 0c 12 3a vldb.2d.unpack y4, unpacksign0, [p2], d0
-# CHECK: 25c: 18 8c d2 38 vldb.2d.unpack y5, unpacksign0, [p0], d6
-# CHECK: 260: 18 2c 51 3b vldb.2d.unpack y2, unpacksign1, [p3], d2
+# CHECK: 24c: 18 8c 50 3b vldb.2d.unpack y1, unpacksign0, [p3], d2
+# CHECK: 250: 18 8c 11 3e vldb.2d.unpack y3, unpacksign0, [p6], d0
+# CHECK: 254: 18 0c 31 3c vldb.2d.unpack y2, unpacksign0, [p4], d1
+# CHECK: 258: 18 0c d2 3a vldb.2d.unpack y4, unpacksign0, [p2], d6
+# CHECK: 25c: 18 8c f2 38 vldb.2d.unpack y5, unpacksign0, [p0], d7
+# CHECK: 260: 18 2c 71 3b vldb.2d.unpack y2, unpacksign1, [p3], d3
 # CHECK: 264: 18 2c 90 3c vldb.2d.unpack y0, unpacksign1, [p4], d4
-# CHECK: 268: 18 ac 72 3e vldb.2d.unpack y5, unpacksign1, [p6], d3
-# CHECK: 26c: 18 2c f2 3f vldb.2d.unpack y4, unpacksign1, [p7], d7
+# CHECK: 268: 18 ac 32 3e vldb.2d.unpack y5, unpacksign1, [p6], d1
+# CHECK: 26c: 18 2c 52 3f vldb.2d.unpack y4, unpacksign1, [p7], d2
 # CHECK: 270: 18 ac b0 3d vldb.2d.unpack y1, unpacksign1, [p5], d5
-# CHECK: 274: 18 ac 11 39 vldb.2d.unpack y3, unpacksign1, [p1], d0
-# CHECK: 278: 18 2c 31 38 vldb.2d.unpack y2, unpacksign1, [p0], d1
-# CHECK: 27c: 18 2c d0 3a vldb.2d.unpack y0, unpacksign1, [p2], d6
+# CHECK: 274: 18 ac d1 39 vldb.2d.unpack y3, unpacksign1, [p1], d6
+# CHECK: 278: 18 2c 11 38 vldb.2d.unpack y2, unpacksign1, [p0], d0
+# CHECK: 27c: 18 2c f0 3a vldb.2d.unpack y0, unpacksign1, [p2], d7
 # CHECK: 280: 18 e4 b0 3b vldb.2d wl3, [p3], d5
-# CHECK: 284: 18 a4 f0 3c vldb.2d wl2, [p4], d7
-# CHECK: 288: 18 44 70 3d vldb.2d wh1, [p5], d3
-# CHECK: 28c: 18 44 d2 3e vldb.2d wh9, [p6], d6
-# CHECK: 290: 18 64 30 39 vldb.2d wl1, [p1], d1
-# CHECK: 294: 18 e4 52 38 vldb.2d wl11, [p0], d2
-# CHECK: 298: 18 84 12 3f vldb.2d wh10, [p7], d0
+# CHECK: 284: 18 a4 50 3c vldb.2d wl2, [p4], d2
+# CHECK: 288: 18 44 30 3d vldb.2d wh1, [p5], d1
+# CHECK: 28c: 18 44 f2 3e vldb.2d wh9, [p6], d7
+# CHECK: 290: 18 64 10 39 vldb.2d wl1, [p1], d0
+# CHECK: 294: 18 e4 72 38 vldb.2d wl11, [p0], d3
+# CHECK: 298: 18 84 d2 3f vldb.2d wh10, [p7], d6
 # CHECK: 29c: 18 64 92 3a vldb.2d wl9, [p2], d4
 # CHECK: 2a0: 18 c4 b0 3b vldb.2d wh3, [p3], d5
-# CHECK: 2a4: 18 84 f0 3c vldb.2d wh2, [p4], d7
-# CHECK: 2a8: 18 24 72 3d vldb.2d wl8, [p5], d3
-# CHECK: 2ac: 18 04 d0 3e vldb.2d wh0, [p6], d6
-# CHECK: 2b0: 18 24 30 39 vldb.2d wl0, [p1], d1
-# CHECK: 2b4: 18 04 52 38 vldb.2d wh8, [p0], d2
-# CHECK: 2b8: 18 a4 11 3f vldb.2d wl6, [p7], d0
+# CHECK: 2a4: 18 84 50 3c vldb.2d wh2, [p4], d2
+# CHECK: 2a8: 18 24 32 3d vldb.2d wl8, [p5], d1
+# CHECK: 2ac: 18 04 f0 3e vldb.2d wh0, [p6], d7
+# CHECK: 2b0: 18 24 10 39 vldb.2d wl0, [p1], d0
+# CHECK: 2b4: 18 04 72 38 vldb.2d wh8, [p0], d3
+# CHECK: 2b8: 18 a4 d1 3f vldb.2d wl6, [p7], d6
 # CHECK: 2bc: 18 c4 92 3a vldb.2d wh11, [p2], d4
 # CHECK: 2c0: 18 64 b1 3b vldb.2d wl5, [p3], d5
-# CHECK: 2c4: 18 24 f1 3c vldb.2d wl4, [p4], d7
-# CHECK: 2c8: 18 84 71 3d vldb.2d wh6, [p5], d3
-# CHECK: 2cc: 18 04 d1 3e vldb.2d wh4, [p6], d6
-# CHECK: 2d0: 18 44 31 39 vldb.2d wh5, [p1], d1
-# CHECK: 2d4: 18 c4 51 38 vldb.2d wh7, [p0], d2
-# CHECK: 2d8: 18 e4 11 3f vldb.2d wl7, [p7], d0
+# CHECK: 2c4: 18 24 51 3c vldb.2d wl4, [p4], d2
+# CHECK: 2c8: 18 84 31 3d vldb.2d wh6, [p5], d1
+# CHECK: 2cc: 18 04 f1 3e vldb.2d wh4, [p6], d7
+# CHECK: 2d0: 18 44 11 39 vldb.2d wh5, [p1], d0
+# CHECK: 2d4: 18 c4 71 38 vldb.2d wh7, [p0], d3
+# CHECK: 2d8: 18 e4 d1 3f vldb.2d wl7, [p7], d6
 # CHECK: 2dc: 18 a4 92 3a vldb.2d wl10, [p2], d4
-# CHECK: 2e0: 18 74 91 3f vldb.2d x5, [p7], d4
-# CHECK: 2e4: 18 f4 71 3a vldb.2d x7, [p2], d3
-# CHECK: 2e8: 18 f4 12 3b vldb.2d x11, [p3], d0
-# CHECK: 2ec: 18 b4 f2 3d vldb.2d x10, [p5], d7
-# CHECK: 2f0: 18 34 b1 38 vldb.2d x4, [p0], d5
-# CHECK: 2f4: 18 b4 31 3e vldb.2d x6, [p6], d1
-# CHECK: 2f8: 18 b4 d0 3c vldb.2d x2, [p4], d6
-# CHECK: 2fc: 18 34 50 39 vldb.2d x0, [p1], d2
-# CHECK: 300: 18 74 92 3f vldb.2d x9, [p7], d4
-# CHECK: 304: 18 74 70 3a vldb.2d x1, [p2], d3
-# CHECK: 308: 18 f4 10 3b vldb.2d x3, [p3], d0
-# CHECK: 30c: 18 34 f2 3d vldb.2d x8, [p5], d7
-# CHECK: 310: 18 c0 58 3b vldb.3d.128 wh3, [p3], d2
-# CHECK: 314: 18 a0 19 39 vldb.3d.128 wl6, [p1], d0
-# CHECK: 318: 18 80 7a 3d vldb.3d.128 wh10, [p5], d3
-# CHECK: 31c: 18 00 38 3f vldb.3d.128 wh0, [p7], d1
-# CHECK: 320: 18 60 58 3a vldb.3d.128 wl1, [p2], d2
-# CHECK: 324: 18 40 18 38 vldb.3d.128 wh1, [p0], d0
-# CHECK: 328: 18 60 79 3e vldb.3d.128 wl5, [p6], d3
-# CHECK: 32c: 18 20 39 3c vldb.3d.128 wl4, [p4], d1
-# CHECK: 330: 18 c0 59 3b vldb.3d.128 wh7, [p3], d2
-# CHECK: 334: 18 40 19 39 vldb.3d.128 wh5, [p1], d0
-# CHECK: 338: 18 80 79 3d vldb.3d.128 wh6, [p5], d3
-# CHECK: 33c: 18 e0 39 3f vldb.3d.128 wl7, [p7], d1
-# CHECK: 340: 18 c0 5a 3a vldb.3d.128 wh11, [p2], d2
-# CHECK: 344: 18 a0 1a 38 vldb.3d.128 wl10, [p0], d0
-# CHECK: 348: 18 e0 78 3e vldb.3d.128 wl3, [p6], d3
-# CHECK: 34c: 18 40 3a 3c vldb.3d.128 wh9, [p4], d1
-# CHECK: 350: 18 a0 58 3b vldb.3d.128 wl2, [p3], d2
-# CHECK: 354: 18 60 1a 39 vldb.3d.128 wl9, [p1], d0
-# CHECK: 358: 18 00 79 3d vldb.3d.128 wh4, [p5], d3
-# CHECK: 35c: 18 80 38 3f vldb.3d.128 wh2, [p7], d1
-# CHECK: 360: 18 20 58 3a vldb.3d.128 wl0, [p2], d2
-# CHECK: 364: 18 20 1a 38 vldb.3d.128 wl8, [p0], d0
-# CHECK: 368: 18 e0 7a 3e vldb.3d.128 wl11, [p6], d3
-# CHECK: 36c: 18 00 3a 3c vldb.3d.128 wh8, [p4], d1
-# CHECK: 370: 18 88 78 3a vldb.3d.unpack x2, unpacksign0, [p2], d3
-# CHECK: 374: 18 48 38 38 vldb.3d.unpack x1, unpacksign0, [p0], d1
-# CHECK: 378: 18 88 1a 39 vldb.3d.unpack x10, unpacksign0, [p1], d0
-# CHECK: 37c: 18 c8 5a 3f vldb.3d.unpack x11, unpacksign0, [p7], d2
-# CHECK: 380: 18 08 7a 3c vldb.3d.unpack x8, unpacksign0, [p4], d3
-# CHECK: 384: 18 c8 38 3b vldb.3d.unpack x3, unpacksign0, [p3], d1
-# CHECK: 388: 18 48 1a 3d vldb.3d.unpack x9, unpacksign0, [p5], d0
-# CHECK: 38c: 18 08 58 3e vldb.3d.unpack x0, unpacksign0, [p6], d2
-# CHECK: 390: 18 08 79 3a vldb.3d.unpack x4, unpacksign0, [p2], d3
-# CHECK: 394: 18 88 39 38 vldb.3d.unpack x6, unpacksign0, [p0], d1
-# CHECK: 398: 18 48 19 39 vldb.3d.unpack x5, unpacksign0, [p1], d0
-# CHECK: 39c: 18 c8 59 3f vldb.3d.unpack x7, unpacksign0, [p7], d2
-# CHECK: 3a0: 18 e8 59 3f vldb.3d.unpack x7, unpacksign1, [p7], d2
-# CHECK: 3a4: 18 e8 1a 38 vldb.3d.unpack x11, unpacksign1, [p0], d0
-# CHECK: 3a8: 18 28 3a 3e vldb.3d.unpack x8, unpacksign1, [p6], d1
-# CHECK: 3ac: 18 68 79 3c vldb.3d.unpack x5, unpacksign1, [p4], d3
-# CHECK: 3b0: 18 a8 59 3b vldb.3d.unpack x6, unpacksign1, [p3], d2
-# CHECK: 3b4: 18 68 18 39 vldb.3d.unpack x1, unpacksign1, [p1], d0
-# CHECK: 3b8: 18 68 3a 3a vldb.3d.unpack x9, unpacksign1, [p2], d1
-# CHECK: 3bc: 18 a8 7a 3d vldb.3d.unpack x10, unpacksign1, [p5], d3
-# CHECK: 3c0: 18 28 58 3f vldb.3d.unpack x0, unpacksign1, [p7], d2
-# CHECK: 3c4: 18 28 19 38 vldb.3d.unpack x4, unpacksign1, [p0], d0
-# CHECK: 3c8: 18 a8 38 3e vldb.3d.unpack x2, unpacksign1, [p6], d1
-# CHECK: 3cc: 18 e8 78 3c vldb.3d.unpack x3, unpacksign1, [p4], d3
-# CHECK: 3d0: 18 0c 3a 39 vldb.3d.unpack y4, unpacksign0, [p1], d1
-# CHECK: 3d4: 18 0c 19 3e vldb.3d.unpack y2, unpacksign0, [p6], d0
-# CHECK: 3d8: 18 8c 58 3c vldb.3d.unpack y1, unpacksign0, [p4], d2
-# CHECK: 3dc: 18 0c 78 3b vldb.3d.unpack y0, unpacksign0, [p3], d3
-# CHECK: 3e0: 18 8c 3a 3d vldb.3d.unpack y5, unpacksign0, [p5], d1
-# CHECK: 3e4: 18 8c 19 3f vldb.3d.unpack y3, unpacksign0, [p7], d0
-# CHECK: 3e8: 18 0c 5a 3a vldb.3d.unpack y4, unpacksign0, [p2], d2
-# CHECK: 3ec: 18 0c 79 38 vldb.3d.unpack y2, unpacksign0, [p0], d3
-# CHECK: 3f0: 18 2c 59 3e vldb.3d.unpack y2, unpacksign1, [p6], d2
-# CHECK: 3f4: 18 ac 78 39 vldb.3d.unpack y1, unpacksign1, [p1], d3
-# CHECK: 3f8: 18 ac 1a 3d vldb.3d.unpack y5, unpacksign1, [p5], d0
-# CHECK: 3fc: 18 2c 3a 3a vldb.3d.unpack y4, unpacksign1, [p2], d1
-# CHECK: 400: 18 ac 59 3c vldb.3d.unpack y3, unpacksign1, [p4], d2
-# CHECK: 404: 18 2c 78 3b vldb.3d.unpack y0, unpacksign1, [p3], d3
-# CHECK: 408: 18 2c 19 38 vldb.3d.unpack y2, unpacksign1, [p0], d0
-# CHECK: 40c: 18 ac 38 3f vldb.3d.unpack y1, unpacksign1, [p7], d1
-# CHECK: 410: 18 e4 59 3a vldb.3d wl7, [p2], d2
-# CHECK: 414: 18 24 19 39 vldb.3d wl4, [p1], d0
-# CHECK: 418: 18 c4 7a 3f vldb.3d wh11, [p7], d3
-# CHECK: 41c: 18 24 38 3c vldb.3d wl0, [p4], d1
-# CHECK: 420: 18 c4 58 3d vldb.3d wh3, [p5], d2
-# CHECK: 424: 18 84 19 3e vldb.3d wh6, [p6], d0
-# CHECK: 428: 18 64 78 38 vldb.3d wl1, [p0], d3
-# CHECK: 42c: 18 44 39 3b vldb.3d wh5, [p3], d1
-# CHECK: 430: 18 84 5a 3a vldb.3d wh10, [p2], d2
-# CHECK: 434: 18 c4 19 39 vldb.3d wh7, [p1], d0
-# CHECK: 438: 18 04 79 3f vldb.3d wh4, [p7], d3
-# CHECK: 43c: 18 a4 3a 3c vldb.3d wl10, [p4], d1
-# CHECK: 440: 18 84 58 3d vldb.3d wh2, [p5], d2
-# CHECK: 444: 18 e4 1a 3e vldb.3d wl11, [p6], d0
-# CHECK: 448: 18 64 79 38 vldb.3d wl5, [p0], d3
-# CHECK: 44c: 18 04 38 3b vldb.3d wh0, [p3], d1
-# CHECK: 450: 18 44 58 3a vldb.3d wh1, [p2], d2
-# CHECK: 454: 18 24 1a 39 vldb.3d wl8, [p1], d0
-# CHECK: 458: 18 a4 78 3f vldb.3d wl2, [p7], d3
-# CHECK: 45c: 18 04 3a 3c vldb.3d wh8, [p4], d1
-# CHECK: 460: 18 64 5a 3d vldb.3d wl9, [p5], d2
-# CHECK: 464: 18 e4 18 3e vldb.3d wl3, [p6], d0
-# CHECK: 468: 18 a4 79 38 vldb.3d wl6, [p0], d3
-# CHECK: 46c: 18 44 3a 3b vldb.3d wh9, [p3], d1
-# CHECK: 470: 18 f4 19 3a vldb.3d x7, [p2], d0
-# CHECK: 474: 18 f4 58 39 vldb.3d x3, [p1], d2
-# CHECK: 478: 18 f4 3a 3f vldb.3d x11, [p7], d1
-# CHECK: 47c: 18 34 7a 3c vldb.3d x8, [p4], d3
-# CHECK: 480: 18 b4 18 3b vldb.3d x2, [p3], d0
-# CHECK: 484: 18 74 5a 3e vldb.3d x9, [p6], d2
-# CHECK: 488: 18 34 38 3d vldb.3d x0, [p5], d1
-# CHECK: 48c: 18 b4 79 38 vldb.3d x6, [p0], d3
-# CHECK: 490: 18 34 19 3a vldb.3d x4, [p2], d0
-# CHECK: 494: 18 74 58 39 vldb.3d x1, [p1], d2
-# CHECK: 498: 18 74 39 3f vldb.3d x5, [p7], d1
-# CHECK: 49c: 18 b4 7a 3c vldb.3d x10, [p4], d3
+# CHECK: 2e0: 18 f4 91 3f vldb.2d x7, [p7], d4
+# CHECK: 2e4: 18 f4 32 3a vldb.2d x11, [p2], d1
+# CHECK: 2e8: 18 f4 d0 3b vldb.2d x3, [p3], d6
+# CHECK: 2ec: 18 74 51 3d vldb.2d x5, [p5], d2
+# CHECK: 2f0: 18 74 b2 38 vldb.2d x9, [p0], d5
+# CHECK: 2f4: 18 34 10 3e vldb.2d x0, [p6], d0
+# CHECK: 2f8: 18 34 f1 3c vldb.2d x4, [p4], d7
+# CHECK: 2fc: 18 34 72 39 vldb.2d x8, [p1], d3
+# CHECK: 300: 18 b4 91 3f vldb.2d x6, [p7], d4
+# CHECK: 304: 18 74 30 3a vldb.2d x1, [p2], d1
+# CHECK: 308: 18 b4 d2 3b vldb.2d x10, [p3], d6
+# CHECK: 30c: 18 b4 50 3d vldb.2d x2, [p5], d2
+# CHECK: 310: 18 c0 78 3b vldb.3d.128 wh3, [p3], d3
+# CHECK: 314: 18 a0 59 39 vldb.3d.128 wl6, [p1], d2
+# CHECK: 318: 18 80 3a 3d vldb.3d.128 wh10, [p5], d1
+# CHECK: 31c: 18 00 18 3f vldb.3d.128 wh0, [p7], d0
+# CHECK: 320: 18 60 78 3a vldb.3d.128 wl1, [p2], d3
+# CHECK: 324: 18 40 58 38 vldb.3d.128 wh1, [p0], d2
+# CHECK: 328: 18 60 39 3e vldb.3d.128 wl5, [p6], d1
+# CHECK: 32c: 18 20 19 3c vldb.3d.128 wl4, [p4], d0
+# CHECK: 330: 18 c0 79 3b vldb.3d.128 wh7, [p3], d3
+# CHECK: 334: 18 40 59 39 vldb.3d.128 wh5, [p1], d2
+# CHECK: 338: 18 80 39 3d vldb.3d.128 wh6, [p5], d1
+# CHECK: 33c: 18 e0 19 3f vldb.3d.128 wl7, [p7], d0
+# CHECK: 340: 18 c0 7a 3a vldb.3d.128 wh11, [p2], d3
+# CHECK: 344: 18 a0 5a 38 vldb.3d.128 wl10, [p0], d2
+# CHECK: 348: 18 e0 38 3e vldb.3d.128 wl3, [p6], d1
+# CHECK: 34c: 18 40 1a 3c vldb.3d.128 wh9, [p4], d0
+# CHECK: 350: 18 a0 78 3b vldb.3d.128 wl2, [p3], d3
+# CHECK: 354: 18 60 5a 39 vldb.3d.128 wl9, [p1], d2
+# CHECK: 358: 18 00 39 3d vldb.3d.128 wh4, [p5], d1
+# CHECK: 35c: 18 80 18 3f vldb.3d.128 wh2, [p7], d0
+# CHECK: 360: 18 20 78 3a vldb.3d.128 wl0, [p2], d3
+# CHECK: 364: 18 20 5a 38 vldb.3d.128 wl8, [p0], d2
+# CHECK: 368: 18 e0 3a 3e vldb.3d.128 wl11, [p6], d1
+# CHECK: 36c: 18 00 1a 3c vldb.3d.128 wh8, [p4], d0
+# CHECK: 370: 18 08 39 3a vldb.3d.unpack x4, unpacksign0, [p2], d1
+# CHECK: 374: 18 48 18 38 vldb.3d.unpack x1, unpacksign0, [p0], d0
+# CHECK: 378: 18 48 59 39 vldb.3d.unpack x5, unpacksign0, [p1], d2
+# CHECK: 37c: 18 c8 78 3f vldb.3d.unpack x3, unpacksign0, [p7], d3
+# CHECK: 380: 18 88 38 3c vldb.3d.unpack x2, unpacksign0, [p4], d1
+# CHECK: 384: 18 88 1a 3b vldb.3d.unpack x10, unpacksign0, [p3], d0
+# CHECK: 388: 18 88 59 3d vldb.3d.unpack x6, unpacksign0, [p5], d2
+# CHECK: 38c: 18 08 7a 3e vldb.3d.unpack x8, unpacksign0, [p6], d3
+# CHECK: 390: 18 48 3a 3a vldb.3d.unpack x9, unpacksign0, [p2], d1
+# CHECK: 394: 18 08 18 38 vldb.3d.unpack x0, unpacksign0, [p0], d0
+# CHECK: 398: 18 c8 59 39 vldb.3d.unpack x7, unpacksign0, [p1], d2
+# CHECK: 39c: 18 c8 7a 3f vldb.3d.unpack x11, unpacksign0, [p7], d3
+# CHECK: 3a0: 18 e8 7a 3f vldb.3d.unpack x11, unpacksign1, [p7], d3
+# CHECK: 3a4: 18 e8 58 38 vldb.3d.unpack x3, unpacksign1, [p0], d2
+# CHECK: 3a8: 18 a8 18 3e vldb.3d.unpack x2, unpacksign1, [p6], d0
+# CHECK: 3ac: 18 e8 39 3c vldb.3d.unpack x7, unpacksign1, [p4], d1
+# CHECK: 3b0: 18 28 78 3b vldb.3d.unpack x0, unpacksign1, [p3], d3
+# CHECK: 3b4: 18 68 58 39 vldb.3d.unpack x1, unpacksign1, [p1], d2
+# CHECK: 3b8: 18 a8 19 3a vldb.3d.unpack x6, unpacksign1, [p2], d0
+# CHECK: 3bc: 18 68 39 3d vldb.3d.unpack x5, unpacksign1, [p5], d1
+# CHECK: 3c0: 18 28 7a 3f vldb.3d.unpack x8, unpacksign1, [p7], d3
+# CHECK: 3c4: 18 68 5a 38 vldb.3d.unpack x9, unpacksign1, [p0], d2
+# CHECK: 3c8: 18 28 19 3e vldb.3d.unpack x4, unpacksign1, [p6], d0
+# CHECK: 3cc: 18 a8 3a 3c vldb.3d.unpack x10, unpacksign1, [p4], d1
+# CHECK: 3d0: 18 0c 1a 39 vldb.3d.unpack y4, unpacksign0, [p1], d0
+# CHECK: 3d4: 18 0c 59 3e vldb.3d.unpack y2, unpacksign0, [p6], d2
+# CHECK: 3d8: 18 8c 78 3c vldb.3d.unpack y1, unpacksign0, [p4], d3
+# CHECK: 3dc: 18 0c 38 3b vldb.3d.unpack y0, unpacksign0, [p3], d1
+# CHECK: 3e0: 18 8c 1a 3d vldb.3d.unpack y5, unpacksign0, [p5], d0
+# CHECK: 3e4: 18 8c 59 3f vldb.3d.unpack y3, unpacksign0, [p7], d2
+# CHECK: 3e8: 18 0c 7a 3a vldb.3d.unpack y4, unpacksign0, [p2], d3
+# CHECK: 3ec: 18 0c 39 38 vldb.3d.unpack y2, unpacksign0, [p0], d1
+# CHECK: 3f0: 18 2c 79 3e vldb.3d.unpack y2, unpacksign1, [p6], d3
+# CHECK: 3f4: 18 ac 38 39 vldb.3d.unpack y1, unpacksign1, [p1], d1
+# CHECK: 3f8: 18 ac 5a 3d vldb.3d.unpack y5, unpacksign1, [p5], d2
+# CHECK: 3fc: 18 2c 1a 3a vldb.3d.unpack y4, unpacksign1, [p2], d0
+# CHECK: 400: 18 ac 79 3c vldb.3d.unpack y3, unpacksign1, [p4], d3
+# CHECK: 404: 18 2c 38 3b vldb.3d.unpack y0, unpacksign1, [p3], d1
+# CHECK: 408: 18 2c 59 38 vldb.3d.unpack y2, unpacksign1, [p0], d2
+# CHECK: 40c: 18 ac 18 3f vldb.3d.unpack y1, unpacksign1, [p7], d0
+# CHECK: 410: 18 e4 79 3a vldb.3d wl7, [p2], d3
+# CHECK: 414: 18 24 59 39 vldb.3d wl4, [p1], d2
+# CHECK: 418: 18 c4 3a 3f vldb.3d wh11, [p7], d1
+# CHECK: 41c: 18 24 18 3c vldb.3d wl0, [p4], d0
+# CHECK: 420: 18 c4 78 3d vldb.3d wh3, [p5], d3
+# CHECK: 424: 18 84 59 3e vldb.3d wh6, [p6], d2
+# CHECK: 428: 18 64 38 38 vldb.3d wl1, [p0], d1
+# CHECK: 42c: 18 44 19 3b vldb.3d wh5, [p3], d0
+# CHECK: 430: 18 84 7a 3a vldb.3d wh10, [p2], d3
+# CHECK: 434: 18 c4 59 39 vldb.3d wh7, [p1], d2
+# CHECK: 438: 18 04 39 3f vldb.3d wh4, [p7], d1
+# CHECK: 43c: 18 a4 1a 3c vldb.3d wl10, [p4], d0
+# CHECK: 440: 18 84 78 3d vldb.3d wh2, [p5], d3
+# CHECK: 444: 18 e4 5a 3e vldb.3d wl11, [p6], d2
+# CHECK: 448: 18 64 39 38 vldb.3d wl5, [p0], d1
+# CHECK: 44c: 18 04 18 3b vldb.3d wh0, [p3], d0
+# CHECK: 450: 18 44 78 3a vldb.3d wh1, [p2], d3
+# CHECK: 454: 18 24 5a 39 vldb.3d wl8, [p1], d2
+# CHECK: 458: 18 a4 38 3f vldb.3d wl2, [p7], d1
+# CHECK: 45c: 18 04 1a 3c vldb.3d wh8, [p4], d0
+# CHECK: 460: 18 64 7a 3d vldb.3d wl9, [p5], d3
+# CHECK: 464: 18 e4 58 3e vldb.3d wl3, [p6], d2
+# CHECK: 468: 18 a4 39 38 vldb.3d wl6, [p0], d1
+# CHECK: 46c: 18 44 1a 3b vldb.3d wh9, [p3], d0
+# CHECK: 470: 18 f4 5a 3a vldb.3d x11, [p2], d2
+# CHECK: 474: 18 b4 7a 39 vldb.3d x10, [p1], d3
+# CHECK: 478: 18 f4 18 3f vldb.3d x3, [p7], d0
+# CHECK: 47c: 18 b4 38 3c vldb.3d x2, [p4], d1
+# CHECK: 480: 18 34 59 3b vldb.3d x4, [p3], d2
+# CHECK: 484: 18 b4 79 3e vldb.3d x6, [p6], d3
+# CHECK: 488: 18 34 1a 3d vldb.3d x8, [p5], d0
+# CHECK: 48c: 18 34 38 38 vldb.3d x0, [p0], d1
+# CHECK: 490: 18 74 5a 3a vldb.3d x9, [p2], d2
+# CHECK: 494: 18 74 78 39 vldb.3d x1, [p1], d3
+# CHECK: 498: 18 f4 19 3f vldb.3d x7, [p7], d0
+# CHECK: 49c: 18 74 39 3c vldb.3d x5, [p4], d1
 # CHECK: 4a0: 18 30 65 38 vldb.4x16.hi wl4, wl0
 # CHECK: 4a4: 18 70 24 3c vldb.4x16.hi wl1, wh8
 # CHECK: 4a8: 18 b0 e4 3b vldb.4x16.hi wl2, wl7
@@ -1300,102 +1300,102 @@ body:      |
 # CHECK: 6d4: 18 d0 56 39 vldb.4x64.lo wh11, wl2
 # CHECK: 6d8: 18 d0 95 39 vldb.4x64.lo wh7, wh3
 # CHECK: 6dc: 18 d0 14 3a vldb.4x64.lo wh3, wh4
-# CHECK: 6e0: 18 08 40 3a vldb.unpack x0, unpacksign0, [p2, dj2]
-# CHECK: 6e4: 18 c8 a1 38 vldb.unpack x7, unpacksign0, [p0, dj5]
-# CHECK: 6e8: 18 48 00 3e vldb.unpack x1, unpacksign0, [p6, dj0]
-# CHECK: 6ec: 18 88 80 3d vldb.unpack x2, unpacksign0, [p5, dj4]
-# CHECK: 6f0: 18 88 61 3c vldb.unpack x6, unpacksign0, [p4, dj3]
-# CHECK: 6f4: 18 c8 e2 3f vldb.unpack x11, unpacksign0, [p7, dj7]
-# CHECK: 6f8: 18 88 c2 39 vldb.unpack x10, unpacksign0, [p1, dj6]
-# CHECK: 6fc: 18 48 22 3b vldb.unpack x9, unpacksign0, [p3, dj1]
-# CHECK: 700: 18 08 42 3a vldb.unpack x8, unpacksign0, [p2, dj2]
-# CHECK: 704: 18 48 a1 38 vldb.unpack x5, unpacksign0, [p0, dj5]
-# CHECK: 708: 18 08 01 3e vldb.unpack x4, unpacksign0, [p6, dj0]
-# CHECK: 70c: 18 c8 80 3d vldb.unpack x3, unpacksign0, [p5, dj4]
-# CHECK: 710: 18 e8 e0 39 vldb.unpack x3, unpacksign1, [p1, dj7]
-# CHECK: 714: 18 28 80 3f vldb.unpack x0, unpacksign1, [p7, dj4]
-# CHECK: 718: 18 68 c0 3e vldb.unpack x1, unpacksign1, [p6, dj6]
-# CHECK: 71c: 18 a8 42 38 vldb.unpack x10, unpacksign1, [p0, dj2]
-# CHECK: 720: 18 a8 00 3c vldb.unpack x2, unpacksign1, [p4, dj0]
-# CHECK: 724: 18 e8 22 3a vldb.unpack x11, unpacksign1, [p2, dj1]
-# CHECK: 728: 18 68 a2 3b vldb.unpack x9, unpacksign1, [p3, dj5]
-# CHECK: 72c: 18 e8 61 3d vldb.unpack x7, unpacksign1, [p5, dj3]
-# CHECK: 730: 18 a8 e1 39 vldb.unpack x6, unpacksign1, [p1, dj7]
-# CHECK: 734: 18 28 81 3f vldb.unpack x4, unpacksign1, [p7, dj4]
-# CHECK: 738: 18 28 c2 3e vldb.unpack x8, unpacksign1, [p6, dj6]
-# CHECK: 73c: 18 68 41 38 vldb.unpack x5, unpacksign1, [p0, dj2]
-# CHECK: 740: 18 c8 16 3b vldb.unpack x11, unpacksign0, [p3, #32]
-# CHECK: 744: 18 c8 85 3f vldb.unpack x7, unpacksign0, [p7, #-256]
-# CHECK: 748: 18 48 76 3c vldb.unpack x9, unpacksign0, [p4, #224]
-# CHECK: 74c: 18 48 04 3d vldb.unpack x1, unpacksign0, [p5, #0]
-# CHECK: 750: 18 08 14 3e vldb.unpack x0, unpacksign0, [p6, #32]
-# CHECK: 754: 18 88 86 38 vldb.unpack x10, unpacksign0, [p0, #-256]
-# CHECK: 758: 18 88 74 39 vldb.unpack x2, unpacksign0, [p1, #224]
-# CHECK: 75c: 18 88 05 3a vldb.unpack x6, unpacksign0, [p2, #0]
-# CHECK: 760: 18 c8 14 3b vldb.unpack x3, unpacksign0, [p3, #32]
-# CHECK: 764: 18 48 85 3f vldb.unpack x5, unpacksign0, [p7, #-256]
-# CHECK: 768: 18 08 76 3c vldb.unpack x8, unpacksign0, [p4, #224]
-# CHECK: 76c: 18 08 05 3d vldb.unpack x4, unpacksign0, [p5, #0]
-# CHECK: 770: 18 28 14 3b vldb.unpack x0, unpacksign1, [p3, #32]
-# CHECK: 774: 18 e8 05 3e vldb.unpack x7, unpacksign1, [p6, #0]
-# CHECK: 778: 18 68 86 3a vldb.unpack x9, unpacksign1, [p2, #-256]
-# CHECK: 77c: 18 a8 74 3d vldb.unpack x2, unpacksign1, [p5, #224]
-# CHECK: 780: 18 e8 16 3c vldb.unpack x11, unpacksign1, [p4, #32]
-# CHECK: 784: 18 68 04 39 vldb.unpack x1, unpacksign1, [p1, #0]
-# CHECK: 788: 18 68 85 3f vldb.unpack x5, unpacksign1, [p7, #-256]
-# CHECK: 78c: 18 28 76 38 vldb.unpack x8, unpacksign1, [p0, #224]
-# CHECK: 790: 18 e8 14 3b vldb.unpack x3, unpacksign1, [p3, #32]
-# CHECK: 794: 18 a8 05 3e vldb.unpack x6, unpacksign1, [p6, #0]
-# CHECK: 798: 18 28 85 3a vldb.unpack x4, unpacksign1, [p2, #-256]
-# CHECK: 79c: 18 a8 76 3d vldb.unpack x10, unpacksign1, [p5, #224]
-# CHECK: 7a0: 18 88 88 3d vldb.unpack x2, unpacksign0, [p5], m4
-# CHECK: 7a4: 18 c8 ca 3e vldb.unpack x11, unpacksign0, [p6], m6
-# CHECK: 7a8: 18 08 a9 3c vldb.unpack x4, unpacksign0, [p4], m5
-# CHECK: 7ac: 18 08 08 3a vldb.unpack x0, unpacksign0, [p2], m0
-# CHECK: 7b0: 18 48 e8 3b vldb.unpack x1, unpacksign0, [p3], m7
-# CHECK: 7b4: 18 08 6a 38 vldb.unpack x8, unpacksign0, [p0], m3
-# CHECK: 7b8: 18 88 29 39 vldb.unpack x6, unpacksign0, [p1], m1
-# CHECK: 7bc: 18 c8 48 3f vldb.unpack x3, unpacksign0, [p7], m2
-# CHECK: 7c0: 18 48 89 3d vldb.unpack x5, unpacksign0, [p5], m4
-# CHECK: 7c4: 18 88 ca 3e vldb.unpack x10, unpacksign0, [p6], m6
-# CHECK: 7c8: 18 48 aa 3c vldb.unpack x9, unpacksign0, [p4], m5
-# CHECK: 7cc: 18 c8 09 3a vldb.unpack x7, unpacksign0, [p2], m0
-# CHECK: 7d0: 18 e8 69 39 vldb.unpack x7, unpacksign1, [p1], m3
-# CHECK: 7d4: 18 a8 09 3a vldb.unpack x6, unpacksign1, [p2], m0
-# CHECK: 7d8: 18 a8 ea 3f vldb.unpack x10, unpacksign1, [p7], m7
-# CHECK: 7dc: 18 28 2a 3d vldb.unpack x8, unpacksign1, [p5], m1
-# CHECK: 7e0: 18 e8 48 3b vldb.unpack x3, unpacksign1, [p3], m2
-# CHECK: 7e4: 18 a8 c8 3e vldb.unpack x2, unpacksign1, [p6], m6
-# CHECK: 7e8: 18 28 88 3c vldb.unpack x0, unpacksign1, [p4], m4
-# CHECK: 7ec: 18 28 a9 38 vldb.unpack x4, unpacksign1, [p0], m5
-# CHECK: 7f0: 18 68 6a 39 vldb.unpack x9, unpacksign1, [p1], m3
-# CHECK: 7f4: 18 68 08 3a vldb.unpack x1, unpacksign1, [p2], m0
-# CHECK: 7f8: 18 e8 ea 3f vldb.unpack x11, unpacksign1, [p7], m7
-# CHECK: 7fc: 18 68 29 3d vldb.unpack x5, unpacksign1, [p5], m1
-# CHECK: 800: 18 48 7d 38 vldb.unpack x5, unpacksign0, [p0], #224
-# CHECK: 804: 18 08 8d 39 vldb.unpack x4, unpacksign0, [p1], #-256
-# CHECK: 808: 18 88 1d 3c vldb.unpack x6, unpacksign0, [p4], #32
-# CHECK: 80c: 18 88 0e 3e vldb.unpack x10, unpacksign0, [p6], #0
-# CHECK: 810: 18 c8 7e 3f vldb.unpack x11, unpacksign0, [p7], #224
-# CHECK: 814: 18 08 8c 3a vldb.unpack x0, unpacksign0, [p2], #-256
-# CHECK: 818: 18 88 1c 3b vldb.unpack x2, unpacksign0, [p3], #32
-# CHECK: 81c: 18 c8 0c 3d vldb.unpack x3, unpacksign0, [p5], #0
-# CHECK: 820: 18 48 7e 38 vldb.unpack x9, unpacksign0, [p0], #224
-# CHECK: 824: 18 c8 8d 39 vldb.unpack x7, unpacksign0, [p1], #-256
-# CHECK: 828: 18 48 1c 3c vldb.unpack x1, unpacksign0, [p4], #32
-# CHECK: 82c: 18 08 0e 3e vldb.unpack x8, unpacksign0, [p6], #0
-# CHECK: 830: 18 28 1c 3f vldb.unpack x0, unpacksign1, [p7], #32
-# CHECK: 834: 18 68 0e 3b vldb.unpack x9, unpacksign1, [p3], #0
-# CHECK: 838: 18 68 7d 3d vldb.unpack x5, unpacksign1, [p5], #224
-# CHECK: 83c: 18 68 8c 38 vldb.unpack x1, unpacksign1, [p0], #-256
-# CHECK: 840: 18 a8 1e 39 vldb.unpack x10, unpacksign1, [p1], #32
-# CHECK: 844: 18 28 0d 3e vldb.unpack x4, unpacksign1, [p6], #0
-# CHECK: 848: 18 a8 7c 3a vldb.unpack x2, unpacksign1, [p2], #224
-# CHECK: 84c: 18 e8 8e 3c vldb.unpack x11, unpacksign1, [p4], #-256
-# CHECK: 850: 18 e8 1d 3f vldb.unpack x7, unpacksign1, [p7], #32
-# CHECK: 854: 18 28 0e 3b vldb.unpack x8, unpacksign1, [p3], #0
-# CHECK: 858: 18 a8 7d 3d vldb.unpack x6, unpacksign1, [p5], #224
-# CHECK: 85c: 18 e8 8c 38 vldb.unpack x3, unpacksign1, [p0], #-256
+# CHECK: 6e0: 18 48 40 3a vldb.unpack x1, unpacksign0, [p2, dj2]
+# CHECK: 6e4: 18 08 a2 38 vldb.unpack x8, unpacksign0, [p0, dj5]
+# CHECK: 6e8: 18 88 02 3e vldb.unpack x10, unpacksign0, [p6, dj0]
+# CHECK: 6ec: 18 c8 82 3d vldb.unpack x11, unpacksign0, [p5, dj4]
+# CHECK: 6f0: 18 08 60 3c vldb.unpack x0, unpacksign0, [p4, dj3]
+# CHECK: 6f4: 18 c8 e1 3f vldb.unpack x7, unpacksign0, [p7, dj7]
+# CHECK: 6f8: 18 88 c0 39 vldb.unpack x2, unpacksign0, [p1, dj6]
+# CHECK: 6fc: 18 08 21 3b vldb.unpack x4, unpacksign0, [p3, dj1]
+# CHECK: 700: 18 48 41 3a vldb.unpack x5, unpacksign0, [p2, dj2]
+# CHECK: 704: 18 88 a1 38 vldb.unpack x6, unpacksign0, [p0, dj5]
+# CHECK: 708: 18 c8 00 3e vldb.unpack x3, unpacksign0, [p6, dj0]
+# CHECK: 70c: 18 48 82 3d vldb.unpack x9, unpacksign0, [p5, dj4]
+# CHECK: 710: 18 68 e2 39 vldb.unpack x9, unpacksign1, [p1, dj7]
+# CHECK: 714: 18 68 80 3f vldb.unpack x1, unpacksign1, [p7, dj4]
+# CHECK: 718: 18 a8 c2 3e vldb.unpack x10, unpacksign1, [p6, dj6]
+# CHECK: 71c: 18 a8 40 38 vldb.unpack x2, unpacksign1, [p0, dj2]
+# CHECK: 720: 18 e8 02 3c vldb.unpack x11, unpacksign1, [p4, dj0]
+# CHECK: 724: 18 e8 21 3a vldb.unpack x7, unpacksign1, [p2, dj1]
+# CHECK: 728: 18 28 a1 3b vldb.unpack x4, unpacksign1, [p3, dj5]
+# CHECK: 72c: 18 28 62 3d vldb.unpack x8, unpacksign1, [p5, dj3]
+# CHECK: 730: 18 28 e0 39 vldb.unpack x0, unpacksign1, [p1, dj7]
+# CHECK: 734: 18 e8 80 3f vldb.unpack x3, unpacksign1, [p7, dj4]
+# CHECK: 738: 18 68 c1 3e vldb.unpack x5, unpacksign1, [p6, dj6]
+# CHECK: 73c: 18 a8 41 38 vldb.unpack x6, unpacksign1, [p0, dj2]
+# CHECK: 740: 18 c8 15 3b vldb.unpack x7, unpacksign0, [p3, #32]
+# CHECK: 744: 18 08 86 3f vldb.unpack x8, unpacksign0, [p7, #-256]
+# CHECK: 748: 18 08 75 3c vldb.unpack x4, unpacksign0, [p4, #224]
+# CHECK: 74c: 18 88 06 3d vldb.unpack x10, unpacksign0, [p5, #0]
+# CHECK: 750: 18 48 14 3e vldb.unpack x1, unpacksign0, [p6, #32]
+# CHECK: 754: 18 88 84 38 vldb.unpack x2, unpacksign0, [p0, #-256]
+# CHECK: 758: 18 c8 76 39 vldb.unpack x11, unpacksign0, [p1, #224]
+# CHECK: 75c: 18 08 04 3a vldb.unpack x0, unpacksign0, [p2, #0]
+# CHECK: 760: 18 48 16 3b vldb.unpack x9, unpacksign0, [p3, #32]
+# CHECK: 764: 18 88 85 3f vldb.unpack x6, unpacksign0, [p7, #-256]
+# CHECK: 768: 18 48 75 3c vldb.unpack x5, unpacksign0, [p4, #224]
+# CHECK: 76c: 18 c8 04 3d vldb.unpack x3, unpacksign0, [p5, #0]
+# CHECK: 770: 18 68 14 3b vldb.unpack x1, unpacksign1, [p3, #32]
+# CHECK: 774: 18 28 06 3e vldb.unpack x8, unpacksign1, [p6, #0]
+# CHECK: 778: 18 28 85 3a vldb.unpack x4, unpacksign1, [p2, #-256]
+# CHECK: 77c: 18 e8 76 3d vldb.unpack x11, unpacksign1, [p5, #224]
+# CHECK: 780: 18 e8 15 3c vldb.unpack x7, unpacksign1, [p4, #32]
+# CHECK: 784: 18 a8 06 39 vldb.unpack x10, unpacksign1, [p1, #0]
+# CHECK: 788: 18 a8 85 3f vldb.unpack x6, unpacksign1, [p7, #-256]
+# CHECK: 78c: 18 68 75 38 vldb.unpack x5, unpacksign1, [p0, #224]
+# CHECK: 790: 18 68 16 3b vldb.unpack x9, unpacksign1, [p3, #32]
+# CHECK: 794: 18 28 04 3e vldb.unpack x0, unpacksign1, [p6, #0]
+# CHECK: 798: 18 e8 84 3a vldb.unpack x3, unpacksign1, [p2, #-256]
+# CHECK: 79c: 18 a8 74 3d vldb.unpack x2, unpacksign1, [p5, #224]
+# CHECK: 7a0: 18 c8 ea 3d vldb.unpack x11, unpacksign0, [p5], m7
+# CHECK: 7a4: 18 c8 89 3e vldb.unpack x7, unpacksign0, [p6], m4
+# CHECK: 7a8: 18 c8 a8 3c vldb.unpack x3, unpacksign0, [p4], m5
+# CHECK: 7ac: 18 48 08 3a vldb.unpack x1, unpacksign0, [p2], m0
+# CHECK: 7b0: 18 88 6a 3b vldb.unpack x10, unpacksign0, [p3], m3
+# CHECK: 7b4: 18 48 49 38 vldb.unpack x5, unpacksign0, [p0], m2
+# CHECK: 7b8: 18 08 c8 39 vldb.unpack x0, unpacksign0, [p1], m6
+# CHECK: 7bc: 18 48 2a 3f vldb.unpack x9, unpacksign0, [p7], m1
+# CHECK: 7c0: 18 88 e9 3d vldb.unpack x6, unpacksign0, [p5], m7
+# CHECK: 7c4: 18 88 88 3e vldb.unpack x2, unpacksign0, [p6], m4
+# CHECK: 7c8: 18 08 a9 3c vldb.unpack x4, unpacksign0, [p4], m5
+# CHECK: 7cc: 18 08 0a 3a vldb.unpack x8, unpacksign0, [p2], m0
+# CHECK: 7d0: 18 28 4a 39 vldb.unpack x8, unpacksign1, [p1], m2
+# CHECK: 7d4: 18 28 08 3a vldb.unpack x0, unpacksign1, [p2], m0
+# CHECK: 7d8: 18 a8 68 3f vldb.unpack x2, unpacksign1, [p7], m3
+# CHECK: 7dc: 18 68 c9 3d vldb.unpack x5, unpacksign1, [p5], m6
+# CHECK: 7e0: 18 68 2a 3b vldb.unpack x9, unpacksign1, [p3], m1
+# CHECK: 7e4: 18 e8 8a 3e vldb.unpack x11, unpacksign1, [p6], m4
+# CHECK: 7e8: 18 68 e8 3c vldb.unpack x1, unpacksign1, [p4], m7
+# CHECK: 7ec: 18 e8 a8 38 vldb.unpack x3, unpacksign1, [p0], m5
+# CHECK: 7f0: 18 28 49 39 vldb.unpack x4, unpacksign1, [p1], m2
+# CHECK: 7f4: 18 a8 0a 3a vldb.unpack x10, unpacksign1, [p2], m0
+# CHECK: 7f8: 18 e8 69 3f vldb.unpack x7, unpacksign1, [p7], m3
+# CHECK: 7fc: 18 a8 c9 3d vldb.unpack x6, unpacksign1, [p5], m6
+# CHECK: 800: 18 88 7d 38 vldb.unpack x6, unpacksign0, [p0], #224
+# CHECK: 804: 18 c8 8c 39 vldb.unpack x3, unpacksign0, [p1], #-256
+# CHECK: 808: 18 08 1c 3c vldb.unpack x0, unpacksign0, [p4], #32
+# CHECK: 80c: 18 88 0c 3e vldb.unpack x2, unpacksign0, [p6], #0
+# CHECK: 810: 18 c8 7d 3f vldb.unpack x7, unpacksign0, [p7], #224
+# CHECK: 814: 18 48 8c 3a vldb.unpack x1, unpacksign0, [p2], #-256
+# CHECK: 818: 18 c8 1e 3b vldb.unpack x11, unpacksign0, [p3], #32
+# CHECK: 81c: 18 48 0e 3d vldb.unpack x9, unpacksign0, [p5], #0
+# CHECK: 820: 18 08 7d 38 vldb.unpack x4, unpacksign0, [p0], #224
+# CHECK: 824: 18 08 8e 39 vldb.unpack x8, unpacksign0, [p1], #-256
+# CHECK: 828: 18 88 1e 3c vldb.unpack x10, unpacksign0, [p4], #32
+# CHECK: 82c: 18 48 0d 3e vldb.unpack x5, unpacksign0, [p6], #0
+# CHECK: 830: 18 68 1c 3f vldb.unpack x1, unpacksign1, [p7], #32
+# CHECK: 834: 18 28 0d 3b vldb.unpack x4, unpacksign1, [p3], #0
+# CHECK: 838: 18 a8 7d 3d vldb.unpack x6, unpacksign1, [p5], #224
+# CHECK: 83c: 18 a8 8e 38 vldb.unpack x10, unpacksign1, [p0], #-256
+# CHECK: 840: 18 a8 1c 39 vldb.unpack x2, unpacksign1, [p1], #32
+# CHECK: 844: 18 e8 0c 3e vldb.unpack x3, unpacksign1, [p6], #0
+# CHECK: 848: 18 e8 7e 3a vldb.unpack x11, unpacksign1, [p2], #224
+# CHECK: 84c: 18 e8 8d 3c vldb.unpack x7, unpacksign1, [p4], #-256
+# CHECK: 850: 18 28 1e 3f vldb.unpack x8, unpacksign1, [p7], #32
+# CHECK: 854: 18 68 0d 3b vldb.unpack x5, unpacksign1, [p3], #0
+# CHECK: 858: 18 28 7c 3d vldb.unpack x0, unpacksign1, [p5], #224
+# CHECK: 85c: 18 68 8e 38 vldb.unpack x9, unpacksign1, [p0], #-256
 # CHECK: 860: 18 8c c0 39 vldb.unpack y1, unpacksign0, [p1, dj6]
 # CHECK: 864: 18 0c 21 38 vldb.unpack y2, unpacksign0, [p0, dj1]
 # CHECK: 868: 18 0c a2 3b vldb.unpack y4, unpacksign0, [p3, dj5]
@@ -1428,21 +1428,21 @@ body:      |
 # CHECK: 8d4: 18 ac 75 3f vldb.unpack y3, unpacksign1, [p7, #448]
 # CHECK: 8d8: 18 ac 84 3c vldb.unpack y1, unpacksign1, [p4, #-512]
 # CHECK: 8dc: 18 2c 15 3d vldb.unpack y2, unpacksign1, [p5, #64]
-# CHECK: 8e0: 18 8c e9 3e vldb.unpack y3, unpacksign0, [p6], m7
+# CHECK: 8e0: 18 8c 69 3e vldb.unpack y3, unpacksign0, [p6], m3
 # CHECK: 8e4: 18 8c 0a 3a vldb.unpack y5, unpacksign0, [p2], m0
-# CHECK: 8e8: 18 0c 68 3c vldb.unpack y0, unpacksign0, [p4], m3
-# CHECK: 8ec: 18 8c c8 3b vldb.unpack y1, unpacksign0, [p3], m6
+# CHECK: 8e8: 18 0c 48 3c vldb.unpack y0, unpacksign0, [p4], m2
+# CHECK: 8ec: 18 8c 88 3b vldb.unpack y1, unpacksign0, [p3], m4
 # CHECK: 8f0: 18 0c a9 3f vldb.unpack y2, unpacksign0, [p7], m5
-# CHECK: 8f4: 18 0c 4a 3d vldb.unpack y4, unpacksign0, [p5], m2
-# CHECK: 8f8: 18 8c 89 39 vldb.unpack y3, unpacksign0, [p1], m4
-# CHECK: 8fc: 18 8c 2a 38 vldb.unpack y5, unpacksign0, [p0], m1
-# CHECK: 900: 18 2c ca 3f vldb.unpack y4, unpacksign1, [p7], m6
-# CHECK: 904: 18 ac 8a 3d vldb.unpack y5, unpacksign1, [p5], m4
-# CHECK: 908: 18 2c e8 38 vldb.unpack y0, unpacksign1, [p0], m7
+# CHECK: 8f4: 18 0c 2a 3d vldb.unpack y4, unpacksign0, [p5], m1
+# CHECK: 8f8: 18 8c e9 39 vldb.unpack y3, unpacksign0, [p1], m7
+# CHECK: 8fc: 18 8c ca 38 vldb.unpack y5, unpacksign0, [p0], m6
+# CHECK: 900: 18 2c 8a 3f vldb.unpack y4, unpacksign1, [p7], m4
+# CHECK: 904: 18 ac ea 3d vldb.unpack y5, unpacksign1, [p5], m7
+# CHECK: 908: 18 2c 68 38 vldb.unpack y0, unpacksign1, [p0], m3
 # CHECK: 90c: 18 ac a9 3c vldb.unpack y3, unpacksign1, [p4], m5
-# CHECK: 910: 18 ac 28 3e vldb.unpack y1, unpacksign1, [p6], m1
-# CHECK: 914: 18 2c 49 3a vldb.unpack y2, unpacksign1, [p2], m2
-# CHECK: 918: 18 2c 6a 39 vldb.unpack y4, unpacksign1, [p1], m3
+# CHECK: 910: 18 ac c8 3e vldb.unpack y1, unpacksign1, [p6], m6
+# CHECK: 914: 18 2c 29 3a vldb.unpack y2, unpacksign1, [p2], m1
+# CHECK: 918: 18 2c 4a 39 vldb.unpack y4, unpacksign1, [p1], m2
 # CHECK: 91c: 18 ac 0a 3b vldb.unpack y5, unpacksign1, [p3], m0
 # CHECK: 920: 18 8c 7e 38 vldb.unpack y5, unpacksign0, [p0], #448
 # CHECK: 924: 18 0c 1c 3d vldb.unpack y0, unpacksign0, [p5], #64
@@ -1508,29 +1508,29 @@ body:      |
 # CHECK: a14: 18 a4 06 38 vldb wl10, [p0, #0]
 # CHECK: a18: 18 84 15 39 vldb wh6, [p1, #32]
 # CHECK: a1c: 18 e4 86 3f vldb wl11, [p7, #-256]
-# CHECK: a20: 18 04 69 3b vldb wh4, [p3], m3
+# CHECK: a20: 18 04 49 3b vldb wh4, [p3], m2
 # CHECK: a24: 18 64 a8 38 vldb wl1, [p0], m5
-# CHECK: a28: 18 c4 89 39 vldb wh7, [p1], m4
-# CHECK: a2c: 18 24 48 3e vldb wl0, [p6], m2
-# CHECK: a30: 18 a4 29 3f vldb wl6, [p7], m1
-# CHECK: a34: 18 a4 e8 3a vldb wl2, [p2], m7
-# CHECK: a38: 18 84 c9 3c vldb wh6, [p4], m6
+# CHECK: a28: 18 c4 e9 39 vldb wh7, [p1], m7
+# CHECK: a2c: 18 24 28 3e vldb wl0, [p6], m1
+# CHECK: a30: 18 a4 c9 3f vldb wl6, [p7], m6
+# CHECK: a34: 18 a4 68 3a vldb wl2, [p2], m3
+# CHECK: a38: 18 84 89 3c vldb wh6, [p4], m4
 # CHECK: a3c: 18 a4 0a 3d vldb wl10, [p5], m0
-# CHECK: a40: 18 44 6a 3b vldb wh9, [p3], m3
+# CHECK: a40: 18 44 4a 3b vldb wh9, [p3], m2
 # CHECK: a44: 18 04 aa 38 vldb wh8, [p0], m5
-# CHECK: a48: 18 24 8a 39 vldb wl8, [p1], m4
-# CHECK: a4c: 18 c4 4a 3e vldb wh11, [p6], m2
-# CHECK: a50: 18 c4 28 3f vldb wh3, [p7], m1
-# CHECK: a54: 18 44 e9 3a vldb wh5, [p2], m7
-# CHECK: a58: 18 44 c8 3c vldb wh1, [p4], m6
+# CHECK: a48: 18 24 ea 39 vldb wl8, [p1], m7
+# CHECK: a4c: 18 c4 2a 3e vldb wh11, [p6], m1
+# CHECK: a50: 18 c4 c8 3f vldb wh3, [p7], m6
+# CHECK: a54: 18 44 69 3a vldb wh5, [p2], m3
+# CHECK: a58: 18 44 88 3c vldb wh1, [p4], m4
 # CHECK: a5c: 18 84 0a 3d vldb wh10, [p5], m0
-# CHECK: a60: 18 e4 68 3b vldb wl3, [p3], m3
+# CHECK: a60: 18 e4 48 3b vldb wl3, [p3], m2
 # CHECK: a64: 18 64 a9 38 vldb wl5, [p0], m5
-# CHECK: a68: 18 e4 8a 39 vldb wl11, [p1], m4
-# CHECK: a6c: 18 24 49 3e vldb wl4, [p6], m2
-# CHECK: a70: 18 e4 29 3f vldb wl7, [p7], m1
-# CHECK: a74: 18 04 e8 3a vldb wh0, [p2], m7
-# CHECK: a78: 18 64 ca 3c vldb wl9, [p4], m6
+# CHECK: a68: 18 e4 ea 39 vldb wl11, [p1], m7
+# CHECK: a6c: 18 24 29 3e vldb wl4, [p6], m1
+# CHECK: a70: 18 e4 c9 3f vldb wl7, [p7], m6
+# CHECK: a74: 18 04 68 3a vldb wh0, [p2], m3
+# CHECK: a78: 18 64 8a 3c vldb wl9, [p4], m4
 # CHECK: a7c: 18 84 08 3d vldb wh2, [p5], m0
 # CHECK: a80: 18 44 0d 39 vldb wh5, [p1], #0
 # CHECK: a84: 18 04 8e 3e vldb wh8, [p6], #-256
@@ -1556,51 +1556,51 @@ body:      |
 # CHECK: ad4: 18 c4 8e 3d vldb wh11, [p5], #-256
 # CHECK: ad8: 18 c4 7d 38 vldb wh7, [p0], #224
 # CHECK: adc: 18 24 1e 3a vldb wl8, [p2], #32
-# CHECK: ae0: 18 74 c0 3c vldb x1, [p4, dj6]
-# CHECK: ae4: 18 b4 40 3d vldb x2, [p5, dj2]
-# CHECK: ae8: 18 34 62 3b vldb x8, [p3, dj3]
-# CHECK: aec: 18 b4 21 3f vldb x6, [p7, dj1]
-# CHECK: af0: 18 b4 02 3e vldb x10, [p6, dj0]
-# CHECK: af4: 18 f4 81 39 vldb x7, [p1, dj4]
-# CHECK: af8: 18 34 a0 38 vldb x0, [p0, dj5]
-# CHECK: afc: 18 74 e2 3a vldb x9, [p2, dj7]
-# CHECK: b00: 18 74 c1 3c vldb x5, [p4, dj6]
-# CHECK: b04: 18 34 41 3d vldb x4, [p5, dj2]
-# CHECK: b08: 18 f4 60 3b vldb x3, [p3, dj3]
-# CHECK: b0c: 18 f4 22 3f vldb x11, [p7, dj1]
-# CHECK: b10: 18 b4 16 3d vldb x10, [p5, #64]
-# CHECK: b14: 18 f4 84 3a vldb x3, [p2, #-512]
-# CHECK: b18: 18 74 05 38 vldb x5, [p0, #0]
-# CHECK: b1c: 18 f4 76 3b vldb x11, [p3, #448]
-# CHECK: b20: 18 f4 15 3f vldb x7, [p7, #64]
-# CHECK: b24: 18 34 85 3c vldb x4, [p4, #-512]
-# CHECK: b28: 18 34 04 39 vldb x0, [p1, #0]
-# CHECK: b2c: 18 74 74 3e vldb x1, [p6, #448]
-# CHECK: b30: 18 74 16 3d vldb x9, [p5, #64]
-# CHECK: b34: 18 34 86 3a vldb x8, [p2, #-512]
-# CHECK: b38: 18 b4 04 38 vldb x2, [p0, #0]
-# CHECK: b3c: 18 b4 75 3b vldb x6, [p3, #448]
-# CHECK: b40: 18 f4 8a 38 vldb x11, [p0], m4
-# CHECK: b44: 18 f4 68 3e vldb x3, [p6], m3
-# CHECK: b48: 18 34 ca 3b vldb x8, [p3], m6
-# CHECK: b4c: 18 74 49 3d vldb x5, [p5], m2
-# CHECK: b50: 18 34 e8 39 vldb x0, [p1], m7
-# CHECK: b54: 18 f4 29 3f vldb x7, [p7], m1
-# CHECK: b58: 18 74 a8 3a vldb x1, [p2], m5
-# CHECK: b5c: 18 b4 09 3c vldb x6, [p4], m0
-# CHECK: b60: 18 34 89 38 vldb x4, [p0], m4
-# CHECK: b64: 18 b4 6a 3e vldb x10, [p6], m3
-# CHECK: b68: 18 b4 c8 3b vldb x2, [p3], m6
-# CHECK: b6c: 18 74 4a 3d vldb x9, [p5], m2
-# CHECK: b70: 18 74 8e 3e vldb x9, [p6], #-512
-# CHECK: b74: 18 b4 1c 3d vldb x2, [p5], #64
-# CHECK: b78: 18 34 0e 3c vldb x8, [p4], #0
-# CHECK: b7c: 18 34 7c 3b vldb x0, [p3], #448
-# CHECK: b80: 18 74 8d 39 vldb x5, [p1], #-512
-# CHECK: b84: 18 f4 1d 3a vldb x7, [p2], #64
-# CHECK: b88: 18 f4 0e 3f vldb x11, [p7], #0
-# CHECK: b8c: 18 74 7c 38 vldb x1, [p0], #448
-# CHECK: b90: 18 b4 8e 3e vldb x10, [p6], #-512
-# CHECK: b94: 18 b4 1d 3d vldb x6, [p5], #64
-# CHECK: b98: 18 34 0d 3c vldb x4, [p4], #0
-# CHECK: b9c: 18 f4 7c 3b vldb x3, [p3], #448
+# CHECK: ae0: 18 b4 c2 3c vldb x10, [p4, dj6]
+# CHECK: ae4: 18 f4 42 3d vldb x11, [p5, dj2]
+# CHECK: ae8: 18 74 61 3b vldb x5, [p3, dj3]
+# CHECK: aec: 18 34 20 3f vldb x0, [p7, dj1]
+# CHECK: af0: 18 b4 00 3e vldb x2, [p6, dj0]
+# CHECK: af4: 18 34 82 39 vldb x8, [p1, dj4]
+# CHECK: af8: 18 74 a0 38 vldb x1, [p0, dj5]
+# CHECK: afc: 18 34 e1 3a vldb x4, [p2, dj7]
+# CHECK: b00: 18 b4 c1 3c vldb x6, [p4, dj6]
+# CHECK: b04: 18 f4 40 3d vldb x3, [p5, dj2]
+# CHECK: b08: 18 74 62 3b vldb x9, [p3, dj3]
+# CHECK: b0c: 18 f4 21 3f vldb x7, [p7, dj1]
+# CHECK: b10: 18 b4 14 3d vldb x2, [p5, #64]
+# CHECK: b14: 18 74 86 3a vldb x9, [p2, #-512]
+# CHECK: b18: 18 b4 05 38 vldb x6, [p0, #0]
+# CHECK: b1c: 18 f4 75 3b vldb x7, [p3, #448]
+# CHECK: b20: 18 34 16 3f vldb x8, [p7, #64]
+# CHECK: b24: 18 f4 84 3c vldb x3, [p4, #-512]
+# CHECK: b28: 18 74 04 39 vldb x1, [p1, #0]
+# CHECK: b2c: 18 b4 76 3e vldb x10, [p6, #448]
+# CHECK: b30: 18 34 15 3d vldb x4, [p5, #64]
+# CHECK: b34: 18 74 85 3a vldb x5, [p2, #-512]
+# CHECK: b38: 18 f4 06 38 vldb x11, [p0, #0]
+# CHECK: b3c: 18 34 74 3b vldb x0, [p3, #448]
+# CHECK: b40: 18 f4 e9 38 vldb x7, [p0], m7
+# CHECK: b44: 18 74 4a 3e vldb x9, [p6], m2
+# CHECK: b48: 18 74 89 3b vldb x5, [p3], m4
+# CHECK: b4c: 18 b4 29 3d vldb x6, [p5], m1
+# CHECK: b50: 18 74 68 39 vldb x1, [p1], m3
+# CHECK: b54: 18 34 ca 3f vldb x8, [p7], m6
+# CHECK: b58: 18 b4 aa 3a vldb x10, [p2], m5
+# CHECK: b5c: 18 34 08 3c vldb x0, [p4], m0
+# CHECK: b60: 18 f4 e8 38 vldb x3, [p0], m7
+# CHECK: b64: 18 b4 48 3e vldb x2, [p6], m2
+# CHECK: b68: 18 f4 8a 3b vldb x11, [p3], m4
+# CHECK: b6c: 18 34 29 3d vldb x4, [p5], m1
+# CHECK: b70: 18 34 8d 3e vldb x4, [p6], #-512
+# CHECK: b74: 18 f4 1e 3d vldb x11, [p5], #64
+# CHECK: b78: 18 74 0d 3c vldb x5, [p4], #0
+# CHECK: b7c: 18 74 7c 3b vldb x1, [p3], #448
+# CHECK: b80: 18 b4 8d 39 vldb x6, [p1], #-512
+# CHECK: b84: 18 34 1e 3a vldb x8, [p2], #64
+# CHECK: b88: 18 f4 0d 3f vldb x7, [p7], #0
+# CHECK: b8c: 18 b4 7e 38 vldb x10, [p0], #448
+# CHECK: b90: 18 b4 8c 3e vldb x2, [p6], #-512
+# CHECK: b94: 18 34 1c 3d vldb x0, [p5], #64
+# CHECK: b98: 18 f4 0c 3c vldb x3, [p4], #0
+# CHECK: b9c: 18 74 7e 3b vldb x9, [p3], #448

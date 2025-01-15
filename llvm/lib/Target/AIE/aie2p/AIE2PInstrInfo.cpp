@@ -1327,106 +1327,107 @@ AIE2PInstrInfo::getTiedRegInfo(unsigned Opcode) const {
         /*SrcOp=*/
         {/*OpIdx=*/4, /*SubRegIdx=*/AIE2P::NoSubRegister,
          /*SubRegsSplit=*/Split3DReg}}};
-  case AIE2P::VLDB_FILLX_512:
-    return {TiedRegOperands{
-        /*DstOps=*/{{/*OpIdx=*/0, /*SubRegIdx=*/AIE2P::sub_ptr},
-                    {/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_fifo},
-                    {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_avail}},
-        /*SrcOp=*/
-        {/*OpIdx=*/5, /*SubRegIdx=*/AIE2P::NoSubRegister,
-         /*SubRegsSplit=*/SplitPLFRReg}}};
-  case AIE2P::VLDA_FILL_512:
-  case AIE2P::VLDB_FILL_512:
-    return {TiedRegOperands{
-        /*DstOps=*/{{/*OpIdx=*/0, /*SubRegIdx=*/AIE2P::sub_ptr},
-                    {/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_fifo},
-                    {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_avail}},
-        /*SrcOp=*/
-        {/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::NoSubRegister,
-         /*SubRegsSplit=*/SplitPLFRReg}}};
+  // case AIE2P::VLDB_FILLX_512:
+  //   return {TiedRegOperands{
+  //       /*DstOps=*/{{/*OpIdx=*/0, /*SubRegIdx=*/AIE2P::sub_ptr},
+  //                   {/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_fifo},
+  //                   {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_avail}},
+  //       /*SrcOp=*/
+  //       {/*OpIdx=*/5, /*SubRegIdx=*/AIE2P::NoSubRegister,
+  //        /*SubRegsSplit=*/SplitPLFRReg}}};
+  // case AIE2P::VLDA_FILL_512:
+  // case AIE2P::VLDB_FILL_512:
+  //   return {TiedRegOperands{
+  //       /*DstOps=*/{{/*OpIdx=*/0, /*SubRegIdx=*/AIE2P::sub_ptr},
+  //                   {/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_fifo},
+  //                   {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_avail}},
+  //       /*SrcOp=*/
+  //       {/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::NoSubRegister,
+  //        /*SubRegsSplit=*/SplitPLFRReg}}};
 
-  case AIE2P::VLDB_POPX_512:
-    return {TiedRegOperands{
-        /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_ptr},
-                    {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_fifo},
-                    {/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::sub_avail}},
-        /*SrcOp=*/
-        {/*OpIdx=*/6, /*SubRegIdx=*/AIE2P::NoSubRegister,
-         /*SubRegsSplit=*/SplitPLFRReg}}};
-  case AIE2P::VLDA_POP_512_normal_pop:
-  case AIE2P::VLDA_POP_544_normal_pop:
-  case AIE2P::VLDA_POP_576_normal_pop:
-  case AIE2P::VLDA_POP_640_normal_pop:
-  case AIE2P::VLDA_POP_704_normal_pop:
-  case AIE2P::VLDB_POP_512_normal_pop:
-  case AIE2P::VLDB_POP_544_normal_pop:
-  case AIE2P::VLDB_POP_576_normal_pop:
-  case AIE2P::VLDB_POP_640_normal_pop:
-  case AIE2P::VLDB_POP_704_normal_pop:
-  case AIE2P::VLDA_POP_512_fifo_1d_pop:
-  case AIE2P::VLDA_POP_544_fifo_1d_pop:
-  case AIE2P::VLDA_POP_576_fifo_1d_pop:
-  case AIE2P::VLDA_POP_640_fifo_1d_pop:
-  case AIE2P::VLDA_POP_704_fifo_1d_pop:
-  case AIE2P::VLDB_POP_512_fifo_1d_pop:
-  case AIE2P::VLDB_POP_544_fifo_1d_pop:
-  case AIE2P::VLDB_POP_576_fifo_1d_pop:
-  case AIE2P::VLDB_POP_640_fifo_1d_pop:
-  case AIE2P::VLDB_POP_704_fifo_1d_pop:
-    return {TiedRegOperands{
-        /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_ptr},
-                    {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_fifo},
-                    {/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::sub_avail}},
-        /*SrcOp=*/
-        {/*OpIdx=*/4, /*SubRegIdx=*/AIE2P::NoSubRegister,
-         /*SubRegsSplit=*/SplitPLFRReg}}};
-  case AIE2P::VLDA_POP_512_2D:
-  case AIE2P::VLDA_POP_544_2D:
-  case AIE2P::VLDA_POP_576_2D:
-  case AIE2P::VLDA_POP_640_2D:
-  case AIE2P::VLDA_POP_704_2D:
-  case AIE2P::VLDB_POP_512_2D:
-  case AIE2P::VLDB_POP_544_2D:
-  case AIE2P::VLDB_POP_576_2D:
-  case AIE2P::VLDB_POP_640_2D:
-  case AIE2P::VLDB_POP_704_2D:
-    return {TiedRegOperands{
-                /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_ptr},
-                            {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_fifo},
-                            {/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::sub_avail}},
-                /*SrcOp=*/
-                {/*OpIdx=*/5, /*SubRegIdx=*/AIE2P::NoSubRegister,
-                 /*SubRegsSplit=*/SplitPLFRReg}},
-            TiedRegOperands{
-                /*DstOps=*/{{/*OpIdx=*/4, /*SubRegIdx=*/AIE2P::sub_dim_count}},
-                /*SrcOp=*/
-                {/*OpIdx=*/6, /*SubRegIdx=*/AIE2P::NoSubRegister,
-                 /*SubRegsSplit=*/Split2DReg}}};
-  case AIE2P::VLDA_POP_512_3D:
-  case AIE2P::VLDA_POP_544_3D:
-  case AIE2P::VLDA_POP_576_3D:
-  case AIE2P::VLDA_POP_640_3D:
-  case AIE2P::VLDA_POP_704_3D:
-  case AIE2P::VLDB_POP_512_3D:
-  case AIE2P::VLDB_POP_544_3D:
-  case AIE2P::VLDB_POP_576_3D:
-  case AIE2P::VLDB_POP_640_3D:
-  case AIE2P::VLDB_POP_704_3D:
-    return {
-        TiedRegOperands{
-            /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_ptr},
-                        {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_fifo},
-                        {/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::sub_avail}},
-            /*SrcOp=*/
-            {/*OpIdx=*/6, /*SubRegIdx=*/AIE2P::NoSubRegister,
-             /*SubRegsSplit=*/SplitPLFRReg}},
-        TiedRegOperands{
-            /*DstOps=*/{{/*OpIdx=*/4, /*SubRegIdx=*/AIE2P::sub_dim_count},
-                        {/*OpIdx=*/5,
-                         /*SubRegIdx=*/AIE2P::sub_hi_dim_then_sub_dim_count}},
-            /*SrcOp=*/
-            {/*OpIdx=*/7, /*SubRegIdx=*/AIE2P::NoSubRegister,
-             /*SubRegsSplit=*/Split3DReg}}};
+  // case AIE2P::VLDB_POPX_512:
+  //   return {TiedRegOperands{
+  //       /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_ptr},
+  //                   {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_fifo},
+  //                   {/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::sub_avail}},
+  //       /*SrcOp=*/
+  //       {/*OpIdx=*/6, /*SubRegIdx=*/AIE2P::NoSubRegister,
+  //        /*SubRegsSplit=*/SplitPLFRReg}}};
+  // case AIE2P::VLDA_POP_512_normal_pop:
+  // case AIE2P::VLDA_POP_544_normal_pop:
+  // case AIE2P::VLDA_POP_576_normal_pop:
+  // case AIE2P::VLDA_POP_640_normal_pop:
+  // case AIE2P::VLDA_POP_704_normal_pop:
+  // case AIE2P::VLDB_POP_512_normal_pop:
+  // case AIE2P::VLDB_POP_544_normal_pop:
+  // case AIE2P::VLDB_POP_576_normal_pop:
+  // case AIE2P::VLDB_POP_640_normal_pop:
+  // case AIE2P::VLDB_POP_704_normal_pop:
+  // case AIE2P::VLDA_POP_512_fifo_1d_pop:
+  // case AIE2P::VLDA_POP_544_fifo_1d_pop:
+  // case AIE2P::VLDA_POP_576_fifo_1d_pop:
+  // case AIE2P::VLDA_POP_640_fifo_1d_pop:
+  // case AIE2P::VLDA_POP_704_fifo_1d_pop:
+  // case AIE2P::VLDB_POP_512_fifo_1d_pop:
+  // case AIE2P::VLDB_POP_544_fifo_1d_pop:
+  // case AIE2P::VLDB_POP_576_fifo_1d_pop:
+  // case AIE2P::VLDB_POP_640_fifo_1d_pop:
+  // case AIE2P::VLDB_POP_704_fifo_1d_pop:
+  //   return {TiedRegOperands{
+  //       /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_ptr},
+  //                   {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_fifo},
+  //                   {/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::sub_avail}},
+  //       /*SrcOp=*/
+  //       {/*OpIdx=*/4, /*SubRegIdx=*/AIE2P::NoSubRegister,
+  //        /*SubRegsSplit=*/SplitPLFRReg}}};
+  // case AIE2P::VLDA_POP_512_2D:
+  // case AIE2P::VLDA_POP_544_2D:
+  // case AIE2P::VLDA_POP_576_2D:
+  // case AIE2P::VLDA_POP_640_2D:
+  // case AIE2P::VLDA_POP_704_2D:
+  // case AIE2P::VLDB_POP_512_2D:
+  // case AIE2P::VLDB_POP_544_2D:
+  // case AIE2P::VLDB_POP_576_2D:
+  // case AIE2P::VLDB_POP_640_2D:
+  // case AIE2P::VLDB_POP_704_2D:
+  //   return {TiedRegOperands{
+  //               /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_ptr},
+  //                           {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_fifo},
+  //                           {/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::sub_avail}},
+  //               /*SrcOp=*/
+  //               {/*OpIdx=*/5, /*SubRegIdx=*/AIE2P::NoSubRegister,
+  //                /*SubRegsSplit=*/SplitPLFRReg}},
+  //           TiedRegOperands{
+  //               /*DstOps=*/{{/*OpIdx=*/4,
+  //               /*SubRegIdx=*/AIE2P::sub_dim_count}},
+  //               /*SrcOp=*/
+  //               {/*OpIdx=*/6, /*SubRegIdx=*/AIE2P::NoSubRegister,
+  //                /*SubRegsSplit=*/Split2DReg}}};
+  // case AIE2P::VLDA_POP_512_3D:
+  // case AIE2P::VLDA_POP_544_3D:
+  // case AIE2P::VLDA_POP_576_3D:
+  // case AIE2P::VLDA_POP_640_3D:
+  // case AIE2P::VLDA_POP_704_3D:
+  // case AIE2P::VLDB_POP_512_3D:
+  // case AIE2P::VLDB_POP_544_3D:
+  // case AIE2P::VLDB_POP_576_3D:
+  // case AIE2P::VLDB_POP_640_3D:
+  // case AIE2P::VLDB_POP_704_3D:
+  //   return {
+  //       TiedRegOperands{
+  //           /*DstOps=*/{{/*OpIdx=*/1, /*SubRegIdx=*/AIE2P::sub_ptr},
+  //                       {/*OpIdx=*/2, /*SubRegIdx=*/AIE2P::sub_fifo},
+  //                       {/*OpIdx=*/3, /*SubRegIdx=*/AIE2P::sub_avail}},
+  //           /*SrcOp=*/
+  //           {/*OpIdx=*/6, /*SubRegIdx=*/AIE2P::NoSubRegister,
+  //            /*SubRegsSplit=*/SplitPLFRReg}},
+  //       TiedRegOperands{
+  //           /*DstOps=*/{{/*OpIdx=*/4, /*SubRegIdx=*/AIE2P::sub_dim_count},
+  //                       {/*OpIdx=*/5,
+  //                        /*SubRegIdx=*/AIE2P::sub_hi_dim_then_sub_dim_count}},
+  //           /*SrcOp=*/
+  //           {/*OpIdx=*/7, /*SubRegIdx=*/AIE2P::NoSubRegister,
+  //            /*SubRegsSplit=*/Split3DReg}}};
   default:
     return {};
   }
