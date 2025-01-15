@@ -266,8 +266,8 @@ body:             |
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:eldfiforeg = COPY killed $lf0
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:erf2 = COPY $r24
     ; CHECK-NEXT: [[VLDB_FILL_512_:%[0-9]+]]:ep_as_32bit_and_eps, [[VLDB_FILL_512_1:%[0-9]+]]:eldfiforeg, [[VLDB_FILL_512_2:%[0-9]+]]:erf2 = VLDB_FILL_512 killed [[COPY1]], killed [[COPY2]], killed [[COPY3]]
-    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:eldfifolreg = COPY [[VLDB_FILL_512_1]].sub_lo_lf
-    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:eldfifohreg = COPY killed [[VLDB_FILL_512_1]].sub_hi_lf
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:eldfifolreg = COPY [[VLDB_FILL_512_1]].sub_lo_fifo
+    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:eldfifohreg = COPY killed [[VLDB_FILL_512_1]].sub_hi_fifo
     ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm killed [[COPY5]], [[COPY]], 64 :: (store (<16 x s32>))
     ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm killed [[COPY4]], [[COPY]], 0 :: (store (<16 x s32>))
     ; CHECK-NEXT: PseudoRET implicit $lr
@@ -276,8 +276,8 @@ body:             |
     %101:eldfiforeg = COPY killed $lf0
     %102:erf2 = COPY $r24
     %7:ep_as_32bit_and_eps, %8:eldfiforeg, %9:erf2 = VLDB_FILL_512 killed %100:eps, killed %101:eldfiforeg, killed %102:erf2
-    %10:eldfifolreg = COPY %8.sub_lo_lf:eldfiforeg
-    %11:eldfifohreg = COPY killed %8.sub_hi_lf:eldfiforeg
+    %10:eldfifolreg = COPY %8.sub_lo_fifo:eldfiforeg
+    %11:eldfifohreg = COPY killed %8.sub_hi_fifo:eldfiforeg
     VST_dmx_sts_fifohl_idx_imm killed %11:eldfifohreg, %1:ep, 64 :: (store (<16 x s32>) )
     VST_dmx_sts_fifohl_idx_imm killed %10:eldfifolreg, %1:ep, 0 :: (store (<16 x s32>) )
     PseudoRET implicit $lr
