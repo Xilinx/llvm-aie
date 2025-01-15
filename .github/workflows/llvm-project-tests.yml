@@ -87,7 +87,8 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ inputs.python_version }}
+          python-version: 3.11.11
+          check-latest: true
       - name: Install Ninja
         if: runner.os != 'Linux'
         uses: llvm/actions/install-ninja@main
