@@ -380,10 +380,9 @@ body:             |
     ; GREEDY-NEXT: {{  $}}
     ; GREEDY-NEXT: [[DEF:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF1:%[0-9]+]]:ptrregbank(p0) = G_IMPLICIT_DEF
-    ; GREEDY-NEXT: [[DEF2:%[0-9]+]]:vregbank(<32 x s32>) = G_IMPLICIT_DEF
+    ; GREEDY-NEXT: [[DEF2:%[0-9]+]]:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF3:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
-    ; GREEDY-NEXT: [[COPY:%[0-9]+]]:fiforegbank(<32 x s32>) = COPY [[DEF2]](<32 x s32>)
-    ; GREEDY-NEXT: [[INT:%[0-9]+]]:vregbank(<64 x s8>), [[INT1:%[0-9]+]]:ptrregbank(p0), [[INT2:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT3:%[0-9]+]]:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.unaligned), [[DEF1]](p0), [[COPY]](<32 x s32>), [[DEF3]](s32)
+    ; GREEDY-NEXT: [[INT:%[0-9]+]]:vregbank(<64 x s8>), [[INT1:%[0-9]+]]:ptrregbank(p0), [[INT2:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT3:%[0-9]+]]:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.unaligned), [[DEF1]](p0), [[DEF2]](<32 x s32>), [[DEF3]](s32)
     ; GREEDY-NEXT: PseudoRET implicit $lr, implicit [[INT]](<64 x s8>), implicit [[INT1]](p0), implicit [[INT2]](<32 x s32>), implicit [[INT3]](s32)
     ;
     ; FAST-LABEL: name: pop_unaligned
@@ -391,10 +390,9 @@ body:             |
     ; FAST-NEXT: {{  $}}
     ; FAST-NEXT: [[DEF:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF1:%[0-9]+]]:ptrregbank(p0) = G_IMPLICIT_DEF
-    ; FAST-NEXT: [[DEF2:%[0-9]+]]:vregbank(<32 x s32>) = G_IMPLICIT_DEF
+    ; FAST-NEXT: [[DEF2:%[0-9]+]]:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF3:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
-    ; FAST-NEXT: [[COPY:%[0-9]+]]:fiforegbank(<32 x s32>) = COPY [[DEF2]](<32 x s32>)
-    ; FAST-NEXT: [[INT:%[0-9]+]]:vregbank(<64 x s8>), [[INT1:%[0-9]+]]:ptrregbank(p0), [[INT2:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT3:%[0-9]+]]:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.unaligned), [[DEF1]](p0), [[COPY]](<32 x s32>), [[DEF3]](s32)
+    ; FAST-NEXT: [[INT:%[0-9]+]]:vregbank(<64 x s8>), [[INT1:%[0-9]+]]:ptrregbank(p0), [[INT2:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT3:%[0-9]+]]:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.unaligned), [[DEF1]](p0), [[DEF2]](<32 x s32>), [[DEF3]](s32)
     ; FAST-NEXT: PseudoRET implicit $lr, implicit [[INT]](<64 x s8>), implicit [[INT1]](p0), implicit [[INT2]](<32 x s32>), implicit [[INT3]](s32)
     %3:_(s20) = G_IMPLICIT_DEF
     %5:_(p0) = G_IMPLICIT_DEF
@@ -418,10 +416,9 @@ body:             |
     ; GREEDY-NEXT: [[DEF:%[0-9]+]]:vregbank(<64 x s8>) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF1:%[0-9]+]]:gprregbank(<8 x s8>) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF2:%[0-9]+]]:ptrregbank(p0) = G_IMPLICIT_DEF
-    ; GREEDY-NEXT: [[DEF3:%[0-9]+]]:vregbank(<32 x s32>) = G_IMPLICIT_DEF
+    ; GREEDY-NEXT: [[DEF3:%[0-9]+]]:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF4:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
-    ; GREEDY-NEXT: [[COPY:%[0-9]+]]:fiforegbank(<32 x s32>) = COPY [[DEF3]](<32 x s32>)
-    ; GREEDY-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:vregbank(<64 x s8>), [[INT4:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.544.bfp16), [[DEF2]](p0), [[COPY]](<32 x s32>), [[DEF4]](s32), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
+    ; GREEDY-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:vregbank(<64 x s8>), [[INT4:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.544.bfp16), [[DEF2]](p0), [[DEF3]](<32 x s32>), [[DEF4]](s32), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
     ; GREEDY-NEXT: PseudoRET implicit $lr, implicit [[INT]](p0), implicit [[INT1]](<32 x s32>), implicit [[INT2]](s32), implicit [[INT3]](<64 x s8>), implicit [[INT4]](<8 x s8>)
     ;
     ; FAST-LABEL: name: pop_544
@@ -430,10 +427,9 @@ body:             |
     ; FAST-NEXT: [[DEF:%[0-9]+]]:vregbank(<64 x s8>) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF1:%[0-9]+]]:gprregbank(<8 x s8>) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF2:%[0-9]+]]:ptrregbank(p0) = G_IMPLICIT_DEF
-    ; FAST-NEXT: [[DEF3:%[0-9]+]]:vregbank(<32 x s32>) = G_IMPLICIT_DEF
+    ; FAST-NEXT: [[DEF3:%[0-9]+]]:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF4:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
-    ; FAST-NEXT: [[COPY:%[0-9]+]]:fiforegbank(<32 x s32>) = COPY [[DEF3]](<32 x s32>)
-    ; FAST-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:vregbank(<64 x s8>), [[INT4:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.544.bfp16), [[DEF2]](p0), [[COPY]](<32 x s32>), [[DEF4]](s32), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
+    ; FAST-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:vregbank(<64 x s8>), [[INT4:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.544.bfp16), [[DEF2]](p0), [[DEF3]](<32 x s32>), [[DEF4]](s32), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
     ; FAST-NEXT: PseudoRET implicit $lr, implicit [[INT]](p0), implicit [[INT1]](<32 x s32>), implicit [[INT2]](s32), implicit [[INT3]](<64 x s8>), implicit [[INT4]](<8 x s8>)
     %14:_(<64 x s8>) = G_IMPLICIT_DEF
     %15:_(<8 x s8>) = G_IMPLICIT_DEF
@@ -458,10 +454,9 @@ body:             |
     ; GREEDY-NEXT: [[DEF:%[0-9]+]]:vregbank(<64 x s8>) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF1:%[0-9]+]]:gprregbank(<8 x s8>) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF2:%[0-9]+]]:ptrregbank(p0) = G_IMPLICIT_DEF
-    ; GREEDY-NEXT: [[DEF3:%[0-9]+]]:vregbank(<32 x s32>) = G_IMPLICIT_DEF
+    ; GREEDY-NEXT: [[DEF3:%[0-9]+]]:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF4:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
-    ; GREEDY-NEXT: [[COPY:%[0-9]+]]:fiforegbank(<32 x s32>) = COPY [[DEF3]](<32 x s32>)
-    ; GREEDY-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:vregbank(<64 x s8>), [[INT4:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.576.bfp16), [[DEF2]](p0), [[COPY]](<32 x s32>), [[DEF4]](s32), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
+    ; GREEDY-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:vregbank(<64 x s8>), [[INT4:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.576.bfp16), [[DEF2]](p0), [[DEF3]](<32 x s32>), [[DEF4]](s32), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
     ; GREEDY-NEXT: PseudoRET implicit $lr, implicit [[INT]](p0), implicit [[INT1]](<32 x s32>), implicit [[INT2]](s32), implicit [[INT3]](<64 x s8>), implicit [[INT4]](<8 x s8>)
     ;
     ; FAST-LABEL: name: pop_576
@@ -470,10 +465,9 @@ body:             |
     ; FAST-NEXT: [[DEF:%[0-9]+]]:vregbank(<64 x s8>) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF1:%[0-9]+]]:gprregbank(<8 x s8>) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF2:%[0-9]+]]:ptrregbank(p0) = G_IMPLICIT_DEF
-    ; FAST-NEXT: [[DEF3:%[0-9]+]]:vregbank(<32 x s32>) = G_IMPLICIT_DEF
+    ; FAST-NEXT: [[DEF3:%[0-9]+]]:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF4:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
-    ; FAST-NEXT: [[COPY:%[0-9]+]]:fiforegbank(<32 x s32>) = COPY [[DEF3]](<32 x s32>)
-    ; FAST-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:vregbank(<64 x s8>), [[INT4:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.576.bfp16), [[DEF2]](p0), [[COPY]](<32 x s32>), [[DEF4]](s32), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
+    ; FAST-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:vregbank(<64 x s8>), [[INT4:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.576.bfp16), [[DEF2]](p0), [[DEF3]](<32 x s32>), [[DEF4]](s32), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
     ; FAST-NEXT: PseudoRET implicit $lr, implicit [[INT]](p0), implicit [[INT1]](<32 x s32>), implicit [[INT2]](s32), implicit [[INT3]](<64 x s8>), implicit [[INT4]](<8 x s8>)
     %14:_(<64 x s8>) = G_IMPLICIT_DEF
     %15:_(<8 x s8>) = G_IMPLICIT_DEF
@@ -496,22 +490,20 @@ body:             |
     ; GREEDY: liveins: $p0, $p1, $r0
     ; GREEDY-NEXT: {{  $}}
     ; GREEDY-NEXT: [[DEF:%[0-9]+]]:ptrregbank(p0) = G_IMPLICIT_DEF
-    ; GREEDY-NEXT: [[DEF1:%[0-9]+]]:vregbank(<32 x s32>) = G_IMPLICIT_DEF
+    ; GREEDY-NEXT: [[DEF1:%[0-9]+]]:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF2:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF3:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
-    ; GREEDY-NEXT: [[COPY:%[0-9]+]]:fiforegbank(<32 x s32>) = COPY [[DEF1]](<32 x s32>)
-    ; GREEDY-NEXT: [[INT:%[0-9]+]]:vregbank(<64 x s8>), [[INT1:%[0-9]+]]:ptrregbank(p0), [[INT2:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT3:%[0-9]+]]:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.1d.unaligned), [[DEF]](p0), [[COPY]](<32 x s32>), [[DEF2]](s32), [[DEF3]](s20)
+    ; GREEDY-NEXT: [[INT:%[0-9]+]]:vregbank(<64 x s8>), [[INT1:%[0-9]+]]:ptrregbank(p0), [[INT2:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT3:%[0-9]+]]:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.1d.unaligned), [[DEF]](p0), [[DEF1]](<32 x s32>), [[DEF2]](s32), [[DEF3]](s20)
     ; GREEDY-NEXT: PseudoRET implicit $lr, implicit [[INT]](<64 x s8>), implicit [[INT1]](p0), implicit [[INT2]](<32 x s32>), implicit [[INT3]](s32)
     ;
     ; FAST-LABEL: name: pop_unaligned_1d
     ; FAST: liveins: $p0, $p1, $r0
     ; FAST-NEXT: {{  $}}
     ; FAST-NEXT: [[DEF:%[0-9]+]]:ptrregbank(p0) = G_IMPLICIT_DEF
-    ; FAST-NEXT: [[DEF1:%[0-9]+]]:vregbank(<32 x s32>) = G_IMPLICIT_DEF
+    ; FAST-NEXT: [[DEF1:%[0-9]+]]:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF2:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF3:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
-    ; FAST-NEXT: [[COPY:%[0-9]+]]:fiforegbank(<32 x s32>) = COPY [[DEF1]](<32 x s32>)
-    ; FAST-NEXT: [[INT:%[0-9]+]]:vregbank(<64 x s8>), [[INT1:%[0-9]+]]:ptrregbank(p0), [[INT2:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT3:%[0-9]+]]:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.1d.unaligned), [[DEF]](p0), [[COPY]](<32 x s32>), [[DEF2]](s32), [[DEF3]](s20)
+    ; FAST-NEXT: [[INT:%[0-9]+]]:vregbank(<64 x s8>), [[INT1:%[0-9]+]]:ptrregbank(p0), [[INT2:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT3:%[0-9]+]]:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.1d.unaligned), [[DEF]](p0), [[DEF1]](<32 x s32>), [[DEF2]](s32), [[DEF3]](s20)
     ; FAST-NEXT: PseudoRET implicit $lr, implicit [[INT]](<64 x s8>), implicit [[INT1]](p0), implicit [[INT2]](<32 x s32>), implicit [[INT3]](s32)
     %6:_(p0) = G_IMPLICIT_DEF
     %7:_(<32 x s32>) = G_IMPLICIT_DEF
@@ -535,11 +527,10 @@ body:             |
     ; GREEDY-NEXT: [[DEF:%[0-9]+]]:vregbank(<64 x s8>) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF1:%[0-9]+]]:gprregbank(<8 x s8>) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF2:%[0-9]+]]:ptrregbank(p0) = G_IMPLICIT_DEF
-    ; GREEDY-NEXT: [[DEF3:%[0-9]+]]:vregbank(<32 x s32>) = G_IMPLICIT_DEF
+    ; GREEDY-NEXT: [[DEF3:%[0-9]+]]:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF4:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF5:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
-    ; GREEDY-NEXT: [[COPY:%[0-9]+]]:fiforegbank(<32 x s32>) = COPY [[DEF3]](<32 x s32>)
-    ; GREEDY-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:vregbank(<64 x s8>), [[INT4:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.544.1d.bfp16), [[DEF2]](p0), [[COPY]](<32 x s32>), [[DEF4]](s32), [[DEF5]](s20), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
+    ; GREEDY-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:vregbank(<64 x s8>), [[INT4:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.544.1d.bfp16), [[DEF2]](p0), [[DEF3]](<32 x s32>), [[DEF4]](s32), [[DEF5]](s20), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
     ; GREEDY-NEXT: PseudoRET implicit $lr, implicit [[INT]](p0), implicit [[INT1]](<32 x s32>), implicit [[INT2]](s32), implicit [[INT3]](<64 x s8>), implicit [[INT4]](<8 x s8>)
     ;
     ; FAST-LABEL: name: pop_544_1d
@@ -548,11 +539,10 @@ body:             |
     ; FAST-NEXT: [[DEF:%[0-9]+]]:vregbank(<64 x s8>) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF1:%[0-9]+]]:gprregbank(<8 x s8>) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF2:%[0-9]+]]:ptrregbank(p0) = G_IMPLICIT_DEF
-    ; FAST-NEXT: [[DEF3:%[0-9]+]]:vregbank(<32 x s32>) = G_IMPLICIT_DEF
+    ; FAST-NEXT: [[DEF3:%[0-9]+]]:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF4:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF5:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
-    ; FAST-NEXT: [[COPY:%[0-9]+]]:fiforegbank(<32 x s32>) = COPY [[DEF3]](<32 x s32>)
-    ; FAST-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:vregbank(<64 x s8>), [[INT4:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.544.1d.bfp16), [[DEF2]](p0), [[COPY]](<32 x s32>), [[DEF4]](s32), [[DEF5]](s20), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
+    ; FAST-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:vregbank(<64 x s8>), [[INT4:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.544.1d.bfp16), [[DEF2]](p0), [[DEF3]](<32 x s32>), [[DEF4]](s32), [[DEF5]](s20), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
     ; FAST-NEXT: PseudoRET implicit $lr, implicit [[INT]](p0), implicit [[INT1]](<32 x s32>), implicit [[INT2]](s32), implicit [[INT3]](<64 x s8>), implicit [[INT4]](<8 x s8>)
     %16:_(<64 x s8>) = G_IMPLICIT_DEF
     %17:_(<8 x s8>) = G_IMPLICIT_DEF
@@ -579,11 +569,10 @@ body:             |
     ; GREEDY-NEXT: [[DEF:%[0-9]+]]:vregbank(<64 x s8>) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF1:%[0-9]+]]:gprregbank(<8 x s8>) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF2:%[0-9]+]]:ptrregbank(p0) = G_IMPLICIT_DEF
-    ; GREEDY-NEXT: [[DEF3:%[0-9]+]]:vregbank(<32 x s32>) = G_IMPLICIT_DEF
+    ; GREEDY-NEXT: [[DEF3:%[0-9]+]]:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF4:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF5:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
-    ; GREEDY-NEXT: [[COPY:%[0-9]+]]:fiforegbank(<32 x s32>) = COPY [[DEF3]](<32 x s32>)
-    ; GREEDY-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:vregbank(<64 x s8>), [[INT4:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.576.1d.bfp16), [[DEF2]](p0), [[COPY]](<32 x s32>), [[DEF4]](s32), [[DEF5]](s20), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
+    ; GREEDY-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:vregbank(<64 x s8>), [[INT4:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.576.1d.bfp16), [[DEF2]](p0), [[DEF3]](<32 x s32>), [[DEF4]](s32), [[DEF5]](s20), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
     ; GREEDY-NEXT: PseudoRET implicit $lr, implicit [[INT]](p0), implicit [[INT1]](<32 x s32>), implicit [[INT2]](s32), implicit [[INT3]](<64 x s8>), implicit [[INT4]](<8 x s8>)
     ;
     ; FAST-LABEL: name: pop_576_1d
@@ -592,11 +581,10 @@ body:             |
     ; FAST-NEXT: [[DEF:%[0-9]+]]:vregbank(<64 x s8>) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF1:%[0-9]+]]:gprregbank(<8 x s8>) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF2:%[0-9]+]]:ptrregbank(p0) = G_IMPLICIT_DEF
-    ; FAST-NEXT: [[DEF3:%[0-9]+]]:vregbank(<32 x s32>) = G_IMPLICIT_DEF
+    ; FAST-NEXT: [[DEF3:%[0-9]+]]:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF4:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF5:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
-    ; FAST-NEXT: [[COPY:%[0-9]+]]:fiforegbank(<32 x s32>) = COPY [[DEF3]](<32 x s32>)
-    ; FAST-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:vregbank(<64 x s8>), [[INT4:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.576.1d.bfp16), [[DEF2]](p0), [[COPY]](<32 x s32>), [[DEF4]](s32), [[DEF5]](s20), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
+    ; FAST-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:vregbank(<64 x s8>), [[INT4:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.576.1d.bfp16), [[DEF2]](p0), [[DEF3]](<32 x s32>), [[DEF4]](s32), [[DEF5]](s20), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
     ; FAST-NEXT: PseudoRET implicit $lr, implicit [[INT]](p0), implicit [[INT1]](<32 x s32>), implicit [[INT2]](s32), implicit [[INT3]](<64 x s8>), implicit [[INT4]](<8 x s8>)
     %16:_(<64 x s8>) = G_IMPLICIT_DEF
     %17:_(<8 x s8>) = G_IMPLICIT_DEF
@@ -620,28 +608,26 @@ body:             |
     ; GREEDY: liveins: $p0, $p1, $p2, $r0, $r1, $r2
     ; GREEDY-NEXT: {{  $}}
     ; GREEDY-NEXT: [[DEF:%[0-9]+]]:ptrregbank(p0) = G_IMPLICIT_DEF
-    ; GREEDY-NEXT: [[DEF1:%[0-9]+]]:vregbank(<32 x s32>) = G_IMPLICIT_DEF
+    ; GREEDY-NEXT: [[DEF1:%[0-9]+]]:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF2:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF3:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF4:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF5:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF6:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
-    ; GREEDY-NEXT: [[COPY:%[0-9]+]]:fiforegbank(<32 x s32>) = COPY [[DEF1]](<32 x s32>)
-    ; GREEDY-NEXT: [[INT:%[0-9]+]]:vregbank(<64 x s8>), [[INT1:%[0-9]+]]:ptrregbank(p0), [[INT2:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT3:%[0-9]+]]:gprregbank(s32), [[INT4:%[0-9]+]]:modregbank(s20) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.2d.unaligned), [[DEF]](p0), [[COPY]](<32 x s32>), [[DEF2]](s32), [[DEF3]](s20), [[DEF4]](s20), [[DEF5]](s20), [[DEF6]](s20)
+    ; GREEDY-NEXT: [[INT:%[0-9]+]]:vregbank(<64 x s8>), [[INT1:%[0-9]+]]:ptrregbank(p0), [[INT2:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT3:%[0-9]+]]:gprregbank(s32), [[INT4:%[0-9]+]]:modregbank(s20) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.2d.unaligned), [[DEF]](p0), [[DEF1]](<32 x s32>), [[DEF2]](s32), [[DEF3]](s20), [[DEF4]](s20), [[DEF5]](s20), [[DEF6]](s20)
     ; GREEDY-NEXT: PseudoRET implicit $lr, implicit [[INT]](<64 x s8>), implicit [[INT1]](p0), implicit [[INT2]](<32 x s32>), implicit [[INT3]](s32), implicit [[INT4]](s20)
     ;
     ; FAST-LABEL: name: pop_unaligned_2d
     ; FAST: liveins: $p0, $p1, $p2, $r0, $r1, $r2
     ; FAST-NEXT: {{  $}}
     ; FAST-NEXT: [[DEF:%[0-9]+]]:ptrregbank(p0) = G_IMPLICIT_DEF
-    ; FAST-NEXT: [[DEF1:%[0-9]+]]:vregbank(<32 x s32>) = G_IMPLICIT_DEF
+    ; FAST-NEXT: [[DEF1:%[0-9]+]]:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF2:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF3:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF4:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF5:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF6:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
-    ; FAST-NEXT: [[COPY:%[0-9]+]]:fiforegbank(<32 x s32>) = COPY [[DEF1]](<32 x s32>)
-    ; FAST-NEXT: [[INT:%[0-9]+]]:vregbank(<64 x s8>), [[INT1:%[0-9]+]]:ptrregbank(p0), [[INT2:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT3:%[0-9]+]]:gprregbank(s32), [[INT4:%[0-9]+]]:modregbank(s20) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.2d.unaligned), [[DEF]](p0), [[COPY]](<32 x s32>), [[DEF2]](s32), [[DEF3]](s20), [[DEF4]](s20), [[DEF5]](s20), [[DEF6]](s20)
+    ; FAST-NEXT: [[INT:%[0-9]+]]:vregbank(<64 x s8>), [[INT1:%[0-9]+]]:ptrregbank(p0), [[INT2:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT3:%[0-9]+]]:gprregbank(s32), [[INT4:%[0-9]+]]:modregbank(s20) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.2d.unaligned), [[DEF]](p0), [[DEF1]](<32 x s32>), [[DEF2]](s32), [[DEF3]](s20), [[DEF4]](s20), [[DEF5]](s20), [[DEF6]](s20)
     ; FAST-NEXT: PseudoRET implicit $lr, implicit [[INT]](<64 x s8>), implicit [[INT1]](p0), implicit [[INT2]](<32 x s32>), implicit [[INT3]](s32), implicit [[INT4]](s20)
     %9:_(p0) = G_IMPLICIT_DEF
     %10:_(<32 x s32>) = G_IMPLICIT_DEF
@@ -669,14 +655,13 @@ body:             |
     ; GREEDY-NEXT: [[DEF:%[0-9]+]]:vregbank(<64 x s8>) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF1:%[0-9]+]]:gprregbank(<8 x s8>) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF2:%[0-9]+]]:ptrregbank(p0) = G_IMPLICIT_DEF
-    ; GREEDY-NEXT: [[DEF3:%[0-9]+]]:vregbank(<32 x s32>) = G_IMPLICIT_DEF
+    ; GREEDY-NEXT: [[DEF3:%[0-9]+]]:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF4:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF5:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF6:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF7:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF8:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
-    ; GREEDY-NEXT: [[COPY:%[0-9]+]]:fiforegbank(<32 x s32>) = COPY [[DEF3]](<32 x s32>)
-    ; GREEDY-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:modregbank(s20), [[INT4:%[0-9]+]]:vregbank(<64 x s8>), [[INT5:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.544.2d.bfp16), [[DEF2]](p0), [[COPY]](<32 x s32>), [[DEF4]](s32), [[DEF5]](s20), [[DEF6]](s20), [[DEF7]](s20), [[DEF8]](s20), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
+    ; GREEDY-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:modregbank(s20), [[INT4:%[0-9]+]]:vregbank(<64 x s8>), [[INT5:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.544.2d.bfp16), [[DEF2]](p0), [[DEF3]](<32 x s32>), [[DEF4]](s32), [[DEF5]](s20), [[DEF6]](s20), [[DEF7]](s20), [[DEF8]](s20), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
     ; GREEDY-NEXT: PseudoRET implicit $lr, implicit [[INT4]](<64 x s8>), implicit [[INT5]](<8 x s8>), implicit [[INT]](p0), implicit [[INT1]](<32 x s32>), implicit [[INT2]](s32), implicit [[INT3]](s20)
     ;
     ; FAST-LABEL: name: pop_544_2d
@@ -685,14 +670,13 @@ body:             |
     ; FAST-NEXT: [[DEF:%[0-9]+]]:vregbank(<64 x s8>) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF1:%[0-9]+]]:gprregbank(<8 x s8>) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF2:%[0-9]+]]:ptrregbank(p0) = G_IMPLICIT_DEF
-    ; FAST-NEXT: [[DEF3:%[0-9]+]]:vregbank(<32 x s32>) = G_IMPLICIT_DEF
+    ; FAST-NEXT: [[DEF3:%[0-9]+]]:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF4:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF5:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF6:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF7:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF8:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
-    ; FAST-NEXT: [[COPY:%[0-9]+]]:fiforegbank(<32 x s32>) = COPY [[DEF3]](<32 x s32>)
-    ; FAST-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:modregbank(s20), [[INT4:%[0-9]+]]:vregbank(<64 x s8>), [[INT5:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.544.2d.bfp16), [[DEF2]](p0), [[COPY]](<32 x s32>), [[DEF4]](s32), [[DEF5]](s20), [[DEF6]](s20), [[DEF7]](s20), [[DEF8]](s20), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
+    ; FAST-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:modregbank(s20), [[INT4:%[0-9]+]]:vregbank(<64 x s8>), [[INT5:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.544.2d.bfp16), [[DEF2]](p0), [[DEF3]](<32 x s32>), [[DEF4]](s32), [[DEF5]](s20), [[DEF6]](s20), [[DEF7]](s20), [[DEF8]](s20), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
     ; FAST-NEXT: PseudoRET implicit $lr, implicit [[INT4]](<64 x s8>), implicit [[INT5]](<8 x s8>), implicit [[INT]](p0), implicit [[INT1]](<32 x s32>), implicit [[INT2]](s32), implicit [[INT3]](s20)
     %24:_(<64 x s8>) = G_IMPLICIT_DEF
     %25:_(<8 x s8>) = G_IMPLICIT_DEF
@@ -722,14 +706,13 @@ body:             |
     ; GREEDY-NEXT: [[DEF:%[0-9]+]]:vregbank(<64 x s8>) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF1:%[0-9]+]]:gprregbank(<8 x s8>) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF2:%[0-9]+]]:ptrregbank(p0) = G_IMPLICIT_DEF
-    ; GREEDY-NEXT: [[DEF3:%[0-9]+]]:vregbank(<32 x s32>) = G_IMPLICIT_DEF
+    ; GREEDY-NEXT: [[DEF3:%[0-9]+]]:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF4:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF5:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF6:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF7:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF8:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
-    ; GREEDY-NEXT: [[COPY:%[0-9]+]]:fiforegbank(<32 x s32>) = COPY [[DEF3]](<32 x s32>)
-    ; GREEDY-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:modregbank(s20), [[INT4:%[0-9]+]]:vregbank(<64 x s8>), [[INT5:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.576.2d.bfp16), [[DEF2]](p0), [[COPY]](<32 x s32>), [[DEF4]](s32), [[DEF5]](s20), [[DEF6]](s20), [[DEF7]](s20), [[DEF8]](s20), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
+    ; GREEDY-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:modregbank(s20), [[INT4:%[0-9]+]]:vregbank(<64 x s8>), [[INT5:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.576.2d.bfp16), [[DEF2]](p0), [[DEF3]](<32 x s32>), [[DEF4]](s32), [[DEF5]](s20), [[DEF6]](s20), [[DEF7]](s20), [[DEF8]](s20), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
     ; GREEDY-NEXT: PseudoRET implicit $lr, implicit [[INT4]](<64 x s8>), implicit [[INT5]](<8 x s8>), implicit [[INT]](p0), implicit [[INT1]](<32 x s32>), implicit [[INT2]](s32), implicit [[INT3]](s20)
     ;
     ; FAST-LABEL: name: pop_576_2d
@@ -738,14 +721,13 @@ body:             |
     ; FAST-NEXT: [[DEF:%[0-9]+]]:vregbank(<64 x s8>) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF1:%[0-9]+]]:gprregbank(<8 x s8>) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF2:%[0-9]+]]:ptrregbank(p0) = G_IMPLICIT_DEF
-    ; FAST-NEXT: [[DEF3:%[0-9]+]]:vregbank(<32 x s32>) = G_IMPLICIT_DEF
+    ; FAST-NEXT: [[DEF3:%[0-9]+]]:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF4:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF5:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF6:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF7:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF8:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
-    ; FAST-NEXT: [[COPY:%[0-9]+]]:fiforegbank(<32 x s32>) = COPY [[DEF3]](<32 x s32>)
-    ; FAST-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:modregbank(s20), [[INT4:%[0-9]+]]:vregbank(<64 x s8>), [[INT5:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.576.2d.bfp16), [[DEF2]](p0), [[COPY]](<32 x s32>), [[DEF4]](s32), [[DEF5]](s20), [[DEF6]](s20), [[DEF7]](s20), [[DEF8]](s20), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
+    ; FAST-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:modregbank(s20), [[INT4:%[0-9]+]]:vregbank(<64 x s8>), [[INT5:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.576.2d.bfp16), [[DEF2]](p0), [[DEF3]](<32 x s32>), [[DEF4]](s32), [[DEF5]](s20), [[DEF6]](s20), [[DEF7]](s20), [[DEF8]](s20), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
     ; FAST-NEXT: PseudoRET implicit $lr, implicit [[INT4]](<64 x s8>), implicit [[INT5]](<8 x s8>), implicit [[INT]](p0), implicit [[INT1]](<32 x s32>), implicit [[INT2]](s32), implicit [[INT3]](s20)
     %24:_(<64 x s8>) = G_IMPLICIT_DEF
     %25:_(<8 x s8>) = G_IMPLICIT_DEF
@@ -773,7 +755,7 @@ body:             |
     ; GREEDY: liveins: $p0, $p1, $p2, $p3, $r0, $r1, $r2, $r3, $r4
     ; GREEDY-NEXT: {{  $}}
     ; GREEDY-NEXT: [[DEF:%[0-9]+]]:ptrregbank(p0) = G_IMPLICIT_DEF
-    ; GREEDY-NEXT: [[DEF1:%[0-9]+]]:vregbank(<32 x s32>) = G_IMPLICIT_DEF
+    ; GREEDY-NEXT: [[DEF1:%[0-9]+]]:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF2:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF3:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF4:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
@@ -782,15 +764,14 @@ body:             |
     ; GREEDY-NEXT: [[DEF7:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF8:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF9:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
-    ; GREEDY-NEXT: [[COPY:%[0-9]+]]:fiforegbank(<32 x s32>) = COPY [[DEF1]](<32 x s32>)
-    ; GREEDY-NEXT: [[INT:%[0-9]+]]:vregbank(<64 x s8>), [[INT1:%[0-9]+]]:ptrregbank(p0), [[INT2:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT3:%[0-9]+]]:gprregbank(s32), [[INT4:%[0-9]+]]:modregbank(s20), [[INT5:%[0-9]+]]:modregbank(s20) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.3d.unaligned), [[DEF]](p0), [[COPY]](<32 x s32>), [[DEF2]](s32), [[DEF3]](s20), [[DEF4]](s20), [[DEF5]](s20), [[DEF6]](s20), [[DEF7]](s20), [[DEF8]](s20), [[DEF9]](s20)
+    ; GREEDY-NEXT: [[INT:%[0-9]+]]:vregbank(<64 x s8>), [[INT1:%[0-9]+]]:ptrregbank(p0), [[INT2:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT3:%[0-9]+]]:gprregbank(s32), [[INT4:%[0-9]+]]:modregbank(s20), [[INT5:%[0-9]+]]:modregbank(s20) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.3d.unaligned), [[DEF]](p0), [[DEF1]](<32 x s32>), [[DEF2]](s32), [[DEF3]](s20), [[DEF4]](s20), [[DEF5]](s20), [[DEF6]](s20), [[DEF7]](s20), [[DEF8]](s20), [[DEF9]](s20)
     ; GREEDY-NEXT: PseudoRET implicit $lr, implicit [[INT]](<64 x s8>), implicit [[INT1]](p0), implicit [[INT2]](<32 x s32>), implicit [[INT3]](s32), implicit [[INT4]](s20), implicit [[INT5]](s20)
     ;
     ; FAST-LABEL: name: pop_unaligned_3d
     ; FAST: liveins: $p0, $p1, $p2, $p3, $r0, $r1, $r2, $r3, $r4
     ; FAST-NEXT: {{  $}}
     ; FAST-NEXT: [[DEF:%[0-9]+]]:ptrregbank(p0) = G_IMPLICIT_DEF
-    ; FAST-NEXT: [[DEF1:%[0-9]+]]:vregbank(<32 x s32>) = G_IMPLICIT_DEF
+    ; FAST-NEXT: [[DEF1:%[0-9]+]]:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF2:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF3:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF4:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
@@ -799,8 +780,7 @@ body:             |
     ; FAST-NEXT: [[DEF7:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF8:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF9:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
-    ; FAST-NEXT: [[COPY:%[0-9]+]]:fiforegbank(<32 x s32>) = COPY [[DEF1]](<32 x s32>)
-    ; FAST-NEXT: [[INT:%[0-9]+]]:vregbank(<64 x s8>), [[INT1:%[0-9]+]]:ptrregbank(p0), [[INT2:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT3:%[0-9]+]]:gprregbank(s32), [[INT4:%[0-9]+]]:modregbank(s20), [[INT5:%[0-9]+]]:modregbank(s20) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.3d.unaligned), [[DEF]](p0), [[COPY]](<32 x s32>), [[DEF2]](s32), [[DEF3]](s20), [[DEF4]](s20), [[DEF5]](s20), [[DEF6]](s20), [[DEF7]](s20), [[DEF8]](s20), [[DEF9]](s20)
+    ; FAST-NEXT: [[INT:%[0-9]+]]:vregbank(<64 x s8>), [[INT1:%[0-9]+]]:ptrregbank(p0), [[INT2:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT3:%[0-9]+]]:gprregbank(s32), [[INT4:%[0-9]+]]:modregbank(s20), [[INT5:%[0-9]+]]:modregbank(s20) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.3d.unaligned), [[DEF]](p0), [[DEF1]](<32 x s32>), [[DEF2]](s32), [[DEF3]](s20), [[DEF4]](s20), [[DEF5]](s20), [[DEF6]](s20), [[DEF7]](s20), [[DEF8]](s20), [[DEF9]](s20)
     ; FAST-NEXT: PseudoRET implicit $lr, implicit [[INT]](<64 x s8>), implicit [[INT1]](p0), implicit [[INT2]](<32 x s32>), implicit [[INT3]](s32), implicit [[INT4]](s20), implicit [[INT5]](s20)
     %12:_(p0) = G_IMPLICIT_DEF
     %13:_(<32 x s32>) = G_IMPLICIT_DEF
@@ -830,7 +810,7 @@ body:             |
     ; GREEDY-NEXT: [[DEF:%[0-9]+]]:vregbank(<64 x s8>) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF1:%[0-9]+]]:gprregbank(<8 x s8>) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF2:%[0-9]+]]:ptrregbank(p0) = G_IMPLICIT_DEF
-    ; GREEDY-NEXT: [[DEF3:%[0-9]+]]:vregbank(<32 x s32>) = G_IMPLICIT_DEF
+    ; GREEDY-NEXT: [[DEF3:%[0-9]+]]:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF4:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF5:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF6:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
@@ -839,8 +819,7 @@ body:             |
     ; GREEDY-NEXT: [[DEF9:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF10:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF11:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
-    ; GREEDY-NEXT: [[COPY:%[0-9]+]]:fiforegbank(<32 x s32>) = COPY [[DEF3]](<32 x s32>)
-    ; GREEDY-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:modregbank(s20), [[INT4:%[0-9]+]]:modregbank(s20), [[INT5:%[0-9]+]]:vregbank(<64 x s8>), [[INT6:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.544.3d.bfp16), [[DEF2]](p0), [[COPY]](<32 x s32>), [[DEF4]](s32), [[DEF5]](s20), [[DEF6]](s20), [[DEF7]](s20), [[DEF8]](s20), [[DEF9]](s20), [[DEF10]](s20), [[DEF11]](s20), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
+    ; GREEDY-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:modregbank(s20), [[INT4:%[0-9]+]]:modregbank(s20), [[INT5:%[0-9]+]]:vregbank(<64 x s8>), [[INT6:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.544.3d.bfp16), [[DEF2]](p0), [[DEF3]](<32 x s32>), [[DEF4]](s32), [[DEF5]](s20), [[DEF6]](s20), [[DEF7]](s20), [[DEF8]](s20), [[DEF9]](s20), [[DEF10]](s20), [[DEF11]](s20), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
     ; GREEDY-NEXT: PseudoRET implicit $lr, implicit [[DEF11]](s20), implicit [[INT]](p0), implicit [[INT1]](<32 x s32>), implicit [[INT2]](s32), implicit [[INT3]](s20), implicit [[INT4]](s20)
     ;
     ; FAST-LABEL: name: pop_544_3d
@@ -849,7 +828,7 @@ body:             |
     ; FAST-NEXT: [[DEF:%[0-9]+]]:vregbank(<64 x s8>) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF1:%[0-9]+]]:gprregbank(<8 x s8>) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF2:%[0-9]+]]:ptrregbank(p0) = G_IMPLICIT_DEF
-    ; FAST-NEXT: [[DEF3:%[0-9]+]]:vregbank(<32 x s32>) = G_IMPLICIT_DEF
+    ; FAST-NEXT: [[DEF3:%[0-9]+]]:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF4:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF5:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF6:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
@@ -858,8 +837,7 @@ body:             |
     ; FAST-NEXT: [[DEF9:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF10:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF11:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
-    ; FAST-NEXT: [[COPY:%[0-9]+]]:fiforegbank(<32 x s32>) = COPY [[DEF3]](<32 x s32>)
-    ; FAST-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:modregbank(s20), [[INT4:%[0-9]+]]:modregbank(s20), [[INT5:%[0-9]+]]:vregbank(<64 x s8>), [[INT6:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.544.3d.bfp16), [[DEF2]](p0), [[COPY]](<32 x s32>), [[DEF4]](s32), [[DEF5]](s20), [[DEF6]](s20), [[DEF7]](s20), [[DEF8]](s20), [[DEF9]](s20), [[DEF10]](s20), [[DEF11]](s20), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
+    ; FAST-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:modregbank(s20), [[INT4:%[0-9]+]]:modregbank(s20), [[INT5:%[0-9]+]]:vregbank(<64 x s8>), [[INT6:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.544.3d.bfp16), [[DEF2]](p0), [[DEF3]](<32 x s32>), [[DEF4]](s32), [[DEF5]](s20), [[DEF6]](s20), [[DEF7]](s20), [[DEF8]](s20), [[DEF9]](s20), [[DEF10]](s20), [[DEF11]](s20), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
     ; FAST-NEXT: PseudoRET implicit $lr, implicit [[DEF11]](s20), implicit [[INT]](p0), implicit [[INT1]](<32 x s32>), implicit [[INT2]](s32), implicit [[INT3]](s20), implicit [[INT4]](s20)
     %32:_(<64 x s8>) = G_IMPLICIT_DEF
     %33:_(<8 x s8>) = G_IMPLICIT_DEF
@@ -891,7 +869,7 @@ body:             |
     ; GREEDY-NEXT: [[DEF:%[0-9]+]]:vregbank(<64 x s8>) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF1:%[0-9]+]]:gprregbank(<8 x s8>) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF2:%[0-9]+]]:ptrregbank(p0) = G_IMPLICIT_DEF
-    ; GREEDY-NEXT: [[DEF3:%[0-9]+]]:vregbank(<32 x s32>) = G_IMPLICIT_DEF
+    ; GREEDY-NEXT: [[DEF3:%[0-9]+]]:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF4:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF5:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF6:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
@@ -900,8 +878,7 @@ body:             |
     ; GREEDY-NEXT: [[DEF9:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF10:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF11:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
-    ; GREEDY-NEXT: [[COPY:%[0-9]+]]:fiforegbank(<32 x s32>) = COPY [[DEF3]](<32 x s32>)
-    ; GREEDY-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:modregbank(s20), [[INT4:%[0-9]+]]:modregbank(s20), [[INT5:%[0-9]+]]:vregbank(<64 x s8>), [[INT6:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.576.3d.bfp16), [[DEF2]](p0), [[COPY]](<32 x s32>), [[DEF4]](s32), [[DEF5]](s20), [[DEF6]](s20), [[DEF7]](s20), [[DEF8]](s20), [[DEF9]](s20), [[DEF10]](s20), [[DEF11]](s20), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
+    ; GREEDY-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:modregbank(s20), [[INT4:%[0-9]+]]:modregbank(s20), [[INT5:%[0-9]+]]:vregbank(<64 x s8>), [[INT6:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.576.3d.bfp16), [[DEF2]](p0), [[DEF3]](<32 x s32>), [[DEF4]](s32), [[DEF5]](s20), [[DEF6]](s20), [[DEF7]](s20), [[DEF8]](s20), [[DEF9]](s20), [[DEF10]](s20), [[DEF11]](s20), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
     ; GREEDY-NEXT: PseudoRET implicit $lr, implicit [[INT5]](<64 x s8>), implicit [[INT6]](<8 x s8>), implicit [[INT]](p0), implicit [[INT1]](<32 x s32>), implicit [[INT2]](s32), implicit [[INT3]](s20), implicit [[INT4]](s20)
     ;
     ; FAST-LABEL: name: pop_576_3d
@@ -910,7 +887,7 @@ body:             |
     ; FAST-NEXT: [[DEF:%[0-9]+]]:vregbank(<64 x s8>) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF1:%[0-9]+]]:gprregbank(<8 x s8>) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF2:%[0-9]+]]:ptrregbank(p0) = G_IMPLICIT_DEF
-    ; FAST-NEXT: [[DEF3:%[0-9]+]]:vregbank(<32 x s32>) = G_IMPLICIT_DEF
+    ; FAST-NEXT: [[DEF3:%[0-9]+]]:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF4:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF5:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF6:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
@@ -919,8 +896,7 @@ body:             |
     ; FAST-NEXT: [[DEF9:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF10:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF11:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
-    ; FAST-NEXT: [[COPY:%[0-9]+]]:fiforegbank(<32 x s32>) = COPY [[DEF3]](<32 x s32>)
-    ; FAST-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:modregbank(s20), [[INT4:%[0-9]+]]:modregbank(s20), [[INT5:%[0-9]+]]:vregbank(<64 x s8>), [[INT6:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.576.3d.bfp16), [[DEF2]](p0), [[COPY]](<32 x s32>), [[DEF4]](s32), [[DEF5]](s20), [[DEF6]](s20), [[DEF7]](s20), [[DEF8]](s20), [[DEF9]](s20), [[DEF10]](s20), [[DEF11]](s20), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
+    ; FAST-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:modregbank(s20), [[INT4:%[0-9]+]]:modregbank(s20), [[INT5:%[0-9]+]]:vregbank(<64 x s8>), [[INT6:%[0-9]+]]:gprregbank(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.576.3d.bfp16), [[DEF2]](p0), [[DEF3]](<32 x s32>), [[DEF4]](s32), [[DEF5]](s20), [[DEF6]](s20), [[DEF7]](s20), [[DEF8]](s20), [[DEF9]](s20), [[DEF10]](s20), [[DEF11]](s20), [[DEF]](<64 x s8>), [[DEF1]](<8 x s8>)
     ; FAST-NEXT: PseudoRET implicit $lr, implicit [[INT5]](<64 x s8>), implicit [[INT6]](<8 x s8>), implicit [[INT]](p0), implicit [[INT1]](<32 x s32>), implicit [[INT2]](s32), implicit [[INT3]](s20), implicit [[INT4]](s20)
     %32:_(<64 x s8>) = G_IMPLICIT_DEF
     %33:_(<8 x s8>) = G_IMPLICIT_DEF
@@ -947,25 +923,21 @@ body:             |
     ; GREEDY-LABEL: name: test_fifo_ld_fillx
     ; GREEDY: [[DEF:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF1:%[0-9]+]]:ptrregbank(p0) = G_IMPLICIT_DEF
-    ; GREEDY-NEXT: [[DEF2:%[0-9]+]]:vregbank(<32 x s32>) = G_IMPLICIT_DEF
+    ; GREEDY-NEXT: [[DEF2:%[0-9]+]]:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF3:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
-    ; GREEDY-NEXT: [[DEF4:%[0-9]+]]:vregbank(<16 x s32>) = G_IMPLICIT_DEF
+    ; GREEDY-NEXT: [[DEF4:%[0-9]+]]:fiforegbank(<16 x s32>) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF5:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
-    ; GREEDY-NEXT: [[COPY:%[0-9]+]]:fiforegbank(<32 x s32>) = COPY [[DEF2]](<32 x s32>)
-    ; GREEDY-NEXT: [[COPY1:%[0-9]+]]:fiforegbank(<16 x s32>) = COPY [[DEF4]](<16 x s32>)
-    ; GREEDY-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:fiforegbank(<16 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.fillx), [[DEF1]](p0), [[COPY]](<32 x s32>), [[DEF3]](s32), [[COPY1]](<16 x s32>), [[DEF5]](s32)
+    ; GREEDY-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:fiforegbank(<16 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.fillx), [[DEF1]](p0), [[DEF2]](<32 x s32>), [[DEF3]](s32), [[DEF4]](<16 x s32>), [[DEF5]](s32)
     ; GREEDY-NEXT: PseudoRET implicit $lr, implicit [[INT]](p0), implicit [[INT1]](<32 x s32>), implicit [[INT2]](s32), implicit [[INT3]](<16 x s32>)
     ;
     ; FAST-LABEL: name: test_fifo_ld_fillx
     ; FAST: [[DEF:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF1:%[0-9]+]]:ptrregbank(p0) = G_IMPLICIT_DEF
-    ; FAST-NEXT: [[DEF2:%[0-9]+]]:vregbank(<32 x s32>) = G_IMPLICIT_DEF
+    ; FAST-NEXT: [[DEF2:%[0-9]+]]:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF3:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
-    ; FAST-NEXT: [[DEF4:%[0-9]+]]:vregbank(<16 x s32>) = G_IMPLICIT_DEF
+    ; FAST-NEXT: [[DEF4:%[0-9]+]]:fiforegbank(<16 x s32>) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF5:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
-    ; FAST-NEXT: [[COPY:%[0-9]+]]:fiforegbank(<32 x s32>) = COPY [[DEF2]](<32 x s32>)
-    ; FAST-NEXT: [[COPY1:%[0-9]+]]:fiforegbank(<16 x s32>) = COPY [[DEF4]](<16 x s32>)
-    ; FAST-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:fiforegbank(<16 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.fillx), [[DEF1]](p0), [[COPY]](<32 x s32>), [[DEF3]](s32), [[COPY1]](<16 x s32>), [[DEF5]](s32)
+    ; FAST-NEXT: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:fiforegbank(<16 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.fillx), [[DEF1]](p0), [[DEF2]](<32 x s32>), [[DEF3]](s32), [[DEF4]](<16 x s32>), [[DEF5]](s32)
     ; FAST-NEXT: PseudoRET implicit $lr, implicit [[INT]](p0), implicit [[INT1]](<32 x s32>), implicit [[INT2]](s32), implicit [[INT3]](<16 x s32>)
     %2:_(s20) = G_IMPLICIT_DEF
     %4:_(p0) = G_IMPLICIT_DEF
@@ -991,13 +963,11 @@ body:             |
     ; GREEDY-NEXT: {{  $}}
     ; GREEDY-NEXT: [[DEF:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF1:%[0-9]+]]:ptrregbank(p0) = G_IMPLICIT_DEF
-    ; GREEDY-NEXT: [[DEF2:%[0-9]+]]:vregbank(<32 x s32>) = G_IMPLICIT_DEF
+    ; GREEDY-NEXT: [[DEF2:%[0-9]+]]:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF3:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
-    ; GREEDY-NEXT: [[DEF4:%[0-9]+]]:vregbank(<16 x s32>) = G_IMPLICIT_DEF
+    ; GREEDY-NEXT: [[DEF4:%[0-9]+]]:fiforegbank(<16 x s32>) = G_IMPLICIT_DEF
     ; GREEDY-NEXT: [[DEF5:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
-    ; GREEDY-NEXT: [[COPY:%[0-9]+]]:fiforegbank(<32 x s32>) = COPY [[DEF2]](<32 x s32>)
-    ; GREEDY-NEXT: [[COPY1:%[0-9]+]]:fiforegbank(<16 x s32>) = COPY [[DEF4]](<16 x s32>)
-    ; GREEDY-NEXT: [[INT:%[0-9]+]]:vregbank(<64 x s8>), [[INT1:%[0-9]+]]:ptrregbank(p0), [[INT2:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT3:%[0-9]+]]:gprregbank(s32), [[INT4:%[0-9]+]]:fiforegbank(<16 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.popx), [[DEF1]](p0), [[COPY]](<32 x s32>), [[DEF3]](s32), [[COPY1]](<16 x s32>), [[DEF5]](s32)
+    ; GREEDY-NEXT: [[INT:%[0-9]+]]:vregbank(<64 x s8>), [[INT1:%[0-9]+]]:ptrregbank(p0), [[INT2:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT3:%[0-9]+]]:gprregbank(s32), [[INT4:%[0-9]+]]:fiforegbank(<16 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.popx), [[DEF1]](p0), [[DEF2]](<32 x s32>), [[DEF3]](s32), [[DEF4]](<16 x s32>), [[DEF5]](s32)
     ; GREEDY-NEXT: PseudoRET implicit $lr, implicit [[INT]](<64 x s8>), implicit [[INT1]](p0), implicit [[INT2]](<32 x s32>), implicit [[INT3]](s32), implicit [[INT4]](<16 x s32>)
     ;
     ; FAST-LABEL: name: test_fifo_ld_popx
@@ -1005,13 +975,11 @@ body:             |
     ; FAST-NEXT: {{  $}}
     ; FAST-NEXT: [[DEF:%[0-9]+]]:modregbank(s20) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF1:%[0-9]+]]:ptrregbank(p0) = G_IMPLICIT_DEF
-    ; FAST-NEXT: [[DEF2:%[0-9]+]]:vregbank(<32 x s32>) = G_IMPLICIT_DEF
+    ; FAST-NEXT: [[DEF2:%[0-9]+]]:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF3:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
-    ; FAST-NEXT: [[DEF4:%[0-9]+]]:vregbank(<16 x s32>) = G_IMPLICIT_DEF
+    ; FAST-NEXT: [[DEF4:%[0-9]+]]:fiforegbank(<16 x s32>) = G_IMPLICIT_DEF
     ; FAST-NEXT: [[DEF5:%[0-9]+]]:gprregbank(s32) = G_IMPLICIT_DEF
-    ; FAST-NEXT: [[COPY:%[0-9]+]]:fiforegbank(<32 x s32>) = COPY [[DEF2]](<32 x s32>)
-    ; FAST-NEXT: [[COPY1:%[0-9]+]]:fiforegbank(<16 x s32>) = COPY [[DEF4]](<16 x s32>)
-    ; FAST-NEXT: [[INT:%[0-9]+]]:vregbank(<64 x s8>), [[INT1:%[0-9]+]]:ptrregbank(p0), [[INT2:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT3:%[0-9]+]]:gprregbank(s32), [[INT4:%[0-9]+]]:fiforegbank(<16 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.popx), [[DEF1]](p0), [[COPY]](<32 x s32>), [[DEF3]](s32), [[COPY1]](<16 x s32>), [[DEF5]](s32)
+    ; FAST-NEXT: [[INT:%[0-9]+]]:vregbank(<64 x s8>), [[INT1:%[0-9]+]]:ptrregbank(p0), [[INT2:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT3:%[0-9]+]]:gprregbank(s32), [[INT4:%[0-9]+]]:fiforegbank(<16 x s32>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.popx), [[DEF1]](p0), [[DEF2]](<32 x s32>), [[DEF3]](s32), [[DEF4]](<16 x s32>), [[DEF5]](s32)
     ; FAST-NEXT: PseudoRET implicit $lr, implicit [[INT]](<64 x s8>), implicit [[INT1]](p0), implicit [[INT2]](<32 x s32>), implicit [[INT3]](s32), implicit [[INT4]](<16 x s32>)
     %3:_(s20) = G_IMPLICIT_DEF
     %5:_(p0) = G_IMPLICIT_DEF

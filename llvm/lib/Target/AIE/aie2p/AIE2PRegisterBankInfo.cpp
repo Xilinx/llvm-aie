@@ -31,6 +31,10 @@
 #include "AIE2PGenRegisterBank.inc"
 using namespace llvm;
 
+static llvm::cl::opt<unsigned>
+    MaxDepthBankSearch("aie-max-depth-bank-search", cl::Hidden, cl::init(4),
+                       cl::desc("Max depth search during RegBankSelect"));
+
 RegisterBankInfo::PartialMapping AIE2PGenRegisterBankInfo::PartMappings[]{
     // StartIdx, Length, RegBank
     // 0: GPR 32-bit value
@@ -745,56 +749,61 @@ bool AIE2PRegisterBankInfo::hasFifoInput(const MachineInstr &MI,
 
 bool AIE2PRegisterBankInfo::isUseAccInsn(const MachineRegisterInfo &MRI,
                                          const TargetRegisterInfo &TRI,
-                                         const Register &RegOp) const {
-  // Helper function to trace through COPY and G_BITCAST
-  auto traceToActualReg = [&](Register &Reg) {
-    for (auto &UseMI : MRI.use_nodbg_instructions(Reg)) {
-      MachineInstr *ConvUseMI = &UseMI;
-      unsigned ConvUseOpc = ConvUseMI->getOpcode();
-      // skip copies
-      while (ConvUseOpc == TargetOpcode::G_BITCAST ||
-             ConvUseOpc == TargetOpcode::COPY) {
-        Register DefReg = ConvUseMI->getOperand(0).getReg();
-        if (DefReg.isPhysical())
-          break;
-        Reg = DefReg;
-        if (MRI.use_empty(DefReg))
-          break;
-        ConvUseMI = &*MRI.use_instr_nodbg_begin(DefReg);
-        ConvUseOpc = ConvUseMI->getOpcode();
-      }
-    }
+                                         const Register &RegOp,
+                                         unsigned Depth) const {
+  if (Depth > MaxDepthBankSearch)
+    return false;
+
+  auto IsCopyToVReg = [](const MachineInstr &MI) {
+    return (MI.isCopy() && MI.getOperand(0).getReg().isVirtual());
   };
 
-  // Create a non-const copy of RegOp for tracing
-  Register TracedRegOp = RegOp;
+  for (auto &UseMI : MRI.use_nodbg_instructions(RegOp)) {
+    const unsigned UseOpcode = UseMI.getOpcode();
 
-  // Trace RegOp to its actual register, updating it if necessary
-  traceToActualReg(TracedRegOp);
-
-  // Now check for accumulator-usage using the updated TracedRegOp
-  return any_of(MRI.use_nodbg_instructions(TracedRegOp),
-                [&](const MachineInstr &UseMI) {
-                  // Check if this instruction uses the accumulator register
-                  return (MRI.getType(TracedRegOp).getSizeInBits() == 2048) ||
-                         usesAccReg(UseMI, MRI, TRI, TracedRegOp);
-                });
+    // skip copies, bitcasts and phis
+    if (UseOpcode == TargetOpcode::G_BITCAST || IsCopyToVReg(UseMI) ||
+        UseMI.isPHI()) {
+      Register DefReg = UseMI.getOperand(0).getReg();
+      if (DefReg.isPhysical())
+        continue;
+      if (isUseAccInsn(MRI, TRI, DefReg, Depth + 1))
+        return true;
+    } else if (usesAccReg(UseMI, MRI, TRI, RegOp)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 // Check if RegOp is used as a fifo register.
 bool AIE2PRegisterBankInfo::isUseFifoInsn(const MachineRegisterInfo &MRI,
                                           const TargetRegisterInfo &TRI,
-                                          const Register RegOp) const {
-  // TODO: Trace RegOp to its actual definition ignoring COPY and G_BITCAST as
-  //       we do for accumulator bank.
-  //       Use getDefIgnoringCopiesAndBitcasts and refactor the code between
-  //       accumulator and fifo handling.
+                                          const Register RegOp,
+                                          unsigned Depth) const {
+  if (Depth > MaxDepthBankSearch)
+    return false;
 
-  return any_of(MRI.use_nodbg_instructions(RegOp),
-                [&](const MachineInstr &UseMI) {
-                  // Check if this instruction uses the accumulator register
-                  return hasFifoInput(UseMI, MRI, TRI, RegOp);
-                });
+  auto IsCopyToVReg = [](const MachineInstr &MI) {
+    return (MI.isCopy() && MI.getOperand(0).getReg().isVirtual());
+  };
+
+  for (auto &UseMI : MRI.use_nodbg_instructions(RegOp)) {
+    const unsigned UseOpcode = UseMI.getOpcode();
+
+    // skip copies, bitcasts and phis
+    if (UseOpcode == TargetOpcode::G_BITCAST || IsCopyToVReg(UseMI) ||
+        UseMI.isPHI()) {
+      Register DefReg = UseMI.getOperand(0).getReg();
+      if (DefReg.isPhysical())
+        continue;
+      if (isUseFifoInsn(MRI, TRI, DefReg, Depth + 1))
+        return true;
+    } else if (hasFifoInput(UseMI, MRI, TRI, RegOp)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 const RegisterBankInfo::InstructionMapping &
@@ -867,6 +876,10 @@ AIE2PRegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
       return AIEBaseRegisterBankInfo::getInstrMapping(MI);
     if (isUseAccInsn(MRI, TRI, DstReg)) {
       OpRegBankIdx[0] = getAccPartialMappingIdx(Type);
+      return AIEBaseRegisterBankInfo::getInstrMappingFinal(MI, Cost, OpSize,
+                                                           OpRegBankIdx);
+    } else if (isUseFifoInsn(MRI, TRI, DstReg)) {
+      OpRegBankIdx[0] = getFifoPartialMappingIdx(Type);
       return AIEBaseRegisterBankInfo::getInstrMappingFinal(MI, Cost, OpSize,
                                                            OpRegBankIdx);
     }
