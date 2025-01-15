@@ -4,13 +4,12 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
 #include "AIEBaseInstrInfo.h"
 #include "AIETiedRegOperands.h"
-
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/Passes.h"
@@ -70,12 +69,14 @@ bool AIESubRegConstrainer::runOnMachineFunction(MachineFunction &MF) {
 void AIESubRegConstrainer::replaceRegOperands(Register OldReg, Register NewReg,
                                               unsigned NewSubReg,
                                               MachineRegisterInfo &MRI) {
+
   const TargetRegisterInfo &TRI = *MRI.getTargetRegisterInfo();
+  assert(MRI.hasOneDef(OldReg) && "OldReg expected to be in SSA form.");
+
   for (MachineOperand &Op : make_early_inc_range(MRI.reg_operands(OldReg))) {
     Op.setReg(NewReg);
-
     // Compose the sub-register index if the dst operand already has
-    // subregisters
+    // subregisters.
     if (Op.getSubReg())
       Op.setSubReg(TRI.composeSubRegIndices(NewSubReg, Op.getSubReg()));
     else
@@ -91,55 +92,90 @@ void AIESubRegConstrainer::replaceRegOperands(Register OldReg, Register NewReg,
   }
 }
 
-static bool isTiedPair(const MachineInstr &MI,
-                       const OperandSubRegMapping &DstOp,
-                       const OperandSubRegMapping &SrcOp) {
-  if (MI.getOperand(DstOp.OpIdx).getReg() ==
-      MI.getOperand(SrcOp.OpIdx).getReg()) {
-    assert(MI.getOperand(DstOp.OpIdx).getSubReg() == DstOp.SubRegIdx &&
-           MI.getOperand(SrcOp.OpIdx).getSubReg() == SrcOp.SubRegIdx);
+static bool isTiedPair(const MachineInstr &MI, const OperandSubRegMapping &Op1,
+                       const OperandSubRegMapping &Op2) {
+  if (&Op1 == &Op2)
+    return true;
+  if (MI.getOperand(Op1.OpIdx).getReg() == MI.getOperand(Op2.OpIdx).getReg()) {
+    assert(MI.getOperand(Op1.OpIdx).getSubReg() == Op1.SubRegIdx &&
+           MI.getOperand(Op2.OpIdx).getSubReg() == Op2.SubRegIdx);
     return true;
   }
   return false;
 }
 
-void AIESubRegConstrainer::processTiedOperands(const TiedRegOperands &Regs,
+void AIESubRegConstrainer::processTiedOperands(const TiedRegOperands &Ties,
                                                MachineInstr &MI) {
-  assert(!MI.getOperand(Regs.SrcOp.OpIdx).getSubReg() && !Regs.SrcOp.SubRegIdx);
+  assert(Ties.SrcOps.size() >= 1);
   MachineFunction &MF = *MI.getParent()->getParent();
-  auto *TII = MF.getSubtarget().getInstrInfo();
+  const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
   MachineRegisterInfo &MRI = MF.getRegInfo();
 
-  if (all_of(Regs.DstOps, [&Regs, &MI](const OperandSubRegMapping &DstOp) {
-        return isTiedPair(MI, DstOp, Regs.SrcOp);
-      })) {
+  auto AreOperandsTied =
+      [&Ties, &MI](const SmallVector<OperandSubRegMapping, 4> &Ops) {
+        return all_of(Ops, [&](const OperandSubRegMapping &DstOp) {
+          return isTiedPair(MI, DstOp, Ties.SrcOps.front());
+        });
+      };
+
+  if (AreOperandsTied(Ties.SrcOps) && AreOperandsTied(Ties.DstOps)) {
     // Nothing to do if all registers are already tied.
     return;
   }
 
   // Create a new virtual register which will be used to replace all the uses
   // of tied destination registers, and the use of SrcReg in MI.
-  auto SrcReg = MI.getOperand(Regs.SrcOp.OpIdx).getReg();
-  auto CopyReg = MRI.createVirtualRegister(MRI.getRegClass(SrcReg));
+  const TargetRegisterClass *SuperRegRC = Ties.NewSuperClass;
+  if (!SuperRegRC) {
+    assert(Ties.SrcOps.size() == 1);
+    Register SrcReg = MI.getOperand(Ties.SrcOps.front().OpIdx).getReg();
+    SuperRegRC = MRI.getRegClass(SrcReg);
+  }
+  auto CopyOrRegSeq = MRI.createVirtualRegister(SuperRegRC);
 
-  for (const OperandSubRegMapping &DstOp : Regs.DstOps) {
+  // Rewrite register defs to use CopyOrRegSeq, and replace all register
+  // operands using the old register (now dead).
+  for (const OperandSubRegMapping &DstOp : Ties.DstOps) {
     auto DstReg = MI.getOperand(DstOp.OpIdx).getReg();
     LLVM_DEBUG(llvm::dbgs()
-               << "Rewriting tied pair: Dst=" << MI.getOperand(DstOp.OpIdx)
-               << " Src=" << MI.getOperand(Regs.SrcOp.OpIdx) << "\n");
-    // MI should be in SSA form and fully define its destination registers.
-    // Existing subregs make rewriting operands harder.
-    assert(!MI.getOperand(DstOp.OpIdx).getSubReg());
-    replaceRegOperands(DstReg, CopyReg, DstOp.SubRegIdx, MRI);
-  }
-  MI.getOperand(Regs.SrcOp.OpIdx).setReg(CopyReg);
-  MI.getOperand(Regs.SrcOp.OpIdx).setIsKill(false);
+               << "Rewriting tied pair: Dst=" << MI.getOperand(DstOp.OpIdx));
 
-  // Insert a copy before MI from SrcReg to CopyReg. This is breaking SSA, as
-  // CopyReg is re-defined by MI.
-  BuildMI(*MI.getParent(), MI, MI.getDebugLoc(), TII->get(TargetOpcode::COPY))
-      .addReg(CopyReg, RegState::Define)
-      .addReg(SrcReg);
+    assert(!MI.getOperand(DstOp.OpIdx).getSubReg());
+    replaceRegOperands(DstReg, CopyOrRegSeq, DstOp.SubRegIdx, MRI);
+    LLVM_DEBUG(llvm::dbgs() << " to " << MI.getOperand(DstOp.OpIdx) << "\n");
+  }
+
+  // In case of a single SrcOp, insert a copy before MI from SrcReg to
+  // CopyOrRegSeq. This is breaking SSA, as CopyOrRegSeq is re-defined by MI. In
+  // case of multiple SrcOps, create a REG_SEQUENCE with the subregisters.
+  if (Ties.SrcOps.size() == 1 && !Ties.SrcOps.front().SubRegIdx) {
+    auto SrcReg = MI.getOperand(Ties.SrcOps.front().OpIdx).getReg();
+    BuildMI(*MI.getParent(), MI, MI.getDebugLoc(), TII.get(TargetOpcode::COPY))
+        .addReg(CopyOrRegSeq, RegState::Define)
+        .addReg(SrcReg);
+  } else {
+    auto MIB = BuildMI(*MI.getParent(), MI, MI.getDebugLoc(),
+                       TII.get(TargetOpcode::REG_SEQUENCE), CopyOrRegSeq);
+    for (const OperandSubRegMapping &SrcOp : Ties.SrcOps) {
+      Register SrcReg = MI.getOperand(SrcOp.OpIdx).getReg();
+      const unsigned SrcSubRegIdx = MI.getOperand(SrcOp.OpIdx).getSubReg();
+      MIB.addReg(SrcReg,
+                 MI.getOperand(SrcOp.OpIdx).isUndef() ? RegState::Undef : 0,
+                 SrcSubRegIdx);
+      MIB.addImm(SrcOp.SubRegIdx);
+    }
+    LLVM_DEBUG(llvm::dbgs() << "Inserted: " << *MIB.getInstr());
+  }
+
+  // Rewrite register sources to use CopyOrRegSeq.
+  for (const OperandSubRegMapping &SrcOp : Ties.SrcOps) {
+    LLVM_DEBUG(llvm::dbgs()
+               << "Rewriting tied pair: Src=" << MI.getOperand(SrcOp.OpIdx));
+    MI.getOperand(SrcOp.OpIdx).setReg(CopyOrRegSeq);
+    MI.getOperand(SrcOp.OpIdx).setSubReg(SrcOp.SubRegIdx);
+    MI.getOperand(SrcOp.OpIdx).setIsKill(false);
+    LLVM_DEBUG(llvm::dbgs() << " to " << MI.getOperand(SrcOp.OpIdx) << "\n");
+  }
 }
 
 } // end anonymous namespace

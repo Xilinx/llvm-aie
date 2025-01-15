@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -18,6 +18,8 @@
 #include "llvm/ADT/SmallVector.h"
 
 namespace llvm {
+
+class TargetRegisterClass;
 
 /// Information on one particular sub-reg to be split from a super-reg.
 struct SubRegSplit {
@@ -46,10 +48,14 @@ struct OperandSubRegMapping {
 };
 
 /// Information about one set of tied source and destination operands
-/// with regards to the sub-registers they use.
+/// with regards to the sub-registers they use, including, optionally,
+/// the superclass that covers all registers. This class is used when
+/// specific registers should be coupled together as a single super
+/// register.
 struct TiedRegOperands {
   SmallVector<OperandSubRegMapping, 4> DstOps;
-  OperandSubRegMapping SrcOp;
+  SmallVector<OperandSubRegMapping, 4> SrcOps;
+  const TargetRegisterClass *NewSuperClass = nullptr;
 
   /// Find the OperandSubRegMapping for the operand at index \p OpIdx, if any.
   const OperandSubRegMapping *findOperandInfo(unsigned OpIdx) const;

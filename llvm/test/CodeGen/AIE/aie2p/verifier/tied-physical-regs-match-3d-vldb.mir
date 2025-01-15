@@ -2,7 +2,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 # RUN: not --crash llc -mtriple=aie2p -run-pass machineverifier -o /dev/null %s 2>&1 | FileCheck %s
 #
 # Test file automatically generated using generate_instr_info_test.py
@@ -24,11 +24,11 @@ body:      |
     $y2, $p4, $dc2, $dc6 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign1 $p4, $d2_3d, implicit $crunpacksize, implicit $unpacksign1
     $wh4, $p5, $dc2, $dc6 = VLDB_3D_dmw_ldb $p5, $d2_3d
     $x8, $p5, $dc0, $dc4 = VLDB_3D_dmx_ldb_x $p5, $d0_3d
-    $x1, $p0, $lf0, $r24, $dc1, $dc5 = VLDB_POP_512_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $ex0, $p0, $lf0, $r24, $dc1, $dc5 = VLDB_POP_544_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $ex2, $p0, $lf0, $r24, $dc1, $dc5 = VLDB_POP_576_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $qx0, $p1, $lf1, $r25, $dc1, $dc5 = VLDB_POP_640_3D $plfr1, $d1_3d, implicit-def $srfifo_uf
-    $qex2, $p1, $lf1, $r25, $dc0, $dc4 = VLDB_POP_704_3D $plfr1, $d0_3d, implicit-def $srfifo_uf
+    $x1, $p0, $lf0, $r24, $dc1, $dc5 = VLDB_POP_512_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $ex0, $p0, $lf0, $r24, $dc1, $dc5 = VLDB_POP_544_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $ex2, $p0, $lf0, $r24, $dc1, $dc5 = VLDB_POP_576_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $qx0, $p1, $lf1, $r25, $dc1, $dc5 = VLDB_POP_640_3D $p1, $lf1, $r25, $d1_3d, implicit-def $srfifo_uf
+    $qex2, $p1, $lf1, $r25, $dc0, $dc4 = VLDB_POP_704_3D $p1, $lf1, $r25, $d0_3d, implicit-def $srfifo_uf
 
     ; Below instructions have hasExtraSrcRegAllocReq and hasExtraDefRegAllocReq attributes
     ; which essentially bypass the register flags. The renamable attributes
@@ -41,11 +41,11 @@ body:      |
     renamable $y2, renamable $p4, renamable $dc2, renamable $dc6 = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign1 renamable $p4, renamable $d2_3d, implicit renamable $crunpacksize, implicit renamable $unpacksign1
     renamable $wh4, renamable $p5, renamable $dc2, renamable $dc6 = VLDB_3D_dmw_ldb renamable $p5, renamable $d2_3d
     renamable $x8, renamable $p5, renamable $dc0, renamable $dc4 = VLDB_3D_dmx_ldb_x renamable $p5, renamable $d0_3d
-    renamable $x1, renamable $p0, renamable $lf0, renamable $r24, renamable $dc1, renamable $dc5 = VLDB_POP_512_3D renamable $plfr0, renamable $d1_3d, implicit-def renamable $srfifo_uf
-    renamable $ex0, renamable $p0, renamable $lf0, renamable $r24, renamable $dc1, renamable $dc5 = VLDB_POP_544_3D renamable $plfr0, renamable $d1_3d, implicit-def renamable $srfifo_uf
-    renamable $ex2, renamable $p0, renamable $lf0, renamable $r24, renamable $dc1, renamable $dc5 = VLDB_POP_576_3D renamable $plfr0, renamable $d1_3d, implicit-def renamable $srfifo_uf
-    renamable $qx0, renamable $p1, renamable $lf1, renamable $r25, renamable $dc1, renamable $dc5 = VLDB_POP_640_3D renamable $plfr1, renamable $d1_3d, implicit-def renamable $srfifo_uf
-    renamable $qex2, renamable $p1, renamable $lf1, renamable $r25, renamable $dc0, renamable $dc4 = VLDB_POP_704_3D renamable $plfr1, renamable $d0_3d, implicit-def renamable $srfifo_uf
+    renamable $x1, renamable $p0, renamable $lf0, renamable $r24, renamable $dc1, renamable $dc5 = VLDB_POP_512_3D renamable $p0, renamable $lf0, renamable $r24, renamable $d1_3d, implicit-def renamable $srfifo_uf
+    renamable $ex0, renamable $p0, renamable $lf0, renamable $r24, renamable $dc1, renamable $dc5 = VLDB_POP_544_3D renamable $p0, renamable $lf0, renamable $r24, renamable $d1_3d, implicit-def renamable $srfifo_uf
+    renamable $ex2, renamable $p0, renamable $lf0, renamable $r24, renamable $dc1, renamable $dc5 = VLDB_POP_576_3D renamable $p0, renamable $lf0, renamable $r24, renamable $d1_3d, implicit-def renamable $srfifo_uf
+    renamable $qx0, renamable $p1, renamable $lf1, renamable $r25, renamable $dc1, renamable $dc5 = VLDB_POP_640_3D renamable $p1, renamable $lf1, renamable $r25, renamable $d1_3d, implicit-def renamable $srfifo_uf
+    renamable $qex2, renamable $p1, renamable $lf1, renamable $r25, renamable $dc0, renamable $dc4 = VLDB_POP_704_3D renamable $p1, renamable $lf1, renamable $r25, renamable $d0_3d, implicit-def renamable $srfifo_uf
 
 ...
 
@@ -64,11 +64,11 @@ body:      |
     %180:ey, %181:ep, %182:edcl, %183:edch = VLDB_3D_UNPACK_dmx_ldb_unpack_unpackSign1 %0, %10, implicit $crunpacksize, implicit $unpacksign1
     %190:mwb, %191:ep, %192:edcl, %193:edch = VLDB_3D_dmw_ldb %0, %10
     %200:mxb, %201:ep, %202:edcl, %203:edch = VLDB_3D_dmx_ldb_x %0, %10
-    %310:mxb, %311:eps, %312:eldfiforeg, %313:erf2, %314:edcl, %315:edch = VLDB_POP_512_3D $plfr0, %10, implicit-def $srfifo_uf
-    %350:mexb, %351:eps, %352:eldfiforeg, %353:erf2, %354:edcl, %355:edch = VLDB_POP_544_3D $plfr0, %10, implicit-def $srfifo_uf
-    %390:mexb, %391:eps, %392:eldfiforeg, %393:erf2, %394:edcl, %395:edch = VLDB_POP_576_3D $plfr0, %10, implicit-def $srfifo_uf
-    %430:mqxsb, %431:eps, %432:eldfiforeg, %433:erf2, %434:edcl, %435:edch = VLDB_POP_640_3D $plfr1, %10, implicit-def $srfifo_uf
-    %470:mqexsb, %471:eps, %472:eldfiforeg, %473:erf2, %474:edcl, %475:edch = VLDB_POP_704_3D $plfr1, %10, implicit-def $srfifo_uf
+    %310:mxb, %311:eps, %312:eldfiforeg, %313:erf2, %314:edcl, %315:edch = VLDB_POP_512_3D $p0, $lf0, $r24, %10, implicit-def $srfifo_uf
+    %350:mexb, %351:eps, %352:eldfiforeg, %353:erf2, %354:edcl, %355:edch = VLDB_POP_544_3D $p0, $lf0, $r24, %10, implicit-def $srfifo_uf
+    %390:mexb, %391:eps, %392:eldfiforeg, %393:erf2, %394:edcl, %395:edch = VLDB_POP_576_3D $p0, $lf0, $r24, %10, implicit-def $srfifo_uf
+    %430:mqxsb, %431:eps, %432:eldfiforeg, %433:erf2, %434:edcl, %435:edch = VLDB_POP_640_3D $p1, $lf1, $r25, %10, implicit-def $srfifo_uf
+    %470:mqexsb, %471:eps, %472:eldfiforeg, %473:erf2, %474:edcl, %475:edch = VLDB_POP_704_3D $p1, $lf1, $r25, %10, implicit-def $srfifo_uf
 
 ...
 
@@ -101,36 +101,35 @@ body:      |
     $x8, $p5, $dc1, $dc7 = VLDB_3D_dmx_ldb_x $p5, $d0_3d
     $x8, $p5, $dc1, $dc4 = VLDB_3D_dmx_ldb_x $p5, $d0_3d
     $x8, $p5, $dc0, $dc6 = VLDB_3D_dmx_ldb_x $p5, $d0_3d
-    $x6, $p1, $lf1, $r25, $dc1, $dc5 = VLDB_POP_512_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $x6, $p1, $lf1, $r24, $dc1, $dc5 = VLDB_POP_512_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $x6, $p1, $lf0, $r24, $dc1, $dc5 = VLDB_POP_512_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $x6, $p0, $lf0, $r24, $dc0, $dc6 = VLDB_POP_512_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $x6, $p0, $lf0, $r24, $dc2, $dc5 = VLDB_POP_512_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $x6, $p0, $lf0, $r24, $dc0, $dc7 = VLDB_POP_512_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $ex0, $p0, $lf1, $r24, $dc1, $dc5 = VLDB_POP_544_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $ex0, $p0, $lf0, $r25, $dc1, $dc5 = VLDB_POP_544_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $ex0, $p1, $lf0, $r24, $dc1, $dc5 = VLDB_POP_544_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $ex0, $p0, $lf0, $r24, $dc1, $dc6 = VLDB_POP_544_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $ex0, $p0, $lf0, $r24, $dc2, $dc4 = VLDB_POP_544_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $ex0, $p0, $lf0, $r24, $dc0, $dc7 = VLDB_POP_544_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $ex2, $p0, $lf1, $r24, $dc1, $dc5 = VLDB_POP_576_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $ex2, $p1, $lf0, $r25, $dc1, $dc5 = VLDB_POP_576_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $ex2, $p0, $lf1, $r25, $dc1, $dc5 = VLDB_POP_576_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $ex2, $p0, $lf0, $r24, $dc1, $dc6 = VLDB_POP_576_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $ex2, $p0, $lf0, $r24, $dc1, $dc7 = VLDB_POP_576_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $ex2, $p0, $lf0, $r24, $dc1, $dc4 = VLDB_POP_576_3D $plfr0, $d1_3d, implicit-def $srfifo_uf
-    $qx0, $p0, $lf0, $r25, $dc1, $dc5 = VLDB_POP_640_3D $plfr1, $d1_3d, implicit-def $srfifo_uf
-    $qx0, $p0, $lf1, $r25, $dc1, $dc5 = VLDB_POP_640_3D $plfr1, $d1_3d, implicit-def $srfifo_uf
-    $qx0, $p1, $lf0, $r24, $dc1, $dc5 = VLDB_POP_640_3D $plfr1, $d1_3d, implicit-def $srfifo_uf
-    $qx0, $p1, $lf1, $r25, $dc3, $dc6 = VLDB_POP_640_3D $plfr1, $d1_3d, implicit-def $srfifo_uf
-    $qx0, $p1, $lf1, $r25, $dc2, $dc7 = VLDB_POP_640_3D $plfr1, $d1_3d, implicit-def $srfifo_uf
-    $qx0, $p1, $lf1, $r25, $dc3, $dc4 = VLDB_POP_640_3D $plfr1, $d1_3d, implicit-def $srfifo_uf
-    $qex2, $p0, $lf1, $r25, $dc0, $dc4 = VLDB_POP_704_3D $plfr1, $d0_3d, implicit-def $srfifo_uf
-    $qex2, $p0, $lf0, $r25, $dc0, $dc4 = VLDB_POP_704_3D $plfr1, $d0_3d, implicit-def $srfifo_uf
-    $qex2, $p0, $lf0, $r25, $dc0, $dc4 = VLDB_POP_704_3D $plfr1, $d0_3d, implicit-def $srfifo_uf
-    $qex2, $p1, $lf1, $r25, $dc1, $dc4 = VLDB_POP_704_3D $plfr1, $d0_3d, implicit-def $srfifo_uf
-    $qex2, $p1, $lf1, $r25, $dc2, $dc4 = VLDB_POP_704_3D $plfr1, $d0_3d, implicit-def $srfifo_uf
-    $qex2, $p1, $lf1, $r25, $dc3, $dc6 = VLDB_POP_704_3D $plfr1, $d0_3d, implicit-def $srfifo_uf
+    $x6, $p1, $lf1, $r25, $dc1, $dc5 = VLDB_POP_512_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $x6, $p1, $lf1, $r24, $dc1, $dc5 = VLDB_POP_512_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $x6, $p1, $lf0, $r24, $dc1, $dc5 = VLDB_POP_512_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $x6, $p0, $lf0, $r24, $dc0, $dc6 = VLDB_POP_512_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $x6, $p0, $lf0, $r24, $dc2, $dc5 = VLDB_POP_512_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $x6, $p0, $lf0, $r24, $dc0, $dc7 = VLDB_POP_512_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $ex0, $p0, $lf1, $r24, $dc1, $dc5 = VLDB_POP_544_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $ex0, $p0, $lf0, $r25, $dc1, $dc5 = VLDB_POP_544_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $ex0, $p1, $lf0, $r24, $dc1, $dc5 = VLDB_POP_544_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $ex0, $p0, $lf0, $r24, $dc1, $dc6 = VLDB_POP_544_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $ex0, $p0, $lf0, $r24, $dc2, $dc4 = VLDB_POP_544_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $ex0, $p0, $lf0, $r24, $dc0, $dc7 = VLDB_POP_544_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $ex2, $p0, $lf1, $r24, $dc1, $dc5 = VLDB_POP_576_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $ex2, $p1, $lf0, $r25, $dc1, $dc5 = VLDB_POP_576_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $ex2, $p0, $lf1, $r25, $dc1, $dc5 = VLDB_POP_576_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $ex2, $p0, $lf0, $r24, $dc1, $dc6 = VLDB_POP_576_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $ex2, $p0, $lf0, $r24, $dc1, $dc7 = VLDB_POP_576_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $ex2, $p0, $lf0, $r24, $dc1, $dc4 = VLDB_POP_576_3D $p0, $lf0, $r24, $d1_3d, implicit-def $srfifo_uf
+    $qx0, $p0, $lf0, $r25, $dc1, $dc5 = VLDB_POP_640_3D $p1, $lf1, $r25, $d1_3d, implicit-def $srfifo_uf
+    $qx0, $p0, $lf1, $r25, $dc1, $dc5 = VLDB_POP_640_3D $p1, $lf1, $r25, $d1_3d, implicit-def $srfifo_uf
+    $qx0, $p1, $lf0, $r24, $dc1, $dc5 = VLDB_POP_640_3D $p1, $lf1, $r25, $d1_3d, implicit-def $srfifo_uf
+    $qx0, $p1, $lf1, $r25, $dc3, $dc6 = VLDB_POP_640_3D $p1, $lf1, $r25, $d1_3d, implicit-def $srfifo_uf
+    $qx0, $p1, $lf1, $r25, $dc2, $dc7 = VLDB_POP_640_3D $p1, $lf1, $r25, $d1_3d, implicit-def $srfifo_uf
+    $qx0, $p1, $lf1, $r25, $dc3, $dc4 = VLDB_POP_640_3D $p1, $lf1, $r25, $d1_3d, implicit-def $srfifo_uf
+    $qex2, $p0, $lf1, $r25, $dc0, $dc4 = VLDB_POP_704_3D $p1, $lf1, $r25, $d0_3d, implicit-def $srfifo_uf
+    $qex2, $p0, $lf0, $r25, $dc0, $dc4 = VLDB_POP_704_3D $p1, $lf1, $r25, $d0_3d, implicit-def $srfifo_uf
+    $qex2, $p0, $lf0, $r25, $dc0, $dc4 = VLDB_POP_704_3D $p1, $lf1, $r25, $d0_3d, implicit-def $srfifo_uf
+    $qex2, $p1, $lf1, $r25, $dc1, $dc4 = VLDB_POP_704_3D $p1, $lf1, $r25, $d0_3d, implicit-def $srfifo_uf
+    $qex2, $p1, $lf1, $r25, $dc2, $dc4 = VLDB_POP_704_3D $p1, $lf1, $r25, $d0_3d, implicit-def $srfifo_uf
+    $qex2, $p1, $lf1, $r25, $dc3, $dc6 = VLDB_POP_704_3D $p1, $lf1, $r25, $d0_3d, implicit-def $srfifo_uf
 
 ...
-

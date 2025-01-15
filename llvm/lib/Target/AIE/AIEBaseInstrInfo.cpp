@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -765,24 +765,40 @@ bool AIEBaseInstrInfo::verifyMemOperand(const MachineInstr &MI,
   return true;
 }
 
+static MCRegister findSuperRegister(const MachineInstr &MI,
+                                    const TiedRegOperands &TiedRegs,
+                                    const TargetRegisterInfo &TRI) {
+  Register SrcReg = MI.getOperand(TiedRegs.SrcOps.front().OpIdx).getReg();
+  if (!SrcReg.isPhysical())
+    return MCRegister::NoRegister;
+
+  if (unsigned SubRegIdx = TiedRegs.SrcOps.front().SubRegIdx) {
+    assert(TiedRegs.NewSuperClass && "Incomplete Tied register info");
+    return TRI.getMatchingSuperReg(SrcReg.asMCReg(), SubRegIdx,
+                                   TiedRegs.NewSuperClass);
+  }
+  return SrcReg.asMCReg();
+}
+
 bool AIEBaseInstrInfo::verifyTiedRegisters(const MachineInstr &MI,
                                            StringRef &ErrInfo) const {
   const TargetSubtargetInfo &ST = MI.getMF()->getSubtarget();
   const TargetRegisterInfo &TRI = *ST.getRegisterInfo();
-  auto VerifyTiedReg = [&](const MachineOperand &Op,
-                           const MachineOperand &TiedOp,
-                           unsigned ExpectedSubReg) {
-    if (!Op.isReg() || !TiedOp.isReg()) {
+  auto VerifyTiedReg = [&](const MachineInstr &MI,
+                           const OperandSubRegMapping &OM,
+                           MCRegister ExpectedSuperReg) {
+    const MachineOperand &Op = MI.getOperand(OM.OpIdx);
+
+    if (!Op.isReg()) {
       ErrInfo = "Tied operand must be a register";
       return false;
     }
-    if (!Register::isPhysicalRegister(Op.getReg()) ||
-        !Register::isPhysicalRegister(TiedOp.getReg()))
+    if (!Register::isPhysicalRegister(Op.getReg()))
       return true;
-    auto TiedReg = ExpectedSubReg
-                       ? TRI.getSubReg(TiedOp.getReg(), ExpectedSubReg)
-                       : TiedOp.getReg().asMCReg();
-    if (Op.getReg() != TiedReg) {
+    auto ExpectedPhysReg = OM.SubRegIdx
+                               ? TRI.getSubReg(ExpectedSuperReg, OM.SubRegIdx)
+                               : ExpectedSuperReg;
+    if (Op.getReg().asMCReg() != ExpectedPhysReg) {
       ErrInfo = "Tied physical registers must match";
       return false;
     }
@@ -790,15 +806,17 @@ bool AIEBaseInstrInfo::verifyTiedRegisters(const MachineInstr &MI,
       ErrInfo = "Tied register is renamable";
       return false;
     }
-    return TargetInstrInfo::verifyInstruction(MI, ErrInfo);
+    return true;
   };
 
   for (const TiedRegOperands &Regs : getTiedRegInfo(MI)) {
-    const MachineOperand &SrcOp = MI.getOperand(Regs.SrcOp.OpIdx);
-    if (!VerifyTiedReg(SrcOp, SrcOp, Regs.SrcOp.SubRegIdx))
-      return false;
+    MCRegister ExpectedSuperReg = findSuperRegister(MI, Regs, TRI);
     for (const OperandSubRegMapping &DstOp : Regs.DstOps) {
-      if (!VerifyTiedReg(MI.getOperand(DstOp.OpIdx), SrcOp, DstOp.SubRegIdx))
+      if (!VerifyTiedReg(MI, DstOp, ExpectedSuperReg))
+        return false;
+    }
+    for (const OperandSubRegMapping &SrcOp : Regs.SrcOps) {
+      if (!VerifyTiedReg(MI, SrcOp, ExpectedSuperReg))
         return false;
     }
   }
