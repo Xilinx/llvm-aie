@@ -16,10 +16,10 @@ selected:        true
 tracksRegLiveness: true
 body:             |
   bb.1.entry:
-    liveins: $bmll0, $r0, $p0, $lf1
+    liveins: $cml0, $r0, $p0, $lf1
 
     ; CHECK-LABEL: name: test_1024_fifo_scarce_regs
-    ; CHECK: liveins: $bmll0, $lf1, $p0, $r0
+    ; CHECK: liveins: $cml0, $lf1, $p0, $r0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: renamable $lf0 = COPY $cml0
     ; CHECK-NEXT: VST_FIFO_SPILL killed renamable $lf0, %stack.0, implicit $sp :: (store (s1024) into %stack.0, align 64)
@@ -68,10 +68,10 @@ selected:        true
 tracksRegLiveness: true
 body:             |
   bb.1.entry:
-    liveins: $bmll0, $r0, $p0, $y1
+    liveins: $cml0, $r0, $p0, $y1
 
     ; CHECK-LABEL: name: test_1024_fifo_sf_scarce_regs
-    ; CHECK: liveins: $bmll0, $p0, $r0, $y1
+    ; CHECK: liveins: $cml0, $p0, $r0, $y1
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: renamable $sf = COPY $cml0
     ; CHECK-NEXT: VST_FIFO_SPILL killed renamable $sf, %stack.0, implicit $sp :: (store (s1024) into %stack.0, align 64)
@@ -143,10 +143,10 @@ selected:        true
 tracksRegLiveness: true
 body:             |
   bb.1.entry:
-    liveins: $bmll0, $r0, $p0, $lf1, $lfh0
+    liveins: $bmll0, $r0, $p0, $lf1
 
     ; CHECK-LABEL: name: test_512_fifo_scarce_regs
-    ; CHECK: liveins: $bmll0, $lf1, $lfh0, $p0, $r0
+    ; CHECK: liveins: $bmll0, $lf1, $p0, $r0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: renamable $lfl0 = COPY $bmll0
     ; CHECK-NEXT: VST_dmx_sts_fifohl_spill killed renamable $lfl0, %stack.0, implicit $sp :: (store (s512) into %stack.0)

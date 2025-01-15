@@ -809,7 +809,7 @@ void AIE2PInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     Opcode = AIE2P::VST_Y_SPILL;
   } else if (regClassMatches(AIE2P::ACC1024RegClass, RC, SrcReg)) {
     Opcode = AIE2P::VST_CM_SPILL;
-  } else if (regClassMatches(AIE2P::eLdFifoRegRegClass, RC, SrcReg)) {
+  } else if (regClassMatches(AIE2P::FIFO1024RegClass, RC, SrcReg)) {
     Opcode = AIE2P::VST_FIFO_SPILL;
   } else if (regClassMatches(AIE2P::ePSRFLdFRegClass, RC, SrcReg)) {
     Opcode = AIE2P::VST_PLFR_SPILL;
@@ -889,7 +889,7 @@ void AIE2PInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     Opcode = AIE2P::VLDA_DM_SPILL;
   } else if (regClassMatches(AIE2P::ACC1024RegClass, RC, DstReg)) {
     Opcode = AIE2P::VLDA_CM_SPILL;
-  } else if (regClassMatches(AIE2P::eLdFifoRegRegClass, RC, DstReg)) {
+  } else if (regClassMatches(AIE2P::FIFO1024RegClass, RC, DstReg)) {
     Opcode = AIE2P::VLDA_FIFO_SPILL;
   } else if (regClassMatches(AIE2P::ePSRFLdFRegClass, RC, DstReg)) {
     Opcode = AIE2P::VLDA_PLFR_SPILL;

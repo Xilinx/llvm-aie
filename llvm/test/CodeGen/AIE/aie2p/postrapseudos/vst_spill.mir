@@ -70,17 +70,31 @@ body:             |
 ...
 
 ---
-name:            test_fifo
+name:            test_fifo_lf
 alignment:       16
 stack:
   - { id: 0, name: '', type: spill-slot, offset: 0, size: 128, alignment: 32 }
 body:             |
   bb.0 (align 16):
 
-    ; CHECK-LABEL: name: test_fifo
+    ; CHECK-LABEL: name: test_fifo_lf
     ; CHECK: VST_dmx_sts_fifohl_spill $lfl1, -128, implicit $sp :: (store (s512) into %stack.0)
     ; CHECK-NEXT: VST_dmx_sts_fifohl_spill $lfh1, -64, implicit $sp :: (store (s512) into %stack.0 + 64)
     VST_FIFO_SPILL $lf1, -128, implicit $sp :: (store (s1024) into %stack.0, align 64)
+...
+
+---
+name:            test_fifo_sf
+alignment:       16
+stack:
+  - { id: 0, name: '', type: spill-slot, offset: 0, size: 128, alignment: 32 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_fifo_sf
+    ; CHECK: VST_dmx_sts_fifohl_spill $sfl, -128, implicit $sp :: (store (s512) into %stack.0)
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_spill $sfh, -64, implicit $sp :: (store (s512) into %stack.0 + 64)
+    VST_FIFO_SPILL $sf, -128, implicit $sp :: (store (s1024) into %stack.0, align 64)
 ...
 
 ---

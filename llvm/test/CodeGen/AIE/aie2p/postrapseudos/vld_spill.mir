@@ -70,19 +70,32 @@ body:             |
 ...
 
 ---
-name:            test_fifo
+name:            test_fifo_ld
 alignment:       16
 stack:
   - { id: 0, name: '', type: spill-slot, offset: 0, size: 128, alignment: 32 }
 body:             |
   bb.0 (align 16):
 
-    ; CHECK-LABEL: name: test_fifo
+    ; CHECK-LABEL: name: test_fifo_ld
     ; CHECK: $lfl0 = VLDA_dmx_lda_fifohl_spill -128, implicit $sp :: (load (s512) from %stack.0)
     ; CHECK-NEXT: $lfh0 = VLDA_dmx_lda_fifohl_spill -64, implicit $sp :: (load (s512) from %stack.0 + 64)
     $lf0 = VLDA_FIFO_SPILL -128, implicit $sp :: (load (s1024) from %stack.0, align 64)
 ...
 
+---
+name:            test_fifo_sf
+alignment:       16
+stack:
+  - { id: 0, name: '', type: spill-slot, offset: 0, size: 128, alignment: 32 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_fifo_sf
+    ; CHECK: $sfl = VLDA_dmx_lda_fifohl_spill -128, implicit $sp :: (load (s512) from %stack.0)
+    ; CHECK-NEXT: $sfh = VLDA_dmx_lda_fifohl_spill -64, implicit $sp :: (load (s512) from %stack.0 + 64)
+    $sf = VLDA_FIFO_SPILL -128, implicit $sp :: (load (s1024) from %stack.0, align 64)
+...
 
 ---
 name:            test_fifo_plfr
