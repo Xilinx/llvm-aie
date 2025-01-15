@@ -283,15 +283,11 @@ class AIE2PDim3DRegisterClass <dag reglist, RegAltNameIndex idx = NoRegAltName> 
   // Load FIFO extra register
   def lfe : AIE2P3BitReg<0b010,"lfe">;
 
-  def sub_lo_lf: SubRegIndex<512,  0>;
-  def sub_hi_lf : SubRegIndex<512, 512>;
-  let SubRegIndices = [sub_lo_lf, sub_hi_lf], CoveredBySubRegs = 1 in {
+  def sub_lo_fifo: SubRegIndex<512,  0>;
+  def sub_hi_fifo : SubRegIndex<512, 512>;
+  let SubRegIndices = [sub_lo_fifo, sub_hi_fifo], CoveredBySubRegs = 1 in {
     def lf0 : AIE2P1BitReg<0b0, "lf0", [lfl0, lfh0]>;
     def lf1 : AIE2P1BitReg<0b1, "lf1", [lfl1, lfh1]>;
-  }
-  def sub_lo_sf: SubRegIndex<512,  0>;
-  def sub_hi_sf : SubRegIndex<512, 512>;
-  let SubRegIndices = [sub_lo_sf, sub_hi_sf], CoveredBySubRegs = 1 in {
     def sf : AIE2P1BitReg<0b1, "sf", [sfl, sfh]>;
   }
 
@@ -950,6 +946,9 @@ let isAllocatable = false, GeneratePressureSet = false in {
 def mMvBMXDst : AIE2PVector512RegisterClass<(add mBMs, mXm, mFifoHLReg)>;
 def mMvBMXSrc : AIE2PVector512RegisterClass<(add mMvBMXDst)>;
 }
+
+def FIFO512 : AIE2PVector512RegisterClass<(add mFifoHLReg)>;
+def FIFO1024 : AIE2PVector1024RegisterClass<(add eLdFifoReg, sf)>;
 
 // There are strange classes, but llvm would define them anyway by performing an
 // "AND" on e.g. the mSPa and mMvSclDst register classes.
