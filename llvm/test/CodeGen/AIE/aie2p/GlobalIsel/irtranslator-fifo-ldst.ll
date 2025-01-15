@@ -295,10 +295,9 @@ define ptr @test_fifo_push(ptr noalias align 4 %ptr, <16 x i32> noundef %v, <64 
   ; ISEL-NEXT:   [[COPY1:%[0-9]+]]:vec512 = COPY $x0
   ; ISEL-NEXT:   [[COPY2:%[0-9]+]]:vec512 = COPY $x2
   ; ISEL-NEXT:   [[COPY3:%[0-9]+]]:el = COPY $l0
-  ; ISEL-NEXT:   [[DEF:%[0-9]+]]:vec1024 = IMPLICIT_DEF
+  ; ISEL-NEXT:   [[DEF:%[0-9]+]]:mstfifo = IMPLICIT_DEF
   ; ISEL-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mr26_fifo_st = MOV_RLC_imm11_pseudo 0
-  ; ISEL-NEXT:   [[COPY4:%[0-9]+]]:mstfifo = COPY [[DEF]]
-  ; ISEL-NEXT:   [[VST_PUSH_512_:%[0-9]+]]:mstfifo, [[VST_PUSH_512_1:%[0-9]+]]:mpfs, [[VST_PUSH_512_2:%[0-9]+]]:mr26_fifo_st = VST_PUSH_512 [[COPY4]], [[COPY1]], [[COPY]], [[MOV_RLC_imm11_pseudo]], implicit-def $srfifo_of :: (store unknown-size into %ir.ptr, align 4)
+  ; ISEL-NEXT:   [[VST_PUSH_512_:%[0-9]+]]:mstfifo, [[VST_PUSH_512_1:%[0-9]+]]:mpfs, [[VST_PUSH_512_2:%[0-9]+]]:mr26_fifo_st = VST_PUSH_512 [[DEF]], [[COPY1]], [[COPY]], [[MOV_RLC_imm11_pseudo]], implicit-def $srfifo_of :: (store unknown-size into %ir.ptr, align 4)
   ; ISEL-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:vec576 = REG_SEQUENCE [[COPY2]], %subreg.sub_bfp16_x, [[COPY3]], %subreg.sub_bfp16_e
   ; ISEL-NEXT:   [[VST_PUSH_576_:%[0-9]+]]:mstfifo, [[VST_PUSH_576_1:%[0-9]+]]:mpfs, [[VST_PUSH_576_2:%[0-9]+]]:mr26_fifo_st = VST_PUSH_576 [[VST_PUSH_512_]], [[REG_SEQUENCE]], [[VST_PUSH_512_1]], [[VST_PUSH_512_2]], implicit-def $srfifo_of :: (store unknown-size into %ir.ptr0, align 4)
   ; ISEL-NEXT:   [[REG_SEQUENCE1:%[0-9]+]]:vec576 = REG_SEQUENCE [[COPY2]], %subreg.sub_bfp16_x, [[COPY3]], %subreg.sub_bfp16_e

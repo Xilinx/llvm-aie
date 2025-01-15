@@ -80,14 +80,14 @@ public:
   bool usesAccReg(const MachineInstr &MI, const MachineRegisterInfo &MRI,
                   const TargetRegisterInfo &TRI, const Register &AccReg) const;
   bool isUseAccInsn(const MachineRegisterInfo &MRI,
-                    const TargetRegisterInfo &TRI,
-                    const Register &AccReg) const;
+                    const TargetRegisterInfo &TRI, const Register &AccReg,
+                    unsigned Depth = 0) const;
   bool hasFifoInput(const MachineInstr &MI, const MachineRegisterInfo &MRI,
                     const TargetRegisterInfo &TRI,
                     const Register FifoReg) const;
   bool isUseFifoInsn(const MachineRegisterInfo &MRI,
-                     const TargetRegisterInfo &TRI,
-                     const Register FifoReg) const;
+                     const TargetRegisterInfo &TRI, const Register FifoReg,
+                     unsigned Depth = 0) const;
 };
 } // end namespace llvm
 #endif
