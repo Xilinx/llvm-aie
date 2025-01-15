@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -731,12 +731,6 @@ inline __attribute__((always_inline)) v16uint32 broadcast_to_v16uint32(v2uint32 
 inline __attribute__((always_inline)) v16cint16 broadcast_to_v16cint16(cint16 );
 inline __attribute__((always_inline)) v16cint16 broadcast_to_v16cint16(v2cint16 );
 inline __attribute__((always_inline)) v8cint32 broadcast_to_v8cint32(cint32 );
-inline __attribute__((always_inline)) v64int8 broadcast_one_to_v64int8();
-inline __attribute__((always_inline)) v32int16 broadcast_one_to_v32int16();
-inline __attribute__((always_inline)) v16int32 broadcast_one_to_v16int32();
-inline __attribute__((always_inline)) v64uint8 broadcast_one_to_v64uint8();
-inline __attribute__((always_inline)) v32uint16 broadcast_one_to_v32uint16();
-inline __attribute__((always_inline)) v16uint32 broadcast_one_to_v16uint32();
 inline __attribute__((always_inline)) v16cint16 broadcast_one_to_v16cint16();
 inline __attribute__((always_inline)) v8cint32 broadcast_one_to_v8cint32();
 inline __attribute__((always_inline)) v16cint16 broadcast_one_c16();
@@ -2783,10 +2777,6 @@ inline __attribute__((always_inline)) v32acc64 mac_4x8_8x8_conf(v32int16 , int ,
 inline __attribute__((always_inline)) v32acc64 msc_4x8_8x8_conf(v32int16 , int , v64int16_sparse , int , v32acc64 , int , int , int , int );
 inline __attribute__((always_inline)) v32acc64 addmac_4x8_8x8_conf(v32int16 , int , v64int16_sparse , int , v32acc64 , v32acc64 , int , int , int , int , int );
 inline __attribute__((always_inline)) v32acc64 addmsc_4x8_8x8_conf(v32int16 , int , v64int16_sparse , int , v32acc64 , v32acc64 , int , int , int , int , int );
-inline __attribute__((always_inline)) v64acc32 clr64();
-inline __attribute__((always_inline)) v64acc32 broadcast_zero_to_v64acc32();
-inline __attribute__((always_inline)) v32acc64 clr32();
-inline __attribute__((always_inline)) v32acc64 broadcast_zero_to_v32acc64();
 inline __attribute__((always_inline)) v16cacc64 add(v16cacc64 , v16cacc64 );
 inline __attribute__((always_inline)) v16cacc64 sub(v16cacc64 , v16cacc64 );
 inline __attribute__((always_inline)) v16cacc64 neg(v16cacc64 );

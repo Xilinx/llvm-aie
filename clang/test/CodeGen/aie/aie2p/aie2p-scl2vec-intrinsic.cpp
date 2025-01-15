@@ -6,7 +6,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -702,30 +702,47 @@ v64int8
 test_broadcast_to_v64int8(int b) {
   return broadcast_to_v64int8(b);
 }
-v16accfloat
+// AIE2P-LABEL: define dso_local inreg noundef <16 x i64> @_Z31test_broadcast_zero_to_v16acc64v(
+// AIE2P-SAME: ) local_unnamed_addr #[[ATTR0]] {
+// AIE2P-NEXT:  entry:
+// AIE2P-NEXT:    ret <16 x i64> zeroinitializer
+//
+v16acc64 test_broadcast_zero_to_v16acc64() {
+  return broadcast_zero_to_v16acc64();
+}
+// AIE2P-LABEL: define dso_local inreg noundef <32 x i64> @_Z31test_broadcast_zero_to_v32acc64v(
+// AIE2P-SAME: ) local_unnamed_addr #[[ATTR0]] {
+// AIE2P-NEXT:  entry:
+// AIE2P-NEXT:    ret <32 x i64> zeroinitializer
+//
+v32acc64 test_broadcast_zero_to_v32acc64() { return broadcast_zero_to_v32acc64(); }
+// AIE2P-LABEL: define dso_local inreg noundef <64 x i32> @_Z31test_broadcast_zero_to_v64acc32v(
+// AIE2P-SAME: ) local_unnamed_addr #[[ATTR0]] {
+// AIE2P-NEXT:  entry:
+// AIE2P-NEXT:    ret <64 x i32> zeroinitializer
+//
+v64acc32 test_broadcast_zero_to_v64acc32() { return broadcast_zero_to_v64acc32(); }
 // AIE2P-LABEL: define dso_local inreg noundef <16 x float> @_Z34test_broadcast_zero_to_v16accfloatv(
 // AIE2P-SAME: ) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    ret <16 x float> zeroinitializer
 //
-test_broadcast_zero_to_v16accfloat() {
+v16accfloat test_broadcast_zero_to_v16accfloat() {
   return broadcast_zero_to_v16accfloat();
 }
-v32accfloat
 // AIE2P-LABEL: define dso_local inreg noundef <32 x float> @_Z34test_broadcast_zero_to_v32accfloatv(
 // AIE2P-SAME: ) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    ret <32 x float> zeroinitializer
 //
-test_broadcast_zero_to_v32accfloat() {
+v32accfloat test_broadcast_zero_to_v32accfloat() {
   return broadcast_zero_to_v32accfloat();
 }
-v64accfloat
 // AIE2P-LABEL: define dso_local inreg noundef <64 x float> @_Z34test_broadcast_zero_to_v64accfloatv(
 // AIE2P-SAME: ) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
 // AIE2P-NEXT:    ret <64 x float> zeroinitializer
 //
-test_broadcast_zero_to_v64accfloat() {
+v64accfloat test_broadcast_zero_to_v64accfloat() {
   return broadcast_zero_to_v64accfloat();
 }
