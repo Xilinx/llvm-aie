@@ -59,6 +59,22 @@ body:             |
 ...
 
 ---
+name:            test_fifo_vec
+alignment:       16
+stack:
+  - { id: 0, name: '', type: spill-slot, offset: 0, size: 4, alignment: 4 }
+  - { id: 1, name: '', type: spill-slot, offset: 0, size: 32, alignment: 32 }
+body:             |
+  bb.0 (align 16):
+    ; CHECK-LABEL: name: test_fifo_vec
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 64, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $lfh0 = VLDA_dmx_lda_fifohl_spill -32, implicit $sp
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_spill $lfh0, -32, implicit $sp
+    $lfh0 = VLDA_dmx_lda_fifohl_spill %stack.1, implicit $sp
+    VST_dmx_sts_fifohl_spill  $lfh0, %stack.1, implicit $sp
+...
+
+---
 name:            test_acc512
 alignment:       16
 stack:
@@ -113,19 +129,35 @@ body:             |
 
 
 ---
-name:            test_fifo
+name:            test_fifo_lf
 alignment:       16
 stack:
   - { id: 0, name: '', type: spill-slot, offset: 0, size: 128, alignment: 32 }
 body:             |
   bb.0 (align 16):
 
-    ; CHECK-LABEL: name: test_fifo
+    ; CHECK-LABEL: name: test_fifo_lf
     ; CHECK: frame-setup PADDXM_pstm_sp_imm 128, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: $lf0 = VLDA_FIFO_SPILL -128, implicit $sp
     ; CHECK-NEXT: VST_FIFO_SPILL $lf0, -128, implicit $sp
     $lf0 = VLDA_FIFO_SPILL %stack.0, implicit $sp
     VST_FIFO_SPILL $lf0, %stack.0, implicit $sp
+...
+
+---
+name:            test_fifo_sf
+alignment:       16
+stack:
+  - { id: 0, name: '', type: spill-slot, offset: 0, size: 128, alignment: 32 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_fifo_sf
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 128, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: $sf = VLDA_FIFO_SPILL -128, implicit $sp
+    ; CHECK-NEXT: VST_FIFO_SPILL $sf, -128, implicit $sp
+    $sf = VLDA_FIFO_SPILL %stack.0, implicit $sp
+    VST_FIFO_SPILL $sf, %stack.0, implicit $sp
 ...
 
 
