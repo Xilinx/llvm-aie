@@ -80,6 +80,10 @@ jobs:
         uses: llvm/actions/setup-windows@main
         with:
           arch: amd64
+      - name: Remove Python in hosted tool cache
+        if: runner.os == 'Linux'
+        run: |
+          rm -Rf ${RUNNER_TOOL_CACHE}/Python
       # On Windows, starting with win19/20220814.1, cmake choose the 32-bit
       # python3.10.6 libraries instead of the 64-bit libraries when building
       # lldb.  Using this setup-python action to make 3.10 the default
