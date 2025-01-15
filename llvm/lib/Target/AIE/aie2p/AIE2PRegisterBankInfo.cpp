@@ -764,13 +764,12 @@ AIE2PRegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     Register VReg = MI.getOperand(0).getReg();
     if (!VReg)
       break;
-    MachineInstr *DefMI = MRI.getVRegDef(VReg);
     LLT Type = MRI.getType(VReg);
-    auto *RB = getRegBank(DefMI->getOperand(0).getReg(), MRI, TRI);
+    auto DefRegBank = getRegBank(VReg, MRI, TRI);
     // Add an additional typesize check to avoid matching the following case.
     // %3:_(<16 x s64>), %4:_(s32) = llvm.aie2p.scd.expand.ACC1024.incr),
     // %1(s32) G_STORE %4(s32), %2(p0) :: (store (s32))
-    if (RB == &AIE2P::AccRegBank && Type.getSizeInBits() > 256) {
+    if (DefRegBank == &AIE2P::AccRegBank && Type.getSizeInBits() > 256) {
       OpRegBankIdx[0] = getAccPartialMappingIdx(MRI.getType(VReg));
       OpRegBankIdx[1] = PMI_PTR;
       return AIEBaseRegisterBankInfo::getInstrMappingFinal(MI, Cost, OpSize,
