@@ -12,4 +12,5 @@
 //===----------------------------------------------------------------------===//
 
 include "AIEBaseRegisterBanks.td"
+def GPRRegBank : RegisterBank<"GPRRegBank", [eR, eL]>;
 def AccRegBank : RegisterBank<"AccRegBank", [ACC256, ACC512, ACC1024]>;

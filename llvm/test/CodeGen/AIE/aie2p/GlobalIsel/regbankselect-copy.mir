@@ -103,3 +103,31 @@ body: |
     %0:_(<64 x s32>) = COPY $dm0
     PseudoRET implicit $lr, implicit %0
 ...
+
+---
+name: copy_exp32
+legalized: true
+
+body: |
+  bb.0:
+    liveins: $el0
+    ; CHECK-LABEL: name: copy_exp32
+    ; CHECK: liveins: $el0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:gprregbank(s32) = COPY $el0
+    %0:_(s32) = COPY $el0
+...
+
+---
+name: copy_exp64
+legalized: true
+
+body: |
+  bb.0:
+    liveins: $el0
+    ; CHECK-LABEL: name: copy_exp64
+    ; CHECK: liveins: $el0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:gprregbank(s64) = COPY $e0
+    %0:_(s64) = COPY $e0
+...
