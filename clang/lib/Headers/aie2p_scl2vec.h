@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -1620,16 +1620,26 @@ INTRINSIC(v16accfloat) shiftr_elem(v16accfloat v, float s) {
 }
 // broadcast value one(1) to all vector lanes
 INTRINSIC(v64int8) broadcast_one_s8() { return broadcast_s8(1); }
+INTRINSIC(v64int8) broadcast_one_to_v64int8() { return broadcast_one_s8(); }
 
 INTRINSIC(v32int16) broadcast_one_s16() { return broadcast_s16(1); }
+INTRINSIC(v32int16) broadcast_one_to_v32int16() { return broadcast_one_s16(); }
 
 INTRINSIC(v16int32) broadcast_one_s32() { return broadcast_s32(1); }
+INTRINSIC(v16int32) broadcast_one_to_v16int32() { return broadcast_one_s32(); }
 
 INTRINSIC(v64uint8) broadcast_one_u8() { return broadcast_u8(1); }
+INTRINSIC(v64uint8) broadcast_one_to_v64uint8() { return broadcast_one_u8(); }
 
 INTRINSIC(v32uint16) broadcast_one_u16() { return broadcast_u16(1); }
+INTRINSIC(v32uint16) broadcast_one_to_v32uint16() {
+  return broadcast_one_u16();
+}
 
 INTRINSIC(v16uint32) broadcast_one_u32() { return broadcast_u32(1); }
+INTRINSIC(v16uint32) broadcast_one_to_v16uint32() {
+  return broadcast_one_u32();
+}
 
 INTRINSIC(v32bfloat16) broadcast_one_bfloat16() {
   return broadcast_bfloat16(1);
@@ -1707,15 +1717,6 @@ INTRINSIC(v16uint32) broadcast_zero_to_v16uint32() { return broadcast_u32(0); }
 }
 INTRINSIC(v16float) broadcast_zero_to_v16float() { return broadcast_float(0); }
 
-INTRINSIC(v16acc64) broadcast_zero_to_v16acc64() {
-  return __builtin_bit_cast(v16acc64, 0 - v32int32{0});
-}
-
-[[deprecated("Function 'clr' is deprecated. Please use the 'broadcast_zero_to' "
-             "variant instead.")]] INTRINSIC(v16acc64) clr16() {
-  return broadcast_zero_to_v16acc64();
-}
-
 #if 0
 [[deprecated("Function 'broadcast_zero_c16' is deprecated. Please use the 'broadcast_zero_to_v16cint16' variant instead.")]] INTRINSIC(v16cint16) broadcast_zero_c16() { return broadcast_c16(0); }
 INTRINSIC(v16cint16) broadcast_zero_to_v16cint16() { return broadcast_c16(0); }
@@ -1792,6 +1793,27 @@ broadcast_elem(v16float v, int idx) {
 
 INTRINSIC(v64int8)
 broadcast_to_v64int8(int b) { return broadcast_s8((int)b); }
+
+INTRINSIC(v16acc64) broadcast_zero_to_v16acc64() { return v16acc64{}; }
+
+[[deprecated("Function 'clr' is deprecated. Please use the 'broadcast_zero_to' "
+             "variant instead.")]] INTRINSIC(v16acc64) clr16() {
+  return broadcast_zero_to_v16acc64();
+}
+
+INTRINSIC(v32acc64) broadcast_zero_to_v32acc64() { return v32acc64{}; }
+
+[[deprecated("Function 'clr' is deprecated. Please use the 'broadcast_zero_to' "
+             "variant instead.")]] INTRINSIC(v32acc64) clr32() {
+  return broadcast_zero_to_v32acc64();
+}
+
+INTRINSIC(v64acc32) broadcast_zero_to_v64acc32() { return v64acc32{}; }
+
+[[deprecated("Function 'clr' is deprecated. Please use the 'broadcast_zero_to' "
+             "variant instead.")]] INTRINSIC(v64acc32) clr64() {
+  return broadcast_zero_to_v64acc32();
+}
 
 INTRINSIC(v16accfloat) broadcast_zero_to_v16accfloat() {
   return __builtin_bit_cast(v16accfloat, (float)0 - v16float{0});
