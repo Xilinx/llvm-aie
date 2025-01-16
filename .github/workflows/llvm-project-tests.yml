@@ -72,7 +72,7 @@ jobs:
     name: Lit Tests
     runs-on: ${{ matrix.os }}
     container:
-      image: ${{(startsWith(matrix.os, 'ubuntu') && 'ghcr.io/llvm/ci-ubuntu-22.04:1734381129') || null}}
+      image: ${{(startsWith(matrix.os, 'ubuntu') && 'ghcr.io/llvm/ci-ubuntu-22.04:latest') || null}}
       volumes:
         - /mnt/:/mnt/
     strategy:
