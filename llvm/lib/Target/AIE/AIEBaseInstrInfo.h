@@ -141,6 +141,9 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   virtual unsigned getGenericVSelOpcode() const {
     llvm_unreachable("Target didn't implement getGenericVSelOpcode!");
   }
+  virtual unsigned getGenericVShiftOpcode() const {
+    llvm_unreachable("Target didn't implement getGenericVShiftOpcode!");
+  }
   /// Check whether Opc represents a lock instruction
   virtual bool isLock(unsigned Opc) const { return false; }
   /// Check whether this is a delayed scheduling barrier induced from

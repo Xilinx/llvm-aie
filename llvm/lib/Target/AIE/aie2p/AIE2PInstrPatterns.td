@@ -971,3 +971,16 @@ def : Pat<(xor Ty:$src1, Ty:$src2),
 // DIVS
 def : Pat<(int_aie2p_divs eR31:$sd_in, eR:$src0, eR:$src1),
           (DIVS eR31:$sd_in, eR:$src0, eR:$src1)>;
+
+// VSHIFT
+def vshift_node : SDNode<"AIE2P::G_AIE_VSHIFT_RIGHT",
+                          SDTypeProfile<1, 3, [SDTCisVec<0>, SDTCisInt<3>,
+                                              SDTCisSameAs<0,1>,
+                                              SDTCisSameAs<0,2>]>>;
+def : GINodeEquiv<G_AIE_VSHIFT_RIGHT, vshift_node>;
+
+
+foreach Ty = [v64i8, v32i16, v16i32, v8i64] in {
+def : Pat<(Ty (vshift_node VEC512:$src1, VEC512:$src2, (i32 eR:$shift))),
+          (VSHIFT VEC512:$src1, VEC512:$src2, eR:$shift)>;
+}
