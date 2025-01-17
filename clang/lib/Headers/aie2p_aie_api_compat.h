@@ -806,10 +806,6 @@ inline __attribute__((always_inline)) v256uint8_sparse shuffle(v256uint8_sparse 
 inline __attribute__((always_inline)) v128uint16_sparse shuffle(v128uint16_sparse , int );
 inline __attribute__((always_inline)) v128uint8_sparse shuffle(v128uint8_sparse , int );
 inline __attribute__((always_inline)) v64uint16_sparse shuffle(v64uint16_sparse , int );
-inline __attribute__((always_inline)) v64bfp16ebs8 shuffle(v64bfp16ebs8 , v64bfp16ebs8 , unsigned int );
-inline __attribute__((always_inline)) v64bfp16ebs16 shuffle(v64bfp16ebs16 , v64bfp16ebs16 , unsigned int );
-inline __attribute__((always_inline)) v64bfp16ebs8 shuffle(v64bfp16ebs8 , unsigned int );
-inline __attribute__((always_inline)) v64bfp16ebs16 shuffle(v64bfp16ebs16 , unsigned int );
 inline __attribute__((always_inline)) v128bfp16ebs8 shuffle(v128bfp16ebs8 , unsigned int );
 inline __attribute__((always_inline)) v128bfp16ebs16_sparse shuffle(v128bfp16ebs16_sparse , unsigned int );
 inline __attribute__((always_inline)) v256bfp16ebs16_sparse shuffle(v256bfp16ebs16_sparse , unsigned int );

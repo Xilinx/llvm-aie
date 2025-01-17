@@ -625,4 +625,10 @@ def int_aie2p_sqrtf : ClangBuiltin<"__builtin_aie2p_sqrtf">, AIE2PNLF;
 // DIVS
 def int_aie2p_divs : AIE2PDIVS;
 
+// BFP16 MAC MUL
+class AIE2PSHUFFLEBFP16
+      : DefaultAttrsIntrinsic<[llvm_v64i8_ty, llvm_v8i8_ty], [llvm_v64i8_ty, llvm_v8i8_ty, llvm_v64i8_ty, llvm_v8i8_ty, llvm_i32_ty],
+					 [IntrNoMem]>;
+def int_aie2p_vshuffle_576_bfp16 :  AIE2PSHUFFLEBFP16;
+
 } // TargetPrefix = "aie2p"

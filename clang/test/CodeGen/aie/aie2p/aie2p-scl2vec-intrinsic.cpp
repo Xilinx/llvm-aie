@@ -260,7 +260,6 @@ v16int32 test_broadcast_elem_128(v16int32 a, int b){
   v64uint8 test_upd_elem(v64uint8 v, int idx, unsigned char b) {
     return upd_elem(v, idx, b);
   }
-//
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z13test_upd_elemDv64_hiDv2_h(
 // AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <2 x i8> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
@@ -332,7 +331,6 @@ v16int32 test_broadcast_elem_128(v16int32 a, int b){
   v32uint16 test_upd_elem(v32uint16 v, int idx, v4uint16 b) {
     return upd_elem(v, idx, b);
   }
-//
 // AIE2P-LABEL: define dso_local noundef <16 x i32> @_Z13test_upd_elemDv16_jij(
 // AIE2P-SAME: <16 x i32> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i32 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
@@ -394,6 +392,7 @@ v16int32 test_broadcast_elem_128(v16int32 a, int b){
     return upd_elem(v, idx, b);
   }
 
+//
 // AIE2P-LABEL: define dso_local noundef <32 x bfloat> @_Z13test_upd_elemDv32_u6__bf16iy(
 // AIE2P-SAME: <32 x bfloat> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], i64 noundef [[B:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // AIE2P-NEXT:  entry:
@@ -609,6 +608,7 @@ v16int32 test_shuffle_u64(mask64 b, unsigned int m) {
   return shuffle_u64(b, m);
 }
 
+//
 // AIE2P-LABEL: define dso_local noundef <16 x i32> @_Z11test_insertDv16_iiDv2_j(
 // AIE2P-SAME: <16 x i32> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <2 x i32> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
@@ -641,6 +641,7 @@ v128uint4 test_insert(v128uint4 v, int idx, mask64 b) {
   return insert(v, idx, b);
 }
 
+//
 // AIE2P-LABEL: define dso_local noundef <64 x i8> @_Z11test_insertDv64_hiDv2_j(
 // AIE2P-SAME: <64 x i8> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <2 x i32> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
@@ -658,6 +659,7 @@ v64uint8 test_insert(v64uint8 v, int idx, mask64 b) {
   return insert(v, idx, b);
 }
 
+//
 // AIE2P-LABEL: define dso_local noundef <32 x i16> @_Z11test_insertDv32_tiDv2_j(
 // AIE2P-SAME: <32 x i16> noundef [[V:%.*]], i32 noundef [[IDX:%.*]], <2 x i32> noundef [[B:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // AIE2P-NEXT:  entry:
@@ -730,4 +732,72 @@ v32accfloat test_broadcast_zero_to_v32accfloat() {
 //
 v64accfloat test_broadcast_zero_to_v64accfloat() {
   return broadcast_zero_to_v64accfloat();
+}
+
+// AIE2P-LABEL: define dso_local %struct.v64bfp16ebs8 @_Z12shuffle_test12v64bfp16ebs8S_j(
+// AIE2P-SAME: [[STRUCT_V64BFP16EBS8:%.*]] [[A_COERCE:%.*]], [[STRUCT_V64BFP16EBS8]] [[B_COERCE:%.*]], i32 noundef [[MODE:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// AIE2P-NEXT:  entry:
+// AIE2P-NEXT:    [[A_COERCE_FCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[A_COERCE]], 0
+// AIE2P-NEXT:    [[A_COERCE_FCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[A_COERCE]], 1
+// AIE2P-NEXT:    [[B_COERCE_FCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[B_COERCE]], 0
+// AIE2P-NEXT:    [[B_COERCE_FCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[B_COERCE]], 1
+// AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <8 x i8> } @llvm.aie2p.vshuffle.576.bfp16(<64 x i8> [[A_COERCE_FCA_0_EXTRACT_I]], <8 x i8> [[A_COERCE_FCA_1_EXTRACT_I]], <64 x i8> [[B_COERCE_FCA_0_EXTRACT_I]], <8 x i8> [[B_COERCE_FCA_1_EXTRACT_I]], i32 [[MODE]])
+// AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <8 x i8> } [[TMP0]], 0
+// AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <8 x i8> } [[TMP0]], 1
+// AIE2P-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V64BFP16EBS8]] poison, <64 x i8> [[TMP1]], 0
+// AIE2P-NEXT:    [[DOTFCA_1_INSERT_I:%.*]] = insertvalue [[STRUCT_V64BFP16EBS8]] [[DOTFCA_0_INSERT_I]], <8 x i8> [[TMP2]], 1
+// AIE2P-NEXT:    ret [[STRUCT_V64BFP16EBS8]] [[DOTFCA_1_INSERT_I]]
+//
+v64bfp16ebs8 shuffle_test(v64bfp16ebs8 a, v64bfp16ebs8 b, unsigned int mode) {
+  return shuffle(a, b, mode);
+}
+
+// AIE2P-LABEL: define dso_local %struct.v64bfp16ebs16 @_Z12shuffle_test13v64bfp16ebs16S_j(
+// AIE2P-SAME: [[STRUCT_V64BFP16EBS16:%.*]] [[A_COERCE:%.*]], [[STRUCT_V64BFP16EBS16]] [[B_COERCE:%.*]], i32 noundef [[MODE:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// AIE2P-NEXT:  entry:
+// AIE2P-NEXT:    [[A_COERCE_FCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFP16EBS16]] [[A_COERCE]], 0
+// AIE2P-NEXT:    [[A_COERCE_FCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFP16EBS16]] [[A_COERCE]], 1
+// AIE2P-NEXT:    [[B_COERCE_FCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFP16EBS16]] [[B_COERCE]], 0
+// AIE2P-NEXT:    [[B_COERCE_FCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFP16EBS16]] [[B_COERCE]], 1
+// AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <8 x i8> } @llvm.aie2p.vshuffle.576.bfp16(<64 x i8> [[A_COERCE_FCA_0_EXTRACT_I]], <8 x i8> [[A_COERCE_FCA_1_EXTRACT_I]], <64 x i8> [[B_COERCE_FCA_0_EXTRACT_I]], <8 x i8> [[B_COERCE_FCA_1_EXTRACT_I]], i32 [[MODE]])
+// AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <8 x i8> } [[TMP0]], 0
+// AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <8 x i8> } [[TMP0]], 1
+// AIE2P-NEXT:    [[DOTFCA_0_INSERT_I:%.*]] = insertvalue [[STRUCT_V64BFP16EBS16]] poison, <64 x i8> [[TMP1]], 0
+// AIE2P-NEXT:    [[DOTFCA_1_INSERT_I:%.*]] = insertvalue [[STRUCT_V64BFP16EBS16]] [[DOTFCA_0_INSERT_I]], <8 x i8> [[TMP2]], 1
+// AIE2P-NEXT:    ret [[STRUCT_V64BFP16EBS16]] [[DOTFCA_1_INSERT_I]]
+//
+v64bfp16ebs16 shuffle_test(v64bfp16ebs16 a, v64bfp16ebs16 b, unsigned int mode) {
+  return shuffle(a, b, mode);
+}
+
+// AIE2P-LABEL: define dso_local %struct.v64bfp16ebs8 @_Z12shuffle_test12v64bfp16ebs8j(
+// AIE2P-SAME: [[STRUCT_V64BFP16EBS8:%.*]] [[A_COERCE:%.*]], i32 noundef [[MODE:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// AIE2P-NEXT:  entry:
+// AIE2P-NEXT:    [[A_COERCE_FCA_0_EXTRACT_I_I:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[A_COERCE]], 0
+// AIE2P-NEXT:    [[A_COERCE_FCA_1_EXTRACT_I_I:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[A_COERCE]], 1
+// AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <8 x i8> } @llvm.aie2p.vshuffle.576.bfp16(<64 x i8> [[A_COERCE_FCA_0_EXTRACT_I_I]], <8 x i8> [[A_COERCE_FCA_1_EXTRACT_I_I]], <64 x i8> undef, <8 x i8> undef, i32 [[MODE]])
+// AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <8 x i8> } [[TMP0]], 0
+// AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <8 x i8> } [[TMP0]], 1
+// AIE2P-NEXT:    [[DOTFCA_0_INSERT_I_I:%.*]] = insertvalue [[STRUCT_V64BFP16EBS8]] poison, <64 x i8> [[TMP1]], 0
+// AIE2P-NEXT:    [[DOTFCA_1_INSERT_I_I:%.*]] = insertvalue [[STRUCT_V64BFP16EBS8]] [[DOTFCA_0_INSERT_I_I]], <8 x i8> [[TMP2]], 1
+// AIE2P-NEXT:    ret [[STRUCT_V64BFP16EBS8]] [[DOTFCA_1_INSERT_I_I]]
+//
+v64bfp16ebs8 shuffle_test(v64bfp16ebs8 a, unsigned mode) {
+  return shuffle(a ,mode);
+}
+
+// AIE2P-LABEL: define dso_local %struct.v64bfp16ebs16 @_Z12shuffle_test13v64bfp16ebs16j(
+// AIE2P-SAME: [[STRUCT_V64BFP16EBS16:%.*]] [[A_COERCE:%.*]], i32 noundef [[MODE:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// AIE2P-NEXT:  entry:
+// AIE2P-NEXT:    [[A_COERCE_FCA_0_EXTRACT_I_I:%.*]] = extractvalue [[STRUCT_V64BFP16EBS16]] [[A_COERCE]], 0
+// AIE2P-NEXT:    [[A_COERCE_FCA_1_EXTRACT_I_I:%.*]] = extractvalue [[STRUCT_V64BFP16EBS16]] [[A_COERCE]], 1
+// AIE2P-NEXT:    [[TMP0:%.*]] = tail call { <64 x i8>, <8 x i8> } @llvm.aie2p.vshuffle.576.bfp16(<64 x i8> [[A_COERCE_FCA_0_EXTRACT_I_I]], <8 x i8> [[A_COERCE_FCA_1_EXTRACT_I_I]], <64 x i8> undef, <8 x i8> undef, i32 [[MODE]])
+// AIE2P-NEXT:    [[TMP1:%.*]] = extractvalue { <64 x i8>, <8 x i8> } [[TMP0]], 0
+// AIE2P-NEXT:    [[TMP2:%.*]] = extractvalue { <64 x i8>, <8 x i8> } [[TMP0]], 1
+// AIE2P-NEXT:    [[DOTFCA_0_INSERT_I_I:%.*]] = insertvalue [[STRUCT_V64BFP16EBS16]] poison, <64 x i8> [[TMP1]], 0
+// AIE2P-NEXT:    [[DOTFCA_1_INSERT_I_I:%.*]] = insertvalue [[STRUCT_V64BFP16EBS16]] [[DOTFCA_0_INSERT_I_I]], <8 x i8> [[TMP2]], 1
+// AIE2P-NEXT:    ret [[STRUCT_V64BFP16EBS16]] [[DOTFCA_1_INSERT_I_I]]
+//
+v64bfp16ebs16 shuffle_test(v64bfp16ebs16 a, unsigned mode) {
+  return shuffle(a,  mode);
 }
