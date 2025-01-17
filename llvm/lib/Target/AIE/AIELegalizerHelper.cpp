@@ -1162,8 +1162,7 @@ bool AIELegalizerHelper::legalizeG_SELECT(LegalizerHelper &Helper,
 }
 
 // We legalize concat vector of 2 inputs. So, anything above we need to split
-// it. So far expect only 4 input. 1024bit vector from 4 256bit register and
-// 2048 accumulator register from 4 512bit registers.
+// it. So far expect only 4 input.
 bool AIELegalizerHelper::legalizeG_CONCAT_VECTORS(LegalizerHelper &Helper,
                                                   MachineInstr &MI) const {
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
@@ -1174,7 +1173,6 @@ bool AIELegalizerHelper::legalizeG_CONCAT_VECTORS(LegalizerHelper &Helper,
   const LLT DstTy = MRI.getType(DstReg);
   const LLT SrcTy = MRI.getType(SrcReg);
   assert(DstTy.isVector() && SrcTy.isVector() && "Expected vector types");
-  assert(SrcTy.getSizeInBits() >= 256 && "Input vector size does not match!");
   assert(MI.getNumOperands() == 5 && "Expected 4 inputs!");
 
   const LLT DstVecEltTy = DstTy.getElementType();
