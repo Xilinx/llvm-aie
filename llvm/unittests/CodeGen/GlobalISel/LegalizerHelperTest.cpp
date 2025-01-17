@@ -3690,6 +3690,37 @@ TEST_F(AArch64GISelMITest, BitcastBitOps) {
   EXPECT_TRUE(CheckMachineFunction(*MF, CheckStr)) << *MF;
 }
 
+TEST_F(AArch64GISelMITest, BitcastUnMerge) {
+  setUp();
+  if (!TM)
+    GTEST_SKIP();
+
+  LLT S32 = LLT::scalar(32);
+  LLT S128 = LLT::scalar(128);
+  LLT V4S32 = LLT::fixed_vector(4, 32);
+
+  auto Src = B.buildUndef(S128);
+  auto Unmerge = B.buildUnmerge(S32, Src);
+
+  DefineLegalizerInfo(A, {});
+
+  AInfo Info(MF->getSubtarget());
+  DummyGISelObserver Observer;
+  LegalizerHelper Helper(*MF, Info, Observer, B);
+  B.setInsertPt(*EntryMBB, Unmerge->getIterator());
+  EXPECT_EQ(LegalizerHelper::LegalizeResult::Legalized,
+            Helper.bitcast(*Unmerge, 1, V4S32));
+
+  auto CheckStr = R"(
+  CHECK: [[UNDEF:%[0-9]+]]:_(s128) = G_IMPLICIT_DEF
+  CHECK: [[BITCAST:%[0-9]+]]:_(<4 x s32>) = G_BITCAST [[UNDEF]]
+  CHECK: [[E0:%[0-9]+]]:_(s32), [[E1:%[0-9]+]]:_(s32), [[E0:%[0-9]+]]:_(s32), [[E1:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[BITCAST]]
+  )";
+
+  // Check
+  EXPECT_TRUE(CheckMachineFunction(*MF, CheckStr)) << *MF;
+}
+
 TEST_F(AArch64GISelMITest, CreateLibcall) {
   setUp();
   if (!TM)
