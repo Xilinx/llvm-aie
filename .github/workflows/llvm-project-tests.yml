@@ -69,6 +69,7 @@ jobs:
     container:
       # Avoid using the llvm container image, since it needs to be consistent with the runner
       # image: ${{(startsWith(matrix.os, 'ubuntu') && 'ghcr.io/llvm/ci-ubuntu-22.04:1734381129') || null}}
+      image: null
       volumes:
         - /mnt/:/mnt/
     strategy:
