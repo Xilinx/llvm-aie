@@ -118,3 +118,11 @@ def G_AIE_VSEL : AIEGenericInstruction {
   let InOperandList = (ins type0:$src1, type0:$src2, type1:$sel);
   let hasSideEffects = false;
 }
+
+// Concatenate the src1 and src2 vectors, shift right
+// and extract the resulting lower 512-bit vector
+def G_AIE_VSHIFT_RIGHT : AIEGenericInstruction {
+  let OutOperandList = (outs type0:$dst);
+  let InOperandList = (ins type0:$src1, type0:$src2, type1:$shift_amt);
+  let hasSideEffects = false;
+}
