@@ -3697,6 +3697,15 @@ LegalizerHelper::bitcast(MachineInstr &MI, unsigned TypeIdx, LLT CastTy) {
     return bitcastExtractVectorElt(MI, TypeIdx, CastTy);
   case TargetOpcode::G_INSERT_VECTOR_ELT:
     return bitcastInsertVectorElt(MI, TypeIdx, CastTy);
+  case TargetOpcode::G_UNMERGE_VALUES: {
+    if (TypeIdx != 1)
+      return UnableToLegalize;
+
+    Observer.changingInstr(MI);
+    bitcastSrc(MI, CastTy, MI.getNumOperands() - 1);
+    Observer.changedInstr(MI);
+    return Legalized;
+  }
   default:
     return UnableToLegalize;
   }
