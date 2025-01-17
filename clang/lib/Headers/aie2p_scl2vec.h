@@ -1827,4 +1827,32 @@ INTRINSIC(v64accfloat) broadcast_zero_to_v64accfloat() {
   return __builtin_bit_cast(v64accfloat, (float)0 - v64float{0});
 }
 
+INTRINSIC(v64bfp16ebs8)
+shuffle(v64bfp16ebs8 a, v64bfp16ebs8 b, unsigned int mode) {
+  v64bfp16ebs8 res;
+  __builtin_aie2p_vshuffle_576_bfp16(a.mantissa, a.exponent, b.mantissa,
+                                     b.exponent, mode, (v64char &)res.mantissa,
+                                     (v8char &)res.exponent);
+  return res;
+}
+
+INTRINSIC(v64bfp16ebs16)
+shuffle(v64bfp16ebs16 a, v64bfp16ebs16 b, unsigned int mode) {
+  v64bfp16ebs16 res;
+  __builtin_aie2p_vshuffle_576_bfp16(a.mantissa, a.exponent, b.mantissa,
+                                     b.exponent, mode, (v64char &)res.mantissa,
+                                     (v8char &)res.exponent);
+  return res;
+}
+
+INTRINSIC(v64bfp16ebs8) shuffle(v64bfp16ebs8 a, unsigned mode) {
+  v64bfp16ebs8 UnDef;
+  return shuffle(a, UnDef, mode);
+}
+
+INTRINSIC(v64bfp16ebs16) shuffle(v64bfp16ebs16 a, unsigned mode) {
+  v64bfp16ebs16 UnDef;
+  return shuffle(a, UnDef, mode);
+}
+
 #endif /*__AIEV2_SCL2VEC_H__*/

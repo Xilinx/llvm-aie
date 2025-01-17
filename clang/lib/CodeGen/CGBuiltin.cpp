@@ -22054,6 +22054,8 @@ static llvm::Intrinsic::ID getAIE2PIntrinsicFunction(unsigned BuiltinID) {
     return Intrinsic::aie2p_v64accfloat_to_v64bfp16ebs16;
   case AIE::BI__builtin_aie2p_v64bfp16ebs8_to_v64bfp16ebs16:
     return Intrinsic::aie2p_v64bfp16ebs8_to_v64bfp16ebs16;
+  case AIE::BI__builtin_aie2p_vshuffle_576_bfp16:
+    return Intrinsic::aie2p_vshuffle_576_bfp16;
   default:
     break;
   }
@@ -22305,6 +22307,30 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
 
     return Builder.CreateDefaultAlignedStore(Exp, ExpAddr);
   }
+  case AIE::BI__builtin_aie2p_vshuffle_576_bfp16: {
+    SmallVector<Value *, 3> Ops;
+    for (unsigned I = 0; I < E->getNumArgs() - 2; I++)
+      Ops.push_back(EmitScalarExpr(E->getArg(I)));
+
+    llvm::Intrinsic::ID IntrinsicID = getAIEIntrinsicFunction(BuiltinID, Arch);
+    assert(IntrinsicID != Intrinsic::not_intrinsic);
+    Function *F = CGM.getIntrinsic(IntrinsicID);
+    Value *Val = Builder.CreateCall(F, Ops);
+
+    // The first member of the returned struct is the mantissa part of bfp16,
+    // store it to the first input reference
+    Value *Mant = Builder.CreateExtractValue(Val, 0);
+    Value *MantAddr =
+        EmitLValue(E->getArg(E->getNumArgs() - 2)).getPointer(*this);
+    Builder.CreateDefaultAlignedStore(Mant, MantAddr);
+
+    // The second member of the returned struct is the exponent part of bfp16
+    // store it to the second input reference
+    Value *Exp = Builder.CreateExtractValue(Val, 1);
+    Value *ExpAddr =
+        EmitLValue(E->getArg(E->getNumArgs() - 1)).getPointer(*this);
+    return Builder.CreateDefaultAlignedStore(Exp, ExpAddr);
+  }
   default:
     break;
   }
@@ -22486,7 +22512,8 @@ Value *CodeGenFunction::EmitAIE2PBuiltinExpr(unsigned BuiltinID,
   case AIE::BI__builtin_aie2p_divstep:
   case AIE::BI__builtin_aie2p_v64accfloat_to_v64bfp16ebs8:
   case AIE::BI__builtin_aie2p_v64accfloat_to_v64bfp16ebs16:
-  case AIE::BI__builtin_aie2p_v64bfp16ebs8_to_v64bfp16ebs16: {
+  case AIE::BI__builtin_aie2p_v64bfp16ebs8_to_v64bfp16ebs16:
+  case AIE::BI__builtin_aie2p_vshuffle_576_bfp16: {
     return this->EmitAIEBuiltinExpr(BuiltinID, E, Arch);
   }
   default:

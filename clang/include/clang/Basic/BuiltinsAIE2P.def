@@ -320,3 +320,6 @@ BUILTIN(__builtin_aie2p_tanh, "V16yV16g", "nc")
 
 //division/mod
 BUILTIN(__builtin_aie2p_divstep, "vUi&Ui&Ui", "nc")
+
+// SHUFFLE
+BUILTIN(__builtin_aie2p_vshuffle_576_bfp16, "vV64cV8cV64cV8ciV64c&V8c&", "nc")

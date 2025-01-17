@@ -171,6 +171,8 @@ typedef int16_t v32int16 __attribute__((__vector_size__(64)))
 __attribute__((aligned(__MIN_ALIGNMENT)));
 typedef int8_t v64int8 __attribute__((__vector_size__(64)))
 __attribute__((aligned(__MIN_ALIGNMENT)));
+typedef char v64char __attribute__((__vector_size__(64)))
+__attribute__((aligned(__MIN_ALIGNMENT)));
 typedef uint32_t v8uint64 __attribute__((__vector_size__(64)))
 __attribute__((aligned(__MIN_ALIGNMENT)));
 typedef uint32_t v16uint32 __attribute__((__vector_size__(64)))
@@ -246,6 +248,7 @@ typedef int16_t v4int16 __attribute__((__vector_size__(8)));
 typedef uint16_t v4uint16 __attribute__((__vector_size__(8)));
 typedef uint8_t v8uint8 __attribute__((__vector_size__(8)));
 typedef int8_t v8int8 __attribute__((__vector_size__(8)));
+typedef char v8char __attribute__((__vector_size__(8)));
 typedef buint8_t v16uint4 __attribute__((__vector_size__(8)));
 typedef bint8_t v16int4 __attribute__((__vector_size__(8)));
 /* vector types */
