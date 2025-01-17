@@ -231,6 +231,63 @@ bool AIELegalizerHelper::legalizeG_BUILD_VECTOR(LegalizerHelper &Helper,
   return true;
 }
 
+// Legalize G_UNMERGE_VALUES of 256-bit vector into 2 x 128-bit vector. For an
+// example,
+//     %1:_(<4 x s32>), %2:_(<4 x s32>) = G_UNMERGE_VALUES %0:_(<8 x s32>)
+//  to
+//     %1:_(<4 x s32>) = G_AIE_UNPAD_VECTOR %0(<8 x s32>)
+//     %3:_(s32) = G_CONSTANT i32 16
+//     %4:_(<16 x s32>) = G_CONCAT_VECTORS %0(<8 x s32>), %0(<8 x s32>)
+//     %5:_(<16 x s32>) = G_IMPLICIT_DEF
+//     %6:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT %4, %5, %3(s32)
+//     %2:_(<4 x s32>) = G_AIE_UNPAD_VECTOR %6(<16 x s32>)
+bool AIELegalizerHelper::legalizeG_UNMERGE_VALUES_128bit(
+    LegalizerHelper &Helper, MachineInstr &MI) const {
+  MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
+  MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
+
+  assert(MI.getNumOperands() == 3 &&
+         "Expected G_UNMERGE_VALUES of 256-bit vector to 2 x 128-bit vector");
+  const AIEBaseInstrInfo *II = ST.getInstrInfo();
+  const unsigned UnpadOpc = II->getGenericUnpadVectorOpcode();
+  const Register SrcReg = MI.getOperand(MI.getNumOperands() - 1).getReg();
+  const Register DstRegLow = MI.getOperand(0).getReg();
+  const Register DstRegHigh = MI.getOperand(1).getReg();
+  const LLT SrcTy = MRI.getType(SrcReg);
+
+  // Extracting lower 128-bit is easy: just discard (unpad) the high bits
+  MIRBuilder.buildInstr(UnpadOpc, {DstRegLow}, {SrcReg});
+
+  // To extract the higher 128-bit, we need to shift them to the lower position,
+  // then unpad again.
+  // We need to shift the upper 128-bit content by 16-byte (128-bit)
+  auto ShiftAmt = MIRBuilder.buildConstant(LLT::scalar(32), 16);
+
+  // VSHIFT operates on 512-bit inputs. We need to pad the 256-bit source
+  // operand to 512-bit
+  const Register ImplicitDef256 = MIRBuilder.buildUndef(SrcTy).getReg(0);
+
+  const LLT Vec512 = SrcTy.multiplyElements(2);
+
+  // Create the first 512-bit vector input
+  auto ConcatValue =
+      MIRBuilder.buildConcatVectors({Vec512}, {SrcReg, ImplicitDef256});
+
+  // The second input will be ignored. Just create a dummy input
+  auto ImplicitDef512 = MIRBuilder.buildUndef(Vec512);
+
+  // Now create the VSHIFT
+  const unsigned VShiftOpc = II->getGenericVShiftOpcode();
+  auto VShift = MIRBuilder.buildInstr(VShiftOpc, {Vec512},
+                                      {ConcatValue, ImplicitDef512, ShiftAmt});
+
+  // Finally, unpad the 512-bit result to 128-bit
+  MIRBuilder.buildInstr(UnpadOpc, {DstRegHigh}, {VShift});
+
+  MI.eraseFromParent();
+  return true;
+}
+
 bool AIELegalizerHelper::legalizeG_UNMERGE_VALUES(LegalizerHelper &Helper,
                                                   MachineInstr &MI) const {
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
@@ -241,6 +298,11 @@ bool AIELegalizerHelper::legalizeG_UNMERGE_VALUES(LegalizerHelper &Helper,
   const Register LastReg = MI.getOperand(MI.getNumOperands() - 1).getReg();
   const LLT FirstTy = MRI.getType(FirstReg);
   const LLT LastTy = MRI.getType(LastReg);
+
+  if (ST.isAIE2P() && FirstTy.isVector() && FirstTy.getSizeInBits() == 128 &&
+      LastTy.getSizeInBits() == 256)
+    return legalizeG_UNMERGE_VALUES_128bit(Helper, MI);
+
   assert(LastTy.isVector() &&
          (FirstTy.getScalarSizeInBits() * (MI.getNumOperands() - 1)) ==
              LastTy.getSizeInBits() &&
