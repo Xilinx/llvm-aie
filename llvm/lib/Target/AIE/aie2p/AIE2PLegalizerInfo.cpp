@@ -564,9 +564,13 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
       .customIf([=](const LegalityQuery &Query) {
         const LLT &DstTy = Query.Types[0];
         const LLT &SrcTy = Query.Types[1];
-
-        return SrcTy.isVector() && DstTy.isScalar() &&
-               DstTy == SrcTy.getElementType();
+        // Handle 2 cases
+        // 1: vector of size 256 to 2 vectors of size 128
+        // 2: Unmerge vector to scalar outputs
+        return (DstTy.isVector() && SrcTy.getSizeInBits() == 256 &&
+                DstTy.getSizeInBits() == 128) ||
+               (SrcTy.isVector() && DstTy.isScalar() &&
+                DstTy == SrcTy.getElementType());
       })
       .unsupportedIf(IsNotValidDestinationVector)
       .legalIf(isValidVectorMergeUnmergeOp(1, 0));

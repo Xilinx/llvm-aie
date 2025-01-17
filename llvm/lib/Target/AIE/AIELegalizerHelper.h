@@ -68,6 +68,8 @@ public:
                        Register SourceReg) const;
   bool unpack32BitVector(LegalizerHelper &Helper, MachineInstr &MI,
                          Register SourceReg) const;
+  bool legalizeG_UNMERGE_VALUES_128bit(LegalizerHelper &Helper,
+                                       MachineInstr &MI) const;
 };
 
 } // namespace llvm

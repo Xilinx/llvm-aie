@@ -77,3 +77,54 @@ body:             |
     %1:_(s64), %2:_(s64), %3:_(s64), %4:_(s64), %5:_(s64), %6:_(s64), %7:_(s64), %8:_(s64), %9:_(s64), %10:_(s64), %11:_(s64), %12:_(s64), %13:_(s64), %14:_(s64), %15:_(s64), %16:_(s64), %17:_(s64), %18:_(s64), %19:_(s64), %20:_(s64), %21:_(s64), %22:_(s64), %23:_(s64), %24:_(s64), %25:_(s64), %26:_(s64), %27:_(s64), %28:_(s64), %29:_(s64), %30:_(s64), %31:_(s64), %32:_(s64) = G_UNMERGE_VALUES %0:_(s2048)
     PseudoRET implicit $lr, implicit %1
 ...
+---
+name:           test__s128_s256_v8
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test__s128_s256_v8
+    ; CHECK: [[DEF:%[0-9]+]]:_(<8 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<4 x s32>) = G_AIE_UNPAD_VECTOR [[DEF]](<8 x s32>)
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 16
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[DEF]](<8 x s32>), [[DEF]](<8 x s32>)
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT:%[0-9]+]]:_(<16 x s32>) = G_AIE_VSHIFT_RIGHT [[CONCAT_VECTORS]], [[DEF1]], [[C]](s32)
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<4 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_VSHIFT_RIGHT]](<16 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_UNPAD_VECTOR]](<4 x s32>), implicit [[AIE_UNPAD_VECTOR1]](<4 x s32>)
+    %0:_(<8 x s32>) = G_IMPLICIT_DEF
+    %1:_(<4 x s32>), %2:_(<4 x s32>) = G_UNMERGE_VALUES %0:_(<8 x s32>)
+    PseudoRET implicit $lr, implicit %1, implicit %2
+...
+---
+name:           test__s128_s256_v16
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test__s128_s256_v16
+    ; CHECK: [[DEF:%[0-9]+]]:_(<16 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<8 x s16>) = G_AIE_UNPAD_VECTOR [[DEF]](<16 x s16>)
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 16
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[DEF]](<16 x s16>), [[DEF]](<16 x s16>)
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<32 x s16>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT:%[0-9]+]]:_(<32 x s16>) = G_AIE_VSHIFT_RIGHT [[CONCAT_VECTORS]], [[DEF1]], [[C]](s32)
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<8 x s16>) = G_AIE_UNPAD_VECTOR [[AIE_VSHIFT_RIGHT]](<32 x s16>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_UNPAD_VECTOR]](<8 x s16>), implicit [[AIE_UNPAD_VECTOR1]](<8 x s16>)
+    %0:_(<16 x s16>) = G_IMPLICIT_DEF
+    %1:_(<8 x s16>), %2:_(<8 x s16>) = G_UNMERGE_VALUES %0:_(<16 x s16>)
+    PseudoRET implicit $lr, implicit %1, implicit %2
+...
+---
+name:           test__s128_s256_v32
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test__s128_s256_v32
+    ; CHECK: [[DEF:%[0-9]+]]:_(<32 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<16 x s8>) = G_AIE_UNPAD_VECTOR [[DEF]](<32 x s8>)
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 16
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[DEF]](<32 x s8>), [[DEF]](<32 x s8>)
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<64 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[AIE_VSHIFT_RIGHT:%[0-9]+]]:_(<64 x s8>) = G_AIE_VSHIFT_RIGHT [[CONCAT_VECTORS]], [[DEF1]], [[C]](s32)
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR1:%[0-9]+]]:_(<16 x s8>) = G_AIE_UNPAD_VECTOR [[AIE_VSHIFT_RIGHT]](<64 x s8>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_UNPAD_VECTOR]](<16 x s8>), implicit [[AIE_UNPAD_VECTOR1]](<16 x s8>)
+    %0:_(<32 x s8>) = G_IMPLICIT_DEF
+    %1:_(<16 x s8>), %2:_(<16 x s8>) = G_UNMERGE_VALUES %0:_(<32 x s8>)
+    PseudoRET implicit $lr, implicit %1, implicit %2
+...
