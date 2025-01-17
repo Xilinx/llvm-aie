@@ -547,6 +547,20 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
                                   LLT::fixed_vector(SrcTy.getNumElements() / 2,
                                                     SrcTy.getElementType()));
           })
+      .bitcastIf(
+          [=](const LegalityQuery &Query) {
+            const LLT &SrcTy = Query.Types[1];
+
+            // If the source type is already a vector, there is nothing to do.
+            return !SrcTy.isVector();
+          },
+          [=](const LegalityQuery &Query) {
+            const LLT &DstTy = Query.Types[0];
+            const LLT &SrcTy = Query.Types[1];
+            const unsigned NumElems =
+                SrcTy.getSizeInBits() / DstTy.getSizeInBits();
+            return std::make_pair(1, LLT::fixed_vector(NumElems, DstTy));
+          })
       .customIf([=](const LegalityQuery &Query) {
         const LLT &DstTy = Query.Types[0];
         const LLT &SrcTy = Query.Types[1];
