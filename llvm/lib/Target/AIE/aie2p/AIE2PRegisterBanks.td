@@ -12,6 +12,9 @@
 //===----------------------------------------------------------------------===//
 
 include "AIEBaseRegisterBanks.td"
-def GPRRegBank : RegisterBank<"GPRRegBank", [eR, eL, eE, EXPVEC64]>;
 def AccRegBank : RegisterBank<"AccRegBank", [ACC512, ACC1024, ACC2048]>;
+<<<<<<< HEAD
 def FifoRegBank : RegisterBank<"FifoRegBank", [FIFO512, FIFO1024]>;
+=======
+def GPRRegBank : RegisterBank<"GPRRegBank", [eR, eL, eE, EXPVEC64]>;
+>>>>>>> 16e9ab4b43fc ([AIE2P] Support bfp16 scl2vec intrinsics - backend)
