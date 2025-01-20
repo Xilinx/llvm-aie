@@ -143,8 +143,8 @@ body:             |
     ; AIE2-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]]
     ;
     ; AIE2P-LABEL: name: vconcat_1024_acc64
-    ; AIE2P: [[DEF:%[0-9]+]]:acc512 = IMPLICIT_DEF
-    ; AIE2P-NEXT: [[DEF1:%[0-9]+]]:acc512 = IMPLICIT_DEF
+    ; AIE2P: [[DEF:%[0-9]+]]:mwbfsrs = IMPLICIT_DEF
+    ; AIE2P-NEXT: [[DEF1:%[0-9]+]]:mwbfsrs = IMPLICIT_DEF
     ; AIE2P-NEXT: [[REG_SEQUENCE:%[0-9]+]]:acc1024 = REG_SEQUENCE [[DEF]], %subreg.sub_512_acc_lo, [[DEF1]], %subreg.sub_512_acc_hi
     ; AIE2P-NEXT: PseudoRET implicit $lr, implicit [[REG_SEQUENCE]]
     %0:accregbank(<8 x s64>) = G_IMPLICIT_DEF

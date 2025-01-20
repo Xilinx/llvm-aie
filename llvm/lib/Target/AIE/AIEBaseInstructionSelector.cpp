@@ -134,11 +134,15 @@ bool AIEBaseInstructionSelector::selectG_IMPLICIT_DEF(
   // Make sure no input operands are passed to IMPLICIT_DEF
   while (I.getNumOperands() > 1)
     I.removeOperand(1);
-  const MachineOperand &DstOp = I.getOperand(0);
-  const RegisterBank &RB = *RBI.getRegBank(DstOp.getReg(), MRI, TRI);
-  const TargetRegisterClass &RC =
-      TRI.getMinClassForRegBank(RB, MRI.getType(DstOp.getReg()));
-  return RBI.constrainGenericRegister(DstOp.getReg(), RC, MRI);
+  const Register DstReg = I.getOperand(0).getReg();
+  const RegClassOrRegBank &RegClassOrBank = MRI.getRegClassOrRegBank(DstReg);
+  const TargetRegisterClass *DstRC =
+      RegClassOrBank.dyn_cast<const TargetRegisterClass *>();
+  if (!DstRC) {
+    const RegisterBank &RB = *RegClassOrBank.get<const RegisterBank *>();
+    DstRC = &TRI.getMinClassForRegBank(RB, MRI.getType(DstReg));
+  }
+  return RBI.constrainGenericRegister(DstReg, *DstRC, MRI);
 }
 
 bool AIEBaseInstructionSelector::selectG_PHI(MachineInstr &I,
