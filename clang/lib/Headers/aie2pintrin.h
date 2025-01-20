@@ -24,9 +24,6 @@
 #define __SIGN_UNSIGNED 0
 #define __SIGN_SIGNED 1
 
-typedef char v64c __attribute__((__vector_size__(64)));
-typedef char v8c __attribute__((__vector_size__(8)));
-
 #include "aie2p_defines.h"
 #include "aie2p_enums.h"
 #include "aiebase_chess.h"
