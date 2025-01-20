@@ -14,3 +14,4 @@
 include "AIEBaseRegisterBanks.td"
 def GPRRegBank : RegisterBank<"GPRRegBank", [eR, eL, eE, EXPVEC64]>;
 def AccRegBank : RegisterBank<"AccRegBank", [ACC512, ACC1024, ACC2048]>;
+def FifoRegBank : RegisterBank<"FifoRegBank", [FIFO512, FIFO1024]>;

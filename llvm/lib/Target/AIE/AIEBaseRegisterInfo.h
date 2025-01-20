@@ -61,6 +61,10 @@ struct AIEBaseRegisterInfo : public TargetRegisterInfo {
     llvm_unreachable("Target didn't implement isVecOrAccRegClass()");
   }
 
+  virtual bool isFifoPhysReg(const Register Reg) const {
+    llvm_unreachable("Target didn't implement isFifoPhysReg()");
+  }
+
   // Whether a reserved register is sticky. We consider a register as
   // sticky when associated with implicit defs of instructions and they
   // keep their result(s) (or flag status) until an explicit reset.

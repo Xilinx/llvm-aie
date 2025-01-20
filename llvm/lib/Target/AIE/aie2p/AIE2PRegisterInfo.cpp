@@ -315,6 +315,16 @@ AIE2PRegisterInfo::getMinClassForRegBank(const RegisterBank &RB, LLT Ty) const {
       llvm_unreachable("Unsupported register size.");
     }
   }
+  case AIE2P::FifoRegBankID: {
+    switch (Ty.getSizeInBits()) {
+    case 512:
+      return AIE2P::FIFO512RegClass;
+    case 1024:
+      return AIE2P::FIFO1024RegClass;
+    default:
+      llvm_unreachable("Unsupported register size.");
+    }
+  }
   }
   llvm_unreachable("Unexpected register bank.");
 }
@@ -535,4 +545,9 @@ bool AIE2PRegisterInfo::isVecOrAccRegClass(
     return true;
 
   return false;
+}
+
+bool AIE2PRegisterInfo::isFifoPhysReg(const Register Reg) const {
+  return Reg.isPhysical() && (AIE2P::FIFO512RegClass.contains(Reg) ||
+                              AIE2P::FIFO1024RegClass.contains(Reg));
 }

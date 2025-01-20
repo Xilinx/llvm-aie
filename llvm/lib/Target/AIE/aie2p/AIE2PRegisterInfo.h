@@ -99,6 +99,8 @@ struct AIE2PRegisterInfo : public AIE2PGenRegisterInfo {
     return &AIE2P::eDCRegClass;
   }
   bool isVecOrAccRegClass(const TargetRegisterClass &RC) const override;
+
+  bool isFifoPhysReg(const Register Reg) const override;
 };
 } // namespace llvm
 

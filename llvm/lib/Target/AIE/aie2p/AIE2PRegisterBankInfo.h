@@ -36,10 +36,12 @@ protected:
     First3OpsIdx = 1,
     FirstVecOpsIdx = 16,
     FirstAccOpsIdx = 26,
-    LastOpsIdx = 29,
+    LastOpsIdx = 31,
     DistanceBetweenRegBanks = 3,
     DistanceBetweenAccRegBanks = 1,
+    DistanceBetweenFifoRegBanks = 1,
     S128_Idx = 28,
+    FirstFifoOpsIdx = 30,
   };
 
   /// Get the pointer to the ValueMapping representing the RegisterBank
@@ -54,6 +56,7 @@ protected:
 
   PartialMappingIdx getPartialMappingIdx(const LLT &Ty) const override;
   PartialMappingIdx getAccPartialMappingIdx(const LLT &Ty) const override;
+  PartialMappingIdx getFifoPartialMappingIdx(const LLT &Ty) const;
 
 #define GET_TARGET_REGBANK_CLASS
 #include "AIE2PGenRegisterBank.inc"
@@ -79,6 +82,12 @@ public:
   bool isUseAccInsn(const MachineRegisterInfo &MRI,
                     const TargetRegisterInfo &TRI,
                     const Register &AccReg) const;
+  bool hasFifoInput(const MachineInstr &MI, const MachineRegisterInfo &MRI,
+                    const TargetRegisterInfo &TRI,
+                    const Register FifoReg) const;
+  bool isUseFifoInsn(const MachineRegisterInfo &MRI,
+                     const TargetRegisterInfo &TRI,
+                     const Register FifoReg) const;
 };
 } // end namespace llvm
 #endif
