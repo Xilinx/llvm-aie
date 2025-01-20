@@ -64,6 +64,11 @@ bool matchBroadcastElement(MachineInstr &MI, MachineRegisterInfo &MRI,
                            std::pair<Register, Register> &MatchInfo);
 bool matchShuffleToBroadcast(MachineInstr &MI, MachineRegisterInfo &MRI,
                              std::pair<Register, Register> &MatchInfo);
+/// Combine G_SHUFFLE_VECTOR(G_BUILD_VECTOR (VAL, UNDEF, ...), mask<0,0,...>)
+/// idiom into G_AIE_VSEL
+bool matchShuffleToVSel(
+    MachineInstr &MI, MachineRegisterInfo &MRI,
+    std::tuple<Register, Register, Register, uint64_t> &MatchInfo);
 /// \return true if \a MemI can be moved just before \a Dest in order to allow
 /// post-increment combining
 bool canDelayMemOp(MachineInstr &MemI, MachineInstr &Dest,
@@ -156,6 +161,8 @@ bool matchConcatPadVector(MachineInstr &MI, MachineRegisterInfo &MRI,
                           Register &MatchedInputVector);
 void applyPadVector(MachineInstr &MI, MachineRegisterInfo &MRI,
                     MachineIRBuilder &B, Register MatchedInputVector);
+void applyVSel(MachineInstr &MI, MachineRegisterInfo &MRI, MachineIRBuilder &B,
+               std::tuple<Register, Register, Register, uint64_t> &MatchInfo);
 bool tryToCombineVectorShiftsByZero(MachineInstr &MI, MachineRegisterInfo &MRI);
 
 bool matchExtractConcat(MachineInstr &MI, MachineRegisterInfo &MRI,

@@ -1261,6 +1261,17 @@ void llvm::applyPadVector(MachineInstr &MI, MachineRegisterInfo &MRI,
   MI.eraseFromParent();
 }
 
+void llvm::applyVSel(
+    MachineInstr &MI, MachineRegisterInfo &MRI, MachineIRBuilder &B,
+    std::tuple<Register, Register, Register, uint64_t> &MatchInfo) {
+  B.setInstrAndDebugLoc(MI);
+  const AIEBaseInstrInfo &AIETII = (const AIEBaseInstrInfo &)B.getTII();
+  auto [DstVecReg, Src1Reg, Src2Reg, Mask] = MatchInfo;
+  B.buildInstr(AIETII.getGenericVSelOpcode(), {DstVecReg},
+               {Src1Reg, Src2Reg, Mask});
+  MI.eraseFromParent();
+}
+
 /// Match something like this:
 ///  %68:_(s32) = G_CONSTANT i32 0
 ///  %93:_(s32) = G_CONSTANT i32 1
@@ -1766,5 +1777,52 @@ bool llvm::matchShuffleToBroadcast(MachineInstr &MI, MachineRegisterInfo &MRI,
       return false;
   }
   MatchInfo = std::make_pair(DstReg, Src1Reg);
+  return true;
+}
+
+bool llvm::matchShuffleToVSel(
+    MachineInstr &MI, MachineRegisterInfo &MRI,
+    std::tuple<Register, Register, Register, uint64_t> &MatchInfo) {
+  assert(MI.getOpcode() == TargetOpcode::G_SHUFFLE_VECTOR);
+  const Register DstReg = MI.getOperand(0).getReg();
+  const Register Src1Reg = MI.getOperand(1).getReg();
+  const Register Src2Reg = MI.getOperand(2).getReg();
+  ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
+
+  const LLT DstTy = MRI.getType(DstReg);
+  const LLT Src1Ty = MRI.getType(Src1Reg);
+  if (Src1Ty.getSizeInBits() != 512)
+    return false;
+
+  const unsigned NumDstElems = DstTy.getNumElements();
+  const unsigned NumSrcElems = Src1Ty.getNumElements();
+  assert(NumDstElems == NumSrcElems &&
+         "Expected same number of elements in dst and src vector types");
+
+  // Check that the shuffle mask can be converted into VSel mask:
+  // 1. The shuffle mask doesn't contain indices that correspond to the same
+  // index in Src1 and Src2, i.e., for each i only the i-th element from Src1 or
+  // the i-th element from Src2 is used.
+  // 2. The mask indices modulo the number of elements are in strictly ascending
+  // order.
+  int PrevIdx = Mask[0] % NumSrcElems;
+  const size_t NumElems = Mask.size();
+  for (unsigned I = 1; I < NumElems; I++) {
+    int CurrIdx = Mask[I] % NumSrcElems;
+    if (CurrIdx <= PrevIdx)
+      return false;
+  }
+
+  // Create the mask
+  unsigned long long DstMask = 0;
+  for (unsigned I = 0; I < NumElems; I++) {
+    int Idx = Mask[I];
+    if (Idx >= (int)NumSrcElems) {
+      unsigned long long ElemMask = 1 << I;
+      DstMask |= ElemMask;
+    }
+  }
+
+  MatchInfo = std::make_tuple(DstReg, Src1Reg, Src2Reg, DstMask);
   return true;
 }
