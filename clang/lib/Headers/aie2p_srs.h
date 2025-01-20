@@ -974,15 +974,15 @@ INTRINSIC(v16float) srs_to_v16float(v32accfloat acc) {
 // Floating-point accumulator to block floating-point vector register
 INTRINSIC(v64bfp16ebs8) to_v64bfp16ebs8(v64accfloat a) {
   v64bfp16ebs8 r;
-  __builtin_aie2p_v64accfloat_to_v64bfp16ebs8((v64c &)r.mantissa,
-                                              (v8c &)r.exponent, a);
+  __builtin_aie2p_v64accfloat_to_v64bfp16ebs8((v64char &)r.mantissa,
+                                              (v8char &)r.exponent, a);
   return r;
 }
 
 INTRINSIC(v64bfp16ebs16) to_v64bfp16ebs16(v64accfloat a) {
   v64bfp16ebs16 r;
-  __builtin_aie2p_v64accfloat_to_v64bfp16ebs16((v64c &)r.mantissa,
-                                               (v8c &)r.exponent, a);
+  __builtin_aie2p_v64accfloat_to_v64bfp16ebs16((v64char &)r.mantissa,
+                                               (v8char &)r.exponent, a);
   return r;
 }
 
@@ -991,7 +991,7 @@ INTRINSIC(v64bfp16ebs16) to_v64bfp16ebs16(v64bfp16ebs8 a) {
   v8int8 exponent = a.exponent;
   v64bfp16ebs16 r;
   __builtin_aie2p_v64bfp16ebs8_to_v64bfp16ebs16(
-      (v64c &)r.mantissa, (v8c &)r.exponent, mantissa, exponent);
+      (v64char &)r.mantissa, (v8char &)r.exponent, mantissa, exponent);
   return r;
 }
 
