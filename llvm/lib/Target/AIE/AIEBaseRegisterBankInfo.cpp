@@ -86,6 +86,16 @@ unsigned AIEBaseRegisterBankInfo::getRegBankBaseIdxOffset(unsigned RBIdx,
       return 0;
     return -1;
   }
+  if (RBIdx == PMI_FIFO512) {
+    if (Size <= 512)
+      return 0;
+    return -1;
+  }
+  if (RBIdx == PMI_FIFO1024) {
+    if (Size <= 1024)
+      return 0;
+    return -1;
+  }
   if (RBIdx == PMI_ACC2048) {
     if (Size <= 2048)
       return 0;

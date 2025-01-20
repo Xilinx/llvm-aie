@@ -535,6 +535,12 @@ def int_aie2p_vbcst_shuffle16 : ClangBuiltin<"__builtin_aie2p_vbcst_shuffle16">,
 def int_aie2p_vbcst_shuffle32 : ClangBuiltin<"__builtin_aie2p_vbcst_shuffle32">, AIE2PVBcstShfl_I32;
 def int_aie2p_vbcst_shuffle64 : ClangBuiltin<"__builtin_aie2p_vbcst_shuffle64">, AIE2PVBcstShfl_I64;
 
+// Fifo loads
+class AIE2PFIFO_LD_FILL : Intrinsic<[llvm_ptr_ty, llvm_v32i32_ty, llvm_i32_ty],
+     [llvm_ptr_ty, llvm_v32i32_ty, llvm_i32_ty],
+     [IntrReadMem]>;
+def int_aie2p_fifo_ld_fill: AIE2PFIFO_LD_FILL;
+
 // Streams
 class AIE2PV16I32I32I32 : DefaultAttrsIntrinsic<[llvm_v16i32_ty], [llvm_i32_ty], [IntrInaccessibleMemOnly]>;
 class AIE2PV16Acc32I32I32 : DefaultAttrsIntrinsic<[llvm_v16i32_ty], [llvm_i32_ty], [IntrInaccessibleMemOnly]>;
