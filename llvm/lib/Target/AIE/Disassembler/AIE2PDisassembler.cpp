@@ -53,8 +53,6 @@ MCDisassembler *createAIE2PDisassembler(const Target &T,
 // Include generated operand decoder tables and methods.
 #include "AIE2PDisassembler.inc"
 
-static const unsigned ePSRFLdFDecoderTable[] = {plfr0, plfr1};
-
 SLOTDECODERDecl(Lda);
 SLOTDECODERDecl(Ldb);
 SLOTDECODERDecl(Alu);
