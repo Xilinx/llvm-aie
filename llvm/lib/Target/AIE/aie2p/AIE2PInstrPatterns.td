@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -907,6 +907,17 @@ def : Pat<(int_aie2p_vsel16 VEC512:$src1, VEC512:$src2, eRS16:$rsel),
 
 def : Pat<(int_aie2p_vsel32 VEC512:$src1, VEC512:$src2, eRS16:$rsel),
            (VSEL_32 VEC512:$src1, VEC512:$src2, eRS16:$rsel)>;
+
+def vsel_node : SDNode<"AIE2P::G_AIE_VSEL",
+                       SDTypeProfile<1, 3, []>>;
+def : GINodeEquiv<G_AIE_VSEL, vsel_node>;
+
+def : Pat<(v64i8(vsel_node (v64i8 VEC512:$src1), (v64i8 VEC512:$src2), (v2i32 eL:$lsel))), 
+  (VSEL_8 VEC512:$src1, VEC512:$src2, eL:$lsel)>;
+def : Pat<(v32i16(vsel_node (v32i16 VEC512:$src1), (v32i16 VEC512:$src2), (i32 eRS16:$rsel))), 
+  (VSEL_16 VEC512:$src1, VEC512:$src2, eRS16:$rsel)>;
+def : Pat<(v16i32(vsel_node (v16i32 VEC512:$src1), (v16i32 VEC512:$src2), (i32 eRS16:$rsel))), 
+  (VSEL_32 VEC512:$src1, VEC512:$src2, eRS16:$rsel)>;
 
 // VSUB_LT/VSUB_GE
 // Note : Non-constant sign is handled in .cpp
