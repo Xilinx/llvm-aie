@@ -109,3 +109,12 @@ def G_AIE_UNPAD_VECTOR : AIEGenericInstruction {
   let InOperandList = (ins type1:$src);
   let hasSideEffects = false;
 }
+
+// Select between the words of two vectors. The selection is performed between 
+// each word in the position corresponding to the bit position in 
+// the sel parameter.
+def G_AIE_VSEL : AIEGenericInstruction {
+  let OutOperandList = (outs type0:$dst);
+  let InOperandList = (ins type0:$src1, type0:$src2, type1:$sel);
+  let hasSideEffects = false;
+}

@@ -1575,6 +1575,10 @@ unsigned AIE2PInstrInfo::getGenericBroadcastVectorOpcode() const {
   return AIE2P::G_AIE_BROADCAST_VECTOR;
 }
 
+unsigned AIE2PInstrInfo::getGenericVSelOpcode() const {
+  return AIE2P::G_AIE_VSEL;
+}
+
 Register AIE2PInstrInfo::getSSStatusReg() const { return AIE2P::srSS0; }
 
 Register AIE2PInstrInfo::getMSStatusReg() const { return AIE2P::srMS0; }
