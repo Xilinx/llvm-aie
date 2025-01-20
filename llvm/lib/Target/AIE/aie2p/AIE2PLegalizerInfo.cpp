@@ -232,7 +232,7 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
       .widenScalarToNextPow2(0)
       .clampScalar(1, S32, S64);
 
-  getActionDefinitionsBuilder(G_FABS).customFor({S16, S32, S64});
+  getActionDefinitionsBuilder(G_FABS).customFor({S16, S32, S64}).scalarize(0);
 
   getActionDefinitionsBuilder({G_FADD, G_FSUB})
       .legalFor({V16S32})

@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2 -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s
 # RUN: llc -mtriple aie2p -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s
 
@@ -72,4 +72,103 @@ body: |
     $r0 = COPY %4(s32)
     $r1 = COPY %5(s32)
     PseudoRET implicit $lr, implicit $r0, implicit $r1
+...
+
+---
+name: test_fabs_v2s32
+body: |
+  bb.0:
+    liveins: $l0
+
+    ; CHECK-LABEL: name: test_fabs_v2s32
+    ; CHECK: liveins: $l0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<2 x s32>) = COPY $l0
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(s32), [[UV1:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[COPY]](<2 x s32>)
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 2147483647
+    ; CHECK-NEXT: [[AND:%[0-9]+]]:_(s32) = G_AND [[UV]], [[C]]
+    ; CHECK-NEXT: [[AND1:%[0-9]+]]:_(s32) = G_AND [[UV1]], [[C]]
+    ; CHECK-NEXT: [[BUILD_VECTOR:%[0-9]+]]:_(<2 x s32>) = G_BUILD_VECTOR [[AND]](s32), [[AND1]](s32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[BUILD_VECTOR]](<2 x s32>)
+    %0:_(<2 x s32>) = COPY $l0
+    %1:_(<2 x s32>) = G_FABS %0
+    PseudoRET implicit $lr, implicit %1
+...
+
+---
+name: test_fabs_v2s16
+body: |
+  bb.0:
+    liveins: $r0
+
+    ; CHECK-LABEL: name: test_fabs_v2s16
+    ; CHECK: liveins: $r0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<2 x s16>) = COPY $r0
+    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(s32) = G_BITCAST [[COPY]](<2 x s16>)
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 16
+    ; CHECK-NEXT: [[LSHR:%[0-9]+]]:_(s32) = G_LSHR [[BITCAST]], [[C]](s32)
+    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 32767
+    ; CHECK-NEXT: [[AND:%[0-9]+]]:_(s32) = G_AND [[BITCAST]], [[C1]]
+    ; CHECK-NEXT: [[AND1:%[0-9]+]]:_(s32) = G_AND [[LSHR]], [[C1]]
+    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[OR:%[0-9]+]]:_(s32) = G_OR [[C2]], [[AND]]
+    ; CHECK-NEXT: [[SHL:%[0-9]+]]:_(s32) = G_SHL [[AND1]], [[C]](s32)
+    ; CHECK-NEXT: [[OR1:%[0-9]+]]:_(s32) = G_OR [[OR]], [[SHL]]
+    ; CHECK-NEXT: [[BITCAST1:%[0-9]+]]:_(<2 x s16>) = G_BITCAST [[OR1]](s32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[BITCAST1]](<2 x s16>)
+    %0:_(<2 x s16>) = COPY $r0
+    %1:_(<2 x s16>) = G_FABS %0
+    PseudoRET implicit $lr, implicit %1
+...
+
+---
+name: test_fabs_v8s32
+body: |
+  bb.0:
+    liveins: $wl0
+
+    ; CHECK-LABEL: name: test_fabs_v8s32
+    ; CHECK: liveins: $wl0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<8 x s32>) = COPY $wl0
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<8 x s32>), [[C]](s32)
+    ; CHECK-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT1:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<8 x s32>), [[C1]](s32)
+    ; CHECK-NEXT: [[C2:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
+    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT2:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<8 x s32>), [[C2]](s32)
+    ; CHECK-NEXT: [[C3:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
+    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT3:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<8 x s32>), [[C3]](s32)
+    ; CHECK-NEXT: [[C4:%[0-9]+]]:_(s32) = G_CONSTANT i32 4
+    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT4:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<8 x s32>), [[C4]](s32)
+    ; CHECK-NEXT: [[C5:%[0-9]+]]:_(s32) = G_CONSTANT i32 5
+    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT5:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<8 x s32>), [[C5]](s32)
+    ; CHECK-NEXT: [[C6:%[0-9]+]]:_(s32) = G_CONSTANT i32 6
+    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT6:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<8 x s32>), [[C6]](s32)
+    ; CHECK-NEXT: [[C7:%[0-9]+]]:_(s32) = G_CONSTANT i32 7
+    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT7:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<8 x s32>), [[C7]](s32)
+    ; CHECK-NEXT: [[C8:%[0-9]+]]:_(s32) = G_CONSTANT i32 2147483647
+    ; CHECK-NEXT: [[AND:%[0-9]+]]:_(s32) = G_AND [[AIE_SEXT_EXTRACT_VECTOR_ELT]], [[C8]]
+    ; CHECK-NEXT: [[AND1:%[0-9]+]]:_(s32) = G_AND [[AIE_SEXT_EXTRACT_VECTOR_ELT1]], [[C8]]
+    ; CHECK-NEXT: [[AND2:%[0-9]+]]:_(s32) = G_AND [[AIE_SEXT_EXTRACT_VECTOR_ELT2]], [[C8]]
+    ; CHECK-NEXT: [[AND3:%[0-9]+]]:_(s32) = G_AND [[AIE_SEXT_EXTRACT_VECTOR_ELT3]], [[C8]]
+    ; CHECK-NEXT: [[AND4:%[0-9]+]]:_(s32) = G_AND [[AIE_SEXT_EXTRACT_VECTOR_ELT4]], [[C8]]
+    ; CHECK-NEXT: [[AND5:%[0-9]+]]:_(s32) = G_AND [[AIE_SEXT_EXTRACT_VECTOR_ELT5]], [[C8]]
+    ; CHECK-NEXT: [[AND6:%[0-9]+]]:_(s32) = G_AND [[AIE_SEXT_EXTRACT_VECTOR_ELT6]], [[C8]]
+    ; CHECK-NEXT: [[AND7:%[0-9]+]]:_(s32) = G_AND [[AIE_SEXT_EXTRACT_VECTOR_ELT7]], [[C8]]
+    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_HI:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_HI [[DEF]], [[AND]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_HI1:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_HI [[AIE_ADD_VECTOR_ELT_HI]], [[AND1]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_HI2:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_HI [[AIE_ADD_VECTOR_ELT_HI1]], [[AND2]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_HI3:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_HI [[AIE_ADD_VECTOR_ELT_HI2]], [[AND3]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_HI4:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_HI [[AIE_ADD_VECTOR_ELT_HI3]], [[AND4]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_HI5:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_HI [[AIE_ADD_VECTOR_ELT_HI4]], [[AND5]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_HI6:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_HI [[AIE_ADD_VECTOR_ELT_HI5]], [[AND6]](s32)
+    ; CHECK-NEXT: [[AIE_ADD_VECTOR_ELT_HI7:%[0-9]+]]:_(<16 x s32>) = G_AIE_ADD_VECTOR_ELT_HI [[AIE_ADD_VECTOR_ELT_HI6]], [[AND7]](s32)
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<8 x s32>), [[UV1:%[0-9]+]]:_(<8 x s32>) = G_UNMERGE_VALUES [[AIE_ADD_VECTOR_ELT_HI7]](<16 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[UV1]](<8 x s32>)
+    %0:_(<8 x s32>) = COPY $wl0
+    %1:_(<8 x s32>) = G_FABS %0
+    PseudoRET implicit $lr, implicit %1
 ...

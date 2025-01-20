@@ -193,7 +193,7 @@ AIE2LegalizerInfo::AIE2LegalizerInfo(const AIE2Subtarget &ST) : AIEHelper(ST) {
       .widenScalarToNextPow2(0)
       .clampScalar(1, S32, S64);
 
-  getActionDefinitionsBuilder(G_FABS).customFor({S16, S32, S64});
+  getActionDefinitionsBuilder(G_FABS).customFor({S16, S32, S64}).scalarize(0);
 
   getActionDefinitionsBuilder({G_FADD, G_FSUB})
       .legalFor({V16S32})
