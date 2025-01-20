@@ -496,6 +496,8 @@ unsigned AIE2PInstrInfo::getOpCode(MachineInstr &I) const {
       return isSigned ? AIE2P::VUNPACK_mv_unpack_x_unpackSign1
                       : AIE2P::VUNPACK_mv_unpack_x_unpackSign0;
   }
+  case Intrinsic::aie2p_vshuffle_576_bfp16:
+    return AIE2P::VSHUFFLE_vec_shuffle_ex;
   default:
     llvm_unreachable("Unexpected Intrinsic ID");
   }
