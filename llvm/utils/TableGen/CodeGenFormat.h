@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -380,10 +380,6 @@ private:
   const Record *const BaseSlotClass;
   /// List of pair <Record, Slot> parsed in TableGen
   SmallVector<RecordSlot> Slots;
-  /// ID's of the Slots part of this instance
-  /// The default slot will have -1 as ID
-  /// Valid slots will have >= 0 IDs attributed
-  static unsigned SlotID;
   /// Indicates if the Slots could be emitted or not
   bool IsFinalized;
 

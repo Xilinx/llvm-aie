@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -975,8 +975,6 @@ void TGFieldLayout::resolveFieldsGlobalOffsets() {
   GlobalOffsets.RightOffset = GlobalOffsets.LeftOffset + this->getSize() - 1;
 }
 
-unsigned TGTargetSlots::SlotID = 0;
-
 bool TGTargetSlots::addSlot(const Record *const R) {
   // If the instance is already finalized
   if (IsFinalized) {
@@ -1066,6 +1064,7 @@ void TGTargetSlots::finalizeSlots() {
   }
 
   // Give an ID for each slot
+  int SlotID = 0;
   for (RecordSlot &Slot : Slots)
     if (Slot.second.isDefaultSlot())
       Slot.second.setNumSlot(-1);
