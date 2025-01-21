@@ -597,7 +597,6 @@ iterator_range<TGFieldIterator> TGInstrLayout::operands() const {
 
 void TGInstrLayout::emitFlatTree(ConstTable &FieldsHierarchy,
                                  unsigned &FieldIndex) const {
-  const std::string GenSlotKindName = SlotsRegistry.GenSlotKindName;
   for (TGFieldLayout *Field : fields()) {
     Field->EmissionID = FieldIndex++;
   }
@@ -632,15 +631,14 @@ void TGInstrLayout::emitFlatTree(ConstTable &FieldsHierarchy,
 
     const std::string TargetKindName = Target + SlotsRegistry.GenSlotKindName;
     const TGTargetSlot *SlotInfo = Field->getSlot();
-    const TGTargetSlots::RecordSlot *DefaultSlotInfo =
-        SlotsRegistry.getDefaultSlot();
 
-    FieldsHierarchy << TargetKindName << '(' << TargetKindName << "::";
     if (SlotInfo)
-      FieldsHierarchy << SlotInfo->getEnumerationString();
+      FieldsHierarchy << "MCSlotKind(" << TargetKindName
+                      << "::" << SlotInfo->getEnumerationString() << ")";
     else
-      FieldsHierarchy << DefaultSlotInfo->second.getEnumerationString();
-    FieldsHierarchy << ") }";
+      FieldsHierarchy << "SLOT_UNKNOWN";
+
+    FieldsHierarchy << "}";
     FieldsHierarchy.next();
   }
 }
@@ -1168,13 +1166,11 @@ void TGTargetSlots::emitSlotsInfoInstantiation(
 
 void TGTargetSlots::emitTargetSlotClass(raw_ostream &o) const {
   const std::string TargetClassName = Target + GenSlotInfoName;
-  const std::string TargetEnumName = Target + GenSlotKindName;
 
   o << "class " << TargetClassName << " : public MC" << GenSlotInfoName << "\n"
     << "{\n"
     << "public:\n"
-    << "  constexpr " << TargetClassName << "(const " << TargetEnumName
-    << " Kind, "
+    << "  constexpr " << TargetClassName << "(const int Kind, "
     << "const char* SlotName, "
     << "unsigned Size, "
     << "SlotBits SlotSet, "

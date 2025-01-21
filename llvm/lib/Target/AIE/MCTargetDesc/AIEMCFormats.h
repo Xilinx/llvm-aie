@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 // Utility classes to interface the generated Formats from CodeGenFormat with
@@ -25,6 +25,8 @@
 #include <unordered_map>
 
 namespace llvm {
+
+static const int SLOT_UNKNOWN = -1;
 
 using SlotBits = uint64_t;
 class MCSlotInfo;
