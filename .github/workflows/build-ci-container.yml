@@ -44,7 +44,7 @@ jobs:
         run: |
           podman save stage1-toolchain > stage1-toolchain.tar
       - name: Upload container image
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # 4.6.0
         with:
           name: stage1-toolchain
           path: stage1-toolchain.tar
