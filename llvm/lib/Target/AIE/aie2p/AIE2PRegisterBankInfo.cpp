@@ -772,7 +772,6 @@ AIE2PRegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     Register VReg = MI.getOperand(0).getReg();
     if (!VReg)
       break;
-    LLT Type = MRI.getType(VReg);
     auto DefRegBank = getRegBank(VReg, MRI, TRI);
     if (DefRegBank == &AIE2P::AccRegBank) {
       OpRegBankIdx[0] = getAccPartialMappingIdx(MRI.getType(VReg));
