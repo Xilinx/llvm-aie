@@ -665,6 +665,26 @@ void AIE2PInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
             TRI.getSubReg(DstReg, AIE2P::sub_512_acc_hi))
         .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_hi_fifo),
                 getKillRegState(KillSrc));
+  } else if ((AIE2P::eLRegClass.contains(SrcReg)) &&
+             (AIE2P::EXPVEC64RegClass.contains(DstReg))) {
+    BuildMI(MBB, MBBI, DL, get(AIE2P::MOV_alu_mv_mv_mv_e_mv_r_to_el),
+            TRI.getSubReg(DstReg, AIE2P::sub_lo_exp))
+        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_l_even),
+                getKillRegState(KillSrc));
+    BuildMI(MBB, MBBI, DL, get(AIE2P::MOV_alu_mv_mv_mv_e_mv_r_to_eh),
+            TRI.getSubReg(DstReg, AIE2P::sub_hi_exp))
+        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_l_odd),
+                getKillRegState(KillSrc));
+  } else if ((AIE2P::EXPVEC64RegClass.contains(SrcReg)) &&
+             (AIE2P::eLRegClass.contains(DstReg))) {
+    BuildMI(MBB, MBBI, DL, get(AIE2P::MOV_alu_mv_mv_mv_e_mv_el_to_r),
+            TRI.getSubReg(DstReg, AIE2P::sub_l_even))
+        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_lo_exp),
+                getKillRegState(KillSrc));
+    BuildMI(MBB, MBBI, DL, get(AIE2P::MOV_alu_mv_mv_mv_e_mv_eh_to_r),
+            TRI.getSubReg(DstReg, AIE2P::sub_l_odd))
+        .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_hi_exp),
+                getKillRegState(KillSrc));
   } else if ((AIE2P::ePSRFLdFRegClass.contains(SrcReg)) &&
              (AIE2P::ePSRFLdFRegClass.contains(DstReg))) {
     copyThroughSubRegs(MBB, MBBI, DL, DstReg, SrcReg, KillSrc);

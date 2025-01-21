@@ -253,3 +253,24 @@ body: |
   $qey0 = COPY $qey1
 ...
 
+
+---
+name:            test_copy_l_to_e
+body: |
+  bb.0:
+    ; CHECK-LABEL: name: test_copy_l_to_e
+    ; CHECK: $el0 = MOV_alu_mv_mv_mv_e_mv_r_to_el $r2
+    ; CHECK-NEXT: $eh0 = MOV_alu_mv_mv_mv_e_mv_r_to_eh $r3
+  $e0 = COPY $l1
+...
+
+---
+name:            test_copy_e_to_l
+body: |
+  bb.0:
+    ; CHECK-LABEL: name: test_copy_e_to_l
+    ; CHECK: $r0 = MOV_alu_mv_mv_mv_e_mv_el_to_r $el1
+    ; CHECK-NEXT: $r1 = MOV_alu_mv_mv_mv_e_mv_eh_to_r $eh1
+  $l0 = COPY $e1
+...
+
