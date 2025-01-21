@@ -106,10 +106,10 @@ body:             |
   bb.0 (align 16):
 
     ; CHECK-LABEL: name: test_fifo_plfr
-    ; CHECK: $p0 = LDA_dms_lda_spill -136, implicit $sp :: (load (s32) from %stack.0, align 64)
-    ; CHECK-NEXT: $lfl0 = VLDA_dmx_lda_fifohl_spill -132, implicit $sp :: (load (s512) from %stack.0 + 4, align 4, basealign 64)
-    ; CHECK-NEXT: $lfh0 = VLDA_dmx_lda_fifohl_spill -68, implicit $sp :: (load (s512) from %stack.0 + 68, align 4, basealign 64)
-    ; CHECK-NEXT: $r24 = LDA_dms_lda_spill -4, implicit $sp :: (load (s32) from %stack.0 + 132, basealign 64)
+    ; CHECK: $lfl0 = VLDA_dmx_lda_fifohl_spill -136, implicit $sp :: (load (s512) from %stack.0)
+    ; CHECK-NEXT: $lfh0 = VLDA_dmx_lda_fifohl_spill -72, implicit $sp :: (load (s512) from %stack.0 + 64)
+    ; CHECK-NEXT: $r24 = LDA_dms_lda_spill -8, implicit $sp :: (load (s32) from %stack.0 + 128, align 64)
+    ; CHECK-NEXT: $p0 = LDA_dms_lda_spill -4, implicit $sp :: (load (s32) from %stack.0 + 132, basealign 64)
     $plfr0 = VLDA_PLFR_SPILL -136, implicit $sp :: (load (s1088) from %stack.0, align 64)
 ...
 

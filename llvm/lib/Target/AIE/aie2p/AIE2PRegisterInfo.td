@@ -957,7 +957,7 @@ foreach RC = [eP, eM, eDN, eDJ, eDC, eSP, eSpecial20] in
     def RC # _as_32Bit : AIE2PScalarRegisterClass<(add RC)>;
 
 class AIE2PVector1076FifoRegisterClass<dag reglist> :
-    AIE2PRegisterClass<1088, 256, [i32], reglist> {
+    AIE2PRegisterClass<1088, 512, [i32], reglist> {
   let hasCompleteDecoder = 0;
 }
 def sub_ptr : SubRegIndex<20,  0>;
