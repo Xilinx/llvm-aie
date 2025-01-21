@@ -1796,8 +1796,8 @@ bool llvm::matchShuffleToVSel(
 
   const unsigned NumDstElems = DstTy.getNumElements();
   const unsigned NumSrcElems = Src1Ty.getNumElements();
-  assert(NumDstElems == NumSrcElems &&
-         "Expected same number of elements in dst and src vector types");
+  if (NumDstElems != NumSrcElems)
+    return false;
 
   // Check that the shuffle mask can be converted into VSel mask:
   // 1. The shuffle mask doesn't contain indices that correspond to the same
