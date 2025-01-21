@@ -12,5 +12,5 @@
 # https://llvm.org/docs/DeveloperPolicy.html#code-owners, as well as the
 # CODE_OWNERS.txt files in the respective subproject directories.
 
-* @abhinay-anubola @abnikant @andcarminati @gbossu @khallouh @konstantinschwarz @martien-de-jong @SagarMaheshwari99 @stephenneuendorffer
-/.github/ @konstantinschwarz
+* @abhinay-anubola @abnikant @andcarminati @F-Stuckmann @gbossu @katerynamuts @khallouh @konstantinschwarz @martien-de-jong @niwinanto @SagarMaheshwari99 @stephenneuendorffer
+/.github/ @konstantinschwarz @philippjh
