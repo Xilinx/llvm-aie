@@ -274,3 +274,52 @@ body: |
   $l0 = COPY $e1
 ...
 
+---
+name:            test_copy_sf_to_lf
+body: |
+  bb.0:
+    ; CHECK-LABEL: name: test_copy_sf_to_lf
+    ; CHECK: $lfl0 = VMOV_alu_mv_mv_x $sfl
+    ; CHECK-NEXT: $lfh0 = VMOV_alu_mv_mv_x $sfh
+  $lf0 = COPY $sf
+...
+
+---
+name:            test_copy_vec_to_fifo
+body: |
+  bb.0:
+    ; CHECK-LABEL: name: test_copy_vec_to_fifo
+    ; CHECK: $lfl0 = VMOV_alu_mv_mv_x $x0
+    ; CHECK-NEXT: $lfh0 = VMOV_alu_mv_mv_x $x1
+  $lf0 = COPY $y0
+...
+
+---
+name:            test_copy_fifo_to_vec
+body: |
+  bb.0:
+    ; CHECK-LABEL: name: test_copy_fifo_to_vec
+    ; CHECK: $x0 = VMOV_alu_mv_mv_x $lfl0
+    ; CHECK-NEXT: $x1 = VMOV_alu_mv_mv_x $lfh0
+  $y0 = COPY $lf0
+...
+
+---
+name:            test_copy_acc_to_fifo
+body: |
+  bb.0:
+    ; CHECK-LABEL: name: test_copy_acc_to_fifo
+    ; CHECK: $lfl0 = VMOV_alu_mv_mv_x $bmll0
+    ; CHECK-NEXT: $lfh0 = VMOV_alu_mv_mv_x $bmlh0
+  $lf0 = COPY $cml0
+...
+
+---
+name:            test_copy_fifo_to_acc
+body: |
+  bb.0:
+    ; CHECK-LABEL: name: test_copy_fifo_to_acc
+    ; CHECK: $bmll0 = VMOV_alu_mv_mv_x $lfl0
+    ; CHECK-NEXT: $bmlh0 = VMOV_alu_mv_mv_x $lfh0
+  $cml0 = COPY $lf0
+...
