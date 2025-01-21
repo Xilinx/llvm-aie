@@ -150,24 +150,24 @@ ArrayRef<MCPhysReg> AllocateSparseRegPair(CCState &State) {
 namespace {
 const std::array<std::array<MCPhysReg, 2>, 12> Bfp16RegPairs576Bit = {
     {{AIE2P::x0, AIE2P::e0},
-     {AIE2P::x1, AIE2P::e1},
      {AIE2P::x2, AIE2P::e2},
-     {AIE2P::x3, AIE2P::e3},
      {AIE2P::x4, AIE2P::e4},
-     {AIE2P::x5, AIE2P::e5},
      {AIE2P::x6, AIE2P::e6},
-     {AIE2P::x7, AIE2P::e7},
      {AIE2P::x8, AIE2P::e8},
-     {AIE2P::x9, AIE2P::e9},
      {AIE2P::x10, AIE2P::e10},
+     {AIE2P::x1, AIE2P::e1},
+     {AIE2P::x3, AIE2P::e3},
+     {AIE2P::x5, AIE2P::e5},
+     {AIE2P::x7, AIE2P::e7},
+     {AIE2P::x9, AIE2P::e9},
      {AIE2P::x11, AIE2P::e11}}};
 
 const std::array<std::array<MCPhysReg, 4>, 6> Bfp16RegSet1052Bit = {
     {{AIE2P::x0, AIE2P::x1, AIE2P::e0, AIE2P::e1},
-     {AIE2P::x2, AIE2P::x3, AIE2P::e2, AIE2P::e3},
      {AIE2P::x4, AIE2P::x5, AIE2P::e4, AIE2P::e5},
-     {AIE2P::x6, AIE2P::x7, AIE2P::e6, AIE2P::e7},
      {AIE2P::x8, AIE2P::x9, AIE2P::e8, AIE2P::e9},
+     {AIE2P::x2, AIE2P::x3, AIE2P::e2, AIE2P::e3},
+     {AIE2P::x6, AIE2P::x7, AIE2P::e6, AIE2P::e7},
      {AIE2P::x10, AIE2P::x11, AIE2P::e10, AIE2P::e11}}};
 } // namespace
 
