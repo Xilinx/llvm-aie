@@ -425,22 +425,18 @@ public:
     assert(IsFinalized &&
            "Internal vector needs to be finalized (i.e. sorted)");
 
+    o << "enum " << Target << "SlotKind {\n";
     for (auto *SlotIt = Slots.begin(); SlotIt != Slots.end(); ++SlotIt) {
       const RecordSlot &Slot = *SlotIt;
       if (Slot.second.isDefaultSlot())
         continue;
       o << "  " << Slot.second.getEnumerationString() << ", \n";
     }
+    o << "};\n";
   }
-
-  /// Emit the "SlotKind" class
-  void emitTargetSlotKindClass(raw_ostream &o) const;
 
   /// Emit the correspondence code between the slot kinds and their slot infos
   void emitTargetSlotMapping(raw_ostream &o) const;
-
-  /// Emit the "SlotInfo" class, specific to the "SlotKind"
-  void emitTargetSlotClass(raw_ostream &o) const;
 
   /// Emit the initialization code of all "SlotInfo" instances
   void emitSlotsInfoInstantiation(raw_ostream &o,

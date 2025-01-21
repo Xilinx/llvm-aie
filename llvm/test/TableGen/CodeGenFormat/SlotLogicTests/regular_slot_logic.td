@@ -26,10 +26,6 @@ let Namespace = "TEST" in
 // CHECK-NEXT:    SLOT_FSDSDS2,
 // CHECK:         #endif // GET_FORMATS_SLOTKINDS
 
-// CHECK:       #ifdef GET_FORMATS_CLASS_DEF
-// CHECK:       class TESTSlotKind: public MCSlotKind
-// CHECK:       #endif // GET_FORMATS_CLASS_DEF
-
 // CHECK:       #ifdef GET_FORMATS_SLOTS_DEFS
 // CHECK:         TESTSlotKind::TEST_SLOT_FU1,
 // CHECK-NEXT:    "fu1",

@@ -41,24 +41,6 @@ public:
     size_t operator()(MCSlotKind SK) const { return SK; }
   };
 
-  static const int SLOT_UNKNOWN = -1;
-
-  enum AIESlotKind : int {
-#define GET_FORMATS_SLOTKINDS
-#include "AIEGenFormats.inc"
-#undef GET_FORMATS_SLOTKINDS
-  };
-  enum AIE2SlotKind : int {
-#define GET_FORMATS_SLOTKINDS
-#include "AIE2GenFormats.inc"
-#undef GET_FORMATS_SLOTKINDS
-  };
-  enum AIE2PSlotKind : int {
-#define GET_FORMATS_SLOTKINDS
-#include "AIE2PGenFormats.inc"
-#undef GET_FORMATS_SLOTKINDS
-  };
-
   /// Ctor with SlotKind initialization.
   constexpr MCSlotKind(int Kind) : Kind(Kind) {}
 
@@ -105,6 +87,9 @@ public:
                        unsigned NopOpc)
       : SlotName(SlotName), Size(Size), SlotOccupancy(Bits), NopOpc(NopOpc) {}
 
+  constexpr MCSlotInfo(int Kind, const char *SlotName, unsigned Size,
+                       SlotBits Bits, unsigned NopOpc)
+      : SlotName(SlotName), Size(Size), SlotOccupancy(Bits), NopOpc(NopOpc) {}
   const char *getName() const { return SlotName; }
   SlotBits getSlotSet() const { return SlotOccupancy; }
   unsigned getNOPOpcode() const { return NopOpc; }

@@ -48,19 +48,19 @@ def I128_LDA_LDB_NOP_ALU_LNG_NOP_VEC_ALL
 // CHECK:        TEST::I128_LDA_LDB_NOP_ALU_LNG_NOP_VEC_ALL - Index : 0
 // CHECK:        "lda"
 // CHECK-SAME:        { 0, 17 }
-// CHECK-SAME:        TESTSlotKind(TESTSlotKind::TEST_SLOT_AAAAAAA)
+// CHECK-SAME:        MCSlotKind(TESTSlotKind::TEST_SLOT_AAAAAAA)
 // CHECK:        "ldb"
 // CHECK-SAME:        { 18, 34 }
-// CHECK-SAME:        TESTSlotKind(TESTSlotKind::TEST_SLOT_BBBBB)
+// CHECK-SAME:        MCSlotKind(TESTSlotKind::TEST_SLOT_BBBBB)
 // CHECK:        "alu"
 // CHECK-SAME:        { 36, 54 }
-// CEHCK-SAME:        TESTSlotKind(TESTSlotKind::TEST_SLOT_CCCC)
+// CEHCK-SAME:        MCSlotKind(TESTSlotKind::TEST_SLOT_CCCC)
 // CHECK:        "lng"
 // CHECK-SAME:        { 60, 87 }
-// CHECK-SAME:        TESTSlotKind(TESTSlotKind::TEST_SLOT_DDDDD)
+// CHECK-SAME:        MCSlotKind(TESTSlotKind::TEST_SLOT_DDDDD)
 // CHECK:        "vec_all"
 // CHECK-SAME:        { 89, 125 }
-// CHECK-SAME:        TESTSlotKind(TESTSlotKind::TEST_SLOT_SDASDADD)
+// CHECK-SAME:        MCSlotKind(TESTSlotKind::TEST_SLOT_SDASDADD)
 
 def I16 : TEST_instr16<(ins instr16_slot:$instr16), "i16", "$instr16">
 {
@@ -71,7 +71,7 @@ def I16 : TEST_instr16<(ins instr16_slot:$instr16), "i16", "$instr16">
 // CHECK:        TEST::I16 - Index : 1
 // CHECK:        "instr16"
 // CHECK:        { 0, 13 }
-// CHECK:        TESTSlotKind(TESTSlotKind::TEST_SLOT_XXXX)
+// CHECK:        MCSlotKind(TESTSlotKind::TEST_SLOT_XXXX)
 
 def I64_LDA_LDB_ALU
     : TEST_i64_lda_fmts_i64_ldb
@@ -92,13 +92,13 @@ def I64_LDA_LDB_ALU
 // CHECK:        TEST::I64_LDA_LDB_ALU - Index : 2
 // CHECK:        "lda"
 // CHECK:        { 0, 17 }
-// CHECK:        TESTSlotKind(TESTSlotKind::TEST_SLOT_AAAAAAA)
+// CHECK:        MCSlotKind(TESTSlotKind::TEST_SLOT_AAAAAAA)
 // CHECK:        "ldb"
 // CHECK:        { 18, 34 }
-// CHECK:        TESTSlotKind(TESTSlotKind::TEST_SLOT_BBBBB)
+// CHECK:        MCSlotKind(TESTSlotKind::TEST_SLOT_BBBBB)
 // CHECK:        "alu"
 // CHECK:        { 36, 54 }
-// CEHCK:        TESTSlotKind(TESTSlotKind::TEST_SLOT_CCCC)
+// CEHCK:        MCSlotKind(TESTSlotKind::TEST_SLOT_CCCC)
 
 
 // CHECK:        TEST::I128_LDA_LDB_NOP_ALU_LNG_NOP_VEC_ALL - Index : 0

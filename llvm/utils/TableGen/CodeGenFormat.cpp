@@ -110,15 +110,9 @@ void CodeGenFormat::run(raw_ostream &o) {
   assert(Slots.size() != 0 && "no Slot detected");
 
   o << "#ifdef GET_FORMATS_SLOTKINDS\n"
-       "#undef GET_FORMATS_SLOTKINDS\n\n";
+       "#undef GET_FORMATS_SLOTKINDS\n";
   Slots.emitTargetSlotKindEnum(o);
   o << "#endif // GET_FORMATS_SLOTKINDS\n\n";
-
-  o << "#ifdef GET_FORMATS_CLASS_DEF\n"
-       "#undef GET_FORMATS_CLASS_DEF\n\n";
-  Slots.emitTargetSlotKindClass(o);
-  Slots.emitTargetSlotClass(o);
-  o << "#endif // GET_FORMATS_CLASS_DEF\n\n";
 
   if (InstFormats.size() > 0) {
     o << "#ifdef GET_FORMATS_INFO\n"
@@ -1078,36 +1072,6 @@ void TGTargetSlots::finalizeSlots() {
   IsFinalized = true;
 }
 
-void TGTargetSlots::emitTargetSlotKindClass(raw_ostream &o) const {
-  assert(IsFinalized && "Internal vector needs to be finalized (i.e. sorted)");
-
-  std::string TargetEnumName = Target + GenSlotKindName;
-
-  o << "class " << Target << GenSlotKindName << ": public MC" << GenSlotKindName
-    << " {\n"
-    << "public:\n";
-
-  // 1st Ctor - Initialization to default slot
-  o << "  constexpr " << TargetEnumName << "()\n"
-    << "    : MC" << GenSlotKindName << "()\n"
-    << "  {\n  }\n\n";
-
-  if (Slots.size() > 1) {
-    // 2nd Ctor - Initilization by SlotKind if valid
-    // We check in this constructor
-    o << "  constexpr " << TargetEnumName << '(' << "int" << " Kind)\n"
-      << "    : MC" << GenSlotKindName
-      << "((Kind >= "
-      // Default slot is always at index 0
-      << Slots[1].second.getEnumerationString()
-      << " && Kind <= " << Slots.back().second.getEnumerationString()
-      << ") ? Kind : SLOT_UNKNOWN)\n"
-      << "  {\n  }\n";
-  }
-
-  o << "};\n\n"; // class closing bracket
-}
-
 void TGTargetSlots::emitTargetSlotMapping(raw_ostream &o) const {
 
   o << "const MCSlotInfo *" << Target << "MCFormats::getSlotInfo";
@@ -1134,12 +1098,10 @@ void TGTargetSlots::emitSlotsInfoInstantiation(
   assert(IsFinalized && "Internal vector needs to be finalized (i.e. sorted)");
 
   using SlotBits = uint64_t;
-  const std::string TargetClassName = Target + GenSlotInfoName;
   const std::string TargetEnumName = Target + GenSlotKindName;
   const std::string TargetSlotsName = Target + "Slots";
 
-  o << "static constexpr const " << TargetClassName << " " << TargetSlotsName
-    << "[] = {\n";
+  o << "static constexpr const MCSlotInfo " << TargetSlotsName << "[] = {\n";
 
   for (const RecordSlot &Slot : Slots) {
     auto SlotMap = SlotMapper.find(Slot.first);
@@ -1162,22 +1124,6 @@ void TGTargetSlots::emitSlotsInfoInstantiation(
       << "},\n";
   }
   o << "};\n";
-}
-
-void TGTargetSlots::emitTargetSlotClass(raw_ostream &o) const {
-  const std::string TargetClassName = Target + GenSlotInfoName;
-
-  o << "class " << TargetClassName << " : public MC" << GenSlotInfoName << "\n"
-    << "{\n"
-    << "public:\n"
-    << "  constexpr " << TargetClassName << "(const int Kind, "
-    << "const char* SlotName, "
-    << "unsigned Size, "
-    << "SlotBits SlotSet, "
-    << "unsigned NopOpc)\n"
-    << "    : MC" << GenSlotInfoName << "(SlotName, Size, SlotSet, NopOpc)\n"
-    << "  {\n  }\n\n"
-    << "};\n\n";
 }
 
 TGFieldIterator::TGFieldIterator(
