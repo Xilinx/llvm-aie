@@ -69,7 +69,7 @@ define dso_local %struct.v64bfp16ebs16 @test_v64bfp16ebs8_to_v64bfp16ebs8(%struc
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
-; CHECK-NEXT:    vconv.bfp16ebs16.ebs8 ex0, ex1 // Delay Slot 4
+; CHECK-NEXT:    vconv.bfp16ebs16.ebs8 ex0, ex2 // Delay Slot 4
 ; CHECK-NEXT:    nop // Delay Slot 3
 ; CHECK-NEXT:    nop // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1

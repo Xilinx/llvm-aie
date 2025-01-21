@@ -31,14 +31,14 @@ define void @pass_v64bfp16ebs16_with_normal_vector(%struct.v64bfp16ebs16 %v1,<64
   ; CHECK-LABEL: name: pass_v64bfp16ebs16_with_normal_vector
   ; CHECK: fixedStack:
   ; CHECK: bb.1.entry:
-  ; CHECK-NEXT:   liveins: $e0, $e1, $l0, $x0, $x1, $x2
+  ; CHECK-NEXT:   liveins: $e0, $e4, $l0, $x0, $x2, $x4
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<64 x s8>) = COPY $x0
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:_(<8 x s8>) = COPY $e0
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:_(<64 x s8>) = COPY $x2
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:_(<8 x s8>) = COPY $l0
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:_(<64 x s8>) = COPY $x1
-  ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:_(<8 x s8>) = COPY $e1
+  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:_(<64 x s8>) = COPY $x4
+  ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:_(<8 x s8>) = COPY $e4
   ; CHECK-NEXT:   PseudoRET implicit $lr
 entry:
   ret void
@@ -52,26 +52,26 @@ define void @pass_v64bfp16ebs16_more_args(%struct.v64bfp16ebs16 %v1, %struct.v64
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<64 x s8>) = COPY $x0
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:_(<8 x s8>) = COPY $e0
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:_(<64 x s8>) = COPY $x1
-  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:_(<8 x s8>) = COPY $e1
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:_(<64 x s8>) = COPY $x2
-  ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:_(<8 x s8>) = COPY $e2
-  ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:_(<64 x s8>) = COPY $x3
-  ; CHECK-NEXT:   [[COPY7:%[0-9]+]]:_(<8 x s8>) = COPY $e3
-  ; CHECK-NEXT:   [[COPY8:%[0-9]+]]:_(<64 x s8>) = COPY $x4
-  ; CHECK-NEXT:   [[COPY9:%[0-9]+]]:_(<8 x s8>) = COPY $e4
-  ; CHECK-NEXT:   [[COPY10:%[0-9]+]]:_(<64 x s8>) = COPY $x5
-  ; CHECK-NEXT:   [[COPY11:%[0-9]+]]:_(<8 x s8>) = COPY $e5
-  ; CHECK-NEXT:   [[COPY12:%[0-9]+]]:_(<64 x s8>) = COPY $x6
-  ; CHECK-NEXT:   [[COPY13:%[0-9]+]]:_(<8 x s8>) = COPY $e6
-  ; CHECK-NEXT:   [[COPY14:%[0-9]+]]:_(<64 x s8>) = COPY $x7
-  ; CHECK-NEXT:   [[COPY15:%[0-9]+]]:_(<8 x s8>) = COPY $e7
-  ; CHECK-NEXT:   [[COPY16:%[0-9]+]]:_(<64 x s8>) = COPY $x8
-  ; CHECK-NEXT:   [[COPY17:%[0-9]+]]:_(<8 x s8>) = COPY $e8
-  ; CHECK-NEXT:   [[COPY18:%[0-9]+]]:_(<64 x s8>) = COPY $x9
-  ; CHECK-NEXT:   [[COPY19:%[0-9]+]]:_(<8 x s8>) = COPY $e9
-  ; CHECK-NEXT:   [[COPY20:%[0-9]+]]:_(<64 x s8>) = COPY $x10
-  ; CHECK-NEXT:   [[COPY21:%[0-9]+]]:_(<8 x s8>) = COPY $e10
+  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:_(<64 x s8>) = COPY $x2
+  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:_(<8 x s8>) = COPY $e2
+  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:_(<64 x s8>) = COPY $x4
+  ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:_(<8 x s8>) = COPY $e4
+  ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:_(<64 x s8>) = COPY $x6
+  ; CHECK-NEXT:   [[COPY7:%[0-9]+]]:_(<8 x s8>) = COPY $e6
+  ; CHECK-NEXT:   [[COPY8:%[0-9]+]]:_(<64 x s8>) = COPY $x8
+  ; CHECK-NEXT:   [[COPY9:%[0-9]+]]:_(<8 x s8>) = COPY $e8
+  ; CHECK-NEXT:   [[COPY10:%[0-9]+]]:_(<64 x s8>) = COPY $x10
+  ; CHECK-NEXT:   [[COPY11:%[0-9]+]]:_(<8 x s8>) = COPY $e10
+  ; CHECK-NEXT:   [[COPY12:%[0-9]+]]:_(<64 x s8>) = COPY $x1
+  ; CHECK-NEXT:   [[COPY13:%[0-9]+]]:_(<8 x s8>) = COPY $e1
+  ; CHECK-NEXT:   [[COPY14:%[0-9]+]]:_(<64 x s8>) = COPY $x3
+  ; CHECK-NEXT:   [[COPY15:%[0-9]+]]:_(<8 x s8>) = COPY $e3
+  ; CHECK-NEXT:   [[COPY16:%[0-9]+]]:_(<64 x s8>) = COPY $x5
+  ; CHECK-NEXT:   [[COPY17:%[0-9]+]]:_(<8 x s8>) = COPY $e5
+  ; CHECK-NEXT:   [[COPY18:%[0-9]+]]:_(<64 x s8>) = COPY $x7
+  ; CHECK-NEXT:   [[COPY19:%[0-9]+]]:_(<8 x s8>) = COPY $e7
+  ; CHECK-NEXT:   [[COPY20:%[0-9]+]]:_(<64 x s8>) = COPY $x9
+  ; CHECK-NEXT:   [[COPY21:%[0-9]+]]:_(<8 x s8>) = COPY $e9
   ; CHECK-NEXT:   [[COPY22:%[0-9]+]]:_(<64 x s8>) = COPY $x11
   ; CHECK-NEXT:   [[COPY23:%[0-9]+]]:_(<8 x s8>) = COPY $e11
   ; CHECK-NEXT:   PseudoRET implicit $lr
@@ -83,10 +83,10 @@ define %struct.v64bfp16ebs16 @ret_v64bfp16ebs16(%struct.v64bfp16ebs16 %v1) {
   ; CHECK-LABEL: name: ret_v64bfp16ebs16
   ; CHECK: fixedStack:
   ; CHECK: bb.1.entry:
-  ; CHECK-NEXT:   liveins: $e1, $x1
+  ; CHECK-NEXT:   liveins: $e2, $x2
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<64 x s8>) = COPY $x1
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:_(<8 x s8>) = COPY $e1
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<64 x s8>) = COPY $x2
+  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:_(<8 x s8>) = COPY $e2
   ; CHECK-NEXT:   $x0 = COPY [[COPY]](<64 x s8>)
   ; CHECK-NEXT:   $e0 = COPY [[COPY1]](<8 x s8>)
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit $x0, implicit $e0
@@ -115,26 +115,26 @@ define void @pass_v64bfp16ebs8_more_args(%struct.v64bfp16ebs8 %v1, %struct.v64bf
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<64 x s8>) = COPY $x0
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:_(<8 x s8>) = COPY $e0
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:_(<64 x s8>) = COPY $x1
-  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:_(<8 x s8>) = COPY $e1
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:_(<64 x s8>) = COPY $x2
-  ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:_(<8 x s8>) = COPY $e2
-  ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:_(<64 x s8>) = COPY $x3
-  ; CHECK-NEXT:   [[COPY7:%[0-9]+]]:_(<8 x s8>) = COPY $e3
-  ; CHECK-NEXT:   [[COPY8:%[0-9]+]]:_(<64 x s8>) = COPY $x4
-  ; CHECK-NEXT:   [[COPY9:%[0-9]+]]:_(<8 x s8>) = COPY $e4
-  ; CHECK-NEXT:   [[COPY10:%[0-9]+]]:_(<64 x s8>) = COPY $x5
-  ; CHECK-NEXT:   [[COPY11:%[0-9]+]]:_(<8 x s8>) = COPY $e5
-  ; CHECK-NEXT:   [[COPY12:%[0-9]+]]:_(<64 x s8>) = COPY $x6
-  ; CHECK-NEXT:   [[COPY13:%[0-9]+]]:_(<8 x s8>) = COPY $e6
-  ; CHECK-NEXT:   [[COPY14:%[0-9]+]]:_(<64 x s8>) = COPY $x7
-  ; CHECK-NEXT:   [[COPY15:%[0-9]+]]:_(<8 x s8>) = COPY $e7
-  ; CHECK-NEXT:   [[COPY16:%[0-9]+]]:_(<64 x s8>) = COPY $x8
-  ; CHECK-NEXT:   [[COPY17:%[0-9]+]]:_(<8 x s8>) = COPY $e8
-  ; CHECK-NEXT:   [[COPY18:%[0-9]+]]:_(<64 x s8>) = COPY $x9
-  ; CHECK-NEXT:   [[COPY19:%[0-9]+]]:_(<8 x s8>) = COPY $e9
-  ; CHECK-NEXT:   [[COPY20:%[0-9]+]]:_(<64 x s8>) = COPY $x10
-  ; CHECK-NEXT:   [[COPY21:%[0-9]+]]:_(<8 x s8>) = COPY $e10
+  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:_(<64 x s8>) = COPY $x2
+  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:_(<8 x s8>) = COPY $e2
+  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:_(<64 x s8>) = COPY $x4
+  ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:_(<8 x s8>) = COPY $e4
+  ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:_(<64 x s8>) = COPY $x6
+  ; CHECK-NEXT:   [[COPY7:%[0-9]+]]:_(<8 x s8>) = COPY $e6
+  ; CHECK-NEXT:   [[COPY8:%[0-9]+]]:_(<64 x s8>) = COPY $x8
+  ; CHECK-NEXT:   [[COPY9:%[0-9]+]]:_(<8 x s8>) = COPY $e8
+  ; CHECK-NEXT:   [[COPY10:%[0-9]+]]:_(<64 x s8>) = COPY $x10
+  ; CHECK-NEXT:   [[COPY11:%[0-9]+]]:_(<8 x s8>) = COPY $e10
+  ; CHECK-NEXT:   [[COPY12:%[0-9]+]]:_(<64 x s8>) = COPY $x1
+  ; CHECK-NEXT:   [[COPY13:%[0-9]+]]:_(<8 x s8>) = COPY $e1
+  ; CHECK-NEXT:   [[COPY14:%[0-9]+]]:_(<64 x s8>) = COPY $x3
+  ; CHECK-NEXT:   [[COPY15:%[0-9]+]]:_(<8 x s8>) = COPY $e3
+  ; CHECK-NEXT:   [[COPY16:%[0-9]+]]:_(<64 x s8>) = COPY $x5
+  ; CHECK-NEXT:   [[COPY17:%[0-9]+]]:_(<8 x s8>) = COPY $e5
+  ; CHECK-NEXT:   [[COPY18:%[0-9]+]]:_(<64 x s8>) = COPY $x7
+  ; CHECK-NEXT:   [[COPY19:%[0-9]+]]:_(<8 x s8>) = COPY $e7
+  ; CHECK-NEXT:   [[COPY20:%[0-9]+]]:_(<64 x s8>) = COPY $x9
+  ; CHECK-NEXT:   [[COPY21:%[0-9]+]]:_(<8 x s8>) = COPY $e9
   ; CHECK-NEXT:   PseudoRET implicit $lr
 entry:
   ret void
@@ -144,10 +144,10 @@ define %struct.v64bfp16ebs8 @ret_v64bfp16ebs8(%struct.v64bfp16ebs8 %v1) {
   ; CHECK-LABEL: name: ret_v64bfp16ebs8
   ; CHECK: fixedStack:
   ; CHECK: bb.1.entry:
-  ; CHECK-NEXT:   liveins: $e1, $x1
+  ; CHECK-NEXT:   liveins: $e2, $x2
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<64 x s8>) = COPY $x1
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:_(<8 x s8>) = COPY $e1
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<64 x s8>) = COPY $x2
+  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:_(<8 x s8>) = COPY $e2
   ; CHECK-NEXT:   $x0 = COPY [[COPY]](<64 x s8>)
   ; CHECK-NEXT:   $e0 = COPY [[COPY1]](<8 x s8>)
   ; CHECK-NEXT:   PseudoRET implicit $lr, implicit $x0, implicit $e0
@@ -180,22 +180,22 @@ define void @pass_v128bfp16ebs16_more_args(%struct.v128bfp16ebs16 %v1, %struct.v
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:_(<64 x s8>) = COPY $x1
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:_(<8 x s8>) = COPY $e0
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:_(<8 x s8>) = COPY $e1
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:_(<64 x s8>) = COPY $x2
-  ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:_(<64 x s8>) = COPY $x3
-  ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:_(<8 x s8>) = COPY $e2
-  ; CHECK-NEXT:   [[COPY7:%[0-9]+]]:_(<8 x s8>) = COPY $e3
-  ; CHECK-NEXT:   [[COPY8:%[0-9]+]]:_(<64 x s8>) = COPY $x4
-  ; CHECK-NEXT:   [[COPY9:%[0-9]+]]:_(<64 x s8>) = COPY $x5
-  ; CHECK-NEXT:   [[COPY10:%[0-9]+]]:_(<8 x s8>) = COPY $e4
-  ; CHECK-NEXT:   [[COPY11:%[0-9]+]]:_(<8 x s8>) = COPY $e5
-  ; CHECK-NEXT:   [[COPY12:%[0-9]+]]:_(<64 x s8>) = COPY $x6
-  ; CHECK-NEXT:   [[COPY13:%[0-9]+]]:_(<64 x s8>) = COPY $x7
-  ; CHECK-NEXT:   [[COPY14:%[0-9]+]]:_(<8 x s8>) = COPY $e6
-  ; CHECK-NEXT:   [[COPY15:%[0-9]+]]:_(<8 x s8>) = COPY $e7
-  ; CHECK-NEXT:   [[COPY16:%[0-9]+]]:_(<64 x s8>) = COPY $x8
-  ; CHECK-NEXT:   [[COPY17:%[0-9]+]]:_(<64 x s8>) = COPY $x9
-  ; CHECK-NEXT:   [[COPY18:%[0-9]+]]:_(<8 x s8>) = COPY $e8
-  ; CHECK-NEXT:   [[COPY19:%[0-9]+]]:_(<8 x s8>) = COPY $e9
+  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:_(<64 x s8>) = COPY $x4
+  ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:_(<64 x s8>) = COPY $x5
+  ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:_(<8 x s8>) = COPY $e4
+  ; CHECK-NEXT:   [[COPY7:%[0-9]+]]:_(<8 x s8>) = COPY $e5
+  ; CHECK-NEXT:   [[COPY8:%[0-9]+]]:_(<64 x s8>) = COPY $x8
+  ; CHECK-NEXT:   [[COPY9:%[0-9]+]]:_(<64 x s8>) = COPY $x9
+  ; CHECK-NEXT:   [[COPY10:%[0-9]+]]:_(<8 x s8>) = COPY $e8
+  ; CHECK-NEXT:   [[COPY11:%[0-9]+]]:_(<8 x s8>) = COPY $e9
+  ; CHECK-NEXT:   [[COPY12:%[0-9]+]]:_(<64 x s8>) = COPY $x2
+  ; CHECK-NEXT:   [[COPY13:%[0-9]+]]:_(<64 x s8>) = COPY $x3
+  ; CHECK-NEXT:   [[COPY14:%[0-9]+]]:_(<8 x s8>) = COPY $e2
+  ; CHECK-NEXT:   [[COPY15:%[0-9]+]]:_(<8 x s8>) = COPY $e3
+  ; CHECK-NEXT:   [[COPY16:%[0-9]+]]:_(<64 x s8>) = COPY $x6
+  ; CHECK-NEXT:   [[COPY17:%[0-9]+]]:_(<64 x s8>) = COPY $x7
+  ; CHECK-NEXT:   [[COPY18:%[0-9]+]]:_(<8 x s8>) = COPY $e6
+  ; CHECK-NEXT:   [[COPY19:%[0-9]+]]:_(<8 x s8>) = COPY $e7
   ; CHECK-NEXT:   [[COPY20:%[0-9]+]]:_(<64 x s8>) = COPY $x10
   ; CHECK-NEXT:   [[COPY21:%[0-9]+]]:_(<64 x s8>) = COPY $x11
   ; CHECK-NEXT:   [[COPY22:%[0-9]+]]:_(<8 x s8>) = COPY $e10
@@ -209,12 +209,12 @@ define %struct.v128bfp16ebs16 @ret_v128bfp16ebs16(%struct.v128bfp16ebs16 %v1) {
   ; CHECK-LABEL: name: ret_v128bfp16ebs16
   ; CHECK: fixedStack:
   ; CHECK: bb.1.entry:
-  ; CHECK-NEXT:   liveins: $e2, $e3, $x2, $x3
+  ; CHECK-NEXT:   liveins: $e4, $e5, $x4, $x5
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<64 x s8>) = COPY $x2
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:_(<64 x s8>) = COPY $x3
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:_(<8 x s8>) = COPY $e2
-  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:_(<8 x s8>) = COPY $e3
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<64 x s8>) = COPY $x4
+  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:_(<64 x s8>) = COPY $x5
+  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:_(<8 x s8>) = COPY $e4
+  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:_(<8 x s8>) = COPY $e5
   ; CHECK-NEXT:   $x0 = COPY [[COPY]](<64 x s8>)
   ; CHECK-NEXT:   $x1 = COPY [[COPY1]](<64 x s8>)
   ; CHECK-NEXT:   $e0 = COPY [[COPY2]](<8 x s8>)
@@ -270,22 +270,22 @@ define void @pass_v128bfp16ebs8_more_args(%struct.v128bfp16ebs8 %v1, %struct.v12
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:_(<64 x s8>) = COPY $x1
   ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:_(<8 x s8>) = COPY $e0
   ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:_(<8 x s8>) = COPY $e1
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:_(<64 x s8>) = COPY $x2
-  ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:_(<64 x s8>) = COPY $x3
-  ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:_(<8 x s8>) = COPY $e2
-  ; CHECK-NEXT:   [[COPY7:%[0-9]+]]:_(<8 x s8>) = COPY $e3
-  ; CHECK-NEXT:   [[COPY8:%[0-9]+]]:_(<64 x s8>) = COPY $x4
-  ; CHECK-NEXT:   [[COPY9:%[0-9]+]]:_(<64 x s8>) = COPY $x5
-  ; CHECK-NEXT:   [[COPY10:%[0-9]+]]:_(<8 x s8>) = COPY $e4
-  ; CHECK-NEXT:   [[COPY11:%[0-9]+]]:_(<8 x s8>) = COPY $e5
-  ; CHECK-NEXT:   [[COPY12:%[0-9]+]]:_(<64 x s8>) = COPY $x6
-  ; CHECK-NEXT:   [[COPY13:%[0-9]+]]:_(<64 x s8>) = COPY $x7
-  ; CHECK-NEXT:   [[COPY14:%[0-9]+]]:_(<8 x s8>) = COPY $e6
-  ; CHECK-NEXT:   [[COPY15:%[0-9]+]]:_(<8 x s8>) = COPY $e7
-  ; CHECK-NEXT:   [[COPY16:%[0-9]+]]:_(<64 x s8>) = COPY $x8
-  ; CHECK-NEXT:   [[COPY17:%[0-9]+]]:_(<64 x s8>) = COPY $x9
-  ; CHECK-NEXT:   [[COPY18:%[0-9]+]]:_(<8 x s8>) = COPY $e8
-  ; CHECK-NEXT:   [[COPY19:%[0-9]+]]:_(<8 x s8>) = COPY $e9
+  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:_(<64 x s8>) = COPY $x4
+  ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:_(<64 x s8>) = COPY $x5
+  ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:_(<8 x s8>) = COPY $e4
+  ; CHECK-NEXT:   [[COPY7:%[0-9]+]]:_(<8 x s8>) = COPY $e5
+  ; CHECK-NEXT:   [[COPY8:%[0-9]+]]:_(<64 x s8>) = COPY $x8
+  ; CHECK-NEXT:   [[COPY9:%[0-9]+]]:_(<64 x s8>) = COPY $x9
+  ; CHECK-NEXT:   [[COPY10:%[0-9]+]]:_(<8 x s8>) = COPY $e8
+  ; CHECK-NEXT:   [[COPY11:%[0-9]+]]:_(<8 x s8>) = COPY $e9
+  ; CHECK-NEXT:   [[COPY12:%[0-9]+]]:_(<64 x s8>) = COPY $x2
+  ; CHECK-NEXT:   [[COPY13:%[0-9]+]]:_(<64 x s8>) = COPY $x3
+  ; CHECK-NEXT:   [[COPY14:%[0-9]+]]:_(<8 x s8>) = COPY $e2
+  ; CHECK-NEXT:   [[COPY15:%[0-9]+]]:_(<8 x s8>) = COPY $e3
+  ; CHECK-NEXT:   [[COPY16:%[0-9]+]]:_(<64 x s8>) = COPY $x6
+  ; CHECK-NEXT:   [[COPY17:%[0-9]+]]:_(<64 x s8>) = COPY $x7
+  ; CHECK-NEXT:   [[COPY18:%[0-9]+]]:_(<8 x s8>) = COPY $e6
+  ; CHECK-NEXT:   [[COPY19:%[0-9]+]]:_(<8 x s8>) = COPY $e7
   ; CHECK-NEXT:   [[COPY20:%[0-9]+]]:_(<64 x s8>) = COPY $x10
   ; CHECK-NEXT:   [[COPY21:%[0-9]+]]:_(<64 x s8>) = COPY $x11
   ; CHECK-NEXT:   [[COPY22:%[0-9]+]]:_(<8 x s8>) = COPY $e10
@@ -299,12 +299,12 @@ define %struct.v128bfp16ebs8 @ret_v128bfp16ebs8(%struct.v128bfp16ebs8 %v1) {
   ; CHECK-LABEL: name: ret_v128bfp16ebs8
   ; CHECK: fixedStack:
   ; CHECK: bb.1.entry:
-  ; CHECK-NEXT:   liveins: $e2, $e3, $x2, $x3
+  ; CHECK-NEXT:   liveins: $e4, $e5, $x4, $x5
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<64 x s8>) = COPY $x2
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:_(<64 x s8>) = COPY $x3
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:_(<8 x s8>) = COPY $e2
-  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:_(<8 x s8>) = COPY $e3
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<64 x s8>) = COPY $x4
+  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:_(<64 x s8>) = COPY $x5
+  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:_(<8 x s8>) = COPY $e4
+  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:_(<8 x s8>) = COPY $e5
   ; CHECK-NEXT:   $x0 = COPY [[COPY]](<64 x s8>)
   ; CHECK-NEXT:   $x1 = COPY [[COPY1]](<64 x s8>)
   ; CHECK-NEXT:   $e0 = COPY [[COPY2]](<8 x s8>)
@@ -435,26 +435,26 @@ define void @pass_v64bfp16ebs8_stack( %struct.v64bfp16ebs8 %v1,  %struct.v64bfp1
   ; CHECK-NEXT: {{  $}}
   ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<64 x s8>) = COPY $x0
   ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:_(<8 x s8>) = COPY $e0
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:_(<64 x s8>) = COPY $x1
-  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:_(<8 x s8>) = COPY $e1
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:_(<64 x s8>) = COPY $x2
-  ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:_(<8 x s8>) = COPY $e2
-  ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:_(<64 x s8>) = COPY $x3
-  ; CHECK-NEXT:   [[COPY7:%[0-9]+]]:_(<8 x s8>) = COPY $e3
-  ; CHECK-NEXT:   [[COPY8:%[0-9]+]]:_(<64 x s8>) = COPY $x4
-  ; CHECK-NEXT:   [[COPY9:%[0-9]+]]:_(<8 x s8>) = COPY $e4
-  ; CHECK-NEXT:   [[COPY10:%[0-9]+]]:_(<64 x s8>) = COPY $x5
-  ; CHECK-NEXT:   [[COPY11:%[0-9]+]]:_(<8 x s8>) = COPY $e5
-  ; CHECK-NEXT:   [[COPY12:%[0-9]+]]:_(<64 x s8>) = COPY $x6
-  ; CHECK-NEXT:   [[COPY13:%[0-9]+]]:_(<8 x s8>) = COPY $e6
-  ; CHECK-NEXT:   [[COPY14:%[0-9]+]]:_(<64 x s8>) = COPY $x7
-  ; CHECK-NEXT:   [[COPY15:%[0-9]+]]:_(<8 x s8>) = COPY $e7
-  ; CHECK-NEXT:   [[COPY16:%[0-9]+]]:_(<64 x s8>) = COPY $x8
-  ; CHECK-NEXT:   [[COPY17:%[0-9]+]]:_(<8 x s8>) = COPY $e8
-  ; CHECK-NEXT:   [[COPY18:%[0-9]+]]:_(<64 x s8>) = COPY $x9
-  ; CHECK-NEXT:   [[COPY19:%[0-9]+]]:_(<8 x s8>) = COPY $e9
-  ; CHECK-NEXT:   [[COPY20:%[0-9]+]]:_(<64 x s8>) = COPY $x10
-  ; CHECK-NEXT:   [[COPY21:%[0-9]+]]:_(<8 x s8>) = COPY $e10
+  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:_(<64 x s8>) = COPY $x2
+  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:_(<8 x s8>) = COPY $e2
+  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:_(<64 x s8>) = COPY $x4
+  ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:_(<8 x s8>) = COPY $e4
+  ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:_(<64 x s8>) = COPY $x6
+  ; CHECK-NEXT:   [[COPY7:%[0-9]+]]:_(<8 x s8>) = COPY $e6
+  ; CHECK-NEXT:   [[COPY8:%[0-9]+]]:_(<64 x s8>) = COPY $x8
+  ; CHECK-NEXT:   [[COPY9:%[0-9]+]]:_(<8 x s8>) = COPY $e8
+  ; CHECK-NEXT:   [[COPY10:%[0-9]+]]:_(<64 x s8>) = COPY $x10
+  ; CHECK-NEXT:   [[COPY11:%[0-9]+]]:_(<8 x s8>) = COPY $e10
+  ; CHECK-NEXT:   [[COPY12:%[0-9]+]]:_(<64 x s8>) = COPY $x1
+  ; CHECK-NEXT:   [[COPY13:%[0-9]+]]:_(<8 x s8>) = COPY $e1
+  ; CHECK-NEXT:   [[COPY14:%[0-9]+]]:_(<64 x s8>) = COPY $x3
+  ; CHECK-NEXT:   [[COPY15:%[0-9]+]]:_(<8 x s8>) = COPY $e3
+  ; CHECK-NEXT:   [[COPY16:%[0-9]+]]:_(<64 x s8>) = COPY $x5
+  ; CHECK-NEXT:   [[COPY17:%[0-9]+]]:_(<8 x s8>) = COPY $e5
+  ; CHECK-NEXT:   [[COPY18:%[0-9]+]]:_(<64 x s8>) = COPY $x7
+  ; CHECK-NEXT:   [[COPY19:%[0-9]+]]:_(<8 x s8>) = COPY $e7
+  ; CHECK-NEXT:   [[COPY20:%[0-9]+]]:_(<64 x s8>) = COPY $x9
+  ; CHECK-NEXT:   [[COPY21:%[0-9]+]]:_(<8 x s8>) = COPY $e9
   ; CHECK-NEXT:   [[COPY22:%[0-9]+]]:_(<64 x s8>) = COPY $x11
   ; CHECK-NEXT:   [[COPY23:%[0-9]+]]:_(<8 x s8>) = COPY $e11
   ; CHECK-NEXT:   [[FRAME_INDEX:%[0-9]+]]:_(p0) = G_FRAME_INDEX %fixed-stack.1
@@ -484,26 +484,26 @@ define %struct.v64bfp16ebs8 @ret_v64bfp16ebs8_stack( %struct.v64bfp16ebs8 %v1,  
   ; CHECK: bb.1.entry:
   ; CHECK-NEXT:   liveins: $e1, $e2, $e3, $e4, $e5, $e6, $e7, $e8, $e9, $e10, $e11, $x1, $x2, $x3, $x4, $x5, $x6, $x7, $x8, $x9, $x10, $x11
   ; CHECK-NEXT: {{  $}}
-  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<64 x s8>) = COPY $x1
-  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:_(<8 x s8>) = COPY $e1
-  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:_(<64 x s8>) = COPY $x2
-  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:_(<8 x s8>) = COPY $e2
-  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:_(<64 x s8>) = COPY $x3
-  ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:_(<8 x s8>) = COPY $e3
-  ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:_(<64 x s8>) = COPY $x4
-  ; CHECK-NEXT:   [[COPY7:%[0-9]+]]:_(<8 x s8>) = COPY $e4
-  ; CHECK-NEXT:   [[COPY8:%[0-9]+]]:_(<64 x s8>) = COPY $x5
-  ; CHECK-NEXT:   [[COPY9:%[0-9]+]]:_(<8 x s8>) = COPY $e5
-  ; CHECK-NEXT:   [[COPY10:%[0-9]+]]:_(<64 x s8>) = COPY $x6
-  ; CHECK-NEXT:   [[COPY11:%[0-9]+]]:_(<8 x s8>) = COPY $e6
-  ; CHECK-NEXT:   [[COPY12:%[0-9]+]]:_(<64 x s8>) = COPY $x7
-  ; CHECK-NEXT:   [[COPY13:%[0-9]+]]:_(<8 x s8>) = COPY $e7
-  ; CHECK-NEXT:   [[COPY14:%[0-9]+]]:_(<64 x s8>) = COPY $x8
-  ; CHECK-NEXT:   [[COPY15:%[0-9]+]]:_(<8 x s8>) = COPY $e8
-  ; CHECK-NEXT:   [[COPY16:%[0-9]+]]:_(<64 x s8>) = COPY $x9
-  ; CHECK-NEXT:   [[COPY17:%[0-9]+]]:_(<8 x s8>) = COPY $e9
-  ; CHECK-NEXT:   [[COPY18:%[0-9]+]]:_(<64 x s8>) = COPY $x10
-  ; CHECK-NEXT:   [[COPY19:%[0-9]+]]:_(<8 x s8>) = COPY $e10
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(<64 x s8>) = COPY $x2
+  ; CHECK-NEXT:   [[COPY1:%[0-9]+]]:_(<8 x s8>) = COPY $e2
+  ; CHECK-NEXT:   [[COPY2:%[0-9]+]]:_(<64 x s8>) = COPY $x4
+  ; CHECK-NEXT:   [[COPY3:%[0-9]+]]:_(<8 x s8>) = COPY $e4
+  ; CHECK-NEXT:   [[COPY4:%[0-9]+]]:_(<64 x s8>) = COPY $x6
+  ; CHECK-NEXT:   [[COPY5:%[0-9]+]]:_(<8 x s8>) = COPY $e6
+  ; CHECK-NEXT:   [[COPY6:%[0-9]+]]:_(<64 x s8>) = COPY $x8
+  ; CHECK-NEXT:   [[COPY7:%[0-9]+]]:_(<8 x s8>) = COPY $e8
+  ; CHECK-NEXT:   [[COPY8:%[0-9]+]]:_(<64 x s8>) = COPY $x10
+  ; CHECK-NEXT:   [[COPY9:%[0-9]+]]:_(<8 x s8>) = COPY $e10
+  ; CHECK-NEXT:   [[COPY10:%[0-9]+]]:_(<64 x s8>) = COPY $x1
+  ; CHECK-NEXT:   [[COPY11:%[0-9]+]]:_(<8 x s8>) = COPY $e1
+  ; CHECK-NEXT:   [[COPY12:%[0-9]+]]:_(<64 x s8>) = COPY $x3
+  ; CHECK-NEXT:   [[COPY13:%[0-9]+]]:_(<8 x s8>) = COPY $e3
+  ; CHECK-NEXT:   [[COPY14:%[0-9]+]]:_(<64 x s8>) = COPY $x5
+  ; CHECK-NEXT:   [[COPY15:%[0-9]+]]:_(<8 x s8>) = COPY $e5
+  ; CHECK-NEXT:   [[COPY16:%[0-9]+]]:_(<64 x s8>) = COPY $x7
+  ; CHECK-NEXT:   [[COPY17:%[0-9]+]]:_(<8 x s8>) = COPY $e7
+  ; CHECK-NEXT:   [[COPY18:%[0-9]+]]:_(<64 x s8>) = COPY $x9
+  ; CHECK-NEXT:   [[COPY19:%[0-9]+]]:_(<8 x s8>) = COPY $e9
   ; CHECK-NEXT:   [[COPY20:%[0-9]+]]:_(<64 x s8>) = COPY $x11
   ; CHECK-NEXT:   [[COPY21:%[0-9]+]]:_(<8 x s8>) = COPY $e11
   ; CHECK-NEXT:   [[FRAME_INDEX:%[0-9]+]]:_(p0) = G_FRAME_INDEX %fixed-stack.3
