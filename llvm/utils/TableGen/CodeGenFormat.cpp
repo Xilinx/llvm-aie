@@ -1172,16 +1172,15 @@ void TGTargetSlots::emitTargetSlotClass(raw_ostream &o) const {
 
   o << "class " << TargetClassName << " : public MC" << GenSlotInfoName << "\n"
     << "{\n"
-    << "  const " << TargetEnumName << " Kind;\n"
     << "public:\n"
     << "  constexpr " << TargetClassName << "(const " << TargetEnumName
-    << " Kind, " << "const char* SlotName, " << "unsigned Size, "
-    << "SlotBits SlotSet, " << "unsigned NopOpc)\n"
-    << "    : MC" << GenSlotInfoName
-    << "(SlotName, Size, SlotSet, NopOpc), Kind(Kind)\n"
+    << " Kind, "
+    << "const char* SlotName, "
+    << "unsigned Size, "
+    << "SlotBits SlotSet, "
+    << "unsigned NopOpc)\n"
+    << "    : MC" << GenSlotInfoName << "(SlotName, Size, SlotSet, NopOpc)\n"
     << "  {\n  }\n\n"
-    << "  const " << TargetEnumName
-    << " &getSlotKind() const { return Kind; }\n"
     << "};\n\n";
 }
 
