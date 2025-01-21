@@ -615,8 +615,8 @@ void AIE2PInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
             TRI.getSubReg(DstReg, AIE2P::sub_odd_vecmaskexp_704))
         .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_odd_vecmaskexp_704),
                 getKillRegState(KillSrc));
-  } else if ((AIE2P::eLdFifoRegRegClass.contains(SrcReg)) &&
-             (AIE2P::eLdFifoRegRegClass.contains(DstReg))) {
+  } else if ((AIE2P::FIFO1024RegClass.contains(SrcReg)) &&
+             (AIE2P::FIFO1024RegClass.contains(DstReg))) {
     BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_x),
             TRI.getSubReg(DstReg, AIE2P::sub_lo_fifo))
         .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_lo_fifo),
@@ -626,7 +626,7 @@ void AIE2PInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
         .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_hi_fifo),
                 getKillRegState(KillSrc));
   } else if ((AIE2P::VEC1024RegClass.contains(SrcReg)) &&
-             (AIE2P::eLdFifoRegRegClass.contains(DstReg))) {
+             (AIE2P::FIFO1024RegClass.contains(DstReg))) {
     BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_x),
             TRI.getSubReg(DstReg, AIE2P::sub_lo_fifo))
         .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_512_lo),
@@ -635,7 +635,7 @@ void AIE2PInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
             TRI.getSubReg(DstReg, AIE2P::sub_hi_fifo))
         .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_512_hi),
                 getKillRegState(KillSrc));
-  } else if ((AIE2P::eLdFifoRegRegClass.contains(SrcReg)) &&
+  } else if ((AIE2P::FIFO1024RegClass.contains(SrcReg)) &&
              (AIE2P::VEC1024RegClass.contains(DstReg))) {
     BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_x),
             TRI.getSubReg(DstReg, AIE2P::sub_512_lo))
@@ -646,7 +646,7 @@ void AIE2PInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
         .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_hi_fifo),
                 getKillRegState(KillSrc));
   } else if ((AIE2P::ACC1024RegClass.contains(SrcReg)) &&
-             (AIE2P::eLdFifoRegRegClass.contains(DstReg))) {
+             (AIE2P::FIFO1024RegClass.contains(DstReg))) {
     BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_x),
             TRI.getSubReg(DstReg, AIE2P::sub_lo_fifo))
         .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_512_acc_lo),
@@ -655,7 +655,7 @@ void AIE2PInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
             TRI.getSubReg(DstReg, AIE2P::sub_hi_fifo))
         .addReg(TRI.getSubReg(SrcReg, AIE2P::sub_512_acc_hi),
                 getKillRegState(KillSrc));
-  } else if ((AIE2P::eLdFifoRegRegClass.contains(SrcReg)) &&
+  } else if ((AIE2P::FIFO1024RegClass.contains(SrcReg)) &&
              (AIE2P::ACC1024RegClass.contains(DstReg))) {
     BuildMI(MBB, MBBI, DL, get(AIE2P::VMOV_alu_mv_mv_x),
             TRI.getSubReg(DstReg, AIE2P::sub_512_acc_lo))
