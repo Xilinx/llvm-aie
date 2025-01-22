@@ -227,3 +227,63 @@ body:             |
     $x0 = COPY %0(<16 x s32>)
     PseudoRET implicit $lr, implicit $x0
 ...
+---
+name: shuffle_vector_to_extract_broadcast_src1
+tracksRegLiveness: true
+body:             |
+  bb.1:
+    liveins: $wl0, $wl1
+
+    ; CHECK-LABEL: name: shuffle_vector_to_extract_broadcast_src1
+    ; CHECK: liveins: $wl0, $wl1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<8 x s32>) = COPY $wl0
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
+    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<8 x s32>), [[C]](s32)
+    ; CHECK-NEXT: [[AIE_BROADCAST_VECTOR:%[0-9]+]]:_(<16 x s32>) = G_AIE_BROADCAST_VECTOR [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s32)
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_BROADCAST_VECTOR]](<16 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_UNPAD_VECTOR]](<8 x s32>)
+    %0:_(<8 x s32>) = COPY $wl0
+    %1:_(<8 x s32>) = COPY $wl1
+    %2:_(<8 x s32>) = G_SHUFFLE_VECTOR %0(<8 x s32>), %1(<8 x s32>), shufflemask(2, 2, 2, 2, 2, 2, 2, 2)
+    PseudoRET implicit $lr, implicit %2
+...
+---
+name: shuffle_vector_to_extract_broadcast_undef
+tracksRegLiveness: true
+body:             |
+  bb.1:
+    liveins: $wl0, $wl1
+
+    ; CHECK-LABEL: name: shuffle_vector_to_extract_broadcast_undef
+    ; CHECK: liveins: $wl0, $wl1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<4 x s64>) = COPY $wl0
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
+    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<4 x s64>), [[C]](s32)
+    ; CHECK-NEXT: [[AIE_BROADCAST_VECTOR:%[0-9]+]]:_(<8 x s64>) = G_AIE_BROADCAST_VECTOR [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_BROADCAST_VECTOR]](<8 x s64>)
+    %0:_(<4 x s64>) = COPY $wl0
+    %1:_(<4 x s64>) = COPY $wl1
+    %2:_(<8 x s64>) = G_SHUFFLE_VECTOR %0(<4 x s64>), %1(<4 x s64>), shufflemask(3, 3, -1, -1, 3, 3, 3, 3)
+    PseudoRET implicit $lr, implicit %2
+...
+---
+name: shuffle_vector_to_extract_broadcast_neg_test
+tracksRegLiveness: true
+body:             |
+  bb.1:
+    liveins: $wl0, $wl1
+
+    ; CHECK-LABEL: name: shuffle_vector_to_extract_broadcast_neg_test
+    ; CHECK: liveins: $wl0, $wl1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<4 x s64>) = COPY $wl0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<4 x s64>) = COPY $wl1
+    ; CHECK-NEXT: [[SHUF:%[0-9]+]]:_(<8 x s64>) = G_SHUFFLE_VECTOR [[COPY]](<4 x s64>), [[COPY1]], shufflemask(3, 2, undef, undef, 3, 3, 3, 3)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[SHUF]](<8 x s64>)
+    %0:_(<4 x s64>) = COPY $wl0
+    %1:_(<4 x s64>) = COPY $wl1
+    %2:_(<8 x s64>) = G_SHUFFLE_VECTOR %0(<4 x s64>), %1(<4 x s64>), shufflemask(3, 2, -1, -1, 3, 3, 3, 3)
+    PseudoRET implicit $lr, implicit %2
+...
