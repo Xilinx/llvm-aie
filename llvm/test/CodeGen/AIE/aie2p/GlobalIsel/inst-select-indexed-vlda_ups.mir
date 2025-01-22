@@ -4,23 +4,24 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s
 
 ---
-name:            VST_UPS_2x_BM_v16_acc32_signed
+name:            VLDA_UPS_2x_acc32_v16_signed
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $bmll0, $p0, $r0, $r1
-    ; CHECK-LABEL: name: VST_UPS_2x_BM_v16_acc32_signed
+    ; CHECK-LABEL: name: VLDA_UPS_2x_acc32_v16_signed
     ; CHECK: liveins: $bmll0, $p0, $r0, $r1
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:edj = COPY $m0
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 16
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 256
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $r1
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:es = COPY [[COPY2]]
@@ -33,21 +34,21 @@ body:             |
     ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign1_1:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign1 [[COPY5]], [[COPY]], [[MOV_PD_imm11_pseudo]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s16>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY6:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1_1:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1 [[COPY6]], [[COPY]], -128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s16>))
+    ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1_1:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1 [[COPY6]], [[COPY]], -256, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s16>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY7:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1_2:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1 [[COPY7]], [[COPY]], 96, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s16>))
+    ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1_2:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1 [[COPY7]], [[COPY]], 224, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s16>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY8:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1_3:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1 [[COPY8]], [[COPY]], 128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s16>))
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign1_]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1_]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign1_1]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1_1]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1_2]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1_3]]
+    ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign1_2:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign1 [[COPY8]], [[COPY]], [[MOV_PD_imm11_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s16>))
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign1_]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1_]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign1_1]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1_1]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1_2]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign1_2]]
     %0:ptrregbank(p0) = COPY $p0
     %7:modregbank(s20) = COPY $m0
     %8:modregbank(s20) = G_CONSTANT i20 0
     %9:modregbank(s20) = G_CONSTANT i20 16
-    %10:modregbank(s20) = G_CONSTANT i20 -128
-    %11:modregbank(s20) = G_CONSTANT i20 96
-    %12:modregbank(s20) = G_CONSTANT i20 128
+    %10:modregbank(s20) = G_CONSTANT i20 -256
+    %11:modregbank(s20) = G_CONSTANT i20 224
+    %12:modregbank(s20) = G_CONSTANT i20 256
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = G_CONSTANT i32 1
     %25:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s16>))
@@ -66,19 +67,20 @@ body:             |
 ...
 
 ---
-name:            VST_UPS_2x_BM_v8_acc64_signed
+name:            VLDA_UPS_2x_acc64_v8_signed
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $bmll0, $p0, $r0, $r1
-    ; CHECK-LABEL: name: VST_UPS_2x_BM_v8_acc64_signed
+    ; CHECK-LABEL: name: VLDA_UPS_2x_acc64_v8_signed
     ; CHECK: liveins: $bmll0, $p0, $r0, $r1
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:edj = COPY $m0
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 16
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 256
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $r1
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:es = COPY [[COPY2]]
@@ -91,21 +93,21 @@ body:             |
     ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign1_1:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign1 [[COPY5]], [[COPY]], [[MOV_PD_imm11_pseudo]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s16>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: [[COPY6:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1_1:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1 [[COPY6]], [[COPY]], -128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s16>))
+    ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1_1:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1 [[COPY6]], [[COPY]], -256, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s16>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: [[COPY7:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1_2:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1 [[COPY7]], [[COPY]], 96, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s16>))
+    ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1_2:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1 [[COPY7]], [[COPY]], 224, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s16>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: [[COPY8:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1_3:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1 [[COPY8]], [[COPY]], 128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s16>))
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign1_]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1_]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign1_1]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1_1]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1_2]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1_3]]
+    ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign1_2:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign1 [[COPY8]], [[COPY]], [[MOV_PD_imm11_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s16>))
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign1_]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1_]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign1_1]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1_1]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign1_2]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign1_2]]
     %0:ptrregbank(p0) = COPY $p0
     %7:modregbank(s20) = COPY $m0
     %8:modregbank(s20) = G_CONSTANT i20 0
     %9:modregbank(s20) = G_CONSTANT i20 16
-    %10:modregbank(s20) = G_CONSTANT i20 -128
-    %11:modregbank(s20) = G_CONSTANT i20 96
-    %12:modregbank(s20) = G_CONSTANT i20 128
+    %10:modregbank(s20) = G_CONSTANT i20 -256
+    %11:modregbank(s20) = G_CONSTANT i20 224
+    %12:modregbank(s20) = G_CONSTANT i20 256
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = G_CONSTANT i32 1
     %25:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s16>))
@@ -124,19 +126,20 @@ body:             |
 ...
 
 ---
-name:            VST_UPS_4x_CM_v16_acc64_signed
+name:            VLDA_UPS_4x_acc64_v16_signed
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $bmll0, $p0, $r0, $r1
-    ; CHECK-LABEL: name: VST_UPS_4x_CM_v16_acc64_signed
+    ; CHECK-LABEL: name: VLDA_UPS_4x_acc64_v16_signed
     ; CHECK: liveins: $bmll0, $p0, $r0, $r1
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:edj = COPY $m0
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 16
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 256
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $r1
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:es = COPY [[COPY2]]
@@ -149,21 +152,21 @@ body:             |
     ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign1_1:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign1 [[COPY5]], [[COPY]], [[MOV_PD_imm11_pseudo]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s16>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: [[COPY6:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1_1:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1 [[COPY6]], [[COPY]], -128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s16>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1_1:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1 [[COPY6]], [[COPY]], -256, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s16>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: [[COPY7:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1_2:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1 [[COPY7]], [[COPY]], 96, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s16>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1_2:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1 [[COPY7]], [[COPY]], 224, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s16>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: [[COPY8:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1_3:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1 [[COPY8]], [[COPY]], 128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s16>))
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign1_]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1_]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign1_1]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1_1]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1_2]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1_3]]
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign1_2:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign1 [[COPY8]], [[COPY]], [[MOV_PD_imm11_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s16>))
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign1_]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1_]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign1_1]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1_1]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1_2]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign1_2]]
     %0:ptrregbank(p0) = COPY $p0
     %7:modregbank(s20) = COPY $m0
     %8:modregbank(s20) = G_CONSTANT i20 0
     %9:modregbank(s20) = G_CONSTANT i20 16
-    %10:modregbank(s20) = G_CONSTANT i20 -128
-    %11:modregbank(s20) = G_CONSTANT i20 96
-    %12:modregbank(s20) = G_CONSTANT i20 128
+    %10:modregbank(s20) = G_CONSTANT i20 -256
+    %11:modregbank(s20) = G_CONSTANT i20 224
+    %12:modregbank(s20) = G_CONSTANT i20 256
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = G_CONSTANT i32 1
     %25:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s16>))
@@ -182,19 +185,20 @@ body:             |
 ...
 
 ---
-name:            VST_UPS_4x_CM_v32_acc32_signed
+name:            VLDA_UPS_4x_acc32_v32_signed
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $bmll0, $p0, $r0, $r1
-    ; CHECK-LABEL: name: VST_UPS_4x_CM_v32_acc32_signed
+    ; CHECK-LABEL: name: VLDA_UPS_4x_acc32_v32_signed
     ; CHECK: liveins: $bmll0, $p0, $r0, $r1
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:edj = COPY $m0
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 16
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 256
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $r1
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:es = COPY [[COPY2]]
@@ -207,21 +211,21 @@ body:             |
     ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign1_1:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign1 [[COPY5]], [[COPY]], [[MOV_PD_imm11_pseudo]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s16>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY6:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1_1:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1 [[COPY6]], [[COPY]], -128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s16>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1_1:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1 [[COPY6]], [[COPY]], -256, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s16>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY7:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1_2:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1 [[COPY7]], [[COPY]], 96, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s16>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1_2:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1 [[COPY7]], [[COPY]], 224, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s16>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY8:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1_3:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1 [[COPY8]], [[COPY]], 128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s16>))
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign1_]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1_]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign1_1]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1_1]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1_2]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1_3]]
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign1_2:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign1 [[COPY8]], [[COPY]], [[MOV_PD_imm11_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s16>))
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign1_]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1_]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign1_1]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1_1]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign1_2]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign1_2]]
     %0:ptrregbank(p0) = COPY $p0
     %7:modregbank(s20) = COPY $m0
     %8:modregbank(s20) = G_CONSTANT i20 0
     %9:modregbank(s20) = G_CONSTANT i20 16
-    %10:modregbank(s20) = G_CONSTANT i20 -128
-    %11:modregbank(s20) = G_CONSTANT i20 96
-    %12:modregbank(s20) = G_CONSTANT i20 128
+    %10:modregbank(s20) = G_CONSTANT i20 -256
+    %11:modregbank(s20) = G_CONSTANT i20 224
+    %12:modregbank(s20) = G_CONSTANT i20 256
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = G_CONSTANT i32 1
     %25:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s16>))
@@ -240,20 +244,20 @@ body:             |
 ...
 
 ---
-name:            VST_UPS_2x_CM_v32_acc32_signed
+name:            VLDA_UPS_2x_acc32_v32_signed
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $bmll0, $p0, $r0, $r1
-    ; CHECK-LABEL: name: VST_UPS_2x_CM_v32_acc32_signed
+    ; CHECK-LABEL: name: VLDA_UPS_2x_acc32_v32_signed
     ; CHECK: liveins: $bmll0, $p0, $r0, $r1
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:edj = COPY $m0
-    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 16
-    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 96
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 32
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 512
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $r1
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:es = COPY [[COPY2]]
@@ -266,21 +270,21 @@ body:             |
     ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign1_1:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign1 [[COPY5]], [[COPY]], [[MOV_PD_imm11_pseudo]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY6:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign1_1:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign1 [[COPY6]], [[COPY]], -128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign1_1:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign1 [[COPY6]], [[COPY]], -512, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY7:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign1_2:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign1 [[COPY7]], [[COPY]], [[MOV_PD_imm11_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign1_2:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign1 [[COPY7]], [[COPY]], 448, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY8:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign1_2:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign1 [[COPY8]], [[COPY]], 128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign1_]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign1_]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign1_1]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign1_1]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign1_2]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign1_2]]
+    ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign1_2:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign1 [[COPY8]], [[COPY]], [[MOV_PD_imm11_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign1_]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign1_]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign1_1]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign1_1]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign1_2]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign1_2]]
     %0:ptrregbank(p0) = COPY $p0
     %7:modregbank(s20) = COPY $m0
     %8:modregbank(s20) = G_CONSTANT i20 0
-    %9:modregbank(s20) = G_CONSTANT i20 16
-    %10:modregbank(s20) = G_CONSTANT i20 -128
-    %11:modregbank(s20) = G_CONSTANT i20 96
-    %12:modregbank(s20) = G_CONSTANT i20 128
+    %9:modregbank(s20) = G_CONSTANT i20 32
+    %10:modregbank(s20) = G_CONSTANT i20 -512
+    %11:modregbank(s20) = G_CONSTANT i20 448
+    %12:modregbank(s20) = G_CONSTANT i20 512
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = G_CONSTANT i32 1
     %25:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s32>))
@@ -299,20 +303,20 @@ body:             |
 ...
 
 ---
-name:            VST_UPS_2x_CM_v16_acc64_signed
+name:            VLDA_UPS_2x_acc64_v16_signed
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $bmll0, $p0, $r0, $r1
-    ; CHECK-LABEL: name: VST_UPS_2x_CM_v16_acc64_signed
+    ; CHECK-LABEL: name: VLDA_UPS_2x_acc64_v16_signed
     ; CHECK: liveins: $bmll0, $p0, $r0, $r1
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:edj = COPY $m0
-    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 16
-    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 96
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 32
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 512
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $r1
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:es = COPY [[COPY2]]
@@ -325,21 +329,21 @@ body:             |
     ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign1_1:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign1 [[COPY5]], [[COPY]], [[MOV_PD_imm11_pseudo]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: [[COPY6:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign1_1:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign1 [[COPY6]], [[COPY]], -128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign1_1:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign1 [[COPY6]], [[COPY]], -512, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: [[COPY7:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign1_2:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign1 [[COPY7]], [[COPY]], [[MOV_PD_imm11_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign1_2:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign1 [[COPY7]], [[COPY]], 448, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: [[COPY8:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign1_2:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign1 [[COPY8]], [[COPY]], 128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign1_]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign1_]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign1_1]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign1_1]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign1_2]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign1_2]]
+    ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign1_2:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign1 [[COPY8]], [[COPY]], [[MOV_PD_imm11_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign1_]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign1_]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign1_1]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign1_1]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign1_2]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign1_2]]
     %0:ptrregbank(p0) = COPY $p0
     %7:modregbank(s20) = COPY $m0
     %8:modregbank(s20) = G_CONSTANT i20 0
-    %9:modregbank(s20) = G_CONSTANT i20 16
-    %10:modregbank(s20) = G_CONSTANT i20 -128
-    %11:modregbank(s20) = G_CONSTANT i20 96
-    %12:modregbank(s20) = G_CONSTANT i20 128
+    %9:modregbank(s20) = G_CONSTANT i20 32
+    %10:modregbank(s20) = G_CONSTANT i20 -512
+    %11:modregbank(s20) = G_CONSTANT i20 448
+    %12:modregbank(s20) = G_CONSTANT i20 512
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = G_CONSTANT i32 1
     %25:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s32>))
@@ -358,47 +362,47 @@ body:             |
 ...
 
 ---
-name:            VST_UPS_4x_DM_v32_acc64_signed
+name:            VLDA_UPS_4x_acc64_v32_signed
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $bmll0, $p0, $r0, $r1
-    ; CHECK-LABEL: name: VST_UPS_4x_DM_v32_acc64_signed
+    ; CHECK-LABEL: name: VLDA_UPS_4x_acc64_v32_signed
     ; CHECK: liveins: $bmll0, $p0, $r0, $r1
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:mdm = COPY $m0
-    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:mdm = MOV_PD_imm11_pseudo 16
-    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:mdm = MOV_PD_imm11_pseudo 96
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:edj = COPY $m0
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 32
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 512
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $r1
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1_:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1 [[COPY3]], [[COPY]], [[COPY1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign1_:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign1 [[COPY3]], [[COPY]], [[COPY1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: [[COPY4:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1_1:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1 [[COPY4]], [[COPY]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1_:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1 [[COPY4]], [[COPY]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: [[COPY5:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1_2:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1 [[COPY5]], [[COPY]], [[MOV_PD_imm11_pseudo]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign1_1:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign1 [[COPY5]], [[COPY]], [[MOV_PD_imm11_pseudo]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: [[COPY6:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1_3:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1 [[COPY6]], [[COPY]], -128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1_1:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1 [[COPY6]], [[COPY]], -512, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: [[COPY7:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1_4:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1 [[COPY7]], [[COPY]], [[MOV_PD_imm11_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1_2:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1 [[COPY7]], [[COPY]], 448, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: [[COPY8:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1_5:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1 [[COPY8]], [[COPY]], 128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1_]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1_1]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1_2]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1_3]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1_4]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1_5]]
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign1_2:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign1 [[COPY8]], [[COPY]], [[MOV_PD_imm11_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign1_]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1_]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign1_1]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1_1]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1_2]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign1_2]]
     %0:ptrregbank(p0) = COPY $p0
     %7:modregbank(s20) = COPY $m0
     %8:modregbank(s20) = G_CONSTANT i20 0
-    %9:modregbank(s20) = G_CONSTANT i20 16
-    %10:modregbank(s20) = G_CONSTANT i20 -128
-    %11:modregbank(s20) = G_CONSTANT i20 96
-    %12:modregbank(s20) = G_CONSTANT i20 128
+    %9:modregbank(s20) = G_CONSTANT i20 32
+    %10:modregbank(s20) = G_CONSTANT i20 -512
+    %11:modregbank(s20) = G_CONSTANT i20 448
+    %12:modregbank(s20) = G_CONSTANT i20 512
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = G_CONSTANT i32 1
     %25:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s32>))
@@ -417,47 +421,47 @@ body:             |
 ...
 
 ---
-name:            VST_UPS_4x_DM_v64_acc32_signed
+name:            VLDA_UPS_4x_acc32_v64_signed
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $bmll0, $p0, $r0, $r1
-    ; CHECK-LABEL: name: VST_UPS_4x_DM_v64_acc32_signed
+    ; CHECK-LABEL: name: VLDA_UPS_4x_acc32_v64_signed
     ; CHECK: liveins: $bmll0, $p0, $r0, $r1
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:mdm = COPY $m0
-    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:mdm = MOV_PD_imm11_pseudo 16
-    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:mdm = MOV_PD_imm11_pseudo 96
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:edj = COPY $m0
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 32
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 512
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $r1
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1_:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1 [[COPY3]], [[COPY]], [[COPY1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign1_:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign1 [[COPY3]], [[COPY]], [[COPY1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY4:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1_1:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1 [[COPY4]], [[COPY]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1_:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1 [[COPY4]], [[COPY]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY5:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1_2:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1 [[COPY5]], [[COPY]], [[MOV_PD_imm11_pseudo]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign1_1:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign1 [[COPY5]], [[COPY]], [[MOV_PD_imm11_pseudo]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY6:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1_3:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1 [[COPY6]], [[COPY]], -128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1_1:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1 [[COPY6]], [[COPY]], -512, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY7:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1_4:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1 [[COPY7]], [[COPY]], [[MOV_PD_imm11_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1_2:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1 [[COPY7]], [[COPY]], 448, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY8:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1_5:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1 [[COPY8]], [[COPY]], 128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1_]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1_1]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1_2]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1_3]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1_4]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1_5]]
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign1_2:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign1 [[COPY8]], [[COPY]], [[MOV_PD_imm11_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign1 :: (load (<16 x s32>))
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign1_]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1_]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign1_1]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1_1]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1_2]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign1_2]]
     %0:ptrregbank(p0) = COPY $p0
     %7:modregbank(s20) = COPY $m0
     %8:modregbank(s20) = G_CONSTANT i20 0
-    %9:modregbank(s20) = G_CONSTANT i20 16
-    %10:modregbank(s20) = G_CONSTANT i20 -128
-    %11:modregbank(s20) = G_CONSTANT i20 96
-    %12:modregbank(s20) = G_CONSTANT i20 128
+    %9:modregbank(s20) = G_CONSTANT i20 32
+    %10:modregbank(s20) = G_CONSTANT i20 -512
+    %11:modregbank(s20) = G_CONSTANT i20 448
+    %12:modregbank(s20) = G_CONSTANT i20 512
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = G_CONSTANT i32 1
     %25:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s32>))
@@ -476,19 +480,20 @@ body:             |
 ...
 
 ---
-name:            VST_UPS_2x_BM_v16_acc32_unsigned
+name:            VLDA_UPS_2x_acc32_v16_unsigned
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $bmll0, $p0, $r0, $r1
-    ; CHECK-LABEL: name: VST_UPS_2x_BM_v16_acc32_unsigned
+    ; CHECK-LABEL: name: VLDA_UPS_2x_acc32_v16_unsigned
     ; CHECK: liveins: $bmll0, $p0, $r0, $r1
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:edj = COPY $m0
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 16
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 256
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $r1
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:es = COPY [[COPY2]]
@@ -501,21 +506,21 @@ body:             |
     ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign0_1:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign0 [[COPY5]], [[COPY]], [[MOV_PD_imm11_pseudo]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY6:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_1:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0 [[COPY6]], [[COPY]], -128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
+    ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_1:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0 [[COPY6]], [[COPY]], -256, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY7:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_2:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0 [[COPY7]], [[COPY]], 96, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
+    ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_2:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0 [[COPY7]], [[COPY]], 224, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY8:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_3:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0 [[COPY8]], [[COPY]], 128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign0_]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign0_1]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_1]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_2]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_3]]
+    ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign0_2:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign0 [[COPY8]], [[COPY]], [[MOV_PD_imm11_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign0_]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign0_1]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_1]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_2]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign0_2]]
     %0:ptrregbank(p0) = COPY $p0
     %7:modregbank(s20) = COPY $m0
     %8:modregbank(s20) = G_CONSTANT i20 0
     %9:modregbank(s20) = G_CONSTANT i20 16
-    %10:modregbank(s20) = G_CONSTANT i20 -128
-    %11:modregbank(s20) = G_CONSTANT i20 96
-    %12:modregbank(s20) = G_CONSTANT i20 128
+    %10:modregbank(s20) = G_CONSTANT i20 -256
+    %11:modregbank(s20) = G_CONSTANT i20 224
+    %12:modregbank(s20) = G_CONSTANT i20 256
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = G_CONSTANT i32 0
     %25:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s16>))
@@ -534,19 +539,20 @@ body:             |
 ...
 
 ---
-name:            VST_UPS_2x_BM_v8_acc64_unsigned
+name:            VLDA_UPS_2x_acc64_v8_unsigned
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $bmll0, $p0, $r0, $r1
-    ; CHECK-LABEL: name: VST_UPS_2x_BM_v8_acc64_unsigned
+    ; CHECK-LABEL: name: VLDA_UPS_2x_acc64_v8_unsigned
     ; CHECK: liveins: $bmll0, $p0, $r0, $r1
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:edj = COPY $m0
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 16
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 256
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $r1
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:es = COPY [[COPY2]]
@@ -559,21 +565,21 @@ body:             |
     ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign0_1:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign0 [[COPY5]], [[COPY]], [[MOV_PD_imm11_pseudo]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: [[COPY6:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_1:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0 [[COPY6]], [[COPY]], -128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
+    ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_1:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0 [[COPY6]], [[COPY]], -256, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: [[COPY7:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_2:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0 [[COPY7]], [[COPY]], 96, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
+    ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_2:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0 [[COPY7]], [[COPY]], 224, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: [[COPY8:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_3:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0 [[COPY8]], [[COPY]], 128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign0_]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign0_1]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_1]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_2]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_3]]
+    ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign0_2:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign0 [[COPY8]], [[COPY]], [[MOV_PD_imm11_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign0_]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign0_1]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_1]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_2]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign0_2]]
     %0:ptrregbank(p0) = COPY $p0
     %7:modregbank(s20) = COPY $m0
     %8:modregbank(s20) = G_CONSTANT i20 0
     %9:modregbank(s20) = G_CONSTANT i20 16
-    %10:modregbank(s20) = G_CONSTANT i20 -128
-    %11:modregbank(s20) = G_CONSTANT i20 96
-    %12:modregbank(s20) = G_CONSTANT i20 128
+    %10:modregbank(s20) = G_CONSTANT i20 -256
+    %11:modregbank(s20) = G_CONSTANT i20 224
+    %12:modregbank(s20) = G_CONSTANT i20 256
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = G_CONSTANT i32 0
     %25:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s16>))
@@ -592,19 +598,20 @@ body:             |
 ...
 
 ---
-name:            VST_UPS_4x_CM_v16_acc64_unsigned
+name:            VLDA_UPS_4x_acc64_v16_unsigned
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $bmll0, $p0, $r0, $r1
-    ; CHECK-LABEL: name: VST_UPS_4x_CM_v16_acc64_unsigned
+    ; CHECK-LABEL: name: VLDA_UPS_4x_acc64_v16_unsigned
     ; CHECK: liveins: $bmll0, $p0, $r0, $r1
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:edj = COPY $m0
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 16
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 256
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $r1
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:es = COPY [[COPY2]]
@@ -617,21 +624,21 @@ body:             |
     ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign0_1:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign0 [[COPY5]], [[COPY]], [[MOV_PD_imm11_pseudo]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: [[COPY6:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_1:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0 [[COPY6]], [[COPY]], -128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_1:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0 [[COPY6]], [[COPY]], -256, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: [[COPY7:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_2:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0 [[COPY7]], [[COPY]], 96, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_2:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0 [[COPY7]], [[COPY]], 224, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: [[COPY8:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_3:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0 [[COPY8]], [[COPY]], 128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign0_]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign0_1]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_1]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_2]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_3]]
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign0_2:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign0 [[COPY8]], [[COPY]], [[MOV_PD_imm11_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign0_]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign0_1]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_1]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_2]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign0_2]]
     %0:ptrregbank(p0) = COPY $p0
     %7:modregbank(s20) = COPY $m0
     %8:modregbank(s20) = G_CONSTANT i20 0
     %9:modregbank(s20) = G_CONSTANT i20 16
-    %10:modregbank(s20) = G_CONSTANT i20 -128
-    %11:modregbank(s20) = G_CONSTANT i20 96
-    %12:modregbank(s20) = G_CONSTANT i20 128
+    %10:modregbank(s20) = G_CONSTANT i20 -256
+    %11:modregbank(s20) = G_CONSTANT i20 224
+    %12:modregbank(s20) = G_CONSTANT i20 256
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = G_CONSTANT i32 0
     %25:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s16>))
@@ -650,19 +657,20 @@ body:             |
 ...
 
 ---
-name:            VST_UPS_4x_CM_v32_acc32_unsigned
+name:            VLDA_UPS_4x_acc32_v32_unsigned
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $bmll0, $p0, $r0, $r1
-    ; CHECK-LABEL: name: VST_UPS_4x_CM_v32_acc32_unsigned
+    ; CHECK-LABEL: name: VLDA_UPS_4x_acc32_v32_unsigned
     ; CHECK: liveins: $bmll0, $p0, $r0, $r1
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:edj = COPY $m0
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 16
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 256
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $r1
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:es = COPY [[COPY2]]
@@ -675,21 +683,21 @@ body:             |
     ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign0_1:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign0 [[COPY5]], [[COPY]], [[MOV_PD_imm11_pseudo]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY6:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_1:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0 [[COPY6]], [[COPY]], -128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_1:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0 [[COPY6]], [[COPY]], -256, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY7:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_2:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0 [[COPY7]], [[COPY]], 96, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_2:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0 [[COPY7]], [[COPY]], 224, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY8:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_3:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0 [[COPY8]], [[COPY]], 128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign0_]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign0_1]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_1]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_2]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_3]]
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign0_2:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign0 [[COPY8]], [[COPY]], [[MOV_PD_imm11_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign0_]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign0_1]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_1]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_2]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign0_2]]
     %0:ptrregbank(p0) = COPY $p0
     %7:modregbank(s20) = COPY $m0
     %8:modregbank(s20) = G_CONSTANT i20 0
     %9:modregbank(s20) = G_CONSTANT i20 16
-    %10:modregbank(s20) = G_CONSTANT i20 -128
-    %11:modregbank(s20) = G_CONSTANT i20 96
-    %12:modregbank(s20) = G_CONSTANT i20 128
+    %10:modregbank(s20) = G_CONSTANT i20 -256
+    %11:modregbank(s20) = G_CONSTANT i20 224
+    %12:modregbank(s20) = G_CONSTANT i20 256
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = G_CONSTANT i32 0
     %25:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s16>))
@@ -708,20 +716,20 @@ body:             |
 ...
 
 ---
-name:            VST_UPS_2x_CM_v32_acc32_unsigned
+name:            VLDA_UPS_2x_acc32_v32_unsigned
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $bmll0, $p0, $r0, $r1
-    ; CHECK-LABEL: name: VST_UPS_2x_CM_v32_acc32_unsigned
+    ; CHECK-LABEL: name: VLDA_UPS_2x_acc32_v32_unsigned
     ; CHECK: liveins: $bmll0, $p0, $r0, $r1
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:edj = COPY $m0
-    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 16
-    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 96
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 32
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 512
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $r1
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:es = COPY [[COPY2]]
@@ -734,21 +742,21 @@ body:             |
     ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0_1:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0 [[COPY5]], [[COPY]], [[MOV_PD_imm11_pseudo]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY6:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_1:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0 [[COPY6]], [[COPY]], -128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_1:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0 [[COPY6]], [[COPY]], -512, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY7:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0_2:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0 [[COPY7]], [[COPY]], [[MOV_PD_imm11_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_2:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0 [[COPY7]], [[COPY]], 448, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY8:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_2:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0 [[COPY8]], [[COPY]], 128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0_]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0_1]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_1]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0_2]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_2]]
+    ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0_2:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0 [[COPY8]], [[COPY]], [[MOV_PD_imm11_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0_]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0_1]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_1]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_2]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0_2]]
     %0:ptrregbank(p0) = COPY $p0
     %7:modregbank(s20) = COPY $m0
     %8:modregbank(s20) = G_CONSTANT i20 0
-    %9:modregbank(s20) = G_CONSTANT i20 16
-    %10:modregbank(s20) = G_CONSTANT i20 -128
-    %11:modregbank(s20) = G_CONSTANT i20 96
-    %12:modregbank(s20) = G_CONSTANT i20 128
+    %9:modregbank(s20) = G_CONSTANT i20 32
+    %10:modregbank(s20) = G_CONSTANT i20 -512
+    %11:modregbank(s20) = G_CONSTANT i20 448
+    %12:modregbank(s20) = G_CONSTANT i20 512
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = G_CONSTANT i32 0
     %25:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s32>))
@@ -767,20 +775,20 @@ body:             |
 ...
 
 ---
-name:            VST_UPS_2x_CM_v16_acc64_unsigned
+name:            VLDA_UPS_2x_acc64_v16_unsigned
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $bmll0, $p0, $r0, $r1
-    ; CHECK-LABEL: name: VST_UPS_2x_CM_v16_acc64_unsigned
+    ; CHECK-LABEL: name: VLDA_UPS_2x_acc64_v16_unsigned
     ; CHECK: liveins: $bmll0, $p0, $r0, $r1
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:edj = COPY $m0
-    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 16
-    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 96
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 32
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 512
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $r1
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:es = COPY [[COPY2]]
@@ -793,21 +801,21 @@ body:             |
     ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0_1:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0 [[COPY5]], [[COPY]], [[MOV_PD_imm11_pseudo]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: [[COPY6:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_1:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0 [[COPY6]], [[COPY]], -128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_1:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0 [[COPY6]], [[COPY]], -512, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: [[COPY7:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0_2:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0 [[COPY7]], [[COPY]], [[MOV_PD_imm11_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_2:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0 [[COPY7]], [[COPY]], 448, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: [[COPY8:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_2:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0 [[COPY8]], [[COPY]], 128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0_]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0_1]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_1]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0_2]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_2]]
+    ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0_2:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0 [[COPY8]], [[COPY]], [[MOV_PD_imm11_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0_]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0_1]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_1]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_2]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0_2]]
     %0:ptrregbank(p0) = COPY $p0
     %7:modregbank(s20) = COPY $m0
     %8:modregbank(s20) = G_CONSTANT i20 0
-    %9:modregbank(s20) = G_CONSTANT i20 16
-    %10:modregbank(s20) = G_CONSTANT i20 -128
-    %11:modregbank(s20) = G_CONSTANT i20 96
-    %12:modregbank(s20) = G_CONSTANT i20 128
+    %9:modregbank(s20) = G_CONSTANT i20 32
+    %10:modregbank(s20) = G_CONSTANT i20 -512
+    %11:modregbank(s20) = G_CONSTANT i20 448
+    %12:modregbank(s20) = G_CONSTANT i20 512
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = G_CONSTANT i32 0
     %25:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s32>))
@@ -826,47 +834,47 @@ body:             |
 ...
 
 ---
-name:            VST_UPS_4x_DM_v32_acc64_unsigned
+name:            VLDA_UPS_4x_acc64_v32_unsigned
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $bmll0, $p0, $r0, $r1
-    ; CHECK-LABEL: name: VST_UPS_4x_DM_v32_acc64_unsigned
+    ; CHECK-LABEL: name: VLDA_UPS_4x_acc64_v32_unsigned
     ; CHECK: liveins: $bmll0, $p0, $r0, $r1
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:mdm = COPY $m0
-    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:mdm = MOV_PD_imm11_pseudo 16
-    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:mdm = MOV_PD_imm11_pseudo 96
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:edj = COPY $m0
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 32
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 512
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $r1
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 [[COPY3]], [[COPY]], [[COPY1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0_:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0 [[COPY3]], [[COPY]], [[COPY1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: [[COPY4:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_1:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 [[COPY4]], [[COPY]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 [[COPY4]], [[COPY]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: [[COPY5:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_2:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 [[COPY5]], [[COPY]], [[MOV_PD_imm11_pseudo]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0_1:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0 [[COPY5]], [[COPY]], [[MOV_PD_imm11_pseudo]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: [[COPY6:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_3:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 [[COPY6]], [[COPY]], -128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_1:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 [[COPY6]], [[COPY]], -512, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: [[COPY7:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_4:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 [[COPY7]], [[COPY]], [[MOV_PD_imm11_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_2:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 [[COPY7]], [[COPY]], 448, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: [[COPY8:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_5:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 [[COPY8]], [[COPY]], 128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_1]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_2]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_3]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_4]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_5]]
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0_2:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0 [[COPY8]], [[COPY]], [[MOV_PD_imm11_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0_]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0_1]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_1]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_2]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0_2]]
     %0:ptrregbank(p0) = COPY $p0
     %7:modregbank(s20) = COPY $m0
     %8:modregbank(s20) = G_CONSTANT i20 0
-    %9:modregbank(s20) = G_CONSTANT i20 16
-    %10:modregbank(s20) = G_CONSTANT i20 -128
-    %11:modregbank(s20) = G_CONSTANT i20 96
-    %12:modregbank(s20) = G_CONSTANT i20 128
+    %9:modregbank(s20) = G_CONSTANT i20 32
+    %10:modregbank(s20) = G_CONSTANT i20 -512
+    %11:modregbank(s20) = G_CONSTANT i20 448
+    %12:modregbank(s20) = G_CONSTANT i20 512
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = G_CONSTANT i32 0
     %25:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s32>))
@@ -885,47 +893,47 @@ body:             |
 ...
 
 ---
-name:            VST_UPS_4x_DM_v64_acc32_unsigned
+name:            VLDA_UPS_4x_acc32_v64_unsigned
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $bmll0, $p0, $r0, $r1
-    ; CHECK-LABEL: name: VST_UPS_4x_DM_v64_acc32_unsigned
+    ; CHECK-LABEL: name: VLDA_UPS_4x_acc32_v64_unsigned
     ; CHECK: liveins: $bmll0, $p0, $r0, $r1
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:mdm = COPY $m0
-    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:mdm = MOV_PD_imm11_pseudo 16
-    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:mdm = MOV_PD_imm11_pseudo 96
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:edj = COPY $m0
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 32
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 512
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $r1
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 [[COPY3]], [[COPY]], [[COPY1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0_:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0 [[COPY3]], [[COPY]], [[COPY1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY4:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_1:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 [[COPY4]], [[COPY]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 [[COPY4]], [[COPY]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY5:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_2:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 [[COPY5]], [[COPY]], [[MOV_PD_imm11_pseudo]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0_1:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0 [[COPY5]], [[COPY]], [[MOV_PD_imm11_pseudo]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY6:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_3:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 [[COPY6]], [[COPY]], -128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_1:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 [[COPY6]], [[COPY]], -512, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY7:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_4:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 [[COPY7]], [[COPY]], [[MOV_PD_imm11_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_2:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 [[COPY7]], [[COPY]], 448, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: [[COPY8:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_5:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 [[COPY8]], [[COPY]], 128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_1]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_2]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_3]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_4]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_5]]
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0_2:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0 [[COPY8]], [[COPY]], [[MOV_PD_imm11_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0_]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0_1]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_1]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_2]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0_2]]
     %0:ptrregbank(p0) = COPY $p0
     %7:modregbank(s20) = COPY $m0
     %8:modregbank(s20) = G_CONSTANT i20 0
-    %9:modregbank(s20) = G_CONSTANT i20 16
-    %10:modregbank(s20) = G_CONSTANT i20 -128
-    %11:modregbank(s20) = G_CONSTANT i20 96
-    %12:modregbank(s20) = G_CONSTANT i20 128
+    %9:modregbank(s20) = G_CONSTANT i20 32
+    %10:modregbank(s20) = G_CONSTANT i20 -512
+    %11:modregbank(s20) = G_CONSTANT i20 448
+    %12:modregbank(s20) = G_CONSTANT i20 512
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = G_CONSTANT i32 0
     %25:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s32>))
@@ -944,19 +952,20 @@ body:             |
 ...
 
 ---
-name:            VST_UPS_2x_BM_v16_acc32_dynamic
+name:            VLDA_UPS_2x_acc32_v16_dynamic
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $bmll0, $p0, $r0, $r1, $r2
-    ; CHECK-LABEL: name: VST_UPS_2x_BM_v16_acc32_dynamic
+    ; CHECK-LABEL: name: VLDA_UPS_2x_acc32_v16_dynamic
     ; CHECK: liveins: $bmll0, $p0, $r0, $r1, $r2
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:edj = COPY $m0
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 16
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 256
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $r1
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:er = COPY $r2
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
@@ -977,26 +986,26 @@ body:             |
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $upssign0 = COPY [[COPY3]]
     ; CHECK-NEXT: [[COPY7:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_1:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0 [[COPY7]], [[COPY]], -128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
+    ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_1:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0 [[COPY7]], [[COPY]], -256, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
     ; CHECK-NEXT: $upssign0 = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $upssign0 = COPY [[COPY3]]
     ; CHECK-NEXT: [[COPY8:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_2:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0 [[COPY8]], [[COPY]], 96, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
+    ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_2:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0 [[COPY8]], [[COPY]], 224, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
     ; CHECK-NEXT: $upssign0 = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $upssign0 = COPY [[COPY3]]
     ; CHECK-NEXT: [[COPY9:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_3:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0 [[COPY9]], [[COPY]], 128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
+    ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign0_2:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign0 [[COPY9]], [[COPY]], [[MOV_PD_imm11_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
     ; CHECK-NEXT: $upssign0 = MOV_scalar_imm11_pseudo 0
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign0_]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign0_1]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_1]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_2]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_3]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign0_]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign0_1]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_1]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_2]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign0_2]]
     %0:ptrregbank(p0) = COPY $p0
     %7:modregbank(s20) = COPY $m0
     %8:modregbank(s20) = G_CONSTANT i20 0
     %9:modregbank(s20) = G_CONSTANT i20 16
-    %10:modregbank(s20) = G_CONSTANT i20 -128
-    %11:modregbank(s20) = G_CONSTANT i20 96
-    %12:modregbank(s20) = G_CONSTANT i20 128
+    %10:modregbank(s20) = G_CONSTANT i20 -256
+    %11:modregbank(s20) = G_CONSTANT i20 224
+    %12:modregbank(s20) = G_CONSTANT i20 256
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = COPY $r2
     %25:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s16>))
@@ -1015,19 +1024,20 @@ body:             |
 ...
 
 ---
-name:            VST_UPS_2x_BM_v8_acc64_dynamic
+name:            VLDA_UPS_2x_acc64_v8_dynamic
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $bmll0, $p0, $r0, $r1, $r2
-    ; CHECK-LABEL: name: VST_UPS_2x_BM_v8_acc64_dynamic
+    ; CHECK-LABEL: name: VLDA_UPS_2x_acc64_v8_dynamic
     ; CHECK: liveins: $bmll0, $p0, $r0, $r1, $r2
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:edj = COPY $m0
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 16
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 256
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $r1
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:er = COPY $r2
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
@@ -1048,26 +1058,26 @@ body:             |
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: $upssign0 = COPY [[COPY3]]
     ; CHECK-NEXT: [[COPY7:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_1:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0 [[COPY7]], [[COPY]], -128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
+    ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_1:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0 [[COPY7]], [[COPY]], -256, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
     ; CHECK-NEXT: $upssign0 = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: $upssign0 = COPY [[COPY3]]
     ; CHECK-NEXT: [[COPY8:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_2:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0 [[COPY8]], [[COPY]], 96, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
+    ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_2:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0 [[COPY8]], [[COPY]], 224, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
     ; CHECK-NEXT: $upssign0 = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: $upssign0 = COPY [[COPY3]]
     ; CHECK-NEXT: [[COPY9:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_3:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0 [[COPY9]], [[COPY]], 128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
+    ; CHECK-NEXT: [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign0_2:%[0-9]+]]:acc512 = VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign0 [[COPY9]], [[COPY]], [[MOV_PD_imm11_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
     ; CHECK-NEXT: $upssign0 = MOV_scalar_imm11_pseudo 0
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign0_]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign0_1]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_1]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_2]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_3]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign0_]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign0_1]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_1]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_imm_upsSign0_2]], implicit [[VLDA_UPS_2x_dmw_lda_ups_w2b_idx_upsSign0_2]]
     %0:ptrregbank(p0) = COPY $p0
     %7:modregbank(s20) = COPY $m0
     %8:modregbank(s20) = G_CONSTANT i20 0
     %9:modregbank(s20) = G_CONSTANT i20 16
-    %10:modregbank(s20) = G_CONSTANT i20 -128
-    %11:modregbank(s20) = G_CONSTANT i20 96
-    %12:modregbank(s20) = G_CONSTANT i20 128
+    %10:modregbank(s20) = G_CONSTANT i20 -256
+    %11:modregbank(s20) = G_CONSTANT i20 224
+    %12:modregbank(s20) = G_CONSTANT i20 256
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = COPY $r2
     %25:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s16>))
@@ -1086,19 +1096,20 @@ body:             |
 ...
 
 ---
-name:            VST_UPS_4x_CM_v16_acc64_dynamic
+name:            VLDA_UPS_4x_acc64_v16_dynamic
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $bmll0, $p0, $r0, $r1, $r2
-    ; CHECK-LABEL: name: VST_UPS_4x_CM_v16_acc64_dynamic
+    ; CHECK-LABEL: name: VLDA_UPS_4x_acc64_v16_dynamic
     ; CHECK: liveins: $bmll0, $p0, $r0, $r1, $r2
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:edj = COPY $m0
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 16
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 256
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $r1
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:er = COPY $r2
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
@@ -1119,26 +1130,26 @@ body:             |
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: $upssign0 = COPY [[COPY3]]
     ; CHECK-NEXT: [[COPY7:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_1:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0 [[COPY7]], [[COPY]], -128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_1:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0 [[COPY7]], [[COPY]], -256, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
     ; CHECK-NEXT: $upssign0 = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: $upssign0 = COPY [[COPY3]]
     ; CHECK-NEXT: [[COPY8:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_2:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0 [[COPY8]], [[COPY]], 96, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_2:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0 [[COPY8]], [[COPY]], 224, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
     ; CHECK-NEXT: $upssign0 = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: $upssign0 = COPY [[COPY3]]
     ; CHECK-NEXT: [[COPY9:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_3:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0 [[COPY9]], [[COPY]], 128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign0_2:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign0 [[COPY9]], [[COPY]], [[MOV_PD_imm11_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
     ; CHECK-NEXT: $upssign0 = MOV_scalar_imm11_pseudo 0
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign0_]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign0_1]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_1]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_2]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_3]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign0_]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign0_1]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_1]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_2]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign0_2]]
     %0:ptrregbank(p0) = COPY $p0
     %7:modregbank(s20) = COPY $m0
     %8:modregbank(s20) = G_CONSTANT i20 0
     %9:modregbank(s20) = G_CONSTANT i20 16
-    %10:modregbank(s20) = G_CONSTANT i20 -128
-    %11:modregbank(s20) = G_CONSTANT i20 96
-    %12:modregbank(s20) = G_CONSTANT i20 128
+    %10:modregbank(s20) = G_CONSTANT i20 -256
+    %11:modregbank(s20) = G_CONSTANT i20 224
+    %12:modregbank(s20) = G_CONSTANT i20 256
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = COPY $r2
     %25:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s16>))
@@ -1157,19 +1168,20 @@ body:             |
 ...
 
 ---
-name:            VST_UPS_4x_CM_v32_acc32_dynamic
+name:            VLDA_UPS_4x_acc32_v32_dynamic
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $bmll0, $p0, $r0, $r1, $r2
-    ; CHECK-LABEL: name: VST_UPS_4x_CM_v32_acc32_dynamic
+    ; CHECK-LABEL: name: VLDA_UPS_4x_acc32_v32_dynamic
     ; CHECK: liveins: $bmll0, $p0, $r0, $r1, $r2
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:edj = COPY $m0
     ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 16
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 256
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $r1
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:er = COPY $r2
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
@@ -1190,26 +1202,26 @@ body:             |
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $upssign0 = COPY [[COPY3]]
     ; CHECK-NEXT: [[COPY7:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_1:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0 [[COPY7]], [[COPY]], -128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_1:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0 [[COPY7]], [[COPY]], -256, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
     ; CHECK-NEXT: $upssign0 = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $upssign0 = COPY [[COPY3]]
     ; CHECK-NEXT: [[COPY8:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_2:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0 [[COPY8]], [[COPY]], 96, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_2:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0 [[COPY8]], [[COPY]], 224, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
     ; CHECK-NEXT: $upssign0 = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $upssign0 = COPY [[COPY3]]
     ; CHECK-NEXT: [[COPY9:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_3:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0 [[COPY9]], [[COPY]], 128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign0_2:%[0-9]+]]:acc1024 = VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign0 [[COPY9]], [[COPY]], [[MOV_PD_imm11_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s16>))
     ; CHECK-NEXT: $upssign0 = MOV_scalar_imm11_pseudo 0
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign0_]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign0_1]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_1]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_2]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_3]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign0_]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign0_1]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_1]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_imm_upsSign0_2]], implicit [[VLDA_UPS_4x_dmw_lda_ups_w2c_idx_upsSign0_2]]
     %0:ptrregbank(p0) = COPY $p0
     %7:modregbank(s20) = COPY $m0
     %8:modregbank(s20) = G_CONSTANT i20 0
     %9:modregbank(s20) = G_CONSTANT i20 16
-    %10:modregbank(s20) = G_CONSTANT i20 -128
-    %11:modregbank(s20) = G_CONSTANT i20 96
-    %12:modregbank(s20) = G_CONSTANT i20 128
+    %10:modregbank(s20) = G_CONSTANT i20 -256
+    %11:modregbank(s20) = G_CONSTANT i20 224
+    %12:modregbank(s20) = G_CONSTANT i20 256
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = COPY $r2
     %25:vregbank(<16 x s16>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s16>))
@@ -1228,20 +1240,20 @@ body:             |
 ...
 
 ---
-name:            VST_UPS_2x_CM_v32_acc32_dynamic
+name:            VLDA_UPS_2x_acc32_v32_dynamic
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $bmll0, $p0, $r0, $r1, $r2
-    ; CHECK-LABEL: name: VST_UPS_2x_CM_v32_acc32_dynamic
+    ; CHECK-LABEL: name: VLDA_UPS_2x_acc32_v32_dynamic
     ; CHECK: liveins: $bmll0, $p0, $r0, $r1, $r2
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:edj = COPY $m0
-    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 16
-    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 96
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 32
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 512
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $r1
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:er = COPY $r2
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
@@ -1262,26 +1274,26 @@ body:             |
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $upssign0 = COPY [[COPY3]]
     ; CHECK-NEXT: [[COPY7:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_1:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0 [[COPY7]], [[COPY]], -128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_1:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0 [[COPY7]], [[COPY]], -512, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
     ; CHECK-NEXT: $upssign0 = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $upssign0 = COPY [[COPY3]]
     ; CHECK-NEXT: [[COPY8:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0_2:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0 [[COPY8]], [[COPY]], [[MOV_PD_imm11_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_2:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0 [[COPY8]], [[COPY]], 448, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
     ; CHECK-NEXT: $upssign0 = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $upssign0 = COPY [[COPY3]]
     ; CHECK-NEXT: [[COPY9:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_2:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0 [[COPY9]], [[COPY]], 128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0_2:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0 [[COPY9]], [[COPY]], [[MOV_PD_imm11_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
     ; CHECK-NEXT: $upssign0 = MOV_scalar_imm11_pseudo 0
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0_]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0_1]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_1]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0_2]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_2]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0_]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0_1]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_1]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_2]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0_2]]
     %0:ptrregbank(p0) = COPY $p0
     %7:modregbank(s20) = COPY $m0
     %8:modregbank(s20) = G_CONSTANT i20 0
-    %9:modregbank(s20) = G_CONSTANT i20 16
-    %10:modregbank(s20) = G_CONSTANT i20 -128
-    %11:modregbank(s20) = G_CONSTANT i20 96
-    %12:modregbank(s20) = G_CONSTANT i20 128
+    %9:modregbank(s20) = G_CONSTANT i20 32
+    %10:modregbank(s20) = G_CONSTANT i20 -512
+    %11:modregbank(s20) = G_CONSTANT i20 448
+    %12:modregbank(s20) = G_CONSTANT i20 512
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = COPY $r2
     %25:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s32>))
@@ -1300,20 +1312,20 @@ body:             |
 ...
 
 ---
-name:            VST_UPS_2x_CM_v16_acc64_dynamic
+name:            VLDA_UPS_2x_acc64_v16_dynamic
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $bmll0, $p0, $r0, $r1, $r2
-    ; CHECK-LABEL: name: VST_UPS_2x_CM_v16_acc64_dynamic
+    ; CHECK-LABEL: name: VLDA_UPS_2x_acc64_v16_dynamic
     ; CHECK: liveins: $bmll0, $p0, $r0, $r1, $r2
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:edj = COPY $m0
-    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 16
-    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 96
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 32
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 512
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $r1
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:er = COPY $r2
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
@@ -1334,26 +1346,26 @@ body:             |
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: $upssign0 = COPY [[COPY3]]
     ; CHECK-NEXT: [[COPY7:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_1:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0 [[COPY7]], [[COPY]], -128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_1:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0 [[COPY7]], [[COPY]], -512, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
     ; CHECK-NEXT: $upssign0 = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: $upssign0 = COPY [[COPY3]]
     ; CHECK-NEXT: [[COPY8:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0_2:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0 [[COPY8]], [[COPY]], [[MOV_PD_imm11_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_2:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0 [[COPY8]], [[COPY]], 448, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
     ; CHECK-NEXT: $upssign0 = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: $upssign0 = COPY [[COPY3]]
     ; CHECK-NEXT: [[COPY9:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_2:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0 [[COPY9]], [[COPY]], 128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0_2:%[0-9]+]]:acc1024 = VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0 [[COPY9]], [[COPY]], [[MOV_PD_imm11_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
     ; CHECK-NEXT: $upssign0 = MOV_scalar_imm11_pseudo 0
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0_]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0_1]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_1]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0_2]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_2]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0_]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0_1]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_1]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_imm_upsSign0_2]], implicit [[VLDA_UPS_2x_dmx_lda_ups_x2c_idx_upsSign0_2]]
     %0:ptrregbank(p0) = COPY $p0
     %7:modregbank(s20) = COPY $m0
     %8:modregbank(s20) = G_CONSTANT i20 0
-    %9:modregbank(s20) = G_CONSTANT i20 16
-    %10:modregbank(s20) = G_CONSTANT i20 -128
-    %11:modregbank(s20) = G_CONSTANT i20 96
-    %12:modregbank(s20) = G_CONSTANT i20 128
+    %9:modregbank(s20) = G_CONSTANT i20 32
+    %10:modregbank(s20) = G_CONSTANT i20 -512
+    %11:modregbank(s20) = G_CONSTANT i20 448
+    %12:modregbank(s20) = G_CONSTANT i20 512
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = COPY $r2
     %25:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s32>))
@@ -1372,60 +1384,60 @@ body:             |
 ...
 
 ---
-name:            VST_UPS_4x_DM_v32_acc64_dynamic
+name:            VLDA_UPS_4x_acc64_v32_dynamic
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $bmll0, $p0, $r0, $r1, $r2
-    ; CHECK-LABEL: name: VST_UPS_4x_DM_v32_acc64_dynamic
+    ; CHECK-LABEL: name: VLDA_UPS_4x_acc64_v32_dynamic
     ; CHECK: liveins: $bmll0, $p0, $r0, $r1, $r2
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:mdm = COPY $m0
-    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:mdm = MOV_PD_imm11_pseudo 16
-    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:mdm = MOV_PD_imm11_pseudo 96
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:edj = COPY $m0
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 32
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 512
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $r1
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:er = COPY $r2
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: $upssign0 = COPY [[COPY3]]
     ; CHECK-NEXT: [[COPY4:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 [[COPY4]], [[COPY]], [[COPY1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0_:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0 [[COPY4]], [[COPY]], [[COPY1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
     ; CHECK-NEXT: $upssign0 = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: $upssign0 = COPY [[COPY3]]
     ; CHECK-NEXT: [[COPY5:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_1:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 [[COPY5]], [[COPY]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 [[COPY5]], [[COPY]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
     ; CHECK-NEXT: $upssign0 = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: $upssign0 = COPY [[COPY3]]
     ; CHECK-NEXT: [[COPY6:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_2:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 [[COPY6]], [[COPY]], [[MOV_PD_imm11_pseudo]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0_1:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0 [[COPY6]], [[COPY]], [[MOV_PD_imm11_pseudo]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
     ; CHECK-NEXT: $upssign0 = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: $upssign0 = COPY [[COPY3]]
     ; CHECK-NEXT: [[COPY7:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_3:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 [[COPY7]], [[COPY]], -128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_1:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 [[COPY7]], [[COPY]], -512, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
     ; CHECK-NEXT: $upssign0 = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: $upssign0 = COPY [[COPY3]]
     ; CHECK-NEXT: [[COPY8:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_4:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 [[COPY8]], [[COPY]], [[MOV_PD_imm11_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_2:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 [[COPY8]], [[COPY]], 448, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
     ; CHECK-NEXT: $upssign0 = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 1
     ; CHECK-NEXT: $upssign0 = COPY [[COPY3]]
     ; CHECK-NEXT: [[COPY9:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_5:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 [[COPY9]], [[COPY]], 128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0_2:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0 [[COPY9]], [[COPY]], [[MOV_PD_imm11_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
     ; CHECK-NEXT: $upssign0 = MOV_scalar_imm11_pseudo 0
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_1]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_2]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_3]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_4]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_5]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0_]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0_1]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_1]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_2]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0_2]]
     %0:ptrregbank(p0) = COPY $p0
     %7:modregbank(s20) = COPY $m0
     %8:modregbank(s20) = G_CONSTANT i20 0
-    %9:modregbank(s20) = G_CONSTANT i20 16
-    %10:modregbank(s20) = G_CONSTANT i20 -128
-    %11:modregbank(s20) = G_CONSTANT i20 96
-    %12:modregbank(s20) = G_CONSTANT i20 128
+    %9:modregbank(s20) = G_CONSTANT i20 32
+    %10:modregbank(s20) = G_CONSTANT i20 -512
+    %11:modregbank(s20) = G_CONSTANT i20 448
+    %12:modregbank(s20) = G_CONSTANT i20 512
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = COPY $r2
     %25:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s32>))
@@ -1444,60 +1456,60 @@ body:             |
 ...
 
 ---
-name:            VST_UPS_4x_DM_v64_acc32_dynamic
+name:            VLDA_UPS_4x_acc32_v64_dynamic
 alignment:       16
 legalized:       true
 regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $bmll0, $p0, $r0, $r1, $r2
-    ; CHECK-LABEL: name: VST_UPS_4x_DM_v64_acc32_dynamic
+    ; CHECK-LABEL: name: VLDA_UPS_4x_acc32_v64_dynamic
     ; CHECK: liveins: $bmll0, $p0, $r0, $r1, $r2
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:mdm = COPY $m0
-    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:mdm = MOV_PD_imm11_pseudo 16
-    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:mdm = MOV_PD_imm11_pseudo 96
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:edj = COPY $m0
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 32
+    ; CHECK-NEXT: [[MOV_PD_imm11_pseudo1:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 512
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:er = COPY $r1
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:er = COPY $r2
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $upssign0 = COPY [[COPY3]]
     ; CHECK-NEXT: [[COPY4:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 [[COPY4]], [[COPY]], [[COPY1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0_:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0 [[COPY4]], [[COPY]], [[COPY1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
     ; CHECK-NEXT: $upssign0 = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $upssign0 = COPY [[COPY3]]
     ; CHECK-NEXT: [[COPY5:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_1:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 [[COPY5]], [[COPY]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 [[COPY5]], [[COPY]], 0, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
     ; CHECK-NEXT: $upssign0 = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $upssign0 = COPY [[COPY3]]
     ; CHECK-NEXT: [[COPY6:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_2:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 [[COPY6]], [[COPY]], [[MOV_PD_imm11_pseudo]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0_1:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0 [[COPY6]], [[COPY]], [[MOV_PD_imm11_pseudo]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
     ; CHECK-NEXT: $upssign0 = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $upssign0 = COPY [[COPY3]]
     ; CHECK-NEXT: [[COPY7:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_3:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 [[COPY7]], [[COPY]], -128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_1:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 [[COPY7]], [[COPY]], -512, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
     ; CHECK-NEXT: $upssign0 = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $upssign0 = COPY [[COPY3]]
     ; CHECK-NEXT: [[COPY8:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_4:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 [[COPY8]], [[COPY]], [[MOV_PD_imm11_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_2:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 [[COPY8]], [[COPY]], 448, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
     ; CHECK-NEXT: $upssign0 = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $crupsmode = MOV_scalar_imm11_pseudo 0
     ; CHECK-NEXT: $upssign0 = COPY [[COPY3]]
     ; CHECK-NEXT: [[COPY9:%[0-9]+]]:es = COPY [[COPY2]]
-    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_5:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0 [[COPY9]], [[COPY]], 128, implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0_2:%[0-9]+]]:acc2048 = VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0 [[COPY9]], [[COPY]], [[MOV_PD_imm11_pseudo1]], implicit-def $srups_of, implicit $crsat, implicit $crupsmode, implicit $upssign0 :: (load (<16 x s32>))
     ; CHECK-NEXT: $upssign0 = MOV_scalar_imm11_pseudo 0
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_1]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_2]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_3]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_4]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_5]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0_]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0_1]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_1]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0_2]], implicit [[VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0_2]]
     %0:ptrregbank(p0) = COPY $p0
     %7:modregbank(s20) = COPY $m0
     %8:modregbank(s20) = G_CONSTANT i20 0
-    %9:modregbank(s20) = G_CONSTANT i20 16
-    %10:modregbank(s20) = G_CONSTANT i20 -128
-    %11:modregbank(s20) = G_CONSTANT i20 96
-    %12:modregbank(s20) = G_CONSTANT i20 128
+    %9:modregbank(s20) = G_CONSTANT i20 32
+    %10:modregbank(s20) = G_CONSTANT i20 -512
+    %11:modregbank(s20) = G_CONSTANT i20 448
+    %12:modregbank(s20) = G_CONSTANT i20 512
     %101:gprregbank(s32) = COPY $r1
     %102:gprregbank(s32) = COPY $r2
     %25:vregbank(<16 x s32>) = G_AIE_OFFSET_LOAD %0, %7 :: (load (<16 x s32>))

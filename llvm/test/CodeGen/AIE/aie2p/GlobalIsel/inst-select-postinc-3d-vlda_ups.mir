@@ -4,18 +4,18 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2p -run-pass=instruction-select %s -verify-machineinstrs -o - | FileCheck %s
 
 ---
-name:            VST_UPS_2x_BM_v16_acc32_signed
+name:            VLDA_UPS_2x_acc32_v16_signed
 legalized:       true
 regBankSelected: true
 tracksRegLiveness: true
 body: |
   bb.0:
     liveins: $p0, $r1, $bmll0
-    ; CHECK-LABEL: name: VST_UPS_2x_BM_v16_acc32_signed
+    ; CHECK-LABEL: name: VLDA_UPS_2x_acc32_v16_signed
     ; CHECK: liveins: $p0, $r1, $bmll0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -48,14 +48,14 @@ body: |
 ...
 
 ---
-name:            VST_UPS_2x_BM_v8_acc64_signed
+name:            VLDA_UPS_2x_acc64_v8_signed
 legalized:       true
 regBankSelected: true
 tracksRegLiveness: true
 body: |
   bb.0:
     liveins: $p0, $r1, $bmll0
-    ; CHECK-LABEL: name: VST_UPS_2x_BM_v8_acc64_signed
+    ; CHECK-LABEL: name: VLDA_UPS_2x_acc64_v8_signed
     ; CHECK: liveins: $p0, $r1, $bmll0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -88,14 +88,14 @@ body: |
 ...
 
 ---
-name:            VST_UPS_4x_CM_v16_acc64_signed
+name:            VLDA_UPS_4x_acc64_v16_signed
 legalized:       true
 regBankSelected: true
 tracksRegLiveness: true
 body: |
   bb.0:
     liveins: $p0, $r1, $bmll0
-    ; CHECK-LABEL: name: VST_UPS_4x_CM_v16_acc64_signed
+    ; CHECK-LABEL: name: VLDA_UPS_4x_acc64_v16_signed
     ; CHECK: liveins: $p0, $r1, $bmll0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -128,14 +128,14 @@ body: |
 ...
 
 ---
-name:            VST_UPS_4x_CM_v32_acc32_signed
+name:            VLDA_UPS_4x_acc32_v32_signed
 legalized:       true
 regBankSelected: true
 tracksRegLiveness: true
 body: |
   bb.0:
     liveins: $p0, $r1, $bmll0
-    ; CHECK-LABEL: name: VST_UPS_4x_CM_v32_acc32_signed
+    ; CHECK-LABEL: name: VLDA_UPS_4x_acc32_v32_signed
     ; CHECK: liveins: $p0, $r1, $bmll0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -168,14 +168,14 @@ body: |
 ...
 
 ---
-name:            VST_UPS_2x_CM_v32_acc32_signed
+name:            VLDA_UPS_2x_acc32_v32_signed
 legalized:       true
 regBankSelected: true
 tracksRegLiveness: true
 body: |
   bb.0:
     liveins: $p0, $r1, $bmll0
-    ; CHECK-LABEL: name: VST_UPS_2x_CM_v32_acc32_signed
+    ; CHECK-LABEL: name: VLDA_UPS_2x_acc32_v32_signed
     ; CHECK: liveins: $p0, $r1, $bmll0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -208,14 +208,14 @@ body: |
 ...
 
 ---
-name:            VST_UPS_2x_CM_v16_acc64_signed
+name:            VLDA_UPS_2x_acc64_v16_signed
 legalized:       true
 regBankSelected: true
 tracksRegLiveness: true
 body: |
   bb.0:
     liveins: $p0, $r1, $bmll0
-    ; CHECK-LABEL: name: VST_UPS_2x_CM_v16_acc64_signed
+    ; CHECK-LABEL: name: VLDA_UPS_2x_acc64_v16_signed
     ; CHECK: liveins: $p0, $r1, $bmll0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -248,14 +248,14 @@ body: |
 ...
 
 ---
-name:            VST_UPS_4x_DM_v32_acc64_signed
+name:            VLDA_UPS_4x_acc64_v32_signed
 legalized:       true
 regBankSelected: true
 tracksRegLiveness: true
 body: |
   bb.0:
     liveins: $p0, $r1, $bmll0
-    ; CHECK-LABEL: name: VST_UPS_4x_DM_v32_acc64_signed
+    ; CHECK-LABEL: name: VLDA_UPS_4x_acc64_v32_signed
     ; CHECK: liveins: $p0, $r1, $bmll0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -288,14 +288,14 @@ body: |
 ...
 
 ---
-name:            VST_UPS_4x_DM_v64_acc32_signed
+name:            VLDA_UPS_4x_acc32_v64_signed
 legalized:       true
 regBankSelected: true
 tracksRegLiveness: true
 body: |
   bb.0:
     liveins: $p0, $r1, $bmll0
-    ; CHECK-LABEL: name: VST_UPS_4x_DM_v64_acc32_signed
+    ; CHECK-LABEL: name: VLDA_UPS_4x_acc32_v64_signed
     ; CHECK: liveins: $p0, $r1, $bmll0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -328,14 +328,14 @@ body: |
 ...
 
 ---
-name:            VST_UPS_2x_BM_v16_acc32_unsigned
+name:            VLDA_UPS_2x_acc32_v16_unsigned
 legalized:       true
 regBankSelected: true
 tracksRegLiveness: true
 body: |
   bb.0:
     liveins: $p0, $r1, $bmll0
-    ; CHECK-LABEL: name: VST_UPS_2x_BM_v16_acc32_unsigned
+    ; CHECK-LABEL: name: VLDA_UPS_2x_acc32_v16_unsigned
     ; CHECK: liveins: $p0, $r1, $bmll0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -368,14 +368,14 @@ body: |
 ...
 
 ---
-name:            VST_UPS_2x_BM_v8_acc64_unsigned
+name:            VLDA_UPS_2x_acc64_v8_unsigned
 legalized:       true
 regBankSelected: true
 tracksRegLiveness: true
 body: |
   bb.0:
     liveins: $p0, $r1, $bmll0
-    ; CHECK-LABEL: name: VST_UPS_2x_BM_v8_acc64_unsigned
+    ; CHECK-LABEL: name: VLDA_UPS_2x_acc64_v8_unsigned
     ; CHECK: liveins: $p0, $r1, $bmll0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -408,14 +408,14 @@ body: |
 ...
 
 ---
-name:            VST_UPS_4x_CM_v16_acc64_unsigned
+name:            VLDA_UPS_4x_acc64_v16_unsigned
 legalized:       true
 regBankSelected: true
 tracksRegLiveness: true
 body: |
   bb.0:
     liveins: $p0, $r1, $bmll0
-    ; CHECK-LABEL: name: VST_UPS_4x_CM_v16_acc64_unsigned
+    ; CHECK-LABEL: name: VLDA_UPS_4x_acc64_v16_unsigned
     ; CHECK: liveins: $p0, $r1, $bmll0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -448,14 +448,14 @@ body: |
 ...
 
 ---
-name:            VST_UPS_4x_CM_v32_acc32_unsigned
+name:            VLDA_UPS_4x_acc32_v32_unsigned
 legalized:       true
 regBankSelected: true
 tracksRegLiveness: true
 body: |
   bb.0:
     liveins: $p0, $r1, $bmll0
-    ; CHECK-LABEL: name: VST_UPS_4x_CM_v32_acc32_unsigned
+    ; CHECK-LABEL: name: VLDA_UPS_4x_acc32_v32_unsigned
     ; CHECK: liveins: $p0, $r1, $bmll0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -488,14 +488,14 @@ body: |
 ...
 
 ---
-name:            VST_UPS_2x_CM_v32_acc32_unsigned
+name:            VLDA_UPS_2x_acc32_v32_unsigned
 legalized:       true
 regBankSelected: true
 tracksRegLiveness: true
 body: |
   bb.0:
     liveins: $p0, $r1, $bmll0
-    ; CHECK-LABEL: name: VST_UPS_2x_CM_v32_acc32_unsigned
+    ; CHECK-LABEL: name: VLDA_UPS_2x_acc32_v32_unsigned
     ; CHECK: liveins: $p0, $r1, $bmll0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -528,14 +528,14 @@ body: |
 ...
 
 ---
-name:            VST_UPS_2x_CM_v16_acc64_unsigned
+name:            VLDA_UPS_2x_acc64_v16_unsigned
 legalized:       true
 regBankSelected: true
 tracksRegLiveness: true
 body: |
   bb.0:
     liveins: $p0, $r1, $bmll0
-    ; CHECK-LABEL: name: VST_UPS_2x_CM_v16_acc64_unsigned
+    ; CHECK-LABEL: name: VLDA_UPS_2x_acc64_v16_unsigned
     ; CHECK: liveins: $p0, $r1, $bmll0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -568,14 +568,14 @@ body: |
 ...
 
 ---
-name:            VST_UPS_4x_DM_v32_acc64_unsigned
+name:            VLDA_UPS_4x_acc64_v32_unsigned
 legalized:       true
 regBankSelected: true
 tracksRegLiveness: true
 body: |
   bb.0:
     liveins: $p0, $r1, $bmll0
-    ; CHECK-LABEL: name: VST_UPS_4x_DM_v32_acc64_unsigned
+    ; CHECK-LABEL: name: VLDA_UPS_4x_acc64_v32_unsigned
     ; CHECK: liveins: $p0, $r1, $bmll0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -608,14 +608,14 @@ body: |
 ...
 
 ---
-name:            VST_UPS_4x_DM_v64_acc32_unsigned
+name:            VLDA_UPS_4x_acc32_v64_unsigned
 legalized:       true
 regBankSelected: true
 tracksRegLiveness: true
 body: |
   bb.0:
     liveins: $p0, $r1, $bmll0
-    ; CHECK-LABEL: name: VST_UPS_4x_DM_v64_acc32_unsigned
+    ; CHECK-LABEL: name: VLDA_UPS_4x_acc32_v64_unsigned
     ; CHECK: liveins: $p0, $r1, $bmll0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -649,14 +649,14 @@ body: |
 
 
 ---
-name:            VST_UPS_2x_BM_v16_acc32_dynamic
+name:            VLDA_UPS_2x_acc32_v16_dynamic
 legalized:       true
 regBankSelected: true
 tracksRegLiveness: true
 body: |
   bb.0:
     liveins: $p0, $r1, $r2, $bmll0
-    ; CHECK-LABEL: name: VST_UPS_2x_BM_v16_acc32_dynamic
+    ; CHECK-LABEL: name: VLDA_UPS_2x_acc32_v16_dynamic
     ; CHECK: liveins: $p0, $r1, $r2, $bmll0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -692,14 +692,14 @@ body: |
 ...
 
 ---
-name:            VST_UPS_2x_BM_v8_acc64_dynamic
+name:            VLDA_UPS_2x_acc64_v8_dynamic
 legalized:       true
 regBankSelected: true
 tracksRegLiveness: true
 body: |
   bb.0:
     liveins: $p0, $r1, $r2, $bmll0
-    ; CHECK-LABEL: name: VST_UPS_2x_BM_v8_acc64_dynamic
+    ; CHECK-LABEL: name: VLDA_UPS_2x_acc64_v8_dynamic
     ; CHECK: liveins: $p0, $r1, $r2, $bmll0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -735,14 +735,14 @@ body: |
 ...
 
 ---
-name:            VST_UPS_4x_CM_v16_acc64_dynamic
+name:            VLDA_UPS_4x_acc64_v16_dynamic
 legalized:       true
 regBankSelected: true
 tracksRegLiveness: true
 body: |
   bb.0:
     liveins: $p0, $r1, $r2, $bmll0
-    ; CHECK-LABEL: name: VST_UPS_4x_CM_v16_acc64_dynamic
+    ; CHECK-LABEL: name: VLDA_UPS_4x_acc64_v16_dynamic
     ; CHECK: liveins: $p0, $r1, $r2, $bmll0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -778,14 +778,14 @@ body: |
 ...
 
 ---
-name:            VST_UPS_4x_CM_v32_acc32_dynamic
+name:            VLDA_UPS_4x_acc32_v32_dynamic
 legalized:       true
 regBankSelected: true
 tracksRegLiveness: true
 body: |
   bb.0:
     liveins: $p0, $r1, $r2, $bmll0
-    ; CHECK-LABEL: name: VST_UPS_4x_CM_v32_acc32_dynamic
+    ; CHECK-LABEL: name: VLDA_UPS_4x_acc32_v32_dynamic
     ; CHECK: liveins: $p0, $r1, $r2, $bmll0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -821,14 +821,14 @@ body: |
 ...
 
 ---
-name:            VST_UPS_2x_CM_v32_acc32_dynamic
+name:            VLDA_UPS_2x_acc32_v32_dynamic
 legalized:       true
 regBankSelected: true
 tracksRegLiveness: true
 body: |
   bb.0:
     liveins: $p0, $r1, $r2, $bmll0
-    ; CHECK-LABEL: name: VST_UPS_2x_CM_v32_acc32_dynamic
+    ; CHECK-LABEL: name: VLDA_UPS_2x_acc32_v32_dynamic
     ; CHECK: liveins: $p0, $r1, $r2, $bmll0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -864,14 +864,14 @@ body: |
 ...
 
 ---
-name:            VST_UPS_2x_CM_v16_acc64_dynamic
+name:            VLDA_UPS_2x_acc64_v16_dynamic
 legalized:       true
 regBankSelected: true
 tracksRegLiveness: true
 body: |
   bb.0:
     liveins: $p0, $r1, $r2, $bmll0
-    ; CHECK-LABEL: name: VST_UPS_2x_CM_v16_acc64_dynamic
+    ; CHECK-LABEL: name: VLDA_UPS_2x_acc64_v16_dynamic
     ; CHECK: liveins: $p0, $r1, $r2, $bmll0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -907,14 +907,14 @@ body: |
 ...
 
 ---
-name:            VST_UPS_4x_DM_v32_acc64_dynamic
+name:            VLDA_UPS_4x_acc64_v32_dynamic
 legalized:       true
 regBankSelected: true
 tracksRegLiveness: true
 body: |
   bb.0:
     liveins: $p0, $r1, $r2, $bmll0
-    ; CHECK-LABEL: name: VST_UPS_4x_DM_v32_acc64_dynamic
+    ; CHECK-LABEL: name: VLDA_UPS_4x_acc64_v32_dynamic
     ; CHECK: liveins: $p0, $r1, $r2, $bmll0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
@@ -950,14 +950,14 @@ body: |
 ...
 
 ---
-name:            VST_UPS_4x_DM_v64_acc32_dynamic
+name:            VLDA_UPS_4x_acc32_v64_dynamic
 legalized:       true
 regBankSelected: true
 tracksRegLiveness: true
 body: |
   bb.0:
     liveins: $p0, $r1, $r2, $bmll0
-    ; CHECK-LABEL: name: VST_UPS_4x_DM_v64_acc32_dynamic
+    ; CHECK-LABEL: name: VLDA_UPS_4x_acc32_v64_dynamic
     ; CHECK: liveins: $p0, $r1, $r2, $bmll0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
