@@ -159,12 +159,12 @@ regBankSelected: true
 body:             |
   bb.1.entry:
     liveins: $lfl0, $p0
-    ; CHECK-LABEL: name: test_v8acc64
+    ; CHECK-LABEL: name: test_v32x16_fifo
     ; CHECK: liveins: $lfl0, $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:acc512 = COPY $lfl0
-    ; CHECK-NEXT: VST_dmx_sts_bm_idx_imm [[COPY1]], [[COPY]], 0 :: (store (<32 x s16>))
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:fifo512 = COPY $lfl0
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY1]], [[COPY]], 0 :: (store (<32 x s16>))
     %0:ptrregbank(p0) = COPY $p0
     %1:fiforegbank(<32 x s16>) = COPY $lfl0
     G_STORE %1(<32 x s16>), %0(p0) :: (store (<32 x s16>))
@@ -178,11 +178,11 @@ body:             |
   bb.1.entry:
     liveins: $lfl0, $p0
     ; CHECK-LABEL: name: test_v16x32_fifo
-    ; CHECK: liveins: $p0
+    ; CHECK: liveins: $lfl0, $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
-    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm:%[0-9]+]]:mfifohlreg = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 0 :: (load (<16 x s32>))
-    ; CHECK-NEXT: $lfl0 = COPY [[VLDA_dmx_lda_fifohl_idx_imm]]
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:fifo512 = COPY $lfl0
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY1]], [[COPY]], 0 :: (store (<16 x s32>))
     %0:ptrregbank(p0) = COPY $p0
     %1:fiforegbank(<16 x s32>) = COPY $lfl0
     G_STORE %1(<16 x s32>), %0(p0) :: (store (<16 x s32>))
@@ -197,13 +197,14 @@ body:             |
   bb.1.entry:
     liveins: $lf0, $p0
     ; CHECK-LABEL: name: test_v32x32_fifo
-    ; CHECK: liveins: $p0
+    ; CHECK: liveins: $lf0, $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
-    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 64 :: (load (<16 x s32>) from unknown-address + 64)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm1:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 0 :: (load (<16 x s32>), align 128)
-    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:fifo1024 = REG_SEQUENCE [[VLDA_dmx_lda_fifohl_idx_imm1]], %subreg.sub_lo_fifo, [[VLDA_dmx_lda_fifohl_idx_imm]], %subreg.sub_hi_fifo
-    ; CHECK-NEXT: $lf0 = COPY [[REG_SEQUENCE]]
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:fifo1024 = COPY $lf0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:fifo512 = COPY [[COPY1]].sub_lo_fifo
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:fifo512 = COPY [[COPY1]].sub_hi_fifo
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY3]], [[COPY]], 64 :: (store (<16 x s32>) into unknown-address + 64)
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY2]], [[COPY]], 0 :: (store (<16 x s32>), align 128)
     %0:ptrregbank(p0) = COPY $p0
     %1:fiforegbank(<32 x s32>) = COPY $lf0
     G_STORE %1(<32 x s32>), %0(p0) :: (store (<32 x s32>))
@@ -218,13 +219,14 @@ body:             |
   bb.1.entry:
     liveins: $lf0, $p0
     ; CHECK-LABEL: name: test_v64x16_fifo
-    ; CHECK: liveins: $p0
+    ; CHECK: liveins: $lf0, $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
-    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 64 :: (load (<32 x s16>) from unknown-address + 64)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm1:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 0 :: (load (<32 x s16>), align 128)
-    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:fifo1024 = REG_SEQUENCE [[VLDA_dmx_lda_fifohl_idx_imm1]], %subreg.sub_lo_fifo, [[VLDA_dmx_lda_fifohl_idx_imm]], %subreg.sub_hi_fifo
-    ; CHECK-NEXT: $lf0 = COPY [[REG_SEQUENCE]]
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:fifo1024 = COPY $lf0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:fifo512 = COPY [[COPY1]].sub_lo_fifo
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:fifo512 = COPY [[COPY1]].sub_hi_fifo
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY3]], [[COPY]], 64 :: (store (<32 x s16>) into unknown-address + 64)
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY2]], [[COPY]], 0 :: (store (<32 x s16>), align 128)
     %0:ptrregbank(p0) = COPY $p0
     %1:fiforegbank(<64 x s16>) = COPY $lf0
     G_STORE %1(<64 x s16>), %0(p0) :: (store (<64 x s16>))
@@ -238,15 +240,16 @@ body:             |
   bb.1.entry:
     liveins: $lf0, $p0
     ; CHECK-LABEL: name: test_v128x8_fifo
-    ; CHECK: liveins: $p0
+    ; CHECK: liveins: $lf0, $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
-    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 64 :: (load (<64 x s8>) from unknown-address + 64)
-    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm1:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 0 :: (load (<64 x s8>), align 128)
-    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:fifo1024 = REG_SEQUENCE [[VLDA_dmx_lda_fifohl_idx_imm1]], %subreg.sub_lo_fifo, [[VLDA_dmx_lda_fifohl_idx_imm]], %subreg.sub_hi_fifo
-    ; CHECK-NEXT: $lf0 = COPY [[REG_SEQUENCE]]
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:fifo1024 = COPY $lf0
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:fifo512 = COPY [[COPY1]].sub_lo_fifo
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:fifo512 = COPY [[COPY1]].sub_hi_fifo
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY3]], [[COPY]], 64 :: (store (<64 x s8>) into unknown-address + 64)
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_idx_imm [[COPY2]], [[COPY]], 0 :: (store (<64 x s8>), align 128)
     %0:ptrregbank(p0) = COPY $p0
-    %1:fiforegbank(<128 x s16>) = COPY $lf0
-    G_STORE %1(<128 x s16>), %0(p0) :: (store (<128 x s16>))
+    %1:fiforegbank(<128 x s8>) = COPY $lf0
+    G_STORE %1(<128 x s8>), %0(p0) :: (store (<128 x s8>))
 ...
 
