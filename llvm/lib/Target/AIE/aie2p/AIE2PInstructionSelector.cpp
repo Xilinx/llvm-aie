@@ -124,6 +124,8 @@ private:
   std::optional<LoadStoreOpcodes>
   getCombinedOpcodeSRSUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
                           std::optional<APInt> Immediate, bool IsSigned);
+  bool canCombineUPS(MachineInstr &LoadOp, MachineInstr &UPSI,
+                     MachineRegisterInfo &MRI);
 
   const AIE2PInstrInfo &TII;
   const AIE2PRegisterInfo &TRI;
@@ -1273,8 +1275,10 @@ bool AIE2PInstructionSelector::selectG_AIE_LOAD_UPS(MachineInstr &UPSI,
   if (!canDelayMemOp(*LoadOp, UPSI, MRI))
     return false;
 
-  if (LoadOp->getParent() != UPSI.getParent() || !MRI.hasOneUse(LoadResult))
+  if (!canCombineUPS(*LoadOp, UPSI, MRI))
     return false;
+
+  assert(getLoadStoreSize(*LoadOp) == 256 || getLoadStoreSize(*LoadOp) == 512);
 
   std::optional<AddressingModeInfo> AMI =
       getOrDefineAddressingRegister(*LoadOp, MRI);
@@ -1294,8 +1298,7 @@ bool AIE2PInstructionSelector::selectG_AIE_LOAD_UPS(MachineInstr &UPSI,
       *LoadOp, UPSI, AMI->ImmediateOffset,
       ConstantSign ? SignVal.value().Value == 0x1 : false);
 
-  if (!LSO.has_value())
-    return false;
+  assert(LSO && "Unexpected VLDA.UPS combine failure");
 
   unsigned MemOpLoadStoreSize = getLoadStoreSize(*LoadOp);
   TypeSize DstRegSize = MRI.getType(DstReg).getSizeInBits();
@@ -2607,8 +2610,7 @@ AIE2PInstructionSelector::getCombinedOpcodeSRSUPS(
        IntrinsicID != Intrinsic::aie2p_acc32_v16_I256_ups &&
        IntrinsicID != Intrinsic::aie2p_acc64_v8_I256_ups &&
        IntrinsicID != Intrinsic::aie2p_acc32_v32_I256_ups &&
-       IntrinsicID != Intrinsic::aie2p_acc64_v16_I256_ups) ||
-      (getLoadStoreSize(MemOp) != 256 && getLoadStoreSize(MemOp) != 512))
+       IntrinsicID != Intrinsic::aie2p_acc64_v16_I256_ups))
     return {};
 
   unsigned ISelOpcode;
@@ -2967,6 +2969,19 @@ AIE2PInstructionSelector::getCombinedOpcodeSRSUPS(
     }
   }
   return {};
+}
+
+bool AIE2PInstructionSelector::canCombineUPS(MachineInstr &LoadOp,
+                                             MachineInstr &UPSI,
+                                             MachineRegisterInfo &MRI) {
+  Register LoadResult = (std::next(UPSI.uses().begin()))->getReg();
+  if (LoadOp.getParent() != UPSI.getParent() || !MRI.hasOneUse(LoadResult)) {
+    return false;
+  }
+  const std::optional<APInt> NoImmediate = {};
+  const bool IsSigned = true;
+  return getCombinedOpcodeSRSUPS(LoadOp, UPSI, NoImmediate, IsSigned)
+      .has_value();
 }
 
 namespace llvm {
