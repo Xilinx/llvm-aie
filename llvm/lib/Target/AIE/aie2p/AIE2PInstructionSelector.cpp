@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 /// \file
@@ -2660,12 +2660,12 @@ AIE2PInstructionSelector::getCombinedOpcodeSRSUPS(
                                   /*OffsetOpcode=*/{}};
         case Intrinsic::aie2p_acc32_v64_I512_ups:
         case Intrinsic::aie2p_acc64_v32_I512_ups:
-          FitsImmediateRange =
-              checkImmediateRangeSplitting<4, 64, 64>(Immediate);
-          return LoadStoreOpcodes{
-              /*ISelOpcode=*/AIE2P::
-                  VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1,
-              FitsImmediateRange, /*OffsetOpcode=*/{}};
+          FitsImmediateRange = checkImmediateRange<4, 64>(Immediate);
+          ISelOpcode = FitsImmediateRange
+                           ? AIE2P::VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign1
+                           : AIE2P::VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign1;
+          return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
+                                  /*OffsetOpcode=*/{}};
         }
       } else { // getLoadStoreSize(MemOp) == 256
         switch (cast<GIntrinsic>(CombOp).getIntrinsicID()) {
@@ -2701,8 +2701,7 @@ AIE2PInstructionSelector::getCombinedOpcodeSRSUPS(
                                   /*OffsetOpcode=*/{}};
         case Intrinsic::aie2p_acc32_v64_I512_ups:
         case Intrinsic::aie2p_acc64_v32_I512_ups:
-          FitsImmediateRange =
-              checkImmediateRangeSplitting<4, 64, 64>(Immediate);
+          FitsImmediateRange = checkImmediateRange<4, 64>(Immediate);
           ISelOpcode =
               FitsImmediateRange
                   ? AIE2P::VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_imm_upsSign1
@@ -2752,14 +2751,12 @@ AIE2PInstructionSelector::getCombinedOpcodeSRSUPS(
         case Intrinsic::aie2p_acc64_v8_I256_ups:
           return LoadStoreOpcodes{
               /*ISelOpcode=*/AIE2P::VLDA_2D_UPS_2x_dmw_lda_ups_w2b_upsSign1,
-              NoImmediate,
-              /*OffsetOpcode=*/{}};
+              NoImmediate, /*OffsetOpcode=*/{}};
         case Intrinsic::aie2p_acc32_v32_I256_ups:
         case Intrinsic::aie2p_acc64_v16_I256_ups:
           return LoadStoreOpcodes{
               /*ISelOpcode=*/AIE2P::VLDA_2D_UPS_4x_dmw_lda_ups_w2c_upsSign1,
-              NoImmediate,
-              /*OffsetOpcode=*/{}};
+              NoImmediate, /*OffsetOpcode=*/{}};
         }
       }
     case AIE2P::G_AIE_POSTINC_3D_LOAD:
@@ -2839,12 +2836,12 @@ AIE2PInstructionSelector::getCombinedOpcodeSRSUPS(
                                   /*OffsetOpcode=*/{}};
         case Intrinsic::aie2p_acc32_v64_I512_ups:
         case Intrinsic::aie2p_acc64_v32_I512_ups:
-          FitsImmediateRange =
-              checkImmediateRangeSplitting<4, 64, 64>(Immediate);
-          return LoadStoreOpcodes{
-              /*ISelOpcode=*/AIE2P::
-                  VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0,
-              FitsImmediateRange, /*OffsetOpcode=*/{}};
+          FitsImmediateRange = checkImmediateRange<4, 64>(Immediate);
+          ISelOpcode = FitsImmediateRange
+                           ? AIE2P::VLDA_UPS_4x_dmx_lda_ups_x2d_idx_imm_upsSign0
+                           : AIE2P::VLDA_UPS_4x_dmx_lda_ups_x2d_idx_upsSign0;
+          return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
+                                  /*OffsetOpcode=*/{}};
         }
       } else { // getLoadStoreSize(MemOp) == 256
         switch (cast<GIntrinsic>(CombOp).getIntrinsicID()) {
@@ -2880,8 +2877,7 @@ AIE2PInstructionSelector::getCombinedOpcodeSRSUPS(
                                   /*OffsetOpcode=*/{}};
         case Intrinsic::aie2p_acc32_v64_I512_ups:
         case Intrinsic::aie2p_acc64_v32_I512_ups:
-          FitsImmediateRange =
-              checkImmediateRangeSplitting<4, 64, 64>(Immediate);
+          FitsImmediateRange = checkImmediateRange<4, 64>(Immediate);
           ISelOpcode =
               FitsImmediateRange
                   ? AIE2P::VLDA_UPS_4x_dmx_lda_ups_x2d_pstm_nrm_imm_upsSign0
