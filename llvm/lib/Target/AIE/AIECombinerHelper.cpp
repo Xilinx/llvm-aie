@@ -1086,12 +1086,9 @@ bool llvm::matchSplatVector(MachineInstr &MI, MachineRegisterInfo &MRI,
   return true;
 }
 
-bool llvm::applySplatVector(MachineInstr &MI, MachineRegisterInfo &MRI,
-                            MachineIRBuilder &B,
-                            std::pair<Register, Register> &MatchInfo) {
-  B.setInstrAndDebugLoc(MI);
+static void buildBroadcastVector(MachineIRBuilder &B, MachineRegisterInfo &MRI,
+                                 Register SrcReg, Register DstVecReg) {
   const AIEBaseInstrInfo &AIETII = (const AIEBaseInstrInfo &)B.getTII();
-  auto [DstVecReg, SrcReg] = MatchInfo;
   const LLT SrcTy = MRI.getType(SrcReg);
   const LLT DstVecTy = MRI.getType(DstVecReg);
   const unsigned DstVecSize = DstVecTy.getSizeInBits();
@@ -1146,6 +1143,14 @@ bool llvm::applySplatVector(MachineInstr &MI, MachineRegisterInfo &MRI,
                                          DstVec512BitReg, DstVec512BitReg});
     }
   }
+}
+
+bool llvm::applySplatVector(MachineInstr &MI, MachineRegisterInfo &MRI,
+                            MachineIRBuilder &B,
+                            std::pair<Register, Register> &MatchInfo) {
+  B.setInstrAndDebugLoc(MI);
+  auto [DstVecReg, SrcReg] = MatchInfo;
+  buildBroadcastVector(B, MRI, SrcReg, DstVecReg);
   MI.eraseFromParent();
   return true;
 }
@@ -1824,5 +1829,59 @@ bool llvm::matchShuffleToVSel(
   }
 
   MatchInfo = std::make_tuple(DstReg, Src1Reg, Src2Reg, DstMask);
+  return true;
+}
+
+/// This function returns the unique index in the shuffle mask \p Mask if the
+/// unique index exists.
+static std::optional<int> getUniqueIndex(ArrayRef<int> Mask) {
+  std::optional<int> UniqOpIdx;
+  for (unsigned I = 0; I < Mask.size(); I++) {
+    int Idx = Mask[I];
+    if (Idx < 0)
+      continue;
+
+    if (!UniqOpIdx) {
+      UniqOpIdx = Idx;
+      continue;
+    }
+
+    if (UniqOpIdx != Idx) {
+      return std::nullopt;
+    }
+  }
+  return UniqOpIdx;
+}
+
+/// \returns true if it is possible to combine a shuffle vector with a mask
+/// that extracts the only element from the first source vector and broadcasts
+/// it. E.g.:
+/// From :  %X:_(<4 x s64>) = COPY $wl0
+///         %1:_(<4 x s64>) = COPY $wl1
+///         %2:_(<8 x s64>) = G_SHUFFLE_VECTOR %X(<4 x s64>), %1(<4 x s64>),
+///         shufflemask(3, 3, 3, 3, 3, 3, 3, 3)
+/// To :    %2:_(<8 x s64>) = G_AIE_BROADCAST_VECTOR %X(<4 x s64>)
+bool llvm::matchShuffleToExtractBroadcast(MachineInstr &MI,
+                                          MachineRegisterInfo &MRI,
+                                          const AIEBaseInstrInfo &TII,
+                                          BuildFnTy &MatchInfo) {
+  assert(MI.getOpcode() == TargetOpcode::G_SHUFFLE_VECTOR);
+  ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
+
+  std::optional<int> UniqOpIdx = getUniqueIndex(Mask);
+  if (!UniqOpIdx)
+    return false;
+
+  assert(UniqOpIdx >= 0 && "Couldn't find a unique operand to extract!");
+
+  const unsigned ExtractOpc = TII.getGenericExtractVectorEltOpcode(true);
+
+  MatchInfo = [=, &MI, &MRI](MachineIRBuilder &B) {
+    const Register DstReg = MI.getOperand(0).getReg();
+    const Register SrcVecReg = MI.getOperand(1).getReg();
+    auto Cst = B.buildConstant(LLT::scalar(32), UniqOpIdx.value());
+    auto Extr = B.buildInstr(ExtractOpc, {LLT::scalar(32)}, {SrcVecReg, Cst});
+    buildBroadcastVector(B, MRI, Extr.getReg(0), DstReg);
+  };
   return true;
 }

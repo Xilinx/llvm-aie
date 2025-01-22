@@ -83,6 +83,12 @@ def combine_vector_shuffle_vsel : GICombineRule<
          [{ return matchShuffleToVSel(*${root}, MRI, ${matchinfo}); }]),
   (apply [{ applyVSel(*${root}, MRI, B, ${matchinfo}); }])>;
 
+def combine_shuffle_to_vextbcst : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_SHUFFLE_VECTOR): $root,
+  [{ return matchShuffleToExtractBroadcast(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
+
 def AIE2PreLegalizerCombiner
     : GICombiner<"AIE2PreLegalizerCombinerImpl", [ combine_unpad_vector, combine_pad_vector,
                                                                  all_combines, combine_S20NarrowingOpt,
@@ -100,7 +106,8 @@ def AIE2PPreLegalizerCombiner
                                                                  combine_splat_vector, combine_vector_broadcast,
                                                                  combine_concat_to_pad_vector, 
                                                                  combine_vector_shuffle_broadcast, 
-                                                                 combine_vector_shuffle_vsel]> {
+                                                                 combine_vector_shuffle_vsel,
+                                                                 combine_shuffle_to_vextbcst]> {
   let CombineAllMethodName = "tryCombineAllImpl";
 }
 

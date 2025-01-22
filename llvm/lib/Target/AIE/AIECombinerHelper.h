@@ -69,6 +69,11 @@ bool matchShuffleToBroadcast(MachineInstr &MI, MachineRegisterInfo &MRI,
 bool matchShuffleToVSel(
     MachineInstr &MI, MachineRegisterInfo &MRI,
     std::tuple<Register, Register, Register, uint64_t> &MatchInfo);
+/// Combine a shuffle vector with a mask that extracts the only element from
+/// the first source vector and broadcasts it.
+bool matchShuffleToExtractBroadcast(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                    const AIEBaseInstrInfo &TII,
+                                    BuildFnTy &MatchInfo);
 /// \return true if \a MemI can be moved just before \a Dest in order to allow
 /// post-increment combining
 bool canDelayMemOp(MachineInstr &MemI, MachineInstr &Dest,
