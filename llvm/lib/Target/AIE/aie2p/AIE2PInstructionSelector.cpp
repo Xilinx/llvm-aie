@@ -1732,16 +1732,12 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
                 /*OffsetOpcode=*/AIE2P::VLDA_dmx_lda_fifohl_idx_imm};
       }
       if (RBID == AIE2P::VRegBankID) {
-        return {/*ISelOpcode=*/AIE2P::VLDA_dmx_lda_x_idx_imm,
-                AlwaysFitsImmediateRange,
-                /*OffsetOpcode=*/AIE2P::VLDA_dmx_lda_x_idx_imm};
+        llvm_unreachable("Unimplemented");
       }
       if (RBID == AIE2P::AccRegBankID) {
-        return {/*ISelOpcode=*/AIE2P::VLDA_dmx_lda_bm_idx_imm,
-                AlwaysFitsImmediateRange,
-                /*OffsetOpcode=*/AIE2P::VLDA_dmx_lda_bm_idx_imm};
+        llvm_unreachable("Unimplemented");
       }
-      llvm_unreachable("512-bit vector type must be in AccRegBank or VRegBank "
+      llvm_unreachable("1024-bit vector type must be in AccRegBank or VRegBank "
                        "or FifoRegBankID");
     }
     break;
@@ -2038,6 +2034,8 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
                   /*FitsImmediateRange=*/AlwaysFitsImmediateRange,
                   /*OffsetOpcode=*/AIE2P::VST_dmx_sts_fifohl_idx_imm};
         }
+        llvm_unreachable("512-bit vector type must be in AccRegBank or "
+                         "VRegBank or FifoRegBankID");
       }
     } else if (LoadStoreSize == 1024) {
       if (RBID == AIE2P::FifoRegBankID) {
@@ -2055,6 +2053,8 @@ LoadStoreOpcodes AIE2PInstructionSelector::getLoadStoreOpcode(
                 /*FitsImmediateRange=*/AlwaysFitsImmediateRange,
                 /*OffsetOpcode=*/AIE2P::VST_dmx_sts_x_idx_imm};
       }
+      llvm_unreachable("1024-bit vector type must be in AccRegBank or "
+                       "VRegBank or FifoRegBankID");
     }
     break;
   }

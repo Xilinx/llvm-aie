@@ -164,7 +164,7 @@ body:             |
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
-    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm:%[0-9]+]]:mfifohlreg = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 0 :: (load (<32 x s16>))
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 0 :: (load (<32 x s16>))
     ; CHECK-NEXT: $lfl0 = COPY [[VLDA_dmx_lda_fifohl_idx_imm]]
     %1:ptrregbank(p0) = COPY $p0
     %0:fiforegbank(<32 x s16>) = G_LOAD %1(p0) :: (load (<32 x s16>))
@@ -182,7 +182,7 @@ body:             |
     ; CHECK: liveins: $p0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:ep = COPY $p0
-    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm:%[0-9]+]]:mfifohlreg = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 0 :: (load (<16 x s32>))
+    ; CHECK-NEXT: [[VLDA_dmx_lda_fifohl_idx_imm:%[0-9]+]]:fifo512 = VLDA_dmx_lda_fifohl_idx_imm [[COPY]], 0 :: (load (<16 x s32>))
     ; CHECK-NEXT: $lfl0 = COPY [[VLDA_dmx_lda_fifohl_idx_imm]]
     %1:ptrregbank(p0) = COPY $p0
     %0:fiforegbank(<16 x s32>) = G_LOAD %1(p0) :: (load (<16 x s32>))
