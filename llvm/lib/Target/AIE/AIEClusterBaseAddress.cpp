@@ -47,7 +47,6 @@
 #include "AIE.h"
 #include "llvm/CodeGen/GlobalISel/CSEInfo.h"
 #include "llvm/CodeGen/GlobalISel/CSEMIRBuilder.h"
-#include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
 #include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -74,6 +73,61 @@ static cl::opt<bool> EnableChainsForVectorLdSt(
     cl::desc("Enable ptradd chaining for vector loads and stores."));
 
 namespace {
+
+/// Try and re-order PTR_ADD instructions to maximise the size of constant
+/// PTR_ADD chains.
+bool optimisePostIncrements(ArrayRef<MachineInstr *> PtrAdds,
+                            const MachineRegisterInfo &MRI,
+                            MachineIRBuilder &MIB,
+                            GISelObserverWrapper &Observer) {
+  bool Changed = false;
+
+  // Look for the following sequence:
+  // %0 = G_PTR_ADD %100, %101
+  // %1 = G_PTR_ADD %100, 32
+  // And swap the offsets if it is safe to get:
+  // %0 = G_PTR_ADD %100, 32
+  // %1 = G_PTR_ADD %100, %101
+  for (MachineInstr *PtrAdd : PtrAdds) {
+    assert(PtrAdd->getOpcode() == TargetOpcode::G_PTR_ADD);
+    Register OutputPtr = PtrAdd->getOperand(0).getReg();
+    Register OffsetReg = PtrAdd->getOperand(2).getReg();
+    if (getIConstantVRegValWithLookThrough(OffsetReg, MRI) ||
+        !MRI.hasOneNonDBGUser(OutputPtr))
+      continue;
+
+    // We found a non-constant PTRADD with a single user, now check if that
+    // user is a constant PTRADD. If so, "swap" their offsets so that the
+    // constant PTRADD appears first.
+    MachineInstr &OutputUser = *MRI.use_instructions(OutputPtr).begin();
+    if (OutputUser.getOpcode() != TargetOpcode::G_PTR_ADD)
+      continue;
+    Register SecondOffsetReg = OutputUser.getOperand(2).getReg();
+    std::optional<ValueAndVReg> CstOffset =
+        getIConstantVRegValWithLookThrough(SecondOffsetReg, MRI);
+    if (!CstOffset)
+      continue;
+
+    // Everything fine, now swap the offsets
+    LLVM_DEBUG(dbgs() << "Swapping offsets for:\n      " << *PtrAdd << "  and "
+                      << OutputUser);
+    Observer.changingInstr(*PtrAdd);
+    MIB.setInstr(*PtrAdd);
+    Register NewOffsetReg =
+        MIB.buildConstant(LLT::scalar(20), CstOffset->Value.getSExtValue())
+            .getReg(0);
+    PtrAdd->getOperand(2).setReg(NewOffsetReg);
+    Observer.changedInstr(*PtrAdd);
+    Observer.changingInstr(OutputUser);
+    OutputUser.getOperand(2).setReg(OffsetReg);
+    OutputUser.clearFlag(MachineInstr::NoUWrap);
+    Observer.changedInstr(OutputUser);
+    Changed = true;
+  }
+
+  return Changed;
+}
+
 class AIEClusterBaseAddress : public MachineFunctionPass {
 public:
   static char ID;
@@ -100,7 +154,8 @@ public:
 
     bool Changed = false;
     for (MachineBasicBlock &MBB : MF) {
-      Changed |= processBasicBlock(MBB, MIB, Observer);
+      while (processBasicBlock(MBB, MIB, Observer))
+        Changed = true;
     }
     return Changed;
   }
@@ -127,6 +182,12 @@ private:
     // Get all G_PTR_ADDs that use the same pointer.
     RegUseMap RegAndUses = collectPtrUses(MBB);
 
+    // Optimise instruction order
+    for (auto &RegAndUse : reverse(RegAndUses)) {
+      ArrayRef<MachineInstr *> PtrAdds = RegAndUse.second;
+      Changed |= optimisePostIncrements(PtrAdds, *MRI, MIB, Observer);
+    }
+
     // Create chains, when profitable.
     for (auto RegAndUse : RegAndUses) {
 
@@ -136,8 +197,7 @@ private:
         continue;
 
       // Build chain, breaking it (or restarting it) when necessary
-      buildChain(Instrs, MBB, MIB, Observer);
-      Changed = true;
+      Changed |= buildChain(Instrs, MBB, MIB, Observer);
     }
     return Changed;
   }
@@ -172,9 +232,10 @@ private:
   // Build a chain (or set of chains) of G_PTR_ADDs. We consider as
   // chain a linear sequence of linked G_PTR_ADDs, tied to output and
   // input pointers.
-  void buildChain(SmallVector<MachineInstr *, 8> &Instrs,
+  bool buildChain(SmallVector<MachineInstr *, 8> &Instrs,
                   MachineBasicBlock &MBB, MachineIRBuilder &MIB,
                   GISelObserverWrapper &Observer) {
+    bool Changed = false;
     int64_t AccumulatedOffset = 0;
     for (unsigned I = 0; I < Instrs.size() - 1; I++) {
       MachineInstr *MI = Instrs[I];
@@ -205,7 +266,9 @@ private:
       MINext->getOperand(1).setReg(MI->getOperand(0).getReg());
       MINext->getOperand(2).setReg(NewOffsetReg);
       Observer.changedInstr(*MINext);
+      Changed = true;
     }
+    return Changed;
   }
 
   // Evaluate if we should break the chain construction.
