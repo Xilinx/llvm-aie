@@ -11,6 +11,9 @@
 #include "AIEMachineAlignment.h"
 #include "AIE.h"
 #include "AIEBundle.h"
+#include "Utils/AIEMachineBasicBlockUtils.h"
+#include "llvm/ADT/BitVector.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineInstrBundle.h"
 
