@@ -17,7 +17,7 @@ define dso_local inreg noundef <64 x float> @_Z17test_mul_8x8_8x8T12v64bfp16ebs8
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    mova r0, #780; nopb ; nopxm ; nops
-; CHECK-NEXT:    vmul.f dm0, ex0, ex1, r0
+; CHECK-NEXT:    vmul.f dm0, ex0, ex2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -40,7 +40,7 @@ define dso_local inreg noundef <64 x float> @_Z20test_negmul_8x8_8x8T12v64bfp16e
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    mova r0, #780; nopb ; nopxm ; nops
-; CHECK-NEXT:    vnegmul.f dm0, ex0, ex1, r0
+; CHECK-NEXT:    vnegmul.f dm0, ex0, ex2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -63,7 +63,7 @@ define dso_local inreg noundef <64 x float> @_Z17test_mac_8x8_8x8T12v64bfp16ebs8
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    mova r0, #780; nopb ; nopxm ; nops
-; CHECK-NEXT:    vmac.f dm0, dm1, ex0, ex1, r0
+; CHECK-NEXT:    vmac.f dm0, dm1, ex0, ex2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -87,7 +87,7 @@ define dso_local inreg noundef <64 x float> @_Z17test_msc_8x8_8x8T12v64bfp16ebs8
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    mova r0, #780; nopb ; nopxm ; nops
-; CHECK-NEXT:    vmsc.f dm0, dm1, ex0, ex1, r0
+; CHECK-NEXT:    vmsc.f dm0, dm1, ex0, ex2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -112,7 +112,7 @@ define dso_local inreg noundef <64 x float> @_Z20test_addmac_8x8_8x8T12v64bfp16e
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopx ; vmov.d dm0, dm1
 ; CHECK-NEXT:    mova r0, #780
-; CHECK-NEXT:    vaddmac.f dm0, dm0, dm2, ex0, ex1, r0
+; CHECK-NEXT:    vaddmac.f dm0, dm0, dm2, ex0, ex2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -138,7 +138,7 @@ define dso_local inreg noundef <64 x float> @_Z20test_addmsc_8x8_8x8T12v64bfp16e
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopx ; vmov.d dm0, dm1
 ; CHECK-NEXT:    mova r0, #780
-; CHECK-NEXT:    vaddmsc.f dm0, dm0, dm2, ex0, ex1, r0
+; CHECK-NEXT:    vaddmsc.f dm0, dm0, dm2, ex0, ex2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -167,7 +167,7 @@ define dso_local inreg noundef <64 x float> @_Z17test_mul_8x8_8x8T12v64bfp16ebs8
 ; CHECK-NEXT:    lshl r1, r1, r3
 ; CHECK-NEXT:    mova r2, #12; or r0, r0, r1
 ; CHECK-NEXT:    or r0, r0, r2
-; CHECK-NEXT:    vmul.f dm0, ex0, ex1, r0
+; CHECK-NEXT:    vmul.f dm0, ex0, ex2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -198,7 +198,7 @@ define dso_local inreg noundef <64 x float> @_Z20test_negmul_8x8_8x8T12v64bfp16e
 ; CHECK-NEXT:    lshl r1, r1, r3
 ; CHECK-NEXT:    mova r2, #12; or r0, r0, r1
 ; CHECK-NEXT:    or r0, r0, r2
-; CHECK-NEXT:    vnegmul.f dm0, ex0, ex1, r0
+; CHECK-NEXT:    vnegmul.f dm0, ex0, ex2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -229,7 +229,7 @@ define dso_local inreg noundef <64 x float> @_Z17test_mac_8x8_8x8T12v64bfp16ebs8
 ; CHECK-NEXT:    lshl r1, r1, r3
 ; CHECK-NEXT:    mova r2, #12; or r0, r0, r1
 ; CHECK-NEXT:    or r0, r0, r2
-; CHECK-NEXT:    vmac.f dm0, dm1, ex0, ex1, r0
+; CHECK-NEXT:    vmac.f dm0, dm1, ex0, ex2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -261,7 +261,7 @@ define dso_local inreg noundef <64 x float> @_Z17test_msc_8x8_8x8T12v64bfp16ebs8
 ; CHECK-NEXT:    lshl r1, r1, r3
 ; CHECK-NEXT:    mova r2, #12; or r0, r0, r1
 ; CHECK-NEXT:    or r0, r0, r2
-; CHECK-NEXT:    vmsc.f dm0, dm1, ex0, ex1, r0
+; CHECK-NEXT:    vmsc.f dm0, dm1, ex0, ex2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -293,7 +293,7 @@ define dso_local inreg noundef <64 x float> @_Z20test_addmac_8x8_8x8T12v64bfp16e
 ; CHECK-NEXT:    lshl r1, r1, r3
 ; CHECK-NEXT:    mova r2, #12; or r0, r0, r1; vmov.d dm0, dm1
 ; CHECK-NEXT:    or r0, r0, r2
-; CHECK-NEXT:    vaddmac.f dm0, dm0, dm2, ex0, ex1, r0
+; CHECK-NEXT:    vaddmac.f dm0, dm0, dm2, ex0, ex2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -326,7 +326,7 @@ define dso_local inreg noundef <64 x float> @_Z20test_addmsc_8x8_8x8T12v64bfp16e
 ; CHECK-NEXT:    lshl r1, r1, r3
 ; CHECK-NEXT:    mova r2, #12; or r0, r0, r1; vmov.d dm0, dm1
 ; CHECK-NEXT:    or r0, r0, r2
-; CHECK-NEXT:    vaddmsc.f dm0, dm0, dm2, ex0, ex1, r0
+; CHECK-NEXT:    vaddmsc.f dm0, dm0, dm2, ex0, ex2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -357,7 +357,7 @@ define dso_local inreg noundef <64 x float> @_Z22test_mul_8x8_8x8T_conf12v64bfp1
 ; CHECK-NEXT:    mova r1, #11
 ; CHECK-NEXT:    mova r2, #780; lshl r0, r0, r1
 ; CHECK-NEXT:    or r0, r0, r2
-; CHECK-NEXT:    vmul.f dm0, ex0, ex1, r0
+; CHECK-NEXT:    vmul.f dm0, ex0, ex2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -384,7 +384,7 @@ define dso_local inreg noundef <64 x float> @_Z25test_negmul_8x8_8x8T_conf12v64b
 ; CHECK-NEXT:    mova r1, #11
 ; CHECK-NEXT:    mova r2, #780; lshl r0, r0, r1
 ; CHECK-NEXT:    or r0, r0, r2
-; CHECK-NEXT:    vnegmul.f dm0, ex0, ex1, r0
+; CHECK-NEXT:    vnegmul.f dm0, ex0, ex2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -414,7 +414,7 @@ define dso_local inreg noundef <64 x float> @_Z22test_mac_8x8_8x8T_conf12v64bfp1
 ; CHECK-NEXT:    or r0, r1, r0
 ; CHECK-NEXT:    mova r1, #780; or r0, r0, r2
 ; CHECK-NEXT:    or r0, r0, r1
-; CHECK-NEXT:    vmac.f dm0, dm1, ex0, ex1, r0
+; CHECK-NEXT:    vmac.f dm0, dm1, ex0, ex2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -448,7 +448,7 @@ define dso_local inreg noundef <64 x float> @_Z22test_msc_8x8_8x8T_conf12v64bfp1
 ; CHECK-NEXT:    or r0, r1, r0
 ; CHECK-NEXT:    mova r1, #780; or r0, r0, r2
 ; CHECK-NEXT:    or r0, r0, r1
-; CHECK-NEXT:    vmsc.f dm0, dm1, ex0, ex1, r0
+; CHECK-NEXT:    vmsc.f dm0, dm1, ex0, ex2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -484,7 +484,7 @@ define dso_local inreg noundef <64 x float> @_Z25test_addmac_8x8_8x8T_conf12v64b
 ; CHECK-NEXT:    or r0, r0, r2
 ; CHECK-NEXT:    mova r1, #780; or r0, r0, r3; vmov.d dm0, dm1
 ; CHECK-NEXT:    or r0, r0, r1
-; CHECK-NEXT:    vaddmac.f dm0, dm0, dm2, ex0, ex1, r0
+; CHECK-NEXT:    vaddmac.f dm0, dm0, dm2, ex0, ex2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -523,7 +523,7 @@ define dso_local inreg noundef <64 x float> @_Z25test_addmsc_8x8_8x8T_conf12v64b
 ; CHECK-NEXT:    or r0, r0, r2
 ; CHECK-NEXT:    mova r1, #780; or r0, r0, r3; vmov.d dm0, dm1
 ; CHECK-NEXT:    or r0, r0, r1
-; CHECK-NEXT:    vaddmsc.f dm0, dm0, dm2, ex0, ex1, r0
+; CHECK-NEXT:    vaddmsc.f dm0, dm0, dm2, ex0, ex2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -561,7 +561,7 @@ define dso_local inreg noundef <64 x float> @_Z22test_mul_8x8_8x8T_conf12v64bfp1
 ; CHECK-NEXT:    or r0, r0, r1
 ; CHECK-NEXT:    mova r1, #12; or r0, r0, r2
 ; CHECK-NEXT:    or r0, r0, r1
-; CHECK-NEXT:    vmul.f dm0, ex0, ex1, r0
+; CHECK-NEXT:    vmul.f dm0, ex0, ex2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -596,7 +596,7 @@ define dso_local inreg noundef <64 x float> @_Z25test_negmul_8x8_8x8T_conf12v64b
 ; CHECK-NEXT:    or r0, r0, r1
 ; CHECK-NEXT:    mova r1, #12; or r0, r0, r2
 ; CHECK-NEXT:    or r0, r0, r1
-; CHECK-NEXT:    vnegmul.f dm0, ex0, ex1, r0
+; CHECK-NEXT:    vnegmul.f dm0, ex0, ex2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -634,7 +634,7 @@ define dso_local inreg noundef <64 x float> @_Z22test_mac_8x8_8x8T_conf12v64bfp1
 ; CHECK-NEXT:    or r0, r0, r3
 ; CHECK-NEXT:    or r0, r0, r4
 ; CHECK-NEXT:    or r0, r0, r6
-; CHECK-NEXT:    vmac.f dm0, dm1, ex0, ex1, r0
+; CHECK-NEXT:    vmac.f dm0, dm1, ex0, ex2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -676,7 +676,7 @@ define dso_local inreg noundef <64 x float> @_Z22test_msc_8x8_8x8T_conf12v64bfp1
 ; CHECK-NEXT:    or r0, r0, r3
 ; CHECK-NEXT:    or r0, r0, r4
 ; CHECK-NEXT:    or r0, r0, r6
-; CHECK-NEXT:    vmsc.f dm0, dm1, ex0, ex1, r0
+; CHECK-NEXT:    vmsc.f dm0, dm1, ex0, ex2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -720,7 +720,7 @@ define dso_local inreg noundef <64 x float> @_Z25test_addmac_8x8_8x8T_conf12v64b
 ; CHECK-NEXT:    or r0, r0, r4
 ; CHECK-NEXT:    or r0, r0, r5; vmov.d dm0, dm1
 ; CHECK-NEXT:    or r0, r0, r7
-; CHECK-NEXT:    vaddmac.f dm0, dm0, dm2, ex0, ex1, r0
+; CHECK-NEXT:    vaddmac.f dm0, dm0, dm2, ex0, ex2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -767,7 +767,7 @@ define dso_local inreg noundef <64 x float> @_Z25test_addmsc_8x8_8x8T_conf12v64b
 ; CHECK-NEXT:    or r0, r0, r4
 ; CHECK-NEXT:    or r0, r0, r5; vmov.d dm0, dm1
 ; CHECK-NEXT:    or r0, r0, r7
-; CHECK-NEXT:    vaddmsc.f dm0, dm0, dm2, ex0, ex1, r0
+; CHECK-NEXT:    vaddmsc.f dm0, dm0, dm2, ex0, ex2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -803,7 +803,7 @@ define dso_local inreg noundef <64 x float> @_Z18test_mul_4x8_8x16T12v64bfp16ebs
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    mova r0, #972; nopb ; nopxm ; nops
-; CHECK-NEXT:    vmul.f dm0, ex0, ey1, r0
+; CHECK-NEXT:    vmul.f dm0, ex0, ey2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -828,7 +828,7 @@ define dso_local inreg noundef <64 x float> @_Z21test_negmul_4x8_8x16T12v64bfp16
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    mova r0, #972; nopb ; nopxm ; nops
-; CHECK-NEXT:    vnegmul.f dm0, ex0, ey1, r0
+; CHECK-NEXT:    vnegmul.f dm0, ex0, ey2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -853,7 +853,7 @@ define dso_local inreg noundef <64 x float> @_Z18test_mac_4x8_8x16T12v64bfp16ebs
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    mova r0, #972; nopb ; nopxm ; nops
-; CHECK-NEXT:    vmac.f dm0, dm1, ex0, ey1, r0
+; CHECK-NEXT:    vmac.f dm0, dm1, ex0, ey2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -879,7 +879,7 @@ define dso_local inreg noundef <64 x float> @_Z18test_msc_4x8_8x16T12v64bfp16ebs
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    mova r0, #972; nopb ; nopxm ; nops
-; CHECK-NEXT:    vmsc.f dm0, dm1, ex0, ey1, r0
+; CHECK-NEXT:    vmsc.f dm0, dm1, ex0, ey2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -906,7 +906,7 @@ define dso_local inreg noundef <64 x float> @_Z21test_addmac_4x8_8x16T12v64bfp16
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopx ; vmov.d dm0, dm1
 ; CHECK-NEXT:    mova r0, #972
-; CHECK-NEXT:    vaddmac.f dm0, dm0, dm2, ex0, ey1, r0
+; CHECK-NEXT:    vaddmac.f dm0, dm0, dm2, ex0, ey2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -934,7 +934,7 @@ define dso_local inreg noundef <64 x float> @_Z21test_addmsc_4x8_8x16T12v64bfp16
 ; CHECK-NEXT:  // %bb.0: // %entry
 ; CHECK-NEXT:    nopa ; nopx ; vmov.d dm0, dm1
 ; CHECK-NEXT:    mova r0, #972
-; CHECK-NEXT:    vaddmsc.f dm0, dm0, dm2, ex0, ey1, r0
+; CHECK-NEXT:    vaddmsc.f dm0, dm0, dm2, ex0, ey2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -965,7 +965,7 @@ define dso_local inreg noundef <64 x float> @_Z18test_mul_4x8_8x16T12v64bfp16ebs
 ; CHECK-NEXT:    lshl r1, r1, r3
 ; CHECK-NEXT:    mova r2, #204; or r0, r0, r1
 ; CHECK-NEXT:    or r0, r0, r2
-; CHECK-NEXT:    vmul.f dm0, ex0, ey1, r0
+; CHECK-NEXT:    vmul.f dm0, ex0, ey2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -998,7 +998,7 @@ define dso_local inreg noundef <64 x float> @_Z21test_negmul_4x8_8x16T12v64bfp16
 ; CHECK-NEXT:    lshl r1, r1, r3
 ; CHECK-NEXT:    mova r2, #204; or r0, r0, r1
 ; CHECK-NEXT:    or r0, r0, r2
-; CHECK-NEXT:    vnegmul.f dm0, ex0, ey1, r0
+; CHECK-NEXT:    vnegmul.f dm0, ex0, ey2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -1031,7 +1031,7 @@ define dso_local inreg noundef <64 x float> @_Z18test_mac_4x8_8x16T12v64bfp16ebs
 ; CHECK-NEXT:    lshl r1, r1, r3
 ; CHECK-NEXT:    mova r2, #204; or r0, r0, r1
 ; CHECK-NEXT:    or r0, r0, r2
-; CHECK-NEXT:    vmac.f dm0, dm1, ex0, ey1, r0
+; CHECK-NEXT:    vmac.f dm0, dm1, ex0, ey2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -1065,7 +1065,7 @@ define dso_local inreg noundef <64 x float> @_Z18test_msc_4x8_8x16T12v64bfp16ebs
 ; CHECK-NEXT:    lshl r1, r1, r3
 ; CHECK-NEXT:    mova r2, #204; or r0, r0, r1
 ; CHECK-NEXT:    or r0, r0, r2
-; CHECK-NEXT:    vmsc.f dm0, dm1, ex0, ey1, r0
+; CHECK-NEXT:    vmsc.f dm0, dm1, ex0, ey2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -1099,7 +1099,7 @@ define dso_local inreg noundef <64 x float> @_Z21test_addmac_4x8_8x16T12v64bfp16
 ; CHECK-NEXT:    lshl r1, r1, r3
 ; CHECK-NEXT:    mova r2, #204; or r0, r0, r1; vmov.d dm0, dm1
 ; CHECK-NEXT:    or r0, r0, r2
-; CHECK-NEXT:    vaddmac.f dm0, dm0, dm2, ex0, ey1, r0
+; CHECK-NEXT:    vaddmac.f dm0, dm0, dm2, ex0, ey2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -1134,7 +1134,7 @@ define dso_local inreg noundef <64 x float> @_Z21test_addmsc_4x8_8x16T12v64bfp16
 ; CHECK-NEXT:    lshl r1, r1, r3
 ; CHECK-NEXT:    mova r2, #204; or r0, r0, r1; vmov.d dm0, dm1
 ; CHECK-NEXT:    or r0, r0, r2
-; CHECK-NEXT:    vaddmsc.f dm0, dm0, dm2, ex0, ey1, r0
+; CHECK-NEXT:    vaddmsc.f dm0, dm0, dm2, ex0, ey2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -1167,7 +1167,7 @@ define dso_local inreg noundef <64 x float> @_Z23test_mul_4x8_8x16T_conf12v64bfp
 ; CHECK-NEXT:    mova r1, #11
 ; CHECK-NEXT:    mova r2, #972; lshl r0, r0, r1
 ; CHECK-NEXT:    or r0, r0, r2
-; CHECK-NEXT:    vmul.f dm0, ex0, ey1, r0
+; CHECK-NEXT:    vmul.f dm0, ex0, ey2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -1196,7 +1196,7 @@ define dso_local inreg noundef <64 x float> @_Z26test_negmul_4x8_8x16T_conf12v64
 ; CHECK-NEXT:    mova r1, #11
 ; CHECK-NEXT:    mova r2, #972; lshl r0, r0, r1
 ; CHECK-NEXT:    or r0, r0, r2
-; CHECK-NEXT:    vnegmul.f dm0, ex0, ey1, r0
+; CHECK-NEXT:    vnegmul.f dm0, ex0, ey2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -1228,7 +1228,7 @@ define dso_local inreg noundef <64 x float> @_Z23test_mac_4x8_8x16T_conf12v64bfp
 ; CHECK-NEXT:    or r0, r1, r0
 ; CHECK-NEXT:    mova r1, #972; or r0, r0, r2
 ; CHECK-NEXT:    or r0, r0, r1
-; CHECK-NEXT:    vmac.f dm0, dm1, ex0, ey1, r0
+; CHECK-NEXT:    vmac.f dm0, dm1, ex0, ey2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -1264,7 +1264,7 @@ define dso_local inreg noundef <64 x float> @_Z23test_msc_4x8_8x16T_conf12v64bfp
 ; CHECK-NEXT:    or r0, r1, r0
 ; CHECK-NEXT:    mova r1, #972; or r0, r0, r2
 ; CHECK-NEXT:    or r0, r0, r1
-; CHECK-NEXT:    vmsc.f dm0, dm1, ex0, ey1, r0
+; CHECK-NEXT:    vmsc.f dm0, dm1, ex0, ey2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -1302,7 +1302,7 @@ define dso_local inreg noundef <64 x float> @_Z26test_addmac_4x8_8x16T_conf12v64
 ; CHECK-NEXT:    or r0, r0, r2
 ; CHECK-NEXT:    mova r1, #972; or r0, r0, r3; vmov.d dm0, dm1
 ; CHECK-NEXT:    or r0, r0, r1
-; CHECK-NEXT:    vaddmac.f dm0, dm0, dm2, ex0, ey1, r0
+; CHECK-NEXT:    vaddmac.f dm0, dm0, dm2, ex0, ey2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -1343,7 +1343,7 @@ define dso_local inreg noundef <64 x float> @_Z26test_addmsc_4x8_8x16T_conf12v64
 ; CHECK-NEXT:    or r0, r0, r2
 ; CHECK-NEXT:    mova r1, #972; or r0, r0, r3; vmov.d dm0, dm1
 ; CHECK-NEXT:    or r0, r0, r1
-; CHECK-NEXT:    vaddmsc.f dm0, dm0, dm2, ex0, ey1, r0
+; CHECK-NEXT:    vaddmsc.f dm0, dm0, dm2, ex0, ey2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -1383,7 +1383,7 @@ define dso_local inreg noundef <64 x float> @_Z23test_mul_4x8_8x16T_conf12v64bfp
 ; CHECK-NEXT:    or r0, r0, r1
 ; CHECK-NEXT:    mova r1, #204; or r0, r0, r2
 ; CHECK-NEXT:    or r0, r0, r1
-; CHECK-NEXT:    vmul.f dm0, ex0, ey1, r0
+; CHECK-NEXT:    vmul.f dm0, ex0, ey2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -1420,7 +1420,7 @@ define dso_local inreg noundef <64 x float> @_Z26test_negmul_4x8_8x16T_conf12v64
 ; CHECK-NEXT:    or r0, r0, r1
 ; CHECK-NEXT:    mova r1, #204; or r0, r0, r2
 ; CHECK-NEXT:    or r0, r0, r1
-; CHECK-NEXT:    vnegmul.f dm0, ex0, ey1, r0
+; CHECK-NEXT:    vnegmul.f dm0, ex0, ey2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -1460,7 +1460,7 @@ define dso_local inreg noundef <64 x float> @_Z23test_mac_4x8_8x16T_conf12v64bfp
 ; CHECK-NEXT:    or r0, r0, r3
 ; CHECK-NEXT:    mova r1, #204; or r0, r0, r4
 ; CHECK-NEXT:    or r0, r0, r1
-; CHECK-NEXT:    vmac.f dm0, dm1, ex0, ey1, r0
+; CHECK-NEXT:    vmac.f dm0, dm1, ex0, ey2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -1504,7 +1504,7 @@ define dso_local inreg noundef <64 x float> @_Z23test_msc_4x8_8x16T_conf12v64bfp
 ; CHECK-NEXT:    or r0, r0, r3
 ; CHECK-NEXT:    mova r1, #204; or r0, r0, r4
 ; CHECK-NEXT:    or r0, r0, r1
-; CHECK-NEXT:    vmsc.f dm0, dm1, ex0, ey1, r0
+; CHECK-NEXT:    vmsc.f dm0, dm1, ex0, ey2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -1550,7 +1550,7 @@ define dso_local inreg noundef <64 x float> @_Z26test_addmac_4x8_8x16T_conf12v64
 ; CHECK-NEXT:    or r0, r0, r4
 ; CHECK-NEXT:    mova r1, #204; or r0, r0, r5; vmov.d dm0, dm1
 ; CHECK-NEXT:    or r0, r0, r1
-; CHECK-NEXT:    vaddmac.f dm0, dm0, dm2, ex0, ey1, r0
+; CHECK-NEXT:    vaddmac.f dm0, dm0, dm2, ex0, ey2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
@@ -1599,7 +1599,7 @@ define dso_local inreg noundef <64 x float> @_Z26test_addmsc_4x8_8x16T_conf12v64
 ; CHECK-NEXT:    or r0, r0, r4
 ; CHECK-NEXT:    mova r1, #204; or r0, r0, r5; vmov.d dm0, dm1
 ; CHECK-NEXT:    or r0, r0, r1
-; CHECK-NEXT:    vaddmsc.f dm0, dm0, dm2, ex0, ey1, r0
+; CHECK-NEXT:    vaddmsc.f dm0, dm0, dm2, ex0, ey2, r0
 ; CHECK-NEXT:    ret lr
 ; CHECK-NEXT:    nop // Delay Slot 5
 ; CHECK-NEXT:    nop // Delay Slot 4
