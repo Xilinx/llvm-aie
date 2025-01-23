@@ -7,6 +7,7 @@
 add_llvm_component_library(LLVMAIEUtils
   AIEBaseInfo.cpp
   AIELoopUtils.cpp
+  AIEMachineBasicBlockUtils.cpp
 
   LINK_COMPONENTS
   Analysis
