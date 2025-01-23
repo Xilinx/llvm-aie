@@ -8,105 +8,277 @@
 # RUN: llc -mtriple aie2p -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s
 
 ---
-name:            test_s64_512
-legalized:       false
+name:            extract_v4i64
+alignment:       16
+tracksRegLiveness: true
 body:             |
-  bb.0.entry:
-    liveins: $wl0
-    ; CHECK-LABEL: name: test_s64_512
-    ; CHECK: liveins: $wl0
+  bb.1.entry:
+    liveins: $bmll0
+
+    ; CHECK-LABEL: name: extract_v4i64
+    ; CHECK: liveins: $bmll0
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<8 x s64>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<8 x s64>), [[C]](s32)
-    ; CHECK-NEXT: $l0 = COPY [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $l0
-    %0:_(<8 x s64>) = G_IMPLICIT_DEF
-    %1:_(s32) = G_CONSTANT i32 1
-    %3:_(s64) = G_EXTRACT_VECTOR_ELT %0(<8 x s64>), %1(s32)
-    $l0 = COPY %3(s64)
-    PseudoRET implicit $lr, implicit $l0
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<8 x s64>) = COPY $bmll0
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<4 x s64>) = G_AIE_UNPAD_VECTOR [[COPY]](<8 x s64>)
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
+    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[AIE_UNPAD_VECTOR]](<4 x s64>), [[C]](s32)
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(s32), [[UV1:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64)
+    ; CHECK-NEXT: $r0 = COPY [[UV]](s32)
+    ; CHECK-NEXT: $r1 = COPY [[UV1]](s32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0, implicit $r1
+    %2:_(<8 x s64>) = COPY $bmll0
+    %1:_(<4 x s64>) = G_AIE_UNPAD_VECTOR %2(<8 x s64>)
+    %4:_(s32) = G_CONSTANT i32 3
+    %0:_(s64) = G_EXTRACT_VECTOR_ELT %1(<4 x s64>), %4(s32)
+    %5:_(s32), %6:_(s32) = G_UNMERGE_VALUES %0(s64)
+    $r0 = COPY %5(s32)
+    $r1 = COPY %6(s32)
+    PseudoRET implicit $lr, implicit $r0, implicit $r1
+
 ...
 
 ---
-name:            test_s64_1024
-legalized:       false
+name:            extract_v4i64_dyn
+alignment:       16
+tracksRegLiveness: true
 body:             |
-  bb.0.entry:
-    liveins: $wl0
-    ; CHECK-LABEL: name: test_s64_1024
-    ; CHECK: liveins: $wl0
+  bb.1.entry:
+    liveins: $bmll0, $r2
+
+    ; CHECK-LABEL: name: extract_v4i64_dyn
+    ; CHECK: liveins: $bmll0, $r2
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<16 x s64>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<16 x s64>), [[C]](s32)
-    ; CHECK-NEXT: $l0 = COPY [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $l0
-    %0:_(<16 x s64>) = G_IMPLICIT_DEF
-    %1:_(s32) = G_CONSTANT i32 1
-    %3:_(s64) = G_EXTRACT_VECTOR_ELT %0(<16 x s64>), %1(s32)
-    $l0 = COPY %3(s64)
-    PseudoRET implicit $lr, implicit $l0
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<8 x s64>) = COPY $bmll0
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<4 x s64>) = G_AIE_UNPAD_VECTOR [[COPY]](<8 x s64>)
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r2
+    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[AIE_UNPAD_VECTOR]](<4 x s64>), [[COPY1]](s32)
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(s32), [[UV1:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64)
+    ; CHECK-NEXT: $r0 = COPY [[UV]](s32)
+    ; CHECK-NEXT: $r1 = COPY [[UV1]](s32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0, implicit $r1
+    %3:_(<8 x s64>) = COPY $bmll0
+    %1:_(<4 x s64>) = G_AIE_UNPAD_VECTOR %3(<8 x s64>)
+    %2:_(s32) = COPY $r2
+    %0:_(s64) = G_EXTRACT_VECTOR_ELT %1(<4 x s64>), %2(s32)
+    %5:_(s32), %6:_(s32) = G_UNMERGE_VALUES %0(s64)
+    $r0 = COPY %5(s32)
+    $r1 = COPY %6(s32)
+    PseudoRET implicit $lr, implicit $r0, implicit $r1
+
 ...
+
 ---
-name:            test_s32_1024
-legalized:       false
+name:            extract_v8i64
+alignment:       16
+tracksRegLiveness: true
 body:             |
-  bb.0.entry:
-    liveins: $wl0
-    ; CHECK-LABEL: name: test_s32_1024
-    ; CHECK: liveins: $wl0
+  bb.1.entry:
+    liveins: $bmll0
+
+    ; CHECK-LABEL: name: extract_v8i64
+    ; CHECK: liveins: $bmll0
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<32 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<32 x s32>), [[C]](s32)
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<8 x s64>) = COPY $bmll0
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 7
+    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<8 x s64>), [[C]](s32)
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(s32), [[UV1:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64)
+    ; CHECK-NEXT: $r0 = COPY [[UV]](s32)
+    ; CHECK-NEXT: $r1 = COPY [[UV1]](s32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0, implicit $r1
+    %1:_(<8 x s64>) = COPY $bmll0
+    %2:_(s32) = G_CONSTANT i32 7
+    %0:_(s64) = G_EXTRACT_VECTOR_ELT %1(<8 x s64>), %2(s32)
+    %3:_(s32), %4:_(s32) = G_UNMERGE_VALUES %0(s64)
+    $r0 = COPY %3(s32)
+    $r1 = COPY %4(s32)
+    PseudoRET implicit $lr, implicit $r0, implicit $r1
+
+...
+
+---
+name:            extract_v8i64_dyn
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.1.entry:
+    liveins: $bmll0, $r2
+
+    ; CHECK-LABEL: name: extract_v8i64_dyn
+    ; CHECK: liveins: $bmll0, $r2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<8 x s64>) = COPY $bmll0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r2
+    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<8 x s64>), [[COPY1]](s32)
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(s32), [[UV1:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64)
+    ; CHECK-NEXT: $r0 = COPY [[UV]](s32)
+    ; CHECK-NEXT: $r1 = COPY [[UV1]](s32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0, implicit $r1
+    %1:_(<8 x s64>) = COPY $bmll0
+    %2:_(s32) = COPY $r2
+    %0:_(s64) = G_EXTRACT_VECTOR_ELT %1(<8 x s64>), %2(s32)
+    %3:_(s32), %4:_(s32) = G_UNMERGE_VALUES %0(s64)
+    $r0 = COPY %3(s32)
+    $r1 = COPY %4(s32)
+    PseudoRET implicit $lr, implicit $r0, implicit $r1
+
+...
+
+---
+name:            extract_v16i64
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.1.entry:
+    liveins: $cml0
+
+    ; CHECK-LABEL: name: extract_v16i64
+    ; CHECK: liveins: $cml0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s64>) = COPY $cml0
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 7
+    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<16 x s64>), [[C]](s32)
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(s32), [[UV1:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64)
+    ; CHECK-NEXT: $r0 = COPY [[UV]](s32)
+    ; CHECK-NEXT: $r1 = COPY [[UV1]](s32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0, implicit $r1
+    %1:_(<16 x s64>) = COPY $cml0
+    %2:_(s32) = G_CONSTANT i32 7
+    %0:_(s64) = G_EXTRACT_VECTOR_ELT %1(<16 x s64>), %2(s32)
+    %3:_(s32), %4:_(s32) = G_UNMERGE_VALUES %0(s64)
+    $r0 = COPY %3(s32)
+    $r1 = COPY %4(s32)
+    PseudoRET implicit $lr, implicit $r0, implicit $r1
+
+...
+
+---
+name:            extract_v16i64_dyn
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.1.entry:
+    liveins: $cml0, $r2
+
+    ; CHECK-LABEL: name: extract_v16i64_dyn
+    ; CHECK: liveins: $cml0, $r2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s64>) = COPY $cml0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r2
+    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<16 x s64>), [[COPY1]](s32)
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(s32), [[UV1:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64)
+    ; CHECK-NEXT: $r0 = COPY [[UV]](s32)
+    ; CHECK-NEXT: $r1 = COPY [[UV1]](s32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0, implicit $r1
+    %1:_(<16 x s64>) = COPY $cml0
+    %2:_(s32) = COPY $r2
+    %0:_(s64) = G_EXTRACT_VECTOR_ELT %1(<16 x s64>), %2(s32)
+    %3:_(s32), %4:_(s32) = G_UNMERGE_VALUES %0(s64)
+    $r0 = COPY %3(s32)
+    $r1 = COPY %4(s32)
+    PseudoRET implicit $lr, implicit $r0, implicit $r1
+
+...
+
+---
+name:            extract_v64i32
+alignment:       16
+tracksRegLiveness: true
+body:             |
+  bb.1.entry:
+    liveins: $dm0
+
+    ; CHECK-LABEL: name: extract_v64i32
+    ; CHECK: liveins: $dm0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<64 x s32>) = COPY $dm0
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 7
+    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<64 x s32>), [[C]](s32)
     ; CHECK-NEXT: $r0 = COPY [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s32)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
-    %0:_(<32 x s32>) = G_IMPLICIT_DEF
-    %1:_(s32) = G_CONSTANT i32 1
-    %3:_(s32) = G_EXTRACT_VECTOR_ELT %0(<32 x s32>), %1(s32)
-    $r0 = COPY %3(s32)
+    %1:_(<64 x s32>) = COPY $dm0
+    %2:_(s32) = G_CONSTANT i32 7
+    %0:_(s32) = G_EXTRACT_VECTOR_ELT %1(<64 x s32>), %2(s32)
+    $r0 = COPY %0(s32)
     PseudoRET implicit $lr, implicit $r0
+
 ...
+
 ---
-name:            test_s64_2048
-legalized:       false
+name:            extract_v64i32_dyn
+alignment:       16
+tracksRegLiveness: true
 body:             |
-  bb.0.entry:
-    liveins: $wl0
-    ; CHECK-LABEL: name: test_s64_2048
-    ; CHECK: liveins: $wl0
+  bb.1.entry:
+    liveins: $dm0, $r1
+
+    ; CHECK-LABEL: name: extract_v64i32_dyn
+    ; CHECK: liveins: $dm0, $r1
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<32 x s64>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<32 x s64>), [[C]](s32)
-    ; CHECK-NEXT: $l0 = COPY [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $l0
-    %0:_(<32 x s64>) = G_IMPLICIT_DEF
-    %1:_(s32) = G_CONSTANT i32 1
-    %3:_(s64) = G_EXTRACT_VECTOR_ELT %0(<32 x s64>), %1(s32)
-    $l0 = COPY %3(s64)
-    PseudoRET implicit $lr, implicit $l0
-...
----
-name:            test_s32_2048
-legalized:       false
-body:             |
-  bb.0.entry:
-    liveins: $wl0
-    ; CHECK-LABEL: name: test_s32_2048
-    ; CHECK: liveins: $wl0
-    ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<64 x s32>) = G_IMPLICIT_DEF
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[DEF]](<64 x s32>), [[C]](s32)
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<64 x s32>) = COPY $dm0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r1
+    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<64 x s32>), [[COPY1]](s32)
     ; CHECK-NEXT: $r0 = COPY [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s32)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
-    %0:_(<64 x s32>) = G_IMPLICIT_DEF
-    %1:_(s32) = G_CONSTANT i32 1
-    %3:_(s32) = G_EXTRACT_VECTOR_ELT %0(<64 x s32>), %1(s32)
-    $r0 = COPY %3(s32)
+    %1:_(<64 x s32>) = COPY $dm0
+    %2:_(s32) = COPY $r1
+    %0:_(s32) = G_EXTRACT_VECTOR_ELT %1(<64 x s32>), %2(s32)
+    $r0 = COPY %0(s32)
     PseudoRET implicit $lr, implicit $r0
+
+...
+
+---
+name:            extract_v32i64
+tracksRegLiveness: true
+body:             |
+  bb.1.entry:
+    liveins: $dm0
+
+    ; CHECK-LABEL: name: extract_v32i64
+    ; CHECK: liveins: $dm0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<32 x s64>) = COPY $dm0
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 7
+    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<32 x s64>), [[C]](s32)
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(s32), [[UV1:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64)
+    ; CHECK-NEXT: $r0 = COPY [[UV]](s32)
+    ; CHECK-NEXT: $r1 = COPY [[UV1]](s32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0, implicit $r1
+    %1:_(<32 x s64>) = COPY $dm0
+    %2:_(s32) = G_CONSTANT i32 7
+    %0:_(s64) = G_EXTRACT_VECTOR_ELT %1(<32 x s64>), %2(s32)
+    %3:_(s32), %4:_(s32) = G_UNMERGE_VALUES %0(s64)
+    $r0 = COPY %3(s32)
+    $r1 = COPY %4(s32)
+    PseudoRET implicit $lr, implicit $r0, implicit $r1
+
+...
+
+---
+name:            extract_v32i64_dyn
+tracksRegLiveness: true
+body:             |
+  bb.1.entry:
+    liveins: $dm0, $r2
+
+    ; CHECK-LABEL: name: extract_v32i64_dyn
+    ; CHECK: liveins: $dm0, $r2
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<32 x s64>) = COPY $dm0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r2
+    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<32 x s64>), [[COPY1]](s32)
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(s32), [[UV1:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64)
+    ; CHECK-NEXT: $r0 = COPY [[UV]](s32)
+    ; CHECK-NEXT: $r1 = COPY [[UV1]](s32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0, implicit $r1
+    %1:_(<32 x s64>) = COPY $dm0
+    %2:_(s32) = COPY $r2
+    %0:_(s64) = G_EXTRACT_VECTOR_ELT %1(<32 x s64>), %2(s32)
+    %3:_(s32), %4:_(s32) = G_UNMERGE_VALUES %0(s64)
+    $r0 = COPY %3(s32)
+    $r1 = COPY %4(s32)
+    PseudoRET implicit $lr, implicit $r0, implicit $r1
+
 ...
 
 ---
