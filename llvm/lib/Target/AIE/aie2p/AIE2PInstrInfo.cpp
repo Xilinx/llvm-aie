@@ -1053,6 +1053,19 @@ AIE2PInstrInfo::getSpillPseudoExpandInfo(const MachineInstr &MI) const {
   llvm_unreachable("Un-implemented");
 }
 
+AIEBaseInstrInfo::AIERegOffsetSpillInstrInfo
+AIE2PInstrInfo::getRegOffsetSpillInstrInfoFromImmOffset(
+    const unsigned Opcode) const {
+  switch (Opcode) {
+  case AIE2P::ST_dms_sts_spill:
+    return {AIE2P::ST_dms_sts_idx, AIE2P::MOVXM, &AIE2P::eDJRegClass};
+  case AIE2P::LDA_dms_lda_spill:
+    return {AIE2P::LDA_dms_lda_idx, AIE2P::MOVXM, &AIE2P::eDJRegClass};
+  default:
+    llvm_unreachable("Offset register spill instruction info un-implemented");
+  }
+}
+
 unsigned AIE2PInstrInfo::getConstantMovOpcode(MachineRegisterInfo &MRI,
                                               unsigned int Reg,
                                               APInt &Val) const {

@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/ResourceCycle.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
+#include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <optional>
 
@@ -536,15 +537,20 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
     return std::nullopt;
   }
 
-protected:
+public:
   /// Expand a spill pseudo-instruction into actual target instructions. This
   /// will essentially split the register being handled into its sub-registers,
   /// until there is an actual instruction that can handle them.
   /// In case sub-registers don't have nice offset, those can be aligned using
   /// \ref SubRegOffsetAlign.
+  /// In case offset value is above the encodable limit provide with a pointer
+  /// register points to stack pointer and actual offset value.
   void expandSpillPseudo(MachineInstr &MI, const TargetRegisterInfo &TRI,
-                         Align SubRegOffsetAlign = Align(1)) const;
+                         Align SubRegOffsetAlign = Align(1),
+                         Register SPReg = MCRegister::NoRegister,
+                         std::optional<int64_t> OffsetVal = std::nullopt) const;
 
+protected:
   struct AIEPseudoExpandInfo {
     /// OpCode to expand a PseudoInstruction to. This can be another Pseudo.
     unsigned ExpandedOpCode;
@@ -558,6 +564,15 @@ protected:
     int MemSize = 0;
   };
 
+  struct AIERegOffsetSpillInstrInfo {
+    /// Opcode for spill using register offset.
+    unsigned SpillOpCode;
+    /// Opcode for adjusting the offset register.
+    unsigned AdjustOffsetOpcode;
+    /// Target register class for offset register.
+    const TargetRegisterClass *OffsetRC;
+  };
+
   /// Return information on how to expand a spill (load/store) pseudo
   /// instruction. This returns an empty vector if the instruction does not
   /// need expanding. Otherwise, the size of the vector will match the number
@@ -566,6 +581,18 @@ protected:
   getSpillPseudoExpandInfo(const MachineInstr &MI) const {
     return {};
   };
+
+  /// Retrieve information about a register offset instruction derived from an
+  /// immediate offset instruction. This functionality is particularly useful
+  /// when it is not possible to encode an immediate value directly within an
+  /// instruction, and instead requires using registers to represent the offset
+  /// value. This function provides the necessary information to handle such
+  /// cases and allows for the appropriate handling of register-based offset
+  /// instructions.
+  virtual AIERegOffsetSpillInstrInfo
+  getRegOffsetSpillInstrInfoFromImmOffset(const unsigned Opcode) const {
+    return {};
+  }
 
   // Copy SrcReg to DstReg through their sub-registers.
   void copyThroughSubRegs(MachineBasicBlock &MBB,
