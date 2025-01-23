@@ -65,8 +65,8 @@ define dso_local noundef <32 x i32> @_Z8test_andDv32_iS_(<32 x i32> noundef %a, 
 ; AIE2-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; AIE2-NEXT:    nopx // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
-; AIE2-NEXT:    vband x5, x9, x7 // Delay Slot 3
-; AIE2-NEXT:    vband x4, x8, x6 // Delay Slot 2
+; AIE2-NEXT:    vband x4, x8, x6 // Delay Slot 3
+; AIE2-NEXT:    vband x5, x9, x7 // Delay Slot 2
 ; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: _Z8test_andDv32_iS_:
@@ -75,8 +75,8 @@ define dso_local noundef <32 x i32> @_Z8test_andDv32_iS_(<32 x i32> noundef %a, 
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; AIE2P-NEXT:    nopx // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
-; AIE2P-NEXT:    vband x5, x9, x7 // Delay Slot 3
-; AIE2P-NEXT:    vband x4, x8, x6 // Delay Slot 2
+; AIE2P-NEXT:    vband x4, x8, x6 // Delay Slot 3
+; AIE2P-NEXT:    vband x5, x9, x7 // Delay Slot 2
 ; AIE2P-NEXT:    nop // Delay Slot 1
 entry:
   %and = and <32 x i32> %b, %a
@@ -140,8 +140,8 @@ define dso_local noundef <32 x i32> @_Z7test_orDv32_iS_(<32 x i32> noundef %a, <
 ; AIE2-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; AIE2-NEXT:    nopx // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
-; AIE2-NEXT:    vbor x5, x9, x7 // Delay Slot 3
-; AIE2-NEXT:    vbor x4, x8, x6 // Delay Slot 2
+; AIE2-NEXT:    vbor x4, x8, x6 // Delay Slot 3
+; AIE2-NEXT:    vbor x5, x9, x7 // Delay Slot 2
 ; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: _Z7test_orDv32_iS_:
@@ -150,8 +150,8 @@ define dso_local noundef <32 x i32> @_Z7test_orDv32_iS_(<32 x i32> noundef %a, <
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; AIE2P-NEXT:    nopx // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
-; AIE2P-NEXT:    vbor x5, x9, x7 // Delay Slot 3
-; AIE2P-NEXT:    vbor x4, x8, x6 // Delay Slot 2
+; AIE2P-NEXT:    vbor x4, x8, x6 // Delay Slot 3
+; AIE2P-NEXT:    vbor x5, x9, x7 // Delay Slot 2
 ; AIE2P-NEXT:    nop // Delay Slot 1
 entry:
   %or = or <32 x i32> %b, %a
