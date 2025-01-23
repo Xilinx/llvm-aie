@@ -24,11 +24,11 @@
 #define __SIGN_UNSIGNED 0
 #define __SIGN_SIGNED 1
 
-#include "aie2p_defines.h"
 #include "aie2p_enums.h"
 #include "aiebase_chess.h"
 #include "aiebase_typedefs.h"
 #ifdef __cplusplus
+#include "aie2p_defines.h"
 // clang-format off
 #include "aie2p_addlog.h"
 #include "aie2p_ldst.h"
