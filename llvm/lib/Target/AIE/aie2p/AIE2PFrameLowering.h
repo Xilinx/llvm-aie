@@ -27,6 +27,8 @@ public:
                              /*StackAlignment=*/Align(64)) {}
   void determineCalleeSaves(MachineFunction &MF, BitVector &SavedRegs,
                             RegScavenger *RS = nullptr) const override;
+  void processFunctionBeforeFrameFinalized(MachineFunction &MF,
+                                           RegScavenger *RS) const override;
 
 private:
   void adjustReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,

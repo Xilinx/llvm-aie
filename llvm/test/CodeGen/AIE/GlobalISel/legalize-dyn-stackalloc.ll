@@ -321,7 +321,7 @@ define  void @test_huge_stack(i32 noundef %n) #0 {
 ; AIE2P-NEXT:    st p7, [p0, dj0] // 4-byte Folded Spill
 ; AIE2P-NEXT:    mov p7, sp
 ; AIE2P-NEXT:    padda [p7], m0
-; AIE2P-NEXT:    movxm m0, #-40048
+; AIE2P-NEXT:    movxm m0, #-40040
 ; AIE2P-NEXT:    mov p0, p7
 ; AIE2P-NEXT:    mov p3, p7
 ; AIE2P-NEXT:    mov p2, p7
