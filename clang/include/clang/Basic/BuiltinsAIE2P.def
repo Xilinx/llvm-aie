@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -323,3 +323,15 @@ BUILTIN(__builtin_aie2p_divstep, "vUi&Ui&Ui", "nc")
 
 // SHUFFLE
 BUILTIN(__builtin_aie2p_vshuffle_576_bfp16, "vV64cV8cV64cV8ciV64c&V8c&", "nc")
+// Unaligned and bfp16 stores
+BUILTIN(__builtin_aie2p_fifo_st_push_576_bfp16, "vi*&V64cV8cV32i&i&", "nc")
+BUILTIN(__builtin_aie2p_fifo_st_push_512_bfp16, "vi*&V16iV32i&i&", "nc")
+BUILTIN(__builtin_aie2p_fifo_st_push_544_bfp16, "vi*&V64cV8cV32i&i&", "nc")
+BUILTIN(__builtin_aie2p_fifo_st_flush, "vi*&V32i&i&", "nc")
+BUILTIN(__builtin_aie2p_fifo_st_flush_1d_byte, "vi*&V32i&i&i", "nc")
+BUILTIN(__builtin_aie2p_fifo_st_flush_2d_byte, "vi*&V32i&i&iii&i", "nc")
+BUILTIN(__builtin_aie2p_fifo_st_flush_3d_byte, "vi*&V32i&i&iii&iii&i", "nc")
+BUILTIN(__builtin_aie2p_fifo_st_flush_conv, "vi*&V32i&i&", "nc")
+BUILTIN(__builtin_aie2p_fifo_st_flush_conv_1d_byte, "vi*&V32i&i&i", "nc")
+BUILTIN(__builtin_aie2p_fifo_st_flush_conv_2d_byte, "vi*&V32i&i&iii&i", "nc")
+BUILTIN(__builtin_aie2p_fifo_st_flush_conv_3d_byte, "vi*&V32i&i&iii&iii&i", "nc")

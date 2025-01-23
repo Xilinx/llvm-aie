@@ -5,11 +5,12 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
-// Test to check the bank annotation for AIE2, specifically the translation of __aie_dm_resource_* to the correct address space.
+// Test to check the bank annotation for AIE, specifically the translation of __aie_dm_resource_* to the correct address space.
 // RUN: %clang -O1 --target=aie2 -nostdlibinc -S -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang -O1 --target=aie2p -nostdlibinc -S -emit-llvm %s -o - | FileCheck %s
 
 // CHECK-LABEL: define dso_local noundef i32 @_Z6squarePU3AS5iS0_(
 // CHECK-SAME: ptr addrspace(5) nocapture readonly [[NUM:%.*]], ptr addrspace(5) nocapture writeonly [[MEM:%.*]]) local_unnamed_addr #[[ATTR0:[0-9]+]] {

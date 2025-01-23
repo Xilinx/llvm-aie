@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 //===----------------------------------------------------------------------===//
 //
 // This file defines all of the AIE2P-specific intrinsics.
@@ -630,5 +630,44 @@ class AIE2PSHUFFLEBFP16
       : DefaultAttrsIntrinsic<[llvm_v64i8_ty, llvm_v8i8_ty], [llvm_v64i8_ty, llvm_v8i8_ty, llvm_v64i8_ty, llvm_v8i8_ty, llvm_i32_ty],
 					 [IntrNoMem]>;
 def int_aie2p_vshuffle_576_bfp16 :  AIE2PSHUFFLEBFP16;
+
+// PUSH
+class AIE2PFIFO_ST_PUSH_576_BFP16 : Intrinsic<[llvm_ptr_ty, llvm_v32i32_ty, llvm_i32_ty],
+     [llvm_ptr_ty, llvm_v64i8_ty, llvm_v8i8_ty, llvm_v32i32_ty, llvm_i32_ty],
+     [IntrWriteMem, IntrArgMemOnly]>;
+def int_aie2p_fifo_st_push_576_bfp16: AIE2PFIFO_ST_PUSH_576_BFP16;
+def int_aie2p_fifo_st_push_544_bfp16: AIE2PFIFO_ST_PUSH_576_BFP16;
+class AIE2PFIFO_ST_PUSH_512_BFP16 : Intrinsic<[llvm_ptr_ty, llvm_v32i32_ty, llvm_i32_ty],
+     [llvm_ptr_ty, llvm_v16i32_ty, llvm_v32i32_ty, llvm_i32_ty],
+     [IntrWriteMem, IntrArgMemOnly]>;
+def int_aie2p_fifo_st_push_512_bfp16: AIE2PFIFO_ST_PUSH_512_BFP16;
+
+// FLUSH normal
+class AIE2PFIFO_ST_FLUSH : Intrinsic<[llvm_ptr_ty, llvm_v32i32_ty, llvm_i32_ty],
+     [llvm_ptr_ty, llvm_v32i32_ty, llvm_i32_ty],
+     [IntrWriteMem, IntrArgMemOnly]>;
+def int_aie2p_fifo_st_flush: AIE2PFIFO_ST_FLUSH;
+def int_aie2p_fifo_st_flush_conv: AIE2PFIFO_ST_FLUSH;
+
+// FLUSH 1D
+class AIE2PFIFO_ST_FLUSH_1D : Intrinsic<[llvm_ptr_ty, llvm_v32i32_ty, llvm_i32_ty],
+     [llvm_ptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_i20_ty],
+     [IntrWriteMem, IntrArgMemOnly]>;
+def int_aie2p_fifo_st_flush_1d: AIE2PFIFO_ST_FLUSH_1D;
+def int_aie2p_fifo_st_flush_1d_conv: AIE2PFIFO_ST_FLUSH_1D;
+
+// FLUSH 2D
+class AIE2PFIFO_ST_FLUSH_2D : Intrinsic<[llvm_ptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_i20_ty],
+     [llvm_ptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty],
+     [IntrWriteMem, IntrArgMemOnly]>;
+def int_aie2p_fifo_st_flush_2d: AIE2PFIFO_ST_FLUSH_2D;
+def int_aie2p_fifo_st_flush_2d_conv: AIE2PFIFO_ST_FLUSH_2D;
+
+// FLUSH 3D
+class AIE2PFIFO_ST_FLUSH_3D : Intrinsic<[llvm_ptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_i20_ty, llvm_i20_ty],
+     [llvm_ptr_ty, llvm_v32i32_ty, llvm_i32_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty, llvm_i20_ty],
+     [IntrWriteMem, IntrArgMemOnly]>;
+def int_aie2p_fifo_st_flush_3d: AIE2PFIFO_ST_FLUSH_3D;
+def int_aie2p_fifo_st_flush_3d_conv: AIE2PFIFO_ST_FLUSH_3D;
 
 } // TargetPrefix = "aie2p"
