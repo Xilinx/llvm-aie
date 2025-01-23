@@ -4,7 +4,9 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+
+# RUN: llc -mtriple aie2 -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s
 # RUN: llc -mtriple aie2p -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s
 
 ---
@@ -91,13 +93,13 @@ body:             |
     ; CHECK-NEXT: [[XOR:%[0-9]+]]:_(<64 x s8>) = G_XOR [[UV]], [[UV2]]
     ; CHECK-NEXT: [[XOR1:%[0-9]+]]:_(<64 x s8>) = G_XOR [[UV1]], [[UV3]]
     ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<128 x s8>) = G_CONCAT_VECTORS [[XOR]](<64 x s8>), [[XOR1]](<64 x s8>)
-    ; CHECK-NEXT: $y0 = COPY [[CONCAT_VECTORS]](<128 x s8>)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $y0
+    ; CHECK-NEXT: $y3 = COPY [[CONCAT_VECTORS]](<128 x s8>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $y3
     %1:_(<128 x s8>) = COPY $y2
     %2:_(<128 x s8>) = COPY $y4
     %0:_(<128 x s8>) = G_XOR %2, %1
-    $y0 = COPY %0(<128 x s8>)
-    PseudoRET implicit $lr, implicit $y0
+    $y3 = COPY %0(<128 x s8>)
+    PseudoRET implicit $lr, implicit $y3
 
 ...
 
@@ -141,13 +143,13 @@ body:             |
     ; CHECK-NEXT: [[XOR:%[0-9]+]]:_(<32 x s16>) = G_XOR [[UV]], [[UV2]]
     ; CHECK-NEXT: [[XOR1:%[0-9]+]]:_(<32 x s16>) = G_XOR [[UV1]], [[UV3]]
     ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<64 x s16>) = G_CONCAT_VECTORS [[XOR]](<32 x s16>), [[XOR1]](<32 x s16>)
-    ; CHECK-NEXT: $y0 = COPY [[CONCAT_VECTORS]](<64 x s16>)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $y0
+    ; CHECK-NEXT: $y3 = COPY [[CONCAT_VECTORS]](<64 x s16>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $y3
     %1:_(<64 x s16>) = COPY $y2
     %2:_(<64 x s16>) = COPY $y4
     %0:_(<64 x s16>) = G_XOR %2, %1
-    $y0 = COPY %0(<64 x s16>)
-    PseudoRET implicit $lr, implicit $y0
+    $y3 = COPY %0(<64 x s16>)
+    PseudoRET implicit $lr, implicit $y3
 
 ...
 ---
@@ -191,13 +193,13 @@ body:             |
     ; CHECK-NEXT: [[XOR:%[0-9]+]]:_(<16 x s32>) = G_XOR [[UV]], [[UV2]]
     ; CHECK-NEXT: [[XOR1:%[0-9]+]]:_(<16 x s32>) = G_XOR [[UV1]], [[UV3]]
     ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[XOR]](<16 x s32>), [[XOR1]](<16 x s32>)
-    ; CHECK-NEXT: $y0 = COPY [[CONCAT_VECTORS]](<32 x s32>)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $y0
+    ; CHECK-NEXT: $y3 = COPY [[CONCAT_VECTORS]](<32 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit $y3
     %1:_(<32 x s32>) = COPY $y2
     %2:_(<32 x s32>) = COPY $y4
     %0:_(<32 x s32>) = G_XOR %2, %1
-    $y0 = COPY %0(<32 x s32>)
-    PseudoRET implicit $lr, implicit $y0
+    $y3 = COPY %0(<32 x s32>)
+    PseudoRET implicit $lr, implicit $y3
 
 ...
 ---

@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 /// \file
@@ -70,6 +70,13 @@ static LegalityPredicate isValidVectorAIE2(const unsigned TypeIdx) {
     const LLT DstTy = Query.Types[TypeIdx];
     const unsigned DstSize = DstTy.getSizeInBits();
     return DstTy.isVector() && (DstSize == 32 || DstSize > 64);
+  };
+}
+
+static LegalityPredicate vectorSmallerThan(unsigned TypeIdx, unsigned Size) {
+  return [=](const LegalityQuery &Query) {
+    const LLT QueryTy = Query.Types[TypeIdx];
+    return QueryTy.isVector() && QueryTy.getSizeInBits() < Size;
   };
 }
 
@@ -213,17 +220,6 @@ AIE2LegalizerInfo::AIE2LegalizerInfo(const AIE2Subtarget &ST) : AIEHelper(ST) {
       .clampScalar(0, S32, S32);
   // FIXME: (s|z|any)ext s20 to s64 is broken.
 
-  getActionDefinitionsBuilder({G_AND, G_OR})
-      .legalFor({S32})
-      .legalFor(AIE2VectorTypes)
-      .widenScalarToNextPow2(0)
-      .clampScalar(0, S32, S32);
-
-  getActionDefinitionsBuilder(G_XOR)
-      .legalFor({S32})
-      .widenScalarToNextPow2(0)
-      .clampScalar(0, S32, S32);
-
   getActionDefinitionsBuilder(G_SEXT_INREG).custom();
 
   getActionDefinitionsBuilder({G_ASHR, G_LSHR, G_SHL})
@@ -250,11 +246,34 @@ AIE2LegalizerInfo::AIE2LegalizerInfo(const AIE2Subtarget &ST) : AIEHelper(ST) {
       // patterns.
       .bitcastIf(typeInSet(0, AIE2AccumulatorTypes), bitcastAccToVectorType(0));
 
-  getActionDefinitionsBuilder({G_ADD, G_SUB})
+  getActionDefinitionsBuilder({G_ADD, G_SUB, G_XOR})
       .legalFor({S32})
       .legalFor({V16S32, V32S16, V64S8})
       .widenScalarToNextPow2(0)
-      .clampScalar(0, S32, S32);
+      .clampScalar(0, S32, S32)
+      // AIE ISA supports only 512-bit vector add/sub/xor
+      .clampMaxNumElements(0, S8, 64)
+      .clampMaxNumElements(0, S16, 32)
+      .clampMaxNumElements(0, S32, 16)
+      // moreElements action could have used here, but it generate code more
+      // like scalarization. We can use G_CONCAT_VECTORS and unmerge to do this
+      // more optimally.
+      .customIf(vectorSmallerThan(0, 512));
+
+  getActionDefinitionsBuilder({G_AND, G_OR})
+      .legalFor({S32})
+      .legalFor({V16S32, V32S16, V64S8})
+      .widenScalarToNextPow2(0)
+      .clampScalar(0, S32, S32)
+      // AIE ISA supports only 512-bit vector and/or
+      .clampMaxNumElements(0, S8, 64)
+      .clampMaxNumElements(0, S16, 32)
+      .clampMaxNumElements(0, S32, 16)
+      // moreElements action could have used here, but it generate code more
+      // like scalarization. We can use G_CONCAT_VECTORS and unmerge to do this
+      // more optimally.
+      .customIf(vectorSmallerThan(0, 512))
+      .bitcastIf(typeInSet(0, AIE2AccumulatorTypes), bitcastAccToVectorType(0));
 
   // FIXME: G_SADDE/G_SSUBE doesn't support lowering. To support this properly,
   // the action needs to be implemented
@@ -546,6 +565,12 @@ bool AIE2LegalizerInfo::legalizeCustom(
     return AIEHelper.legalizeG_SEXT_INREG(Helper, MI);
   case TargetOpcode::G_BITCAST:
     return AIEHelper.legalizeG_BITCAST(Helper, MI);
+  case TargetOpcode::G_ADD:
+  case TargetOpcode::G_SUB:
+  case TargetOpcode::G_XOR:
+  case TargetOpcode::G_AND:
+  case TargetOpcode::G_OR:
+    return AIEHelper.legalizeBinOp(Helper, MI);
   }
 
   llvm_unreachable("Un-expected custom legalization");

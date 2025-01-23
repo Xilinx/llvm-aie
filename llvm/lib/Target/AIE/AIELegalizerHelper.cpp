@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 /// \file
@@ -1306,7 +1306,9 @@ bool AIELegalizerHelper::legalizeBinOp(LegalizerHelper &Helper,
                                        MachineInstr &MI) const {
   assert(MI.getOpcode() == TargetOpcode::G_ADD ||
          MI.getOpcode() == TargetOpcode::G_SUB ||
-         MI.getOpcode() == TargetOpcode::G_XOR);
+         MI.getOpcode() == TargetOpcode::G_XOR ||
+         MI.getOpcode() == TargetOpcode::G_AND ||
+         MI.getOpcode() == TargetOpcode::G_OR);
 
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
   MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
@@ -1314,40 +1316,41 @@ bool AIELegalizerHelper::legalizeBinOp(LegalizerHelper &Helper,
   const Register DstReg = MI.getOperand(0).getReg();
   const LLT DstTy = MRI.getType(DstReg);
   const auto VectorSize = DstTy.getSizeInBits();
+
   assert(DstTy.isVector() && VectorSize < 512 &&
          "Expected vector size less than 512-bits");
   assert(!(512 % VectorSize) && "Vector size should be a multiple of 512");
 
   const Register Src1Reg = MI.getOperand(1).getReg();
   const Register Src2Reg = MI.getOperand(2).getReg();
+
   assert(DstTy == MRI.getType(Src1Reg));
-  Register UndefReg = MRI.createGenericVirtualRegister(DstTy);
-  MIRBuilder.buildUndef(UndefReg);
 
   auto NewVecTy = LLT::fixed_vector(
       512 / DstTy.getElementType().getSizeInBits(), DstTy.getElementType());
-  Register NewDstReg = MRI.createGenericVirtualRegister(NewVecTy);
-  Register NewSrc1Reg = MRI.createGenericVirtualRegister(NewVecTy);
-  Register NewSrc2Reg = MRI.createGenericVirtualRegister(NewVecTy);
 
-  unsigned NumberOfPadElts = (512 / VectorSize) - 1;
-  SmallVector<Register, 8> Regs;
+  const Register UndefReg = MRI.createGenericVirtualRegister(DstTy);
+  MIRBuilder.buildUndef(UndefReg);
 
-  Regs.push_back(Src1Reg);
-  for (unsigned i = 0; i < NumberOfPadElts; ++i)
-    Regs.push_back(UndefReg);
-  MIRBuilder.buildMergeLikeInstr(NewSrc1Reg, Regs);
+  const unsigned NumberOfPadElts = (512 / VectorSize) - 1;
+  auto buildMergeInstr = [&](const Register SrcReg) -> Register {
+    SmallVector<Register, 4> Regs;
+    Regs.push_back(SrcReg);
+    for (unsigned i = 0; i < NumberOfPadElts; i++)
+      Regs.push_back(UndefReg);
+    const Register NewSrcReg = MRI.createGenericVirtualRegister(NewVecTy);
+    MIRBuilder.buildMergeLikeInstr(NewSrcReg, Regs);
+    return NewSrcReg;
+  };
 
-  Regs.clear();
-  Regs.push_back(Src2Reg);
-  for (unsigned i = 0; i < NumberOfPadElts; ++i)
-    Regs.push_back(UndefReg);
-  MIRBuilder.buildMergeLikeInstr(NewSrc2Reg, Regs);
+  const Register NewSrc1Reg = buildMergeInstr(Src1Reg);
+  const Register NewSrc2Reg = buildMergeInstr(Src2Reg);
 
+  const Register NewDstReg = MRI.createGenericVirtualRegister(NewVecTy);
   MIRBuilder.buildInstr(MI.getOpcode(), {NewDstReg}, {NewSrc1Reg, NewSrc2Reg},
                         MI.getFlags());
 
-  Regs.clear();
+  SmallVector<Register, 4> Regs;
   Regs.push_back(DstReg);
   for (unsigned i = 0; i < NumberOfPadElts; ++i)
     Regs.push_back(MRI.createGenericVirtualRegister(DstTy));

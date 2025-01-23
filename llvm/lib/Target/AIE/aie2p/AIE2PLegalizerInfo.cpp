@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 /// \file
@@ -252,12 +252,6 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
       .clampScalar(0, S32, S32);
   // FIXME: (s|z|any)ext s20 to s64 is broken.
 
-  getActionDefinitionsBuilder({G_AND, G_OR})
-      .legalFor({S32})
-      .legalFor(AIE2PVectorTypes)
-      .widenScalarToNextPow2(0)
-      .clampScalar(0, S32, S32);
-
   getActionDefinitionsBuilder(G_SEXT_INREG).custom();
 
   getActionDefinitionsBuilder({G_ASHR, G_LSHR, G_SHL})
@@ -305,7 +299,7 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
       .legalFor({V16S32, V32S16, V64S8})
       .widenScalarToNextPow2(0)
       .clampScalar(0, S32, S32)
-      // AIE ISA supports only 512-bit vector add/sub/xor
+      // AIE ISA supports only 512-bit vector add/sub/xor/and/or
       .clampMaxNumElements(0, S8, 64)
       .clampMaxNumElements(0, S16, 32)
       .clampMaxNumElements(0, S32, 16)
@@ -313,6 +307,22 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
       // like scalarization. We can use G_CONCAT_VECTORS and unmerge to do this
       // more optimally.
       .customIf(vectorSmallerThan(0, 512));
+
+  getActionDefinitionsBuilder({G_AND, G_OR})
+      .legalFor({S32})
+      .legalFor({V16S32, V32S16, V64S8})
+      .widenScalarToNextPow2(0)
+      .clampScalar(0, S32, S32)
+      // AIE ISA supports only 512-bit vector and/or
+      .clampMaxNumElements(0, S8, 64)
+      .clampMaxNumElements(0, S16, 32)
+      .clampMaxNumElements(0, S32, 16)
+      // moreElements action could have used here, but it generate code more
+      // like scalarization. We can use G_CONCAT_VECTORS and unmerge to do this
+      // more optimally.
+      .customIf(vectorSmallerThan(0, 512))
+      .bitcastIf(typeInSet(0, {AccV4S64, AccV8S64, AccV16S64}),
+                 bitcastAccToVectorType(0));
 
   // FIXME: G_SADDE/G_SSUBE doesn't support lowering. To support this properly,
   // the action needs to be implemented
@@ -668,6 +678,8 @@ bool AIE2PLegalizerInfo::legalizeCustom(
   case TargetOpcode::G_ADD:
   case TargetOpcode::G_SUB:
   case TargetOpcode::G_XOR:
+  case TargetOpcode::G_AND:
+  case TargetOpcode::G_OR:
     return AIEHelper.legalizeBinOp(Helper, MI);
   }
   llvm_unreachable("Un-expected custom legalization");

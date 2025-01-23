@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2 -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s
 # RUN: llc -mtriple aie2p -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s
 
@@ -172,14 +172,39 @@ body:             |
     ; CHECK-LABEL: name: or_vec_256
     ; CHECK: [[COPY:%[0-9]+]]:_(<32 x s8>) = COPY $wl0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<32 x s8>) = COPY $wh3
-    ; CHECK-NEXT: [[OR:%[0-9]+]]:_(<32 x s8>) = G_OR [[COPY]], [[COPY1]]
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[OR]](<32 x s8>)
+    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<32 x s8>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[COPY]](<32 x s8>), [[DEF]](<32 x s8>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[COPY1]](<32 x s8>), [[DEF]](<32 x s8>)
+    ; CHECK-NEXT: [[OR:%[0-9]+]]:_(<64 x s8>) = G_OR [[CONCAT_VECTORS]], [[CONCAT_VECTORS1]]
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<32 x s8>), [[UV1:%[0-9]+]]:_(<32 x s8>) = G_UNMERGE_VALUES [[OR]](<64 x s8>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[UV]](<32 x s8>)
     %0:_(<32 x s8>) = COPY $wl0
     %1:_(<32 x s8>) = COPY $wh3
     %2:_(<32 x s8>) = G_OR %0(<32 x s8>), %1(<32 x s8>)
     PseudoRET implicit $lr, implicit %2
 ...
 
+---
+name:            or_vec_4xs64
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: or_vec_4xs64
+    ; CHECK: [[COPY:%[0-9]+]]:_(<4 x s64>) = COPY $wh0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<4 x s64>) = COPY $wh1
+    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<4 x s64>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[COPY]](<4 x s64>), [[DEF]](<4 x s64>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[COPY1]](<4 x s64>), [[DEF]](<4 x s64>)
+    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[CONCAT_VECTORS]](<8 x s64>)
+    ; CHECK-NEXT: [[BITCAST1:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[CONCAT_VECTORS1]](<8 x s64>)
+    ; CHECK-NEXT: [[OR:%[0-9]+]]:_(<16 x s32>) = G_OR [[BITCAST]], [[BITCAST1]]
+    ; CHECK-NEXT: [[BITCAST2:%[0-9]+]]:_(<8 x s64>) = G_BITCAST [[OR]](<16 x s32>)
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<4 x s64>), [[UV1:%[0-9]+]]:_(<4 x s64>) = G_UNMERGE_VALUES [[BITCAST2]](<8 x s64>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[UV]](<4 x s64>)
+    %0:_(<4 x s64>) = COPY $wh0
+    %1:_(<4 x s64>) = COPY $wh1
+    %2:_(<4 x s64>) = G_OR %0(<4 x s64>), %1(<4 x s64>)
+    PseudoRET implicit $lr, implicit %2
+...
 
 ---
 name:            or_vec_512
@@ -197,16 +222,60 @@ body:             |
 ...
 
 ---
+name:            or_vec_8xs64
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: or_vec_8xs64
+    ; CHECK: [[COPY:%[0-9]+]]:_(<8 x s64>) = COPY $x0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<8 x s64>) = COPY $x1
+    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[COPY]](<8 x s64>)
+    ; CHECK-NEXT: [[BITCAST1:%[0-9]+]]:_(<16 x s32>) = G_BITCAST [[COPY1]](<8 x s64>)
+    ; CHECK-NEXT: [[OR:%[0-9]+]]:_(<16 x s32>) = G_OR [[BITCAST]], [[BITCAST1]]
+    ; CHECK-NEXT: [[BITCAST2:%[0-9]+]]:_(<8 x s64>) = G_BITCAST [[OR]](<16 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[BITCAST2]](<8 x s64>)
+    %0:_(<8 x s64>) = COPY $x0
+    %1:_(<8 x s64>) = COPY $x1
+    %2:_(<8 x s64>) = G_OR %0(<8 x s64>), %1(<8 x s64>)
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
 name:            or_vec_1024
 body:             |
   bb.1.entry:
     ; CHECK-LABEL: name: or_vec_1024
     ; CHECK: [[COPY:%[0-9]+]]:_(<64 x s16>) = COPY $y5
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<64 x s16>) = COPY $y2
-    ; CHECK-NEXT: [[OR:%[0-9]+]]:_(<64 x s16>) = G_OR [[COPY]], [[COPY1]]
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[OR]](<64 x s16>)
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<32 x s16>), [[UV1:%[0-9]+]]:_(<32 x s16>) = G_UNMERGE_VALUES [[COPY]](<64 x s16>)
+    ; CHECK-NEXT: [[UV2:%[0-9]+]]:_(<32 x s16>), [[UV3:%[0-9]+]]:_(<32 x s16>) = G_UNMERGE_VALUES [[COPY1]](<64 x s16>)
+    ; CHECK-NEXT: [[OR:%[0-9]+]]:_(<32 x s16>) = G_OR [[UV]], [[UV2]]
+    ; CHECK-NEXT: [[OR1:%[0-9]+]]:_(<32 x s16>) = G_OR [[UV1]], [[UV3]]
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<64 x s16>) = G_CONCAT_VECTORS [[OR]](<32 x s16>), [[OR1]](<32 x s16>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<64 x s16>)
     %0:_(<64 x s16>) = COPY $y5
     %1:_(<64 x s16>) = COPY $y2
     %2:_(<64 x s16>) = G_OR %0(<64 x s16>), %1(<64 x s16>)
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
+name:            or_vec_16xs64
+body:             |
+  bb.1.entry:
+    ; CHECK-LABEL: name: or_vec_16xs64
+    ; CHECK: [[COPY:%[0-9]+]]:_(<16 x s64>) = COPY $y2
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<16 x s64>) = COPY $y3
+    ; CHECK-NEXT: [[BITCAST:%[0-9]+]]:_(<32 x s32>) = G_BITCAST [[COPY]](<16 x s64>)
+    ; CHECK-NEXT: [[BITCAST1:%[0-9]+]]:_(<32 x s32>) = G_BITCAST [[COPY1]](<16 x s64>)
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<16 x s32>), [[UV1:%[0-9]+]]:_(<16 x s32>) = G_UNMERGE_VALUES [[BITCAST]](<32 x s32>)
+    ; CHECK-NEXT: [[UV2:%[0-9]+]]:_(<16 x s32>), [[UV3:%[0-9]+]]:_(<16 x s32>) = G_UNMERGE_VALUES [[BITCAST1]](<32 x s32>)
+    ; CHECK-NEXT: [[OR:%[0-9]+]]:_(<16 x s32>) = G_OR [[UV]], [[UV2]]
+    ; CHECK-NEXT: [[OR1:%[0-9]+]]:_(<16 x s32>) = G_OR [[UV1]], [[UV3]]
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s32>) = G_CONCAT_VECTORS [[OR]](<16 x s32>), [[OR1]](<16 x s32>)
+    ; CHECK-NEXT: [[BITCAST2:%[0-9]+]]:_(<16 x s64>) = G_BITCAST [[CONCAT_VECTORS]](<32 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[BITCAST2]](<16 x s64>)
+    %0:_(<16 x s64>) = COPY $y2
+    %1:_(<16 x s64>) = COPY $y3
+    %2:_(<16 x s64>) = G_OR %0(<16 x s64>), %1(<16 x s64>)
     PseudoRET implicit $lr, implicit %2
 ...
