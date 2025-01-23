@@ -156,8 +156,8 @@ bool AIE2PRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     // need to use offsets using registers.
 
     // NOTE: Although the register scavenger can often find a spare register, an
-    // emergency spill slot might be needed to guarantee success. AIE might need
-    // to impliment `processFunctionBeforeFrameFinalized`
+    // emergency spill slot might be needed to guarantee success. AIE reserves
+    // an emergency slot in `processFunctionBeforeFrameFinalized`
 
     // Note that LDB path does not support SPILL instructions
 
