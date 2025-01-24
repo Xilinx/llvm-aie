@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -115,33 +115,6 @@ class SelectPat<ValueType type> :
           (SELNEZ eR:$rs2, eR:$rs3, eR27:$rs1)>;
 def : SelectPat<ptr0>;
 def : SelectPat<i32>;
-
-// For vector select, VSEL instruction is used, since it does select word by word
-// sel input is modified, "sel ? v1 : v2 is equivalent to vsel(sel-1, v1, v2)"
-// rs1(sel) is zero-extended from the original 1 bit type
-foreach vec256Ty = [v32i8, v16i16, v8i32] in {
-def : Pat<(vec256Ty (select (i32 eRS8:$rs1), VEC256:$rs2, VEC256:$rs3)),
-          (vec256Ty (EXTRACT_SUBREG (VSEL_32
-                     (v32i16 (REG_SEQUENCE VEC512, VEC256:$rs2, sub_256_lo)),
-                     (v32i16 (REG_SEQUENCE VEC512, VEC256:$rs3, sub_256_lo)),
-                     (ADD_add_r_ri eR:$rs1, (i32 -1))),
-                   sub_256_lo))>;
-}
-foreach vec512Ty = [v64i8, v32i16, v16i32] in {
-  def : Pat<(vec512Ty (select (i32 eRS8:$rs1), VEC512:$rs2, VEC512:$rs3)),
-            (vec512Ty (VSEL_32 VEC512:$rs2, VEC512:$rs3, (ADD_add_r_ri eR:$rs1, (i32 -1))))>;
-}
-foreach vec1024Ty = [v128i8, v64i16, v32i32] in {
-def : Pat<(vec1024Ty (select (i32 eRS8:$rs1), VEC1024:$rs2, VEC1024:$rs3)),
-          (REG_SEQUENCE VEC1024,
-             (VSEL_32 (v16i32 (EXTRACT_SUBREG VEC1024:$rs2, sub_512_lo)),
-                      (v16i32 (EXTRACT_SUBREG VEC1024:$rs3, sub_512_lo)),
-                      (ADD_add_r_ri eR:$rs1, (i32 -1))), sub_512_lo,
-             (VSEL_32 (v16i32 (EXTRACT_SUBREG VEC1024:$rs2, sub_512_hi)),
-                      (v16i32 (EXTRACT_SUBREG VEC1024:$rs3, sub_512_hi)),
-                      (ADD_add_r_ri eR:$rs1, (i32 -1))), sub_512_hi
-          )>;
-}
 
 class SelectNezPat<ValueType type> :
          Pat<(type (select (i32 (setne eR27:$rs1, (i32 0))), (type eR:$rs2), (type eR:$rs3))),
