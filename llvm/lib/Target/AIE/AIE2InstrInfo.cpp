@@ -18,6 +18,7 @@
 #include "AIE2RegisterInfo.h"
 #include "AIE2Subtarget.h"
 #include "AIE2TargetMachine.h"
+#include "AIEBaseInstrInfo.h"
 #include "AIEHazardRecognizer.h"
 #include "AIEMachineFunctionInfo.h"
 #include "AIEMachineScheduler.h"
@@ -1387,31 +1388,20 @@ bool AIE2InstrInfo::isHardwareLoopJNZ(unsigned Opcode) const {
   return Opcode == AIE2::LoopJNZ;
 }
 
-bool AIE2InstrInfo::isHardwareLoopStart(unsigned Opcode) const {
-  return Opcode == AIE2::LoopStart;
-}
+std::optional<AIEBaseInstrInfo::ZOLSupport>
+AIE2InstrInfo::getZOLSupport() const {
+  AIEBaseInstrInfo::ZOLSupport Result;
 
-bool AIE2InstrInfo::isHardwareLoopEnd(unsigned Opcode) const {
-  return Opcode == AIE2::PseudoLoopEnd;
-}
+  Result.LoopStartOpcode = AIE2::LoopStart;
+  Result.LoopEndOpcode = AIE2::PseudoLoopEnd;
+  Result.SetLoopCountOpcode = AIE2::ADD_NC;
+  Result.SetAddressOpcode = AIE2::MOVXM_lng_cg;
+  Result.LoopSetupDistance = 7;
+  Result.LCRegister = AIE2::LC;
+  Result.LSRegister = AIE2::LS;
+  Result.LERegister = AIE2::LE;
 
-bool AIE2InstrInfo::isZOLTripCountDef(const MachineInstr &MI,
-                                      bool Pristine) const {
-  return MI.getOpcode() == AIE2::ADD_NC &&
-         MI.getOperand(0).getReg() == AIE2::LC &&
-         (!Pristine || MI.getOperand(2).getImm() == 0);
-}
-
-void AIE2InstrInfo::adjustTripCount(MachineInstr &MI, int Adjustment) const {
-  assert(isZOLTripCountDef(MI));
-  auto &Imm = MI.getOperand(2);
-  Imm.setImm(Imm.getImm() + Adjustment);
-}
-
-bool AIE2InstrInfo::isZeroOverheadLoopSetupInstr(const MachineInstr &MI) const {
-  return isZOLTripCountDef(MI) || (MI.getOpcode() == AIE2::MOVXM_lng_cg &&
-                                   (MI.getOperand(0).getReg() == AIE2::LS ||
-                                    MI.getOperand(0).getReg() == AIE2::LE));
+  return Result;
 }
 
 unsigned AIE2InstrInfo::getPseudoJNZDOpcode() const { return AIE2::PseudoJNZD; }

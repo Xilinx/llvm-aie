@@ -32,6 +32,30 @@ namespace llvm {
 struct AIEBaseInstrInfo : public TargetInstrInfo {
   using TargetInstrInfo::TargetInstrInfo;
 
+  // This codifies the model of ZeroOverheadLoops
+  class ZOLSupport {
+  public:
+    // Pseudo opcodes.
+    // LoopStart defines the iteration count.
+    // It has an explicit second operand that represents the adjustment
+    // that swp applies.
+    unsigned LoopStartOpcode;
+    // LoopEnd holds the branch target and the address of the last bundle.
+    unsigned LoopEndOpcode;
+    // Opcodes and registers to use when lowering the above pseudos
+    // SetLoopCount has the same operands as LoopStart.
+    unsigned SetLoopCountOpcode;
+    Register LCRegister;
+
+    // SetAddress takes an address and writes it to a loop register
+    unsigned SetAddressOpcode;
+    Register LSRegister;
+    Register LERegister;
+    // The distance between setup and the start of the loop, in units
+    // of bundles.
+    unsigned LoopSetupDistance;
+  };
+
   /// Return the opcode for a return instruction
   virtual unsigned getReturnOpcode() const {
     llvm_unreachable("Target didn't implement getReturnOpcode");
@@ -227,35 +251,31 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   // Opcodes related to hardware loop handling
   virtual bool isHardwareLoopDec(unsigned Opcode) const { return false; }
   virtual bool isHardwareLoopJNZ(unsigned Opcode) const { return false; }
-  virtual bool isHardwareLoopStart(unsigned Opcode) const { return false; }
-  virtual bool isHardwareLoopEnd(unsigned Opcode) const { return false; }
+  virtual bool isHardwareLoopStart(unsigned Opcode) const;
+  virtual bool isHardwareLoopEnd(unsigned Opcode) const;
 
+  // All opcodes etc used for ZOL lowering. If this returns none, we have no
+  // ZOL support.
+  virtual std::optional<ZOLSupport> getZOLSupport() const { return {}; }
   /// Check whether \p MI defines the ZOL tripcount. If this returns true, \p MI
   /// should be suitable for calling adjustTripCount on it.
   /// If \p Pristine is set, we check that it wasn't updated before.
   virtual bool isZOLTripCountDef(const MachineInstr &MI,
-                                 bool Pristine = false) const {
-    return false;
-  }
+                                 bool Pristine = false) const;
 
   /// Lower the tripcount defined by MI with Update, which is a small
   /// negative integer that should be added to the tripcount
   /// \pre isZOLTripCountDef(MI)
-  virtual void adjustTripCount(MachineInstr &MI, int Update) const {
-    llvm_unreachable("adjustTripCount should have been overridden");
-  }
+  virtual void adjustTripCount(MachineInstr &MI, int Update) const;
 
   /// Check whether this is a zero-overhead loop start block
-  virtual bool isZeroOverheadLoopSetupInstr(const MachineInstr &) const {
-    return false;
-  }
+  virtual bool isZeroOverheadLoopSetupInstr(const MachineInstr &) const;
 
   // Return number of fully-expanded 128-bit instructions, the distance
   // which needs to be maintained between writing zero-overhead
   // registers(lc, le, ls, etc.) and the end of the loop,
-  virtual unsigned getLoopSetupDistance() const {
-    llvm_unreachable("Implement this Function for Zero-Overhead Loops.");
-  }
+  virtual unsigned getLoopSetupDistance() const;
+
   // Return the vector of Alignment Region Boundaries.
   virtual std::vector<MachineBasicBlock::iterator>
   getAlignmentBoundaries(MachineBasicBlock &MBB) const;

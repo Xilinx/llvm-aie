@@ -353,19 +353,24 @@ void AIEBaseHardwareLoops::expandLoopStart(LowOverheadLoop &LoLoop) {
   MachineBasicBlock *MBB = Start->getParent();
   LLVM_DEBUG(dbgs() << "AIE Loops: ZOL loop. Expanding LoopStart.\n");
 
+  auto LoweringData = TII->getZOLSupport();
+  assert(LoweringData);
+
   // LoopStart carries an immediate operand that is dedicated to the tripcount
   // update of the pipeliner. We translate to ADD_NC, which has a similar
   // operand.
-  BuildMI(*MBB, Start, Start->getDebugLoc(), TII->get(AIE2::ADD_NC), AIE2::LC)
+  BuildMI(*MBB, Start, Start->getDebugLoc(),
+          TII->get(LoweringData->SetLoopCountOpcode), LoweringData->LCRegister)
       .addReg(Start->getOperand(0).getReg())
       .addImm(Start->getOperand(1).getImm());
 
-  BuildMI(*MBB, Start, Start->getDebugLoc(), TII->get(AIE2::MOVXM_lng_cg),
-          AIE2::LS)
+  BuildMI(*MBB, Start, Start->getDebugLoc(),
+          TII->get(LoweringData->SetAddressOpcode), LoweringData->LSRegister)
       .addMBB(LoLoop.LoopEnd->getOperand(1).getMBB());
   MachineInstrBuilder MIB;
-  MIB = BuildMI(*MBB, Start, Start->getDebugLoc(), TII->get(AIE2::MOVXM_lng_cg),
-                AIE2::LE)
+  MIB = BuildMI(*MBB, Start, Start->getDebugLoc(),
+                TII->get(LoweringData->SetAddressOpcode),
+                LoweringData->LERegister)
             .addSym(LoLoop.LoopEnd->getOperand(0).getMCSymbol());
   MachineInstr *MI = MIB.getInstr();
   MI->getOperand(1).ChangeToMCSymbol(
