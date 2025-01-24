@@ -13,31 +13,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "AIE2TargetMachine.h"
-#include "AIE.h"
-#include "AIE2.h"
 #include "AIE2TargetTransformInfo.h"
-#include "AIEBaseAliasAnalysis.h"
 #include "AIEDumpArtifacts.h"
-#include "AIEFinalizeBundle.h"
-#include "AIEMachineAlignment.h"
 #include "AIEMachineBlockPlacement.h"
 #include "AIEMachineFunctionInfo.h"
-#include "AIETargetObjectFile.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/GlobalISel/IRTranslator.h"
 #include "llvm/CodeGen/GlobalISel/InstructionSelect.h"
-#include "llvm/CodeGen/GlobalISel/Legalizer.h"
-#include "llvm/CodeGen/GlobalISel/RegBankSelect.h"
-#include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
-#include "llvm/CodeGen/TargetPassConfig.h"
-#include "llvm/IR/LegacyPassManager.h"
-#include "llvm/InitializePasses.h"
-#include "llvm/MC/TargetRegistry.h"
-#include "llvm/PassRegistry.h"
-#include "llvm/Support/FormattedStream.h"
-#include "llvm/Target/TargetOptions.h"
-#include "llvm/Transforms/Scalar.h"
 
 using namespace llvm;
 
@@ -58,10 +40,7 @@ static cl::opt<unsigned> StackAddrSpace(
     cl::desc("Specify the addrspace where the stack is allocated "
              "(5: Bank A, 6: Bank B, 7: Bank C, 8: Bank D)"));
 
-static cl::opt<bool> EnableAddressChaining("aie-address-chaining", cl::Hidden,
-                                           cl::init(true),
-                                           cl::desc("Enable ptradd chaining."));
-
+extern cl::opt<bool> EnableAddressChaining;
 extern cl::opt<bool> EnableStagedRA;
 extern cl::opt<bool> EnableSuperRegSplitting;
 extern cl::opt<bool> AllocateMRegsFirst;

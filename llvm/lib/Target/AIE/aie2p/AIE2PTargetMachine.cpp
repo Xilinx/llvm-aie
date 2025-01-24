@@ -21,6 +21,7 @@ extern cl::opt<bool> EnableStagedRA;
 extern cl::opt<bool> EnableSuperRegSplitting;
 extern cl::opt<bool> AllocateMRegsFirst;
 extern cl::opt<bool> EnablePreMISchedCoalescer;
+extern cl::opt<bool> EnableAddressChaining;
 
 void AIE2PTargetMachine::anchor() {}
 
@@ -58,7 +59,8 @@ void AIE2PPassConfig::addPreLegalizeMachineIR() {
 void AIE2PPassConfig::addPreRegBankSelect() {
   if (getOptLevel() != CodeGenOptLevel::None) {
     addPass(createAIE2PPostLegalizerGenericCombiner());
-    addPass(createAIEClusterBaseAddress());
+    if (EnableAddressChaining)
+      addPass(createAIEClusterBaseAddress());
     addPass(createAIE2PPostLegalizerCustomCombiner());
   }
 }

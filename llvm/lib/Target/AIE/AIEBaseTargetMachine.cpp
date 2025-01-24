@@ -69,6 +69,10 @@ static cl::list<std::string>
                      cl::Hidden, cl::list_init<std::string>({"main"}),
                      cl::CommaSeparated);
 
+cl::opt<bool> EnableAddressChaining("aie-address-chaining", cl::Hidden,
+                                    cl::init(true),
+                                    cl::desc("Enable ptradd chaining."));
+
 cl::opt<bool>
     EnableStagedRA("aie-staged-ra", cl::Hidden, cl::init(true),
                    cl::desc("Enable multi-stage register allocation"));
