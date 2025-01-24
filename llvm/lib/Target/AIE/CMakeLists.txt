@@ -145,6 +145,7 @@ add_llvm_target(AIECodeGen
    AIEWawRegRewriter.cpp
    aie2p/AIE2PSubtarget.cpp
    aie2p/AIE2PTargetMachine.cpp
+   aie2p/AIE2PTargetTransformInfo.cpp
    aie2p/AIE2PRegisterInfo.cpp
    aie2p/AIE2PLegalizerInfo.cpp
    aie2p/AIE2PInstrInfo.cpp
