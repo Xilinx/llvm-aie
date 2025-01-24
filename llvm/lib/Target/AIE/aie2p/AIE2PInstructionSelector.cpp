@@ -103,6 +103,7 @@ public:
   bool select1024BitG_AIE_LOAD_STORE(MachineInstr &I, LoadStoreOpcodes &LSO,
                                      AddressingModeInfo &AMI,
                                      MachineRegisterInfo &MRI);
+  bool selectG_AIE_STORE_PACK(MachineInstr &StoreI, MachineRegisterInfo &MRI);
   bool selectSetI128(MachineInstr &I, MachineOperand &DstReg,
                      MachineOperand &SrcReg, MachineRegisterInfo &MRI);
   bool selectExtractI128(MachineInstr &I, Register DstReg, Register SrcReg,
@@ -130,6 +131,11 @@ private:
                           std::optional<APInt> Immediate, bool IsSigned);
   bool canCombineUPS(MachineInstr &LoadOp, MachineInstr &UPSI,
                      MachineRegisterInfo &MRI);
+  std::optional<LoadStoreOpcodes>
+  getCombinedOpcodePACK(const MachineInstr &MemOp, const MachineInstr &CombOp,
+                        std::optional<APInt> Immediate, bool IsSigned);
+  bool canCombinePACK(MachineInstr &MemOp, MachineInstr &CombOp,
+                      MachineRegisterInfo &MRI);
 
   const AIE2PInstrInfo &TII;
   const AIE2PRegisterInfo &TRI;
@@ -2377,8 +2383,8 @@ bool AIE2PInstructionSelector::selectG_AIE_LOAD_STORE(
     MachineInstr &I, MachineRegisterInfo &MRI) {
 
   // First try to match CONV, SRS and PACK combine
-  if (selectG_AIE_STORE_CONV(I, MRI) /*|| selectG_AIE_STORE_SRS(I, MRI) ||
-      selectG_AIE_STORE_PACK(I, MRI)*/)
+  if (selectG_AIE_STORE_CONV(I, MRI) /*|| selectG_AIE_STORE_SRS(I, MRI)*/ ||
+      selectG_AIE_STORE_PACK(I, MRI))
     return true;
 
   std::optional<AddressingModeInfo> AMI = getOrDefineAddressingRegister(I, MRI);
@@ -2490,6 +2496,285 @@ AIE2PInstructionSelector::getCombinedOpcodeCONVLoad(
          "Unexpected VLDA.CONV size");
 
   return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange, /*OffsetOpcode=*/{}};
+}
+
+std::optional<LoadStoreOpcodes> AIE2PInstructionSelector::getCombinedOpcodePACK(
+    const MachineInstr &MemOp, const MachineInstr &CombOp,
+    std::optional<APInt> Immediate, bool IsSigned) {
+  if (CombOp.getOpcode() != AIE2P::G_INTRINSIC_W_SIDE_EFFECTS)
+    return {};
+
+  auto CombOpIntrinsicID = cast<GIntrinsic>(CombOp).getIntrinsicID();
+  if (CombOpIntrinsicID != Intrinsic::aie2p_pack_I512_I8_I16 &&
+      CombOpIntrinsicID != Intrinsic::aie2p_pack_I512_I4_I8 &&
+      CombOpIntrinsicID != Intrinsic::aie2p_pack_I1024_I8_I16 &&
+      CombOpIntrinsicID != Intrinsic::aie2p_pack_I1024_I4_I8)
+    return {};
+
+  assert((getLoadStoreSize(MemOp) == 256 || getLoadStoreSize(MemOp) == 512) &&
+         "Unexpected VST.PACK size");
+
+  unsigned ISelOpcode;
+  const bool AlwaysFitsImmediateRange = true;
+  bool FitsImmediateRange = false;
+  const bool NoImmediate = false;
+
+  if (IsSigned) {
+    switch (MemOp.getOpcode()) {
+    case AIE2P::G_STORE:
+      switch (CombOpIntrinsicID) {
+      case Intrinsic::aie2p_pack_I512_I8_I16:
+      case Intrinsic::aie2p_pack_I512_I4_I8:
+        return LoadStoreOpcodes{
+            /*ISelOpcode=*/AIE2P::VST_PACK_dmw_sts_pack_idx_imm_packSign1,
+            AlwaysFitsImmediateRange, /*OffsetOpcode=*/{}};
+      case Intrinsic::aie2p_pack_I1024_I8_I16:
+      case Intrinsic::aie2p_pack_I1024_I4_I8:
+        return LoadStoreOpcodes{
+            /*ISelOpcode=*/AIE2P::VST_PACK_dmx_sts_pack_idx_imm_packSign1,
+            AlwaysFitsImmediateRange, /*OffsetOpcode=*/{}};
+      }
+    case AIE2P::G_AIE_OFFSET_STORE:
+      switch (CombOpIntrinsicID) {
+      case Intrinsic::aie2p_pack_I512_I8_I16:
+      case Intrinsic::aie2p_pack_I512_I4_I8:
+        FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
+        ISelOpcode = FitsImmediateRange
+                         ? AIE2P::VST_PACK_dmw_sts_pack_idx_imm_packSign1
+                         : AIE2P::VST_PACK_dmw_sts_pack_idx_packSign1;
+        return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
+                                /*OffsetOpcode=*/{}};
+      case Intrinsic::aie2p_pack_I1024_I8_I16:
+      case Intrinsic::aie2p_pack_I1024_I4_I8:
+        FitsImmediateRange = checkImmediateRange<4, 64>(Immediate);
+        ISelOpcode = FitsImmediateRange
+                         ? AIE2P::VST_PACK_dmx_sts_pack_idx_imm_packSign1
+                         : AIE2P::VST_PACK_dmx_sts_pack_idx_packSign1;
+        return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
+                                /*OffsetOpcode=*/{}};
+      }
+    case AIE2P::G_AIE_POSTINC_STORE:
+      switch (CombOpIntrinsicID) {
+      case Intrinsic::aie2p_pack_I512_I8_I16:
+      case Intrinsic::aie2p_pack_I512_I4_I8:
+        FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
+        ISelOpcode = FitsImmediateRange
+                         ? AIE2P::VST_PACK_dmw_sts_pack_pstm_nrm_imm_packSign1
+                         : AIE2P::VST_PACK_dmw_sts_pack_pstm_nrm_packSign1;
+        return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
+                                /*OffsetOpcode=*/{}};
+      case Intrinsic::aie2p_pack_I1024_I8_I16:
+      case Intrinsic::aie2p_pack_I1024_I4_I8:
+        FitsImmediateRange = checkImmediateRange<4, 64>(Immediate);
+        ISelOpcode = FitsImmediateRange
+                         ? AIE2P::VST_PACK_dmx_sts_pack_pstm_nrm_imm_packSign1
+                         : AIE2P::VST_PACK_dmx_sts_pack_pstm_nrm_packSign1;
+        return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
+                                /*OffsetOpcode=*/{}};
+      }
+    case AIE2P::G_AIE_POSTINC_2D_STORE:
+      switch (CombOpIntrinsicID) {
+      case Intrinsic::aie2p_pack_I512_I8_I16:
+      case Intrinsic::aie2p_pack_I512_I4_I8:
+        return LoadStoreOpcodes{
+            /*ISelOpcode=*/AIE2P::VST_2D_PACK_dmw_sts_pack_packSign1,
+            NoImmediate,
+            /*OffsetOpcode=*/{}};
+      case Intrinsic::aie2p_pack_I1024_I8_I16:
+      case Intrinsic::aie2p_pack_I1024_I4_I8:
+        return LoadStoreOpcodes{
+            /*ISelOpcode=*/AIE2P::VST_2D_PACK_dmx_sts_pack_packSign1,
+            NoImmediate,
+            /*OffsetOpcode=*/{}};
+      }
+    case AIE2P::G_AIE_POSTINC_3D_STORE:
+      switch (CombOpIntrinsicID) {
+      case Intrinsic::aie2p_pack_I512_I8_I16:
+      case Intrinsic::aie2p_pack_I512_I4_I8:
+        return LoadStoreOpcodes{
+            /*ISelOpcode=*/AIE2P::VST_3D_PACK_dmw_sts_pack_packSign1,
+            NoImmediate,
+            /*OffsetOpcode=*/{}};
+      case Intrinsic::aie2p_pack_I1024_I8_I16:
+      case Intrinsic::aie2p_pack_I1024_I4_I8:
+        return LoadStoreOpcodes{
+            /*ISelOpcode=*/AIE2P::VST_3D_PACK_dmx_sts_pack_packSign1,
+            NoImmediate,
+            /*OffsetOpcode=*/{}};
+      }
+    default:
+      return {};
+    }
+  } else { /* !IsSigned */
+    switch (MemOp.getOpcode()) {
+    case AIE2P::G_STORE:
+      switch (CombOpIntrinsicID) {
+      case Intrinsic::aie2p_pack_I512_I8_I16:
+      case Intrinsic::aie2p_pack_I512_I4_I8:
+        return LoadStoreOpcodes{
+            /*ISelOpcode=*/AIE2P::VST_PACK_dmw_sts_pack_idx_imm_packSign0,
+            AlwaysFitsImmediateRange, /*OffsetOpcode=*/{}};
+      case Intrinsic::aie2p_pack_I1024_I8_I16:
+      case Intrinsic::aie2p_pack_I1024_I4_I8:
+        return LoadStoreOpcodes{
+            /*ISelOpcode=*/AIE2P::VST_PACK_dmx_sts_pack_idx_imm_packSign0,
+            AlwaysFitsImmediateRange, /*OffsetOpcode=*/{}};
+      }
+    case AIE2P::G_AIE_OFFSET_STORE:
+      switch (CombOpIntrinsicID) {
+      case Intrinsic::aie2p_pack_I512_I8_I16:
+      case Intrinsic::aie2p_pack_I512_I4_I8:
+        FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
+        ISelOpcode = FitsImmediateRange
+                         ? AIE2P::VST_PACK_dmw_sts_pack_idx_imm_packSign0
+                         : AIE2P::VST_PACK_dmw_sts_pack_idx_packSign0;
+        return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
+                                /*OffsetOpcode=*/{}};
+      case Intrinsic::aie2p_pack_I1024_I8_I16:
+      case Intrinsic::aie2p_pack_I1024_I4_I8:
+        FitsImmediateRange = checkImmediateRange<4, 64>(Immediate);
+        ISelOpcode = FitsImmediateRange
+                         ? AIE2P::VST_PACK_dmx_sts_pack_idx_imm_packSign0
+                         : AIE2P::VST_PACK_dmx_sts_pack_idx_packSign0;
+        return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
+                                /*OffsetOpcode=*/{}};
+      }
+    case AIE2P::G_AIE_POSTINC_STORE:
+      switch (CombOpIntrinsicID) {
+      case Intrinsic::aie2p_pack_I512_I8_I16:
+      case Intrinsic::aie2p_pack_I512_I4_I8:
+        FitsImmediateRange = checkImmediateRange<4, 32>(Immediate);
+        ISelOpcode = FitsImmediateRange
+                         ? AIE2P::VST_PACK_dmw_sts_pack_pstm_nrm_imm_packSign0
+                         : AIE2P::VST_PACK_dmw_sts_pack_pstm_nrm_packSign0;
+        return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
+                                /*OffsetOpcode=*/{}};
+      case Intrinsic::aie2p_pack_I1024_I8_I16:
+      case Intrinsic::aie2p_pack_I1024_I4_I8:
+        FitsImmediateRange = checkImmediateRange<4, 64>(Immediate);
+        ISelOpcode = FitsImmediateRange
+                         ? AIE2P::VST_PACK_dmx_sts_pack_pstm_nrm_imm_packSign0
+                         : AIE2P::VST_PACK_dmx_sts_pack_pstm_nrm_packSign0;
+        return LoadStoreOpcodes{ISelOpcode, FitsImmediateRange,
+                                /*OffsetOpcode=*/{}};
+      }
+    case AIE2P::G_AIE_POSTINC_2D_STORE:
+      switch (CombOpIntrinsicID) {
+      case Intrinsic::aie2p_pack_I512_I8_I16:
+      case Intrinsic::aie2p_pack_I512_I4_I8:
+        return LoadStoreOpcodes{
+            /*ISelOpcode=*/AIE2P::VST_2D_PACK_dmw_sts_pack_packSign0,
+            NoImmediate,
+            /*OffsetOpcode=*/{}};
+      case Intrinsic::aie2p_pack_I1024_I8_I16:
+      case Intrinsic::aie2p_pack_I1024_I4_I8:
+        return LoadStoreOpcodes{
+            /*ISelOpcode=*/AIE2P::VST_2D_PACK_dmx_sts_pack_packSign0,
+            NoImmediate,
+            /*OffsetOpcode=*/{}};
+      }
+    case AIE2P::G_AIE_POSTINC_3D_STORE:
+      switch (CombOpIntrinsicID) {
+      case Intrinsic::aie2p_pack_I512_I8_I16:
+      case Intrinsic::aie2p_pack_I512_I4_I8:
+        return LoadStoreOpcodes{
+            /*ISelOpcode=*/AIE2P::VST_3D_PACK_dmw_sts_pack_packSign0,
+            NoImmediate,
+            /*OffsetOpcode=*/{}};
+      case Intrinsic::aie2p_pack_I1024_I8_I16:
+      case Intrinsic::aie2p_pack_I1024_I4_I8:
+        return LoadStoreOpcodes{
+            /*ISelOpcode=*/AIE2P::VST_3D_PACK_dmx_sts_pack_packSign0,
+            NoImmediate,
+            /*OffsetOpcode=*/{}};
+      }
+    default:
+      return {};
+    }
+  }
+  return {};
+}
+
+bool AIE2PInstructionSelector::canCombinePACK(MachineInstr &MemOp,
+                                              MachineInstr &CombOp,
+                                              MachineRegisterInfo &MRI) {
+  Register PackResult = (MemOp.uses().begin())->getReg();
+
+  if (MemOp.getParent() != CombOp.getParent() || !MRI.hasOneUse(PackResult))
+    return false;
+
+  std::optional<APInt> NoImmediate = {};
+  bool IsSigned = true;
+
+  return getCombinedOpcodePACK(MemOp, CombOp, NoImmediate, IsSigned)
+      .has_value();
+}
+
+bool AIE2PInstructionSelector::selectG_AIE_STORE_PACK(
+    MachineInstr &StoreI, MachineRegisterInfo &MRI) {
+
+  Register PackResult = (StoreI.uses().begin())->getReg();
+  MachineInstr *PackOp = MRI.getVRegDef(PackResult);
+
+  if (!canCombinePACK(StoreI, *PackOp, MRI))
+    return false;
+
+  std::optional<AddressingModeInfo> AMI =
+      getOrDefineAddressingRegister(StoreI, MRI);
+  if (!AMI)
+    return false;
+
+  // Note: Operand 1 is the ID of the intrinsic
+  Register SrcReg = PackOp->getOperand(2).getReg();
+  Register SignReg = PackOp->getOperand(3).getReg();
+
+  unsigned MemOpLoadStoreSize = getLoadStoreSize(StoreI);
+  TypeSize SrcRegSize = MRI.getType(SrcReg).getSizeInBits();
+  assert((MemOpLoadStoreSize == 256 && SrcRegSize == 512) ||
+         (MemOpLoadStoreSize == 512 && SrcRegSize == 1024) &&
+             "Unexpected VST.PACK size");
+
+  auto SignVal = getIConstantVRegValWithLookThrough(SignReg, MRI);
+  bool ConstantSign = SignVal ? true : false;
+  // SignVal = 1 for signed and 0 for dynamically signed
+  std::optional<LoadStoreOpcodes> LSO = getCombinedOpcodePACK(
+      StoreI, *PackOp, AMI->ImmediateOffset,
+      ConstantSign ? SignVal.value().Value == 0x1 : false);
+
+  assert(LSO && "Unexpected VST.PACK combine failure");
+
+  // Note: the output size (I8 or I4) is not encoded as part of the instruction,
+  // but it is read from the crPackSize register.
+  auto NewInstr = MIB.buildInstr(LSO->ISelOpcode);
+
+  for (auto Def : StoreI.defs())
+    NewInstr.addDef(Def.getReg());
+
+  NewInstr.addUse(SrcReg);
+
+  addAddressingMode(NewInstr, *AMI, LSO->FitsImmediateRange, false, MRI);
+
+  NewInstr.cloneMemRefs(StoreI);
+
+  // Set the crPackSize before NewInstr
+  // Selects the size of the Pack instructions
+  // 0 – Destination is 4 bits
+  // 1 – Destination is 8 bits
+  const bool Is8Bit = cast<GIntrinsic>(PackOp)->getIntrinsicID() ==
+                          Intrinsic::aie2p_pack_I512_I8_I16 ||
+                      cast<GIntrinsic>(PackOp)->getIntrinsicID() ==
+                          Intrinsic::aie2p_pack_I1024_I8_I16;
+
+  auto Opcode = TII.getMvSclMultiSlotPseudoOpcode();
+  MIB.setInstr(*NewInstr);
+  MIB.buildInstr(Opcode, {AIE2P::crPackSize}, {}).addImm((unsigned)Is8Bit);
+
+  if (!ConstantSign)
+    setUnsetCtrlRegister(MIB, *NewInstr, MRI, AIE2P::packSign0, SignReg);
+
+  StoreI.eraseFromParent();
+  makeDeadMI(*PackOp, MRI);
+  return constrainSelectedInstRegOperands(*NewInstr.getInstr(), TII, TRI, RBI);
 }
 
 bool AIE2PInstructionSelector::selectG_AIE_ADD_VECTOR_ELT_HI(

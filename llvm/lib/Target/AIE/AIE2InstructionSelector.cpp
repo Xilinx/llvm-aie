@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 /// \file
@@ -149,6 +149,11 @@ private:
   getCombinedOpcodeSRSUPS(const MachineInstr &MemOp, const MachineInstr &CombOp,
                           std::optional<APInt> Immediate, bool IsSigned);
   bool canCombineSRSUPS(MachineInstr &MemOp, MachineInstr &CombOp);
+  std::optional<LoadStoreOpcodes>
+  getCombinedOpcodePACK(const MachineInstr &MemOp, const MachineInstr &CombOp,
+                        std::optional<APInt> Immediate, bool IsSigned,
+                        bool Is32Lanes);
+  bool canCombinePACK(MachineInstr &MemOp, MachineInstr &CombOp);
 
   // const AIE2TargetMachine &TM;
   const AIE2InstrInfo &TII;
@@ -3036,10 +3041,9 @@ LoadStoreOpcodes AIE2InstructionSelector::getLoadStoreOpcode(
   llvm_unreachable("Invalid combined instruction");
 }
 
-std::optional<LoadStoreOpcodes>
-getCombinedOpcodePACK(const MachineInstr &MemOp, const MachineInstr &CombOp,
-                      std::optional<APInt> Immediate, bool IsSigned,
-                      bool Is32Lanes) {
+std::optional<LoadStoreOpcodes> AIE2InstructionSelector::getCombinedOpcodePACK(
+    const MachineInstr &MemOp, const MachineInstr &CombOp,
+    std::optional<APInt> Immediate, bool IsSigned, bool Is32Lanes) {
   const bool AlwaysFitsImmediateRange = true;
 
   if (CombOp.getOpcode() != AIE2::G_INTRINSIC_W_SIDE_EFFECTS ||
@@ -3189,7 +3193,8 @@ getCombinedOpcodePACK(const MachineInstr &MemOp, const MachineInstr &CombOp,
   return {};
 }
 
-bool canCombinePACK(MachineInstr &MemOp, MachineInstr &CombOp) {
+bool AIE2InstructionSelector::canCombinePACK(MachineInstr &MemOp,
+                                             MachineInstr &CombOp) {
 
   std::optional<APInt> NoImmediate = {};
   bool IsSigned = true;
