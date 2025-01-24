@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 /// \file
@@ -15,6 +15,7 @@
 
 #include "AIE2PLegalizerInfo.h"
 #include "AIE2PSubtarget.h"
+#include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
 #include "llvm/CodeGen/GlobalISel/LegalizerInfo.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
 
@@ -671,4 +672,19 @@ bool AIE2PLegalizerInfo::legalizeCustom(
     return AIEHelper.legalizeBinOp(Helper, MI);
   }
   llvm_unreachable("Un-expected custom legalization");
+}
+
+bool AIE2PLegalizerInfo::legalizeIntrinsic(LegalizerHelper &Helper,
+                                           MachineInstr &MI) const {
+
+  // The loop_decrement is a bit of an exception in legalization since it
+  // is an architecture-neutral intrinsic to implement hardware loops, not a
+  // dedicated AIE intrinsic. As such it carries a boolean, which should be
+  // legalized to a 32 bit integer type.
+  switch (cast<GIntrinsic>(MI).getIntrinsicID()) {
+  case Intrinsic::loop_decrement:
+    return AIEHelper.legalizeLoopDecrement(Helper, MI);
+  }
+
+  return true;
 }
