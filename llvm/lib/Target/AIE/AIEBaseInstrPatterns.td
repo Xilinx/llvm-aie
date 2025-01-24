@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -68,4 +68,12 @@ def : Pat<(vec1024Ty (and VEC1024:$src1, VEC1024:$src2)),
                  (VBAND (v16i32 (EXTRACT_SUBREG VEC1024:$src1, sub_512_hi)),
                         (v16i32 (EXTRACT_SUBREG VEC1024:$src2, sub_512_hi))), sub_512_hi
           )>;
+}
+
+// For vector select, VSEL instruction is used, since it does select word by word
+// sel input is modified, "sel ? v1 : v2 is equivalent to vsel(sel-1, v1, v2)"
+// rs1(sel) is zero-extended from the original 1 bit type
+foreach vec512Ty = [v64i8, v32i16, v16i32] in {
+  def : Pat<(vec512Ty (select (i32 eR:$rs1), VEC512:$rs2, VEC512:$rs3)),
+            (vec512Ty (VSEL_32 VEC512:$rs2, VEC512:$rs3, (ADD_add_r_ri eR:$rs1, (i32 -1))))>;
 }
