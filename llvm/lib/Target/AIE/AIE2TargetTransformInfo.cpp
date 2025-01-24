@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -20,41 +20,39 @@ using namespace llvm;
 
 #define DEBUG_TYPE "aie2tti"
 
-static cl::opt<bool>
-    EnableAIEHardwareLoops("enable-aie-hardware-loops",
-                           cl::desc("Enable hardware loops on AIE"),
-                           cl::init(true), cl::Hidden);
+cl::opt<bool> EnableAIEHardwareLoops("enable-aie-hardware-loops",
+                                     cl::desc("Enable hardware loops on AIE"),
+                                     cl::init(true), cl::Hidden);
 
-static cl::opt<bool>
+cl::opt<bool>
     AllowAIEZOL("enable-aie-zero-overhead-loops",
                 cl::desc("Enable true zero overhead hardware loops on AIE"),
                 cl::init(true), cl::Hidden);
 
-static cl::opt<int> MinIterCountHLReject(
+cl::opt<int> MinIterCountHLReject(
     "aie-hardware-loops-minitercount", cl::Hidden, cl::init(3),
     cl::desc("Minimum trip count threshold for HL rejection"));
 
-static cl::opt<bool>
+cl::opt<bool>
     ForceHLGeneration("aie-force-hl-gen", cl::Hidden, cl::init(false),
                       cl::desc("Force HL generation ignoring metadata info."));
 
-static cl::opt<bool>
+cl::opt<bool>
     ConsiderLSROuterLoops("aie-lsr-consider-outer", cl::Hidden, cl::init(false),
                           cl::desc("Whether to consider outer loops for LSR"));
 
-static cl::opt<bool>
+cl::opt<bool>
     EnableAutoUnroll("aie-unroll-auto", cl::Hidden, cl::init(true),
                      cl::desc("Whether to unroll loops without pragmas"));
-static cl::opt<unsigned>
+cl::opt<unsigned>
     MaxUnrollCount("aie-unroll-max-count", cl::Hidden, cl::init(4),
                    cl::desc("Maximum partial unroll count for loops"));
-static cl::opt<int>
-    MaxUnrollLoads("aie-unroll-max-loads", cl::Hidden, cl::init(-1),
-                   cl::desc("Maximum partial unroll count for loops"));
-static cl::opt<unsigned>
+cl::opt<int> MaxUnrollLoads("aie-unroll-max-loads", cl::Hidden, cl::init(-1),
+                            cl::desc("Maximum partial unroll count for loops"));
+cl::opt<unsigned>
     MaxUnrollCost("aie-unroll-max-cost", cl::Hidden, cl::init(200),
                   cl::desc("Maximum partial unroll cost for loops"));
-static cl::opt<unsigned> PreferSwpOverUnroll(
+cl::opt<unsigned> PreferSwpOverUnroll(
     "aie-prefer-swp-over-unroll", cl::Hidden, cl::init(9),
     cl::desc("Aim for pipelining if MinIterCount is at least this value."));
 
@@ -147,14 +145,14 @@ bool AIE2TTIImpl::isHardwareLoopProfitable(Loop *L, ScalarEvolution &SE,
   LLVMContext &C = L->getHeader()->getContext();
   HWLoopInfo.CountType = Type::getInt32Ty(C);
   HWLoopInfo.LoopDecrement = ConstantInt::get(HWLoopInfo.CountType, 1);
-  // We always allow nested hardware loops, but only the inntermost loop
+  // We always allow nested hardware loops, but only the innermost loop
   // can use actual zero overhead loop instructions
   HWLoopInfo.IsNestingLegal = true;
   if (L->isInnermost() && AllowAIEZOL) {
-    LLVM_DEBUG(dbgs() << "AIE Loops: Loop is ZOL candiate\n");
+    LLVM_DEBUG(dbgs() << "AIE Loops: Loop is ZOL candidate\n");
     HWLoopInfo.CounterInReg = false;
   } else {
-    LLVM_DEBUG(dbgs() << "AIE Loops: Loop is JNZD candiate\n");
+    LLVM_DEBUG(dbgs() << "AIE Loops: Loop is JNZD candidate\n");
     HWLoopInfo.CounterInReg = true;
   }
   return true;
