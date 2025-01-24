@@ -92,16 +92,9 @@ public:
 
   virtual bool isHardwareLoopDec(unsigned Opcode) const override;
   virtual bool isHardwareLoopJNZ(unsigned Opcode) const override;
-  virtual bool isHardwareLoopStart(unsigned Opcode) const override;
-  virtual bool isHardwareLoopEnd(unsigned Opcode) const override;
 
-  virtual bool
-  isZeroOverheadLoopSetupInstr(const MachineInstr &) const override;
+  virtual std::optional<ZOLSupport> getZOLSupport() const override;
 
-  // Between writing to zero-overhead registers (lc, ls and le) and
-  // the end of the loop, must be a distance of 112 bytes
-  // (7 fully-expanded 128-bit instructions) in terms of PM addresses
-  unsigned getLoopSetupDistance() const override { return 7; }
   unsigned getNumBypassedCycles(const InstrItineraryData *ItinData,
                                 const MachineInstr &DefMI, unsigned DefIdx,
                                 const MachineInstr &UseMI,

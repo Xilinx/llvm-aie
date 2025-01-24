@@ -329,6 +329,14 @@ bool AIEBaseInstrInfo::isCallBundle(MachineBasicBlock::iterator MII) const {
   return IsReturnAddr;
 }
 
+bool AIEBaseInstrInfo::isZOLTripCountDef(const MachineInstr &MI,
+                                         bool Pristine) const {
+  auto ZOLSupport = getZOLSupport();
+  return ZOLSupport && MI.getOpcode() == ZOLSupport->SetLoopCountOpcode &&
+         MI.getOperand(0).getReg() == ZOLSupport->LCRegister &&
+         (!Pristine || MI.getOperand(2).getImm() == 0);
+}
+
 bool AIEBaseInstrInfo::isZOLSetupBundle(MachineBasicBlock::iterator MII) const {
   MachineBasicBlock::const_instr_iterator I = ++MII->getIterator();
   MachineBasicBlock::instr_iterator E = MII->getParent()->instr_end();
@@ -342,6 +350,40 @@ bool AIEBaseInstrInfo::isZOLSetupBundle(MachineBasicBlock::iterator MII) const {
     I++;
   }
   return IsLoopStartSetup;
+}
+
+unsigned AIEBaseInstrInfo::getLoopSetupDistance() const {
+  auto ZOLSupport = getZOLSupport();
+  assert(ZOLSupport);
+  return ZOLSupport->LoopSetupDistance;
+}
+
+bool AIEBaseInstrInfo::isZeroOverheadLoopSetupInstr(
+    const MachineInstr &MI) const {
+  auto ZOLSupport = getZOLSupport();
+  if (!ZOLSupport) {
+    return false;
+  }
+
+  return isZOLTripCountDef(MI) ||
+         (MI.getOpcode() == ZOLSupport->SetAddressOpcode &&
+          (MI.getOperand(0).getReg() == ZOLSupport->LSRegister ||
+           MI.getOperand(0).getReg() == ZOLSupport->LERegister));
+}
+
+void AIEBaseInstrInfo::adjustTripCount(MachineInstr &MI, int Adjustment) const {
+  assert(isZOLTripCountDef(MI));
+  auto &Imm = MI.getOperand(2);
+  Imm.setImm(Imm.getImm() + Adjustment);
+}
+bool AIEBaseInstrInfo::isHardwareLoopStart(unsigned Opcode) const {
+  const auto ZOLSupport = getZOLSupport();
+  return ZOLSupport && Opcode == ZOLSupport->LoopStartOpcode;
+}
+
+bool AIEBaseInstrInfo::isHardwareLoopEnd(unsigned Opcode) const {
+  const auto ZOLSupport = getZOLSupport();
+  return ZOLSupport && Opcode == ZOLSupport->LoopEndOpcode;
 }
 
 // Look for the last LoopSetup Bundle.
@@ -993,6 +1035,7 @@ AIEBaseInstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
   // schduler dag mutator
   unsigned LoopSetupDistance = 0;
   bool IsCall = false;
+  auto ZOLSupport = getZOLSupport();
   for (auto MI = MBB.begin(), End = MBB.end(); MI != End; ++MI) {
     if (MI->isBundle()) {
       // Return Address Candidate
@@ -1018,10 +1061,11 @@ AIEBaseInstrInfo::getAlignmentBoundaries(MachineBasicBlock &MBB) const {
       if (IsCall)
         DelaySlot = getNumDelaySlots(*MI);
 
-      // Distance of 112 bytes in terms of PM addresses corresponds to
-      // 7 fully-expanded 128-bit instructions.
-      if (isZOLSetupBundle(MI) && isLastZOLSetupBundleInMBB(MI))
-        LoopSetupDistance = getLoopSetupDistance();
+      // Distance in terms of fully-expanded 128-bit bundles that
+      // loop setup should maintain. We force each of these bundles to an
+      // alignment boundary, so that they will occupy 16 bytes.
+      if (ZOLSupport && isZOLSetupBundle(MI) && isLastZOLSetupBundleInMBB(MI))
+        LoopSetupDistance = ZOLSupport->LoopSetupDistance;
     } else if (isHardwareLoopEnd(MI->getOpcode())) {
       if (DelaySlot > 0)
         llvm_unreachable("Cannot have HWLoopEnd in branch delay slot!\n");

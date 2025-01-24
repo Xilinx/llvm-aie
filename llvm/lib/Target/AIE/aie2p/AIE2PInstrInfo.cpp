@@ -17,6 +17,7 @@
 #include "AIE2PRegisterInfo.h"
 #include "AIE2PSubtarget.h"
 #include "AIE2PTargetMachine.h"
+#include "AIEBaseInstrInfo.h"
 #include "AIEHazardRecognizer.h"
 #include "AIEMachineFunctionInfo.h"
 #include "AIEMachineScheduler.h"
@@ -1632,21 +1633,20 @@ bool AIE2PInstrInfo::isHardwareLoopJNZ(unsigned Opcode) const {
   return Opcode == AIE2P::LoopJNZ;
 }
 
-bool AIE2PInstrInfo::isHardwareLoopStart(unsigned Opcode) const {
-  return Opcode == AIE2P::LoopStart;
-}
+std::optional<AIEBaseInstrInfo::ZOLSupport>
+AIE2PInstrInfo::getZOLSupport() const {
+  AIEBaseInstrInfo::ZOLSupport Result;
 
-bool AIE2PInstrInfo::isHardwareLoopEnd(unsigned Opcode) const {
-  return Opcode == AIE2P::PseudoLoopEnd;
-}
+  Result.LoopStartOpcode = AIE2P::LoopStart;
+  Result.LoopEndOpcode = AIE2P::PseudoLoopEnd;
+  Result.SetLoopCountOpcode = AIE2P::ADD_NC_mv_add_ri;
+  Result.SetAddressOpcode = AIE2P::MOVXM;
+  Result.LoopSetupDistance = 7;
+  Result.LCRegister = AIE2P::lc;
+  Result.LSRegister = AIE2P::ls;
+  Result.LERegister = AIE2P::le;
 
-bool AIE2PInstrInfo::isZeroOverheadLoopSetupInstr(
-    const MachineInstr &MI) const {
-  return (MI.getOpcode() == AIE2P::MOV_alu_mv_mv_mv_scl ||
-          MI.getOpcode() == AIE2P::MOVXM) &&
-         (MI.getOperand(0).getReg() == AIE2P::lc ||
-          MI.getOperand(0).getReg() == AIE2P::ls ||
-          MI.getOperand(0).getReg() == AIE2P::le);
+  return Result;
 }
 
 unsigned AIE2PInstrInfo::getGenericAddVectorEltOpcode() const {
