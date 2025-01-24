@@ -244,6 +244,8 @@ bool AIE2PInstructionSelector::select(MachineInstr &I) {
     return selectG_PTR_ADD(MIB, I, MRI);
   case G_CONCAT_VECTORS:
     return selectG_CONCAT_VECTORS(I, MRI);
+  case G_BRCOND:
+    return selectG_BRCOND(I, MRI);
   case G_INTRINSIC:
     switch (cast<GIntrinsic>(I).getIntrinsicID()) {
     case Intrinsic::aie2p_get_coreid:
@@ -413,6 +415,8 @@ bool AIE2PInstructionSelector::select(MachineInstr &I) {
     case Intrinsic::aie2p_fifo_ld_pop_544_3d_bfp16:
     case Intrinsic::aie2p_fifo_ld_pop_576_3d_bfp16:
       return selectVLD_FIFO_POP_BFP16_3D(I, MRI);
+    case Intrinsic::set_loop_iterations:
+      return selectSetLoopIterations(I, MRI, MIB);
     default:
       return selectImpl(I, *CoverageInfo);
     }

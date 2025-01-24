@@ -14,6 +14,7 @@
 
 #include "AIEBaseInstructionSelector.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
+#include "llvm/MC/MCContext.h"
 
 using namespace llvm;
 
@@ -126,6 +127,57 @@ bool AIEBaseInstructionSelector::selectAddrInsn(MachineIRBuilder &MIB,
     return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
   } else
     llvm_unreachable("Unexpected addressing intrinsic id");
+}
+
+bool AIEBaseInstructionSelector::selectSetLoopIterations(
+    MachineInstr &I, MachineRegisterInfo &MRI, MachineIRBuilder &MIB) {
+  auto ZOLSupport = TII.getZOLSupport();
+  assert(ZOLSupport);
+  auto LS = MIB.buildInstr(ZOLSupport->LoopStartOpcode, {}, {I.getOperand(1)})
+                .addImm(0);
+  I.eraseFromParent();
+  return constrainSelectedInstRegOperands(*LS, TII, TRI, RBI);
+}
+
+// Try to match BRCOND(Intrinsic::loop_decrement)
+bool AIEBaseInstructionSelector::selectBrCondLoopDecrement(
+    MachineInstr &BrCond, MachineRegisterInfo &MRI) {
+
+  assert(BrCond.getOpcode() == TargetOpcode::G_BRCOND);
+  auto ZOLSupport = TII.getZOLSupport();
+  if (!ZOLSupport) {
+    return false;
+  }
+  MachineOperand &MO = BrCond.getOperand(0);
+  Register CondReg = MO.getReg();
+
+  // Check if the condition is a LoopDecrement
+  auto *LoopDec = getDefIgnoringCopies(CondReg, MRI);
+  if (!LoopDec ||
+      LoopDec->getOpcode() != TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS) {
+    return false;
+  }
+  auto *LoopDecIntrinsic = cast<GIntrinsic>(LoopDec);
+  if (LoopDecIntrinsic->getIntrinsicID() == Intrinsic::loop_decrement) {
+    MachineBasicBlock *DestMBB = BrCond.getOperand(1).getMBB();
+    MCContext &Context = BrCond.getParent()->getParent()->getContext();
+    MCSymbol *EndLabel = Context.createNamedTempSymbol("_LEnd");
+    MIB.buildInstr(ZOLSupport->LoopEndOpcode).addSym(EndLabel).addMBB(DestMBB);
+    makeDeadMI(*LoopDec, MRI);
+    BrCond.eraseFromParent();
+    return true;
+  }
+  return false;
+}
+
+bool AIEBaseInstructionSelector::selectG_BRCOND(MachineInstr &I,
+                                                MachineRegisterInfo &MRI) {
+  // Try matching ZOL loop end
+  if (selectBrCondLoopDecrement(I, MRI)) {
+    return true;
+  }
+  // resort to TableGen'ed selection patterns
+  return selectImpl(I, *CoverageInfo);
 }
 
 bool AIEBaseInstructionSelector::selectG_IMPLICIT_DEF(

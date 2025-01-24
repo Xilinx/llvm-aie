@@ -123,8 +123,6 @@ public:
   // Select a control packet header stream write instruction from the
   // corresponding intrinsic.
   bool selectPutMS_CPH(MachineInstr &I, MachineRegisterInfo &MRI);
-  bool selectBrCondLoopDecrement(MachineInstr &BrCond,
-                                 MachineRegisterInfo &MRI);
 
   static const char *getName() { return DEBUG_TYPE; }
 
@@ -354,12 +352,8 @@ bool AIE2InstructionSelector::select(MachineInstr &I) {
       return selectVUPS(I, MRI);
     case Intrinsic::start_loop_iterations:
       return selectStartLoop(I, MRI);
-    case Intrinsic::set_loop_iterations: {
-      auto LS =
-          MIB.buildInstr(AIE2::LoopStart, {}, {I.getOperand(1)}).addImm(0);
-      I.eraseFromParent();
-      return constrainSelectedInstRegOperands(*LS, TII, TRI, RBI);
-    }
+    case Intrinsic::set_loop_iterations:
+      return selectSetLoopIterations(I, MRI, MIB);
     case Intrinsic::aie2_scd_read_vec:
     case Intrinsic::aie2_scd_read_acc32:
     case Intrinsic::aie2_scd_expand_lo:
@@ -537,33 +531,6 @@ bool AIE2InstructionSelector::selectG_AIE_ADD_VECTOR_ELT_HI(
   return constrainSelectedInstRegOperands(MI, TII, TRI, RBI);
 }
 
-// Try to match BRCOND(Intrinsic::loop_decrement)
-bool AIE2InstructionSelector::selectBrCondLoopDecrement(
-    MachineInstr &BrCond, MachineRegisterInfo &MRI) {
-
-  assert(BrCond.getOpcode() == TargetOpcode::G_BRCOND);
-  MachineOperand &MO = BrCond.getOperand(0);
-  Register CondReg = MO.getReg();
-
-  // Check if the condition is a LoopDecrement
-  auto *LoopDec = getDefIgnoringCopies(CondReg, MRI);
-  if (!LoopDec ||
-      LoopDec->getOpcode() != TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS) {
-    return false;
-  }
-  auto *LoopDecIntrinsic = cast<GIntrinsic>(LoopDec);
-  if (LoopDecIntrinsic->getIntrinsicID() == Intrinsic::loop_decrement) {
-    MachineBasicBlock *DestMBB = BrCond.getOperand(1).getMBB();
-    MCContext &Context = BrCond.getParent()->getParent()->getContext();
-    MCSymbol *EndLabel = Context.createNamedTempSymbol("_LEnd");
-    MIB.buildInstr(AIE2::PseudoLoopEnd).addSym(EndLabel).addMBB(DestMBB);
-    makeDeadMI(*LoopDec, MRI);
-    BrCond.eraseFromParent();
-    return true;
-  }
-  return false;
-}
-
 bool AIE2InstructionSelector::selectG_BRCOND(MachineInstr &I,
                                              MachineRegisterInfo &MRI) {
   Register CondReg = I.getOperand(0).getReg();
@@ -634,13 +601,8 @@ bool AIE2InstructionSelector::selectG_BRCOND(MachineInstr &I,
     Args->IntrinInst->eraseFromParent();
     return constrainSelectedInstRegOperands(*LoopDec, TII, TRI, RBI);
   }
-  // Try matching ZOL loop end
-  if (selectBrCondLoopDecrement(I, MRI)) {
-    return true;
-  }
 
-  // resort to TableGen'ed selection patterns
-  return selectImpl(I, *CoverageInfo);
+  return AIEBaseInstructionSelector::selectG_BRCOND(I, MRI);
 }
 
 bool AIE2InstructionSelector::selectG_BRINDIRECT(MachineInstr &I,
