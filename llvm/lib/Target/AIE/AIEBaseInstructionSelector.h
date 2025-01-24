@@ -138,6 +138,11 @@ public:
                            MachineIRBuilder &MIB, MachineInstrBuilder &MI);
   void buildPack(MachineInstr &I, MachineRegisterInfo &MRI,
                  MachineIRBuilder &MIB, MachineInstrBuilder &MI);
+  bool selectSetLoopIterations(MachineInstr &I, MachineRegisterInfo &MRI,
+                               MachineIRBuilder &MIB);
+  bool selectBrCondLoopDecrement(MachineInstr &BrCond,
+                                 MachineRegisterInfo &MRI);
+  bool selectG_BRCOND(MachineInstr &I, MachineRegisterInfo &MRI);
 
   bool selectVMAXDIFF_LT(MachineInstr &I, MachineRegisterInfo &MRI,
                          MachineIRBuilder &MIB);
