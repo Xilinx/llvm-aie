@@ -76,7 +76,7 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY $x1
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:expvec64 = COPY $e1
-    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:mbp2bp = REG_SEQUENCE [[COPY]], %subreg.sub_bfp16_x, [[COPY1]], %subreg.sub_bfp16_e
+    ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:vec576 = REG_SEQUENCE [[COPY]], %subreg.sub_bfp16_x, [[COPY1]], %subreg.sub_bfp16_e
     ; CHECK-NEXT: [[VCONV_bfp16ebs16_ebs8_:%[0-9]+]]:mexa = VCONV_bfp16ebs16_ebs8 [[REG_SEQUENCE]], implicit-def $srf2bflags, implicit $crf2bmask, implicit $crrnd
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:vec512 = COPY [[VCONV_bfp16ebs16_ebs8_]].sub_bfp16_x
     ; CHECK-NEXT: [[COPY3:%[0-9]+]]:expvec64 = COPY [[VCONV_bfp16ebs16_ebs8_]].sub_bfp16_e

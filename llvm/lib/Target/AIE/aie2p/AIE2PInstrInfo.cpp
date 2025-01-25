@@ -763,6 +763,8 @@ Register AIE2PInstrInfo::isLoadFromStackSlot(const MachineInstr &MI,
   case AIE2P::VLDA_PLFR_SPILL:
   case AIE2P::LDA_D_SPILL:
   case AIE2P::LDA_DS_SPILL:
+  case AIE2P::VLDA_EX_SPILL:
+  case AIE2P::VLDA_E_SPILL:
     break;
   }
 
@@ -794,6 +796,8 @@ Register AIE2PInstrInfo::isStoreToStackSlot(const MachineInstr &MI,
   case AIE2P::VST_DM_SPILL:
   case AIE2P::VST_L_SPILL:
   case AIE2P::VST_Y_SPILL:
+  case AIE2P::VST_E_SPILL:
+  case AIE2P::VST_EX_SPILL:
     break;
   }
 
@@ -865,6 +869,10 @@ void AIE2PInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     Opcode = AIE2P::ST_D_SPILL;
   } else if (regClassMatches(AIE2P::eDSRegClass, RC, SrcReg)) {
     Opcode = AIE2P::ST_DS_SPILL;
+  } else if (regClassMatches(AIE2P::EXPVEC64RegClass, RC, SrcReg)) {
+    Opcode = AIE2P::VST_E_SPILL;
+  } else if (regClassMatches(AIE2P::VEC576RegClass, RC, SrcReg)) {
+    Opcode = AIE2P::VST_EX_SPILL;
   } else if (regClassMatches(AIE2P::eSRegClass, RC, SrcReg) ||
              regClassMatches(AIE2P::spill_eS_to_eRRegClass, RC, SrcReg)) {
     // Can't spill these directly.  Need to bounce through a GPR.
@@ -947,6 +955,10 @@ void AIE2PInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     Opcode = AIE2P::LDA_D_SPILL;
   } else if (regClassMatches(AIE2P::eDSRegClass, RC, DstReg)) {
     Opcode = AIE2P::LDA_DS_SPILL;
+  } else if (regClassMatches(AIE2P::EXPVEC64RegClass, RC, DstReg)) {
+    Opcode = AIE2P::VLDA_E_SPILL;
+  } else if (regClassMatches(AIE2P::VEC576RegClass, RC, DstReg)) {
+    Opcode = AIE2P::VLDA_EX_SPILL;
   } else if (regClassMatches(AIE2P::eSRegClass, RC, DstReg) ||
              regClassMatches(AIE2P::spill_eS_to_eRRegClass, RC, DstReg)) {
     // Can't spill these directly.  Need to bounce through a GPR.
@@ -1053,6 +1065,18 @@ AIE2PInstrInfo::getSpillPseudoExpandInfo(const MachineInstr &MI) const {
             {AIE2P::LDA_dms_lda_spill, AIE2P::sub_hi_dim_then_sub_dim_size},
             {AIE2P::LDA_dms_lda_spill, AIE2P::sub_hi_dim_then_sub_dim_stride},
             {AIE2P::LDA_dms_lda_spill, AIE2P::sub_hi_dim_then_sub_dim_count}};
+  case AIE2P::VLDA_E_SPILL:
+    return {{AIE2P::LDA_dms_lda_spill, AIE2P::sub_lo_exp},
+            {AIE2P::LDA_dms_lda_spill, AIE2P::sub_hi_exp}};
+  case AIE2P::VLDA_EX_SPILL:
+    return {{AIE2P::VLDA_dmx_lda_x_spill, AIE2P::sub_bfp16_x},
+            {AIE2P::VLDA_E_SPILL, AIE2P::sub_bfp16_e}};
+  case AIE2P::VST_E_SPILL:
+    return {{AIE2P::ST_dms_sts_spill, AIE2P::sub_lo_exp},
+            {AIE2P::ST_dms_sts_spill, AIE2P::sub_hi_exp}};
+  case AIE2P::VST_EX_SPILL:
+    return {{AIE2P::VST_dmx_sts_x_spill, AIE2P::sub_bfp16_x},
+            {AIE2P::VST_E_SPILL, AIE2P::sub_bfp16_e}};
   }
   llvm_unreachable("Un-implemented");
 }
@@ -1069,6 +1093,10 @@ AIE2PInstrInfo::getRegOffsetSpillInstrInfoFromImmOffset(
     return {AIE2P::VST_dmx_sts_fifohl_idx, AIE2P::MOVXM, &AIE2P::eDJRegClass};
   case AIE2P::VLDA_dmx_lda_fifohl_spill:
     return {AIE2P::VLDA_dmx_lda_fifohl_idx, AIE2P::MOVXM, &AIE2P::eDJRegClass};
+  case AIE2P::VLDA_dmx_lda_x_spill:
+    return {AIE2P::VLDA_dmx_lda_x_idx, AIE2P::MOVXM, &AIE2P::eDJRegClass};
+  case AIE2P::VST_dmx_sts_x_spill:
+    return {AIE2P::VST_dmx_sts_x_idx, AIE2P::MOVXM, &AIE2P::eDJRegClass};
   default:
     llvm_unreachable("Offset register spill instruction info un-implemented");
   }
