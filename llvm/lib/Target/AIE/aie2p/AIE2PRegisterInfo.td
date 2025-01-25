@@ -732,9 +732,9 @@ class AIE2PDim3DRegisterClass <dag reglist, RegAltNameIndex idx = NoRegAltName> 
   // i32 in the list of regTypes is only there to keep TableGen happy as it does not like an empty list of "legal types".
   // This is not an issue for us since it is a SelectionDAG concept.
   class AIE2PVector640RegisterClass<dag reglist, RegAltNameIndex idx = NoRegAltName>
-      : AIE2PRegisterClass<640, 256, [i32], reglist, idx>;
+      : AIE2PRegisterClass<640, 512, [i32], reglist, idx>;
   class AIE2PVector1280RegisterClass<dag reglist, RegAltNameIndex idx = NoRegAltName>
-      : AIE2PRegisterClass<1280, 256, [i32], reglist, idx>;
+      : AIE2PRegisterClass<1280, 512, [i32], reglist, idx>;
 
   // There are no 320-bit sparse register classes (qwh and qwl) as those are not used by any
   // instructions.
@@ -828,7 +828,7 @@ class AIE2PDim3DRegisterClass <dag reglist, RegAltNameIndex idx = NoRegAltName> 
     }
   }
   class AIE2PVector576RegisterClass<dag reglist, RegAltNameIndex idx = NoRegAltName>
-      : AIE2PRegisterClass<576, 256, [i32], reglist, idx>;
+      : AIE2PRegisterClass<576, 512, [i32], reglist, idx>;
 
   def eEXe : AIE2PVector576RegisterClass<(add ex0, ex2, ex4, ex6, ex8, ex10)>;
   def eEXo : AIE2PVector576RegisterClass<(add ex1, ex3, ex5, ex7, ex9, ex11)>;
@@ -851,7 +851,7 @@ class AIE2PDim3DRegisterClass <dag reglist, RegAltNameIndex idx = NoRegAltName> 
   } // let SubRegIndices = [sub_bfp576_lo, sub_bfp576_hi]
 
   class AIE2PVector1152RegisterClass<dag reglist, RegAltNameIndex idx = NoRegAltName>
-      : AIE2PRegisterClass<1152, 256, [i32], reglist, idx>;
+      : AIE2PRegisterClass<1152, 512, [i32], reglist, idx>;
 
   def eEY : AIE2PVector1152RegisterClass<(add ey0, ey1, ey2, ey3, ey4, ey5)>;
   def mEYv : AIE2PVector1152RegisterClass<(add eEY)>;
@@ -881,7 +881,7 @@ class AIE2PDim3DRegisterClass <dag reglist, RegAltNameIndex idx = NoRegAltName> 
   }
 
   class AIE2PVector704RegisterClass<dag reglist, RegAltNameIndex idx = NoRegAltName>
-      : AIE2PRegisterClass<704, 256, [i32], reglist, idx>;
+      : AIE2PRegisterClass<704, 512, [i32], reglist, idx>;
   def eQEXse : AIE2PVector704RegisterClass<(add qex0, qex2)>;
   def eQEXso : AIE2PVector704RegisterClass<(add qex1, qex3)>;
   def mQEXsw : AIE2PVector704RegisterClass<(add eQEXse, eQEXso)>;
@@ -902,7 +902,7 @@ class AIE2PDim3DRegisterClass <dag reglist, RegAltNameIndex idx = NoRegAltName> 
   }
 
   class AIE2PVector1408RegisterClass<dag reglist, RegAltNameIndex idx = NoRegAltName>
-      : AIE2PRegisterClass<1408, 256, [i32], reglist, idx>;
+      : AIE2PRegisterClass<1408, 512, [i32], reglist, idx>;
 
   def eQEYs : AIE2PVector1408RegisterClass<(add qey0, qey1)>;
   def mQEYsw : AIE2PVector1408RegisterClass<(add eQEYs)>;
@@ -911,6 +911,7 @@ def VEC128 : AIE2PVector128RegisterClass<(add mQQsm, mQQsa, mQQss)>;
 def VEC256 : AIE2PVector256RegisterClass<(add eWhe, eWho, eWle, eWlo)>;
 def VEC512 : AIE2PVector512RegisterClass<(add mXm)>;
 def VEC1024 : AIE2PVector1024RegisterClass<(add eY)>;
+def VEC576 : AIE2PVector576RegisterClass<(add mEXa)>;
 
 def ACC512 : AIE2PAcc512RegisterClass<(add mBMm)>;
 def ACC1024 : AIE2PAcc1024RegisterClass<(add mCMm)>;
