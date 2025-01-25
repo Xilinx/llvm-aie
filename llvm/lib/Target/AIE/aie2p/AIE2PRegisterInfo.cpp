@@ -183,6 +183,10 @@ bool AIE2PRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   case AIE2P::ST_D_SPILL:
   case AIE2P::LDA_DS_SPILL:
   case AIE2P::ST_DS_SPILL:
+  case AIE2P::VST_EX_SPILL:
+  case AIE2P::VST_E_SPILL:
+  case AIE2P::VLDA_E_SPILL:
+  case AIE2P::VLDA_EX_SPILL:
   case AIE2P::VLDA_PLFR_SPILL:
   case AIE2P::VST_PLFR_SPILL: {
     // When a pseudo instruction expands to multiple instructions, this case
