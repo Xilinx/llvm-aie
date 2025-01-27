@@ -194,26 +194,6 @@ bool AIE2PRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     }
     return false;
   }
-  case AIE2P::VLDA_L_SPILL:
-  case AIE2P::VST_L_SPILL:
-  case AIE2P::LDA_D_SPILL:
-  case AIE2P::ST_D_SPILL:
-  case AIE2P::LDA_DS_SPILL:
-  case AIE2P::ST_DS_SPILL: {
-    // The stack grows upward so if Offset is in range, the offsets of its
-    // sub-register spills should also be fine.
-    if (isEncodableAsNegativeInt<9, 4>(Offset)) {
-      MI.getOperand(FIOperandNum).ChangeToImmediate(Offset);
-    } else {
-      Register SPReg =
-          MF.getRegInfo().createVirtualRegister(&AIE2P::ePRegClass);
-      BuildMI(MBB, II, DL, TII->get(TII->getMvSclOpcode()), SPReg)
-          .addReg(getStackPointerRegister());
-      TII->expandSpillPseudo(MI, TRI, /*SubRegOffsetAlign=*/Align(4), SPReg,
-                             Offset);
-    }
-    return false;
-  }
   case AIE2P::LDA_dmv_lda_q_spill:
   case AIE2P::VLDA_128_dmv_lda_w_spill:
   case AIE2P::VLDA_dmw_lda_w_spill:
@@ -226,6 +206,29 @@ bool AIE2PRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   case AIE2P::VST_dmx_sts_bm_spill:
   case AIE2P::VST_dmx_sts_fifohl_spill:
   case AIE2P::VST_dmx_sts_x_spill:
+    MI.getOperand(FIOperandNum).ChangeToImmediate(Offset);
+    return false;
+  case AIE2P::VLDA_L_SPILL:
+  case AIE2P::VST_L_SPILL:
+  case AIE2P::LDA_D_SPILL:
+  case AIE2P::ST_D_SPILL:
+  case AIE2P::LDA_DS_SPILL:
+  case AIE2P::ST_DS_SPILL: {
+    // The stack grows upward so if Offset is in range, the offsets of its
+    // sub-register spills should also be fine.
+    if (isEncodableAsNegativeInt<9, 4>(Offset)) {
+      MI.getOperand(FIOperandNum).ChangeToImmediate(Offset);
+      TII->expandSpillPseudo(MI, TRI, /*SubRegOffsetAlign=*/Align(4));
+    } else {
+      Register SPReg =
+          MF.getRegInfo().createVirtualRegister(&AIE2P::ePRegClass);
+      BuildMI(MBB, II, DL, TII->get(TII->getMvSclOpcode()), SPReg)
+          .addReg(getStackPointerRegister());
+      TII->expandSpillPseudo(MI, TRI, /*SubRegOffsetAlign=*/Align(4), SPReg,
+                             Offset);
+    }
+    return true;
+  }
   case AIE2P::VST_DM_SPILL:
   case AIE2P::VST_CM_SPILL:
   case AIE2P::VST_FIFO_SPILL:
@@ -237,7 +240,8 @@ bool AIE2PRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   case AIE2P::VLDA_PLFR_SPILL:
   case AIE2P::VLDA_Y_SPILL:
     MI.getOperand(FIOperandNum).ChangeToImmediate(Offset);
-    return false;
+    TII->expandSpillPseudo(MI, TRI, /*SubRegOffsetAlign=*/Align(4));
+    return true;
   case AIE2P::PseudoFI: {
     // DstReg = FI;
     // Replace with DstReg = FrameReg, DstReg += Offset;
