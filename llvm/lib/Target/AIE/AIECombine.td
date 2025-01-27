@@ -21,7 +21,7 @@ def combine_globalval_offset : GICombineRule<
 def combine_S20NarrowingOpt_instruction_queue : GIDefMatchData<"std::set<InstrNode>">;
 def combine_S20NarrowingOpt : GICombineRule<
   (defs root:$root, combine_S20NarrowingOpt_instruction_queue:$matchinfo),
-  (match (wip_match_opcode G_PTR_ADD, G_INTRINSIC):$root,
+  (match (wip_match_opcode G_PTR_ADD, G_INTRINSIC, G_INTRINSIC_W_SIDE_EFFECTS):$root,
           [{ return matchS20NarrowingOpt(*${root}, MRI, ${matchinfo}); }]),
   (apply [{  applyS20NarrowingOpt(*${root}, MRI, B, Observer, Helper, ${matchinfo});}])
 >;
