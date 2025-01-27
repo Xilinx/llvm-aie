@@ -748,7 +748,7 @@ Register AIE2PInstrInfo::isLoadFromStackSlot(const MachineInstr &MI,
   switch (MI.getOpcode()) {
   default:
     return 0;
-  case AIE2P::LDA_dms_lda_spill:
+  case AIE2P::LDA_R_SPILL:
   case AIE2P::LDA_dmv_lda_q_spill:
   case AIE2P::VLDA_128_dmv_lda_w_spill:
   case AIE2P::VLDA_dmw_lda_w_spill:
@@ -779,7 +779,7 @@ Register AIE2PInstrInfo::isStoreToStackSlot(const MachineInstr &MI,
   switch (MI.getOpcode()) {
   default:
     return 0;
-  case AIE2P::ST_dms_sts_spill:
+  case AIE2P::ST_R_SPILL:
   case AIE2P::ST_dmv_sts_q_spill:
   case AIE2P::VST_128_dmv_sts_w_spill:
   case AIE2P::VST_dmw_sts_w_spill:
@@ -831,7 +831,7 @@ void AIE2PInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   LLVM_DEBUG(dbgs() << "Attempting to Store: " << SrcReg << " To " << FI
                     << "\n");
   if (regClassMatches(AIE2P::mSclStRegClass, RC, SrcReg)) {
-    Opcode = AIE2P::ST_dms_sts_spill;
+    Opcode = AIE2P::ST_R_SPILL;
   } else if (regClassMatches(AIE2P::mQQssRegClass, RC, SrcReg)) {
     Opcode = AIE2P::ST_dmv_sts_q_spill;
   } else if (regClassMatches(AIE2P::mWsRegClass, RC, SrcReg)) {
@@ -872,7 +872,7 @@ void AIE2PInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     Register ScratchReg = MRI.createVirtualRegister(&AIE2P::eRRegClass);
     BuildMI(MBB, I, DL, get(AIE2P::MOV_alu_mv_mv_mv_scl), ScratchReg)
         .addReg(SrcReg, getKillRegState(IsKill));
-    Opcode = AIE2P::ST_dms_sts_spill;
+    Opcode = AIE2P::ST_R_SPILL;
     SrcReg = ScratchReg;
     IsKill = true;
   } else {
@@ -915,7 +915,7 @@ void AIE2PInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   };
   RC = constrainRegClass(MBB.getParent()->getRegInfo(), RC, DstReg);
   if (regClassMatches(AIE2P::mLdaSclRegClass, RC, DstReg)) {
-    Opcode = AIE2P::LDA_dms_lda_spill;
+    Opcode = AIE2P::LDA_R_SPILL;
   } else if (regClassMatches(AIE2P::mQQssRegClass, RC, DstReg)) {
     Opcode = AIE2P::LDA_dmv_lda_q_spill;
   } else if (regClassMatches(AIE2P::mWsRegClass, RC, DstReg)) {
@@ -952,7 +952,7 @@ void AIE2PInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     // Can't spill these directly.  Need to bounce through a GPR.
     MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
     Register Reg = MRI.createVirtualRegister(&AIE2P::eRRegClass);
-    BuildMI(MBB, I, DL, get(AIE2P::LDA_dms_lda_spill), Reg)
+    BuildMI(MBB, I, DL, get(AIE2P::LDA_R_SPILL), Reg)
         .addFrameIndex(FI)
         .addMemOperand(CreateMMO(FI));
     BuildMI(MBB, I, DL, get(AIE2P::MOV_alu_mv_mv_mv_scl), DstReg)
@@ -979,6 +979,8 @@ AIE2PInstrInfo::getSpillPseudoExpandInfo(const MachineInstr &MI) const {
     return {};
 
   switch (MI.getOpcode()) {
+  case AIE2P::ST_R_SPILL:
+    return {{AIE2P::ST_dms_sts_spill, AIE2P::NoSubRegister, 4}};
   case AIE2P::VST_L_SPILL:
     return {{AIE2P::ST_dms_sts_spill, AIE2P::sub_l_even},
             {AIE2P::ST_dms_sts_spill, AIE2P::sub_l_odd}};
@@ -1014,6 +1016,8 @@ AIE2PInstrInfo::getSpillPseudoExpandInfo(const MachineInstr &MI) const {
             {AIE2P::ST_dms_sts_spill, AIE2P::sub_hi_dim_then_sub_dim_stride},
             {AIE2P::ST_dms_sts_spill, AIE2P::sub_hi_dim_then_sub_dim_count}};
 
+  case AIE2P::LDA_R_SPILL:
+    return {{AIE2P::LDA_dms_lda_spill, AIE2P::NoSubRegister, 4}};
   case AIE2P::VLDA_L_SPILL:
     return {{AIE2P::LDA_dms_lda_spill, AIE2P::sub_l_even},
             {AIE2P::LDA_dms_lda_spill, AIE2P::sub_l_odd}};

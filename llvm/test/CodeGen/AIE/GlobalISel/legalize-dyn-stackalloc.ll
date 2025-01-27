@@ -310,14 +310,14 @@ define  void @test_huge_stack(i32 noundef %n) #0 {
 ; AIE2P-NEXT:    mov p0, sp
 ; AIE2P-NEXT:    mov p1, sp
 ; AIE2P-NEXT:    st lr, [p0, dj0] // 4-byte Folded Spill
+; AIE2P-NEXT:    mov p0, sp
 ; AIE2P-NEXT:    movxm dj0, #-40056
-; AIE2P-NEXT:    mov p0, sp
 ; AIE2P-NEXT:    st r8, [p0, dj0] // 4-byte Folded Spill
+; AIE2P-NEXT:    mov p0, sp
 ; AIE2P-NEXT:    movxm dj0, #-40060
-; AIE2P-NEXT:    mov p0, sp
 ; AIE2P-NEXT:    st p6, [p0, dj0] // 4-byte Folded Spill
-; AIE2P-NEXT:    movxm dj0, #-40064
 ; AIE2P-NEXT:    mov p0, sp
+; AIE2P-NEXT:    movxm dj0, #-40064
 ; AIE2P-NEXT:    st p7, [p0, dj0] // 4-byte Folded Spill
 ; AIE2P-NEXT:    mov p7, sp
 ; AIE2P-NEXT:    padda [p7], m0
@@ -366,11 +366,11 @@ define  void @test_huge_stack(i32 noundef %n) #0 {
 ; AIE2P-NEXT:    mov sp, p7
 ; AIE2P-NEXT:    mov p0, sp
 ; AIE2P-NEXT:    lda p7, [p0, dj0] // 4-byte Folded Reload
+; AIE2P-NEXT:    mov p0, sp
 ; AIE2P-NEXT:    movxm dj0, #-40060
-; AIE2P-NEXT:    mov p0, sp
 ; AIE2P-NEXT:    lda p6, [p0, dj0] // 4-byte Folded Reload
-; AIE2P-NEXT:    movxm dj0, #-40056
 ; AIE2P-NEXT:    mov p0, sp
+; AIE2P-NEXT:    movxm dj0, #-40056
 ; AIE2P-NEXT:    lda r8, [p0, dj0] // 4-byte Folded Reload
 ; AIE2P-NEXT:    mov p0, sp
 ; AIE2P-NEXT:    movxm dj0, #-40052
