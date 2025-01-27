@@ -161,39 +161,6 @@ bool AIE2PRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
     // Note that LDB path does not support SPILL instructions
 
-  case AIE2P::LDA_dms_lda_spill:
-  case AIE2P::ST_dms_sts_spill: {
-    if (isEncodableAsNegativeInt<9, 4>(Offset)) {
-      MI.getOperand(FIOperandNum).ChangeToImmediate(Offset);
-    } else {
-      // TODO: May be we should consider creating PSEUDO instructions for real
-      // spill instructions, then special handling like here not needed anymore.
-      Register OffsetReg =
-          MF.getRegInfo().createVirtualRegister(&AIE2P::eDJRegClass);
-      Register SPReg =
-          MF.getRegInfo().createVirtualRegister(&AIE2P::ePRegClass);
-
-      BuildMI(MBB, II, DL, TII->get(AIE2P::MOVXM), OffsetReg).addImm(Offset);
-      BuildMI(MBB, II, DL, TII->get(TII->getMvSclOpcode()), SPReg)
-          .addReg(getStackPointerRegister());
-
-      if (Opc == AIE2P::LDA_dms_lda_spill) {
-        auto LoadMI = BuildMI(MBB, II, DL, TII->get(AIE2P::LDA_dms_lda_idx))
-                          .addDef(MI.getOperand(0).getReg())
-                          .addReg(SPReg)
-                          .addReg(OffsetReg);
-        LoadMI.cloneMemRefs(MI);
-      } else {
-        auto StoreMI = BuildMI(MBB, II, DL, TII->get(AIE2P::ST_dms_sts_idx))
-                           .addReg(MI.getOperand(0).getReg())
-                           .addReg(SPReg)
-                           .addReg(OffsetReg);
-        StoreMI.cloneMemRefs(MI);
-      }
-      II->removeFromParent();
-    }
-    return false;
-  }
   case AIE2P::LDA_dmv_lda_q_spill:
   case AIE2P::VLDA_128_dmv_lda_w_spill:
   case AIE2P::VLDA_dmw_lda_w_spill:
@@ -208,6 +175,8 @@ bool AIE2PRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   case AIE2P::VST_dmx_sts_x_spill:
     MI.getOperand(FIOperandNum).ChangeToImmediate(Offset);
     return false;
+  case AIE2P::LDA_R_SPILL:
+  case AIE2P::ST_R_SPILL:
   case AIE2P::VLDA_L_SPILL:
   case AIE2P::VST_L_SPILL:
   case AIE2P::LDA_D_SPILL:
