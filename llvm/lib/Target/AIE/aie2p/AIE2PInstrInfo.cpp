@@ -1105,11 +1105,11 @@ unsigned AIE2PInstrInfo::getCycleSeparatorOpcode() const {
   return AIE2P::CYCLE_SEPARATOR;
 }
 
+// Note: Some pseudos like spill/reload are already expanded in
+// eliminateFrameIndex.
 bool AIE2PInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
   auto DL = MI.getDebugLoc();
   MachineBasicBlock &MBB = *MI.getParent();
-  MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
-  const TargetRegisterInfo &TRI = *MRI.getTargetRegisterInfo();
   switch (MI.getOpcode()) {
   case AIE2P::PseudoMove: {
     Register Dst = MI.getOperand(0).getReg();
@@ -1119,24 +1119,6 @@ bool AIE2PInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
     MI.eraseFromParent();
     return true;
   }
-  case AIE2P::VST_DM_SPILL:
-  case AIE2P::ST_D_SPILL:
-  case AIE2P::ST_DS_SPILL:
-  case AIE2P::VST_CM_SPILL:
-  case AIE2P::VST_FIFO_SPILL:
-  case AIE2P::VST_PLFR_SPILL:
-  case AIE2P::VST_L_SPILL:
-  case AIE2P::VST_Y_SPILL:
-  case AIE2P::VLDA_DM_SPILL:
-  case AIE2P::LDA_D_SPILL:
-  case AIE2P::LDA_DS_SPILL:
-  case AIE2P::VLDA_CM_SPILL:
-  case AIE2P::VLDA_FIFO_SPILL:
-  case AIE2P::VLDA_PLFR_SPILL:
-  case AIE2P::VLDA_L_SPILL:
-  case AIE2P::VLDA_Y_SPILL:
-    expandSpillPseudo(MI, TRI, /*SubRegOffsetAlign=*/Align(4));
-    return true;
   }
   return false;
 }

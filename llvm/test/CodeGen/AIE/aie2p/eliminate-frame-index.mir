@@ -91,6 +91,66 @@ body:             |
 ...
 
 ---
+name:            test_vec1024
+alignment:       16
+stack:
+  - { id: 0, name: '', type: spill-slot, offset: 0, size: 128, alignment: 32 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_vec1024
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 128, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: VST_dmx_sts_x_spill $x6, -128, implicit $sp :: (store (s512) into %stack.0)
+    ; CHECK-NEXT: VST_dmx_sts_x_spill $x7, -64, implicit $sp :: (store (s512) into %stack.0 + 64)
+    ; CHECK-NEXT: $x6 = VLDA_dmx_lda_x_spill -128, implicit $sp :: (load (s512) from %stack.0)
+    ; CHECK-NEXT: $x7 = VLDA_dmx_lda_x_spill -64, implicit $sp :: (load (s512) from %stack.0 + 64)
+    VST_Y_SPILL $y3, %stack.0, implicit $sp :: (store (s1024) into %stack.0, align 64)
+    $y3 = VLDA_Y_SPILL %stack.0, implicit $sp :: (load (s1024) from %stack.0, align 64)
+...
+
+---
+name:            test_acc1024
+alignment:       16
+stack:
+  - { id: 0, name: '', type: spill-slot, offset: 0, size: 128, alignment: 32 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_acc1024
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 128, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: VST_dmx_sts_bm_spill $bmll3, -128, implicit $sp :: (store (s512) into %stack.0)
+    ; CHECK-NEXT: VST_dmx_sts_bm_spill $bmlh3, -64, implicit $sp :: (store (s512) into %stack.0 + 64)
+    ; CHECK-NEXT: $bmll3 = VLDA_dmx_lda_bm_spill -128, implicit $sp :: (load (s512) from %stack.0)
+    ; CHECK-NEXT: $bmlh3 = VLDA_dmx_lda_bm_spill -64, implicit $sp :: (load (s512) from %stack.0 + 64)
+    VST_CM_SPILL $cml3, %stack.0, implicit $sp :: (store (s1024) into %stack.0, align 64)
+    $cml3 = VLDA_CM_SPILL %stack.0, implicit $sp :: (load (s1024) from %stack.0, align 64)
+...
+
+
+---
+name:            test_acc2048
+alignment:       16
+stack:
+  - { id: 0, name: '', type: spill-slot, offset: 0, size: 128, alignment: 32 }
+body:             |
+  bb.0 (align 16):
+
+    ; CHECK-LABEL: name: test_acc2048
+    ; CHECK: frame-setup PADDXM_pstm_sp_imm 128, implicit-def $sp, implicit $sp
+    ; CHECK-NEXT: VST_dmx_sts_bm_spill $bmll3, -128, implicit $sp :: (store (s512) into %stack.0)
+    ; CHECK-NEXT: VST_dmx_sts_bm_spill $bmlh3, -64, implicit $sp :: (store (s512) into %stack.0 + 64)
+    ; CHECK-NEXT: VST_dmx_sts_bm_spill $bmhl3, 0, implicit $sp :: (store (s512) into %stack.0 + 128)
+    ; CHECK-NEXT: VST_dmx_sts_bm_spill $bmhh3, 64, implicit $sp :: (store (s512) into %stack.0 + 192)
+    ; CHECK-NEXT: $bmll3 = VLDA_dmx_lda_bm_spill -128, implicit $sp :: (load (s512) from %stack.0)
+    ; CHECK-NEXT: $bmlh3 = VLDA_dmx_lda_bm_spill -64, implicit $sp :: (load (s512) from %stack.0 + 64)
+    ; CHECK-NEXT: $bmhl3 = VLDA_dmx_lda_bm_spill 0, implicit $sp :: (load (s512) from %stack.0 + 128)
+    ; CHECK-NEXT: $bmhh3 = VLDA_dmx_lda_bm_spill 64, implicit $sp :: (load (s512) from %stack.0 + 192)
+    VST_DM_SPILL $dm3, %stack.0, implicit $sp :: (store (s1024) into %stack.0, align 64)
+    $dm3 = VLDA_DM_SPILL %stack.0, implicit $sp :: (load (s2048) from %stack.0, align 64)
+...
+
+
+---
 name:            test_vec128
 alignment:       16
 stack:
@@ -121,8 +181,10 @@ body:             |
     ; CHECK-NEXT: frame-setup PADDXM_pstm_sp_imm 64, implicit-def $sp, implicit $sp
     ; CHECK-NEXT: $r0 = PseudoMove killed $r14
     ; CHECK-NEXT: $r1 = PseudoMove killed $r15
-    ; CHECK-NEXT: $l7 = VLDA_L_SPILL -56, implicit $sp
-    ; CHECK-NEXT: VST_L_SPILL $l7, -56, implicit $sp
+    ; CHECK-NEXT: $r14 = LDA_dms_lda_spill -56, implicit $sp
+    ; CHECK-NEXT: $r15 = LDA_dms_lda_spill -52, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_spill $r14, -56, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_spill $r15, -52, implicit $sp
     $l7 = VLDA_L_SPILL %stack.1, implicit $sp
     VST_L_SPILL $l7, %stack.1, implicit $sp
 ...
@@ -138,8 +200,10 @@ body:             |
 
     ; CHECK-LABEL: name: test_fifo_lf
     ; CHECK: frame-setup PADDXM_pstm_sp_imm 128, implicit-def $sp, implicit $sp
-    ; CHECK-NEXT: $lf0 = VLDA_FIFO_SPILL -128, implicit $sp
-    ; CHECK-NEXT: VST_FIFO_SPILL $lf0, -128, implicit $sp
+    ; CHECK-NEXT: $lfl0 = VLDA_dmx_lda_fifohl_spill -128, implicit $sp
+    ; CHECK-NEXT: $lfh0 = VLDA_dmx_lda_fifohl_spill -64, implicit $sp
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_spill $lfl0, -128, implicit $sp
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_spill $lfh0, -64, implicit $sp
     $lf0 = VLDA_FIFO_SPILL %stack.0, implicit $sp
     VST_FIFO_SPILL $lf0, %stack.0, implicit $sp
 ...
@@ -154,8 +218,10 @@ body:             |
 
     ; CHECK-LABEL: name: test_fifo_sf
     ; CHECK: frame-setup PADDXM_pstm_sp_imm 128, implicit-def $sp, implicit $sp
-    ; CHECK-NEXT: $sf = VLDA_FIFO_SPILL -128, implicit $sp
-    ; CHECK-NEXT: VST_FIFO_SPILL $sf, -128, implicit $sp
+    ; CHECK-NEXT: $sfl = VLDA_dmx_lda_fifohl_spill -128, implicit $sp
+    ; CHECK-NEXT: $sfh = VLDA_dmx_lda_fifohl_spill -64, implicit $sp
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_spill $sfl, -128, implicit $sp
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_spill $sfh, -64, implicit $sp
     $sf = VLDA_FIFO_SPILL %stack.0, implicit $sp
     VST_FIFO_SPILL $sf, %stack.0, implicit $sp
 ...
@@ -171,8 +237,14 @@ body:             |
 
     ; CHECK-LABEL: name: test_fifo_plfr
     ; CHECK: frame-setup PADDXM_pstm_sp_imm 192, implicit-def $sp, implicit $sp
-    ; CHECK-NEXT: $plfr0 = VLDA_PLFR_SPILL -192, implicit $sp
-    ; CHECK-NEXT: VST_PLFR_SPILL $plfr0, -192, implicit $sp
+    ; CHECK-NEXT: $lfl0 = VLDA_dmx_lda_fifohl_spill -192, implicit $sp
+    ; CHECK-NEXT: $lfh0 = VLDA_dmx_lda_fifohl_spill -128, implicit $sp
+    ; CHECK-NEXT: $r24 = LDA_dms_lda_spill -64, implicit $sp
+    ; CHECK-NEXT: $p0 = LDA_dms_lda_spill -60, implicit $sp
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_spill $lfl0, -192, implicit $sp
+    ; CHECK-NEXT: VST_dmx_sts_fifohl_spill $lfh0, -128, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_spill $p0, -64, implicit $sp
+    ; CHECK-NEXT: ST_dms_sts_spill $r24, -60, implicit $sp
     $plfr0 = VLDA_PLFR_SPILL %stack.0, implicit $sp
     VST_PLFR_SPILL $plfr0, %stack.0, implicit $sp
 ...
