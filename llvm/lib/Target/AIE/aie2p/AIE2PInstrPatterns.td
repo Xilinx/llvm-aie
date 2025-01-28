@@ -27,6 +27,39 @@ def : Pat<(int_aie2p_sched_barrier), (SCHED_BARRIER)>;
 // A bare frameindex. Placeholder until eliminateFrameIndex.
 def : Pat<(ptr0 frameindex:$fi), (PseudoFI(frameindex_to_targetframeindex $fi))>;
 
+class VecConf {
+  int AMODE_I32  = 0;
+  int AMODE_I64  = 1;
+  int AMODE_FP32 = 2;
+
+  int BMODE_8x4     = 0;
+  int BMODE_8x8     = 1;
+  int BMODE_16x8    = 2;
+  int BMODE_16x16   = 3;
+  int BMODE_16x16_a = 3;
+  int BMODE_16x16_b = 1;
+  int BMODE_32x16   = 0;
+
+  bits<1> dynZeroAccum = 0;  // 0 – Use default first accumulator input to the post-adder. 1 – Replace default first accumulator with zeros.
+  bits<2> amode        = 0;  // Accumulator width (see above)
+  bits<2> bmode        = 0;  // Multiplication precision (see above)
+  bits<3> cmode        = 0;  // Multiplication mode
+  bits<1> signY        = 0;  // 0 – Y buffer has an unsigned datatype. 1 – Signed
+  bits<1> signX        = 0;  // 0 – X buffer has an unsigned datatype. 1 – Signed
+  bits<1> accShift     = 0;  // Accumulator left shift by 16 bits
+  bits<1> dynMulNeg    = 0;  // 0 – Do nothing. 1 – Invert instruction behavior regarding negation of the multiplier results.
+  bits<1> dynAcc0Neg   = 0;  // 0 – Do nothing. 1 – Invert instruction behavior regarding negation of the first accumulator input.
+  bits<1> dynAcc1Neg   = 0;  // 0 – Do nothing. 1 – Invert instruction behavior regarding negation of the second accumulator input.
+  bits<2> reserved1    = 0;
+  bits<8> dynTermNeg   = 0;  // Negation of terms in complex multiplications to allow complex handling.
+  bits<8> reserved2    = 0;
+
+  bits<32> all = {reserved2, dynTermNeg, reserved1, dynAcc1Neg, dynAcc0Neg, dynMulNeg, accShift, signX, signY, cmode, bmode, amode, dynZeroAccum};
+  dag ConfBits = (MOV_RLC_imm11_pseudo (i32 all));
+}
+
+def accfp32_vecconf : VecConf { let amode = AMODE_FP32; let bmode = BMODE_16x16; }
+
 /// Generic pattern classes
 class PatGpr<SDPatternOperator OpNode, AIE2PInst Inst, ValueType type>
     : Pat<(type (OpNode (type eR:$rs))), (Inst eR:$rs)>;
@@ -183,6 +216,11 @@ def : Pat<(int_aie2p_ACC2048_sub_conf ACC2048:$acc1, ACC2048:$acc2, eR:$acc),
            (VSUB_vmac_cm2_add_reg ACC2048:$acc1, ACC2048:$acc2, eR:$acc)>;
 def : PatInaccessibleMem<(int_aie2p_ACC2048_accfloat_sub_conf ACC2048:$acc1, ACC2048:$acc2, eR:$acc),
            (VSUB_f_vmac_cm2_add_reg ACC2048:$acc1, ACC2048:$acc2, eR:$acc)>;
+
+def : Pat<(fadd ACC2048:$acc1, ACC2048:$acc2),
+          (VADD_f_vmac_cm2_add_reg ACC2048:$acc1, ACC2048:$acc2, (i32 accfp32_vecconf.ConfBits))>;
+def : Pat<(fsub ACC2048:$acc1, ACC2048:$acc2),
+          (VSUB_f_vmac_cm2_add_reg ACC2048:$acc1, ACC2048:$acc2, (i32 accfp32_vecconf.ConfBits))>;
 
 // VMUL/VMAC Intrinsics
 
