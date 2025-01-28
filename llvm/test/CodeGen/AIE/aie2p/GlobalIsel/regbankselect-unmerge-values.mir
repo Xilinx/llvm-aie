@@ -71,8 +71,7 @@ body:             |
     ; CHECK: liveins: $cml0
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:accregbank(<2 x s512>) = COPY $cml0
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:vregbank(<2 x s512>) = COPY [[COPY]](<2 x s512>)
-    ; CHECK-NEXT: [[UV:%[0-9]+]]:vregbank(s512), [[UV1:%[0-9]+]]:vregbank(s512) = G_UNMERGE_VALUES [[COPY1]](<2 x s512>)
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:accregbank(s512), [[UV1:%[0-9]+]]:accregbank(s512) = G_UNMERGE_VALUES [[COPY]](<2 x s512>)
     ; CHECK-NEXT: $bmll0 = COPY [[UV]](s512)
     ; CHECK-NEXT: $bmll2 = COPY [[UV1]](s512)
     %0:_(<2 x s512>) = COPY $cml0
