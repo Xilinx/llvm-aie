@@ -819,16 +819,28 @@ AIE2PRegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
                                                          OpRegBankIdx);
   }
   case TargetOpcode::G_UNMERGE_VALUES: {
+    assert(MI.getNumOperands() == 3 &&
+           "Unsupported number of operands for G_UNMERGE_VALUES\n");
     const Register SrcReg = MI.getOperand(2).getReg();
     const LLT SrcTy = MRI.getType(SrcReg);
-    if (SrcTy.getSizeInBits() == 2048) {
+
+    auto *RB = getRegBank(SrcReg, MRI, TRI);
+    if ((RB == &AIE2P::AccRegBank) &&
+        (SrcTy.getSizeInBits() == 1024 || SrcTy.getSizeInBits() == 2048)) {
+      const LLT HalfSrcTy = SrcTy.divide(2);
+      const unsigned HalfSrcTySize = HalfSrcTy.getSizeInBits();
       return getInstructionMapping(
           /*ID*/ 1, /*Cost*/ 1,
-          getOperandsMapping({getValueMapping(PMI_ACC1024, 1024),
-                              getValueMapping(PMI_ACC1024, 1024),
-                              getValueMapping(PMI_ACC2048, 2048)}),
+          getOperandsMapping(
+              {getValueMapping(getAccPartialMappingIdx(HalfSrcTy),
+                               HalfSrcTySize),
+               getValueMapping(getAccPartialMappingIdx(HalfSrcTy),
+                               HalfSrcTySize),
+               getValueMapping(getAccPartialMappingIdx(SrcTy),
+                               SrcTy.getSizeInBits())}),
           /*NumOperands*/ 3);
     }
+
     if (SrcTy.getSizeInBits() == 512) {
       return getInstructionMapping(
           /*ID*/ 1, /*Cost*/ 1,
