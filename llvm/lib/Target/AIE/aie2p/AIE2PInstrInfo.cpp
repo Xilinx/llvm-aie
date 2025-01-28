@@ -1065,6 +1065,10 @@ AIE2PInstrInfo::getRegOffsetSpillInstrInfoFromImmOffset(
     return {AIE2P::ST_dms_sts_idx, AIE2P::MOVXM, &AIE2P::eDJRegClass};
   case AIE2P::LDA_dms_lda_spill:
     return {AIE2P::LDA_dms_lda_idx, AIE2P::MOVXM, &AIE2P::eDJRegClass};
+  case AIE2P::VST_dmx_sts_fifohl_spill:
+    return {AIE2P::VST_dmx_sts_fifohl_idx, AIE2P::MOVXM, &AIE2P::eDJRegClass};
+  case AIE2P::VLDA_dmx_lda_fifohl_spill:
+    return {AIE2P::VLDA_dmx_lda_fifohl_idx, AIE2P::MOVXM, &AIE2P::eDJRegClass};
   default:
     llvm_unreachable("Offset register spill instruction info un-implemented");
   }

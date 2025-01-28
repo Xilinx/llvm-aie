@@ -457,7 +457,10 @@ void AIEBaseInstrInfo::expandSpillPseudo(
         EI.SubRegIndex ? Register(TRI.getSubReg(Reg, EI.SubRegIndex)) : Reg;
     if (MI.hasOrderedMemoryRef() || SEH.isLiveReg(SubReg)) {
       MachineInstrBuilder MIB;
-      if (SPReg) {
+      // If the SPReg is set, we need to spill using register offset. However,
+      // for pseudo instructions, we skip this step since we will come back to
+      // it once we expand the pseudo instruction into multiple instructions.
+      if (SPReg && !get(EI.ExpandedOpCode).isPseudo()) {
         auto OffsetRegInfo =
             getRegOffsetSpillInstrInfoFromImmOffset(EI.ExpandedOpCode);
         MachineFunction &MF = *MI.getMF();
@@ -502,7 +505,7 @@ void AIEBaseInstrInfo::expandSpillPseudo(
   // E.g. In AIE2 eDS spills are expanded into 2 eD spills, which are themselves
   // expanded into 4 other spills.
   for (MachineInstr *ExpandedMI : ExpandedInsts)
-    expandSpillPseudo(*ExpandedMI, TRI, SubRegOffsetAlign);
+    expandSpillPseudo(*ExpandedMI, TRI, SubRegOffsetAlign, SPReg);
 }
 
 /// Collect all the "atomic" sub-registers that make up \ref Reg.
