@@ -892,30 +892,29 @@ define i32 @extract_v32i32_dyn(<32 x i32> %v, i32 %idx) nounwind {
 ; AIE2-LABEL: extract_v32i32_dyn:
 ; AIE2:         .p2align 4
 ; AIE2-NEXT:  // %bb.0:
-; AIE2-NEXT:    nopb ; nopa ; nops ; nopx ; mov r3, r16; nopv
-; AIE2-NEXT:    mov r4, r17
-; AIE2-NEXT:    mova r0, #0
-; AIE2-NEXT:    mova r2, #16
-; AIE2-NEXT:    lt r27, r1, r2
-; AIE2-NEXT:    sel.nez r0, r0, r2, r27
-; AIE2-NEXT:    add r17, r27, #-1
+; AIE2-NEXT:    nopa ; mov r3, r16
+; AIE2-NEXT:    mova r0, #16
+; AIE2-NEXT:    mova r2, #0
+; AIE2-NEXT:    lt r27, r1, r0
+; AIE2-NEXT:    add r16, r27, #-1
+; AIE2-NEXT:    sel.nez r0, r2, r0, r27
 ; AIE2-NEXT:    ret lr
-; AIE2-NEXT:    vsel.32 x0, x4, x5, r17 // Delay Slot 5
+; AIE2-NEXT:    vsel.32 x0, x4, x5, r16 // Delay Slot 5
 ; AIE2-NEXT:    sub r16, r1, r0 // Delay Slot 4
 ; AIE2-NEXT:    vextract.s32 r0, x0, r16 // Delay Slot 3
-; AIE2-NEXT:    or r17, r4, r4 // Delay Slot 2
+; AIE2-NEXT:    nop // Delay Slot 2
 ; AIE2-NEXT:    mov r16, r3 // Delay Slot 1
 ;
 ; AIE2P-LABEL: extract_v32i32_dyn:
 ; AIE2P:         .p2align 4
 ; AIE2P-NEXT:  // %bb.0:
-; AIE2P-NEXT:    mova r0, #0; nopb ; nopxm ; nops
-; AIE2P-NEXT:    mova r2, #16
-; AIE2P-NEXT:    lt r27, r1, r2
-; AIE2P-NEXT:    sel.nez r0, r0, r2, r27
+; AIE2P-NEXT:    mova r0, #16; nopb ; nopxm ; nops
+; AIE2P-NEXT:    mova r2, #0
+; AIE2P-NEXT:    lt r27, r1, r0
+; AIE2P-NEXT:    add r16, r27, #-1
 ; AIE2P-NEXT:    ret lr
-; AIE2P-NEXT:    sub r0, r1, r0 // Delay Slot 5
-; AIE2P-NEXT:    add r16, r27, #-1 // Delay Slot 4
+; AIE2P-NEXT:    sel.nez r0, r2, r0, r27 // Delay Slot 5
+; AIE2P-NEXT:    sub r0, r1, r0 // Delay Slot 4
 ; AIE2P-NEXT:    vsel.32 x0, x4, x5, r16 // Delay Slot 3
 ; AIE2P-NEXT:    vextract.32 r0, x0, r0, vaddsign1 // Delay Slot 2
 ; AIE2P-NEXT:    nop // Delay Slot 1

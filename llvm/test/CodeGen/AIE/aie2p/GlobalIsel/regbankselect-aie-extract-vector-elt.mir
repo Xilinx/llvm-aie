@@ -8,91 +8,23 @@
 # RUN: llc -mtriple aie2p -run-pass=regbankselect -regbankselect-fast %s -verify-machineinstrs -o - | FileCheck %s
 
 ---
-name:            test_acc256_4x64
+name:            test_acc512_8x64
 legalized:       true
 body:             |
   bb.0.entry:
-    liveins: $wl0
+    liveins: $bmll0
 
-    ; CHECK-LABEL: name: test_acc256_4x64
-    ; CHECK: liveins: $wl0
+    ; CHECK-LABEL: name: test_acc512_8x64
+    ; CHECK: liveins: $bmll0
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vregbank(<4 x s64>) = COPY $wl0
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:accregbank(<8 x s64>) = COPY $bmll0
     ; CHECK-NEXT: [[C:%[0-9]+]]:gprregbank(s32) = G_CONSTANT i32 1
-    ; CHECK-NEXT: [[AIE_ZEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:gprregbank(s64) = G_AIE_ZEXT_EXTRACT_VECTOR_ELT [[COPY]](<4 x s64>), [[C]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:gprregbank(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<4 x s64>), [[C]](s32)
+    ; CHECK-NEXT: [[AIE_ZEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:gprregbank(s64) = G_AIE_ZEXT_EXTRACT_VECTOR_ELT [[COPY]](<8 x s64>), [[C]](s32)
+    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:gprregbank(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<8 x s64>), [[C]](s32)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_ZEXT_EXTRACT_VECTOR_ELT]](s64), implicit [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64)
-    %0:_(<4 x s64>) = COPY $wl0
+    %0:_(<8 x s64>) = COPY $bmll0
     %1:_(s32) = G_CONSTANT i32 1
-    %3:_(s64) = G_AIE_ZEXT_EXTRACT_VECTOR_ELT %0(<4 x s64>), %1(s32)
-    %4:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %0(<4 x s64>), %1(s32)
+    %3:_(s64) = G_AIE_ZEXT_EXTRACT_VECTOR_ELT %0(<8 x s64>), %1(s32)
+    %4:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %0(<8 x s64>), %1(s32)
     PseudoRET implicit $lr, implicit %3, implicit %4
 ...
-
----
-name:            test_8x32
-legalized:       true
-body:             |
-  bb.0.entry:
-    liveins: $wl0
-
-    ; CHECK-LABEL: name: test_8x32
-    ; CHECK: liveins: $wl0
-    ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vregbank(<8 x s32>) = COPY $wl0
-    ; CHECK-NEXT: [[C:%[0-9]+]]:gprregbank(s32) = G_CONSTANT i32 1
-    ; CHECK-NEXT: [[AIE_ZEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:gprregbank(s64) = G_AIE_ZEXT_EXTRACT_VECTOR_ELT [[COPY]](<8 x s32>), [[C]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:gprregbank(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<8 x s32>), [[C]](s32)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_ZEXT_EXTRACT_VECTOR_ELT]](s64), implicit [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64)
-    %0:_(<8 x s32>) = COPY $wl0
-    %1:_(s32) = G_CONSTANT i32 1
-    %3:_(s64) = G_AIE_ZEXT_EXTRACT_VECTOR_ELT %0(<8 x s32>), %1(s32)
-    %4:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %0(<8 x s32>), %1(s32)
-    PseudoRET implicit $lr, implicit %3, implicit %4
-...
-
----
-name:            test_16x16
-legalized:       true
-body:             |
-  bb.0.entry:
-    liveins: $wl0
-
-    ; CHECK-LABEL: name: test_16x16
-    ; CHECK: liveins: $wl0
-    ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vregbank(<16 x s16>) = COPY $wl0
-    ; CHECK-NEXT: [[C:%[0-9]+]]:gprregbank(s32) = G_CONSTANT i32 1
-    ; CHECK-NEXT: [[AIE_ZEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:gprregbank(s64) = G_AIE_ZEXT_EXTRACT_VECTOR_ELT [[COPY]](<16 x s16>), [[C]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:gprregbank(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<16 x s16>), [[C]](s32)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_ZEXT_EXTRACT_VECTOR_ELT]](s64), implicit [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64)
-    %0:_(<16 x s16>) = COPY $wl0
-    %1:_(s32) = G_CONSTANT i32 1
-    %3:_(s64) = G_AIE_ZEXT_EXTRACT_VECTOR_ELT %0(<16 x s16>), %1(s32)
-    %4:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %0(<16 x s16>), %1(s32)
-    PseudoRET implicit $lr, implicit %3, implicit %4
-...
-
-
----
-name:            test_32x8
-legalized:       true
-body:             |
-  bb.0.entry:
-    liveins: $wl0
-
-    ; CHECK-LABEL: name: test_32x8
-    ; CHECK: liveins: $wl0
-    ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vregbank(<32 x s8>) = COPY $wl0
-    ; CHECK-NEXT: [[C:%[0-9]+]]:gprregbank(s32) = G_CONSTANT i32 1
-    ; CHECK-NEXT: [[AIE_ZEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:gprregbank(s64) = G_AIE_ZEXT_EXTRACT_VECTOR_ELT [[COPY]](<32 x s8>), [[C]](s32)
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:gprregbank(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<32 x s8>), [[C]](s32)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_ZEXT_EXTRACT_VECTOR_ELT]](s64), implicit [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s64)
-    %0:_(<32 x s8>) = COPY $wl0
-    %1:_(s32) = G_CONSTANT i32 1
-    %3:_(s64) = G_AIE_ZEXT_EXTRACT_VECTOR_ELT %0(<32 x s8>), %1(s32)
-    %4:_(s64) = G_AIE_SEXT_EXTRACT_VECTOR_ELT %0(<32 x s8>), %1(s32)
-    PseudoRET implicit $lr, implicit %3, implicit %4
-...
-

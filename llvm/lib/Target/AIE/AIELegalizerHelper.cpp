@@ -666,26 +666,40 @@ bool AIELegalizerHelper::legalizeG_EXTRACT_VECTOR_ELT(LegalizerHelper &Helper,
     assert((SrcVecEltTy == S8 || SrcVecEltTy == S16 || SrcVecEltTy == S64 ||
             SrcVecEltTy == S32) &&
            "Unexpected vector element type for extract vector elt!");
+
+    MachineInstr *ExtractInstr = nullptr;
     if (SrcVecEltTy == S8 || SrcVecEltTy == S16) {
       const Register ExtEltDstReg = MRI.createGenericVirtualRegister(S32);
       const Register ExtDstReg = MRI.createGenericVirtualRegister(S32);
-      MIRBuilder.buildInstr(
+      ExtractInstr = MIRBuilder.buildInstr(
           II->getGenericExtractVectorEltOpcode(/*SignExt*/ true),
           {ExtEltDstReg}, {SrcVecReg, IdxReg});
       MIRBuilder.buildAssertInstr(TargetOpcode::G_ASSERT_SEXT, ExtDstReg,
                                   ExtEltDstReg, SrcVecEltTy.getSizeInBits());
       MIRBuilder.buildTrunc(DstReg, ExtDstReg);
     } else {
-      MIRBuilder.buildInstr(
+      ExtractInstr = MIRBuilder.buildInstr(
           II->getGenericExtractVectorEltOpcode(/*SignExt*/ true), {DstReg},
           {SrcVecReg, IdxReg});
     }
-    break;
+    MI.eraseFromParent();
+
+    const unsigned LegalVectorSize = II->getBasicVectorBitSize();
+    // If this instruction is already legal, we are done
+    if (SrcVecSize == LegalVectorSize)
+      return true;
+
+    // For any illegal vector type, re-use the existing legalization strategy
+
+    // Set a valid insertion point after erasing the original instruction.
+    MIRBuilder.setInstr(*ExtractInstr);
+    return legalizeG_AIE_EXTRACT_VECTOR_ELT(Helper, *ExtractInstr,
+                                            LegalVectorSize);
   }
   default:
     llvm_unreachable("Unexpected vector size for extract vector elt!");
   }
-  MI.removeFromParent();
+  MI.eraseFromParent();
   return true;
 }
 

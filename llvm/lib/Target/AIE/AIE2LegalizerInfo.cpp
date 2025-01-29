@@ -405,21 +405,15 @@ AIE2LegalizerInfo::AIE2LegalizerInfo(const AIE2Subtarget &ST) : AIEHelper(ST) {
         const LLT &EltTy = Query.Types[1].getElementType();
         return Query.Types[0] != EltTy;
       })
-      // If it is 32-bit, the LLVM can perform some bitshifts to legalize it
+      // Bitcast 32-bit vectors to 1 x s32, which will be expanded to bit
+      // arithmetic
       .bitcastIf(
           [=](const LegalityQuery &Query) {
             const LLT &VecTy = Query.Types[1];
             return VecTy.getSizeInBits() == 32;
           },
           bitcastToVectorElement32(1))
-      // Extraction is supported for the native types of 32-, 256-, 512- and
-      // 1024-bit
-      .customIf(typeInSet(1, {V4S8, V2S16, V2S32, V8S32, V16S32, V32S32, V16S16,
-                              V32S8, V32S16, V64S8, V64S16, V128S8}))
-      // For 16-bits, we want to increase the number of elements to 4. Since
-      // our architecture doesn't always support all intermediate sizes, we do
-      // it as a special case so that we can use them minimum clamp for the
-      // smallest vector register.
+      // For 2 x 8 vectors, we want to increase the number of elements to 4
       .moreElementsIf(
           [=](const LegalityQuery &Query) {
             return Query.Types[1].getScalarSizeInBits() == 8 &&
@@ -428,11 +422,15 @@ AIE2LegalizerInfo::AIE2LegalizerInfo(const AIE2Subtarget &ST) : AIEHelper(ST) {
           [=](const LegalityQuery &Query) {
             return std::make_pair(1, LLT::fixed_vector(4, S8));
           })
-      // Increase the input vectors if they don't fit in the smallest vector
-      // register
+      // Custom legalize 2 x 32 vectors
+      .customIf(typeInSet(1, {V2S32}))
+      // Extend vectors to have at least 256-bits
       .clampMinNumElements(1, S8, 32)
       .clampMinNumElements(1, S16, 16)
-      .clampMinNumElements(1, S32, 8);
+      .clampMinNumElements(1, S32, 8)
+      // Custom legalize resulting vector types >= 256-bit
+      .customIf(typeInSet(1, {V8S32, V16S16, V32S8, V16S32, V32S16, V64S8,
+                              V32S32, V64S16, V128S8}));
 
   getActionDefinitionsBuilder(G_INSERT_VECTOR_ELT)
       .clampScalar(2, S32, S32) // Clamp the idx to 32 bit since VINSERT
