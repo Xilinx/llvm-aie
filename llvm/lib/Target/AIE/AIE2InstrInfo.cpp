@@ -1396,6 +1396,8 @@ AIE2InstrInfo::getZOLSupport() const {
   Result.LoopEndOpcode = AIE2::PseudoLoopEnd;
   Result.SetLoopCountOpcode = AIE2::ADD_NC;
   Result.SetAddressOpcode = AIE2::MOVXM_lng_cg;
+  // We need at 112 bytes distance from the loop setup to the loop end label,
+  // which requires 7 bundles of 16 bytes.
   Result.LoopSetupDistance = 7;
   Result.LCRegister = AIE2::LC;
   Result.LSRegister = AIE2::LS;
