@@ -76,12 +76,11 @@ def combine_vector_shuffle_broadcast : GICombineRule<
          [{ return matchShuffleToBroadcast(*${root}, MRI, ${matchinfo}); }]),
   (apply [{ applySplatVector(*${root}, MRI, B, ${matchinfo}); }])>;
 
-def combine_vsel_matchdata: GIDefMatchData<"std::tuple<Register, Register, Register, uint64_t>">;
 def combine_vector_shuffle_vsel : GICombineRule<
-  (defs root:$root, combine_vsel_matchdata:$matchinfo),
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
   (match (wip_match_opcode G_SHUFFLE_VECTOR): $root,
-         [{ return matchShuffleToVSel(*${root}, MRI, ${matchinfo}); }]),
-  (apply [{ applyVSel(*${root}, MRI, B, ${matchinfo}); }])>;
+         [{ return matchShuffleToVSel(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
 
 def combine_shuffle_to_vextbcst : GICombineRule<
   (defs root:$root, build_fn_matchinfo:$matchinfo),

@@ -66,9 +66,8 @@ bool matchShuffleToBroadcast(MachineInstr &MI, MachineRegisterInfo &MRI,
                              std::pair<Register, Register> &MatchInfo);
 /// Combine G_SHUFFLE_VECTOR(G_BUILD_VECTOR (VAL, UNDEF, ...), mask<0,0,...>)
 /// idiom into G_AIE_VSEL
-bool matchShuffleToVSel(
-    MachineInstr &MI, MachineRegisterInfo &MRI,
-    std::tuple<Register, Register, Register, uint64_t> &MatchInfo);
+bool matchShuffleToVSel(MachineInstr &MI, MachineRegisterInfo &MRI,
+                        const AIEBaseInstrInfo &TII, BuildFnTy &MatchInfo);
 /// Combine a shuffle vector with a mask that extracts the only element from
 /// the first source vector and broadcasts it.
 bool matchShuffleToExtractBroadcast(MachineInstr &MI, MachineRegisterInfo &MRI,
@@ -166,8 +165,6 @@ bool matchConcatPadVector(MachineInstr &MI, MachineRegisterInfo &MRI,
                           Register &MatchedInputVector);
 void applyPadVector(MachineInstr &MI, MachineRegisterInfo &MRI,
                     MachineIRBuilder &B, Register MatchedInputVector);
-void applyVSel(MachineInstr &MI, MachineRegisterInfo &MRI, MachineIRBuilder &B,
-               std::tuple<Register, Register, Register, uint64_t> &MatchInfo);
 bool tryToCombineVectorShiftsByZero(MachineInstr &MI, MachineRegisterInfo &MRI);
 
 bool matchExtractConcat(MachineInstr &MI, MachineRegisterInfo &MRI,
