@@ -15,6 +15,8 @@
 #include "AIE2PFrameLowering.h"
 #include "AIE2PSubtarget.h"
 #include "MCTargetDesc/aie2p/AIE2PMCTargetDesc.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/RegisterScavenging.h"
 
 #define DEBUG_TYPE "aie-frame-lowering"
 
@@ -92,4 +94,24 @@ void AIE2PFrameLowering::determineCalleeSaves(MachineFunction &MF,
   // function body and restore it at the end by adding it in SavedRegs.
   if (hasFP(MF))
     SavedRegs.set(FPReg);
+}
+
+// Although the register scavenger can often find a spare register, an
+// emergency spill slot might be needed to guarantee success.
+void AIE2PFrameLowering::processFunctionBeforeFrameFinalized(
+    MachineFunction &MF, RegScavenger *RS) const {
+  const TargetRegisterInfo *RegInfo = MF.getSubtarget().getRegisterInfo();
+  MachineFrameInfo &MFI = MF.getFrameInfo();
+  const TargetRegisterClass *RC1 = &AIE2P::ePRegClass;
+  const TargetRegisterClass *RC2 = &AIE2P::eDJRegClass;
+  if (!isInt<12>(MFI.estimateStackSize(MF))) {
+    // For an estimate stack size greater than isInt<12>, consevativly we
+    // allocate emergency spill slots in the stack.
+    int RegScavPtr = MFI.CreateStackObject(RegInfo->getSpillSize(*RC1),
+                                           RegInfo->getSpillAlign(*RC1), false);
+    int RegScavDj = MFI.CreateStackObject(RegInfo->getSpillSize(*RC2),
+                                          RegInfo->getSpillAlign(*RC2), false);
+    RS->addScavengingFrameIndex(RegScavPtr);
+    RS->addScavengingFrameIndex(RegScavDj);
+  }
 }

@@ -180,6 +180,9 @@ public:
 protected:
   SmallVector<AIEPseudoExpandInfo, 4>
   getSpillPseudoExpandInfo(const MachineInstr &MI) const override;
+
+  AIERegOffsetSpillInstrInfo
+  getRegOffsetSpillInstrInfoFromImmOffset(const unsigned Opcode) const override;
 };
 } // namespace llvm
 #endif

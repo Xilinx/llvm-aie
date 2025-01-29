@@ -3,7 +3,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 
@@ -80,5 +80,160 @@ INTRINSIC(v64int16) unpack(v64int8 v) { return unpack(v, __SIGN_SIGNED); }
 INTRINSIC(v64uint16) unpack(v64uint8 v) { return unpack(v, __SIGN_UNSIGNED); }
 INTRINSIC(v128int8) unpack(v128int4 v) { return unpack(v, __SIGN_SIGNED); }
 INTRINSIC(v128uint8) unpack(v128uint4 v) { return unpack(v, __SIGN_UNSIGNED); }
+
+#define FIFO_ST_PUSH_NORMAL(T, DM_BANK, RESTRICT)                              \
+  INTRINSIC(void)                                                              \
+  fifo_st_reset(T DM_BANK *RESTRICT &p, T v, fifo_state_t &s) {                \
+    s.pos = 0;                                                                 \
+    sparse_fifo_t &fifo = s.fifo;                                              \
+    __builtin_aie2p_fifo_st_push_512_bfp16((int *&)p, v, fifo, s.pos);         \
+  }                                                                            \
+  INTRINSIC(void) fifo_st_push(T DM_BANK *RESTRICT &p, T v, fifo_state_t &s) { \
+    int &pos = s.pos;                                                          \
+    sparse_fifo_t &fifo = s.fifo;                                              \
+    __builtin_aie2p_fifo_st_push_512_bfp16((int *&)p, v, fifo, pos);           \
+  }
+
+#define FIFO_ST_PUSH_BFP16(T, SIZE, DM_BANK, RESTRICT)                         \
+  INTRINSIC(void)                                                              \
+  fifo_st_reset(T##_unaligned DM_BANK *RESTRICT &p, T v, fifo_state_t &s) {    \
+    s.pos = 0;                                                                 \
+    sparse_fifo_t &fifo = s.fifo;                                              \
+    v64char mant = v.mantissa;                                                 \
+    v8char exp = v.exponent;                                                   \
+    __builtin_aie2p_fifo_st_push_##SIZE##_bfp16((int *&)p, mant, exp, fifo,    \
+                                                s.pos);                        \
+  }                                                                            \
+  INTRINSIC(void)                                                              \
+  fifo_st_push(T##_unaligned DM_BANK *RESTRICT &p, T v, fifo_state_t &s) {     \
+    int &pos = s.pos;                                                          \
+    sparse_fifo_t &fifo = s.fifo;                                              \
+    v64char mant = v.mantissa;                                                 \
+    v8char exp = v.exponent;                                                   \
+    __builtin_aie2p_fifo_st_push_##SIZE##_bfp16((int *&)p, mant, exp, fifo,    \
+                                                pos);                          \
+  }
+
+#define FIFO_ST_FLUSH_BARE(T, VAR, DM_BANK, RESTRICT)                          \
+  INTRINSIC(void)                                                              \
+  fifo_st_flush##VAR(T DM_BANK *RESTRICT &p, fifo_state_t &s) {                \
+    int &pos = s.pos;                                                          \
+    sparse_fifo_t &fifo = s.fifo;                                              \
+    __builtin_aie2p_fifo_st_flush((int *&)p, fifo, pos);                       \
+  }                                                                            \
+  INTRINSIC(void)                                                              \
+  fifo_st_flush##VAR##_1d_byte(T DM_BANK *RESTRICT &p, fifo_state_t &s,        \
+                               int off) {                                      \
+    int &pos = s.pos;                                                          \
+    sparse_fifo_t &fifo = s.fifo;                                              \
+    __builtin_aie2p_fifo_st_flush_1d_byte((int *&)p, fifo, pos, off);          \
+  }                                                                            \
+  INTRINSIC(void)                                                              \
+  fifo_st_flush##VAR##_2d_byte(T DM_BANK *RESTRICT &p, fifo_state_t &s,        \
+                               int off, int size1, addr_t &count1, int inc1) { \
+    int &pos = s.pos;                                                          \
+    sparse_fifo_t &fifo = s.fifo;                                              \
+    __builtin_aie2p_fifo_st_flush_2d_byte((int *&)p, fifo, pos, off, size1,    \
+                                          count1, inc1);                       \
+  }                                                                            \
+  INTRINSIC(void)                                                              \
+  fifo_st_flush##VAR##_3d_byte(T DM_BANK *RESTRICT &p, fifo_state_t &s,        \
+                               int off, int size1, addr_t &count1, int inc1,   \
+                               int size2, addr_t &count2, int inc2) {          \
+    int &pos = s.pos;                                                          \
+    sparse_fifo_t &fifo = s.fifo;                                              \
+    __builtin_aie2p_fifo_st_flush_3d_byte((int *&)p, fifo, pos, off, size1,    \
+                                          count1, inc1, size2, count2, inc2);  \
+  }
+
+#define FIFO_ST_FLUSH_CONV(T, DM_BANK, RESTRICT)                               \
+  INTRINSIC(void)                                                              \
+  fifo_st_flush_conv(T DM_BANK *RESTRICT &p, fifo_state_t &s) {                \
+    int &pos = s.pos;                                                          \
+    sparse_fifo_t &fifo = s.fifo;                                              \
+    __builtin_aie2p_fifo_st_flush_conv((int *&)p, fifo, pos);                  \
+  }                                                                            \
+  INTRINSIC(void)                                                              \
+  fifo_st_flush_conv_1d_byte(T DM_BANK *RESTRICT &p, fifo_state_t &s,          \
+                             int off) {                                        \
+    int &pos = s.pos;                                                          \
+    sparse_fifo_t &fifo = s.fifo;                                              \
+    __builtin_aie2p_fifo_st_flush_conv_1d_byte((int *&)p, fifo, pos, off);     \
+  }                                                                            \
+  INTRINSIC(void)                                                              \
+  fifo_st_flush_conv_2d_byte(T DM_BANK *RESTRICT &p, fifo_state_t &s, int off, \
+                             int size1, addr_t &count1, int inc1) {            \
+    int &pos = s.pos;                                                          \
+    sparse_fifo_t &fifo = s.fifo;                                              \
+    __builtin_aie2p_fifo_st_flush_conv_2d_byte((int *&)p, fifo, pos, off,      \
+                                               size1, count1, inc1);           \
+  }                                                                            \
+  INTRINSIC(void)                                                              \
+  fifo_st_flush_conv_3d_byte(T DM_BANK *RESTRICT &p, fifo_state_t &s, int off, \
+                             int size1, addr_t &count1, int inc1, int size2,   \
+                             addr_t &count2, int inc2) {                       \
+    int &pos = s.pos;                                                          \
+    sparse_fifo_t &fifo = s.fifo;                                              \
+    __builtin_aie2p_fifo_st_flush_conv_3d_byte(                                \
+        (int *&)p, fifo, pos, off, size1, count1, inc1, size2, count2, inc2);  \
+  }
+
+#define FIFO_ST_NORMAL(T, DM_BANK, RESTRICT)                                   \
+  FIFO_ST_PUSH_NORMAL(T, DM_BANK, RESTRICT)                                    \
+  FIFO_ST_FLUSH_BARE(T, , DM_BANK, RESTRICT)                                   \
+  FIFO_ST_FLUSH_BARE(T, _bare, DM_BANK, RESTRICT)                              \
+  FIFO_ST_FLUSH_CONV(T, DM_BANK, RESTRICT)
+
+#define FIFO_ST_BFP16(T, SIZE, DM_BANK, RESTRICT)                              \
+  FIFO_ST_PUSH_BFP16(T, SIZE, DM_BANK, RESTRICT)                               \
+  FIFO_ST_FLUSH_BARE(T##_unaligned, , DM_BANK, RESTRICT)                       \
+  FIFO_ST_FLUSH_BARE(T##_unaligned, _bare, DM_BANK, RESTRICT)                  \
+  FIFO_ST_FLUSH_CONV(T##_unaligned, DM_BANK, RESTRICT)
+
+#define FIFO_ST(DM_BANK, RESTRICT)                                             \
+  FIFO_ST_BFP16(v64bfp16ebs8, 576, DM_BANK, RESTRICT)                          \
+  FIFO_ST_BFP16(v64bfp16ebs16, 544, DM_BANK, RESTRICT)                         \
+  FIFO_ST_NORMAL(v32bfloat16, DM_BANK, RESTRICT)                               \
+  FIFO_ST_NORMAL(v16float, DM_BANK, RESTRICT)                                  \
+  FIFO_ST_NORMAL(v128int4, DM_BANK, RESTRICT)                                  \
+  FIFO_ST_NORMAL(v128uint4, DM_BANK, RESTRICT)                                 \
+  FIFO_ST_NORMAL(v64int8, DM_BANK, RESTRICT)                                   \
+  FIFO_ST_NORMAL(v64uint8, DM_BANK, RESTRICT)                                  \
+  FIFO_ST_NORMAL(v32int16, DM_BANK, RESTRICT)                                  \
+  FIFO_ST_NORMAL(v32uint16, DM_BANK, RESTRICT)                                 \
+  FIFO_ST_NORMAL(v16int32, DM_BANK, RESTRICT)                                  \
+  FIFO_ST_NORMAL(v16uint32, DM_BANK, RESTRICT)
+
+FIFO_ST(, )
+FIFO_ST(__aie_dm_resource_a, )
+FIFO_ST(__aie_dm_resource_b, )
+FIFO_ST(__aie_dm_resource_c, )
+FIFO_ST(__aie_dm_resource_d, )
+FIFO_ST(__aie_dm_resource_ab, )
+FIFO_ST(__aie_dm_resource_ac, )
+FIFO_ST(__aie_dm_resource_ad, )
+FIFO_ST(__aie_dm_resource_bc, )
+FIFO_ST(__aie_dm_resource_bd, )
+FIFO_ST(__aie_dm_resource_cd, )
+
+FIFO_ST(, restrict)
+FIFO_ST(__aie_dm_resource_a, restrict)
+FIFO_ST(__aie_dm_resource_b, restrict)
+FIFO_ST(__aie_dm_resource_c, restrict)
+FIFO_ST(__aie_dm_resource_d, restrict)
+FIFO_ST(__aie_dm_resource_ab, restrict)
+FIFO_ST(__aie_dm_resource_ac, restrict)
+FIFO_ST(__aie_dm_resource_ad, restrict)
+FIFO_ST(__aie_dm_resource_bc, restrict)
+FIFO_ST(__aie_dm_resource_bd, restrict)
+FIFO_ST(__aie_dm_resource_cd, restrict)
+
+#undef FIFO_ST_PUSH_NORMAL
+#undef FIFO_ST_FLUSH_BARE
+#undef FIFO_ST_FLUSH_CONV
+#undef FIFO_ST_PUSH_BFP16
+#undef FIFO_ST_NORMAL
+#undef FIFO_ST_BFP16
+#undef FIFO_ST
 
 #endif // AIE2P_LDST_H

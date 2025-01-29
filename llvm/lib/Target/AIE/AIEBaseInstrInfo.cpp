@@ -408,9 +408,9 @@ public:
   }
 };
 
-void AIEBaseInstrInfo::expandSpillPseudo(MachineInstr &MI,
-                                         const TargetRegisterInfo &TRI,
-                                         Align SubRegOffsetAlign) const {
+void AIEBaseInstrInfo::expandSpillPseudo(
+    MachineInstr &MI, const TargetRegisterInfo &TRI, Align SubRegOffsetAlign,
+    Register SPReg, std::optional<int64_t> OffsetVal) const {
   auto ExpandInfos = getSpillPseudoExpandInfo(MI);
   if (ExpandInfos.empty()) {
     // Nothing to expand
@@ -420,7 +420,8 @@ void AIEBaseInstrInfo::expandSpillPseudo(MachineInstr &MI,
   const MachineOperand &RegOp = MI.getOperand(0);
   Register Reg = RegOp.getReg();
   unsigned RegFlags = computeRegStateFlags(RegOp);
-  int64_t Offset = MI.getOperand(1).getImm();
+  int64_t Offset =
+      OffsetVal.has_value() ? *OffsetVal : MI.getOperand(1).getImm();
   auto &MBB = *MI.getParent();
   auto DL = MI.getDebugLoc();
 
@@ -455,9 +456,27 @@ void AIEBaseInstrInfo::expandSpillPseudo(MachineInstr &MI,
     Register SubReg =
         EI.SubRegIndex ? Register(TRI.getSubReg(Reg, EI.SubRegIndex)) : Reg;
     if (MI.hasOrderedMemoryRef() || SEH.isLiveReg(SubReg)) {
-      MachineInstrBuilder MIB = BuildMI(MBB, MI, DL, get(EI.ExpandedOpCode))
-                                    .addReg(SubReg, RegFlags)
-                                    .addImm(MemOffset);
+      MachineInstrBuilder MIB;
+      // If the SPReg is set, we need to spill using register offset. However,
+      // for pseudo instructions, we skip this step since we will come back to
+      // it once we expand the pseudo instruction into multiple instructions.
+      if (SPReg && !get(EI.ExpandedOpCode).isPseudo()) {
+        auto OffsetRegInfo =
+            getRegOffsetSpillInstrInfoFromImmOffset(EI.ExpandedOpCode);
+        MachineFunction &MF = *MI.getMF();
+        Register OffsetReg =
+            MF.getRegInfo().createVirtualRegister(OffsetRegInfo.OffsetRC);
+        BuildMI(MBB, MI, DL, get(OffsetRegInfo.AdjustOffsetOpcode), OffsetReg)
+            .addImm(MemOffset);
+        MIB = BuildMI(MBB, MI, DL, get(OffsetRegInfo.SpillOpCode))
+                  .addReg(SubReg, RegFlags)
+                  .addReg(SPReg)
+                  .addReg(OffsetReg);
+      } else {
+        MIB = BuildMI(MBB, MI, DL, get(EI.ExpandedOpCode))
+                  .addReg(SubReg, RegFlags)
+                  .addImm(MemOffset);
+      }
 
       // If safe, refine the size and offset of the MMO while maintaining the
       // MachinePointerInfo location.
@@ -486,7 +505,7 @@ void AIEBaseInstrInfo::expandSpillPseudo(MachineInstr &MI,
   // E.g. In AIE2 eDS spills are expanded into 2 eD spills, which are themselves
   // expanded into 4 other spills.
   for (MachineInstr *ExpandedMI : ExpandedInsts)
-    expandSpillPseudo(*ExpandedMI, TRI, SubRegOffsetAlign);
+    expandSpillPseudo(*ExpandedMI, TRI, SubRegOffsetAlign, SPReg);
 }
 
 /// Collect all the "atomic" sub-registers that make up \ref Reg.

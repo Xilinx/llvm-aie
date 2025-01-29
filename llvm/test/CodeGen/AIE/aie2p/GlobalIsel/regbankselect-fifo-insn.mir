@@ -4,7 +4,7 @@
 # See https://llvm.org/LICENSE.txt for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
-# (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+# (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2p -run-pass=regbankselect -regbankselect-greedy %s -verify-machineinstrs -o - | FileCheck --check-prefix=GREEDY %s
 # RUN: llc -mtriple aie2p -run-pass=regbankselect -regbankselect-fast %s -verify-machineinstrs -o - | FileCheck --check-prefix=FAST %s
 ---
@@ -210,3 +210,159 @@ body:             |
     PseudoRET implicit $lr, implicit $cml0
 
 ...
+
+---
+name:            _Z18test_fifo_st_resetRPDv64_DB8_S0_R12fifo_state_t
+legalized:       true
+body:             |
+  bb.1.entry:
+    ; GREEDY-LABEL: name: _Z18test_fifo_st_resetRPDv64_DB8_S0_R12fifo_state_t
+    ; GREEDY: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.push.512.bfp16), %3:ptrregbank(p0), %4:vregbank(<16 x s32>), %5:fiforegbank(<32 x s32>), %6:gprregbank(s32)
+    ;
+    ; FAST-LABEL: name: _Z18test_fifo_st_resetRPDv64_DB8_S0_R12fifo_state_t
+    ; FAST: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.push.512.bfp16), %3:ptrregbank(p0), %4:vregbank(<16 x s32>), %5:fiforegbank(<32 x s32>), %6:gprregbank(s32)
+  %9:_(p0), %10:_(<32 x s32>), %11:_(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.push.512.bfp16), %5:_(p0), %6:_(<16 x s32>), %7:_(<32 x s32>), %8:_(s32)
+...
+
+
+---
+name:            _Z18test_fifo_st_flushRPDv64_DB8_R12fifo_state_t
+legalized:       true
+body:             |
+  bb.1.entry:
+    ; GREEDY-LABEL: name: _Z18test_fifo_st_flushRPDv64_DB8_R12fifo_state_t
+    ; GREEDY: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.flush), %3:ptrregbank(p0), %4:fiforegbank(<32 x s32>), %5:gprregbank(s32)
+    ;
+    ; FAST-LABEL: name: _Z18test_fifo_st_flushRPDv64_DB8_R12fifo_state_t
+    ; FAST: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.flush), %3:ptrregbank(p0), %4:fiforegbank(<32 x s32>), %5:gprregbank(s32)
+  %7:_(p0), %8:_(<32 x s32>), %9:_(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.flush), %4:_(p0), %5:_(<32 x s32>), %6:_(s32)
+...
+
+
+---
+name:            _Z26test_fifo_st_flush_1d_byteRPDv64_DB8_R12fifo_state_ti
+legalized:       true
+body:             |
+  bb.1.entry:
+    ; GREEDY-LABEL: name: _Z26test_fifo_st_flush_1d_byteRPDv64_DB8_R12fifo_state_ti
+    ; GREEDY: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.flush.1d), %3:ptrregbank(p0), %4:fiforegbank(<32 x s32>), %5:gprregbank(s32), %6:modregbank(s20)
+    ;
+    ; FAST-LABEL: name: _Z26test_fifo_st_flush_1d_byteRPDv64_DB8_R12fifo_state_ti
+    ; FAST: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.flush.1d), %3:ptrregbank(p0), %4:fiforegbank(<32 x s32>), %5:gprregbank(s32), %6:modregbank(s20)
+  %9:_(p0), %10:_(<32 x s32>), %11:_(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.flush.1d), %5:_(p0), %6:_(<32 x s32>), %7:_(s32), %8:_(s20)
+...
+
+
+---
+name:            _Z26test_fifo_st_flush_2d_byteRPDv64_DB8_R12fifo_state_tiiRii
+legalized:       true
+body:             |
+  bb.1.entry:
+    ; GREEDY-LABEL: name: _Z26test_fifo_st_flush_2d_byteRPDv64_DB8_R12fifo_state_tiiRii
+    ; GREEDY: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:modregbank(s20) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.flush.2d.conv), %4:ptrregbank(p0), %5:fiforegbank(<32 x s32>), %6:gprregbank(s32), %7:modregbank(s20), %8:modregbank(s20), %9:modregbank(s20), %10:modregbank(s20)
+    ;
+    ; FAST-LABEL: name: _Z26test_fifo_st_flush_2d_byteRPDv64_DB8_R12fifo_state_tiiRii
+    ; FAST: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:modregbank(s20) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.flush.2d.conv), %4:ptrregbank(p0), %5:fiforegbank(<32 x s32>), %6:gprregbank(s32), %7:modregbank(s20), %8:modregbank(s20), %9:modregbank(s20), %10:modregbank(s20)
+  %16:_(p0), %17:_(<32 x s32>), %18:_(s32), %19:_(s20) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.flush.2d.conv), %8:_(p0), %9:_(<32 x s32>), %10:_(s32), %11:_(s20), %12:_(s20), %14:_(s20), %15:_(s20)
+...
+
+
+---
+name:            _Z26test_fifo_st_flush_3d_byteRPDv64_DB8_R12fifo_state_tiiRiiiS5_i
+legalized:       true
+body:             |
+  bb.1.entry:
+    ; GREEDY-LABEL: name: _Z26test_fifo_st_flush_3d_byteRPDv64_DB8_R12fifo_state_tiiRiiiS5_i
+    ; GREEDY: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:modregbank(s20), [[INT4:%[0-9]+]]:modregbank(s20) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.flush.3d), %5:ptrregbank(p0), %6:fiforegbank(<32 x s32>), %7:gprregbank(s32), %8:modregbank(s20), %9:modregbank(s20), %10:modregbank(s20), %11:modregbank(s20), %12:modregbank(s20), %13:modregbank(s20), %14:modregbank(s20)
+    ;
+    ; FAST-LABEL: name: _Z26test_fifo_st_flush_3d_byteRPDv64_DB8_R12fifo_state_tiiRiiiS5_i
+    ; FAST: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:modregbank(s20), [[INT4:%[0-9]+]]:modregbank(s20) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.flush.3d), %5:ptrregbank(p0), %6:fiforegbank(<32 x s32>), %7:gprregbank(s32), %8:modregbank(s20), %9:modregbank(s20), %10:modregbank(s20), %11:modregbank(s20), %12:modregbank(s20), %13:modregbank(s20), %14:modregbank(s20)
+  %23:_(p0), %24:_(<32 x s32>), %25:_(s32), %26:_(s20), %27:_(s20) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.flush.3d), %11:_(p0), %12:_(<32 x s32>), %13:_(s32), %14:_(s20), %15:_(s20), %17:_(s20), %18:_(s20), %19:_(s20), %21:_(s20), %22:_(s20)
+...
+
+
+---
+name:            _Z23test_fifo_st_flush_convRPDv64_DB8_R12fifo_state_t
+legalized:       true
+body:             |
+  bb.1.entry:
+    ; GREEDY-LABEL: name: _Z23test_fifo_st_flush_convRPDv64_DB8_R12fifo_state_t
+    ; GREEDY: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.flush.conv), %3:ptrregbank(p0), %4:fiforegbank(<32 x s32>), %5:gprregbank(s32)
+    ;
+    ; FAST-LABEL: name: _Z23test_fifo_st_flush_convRPDv64_DB8_R12fifo_state_t
+    ; FAST: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.flush.conv), %3:ptrregbank(p0), %4:fiforegbank(<32 x s32>), %5:gprregbank(s32)
+  %7:_(p0), %8:_(<32 x s32>), %9:_(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.flush.conv), %4:_(p0), %5:_(<32 x s32>), %6:_(s32)
+...
+
+
+---
+name:            _Z31test_fifo_st_flush_conv_1d_byteRPDv64_DB8_R12fifo_state_ti
+legalized:       true
+body:             |
+  bb.1.entry:
+    ; GREEDY-LABEL: name: _Z31test_fifo_st_flush_conv_1d_byteRPDv64_DB8_R12fifo_state_ti
+    ; GREEDY: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.flush.1d.conv), %3:ptrregbank(p0), %4:fiforegbank(<32 x s32>), %5:gprregbank(s32), %6:modregbank(s20)
+    ;
+    ; FAST-LABEL: name: _Z31test_fifo_st_flush_conv_1d_byteRPDv64_DB8_R12fifo_state_ti
+    ; FAST: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.flush.1d.conv), %3:ptrregbank(p0), %4:fiforegbank(<32 x s32>), %5:gprregbank(s32), %6:modregbank(s20)
+  %9:_(p0), %10:_(<32 x s32>), %11:_(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.flush.1d.conv), %5:_(p0), %6:_(<32 x s32>), %7:_(s32), %8:_(s20)
+...
+
+
+---
+name:            _Z31test_fifo_st_flush_conv_2d_byteRPDv64_DB8_R12fifo_state_tiiRii
+legalized:       true
+body:             |
+  bb.1.entry:
+    ; GREEDY-LABEL: name: _Z31test_fifo_st_flush_conv_2d_byteRPDv64_DB8_R12fifo_state_tiiRii
+    ; GREEDY: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:modregbank(s20) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.flush.2d), %4:ptrregbank(p0), %5:fiforegbank(<32 x s32>), %6:gprregbank(s32), %7:modregbank(s20), %8:modregbank(s20), %9:modregbank(s20), %10:modregbank(s20)
+    ;
+    ; FAST-LABEL: name: _Z31test_fifo_st_flush_conv_2d_byteRPDv64_DB8_R12fifo_state_tiiRii
+    ; FAST: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:modregbank(s20) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.flush.2d), %4:ptrregbank(p0), %5:fiforegbank(<32 x s32>), %6:gprregbank(s32), %7:modregbank(s20), %8:modregbank(s20), %9:modregbank(s20), %10:modregbank(s20)
+  %16:_(p0), %17:_(<32 x s32>), %18:_(s32), %19:_(s20) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.flush.2d), %8:_(p0), %9:_(<32 x s32>), %10:_(s32), %11:_(s20), %12:_(s20), %14:_(s20), %15:_(s20)
+...
+
+
+---
+name:            _Z31test_fifo_st_flush_conv_3d_byteRPDv64_DB8_R12fifo_state_tiiRiiiS5_i
+legalized:       true
+body:             |
+  bb.1.entry:
+    ; GREEDY-LABEL: name: _Z31test_fifo_st_flush_conv_3d_byteRPDv64_DB8_R12fifo_state_tiiRiiiS5_i
+    ; GREEDY: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:modregbank(s20), [[INT4:%[0-9]+]]:modregbank(s20) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.flush.3d.conv), %5:ptrregbank(p0), %6:fiforegbank(<32 x s32>), %7:gprregbank(s32), %8:modregbank(s20), %9:modregbank(s20), %10:modregbank(s20), %11:modregbank(s20), %12:modregbank(s20), %13:modregbank(s20), %14:modregbank(s20)
+    ;
+    ; FAST-LABEL: name: _Z31test_fifo_st_flush_conv_3d_byteRPDv64_DB8_R12fifo_state_tiiRiiiS5_i
+    ; FAST: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32), [[INT3:%[0-9]+]]:modregbank(s20), [[INT4:%[0-9]+]]:modregbank(s20) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.flush.3d.conv), %5:ptrregbank(p0), %6:fiforegbank(<32 x s32>), %7:gprregbank(s32), %8:modregbank(s20), %9:modregbank(s20), %10:modregbank(s20), %11:modregbank(s20), %12:modregbank(s20), %13:modregbank(s20), %14:modregbank(s20)
+  %23:_(p0), %24:_(<32 x s32>), %25:_(s32), %26:_(s20), %27:_(s20) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.flush.3d.conv), %11:_(p0), %12:_(<32 x s32>), %13:_(s32), %14:_(s20), %15:_(s20), %17:_(s20), %18:_(s20), %19:_(s20), %21:_(s20), %22:_(s20)
+...
+
+
+---
+name:            _Z18test_fifo_st_resetRP22v64bfp16ebs8_unaligned12v64bfp16ebs8R12fifo_state_t
+legalized:       true
+body:             |
+  bb.1.entry:
+    ; GREEDY-LABEL: name: _Z18test_fifo_st_resetRP22v64bfp16ebs8_unaligned12v64bfp16ebs8R12fifo_state_t
+    ; GREEDY: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.push.576.bfp16), %3:ptrregbank(p0), %4:vregbank(<64 x s8>), %5:gprregbank(<8 x s8>), %6:fiforegbank(<32 x s32>), %7:gprregbank(s32)
+    ;
+    ; FAST-LABEL: name: _Z18test_fifo_st_resetRP22v64bfp16ebs8_unaligned12v64bfp16ebs8R12fifo_state_t
+    ; FAST: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.push.576.bfp16), %3:ptrregbank(p0), %4:vregbank(<64 x s8>), %5:gprregbank(<8 x s8>), %6:fiforegbank(<32 x s32>), %7:gprregbank(s32)
+  %9:_(p0), %10:_(<32 x s32>), %11:_(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.push.576.bfp16), %6:_(p0), %1:_(<64 x s8>), %2:_(<8 x s8>), %7:_(<32 x s32>), %8:_(s32)
+...
+
+
+---
+name:            _Z18test_fifo_st_resetRP23v64bfp16ebs16_unaligned13v64bfp16ebs16R12fifo_state_t
+legalized:       true
+body:             |
+  bb.1.entry:
+    ; GREEDY-LABEL: name: _Z18test_fifo_st_resetRP23v64bfp16ebs16_unaligned13v64bfp16ebs16R12fifo_state_t
+    ; GREEDY: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.push.544.bfp16), %3:ptrregbank(p0), %4:vregbank(<64 x s8>), %5:gprregbank(<8 x s8>), %6:fiforegbank(<32 x s32>), %7:gprregbank(s32)
+    ;
+    ; FAST-LABEL: name: _Z18test_fifo_st_resetRP23v64bfp16ebs16_unaligned13v64bfp16ebs16R12fifo_state_t
+    ; FAST: [[INT:%[0-9]+]]:ptrregbank(p0), [[INT1:%[0-9]+]]:fiforegbank(<32 x s32>), [[INT2:%[0-9]+]]:gprregbank(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.push.544.bfp16), %3:ptrregbank(p0), %4:vregbank(<64 x s8>), %5:gprregbank(<8 x s8>), %6:fiforegbank(<32 x s32>), %7:gprregbank(s32)
+  %9:_(p0), %10:_(<32 x s32>), %11:_(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.push.544.bfp16), %6:_(p0), %1:_(<64 x s8>), %2:_(<8 x s8>), %7:_(<32 x s32>), %8:_(s32)
+...
+
+
+

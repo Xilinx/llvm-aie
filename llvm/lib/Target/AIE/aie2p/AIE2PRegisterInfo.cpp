@@ -100,6 +100,12 @@ const uint32_t *AIE2PRegisterInfo::getNoPreservedMask() const {
   return CSR_NoRegs_RegMask;
 }
 
+namespace {
+template <int N, unsigned step> bool isEncodableAsNegativeInt(int Value) {
+  return isInt<N + CTLog2<step>() + 1>(Value);
+}
+} // namespace
+
 bool AIE2PRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                             int SPAdj, unsigned FIOperandNum,
                                             RegScavenger *RS) const {
@@ -110,6 +116,9 @@ bool AIE2PRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   const AIE2PFrameLowering *TFI = getFrameLowering(MF);
   DebugLoc DL = MI.getDebugLoc();
 
+  MachineBasicBlock &MBB = *MI.getParent();
+  MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
+  const TargetRegisterInfo &TRI = *MRI.getTargetRegisterInfo();
   // Assume that we have a frame index operand, followed by an immediate offset.
   int FrameIndex = MI.getOperand(FIOperandNum).getIndex();
 
@@ -141,46 +150,72 @@ bool AIE2PRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
   unsigned Opc = MI.getOpcode();
   switch (Opc) {
-    // TODO: more (vector) spill instructions to come.
-  case AIE2P::LDA_dms_lda_spill:
+    // Instructions named *_spill implicitly a stack spill instruction, so
+    // simply replace the TargetFrameIndex operand with the right immediate
+    // offset. However, bigger offsets cannot be encodable. In this scenario, we
+    // need to use offsets using registers.
+
+    // NOTE: Although the register scavenger can often find a spare register, an
+    // emergency spill slot might be needed to guarantee success. AIE reserves
+    // an emergency slot in `processFunctionBeforeFrameFinalized`
+
+    // Note that LDB path does not support SPILL instructions
+
   case AIE2P::LDA_dmv_lda_q_spill:
   case AIE2P::VLDA_128_dmv_lda_w_spill:
   case AIE2P::VLDA_dmw_lda_w_spill:
   case AIE2P::VLDA_dmx_lda_bm_spill:
   case AIE2P::VLDA_dmx_lda_fifohl_spill:
   case AIE2P::VLDA_dmx_lda_x_spill:
-  case AIE2P::ST_dms_sts_spill:
   case AIE2P::ST_dmv_sts_q_spill:
   case AIE2P::VST_128_dmv_sts_w_spill:
   case AIE2P::VST_dmw_sts_w_spill:
   case AIE2P::VST_dmx_sts_bm_spill:
   case AIE2P::VST_dmx_sts_fifohl_spill:
   case AIE2P::VST_dmx_sts_x_spill:
+    MI.getOperand(FIOperandNum).ChangeToImmediate(Offset);
+    return false;
+  case AIE2P::LDA_R_SPILL:
+  case AIE2P::ST_R_SPILL:
+  case AIE2P::VLDA_L_SPILL:
+  case AIE2P::VST_L_SPILL:
+  case AIE2P::LDA_D_SPILL:
+  case AIE2P::ST_D_SPILL:
+  case AIE2P::LDA_DS_SPILL:
+  case AIE2P::ST_DS_SPILL:
+  case AIE2P::VLDA_PLFR_SPILL:
+  case AIE2P::VST_PLFR_SPILL: {
+    // When a pseudo instruction expands to multiple instructions, this case
+    // looks for the smallest encodable offset that can be used.
+    // The stack grows upward so if Offset is in range, the offsets of its
+    // sub-register spills should also be fine.
+    if (isEncodableAsNegativeInt<9, 4>(Offset)) {
+      MI.getOperand(FIOperandNum).ChangeToImmediate(Offset);
+      TII->expandSpillPseudo(MI, TRI, /*SubRegOffsetAlign=*/Align(4));
+    } else {
+      Register SPReg =
+          MF.getRegInfo().createVirtualRegister(&AIE2P::ePRegClass);
+      BuildMI(MBB, II, DL, TII->get(TII->getMvSclOpcode()), SPReg)
+          .addReg(getStackPointerRegister());
+      TII->expandSpillPseudo(MI, TRI, /*SubRegOffsetAlign=*/Align(4), SPReg,
+                             Offset);
+    }
+    return true;
+  }
   case AIE2P::VST_DM_SPILL:
   case AIE2P::VST_CM_SPILL:
   case AIE2P::VST_FIFO_SPILL:
-  case AIE2P::VST_PLFR_SPILL:
   case AIE2P::VST_Y_SPILL:
-  case AIE2P::ST_D_SPILL:
-  case AIE2P::ST_DS_SPILL:
   case AIE2P::VLDA_DM_SPILL:
   case AIE2P::VLDA_CM_SPILL:
   case AIE2P::VLDA_FIFO_SPILL:
-  case AIE2P::VLDA_PLFR_SPILL:
   case AIE2P::VLDA_Y_SPILL:
-  case AIE2P::LDA_D_SPILL:
-  case AIE2P::LDA_DS_SPILL:
-  case AIE2P::VLDA_L_SPILL:
-  case AIE2P::VST_L_SPILL:
-    // This is implicitly a stack spill instruction, so simply replace
-    // the TargetFrameIndex operand with the right immediate offset.
-    // Note that LDB path does not support SPILL instructions
     MI.getOperand(FIOperandNum).ChangeToImmediate(Offset);
-    return false;
+    TII->expandSpillPseudo(MI, TRI, /*SubRegOffsetAlign=*/Align(4));
+    return true;
   case AIE2P::PseudoFI: {
     // DstReg = FI;
     // Replace with DstReg = FrameReg, DstReg += Offset;
-    MachineBasicBlock &MBB = *MI.getParent();
 
     Register DstReg = II->getOperand(0).getReg();
     BuildMI(MBB, II, DL, TII->get(AIE2P::MOV_alu_mv_mv_mv_scl), DstReg)

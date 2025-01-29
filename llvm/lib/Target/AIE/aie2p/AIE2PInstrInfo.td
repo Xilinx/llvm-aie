@@ -145,6 +145,12 @@ foreach instr = [PADDA_3D, PADDB_3D, PADDS_3D] in
 
 let hasSideEffects = 0, Uses = [sp] in {
 let mayLoad = false, mayStore = true in {
+// Although it is ideal to avoid the use of ST_R_SPILL and LDA_R_SPILL,
+// these instructions are included to simplify handling in certain
+// scenarios. For example, they help eliminate the need for custom handling
+// in places like eliminateFrameIndex. By including these instructions, we
+// can streamline the code and improve readability.
+def ST_R_SPILL : Pseudo<(outs ), (ins OP_mSclSt:$src, c12n_step4:$imm), "vst_r_spill", "$src, [sp, $imm]">;
 def VST_L_SPILL : Pseudo<(outs ), (ins eL:$src, c12n_step4:$imm), "vst_l_spill", "$src, [sp, $imm]">;
 def VST_Y_SPILL : Pseudo<(outs ), (ins VEC1024:$src, c16n_step64:$imm), "vst_y_spill", "${src}, [sp, $imm]">;
 def VST_CM_SPILL : Pseudo<(outs ), (ins ACC1024:$src, c16n_step64:$imm), "vst_cm_spill", "${src}, [sp, $imm]">;
@@ -156,6 +162,7 @@ def VST_PLFR_SPILL : Pseudo<(outs ), (ins ePSRFLdF:$src, c16n_step64:$imm), "vst
 }
 
 let mayLoad = true, mayStore = false in {
+def LDA_R_SPILL : Pseudo<(outs OP_mLdaScl:$dst), (ins c12n_step4:$imm), "vlda_r_spill", "$dst, [sp, $imm]">;
 def VLDA_L_SPILL : Pseudo<(outs eL:$dst), (ins c12n_step4:$imm), "vlda_l_spill", "$dst, [sp, $imm]">;
 def VLDA_Y_SPILL : Pseudo<(outs VEC1024:$dst), (ins c16n_step64:$imm), "vlda_y_spill", "${dst}, [sp, $imm]">;
 def VLDA_CM_SPILL : Pseudo<(outs ACC1024:$dst), (ins c16n_step64:$imm), "vlda_cm_spill", "${dst}, [sp, $imm]">;

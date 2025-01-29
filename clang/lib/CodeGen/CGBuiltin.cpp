@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Modifications (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its
+// Modifications (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its
 // affiliates
 //
 //===----------------------------------------------------------------------===//
@@ -64,6 +64,7 @@
 #include "llvm/IR/MDBuilder.h"
 #include "llvm/IR/MatrixBuilder.h"
 #include "llvm/Support/ConvertUTF.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/ScopedPrinter.h"
 #include "llvm/TargetParser/AArch64TargetParser.h"
@@ -22054,6 +22055,30 @@ static llvm::Intrinsic::ID getAIE2PIntrinsicFunction(unsigned BuiltinID) {
     return Intrinsic::aie2p_v64accfloat_to_v64bfp16ebs16;
   case AIE::BI__builtin_aie2p_v64bfp16ebs8_to_v64bfp16ebs16:
     return Intrinsic::aie2p_v64bfp16ebs8_to_v64bfp16ebs16;
+  case AIE::BI__builtin_aie2p_vshuffle_576_bfp16:
+    return Intrinsic::aie2p_vshuffle_576_bfp16;
+  case AIE::BI__builtin_aie2p_fifo_st_push_512_bfp16:
+    return Intrinsic::aie2p_fifo_st_push_512_bfp16;
+  case AIE::BI__builtin_aie2p_fifo_st_push_544_bfp16:
+    return Intrinsic::aie2p_fifo_st_push_544_bfp16;
+  case AIE::BI__builtin_aie2p_fifo_st_push_576_bfp16:
+    return Intrinsic::aie2p_fifo_st_push_576_bfp16;
+  case AIE::BI__builtin_aie2p_fifo_st_flush:
+    return Intrinsic::aie2p_fifo_st_flush;
+  case AIE::BI__builtin_aie2p_fifo_st_flush_conv:
+    return Intrinsic::aie2p_fifo_st_flush_conv;
+  case AIE::BI__builtin_aie2p_fifo_st_flush_1d_byte:
+    return Intrinsic::aie2p_fifo_st_flush_1d;
+  case AIE::BI__builtin_aie2p_fifo_st_flush_conv_1d_byte:
+    return Intrinsic::aie2p_fifo_st_flush_1d_conv;
+  case AIE::BI__builtin_aie2p_fifo_st_flush_2d_byte:
+    return Intrinsic::aie2p_fifo_st_flush_2d_conv;
+  case AIE::BI__builtin_aie2p_fifo_st_flush_conv_2d_byte:
+    return Intrinsic::aie2p_fifo_st_flush_2d;
+  case AIE::BI__builtin_aie2p_fifo_st_flush_3d_byte:
+    return Intrinsic::aie2p_fifo_st_flush_3d;
+  case AIE::BI__builtin_aie2p_fifo_st_flush_conv_3d_byte:
+    return Intrinsic::aie2p_fifo_st_flush_3d_conv;
   default:
     break;
   }
@@ -22291,6 +22316,7 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
       Ops.push_back(EmitScalarExpr(E->getArg(E->getNumArgs() - 2)));
       Ops.push_back(EmitScalarExpr(E->getArg(E->getNumArgs() - 1)));
     }
+
     llvm::Intrinsic::ID IntrinsicID = getAIEIntrinsicFunction(BuiltinID, Arch);
     assert(IntrinsicID != Intrinsic::not_intrinsic);
     Function *F = CGM.getIntrinsic(IntrinsicID);
@@ -22304,6 +22330,144 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
     Value *ExpAddr = EmitLValue(E->getArg(1)).getPointer(*this);
 
     return Builder.CreateDefaultAlignedStore(Exp, ExpAddr);
+  }
+  case AIE::BI__builtin_aie2p_vshuffle_576_bfp16: {
+    SmallVector<Value *, 3> Ops;
+    for (unsigned I = 0; I < E->getNumArgs() - 2; I++)
+      Ops.push_back(EmitScalarExpr(E->getArg(I)));
+
+    llvm::Intrinsic::ID IntrinsicID = getAIEIntrinsicFunction(BuiltinID, Arch);
+    assert(IntrinsicID != Intrinsic::not_intrinsic);
+    Function *F = CGM.getIntrinsic(IntrinsicID);
+    Value *Val = Builder.CreateCall(F, Ops);
+
+    // The first member of the returned struct is the mantissa part of bfp16,
+    // store it to the first input reference
+    Value *Mant = Builder.CreateExtractValue(Val, 0);
+    Value *MantAddr =
+        EmitLValue(E->getArg(E->getNumArgs() - 2)).getPointer(*this);
+    Builder.CreateDefaultAlignedStore(Mant, MantAddr);
+
+    // The second member of the returned struct is the exponent part of bfp16
+    // store it to the second input reference
+    Value *Exp = Builder.CreateExtractValue(Val, 1);
+    Value *ExpAddr =
+        EmitLValue(E->getArg(E->getNumArgs() - 1)).getPointer(*this);
+    return Builder.CreateDefaultAlignedStore(Exp, ExpAddr);
+  }
+  case AIE::BI__builtin_aie2p_fifo_st_push_512_bfp16:
+  case AIE::BI__builtin_aie2p_fifo_st_push_544_bfp16:
+  case AIE::BI__builtin_aie2p_fifo_st_push_576_bfp16:
+  case AIE::BI__builtin_aie2p_fifo_st_flush_conv:
+  case AIE::BI__builtin_aie2p_fifo_st_flush: {
+    SmallVector<Value *, 3> Ops;
+    for (unsigned I = 0; I < E->getNumArgs(); I++)
+      Ops.push_back(EmitScalarExpr(E->getArg(I)));
+
+    llvm::Intrinsic::ID IntrinsicID = getAIEIntrinsicFunction(BuiltinID, Arch);
+    assert(IntrinsicID != Intrinsic::not_intrinsic);
+    Function *F = CGM.getIntrinsic(IntrinsicID);
+    Value *Val = Builder.CreateCall(F, Ops);
+
+    Value *Ptr = Builder.CreateExtractValue(Val, 0);
+    Value *Fifo = Builder.CreateExtractValue(Val, 1);
+    Value *Avail = Builder.CreateExtractValue(Val, 2);
+    Value *PtrAddr = EmitLValue(E->getArg(0)).getPointer(*this);
+
+    Value *FifoAddr = nullptr;
+    Value *AvailAddr = nullptr;
+    if (BuiltinID == AIE::BI__builtin_aie2p_fifo_st_flush ||
+        BuiltinID == AIE::BI__builtin_aie2p_fifo_st_flush_conv) {
+      FifoAddr = EmitLValue(E->getArg(1)).getPointer(*this);
+      AvailAddr = EmitLValue(E->getArg(2)).getPointer(*this);
+    } else if (BuiltinID == AIE::BI__builtin_aie2p_fifo_st_push_512_bfp16) {
+      FifoAddr = EmitLValue(E->getArg(2)).getPointer(*this);
+      AvailAddr = EmitLValue(E->getArg(3)).getPointer(*this);
+    } else {
+      assert(BuiltinID == AIE::BI__builtin_aie2p_fifo_st_push_576_bfp16 ||
+             BuiltinID == AIE::BI__builtin_aie2p_fifo_st_push_544_bfp16 &&
+                 "Unexpected BuiltinID");
+      FifoAddr = EmitLValue(E->getArg(3)).getPointer(*this);
+      AvailAddr = EmitLValue(E->getArg(4)).getPointer(*this);
+    }
+
+    Builder.CreateDefaultAlignedStore(Fifo, FifoAddr);
+    Builder.CreateDefaultAlignedStore(Avail, AvailAddr);
+    return Builder.CreateDefaultAlignedStore(Ptr, PtrAddr);
+  }
+  case AIE::BI__builtin_aie2p_fifo_st_flush_conv_1d_byte:
+  case AIE::BI__builtin_aie2p_fifo_st_flush_1d_byte:
+  case AIE::BI__builtin_aie2p_fifo_st_flush_conv_2d_byte:
+  case AIE::BI__builtin_aie2p_fifo_st_flush_2d_byte:
+  case AIE::BI__builtin_aie2p_fifo_st_flush_conv_3d_byte:
+  case AIE::BI__builtin_aie2p_fifo_st_flush_3d_byte: {
+    SmallVector<Value *, 3> Ops;
+    unsigned NumAddrIncs = 0;
+    switch (BuiltinID) {
+    case AIE::BI__builtin_aie2p_fifo_st_flush_1d_byte:
+    case AIE::BI__builtin_aie2p_fifo_st_flush_conv_1d_byte:
+      NumAddrIncs = 1;
+      break;
+    case AIE::BI__builtin_aie2p_fifo_st_flush_2d_byte:
+    case AIE::BI__builtin_aie2p_fifo_st_flush_conv_2d_byte:
+      NumAddrIncs = 4;
+      break;
+    case AIE::BI__builtin_aie2p_fifo_st_flush_3d_byte:
+    case AIE::BI__builtin_aie2p_fifo_st_flush_conv_3d_byte:
+      NumAddrIncs = 7;
+      break;
+    default:
+      llvm_unreachable("Unexpected BuiltinID");
+    }
+
+    for (unsigned I = 0; I < E->getNumArgs() - NumAddrIncs; I++)
+      Ops.push_back(EmitScalarExpr(E->getArg(I)));
+
+    for (unsigned i = E->getNumArgs() - NumAddrIncs, e = E->getNumArgs();
+         i != e; i++) {
+      Ops.push_back(
+          Builder.CreateTrunc(EmitScalarExpr(E->getArg(i)),
+                              llvm::Type::getInt20Ty(getLLVMContext())));
+    }
+    llvm::Intrinsic::ID IntrinsicID = getAIEIntrinsicFunction(BuiltinID, Arch);
+    assert(IntrinsicID != Intrinsic::not_intrinsic);
+    Function *F = CGM.getIntrinsic(IntrinsicID);
+    Value *Val = Builder.CreateCall(F, Ops);
+
+    Value *Ptr = Builder.CreateExtractValue(Val, 0);
+    Value *Fifo = Builder.CreateExtractValue(Val, 1);
+    Value *Avail = Builder.CreateExtractValue(Val, 2);
+    Value *PtrAddr = EmitLValue(E->getArg(0)).getPointer(*this);
+    Value *FifoAddr = EmitLValue(E->getArg(1)).getPointer(*this);
+    Value *AvailAddr = EmitLValue(E->getArg(2)).getPointer(*this);
+
+    if (BuiltinID == AIE::BI__builtin_aie2p_fifo_st_flush_2d_byte ||
+        BuiltinID == AIE::BI__builtin_aie2p_fifo_st_flush_conv_2d_byte) {
+      Value *Count1 =
+          Builder.CreateZExt(Builder.CreateExtractValue(Val, 3),
+                             llvm::Type::getInt32Ty(getLLVMContext()));
+      Value *Count1Addr = EmitLValue(E->getArg(5)).getPointer(*this);
+      Builder.CreateDefaultAlignedStore(Count1, Count1Addr);
+    } else if (BuiltinID == AIE::BI__builtin_aie2p_fifo_st_flush_3d_byte ||
+               BuiltinID == AIE::BI__builtin_aie2p_fifo_st_flush_conv_3d_byte) {
+      Value *Count1 =
+          Builder.CreateZExt(Builder.CreateExtractValue(Val, 3),
+                             llvm::Type::getInt32Ty(getLLVMContext()));
+      Value *Count1Addr =
+          EmitLValue(E->getArg(E->getNumArgs() - 5)).getPointer(*this);
+      Value *Count2 =
+          Builder.CreateZExt(Builder.CreateExtractValue(Val, 4),
+                             llvm::Type::getInt32Ty(getLLVMContext()));
+      EmitLValue(E->getArg(E->getNumArgs() - 2)).getPointer(*this);
+      Value *Count2Addr =
+          EmitLValue(E->getArg(E->getNumArgs() - 2)).getPointer(*this);
+      Builder.CreateDefaultAlignedStore(Count1, Count1Addr);
+      Builder.CreateDefaultAlignedStore(Count2, Count2Addr);
+    }
+
+    Builder.CreateDefaultAlignedStore(Fifo, FifoAddr);
+    Builder.CreateDefaultAlignedStore(Avail, AvailAddr);
+    return Builder.CreateDefaultAlignedStore(Ptr, PtrAddr);
   }
   default:
     break;
@@ -22486,7 +22650,19 @@ Value *CodeGenFunction::EmitAIE2PBuiltinExpr(unsigned BuiltinID,
   case AIE::BI__builtin_aie2p_divstep:
   case AIE::BI__builtin_aie2p_v64accfloat_to_v64bfp16ebs8:
   case AIE::BI__builtin_aie2p_v64accfloat_to_v64bfp16ebs16:
-  case AIE::BI__builtin_aie2p_v64bfp16ebs8_to_v64bfp16ebs16: {
+  case AIE::BI__builtin_aie2p_v64bfp16ebs8_to_v64bfp16ebs16:
+  case AIE::BI__builtin_aie2p_vshuffle_576_bfp16:
+  case AIE::BI__builtin_aie2p_fifo_st_push_576_bfp16:
+  case AIE::BI__builtin_aie2p_fifo_st_push_512_bfp16:
+  case AIE::BI__builtin_aie2p_fifo_st_push_544_bfp16:
+  case AIE::BI__builtin_aie2p_fifo_st_flush:
+  case AIE::BI__builtin_aie2p_fifo_st_flush_conv:
+  case AIE::BI__builtin_aie2p_fifo_st_flush_1d_byte:
+  case AIE::BI__builtin_aie2p_fifo_st_flush_conv_1d_byte:
+  case AIE::BI__builtin_aie2p_fifo_st_flush_2d_byte:
+  case AIE::BI__builtin_aie2p_fifo_st_flush_conv_2d_byte:
+  case AIE::BI__builtin_aie2p_fifo_st_flush_3d_byte:
+  case AIE::BI__builtin_aie2p_fifo_st_flush_conv_3d_byte: {
     return this->EmitAIEBuiltinExpr(BuiltinID, E, Arch);
   }
   default:
