@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc -mtriple=aie2p -verify-machineinstrs -o - < %s | FileCheck %s
 
 define dso_local inreg noundef <64 x i32> @_Z16test_mul_8x2_2x8Dv16_jDv32_t(<16 x i32> noundef %a0, <32 x i16> noundef %b)  {
@@ -105,52 +105,52 @@ define dso_local inreg noundef <64 x i32> @_Z27test_addmac_4x16_16x16_confDv64_h
 ; CHECK-LABEL: _Z27test_addmac_4x16_16x16_confDv64_hiDv128_DB8_iDv64_u7__acc32S2_iiiii:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r7, #50; mov crunpacksize, #0
-; CHECK-NEXT:    mova r23, #5; vshuffle x0, x0, x0, r7
-; CHECK-NEXT:    mova r28, #1; vextract.32 r29, x4, r23, vaddsign1
-; CHECK-NEXT:    mova r20, #2; vextract.32 r16, x0, r28, vaddsign1
-; CHECK-NEXT:    mova r21, #3; vextract.32 r17, x0, r20, vaddsign1
-; CHECK-NEXT:    mova r22, #4; vextract.32 r18, x0, r21, vaddsign1
-; CHECK-NEXT:    vextract.32 r19, x0, r22, vaddsign1
-; CHECK-NEXT:    mova r24, #0; vextract.32 r25, x0, r23, vaddsign1
-; CHECK-NEXT:    vextract.32 r7, x0, r24, vaddsign1
-; CHECK-NEXT:    vextract.32 r23, x5, r23, vaddsign1
+; CHECK-NEXT:    mova r7, #50; nopb ; nops ; nopx ; mov crunpacksize, #0; nopv
+; CHECK-NEXT:    mova r24, #5; vshuffle x0, x0, x0, r7
+; CHECK-NEXT:    mova r20, #1; vextract.32 r29, x4, r24, vaddsign1
+; CHECK-NEXT:    mova r21, #2; vextract.32 r16, x0, r20, vaddsign1
+; CHECK-NEXT:    mova r22, #3; vextract.32 r17, x0, r21, vaddsign1
+; CHECK-NEXT:    mova r23, #4; vextract.32 r18, x0, r22, vaddsign1
+; CHECK-NEXT:    vextract.32 r19, x0, r23, vaddsign1
+; CHECK-NEXT:    mova r25, #0; vextract.32 r26, x0, r24, vaddsign1
+; CHECK-NEXT:    vextract.32 r7, x0, r25, vaddsign1
+; CHECK-NEXT:    vextract.32 r24, x5, r24, vaddsign1
 ; CHECK-NEXT:    vpush.hi.32 x2, x0, r7
 ; CHECK-NEXT:    vpush.hi.32 x2, x2, r16
 ; CHECK-NEXT:    vpush.hi.32 x2, x2, r17
 ; CHECK-NEXT:    mova r17, #11; vpush.hi.32 x2, x2, r18
-; CHECK-NEXT:    vextract.32 r27, x0, r17, vaddsign1
+; CHECK-NEXT:    vextract.32 r28, x0, r17, vaddsign1
 ; CHECK-NEXT:    mova r7, #8; vpush.hi.32 x2, x2, r19
 ; CHECK-NEXT:    mova r18, #10; vextract.32 r19, x0, r7, vaddsign1
-; CHECK-NEXT:    vextract.32 r26, x0, r18, vaddsign1
-; CHECK-NEXT:    mova r16, #9; vpush.hi.32 x2, x2, r25
-; CHECK-NEXT:    vextract.32 r25, x0, r16, vaddsign1
+; CHECK-NEXT:    vextract.32 r27, x0, r18, vaddsign1
+; CHECK-NEXT:    mova r16, #9; vpush.hi.32 x2, x2, r26
+; CHECK-NEXT:    vextract.32 r26, x0, r16, vaddsign1
 ; CHECK-NEXT:    vpush.hi.32 x6, x0, r19
-; CHECK-NEXT:    mova r19, #12; vpush.hi.32 x6, x6, r25
-; CHECK-NEXT:    vextract.32 r25, x0, r19, vaddsign1
-; CHECK-NEXT:    vpush.hi.32 x6, x6, r26
-; CHECK-NEXT:    vextract.32 r26, x4, r28, vaddsign1
-; CHECK-NEXT:    vextract.32 r28, x5, r28, vaddsign1
+; CHECK-NEXT:    mova r19, #12; vpush.hi.32 x6, x6, r26
+; CHECK-NEXT:    vextract.32 r26, x0, r19, vaddsign1
 ; CHECK-NEXT:    vpush.hi.32 x6, x6, r27
 ; CHECK-NEXT:    vextract.32 r27, x4, r20, vaddsign1
 ; CHECK-NEXT:    vextract.32 r20, x5, r20, vaddsign1
-; CHECK-NEXT:    vpush.hi.32 x6, x6, r25
-; CHECK-NEXT:    vextract.32 r25, x4, r24, vaddsign1
-; CHECK-NEXT:    vextract.32 r24, x5, r24, vaddsign1
-; CHECK-NEXT:    vpush.hi.32 x8, x0, r25
-; CHECK-NEXT:    vextract.32 r25, x4, r21, vaddsign1
+; CHECK-NEXT:    vpush.hi.32 x6, x6, r28
+; CHECK-NEXT:    vextract.32 r28, x4, r21, vaddsign1
 ; CHECK-NEXT:    vextract.32 r21, x5, r21, vaddsign1
-; CHECK-NEXT:    vpush.hi.32 x8, x8, r26
+; CHECK-NEXT:    vpush.hi.32 x6, x6, r26
+; CHECK-NEXT:    vextract.32 r26, x4, r25, vaddsign1
+; CHECK-NEXT:    vextract.32 r25, x5, r25, vaddsign1
+; CHECK-NEXT:    vpush.hi.32 x8, x0, r26
 ; CHECK-NEXT:    vextract.32 r26, x4, r22, vaddsign1
+; CHECK-NEXT:    vextract.32 r22, x5, r22, vaddsign1
 ; CHECK-NEXT:    vpush.hi.32 x8, x8, r27
-; CHECK-NEXT:    vpush.hi.32 x8, x8, r25
-; CHECK-NEXT:    mova r27, #6; vpush.hi.32 x8, x8, r26
-; CHECK-NEXT:    vextract.32 r26, x4, r27, vaddsign1
-; CHECK-NEXT:    mova r25, #13; vpush.hi.32 x8, x8, r29
-; CHECK-NEXT:    vextract.32 r29, x0, r25, vaddsign1
+; CHECK-NEXT:    vextract.32 r27, x4, r23, vaddsign1
+; CHECK-NEXT:    vpush.hi.32 x8, x8, r28
 ; CHECK-NEXT:    vpush.hi.32 x8, x8, r26
-; CHECK-NEXT:    mova r26, #7; vpush.hi.32 x6, x6, r29
-; CHECK-NEXT:    vextract.32 r29, x4, r26, vaddsign1
+; CHECK-NEXT:    mova r28, #6; vpush.hi.32 x8, x8, r27
+; CHECK-NEXT:    vextract.32 r27, x4, r28, vaddsign1
+; CHECK-NEXT:    mova r26, #13; vpush.hi.32 x8, x8, r29
+; CHECK-NEXT:    vextract.32 r29, x0, r26, vaddsign1
+; CHECK-NEXT:    vpush.hi.32 x8, x8, r27
+; CHECK-NEXT:    mova r27, #7; vpush.hi.32 x6, x6, r29
+; CHECK-NEXT:    vextract.32 r29, x4, r27, vaddsign1
 ; CHECK-NEXT:    vextract.32 r29, x4, r7, vaddsign1
 ; CHECK-NEXT:    vpush.hi.32 x8, x8, r29
 ; CHECK-NEXT:    vpush.hi.32 x8, x8, r29
@@ -162,50 +162,48 @@ define dso_local inreg noundef <64 x i32> @_Z27test_addmac_4x16_16x16_confDv64_h
 ; CHECK-NEXT:    vextract.32 r29, x4, r19, vaddsign1
 ; CHECK-NEXT:    vpush.hi.32 x8, x8, r29
 ; CHECK-NEXT:    vpush.hi.32 x8, x8, r29
-; CHECK-NEXT:    mova r30, #14; vextract.32 r29, x4, r25, vaddsign1
+; CHECK-NEXT:    mova r30, #14; vextract.32 r29, x4, r26, vaddsign1
 ; CHECK-NEXT:    vextract.32 r29, x4, r30, vaddsign1
 ; CHECK-NEXT:    vpush.hi.32 x8, x8, r29
 ; CHECK-NEXT:    mova r29, #15; vpush.hi.32 x8, x8, r29
 ; CHECK-NEXT:    vextract.32 r31, x4, r29, vaddsign1
-; CHECK-NEXT:    vextract.32 r22, x5, r22, vaddsign1
+; CHECK-NEXT:    vextract.32 r23, x5, r23, vaddsign1
 ; CHECK-NEXT:    vpush.hi.32 x4, x8, r31
-; CHECK-NEXT:    vpush.hi.32 x8, x0, r24
-; CHECK-NEXT:    vpush.hi.32 x8, x8, r28
+; CHECK-NEXT:    vpush.hi.32 x8, x0, r25
 ; CHECK-NEXT:    vpush.hi.32 x8, x8, r20
-; CHECK-NEXT:    vextract.32 r20, x5, r27, vaddsign1
+; CHECK-NEXT:    vextract.32 r20, x5, r28, vaddsign1
 ; CHECK-NEXT:    vpush.hi.32 x8, x8, r21
-; CHECK-NEXT:    vextract.32 r21, x5, r26, vaddsign1
+; CHECK-NEXT:    vextract.32 r21, x5, r27, vaddsign1
 ; CHECK-NEXT:    vpush.hi.32 x8, x8, r22
 ; CHECK-NEXT:    vextract.32 r22, x5, r7, vaddsign1
 ; CHECK-NEXT:    vpush.hi.32 x8, x8, r23
 ; CHECK-NEXT:    vextract.32 r23, x5, r16, vaddsign1
-; CHECK-NEXT:    vextract.32 r16, x0, r30, vaddsign1
-; CHECK-NEXT:    lshl r0, r0, r16; vpush.hi.32 x8, x8, r20
-; CHECK-NEXT:    vextract.32 r20, x5, r18, vaddsign1
+; CHECK-NEXT:    vpush.hi.32 x8, x8, r24
+; CHECK-NEXT:    nez r24, r1; vextract.32 r7, x0, r30, vaddsign1
+; CHECK-NEXT:    lshl r1, r1, r7; vpush.hi.32 x8, x8, r20
+; CHECK-NEXT:    lshl r0, r0, r16; mov unpacksign0, r24
+; CHECK-NEXT:    lshl r3, r3, r18; vextract.32 r20, x5, r18, vaddsign1
+; CHECK-NEXT:    or r0, r1, r0; vextract.32 r2, x0, r28, vaddsign1
+; CHECK-NEXT:    or r1, r3, r2; vextract.32 r3, x0, r29, vaddsign1
 ; CHECK-NEXT:    vpush.hi.32 x8, x8, r21
-; CHECK-NEXT:    vpush.hi.32 x6, x6, r16
-; CHECK-NEXT:    vextract.32 r21, x5, r17, vaddsign1
+; CHECK-NEXT:    lshl r4, r4, r17; vpush.hi.32 x6, x6, r7
+; CHECK-NEXT:    lshl r5, r5, r19; vextract.32 r21, x5, r17, vaddsign1
+; CHECK-NEXT:    or r1, r1, r4; vextract.32 r5, x0, r27, vaddsign1
+; CHECK-NEXT:    or r1, r1, r5; vpush.hi.32 x0, x6, r3
 ; CHECK-NEXT:    vpush.hi.32 x8, x8, r22
+; CHECK-NEXT:    vpush.hi.32 x2, x2, r2
 ; CHECK-NEXT:    vextract.32 r22, x5, r19, vaddsign1
 ; CHECK-NEXT:    vpush.hi.32 x8, x8, r23
-; CHECK-NEXT:    vextract.32 r23, x5, r25, vaddsign1
+; CHECK-NEXT:    vextract.32 r23, x5, r26, vaddsign1
 ; CHECK-NEXT:    vpush.hi.32 x8, x8, r20
 ; CHECK-NEXT:    vextract.32 r20, x5, r30, vaddsign1
-; CHECK-NEXT:    lshl r4, r4, r17; vpush.hi.32 x8, x8, r21
-; CHECK-NEXT:    nez r21, r1; vpush.hi.32 x8, x8, r22
-; CHECK-NEXT:    lshl r3, r3, r18; mov unpacksign0, r21
-; CHECK-NEXT:    lshl r1, r1, r7; vextract.32 r22, x5, r29, vaddsign1
-; CHECK-NEXT:    or r0, r1, r0; vextract.32 r2, x0, r27, vaddsign1
-; CHECK-NEXT:    or r1, r3, r2; vextract.32 r3, x0, r29, vaddsign1
-; CHECK-NEXT:    lshl r5, r5, r19; vpush.hi.32 x8, x8, r23
-; CHECK-NEXT:    vunpack y2, x4, unpacksign0; or r1, r1, r4; vextract.32 r5, x0, r26, vaddsign1
-; CHECK-NEXT:    or r1, r1, r5; vpush.hi.32 x0, x6, r3
-; CHECK-NEXT:    vunpack y4, x8, unpacksign0; vpush.hi.32 x8, x8, r20
-; CHECK-NEXT:    vpush.hi.32 x2, x2, r2
-; CHECK-NEXT:    vmov wl0, wh0
+; CHECK-NEXT:    vpush.hi.32 x8, x8, r21
+; CHECK-NEXT:    vunpack y4, x8, unpacksign0; vextract.32 r21, x5, r29, vaddsign1
 ; CHECK-NEXT:    vpush.hi.32 x8, x8, r22
-; CHECK-NEXT:    lshl r4, r6, r25; mov unpacksign0, #0
-; CHECK-NEXT:    mova r3, #200; or r1, r1, r0; mov unpacksign0, r21
+; CHECK-NEXT:    vunpack y2, x4, unpacksign0; vpush.hi.32 x8, x8, r23
+; CHECK-NEXT:    vpush.hi.32 x8, x8, r20
+; CHECK-NEXT:    lshl r4, r6, r26; vpush.hi.32 x8, x8, r21
+; CHECK-NEXT:    mova r3, #200; or r1, r1, r0; vmov wl0, wh0
 ; CHECK-NEXT:    or r1, r1, r3; vpush.hi.32 x2, x2, r5
 ; CHECK-NEXT:    or r0, r0, r4; vmov wl0, wh2; vmac dm0, dm1, x0, y4,r1
 ; CHECK-NEXT:    or r0, r0, r3
@@ -258,52 +256,52 @@ define dso_local inreg noundef <64 x i32> @_Z27test_addmsc_4x16_16x16_confDv64_h
 ; CHECK-LABEL: _Z27test_addmsc_4x16_16x16_confDv64_hiDv128_DB8_iDv64_u7__acc32S2_iiiii:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    mova r7, #50; mov crunpacksize, #0
-; CHECK-NEXT:    mova r23, #5; vshuffle x0, x0, x0, r7
-; CHECK-NEXT:    mova r28, #1; vextract.32 r29, x4, r23, vaddsign1
-; CHECK-NEXT:    mova r20, #2; vextract.32 r16, x0, r28, vaddsign1
-; CHECK-NEXT:    mova r21, #3; vextract.32 r17, x0, r20, vaddsign1
-; CHECK-NEXT:    mova r22, #4; vextract.32 r18, x0, r21, vaddsign1
-; CHECK-NEXT:    vextract.32 r19, x0, r22, vaddsign1
-; CHECK-NEXT:    mova r24, #0; vextract.32 r25, x0, r23, vaddsign1
-; CHECK-NEXT:    vextract.32 r7, x0, r24, vaddsign1
-; CHECK-NEXT:    vextract.32 r23, x5, r23, vaddsign1
+; CHECK-NEXT:    mova r7, #50; nopb ; nops ; nopx ; mov crunpacksize, #0; nopv
+; CHECK-NEXT:    mova r24, #5; vshuffle x0, x0, x0, r7
+; CHECK-NEXT:    mova r20, #1; vextract.32 r29, x4, r24, vaddsign1
+; CHECK-NEXT:    mova r21, #2; vextract.32 r16, x0, r20, vaddsign1
+; CHECK-NEXT:    mova r22, #3; vextract.32 r17, x0, r21, vaddsign1
+; CHECK-NEXT:    mova r23, #4; vextract.32 r18, x0, r22, vaddsign1
+; CHECK-NEXT:    vextract.32 r19, x0, r23, vaddsign1
+; CHECK-NEXT:    mova r25, #0; vextract.32 r26, x0, r24, vaddsign1
+; CHECK-NEXT:    vextract.32 r7, x0, r25, vaddsign1
+; CHECK-NEXT:    vextract.32 r24, x5, r24, vaddsign1
 ; CHECK-NEXT:    vpush.hi.32 x2, x0, r7
 ; CHECK-NEXT:    vpush.hi.32 x2, x2, r16
 ; CHECK-NEXT:    vpush.hi.32 x2, x2, r17
 ; CHECK-NEXT:    mova r17, #11; vpush.hi.32 x2, x2, r18
-; CHECK-NEXT:    vextract.32 r27, x0, r17, vaddsign1
+; CHECK-NEXT:    vextract.32 r28, x0, r17, vaddsign1
 ; CHECK-NEXT:    mova r7, #8; vpush.hi.32 x2, x2, r19
 ; CHECK-NEXT:    mova r18, #10; vextract.32 r19, x0, r7, vaddsign1
-; CHECK-NEXT:    vextract.32 r26, x0, r18, vaddsign1
-; CHECK-NEXT:    mova r16, #9; vpush.hi.32 x2, x2, r25
-; CHECK-NEXT:    vextract.32 r25, x0, r16, vaddsign1
+; CHECK-NEXT:    vextract.32 r27, x0, r18, vaddsign1
+; CHECK-NEXT:    mova r16, #9; vpush.hi.32 x2, x2, r26
+; CHECK-NEXT:    vextract.32 r26, x0, r16, vaddsign1
 ; CHECK-NEXT:    vpush.hi.32 x6, x0, r19
-; CHECK-NEXT:    mova r19, #12; vpush.hi.32 x6, x6, r25
-; CHECK-NEXT:    vextract.32 r25, x0, r19, vaddsign1
-; CHECK-NEXT:    vpush.hi.32 x6, x6, r26
-; CHECK-NEXT:    vextract.32 r26, x4, r28, vaddsign1
-; CHECK-NEXT:    vextract.32 r28, x5, r28, vaddsign1
+; CHECK-NEXT:    mova r19, #12; vpush.hi.32 x6, x6, r26
+; CHECK-NEXT:    vextract.32 r26, x0, r19, vaddsign1
 ; CHECK-NEXT:    vpush.hi.32 x6, x6, r27
 ; CHECK-NEXT:    vextract.32 r27, x4, r20, vaddsign1
 ; CHECK-NEXT:    vextract.32 r20, x5, r20, vaddsign1
-; CHECK-NEXT:    vpush.hi.32 x6, x6, r25
-; CHECK-NEXT:    vextract.32 r25, x4, r24, vaddsign1
-; CHECK-NEXT:    vextract.32 r24, x5, r24, vaddsign1
-; CHECK-NEXT:    vpush.hi.32 x8, x0, r25
-; CHECK-NEXT:    vextract.32 r25, x4, r21, vaddsign1
+; CHECK-NEXT:    vpush.hi.32 x6, x6, r28
+; CHECK-NEXT:    vextract.32 r28, x4, r21, vaddsign1
 ; CHECK-NEXT:    vextract.32 r21, x5, r21, vaddsign1
-; CHECK-NEXT:    vpush.hi.32 x8, x8, r26
+; CHECK-NEXT:    vpush.hi.32 x6, x6, r26
+; CHECK-NEXT:    vextract.32 r26, x4, r25, vaddsign1
+; CHECK-NEXT:    vextract.32 r25, x5, r25, vaddsign1
+; CHECK-NEXT:    vpush.hi.32 x8, x0, r26
 ; CHECK-NEXT:    vextract.32 r26, x4, r22, vaddsign1
+; CHECK-NEXT:    vextract.32 r22, x5, r22, vaddsign1
 ; CHECK-NEXT:    vpush.hi.32 x8, x8, r27
-; CHECK-NEXT:    vpush.hi.32 x8, x8, r25
-; CHECK-NEXT:    mova r27, #6; vpush.hi.32 x8, x8, r26
-; CHECK-NEXT:    vextract.32 r26, x4, r27, vaddsign1
-; CHECK-NEXT:    mova r25, #13; vpush.hi.32 x8, x8, r29
-; CHECK-NEXT:    vextract.32 r29, x0, r25, vaddsign1
+; CHECK-NEXT:    vextract.32 r27, x4, r23, vaddsign1
+; CHECK-NEXT:    vpush.hi.32 x8, x8, r28
 ; CHECK-NEXT:    vpush.hi.32 x8, x8, r26
-; CHECK-NEXT:    mova r26, #7; vpush.hi.32 x6, x6, r29
-; CHECK-NEXT:    vextract.32 r29, x4, r26, vaddsign1
+; CHECK-NEXT:    mova r28, #6; vpush.hi.32 x8, x8, r27
+; CHECK-NEXT:    vextract.32 r27, x4, r28, vaddsign1
+; CHECK-NEXT:    mova r26, #13; vpush.hi.32 x8, x8, r29
+; CHECK-NEXT:    vextract.32 r29, x0, r26, vaddsign1
+; CHECK-NEXT:    vpush.hi.32 x8, x8, r27
+; CHECK-NEXT:    mova r27, #7; vpush.hi.32 x6, x6, r29
+; CHECK-NEXT:    vextract.32 r29, x4, r27, vaddsign1
 ; CHECK-NEXT:    vextract.32 r29, x4, r7, vaddsign1
 ; CHECK-NEXT:    vpush.hi.32 x8, x8, r29
 ; CHECK-NEXT:    vpush.hi.32 x8, x8, r29
@@ -315,50 +313,48 @@ define dso_local inreg noundef <64 x i32> @_Z27test_addmsc_4x16_16x16_confDv64_h
 ; CHECK-NEXT:    vextract.32 r29, x4, r19, vaddsign1
 ; CHECK-NEXT:    vpush.hi.32 x8, x8, r29
 ; CHECK-NEXT:    vpush.hi.32 x8, x8, r29
-; CHECK-NEXT:    mova r30, #14; vextract.32 r29, x4, r25, vaddsign1
+; CHECK-NEXT:    mova r30, #14; vextract.32 r29, x4, r26, vaddsign1
 ; CHECK-NEXT:    vextract.32 r29, x4, r30, vaddsign1
 ; CHECK-NEXT:    vpush.hi.32 x8, x8, r29
 ; CHECK-NEXT:    mova r29, #15; vpush.hi.32 x8, x8, r29
 ; CHECK-NEXT:    vextract.32 r31, x4, r29, vaddsign1
-; CHECK-NEXT:    vextract.32 r22, x5, r22, vaddsign1
+; CHECK-NEXT:    vextract.32 r23, x5, r23, vaddsign1
 ; CHECK-NEXT:    vpush.hi.32 x4, x8, r31
-; CHECK-NEXT:    vpush.hi.32 x8, x0, r24
-; CHECK-NEXT:    vpush.hi.32 x8, x8, r28
+; CHECK-NEXT:    vpush.hi.32 x8, x0, r25
 ; CHECK-NEXT:    vpush.hi.32 x8, x8, r20
-; CHECK-NEXT:    vextract.32 r20, x5, r27, vaddsign1
+; CHECK-NEXT:    vextract.32 r20, x5, r28, vaddsign1
 ; CHECK-NEXT:    vpush.hi.32 x8, x8, r21
-; CHECK-NEXT:    vextract.32 r21, x5, r26, vaddsign1
+; CHECK-NEXT:    vextract.32 r21, x5, r27, vaddsign1
 ; CHECK-NEXT:    vpush.hi.32 x8, x8, r22
 ; CHECK-NEXT:    vextract.32 r22, x5, r7, vaddsign1
 ; CHECK-NEXT:    vpush.hi.32 x8, x8, r23
 ; CHECK-NEXT:    vextract.32 r23, x5, r16, vaddsign1
-; CHECK-NEXT:    vextract.32 r16, x0, r30, vaddsign1
-; CHECK-NEXT:    lshl r0, r0, r16; vpush.hi.32 x8, x8, r20
-; CHECK-NEXT:    vextract.32 r20, x5, r18, vaddsign1
+; CHECK-NEXT:    vpush.hi.32 x8, x8, r24
+; CHECK-NEXT:    nez r24, r1; vextract.32 r7, x0, r30, vaddsign1
+; CHECK-NEXT:    lshl r1, r1, r7; vpush.hi.32 x8, x8, r20
+; CHECK-NEXT:    lshl r0, r0, r16; mov unpacksign0, r24
+; CHECK-NEXT:    lshl r3, r3, r18; vextract.32 r20, x5, r18, vaddsign1
+; CHECK-NEXT:    or r0, r1, r0; vextract.32 r2, x0, r28, vaddsign1
+; CHECK-NEXT:    or r1, r3, r2; vextract.32 r3, x0, r29, vaddsign1
 ; CHECK-NEXT:    vpush.hi.32 x8, x8, r21
-; CHECK-NEXT:    vpush.hi.32 x6, x6, r16
-; CHECK-NEXT:    vextract.32 r21, x5, r17, vaddsign1
+; CHECK-NEXT:    lshl r4, r4, r17; vpush.hi.32 x6, x6, r7
+; CHECK-NEXT:    lshl r5, r5, r19; vextract.32 r21, x5, r17, vaddsign1
+; CHECK-NEXT:    or r1, r1, r4; vextract.32 r5, x0, r27, vaddsign1
+; CHECK-NEXT:    or r1, r1, r5; vpush.hi.32 x0, x6, r3
 ; CHECK-NEXT:    vpush.hi.32 x8, x8, r22
+; CHECK-NEXT:    vpush.hi.32 x2, x2, r2
 ; CHECK-NEXT:    vextract.32 r22, x5, r19, vaddsign1
 ; CHECK-NEXT:    vpush.hi.32 x8, x8, r23
-; CHECK-NEXT:    vextract.32 r23, x5, r25, vaddsign1
+; CHECK-NEXT:    vextract.32 r23, x5, r26, vaddsign1
 ; CHECK-NEXT:    vpush.hi.32 x8, x8, r20
 ; CHECK-NEXT:    vextract.32 r20, x5, r30, vaddsign1
-; CHECK-NEXT:    lshl r4, r4, r17; vpush.hi.32 x8, x8, r21
-; CHECK-NEXT:    nez r21, r1; vpush.hi.32 x8, x8, r22
-; CHECK-NEXT:    lshl r3, r3, r18; mov unpacksign0, r21
-; CHECK-NEXT:    lshl r1, r1, r7; vextract.32 r22, x5, r29, vaddsign1
-; CHECK-NEXT:    or r0, r1, r0; vextract.32 r2, x0, r27, vaddsign1
-; CHECK-NEXT:    or r1, r3, r2; vextract.32 r3, x0, r29, vaddsign1
-; CHECK-NEXT:    lshl r5, r5, r19; vpush.hi.32 x8, x8, r23
-; CHECK-NEXT:    vunpack y2, x4, unpacksign0; or r1, r1, r4; vextract.32 r5, x0, r26, vaddsign1
-; CHECK-NEXT:    or r1, r1, r5; vpush.hi.32 x0, x6, r3
-; CHECK-NEXT:    vunpack y4, x8, unpacksign0; vpush.hi.32 x8, x8, r20
-; CHECK-NEXT:    vpush.hi.32 x2, x2, r2
-; CHECK-NEXT:    vmov wl0, wh0
+; CHECK-NEXT:    vpush.hi.32 x8, x8, r21
+; CHECK-NEXT:    vunpack y4, x8, unpacksign0; vextract.32 r21, x5, r29, vaddsign1
 ; CHECK-NEXT:    vpush.hi.32 x8, x8, r22
-; CHECK-NEXT:    lshl r4, r6, r25; mov unpacksign0, #0
-; CHECK-NEXT:    mova r3, #200; or r1, r1, r0; mov unpacksign0, r21
+; CHECK-NEXT:    vunpack y2, x4, unpacksign0; vpush.hi.32 x8, x8, r23
+; CHECK-NEXT:    vpush.hi.32 x8, x8, r20
+; CHECK-NEXT:    lshl r4, r6, r26; vpush.hi.32 x8, x8, r21
+; CHECK-NEXT:    mova r3, #200; or r1, r1, r0; vmov wl0, wh0
 ; CHECK-NEXT:    or r1, r1, r3; vpush.hi.32 x2, x2, r5
 ; CHECK-NEXT:    or r0, r0, r4; vmov wl0, wh2; vmsc dm0, dm1, x0, y4,r1
 ; CHECK-NEXT:    or r0, r0, r3
