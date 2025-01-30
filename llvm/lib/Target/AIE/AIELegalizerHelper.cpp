@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 /// \file
@@ -1186,38 +1186,57 @@ bool AIELegalizerHelper::legalizeLoopDecrement(LegalizerHelper &Helper,
   return true;
 }
 
-// Legalize 2048-bit G_SELECT
+// Legalize < MaxBitSize-bit G_SELECT
+// Expand the source vectors to MaxBitSize-bits by padding it with undefs.
 bool AIELegalizerHelper::legalizeG_SELECT(LegalizerHelper &Helper,
-                                          MachineInstr &MI) const {
+                                          MachineInstr &MI,
+                                          const unsigned MaxBitSize) const {
   MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
   MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
 
   const Register DstReg = MI.getOperand(0).getReg();
+  const LLT DstTy = MRI.getType(DstReg);
+  const unsigned DstVecSize = DstTy.getSizeInBits();
+
+  assert(DstTy.isVector() && DstVecSize < MaxBitSize &&
+         "Expected to legalize < MaxBitSize-bit vector G_SELECT");
+  assert(!(MaxBitSize % DstVecSize) &&
+         "Vector size should be a factor of MaxBitSize");
+
   const Register SrcReg0 = MI.getOperand(1).getReg(); // Scalar
   const Register SrcReg1 = MI.getOperand(2).getReg();
   const Register SrcReg2 = MI.getOperand(3).getReg();
-  const LLT DstTy = MRI.getType(DstReg);
-  assert(DstTy.isVector() && DstTy.getSizeInBits() == 2048 &&
-         "Expected to legalize 2048-bit vector G_SELECT");
-  const LLT DstVecEltTy = DstTy.getElementType();
-  const unsigned ElTySize = DstVecEltTy.getSizeInBits();
-  const LLT ACC1024 = LLT::fixed_vector(1024 / ElTySize, ElTySize);
 
-  const Register Dst0LoReg = MRI.createGenericVirtualRegister(ACC1024);
-  const Register Dst0HiReg = MRI.createGenericVirtualRegister(ACC1024);
-  const Register Dst1LoReg = MRI.createGenericVirtualRegister(ACC1024);
-  const Register Dst1HiReg = MRI.createGenericVirtualRegister(ACC1024);
+  const LLT NewVecTy =
+      LLT::fixed_vector(MaxBitSize / DstTy.getElementType().getSizeInBits(),
+                        DstTy.getElementType());
 
-  MIRBuilder.buildUnmerge({Dst0LoReg, Dst0HiReg}, SrcReg1);
-  MIRBuilder.buildUnmerge({Dst1LoReg, Dst1HiReg}, SrcReg2);
+  const Register UndefReg = MRI.createGenericVirtualRegister(DstTy);
+  MIRBuilder.buildUndef(UndefReg);
 
-  const Register DstRegLoSelect = MRI.createGenericVirtualRegister(ACC1024);
-  const Register DstRegHiSelect = MRI.createGenericVirtualRegister(ACC1024);
+  const unsigned NumPadElts = (MaxBitSize / DstVecSize) - 1;
+  auto buildMergeInstr = [&](const Register SrcReg) -> Register {
+    SmallVector<Register, 4> Regs;
+    Regs.push_back(SrcReg);
+    for (unsigned I = 0; I < NumPadElts; I++)
+      Regs.push_back(UndefReg);
+    const Register NewSrcReg = MRI.createGenericVirtualRegister(NewVecTy);
+    MIRBuilder.buildMergeLikeInstr(NewSrcReg, Regs);
+    return NewSrcReg;
+  };
 
-  MIRBuilder.buildSelect(DstRegLoSelect, SrcReg0, Dst0LoReg, Dst1LoReg);
-  MIRBuilder.buildSelect(DstRegHiSelect, SrcReg0, Dst0HiReg, Dst1HiReg);
+  const Register NewSrcReg1 = buildMergeInstr(SrcReg1);
+  const Register NewSrcReg2 = buildMergeInstr(SrcReg2);
 
-  MIRBuilder.buildConcatVectors({DstReg}, {DstRegLoSelect, DstRegHiSelect});
+  const Register NewDstReg = MRI.createGenericVirtualRegister(NewVecTy);
+  MIRBuilder.buildInstr(MI.getOpcode(), {NewDstReg},
+                        {SrcReg0, NewSrcReg1, NewSrcReg2}, MI.getFlags());
+
+  SmallVector<Register, 4> Regs;
+  Regs.push_back(DstReg);
+  for (unsigned I = 0; I < NumPadElts; ++I)
+    Regs.push_back(MRI.createGenericVirtualRegister(DstTy));
+  MIRBuilder.buildUnmerge(Regs, NewDstReg);
 
   MI.eraseFromParent();
   return true;
