@@ -400,19 +400,43 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
           {V8S32, P0, V8S32, 256},
           {V16S16, P0, V16S16, 256},
           {V32S8, P0, V32S8, 256},
-          {V16S32, P0, V16S32, 256},
-          {V32S16, P0, V32S16, 256},
-          {V64S8, P0, V64S8, 256},
-          {V32S32, P0, V32S32, 256},
-          {V64S16, P0, V64S16, 256},
-          {V128S8, P0, V128S8, 256},
+          {V16S32, P0, V16S32, 512},
+          {V32S16, P0, V32S16, 512},
+          {V64S8, P0, V64S8, 512},
+          {V32S32, P0, V32S32, 512},
+          {V64S16, P0, V64S16, 512},
+          {V128S8, P0, V128S8, 512},
           {AccV4S64, P0, AccV4S64, 256},
-          {AccV8S64, P0, AccV8S64, 256},
-          {AccV16S64, P0, AccV16S64, 256},
-          {AccV64S32, P0, AccV64S32, 256},
-          {AccV32S64, P0, AccV32S64, 256},
+          {AccV8S64, P0, AccV8S64, 512},
+          {AccV16S64, P0, AccV16S64, 512},
+          {AccV64S32, P0, AccV64S32, 512},
+          {AccV32S64, P0, AccV32S64, 512},
           {S128, P0, S128, 16},
       })
+      // Split 256-bit aligned load/store of 512-bit or larger vectors into
+      // legal 256-bit loads with 32-byte alignment.
+      .fewerElementsIf(
+          [=](const LegalityQuery &Query) {
+            const LLT &MemoryType = Query.MMODescrs[0].MemoryTy;
+            const uint64_t Alignment = Query.MMODescrs[0].AlignInBits;
+            unsigned MemSize = MemoryType.getSizeInBits();
+            if (!MemoryType.isVector() || MemSize % 256 != 0)
+              return false;
+            // TODO: We could do the same as above for 16-byte aligned loads and
+            // stores by splitting them into 128-bit loads and stores but this
+            // doesn't work out of the box at the moment. We can easily enable
+            // it later when we have a more complete legalizer and
+            // regbankselect.
+            return MemSize >= 512 && Alignment == 256;
+          },
+          [=](const LegalityQuery &Query) {
+            const LLT &MemoryType = Query.MMODescrs[0].MemoryTy;
+            const uint64_t Alignment = Query.MMODescrs[0].AlignInBits;
+            const unsigned SplitFactor = MemoryType.getSizeInBits() / Alignment;
+            return std::make_pair(
+                0, LLT::fixed_vector(MemoryType.getNumElements() / SplitFactor,
+                                     MemoryType.getElementType()));
+          })
       .widenScalarToNextPow2(0)
       .lowerIfMemSizeNotPow2()
       .bitcastIf(
