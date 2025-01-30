@@ -23,8 +23,8 @@ body:             |
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: $lfl1 = VMOV_alu_mv_mv_x killed $x9
+    ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     $p1, $lf0, $r25 = VLDA_FILL_512 $p1, $lf0, $r25
     $lfl1 = VMOV_alu_mv_mv_x $x9
