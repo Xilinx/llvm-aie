@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 /// \file
@@ -70,6 +70,13 @@ static LegalityPredicate isValidVectorAIE2(const unsigned TypeIdx) {
     const LLT DstTy = Query.Types[TypeIdx];
     const unsigned DstSize = DstTy.getSizeInBits();
     return DstTy.isVector() && (DstSize == 32 || DstSize > 64);
+  };
+}
+
+static LegalityPredicate vectorSmallerThan(unsigned TypeIdx, unsigned Size) {
+  return [=](const LegalityQuery &Query) {
+    const LLT QueryTy = Query.Types[TypeIdx];
+    return QueryTy.isVector() && QueryTy.getSizeInBits() < Size;
   };
 }
 
@@ -236,10 +243,24 @@ AIE2LegalizerInfo::AIE2LegalizerInfo(const AIE2Subtarget &ST) : AIEHelper(ST) {
 
   getActionDefinitionsBuilder(G_SELECT)
       .legalFor({{S32, S32}, {P0, S32}})
+      .clampScalar(1, S32, S32)
+      // AIE2 ISA supports only 512-bit vector select
+      .legalFor({V16S32, V32S16, V64S8})
+      // For scalar types >= 256, bitcast to a vector type and use existing
+      // selection patterns
+      .bitcastIf(
+          [=](const LegalityQuery &Query) {
+            const LLT &ResTy = Query.Types[0];
+            return ResTy.isScalar() && ResTy.getSizeInBits() >= 256;
+          },
+          [=](const LegalityQuery &Query) {
+            const LLT Ty = Query.Types[0];
+            const unsigned Size = Ty.getSizeInBits();
+            return std::pair(0, LLT::fixed_vector(Size / 32, LLT::scalar(32)));
+          })
       .widenScalarToNextPow2(0)
       .clampScalar(0, S32, S32)
-      .clampScalar(1, S32, S32)
-      .legalFor(AIE2VectorTypes)
+      .customIf(vectorSmallerThan(0, 512))
       // We support G_SELECT only on the vector register bank
       // Mapping the G_SELECT operands to the vector register bank
       // during register bank selection introduces the proper cross-bank
@@ -248,7 +269,10 @@ AIE2LegalizerInfo::AIE2LegalizerInfo(const AIE2Subtarget &ST) : AIEHelper(ST) {
       // type patterns in C++. Introducing bitcasts during legalization allows
       // to re-use the existing code for register bank selection and ISEL
       // patterns.
-      .bitcastIf(typeInSet(0, AIE2AccumulatorTypes), bitcastAccToVectorType(0));
+      .bitcastIf(typeInSet(0, AIE2AccumulatorTypes), bitcastAccToVectorType(0))
+      .clampMaxNumElements(0, S8, 64)
+      .clampMaxNumElements(0, S16, 32)
+      .clampMaxNumElements(0, S32, 16);
 
   getActionDefinitionsBuilder({G_ADD, G_SUB})
       .legalFor({S32})
@@ -546,6 +570,8 @@ bool AIE2LegalizerInfo::legalizeCustom(
     return AIEHelper.legalizeG_SEXT_INREG(Helper, MI);
   case TargetOpcode::G_BITCAST:
     return AIEHelper.legalizeG_BITCAST(Helper, MI);
+  case TargetOpcode::G_SELECT:
+    return AIEHelper.legalizeG_SELECT(Helper, MI, /* MaxBitSize */ 512);
   }
 
   llvm_unreachable("Un-expected custom legalization");

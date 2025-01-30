@@ -272,15 +272,14 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
   getActionDefinitionsBuilder(G_SELECT)
       .legalFor({{S32, S32}, {P0, S32}})
       .clampScalar(1, S32, S32)
-      .legalFor(AIE2PVectorTypes)
+      // AIE2P ISA supports only 512-bit vector select
+      .legalFor({V16S32, V32S16, V64S8})
       // For scalar types >= 256, bitcast to a vector type and use existing
       // selection patterns
       .bitcastIf(
           [=](const LegalityQuery &Query) {
             const LLT &ResTy = Query.Types[0];
-            if (ResTy.isVector())
-              return false;
-            return ResTy.getSizeInBits() >= 256;
+            return ResTy.isScalar() && ResTy.getSizeInBits() >= 256;
           },
           [=](const LegalityQuery &Query) {
             const LLT Ty = Query.Types[0];
@@ -289,6 +288,7 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
           })
       .widenScalarToNextPow2(0)
       .clampScalar(0, S32, S32)
+      .customIf(vectorSmallerThan(0, 512))
       // We support G_SELECT only on the vector register bank
       // Mapping the G_SELECT operands to the vector register bank
       // during register bank selection introduces the proper cross-bank
@@ -299,7 +299,9 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
       // patterns.
       .bitcastIf(typeInSet(0, {AccV4S64, AccV8S64, AccV16S64}),
                  bitcastAccToVectorType(0))
-      .customFor({{AccV64S32, S32}});
+      .clampMaxNumElements(0, S8, 64)
+      .clampMaxNumElements(0, S16, 32)
+      .clampMaxNumElements(0, S32, 16);
 
   getActionDefinitionsBuilder({G_ADD, G_SUB, G_XOR})
       .legalFor({S32})
@@ -667,7 +669,7 @@ bool AIE2PLegalizerInfo::legalizeCustom(
   case TargetOpcode::G_SEXT_INREG:
     return AIEHelper.legalizeG_SEXT_INREG(Helper, MI);
   case TargetOpcode::G_SELECT:
-    return AIEHelper.legalizeG_SELECT(Helper, MI);
+    return AIEHelper.legalizeG_SELECT(Helper, MI, /* MaxBitSize */ 512);
   case TargetOpcode::G_CONCAT_VECTORS:
     return AIEHelper.legalizeG_CONCAT_VECTORS(Helper, MI);
   case TargetOpcode::G_BITCAST:

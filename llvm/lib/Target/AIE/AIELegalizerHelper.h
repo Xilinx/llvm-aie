@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 /// \file
@@ -56,7 +56,8 @@ public:
   bool legalizeG_FPEXT(LegalizerHelper &Helper, MachineInstr &MI) const;
   bool legalizeG_FABS(LegalizerHelper &Helper, MachineInstr &MI) const;
   bool legalizeG_FADDSUB(LegalizerHelper &Helper, MachineInstr &MI) const;
-  bool legalizeG_SELECT(LegalizerHelper &Helper, MachineInstr &MI) const;
+  bool legalizeG_SELECT(LegalizerHelper &Helper, MachineInstr &MI,
+                        const unsigned MaxBitSize = 512) const;
   bool legalizeG_BITCAST(LegalizerHelper &Helper, MachineInstr &MI) const;
   bool legalizeLoopDecrement(LegalizerHelper &Helper, MachineInstr &MI) const;
   bool legalizeG_CONCAT_VECTORS(LegalizerHelper &Helper,
