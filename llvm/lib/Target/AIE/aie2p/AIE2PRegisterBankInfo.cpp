@@ -437,37 +437,25 @@ static bool isUsedAsFifoRegInIntrinsic(const MachineRegisterInfo &MRI,
   }
   case Intrinsic::aie2p_fifo_st_push_544_bfp16:
   case Intrinsic::aie2p_fifo_st_push_576_bfp16: {
-    Register FifoDstReg = MI.getOperand(1).getReg();
-    Register FifoSrcReg = MI.getOperand(7).getReg();
-    if ((FifoRegCandidate == FifoDstReg) || (FifoRegCandidate == FifoSrcReg))
-      return true;
+    return checkFifoDstSrc(MI, FifoRegCandidate, 1, 7);
     break;
   }
   case Intrinsic::aie2p_fifo_st_flush:
   case Intrinsic::aie2p_fifo_st_flush_conv:
   case Intrinsic::aie2p_fifo_st_flush_1d:
   case Intrinsic::aie2p_fifo_st_flush_1d_conv: {
-    Register FifoDstReg = MI.getOperand(1).getReg();
-    Register FifoSrcReg = MI.getOperand(5).getReg();
-    if ((FifoRegCandidate == FifoDstReg) || (FifoRegCandidate == FifoSrcReg))
-      return true;
+    return checkFifoDstSrc(MI, FifoRegCandidate, 1, 5);
     break;
   }
   case Intrinsic::aie2p_fifo_st_push_512_bfp16:
   case Intrinsic::aie2p_fifo_st_flush_2d:
   case Intrinsic::aie2p_fifo_st_flush_2d_conv: {
-    Register FifoDstReg = MI.getOperand(1).getReg();
-    Register FifoSrcReg = MI.getOperand(6).getReg();
-    if ((FifoRegCandidate == FifoDstReg) || (FifoRegCandidate == FifoSrcReg))
-      return true;
+    return checkFifoDstSrc(MI, FifoRegCandidate, 1, 6);
     break;
   }
   case Intrinsic::aie2p_fifo_st_flush_3d:
   case Intrinsic::aie2p_fifo_st_flush_3d_conv: {
-    Register FifoDstReg = MI.getOperand(1).getReg();
-    Register FifoSrcReg = MI.getOperand(7).getReg();
-    if ((FifoRegCandidate == FifoDstReg) || (FifoRegCandidate == FifoSrcReg))
-      return true;
+    return checkFifoDstSrc(MI, FifoRegCandidate, 1, 7);
     break;
   }
   default:
