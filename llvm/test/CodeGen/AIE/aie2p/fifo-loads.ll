@@ -4,7 +4,7 @@
 ; See https://llvm.org/LICENSE.txt for license information.
 ; SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ;
-; (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+; (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
 ; RUN: llc < %s -verify-machineinstrs -mtriple=aie2p | FileCheck %s
 
 %struct.v64bfp16ebs8 = type <{ <64 x i8>, <8 x i8> }>
@@ -640,8 +640,6 @@ declare { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } @llvm.aie2p.fifo.ld.pop.54
 declare { ptr, <32 x i32>, i32, i20, <64 x i8>, <8 x i8> } @llvm.aie2p.fifo.ld.pop.544.2d.bfp16(ptr, <32 x i32>, i32, i20, i20, i20, i20) #5
 declare { ptr, <32 x i32>, i32, i20, i20, <64 x i8>, <8 x i8> } @llvm.aie2p.fifo.ld.pop.544.3d.bfp16(ptr, <32 x i32>, i32, i20, i20, i20, i20, i20, i20, i20) #5
 
-!0 = !{i32 1, !"wchar_size", i32 4}
-!1 = !{!"clang version 19.0.0git (git@gitenterprise.xilinx.com:XRLabs/llvm-aie.git 35e685a28ac5e78c6c8a5ab733508f3e0aaedf24)"}
 !2 = !{!3, !3, i64 0}
 !3 = !{!"any pointer", !4, i64 0}
 !4 = !{!"omnipotent char", !5, i64 0}

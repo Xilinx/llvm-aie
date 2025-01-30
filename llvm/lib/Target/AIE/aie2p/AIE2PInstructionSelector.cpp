@@ -21,7 +21,6 @@
 #include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/IR/IntrinsicsAIE2P.h"
 #include "llvm/MC/MCContext.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TypeSize.h"
 #include <cassert>
@@ -91,8 +90,9 @@ public:
                               MachineRegisterInfo &MRI) override;
   Register createPLFRRegSequence(Register PtrReg, Register FifoReg,
                                  Register AvailReg, MachineRegisterInfo &MRI);
-  bool buildAndConstrainFifoLoadCopies(Register Bfp16Vec, Register Mantissa,
-                                       Register Exponent,
+  bool buildAndConstrainFifoLoadCopies(Register Bfp16VecDst,
+                                       Register MantissaDst,
+                                       Register ExponentDst,
                                        MachineRegisterInfo &MRI);
   Register createDSRegSequence(Register ModifierReg, Register Incr1Reg,
                                Register Incr2Reg, Register Size1Reg,
@@ -1616,13 +1616,13 @@ Register AIE2PInstructionSelector::createPLFRRegSequence(
   return MI.getReg(0);
 }
 bool AIE2PInstructionSelector::buildAndConstrainFifoLoadCopies(
-    Register Bfp16Vec, Register Mantissa, Register Exponent,
+    Register Bfp16VecDest, Register MantissaDst, Register ExponentDst,
     MachineRegisterInfo &MRI) {
 
-  auto CopyMI1 = MIB.buildInstr(TargetOpcode::COPY, {Mantissa}, {})
-                     .addReg(Bfp16Vec, 0, AIE2P::sub_bfp16_x);
-  auto CopyMI2 = MIB.buildInstr(TargetOpcode::COPY, {Exponent}, {})
-                     .addReg(Bfp16Vec, 0, AIE2P::sub_bfp16_e);
+  auto CopyMI1 = MIB.buildInstr(TargetOpcode::COPY, {MantissaDst}, {})
+                     .addReg(Bfp16VecDest, 0, AIE2P::sub_bfp16_x);
+  auto CopyMI2 = MIB.buildInstr(TargetOpcode::COPY, {ExponentDst}, {})
+                     .addReg(Bfp16VecDest, 0, AIE2P::sub_bfp16_e);
 
   return constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *CopyMI2,
                                   AIE2P::EXPVEC64RegClass,
@@ -2543,7 +2543,7 @@ bool AIE2PInstructionSelector::selectG_STORE(MachineInstr &I,
   return selectImpl(I, *CoverageInfo);
 }
 
-unsigned int getLoadFifoOpcode(MachineInstr &I) {
+unsigned getLoadFifoOpcode(MachineInstr &I) {
   switch (cast<GIntrinsic>(I).getIntrinsicID()) {
   case Intrinsic::aie2p_fifo_ld_fill:
     return AIE2P::VLDB_FILL_512;
@@ -2577,7 +2577,7 @@ unsigned int getLoadFifoOpcode(MachineInstr &I) {
 }
 bool AIE2PInstructionSelector::selectVLD_FIFO_FILL(MachineInstr &I,
                                                    MachineRegisterInfo &MRI) {
-  auto IntrinsicID = cast<GIntrinsic>(I).getIntrinsicID();
+  unsigned IntrinsicID = cast<GIntrinsic>(I).getIntrinsicID();
   assert(IntrinsicID == Intrinsic::aie2p_fifo_ld_fill);
   Register PtrOut = I.getOperand(0).getReg();
   Register FifoOut = I.getOperand(1).getReg();
@@ -2594,7 +2594,7 @@ bool AIE2PInstructionSelector::selectVLD_FIFO_FILL(MachineInstr &I,
 
 bool AIE2PInstructionSelector::selectVLD_FIFO_POP_512(
     MachineInstr &I, MachineRegisterInfo &MRI) {
-  auto IntrinsicID = cast<GIntrinsic>(I).getIntrinsicID();
+  unsigned IntrinsicID = cast<GIntrinsic>(I).getIntrinsicID();
   assert(IntrinsicID == Intrinsic::aie2p_fifo_ld_pop_unaligned);
   Register VecOut = I.getOperand(0).getReg();
   Register PtrOut = I.getOperand(1).getReg();
@@ -2612,7 +2612,7 @@ bool AIE2PInstructionSelector::selectVLD_FIFO_POP_512(
 
 bool AIE2PInstructionSelector::selectVLD_FIFO_POP_512_1D(
     MachineInstr &I, MachineRegisterInfo &MRI) {
-  auto IntrinsicID = cast<GIntrinsic>(I).getIntrinsicID();
+  unsigned IntrinsicID = cast<GIntrinsic>(I).getIntrinsicID();
   assert(IntrinsicID == Intrinsic::aie2p_fifo_ld_pop_1d_unaligned);
   Register VecOut = I.getOperand(0).getReg();
   Register PtrOut = I.getOperand(1).getReg();
@@ -2631,7 +2631,7 @@ bool AIE2PInstructionSelector::selectVLD_FIFO_POP_512_1D(
 
 bool AIE2PInstructionSelector::selectVLD_FIFO_POP_512_2D(
     MachineInstr &I, MachineRegisterInfo &MRI) {
-  auto IntrinsicID = cast<GIntrinsic>(I).getIntrinsicID();
+  unsigned IntrinsicID = cast<GIntrinsic>(I).getIntrinsicID();
   assert(IntrinsicID == Intrinsic::aie2p_fifo_ld_pop_2d_unaligned);
   Register VecOut = I.getOperand(0).getReg();
   Register PtrOut = I.getOperand(1).getReg();
@@ -2645,8 +2645,6 @@ bool AIE2PInstructionSelector::selectVLD_FIFO_POP_512_2D(
   Register SizeReg = I.getOperand(10).getReg();
   Register CountIn1Reg = I.getOperand(11).getReg();
   Register IncrReg = I.getOperand(12).getReg();
-  if (!RBI.constrainGenericRegister(CountOut1Reg, AIE2P::eDCRegClass, MRI))
-    return false;
   Register DReg =
       createDRegSequence(OffsetReg, IncrReg, SizeReg, CountIn1Reg, MRI);
   MachineInstrBuilder MI = MIB.buildInstr(
@@ -2658,7 +2656,7 @@ bool AIE2PInstructionSelector::selectVLD_FIFO_POP_512_2D(
 
 bool AIE2PInstructionSelector::selectVLD_FIFO_POP_512_3D(
     MachineInstr &I, MachineRegisterInfo &MRI) {
-  auto IntrinsicID = cast<GIntrinsic>(I).getIntrinsicID();
+  unsigned IntrinsicID = cast<GIntrinsic>(I).getIntrinsicID();
   assert(IntrinsicID == Intrinsic::aie2p_fifo_ld_pop_3d_unaligned);
   Register VecOut = I.getOperand(0).getReg();
   Register PtrOut = I.getOperand(1).getReg();
@@ -2676,11 +2674,6 @@ bool AIE2PInstructionSelector::selectVLD_FIFO_POP_512_3D(
   Register Size2Reg = I.getOperand(14).getReg();
   Register CountIn2Reg = I.getOperand(15).getReg();
   Register Incr2Reg = I.getOperand(16).getReg();
-  if (!RBI.constrainGenericRegister(CountOut1Reg, *TRI.getAddrCountRegClass(),
-                                    MRI) ||
-      !RBI.constrainGenericRegister(CountOut2Reg, *TRI.getAddrCountRegClass(),
-                                    MRI))
-    return false;
   Register DSReg = createDSRegSequence(OffsetReg, Incr1Reg, Incr2Reg, Size1Reg,
                                        CountIn1Reg, Size2Reg, CountIn2Reg, MRI);
   MachineInstrBuilder MI = MIB.buildInstr(
@@ -2693,7 +2686,7 @@ bool AIE2PInstructionSelector::selectVLD_FIFO_POP_512_3D(
 
 bool AIE2PInstructionSelector::selectVLD_FIFO_POP_BFP16(
     MachineInstr &I, MachineRegisterInfo &MRI) {
-  auto IntrinsicID = cast<GIntrinsic>(I).getIntrinsicID();
+  unsigned IntrinsicID = cast<GIntrinsic>(I).getIntrinsicID();
   assert(IntrinsicID == Intrinsic::aie2p_fifo_ld_pop_576_bfp16 ||
          (IntrinsicID == Intrinsic::aie2p_fifo_ld_pop_544_bfp16));
   Register PtrOut = I.getOperand(0).getReg();
@@ -2717,7 +2710,7 @@ bool AIE2PInstructionSelector::selectVLD_FIFO_POP_BFP16(
 
 bool AIE2PInstructionSelector::selectVLD_FIFO_POP_BFP16_1D(
     MachineInstr &I, MachineRegisterInfo &MRI) {
-  auto IntrinsicID = cast<GIntrinsic>(I).getIntrinsicID();
+  unsigned IntrinsicID = cast<GIntrinsic>(I).getIntrinsicID();
   assert(IntrinsicID == Intrinsic::aie2p_fifo_ld_pop_576_1d_bfp16 ||
          (IntrinsicID == Intrinsic::aie2p_fifo_ld_pop_544_1d_bfp16));
   Register PtrOut = I.getOperand(0).getReg();
@@ -2742,7 +2735,7 @@ bool AIE2PInstructionSelector::selectVLD_FIFO_POP_BFP16_1D(
 
 bool AIE2PInstructionSelector::selectVLD_FIFO_POP_BFP16_2D(
     MachineInstr &I, MachineRegisterInfo &MRI) {
-  auto IntrinsicID = cast<GIntrinsic>(I).getIntrinsicID();
+  unsigned IntrinsicID = cast<GIntrinsic>(I).getIntrinsicID();
   assert(IntrinsicID == Intrinsic::aie2p_fifo_ld_pop_576_2d_bfp16 ||
          (IntrinsicID == Intrinsic::aie2p_fifo_ld_pop_544_2d_bfp16));
   Register PtrOut = I.getOperand(0).getReg();
@@ -2759,8 +2752,6 @@ bool AIE2PInstructionSelector::selectVLD_FIFO_POP_BFP16_2D(
   Register IncrReg = I.getOperand(13).getReg();
   Register MantVecOut = I.getOperand(4).getReg();
   Register ExpVecOut = I.getOperand(5).getReg();
-  if (!RBI.constrainGenericRegister(CountOut1Reg, AIE2P::eDCRegClass, MRI))
-    return false;
   Register DReg =
       createDRegSequence(OffsetReg, IncrReg, SizeReg, CountIn1Reg, MRI);
   MachineInstrBuilder MI =
@@ -2776,7 +2767,7 @@ bool AIE2PInstructionSelector::selectVLD_FIFO_POP_BFP16_2D(
 
 bool AIE2PInstructionSelector::selectVLD_FIFO_POP_BFP16_3D(
     MachineInstr &I, MachineRegisterInfo &MRI) {
-  auto IntrinsicID = cast<GIntrinsic>(I).getIntrinsicID();
+  unsigned IntrinsicID = cast<GIntrinsic>(I).getIntrinsicID();
   assert(IntrinsicID == Intrinsic::aie2p_fifo_ld_pop_576_3d_bfp16 ||
          (IntrinsicID == Intrinsic::aie2p_fifo_ld_pop_544_3d_bfp16));
   Register PtrOut = I.getOperand(0).getReg();
@@ -2797,11 +2788,6 @@ bool AIE2PInstructionSelector::selectVLD_FIFO_POP_BFP16_3D(
   Register Incr2Reg = I.getOperand(17).getReg();
   Register MantVecOut = I.getOperand(5).getReg();
   Register ExpVecOut = I.getOperand(6).getReg();
-  if (!RBI.constrainGenericRegister(CountOut1Reg, *TRI.getAddrCountRegClass(),
-                                    MRI) ||
-      !RBI.constrainGenericRegister(CountOut2Reg, *TRI.getAddrCountRegClass(),
-                                    MRI))
-    return false;
   Register DSReg = createDSRegSequence(OffsetReg, Incr1Reg, Incr2Reg, Size1Reg,
                                        CountIn1Reg, Size2Reg, CountIn2Reg, MRI);
   MachineInstrBuilder MI = MIB.buildInstr(
@@ -4450,8 +4436,6 @@ bool AIE2PInstructionSelector::selectVST_FIFO(MachineInstr &I,
     Register SizeReg = I.getOperand(9).getReg();
     Register CountIn1Reg = I.getOperand(10).getReg();
     Register IncrReg = I.getOperand(11).getReg();
-    if (!RBI.constrainGenericRegister(CountOut1Reg, AIE2P::eDCRegClass, MRI))
-      return false;
     Register DReg =
         createDRegSequence(OffsetReg, IncrReg, SizeReg, CountIn1Reg, MRI);
 
@@ -4478,11 +4462,6 @@ bool AIE2PInstructionSelector::selectVST_FIFO(MachineInstr &I,
     Register CountIn2Reg = I.getOperand(14).getReg();
     Register Incr2Reg = I.getOperand(15).getReg();
 
-    if (!RBI.constrainGenericRegister(CountOut1Reg, *TRI.getAddrCountRegClass(),
-                                      MRI) ||
-        !RBI.constrainGenericRegister(CountOut2Reg, *TRI.getAddrCountRegClass(),
-                                      MRI))
-      return false;
     Register DSReg =
         createDSRegSequence(OffsetReg, Incr1Reg, Incr2Reg, Size1Reg,
                             CountIn1Reg, Size2Reg, CountIn2Reg, MRI);
