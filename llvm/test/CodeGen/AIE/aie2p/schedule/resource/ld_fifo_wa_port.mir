@@ -15,17 +15,17 @@ alignment:       16
 tracksRegLiveness: true
 body:             |
   bb.0.entry:
-    liveins: $p1, $lf0, $r25, $x9
+    liveins: $p0, $lf0, $r24, $x9
     ; CHECK-LABEL: name: E7_VLDA_FILL_512_E2_VMOV_x
-    ; CHECK: liveins: $p1, $lf0, $r25, $x9
+    ; CHECK: liveins: $p0, $lf0, $r24, $x9
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: $p1, $lf0, $r25 = VLDA_FILL_512 killed $p1, killed $lf0, killed $r25
+    ; CHECK-NEXT: $p0, $lf0, $r24 = VLDA_FILL_512 killed $p0, killed $lf0, killed $r24
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: $lfl1 = VMOV_alu_mv_mv_x killed $x9
     ; CHECK-NEXT: NOP
     ; CHECK-NEXT: NOP
-    $p1, $lf0, $r25 = VLDA_FILL_512 $p1, $lf0, $r25
+    $p0, $lf0, $r24 = VLDA_FILL_512 $p0, $lf0, $r24
     $lfl1 = VMOV_alu_mv_mv_x $x9
 ...
