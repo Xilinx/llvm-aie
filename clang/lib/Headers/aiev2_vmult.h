@@ -23412,9 +23412,9 @@ msc_4x16_16x4_conf(v64bfloat16 a, v64bfloat16_sparse b, v16accfloat acc1,
       a, b.data, b.mask, acc1, conf);
 }
 INTRINSIC(v16accfloat)
-addmac_²4_conf(v64bfloat16 a, v64bfloat16_sparse b, v16accfloat acc1,
-               v16accfloat acc2, int zero_acc1, int sub_mul, int sub_acc1,
-               int sub_acc2) {
+addmac_4x16_16x4_conf(v64bfloat16 a, v64bfloat16_sparse b, v16accfloat acc1,
+                      v16accfloat acc2, int zero_acc1, int sub_mul,
+                      int sub_acc1, int sub_acc2) {
   int conf = aiev2_compute_control(0, 0, 2, 3, 2, zero_acc1, 0, sub_mul,
                                    sub_acc1, sub_acc2, 0);
   return __builtin_aiev2_I1024_I1024_ACC1024_ACC1024_accfloat_bf_addmac_conf(
