@@ -110107,11 +110107,17 @@ v64accfloat test_neg(v64accfloat acc) { return neg(acc); }
 // CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z8test_addDv32_u10__accfloatS_(
 // CHECK-SAME: <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = shufflevector <32 x float> [[ACC1]], <32 x float> poison, <64 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
-// CHECK-NEXT:    [[TMP1:%.*]] = shufflevector <32 x float> [[ACC2]], <32 x float> poison, <64 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <64 x float> @llvm.aie2p.ACC2048.accfloat.add.conf(<64 x float> [[TMP0]], <64 x float> [[TMP1]], i32 60)
-// CHECK-NEXT:    [[TMP3:%.*]] = shufflevector <64 x float> [[TMP2]], <64 x float> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
-// CHECK-NEXT:    ret <32 x float> [[TMP3]]
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast <32 x float> [[ACC1]] to <16 x i64>
+// CHECK-NEXT:    [[SHUFFLE_I_I_I:%.*]] = shufflevector <16 x i64> [[TMP0]], <16 x i64> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <32 x i64> [[SHUFFLE_I_I_I]] to <64 x float>
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <32 x float> [[ACC2]] to <16 x i64>
+// CHECK-NEXT:    [[SHUFFLE_I_I4_I:%.*]] = shufflevector <16 x i64> [[TMP2]], <16 x i64> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// CHECK-NEXT:    [[TMP3:%.*]] = bitcast <32 x i64> [[SHUFFLE_I_I4_I]] to <64 x float>
+// CHECK-NEXT:    [[TMP4:%.*]] = tail call noundef <64 x float> @llvm.aie2p.ACC2048.accfloat.add.conf(<64 x float> [[TMP1]], <64 x float> [[TMP3]], i32 60)
+// CHECK-NEXT:    [[TMP5:%.*]] = bitcast <64 x float> [[TMP4]] to <32 x i64>
+// CHECK-NEXT:    [[SHUFFLE_I_I5_I:%.*]] = shufflevector <32 x i64> [[TMP5]], <32 x i64> poison, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+// CHECK-NEXT:    [[TMP6:%.*]] = bitcast <16 x i64> [[SHUFFLE_I_I5_I]] to <32 x float>
+// CHECK-NEXT:    ret <32 x float> [[TMP6]]
 //
 v32accfloat test_add(v32accfloat acc1, v32accfloat acc2) {
   return add(acc1, acc2);
@@ -110119,11 +110125,17 @@ v32accfloat test_add(v32accfloat acc1, v32accfloat acc2) {
 // CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z8test_subDv32_u10__accfloatS_(
 // CHECK-SAME: <32 x float> inreg noundef [[ACC1:%.*]], <32 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = shufflevector <32 x float> [[ACC1]], <32 x float> poison, <64 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
-// CHECK-NEXT:    [[TMP1:%.*]] = shufflevector <32 x float> [[ACC2]], <32 x float> poison, <64 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <64 x float> @llvm.aie2p.ACC2048.accfloat.sub.conf(<64 x float> [[TMP0]], <64 x float> [[TMP1]], i32 60)
-// CHECK-NEXT:    [[TMP3:%.*]] = shufflevector <64 x float> [[TMP2]], <64 x float> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
-// CHECK-NEXT:    ret <32 x float> [[TMP3]]
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast <32 x float> [[ACC1]] to <16 x i64>
+// CHECK-NEXT:    [[SHUFFLE_I_I_I:%.*]] = shufflevector <16 x i64> [[TMP0]], <16 x i64> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <32 x i64> [[SHUFFLE_I_I_I]] to <64 x float>
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <32 x float> [[ACC2]] to <16 x i64>
+// CHECK-NEXT:    [[SHUFFLE_I_I4_I:%.*]] = shufflevector <16 x i64> [[TMP2]], <16 x i64> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// CHECK-NEXT:    [[TMP3:%.*]] = bitcast <32 x i64> [[SHUFFLE_I_I4_I]] to <64 x float>
+// CHECK-NEXT:    [[TMP4:%.*]] = tail call noundef <64 x float> @llvm.aie2p.ACC2048.accfloat.sub.conf(<64 x float> [[TMP1]], <64 x float> [[TMP3]], i32 60)
+// CHECK-NEXT:    [[TMP5:%.*]] = bitcast <64 x float> [[TMP4]] to <32 x i64>
+// CHECK-NEXT:    [[SHUFFLE_I_I5_I:%.*]] = shufflevector <32 x i64> [[TMP5]], <32 x i64> poison, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+// CHECK-NEXT:    [[TMP6:%.*]] = bitcast <16 x i64> [[SHUFFLE_I_I5_I]] to <32 x float>
+// CHECK-NEXT:    ret <32 x float> [[TMP6]]
 //
 v32accfloat test_sub(v32accfloat acc1, v32accfloat acc2) {
   return sub(acc1, acc2);
@@ -110131,21 +110143,31 @@ v32accfloat test_sub(v32accfloat acc1, v32accfloat acc2) {
 // CHECK-LABEL: define dso_local inreg noundef <32 x float> @_Z8test_negDv32_u10__accfloat(
 // CHECK-SAME: <32 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = shufflevector <32 x float> [[ACC]], <32 x float> poison, <64 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <64 x float> @llvm.aie2p.ACC2048.accfloat.neg.conf(<64 x float> [[TMP0]], i32 60)
-// CHECK-NEXT:    [[TMP2:%.*]] = shufflevector <64 x float> [[TMP1]], <64 x float> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
-// CHECK-NEXT:    ret <32 x float> [[TMP2]]
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast <32 x float> [[ACC]] to <16 x i64>
+// CHECK-NEXT:    [[SHUFFLE_I_I_I:%.*]] = shufflevector <16 x i64> [[TMP0]], <16 x i64> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <32 x i64> [[SHUFFLE_I_I_I]] to <64 x float>
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <64 x float> @llvm.aie2p.ACC2048.accfloat.neg.conf(<64 x float> [[TMP1]], i32 60)
+// CHECK-NEXT:    [[TMP3:%.*]] = bitcast <64 x float> [[TMP2]] to <32 x i64>
+// CHECK-NEXT:    [[SHUFFLE_I_I3_I:%.*]] = shufflevector <32 x i64> [[TMP3]], <32 x i64> poison, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+// CHECK-NEXT:    [[TMP4:%.*]] = bitcast <16 x i64> [[SHUFFLE_I_I3_I]] to <32 x float>
+// CHECK-NEXT:    ret <32 x float> [[TMP4]]
 //
 v32accfloat test_neg(v32accfloat acc) { return neg(acc); }
 
 // CHECK-LABEL: define dso_local inreg noundef <16 x float> @_Z8test_addDv16_u10__accfloatS_(
 // CHECK-SAME: <16 x float> inreg noundef [[ACC1:%.*]], <16 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = shufflevector <16 x float> [[ACC1]], <16 x float> poison, <64 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
-// CHECK-NEXT:    [[TMP1:%.*]] = shufflevector <16 x float> [[ACC2]], <16 x float> poison, <64 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <64 x float> @llvm.aie2p.ACC2048.accfloat.add.conf(<64 x float> [[TMP0]], <64 x float> [[TMP1]], i32 60)
-// CHECK-NEXT:    [[TMP3:%.*]] = shufflevector <64 x float> [[TMP2]], <64 x float> poison, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    ret <16 x float> [[TMP3]]
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast <16 x float> [[ACC1]] to <8 x i64>
+// CHECK-NEXT:    [[SHUFFLE1_I_I_I:%.*]] = shufflevector <8 x i64> [[TMP0]], <8 x i64> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <32 x i64> [[SHUFFLE1_I_I_I]] to <64 x float>
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <16 x float> [[ACC2]] to <8 x i64>
+// CHECK-NEXT:    [[SHUFFLE1_I_I4_I:%.*]] = shufflevector <8 x i64> [[TMP2]], <8 x i64> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// CHECK-NEXT:    [[TMP3:%.*]] = bitcast <32 x i64> [[SHUFFLE1_I_I4_I]] to <64 x float>
+// CHECK-NEXT:    [[TMP4:%.*]] = tail call noundef <64 x float> @llvm.aie2p.ACC2048.accfloat.add.conf(<64 x float> [[TMP1]], <64 x float> [[TMP3]], i32 60)
+// CHECK-NEXT:    [[TMP5:%.*]] = bitcast <64 x float> [[TMP4]] to <32 x i64>
+// CHECK-NEXT:    [[SHUFFLE_I_I_I:%.*]] = shufflevector <32 x i64> [[TMP5]], <32 x i64> poison, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+// CHECK-NEXT:    [[TMP6:%.*]] = bitcast <8 x i64> [[SHUFFLE_I_I_I]] to <16 x float>
+// CHECK-NEXT:    ret <16 x float> [[TMP6]]
 //
 v16accfloat test_add(v16accfloat acc1, v16accfloat acc2) {
   return add(acc1, acc2);
@@ -110153,11 +110175,17 @@ v16accfloat test_add(v16accfloat acc1, v16accfloat acc2) {
 // CHECK-LABEL: define dso_local inreg noundef <16 x float> @_Z8test_subDv16_u10__accfloatS_(
 // CHECK-SAME: <16 x float> inreg noundef [[ACC1:%.*]], <16 x float> inreg noundef [[ACC2:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = shufflevector <16 x float> [[ACC1]], <16 x float> poison, <64 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
-// CHECK-NEXT:    [[TMP1:%.*]] = shufflevector <16 x float> [[ACC2]], <16 x float> poison, <64 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
-// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <64 x float> @llvm.aie2p.ACC2048.accfloat.sub.conf(<64 x float> [[TMP0]], <64 x float> [[TMP1]], i32 60)
-// CHECK-NEXT:    [[TMP3:%.*]] = shufflevector <64 x float> [[TMP2]], <64 x float> poison, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    ret <16 x float> [[TMP3]]
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast <16 x float> [[ACC1]] to <8 x i64>
+// CHECK-NEXT:    [[SHUFFLE1_I_I_I:%.*]] = shufflevector <8 x i64> [[TMP0]], <8 x i64> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <32 x i64> [[SHUFFLE1_I_I_I]] to <64 x float>
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <16 x float> [[ACC2]] to <8 x i64>
+// CHECK-NEXT:    [[SHUFFLE1_I_I4_I:%.*]] = shufflevector <8 x i64> [[TMP2]], <8 x i64> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// CHECK-NEXT:    [[TMP3:%.*]] = bitcast <32 x i64> [[SHUFFLE1_I_I4_I]] to <64 x float>
+// CHECK-NEXT:    [[TMP4:%.*]] = tail call noundef <64 x float> @llvm.aie2p.ACC2048.accfloat.sub.conf(<64 x float> [[TMP1]], <64 x float> [[TMP3]], i32 60)
+// CHECK-NEXT:    [[TMP5:%.*]] = bitcast <64 x float> [[TMP4]] to <32 x i64>
+// CHECK-NEXT:    [[SHUFFLE_I_I_I:%.*]] = shufflevector <32 x i64> [[TMP5]], <32 x i64> poison, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+// CHECK-NEXT:    [[TMP6:%.*]] = bitcast <8 x i64> [[SHUFFLE_I_I_I]] to <16 x float>
+// CHECK-NEXT:    ret <16 x float> [[TMP6]]
 //
 v16accfloat test_sub(v16accfloat acc1, v16accfloat acc2) {
   return sub(acc1, acc2);
@@ -110165,9 +110193,13 @@ v16accfloat test_sub(v16accfloat acc1, v16accfloat acc2) {
 // CHECK-LABEL: define dso_local inreg noundef <16 x float> @_Z8test_negDv16_u10__accfloat(
 // CHECK-SAME: <16 x float> inreg noundef [[ACC:%.*]]) local_unnamed_addr #[[ATTR1]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = shufflevector <16 x float> [[ACC]], <16 x float> poison, <64 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
-// CHECK-NEXT:    [[TMP1:%.*]] = tail call noundef <64 x float> @llvm.aie2p.ACC2048.accfloat.neg.conf(<64 x float> [[TMP0]], i32 60)
-// CHECK-NEXT:    [[TMP2:%.*]] = shufflevector <64 x float> [[TMP1]], <64 x float> poison, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
-// CHECK-NEXT:    ret <16 x float> [[TMP2]]
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast <16 x float> [[ACC]] to <8 x i64>
+// CHECK-NEXT:    [[SHUFFLE1_I_I_I:%.*]] = shufflevector <8 x i64> [[TMP0]], <8 x i64> poison, <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison, i32 poison>
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <32 x i64> [[SHUFFLE1_I_I_I]] to <64 x float>
+// CHECK-NEXT:    [[TMP2:%.*]] = tail call noundef <64 x float> @llvm.aie2p.ACC2048.accfloat.neg.conf(<64 x float> [[TMP1]], i32 60)
+// CHECK-NEXT:    [[TMP3:%.*]] = bitcast <64 x float> [[TMP2]] to <32 x i64>
+// CHECK-NEXT:    [[SHUFFLE_I_I_I:%.*]] = shufflevector <32 x i64> [[TMP3]], <32 x i64> poison, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+// CHECK-NEXT:    [[TMP4:%.*]] = bitcast <8 x i64> [[SHUFFLE_I_I_I]] to <16 x float>
+// CHECK-NEXT:    ret <16 x float> [[TMP4]]
 //
 v16accfloat test_neg(v16accfloat acc) { return neg(acc); }

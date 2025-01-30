@@ -180,7 +180,7 @@ class AIE2PRegisterClass <int size, int align, list<ValueType> regTypes, dag reg
   }
 
   class AIE2PScalar64RegisterClass<dag reglist, RegAltNameIndex idx = NoRegAltName>
-      : AIE2PRegisterClass<64, 32, [v8i8, v4i16, v4bf16, v2i32, v2f32], reglist,
+      : AIE2PRegisterClass<64, 32, [i64, v8i8, v4i16, v4bf16, v2i32, v2f32], reglist,
                           idx>;
 
   def eL : AIE2PScalar64RegisterClass<(add l0, l1, l2, l3, l4, l5, l6, l7,

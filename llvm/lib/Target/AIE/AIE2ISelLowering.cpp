@@ -80,7 +80,7 @@ MVT AIE2TargetLowering::getRegisterTypeForCallingConv(LLVMContext &Context,
   if (VT.isScalarInteger() && VT.getScalarSizeInBits() == 128)
     return VT.getSimpleVT();
 
-  return TargetLowering::getRegisterTypeForCallingConv(Context, CC, VT);
+  return AIEBaseTargetLowering::getRegisterTypeForCallingConv(Context, CC, VT);
 }
 
 unsigned AIE2TargetLowering::getNumRegistersForCallingConv(LLVMContext &Context,
@@ -89,7 +89,7 @@ unsigned AIE2TargetLowering::getNumRegistersForCallingConv(LLVMContext &Context,
   // See getRegisterTypeForCallingConv(): i128 is passed in a single register
   if (VT.isScalarInteger() && VT.getScalarSizeInBits() == 128)
     return 1;
-  return TargetLowering::getNumRegistersForCallingConv(Context, CC, VT);
+  return AIEBaseTargetLowering::getNumRegistersForCallingConv(Context, CC, VT);
 }
 
 // Returns true if type name matches with a sparse type name

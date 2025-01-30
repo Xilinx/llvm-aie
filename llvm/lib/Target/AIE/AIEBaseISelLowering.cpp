@@ -534,3 +534,28 @@ void AIEBaseTargetLowering::alignFirstVASlot(CCState &CCInfo) {
 MVT AIEBaseTargetLowering::getVectorIdxTy(const DataLayout &DL) const {
   return MVT::i32;
 }
+
+unsigned AIEBaseTargetLowering::getNumRegistersForCallingConv(
+    LLVMContext &Context, CallingConv::ID CC, EVT VT) const {
+  if (VT == MVT::i64 || VT == MVT::f64) {
+    return 2;
+  }
+  return TargetLowering::getNumRegistersForCallingConv(Context, CC, VT);
+}
+
+MVT AIEBaseTargetLowering::getRegisterTypeForCallingConvAssignment(
+    LLVMContext &Context, CallingConv::ID CC, EVT VT) const {
+  if (VT == MVT::i64 || VT == MVT::f64)
+    return MVT::i32;
+
+  return TargetLowering::getRegisterTypeForCallingConv(Context, CC, VT);
+}
+
+MVT AIEBaseTargetLowering::getRegisterTypeForCallingConv(LLVMContext &Context,
+                                                         CallingConv::ID CC,
+                                                         EVT VT) const {
+  if (VT == MVT::i64 || VT == MVT::f64)
+    return MVT::i32;
+
+  return TargetLowering::getRegisterTypeForCallingConv(Context, CC, VT);
+}

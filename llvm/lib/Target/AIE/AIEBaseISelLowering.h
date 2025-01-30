@@ -64,6 +64,10 @@ public:
   /// Returns the alignment for arguments on the stack.
   static Align getStackArgumentAlignment() { return Align(4); }
 
+  virtual unsigned getNumRegistersForCallingConv(LLVMContext &Context,
+                                                 CallingConv::ID CC,
+                                                 EVT VT) const override;
+
   /// Return the type to be used for assigning \p VT to a CC register decided by
   /// the convention. This might be different from
   /// getRegisterTypeForCallingConv() when the type of the vreg to assign is
@@ -71,9 +75,11 @@ public:
   /// the former returns v4i32, while this returns v8i32.
   virtual MVT getRegisterTypeForCallingConvAssignment(LLVMContext &Context,
                                                       CallingConv::ID CC,
-                                                      EVT VT) const {
-    return TargetLowering::getRegisterTypeForCallingConv(Context, CC, VT);
-  }
+                                                      EVT VT) const;
+
+  virtual MVT getRegisterTypeForCallingConv(LLVMContext &Context,
+                                            CallingConv::ID CC,
+                                            EVT VT) const override;
 
 protected:
   bool isEligibleForTailCallOptimization(
