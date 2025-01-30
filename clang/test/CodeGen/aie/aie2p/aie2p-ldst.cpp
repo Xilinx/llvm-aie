@@ -28,6 +28,7 @@ v32int16 test_unpack_v32i16_v32i8(v32int8 v) {
   return unpack(v);
 }
 
+//
 // CHECK-LABEL: @_Z21test_pack_v64i4_v64i8Dv64_hi(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <32 x i8> @llvm.aie2p.pack.I512.I4.I8(<64 x i8> [[V:%.*]], i32 [[SIGN:%.*]])
@@ -37,7 +38,6 @@ v64uint4 test_pack_v64i4_v64i8(v64uint8 v, int sign) {
   return pack(v, sign);
 }
 
-//
 // CHECK-LABEL: @_Z23test_unpack_v64i8_v64i4Dv32_DU8_(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x i8> @llvm.aie2p.unpack.I512.I8.I4(<32 x i8> [[V:%.*]], i32 0)
@@ -56,6 +56,7 @@ v64uint8 test_pack_v64i8_v64i16(v64uint16 v, int sign) {
   return pack(v, sign);
 }
 
+//
 // CHECK-LABEL: @_Z24test_unpack_v64i16_v64i8Dv64_h(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[TMP0:%.*]] = tail call noundef <64 x i16> @llvm.aie2p.unpack.I1024.I16.I8(<64 x i8> [[V:%.*]], i32 0)
@@ -4480,9 +4481,9 @@ void test_fifo_st_flush_3d_byte(v64bfp16ebs8_unaligned __aie_dm_resource_a * res
 // CHECK-LABEL: @_Z18test_fifo_ld_resetRPDv64_DB8_R12fifo_state_t(
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    [[POS_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
-// CHECK-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2:![0-9]+]]
-// CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7:![0-9]+]]
-// CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9:![0-9]+]]
+// CHECK-NEXT:    store i32 0, ptr [[POS_I]], align 64, !tbaa [[TBAA2]]
+// CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
+// CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.fill(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 0)
 // CHECK-NEXT:    [[TMP3:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP2]], 0
 // CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP2]], 1
@@ -4501,7 +4502,7 @@ void test_fifo_ld_reset(v128int4 *&p, fifo_state_t &s) {
 // CHECK-NEXT:    [[POS1_I:%.*]] = getelementptr inbounds i8, ptr [[S:%.*]], i20 128
 // CHECK-NEXT:    [[TMP0:%.*]] = load ptr, ptr [[P:%.*]], align 4, !tbaa [[TBAA7]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
-// CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10:![0-9]+]]
+// CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP3:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.fill(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
 // CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 0
 // CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP3]], 1
@@ -4522,14 +4523,14 @@ void test_fifo_ld_fill(v128int4 *&p, fifo_state_t &s) {
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP3:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.pop.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 2
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 3
-// CHECK-NEXT:    store <32 x i32> [[TMP5]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP6]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP4]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 0
-// CHECK-NEXT:    ret <64 x i8> [[TMP7]]
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 0
+// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 1
+// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 2
+// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 3
+// CHECK-NEXT:    store <32 x i32> [[TMP6]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP7]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP5]], ptr [[P]], align 4
+// CHECK-NEXT:    ret <64 x i8> [[TMP4]]
 //
 v128int4 test_fifo_ld_pop(v128int4 *&p, fifo_state_t &s) {
   return fifo_ld_pop(p, s);
@@ -4543,14 +4544,14 @@ v128int4 test_fifo_ld_pop(v128int4 *&p, fifo_state_t &s) {
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF:%.*]] to i20
 // CHECK-NEXT:    [[TMP4:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.pop.1d.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]])
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 1
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 2
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 3
-// CHECK-NEXT:    store <32 x i32> [[TMP6]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP7]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP5]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 0
-// CHECK-NEXT:    ret <64 x i8> [[TMP8]]
+// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 0
+// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 1
+// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 2
+// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 3
+// CHECK-NEXT:    store <32 x i32> [[TMP7]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP8]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP6]], ptr [[P]], align 4
+// CHECK-NEXT:    ret <64 x i8> [[TMP5]]
 //
 v128int4 test_fifo_ld_pop_1d_byte(v128int4 *&p, fifo_state_t &s, int off) {
   return fifo_ld_pop_1d_byte(p, s, off);
@@ -4568,17 +4569,17 @@ v128int4 test_fifo_ld_pop_1d_byte(v128int4 *&p, fifo_state_t &s, int off) {
 // CHECK-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // CHECK-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1:%.*]] to i20
 // CHECK-NEXT:    [[TMP8:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32, i20 } @llvm.aie2p.fifo.ld.pop.2d.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]])
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 1
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 2
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 3
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 4
-// CHECK-NEXT:    [[TMP13:%.*]] = zext i20 [[TMP12]] to i32
-// CHECK-NEXT:    store i32 [[TMP13]], ptr [[COUNT1]], align 4
-// CHECK-NEXT:    store <32 x i32> [[TMP10]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP11]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP9]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 0
-// CHECK-NEXT:    ret <64 x i8> [[TMP14]]
+// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 0
+// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 1
+// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 2
+// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 3
+// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 4
+// CHECK-NEXT:    [[TMP14:%.*]] = zext i20 [[TMP13]] to i32
+// CHECK-NEXT:    store i32 [[TMP14]], ptr [[COUNT1]], align 4
+// CHECK-NEXT:    store <32 x i32> [[TMP11]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP12]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP10]], ptr [[P]], align 4
+// CHECK-NEXT:    ret <64 x i8> [[TMP9]]
 //
 v128int4 test_fifo_ld_pop_2d_byte(v128int4 *&p, fifo_state_t &s, int off,
                                   int size1, addr_t &count1, int inc1) {
@@ -4601,20 +4602,20 @@ v128int4 test_fifo_ld_pop_2d_byte(v128int4 *&p, fifo_state_t &s, int off,
 // CHECK-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // CHECK-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2:%.*]] to i20
 // CHECK-NEXT:    [[TMP12:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } @llvm.aie2p.fifo.ld.pop.3d.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]])
-// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 1
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 2
-// CHECK-NEXT:    [[TMP15:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 3
-// CHECK-NEXT:    [[TMP16:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 4
-// CHECK-NEXT:    [[TMP17:%.*]] = zext i20 [[TMP16]] to i32
-// CHECK-NEXT:    [[TMP18:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 5
-// CHECK-NEXT:    [[TMP19:%.*]] = zext i20 [[TMP18]] to i32
-// CHECK-NEXT:    store i32 [[TMP17]], ptr [[COUNT1]], align 4
-// CHECK-NEXT:    store i32 [[TMP19]], ptr [[COUNT2]], align 4
-// CHECK-NEXT:    store <32 x i32> [[TMP14]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP15]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP13]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP20:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 0
-// CHECK-NEXT:    ret <64 x i8> [[TMP20]]
+// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 0
+// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 1
+// CHECK-NEXT:    [[TMP15:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 2
+// CHECK-NEXT:    [[TMP16:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 3
+// CHECK-NEXT:    [[TMP17:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 4
+// CHECK-NEXT:    [[TMP18:%.*]] = zext i20 [[TMP17]] to i32
+// CHECK-NEXT:    [[TMP19:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 5
+// CHECK-NEXT:    [[TMP20:%.*]] = zext i20 [[TMP19]] to i32
+// CHECK-NEXT:    store i32 [[TMP18]], ptr [[COUNT1]], align 4
+// CHECK-NEXT:    store i32 [[TMP20]], ptr [[COUNT2]], align 4
+// CHECK-NEXT:    store <32 x i32> [[TMP15]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP16]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP14]], ptr [[P]], align 4
+// CHECK-NEXT:    ret <64 x i8> [[TMP13]]
 //
 v128int4 test_fifo_ld_pop_3d_byte(v128int4 *&p, fifo_state_t &s, int off,
                                   int size1, addr_t &count1, int inc1,
@@ -4669,14 +4670,14 @@ void test_fifo_ld_fill(v128uint4 *&p, fifo_state_t &s) {
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP3:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.pop.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 2
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 3
-// CHECK-NEXT:    store <32 x i32> [[TMP5]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP6]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP4]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 0
-// CHECK-NEXT:    ret <64 x i8> [[TMP7]]
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 0
+// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 1
+// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 2
+// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 3
+// CHECK-NEXT:    store <32 x i32> [[TMP6]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP7]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP5]], ptr [[P]], align 4
+// CHECK-NEXT:    ret <64 x i8> [[TMP4]]
 //
 v128uint4 test_fifo_ld_pop(v128uint4 *&p, fifo_state_t &s) {
   return fifo_ld_pop(p, s);
@@ -4690,14 +4691,14 @@ v128uint4 test_fifo_ld_pop(v128uint4 *&p, fifo_state_t &s) {
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF:%.*]] to i20
 // CHECK-NEXT:    [[TMP4:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.pop.1d.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]])
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 1
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 2
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 3
-// CHECK-NEXT:    store <32 x i32> [[TMP6]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP7]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP5]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 0
-// CHECK-NEXT:    ret <64 x i8> [[TMP8]]
+// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 0
+// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 1
+// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 2
+// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 3
+// CHECK-NEXT:    store <32 x i32> [[TMP7]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP8]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP6]], ptr [[P]], align 4
+// CHECK-NEXT:    ret <64 x i8> [[TMP5]]
 //
 v128uint4 test_fifo_ld_pop_1d_byte(v128uint4 *&p, fifo_state_t &s, int off) {
   return fifo_ld_pop_1d_byte(p, s, off);
@@ -4715,17 +4716,17 @@ v128uint4 test_fifo_ld_pop_1d_byte(v128uint4 *&p, fifo_state_t &s, int off) {
 // CHECK-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // CHECK-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1:%.*]] to i20
 // CHECK-NEXT:    [[TMP8:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32, i20 } @llvm.aie2p.fifo.ld.pop.2d.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]])
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 1
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 2
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 3
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 4
-// CHECK-NEXT:    [[TMP13:%.*]] = zext i20 [[TMP12]] to i32
-// CHECK-NEXT:    store i32 [[TMP13]], ptr [[COUNT1]], align 4
-// CHECK-NEXT:    store <32 x i32> [[TMP10]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP11]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP9]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 0
-// CHECK-NEXT:    ret <64 x i8> [[TMP14]]
+// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 0
+// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 1
+// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 2
+// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 3
+// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 4
+// CHECK-NEXT:    [[TMP14:%.*]] = zext i20 [[TMP13]] to i32
+// CHECK-NEXT:    store i32 [[TMP14]], ptr [[COUNT1]], align 4
+// CHECK-NEXT:    store <32 x i32> [[TMP11]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP12]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP10]], ptr [[P]], align 4
+// CHECK-NEXT:    ret <64 x i8> [[TMP9]]
 //
 v128uint4 test_fifo_ld_pop_2d_byte(v128uint4 *&p, fifo_state_t &s, int off,
                                    int size1, addr_t &count1, int inc1) {
@@ -4748,20 +4749,20 @@ v128uint4 test_fifo_ld_pop_2d_byte(v128uint4 *&p, fifo_state_t &s, int off,
 // CHECK-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // CHECK-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2:%.*]] to i20
 // CHECK-NEXT:    [[TMP12:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } @llvm.aie2p.fifo.ld.pop.3d.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]])
-// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 1
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 2
-// CHECK-NEXT:    [[TMP15:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 3
-// CHECK-NEXT:    [[TMP16:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 4
-// CHECK-NEXT:    [[TMP17:%.*]] = zext i20 [[TMP16]] to i32
-// CHECK-NEXT:    [[TMP18:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 5
-// CHECK-NEXT:    [[TMP19:%.*]] = zext i20 [[TMP18]] to i32
-// CHECK-NEXT:    store i32 [[TMP17]], ptr [[COUNT1]], align 4
-// CHECK-NEXT:    store i32 [[TMP19]], ptr [[COUNT2]], align 4
-// CHECK-NEXT:    store <32 x i32> [[TMP14]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP15]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP13]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP20:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 0
-// CHECK-NEXT:    ret <64 x i8> [[TMP20]]
+// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 0
+// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 1
+// CHECK-NEXT:    [[TMP15:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 2
+// CHECK-NEXT:    [[TMP16:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 3
+// CHECK-NEXT:    [[TMP17:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 4
+// CHECK-NEXT:    [[TMP18:%.*]] = zext i20 [[TMP17]] to i32
+// CHECK-NEXT:    [[TMP19:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 5
+// CHECK-NEXT:    [[TMP20:%.*]] = zext i20 [[TMP19]] to i32
+// CHECK-NEXT:    store i32 [[TMP18]], ptr [[COUNT1]], align 4
+// CHECK-NEXT:    store i32 [[TMP20]], ptr [[COUNT2]], align 4
+// CHECK-NEXT:    store <32 x i32> [[TMP15]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP16]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP14]], ptr [[P]], align 4
+// CHECK-NEXT:    ret <64 x i8> [[TMP13]]
 //
 v128uint4 test_fifo_ld_pop_3d_byte(v128uint4 *&p, fifo_state_t &s, int off,
                                    int size1, addr_t &count1, int inc1,
@@ -4816,14 +4817,14 @@ void test_fifo_ld_fill(v64int8 *&p, fifo_state_t &s) {
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP3:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.pop.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 2
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 3
-// CHECK-NEXT:    store <32 x i32> [[TMP5]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP6]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP4]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 0
-// CHECK-NEXT:    ret <64 x i8> [[TMP7]]
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 0
+// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 1
+// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 2
+// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 3
+// CHECK-NEXT:    store <32 x i32> [[TMP6]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP7]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP5]], ptr [[P]], align 4
+// CHECK-NEXT:    ret <64 x i8> [[TMP4]]
 //
 v64int8 test_fifo_ld_pop(v64int8 *&p, fifo_state_t &s) {
   return fifo_ld_pop(p, s);
@@ -4837,14 +4838,14 @@ v64int8 test_fifo_ld_pop(v64int8 *&p, fifo_state_t &s) {
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF:%.*]] to i20
 // CHECK-NEXT:    [[TMP4:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.pop.1d.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]])
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 1
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 2
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 3
-// CHECK-NEXT:    store <32 x i32> [[TMP6]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP7]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP5]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 0
-// CHECK-NEXT:    ret <64 x i8> [[TMP8]]
+// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 0
+// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 1
+// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 2
+// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 3
+// CHECK-NEXT:    store <32 x i32> [[TMP7]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP8]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP6]], ptr [[P]], align 4
+// CHECK-NEXT:    ret <64 x i8> [[TMP5]]
 //
 v64int8 test_fifo_ld_pop_1d_byte(v64int8 *&p, fifo_state_t &s, int off) {
   return fifo_ld_pop_1d_byte(p, s, off);
@@ -4862,17 +4863,17 @@ v64int8 test_fifo_ld_pop_1d_byte(v64int8 *&p, fifo_state_t &s, int off) {
 // CHECK-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // CHECK-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1:%.*]] to i20
 // CHECK-NEXT:    [[TMP8:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32, i20 } @llvm.aie2p.fifo.ld.pop.2d.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]])
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 1
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 2
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 3
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 4
-// CHECK-NEXT:    [[TMP13:%.*]] = zext i20 [[TMP12]] to i32
-// CHECK-NEXT:    store i32 [[TMP13]], ptr [[COUNT1]], align 4
-// CHECK-NEXT:    store <32 x i32> [[TMP10]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP11]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP9]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 0
-// CHECK-NEXT:    ret <64 x i8> [[TMP14]]
+// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 0
+// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 1
+// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 2
+// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 3
+// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 4
+// CHECK-NEXT:    [[TMP14:%.*]] = zext i20 [[TMP13]] to i32
+// CHECK-NEXT:    store i32 [[TMP14]], ptr [[COUNT1]], align 4
+// CHECK-NEXT:    store <32 x i32> [[TMP11]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP12]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP10]], ptr [[P]], align 4
+// CHECK-NEXT:    ret <64 x i8> [[TMP9]]
 //
 v64int8 test_fifo_ld_pop_2d_byte(v64int8 *&p, fifo_state_t &s, int off,
                                  int size1, addr_t &count1, int inc1) {
@@ -4895,20 +4896,20 @@ v64int8 test_fifo_ld_pop_2d_byte(v64int8 *&p, fifo_state_t &s, int off,
 // CHECK-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // CHECK-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2:%.*]] to i20
 // CHECK-NEXT:    [[TMP12:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } @llvm.aie2p.fifo.ld.pop.3d.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]])
-// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 1
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 2
-// CHECK-NEXT:    [[TMP15:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 3
-// CHECK-NEXT:    [[TMP16:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 4
-// CHECK-NEXT:    [[TMP17:%.*]] = zext i20 [[TMP16]] to i32
-// CHECK-NEXT:    [[TMP18:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 5
-// CHECK-NEXT:    [[TMP19:%.*]] = zext i20 [[TMP18]] to i32
-// CHECK-NEXT:    store i32 [[TMP17]], ptr [[COUNT1]], align 4
-// CHECK-NEXT:    store i32 [[TMP19]], ptr [[COUNT2]], align 4
-// CHECK-NEXT:    store <32 x i32> [[TMP14]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP15]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP13]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP20:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 0
-// CHECK-NEXT:    ret <64 x i8> [[TMP20]]
+// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 0
+// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 1
+// CHECK-NEXT:    [[TMP15:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 2
+// CHECK-NEXT:    [[TMP16:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 3
+// CHECK-NEXT:    [[TMP17:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 4
+// CHECK-NEXT:    [[TMP18:%.*]] = zext i20 [[TMP17]] to i32
+// CHECK-NEXT:    [[TMP19:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 5
+// CHECK-NEXT:    [[TMP20:%.*]] = zext i20 [[TMP19]] to i32
+// CHECK-NEXT:    store i32 [[TMP18]], ptr [[COUNT1]], align 4
+// CHECK-NEXT:    store i32 [[TMP20]], ptr [[COUNT2]], align 4
+// CHECK-NEXT:    store <32 x i32> [[TMP15]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP16]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP14]], ptr [[P]], align 4
+// CHECK-NEXT:    ret <64 x i8> [[TMP13]]
 //
 v64int8 test_fifo_ld_pop_3d_byte(v64int8 *&p, fifo_state_t &s, int off,
                                  int size1, addr_t &count1, int inc1, int size2,
@@ -4962,14 +4963,14 @@ void test_fifo_ld_fill(v64uint8 *&p, fifo_state_t &s) {
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP3:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.pop.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 2
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 3
-// CHECK-NEXT:    store <32 x i32> [[TMP5]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP6]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP4]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 0
-// CHECK-NEXT:    ret <64 x i8> [[TMP7]]
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 0
+// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 1
+// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 2
+// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 3
+// CHECK-NEXT:    store <32 x i32> [[TMP6]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP7]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP5]], ptr [[P]], align 4
+// CHECK-NEXT:    ret <64 x i8> [[TMP4]]
 //
 v64uint8 test_fifo_ld_pop(v64uint8 *&p, fifo_state_t &s) {
   return fifo_ld_pop(p, s);
@@ -4983,14 +4984,14 @@ v64uint8 test_fifo_ld_pop(v64uint8 *&p, fifo_state_t &s) {
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF:%.*]] to i20
 // CHECK-NEXT:    [[TMP4:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.pop.1d.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]])
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 1
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 2
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 3
-// CHECK-NEXT:    store <32 x i32> [[TMP6]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP7]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP5]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 0
-// CHECK-NEXT:    ret <64 x i8> [[TMP8]]
+// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 0
+// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 1
+// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 2
+// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 3
+// CHECK-NEXT:    store <32 x i32> [[TMP7]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP8]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP6]], ptr [[P]], align 4
+// CHECK-NEXT:    ret <64 x i8> [[TMP5]]
 //
 v64uint8 test_fifo_ld_pop_1d_byte(v64uint8 *&p, fifo_state_t &s, int off) {
   return fifo_ld_pop_1d_byte(p, s, off);
@@ -5008,17 +5009,17 @@ v64uint8 test_fifo_ld_pop_1d_byte(v64uint8 *&p, fifo_state_t &s, int off) {
 // CHECK-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // CHECK-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1:%.*]] to i20
 // CHECK-NEXT:    [[TMP8:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32, i20 } @llvm.aie2p.fifo.ld.pop.2d.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]])
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 1
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 2
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 3
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 4
-// CHECK-NEXT:    [[TMP13:%.*]] = zext i20 [[TMP12]] to i32
-// CHECK-NEXT:    store i32 [[TMP13]], ptr [[COUNT1]], align 4
-// CHECK-NEXT:    store <32 x i32> [[TMP10]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP11]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP9]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 0
-// CHECK-NEXT:    ret <64 x i8> [[TMP14]]
+// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 0
+// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 1
+// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 2
+// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 3
+// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 4
+// CHECK-NEXT:    [[TMP14:%.*]] = zext i20 [[TMP13]] to i32
+// CHECK-NEXT:    store i32 [[TMP14]], ptr [[COUNT1]], align 4
+// CHECK-NEXT:    store <32 x i32> [[TMP11]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP12]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP10]], ptr [[P]], align 4
+// CHECK-NEXT:    ret <64 x i8> [[TMP9]]
 //
 v64uint8 test_fifo_ld_pop_2d_byte(v64uint8 *&p, fifo_state_t &s, int off,
                                   int size1, addr_t &count1, int inc1) {
@@ -5041,20 +5042,20 @@ v64uint8 test_fifo_ld_pop_2d_byte(v64uint8 *&p, fifo_state_t &s, int off,
 // CHECK-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // CHECK-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2:%.*]] to i20
 // CHECK-NEXT:    [[TMP12:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } @llvm.aie2p.fifo.ld.pop.3d.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]])
-// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 1
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 2
-// CHECK-NEXT:    [[TMP15:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 3
-// CHECK-NEXT:    [[TMP16:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 4
-// CHECK-NEXT:    [[TMP17:%.*]] = zext i20 [[TMP16]] to i32
-// CHECK-NEXT:    [[TMP18:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 5
-// CHECK-NEXT:    [[TMP19:%.*]] = zext i20 [[TMP18]] to i32
-// CHECK-NEXT:    store i32 [[TMP17]], ptr [[COUNT1]], align 4
-// CHECK-NEXT:    store i32 [[TMP19]], ptr [[COUNT2]], align 4
-// CHECK-NEXT:    store <32 x i32> [[TMP14]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP15]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP13]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP20:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 0
-// CHECK-NEXT:    ret <64 x i8> [[TMP20]]
+// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 0
+// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 1
+// CHECK-NEXT:    [[TMP15:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 2
+// CHECK-NEXT:    [[TMP16:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 3
+// CHECK-NEXT:    [[TMP17:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 4
+// CHECK-NEXT:    [[TMP18:%.*]] = zext i20 [[TMP17]] to i32
+// CHECK-NEXT:    [[TMP19:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 5
+// CHECK-NEXT:    [[TMP20:%.*]] = zext i20 [[TMP19]] to i32
+// CHECK-NEXT:    store i32 [[TMP18]], ptr [[COUNT1]], align 4
+// CHECK-NEXT:    store i32 [[TMP20]], ptr [[COUNT2]], align 4
+// CHECK-NEXT:    store <32 x i32> [[TMP15]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP16]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP14]], ptr [[P]], align 4
+// CHECK-NEXT:    ret <64 x i8> [[TMP13]]
 //
 v64uint8 test_fifo_ld_pop_3d_byte(v64uint8 *&p, fifo_state_t &s, int off,
                                   int size1, addr_t &count1, int inc1,
@@ -5108,14 +5109,14 @@ void test_fifo_ld_fill(v32int16 *&p, fifo_state_t &s) {
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP3:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.pop.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 2
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 3
-// CHECK-NEXT:    store <32 x i32> [[TMP5]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP6]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP4]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 0
-// CHECK-NEXT:    [[TMP8:%.*]] = bitcast <64 x i8> [[TMP7]] to <32 x i16>
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 0
+// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 1
+// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 2
+// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 3
+// CHECK-NEXT:    store <32 x i32> [[TMP6]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP7]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP5]], ptr [[P]], align 4
+// CHECK-NEXT:    [[TMP8:%.*]] = bitcast <64 x i8> [[TMP4]] to <32 x i16>
 // CHECK-NEXT:    ret <32 x i16> [[TMP8]]
 //
 v32int16 test_fifo_ld_pop(v32int16 *&p, fifo_state_t &s) {
@@ -5130,14 +5131,14 @@ v32int16 test_fifo_ld_pop(v32int16 *&p, fifo_state_t &s) {
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF:%.*]] to i20
 // CHECK-NEXT:    [[TMP4:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.pop.1d.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]])
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 1
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 2
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 3
-// CHECK-NEXT:    store <32 x i32> [[TMP6]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP7]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP5]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 0
-// CHECK-NEXT:    [[TMP9:%.*]] = bitcast <64 x i8> [[TMP8]] to <32 x i16>
+// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 0
+// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 1
+// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 2
+// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 3
+// CHECK-NEXT:    store <32 x i32> [[TMP7]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP8]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP6]], ptr [[P]], align 4
+// CHECK-NEXT:    [[TMP9:%.*]] = bitcast <64 x i8> [[TMP5]] to <32 x i16>
 // CHECK-NEXT:    ret <32 x i16> [[TMP9]]
 //
 v32int16 test_fifo_ld_pop_1d_byte(v32int16 *&p, fifo_state_t &s, int off) {
@@ -5156,17 +5157,17 @@ v32int16 test_fifo_ld_pop_1d_byte(v32int16 *&p, fifo_state_t &s, int off) {
 // CHECK-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // CHECK-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1:%.*]] to i20
 // CHECK-NEXT:    [[TMP8:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32, i20 } @llvm.aie2p.fifo.ld.pop.2d.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]])
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 1
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 2
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 3
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 4
-// CHECK-NEXT:    [[TMP13:%.*]] = zext i20 [[TMP12]] to i32
-// CHECK-NEXT:    store i32 [[TMP13]], ptr [[COUNT1]], align 4
-// CHECK-NEXT:    store <32 x i32> [[TMP10]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP11]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP9]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 0
-// CHECK-NEXT:    [[TMP15:%.*]] = bitcast <64 x i8> [[TMP14]] to <32 x i16>
+// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 0
+// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 1
+// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 2
+// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 3
+// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 4
+// CHECK-NEXT:    [[TMP14:%.*]] = zext i20 [[TMP13]] to i32
+// CHECK-NEXT:    store i32 [[TMP14]], ptr [[COUNT1]], align 4
+// CHECK-NEXT:    store <32 x i32> [[TMP11]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP12]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP10]], ptr [[P]], align 4
+// CHECK-NEXT:    [[TMP15:%.*]] = bitcast <64 x i8> [[TMP9]] to <32 x i16>
 // CHECK-NEXT:    ret <32 x i16> [[TMP15]]
 //
 v32int16 test_fifo_ld_pop_2d_byte(v32int16 *&p, fifo_state_t &s, int off,
@@ -5190,20 +5191,20 @@ v32int16 test_fifo_ld_pop_2d_byte(v32int16 *&p, fifo_state_t &s, int off,
 // CHECK-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // CHECK-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2:%.*]] to i20
 // CHECK-NEXT:    [[TMP12:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } @llvm.aie2p.fifo.ld.pop.3d.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]])
-// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 1
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 2
-// CHECK-NEXT:    [[TMP15:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 3
-// CHECK-NEXT:    [[TMP16:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 4
-// CHECK-NEXT:    [[TMP17:%.*]] = zext i20 [[TMP16]] to i32
-// CHECK-NEXT:    [[TMP18:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 5
-// CHECK-NEXT:    [[TMP19:%.*]] = zext i20 [[TMP18]] to i32
-// CHECK-NEXT:    store i32 [[TMP17]], ptr [[COUNT1]], align 4
-// CHECK-NEXT:    store i32 [[TMP19]], ptr [[COUNT2]], align 4
-// CHECK-NEXT:    store <32 x i32> [[TMP14]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP15]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP13]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP20:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 0
-// CHECK-NEXT:    [[TMP21:%.*]] = bitcast <64 x i8> [[TMP20]] to <32 x i16>
+// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 0
+// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 1
+// CHECK-NEXT:    [[TMP15:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 2
+// CHECK-NEXT:    [[TMP16:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 3
+// CHECK-NEXT:    [[TMP17:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 4
+// CHECK-NEXT:    [[TMP18:%.*]] = zext i20 [[TMP17]] to i32
+// CHECK-NEXT:    [[TMP19:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 5
+// CHECK-NEXT:    [[TMP20:%.*]] = zext i20 [[TMP19]] to i32
+// CHECK-NEXT:    store i32 [[TMP18]], ptr [[COUNT1]], align 4
+// CHECK-NEXT:    store i32 [[TMP20]], ptr [[COUNT2]], align 4
+// CHECK-NEXT:    store <32 x i32> [[TMP15]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP16]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP14]], ptr [[P]], align 4
+// CHECK-NEXT:    [[TMP21:%.*]] = bitcast <64 x i8> [[TMP13]] to <32 x i16>
 // CHECK-NEXT:    ret <32 x i16> [[TMP21]]
 //
 v32int16 test_fifo_ld_pop_3d_byte(v32int16 *&p, fifo_state_t &s, int off,
@@ -5258,14 +5259,14 @@ void test_fifo_ld_fill(v32uint16 *&p, fifo_state_t &s) {
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP3:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.pop.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 2
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 3
-// CHECK-NEXT:    store <32 x i32> [[TMP5]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP6]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP4]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 0
-// CHECK-NEXT:    [[TMP8:%.*]] = bitcast <64 x i8> [[TMP7]] to <32 x i16>
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 0
+// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 1
+// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 2
+// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 3
+// CHECK-NEXT:    store <32 x i32> [[TMP6]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP7]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP5]], ptr [[P]], align 4
+// CHECK-NEXT:    [[TMP8:%.*]] = bitcast <64 x i8> [[TMP4]] to <32 x i16>
 // CHECK-NEXT:    ret <32 x i16> [[TMP8]]
 //
 v32uint16 test_fifo_ld_pop(v32uint16 *&p, fifo_state_t &s) {
@@ -5280,14 +5281,14 @@ v32uint16 test_fifo_ld_pop(v32uint16 *&p, fifo_state_t &s) {
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF:%.*]] to i20
 // CHECK-NEXT:    [[TMP4:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.pop.1d.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]])
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 1
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 2
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 3
-// CHECK-NEXT:    store <32 x i32> [[TMP6]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP7]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP5]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 0
-// CHECK-NEXT:    [[TMP9:%.*]] = bitcast <64 x i8> [[TMP8]] to <32 x i16>
+// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 0
+// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 1
+// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 2
+// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 3
+// CHECK-NEXT:    store <32 x i32> [[TMP7]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP8]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP6]], ptr [[P]], align 4
+// CHECK-NEXT:    [[TMP9:%.*]] = bitcast <64 x i8> [[TMP5]] to <32 x i16>
 // CHECK-NEXT:    ret <32 x i16> [[TMP9]]
 //
 v32uint16 test_fifo_ld_pop_1d_byte(v32uint16 *&p, fifo_state_t &s, int off) {
@@ -5306,17 +5307,17 @@ v32uint16 test_fifo_ld_pop_1d_byte(v32uint16 *&p, fifo_state_t &s, int off) {
 // CHECK-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // CHECK-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1:%.*]] to i20
 // CHECK-NEXT:    [[TMP8:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32, i20 } @llvm.aie2p.fifo.ld.pop.2d.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]])
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 1
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 2
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 3
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 4
-// CHECK-NEXT:    [[TMP13:%.*]] = zext i20 [[TMP12]] to i32
-// CHECK-NEXT:    store i32 [[TMP13]], ptr [[COUNT1]], align 4
-// CHECK-NEXT:    store <32 x i32> [[TMP10]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP11]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP9]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 0
-// CHECK-NEXT:    [[TMP15:%.*]] = bitcast <64 x i8> [[TMP14]] to <32 x i16>
+// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 0
+// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 1
+// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 2
+// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 3
+// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 4
+// CHECK-NEXT:    [[TMP14:%.*]] = zext i20 [[TMP13]] to i32
+// CHECK-NEXT:    store i32 [[TMP14]], ptr [[COUNT1]], align 4
+// CHECK-NEXT:    store <32 x i32> [[TMP11]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP12]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP10]], ptr [[P]], align 4
+// CHECK-NEXT:    [[TMP15:%.*]] = bitcast <64 x i8> [[TMP9]] to <32 x i16>
 // CHECK-NEXT:    ret <32 x i16> [[TMP15]]
 //
 v32uint16 test_fifo_ld_pop_2d_byte(v32uint16 *&p, fifo_state_t &s, int off,
@@ -5340,20 +5341,20 @@ v32uint16 test_fifo_ld_pop_2d_byte(v32uint16 *&p, fifo_state_t &s, int off,
 // CHECK-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // CHECK-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2:%.*]] to i20
 // CHECK-NEXT:    [[TMP12:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } @llvm.aie2p.fifo.ld.pop.3d.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]])
-// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 1
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 2
-// CHECK-NEXT:    [[TMP15:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 3
-// CHECK-NEXT:    [[TMP16:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 4
-// CHECK-NEXT:    [[TMP17:%.*]] = zext i20 [[TMP16]] to i32
-// CHECK-NEXT:    [[TMP18:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 5
-// CHECK-NEXT:    [[TMP19:%.*]] = zext i20 [[TMP18]] to i32
-// CHECK-NEXT:    store i32 [[TMP17]], ptr [[COUNT1]], align 4
-// CHECK-NEXT:    store i32 [[TMP19]], ptr [[COUNT2]], align 4
-// CHECK-NEXT:    store <32 x i32> [[TMP14]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP15]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP13]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP20:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 0
-// CHECK-NEXT:    [[TMP21:%.*]] = bitcast <64 x i8> [[TMP20]] to <32 x i16>
+// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 0
+// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 1
+// CHECK-NEXT:    [[TMP15:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 2
+// CHECK-NEXT:    [[TMP16:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 3
+// CHECK-NEXT:    [[TMP17:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 4
+// CHECK-NEXT:    [[TMP18:%.*]] = zext i20 [[TMP17]] to i32
+// CHECK-NEXT:    [[TMP19:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 5
+// CHECK-NEXT:    [[TMP20:%.*]] = zext i20 [[TMP19]] to i32
+// CHECK-NEXT:    store i32 [[TMP18]], ptr [[COUNT1]], align 4
+// CHECK-NEXT:    store i32 [[TMP20]], ptr [[COUNT2]], align 4
+// CHECK-NEXT:    store <32 x i32> [[TMP15]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP16]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP14]], ptr [[P]], align 4
+// CHECK-NEXT:    [[TMP21:%.*]] = bitcast <64 x i8> [[TMP13]] to <32 x i16>
 // CHECK-NEXT:    ret <32 x i16> [[TMP21]]
 //
 v32uint16 test_fifo_ld_pop_3d_byte(v32uint16 *&p, fifo_state_t &s, int off,
@@ -5408,14 +5409,14 @@ void test_fifo_ld_fill(v16int32 *&p, fifo_state_t &s) {
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP3:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.pop.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 2
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 3
-// CHECK-NEXT:    store <32 x i32> [[TMP5]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP6]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP4]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 0
-// CHECK-NEXT:    [[TMP8:%.*]] = bitcast <64 x i8> [[TMP7]] to <16 x i32>
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 0
+// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 1
+// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 2
+// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 3
+// CHECK-NEXT:    store <32 x i32> [[TMP6]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP7]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP5]], ptr [[P]], align 4
+// CHECK-NEXT:    [[TMP8:%.*]] = bitcast <64 x i8> [[TMP4]] to <16 x i32>
 // CHECK-NEXT:    ret <16 x i32> [[TMP8]]
 //
 v16int32 test_fifo_ld_pop(v16int32 *&p, fifo_state_t &s) {
@@ -5430,14 +5431,14 @@ v16int32 test_fifo_ld_pop(v16int32 *&p, fifo_state_t &s) {
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF:%.*]] to i20
 // CHECK-NEXT:    [[TMP4:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.pop.1d.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]])
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 1
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 2
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 3
-// CHECK-NEXT:    store <32 x i32> [[TMP6]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP7]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP5]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 0
-// CHECK-NEXT:    [[TMP9:%.*]] = bitcast <64 x i8> [[TMP8]] to <16 x i32>
+// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 0
+// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 1
+// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 2
+// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 3
+// CHECK-NEXT:    store <32 x i32> [[TMP7]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP8]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP6]], ptr [[P]], align 4
+// CHECK-NEXT:    [[TMP9:%.*]] = bitcast <64 x i8> [[TMP5]] to <16 x i32>
 // CHECK-NEXT:    ret <16 x i32> [[TMP9]]
 //
 v16int32 test_fifo_ld_pop_1d_byte(v16int32 *&p, fifo_state_t &s, int off) {
@@ -5456,17 +5457,17 @@ v16int32 test_fifo_ld_pop_1d_byte(v16int32 *&p, fifo_state_t &s, int off) {
 // CHECK-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // CHECK-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1:%.*]] to i20
 // CHECK-NEXT:    [[TMP8:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32, i20 } @llvm.aie2p.fifo.ld.pop.2d.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]])
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 1
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 2
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 3
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 4
-// CHECK-NEXT:    [[TMP13:%.*]] = zext i20 [[TMP12]] to i32
-// CHECK-NEXT:    store i32 [[TMP13]], ptr [[COUNT1]], align 4
-// CHECK-NEXT:    store <32 x i32> [[TMP10]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP11]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP9]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 0
-// CHECK-NEXT:    [[TMP15:%.*]] = bitcast <64 x i8> [[TMP14]] to <16 x i32>
+// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 0
+// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 1
+// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 2
+// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 3
+// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 4
+// CHECK-NEXT:    [[TMP14:%.*]] = zext i20 [[TMP13]] to i32
+// CHECK-NEXT:    store i32 [[TMP14]], ptr [[COUNT1]], align 4
+// CHECK-NEXT:    store <32 x i32> [[TMP11]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP12]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP10]], ptr [[P]], align 4
+// CHECK-NEXT:    [[TMP15:%.*]] = bitcast <64 x i8> [[TMP9]] to <16 x i32>
 // CHECK-NEXT:    ret <16 x i32> [[TMP15]]
 //
 v16int32 test_fifo_ld_pop_2d_byte(v16int32 *&p, fifo_state_t &s, int off,
@@ -5490,20 +5491,20 @@ v16int32 test_fifo_ld_pop_2d_byte(v16int32 *&p, fifo_state_t &s, int off,
 // CHECK-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // CHECK-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2:%.*]] to i20
 // CHECK-NEXT:    [[TMP12:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } @llvm.aie2p.fifo.ld.pop.3d.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]])
-// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 1
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 2
-// CHECK-NEXT:    [[TMP15:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 3
-// CHECK-NEXT:    [[TMP16:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 4
-// CHECK-NEXT:    [[TMP17:%.*]] = zext i20 [[TMP16]] to i32
-// CHECK-NEXT:    [[TMP18:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 5
-// CHECK-NEXT:    [[TMP19:%.*]] = zext i20 [[TMP18]] to i32
-// CHECK-NEXT:    store i32 [[TMP17]], ptr [[COUNT1]], align 4
-// CHECK-NEXT:    store i32 [[TMP19]], ptr [[COUNT2]], align 4
-// CHECK-NEXT:    store <32 x i32> [[TMP14]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP15]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP13]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP20:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 0
-// CHECK-NEXT:    [[TMP21:%.*]] = bitcast <64 x i8> [[TMP20]] to <16 x i32>
+// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 0
+// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 1
+// CHECK-NEXT:    [[TMP15:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 2
+// CHECK-NEXT:    [[TMP16:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 3
+// CHECK-NEXT:    [[TMP17:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 4
+// CHECK-NEXT:    [[TMP18:%.*]] = zext i20 [[TMP17]] to i32
+// CHECK-NEXT:    [[TMP19:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 5
+// CHECK-NEXT:    [[TMP20:%.*]] = zext i20 [[TMP19]] to i32
+// CHECK-NEXT:    store i32 [[TMP18]], ptr [[COUNT1]], align 4
+// CHECK-NEXT:    store i32 [[TMP20]], ptr [[COUNT2]], align 4
+// CHECK-NEXT:    store <32 x i32> [[TMP15]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP16]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP14]], ptr [[P]], align 4
+// CHECK-NEXT:    [[TMP21:%.*]] = bitcast <64 x i8> [[TMP13]] to <16 x i32>
 // CHECK-NEXT:    ret <16 x i32> [[TMP21]]
 //
 v16int32 test_fifo_ld_pop_3d_byte(v16int32 *&p, fifo_state_t &s, int off,
@@ -5559,14 +5560,14 @@ void test_fifo_ld_fill(v16uint32 *&p, fifo_state_t &s) {
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP3:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.pop.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 2
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 3
-// CHECK-NEXT:    store <32 x i32> [[TMP5]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP6]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP4]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 0
-// CHECK-NEXT:    [[TMP8:%.*]] = bitcast <64 x i8> [[TMP7]] to <16 x i32>
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 0
+// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 1
+// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 2
+// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 3
+// CHECK-NEXT:    store <32 x i32> [[TMP6]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP7]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP5]], ptr [[P]], align 4
+// CHECK-NEXT:    [[TMP8:%.*]] = bitcast <64 x i8> [[TMP4]] to <16 x i32>
 // CHECK-NEXT:    ret <16 x i32> [[TMP8]]
 //
 v16uint32 test_fifo_ld_pop(v16uint32 *&p, fifo_state_t &s) {
@@ -5581,14 +5582,14 @@ v16uint32 test_fifo_ld_pop(v16uint32 *&p, fifo_state_t &s) {
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF:%.*]] to i20
 // CHECK-NEXT:    [[TMP4:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.pop.1d.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]])
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 1
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 2
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 3
-// CHECK-NEXT:    store <32 x i32> [[TMP6]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP7]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP5]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 0
-// CHECK-NEXT:    [[TMP9:%.*]] = bitcast <64 x i8> [[TMP8]] to <16 x i32>
+// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 0
+// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 1
+// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 2
+// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 3
+// CHECK-NEXT:    store <32 x i32> [[TMP7]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP8]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP6]], ptr [[P]], align 4
+// CHECK-NEXT:    [[TMP9:%.*]] = bitcast <64 x i8> [[TMP5]] to <16 x i32>
 // CHECK-NEXT:    ret <16 x i32> [[TMP9]]
 //
 v16uint32 test_fifo_ld_pop_1d_byte(v16uint32 *&p, fifo_state_t &s, int off) {
@@ -5607,17 +5608,17 @@ v16uint32 test_fifo_ld_pop_1d_byte(v16uint32 *&p, fifo_state_t &s, int off) {
 // CHECK-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // CHECK-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1:%.*]] to i20
 // CHECK-NEXT:    [[TMP8:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32, i20 } @llvm.aie2p.fifo.ld.pop.2d.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]])
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 1
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 2
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 3
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 4
-// CHECK-NEXT:    [[TMP13:%.*]] = zext i20 [[TMP12]] to i32
-// CHECK-NEXT:    store i32 [[TMP13]], ptr [[COUNT1]], align 4
-// CHECK-NEXT:    store <32 x i32> [[TMP10]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP11]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP9]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 0
-// CHECK-NEXT:    [[TMP15:%.*]] = bitcast <64 x i8> [[TMP14]] to <16 x i32>
+// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 0
+// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 1
+// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 2
+// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 3
+// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 4
+// CHECK-NEXT:    [[TMP14:%.*]] = zext i20 [[TMP13]] to i32
+// CHECK-NEXT:    store i32 [[TMP14]], ptr [[COUNT1]], align 4
+// CHECK-NEXT:    store <32 x i32> [[TMP11]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP12]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP10]], ptr [[P]], align 4
+// CHECK-NEXT:    [[TMP15:%.*]] = bitcast <64 x i8> [[TMP9]] to <16 x i32>
 // CHECK-NEXT:    ret <16 x i32> [[TMP15]]
 //
 v16uint32 test_fifo_ld_pop_2d_byte(v16uint32 *&p, fifo_state_t &s, int off,
@@ -5641,20 +5642,20 @@ v16uint32 test_fifo_ld_pop_2d_byte(v16uint32 *&p, fifo_state_t &s, int off,
 // CHECK-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // CHECK-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2:%.*]] to i20
 // CHECK-NEXT:    [[TMP12:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } @llvm.aie2p.fifo.ld.pop.3d.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]])
-// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 1
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 2
-// CHECK-NEXT:    [[TMP15:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 3
-// CHECK-NEXT:    [[TMP16:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 4
-// CHECK-NEXT:    [[TMP17:%.*]] = zext i20 [[TMP16]] to i32
-// CHECK-NEXT:    [[TMP18:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 5
-// CHECK-NEXT:    [[TMP19:%.*]] = zext i20 [[TMP18]] to i32
-// CHECK-NEXT:    store i32 [[TMP17]], ptr [[COUNT1]], align 4
-// CHECK-NEXT:    store i32 [[TMP19]], ptr [[COUNT2]], align 4
-// CHECK-NEXT:    store <32 x i32> [[TMP14]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP15]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP13]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP20:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 0
-// CHECK-NEXT:    [[TMP21:%.*]] = bitcast <64 x i8> [[TMP20]] to <16 x i32>
+// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 0
+// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 1
+// CHECK-NEXT:    [[TMP15:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 2
+// CHECK-NEXT:    [[TMP16:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 3
+// CHECK-NEXT:    [[TMP17:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 4
+// CHECK-NEXT:    [[TMP18:%.*]] = zext i20 [[TMP17]] to i32
+// CHECK-NEXT:    [[TMP19:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 5
+// CHECK-NEXT:    [[TMP20:%.*]] = zext i20 [[TMP19]] to i32
+// CHECK-NEXT:    store i32 [[TMP18]], ptr [[COUNT1]], align 4
+// CHECK-NEXT:    store i32 [[TMP20]], ptr [[COUNT2]], align 4
+// CHECK-NEXT:    store <32 x i32> [[TMP15]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP16]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP14]], ptr [[P]], align 4
+// CHECK-NEXT:    [[TMP21:%.*]] = bitcast <64 x i8> [[TMP13]] to <16 x i32>
 // CHECK-NEXT:    ret <16 x i32> [[TMP21]]
 //
 v16uint32 test_fifo_ld_pop_3d_byte(v16uint32 *&p, fifo_state_t &s, int off,
@@ -5710,14 +5711,14 @@ void test_fifo_ld_fill(v32bfloat16 *&p, fifo_state_t &s) {
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP3:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.pop.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 2
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 3
-// CHECK-NEXT:    store <32 x i32> [[TMP5]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP6]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP4]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 0
-// CHECK-NEXT:    [[TMP8:%.*]] = bitcast <64 x i8> [[TMP7]] to <32 x bfloat>
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 0
+// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 1
+// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 2
+// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 3
+// CHECK-NEXT:    store <32 x i32> [[TMP6]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP7]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP5]], ptr [[P]], align 4
+// CHECK-NEXT:    [[TMP8:%.*]] = bitcast <64 x i8> [[TMP4]] to <32 x bfloat>
 // CHECK-NEXT:    ret <32 x bfloat> [[TMP8]]
 //
 v32bfloat16 test_fifo_ld_pop(v32bfloat16 *&p, fifo_state_t &s) {
@@ -5732,14 +5733,14 @@ v32bfloat16 test_fifo_ld_pop(v32bfloat16 *&p, fifo_state_t &s) {
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF:%.*]] to i20
 // CHECK-NEXT:    [[TMP4:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.pop.1d.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]])
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 1
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 2
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 3
-// CHECK-NEXT:    store <32 x i32> [[TMP6]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP7]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP5]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 0
-// CHECK-NEXT:    [[TMP9:%.*]] = bitcast <64 x i8> [[TMP8]] to <32 x bfloat>
+// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 0
+// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 1
+// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 2
+// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 3
+// CHECK-NEXT:    store <32 x i32> [[TMP7]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP8]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP6]], ptr [[P]], align 4
+// CHECK-NEXT:    [[TMP9:%.*]] = bitcast <64 x i8> [[TMP5]] to <32 x bfloat>
 // CHECK-NEXT:    ret <32 x bfloat> [[TMP9]]
 //
 v32bfloat16 test_fifo_ld_pop_1d_byte(v32bfloat16 *&p, fifo_state_t &s,
@@ -5759,17 +5760,17 @@ v32bfloat16 test_fifo_ld_pop_1d_byte(v32bfloat16 *&p, fifo_state_t &s,
 // CHECK-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // CHECK-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1:%.*]] to i20
 // CHECK-NEXT:    [[TMP8:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32, i20 } @llvm.aie2p.fifo.ld.pop.2d.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]])
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 1
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 2
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 3
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 4
-// CHECK-NEXT:    [[TMP13:%.*]] = zext i20 [[TMP12]] to i32
-// CHECK-NEXT:    store i32 [[TMP13]], ptr [[COUNT1]], align 4
-// CHECK-NEXT:    store <32 x i32> [[TMP10]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP11]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP9]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 0
-// CHECK-NEXT:    [[TMP15:%.*]] = bitcast <64 x i8> [[TMP14]] to <32 x bfloat>
+// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 0
+// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 1
+// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 2
+// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 3
+// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 4
+// CHECK-NEXT:    [[TMP14:%.*]] = zext i20 [[TMP13]] to i32
+// CHECK-NEXT:    store i32 [[TMP14]], ptr [[COUNT1]], align 4
+// CHECK-NEXT:    store <32 x i32> [[TMP11]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP12]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP10]], ptr [[P]], align 4
+// CHECK-NEXT:    [[TMP15:%.*]] = bitcast <64 x i8> [[TMP9]] to <32 x bfloat>
 // CHECK-NEXT:    ret <32 x bfloat> [[TMP15]]
 //
 v32bfloat16 test_fifo_ld_pop_2d_byte(v32bfloat16 *&p, fifo_state_t &s, int off,
@@ -5793,20 +5794,20 @@ v32bfloat16 test_fifo_ld_pop_2d_byte(v32bfloat16 *&p, fifo_state_t &s, int off,
 // CHECK-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // CHECK-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2:%.*]] to i20
 // CHECK-NEXT:    [[TMP12:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } @llvm.aie2p.fifo.ld.pop.3d.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]])
-// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 1
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 2
-// CHECK-NEXT:    [[TMP15:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 3
-// CHECK-NEXT:    [[TMP16:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 4
-// CHECK-NEXT:    [[TMP17:%.*]] = zext i20 [[TMP16]] to i32
-// CHECK-NEXT:    [[TMP18:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 5
-// CHECK-NEXT:    [[TMP19:%.*]] = zext i20 [[TMP18]] to i32
-// CHECK-NEXT:    store i32 [[TMP17]], ptr [[COUNT1]], align 4
-// CHECK-NEXT:    store i32 [[TMP19]], ptr [[COUNT2]], align 4
-// CHECK-NEXT:    store <32 x i32> [[TMP14]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP15]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP13]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP20:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 0
-// CHECK-NEXT:    [[TMP21:%.*]] = bitcast <64 x i8> [[TMP20]] to <32 x bfloat>
+// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 0
+// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 1
+// CHECK-NEXT:    [[TMP15:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 2
+// CHECK-NEXT:    [[TMP16:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 3
+// CHECK-NEXT:    [[TMP17:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 4
+// CHECK-NEXT:    [[TMP18:%.*]] = zext i20 [[TMP17]] to i32
+// CHECK-NEXT:    [[TMP19:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 5
+// CHECK-NEXT:    [[TMP20:%.*]] = zext i20 [[TMP19]] to i32
+// CHECK-NEXT:    store i32 [[TMP18]], ptr [[COUNT1]], align 4
+// CHECK-NEXT:    store i32 [[TMP20]], ptr [[COUNT2]], align 4
+// CHECK-NEXT:    store <32 x i32> [[TMP15]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP16]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP14]], ptr [[P]], align 4
+// CHECK-NEXT:    [[TMP21:%.*]] = bitcast <64 x i8> [[TMP13]] to <32 x bfloat>
 // CHECK-NEXT:    ret <32 x bfloat> [[TMP21]]
 //
 v32bfloat16 test_fifo_ld_pop_3d_byte(v32bfloat16 *&p, fifo_state_t &s, int off,
@@ -5862,14 +5863,14 @@ void test_fifo_ld_fill(v16float *&p, fifo_state_t &s) {
 // CHECK-NEXT:    [[TMP1:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP3:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.pop.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]])
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 2
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 3
-// CHECK-NEXT:    store <32 x i32> [[TMP5]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP6]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP4]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 0
-// CHECK-NEXT:    [[TMP8:%.*]] = bitcast <64 x i8> [[TMP7]] to <16 x float>
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 0
+// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 1
+// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 2
+// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 3
+// CHECK-NEXT:    store <32 x i32> [[TMP6]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP7]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP5]], ptr [[P]], align 4
+// CHECK-NEXT:    [[TMP8:%.*]] = bitcast <64 x i8> [[TMP4]] to <16 x float>
 // CHECK-NEXT:    ret <16 x float> [[TMP8]]
 //
 v16float test_fifo_ld_pop(v16float *&p, fifo_state_t &s) {
@@ -5884,14 +5885,14 @@ v16float test_fifo_ld_pop(v16float *&p, fifo_state_t &s) {
 // CHECK-NEXT:    [[TMP2:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP3:%.*]] = trunc i32 [[OFF:%.*]] to i20
 // CHECK-NEXT:    [[TMP4:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.pop.1d.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]])
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 1
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 2
-// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 3
-// CHECK-NEXT:    store <32 x i32> [[TMP6]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP7]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP5]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 0
-// CHECK-NEXT:    [[TMP9:%.*]] = bitcast <64 x i8> [[TMP8]] to <16 x float>
+// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 0
+// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 1
+// CHECK-NEXT:    [[TMP7:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 2
+// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP4]], 3
+// CHECK-NEXT:    store <32 x i32> [[TMP7]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP8]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP6]], ptr [[P]], align 4
+// CHECK-NEXT:    [[TMP9:%.*]] = bitcast <64 x i8> [[TMP5]] to <16 x float>
 // CHECK-NEXT:    ret <16 x float> [[TMP9]]
 //
 v16float test_fifo_ld_pop_1d_byte(v16float *&p, fifo_state_t &s, int off) {
@@ -5910,17 +5911,17 @@ v16float test_fifo_ld_pop_1d_byte(v16float *&p, fifo_state_t &s, int off) {
 // CHECK-NEXT:    [[TMP6:%.*]] = trunc i32 [[TMP5]] to i20
 // CHECK-NEXT:    [[TMP7:%.*]] = trunc i32 [[INC1:%.*]] to i20
 // CHECK-NEXT:    [[TMP8:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32, i20 } @llvm.aie2p.fifo.ld.pop.2d.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]])
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 1
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 2
-// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 3
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 4
-// CHECK-NEXT:    [[TMP13:%.*]] = zext i20 [[TMP12]] to i32
-// CHECK-NEXT:    store i32 [[TMP13]], ptr [[COUNT1]], align 4
-// CHECK-NEXT:    store <32 x i32> [[TMP10]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP11]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP9]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 0
-// CHECK-NEXT:    [[TMP15:%.*]] = bitcast <64 x i8> [[TMP14]] to <16 x float>
+// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 0
+// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 1
+// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 2
+// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 3
+// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP8]], 4
+// CHECK-NEXT:    [[TMP14:%.*]] = zext i20 [[TMP13]] to i32
+// CHECK-NEXT:    store i32 [[TMP14]], ptr [[COUNT1]], align 4
+// CHECK-NEXT:    store <32 x i32> [[TMP11]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP12]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP10]], ptr [[P]], align 4
+// CHECK-NEXT:    [[TMP15:%.*]] = bitcast <64 x i8> [[TMP9]] to <16 x float>
 // CHECK-NEXT:    ret <16 x float> [[TMP15]]
 //
 v16float test_fifo_ld_pop_2d_byte(v16float *&p, fifo_state_t &s, int off,
@@ -5944,20 +5945,20 @@ v16float test_fifo_ld_pop_2d_byte(v16float *&p, fifo_state_t &s, int off,
 // CHECK-NEXT:    [[TMP10:%.*]] = trunc i32 [[TMP9]] to i20
 // CHECK-NEXT:    [[TMP11:%.*]] = trunc i32 [[INC2:%.*]] to i20
 // CHECK-NEXT:    [[TMP12:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } @llvm.aie2p.fifo.ld.pop.3d.unaligned(ptr [[TMP0]], <32 x i32> [[TMP1]], i32 [[TMP2]], i20 [[TMP3]], i20 [[TMP4]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP8]], i20 [[TMP10]], i20 [[TMP11]])
-// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 1
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 2
-// CHECK-NEXT:    [[TMP15:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 3
-// CHECK-NEXT:    [[TMP16:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 4
-// CHECK-NEXT:    [[TMP17:%.*]] = zext i20 [[TMP16]] to i32
-// CHECK-NEXT:    [[TMP18:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 5
-// CHECK-NEXT:    [[TMP19:%.*]] = zext i20 [[TMP18]] to i32
-// CHECK-NEXT:    store i32 [[TMP17]], ptr [[COUNT1]], align 4
-// CHECK-NEXT:    store i32 [[TMP19]], ptr [[COUNT2]], align 4
-// CHECK-NEXT:    store <32 x i32> [[TMP14]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP15]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP13]], ptr [[P]], align 4
-// CHECK-NEXT:    [[TMP20:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 0
-// CHECK-NEXT:    [[TMP21:%.*]] = bitcast <64 x i8> [[TMP20]] to <16 x float>
+// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 0
+// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 1
+// CHECK-NEXT:    [[TMP15:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 2
+// CHECK-NEXT:    [[TMP16:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 3
+// CHECK-NEXT:    [[TMP17:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 4
+// CHECK-NEXT:    [[TMP18:%.*]] = zext i20 [[TMP17]] to i32
+// CHECK-NEXT:    [[TMP19:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP12]], 5
+// CHECK-NEXT:    [[TMP20:%.*]] = zext i20 [[TMP19]] to i32
+// CHECK-NEXT:    store i32 [[TMP18]], ptr [[COUNT1]], align 4
+// CHECK-NEXT:    store i32 [[TMP20]], ptr [[COUNT2]], align 4
+// CHECK-NEXT:    store <32 x i32> [[TMP15]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP16]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    store ptr [[TMP14]], ptr [[P]], align 4
+// CHECK-NEXT:    [[TMP21:%.*]] = bitcast <64 x i8> [[TMP13]] to <16 x float>
 // CHECK-NEXT:    ret <16 x float> [[TMP21]]
 //
 v16float test_fifo_ld_pop_3d_byte(v16float *&p, fifo_state_t &s, int off,
@@ -6338,12 +6339,12 @@ void test_fifo_ld_fill(v32int16 __aie_dm_resource_b *p, fifo_state_t &s) {
 // CHECK-NEXT:    [[TMP0:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA9]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP2:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.pop.unaligned(ptr [[P_ADDR_SROA_0_0_P_ADDR_SROA_0_0_P_ADDR_SROA_0_0_P_ADDR_SROA_0_0_]], <32 x i32> [[TMP0]], i32 [[TMP1]])
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP2]], 2
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP2]], 3
-// CHECK-NEXT:    store <32 x i32> [[TMP3]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP4]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP2]], 0
-// CHECK-NEXT:    [[TMP6:%.*]] = bitcast <64 x i8> [[TMP5]] to <32 x i16>
+// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP2]], 0
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP2]], 2
+// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP2]], 3
+// CHECK-NEXT:    store <32 x i32> [[TMP4]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP5]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    [[TMP6:%.*]] = bitcast <64 x i8> [[TMP3]] to <32 x i16>
 // CHECK-NEXT:    ret <32 x i16> [[TMP6]]
 //
 v32int16 test_fifo_ld_pop(v32int16 __aie_dm_resource_b *p, fifo_state_t &s) {
@@ -6360,12 +6361,12 @@ v32int16 test_fifo_ld_pop(v32int16 __aie_dm_resource_b *p, fifo_state_t &s) {
 // CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA10]]
 // CHECK-NEXT:    [[TMP2:%.*]] = trunc i32 [[OFF:%.*]] to i20
 // CHECK-NEXT:    [[TMP3:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.pop.1d.unaligned(ptr [[P_ADDR_SROA_0_0_P_ADDR_SROA_0_0_P_ADDR_SROA_0_0_P_ADDR_SROA_0_0_]], <32 x i32> [[TMP0]], i32 [[TMP1]], i20 [[TMP2]])
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 2
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 3
-// CHECK-NEXT:    store <32 x i32> [[TMP4]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP5]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 0
-// CHECK-NEXT:    [[TMP7:%.*]] = bitcast <64 x i8> [[TMP6]] to <32 x i16>
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 0
+// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 2
+// CHECK-NEXT:    [[TMP6:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } [[TMP3]], 3
+// CHECK-NEXT:    store <32 x i32> [[TMP5]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP6]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    [[TMP7:%.*]] = bitcast <64 x i8> [[TMP4]] to <32 x i16>
 // CHECK-NEXT:    ret <32 x i16> [[TMP7]]
 //
 v32int16 test_fifo_ld_pop_1d_byte(v32int16 __aie_dm_resource_b *p, fifo_state_t &s, int off) {
@@ -6386,15 +6387,15 @@ v32int16 test_fifo_ld_pop_1d_byte(v32int16 __aie_dm_resource_b *p, fifo_state_t 
 // CHECK-NEXT:    [[TMP5:%.*]] = trunc i32 [[TMP4]] to i20
 // CHECK-NEXT:    [[TMP6:%.*]] = trunc i32 [[INC1:%.*]] to i20
 // CHECK-NEXT:    [[TMP7:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32, i20 } @llvm.aie2p.fifo.ld.pop.2d.unaligned(ptr [[P_ADDR_SROA_0_0_P_ADDR_SROA_0_0_P_ADDR_SROA_0_0_P_ADDR_SROA_0_0_]], <32 x i32> [[TMP0]], i32 [[TMP1]], i20 [[TMP2]], i20 [[TMP3]], i20 [[TMP5]], i20 [[TMP6]])
-// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP7]], 2
-// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP7]], 3
-// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP7]], 4
-// CHECK-NEXT:    [[TMP11:%.*]] = zext i20 [[TMP10]] to i32
-// CHECK-NEXT:    store i32 [[TMP11]], ptr [[COUNT1]], align 4
-// CHECK-NEXT:    store <32 x i32> [[TMP8]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP9]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP7]], 0
-// CHECK-NEXT:    [[TMP13:%.*]] = bitcast <64 x i8> [[TMP12]] to <32 x i16>
+// CHECK-NEXT:    [[TMP8:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP7]], 0
+// CHECK-NEXT:    [[TMP9:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP7]], 2
+// CHECK-NEXT:    [[TMP10:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP7]], 3
+// CHECK-NEXT:    [[TMP11:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20 } [[TMP7]], 4
+// CHECK-NEXT:    [[TMP12:%.*]] = zext i20 [[TMP11]] to i32
+// CHECK-NEXT:    store i32 [[TMP12]], ptr [[COUNT1]], align 4
+// CHECK-NEXT:    store <32 x i32> [[TMP9]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP10]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    [[TMP13:%.*]] = bitcast <64 x i8> [[TMP8]] to <32 x i16>
 // CHECK-NEXT:    ret <32 x i16> [[TMP13]]
 //
 v32int16 test_fifo_ld_pop_2d_byte(v32int16 __aie_dm_resource_b *p, fifo_state_t &s, int off,
@@ -6420,18 +6421,18 @@ v32int16 test_fifo_ld_pop_2d_byte(v32int16 __aie_dm_resource_b *p, fifo_state_t 
 // CHECK-NEXT:    [[TMP9:%.*]] = trunc i32 [[TMP8]] to i20
 // CHECK-NEXT:    [[TMP10:%.*]] = trunc i32 [[INC2:%.*]] to i20
 // CHECK-NEXT:    [[TMP11:%.*]] = tail call { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } @llvm.aie2p.fifo.ld.pop.3d.unaligned(ptr [[P_ADDR_SROA_0_0_P_ADDR_SROA_0_0_P_ADDR_SROA_0_0_P_ADDR_SROA_0_0_]], <32 x i32> [[TMP0]], i32 [[TMP1]], i20 [[TMP2]], i20 [[TMP3]], i20 [[TMP5]], i20 [[TMP6]], i20 [[TMP7]], i20 [[TMP9]], i20 [[TMP10]])
-// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP11]], 2
-// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP11]], 3
-// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP11]], 4
-// CHECK-NEXT:    [[TMP15:%.*]] = zext i20 [[TMP14]] to i32
-// CHECK-NEXT:    [[TMP16:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP11]], 5
-// CHECK-NEXT:    [[TMP17:%.*]] = zext i20 [[TMP16]] to i32
-// CHECK-NEXT:    store i32 [[TMP15]], ptr [[COUNT1]], align 4
-// CHECK-NEXT:    store i32 [[TMP17]], ptr [[COUNT2]], align 4
-// CHECK-NEXT:    store <32 x i32> [[TMP12]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP13]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    [[TMP18:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP11]], 0
-// CHECK-NEXT:    [[TMP19:%.*]] = bitcast <64 x i8> [[TMP18]] to <32 x i16>
+// CHECK-NEXT:    [[TMP12:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP11]], 0
+// CHECK-NEXT:    [[TMP13:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP11]], 2
+// CHECK-NEXT:    [[TMP14:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP11]], 3
+// CHECK-NEXT:    [[TMP15:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP11]], 4
+// CHECK-NEXT:    [[TMP16:%.*]] = zext i20 [[TMP15]] to i32
+// CHECK-NEXT:    [[TMP17:%.*]] = extractvalue { <64 x i8>, ptr, <32 x i32>, i32, i20, i20 } [[TMP11]], 5
+// CHECK-NEXT:    [[TMP18:%.*]] = zext i20 [[TMP17]] to i32
+// CHECK-NEXT:    store i32 [[TMP16]], ptr [[COUNT1]], align 4
+// CHECK-NEXT:    store i32 [[TMP18]], ptr [[COUNT2]], align 4
+// CHECK-NEXT:    store <32 x i32> [[TMP13]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP14]], ptr [[POS1_I]], align 64
+// CHECK-NEXT:    [[TMP19:%.*]] = bitcast <64 x i8> [[TMP12]] to <32 x i16>
 // CHECK-NEXT:    ret <32 x i16> [[TMP19]]
 //
 v32int16 test_fifo_ld_pop_3d_byte(v32int16 __aie_dm_resource_b *p, fifo_state_t &s, int off,
