@@ -22397,28 +22397,28 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
 
     Value *Ptr = Builder.CreateExtractValue(Val, 0);
     Value *Fifo = Builder.CreateExtractValue(Val, 1);
-    Value *Avail = Builder.CreateExtractValue(Val, 2);
+    Value *Pos = Builder.CreateExtractValue(Val, 2);
     Value *PtrAddr = EmitLValue(E->getArg(0)).getPointer(*this);
 
     Value *FifoAddr = nullptr;
-    Value *AvailAddr = nullptr;
+    Value *PosAddr = nullptr;
     if (BuiltinID == AIE::BI__builtin_aie2p_fifo_st_flush ||
         BuiltinID == AIE::BI__builtin_aie2p_fifo_st_flush_conv) {
       FifoAddr = EmitLValue(E->getArg(1)).getPointer(*this);
-      AvailAddr = EmitLValue(E->getArg(2)).getPointer(*this);
+      PosAddr = EmitLValue(E->getArg(2)).getPointer(*this);
     } else if (BuiltinID == AIE::BI__builtin_aie2p_fifo_st_push_512_bfp16) {
       FifoAddr = EmitLValue(E->getArg(2)).getPointer(*this);
-      AvailAddr = EmitLValue(E->getArg(3)).getPointer(*this);
+      PosAddr = EmitLValue(E->getArg(3)).getPointer(*this);
     } else {
       assert(BuiltinID == AIE::BI__builtin_aie2p_fifo_st_push_576_bfp16 ||
              BuiltinID == AIE::BI__builtin_aie2p_fifo_st_push_544_bfp16 &&
                  "Unexpected BuiltinID");
       FifoAddr = EmitLValue(E->getArg(3)).getPointer(*this);
-      AvailAddr = EmitLValue(E->getArg(4)).getPointer(*this);
+      PosAddr = EmitLValue(E->getArg(4)).getPointer(*this);
     }
 
     Builder.CreateDefaultAlignedStore(Fifo, FifoAddr);
-    Builder.CreateDefaultAlignedStore(Avail, AvailAddr);
+    Builder.CreateDefaultAlignedStore(Pos, PosAddr);
     return Builder.CreateDefaultAlignedStore(Ptr, PtrAddr);
   }
   case AIE::BI__builtin_aie2p_fifo_st_flush_conv_1d_byte:
@@ -22449,10 +22449,10 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
     for (unsigned I = 0; I < E->getNumArgs() - NumAddrIncs; I++)
       Ops.push_back(EmitScalarExpr(E->getArg(I)));
 
-    for (unsigned i = E->getNumArgs() - NumAddrIncs, e = E->getNumArgs();
-         i != e; i++) {
+    for (unsigned I = E->getNumArgs() - NumAddrIncs, NA = E->getNumArgs();
+         I < NA; I++) {
       Ops.push_back(
-          Builder.CreateTrunc(EmitScalarExpr(E->getArg(i)),
+          Builder.CreateTrunc(EmitScalarExpr(E->getArg(I)),
                               llvm::Type::getInt20Ty(getLLVMContext())));
     }
     llvm::Intrinsic::ID IntrinsicID = getAIEIntrinsicFunction(BuiltinID, Arch);
@@ -22462,10 +22462,10 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
 
     Value *Ptr = Builder.CreateExtractValue(Val, 0);
     Value *Fifo = Builder.CreateExtractValue(Val, 1);
-    Value *Avail = Builder.CreateExtractValue(Val, 2);
+    Value *Pos = Builder.CreateExtractValue(Val, 2);
     Value *PtrAddr = EmitLValue(E->getArg(0)).getPointer(*this);
     Value *FifoAddr = EmitLValue(E->getArg(1)).getPointer(*this);
-    Value *AvailAddr = EmitLValue(E->getArg(2)).getPointer(*this);
+    Value *PosAddr = EmitLValue(E->getArg(2)).getPointer(*this);
 
     if (BuiltinID == AIE::BI__builtin_aie2p_fifo_st_flush_2d_byte ||
         BuiltinID == AIE::BI__builtin_aie2p_fifo_st_flush_conv_2d_byte) {
@@ -22492,7 +22492,7 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
     }
 
     Builder.CreateDefaultAlignedStore(Fifo, FifoAddr);
-    Builder.CreateDefaultAlignedStore(Avail, AvailAddr);
+    Builder.CreateDefaultAlignedStore(Pos, PosAddr);
     return Builder.CreateDefaultAlignedStore(Ptr, PtrAddr);
   }
   case AIE::BI__builtin_aie2p_fifo_ld_fill: {
@@ -22507,13 +22507,13 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
 
     Value *Ptr = Builder.CreateExtractValue(Val, 0);
     Value *Fifo = Builder.CreateExtractValue(Val, 1);
-    Value *Avail = Builder.CreateExtractValue(Val, 2);
+    Value *Pos = Builder.CreateExtractValue(Val, 2);
     Value *PtrAddr = EmitLValue(E->getArg(0)).getPointer(*this);
     Value *FifoAddr = EmitLValue(E->getArg(1)).getPointer(*this);
-    Value *AvailAddr = EmitLValue(E->getArg(2)).getPointer(*this);
+    Value *PosAddr = EmitLValue(E->getArg(2)).getPointer(*this);
 
     Builder.CreateDefaultAlignedStore(Fifo, FifoAddr);
-    Builder.CreateDefaultAlignedStore(Avail, AvailAddr);
+    Builder.CreateDefaultAlignedStore(Pos, PosAddr);
     return Builder.CreateDefaultAlignedStore(Ptr, PtrAddr);
   }
   case AIE::BI__builtin_aie2p_fifo_ld_pop_512_unaligned:
@@ -22535,10 +22535,10 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
     for (unsigned I = 0; I < E->getNumArgs() - NumAddrIncs; I++)
       Ops.push_back(EmitScalarExpr(E->getArg(I)));
 
-    for (unsigned i = E->getNumArgs() - NumAddrIncs, e = E->getNumArgs();
-         i != e; i++) {
+    for (unsigned I = E->getNumArgs() - NumAddrIncs, NA = E->getNumArgs();
+         I < NA; I++) {
       Ops.push_back(
-          Builder.CreateTrunc(EmitScalarExpr(E->getArg(i)),
+          Builder.CreateTrunc(EmitScalarExpr(E->getArg(I)),
                               llvm::Type::getInt20Ty(getLLVMContext())));
     }
 
@@ -22547,12 +22547,13 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
     Function *F = CGM.getIntrinsic(IntrinsicID);
     Value *Val = Builder.CreateCall(F, Ops);
 
+    Value *Vec = Builder.CreateExtractValue(Val, 0);
     Value *Ptr = Builder.CreateExtractValue(Val, 1);
     Value *Fifo = Builder.CreateExtractValue(Val, 2);
-    Value *Avail = Builder.CreateExtractValue(Val, 3);
+    Value *Pos = Builder.CreateExtractValue(Val, 3);
     Value *PtrAddr = EmitLValue(E->getArg(0)).getPointer(*this);
     Value *FifoAddr = EmitLValue(E->getArg(1)).getPointer(*this);
-    Value *AvailAddr = EmitLValue(E->getArg(2)).getPointer(*this);
+    Value *PosAddr = EmitLValue(E->getArg(2)).getPointer(*this);
 
     if (BuiltinID == AIE::BI__builtin_aie2p_fifo_ld_pop_2d_512_unaligned) {
       Value *Count1 =
@@ -22577,9 +22578,9 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
     }
 
     Builder.CreateDefaultAlignedStore(Fifo, FifoAddr);
-    Builder.CreateDefaultAlignedStore(Avail, AvailAddr);
+    Builder.CreateDefaultAlignedStore(Pos, PosAddr);
     Builder.CreateDefaultAlignedStore(Ptr, PtrAddr);
-    return Builder.CreateExtractValue(Val, 0);
+    return Vec;
   }
   case AIE::BI__builtin_aie2p_fifo_ld_pop_1d_544_bfp16:
   case AIE::BI__builtin_aie2p_fifo_ld_pop_1d_576_bfp16:
@@ -22608,11 +22609,11 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
 
     for (unsigned I = 0; I < E->getNumArgs() - NumAddrIncs - 2; I++)
       Ops.push_back(EmitScalarExpr(E->getArg(I)));
-    for (unsigned i = E->getNumArgs() - NumAddrIncs - 2,
-                  e = E->getNumArgs() - 2;
-         i != e; i++) {
+    for (unsigned I = E->getNumArgs() - NumAddrIncs - 2,
+                  NA = E->getNumArgs() - 2;
+         I < NA; I++) {
       Ops.push_back(
-          Builder.CreateTrunc(EmitScalarExpr(E->getArg(i)),
+          Builder.CreateTrunc(EmitScalarExpr(E->getArg(I)),
                               llvm::Type::getInt20Ty(getLLVMContext())));
     }
 
@@ -22623,10 +22624,10 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
 
     Value *Ptr = Builder.CreateExtractValue(Val, 0);
     Value *Fifo = Builder.CreateExtractValue(Val, 1);
-    Value *Avail = Builder.CreateExtractValue(Val, 2);
+    Value *Pos = Builder.CreateExtractValue(Val, 2);
     Value *PtrAddr = EmitLValue(E->getArg(0)).getPointer(*this);
     Value *FifoAddr = EmitLValue(E->getArg(1)).getPointer(*this);
-    Value *AvailAddr = EmitLValue(E->getArg(2)).getPointer(*this);
+    Value *PosAddr = EmitLValue(E->getArg(2)).getPointer(*this);
 
     Value *Mantissa = Builder.CreateExtractValue(Val, 3 + NumOutIncs);
     Value *Exponent = Builder.CreateExtractValue(Val, 4 + NumOutIncs);
@@ -22659,7 +22660,7 @@ Value *CodeGenFunction::EmitAIEBuiltinExpr(unsigned BuiltinID,
     }
 
     Builder.CreateDefaultAlignedStore(Fifo, FifoAddr);
-    Builder.CreateDefaultAlignedStore(Avail, AvailAddr);
+    Builder.CreateDefaultAlignedStore(Pos, PosAddr);
     Builder.CreateDefaultAlignedStore(Mantissa, MantissaAddr);
     Builder.CreateDefaultAlignedStore(Exponent, ExponentAddr);
     return Builder.CreateDefaultAlignedStore(Ptr, PtrAddr);
