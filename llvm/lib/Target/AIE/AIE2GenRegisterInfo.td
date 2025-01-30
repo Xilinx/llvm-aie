@@ -481,7 +481,7 @@ class AIE2Dim3DRegisterClass <dag reglist, RegAltNameIndex idx = NoRegAltName> :
                   DwarfRegNum<[!add(!mul(i, 2), 167)]>;
   }
 
-  def eL : AIE2RegisterClass<64, 32, [v8i8, v4i16, v4bf16, v2i32],
+  def eL : AIE2RegisterClass<64, 32, [i64, v8i8, v4i16, v4bf16, v2i32],
                              (add l0, l1, l2, l3, l4, l5, l6, l7)>;
 
   class AIE2ShiftReg<bits<2> Enc, string n> : Register<n> {

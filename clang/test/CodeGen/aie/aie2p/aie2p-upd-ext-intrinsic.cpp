@@ -5122,10 +5122,15 @@ v64accfloat test_set_v64accfloat (int idx, v16accfloat b)
 // CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z11test_concatDv16_u10__accfloatS_S_S_(
 // CHECK-SAME: <16 x float> inreg noundef [[A0:%.*]], <16 x float> inreg noundef [[A1:%.*]], <16 x float> inreg noundef [[A2:%.*]], <16 x float> inreg noundef [[A3:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = shufflevector <16 x float> [[A0]], <16 x float> [[A1]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
-// CHECK-NEXT:    [[TMP1:%.*]] = shufflevector <16 x float> [[A2]], <16 x float> [[A3]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
-// CHECK-NEXT:    [[TMP2:%.*]] = shufflevector <32 x float> [[TMP0]], <32 x float> [[TMP1]], <64 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31, i32 32, i32 33, i32 34, i32 35, i32 36, i32 37, i32 38, i32 39, i32 40, i32 41, i32 42, i32 43, i32 44, i32 45, i32 46, i32 47, i32 48, i32 49, i32 50, i32 51, i32 52, i32 53, i32 54, i32 55, i32 56, i32 57, i32 58, i32 59, i32 60, i32 61, i32 62, i32 63>
-// CHECK-NEXT:    ret <64 x float> [[TMP2]]
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast <16 x float> [[A0]] to <8 x i64>
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <16 x float> [[A1]] to <8 x i64>
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <16 x float> [[A2]] to <8 x i64>
+// CHECK-NEXT:    [[TMP3:%.*]] = bitcast <16 x float> [[A3]] to <8 x i64>
+// CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <8 x i64> [[TMP0]], <8 x i64> [[TMP1]], <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+// CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <8 x i64> [[TMP2]], <8 x i64> [[TMP3]], <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+// CHECK-NEXT:    [[SHUFFLE2_I_I:%.*]] = shufflevector <16 x i64> [[SHUFFLE_I_I]], <16 x i64> [[SHUFFLE1_I_I]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+// CHECK-NEXT:    [[TMP4:%.*]] = bitcast <32 x i64> [[SHUFFLE2_I_I]] to <64 x float>
+// CHECK-NEXT:    ret <64 x float> [[TMP4]]
 //
 v64accfloat test_concat (v16accfloat a0, v16accfloat a1, v16accfloat a2, v16accfloat a3)
 {
@@ -5208,8 +5213,11 @@ v64accfloat test_set_v64accfloat (int idx, v32accfloat b)
 // CHECK-LABEL: define dso_local inreg noundef <64 x float> @_Z11test_concatDv32_u10__accfloatS_(
 // CHECK-SAME: <32 x float> inreg noundef [[A0:%.*]], <32 x float> inreg noundef [[A1:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = shufflevector <32 x float> [[A0]], <32 x float> [[A1]], <64 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31, i32 32, i32 33, i32 34, i32 35, i32 36, i32 37, i32 38, i32 39, i32 40, i32 41, i32 42, i32 43, i32 44, i32 45, i32 46, i32 47, i32 48, i32 49, i32 50, i32 51, i32 52, i32 53, i32 54, i32 55, i32 56, i32 57, i32 58, i32 59, i32 60, i32 61, i32 62, i32 63>
-// CHECK-NEXT:    ret <64 x float> [[TMP0]]
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast <32 x float> [[A0]] to <16 x i64>
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <32 x float> [[A1]] to <16 x i64>
+// CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <16 x i64> [[TMP0]], <16 x i64> [[TMP1]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <32 x i64> [[SHUFFLE_I_I]] to <64 x float>
+// CHECK-NEXT:    ret <64 x float> [[TMP2]]
 //
 v64accfloat test_concat (v32accfloat a0, v32accfloat a1)
 {
@@ -5319,10 +5327,15 @@ v64acc32 test_set_v64acc32 (int idx, v16acc32 b)
 // CHECK-LABEL: define dso_local inreg noundef <64 x i32> @_Z11test_concatDv16_u7__acc32S_S_S_(
 // CHECK-SAME: <16 x i32> inreg noundef [[A0:%.*]], <16 x i32> inreg noundef [[A1:%.*]], <16 x i32> inreg noundef [[A2:%.*]], <16 x i32> inreg noundef [[A3:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = shufflevector <16 x i32> [[A0]], <16 x i32> [[A1]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
-// CHECK-NEXT:    [[TMP1:%.*]] = shufflevector <16 x i32> [[A2]], <16 x i32> [[A3]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
-// CHECK-NEXT:    [[TMP2:%.*]] = shufflevector <32 x i32> [[TMP0]], <32 x i32> [[TMP1]], <64 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31, i32 32, i32 33, i32 34, i32 35, i32 36, i32 37, i32 38, i32 39, i32 40, i32 41, i32 42, i32 43, i32 44, i32 45, i32 46, i32 47, i32 48, i32 49, i32 50, i32 51, i32 52, i32 53, i32 54, i32 55, i32 56, i32 57, i32 58, i32 59, i32 60, i32 61, i32 62, i32 63>
-// CHECK-NEXT:    ret <64 x i32> [[TMP2]]
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast <16 x i32> [[A0]] to <8 x i64>
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <16 x i32> [[A1]] to <8 x i64>
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <16 x i32> [[A2]] to <8 x i64>
+// CHECK-NEXT:    [[TMP3:%.*]] = bitcast <16 x i32> [[A3]] to <8 x i64>
+// CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <8 x i64> [[TMP0]], <8 x i64> [[TMP1]], <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+// CHECK-NEXT:    [[SHUFFLE1_I_I:%.*]] = shufflevector <8 x i64> [[TMP2]], <8 x i64> [[TMP3]], <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+// CHECK-NEXT:    [[SHUFFLE2_I_I:%.*]] = shufflevector <16 x i64> [[SHUFFLE_I_I]], <16 x i64> [[SHUFFLE1_I_I]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+// CHECK-NEXT:    [[TMP4:%.*]] = bitcast <32 x i64> [[SHUFFLE2_I_I]] to <64 x i32>
+// CHECK-NEXT:    ret <64 x i32> [[TMP4]]
 //
 v64acc32 test_concat (v16acc32 a0, v16acc32 a1, v16acc32 a2, v16acc32 a3)
 {
@@ -5405,8 +5418,11 @@ v64acc32 test_set_v64acc32 (int idx, v32acc32 b)
 // CHECK-LABEL: define dso_local inreg noundef <64 x i32> @_Z11test_concatDv32_u7__acc32S_(
 // CHECK-SAME: <32 x i32> inreg noundef [[A0:%.*]], <32 x i32> inreg noundef [[A1:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
-// CHECK-NEXT:    [[TMP0:%.*]] = shufflevector <32 x i32> [[A0]], <32 x i32> [[A1]], <64 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31, i32 32, i32 33, i32 34, i32 35, i32 36, i32 37, i32 38, i32 39, i32 40, i32 41, i32 42, i32 43, i32 44, i32 45, i32 46, i32 47, i32 48, i32 49, i32 50, i32 51, i32 52, i32 53, i32 54, i32 55, i32 56, i32 57, i32 58, i32 59, i32 60, i32 61, i32 62, i32 63>
-// CHECK-NEXT:    ret <64 x i32> [[TMP0]]
+// CHECK-NEXT:    [[TMP0:%.*]] = bitcast <32 x i32> [[A0]] to <16 x i64>
+// CHECK-NEXT:    [[TMP1:%.*]] = bitcast <32 x i32> [[A1]] to <16 x i64>
+// CHECK-NEXT:    [[SHUFFLE_I_I:%.*]] = shufflevector <16 x i64> [[TMP0]], <16 x i64> [[TMP1]], <32 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
+// CHECK-NEXT:    [[TMP2:%.*]] = bitcast <32 x i64> [[SHUFFLE_I_I]] to <64 x i32>
+// CHECK-NEXT:    ret <64 x i32> [[TMP2]]
 //
 v64acc32 test_concat (v32acc32 a0, v32acc32 a1)
 {
