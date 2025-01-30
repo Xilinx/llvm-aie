@@ -46,7 +46,7 @@ AIEBaseTargetLowering::AIEBaseTargetLowering(const TargetMachine &TM,
   // Arguments are 32-bit aligned on the stack
   setMinStackArgumentAlignment(getStackArgumentAlignment());
 
-  if (Subtarget.isAIE2()) {
+  if (Subtarget.isAIE2() || Subtarget.isAIE2P()) {
     MaxStoresPerMemset = 32;
     MaxStoresPerMemsetOptSize = 16;
     MaxStoresPerMemcpy = 32;
@@ -511,7 +511,11 @@ bool AIEBaseTargetLowering::isEligibleForTailCallOptimization(
 LLT AIEBaseTargetLowering::getOptimalMemOpLLT(
     const MemOp &Op, const AttributeList &FuncAttributes) const {
 
-  if (Subtarget.isAIE2()) {
+  if (Subtarget.isAIE2P()) {
+    if (AllowVecRegMemOps && Op.size() >= 64 && Op.isAligned(Align(64)))
+      return LLT::fixed_vector(16, 32);
+  }
+  if (Subtarget.isAIE2() || Subtarget.isAIE2P()) {
     if (AllowVecRegMemOps && Op.size() >= 32 && Op.isAligned(Align(32)))
       return LLT::fixed_vector(8, 32);
     if (AllowVecRegMemOps && Op.size() >= 16 && Op.isAligned(Align(16)))
