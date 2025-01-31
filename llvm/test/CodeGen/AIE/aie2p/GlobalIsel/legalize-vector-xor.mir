@@ -114,7 +114,8 @@ body:             |
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<32 x s8>) = COPY $wh4
     ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<32 x s8>) = G_IMPLICIT_DEF
     ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[COPY1]](<32 x s8>), [[DEF]](<32 x s8>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[COPY]](<32 x s8>), [[DEF]](<32 x s8>)
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(<32 x s8>) = COPY [[DEF]](<32 x s8>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<64 x s8>) = G_CONCAT_VECTORS [[COPY]](<32 x s8>), [[COPY2]](<32 x s8>)
     ; CHECK-NEXT: [[XOR:%[0-9]+]]:_(<64 x s8>) = G_XOR [[CONCAT_VECTORS]], [[CONCAT_VECTORS1]]
     ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<32 x s8>), [[UV1:%[0-9]+]]:_(<32 x s8>) = G_UNMERGE_VALUES [[XOR]](<64 x s8>)
     ; CHECK-NEXT: $wh0 = COPY [[UV]](<32 x s8>)
@@ -163,7 +164,8 @@ body:             |
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<16 x s16>) = COPY $wh4
     ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<16 x s16>) = G_IMPLICIT_DEF
     ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[COPY1]](<16 x s16>), [[DEF]](<16 x s16>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[COPY]](<16 x s16>), [[DEF]](<16 x s16>)
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(<16 x s16>) = COPY [[DEF]](<16 x s16>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[COPY]](<16 x s16>), [[COPY2]](<16 x s16>)
     ; CHECK-NEXT: [[XOR:%[0-9]+]]:_(<32 x s16>) = G_XOR [[CONCAT_VECTORS]], [[CONCAT_VECTORS1]]
     ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<16 x s16>), [[UV1:%[0-9]+]]:_(<16 x s16>) = G_UNMERGE_VALUES [[XOR]](<32 x s16>)
     ; CHECK-NEXT: $wh0 = COPY [[UV]](<16 x s16>)
@@ -213,7 +215,8 @@ body:             |
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<8 x s32>) = COPY $wh4
     ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<8 x s32>) = G_IMPLICIT_DEF
     ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[COPY1]](<8 x s32>), [[DEF]](<8 x s32>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[COPY]](<8 x s32>), [[DEF]](<8 x s32>)
+    ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(<8 x s32>) = COPY [[DEF]](<8 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[COPY]](<8 x s32>), [[COPY2]](<8 x s32>)
     ; CHECK-NEXT: [[XOR:%[0-9]+]]:_(<16 x s32>) = G_XOR [[CONCAT_VECTORS]], [[CONCAT_VECTORS1]]
     ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<8 x s32>), [[UV1:%[0-9]+]]:_(<8 x s32>) = G_UNMERGE_VALUES [[XOR]](<16 x s32>)
     ; CHECK-NEXT: $wh0 = COPY [[UV]](<8 x s32>)

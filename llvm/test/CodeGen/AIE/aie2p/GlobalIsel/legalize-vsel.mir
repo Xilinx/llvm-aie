@@ -119,7 +119,8 @@ body:             |
     ; CHECK-NEXT: [[BITCAST1:%[0-9]+]]:_(<8 x s32>) = G_BITCAST [[COPY2]](s256)
     ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<8 x s32>) = G_IMPLICIT_DEF
     ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[BITCAST]](<8 x s32>), [[DEF]](<8 x s32>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[BITCAST1]](<8 x s32>), [[DEF]](<8 x s32>)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:_(<8 x s32>) = COPY [[DEF]](<8 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[BITCAST1]](<8 x s32>), [[COPY3]](<8 x s32>)
     ; CHECK-NEXT: [[SELECT:%[0-9]+]]:_(<16 x s32>) = G_SELECT [[COPY]](s32), [[CONCAT_VECTORS]], [[CONCAT_VECTORS1]]
     ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<8 x s32>), [[UV1:%[0-9]+]]:_(<8 x s32>) = G_UNMERGE_VALUES [[SELECT]](<16 x s32>)
     ; CHECK-NEXT: [[BITCAST2:%[0-9]+]]:_(s256) = G_BITCAST [[UV]](<8 x s32>)
