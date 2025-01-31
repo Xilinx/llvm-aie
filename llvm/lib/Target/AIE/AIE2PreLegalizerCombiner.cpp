@@ -15,6 +15,8 @@
 
 #include "AIE2TargetMachine.h"
 #include "AIECombinerHelper.h"
+#include "AIELegalizerHelper.h"
+#include "MCTargetDesc/AIE2MCTargetDesc.h"
 #include "llvm/CodeGen/GlobalISel/CSEInfo.h"
 #include "llvm/CodeGen/GlobalISel/Combiner.h"
 #include "llvm/CodeGen/GlobalISel/CombinerHelper.h"
@@ -283,6 +285,18 @@ bool AIE2PreLegalizerCombinerImpl::tryCombineAll(MachineInstr &MI) const {
   }
   case TargetOpcode::G_INTRINSIC: {
     return tryToCombineIntrinsic(MI);
+  }
+  case AIE2::G_AIE_ZEXT_EXTRACT_VECTOR_ELT:
+  case AIE2::G_AIE_SEXT_EXTRACT_VECTOR_ELT: {
+    const LLT SrcVecTy = MRI.getType(MI.getOperand(1).getReg());
+    const unsigned BasicVecSize = STI.getInstrInfo()->getBasicVectorBitSize();
+    if (SrcVecTy.getSizeInBits() != BasicVecSize) {
+      LegalizerHelper Helper(*MI.getMF(), Observer, B);
+      AIELegalizerHelper AIEHelper(STI);
+      return AIEHelper.legalizeG_AIE_EXTRACT_VECTOR_ELT(Helper, MI,
+                                                        BasicVecSize);
+    }
+    break;
   }
   default:
     break;

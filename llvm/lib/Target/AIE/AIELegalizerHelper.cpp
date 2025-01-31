@@ -18,7 +18,10 @@
 #include "AIEMachineFunctionInfo.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/CodeGen/GlobalISel/GenericMachineInstrs.h"
+#include "llvm/CodeGen/GlobalISel/LegalizerHelper.h"
 #include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RuntimeLibcalls.h"
 #include "llvm/CodeGen/TargetOpcodes.h"
 #include "llvm/IR/IntrinsicsAIE2.h"
@@ -31,6 +34,18 @@ AIELegalizerHelper::AIELegalizerHelper(const AIEBaseSubtarget &ST) : ST(ST) {}
 
 const AIEBaseInstrInfo *AIELegalizerHelper::getInstrInfo() {
   return ST.getInstrInfo();
+}
+
+/// Append the result registers of G_UNMERGE_VALUES \p MI to \p Regs.
+static void getUnmergeResults(SmallVectorImpl<Register> &Regs,
+                              const MachineInstr &MI) {
+  assert(MI.getOpcode() == TargetOpcode::G_UNMERGE_VALUES);
+
+  const int StartIdx = Regs.size();
+  const int NumResults = MI.getNumOperands() - 1;
+  Regs.resize(Regs.size() + NumResults);
+  for (int I = 0; I != NumResults; ++I)
+    Regs[StartIdx + I] = MI.getOperand(I).getReg();
 }
 
 static Register emitPadUndefVector(MachineRegisterInfo &MRI,
@@ -1369,6 +1384,117 @@ bool AIELegalizerHelper::legalizeBinOp(LegalizerHelper &Helper,
   for (unsigned i = 0; i < NumberOfPadElts; ++i)
     Regs.push_back(MRI.createGenericVirtualRegister(DstTy));
   MIRBuilder.buildUnmerge(Regs, NewDstReg);
+
+  MI.eraseFromParent();
+  return true;
+}
+
+/// Clamps the source vector size of the incoming \p MI to the legal base vector
+/// size \p LegalVectorSize.
+static bool narrowAIEVectorExtractEltSrcVecToLegalSize(
+    MachineRegisterInfo &MRI, MachineIRBuilder &MIRBuilder,
+    LegalizerHelper &Helper, MachineInstr &MI, const unsigned LegalVectorSize) {
+  auto [DstReg, SrcVec] = MI.getFirst2Regs();
+  Register Idx = MI.getOperand(MI.getNumOperands() - 1).getReg();
+
+  const LLT VecTy = MRI.getType(SrcVec);
+  assert((VecTy.getSizeInBits() % LegalVectorSize == 0) &&
+         "Expected source vector to be multiple of LegalVectorSize");
+  const LLT NarrowVecTy = VecTy.divide(VecTy.getSizeInBits() / LegalVectorSize);
+
+  // If the index is a constant, we can really break this down as you would
+  // expect, and index into the target size pieces.
+  auto MaybeCst = getIConstantVRegValWithLookThrough(Idx, MRI);
+  if (MaybeCst) {
+    const int64_t IdxVal = MaybeCst->Value.getSExtValue();
+    // Avoid out of bounds indexing the pieces.
+    if (IdxVal >= VecTy.getNumElements() || IdxVal < 0) {
+      MIRBuilder.buildUndef(DstReg);
+      return true;
+    }
+
+    SmallVector<Register, 4> VecParts;
+    const auto Unmerge = MIRBuilder.buildUnmerge(NarrowVecTy, SrcVec);
+    getUnmergeResults(VecParts, *Unmerge);
+
+    const unsigned NewNumElts = NarrowVecTy.getNumElements();
+    const int64_t PartIdx = IdxVal / NewNumElts;
+    const LLT IdxTy = MRI.getType(Idx);
+    const auto NewIdx = MIRBuilder.buildConstant(IdxTy, IdxVal % NewNumElts);
+    MIRBuilder.buildInstr(MI.getOpcode(), {DstReg},
+                          {VecParts[PartIdx], NewIdx});
+    return true;
+  }
+
+  // If the index is not a constant, we need to find the sub-vector to extract
+  // from at runtime.
+  SmallVector<Register, 4> VecParts;
+  const auto Unmerge = MIRBuilder.buildUnmerge(NarrowVecTy, SrcVec);
+  getUnmergeResults(VecParts, *Unmerge);
+
+  assert(VecParts.size() >= 2 &&
+         "Expected split into at least two sub-vectors");
+
+  const unsigned NewNumElts = NarrowVecTy.getNumElements();
+  const LLT IdxTy = MRI.getType(Idx);
+  Register NewSrcVec = VecParts[VecParts.size() - 1];
+  Register AdjImm =
+      MIRBuilder.buildConstant(IdxTy, (VecParts.size() - 1) * NewNumElts)
+          .getReg(0);
+
+  for (size_t I = VecParts.size() - 1; I > 0; I--) {
+    const auto HighIdx = MIRBuilder.buildConstant(IdxTy, I * NewNumElts);
+    // Check if the Idx falls into the low or high part of the split vector.
+    const auto Cmp =
+        MIRBuilder.buildICmp(CmpInst::ICMP_SLT, LLT::scalar(1), Idx, HighIdx);
+    // Select between the low and high part of the split vector.
+    NewSrcVec =
+        MIRBuilder.buildSelect(NarrowVecTy, Cmp, VecParts[I - 1], NewSrcVec)
+            .getReg(0);
+
+    // We need to adjust the Idx to select from either low or high sub-vector
+    const auto AdjLow = MIRBuilder.buildConstant(IdxTy, (I - 1) * NewNumElts);
+    AdjImm = MIRBuilder.buildSelect(IdxTy, Cmp, AdjLow, AdjImm).getReg(0);
+  }
+
+  const auto NewIdx = MIRBuilder.buildSub(IdxTy, Idx, AdjImm);
+  MIRBuilder.buildInstr(MI.getOpcode(), {DstReg}, {NewSrcVec, NewIdx});
+  return true;
+}
+
+bool AIELegalizerHelper::legalizeG_AIE_EXTRACT_VECTOR_ELT(
+    LegalizerHelper &Helper, MachineInstr &MI,
+    const unsigned LegalVectorSize) const {
+  MachineIRBuilder &MIRBuilder = Helper.MIRBuilder;
+  MachineRegisterInfo &MRI = *MIRBuilder.getMRI();
+
+  const Register DstReg = MI.getOperand(0).getReg();
+  const Register SrcVecReg = MI.getOperand(1).getReg();
+  const LLT SrcVecTy = MRI.getType(SrcVecReg);
+  const Register IdxReg = MI.getOperand(2).getReg();
+  const unsigned SrcVecSize = SrcVecTy.getSizeInBits();
+
+  // Already legal
+  if (SrcVecSize == LegalVectorSize)
+    return true;
+
+  if (SrcVecSize < LegalVectorSize) {
+    assert((LegalVectorSize % SrcVecSize == 0) &&
+           "Expected LegalVectorSize to be a multiple of source vector size");
+    const unsigned MultiplyFactor = LegalVectorSize / SrcVecSize;
+    const LLT LegalVecTy = SrcVecTy.multiplyElements(MultiplyFactor);
+    const Register NewSrc =
+        emitPadUndefVector(MRI, MIRBuilder, LegalVecTy, SrcVecReg);
+
+    MIRBuilder.buildInstr(MI.getOpcode(), {DstReg}, {NewSrc, IdxReg});
+  } else if (SrcVecSize > LegalVectorSize && isPowerOf2_32(SrcVecSize)) {
+    if (!narrowAIEVectorExtractEltSrcVecToLegalSize(MRI, MIRBuilder, Helper, MI,
+                                                    LegalVectorSize))
+      return false;
+  } else {
+    llvm_unreachable(
+        "Illegal vector size for G_AIE_[ZS]EXT_EXTRACT_VECTOR_ELT");
+  }
 
   MI.eraseFromParent();
   return true;
