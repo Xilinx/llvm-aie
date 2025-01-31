@@ -1713,3 +1713,9 @@ Register AIE2PInstrInfo::getPackSignCReg() const { return AIE2P::packSign0; }
 Register AIE2PInstrInfo::getUnpackSignCReg() const {
   return AIE2P::unpackSign0;
 }
+
+unsigned AIE2PInstrInfo::getScalarRegSize() const { return 32; }
+
+unsigned AIE2PInstrInfo::getBasicVecRegSize() const { return 256; }
+
+unsigned AIE2PInstrInfo::getExtractSubvecNativeSrcSize() const { return 512; }

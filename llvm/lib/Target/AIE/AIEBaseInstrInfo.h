@@ -523,6 +523,23 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
     llvm_unreachable("Target didn't implement isProfitableToSplitType!");
   }
 
+  /// Get the native size of the source vector for `G_AIE_EXTRACT_SUBVECTOR`
+  /// The native source type depends on the instruction to which the
+  /// G_AIE_SUBVECTOR is mapped during instruction selection.
+  virtual unsigned getExtractSubvecNativeSrcSize() const {
+    llvm_unreachable("Target didn't implement getExtractSubvecNativeSrcSize!");
+  }
+
+  /// Get size of general purpose registers (GPR)
+  virtual unsigned getScalarRegSize() const {
+    llvm_unreachable("Target didn't implement getScalarRegSize!");
+  }
+
+  /// Get size of basic vector registers
+  virtual unsigned getBasicVecRegSize() const {
+    llvm_unreachable("Target didn't implement getVecRegSize!");
+  }
+
   /// Abstract operations to help the decoding of complex operations.
   struct AbstractOp {
     enum class OperationType : unsigned {

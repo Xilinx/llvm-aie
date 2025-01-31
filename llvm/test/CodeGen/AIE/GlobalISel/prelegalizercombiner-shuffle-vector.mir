@@ -19,11 +19,11 @@ body:             |
     ; CHECK: liveins: $wl0, $wl1
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<8 x s32>) = COPY $wl0
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<8 x s32>) = COPY $wl0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<8 x s32>) = COPY $wl1
     ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[COPY]](<8 x s32>), [[COPY1]](<8 x s32>)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<16 x s32>)
     %0:_(<8 x s32>) = COPY $wl0
-    %1:_(<8 x s32>) = COPY $wl0
+    %1:_(<8 x s32>) = COPY $wl1
     %2:_(<16 x s32>) = G_SHUFFLE_VECTOR %0(<8 x s32>), %1(<8 x s32>), shufflemask(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
     PseudoRET implicit $lr, implicit %2
 ...
@@ -373,14 +373,15 @@ body:             |
     ; CHECK-LABEL: name: shuffle_vector_to_extract_broadcast_undef
     ; CHECK: liveins: $wl0, $wl1
     ; CHECK-NEXT: {{  $}}
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<4 x s64>) = COPY $wl0
-    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<4 x s64>), [[C]](s32)
-    ; CHECK-NEXT: [[AIE_BROADCAST_VECTOR:%[0-9]+]]:_(<8 x s64>) = G_AIE_BROADCAST_VECTOR [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s32)
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_BROADCAST_VECTOR]](<8 x s64>)
-    %0:_(<4 x s64>) = COPY $wl0
-    %1:_(<4 x s64>) = COPY $wl1
-    %2:_(<8 x s64>) = G_SHUFFLE_VECTOR %0(<4 x s64>), %1(<4 x s64>), shufflemask(3, 3, -1, -1, 3, 3, 3, 3)
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<8 x s32>) = COPY $wl0
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
+    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<8 x s32>), [[C]](s32)
+    ; CHECK-NEXT: [[AIE_BROADCAST_VECTOR:%[0-9]+]]:_(<16 x s32>) = G_AIE_BROADCAST_VECTOR [[AIE_SEXT_EXTRACT_VECTOR_ELT]](s32)
+    ; CHECK-NEXT: [[AIE_UNPAD_VECTOR:%[0-9]+]]:_(<8 x s32>) = G_AIE_UNPAD_VECTOR [[AIE_BROADCAST_VECTOR]](<16 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_UNPAD_VECTOR]](<8 x s32>)
+    %0:_(<8 x s32>) = COPY $wl0
+    %1:_(<8 x s32>) = COPY $wl1
+    %2:_(<8 x s32>) = G_SHUFFLE_VECTOR %0(<8 x s32>), %1(<8 x s32>), shufflemask(2, 2, -1, -1, 2, 2, 2, 2)
     PseudoRET implicit $lr, implicit %2
 ...
 ---
@@ -401,4 +402,194 @@ body:             |
     %1:_(<4 x s64>) = COPY $wl1
     %2:_(<8 x s64>) = G_SHUFFLE_VECTOR %0(<4 x s64>), %1(<4 x s64>), shufflemask(3, 2, -1, -1, 3, 3, 3, 3)
     PseudoRET implicit $lr, implicit %2
+...
+
+# Tests for combining shuffle_vector to extract_subvector
+# Test destination vector types with native source vector type (512 bits)
+---
+name: shuffle_vector_to_extract_subvec_4xs8Dst
+tracksRegLiveness: true
+body:             |
+  bb.1:
+    liveins: $x0, $x1
+    ; CHECK-LABEL: name: shuffle_vector_to_extract_subvec_4xs8Dst
+    ; CHECK: liveins: $x0, $x1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<64 x s8>) = COPY $x0
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; CHECK-NEXT: [[AIE_EXTRACT_SUBVECTOR:%[0-9]+]]:_(<4 x s8>) = G_AIE_EXTRACT_SUBVECTOR [[COPY]](<64 x s8>), [[C]](s32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_EXTRACT_SUBVECTOR]](<4 x s8>)
+    %1:_(<64 x s8>) = COPY $x0
+    %2:_(<64 x s8>) = COPY $x1
+    %0:_(<4 x s8>) = G_SHUFFLE_VECTOR %1(<64 x s8>), %2(<64 x s8>), shufflemask(4, 5, 6, 7)
+    PseudoRET implicit $lr, implicit %0
+...
+---
+name: shuffle_vector_to_extract_subvec_2xs16Dst
+tracksRegLiveness: true
+body:             |
+  bb.1:
+    liveins: $x0, $x1
+    ; CHECK-LABEL: name: shuffle_vector_to_extract_subvec_2xs16Dst
+    ; CHECK: liveins: $x0, $x1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<32 x s16>) = COPY $x0
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[AIE_EXTRACT_SUBVECTOR:%[0-9]+]]:_(<2 x s16>) = G_AIE_EXTRACT_SUBVECTOR [[COPY]](<32 x s16>), [[C]](s32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_EXTRACT_SUBVECTOR]](<2 x s16>)
+    %1:_(<32 x s16>) = COPY $x0
+    %2:_(<32 x s16>) = COPY $x1
+    %0:_(<2 x s16>) = G_SHUFFLE_VECTOR %1(<32 x s16>), %2(<32 x s16>), shufflemask(0, 1)
+    PseudoRET implicit $lr, implicit %0
+...
+---
+name: shuffle_vector_to_extract_subvec_8xs8Dst
+tracksRegLiveness: true
+body:             |
+  bb.1:
+    liveins: $x0, $x1
+    ; CHECK-LABEL: name: shuffle_vector_to_extract_subvec_8xs8Dst
+    ; CHECK: liveins: $x0, $x1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<64 x s8>) = COPY $x0
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[AIE_EXTRACT_SUBVECTOR:%[0-9]+]]:_(<8 x s8>) = G_AIE_EXTRACT_SUBVECTOR [[COPY]](<64 x s8>), [[C]](s32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_EXTRACT_SUBVECTOR]](<8 x s8>)
+    %1:_(<64 x s8>) = COPY $x0
+    %2:_(<64 x s8>) = COPY $x1
+    %0:_(<8 x s8>) = G_SHUFFLE_VECTOR %1(<64 x s8>), %2(<64 x s8>), shufflemask(0, 1, 2, 3, 4, 5, 6, 7)
+    PseudoRET implicit $lr, implicit %0
+...
+---
+name: shuffle_vector_to_extract_subvec_4xs16Dst
+tracksRegLiveness: true
+body:             |
+  bb.1:
+    liveins: $x0, $x1
+    ; CHECK-LABEL: name: shuffle_vector_to_extract_subvec_4xs16Dst
+    ; CHECK: liveins: $x0, $x1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<32 x s16>) = COPY $x0
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; CHECK-NEXT: [[AIE_EXTRACT_SUBVECTOR:%[0-9]+]]:_(<4 x s16>) = G_AIE_EXTRACT_SUBVECTOR [[COPY]](<32 x s16>), [[C]](s32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_EXTRACT_SUBVECTOR]](<4 x s16>)
+    %1:_(<32 x s16>) = COPY $x0
+    %2:_(<32 x s16>) = COPY $x1
+    %0:_(<4 x s16>) = G_SHUFFLE_VECTOR %1(<32 x s16>), %2(<32 x s16>), shufflemask(4, 5, 6, 7)
+    PseudoRET implicit $lr, implicit %0
+...
+---
+name: shuffle_vector_to_extract_subvec_2xs32Dst
+tracksRegLiveness: true
+body:             |
+  bb.1:
+    liveins: $x0, $x1
+    ; CHECK-LABEL: name: shuffle_vector_to_extract_subvec_2xs32Dst
+    ; CHECK: liveins: $x0, $x1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s32>) = COPY $x0
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[AIE_EXTRACT_SUBVECTOR:%[0-9]+]]:_(<2 x s32>) = G_AIE_EXTRACT_SUBVECTOR [[COPY]](<16 x s32>), [[C]](s32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_EXTRACT_SUBVECTOR]](<2 x s32>)
+    %1:_(<16 x s32>) = COPY $x0
+    %2:_(<16 x s32>) = COPY $x1
+    %0:_(<2 x s32>) = G_SHUFFLE_VECTOR %1(<16 x s32>), %2(<16 x s32>), shufflemask(0, 1)
+    PseudoRET implicit $lr, implicit %0
+...
+
+# Test not native source vector types
+---
+name: shuffle_vector_to_extract_subvec_256BitSrc
+tracksRegLiveness: true
+body:             |
+  bb.1:
+    liveins: $wl0, $wl1
+    ; CHECK-LABEL: name: shuffle_vector_to_extract_subvec_256BitSrc
+    ; CHECK: liveins: $wl0, $wl1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<8 x s32>) = COPY $wl0
+    ; CHECK-NEXT: [[AIE_PAD_VECTOR_UNDEF:%[0-9]+]]:_(<16 x s32>) = G_AIE_PAD_VECTOR_UNDEF [[COPY]](<8 x s32>)
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
+    ; CHECK-NEXT: [[AIE_EXTRACT_SUBVECTOR:%[0-9]+]]:_(<2 x s32>) = G_AIE_EXTRACT_SUBVECTOR [[AIE_PAD_VECTOR_UNDEF]](<16 x s32>), [[C]](s32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_EXTRACT_SUBVECTOR]](<2 x s32>)
+    %1:_(<8 x s32>) = COPY $wl0
+    %2:_(<8 x s32>) = COPY $wl1
+    %0:_(<2 x s32>) = G_SHUFFLE_VECTOR %1(<8 x s32>), %2(<8 x s32>), shufflemask(6, 7)
+    PseudoRET implicit $lr, implicit %0
+...
+---
+name: shuffle_vector_to_extract_subvec_1024BitSrc
+tracksRegLiveness: true
+body:             |
+  bb.1:
+    liveins: $y0, $y1
+    ; CHECK-LABEL: name: shuffle_vector_to_extract_subvec_1024BitSrc
+    ; CHECK: liveins: $y0, $y1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<32 x s32>) = COPY $y0
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<16 x s32>), [[UV1:%[0-9]+]]:_(<16 x s32>) = G_UNMERGE_VALUES [[COPY]](<32 x s32>)
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[AIE_EXTRACT_SUBVECTOR:%[0-9]+]]:_(<2 x s32>) = G_AIE_EXTRACT_SUBVECTOR [[UV1]](<16 x s32>), [[C]](s32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_EXTRACT_SUBVECTOR]](<2 x s32>)
+    %1:_(<32 x s32>) = COPY $y0
+    %2:_(<32 x s32>) = COPY $y1
+    %0:_(<2 x s32>) = G_SHUFFLE_VECTOR %1(<32 x s32>), %2(<32 x s32>), shufflemask(16, 17)
+    PseudoRET implicit $lr, implicit %0
+...
+---
+name: shuffle_vector_to_extract_subvec_2048BitSrc
+tracksRegLiveness: true
+body:             |
+  bb.1:
+    liveins: $dm0, $dm1
+    ; CHECK-LABEL: name: shuffle_vector_to_extract_subvec_2048BitSrc
+    ; CHECK: liveins: $dm0, $dm1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<64 x s32>) = COPY $dm0
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<16 x s32>), [[UV1:%[0-9]+]]:_(<16 x s32>), [[UV2:%[0-9]+]]:_(<16 x s32>), [[UV3:%[0-9]+]]:_(<16 x s32>) = G_UNMERGE_VALUES [[COPY]](<64 x s32>)
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; CHECK-NEXT: [[AIE_EXTRACT_SUBVECTOR:%[0-9]+]]:_(<2 x s32>) = G_AIE_EXTRACT_SUBVECTOR [[UV]](<16 x s32>), [[C]](s32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_EXTRACT_SUBVECTOR]](<2 x s32>)
+    %1:_(<64 x s32>) = COPY $dm0
+    %2:_(<64 x s32>) = COPY $dm1
+    %0:_(<2 x s32>) = G_SHUFFLE_VECTOR %1(<64 x s32>), %2(<64 x s32>), shufflemask(0, 1)
+    PseudoRET implicit $lr, implicit %0
+...
+
+# Test undefs and invalid masks for extract_subvector
+---
+name: shuffle_vector_to_extract_subvec_with_undef
+tracksRegLiveness: true
+body:             |
+  bb.1:
+    liveins: $x0, $x1
+    ; CHECK-LABEL: name: shuffle_vector_to_extract_subvec_with_undef
+    ; CHECK: liveins: $x0, $x1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<32 x s16>) = COPY $x0
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
+    ; CHECK-NEXT: [[AIE_EXTRACT_SUBVECTOR:%[0-9]+]]:_(<4 x s16>) = G_AIE_EXTRACT_SUBVECTOR [[COPY]](<32 x s16>), [[C]](s32)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[AIE_EXTRACT_SUBVECTOR]](<4 x s16>)
+    %1:_(<32 x s16>) = COPY $x0
+    %2:_(<32 x s16>) = COPY $x1
+    %0:_(<4 x s16>) = G_SHUFFLE_VECTOR %1(<32 x s16>), %2(<32 x s16>), shufflemask(4, -1, -1, 7)
+    PseudoRET implicit $lr, implicit %0
+...
+---
+name: shuffle_vector_to_extract_subvec_invalid
+tracksRegLiveness: true
+body:             |
+  bb.1:
+    liveins: $x0, $x1
+    ; CHECK-LABEL: name: shuffle_vector_to_extract_subvec_invalid
+    ; CHECK: liveins: $x0, $x1
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<8 x s64>) = COPY $x0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(<8 x s64>) = COPY $x1
+    ; CHECK-NEXT: [[SHUF:%[0-9]+]]:_(<8 x s64>) = G_SHUFFLE_VECTOR [[COPY]](<8 x s64>), [[COPY1]], shufflemask(undef, 5, undef, 3, 4, 5, 6, 7)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[SHUF]](<8 x s64>)
+    %1:_(<8 x s64>) = COPY $x0
+    %2:_(<8 x s64>) = COPY $x1
+    %0:_(<8 x s64>) = G_SHUFFLE_VECTOR %1(<8 x s64>), %2(<8 x s64>), shufflemask(-1, 5, -1, 3, 4, 5, 6, 7)
+    PseudoRET implicit $lr, implicit %0
 ...
