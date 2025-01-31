@@ -524,22 +524,28 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
             const LLT &DstTy = Query.Types[0];
             const LLT &SrcTy = Query.Types[1];
 
-            if (!SrcTy.isVector() || !DstTy.isScalar())
-              return false;
-
             // Unmerge of sources <= 32-bit are legalized into bit arithmetic
             // below
             if (SrcTy.getSizeInBits() <= 32)
               return false;
 
-            // Unmerge results that are not vector register sized are legalized
-            // to EXTRACT_VECTOR_ELT
-            if (!isVectorRegisterSized(DstTy))
-              return false;
+            if (SrcTy.isVector() && DstTy.isScalar()) {
+              // Unmerge results that are not vector register sized are
+              // legalized to EXTRACT_VECTOR_ELT
+              if (!isVectorRegisterSized(DstTy))
+                return false;
 
-            // Split unmerges with more than two scalar results into multiple
-            // unmerges with two results
-            return SrcTy.getNumElements() > 2;
+              // Split unmerges with more than two scalar results into multiple
+              // unmerges with two results
+              return SrcTy.getNumElements() > 2;
+            }
+
+            if (SrcTy.isVector() && DstTy.isVector()) {
+              // Unmerges into 2 subvectors are legal
+              return !(2 * DstTy.getSizeInBits() == SrcTy.getSizeInBits());
+            }
+
+            return false;
           },
           [=](const LegalityQuery &Query) {
             const LLT &SrcTy = Query.Types[1];

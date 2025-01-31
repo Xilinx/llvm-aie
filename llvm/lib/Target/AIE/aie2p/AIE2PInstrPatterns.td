@@ -801,6 +801,36 @@ def : Pat<(int_aie2p_vinsert64_bf512 VEC512:$s1, eR29:$idx, eL:$s0),
 def : Pat<(int_aie2p_vinsert32_accfloat ACC512:$s1, eR29:$idx, eR:$s0),
            (COPY_TO_REGCLASS (VINSERT_32_mR29_insert (COPY_TO_REGCLASS ACC512:$s1, VEC512), eR29:$idx, eR:$s0), ACC512)>;
 
+// VEXTRACT
+def extract_subvec_node : SDNode<"AIE2P::G_AIE_EXTRACT_SUBVECTOR", SDTypeProfile<1, 2, []>>;
+def : GINodeEquiv<G_AIE_EXTRACT_SUBVECTOR , extract_subvec_node>;
+// G_AIE_EXTRACT_SUBVECTOR extracts only 32-bit or 64-bit subvector.
+def : Pat<(v4i8(extract_subvec_node(v64i8 VEC512:$s0), (i32 c6u:$idx))), 
+          (VEXTRACT_32_vec_extract_imm_vaddSign1 VEC512:$s0, c6u:$idx)>;
+def : Pat<(v8i8(extract_subvec_node(v64i8 VEC512:$s0), (i32 c6u:$idx))), 
+          (VEXTRACT_64_vec_extract_imm_vaddSign1 VEC512:$s0, c6u:$idx)>;
+def : Pat<(v2i16(extract_subvec_node(v32i16 VEC512:$s0), (i32 c6u:$idx))), 
+          (VEXTRACT_32_vec_extract_imm_vaddSign1 VEC512:$s0, c6u:$idx)>;
+def : Pat<(v4i16(extract_subvec_node(v32i16 VEC512:$s0), (i32 c6u:$idx))), 
+          (VEXTRACT_64_vec_extract_imm_vaddSign1 VEC512:$s0, c6u:$idx)>;
+def : Pat<(v2i32(extract_subvec_node(v16i32 VEC512:$s0), (i32 c6u:$idx))), 
+          (VEXTRACT_64_vec_extract_imm_vaddSign1 VEC512:$s0, c6u:$idx)>;
+def : Pat<(v2i32(extract_subvec_node(v8i64 VEC512:$s0), (i32 c6u:$idx))), 
+          (VEXTRACT_64_vec_extract_imm_vaddSign1 VEC512:$s0, c6u:$idx)>;
+
+def : Pat<(v4i8(extract_subvec_node(v64i8 VEC512:$s0), (i32 eRS4:$idx))), 
+          (VEXTRACT_32_vec_extract_r_vaddSign1 VEC512:$s0, eRS4:$idx)>;
+def : Pat<(v8i8(extract_subvec_node(v64i8 VEC512:$s0), (i32 eRS4:$idx))), 
+          (VEXTRACT_64_vec_extract_r_vaddSign1 VEC512:$s0, eRS4:$idx)>;
+def : Pat<(v2i16(extract_subvec_node(v32i16 VEC512:$s0), (i32 eRS4:$idx))), 
+          (VEXTRACT_32_vec_extract_r_vaddSign1 VEC512:$s0, eRS4:$idx)>;
+def : Pat<(v4i16(extract_subvec_node(v32i16 VEC512:$s0), (i32 eRS4:$idx))), 
+          (VEXTRACT_64_vec_extract_r_vaddSign1 VEC512:$s0, eRS4:$idx)>;
+def : Pat<(v2i32(extract_subvec_node(v16i32 VEC512:$s0), (i32 eRS4:$idx))), 
+          (VEXTRACT_64_vec_extract_r_vaddSign1 VEC512:$s0, eRS4:$idx)>;
+def : Pat<(v2i32(extract_subvec_node(v8i64 VEC512:$s0), (i32 eRS4:$idx))), 
+          (VEXTRACT_64_vec_extract_r_vaddSign1 VEC512:$s0, eRS4:$idx)>;
+
 // VBCST
 def : Pat<(int_aie2p_vbroadcast32_bf512 eR:$s0), (VBCST_32 eR:$s0)>;
 def : Pat<(int_aie2p_vbroadcast64_bf512 eL:$s0), (VBCST_64 eL:$s0)>;
