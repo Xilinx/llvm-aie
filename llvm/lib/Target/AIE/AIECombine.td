@@ -88,6 +88,12 @@ def combine_shuffle_to_vextbcst : GICombineRule<
   [{ return matchShuffleToExtractBroadcast(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
   (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
 
+def combine_vector_shuffle_extract_subvec : GICombineRule<
+  (defs root:$root, build_fn_matchinfo:$matchinfo),
+  (match (wip_match_opcode G_SHUFFLE_VECTOR): $root,
+         [{ return matchShuffleToExtractSubvec(*${root}, MRI, (const AIEBaseInstrInfo &)B.getTII(), ${matchinfo}); }]),
+  (apply [{ Helper.applyBuildFn(*${root}, ${matchinfo}); }])>;
+
 def AIE2PreLegalizerCombiner
     : GICombiner<"AIE2PreLegalizerCombinerImpl", [ combine_unpad_vector, combine_pad_vector,
                                                                  all_combines, combine_S20NarrowingOpt,
@@ -99,6 +105,7 @@ def AIE2PreLegalizerCombiner
 
 def AIE2PPreLegalizerCombiner
     : GICombiner<"AIE2PPreLegalizerCombinerImpl", [ combine_unpad_vector, combine_pad_vector,
+                                                                 combine_vector_shuffle_extract_subvec,
                                                                  all_combines, combine_S20NarrowingOpt,
                                                                  combine_globalval_offset,
                                                                  combine_extract_vector_elt_and_zsa_ext,

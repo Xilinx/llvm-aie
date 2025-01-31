@@ -67,6 +67,11 @@ public:
   bool isDelayedSchedBarrier(const MachineInstr &MI) const override;
   bool isSchedBarrier(const MachineInstr &MI) const override;
 
+  unsigned getScalarRegSize() const override;
+  unsigned getBasicVecRegSize() const override;
+
+  unsigned getExtractSubvecNativeSrcSize() const override;
+
   virtual unsigned
   getNumReservedDelaySlots(const MachineInstr &MI) const override;
 

@@ -1758,6 +1758,10 @@ bool llvm::matchShuffleToBroadcast(MachineInstr &MI, MachineRegisterInfo &MRI,
   }
   const unsigned NumDstElems = DstTy.getNumElements();
   const unsigned NumSrcElems = Src1Ty.getNumElements();
+  if (NumDstElems < NumSrcElems) {
+    return false;
+  }
+
   // Create the mask that covers all elements of Src1
   auto Src1Mask = llvm::createSequentialMask(0, NumSrcElems, 0);
 
@@ -1878,6 +1882,152 @@ bool llvm::matchShuffleToExtractBroadcast(MachineInstr &MI,
     auto Cst = B.buildConstant(LLT::scalar(32), UniqOpIdx.value());
     auto Extr = B.buildInstr(ExtractOpc, {LLT::scalar(32)}, {SrcVecReg, Cst});
     buildBroadcastVector(B, MRI, Extr.getReg(0), DstReg);
+  };
+  return true;
+}
+
+/// A sequential mask with \p StartValue and \p NumElems is generated. If \p
+/// Mask is equivalent to the generated sequential mask, the method returns
+/// true. Otherwise, false.
+static bool checkSequentialMask(const ArrayRef<int> Mask, unsigned StartValue,
+                                unsigned NumElems) {
+  if (Mask.size() != NumElems)
+    return false;
+
+  auto SeqMask = createSequentialMask(StartValue, NumElems, 0);
+
+  for (unsigned I = 0; I < NumElems; ++I) {
+    if (Mask[I] != -1 && Mask[I] != SeqMask[I])
+      return false;
+  }
+
+  return true;
+}
+
+/// Match something like this:
+///  %1:_(<16 x s16>) = COPY $wl0
+///  %2:_(<16 x s16>) = COPY $wl1
+///  %0:_(<4 x s16>) = G_SHUFFLE_VECTOR %1(<16 x s16>), %2(<16 x s16>),
+///  shufflemask(4, 5, 6, 7)
+
+/// To convert to:
+/// %1:_(<16 x s16>) = COPY $wl0
+/// %2:_(s32) = G_CONSTANT i32 1
+/// %3:_(<4 x s16>) = G_AIE_EXTRACT_SUBVECTOR %1(<16 x s16>), %2(s32)
+bool llvm::matchShuffleToExtractSubvec(MachineInstr &MI,
+                                       MachineRegisterInfo &MRI,
+                                       const AIEBaseInstrInfo &TII,
+                                       BuildFnTy &MatchInfo) {
+  assert(MI.getOpcode() == TargetOpcode::G_SHUFFLE_VECTOR);
+
+  const unsigned GPRSize = TII.getScalarRegSize();
+  const unsigned VecRegSize = TII.getBasicVecRegSize();
+  const unsigned ExtractSubvecNativeSrcSize =
+      TII.getExtractSubvecNativeSrcSize();
+
+  const Register DstReg = MI.getOperand(0).getReg();
+  const Register Src1Reg = MI.getOperand(1).getReg();
+  const ArrayRef<int> Mask = MI.getOperand(3).getShuffleMask();
+
+  const LLT DstTy = MRI.getType(DstReg);
+  const LLT Src1Ty = MRI.getType(Src1Reg);
+  const unsigned Src1TySize = Src1Ty.getSizeInBits();
+
+  if (!DstTy.isVector() || !Src1Ty.isVector() || Src1TySize < GPRSize ||
+      (DstTy.getSizeInBits() != GPRSize &&
+       DstTy.getSizeInBits() != 2 * GPRSize))
+    return false;
+
+  // Currently, we cannot concat vectors of the size less than vector register
+  // size.
+  if (Src1TySize < VecRegSize)
+    return false;
+
+  //  This should be handled by a separate combine that copies Src1Reg to
+  //  DstReg.
+  if (Src1TySize == DstTy.getSizeInBits())
+    return false;
+
+  const unsigned NumDstElems = DstTy.getNumElements();
+  const unsigned NumSrc1Elems = Src1Ty.getNumElements();
+  const unsigned NumSubVectors = NumSrc1Elems / NumDstElems;
+
+  // Not an extract pattern
+  if (NumSrc1Elems < NumDstElems)
+    return false;
+
+  // Unlikely to select into a subregister copy
+  if (NumSrc1Elems % NumDstElems != 0)
+    return false;
+
+  auto GetSubIdx = [=, &Mask]() -> std::optional<unsigned> {
+    for (unsigned SubVecIdx = 0; SubVecIdx < NumSubVectors; ++SubVecIdx) {
+      if (checkSequentialMask(Mask, SubVecIdx * NumDstElems, NumDstElems)) {
+        return SubVecIdx;
+      }
+    }
+
+    return std::nullopt;
+  };
+
+  std::optional<unsigned> SubIdx = GetSubIdx();
+
+  // Not an extract pattern
+  if (!SubIdx)
+    return false;
+
+  const unsigned Opc = TII.getGenericExtractSubvectorOpcode();
+
+  // Natively supported source vector type
+  if (Src1TySize == ExtractSubvecNativeSrcSize) {
+    MatchInfo = [=](MachineIRBuilder &B) {
+      auto Cst = B.buildConstant(LLT::scalar(GPRSize), SubIdx.value());
+      B.buildInstr(Opc, {DstReg}, {Src1Reg, Cst});
+    };
+
+    return true;
+  }
+
+  // Source vectors of a non-native size are converted to vectors of the native
+  // size
+  const unsigned Src1ElmtSize = Src1Ty.getElementType().getSizeInBits();
+  const unsigned Src1Vec512BitLen = ExtractSubvecNativeSrcSize / Src1ElmtSize;
+  const LLT NewSrc1Ty = LLT::fixed_vector(Src1Vec512BitLen, Src1ElmtSize);
+  const Register NewSrcReg = MRI.createGenericVirtualRegister(NewSrc1Ty);
+
+  if (Src1TySize < ExtractSubvecNativeSrcSize) {
+    MatchInfo = [=](MachineIRBuilder &B) {
+      const Register ImplicitDef = B.buildUndef(Src1Ty).getReg(0);
+      SmallVector<Register, 15> ConcatOps = {Src1Reg};
+      unsigned NumImplicitDef = ExtractSubvecNativeSrcSize / Src1TySize - 1;
+      while (NumImplicitDef-- > 0) {
+        ConcatOps.push_back(ImplicitDef);
+      }
+      B.buildConcatVectors({NewSrcReg}, ConcatOps);
+      auto Cst = B.buildConstant(LLT::scalar(GPRSize), SubIdx.value());
+      B.buildInstr(Opc, {DstReg}, {NewSrcReg, Cst});
+    };
+    return true;
+  }
+
+  // Source vectors with the size greater than the native source vector size
+  MatchInfo = [=, &MRI](MachineIRBuilder &B) {
+    const unsigned SizeCoefficient = Src1TySize / ExtractSubvecNativeSrcSize;
+    const unsigned NumSubVectorsNativeSize = NumSubVectors / SizeCoefficient;
+    unsigned NewSubIdx = SubIdx.value() % NumSubVectorsNativeSize;
+
+    SmallVector<Register, 4> SubRegs;
+    unsigned NewSrcRegPosition = SubIdx.value() / NumSubVectorsNativeSize;
+    for (unsigned I = 0; I < SizeCoefficient; ++I) {
+      if (I == NewSrcRegPosition)
+        SubRegs.push_back(NewSrcReg);
+      else
+        SubRegs.push_back(MRI.createGenericVirtualRegister(NewSrc1Ty));
+    }
+
+    B.buildUnmerge(SubRegs, Src1Reg);
+    auto Cst = B.buildConstant(LLT::scalar(GPRSize), NewSubIdx);
+    B.buildInstr(Opc, {DstReg}, {NewSrcReg, Cst});
   };
   return true;
 }

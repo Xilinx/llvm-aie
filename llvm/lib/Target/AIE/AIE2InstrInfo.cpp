@@ -1620,3 +1620,9 @@ Register AIE2InstrInfo::getMSStatusReg() const { return AIE2::srMS0; }
 Register AIE2InstrInfo::getPackSignCReg() const { return AIE2::crPackSign; }
 
 Register AIE2InstrInfo::getUnpackSignCReg() const { return AIE2::crUnpackSign; }
+
+unsigned AIE2InstrInfo::getScalarRegSize() const { return 32; }
+
+unsigned AIE2InstrInfo::getBasicVecRegSize() const { return 256; }
+
+unsigned AIE2InstrInfo::getExtractSubvecNativeSrcSize() const { return 512; }

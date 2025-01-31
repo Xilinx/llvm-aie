@@ -207,6 +207,10 @@ bool matchOffsetLoadStoreSharePtrAdd(MachineInstr &MI, MachineRegisterInfo &MRI,
 void applyOffsetLoadStoreSharePtrAdd(MachineInstr &MI, MachineRegisterInfo &MRI,
                                      MachineIRBuilder &B, Register &PtrAddReg);
 
+bool matchShuffleToExtractSubvec(MachineInstr &MI, MachineRegisterInfo &MRI,
+                                 const AIEBaseInstrInfo &TII,
+                                 BuildFnTy &MatchInfo);
+
 } // namespace llvm
 
 #endif
