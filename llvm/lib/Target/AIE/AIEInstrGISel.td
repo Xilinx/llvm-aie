@@ -126,3 +126,10 @@ def G_AIE_VSHIFT_RIGHT : AIEGenericInstruction {
   let InOperandList = (ins type0:$src1, type0:$src2, type1:$shift_amt);
   let hasSideEffects = false;
 }
+
+// Extract 32-bit or 64-bit subvector. The native source type1 is 512 bits. 
+def G_AIE_EXTRACT_SUBVECTOR : AIEGenericInstruction {
+  let OutOperandList = (outs type0:$dst);
+  let InOperandList = (ins type1:$src, type2:$idx);
+  let hasSideEffects = false;
+}
