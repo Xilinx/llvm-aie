@@ -128,3 +128,35 @@ body:             |
     %1:_(<16 x s8>), %2:_(<16 x s8>) = G_UNMERGE_VALUES %0:_(<32 x s8>)
     PseudoRET implicit $lr, implicit %1, implicit %2
 ...
+---
+name:           test__4DstVectors
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test__4DstVectors
+    ; CHECK: [[DEF:%[0-9]+]]:_(<32 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<16 x s32>), [[UV1:%[0-9]+]]:_(<16 x s32>) = G_UNMERGE_VALUES [[DEF]](<32 x s32>)
+    ; CHECK-NEXT: [[UV2:%[0-9]+]]:_(<8 x s32>), [[UV3:%[0-9]+]]:_(<8 x s32>) = G_UNMERGE_VALUES [[UV]](<16 x s32>)
+    ; CHECK-NEXT: [[UV4:%[0-9]+]]:_(<8 x s32>), [[UV5:%[0-9]+]]:_(<8 x s32>) = G_UNMERGE_VALUES [[UV1]](<16 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[UV2]](<8 x s32>), implicit [[UV3]](<8 x s32>), implicit [[UV4]](<8 x s32>), implicit [[UV5]](<8 x s32>)
+    %0:_(<32 x s32>) = G_IMPLICIT_DEF
+    %1:_(<8 x s32>), %2:_(<8 x s32>), %3:_(<8 x s32>), %4:_(<8 x s32>) = G_UNMERGE_VALUES %0:_(<32 x s32>)
+    PseudoRET implicit $lr, implicit %1, implicit %2, implicit %3, implicit %4
+...
+---
+name:           test__8DstVectors
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test__8DstVectors
+    ; CHECK: [[DEF:%[0-9]+]]:_(<64 x s32>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<32 x s32>), [[UV1:%[0-9]+]]:_(<32 x s32>) = G_UNMERGE_VALUES [[DEF]](<64 x s32>)
+    ; CHECK-NEXT: [[UV2:%[0-9]+]]:_(<16 x s32>), [[UV3:%[0-9]+]]:_(<16 x s32>) = G_UNMERGE_VALUES [[UV]](<32 x s32>)
+    ; CHECK-NEXT: [[UV4:%[0-9]+]]:_(<8 x s32>), [[UV5:%[0-9]+]]:_(<8 x s32>) = G_UNMERGE_VALUES [[UV2]](<16 x s32>)
+    ; CHECK-NEXT: [[UV6:%[0-9]+]]:_(<8 x s32>), [[UV7:%[0-9]+]]:_(<8 x s32>) = G_UNMERGE_VALUES [[UV3]](<16 x s32>)
+    ; CHECK-NEXT: [[UV8:%[0-9]+]]:_(<16 x s32>), [[UV9:%[0-9]+]]:_(<16 x s32>) = G_UNMERGE_VALUES [[UV1]](<32 x s32>)
+    ; CHECK-NEXT: [[UV10:%[0-9]+]]:_(<8 x s32>), [[UV11:%[0-9]+]]:_(<8 x s32>) = G_UNMERGE_VALUES [[UV8]](<16 x s32>)
+    ; CHECK-NEXT: [[UV12:%[0-9]+]]:_(<8 x s32>), [[UV13:%[0-9]+]]:_(<8 x s32>) = G_UNMERGE_VALUES [[UV9]](<16 x s32>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[UV4]](<8 x s32>), implicit [[UV5]](<8 x s32>), implicit [[UV6]](<8 x s32>), implicit [[UV7]](<8 x s32>), implicit [[UV10]](<8 x s32>), implicit [[UV11]](<8 x s32>), implicit [[UV12]](<8 x s32>), implicit [[UV13]](<8 x s32>)
+    %0:_(<64 x s32>) = G_IMPLICIT_DEF
+    %1:_(<8 x s32>), %2:_(<8 x s32>), %3:_(<8 x s32>), %4:_(<8 x s32>), %5:_(<8 x s32>), %6:_(<8 x s32>), %7:_(<8 x s32>), %8:_(<8 x s32>) = G_UNMERGE_VALUES %0:_(<64 x s32>)
+    PseudoRET implicit $lr, implicit %1, implicit %2, implicit %3, implicit %4, implicit %5, implicit %6, implicit %7, implicit %8
+...
