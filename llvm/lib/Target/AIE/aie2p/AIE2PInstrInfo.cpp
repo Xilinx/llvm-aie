@@ -1682,6 +1682,10 @@ unsigned AIE2PInstrInfo::getGenericVShiftOpcode() const {
   return AIE2P::G_AIE_VSHIFT_RIGHT;
 }
 
+unsigned AIE2PInstrInfo::getGenericExtractSubvectorOpcode() const {
+  return AIE2P::G_AIE_EXTRACT_SUBVECTOR;
+}
+
 Register AIE2PInstrInfo::getSSStatusReg() const { return AIE2P::srSS0; }
 
 Register AIE2PInstrInfo::getMSStatusReg() const { return AIE2P::srMS0; }
