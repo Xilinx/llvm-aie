@@ -4,7 +4,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2023-2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2023-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 //
@@ -1091,6 +1091,15 @@ def : PatInaccessibleMem<(int_aie2_v16bf16_to_v16i32 VEC256:$src, mSs:$shft),
 // VCLR_vclr_BF
 def : PatInaccessibleMem<(int_aie2_clr16f_conf),
           (VCLR_vclr_BF)>;
+
+// AIE does not have a native xor instruction for vector operands.
+// Res = A xor B --> Res = AB' || A'B
+foreach Ty = [v64i8, v32i16, v16i32] in {
+def : Pat<(xor Ty:$src1, Ty:$src2),
+          (VBOR
+            (VBAND (VBNEG_LTZ_S32 Ty:$src1), Ty:$src2),
+            (VBAND (VBNEG_LTZ_S32 Ty:$src2), Ty:$src1))>;
+}
 
 // DIVS
 def : Pat<(int_aie2_divs eR31:$sd_in, eR:$src0, eR:$src1),
