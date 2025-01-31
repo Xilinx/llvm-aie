@@ -1204,11 +1204,14 @@ bool AIELegalizerHelper::legalizeG_FADDSUB(LegalizerHelper &Helper,
           .addUse(FPRes)
           .getReg(0);
 
+  auto Pad512 =
+      emitPadUndefVector(MRI, MIRBuilder, V16BF16.multiplyElements(2), Conv);
+
   const Register ExtEltDstReg = MRI.createGenericVirtualRegister(S32);
   const Register ExtDstReg = MRI.createGenericVirtualRegister(S32);
   const unsigned ExtractEltOpc =
       ST.getInstrInfo()->getGenericExtractVectorEltOpcode(/*SignExt*/ true);
-  MIRBuilder.buildInstr(ExtractEltOpc, {ExtEltDstReg}, {Conv, IdxReg});
+  MIRBuilder.buildInstr(ExtractEltOpc, {ExtEltDstReg}, {Pad512, IdxReg});
   MIRBuilder.buildAssertInstr(TargetOpcode::G_ASSERT_SEXT, ExtDstReg,
                               ExtEltDstReg, 16);
   MIRBuilder.buildTrunc(DstReg, ExtDstReg);
