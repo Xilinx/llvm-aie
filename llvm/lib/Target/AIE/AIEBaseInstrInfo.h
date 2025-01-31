@@ -482,6 +482,13 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
   bool verifyInstruction(const MachineInstr &MI,
                          StringRef &ErrInfo) const override;
 
+  /// Returns whether the function that contains \p MI has been
+  /// legalized
+  static bool isLegalized(const MachineInstr &MI) {
+    return MI.getParent()->getParent()->getProperties().hasProperty(
+        MachineFunctionProperties::Property::Legalized);
+  }
+
   bool canHoistCheapInst(const MachineInstr &MI) const override;
 
   static bool regClassMatches(const TargetRegisterClass &TRC,

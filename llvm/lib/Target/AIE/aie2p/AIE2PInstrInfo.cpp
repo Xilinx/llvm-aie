@@ -167,6 +167,12 @@ bool AIE2PInstrInfo::verifyGenericInstruction(const MachineInstr &MI,
   switch (MI.getOpcode()) {
   case AIE2P::G_AIE_ZEXT_EXTRACT_VECTOR_ELT:
   case AIE2P::G_AIE_SEXT_EXTRACT_VECTOR_ELT:
+    if (MRI.getType(MI.getOperand(1).getReg()).getSizeInBits() != 512) {
+      if (isLegalized(MI)) {
+        ErrInfo = "Operation is only legal for 512-bit vector sources";
+        return false;
+      }
+    }
     ErrInfo = "Expected 32/64bit scalar destination";
     return MRI.getType(MI.getOperand(0).getReg()) == LLT::scalar(32) ||
            MRI.getType(MI.getOperand(0).getReg()) == LLT::scalar(64);
