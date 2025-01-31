@@ -301,7 +301,8 @@ body:             |
     ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<8 x s32>) = G_IMPLICIT_DEF
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(<8 x s32>) = COPY [[DEF1]](<8 x s32>)
     ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[BITCAST]](<8 x s32>), [[COPY2]](<8 x s32>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[BITCAST1]](<8 x s32>), [[COPY2]](<8 x s32>)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:_(<8 x s32>) = COPY [[DEF1]](<8 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[BITCAST1]](<8 x s32>), [[COPY3]](<8 x s32>)
     ; CHECK-NEXT: [[SELECT:%[0-9]+]]:_(<16 x s32>) = G_SELECT [[ICMP]](s32), [[CONCAT_VECTORS]], [[CONCAT_VECTORS1]]
     ; CHECK-NEXT: [[UV2:%[0-9]+]]:_(<8 x s32>), [[UV3:%[0-9]+]]:_(<8 x s32>) = G_UNMERGE_VALUES [[SELECT]](<16 x s32>)
     ; CHECK-NEXT: [[BITCAST2:%[0-9]+]]:_(s256) = G_BITCAST [[UV2]](<8 x s32>)
@@ -310,7 +311,8 @@ body:             |
     ; CHECK-NEXT: [[BITCAST3:%[0-9]+]]:_(<8 x s32>) = G_BITCAST [[UV]](s256)
     ; CHECK-NEXT: [[BITCAST4:%[0-9]+]]:_(<8 x s32>) = G_BITCAST [[BITCAST2]](s256)
     ; CHECK-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[BITCAST3]](<8 x s32>), [[DEF1]](<8 x s32>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS3:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[BITCAST4]](<8 x s32>), [[DEF1]](<8 x s32>)
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:_(<8 x s32>) = COPY [[DEF1]](<8 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS3:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[BITCAST4]](<8 x s32>), [[COPY4]](<8 x s32>)
     ; CHECK-NEXT: [[SELECT1:%[0-9]+]]:_(<16 x s32>) = G_SELECT [[ICMP1]](s32), [[CONCAT_VECTORS2]], [[CONCAT_VECTORS3]]
     ; CHECK-NEXT: [[UV4:%[0-9]+]]:_(<8 x s32>), [[UV5:%[0-9]+]]:_(<8 x s32>) = G_UNMERGE_VALUES [[SELECT1]](<16 x s32>)
     ; CHECK-NEXT: [[BITCAST5:%[0-9]+]]:_(s256) = G_BITCAST [[UV4]](<8 x s32>)
@@ -412,7 +414,8 @@ body:             |
     ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<8 x s32>) = G_IMPLICIT_DEF
     ; CHECK-NEXT: [[COPY2:%[0-9]+]]:_(<8 x s32>) = COPY [[DEF1]](<8 x s32>)
     ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[BITCAST]](<8 x s32>), [[COPY2]](<8 x s32>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[BITCAST1]](<8 x s32>), [[COPY2]](<8 x s32>)
+    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:_(<8 x s32>) = COPY [[DEF1]](<8 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[BITCAST1]](<8 x s32>), [[COPY3]](<8 x s32>)
     ; CHECK-NEXT: [[SELECT:%[0-9]+]]:_(<16 x s32>) = G_SELECT [[ICMP]](s32), [[CONCAT_VECTORS]], [[CONCAT_VECTORS1]]
     ; CHECK-NEXT: [[UV6:%[0-9]+]]:_(<8 x s32>), [[UV7:%[0-9]+]]:_(<8 x s32>) = G_UNMERGE_VALUES [[SELECT]](<16 x s32>)
     ; CHECK-NEXT: [[BITCAST2:%[0-9]+]]:_(s256) = G_BITCAST [[UV6]](<8 x s32>)
@@ -420,9 +423,10 @@ body:             |
     ; CHECK-NEXT: [[ICMP1:%[0-9]+]]:_(s32) = G_ICMP intpred(eq), [[C1]](s32), [[COPY1]]
     ; CHECK-NEXT: [[BITCAST3:%[0-9]+]]:_(<8 x s32>) = G_BITCAST [[UV4]](s256)
     ; CHECK-NEXT: [[BITCAST4:%[0-9]+]]:_(<8 x s32>) = G_BITCAST [[BITCAST2]](s256)
-    ; CHECK-NEXT: [[COPY3:%[0-9]+]]:_(<8 x s32>) = COPY [[DEF1]](<8 x s32>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[BITCAST3]](<8 x s32>), [[COPY3]](<8 x s32>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS3:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[BITCAST4]](<8 x s32>), [[COPY3]](<8 x s32>)
+    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:_(<8 x s32>) = COPY [[DEF1]](<8 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS2:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[BITCAST3]](<8 x s32>), [[COPY4]](<8 x s32>)
+    ; CHECK-NEXT: [[COPY5:%[0-9]+]]:_(<8 x s32>) = COPY [[DEF1]](<8 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS3:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[BITCAST4]](<8 x s32>), [[COPY5]](<8 x s32>)
     ; CHECK-NEXT: [[SELECT1:%[0-9]+]]:_(<16 x s32>) = G_SELECT [[ICMP1]](s32), [[CONCAT_VECTORS2]], [[CONCAT_VECTORS3]]
     ; CHECK-NEXT: [[UV8:%[0-9]+]]:_(<8 x s32>), [[UV9:%[0-9]+]]:_(<8 x s32>) = G_UNMERGE_VALUES [[SELECT1]](<16 x s32>)
     ; CHECK-NEXT: [[BITCAST5:%[0-9]+]]:_(s256) = G_BITCAST [[UV8]](<8 x s32>)
@@ -430,9 +434,10 @@ body:             |
     ; CHECK-NEXT: [[ICMP2:%[0-9]+]]:_(s32) = G_ICMP intpred(eq), [[C2]](s32), [[COPY1]]
     ; CHECK-NEXT: [[BITCAST6:%[0-9]+]]:_(<8 x s32>) = G_BITCAST [[UV3]](s256)
     ; CHECK-NEXT: [[BITCAST7:%[0-9]+]]:_(<8 x s32>) = G_BITCAST [[BITCAST5]](s256)
-    ; CHECK-NEXT: [[COPY4:%[0-9]+]]:_(<8 x s32>) = COPY [[DEF1]](<8 x s32>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS4:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[BITCAST6]](<8 x s32>), [[COPY4]](<8 x s32>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS5:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[BITCAST7]](<8 x s32>), [[COPY4]](<8 x s32>)
+    ; CHECK-NEXT: [[COPY6:%[0-9]+]]:_(<8 x s32>) = COPY [[DEF1]](<8 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS4:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[BITCAST6]](<8 x s32>), [[COPY6]](<8 x s32>)
+    ; CHECK-NEXT: [[COPY7:%[0-9]+]]:_(<8 x s32>) = COPY [[DEF1]](<8 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS5:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[BITCAST7]](<8 x s32>), [[COPY7]](<8 x s32>)
     ; CHECK-NEXT: [[SELECT2:%[0-9]+]]:_(<16 x s32>) = G_SELECT [[ICMP2]](s32), [[CONCAT_VECTORS4]], [[CONCAT_VECTORS5]]
     ; CHECK-NEXT: [[UV10:%[0-9]+]]:_(<8 x s32>), [[UV11:%[0-9]+]]:_(<8 x s32>) = G_UNMERGE_VALUES [[SELECT2]](<16 x s32>)
     ; CHECK-NEXT: [[BITCAST8:%[0-9]+]]:_(s256) = G_BITCAST [[UV10]](<8 x s32>)
@@ -441,7 +446,8 @@ body:             |
     ; CHECK-NEXT: [[BITCAST9:%[0-9]+]]:_(<8 x s32>) = G_BITCAST [[UV2]](s256)
     ; CHECK-NEXT: [[BITCAST10:%[0-9]+]]:_(<8 x s32>) = G_BITCAST [[BITCAST8]](s256)
     ; CHECK-NEXT: [[CONCAT_VECTORS6:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[BITCAST9]](<8 x s32>), [[DEF1]](<8 x s32>)
-    ; CHECK-NEXT: [[CONCAT_VECTORS7:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[BITCAST10]](<8 x s32>), [[DEF1]](<8 x s32>)
+    ; CHECK-NEXT: [[COPY8:%[0-9]+]]:_(<8 x s32>) = COPY [[DEF1]](<8 x s32>)
+    ; CHECK-NEXT: [[CONCAT_VECTORS7:%[0-9]+]]:_(<16 x s32>) = G_CONCAT_VECTORS [[BITCAST10]](<8 x s32>), [[COPY8]](<8 x s32>)
     ; CHECK-NEXT: [[SELECT3:%[0-9]+]]:_(<16 x s32>) = G_SELECT [[ICMP3]](s32), [[CONCAT_VECTORS6]], [[CONCAT_VECTORS7]]
     ; CHECK-NEXT: [[UV12:%[0-9]+]]:_(<8 x s32>), [[UV13:%[0-9]+]]:_(<8 x s32>) = G_UNMERGE_VALUES [[SELECT3]](<16 x s32>)
     ; CHECK-NEXT: [[BITCAST11:%[0-9]+]]:_(s256) = G_BITCAST [[UV12]](<8 x s32>)

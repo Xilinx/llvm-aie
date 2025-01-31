@@ -33,6 +33,28 @@ const AIEBaseInstrInfo *AIELegalizerHelper::getInstrInfo() {
   return ST.getInstrInfo();
 }
 
+static Register emitPadUndefVector(MachineRegisterInfo &MRI,
+                                   MachineIRBuilder &MIRBuilder,
+                                   const LLT WideTy, Register SrcReg) {
+
+  const LLT OrigTy = MRI.getType(SrcReg);
+  assert(WideTy.getSizeInBits() % OrigTy.getSizeInBits() == 0 &&
+         "Expected to pad to a multiple of the src type");
+  const unsigned NumPadElts =
+      WideTy.getSizeInBits() / OrigTy.getSizeInBits() - 1;
+
+  const Register UndefReg = MRI.createGenericVirtualRegister(OrigTy);
+  MIRBuilder.buildUndef(UndefReg);
+
+  SmallVector<Register, 4> Regs;
+  Regs.push_back(SrcReg);
+  for (unsigned I = 0; I < NumPadElts; I++)
+    Regs.push_back(UndefReg);
+  const Register NewSrcReg = MRI.createGenericVirtualRegister(WideTy);
+  MIRBuilder.buildMergeLikeInstr(NewSrcReg, Regs);
+  return NewSrcReg;
+}
+
 bool AIELegalizerHelper::pack32BitVector(LegalizerHelper &Helper,
                                          MachineInstr &MI,
                                          Register SourceReg) const {
@@ -1211,27 +1233,17 @@ bool AIELegalizerHelper::legalizeG_SELECT(LegalizerHelper &Helper,
       LLT::fixed_vector(MaxBitSize / DstTy.getElementType().getSizeInBits(),
                         DstTy.getElementType());
 
-  const Register UndefReg = MRI.createGenericVirtualRegister(DstTy);
-  MIRBuilder.buildUndef(UndefReg);
-
-  const unsigned NumPadElts = (MaxBitSize / DstVecSize) - 1;
-  auto buildMergeInstr = [&](const Register SrcReg) -> Register {
-    SmallVector<Register, 4> Regs;
-    Regs.push_back(SrcReg);
-    for (unsigned I = 0; I < NumPadElts; I++)
-      Regs.push_back(UndefReg);
-    const Register NewSrcReg = MRI.createGenericVirtualRegister(NewVecTy);
-    MIRBuilder.buildMergeLikeInstr(NewSrcReg, Regs);
-    return NewSrcReg;
-  };
-
-  const Register NewSrcReg1 = buildMergeInstr(SrcReg1);
-  const Register NewSrcReg2 = buildMergeInstr(SrcReg2);
+  const LLT WideTy = DstTy.multiplyElements(MaxBitSize / DstVecSize);
+  const Register NewSrcReg1 =
+      emitPadUndefVector(MRI, MIRBuilder, WideTy, SrcReg1);
+  const Register NewSrcReg2 =
+      emitPadUndefVector(MRI, MIRBuilder, WideTy, SrcReg2);
 
   const Register NewDstReg = MRI.createGenericVirtualRegister(NewVecTy);
   MIRBuilder.buildInstr(MI.getOpcode(), {NewDstReg},
                         {SrcReg0, NewSrcReg1, NewSrcReg2}, MI.getFlags());
 
+  const unsigned NumPadElts = (MaxBitSize / DstVecSize) - 1;
   SmallVector<Register, 4> Regs;
   Regs.push_back(DstReg);
   for (unsigned I = 0; I < NumPadElts; ++I)
@@ -1340,33 +1352,19 @@ bool AIELegalizerHelper::legalizeBinOp(LegalizerHelper &Helper,
   const Register Src1Reg = MI.getOperand(1).getReg();
   const Register Src2Reg = MI.getOperand(2).getReg();
   assert(DstTy == MRI.getType(Src1Reg));
-  Register UndefReg = MRI.createGenericVirtualRegister(DstTy);
-  MIRBuilder.buildUndef(UndefReg);
 
   auto NewVecTy = LLT::fixed_vector(
       512 / DstTy.getElementType().getSizeInBits(), DstTy.getElementType());
+
   Register NewDstReg = MRI.createGenericVirtualRegister(NewVecTy);
-  Register NewSrc1Reg = MRI.createGenericVirtualRegister(NewVecTy);
-  Register NewSrc2Reg = MRI.createGenericVirtualRegister(NewVecTy);
+  Register NewSrc1Reg = emitPadUndefVector(MRI, MIRBuilder, NewVecTy, Src1Reg);
+  Register NewSrc2Reg = emitPadUndefVector(MRI, MIRBuilder, NewVecTy, Src2Reg);
 
   unsigned NumberOfPadElts = (512 / VectorSize) - 1;
-  SmallVector<Register, 8> Regs;
-
-  Regs.push_back(Src1Reg);
-  for (unsigned i = 0; i < NumberOfPadElts; ++i)
-    Regs.push_back(UndefReg);
-  MIRBuilder.buildMergeLikeInstr(NewSrc1Reg, Regs);
-
-  Regs.clear();
-  Regs.push_back(Src2Reg);
-  for (unsigned i = 0; i < NumberOfPadElts; ++i)
-    Regs.push_back(UndefReg);
-  MIRBuilder.buildMergeLikeInstr(NewSrc2Reg, Regs);
-
   MIRBuilder.buildInstr(MI.getOpcode(), {NewDstReg}, {NewSrc1Reg, NewSrc2Reg},
                         MI.getFlags());
 
-  Regs.clear();
+  SmallVector<Register, 8> Regs;
   Regs.push_back(DstReg);
   for (unsigned i = 0; i < NumberOfPadElts; ++i)
     Regs.push_back(MRI.createGenericVirtualRegister(DstTy));
