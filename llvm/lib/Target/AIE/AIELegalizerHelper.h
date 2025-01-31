@@ -71,6 +71,9 @@ public:
                          Register SourceReg) const;
   bool legalizeG_UNMERGE_VALUES_128bit(LegalizerHelper &Helper,
                                        MachineInstr &MI) const;
+  bool legalizeG_AIE_EXTRACT_VECTOR_ELT(LegalizerHelper &Helper,
+                                        MachineInstr &MI,
+                                        const unsigned LegalVectorSize) const;
 };
 
 } // namespace llvm
