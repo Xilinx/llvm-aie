@@ -619,7 +619,21 @@ bool AIE2PInstructionSelector::selectG_CONCAT_VECTORS(
     return constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *CopyMI2,
                                     AIE2P::VEC256RegClass,
                                     CopyMI2->getOperand(0));
-    return true;
+  }
+
+  // FIXME: Add this as a TableGen pattern. v4i64 is not yet a legal register
+  // type for vector registers.
+  if (DstTy.getSizeInBits() == 512 &&
+      Src0Ty == LLT::fixed_vector(4, LLT::scalar(64))) {
+    auto MI = MIB.buildInstr(TargetOpcode::REG_SEQUENCE, {Dst}, {})
+                  .addReg(Src0)
+                  .addImm(AIE2P::sub_256_lo)
+                  .addReg(Src1)
+                  .addImm(AIE2P::sub_256_hi);
+
+    I.eraseFromParent();
+    return constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, *MI,
+                                    AIE2P::VEC512RegClass, MI->getOperand(0));
   }
 
   return selectImpl(I, *CoverageInfo);
