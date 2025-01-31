@@ -5,7 +5,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 /// \file
@@ -410,7 +410,7 @@ static bool checkFifoDstSrc(const MachineInstr &MI,
 // Check if FifoRegCandidate is one of the fifo operands of the intrinsic
 static bool isUsedAsFifoRegInIntrinsic(const MachineRegisterInfo &MRI,
                                        const MachineInstr &MI,
-                                       const Register &FifoRegCandidate) {
+                                       const Register FifoRegCandidate) {
   switch (cast<GIntrinsic>(MI).getIntrinsicID()) {
   // TODO: To be extented with more FIFO using intrinsics
   case Intrinsic::aie2p_fifo_ld_fill: {
@@ -493,10 +493,11 @@ static bool isUsedAsFifoRegInIntrinsic(const MachineRegisterInfo &MRI,
 }
 /// \returns true if the specified intrinsic has an accumulator
 /// vector as one of its operands.
-static bool isAccIntrinsic(const MachineRegisterInfo &MRI,
-                           const MachineInstr &MI, const Register &AccReg) {
+static bool isUsedAsAccRegInIntrinsic(const MachineRegisterInfo &MRI,
+                                      const MachineInstr &MI,
+                                      const Register AccReg) {
   switch (cast<GIntrinsic>(MI).getIntrinsicID()) {
-  // All Intrinsics with accumlator destination operand
+  // All Intrinsics with accumulator destination operand
   case Intrinsic::aie2p_vbroadcast_zero_acc1024:
   case Intrinsic::aie2p_scd_expand_ACC1024:
   case Intrinsic::aie2p_scd_ACC2048:
@@ -546,7 +547,7 @@ static bool isAccIntrinsic(const MachineRegisterInfo &MRI,
       return true;
     break;
   }
-  // All Intrinsics with first source as accumlator operand
+  // All Intrinsics with first source as accumulator operand
   case Intrinsic::aie2p_mcd_write_acc32: {
     // Operand at Idx 1 is an accumulator operand
     Register SrcReg = MI.getOperand(1).getReg();
@@ -698,17 +699,18 @@ static bool isAccIntrinsic(const MachineRegisterInfo &MRI,
   return false;
 }
 
-bool AIE2PRegisterBankInfo::usesAccReg(const MachineInstr &MI,
-                                       const MachineRegisterInfo &MRI,
-                                       const TargetRegisterInfo &TRI,
-                                       const Register &RegOp) const {
+static bool isUsedAsAccRegInInstr(const MachineInstr &MI,
+                                  const MachineRegisterInfo &MRI,
+                                  const TargetRegisterInfo &TRI, Register Reg) {
+  const MachineFunction &MF = *MI.getParent()->getParent();
+  const RegisterBankInfo *RBI = MF.getSubtarget().getRegBankInfo();
   unsigned Op = MI.getOpcode();
   switch (Op) {
   default:
     break;
   case TargetOpcode::G_INTRINSIC:
   case TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS:
-    return isAccIntrinsic(MRI, MI, RegOp);
+    return isUsedAsAccRegInIntrinsic(MRI, MI, Reg);
   case TargetOpcode::COPY: {
     Register DstReg = MI.getOperand(0).getReg();
     if (isAccReg(DstReg))
@@ -716,7 +718,7 @@ bool AIE2PRegisterBankInfo::usesAccReg(const MachineInstr &MI,
     break;
   }
   case TargetOpcode::G_STORE: {
-    auto *RB = getRegBank(MI.getOperand(0).getReg(), MRI, TRI);
+    auto *RB = RBI->getRegBank(MI.getOperand(0).getReg(), MRI, TRI);
     if (RB == &AIE2P::AccRegBank)
       return true;
     break;
@@ -725,20 +727,23 @@ bool AIE2PRegisterBankInfo::usesAccReg(const MachineInstr &MI,
   return false;
 }
 
-// Check if the instruction has RegOp as a fifo input.
+// Check if the instruction has Reg as a fifo input.
 // Similar to usesAccReg for Accumulators
-bool AIE2PRegisterBankInfo::hasFifoInput(const MachineInstr &MI,
-                                         const MachineRegisterInfo &MRI,
-                                         const TargetRegisterInfo &TRI,
-                                         const Register RegOp) const {
+static bool isUsedAsFifoRegInInstr(const MachineInstr &MI,
+                                   const MachineRegisterInfo &MRI,
+                                   const TargetRegisterInfo &TRI,
+                                   Register Reg) {
+  const MachineFunction &MF = *MI.getParent()->getParent();
   auto *RI = static_cast<const AIEBaseRegisterInfo *>(
-      MI.getParent()->getParent()->getSubtarget().getRegisterInfo());
+      MF.getSubtarget().getRegisterInfo());
+  const RegisterBankInfo *RBI = MF.getSubtarget().getRegBankInfo();
+
   switch (MI.getOpcode()) {
   default:
     break;
   case TargetOpcode::G_INTRINSIC:
   case TargetOpcode::G_INTRINSIC_W_SIDE_EFFECTS:
-    return isUsedAsFifoRegInIntrinsic(MRI, MI, RegOp);
+    return isUsedAsFifoRegInIntrinsic(MRI, MI, Reg);
   case TargetOpcode::COPY: {
     Register DstReg = MI.getOperand(0).getReg();
     if (RI->isFifoPhysReg(DstReg))
@@ -746,7 +751,7 @@ bool AIE2PRegisterBankInfo::hasFifoInput(const MachineInstr &MI,
     break;
   }
   case TargetOpcode::G_STORE: {
-    auto *RB = getRegBank(MI.getOperand(0).getReg(), MRI, TRI);
+    auto *RB = RBI->getRegBank(MI.getOperand(0).getReg(), MRI, TRI);
     if (RB == &AIE2P::FifoRegBank)
       return true;
     break;
@@ -755,10 +760,10 @@ bool AIE2PRegisterBankInfo::hasFifoInput(const MachineInstr &MI,
   return false;
 }
 
-bool AIE2PRegisterBankInfo::isUseAccInsn(const MachineRegisterInfo &MRI,
-                                         const TargetRegisterInfo &TRI,
-                                         const Register &RegOp,
-                                         unsigned Depth) const {
+bool AIE2PRegisterBankInfo::registerBankLookAheadSearch(
+    RegisterUsedAsSpecificBankFcn RegisterUsedAsSpecificBank,
+    const MachineRegisterInfo &MRI, const TargetRegisterInfo &TRI, Register Reg,
+    unsigned Depth) const {
   if (Depth > MaxDepthBankSearch)
     return false;
 
@@ -766,7 +771,7 @@ bool AIE2PRegisterBankInfo::isUseAccInsn(const MachineRegisterInfo &MRI,
     return (MI.isCopy() && MI.getOperand(0).getReg().isVirtual());
   };
 
-  for (auto &UseMI : MRI.use_nodbg_instructions(RegOp)) {
+  for (auto &UseMI : MRI.use_nodbg_instructions(Reg)) {
     const unsigned UseOpcode = UseMI.getOpcode();
 
     // skip copies, bitcasts and phis
@@ -775,43 +780,34 @@ bool AIE2PRegisterBankInfo::isUseAccInsn(const MachineRegisterInfo &MRI,
       Register DefReg = UseMI.getOperand(0).getReg();
       if (DefReg.isPhysical())
         continue;
-      if (isUseAccInsn(MRI, TRI, DefReg, Depth + 1))
+      if (registerBankLookAheadSearch(RegisterUsedAsSpecificBank, MRI, TRI,
+                                      DefReg, Depth + 1))
         return true;
-    } else if (usesAccReg(UseMI, MRI, TRI, RegOp)) {
+    } else if (RegisterUsedAsSpecificBank(UseMI, MRI, TRI, Reg)) {
       return true;
     }
   }
   return false;
 }
 
-// Check if RegOp is used as a fifo register.
-bool AIE2PRegisterBankInfo::isUseFifoInsn(const MachineRegisterInfo &MRI,
-                                          const TargetRegisterInfo &TRI,
-                                          const Register RegOp,
-                                          unsigned Depth) const {
-  if (Depth > MaxDepthBankSearch)
-    return false;
+std::optional<const RegisterBank *>
+AIE2PRegisterBankInfo::getPreferredRegBankForVectorTy(
+    const MachineRegisterInfo &MRI, const TargetRegisterInfo &TRI,
+    Register Reg) const {
+  LLT RegTy = MRI.getType(Reg);
+  TypeSize RegSize = RegTy.getSizeInBits();
+  if (RegSize <= 256 && RegSize > 64)
+    return &getRegBank(AIE2P::VRegBankID);
+  if (RegSize == 2048)
+    return &getRegBank(AIE2P::AccRegBankID);
 
-  auto IsCopyToVReg = [](const MachineInstr &MI) {
-    return (MI.isCopy() && MI.getOperand(0).getReg().isVirtual());
-  };
-
-  for (auto &UseMI : MRI.use_nodbg_instructions(RegOp)) {
-    const unsigned UseOpcode = UseMI.getOpcode();
-
-    // skip copies, bitcasts and phis
-    if (UseOpcode == TargetOpcode::G_BITCAST || IsCopyToVReg(UseMI) ||
-        UseMI.isPHI()) {
-      Register DefReg = UseMI.getOperand(0).getReg();
-      if (DefReg.isPhysical())
-        continue;
-      if (isUseFifoInsn(MRI, TRI, DefReg, Depth + 1))
-        return true;
-    } else if (hasFifoInput(UseMI, MRI, TRI, RegOp)) {
-      return true;
-    }
-  }
-  return false;
+  if (registerBankLookAheadSearch(isUsedAsAccRegInInstr, MRI, TRI, Reg))
+    return &getRegBank(AIE2P::AccRegBankID);
+  else if (registerBankLookAheadSearch(isUsedAsFifoRegInInstr, MRI, TRI, Reg))
+    return &getRegBank(AIE2P::FifoRegBankID);
+  else if (RegSize > 64)
+    return &getRegBank(AIE2P::VRegBankID);
+  return std::nullopt;
 }
 
 const RegisterBankInfo::InstructionMapping &
@@ -841,7 +837,8 @@ AIE2PRegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
       auto *RB = getRegBank(DstReg, MRI, TRI);
       if (RB == &AIE2P::AccRegBank)
         return AIEBaseRegisterBankInfo::getInstrMapping(MI);
-      if (isUseAccInsn(MRI, TRI, DstReg)) {
+      auto PreferredRegBank = getPreferredRegBankForVectorTy(MRI, TRI, DstReg);
+      if (PreferredRegBank && &AIE2P::AccRegBank == *PreferredRegBank) {
         OpRegBankIdx[0] = getAccPartialMappingIdx(DstType);
         for (unsigned Idx = 2; Idx < NumOperands; ++Idx) {
           LLT Type = MRI.getType(MI.getOperand(Idx).getReg());
@@ -859,7 +856,7 @@ AIE2PRegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
       LLT Ty = MRI.getType(MO.getReg());
       if (!Ty.isValid())
         continue;
-      if (isAccIntrinsic(MRI, MI, MI.getOperand(Idx).getReg())) {
+      if (isUsedAsAccRegInIntrinsic(MRI, MI, MI.getOperand(Idx).getReg())) {
         LLT Type = MRI.getType(MI.getOperand(Idx).getReg());
         OpRegBankIdx[Idx] = getAccPartialMappingIdx(Type);
         continue;
@@ -882,11 +879,12 @@ AIE2PRegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     auto *RB = getRegBank(DstReg, MRI, TRI);
     if (RB == &AIE2P::AccRegBank)
       return AIEBaseRegisterBankInfo::getInstrMapping(MI);
-    if (isUseAccInsn(MRI, TRI, DstReg)) {
+    auto PreferredRegBank = getPreferredRegBankForVectorTy(MRI, TRI, DstReg);
+    if (PreferredRegBank && &AIE2P::AccRegBank == *PreferredRegBank) {
       OpRegBankIdx[0] = getAccPartialMappingIdx(Type);
       return AIEBaseRegisterBankInfo::getInstrMappingFinal(MI, Cost, OpSize,
                                                            OpRegBankIdx);
-    } else if (isUseFifoInsn(MRI, TRI, DstReg)) {
+    } else if (PreferredRegBank && &AIE2P::FifoRegBank == *PreferredRegBank) {
       OpRegBankIdx[0] = getFifoPartialMappingIdx(Type);
       return AIEBaseRegisterBankInfo::getInstrMappingFinal(MI, Cost, OpSize,
                                                            OpRegBankIdx);
@@ -901,7 +899,8 @@ AIE2PRegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     LLT SrcType = MRI.getType(SrcReg);
     // Check if we already know the register bank.
     auto *RB = getRegBank(SrcReg, MRI, TRI);
-    if (isUseAccInsn(MRI, TRI, DstReg))
+    auto PreferredRegBank = getPreferredRegBankForVectorTy(MRI, TRI, DstReg);
+    if (PreferredRegBank && &AIE2P::AccRegBank == *PreferredRegBank)
       OpRegBankIdx[0] = getAccPartialMappingIdx(DstType);
     else
       OpRegBankIdx[0] = getPartialMappingIdx(DstType);
@@ -960,8 +959,8 @@ AIE2PRegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
       return AIEBaseRegisterBankInfo::getInstrMappingFinal(MI, Cost, OpSize,
                                                            OpRegBankIdx);
     }
-
-    if (isUseAccInsn(MRI, TRI, DstReg)) {
+    auto PreferredRegBank = getPreferredRegBankForVectorTy(MRI, TRI, DstReg);
+    if (PreferredRegBank && &AIE2P::AccRegBank == *PreferredRegBank) {
       OpRegBankIdx[0] = getAccPartialMappingIdx(DstType);
       for (unsigned Idx = 1; Idx < NumOperands; ++Idx) {
         LLT Type = MRI.getType(MI.getOperand(Idx).getReg());
@@ -982,9 +981,11 @@ AIE2PRegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     auto *RB = getRegBank(UseCandidate, MRI, TRI);
     if (RB == &AIE2P::AccRegBank || RB == &AIE2P::FifoRegBank)
       return AIEBaseRegisterBankInfo::getInstrMapping(MI);
-    if (isUseAccInsn(MRI, TRI, UseCandidate))
+    auto PreferredRegBank =
+        getPreferredRegBankForVectorTy(MRI, TRI, UseCandidate);
+    if (PreferredRegBank && &AIE2P::AccRegBank == *PreferredRegBank)
       isAccRegMapping = true;
-    if (isUseFifoInsn(MRI, TRI, UseCandidate))
+    else if (PreferredRegBank && &AIE2P::FifoRegBank == *PreferredRegBank)
       isFifoPhysRegMapping = true;
     // size of accu and fifo vector on aie2p >= 512.
     MachineMemOperand *MMO = *MI.memoperands_begin();
@@ -1000,9 +1001,10 @@ AIE2PRegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
       UseCandidate = DefMI->getOperand(0).getReg();
       Type = MRI.getType(MI.getOperand(0).getReg());
     }
-    if (isUseAccInsn(MRI, TRI, UseCandidate))
+    PreferredRegBank = getPreferredRegBankForVectorTy(MRI, TRI, UseCandidate);
+    if (PreferredRegBank && &AIE2P::AccRegBank == *PreferredRegBank)
       isAccRegMapping = true;
-    if (isUseFifoInsn(MRI, TRI, UseCandidate))
+    else if (PreferredRegBank && &AIE2P::FifoRegBank == *PreferredRegBank)
       isFifoPhysRegMapping = true;
     if (isAccRegMapping) {
       OpRegBankIdx[0] = getAccPartialMappingIdx(Type);

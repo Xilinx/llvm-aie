@@ -5,7 +5,7 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// (c) Copyright 2024 Advanced Micro Devices, Inc. or its affiliates
+// (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
 //
 //===----------------------------------------------------------------------===//
 /// \file
@@ -77,17 +77,17 @@ public:
   getInstrMapping(const MachineInstr &MI) const override;
   const RegisterBank &getRegBankFromRegClass(const TargetRegisterClass &RC,
                                              LLT) const override;
-  bool usesAccReg(const MachineInstr &MI, const MachineRegisterInfo &MRI,
-                  const TargetRegisterInfo &TRI, const Register &AccReg) const;
-  bool isUseAccInsn(const MachineRegisterInfo &MRI,
-                    const TargetRegisterInfo &TRI, const Register &AccReg,
-                    unsigned Depth = 0) const;
-  bool hasFifoInput(const MachineInstr &MI, const MachineRegisterInfo &MRI,
-                    const TargetRegisterInfo &TRI,
-                    const Register FifoReg) const;
-  bool isUseFifoInsn(const MachineRegisterInfo &MRI,
-                     const TargetRegisterInfo &TRI, const Register FifoReg,
-                     unsigned Depth = 0) const;
+  using RegisterUsedAsSpecificBankFcn =
+      std::function<bool(const MachineInstr &MI, const MachineRegisterInfo &MRI,
+                         const TargetRegisterInfo &TRI, Register Reg)>;
+  bool registerBankLookAheadSearch(
+      RegisterUsedAsSpecificBankFcn RegisterUsedAsSpecificBank,
+      const MachineRegisterInfo &MRI, const TargetRegisterInfo &TRI,
+      Register Reg, unsigned Depth = 0) const;
+  std::optional<const RegisterBank *>
+  getPreferredRegBankForVectorTy(const MachineRegisterInfo &MRI,
+                                 const TargetRegisterInfo &TRI,
+                                 Register Reg) const;
 };
 } // end namespace llvm
 #endif
