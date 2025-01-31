@@ -9,6 +9,22 @@
 # RUN: llc -mtriple aie2p -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s
 
 ---
+name:            test_v8s64_4s64
+legalized:       false
+body:             |
+  bb.0.entry:
+    ; CHECK-LABEL: name: test_v8s64_4s64
+    ; CHECK: [[DEF:%[0-9]+]]:_(<4 x s64>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[DEF1:%[0-9]+]]:_(<4 x s64>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[DEF]](<4 x s64>), [[DEF1]](<4 x s64>)
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[CONCAT_VECTORS]](<8 x s64>)
+    %0:_(<4 x s64>) = G_IMPLICIT_DEF
+    %1:_(<4 x s64>) = G_IMPLICIT_DEF
+    %2:_(<8 x s64>) = G_CONCAT_VECTORS %0(<4 x s64>), %1(<4 x s64>)
+    PseudoRET implicit $lr, implicit %2
+...
+
+---
 name:           test_v64s32
 registers:
 legalized: false
