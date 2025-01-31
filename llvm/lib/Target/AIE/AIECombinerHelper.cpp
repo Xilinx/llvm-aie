@@ -995,6 +995,10 @@ bool llvm::matchExtractVecEltAndExt(
   const LLT S8 = LLT::scalar(8);
   const LLT S16 = LLT::scalar(16);
   LLT SrcVecTy = MRI.getType(MI.getOperand(1).getReg());
+  // Extracts from vectors <= 64-bits are lowered to bit-arithmetic in
+  // legalization
+  if (SrcVecTy.getSizeInBits() <= 64)
+    return false;
   LLT SrcEltTy = SrcVecTy.getElementType();
   if (SrcEltTy != S8 && SrcEltTy != S16)
     return false;
@@ -1029,8 +1033,7 @@ void llvm::applyExtractVecEltAndExt(
   const LLT S32 = LLT::scalar(32);
   const AIEBaseInstrInfo &AIETII = (const AIEBaseInstrInfo &)B.getTII();
   const unsigned Opcode =
-      IsSignedExt ? AIETII.getGenericExtractVectorEltOpcode(/*sign ext*/ true)
-                  : AIETII.getGenericExtractVectorEltOpcode(/*sign ext*/ false);
+      AIETII.getGenericExtractVectorEltOpcode(/*sign ext*/ IsSignedExt);
   const Register ExtractElt32BitDst = MRI.createGenericVirtualRegister(S32);
   B.buildInstr(Opcode, {ExtractElt32BitDst}, {SrcReg0, SrcReg1});
 

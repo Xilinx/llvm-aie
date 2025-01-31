@@ -20,9 +20,9 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<8 x s8>) = COPY $l0
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<8 x s8>), [[C]](s32)
-    ; CHECK-NEXT: [[ASSERT_SEXT:%[0-9]+]]:_(s32) = G_ASSERT_SEXT [[AIE_SEXT_EXTRACT_VECTOR_ELT]], 8
-    ; CHECK-NEXT: $r0 = COPY [[ASSERT_SEXT]](s32)
+    ; CHECK-NEXT: [[EVEC:%[0-9]+]]:_(s8) = G_EXTRACT_VECTOR_ELT [[COPY]](<8 x s8>), [[C]](s32)
+    ; CHECK-NEXT: [[SEXT:%[0-9]+]]:_(s32) = G_SEXT [[EVEC]](s8)
+    ; CHECK-NEXT: $r0 = COPY [[SEXT]](s32)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
     %1:_(<8 x s8>) = COPY $l0
     %2:_(s32) = G_CONSTANT i32 1
@@ -45,9 +45,9 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<8 x s8>) = COPY $l0
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<8 x s8>), [[C]](s32)
-    ; CHECK-NEXT: [[ASSERT_SEXT:%[0-9]+]]:_(s32) = G_ASSERT_SEXT [[AIE_SEXT_EXTRACT_VECTOR_ELT]], 8
-    ; CHECK-NEXT: $r0 = COPY [[ASSERT_SEXT]](s32)
+    ; CHECK-NEXT: [[EVEC:%[0-9]+]]:_(s8) = G_EXTRACT_VECTOR_ELT [[COPY]](<8 x s8>), [[C]](s32)
+    ; CHECK-NEXT: [[SEXT:%[0-9]+]]:_(s32) = G_SEXT [[EVEC]](s8)
+    ; CHECK-NEXT: $r0 = COPY [[SEXT]](s32)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
     %1:_(<8 x s8>) = COPY $l0
     %2:_(s32) = G_CONSTANT i32 1
@@ -69,9 +69,9 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<8 x s8>) = COPY $l0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r1
-    ; CHECK-NEXT: [[AIE_ZEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_ZEXT_EXTRACT_VECTOR_ELT [[COPY]](<8 x s8>), [[COPY1]](s32)
-    ; CHECK-NEXT: [[ASSERT_ZEXT:%[0-9]+]]:_(s32) = G_ASSERT_ZEXT [[AIE_ZEXT_EXTRACT_VECTOR_ELT]], 8
-    ; CHECK-NEXT: $r0 = COPY [[ASSERT_ZEXT]](s32)
+    ; CHECK-NEXT: [[EVEC:%[0-9]+]]:_(s8) = G_EXTRACT_VECTOR_ELT [[COPY]](<8 x s8>), [[COPY1]](s32)
+    ; CHECK-NEXT: [[ZEXT:%[0-9]+]]:_(s32) = G_ZEXT [[EVEC]](s8)
+    ; CHECK-NEXT: $r0 = COPY [[ZEXT]](s32)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
     %1:_(<8 x s8>) = COPY $l0
     %2:_(s32) = COPY $r1
@@ -94,9 +94,9 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<4 x s16>) = COPY $l0
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<4 x s16>), [[C]](s32)
-    ; CHECK-NEXT: [[ASSERT_SEXT:%[0-9]+]]:_(s32) = G_ASSERT_SEXT [[AIE_SEXT_EXTRACT_VECTOR_ELT]], 16
-    ; CHECK-NEXT: $r0 = COPY [[ASSERT_SEXT]](s32)
+    ; CHECK-NEXT: [[EVEC:%[0-9]+]]:_(s16) = G_EXTRACT_VECTOR_ELT [[COPY]](<4 x s16>), [[C]](s32)
+    ; CHECK-NEXT: [[SEXT:%[0-9]+]]:_(s32) = G_SEXT [[EVEC]](s16)
+    ; CHECK-NEXT: $r0 = COPY [[SEXT]](s32)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
     %1:_(<4 x s16>) = COPY $l0
     %2:_(s32) = G_CONSTANT i32 1
@@ -119,9 +119,9 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<4 x s16>) = COPY $l0
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<4 x s16>), [[C]](s32)
-    ; CHECK-NEXT: [[ASSERT_SEXT:%[0-9]+]]:_(s32) = G_ASSERT_SEXT [[AIE_SEXT_EXTRACT_VECTOR_ELT]], 16
-    ; CHECK-NEXT: $r0 = COPY [[ASSERT_SEXT]](s32)
+    ; CHECK-NEXT: [[EVEC:%[0-9]+]]:_(s16) = G_EXTRACT_VECTOR_ELT [[COPY]](<4 x s16>), [[C]](s32)
+    ; CHECK-NEXT: [[SEXT:%[0-9]+]]:_(s32) = G_SEXT [[EVEC]](s16)
+    ; CHECK-NEXT: $r0 = COPY [[SEXT]](s32)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
     %1:_(<4 x s16>) = COPY $l0
     %2:_(s32) = G_CONSTANT i32 1
@@ -143,9 +143,9 @@ body:             |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<4 x s16>) = COPY $l0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r1
-    ; CHECK-NEXT: [[AIE_ZEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_ZEXT_EXTRACT_VECTOR_ELT [[COPY]](<4 x s16>), [[COPY1]](s32)
-    ; CHECK-NEXT: [[ASSERT_ZEXT:%[0-9]+]]:_(s32) = G_ASSERT_ZEXT [[AIE_ZEXT_EXTRACT_VECTOR_ELT]], 16
-    ; CHECK-NEXT: $r0 = COPY [[ASSERT_ZEXT]](s32)
+    ; CHECK-NEXT: [[EVEC:%[0-9]+]]:_(s16) = G_EXTRACT_VECTOR_ELT [[COPY]](<4 x s16>), [[COPY1]](s32)
+    ; CHECK-NEXT: [[ZEXT:%[0-9]+]]:_(s32) = G_ZEXT [[EVEC]](s16)
+    ; CHECK-NEXT: $r0 = COPY [[ZEXT]](s32)
     ; CHECK-NEXT: PseudoRET implicit $lr, implicit $r0
     %1:_(<4 x s16>) = COPY $l0
     %2:_(s32) = COPY $r1
@@ -1117,9 +1117,9 @@ body: |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<4 x s8>) = COPY $r0
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<4 x s8>), [[C]](s32)
-    ; CHECK-NEXT: [[ASSERT_SEXT:%[0-9]+]]:_(s32) = G_ASSERT_SEXT [[AIE_SEXT_EXTRACT_VECTOR_ELT]], 8
-    ; CHECK-NEXT: $r2 = COPY [[ASSERT_SEXT]](s32)
+    ; CHECK-NEXT: [[EVEC:%[0-9]+]]:_(s8) = G_EXTRACT_VECTOR_ELT [[COPY]](<4 x s8>), [[C]](s32)
+    ; CHECK-NEXT: [[ANYEXT:%[0-9]+]]:_(s32) = G_ANYEXT [[EVEC]](s8)
+    ; CHECK-NEXT: $r2 = COPY [[ANYEXT]](s32)
     %0:_(<4 x s8>) = COPY $r0
     %5:_(s32) = G_CONSTANT i32 0
     %4:_(s8) = G_EXTRACT_VECTOR_ELT %0(<4 x s8>), %5(s32)
@@ -1137,9 +1137,9 @@ body: |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<4 x s8>) = COPY $r0
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 1
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<4 x s8>), [[C]](s32)
-    ; CHECK-NEXT: [[ASSERT_SEXT:%[0-9]+]]:_(s32) = G_ASSERT_SEXT [[AIE_SEXT_EXTRACT_VECTOR_ELT]], 8
-    ; CHECK-NEXT: $r2 = COPY [[ASSERT_SEXT]](s32)
+    ; CHECK-NEXT: [[EVEC:%[0-9]+]]:_(s8) = G_EXTRACT_VECTOR_ELT [[COPY]](<4 x s8>), [[C]](s32)
+    ; CHECK-NEXT: [[ANYEXT:%[0-9]+]]:_(s32) = G_ANYEXT [[EVEC]](s8)
+    ; CHECK-NEXT: $r2 = COPY [[ANYEXT]](s32)
     %0:_(<4 x s8>) = COPY $r0
     %5:_(s32) = G_CONSTANT i32 1
     %4:_(s8) = G_EXTRACT_VECTOR_ELT %0(<4 x s8>), %5(s32)
@@ -1157,9 +1157,9 @@ body: |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<4 x s8>) = COPY $r0
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 2
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<4 x s8>), [[C]](s32)
-    ; CHECK-NEXT: [[ASSERT_SEXT:%[0-9]+]]:_(s32) = G_ASSERT_SEXT [[AIE_SEXT_EXTRACT_VECTOR_ELT]], 8
-    ; CHECK-NEXT: $r2 = COPY [[ASSERT_SEXT]](s32)
+    ; CHECK-NEXT: [[EVEC:%[0-9]+]]:_(s8) = G_EXTRACT_VECTOR_ELT [[COPY]](<4 x s8>), [[C]](s32)
+    ; CHECK-NEXT: [[ANYEXT:%[0-9]+]]:_(s32) = G_ANYEXT [[EVEC]](s8)
+    ; CHECK-NEXT: $r2 = COPY [[ANYEXT]](s32)
     %0:_(<4 x s8>) = COPY $r0
     %5:_(s32) = G_CONSTANT i32 2
     %4:_(s8) = G_EXTRACT_VECTOR_ELT %0(<4 x s8>), %5(s32)
@@ -1177,9 +1177,9 @@ body: |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<4 x s8>) = COPY $r0
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 3
-    ; CHECK-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[COPY]](<4 x s8>), [[C]](s32)
-    ; CHECK-NEXT: [[ASSERT_SEXT:%[0-9]+]]:_(s32) = G_ASSERT_SEXT [[AIE_SEXT_EXTRACT_VECTOR_ELT]], 8
-    ; CHECK-NEXT: $r2 = COPY [[ASSERT_SEXT]](s32)
+    ; CHECK-NEXT: [[EVEC:%[0-9]+]]:_(s8) = G_EXTRACT_VECTOR_ELT [[COPY]](<4 x s8>), [[C]](s32)
+    ; CHECK-NEXT: [[ANYEXT:%[0-9]+]]:_(s32) = G_ANYEXT [[EVEC]](s8)
+    ; CHECK-NEXT: $r2 = COPY [[ANYEXT]](s32)
     %0:_(<4 x s8>) = COPY $r0
     %5:_(s32) = G_CONSTANT i32 3
     %4:_(s8) = G_EXTRACT_VECTOR_ELT %0(<4 x s8>), %5(s32)
