@@ -28,6 +28,7 @@
 #include "llvm/IR/RuntimeLibcalls.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <cassert>
+#include <cstdint>
 
 namespace llvm {
 
@@ -857,6 +858,16 @@ bool AIELegalizerHelper::legalizeG_INSERT_VECTOR_ELT(LegalizerHelper &Helper,
   const unsigned DstVecSize = DstVecTy.getSizeInBits();
   const LLT S32 = LLT::scalar(32);
 
+  auto ClampScalarSrc = [&](Register SrcReg) {
+    Register NewValReg = SrcReg;
+    const LLT ValTy = MRI.getType(SrcReg);
+    if (ValTy == LLT::scalar(8) || ValTy == LLT::scalar(16)) {
+      NewValReg = MRI.createGenericVirtualRegister(S32);
+      MIRBuilder.buildAnyExt(NewValReg, SrcReg);
+    }
+    return NewValReg;
+  };
+  const AIEBaseInstrInfo *II = ST.getInstrInfo();
   switch (DstVecSize) {
   case 64: {
     if (DstVecTy != V2S32) {
@@ -881,24 +892,41 @@ bool AIELegalizerHelper::legalizeG_INSERT_VECTOR_ELT(LegalizerHelper &Helper,
     }
     break;
   }
-  case 256:
-  case 512:
-  case 1024: {
-    const LLT ValTy = MRI.getType(ValReg);
-    const AIEBaseInstrInfo *II = ST.getInstrInfo();
-    Register NewValReg;
-    if (ValTy == LLT::scalar(8) || ValTy == LLT::scalar(16)) {
-      NewValReg = MRI.createGenericVirtualRegister(S32);
-      MIRBuilder.buildAnyExt(NewValReg, ValReg);
-    } else {
-      NewValReg = ValReg;
-    }
-    MIRBuilder.buildInstr(II->getGenericInsertVectorEltOpcode(), {DstVecReg},
-                          {SrcVecReg, NewValReg, IdxReg});
+  case 256: {
+    const unsigned MultiplyFactor = 512 / DstVecSize;
+    const LLT New512Ty = DstVecTy.multiplyElements(MultiplyFactor);
+    Register New512 = emitPadUndefVector(MRI, MIRBuilder, New512Ty, SrcVecReg);
+    Register ScalarSrc = ClampScalarSrc(ValReg);
+    Register NewDstReg =
+        MIRBuilder
+            .buildInstr(II->getGenericInsertVectorEltOpcode(), {New512Ty},
+                        {New512, ScalarSrc, IdxReg})
+            .getReg(0);
+
+    SmallVector<Register, 4> Regs;
+    Regs.push_back(DstVecReg);
+    const unsigned NumberOfPadElts = MultiplyFactor - 1;
+    for (unsigned i = 0; i < NumberOfPadElts; ++i)
+      Regs.push_back(MRI.createGenericVirtualRegister(DstVecTy));
+    MIRBuilder.buildUnmerge(Regs, NewDstReg);
     break;
   }
-  default:
-    llvm_unreachable("Unexpected vector size for insert vector elt!");
+  case 512: {
+    Register ScalarSrc = ClampScalarSrc(ValReg);
+    MIRBuilder.buildInstr(II->getGenericInsertVectorEltOpcode(), {DstVecReg},
+                          {SrcVecReg, ScalarSrc, IdxReg});
+    break;
+  }
+  case 1024:
+  case 2048: {
+    LLT NarrowTy =
+        LLT::fixed_vector(512 / DstVecTy.getElementType().getSizeInBits(),
+                          DstVecTy.getElementType());
+    return Helper.fewerElementsVectorExtractInsertVectorElt(MI, 0, NarrowTy);
+  }
+  default: {
+    llvm_unreachable("Unexpected vector size for G_INSERT_VECTOR_ELT!");
+  }
   }
   MI.removeFromParent();
   return true;
