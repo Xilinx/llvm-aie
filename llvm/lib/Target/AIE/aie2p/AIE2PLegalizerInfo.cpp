@@ -584,8 +584,16 @@ AIE2PLegalizerInfo::AIE2PLegalizerInfo(const AIE2PSubtarget &ST)
   getActionDefinitionsBuilder(G_INSERT_VECTOR_ELT)
       .clampScalar(2, S32, S32) // Clamp the idx to 32 bit since VINSERT
                                 // relies on eR29 only for idx.
-      .customIf(typeInSet(0, {V2S32, V8S32, V16S16, V32S8, V16S32, V32S16,
-                              V64S8, V32S32, V64S16, V128S8, V8S64, V16S64}));
+      // Custom legalize 2 x 32 vectors
+      .customIf(typeInSet(0, {V2S32}))
+      // Extend vectors to have at least 256-bits
+      .clampMinNumElements(0, S8, 32)
+      .clampMinNumElements(0, S16, 16)
+      .clampMinNumElements(0, S32, 8)
+      .clampMinNumElements(0, S64, 4)
+      // Custom legalize resulting vector types >= 256-bit
+      .customIf(typeInSet(0, AIE2PVectorTypes))
+      .customIf(typeInSet(0, AIE2PAccumulatorTypes));
 
   // Control-flow
   getActionDefinitionsBuilder(G_BRCOND).legalFor({S32}).clampScalar(0, S32,
