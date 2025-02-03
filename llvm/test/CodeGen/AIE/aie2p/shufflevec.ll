@@ -221,11 +221,11 @@ define <16 x i32> @test_shuffle_vector_vsel_invalid_mask(<16 x i32> noundef %a, 
 ; CHECK-LABEL: test_shuffle_vector_vsel_invalid_mask:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; ret lr; nopm ; nops
+; CHECK-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; CHECK-NEXT:    vextract.64 r1:r0, x2, #0, vaddsign1 // Delay Slot 5
-; CHECK-NEXT:    mova r29, #0 // Delay Slot 4
+; CHECK-NEXT:    nop // Delay Slot 4
 ; CHECK-NEXT:    vbcst.32 x0, r1 // Delay Slot 3
-; CHECK-NEXT:    vinsert.32 x0, x0, r29, r0 // Delay Slot 2
+; CHECK-NEXT:    vinsert.32 x0, x0, #0, r0 // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %shuffle = shufflevector <16 x i32> %a, <16 x i32> %b, <16 x i32> <i32 0, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1>
@@ -682,11 +682,10 @@ define <32 x i16> @shuffle_vector_to_extract_insert_elt_3_exceptions_second_inpu
 ; CHECK-LABEL: shuffle_vector_to_extract_insert_elt_3_exceptions_second_input_reuse_extract_result:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0: // %entry
-; CHECK-NEXT:    nopa ; nopb ; nops ; nopx ; vextract.16 r0, x4, #0, vaddsign1; nopv
-; CHECK-NEXT:    mova r29, #0; nopx
-; CHECK-NEXT:    vinsert.16 x0, x2, r29, r0
+; CHECK-NEXT:    mova r29, #7; nopx
+; CHECK-NEXT:    vextract.16 r0, x4, #0, vaddsign1
 ; CHECK-NEXT:    ret lr
-; CHECK-NEXT:    mova r29, #7 // Delay Slot 5
+; CHECK-NEXT:    vinsert.16 x0, x2, #0, r0 // Delay Slot 5
 ; CHECK-NEXT:    vinsert.16 x0, x0, r29, r0 // Delay Slot 4
 ; CHECK-NEXT:    mova r29, #8 // Delay Slot 3
 ; CHECK-NEXT:    vinsert.16 x0, x0, r29, r0 // Delay Slot 2
@@ -910,12 +909,11 @@ define <16 x i32> @shuffle_concat_extracted_subvectors_nothing_but_exceptions(<1
 ; CHECK-LABEL: shuffle_concat_extracted_subvectors_nothing_but_exceptions:
 ; CHECK:         .p2align 4
 ; CHECK-NEXT:  // %bb.0:
-; CHECK-NEXT:    mova r29, #0; nopx
+; CHECK-NEXT:    mova r29, #1; nopxm
 ; CHECK-NEXT:    vextract.64 r1:r0, x2, #2, vaddsign1
 ; CHECK-NEXT:    vextract.64 r3:r2, x2, #0, vaddsign1
 ; CHECK-NEXT:    vbcst.32 x0, r1
-; CHECK-NEXT:    vinsert.32 x0, x0, r29, r2
-; CHECK-NEXT:    mova r29, #1
+; CHECK-NEXT:    vinsert.32 x0, x0, #0, r2
 ; CHECK-NEXT:    vinsert.32 x0, x0, r29, r3
 ; CHECK-NEXT:    vextract.64 r3:r2, x2, #1, vaddsign1
 ; CHECK-NEXT:    mova r29, #2

@@ -95,3 +95,12 @@ multiclass Extract_512<ValueType DstTy, ValueType SrcTy, dag Idx, Instruction Un
   def : Extr512Pat<DstTy, SrcTy, Idx, vextract_zext, UnsignedOpc>;
   def : Extr512Pat<DstTy, SrcTy, Idx, vextract_sext, SignedOpc>;
 }
+
+// Make our generic insert vector elt instructions available to TableGen patterns.
+def vinsert : SDNode<"G_AIE_INSERT_VECTOR_ELT",
+                      SDTypeProfile<1, 3, [SDTCisSameAs<0,1>, SDTCisVec<0>, SDTCisInt<2>, SDTCisInt<3>]>>;
+def : GINodeEquiv<G_AIE_INSERT_VECTOR_ELT, vinsert>;
+
+class Insert512Pat<ValueType VecTy, dag Val, dag Idx, Instruction Inst> :
+    Pat<(VecTy (vinsert VecTy:$src1, Val, Idx)),
+        (Inst VecTy:$src1, Idx, Val)>;

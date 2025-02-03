@@ -7,7 +7,29 @@
 # (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
 # RUN: llc -mtriple aie2p -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck %s
 
-
+---
+name:            256bit_s64_val
+legalized:       false
+body:             |
+  bb.0.entry:
+    liveins: $wl0, $r0
+    ; CHECK-LABEL: name: 256bit_s64_val
+    ; CHECK: liveins: $wl0, $r0
+    ; CHECK-NEXT: {{  $}}
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<4 x s64>) = COPY $wl0
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(s64) = COPY $l0
+    ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 5
+    ; CHECK-NEXT: [[DEF:%[0-9]+]]:_(<4 x s64>) = G_IMPLICIT_DEF
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<8 x s64>) = G_CONCAT_VECTORS [[COPY]](<4 x s64>), [[DEF]](<4 x s64>)
+    ; CHECK-NEXT: [[AIE_INSERT_VECTOR_ELT:%[0-9]+]]:_(<8 x s64>) = G_AIE_INSERT_VECTOR_ELT [[CONCAT_VECTORS]], [[COPY1]](s64), [[C]](s32)
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<4 x s64>), [[UV1:%[0-9]+]]:_(<4 x s64>) = G_UNMERGE_VALUES [[AIE_INSERT_VECTOR_ELT]](<8 x s64>)
+    ; CHECK-NEXT: $wl4 = COPY [[UV]](<4 x s64>)
+    %0:_(<4 x s64>) = COPY $wl0
+    %1:_(s64) = COPY $l0
+    %2:_(s32) = G_CONSTANT i32 5
+    %7:_(<4 x s64>) = G_INSERT_VECTOR_ELT %0(<4 x s64>), %1(s64), %2(s32)
+    $wl4 = COPY %7(<4 x s64>)
+...
 
 ---
 name:            512bit_s64_val
@@ -42,8 +64,10 @@ body:             |
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(<16 x s64>) = COPY $y0
     ; CHECK-NEXT: [[COPY1:%[0-9]+]]:_(s64) = COPY $l0
     ; CHECK-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 5
-    ; CHECK-NEXT: [[AIE_INSERT_VECTOR_ELT:%[0-9]+]]:_(<16 x s64>) = G_AIE_INSERT_VECTOR_ELT [[COPY]], [[COPY1]](s64), [[C]](s32)
-    ; CHECK-NEXT: $y4 = COPY [[AIE_INSERT_VECTOR_ELT]](<16 x s64>)
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(<8 x s64>), [[UV1:%[0-9]+]]:_(<8 x s64>) = G_UNMERGE_VALUES [[COPY]](<16 x s64>)
+    ; CHECK-NEXT: [[AIE_INSERT_VECTOR_ELT:%[0-9]+]]:_(<8 x s64>) = G_AIE_INSERT_VECTOR_ELT [[UV]], [[COPY1]](s64), [[C]](s32)
+    ; CHECK-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<16 x s64>) = G_CONCAT_VECTORS [[AIE_INSERT_VECTOR_ELT]](<8 x s64>), [[UV1]](<8 x s64>)
+    ; CHECK-NEXT: $y4 = COPY [[CONCAT_VECTORS]](<16 x s64>)
     %0:_(<16 x s64>) = COPY $y0
     %1:_(s64) = COPY $l0
     %2:_(s32) = G_CONSTANT i32 5

@@ -1251,6 +1251,23 @@ defm : Extract_512<i32, v32i16, (i32 c6u:$idx), VEXTRACT_16_vec_extract_imm_vadd
 defm : Extract_512<i32, v16i32, (i32 c6u:$idx), VEXTRACT_32_vec_extract_imm_vaddSign0, VEXTRACT_32_vec_extract_imm_vaddSign1>;
 defm : Extract_512<i64, v8i64, (i32 c6u:$idx), VEXTRACT_64_vec_extract_imm_vaddSign0, VEXTRACT_64_vec_extract_imm_vaddSign1>;
 
+// G_AIE_INSERT_VECTOR_ELT
+def : Insert512Pat<v64i8, (i32 eR:$val), (i32 eR:$idx), VINSERT_8_mR29_insert>;
+def : Insert512Pat<v32i16, (i32 eR:$val), (i32 eR:$idx), VINSERT_16_mR29_insert>;
+def : Insert512Pat<v16i32, (i32 eR:$val), (i32 eR:$idx), VINSERT_32_mR29_insert>;
+def : Insert512Pat<v8i64, (i64 eL:$val), (i32 eR:$idx), VINSERT_64_mR29_insert>;
+
+// Special case: insert at index 0
+// The instruction does not encode the idx register
+class Insert512Imm0Pat<ValueType VecTy, dag Val, dag Idx, Instruction Inst> :
+    Pat<(VecTy (vinsert VecTy:$src1, Val, Idx)),
+        (Inst VecTy:$src1, Val)>;
+
+def : Insert512Imm0Pat<v64i8, (i32 eR:$idx), (i32 0), VINSERT_8_mIdxImm0>;
+def : Insert512Imm0Pat<v32i16, (i32 eR:$idx), (i32 0), VINSERT_16_mIdxImm0>;
+def : Insert512Imm0Pat<v16i32, (i32 eR:$idx), (i32 0), VINSERT_32_mIdxImm0>;
+def : Insert512Imm0Pat<v8i64, (i64 eL:$idx), (i32 0), VINSERT_64_mIdxImm0>;
+
 // G_TRUNC
 
 // The G_TRUNC operation can be efficiently implemented using a VSHUFFLE

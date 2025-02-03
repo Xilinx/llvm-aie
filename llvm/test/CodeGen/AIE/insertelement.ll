@@ -380,16 +380,12 @@ define <128 x i8> @insert_v128i8_dyn(<128 x i8> %v, i8 %e, i32 %idx) nounwind {
 ; AIE2-NEXT:    mova r2, #127
 ; AIE2-NEXT:    mov p0, sp
 ; AIE2-NEXT:    and r1, r1, r2
-; AIE2-NEXT:    mova r2, #8
 ; AIE2-NEXT:    paddb [p0], #-128
-; AIE2-NEXT:    lshl r1, r1, r2
-; AIE2-NEXT:    mova r2, #-8
-; AIE2-NEXT:    ashl r1, r1, r2
+; AIE2-NEXT:    mov dj0, r1
 ; AIE2-NEXT:    vst wh7, [p0, #96]
 ; AIE2-NEXT:    vst wl7, [p0, #64]
 ; AIE2-NEXT:    vst wh6, [p0, #32]
 ; AIE2-NEXT:    vst wl6, [p0, #0]
-; AIE2-NEXT:    mov dj0, r1
 ; AIE2-NEXT:    st.s8 r0, [p0, dj0]
 ; AIE2-NEXT:    nop
 ; AIE2-NEXT:    nop
@@ -415,14 +411,10 @@ define <128 x i8> @insert_v128i8_dyn(<128 x i8> %v, i8 %e, i32 %idx) nounwind {
 ; AIE2P-NEXT:    paddxm [sp], #128
 ; AIE2P-NEXT:    mov p0, sp
 ; AIE2P-NEXT:    and r1, r1, r2
-; AIE2P-NEXT:    mova r2, #8
-; AIE2P-NEXT:    lshl r1, r1, r2
-; AIE2P-NEXT:    mova r2, #-8
+; AIE2P-NEXT:    mov dj0, r1
 ; AIE2P-NEXT:    padda [p0], #-128
-; AIE2P-NEXT:    ashl r1, r1, r2
 ; AIE2P-NEXT:    vst x6, [p0, #0]
 ; AIE2P-NEXT:    vst x7, [p0, #64]
-; AIE2P-NEXT:    mov dj0, r1
 ; AIE2P-NEXT:    st.s8 r0, [p0, dj0]
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop
@@ -430,8 +422,8 @@ define <128 x i8> @insert_v128i8_dyn(<128 x i8> %v, i8 %e, i32 %idx) nounwind {
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop
-; AIE2P-NEXT:    vlda x4, [p0, #0]
-; AIE2P-NEXT:    vlda x5, [p0, #64]
+; AIE2P-NEXT:    vldb x4, [p0, #0]
+; AIE2P-NEXT:    vldb x5, [p0, #64]
 ; AIE2P-NEXT:    ret lr
 ; AIE2P-NEXT:    nop // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
@@ -470,20 +462,18 @@ define <64 x i16> @insert_v64i16_dyn(<64 x i16> %v, i16 %e, i32 %idx) nounwind {
 ; AIE2-LABEL: insert_v64i16_dyn:
 ; AIE2:         .p2align 4
 ; AIE2-NEXT:  // %bb.0:
-; AIE2-NEXT:    nopa ; paddb [sp], #128; nopxm
+; AIE2-NEXT:    paddb [sp], #128
 ; AIE2-NEXT:    mova r2, #63
 ; AIE2-NEXT:    mov p0, sp
 ; AIE2-NEXT:    and r1, r1, r2
-; AIE2-NEXT:    mova r2, #9
+; AIE2-NEXT:    mova r2, #1
 ; AIE2-NEXT:    paddb [p0], #-128
 ; AIE2-NEXT:    lshl r1, r1, r2
-; AIE2-NEXT:    mova r2, #-8
-; AIE2-NEXT:    ashl r1, r1, r2
+; AIE2-NEXT:    mov dj0, r1
 ; AIE2-NEXT:    vst wh7, [p0, #96]
 ; AIE2-NEXT:    vst wl7, [p0, #64]
 ; AIE2-NEXT:    vst wh6, [p0, #32]
 ; AIE2-NEXT:    vst wl6, [p0, #0]
-; AIE2-NEXT:    mov dj0, r1
 ; AIE2-NEXT:    st.s16 r0, [p0, dj0]
 ; AIE2-NEXT:    nop
 ; AIE2-NEXT:    nop
@@ -505,18 +495,16 @@ define <64 x i16> @insert_v64i16_dyn(<64 x i16> %v, i16 %e, i32 %idx) nounwind {
 ; AIE2P-LABEL: insert_v64i16_dyn:
 ; AIE2P:         .p2align 4
 ; AIE2P-NEXT:  // %bb.0:
-; AIE2P-NEXT:    mova r2, #63; nopb ; nopx
+; AIE2P-NEXT:    mova r2, #63; nopb ; nops ; nopxm ; nopv
 ; AIE2P-NEXT:    paddxm [sp], #128
 ; AIE2P-NEXT:    mov p0, sp
 ; AIE2P-NEXT:    and r1, r1, r2
-; AIE2P-NEXT:    mova r2, #9
+; AIE2P-NEXT:    mova r2, #1
 ; AIE2P-NEXT:    lshl r1, r1, r2
-; AIE2P-NEXT:    mova r2, #-8
 ; AIE2P-NEXT:    padda [p0], #-128
-; AIE2P-NEXT:    ashl r1, r1, r2
+; AIE2P-NEXT:    mov dj0, r1
 ; AIE2P-NEXT:    vst x6, [p0, #0]
 ; AIE2P-NEXT:    vst x7, [p0, #64]
-; AIE2P-NEXT:    mov dj0, r1
 ; AIE2P-NEXT:    st.s16 r0, [p0, dj0]
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop
@@ -524,8 +512,8 @@ define <64 x i16> @insert_v64i16_dyn(<64 x i16> %v, i16 %e, i32 %idx) nounwind {
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop
-; AIE2P-NEXT:    vlda x4, [p0, #0]
-; AIE2P-NEXT:    vlda x5, [p0, #64]
+; AIE2P-NEXT:    vldb x4, [p0, #0]
+; AIE2P-NEXT:    vldb x5, [p0, #64]
 ; AIE2P-NEXT:    ret lr
 ; AIE2P-NEXT:    nop // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
@@ -564,20 +552,18 @@ define <32 x i32> @insert_v32i32_dyn(<32 x i32> %v, i32 %e, i32 %idx) nounwind {
 ; AIE2-LABEL: insert_v32i32_dyn:
 ; AIE2:         .p2align 4
 ; AIE2-NEXT:  // %bb.0:
-; AIE2-NEXT:    nopa ; paddb [sp], #128; nopx
+; AIE2-NEXT:    paddb [sp], #128; nopa ; nops ; nopxm ; nopv
 ; AIE2-NEXT:    mova r2, #31
 ; AIE2-NEXT:    mov p0, sp
 ; AIE2-NEXT:    and r1, r1, r2
-; AIE2-NEXT:    mova r2, #10
+; AIE2-NEXT:    mova r2, #2
 ; AIE2-NEXT:    paddb [p0], #-128
 ; AIE2-NEXT:    lshl r1, r1, r2
-; AIE2-NEXT:    mova r2, #-8
-; AIE2-NEXT:    ashl r1, r1, r2
+; AIE2-NEXT:    mov dj0, r1
 ; AIE2-NEXT:    vst wh7, [p0, #96]
 ; AIE2-NEXT:    vst wl7, [p0, #64]
 ; AIE2-NEXT:    vst wh6, [p0, #32]
 ; AIE2-NEXT:    vst wl6, [p0, #0]
-; AIE2-NEXT:    mov dj0, r1
 ; AIE2-NEXT:    st r0, [p0, dj0]
 ; AIE2-NEXT:    vldb wh5, [p0, #96]
 ; AIE2-NEXT:    vldb wl5, [p0, #64]
@@ -593,21 +579,19 @@ define <32 x i32> @insert_v32i32_dyn(<32 x i32> %v, i32 %e, i32 %idx) nounwind {
 ; AIE2P-LABEL: insert_v32i32_dyn:
 ; AIE2P:         .p2align 4
 ; AIE2P-NEXT:  // %bb.0:
-; AIE2P-NEXT:    mova r2, #31
+; AIE2P-NEXT:    mova r2, #31; nopb ; nopxm
 ; AIE2P-NEXT:    paddxm [sp], #128
 ; AIE2P-NEXT:    mov p0, sp
 ; AIE2P-NEXT:    and r1, r1, r2
-; AIE2P-NEXT:    mova r2, #10
+; AIE2P-NEXT:    mova r2, #2
 ; AIE2P-NEXT:    lshl r1, r1, r2
-; AIE2P-NEXT:    mova r2, #-8
 ; AIE2P-NEXT:    padda [p0], #-128
-; AIE2P-NEXT:    ashl r1, r1, r2
+; AIE2P-NEXT:    mov dj0, r1
 ; AIE2P-NEXT:    vst x6, [p0, #0]
 ; AIE2P-NEXT:    vst x7, [p0, #64]
-; AIE2P-NEXT:    mov dj0, r1
 ; AIE2P-NEXT:    st r0, [p0, dj0]
-; AIE2P-NEXT:    vlda x4, [p0, #0]
-; AIE2P-NEXT:    vlda x5, [p0, #64]
+; AIE2P-NEXT:    vldb x4, [p0, #0]
+; AIE2P-NEXT:    vldb x5, [p0, #64]
 ; AIE2P-NEXT:    ret lr
 ; AIE2P-NEXT:    nop // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
