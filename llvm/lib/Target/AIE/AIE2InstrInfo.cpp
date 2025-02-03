@@ -1617,4 +1617,4 @@ unsigned AIE2InstrInfo::getScalarRegSize() const { return 32; }
 
 unsigned AIE2InstrInfo::getBasicVecRegSize() const { return 256; }
 
-unsigned AIE2InstrInfo::getExtractSubvecNativeSrcSize() const { return 512; }
+unsigned AIE2InstrInfo::getBasicVectorBitSize() const { return 512; }

@@ -1925,8 +1925,7 @@ bool llvm::matchShuffleToExtractSubvec(MachineInstr &MI,
 
   const unsigned GPRSize = TII.getScalarRegSize();
   const unsigned VecRegSize = TII.getBasicVecRegSize();
-  const unsigned ExtractSubvecNativeSrcSize =
-      TII.getExtractSubvecNativeSrcSize();
+  const unsigned ExtractSubvecNativeSrcSize = TII.getBasicVectorBitSize();
 
   const Register DstReg = MI.getOperand(0).getReg();
   const Register Src1Reg = MI.getOperand(1).getReg();

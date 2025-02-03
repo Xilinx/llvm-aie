@@ -543,11 +543,11 @@ struct AIEBaseInstrInfo : public TargetInstrInfo {
     llvm_unreachable("Target didn't implement isProfitableToSplitType!");
   }
 
-  /// Get the native size of the source vector for `G_AIE_EXTRACT_SUBVECTOR`
-  /// The native source type depends on the instruction to which the
-  /// G_AIE_SUBVECTOR is mapped during instruction selection.
-  virtual unsigned getExtractSubvecNativeSrcSize() const {
-    llvm_unreachable("Target didn't implement getExtractSubvecNativeSrcSize!");
+  /// Get the native size of the source vector for basic vector operations like
+  /// `G_AIE_[ZS]EXT_EXTRACT_VECTOR_ELT`, `G_AIE_EXTRACT_SUBVECTOR`,
+  /// `G_AIE_VSEL` and `G_AIE_VSHIFT_RIGHT`.
+  virtual unsigned getBasicVectorBitSize() const {
+    llvm_unreachable("Target didn't implement getBasicVectorBitSize!");
   }
 
   /// Get size of general purpose registers (GPR)
