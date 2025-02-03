@@ -11,7 +11,7 @@
 // This test shows that the translation of __aie_dm_resource_* to the correct address space only works with a pointer
 // passed to the intrinsic, if we pass an annotated reference to a pointer however (e.g. *&p), it is not translated
 // to the correct address space.
-// RUN: %clang -O1 --target=aie2p -nostdlibinc -S -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang -O2 --target=aie2p -nostdlibinc -fno-unroll-loops -S -emit-llvm %s -o - | FileCheck %s
 
 
 // CHECK-LABEL: define dso_local void @_Z32test_intrinsic_annotated_pointerPU3AS522v64bfp16ebs8_unaligned12v64bfp16ebs8R12fifo_state_t(
@@ -26,12 +26,10 @@
 // CHECK-NEXT:    [[TMP0:%.*]] = load <32 x i32>, ptr [[S]], align 64, !tbaa [[TBAA6:![0-9]+]]
 // CHECK-NEXT:    [[TMP1:%.*]] = load i32, ptr [[POS1_I]], align 64, !tbaa [[TBAA7:![0-9]+]]
 // CHECK-NEXT:    [[TMP2:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.576.bfp16(ptr [[P_ADDR_SROA_0_0_P_ADDR_SROA_0_0_P_ADDR_SROA_0_0_P_ADDR_SROA_0_0_]], <64 x i8> [[V_COERCE_FCA_0_EXTRACT_I]], <8 x i8> [[V_COERCE_FCA_1_EXTRACT_I]], <32 x i32> [[TMP0]], i32 [[TMP1]])
-// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP2]], 0
-// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP2]], 1
-// CHECK-NEXT:    [[TMP5:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP2]], 2
-// CHECK-NEXT:    store <32 x i32> [[TMP4]], ptr [[S]], align 128
-// CHECK-NEXT:    store i32 [[TMP5]], ptr [[POS1_I]], align 64
-// CHECK-NEXT:    store ptr [[TMP3]], ptr [[P_ADDR_SROA_0]], align 4
+// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP2]], 1
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP2]], 2
+// CHECK-NEXT:    store <32 x i32> [[TMP3]], ptr [[S]], align 128
+// CHECK-NEXT:    store i32 [[TMP4]], ptr [[POS1_I]], align 64
 // CHECK-NEXT:    ret void
 //
 void test_intrinsic_annotated_pointer(v64bfp16ebs8_unaligned __aie_dm_resource_a * p, v64bfp16ebs8 v,
@@ -61,6 +59,86 @@ void test_intrinsic_annotated_pointer_reference(v64bfp16ebs8_unaligned __aie_dm_
                        fifo_state_t &s) {
   return fifo_st_push(p, v, s);
 }
+
+// CHECK-LABEL: define dso_local void @_Z47test_intrinsic_annotated_pointer_reference_loopRPU3AS522v64bfp16ebs8_unaligned12v64bfp16ebs8i(
+// CHECK-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], [[STRUCT_V64BFP16EBS8:%.*]] [[V_COERCE:%.*]], i32 noundef [[NUM:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[CMP6:%.*]] = icmp sgt i32 [[NUM]], 0
+// CHECK-NEXT:    br i1 [[CMP6]], label [[FOR_BODY_LR_PH:%.*]], label [[FOR_COND_CLEANUP:%.*]]
+// CHECK:       for.body.lr.ph:
+// CHECK-NEXT:    [[V_COERCE_FCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[V_COERCE]], 0
+// CHECK-NEXT:    [[V_COERCE_FCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[V_COERCE]], 1
+// CHECK-NEXT:    [[DOTPRE:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA2]]
+// CHECK-NEXT:    br label [[FOR_BODY:%.*]]
+// CHECK:       for.cond.cleanup:
+// CHECK-NEXT:    ret void
+// CHECK:       for.body:
+// CHECK-NEXT:    [[TMP0:%.*]] = phi ptr [ [[DOTPRE]], [[FOR_BODY_LR_PH]] ], [ [[TMP6:%.*]], [[FOR_BODY]] ]
+// CHECK-NEXT:    [[I_09:%.*]] = phi i32 [ 0, [[FOR_BODY_LR_PH]] ], [ [[INC:%.*]], [[FOR_BODY]] ]
+// CHECK-NEXT:    [[S_SROA_0_08:%.*]] = phi <32 x i32> [ undef, [[FOR_BODY_LR_PH]] ], [ [[TMP7:%.*]], [[FOR_BODY]] ]
+// CHECK-NEXT:    [[S_SROA_6_07:%.*]] = phi i32 [ 0, [[FOR_BODY_LR_PH]] ], [ [[TMP8:%.*]], [[FOR_BODY]] ]
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.576.bfp16(ptr [[TMP0]], <64 x i8> [[V_COERCE_FCA_0_EXTRACT_I]], <8 x i8> [[V_COERCE_FCA_1_EXTRACT_I]], <32 x i32> [[S_SROA_0_08]], i32 [[S_SROA_6_07]])
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP1]], 0
+// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP1]], 1
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP1]], 2
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.flush(ptr [[TMP2]], <32 x i32> [[TMP3]], i32 [[TMP4]])
+// CHECK-NEXT:    [[TMP6]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP5]], 0
+// CHECK-NEXT:    [[TMP7]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP5]], 1
+// CHECK-NEXT:    [[TMP8]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP5]], 2
+// CHECK-NEXT:    store ptr [[TMP6]], ptr [[P]], align 4
+// CHECK-NEXT:    [[INC]] = add nuw nsw i32 [[I_09]], 1
+// CHECK-NEXT:    [[EXITCOND_NOT:%.*]] = icmp eq i32 [[INC]], [[NUM]]
+// CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label [[FOR_COND_CLEANUP]], label [[FOR_BODY]], !llvm.loop [[LOOP9:![0-9]+]]
+//
+void test_intrinsic_annotated_pointer_reference_loop(
+    v64bfp16ebs8_unaligned __aie_dm_resource_a *&p, v64bfp16ebs8 v, int num) {
+  fifo_state_t s;
+  s.pos = 0;
+  for (int i = 0; i < num; ++i) {
+    fifo_st_push(p, v, s);
+    fifo_st_flush(p, s);
+  }
+}
+
+// CHECK-LABEL: define dso_local void @_Z45test_intrinsic_default_pointer_reference_loopRP22v64bfp16ebs8_unaligned12v64bfp16ebs8i(
+// CHECK-SAME: ptr nocapture nonnull align 4 dereferenceable(4) [[P:%.*]], [[STRUCT_V64BFP16EBS8:%.*]] [[V_COERCE:%.*]], i32 noundef [[NUM:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-NEXT:  entry:
+// CHECK-NEXT:    [[CMP6:%.*]] = icmp sgt i32 [[NUM]], 0
+// CHECK-NEXT:    br i1 [[CMP6]], label [[FOR_BODY_LR_PH:%.*]], label [[FOR_COND_CLEANUP:%.*]]
+// CHECK:       for.body.lr.ph:
+// CHECK-NEXT:    [[V_COERCE_FCA_0_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[V_COERCE]], 0
+// CHECK-NEXT:    [[V_COERCE_FCA_1_EXTRACT_I:%.*]] = extractvalue [[STRUCT_V64BFP16EBS8]] [[V_COERCE]], 1
+// CHECK-NEXT:    [[DOTPRE:%.*]] = load ptr, ptr [[P]], align 4, !tbaa [[TBAA2]]
+// CHECK-NEXT:    br label [[FOR_BODY:%.*]]
+// CHECK:       for.cond.cleanup:
+// CHECK-NEXT:    ret void
+// CHECK:       for.body:
+// CHECK-NEXT:    [[TMP0:%.*]] = phi ptr [ [[DOTPRE]], [[FOR_BODY_LR_PH]] ], [ [[TMP6:%.*]], [[FOR_BODY]] ]
+// CHECK-NEXT:    [[I_09:%.*]] = phi i32 [ 0, [[FOR_BODY_LR_PH]] ], [ [[INC:%.*]], [[FOR_BODY]] ]
+// CHECK-NEXT:    [[S_SROA_0_08:%.*]] = phi <32 x i32> [ undef, [[FOR_BODY_LR_PH]] ], [ [[TMP7:%.*]], [[FOR_BODY]] ]
+// CHECK-NEXT:    [[S_SROA_6_07:%.*]] = phi i32 [ 0, [[FOR_BODY_LR_PH]] ], [ [[TMP8:%.*]], [[FOR_BODY]] ]
+// CHECK-NEXT:    [[TMP1:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.576.bfp16(ptr [[TMP0]], <64 x i8> [[V_COERCE_FCA_0_EXTRACT_I]], <8 x i8> [[V_COERCE_FCA_1_EXTRACT_I]], <32 x i32> [[S_SROA_0_08]], i32 [[S_SROA_6_07]])
+// CHECK-NEXT:    [[TMP2:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP1]], 0
+// CHECK-NEXT:    [[TMP3:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP1]], 1
+// CHECK-NEXT:    [[TMP4:%.*]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP1]], 2
+// CHECK-NEXT:    [[TMP5:%.*]] = tail call { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.flush(ptr [[TMP2]], <32 x i32> [[TMP3]], i32 [[TMP4]])
+// CHECK-NEXT:    [[TMP6]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP5]], 0
+// CHECK-NEXT:    [[TMP7]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP5]], 1
+// CHECK-NEXT:    [[TMP8]] = extractvalue { ptr, <32 x i32>, i32 } [[TMP5]], 2
+// CHECK-NEXT:    store ptr [[TMP6]], ptr [[P]], align 4
+// CHECK-NEXT:    [[INC]] = add nuw nsw i32 [[I_09]], 1
+// CHECK-NEXT:    [[EXITCOND_NOT:%.*]] = icmp eq i32 [[INC]], [[NUM]]
+// CHECK-NEXT:    br i1 [[EXITCOND_NOT]], label [[FOR_COND_CLEANUP]], label [[FOR_BODY]], !llvm.loop [[LOOP12:![0-9]+]]
+//
+void test_intrinsic_default_pointer_reference_loop(
+    v64bfp16ebs8_unaligned *&p, v64bfp16ebs8 v, int num) {
+  fifo_state_t s;
+  s.pos = 0;
+  for (int i = 0; i < num; ++i) {
+    fifo_st_push(p, v, s);
+    fifo_st_flush(p, s);
+  }
+}
 //.
 // CHECK: [[TBAA2]] = !{[[META3:![0-9]+]], [[META3]], i64 0}
 // CHECK: [[META3]] = !{!"any pointer", [[META4:![0-9]+]], i64 0}
@@ -69,4 +147,8 @@ void test_intrinsic_annotated_pointer_reference(v64bfp16ebs8_unaligned __aie_dm_
 // CHECK: [[TBAA6]] = !{[[META4]], [[META4]], i64 0}
 // CHECK: [[TBAA7]] = !{[[META8:![0-9]+]], [[META8]], i64 0}
 // CHECK: [[META8]] = !{!"int", [[META4]], i64 0}
+// CHECK: [[LOOP9]] = distinct !{[[LOOP9]], [[META10:![0-9]+]], [[META11:![0-9]+]]}
+// CHECK: [[META10]] = !{!"llvm.loop.mustprogress"}
+// CHECK: [[META11]] = !{!"llvm.loop.unroll.disable"}
+// CHECK: [[LOOP12]] = distinct !{[[LOOP12]], [[META10]], [[META11]]}
 //.
