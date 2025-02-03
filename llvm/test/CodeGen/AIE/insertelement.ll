@@ -11,8 +11,7 @@
 ; 64-bit vectors
 define <2 x i32> @insert_v2i32(<2 x i32> %v, i32 %e) nounwind {
 ; AIE2-LABEL: insert_v2i32:
-; AIE2:         .p2align 4
-; AIE2-NEXT:  // %bb.0:
+; AIE2:       // %bb.0:
 ; AIE2-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; AIE2-NEXT:    nopx // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
@@ -21,8 +20,7 @@ define <2 x i32> @insert_v2i32(<2 x i32> %v, i32 %e) nounwind {
 ; AIE2-NEXT:    mov r17, r0 // Delay Slot 1
 ;
 ; AIE2P-LABEL: insert_v2i32:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0:
+; AIE2P:       // %bb.0:
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; AIE2P-NEXT:    nopx // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
@@ -35,8 +33,7 @@ define <2 x i32> @insert_v2i32(<2 x i32> %v, i32 %e) nounwind {
 
 define <2 x i32> @insert_v2i32_dyn(<2 x i32> %v, i32 %e, i32 %idx) nounwind {
 ; AIE2-LABEL: insert_v2i32_dyn:
-; AIE2:         .p2align 4
-; AIE2-NEXT:  // %bb.0:
+; AIE2:       // %bb.0:
 ; AIE2-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; AIE2-NEXT:    nop // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
@@ -45,8 +42,7 @@ define <2 x i32> @insert_v2i32_dyn(<2 x i32> %v, i32 %e, i32 %idx) nounwind {
 ; AIE2-NEXT:    sel.nez r17, r0, r19, r27 // Delay Slot 1
 ;
 ; AIE2P-LABEL: insert_v2i32_dyn:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0:
+; AIE2P:       // %bb.0:
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; AIE2P-NEXT:    nop // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
@@ -60,8 +56,7 @@ define <2 x i32> @insert_v2i32_dyn(<2 x i32> %v, i32 %e, i32 %idx) nounwind {
 ; 256-bit vectors
 define <32 x i8> @insert_v32i8(<32 x i8> %v, i8 %e) nounwind {
 ; AIE2-LABEL: insert_v32i8:
-; AIE2:         .p2align 4
-; AIE2-NEXT:  // %bb.0:
+; AIE2:       // %bb.0:
 ; AIE2-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; AIE2-NEXT:    nopx // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
@@ -70,8 +65,7 @@ define <32 x i8> @insert_v32i8(<32 x i8> %v, i8 %e) nounwind {
 ; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: insert_v32i8:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0:
+; AIE2P:       // %bb.0:
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; AIE2P-NEXT:    nopx // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
@@ -84,8 +78,7 @@ define <32 x i8> @insert_v32i8(<32 x i8> %v, i8 %e) nounwind {
 
 define <32 x i8> @insert_v32i8_dyn(<32 x i8> %v, i8 %e, i32 %idx) nounwind {
 ; AIE2-LABEL: insert_v32i8_dyn:
-; AIE2:         .p2align 4
-; AIE2-NEXT:  // %bb.0:
+; AIE2:       // %bb.0:
 ; AIE2-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; AIE2-NEXT:    nopx // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
@@ -94,8 +87,7 @@ define <32 x i8> @insert_v32i8_dyn(<32 x i8> %v, i8 %e, i32 %idx) nounwind {
 ; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: insert_v32i8_dyn:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0:
+; AIE2P:       // %bb.0:
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; AIE2P-NEXT:    nopx // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
@@ -108,8 +100,7 @@ define <32 x i8> @insert_v32i8_dyn(<32 x i8> %v, i8 %e, i32 %idx) nounwind {
 
 define <16 x i16> @insert_v16i16(<16 x i16> %v, i16 %e) nounwind {
 ; AIE2-LABEL: insert_v16i16:
-; AIE2:         .p2align 4
-; AIE2-NEXT:  // %bb.0:
+; AIE2:       // %bb.0:
 ; AIE2-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; AIE2-NEXT:    nopx // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
@@ -118,8 +109,7 @@ define <16 x i16> @insert_v16i16(<16 x i16> %v, i16 %e) nounwind {
 ; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: insert_v16i16:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0:
+; AIE2P:       // %bb.0:
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; AIE2P-NEXT:    nopx // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
@@ -132,8 +122,7 @@ define <16 x i16> @insert_v16i16(<16 x i16> %v, i16 %e) nounwind {
 
 define <16 x i16> @insert_v16i16_dyn(<16 x i16> %v, i16 %e, i32 %idx) nounwind {
 ; AIE2-LABEL: insert_v16i16_dyn:
-; AIE2:         .p2align 4
-; AIE2-NEXT:  // %bb.0:
+; AIE2:       // %bb.0:
 ; AIE2-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; AIE2-NEXT:    nopx // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
@@ -142,8 +131,7 @@ define <16 x i16> @insert_v16i16_dyn(<16 x i16> %v, i16 %e, i32 %idx) nounwind {
 ; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: insert_v16i16_dyn:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0:
+; AIE2P:       // %bb.0:
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; AIE2P-NEXT:    nopx // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
@@ -156,8 +144,7 @@ define <16 x i16> @insert_v16i16_dyn(<16 x i16> %v, i16 %e, i32 %idx) nounwind {
 
 define <8 x i32> @insert_v8i32(<8 x i32> %v, i32 %e) nounwind {
 ; AIE2-LABEL: insert_v8i32:
-; AIE2:         .p2align 4
-; AIE2-NEXT:  // %bb.0:
+; AIE2:       // %bb.0:
 ; AIE2-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; AIE2-NEXT:    nopx // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
@@ -166,8 +153,7 @@ define <8 x i32> @insert_v8i32(<8 x i32> %v, i32 %e) nounwind {
 ; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: insert_v8i32:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0:
+; AIE2P:       // %bb.0:
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; AIE2P-NEXT:    nopx // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
@@ -180,8 +166,7 @@ define <8 x i32> @insert_v8i32(<8 x i32> %v, i32 %e) nounwind {
 
 define <8 x i32> @insert_v8i32_dyn(<8 x i32> %v, i32 %e, i32 %idx) nounwind {
 ; AIE2-LABEL: insert_v8i32_dyn:
-; AIE2:         .p2align 4
-; AIE2-NEXT:  // %bb.0:
+; AIE2:       // %bb.0:
 ; AIE2-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; AIE2-NEXT:    nopx // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
@@ -190,8 +175,7 @@ define <8 x i32> @insert_v8i32_dyn(<8 x i32> %v, i32 %e, i32 %idx) nounwind {
 ; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: insert_v8i32_dyn:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0:
+; AIE2P:       // %bb.0:
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; AIE2P-NEXT:    nopx // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
@@ -205,8 +189,7 @@ define <8 x i32> @insert_v8i32_dyn(<8 x i32> %v, i32 %e, i32 %idx) nounwind {
 ; 512-bit vectors
 define <64 x i8> @insert_v64i8(<64 x i8> %v, i8 %e) nounwind {
 ; AIE2-LABEL: insert_v64i8:
-; AIE2:         .p2align 4
-; AIE2-NEXT:  // %bb.0:
+; AIE2:       // %bb.0:
 ; AIE2-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; AIE2-NEXT:    nopx // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
@@ -215,8 +198,7 @@ define <64 x i8> @insert_v64i8(<64 x i8> %v, i8 %e) nounwind {
 ; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: insert_v64i8:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0:
+; AIE2P:       // %bb.0:
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; AIE2P-NEXT:    nopx // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
@@ -229,8 +211,7 @@ define <64 x i8> @insert_v64i8(<64 x i8> %v, i8 %e) nounwind {
 
 define <64 x i8> @insert_v64i8_dyn(<64 x i8> %v, i8 %e, i32 %idx) nounwind {
 ; AIE2-LABEL: insert_v64i8_dyn:
-; AIE2:         .p2align 4
-; AIE2-NEXT:  // %bb.0:
+; AIE2:       // %bb.0:
 ; AIE2-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; AIE2-NEXT:    nopx // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
@@ -239,8 +220,7 @@ define <64 x i8> @insert_v64i8_dyn(<64 x i8> %v, i8 %e, i32 %idx) nounwind {
 ; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: insert_v64i8_dyn:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0:
+; AIE2P:       // %bb.0:
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; AIE2P-NEXT:    nopx // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
@@ -253,8 +233,7 @@ define <64 x i8> @insert_v64i8_dyn(<64 x i8> %v, i8 %e, i32 %idx) nounwind {
 
 define <32 x i16> @insert_v32i16(<32 x i16> %v, i16 %e) nounwind {
 ; AIE2-LABEL: insert_v32i16:
-; AIE2:         .p2align 4
-; AIE2-NEXT:  // %bb.0:
+; AIE2:       // %bb.0:
 ; AIE2-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; AIE2-NEXT:    nopx // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
@@ -263,8 +242,7 @@ define <32 x i16> @insert_v32i16(<32 x i16> %v, i16 %e) nounwind {
 ; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: insert_v32i16:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0:
+; AIE2P:       // %bb.0:
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; AIE2P-NEXT:    nopx // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
@@ -277,8 +255,7 @@ define <32 x i16> @insert_v32i16(<32 x i16> %v, i16 %e) nounwind {
 
 define <32 x i16> @insert_v32i16_dyn(<32 x i16> %v, i16 %e, i32 %idx) nounwind {
 ; AIE2-LABEL: insert_v32i16_dyn:
-; AIE2:         .p2align 4
-; AIE2-NEXT:  // %bb.0:
+; AIE2:       // %bb.0:
 ; AIE2-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; AIE2-NEXT:    nopx // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
@@ -287,8 +264,7 @@ define <32 x i16> @insert_v32i16_dyn(<32 x i16> %v, i16 %e, i32 %idx) nounwind {
 ; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: insert_v32i16_dyn:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0:
+; AIE2P:       // %bb.0:
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; AIE2P-NEXT:    nopx // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
@@ -301,8 +277,7 @@ define <32 x i16> @insert_v32i16_dyn(<32 x i16> %v, i16 %e, i32 %idx) nounwind {
 
 define <16 x i32> @insert_v16i32(<16 x i32> %v, i32 %e) nounwind {
 ; AIE2-LABEL: insert_v16i32:
-; AIE2:         .p2align 4
-; AIE2-NEXT:  // %bb.0:
+; AIE2:       // %bb.0:
 ; AIE2-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; AIE2-NEXT:    nopx // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
@@ -311,8 +286,7 @@ define <16 x i32> @insert_v16i32(<16 x i32> %v, i32 %e) nounwind {
 ; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: insert_v16i32:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0:
+; AIE2P:       // %bb.0:
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; AIE2P-NEXT:    nopx // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
@@ -325,8 +299,7 @@ define <16 x i32> @insert_v16i32(<16 x i32> %v, i32 %e) nounwind {
 
 define <16 x i32> @insert_v16i32_dyn(<16 x i32> %v, i32 %e, i32 %idx) nounwind {
 ; AIE2-LABEL: insert_v16i32_dyn:
-; AIE2:         .p2align 4
-; AIE2-NEXT:  // %bb.0:
+; AIE2:       // %bb.0:
 ; AIE2-NEXT:    nopb ; nopa ; nops ; ret lr ; nopm ; nopv
 ; AIE2-NEXT:    nopx // Delay Slot 5
 ; AIE2-NEXT:    nop // Delay Slot 4
@@ -335,8 +308,7 @@ define <16 x i32> @insert_v16i32_dyn(<16 x i32> %v, i32 %e, i32 %idx) nounwind {
 ; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: insert_v16i32_dyn:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0:
+; AIE2P:       // %bb.0:
 ; AIE2P-NEXT:    nopa ; nopb ; nops ; ret lr; nopm ; nopv
 ; AIE2P-NEXT:    nopx // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
@@ -350,8 +322,7 @@ define <16 x i32> @insert_v16i32_dyn(<16 x i32> %v, i32 %e, i32 %idx) nounwind {
 ; 1024-bit vectors
 define <128 x i8> @insert_v128i8(<128 x i8> %v, i8 %e) nounwind {
 ; AIE2-LABEL: insert_v128i8:
-; AIE2:         .p2align 4
-; AIE2-NEXT:  // %bb.0:
+; AIE2:       // %bb.0:
 ; AIE2-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; AIE2-NEXT:    mova r29, #1 // Delay Slot 5
 ; AIE2-NEXT:    vmov x4, x6 // Delay Slot 4
@@ -360,8 +331,7 @@ define <128 x i8> @insert_v128i8(<128 x i8> %v, i8 %e) nounwind {
 ; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: insert_v128i8:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0:
+; AIE2P:       // %bb.0:
 ; AIE2P-NEXT:    nopa ; nopb ; ret lr; nopm ; nops
 ; AIE2P-NEXT:    mova r29, #1 // Delay Slot 5
 ; AIE2P-NEXT:    vmov x4, x6 // Delay Slot 4
@@ -374,22 +344,17 @@ define <128 x i8> @insert_v128i8(<128 x i8> %v, i8 %e) nounwind {
 
 define <128 x i8> @insert_v128i8_dyn(<128 x i8> %v, i8 %e, i32 %idx) nounwind {
 ; AIE2-LABEL: insert_v128i8_dyn:
-; AIE2:         .p2align 4
-; AIE2-NEXT:  // %bb.0:
+; AIE2:       // %bb.0:
 ; AIE2-NEXT:    nopa ; paddb [sp], #128; nopxm
 ; AIE2-NEXT:    mova r2, #127
 ; AIE2-NEXT:    mov p0, sp
 ; AIE2-NEXT:    and r1, r1, r2
-; AIE2-NEXT:    mova r2, #8
 ; AIE2-NEXT:    paddb [p0], #-128
-; AIE2-NEXT:    lshl r1, r1, r2
-; AIE2-NEXT:    mova r2, #-8
-; AIE2-NEXT:    ashl r1, r1, r2
+; AIE2-NEXT:    mov dj0, r1
 ; AIE2-NEXT:    vst wh7, [p0, #96]
 ; AIE2-NEXT:    vst wl7, [p0, #64]
 ; AIE2-NEXT:    vst wh6, [p0, #32]
 ; AIE2-NEXT:    vst wl6, [p0, #0]
-; AIE2-NEXT:    mov dj0, r1
 ; AIE2-NEXT:    st.s8 r0, [p0, dj0]
 ; AIE2-NEXT:    nop
 ; AIE2-NEXT:    nop
@@ -409,20 +374,15 @@ define <128 x i8> @insert_v128i8_dyn(<128 x i8> %v, i8 %e, i32 %idx) nounwind {
 ; AIE2-NEXT:    paddb [sp], #-128 // Delay Slot 1
 ;
 ; AIE2P-LABEL: insert_v128i8_dyn:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0:
+; AIE2P:       // %bb.0:
 ; AIE2P-NEXT:    mova r2, #127; nopb ; nopx
 ; AIE2P-NEXT:    paddxm [sp], #128
 ; AIE2P-NEXT:    mov p0, sp
 ; AIE2P-NEXT:    and r1, r1, r2
-; AIE2P-NEXT:    mova r2, #8
-; AIE2P-NEXT:    lshl r1, r1, r2
-; AIE2P-NEXT:    mova r2, #-8
+; AIE2P-NEXT:    mov dj0, r1
 ; AIE2P-NEXT:    padda [p0], #-128
-; AIE2P-NEXT:    ashl r1, r1, r2
 ; AIE2P-NEXT:    vst x6, [p0, #0]
 ; AIE2P-NEXT:    vst x7, [p0, #64]
-; AIE2P-NEXT:    mov dj0, r1
 ; AIE2P-NEXT:    st.s8 r0, [p0, dj0]
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop
@@ -430,8 +390,8 @@ define <128 x i8> @insert_v128i8_dyn(<128 x i8> %v, i8 %e, i32 %idx) nounwind {
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop
-; AIE2P-NEXT:    vlda x4, [p0, #0]
-; AIE2P-NEXT:    vlda x5, [p0, #64]
+; AIE2P-NEXT:    vldb x4, [p0, #0]
+; AIE2P-NEXT:    vldb x5, [p0, #64]
 ; AIE2P-NEXT:    ret lr
 ; AIE2P-NEXT:    nop // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
@@ -444,8 +404,7 @@ define <128 x i8> @insert_v128i8_dyn(<128 x i8> %v, i8 %e, i32 %idx) nounwind {
 
 define <64 x i16> @insert_v64i16(<64 x i16> %v, i16 %e) nounwind {
 ; AIE2-LABEL: insert_v64i16:
-; AIE2:         .p2align 4
-; AIE2-NEXT:  // %bb.0:
+; AIE2:       // %bb.0:
 ; AIE2-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; AIE2-NEXT:    mova r29, #11 // Delay Slot 5
 ; AIE2-NEXT:    vmov x4, x6 // Delay Slot 4
@@ -454,8 +413,7 @@ define <64 x i16> @insert_v64i16(<64 x i16> %v, i16 %e) nounwind {
 ; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: insert_v64i16:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0:
+; AIE2P:       // %bb.0:
 ; AIE2P-NEXT:    nopa ; nopb ; ret lr; nopm ; nops
 ; AIE2P-NEXT:    mova r29, #11 // Delay Slot 5
 ; AIE2P-NEXT:    vmov x4, x6 // Delay Slot 4
@@ -468,22 +426,19 @@ define <64 x i16> @insert_v64i16(<64 x i16> %v, i16 %e) nounwind {
 
 define <64 x i16> @insert_v64i16_dyn(<64 x i16> %v, i16 %e, i32 %idx) nounwind {
 ; AIE2-LABEL: insert_v64i16_dyn:
-; AIE2:         .p2align 4
-; AIE2-NEXT:  // %bb.0:
-; AIE2-NEXT:    nopa ; paddb [sp], #128; nopxm
+; AIE2:       // %bb.0:
+; AIE2-NEXT:    paddb [sp], #128
 ; AIE2-NEXT:    mova r2, #63
 ; AIE2-NEXT:    mov p0, sp
 ; AIE2-NEXT:    and r1, r1, r2
-; AIE2-NEXT:    mova r2, #9
+; AIE2-NEXT:    mova r2, #1
 ; AIE2-NEXT:    paddb [p0], #-128
 ; AIE2-NEXT:    lshl r1, r1, r2
-; AIE2-NEXT:    mova r2, #-8
-; AIE2-NEXT:    ashl r1, r1, r2
+; AIE2-NEXT:    mov dj0, r1
 ; AIE2-NEXT:    vst wh7, [p0, #96]
 ; AIE2-NEXT:    vst wl7, [p0, #64]
 ; AIE2-NEXT:    vst wh6, [p0, #32]
 ; AIE2-NEXT:    vst wl6, [p0, #0]
-; AIE2-NEXT:    mov dj0, r1
 ; AIE2-NEXT:    st.s16 r0, [p0, dj0]
 ; AIE2-NEXT:    nop
 ; AIE2-NEXT:    nop
@@ -503,20 +458,17 @@ define <64 x i16> @insert_v64i16_dyn(<64 x i16> %v, i16 %e, i32 %idx) nounwind {
 ; AIE2-NEXT:    paddb [sp], #-128 // Delay Slot 1
 ;
 ; AIE2P-LABEL: insert_v64i16_dyn:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0:
-; AIE2P-NEXT:    mova r2, #63; nopb ; nopx
+; AIE2P:       // %bb.0:
+; AIE2P-NEXT:    mova r2, #63; nopb ; nops ; nopxm ; nopv
 ; AIE2P-NEXT:    paddxm [sp], #128
 ; AIE2P-NEXT:    mov p0, sp
 ; AIE2P-NEXT:    and r1, r1, r2
-; AIE2P-NEXT:    mova r2, #9
+; AIE2P-NEXT:    mova r2, #1
 ; AIE2P-NEXT:    lshl r1, r1, r2
-; AIE2P-NEXT:    mova r2, #-8
 ; AIE2P-NEXT:    padda [p0], #-128
-; AIE2P-NEXT:    ashl r1, r1, r2
+; AIE2P-NEXT:    mov dj0, r1
 ; AIE2P-NEXT:    vst x6, [p0, #0]
 ; AIE2P-NEXT:    vst x7, [p0, #64]
-; AIE2P-NEXT:    mov dj0, r1
 ; AIE2P-NEXT:    st.s16 r0, [p0, dj0]
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop
@@ -524,8 +476,8 @@ define <64 x i16> @insert_v64i16_dyn(<64 x i16> %v, i16 %e, i32 %idx) nounwind {
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop
 ; AIE2P-NEXT:    nop
-; AIE2P-NEXT:    vlda x4, [p0, #0]
-; AIE2P-NEXT:    vlda x5, [p0, #64]
+; AIE2P-NEXT:    vldb x4, [p0, #0]
+; AIE2P-NEXT:    vldb x5, [p0, #64]
 ; AIE2P-NEXT:    ret lr
 ; AIE2P-NEXT:    nop // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4
@@ -538,8 +490,7 @@ define <64 x i16> @insert_v64i16_dyn(<64 x i16> %v, i16 %e, i32 %idx) nounwind {
 
 define <32 x i32> @insert_v32i32(<32 x i32> %v, i32 %e) nounwind {
 ; AIE2-LABEL: insert_v32i32:
-; AIE2:         .p2align 4
-; AIE2-NEXT:  // %bb.0:
+; AIE2:       // %bb.0:
 ; AIE2-NEXT:    nopa ; nopb ; ret lr ; nopm ; nops
 ; AIE2-NEXT:    mova r29, #7 // Delay Slot 5
 ; AIE2-NEXT:    vmov x4, x6 // Delay Slot 4
@@ -548,8 +499,7 @@ define <32 x i32> @insert_v32i32(<32 x i32> %v, i32 %e) nounwind {
 ; AIE2-NEXT:    nop // Delay Slot 1
 ;
 ; AIE2P-LABEL: insert_v32i32:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0:
+; AIE2P:       // %bb.0:
 ; AIE2P-NEXT:    nopa ; nopb ; ret lr; nopm ; nops
 ; AIE2P-NEXT:    mova r29, #7 // Delay Slot 5
 ; AIE2P-NEXT:    vmov x4, x6 // Delay Slot 4
@@ -562,22 +512,19 @@ define <32 x i32> @insert_v32i32(<32 x i32> %v, i32 %e) nounwind {
 
 define <32 x i32> @insert_v32i32_dyn(<32 x i32> %v, i32 %e, i32 %idx) nounwind {
 ; AIE2-LABEL: insert_v32i32_dyn:
-; AIE2:         .p2align 4
-; AIE2-NEXT:  // %bb.0:
-; AIE2-NEXT:    nopa ; paddb [sp], #128; nopx
+; AIE2:       // %bb.0:
+; AIE2-NEXT:    paddb [sp], #128; nopa ; nops ; nopxm ; nopv
 ; AIE2-NEXT:    mova r2, #31
 ; AIE2-NEXT:    mov p0, sp
 ; AIE2-NEXT:    and r1, r1, r2
-; AIE2-NEXT:    mova r2, #10
+; AIE2-NEXT:    mova r2, #2
 ; AIE2-NEXT:    paddb [p0], #-128
 ; AIE2-NEXT:    lshl r1, r1, r2
-; AIE2-NEXT:    mova r2, #-8
-; AIE2-NEXT:    ashl r1, r1, r2
+; AIE2-NEXT:    mov dj0, r1
 ; AIE2-NEXT:    vst wh7, [p0, #96]
 ; AIE2-NEXT:    vst wl7, [p0, #64]
 ; AIE2-NEXT:    vst wh6, [p0, #32]
 ; AIE2-NEXT:    vst wl6, [p0, #0]
-; AIE2-NEXT:    mov dj0, r1
 ; AIE2-NEXT:    st r0, [p0, dj0]
 ; AIE2-NEXT:    vldb wh5, [p0, #96]
 ; AIE2-NEXT:    vldb wl5, [p0, #64]
@@ -591,23 +538,20 @@ define <32 x i32> @insert_v32i32_dyn(<32 x i32> %v, i32 %e, i32 %idx) nounwind {
 ; AIE2-NEXT:    paddb [sp], #-128 // Delay Slot 1
 ;
 ; AIE2P-LABEL: insert_v32i32_dyn:
-; AIE2P:         .p2align 4
-; AIE2P-NEXT:  // %bb.0:
-; AIE2P-NEXT:    mova r2, #31
+; AIE2P:       // %bb.0:
+; AIE2P-NEXT:    mova r2, #31; nopb ; nopxm
 ; AIE2P-NEXT:    paddxm [sp], #128
 ; AIE2P-NEXT:    mov p0, sp
 ; AIE2P-NEXT:    and r1, r1, r2
-; AIE2P-NEXT:    mova r2, #10
+; AIE2P-NEXT:    mova r2, #2
 ; AIE2P-NEXT:    lshl r1, r1, r2
-; AIE2P-NEXT:    mova r2, #-8
 ; AIE2P-NEXT:    padda [p0], #-128
-; AIE2P-NEXT:    ashl r1, r1, r2
+; AIE2P-NEXT:    mov dj0, r1
 ; AIE2P-NEXT:    vst x6, [p0, #0]
 ; AIE2P-NEXT:    vst x7, [p0, #64]
-; AIE2P-NEXT:    mov dj0, r1
 ; AIE2P-NEXT:    st r0, [p0, dj0]
-; AIE2P-NEXT:    vlda x4, [p0, #0]
-; AIE2P-NEXT:    vlda x5, [p0, #64]
+; AIE2P-NEXT:    vldb x4, [p0, #0]
+; AIE2P-NEXT:    vldb x5, [p0, #64]
 ; AIE2P-NEXT:    ret lr
 ; AIE2P-NEXT:    nop // Delay Slot 5
 ; AIE2P-NEXT:    nop // Delay Slot 4

@@ -1077,3 +1077,8 @@ defm : Extract_512<i32, v16i32, (i32 eR:$idx), VEXTRACT_D32, VEXTRACT_S32>;
 defm : Extract_512<i20, v64i8, (i32 eR:$idx), VEXTRACT_D8, VEXTRACT_S8>;
 defm : Extract_512<i20, v32i16, (i32 eR:$idx), VEXTRACT_D16, VEXTRACT_S16>;
 defm : Extract_512<i20, v16i32, (i32 eR:$idx), VEXTRACT_D32, VEXTRACT_S32>;
+
+// G_AIE_INSERT_VECTOR_ELT
+def : Insert512Pat<v64i8, (i32 eR:$val), (i32 eR:$idx), VINSERT_8>;
+def : Insert512Pat<v32i16, (i32 eR:$val), (i32 eR:$idx), VINSERT_16>;
+def : Insert512Pat<v16i32, (i32 eR:$val), (i32 eR:$idx), VINSERT_32>;
