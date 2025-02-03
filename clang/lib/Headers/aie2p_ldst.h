@@ -114,12 +114,14 @@ INTRINSIC(v128uint8) unpack(v128uint4 v) { return unpack(v, __SIGN_UNSIGNED); }
   fifo_st_reset(T DM_BANK *RESTRICT &p, T v, fifo_state_t &s) {                \
     s.pos = 0;                                                                 \
     sparse_fifo_t &fifo = s.fifo;                                              \
-    __builtin_aie2p_fifo_st_push_512_bfp16((int *&)p, v, fifo, s.pos);         \
+    __builtin_aie2p_fifo_st_push_512_bfp16((void DM_BANK *RESTRICT &)p, v,     \
+                                           fifo, s.pos);                       \
   }                                                                            \
   INTRINSIC(void) fifo_st_push(T DM_BANK *RESTRICT &p, T v, fifo_state_t &s) { \
     int &pos = s.pos;                                                          \
     sparse_fifo_t &fifo = s.fifo;                                              \
-    __builtin_aie2p_fifo_st_push_512_bfp16((int *&)p, v, fifo, pos);           \
+    __builtin_aie2p_fifo_st_push_512_bfp16((void DM_BANK *RESTRICT &)p, v,     \
+                                           fifo, pos);                         \
   }
 
 #define FIFO_ST_PUSH_BFP16(T, SIZE, DM_BANK, RESTRICT)                         \
@@ -129,8 +131,8 @@ INTRINSIC(v128uint8) unpack(v128uint4 v) { return unpack(v, __SIGN_UNSIGNED); }
     sparse_fifo_t &fifo = s.fifo;                                              \
     v64char mant = v.mantissa;                                                 \
     v8char exp = v.exponent;                                                   \
-    __builtin_aie2p_fifo_st_push_##SIZE##_bfp16((int *&)p, mant, exp, fifo,    \
-                                                s.pos);                        \
+    __builtin_aie2p_fifo_st_push_##SIZE##_bfp16((void DM_BANK *RESTRICT &)p,   \
+                                                mant, exp, fifo, s.pos);       \
   }                                                                            \
   INTRINSIC(void)                                                              \
   fifo_st_push(T##_unaligned DM_BANK *RESTRICT &p, T v, fifo_state_t &s) {     \
@@ -138,8 +140,8 @@ INTRINSIC(v128uint8) unpack(v128uint4 v) { return unpack(v, __SIGN_UNSIGNED); }
     sparse_fifo_t &fifo = s.fifo;                                              \
     v64char mant = v.mantissa;                                                 \
     v8char exp = v.exponent;                                                   \
-    __builtin_aie2p_fifo_st_push_##SIZE##_bfp16((int *&)p, mant, exp, fifo,    \
-                                                pos);                          \
+    __builtin_aie2p_fifo_st_push_##SIZE##_bfp16((void DM_BANK *RESTRICT &)p,   \
+                                                mant, exp, fifo, pos);         \
   }
 
 #define FIFO_ST_FLUSH_BARE(T, VAR, DM_BANK, RESTRICT)                          \
@@ -147,22 +149,23 @@ INTRINSIC(v128uint8) unpack(v128uint4 v) { return unpack(v, __SIGN_UNSIGNED); }
   fifo_st_flush##VAR(T DM_BANK *RESTRICT &p, fifo_state_t &s) {                \
     int &pos = s.pos;                                                          \
     sparse_fifo_t &fifo = s.fifo;                                              \
-    __builtin_aie2p_fifo_st_flush((int *&)p, fifo, pos);                       \
+    __builtin_aie2p_fifo_st_flush((void DM_BANK *RESTRICT &)p, fifo, pos);     \
   }                                                                            \
   INTRINSIC(void)                                                              \
   fifo_st_flush##VAR##_1d_byte(T DM_BANK *RESTRICT &p, fifo_state_t &s,        \
                                int off) {                                      \
     int &pos = s.pos;                                                          \
     sparse_fifo_t &fifo = s.fifo;                                              \
-    __builtin_aie2p_fifo_st_flush_1d_byte((int *&)p, fifo, pos, off);          \
+    __builtin_aie2p_fifo_st_flush_1d_byte((void DM_BANK *RESTRICT &)p, fifo,   \
+                                          pos, off);                           \
   }                                                                            \
   INTRINSIC(void)                                                              \
   fifo_st_flush##VAR##_2d_byte(T DM_BANK *RESTRICT &p, fifo_state_t &s,        \
                                int off, int size1, addr_t &count1, int inc1) { \
     int &pos = s.pos;                                                          \
     sparse_fifo_t &fifo = s.fifo;                                              \
-    __builtin_aie2p_fifo_st_flush_2d_byte((int *&)p, fifo, pos, off, size1,    \
-                                          count1, inc1);                       \
+    __builtin_aie2p_fifo_st_flush_2d_byte((void DM_BANK *RESTRICT &)p, fifo,   \
+                                          pos, off, size1, count1, inc1);      \
   }                                                                            \
   INTRINSIC(void)                                                              \
   fifo_st_flush##VAR##_3d_byte(T DM_BANK *RESTRICT &p, fifo_state_t &s,        \
@@ -170,8 +173,9 @@ INTRINSIC(v128uint8) unpack(v128uint4 v) { return unpack(v, __SIGN_UNSIGNED); }
                                int size2, addr_t &count2, int inc2) {          \
     int &pos = s.pos;                                                          \
     sparse_fifo_t &fifo = s.fifo;                                              \
-    __builtin_aie2p_fifo_st_flush_3d_byte((int *&)p, fifo, pos, off, size1,    \
-                                          count1, inc1, size2, count2, inc2);  \
+    __builtin_aie2p_fifo_st_flush_3d_byte((void DM_BANK *RESTRICT &)p, fifo,   \
+                                          pos, off, size1, count1, inc1,       \
+                                          size2, count2, inc2);                \
   }
 
 #define FIFO_ST_FLUSH_CONV(T, DM_BANK, RESTRICT)                               \
@@ -179,22 +183,24 @@ INTRINSIC(v128uint8) unpack(v128uint4 v) { return unpack(v, __SIGN_UNSIGNED); }
   fifo_st_flush_conv(T DM_BANK *RESTRICT &p, fifo_state_t &s) {                \
     int &pos = s.pos;                                                          \
     sparse_fifo_t &fifo = s.fifo;                                              \
-    __builtin_aie2p_fifo_st_flush_conv((int *&)p, fifo, pos);                  \
+    __builtin_aie2p_fifo_st_flush_conv((void DM_BANK *RESTRICT &)p, fifo,      \
+                                       pos);                                   \
   }                                                                            \
   INTRINSIC(void)                                                              \
   fifo_st_flush_conv_1d_byte(T DM_BANK *RESTRICT &p, fifo_state_t &s,          \
                              int off) {                                        \
     int &pos = s.pos;                                                          \
     sparse_fifo_t &fifo = s.fifo;                                              \
-    __builtin_aie2p_fifo_st_flush_conv_1d_byte((int *&)p, fifo, pos, off);     \
+    __builtin_aie2p_fifo_st_flush_conv_1d_byte((void DM_BANK *RESTRICT &)p,    \
+                                               fifo, pos, off);                \
   }                                                                            \
   INTRINSIC(void)                                                              \
   fifo_st_flush_conv_2d_byte(T DM_BANK *RESTRICT &p, fifo_state_t &s, int off, \
                              int size1, addr_t &count1, int inc1) {            \
     int &pos = s.pos;                                                          \
     sparse_fifo_t &fifo = s.fifo;                                              \
-    __builtin_aie2p_fifo_st_flush_conv_2d_byte((int *&)p, fifo, pos, off,      \
-                                               size1, count1, inc1);           \
+    __builtin_aie2p_fifo_st_flush_conv_2d_byte(                                \
+        (void DM_BANK *RESTRICT &)p, fifo, pos, off, size1, count1, inc1);     \
   }                                                                            \
   INTRINSIC(void)                                                              \
   fifo_st_flush_conv_3d_byte(T DM_BANK *RESTRICT &p, fifo_state_t &s, int off, \
@@ -202,8 +208,9 @@ INTRINSIC(v128uint8) unpack(v128uint4 v) { return unpack(v, __SIGN_UNSIGNED); }
                              addr_t &count2, int inc2) {                       \
     int &pos = s.pos;                                                          \
     sparse_fifo_t &fifo = s.fifo;                                              \
-    __builtin_aie2p_fifo_st_flush_conv_3d_byte(                                \
-        (int *&)p, fifo, pos, off, size1, count1, inc1, size2, count2, inc2);  \
+    __builtin_aie2p_fifo_st_flush_conv_3d_byte((void DM_BANK *RESTRICT &)p,    \
+                                               fifo, pos, off, size1, count1,  \
+                                               inc1, size2, count2, inc2);     \
   }
 
 #define FIFO_ST_NORMAL(T, DM_BANK, RESTRICT)                                   \
@@ -268,19 +275,20 @@ FIFO_ST(__aie_dm_resource_cd, restrict)
   INTRINSIC(void) fifo_ld_reset(T DM_BANK *RESTRICT &p, fifo_state_t &s) {     \
     s.pos = 0;                                                                 \
     sparse_fifo_t &fifo = s.fifo;                                              \
-    __builtin_aie2p_fifo_ld_fill((int *&)p, fifo, s.pos);                      \
+    __builtin_aie2p_fifo_ld_fill((void DM_BANK *RESTRICT &)p, fifo, s.pos);    \
   }                                                                            \
                                                                                \
   INTRINSIC(void) fifo_ld_fill(T DM_BANK *RESTRICT &p, fifo_state_t &s) {      \
     int &pos = s.pos;                                                          \
     sparse_fifo_t &fifo = s.fifo;                                              \
-    __builtin_aie2p_fifo_ld_fill((int *&)p, fifo, pos);                        \
+    __builtin_aie2p_fifo_ld_fill((void DM_BANK *RESTRICT &)p, fifo, pos);      \
   }                                                                            \
                                                                                \
   INTRINSIC(T) fifo_ld_pop(T DM_BANK *RESTRICT &p, fifo_state_t &s) {          \
     int &pos = s.pos;                                                          \
     sparse_fifo_t &fifo = s.fifo;                                              \
-    T r = (T)__builtin_aie2p_fifo_ld_pop_512_unaligned((int *&)p, fifo, pos);  \
+    T r = (T)__builtin_aie2p_fifo_ld_pop_512_unaligned(                        \
+        (void DM_BANK *RESTRICT &)p, fifo, pos);                               \
     return r;                                                                  \
   }                                                                            \
                                                                                \
@@ -288,8 +296,8 @@ FIFO_ST(__aie_dm_resource_cd, restrict)
   fifo_ld_pop_1d_byte(T DM_BANK *RESTRICT &p, fifo_state_t &s, int off) {      \
     int &pos = s.pos;                                                          \
     sparse_fifo_t &fifo = s.fifo;                                              \
-    T r = (T)__builtin_aie2p_fifo_ld_pop_1d_512_unaligned((int *&)p, fifo,     \
-                                                          pos, off);           \
+    T r = (T)__builtin_aie2p_fifo_ld_pop_1d_512_unaligned(                     \
+        (void DM_BANK *RESTRICT &)p, fifo, pos, off);                          \
     return r;                                                                  \
   }                                                                            \
                                                                                \
@@ -299,7 +307,7 @@ FIFO_ST(__aie_dm_resource_cd, restrict)
     int &pos = s.pos;                                                          \
     sparse_fifo_t &fifo = s.fifo;                                              \
     T r = (T)__builtin_aie2p_fifo_ld_pop_2d_512_unaligned(                     \
-        (int *&)p, fifo, pos, off, size1, count1, inc1);                       \
+        (void DM_BANK *RESTRICT &)p, fifo, pos, off, size1, count1, inc1);     \
     return r;                                                                  \
   }                                                                            \
                                                                                \
@@ -310,7 +318,8 @@ FIFO_ST(__aie_dm_resource_cd, restrict)
     int &pos = s.pos;                                                          \
     sparse_fifo_t &fifo = s.fifo;                                              \
     T r = (T)__builtin_aie2p_fifo_ld_pop_3d_512_unaligned(                     \
-        (int *&)p, fifo, pos, off, size1, count1, inc1, size2, count2, inc2);  \
+        (void DM_BANK *RESTRICT &)p, fifo, pos, off, size1, count1, inc1,      \
+        size2, count2, inc2);                                                  \
     return r;                                                                  \
   }
 
@@ -319,14 +328,14 @@ FIFO_ST(__aie_dm_resource_cd, restrict)
   fifo_ld_reset(T##_unaligned DM_BANK *RESTRICT &p, fifo_state_t &s) {         \
     s.pos = 0;                                                                 \
     sparse_fifo_t &fifo = s.fifo;                                              \
-    __builtin_aie2p_fifo_ld_fill((int *&)p, fifo, s.pos);                      \
+    __builtin_aie2p_fifo_ld_fill((void DM_BANK *RESTRICT &)p, fifo, s.pos);    \
   }                                                                            \
                                                                                \
   INTRINSIC(void)                                                              \
   fifo_ld_fill(T##_unaligned DM_BANK *RESTRICT &p, fifo_state_t &s) {          \
     int &pos = s.pos;                                                          \
     sparse_fifo_t &fifo = s.fifo;                                              \
-    __builtin_aie2p_fifo_ld_fill((int *&)p, fifo, pos);                        \
+    __builtin_aie2p_fifo_ld_fill((void DM_BANK *RESTRICT &)p, fifo, pos);      \
   }                                                                            \
                                                                                \
   INTRINSIC(T)                                                                 \
@@ -335,7 +344,8 @@ FIFO_ST(__aie_dm_resource_cd, restrict)
     sparse_fifo_t &fifo = s.fifo;                                              \
     T r;                                                                       \
     __builtin_aie2p_fifo_ld_pop_##SIZE##_bfp16(                                \
-        (int *&)p, fifo, pos, (v64char &)r.mantissa, (v8char &)r.exponent);    \
+        (void DM_BANK *RESTRICT &)p, fifo, pos, (v64char &)r.mantissa,         \
+        (v8char &)r.exponent);                                                 \
     return r;                                                                  \
   }                                                                            \
                                                                                \
@@ -345,9 +355,9 @@ FIFO_ST(__aie_dm_resource_cd, restrict)
     int &pos = s.pos;                                                          \
     sparse_fifo_t &fifo = s.fifo;                                              \
     T r;                                                                       \
-    __builtin_aie2p_fifo_ld_pop_1d_##SIZE##_bfp16((int *&)p, fifo, pos, off,   \
-                                                  (v64char &)r.mantissa,       \
-                                                  (v8char &)r.exponent);       \
+    __builtin_aie2p_fifo_ld_pop_1d_##SIZE##_bfp16(                             \
+        (void DM_BANK *RESTRICT &)p, fifo, pos, off, (v64char &)r.mantissa,    \
+        (v8char &)r.exponent);                                                 \
     return r;                                                                  \
   }                                                                            \
                                                                                \
@@ -358,8 +368,8 @@ FIFO_ST(__aie_dm_resource_cd, restrict)
     sparse_fifo_t &fifo = s.fifo;                                              \
     T r;                                                                       \
     __builtin_aie2p_fifo_ld_pop_2d_##SIZE##_bfp16(                             \
-        (int *&)p, fifo, pos, off, size1, count1, inc1, (v64char &)r.mantissa, \
-        (v8char &)r.exponent);                                                 \
+        (void DM_BANK *RESTRICT &)p, fifo, pos, off, size1, count1, inc1,      \
+        (v64char &)r.mantissa, (v8char &)r.exponent);                          \
     return r;                                                                  \
   }                                                                            \
                                                                                \
@@ -371,8 +381,8 @@ FIFO_ST(__aie_dm_resource_cd, restrict)
     sparse_fifo_t &fifo = s.fifo;                                              \
     T r;                                                                       \
     __builtin_aie2p_fifo_ld_pop_3d_##SIZE##_bfp16(                             \
-        (int *&)p, fifo, pos, off, size1, count1, inc1, size2, count2, inc2,   \
-        (v64char &)r.mantissa, (v8char &)r.exponent);                          \
+        (void DM_BANK *RESTRICT &)p, fifo, pos, off, size1, count1, inc1,      \
+        size2, count2, inc2, (v64char &)r.mantissa, (v8char &)r.exponent);     \
     return r;                                                                  \
   }
 
