@@ -41,5 +41,5 @@ jobs:
       projects: lld
       cache-key: amd-upstream
       extra_cmake_args: '-DLLVM_USE_LINKER=gold -DLLVM_TARGETS_TO_BUILD="X86;ARM;AArch64;AMDGPU" -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=""'
-      os_list: '["rad", "windows-2019"]'
+      os_list: '["spa", "windows-2019"]'
 
