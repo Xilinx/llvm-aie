@@ -19,8 +19,8 @@ body:             |
     ; CHECK: [[DEF:%[0-9]+]]:eps = IMPLICIT_DEF
     ; CHECK-NEXT: [[DEF1:%[0-9]+]]:eldfiforeg = IMPLICIT_DEF
     ; CHECK-NEXT: [[DEF2:%[0-9]+]]:erf2 = IMPLICIT_DEF
-    ; CHECK-NEXT: [[VLDB_FILL_512_:%[0-9]+]]:eps, [[VLDB_FILL_512_1:%[0-9]+]]:eldfiforeg, [[VLDB_FILL_512_2:%[0-9]+]]:erf2 = VLDB_FILL_512 [[DEF]], [[DEF1]], [[DEF2]]
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDB_FILL_512_]], implicit [[VLDB_FILL_512_1]], implicit [[VLDB_FILL_512_2]]
+    ; CHECK-NEXT: [[VLD_FILL_512_pseudo:%[0-9]+]]:eps, [[VLD_FILL_512_pseudo1:%[0-9]+]]:eldfiforeg, [[VLD_FILL_512_pseudo2:%[0-9]+]]:erf2 = VLD_FILL_512_pseudo [[DEF]], [[DEF1]], [[DEF2]]
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLD_FILL_512_pseudo]], implicit [[VLD_FILL_512_pseudo1]], implicit [[VLD_FILL_512_pseudo2]]
     %2:modregbank(s20) = G_IMPLICIT_DEF
     %4:ptrregbank(p0) = G_IMPLICIT_DEF
     %5:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
@@ -41,8 +41,8 @@ body:             |
     ; CHECK: [[DEF:%[0-9]+]]:eps = IMPLICIT_DEF
     ; CHECK-NEXT: [[DEF1:%[0-9]+]]:eldfiforeg = IMPLICIT_DEF
     ; CHECK-NEXT: [[DEF2:%[0-9]+]]:erf2 = IMPLICIT_DEF
-    ; CHECK-NEXT: [[VLDB_POP_512_normal_pop:%[0-9]+]]:vec512, [[VLDB_POP_512_normal_pop1:%[0-9]+]]:eps, [[VLDB_POP_512_normal_pop2:%[0-9]+]]:eldfiforeg, [[VLDB_POP_512_normal_pop3:%[0-9]+]]:erf2 = VLDB_POP_512_normal_pop [[DEF]], [[DEF1]], [[DEF2]], implicit-def $srfifo_uf
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDB_POP_512_normal_pop]], implicit [[VLDB_POP_512_normal_pop1]], implicit [[VLDB_POP_512_normal_pop2]], implicit [[VLDB_POP_512_normal_pop3]]
+    ; CHECK-NEXT: [[VLD_POP_512_normal_pop_pseudo:%[0-9]+]]:vec512, [[VLD_POP_512_normal_pop_pseudo1:%[0-9]+]]:eps, [[VLD_POP_512_normal_pop_pseudo2:%[0-9]+]]:eldfiforeg, [[VLD_POP_512_normal_pop_pseudo3:%[0-9]+]]:erf2 = VLD_POP_512_normal_pop_pseudo [[DEF]], [[DEF1]], [[DEF2]], implicit-def $srfifo_uf
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLD_POP_512_normal_pop_pseudo]], implicit [[VLD_POP_512_normal_pop_pseudo1]], implicit [[VLD_POP_512_normal_pop_pseudo2]], implicit [[VLD_POP_512_normal_pop_pseudo3]]
     %3:modregbank(s20) = G_IMPLICIT_DEF
     %5:ptrregbank(p0) = G_IMPLICIT_DEF
     %6:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
@@ -63,10 +63,10 @@ body:             |
     ; CHECK: [[DEF:%[0-9]+]]:eps = IMPLICIT_DEF
     ; CHECK-NEXT: [[DEF1:%[0-9]+]]:eldfiforeg = IMPLICIT_DEF
     ; CHECK-NEXT: [[DEF2:%[0-9]+]]:erf2 = IMPLICIT_DEF
-    ; CHECK-NEXT: [[VLDB_POP_544_normal_pop:%[0-9]+]]:mexb, [[VLDB_POP_544_normal_pop1:%[0-9]+]]:eps, [[VLDB_POP_544_normal_pop2:%[0-9]+]]:eldfiforeg, [[VLDB_POP_544_normal_pop3:%[0-9]+]]:erf2 = VLDB_POP_544_normal_pop [[DEF]], [[DEF1]], [[DEF2]], implicit-def $srfifo_uf
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY [[VLDB_POP_544_normal_pop]].sub_bfp16_x
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:expvec64 = COPY [[VLDB_POP_544_normal_pop]].sub_bfp16_e
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDB_POP_544_normal_pop1]], implicit [[VLDB_POP_544_normal_pop2]], implicit [[VLDB_POP_544_normal_pop3]], implicit [[COPY]], implicit [[COPY1]]
+    ; CHECK-NEXT: [[VLD_POP_544_normal_pop_pseudo:%[0-9]+]]:vec576, [[VLD_POP_544_normal_pop_pseudo1:%[0-9]+]]:eps, [[VLD_POP_544_normal_pop_pseudo2:%[0-9]+]]:eldfiforeg, [[VLD_POP_544_normal_pop_pseudo3:%[0-9]+]]:erf2 = VLD_POP_544_normal_pop_pseudo [[DEF]], [[DEF1]], [[DEF2]], implicit-def $srfifo_uf
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY [[VLD_POP_544_normal_pop_pseudo]].sub_bfp16_x
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:expvec64 = COPY [[VLD_POP_544_normal_pop_pseudo]].sub_bfp16_e
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLD_POP_544_normal_pop_pseudo1]], implicit [[VLD_POP_544_normal_pop_pseudo2]], implicit [[VLD_POP_544_normal_pop_pseudo3]], implicit [[COPY]], implicit [[COPY1]]
     %14:vregbank(<64 x s8>) = G_IMPLICIT_DEF
     %15:gprregbank(<8 x s8>) = G_IMPLICIT_DEF
     %6:ptrregbank(p0) = G_IMPLICIT_DEF
@@ -88,10 +88,10 @@ body:             |
     ; CHECK: [[DEF:%[0-9]+]]:eps = IMPLICIT_DEF
     ; CHECK-NEXT: [[DEF1:%[0-9]+]]:eldfiforeg = IMPLICIT_DEF
     ; CHECK-NEXT: [[DEF2:%[0-9]+]]:erf2 = IMPLICIT_DEF
-    ; CHECK-NEXT: [[VLDB_POP_576_normal_pop:%[0-9]+]]:mexb, [[VLDB_POP_576_normal_pop1:%[0-9]+]]:eps, [[VLDB_POP_576_normal_pop2:%[0-9]+]]:eldfiforeg, [[VLDB_POP_576_normal_pop3:%[0-9]+]]:erf2 = VLDB_POP_576_normal_pop [[DEF]], [[DEF1]], [[DEF2]], implicit-def $srfifo_uf
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY [[VLDB_POP_576_normal_pop]].sub_bfp16_x
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:expvec64 = COPY [[VLDB_POP_576_normal_pop]].sub_bfp16_e
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDB_POP_576_normal_pop1]], implicit [[VLDB_POP_576_normal_pop2]], implicit [[VLDB_POP_576_normal_pop3]], implicit [[COPY]], implicit [[COPY1]]
+    ; CHECK-NEXT: [[VLD_POP_576_normal_pop_pseudo:%[0-9]+]]:vec576, [[VLD_POP_576_normal_pop_pseudo1:%[0-9]+]]:eps, [[VLD_POP_576_normal_pop_pseudo2:%[0-9]+]]:eldfiforeg, [[VLD_POP_576_normal_pop_pseudo3:%[0-9]+]]:erf2 = VLD_POP_576_normal_pop_pseudo [[DEF]], [[DEF1]], [[DEF2]], implicit-def $srfifo_uf
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY [[VLD_POP_576_normal_pop_pseudo]].sub_bfp16_x
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:expvec64 = COPY [[VLD_POP_576_normal_pop_pseudo]].sub_bfp16_e
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLD_POP_576_normal_pop_pseudo1]], implicit [[VLD_POP_576_normal_pop_pseudo2]], implicit [[VLD_POP_576_normal_pop_pseudo3]], implicit [[COPY]], implicit [[COPY1]]
     %14:vregbank(<64 x s8>) = G_IMPLICIT_DEF
     %15:gprregbank(<8 x s8>) = G_IMPLICIT_DEF
     %6:ptrregbank(p0) = G_IMPLICIT_DEF
@@ -114,8 +114,8 @@ body:             |
     ; CHECK-NEXT: [[DEF1:%[0-9]+]]:eldfiforeg = IMPLICIT_DEF
     ; CHECK-NEXT: [[DEF2:%[0-9]+]]:erf2 = IMPLICIT_DEF
     ; CHECK-NEXT: [[DEF3:%[0-9]+]]:em = IMPLICIT_DEF
-    ; CHECK-NEXT: [[VLDB_POP_512_fifo_1d_pop:%[0-9]+]]:vec512, [[VLDB_POP_512_fifo_1d_pop1:%[0-9]+]]:eps, [[VLDB_POP_512_fifo_1d_pop2:%[0-9]+]]:eldfiforeg, [[VLDB_POP_512_fifo_1d_pop3:%[0-9]+]]:erf2 = VLDB_POP_512_fifo_1d_pop [[DEF]], [[DEF1]], [[DEF2]], [[DEF3]], implicit-def $srfifo_uf
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDB_POP_512_fifo_1d_pop]], implicit [[VLDB_POP_512_fifo_1d_pop1]], implicit [[VLDB_POP_512_fifo_1d_pop2]], implicit [[VLDB_POP_512_fifo_1d_pop3]]
+    ; CHECK-NEXT: [[VLD_POP_512_fifo_1d_pop_pseudo:%[0-9]+]]:vec512, [[VLD_POP_512_fifo_1d_pop_pseudo1:%[0-9]+]]:eps, [[VLD_POP_512_fifo_1d_pop_pseudo2:%[0-9]+]]:eldfiforeg, [[VLD_POP_512_fifo_1d_pop_pseudo3:%[0-9]+]]:erf2 = VLD_POP_512_fifo_1d_pop_pseudo [[DEF]], [[DEF1]], [[DEF2]], [[DEF3]], implicit-def $srfifo_uf
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLD_POP_512_fifo_1d_pop_pseudo]], implicit [[VLD_POP_512_fifo_1d_pop_pseudo1]], implicit [[VLD_POP_512_fifo_1d_pop_pseudo2]], implicit [[VLD_POP_512_fifo_1d_pop_pseudo3]]
     %6:ptrregbank(p0) = G_IMPLICIT_DEF
     %7:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
     %8:gprregbank(s32) = G_IMPLICIT_DEF
@@ -137,10 +137,10 @@ body:             |
     ; CHECK-NEXT: [[DEF1:%[0-9]+]]:eldfiforeg = IMPLICIT_DEF
     ; CHECK-NEXT: [[DEF2:%[0-9]+]]:erf2 = IMPLICIT_DEF
     ; CHECK-NEXT: [[DEF3:%[0-9]+]]:em = IMPLICIT_DEF
-    ; CHECK-NEXT: [[VLDB_POP_544_fifo_1d_pop:%[0-9]+]]:mexb, [[VLDB_POP_544_fifo_1d_pop1:%[0-9]+]]:eps, [[VLDB_POP_544_fifo_1d_pop2:%[0-9]+]]:eldfiforeg, [[VLDB_POP_544_fifo_1d_pop3:%[0-9]+]]:erf2 = VLDB_POP_544_fifo_1d_pop [[DEF]], [[DEF1]], [[DEF2]], [[DEF3]], implicit-def $srfifo_uf
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY [[VLDB_POP_544_fifo_1d_pop]].sub_bfp16_x
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:expvec64 = COPY [[VLDB_POP_544_fifo_1d_pop]].sub_bfp16_e
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDB_POP_544_fifo_1d_pop1]], implicit [[VLDB_POP_544_fifo_1d_pop2]], implicit [[VLDB_POP_544_fifo_1d_pop3]], implicit [[COPY]], implicit [[COPY1]]
+    ; CHECK-NEXT: [[VLD_POP_544_fifo_1d_pop_pseudo:%[0-9]+]]:vec576, [[VLD_POP_544_fifo_1d_pop_pseudo1:%[0-9]+]]:eps, [[VLD_POP_544_fifo_1d_pop_pseudo2:%[0-9]+]]:eldfiforeg, [[VLD_POP_544_fifo_1d_pop_pseudo3:%[0-9]+]]:erf2 = VLD_POP_544_fifo_1d_pop_pseudo [[DEF]], [[DEF1]], [[DEF2]], [[DEF3]], implicit-def $srfifo_uf
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY [[VLD_POP_544_fifo_1d_pop_pseudo]].sub_bfp16_x
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:expvec64 = COPY [[VLD_POP_544_fifo_1d_pop_pseudo]].sub_bfp16_e
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLD_POP_544_fifo_1d_pop_pseudo1]], implicit [[VLD_POP_544_fifo_1d_pop_pseudo2]], implicit [[VLD_POP_544_fifo_1d_pop_pseudo3]], implicit [[COPY]], implicit [[COPY1]]
     %16:vregbank(<64 x s8>) = G_IMPLICIT_DEF
     %17:gprregbank(<8 x s8>) = G_IMPLICIT_DEF
     %7:ptrregbank(p0) = G_IMPLICIT_DEF
@@ -165,10 +165,10 @@ body:             |
     ; CHECK-NEXT: [[DEF1:%[0-9]+]]:eldfiforeg = IMPLICIT_DEF
     ; CHECK-NEXT: [[DEF2:%[0-9]+]]:erf2 = IMPLICIT_DEF
     ; CHECK-NEXT: [[DEF3:%[0-9]+]]:em = IMPLICIT_DEF
-    ; CHECK-NEXT: [[VLDB_POP_576_fifo_1d_pop:%[0-9]+]]:mexb, [[VLDB_POP_576_fifo_1d_pop1:%[0-9]+]]:eps, [[VLDB_POP_576_fifo_1d_pop2:%[0-9]+]]:eldfiforeg, [[VLDB_POP_576_fifo_1d_pop3:%[0-9]+]]:erf2 = VLDB_POP_576_fifo_1d_pop [[DEF]], [[DEF1]], [[DEF2]], [[DEF3]], implicit-def $srfifo_uf
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY [[VLDB_POP_576_fifo_1d_pop]].sub_bfp16_x
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:expvec64 = COPY [[VLDB_POP_576_fifo_1d_pop]].sub_bfp16_e
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDB_POP_576_fifo_1d_pop1]], implicit [[VLDB_POP_576_fifo_1d_pop2]], implicit [[VLDB_POP_576_fifo_1d_pop3]], implicit [[COPY]], implicit [[COPY1]]
+    ; CHECK-NEXT: [[VLD_POP_576_fifo_1d_pop_pseudo:%[0-9]+]]:vec576, [[VLD_POP_576_fifo_1d_pop_pseudo1:%[0-9]+]]:eps, [[VLD_POP_576_fifo_1d_pop_pseudo2:%[0-9]+]]:eldfiforeg, [[VLD_POP_576_fifo_1d_pop_pseudo3:%[0-9]+]]:erf2 = VLD_POP_576_fifo_1d_pop_pseudo [[DEF]], [[DEF1]], [[DEF2]], [[DEF3]], implicit-def $srfifo_uf
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY [[VLD_POP_576_fifo_1d_pop_pseudo]].sub_bfp16_x
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:expvec64 = COPY [[VLD_POP_576_fifo_1d_pop_pseudo]].sub_bfp16_e
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLD_POP_576_fifo_1d_pop_pseudo1]], implicit [[VLD_POP_576_fifo_1d_pop_pseudo2]], implicit [[VLD_POP_576_fifo_1d_pop_pseudo3]], implicit [[COPY]], implicit [[COPY1]]
     %16:vregbank(<64 x s8>) = G_IMPLICIT_DEF
     %17:gprregbank(<8 x s8>) = G_IMPLICIT_DEF
     %7:ptrregbank(p0) = G_IMPLICIT_DEF
@@ -196,8 +196,8 @@ body:             |
     ; CHECK-NEXT: [[DEF5:%[0-9]+]]:edc = IMPLICIT_DEF
     ; CHECK-NEXT: [[DEF6:%[0-9]+]]:edj = IMPLICIT_DEF
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:ed = REG_SEQUENCE [[DEF3]], %subreg.sub_mod, [[DEF4]], %subreg.sub_dim_size, [[DEF6]], %subreg.sub_dim_stride, [[DEF5]], %subreg.sub_dim_count
-    ; CHECK-NEXT: [[VLDB_POP_512_2D:%[0-9]+]]:vec512, [[VLDB_POP_512_2D1:%[0-9]+]]:eps, [[VLDB_POP_512_2D2:%[0-9]+]]:eldfiforeg, [[VLDB_POP_512_2D3:%[0-9]+]]:erf2, [[VLDB_POP_512_2D4:%[0-9]+]]:edc = VLDB_POP_512_2D [[DEF]], [[DEF1]], [[DEF2]], [[REG_SEQUENCE]], implicit-def $srfifo_uf
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDB_POP_512_2D]], implicit [[VLDB_POP_512_2D1]], implicit [[VLDB_POP_512_2D2]], implicit [[VLDB_POP_512_2D3]], implicit [[VLDB_POP_512_2D4]]
+    ; CHECK-NEXT: [[VLD_POP_512_2D_pseudo:%[0-9]+]]:vec512, [[VLD_POP_512_2D_pseudo1:%[0-9]+]]:eps, [[VLD_POP_512_2D_pseudo2:%[0-9]+]]:eldfiforeg, [[VLD_POP_512_2D_pseudo3:%[0-9]+]]:erf2, [[VLD_POP_512_2D_pseudo4:%[0-9]+]]:edc = VLD_POP_512_2D_pseudo [[DEF]], [[DEF1]], [[DEF2]], [[REG_SEQUENCE]], implicit-def $srfifo_uf
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLD_POP_512_2D_pseudo]], implicit [[VLD_POP_512_2D_pseudo1]], implicit [[VLD_POP_512_2D_pseudo2]], implicit [[VLD_POP_512_2D_pseudo3]], implicit [[VLD_POP_512_2D_pseudo4]]
     %9:ptrregbank(p0) = G_IMPLICIT_DEF
     %10:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
     %11:gprregbank(s32) = G_IMPLICIT_DEF
@@ -227,10 +227,10 @@ body:             |
     ; CHECK-NEXT: [[DEF5:%[0-9]+]]:edc = IMPLICIT_DEF
     ; CHECK-NEXT: [[DEF6:%[0-9]+]]:edj = IMPLICIT_DEF
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:ed = REG_SEQUENCE [[DEF3]], %subreg.sub_mod, [[DEF4]], %subreg.sub_dim_size, [[DEF6]], %subreg.sub_dim_stride, [[DEF5]], %subreg.sub_dim_count
-    ; CHECK-NEXT: [[VLDB_POP_544_2D:%[0-9]+]]:mexb, [[VLDB_POP_544_2D1:%[0-9]+]]:eps, [[VLDB_POP_544_2D2:%[0-9]+]]:eldfiforeg, [[VLDB_POP_544_2D3:%[0-9]+]]:erf2, [[VLDB_POP_544_2D4:%[0-9]+]]:edc = VLDB_POP_544_2D [[DEF]], [[DEF1]], [[DEF2]], [[REG_SEQUENCE]], implicit-def $srfifo_uf
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY [[VLDB_POP_544_2D]].sub_bfp16_x
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:expvec64 = COPY [[VLDB_POP_544_2D]].sub_bfp16_e
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[COPY]], implicit [[COPY1]], implicit [[VLDB_POP_544_2D1]], implicit [[VLDB_POP_544_2D2]], implicit [[VLDB_POP_544_2D3]], implicit [[VLDB_POP_544_2D4]]
+    ; CHECK-NEXT: [[VLD_POP_544_2D_pseudo:%[0-9]+]]:vec576, [[VLD_POP_544_2D_pseudo1:%[0-9]+]]:eps, [[VLD_POP_544_2D_pseudo2:%[0-9]+]]:eldfiforeg, [[VLD_POP_544_2D_pseudo3:%[0-9]+]]:erf2, [[VLD_POP_544_2D_pseudo4:%[0-9]+]]:edc = VLD_POP_544_2D_pseudo [[DEF]], [[DEF1]], [[DEF2]], [[REG_SEQUENCE]], implicit-def $srfifo_uf
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY [[VLD_POP_544_2D_pseudo]].sub_bfp16_x
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:expvec64 = COPY [[VLD_POP_544_2D_pseudo]].sub_bfp16_e
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[COPY]], implicit [[COPY1]], implicit [[VLD_POP_544_2D_pseudo1]], implicit [[VLD_POP_544_2D_pseudo2]], implicit [[VLD_POP_544_2D_pseudo3]], implicit [[VLD_POP_544_2D_pseudo4]]
     %24:vregbank(<64 x s8>) = G_IMPLICIT_DEF
     %25:gprregbank(<8 x s8>) = G_IMPLICIT_DEF
     %10:ptrregbank(p0) = G_IMPLICIT_DEF
@@ -262,10 +262,10 @@ body:             |
     ; CHECK-NEXT: [[DEF5:%[0-9]+]]:edc = IMPLICIT_DEF
     ; CHECK-NEXT: [[DEF6:%[0-9]+]]:edj = IMPLICIT_DEF
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:ed = REG_SEQUENCE [[DEF3]], %subreg.sub_mod, [[DEF4]], %subreg.sub_dim_size, [[DEF6]], %subreg.sub_dim_stride, [[DEF5]], %subreg.sub_dim_count
-    ; CHECK-NEXT: [[VLDB_POP_576_2D:%[0-9]+]]:mexb, [[VLDB_POP_576_2D1:%[0-9]+]]:eps, [[VLDB_POP_576_2D2:%[0-9]+]]:eldfiforeg, [[VLDB_POP_576_2D3:%[0-9]+]]:erf2, [[VLDB_POP_576_2D4:%[0-9]+]]:edc = VLDB_POP_576_2D [[DEF]], [[DEF1]], [[DEF2]], [[REG_SEQUENCE]], implicit-def $srfifo_uf
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY [[VLDB_POP_576_2D]].sub_bfp16_x
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:expvec64 = COPY [[VLDB_POP_576_2D]].sub_bfp16_e
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[COPY]], implicit [[COPY1]], implicit [[VLDB_POP_576_2D1]], implicit [[VLDB_POP_576_2D2]], implicit [[VLDB_POP_576_2D3]], implicit [[VLDB_POP_576_2D4]]
+    ; CHECK-NEXT: [[VLD_POP_576_2D_pseudo:%[0-9]+]]:vec576, [[VLD_POP_576_2D_pseudo1:%[0-9]+]]:eps, [[VLD_POP_576_2D_pseudo2:%[0-9]+]]:eldfiforeg, [[VLD_POP_576_2D_pseudo3:%[0-9]+]]:erf2, [[VLD_POP_576_2D_pseudo4:%[0-9]+]]:edc = VLD_POP_576_2D_pseudo [[DEF]], [[DEF1]], [[DEF2]], [[REG_SEQUENCE]], implicit-def $srfifo_uf
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY [[VLD_POP_576_2D_pseudo]].sub_bfp16_x
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:expvec64 = COPY [[VLD_POP_576_2D_pseudo]].sub_bfp16_e
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[COPY]], implicit [[COPY1]], implicit [[VLD_POP_576_2D_pseudo1]], implicit [[VLD_POP_576_2D_pseudo2]], implicit [[VLD_POP_576_2D_pseudo3]], implicit [[VLD_POP_576_2D_pseudo4]]
     %24:vregbank(<64 x s8>) = G_IMPLICIT_DEF
     %25:gprregbank(<8 x s8>) = G_IMPLICIT_DEF
     %10:ptrregbank(p0) = G_IMPLICIT_DEF
@@ -300,8 +300,8 @@ body:             |
     ; CHECK-NEXT: [[DEF8:%[0-9]+]]:edc = IMPLICIT_DEF
     ; CHECK-NEXT: [[DEF9:%[0-9]+]]:edj = IMPLICIT_DEF
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:eds = REG_SEQUENCE [[DEF3]], %subreg.sub_mod, [[DEF4]], %subreg.sub_dim_size, [[DEF6]], %subreg.sub_dim_stride, [[DEF5]], %subreg.sub_dim_count, [[DEF7]], %subreg.sub_hi_dim_then_sub_dim_size, [[DEF9]], %subreg.sub_hi_dim_then_sub_dim_stride, [[DEF8]], %subreg.sub_hi_dim_then_sub_dim_count
-    ; CHECK-NEXT: [[VLDB_POP_512_3D:%[0-9]+]]:vec512, [[VLDB_POP_512_3D1:%[0-9]+]]:eps, [[VLDB_POP_512_3D2:%[0-9]+]]:eldfiforeg, [[VLDB_POP_512_3D3:%[0-9]+]]:erf2, [[VLDB_POP_512_3D4:%[0-9]+]]:edcl, [[VLDB_POP_512_3D5:%[0-9]+]]:edch = VLDB_POP_512_3D [[DEF]], [[DEF1]], [[DEF2]], [[REG_SEQUENCE]], implicit-def $srfifo_uf
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLDB_POP_512_3D]], implicit [[VLDB_POP_512_3D1]], implicit [[VLDB_POP_512_3D2]], implicit [[VLDB_POP_512_3D3]], implicit [[VLDB_POP_512_3D4]], implicit [[VLDB_POP_512_3D5]]
+    ; CHECK-NEXT: [[VLD_POP_512_3D_pseudo:%[0-9]+]]:vec512, [[VLD_POP_512_3D_pseudo1:%[0-9]+]]:eps, [[VLD_POP_512_3D_pseudo2:%[0-9]+]]:eldfiforeg, [[VLD_POP_512_3D_pseudo3:%[0-9]+]]:erf2, [[VLD_POP_512_3D_pseudo4:%[0-9]+]]:edcl, [[VLD_POP_512_3D_pseudo5:%[0-9]+]]:edch = VLD_POP_512_3D_pseudo [[DEF]], [[DEF1]], [[DEF2]], [[REG_SEQUENCE]], implicit-def $srfifo_uf
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[VLD_POP_512_3D_pseudo]], implicit [[VLD_POP_512_3D_pseudo1]], implicit [[VLD_POP_512_3D_pseudo2]], implicit [[VLD_POP_512_3D_pseudo3]], implicit [[VLD_POP_512_3D_pseudo4]], implicit [[VLD_POP_512_3D_pseudo5]]
     %12:ptrregbank(p0) = G_IMPLICIT_DEF
     %13:fiforegbank(<32 x s32>) = G_IMPLICIT_DEF
     %14:gprregbank(s32) = G_IMPLICIT_DEF
@@ -336,10 +336,10 @@ body:             |
     ; CHECK-NEXT: [[DEF8:%[0-9]+]]:edc = IMPLICIT_DEF
     ; CHECK-NEXT: [[DEF9:%[0-9]+]]:edj = IMPLICIT_DEF
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:eds = REG_SEQUENCE [[DEF3]], %subreg.sub_mod, [[DEF4]], %subreg.sub_dim_size, [[DEF6]], %subreg.sub_dim_stride, [[DEF5]], %subreg.sub_dim_count, [[DEF7]], %subreg.sub_hi_dim_then_sub_dim_size, [[DEF9]], %subreg.sub_hi_dim_then_sub_dim_stride, [[DEF8]], %subreg.sub_hi_dim_then_sub_dim_count
-    ; CHECK-NEXT: [[VLDB_POP_544_3D:%[0-9]+]]:mexb, [[VLDB_POP_544_3D1:%[0-9]+]]:eps, [[VLDB_POP_544_3D2:%[0-9]+]]:eldfiforeg, [[VLDB_POP_544_3D3:%[0-9]+]]:erf2, [[VLDB_POP_544_3D4:%[0-9]+]]:edcl, [[VLDB_POP_544_3D5:%[0-9]+]]:edch = VLDB_POP_544_3D [[DEF]], [[DEF1]], [[DEF2]], [[REG_SEQUENCE]], implicit-def $srfifo_uf
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY [[VLDB_POP_544_3D]].sub_bfp16_x
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:expvec64 = COPY [[VLDB_POP_544_3D]].sub_bfp16_e
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[DEF9]], implicit [[VLDB_POP_544_3D1]], implicit [[VLDB_POP_544_3D2]], implicit [[VLDB_POP_544_3D3]], implicit [[VLDB_POP_544_3D4]], implicit [[VLDB_POP_544_3D5]]
+    ; CHECK-NEXT: [[VLD_POP_544_3D_pseudo:%[0-9]+]]:vec576, [[VLD_POP_544_3D_pseudo1:%[0-9]+]]:eps, [[VLD_POP_544_3D_pseudo2:%[0-9]+]]:eldfiforeg, [[VLD_POP_544_3D_pseudo3:%[0-9]+]]:erf2, [[VLD_POP_544_3D_pseudo4:%[0-9]+]]:edcl, [[VLD_POP_544_3D_pseudo5:%[0-9]+]]:edch = VLD_POP_544_3D_pseudo [[DEF]], [[DEF1]], [[DEF2]], [[REG_SEQUENCE]], implicit-def $srfifo_uf
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY [[VLD_POP_544_3D_pseudo]].sub_bfp16_x
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:expvec64 = COPY [[VLD_POP_544_3D_pseudo]].sub_bfp16_e
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[DEF9]], implicit [[VLD_POP_544_3D_pseudo1]], implicit [[VLD_POP_544_3D_pseudo2]], implicit [[VLD_POP_544_3D_pseudo3]], implicit [[VLD_POP_544_3D_pseudo4]], implicit [[VLD_POP_544_3D_pseudo5]]
     %32:vregbank(<64 x s8>) = G_IMPLICIT_DEF
     %33:gprregbank(<8 x s8>) = G_IMPLICIT_DEF
     %13:ptrregbank(p0) = G_IMPLICIT_DEF
@@ -376,10 +376,10 @@ body:             |
     ; CHECK-NEXT: [[DEF8:%[0-9]+]]:edc = IMPLICIT_DEF
     ; CHECK-NEXT: [[DEF9:%[0-9]+]]:edj = IMPLICIT_DEF
     ; CHECK-NEXT: [[REG_SEQUENCE:%[0-9]+]]:eds = REG_SEQUENCE [[DEF3]], %subreg.sub_mod, [[DEF4]], %subreg.sub_dim_size, [[DEF6]], %subreg.sub_dim_stride, [[DEF5]], %subreg.sub_dim_count, [[DEF7]], %subreg.sub_hi_dim_then_sub_dim_size, [[DEF9]], %subreg.sub_hi_dim_then_sub_dim_stride, [[DEF8]], %subreg.sub_hi_dim_then_sub_dim_count
-    ; CHECK-NEXT: [[VLDB_POP_576_3D:%[0-9]+]]:mexb, [[VLDB_POP_576_3D1:%[0-9]+]]:eps, [[VLDB_POP_576_3D2:%[0-9]+]]:eldfiforeg, [[VLDB_POP_576_3D3:%[0-9]+]]:erf2, [[VLDB_POP_576_3D4:%[0-9]+]]:edcl, [[VLDB_POP_576_3D5:%[0-9]+]]:edch = VLDB_POP_576_3D [[DEF]], [[DEF1]], [[DEF2]], [[REG_SEQUENCE]], implicit-def $srfifo_uf
-    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY [[VLDB_POP_576_3D]].sub_bfp16_x
-    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:expvec64 = COPY [[VLDB_POP_576_3D]].sub_bfp16_e
-    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[COPY]], implicit [[COPY1]], implicit [[VLDB_POP_576_3D1]], implicit [[VLDB_POP_576_3D2]], implicit [[VLDB_POP_576_3D3]], implicit [[VLDB_POP_576_3D4]], implicit [[VLDB_POP_576_3D5]]
+    ; CHECK-NEXT: [[VLD_POP_576_3D_pseudo:%[0-9]+]]:vec576, [[VLD_POP_576_3D_pseudo1:%[0-9]+]]:eps, [[VLD_POP_576_3D_pseudo2:%[0-9]+]]:eldfiforeg, [[VLD_POP_576_3D_pseudo3:%[0-9]+]]:erf2, [[VLD_POP_576_3D_pseudo4:%[0-9]+]]:edcl, [[VLD_POP_576_3D_pseudo5:%[0-9]+]]:edch = VLD_POP_576_3D_pseudo [[DEF]], [[DEF1]], [[DEF2]], [[REG_SEQUENCE]], implicit-def $srfifo_uf
+    ; CHECK-NEXT: [[COPY:%[0-9]+]]:vec512 = COPY [[VLD_POP_576_3D_pseudo]].sub_bfp16_x
+    ; CHECK-NEXT: [[COPY1:%[0-9]+]]:expvec64 = COPY [[VLD_POP_576_3D_pseudo]].sub_bfp16_e
+    ; CHECK-NEXT: PseudoRET implicit $lr, implicit [[COPY]], implicit [[COPY1]], implicit [[VLD_POP_576_3D_pseudo1]], implicit [[VLD_POP_576_3D_pseudo2]], implicit [[VLD_POP_576_3D_pseudo3]], implicit [[VLD_POP_576_3D_pseudo4]], implicit [[VLD_POP_576_3D_pseudo5]]
     %32:vregbank(<64 x s8>) = G_IMPLICIT_DEF
     %33:gprregbank(<8 x s8>) = G_IMPLICIT_DEF
     %13:ptrregbank(p0) = G_IMPLICIT_DEF
