@@ -20,7 +20,7 @@ define dso_local void @_Z17test_fifo_ld_fillRPDv64_DB8_R12fifo_state_t(ptr nocap
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    mov p2, p0
+; CHECK-NEXT:    mov p3, p0
 ; CHECK-NEXT:    vlda lfl0, [p1, #0]
 ; CHECK-NEXT:    vlda lfh0, [p1, #64]
 ; CHECK-NEXT:    vldb.fill.512 [p0, lf0, r24]
@@ -32,7 +32,7 @@ define dso_local void @_Z17test_fifo_ld_fillRPDv64_DB8_R12fifo_state_t(ptr nocap
 ; CHECK-NEXT:    st r24, [p1, dj0] // Delay Slot 5
 ; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 4
 ; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 3
-; CHECK-NEXT:    st p0, [p2, #0] // Delay Slot 2
+; CHECK-NEXT:    st p0, [p3, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %pos1.i = getelementptr inbounds i8, ptr %s, i20 128
@@ -58,7 +58,7 @@ define dso_local noundef <64 x i8> @_Z16test_fifo_ld_popRPDv64_DB8_R12fifo_state
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    mov p2, p0
+; CHECK-NEXT:    mov p3, p0
 ; CHECK-NEXT:    vlda lfl0, [p1, #0]
 ; CHECK-NEXT:    vlda lfh0, [p1, #64]
 ; CHECK-NEXT:    vldb.pop.512 x0, [p0, lf0, r24]
@@ -70,7 +70,7 @@ define dso_local noundef <64 x i8> @_Z16test_fifo_ld_popRPDv64_DB8_R12fifo_state
 ; CHECK-NEXT:    st r24, [p1, dj0] // Delay Slot 5
 ; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 4
 ; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 3
-; CHECK-NEXT:    st p0, [p2, #0] // Delay Slot 2
+; CHECK-NEXT:    st p0, [p3, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %pos1.i = getelementptr inbounds i8, ptr %s, i20 128
@@ -97,7 +97,7 @@ define dso_local noundef <64 x i8> @_Z24test_fifo_ld_pop_1d_byteRPDv64_DB8_R12fi
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    mov p2, p0
+; CHECK-NEXT:    mov p3, p0
 ; CHECK-NEXT:    vlda lfl0, [p1, #0]
 ; CHECK-NEXT:    vlda lfh0, [p1, #64]; mov m0, r0
 ; CHECK-NEXT:    vldb.pop.512 x0, [p0, lf0, r24, m0]
@@ -109,7 +109,7 @@ define dso_local noundef <64 x i8> @_Z24test_fifo_ld_pop_1d_byteRPDv64_DB8_R12fi
 ; CHECK-NEXT:    st r24, [p1, dj0] // Delay Slot 5
 ; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 4
 ; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 3
-; CHECK-NEXT:    st p0, [p2, #0] // Delay Slot 2
+; CHECK-NEXT:    st p0, [p3, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %pos1.i = getelementptr inbounds i8, ptr %s, i20 128
@@ -138,7 +138,7 @@ define dso_local noundef <64 x i8> @_Z24test_fifo_ld_pop_2d_byteRPDv64_DB8_R12fi
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mov m0, r0
-; CHECK-NEXT:    mov p3, p0
+; CHECK-NEXT:    mov p4, p0
 ; CHECK-NEXT:    vlda lfl0, [p1, #0]; mov dn0, r1
 ; CHECK-NEXT:    vlda lfh0, [p1, #64]; mov dj0, r2
 ; CHECK-NEXT:    vldb.pop.512.2d x0, [p0, lf0, r24, d0]
@@ -150,7 +150,7 @@ define dso_local noundef <64 x i8> @_Z24test_fifo_ld_pop_2d_byteRPDv64_DB8_R12fi
 ; CHECK-NEXT:    st r24, [p1, dj1] // Delay Slot 5
 ; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 4
 ; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 3
-; CHECK-NEXT:    st p0, [p3, #0] // Delay Slot 2
+; CHECK-NEXT:    st p0, [p4, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %pos1.i = getelementptr inbounds i8, ptr %s, i20 128
@@ -242,7 +242,7 @@ define dso_local %struct.v64bfp16ebs8 @_Z16test_fifo_ld_popRP22v64bfp16ebs8_unal
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    mov p2, p0
+; CHECK-NEXT:    mov p3, p0
 ; CHECK-NEXT:    vlda lfl0, [p1, #0]
 ; CHECK-NEXT:    vlda lfh0, [p1, #64]
 ; CHECK-NEXT:    vldb.pop.576 ex0, [p0, lf0, r24]
@@ -254,7 +254,7 @@ define dso_local %struct.v64bfp16ebs8 @_Z16test_fifo_ld_popRP22v64bfp16ebs8_unal
 ; CHECK-NEXT:    st r24, [p1, dj0] // Delay Slot 5
 ; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 4
 ; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 3
-; CHECK-NEXT:    st p0, [p2, #0] // Delay Slot 2
+; CHECK-NEXT:    st p0, [p3, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %pos1.i = getelementptr inbounds i8, ptr %s, i20 128
@@ -284,7 +284,7 @@ define dso_local %struct.v64bfp16ebs8 @_Z24test_fifo_ld_pop_1d_byteRP22v64bfp16e
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    mov p2, p0
+; CHECK-NEXT:    mov p3, p0
 ; CHECK-NEXT:    vlda lfl0, [p1, #0]
 ; CHECK-NEXT:    vlda lfh0, [p1, #64]; mov m0, r0
 ; CHECK-NEXT:    vldb.pop.576 ex0, [p0, lf0, r24, m0]
@@ -296,7 +296,7 @@ define dso_local %struct.v64bfp16ebs8 @_Z24test_fifo_ld_pop_1d_byteRP22v64bfp16e
 ; CHECK-NEXT:    st r24, [p1, dj0] // Delay Slot 5
 ; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 4
 ; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 3
-; CHECK-NEXT:    st p0, [p2, #0] // Delay Slot 2
+; CHECK-NEXT:    st p0, [p3, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %pos1.i = getelementptr inbounds i8, ptr %s, i20 128
@@ -328,7 +328,7 @@ define dso_local %struct.v64bfp16ebs8 @_Z24test_fifo_ld_pop_2d_byteRP22v64bfp16e
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mov m0, r0
-; CHECK-NEXT:    mov p3, p0
+; CHECK-NEXT:    mov p4, p0
 ; CHECK-NEXT:    vlda lfl0, [p1, #0]; mov dn0, r1
 ; CHECK-NEXT:    vlda lfh0, [p1, #64]; mov dj0, r2
 ; CHECK-NEXT:    vldb.pop.576.2d ex0, [p0, lf0, r24, d0]
@@ -340,7 +340,7 @@ define dso_local %struct.v64bfp16ebs8 @_Z24test_fifo_ld_pop_2d_byteRP22v64bfp16e
 ; CHECK-NEXT:    st r24, [p1, dj1] // Delay Slot 5
 ; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 4
 ; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 3
-; CHECK-NEXT:    st p0, [p3, #0] // Delay Slot 2
+; CHECK-NEXT:    st p0, [p4, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %pos1.i = getelementptr inbounds i8, ptr %s, i20 128
@@ -438,7 +438,7 @@ define dso_local %struct.v64bfp16ebs16 @_Z16test_fifo_ld_popRP23v64bfp16ebs16_un
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    mov p2, p0
+; CHECK-NEXT:    mov p3, p0
 ; CHECK-NEXT:    vlda lfl0, [p1, #0]
 ; CHECK-NEXT:    vlda lfh0, [p1, #64]
 ; CHECK-NEXT:    vldb.pop.544 ex0, [p0, lf0, r24]
@@ -450,7 +450,7 @@ define dso_local %struct.v64bfp16ebs16 @_Z16test_fifo_ld_popRP23v64bfp16ebs16_un
 ; CHECK-NEXT:    st r24, [p1, dj0] // Delay Slot 5
 ; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 4
 ; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 3
-; CHECK-NEXT:    st p0, [p2, #0] // Delay Slot 2
+; CHECK-NEXT:    st p0, [p3, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %pos1.i = getelementptr inbounds i8, ptr %s, i20 128
@@ -480,7 +480,7 @@ define dso_local %struct.v64bfp16ebs16 @_Z24test_fifo_ld_pop_1d_byteRP23v64bfp16
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
-; CHECK-NEXT:    mov p2, p0
+; CHECK-NEXT:    mov p3, p0
 ; CHECK-NEXT:    vlda lfl0, [p1, #0]
 ; CHECK-NEXT:    vlda lfh0, [p1, #64]; mov m0, r0
 ; CHECK-NEXT:    vldb.pop.544 ex0, [p0, lf0, r24, m0]
@@ -492,7 +492,7 @@ define dso_local %struct.v64bfp16ebs16 @_Z24test_fifo_ld_pop_1d_byteRP23v64bfp16
 ; CHECK-NEXT:    st r24, [p1, dj0] // Delay Slot 5
 ; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 4
 ; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 3
-; CHECK-NEXT:    st p0, [p2, #0] // Delay Slot 2
+; CHECK-NEXT:    st p0, [p3, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %pos1.i = getelementptr inbounds i8, ptr %s, i20 128
@@ -524,7 +524,7 @@ define dso_local %struct.v64bfp16ebs16 @_Z24test_fifo_ld_pop_2d_byteRP23v64bfp16
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    nop
 ; CHECK-NEXT:    mov m0, r0
-; CHECK-NEXT:    mov p3, p0
+; CHECK-NEXT:    mov p4, p0
 ; CHECK-NEXT:    vlda lfl0, [p1, #0]; mov dn0, r1
 ; CHECK-NEXT:    vlda lfh0, [p1, #64]; mov dj0, r2
 ; CHECK-NEXT:    vldb.pop.544.2d ex0, [p0, lf0, r24, d0]
@@ -536,7 +536,7 @@ define dso_local %struct.v64bfp16ebs16 @_Z24test_fifo_ld_pop_2d_byteRP23v64bfp16
 ; CHECK-NEXT:    st r24, [p1, dj1] // Delay Slot 5
 ; CHECK-NEXT:    vst lfl0, [p1, #0] // Delay Slot 4
 ; CHECK-NEXT:    vst lfh0, [p1, #64] // Delay Slot 3
-; CHECK-NEXT:    st p0, [p3, #0] // Delay Slot 2
+; CHECK-NEXT:    st p0, [p4, #0] // Delay Slot 2
 ; CHECK-NEXT:    nop // Delay Slot 1
 entry:
   %pos1.i = getelementptr inbounds i8, ptr %s, i20 128

@@ -2550,31 +2550,31 @@ bool AIE2PInstructionSelector::selectG_STORE(MachineInstr &I,
 unsigned getLoadFifoOpcode(MachineInstr &I) {
   switch (cast<GIntrinsic>(I).getIntrinsicID()) {
   case Intrinsic::aie2p_fifo_ld_fill:
-    return AIE2P::VLDB_FILL_512;
+    return AIE2P::VLD_FILL_512_pseudo;
   case Intrinsic::aie2p_fifo_ld_pop_unaligned:
-    return AIE2P::VLDB_POP_512_normal_pop;
+    return AIE2P::VLD_POP_512_normal_pop_pseudo;
   case Intrinsic::aie2p_fifo_ld_pop_1d_unaligned:
-    return AIE2P::VLDB_POP_512_fifo_1d_pop;
+    return AIE2P::VLD_POP_512_fifo_1d_pop_pseudo;
   case Intrinsic::aie2p_fifo_ld_pop_544_1d_bfp16:
-    return AIE2P::VLDB_POP_544_fifo_1d_pop;
+    return AIE2P::VLD_POP_544_fifo_1d_pop_pseudo;
   case Intrinsic::aie2p_fifo_ld_pop_576_1d_bfp16:
-    return AIE2P::VLDB_POP_576_fifo_1d_pop;
+    return AIE2P::VLD_POP_576_fifo_1d_pop_pseudo;
   case Intrinsic::aie2p_fifo_ld_pop_544_bfp16:
-    return AIE2P::VLDB_POP_544_normal_pop;
+    return AIE2P::VLD_POP_544_normal_pop_pseudo;
   case Intrinsic::aie2p_fifo_ld_pop_576_bfp16:
-    return AIE2P::VLDB_POP_576_normal_pop;
+    return AIE2P::VLD_POP_576_normal_pop_pseudo;
   case Intrinsic::aie2p_fifo_ld_pop_2d_unaligned:
-    return AIE2P::VLDB_POP_512_2D;
+    return AIE2P::VLD_POP_512_2D_pseudo;
   case Intrinsic::aie2p_fifo_ld_pop_3d_unaligned:
-    return AIE2P::VLDB_POP_512_3D;
+    return AIE2P::VLD_POP_512_3D_pseudo;
   case Intrinsic::aie2p_fifo_ld_pop_544_2d_bfp16:
-    return AIE2P::VLDB_POP_544_2D;
+    return AIE2P::VLD_POP_544_2D_pseudo;
   case Intrinsic::aie2p_fifo_ld_pop_576_2d_bfp16:
-    return AIE2P::VLDB_POP_576_2D;
+    return AIE2P::VLD_POP_576_2D_pseudo;
   case Intrinsic::aie2p_fifo_ld_pop_544_3d_bfp16:
-    return AIE2P::VLDB_POP_544_3D;
+    return AIE2P::VLD_POP_544_3D_pseudo;
   case Intrinsic::aie2p_fifo_ld_pop_576_3d_bfp16:
-    return AIE2P::VLDB_POP_576_3D;
+    return AIE2P::VLD_POP_576_3D_pseudo;
   }
   llvm_unreachable("unreachable: Failed to get sparse load opcode");
   return AIE2P::INSTRUCTION_LIST_END;
