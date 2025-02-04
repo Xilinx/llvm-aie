@@ -7,7 +7,10 @@
 ; (c) Copyright 2025 Advanced Micro Devices, Inc. or its affiliates
 
 ; RUN: llc -mtriple=aie2p -stop-after=irtranslator -global-isel -verify-machineinstrs %s -o - 2>&1 | FileCheck %s --check-prefix=GMIR
+; RUN: llc -mtriple=aie2p -stop-after=instruction-select -global-isel -verify-machineinstrs %s -o - 2>&1 | FileCheck %s --check-prefix=ISEL
 
+; This test verifies that MMOs are created by the IRTranslator for FIFO ld/st
+; instructions, and that they survive ISel.
 
 define ptr @test_fifo_fill(ptr noalias align 4 %ptr, <32 x i32> %buf, i32 %avail) {
   ; GMIR-LABEL: name: test_fifo_fill
@@ -20,6 +23,18 @@ define ptr @test_fifo_fill(ptr noalias align 4 %ptr, <32 x i32> %buf, i32 %avail
   ; GMIR-NEXT:   [[INT:%[0-9]+]]:_(p0), [[INT1:%[0-9]+]]:_(<32 x s32>), [[INT2:%[0-9]+]]:_(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.fill), [[COPY]](p0), [[COPY1]](<32 x s32>), [[COPY2]](s32) :: (load unknown-size from %ir.ptr, align 1)
   ; GMIR-NEXT:   $p0 = COPY [[INT]](p0)
   ; GMIR-NEXT:   PseudoRET implicit $lr, implicit $p0
+  ;
+  ; ISEL-LABEL: name: test_fifo_fill
+  ; ISEL: bb.1.entry:
+  ; ISEL-NEXT:   liveins: $p1, $r0, $y2
+  ; ISEL-NEXT: {{  $}}
+  ; ISEL-NEXT:   [[COPY:%[0-9]+]]:eps = COPY $p1
+  ; ISEL-NEXT:   [[COPY1:%[0-9]+]]:vec1024 = COPY $y2
+  ; ISEL-NEXT:   [[COPY2:%[0-9]+]]:erf2 = COPY $r0
+  ; ISEL-NEXT:   [[COPY3:%[0-9]+]]:eldfiforeg = COPY [[COPY1]]
+  ; ISEL-NEXT:   [[VLD_FILL_512_pseudo:%[0-9]+]]:eps, [[VLD_FILL_512_pseudo1:%[0-9]+]]:eldfiforeg, [[VLD_FILL_512_pseudo2:%[0-9]+]]:erf2 = VLD_FILL_512_pseudo [[COPY]], [[COPY3]], [[COPY2]] :: (load unknown-size from %ir.ptr, align 1)
+  ; ISEL-NEXT:   $p0 = COPY [[VLD_FILL_512_pseudo]]
+  ; ISEL-NEXT:   PseudoRET implicit $lr, implicit $p0
 entry:
   %res0 = tail call    { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.fill(ptr %ptr, <32 x i32> %buf, i32 %avail)
   %ptr0 = extractvalue { ptr, <32 x i32>, i32 } %res0, 0
@@ -48,6 +63,31 @@ define ptr @test_fifo_pop_unaligned(ptr noalias align 4 %ptr, <32 x i32> %buf, i
   ; GMIR-NEXT:   [[INT13:%[0-9]+]]:_(<64 x s8>), [[INT14:%[0-9]+]]:_(p0), [[INT15:%[0-9]+]]:_(<32 x s32>), [[INT16:%[0-9]+]]:_(s32), [[INT17:%[0-9]+]]:_(s20), [[INT18:%[0-9]+]]:_(s20) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.3d.unaligned), [[INT9]](p0), [[INT10]](<32 x s32>), [[INT11]](s32), [[C1]](s20), [[C2]](s20), [[C3]](s20), [[C4]](s20), [[C5]](s20), [[C6]](s20), [[C7]](s20) :: (load unknown-size from %ir.ptr2, align 1)
   ; GMIR-NEXT:   $p0 = COPY [[INT14]](p0)
   ; GMIR-NEXT:   PseudoRET implicit $lr, implicit $p0
+  ;
+  ; ISEL-LABEL: name: test_fifo_pop_unaligned
+  ; ISEL: bb.1.entry:
+  ; ISEL-NEXT:   liveins: $p1, $r0, $y2
+  ; ISEL-NEXT: {{  $}}
+  ; ISEL-NEXT:   [[COPY:%[0-9]+]]:eps = COPY $p1
+  ; ISEL-NEXT:   [[COPY1:%[0-9]+]]:vec1024 = COPY $y2
+  ; ISEL-NEXT:   [[COPY2:%[0-9]+]]:erf2 = COPY $r0
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo:%[0-9]+]]:em = MOV_PD_imm11_pseudo 16
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo1:%[0-9]+]]:em = MOV_PD_imm11_pseudo 1
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo2:%[0-9]+]]:edn = MOV_PD_imm11_pseudo 2
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo3:%[0-9]+]]:edc = MOV_PD_imm11_pseudo 3
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo4:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 4
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo5:%[0-9]+]]:edn = MOV_PD_imm11_pseudo 5
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo6:%[0-9]+]]:edc = MOV_PD_imm11_pseudo 6
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo7:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 7
+  ; ISEL-NEXT:   [[COPY3:%[0-9]+]]:eldfiforeg = COPY [[COPY1]]
+  ; ISEL-NEXT:   [[VLD_POP_512_normal_pop_pseudo:%[0-9]+]]:vec512, [[VLD_POP_512_normal_pop_pseudo1:%[0-9]+]]:eps, [[VLD_POP_512_normal_pop_pseudo2:%[0-9]+]]:eldfiforeg, [[VLD_POP_512_normal_pop_pseudo3:%[0-9]+]]:erf2 = VLD_POP_512_normal_pop_pseudo [[COPY]], [[COPY3]], [[COPY2]], implicit-def $srfifo_uf :: (load unknown-size from %ir.ptr, align 1)
+  ; ISEL-NEXT:   [[VLD_POP_512_fifo_1d_pop_pseudo:%[0-9]+]]:vec512, [[VLD_POP_512_fifo_1d_pop_pseudo1:%[0-9]+]]:eps, [[VLD_POP_512_fifo_1d_pop_pseudo2:%[0-9]+]]:eldfiforeg, [[VLD_POP_512_fifo_1d_pop_pseudo3:%[0-9]+]]:erf2 = VLD_POP_512_fifo_1d_pop_pseudo [[VLD_POP_512_normal_pop_pseudo1]], [[VLD_POP_512_normal_pop_pseudo2]], [[VLD_POP_512_normal_pop_pseudo3]], [[MOV_PD_imm11_pseudo]], implicit-def $srfifo_uf :: (load unknown-size from %ir.ptr0, align 1)
+  ; ISEL-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm11_pseudo1]], %subreg.sub_mod, [[MOV_PD_imm11_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm11_pseudo4]], %subreg.sub_dim_stride, [[MOV_PD_imm11_pseudo3]], %subreg.sub_dim_count
+  ; ISEL-NEXT:   [[VLD_POP_512_2D_pseudo:%[0-9]+]]:vec512, [[VLD_POP_512_2D_pseudo1:%[0-9]+]]:eps, [[VLD_POP_512_2D_pseudo2:%[0-9]+]]:eldfiforeg, [[VLD_POP_512_2D_pseudo3:%[0-9]+]]:erf2, [[VLD_POP_512_2D_pseudo4:%[0-9]+]]:edc = VLD_POP_512_2D_pseudo [[VLD_POP_512_fifo_1d_pop_pseudo1]], [[VLD_POP_512_fifo_1d_pop_pseudo2]], [[VLD_POP_512_fifo_1d_pop_pseudo3]], [[REG_SEQUENCE]], implicit-def $srfifo_uf :: (load unknown-size from %ir.ptr1, align 1)
+  ; ISEL-NEXT:   [[REG_SEQUENCE1:%[0-9]+]]:eds = REG_SEQUENCE [[MOV_PD_imm11_pseudo1]], %subreg.sub_mod, [[MOV_PD_imm11_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm11_pseudo4]], %subreg.sub_dim_stride, [[MOV_PD_imm11_pseudo3]], %subreg.sub_dim_count, [[MOV_PD_imm11_pseudo5]], %subreg.sub_hi_dim_then_sub_dim_size, [[MOV_PD_imm11_pseudo7]], %subreg.sub_hi_dim_then_sub_dim_stride, [[MOV_PD_imm11_pseudo6]], %subreg.sub_hi_dim_then_sub_dim_count
+  ; ISEL-NEXT:   [[VLD_POP_512_3D_pseudo:%[0-9]+]]:vec512, [[VLD_POP_512_3D_pseudo1:%[0-9]+]]:eps, [[VLD_POP_512_3D_pseudo2:%[0-9]+]]:eldfiforeg, [[VLD_POP_512_3D_pseudo3:%[0-9]+]]:erf2, [[VLD_POP_512_3D_pseudo4:%[0-9]+]]:edcl, [[VLD_POP_512_3D_pseudo5:%[0-9]+]]:edch = VLD_POP_512_3D_pseudo [[VLD_POP_512_2D_pseudo1]], [[VLD_POP_512_2D_pseudo2]], [[VLD_POP_512_2D_pseudo3]], [[REG_SEQUENCE1]], implicit-def $srfifo_uf :: (load unknown-size from %ir.ptr2, align 1)
+  ; ISEL-NEXT:   $p0 = COPY [[VLD_POP_512_3D_pseudo1]]
+  ; ISEL-NEXT:   PseudoRET implicit $lr, implicit $p0
 entry:
   %res0 = tail call { <64 x i8>, ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.ld.pop.unaligned(ptr %ptr, <32 x i32> %buf, i32 %avail)
   %ptr0 = extractvalue { <64 x i8>, ptr, <32 x i32>, i32 } %res0, 1
@@ -94,6 +134,39 @@ define ptr @test_fifo_pop_576(ptr noalias align 4 %ptr, <32 x i32> %buf, i32 %av
   ; GMIR-NEXT:   [[INT16:%[0-9]+]]:_(p0), [[INT17:%[0-9]+]]:_(<32 x s32>), [[INT18:%[0-9]+]]:_(s32), [[INT19:%[0-9]+]]:_(s20), [[INT20:%[0-9]+]]:_(s20), [[INT21:%[0-9]+]]:_(<64 x s8>), [[INT22:%[0-9]+]]:_(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.576.3d.bfp16), [[INT10]](p0), [[INT11]](<32 x s32>), [[INT12]](s32), [[C1]](s20), [[C2]](s20), [[C3]](s20), [[C4]](s20), [[C5]](s20), [[C6]](s20), [[C7]](s20) :: (load unknown-size from %ir.ptr2, align 1)
   ; GMIR-NEXT:   $p0 = COPY [[INT16]](p0)
   ; GMIR-NEXT:   PseudoRET implicit $lr, implicit $p0
+  ;
+  ; ISEL-LABEL: name: test_fifo_pop_576
+  ; ISEL: bb.1.entry:
+  ; ISEL-NEXT:   liveins: $p1, $r0, $y2
+  ; ISEL-NEXT: {{  $}}
+  ; ISEL-NEXT:   [[COPY:%[0-9]+]]:eps = COPY $p1
+  ; ISEL-NEXT:   [[COPY1:%[0-9]+]]:vec1024 = COPY $y2
+  ; ISEL-NEXT:   [[COPY2:%[0-9]+]]:erf2 = COPY $r0
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo:%[0-9]+]]:em = MOV_PD_imm11_pseudo 16
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo1:%[0-9]+]]:em = MOV_PD_imm11_pseudo 1
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo2:%[0-9]+]]:edn = MOV_PD_imm11_pseudo 2
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo3:%[0-9]+]]:edc = MOV_PD_imm11_pseudo 3
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo4:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 4
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo5:%[0-9]+]]:edn = MOV_PD_imm11_pseudo 5
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo6:%[0-9]+]]:edc = MOV_PD_imm11_pseudo 6
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo7:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 7
+  ; ISEL-NEXT:   [[COPY3:%[0-9]+]]:eldfiforeg = COPY [[COPY1]]
+  ; ISEL-NEXT:   [[VLD_POP_576_normal_pop_pseudo:%[0-9]+]]:vec576, [[VLD_POP_576_normal_pop_pseudo1:%[0-9]+]]:eps, [[VLD_POP_576_normal_pop_pseudo2:%[0-9]+]]:eldfiforeg, [[VLD_POP_576_normal_pop_pseudo3:%[0-9]+]]:erf2 = VLD_POP_576_normal_pop_pseudo [[COPY]], [[COPY3]], [[COPY2]], implicit-def $srfifo_uf :: (load unknown-size from %ir.ptr, align 1)
+  ; ISEL-NEXT:   [[COPY4:%[0-9]+]]:vec512 = COPY [[VLD_POP_576_normal_pop_pseudo]].sub_bfp16_x
+  ; ISEL-NEXT:   [[COPY5:%[0-9]+]]:expvec64 = COPY [[VLD_POP_576_normal_pop_pseudo]].sub_bfp16_e
+  ; ISEL-NEXT:   [[VLD_POP_576_fifo_1d_pop_pseudo:%[0-9]+]]:vec576, [[VLD_POP_576_fifo_1d_pop_pseudo1:%[0-9]+]]:eps, [[VLD_POP_576_fifo_1d_pop_pseudo2:%[0-9]+]]:eldfiforeg, [[VLD_POP_576_fifo_1d_pop_pseudo3:%[0-9]+]]:erf2 = VLD_POP_576_fifo_1d_pop_pseudo [[VLD_POP_576_normal_pop_pseudo1]], [[VLD_POP_576_normal_pop_pseudo2]], [[VLD_POP_576_normal_pop_pseudo3]], [[MOV_PD_imm11_pseudo]], implicit-def $srfifo_uf :: (load unknown-size from %ir.ptr0, align 1)
+  ; ISEL-NEXT:   [[COPY6:%[0-9]+]]:vec512 = COPY [[VLD_POP_576_fifo_1d_pop_pseudo]].sub_bfp16_x
+  ; ISEL-NEXT:   [[COPY7:%[0-9]+]]:expvec64 = COPY [[VLD_POP_576_fifo_1d_pop_pseudo]].sub_bfp16_e
+  ; ISEL-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm11_pseudo1]], %subreg.sub_mod, [[MOV_PD_imm11_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm11_pseudo4]], %subreg.sub_dim_stride, [[MOV_PD_imm11_pseudo3]], %subreg.sub_dim_count
+  ; ISEL-NEXT:   [[VLD_POP_576_2D_pseudo:%[0-9]+]]:vec576, [[VLD_POP_576_2D_pseudo1:%[0-9]+]]:eps, [[VLD_POP_576_2D_pseudo2:%[0-9]+]]:eldfiforeg, [[VLD_POP_576_2D_pseudo3:%[0-9]+]]:erf2, [[VLD_POP_576_2D_pseudo4:%[0-9]+]]:edc = VLD_POP_576_2D_pseudo [[VLD_POP_576_fifo_1d_pop_pseudo1]], [[VLD_POP_576_fifo_1d_pop_pseudo2]], [[VLD_POP_576_fifo_1d_pop_pseudo3]], [[REG_SEQUENCE]], implicit-def $srfifo_uf :: (load unknown-size from %ir.ptr1, align 1)
+  ; ISEL-NEXT:   [[COPY8:%[0-9]+]]:vec512 = COPY [[VLD_POP_576_2D_pseudo]].sub_bfp16_x
+  ; ISEL-NEXT:   [[COPY9:%[0-9]+]]:expvec64 = COPY [[VLD_POP_576_2D_pseudo]].sub_bfp16_e
+  ; ISEL-NEXT:   [[REG_SEQUENCE1:%[0-9]+]]:eds = REG_SEQUENCE [[MOV_PD_imm11_pseudo1]], %subreg.sub_mod, [[MOV_PD_imm11_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm11_pseudo4]], %subreg.sub_dim_stride, [[MOV_PD_imm11_pseudo3]], %subreg.sub_dim_count, [[MOV_PD_imm11_pseudo5]], %subreg.sub_hi_dim_then_sub_dim_size, [[MOV_PD_imm11_pseudo7]], %subreg.sub_hi_dim_then_sub_dim_stride, [[MOV_PD_imm11_pseudo6]], %subreg.sub_hi_dim_then_sub_dim_count
+  ; ISEL-NEXT:   [[VLD_POP_576_3D_pseudo:%[0-9]+]]:vec576, [[VLD_POP_576_3D_pseudo1:%[0-9]+]]:eps, [[VLD_POP_576_3D_pseudo2:%[0-9]+]]:eldfiforeg, [[VLD_POP_576_3D_pseudo3:%[0-9]+]]:erf2, [[VLD_POP_576_3D_pseudo4:%[0-9]+]]:edcl, [[VLD_POP_576_3D_pseudo5:%[0-9]+]]:edch = VLD_POP_576_3D_pseudo [[VLD_POP_576_2D_pseudo1]], [[VLD_POP_576_2D_pseudo2]], [[VLD_POP_576_2D_pseudo3]], [[REG_SEQUENCE1]], implicit-def $srfifo_uf :: (load unknown-size from %ir.ptr2, align 1)
+  ; ISEL-NEXT:   [[COPY10:%[0-9]+]]:vec512 = COPY [[VLD_POP_576_3D_pseudo]].sub_bfp16_x
+  ; ISEL-NEXT:   [[COPY11:%[0-9]+]]:expvec64 = COPY [[VLD_POP_576_3D_pseudo]].sub_bfp16_e
+  ; ISEL-NEXT:   $p0 = COPY [[VLD_POP_576_3D_pseudo1]]
+  ; ISEL-NEXT:   PseudoRET implicit $lr, implicit $p0
 entry:
   %res0 = tail call    { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } @llvm.aie2p.fifo.ld.pop.576.bfp16(ptr %ptr, <32 x i32> %buf, i32 %avail)
   %ptr0 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %res0, 0
@@ -140,6 +213,39 @@ define ptr @test_fifo_pop_544(ptr noalias align 4 %ptr, <32 x i32> %buf, i32 %av
   ; GMIR-NEXT:   [[INT16:%[0-9]+]]:_(p0), [[INT17:%[0-9]+]]:_(<32 x s32>), [[INT18:%[0-9]+]]:_(s32), [[INT19:%[0-9]+]]:_(s20), [[INT20:%[0-9]+]]:_(s20), [[INT21:%[0-9]+]]:_(<64 x s8>), [[INT22:%[0-9]+]]:_(<8 x s8>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.ld.pop.544.3d.bfp16), [[INT10]](p0), [[INT11]](<32 x s32>), [[INT12]](s32), [[C1]](s20), [[C2]](s20), [[C3]](s20), [[C4]](s20), [[C5]](s20), [[C6]](s20), [[C7]](s20) :: (load unknown-size from %ir.ptr2, align 1)
   ; GMIR-NEXT:   $p0 = COPY [[INT16]](p0)
   ; GMIR-NEXT:   PseudoRET implicit $lr, implicit $p0
+  ;
+  ; ISEL-LABEL: name: test_fifo_pop_544
+  ; ISEL: bb.1.entry:
+  ; ISEL-NEXT:   liveins: $p1, $r0, $y2
+  ; ISEL-NEXT: {{  $}}
+  ; ISEL-NEXT:   [[COPY:%[0-9]+]]:eps = COPY $p1
+  ; ISEL-NEXT:   [[COPY1:%[0-9]+]]:vec1024 = COPY $y2
+  ; ISEL-NEXT:   [[COPY2:%[0-9]+]]:erf2 = COPY $r0
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo:%[0-9]+]]:em = MOV_PD_imm11_pseudo 16
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo1:%[0-9]+]]:em = MOV_PD_imm11_pseudo 1
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo2:%[0-9]+]]:edn = MOV_PD_imm11_pseudo 2
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo3:%[0-9]+]]:edc = MOV_PD_imm11_pseudo 3
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo4:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 4
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo5:%[0-9]+]]:edn = MOV_PD_imm11_pseudo 5
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo6:%[0-9]+]]:edc = MOV_PD_imm11_pseudo 6
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo7:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 7
+  ; ISEL-NEXT:   [[COPY3:%[0-9]+]]:eldfiforeg = COPY [[COPY1]]
+  ; ISEL-NEXT:   [[VLD_POP_544_normal_pop_pseudo:%[0-9]+]]:vec576, [[VLD_POP_544_normal_pop_pseudo1:%[0-9]+]]:eps, [[VLD_POP_544_normal_pop_pseudo2:%[0-9]+]]:eldfiforeg, [[VLD_POP_544_normal_pop_pseudo3:%[0-9]+]]:erf2 = VLD_POP_544_normal_pop_pseudo [[COPY]], [[COPY3]], [[COPY2]], implicit-def $srfifo_uf :: (load unknown-size from %ir.ptr, align 1)
+  ; ISEL-NEXT:   [[COPY4:%[0-9]+]]:vec512 = COPY [[VLD_POP_544_normal_pop_pseudo]].sub_bfp16_x
+  ; ISEL-NEXT:   [[COPY5:%[0-9]+]]:expvec64 = COPY [[VLD_POP_544_normal_pop_pseudo]].sub_bfp16_e
+  ; ISEL-NEXT:   [[VLD_POP_544_fifo_1d_pop_pseudo:%[0-9]+]]:vec576, [[VLD_POP_544_fifo_1d_pop_pseudo1:%[0-9]+]]:eps, [[VLD_POP_544_fifo_1d_pop_pseudo2:%[0-9]+]]:eldfiforeg, [[VLD_POP_544_fifo_1d_pop_pseudo3:%[0-9]+]]:erf2 = VLD_POP_544_fifo_1d_pop_pseudo [[VLD_POP_544_normal_pop_pseudo1]], [[VLD_POP_544_normal_pop_pseudo2]], [[VLD_POP_544_normal_pop_pseudo3]], [[MOV_PD_imm11_pseudo]], implicit-def $srfifo_uf :: (load unknown-size from %ir.ptr0, align 1)
+  ; ISEL-NEXT:   [[COPY6:%[0-9]+]]:vec512 = COPY [[VLD_POP_544_fifo_1d_pop_pseudo]].sub_bfp16_x
+  ; ISEL-NEXT:   [[COPY7:%[0-9]+]]:expvec64 = COPY [[VLD_POP_544_fifo_1d_pop_pseudo]].sub_bfp16_e
+  ; ISEL-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm11_pseudo1]], %subreg.sub_mod, [[MOV_PD_imm11_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm11_pseudo4]], %subreg.sub_dim_stride, [[MOV_PD_imm11_pseudo3]], %subreg.sub_dim_count
+  ; ISEL-NEXT:   [[VLD_POP_544_2D_pseudo:%[0-9]+]]:vec576, [[VLD_POP_544_2D_pseudo1:%[0-9]+]]:eps, [[VLD_POP_544_2D_pseudo2:%[0-9]+]]:eldfiforeg, [[VLD_POP_544_2D_pseudo3:%[0-9]+]]:erf2, [[VLD_POP_544_2D_pseudo4:%[0-9]+]]:edc = VLD_POP_544_2D_pseudo [[VLD_POP_544_fifo_1d_pop_pseudo1]], [[VLD_POP_544_fifo_1d_pop_pseudo2]], [[VLD_POP_544_fifo_1d_pop_pseudo3]], [[REG_SEQUENCE]], implicit-def $srfifo_uf :: (load unknown-size from %ir.ptr1, align 1)
+  ; ISEL-NEXT:   [[COPY8:%[0-9]+]]:vec512 = COPY [[VLD_POP_544_2D_pseudo]].sub_bfp16_x
+  ; ISEL-NEXT:   [[COPY9:%[0-9]+]]:expvec64 = COPY [[VLD_POP_544_2D_pseudo]].sub_bfp16_e
+  ; ISEL-NEXT:   [[REG_SEQUENCE1:%[0-9]+]]:eds = REG_SEQUENCE [[MOV_PD_imm11_pseudo1]], %subreg.sub_mod, [[MOV_PD_imm11_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm11_pseudo4]], %subreg.sub_dim_stride, [[MOV_PD_imm11_pseudo3]], %subreg.sub_dim_count, [[MOV_PD_imm11_pseudo5]], %subreg.sub_hi_dim_then_sub_dim_size, [[MOV_PD_imm11_pseudo7]], %subreg.sub_hi_dim_then_sub_dim_stride, [[MOV_PD_imm11_pseudo6]], %subreg.sub_hi_dim_then_sub_dim_count
+  ; ISEL-NEXT:   [[VLD_POP_544_3D_pseudo:%[0-9]+]]:vec576, [[VLD_POP_544_3D_pseudo1:%[0-9]+]]:eps, [[VLD_POP_544_3D_pseudo2:%[0-9]+]]:eldfiforeg, [[VLD_POP_544_3D_pseudo3:%[0-9]+]]:erf2, [[VLD_POP_544_3D_pseudo4:%[0-9]+]]:edcl, [[VLD_POP_544_3D_pseudo5:%[0-9]+]]:edch = VLD_POP_544_3D_pseudo [[VLD_POP_544_2D_pseudo1]], [[VLD_POP_544_2D_pseudo2]], [[VLD_POP_544_2D_pseudo3]], [[REG_SEQUENCE1]], implicit-def $srfifo_uf :: (load unknown-size from %ir.ptr2, align 1)
+  ; ISEL-NEXT:   [[COPY10:%[0-9]+]]:vec512 = COPY [[VLD_POP_544_3D_pseudo]].sub_bfp16_x
+  ; ISEL-NEXT:   [[COPY11:%[0-9]+]]:expvec64 = COPY [[VLD_POP_544_3D_pseudo]].sub_bfp16_e
+  ; ISEL-NEXT:   $p0 = COPY [[VLD_POP_544_3D_pseudo1]]
+  ; ISEL-NEXT:   PseudoRET implicit $lr, implicit $p0
 entry:
   %res0 = tail call    { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } @llvm.aie2p.fifo.ld.pop.544.bfp16(ptr %ptr, <32 x i32> %buf, i32 %avail)
   %ptr0 = extractvalue { ptr, <32 x i32>, i32, <64 x i8>, <8 x i8> } %res0, 0
@@ -180,6 +286,25 @@ define ptr @test_fifo_push(ptr noalias align 4 %ptr, <16 x i32> noundef %v, <64 
   ; GMIR-NEXT:   [[INT6:%[0-9]+]]:_(p0), [[INT7:%[0-9]+]]:_(<32 x s32>), [[INT8:%[0-9]+]]:_(s32) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.push.544.bfp16), [[INT3]](p0), [[COPY2]](<64 x s8>), [[COPY3]](<8 x s8>), [[INT4]](<32 x s32>), [[INT5]](s32) :: (store unknown-size into %ir.ptr1, align 4)
   ; GMIR-NEXT:   $p0 = COPY [[INT6]](p0)
   ; GMIR-NEXT:   PseudoRET implicit $lr, implicit $p0
+  ;
+  ; ISEL-LABEL: name: test_fifo_push
+  ; ISEL: bb.1.entry:
+  ; ISEL-NEXT:   liveins: $l0, $p1, $x0, $x2
+  ; ISEL-NEXT: {{  $}}
+  ; ISEL-NEXT:   [[COPY:%[0-9]+]]:mpfs = COPY $p1
+  ; ISEL-NEXT:   [[COPY1:%[0-9]+]]:vec512 = COPY $x0
+  ; ISEL-NEXT:   [[COPY2:%[0-9]+]]:vec512 = COPY $x2
+  ; ISEL-NEXT:   [[COPY3:%[0-9]+]]:el = COPY $l0
+  ; ISEL-NEXT:   [[DEF:%[0-9]+]]:vec1024 = IMPLICIT_DEF
+  ; ISEL-NEXT:   [[MOV_RLC_imm11_pseudo:%[0-9]+]]:mr26_fifo_st = MOV_RLC_imm11_pseudo 0
+  ; ISEL-NEXT:   [[COPY4:%[0-9]+]]:mstfifo = COPY [[DEF]]
+  ; ISEL-NEXT:   [[VST_PUSH_512_:%[0-9]+]]:mstfifo, [[VST_PUSH_512_1:%[0-9]+]]:mpfs, [[VST_PUSH_512_2:%[0-9]+]]:mr26_fifo_st = VST_PUSH_512 [[COPY4]], [[COPY1]], [[COPY]], [[MOV_RLC_imm11_pseudo]], implicit-def $srfifo_of :: (store unknown-size into %ir.ptr, align 4)
+  ; ISEL-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:vec576 = REG_SEQUENCE [[COPY2]], %subreg.sub_bfp16_x, [[COPY3]], %subreg.sub_bfp16_e
+  ; ISEL-NEXT:   [[VST_PUSH_576_:%[0-9]+]]:mstfifo, [[VST_PUSH_576_1:%[0-9]+]]:mpfs, [[VST_PUSH_576_2:%[0-9]+]]:mr26_fifo_st = VST_PUSH_576 [[VST_PUSH_512_]], [[REG_SEQUENCE]], [[VST_PUSH_512_1]], [[VST_PUSH_512_2]], implicit-def $srfifo_of :: (store unknown-size into %ir.ptr0, align 4)
+  ; ISEL-NEXT:   [[REG_SEQUENCE1:%[0-9]+]]:vec576 = REG_SEQUENCE [[COPY2]], %subreg.sub_bfp16_x, [[COPY3]], %subreg.sub_bfp16_e
+  ; ISEL-NEXT:   [[VST_PUSH_544_:%[0-9]+]]:mstfifo, [[VST_PUSH_544_1:%[0-9]+]]:mpfs, [[VST_PUSH_544_2:%[0-9]+]]:mr26_fifo_st = VST_PUSH_544 [[VST_PUSH_576_]], [[REG_SEQUENCE1]], [[VST_PUSH_576_1]], [[VST_PUSH_576_2]], implicit-def $srfifo_of :: (store unknown-size into %ir.ptr1, align 4)
+  ; ISEL-NEXT:   $p0 = COPY [[VST_PUSH_544_1]]
+  ; ISEL-NEXT:   PseudoRET implicit $lr, implicit $p0
 entry:
   %res0 = tail call    { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.push.512.bfp16(ptr %ptr, <16 x i32> %v, <32 x i32> undef, i32 0)
   %ptr0 = extractvalue { ptr, <32 x i32>, i32 } %res0, 0
@@ -221,6 +346,31 @@ define ptr @test_fifo_flush(ptr noalias align 4 %ptr, <32 x i32> %buf, i32 %pos)
   ; GMIR-NEXT:   [[INT10:%[0-9]+]]:_(p0), [[INT11:%[0-9]+]]:_(<32 x s32>), [[INT12:%[0-9]+]]:_(s32), [[INT13:%[0-9]+]]:_(s20), [[INT14:%[0-9]+]]:_(s20) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.flush.3d), [[INT6]](p0), [[INT7]](<32 x s32>), [[INT8]](s32), [[C1]](s20), [[C2]](s20), [[C3]](s20), [[C4]](s20), [[C5]](s20), [[C6]](s20), [[C7]](s20) :: (store unknown-size into %ir.ptr2, align 4)
   ; GMIR-NEXT:   $p0 = COPY [[INT10]](p0)
   ; GMIR-NEXT:   PseudoRET implicit $lr, implicit $p0
+  ;
+  ; ISEL-LABEL: name: test_fifo_flush
+  ; ISEL: bb.1.entry:
+  ; ISEL-NEXT:   liveins: $p1, $r0, $y2
+  ; ISEL-NEXT: {{  $}}
+  ; ISEL-NEXT:   [[COPY:%[0-9]+]]:mpfs = COPY $p1
+  ; ISEL-NEXT:   [[COPY1:%[0-9]+]]:vec1024 = COPY $y2
+  ; ISEL-NEXT:   [[COPY2:%[0-9]+]]:mr26_fifo_st = COPY $r0
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo:%[0-9]+]]:em = MOV_PD_imm11_pseudo 16
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo1:%[0-9]+]]:em = MOV_PD_imm11_pseudo 1
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo2:%[0-9]+]]:edn = MOV_PD_imm11_pseudo 2
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo3:%[0-9]+]]:edc = MOV_PD_imm11_pseudo 3
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo4:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 4
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo5:%[0-9]+]]:edn = MOV_PD_imm11_pseudo 5
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo6:%[0-9]+]]:edc = MOV_PD_imm11_pseudo 6
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo7:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 7
+  ; ISEL-NEXT:   [[COPY3:%[0-9]+]]:mstfifo = COPY [[COPY1]]
+  ; ISEL-NEXT:   [[VST_FLUSH_512_normal_flush:%[0-9]+]]:mstfifo, [[VST_FLUSH_512_normal_flush1:%[0-9]+]]:mpfs, [[VST_FLUSH_512_normal_flush2:%[0-9]+]]:mr26_fifo_st = VST_FLUSH_512_normal_flush [[COPY3]], [[COPY]], [[COPY2]], implicit-def $srfifo_of :: (store unknown-size into %ir.ptr, align 4)
+  ; ISEL-NEXT:   [[VST_FLUSH_512_fifo_1d_flush:%[0-9]+]]:mstfifo, [[VST_FLUSH_512_fifo_1d_flush1:%[0-9]+]]:mpfs, [[VST_FLUSH_512_fifo_1d_flush2:%[0-9]+]]:mr26_fifo_st = VST_FLUSH_512_fifo_1d_flush [[VST_FLUSH_512_normal_flush]], [[VST_FLUSH_512_normal_flush1]], [[VST_FLUSH_512_normal_flush2]], [[MOV_PD_imm11_pseudo]], implicit-def $srfifo_of :: (store unknown-size into %ir.ptr0, align 4)
+  ; ISEL-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm11_pseudo1]], %subreg.sub_mod, [[MOV_PD_imm11_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm11_pseudo4]], %subreg.sub_dim_stride, [[MOV_PD_imm11_pseudo3]], %subreg.sub_dim_count
+  ; ISEL-NEXT:   [[VST_FLUSH_512_2D:%[0-9]+]]:mstfifo, [[VST_FLUSH_512_2D1:%[0-9]+]]:mpfs, [[VST_FLUSH_512_2D2:%[0-9]+]]:mr26_fifo_st, [[VST_FLUSH_512_2D3:%[0-9]+]]:edc = VST_FLUSH_512_2D [[VST_FLUSH_512_fifo_1d_flush]], [[VST_FLUSH_512_fifo_1d_flush1]], [[VST_FLUSH_512_fifo_1d_flush2]], [[REG_SEQUENCE]], implicit-def $srfifo_of :: (store unknown-size into %ir.ptr1, align 4)
+  ; ISEL-NEXT:   [[REG_SEQUENCE1:%[0-9]+]]:eds = REG_SEQUENCE [[MOV_PD_imm11_pseudo1]], %subreg.sub_mod, [[MOV_PD_imm11_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm11_pseudo4]], %subreg.sub_dim_stride, [[MOV_PD_imm11_pseudo3]], %subreg.sub_dim_count, [[MOV_PD_imm11_pseudo5]], %subreg.sub_hi_dim_then_sub_dim_size, [[MOV_PD_imm11_pseudo7]], %subreg.sub_hi_dim_then_sub_dim_stride, [[MOV_PD_imm11_pseudo6]], %subreg.sub_hi_dim_then_sub_dim_count
+  ; ISEL-NEXT:   [[VST_FLUSH_512_3D:%[0-9]+]]:mstfifo, [[VST_FLUSH_512_3D1:%[0-9]+]]:mpfs, [[VST_FLUSH_512_3D2:%[0-9]+]]:mr26_fifo_st, [[VST_FLUSH_512_3D3:%[0-9]+]]:edcl, [[VST_FLUSH_512_3D4:%[0-9]+]]:edch = VST_FLUSH_512_3D [[VST_FLUSH_512_2D]], [[VST_FLUSH_512_2D1]], [[VST_FLUSH_512_2D2]], [[REG_SEQUENCE1]], implicit-def $srfifo_of :: (store unknown-size into %ir.ptr2, align 4)
+  ; ISEL-NEXT:   $p0 = COPY [[VST_FLUSH_512_3D1]]
+  ; ISEL-NEXT:   PseudoRET implicit $lr, implicit $p0
 entry:
   %res0 = tail call    { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.flush(ptr %ptr, <32 x i32> %buf, i32 %pos)
   %ptr0 = extractvalue { ptr, <32 x i32>, i32 } %res0, 0
@@ -267,6 +417,31 @@ define ptr @test_fifo_flush_conv(ptr noalias align 4 %ptr, <32 x i32> %buf, i32 
   ; GMIR-NEXT:   [[INT10:%[0-9]+]]:_(p0), [[INT11:%[0-9]+]]:_(<32 x s32>), [[INT12:%[0-9]+]]:_(s32), [[INT13:%[0-9]+]]:_(s20), [[INT14:%[0-9]+]]:_(s20) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.fifo.st.flush.3d.conv), [[INT6]](p0), [[INT7]](<32 x s32>), [[INT8]](s32), [[C1]](s20), [[C2]](s20), [[C3]](s20), [[C4]](s20), [[C5]](s20), [[C6]](s20), [[C7]](s20) :: (store unknown-size into %ir.ptr2, align 4)
   ; GMIR-NEXT:   $p0 = COPY [[INT10]](p0)
   ; GMIR-NEXT:   PseudoRET implicit $lr, implicit $p0
+  ;
+  ; ISEL-LABEL: name: test_fifo_flush_conv
+  ; ISEL: bb.1.entry:
+  ; ISEL-NEXT:   liveins: $p1, $r0, $y2
+  ; ISEL-NEXT: {{  $}}
+  ; ISEL-NEXT:   [[COPY:%[0-9]+]]:mpfs = COPY $p1
+  ; ISEL-NEXT:   [[COPY1:%[0-9]+]]:vec1024 = COPY $y2
+  ; ISEL-NEXT:   [[COPY2:%[0-9]+]]:mr26_fifo_st = COPY $r0
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo:%[0-9]+]]:em = MOV_PD_imm11_pseudo 16
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo1:%[0-9]+]]:em = MOV_PD_imm11_pseudo 1
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo2:%[0-9]+]]:edn = MOV_PD_imm11_pseudo 2
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo3:%[0-9]+]]:edc = MOV_PD_imm11_pseudo 3
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo4:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 4
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo5:%[0-9]+]]:edn = MOV_PD_imm11_pseudo 5
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo6:%[0-9]+]]:edc = MOV_PD_imm11_pseudo 6
+  ; ISEL-NEXT:   [[MOV_PD_imm11_pseudo7:%[0-9]+]]:edj = MOV_PD_imm11_pseudo 7
+  ; ISEL-NEXT:   [[COPY3:%[0-9]+]]:mstfifo = COPY [[COPY1]]
+  ; ISEL-NEXT:   [[VST_FLUSH_512_CONV_normal_flush:%[0-9]+]]:mstfifo, [[VST_FLUSH_512_CONV_normal_flush1:%[0-9]+]]:mpfs, [[VST_FLUSH_512_CONV_normal_flush2:%[0-9]+]]:mr26_fifo_st = VST_FLUSH_512_CONV_normal_flush [[COPY3]], [[COPY]], [[COPY2]], implicit-def $srfifo_of :: (store unknown-size into %ir.ptr, align 4)
+  ; ISEL-NEXT:   [[VST_FLUSH_512_CONV_fifo_1d_flush:%[0-9]+]]:mstfifo, [[VST_FLUSH_512_CONV_fifo_1d_flush1:%[0-9]+]]:mpfs, [[VST_FLUSH_512_CONV_fifo_1d_flush2:%[0-9]+]]:mr26_fifo_st = VST_FLUSH_512_CONV_fifo_1d_flush [[VST_FLUSH_512_CONV_normal_flush]], [[VST_FLUSH_512_CONV_normal_flush1]], [[VST_FLUSH_512_CONV_normal_flush2]], [[MOV_PD_imm11_pseudo]], implicit-def $srfifo_of :: (store unknown-size into %ir.ptr0, align 4)
+  ; ISEL-NEXT:   [[REG_SEQUENCE:%[0-9]+]]:ed = REG_SEQUENCE [[MOV_PD_imm11_pseudo1]], %subreg.sub_mod, [[MOV_PD_imm11_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm11_pseudo4]], %subreg.sub_dim_stride, [[MOV_PD_imm11_pseudo3]], %subreg.sub_dim_count
+  ; ISEL-NEXT:   [[VST_FLUSH_512_CONV_2D:%[0-9]+]]:mstfifo, [[VST_FLUSH_512_CONV_2D1:%[0-9]+]]:mpfs, [[VST_FLUSH_512_CONV_2D2:%[0-9]+]]:mr26_fifo_st, [[VST_FLUSH_512_CONV_2D3:%[0-9]+]]:edc = VST_FLUSH_512_CONV_2D [[VST_FLUSH_512_CONV_fifo_1d_flush]], [[VST_FLUSH_512_CONV_fifo_1d_flush1]], [[VST_FLUSH_512_CONV_fifo_1d_flush2]], [[REG_SEQUENCE]], implicit-def $srfifo_of :: (store unknown-size into %ir.ptr1, align 4)
+  ; ISEL-NEXT:   [[REG_SEQUENCE1:%[0-9]+]]:eds = REG_SEQUENCE [[MOV_PD_imm11_pseudo1]], %subreg.sub_mod, [[MOV_PD_imm11_pseudo2]], %subreg.sub_dim_size, [[MOV_PD_imm11_pseudo4]], %subreg.sub_dim_stride, [[MOV_PD_imm11_pseudo3]], %subreg.sub_dim_count, [[MOV_PD_imm11_pseudo5]], %subreg.sub_hi_dim_then_sub_dim_size, [[MOV_PD_imm11_pseudo7]], %subreg.sub_hi_dim_then_sub_dim_stride, [[MOV_PD_imm11_pseudo6]], %subreg.sub_hi_dim_then_sub_dim_count
+  ; ISEL-NEXT:   [[VST_FLUSH_512_CONV_3D:%[0-9]+]]:mstfifo, [[VST_FLUSH_512_CONV_3D1:%[0-9]+]]:mpfs, [[VST_FLUSH_512_CONV_3D2:%[0-9]+]]:mr26_fifo_st, [[VST_FLUSH_512_CONV_3D3:%[0-9]+]]:edcl, [[VST_FLUSH_512_CONV_3D4:%[0-9]+]]:edch = VST_FLUSH_512_CONV_3D [[VST_FLUSH_512_CONV_2D]], [[VST_FLUSH_512_CONV_2D1]], [[VST_FLUSH_512_CONV_2D2]], [[REG_SEQUENCE1]], implicit-def $srfifo_of :: (store unknown-size into %ir.ptr2, align 4)
+  ; ISEL-NEXT:   $p0 = COPY [[VST_FLUSH_512_CONV_3D1]]
+  ; ISEL-NEXT:   PseudoRET implicit $lr, implicit $p0
 entry:
   %res0 = tail call    { ptr, <32 x i32>, i32 } @llvm.aie2p.fifo.st.flush.conv(ptr %ptr, <32 x i32> %buf, i32 %pos)
   %ptr0 = extractvalue { ptr, <32 x i32>, i32 } %res0, 0

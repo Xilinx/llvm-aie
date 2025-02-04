@@ -2592,6 +2592,7 @@ bool AIE2PInstructionSelector::selectVLD_FIFO_FILL(MachineInstr &I,
   MachineInstrBuilder MI =
       MIB.buildInstr(getLoadFifoOpcode(I), {PtrOut, FifoOut, AvailOut},
                      {PtrIn, FifoIn, AvailIn});
+  MI.cloneMemRefs(I);
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
 }
@@ -2610,6 +2611,7 @@ bool AIE2PInstructionSelector::selectVLD_FIFO_POP_512(
   MachineInstrBuilder MI =
       MIB.buildInstr(getLoadFifoOpcode(I), {VecOut, PtrOut, FifoOut, AvailOut},
                      {PtrIn, FifoIn, AvailIn});
+  MI.cloneMemRefs(I);
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
 }
@@ -2629,6 +2631,7 @@ bool AIE2PInstructionSelector::selectVLD_FIFO_POP_512_1D(
   MachineInstrBuilder MI =
       MIB.buildInstr(getLoadFifoOpcode(I), {VecOut, PtrOut, FifoOut, AvailOut},
                      {PtrIn, FifoIn, AvailIn, OffsetReg});
+  MI.cloneMemRefs(I);
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
 }
@@ -2654,6 +2657,7 @@ bool AIE2PInstructionSelector::selectVLD_FIFO_POP_512_2D(
   MachineInstrBuilder MI = MIB.buildInstr(
       getLoadFifoOpcode(I), {VecOut, PtrOut, FifoOut, AvailOut, CountOut1Reg},
       {PtrIn, FifoIn, AvailIn, DReg});
+  MI.cloneMemRefs(I);
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
 }
@@ -2684,6 +2688,7 @@ bool AIE2PInstructionSelector::selectVLD_FIFO_POP_512_3D(
       getLoadFifoOpcode(I),
       {VecOut, PtrOut, FifoOut, AvailOut, CountOut1Reg, CountOut2Reg},
       {PtrIn, FifoIn, AvailIn, DSReg});
+  MI.cloneMemRefs(I);
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
 }
@@ -2707,6 +2712,7 @@ bool AIE2PInstructionSelector::selectVLD_FIFO_POP_BFP16(
       {PtrIn, FifoIn, AvailIn});
   bool CopiesConstrained =
       buildAndConstrainFifoLoadCopies(Vec576Out, MantVecOut, ExpVecOut, MRI);
+  MI.cloneMemRefs(I);
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI) &&
          CopiesConstrained;
@@ -2732,6 +2738,7 @@ bool AIE2PInstructionSelector::selectVLD_FIFO_POP_BFP16_1D(
       {PtrIn, FifoIn, AvailIn, OffsetReg});
   bool CopiesConstrained =
       buildAndConstrainFifoLoadCopies(Vec576Out, MantVecOut, ExpVecOut, MRI);
+  MI.cloneMemRefs(I);
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI) &&
          CopiesConstrained;
@@ -2764,6 +2771,7 @@ bool AIE2PInstructionSelector::selectVLD_FIFO_POP_BFP16_2D(
                      {PtrIn, FifoIn, AvailIn, DReg});
   bool CopiesConstrained =
       buildAndConstrainFifoLoadCopies(Vec576Out, MantVecOut, ExpVecOut, MRI);
+  MI.cloneMemRefs(I);
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI) &&
          CopiesConstrained;
@@ -2800,6 +2808,7 @@ bool AIE2PInstructionSelector::selectVLD_FIFO_POP_BFP16_3D(
       {PtrIn, FifoIn, AvailIn, DSReg});
   bool CopiesConstrained =
       buildAndConstrainFifoLoadCopies(Vec576Out, MantVecOut, ExpVecOut, MRI);
+  MI.cloneMemRefs(I);
   I.eraseFromParent();
   return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI) &&
          CopiesConstrained;
@@ -4385,6 +4394,7 @@ bool AIE2PInstructionSelector::selectVST_FIFO(MachineInstr &I,
     MI = MIB.buildInstr(getStoreFifoOpcode(I), {FifoOut, PtrOut, AvailOut},
                         {FifoIn, VecIn, PtrIn, AvailIn});
 
+    MI.cloneMemRefs(I);
     I.eraseFromParent();
     return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
   }
@@ -4405,6 +4415,7 @@ bool AIE2PInstructionSelector::selectVST_FIFO(MachineInstr &I,
     MI = MIB.buildInstr(getStoreFifoOpcode(I), {FifoOut, PtrOut, AvailOut},
                         {FifoIn, SrcReg, PtrIn, AvailIn});
 
+    MI.cloneMemRefs(I);
     I.eraseFromParent();
     return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
   }
@@ -4416,6 +4427,7 @@ bool AIE2PInstructionSelector::selectVST_FIFO(MachineInstr &I,
     MI = MIB.buildInstr(getStoreFifoOpcode(I), {FifoOut, PtrOut, AvailOut},
                         {FifoIn, PtrIn, AvailIn});
 
+    MI.cloneMemRefs(I);
     I.eraseFromParent();
     return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
   }
@@ -4427,6 +4439,7 @@ bool AIE2PInstructionSelector::selectVST_FIFO(MachineInstr &I,
     Register OffsetReg = I.getOperand(7).getReg();
     MI = MIB.buildInstr(getStoreFifoOpcode(I), {FifoOut, PtrOut, AvailOut},
                         {FifoIn, PtrIn, AvailIn, OffsetReg});
+    MI.cloneMemRefs(I);
     I.eraseFromParent();
     return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
   }
@@ -4447,6 +4460,7 @@ bool AIE2PInstructionSelector::selectVST_FIFO(MachineInstr &I,
                         {FifoOut, PtrOut, AvailOut, CountOut1Reg},
                         {FifoIn, PtrIn, AvailIn, DReg});
 
+    MI.cloneMemRefs(I);
     I.eraseFromParent();
     return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
   }
@@ -4474,6 +4488,7 @@ bool AIE2PInstructionSelector::selectVST_FIFO(MachineInstr &I,
                         {FifoOut, PtrOut, AvailOut, CountOut1Reg, CountOut2Reg},
                         {FifoIn, PtrIn, AvailIn, DSReg});
 
+    MI.cloneMemRefs(I);
     I.eraseFromParent();
     return constrainSelectedInstRegOperands(*MI, TII, TRI, RBI);
   }
