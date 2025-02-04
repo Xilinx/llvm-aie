@@ -351,3 +351,6 @@ BUILTIN(__builtin_aie2p_fifo_ld_pop_2d_576_bfp16,     "vv*&V32i&i&iii&iV64c&V8c&
 BUILTIN(__builtin_aie2p_fifo_ld_pop_3d_512_unaligned, "V64cv*&V32i&i&iii&iii&i", "t")
 BUILTIN(__builtin_aie2p_fifo_ld_pop_3d_544_bfp16,     "vv*&V32i&i&iii&iii&iV64c&V8c&", "t")
 BUILTIN(__builtin_aie2p_fifo_ld_pop_3d_576_bfp16,     "vv*&V32i&i&iii&iii&iV64c&V8c&", "t")
+// Unaligned and bfp16 loads with extra storage
+BUILTIN(__builtin_aie2p_fifo_ld_fillx, "vv*&V32i&i&V16i&i", "t")
+BUILTIN(__builtin_aie2p_fifo_ld_popx, "V64cv*&V32i&i&V16i&i", "t")
