@@ -1,0 +1,53 @@
+# This file is licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+#
+# (c) Copyright 2024-2025 Advanced Micro Devices, Inc. or its affiliates
+
+# RUN: llc -mtriple aie2 -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck --check-prefix=COMMON --check-prefix=AIE2 %s
+# RUN: llc -mtriple aie2p -run-pass=legalizer %s -verify-machineinstrs -o - | FileCheck --check-prefix=COMMON --check-prefix=AIE2P %s
+
+---
+name: test_fsub_bfloat16
+body: |
+  bb.0:
+    liveins: $r1, $r2
+    ; COMMON-LABEL: name: test_fsub_bfloat16
+    ; COMMON: liveins: $r1, $r2
+    ; COMMON-NEXT: {{  $}}
+    ; COMMON-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r1
+    ; COMMON-NEXT: [[COPY1:%[0-9]+]]:_(s32) = COPY $r2
+    ; COMMON-NEXT: [[C:%[0-9]+]]:_(s32) = G_CONSTANT i32 16
+    ; COMMON-NEXT: [[SHL:%[0-9]+]]:_(s32) = G_SHL [[COPY]], [[C]](s32)
+    ; COMMON-NEXT: [[SHL1:%[0-9]+]]:_(s32) = G_SHL [[COPY1]], [[C]](s32)
+    ; COMMON-NEXT: [[C1:%[0-9]+]]:_(s32) = G_CONSTANT i32 0
+    ; AIE2-NEXT: [[DEF:%[0-9]+]]:_(<16 x s32>) = G_IMPLICIT_DEF
+    ; AIE2-NEXT: [[AIE_INSERT_VECTOR_ELT:%[0-9]+]]:_(<16 x s32>) = G_AIE_INSERT_VECTOR_ELT [[DEF]], [[SHL]](s32), [[C1]](s32)
+    ; AIE2-NEXT: [[AIE_INSERT_VECTOR_ELT1:%[0-9]+]]:_(<16 x s32>) = G_AIE_INSERT_VECTOR_ELT [[DEF]], [[SHL1]](s32), [[C1]](s32)
+    ; AIE2-NEXT: [[FSUB:%[0-9]+]]:_(<16 x s32>) = G_FSUB [[AIE_INSERT_VECTOR_ELT]], [[AIE_INSERT_VECTOR_ELT1]]
+    ; AIE2-NEXT: [[BITCAST:%[0-9]+]]:_(<8 x s64>) = G_BITCAST [[FSUB]](<16 x s32>)
+    ; AIE2-NEXT: [[INT:%[0-9]+]]:_(<16 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2.v16accfloat.to.v16bf16), [[BITCAST]](<8 x s64>)
+    ; AIE2-NEXT: [[DEF1:%[0-9]+]]:_(<16 x s16>) = G_IMPLICIT_DEF
+    ; AIE2-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<32 x s16>) = G_CONCAT_VECTORS [[INT]](<16 x s16>), [[DEF1]](<16 x s16>)
+    ; AIE2-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[CONCAT_VECTORS]](<32 x s16>), [[C1]](s32)
+    ; AIE2P-NEXT: [[DEF:%[0-9]+]]:_(<32 x s32>) = G_IMPLICIT_DEF
+    ; AIE2P-NEXT: [[AIE_INSERT_VECTOR_ELT:%[0-9]+]]:_(<32 x s32>) = G_AIE_INSERT_VECTOR_ELT [[DEF]], [[SHL]](s32), [[C1]](s32)
+    ; AIE2P-NEXT: [[AIE_INSERT_VECTOR_ELT1:%[0-9]+]]:_(<32 x s32>) = G_AIE_INSERT_VECTOR_ELT [[DEF]], [[SHL1]](s32), [[C1]](s32)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS:%[0-9]+]]:_(<64 x s32>) = G_CONCAT_VECTORS [[AIE_INSERT_VECTOR_ELT]](<32 x s32>), [[DEF]](<32 x s32>)
+    ; AIE2P-NEXT: [[CONCAT_VECTORS1:%[0-9]+]]:_(<64 x s32>) = G_CONCAT_VECTORS [[AIE_INSERT_VECTOR_ELT1]](<32 x s32>), [[DEF]](<32 x s32>)
+    ; AIE2P-NEXT: [[FSUB:%[0-9]+]]:_(<64 x s32>) = G_FSUB [[CONCAT_VECTORS]], [[CONCAT_VECTORS1]]
+    ; AIE2P-NEXT: [[UNMERGE_VALUES:%[0-9]+]]:_(<32 x s32>), [[UNMERGE_VALUES1:%[0-9]+]]:_(<32 x s32>) = G_UNMERGE_VALUES [[FSUB]](<64 x s32>)
+    ; AIE2P-NEXT: [[INT:%[0-9]+]]:_(<32 x s16>) = G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aie2p.v32accfloat.to.v32bf16), [[UNMERGE_VALUES]](<32 x s32>)
+    ; AIE2P-NEXT: [[AIE_SEXT_EXTRACT_VECTOR_ELT:%[0-9]+]]:_(s32) = G_AIE_SEXT_EXTRACT_VECTOR_ELT [[INT]](<32 x s16>), [[C1]](s32)
+    ; COMMON-NEXT: [[ASSERT_SEXT:%[0-9]+]]:_(s32) = G_ASSERT_SEXT [[AIE_SEXT_EXTRACT_VECTOR_ELT]], 16
+    ; COMMON-NEXT: $r0 = COPY [[ASSERT_SEXT]](s32)
+    ; COMMON-NEXT: PseudoRET implicit $lr, implicit $r0
+    %0:_(s32) = COPY $r1
+    %1:_(s16) = G_TRUNC %0(s32)
+    %2:_(s32) = COPY $r2
+    %3:_(s16) = G_TRUNC %2(s32)
+    %4:_(s16) = G_FSUB %1, %3
+    %5:_(s32) = G_ANYEXT %4(s16)
+    $r0 = COPY %5(s32)
+    PseudoRET implicit $lr, implicit $r0
+...
